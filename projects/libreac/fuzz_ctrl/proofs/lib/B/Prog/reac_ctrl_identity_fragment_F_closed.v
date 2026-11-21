@@ -25,7 +25,7 @@ Qed.
 (* Route (C), the callee case (a Theorem Labs lane): the closed form of reac_ctrl_identity_fragment_holds_F_on.
    The narrowed statement reac_ctrl_identity_fragment_contract_F_on, at the _F_on runs its three callees' owners prove
    for this image: asan_memcpy_holds_F_on (lib/B/Prog/asan_memcpyF_on.v), bcmp_wrap_holds_F_on (lib/B/Prog/bcmp_wrap_on.v,
-   taken by path from a working branch 05b456d375e) and reac_ctrl_record_cksum_verify_holds_F_on
+   taken by path from a working branch) and reac_ctrl_record_cksum_verify_holds_F_on
    (lib/B/Prog/reac_ctrl_record_cksum_verify_F.v), all three closed. *)
 Require OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog.asan_memcpyF_on.
 Require OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog.bcmp_wrap_on.

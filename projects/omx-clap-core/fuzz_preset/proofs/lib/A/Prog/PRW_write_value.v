@@ -3,11 +3,12 @@
 (* Modified by Theorem Labs, 2026-10: the ASan walk of fuzz_reply's op_add, in the form of the cgif walks of
    proofs/cgif/cgif_file_fuzzer/lib/A/AC8h.v (call sites) and lib/A/ACbk.v (entry and return). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_op_add.v, with its module paths and module names changed; 6719 of its 6853 lines of code are new or changed and 2614 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3; internal commit ids in comments replaced by public commits or removed. *)
 (* rule 24: proves function write_value (CONFIRM R24Writer 2026-10-30): write_value_holds, at the end of Section cl.
    fuzz_preset image A, slice S7b (S7bWriteValue of the S7b walk's lane): the program walk of write_value (A 0x86c8c, 258
    instructions, self-recursive) over the ONE image-A program listing (lib/A/Listing_prog.v, a Theorem Labs lane), generic in
    the image facts (Context PAImg) and in the allocator relation ARx (LAWS : AR_laws_x), concluding the kit's text
-   twrite_value_specX (lib/A/PRH_FnWriter.v blob d89d3c67b78c, PRH_Base.v blob ef7c8ca98529, at the kit's cut 7cdbb61b5fa0) for every depth n.
+   twrite_value_specX (lib/A/PRH_FnWriter.v blob d89d3c67b78c, PRH_Base.v blob ef7c8ca98529, at the kit's cut) for every depth n.
    KIT MIGRATION (walkkit-next preset-tree-at-2026-10-29T11-52-53Z.tsv (sha256 7a1c7c129aef; internal record), merged preset-tree-at-2026-10-29T12-21-32Z.tsv (sha256 177285bb87d5; internal record)): fQmn over YAkMemnorm (the marked PLAWJ is GONE; each
    walk lemma instantiates the runner's invariant once at srr_inv_laws_memnorm_k); fpre's `raZ regs < alloc_ceiling`;
    the put family's TWO-case cut and indent's plain cut. PREMISES THAT MOVED BECAUSE OF A CALLEE TEXT (not for the
@@ -42,14 +43,14 @@
    the same way in the loop's segments; after put_string (the key) and the self call the walk goes on at the call's
    fx'. The item loop (formerly PRW_write_value_lp.v, WalkS7bR.WvLoopR's donor) is merged here: wvl_seg_210 / 193 /
    185 / 181 / 162 / 158 / 153 and wv_loop (induction over the items, at every current float state).
-   The batch kit RE-FIT (WalkS7bR.WriteValueB, 2026-10-30; the batch kit's texts a working branch 44123abafeb7:
+   The batch kit RE-FIT (WalkS7bR.WriteValueB, 2026-10-30; the batch kit's texts a working branch:
    PRH_FnWriter d89d3c67b78c, PRH_Base 6d0ab94b8f66): DW is gone (prh_univ_closure B CTX0); every writer text takes
    PRH_Base.prh_cons_from at entry, supplied to put / indent / put_string / the self call from the caller's window
    (wv_cons_next); the LIVE_<fn> sums are replaced by PRH_Base.prh_live_evs, supplied from the caller's by the blocks
    arms of prhWriter_blk (wv_live_next); the posts carry prh_granted (S7a_WriterRet's prhWriter_retg /
    prhWriter_ret_pos); wv_gap is DELETED (src_rd / cstr_ok lost their `+ 8`): twrite_value_specI is the batch kit's
    twrite_value_specX verbatim.
-   ON THE KIT'S CUT 7cdbb61b5fa0 (the one rebind, 2026-10-30): merged forward with no proof or statement change; the cut's
+   ON THE KIT'S CUT (the one rebind, 2026-10-30): merged forward with no proof or statement change; the cut's
    PRH_FnWriter is the same blob d89d3c67b78c, its PRH_Base is ef7c8ca98529 and its YCbqG 219748197d6b.
    Numerals: 4 (LENGTH: instruction bytes), 176 (LENGTH: write_value's own frame, its `addi sp, sp, -176`),
    0 .. 56 (LENGTH: the node's field offsets and its size, PRH_Reader pj_hdrR), 2 ^ 46 / 2 ^ 47 (LENGTH: the stack
@@ -1604,7 +1605,7 @@ intros ly S Lam peak buf st lyc Sc Lam1 peak1 buf1 st1 Hnd
   rewrite EL in Hnd |- *. split; [right; exact Hin'|].
   intros Ea. subst a. cbn [map] in Hnd. inversion Hnd as [|? ? Hni _]. apply Hni.
   apply (in_map fst) in Hin'. cbn [fst] in Hin'.
-  first [ exact Hin' | apply list_elem_of_In; exact Hin' | apply elem_of_list_In; exact Hin' ].
+  first [ exact Hin' | apply list_elem_of_In; exact Hin' | apply list_elem_of_In; exact Hin' ].
 Qed.
 
 (* the current buffer's footprint is the entry's or a block the run made: a callee's FP fits the caller's *)
@@ -3789,7 +3790,7 @@ Qed.
 End c1.
 
 (* ======== THE CONTAINER (case 36: an array, tag 5, or an object, tag 6) ======== *)
-(* The batch kit (a working branch 44123abafeb7, kept by the cut 7cdbb61b5fa0) dropped src_rd's / cstr_ok's `+ 8` (PRH_Base.v ef7c8ca98529 :1603,
+(* The batch kit (a working branch, kept by the cut) dropped src_rd's / cstr_ok's `+ 8` (PRH_Base.v ef7c8ca98529 :1603,
    :1660 at the cut), so the interim text's named argument wv_gap (SRC-CEIL) is DELETED: the string / number leaves and each
    object key take the ceiling bound of their block from tree_vis_cf's granule end (wv_cstr_blk).
    S0 is the kit's premise (`s0Z regs = o \/ s0Z regs < YM05.alloc_ceiling` in twrite_value_specX and tput_string_specX):

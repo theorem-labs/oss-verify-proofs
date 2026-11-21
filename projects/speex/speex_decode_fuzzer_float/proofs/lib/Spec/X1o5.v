@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (nprog_read's case split on the fd-table entry covers the new kinds of entry). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys Require Import Uapi.
@@ -114,7 +115,7 @@ match fd_lookup (m_fds mo) (Z_to_bv 64 fd) with
 end -> nprog sel (NRead fd buf cnt) mo.
 Proof.
 intros sel fd buf cnt mo Hfd. apply nprog_of_nstep; [exact I|].
-destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|pi pw|rd wr| ]|] eqn:E; try contradiction.
+destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|pi pw|rd wr| |sq sw sv|ex|dgf|ani anf]|] eqn:E; try contradiction.
 - destruct (fs_lookup (m_fs mo) p) as [data|] eqn:Hfs; [|contradiction].
 eexists (mkEffect _ _ []), _, []. cbn [nstep]. rewrite E, Hfs. split; [reflexivity|]. split; reflexivity.
 - exists (efferr EISDIR), mo, []. cbn [nstep]. rewrite E. auto.

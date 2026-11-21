@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN13.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (ledger_same's kernel premise, for the vvar/vDSO pair of the ledger). *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -32,6 +33,7 @@ Ltac lits := unfold LOCK, CTX, LIBC, ERRNO, TP, GOT, GUARD, SCT, SCNT, MCNT, ASF
 src0_D_got_stack_chk_guard, src0_D_stack_chk_guard, src0_D_size_classes, src0_D_small_cnt_tab, src0_D_med_cnt_tab in *.
 Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Context {AM : AllocMode}.
+Context {AMF : Forced AM}.
 Definition ab_st (sc : Z) (s : astate) : astate :=
 match bounce_idx sc with
 | Some k =>
@@ -52,6 +54,7 @@ End d.
 Local Open Scope mm_scope.
 Section e. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Context {AM : AllocMode}.
+Context {AMF : Forced AM}.
 Definition mm_granted (sc : Z) (m : sptr) (cnt needed : Z) : M (option sptr) :=
 r <- new_region RkMap (page_round needed) ;;
 s0 <- get ;;
@@ -197,7 +200,7 @@ destruct (LOWc x Hx) as [Hlo|Hc]; [lia|]. apply NI. apply (so_ctx_img _ SO). cha
 - intros p x H. discriminate.
 - intros c Hc. destruct (CELLS c Hc) as [[Hc1 HW]|Hm]; [left | right; exact Hm]. split; [exact Hc1|].
 intros k Hk. destruct (In_ctx_cells A1 c Hc1) as (off & El & _). change (ms_ctx B) with CTX. unfold ctx_off in HW. rewrite El in HW |- *. exact (HW k Hk). }
-pose proof (YN2i.ledger_same B L1 A1 md1 (mid_ledger _ _ _ _ _ MID1) (mid_ledgerx _ _ _ _ _ MID1) A2 md1 ER EB eq_refl eq_refl eq_refl) as [LG2 LX2].
+pose proof (YN2i.ledger_same B L1 A1 md1 (mid_ledger _ _ _ _ _ MID1) (mid_ledgerx _ _ _ _ _ MID1) A2 md1 ER EB eq_refl eq_refl eq_refl eq_refl) as [LG2 LX2].
 split.
 - exact SO.
 - exact MR'.

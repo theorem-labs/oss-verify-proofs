@@ -85,7 +85,7 @@ Proof.
 Qed.
 
 (* ---- route (C): the region form (a Theorem Labs lane 09:20Z; form rule a Theorem Labs lane 09:37Z, 09:38Z; R amended 10:33Z) ----
-   Image-B twin of lib/A/Prog/reac_ctrl_kind_name_c.v's block (a working branch d68c95046c8).
+   Image-B twin of lib/A/Prog/reac_ctrl_kind_name_c.v's block (a working branch).
    R is the set of shadow bytes the run needs PRESENT through its shadow_rw premise (the bytes it reads AND the bytes
    it stores into). For this run R is EMPTY, so each _on statement is the old one with the premise shadow_rw m DROPPED
    (no fun _ => False region). Reads: for a0 <= 13 the run's one instrumented check reads the shadow byte of the table

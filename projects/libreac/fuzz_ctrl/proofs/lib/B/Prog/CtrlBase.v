@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/Prog/CtrlBase.v (a working branch 26edf006f53, blob ae7df9fc2b4): the same Requires (all lib/Reusable, none image-specific), the same aliases and the same two definitions afobjb / afobj_any; the dual-copy modules YK11 / YM05 / YI16 are named qualified (lib.Reusable.<X>, the copy A's file resolves); the afobjb comment cites image B's (asan-ubsan) call site, malloc and guard. *)
+(* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/Prog/CtrlBase.v (a working branch, blob ae7df9fc2b4): the same Requires (all lib/Reusable, none image-specific), the same aliases and the same two definitions afobjb / afobj_any; the dual-copy modules YK11 / YM05 / YI16 are named qualified (lib.Reusable.<X>, the copy A's file resolves); the afobjb comment cites image B's (asan-ubsan) call site, malloc and guard. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_ctrl image B (asan-ubsan), PA layer: the frame / heap object predicates and the call post the program walk uses.
 
    ONE TEXT. The generic part of cgif's lib/YC20.v (in_roP, arodata_okP, ro_below_ofl, ro_spares,

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO layer: a failed load that meets the vvar range is unmodeled (range_meets_vvar) in interp_eff and interp_eff_spec). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -29,31 +30,32 @@ ms = MS (ms_regs ms) (ms_fregs ms) (ms_pc_val ms) (ms_fcsr ms) (ms_resv ms) (ms_
 Proof. intros [] H; cbn in *; subst; reflexivity. Qed.
 
 Fixpoint interp_eff (segs : list Segment) (t : eff) (m : word -> option byte)
-: machine_result (core * (word -> option byte)) :=
-match t with
-| EDone c => MachineOk (c, m)
-| EEbreak _ | EFault _ | EDefinedIllegal _ => MachineFault
-| EIllegal _ | EEcall _ => MachineUnmodeled
-| ELoad n a k =>
-match ov_read_bytes segs m a (width_bytes n) with
-| Some bs => interp_eff segs (k (bv_extract 0 n (le_bytes_to_word bs))) m
-| None => MachineFault
-end
-| EStore n a v k =>
-if store_ok segs m a (width_bytes n)
-then interp_eff segs k (write_to_mem m a (Z_to_le_bytes (width_bytes n) (bv_unsigned v)))
-else MachineFault
-end.
+    : machine_result (core * (word -> option byte)) :=
+  match t with
+  | EDone c => MachineOk (c, m)
+  | EEbreak _ | EFault _ | EDefinedIllegal _ => MachineFault
+  | EIllegal _ | EEcall _ => MachineUnmodeled
+  | ELoad n a k =>
+      match ov_read_bytes segs m a (width_bytes n) with
+      | Some bs => interp_eff segs (k (bv_extract 0 n (le_bytes_to_word bs))) m
+      | None => if range_meets_vvar segs a (width_bytes n) then MachineUnmodeled else MachineFault
+      end
+  | EStore n a v k =>
+      if store_ok segs m a (width_bytes n)
+      then interp_eff segs k (write_to_mem m a (Z_to_le_bytes (width_bytes n) (bv_unsigned v)))
+      else MachineFault
+  end.
 
 Lemma interp_eff_spec : forall segs t m,
 RiscvSemantics.interp_eff segs t m = interp_eff segs t m.
 Proof.
-intros segs t. unfold RiscvSemantics.interp_eff.
-induction t; intros m; cbn [interp_eff interp_eff_accesses drop_access_report]; try reflexivity.
-- destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|reflexivity].
-rewrite <- H. destruct (interp_eff_accesses segs _ m) as [[v2 rg]| |]; reflexivity.
-- destruct (store_ok segs m a (width_bytes n)); [|reflexivity].
-rewrite <- IHt. destruct (interp_eff_accesses segs t _) as [[v2 rg]| |]; reflexivity.
+  intros segs t. unfold RiscvSemantics.interp_eff.
+  induction t as [c|c|c|c|c|c|n a k IH|n a v k IH]; intros m; cbn [interp_eff interp_eff_accesses drop_access_report]; try reflexivity.
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|];
+  [|destruct (range_meets_vvar segs a (width_bytes n)); reflexivity].
+    rewrite <- IH. destruct (interp_eff_accesses segs (k _) m) as [r| |]; reflexivity.
+  - destruct (store_ok segs m a (width_bytes n)); [|reflexivity].
+    rewrite <- IH. destruct (interp_eff_accesses segs k _) as [r| |]; reflexivity.
 Qed.
 
 Definition lift_result (ro : word -> option byte) (r : machine_result (core * (word -> option byte)))

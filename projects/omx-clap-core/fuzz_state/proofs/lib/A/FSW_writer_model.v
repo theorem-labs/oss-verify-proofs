@@ -8,7 +8,7 @@
    put_string writes the string between two quotes and its snprintf arm is unreachable.
    Rule 24 (proof-index v5 built 2026-10-28T21:58:24Z, exit 0, read from a file, not a pipe): put, indent,
    put_string, write_value, pj_write, preset_base64_encode and preset_base64_decode have RELEASED proofs for fs's
-   PLAIN and UBSAN builds only (lib/Prog, lib/U/Prog, ossv/recipes@566eb6ffa5, release/pau-projects-recipes@b6a0088adc),
+   PLAIN and UBSAN builds only (lib/Prog, lib/U/Prog, ossv/recipes, release/pau-projects-recipes),
    none for an ASan build. Those plain contracts / proofs are the templates used here, not drop-ins.
    Lemma names, git grep -w over origin/main, ossv/recipes, ossv/candidates, release/pau-projects-recipes (under proofs/):
    dbl_pow / newcap_pow / newcap_pos exist released (reused below); the others have no hit. *)
@@ -66,7 +66,7 @@ Proof.
 Qed.
 
 (* ---- the buffer's size class after a grow: RELEASED lemmas, reused, not copied: fs's plain proof of put
-   (lib/Prog/put_blocks.v:249-281, dbl_pow / newcap_pow, ossv/recipes@566eb6ffa5) states them over WriterSpec's
+   (lib/Prog/put_blocks.v:249-281, dbl_pow / newcap_pow, ossv/recipes) states them over WriterSpec's
    newcap, and fs's WriterRet.v:163 states newcap_pos. ---- *)
 
 (* ---- every allocation size the writer passes is at least 1 (owner-ruled, a Theorem Labs lane 21:53Z: ALLOC's

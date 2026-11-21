@@ -49,11 +49,11 @@ Definition TR_SIZE : Z := 2064.
 Definition TR_MAX : Z := 30.
 Definition ANMAX : Z := 2 ^ 30.
 (* The inner entry's premises (amalloc_inner_contract, item 12; a Theorem Labs lane, fm W6 MallocInner2.v (not in this delivery)
-   amalloc_inner_contract2 at a working branch 079b7a02ed1): asan_malloc's own stack bound with the caller's frame,
+   amalloc_inner_contract2 at a working branch): asan_malloc's own stack bound with the caller's frame,
    the request bound, and the pcs a one-pc trace record may hold (malloc_context_size = 1). *)
-(* fm W6 lib/A/W6/MallocInnerDef.v (not in this delivery) (a working branch 079b7a02ed1) *)
+(* fm W6 lib/A/W6/MallocInnerDef.v (not in this delivery) (a working branch) *)
 Definition AK_INNER2 : Z := 1968.
-(* fm W6 REF lib/AZ/AsanW/ABase.v (not in this delivery) (a working branch 355c85c578c), the value every unit's W6 line moves onto *)
+(* fm W6 REF lib/AZ/AsanW/ABase.v (not in this delivery) (a working branch), the value every unit's W6 line moves onto *)
 Definition AREQMAX : Z := 2^30.
 (* GetCurrentPc's return address on ___interceptor_malloc's short branch (the one jal GetCurrentPc there followed by
    `sd a0,16(..)`), from the image's objdump (startcert/acontract.py trace_pcs); equal to the unit's W6
@@ -558,7 +558,7 @@ Definition a_laws : Prop :=
   (forall H mem md, AH H mem md -> State.alloc_top (m_vmmaps md) <= stklo mem md) /\
   (* the run's initial sp is a valid one, so alloc_top = vm_init_sp - stack_max_size is 16-aligned and lies above
      HIGHMEM_BEG (next round, a Theorem Labs lane 21:57Z / 22:04Z: the word slack below the entry top and the Shadow case of
-     a_laws_rest_owned; W6 discharge: AllocTopValidSp.v (not in this delivery) ah5_valid_sp, a working branch 012b56f81f4) *)
+     a_laws_rest_owned; W6 discharge: AllocTopValidSp.v (not in this delivery) ah5_valid_sp, a working branch) *)
   (forall H mem md, AH H mem md -> Run.valid_sp (vm_init_sp (m_vmmaps md))) /\
   (* every AH state's memory holds no byte at a read-only address: lib/Lib/Mem.v mem_inv, the invariant the program's
      own steps carry (the posts of lib/A/Prog's *_c.v); W6 discharge: mem_inv_h5 (a Theorem Labs lane) *)
@@ -602,8 +602,8 @@ Proof.
 Qed.
 
 (* The two maps fields a_call_post keeps (a_call_post_vm_limit, a_call_post_init_sp): an accounting run keeps the whole
-   vmmaps record, so it keeps the budget and the initial sp (fuzz_reply AGlue.v ag_vm_kept, a working branch
-   b3d9217852e; a working branch 02b6e83e482's helper). *)
+   vmmaps record, so it keeps the budget and the initial sp (fuzz_reply AGlue.v ag_vm_kept, a working branch;
+   a working branch's helper). *)
 Lemma ag_vm_kept : forall md md', AsanLift.mat_le md md' ->
   vm_limit (m_vmmaps md') = vm_limit (m_vmmaps md) /\ vm_init_sp (m_vmmaps md') = vm_init_sp (m_vmmaps md).
 Proof.
@@ -1197,7 +1197,7 @@ End AContracts.
    p + n <= stklo does not place a block below alloc_top): by a_laws_above_top nothing at or above alloc_top is in a
    live block, and a block of n > 0 bytes ends inside AppMem; the slack forms use that alloc_top is a multiple of 8.
    The four statements are character-identical to fuzz_reply's lib/A/ContractPlace.v copies
-   (a working branch 3bcb4cdf17e :165, :187, :202, :345); a_live_slack_below_top_of_valid_sp's proof cites
+   (a working branch :165, :187, :202, :345); a_live_slack_below_top_of_valid_sp's proof cites
    alloc_top_mod8_of_valid_sp above (the same statement as that file's a_top_mod8_of_valid_sp). A name that covers the
    word slack carries "slack" (a Theorem Labs lane 2026-10-27 21:45Z). *)
 Section ALiveBelowTop.
@@ -1268,7 +1268,7 @@ End ALiveBelowTop.
    touched set names: each lies in FS, so neither state's allocator owns it (a_laws_not_owned; the base word at tp is
    kept, a_call_post_tp), below the window (a_laws_fs_place, a_call_pre_stklo), and above GT, so off errno and the OOM
    flag (this image's tp and flag lie below GT; startcert/acontract.py asserts both at render). The text of
-   fuzz_command's fs14k_keep / fs14_kept_post (lib/A/Prog/Fs14K.v, a working branch 6a8236a8ccc) over every class
+   fuzz_command's fs14k_keep / fs14_kept_post (lib/A/Prog/Fs14K.v, a working branch) over every class
    c <= 10 and Contract.v's layout, with the touched exception. *)
 Section AFsFlagsKept.
 Variable RT : Z -> (word -> option byte) -> Model -> Prop.

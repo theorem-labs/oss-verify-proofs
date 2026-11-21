@@ -3,9 +3,9 @@
 (* Modified by Theorem Labs, 2026-10: the SEARCH stage of segment GS of the ASan+UBSan walk (image B,
    fuzz_reply.asan-ubsan) of fuzz_reply's drain -- gesture_seen's held-array search (relay.c:100-109, inlined),
    DGS 0x83aa4 -> GA 0x83ba0 / GF 0x83cb4 / DLN 0x839d4.  Proves no function (kind: segment lemma of drain's
-   image-B walk, GS piece gs_scan): pb_gs_scan : gs_scan_stmt (lib/B/W_drain_gs.v:280), the Section arguments
-   as in W_drain_gs.v.  In the form of image A's lib/A/W_gsscan_scratch.v gs_scan_of_loop (a working branch
-   0c06ccc287f); every pc, register and frame slot is image B's (fuzz_reply.objdump.txt sha256 17f5c434bf57; internal record):
+   image-B walk, GS piece gs_scan): pb_gs_scan : gs_scan_stmt (lib/B/W_drain_gs.v:281), the Section arguments
+   as in W_drain_gs.v.  In the form of image A's lib/A/W_gsscan_scratch.v gs_scan_of_loop (a working branch);
+   every pc, register and frame slot is image B's (fuzz_reply.objdump.txt sha256 17f5c434bf57; internal record):
      0x83aa4 sd s9,24(sp)                              24(sp) = bg
      0x83aa8 .. 0x83ac0  ld 32(sp) (SA + 48); srli; ld 240(sp) (the shadow base); add; sd 16(sp); lb; bnez
                          the shadow byte of &e->nheld: folded by the token layer (gse_SH over SA + 40 .. SA + 56)
@@ -19,6 +19,7 @@
    The stage writes only 0, 16, 24, 96, 112, 160, 168 and 192 of drain's frame (gsW of lib/B/W_gsscan_cx.v), so
    dr_frame and the line loop's core move to the new memory (gsc_frame_keep, gsc_core_kept).  No trap site lies on
    this stretch (the stage's three are the loop's: lib/B/W_gsscan_loop.v). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -617,7 +618,7 @@ End a.
 
 (* ============================================================================================================
    THE ARx-GENERIC TWIN of this file (image B's DR_x slice D, 2026-10-30; the B twin of lib/A/W_gsscan_scratch.v's
-   Section cx at a working branch 50623273289): the stage's set-up over lib/B/W_drain_cx_x.v's Section
+   Section cx at a working branch): the stage's set-up over lib/B/W_drain_cx_x.v's Section
    variables (B PST ARx MT RP MMAX RG), the entry's ghost list Hp and budget kr after cx and the cut's own ghost list Hp1
    after S1 (lib/B/W_drain_gs.v's GA_x, lib/B/W_gsscan_cx.v's GSL_x).  Everything above this line is unchanged.
    - The stage calls no allocator rule: the cut's journal, its dbud_x and its trace pass unchanged from DGS_x to GA_x

@@ -1,17 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs: copied from proofs/libreac/fuzz_decode/lib/A/Prog/LLVMFuzzerTestOneInput_leafb.v (origin/ossv/recipes 88154566652a) for reac-repacer/fuzz_uci's image A: module paths and names changed, the cell rows are this unit's AsanCells rows, and the read-only-image helper is dropped. *)
+(* Modified by Theorem Labs: copied from proofs/libreac/fuzz_decode/lib/A/Prog/LLVMFuzzerTestOneInput_leafb.v for reac-repacer/fuzz_uci's image A: module paths and names changed, the cell rows are this unit's AsanCells rows, and the read-only-image helper is dropped. *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/reac-repacer/fuzz_uci/lib/A/Prog/UciCcLeafb.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/A/Prog/UciCcLeafb.v, with its module paths and module names changed; 1106 of its 1229 lines of code are new or changed and 398 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/B/Prog/check_value_cgW.v, with its module paths, module names and numbers changed; 396 of its 628 lines of code are new or changed and 997 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_counter_cgW: wire_check_counter_cg (wire_sigma WS_check_counter) at image B (fuzz_wire.asan-ubsan, check_counter
    at 0x804c0; objdump of record sha256 440b9550f4f5) from the callee contract the statement names, proving the frozen
    statement lib/B/Prog/check_counter_cg.v wire_check_counter_holds_stmt. In the walk style of reac-repacer/fuzz_uci's
-   lib/B/Prog/check_value_cgW.v (recipes commit 0295462466b2; its helpers copied under the prefix ccw_): the body runs
+   lib/B/Prog/check_value_cgW.v (recipes; its helpers copied under the prefix ccw_): the body runs
    as footprint runs (lib/B/Prog/WireCcnBSegs.v) carried into SRr by lib/B/Prog/LeafCgFacts.v bridge_evtF_stmt_YA0n,
    an inner journal over the call's stack window, and the one call, of the leaf rp_counter, cut by its leaf contract
    through the kit's lib/B/Prog/WireCcLeafb.v wcc_leafb_journal, in the form of libreac/fuzz_decode's released
-   lib/B/Prog/LLVMFuzzerTestOneInput_leafb.v dec_leafb_counter (recipes commit 48907dc7e8ca).
+   lib/B/Prog/LLVMFuzzerTestOneInput_leafb.v dec_leafb_counter (recipes).
 
    The walk:
      1. an INNER journal at the entry state (YCbq.v ajournal_sub_init): stack window [spZ regs - CCN_STK, spZ regs),

@@ -6,6 +6,7 @@
    lib/AU/P_LLVMFuzzerTestOneInput_seg.v (a Theorem Labs lane, unchanged by this file).  Rule 24: no function is proved here;
    this lane proves ONE segment lemma of the walk, with the runtime contracts and the glue's laws as Section
    hypotheses and with S3 (one loop turn) as the hypothesis the statement names. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (*   S4 = all of the whole_transfer block outside one turn:
      0x82e50 .. 0x82ea8  the guard `flags & 2` and `n' = 8904`, the malloc at 0x82e6c, its null test, and the
@@ -16,9 +17,9 @@
      and the no-T arm, which `beqz a0` 0x82e58 / `bne s8,a0` 0x82e64 take straight to C5 at 0x82fa4.
    Gate 6h: the sink head is this file's own Section variable SK, passed by name at every statement constant that
    takes one, so no global instance (the plain YI5b.src0_sink_head, cgif's AE2k.tfib_sink_head) can be chosen. *)
-(* Cut base of record: a Theorem Labs lane's lib/AU/P_LLVMFuzzerTestOneInput_seg.v at
-   18ba727d44b (a Theorem Labs lane, 2026-10-29 03:15Z).  This file Requires the cut file and the walk context, not
-   lib/AU/P_LLVMFuzzerTestOneInput.v, so the capture of the short name YI16.sink_head that 18ba727d44b
+(* Cut base of record: a Theorem Labs lane's lib/AU/P_LLVMFuzzerTestOneInput_seg.v
+    (a Theorem Labs lane, 2026-10-29 03:15Z).  This file Requires the cut file and the walk context, not
+   lib/AU/P_LLVMFuzzerTestOneInput.v, so the capture of the short name YI16.sink_head that
    fixes there cannot reach it; its own sink head is the Section variable SK below. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

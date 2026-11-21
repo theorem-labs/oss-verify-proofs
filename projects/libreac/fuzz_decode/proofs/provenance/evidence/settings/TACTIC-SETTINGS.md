@@ -4,7 +4,7 @@ A tactic-level setting (an `Ltac ... ::=` redefinition, an Opaque / Transparent 
 lia flag) changes proof search, not what the kernel checks. Per rule 1i-ter it is recorded here once; it is not
 made Local and not rebuilt. A kernel-level setting is never accepted: this run found none.
 
-- Tree: `proofs/libreac/fuzz_decode/lib` at commit `3f64815aead2`, every `.v` file of the lib (2673 files).
+- Tree: `proofs/libreac/fuzz_decode/lib`, every `.v` file of the lib (2673 files).
 - Tool: `global_settings.py` v10, sha256 `439f8e3bd4637640d6d40fb668716c081c3ba202aa831f31f0120de0b4e39242` (release `global_settings-439f8e3bd463`; its self-test and 20
   real-file controls ran first and passed). Command: `global_settings.py WT <every lib .v file>`; exit code 0.
 - `SUMMARY: 2673 files read of 2673 given; ESCAPES 1229; PLAIN 4735; UNMEASURED 4; KERNEL 0; levels TACTIC 5154, OPTION 814; HINTS 227 (report only, tactic-level)`

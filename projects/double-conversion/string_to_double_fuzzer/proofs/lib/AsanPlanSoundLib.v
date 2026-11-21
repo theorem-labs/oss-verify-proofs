@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's kernel field carried across the step). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -72,8 +73,9 @@ Proof.
   pose proof (same_but_materialized_frame _ _ Hs) as Hfr.
   assert (Evm : m_vmmaps model' = m_vmmaps model) by apply Hfr.
   assert (Elz : m_vm_lazy model' = m_vm_lazy model) by apply Hfr.
+  assert (Ekn : m_kernel model' = m_kernel model) by (rewrite Hs; reflexivity).
   destruct HC. constructor; cbn [with_ss a_ss a_maps a_totsz a_ylo a_eager a_vis a_abytes a_brk a_fd a_tidset kn];
-    rewrite ?Evm, ?Elz; try assumption.
+    rewrite ?Evm, ?Elz, ?Ekn; try assumption.
   - unfold Mr. rewrite (hid_same A argH _ _ _ _ Hs). exact HK.
   - replace (m_halted model') with (m_halted model) by (symmetry; apply Hfr). assumption.
   - unfold fds_ok in *. replace (m_fds model') with (m_fds model) by (symmetry; apply Hfr).
@@ -84,6 +86,7 @@ Proof.
   - replace (eager_used model') with (eager_used model) by (symmetry; apply Hfr). assumption.
   - intros a Hh. rewrite (hid_same A argH _ _ _ _ Hs) in Hh. rewrite (Hhid a Hh). auto.
   - eapply SINV_frame; [|eassumption]. intros a Ha. apply Hhid. unfold hid. rewrite Ha. reflexivity.
+  - rewrite Hs. assumption.
 Qed.
 
 (* [comment removed for export] *)

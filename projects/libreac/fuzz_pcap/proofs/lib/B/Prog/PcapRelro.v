@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: libreac/fuzz_pcap (libreac v1.9.0, ASan build): the read-only window RLO / RHI that
-   pcap's ASan statements pass (obligation row 5; the donor passes 0x9da38 / 0x9eca8, cgif_file_fuzzer lib/A/AD2o.v:45-47,
+   pcap's ASan statements pass (obligation row 5; the donor passes 0x9da38 / 0x9eca8, cgif_file_fuzzer lib/A/AD2o.v:46-48,
    AB1w.v:11-14, ACeg.v:42-44 in_ro_tfa).
    The donor's rule, measured on both donor images (cgif_file_fuzzer.asan sha256 7093581aab040cfd: .data.rel.ro
    0x9da38.., .got ..0x9eca8; .asan-ubsan 1c29845fe6058de6: 0x9dca8 .. 0x9ef18): RLO = the start of .data.rel.ro (the
@@ -17,6 +17,7 @@
    9e66f771f22af67a, the image the build loads as AsanUbsan): the same rule gives RLO = 0x99198 (start of .data.rel.ro)
    and RHI = 0x9a3f0 (end of .got), re-measured from the pin's section headers (.data.rel.ro 0x99198 .. 0x99698, .got
    0x99698 .. 0x9a3f0, inside the PT_LOAD 0x99160 .. 0x9b000); pcap_relro_in_image checks them against AsanUbsan. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 From OSSVerify.libreac.fuzz_pcap Require Symbols.
 From Stdlib Require Import ZArith NArith List Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import MemImageType.

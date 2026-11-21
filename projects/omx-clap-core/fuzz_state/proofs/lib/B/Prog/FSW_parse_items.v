@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) walk of parse_items, in the stage form of
    lib/B/Prog/FSW_pj_set.v (this branch). B-local copies of A-kit helpers with no B twin, each copied from
-   a working branch be9ecc0b1fd proofs/omx-clap-core/fuzz_state/lib/A/FSW_parse_items.v (a Theorem Labs lane):
+   a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSW_parse_items.v (a Theorem Labs lane):
    the writer-text facts pi_concat_cons / pi_concat_app / pi_concat_single / pi_wt_len2 / pi_wt_head / pi_rest_len /
    pi_p1_lt_end / pi_mgo / pi_obj_pieces / pi_obj_nil / pi_obj_cons / pi_spieces_head / pi_ws_repeat / pi_wind_ws,
    pi_nth_repeat / pi_zero_val, pi_stack_cells8 / pi_RA_stack (themselves A/ACex.v:322 / :330), and the entry state
@@ -12,6 +12,7 @@
    recorded at each stage).
    Proof style as the A walk; B's code is not A's: B CALLS skip_ws at four sites (A inlines the white-space loops), so
    B's stages cut at those calls, and B's UBSan checks (one trap, the unimp 0x853d8) sit between them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The ASan + UBSan walk of parse_items (fs.asan-ubsan 0x84e70, pf.c:211-264) against
    lib/B/FSH_Fn_reader.parse_items_spec k: STAGES.
    rule 24: proved new on image B (a Theorem Labs lane's lookup, CONFIRM 08:0xZ: no released proof of parse_items on any ASan image of

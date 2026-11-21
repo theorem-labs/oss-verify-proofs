@@ -1,7 +1,7 @@
 # fuzz_uci image-B class-1 stack_malloc contract: gate record
 
 The files: lib/B/Rt/YF0r.v, lib/B/Rt/YF0s.v and the shared lib/Reusable/YF0v.v (applied.txt), relocated from
-fuzz_grant's released lib/B/Rt/YF0r.v, YF0s.v and lib/Reusable/YF0v.v (recipes 4f87de75d67) by `run.sh` (port_core
+fuzz_grant's released lib/B/Rt/YF0r.v, YF0s.v and lib/Reusable/YF0v.v (recipes) by `run.sh` (port_core
 0e4e065eab9f, image-B mode, core-B's route): staged 3, kept 0, required.tsv empty, 1 override value, 1/1 patch, symbol
 gate PASS; the one FAIL row is core-B's known `rename-new-undeclared UciSyms` (its Record is in the start-up file
 lib/B/YF0m.v, never staged), so `apply-sm1.sh` copies by --apply's rule (nothing overwritten) and `header-sm1.py` does the
@@ -39,7 +39,7 @@ __asan::InitializeFlags); triage-sm1.py leaves exactly those 5 unexplained and e
 
 ## 2. codeptr, the atable replacement, and the by-value check
 
-### 2a. codeptr 12348302dfd2 (start-up set dbb5a97ad14, frozen-run.sh; records/codeptr.txt)
+### 2a. codeptr 12348302dfd2 (start-up set, frozen-run.sh; records/codeptr.txt)
 
 On fuzz_uci.asan-ubsan, stale against fuzz_grant.asan-ubsan with each file's donor text: 5 findings, every one a
 non-address (0x100000 = 1 << kStackSizeLog; 0x109000 = FS_FROFF; 0x160613 = the instruction word at FS_LOOP + 0x14;
@@ -81,7 +81,7 @@ and nothing else changes.
 ## 3. v10: global_settings 439f8e3bd463 (records/settings-count.txt)
 
 The three files: ESCAPES 1, PLAIN 6, UNMEASURED 0, KERNEL 0 (TACTIC 7). fuzz_grant's released counterparts (lib/B/Rt/
-YF0r.v, YF0s.v, lib/Reusable/YF0v.v at 4f87de75d67): ESCAPES 1, PLAIN 6, UNMEASURED 0, KERNEL 0: equal. The one ESCAPES row
+YF0r.v, YF0s.v, lib/Reusable/YF0v.v): ESCAPES 1, PLAIN 6, UNMEASURED 0, KERNEL 0: equal. The one ESCAPES row
 is YF0v.v's global `Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).`, the donor's line;
 its one importer, YF0s.v, sets the same value `#[local]` itself. Control: YF0s.v's `#[local]` Zify flag made global
 gives ESCAPES 2.
@@ -96,7 +96,7 @@ is BAD (rc 1).
 ## 5. Build (records/build.txt, records/print-assumptions.txt)
 
 `cb build` of lib/Reusable/YF0v.vo, lib/B/Rt/YF0r.vo, lib/B/Rt/YF0s.vo (dune, each target
-compiled, not restored from the cache): rc 0, 4 PINNED at facts 25e3d17bdb50 (fuzz_uci.asan 6ea017c24525, asan-ubsan
+compiled, not restored from the cache): rc 0, 4 PINNED at facts (fuzz_uci.asan 6ea017c24525, asan-ubsan
 a1b86e424add, plain a6119aa7f1f2, ubsan fa87ac3037db), each file's own `.vo (real ...)` line. Control: YF0r.v's data
 cell (0x9e960, ...) planted as (0x9e968, ...) fails the same build at YF0r.v:78 (`fsA_rodata_chk`, "Unable to unify
 "true" with "false""), rc 1; the plant was reverted before the build of record. No admit / Admitted / Axiom / Parameter in

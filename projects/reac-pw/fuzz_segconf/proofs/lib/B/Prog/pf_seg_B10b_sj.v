@@ -6,7 +6,7 @@
    Section hypotheses (lib/B/Prog/pf_seg_B10b_s.v names them; the segment's piece list, section 3):
      ASNP  forall fx0, RtFormat.asnprintf_realizes fx0 rc SEGS B (pa_sigma SS___interceptor_trampoline_snprintf)
            gotwA guardA  (the snprintf wrapper at its trampoline, the stack-protector cells of SegInstB).
-   ADAPTED from 501c0d516c69 proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_reply_s4.v (an snprintf site: the
+   ADAPTED from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_reply_s4.v (an snprintf site: the
    step, srr_after_artF and the continuation at the FP state fx1 the wrapper returns), with the step of
    pf_seg_B10b_sf.v (b10s_aj_snprintf_atSF, the journal form) and the "%s" family instance b10s_FR_s_regs; the JOIN
    cut rebuilt as the B10b segment lane's pf_seg_B10b_j.v rebuilds TAIL (the keep lemmas of pf_seg_B10b_sg.v), and the

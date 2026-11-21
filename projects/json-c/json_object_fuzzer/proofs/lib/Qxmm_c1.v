@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: the jo_deep_copy proofs name jo_preA's conjunct; the DCA and PUT calls discharge it). *)
 
 From Stdlib Require ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run Fs.
@@ -61,7 +62,7 @@ Let DCA := (dcopy_A HIx SHALLOW PUT OBL_STRDUP_NF LF OBL_AMEMSET OBL_ISTRCMP HD 
 Theorem deep_copy_A : jo_deep_copy_A_stmt HIx DC_A SH_A (32 + (DC_F + DC_C)) DC_F (fun w => DC_KB * w) (fun w => w).
 Proof.
 unfold jo_deep_copy_A_stmt. intros until errv. intros PRE SPA32 G JR DC DLOC DU DAL FRN RW WLT BBW BDW FRM A0 A1 A2 K.
-destruct PRE as (HP & ST & LO & LOS & SPA & HT & ERR & TP & RA). subst a0 a1 a2 tp.
+destruct PRE as (HP & ST & LO & HBT & LOS & SPA & HT & ERR & TP & RA). subst a0 a1 a2 tp.
 pose proof (bv_unsigned_in_range 64 sp) as SPR. change (bv_modulus 64) with (2^64) in SPR.
 unfold A_ERRNO, A_TP in ERR. change (6434400 - 164) with 6434236 in ERR.
 assert (RD0 : 0 <= rdepth r) by (destruct r; cbn [rdepth]; try lia; apply sdepth_nonneg).
@@ -172,7 +173,7 @@ evt_done5.
 eapply (DCA r NN) with (m := m1) (md := md) (T := T) (A := A) (LB := LB) (BS := BS) (LM := LM) (FRS := FRS) (B := B) (lo := lo) (p := p) (D := D) (w := w0) (errv := errv);
 [ exact HP1 | exact JR1 | exact NN | eapply lh_globA_client; [exact HPR1 | exact G] | exact DCc | exists Fd, kd; split; [exact HFd | split; [exact HD1 | exact HD2]]
 | eapply (QsKa.Mq6.unpoisoned_pres_frame HIx); [exact HP | exact HFd | exact HD1 | exact HD2 | exact DU | exact HPR1] | exact DAL
-| rewrite ?unsigned_lit by lia; exact ST | exact LO | rewrite ?unsigned_lit by lia; clear - LOSu; unfold dc_stkA, DC_F, DC_C; lia
+| rewrite ?unsigned_lit by lia; exact ST | exact LO | first [assumption | lia] | rewrite ?unsigned_lit by lia; clear - LOSu; unfold dc_stkA, DC_F, DC_C; lia
 | rewrite ?unsigned_lit by lia; clear - SPA32 SPR LOSu LO ACR RD0; Z.div_mod_to_equations; lia | rewrite ?unsigned_lit by lia; clear - HT; lia
 | exact ERR | reflexivity | rewrite ?unsigned_lit by lia; reflexivity | exact FRM | exact FRN | exact WT1 | clear - W0R WLT; lia
 | clear - W0R BBW; unfold DC_KB in *; lia | clear - W0R BDW; lia | reflexivity | reflexivity | reflexivity | ].
@@ -237,7 +238,7 @@ evt_done5.
 destruct FRq as [[-> ->] | (Hq & sq & JQ)].
 +
 eapply (PUT _ _ gp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F2 fc2 mr mdr T Ar (BS ++ REM ++ LB) LM FRS Br lo errr None [] 0 1);
-[ exact HPp | cbn [put_pre]; split; reflexivity | reflexivity | rewrite unsigned_lit by lia; exact STr | exact LO | rewrite unsigned_lit by lia; unfold put_stk_A; clear - LOSu RD0; lia
+[ exact HPp | cbn [put_pre]; split; reflexivity | reflexivity | rewrite unsigned_lit by lia; exact STr | exact LO | first [assumption | lia] | rewrite unsigned_lit by lia; unfold put_stk_A; clear - LOSu RD0; lia
 | rewrite unsigned_lit by lia; clear - SPA32 SPR LOSu LO ACR RD0; Z.div_mod_to_equations; lia | rewrite unsigned_lit by lia; clear - HT; lia | exact ERRr | reflexivity | reflexivity
 | cbn [put_costA]; clear - BBr BBW W0R; unfold DC_KB in *; lia | ].
 idtac.
@@ -299,7 +300,7 @@ eapply agree_on_trans; [| exact AGf]. eapply (agree_of_heap_pres asegs A4H); [ex
 * right. split; [reflexivity|]. exists REM. split; [assumption | exact HPf].
 +
 eapply (PUT _ _ gp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F2 fc2 mr mdr T Ar (BS ++ REM ++ LB) LM FRS Br lo errr (Some sq) CBS q 1);
-[ exact HPp | cbn [put_pre]; split; [exact Hq | split; [lia | exact JQ]] | reflexivity | rewrite unsigned_lit by lia; exact STr | exact LO | rewrite unsigned_lit by lia; unfold put_stk_A; clear - LOSu RD0; lia
+[ exact HPp | cbn [put_pre]; split; [exact Hq | split; [lia | exact JQ]] | reflexivity | rewrite unsigned_lit by lia; exact STr | exact LO | first [assumption | lia] | rewrite unsigned_lit by lia; unfold put_stk_A; clear - LOSu RD0; lia
 | rewrite unsigned_lit by lia; clear - SPA32 SPR LOSu LO ACR RD0; Z.div_mod_to_equations; lia | rewrite unsigned_lit by lia; clear - HT; lia | exact ERRr | reflexivity | reflexivity
 | cbn [put_costA]; change (1 =? 1) with true; cbn [bB]; clear - BBr BBW W0R; unfold DC_KB in *; lia | ].
 intros ms2 md2 A2 (m2 & rr & B2 & RS2 & VM2 & ST2 & HPR2 & ERR2 & BB2 & BD2 & OUT2).
@@ -454,7 +455,7 @@ Hypothesis DCA : forall r : jroot, r <> JRnull -> DCOPY HIx r.
 Theorem deep_copy_A : jo_deep_copy_A_stmt HIx DC_A SH_A (32 + (DC_F + DC_C)) DC_F (fun w => DC_KB * w) (fun w => w).
 Proof.
 unfold jo_deep_copy_A_stmt. intros until errv. intros PRE SPA32 G JR DC DLOC DU DAL FRN RW WLT BBW BDW FRM A0 A1 A2 K.
-destruct PRE as (HP & ST & LO & LOS & SPA & HT & ERR & TP & RA). subst a0 a1 a2 tp.
+destruct PRE as (HP & ST & LO & HBT & LOS & SPA & HT & ERR & TP & RA). subst a0 a1 a2 tp.
 pose proof (bv_unsigned_in_range 64 sp) as SPR. change (bv_modulus 64) with (2^64) in SPR.
 unfold A_ERRNO, A_TP in ERR. change (6444320 - 164) with 6444156 in ERR.
 assert (RD0 : 0 <= rdepth r) by (destruct r; cbn [rdepth]; try lia; apply sdepth_nonneg).
@@ -567,7 +568,7 @@ evt_done5.
 eapply (DCA r NN) with (m := m1) (md := md) (T := T) (A := A) (LB := LB) (BS := BS) (LM := LM) (FRS := FRS) (B := B) (lo := lo) (p := p) (D := D) (w := w0) (errv := errv);
 [ exact HP1 | exact JR1 | exact NN | eapply lh_globA_client; [exact HPR1 | exact G] | exact DCc | exists Fd, kd; split; [exact HFd | split; [exact HD1 | exact HD2]]
 | eapply (QsKa.Mqf.unpoisoned_pres_frame HIx); [exact HP | exact HFd | exact HD1 | exact HD2 | exact DU | exact HPR1] | exact DAL
-| rewrite ?unsigned_lit by lia; exact ST | exact LO | rewrite ?unsigned_lit by lia; clear - LOSu; unfold dc_stkA, DC_F, DC_C; lia
+| rewrite ?unsigned_lit by lia; exact ST | exact LO | first [assumption | lia] | rewrite ?unsigned_lit by lia; clear - LOSu; unfold dc_stkA, DC_F, DC_C; lia
 | rewrite ?unsigned_lit by lia; clear - SPA32 SPR LOSu LO ACR RD0; Z.div_mod_to_equations; lia | rewrite ?unsigned_lit by lia; clear - HT; lia
 | exact ERR | reflexivity | rewrite ?unsigned_lit by lia; reflexivity | exact FRM | exact FRN | exact WT1 | clear - W0R WLT; lia
 | clear - W0R BBW; unfold DC_KB in *; lia | clear - W0R BDW; lia | reflexivity | reflexivity | reflexivity | ].
@@ -632,7 +633,7 @@ evt_done5.
 destruct FRq as [[-> ->] | (Hq & sq & JQ)].
 +
 eapply (PUT _ _ gp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F2 fc2 mr mdr T Ar (BS ++ REM ++ LB) LM FRS Br lo errr None [] 0 1);
-[ exact HPp | cbn [put_pre]; split; reflexivity | reflexivity | rewrite unsigned_lit by lia; exact STr | exact LO | rewrite unsigned_lit by lia; unfold put_stk_A; clear - LOSu RD0; lia
+[ exact HPp | cbn [put_pre]; split; reflexivity | reflexivity | rewrite unsigned_lit by lia; exact STr | exact LO | first [assumption | lia] | rewrite unsigned_lit by lia; unfold put_stk_A; clear - LOSu RD0; lia
 | rewrite unsigned_lit by lia; clear - SPA32 SPR LOSu LO ACR RD0; Z.div_mod_to_equations; lia | rewrite unsigned_lit by lia; clear - HT; lia | exact ERRr | reflexivity | reflexivity
 | cbn [put_costA]; clear - BBr BBW W0R; unfold DC_KB in *; lia | ].
 idtac.
@@ -694,7 +695,7 @@ eapply agree_on_trans; [| exact AGf]. eapply (agree_of_heap_pres asegs A4H); [ex
 * right. split; [reflexivity|]. exists REM. split; [assumption | exact HPf].
 +
 eapply (PUT _ _ gp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F2 fc2 mr mdr T Ar (BS ++ REM ++ LB) LM FRS Br lo errr (Some sq) CBS q 1);
-[ exact HPp | cbn [put_pre]; split; [exact Hq | split; [lia | exact JQ]] | reflexivity | rewrite unsigned_lit by lia; exact STr | exact LO | rewrite unsigned_lit by lia; unfold put_stk_A; clear - LOSu RD0; lia
+[ exact HPp | cbn [put_pre]; split; [exact Hq | split; [lia | exact JQ]] | reflexivity | rewrite unsigned_lit by lia; exact STr | exact LO | first [assumption | lia] | rewrite unsigned_lit by lia; unfold put_stk_A; clear - LOSu RD0; lia
 | rewrite unsigned_lit by lia; clear - SPA32 SPR LOSu LO ACR RD0; Z.div_mod_to_equations; lia | rewrite unsigned_lit by lia; clear - HT; lia | exact ERRr | reflexivity | reflexivity
 | cbn [put_costA]; change (1 =? 1) with true; cbn [bB]; clear - BBr BBW W0R; unfold DC_KB in *; lia | ].
 intros ms2 md2 A2 (m2 & rr & B2 & RS2 & VM2 & ST2 & HPR2 & ERR2 & BB2 & BD2 & OUT2).

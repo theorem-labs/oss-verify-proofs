@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/A/Rt/WrapRo.v at origin/ossv/recipes 7cbe5270d908 (donor image sha256 c954b804786c); module paths changed and addresses moved to reac-pw/fuzz_role's ASan build (fuzz_role.asan sha256 614cffc0864c) by port_core.py 1e42da8952ec, cross-checked numeral by numeral with alreloc a5c53bb2bed4 (ledger provenance/reloc/A-Rt-Strlen.tsv); arodata_okP is Required from lib/A/RPgBase.v, which holds the same definition, in place of lib/A/Prog/IdentBase.v. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/A/Rt/WrapRo.v (donor image sha256 c954b804786c); module paths changed and addresses moved to reac-pw/fuzz_role's ASan build (fuzz_role.asan sha256 614cffc0864c) by port_core.py 1e42da8952ec, cross-checked numeral by numeral with alreloc a5c53bb2bed4 (ledger provenance/reloc/A-Rt-Strlen.tsv); arodata_okP is Required from lib/A/RPgBase.v, which holds the same definition, in place of lib/A/Prog/IdentBase.v. *)
 (* libreac/fuzz_identity, build asan: the read-only premise of the runtime wrappers (lib/A/Rt/StrlenDef.v,
    lib/A/Rt/MemchrDef.v), in the form a program walk can carry across a call.
    A wrapper may read bytes of the image's read-only segments in two ways:
@@ -10,8 +10,8 @@
    aro_unowned is the in-segment half of arodata_okP (lib/A/Prog/IdentBase.v:20), the fact the program walks
    carry; aro_unowned_of_arodata turns one into the other. Unlike YG0d's rom_view, it says nothing about owned
    image bytes, so it survives a call whose post keeps only the bytes that are unowned before and after
-   (__asan_stack_malloc_*, YG0d.v:298-299): aro_unowned_keep. *)
-(* Modified by Theorem Labs, 2026-10: derived from lib/A/Rt/WrapRo.v of this library at d428443238a6 by derive_y.py: module paths lib.A -> lib.AU (A.Axyz -> AU.Yxyz), addresses moved from reac-pw/fuzz_role's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/Rt/WrapRo.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
+   (__asan_stack_malloc_*, YG0d.v:299-300): aro_unowned_keep. *)
+(* Modified by Theorem Labs, 2026-10: derived from lib/A/Rt/WrapRo.v of this library by derive_y.py: module paths lib.A -> lib.AU (A.Axyz -> AU.Yxyz), addresses moved from reac-pw/fuzz_role's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/Rt/WrapRo.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
 From OSSVerify.Proofs.reac_pw.fuzz_role.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

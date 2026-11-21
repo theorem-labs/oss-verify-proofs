@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main entry's recorded facts read as the main entry keeps them: BMKN, BPKN, imported from MainEntryBoth; the fake block's shadow address unfolds AsanEmbed.ASHOFF by its full name, as MainEntryBoth has an ASHOFF too). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -8,7 +9,7 @@ From LinuxProcessSemantics.Riscv Require Import Prelude.
 From OSSVerify.Proofs.zstd.zstd_frame_info.lib.Lib Require Import PropExec MState Mem Cells Step Frame Arr Tac InitMem.
 From OSSVerify.Proofs.zstd.zstd_frame_info.lib.LibA Require Import ExecF.
 From OSSVerify.Proofs.zstd.zstd_frame_info.lib.Spec Require Import AsanEmbed.
-From OSSVerify.Proofs.zstd.zstd_frame_info.lib.AS Require Import MainExport MainFactsBoth.
+From OSSVerify.Proofs.zstd.zstd_frame_info.lib.AS Require Import MainExport MainFactsBoth MainEntryBoth.
 From OSSVerify.Proofs.zstd.zstd_frame_info.lib.BothW Require Import BImg ABase ABytes ALayout FsKit AFake_iface ARepInit_kit.   (* [comment removed for export] *)
 From OSSVerify.Proofs.zstd.zstd_frame_info.lib.Common Require Import RunDraw.
 Import ListNotations.
@@ -60,8 +61,8 @@ Local Ltac pf V HP f H := pose proof (pfact_find V _ f HP ltac:(vm_compute; refl
 
 Section CANSEC2. Context {rc : runConstT}.
 #[using="Type"] Theorem afake_init : forall (V : nat -> Z) (w : bool) (U : list (list Z)) (m : amem),
-  Forall (mfact_ok bsegs V m) both_mem_facts ->
-  Forall (pfact_ok V) both_pure_facts ->
+  Forall (mfact_ok bsegs V m) BMKN ->
+  Forall (pfact_ok V) BPKN ->
   32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat - 8388608 = ATOP ->      (* [comment removed for export] *)
   AFAKE (mkALayout (LV V) w U) [] m.
 Proof.
@@ -103,7 +104,7 @@ Proof.
   pose proof (mimg_cover bsegs V m _ 0x10000 0x9aed8 HM ltac:(vm_compute; reflexivity)) as IMG.
   rewrite <- EF in *. rewrite <- ED in *. rewrite <- ET in *.
   assert (SHF : shad (al_fake L) = 512 * V 377%nat + 2147450880).
-  { unfold shad, ASHOFF. Local Ltac2 Set LiaHints.tbl := fun () => "00U0>10545267173.511113428871.51 11850515108.5815595784720.4916382764429.4918274553776.1018274553776.1118598469526.4921013638781.4923547481408.4925487562532.4626989274532.6227521648287.6427572950718.1027572950718.1127681095499.1027681095499.1128048607597.5729782367974.4634209741889.6437608451428.4 37610345433.1037610345433.1137995183411.5141538656490.5442225533296.464353274817.49 49622723523.5753292919379.1054060397907.5054969794426.4959392915889.4961035084364.4663541249473.4965561039727.516758013062.49 8274901526.49 00000100500600700800900R00S00T00U00V00W00X00m01Y01Z01e01f01g01h02202302402802902:02;02>02Y02Z02c02d02e02f02j02k02lSS2HaSSSFS5DB3105DI3105DB2275DI227SSSSSSS3HAT4P3932P65DW3931HS3HAT4P3102P65DW3105DB3101H4P2275DW2275DB227FS4P3104P227SSSS2D12D22D3FFS2HiSSSS1RS3HAT4P3932P65DW3935DB3931HSS2EF4P393SSSS2HiSS".
+  { unfold shad, AsanEmbed.ASHOFF. Local Ltac2 Set LiaHints.tbl := fun () => "00U0>10545267173.511113428871.51 11850515108.5815595784720.4916382764429.4918274553776.1018274553776.1118598469526.4921013638781.4923547481408.4925487562532.4626989274532.6227521648287.6427572950718.1027572950718.1127681095499.1027681095499.1128048607597.5729782367974.4634209741889.6437608451428.4 37610345433.1037610345433.1137995183411.5141538656490.5442225533296.464353274817.49 49622723523.5753292919379.1054060397907.5054969794426.4959392915889.4961035084364.4663541249473.4965561039727.516758013062.49 8274901526.49 00000100500600700800900R00S00T00U00V00W00X00m01Y01Z01e01f01g01h02202302402802902:02;02>02Y02Z02c02d02e02f02j02k02lSS2HaSSSFS5DB3105DI3105DB2275DI227SSSSSSS3HAT4P3932P65DW3931HS3HAT4P3102P65DW3105DB3101H4P2275DW2275DB227FS4P3104P227SSSS2D12D22D3FFS2HiSSSS1RS3HAT4P3932P65DW3935DB3931HSS2EF4P393SSSS2HiSS".
 rewrite Z.shiftr_div_pow2, EF by lia. change (2^3) with 8.
     replace (4096 * V 377%nat) with ((512 * V 377%nat) * 8) by lia. rewrite Z.div_mul by lia. lia. }
   assert (SHL : shlen FAKESZ = 1446400) by reflexivity.

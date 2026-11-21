@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanF.v at 225c2086379 for reac-pw/fuzz_rate:
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanF.v for reac-pw/fuzz_rate:
    the Pod model's Role answers become Rate's (Rate.rate_of_pairs, Rate.expect_value, Rate.expect_model,
    Rate.harness_parse), the cut file is lib/A/RtPgSeg.v; the role-specific answer cases and the role cell are
    dropped, the answer's shape is Rate.answer_ok. *)

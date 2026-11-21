@@ -3,10 +3,10 @@
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
    source runs: lib/B/Prog/Seg/F4.v seg_F4 (the two inline c_run_lib runs of the segment proof, F4.v lines
-     333-370 and 376-396; c_run_lib is lib/B/Prog/Seg/F5.v:891) at a working branch 3803efccea0
+     333-370 and 376-396; c_run_lib is lib/B/Prog/Seg/F5.v:892) at a working branch
      (blob 44f46f16817accf46824082fab41755a1ffa35b6);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    compare: seg_F4_eq88_run / seg_F4_ne88_run (evtF_evt + rng_all) re-derive the source statements; the stretch
      0x81fbc -> 0x82098 has no call, so there is no _pre_F / _post_F split. *)
 
@@ -52,7 +52,7 @@ Section F4F.
 
 Variables (Fr : bvmap 5 word) (fc : bv 32).
 
-(* ---- arm 1: record byte 12 = 0x88 (F4.v:333-370) ---- *)
+(* ---- arm 1: record byte 12 = 0x88 (F4.v:334-371) ---- *)
 Lemma seg_F4_eq88_F :
   forall (RNG : footprint) (regs : bvmap 5 word) (mem : word -> option byte)
          (A p k8 : Z) (b12 b13 : byte),
@@ -126,7 +126,7 @@ Proof.
   all: try reflexivity.
 Qed.
 
-(* ---- arm 2: record byte 12 <> 0x88 (F4.v:376-396) ---- *)
+(* ---- arm 2: record byte 12 <> 0x88 (F4.v:377-397) ---- *)
 Lemma seg_F4_ne88_F :
   forall (RNG : footprint) (regs : bvmap 5 word) (mem : word -> option byte)
          (A p k8 : Z) (b12 : byte),

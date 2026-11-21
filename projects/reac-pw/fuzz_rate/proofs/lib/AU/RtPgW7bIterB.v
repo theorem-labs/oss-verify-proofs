@@ -1,17 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: proofs/cgif/cgif_file_fuzzer/lib/A/AC8j.v at c8557374ad2e (st_ok_region_nth, field_of_region, awr_ok_cons_gen, as w7_region_nth, w7_field, w7_awr_cons) for reac-pw/fuzz_role's image A; the rest of the file is new: the block-post shape, the code table and the helpers of the walk of LLVMFuzzerTestOneInput from 0x80d14 to 0x8165c. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW7bBase.v at 25d4b718638 and the definitions
-   w7_kept, w7_hull, w7_strok, w7_strz of proofs/reac-pw/fuzz_role/lib/A/RPgW7bKit.v at 25d4b718638, for
+(* Modified by Theorem Labs, 2026-10: proofs/cgif/cgif_file_fuzzer/lib/A/AC8j.v at theorem-labs/oss-verify-proofs@6b32741d849a (st_ok_region_nth, field_of_region, awr_ok_cons_gen, as w7_region_nth, w7_field, w7_awr_cons) for reac-pw/fuzz_role's image A; the rest of the file is new: the block-post shape, the code table and the helpers of the walk of LLVMFuzzerTestOneInput from 0x80d14 to 0x8165c. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW7bBase.v and the definitions
+   w7_kept, w7_hull, w7_strok, w7_strz of proofs/reac-pw/fuzz_role/lib/A/RPgW7bKit.v, for
    reac-pw/fuzz_headamp's image B: w7_ -> hw7b_, role's image A code and record -> fuzz_headamp.asan-ubsan's (its own
    code table, pcs, registers and real-frame cells, measured on image B), module paths; the statements of the walk's
    blocks and call steps are new (hw7b_*_stmt), one per block of image B's own code; its hw7b_post,
    hw7b_post_of_run, hw7b_kept, hw7b_hull, hw7b_ra_kept, hw7b_hull_kept, hw7b_strok, hw7b_strz, hw7b_strok_kept and
    hw7b_strok_first_byte are lib/AU/HPgCaseB.v's cb_* since the dedup. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/AU/HPgW7bBase.v, with its module paths, module names and numbers changed; 107 of its 146 lines of code are new or changed and 275 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW7bIter.v at 25d4b718638e for reac-pw/fuzz_rate's image A: module paths changed; the image is fuzz_rate.asan (images.Asan) in place of lib/A/Img0; the turn's registers are rate's (x in a0 and s8, n in s9, t in s5; role's s9, s8, s10); RPgMem.rm_hull_sub is lib/A/RtPgMem.v rtm_hull_sub; the strlen and memcpy entries are rate's 0x42194 and 0x51860. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW7bIter.v at 7ef0f92b27f1 for the same unit's image B (fuzz_rate.asan-ubsan): the image is images.AsanUbsan; the turn's registers are image B's (x in a0 and s10, n in s9, t in s11, the length in s6); rtm_hull_sub is lib/AU/RtPgMemB.v rtmb_hull_sub; the strlen and memcpy entries are image B's 0x421ec and 0x518b8; the strlen contract is lib/AU/RtPgW7bCallB.v w7b_astrlen_realizes; the prefix w7_ becomes w7b_. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW7bIter.v for reac-pw/fuzz_rate's image A: module paths changed; the image is fuzz_rate.asan (images.Asan) in place of lib/A/Img0; the turn's registers are rate's (x in a0 and s8, n in s9, t in s5; role's s9, s8, s10); RPgMem.rm_hull_sub is lib/A/RtPgMem.v rtm_hull_sub; the strlen and memcpy entries are rate's 0x42194 and 0x51860. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW7bIter.v for the same unit's image B (fuzz_rate.asan-ubsan): the image is images.AsanUbsan; the turn's registers are image B's (x in a0 and s10, n in s9, t in s11, the length in s6); rtm_hull_sub is lib/AU/RtPgMemB.v rtmb_hull_sub; the strlen and memcpy entries are image B's 0x421ec and 0x518b8; the strlen contract is lib/AU/RtPgW7bCallB.v w7b_astrlen_realizes; the prefix w7_ becomes w7b_. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14; addresses measured on the unstripped twin
    a1e5fa55ae27e657ea2719297ec4c037110f10fa9047c3ea7bb6ea7fcb358cb1): one turn of the parts loop of

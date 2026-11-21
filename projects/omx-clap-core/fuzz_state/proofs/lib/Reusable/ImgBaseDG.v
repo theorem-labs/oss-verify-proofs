@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFeu.v, with its module paths changed; its image addresses relocated to omx-clap-core/fuzz_preset's ASan build through code-verified pairs; entries with no preset counterpart are listed in the commit that relocated them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/AFeu.v, with its module paths changed; 75 of its 100 lines of code are new or changed and 257 lines of the source are left out. *)
-(* copied from proofs/cgif/cgif_file_fuzzer/lib/ImgBaseDG.v @ 95e6f1d72b6 (a Theorem Labs lane, frozen), module paths changed, and the mcheck label on line 88 changed from 209280 to 4. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* copied from proofs/cgif/cgif_file_fuzzer/lib/ImgBaseDG.v (a Theorem Labs lane, frozen), module paths changed, and the mcheck label on line 88 changed from 209280 to 4. *)
 (* The image-free base of the Deallocate interface DGif0.DIface and its drain contract (DMspec / DMiface), beside
    ImgBase.
 

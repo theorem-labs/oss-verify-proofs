@@ -4,7 +4,7 @@
    cells, separation from the other blocks, slack and absence from the image (b1_hb, b1_sep, b1_slack_ok,
    b1_blk_rom, b1_blk_present, b1_in_all).
    Taken from reac-pw/fuzz_pin's Prog/Seg/Tac_b1.v, itself libreac/fuzz_ctrl's released Prog/Seg/Tac_b1.v
-   (origin/ossv/recipes 25e3d17bdb50) adapted, with role's numbers (frame 496, saved registers [S - 104, S), malloc
+   adapted, with role's numbers (frame 496, saved registers [S - 104, S), malloc
    at 0x15e54, the sink cells 0x4f5c1, 0x4f9e8 .. 0x4f9ec, 0x4f9f0 .. 0x4f9f8, the request bound 2^26 of
    SlotFR.resb_room). Widened from one block to a list hb: b1_FR_malloc / b1_malloc_call take FR with any hb (of at
    most 16 blocks and 2^24 bytes) to FR with (res, n) :: hb, and give res mod 16 = 0 and the bytes of the blocks of

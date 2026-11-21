@@ -1,6 +1,6 @@
 (* The calls of __asan_poison_memory_region (h, 16) and __asan_unpoison_memory_region (h, 16) from a walk that holds
    the core's journal over the unpoisoned memory (FSW_K's U form): the contracts' raw-memory posts (lib/A/FSpoisonS.v
-   apoison16_realizes / aunpoison16_realizes, a working branch 63931ee52ed, with the global presence
+   apoison16_realizes / aunpoison16_realizes, a working branch, with the global presence
    conjunct of fix (a)) converted to FSW_K.fsw_intrin_atU's callee form over the unpoisoned memories, and the two call
    steps that put the caller's journal and ARU back together. Generic in B, in the entry pc and in the caller's FP.
    ONE COPY (kit layout, ruling a Theorem Labs lane 22:30Z): this file is the single writer of the conversion; fuzz_malloc /

@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch input ProcInput, the new auxv layout and the init stack window). *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -15,41 +15,9 @@ Open Scope bv_scope.
 Definition rdB (B : list byte) (o k : nat) : list byte := firstn k (skipn o B).
 
 Definition tab (L : list (list byte)) : nat := total_arg_bytes_nat L.
+Lemma tab_app : forall a b, total_arg_bytes_nat (a ++ b) = (total_arg_bytes_nat a + total_arg_bytes_nat b)%nat.
+Proof. induction a as [|x a IH]; intros b; [reflexivity|]. cbn [app]. rewrite !total_arg_bytes_cons, IH. lia. Qed.
 Definition pre (i : nat) (L : list (list byte)) : nat := total_arg_bytes_nat (firstn i L).
-Definition SBn (av ev : list (list byte)) : nat := (184 + 8 * length av + 8 * length ev)%nat.
-Definition ROn (av ev : list (list byte)) : nat := (SBn av ev + 8 * ((tab av + tab ev + 7) / 8))%nat.
-
-Lemma SBn_struct : forall av ev, SBn av ev = struct_nat av ev.
-Proof. intros av ev. unfold SBn, struct_nat, auxv_size. lia. Qed.
-
-Lemma tab_Z : forall L, total_arg_bytes L = Z.of_nat (tab L).
-Proof. intros L. apply total_arg_bytes_Z. Qed.
-
-Lemma ROn_pad : forall av ev, ROn av ev = (struct_nat av ev + length (flatten_strings av)
-                                             + length (flatten_strings ev) + pad_nat av ev)%nat.
-Proof.
-  intros av ev. unfold ROn, pad_nat. rewrite !length_flatten_strings. rewrite <- SBn_struct. unfold SBn, tab.
-  set (t := (total_arg_bytes_nat av + total_arg_bytes_nat ev)%nat).
-  set (q := (23 + length av + length ev)%nat).
-  replace (184 + 8 * length av + 8 * length ev + total_arg_bytes_nat av + total_arg_bytes_nat ev)%nat
-    with (8 * q + t)%nat by (unfold q, t; lia).
-  pose proof (Nat.div_mod t 8 ltac:(lia)) as Hd. pose proof (Nat.mod_upper_bound t 8 ltac:(lia)) as Hm.
-  assert (HL : (Z.of_nat (8 * q + t) mod 8 = Z.of_nat (t mod 8))%Z).
-  { symmetry. apply Z.mod_unique with (q := Z.of_nat (q + t / 8)); lia. }
-  rewrite HL.
-  destruct (Nat.eq_dec (t mod 8) 0) as [E0|E0].
-  - rewrite E0. change ((8 - Z.of_nat 0) mod 8)%Z with 0%Z. change (Z.to_nat 0) with 0%nat.
-    replace ((t + 7) / 8)%nat with (t / 8)%nat.
-    2:{ apply Nat.div_unique with (r := 7%nat); lia. }
-    replace ((184 + 8 * length av + 8 * length ev))%nat with (8 * q)%nat by (unfold q; lia). lia.
-  - rewrite Z.mod_small by lia.
-    replace ((t + 7) / 8)%nat with (S (t / 8))%nat.
-    2:{ apply Nat.div_unique with (r := (t mod 8 - 1)%nat); lia. }
-    replace ((184 + 8 * length av + 8 * length ev))%nat with (8 * q)%nat by (unfold q; lia).
-    assert (Hz : Z.to_nat (8 - Z.of_nat (t mod 8)) = (8 - t mod 8)%nat) by lia.
-    rewrite Hz. lia.
-Qed.
-
 Lemma rdB_app_l : forall (l1 l2 : list byte) o k, (o + k <= length l1)%nat -> rdB (l1 ++ l2) o k = rdB l1 o k.
 Proof.
   intros l1 l2 o k H. unfold rdB. rewrite skipn_app. replace (o - length l1)%nat with 0%nat by lia.
@@ -88,44 +56,57 @@ Proof.
   apply IH. cbn in Hi. lia.
 Qed.
 
+Lemma length_flat_pairs : forall (es : list (word * word)), length (flat_map (fun e => [fst e; snd e]) es) = (2 * length es)%nat.
+Proof. induction es as [|e es IH]; [reflexivity|]. cbn [flat_map length app]. rewrite IH. lia. Qed.
+
 Section Block.
-Variables (ph : PhdrInfo) (sp : word) (av ev : list (list byte)) (uid hw : word) (draw : EntryDraw).
+Local Set Default Proof Using "All".
+Variables (la : LaunchAuxv) (ph : PhdrInfo) (entry sp top : word) (av ev : list (list byte)) (xfn : list byte).
+Variables (uid gid hw : word) (draw : EntryDraw).
 
-Let B := build_stack_bytes ph sp av ev uid hw draw.
+Let B := build_stack_bytes la ph entry sp top av ev xfn uid gid hw draw.
+Let HS := block_head_size (la_rseq la) av ev.
+Let PAD := block_pad_len (la_rseq la) sp top av ev xfn.
 
-Theorem E0_length : length B = (ROn av ev + 16)%nat.
-Proof. unfold B. rewrite length_bsb, ROn_pad. lia. Qed.
+Theorem E0_length : length B = (HS + PAD + launch_string_bytes av ev xfn + 8)%nat.
+Proof. unfold B, HS, PAD. apply length_bsb. Qed.
+
+Lemma B_split : B = struct_prefix top av ev xfn
+  ++ (auxv_bytes la ph entry uid gid hw (at_random_ptr sp (la_rseq la) av ev) (at_execfn_ptr top xfn)
+  ++ repeat (Z_to_bv 8 0) (gap_nat av ev) ++ at_random_bytes (ed_random draw))
+  ++ repeat (Z_to_bv 8 0) PAD ++ strs_bytes av ev xfn ++ repeat (Z_to_bv 8 0) 8.
+Proof. unfold B, PAD. rewrite bsb_decomp. rewrite <- !app_assoc. reflexivity. Qed.
+
+Lemma length_mid : length (auxv_bytes la ph entry uid gid hw (at_random_ptr sp (la_rseq la) av ev) (at_execfn_ptr top xfn)
+  ++ repeat (Z_to_bv 8 0) (gap_nat av ev) ++ at_random_bytes (ed_random draw)) = (auxv_size (la_rseq la) + gap_nat av ev + 16)%nat.
+Proof. rewrite !length_app, length_auxv_bytes, repeat_length, length_at_random_bytes. lia. Qed.
+
+Lemma HS_eq : HS = (struct_nat av ev + auxv_size (la_rseq la) + gap_nat av ev + 16)%nat.
+Proof. unfold HS. apply head_nat. Qed.
 
 Theorem E1_argc : rdB B 0 8 = word_le8 (Z_to_bv 64 (Z.of_nat (length av))).
 Proof.
-  unfold B. rewrite bsb_decomp. unfold struct_prefix. rewrite <- !app_assoc.
+  rewrite B_split. unfold struct_prefix. rewrite <- !app_assoc.
   apply (rdB_exact (word_le8 (len_word av))).
 Qed.
 
-Lemma rd_struct : forall o k, (o + k <= SBn av ev)%nat ->
-  rdB B o k = rdB (word_le8 (len_word av) ++ flat_map word_le8 (argv_ptrs sp av ev) ++ word_le8 (Z_to_bv 64 0)
-                   ++ flat_map word_le8 (envp_ptrs sp av ev) ++ word_le8 (Z_to_bv 64 0)
-                   ++ auxv_bytes ph (at_random_ptr sp av ev) uid hw) o k.
-Proof.
-  intros o k H. unfold B. rewrite bsb_decomp. rewrite rdB_app_l.
-  - unfold struct_prefix. reflexivity.
-  - rewrite length_struct_prefix. rewrite <- SBn_struct. exact H.
-Qed.
+Lemma rd_struct : forall o k, (o + k <= struct_nat av ev)%nat -> rdB B o k = rdB (struct_prefix top av ev xfn) o k.
+Proof. intros o k H. rewrite B_split. apply rdB_app_l. rewrite length_struct_prefix. exact H. Qed.
 
 Theorem E2_argv : forall i, (i < length av)%nat ->
-  rdB B (8 + 8 * i) 8 = word_le8 (sp + Z_to_bv 64 (Z.of_nat (SBn av ev + pre i av))).
+  rdB B (8 + 8 * i) 8 = word_le8 (str_base top av ev xfn + nat_to_word (pre i av)).
 Proof.
-  intros i Hi. rewrite rd_struct by (unfold SBn; lia).
+  intros i Hi. rewrite rd_struct by (unfold struct_nat; lia). unfold struct_prefix.
   rewrite rdB_app_r by (rewrite length_n_to_le_8; lia). rewrite length_n_to_le_8.
   replace (8 + 8 * i - 8)%nat with (8 * i)%nat by lia.
   rewrite rdB_app_l by (rewrite length_flat_map_le8, length_argv_ptrs; lia).
   rewrite rdB_flat_le8 by (rewrite length_argv_ptrs; exact Hi).
-  rewrite argv_ptr_eq by exact Hi. rewrite SBn_struct. reflexivity.
+  rewrite argv_ptr_eq by exact Hi. reflexivity.
 Qed.
 
 Theorem E2_argv_null : rdB B (8 + 8 * length av) 8 = word_le8 (Z_to_bv 64 0).
 Proof.
-  rewrite rd_struct by (unfold SBn; lia).
+  rewrite rd_struct by (unfold struct_nat; lia). unfold struct_prefix.
   rewrite rdB_app_r by (rewrite length_n_to_le_8; lia). rewrite length_n_to_le_8.
   rewrite rdB_app_r by (rewrite length_flat_map_le8, length_argv_ptrs; lia).
   rewrite length_flat_map_le8, length_argv_ptrs. replace (8 + 8 * length av - 8 - 8 * length av)%nat with 0%nat by lia.
@@ -133,9 +114,9 @@ Proof.
 Qed.
 
 Theorem E3_envp : forall j, (j < length ev)%nat ->
-  rdB B (16 + 8 * length av + 8 * j) 8 = word_le8 (sp + Z_to_bv 64 (Z.of_nat (SBn av ev + tab av + pre j ev))).
+  rdB B (16 + 8 * length av + 8 * j) 8 = word_le8 (str_base top av ev xfn + nat_to_word (tab av + pre j ev)).
 Proof.
-  intros j Hj. rewrite rd_struct by (unfold SBn; lia).
+  intros j Hj. rewrite rd_struct by (unfold struct_nat; lia). unfold struct_prefix.
   rewrite rdB_app_r by (rewrite length_n_to_le_8; lia). rewrite length_n_to_le_8.
   rewrite rdB_app_r by (rewrite length_flat_map_le8, length_argv_ptrs; lia).
   rewrite length_flat_map_le8, length_argv_ptrs.
@@ -143,12 +124,12 @@ Proof.
   replace (16 + 8 * length av + 8 * j - 8 - 8 * length av - 8)%nat with (8 * j)%nat by lia.
   rewrite rdB_app_l by (rewrite length_flat_map_le8, length_envp_ptrs; lia).
   rewrite rdB_flat_le8 by (rewrite length_envp_ptrs; exact Hj).
-  rewrite envp_ptr_eq by exact Hj. rewrite SBn_struct. reflexivity.
+  rewrite envp_ptr_eq by exact Hj. reflexivity.
 Qed.
 
 Theorem E3_envp_null : rdB B (16 + 8 * length av + 8 * length ev) 8 = word_le8 (Z_to_bv 64 0).
 Proof.
-  rewrite rd_struct by (unfold SBn; lia).
+  rewrite rd_struct by (unfold struct_nat; lia). unfold struct_prefix.
   rewrite rdB_app_r by (rewrite length_n_to_le_8; lia). rewrite length_n_to_le_8.
   rewrite rdB_app_r by (rewrite length_flat_map_le8, length_argv_ptrs; lia).
   rewrite length_flat_map_le8, length_argv_ptrs.
@@ -159,44 +140,76 @@ Proof.
   apply (rdB_exact (word_le8 (Z_to_bv 64 0))).
 Qed.
 
-Lemma at_random_ptr_RO : at_random_ptr sp av ev = sp + Z_to_bv 64 (Z.of_nat (ROn av ev)).
-Proof. rewrite at_random_ptr_eq, ROn_pad. reflexivity. Qed.
-
-Theorem E4_auxv : forall i, (i < 10)%nat ->
-  rdB B (24 + 8 * length av + 8 * length ev + 16 * i) 8
-    = word_le8 (fst (nth i (auxv_entries ph (sp + Z_to_bv 64 (Z.of_nat (ROn av ev))) uid hw) (Z_to_bv 64 0, Z_to_bv 64 0)))
-  /\ rdB B (32 + 8 * length av + 8 * length ev + 16 * i) 8
-    = word_le8 (snd (nth i (auxv_entries ph (sp + Z_to_bv 64 (Z.of_nat (ROn av ev))) uid hw) (Z_to_bv 64 0, Z_to_bv 64 0))).
+Lemma rd_mid : forall o k, (struct_nat av ev <= o)%nat -> (o + k <= HS)%nat ->
+  rdB B o k = rdB (auxv_bytes la ph entry uid gid hw (at_random_ptr sp (la_rseq la) av ev) (at_execfn_ptr top xfn)
+                   ++ repeat (Z_to_bv 8 0) (gap_nat av ev) ++ at_random_bytes (ed_random draw)) (o - struct_nat av ev) k.
 Proof.
-  intros i Hi.
-  assert (Hskip : forall o, (24 + 8 * length av + 8 * length ev <= o)%nat -> (o + 8 <= SBn av ev)%nat ->
-            rdB B o 8 = rdB (auxv_bytes ph (at_random_ptr sp av ev) uid hw) (o - (24 + 8 * length av + 8 * length ev)) 8).
-  { intros o Ho1 Ho2. rewrite rd_struct by exact Ho2.
-    rewrite rdB_app_r by (rewrite length_n_to_le_8; lia). rewrite length_n_to_le_8.
-    rewrite rdB_app_r by (rewrite length_flat_map_le8, length_argv_ptrs; lia).
-    rewrite length_flat_map_le8, length_argv_ptrs.
-    rewrite rdB_app_r by (rewrite length_n_to_le_8; lia). rewrite length_n_to_le_8.
-    rewrite rdB_app_r by (rewrite length_flat_map_le8, length_envp_ptrs; lia).
-    rewrite length_flat_map_le8, length_envp_ptrs.
-    rewrite rdB_app_r by (rewrite length_n_to_le_8; lia). rewrite length_n_to_le_8.
-    f_equal. lia. }
-  rewrite !Hskip by (unfold SBn; lia).
-  rewrite auxv_bytes_words. rewrite at_random_ptr_RO.
-  pose proof (nth_flat_pairs (auxv_entries ph (sp + Z_to_bv 64 (Z.of_nat (ROn av ev))) uid hw) i ltac:(cbn; lia)) as [N1 N2].
-  split.
-  - replace (24 + 8 * length av + 8 * length ev + 16 * i - (24 + 8 * length av + 8 * length ev))%nat with (8 * (2 * i))%nat by lia.
-    unfold auxv_words. rewrite rdB_flat_le8 by (cbn; lia). rewrite N1. reflexivity.
-  - replace (32 + 8 * length av + 8 * length ev + 16 * i - (24 + 8 * length av + 8 * length ev))%nat with (8 * (2 * i + 1))%nat by lia.
-    unfold auxv_words. rewrite rdB_flat_le8 by (cbn; lia). rewrite N2. reflexivity.
+  intros o k H1 H2. rewrite B_split. rewrite rdB_app_r by (rewrite length_struct_prefix; lia).
+  rewrite length_struct_prefix. apply rdB_app_l. rewrite length_mid. rewrite HS_eq in H2. lia.
 Qed.
 
-Lemma nth_strings : forall x, nth (SBn av ev + x) B (Z_to_bv 8 0)
-  = nth x (flatten_strings av ++ flatten_strings ev ++ repeat (Z_to_bv 8 0) (pad_nat av ev)
-           ++ at_random_bytes (ed_random draw)) (Z_to_bv 8 0).
+Definition aux_ent (i : nat) : word * word :=
+  nth i (auxv_entries la ph entry uid gid hw (at_random_ptr sp (la_rseq la) av ev) (at_execfn_ptr top xfn)) (Z_to_bv 64 0, Z_to_bv 64 0).
+
+Theorem E4_auxv : forall i, (i < auxv_count (la_rseq la))%nat ->
+  rdB B (struct_nat av ev + 16 * i) 8 = word_le8 (fst (aux_ent i))
+  /\ rdB B (struct_nat av ev + 16 * i + 8) 8 = word_le8 (snd (aux_ent i)).
 Proof.
-  intros x. unfold B. rewrite bsb_decomp.
-  rewrite app_nth2 by (rewrite length_struct_prefix, <- SBn_struct; lia).
-  rewrite length_struct_prefix, <- SBn_struct. f_equal. lia.
+  intros i Hi.
+  assert (Hc : (auxv_size (la_rseq la) = 16 * auxv_count (la_rseq la))%nat) by reflexivity.
+  rewrite !rd_mid by (pose proof HS_eq; unfold auxv_size in *; lia).
+  replace (struct_nat av ev + 16 * i - struct_nat av ev)%nat with (8 * (2 * i))%nat by lia.
+  replace (struct_nat av ev + 16 * i + 8 - struct_nat av ev)%nat with (8 * (2 * i + 1))%nat by lia.
+  assert (Hl16 : (8 * (2 * i + 1) + 8 <= auxv_size (la_rseq la))%nat) by (unfold auxv_size; lia).
+  rewrite !rdB_app_l by (rewrite length_auxv_bytes; lia).
+  rewrite auxv_bytes_words.
+  pose proof (nth_flat_pairs (auxv_entries la ph entry uid gid hw (at_random_ptr sp (la_rseq la) av ev) (at_execfn_ptr top xfn)) i
+                ltac:(rewrite length_auxv_entries; exact Hi)) as [N1 N2].
+  split.
+  - unfold auxv_words. rewrite rdB_flat_le8 by (rewrite length_flat_pairs, length_auxv_entries; lia). rewrite N1. reflexivity.
+  - unfold auxv_words. rewrite rdB_flat_le8 by (rewrite length_flat_pairs, length_auxv_entries; lia). rewrite N2. reflexivity.
+Qed.
+
+Theorem E4_gap : forall j, (j < gap_nat av ev)%nat ->
+  nth (struct_nat av ev + auxv_size (la_rseq la) + j) B (Z_to_bv 8 0) = Z_to_bv 8 0.
+Proof.
+  intros j Hj. rewrite B_split.
+  rewrite app_nth2 by (rewrite length_struct_prefix; lia). rewrite length_struct_prefix.
+  rewrite app_nth1 by (rewrite length_mid; lia).
+  rewrite app_nth2 by (rewrite length_auxv_bytes; lia). rewrite length_auxv_bytes.
+  rewrite app_nth1 by (rewrite repeat_length; lia). apply nth_repeat.
+Qed.
+
+Theorem E6_random : rdB B (struct_nat av ev + auxv_size (la_rseq la) + gap_nat av ev) 16 = at_random_bytes (ed_random draw).
+Proof.
+  rewrite rd_mid by (pose proof HS_eq; unfold auxv_size in *; lia).
+  rewrite rdB_app_r by (rewrite length_auxv_bytes; lia). rewrite length_auxv_bytes.
+  rewrite rdB_app_r by (rewrite repeat_length; lia). rewrite repeat_length.
+  replace (struct_nat av ev + auxv_size (la_rseq la) + gap_nat av ev - struct_nat av ev - auxv_size (la_rseq la) - gap_nat av ev)%nat with 0%nat by lia.
+  apply (rdB_exact' (at_random_bytes (ed_random draw))).
+Qed.
+
+Lemma nth_above_head : forall x, nth (HS + x) B (Z_to_bv 8 0)
+  = nth x (repeat (Z_to_bv 8 0) PAD ++ strs_bytes av ev xfn ++ repeat (Z_to_bv 8 0) 8) (Z_to_bv 8 0).
+Proof.
+  intros x. rewrite B_split. rewrite app_assoc.
+  rewrite app_nth2 by (rewrite length_app, length_struct_prefix, length_mid, HS_eq; lia).
+  rewrite length_app, length_struct_prefix, length_mid, HS_eq. f_equal. lia.
+Qed.
+
+Theorem E_pad : forall j, (j < PAD)%nat -> nth (HS + j) B (Z_to_bv 8 0) = Z_to_bv 8 0.
+Proof.
+  intros j Hj. rewrite nth_above_head. rewrite app_nth1 by (rewrite repeat_length; exact Hj).
+  apply nth_repeat.
+Qed.
+
+Lemma nth_strs : forall x, (x < launch_string_bytes av ev xfn)%nat ->
+  nth (HS + PAD + x) B (Z_to_bv 8 0) = nth x (strs_bytes av ev xfn) (Z_to_bv 8 0).
+Proof.
+  intros x Hx. rewrite <- (Nat.add_assoc HS), nth_above_head.
+  rewrite app_nth2 by (rewrite repeat_length; lia). rewrite repeat_length.
+  replace (PAD + x - PAD)%nat with x by lia.
+  rewrite app_nth1 by (rewrite length_strs_bytes; exact Hx). reflexivity.
 Qed.
 
 Lemma nth_string_k : forall (L : list (list byte)) (rest : list byte) k j, (k < length L)%nat ->
@@ -209,78 +222,98 @@ Proof.
   rewrite app_assoc. rewrite app_nth1 by (rewrite length_app; cbn [length]; lia). reflexivity.
 Qed.
 
-Theorem E5_argv_str : forall k j, (k < length av)%nat -> (j <= length (nth k av []))%nat ->
-  nth (SBn av ev + pre k av + j) B (Z_to_bv 8 0) = nth j (nth k av [] ++ [Z_to_bv 8 0]) (Z_to_bv 8 0).
+Lemma pre_le_tab : forall (L : list (list byte)) k j, (k < length L)%nat -> (j <= length (nth k L []))%nat ->
+  (pre k L + j < tab L)%nat.
 Proof.
-  intros k j Hk Hj. rewrite <- Nat.add_assoc, nth_strings. apply nth_string_k; assumption.
+  intros L k j Hk Hj. unfold tab, pre.
+  rewrite <- (firstn_skipn k L) at 2. rewrite tab_app.
+  rewrite (skipn_nth L k [] Hk), total_arg_bytes_cons.
+  pose proof (Nat.le_0_l (total_arg_bytes_nat (skipn (S k) L))). lia.
 Qed.
 
-Theorem E6_random : rdB B (ROn av ev) 16 = at_random_bytes (ed_random draw).
+Theorem E5_argv_str : forall k j, (k < length av)%nat -> (j <= length (nth k av []))%nat ->
+  nth (HS + PAD + pre k av + j) B (Z_to_bv 8 0) = nth j (nth k av [] ++ [Z_to_bv 8 0]) (Z_to_bv 8 0).
 Proof.
-  unfold B. rewrite bsb_decomp. rewrite !app_assoc.
-  rewrite rdB_app_r.
-  - rewrite !length_app, length_struct_prefix, !length_flatten_strings, repeat_length.
-    rewrite ROn_pad, !length_flatten_strings.
-    replace (struct_nat av ev + total_arg_bytes_nat av + total_arg_bytes_nat ev + pad_nat av ev
-             - (struct_nat av ev + total_arg_bytes_nat av + total_arg_bytes_nat ev + pad_nat av ev))%nat with 0%nat by lia.
-    apply (rdB_exact' (at_random_bytes (ed_random draw))).
-  - rewrite !length_app, length_struct_prefix, !length_flatten_strings, repeat_length.
-    rewrite ROn_pad, !length_flatten_strings. lia.
+  intros k j Hk Hj. pose proof (pre_le_tab av k j Hk Hj).
+  rewrite <- (Nat.add_assoc (HS + PAD)), nth_strs.
+  - unfold strs_bytes. apply nth_string_k; assumption.
+  - unfold launch_string_bytes, tab in *. rewrite length_flatten_strings. lia.
+Qed.
+
+Theorem E5_execfn : forall j, (j <= length xfn)%nat ->
+  nth (HS + PAD + tab av + tab ev + j) B (Z_to_bv 8 0) = nth j (xfn ++ [Z_to_bv 8 0]) (Z_to_bv 8 0).
+Proof.
+  intros j Hj. unfold tab.
+  replace (HS + PAD + total_arg_bytes_nat av + total_arg_bytes_nat ev + j)%nat
+    with (HS + PAD + (total_arg_bytes_nat av + total_arg_bytes_nat ev + j))%nat by lia.
+  rewrite nth_strs.
+  - unfold strs_bytes. rewrite app_nth2 by (rewrite length_flatten_strings; lia).
+    rewrite length_flatten_strings.
+    rewrite app_nth2 by (rewrite length_flatten_strings; lia).
+    rewrite length_flatten_strings. f_equal. lia.
+  - unfold launch_string_bytes. rewrite !length_flatten_strings. lia.
+Qed.
+
+Theorem E_top8 : forall j, (j < 8)%nat ->
+  nth (HS + PAD + launch_string_bytes av ev xfn + j) B (Z_to_bv 8 0) = Z_to_bv 8 0.
+Proof.
+  intros j Hj.
+  replace (HS + PAD + launch_string_bytes av ev xfn + j)%nat with (HS + (PAD + launch_string_bytes av ev xfn + j))%nat by lia.
+  rewrite nth_above_head.
+  rewrite app_nth2 by (rewrite repeat_length; lia). rewrite repeat_length.
+  rewrite app_nth2 by (rewrite length_strs_bytes; lia). rewrite length_strs_bytes.
+  replace (PAD + launch_string_bytes av ev xfn + j - PAD - launch_string_bytes av ev xfn)%nat with j by lia.
+  apply nth_repeat.
 Qed.
 
 End Block.
 
 Section Init.
-Variables (segs : list Segment) (pc : N) (ph : PhdrInfo) (sp : word) (draw : EntryDraw).
-Variables (av ev : list (list byte)) (uid hw : word).
+Local Set Default Proof Using "All".
+Variables (segs : list Segment) (pc : N) (ph : PhdrInfo) (sp mbase : word) (draw : EntryDraw) (inp : ProcInput).
 
-Let B := build_stack_bytes ph sp av ev uid hw draw.
-Let ms := init_machine_state segs pc ph sp draw av ev uid hw.
+Let B := entry_stack_image inp mbase ph (Z_to_bv 64 (Z.of_N pc)) sp draw.
+Let ms := init_machine_state segs pc ph sp mbase draw inp.
+Let WLO := stack_window_lo (in_kernel inp) mbase draw.
 
-Hypothesis Hsp : (bv_unsigned sp + Z.of_nat (ROn av ev) + 16 < 2 ^ 64)%Z.
+Hypothesis Hsp : (bv_unsigned sp + Z.of_nat (length B) < 2 ^ 64)%Z.
 
-Theorem E7_block : forall z, (bv_unsigned sp <= z < bv_unsigned sp + Z.of_nat (ROn av ev) + 16)%Z ->
+Theorem E7_block : forall z, (bv_unsigned sp <= z < bv_unsigned sp + Z.of_nat (length B))%Z ->
   ms_mem ms (Z_to_bv 64 z) = Some (nth (Z.to_nat (z - bv_unsigned sp)) B (Z_to_bv 8 0)).
 Proof.
-  intros z Hz. pose proof (E0_length ph sp av ev uid hw draw) as HL. fold B in HL.
-  unfold ms, init_machine_state. cbn [ms_mem]. cbv zeta.
+  intros z Hz. unfold ms, init_machine_state. cbn [ms_mem]. cbv zeta. fold B.
   assert (Hu : bv_unsigned (Z_to_bv 64 z) = z).
   { rewrite Z_to_bv_unsigned. apply bv_wrap_small. change (bv_modulus 64) with (2 ^ 64)%Z. pose proof (u64_range sp). lia. }
-  rewrite stack_to_mem_image_in_block.
-  2:{ unfold entry_block_top. rewrite Hu. fold B. rewrite HL. lia. }
-  unfold stack_to_mem. rewrite Hu. fold B.
-  rewrite (proj2 (Z.leb_le _ _)) by lia. rewrite HL.
+  unfold stack_to_mem. rewrite Hu.
+  rewrite (proj2 (Z.leb_le _ _)) by lia.
   rewrite (proj2 (Z.ltb_lt _ _)) by lia.
-  rewrite (nth_error_nth' B (Z_to_bv 8 0)) by (rewrite HL; lia). reflexivity.
+  rewrite (nth_error_nth' B (Z_to_bv 8 0)) by lia. reflexivity.
 Qed.
 
-Theorem E7_window : (stack_max_size <= bv_unsigned sp)%Z ->
-  forall z, (bv_unsigned sp - stack_max_size <= z < bv_unsigned sp)%Z -> ms_mem ms (Z_to_bv 64 z) = Some (Z_to_bv 8 0).
+Theorem E7_window : forall z, (WLO <= z < bv_unsigned sp)%Z -> (0 <= z)%Z ->
+  ms_mem ms (Z_to_bv 64 z) = Some (Z_to_bv 8 0).
 Proof.
-  intros Hsm z Hz. unfold ms, init_machine_state. cbn [ms_mem]. cbv zeta.
+  intros z Hz Hz0. unfold ms, init_machine_state. cbn [ms_mem]. cbv zeta. fold B. fold WLO.
   assert (Hu : bv_unsigned (Z_to_bv 64 z) = z).
-  { rewrite Z_to_bv_unsigned. apply bv_wrap_small. change (bv_modulus 64) with (2 ^ 64)%Z. pose proof (u64_range sp).
-    unfold stack_max_size in *. lia. }
+  { rewrite Z_to_bv_unsigned. apply bv_wrap_small. change (bv_modulus 64) with (2 ^ 64)%Z. pose proof (u64_range sp). lia. }
   unfold stack_to_mem. rewrite Hu. rewrite (proj2 (Z.leb_gt _ _)) by lia.
   rewrite (proj2 (Z.leb_le _ _)) by lia. rewrite (proj2 (Z.ltb_lt _ _)) by lia. reflexivity.
 Qed.
 
 Theorem E7_domain : forall a : word, ms_mem ms a <> None ->
-  (bv_unsigned sp - stack_max_size <= bv_unsigned a < entry_page_top sp B)%Z.
+  (WLO <= bv_unsigned a < bv_unsigned sp \/ bv_unsigned sp <= bv_unsigned a < bv_unsigned sp + Z.of_nat (length B))%Z.
 Proof.
-  intros a Ha. unfold ms, init_machine_state in Ha. cbn [ms_mem] in Ha. cbv zeta in Ha.
-  pose proof (entry_stack_image_top ph sp av ev uid hw draw) as Htop. fold B in Htop.
+  intros a Ha. unfold ms, init_machine_state in Ha. cbn [ms_mem] in Ha. cbv zeta in Ha. fold B in Ha. fold WLO in Ha.
   unfold stack_to_mem in Ha.
   destruct (Z.leb_spec (bv_unsigned sp) (bv_unsigned a)) as [H1|H1].
-  - destruct (Z.ltb_spec (bv_unsigned a - bv_unsigned sp) (Z.of_nat (length (entry_stack_image ph sp av ev uid hw draw)))) as [H2|H2].
-    + split; [unfold stack_max_size; lia | lia].
-    + destruct (Z.leb (bv_unsigned sp - stack_max_size) (bv_unsigned a) && Z.ltb (bv_unsigned a) (bv_unsigned sp))%bool eqn:E;
+  - destruct (Z.ltb_spec (bv_unsigned a - bv_unsigned sp) (Z.of_nat (length B))) as [H2|H2].
+    + right. lia.
+    + destruct (Z.leb WLO (bv_unsigned a) && Z.ltb (bv_unsigned a) (bv_unsigned sp))%bool eqn:E;
         [|exfalso; apply Ha; reflexivity].
       apply andb_prop in E as [_ E]. apply Z.ltb_lt in E. lia.
-  - destruct (Z.leb (bv_unsigned sp - stack_max_size) (bv_unsigned a) && Z.ltb (bv_unsigned a) (bv_unsigned sp))%bool eqn:E;
+  - destruct (Z.leb WLO (bv_unsigned a) && Z.ltb (bv_unsigned a) (bv_unsigned sp))%bool eqn:E;
       [|exfalso; apply Ha; reflexivity].
-    apply andb_prop in E as [E1 E2]. apply Z.leb_le in E1. pose proof (entry_page_top_ge sp B).
-    unfold entry_block_top in *. lia.
+    apply andb_prop in E as [E1 E2]. apply Z.leb_le in E1. apply Z.ltb_lt in E2. left. lia.
 Qed.
 
 End Init.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the recorded plans renumbered by AzPlanRegen; s2c_plan renames back to the main lane numbering at its hand-offs). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -8,7 +9,7 @@ From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool.
 From LinuxProcessSemantics.Riscv Require Import Instr.
-From OSSVerify.Proofs.glaze.binary_reflection.lib Require Import AzSymExec3 AzSymExec3B AzPlanCore AzPlan.
+From OSSVerify.Proofs.glaze.binary_reflection.lib Require Import AzSymExec3 AzSymExec3B AzPlanCore AzPlan AzPlanRegen.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations. Import AX2. Import AX2B. Import APC. Import AP.
 Open Scope Z_scope.
@@ -31,7 +32,7 @@ Definition s2a_plan_r0_1 : plan :=
   (PHavoc [5; 6; 7; 14; 15; 16; 17; 28; 29; 30; 31]%nat (* [comment removed for export] *)
   (PHandoff 950 (* [comment removed for export] *))))))).
 
-Definition s2a_plan : plan :=
+Definition s2a_plan_rec : plan :=
   PBump 467 (* [comment removed for export] *)
   (s2a_plan_r0_1).
 
@@ -59,7 +60,7 @@ Definition s2b_plan_r0_1 : plan :=
   (PHavoc [5; 6; 7; 28; 29; 30; 31]%nat (* [comment removed for export] *)
   (PHandoff 951 (* [comment removed for export] *))).
 
-Definition s2b_plan : plan :=
+Definition s2b_plan_rec : plan :=
   PBump 510 (* [comment removed for export] *)
   (s2b_plan_r0_1).
 
@@ -176,7 +177,7 @@ Definition s2c_plan_r1_2 : plan :=
   (PHavoc [5; 6; 7; 14; 15; 16; 17; 28; 29; 30; 31]%nat (* [comment removed for export] *)
   (PHandoff 2 (* [comment removed for export] *))))))))))))))))))))))))))))))))))))))).
 
-Definition s2c_plan : plan :=
+Definition s2c_plan_rec : plan :=
   PBump 517 (* [comment removed for export] *)
   (PCase2 (eaddz (esub (escale 16 (EVar 6)) (escale 4096 (EVar 10))) 3935) 4030 (* [comment removed for export] *)
   (s2c_plan_r0_1)
@@ -184,3 +185,17 @@ Definition s2c_plan : plan :=
 
 (* [comment removed for export] *)
 Definition s2c_plan_ranges : list (Z * nat) := [(0x4a924, 32%nat); (0x59124, 48%nat); (0x59224, 64%nat); (0x593a4, 80%nat); (0x59564, 16%nat); (0x596a4, 16%nat); (0x59864, 32%nat); (0x599a4, 48%nat); (0x59ae4, 96%nat); (0x5a424, 16%nat); (0x5ab64, 48%nat); (0x5ac64, 112%nat); (0x5b024, 32%nat); (0x5c3a4, 64%nat); (0x6f5d0, 48%nat); (0x6f810, 48%nat); (0x6f950, 32%nat); (0x74c90, 16%nat); (0x76a50, 32%nat); (0x7a750, 80%nat); (0x7bf50, 32%nat); (0x7c610, 16%nat); (0x7fe90, 32%nat); (0x80710, 16%nat); (0x81dd0, 144%nat); (0x82310, 80%nat); (0x82ad0, 32%nat); (0x82c10, 32%nat); (0x88790, 32%nat); (0x8c44c, 128%nat); (0x8c68c, 16%nat); (0x8cf8c, 48%nat); (0x8e78c, 32%nat); (0x8ea4c, 96%nat); (0x8ec0c, 80%nat); (0x8f20c, 96%nat); (0x8f40c, 80%nat); (0x9c598, 16%nat); (0xbf014, 16%nat); (0xe6854, 16%nat); (0xe68d4, 32%nat); (0xf56c8, 80%nat)]%Z.
+
+(* LPS 727298f3: the recorded plans above ([*_rec]) are kept as written and renumbered where
+   they are checked ([AzPlanRegen.psh]): every variable from 14 up moves by 6, the map read
+   off the run (the counter it reaches at each plan's start, against the recorded one). *)
+Definition s2a_plan : plan := psh (vsh_from 14 6) s2a_plan_rec.
+Definition s2b_plan : plan := psh (vsh_from 14 6) s2b_plan_rec.
+(* s2c_plan's hand-offs (1 and 2, the main lane's entry) end with a rename back to the
+   numbering the main lane's facts were written in, the inverse of the start-up maps
+   (v - 4 below 334, v - 6 from 336; no variable from 15 to 18 or at 334 / 335 is live
+   there, and none from 761 up), and a bump to that numbering's counter, 755. *)
+Definition s2c_back : list (nat * nat) :=
+  rename_pairs (fun v => (v - 4)%nat) 19 334 ++ rename_pairs (fun v => (v - 6)%nat) 336 761.
+Definition s2c_plan : plan :=
+  pmap (vsh_from 14 6) (fun h => PRename s2c_back (PBump 755 (PHandoff h))) s2c_plan_rec.

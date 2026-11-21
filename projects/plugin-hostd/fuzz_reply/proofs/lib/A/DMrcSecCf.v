@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcSecCf.v (commit 3d8ad2aeb77e, H4 cf instance set (reply-rccf); file sha256 032d151bfde9) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcSecCf.v (H4 cf instance set (reply-rccf); file sha256 032d151bfde9) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, slice H4): H4's secondary step field DMrcSecReads.rc_sec_step_g at reply's image
    over the loosened post relation, and its flag-free form DMrcSecNf.rc_sec_step_nf_g, from the cf layer's secondary
    step with its budget loosened, YGcfInstRcSec.rc_sec_step_sl_cf (F1 row R3, re-hide twin).
@@ -15,7 +16,7 @@
    laws take).
    [rc_sec_step_nf_sl_of_cf]: for every B with TfibSyms B and every IOK, Hp, the row ERRB_QAPART and REC_LE give the
    flag-free field DMrcSecNf.rc_sec_step_nf_g B at pre relation ARXr_cf B IOK Hp, post relation ARXsl_cf B IOK Hp and
-   AOX := aowned B (the owned set the cf instance gives H4's fields, YGcfInstRcPrim.v:13): the post holds at the
+   AOX := aowned B (the owned set the cf instance gives H4's fields, YGcfInstRcPrim.v:14): the post holds at the
    recycled slot's slack rh_hi MAP LEN - rh_lo MAP.  [rc_sec_step_sl_of_cf]: the same at DMrcSecReads.rc_sec_step_g
    (rcc_pre_x), through DMiface.rcc_pre_sec_of_x, its post's flag the pre's (X2v keeps st_cache_inited by computation).
 

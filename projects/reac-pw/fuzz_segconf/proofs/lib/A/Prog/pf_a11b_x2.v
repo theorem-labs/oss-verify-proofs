@@ -3,13 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: the walk of reac_box_catalogue on fuzz_segconf.asan-ubsan (image B, pin sha256
    c3796c0b38f3, twin 80e82127e8ca; entry 0x8a8a0, 84 bytes, 21 instructions, a 16-byte frame, no side-stack
    frame): reac_box_catalogue_contract of lib/B/Prog/reac_box_catalogue_c.v (image B's copy of the image-A owner's FINAL
-   text at 6f783602b5e3) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
+   text) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
    entry, SRr of apost_base at the return, over `Context {PI : PAImg seg_listing}` of image B's listing,
    lib/B/Prog/SegPa.v).
-   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane, commit
-   434ade288123, both arms): the same entry seeds, token runs and return steps over image B's listing modules and
+   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane,
+    both arms): the same entry seeds, token runs and return steps over image B's listing modules and
    B's kit copies. The UBSan alignment check is read from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_catalogue.v
-   at origin/ossv/recipes 3abc3740de97 (the same image-B code but 4 pc-relative words; caller-journal form, not
+   (the same image-B code but 4 pc-relative words; caller-journal form, not
    copied), whose token run decides it the same way.
    Image B's code differs from image A's by two instructions: `andi a1,a0,7` (0x8a8ac) and `bnez a1,0x8a8ec`
    (0x8a8b0) to `unimp` (0x8a8ec), the UBSan alignment check of the 8-byte store through c.
@@ -37,11 +37,12 @@
    definitions (SegInstA's names at image B): SegInstB.STK_reac_box_catalogue and SegInstB.catA, tied to this walk
    by the lemmas STK_reac_box_catalogue_B (the value 16) and catA_B (listing object 77 of B's seg_objs). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/reac_box_catalogue.v, with its module paths and module names changed; 527 of its 576 lines of code are new or changed and 404 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image A (fuzz_segconf.asan): segment A11b of reac_segconf_parse_file's walk, the
    half KEXIT 0x886c8 -> LOWOUT 0x88774 (43 instructions: 9 up to and including the jal, 34 after it).
    Part of segment A11b's proof, by the G3 walk owner, 2026-10-30.
 
-   THE CODE (the unit's internal record, commit dfb49d6ad789, path records/segp/dis/
+   THE CODE (the unit's internal record, path records/segp/dis/
    reac_segconf_parse_file.fuzz_segconf.asan.s), with F the class-5 frame and SH its shadow:
      0x886c8  auipc a0,0xfff99 ; addi a2,a0,0x1b8   a2 = 0x21880 = seg_litA_rc F_badmodel (listing object 65)
      0x886d0  ld s8,0x90(s1)    s8 = c          0x886d4 mv a0,s8     a0 = c
@@ -201,7 +202,7 @@ Hypothesis SIGP : seg_sig_prog (PI := PI).
 Hypothesis OBJ : seg_val_objs (PI := PI).
 Hypothesis VRO : seg_val_relro (PI := PI).
 (* the stack-protector cells at every AR state (the contract writer's route A, the shape of
-   lib/A/Prog/reac_segconf_parse.v:137). TAKEN ONLY FOR pf_a6_k.a6_base_move AFTER THE refuse CALL: refuse's
+   lib/A/Prog/reac_segconf_parse.v:138). TAKEN ONLY FOR pf_a6_k.a6_base_move AFTER THE refuse CALL: refuse's
    post gives only its journal, the journal keeps an image byte only when it is not an owned static
    (YCbq.v:479), and whether gotwA / guardA are owned statics is a record fact of listing stage 2
    (SegRecCells.seg_rec_cells). VRO is taken for the same step, for a6_base_move's arodata_okP. *)
@@ -516,7 +517,7 @@ Qed.
     The run to the jal (it writes nothing), the call (x1_refuse_site_ok_886e8 + cl_callSF + REF), the rebuild
     after it at the returned FP state (a6_keeps_refuse + a6_base_move: the ONLY use of VRO and SSPX), and
     x2_after_ok at that FP state, lifted back by srr_apost_baseF_lift. The shape is piece A7's
-    lib/A/Prog/pf_a7_u.v at commit 89bf60b43b36 (the call at 0x880f8), with one difference:
+    lib/A/Prog/pf_a7_u.v (the call at 0x880f8), with one difference:
     this run loads s8 = c (0x886d0), so the callee-saved registers are NOT all the cut's, and the run's kept
     registers are listed (RKC) instead of aregs_preserved_of_st_ok. *)
 Theorem pfx_kexit_ok : forall n : nat, HA_LOWOUT B n -> H_KEXIT B n.

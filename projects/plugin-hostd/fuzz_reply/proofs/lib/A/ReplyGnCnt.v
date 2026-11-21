@@ -2,7 +2,7 @@
    instance gn_pk := ReplyLScnt.pk_gone, RINV := fr_RINV, and the callee peaks top_x passes, gn_rig_pk := gn_rig_pk_x
    (W_contract_x.v rig_pk at rig_tr), gn_cnl_pk := gn_cnl_pk_x (W_contract_x.v cnl_pk of the slot's two lists).
    proves no function (kind: invariant lemma).
-   - The texts are gone_base's own (W8's C1 + C2 text, 2ca82cccb7b, landed with the TOP-step head 14fbe276057):
+   - The texts are gone_base's own (W8's C1 + C2 text, landed with the TOP-step head):
      gn_cnl_ok with cnl_post's exact capacity law last, GN_CNT_rig / GN_CNT_step over the peak parameters, C2 a
      premise; roomp / cnt_ok_pk are lib/A/W_journal_x.v's.
    - gcnt_rig / gcnt_step: GN_CNT_rig / GN_CNT_step PROVED at pk_gone.

@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from projects/cgif/cgif_file_fuzzer/proofs/lib/A/AFk0.v (donor image sha256 7093581aab04), with its module paths changed and its addresses moved to libreac/fuzz_scene's ASan build. *)
 (* Modified by Theorem Labs, 2026-10: copied from projects/libreac/fuzz_scene/proofs/lib/A/AFk0.v (donor image sha256 43654a025fd0), with its module paths changed and its addresses moved to libdiginet/fuzz_codec's ASan build. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vvar/vDSO pages; grant_ok's Linux placement and the call's hint). *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -887,7 +888,7 @@ Hypothesis Htr : In tr (as_universe B).
 Hypothesis D1 : tfib_depot_spec B.
 Hypothesis HBC : BCELLS.
 Hypothesis HDP : forall z m, DPOST z m <-> DPOSTS W3 z m.
-Hypothesis GOK : grant_ok_na_pin mdN (w64 mb) MSv = true.
+Hypothesis GOK : grant_ok_na_pin (Z_to_bv 64 0) mdN (w64 mb) MSv = true.
 Hypothesis LE3 : wle W W3.
 Hypothesis SUB3 : hsub (w_H W3) (w_H W).
 Hypothesis MON3 : forall x : word, w_H W x = false -> w_H W3 x = false.
@@ -994,17 +995,24 @@ Proof.
 clear. intros a k md. unfold grant_md, fixedin_ok_model, fixedin_ok_vmmaps, with_mmap_replacement, with_mmap_backing. rewrite AFjt.nores50. cbn.
 destruct md as [fd [maps lazy mat] io fs pr lim tm sg sc]. cbn. destruct maps; cbn; reflexivity.
 Qed.
+(* 727298f3: the reserved ledger names the kernel build's vvar/vDSO pair; this grant keeps the build. *)
+Lemma grant50_kernel : forall (a k : word) md, m_kernel (grant_md false (Z_to_bv 64 50) a k md) = m_kernel md.
+Proof.
+clear. intros a k md. unfold grant_md, fixedin_ok_model, fixedin_ok_vmmaps, with_mmap_replacement, with_mmap_backing.
+rewrite AFjt.nores50. cbn. reflexivity.
+Qed.
 Lemma LED1 : forall z mdV md5, idx = res -> ALedger tfibsegs lyF (SFS false z) mdV ->
 vm_maps (m_vmmaps md5) = vm_maps (m_vmmaps mdV) -> vm_reserved (m_vmmaps md5) = vm_reserved (m_vmmaps mdV) ->
 vm_limit (m_vmmaps md5) = vm_limit (m_vmmaps mdV) -> vm_mmap_base (m_vmmaps md5) = vm_mmap_base (m_vmmaps mdV) ->
 vm_init_sp (m_vmmaps md5) = vm_init_sp (m_vmmaps mdV) ->
+m_kernel md5 = m_kernel mdV ->
 (forall x, ~ (ly_Q ly <= x < ly_Q ly + kPtrArrayResv) ->
 YK0g.covered (vm_noaccess (m_vmmaps md5) ++ m_vm_lazy md5) x = YK0g.covered (vm_noaccess (m_vmmaps mdV) ++ m_vm_lazy mdV) x) ->
 eager_used md5 <= eager_used mdV + 131072 ->
 (forall lo n, region_free (vm_noaccess (m_vmmaps mdV)) lo n = true -> region_free (vm_noaccess (m_vmmaps md5)) lo n = true) ->
 ALedger tfibsegs lyF (SFS true z) md5.
 Proof.
-intros z mdV md5 Heq LV VM RES LIM MMB ISP COV EG NAF.
+intros z mdV md5 Heq LV VM RES LIM MMB ISP KER COV EG NAF.
 pose proof (SF_parts false z) as (Rreg0 & _ & _ & _ & _ & _ & _ & _ & _ & Rres0 & _ & _ & _ & Rnev0 & Rregs0).
 pose proof (SF_parts true z) as (Rreg1 & _ & _ & _ & _ & _ & _ & _ & _ & Rres1 & _ & _ & _ & Rnev1 & Rregs1).
 pose proof size_facts as (_ & _ & _ & _ & _ & _ & _ & Z8 & Z9 & _).
@@ -1018,6 +1026,7 @@ apply (YG0j.ALedger_qcommit' tfibsegs lyF (SFS false z) (SFS true z) mdV md5).
 - exact LIM.
 - exact MMB.
 - exact ISP.
+- exact KER.
 - intros x Hx. apply COV. exact Hx.
 - clear - EG. unfold kPtrArrayEntriesPerCommit. zlia.
 - intros c Hc. rewrite (Rreg1 c), (Rreg0 c). reflexivity.
@@ -1346,7 +1355,7 @@ assert (WZ5 : forall mat', wz_facts true z W5 (with_vm_backing (m_vm_lazy md5) m
 - intros i Hi. rewrite A5, A3. cbn. right; right; right. exact Hi.
 - rewrite A5, A3. cbn. right; right; left. reflexivity.
 - rewrite A5, A3. cbn. right; left. reflexivity.
-- apply (ALedger_same tfibsegs lyF (SFS true z) md5 _ (LED1 z mdV md5 EQ (LV z) (proj1 VM5) (proj1 (proj2 VM5)) (proj1 (proj2 (proj2 VM5))) (proj2 (proj2 (proj2 VM5))) (grant50_isp _ _ _) (COV_Q mdV MWV EQ) EG5 (YG0g.naf_grant_md false (Z_to_bv 64 50) mdV _ _ MWV))
+- apply (ALedger_same tfibsegs lyF (SFS true z) md5 _ (LED1 z mdV md5 EQ (LV z) (proj1 VM5) (proj1 (proj2 VM5)) (proj1 (proj2 (proj2 VM5))) (proj2 (proj2 (proj2 VM5))) (grant50_isp _ _ _) (grant50_kernel _ _ _) (COV_Q mdV MWV EQ) EG5 (YG0g.naf_grant_md false (Z_to_bv 64 50) mdV _ _ MWV))
 (m_vmmaps_wvb _ _ _) (m_vm_lazy_wvb _ _ _) (eager_used_wvb _ _)).
 - exact (amwf_same md5 _ (m_vmmaps_wvb _ _ _) (m_vm_lazy_wvb _ _ _) MW5).
 - exact GAP. }

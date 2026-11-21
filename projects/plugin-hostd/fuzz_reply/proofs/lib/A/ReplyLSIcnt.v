@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/W_LLVMFuzzerTestOneInput_top_x.v, with its module paths and module names changed; 104 of its 167 lines of code are new or changed and 1164 lines of the source are left out. *)
-(* top_x's COUNT rows (W_LLVMFuzzerTestOneInput_top_x.v at the TOP head 3d17f490d56), each at top_x's exact text with
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* top_x's COUNT rows (W_LLVMFuzzerTestOneInput_top_x.v at the TOP head), each at top_x's exact text with
    LSx := ReplyLSI.LSI B OM nsec KMAX KC, RINV := fr_RINV, TfibB := B and RP := RPi (top_x's CfRBridgeRules.RP_cf, whose
    count fields are ReplyCnt.v's: ReplyLScntRP.rp_cnt_cf).  proves no function (kind: invariant lemma).
    Each is proved from s5-r1d's rows by projecting LSI to its first part fr_LS3cp B:

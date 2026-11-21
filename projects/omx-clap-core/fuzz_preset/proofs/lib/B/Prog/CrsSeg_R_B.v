@@ -20,6 +20,7 @@
    the keep (MN.memnorm segs memT -> MN.memnorm segs mem2) from their conclusion: each _m / _mR rule is now its
    YGcallx.v original VERBATIM (the _mR forms are proved by it), under its own name for the walks that apply it. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcallMxmn.v, with its module paths and module names changed; 487 of its 563 lines of code are new or changed and 2253 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image B' (the #102 pins, asan-ubsan): segment R of the walk of check_reject_clean_starved against
    the kit's text tcheck_reject_clean_starved_specX, row R_B (a Theorem Labs lane's internal file BRIEF-crcs-Bprime-seg.md). Its one
    export is crs_seg_R_B : .. -> crs_from_R_B B ARx CTX0 C (lib/B/Prog/CrsKitBp.v).
@@ -28,16 +29,16 @@
    lookup; CONFIRM by checker LookupCheckCrcsAp. At that search origin/ossv/recipes had no lib/A or lib/B, its
    released rows were lib/Prog (plain) and lib/U/Prog (ubsan) only, and no released asan Proof.v existed for
    check_reject_clean_starved). DONOR (reuse): the A' segment file
-   lib/A/Prog/CrsSeg_R.v blob af4097e508fc (a working branch aee0692b20cc), carried lemma for lemma with the kit's
+   lib/A/Prog/CrsSeg_R.v blob af4097e508fc (a working branch), carried lemma for lemma with the kit's
    `_B` names and B''s instance; every number re-derived at B' (below), none shifted from A'.
    INPUTS.
-   - Pin B' asan-ubsan sha256 d663f82d7f488d30 (harness.yaml of release/fuzz-preset-ran-out-pins 8f3e7e1a07f1).
+   - Pin B' asan-ubsan sha256 d663f82d7f488d30 (harness.yaml).
    - Listing lib/B/Listing_prog.v blob c97cc46b3e13 + lib/B/PAImg_prog.v blob 15fab93fe702 (a Theorem Labs lane's listings v3);
      entry 0x820e0 = slot 645 (B_entry_check_reject_clean_starved); R = slots 829 .. 892 (B' 0x823c0 .. 0x824bc, the
      `ret`), the same 64 instruction words as A''s R, read off the B' listing at slot 829.
    - Image record lib/B/PRH_ImgB.v (prh_img_B); the kit text tcheck_reject_clean_starved_specX in lib/A/PRH_FnCheck.v blob
      9ecd8eb167c6, lib/A/PRH_Base.v blob fdb45545469b, through the B'
-     kit lib/B/Prog/CrsKitBp.v blob 1dd89c0383ac (a working branch a179cedc95a7). R makes no call.
+     kit lib/B/Prog/CrsKitBp.v blob 1dd89c0383ac (a working branch). R makes no call.
    THE SEGMENT: ONE engine run from R (+736) to the `ret` (+988): `li a0, -8` and `sb a0` over the local's shadow
      bytes 4 .. 10 (s9 = the frame's shadow); the retired magic 0x45e0360e by `sd a0, 0(s10)` (s10 = F); `beqz s2` -
      THE s2 = 0 ARM (the real-stack shadow clear) IS UNREACHABLE: s2 = F and the run's fact on s2's atom is 4096 <= F
@@ -479,7 +480,7 @@ intros x [Hx | ((a, k0) & Hb & Hx)].
     exact (proj1 (Hb' x Hrq)).
 Qed.
 
-(* THE POSITION STEP of R, the one place R reads the model-run position (kit v2 c0766e47c280: crs_pos_B is the EXACT
+(* THE POSITION STEP of R, the one place R reads the model-run position (kit v2: crs_pos_B is the EXACT
    position cb_rp_i C + length evs under ran3 = 0): the inline release keeps it (PresetRoomPosKeep.room_pos_stack_free) *)
 Lemma crsRB_pos_step : forall C evs ran3 S3 c p, crs_pos_B C evs ran3 S3 -> crs_pos_B C evs ran3 (stack_free_state c p S3).
 Proof.

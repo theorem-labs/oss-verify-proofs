@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 2065 of its 2181 lines of code are new or changed and 895 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment F3 of fuzz_ctrl LLVMFuzzerTestOneInput (asan, patched image A): 0x81dd0-0x81df8 and the reac_ctrl_parse
    call, to its return point 0x81dfc (F4's first entry).
      81dd0 addi s9,s7,18 (s9 = Phi + 18); 81dd4 .. 81de0 sb zero,22(s3) .. sb zero,25(s3); 81de4 li a0,4;
@@ -16,8 +17,8 @@
    the block's placement from b5_C / the block's AH. Its post gives a0 = fst (ctrlparse len (t_g j)) = t_k j and
    the 36 output cells at fr + 176, whose first four bytes are the u32 kind (C7, f3_c7).
    Cuts: entry Seg/F2.v's Inv_A81dd0_c5_at (the b5_CUT shell at 0x81dd0), exit the official Inv_A81dfc_at. The
-   machinery of the five shadow stores and of the call is a Theorem Labs lane's F4.v 0x81e54 path (a working branch
-   f291edd614b: f4_fr_ah, f4_fra_sh, f4_dbc_call(n), f4_fr_run, f4_fra_call), renamed f3_ and taken at the record
+   machinery of the five shadow stores and of the call is a Theorem Labs lane's F4.v 0x81e54 path (a working branch:
+   f4_fr_ah, f4_fra_sh, f4_dbc_call(n), f4_fr_run, f4_fra_call), renamed f3_ and taken at the record
    length len instead of 0. rule 24: no function proved. *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

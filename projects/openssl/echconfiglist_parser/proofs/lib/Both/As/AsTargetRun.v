@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (Section TR takes the launch's channel reader RDR0, carried to each step model by adlr_rdr for drv_printf_first_rt; it takes the run's tail RunTail and the run's driver laws asan_driver_laws_run in place of asan_driver_laws, because the target's time() enters the vDSO, so every walk, as_target_run's included, is over the run's segment list asegs ++ rt_tail from the configuration with that list's read-only backing, through the drivers' _rt forms). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -19,6 +20,7 @@ From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Agent Require Import Init
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.As Require Import ASegs AsShadow AsConst AsIface AsCXXHeap AsDriverLaws AsStack0 AsAuxv
   ECH_Xpres ECH_Iface AsCall AsCallX RefExitBase AsPrintfFirst AsPrintfBuf
   AsDrvHeap AsDrvRun AsDrvIO AsDrvFuzz AsDrvMem AsDrvDefs AsTRWalk_defs AsTRSegs.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require RomBase RunTail.
 Import ListNotations.
 Import SymExec2.SX2. Import SymExec2Sound.SX2S.
 Import OSSVerify.Proofs.openssl.echconfiglist_parser.lib.PropExec.
@@ -73,9 +75,14 @@ Qed.
 
 Section TR.
   Context {HCEIL : HeapCeil}.
+  (* The target calls time(), which reads and enters the vDSO: every walk below is over the
+     run's segment list asegs ++ rt_tail from the configuration with that list's read-only
+     backing ([arz], Both/As/AsDriverLaws.v), under the run's driver laws [DLR]. *)
+  Context {RT : RunTail.RunTail}.
   Variable H : asr.
   Hypothesis HH : asan_rt_hyps H.
-  Hypothesis DL : asan_driver_laws H.
+  Context {vlo vb vhi : Z}.
+  Hypothesis DLR : asan_driver_laws_run RunTail.rt_tail vlo vb vhi H.
   Variable L : alib.
   Hypothesis LOK : alib_ok L.
   Hypothesis FZ : fuzz_stmt H L.
@@ -89,6 +96,11 @@ Section TR.
     Variables (sp : word) (A cap : Z) (data : list byte) (p : bptr) (s0 : as_St H) (LB : list block)
               (msF0 : machine_state) (mo0 : Model) (regs0 : bvmap 5 word) (mem0 : word -> option byte).
     Hypothesis PRE : ATRpre H L sp A cap data p s0 LB msF0 mo0 regs0 mem0.
+    (* The launch's channel reader at [mo0].  [tr_printf_first] needs it for
+       [drv_printf_first_rt] (the run's form of Both/As/AsDrvIO.v:54).  A Section hypothesis, not an [ATRpre] field;
+       only the lemmas that use it ([tr_printf_first], [tr_loop], [as_target_run_ok]) take
+       it at End Call. *)
+    Hypothesis RDR0 : m_channel_reader mo0 = true.
 
     Let cfg : Z := hdr_cfg data.
     Let N : Z := hdr_payload_len data.
@@ -682,12 +694,12 @@ Section TR.
          (forall r, In r aheap_kept -> getr regs' r = getr regs r) -> getr regs' 10 = Z_to_bv 64 Dst ->
          munch [(Dst, Dst + Nn); (SP - 4096, SP)]%Z mem mem' -> wmono asegs mem mem' -> mem_inv asegs mem' -> stk asegs mem' lo SP ->
          rw_cells asegs mem' Dst [CB (Z.to_nat Nn) src] -> bytes_at asegs mem' Src src -> ACONST mem' ->
-         realizes asegs (mkCfg msF' mo') Kx) ->
-      realizes asegs (mkCfg msF mo) Kx.
+         arz (mkCfg msF' mo') Kx) ->
+      arz (mkCfg msF mo) Kx.
     Proof.
       intros regs mem msF mo s SP Dst Src Nn lo src junk ra Kx HV HA Hra Hra64 Hra2 R2 R10 R11 R12
              SRC LEN DST SEP HNn HS HD ACS ACD SVS SVD IMS IMD AOK ST CE LO SPH FSD FSS MI AC HK.
-      eapply (aevt_call H HH DL _ s msF mo regs _ mem Kx HV HA).
+      eapply (aevt_call_rt H HH DLR _ s msF mo regs _ mem Kx HV HA).
       - rewrite mkR_of_getr, Hra, R2, R10, R11, R12.
         eapply (amemcpy_specZ H HH) with (lo := lo) (junk := junk); eassumption.
       - intros msF' mo' HA' HMP HP. unfold amove_post in HP.
@@ -884,7 +896,7 @@ Section TR.
       (* [comment removed for export] *)
       Variable K : TSet.
       Hypothesis HPOST : forall regs' mem' msF' mo' s', ATRpost H L sp A cap data p s0 LB mo0 regs0 mem0 regs' mem' msF' mo' s' ->
-         realizes asegs (mkCfg msF' mo') K.
+         arz (mkCfg msF' mo') K.
 
       (* [comment removed for export] *)
       Definition spent (k : nat) : Z := as_Cm H N + Z.of_nat k * fuzz_cost H L N.
@@ -920,11 +932,11 @@ Section TR.
       Proof. reflexivity. Qed.
 
       Let Hfd1 : forall mo, as_MPRES H mo0 mo -> fd_lookup (m_fds mo) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)).
-      Proof. intros mo MP. destruct (adl_mpres H DL _ _ MP) as (_ & E & _). rewrite E. exact (atr_fd1 _ _ _ _ _ _ _ _ _ _ _ _ _ PRE). Qed.
+      Proof. intros mo MP. destruct (adlr_mpres _ _ _ _ H DLR _ _ MP) as (_ & E & _). rewrite E. exact (atr_fd1 _ _ _ _ _ _ _ _ _ _ _ _ _ PRE). Qed.
       Let Hfd2 : forall mo, as_MPRES H mo0 mo -> fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
-      Proof. intros mo MP. destruct (adl_mpres H DL _ _ MP) as (_ & E & _). rewrite E. exact (atr_fd2 _ _ _ _ _ _ _ _ _ _ _ _ _ PRE). Qed.
+      Proof. intros mo MP. destruct (adlr_mpres _ _ _ _ H DLR _ _ MP) as (_ & E & _). rewrite E. exact (atr_fd2 _ _ _ _ _ _ _ _ _ _ _ _ _ PRE). Qed.
       Let Hfs : forall mo, as_MPRES H mo0 mo -> m_fs mo = m_fs mo0.
-      Proof. intros mo MP. exact (proj1 (adl_mpres H DL _ _ MP)). Qed.
+      Proof. intros mo MP. exact (proj1 (adlr_mpres _ _ _ _ H DLR _ _ MP)). Qed.
 
       (* [comment removed for export] *)
       Lemma lb_remove_perm : forall Lx q Ak n, List.NoDup (map blk_id Lx) -> In (q, Ak, n) Lx ->
@@ -949,16 +961,16 @@ Section TR.
         as_RHEAP H sC LBall m -> (forall b, In b LB -> In b LBall) -> al_LIBST L st LIBc m ->
         as_MPRES H mo0 mo -> sto calls m -> cells_ok m atexit_done_cells -> incb 0 m ->
         as_AL H sC >= as_AL H s0 - atr_cost H L data ->
-        realizes asegs (mkCfg msF mo) K.
+        arz (mkCfg msF mo) K.
       Proof.
         intros regs m msF mo sC LIBc LBall st HV HA LR K4 TI TF RH INCL HL MP STO ATX INCB HAL. pose proof SPlo. pose proof SPhi.
-        eapply (seg_T8 H DL sp SP16 SPlo SPhi sC msF mo regs m _ _ _ _ _ _ _ _ _ _ _ K LR (atinv_stk128 m TI) (atinv_ro m TI) (ti_relro m TI) (atinv_latch m TI) TF);
+        eapply (seg_T8 H DLR sp SP16 SPlo SPhi sC msF mo regs m _ _ _ _ _ _ _ _ _ _ _ K LR (atinv_stk128 m TI) (atinv_ro m TI) (ti_relro m TI) (atinv_latch m TI) TF);
           [| exact HV | exact HA].
         intros regs' msF' mo' HV' HA' SB' Q2 Q4 Q10 Q8 Q9 Q18 Q19 Q20 Q21 Q22 Q23 KP K4'.
         apply (HPOST regs' m msF' mo' sC). destruct TI as [INV STK AC RELRO GLB CELLS TID ERR CAN RFS SH0 ABOVE [B' [AUX [HB' AUXV]]] ADDR DATA JCB].
         destruct calls as [|k'] eqn:EC; [lia|]. cbn [sto] in STO.
         split; try assumption.
-        - eapply (ah_mpres_trans H HH); [exact MP| apply (adl_sb H DL); exact SB'].
+        - eapply (ah_mpres_trans H HH); [exact MP| apply (adlr_sb _ _ _ _ H DLR); exact SB'].
         - intros rr Hrr. cbn [In] in Hrr.
           destruct Hrr as [<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[]]]]]]]]]]]]];
             first [assumption | rewrite K4' by in_solve; apply K4; in_solve].
@@ -1001,7 +1013,7 @@ Section TR.
       Lemma tr_free : forall regs m msF mo sC LIBc LBc st,
         as_VIS H sC msF = mkst regs (Z_to_bv 64 0x1ef0d8) m rom -> as_AKREL H sC (mkCfg msF mo) ->
         lstate calls calls 1 regs m mo sC LIBc LBc st -> getr regs 19 = Z_to_bv 64 0 ->
-        realizes asegs (mkCfg msF mo) K.
+        arz (mkCfg msF mo) K.
       Proof.
         intros regs m msF mo sC LIBc LBc st HV HA [LR R21 K4 TI TF RH PERM HL HLN MP CPY CELLS CADDR STO ATX INCB HAL] R19. pose proof SPlo. pose proof SPhi.
         pose proof HCLO as HCL. unfold ATR_STACK in HCL. pose proof HN as HN'.
@@ -1009,16 +1021,16 @@ Section TR.
         pose proof HAL0 as AL0. rewrite HCOST in AL0. unfold spent in HAL.
         destruct COSTS as (C1 & C2 & C3 & C4 & C5 & C6). pose proof (C1 N ltac:(lia)). pose proof (C3 N ltac:(lia)). pose proof (C3 0 ltac:(lia)).
         pose proof (C4 0 N ltac:(lia)).
-        eapply (seg_T7free H DL sp SP16 SPlo SPhi sC msF mo regs m _ _ _ K LR R19 R21 (atinv_stk128 m TI) (atinv_ro m TI) (ti_relro m TI) (atinv_latch m TI));
+        eapply (seg_T7free H DLR sp SP16 SPlo SPhi sC msF mo regs m _ _ _ K LR R19 R21 (atinv_stk128 m TI) (atinv_ro m TI) (ti_relro m TI) (atinv_latch m TI));
           [| exact HV | exact HA].
         intros regs1 msF1 mo1 HV1 HA1 SB1 (Q2 & Q4 & Q8 & Q9 & Q18 & Q20 & Q22 & Q23) Q19 Q1 Q10 K4'.
         destruct (ti_aux _ TI) as [B' [AUX1 [HB' AUXV1]]]. destruct (ti_errno _ TI) as [errv ERR].
-        assert (MP1 : as_MPRES H mo0 mo1) by (eapply (ah_mpres_trans H HH); [exact MP | apply (adl_sb H DL); exact SB1]).
+        assert (MP1 : as_MPRES H mo0 mo1) by (eapply (ah_mpres_trans H HH); [exact MP | apply (adlr_sb _ _ _ _ H DLR); exact SB1]).
         assert (SUBL : forall b, In b LIBc -> In b (LIBc ++ LBc)) by (intros b Hb; apply in_or_app; left; exact Hb).
         destruct COPY as [(N0 & ED & EOW & Ecb) | (N1 & EOW & pD & Ecb & HBR)].
         - (* [comment removed for export] *)
           rewrite EOW in Q10.
-          eapply (afree_null_call H HH DL regs1 m msF1 mo1 sC (LIBc ++ LBc) (bv_unsigned sp - ATR_STACK) B' errv 0x1ef0f4 [] K HV1 HA1 Q1);
+          eapply (afree_null_call_rt H HH DLR regs1 m msF1 mo1 sC (LIBc ++ LBc) (bv_unsigned sp - ATR_STACK) B' errv 0x1ef0f4 [] K HV1 HA1 Q1);
             [ lia | reflexivity | exact Q4 | exact Q10 | exact RH | lia
             | exact AUX1 | rewrite Q2, u_small by lia; lia
             | rewrite Q2, u_small by lia; exact (atinv_stklo m TI)
@@ -1055,7 +1067,7 @@ Section TR.
           assert (HInAc : In (p, A, cap) LBc) by (eapply Permutation_in; [apply Permutation_sym; exact PERM|]; subst LB0; rewrite Ecb; right; apply (atr_blk _ _ _ _ _ _ _ _ _ _ _ _ _ PRE)).
           destruct (CADDR N1) as [_ SHD].
           rewrite EOW in Q10.
-          eapply (afree_call H HH DL regs1 m msF1 mo1 sC (LIBc ++ LBc) pD Dz N (bv_unsigned sp - ATR_STACK) B' errv 0x1ef0f4 [] ds (shadow_of N) K HV1 HA1 Q1);
+          eapply (afree_call_rt H HH DLR regs1 m msF1 mo1 sC (LIBc ++ LBc) pD Dz N (bv_unsigned sp - ATR_STACK) B' errv 0x1ef0f4 [] ds (shadow_of N) K HV1 HA1 Q1);
             [ lia | reflexivity | exact Q4 | exact Q10 | exact RH | exact HIn | lia
             | exact (CELLS N1) | exact SHD | apply shadow_of_length; lia
             | exact AUX1 | rewrite Q2, u_small by lia; lia
@@ -1161,15 +1173,15 @@ Section TR.
            as_VIS H sC' msF' = mkst regs' (Z_to_bv 64 0x1ef184) m' rom -> as_AKREL H sC' (mkCfg msF' mo') ->
            lstate k (S k) r regs' m' mo' sC' LIBc' LBc' st' ->
            getr regs' 1 = Z_to_bv 64 0x1ef0d8 -> getr regs' 11 = Z_to_bv 64 0 -> getr regs' 19 = Z_to_bv 64 0 ->
-           realizes asegs (mkCfg msF' mo') Kx) ->
-        realizes asegs (mkCfg msF mo) Kx.
+           arz (mkCfg msF' mo') Kx) ->
+        arz (mkCfg msF mo) Kx.
       Proof.
         intros k r regs m msF mo sC LIBc LBc st Kx Hk HV HA [LR R21 K4 TI TF RH PERM HL HLN MP CPY CELLS CADDR STO ATX INCB HAL] HK.
         pose proof SPlo. pose proof SPhi. pose proof HCLO as HCL. unfold ATR_STACK in HCL. pose proof Hcalls as HC.
-        pose proof (adl_live H DL) as [LV1 LV2]. pose proof (atr_live _ _ _ _ _ _ _ _ _ _ _ _ _ PRE) as [LV3 LV4].
+        pose proof (adlr_live _ _ _ _ H DLR) as [LV1 LV2]. pose proof (atr_live _ _ _ _ _ _ _ _ _ _ _ _ _ PRE) as [LV3 LV4].
         pose proof LB0_bytes as [LBB LBL]. pose proof HN as HN'.
         (* [comment removed for export] *)
-        eapply (seg_T5 H DL sp SP16 SPlo SPhi sC msF mo regs m _ _ _ (getr regs 19) _ Kx LR eq_refl R21
+        eapply (seg_T5 H DLR sp SP16 SPlo SPhi sC msF mo regs m _ _ _ (getr regs 19) _ Kx LR eq_refl R21
                   (atinv_stk128 m TI) (atinv_ro m TI) (ti_relro m TI) (atinv_latch m TI)); [| exact HV | exact HA].
         intros regs1 m1 msF1 mo1 HV1 HA1 SB1 (Q2 & Q4 & Q8 & Q9 & Q18 & Q20 & Q22 & Q23) Q19 Q21' Q1 Q10 Q11 K4a FM1 STK1 IB1.
         assert (RS1 : forall rr, In rr (regTc_w sp) -> atr_region rr).
@@ -1188,7 +1200,7 @@ Section TR.
         { eapply atx_frame; [exact ATX | exact FM1 |]. intros rr Hrr. unfold regTc_w in Hrr. cbn [In] in Hrr. destruct Hrr as [<-|[]].
           unfold atx_ok. cbn [fst snd]. rewrite u_small by lia. lia. }
         destruct (ti_aux _ TI1) as [B' [AUX1 [HB' AUXV1]]]. destruct (ti_errno _ TI1) as [errv ERR]. destruct (ti_sh0 _ TI1) as [shi [SH0 Hshi]].
-        assert (MP1 : as_MPRES H mo0 mo1) by (eapply (ah_mpres_trans H HH); [exact MP | apply (adl_sb H DL); exact SB1]).
+        assert (MP1 : as_MPRES H mo0 mo1) by (eapply (ah_mpres_trans H HH); [exact MP | apply (adlr_sb _ _ _ _ H DLR); exact SB1]).
         (* [comment removed for export] *)
         assert (HCOST : atr_cost H L data = as_Cm H N + as_Cf H N + Z.of_nat calls * fuzz_cost H L N) by reflexivity.
         pose proof HAL0 as AL0. rewrite HCOST in AL0. unfold spent in HAL.
@@ -1206,7 +1218,7 @@ Section TR.
         { rewrite length_app, Nat2Z.inj_add, (Permutation_length PERM). unfold afuzz_cnt, ATRANS_CNT, ALIB_CNT_MAX, ADRV_CNT in *.
           destruct HLN as [HCn _]. destruct (al_is_fresh L st); lia. }
         change (Z_to_bv 64 0x1ef1d0) with (Z_to_bv 64 P_FUZZ_ENTRY) in HV1.
-        eapply (afuzz_call H HH L DL FZ regs1 m1 msF1 mo1 sC LIBc LBc st Dz N (bv_unsigned sp - ATR_STACK) B' shi ds errv 0x1ef0c8 Kx HV1 HA1 Q1);
+        eapply (afuzz_call_rt H HH L DLR FZ regs1 m1 msF1 mo1 sC LIBc LBc st Dz N (bv_unsigned sp - ATR_STACK) B' shi ds errv 0x1ef0c8 Kx HV1 HA1 Q1);
           [ lia | reflexivity | exact Q4 | exact Q10 | exact Q11
           | apply ardn_bytes_at; [apply CF1; exact CPY | lia | lia]
           | rewrite Hds; lia | lia | exact HD16
@@ -1248,7 +1260,7 @@ Section TR.
           apply not_rin_safe; [apply xsafe_of_far; eapply scratch_far; [exact (ti_rfs _ TI1) | exact HSC] | nlibx | right; acb; lia]. }
         pose proof (copy_xpres m1 mem2 LIBc LBc XS sC m1 PERM RH1 (ti_rfs _ TI1) HSC X2) as (CP1 & CP2 & CP3).
         (* [comment removed for export] *)
-        eapply (seg_T6 H DL sp SP16 SPlo SPhi s2 msF2 mo2 regs2 mem2 _ _ _ _ Kx LR2 ltac:(rewrite S21; exact Q21') A0
+        eapply (seg_T6 H DLR sp SP16 SPlo SPhi s2 msF2 mo2 regs2 mem2 _ _ _ _ Kx LR2 ltac:(rewrite S21; exact Q21') A0
                   (atinv_stk128 mem2 TI2) (atinv_ro mem2 TI2) (ti_relro mem2 TI2) (atinv_latch mem2 TI2)); [| exact HV2 | exact HA2].
         intros regs3 m3 msF3 mo3 HV3 HA3 SB3 LR3 T19 T21 T1 T11 K4b FM3 STK3 IB3.
         assert (RS3 : forall rr, In rr (regTc_w sp) -> atr_region rr) by exact RS1.
@@ -1265,7 +1277,7 @@ Section TR.
         - eapply Permutation_trans; [exact PERM2 | exact PERM].
         - eapply alib_frame; [exact HL2 | exact RH2 | intros b Hb; apply in_or_app; left; exact Hb | exact FM3 | exact RS3].
         - rewrite HNF2. split; lia.
-        - eapply (ah_mpres_trans H HH); [exact MP1 |]. eapply (ah_mpres_trans H HH); [exact MP2 | apply (adl_sb H DL); exact SB3].
+        - eapply (ah_mpres_trans H HH); [exact MP1 |]. eapply (ah_mpres_trans H HH); [exact MP2 | apply (adlr_sb _ _ _ _ H DLR); exact SB3].
         - apply CG1. apply CP1. apply CF1. exact CPY.
         - intros HN1. apply CG2; [exact HN1|]. apply CP2; [exact HN1|]. apply CF2; [exact HN1 | exact (CELLS HN1)].
         - intros HN1. apply CG3; [exact HN1|]. apply CP3; [exact HN1|]. apply CF3; [exact HN1 | exact (CADDR HN1)].
@@ -1285,8 +1297,8 @@ Section TR.
         (forall regs' m' msF' mo',
            as_VIS H sC msF' = mkst regs' (Z_to_bv 64 0x1ef0d8) m' rom -> as_AKREL H sC (mkCfg msF' mo') ->
            lstate (S k) (S k) r regs' m' mo' sC LIBc LBc st -> getr regs' 19 = Z_to_bv 64 0 ->
-           realizes asegs (mkCfg msF' mo') Kx) ->
-        realizes asegs (mkCfg msF mo) Kx.
+           arz (mkCfg msF' mo') Kx) ->
+        arz (mkCfg msF mo) Kx.
       Proof.
         intros k r regs m msF mo sC LIBc LBc st Kx Hk HV HA [LR R21 K4 TI TF RH PERM HL HLN MP CPY CELLS CADDR STO ATX INCB HAL] R1 R11 R19 HK.
         pose proof SPlo. pose proof SPhi. pose proof HCLO as HCL. unfold ATR_STACK in HCL. acb.
@@ -1306,7 +1318,7 @@ Section TR.
           - exact CAN.
           - exact CAN64.
           - intros a Ha. eapply (stack0_qsh0 m _ _ (bv_unsigned sp - 80) SH0); [unfold ATR_STACK; lia | lia | rewrite ASHADOW_BASE_val; exact Ha]. }
-        eapply (drv_printf_buf H DL k' sC msF mo regs m (Z_to_bv 64 (bv_unsigned sp - 80)) can Kx ltac:(lia) PH R1 ltac:(exact Q2) R11 HV HA).
+        eapply (drv_printf_buf_rt H DLR k' sC msF mo regs m (Z_to_bv 64 (bv_unsigned sp - 80)) can Kx ltac:(lia) PH R1 ltac:(exact Q2) R11 HV HA).
         intros regs' mem' msF' mo' KCS FM BY WP FL HV' HA' SB'.
         rewrite u_small in FM by lia. subst w. unfold ABUF in *.
         assert (RS : forall rr, In rr [(Z_to_bv 64 (bv_unsigned sp - 80 - 3400), 3400); (Z_to_bv 64 0x5ede88, 4); (Z_to_bv 64 0x5edeb0, 8);
@@ -1334,7 +1346,7 @@ Section TR.
           + exact PERM.
           + eapply alib_frame; [exact HL | exact RH | intros b Hb; apply in_or_app; left; exact Hb | exact FM | exact RS].
           + exact HLN.
-          + eapply (ah_mpres_trans H HH); [exact MP | apply (adl_sb H DL); exact SB'].
+          + eapply (ah_mpres_trans H HH); [exact MP | apply (adlr_sb _ _ _ _ H DLR); exact SB'].
           + apply CP1. exact CPY.
           + intros HN1. apply CP2; [exact HN1 | exact (CELLS HN1)].
           + intros HN1. apply CP3; [exact HN1 | exact (CADDR HN1)].
@@ -1372,8 +1384,8 @@ Section TR.
         (forall regs' m' msF' mo',
            as_VIS H sC msF' = mkst regs' (Z_to_bv 64 0x1ef0d8) m' rom -> as_AKREL H sC (mkCfg msF' mo') ->
            lstate 1 1 r regs' m' mo' sC LIBc LBc st -> getr regs' 19 = Z_to_bv 64 0 ->
-           realizes asegs (mkCfg msF' mo') Kx) ->
-        realizes asegs (mkCfg msF mo) (t_emit (W 1 [Z_to_bv 8 48; Z_to_bv 8 10]) Kx).
+           arz (mkCfg msF' mo') Kx) ->
+        arz (mkCfg msF mo) (t_emit (W 1 [Z_to_bv 8 48; Z_to_bv 8 10]) Kx).
       Proof.
         intros r regs m msF mo sC LIBc LBc st Kx HV HA [LR R21 K4 TI TF RH PERM HL HLN MP CPY CELLS CADDR STO ATX INCB HAL] R1 R11 R19 K0 HK.
         pose proof SPlo. pose proof SPhi. pose proof HCLO as HCL. unfold ATR_STACK in HCL. acb. cbn [sto] in STO.
@@ -1395,7 +1407,9 @@ Section TR.
           - exact CAN64.
           - intros a Ha. eapply (stack0_qsh0 m _ _ (bv_unsigned sp - 80) SH0); [unfold ATR_STACK; lia | lia | rewrite ASHADOW_BASE_val; exact Ha]. }
         unfold W. cbn [map].
-        apply (drv_printf_first H DL sC msF mo regs m (Z_to_bv 64 (bv_unsigned sp - 80)) can Kx PH HV HA (Hfd1 mo MP) K0).
+        (* The reader at the step model is [RDR0] carried along [ls_mpres] by [adlr_rdr]. *)
+        assert (HRD : m_channel_reader mo = true) by (rewrite (adlr_rdr _ _ _ _ H DLR _ _ MP); exact RDR0).
+        apply (drv_printf_first_rt H DLR sC msF mo regs m (Z_to_bv 64 (bv_unsigned sp - 80)) can Kx PH HV HA (Hfd1 mo MP) HRD K0).
         intros regs' mem' msF' mo' PP HV' HA' SB'. destruct PP. rewrite u_small in P_frame by lia.
         assert (RS : forall rr, In rr [(Z_to_bv 64 (bv_unsigned sp - 80 - 3400), 3400); (Z_to_bv 64 0x5ede88, 232); (Z_to_bv 64 0xc027a8, 1)] -> atr_region rr).
         { intros rr Hr. pf_region Hr. }
@@ -1415,7 +1429,7 @@ Section TR.
           + exact PERM.
           + eapply alib_frame; [exact HL | exact RH | intros b Hb; apply in_or_app; left; exact Hb | exact P_frame | exact RS].
           + exact HLN.
-          + eapply (ah_mpres_trans H HH); [exact MP | apply (adl_sb H DL); exact SB'].
+          + eapply (ah_mpres_trans H HH); [exact MP | apply (adlr_sb _ _ _ _ H DLR); exact SB'].
           + apply CP1. exact CPY.
           + intros HN1. apply CP2; [exact HN1 | exact (CELLS HN1)].
           + intros HN1. apply CP3; [exact HN1 | exact (CADDR HN1)].
@@ -1431,21 +1445,21 @@ Section TR.
         (1 <= rn)%nat -> (k + rn = calls + 1)%nat -> (1 <= k)%nat ->
         as_VIS H sC msF = mkst regs (Z_to_bv 64 0x1ef0d8) m rom -> as_AKREL H sC (mkCfg msF mo) ->
         lstate k k (Z.of_nat rn) regs m mo sC LIBc LBc st -> getr regs 19 = Z_to_bv 64 0 ->
-        realizes asegs (mkCfg msF mo) K.
+        arz (mkCfg msF mo) K.
       Proof.
         induction rn as [|rn IH]; intros k regs m msF mo sC LIBc LBc st Hrn Hk Hk1 HV HA LS R19; [lia|].
         pose proof Hcalls as HC. pose proof SPlo. pose proof SPhi.
         destruct rn as [|rn'].
         - assert (Ek : k = calls) by lia. subst k. eapply tr_free; [exact HV | exact HA | exact LS | exact R19].
         - destruct LS as [LR R21 K4 TI TF RH PERM HL HLN MP CPY CELLS CADDR STO ATX INCB HAL].
-          eapply (seg_T7more H DL sp SP16 SPlo SPhi sC msF mo regs m _ _ _ (Z.of_nat (S (S rn'))) K LR R19 R21 ltac:(lia)
+          eapply (seg_T7more H DLR sp SP16 SPlo SPhi sC msF mo regs m _ _ _ (Z.of_nat (S (S rn'))) K LR R19 R21 ltac:(lia)
                     (atinv_stk128 m TI) (atinv_ro m TI) (ti_relro m TI) (atinv_latch m TI)); [| exact HV | exact HA].
           intros regs1 msF1 mo1 HV1 HA1 SB1 LR1 Q19 Q21 K4a.
           replace (Z.of_nat (S (S rn')) - 1) with (Z.of_nat (S rn')) in Q21 by lia.
           assert (LS1 : lstate k k (Z.of_nat (S rn')) regs1 m mo1 sC LIBc LBc st).
           { split; try assumption.
             - intros rr Hrr. rewrite (K4a rr Hrr). apply K4. exact Hrr.
-            - eapply (ah_mpres_trans H HH); [exact MP | apply (adl_sb H DL); exact SB1]. }
+            - eapply (ah_mpres_trans H HH); [exact MP | apply (adlr_sb _ _ _ _ H DLR); exact SB1]. }
           eapply (tr_call_harness k _ regs1 m msF1 mo1 sC LIBc LBc st K ltac:(lia) HV1 HA1 LS1).
           intros regs2 m2 msF2 mo2 sC2 LIBc2 LBc2 st2 HV2 HA2 LS2 T1 T11 T19.
           eapply (tr_printf_buf k _ regs2 m2 msF2 mo2 sC2 LIBc2 LBc2 st2 K ltac:(lia) HV2 HA2 LS2 T1 T11 T19).
@@ -1457,7 +1471,7 @@ Section TR.
       Lemma tr_loop : forall regs m msF mo sC LIBc LBc st,
         as_VIS H sC msF = mkst regs (Z_to_bv 64 0x1ef0b4) m rom -> as_AKREL H sC (mkCfg msF mo) ->
         lstate 0 0 (Z.of_nat calls) regs m mo sC LIBc LBc st -> K [] ->
-        realizes asegs (mkCfg msF mo) (t_emit (W 1 [Z_to_bv 8 48; Z_to_bv 8 10]) K).
+        arz (mkCfg msF mo) (t_emit (W 1 [Z_to_bv 8 48; Z_to_bv 8 10]) K).
       Proof.
         intros regs m msF mo sC LIBc LBc st HV HA LS K0. pose proof Hcalls as HC.
         eapply (tr_call_harness 0 _ regs m msF mo sC LIBc LBc st _ ltac:(lia) HV HA LS).
@@ -1513,9 +1527,9 @@ Section TR.
     Variable K : TSet.
     Hypothesis K0 : K [].
     Hypothesis HPOST : forall regs' mem' msF' mo' s', ATRpost H L sp A cap data p s0 LB mo0 regs0 mem0 regs' mem' msF' mo' s' ->
-       realizes asegs (mkCfg msF' mo') K.
+       arz (mkCfg msF' mo') K.
 
-    Theorem as_target_run_ok : realizes asegs (mkCfg msF0 mo0) (t_emit (W 1 [Z_to_bv 8 48; Z_to_bv 8 10]) K).
+    Theorem as_target_run_ok : arz (mkCfg msF0 mo0) (t_emit (W 1 [Z_to_bv 8 48; Z_to_bv 8 10]) K).
     Proof.
       pose proof SPlo as Hlo. pose proof SPhi as Hhi. pose proof HN as HN'. pose proof Hcfg as Hcfg'. pose proof Hcalls as HC. pose proof Hds as Hds'.
       pose proof HCLO as HCL. unfold ATR_STACK in HCL. acb.
@@ -1529,7 +1543,7 @@ Section TR.
       set (c := nth 2 data (Z_to_bv 8 0)).
       pose proof (calls_of_hdr c eq_refl) as ECALLS.
       (* [comment removed for export] *)
-      eapply (seg_T0 H DL sp SP16 SPlo SPhi s0 msF0 mo0 regs0 mem0 (Z_to_bv 64 CP) (Z_to_bv 64 cfg) (Z_to_bv 64 PL) (Z_to_bv 64 N) ib _
+      eapply (seg_T0 H DLR sp SP16 SPlo SPhi s0 msF0 mo0 regs0 mem0 (Z_to_bv 64 CP) (Z_to_bv 64 cfg) (Z_to_bv 64 PL) (Z_to_bv 64 N) ib _
                 R1 R2 R4 R10 R11 R12 R13 Hib APC (atinv_stk128 mem0 TI0) (atinv_ro mem0 TI0) (ti_relro mem0 TI0) (atinv_latch mem0 TI0));
         [| exact HV0 | exact HA0].
       intros regs1 mem1 msF1 mo1 HV1 HA1 SB1 LR1 K6a FM1 STK1 TF1 HAD.
@@ -1549,13 +1563,13 @@ Section TR.
       assert (HC1 : cfg <> 0 -> rdn RSEGS mem1 (Z_to_bv 64 CP) 1 = Some [c]).
       { intros _. subst c CP. pose proof (rdn_nth RSEGS mem1 (length data) (Z_to_bv 64 A) data 2 DATA1 ltac:(lia)) as R.
         unfold nat_to_word in R. rewrite lit_add_lit in R. exact R. }
-      assert (MP1 : as_MPRES H mo0 mo1) by (apply (adl_sb H DL); exact SB1).
+      assert (MP1 : as_MPRES H mo0 mo1) by (apply (adlr_sb _ _ _ _ H DLR); exact SB1).
       clear TI0 RH DATA.
       pose proof (alo_fresh_b L LOK) as FB.
       destruct (Z.eq_dec N 0) as [N0|N1].
       - (* [comment removed for export] *)
         rewrite N0 in LR1.
-        eapply (seg_T1zero H DL sp SP16 SPlo SPhi s0 msF1 mo1 regs1 mem1 cfg _ _ c _ LR1 ltac:(lia) HC1 ltac:(subst CP; rewrite u_small by lia; lia)
+        eapply (seg_T1zero H DLR sp SP16 SPlo SPhi s0 msF1 mo1 regs1 mem1 cfg _ _ c _ LR1 ltac:(lia) HC1 ltac:(subst CP; rewrite u_small by lia; lia)
                   (atinv_stk128 mem1 TI1) (atinv_ro mem1 TI1) (ti_relro mem1 TI1) (atinv_latch mem1 TI1)); [| exact HV1 | exact HA1].
         intros regs2 msF2 mo2 HV2 HA2 SB2 LR2 Q21 K4b.
         eapply (tr_loop AFUZZ_EMPTY 0 [] ltac:(left; repeat split; lia) K HPOST regs2 mem1 msF2 mo2 s0 [] LB (al_fresh L) HV2 HA2); [| exact K0].
@@ -1565,24 +1579,24 @@ Section TR.
         + intros rr Hrr. rewrite (K4b rr Hrr). apply K6a. cbn [In] in Hrr |- *. tauto.
         + apply Permutation_refl.
         + rewrite FB. cbn [length Z.of_nat lb_bytes fold_right]. unfold ALIB_CNT_MAX, ALIB_BYTES_MAX. lia.
-        + eapply (ah_mpres_trans H HH); [exact MP1 | apply (adl_sb H DL); exact SB2].
+        + eapply (ah_mpres_trans H HH); [exact MP1 | apply (adlr_sb _ _ _ _ H DLR); exact SB2].
         + assert (E : ds = []) by (apply length_zero_iff_nil; rewrite Hds, N0; reflexivity). rewrite E. reflexivity.
         + intros; lia.
         + intros; lia.
         + unfold spent. rewrite N0 in *. lia.
       - (* [comment removed for export] *)
-        eapply (seg_T1pos H DL sp SP16 SPlo SPhi s0 msF1 mo1 regs1 mem1 N cfg _ _ c _ LR1 ltac:(lia) ltac:(lia) HC1 ltac:(subst CP; rewrite u_small by lia; lia)
+        eapply (seg_T1pos H DLR sp SP16 SPlo SPhi s0 msF1 mo1 regs1 mem1 N cfg _ _ c _ LR1 ltac:(lia) ltac:(lia) HC1 ltac:(subst CP; rewrite u_small by lia; lia)
                   (atinv_stk128 mem1 TI1) (atinv_ro mem1 TI1) (ti_relro mem1 TI1) (atinv_latch mem1 TI1)); [| exact HV1 | exact HA1].
         intros regs2 msF2 mo2 HV2 HA2 SB2 LR2 Q21 K6b.
-        eapply (seg_T2 H DL sp SP16 SPlo SPhi s0 msF2 mo2 regs2 mem1 _ _ _ _ _ _ LR2 Q21
+        eapply (seg_T2 H DLR sp SP16 SPlo SPhi s0 msF2 mo2 regs2 mem1 _ _ _ _ _ _ LR2 Q21
                   (atinv_stk128 mem1 TI1) (atinv_ro mem1 TI1) (ti_relro mem1 TI1) (atinv_latch mem1 TI1)); [| exact HV2 | exact HA2].
         intros regs3 msF3 mo3 HV3 HA3 SB3 LR3 U21 U1 U10 K6c.
         pose proof LR3 as (V2 & V4 & V8 & V9 & V18 & V19 & V21).
         destruct (ti_aux _ TI1) as [B' [AUX1 [HB' AUXV1]]]. destruct (ti_errno _ TI1) as [errv ERR].
         assert (MP3 : as_MPRES H mo0 mo3).
-        { eapply (ah_mpres_trans H HH); [exact MP1|]. eapply (ah_mpres_trans H HH); apply (adl_sb H DL); [exact SB2 | exact SB3]. }
+        { eapply (ah_mpres_trans H HH); [exact MP1|]. eapply (ah_mpres_trans H HH); apply (adlr_sb _ _ _ _ H DLR); [exact SB2 | exact SB3]. }
         change (Z_to_bv 64 0x1bf174) with (Z_to_bv 64 AMALLOC_STUB) in HV3.
-        eapply (amalloc_call H HH DL regs3 mem1 msF3 mo3 s0 LB N (bv_unsigned sp - ATR_STACK) B' errv 0x1ef05c [] _ HV3 HA3 U1);
+        eapply (amalloc_call_rt H HH DLR regs3 mem1 msF3 mo3 s0 LB N (bv_unsigned sp - ATR_STACK) B' errv 0x1ef05c [] _ HV3 HA3 U1);
           [ lia | reflexivity | exact V4 | exact U10 | lia | exact RH1
           | apply (ah_alloc H HH s0 LB mem1 N RH1); [lia | unfold ADRV_LIVE in LIVE; lia | unfold ADRV_CNT in LIVE; lia]
           | rewrite HCOST in HAL; pose proof (fuzz_cost_nonneg N ltac:(lia)); nia
@@ -1615,7 +1629,7 @@ Section TR.
         pose proof (KEPT 20%bv ltac:(in_solve)) as S20. pose proof (KEPT 21%bv ltac:(in_solve)) as S21.
         assert (LR4 : regs138 sp regs4 (Z_to_bv 64 N) (Z_to_bv 64 PL) (Z_to_bv 64 cfg) (Z_to_bv 64 CP)).
         { unfold regs138. rewrite S2, S4, S8, S9, S18, S19, S20. exact LR3. }
-        eapply (seg_T3 H DL sp SP16 SPlo SPhi s4 msF4 mo4 regs4 mem4 _ _ _ _ _ (Z_to_bv 64 D) _ LR4 ltac:(rewrite S21; exact U21) W10 ltac:(rewrite u_small by lia; lia)
+        eapply (seg_T3 H DLR sp SP16 SPlo SPhi s4 msF4 mo4 regs4 mem4 _ _ _ _ _ (Z_to_bv 64 D) _ LR4 ltac:(rewrite S21; exact U21) W10 ltac:(rewrite u_small by lia; lia)
                   (atinv_stk128 mem4 TI4) (atinv_ro mem4 TI4) (ti_relro mem4 TI4) (atinv_latch mem4 TI4)); [| exact HV4 | exact HA4].
         intros regs5 msF5 mo5 HV5 HA5 SB5 LR5 X21 X1 X10 X11 X12 K6d.
         pose proof LR5 as (Y2 & Y4 & Y8 & Y9 & Y18 & Y19 & Y21).
@@ -1682,13 +1696,13 @@ Section TR.
         { eapply alib_munch; [exact HL4 | exact MU5 | exact WM5 |]. intros x Hx. unfold alibx_ok in Hx. cbn. lia. }
         assert (MP6' : as_MPRES H mo0 mo6).
         { eapply (ah_mpres_trans H HH); [exact MP3|]. eapply (ah_mpres_trans H HH); [exact MP4|].
-          eapply (ah_mpres_trans H HH); [apply (adl_sb H DL); exact SB5 | exact MP6]. }
+          eapply (ah_mpres_trans H HH); [apply (adlr_sb _ _ _ _ H DLR); exact SB5 | exact MP6]. }
         pose proof (KEEP6 2%bv ltac:(in_solve)) as T2. pose proof (KEEP6 4%bv ltac:(in_solve)) as T4. pose proof (KEEP6 8%bv ltac:(in_solve)) as T8.
         pose proof (KEEP6 9%bv ltac:(in_solve)) as T9. pose proof (KEEP6 18%bv ltac:(in_solve)) as T18. pose proof (KEEP6 19%bv ltac:(in_solve)) as T19.
         pose proof (KEEP6 20%bv ltac:(in_solve)) as T20. pose proof (KEEP6 21%bv ltac:(in_solve)) as T21.
         assert (LR6 : regs138 sp regs6 (Z_to_bv 64 N) (Z_to_bv 64 PL) (Z_to_bv 64 D) (Z_to_bv 64 CP)).
         { unfold regs138. rewrite T2, T4, T8, T9, T18, T19, T20. exact LR5. }
-        eapply (seg_T4 H DL sp SP16 SPlo SPhi s4 msF6 mo6 regs6 mem5 _ _ (Z_to_bv 64 cfg) _ _ _ _ LR6 ltac:(rewrite T21; exact X21)
+        eapply (seg_T4 H DLR sp SP16 SPlo SPhi s4 msF6 mo6 regs6 mem5 _ _ (Z_to_bv 64 cfg) _ _ _ _ LR6 ltac:(rewrite T21; exact X21)
                   (atinv_stk128 mem5 TI5) (atinv_ro mem5 TI5) (ti_relro mem5 TI5) (atinv_latch mem5 TI5)); [| exact HV6 | exact HA6].
         intros regs7 msF7 mo7 HV7 HA7 SB7 LR7 Z21 K4e.
         eapply (tr_loop D D [(pD, D, N)] ltac:(right; split; [lia | split; [reflexivity | exists pD; split; [reflexivity | exact HBR4]]]) K HPOST
@@ -1701,7 +1715,7 @@ Section TR.
           rewrite (K6c rr Hrr6), (K6b rr Hrr6). apply K6a. exact Hrr6.
         + apply Permutation_refl.
         + rewrite FB. cbn [length Z.of_nat lb_bytes fold_right]. unfold ALIB_CNT_MAX, ALIB_BYTES_MAX. lia.
-        + eapply (ah_mpres_trans H HH); [exact MP6' | apply (adl_sb H DL); exact SB7].
+        + eapply (ah_mpres_trans H HH); [exact MP6' | apply (adlr_sb _ _ _ _ H DLR); exact SB7].
         + intros _. exact CB5.
         + intros _. exact AD5.
         + unfold spent. lia.
@@ -1712,7 +1726,7 @@ Section TR.
   (* [comment removed for export] *)
   Theorem as_target_run : as_target_run_stmt H L.
   Proof.
-    intros sp A cap data p s LB msF mo regs mem K PRE K0 HPOST.
-    exact (as_target_run_ok sp A cap data p s LB msF mo regs mem PRE K K0 HPOST).
+    intros sp A cap data p s LB msF mo regs mem K PRE RDR K0 HPOST.
+    exact (as_target_run_ok sp A cap data p s LB msF mo regs mem PRE RDR K K0 HPOST).
   Qed.
 End TR.

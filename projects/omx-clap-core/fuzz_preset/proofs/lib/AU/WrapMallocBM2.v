@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/AU/WrapMallocBM2.v, with its module paths and addresses changed; 31 of its 270 lines of code are new or changed and 19 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: omx-clap-core/fuzz_preset image B (asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43; relocated from pin f8f98a95bc52 by alreloc c4338d099cfb8025): field
    wmk_ret of the keep record wrap_malloc_walk_keep_cf (lib/Reusable/YGcfMallocComposeKeep.v:84-101) at image B, as
    WrapMallocBStmt.wmk_ret_stmt (the field verbatim; wmk_ret_of_record checks it) with segs := tfibsegs, nmax free,
-   al := 8, atp := 1, acf := 1, ARX := YGcfInstBase.ARXq_cf B (fun i => i = as_inst B) (lib/Reusable/YGcfInstBase.v:480)
+   al := 8, atp := 1, acf := 1, ARX := YGcfInstBase.ARXq_cf B (fun i => i = as_inst B) (lib/Reusable/YGcfInstBase.v:481)
    at IM := AU/AGif2cgif.AImg_cgif, K := K_B (WrapMallocBM1.v). The run is WrapMallocBRetRun.retB / retN; this file
    reads no instruction.
    What carries the call segment's frames over Allocate: the post's frame (AllocG.alloc_post's view and raw clauses)
@@ -14,7 +15,7 @@
    blocks S2; AR_blocks_law_cf bounds it by the allocation ceiling, which layout_ok's lo_stk_ceil puts below the stack).
    ARcf at both states is read off the relation by YGcfInstBase.ARXq_cf_ARcf.
    The relation at the wrapper's return (YGcfInstBase.ARXq_cf_intro / ARX_cf_start): IOK and qtight from the relation
-   at Allocate's return (ARXq_cf_iok, ARXq_cf_qtight); ARcf by AR_frame_law_ok_cf (YG0qcf.v:802), the return path
+   at Allocate's return (ARXq_cf_iok, ARXq_cf_qtight); ARcf by AR_frame_law_ok_cf (YG0qcf.v:803), the return path
    writing only the caller's stack window below Allocate's entry sp and, on the NULL arm, errno, an image byte outside
    as_owned_static (AR_owned_image_law with TfibSyms' Tfib_owned_static, YFk0.v:772-780's argument); xs_mapped_cf from
    that ARcf (YGcfXs.ARcf_xsm, YGcfXs.v:201).

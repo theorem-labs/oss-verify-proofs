@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/PItems_entry.v, with its module paths and module names changed; 301 of its 347 lines of code are new or changed and 1519 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the shared layer of parse_items' image-B walk: the block offsets of the body, the Section
    every segment file opens, the run / branch / kept tactics, and
    the small kept-memory lemmas. No segment lemma and no walk is here.
@@ -286,7 +287,7 @@ Definition pi_cont (m : word -> option byte) (lblk : Z -> Z -> Prop) (o : bool)
   (if o then pj_memsR segs m lblk (pj_nodeR segs m lblk) kids keys acc Di
    else pj_itemsR (pj_nodeR segs m lblk) kids (map snd acc) Di).
 
-(* ==== THE BATCH KIT'S INVARIANTS of the loop (the batch kit 240b06ed4fd4; a Theorem Labs lane's A' template VrdIElem.v vrd_imodel) ====
+(* ==== THE BATCH KIT'S INVARIANTS of the loop (the batch kit; a Theorem Labs lane's A' template VrdIElem.v vrd_imodel) ====
    preset-tree-at-2026-10-30T00-42-43Z.tsv (sha256 08fbb565c497; internal record)) ====
    (1)/(4) THE GRANTED PREFIX: every allocator call the walk passed was granted, because every refusal leaves the loop; so the ok
    list the prefix ate is one `true` per call (the template's ip_ok P = repeat true ..). It makes the prefix's refusal peak 0
@@ -383,7 +384,7 @@ Definition pi_run_eq (d : nat) (o : bool) (x0 : list Z) (ok0 : list bool) (tr0 :
     PjGrammar.jrl prh_jr_strtod f (S d) o n cap (rev acc) y ok1 = (r, t, ok2) ->
     PjGrammar.jr_items prh_jr_strtod d o x0 (ok0 ++ ok1) = (r, tr0 ++ t, ok2).
 
-(* the ledger has moved by the prefix trace, and the blocks the prefix allocated are D0. The batch kit (8ba304fe2f93): the move
+(* the ledger has moved by the prefix trace, and the blocks the prefix allocated are D0. The batch kit: the move
    preset-tree-at-2026-10-29T23-27-23Z.tsv (sha256 1f0ae5f9ecde; internal record): the move takes g_most and the call's
    ALL-GRANTED trace, whose helds price a refusal's peak. Every block of the loop is reached only while every allocation so
    far was GRANTED (a refused or chosen-failed call exits), so the prefix's granted trace is the prefix itself: gt := tr0 *)
@@ -450,13 +451,13 @@ Lemma pi_pos_mono : forall rp_sm rp_x rp_os rp_H0 i j S,
   (i <= j)%nat -> pi_pos rp_sm rp_x rp_os rp_H0 j S -> pi_pos rp_sm rp_x rp_os rp_H0 i S.
 Proof. intros rp_sm rp_x rp_os rp_H0 i j S Hij (j' & hist & Hle & H). exists j', hist. split; [lia | exact H]. Qed.
 
-(* ---- the ENTRY premises, the kit's text's own (kit walkkit-next f97c8b2f046b, lib/A/PRH_FnParse.v tparse_items_specX d
+(* ---- the ENTRY premises, the kit's text's own (kit walkkit-next, lib/A/PRH_FnParse.v tparse_items_specX d
    CTX CTX0 DW), at the entry float state fx0 and entry registers regs0: every segment carries them unchanged, because
    the callee premises at each call site are derived from them. The room is the invariant room_live_cf; the kr binder
    of pi_ent and of every segment pre is VESTIGIAL (kept so the segment files' argument lists do not renumber), dropped at the
    top. most / own are the ledger's g_most / g_own_ran_out values (prh_ledger's two cells since the E sweep); every
    reader text keeps them, so they are the same at every block and in the post. CTX0 / DW (the call-graph universe closure
-   closure over the run's data words, the kit 4eb03b7b7e8) are the LAST two arguments of pi_ent and of every pre, and
+   closure over the run's data words, the kit) are the LAST two arguments of pi_ent and of every pre, and
    LAST two arguments of pi_ent and of every pre, and parameters of every spec. Added beside the text's own: the entry gp /
    tp (afn_pre_x's, which the window call rule aj_call_xW asks at every call site; 02:1xZ) and fpre's read-only view. ---- *)
 Definition pi_ent (fx0 : YK11.FPState) (ly : alayout) (S : astate) (Hp : list Z) (W : world segs)
@@ -491,7 +492,7 @@ Definition pi_ent (fx0 : YK11.FPState) (ly : alayout) (S : astate) (Hp : list Z)
   (* fpre's read-only view at the entry: every callee text's fpre needs it at its call state, and the journal's
      image clause carries it there (01:2xZ) *)
   arodata_okP segs pa_relro_lo pa_relro_hi B (aview segs (w_H W) mem) /\
-  (* THE CURSOR SET (the batch kit 240b06ed4fd4, PRH_FnParse.v ed236011cf99:385 / :407, verbatim): every cursor free trace
+  (* THE CURSOR SET (the batch kit, PRH_FnParse.v ed236011cf99:385 / :407, verbatim): every cursor free trace
      at q is CW's (or its word is pj_parse's code word), and the depot at entry has room for CW with no fresh slot *)
   prh_cw_entry B CW W mem regs0 q /\
   YCbqGwild.wild_room (as_universe B) CW 0 (st_depot S) /\

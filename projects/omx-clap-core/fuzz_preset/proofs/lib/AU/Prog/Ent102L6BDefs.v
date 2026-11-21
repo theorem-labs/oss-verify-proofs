@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image B' (asan-ubsan, harness fix #102, PIN sha256
    d663f82d7f488d30f8e8d7496cb814e595a2f3cbbf16bde81a65cb3ea9af0994, unstripped twin c90d4fa54d43160b): the SYMBOLIC
    STATE of segment L6x of LLVMFuzzerTestOneInput (B' entry 0x816cc), the exit lane (listing +0x1c4 .. the `ret` at
@@ -7,7 +8,7 @@
    the atom numbering, the facts and the entry environment. The cut statements are lib/AU/Ent102CutsB.v's (blob
    4802d1fcf13d at the time of writing; earlier, blob
    a74a7497b9d0); nothing is restated here.
-   PORTED from lib/A/Prog/Ent102L6ADefs.v (blob f2445bce68a1, a working branch a2d6bb26a279) by
+   PORTED from lib/A/Prog/Ent102L6ADefs.v (blob f2445bce68a1, a working branch) by
    port/a2b.py (sha256 f5113cbc90e503da, no --map; a2b's rename L6_A_FLAG / L6_A_RA -> L6_B_FLAG / L6_B_RA). Hand
    fixes: the Require routing (lib.B Listing_prog Ent102PLB) and A_prog_listing -> B_prog_listing. The literals a2b
    leaves untranslated (0x7fffff800000, 0x7fff8000, 0x10007fff8000) are ASan constants, the same on both images.

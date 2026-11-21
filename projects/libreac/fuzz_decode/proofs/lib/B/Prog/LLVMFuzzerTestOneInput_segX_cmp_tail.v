@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* LLVMFuzzerTestOneInput_segX_cmp_tail: the end of image B's LLVMFuzzerTestOneInput cmp segment (llvm_b_cmp_stmt of
    lib/B/Prog/LLVMFuzzerTestOneInput_segs.v), from the call of free #1 to llvm_b_st_840:
      +0x830 ld a0, 88(s1); +0x834 jal free           free #1: the decode buffer (both paths reach +0x830)
@@ -8,7 +9,7 @@
    The free is the statement's afree04_rule (lib/Reusable/YC5d.v:76) at the listing's trampoline, as the exit group's
    fr_free_call (lib/B/Prog/LLVMFuzzerTestOneInput_segX_exit_fr.v, working copy) applies it; the leaf is the
    statement's dec_leaf_at reac_upstream_channels through a Theorem Labs lane's per-leaf instance
-   dec_leafb_upstream_channels (lib/B/Prog/LLVMFuzzerTestOneInput_leafb.v, a14 727ce5de258), whose read-only
+   dec_leafb_upstream_channels (lib/B/Prog/LLVMFuzzerTestOneInput_leafb.v, a14), whose read-only
    multiplier is dec_crt_cells' own row; the two instructions between them are a Pa run to the leaf's PTS_call
    (exit_fr's fr_free_at form). *)
 From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require YZ00.

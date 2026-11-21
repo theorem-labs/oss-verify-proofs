@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
@@ -14,7 +15,7 @@ From OSSVerify.Proofs.openssl.bignum.lib Require TopHalts TopBignumAsan.
 From OSSVerify.Proofs.openssl.bignum.lib.BgA Require Import RT_iface RT_rep D_defs D_libiface I_iodefs X_xdefs.
 From OSSVerify.Proofs.openssl.bignum.lib.BgRepA Require Import LibaBg.
 From OSSVerify.Proofs.openssl.bignum.lib.BgAxA Require ArtA.
-From OSSVerify.Proofs.openssl.bignum.lib.BgAxBdA Require BdAStartCert.
+From OSSVerify.Proofs.openssl.bignum.lib.BgAxBdA Require BdAStartCert BdAStartCertNoRseq.
 From OSSVerify.Proofs.openssl.bignum.lib.VCommon Require ShapeAlgCfg.
 From OSSVerify.Proofs.openssl.bignum.lib.AxA Require RzBridge.
 From OSSVerify.Proofs.openssl.bignum.lib.BgAxA Require StartA.
@@ -46,7 +47,9 @@ Section Debt.
   Proof.
     intros en inp He Hi.
     exact (BgAxA.StartA.startA_realizes RTA OUT_repA ERR_repA XENVA lib_startA ArtA.fin_mainA ArtA.fin_mainA_out ArtA.bridgeA_final
-             BgAxBdA.BdAStartCert.bda_cert_main TopBignumAsan.main_asan en inp He Hi).
+             BgAxBdA.BdAStartCert.bda_cert_main BgAxBdA.BdAStartCertNoRseq.bda_cert_main_norseq
+             TopBignumAsan.main_asan en inp He Hi
+             (valid_input_cache_words inp Hi) (valid_input_min_sigframe_size inp (in_hwcap inp) Hi)).
   Qed.
 
   Theorem must_exit_asan_big : forall en inp, valid_entry imgA en inp -> valid_input inp ->
@@ -54,7 +57,9 @@ Section Debt.
   Proof.
     intros en inp He Hi. pose proof (realizes_asan en inp He Hi) as Hr.
     destruct en as [sp brk mb rnd]. cbn [must_exit_in_scfg en_sp en_brk en_mmap_base en_draw] in *.
-    apply (AxA.RzBridge.realizes_cfg_must_exit_forced_only _ TopHalts.codes02 _ _ Hr).
+    (* LPS 08b1429: the binary carries no vDSO segment of its own *)
+    assert (Hvi : vdso_image Asan.M.loaded_segments = None) by reflexivity.
+    apply (AxA.RzBridge.realizes_cfg_must_exit_forced_only_init _ TopHalts.codes02 _ _ _ _ _ _ _ inp _ Hvi Hr).
     - apply canonT_exits_in.
     - reflexivity.
   Qed.

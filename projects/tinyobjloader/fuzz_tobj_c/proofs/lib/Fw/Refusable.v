@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (refusability asks Linux's placement at the mmap hint, vm_place_available over Placement.linux_place_b (the block of cgif/cgif_file_fuzzer's Z/Placement.v), in place of a free gap below alloc_top: mmap_grant_refusable and mmap_reserve_refusable take the hint, and grant_not_refusable_of and reserve_not_refusable_of are restated over Linux's address; refusal_b_munmap, family_off_munmap and ns_nonenomem_munmap added for munmap in the allocation family). *)
 (* Placement and budget tests for anonymous mmap / mprotect, and the filtered step relation of the
    alloc_forced_only reading ([Run.alloc_only_cfg false]), stated over the release model.
 
@@ -13,6 +14,7 @@
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType Fs State Monad Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap Mprotect.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement.
 Import ListNotations.
 Open Scope bv_scope.
 
@@ -181,12 +183,76 @@ Qed.
    Refusable requests, one test per mmap arm the tree uses, and mprotect's.
    --------------------------------------------------------------------------------------------------- *)
 
-Definition mmap_grant_refusable (flags : word) (m : Model) (nZ : Z) : bool :=
-  negb (mmap_noreserve_backed_ok flags m nZ)
-  || negb (vm_gap_available (m_vmmaps m) nZ).
+(* 08b1429: [mmap_spec]'s anonymous grant arms choose exactly Linux's address ([Mmap.linux_place],
+   decided by [Checks.Placement.linux_place_b]), not any free range below [alloc_top].  So a grant
+   exists iff Linux places the request (and, for a backed mapping, the budget admits it).  The
+   refusability tests below therefore take the mmap hint and ask [linux_place_b].  The block is
+   cgif/cgif_file_fuzzer's [lib/Z/Placement.v] as that unit's own repair at LPS 727298f3 wrote it
+   (not the file on main, which has no such block), with two of its comments shortened and
+   [vm_place_available_of_gap] added in this unit. *)
+Definition vm_place_available (h : VmMaps) (thp : bool) (hint : word) (nZ : Z) : bool :=
+  match linux_place_b h thp hint nZ with Some _ => true | None => false end.
 
-Definition mmap_reserve_refusable (m : Model) (nZ : Z) : bool :=
-  negb (vm_gap_available (m_vmmaps m) nZ).
+Lemma linux_place_is_available : forall h thp hint nZ a,
+  linux_place_is h thp hint nZ a = true -> vm_place_available h thp hint nZ = true.
+Proof.
+  intros h thp hint nZ a H. unfold linux_place_is in H. unfold vm_place_available.
+  destruct (linux_place_b h thp hint nZ); [reflexivity | discriminate].
+Qed.
+
+(* Linux's address as a word, computed. *)
+Definition vm_place_pick (h : VmMaps) (thp : bool) (hint : word) (nZ : Z) : word :=
+  match linux_place_b h thp hint nZ with Some p => Z_to_bv 64 p | None => Z_to_bv 64 0 end.
+
+Lemma vm_place_pick_ok : forall h thp hint nZ,
+  (0 < nZ)%Z -> (nZ mod page_size = 0)%Z ->
+  vm_place_available h thp hint nZ = true ->
+  linux_place_is h thp hint nZ (vm_place_pick h thp hint nZ) = true.
+Proof.
+  intros h thp hint nZ Hn Hnal H. unfold vm_place_available in H. unfold vm_place_pick.
+  destruct (linux_place_b h thp hint nZ) as [p|] eqn:Hp; [|discriminate].
+  pose proof (proj1 (proj1 (linux_place_b_spec h thp hint nZ Hn Hnal) p) Hp) as Hpl.
+  destruct (linux_place_admissible h thp hint nZ p Hn Hnal Hpl) as (_ & Hpos & Htop & _).
+  pose proof (alloc_top_room h) as Hroom. unfold two_pow_64, stack_max_size in Hroom.
+  unfold linux_place_is. rewrite Hp. apply Z.eqb_eq.
+  rewrite Z_to_bv_unsigned. symmetry. apply bv_wrap_small.
+  change (bv_modulus 64) with (2 ^ 64)%Z. lia.
+Qed.
+
+Lemma vm_place_available_grant : forall h thp hint nZ,
+  (0 < nZ)%Z -> (nZ mod page_size = 0)%Z ->
+  vm_place_available h thp hint nZ = true ->
+  exists a : word, linux_place_is h thp hint nZ a = true.
+Proof.
+  intros h thp hint nZ Hn Hnal H. exists (vm_place_pick h thp hint nZ).
+  exact (vm_place_pick_ok h thp hint nZ Hn Hnal H).
+Qed.
+
+(* A free gap in Linux's bottom-up window gives Linux an address, whatever the hint
+   ([Placement.linux_place_exists], computed through [Placement.linux_place_b_spec]). *)
+Lemma vm_place_available_of_gap : forall h thp hint nZ (a : word),
+  (0 < nZ)%Z -> (nZ mod page_size = 0)%Z ->
+  (bv_unsigned a mod page_size = 0)%Z ->
+  (task_unmapped_base <= bv_unsigned a)%Z ->
+  (bv_unsigned a + nZ <= alloc_top h)%Z ->
+  region_free (vm_reserved h ++ vm_maps h) a (Z_to_bv 64 nZ) = true ->
+  vm_place_available h thp hint nZ = true.
+Proof.
+  intros h thp hint nZ a Hn Hnal Hal Hlo Hhi Hfree.
+  destruct (linux_place_exists h thp hint nZ Hn Hnal) as [p Hp].
+  { exists (bv_unsigned a). right. unfold gap_fits. rewrite Z_to_bv_bv_unsigned.
+    split; [exact Hal|]. split; [exact Hlo|]. split; [exact Hhi | exact Hfree]. }
+  unfold vm_place_available.
+  destruct (linux_place_b h thp hint nZ) eqn:E; [reflexivity|].
+  exfalso. exact (proj1 (proj2 (linux_place_b_spec h thp hint nZ Hn Hnal)) E p Hp).
+Qed.
+
+Definition mmap_grant_refusable (flags hint : word) (m : Model) (nZ : Z) : bool :=
+  negb (mmap_noreserve_backed_ok flags m nZ)
+  || negb (vm_place_available (m_vmmaps m) (kb_thp (m_kernel m)) hint nZ).
+
+Definition mmap_reserve_refusable (hint : word) (m : Model) (nZ : Z) : bool :=
+  negb (vm_place_available (m_vmmaps m) (kb_thp (m_kernel m)) hint nZ).
 
 Definition mmap_fixed_fresh_refusable (flags : word) (m : Model) (nZ : Z) : bool :=
   negb (mmap_noreserve_backed_ok flags m nZ).
@@ -317,27 +383,23 @@ Qed.
 
 Coercion syscall_spec_ns_spec : syscall_spec_ns >-> syscall_spec.
 
-Lemma grant_not_refusable_of : forall flags m nZ a,
-  (bv_unsigned a mod page_size = 0)%Z -> (0 < bv_unsigned a)%Z ->
-  (bv_unsigned a + nZ <= alloc_top (m_vmmaps m))%Z ->
-  region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 nZ) = true ->
+(* 08b1429: the grant a request has is Linux's address; it witnesses that the request is not
+   refusable. *)
+Lemma grant_not_refusable_of : forall flags hint m nZ a,
+  linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint nZ a = true ->
   mmap_noreserve_backed_ok flags m nZ = true ->
-  mmap_grant_refusable flags m nZ = false.
+  mmap_grant_refusable flags hint m nZ = false.
 Proof.
-  intros flags m nZ a Hal Hpos Htop Hfree Hb.
-  unfold mmap_grant_refusable. rewrite Hb. cbn [negb orb].
-  apply negb_false_iff. apply vm_gap_available_iff. exists a. repeat split; assumption.
+  intros flags hint m nZ a Hp Hb.
+  unfold mmap_grant_refusable. rewrite Hb, (linux_place_is_available _ _ _ _ _ Hp). reflexivity.
 Qed.
 
-Lemma reserve_not_refusable_of : forall m nZ a,
-  (bv_unsigned a mod page_size = 0)%Z -> (0 < bv_unsigned a)%Z ->
-  (bv_unsigned a + nZ <= alloc_top (m_vmmaps m))%Z ->
-  region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 nZ) = true ->
-  mmap_reserve_refusable m nZ = false.
+Lemma reserve_not_refusable_of : forall hint m nZ a,
+  linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint nZ a = true ->
+  mmap_reserve_refusable hint m nZ = false.
 Proof.
-  intros m nZ a Hal Hpos Htop Hfree.
-  unfold mmap_reserve_refusable. apply negb_false_iff. apply vm_gap_available_iff. exists a.
-  repeat split; assumption.
+  intros hint m nZ a Hp.
+  unfold mmap_reserve_refusable. rewrite (linux_place_is_available _ _ _ _ _ Hp). reflexivity.
 Qed.
 
 Lemma ret_zero_not_enomem : Z_to_bv 64 0 <> errno_ret ENOMEM.
@@ -434,6 +496,32 @@ Lemma ns_nonenomem_mprotect : forall i m eff,
   ~ spurious_refusal_cfg ACFG i m eff.
 Proof.
   intros i m eff Hno Hne. apply ns_not_refusal. rewrite refusal_b_mprotect by exact Hno.
+  destruct (bv_eqb (eff_ret eff) (errno_ret ENOMEM)) eqn:E; [|reflexivity].
+  apply bv_eqb_eq in E. contradiction.
+Qed.
+
+(* LPS 08b1429: munmap (215) joined the allocation family ([Run.alloc_mark_sysnos], and
+   [injected_table]'s [mkInjectedArm 215%Z FamAlloc munmap_errnos]), so it gets the 222/226 lemmas. *)
+Lemma ret_einval_not_enomem : errno_ret EINVAL <> errno_ret ENOMEM.
+Proof. intro E. apply (f_equal bv_unsigned) in E. vm_compute in E. discriminate E. Qed.
+
+Lemma refusal_b_munmap : forall i m r,
+  bv_unsigned (in_sysno i) = 215%Z -> refusal_b i m r = bv_eqb r (errno_ret ENOMEM).
+Proof.
+  intros i m r Hno. unfold refusal_b. rewrite Hno. cbn [Z.eqb Pos.eqb].
+  change (injected_arm 215) with (Some (mkInjectedArm 215 FamAlloc munmap_errnos)).
+  cbn [ia_errnos ret_in_errnos munmap_errnos existsb]. rewrite orb_false_r. reflexivity.
+Qed.
+
+Lemma family_off_munmap : forall i,
+  bv_unsigned (in_sysno i) = 215%Z -> injected_family_off ACFG i = true.
+Proof. intros i Hno. unfold injected_family_off. rewrite Hno. reflexivity. Qed.
+
+Lemma ns_nonenomem_munmap : forall i m eff,
+  bv_unsigned (in_sysno i) = 215%Z -> eff_ret eff <> errno_ret ENOMEM ->
+  ~ spurious_refusal_cfg ACFG i m eff.
+Proof.
+  intros i m eff Hno Hne. apply ns_not_refusal. rewrite refusal_b_munmap by exact Hno.
   destruct (bv_eqb (eff_ret eff) (errno_ret ENOMEM)) eqn:E; [|reflexivity].
   apply bv_eqb_eq in E. contradiction.
 Qed.

@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs: copied from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/B/Prog/LeafCgGlue.v at recipes commit 88154566652a310ff96f54a5442e5c73fdaad090 (a recipes commit newer than the unit's base 25e3d17bdb50) for reac-repacer/fuzz_uci; module path OSSVerify.Proofs.reac_repacer.fuzz_uci.lib. *)
+(* Modified by Theorem Labs: copied from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/B/Prog/LeafCgGlue.v at recipes (a recipes commit newer than the unit's base) for reac-repacer/fuzz_uci; module path OSSVerify.Proofs.reac_repacer.fuzz_uci.lib. *)
 (* LeafCgGlue: proof of the ONE generic leaf translation of decode image B's shared leaf kit (LeafCgKit.v):
    a footprint run of a leaf (ExecF.evtF at the call state, its post read off the return state) gives the cgif_file
    leaf obligation (SRr world walk to dleaf_post / dleaf_post_fx). Port of fuzz_decode to the released
@@ -9,7 +9,7 @@
      the same accesses (mstepsF_eqv, the footprint form of decode's RegisterBridge.msteps_register_transport).
    * The run then enters the world walk through the kit's bridge_evtF_stmt (cgif YA0nR.v SRr_fevt) at RNG_W W, and
      returns through SRr_ret_stmt (cgif YA0n.v:39 SRr_ret).
-   * Post: AR by AR_frame_stmt (YG0d.v:437) + AR_stack_stmt + AR_sbm_stmt (A/AD1y.v:139); the bytes the leaf may
+   * Post: AR by AR_frame_stmt (YG0d.v:437) + AR_stack_stmt + AR_sbm_stmt (A/AD1y.v:140); the bytes the leaf may
      write are visible (stack window: ecall_pre's apresent; WR: the premise) and present after the run (stack
      window: every run grows memory, YI04.v step_mem_grows; WR: mrd outside the image is the overlay byte);
      aview through aview_ext_stmt / aview_some_stmt; the return pc through ret_ok_stmt.

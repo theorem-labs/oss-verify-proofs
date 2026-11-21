@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/YE05.v, with its module paths changed; 2671 of its 2756 lines of code are new or changed and 333 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segA.v; 2111 of its 2334 lines of code are new or changed and 2533 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_round_trip (fs.asan 0x81a9c, 667 insns), build A, lane A23: the two straight-line pieces between the walk's
    two loops -
      segment 6  0x81f58 -> 0x81fb8 (the seg-5 loop exits at 0x81f58, the join with the l = 0 bypass): the NUL store
@@ -24,13 +25,13 @@
    re-seated on s6's atom), and 0x82058 `bnez a0` -> 0x824b8 by B64Canon.canonical_enc (a23_eq1).
 
    rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from
-   a working branch d25a984c903 proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_sd2.v
+   a working branch proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_sd2.v
    (sd2_tail :494-870 - the 0x81f6c .. 0x8481c stretch this lane's two pieces are the ASan-state form of; sd2_postlen
    :458-489 is 0x81f78 -> 0x81fb8 instruction for instruction; sd2_last :312-407 is the second strcmp into the
    decoder; the canonical / non-canonical case split at :732-869 is this file's a23_seg89 case split, with
    B64Canon.canonical_enc the same bridge), check_round_trip_stdefs.v St2 :244 / St3 :260 (the stage cuts this lane
    runs between) and check_round_trip_loops.v crt_canonical :1032 (the exit shape at 0x82044 the loop hands over)).
-   The statement form is S0's: crt_from / crt_INV_* of lib/A/FSH_crt_base.v, not d25a984c903's a_call_pre/post.
+   The statement form is S0's: crt_from / crt_INV_* of lib/A/FSH_crt_base.v, not's a_call_pre/post.
 
    Lane contract (crt-lane-head.md, a Theorem Labs lane): this file proves
      a23_seg6  : crt_from ss_81fb8 (INV_81fb8 /\ R7) -> crt_from ss_81f58 (INV_81f58 /\ R5)

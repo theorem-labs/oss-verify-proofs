@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise of the exit path is carried as a section hypothesis). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -30,6 +31,7 @@ Section ReadErr.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  Hypothesis Hrdr : m_channel_reader model = true.
 
   Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
   Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
@@ -52,7 +54,7 @@ Section ReadErr.
     eapply (re_segBC sp0 BL model Hvsp Hh Hlazy path pp (Z.of_nat (length path)) _ t8 vals);
       try eassumption; try lia.
     intros vals' R' M' HL' Q0 Q2 Q113 HR' HK' Hstr'.
-    eapply (re_segF sp0 BL model Hvsp Hh Hlazy Hfd2 path pp _ vals'); try eassumption; lia.
+    eapply (re_segF sp0 BL model Hvsp Hh Hlazy Hfd2 Hrdr path pp _ vals'); try eassumption; lia.
   Qed.
 
   (* [comment removed for export] *)

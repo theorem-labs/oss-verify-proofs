@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (2 recorded proofs replaced by written proofs (REFILL, MID)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -52,11 +53,9 @@ Hypothesis BACK : afree_back_stmt DI AFK CI.
 
 Notation AHQm := (AHQm DI ASEC_of AFK).
 Lemma REFILL : forall Q1, refill_stmt (AHQm Q1).
-Proof.
-ltac2:(KReplay.run1 (kr_t_AFreeRecRP ()) ["CANSEC1"; "S"] "h02Q1p;1p;5p;6p;3p-1R0p10000p4p710p8P0p1000QR1p4p710p8P0P1p4p7210p8p1000nR1p4p710p1001ep4p710R0p8P1p4p7210P0p8p1002Cp4p710R1p1002aR2p4p710R3p8P1P2p4p7210R2p8p1003:p4p710P0p8p1003op4p70R4p1004fp4p710p8P4p1005=p4p710p8P4p1005Yp4p710p8P4P0p8P4p10066p4p710p8P4p1006Rp4p710p8P4p1006op4p710p8P4p1007Hp4p710p8P4p1007hp4p710p8P4p1008<p4p710p8p1008Pp4p710R4P1p8P4P3p8P4P2p8P4p1008dp4p73110p8p10096p4p7210P0p8g009bj13Tg00:Yj52Tg00;Vj60Tg00<Xj31Tg00=Tp,2rcR0P0p,2DIR4%30R2p,3AFKR3f0R1D2P0P4P2P3p,2HLP1E031W0o"). Qed.
+Proof. intros Q1. exact (arefillP (AHQm Q1) (AHQm_laws DI ASEC_of AFK HL Q1)). Qed.
 Lemma MID : mid_stmt DI ASEC_of AFK CI.
-Proof.
-ltac2:(KReplay.run1 (kr_t_AFreeRecRP ()) ["CANSEC1"; "S"] "p;1p;7p-1R0p10000p4p710p8P0p1000QR1p4p710p8P0P1p4p7210p8p1000nR1p4p710p1001ep4p710R0p8P1p4p7210P0p8p1002Cp4p710R1p1002aR2p4p710R3p8P1P2p4p7210R2p8p1003:p4p710P0p8p1003op4p70R4p1004fp4p710p8P4p1005=p4p710p8P4p1005Yp4p710p8P4P0p8P4p10066p4p710p8P4p1006Rp4p710p8P4p1006op4p710p8P4p1007Hp4p710p8P4p1007hp4p710p8P4p1008<p4p710p8p1008Pp4p710R4P1p8P4P3p8P4P2p8P4p1008dp4p73110p8p10096p4p7210P0p8g009bj11Tg00>Lj70Tp,2rcR0p,2DI%10p,3AFKp,2HLp,2CIp,5CI_OKF0o"). Qed.
+Proof. exact (mid_kit DI ASEC_of AFK HL CI CI_OK). Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)

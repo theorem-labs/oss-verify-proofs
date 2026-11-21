@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YCbq.v (donor image sha256 7093581aab04), with its module paths changed and its addresses moved to libreac/fuzz_ctrl's ASan build. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed proc_but_pins, proc_but_pins_refl). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YImgTop.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -31,9 +32,15 @@ Open Scope Z_scope.
 Ltac appn := unfold app_addr, in_app, amem_range, ASAN_CEIL, kLowShadowBeg, kLowMemEnd, kHighMemBeg, kHighMemEnd, kHighShadowEnd, kImgLo in *.
 Ltac zlia := appn; lia.
 Definition proc_but_pins (md md' : Model) : Prop :=
+(* ProcState gained four fields after [procst_statpins] at the revision
+   (75d69e00 State.v:4555/4608/4651/4701: sigpipe_pending, channel_reader, sigpipe_action,
+   sigpipe_terminal).  Taken from [md], NOT [md'], so the relation is STRENGTHENED: exactly
+   one field of the process state may still move. *)
 m_proc md' = mkProcState (procst_halted (m_proc md)) (procst_tid (m_proc md)) (procst_creds (m_proc md)) (procst_setsid_succeeded (m_proc md))
 (procst_sigmask (m_proc md)) (procst_children (m_proc md)) (procst_utsname (m_proc md)) (procst_sigaltstack_installed (m_proc md))
-(procst_killed (m_proc md)) (procst_sigabrt_pending (m_proc md)) (procst_abort_terminal (m_proc md)) (m_statpins md').
+(procst_killed (m_proc md)) (procst_sigabrt_pending (m_proc md)) (procst_abort_terminal (m_proc md)) (m_statpins md')
+(procst_sigpipe_pending (m_proc md)) (procst_channel_reader (m_proc md)) (procst_sigpipe_action (m_proc md))
+(procst_sigpipe_terminal (m_proc md)).
 Definition aos_step (FP : list (Z * Z)) (md md' : Model) : Prop :=
 m_io md' = m_io md /\ m_pipes md' = m_pipes md /\
 YI16.fds_rel (m_fds md) (m_fds md') /\ YI16.fs_rel (m_fs md) (m_fs md') /\
@@ -41,7 +48,7 @@ YI16.fds_rel (m_fds md) (m_fds md') /\ YI16.fs_rel (m_fs md) (m_fs md') /\
 proc_but_pins md md' /\
 (~ YI16.sink_open_fp FP -> m_fd md' = m_fd md /\ m_fsys md' = m_fsys md /\ m_proc md' = m_proc md).
 Lemma proc_but_pins_refl : forall md, proc_but_pins md md.
-Proof. intros [fd vm io fs [h ti c ss sm ch u sa k sp at_ pins] li tm]. reflexivity. Qed.
+Proof. intros [fd vm io fs [h ti c ss sm ch u sa k sp at_ pins spp chr spa spt] li tm]. reflexivity. Qed.
 Lemma proc_but_pins_trans : forall m1 m2 m3, proc_but_pins m1 m2 -> proc_but_pins m2 m3 -> proc_but_pins m1 m3.
 Proof.
 intros m1 m2 m3 H12 H23. unfold proc_but_pins, m_statpins in *. rewrite H23. rewrite H12. reflexivity.

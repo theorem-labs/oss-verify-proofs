@@ -4,14 +4,15 @@
 (* Modified by Theorem Labs, 2026-10: the boundary states and segment statements of LLVMFuzzerTestOneInput's ASan+UBSan walk (plugin-hostd/fuzz_command image B, 0x86530), the B twin of lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh6.v (the CL_*_stmtX statements: from a point of the function to its return, under the entry's context) and A/ACf5.v (rtcx, rt_base: the entry's facts bundled once). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths, module names, addresses and numbers changed; 469 of its 518 lines of code are new or changed and 289 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths and module names changed; 80 of its 104 lines of code are new or changed and 494 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* m_file on fuzz_segconf.asan-ubsan (image B, pin c3796c0b38f3), segment S_MF_FRONT of lib/B/Prog/m_file_m.v
    (HEAD 0x86378 -> LONG 0x863d4, HDR 0x864f4, KEY 0x8661c, TAIL 0x86820; the image-B m_file segment table section 2, the image-B m_file cut map
    section 4, 88 instructions): the program points the segment's walk is cut at, one FR_<point>_stmt each in the
    form of m_file_m.v's MF_<cut>_stmt (a state at BASE + pc whose registers and memory satisfy the point's predicate
    realizes the contract's post), and the logic that chains the pieces into MF_HEAD_stmt (S n). No instruction is
    executed here. A walk lane of the image-B m_file-family owner's G2B (on a working branch).
-   ADAPTED from image A's lib/A/Prog/m_file_s_front_m.v (the image-A m_file-family lane, commit
-   ae5120b8b0ec): the same head context fr_ctx and the same kind of points, at image B's code. Image B calls strip
+   ADAPTED from image A's lib/A/Prog/m_file_s_front_m.v (the image-A m_file-family lane):
+   the same head context fr_ctx and the same kind of points, at image B's code. Image B calls strip
    (image A inlines it), so A's forward / backward strip points SF / SM / SB are B's one strip call ST -> SR; image
    B keeps the line start and end in the frame cells 176(s1) / 168(s1) (strip's arguments), A in registers.
 

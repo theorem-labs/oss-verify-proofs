@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the rseq-dependent auxv, the launch input's kernel build): changed LH2P, ME, SSP and 8 more; added entry, inp, mbase; removed Hfits. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -37,7 +38,7 @@ Lemma locale_img : forall k, (k < 6)%nat ->
 Proof. intros k Hk. do 6 (destruct k as [|k]; [vm_compute; reflexivity|]). lia. Qed.
 
 Section DrvF.
-  Context {RE : RunEnv}.
+  Context {RE : RunEnv}. Context {RO : ReaderOn}.
   Variable L : heap_layout.
   Variable HI : heap_iface.
   Hypothesis HIok : heap_iface_ok L scfg HI.
@@ -59,7 +60,9 @@ Section DrvF.
   Hypothesis Hve : valid_envp envv.
   Hypothesis Hvsp : valid_sp sp0.
   Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-  Hypothesis ME : main_entry sp0 [a0s; path] envv uid hw rdraw tid regs0 mem0.
+  Variable inp : ProcInput.
+  Variable mbase entry : word.
+  Hypothesis ME : main_entry inp mbase entry sp0 [a0s; path] envv uid hw rdraw tid regs0 mem0.
   Hypothesis Hfile : fs_lookup fs0 path = Some fdata.
   Hypothesis Hplen : (length path <= 4095)%nat.
   Hypothesis DL : drv_layout L sp0.
@@ -74,7 +77,6 @@ Section DrvF.
   Hypothesis LXok : lib_exit_ok LSt.
 
   Hypothesis Huid : (bv_unsigned uid < 2 ^ 32)%Z.
-  Hypothesis Hfits : entry_stack_fits sp0 [a0s; path] envv.
 
   Let Hsp : (0x7fff80000000 <= bv_unsigned sp0 <= 0x800000000000)%Z := conj (proj1 Hvsp) (proj1 (proj2 Hvsp)).
   Let Hal : (bv_unsigned sp0 mod 16 = 0)%Z := proj2 (proj2 Hvsp).
@@ -86,9 +88,12 @@ Section DrvF.
   Let PL : Z := PL fdata.
   Let CALLS : Z := CALLS fdata.
   Let payload : list byte := payload fdata.
-  Let lh_vals := lh_vals sp0 a0s path envv tid fdata.
+  (* U/ twin of Pm10DrvF.v:96 -- [lh_vals] gained [rdraw] before [tid] and a
+     trailing [inp].  Sibling U/Pm10DrvE_u.v:92 already carries this form. *)
+  Let lh_vals := lh_vals sp0 a0s path envv rdraw tid fdata inp.
   Let blk_facts := blk_facts L fdata CAP.
-  Let lh1_k := lh1_k scfg L HI sp0 a0s path envv hw rdraw tid mem0 fs0 stdin0 fdata CAP crC.
+  (* Same class as :92 -- [lh1_k] gained a trailing [inp]; U/Pm10DrvE_u.v:94 has it. *)
+  Let lh1_k := lh1_k scfg L HI sp0 a0s path envv hw rdraw tid mem0 fs0 stdin0 fdata inp CAP crC.
   Let cr1 := cr1 L fdata crC.
   Let relay_regs := relay_regs sp0 a0s path hw rdraw tid mem0 VM0 fs0 stdin0 fdata Hvsp Htid Hplen CAP HCAP.
   Let relay_agree := relay_agree sp0 a0s path hw rdraw fdata Hplen.
@@ -96,10 +101,13 @@ Section DrvF.
   Let relay_lo := relay_lo sp0 path fdata Hplen.
   Let relay_81 := relay_81 sp0 path fdata Hplen.
   Let relay_101 := relay_101 sp0 path fdata Hplen.
-  Let hiv_facts' := hiv_facts' sp0 a0s path envv uid hw rdraw Hva Hve Hvsp Hplen.
+  (* as U/Pm10DrvE_u.v:104: U/Pm10DrvD_u's [hiv_facts'] discharges [sp0 a0s path envv uid hw
+     rdraw tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME Hplen] *)
+  Let hiv_facts' := hiv_facts' sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME Hplen.
   Let content_block' := content_block' sp0 a0s path hw rdraw fdata Hvsp.
-  Let SSP := SSP scfg L HI sp0 a0s path envv hw rdraw tid mem0 fs0 stdin0 fdata CAP Lay LSt.
-  Let LH2P := LH2P scfg L HI sp0 a0s path envv hw rdraw tid mem0 fs0 stdin0 fdata CAP Lay LSt.
+  (* U/Pm10DrvE_u's [SSP]/[LH2P] read its [lh_vals], which takes [inp] *)
+  Let SSP := SSP scfg L HI sp0 a0s path envv hw rdraw tid mem0 fs0 stdin0 fdata inp CAP Lay LSt.
+  Let LH2P := LH2P scfg L HI sp0 a0s path envv hw rdraw tid mem0 fs0 stdin0 fdata inp CAP Lay LSt.
   Let E := E fs0.
 
   Hypothesis Hok : (6 + CFG <= LEN)%Z.
@@ -151,7 +159,8 @@ Section DrvF.
           rdn RSEGS M (Z_to_bv 64 a) n = Some bs -> rdn RSEGS (mem_denot (ENVb vals) M log) (Z_to_bv 64 a) n = Some bs).
   Proof.
     intros vals M log LB cr VM g P0 Hlog Hbelow. pose proof Hsp as Hsp'.
-    pose proof (dl_ro L sp0 DL) as RO. pose proof (dl_static L sp0 DL) as STA.
+    (* [RO] now names the section's [Context {RO : ReaderOn}]: Error: RO is already used *)
+    pose proof (dl_ro L sp0 DL) as ROd. pose proof (dl_static L sp0 DL) as STA.
     pose proof (dl_img_lo L sp0 DL) as IL. pose proof (dl_img_hi L sp0 DL) as IH.
     assert (FR : forall a, (0 <= a)%Z -> ~ CPpw a -> mem_denot (ENVb vals) M log (Z_to_bv 64 a) = M (Z_to_bv 64 a))
       by (intros; apply mem_pw_frame; assumption).
@@ -169,7 +178,7 @@ Section DrvF.
                 right; apply Classical_Prop.NNPP; intros Hn; apply B; split; [lia| exact Hn]).
           -- lia.
           -- apply STA in C. lia.
-        * apply RO in A. lia.
+        * apply ROd in A. lia.
       + intros x Hx. exact (mem_denot_grows (ENVb vals) M log x Hx).
     - intros HA a Ha. rewrite AB by exact Ha. apply HA. exact Ha.
     - intros Hls. apply (liof_frame Lay scfg HI LSt LIok g M _ Hls).
@@ -191,7 +200,8 @@ Section DrvF.
           rdn RSEGS M (Z_to_bv 64 a) n = Some bs -> rdn RSEGS M' (Z_to_bv 64 a) n = Some bs).
   Proof.
     intros M M' su bufp bufsz LB cr VM g HP Hlo Hhi. pose proof Hsp as Hsp'.
-    pose proof (dl_ro L sp0 DL) as RO. pose proof (dl_static L sp0 DL) as STA.
+    (* [RO] now names the section's [Context {RO : ReaderOn}]: Error: RO is already used *)
+    pose proof (dl_ro L sp0 DL) as ROd. pose proof (dl_static L sp0 DL) as STA.
     pose proof (dl_img_lo L sp0 DL) as IL. pose proof (dl_img_hi L sp0 DL) as IH.
     assert (FR : forall a, (0 <= a < 2 ^ 64)%Z -> ~ CPpw a \/ ((0xc4c58 <= a < 0xc4c78) \/ (0xc4c88 <= a < 0xc4c90) \/ (0xc4c98 <= a))%Z /\ (a < su - 112 \/ su <= a)%Z ->
                  M' (Z_to_bv 64 a) = M (Z_to_bv 64 a)).
@@ -206,7 +216,7 @@ Section DrvF.
                 right; apply Classical_Prop.NNPP; intros Hn; apply B; split; [lia| exact Hn]).
           -- left. lia.
           -- apply STA in C. left. lia.
-        * apply RO in A. lia.
+        * apply ROd in A. lia.
       + exact (swp_grows _ _ _ _ _ _ HP).
     - intros HA a Ha. pose proof (u64_range a). rewrite <- (Z_to_bv_bv_unsigned 64 a), FR; [rewrite Z_to_bv_bv_unsigned; apply HA; exact Ha | lia | right; lia].
     - intros Hls. apply (liof_frame Lay scfg HI LSt LIok g M M' Hls).
@@ -220,18 +230,32 @@ Section DrvF.
   Qed.
 
   Lemma init_facts : forall vals M,
-    vals_ev vals 0 = sp0 -> vals_ev vals 3 = auxvp sp0 a0s path envv -> vals_ev vals 4 = rnd sp0 a0s path envv -> vals_ev vals 5 = tid ->
+    vals_ev vals 0 = sp0 -> vals_ev vals 3 = auxvp sp0 a0s path envv -> vals_ev vals 4 = rnd sp0 a0s path envv inp -> vals_ev vals 5 = tid ->
     know_ok RSEGS (ENVb vals) M knLB1 -> above M ->
-    lib_init_facts Lay (bv_unsigned (auxvp sp0 a0s path envv)) (bv_unsigned uid) (bv_unsigned (rnd sp0 a0s path envv)) (bv_unsigned tid)
+    lib_init_facts Lay (bv_unsigned (auxvp sp0 a0s path envv)) (bv_unsigned uid) (bv_unsigned (rnd sp0 a0s path envv inp)) (bv_unsigned tid)
                    (CANZ rdraw) (bv_unsigned hw) M.
   Proof.
     intros vals M P0 P3 P4 P5 HK HA. pose proof Hsp as Hsp'.
-    destruct (auxvp_u sp0 a0s path envv uid hw rdraw Hva Hve Hvsp) as [AV1 AV2].
-    destruct (rnd_u sp0 a0s path envv uid hw rdraw Hva Hve Hvsp) as (RN1 & RN2 & RN3 & RN4).
-    pose proof (auxv_off_bound RPH sp0 rdraw [a0s; path] envv uid hw) as AOB.
-    pose proof (build_stack_bytes_within_span RPH sp0 [a0s; path] envv uid hw rdraw) as BSB.
-    pose proof Hfits as FIT. unfold entry_stack_fits, sp_window_hi in FIT.
-    pose proof (u64_range (auxvp sp0 a0s path envv)) as AVR. pose proof (u64_range (rnd sp0 a0s path envv)) as RNR.
+    destruct (auxvp_u sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME) as [AV1 AV2].
+    destruct (rnd_u sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME) as (RN1 & RN2 & RN3 & RN4).
+    (* 727298f3: [RefLayout]'s bounds are section lemmas over the launch, and
+       [PropExec.build_stack_bytes_within_span] is retired (its span is no longer an
+       upper bound on the kernel's block).  Same shape as [Pm10HeapBridge]'s AOB and
+       [Pm10MainEntry]'s Hl: [lay_bsb_len] carries [StepTac.bsb_bound]. *)
+    destruct (main_entry_inp inp mbase entry sp0 [a0s; path] envv uid hw rdraw tid regs0 mem0 ME)
+      as (Eav & Eev & _ & _ & Hvl & brk & Hlau).
+    assert (Hva' : valid_argv (in_argv inp)) by (rewrite Eav; exact Hva).
+    assert (Hve' : valid_envp (in_envp inp)) by (rewrite Eev; exact Hve).
+    assert (AOB : (auxv_off (in_argv inp) (in_envp inp) + auxv_size (kb_rseq (in_kernel inp)) + 16
+                   <= length (entry_stack_image inp mbase RPH entry sp0 rdraw))%nat)
+      by (first
+            [ solve [eapply auxv_off_bound; first [exact Hva' | exact Hve' | exact Hvl | exact Hlau | exact Hal
+                                                  | (unfold sp_window_lo; lia) | (unfold sp_window_hi; lia)]]
+            | (unfold entry_stack_image; rewrite length_build_stack_bytes; cbn [launch_auxv la_rseq];
+               unfold auxv_off, block_head_size, block_items; lia) ]).
+    assert (BSB : (Z.of_nat (length (entry_stack_image inp mbase RPH entry sp0 rdraw)) <= 2101782)%Z)
+      by (eapply lay_bsb_len; first [exact Hva' | exact Hve' | exact Hvl | exact Hlau | (unfold sp_window_lo; lia) | (unfold sp_window_hi; lia)]).
+    pose proof (u64_range (auxvp sp0 a0s path envv)) as AVR. pose proof (u64_range (rnd sp0 a0s path envv inp)) as RNR.
     pose proof (u64_range uid) as UR. pose proof (u64_range hw) as HWR. pose proof (CANZ_range rdraw) as CR.
     assert (KC : forall addr, kblob_find knLB1 (ELit 0) addr = Some (ELit 8, 2%nat) ->
                  rdn RSEGS M (Z_to_bv 64 addr) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 (CANZ rdraw)))).
@@ -239,10 +263,13 @@ Section DrvF.
       pose proof (kblob_rdn RSEGS (ENVb vals) M knLB1 (ELit 0) addr (ELit 8) 2%nat HK Hc) as R.
       unfold adenot, v_addi in R. cbn [a_base a_off edenot eb ENVb ENV blobs_ev nth app blobs0] in R.
       rewrite length_word_to_le_bytes, u_small in R by lia. rewrite Z.add_0_l in R. exact R. }
+    (* LibIface.lib_init_facts lost its two auxv conjuncts (the __auxv cell bundle and the
+       20 auxv words; Main's ruling, option D): false at LPS 75d69e00 and read by no
+       consumer.  OLD: [(dll_auxvp Lay L DLL)] in this rewrite and five more splits. *)
     unfold lib_init_facts. rewrite (dll_heap Lay L DLL), (dl_segs L sp0 DL), (dl_sptop L sp0 DL), (dll_init_img Lay L DLL),
       (dll_td_self Lay L DLL), (dll_td_tid Lay L DLL), (dll_td_locale Lay L DLL), (dll_locale Lay L DLL), (dll_td_canary Lay L DLL),
-      (dll_guard Lay L DLL), (dll_auxvp Lay L DLL), (dll_init_cells Lay L DLL). cbv zeta. unfold cellz.
-    split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [|split]]]]]]]]]]]]]]]]].
+      (dll_guard Lay L DLL), (dll_init_cells Lay L DLL). cbv zeta. unfold cellz.
+    split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [|split; [|split]]]]]]]]]]]].
     - intros iv a Hin Hr.
       destruct Hin as [<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[]]]]]]]]]]]]; cbn [fst snd] in Hr.
       + pose proof (know_nth RSEGS _ _ knLB1 ltac:(let q := kidx knLB1 (is_kimg_cov 0x10000 0xb4a1c) in exact q) _ HK eq_refl) as KI.
@@ -277,18 +304,6 @@ Section DrvF.
     - apply KC. vm_compute. reflexivity.
     - apply KC. vm_compute. reflexivity.
     - lia.
-    - krd HK 0xf6a98%Z 8%nat Hav. rewrite Hav. cbn [ev ENVb ENV]. rewrite P3, Z_to_bv_bv_unsigned. reflexivity.
-    - lia.
-    - lia.
-    - pose proof (know_nth RSEGS _ _ knLB1 ltac:(let q := kidx knLB1 (kentry_eqb (KAlign (EVar 3) 8)) in exact q) _ HK eq_refl) as KA.
-      cbn [kentry_ok edenot ev ENVb ENV] in KA. rewrite P3 in KA. destruct KA as [_ KA]. exact KA.
-    - intros j Hj.
-      transitivity (rdn RSEGS mem0 (Z_to_bv 64 (bv_unsigned (auxvp sp0 a0s path envv) + 8 * Z.of_nat j)) 8).
-      + apply rdn_agree. intros q Hq. apply HA. rewrite (u_small (bv_unsigned (auxvp sp0 a0s path envv) + 8 * Z.of_nat j)) by lia.
-        rewrite u_small by lia. lia.
-      + rewrite (auxv_word_at sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hva Hve Hvsp ME j Hj).
-        f_equal. f_equal. unfold auxv_words. rewrite (dll_phdr Lay L DLL), (dll_phent Lay L DLL), (dll_phnum Lay L DLL).
-        do 20 (destruct j as [|j]; [cbn; rewrite ?Z_to_bv_bv_unsigned; reflexivity|]). lia.
     - lia.
     - lia.
     - lia.
@@ -435,7 +450,7 @@ Section DrvF.
     lazymatch type of HK with know_ok _ _ ?Mc ?kn =>
     lazymatch type of HR with regs_ok _ ?sr ?Rc =>
       assert (HSC : stdio_call 134 sr kn = Some scP) by vmc_refl;
-      pose proof (stdio_call_sound_fr scfg vals2 _ sr kn Rc Mc (model2 VM2) scP [Z_to_bv 8 48] [Z_to_bv 8 10] K HR HK
+      pose proof (stdio_call_sound_fr scfg vals2 _ sr kn Rc Mc (model2 VM2) scP [Z_to_bv 8 48] [Z_to_bv 8 10] K ltac:(rdr) HR HK
                     (eq_trans (f_equal (fun n => stdio_call n sr kn) HL') HSC)) as Hsc;
       cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn scP length app Z.of_nat Pos.of_succ_nat Pos.succ] in Hsc;
       unfold W; cbn [map zero_lines app];
@@ -530,10 +545,11 @@ Section DrvF.
     induction n as [|n IH]; intros j Hn Hjn; [lia|].
     destruct n as [|n'].
     - replace (j + 1 - 1)%nat with j by lia. change (Z.of_nat 1) with 1%Z.
-      apply last_S; assumption.
+      (* [last_S] and [iter2] read [hiv_facts'], so they take [uid regs0 mbase entry] for [ME] *)
+      apply last_S with (uid := uid) (regs0 := regs0) (mbase := mbase) (entry := entry); assumption.
     - apply step_S; try assumption; [lia|].
       replace (Z.of_nat (S (S n')) - 1)%Z with (Z.of_nat (S n')) by lia.
-      apply iter2; try assumption; [lia | unfold E, Pm10DrvE_u.E; apply t_emit_has_nil |].
+      apply iter2 with (uid := uid) (regs0 := regs0) (mbase := mbase) (entry := entry); try assumption; [lia | unfold E, Pm10DrvE_u.E; apply t_emit_has_nil |].
       replace (j + S (S n') - 1)%nat with (S j + S n' - 1)%nat by lia. apply IH; lia.
   Qed.
 

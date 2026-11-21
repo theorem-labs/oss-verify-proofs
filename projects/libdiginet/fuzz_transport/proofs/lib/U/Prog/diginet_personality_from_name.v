@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
-(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_codec proofs/libdiginet/fuzz_codec/lib/U/Prog/diginet_personality_from_name.v at d8e4e696562a3ec070d61f99e264ce9d80f5a5bd to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_codec proofs/libdiginet/fuzz_codec/lib/U/Prog/diginet_personality_from_name.v to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (** diginet_personality_from_name (diginet_codec.c:17-25; 34 instructions at 0x18644, frame 0x30). a0 is not
     NULL, so 0x18644 `beqz` falls through; the prologue saves ra, s0-s3 and sets s2 = &personalities[0]. Each of
     the two turns loads the announce_name pointer at s3 + 8 (s3 = s2 + 24 i, in the RELRO tables) and calls

@@ -12,7 +12,7 @@ Writes the input to /tmp/libfuzzer.<pid>, creates an indexer and indexes it (FFM
 - The harness source was modified for these builds; the modified copy is not in this release yet.
 
 ## What the harness checks
-The harness makes no check of its own beyond not crashing, so a statement about it says only that the code it calls never crashes, hangs or trips a sanitizer.
+The harness makes no check of its own beyond not crashing. Its halts statements say only that the code it calls never crashes, hangs or trips a sanitizer. Its agreement statements say only that the code never crashes or trips a sanitizer, and allow a run that never ends.
 
 ## Statements ([Statements.v](Statements.v))
 

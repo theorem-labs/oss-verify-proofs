@@ -2,7 +2,7 @@
    that the piece files of segment B10b of reac_segconf_parse_file (pf_seg_B10b_c.v, pf_seg_B10b_r.v,
    pf_seg_B10b_s.v, pf_seg_B10b_j.v) share. The B10b segment lane of the image-B G3 walk owner, 2026-10-30. proves no function
    (kind: model and invariant lemmas).
-   ADAPTED from a working branch's lib/A/Prog/pf_a10b_f.v (a B10b sub-lane of an image-A segment lane, 313e573b5900): the
+   ADAPTED from a working branch's lib/A/Prog/pf_a10b_f.v (a B10b sub-lane of an image-A segment lane): the
    text is image-independent (no machine state, no SRr, no Section hypothesis); the changes are the module paths
    (the B kit copies lib.B YG0f / YG0n and lib.B.Prog SegABase in place of lib.Reusable and lib.A.Prog; this
    lane's kit pf_seg_B10b_k.v for the word list), the names (prefix b10f_ / b10b_ for a10f_ / a10b_,

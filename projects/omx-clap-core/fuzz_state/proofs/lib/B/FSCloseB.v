@@ -2,8 +2,8 @@
    Statements.asan_ubsan_agrees and Statements.asan_ubsan_halts, from NAMED Section hypotheses (rule 24: no function
    proved; this file is assembly only, no walk is written here).
 
-   The B twin of lib/A/FSClose.v (a working branch 1469f04666b), same
-   decomposition (a Theorem Labs lane's lib/A/FMTfibParts.v, a working branch aeb12aaa12b):
+   The B twin of lib/A/FSClose.v (a working branch), same
+   decomposition (a Theorem Labs lane's lib/A/FMTfibParts.v, a working branch):
      TFIB_T_B <-  lib/B/FSTfibPartsB.v TFIB_T_of_lib_B at LI := LI_fs: the start-up, HS_ok_open, the driver main, the
                   allocator, the driver's memcpy, the read checks and the stdio sites are PROVED lemmas of image B's
                   relocated core there (lib/B/YD1q.v tfib_srealizesX); its three premises are the program part LIBX
@@ -64,7 +64,7 @@ Local Abbreviation SKB := FSH_Base.fsB_sink_head.
 (* ===================================================================================================== *)
 
 (* the entry premise YCeg.TfibLib TfibBU (lib/B/YCeg.v:27). Port-from: cgif_file_fuzzer lib/YCed.v:29-48 tfibX_lib
-   (c8557374ad2e), the B twin of lib/A/FSClose.v fs_tfib_lib, at image B's numbers: lib_const_addr is the constant
+   (theorem-labs/oss-verify-proofs@6b32741d849a), the B twin of lib/A/FSClose.v fs_tfib_lib, at image B's numbers: lib_const_addr is the constant
    word [0x10320, 0x10328) (lib/B/YCeg.v:26), errno is TFIB_ERRNO 0x5db38c (lib/B/YF0m.v:19) in the fourth load
    segment, the owned statics are lib/B/YF0m.v Tfib_owned_static, gp is TFIB_GP 0x10800 (lib/B/YF0m.v:18). *)
 Lemma fsB_tfib_lib_consts_chk :
@@ -126,10 +126,10 @@ Local Abbreviation B := TfibBU (only parsing).
 (* ---- RUNTIME, U forms at image B (lib/B/FSH_Rt.v FsRt and lib/B/FSH_Fn_entry.v:69 FsEntryRt) ---- *)
 Local Abbreviation LAWS0 := (YG0q.AR_laws_ok tfibsegs TfibBU).
 Local Abbreviation HD0 := (fun t => eq_refl).
-(* strlen, memchr, bcmp, memcpy: a Theorem Labs lane's image-B interceptors (a working branch 26a456aaf33) *)
+(* strlen, memchr, bcmp, memcpy: a Theorem Labs lane's image-B interceptors (a working branch) *)
 Lemma H_strlen : forall (rc : YM05.RunCeil) (fx : YK11.FPState), astrlen_realizesU tfibsegs B PC_strlen.
 Proof. intros rc fx. exact (FSrtcells.fs_strlen_realizesU_s TfibBU LAWS0 TfibBU_syms fsB_tfib_lib). Qed.
-(* strcmp: a Theorem Labs lane's lib/B/Rt/StrcmpU.v fs_strcmp_realizesU (in S0 8fee0cc526f) *)
+(* strcmp: a Theorem Labs lane's lib/B/Rt/StrcmpU.v fs_strcmp_realizesU (in S0) *)
 Lemma H_strcmp : forall (rc : YM05.RunCeil) (fx : YK11.FPState), astrcmp_realizesU tfibsegs B PC_strcmp.
 Proof. intros rc fx. exact (StrcmpU.fs_strcmp_realizesU TfibBU LAWS0 TfibBU_syms). Qed.
 Lemma H_memchr : forall (rc : YM05.RunCeil) (fx : YK11.FPState), amemchr_realizesU tfibsegs B PC_memchr.
@@ -234,8 +234,8 @@ Proof.
   exact (@FSW_fuzz_malloc.fuzz_malloc_holds fx rc SKB B (H_fs_img_facts rc) fsB_shadow_syms TfibBU_syms ENV
     (H_malloc rc fx) (@FSpoisonW.tfib_poison16 fx rc B LAWS TfibBU_syms)).
 Qed.
-(* decode at image B (a Theorem Labs lane's lib/B/preset_base64_decode_ff_orch.v decode_spec_ff_holds, a working branch
-   856c422cb0b; from arm A's work): image facts, shadow cells, strlen, memchr, fuzz_malloc and fuzz_free *)
+(* decode at image B (a Theorem Labs lane's lib/B/preset_base64_decode_ff_orch.v decode_spec_ff_holds, a working branch;
+   from arm A's work): image facts, shadow cells, strlen, memchr, fuzz_malloc and fuzz_free *)
 Lemma H_decode_ff : forall (rc : YM05.RunCeil) (fx : YK11.FPState),
   @decode_spec_ff fx rc SKB B tfibsegs.
 Proof.

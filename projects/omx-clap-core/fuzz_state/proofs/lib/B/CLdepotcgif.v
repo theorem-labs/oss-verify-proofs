@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/CLdepotcgif.v (a working branch ced28ed2383, file sha256 12a504bff9a6) onto omx-clap-core/fuzz_state's asan-ubsan image (fuzz_state.asan-ubsan, pinned sha256 5ac5ce0954f8; addresses read from its unstripped build b1566a1ca816); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/CLdepotcgif.v (a working branch, file sha256 12a504bff9a6) onto omx-clap-core/fuzz_state's asan-ubsan image (fuzz_state.asan-ubsan, pinned sha256 5ac5ce0954f8; addresses read from its unstripped build b1566a1ca816); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
 (* Modified by Theorem Labs, 2026-10-29: fs's depot invariant (YG01.WfP.wf_depot = depot_inv, not NoDup /\ incl), by a Theorem Labs lane's fix list (a Theorem Labs lane's FS-INSTANCE.md section 1.3, kind L): depot_ids_bound in lib/A/AFix.v:357-361's form, bounds 20481 / 20482 (YG01.depot_inv_cap). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* cgif_file's instance of the generic depot sub-interface (CLdepot.DepotSub), and the two depot fields it
    discharges: AGif0n.if_depot (Allocate's call, QuarantineChunk's twin on the hit path) and DGif0.di_depot
    (Deallocate's call).  Both come from the released machine-level contract YFl0.tfib_depot_spec; this file adds

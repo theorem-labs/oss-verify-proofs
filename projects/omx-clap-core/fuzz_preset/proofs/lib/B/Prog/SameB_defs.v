@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset, the walk of same (fuzz_preset.c:65-86) at image B' (asan-ubsan #102 pin
-   d663f82d7f48, unstripped twin c90d4fa54d43), against the batch kit's text tsame_specX (lib/A/PRH_FnEx.v :353 at the cut
-   7cdbb61b5fa0, with its guarded live-stack premise; SameB_walk.v's same_holds_B), over
+   d663f82d7f48, unstripped twin c90d4fa54d43), against the batch kit's text tsame_specX (lib/A/PRH_FnEx.v :353 at the cut,
+   with its guarded live-stack premise; SameB_walk.v's same_holds_B), over
    the whole-program listing B_prog_listing / PI_prog_B (lib/B/Listing_prog.v c97cc46b3e13, PAImg_prog.v 15fab93fe702):
    same is B_prog_sigma AS_same, 252 instructions, frame 160 (neutral listing, the internal file same.fuzz_preset.asan-ubsan.s, a work
    file outside the tree). This file: the image numbers, the computed segment states, the run tactics, the loop's
    canonical state and the value lemmas of the checks.
-   PORT. The segment structure is the image-A walk's (h-hpreset-7's slice S9, lib/A/Prog/Wsame.v at
-   origin/cold/h-hpreset-7-walk-s9-got-rob 9a0674f0b5f2): entry (both tags, both n fields), dispatch, number arm,
+   PORT. The segment structure is the image-A walk's (h-hpreset-7's slice S9, lib/A/Prog/Wsame.v):
+   entry (both tags, both n fields), dispatch, number arm,
    string arm, container arm, the item loop in canonical form (head / key / kids) by induction on the items left, and
    the recursive call through the induction hypothesis at nesting n - 1. B' differs from A in register allocation,
    block order (the string arm and the bcmp call sit after the loop), the loop counter (B' counts i UP in s3, with

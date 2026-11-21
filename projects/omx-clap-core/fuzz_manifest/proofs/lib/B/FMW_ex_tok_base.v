@@ -6,10 +6,11 @@
    453-455, 470-475, 477-486, 489-491, 502-505, 511-514, 1255-1258. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_name_seg_rel.v, with its module paths, module names and numbers changed; 848 of its 931 lines of code are new or changed and 1841 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_hp_kit.v, with its module paths and module names changed; 305 of its 367 lines of code are new or changed and 869 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* G4 IMAGE B (fm.asan-ubsan, pin ca61e5c9eabc0050): the base of ex_seg_T (lib/B/FMW_ex_base.v): expected's ex_token
    (fuzz_manifest.c:96-113, inlined at 0x816dc .. 0x818ac of B's expected, listing
    (internal path) lines 294-421). The shape follows image A's
-   lib/A/FMW_ex_tok_base.v (06d82004dc3); every pc, register and frame offset below is B's. B keeps the scan in other
+   lib/A/FMW_ex_tok_base.v; every pc, register and frame offset below is B's. B keeps the scan in other
    registers than A: the loop index j in s8, s10 = ~text - j (B's UBSan bound for text + j), the pointer text + j in s1
    (made per iteration), text in a6 (re-made after each call, with a7 = 6 and t1 = the mask), and the answer in s7 = 1
    (0x81904 `mv a0, s7`). The token walk is cut at four more pcs; each cut carries a semantic invariant, and each

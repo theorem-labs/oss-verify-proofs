@@ -9,7 +9,7 @@
    with ACtl.v's own CF notation (SK := A.AE2k.tfib_sink_head, FP := []), i.e. exactly ACtl.v's Section hypothesis
    seg_F38.  The ENTRY is C_A82940_at at turn j (the conclusion); the two EXITS (the premises) are the frame loop's
    head at the NEXT turn, C_A81d40_at [S j] (back edge 0x8295c), and the loop exit C_A82b04 (0x82944 / 0x82960).
-   Segment F38 is the frame-loop LATCH 0x82940-0x82960 (Seg/F38.v:9-22): no call, no store, two spill reloads.
+   Segment F38 is the frame-loop LATCH 0x82940-0x82960 (Seg/F38.v:10-23): no call, no store, two spill reloads.
 
    THE THREE RUNS (lib/A/Prog/Seg/F38F.v, this unit's _F re-runs of Seg/F38.v, Required qualified) and the split
    (Seg/F38.v f38_run :381-404, followed here):
@@ -29,7 +29,7 @@
    entry's LK `rgv regs3 21 (Z.of_nat j)` (the run's premise x21 = Z_to_bv 64 jv), and Z.of_nat j + 1 =
    Z.of_nat (S j).  The other LI facts of turn S j come from the same post: s6 = x22 = bb + cc = c_p + t_c (S j)
    (CUR), s9 = x25 = aa - cc = c_n - t_c (S j) (CUR; and 1 <= t_left (S j) from aa <> cc), with the model's own
-   step t_c (S j) = t_body j + t_len j (SlotModel's fc, by reflexivity) and f38_t_facts (Seg/F38.v:91).
+   step t_c (S j) = t_body j + t_len j (SlotModel's fc, by reflexivity) and f38_t_facts (Seg/F38.v:92).
 
    THE PROOF, step by step (glue-pattern.md section 3)
    G1  unfold the entry cut: ix_cut's index equation, then C_A82940_at's body (ACtlCutP.v, `exists phi`, six
@@ -55,11 +55,11 @@
        unchanged; k bound: 14 + 2j + 2 = 14 + 2 (S j) on the back edge, and <= 526 = EV_LLVMF on the exit by LK's
        j <= 255.
 
-   ROUTE (C) (L3; shell ACtlCut.v (at head lib/A/ACtlCut.v:243; from a working branch 8ce82d7e310)): ctl_from's runtime premise is
+   ROUTE (C) (L3; shell ACtlCut.v (at head lib/A/ACtlCut.v:243; from a working branch)): ctl_from's runtime premise is
    A.ACtlRtC.ctl_rt_C B ly3 S3 mem3 (was ACtlCut.ctl_rt mem3).  The latch reads no shadow byte and keeps ly3, S3 and
    the memory on both exits, so each exit passes the entry's Hrt as it is; the Section never had VIS0 / OWNED_RO.
 
-   SECTION HYPOTHESES.  The Section mirrors ACtl.v's Section Ctl at a Theorem Labs lane's Batch3 glue base d36efc6152d (ACtl.v
+   SECTION HYPOTHESES.  The Section mirrors ACtl.v's Section Ctl at a Theorem Labs lane's Batch3 glue base (ACtl.v
    blob a3c6b7b35017; its Context, variables and hypotheses, in its order, through KPARSE, including Batch3's
    RELRO_KIND_NAME / RELRO_CAT / RELRO_FRAMES / MO_LE / KREPLY / KPARSE in ACtl.v's exact text and names).  The proof
    uses only LAWS (ajournal_exec, frames_bounds); the rest are unused and do not become arguments: after the Section
@@ -81,7 +81,7 @@
 
    CLOSURE: every Require below is qualified; no statement here names a frame-route identifier.  Measured with
    closure_scan.py (sha256 039e7d56edc3..., conservative: an ambiguous
-   Require counts all its matches) on a Theorem Labs lane's stand-in-free glue base 29ddfc3ea99 merged: 534 unit files;
+   Require counts all its matches) on a Theorem Labs lane's stand-in-free glue base merged: 534 unit files;
    closure-rule-3 files NONE (no lib/AZ/AsanW (not in this delivery), no W6, no SegCF / *_cfw / Cf* file); its lib/AZ files are
    AZ/LibA/AcctCore.v (through Lib/ExecF.v) and AZ/Spec/{AsanCtrl,AsanCtrlProps,STree}.v (through Seg/F38.v).
    Frame-route files, each at its blob on that base: Seg/F38.v 2c3fae322ce, Seg/F38F.v 087d2ca1ecf, Seg/Tac_slot.v
@@ -96,9 +96,9 @@
    Lib/Mem) are cited by their FULL path and Required from their own directory (porter 04:24Z / 04:33Z rule).
    Check: grep -nE '(^|[^.A-Za-z_])(mkst|getr|seg_rom|cfg_at)\b' lib/A/ACtlG/F38.v  -- hits only inside comments.
 
-   BUILD STATE: TYPE-CHECK ON INTERIM 5da74c9c931, CLOSURE REACHES NO STAND-IN.  rc=0 by cb
-   on a build machine (a fresh worktree; workspace from the packed base 23b918fe0c2e) with NO port_core_refused
-   substitution: on the stand-in-free glue base 29ddfc3ea99 the five planning-core files the type-check workspaces
+   BUILD STATE: TYPE-CHECK ON INTERIM, CLOSURE REACHES NO STAND-IN.  rc=0 by cb
+   on a build machine (a fresh worktree; workspace from the packed base) with NO port_core_refused
+   substitution: on the stand-in-free glue base the five planning-core files the type-check workspaces
    used to substitute (lib/A/AE2k.v AF0m.v AF0l.v ACej.v ACeh.v) carry no port_core_refused_ name and compile from
    their own text.  No Axiom, no Parameter, no Admitted, no admit.  Print Assumptions glue_seg_F38: Rocq primitives
    (PrimInt63, PrimString, PrimArray) and functional_extensionality_dep only. *)
@@ -126,7 +126,7 @@ Local Notation segs := A.AB1v.tfibsegs.
 
 Section GlueF38.
 
-(* ACtl.v's Section Ctl shape (ACtl.v (an earlier version, blob a3c6b7b35017, not in this delivery), a Theorem Labs lane's Batch3 glue base d36efc6152d), in its order,
+(* ACtl.v's Section Ctl shape (ACtl.v (an earlier version, blob a3c6b7b35017, not in this delivery), a Theorem Labs lane's Batch3 glue base), in its order,
    through KPARSE.  The Batch3 additions RELRO_KIND_NAME / RELRO_CAT / RELRO_FRAMES / MO_LE / KREPLY / KPARSE are
    ACtl.v's exact text and names (ACtl.v:204-206, :217, :237-238); this stage uses none of them, so none becomes an
    argument of glue_seg_F38. *)

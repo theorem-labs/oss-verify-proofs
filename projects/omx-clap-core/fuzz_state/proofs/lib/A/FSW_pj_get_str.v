@@ -3,8 +3,8 @@
    form of the released donor cgif_file_fuzzer as ported by a Theorem Labs lane.
    rule 24: pj_get_str is CONFIRMED to have no released ASan-image proof
    (internal path, ossv proof index v5 built
-   2026-10-28T21:58:24Z, ossv/recipes@566eb6ffa5df): this file proves the function's NEW ASan contract; its released
-   plain proof is lib/Prog/pj_get_str.v (c8557374ad2e), the template for the functional part.
+   2026-10-28T21:58:24Z, ossv/recipes): this file proves the function's NEW ASan contract; its released
+   plain proof is lib/Prog/pj_get_str.v, the template for the functional part.
    The code (MEASURED, (internal path) fuzz_state.objdump.txt): `addi sp,sp,-16; sd ra,8(sp); sd s0,0(sp)`, the shadow base
    into s0 through the GOT (0x9f6f0 -> 0xa7f38 -> SHADOW_OFF), `jal pj_get` (0x83880 -> 0x83884), `beqz a0, 0x838c4`;
    the inline ASan check of the 4-byte load at a0 (lb of a0's shadow byte, `bnez` to the slow check 0x838d4 /
@@ -28,7 +28,7 @@
    The resume uses FSW_K.fsw_after_callU (stack frame only) plus YI0n.st_ok_add_region' for the kid, not
    FSW_ret.fsw_after_callU_args: the latter also keeps the two shadow-base image cells, whose disjointness from a heap
    kid would need the image law; pj_get_str does not reload the shadow base after the call (s0 keeps it).
-   The needle k: cstr_ok and cstr_kept (S0 eb1060daa3c, R1) go to pj_get at the same layout and state (cstr_kept reads
+   The needle k: cstr_ok and cstr_kept (S0, R1) go to pj_get at the same layout and state (cstr_kept reads
    no memory) and come back from pj_get's post.
    Local lemmas (no kit copy): the PjStruct transport below alloc_ceiling (pgs_u64_below, pgs_cstr_below), the kid
    addressability (pgs_body_addressable), same_below from a run's write windows (pgs_same_below_wr, the

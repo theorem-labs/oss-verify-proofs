@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module names changed; 1011 of its 1078 lines of code are new or changed and 944 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment A1 of fuzz_ctrl LLVMFuzzerTestOneInput (asan-ubsan, image B, libreac v1.9.0): the prologue and the
    side-stack frame request, 0x81018 .. 0x8108c, from the slot pre Inv_ENTRY to the cut Inv_B81090 (the `mv s8,a0`
    right after `jal frame_alloc_6`). The run (a1_pro, then the
@@ -1091,7 +1092,7 @@ Proof.
                          intros a Hia Ho; exact (proj2 (Hown1 a) Ho)]. }
     assert (HENT' : ENT APIf (Ghost gin gp S gregs gmem gmd gH gT) [] m' md')
       by (eapply ent_mat; [exact HENTm | exact Hmat]).
-    (* FRA's input facts (de2516edf5), from the entry pre: the input bytes from blk_data (0 <= p and
+    (* FRA's input facts, from the entry pre: the input bytes from blk_data (0 <= p and
        p + n <= 2^64 by the block's addressability, or by p = empty when n = 0) and, for n > 0, the live block and
        its addressability. The run keeps them (fra_in_keep_sh below): each input byte is app memory below
        stklo <= S - SLOT_STACK and off the side stack (a_laws_blocks), so neither it nor its shadow byte is in A1W. *)

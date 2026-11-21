@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the reserved ledger at main is init_reserved, the image's reservations followed by the launch's vDSO pair, so AMI_init reads AMI's mapping-misses-the-ledger conjunct off the new amodel field am_resfree (BootState's mf_resx), bounds the ledger's length and bytes with the pair's (init_reserved_facts), and takes START's pointer-array freedom from am_resfree; minv_lf_main takes minv's channel-reader conjunct from the new amodel field am_rdr. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
 From stdpp Require Import gmap.
@@ -104,7 +105,7 @@ Lemma Forall_uns2 : forall (P : Z * Z -> Prop) l, Forall P (map uns2 l) -> Foral
 Proof. induction l as [|e l IH]; intros H; [constructor|]. cbn [map] in H. apply Forall_cons_iff in H as [H1 H2]. constructor; auto. Qed.
 Lemma reserved_facts :
   Forall (fun e => bv_unsigned (fst e) + bv_unsigned (snd e) <= RES_HI) (segments_reserved SEGS)
-  /\ zlen (segments_reserved SEGS) <= LEN0 /\ live_bytes (segments_reserved SEGS) <= RTOT0
+  /\ zlen (segments_reserved SEGS) + 2 <= LEN0 /\ live_bytes (segments_reserved SEGS) + 81920 <= RTOT0
   /\ Forall (fun e => 65536 <= bv_unsigned (fst e) /\ bv_unsigned (fst e) + bv_unsigned (snd e) <= 6303744) (segments_reserved SEGS).
 Proof.
   pose proof reserved_eval as E. split; [|split; [|split]].
@@ -112,6 +113,23 @@ Proof.
   - unfold AsanInv.zlen. rewrite <- (length_map uns2), E. unfold LEN0. cbn [length Z.of_nat Pos.of_succ_nat Pos.succ]. lia.
   - rewrite live_bytes_uns2, E. unfold RTOT0. cbn -[Z.le Z.pow]. lia.
   - apply (Forall_uns2 (fun q => 65536 <= fst q /\ fst q + snd q <= 6303744)). rewrite E. repeat constructor; cbn; lia.
+Qed.
+
+(* The launch's vDSO pair: at most two entries of at most 20 pages ([State.vdso_text_pages_le]). *)
+Lemma vdso_resv_facts : forall kb top, zlen (vdso_reserved kb top) <= 2 /\ live_bytes (vdso_reserved kb top) <= 81920.
+Proof.
+  intros kb top. pose proof (vdso_text_pages_pos kb) as T1. pose proof (vdso_text_pages_le kb) as T2.
+  unfold vdso_reserved. cbv zeta. destruct (_ <? page_size).
+  - split; [unfold AsanInv.zlen; cbn [length]; lia | cbn; lia].
+  - split; [unfold AsanInv.zlen; cbn [length]; lia|].
+    rewrite live_bytes_uns2. cbn [map fold_right uns2 fst snd].
+    rewrite !unsigned_lit by (unfold vdso_vvar_pages, page_size; lia). unfold vdso_vvar_pages, page_size. lia.
+Qed.
+Lemma init_reserved_facts : forall R (mb sp : word) kb,
+  zlen (init_reserved R mb sp kb) <= zlen R + 2 /\ live_bytes (init_reserved R mb sp kb) <= live_bytes R + 81920.
+Proof.
+  intros R mb sp kb. unfold init_reserved. rewrite zlen_app, live_bytes_app.
+  match goal with |- context [vdso_reserved kb ?t] => destruct (vdso_resv_facts kb t) end. lia.
 Qed.
 
 (* [comment removed for export] *)
@@ -194,7 +212,7 @@ Proof.
   pose proof (am_reserved _ _ _ _ _ HM) as Hres. pose proof (am_limit _ _ _ _ _ HM) as Hlim. pose proof (am_top _ _ _ _ _ HM) as Htop.
   pose proof (am_usp _ _ _ _ _ HM) as Husp. pose proof (am_maps _ _ _ _ _ HM) as Hmaps. pose proof (am_sep _ _ _ _ _ HM) as Hsep.
   pose proof (am_bounds _ _ _ _ _ HM) as Hbnd. pose proof (am_lazy_bounds _ _ _ _ _ HM) as Hlzb. pose proof (am_noaccess_wf _ _ _ _ _ HM) as Hnawf.
-  pose proof (am_totsz _ _ _ _ _ HM) as Htot. pose proof (am_nonlazy _ _ _ _ _ HM) as Hnl.
+  pose proof (am_totsz _ _ _ _ _ HM) as Htot. pose proof (am_nonlazy _ _ _ _ _ HM) as Hnl. pose proof (am_resfree _ _ _ _ _ HM) as Hrf0.
   unfold AMI. rewrite m_vm_materialized_MX, m_vmmaps_MX, m_vm_lazy_MX. change (Pm moA) with (Pm mo_).
   destruct reserved_facts as (R1 & R2 & R3 & R4).
   pose proof (@ATOP_lo rc) as AL. pose proof (@ATOP_hi rc) as AH.
@@ -209,7 +227,8 @@ Proof.
     split; [apply end_le_ATOP; assumption| exact A5]. }
   split; [reflexivity|].
   split; [exact Hlim|].
-  rewrite Hres. split; [exact R1|]. split; [exact R2|]. split; [exact R3|].
+  destruct (init_reserved_facts (segments_reserved SEGS) (en_mmap_base en) (en_sp en) (in_kernel inp)) as [IZ IL].
+  rewrite Hres in Hrf0 |- *. split; [exact Hrf0|]. split; [lia|]. split; [lia|].
   split. { rewrite Forall_forall. intros [b n] Hin. rewrite Forall_forall in Hbnd. destruct (Hbnd _ Hin) as (A1 & A2 & A3 & _). unfold entry_ok. cbn [fst snd] in *.
            repeat split; try assumption. exact (proj1 (END b n Hin)). }
   split; [exact W2|]. split; [exact W3|]. split; [apply ivs_sep_seps; exact Hsep|].
@@ -231,7 +250,7 @@ Proof.
     { exists (4096 * V 208%nat). split; [exact INP|]. unfold a_space_beg0, PRIM_SZ, KHIGH in *. lia. }
     split; [exact INQ|].
     split; [unfold a_ptr_array0; lia|].
-    split. { unfold a_ptr_array0. apply region_free_of_hull; [lia| unfold PTR_SZ; lia| unfold PTR_SZ in *; lia| exact R4| exact HQ]. }
+    split. { unfold a_ptr_array0. exact (Hrf0 _ INQ). }
     split; [apply (INL (ZLit LS_LO) _ KRWLAZY); cbn [In asan_ledger]; repeat (try (left; reflexivity); right)|].
     split; [apply (INL (ZLit GAP_LO) _ KNONELAZY); cbn [In asan_ledger]; repeat (try (left; reflexivity); right)|].
     split; [apply (INL (ZLit HS_LO) _ KRWLAZY); cbn [In asan_ledger]; repeat (try (left; reflexivity); right)|].
@@ -243,7 +262,7 @@ Proof.
       destruct le as [b n k|n]; [|destruct He]. destruct He as [<-|[]].
       exists (wa (zv V b), wa n). split; [apply in_app_iff; right; exact (INL b n k Hle)|]. unfold iv_of. cbn [fst snd]. lia.
     + apply Forall_forall. intros iv Hiv. apply in_map_iff in Hiv as (e & <- & He).
-      exists e. split; [apply in_app_iff; left; exact He|]. unfold iv_of. cbn [fst snd]. lia.
+      exists e. split; [apply in_app_iff; left; unfold init_reserved; apply in_or_app; left; exact He|]. unfold iv_of. cbn [fst snd]. lia.
   - rewrite commit_bytes_ainit, Z.add_0_r.
     assert (W4 : AsanCeil.init_sp_ok (m_vmmaps mo_)) by (unfold AsanCeil.init_sp_ok, sp_window_lo; rewrite Htop; lia).
     rewrite <- (nonlazy_sum_count moA eq_refl ltac:(split; [exact W1| split; [exact W2| split; [exact W3| rewrite m_vmmaps_MX; exact W4]]])).
@@ -361,7 +380,7 @@ Proof.
     destruct (bv_eqb (Z_to_bv 64 1) k) eqn:E1. { apply bv_eqb_eq in E1. subst k. injection H as <-. vm_compute. reflexivity. }
     destruct (bv_eqb (Z_to_bv 64 2) k) eqn:E2. { apply bv_eqb_eq in E2. subst k. injection H as <-. vm_compute. reflexivity. }
     discriminate. }
-  split; [exact Ht|]. split; [split; reflexivity| exact Hn].
+  split; [exact Ht|]. split; [split; reflexivity|]. split; [exact Hn | exact (am_rdr _ _ _ _ _ HM)].
 Qed.
 
 #[using="V en inp HM"] Lemma minvA_main : minvA OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.SpecA.AsanHeap__SpecA.AsanNodeSem.ASHM0 moA.

@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) B-LOCAL COPY of the A walk's state-surgery kit, copied from
-   a working branch 4480a5df1ae proofs/omx-clap-core/fuzz_state/lib/A/FSW_parse_items_kit.v
-   (a Theorem Labs lane; itself by path from a working branch b6faf249dd1). It has no B twin. The kit is generic
+   a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSW_parse_items_kit.v
+   (a Theorem Labs lane; itself by path from a working branch). It has no B twin. The kit is generic
    over the engine and names no image value: the one change is the image module, lib/A AB1v -> lib/B YB1v (B's
    tfibsegs). Statements and proofs verbatim.
    The A header, kept: *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs program part, READER lane (a Theorem Labs lane), free hand B of a Theorem Labs lane: the STATE-SURGERY kit that the
    parse_items segment runs use at every resume. Generic over the engine: no parse_items fact, no callee spec, no
    machine run. A kit (rule 24: no function proved here).

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's caps, mmap base and far-end reader; the string-length contract's end alignment; the library and family hypotheses for both CONFIG_RSEQ copies of the certificates; PB12 bounds the string area by the launch's E2BIG cap; aw_init's start model with the launch's vDSO run state, by AWInit.aw_init stated for any vDSO run state; RunSrc's run records, contract tables and family records taken at the launch's mmap base too, which the start environment reads). *)
 From Stdlib Require Import ZArith NArith Bool List Lia.
 From Stdlib Require Import PrimInt63 Uint63.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
@@ -19,6 +20,14 @@ From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Unp Require Import G0 G1 
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Ctr Require Import LdPart.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Br Require Import LdPartSound.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Br Require PkBodyCtr MemcpyG.
+(* The CONFIG_RSEQ copies first: their short names are shadowed by the originals below, and are used only through
+   the full-path aliases after the imports. *)
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Src2UR Require T_Src2U.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Src2UER Require T_Src2UE.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Src2FR Require T_Src2F.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Src2LR Require T_Src2L.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Src2ER Require T_Src2E.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.LibRunR Require Src_u_16 Src_r8 Src_r9.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Src2U Require T_Src2U.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Src2UE Require T_Src2UE.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.LibRun Require Src_u_1 Src_u_2 Src_u_3 Src_u_4 Src_u_5 Src_u_6 Src_u_7 Src_u_8 Src_u_9 Src_u_10 Src_u_11 Src_u_12 Src_u_13 Src_u_14 Src_u_15 Src_u_16.
@@ -48,6 +57,14 @@ Module RX := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.RunSrc.RunSr
 Module L8 := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.LibRun.Src_r8.LibRunSrc_r8.
 Module L9 := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.LibRun.Src_r9.LibRunSrc_r9.
 Module LU := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.LibRun.Src_u_16.LibRunSrc_u_16.
+Module L8R := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.LibRunR.Src_r8.LibRunSrc_r8.
+Module L9R := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.LibRunR.Src_r9.LibRunSrc_r9.
+Module LUR := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.LibRunR.Src_u_16.LibRunSrc_u_16.
+Module TFR := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Src2FR.T_Src2F.
+Module TLR := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Src2LR.T_Src2L.
+Module TER := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Src2ER.T_Src2E.
+Module TUR := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Src2UR.T_Src2U.
+Module TUER := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Src2UER.T_Src2UE.
 
 Module TopHypsSrc.
 
@@ -64,6 +81,10 @@ Hypothesis Hva : valid_argv (in_argv inp).
 Hypothesis Hve : valid_envp (in_envp inp).
 Hypothesis Hhw : valid_hwcap (in_hwcap inp).
 Hypothesis Hsz : in_va_size inp = Sv48.
+(* the launch's caps, for the start state's window below sp (ALib/InitMem.v's stack_window_lo_valid) *)
+Hypothesis Hvl : valid_launch inp.
+(* the launch's far-end reader ([Run.valid_input]) *)
+Hypothesis Hrdr : in_channel_reader inp = true.
 Hypothesis Hen : valid_entry (mkImage SEGS PC PH) (mkEntry sp brk0 mb rnd) inp.
 Hypothesis Hlim : 2 ^ 31 <= lim.
 
@@ -98,9 +119,11 @@ Lemma aw_init : forall mem tid lo,
   (forall a, RX.AST_LO <= a < RX.AST_HI -> rb SEGS mem a = img_byte SEGS a) ->
   HeapOp.aw_holds SEGS RX.XCL A (Z_to_bv 64 0) [] [HeapOp.Win lo DrvTop.WLEN 0] mem (with_tid tid (RX.model0 inp sp brk0 mb rnd lim)).
 Proof.
-  intros mem tid lo HI. pose proof (proj1 (valid_entry_sv48 _ _ _ Hsz) Hen) as (_ & Hbrk & _ & _).
-  apply (@AWInit.aw_init CLG mem brk0 mb sp lim inp tid Hbrk (AWInit.ceil_clamp_ok sp Hvsp) Hlim HI).
-  intros w [<-|[]]. cbn. unfold HeapOp.K_GHOST. lia.
+  intros mem tid lo HI. pose proof (proj1 (valid_entry_sv48 _ _ _ Hsz) Hen) as (_ & Hbrk & Hmb & _).
+  (* LPS 727298f3: the start model is init_model under with_vdso (the launch's vDSO draw); AWInit.aw_init is
+     stated for any vDSO run state, and the run's own is read off the goal *)
+  exact (@AWInit.aw_init CLG mem brk0 mb sp lim inp tid _ Hbrk (AWInit.ceil_clamp_ok sp Hvsp) Hmb Hlim HI
+           [HeapOp.Win lo DrvTop.WLEN 0] ltac:(intros w [<-|[]]; cbn; unfold HeapOp.K_GHOST; lia)).
 Qed.
 
 Lemma aw_ceil_fds : forall mo fds, HeapOp.aw_ceiling SEGS RX.XCL A (with_fds fds mo) = HeapOp.aw_ceiling SEGS RX.XCL A mo.
@@ -108,9 +131,9 @@ Proof. intros mo fds. reflexivity. Qed.
 Lemma aw_ceil0 : forall tid, HeapOp.aw_ceiling SEGS RX.XCL A (with_tid tid (RX.model0 inp sp brk0 mb rnd lim)) <= bv_unsigned sp - DrvTop.WOFF.
 Proof. intros tid. exact ceil_le. Qed.
 
-Definition R : drun := RX.R inp sp rnd Hva A Cw aw_fds aw_ceil_fds.
+Definition R : drun := RX.R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds.
 Let MP := RX.MP inp.
-Let PB := RX.PB inp sp rnd.
+Let PB := RX.PB inp sp mb rnd.
 
 Lemma OPS_holds1 : forall args m mo, op_holds (OPS R) CtrLib.HEAP_ID args m mo = HeapOp.heap_holds SEGS RX.XCL A Cw args m mo.
 Proof. intros. reflexivity. Qed.
@@ -201,14 +224,14 @@ Proof.
   - intros id args a Hid X. pose proof (OPS_fp_other0 id args a Hid X) as Y. left. apply HeapCtrB.hi_seg.
     unfold RX.RS, RX.PFP, DrvTop.inZ in Y.
     destruct Y as [Y|Y]; [| repeat (apply Exists_cons in Y as [Y|Y]; [cbn [fst snd] in Y|]); [| | inversion Y]]; lia.
-  - apply OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Unp.GLib.UG.plain_cover_law. exact (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds).
-  - apply OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Unp.GLib.UG.plain_acc_user_law. exact (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds).
+  - apply OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Unp.GLib.UG.plain_cover_law. exact (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds).
+  - apply OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Unp.GLib.UG.plain_acc_user_law. exact (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds).
 Qed.
 
 Definition MEMCPY_PC : int := 326376%uint63.
 Lemma CS_g6 : forall isV, contract_sound SEGS (OPS R) MP PB (G6.g6_contract MEMCPY_PC isV).
 Proof.
-  intros isV. eapply (UnpInst.g6_sound SEGS RX.XCL A (OPS R) HOPS MP PB (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds)).
+  intros isV. eapply (UnpInst.g6_sound SEGS RX.XCL A (OPS R) HOPS MP PB (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds)).
   intros; eapply MemcpyG.memcpy_G; eauto.
 Qed.
 
@@ -276,28 +299,28 @@ Proof.
   split; [exact E3|]. split; [exact (RX.p1_nz inp Hva)|].
   unfold CtrA.SZ. change wzero with (wp 0%uint63). exact (OL.den_param8_u E 10%uint63 _ E10 ltac:(lia)).
 Qed.
-Lemma PB12 : forall E, PB (eb E) -> bv_unsigned (den E (CtrA.SZ 15%uint63)) = Z.of_nat (length (eb E 12%uint63)) /\ Z.of_nat (length (eb E 12%uint63)) mod 8 = 0.
+Lemma PB12 : forall E, PB (eb E) -> bv_unsigned (den E (CtrA.SZ 15%uint63)) = Z.of_nat (length (eb E 12%uint63)).
 Proof.
   intros E H. unfold PB, RX.PB in H.
-  assert (E12 : eb E 12%uint63 = SI.strarea (in_argv inp) (in_envp inp)) by (rewrite H; reflexivity).
-  assert (E15 : eb E 15%uint63 = LE8 (Z.of_nat (length (SI.strarea (in_argv inp) (in_envp inp))))) by (rewrite H; reflexivity).
-  pose proof (proj1 (valid_entry_sv48 _ _ _ Hsz) Hen) as (Hsp' & _ & _ & Hfit).
-  pose proof (SI.BSB_top PH sp (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) rnd Hfit) as T. rewrite SI.length_BSB in T.
-  pose proof (SI.length_strarea (in_argv inp) (in_envp inp)) as L. pose proof (SI.SP_lo sp Hsp') as LO.
-  rewrite E12. split; [| apply SI.strarea_len8].
-  unfold CtrA.SZ. change wzero with (wp 0%uint63). apply (OL.den_param8_u E 15%uint63 _ E15). unfold SI.raw_len, SI.SP in *. lia.
+  assert (E12 : eb E 12%uint63 = SI.strarea inp) by (rewrite H; reflexivity).
+  assert (E15 : eb E 15%uint63 = LE8 (Z.of_nat (length (SI.strarea inp)))) by (rewrite H; reflexivity).
+  (* LPS 727298f3: the string area's length (the launch's strings, the exec name, its NUL and the
+     8-byte slot), under the launch's E2BIG cap ([valid_launch]) *)
+  pose proof (SI.length_strarea inp) as L. pose proof (proj2 Hvl) as CAP. unfold launch_bytes, e2big_limit in CAP.
+  rewrite E12.
+  unfold CtrA.SZ. change wzero with (wp 0%uint63). apply (OL.den_param8_u E 15%uint63 _ E15). unfold SI.LSB in L. lia.
 Qed.
 
-Definition CS_free := @HeapCtrB.free_sound CLG Cw (OPS R) (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds) OPS_holds1 OPS_fp1 OPS_frame_other OPS_fp_other OPS_mo_other MP MP_vm PB CANARY PB_canary PB_secret.
-Definition CS_roomcap := @HeapCtr.roomcap_sound CLG Cw (OPS R) (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds) OPS_holds1 OPS_fp1 MP PB.
-Definition CS_roomdrop := @HeapCtr.roomdrop_sound CLG Cw (OPS R) (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds) OPS_holds1 OPS_fp1 MP PB.
-Definition MFORK := @HeapCtrB.malloc_nofork CLG Cw (OPS R) (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds) OPS_holds1 OPS_fp1 OPS_frame_other OPS_fp_other OPS_mo_other MP MP_vm PB CANARY PB_canary PB_secret.
+Definition CS_free := @HeapCtrB.free_sound CLG Cw (OPS R) (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds) OPS_holds1 OPS_fp1 OPS_frame_other OPS_fp_other OPS_mo_other MP MP_vm PB CANARY PB_canary PB_secret.
+Definition CS_roomcap := @HeapCtr.roomcap_sound CLG Cw (OPS R) (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds) OPS_holds1 OPS_fp1 MP PB.
+Definition CS_roomdrop := @HeapCtr.roomdrop_sound CLG Cw (OPS R) (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds) OPS_holds1 OPS_fp1 MP PB.
+Definition MFORK := @HeapCtrB.malloc_nofork CLG Cw (OPS R) (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds) OPS_holds1 OPS_fp1 OPS_frame_other OPS_fp_other OPS_mo_other MP MP_vm PB CANARY PB_canary PB_secret.
 
-Definition CS_malloc_s := @HeapCtrB.malloc_s_sound CLG Cw (OPS R) (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds) OPS_holds1 OPS_fp1 OPS_frame_other OPS_fp_other OPS_mo_other MP MP_vm PB CANARY PB_canary PB_secret.
-Definition CS_realloc := @HeapCtrB.realloc_sound CLG Cw (OPS R) (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds) OPS_holds1 OPS_fp1 OPS_frame_other OPS_fp_other OPS_mo_other MP MP_vm PB CANARY PB_canary PB_secret.
-Definition CS_aligned := @HeapCtrB.aligned_alloc_sound CLG Cw (OPS R) (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds) OPS_holds1 OPS_fp1 OPS_frame_other OPS_fp_other OPS_mo_other MP MP_vm PB CANARY PB_canary PB_secret.
+Definition CS_malloc_s := @HeapCtrB.malloc_s_sound CLG Cw (OPS R) (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds) OPS_holds1 OPS_fp1 OPS_frame_other OPS_fp_other OPS_mo_other MP MP_vm PB CANARY PB_canary PB_secret.
+Definition CS_realloc := @HeapCtrB.realloc_sound CLG Cw (OPS R) (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds) OPS_holds1 OPS_fp1 OPS_frame_other OPS_fp_other OPS_mo_other MP MP_vm PB CANARY PB_canary PB_secret.
+Definition CS_aligned := @HeapCtrB.aligned_alloc_sound CLG Cw (OPS R) (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds) OPS_holds1 OPS_fp1 OPS_frame_other OPS_fp_other OPS_mo_other MP MP_vm PB CANARY PB_canary PB_secret.
 
-Definition CS_aligned1 := @HeapCtrB.aligned_alloc1_sound CLG Cw (OPS R) (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds) OPS_holds1 OPS_fp1 OPS_frame_other OPS_fp_other OPS_mo_other MP MP_vm PB CANARY PB_canary PB_secret.
+Definition CS_aligned1 := @HeapCtrB.aligned_alloc1_sound CLG Cw (OPS R) (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds) OPS_holds1 OPS_fp1 OPS_frame_other OPS_fp_other OPS_mo_other MP MP_vm PB CANARY PB_canary PB_secret.
 Definition CS_blkside := @HeapCtrB.blk_side_sound CLG Cw (OPS R) OPS_holds1 MP PB.
 
 Lemma P_holds : forall args m md, op_holds (OPS R) Pool.POOL_ID args m md <-> Pool.pool_holds RX.FL SEGS args m md.
@@ -351,7 +374,7 @@ Proof.
 Qed.
 Lemma OPS3_fp : forall args args', op_fp (OPS R) 3%uint63 args = op_fp (OPS R) 3%uint63 args'.
 Proof. intros. unfold OPS, CtrSys.OPS. rewrite !mk_fp. rewrite comp_3. reflexivity. Qed.
-Definition CS_rstage := @RstageCtr.rstage_sound CLG Cw (OPS R) (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds) OPS_holds1 OPS_fp1 OPS_fp_other MP PB RSI RS_range3 OPS3_bytes OPS3_advance OPS3_fp.
+Definition CS_rstage := @RstageCtr.rstage_sound CLG Cw (OPS R) (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds) OPS_holds1 OPS_fp1 OPS_fp_other MP PB RSI RS_range3 OPS3_bytes OPS3_advance OPS3_fp.
 
 Lemma mf_ok : mnofork_ok SEGS R MALLOC_PC (c_apply (Contract MALLOC_PC (CtrA.malloc_apply SEGS HeapCtr.ERRNO HeapCtr.LIBC HeapCtr.GOT HeapCtr.GUARD HeapCtr.TP CANARY))).
 Proof.
@@ -369,7 +392,7 @@ Ltac tabcase H :=
 Lemma ctabL :  ctab_ok SEGS R T_Src2L.CONTRACTS.
 Proof.
   intros  cid ct Hf. pose proof Hf as Hf0. unfold T_Src2L.CONTRACTS in Hf. tabcase Hf.
-  - apply (MemcpyCtr.memcpy_rr_sound (OPS R) (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds) MP PB). reflexivity.
+  - apply (MemcpyCtr.memcpy_rr_sound (OPS R) (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds) MP PB). reflexivity.
   - apply CS_malloc_s. reflexivity.
 Qed.
 Lemma ctabE :  ctab_ok SEGS R T_Src2E.CONTRACTS.
@@ -381,7 +404,7 @@ Proof.
   - apply CS_malloc_s. reflexivity.
   - apply CS_pool_open.
   - apply CS_pool_close.
-  - apply (MemcpyWCtr.memcpy_w_sound (OPS R) (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds) MP PB). reflexivity.
+  - apply (MemcpyWCtr.memcpy_w_sound (OPS R) (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds) MP PB). reflexivity.
 Qed.
 
 Lemma lib8 :   lib_ok SEGS R (t_st T_Src2F.T_LIBGEN_r8) (t_st T_Src2F.R_LIBGEN_r8_RET).
@@ -394,10 +417,10 @@ Lemma ctabU : ctab_ok SEGS R T_Src2U.CONTRACTS.
 Proof.
   intros  cid ct Hf. pose proof Hf as Hf0. unfold T_Src2U.CONTRACTS in Hf. tabcase Hf.
   - apply CS_free. reflexivity.
-  - apply (MemcpyCtr.memcpy_rr_sound (OPS R) (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds) MP PB). reflexivity.
+  - apply (MemcpyCtr.memcpy_rr_sound (OPS R) (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds) MP PB). reflexivity.
   - apply CS_malloc_s. reflexivity.
   - apply CS_realloc. reflexivity.
-  - apply (MemcpyCtr.memcpy_sink_sound (OPS R) (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds) MP PB). reflexivity.
+  - apply (MemcpyCtr.memcpy_sink_sound (OPS R) (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds) MP PB). reflexivity.
   - apply (TdInst.tdenter_sound SEGS RX.XCL A (OPS R) HOPS MP PB).
   - apply (TdInst.znext_sound SEGS RX.XCL A (OPS R) HOPS MP PB).
   - apply (UnpInst.g0_sound SEGS RX.XCL A (OPS R) HOPS MP PB).
@@ -439,10 +462,10 @@ Proof.
   - apply (PkInst.pkenter_sound SEGS RX.XCL A (OPS R) HOPS MP PB).
   - apply (PkInst.pkexit_sound SEGS RX.XCL A (OPS R) HOPS MP PB).
   - apply (PkInst.pkexit_sound SEGS RX.XCL A (OPS R) HOPS MP PB).
-  - apply (PkBodyCtr.pkmemcpy_sound RX.XCL A Cw (OPS R) (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds) HOPS CW3 MP PB). reflexivity.
+  - apply (PkBodyCtr.pkmemcpy_sound RX.XCL A Cw (OPS R) (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds) HOPS CW3 MP PB). reflexivity.
   - apply (PkInst.peek_sound SEGS RX.XCL A (OPS R) HOPS MP PB (r_MPA R)).
-  - apply (PkRegrow.pkregrow_sound _ SEGS RX.XCL A Cw (OPS R) HOPS CW3 CW3i MP PB (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds)). intros; eapply MemcpyG.memcpy_G; eauto.
-  - apply (PkBodyCtr.pkextb_sound RX.XCL A Cw (OPS R) (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds) HOPS CW3 MP PB).
+  - apply (PkRegrow.pkregrow_sound _ SEGS RX.XCL A Cw (OPS R) HOPS CW3 CW3i MP PB (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds)). intros; eapply MemcpyG.memcpy_G; eauto.
+  - apply (PkBodyCtr.pkextb_sound RX.XCL A Cw (OPS R) (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds) HOPS CW3 MP PB).
   - apply (PkInst.pkcap_sound SEGS RX.XCL A (OPS R) HOPS MP PB).
   - apply (UnpInst.gname_sound SEGS RX.XCL A (OPS R) HOPS MP PB).
   - apply (UnpInst.gname_sound SEGS RX.XCL A (OPS R) HOPS MP PB).
@@ -461,13 +484,13 @@ Proof.
   - apply (UnpInst.gperm_kinds_sound SEGS RX.XCL A (OPS R) HOPS MP PB).
   - apply (UnpInst.gperm_kinds_sound SEGS RX.XCL A (OPS R) HOPS MP PB).
   - apply (UnpInst.gperm_kinds_sound SEGS RX.XCL A (OPS R) HOPS MP PB).
-  - apply (LdPartSound.ldpart_sound SEGS (OPS R) (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds) MP PB).
-  - apply (LdPartSound.ldpart_sound SEGS (OPS R) (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds) MP PB).
-  - apply (LdPartSound.ldpart_sound SEGS (OPS R) (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds) MP PB).
-  - apply (LdPartSound.ldpart_sound SEGS (OPS R) (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds) MP PB).
-  - apply (LdPartSound.ldpart_sound SEGS (OPS R) (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds) MP PB).
-  - apply (LdPartSound.ldpart_sound SEGS (OPS R) (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds) MP PB).
-  - apply (LdPartSound.ldpart_sound SEGS (OPS R) (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds) MP PB).
+  - apply (LdPartSound.ldpart_sound SEGS (OPS R) (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds) MP PB).
+  - apply (LdPartSound.ldpart_sound SEGS (OPS R) (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds) MP PB).
+  - apply (LdPartSound.ldpart_sound SEGS (OPS R) (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds) MP PB).
+  - apply (LdPartSound.ldpart_sound SEGS (OPS R) (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds) MP PB).
+  - apply (LdPartSound.ldpart_sound SEGS (OPS R) (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds) MP PB).
+  - apply (LdPartSound.ldpart_sound SEGS (OPS R) (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds) MP PB).
+  - apply (LdPartSound.ldpart_sound SEGS (OPS R) (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds) MP PB).
   - apply (PkInst.pkload_sound SEGS RX.XCL A (OPS R) HOPS MP PB (r_MPA R)).
   - apply (PkInst.pkload_sound SEGS RX.XCL A (OPS R) HOPS MP PB (r_MPA R)).
   - apply (PkInst.pkload_sound SEGS RX.XCL A (OPS R) HOPS MP PB (r_MPA R)).
@@ -497,7 +520,7 @@ Proof.
   - apply CS_pool_open.
   - apply CS_pool_close.
   - apply (TdInst.znext_sound SEGS RX.XCL A (OPS R) HOPS MP PB).
-  - apply (MemcpyWCtr.memcpy_w_sound (OPS R) (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds) MP PB). reflexivity.
+  - apply (MemcpyWCtr.memcpy_w_sound (OPS R) (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds) MP PB). reflexivity.
   - apply CS_pool_park.
   - apply CS_pool_unpark.
   - apply CS_pool_unpark.
@@ -507,17 +530,34 @@ Proof.
   intros     E0 K HPB HRET.
   exact (LU.g0_ok R ltac:(apply ctabU; assumption) ltac:(apply ctabUE; assumption)  E0 K HPB  HRET).
 Qed.
+
+(* The same contract tables and library nodes in the certificates of the start state with CONFIG_RSEQ: the
+   tables are the same terms; the nodes are those certificates' own. *)
+Lemma ctabLR : ctab_ok SEGS R TLR.CONTRACTS. Proof. exact ctabL. Qed.
+Lemma ctabER : ctab_ok SEGS R TER.CONTRACTS. Proof. exact ctabE. Qed.
+Lemma ctabUR : ctab_ok SEGS R TUR.CONTRACTS. Proof. exact ctabU. Qed.
+Lemma ctabUER : ctab_ok SEGS R TUER.CONTRACTS. Proof. exact ctabUE. Qed.
+Lemma lib8R : lib_ok SEGS R (t_st TFR.T_LIBGEN_r8) (t_st TFR.R_LIBGEN_r8_RET).
+Proof. intros. apply L8R.lib_ok_r8; [apply ctabLR; assumption | apply ctabER; assumption]. Qed.
+Definition G0_stmtR : Prop := (forall E0 K, r_PB R (eb E0) -> LNODE SEGS R L9R.N E0 K (t_st TFR.R_LIBGEN_r9_RET) -> LNODE SEGS R L9R.N E0 K (t_st TLR.T_G0_r14o5n0o7n1o1n24o3n2)).
+Lemma lib9R : G0_stmtR -> lib_ok SEGS R (t_st TFR.T_LIBGEN_r9) (t_st TFR.R_LIBGEN_r9_RET).
+Proof. intros. apply L9R.lib_ok_r9; [apply ctabLR; assumption | apply ctabER; assumption | assumption]. Qed.
+Lemma G0_okR : G0_stmtR.
+Proof.
+  intros     E0 K HPB HRET.
+  exact (LUR.g0_ok R ltac:(apply ctabUR; assumption) ltac:(apply ctabUER; assumption)  E0 K HPB  HRET).
+Qed.
 Lemma ext_F :
-  RX.ext_ok inp sp rnd Hva A Cw aw_fds aw_ceil_fds T_Src2F.CONTRACTS [21; 23; 24]%uint63.
+  RX.ext_ok inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds T_Src2F.CONTRACTS [21; 23; 24]%uint63.
 Proof.
   intros cid ct Hf Hn. pose proof Hf as Hf0. unfold T_Src2F.CONTRACTS in Hf. tabcase Hf.
   - apply CS_roomcap.
   - apply CS_free. reflexivity.
-  - apply (MemcpyCtr.memcpy_rr_sound (OPS R) (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds) MP PB). reflexivity.
-  - apply (MemcpyCtr.memcpy_blob_sound (OPS R) (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds) MP PB). reflexivity.
+  - apply (MemcpyCtr.memcpy_rr_sound (OPS R) (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds) MP PB). reflexivity.
+  - apply (MemcpyCtr.memcpy_blob_sound (OPS R) (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds) MP PB). reflexivity.
   - apply CS_rstage. reflexivity.
-  - apply (MemcpyCtr.memcpy_payload_sound (OPS R) (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds) MP PB PB5). reflexivity.
-  - apply (StrCtr.strnlen_sound (OPS R) (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds) MP PB PBstr1 PBstr3 PB12). reflexivity.
+  - apply (MemcpyCtr.memcpy_payload_sound (OPS R) (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds) MP PB PB5). reflexivity.
+  - apply (StrCtr.strnlen_sound (OPS R) (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds) MP PB PBstr1 PBstr3 PB12). reflexivity.
   - apply CS_roomdrop.
   - apply CS_roomdrop.
   - exfalso. apply Hn. cbn [In]. tauto.
@@ -526,67 +566,68 @@ Proof.
 Qed.
 Lemma FamF :
   lib_ok SEGS R (t_st T_Src2F.T_LIBGEN_r8) (t_st T_Src2F.R_LIBGEN_r8_RET) -> lib_ok SEGS R (t_st T_Src2F.T_LIBGEN_r9) (t_st T_Src2F.R_LIBGEN_r9_RET) ->
-  RX.FamHypsF inp sp rnd Hva A Cw aw_fds aw_ceil_fds.
-Proof. intros L8 L9. exact (RX.FHF inp sp rnd Hva A Cw aw_fds aw_ceil_fds ext_F mf_ok L8 L9). Qed.
+  lib_ok SEGS R (t_st TFR.T_LIBGEN_r8) (t_st TFR.R_LIBGEN_r8_RET) -> lib_ok SEGS R (t_st TFR.T_LIBGEN_r9) (t_st TFR.R_LIBGEN_r9_RET) ->
+  RX.FamHypsF inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds.
+Proof. intros L8 L9 L8' L9'. exact (RX.FHF inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds ext_F mf_ok L8 L9 L8' L9'). Qed.
 Lemma ext_D :
-  RX.ext_ok inp sp rnd Hva A Cw aw_fds aw_ceil_fds T_Src2D.CONTRACTS [22]%uint63.
+  RX.ext_ok inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds T_Src2D.CONTRACTS [22]%uint63.
 Proof.
   intros cid ct Hf Hn. pose proof Hf as Hf0. unfold T_Src2D.CONTRACTS in Hf. tabcase Hf.
-  - apply (MemcpyCtr.memcpy_rr_sound (OPS R) (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds) MP PB). reflexivity.
-  - apply (StrCtr.strnlen_sound (OPS R) (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds) MP PB PBstr1 PBstr3 PB12). reflexivity.
+  - apply (MemcpyCtr.memcpy_rr_sound (OPS R) (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds) MP PB). reflexivity.
+  - apply (StrCtr.strnlen_sound (OPS R) (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds) MP PB PBstr1 PBstr3 PB12). reflexivity.
   - apply CS_roomdrop.
   - exfalso. apply Hn. cbn [In]. tauto.
 Qed.
-Lemma FamD : RX.FamHypsD inp sp rnd Hva A Cw aw_fds aw_ceil_fds.
-Proof. exact (RX.FHD inp sp rnd Hva A Cw aw_fds aw_ceil_fds ext_D mf_ok). Qed.
+Lemma FamD : RX.FamHypsD inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds.
+Proof. exact (RX.FHD inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds ext_D mf_ok). Qed.
 Lemma ext_A :
-  RX.ext_ok inp sp rnd Hva A Cw aw_fds aw_ceil_fds T_Src2A.CONTRACTS [26]%uint63.
+  RX.ext_ok inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds T_Src2A.CONTRACTS [26]%uint63.
 Proof.
   intros cid ct Hf Hn. pose proof Hf as Hf0. unfold T_Src2A.CONTRACTS in Hf. tabcase Hf.
-  - apply (MemcpyCtr.memcpy_rr_sound (OPS R) (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds) MP PB). reflexivity.
-  - apply (StrCtr.strnlen_sound (OPS R) (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds) MP PB PBstr1 PBstr3 PB12). reflexivity.
+  - apply (MemcpyCtr.memcpy_rr_sound (OPS R) (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds) MP PB). reflexivity.
+  - apply (StrCtr.strnlen_sound (OPS R) (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds) MP PB PBstr1 PBstr3 PB12). reflexivity.
   - apply CS_roomdrop.
   - exfalso. apply Hn. cbn [In]. tauto.
 Qed.
-Lemma FamA : RX.FamHypsA inp sp rnd Hva A Cw aw_fds aw_ceil_fds.
-Proof. exact (RX.FHA inp sp rnd Hva A Cw aw_fds aw_ceil_fds ext_A). Qed.
+Lemma FamA : RX.FamHypsA inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds.
+Proof. exact (RX.FHA inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds ext_A). Qed.
 Lemma ext_T :
-  RX.ext_ok inp sp rnd Hva A Cw aw_fds aw_ceil_fds T_Src2T.CONTRACTS [27]%uint63.
+  RX.ext_ok inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds T_Src2T.CONTRACTS [27]%uint63.
 Proof.
   intros cid ct Hf Hn. pose proof Hf as Hf0. unfold T_Src2T.CONTRACTS in Hf. tabcase Hf.
-  - apply (MemcpyCtr.memcpy_rr_sound (OPS R) (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds) MP PB). reflexivity.
-  - apply (StrCtr.strnlen_sound (OPS R) (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds) MP PB PBstr1 PBstr3 PB12). reflexivity.
+  - apply (MemcpyCtr.memcpy_rr_sound (OPS R) (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds) MP PB). reflexivity.
+  - apply (StrCtr.strnlen_sound (OPS R) (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds) MP PB PBstr1 PBstr3 PB12). reflexivity.
   - apply CS_roomdrop.
   - exfalso. apply Hn. cbn [In]. tauto.
 Qed.
-Lemma FamT : RX.FamHypsT inp sp rnd Hva A Cw aw_fds aw_ceil_fds.
-Proof. exact (RX.FHT inp sp rnd Hva A Cw aw_fds aw_ceil_fds ext_T). Qed.
+Lemma FamT : RX.FamHypsT inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds.
+Proof. exact (RX.FHT inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds ext_T). Qed.
 Lemma ext_N :
-  RX.ext_ok inp sp rnd Hva A Cw aw_fds aw_ceil_fds T_SrcNU.CONTRACTS [].
+  RX.ext_ok inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds T_SrcNU.CONTRACTS [].
 Proof.
   intros cid ct Hf Hn. pose proof Hf as Hf0. unfold T_SrcNU.CONTRACTS in Hf. tabcase Hf.
-  - apply (MemcpyCtr.memcpy_rr_sound (OPS R) (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds) MP PB). reflexivity.
-  - apply (StrCtr.strnlen_sound (OPS R) (RX.OPS_plain_R inp sp rnd Hva A Cw aw_fds aw_ceil_fds) MP PB PBstr1 PBstr3 PB12). reflexivity.
+  - apply (MemcpyCtr.memcpy_rr_sound (OPS R) (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds) MP PB). reflexivity.
+  - apply (StrCtr.strnlen_sound (OPS R) (RX.OPS_plain_R inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds) MP PB PBstr1 PBstr3 PB12). reflexivity.
   - apply CS_roomdrop.
 Qed.
-Lemma FamN : RX.FamHypsN inp sp rnd Hva A Cw aw_fds aw_ceil_fds.
-Proof. exact (RX.FHN inp sp rnd Hva A Cw aw_fds aw_ceil_fds ext_N). Qed.
+Lemma FamN : RX.FamHypsN inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds.
+Proof. exact (RX.FHN inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds ext_N). Qed.
 
 Theorem all_hyps :
-    G0_stmt ->
-  RX.AllHyps inp sp rnd Hva A Cw aw_fds aw_ceil_fds.
+    G0_stmt -> G0_stmtR ->
+  RX.AllHyps inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds.
 Proof.
-  intros  G0.
-  exact (RX.AH inp sp rnd Hva A Cw aw_fds aw_ceil_fds (FamF (lib8 ) (lib9  G0)) FamD FamA FamT FamN).
+  intros  G0 G0R.
+  exact (RX.AH inp sp mb rnd Hva A Cw aw_fds aw_ceil_fds (FamF (lib8 ) (lib9  G0) lib8R (lib9R G0R)) FamD FamA FamT FamN).
 Qed.
 
 Theorem rz :
-    G0_stmt ->
+    G0_stmt -> G0_stmtR ->
   realizes SEGS (RX.c0 inp sp brk0 mb rnd lim) (K inp).
 Proof.
-  intros  G0.
-  exact (RX.rz inp sp brk0 mb rnd lim Hva Hve Hhw Hsz Hen A Cw aw_fds aw_ceil_fds cw_init aw_ceil0 aw_init
-           (all_hyps  G0)).
+  intros  G0 G0R.
+  exact (RX.rz inp sp brk0 mb rnd lim Hva Hve Hhw Hsz Hvl Hrdr Hen A Cw aw_fds aw_ceil_fds cw_init aw_ceil0 aw_init
+           (all_hyps  G0 G0R)).
 Qed.
 
 End RUN.

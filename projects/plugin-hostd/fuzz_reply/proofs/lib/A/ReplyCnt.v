@@ -35,7 +35,7 @@ Definition L24 : nat := Z.to_nat (2 ^ 15).
 Definition RL_PRIM (c : Z) : Z := 2 ^ 31 / PresetRoom.size_of_class c.
 Definition LPRIM (c : Z) : nat := Z.to_nat (RL_PRIM c).
 
-(* the count peak of a trace, for any predicate: the room kit's own text (W_contract_x.v:249-256 at 67327a6003d), Z-valued,
+(* the count peak of a trace, for any predicate: the room kit's own text (W_contract_x.v:249-256), Z-valued,
    kept here as the one definition; tr_peakP_w below checks it event by event against tr_peak_w (ReplyTrPeakW.v) *)
 Definition zb (b : bool) : Z := if b then 1 else 0.
 Fixpoint tr_peakP {X : Type} (P : Z -> bool) (tr : list (RelayRunT.rev X)) : Z :=

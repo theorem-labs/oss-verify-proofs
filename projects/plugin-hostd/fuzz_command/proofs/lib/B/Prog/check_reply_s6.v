@@ -1,12 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: ported from this harness's lib/A/Prog/check_reply_s6.v (the ASan walk, a working branch 91059853ab1) to the ASan+UBSan build fuzz_command.asan-ubsan (lib/B, entry 0x86e64): B's addresses; the transfer of astr_argA between readers in lib/B/Prog/CmdRep.v's form. *)
-(* Modified by Theorem Labs, 2026-10: onto a working branch 917ca7ac6b1: astr_argA's read-only arm there names no reader (CmdChk's cmd_addr_b / cmd_hull_b, the end in CmdRo's cmd_ro_ends), so s6_argA_eq carries that arm unchanged. *)
+(* Modified by Theorem Labs, 2026-10: ported from this harness's lib/A/Prog/check_reply_s6.v (the ASan walk, a working branch) to the ASan+UBSan build fuzz_command.asan-ubsan (lib/B, entry 0x86e64): B's addresses; the transfer of astr_argA between readers in lib/B/Prog/CmdRep.v's form. *)
+(* Modified by Theorem Labs, 2026-10: onto a working branch: astr_argA's read-only arm there names no reader (CmdChk's cmd_addr_b / cmd_hull_b, the end in CmdRo's cmd_ro_ends), so s6_argA_eq carries that arm unchanged. *)
 (* Modified by Theorem Labs, 2026-10: the segment of check_reply's walk (fuzz_command.asan-ubsan, 0x86e64) from the strlen
    call 0x87080 through rec_shape_of (0x8708c) and `j 0x870e4` to the shape join, ported from
    proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v (cgif_close's call steps: cl_callS,
-   jafter_call_keep_pi) at origin/ossv/recipes c8557374ad2e.
+   jafter_call_keep_pi).
 
    The symbolic state carries the registers only (no regions): the segment loads and stores nothing, so each run
    keeps every byte (frame_of with no window). cr_mid goes from point to point by cr_mid_step: the journal from the
@@ -15,6 +15,7 @@
 
    rec_shape_of's post (rec_shape_of_c.v) gives the returned string as astr_argA for every owned-block list, which
    is the join's premise (CR_JOIN_stmt) at the list []; its `ly' = ly /\ S' = S` carries cr_ls to the join. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

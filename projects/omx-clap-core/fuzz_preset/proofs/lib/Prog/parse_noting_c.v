@@ -16,7 +16,7 @@ Import ListNotations.
 Local Open Scope Z_scope.
 
 (* Measured in the symtab of the #102 twin pau-preset-102/omx-clap-core/unstripped/fuzz_preset/fuzz_preset.plain (sha256
-   c8f4d6b8e567b0b1...), the unstripped twin of the pinned fuzz_preset.plain 805604bb0907ae1b... (facts 8f3e7e1a07f1):
+   c8f4d6b8e567b0b1...), the unstripped twin of the pinned fuzz_preset.plain 805604bb0907ae1b... (facts):
      parse_noting FUNC LOCAL 0x13a04 size 120: addi sp, sp, -0x30; jal fuzz_alloc_live; jal pj_parse;
      jal fuzz_alloc_ran_out; beqz a0, 0x13a5c; jal check_reject_clean; mv a0, s2; ret.
    Source (fuzz_preset.c of #102, lines 499-507): parse_noting(text, size, doc) has no int *ran_out parameter any more,

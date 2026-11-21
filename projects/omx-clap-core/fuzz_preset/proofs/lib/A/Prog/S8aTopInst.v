@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane; asked by a Theorem Labs lane 15:05Z for its A' driver top). fuzz_preset, image A' (asan #102):
    six premises of S8aTop.ex_value_A that had no lemma at the binding of record, each stated at that binding:
    B := AD2l.TfibB, PA := PI_prog_A, L := A_prog_listing, cp := CfParamsPreset.CfParams_preset and
@@ -47,7 +48,7 @@ Section a. Context {rc : YM05.RunCeil} {ci : CfImg}.
 #[local] Abbreviation ARX := (fun ly S Hp (W : world SEGS) mem md =>
   ARcf (cp := CP) SEGS TB ly S Hp W mem md /\ xs_placed_cf ly S).
 
-(* ASM1 (S8aEntry.v:135) at the binding *)
+(* ASM1 (S8aEntry.v:136) at the binding *)
 Corollary s8i_ASM1 : forall fx1 : YK11.FPState, @YGcallMxmn.astack_malloc_realizes_xm fx1 SEGS TB ARX 1.
 Proof.
 intros fx1. change SEGS with AB1v.tfibsegs.
@@ -57,7 +58,7 @@ exact (astack_malloc_realizes_xm_conj (fx := fx1) AB1v.tfibsegs TB (ARcf (cp := 
     (fs_iface_ARcf (cp := CP) AB1v.tfibsegs TB (AR_laws_ok_cf (cp := CP) AB1v.tfibsegs TB)) AD2l.TfibB_syms)).
 Qed.
 
-(* UAR_CELL (S8aEntry.v:153) at the binding: the record's values *)
+(* UAR_CELL (S8aEntry.v:154) at the binding: the record's values *)
 Lemma s8i_UAR_CELL :
   4096 <= as_uar_cell TB /\ as_uar_cell TB + 4 <= kLowMemEnd /\
   (as_uar_cell TB + 4 <= VAL (A_OBJ 0) \/ VAL (A_OBJ 0) + 8 <= as_uar_cell TB) /\
@@ -71,7 +72,7 @@ let v := eval vm_compute in (VAL (A_OBJ 12)) in assert (V12 : VAL (A_OBJ 12) = v
 rewrite U, V0, V1, V12. unfold kLowMemEnd. lia.
 Qed.
 
-(* HBLK32 (S8aNumber.v:90) at the binding *)
+(* HBLK32 (S8aNumber.v:91) at the binding *)
 Lemma s8i_HBLK32 : forall ly S Hp W mem md p n, ARX ly S Hp W mem md -> In (p, n) (ablocks TB ly S) -> n < 2 ^ 32.
 Proof.
 intros ly S Hp W mem md p n [HA _] Hin.
@@ -79,7 +80,7 @@ destruct (YGcfBlockRange.ablock_n_lt_max_cf (cp := CP) SEGS TB ly S Hp W mem md 
 assert (Hmax : @cf_malloc_max CP < 2 ^ 32) by (vm_compute; reflexivity). lia.
 Qed.
 
-(* HAM8 (S8aStr.v:133) at the binding: the k-form *)
+(* HAM8 (S8aStr.v:134) at the binding: the k-form *)
 Lemma s8i_HAM8 : forall ly S Hp W mem md p n k, ARX ly S Hp W mem md -> In (p, n) (ablocks TB ly S) -> 0 <= k <= n ->
   YGcallMx.amem_range8 p (k + 1).
 Proof.
@@ -88,7 +89,7 @@ apply in_map_iff in Hin as ([p0 n0] & E & Hin). cbn [fst snd] in E. injection E 
 exact (YGcfBlockRange.block_amem_range8_cf (cp := CP) SEGS TB ly S Hp W mem md p0 n0 k HA Hin Hk).
 Qed.
 
-(* HAMEM8 (S8aNumber.v:94) at the binding: the req_size form (req_size n = n + 1 - 1 for 0 < n, 1 for n = 0) *)
+(* HAMEM8 (S8aNumber.v:95) at the binding: the req_size form (req_size n = n + 1 - 1 for 0 < n, 1 for n = 0) *)
 Lemma s8i_HAMEM8 : forall ly S Hp W mem md p n, ARX ly S Hp W mem md -> In (p, n) (ablocks TB ly S) ->
   YGcallMx.amem_range8 p (req_size n).
 Proof.
@@ -103,7 +104,7 @@ unfold req_size. destruct (Z.eqb_spec n0 0) as [-> | Hne].
   replace (n0 - 1 + 1) with n0 in H8 by lia. exact H8.
 Qed.
 
-(* HOFFF (S8aNumber.v:75) at the binding *)
+(* HOFFF (S8aNumber.v:76) at the binding *)
 Lemma s8i_HOFFF : S8aNumCut.ev_frm_offimg ARX strtod_row.strtod_img_A.
 Proof.
 intros ly S Hp W mem md cid pos HAR Hin.

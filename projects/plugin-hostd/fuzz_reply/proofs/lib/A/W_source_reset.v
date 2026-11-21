@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the ASan walk of fuzz_reply's source_reset, in the form of the cgif walks of
    proofs/cgif/cgif_file_fuzzer/lib/A/ACh2.v (an internal call) and lib/A/ACbk.v (entry and return). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* source_reset(s) at 0x8575c (fuzz_reply.c:531-538): frame 32; it loads the shadow base through the GOT, calls
    list_free on s->pending (s+16), s->expected (s+64) and s->held (s+80), frees s->partial (s+40) behind a shadow
    check, and zeroes the 96 bytes of the struct with __asan_memset, so the source is closed.
@@ -130,7 +131,7 @@ unfold aview, mbyte, mrestrict. rewrite (hidden_not_img SEGS W (Z_to_bv 64 a) Hi
 destruct (m (Z_to_bv 64 a)) as [b|]; cbn; [discriminate|].
 destruct (seg_rom SEGS (Z_to_bv 64 a)) as [b|] eqn:Er; cbn; [discriminate | intros _; exact (GX_ROM a Ha Er)].
 Qed.
-(* W_sites.v:279, which this file does not import *)
+(* W_sites.v:280, which this file does not import *)
 Lemma aview_wrap64 : forall H (m : word -> option byte) a, aview SEGS H m a = aview SEGS H m (a mod 2 ^ 64).
 Proof.
 intros H m a. unfold aview, mbyte.
@@ -1485,7 +1486,7 @@ Qed.
    -> their R forms: list_free LF_R := lf_spec_g_xR (W_contract_srlf_xR.v; a Theorem Labs lane's G6 proves it as
    pb_list_free_g_xR), free / free(NULL) AFREE_R / AFREEN_R := afree_cf_rule_c_xR / afree_null_cf_rule_c_xR .. RO CTX R
    (their RO call-boundary premise from ARx at the call state, RO_ARx; part 3c removed their memnorm premise), memset
-   AMEMSET_R := aintrin_realizes_xR .. R OSet (a Theorem Labs lane e4c815100c57; aintrin_realizes_xR_of_x gives it from the
+   AMEMSET_R := aintrin_realizes_xR .. R OSet (a Theorem Labs lane; aintrin_realizes_xR_of_x gives it from the
    strict rule).
    Every other token is the strict text's.  The strict pb_source_reset_x above keeps its proof. ---- *)
 Section wR.
@@ -1502,7 +1503,7 @@ Hypothesis AMEMSET_R : aintrin_realizes_xR SEGS B ARx R OSet (SIGMA WS_asan_mems
 Let RUNG := paj_run_x_xG B PST ARx LAWS R G HG 0 [].
 Let RUNTOG := paj_run_to_x_xG B PST ARx LAWS R G HG 0 [].
 (* ---------------------------------------------------------------- what a callee's journal keeps *)
-(* :319 gx_keep_hi (line at 3a15e3071e9) *)
+(* :319 gx_keep_hi (line) *)
 Lemma gx_keep_hi_xR : forall G1 STK1 sp1 FP1 lyc Sc Hpc (W : world SEGS) memc mdc ly2 S2 Hp2 W2 mem2 md2 k1,
 (forall a, inG G1 a -> inG G a) ->
 ajournal_gx_xR SEGS B PST ARx R G1 0 [] STK1 sp1 FP1 lyc Sc Hpc W memc mdc [] ly2 S2 Hp2 W2 mem2 md2 k1 ->
@@ -1517,7 +1518,7 @@ rewrite (F1 a Ha Hno). apply (aview_gagree SEGS G1 (w_H W) memc memS a Hag).
 apply (proj2 (inGb_false G1 _)). rewrite unsigned_lit_small by lia.
 intros Hc. pose proof (inG_lo a (Hsub a Hc)). unfold kLowMemEnd in *. lia.
 Qed.
-(* :333 gx_keep_img (line at 3a15e3071e9) *)
+(* :333 gx_keep_img (line) *)
 Lemma gx_keep_img_xR : forall G1 STK1 sp1 FP1 lyc Sc Hpc (W : world SEGS) memc mdc ly2 S2 Hp2 W2 mem2 md2 k1,
 (forall a, inG G1 a -> inG G a) -> ~ YI16.sink_open_fp FP1 ->
 ajournal_gx_xR SEGS B PST ARx R G1 0 [] STK1 sp1 FP1 lyc Sc Hpc W memc mdc [] ly2 S2 Hp2 W2 mem2 md2 k1 ->
@@ -1532,7 +1533,7 @@ rewrite (F3 a (proj1 (HG a Ha)) (proj1 (proj2 (HG a Ha))) (proj1 (HGR a Ha)) (HP
 apply (aview_gagree SEGS G1 (w_H W) memc memS a Hag).
 apply (proj2 (inGb_false G1 _)). rewrite unsigned_lit_small by (unfold kLowMemEnd in *; lia). exact Hna.
 Qed.
-(* :347 gx_keep_blk (line at 3a15e3071e9) *)
+(* :347 gx_keep_blk (line) *)
 Lemma gx_keep_blk_xR : forall G1 STK1 sp1 FP1 lyc Sc Hpc (W : world SEGS) memc mdc ly2 S2 Hp2 W2 mem2 md2 k1 p n,
 (forall a, inG G1 a -> inG G a) ->
 ARx lyc Sc Hpc W memc mdc ->
@@ -1563,7 +1564,7 @@ Qed.
 (* Reusable/YCbq.v:1955 aj_intrin_at wants the written bytes to be awr_bytes of the walk's own window; here they
    are bytes of a program global, so this is W_sites_x.v aj_gx_entry_at_x's proof at OSet, with its presence
    premise on the bytes of G weakened to visibility (which is all its ARx_frame_law step uses). *)
-(* :378 aj_set_gx_at (line at 3a15e3071e9) *)
+(* :378 aj_set_gx_at (line) *)
 Lemma aj_set_gx_at_xR : forall pc, aintrin_realizes_xR SEGS B ARx R OSet pc ->
 forall (W : world SEGS) regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k d x n (o : Z) raw,
 ajournal_gx_xR SEGS B PST ARx R G 0 [] STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
@@ -1663,7 +1664,7 @@ split; [exact HP2|]. split; [exact Heff | split; [exact Hfr | exact Hgr]].
 Qed.
 
 (* ---------------------------------------------------------------- an internal call, journal to journal *)
-(* :476 aj_gx_call (line at 3a15e3071e9) *)
+(* :476 aj_gx_call (line) *)
 Lemma aj_gx_call_xR : forall (G1 : list (Z * Z)) (W : world SEGS) regsT memT pc STK sp0 FP ly S Hp W0 mem md lyc Sc Hpc mdc k STK1 FP1 (o : Z) raw ch1
 (K : alayout -> astate -> world SEGS -> bvmap 5 word -> (word -> option byte) -> Model -> Z -> Prop),
 (forall a, inG G1 a -> inG G a) ->
@@ -1704,7 +1705,7 @@ eapply (ajournal_gx_sub_xR SEGS B PST ARx LAWS Hsegs R_trans G STK sp0 0 [] FP l
 [ exact (ajournal_gx_G_mono_xR SEGS B PST ARx G1 G 0 [] STK1 (sp0 + o) FP1 lyc Sc Hpc W memT mdc [] ly2 S2 Hp2 W2 mem2 md2 k1 HGsub HJ1)
 | lia | lia | lia | intros a (r & [] & _) | exact HG | exact HF ].
 Qed.
-(* :574 sr_call_lf (line at 3a15e3071e9) *)
+(* :574 sr_call_lf (line) *)
 Lemma sr_call_lf_xR : forall (LA : Z) (l : hlist) (lines : bool)
 (W : world SEGS) regsT memT STK sp0 FP ly S Hp W0 mem md lyc Sc Hpc mdc k (o : Z) raw (kr : nat),
 LA mod 8 = 0 ->
@@ -1795,7 +1796,7 @@ intros a Ha Hno.
 exact (gx_keep_hi_xR (sr_G1 LA) LF_STK (sp0 + o) (blk_FP (list_blks l)) lyc Sc Hpc W memT mdc ly2 S2 Hp2 W2 mem2 md2 k1
   Hsub HJb a Ha Hno).
 Qed.
-(* :758 gx_pres (line at 3a15e3071e9) *)
+(* :758 gx_pres (line) *)
 Lemma gx_pres_xR : forall G0 STK sp0 FP ly S Hp (W0 : world SEGS) mem md own ly' S' Hp' (W' : world SEGS) mem' md' k,
 ajournal_gx_xR SEGS B PST ARx R G0 0 [] STK sp0 FP ly S Hp W0 mem md own ly' S' Hp' W' mem' md' k ->
 forall a, sp0 - STK <= a < sp0 -> apresent (w_H W') mem' a.
@@ -1805,12 +1806,12 @@ destruct HJ as (_ & _ & (memS & HJi & _) & _). rewrite !Z.add_0_r in HJi.
 pose proof HJi as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & Hpr & _). exact (Hpr a Ha).
 Qed.
 (* two journal facts at the walk's G, with their journal arguments implicit *)
-(* :837 sr_gx_AR (line at 3a15e3071e9) *)
+(* :837 sr_gx_AR (line) *)
 Lemma sr_gx_AR_xR : forall {STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k},
 ajournal_gx_xR SEGS B PST ARx R G 0 [] STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k ->
 ARx ly' S' Hp' W' mem' md'.
 Proof. intros * HJ. exact (ajournal_gx_AR_xR SEGS B PST ARx _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HJ). Qed.
-(* :841 sr_rom_view (line at 3a15e3071e9) *)
+(* :841 sr_rom_view (line) *)
 Lemma sr_rom_view_xR : forall {STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k},
 ajournal_gx_xR SEGS B PST ARx R G 0 [] STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k ->
 rom_view SEGS W mem -> rom_view SEGS W' mem'.
@@ -1819,7 +1820,7 @@ intros * HJ Hrv. eapply ajournal_gx_rom_view_xR;
 first [exact LAWS | exact pa_segs_low | exact HJ | exact HRO | exact sr_pstr | exact Hrv].
 Qed.
 (* ---------------------------------------------------------------- the walk *)
-(* :849 pb_source_reset_x (line at 3a15e3071e9) *)
+(* :849 pb_source_reset_x (line) *)
 Theorem pb_source_reset_xR : sr_spec_xR B PST ARx R MT RP G A_source_resetP.
 Proof.
 intros W ly S Hp regs mem md ch HA op HPRE H10 HAL8 HREP HGL HZS HROM HMO kr HRM0 HCNT0.

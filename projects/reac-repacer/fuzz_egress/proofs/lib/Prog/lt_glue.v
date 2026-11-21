@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Prog/fd_glue.v,
-   fd_seghelp.v and LLVMFuzzerTestOneInput.v at 25e3d17bdb50 and from reac-repacer/fuzz_uci
-   proofs/reac-repacer/fuzz_uci/lib/Prog/LLVMFuzzerTestOneInput.v at bc49657c087a; module path, this unit's callee
+   fd_seghelp.v and LLVMFuzzerTestOneInput.v and from reac-repacer/fuzz_uci
+   proofs/reac-repacer/fuzz_uci/lib/Prog/LLVMFuzzerTestOneInput.v; module path, this unit's callee
    contracts (g_cr, g_cm, g_ci in the form of uci's g_cno), and the cell lemmas rwc_cons, rwc_c1. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The SR glue of the harness-body walk of LLVMFuzzerTestOneInput (LLVMFuzzerTestOneInput.v): each call the body
    makes through an SR contract (malloc, free, check_restamp, check_mute, check_inject), from a frame state lf_fr of
    LLVMFuzzerTestOneInput_fr.v to the same frame state after the call, and g_run, which bridges a straight-line evt

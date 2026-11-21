@@ -7,9 +7,10 @@
    answer's entry (sbb_at_ans: answer's premises, the entry's frame chain by achain_kept, PASS4-REFIT.md section B);
    the tail call through PaFx.v's cl_callS_pgF with answer_c.v's contract at the walk's FP state; and the post of
    the statement from answer's post and the block history (sup_broadcast_s2.v sbb_post_blocks). The shape of
-   a Theorem Labs lane's A walk (lib/A/Prog/sup_broadcast_s3.v at a5a5ff08765) and of the worked re-fit
+   a Theorem Labs lane's A walk (lib/A/Prog/sup_broadcast_s3.v) and of the worked re-fit
    lib/A/Prog/sup_remove_all_refit_s3.v (the F tail call). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/sup_broadcast_s6.v, with its module paths and module names changed; 127 of its 175 lines of code are new or changed and 347 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The lemmas that the B walks' calls of record() and answer() share (fuzz_command.asan-ubsan): the recorder's
    answer cell and blocks, record()'s footprint, the program's statics, the live blocks, and answer's argument
    "resp 0" (the shape REC_MOD_HOST_SHAPE at 0x21d20). They are about no single walk, so they are here once and the
@@ -17,12 +18,12 @@
 
    Moved here with their proofs unchanged (the copies differ only in their name prefix):
    - rca_answer_cell .. rca_rep_blocks, rca_blk, rca_same_start: the B sup_remove_all walk of another branch,
-     lib/B/Prog/sup_remove_all_s1.v:33-91 and :219-237 (prefix bsra_);
-     rca_shape_unowned_tfib, rca_shape_arg: sup_remove_all_s3.v:48 and :106 (prefix bsra_); rca_prog:
-     sup_remove_all_s4.v:83 (sra_prog). Copied with prefix sc_t_ in an earlier version of
-     lib/B/Prog/sup_call_t.v:56-124 and :375-444.
+     lib/B/Prog/sup_remove_all_s1.v:34-92 and :220-238 (prefix bsra_);
+     rca_shape_unowned_tfib, rca_shape_arg: sup_remove_all_s3.v:49 and :107 (prefix bsra_); rca_prog:
+     sup_remove_all_s4.v:84 (sra_prog). Copied with prefix sc_t_ in an earlier version of
+     lib/B/Prog/sup_call_t.v:57-125 and :376-445.
    - rca_recFP, rca_in_dec, rca_HPROG, rca_sig_record: the B sup_add walk of another branch,
-     lib/B/Prog/sup_add_s1a.v:189, :164, :371, :460 (prefix s1_), copied with prefix scb_ in sup_call_b.v.
+     lib/B/Prog/sup_add_s1a.v:190, :165, :372, :461 (prefix s1_), copied with prefix scb_ in sup_call_b.v.
    The Section lemmas sit in a Section with the Context of their source, so after End they take the same
    arguments as the copies do. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.

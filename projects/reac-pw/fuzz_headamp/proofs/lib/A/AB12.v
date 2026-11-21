@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: proofs/cgif/cgif_file_fuzzer/lib/A/AB12.v at c8557374ad2e; emitted for reac-pw/fuzz_headamp image A by atable.py e88affcf0526 from fuzz_headamp.asan and its unstripped twin: every field read from this image, TFIB_TEXT_N over this image's own .text, stops_more the image's own self-loops; img_lo / img_hi cited from lib/Reusable/YImgTop.v; module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: proofs/cgif/cgif_file_fuzzer/lib/A/AB12.v at theorem-labs/oss-verify-proofs@6b32741d849a; emitted for reac-pw/fuzz_headamp image A by atable.py e88affcf0526 from fuzz_headamp.asan and its unstripped twin: every field read from this image, TFIB_TEXT_N over this image's own .text, stops_more the image's own self-loops; img_lo / img_hi cited from lib/Reusable/YImgTop.v; module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_headamp.asan (reac-pw/fuzz_headamp asan) sha256 f3e0669d2819724922df0556b11c2dcd22d1e16fe7e0fe1535ce784b34436c47; unstripped twin sha256 b5f352154c54a97c66fd92dfa228e8a854498f6cd313dba0107900546b043f9a *)
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: fuzz_preset, the YAjMemnorm.memnorm instance of YC80x.v's srr_inv_laws
    (memnorm m := Lib.Mem.mem_inv segs m /\ MemNorm.task_mem segs m, YAjMemnorm.v:41, the body of the walks' aj_memnorm).
    rule 24: no function proved. rule 24: proves no function (kind: segment lemma / runner invariant twin).

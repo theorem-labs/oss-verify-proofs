@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (room_init, in both copies, takes the kernel build and reads the start ledger as the model's init_reserved: the image's reservations followed by the vvar/vDSO pair, whose two entries are measured by the size and count bounds; the image's reservations' size and count bounds as the lemmas rsegs_sizes and rsegs_len). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Specs Run.
@@ -54,14 +55,41 @@ Proof.
   apply andb_prop in H as [H1 H2]. constructor; [apply Z.leb_le; exact H1 | apply IH; exact H2].
 Qed.
 
-Lemma room_init : forall mo brk lim mbase sp,
-  m_vmmaps mo = mkVmMapsFull (segments_reserved rsegs) [] [] brk brk lim mbase sp -> 2 ^ 31 <= lim -> room mo 0.
+(* the image's own reservations, as separate lemmas: computed once, closed (written inside room_init's
+   proof as a tactic-in-term and an asserted vm_compute, the step grew without bound) *)
+Lemma rsegs_sizes : sizes_le (2 ^ 30) (segments_reserved rsegs).
+Proof. apply forallb_sizes. vm_compute. reflexivity. Qed.
+Lemma rsegs_len : (length (segments_reserved rsegs) <= 98)%nat.
+Proof. vm_compute. lia. Qed.
+
+(* The launch seeds [vm_reserved] with [State.init_reserved]: the image's
+   reservations AND the vdso/vvar pair.  [room]'s size and count bounds read
+   [vmaps = vm_reserved ++ vm_maps], so the pair has to be measured; [rm_live]
+   reads [vm_maps] alone and is untouched. *)
+Lemma room_init : forall mo kb brk lim mbase sp,
+  m_vmmaps mo = mkVmMapsFull (init_reserved (segments_reserved rsegs) mbase sp kb) [] [] brk brk lim mbase sp ->
+  2 ^ 31 <= lim -> room mo 0.
 Proof.
-  intros mo brk lim mbase sp E Hlim. constructor; unfold vmaps; rewrite E; cbn [vm_reserved vm_maps vm_limit vm_live_bytes live_bytes]; rewrite ?app_nil_r.
-  - apply forallb_sizes. vm_compute. reflexivity.
-  - assert (EL : length (segments_reserved rsegs) = ltac:(let x := eval vm_compute in (length (segments_reserved rsegs)) in exact x))
-      by (vm_compute; reflexivity).
-    rewrite EL. cbn. lia.
+  intros mo kb brk lim mbase sp E Hlim.
+  pose proof (vdso_text_pages_pos kb). pose proof (vdso_text_pages_le kb).
+  assert (HV : forall top, sizes_le (2 ^ 30) (vdso_reserved kb top)
+                           /\ (length (vdso_reserved kb top) <= 2)%nat).
+  { intros top. unfold sizes_le, vdso_reserved. cbv zeta.
+    destruct ((top - vdso_len kb) <? page_size)%Z; cbn [length].
+    - split; [apply Forall_nil | lia].
+    - split; [| lia].
+      repeat (apply Forall_cons;
+        [cbn [snd]; rewrite bv_unsigned_Z_to_bv_u64
+           by (unfold vdso_vvar_pages, page_size, two_pow_64; lia);
+         unfold vdso_vvar_pages, page_size; lia |]).
+      apply Forall_nil. }
+  constructor; unfold vmaps; rewrite E; cbn [vm_reserved vm_maps vm_limit vm_live_bytes live_bytes]; rewrite ?app_nil_r.
+  - unfold init_reserved, sizes_le. apply Forall_forall. intros p Hp.
+    apply in_app_or in Hp as [Hp|Hp].
+    + exact (proj1 (Forall_forall _ _) rsegs_sizes p Hp).
+    + exact (proj1 (Forall_forall _ _) (proj1 (HV _)) p Hp).
+  - unfold init_reserved. rewrite length_app.
+    pose proof rsegs_len. pose proof (proj2 (HV (page_round_down_Z (Z.min (bv_unsigned mbase) (bv_unsigned sp - stack_max_size))))). lia.
   - lia.
   - exact Hlim.
 Qed.
@@ -155,14 +183,38 @@ Proof.
   apply andb_prop in H as [H1 H2]. constructor; [apply Z.leb_le; exact H1 | apply IH; exact H2].
 Qed.
 
-Lemma room_init : forall mo brk lim mbase sp,
-  m_vmmaps mo = mkVmMapsFull (segments_reserved rsegs) [] [] brk brk lim mbase sp -> 2 ^ 31 <= lim -> room mo 0.
+(* the image's own reservations, as separate lemmas: computed once, closed (written inside room_init's
+   proof as a tactic-in-term and an asserted vm_compute, the step grew without bound) *)
+Lemma rsegs_sizes : sizes_le (2 ^ 30) (segments_reserved rsegs).
+Proof. apply forallb_sizes. vm_compute. reflexivity. Qed.
+Lemma rsegs_len : (length (segments_reserved rsegs) <= 98)%nat.
+Proof. vm_compute. lia. Qed.
+
+(* twin of the module above; kept byte-identical in shape *)
+Lemma room_init : forall mo kb brk lim mbase sp,
+  m_vmmaps mo = mkVmMapsFull (init_reserved (segments_reserved rsegs) mbase sp kb) [] [] brk brk lim mbase sp ->
+  2 ^ 31 <= lim -> room mo 0.
 Proof.
-  intros mo brk lim mbase sp E Hlim. constructor; unfold vmaps; rewrite E; cbn [vm_reserved vm_maps vm_limit vm_live_bytes live_bytes]; rewrite ?app_nil_r.
-  - apply forallb_sizes. vm_compute. reflexivity.
-  - assert (EL : length (segments_reserved rsegs) = ltac:(let x := eval vm_compute in (length (segments_reserved rsegs)) in exact x))
-      by (vm_compute; reflexivity).
-    rewrite EL. cbn. lia.
+  intros mo kb brk lim mbase sp E Hlim.
+  pose proof (vdso_text_pages_pos kb). pose proof (vdso_text_pages_le kb).
+  assert (HV : forall top, sizes_le (2 ^ 30) (vdso_reserved kb top)
+                           /\ (length (vdso_reserved kb top) <= 2)%nat).
+  { intros top. unfold sizes_le, vdso_reserved. cbv zeta.
+    destruct ((top - vdso_len kb) <? page_size)%Z; cbn [length].
+    - split; [apply Forall_nil | lia].
+    - split; [| lia].
+      repeat (apply Forall_cons;
+        [cbn [snd]; rewrite bv_unsigned_Z_to_bv_u64
+           by (unfold vdso_vvar_pages, page_size, two_pow_64; lia);
+         unfold vdso_vvar_pages, page_size; lia |]).
+      apply Forall_nil. }
+  constructor; unfold vmaps; rewrite E; cbn [vm_reserved vm_maps vm_limit vm_live_bytes live_bytes]; rewrite ?app_nil_r.
+  - unfold init_reserved, sizes_le. apply Forall_forall. intros p Hp.
+    apply in_app_or in Hp as [Hp|Hp].
+    + exact (proj1 (Forall_forall _ _) rsegs_sizes p Hp).
+    + exact (proj1 (Forall_forall _ _) (proj1 (HV _)) p Hp).
+  - unfold init_reserved. rewrite length_app.
+    pose proof rsegs_len. pose proof (proj2 (HV (page_round_down_Z (Z.min (bv_unsigned mbase) (bv_unsigned sp - stack_max_size))))). lia.
   - lia.
   - exact Hlim.
 Qed.

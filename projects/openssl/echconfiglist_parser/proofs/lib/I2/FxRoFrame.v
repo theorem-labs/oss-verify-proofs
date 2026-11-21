@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a failed sc is framed through its store-permission probe, fm_load_abs then fm_store_abs, instead of step_accesses_sc_fail). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From stdpp Require Import bitvector.
@@ -191,9 +192,10 @@ Proof.
     destruct hit.
     + destruct (fm_store_abs IM RO (f_mem F) (FxState.rget F (ireg rs1)) (awidth_sz w0) (FxState.rget F (ireg rs2))) as [M'|] eqn:Es0; [|discriminate].
       apply (Hgo _ (awidth_sz w0) _ M' Es0); [rewrite <- Hregs; reflexivity | destruct w0; reflexivity].
-    + unfold resv_hit in Ehit.
-      apply Hfr. rewrite (step_accesses_sc_fail segs ms w w0 _ _ _ _ _ 4 report Hf He Hd Eal Ehit Hacc).
-      intros r [].
+    + (* [comment removed for export] *)
+      destruct (fm_load_abs IM (f_mem F) (FxState.rget F (ireg rs1)) (awidth_sz w0) true) as [old|] eqn:El0; [|discriminate].
+      destruct (fm_store_abs IM RO (f_mem F) (FxState.rget F (ireg rs1)) (awidth_sz w0) old) as [M'|] eqn:Es0; [|discriminate].
+      apply (Hgo _ (awidth_sz w0) _ M' Es0); [rewrite <- Hregs; reflexivity | destruct w0; reflexivity].
   - (* [comment removed for export] *)
     apply some_inj in Hc. subst fi. cbv beta iota zeta in H.
     destruct (aligned_for w0 (FxState.rget F (ireg rs1)) (f_mem F)) eqn:Eal; cbn [negb] in H; [|discriminate].

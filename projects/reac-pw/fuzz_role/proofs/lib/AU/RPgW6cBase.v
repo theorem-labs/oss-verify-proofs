@@ -1,18 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Reusable/YCbq.v aj_intrin_at at 28fdc66416e (the call of
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Reusable/YCbq.v aj_intrin_at (the call of
    __asan_memcpy in the journal) restated as hd_memcpy with the wrapper's same_but_materialized kept in the post as
-   same_io, and proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v at 9e73ed57244 (m2_img_zone, m2_cstr_kept, the .rodata
+   same_io, and proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v (m2_img_zone, m2_cstr_kept, the .rodata
    zone of m2_szone) restated as hd_img_zone / hd_cstr_kept / hd_szone for the .rodata range only; the rest of the
    file is new. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_role/lib/A/RPgScanHead.v, with its module paths and module names changed; 428 of its 517 lines of code are new or changed and 925 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_role/lib/A/RPgW6cTail.v, with its module paths, module names, addresses and numbers changed; 149 of its 192 lines of code are new or changed and 474 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6cBase.v at cb9cdc023f20 for the same
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6cBase.v for the same
    unit's image B (fuzz_rate.asan-ubsan): image B's pcs, code table, registers and real-frame cells; the pod is e62
    (F + 0x210) instead of e (F + 0xf0); the intrinsics are image B's __asan_memcpy 0x518b8 and __asan_memset 0x51d54;
    the frame for locals is class 4 (1024 bytes) and the real frame 0x220 bytes; the join's state names t1, s2, s6 and
    s10 and the tails read s2 back from the cell R + 0x158; the input avoids image B's first write ranges. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgW6cBaseB.v at 05426fac6916 for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgW6cBaseB.v for
    reac-pw/fuzz_role's image B (fuzz_role.asan-ubsan): module paths changed (lib/AU/Img0.rsegs, lib/A/RPgBase and
    RPgCSpec, lib/AU/RPgMem / RPgSteps / RPgSeg names); every pc, register, real-frame cell and data address is role
    B's: the case entries 0x811d8 / 0x81050 / 0x8122c, the join 0x818d8, __asan_memcpy 0x5116c (return 0x81738) and
@@ -22,6 +22,7 @@
    left in s8 / s4 (cases 6, 7) or s2 / s6 (case 8); at J the cursor is a3, what is left t1, s6 = pp + 0x4000 and
    a5 = pp, which the tails read from [R+0x140]; the code table is lib/AU/RPgW6bBase.v's w6bb_tbl; the real frame is
    0x200 bytes; the input avoids role B's first write ranges. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_role image B (fuzz_role.asan-ubsan, pinned sha256
    b255d4935da5af137a3967dbe33380ea43be8e78bfe05d1e356e0a2be8a69ff0; every address measured on the unstripped twin
    dc791783f32962615e18a5f5cffae758ba56eb5dc87f70913c3579b101b4406a, same loaded bytes): the BLOCK STATEMENTS of the

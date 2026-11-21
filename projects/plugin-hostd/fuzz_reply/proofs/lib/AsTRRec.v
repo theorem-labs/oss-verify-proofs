@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_reply, both ASan builds: copied from proofs/boost-beast/http_request/lib/As/AsIface.v:291-316 and from
-   proofs/boost-beast/http_request/lib/As/AsTRList.v:137-207, both at origin/ossv/recipes 754c3cdb4cc (blobs
-   unchanged at de305eb5587): the released trace-recording vocabulary.
+   proofs/boost-beast/http_request/lib/As/AsTRList.v:137-207, both (blobs
+   unchanged): the released trace-recording vocabulary.
    - AsIface.v:291-316: trace_ok, pf_ok, pf_shift, pf_ok_call, pf_ok_site, pf_ok_incl;
    - AsTRList.v:137-207: the boolean checks inb, list_eqb, inlb, prefixes_inb, trace_okb, pf_okb0, their soundness,
      trace_ok_of_incl, pf_ok_of_incl.

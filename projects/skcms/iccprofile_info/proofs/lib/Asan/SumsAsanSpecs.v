@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the entry specifications hold at either CONFIG_RSEQ layout (INFO_ASAN_at r). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -178,36 +179,36 @@ End Derive.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-Lemma asan_fill_spec_imemset : APSX.fill_spec ASEGS (AP.x_imemset INFO_ASAN) 256.
+Lemma asan_fill_spec_imemset {r : Z} : APSX.fill_spec ASEGS (AP.x_imemset (INFO_ASAN_at r)) 256.
 Proof.
   apply (fill_spec_of_imemset _ asan_imemset_entry); [apply bv_eq; reflexivity|].
   exact asan_imemset.
 Qed.
 
-Lemma asan_fill_spec_memset : APSX.fill_spec ASEGS (AP.x_memset INFO_ASAN) AX2.two64.
+Lemma asan_fill_spec_memset {r : Z} : APSX.fill_spec ASEGS (AP.x_memset (INFO_ASAN_at r)) AX2.two64.
 Proof.
   apply fill_spec_of_memset. intros mem0 d cv ret n rom Hn Hnw Hst Hret regs R10 R11 R12 R1.
   exact (AsanMemset.memset_summary mem0 d cv ret n rom Hn Hnw Hst Hret regs R10 R11 R12 R1).
 Qed.
 
-Lemma asan_copy_spec_imemcpy : APSX.copy_spec ASEGS (AP.x_imemcpy INFO_ASAN).
+Lemma asan_copy_spec_imemcpy {r : Z} : APSX.copy_spec ASEGS (AP.x_imemcpy (INFO_ASAN_at r)).
 Proof.
   apply (copy_spec_of_imemcpy _ asan_imemcpy_entry); [apply bv_eq; reflexivity|].
   exact asan_imemcpy.
 Qed.
 
-Lemma asan_copy_spec_memcpy : APSX.copy_spec ASEGS (AP.x_memcpy INFO_ASAN).
+Lemma asan_copy_spec_memcpy {r : Z} : APSX.copy_spec ASEGS (AP.x_memcpy (INFO_ASAN_at r)).
 Proof.
   intros mem0 dst src n bs regs ret Hn Hlen Hrd Hst Hdisj Hnws Hnwd Hret R1 R10 R11 R12.
   pose proof (u64_range dst) as Hdr.
   assert (HOK : AsanMemcpyBase.mcH mem0 dst src n bs) by (constructor; try assumption; lia).
   destruct (AsanMemcpy.ref_memcpy mem0 dst src n bs (seg_rom ASEGS) HOK regs ret Hret R1 R10 R11 R12) as (regs' & Hms & Hk).
-  exists regs'. split; [replace (Z_to_bv 64 (AP.x_memcpy INFO_ASAN)) with (0x97e1c%bv : word) by (apply bv_eq; reflexivity); exact Hms|].
+  exists regs'. split; [replace (Z_to_bv 64 (AP.x_memcpy (INFO_ASAN_at r))) with (0x97e1c%bv : word) by (apply bv_eq; reflexivity); exact Hms|].
   split; [apply kept_ok_of_keeps; exact Hk|].
   rewrite <- R10. apply Hk. unfold callee_kept. in_list.
 Qed.
 
-Lemma asan_miz_spec : APSX.miz_spec ASEGS (AP.x_memiszero INFO_ASAN).
+Lemma asan_miz_spec {r : Z} : APSX.miz_spec ASEGS (AP.x_memiszero (INFO_ASAN_at r)).
 Proof.
   apply (miz_spec_of_summary _ asan_mem_is_zero_entry); [apply bv_eq; reflexivity|].
   exact asan_mem_is_zero.

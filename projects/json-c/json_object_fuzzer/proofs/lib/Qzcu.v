@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo at the window floor: main_phase_jo_inst takes QrOY.hiA_jo's floor fact RUN_floor (BOTJ <= stk_floor <= TOPJ) and passes it on). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Monad Fs Specs Run.
@@ -107,10 +108,10 @@ Variables BAUX BOTJ TOPJ : Z.
 Variable HS : QU91.Mq0.handoff_static Qwm6.Mq0.A4L LA LV PERM0 TMAX NMAX RE FR0.
 
 Definition main_phase_jo_inst :=
-fun RUN_base_img RUN_base_stack RUN_FR0_off_data RUN_botj RUN_topj RUN_baux RUN_top_re =>
+fun RUN_base_img RUN_base_stack RUN_FR0_off_data RUN_botj RUN_topj RUN_baux RUN_top_re RUN_floor =>
 main_phase_jo LV (proj1 (proj2 HS)) (proj1 (proj2 (proj2 HS))) (proj1 (proj2 (proj2 (proj2 HS)))) (proj1 (proj2 (proj2 (proj2 (proj2 HS)))))
 (proj1 (proj2 (proj2 (proj2 (proj2 (proj2 HS))))))
-(@QrOY.Mq0.hiA_jo RC__ LA LV PERM0 TMAX NMAX RE FR0 BAUX BOTJ TOPJ HS RUN_base_img RUN_base_stack RUN_FR0_off_data RUN_botj RUN_topj RUN_baux RUN_top_re)
+(@QrOY.Mq0.hiA_jo RC__ LA LV PERM0 TMAX NMAX RE FR0 BAUX BOTJ TOPJ HS RUN_base_img RUN_base_stack RUN_FR0_off_data RUN_botj RUN_topj RUN_baux RUN_top_re RUN_floor)
 eq_refl.
 End MainPhaseInst.
 End Mq0.
@@ -241,9 +242,9 @@ Variables BAUX BOTJ TOPJ : Z.
 Variable HS : QU91.Mq0.handoff_static Qwm6.Mq4.A4L LA LV PERM0 TMAX NMAX RE FR0.
 
 Definition main_phase_jo_inst :=
-fun RUN_base_img RUN_base_stack RUN_FR0_off_data RUN_botj RUN_topj RUN_baux RUN_top_re =>
+fun RUN_base_img RUN_base_stack RUN_FR0_off_data RUN_botj RUN_topj RUN_baux RUN_top_re RUN_floor =>
 main_phase_jo LV (proj1 (proj2 HS)) (proj1 (proj2 (proj2 HS))) (proj1 (proj2 (proj2 (proj2 HS)))) (proj1 (proj2 (proj2 (proj2 (proj2 HS)))))
 (proj1 (proj2 (proj2 (proj2 (proj2 (proj2 HS))))))
-(@QrOY.hiA_jo RC__ LA LV PERM0 TMAX NMAX RE FR0 BAUX BOTJ TOPJ HS RUN_base_img RUN_base_stack RUN_FR0_off_data RUN_botj RUN_topj RUN_baux RUN_top_re)
+(@QrOY.hiA_jo RC__ LA LV PERM0 TMAX NMAX RE FR0 BAUX BOTJ TOPJ HS RUN_base_img RUN_base_stack RUN_FR0_off_data RUN_botj RUN_topj RUN_baux RUN_top_re RUN_floor)
 eq_refl.
 End MainPhaseInst.

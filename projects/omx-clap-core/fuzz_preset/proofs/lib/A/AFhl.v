@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFhl.v, with its module paths changed; every one of its 381 image numerals names the same object in omx-clap-core/fuzz_preset's ASan build as in cgif_file_fuzzer.asan's (c-asan's checker e55e1b52a8a0, all SAME-* verdicts). *)
-(* Modified by Theorem Labs, 2026-10-30: a Theorem Labs lane's B3 weakening of the Enqueue / DoRecycle walk premises (commits ba6af81cc6b + de1e889fb0f; proofs/cgif/cgif_file_fuzzer/lib/YFhl.v, file sha256 4a3646a6ceee) applied at A' by a 3-way merge: base = c5 8e0ff8e049b's YFhl.v relocated cgif -> A', theirs = de1e889fb0f's YFhl.v relocated the same way, ours = this file; 1 line changed, no conflict; this file's #102 adaptations are kept. *)
+(* Modified by Theorem Labs, 2026-10-30: a Theorem Labs lane's B3 weakening of the Enqueue / DoRecycle walk premises (commits; proofs/cgif/cgif_file_fuzzer/lib/YFhl.v, file sha256 4a3646a6ceee) applied at A' by a 3-way merge: base = c5's YFhl.v relocated cgif -> A', theirs = a commit's YFhl.v relocated the same way, ours = this file; 1 line changed, no conflict; this file's #102 adaptations are kept. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

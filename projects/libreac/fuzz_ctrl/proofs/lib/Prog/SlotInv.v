@@ -79,7 +79,7 @@ Definition slot_obligation (B : malloc_syms) (API : forall rc : RunCeil, AllocAP
     G_local_c B G GI ->
     (forall mem, G_img_c B G mem -> GI 0%nat mem) ->
     (forall (rc : RunCeil) (fx : FPState) (j : nat), (j < 4)%nat ->
-       @lib_contract_g fx rc LS B (API rc) SH SK G frame_RELRO GI j ENTRY ra empty SLOT_STACK) ->
+       @lib_contract_g fx rc LS B _ (API rc) SH SK G frame_RELRO GI j ENTRY ra empty SLOT_STACK) ->
     Statements.plain_halts.
 
 Lemma frame_plain_split : frame_plain -> exists B API LS SH SK ra empty,

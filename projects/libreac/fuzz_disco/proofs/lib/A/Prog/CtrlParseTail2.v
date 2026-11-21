@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: licence lines copied from lib/AU/Prog/CtrlParseTail2.v, its asan-ubsan port, which names the common source, cgif's lib/A/ACgq.v. *)
-(* Modified by Theorem Labs, 2026-10: ported to libreac/fuzz_scene from a Theorem Labs lane's proofs/libreac/fuzz_grant/lib/A/Prog/CtrlParseTail2.v at a working branch 7e98c198edd. fuzz_scene.asan's reac_ctrl_parse (sha256 43654a025fd0..., 0x83dd8, AF_reac_ctrl_parse = 0x1560) holds the same 616 instructions as fuzz_grant.asan's (0x82000), 52 pc-relative words apart, so every instruction offset and every branch outcome below is the donor's; only the module paths, the listing layer (Grant* -> Scene*, grant_listing -> scene_listing) and the printed pcs changed. *)
+(* Modified by Theorem Labs, 2026-10: ported to libreac/fuzz_scene from a Theorem Labs lane's proofs/libreac/fuzz_grant/lib/A/Prog/CtrlParseTail2.v at a working branch. fuzz_scene.asan's reac_ctrl_parse (sha256 43654a025fd0..., 0x83dd8, AF_reac_ctrl_parse = 0x1560) holds the same 616 instructions as fuzz_grant.asan's (0x82000), 52 pc-relative words apart, so every instruction offset and every branch outcome below is the donor's; only the module paths, the listing layer (Grant* -> Scene*, grant_listing -> scene_listing) and the printed pcs changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_scene/lib/A/Prog/CtrlParseTail2.v, with its module paths and module names changed; 23 of its 302 lines of code are new or changed and 23 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: relocated to libreac/fuzz_disco (the same code at other addresses: reac_ctrl_parse at 0x873a8 for fuzz_grant's 0x82000); the walk restated on fuzz_disco's cut specifications (CtrlParseCut.v: the premise 50 <= n, the frame f's facts by pz_open_f, the out struct placed by off_img in pz_kept_run). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_ctrl_parse, the walk from cut B (0x87570) to cut J for the frames of class 2 (pz_P2):
    a frame type other than 00 00, cf ea, ce ea, cd ea: UNKNOWN_CTRL (13).
    From cut B the walk stores is_broadcast (out + 16), counter (out + 20), link (out + 22), seg (out + 23),

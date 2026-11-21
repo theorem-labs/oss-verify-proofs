@@ -21,13 +21,14 @@
    Each landing states the four registers nx_mid names that PRE does not (s5 = ps, s7 = cap, s10 = the shadow
    address of ps, s11 = ps + 8): nx_mid at the landing asks for them, and nothing else fixes them.
 
-   TAKEN FROM: the proof of hb_exit_at (lib/B/Prog/PcapSourceNextHdrB.v, a working branch e1a3de4997e,
+   TAKEN FROM: the proof of hb_exit_at (lib/B/Prog/PcapSourceNextHdrB.v, a working branch,
    a Theorem Labs lane), whose post side these copy; the statements are a Theorem Labs lane's (HdrBLand-brief.md (sha256 7e999fd3bc13; internal record)).
 
    Every number is read from the pinned fuzz_pcap.asan-ubsan image
    (sha256 9e66f771f22af67a...; capstone 5 disassembly of its unstripped twin). *)
 (* Modified by Theorem Labs, 2026-10: the Require of PcapSourceNextFitB.v, made only for its vm_frame / asource_at_frame
    copies (deleted; lib/A/Prog/PcapSourceCloseSpec.v holds them), is dropped: this file names none of them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

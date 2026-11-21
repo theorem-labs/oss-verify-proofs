@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names and addresses changed; 2105 of its 2257 lines of code are new or changed and 859 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A5.v, with its addresses changed; 20 of its 66 lines of code are new or changed and 2211 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Provenance (route (a) bridge input, lead 22:18Z; auditor a Theorem Labs lane):
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
@@ -13,12 +14,12 @@
      0x81560, the byte copy 0x81568 .. 0x8157c and the latch, ending at the head 0x81548 or, after turn 5, at the
      loop exit 0x815a0).  seg_R1_F is that stretch cut out of seg_R1; the exit after turn 5 is A5's b_tail_evt /
      b_mode_evt / b_cat_evt, whose twins are A5F.b_tail_evt_F / b_mode_evt_F / b_cat_evt_pre_F / b_cat_evt_post_F.
-     R1.v and A5.v are not in a working branch 3803efccea0: they are a Theorem Labs lane's WIP d574f6c66de
-     (R1.v blob 0a6ebab204bf5ba8aa6492283fb98f0c06b01066 (the blob this tree had at release c5e779efe8c), A5.v blob 0e65829571e0303b907755eee8035d04c36236c7), taken
-     by path onto 3803efccea0 on a working branch f9a9f80d79e (unchanged, same blobs) and built there
+     R1.v and A5.v are not in a working branch: they are a Theorem Labs lane's WIP
+     (R1.v blob 0a6ebab204bf5ba8aa6492283fb98f0c06b01066 (the blob this tree had at release), A5.v blob 0e65829571e0303b907755eee8035d04c36236c7), taken
+     by path onto on a working branch (unchanged, same blobs) and built there
      (scratch -s ours type-check rc=0);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-     lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+     lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    compare: seg_R1_of_F (evtF_evt + rng_all) re-derives the source statement of the run seg_R1 uses
      (A5.b_ld_evt, checked by conversion, seg_R1_src_check).
    The stretch has no call.  This file states no callee contract. *)

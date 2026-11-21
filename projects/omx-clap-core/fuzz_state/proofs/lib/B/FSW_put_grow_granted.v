@@ -3,12 +3,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/PItems_entry.v, with its module paths and module names changed; 2668 of its 2786 lines of code are new or changed and 1447 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S7a_put.v, with its module paths and module names changed; 1917 of its 1994 lines of code are new or changed and 2709 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_put_grow_tail.v, with its module paths, module names and numbers changed; 128 of its 812 lines of code are new or changed and 1310 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs WRITER walk, image B (fs.asan-ubsan): put's GROW arm, second half, the piece pgt_granted: fuzz_realloc granted
    the new buffer res (a0 <> 0); put stores it into o, re-joins the FAST arm's code at 0x845a0 and runs it, through the
    call of __asan_memcpy, to the ret 0x84668. Composed by lib/B/FSW_put_grow_close.v pgt_run (the integrator's).
 
    The route, MEASURED with the token engine on B (scratch probe lib/B/ZZpbg_granted.v, never committed; a build machine,
-   workspace (internal path) at c33a9d6a7d4, 2026-10-29T09:48Z; Bx := FSW_K.fs_Bx, Bspan := FSW_K.fs_Bspan,
+   workspace (internal path), 2026-10-29T09:48Z; Bx := FSW_K.fs_Bx, Bspan := FSW_K.fs_Bspan,
    SH := pgt_SH1 = [mkSHE 8 0 32] until the copy, fsw_pf_SH2 after it; every run ends with sh_obls = [], sh_j = 0
    except run 5, as put_fast_run's):
    - pgt_ss1 (pc 542080 = 0x84580) stops at once at `beqz a0`; its taken side (a0 = 0) is refuted from a0 = res <> 0;
@@ -32,9 +33,9 @@
    The new buffer is a temporary block of the journal (in the blocks after fuzz_realloc, not in the entry's: awr_byte's
    in_tmp_block arm), where the fast arm's buffer was the old one under wbuf_fp.
 
-   TAKEN FROM: lib/A/FSW_put_grow_tail.v lines 729-1366 at a working branch 860b2fb1188 (pgt_granted:
+   TAKEN FROM: lib/A/FSW_put_grow_tail.v lines 730-1367 at a working branch (pgt_granted:
    the setup, the journal / ARU / wout_ok / fs_glob reasoning, the call, the resume, the post), with B's resume pc,
-   memcpy return pc and runs; lib/B/FSW_put.v put_fast_run (unchanged from c33a9d6a7d4 to fa27ae02467): the refutation
+   memcpy return pc and runs; lib/B/FSW_put.v put_fast_run (unchanged to): the refutation
    of 0x845c0 :866-873, the call's s8 / s11 :915-919, the three re-seated registers of fsw_pf_ssr :1193-1217, run 4
    :1239-1264, the refutation of 0x84604 :1265-1270, run 5 :1271-1296.
    rule 24: proves no function (kind: segment lemma). *)
@@ -71,7 +72,7 @@ Variable B : asyms.
 Hypothesis HSS : FsShadowSyms B.
 Hypothesis RT_memcpy : FSupoisonU.aintrin_realizesU tfibsegs B OCpy PC_memcpy.
 Hypothesis IMG : fs_img_facts tfibsegs B.
-(* THE CALLEE: fuzz_realloc's ASan contract, a statement only (lib/B/FSH_Fn_alloc.v, by path from dda8331bd25:
+(* THE CALLEE: fuzz_realloc's ASan contract, a statement only (lib/B/FSH_Fn_alloc.v, by path:
    CTX-free with its `cnt <> fail ->` room guards), discharged at composition. *)
 Hypothesis HREALLOC : fuzz_realloc_spec tfibsegs B.
 
@@ -246,7 +247,7 @@ assert (F32 : ew Er 32 = Z_to_bv 64 SHADOW_OFF)
 assert (F34 : ew Er 34 = Z_to_bv 64 len) by (unfold Er; change 34%nat with (32 + 2)%nat; rewrite ew_Ereg_extra; reflexivity).
 assert (F8u : bv_unsigned (ew Er 8) = o) by (rewrite F8; apply wz; lia).
 assert (F32u : bv_unsigned (ew Er 32) = SHADOW_OFF) by (rewrite F32; apply wz; unfold SHADOW_OFF; lia).
-(* o's 32 bytes are addressable on any memory where AR holds over U2: the stack's shadow is 0 (as FSW_put.v:734-747) *)
+(* o's 32 bytes are addressable on any memory where AR holds over U2: the stack's shadow is 0 (as FSW_put.v:735-748) *)
 assert (HLO2 : layout_ok ly2) by exact (am_layout _ _ _ _ (proj1 (proj1 HARU2))).
 pose proof (lo_top ly2 HLO2) as LTOP.
 assert (Hlo8 : ly_stk_lo ly2 mod 8 = 0).
@@ -385,7 +386,7 @@ fsw_aj_run_tokU fsw_put_tbl_ok HS1 HJ2 HARU2 SHOK1 fs_Bspan.
   assert (RT12 : getr (ms_regs ms) 12%bv = w64 n) by (pf_reg HS1; rewrite fsw_SOff0; exact F9).
   assert (RT23 : getr (ms_regs ms) 23%bv = Z_to_bv 64 SHADOW_OFF) by (pf_reg HS1; rewrite fsw_SOff0; exact F32).
   (* s8 / s11: the shadow addresses of o + 8 and o over atom 8, as pgt_ss1 re-seated them (re-seated again at the
-     resume, as FSW_put.v:915-919 / 1193-1217) *)
+     resume, as FSW_put.v:916-920 / 1193-1217) *)
   assert (RT24 : getr (ms_regs ms) 24%bv = sv_denot Er (SAlu ALU_ADD (SAlu ALU_SRL (SOff 8 8) (SLit 3)) (SOff 32 0)))
     by (pf_reg HS1; reflexivity).
   assert (RT27 : getr (ms_regs ms) 27%bv = sv_denot Er (SAlu ALU_ADD (SAlu ALU_SRL (SOff 8 0) (SLit 3)) (SOff 32 0)))
@@ -542,7 +543,7 @@ fsw_aj_run_tokU fsw_put_tbl_ok HS1 HJ2 HARU2 SHOK1 fs_Bspan.
   { intros off w e e' He Hck Ho1 Ho2.
     apply (fsw_pf_chunk_move Er Er3 _ _ o o off off w e e' Hck He); [lia|].
     intros i Hi. apply KC; [lia | unfold d in *; lia | unfold ESTACK; lia]. }
-  (* the shadow-base cells on the memory after the copy (as FSW_put.v:985-1003) *)
+  (* the shadow-base cells on the memory after the copy (as FSW_put.v:986-1004) *)
   destruct (fsw_got_shadow B ly2 S2 W2 (unpoison U2 mem3) md3 (proj1 HSS) (proj2 HSS) (proj1 HARU3)) as [Kgot Kcell].
   assert (MBL : forall x, 0 <= x < SHADOW_OFF ->
     mbyte tfibsegs (mrestrict (w_H W2) mem3) x = mbyte tfibsegs (mrestrict (w_H W2) (unpoison U2 mem3)) x).
@@ -664,7 +665,7 @@ fsw_aj_run_tokU fsw_put_tbl_ok HS1 HJ2 HARU2 SHOK1 fs_Bspan.
         cbn [zalu_raw]. rewrite (zcanon_id (n + res)) by (unfold M64; lia).
         rewrite zcanon_id by (unfold M64; lia). unfold d. lia. }
   (* the resume state's three re-seated registers: s7 the shadow base, s8 / s11 the shadow addresses of o + 8 and o
-     over the resumed o (atom 8), which the token engine reads at 0x845e0 / 0x845f4 (FSW_put.v:1193-1217) *)
+     over the resumed o (atom 8), which the token engine reads at 0x845e0 / 0x845f4 (FSW_put.v:1194-1218) *)
   assert (HSR1 : st_ok tfibsegs Er3 (fsw_pf_ssk fsw_pf_rs1)
                    (restrict (w_H W2) (mkst regs3 (Z_to_bv 64 542176) mem3 (seg_rom tfibsegs)))).
   { refine (st_ok_set_reg tfibsegs Er3 _ _ 23%bv (SOff 32 0) HSR0 _ _).
@@ -709,7 +710,7 @@ fsw_aj_run_tokU fsw_put_tbl_ok HS1 HJ2 HARU2 SHOK1 fs_Bspan.
       + lia.
       + lia.
       + intros x Hx. unfold SHADOW_OFF, d in *. lia. }
-  (* run 4 (the fast arm's, FSW_put.v:1239): the checks of o + 8 (0x845e4) and o (0x845f8) through the re-seated
+  (* run 4 (the fast arm's, FSW_put.v:1240): the checks of o + 8 (0x845e4) and o (0x845f8) through the re-seated
      s8 / s11, the length store o + 8, to UBSan's pointer-overflow check of res + len + n, 0x84604 *)
   fsw_aj_run_tokU fsw_put_tbl_ok HSR HJ3 HARU3 SHOK2 fs_Bspan.
   { lazymatch goal with |- context C [ss_mem ?ssx] =>
@@ -739,7 +740,7 @@ fsw_aj_run_tokU fsw_put_tbl_ok HS1 HJ2 HARU2 SHOK1 fs_Bspan.
     rewrite (U_atom Er3 36 (d + n) G36), (U_atom Er3 33 res G33) in Hc by (unfold d in *; lia).
     apply Z.ltb_lt in Hc. unfold d in *. lia. }
   try clear Hc.
-  (* run 5 (FSW_put.v:1271): the checks 0x84614 / 0x84618, the shadow check of d + n (0x84628 into the
+  (* run 5 (FSW_put.v:1272): the checks 0x84614 / 0x84618, the shadow check of d + n (0x84628 into the
      partial-granule slow block 0x84698, compare 0x8469c), the 0 after the new text, the epilogue, to the ret 0x84668 *)
   fsw_aj_run_tokU fsw_put_tbl_ok HSR HJ3 HARU3 SHOK2 fs_Bspan.
   { lazymatch goal with |- context C [ss_mem ?ssx] =>

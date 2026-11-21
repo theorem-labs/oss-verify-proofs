@@ -1,25 +1,26 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Reusable/YCbq.v aj_intrin_at at 28fdc66416e (the call of
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Reusable/YCbq.v aj_intrin_at (the call of
    __asan_memcpy in the journal) restated as hd_memcpy with the wrapper's same_but_materialized kept in the post as
-   same_io, and proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v at 9e73ed57244 (m2_img_zone, m2_cstr_kept, the .rodata
+   same_io, and proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v (m2_img_zone, m2_cstr_kept, the .rodata
    zone of m2_szone) restated as hd_img_zone / hd_cstr_kept / hd_szone for the .rodata range only; the rest of the
    file is new. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_role/lib/A/RPgScanHead.v, with its module paths and module names changed; 428 of its 517 lines of code are new or changed and 925 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_role/lib/A/RPgW6cTail.v, with its module paths, addresses and numbers changed; 219 of its 392 lines of code are new or changed and 344 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6cTail.v at 4c23b042570d for reac-pw/fuzz_rate's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6cTail.v for reac-pw/fuzz_rate's
    image A: module paths changed; the pcs, the code table and the statements move to lib/A/RtPgW6cBase.v (rate's
    pcs: the memcpy 0x51860 returning to the `j J` at 0x81cdc, the memset 0x51cfc returning to 0x81c00); rate's join
    keeps the cursor in s9 and what is left in s8 (registers, no frame cell) and s6 = the shadow address of &pp->len,
    so the memset tail is `mv s8,s6; ld s6,0xe8(s1); j J` and the join's post names s6, s8, s9 and no cell; the
    intrinsic adapter is RtPgSteps.rts_intrin_at; role's RPgMem / RPgCfgChanges names become rate's RtPgMem /
    RtPgSteps ones; the frame's shadow flags are rate's seven. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6cTail.v at cb9cdc023f20; image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6cTail.v; image B
    (fuzz_rate.asan-ubsan): the statements are lib/AU/RtPgW6cBaseB.v's; the intrinsics are __asan_memcpy 0x518b8
    (return 0x81f40) and __asan_memset 0x51d54 (return 0x81d84) by RtPgStepsB.rtsb_intrin_at; the pod is e62 =
    F + 0x210 (destination F + 0x218, its shadow from rsb_PJ by RtPgMemB.rtmb_B_ra_e62); the frame for locals is
    class 4 (1024 bytes, 128 shadow bytes, write rights by RtPgStepsB.rtsb_awr_fobj); both tails read s2 back from the
    cell R + 0x158 (one region at s1, no write window), and the join's post names t1, s2, s6 and s10. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14; every address measured on the unstripped twin
    a1e5fa55ae27e657ea2719297ec4c037110f10fa9047c3ea7bb6ea7fcb358cb1, same loaded bytes): the two calls that end

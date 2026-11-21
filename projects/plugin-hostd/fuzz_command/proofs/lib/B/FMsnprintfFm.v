@@ -30,7 +30,7 @@ Definition fm_glue_img : Z := 0xa30.
 Lemma fm_glue_img_parts : fm_glue_img = 0x60 + 0x870 + 0x130 + 0x30.
 Proof. reflexivity. Qed.
 (* GXA's released musl vfprintf window: VF_DEPTH = VFA_DEPTH 368 + PC_DEPTH 5184 (fuzz_reply
-   lib/CJ/RL/GXA/G_printf_core_common.v:141, G_vfprintf_snf.v:54, 568db058c1d) *)
+   lib/CJ/RL/GXA/G_printf_core_common.v:142, G_vfprintf_snf.v:54) *)
 Definition GXA_VF_DEPTH : Z := 5552.
 (* on the GXA route the top's window is at least 8160 (= 2256 to musl vsnprintf + VSN_DEPTH 5904); 2 * ESTACK fits *)
 Lemma fm_K_min_gxa : fm_glue_img + GXA_VF_DEPTH = 8160.

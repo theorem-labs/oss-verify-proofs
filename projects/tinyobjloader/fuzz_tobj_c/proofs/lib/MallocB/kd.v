@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the VM state record's two new fields, the kernel build and the vDSO, in one rewrite; the reserved ledger hypothesis law_res stated as the image's entries followed by the vDSO/vvar pair, written as plain text). *)
 (* [comment removed for export] *)
 Local Set Warnings "-require-in-module".
 (* [comment removed for export] *)
@@ -228,7 +229,7 @@ Proof.
   split.
   { unfold vm_forget_range. rewrite with_vm_backing_with_vm. apply HKc.
     match goal with |- Kc _ (with_vmmaps ?h ?m) =>
-      replace (with_vmmaps h m) with (with_vm (mkVmState h (m_vm_lazy m) (m_vm_materialized m)) m) by (destruct m; reflexivity) end.
+      replace (with_vmmaps h m) with (with_vm (mkVmState h (m_vm_lazy m) (m_vm_materialized m) (m_kernel m) (m_vdso m)) m) by (destruct m; reflexivity) end.
     apply HKc. exact HK. }
   split; [|exact (rlinkG_01 A c rb r HR)].
   apply (mlinkG_commit A c tp0 md0 tp md _ HM); fold B.
@@ -430,8 +431,9 @@ S10SdVCST;R1A2SdS2aR2A2S1aF_;F_;Fa;").
 Hypothesis HCSTD : ltac2:(tb__ "0|0|
 S10SdVCST;R1A2S1cS28R2A1A1F_;Fa;").
 Let AInv : AA -> valuation -> list word -> Model -> Prop := AInvA segs.
-Hypothesis law_res : ltac2:(tb__ "0|1|
-S8S3S9SeQ40A1M0A1S23VAInv;R4R3R2R1A4S1bS9SbG0G0A2A1S25S24R2A1A1S22S0A1A3F_;Fmd;Ftp;Frho;FA;").
+(* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v [vdso_pair_ok]). *)
+Hypothesis law_res : forall (A : AA) (rho : valuation) (tp : list word) (md : Model), AInv A rho tp md ->
+  exists V, vm_reserved (m_vmmaps md) = segments_reserved OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocB.i0.CertStackFree.segsA ++ V /\ vdso_pair_ok V.
 
 Theorem sec_ok_0h : ltac2:(tb__ "0|2|
 S12OF_;S8S17S3SeQ40M0A1M1S9G1A1S18R4A1S7S0R7S5R5A1A3S15S0R8S5R6A1A3S21ScSfG0R5A2S1fSfG0S4R6PcA2A2A1A3S3S11S0RbS6S0S20U0S1S2bS8R1LX;RaR9R8R7A8S1dS2S1Z2A3R1R6A5S14S0S13R8R6S19S16S1eS0A1VCST;VXGL;S2S1RaR9A8A5A4FrhoX;F_;F_;F_;F_;Ftp;Fa;Frho;FKc;FA;Fok;").

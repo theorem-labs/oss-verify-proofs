@@ -13,7 +13,8 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/rec_canonical.v, with its module paths and module names changed; 696 of its 835 lines of code are new or changed and 2224 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/U/Prog/CF/rec_canonical.v, with its module paths, module names, addresses and numbers changed; 520 of its 641 lines of code are new or changed and 714 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/U/Prog/CF/reply.v, with its module paths and module names changed; 399 of its 442 lines of code are new or changed and 598 lines of the source are left out. *)
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMstrstr.v at a working branch b6bc009d623, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMstrstr.v at a working branch, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
 (* fm's strstr runtime contract in the donor's form: astrstr_realizes PC_strstr (lib/A/FMH_Rt.v), the strstr
    interceptor (trampoline 0x4133c -> __interceptor_strstr 0x429bc -> musl strstr 0x93294 -> StrstrCheck 0x42a98)
    called inside fm's user-poison window (lv2_locate.c:98), over Poison's ARU.

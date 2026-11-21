@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs: copied from this unit's lib/A/UciAFacts.v (commit f1e54100cbe6; itself made from libreac/fuzz_decode's lib/A DecodeACrtFacts.v, DecodeClose.v HB_API_ENV and DecodeASinkRo.v) for reac-repacer/fuzz_uci's image B, at the record UciB (lib/B/YD2l.v:17), segments ucisegsB0 (lib/B/UciBTFIB.v) and sink head (lib/B/YE2k.v); module paths changed; and with the seven COMPUTE rows of lib/B/UciBClose.v's block (HB_CELLS, HB_RO_RD_UNOWNED, HB_ROM_NO_ERRNO, HB_CNO_UCTX, HB_CNO_UFIX, HB_CV_UFIX, HB_COST), HB_RO_BELOW_OFL in its class form (lib/B/Prog/PaBase.v ro_below_ofl) and the meter bound uci_XL0, each decided at UciB by computation over the B core's tables and lib/B/Prog's statement definitions. *)
+(* Modified by Theorem Labs: copied from this unit's lib/A/UciAFacts.v (itself made from libreac/fuzz_decode's lib/A DecodeACrtFacts.v, DecodeClose.v HB_API_ENV and DecodeASinkRo.v) for reac-repacer/fuzz_uci's image B, at the record UciB (lib/B/YD2l.v:17), segments ucisegsB0 (lib/B/UciBTFIB.v) and sink head (lib/B/YE2k.v); module paths changed; and with the seven COMPUTE rows of lib/B/UciBClose.v's block (HB_CELLS, HB_RO_RD_UNOWNED, HB_ROM_NO_ERRNO, HB_CNO_UCTX, HB_CNO_UFIX, HB_CV_UFIX, HB_COST), HB_RO_BELOW_OFL in its class form (lib/B/Prog/PaBase.v ro_below_ofl) and the meter bound uci_XL0, each decided at UciB by computation over the B core's tables and lib/B/Prog's statement definitions. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* UciBFacts: the facts about image B's record that lib/B/UciBClose.v takes, each proved by computation at
-   B := UciB (lib/B/YD2l.v:17) and segs := ucisegsB0 (lib/B/UciBTFIB.v, = lib/B/YB1v.v:13 tfibsegs):
+   B := UciB (lib/B/YD2l.v:17) and segs := ucisegsB0 (lib/B/UciBTFIB.v, = lib/B/YB1v.v:14 tfibsegs):
    - HB_API_ENV : api_env segs B (lib/B/YCbq.v:808): errno (as_errno UciB = lib/B/YF0m.v TFIB_ERRNO) lies in low
      memory and inside one loaded segment, and the traces [pc_malloc_ra0] / [pc_free_ra0] (lib/B/YF0l.v) are in
      Tfib_universe (lib/B/YCej.v);

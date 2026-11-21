@@ -1,4 +1,4 @@
-(* CARRIED from commit d692856bfecbb98b2d89a0bba73b457c2098f96d,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YP0kR.v, sha256 fc6ebde5082ae1d3e82934de306900e12bd98b3db44b6a5bcf1d4f9a606bfde9 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change made here is the module
    prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
@@ -101,7 +101,14 @@ cbn [access_value accessed_ranges] in Hsa.
   rewrite ?HR, Haddr in Hsa. subst b.
   destruct sz; cbn [nbytes Z.of_nat] in Hhi;
   cbv beta iota zeta delta [interp_eff_accesses RiscvSemantics.width_bytes] in Hsa;
-  (destruct (ov_read_bytes segs mem (Z_to_bv 64 (base_val E (r_base r) + off)) _) as [bs|]; [|discriminate]);
+  (* 727298f3: interp_eff_accesses' ELoad/None arm is now
+     [if range_meets_vvar a (width_bytes n) then MachineUnmodeled else MachineFault]
+     (RiscvSemantics.v:1006-1018) -- the vvar data pages are mapped and readable on
+     Linux, so the model declines instead of faulting.  [discriminate] cannot see
+     through the stuck [if] and reports 'No primitive equality found'; split the
+     boolean first, as the model's own consumer does at Common/AsanAcct.v:645. *)
+  (destruct (ov_read_bytes segs mem (Z_to_bv 64 (base_val E (r_base r) + off)) _) as [bs|];
+   [|match type of Hsa with context[range_meets_vvar ?s ?aa ?nn] => destruct (range_meets_vvar s aa nn) end; discriminate]);
   cbn [access_value accessed_ranges] in Hsa; injection Hsa as <-; cbn [accessed_ranges];
   (eapply accs_in_rrange_hit; [exact Hmem | exact Hin | exact Hlo | cbn; lia]).
 - destruct (ss_resv ss) as [rv0|] eqn:Hrv; [discriminate|]. cbn in Hresv. subst resv.
@@ -141,7 +148,11 @@ cbn [access_value accessed_ranges] in Hsa.
   rewrite ?HR in Hsa. rewrite Hamo in Hsa. cbn [negb] in Hsa. rewrite Haddr in Hsa. subst b.
   destruct w; cbn [amo_sz nbytes Z.of_nat] in Hhi;
   cbv beta iota zeta delta [interp_eff_accesses RiscvSemantics.width_bytes] in Hsa;
-  (destruct (ov_read_bytes segs mem (Z_to_bv 64 (base_val E (r_base r) + off)) _) as [bs|]; [|discriminate]);
+  (* same vvar arm as :110; the AMO load reaches it too.  The two store_ok
+     arms (:125, :171) do NOT -- the vvar pages are read-only, so the model
+     still faults there and their bare discriminate stays correct. *)
+  (destruct (ov_read_bytes segs mem (Z_to_bv 64 (base_val E (r_base r) + off)) _) as [bs|];
+   [|match type of Hsa with context[range_meets_vvar ?s ?aa ?nn] => destruct (range_meets_vvar s aa nn) end; discriminate]);
   cbn [access_value accessed_ranges] in Hsa; injection Hsa as <-; cbn [accessed_ranges];
   (eapply accs_in_rrange_hit; [exact Hmem | exact Hin | exact Hlo | cbn; lia]).
 - destruct (aligned_dec (ss_facts ss) (sr_get (ss_regs ss) rs1) (amo_bytes_of w)) eqn:Hal;
@@ -164,7 +175,9 @@ cbn [access_value accessed_ranges] in Hsa.
     (destruct (store_ok segs mem (Z_to_bv 64 (base_val E (r_base r) + off)) _); [|discriminate]);
     cbn [access_value accessed_ranges] in Hsa; injection Hsa as <-; cbn [accessed_ranges];
     (eapply accs_in_rrange_hit; [exact Hmem | exact Hin | exact Hlo | cbn; lia]).
-  + nil_arm Hsa.
+  (* 727298f3: a store-conditional with no reservation is not a symbolic step ([H]), as
+     omx-clap-core/fuzz_preset's copy of this file has it *)
+  + first [discriminate H | nil_arm Hsa].
 Qed.
 
 Theorem sym_step_soundR : forall E ss ss' ms,

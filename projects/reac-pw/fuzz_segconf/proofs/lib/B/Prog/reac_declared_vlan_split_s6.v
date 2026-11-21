@@ -5,8 +5,9 @@
    for libreac/fuzz_identity's ASan build (lib/A). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_catalogue.v, with its module paths and numbers changed; 204 of its 254 lines of code are new or changed and 319 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/check_ignore.v, with its module paths and module names changed; 175 of its 209 lines of code are new or changed and 220 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_declared_vlan_split on fuzz_segconf image B (fuzz_segconf.asan-ubsan): the image-B port of
-   lib/A/Prog/reac_declared_vlan_split_s6.v (commit ceb7e39832b2), plus image B's alignment test
+   lib/A/Prog/reac_declared_vlan_split_s6.v, plus image B's alignment test
    of the vid cell before its store (0x8a3b4 `andi a0,s0,1`, 0x8a3b8 `bnez a0` to the UBSan trap `unimp` 0x8a3d8).
    The point K6 (0x8a3b0), after name_ok. `beqz a0` returns 0 when name_ok refused the parent; else the alignment
    test (refuted: vid mod 2 = 0, split_pre), the check of the 2-byte store to the vid cell (0x8a3bc-0x8a3c8, killed by

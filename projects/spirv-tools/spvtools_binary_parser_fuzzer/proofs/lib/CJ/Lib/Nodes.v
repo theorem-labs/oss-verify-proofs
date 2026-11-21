@@ -1,12 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's mmap base; the model's channel reader as a premise of the writes). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool Classical_Prop.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
 
 From LinuxProcessSemantics.LinuxProcessSem.Checks.Sys Require Import Prelude.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Placement.
 From LinuxProcessSemantics.Riscv Require Import Prelude Sem.
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib.CJ.Lib Require Import PropExec MState Mem Exec ITree.
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Import AllocCeil RunRandom.
@@ -170,17 +172,12 @@ Definition knoaccess_model (a n : word) (m : Model) : Model :=
                  ((a, n) :: vm_noaccess (m_vmmaps m))
                  (vm_start_brk (m_vmmaps m)) (vm_brk (m_vmmaps m)) (vm_limit (m_vmmaps m))
                  (vm_mmap_base (m_vmmaps m)) (vm_init_sp (m_vmmaps m))) m.
+(* At the revision [Mmap.munmap_spec]'s exact arm cuts the request out of
+   BOTH ledgers through [Mmap.mmap_fixed_destroyed_next], where it used to
+   remove the whole [vm_maps] entry based at [addr]; on a well-formed
+   ledger the two agree ([maps_subtract_remove_vmwf], NodesMM.v). *)
 Definition kmunmap_model (addr n : word) (m : Model) : Model :=
-  with_mmap_destroyed addr n
-    (mkVmMapsFull (vm_reserved (m_vmmaps m))
-               (map_remove (vm_maps (m_vmmaps m)) addr)
-               (maps_subtract (vm_noaccess (m_vmmaps m))
-                  (bv_unsigned addr)
-                  (bv_unsigned addr + bv_unsigned n))
-               (vm_start_brk (m_vmmaps m))
-               (vm_brk (m_vmmaps m))
-               (vm_limit (m_vmmaps m))
-               (vm_mmap_base (m_vmmaps m)) (vm_init_sp (m_vmmaps m))) m.
+  with_mmap_destroyed addr n (mmap_fixed_destroyed_next (m_vmmaps m) addr n) m.
 Definition kmprotect_model (addr n : word) (m : Model) : Model :=
   with_vmmaps (mkVmMapsFull (vm_reserved (m_vmmaps m)) (vm_maps (m_vmmaps m))
                  (maps_subtract (vm_noaccess (m_vmmaps m)) (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n))
@@ -206,13 +203,29 @@ Definition kbrk_grow_model (d : Z) (m : Model) : Model :=
                  (vm_noaccess h) (vm_start_brk h)
                  (Z_to_bv 64 (bv_unsigned b + d)) (vm_limit h) (vm_mmap_base h) (vm_init_sp h)) m.
 
+
+(* 08b1429: the ledger reads the kernel build and the two bounds [vdso_top]
+   reads; each k*_model keeps all three ([KInv.kresv_keep] wants them). *)
+#[using="Type"] Lemma kbrk_grow_kernel : forall d m, m_kernel (kbrk_grow_model d m) = m_kernel m.
+Proof. reflexivity. Qed.
+#[using="Type"] Lemma kbrk_grow_mbase : forall d m,
+  vm_mmap_base (m_vmmaps (kbrk_grow_model d m)) = vm_mmap_base (m_vmmaps m)
+  /\ vm_init_sp (m_vmmaps (kbrk_grow_model d m)) = vm_init_sp (m_vmmaps m).
+Proof. split; reflexivity. Qed.
+
+(* At the revision [Mmap.mmap_spec]'s fresh-grant arms return the address
+   [Mmap.linux_place] gives, so the grant test leads with the checker's
+   [Placement.linux_place_is], as the root [MmapSim.grant_ok] and
+   [RefNodes.grant_ok_na] do. *)
 Definition kgrant_ok (hint : word) (m : Model) (a : word) (n : Z) : bool :=
-  (bv_unsigned a mod page_size =? 0)%Z && (0 <? bv_unsigned a)%Z
+  Placement.linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint n a
+  && (bv_unsigned a mod page_size =? 0)%Z && (0 <? bv_unsigned a)%Z
   && (bv_unsigned a + n <=? alloc_ceiling)%Z
   && region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 n)
   && (vm_backing_used m + n <=? vm_limit (m_vmmaps m))%Z.
 Definition kgrant_ok_na (hint : word) (m : Model) (a : word) (n : Z) : bool :=
-  (bv_unsigned a mod page_size =? 0)%Z && (0 <? bv_unsigned a)%Z
+  Placement.linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint n a
+  && (bv_unsigned a mod page_size =? 0)%Z && (0 <? bv_unsigned a)%Z
   && (bv_unsigned a + n <=? alloc_ceiling)%Z
   && region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 n).
 
@@ -227,7 +240,7 @@ Definition kbrk_grow_ok (m : Model) (req r : word) : bool :=
              && region_free (vm_reserved h ++ vm_maps h)
                             (Z_to_bv 64 lo) (Z_to_bv 64 (hi + page_size - lo))
         else true)
-       && Z.leb (vm_backing_used m + bv_unsigned (r - vm_brk h)) (vm_limit h)
+       && Z.leb (vm_backing_used m + Mmap.brk_grow_bytes h r) (vm_limit h)
   else true.
 
 Lemma kbrk_grow_ok_spec : forall m req r,
@@ -279,9 +292,51 @@ Definition nrefusal (n : node) (mo : Model) (eff : resp) : bool :=
   match n with
   | NBrk req => brk_refusal_b mo (Z_to_bv 64 req) (eff_ret eff)
   | NMmap _ _ _ _ => bv_eqb (eff_ret eff) (errno_ret ENOMEM)
+  (* munmap (215) is an injected [FamAlloc] arm at the revision
+     ([Run.injected_table]), so it has refusals like mmap and mprotect *)
+  | NMunmap _ _ => ret_in_errnos munmap_errnos (eff_ret eff)
   | NMprotect _ _ _ => ret_in_errnos mprotect_errnos (eff_ret eff)
   | _ => false
   end.
+
+
+(* 08b1429: the heap ledger also reads the kernel build, for the vDSO pair
+   ([CJ.Spec.KInv.kresv]), so a modeled mm step must keep [m_kernel]. Each
+   k*_model is built from [with_vmmaps] and [vm_forget_range], which do. *)
+#[using="Type"] Lemma kern_with_vmmaps : forall h m, m_kernel (with_vmmaps h m) = m_kernel m.
+Proof. reflexivity. Qed.
+#[using="Type"] Lemma kern_forget_range : forall lo hi m, m_kernel (vm_forget_range lo hi m) = m_kernel m.
+Proof. reflexivity. Qed.
+
+#[using="Type"] Lemma nstep_mm_kernel : forall n mo eff mo' evs,
+  nstep n mo eff mo' evs -> m_kernel mo' = m_kernel mo.
+Proof.
+  (* every arm either leaves [mo] alone or rebuilds it with [with_vmmaps] /
+     [vm_forget_range], neither of which touches [m_kernel], so each case closes
+     by conversion *)
+  Local Ltac kern_done :=
+    first [ reflexivity
+          | unfold kbrk_grow_model, kmmap_model, knoaccess_model, kfixna_model,
+                   kfixlost_model, kmunmap_model, kmprotect_model, with_mmap_destroyed;
+            cbv zeta; reflexivity ].
+  intros n mo eff mo' evs [_ H]. destruct n; try contradiction; cbv zeta in H.
+  - (* NBrk *)
+    destruct (_ =? _)%Z.
+    + destruct H as [_ ->]. kern_done.
+    + destruct H as [[_ ->] | (_ & _ & ->)]; kern_done.
+  - (* NMmap: three flag/prot arms, then [False] *)
+    destruct (_ && _)%bool.
+    + destruct H as [(e & _ & _ & ->) | (a & _ & _ & ->)]; kern_done.
+    + destruct (_ && _)%bool.
+      * destruct H as [(e & _ & _ & ->) | (a & _ & _ & ->)]; kern_done.
+      * destruct (_ && _)%bool.
+        -- destruct H as [(e & _ & _ & ->) | [(_ & ->) | (e & _ & _ & ->)]]; kern_done.
+        -- contradiction.
+  - (* NMunmap *)
+    destruct H as [_ ->]. kern_done.
+  - (* NMprotect *)
+    destruct H as [(e & _ & _ & ->) | (_ & _ & ->)]; kern_done.
+Qed.
 
 Definition nstep_cfg (n : node) (mo : Model) (eff : resp) (mo' : Model) (evs : list event) : Prop :=
   nstep n mo eff mo' evs
@@ -337,6 +392,10 @@ Definition nsafe (n : node) (mo : Model) : Prop :=
       /\ map_has (vm_maps h) (Z_to_bv 64 addr) (Z_to_bv 64 (page_round_up_Z len)) = true
   | NMprotect addr len prot =>
       prot = PROT_RW_Z /\ addr mod page_size = 0 /\ 0 < len /\ 0 <= addr /\ addr + page_round_up_Z len < 2 ^ 64
+      (* 08b1429: [Mprotect.mprotect_spec] answers unmodeled for a range that meets
+         the vDSO/vvar pair, so the page must be apart from it *)
+      /\ region_free (vdso_reserved (m_kernel mo) (vdso_top h))
+           (Z_to_bv 64 addr) (Z_to_bv 64 (page_round_up_Z len)) = true
       /\ map_contains (vm_noaccess h) (Z_to_bv 64 addr) (Z_to_bv 64 (page_round_up_Z len)) = true
       /\ map_contains (vm_maps h) (Z_to_bv 64 addr) (Z_to_bv 64 (page_round_up_Z len)) = true
   | _ => False
@@ -350,5 +409,8 @@ Lemma vm_only_fs : forall m m', vm_only m m' -> m_fs m' = m_fs m.
 Proof. intros m m' (A&B&C&D&E&F). unfold m_fs. rewrite C. reflexivity. Qed.
 Lemma vm_only_fds : forall m m', vm_only m m' -> m_fds m' = m_fds m.
 Proof. intros m m' (A&B&C&D&E&F). unfold m_fds. rewrite A. reflexivity. Qed.
+(* LPS 727298f3: the far end's reader bit lives in [m_proc], which [vm_only] keeps. *)
+Lemma vm_only_rdr : forall m m', vm_only m m' -> m_channel_reader m' = m_channel_reader m.
+Proof. intros m m' (A&B&C&D&E&F). unfold m_channel_reader. rewrite D. reflexivity. Qed.
 
 End AC_2.

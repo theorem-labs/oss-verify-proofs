@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: recorded proofs written out as text, statements written out as text, the launch's channel reader. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -77,6 +78,17 @@ Section TR.
     Variables (sp : word) (A cap : Z) (data : list byte) (p : bptr) (s0 : as_St H) (LB : list block)
               (msF0 : machine_state) (mo0 : Model) (regs0 : bvmap 5 word) (mem0 : word -> option byte).
     Hypothesis PRE : ltac2:(zQ "10!snd@e$0?2fx?5HCEIL?1H?2sp?1A?3cap?4data?1p?2s0?2LB?4msF0?3mo0?5regs0?4mem0").
+    (* LPS 75d69e00, the launch's channel reader.  It is a SECTION HYPOTHESIS, not a field
+       of ATRpre: [as_target_run_ok]'s 49 KB KReplay decomposes [PRE] positionally AND
+       records each field's type, so a sixteenth field gives
+       "Anomaly decompose_lambda_n_decls: not enough declarations"
+       (a farm round) and widening [atr_fd1] instead gives an Illegal
+       application whose expected type is the old bare [fd_lookup] equation
+       (a farm round).  An extra hypothesis costs those replays nothing --
+       KReplay binds context entries by NAME -- and it becomes one premise of
+       [as_target_run], where Top/BaseAsan discharges it from the published [valid_input]
+       premise through [Run.valid_input_channel_reader] (75d69e00 Run.v:4951). *)
+    Hypothesis RDR0 : m_channel_reader mo0 = true.
 
     Let cfg : Z := hdr_cfg data.
     Let N : ltac2:(zQ "10!pf$0") := ltac2:(zQ "10!ru0@1$0?4data").
@@ -394,7 +406,6 @@ ltac2:(KReplay.run1z (kr_t_AsTargetRun ()) ["TR"; "Call"] "##Q_h02Exh11xh22Hah34
       Proof. intros mo MP. destruct (adl_mpres H DL _ _ MP) as (_ & E & _). rewrite E. exact (atr_fd2 _ _ _ _ _ _ _ _ _ _ _ _ PRE). Qed.
       Let Hfs : forall mo, as_MPRES H mo0 mo -> m_fs mo = m_fs mo0.
       Proof. intros mo MP. exact (proj1 (adl_mpres H DL _ _ MP)). Qed.
-
       Let TRC : adrv_traces H. Proof. exact (atr_tr _ _ _ _ _ _ _ _ _ _ _ _ PRE). Qed.
       Let HCAP : Z.of_nat (length data) <= cap. Proof. exact (atr_cap _ _ _ _ _ _ _ _ _ _ _ _ PRE). Qed.
       Let HAL0 : atr_cost H data <= as_AL H s0. Proof. exact (atr_al _ _ _ _ _ _ _ _ _ _ _ _ PRE). Qed.
@@ -487,7 +498,98 @@ ltac2:(KReplay.run1z (kr_t_AsTargetRun ()) ["TR"; "Call"; "Loop"] "#,`$p'0p'1h07
            realizes asegs (mkCfg msF' mo') Kx) ->
         realizes asegs (mkCfg msF mo) (t_emit (W 1 [Z_to_bv 8 48; Z_to_bv 8 10]) Kx).
 Proof.
-ltac2:(KReplay.run1z (kr_t_AsTargetRun ()) ["TR"; "Call"; "Loop"] "#%s/p'0p'1h02H2h14__x1h27__arithh34__ffh48__varmaph55__with61zh73H65h87Hcalls0h94Hds0h:7__sat66h;!s0&7h<!s0&8h=!s0&9h>!s0%70h?!s0&1h@!s0&2hA4cstrhB5cstr0hC!s-$1hD!s-$2hE6heq_CPhF5heq_NhG!s7$PLhH9heq_!ta$hI:!s2+0hJ7!s3$fghK3z65hL4__p1hM2rrhN1bhO4__p2hP4__x2hQ2HrhR4__p3hS2HahT2H3hU4__p4hV4__p5hW4__p6hX4__p7hY4__p8hZ4__x3h[4__x4h\1xi001xh]1ah^3canh_3mo'h`4msF'ha5regs'hb3shihc2H0hd3HN1he7P_framei01!s1'hf6!v=$0hg!s/%1hh!vO&3hi!s0&4hj1ehk2m'hl1rhm6ACEILBhn2AXho2BJhp5CADDRhq3CANhr5CAN64hs2CBht5CELLShu3CP1hv3CP2hw3CP3hx3CPYhy2H1hz2HAh{3HA'h|3HALh}3HCLh~2HKi022HVi033HV'i043Hrri054Hshii062Hxi072K0i082K4i092Kxi0:3LBci0;2LRi0<2MPi0=4PERMi0>2PHi0?2PPi0@4P_a0i0A5P_bszi0B5P_bufi0C5P_cani0D4P_csi0E4P_fdi0F7P_flagsi0G5P_lbfi0H6P_locki0I6P_modei0J4P_rai0K6P_rendi0L6P_rposi0M4P_spi0N5P_stki0O7P_wbasei0P6P_w!sV$Q6P_w!sV$R7P_writei0S3Q18i0T2Q2i0U3Q20i0V3Q22i0W3Q23i0X2Q4i0Y2Q8i0Z2Q9i0[2R1i0\3R11i0]3R19i0^3R21i0_2RHi0`2RSi0a3SB'i0b3SH0i0c3STOi0d2TFi0e2TIi0f7_TmpHypi0g3fxci0h1mi0i4mem'i0j2moi0k3msFi0l2pDi0m4regsi0n2sCi0o1yi0p5ls_ali0q!s/$xi0r5ls_bji0s8ls_caddri0t5ls_cbi0u!s;$ellsi0v7ls_copyi0w8ls!{4'x7ls_heapi0y5ls_k4i0z8ls_mpresi0{7ls_permi0|4ls_ri0}7ls_!tj%~6ls_stoi107ls_tinvp%0p%1p%2p&0p&1p;1p;2p;3p;5p;8p;:p;4p;6p;Ap;<p;@p;Hp;;p;7g00Gmj13Tg00I5j14Tg00Uak10UTg00V?k10`Tg06bTk21h!s:$bk10nTg04kKk11MTg008jk10_Tg06c@k30DTg06dEk50KTg00@aj30k10iTg06eFk20:Tg06f;k30>Tg00CKj1jTg07KdR0k80TTg00Zij1<Tg00c_j2=Tg00<Oj1oTg09<0k21:!s0$jj2rTg06iDk50hTg01ggj3ATg06n=j2;Tg01eZk111Tg04?Wm:0~Tg04lOk40{Tg004?k30zTg06T]k30xTg009lk20vTg00XDk20;Tg00ggR1j22Tg01Q@R2k11vTg025]k21rTg00FQj3sTg024Rj3[Tg04CKk20pTg06<<k11gTg06>Qk11cTg06L@k11bTg06jMk20oTg07Lok11aTg01Oaj2HTg06lZk21]Tg011<j2ITg01?<k11QTg00J_j2:Tg01@Ak11OTg01ALj2u!s/$lk11HTg00fgj2CTg00]US00j27Tg08iCk21CTg022Ek20^Tg00^0R3k20RTg00dek20jTg08Hmk2!wQ$27ik405Tg00BLk11!v6$?[j2!tZ$0`k60ETg07VSk319Tg001[j6ETg01Bnk118Tg01D8k117Tg01E@k116!t:$ER4j1{Tg01FPk215Tg01G3k3!zO%jRk40QTg02H9R5k20fTg01`Jk6!zx$1Uok20dTg00eZk10?Tg01SIk210!sn$Pk20N!u~$?k20c!x;$Ck30bTg00G1k20!yu$=Mk10}!s0$kk10|Tg00HRk20!zD$IZk10yTg00>Vk20aTg00iDk30w!u{$9k21!sb$@5k21!sb$A;k3!uJ$0AZk41zTg012nk20LTg04OOk21!sv$<ok11xTg04PXm:1wTg070Mk21uTg071Xk21tTg07W;k21sTg09=mk31qTg02M<k20!x3$MYk20t!y&$<k307!uR$Ok40JTg08k[m:!|J%?=mA1nTg09@Hk41mTg09ASS01k61lTg072ck11kTg073gk2!}N$1\Yk20YTg01fdk30XTg08D@k41!wO$h>j!s/$8G`k51!y_$lBj2gTg00[Gk30ITg08Uik31\!y|$Jk41[Tg01VLS02j21Tg00_?k21YTg04eJk60HTg08EAk61XTg02:9k21WTg02;:k21TTg00Cjk20STg00E<k30l!s0$ek21PTg00M0k40!z0$_Dk40mTg04mVk41RTg02fck31STg03_ck51NTg07`:m<1UTg08FOk81VTg076Gk51LTg077Qk81KTg04FUk11JTg04H[m@1ITg092Zk61`Tg093fk61GTg0952k61FTg08[SmH1ETg09BamA1dTg09D0k11eTg004jk41DTg07@am;1iTg06m6k40ZTg00WDk40[Tg039;k41BTg026ak20qTg015?m<0rTg018Jm<1A!up$[k70ATg01O>k31@Tg01:9k70!wD$N?k80]Tg019Uk61!|;$Vfk70@Tg02`_k31>!s0$Bk31=Tg02b>k30uTg031Hk30MTf0R6#3#3p=K%46#4p=M%3!s-$B%46#3p=Df1R7%36#3#<'=p>03g00bJS03:0I76p=Ff3R8f2R9/;7;06p=5g00aHS04g07D3R:P7P6H0Zp>0k%<6,=7p>0Ff4R;As9767s8p=dQ04P:20:9!sR&=e%36#<p>04g00`=S05P8P9P7H0[=0;6p=xQ04P9!t&$1Bp=Y!u5$#4#4p=N!t}%!uM$c!u=$!s2%`!s>+!s$'p=t!s:'<p=L1297/76p=ig00NcR<g00QgR=706p=h1776,79p=Xf6R>Q05f5R?P;P8H0[20q76-0;930p>0B12=6p=81C!sX%>061Q<6p=]A0<76p=ag00_^R@P<P6P4P7P9P8P;P?P>f7RAf8RBN<0rp>0gP@P<P5P4P1g03=JP!t?$!un%!sI&eP<!sK$<P2P;P4P8g01WJ!sI'1Ap>1217;8!uS&'1p>0P20a<6p=@P9g00OhR4g00PGR2P2g00PgR1P<P7g01:]R5P6H08g00QGRCK0Ap=>B1@!u=$z!sL&;f!sJ$p=yP7P4P2P2P1P6P!sT%w!td$!s:%8!s0+<P9P5P7H08!sM$P6K0\p=?P>!sH+!u`%!s4'!uE$L0]L0]p=mP<!u},J0Ep=G!sQ6p=p20;769089p>1pP9P<!zJ%mp>02!wy+p=qQ05P;%<9,=8!yy&?6p=UA0?;8A0976g00bfRD'1'1p=Z1289/77,7;/16p=R!ul/J1?p=V!uj89P7K0\P6K0@p=n!sI09!s2+7!sF$K0@p>0W12?;!t;&'7!t:$J1176,19p>0V12!xD,7p=SB1>7<6,I9p=lB1=7<6p=k!u5$/1Dp=^A08!{F&\!{2&,78,7;p>01A0>?;!sG''7p=|B0I976,;8p>00P>!wV%1;9!w9'W!sY-16'1p=91Q76:0u89p=vB0M976:0M;8p=6!vh$1197<0M6p=PB0u!sD,~116Dp>1Z1C8912!zb$=O!v>:<P7P!zQ%!yO$!vj$T12!v3'9!vi3\p>0G12A>12?;'112!t1''7p=_!v]$16p=}!w,$1!v=$>0O1297,18!s4$1_!s[,p=bQ04P:P91r7!#5+%sg07Afg00T1R:#3R4#4S06$0URC%34S07#3R5#3RE#KRF$0URG$0`RH+1hS08&0U5S09$0`S0:$0nS0;\HS0<g07BlS0=g06\GS0>p,1HRI$1Mg007fS0?$0_S0@g08`5Q0=B0DI9;PBP>Q06#4RJ#4RK#M#B#DRL#4#K#B#B-03GP?p,3romRMI0K3020:?;RN:0>I8g00TVS0AQ0A#jROf9S0BPBPA!xh%L0TP0Q0APOf:S0CQ!sB$!y+%HQ0C%<:R0,FCS0D%3L#B#D#D-03GS0EC5PHf;S0F%<J,FCRL1=G=S0G!s>$<S0HQ07#4RP#4#<,FCRQQ!sB$Ag09DfS0I#oRRO1Q08Q0<Q0=Q0>Q0=f>S0J>0DI7fDS0KP8Q0EP9P!uL%f?S0L20:97RS60>IPOPOfES0M!t}$9f@S0NQ0LL0TPHP>P!t?%RTQ0N-0kN[[[[]_]`]k]af=S0OQ0HQ0:Q09%4:S0P#3RU#3RV#3RW#3+0F!sC%Q06#3RX#<S0Q'=Q0:#oDdS0R-1:0S0SQ0B'r3e[[[[[P6p,2spS0TfIS0Up,1NRY,=GS0Vp,2DzRZ!s3$Wp,3OWzS0X!s5$YI0hPHfJS0Z%4X!vJ%[fKS0[,=GC5&0`CR\P\%<W,FCRWP\%4VS0\!sO%VP\%4URU#3S0]#<R],FCR^!s;$S0^!sJ%U%o\DdDdS0_9A\6S0`PHfMS0aP7p,5regs0R_/;7C5[]MQ0[$11Q0TfLS0b%<5R5,FCR`,;_S0c%<PS0d,FCRa!s7$e&04PS0f,FCRP!s8$g1;_QS0h%3X!vS%i,FCRb!sB$j1;_[S0k&04JS0l,FCRJ!s?$m%<KS0n,FCRK!s7$oN:0~PIQ0ZQ0UQ0aH0{Q0?Q0Zp,3LB040zp,3mo0S0pQ0a60xIQ0:$0_Rc$0nRdfPS0qQ0WQ0:p,2dsRe+0vS0r20;ceS0sDx120YRffRS0tg03:@Rg&1vYRh01re%og3sRg7YZ[fSS0u?[ZY\fQ0AQ0u+0pfTS0v$1gfUS0w$1cfVS0x$1bQ0v-0oIp,2s0-0oI&1aO'H+1]PHfYS0yQ0DQ!|D&ZS0zPL!{v%Hf[S0{!zk&Q0xP!{{6]S0|!{{%cS0}!{{2^S0~>0>IS!{u$dS10!{u&_RSQ0~L0T20kNS\T!{f-p,4SPloS11Q0P#4S12#N#N#NRT#B#M#NS13#4#K#cRN#`#D#t#LS14Q0T,IGRM'2!sf$hiS15%4TS16!sb&N#NS17!s,%8#c#LRR,2Mp,4HCLOp,5HCEILS19$1QS1:g01HARL':%KFS1;#KS1<#KS1=#<Re':/2MQ19$1O%KN#c!tQ%>Q1:Q1:%cT#t#t#L'2S1?3iQ1:/ueRT#h!sF$9$1HRN'2Q1:/:e,CN3XS1@'7RNePNfaS1AQ0M+1CfbS1B00^6X^<-0R<P3P<Q0}!s8&Q1BQ1AQ0SQ0~'r3eP6feS1C00^6Q00PdffS1DQ12#3S1E#3#B#K#BS1F#3S1G#3#M#BS1H#B!#6/%1I%jO#j#jRN#jS1J#j!s3$iPcPi1=G7S1KK0B%87%<4Rj%<FRF+0jS1L,C7S1M'7Q1DQ1CQ0SQ1B!t^%PdfhS1NQ1IP!sm'8!sj$;Q1L806;fjRkfNS1O+1<Q19fkRl1HMLRLP6H0512M6Rm'7Xb!ut,19flS1PP!sH%/7mXb<Q0SfgS1Q'r9elkP6Q19fnR3!sJ,Q00Q19foRmPLP7!t$%7Q0S/rl9em3!sX%q!sD$8!sD%;PHftRn1FCjS1R%3X$04S1S,HMRX,=GRoC5S1TPHPnQ07#<S1U,FCRpQ0^#4Rq!#;?%K#M!s-$!v~&VC5PHPnP`Q0!s1'aQ0W!s1&PQ0Y!s1&b%Bq#M#D#N#D#DS1W#KS1X$04Rq,=GS1!sN'J!}W&PnPK&1;4!sC$ZC5fr!uR$37emQ1TPHfuS1[PpQ!tP%fvS1\!tS+fwS1]!tV+fx!tV+fyS1^PbQ!t<%fzS1_!t?+f{S1`PKQ!t;$|S1aQ1`PofFS1bQ0tPAfQS1cPX%<ERE,u6#hX6<P<1uMERmQ1S'H/uE%h6!s<$P=Q1S,H6S1d/uE!sQ$1Q<=Pm!}y$16J0E1uXEQ1S>19MEEE1IGoR3p,4dataRn$18Rr,Q@p,5callsRs=0@rRteS1ePtp,1A/:jRu&17nRv':Q1U':Rw#]p,2PL/awRweS1fPw%]up,2CP/auRueS1gPu&16nRx#]1aYxRxeS1hPx%]vp,3cfg/avRveS1iPvPt%{sRy%{rRz'aR{&0i@S1j&0i<S1k%{7%{6'aA0@7621576414Z0o@X\@S1lPsPy%]yR|PrPz%]zN90gP;H0QS1mP{20fOsS1n20fsNS1o'7120yS1pQ1U,2yR}'7R~Q1nQ1oQ1pP}POP0%]0PsPyP|J0e!s/%PNQ1UQ1U#]J0eJ13p,6!#su$!t5$pP~Q0r=0@hQ0r#{R@20d=YR|'aR}Q1jQ1kQ1lQ0rP@%]@Ph20d=6X\<RhPYO1P6X\<PhPYPY%]YI12N90gp,3Hd!t'%lP}&0?rS1k%8z!v3$?sS1o%8yS1nQ0:00vnRn$0?S1q%{n#8S1rQ0r!s7$s%8@S1t210=YS1u1C=Y1a|YPYP=%h|I0PS1vP|P<20NMES1w%8M%8ER@%8m[[S1xQ1:00NeS1yQ1:#8%8e%8T[[S1z20cjFRT1C=jRm%8FQ1L,C=[[Rn%8jRyg00cCRsB0bjF7UWSRFQ1L#8\s^SyR!sc$]S1{%8]20jj]Rr,C=[\mS1|B0bj]7VsXSyS1}%8r!sY$S1~20NZES20%8Z1uZE#8\@[S21g00RES22#oR@Q22$0_RE20=<7S23&0}<Ry&0|<Rs20<<:R:%@R5>sS24&0y2R2PsQ14#@S25=>s:S26P2PsPs20a<=S27Q1S#@S28,z:Rr%@j>0w<GS29,yr,wsD?Fm21}s1R1P6P9g00S1R]g00SQRm'Q21|69=0]mdB1{<=7H1zRmb3b4b5X1<126RS2:Q14/27S2;!}y$9S2<#8Q2<Q1L406[[^1<P6PMQ15Q11O3S2=b2b:b;b<b=b>b?b@bKb7bDbCbBbAb9b8bIbJbFbEbGbH-0LXS2>DGPXg099ZRR/26X6<Q1ePtQ1fPwQ1gPuQ1hPxQ1iPvQ1mP{Q!{5$1lP}!zv$j!|#$nQ1qQ1rQ1sQ1tQ1uQ!yN%Q1wQ1xQ1yQ1zPTPnPFPzQ1{Q1|Q1}Q1~Q20Q21P@PEQ23PyPsQ26P2Q13#3#c!#=v$R]#@=>srCpP1P!v>,!v7$6S13!v7$7S2?,2]!v-,1O2!v$O12RXeP3Q!v'+:eRR,!v'~!v'J4P2Q18#4#M#N#<R]#@9!v%62:Q2?/!uu/5O2R]!uwQXR!uw'Q1`PLPMPoQ0]#D#B#LRRQ1`01ySPXQ1=#3#LRh,HMS1=1H6RS0]'2!vH~!vHD%@h,z:S15%@RS18,zrS2@!}}$A!vG01H6hS2BQ1d/HRS2C'2S2D!vR&O1S2E!vPO!vK&1H3RS2F,2LePX126M!v#~!v#DA>sr:!|52d/26^1<Q!uTXP@PE&1x<S2GPyQ27Q18!vv$H!t3,%8RRhP6b2!ul~!|7I29,y:,ws!|,61M!|&$!{yPN:1w!{]$uS!s,$tSQ1`!s0$sSfWS1M41qfBS2IfAS2JPXQ16!#Kj$R]1H7e00C5':20C75,:],C67i6Q0;f~S16Q1KO1!#VZ$/==H1p[^]<X6<1HXeR!s`$S09,:]20CX5S1K!sg,19f}S2KPLQ0LPXQ0F!w<s20te5S2L%8e%85ReQ09#8[[S2M!wVC20tX5S2N%8XQ1K#8\e[S2O!wl+Q15Q1;#4#LRe#@607<=>sr!wp2B/:eQ1d'2!zp:hbi!wy?1:Le/2Xe!zIt2LQ!uwEQ2NQ!ug%P<20=<9P7Q2GH0JS2OPyPs20<<4S2N9>s:P2Q!s/$!#7r2XP<1267Q2?/29[^1<^P<P6Q1MPMQ0tO3!v0SP7P<P]Q09,:6Q1K,:6,C97i9X6<P6g03=lg03?5J0EN:1oWSX]<!~Y&NA1nQ!#K>%Q1bH1mp+01@R]PIp,2DLS1KQ1^!{y$_Q2KQ1aPofGS1aQ1]P6Q1\Q1[p,4Hfd1Q1_f\S1\O2Q0q!#X#-p+01BRrp+01AR4PoQ0[P8P9J1lQ0=Q16>0DI9p+01EReP;Q0EP8Q04$1k!#ch&89:0>I]21jr8Q01p+01FPePofOS01PAP>Ae>?4P8PHQ0[Q1RPoC5PHQ0b!#Z$+Q0aQ0Q,FC1=GjC5P\Q0P#<,FCS0PP\PpP\P`P\PaP\PPP\PQP\PbP\P[P\PJP\PKQ0_Dd!s$'R4!#_E$_PHQ0qP7p+01_S0Q!#_A$^l\p+01]Q1O20YH<ReQ2F,=G>02HRPeQ0^#B#D#M#DS0^#3S2F#3S0E#BS0D#3#LRr,=GS04Q1E#4#LS1E602HS16PeQ1F#4S1F#B#DS2K#B#M#LR],=GS1^>02H0RL%oeDdS093s40XPdQ01Q04PNPcPNQ06-0FGK0BPdQ0qPGQ0D#`PiQ0G9qciS0DEUPdQ1cPGQ0E#4S0E#3#cPiQ!s@&0t!s@-cPi!t^$#M#K#M!#TK$9qci!sP%u!sP%`PiQ1^!t+%E!s@%vPGQ2F#4!uo&v#3!tR%!sE&wPGQ0v#4!s;%\#`!vJ$B#`!t-1x!sl/!sg/1M!s@&!to%<-0F!s]+fXPGQ0^#4!w@%1<!wE&#`PN1=G0S1M9qcN!t0%y!sn%M!sH%KPNQ17!ss&NS17!sK%z!t;'!sF%!s;%{PGQ1<#D#c!s;,1\!#Z\'Q1[,=GK0BQ05Q0|PoPRH1fP<P3p+01nQ0]!yD'Q095se80XSX6<!#8Z$2>EEp+01mQ0~1HXRS2>!yE$]!sW$S0|!sZ%S0940XQ099Ae6S0~Q02Q0|=0e7S05PeQ16P7PePLP7EZS1[%f9P6!sG%9S1IPeQ0|%f6XMeS1\Q2>Q1=/26S171:6RS1<PMPh12r6S0{Q1<Q0^#N#LS0^Ph12]6S2FQ1<Q2K#`#LS2KPh12q6S0yQ1<Q1W!#Z%$4#<RSPhQ1H#4#B#LR3!t0$H!sJ$G#D!#[>%LRi'2;XhDR!s$%!#BW~!#8@9p-0RN!#?n,PsQ2A!s,%@Q18607<S2AP:Q2HD?Ps1Vs8S1G!s/$;S0EPsPs%@qS0xQ2@5>s!sg&%@SS2A!sZ$1Vs?S2HDnI0WDn!#8x0LNXONWRQ2DQ2C/:RS2DP6PhPqQ2CQ2DPSPhP8EJ:0V79DR^1<^LN^ON^RNP6P3Q2>Q2>!s]&iPhDSP]!s:$DQ2K!s5$r!s5&0^!s5$MO4!#AtNQ0],IGS0!s{$!w]~!#DHF!#Pe%!v}%7Q2@!s%$9'y!#TS%!#Md4;Q2</HR!#Su5Q!#SiP+0LS2=DGQ1=Q0|9lGHS2:Q2:Q0|,kHRh':S2;PM%8hRhPr!tJ&0^PhP]!tW'K!xB%:Q2;!xB$3!s2&!w{$EJ!s$%eQ0|#feP8P6EEW0P6O1!~&%9!~&$9EZS24Q02Q16=0e8S2CA^eL8S0\%f;P6!s=%;S0v!s\$Q1\PrQ17Q1E,:6S0wPMQ1E#8S0uQ0{Q0wQ0^Q0uQ2FQ0wQ2KQ0uQ0yQ0wPSQ0uQ1HQ0w/2iQ0u3X!}U~!xvIGPy!}$$9S1FP!|r$%@rS0tQ0t!y$$0tQ1E#@Rh!}e$0DQ0^#@S1cQ27=>shS0qD?D?!s^%]RhQ0t!}a'0DQ2K#@S06Q0q!sI%Q0x!sG2A!sB+%@3S2M!tE+D%@iS2L!sE$D?Dn!~C$!zI-LNPrPr!wI$rS1E!w9%DSP]!s;$!w<%Pq!s3$!w=$P3!s2%i!sM$EJEJ60V6^LNP6Q1=!sB%M!sB$O1!~$Q4!~$$4!w/'!vu-!|_%!vj$!|_,!#P&-r!#nE$rP6b2bfbg-0LrS0u!{w%16!{w$0qQ0qQ16,kHS2E':S1dPMQ2E#8S2EPr!sC$dQ0^Q2EP]!s4&2KQ2EP!s_%dPSQ2EP3!s3&iQ2E!|#/16#feP?!|#,A^eL;S2EQ02A0eL?S2BPD%f>P6A0eL>S15PePLQ1\P]Q171:60S17PM%80S1\Q0{Q17Q0^Q1\Q2FQ17Q2KQ1\Q0yQ17PSQ1\Q1HQ17/2iQ1\!{f~!{fPQ!{b'Q0tPh!zL%0S1F:07<hS1HQ!{V$Q1F5>sS1c!{X'A>sh!sT$!~2$6Q1c!{M+=>s!s@+2A!s@,2MP!s>,L!s>$!{D<]1:]0S1c!vm%!{B$]!tX$KQ1\Pq!s3$!vq$P3!s2%i!sM$!{B4!sB$M!sB$!{BR1^,IGS1^!{B;PhQ29,yh!{?4]!{?%]!{?-]S1L!{?$AlGHLS1=Q1=1kHLS29':S1\PMQ29#8S29Pr!{e$\!{;$9P]!s4&2KQ29Pq!s4%PSQ29P3!s3&iQ29!{;-%fLePA!{9,PD%fBP6n010!s#%XQDP6O1n20!s9'2110!s3&WQ!sB91!sBDXMeQ0~%f7[^Mep+01oS29f`S2KQ09P7P6I1^PdQ29Q0WQ0rQ0sDxPdQ1A!s6-[p+020S29?YZgQ1B?YZg[\fQ29?[ZYQ1B?[ZY[\f3XQ00!ss7B!ss31S!sl%Q0}!ss'!sl%Q0}!ss&'7Q1AQ2Kp+01l!#|#$p+022!t%20!t%34S0s!tv%D!t%'0s!tv%D!t%,00p+025S00!sR%Q!sR+0!sR%Q!sR&Q1CQ10Q293eP6p+027?YZgfi!v+&[\fp+028S!t'%A[k!s\$p+01KPkQ29Q1NQ1Q!sl%POPOp+02:S10!sC&QQ00Q0sPHp+029Rg/;pS1CPHPl!#RZ%S1NQ1V90H6PH1;l`Q0V!s/$aQ0W!s/$PQ0Y!s/$bQ1!s/%JQ0GPHPl!#z'%S0rC\S2KC\S1AC\S1BC\S0^C\3XXNHPH1;g`S06Q1NPHQ10!#{Z%S0yPHP6Q0VQ!sR1aS0^Q1NQ0y!sU%!#{{$S2FQ0W90H6Q1BI01!sT'PS1B!sT%Q2F!sW%!#|F$S0{!t-%YQ1AC\!sY-bS1A!sY+Q0{!s\%!#|q$S1;Q1Y!t5$2K3X!s\-JS2K!s\/Q1;!s_%!#}D$S2PQ0G90H6S2QQ0r'7!sd0KS0r!sd2Q2P!sg%!#}w$!wN$Z90H6!sa/PoPHP6Po!s_2!vj+!wH%!sV$C\XNHA0HooPH!x}$VPHQ06!x>$Q0^!x=$!|8$YPHQ1A!x;$Q2KQ0GQ0rQ1Z50HF|F|F|1QHoPHPgQ031gCjd:0ICj!#Xu$PgPCQ1UQ03Q1U,gCdH00!t7$PgPCP5!sX%5!s<$0!s<&Q0dQ03Q0d!sU'0W!s?'f!s?$f!s?+Y!s?'i!s?$i!t/+!s?+l!s?$l!sX+G!tv%n!s=$n,gCd60IC!v2$!uB%Q0Q41\H1[PkQ1RQ1OFWPkPKQ0[PKP\Q0PPKA0\pKS1RA0\`KS1ZA0\aKS0nA0\PKS03A0\QKS0GA0\bKS0lA0\[KS1YA0\JKS0iA0\KKS0fP\PWPKP\PV!s+$^!s+$UPKEZF9S0d'1S1V'1S1U'1S0r'1S2K'1RC'1R5'1Ro'1RjQ1RPjQ1ZPoQ0n!vm$PCQ0G!wl$l!wl$Y!wD$iQ1V!v]$dP\PKCvD6!s$%EPAA\K4eO2!u]$JQ0[PJ!u]%JA0\pJS0dA0\`JS0fA0\aJS1VA0\PJ!u=%QJS1UA0\bJ!uU%[JS0rA0\JJS0lP\PKPJ!u[$J!u[$J!u[$JA^\UJF9F9!uF$S0G'1S03'1S0n!uU40dPjQ0fPoQ1VP5Q0i!yd&nQ1Y!x1$r!zL$lQ2K1Q\JD~!uM-J!uM+bQ0[Pb!uM%bA0\pbS2KA0\`b!wd%ab!wt%Pb!u5%Qb!x4%bbS1YP\P!sc$PJ!s+$K!s+$W!s+$V!s+$^PbA^\UbF9!uK$0n!wz&!uA22KPjQ0lPoQ0GP5Q0rPC!{|%!uA$n1Q\b!u5%!u3$b!u3+PQ0[PP!u3%PA0\pP!z%%`P!w:%aP!wJ%PPS03P\PQPPP\Pb!s+$!s_$PJ!s+$K!s+$W!s+$V!s+$^PPA^\UP!u/%F9!wB3nPjQ1YPoQ1U!yq&1Q\PD~!tq&P!tq+aQ0[Pa!tq%aA0\pa!v^%`a!ti%aaRCP\PPPa!tn$a!tn$a!tn$a!tn$a!tn$a!tn$a!tn$a!tn$a!{w$aEZ!tq+!tm-3PjQ1UPoPCP5P\PaCv!tg&a!tg+`Q0[P`!tg%`A0\p`R5A0\``!t^$aP`!td$`!td$`!td$`!td$`!td$`!td$`!td$`!td$`!td$`A^\U`!ta'F9!t_%P5PjPCPo1Q\`D~!tW$`!tW+pQ0[Pp!tW%pA0\ppRoP\P`Pp!tV$p!tV$p!tV$p!tV$p!tV$p!tV$p!tV$p!tV$p!tV$p!tV$p!v<$p!v<,F9RC!v-$\PpCv!tQ$p!tQ%Q0TPkQ0VQ0WQ0YI0hePH1;g[p+02;RC,=G90H6XNHp+01^PkP[Q0[P[!u#%[A0\p[S0YA0\`[S0WA0\a[S0!~h$[S0TA0\Q[!~h&[!xi%[[!|I%JP[!u4$[!u4$[!u4$[!u4$[!u4$[!u4%!|D%0r!~n+l!xV''1R5Q0YP5Q0WPjQ0VPoQ0TQ0l!~f$G!~c&!|Q$P\P[!#51&!us$[!us'`PH1;C71;_9!u^&Q0QP7P6O2Q1PP7Q0aP7P6!tr$7!tr$7!tr$7!tr$7EZF9!sB$9!sB$9!sB$9!sB$9EZF9A0\W8R_!sC$8!sC$8A^\U8F9RCAA\84P\PWQ0_XM\Ro!vr%WA0\pWS0_A0\`WS1PA0\aWS0QA0\PW!~@%QW!~@%bW!#4E$[W!vz%JW!#4]$KW!w:%WW!#6l$VPW!tK$WA^\UWF9S0T'1S0V'1S0W'1S0Y!#9:%S0i!#9S&0f!w',_P5Q1PPjQ0QQ0fQ0nQ1V!vx$iQ0rQ2K!w2$Y!w;$W!wD$VQ0lQ0T1Q\W!#6x&!w@&W4eP;P6EEX!uX$V;!v<$^P;!vS$;EZRjAA\;4!u+$!v1&VA0\pV!ye%`V!#7@%V!y}&V!ua%QV!z=%bV!uy%[V!zU%JV!v9%KV!#8$$WV!vQ%VVS0i!tH$V!tH$VEZS1Y!us+n!ux&S0Q'1S1P'1S0_'1!#<k%Z'1S1R!v:%TP5!z2$RQ0VQ1Z!uu$d!|\$_Q0GQ1P!v8$Q!vA$f!vJ$n!zV$VQ0iQ!{p$V!#<d+!vC&V4!#VQ%XT_A0\^?R_A^\U?R5AA\?4!u,$!v:&^A0\p^!x}%`^!#<k$a^!#<{%^!ub%Q^!yM%b^!uz%[^!#=K$J^!v:&^!yu%W^!vR%V^!z5%^^S0GA^\U^!us&W!ux+U!u}'!y[$1R!}P&!yo%1A'1S1B'1S0^!y=$^!ub$B!yL$AQ0r!}^$n!#=4$!vX$f!yI$3Q1ZQ0Q!va$YQ0d!v[$W!ym$_1Q\^!ya,!vF&^4eP>!yc,U>R_PDAA\>4!xB$!vA&UA0\pU!|`&U!y5%aU!yE%PU!ua%QU!#@^$bU!uy%[U!ym%JU!v9%KU!#CU$WU!vQ%VU!z=%^U!vi%UUS1R$1Z!|T&l!yZ+T!#4l&!v3%V!v8+i!v=$'1!z4$RoQ0_Po!yG$Y!uj$^!us$i!u|$BQ0Y!vZ$U!v]$Q!yV$Z!vc$3!vf$!|}%!yt$1RPDP\PU!yj/!vL&U4!#U+%XT_AA\A401Y6XTDP6J0HX05!s-%Tj!s6&C!s-$Y0fP6O1b0O2FWY04XM\Q1DQ29Q09p+01\Q0CQ0BJ1X!s='cQ0eQ0gQ0hQ0jQ0kQ0mQ0op+01[1IG6RC1CCM5iXQ09-1W6Q0;fmP7O1p+02<P7O130[^]HQ1001TlQ0HP7Q09Q!#sR%5Q!sm$;RlAlGH9RX1kH9,:XS10PlCOP6Q!#sM%1IG>!sK%6RC1kH6,:CRjPlCOXMeQ2>PlP6Q1<!s7$!#^{~!#^{>O!#[P$PsQ2NQ28'zR5P:Q0ED?!#mm$HPsQ18,z5!#rM%P:DT!$'Y4!#qb$Q2??i69Q2</:R>09;7!$'g%!#qO$P6Q0[,IGR5Q2>'C1C5MPMP5Q0ZO5!#q0QQ2=DG1IG?R5!#mC%5CO!#m3/Q!#l|$2CQ0\P!wJ$;R51kH;,:5S0Z!wo&!#l}%1IGBRlPCP!wc'Pr!wb$0w!wb~!$08@2Q1J-0S<20S<OQ0A-0S<60l!s&$g00U5+1PR_Q22P_P@DdS22PEP<!$0f$8P9!$0f$P7P<Q2GP;20=<;H0JH0JS1J!xa,7Q12-0<<R_'y,ws1Vs>!sA$_Q271VsAD?DnS12!#sa$PsQ07!sT$o!y@$P:1VsBD?S28!sG+1>#@Q2NQ0B,VsD?Q0C,Vs60GsS2N!yg%5=>soRo!sX'P<P_g00OAQ27H08,wsQ0F,V!st&FP_Q0H!sq$DnS1F!s\$!sb$Q0O,VsS27PsQ0DP:DTFmFm!#uA1XP<XZ<X[!z^&XRNXUNXVNXWNXXNXYN1C=8P;P8P=P?I0PS25Q1S,H8?i7AS1SQ1>Q0B7i8Q0C'7S1>Q14/2?S07%hAQ0OP0PAQ0J!s`$!$H?$AS14Q2JQ1E<09>[!s#$!{j&Z<^[!#zA+^UN^VN^WN^XN^Y!|&$a,IGR0/CrQ0X/aZg002eR=Q0@p,2cbS0a20Y=<S1800Y<R_Q18P=P<P6PZH0m<02Y%o_3sQ19PIPZPYH1RC\Z0l=+0R'7S18P<PZg06SQQ0X#hQ0@Q0aQ0?#o30'7C\S0aQ1@Q1?1C0M%hBS0@1aBYRZPYPMQ1:P0Q0BQ0bp+01ep+01hp,4COPYR0Q11OB!}yQ4Q0u!}y$AR=!#o>%=CO!#o,/Q2E!}y$BPD!}x%>R=1kH>,:=R_!}w&!#o1%0C,IG!}x1]!}x$17!}x~!}xBPEQ!|z%Q!|P%Q!|6%Q!{p%!{,&!{:0!{4$1H!{4[Q!z}$!zs$7Q!zO$!zI$c!zIU1,IGR:/C]Q18Q!y-,:MQ0@P!y#+:Q0BQ1Op+01gp+01jP!xxV1^Q1LDGQ0B!{e$!#l}%0CO!#ln1!xq%BRG1kHB,:GR!#<[%!#m%,0!#m%>0!#le=0!#m%A61S7I1NY06X\HN<1U!#?O&0Q0s!#?l%Z!#?l$L1Vp+01Y!}=$p,2HHQ0pp+026RlQ1Qp+01XPIQ1KPlQ1QQ0}I1LL1KP?p+01WRlO1P9P6PlP6O1O2XdfP7P6p+01V!s8+!tH$AQ0UfHQ1aQ1bQ0MQ0KfCRfQ2IQ2JQ0NQ0LQ0JQ0OQ0A$1J-0;c,QdN@1IQ29-0pOe!#Ay/S!u3$!#@m+Q10PqQ1X#4#<ROPXQ10P3PiPXG_!#@m+PjPqPO!}&$3PiPCG_XMeRdQ2>Q1<Pq12O6RcQ1<12i6Rl7}3H0!}@~!$Y3KPsQ1GPs%@ORIQ2@DTPsQ0EPsQ2L!s5$60G!$M82!}#%Q13P9POQ2?/HRRRB098iRH1_[!$3A'P6Q2D/23!s+$q!$Y]$4!#@iVQ2;PqPO!#@j%3PiQ2:G_!#@o;Q0Z!wQ$5Q0Z!wR$5!wn$!#@l%PdPrQ0wPqPcQ0w?}3l!wO%!#|+-0DQ0x!$'\$IQ0t!v3%DQ2M!s:$Q2L!s;$60Gs!v7,Q1E!tD$rQ1E!tD$rG_P6b2!#8'&Q1d!u;$!#8+$3PiQ0qG_!#81;_!ss$=P_!sr$=!z$%5PePLPdP]Q17!u7$17!u791H!u7,Ph!u6$1H!u6-Ph!u55c!t@$]Q1c!tA$]!u5&!#4@&1\!u5$!#4?$3PiQ1=G_!#4D20!sj$GP!|-%GG_!#4@'1!#4@41!#3|=!sBMQXMeJ1`!}w0R!}w5Q1W$04RiPSPXCb!}m0iPSPCCbXMeRC!}e%12S6Rj7}i!}W~!}WRQ2A!}F$!}B5Q13B099SR!}0&!},&i!}#%3!}#[iPSQ2:Cb!|u@iPSP5!vm$!|l'C!|l$?}ij!|b4%@iR5!z@&A!|e%!|L0iPSPrCb!|C3iPSQ0qCb!|9>iPSP=!xD%!|1%C!|1$!tT61H=>s5!tP$!{~$!{f0iPSP]!tO&!{]-iPSQ1=Cb!{S5iPSPGCb!#<e~!{K/G!{K0Q!#U?&Fp+01PNH1EPH1;gQQ2Q!#gE%MPkPQQ0[PQ!#Yo$QA0\pQRpA0\`QR`A0\aQRaA0\PQRPA0\QQRkP\PbPQP\P!s\$PJ!s+$K!s+$W!s+$V!s+$^!s+$UPQ!#iJ&RU'1R^'1RV'1RW'1RKPpPKP`PWPaPVPPP^PkPUP\PQ!#XX$EPAA\Q!#fu$O8WwWv!#fd$!ux-12!s/&W0Wu!sD=b0c0`beY0NY0CY0GY0HY0IY0EY0AY0BY0RY0OY0QY0PY0KY0LY0FWeY0DY0@Y0JY0MP!#>i7HQ0F!w&%PBPA!%@G&!%DD$ODn6!tU&!s,&D110M10J10@10D10110F10L10K10P10Q10O10R10B10A10E10I10H10G10C10NY0aW{Y03Y0?W_W`Y0iWaNA1d!$Y#$+0:RfQ0:Q0IQ1M$1eQ0RH1DQ1]40seQ0SQ1]60sfec0>Y0WY0VY0UY0SY0ZY0YY0XY0TQ0zN;1iY05Y0b!w1?Xb<!sE7!s0%bjWrWq!se@^!se@bmb}bybcW~Y07Y0]Y0\Y0[W|WoWsWnY0cWpWtWxY0<Y0=Y0_Y0dY0eY08Y0^Y0;!weK@n8!}G&!#9&&1@110}10|10y11010w10x10{10z10v10u10s10~10q10t10r10pWcWzY02Y09Y0:Y0nY0jY0kY0hY0mXl<Y0go"). Qed.
+    (* LPS 75d69e00, the channel reader, RE-DERIVED.  [drv_printf_first] (Bs/AsDrvIO.v)
+       gained [m_channel_reader mo = true] in an earlier repair and this proof was a KReplay one
+       argument short of it.  Two cheaper routes were measured shut before this one:
+       (a) a law on [asan_driver_laws] from AKREL -- [channel_reader] occurs 0 times over
+           Bs/AS_InstDefs.v and Bs/AsSR.v, which define everything the instance's AKREL
+           is built from (firing controls: AMODEL in the former's name table, m_halted in
+           the latter, and the same screen is non-zero in 46 files of this unit);
+       (b) widening [Hfd1] so the argument COUNT is unchanged -- [Hfd1] is shared with
+           [tr_free], whose replay rewrites it along [same_but_materialized_fds]
+           (a farm round, Bs/AsTargetRun.v:425).
+       So the replay is written out as explicit text (rule 11g).  The shape is the donor's,
+       a donor tree:projects/openssl/echconfiglist_parser/
+       proofs/lib/As/AsTargetRun.v:1369-1429, which is fully plain; every CONSTANT below is
+       this tree's own, read from its own [About]/[Print] on a throwaway probe branch
+       (As/PrbTR.v at a farm round and a farm round).
+       The reader itself is TRANSPORTED, not assumed: [Hrdr] goes through [adl_rdr] and so
+       holds at every model [as_MPRES]-related to [mo0], which is what [ls_mpres] carries. *)
+    intros fxc r regs m msF mo sC LBc Kx HV HA
+           [LR R21 K4 TI TF RH PERM MP CPY CELLS CADDR STO AX CB BJ HAL] R1 R11 R19 K0 HK.
+    pose proof SPlo. pose proof SPhi. pose proof SP16. pose proof HCLO as HCL.
+    unfold ATR_STACK in HCL. acb.
+    destruct (ti_can _ TI) as [can [CAN CAN64]]. destruct (ti_sh0 _ TI) as [shi [SH0 Hshi]].
+    pose proof LR as (Q2 & Q4 & Q8 & Q9 & Q18 & Q20 & Q22 & Q23).
+    assert (PH : ap1H regs m (Z_to_bv 64 (bv_unsigned sp - 80)) can).
+    { split; rewrite ?u_small by lia.
+      - exact R1.
+      - exact Q2.
+      - exact R11.
+      - rewrite <- Zminus_mod_idemp_l, SP16. reflexivity.
+      - unfold ASP_LO. lia.
+      - unfold ASP_HI. lia.
+      - eapply astk_stk_ok;
+          [ exact (ti_stk _ TI)
+          | unfold ATR_STACK; rewrite u_small by lia; lia
+          | rewrite u_small by lia; lia | lia | lia ].
+      - exact (amem_inv_ro_none m (ti_inv _ TI)).
+      - exact (ti_relro _ TI).
+      - apply apf1_cells_of; [exact (ti_ac _ TI) | exact STO].
+      - exact CAN.
+      - exact CAN64.
+      - intros a Ha. eapply (stack0_qsh0 m _ _ (bv_unsigned sp - 80) SH0);
+          [ unfold ATR_STACK; lia | lia | rewrite ASHADOW_BASE_val; exact Ha ]. }
+    (* The reader at THIS step model, inline.  It must NOT be a section [Let]: inserting a
+       [Let] into Section Loop re-slots the local context of every later KReplay in the
+       section, and [as_target_run_ok] then fails with
+       "Anomaly decompose_lambda_n_decls: not enough declarations"
+       (measured, a farm round, Bs/AsTargetRun.v:617). *)
+    assert (HRD : m_channel_reader mo = true).
+    { rewrite (adl_rdr H DL _ _ MP). exact RDR0. }
+    unfold W. cbn [map].
+    apply (drv_printf_first H DL sC msF mo regs m (Z_to_bv 64 (bv_unsigned sp - 80)) can Kx
+             PH HV HA (Hfd1 mo MP) HRD K0).
+    intros regs' mem' msF' mo' PP HV' HA' SB'. destruct PP. rewrite u_small in P_frame by lia.
+    assert (RS : forall rr, In rr [(Z_to_bv 64 (bv_unsigned sp - 80 - 3400), 3400);
+                                   (Z_to_bv 64 0x1b6e10, 232); (Z_to_bv 64 0x711b38, 1)] -> atr_region rr).
+    { intros rr Hr. pf_region Hr. }
+    pose proof (copy_frame m mem' _ P_frame RS) as (CP1 & CP2 & CP3).
+    apply (HK regs' mem' msF' mo' HV' HA').
+    - split.
+      + unfold loop_base.
+        rewrite (P_cs 4%bv), (P_cs 8%bv), (P_cs 9%bv), (P_cs 18%bv), (P_cs 20%bv),
+                (P_cs 22%bv), (P_cs 23%bv) by in_solve.
+        rewrite P_sp. split; [reflexivity | exact (proj2 LR)].
+      + rewrite (P_cs _) by in_solve. exact R21.
+      + intros rr Hrr. rewrite (P_cs rr) by (in_from Hrr). apply K4. exact Hrr.
+      + eapply atinv_frame; [exact TI | exact P_frame | exact RS].
+      + eapply atframe_agree; [exact TF|]. intros x Hx. apply (proj1 P_frame).
+        apply outside_of_disjoint. intros rr Hr. cbn [In] in Hr.
+        destruct Hr as [<-|[<-|[<-|[]]]]; cbn [fst snd]; rewrite u_small by lia; lia.
+      + eapply aheap_frame_tr; [exact RH | exact P_frame | exact RS].
+      + exact PERM.
+      + eapply (ah_mpres_trans H HH); [exact MP | apply (adl_sb H DL); exact SB'].
+      + apply CP1. exact CPY.
+      + intros HN1. apply CP2; [exact HN1 | exact (CELLS HN1)].
+      + intros HN1. apply CP3; [exact HN1 | exact (CADDR HN1)].
+      + (* [sto 1 m'] is [astdout_after m' 0], a DIFFERENT predicate from [sto 0 m], so the
+           frame lemma does not apply here -- the printf is exactly what writes those cells.
+           Every field but two is one of ap1Post's; [so_wpos] is P_wpos at k = 0 and
+           [so_bytes] is a zero-length read. *)
+        cbn [sto]. split; try assumption;
+          first [ reflexivity
+                | replace (7412536 + 2 * Z.of_nat 0) with 7412536 by lia; exact P_wpos ].
+      + eapply axr_frame; [exact AX | exact P_frame |].
+        intros rr Hr. cbn [In] in Hr.
+        destruct Hr as [<-|[<-|[<-|[]]]]; cbn [fst snd]; rewrite u_small by lia; lia.
+      + eapply cb0_frame; [exact CB | exact P_frame |].
+        intros rr Hr. cbn [In] in Hr.
+        destruct Hr as [<-|[<-|[<-|[]]]]; cbn [fst snd]; rewrite u_small by lia; lia.
+      + eapply bj_frame; [exact BJ | exact P_frame | exact RS].
+      + exact HAL.
+    - rewrite (P_cs _) by in_solve. exact R19.
+  Qed.
       (* [comment removed for export] *)
       Lemma tr_after_printf : forall (rn k : nat) (fxc : FPState) regs m msF mo sC LBc,
         (1 <= rn)%nat -> (k + rn = calls + 1)%nat -> (1 <= k)%nat ->
@@ -527,8 +629,12 @@ ltac2:(KReplay.run1z (kr_t_AsTargetRun ()) ["TR"; "Call"] "#0ptp'0p'1p'2p'3p'4h0
   End Call.
 
   (* [comment removed for export] *)
-  Theorem as_target_run : ltac2:(zQ "10!rs9@3$0?2fx?5HCEIL?1H").
-Proof.
-ltac2:(KReplay.run1 (kr_t_AsTargetRun ()) ["TR"] "h01Ah15HPOSTh21Kh32K0h42LBh53PREh63caph74datah83fx'h93memh:4mem'h;2moh<3mo'h=3msFh>4msF'h?1ph@4regshA5regs'hB1shC2s'hD2spp;1p;2p;>p;Bp;4p;?p;3g00Gmj10Tg00Uaj11Tg00V?j12Tg008jj13Tg04kKj1>Tg00I5j1;Tg06bTj2:Tg00Vbj15Tg09S\l>6Tg00<Oj17Tg075=lB4Tg06eFj28Tg06m6j49Tg0:Jkl?=Tg0:L>j3<Tg00T1#0R0#0#0R1#0#0#0#1#2R2g00NcR3%11#2R1#3g002ep,1HR4#>R5g007f#3g07BlR6g06\GR7%;0#1/:2R0%51\2R2g08`5p,2fxR1p,5HCEILR8P4f;R9f:R:f9R;f8R<f7R=f6R>f5R?f4R@f3RAf2RBf1RCM>6PCg09Df#7O1g07AfP8P4P?fCfBfAf@f?f>RDf=REP9P:P;P@PAPBPCf0RFMB4g00aHg07D318ABP;C9[^C5^<7^>6^:2^A0]8PDPEf<P9P:P;P<P=P>P?P@PBPAPCPFM?=W1W3W5W2W9W@W;W=W4WBW?W7X63W0WDA<184eo"). Qed.
+  Theorem as_target_run : as_target_run_stmt H.
+  Proof.
+    (* LPS 75d69e00: one more argument, the Section Call hypothesis [RDR0].  Written out
+       (rule 11g); the donor is openssl/echconfiglist_parser As/AsTargetRun.v:1714-1718. *)
+    intros sp A cap data p s LB msF mo regs mem K PRE RDR K0 HPOST.
+    exact (as_target_run_ok sp A cap data p s LB msF mo regs mem PRE RDR K K0 HPOST).
+  Qed.
 End TR.
 (* [comment removed for export] *)

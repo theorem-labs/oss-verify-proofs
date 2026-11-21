@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: preserved map/reserved separation through top-slot ledger transport. *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -770,12 +771,13 @@ Section NewTop.
   (* [comment removed for export] *)
   Lemma t_ledger : forall vm, LEDGERX st [(Z_to_bv 64 a, Z_to_bv 64 len)] vm -> LEDGER st' vm.
   Proof using. repeat match reverse goal with PinX : _ |- _ => clear PinX end.
-    intros vm [LM LN LB LR LMB]. constructor; rewrite ?e_regions, ?e_brk.
+    intros vm [LM LN LB LR LMB LMR]. constructor; rewrite ?e_regions, ?e_brk.
     - exact LM.
     - unfold noacc_of in *. rewrite e_brk, e_regions. cbn [flat_map noacc_of_region r_new rg_kind]. exact LN.
     - exact LB.
     - exact LR.
     - exact LMB.
+    - exact LMR.
   Qed.
 
   Theorem newtop_close : WF st' L /\ REP st' M'.

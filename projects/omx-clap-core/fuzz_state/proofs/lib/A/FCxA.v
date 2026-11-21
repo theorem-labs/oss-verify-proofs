@@ -7,7 +7,8 @@
    - rodata_ok_x       = AE2y.rodata_ok, with ARm -> ARx.
    Image numerals: none here; the image enters through the core's AF0x (TFIB_IMG_LO / TFIB_IMG_END, preset's top 0x600000),
    AF0m (Tfib_const, TfibSyms) and the image's own segment list. *)
-(* Modified by Theorem Labs, 2026-10: relocated from omx-clap-core/fuzz_preset (a working branch b120217aa206) to omx-clap-core/fuzz_state's ASan image A as fuzz_state's image-A lemmas over FCiface.fs_iface: module paths and the image numerals of A/FCimg.v (generated from fuzz_state.asan), nothing else. *)
+(* Modified by Theorem Labs, 2026-10: relocated from omx-clap-core/fuzz_preset (a working branch) to omx-clap-core/fuzz_state's ASan image A as fuzz_state's image-A lemmas over FCiface.fs_iface: module paths and the image numerals of A/FCimg.v (generated from fuzz_state.asan), nothing else. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

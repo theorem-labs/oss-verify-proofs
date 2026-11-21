@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up per CONFIG_RSEQ value and the new auxv layout; the syscall-return and channel-reader fields of the model's state; the model's placement by linux_place and its reserved-ledger changes; the model's vDSO changes). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -105,6 +106,14 @@ Hypothesis IT_ok : itab_sound SEGS IT.
 Variable A : atable.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+(* The run's CONFIG_RSEQ flag as 0 or 1 ([rseq_z]).  [AP.check] carries it
+   because the revision's auxv vector is rseq-dependent: [AUXSZ rz = 432 + 32 * rz]
+   (75d69e00:theories/Common/AsanPlanCore.v:3192), so every address above the
+   auxv moves with it.  Declared here, immediately after [LIMIT], so it
+   discharges into [check_vars], [cont_agree] and [check_sound] in the slot the
+   applications already spell.  It is a PARAMETER, never a pin: both values are
+   reachable and the caller supplies the free flag. *)
+Variable RZ : Z.
 Variable HS : nat -> option acs.
 
 Variable XN : nat -> list expr -> acs -> option acs.
@@ -137,7 +146,7 @@ Variable FS0 : Fs.Fs.
 
 Variable KC : nat.
 
-#[local] Notation CHECK := (AP.check SEGS IT A nx0 LIMIT XN XE XB HS KC).
+#[local] Notation CHECK := (AP.check SEGS IT A nx0 LIMIT RZ XN XE XB HS KC).
 
 #[local] Notation cfg := (cfg_of SEGS).
 
@@ -258,7 +267,36 @@ Record cs_ok (E : env) (cs : acs) (R : bvmap 5 word) (FULL : word -> option byte
   co_fds   : fds_ok E (a_fd cs) model;
   co_fs    : m_fs model = FS0;
   co_tid   : a_tidset cs = false -> m_tid model = None;
-  co_res   : vm_reserved (m_vmmaps model) = segments_reserved SEGS;
+  (* LPS 75d69e00: the initial reserved ledger is NO LONGER the image's reservations
+     alone.  [State.init_model] seeds [vm_reserved] with
+     [State.init_reserved reserved mbase sp kb = reserved ++ vdso_reserved kb
+     (page_round_down_Z (Z.min mbase (sp - stack_max_size)))]
+     (75d69e00:theories/LinuxProcessSem/State.v:7716-7721, :7786), and
+     [Run.init_config] additionally wraps [with_vdso (vdso_run_init (ed_vdso mi_draw))]
+     (Run.v:1426-1430).  [State.vdso_reserved] (State.v:6540-6545) is [] only when
+     [top - vdso_len kb < page_size], which [valid_mmap_base] never permits, so the
+     tail is the vDSO pair: at most two intervals, sitting at [mmap_base_min =
+     0x154555557000] (State.v:321) and therefore ABOVE [img_hi A], which [if_hull]
+     caps at 2 ^ 32.  The two bounds are written as literals here rather than as new
+     [atable] fields because this tree pins [A] per image -- the model needed
+     [n_resx]/[p_resx] only because [AsanPlan] is generic over images. *)
+  co_res   : exists rx, vm_reserved (m_vmmaps model) = segments_reserved SEGS ++ rx
+                        /\ (length rx <= 2)%nat
+                        /\ Forall (fun iv => KHI <= bv_unsigned (fst iv)
+                                             /\ bv_unsigned (snd iv) <= 65536) rx
+                        (* [rx] IS the launch's vDSO pair, named rather than left
+                           anonymous.  Appended LAST so that consumers which
+                           destructure [(rx & Hres & Hcnt & _)] absorb it and do
+                           not move.  This component is what lets
+                           [region_free_app_r] (Spec/KStep.v:73) fire: the pair is
+                           a suffix of the ledger ([State.init_reserved] =
+                           reserved ++ vdso_reserved, State.v:7702-7721), but
+                           [region_free_app_r] needs an EQUATION naming the suffix
+                           before it can be applied, and the first three components
+                           leave [rx] abstract.  It also subsumes an [incl
+                           (vdso_reserved ...) (vm_reserved ...)], which follows
+                           from the equation by [in_or_app; right]. *)
+                        /\ rx = vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model));
   co_limit : vm_limit (m_vmmaps model) = LIMIT;
 
   co_maps  : maps_match E (a_maps cs) (vm_maps (m_vmmaps model));
@@ -305,7 +343,56 @@ Record cs_ok (E : env) (cs : acs) (R : bvmap 5 word) (FULL : word -> option byte
   co_lazyin : lazy_in_maps model;
 
   co_naal : Forall (fun iv => bv_unsigned (fst iv) mod 4096 = 0 /\ bv_unsigned (snd iv) mod 4096 = 0 /\ 0 < bv_unsigned (snd iv))
-              (vm_noaccess (m_vmmaps model))
+              (vm_noaccess (m_vmmaps model));
+
+  (* LPS 75d69e00: every tracked mapping is apart from the WHOLE reserved
+     ledger.  The model's field, at 75d69e00:theories/Common/AsanPlanSound.v:420-427.
+     A grant proves [region_free] over reserved ++ maps for its own range, and
+     nothing ever widens a mapping, so it holds throughout -- which is why it
+     must be CARRIED as an invariant rather than re-derived at each use.
+     AS/Z2s.v:3608 [slice_args] needs it: it names a range inside a tracked
+     entry bounded only by [alloc_top], and [alloc_top <= ATOPMAX =
+     0x7fffff800000] (AS/Z2z.v:31) sits ABOVE the vDSO pair, so [co_res]'s
+     floor cannot separate them at any value.
+
+     THERE IS NO [co_vdso] FIELD, AND THAT IS NOW A CONSIDERED CHOICE RATHER
+     THAN AN OVERSIGHT.  I added one, removed it for a bad reason, and was
+     about to restore it; what landed instead is the fourth component of
+     [co_res] above, which is strictly better: one invariant rather than two,
+     additive so no consumer's destructuring moves, and it subsumes the [incl]
+     the field would have given.
+
+     The obligation it closes is specific and was an OPEN GOAL on the branch at
+     the time of writing: AS/Z2q.v:570 owes
+       region_free (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model)))
+                   addr n = true
+     and the other two routes are closed.  It cannot be carried upward as a
+     premise: [node_mprotect_sound2]'s only caller is [node_mprotect2_sound] at
+     AS/Z2q.v:693, a node-shape statement we do not move.  It cannot be bounded
+     numerically, for the reason given above for [co_mres]: ATOPMAX =
+     0x7fffff800000 (AS/Z2z.v:31) sits above the pair at about 0x154555543000.
+
+     The reason this is recorded as a proof obligation and not as a census: my
+     first justification for the field was a tree-level "names vdso anywhere"
+     screen, and Main measured that such screens give false clearances in both
+     directions.  THIS UNIT IS A WORKED EXAMPLE -- AS/Z2q.v went from zero vdso
+     names to two to one-in-prose across three commits while the obligation was
+     un-discharged at every one of them.  A name-frequency screen would have
+     called it ported in the middle state.
+
+     Emptiness needs no premise anywhere here: [vdso_reserved] is [] when its
+     base is below [page_size] (State.v:6540-6545) and non-empty only under
+     [valid_mmap_base].  The equation, the length bound and the [Forall] are
+     all true of the empty list, so nothing in [co_res] needs non-emptiness.
+     Do not go hunting for it. *)
+  co_mres  : Forall (fun iv => Forall (iv_disjoint iv) (vm_reserved (m_vmmaps model)))
+                    (vm_maps (m_vmmaps model));
+  (* LPS 75d69e00: the channel's reader bit, which the hand-off's [PMfd] consumes
+     (A|B/Zbg.v).  [State.init_model] seeds [m_channel_reader] from
+     [in_channel_reader inp], and every step this plan takes keeps [m_proc].  Appended
+     LAST, as in simdjson/fuzz_utf8's AS/AsanPlanSound.v, so positional
+     destructs keep their meaning. *)
+  co_rdr   : m_channel_reader model = true
 }.
 
 Lemma e_band_eq : e_band = eaddz e_sp0 (-8388608).
@@ -481,6 +568,9 @@ Proof using SINV_frame.
   - intros a Hh. rewrite (hid_same _ _ _ _ Hs) in Hh. rewrite (Hhid a Hh). auto.
   - eapply SINV_frame; [|eassumption]. intros a Ha. apply Hhid. unfold hid. rewrite Ha. reflexivity.
   - unfold lazy_in_maps in *. rewrite Evm, Elz. assumption.
+  - (* [co_rdr]: materialization keeps [m_proc], where the reader bit lives. *)
+    unfold m_channel_reader in *. replace (m_proc model') with (m_proc model) by (symmetry; apply Hfr).
+    assumption.
 Qed.
 
 Lemma know_ok_filter : forall E M f k, know_ok SEGS E M k -> know_ok SEGS E M (List.filter f k).
@@ -2084,7 +2174,15 @@ Definition always (cs : acs) : bool := true.
 
 Definition sys_stmt (y : snode) : Prop := node1_stmt (is_ecall_at SEGS) (node_sys A nx0 y).
 
-Definition x_stmt (x : xnode) : Prop := forall args, node1_stmt always (node_x SEGS A nx0 x args).
+(* [node_x] is discharged over AS/Z2y.v's Section WithSegs, which gained
+   `Variable rz : Z` at Z2y.v:33 for the rseq-dependent auxv, and reads it at
+   Z2y.v:125 (`node_pnscan A nx0 rz cs`).  So the discharged form is
+   `node_x segs A nx0 rz x args cs` and this section's own [RZ] (:115) is what
+   goes in that place.  Without it [x] landed in the [Z] position and the round
+   reported "The term x has type xnode while it is expected to have type Z"
+   in its log.  [node_sys] above needs no such argument:
+   Z2y.v:110 reads only [A] and [nx0]. *)
+Definition x_stmt (x : xnode) : Prop := forall args, node1_stmt always (node_x SEGS A nx0 RZ x args).
 
 Definition fresh_stmt : Prop := forall r logc base, node1_stmt always (fun cs => node_fresh nx0 cs r logc base).
 
@@ -3751,7 +3849,7 @@ Proof using .
   - destruct (is_ecall_at SEGS cs); [|discriminate]. destruct (node_mprotect2 A LIMIT cs) as [[csa csb]|]; [|discriminate].
     exact (IH _ qb _ s Hc).
   - discriminate Hc.
-  - destruct (node_x SEGS A nx0 x args cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
+  - destruct (node_x SEGS A nx0 RZ x args cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
   - destruct (XN xid xargs cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
   - destruct (XE eid eargs cs) as [[[fd ps] cs1]|]; [|discriminate].
     destruct (CHECK bfuel fuel lc cs1 k) as [s1|] eqn:H1; [|discriminate].
@@ -4931,7 +5029,7 @@ Proof using HOLES_agree HOLES_nil HS_sound HULL_ok IT_ok SEGS_in_hull SEGS_wx SH
   -
     discriminate Hc.
   -
-    destruct (node_x SEGS A nx0 x args cs) as [cs1|] eqn:Hn; [|discriminate].
+    destruct (node_x SEGS A nx0 RZ x args cs) as [cs1|] eqn:Hn; [|discriminate].
     eapply (node_x_sound x args cs cs1 E R FULL model); [exact HC | reflexivity | exact Hn |]. exact (CONT k cs1 s Hc).
   -
     destruct (XN xid xargs cs) as [cs1|] eqn:Hn; [|discriminate].

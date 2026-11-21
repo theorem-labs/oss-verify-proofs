@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-11: copied from projects/openssl/bndiv/proofs/lib/Lib/LimArms5.v at commit 874e3397a35, with its module paths changed to libpcap/fuzz_pcap. *)
+(* Modified by Theorem Labs, 2026-11: copied from projects/openssl/bndiv/proofs/lib/Lib/LimArms5.v at commit theorem-labs/oss-verify-proofs@f92feaf8b7e6, with its module paths changed to libpcap/fuzz_pcap. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 by taking openssl/bndiv's ported copy of Lib/LimArms5.v whole, with its module paths changed to libpcap/fuzz_pcap: it adds the lim_blind arms for set_robust_list (99), clock_getres (114) and pwritev2 (287); internal commit ids in comments replaced by public commits or removed. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs.
@@ -49,4 +50,13 @@ Proof. apply (lim_blind_arm (fun j => clone_spec (in_arg j 0))). intros j. lim_a
 
 Lemma arm_439 : lim_blind (fun i => faccessat2_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3) i).
 Proof. apply (lim_blind_arm (fun j => faccessat2_spec (fd32 (in_arg j 0)) (in_arg j 1) (in_arg j 2) (in_arg j 3))). intros j. lim_auto. Qed.
+
+Lemma arm_99 : lim_blind (fun i => set_robust_list_spec (in_arg i 1) i).
+Proof. apply (lim_blind_arm (fun j => set_robust_list_spec (in_arg j 1))). intros j. lim_auto. Qed.
+
+Lemma arm_114 : lim_blind (fun i => clock_getres_spec (clockid32 (in_arg i 0)) (in_arg i 1) i).
+Proof. apply (lim_blind_arm (fun j => clock_getres_spec (clockid32 (in_arg j 0)) (in_arg j 1))). intros j. lim_auto. Qed.
+
+Lemma arm_287 : lim_blind (fun i => pwritev2_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (flag32 (in_arg i 5)) i).
+Proof. apply (lim_blind_arm (fun j => pwritev2_spec (fd32 (in_arg j 0)) (in_arg j 1) (in_arg j 2) (in_arg j 3) (in_arg j 4) (flag32 (in_arg j 5)))). intros j. lim_auto. Qed.
 

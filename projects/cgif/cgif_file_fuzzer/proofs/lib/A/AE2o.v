@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed tfib_aunlink_x. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -130,7 +131,9 @@ destruct (ffo_mbyte_unhidden W mem2 (A_PATH + (Z.of_nat j + Z.of_nat k)) (PIMG (
 fold H in EE. rewrite EE in X. unfold mbyte, mrb in *. exact X. }
 assert (Hcstr : read_cstr (ms_read_byte (pend_at regs2 (Z_to_bv 64 UN_ECALL) mem2 (seg_rom tfibsegs))) (getr regs2 11) = CstrOk sink_path).
 { rewrite pend_read_byte_mrb, Q2_11. change (w64 A_PATH) with (Z_to_bv 64 A_PATH). rewrite sink_path_eq.
-apply (read_cstr_of_garr8 tfibsegs mem2 A_PATH sink_path_Z Hraw); [|cbn; lia]. unfold sink_path_Z. repeat (constructor; [lia|]). constructor. }
+(* The last two branches are 75d69e00's TASK_SIZE premise on [read_cstr_of_garr8] (YI19.v:41);
+   [A_PATH] is a literal here, so both close by computation. *)
+apply (read_cstr_of_garr8 tfibsegs mem2 A_PATH sink_path_Z Hraw); [| cbn; lia | unfold A_PATH; lia | change (Z.of_nat (length sink_path_Z)) with 12; unfold A_PATH, TASK_SIZE; lia ]. unfold sink_path_Z. repeat (constructor; [lia|]). constructor. }
 assert (Hav : ranges_avoid (w_H W) (open_copyins (pend_at regs2 (Z_to_bv 64 UN_ECALL) mem2 (seg_rom tfibsegs)))).
 { intros a n Hin. unfold open_copyins in Hin. rewrite pend_gpr1, pend_read_byte_mrb, Q2_11 in Hin. change (w64 A_PATH) with (Z_to_bv 64 A_PATH) in Hin.
 assert (Hlen : (cstr_access_len_aux (mrb tfibsegs mem2) (Z_to_bv 64 A_PATH) path_max <= 13)%nat).
@@ -341,8 +344,10 @@ rewrite Hms2. rewrite Hms2 in HAI2. cbn [cfg_model] in HAI2. rename HAI2 into HA
 unfold unlink_shape.
 destruct (fs_under (m_fs md2) sink_path) eqn:Hun.
 { destruct (node_unlink_tmp_isdir_lazy tfibsegs (w_H W) (w_A W) regs2 (Z_to_bv 64 UN_ECALL) mem2 (seg_rom tfibsegs) md2 sink_path sink_name_bytes
-HAI Q2_17 Hdir Hcstr Hfl F1 F2 F3 F7 F8 Hfdn2 Hun Hav) as (Hnode & HAI' & Hsbm).
-apply (srz_silent1 tfibsegs _ _ XA Hnode). apply CA; [| exact HAI']. apply (KREF _ EISDIR); [unfold EISDIR; lia | exact Hsbm]. }
+HAI Q2_17 Hdir Hcstr Hfl F1 F2 F3 F7 F8 Hfdn2 Hun Hav) as [Hnode Hall].
+apply (srz_silent_all tfibsegs _ unlink_type_ix _ XA (exist _ EISDIR (or_introl eq_refl)) Hnode).
+intros [e He]. cbn [unlink_type_ret proj1_sig]. apply CA; [| exact (proj1 (Hall (exist _ e He)))].
+apply (KREF _ e); [| exact (proj2 (Hall (exist _ e He)))]. apply unlink_type_errnos_range. exact He. }
 destruct (fs_lookup (m_fs md2) sink_path) as [d|] eqn:Hlk.
 - destruct (node_unlink_tmp_present_lazy tfibsegs (w_H W) (w_A W) regs2 (Z_to_bv 64 UN_ECALL) mem2 (seg_rom tfibsegs) md2 sink_path sink_name_bytes d
 HAI Q2_17 Hdir Hcstr Hfl F1 F2 F3 F7 F8 Hfdn2 Hun Hlk Hav) as [Hnode Hall].

@@ -1,6 +1,6 @@
 (* lib/B/TopX_MEMCPYS.v: image B's (fuzz_reply.asan-ubsan) __asan_memcpy onto itself, the image-B twin of a Theorem Labs lane's
-   lib/A/TopX_MEMCPYS.v (a working branch b39456532c7).  RR_x's Section hypothesis
-   (W_relay_remove.v:130 and the W_rr_* files)
+   lib/A/TopX_MEMCPYS.v (a working branch).  RR_x's Section hypothesis
+   (W_relay_remove.v:131 and the W_rr_* files)
      AMEMCPYS : amemcpy_same_realizes_x B ARx (SIGMA WS_asan_memcpy)
    PROVED at the instance of B's top_x (lib/B/W_LLVMFuzzerTestOneInput_top_x.v), B := TfibB and ARx :=
    TopX_RT_lock.ARX_rt (B top_x's ARX verbatim, as lib/B/TopX_INTRIN_memset.v uses it), so the plug is `exact` up to
@@ -52,7 +52,7 @@ Local Notation segs := (@pa_segs _ fr_prog_listing PB_fr).
 Lemma asan_memcpy_id_sigma : SIGMA WS_asan_memcpy = 0x52780.
 Proof. reflexivity. Qed.
 
-(* AMEMCPYS (W_relay_remove.v:130) at B top_x's ARX *)
+(* AMEMCPYS (W_relay_remove.v:131) at B top_x's ARX *)
 Lemma topx_AMEMCPYS : amemcpy_same_realizes_x TfibB ARX_rt (SIGMA WS_asan_memcpy).
 Proof.
   rewrite asan_memcpy_id_sigma.

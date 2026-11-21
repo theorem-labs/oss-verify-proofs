@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: for omx-clap-core/fuzz_preset, the CALLER-WINDOW call kit over YCbqG.v's journal
    ajournal_x (allocator invariant a parameter ARx, ghost head set Hp after S, program statics PST), generic: no image
-   class, no address, no ledger. Credit: WalkS4, lib/A/Prog/PRW_CallerJ.v at 85a188622c5 (statements and proofs taken
+   class, no address, no ledger. Credit: WalkS4, lib/A/Prog/PRW_CallerJ.v (statements and proofs taken
    from there; changes below). Donors there: cj_kept from cgif_file_fuzzer lib/YC20.v:311-325 tlzw_kept and
    lib/YC8n.v:272-287 tlzw_kept_of_journal (origin/release/pau-projects-recipes), generalised to ajournal_x's keep
    clauses; aj_call_xW from YCbqGcall.v aj_call_x (cgif YCbq.v:1845-1883 aj_call, origin/ossv/recipes).
@@ -14,10 +14,10 @@
    - START: ajournal_x_init_W, the widened journal (STK + e) (sp + e) at the entry state.
    - CALL of a caller-window callee: aj_call_xW / aj_call_xWF (callee state in mkst form), aj_call_xW_sp /
      aj_call_xWF_sp (the entry form of YCbqGcall.v's aj_call_x_sp: st_ok, ss_resv, the machine state ms).
-     The footprint side condition is YCbqG.v's own fp_sub_x (h-hpreset-7 9052c7a7d74 :688-691), whose fourth
+     The footprint side condition is YCbqG.v's own fp_sub_x (h-hpreset-7 :688-691), whose fourth
      disjunct `sp0 - STK <= a < sp0` is the caller's window: WalkS4's fp_sub_xW is that predicate, so this file
      no longer states one and ajournal_x_sub_W (the name WalkS4's callers use) is YCbqG's ajournal_x_sub.
-   - vrd_call_W: h-verbs-3's lib/A/VrdArm.v call rule (6d4cddbdff5), premise shape kept, as a corollary of
+   - vrd_call_W: h-verbs-3's lib/A/VrdArm.v call rule, premise shape kept, as a corollary of
      aj_call_xW_sp at e1 := - o.
    - aj_call_xWF_d: WalkH6's caller-window float call rule (h-walk-identity's S8aCallW.v aj_call_xWF), verbatim: no
      fwin_x for the callee and no window-kept clause on either side.
@@ -37,8 +37,9 @@
    conclusion at R. Each plain lemma is its R form at wle (wle_refl / wle_trans); its statement is unchanged.
    fpostW_x_R_lift: a plain fpostW_x (journal at wle) is fpostW_xR at every R that contains wle. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YCbqGcallW.v; 1356 of its 1435 lines of code are new or changed and 732 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, the #102 tx TEXT-STATE GLUE: image-free and allocator-parametric, ONE copy for the tx family's walks
-   on the #102 kit (first lib/A/PRH_FnTx.v / PRH_Base.v of walk kit f97c8b2f046b, the tx texts decff67d721f's word for
+   on the #102 kit (first lib/A/PRH_FnTx.v / PRH_Base.v of walk kit, the tx texts's word for
    word; now PRH_FnTx.v 7cf918708def). OWNER a Theorem Labs lane, on that lane's branch; the SHARED HOME of the #102 tx
    glue (a Theorem Labs lane at 19:36Z: S10's #102 move cites this file). Generic in PA: every image bound is the instance's pa_lo / pa_hi or
    the CfImg's cf_img_lo / cf_img_top; no instance bound is bridged to a fixed image constant.
@@ -1267,7 +1268,7 @@ intros a Ha. destruct (Z_lt_le_dec a (x + k)) as [Hlt|Hge].
   lia.
 Qed.
 
-(* ======== PREP for the batch kit's texts (a working branch 4dcec0343c87; NOT the record glue, which is ec9d6e6a0914 on
+(* ======== PREP for the batch kit's texts (a working branch; NOT the record glue, which is ec9d6e6a0914 on
    a working branch). The batch posts are BUDGETED (PRH_Base.fpostWb = YCbqGwild.fpostW_xbR at wle' segs RZ_cf,
    PRH_Base.v:1578-1583; fpostWbm its fQmn form: the journal at a budget WS the post chooses, of which it claims P WS =
    wbudget_if f0 [] k WS), and each tx text takes a GUARDED room premise and a GUARDED consumer window (f0 = 0 -> ..).

@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/FMgxaSeamReadyX.v, with its module paths and addresses changed; 561 of its 1025 lines of code are new or changed and 294 lines of the source are left out. *)
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamReady.v (a working branch 3e35620c52e); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 8 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMgxaSeamReady.table); by hand (numerals.py HAND, reason in the table): 0x20d00 -> 0x20f98; GXA symbol keys kept (0x1029e); names: record RT_IImgA -> A_img RecAsanVfA.N_img_asan_vf; hand checks: FMgxa_mem STOP: names differ: fm FMgxa_mem.copy_ready/set_ready = disco lib/<img>/RT_gxa_calls_mem.copy_ready/set_ready; fm memcpy_stack_contract_A/memset_stack_contract_A (at A_img) = disco lib/<img>/RT_gxa_calls_mem_vf.memcpy_stack_contract_Avf/_Avf (Y: _Bvf); map each use by hand. *)
-(* Modified by Theorem Labs, 2026-10: hand check of the STOP module FMgxa_mem (G9 row P7-A-ready-FMgxaSeamReady): fm's FMgxa_mem.copy_ready / set_ready are disco lib/A/RT_gxa_calls_mem.v copy_ready / set_ready (same text; set_ready guarded by 0 <= n as fm 3899f140f93, a working branch 97f92fff44e), so the Require and the alias FMM name lib.A.RT_gxa_calls_mem; the comment address of sym 0x1029e is disco's 0x10b7c (lib/A/FMgxaSeamShadow.v sym_musl_prefix). The six lemmas that reach the world field w_H8 (word_vis .. seam_ready_holds) read it from G9 P1. Evidence: (internal path). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamReady.v (a working branch); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 8 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMgxaSeamReady.table); by hand (numerals.py HAND, reason in the table): 0x20d00 -> 0x20f98; GXA symbol keys kept (0x1029e); names: record RT_IImgA -> A_img RecAsanVfA.N_img_asan_vf; hand checks: FMgxa_mem STOP: names differ: fm FMgxa_mem.copy_ready/set_ready = disco lib/<img>/RT_gxa_calls_mem.copy_ready/set_ready; fm memcpy_stack_contract_A/memset_stack_contract_A (at A_img) = disco lib/<img>/RT_gxa_calls_mem_vf.memcpy_stack_contract_Avf/_Avf (Y: _Bvf); map each use by hand. *)
+(* Modified by Theorem Labs, 2026-10: hand check of the STOP module FMgxa_mem (G9 row P7-A-ready-FMgxaSeamReady): fm's FMgxa_mem.copy_ready / set_ready are disco lib/A/RT_gxa_calls_mem.v copy_ready / set_ready (same text; set_ready guarded by 0 <= n as fm, a working branch), so the Require and the alias FMM name lib.A.RT_gxa_calls_mem; the comment address of sym 0x1029e is disco's 0x10b7c (lib/A/FMgxaSeamShadow.v sym_musl_prefix). The six lemmas that reach the world field w_H8 (word_vis .. seam_ready_holds) read it from G9 P1. Evidence: (internal path). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* READINESS OF THE THREE INTERCEPTORS FROM LOCAL SHADOW FACTS, for the GXA seam at musl vfprintf
    (FMgxaSeam.v READY, :317-328).
 
@@ -58,10 +59,10 @@
       - seam_ready_holds: READY at fm's three predicates, for every R that carves out the
         destination and the stack window and whose hulls the harness sees.
 
-   THE DOCUMENTED CONTROL AGAINST THE OLD set_ready.  Before 3899f140f93, FMgxa_mem.set_ready asked
-   sp < 2 ^ 63 at every n (FMgxa_mem.v:219-224 at 8c70fb561b7).  Against that set_ready this file
-   proved the two lemmas below (proofs at e36171fe839, lib/A/FMgxaSeamReady.v:419-440; SG is
-   lib/A/FMgxaSeamGuard.v); cbe21760a93 removed them:
+   THE DOCUMENTED CONTROL AGAINST THE OLD set_ready.  Before, FMgxa_mem.set_ready asked
+   sp < 2 ^ 63 at every n (FMgxa_mem.v:219-224).  Against that set_ready this file
+   proved the two lemmas below (proofs at lib/A/FMgxaSeamReady.v:419-440; SG is
+   lib/A/FMgxaSeamGuard.v); removed them:
 
      Lemma seam_calls_ready_false : forall (m : word -> option byte) (q lo Fp CK D : Z) (dn : nat),
        ~ SG.seam_calls_ready FMM.copy_ready FMM.set_ready RSN.strn_ready m q lo Fp CK D dn.
@@ -151,7 +152,7 @@ Module BzI := OSSVerify.Proofs.reac_pw.fuzz_link.lib.A.Bz.Lib.ImageA.
 Module BzM := OSSVerify.Proofs.reac_pw.fuzz_link.lib.A.Bz.Lib.Mem.
 Module BzCl := OSSVerify.Proofs.reac_pw.fuzz_link.lib.A.Bz.Lib.Cells.
 Module BzSt := OSSVerify.Proofs.reac_pw.fuzz_link.lib.A.Bz.Lib.Step.
-(* strn_ready counts with the Bz tree's strnlen_res (RT_gxa_strnlen.v:100) *)
+(* strn_ready counts with the Bz tree's strnlen_res (RT_gxa_strnlen.v:101) *)
 #[local] Abbreviation strnlen_res := BSF.strnlen_res.
 
 #[local] Existing Instance N_img_asan_vf.
@@ -364,7 +365,7 @@ split; [exact (chk_ok_of_pf_rng_loc m d Ld n PD VD ltac:(lia))|].
 exact (conj C1 C2).
 Qed.
 
-(* RT_gxa_strnlen.strn_ready_intro (RT_gxa_strnlen.v:153) with the hull of the bytes strnlen checks,
+(* RT_gxa_strnlen.strn_ready_intro (RT_gxa_strnlen.v:154) with the hull of the bytes strnlen checks,
    [S, S + min (strnlen_res N buf + 1) N) *)
 Lemma strn_ready_intro_loc : forall (m : word -> option byte) sp S N L buf,
   BR.kHighShadowEnd < sp - GNC.STRN_DEPTH -> sp < 2 ^ 63 ->
@@ -457,11 +458,11 @@ Qed.
 End N.
 
 (* ===================================================================================== *)
-(* 5. READY's clauses (FMgxaSeam.v:317-328, FMgxaSeamGuard.v:99-112): what closes          *)
+(* 5. READY's clauses (FMgxaSeam.v:318-329, FMgxaSeamGuard.v:99-112): what closes          *)
 (* ===================================================================================== *)
 
 (* ---- the runtime's fixed cells as the interceptors read them.  bz_mrd_mbyte .. cells_cons8 are
-   a working branch 3b35fff5df2 lib/A/FMrt_pre.v:77-233 (that file is not on this branch), proofs
+   a working branch lib/A/FMrt_pre.v:77-233 (that file is not on this branch), proofs
    unchanged up to module names and SnUpoison.wz for its u64z ---- *)
 Lemma bz_mrd_mbyte : forall (m : word -> option byte) a, BzM.mrd BzI.asegs m (BzM.wa a) = mbyte tfibsegs m a.
 Proof. intros m a. reflexivity. Qed.
@@ -781,7 +782,7 @@ destruct (in_ush U (bv_unsigned (Z_to_bv 64 s))) eqn:EU.
 - rewrite (ARU_view_out tfibsegs B ly S U W mem md s HU EU), Hv. discriminate.
 Qed.
 
-(* ---- the clauses.  Premises: READY's (FMgxaSeam.v:318-327), only those each clause uses ---- *)
+(* ---- the clauses.  Premises: READY's (FMgxaSeam.v:319-328), only those each clause uses ---- *)
 
 (* memcpy from ranges whose pf_rng and hull are known: the whole of copy_ready but the two ranges *)
 Lemma seam_copy_of_rng : forall ly R S U (W : world tfibsegs) regs mem md (lo Fp CK D : Z) (dn : nat)

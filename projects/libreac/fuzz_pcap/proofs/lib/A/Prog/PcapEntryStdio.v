@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: new file (a Theorem Labs lane). *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 
 (* fuzz_pcap's entry instance (PcapEntryInst.pcap_entry_inst, B := AD2l.PcapB, MT := YCbp.ameter_triv): the stdio
    premises of item (D) of a Theorem Labs lane's list, each a lemma whose type is the instance's
@@ -9,8 +10,8 @@
      FM_RA         := PStdioImgA.FM_MALLOC_RA      the return of musl fmemopen's malloc call (PStdioImgA.v:46)
      CTX           := ACej.CTX_pcap_source_open    the call spines of pcap_source_open's two calls (ACej.v:40), the
                                                    trace lane's own list; its four spines are the two landings PP_K2,
-                                                   PP_K7 (PcapEntryDefs.v:200, :211), each with and without RA_LLVMF
-                                                   (PcapEntryA.v:15)
+                                                   PP_K7 (PcapEntryDefs.v:201, :212), each with and without RA_LLVMF
+                                                   (PcapEntryA.v:16)
      mc_lo, mc_hi  := AE39.MC_LO / AE39.MC_HI      the core's window of __strchrnul's word constants (AE39.v:27-28),
                                                    the names a Theorem Labs lane binds at the instance (a Theorem Labs lane, 12:16Z)
 
@@ -28,8 +29,8 @@
 
    Each conversion is delta (with iota) of named Definitions only, and each site carries a `conversion:` comment; the
    build log shows each one as a CONCL_FIT or ARGS_FIT CONVERSION line:
-   - AB1v.tfibsegs := Asan.M.loaded_segments (AB1v.v:13) and pa_segs PI_pcap := Asan.M.loaded_segments
-     (PcapEntryTop.v:140-141), at ASIL (stated, as the instance states it, at Asan.M.loaded_segments) and at the
+   - AB1v.tfibsegs := Asan.M.loaded_segments (AB1v.v:14) and pa_segs PI_pcap := Asan.M.loaded_segments
+     (PcapEntryTop.v:141-142), at ASIL (stated, as the instance states it, at Asan.M.loaded_segments) and at the
      segments of each conclusion;
    - AFMEMOPEN: PFmemopenI.FM_ENTRY (PFmemopenI.v:106) and pa_sigma PI_pcap PS___interceptor_trampoline_fmemopen
      (PcapAddr.v:16) are the same number; PFmemopenC states the window as two numerals, which AE39.MC_LO / MC_HI
@@ -136,8 +137,8 @@ Lemma pcap_entry_AFMEMOPEN : forall fx : YK11.FPState,
     (@pa_sigma rc pcap_listing PIp PS___interceptor_trampoline_fmemopen) FM_RA mc_lo mc_hi.
 Proof.
   intros fx.
-  (* conversion: ASIL at Asan.M.loaded_segments = AB1v.tfibsegs (AB1v.v:13); the conclusion's segments tfibsegs =
-     pa_segs PI_pcap (AB1v.v:13, PcapEntryTop.v:140-141), its entry PFmemopenI.FM_ENTRY = pa_sigma PI_pcap
+  (* conversion: ASIL at Asan.M.loaded_segments = AB1v.tfibsegs (AB1v.v:14); the conclusion's segments tfibsegs =
+     pa_segs PI_pcap (AB1v.v:14, PcapEntryTop.v:141-142), its entry PFmemopenI.FM_ENTRY = pa_sigma PI_pcap
      PS___interceptor_trampoline_fmemopen (PFmemopenI.v:106, PcapAddr.v:16), its window's two numerals = AE39.MC_LO /
      AE39.MC_HI (AE39.v:27-28, AE3a.v:15-16) *)
   fitc_s (@PFmemopenC.pcap_afmemopen_closed fx rc B SK MT CTX (@PcapBFacts.PcapB_LAWS rc) AD2l.PcapB_syms ASIL
@@ -159,8 +160,8 @@ Lemma pcap_entry_AFREAD : forall fx : YK11.FPState,
   @PFreadISpec.afread_spec fx rc SK SEGSp B pcap_KS (@pa_sigma rc pcap_listing PIp PS___interceptor_trampoline_fread).
 Proof.
   intros fx.
-  (* conversion: ASIL at Asan.M.loaded_segments = AB1v.tfibsegs (AB1v.v:13); the conclusion's segments tfibsegs =
-     pa_segs PI_pcap (AB1v.v:13, PcapEntryTop.v:140-141) and its entry PFreadI.FR_ENTRY = pa_sigma PI_pcap
+  (* conversion: ASIL at Asan.M.loaded_segments = AB1v.tfibsegs (AB1v.v:14); the conclusion's segments tfibsegs =
+     pa_segs PI_pcap (AB1v.v:14, PcapEntryTop.v:141-142) and its entry PFreadI.FR_ENTRY = pa_sigma PI_pcap
      PS___interceptor_trampoline_fread (PFreadI.v:164, PcapAddr.v:34) *)
   fitc_s (@PFreadC.pcap_afread_closed fx rc SK B (@PcapBFacts.PcapB_LAWS rc) AD2l.PcapB_syms ASIL
     (pcap_entry_TRAMP_MEMCPY fx)).

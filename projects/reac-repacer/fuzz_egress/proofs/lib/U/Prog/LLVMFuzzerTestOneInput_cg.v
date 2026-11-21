@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
-(* Modified by Theorem Labs: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/Prog/fd_glue_cg.v at
-   25e3d17bdb5059606131377a3722d585415ab5d6; g_run_cf, g_malloc_cf and g_free_cf at this unit's module path (over
+(* Modified by Theorem Labs: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/Prog/fd_glue_cg.v;
+   g_run_cf, g_malloc_cf and g_free_cf at this unit's module path (over
    lib/U/Prog/LLVMFuzzerTestOneInput_gl.v's g_pre and g_above), and g_crs_cf, g_cm_cf and g_ci_cf that file's g_crt_cf
    at this program's three K-style callees, the cf twins of lib/U/Prog/LLVMFuzzerTestOneInput_gl.v's g_crs, g_cm and
    g_ci. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The cut-free (SRcf) walk of fuzz_egress's LLVMFuzzerTestOneInput on the UBSan image, against
    lib/U/Prog/LLVMFuzzerTestOneInput_cfb.v's LLVMFuzzerTestOneInput_sr_contract_cf: LLVMFuzzerTestOneInput_holds_of_cf,
-   as reac-repacer/fuzz_uci's lib/U/Prog/LLVMFuzzerTestOneInput_cg.v (at bc49657c087a) is to its U walk. Section M is
+   as reac-repacer/fuzz_uci's lib/U/Prog/LLVMFuzzerTestOneInput_cg.v is to its U walk. Section M is
    lib/U/Prog/LLVMFuzzerTestOneInput.v's with SR replaced by SRcf (SRcf_bind / SRcf_ret, llvm_run_norm_cf): malloc at
    the agree room (malloc_contract_ag, room_ag), free at free_contract_cf, the three K-style callees at their cf
    contracts (check_restamp_ccf.v, check_mute_ccf.v, check_inject_ccf.v: cr_room_cf / cm_room_cf / ci_room_cf), the

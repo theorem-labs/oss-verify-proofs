@@ -1,9 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: made from proofs/libreac/fuzz_knock/lib/A/APgStep.v at origin/ossv/recipes
-   6ebe35ba632 (itself ported from proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v, ACeu.v, AD28.v and ACeh.v at
-   c8557374ad2e) for reac-pw/fuzz_qdisc's image A: it walks check_slots against lib/A/QPgCSpec.v's
+(* Modified by Theorem Labs, 2026-10: made from proofs/libreac/fuzz_knock/lib/A/APgStep.v
+    (itself ported from proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v, ACeu.v, AD28.v and ACeh.v at
+   theorem-labs/oss-verify-proofs@6b32741d849a) for reac-pw/fuzz_qdisc's image A: it walks check_slots against lib/A/QPgCSpec.v's
    qdisc_check_specX on the CONCRETE image tfibsegs / tfibtbl_lib, without knock's PAImg layer; its regions are the
    16-byte save slot stack_region 16 and the divisor cell 0x10350 (a base-None region with the literal chunk
    QD_MAGIC, paid by the contract's val_mem premise); knock's object, shadow entry, GOT / shadow-cell regions and
@@ -18,6 +18,7 @@
    `unimp` word at 0x7e918 after the abort call 0x7e914 (capstone 5.0.7 over both pinned images). That word is
    reached only through the abort path, which B4 below refutes, so the walk never meets it; the proof text is the
    A file's. The function has no UBSan check. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_slots, 0x7e8a4, 120 bytes, 30 instructions. a0 = slots_spec lead fps (the contract's premise),
    a1 = lead (0 <= lead <= 65535), a2 = fps (an int). 0x7e8a4 addi sp,sp,-16 and 0x7e8a8 sd ra,8(sp) open a frame;
    that store into [sp - 16, sp) is the walk's only write (awr_stk: it lies in [sp0 - STK, sp0) by the contract's two

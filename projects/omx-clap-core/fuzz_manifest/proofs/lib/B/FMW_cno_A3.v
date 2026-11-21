@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_cno_A3.v at a working branch 31d1eb57a40.
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_cno_A3.v at a working branch.
    check_no_overread 0x80bd4, segment R2 0x80d14 -> P3 0x80d38:
      0x80d14  bltu s11, s10 -> 0x80ea0   UBSan check that t1 + (tn + 17) does not wrap (s11 = ~t1, s10 = tn + 17); dead:
                                          t1's block lies below 2^64, so ~t1 >= tn + 17 (cno_not_ge)

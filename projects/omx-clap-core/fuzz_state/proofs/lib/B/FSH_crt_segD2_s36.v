@@ -1,8 +1,8 @@
 (* check_round_trip (fs.asan-ubsan 0x81b9c, build B), WALK LANE D2, segment 36: B 0x82418 -> 0x8249c, `mv s4, s2`, the
    shadow stores of the frame's objects and the first fuzz_free.
-   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from 6cf61486dca lib/A/FSH_crt_segD2_s36.v)
-   PORT SOURCE: a working branch 6cf61486dca proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segD2_s36.v, itself
-   PORTED from a working branch d25a984c903 proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_sd21.v
+   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from lib/A/FSH_crt_segD2_s36.v)
+   PORT SOURCE: a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segD2_s36.v, itself
+   PORTED from a working branch proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_sd21.v
    (stage St21, the same fuzz_free (back) call). The function-level lookup is the one quoted in the lane head
    (internal path) (checker a Theorem Labs lane, role check, CONFIRM). Same
    Definition / Lemma names and statement shapes as the A file, over image B; B twin written by a Theorem Labs
@@ -31,7 +31,7 @@
    write window (the saved words, the s1 slots, the frame and its shadow) holds no image byte and no byte of a live
    block (crtD2_w36), so fs's statics and back's / text's blocks reach the call memory unchanged (crtD2_rblock_frame).
 
-   What St21 of d25a984c903 does at this call, restated in S0's form: the callee frees back's reader block
+   What St21 does at this call, restated in S0's form: the callee frees back's reader block
    (back - HEAD, dec_size tb2 + HEAD) and its user-poisoned head; text's block is a different live block, outside the
    callee's footprint, so it and its head survive; g_live goes down by dec_size tb2. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.

@@ -24,17 +24,18 @@
    PROVISIONAL (owner: a Theorem Labs lane, merged sha pending): ablocks_cf, afn_pre_cf, ajournal_cf, apost_base_cf,
    fregs_kept_x and N_LLVMF are universally quantified with PresetCfnB.v's types (Section v); the composition
    instantiates them (YCbqG.v's afn_pre_x / ajournal_x / apost_base_x at ARx := ARcf tfibsegs TfibB, and so on). The
-   closure uses none of their bodies. The interface (222ae8c2bc49) cites a8's YGcfRoomKeep.ROOM_cf_k, so the room is
+   closure uses none of their bodies. The interface cites a8's YGcfRoomKeep.ROOM_cf_k, so the room is
    not a parameter here.
    Left out (cannot be stated on this base): TfibB_libS (donor YCfi.v:19-39): lib/Reusable/YCeg.v, which defines
    TfibLib for image B, is not relocated to preset's image B yet (a Theorem Labs lane).
-   #102 (no-DW interface, PresetCfnB.v, first at commit 8259b94c42ee; on the kit's batch):
+   #102 (no-DW interface, PresetCfnB.v, first; on the kit's batch):
    the interface's slot takes ONE record of callee contracts, preset_callee_contracts (PresetCfnB.v section 6: the kit's
    sixteen texts at the record's ARx := iface_ARx, RL := prh_room_live_a8, PI := preset_prh_img, sink head and
    context iface_ctx0, plus the frame-area allocation pcc_stack_malloc and its release pcc_stack_free), and the harness
    walk preset_lib_x_stmt takes that record at every float state. So the closure's parts are the record and the walk;
    the fourteen afn_spec_cf records of the old pins (and A_pj_parse / pj_get / pj_get_str, gone from LLVMFuzzerTestOneInput
    on #102) are gone, and so is the run's data-word list DW (the kit's batch: clause 4a / 4b). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

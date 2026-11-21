@@ -5,7 +5,8 @@
    proofs/cgif/cgif_file_fuzzer/lib/A/AChc.v .. ACh1.v (cgif_close): the seed of a symbolic state over the
    listing, paj_run_tok steps, cl_callS for the program callee and the 04 rules for the runtime entries. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/rec_clear.v, with its module paths and module names changed; 181 of its 246 lines of code are new or changed and 1144 lines of the source are left out. *)
-(* The image-B port of lib/A/Prog/reac_segconf_init.v (commit 64746c036e80): RELOCATION. Image B's
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* The image-B port of lib/A/Prog/reac_segconf_init.v: RELOCATION. Image B's
    9 words are image A's but word 6, the pc-relative `jal` to the checked memset (A b14ce0ef at 0x87a68 to 0x55d7c,
    B fe1cd0ef at 0x87e28 to 0x55e08); the listing names that call PCall SS___asan_memset in both images.
 

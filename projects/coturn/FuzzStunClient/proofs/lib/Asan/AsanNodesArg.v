@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: argv's strings follow the table's rseq layout (str_e, nul_e), and the last NUL may sit at 2 ^ 47 - 9 under the LPS 727298f3 launch layout, was 2 ^ 47 - 17. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -50,7 +51,9 @@ Definition argtab_of (A : atable) : argtab :=
 
 Definition LMAX : Z := 131071.   (* [comment removed for export] *)
 (* [comment removed for export] *)
-Definition TOPNUL : Z := 2 ^ 47 - 17.
+(* The launch's strings end at [utop - 8] ([string_base_addr], [launch_sp_hi], [block_pad_len]) and
+   [utop] may be [2 ^ 47] ([valid_stack_top_va]), so the last NUL can sit at [2 ^ 47 - 9]. *)
+Definition TOPNUL : Z := 2 ^ 47 - 9.
 Definition STRLO : Z := 0x7fff80000000 + 176.   (* [comment removed for export] *)
 
 Definition arg_idx (args : list expr) : option nat :=
@@ -59,16 +62,18 @@ Definition arg_idx (args : list expr) : option nat :=
   | [ELit 1] => Some 1%nat
   | _ => None
   end.
-Definition str_e (i : nat) : expr := match i with O => e_str0 | _ => e_str1 end.
 Definition len_e (i : nat) : expr := match i with O => EVar V_L0 | _ => EVar V_L1 end.
 Definition blob_of (i : nat) : nat := match i with O => 1%nat | _ => 2%nat end.
-(* [comment removed for export] *)
-Definition nul_e (i : nat) : expr := eadd (str_e i) (len_e i).
 
 Section WithSegs.
 Variable segs : list Segment.
 Variable A : atable.
 Variable nx0 : N.
+(* [str_e] / [nul_e] are inside the section, because argv[0]/argv[1]'s addresses read the table's
+   rseq layout ([e_str0 A], [e_str1 A]); outside the section they take [A]. *)
+Definition str_e (i : nat) : expr := match i with O => e_str0 A | _ => e_str1 A end.
+(* [comment removed for export] *)
+Definition nul_e (i : nat) : expr := eadd (str_e i) (len_e i).
 Let G : argtab := argtab_of A.
 
 (* [comment removed for export] *)

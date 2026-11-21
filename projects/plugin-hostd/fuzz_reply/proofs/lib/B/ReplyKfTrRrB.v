@@ -3,9 +3,10 @@
 (* Modified by Theorem Labs: the secondary-request count of relay_remove's request trace (W_contract.rr_tr). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyKfTrRr.v, with its module paths changed; 60 of its 102 lines of code are new or changed and 124 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyKfTrRr.v, with its module paths and module names changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* KF-COUNT row #5, relay_remove: the count nsec_tr (ReplyKfNsecB.v) of the requests rr_tr makes, in the form agreed for
    the drains (per drained entry, the bytes the drain consumes pay for its begins).  proves no function (kind: segment
-   lemma).  The image-B (asan-ubsan) twin of lib/A/ReplyKfTrRr.v at 6f39e9474dd (F6): the same text over
+   lemma).  The image-B (asan-ubsan) twin of lib/A/ReplyKfTrRr.v (F6): the same text over
    lib/B/W_contract.v and lib/B/W_rep.v.
    - kf_rr: for fd >= 0 and the first entry e of fd: 21 * (count of rr_tr) + (when e is open, the partial line the
      drain leaves) <= 21 * KC_rr + (when e is open, |re_U e| + |pending_stream h|), KC_rr = KC_dr + KC_ke = 30 + 15.
@@ -120,8 +121,8 @@ Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Context {PI : W_kit.PAImg W_listing.fr_prog_listing}.
 Variable B : YG0f.asyms.
 
-(* rr_spec_x's premises at the entry of fd when it is open (its dr_src_ok's asrc_at, lib/B/W_contract.v:1274-1276;
-   arelay_at's aentry_ok, lib/B/W_rep.v:157,165), its tr_max tr < MMAX (lib/B/W_contract_x.v:938), and MMAX <= 2 ^ 30
+(* rr_spec_x's premises at the entry of fd when it is open (its dr_src_ok's asrc_at, lib/B/W_contract.v:1275-1277;
+   arelay_at's aentry_ok, lib/B/W_rep.v:157,165), its tr_max tr < MMAX (lib/B/W_contract_x.v:939), and MMAX <= 2 ^ 30
    (CfParamsReplyB.reply_HMMAX at fr_MMAX, lib/B/CfParamsReplyB.v:129) *)
 Lemma kf_rr_at : forall ly S W mem HA c mx no cap FD es h e MMAX,
   0 <= FD -> find (fun e => re_fd e =? FD) es = Some e ->

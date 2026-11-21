@@ -22,16 +22,17 @@
      where the two readings agree (appz, vm_lo / vm_T / vm_C); FINH re-establishes ARU at s1;
    - p's facts (PF) come from the chunk of p (YG0s chunk_facts) instead of cgif_rgb's free walk (YF1p.p_facts);
    - the leaf stops at Allocate's entry 0x31ef4 (one `jal` after the donor's 0x32990), and the glue (seg_pre_core) turns
-     it into seg_pre's post: alloc_pre (AllocG.v:69) from PAST_top, K1_fs, the frame and rin.
+     it into seg_pre's post: alloc_pre (AllocG.v:70) from PAST_top, K1_fs, the frame and rin.
    - word_of_bytes is fs's A/AFio.v lemma (copied; AFio is not a dependency).
 
-   The theorem: fs_seg_pre : TfibSyms B -> FS_seg_pre B Up, against a Theorem Labs lane's c5 seg_pre (RGtop.v @ 2bd8ae006ef): c5's
+   The theorem: fs_seg_pre : TfibSyms B -> FS_seg_pre B Up, against a Theorem Labs lane's c5 seg_pre (RGtop.v): c5's
    realloc_pre states the user-stack bound `ly_bot ly + RSTACK < spZ regs` (RSTACK := FS_RFRAME at fs; Allocate's alloc_pre
    asks `ly_bot ly < spZ regsA`, spZ regsA = spZ regs - FS_RFRAME), seg_pre hands over Allocate's trace premise
    [U tr S1], and its post carries the frame on the raw memory too (pa_leaf's raw conjunct, from the walk's write set).
    Every error / CHECK branch of the prefix is decided untaken by the symbolic walk (FSRealloc_S1_t.segA).  No Axiom,
    no Admitted. *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -80,7 +81,7 @@ Let sp0 : Z := bv_unsigned (getr regs 2).
 (* the allocator's reading of memory: fs's ARU reads the user-poisoned shadow bytes as 0 *)
 Local Notation memu := (FSupoison.unpoison Up mem).
 (* acall_pre (YG0d.v:225) with AR over the unpoisoned reading and every other fact over the machine's memory: what
-   realloc_pre (ReallocG.v:108) at FS_ARX gives; the same shape as acall_pre, so the donor's destruct patterns apply *)
+   realloc_pre (ReallocG.v:109) at FS_ARX gives; the same shape as acall_pre, so the donor's destruct patterns apply *)
 Hypothesis PRE : AR tfibsegs B ly S W memu md /\ aregime S /\
 YK0s.ret_ok (getr regs 1) /\
 spZ regs mod 16 = 0 /\ ly_stk_lo ly + ASTACK <= spZ regs /\ ly_bot ly < spZ regs /\ spZ regs <= ly_stk_hi ly /\

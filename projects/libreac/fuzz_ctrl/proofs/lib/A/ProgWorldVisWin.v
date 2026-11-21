@@ -5,8 +5,9 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/tx_put.v, with its module paths and module names changed; 3018 of its 3112 lines of code are new or changed and 934 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW4e1.v, with its module paths and module names changed; 2867 of its 3071 lines of code are new or changed and 2908 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW1.v, with its module paths and module names changed; 43 of its 75 lines of code are new or changed and 3039 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ProgWorldVisWin.v -- fuzz_ctrl image A (libreac v1.9.0): proofs of two statements of lib/A/ProgWorld.v
-   Section Visible (a Theorem Labs lane's statements file, a working branch c03ce1627b6, lines 297-313):
+   Section Visible (a Theorem Labs lane's statements file, a working branch, lines 297-313):
      win_vis     : win_vis_stmt     -- the callee's stack window is visible at the cut world, from the journal's
                                        presence conjunct (YCbq.v:368) and its stack bounds astk_ok (YCbq.v:333-335).
      win_sh_vis  : win_sh_vis_stmt  -- the 8-aligned shadow word cover of a stack sub-range is visible, from the
@@ -15,16 +16,16 @@
                                        YG0f.v:322-324), so the aligned cover stays inside the stack's shadow.
    img_vis (V2) is not stated in ProgWorld.v any more: ProgBridge.img_vis_W proves it for every world.
 
-   This file CARRIED word-for-word copies of the two _stmt definitions from ProgWorld.v c03ce1627b6 while ProgWorld.v
-   could not compile on this base: lib/A/AE2k.v:11 and lib/A/AF0l.v:13 name undefined `port_core_refused_*` addresses
-   (the planning core's relocation run 5a85b67a5d8 refused them), and ProgWorld Requires A.AE2k.  ProgWorld fixes the
+   This file CARRIED word-for-word copies of the two _stmt definitions from ProgWorld.v while ProgWorld.v
+   could not compile on this base: lib/A/AE2k.v:12 and lib/A/AF0l.v:14 name undefined `port_core_refused_*` addresses
+   (the planning core's relocation run refused them), and ProgWorld Requires A.AE2k.  ProgWorld fixes the
    journal's sink_head to A.AE2k.tfib_sink_head (ProgWorld.v:76); here it is a section Context, so the lemmas hold for
    every sink_head, that instance included.
    RE-POINTED 10-29 05:4xZ (a Theorem Labs lane's order, after a Theorem Labs lane measured with About that the lemmas proved LOCAL
    look-alikes that would not plug into ProgWorld's top): this file now Requires A.ProgWorld and states the record
    text, `A.ProgWorld.win_vis_stmt B` / `A.ProgWorld.win_sh_vis_stmt B`.  The six statements were diffed against
    ProgWorld.v first and were character-identical, so no bridge lemma exists or is needed, and the proofs did not
-   change.  Replay verified on a Theorem Labs lane's integration head a48c4068c6e, where A.ProgWorld compiles. *)
+   change.  Replay verified on a Theorem Labs lane's integration head, where A.ProgWorld compiles. *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require Reusable.YK04 Reusable.YA0n.

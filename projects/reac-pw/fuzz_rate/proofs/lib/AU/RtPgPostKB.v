@@ -1,31 +1,32 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPropKit.v at a529a88a618 (the plumbing of
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPropKit.v (the plumbing of
    the property loop's block lemmas: pa_chunk8, pa_keep, pa_kwr_ro, pa_run, pa_runb, pa_branch, pa_reg, pa_leaf),
-   proofs/reac-pw/fuzz_role/lib/A/RPgCfgChanges.v at a529a88a618 (kept_run) and proofs/reac-pw/fuzz_role/lib/A/RPgProp.v
-   at a529a88a618 (its section g and its tactics: the (location, value) facts of a cut, the journal-and-frame step,
+   proofs/reac-pw/fuzz_role/lib/A/RPgCfgChanges.v (kept_run) and proofs/reac-pw/fuzz_role/lib/A/RPgProp.v
+   (its section g and its tactics: the (location, value) facts of a cut, the journal-and-frame step,
    the segment's write set, the first block's bounds and pod_put, the model of a shape-7 property, the start facts
    and the input at a cut) for reac-pw/fuzz_headamp's image B: rs_ / rl_ / rm_ -> hsu_ / hd_ / hm_, role's image A
    record and code -> fuzz_headamp.asan-ubsan's (lib/AU/Img0U.v rsegs, HPgImgB.headamp_himg_B: class-4 frame of
    1024 bytes, real frame of 0x220 bytes, write set [F+0x20, F+0x278) / 116 shadow bytes / [R, R+0x198)), the block
    post HPgSteps.hdu_blk_postE in place of pa_post, one table over the four pieces of image B. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/AU/HPgPropKit.v, with its module paths and module names changed; 499 of its 592 lines of code are new or changed and 318 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Prog/RoleBuild/Post.v at f3cc5e1ef75 (its image-
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Prog/RoleBuild/Post.v (its image-
    independent lemmas: the corruption step once its test is decided, the record the piece ends with, the block's
    image under the piece's writes) and lib/Prog/RoleBuild/Facts.v lines 25-92 at the same commit (overwrite_adj),
    restated over lib/Pod's Model / Layout for the ASan walk; the plain image's machine-state predicates are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPostK.v at e860354a28ee and the cut helpers of
-   proofs/reac-pw/fuzz_role/lib/A/RPgProp.v at a529a88a6181 (pa_at_get, pa_at_app, pa_kept_loc, pa_at_move,
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPostK.v and the cut helpers of
+   proofs/reac-pw/fuzz_role/lib/A/RPgProp.v (pa_at_get, pa_at_app, pa_kept_loc, pa_at_move,
    pa_core_step, pa_R_bounds, pa_blk_bounds, pa_pp_blocks, pa_input_now, pa_nth_skipn, pa_suffix_step, under the
    prefix w10_) for reac-pw/fuzz_rate's image A: rate's code table, shadow-base register (s2), real-frame size (0x1e0), frame
    shadow length (56 granules), segment start (RtPgCSpec.rt_seg_pre, the start's frame shadow from rs_start_M01) and C2
    value list; the kernel's awr_ok_cons_gen and RtPgSteps' helpers in place of role's RPgW7bBase and RPgCfgChanges. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgPostK.v at 8af9cea6f917; restated for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgPostK.v; restated for image B
    (fuzz_rate.asan-ubsan) over lib/AU's RtPgImgB / RtPgMemB / RtPgSegB / RtPgStepsB under the prefix wb10_: image B's
    code table (the piece 0x82684 .. 0x82a2c and eight out-of-line runs), the shadow-base register s4 (atom 20), the
    real frame 0x220, the class-4 frame for locals (1024 bytes, 128 shadow bytes), the frame's shadow pattern of 88
    bytes, the write ranges hi_w1 of rate_himg_B, the C2 value list rate_B_L23 XLenNZ with s6 = len (image A: s10),
    and the piece's own cut T = 0x8270c with its value list (t4, s10, R+0x108). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14; addresses measured on the unstripped twin
    a1e5fa55ae27e657ea2719297ec4c037110f10fa9047c3ea7bb6ea7fcb358cb1): the kit of the post piece of the walk of

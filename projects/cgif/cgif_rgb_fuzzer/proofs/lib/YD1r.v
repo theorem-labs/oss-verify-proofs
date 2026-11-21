@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (tail_at takes the entry draw, and the TRB short, overrun, post-header, run_Q and loop interfaces take the mmap base, break, entry draw and the launch premises valid_launch and entry_launch_ok_va, with the layout environment ELV at the entry draw's top, the run's CONFIG_RSEQ flag and execfn string, and runs_main_tfa over that top and execfn string; the launch's channel-reader flag, which fdchan asks for at the revision, carried beside the fd table in tail_at, the loop interface and the printf and exit leaves). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
@@ -14,36 +15,42 @@ Unset Lia Cache. Unset Nia Cache.
 Open Scope Z_scope.
 Section c. Context {fx : YK11.FPState} {rc : YN05.RunCeil}.
 Variable B : asyms.
-#[local] Notation ELV sp a0 p inp xw xd := (YQ0a.E0 sp [a0; p] (in_envp inp) xw xd).
-Definition tail_at (ss : sstate) (E : YQ0j.env) (sp : word) (inp : ProcInput) (a0 p data : list byte)
+(* #38: YQ0a.E0 now takes (sp top rs av ev xf xw xd); [rnd] carries the stack top
+   [ed_top rnd] and the rseq flag comes from the run, never pinned. *)
+#[local] Notation ELV sp a0 p inp rnd xw xd :=
+  (YQ0a.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd).
+Definition tail_at (ss : sstate) (E : YQ0j.env) (sp : word) (inp : ProcInput) (rnd : EntryDraw) (a0 p data : list byte)
 (W : world trbsegs) (ms : machine_state) (md : Model) (ly : alayout) (S : astate) (pb : sptr) (cap : Z) : Prop :=
 st_ok trbsegs E ss (restrict (w_H W) ms) /\
 bv_unsigned (ew E A_BUF) = sptr_addr B ly pb /\ bv_unsigned (ew E A_LEN) = dlen data /\
-runs_at (bv_unsigned sp) (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp [a0; p] (in_envp inp)) /\
+runs_at (bv_unsigned sp) (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp (ed_top rnd) [a0; p] (in_envp inp) (in_execfn inp)) /\
 AI trbsegs (w_H W) (w_A W) md /\ AR trbsegs B ly S W (ms_mem ms) md /\ top_ok (bv_unsigned sp) ly /\
 blocks S = [(pb, cap)] /\ dev S <= 64 /\ 65536 <= cap <= 2 ^ 26 /\ dlen data < cap /\
 blk (w_H W) (ms_mem ms) (sptr_addr B ly pb) (dlen data) data /\
-m_fs md = in_fs inp /\ m_fds md = APSG.fds_std /\ drv_minv S cap (dlen data).
+m_fs md = in_fs inp /\ m_fds md = APSG.fds_std /\ m_channel_reader md = true /\ drv_minv S cap (dlen data).
 Definition short_leaf_tfa : Prop :=
-forall (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (ws : list word)
+forall (sp : word) (inp : ProcInput) (mbase brk : word) (rnd : EntryDraw) (xw : nat -> word) (xd : nat -> list byte) (ws : list word)
 (W : world trbsegs) (ms : machine_state) (md : Model) (ly : alayout) (S : astate) (a0 p data : list byte) (pb : sptr) (cap : Z),
 in_argv inp = [a0; p] -> valid_sp sp -> valid_argv [a0; p] -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 fs_lookup (in_fs inp) p = Some data -> dlen data <= 5 ->
-tail_at S_SHORT (havoc (ELV sp a0 p inp xw xd) K_M1 ws) sp inp a0 p data W ms md ly S pb cap ->
+tail_at S_SHORT (havoc (ELV sp a0 p inp rnd xw xd) K_M1 ws) sp inp rnd a0 p data W ms md ly S pb cap ->
 srealizes trbsegs (mkCfg ms md) (diag msg_short (in_fs inp)).
 Definition overrun_leaf_tfa : Prop :=
-forall (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (ws : list word)
+forall (sp : word) (inp : ProcInput) (mbase brk : word) (rnd : EntryDraw) (xw : nat -> word) (xd : nat -> list byte) (ws : list word)
 (W : world trbsegs) (ms : machine_state) (md : Model) (ly : alayout) (S : astate) (a0 p data : list byte) (pb : sptr) (cap : Z),
 in_argv inp = [a0; p] -> valid_sp sp -> valid_argv [a0; p] -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 fs_lookup (in_fs inp) p = Some data -> 6 <= dlen data < 6 + config_len data ->
-tail_at S_OVR (edset (havoc (ELV sp a0 p inp xw xd) K_M1 ws) 2 data) sp inp a0 p data W ms md ly S pb cap ->
+tail_at S_OVR (edset (havoc (ELV sp a0 p inp rnd xw xd) K_M1 ws) 2 data) sp inp rnd a0 p data W ms md ly S pb cap ->
 srealizes trbsegs (mkCfg ms md) (diag msg_overrun (in_fs inp)).
 Definition post_P_tfa : Prop :=
-forall (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (ws : list word)
+forall (sp : word) (inp : ProcInput) (mbase brk : word) (rnd : EntryDraw) (xw : nat -> word) (xd : nat -> list byte) (ws : list word)
 (W : world trbsegs) (ms : machine_state) (md : Model) (ly : alayout) (S : astate) (a0 p data : list byte) (pb : sptr) (cap : Z),
 in_argv inp = [a0; p] -> valid_sp sp -> valid_argv [a0; p] -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 fs_lookup (in_fs inp) p = Some data -> 6 + config_len data <= dlen data ->
-tail_at S_P (edset (havoc (ELV sp a0 p inp xw xd) K_M1 ws) 2 data) sp inp a0 p data W ms md ly S pb cap ->
+tail_at S_P (edset (havoc (ELV sp a0 p inp rnd xw xd) K_M1 ws) 2 data) sp inp rnd a0 p data W ms md ly S pb cap ->
 srealizes trbsegs (mkCfg ms md)
 (if payload_len data =? 0 then RUNS data (in_fs inp)
 else t_alt2 (ex (if count_mode data then 0 else 2) (in_fs inp)) (RUNS data (in_fs inp))).
@@ -110,13 +117,15 @@ srealizes trbsegs (cfg_at trbsegs (raZ regs) regs' mem' md') T.
 Definition printf_first_tfa : Prop :=
 forall ly S (W : world trbsegs) regs mem md T,
 printf_pre ly S W regs mem md -> vev S < VEV_MAX -> stdout_img (w_H W) mem ->
-m_fds md = APSG.fds_std -> AI trbsegs (w_H W) (w_A W) md ->
+m_fds md = APSG.fds_std ->
+m_channel_reader md = true -> AI trbsegs (w_H W) (w_A W) md ->
 printf_post ly S W regs mem md 1%nat T ->
 srealizes trbsegs (cfg_at trbsegs A_icpt_vprintf regs mem md) (wr ch_stdout line0 T).
 Definition printf_next_tfa : Prop :=
 forall ly S (W : world trbsegs) regs mem md T k,
 printf_pre ly S W regs mem md -> vev S < VEV_MAX -> xst k (w_H W) mem -> (1 <= k <= 3)%nat ->
-m_fds md = APSG.fds_std -> AI trbsegs (w_H W) (w_A W) md ->
+m_fds md = APSG.fds_std ->
+m_channel_reader md = true -> AI trbsegs (w_H W) (w_A W) md ->
 printf_post ly S W regs mem md (Datatypes.S k) T ->
 srealizes trbsegs (cfg_at trbsegs A_icpt_vprintf regs mem md) T.
 Definition A_EXIT : Z := 0x9214c.
@@ -130,26 +139,28 @@ mem_ok trbsegs E' (mrestrict (w_H W) mem) IMG_L ->
 (forall a, usp - 65536 <= a < usp -> apresent (w_H W) mem a) ->
 AI trbsegs (w_H W) (w_A W) md -> AR trbsegs B ly S W mem md -> top_ok usp ly -> vev S < VEV_MAX ->
 ((k = 0%nat /\ stdout_img (w_H W) mem) \/ ((1 <= k)%nat /\ xst k (w_H W) mem)) ->
-m_fds md = APSG.fds_std -> m_fs md = fs ->
+m_fds md = APSG.fds_std -> m_channel_reader md = true -> m_fs md = fs ->
 srealizes trbsegs (mkCfg (mkst regs (w64 A_EXIT) mem (seg_rom trbsegs)) md) (wr ch_stdout (concat (repeat line0 (k - 1))) (ex code fs)).
 Definition run_Q_tfa : Prop :=
-forall (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (ws : list word)
+forall (sp : word) (inp : ProcInput) (mbase brk : word) (rnd : EntryDraw) (xw : nat -> word) (xd : nat -> list byte) (ws : list word)
 (W : world trbsegs) (ms : machine_state) (md : Model) (ly : alayout) (S : astate) (a0 p data : list byte) (pb : sptr) (cap : Z),
 in_argv inp = [a0; p] -> valid_sp sp -> valid_argv [a0; p] -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 fs_lookup (in_fs inp) p = Some data -> 6 + config_len data <= dlen data ->
-let E3 := E_P (edset (havoc (ELV sp a0 p inp xw xd) K_M1 ws) 2 data) data (sptr_addr B ly pb + 2 + config_len data) in
-tail_at (sQ (config_len data =? 0) (Z.of_nat (calls data))) E3 sp inp a0 p data W ms md ly S pb cap ->
+let E3 := E_P (edset (havoc (ELV sp a0 p inp rnd xw xd) K_M1 ws) 2 data) data (sptr_addr B ly pb + 2 + config_len data) in
+tail_at (sQ (config_len data =? 0) (Z.of_nat (calls data))) E3 sp inp rnd a0 p data W ms md ly S pb cap ->
 bv_unsigned (ew E3 K_PP) = sptr_addr B ly pb + 2 + config_len data ->
 srealizes trbsegs (mkCfg ms md)
 (if payload_len data =? 0 then RUNS data (in_fs inp)
 else t_alt2 (ex (if count_mode data then 0 else 2) (in_fs inp)) (RUNS data (in_fs inp))).
 Definition loop_L_tfa : Prop :=
-forall (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (E : YQ0j.env)
+forall (sp : word) (inp : ProcInput) (mbase brk : word) (rnd : EntryDraw) (xw : nat -> word) (xd : nat -> list byte) (E : YQ0j.env)
 (W : world trbsegs) (ms : machine_state) (md : Model) (ly : alayout) (S : astate) (a0 p data : list byte) (pb pq : sptr) (cap q : Z)
 (j r : nat),
 in_argv inp = [a0; p] -> valid_sp sp -> valid_argv [a0; p] -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 fs_lookup (in_fs inp) p = Some data -> 6 + config_len data <= dlen data ->
-(forall k, (k < K_M1)%nat -> ew E k = ew (ELV sp a0 p inp xw xd) k) -> ed E 2 = data ->
+(forall k, (k < K_M1)%nat -> ew E k = ew (ELV sp a0 p inp rnd xw xd) k) -> ed E 2 = data ->
 bv_unsigned (ew E A_BUF) = sptr_addr B ly pb -> bv_unsigned (ew E A_LEN) = dlen data ->
 bv_unsigned (ew E 161) = sptr_addr B ly pb + 2 + config_len data ->
 bv_unsigned (ew E 162) = payload_len data -> bv_unsigned (ew E 163) = (if payload_len data =? 0 then A_EMPTY_tfa else q) ->
@@ -163,6 +174,6 @@ AI trbsegs (w_H W) (w_A W) md -> AR trbsegs B ly S W (ms_mem ms) md -> top_ok (b
 rbud S (Z.of_nat r) 3   -> 65536 <= cap <= 2 ^ 26 -> dlen data < cap ->
 ((j = 0%nat /\ stdout_img (w_H W) (ms_mem ms)) \/ ((1 <= j)%nat /\ xst j (w_H W) (ms_mem ms))) ->
 arodata_ok B (aview trbsegs (w_H W) (ms_mem ms)) ->
-m_fs md = in_fs inp -> m_fds md = APSG.fds_std ->
+m_fs md = in_fs inp -> m_fds md = APSG.fds_std -> m_channel_reader md = true ->
 srealizes trbsegs (mkCfg ms md) (wr ch_stdout (concat (repeat line0 (r + (j - 1))%nat)) (ex 0 (in_fs inp))).
 End c.

@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/AImgA.v; 15 of its 23 lines of code are new or changed and 4 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGif2cgif.v (cold/c-asan-realloc-c5 ced28ed2383, file sha256 f5aa8e82f671) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGif2cgif.v (file sha256 f5aa8e82f671) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/AU/AGif2cgif.v, with its module paths changed; 7 of its 27 lines of code are new or changed and 3 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGif2cgif.v (cold/c-frame-alloc-dgraw-frozen ced28ed2383, file sha256 f5aa8e82f671) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGif2cgif.v (file sha256 f5aa8e82f671) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/omx-clap-core/fuzz_state/lib/A/AGif2cgif.v (donor image sha256 64b53ff86172), with its module paths changed, names TfibSyms -> SegBSyms. *)
 (* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/A/AGif2cgif.v, derived mechanically (derive_y.py b7b132fb12a7; every changed numeral checked against alreloc.py a5c53bb2bed4 and against image B), with its module paths changed (lib/A to lib/B) and its addresses moved to reac-pw/fuzz_segconf's ASan+UBSan build. The comments are the A file's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The cgif_file instance of the image class ImgBase.AImg: cgif's segments (tfibsegs), data cells (TFIB_TP / TFIB_TSD /
    TFIB_OOM / TFIB_ERRNO), image window (YF0x.img_cover), symbol facts (YF0m.SegBSyms) and constant cells
    (YF0m.Tfib_const).  The image-free interfaces (AGif2, ...) take the class as [Context {IM : AImg}]; a cgif_file

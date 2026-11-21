@@ -3,7 +3,7 @@
    build_table steps pc + 4 (Reusable/YP02.v:19-22), so the count is in 32-bit words: 136. MEASURED on the pinned fs.asan
    (capstone, RISCV64 + C): the 544 bytes decode to exactly 136 instructions, so the function has no compressed
    instruction and every instruction it executes is a table entry; its calls leave the range.
-   Ported from: a working branch 0c8f540c787 lib/A/FSW_crt_tbl.v (the table pattern of RELOC's AB1k.v). *)
+   Ported from: a working branch lib/A/FSW_crt_tbl.v (the table pattern of RELOC's AB1k.v). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

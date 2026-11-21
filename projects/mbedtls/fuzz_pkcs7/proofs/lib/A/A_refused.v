@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (new section hypothesis Hrdr, the channel reader the revision's writev reads, after the fd one; refused_tailA carries it to the model after the block and passes it to stdio_call_sound_frA). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -186,6 +187,8 @@ Section RF.
   Hypothesis SPal : (bv_unsigned sp0 mod 16 = 0)%Z.
   Hypothesis HKI : KI model.
   Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  (* the revision's writev reads the channel reader *)
+  Hypothesis Hrdr : m_channel_reader model = true.
   (* [comment removed for export] *)
   Hypothesis WCS : crange CS (bv_unsigned sp0 - 4096) 4096.
   Hypothesis FCS : crange CS 0x1ba00 64.
@@ -429,6 +432,8 @@ Section RF.
     change (map (WriteEv (Z_to_bv 64 2)) msg_refused) with (map (WriteEv (Z_to_bv 64 (sc_fd resC))) (msg_refused ++ [])).
     assert (FdA : fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2))).
     { unfold m_fds in *. destruct MMA as (E1 & _). rewrite E1. exact Hfd2. }
+    assert (RdA : m_channel_reader mo = true).
+    { pose proof MMA as X. destruct X as (_ & _ & _ & _ & _ & E6 & _). unfold m_channel_reader in *. rewrite E6. exact Hrdr. }
     pose proof itinerary_rf as (_ & SC & _ & _).
     eapply (stdio_call_sound_frA AL CS KI IMG K_halted K_mat K_vmonly valsRF (blobs_ev []) srA knA RA MA0 mo resC msg_refused []
               (t_exit (exit_code 2) (m_fs model)) HR HK);
@@ -451,6 +456,7 @@ Section RF.
       cbn [edenot] in RD. change (ev E 0) with sp0 in RD. apply RD; lia.
     + reflexivity.
     + exact FdA.
+    + exact RdA.
     + exact HKA.
     + intros z Hz. revert Hz. evs. rewrite alu_add_zlit by lia. rewrite !u_small by lia. intros Hz. apply WCS. lia.
     + intros z Hz. revert Hz. evs. rewrite !alu_add_zlit by lia. rewrite !u_small by lia. intros Hz. left. apply WCS. lia.

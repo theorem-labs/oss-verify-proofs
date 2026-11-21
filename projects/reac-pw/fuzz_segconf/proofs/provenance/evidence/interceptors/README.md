@@ -45,10 +45,10 @@ lib/A/Rt/SegRtClosed.v also re-exports every closing above. Row 15 (__asan_stack
 ## Run records (internal record, not shipped)
 
 The verbatim run text of this layer (run scripts, logs, overrides, patches, per-row tables, tool sha256 lists, review reports) is kept
-in the internal record: commit 72eb1296d954 (records/interceptors/, 106 files), commit f252a3dc75cb (records/interceptors/measurements/, 4 files)
-commit eacec177d236 (records/interceptors/closings/, 3 files)
-commit 8838802efbe0 (records/interceptors/calloc/, 118 files)
-and commit 936becf778e6 (records/interceptors/relocation-checks/, 33 files + ALIASES.txt naming 23 files of that run already recorded byte for byte).
+in the internal record: (records/interceptors/, 106 files), (records/interceptors/measurements/, 4 files)
+(records/interceptors/closings/, 3 files)
+(records/interceptors/calloc/, 118 files)
+and (records/interceptors/relocation-checks/, 33 files + ALIASES.txt naming 23 files of that run already recorded byte for byte).
 Each file is listed below with its sha256; the same list is the record's MANIFEST.
 
 | record path | sha256 |
@@ -222,7 +222,7 @@ Each file is listed below with its sha256; the same list is the record's MANIFES
 | records/interceptors/calloc/walk/reloc/logs/alt1.log | dd224ea4ecf866bc9a7150067fa17b879db0ac6d2729b23529b90a070d0368b1 |
 | records/interceptors/calloc/walk/reloc/logs/cb-build-20261030T194520Z.log | e71f63c1fc2dbc5723e840583521328d85cd2e1fecac9fc078e1d0537e9d1709 |
 | records/interceptors/calloc/walk/reloc/logs/cb-build-20261030T194855Z.log | dbde31e11dac926138397ad2c3d7ca16bd93b1a9eaef27dc2d79a9ce89bbd883 |
-| records/interceptors/calloc/walk/reloc/logs/cb-build-af5f9fdc0576.out | d2faeca7f8bd5fe74ccdd5a8ba6b217a3f521530ff87b550b1a9bda0b367e3f7 |
+| records/interceptors/calloc/walk/reloc/logs/cb-build.out | d2faeca7f8bd5fe74ccdd5a8ba6b217a3f521530ff87b550b1a9bda0b367e3f7 |
 | records/interceptors/calloc/walk/reloc/logs/run1.log | b2b76cbcecc58b130f092eef3508a3c4bb919209ed88a9074ef459b23f5bcf2d |
 | records/interceptors/calloc/walk/reloc/logs/run3.log | 4a56573cae8ecd773726a65c0df4a4e50260160d404766745f3464f276a318d8 |
 | records/interceptors/calloc/walk/reloc/mksyms_decode.out | b14609a52222b4ce0b9b3918737f639a19b0e54c9423c6d31e9032c4b01f0c0e |
@@ -271,7 +271,7 @@ Each file is listed below with its sha256; the same list is the record's MANIFES
 | records/interceptors/calloc/walk/reloc2/logs/cb-build-20261030T200812Z.log | 0cff1850186080c1a9290c5fd25f304f6aa83bf1a0705a777be742e98b5a1833 |
 | records/interceptors/calloc/walk/reloc2/logs/cb-build-20261030T231701Z.log | ee2f5e948edee170105ef203bd62d7734357f43485f25995b6948dee1190c24c |
 | records/interceptors/calloc/walk/reloc2/logs/cb-build-20261030T232122Z.log | 9e5a49f76fcddfab52ccdaaa819a39c1268e7cc9f74afba9cd453c2797777eb0 |
-| records/interceptors/calloc/walk/reloc2/logs/cb-build-9cc685db399.out | 99c95a98f04ed3b3e0e734fd8863d27ab31994c9b21231f9a14203caa852dcfc |
+| records/interceptors/calloc/walk/reloc2/logs/cb-build.out | 99c95a98f04ed3b3e0e734fd8863d27ab31994c9b21231f9a14203caa852dcfc |
 | records/interceptors/calloc/walk/reloc2/logs/runP1.log | 8b1b4a56f799abd92a6efcb86d06cf700a11739638d6dd1786da08a9a8301851 |
 | records/interceptors/calloc/walk/reloc2/numerals-a.tsv | 831fc438a7eea7a3c0127d67a32d5cfb801ba9366d71d36f863b7a8011938982 |
 | records/interceptors/calloc/walk/reloc2/numerals-b.tsv | f951140183cd9be2099f2ce7688d35e8bbb9b3aa21dbba7024a0817db2ffb140 |

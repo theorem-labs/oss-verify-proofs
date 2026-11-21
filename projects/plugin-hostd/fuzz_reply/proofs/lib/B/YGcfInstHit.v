@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (lane M of the generic cf instance layer, a working branch; integrator ReallocPrimary).
-   The cf twin of proofs/cgif/cgif_file_fuzzer/lib/AGif1.v and AGif1k.v at c5 30a1993588f (with AGif1mE.v's
+   The cf twin of proofs/cgif/cgif_file_fuzzer/lib/AGif1.v and AGif1k.v at c5 (with AGif1mE.v's
    ae_depot): the hit interfaces AGif0n.AIface / AGif0n.AIfaceK and ErrnoG.AIfaceE at the call-site relation
    YGcfInstBase.ARXq_cf, generic over CfImg / CfParams / AImg / AGImg.
    - iface_cf : forall Hp, AIface B (U_cf B) malloc_cf (ARXq_cf B IOK Hp) (AOX_cf B) (rpre_cf B) cf_malloc_max
@@ -51,7 +52,7 @@ Section d.
 Variable B : asyms.
 (* The post of the depot callee (AGif1.dpost_cgif, AGif1.v:35-38, over the unit's segments): the answer is the model's,
    and the depot's memory facts after the put and the constant cells hold at the memory the callee returns.  It is
-   CLdepot.dpost_x (CLdepot.v:88-91) at im_segs, the post the generic depot field CLdepot.depot_field gives. *)
+   CLdepot.dpost_x (CLdepot.v:89-92) at im_segs, the post the generic depot field CLdepot.depot_field gives. *)
 Definition dpost_cf : Z -> alayout -> astate -> world im_segs -> list Z -> Z -> (word -> option byte) -> Prop :=
   CLdepot.dpost_x im_segs B.
 End d.
@@ -94,7 +95,7 @@ Proof. intros n Hn. unfold req_size. destruct (Z.eqb_spec n 0); lia. Qed.
 Lemma req_size_pos : forall n, 1 <= n -> req_size n = n.
 Proof. intros n Hn. unfold req_size. destruct (Z.eqb_spec n 0); lia. Qed.
 
-(* The header's second byte the hit walk writes (AGis.v:67 / AGj6.v:67; AFis.hdr_byte1_ok's check). *)
+(* The header's second byte the hit walk writes (AGis.v:68 / AGj6.v:68; AFis.hdr_byte1_ok's check). *)
 Lemma hdr_byte1_g_ok : forall jb, 0 <= jb <= 255 -> 0 <= ImgBaseAG.hdr_byte1 jb < 256 /\ Z.land (ImgBaseAG.hdr_byte1 jb) 127 = 17.
 Proof.
 intros jb Hjb.

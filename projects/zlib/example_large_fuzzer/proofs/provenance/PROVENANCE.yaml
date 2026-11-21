@@ -1,0 +1,194 @@
+schema: oss-verify-proofs build record v1
+entry_point:
+  project: zlib
+  harness: example_large_fuzzer
+  function: LLVMFuzzerTestOneInput
+  records:
+  - projects/zlib/project.yaml
+  - projects/zlib/example_large_fuzzer/harness.yaml
+upstream:
+  name: zlib
+  repository: https://github.com/madler/zlib
+  commit: 99623ef7097352da7993ba614161fd6a311e046e
+  licence: Zlib
+  patch_count: 8
+  licence_evidence: 'LICENSE of the repository at the pinned commit 99623ef7 ((C) 1995-2026 Jean-loup Gailly and Mark Adler:
+    the Zlib licence), the text in LICENSES/zlib-LICENSE'
+oss_fuzz:
+  repository: https://github.com/google/oss-fuzz
+  commit: bd2ce21991a94a362b92fb1bf25f86d5a1a60842
+  path: projects/zlib
+harness:
+  origin: oss-fuzz
+  source:
+    files:
+    - source/example_large_fuzzer.c
+    from:
+      repository: https://github.com/google/oss-fuzz
+      commit: fadbcdfb9e96aaa26734fbc936ab64a6f4f18ab4
+      path: projects/zlib/example_large_fuzzer.c
+    modified: false
+    licence: Apache-2.0
+  modifications:
+  - Linked against zlib 1.4 at commit 99623ef7.
+  - zlib carries the public inflate fix https://github.com/madler/zlib/pull/1390 in every build.
+  - In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the program depends only
+    on its input.
+  - A small driver reads the input file, calls the harness one to four times and prints each return value.
+port:
+  repository: theorem-labs/oss-verify
+  commit: 23e806fe4e4217abcc7fab4419f665f5277a602c
+  path: projects/zlib
+  tools:
+    commit: 23e806fe4e4217abcc7fab4419f665f5277a602c
+    paths:
+    - src/
+    - seeds/
+    - infra/
+    built: 23e806fe4e4217abcc7fab4419f665f5277a602c
+    how: 'the build ran oss-verify''s src/, seeds/ and infra/ at this commit on its own projects/zlib/ (oss-verify check --no-shell
+      --twice zlib): the commit built (oss_verifier.commit in port/manifest.yaml, modified false) is this commit'
+  asset:
+    file: zlib-port.tar.zst
+    bytes: 819355
+    sha256: 14f04792d8797c4e96dd7a7326100e52ae4a0dddb340cba86124f09c457c87c0
+  files: port/projects/zlib/ (the port's files for the project at the commit, less its seed corpora and other binary or derived
+    files, which the port archive carries) and port/manifest.yaml (the manifest of PYTHONPATH=src python3 -P -m oss_verify
+    check --twice, less its host keys and the local ids of its docker images, and with the full path in the toolchain image
+    of each file its uninstrumented lists name, from the same run's link records)
+  patches:
+  - file: zlib-checksum_fuzzer.0001-inflate-memerr-totals.patch
+    sha256: 4092e42e50efa4ff6804d8bb9d1094008a7533eb43a1e6cd299145fc58d87014
+    harness: checksum_fuzzer
+  - file: zlib-gzio_fuzzer.0001-inflate-memerr-totals.patch
+    sha256: 4092e42e50efa4ff6804d8bb9d1094008a7533eb43a1e6cd299145fc58d87014
+    harness: gzio_fuzzer
+  - file: zlib-gzio_fuzzer.0002-gzseek-after-pushback.patch
+    sha256: 5ed509604e4fe644ab757b7f84cc435acd4a6c903d33d12dd8d3b0b84701614d
+    harness: gzio_fuzzer
+  - file: zlib-compress_fuzzer.0001-oss-fuzz-16582.patch
+    sha256: 86b2a60a857b390112ae2c9861239023ff3bc0e076855b238b23deac06f81911
+    harness: compress_fuzzer
+  - file: zlib-gzio_fuzzer.0003-oss-fuzz-16316.patch
+    sha256: e5ef8c228e95b04a780a8503f99d4a784de05929b06d82e8fd6e6dba842ff3c0
+    harness: gzio_fuzzer
+  - file: zlib-gzio_fuzzer.0004-oss-fuzz-16411.patch
+    sha256: 1fb11c086e4b25366679dfbb76f6c94cba7c3ea5fa4e4991735be126483adf70
+    harness: gzio_fuzzer
+  - file: zlib-minigzip_fuzzer.0002-oss-fuzz-16428.patch
+    sha256: 14c07eb4fa20d22731c990453538c4f77f69e9eda63b56c1ff49754c8d677636
+    harness: minigzip_fuzzer
+  - file: zlib-minigzip_fuzzer.0003-oss-fuzz-16429.patch
+    sha256: 3aa6a715c6f40375527941e2da7451c95f148f5b8b0d6aadf0a82c58df101a7b
+    harness: minigzip_fuzzer
+  build_system: 'cmake (projects/zlib/build.sh of the port: oft_build_cmake)'
+  how_to_rebuild: 'as docs/reproducing.md: unpack zlib-port.tar.zst and, from it, run PYTHONPATH=src python3 -P -m oss_verify
+    check --no-shell --lock <projects/zlib/example_large_fuzzer/harness.yaml of this repository> zlib; it builds zlib at the
+    commit the lock names, on the builder image project.yaml names, and compares each binary'
+toolchain:
+  clang: 20.1.8
+  builder_image: ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
+  images:
+  - ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
+  - ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:c7c5abdc2676e121ca7532b553a83148b384001a553b6ffea63b1911848fd711
+  static_asan:
+    repository: https://github.com/theorem-labs/static-asan
+    commit: b05061352064fa2be1813ac5429149f3de5f057d
+    note: 'the published source of the compiler image''s static AddressSanitizer: its toolchain/ and patches/ are those the
+      image was built from, with comments and patch descriptions edited for publication (toolchain-src.tar.zst holds this
+      commit). Building it gives the image''s libclang_rt.builtins.a and musl libc.a byte for byte; its libclang_rt.asan.a
+      and asan_cxx.a differ from the image''s only in DWARF line tables, which --strip-all removes from the binaries'
+    image_runtime_md5:
+      libclang_rt.asan.a: 91ba024da5ddacd96dc1c7588e5763b3
+      libclang_rt.asan_cxx.a: 2c6e776abd494934481b3f47ff030052
+      libclang_rt.builtins.a: 1f3d379aa7d4de2dcf11254b8f493a29
+      libc.a: 485eb64c0b7397bfea554a9cdf8e352c
+binaries:
+- build: plain
+  file: example_large_fuzzer.plain
+  bytes: 97144
+  sha256: bcd66bcb935c115db45af21ece9341796b945bdb91ae0c3c1e6fadc560bf20a7
+- build: ubsan
+  file: example_large_fuzzer.ubsan
+  bytes: 109464
+  sha256: 0874dae378a1e926c028ba964259847f8b4a115c6dc1829aeed6e44c78016a9c
+- build: asan
+  file: example_large_fuzzer.asan
+  bytes: 715736
+  sha256: 0078b0aa21ff1f2365fd26f4f0d42b0608156f2942fc5ef8402d88d87f02350d
+- build: asan-ubsan
+  file: example_large_fuzzer.asan-ubsan
+  bytes: 726712
+  sha256: 8c0ee648d88b5bbc5ec93f902c29b81c824c5b011a5743834bcabf9cc5b48534
+binary_asset:
+  file: zlib-bin.tar.zst
+  bytes: 1912423
+  sha256: 07ea992e0d07e50314b8f4feefb6c594efa43fc927ad25e5411013a54a34211e
+source_asset:
+  src:
+    file: zlib-src.tar.zst
+    bytes: 1344591
+    sha256: b75e2eae62532dad6e1bee4c2a1688dbfa340fdf4e976741070b0015f032beb5
+  src_manifest:
+    file: zlib-src.MANIFEST.tsv
+    bytes: 25166
+    sha256: 254b6846d2d4faa362bbb3101cc9b14e7cc2dc7e74fbc0bab26aa9a399aa28e3
+rebuild:
+- 'the port''s second build (port/manifest.yaml, rebuild: kind same-host, result identical) gave all 44 binaries of the 11
+  harnesses the SHA-256s of the first, these four among them'
+proofs:
+  licence: Apache-2.0 OR MIT for the 1493 library files of lib/ubsan_halts_any_exit/ that carry Anthropic's licence header;
+    MIT, the repository's licence (LICENSE), for the other files, which were written for this repository
+  texts:
+  - LICENSES/anthropic-proofs-LICENSE
+  - LICENSES/anthropic-proofs-LICENSE-MIT
+  - LICENSES/anthropic-proofs-NOTICE
+  texts_location: the repository's top directory
+  modified: each changed file carries one line under its licence header saying so; the 0 files that are byte for byte their
+    source carry none
+licence:
+  components:
+  - component: zlib
+    files: '-'
+    licence: Zlib
+    evidence: 'LICENSE of the repository at the pinned commit 99623ef7 ((C) 1995-2026 Jean-loup Gailly and Mark Adler: the
+      Zlib licence), the text in LICENSES/zlib-LICENSE'
+    texts:
+    - LICENSES/zlib-LICENSE
+  - component: OSS-Fuzz harness
+    files: example_large_fuzzer.c
+    licence: Apache-2.0
+    evidence: the file's own header, source/example_large_fuzzer.c:1-10 (Copyright 2018 Google LLC; Licensed under the Apache
+      License, Version 2.0); it is projects/zlib/example_large_fuzzer.c of google/oss-fuzz at fadbcdfb, the commit harness.yaml
+      names, and the same bytes as its copy in zlib-src.tar.zst
+    texts:
+    - LICENSES/oss-fuzz-LICENSE
+  - component: musl libc (static)
+    files: '-'
+    licence: MIT
+    evidence: musl COPYRIGHT; linked in every build
+    texts:
+    - LICENSES/musl-COPYRIGHT
+  - component: 'LLVM runtimes: compiler-rt builtins; in ASan builds the sanitizer runtime and libunwind; libc++/libc++abi
+      in C++ programs'
+    files: '-'
+    licence: Apache-2.0 WITH LLVM-exception
+    evidence: LICENSE.TXT of compiler-rt, libunwind, libc++ and libc++abi at llvmorg-20.1.8 (87f0227c)
+    texts:
+    - LICENSES/llvm-compiler-rt-LICENSE.TXT
+    - LICENSES/llvm-libunwind-LICENSE.TXT
+    - LICENSES/llvm-libcxx-LICENSE.TXT
+    - LICENSES/llvm-libcxxabi-LICENSE.TXT
+  - component: static-asan patches compiled into the ASan runtime and musl
+    files: '-'
+    licence: MIT
+    evidence: LICENSE of theorem-labs/static-asan at b0506135 (MIT for Theorem Labs work; the LLVM and musl code it patches
+      keeps its own licence)
+    texts:
+    - LICENSES/static-asan-LICENSE
+  - component: Theorem Labs file-input driver and build recipe (recipe/src/, recipe/targets/*/plugin.c)
+    files: '-'
+    licence: MIT
+    evidence: LICENSE of this repository (MIT, Theorem Labs, PBC)
+    texts:
+    - LICENSES/oss-fuzz-theorems-LICENSE

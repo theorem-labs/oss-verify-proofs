@@ -2,7 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN2b.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap's refusal under a may-fail allocator). *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require YZ00.
+From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable.R Require Import Cfg.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -15,6 +17,8 @@ Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Local Open Scope Z_scope.
 Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {AM : AllocMode}.
+Context {AMF : Forced AM}.
 Lemma mreal_cf_itok {R} : forall segs (t : itree astate R) c (P : R -> config -> Prop) (Q : R -> Prop),
 mreal_cf segs c t P -> itok t Q -> mreal_cf segs c t (fun r c' => P r c' /\ Q r).
 Proof.

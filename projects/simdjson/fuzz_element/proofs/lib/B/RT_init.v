@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the runtime invariant's reserved-list clause (the image's reservations followed by at most two vDSO intervals of at most 81920 bytes, every tracked mapping apart from them) is derived from the plan invariant, given the table's bounds on that tail; taken in part from projects/simdjson/fuzz_ondemand/proofs/lib/B/RT_init.v, lines 509-530. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import Permutation.
@@ -506,9 +507,28 @@ Qed.
 Lemma seps_FOP : forall l, APS.seps l -> ForallOrdPairs iv_apart l.
 Proof. intros l H. induction H as [|p l Hf Hs IH]; constructor; [exact Hf | exact IH]. Qed.
 
-Lemma ri_artm : LIMIT = VMLIMIT -> ARTM_A (sigma0 A E ch model) model.
+(* [n_resx A <= 2] and [resx_bytes A <= 81920]: this target's tables (2 and 20 pages), which
+   bound the vDSO tail of the reserved ledger as ARTM_A states it; proved where the table is
+   named (B/TopA.v [asan_nresx], [asan_resxb]). *)
+Lemma ri_artm : LIMIT = VMLIMIT -> (n_resx A <= 2)%nat -> resx_bytes A <= 81920 -> ARTM_A (sigma0 A E ch model) model.
 Proof.
-  intros Hlim. unfold ARTM_A. split; [exact (Permutation_refl _)|]. split; [exact (APS.co_res _ _ _ _ _ _ _ _ _ _ _ _ HC)|].
+  intros Hlim Hnr Hrb. unfold ARTM_A. split; [exact (Permutation_refl _)|].
+  (* LPS 727298f3: ARTM_A's reserved clause is [co_res]'s tail with its count and byte bounds
+     read at this target's table, plus [co_mres]'s content restricted to the tail.  This is
+     the ONLY place the clause is ever established -- RT_init consumes [cs_ok] (Hypothesis HC)
+     and constructs none -- so everything the ARTM layer needs of the vDSO pair has to come
+     through here. *)
+  split.
+  { destruct (APS.co_res _ _ _ _ _ _ _ _ _ _ _ _ HC) as (rx & Hres & _ & Hcnt & Hsum).
+    exists rx. split; [exact Hres|]. split; [lia|]. split; [rewrite live_bytes_sum_sizes; lia|].
+    pose proof (APS.co_mres _ _ _ _ _ _ _ _ _ _ _ _ HC) as HM.
+    apply Forall_forall. intros q Hq.
+    pose proof (proj1 (Forall_forall _ _) HM q Hq) as F.
+    apply Forall_forall. intros iv Hiv.
+    assert (Hin : In iv (vm_reserved (m_vmmaps model)))
+      by (rewrite Hres; apply in_or_app; right; exact Hiv).
+    pose proof (proj1 (Forall_forall _ _) F iv Hin) as D.
+    unfold APS.iv_disjoint in D. unfold iv_apart. exact D. }
   split; [rewrite (APS.co_limit _ _ _ _ _ _ _ _ _ _ _ _ HC); exact Hlim|].
   split.
   { pose proof (APS.co_eager _ _ _ _ _ _ _ _ _ _ _ _ HC) as He. pose proof ri_test as (_ & _ & _ & Hea & _).

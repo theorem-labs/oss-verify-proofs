@@ -1,4 +1,4 @@
-(* CARRIED from commit 7fb5e1d920f1a960ba591aa28cade9497d873d3c,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YG0tcf.v, sha256 f62aa1742b01a901f9259d6d78821012e554c696815d023afeb0fb237a73e5e5 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the Require lines only:
    the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
@@ -6,17 +6,18 @@
 *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Taken by path from a working branch a0fed4266a1b, provisional. *)
+(* Taken by path from a working branch, provisional. *)
 (* Modified by Theorem Labs, 2026-10: module paths changed from fuzz_preset lib.Reusable to cgif_file_fuzzer lib; the text is otherwise unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the event-free second allocator instance (suffix cf), the two STACK laws and the
    heap-head frame law.
    Source: cgif's YG0t.v (copied into this unit as lib/Reusable/YG0t.v), re-proved over the fresh record
    ARcf / ARmcf of YG0ncf.v. cgif's YG0t.v is NOT edited.
    The statements proved here are YG0dcf.v's astack_free_law_cf and astack_malloc_law_cf (adopted there from
-   this file's first version, 47e01d3478d5): YG0d.v:301-309 and YG0t.v:577-589 with AR -> ARcf and the
+   this file's first version): YG0d.v:301-309 and YG0t.v:577-589 with AR -> ARcf and the
    binder Hp after S, Hp unchanged. astack_malloc_law_cf is FCiface.v's astack_malloc_law_x at
    ARx := ARcf segs B (eq_refl). AR_head_frame_law_ok_cf proves YG0dcf.v's AR_head_frame_law_cf (from
-   h-rw-man-5's YGcfHp.v:63, 29c8b46b1cef), the 15th field of AR_laws_cf; it has no cgif original.
+   h-rw-man-5's YGcfHp.v:64), the 15th field of AR_laws_cf; it has no cgif original.
    Every helper of YG0t.v that names ARm / AR / Wf / acells / ajunk / ALedger is restated with the suffix
    _cf and the naming contract's substitutions. Helpers of YG0t.v that name none of these are used from
    YG0t.v as they stand; the YG05.v steps over Wf_cf come from YG05cf.v. The cells' footprint (cgif's

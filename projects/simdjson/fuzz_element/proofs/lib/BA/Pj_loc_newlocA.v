@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -126,7 +127,7 @@ Definition newlocale_postA (Σ : rts RT) (ra sp gp tp t0 t1 t2 s0 s1 a5 a6 a7 s2
 
 Lemma newlocale_aevt : forall Σ K ra sp gp tp t0 t1 t2 s0 s1 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
     (F : bvmap 5 word) fc (m : word -> option byte) (lo : Z) (canary : word),
-  stk asegs m lo (bv_unsigned sp) -> (lo + 496 + RT_STACK <= bv_unsigned sp)%Z -> (rt_sp0 RT Σ - STACK_WIN <= lo)%Z ->
+  stk asegs m lo (bv_unsigned sp) -> (lo + 496 + RT_STACK <= bv_unsigned sp)%Z -> (rt_sp0 RT Σ - STACK_SPAN <= lo)%Z ->
   (bv_unsigned sp + 16 <= USTACK_TOP)%Z -> (bv_unsigned sp mod 16 = 0)%Z -> (bv_unsigned sp < 2^62)%Z ->
   ro_cells asegs m 0x16afd8 [C8 (Z_to_bv 64 0x6c7ea8)] -> ro_cells asegs m 0x6c7ea8 [C8 canary] ->
   ro_cells asegs m 0x6c80fb [C1 (Z_to_bv 8 0)] -> rw_cells asegs m 0x6c81d8 [C4 (Z_to_bv 64 0)] -> mem_inv asegs m -> ART RT Σ m ->

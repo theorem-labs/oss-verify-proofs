@@ -1,5 +1,5 @@
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/ZZwv_runs1.v (a working branch
-   1a5dc5b2e7c): same lemma names, every return address, frame slot and register re-measured on fs.asan-ubsan; the entry
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/ZZwv_runs1.v (a working branch):
+   same lemma names, every return address, frame slot and register re-measured on fs.asan-ubsan; the entry
    state is lib/B/FSW_write_value_entry.v's (wv_ss0 / wv_SH / wv_xs, with its wv_awr0 / wv_frame0), not a local copy;
    imports point at lib/B's image files and walk kit.
    rule 24: proves no function (kind: segment lemma) - the container arms of write_value B. *)

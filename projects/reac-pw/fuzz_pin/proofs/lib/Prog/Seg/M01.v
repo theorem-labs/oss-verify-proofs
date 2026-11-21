@@ -1,8 +1,8 @@
 (* Segment M01 of reac-pw/fuzz_pin LLVMFuzzerTestOneInput (plain): [0x12d1c, 0x12de4), K12d1c -> K12de4
    (LLVMFuzzerTestOneInput_c.v S_M01). The body is pin_mid_contract's evt (memcpy, NUL, strlen, the scan,
    fuzz_catalogue_row, reac_box_pin_parse, check_known/row/label), taken as a Section hypothesis and run on the
-   normalized memory with Tac_slot.sl_run, as libreac/fuzz_ctrl's released Prog/Seg/F02.v (origin/ossv/recipes
-   25e3d17bdb50) runs f02_evt. Its premises come from FR at K12d1c: s := pin_str (g_in g) at g_src g (Tac_m01.m01_src),
+   normalized memory with Tac_slot.sl_run, as libreac/fuzz_ctrl's released Prog/Seg/F02.v
+    runs f02_evt. Its premises come from FR at K12d1c: s := pin_str (g_in g) at g_src g (Tac_m01.m01_src),
    the live block (phi, k + 1) writable (b1_hb), outside the image (b1_blk_rom) with its slack (b1_slack_ok), the
    stack [S - 65536, S - 64) and the cells [S - 64, S - 48) (sl_fr_stk), the table in frame_RELRO's first block
    (b8_relro_norm), the SSP cells from the allocator relation's statics (m01_ssp). Its writes, [S - 240, S - 48) and

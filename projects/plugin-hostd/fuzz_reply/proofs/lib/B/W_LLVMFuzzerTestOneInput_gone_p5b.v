@@ -4,15 +4,16 @@
 (* Modified by Theorem Labs, 2026-10: ARM_gone of the ASan+UBSan walk of fuzz_reply's LLVMFuzzerTestOneInput on image B,
    PHASE 5, part b: the two calls of the table-order loop, fuzz_reply.asan-ubsan 0x84c0c (check_no_loss(&g_s[k], &at),
    jal 0x84c14) to 0x84c18, and 0x84c18 (check_shape_ends(&g_s[k], prefix, &at), jal 0x84c24) to 0x84c28.  A PORT of
-   image A's lib/A/W_LLVMFuzzerTestOneInput_gone_p5.v gp5_c8 / gp5_c3 (a working branch 32b23a20c3e),
+   image A's lib/A/W_LLVMFuzzerTestOneInput_gone_p5.v gp5_c8 / gp5_c3 (a working branch),
    over part a (W_LLVMFuzzerTestOneInput_gone_p5a.v) and the base's two kit citations:
-   - check_no_loss: GN_CNL, the kit's cnl_spec (W_contract.v Section w3n, a working branch 990666444ab), at
+   - check_no_loss: GN_CNL, the kit's cnl_spec (W_contract.v Section w3n, a working branch), at
      G = gn_Gs k.  Its last premise (the caller's stack readable from sp up to ly_top) is [F, sp0) from the arm
      journal's own presence clause and [sp0, ly_top) from the cut's STKR (base gn_stkr), kept by the journal's view
      clause above the window (gp5_stk_rd).
    - check_shape_ends: GN_CSHE, the kit's cshe_spec (W_contract.v Section w3e); its PF premise is discharged by the
      fake-frame disjunct (PF = s3 = FF + 32 lies in the fake frame (1, fpos)), in gp5_c3 only.
    - errno: each kit post gives errno's view; its writability is the cut's errno_law (ERRL, part a). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

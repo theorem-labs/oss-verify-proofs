@@ -7,16 +7,17 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/Tac_slot.v, with its module paths and module names changed; 756 of its 937 lines of code are new or changed and 2376 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F18.v; 70 of its 133 lines of code are new or changed and 874 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F18F.v, with its module names, addresses and numbers changed; 31 of its 85 lines of code are new or changed and 79 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* rule 24: no function proved. *)
 (* Provenance (route (a) bridge input, lead 22:18Z; auditor a Theorem Labs lane):
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
-   source run: lib/B/Prog/Seg/F19.v f19_evt (:108) at a working branch 3803efccea0
+   source run: lib/B/Prog/Seg/F19.v f19_evt (:108) at a working branch
      (blob 6370824fb2234f56af3f03cc74b96e0642b32f20);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
-   compare: f19_evt calls wrapper_bcmp (jal at 0x82664), so it is split: f19_pre_F re-runs F19.v:146-162
-     (0x8264c -> the wrapper entry 0x42aac, ra = 0x82668) and f19_post_F re-runs F19.v:194-203 (the return pc
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
+   compare: f19_evt calls wrapper_bcmp (jal at 0x82664), so it is split: f19_pre_F re-runs F19.v:147-163
+     (0x8264c -> the wrapper entry 0x42aac, ra = 0x82668) and f19_post_F re-runs F19.v:195-204 (the return pc
      0x82668 -> the run's end, no step), with the wrapper post facts as premises. *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -80,7 +81,7 @@ Proof.
   apply evtF_done. reflexivity.
 Qed.
 
-(* The post half of f19_evt (F19.v:194-203): from the return pc 0x82668 there is no further instruction before
+(* The post half of f19_evt (F19.v:195-204): from the return pc 0x82668 there is no further instruction before
    the run's exit cut, so the post is the wrapper post facts themselves. *)
 Lemma f19_post_F :
   forall (RNG : footprint)

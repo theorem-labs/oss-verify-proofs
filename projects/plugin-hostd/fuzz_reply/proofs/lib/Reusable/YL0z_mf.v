@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YL0z.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/Reusable/YL0z.v; 44 of its 188 lines of code are new or changed and 60 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: a0 and path dropped from the section as E_main now takes the input, and src0_postX_mf states POST_mf and calls anch_lp without them. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -36,8 +37,10 @@ Hypothesis GIL : G_local_T src0segs src0_G GI.
 Hypothesis GI0 : forall mem, G_img src0segs src0_G mem -> GI 0%nat [] mem.
 Hypothesis LIBX : lib_contract_x_R_all src0_msyms API RI src0_G src0_R GI OUT LIBPC RA_LIB EMPTY LIB_STACK.
 Hypothesis FRM : frm_zero fp_csr.
-Variables (sp tid : word) (a0 path : list byte) (inp : ProcInput) (data : list byte) (rnd : EntryDraw).
-Hypothesis HSA0 : forall G, anchored_atoms G = anchored_atoms RD_facts -> stack_anchored (E_main sp [a0; path] (in_envp inp) tid rnd) G.
+(* [E_main] reads the entry strings and execfn from [inp] at 727298f3, so [a0] and [path] are
+   no longer variables here; as libreac/fuzz_decode's copy. *)
+Variables (sp tid : word) (inp : ProcInput) (data : list byte) (rnd : EntryDraw).
+Hypothesis HSA0 : forall G, anchored_atoms G = anchored_atoms RD_facts -> stack_anchored (E_main sp inp tid rnd) G.
 Hypothesis Hvfs : valid_fs (in_fs inp).
 Hypothesis Hsp47 : bv_unsigned sp <= 2 ^ 47.
 Lemma run_from_QX_mf : forall cap0 L' A' b0 E ms md (K : dleaf * astate -> TSet),
@@ -157,7 +160,7 @@ exact (src0_overrun_tail_mf API AX Hfre inp data cap0 L' A' b0 Hub Hcap0 HLc HW 
 Qed.
 Theorem src0_postX_mf : forall K : dleaf * astate -> TSet,
 (forall r, t_eq (K r) (leaf_shapeX data (in_fs inp) r)) ->
-POST_mf API sp tid a0 path inp data rnd (run_RI RI (payload data)) K.
+POST_mf API sp tid inp data rnd (run_RI RI (payload data)) K.
 Proof using AX HAM Hmal Hfre GIL GI0 LIBX FRM HSA0 Hvfs Hsp47.
 intros K HK. unfold POST_mf. cbv zeta beta.
 intros cap' bufp' A' Lc' J' g' len0 w ms' md' HLc Hcap Hlen0 Hub HW HB Hid HS Hw HL0 HMR Hmd0 HD HL.
@@ -176,7 +179,7 @@ apply u64_of_Z. lia.
 - rewrite ew_ewset_other by lia. unfold E_lp. rewrite ew_ewset_other, ew_ewset_same by lia.
 apply u64_of_Z. unfold dlen in HLc. lia. }
 assert (HAN : hdr_anch E).
-{ intros G HGa. subst E. apply (anch_lp sp tid a0 path inp data rnd HSA0 J' (ptr_addr Lc' bufp') g' (Z.of_nat (length data)) cap' _ G); [| exact HGa].
+{ intros G HGa. subst E. apply (anch_lp sp tid inp data rnd HSA0 J' (ptr_addr Lc' bufp') g' (Z.of_nat (length data)) cap' _ G); [| exact HGa].
 apply (ext29_ewset data); [lia | apply ext29_refl]. }
 drv_run_with src0tbl_ok HS HF.
 lazymatch type of HS with st_ok _ _ _ ?msx => change (st_ok src0segs E ss_h0 msx) in HS end.

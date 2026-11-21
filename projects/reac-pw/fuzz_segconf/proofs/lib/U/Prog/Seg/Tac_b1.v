@@ -3,14 +3,15 @@
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/Prog/LLVMFuzzerTestOneInput_fr.v, with its module paths and module names changed; 456 of its 574 lines of code are new or changed and 409 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/U/Prog/Seg/Tac_slot.v, with its module paths and module names changed; 669 of its 757 lines of code are new or changed and 486 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Helpers of the segments of reac-pw/fuzz_segconf LLVMFuzzerTestOneInput (UBSan): byte transport across runs, the
    allocator facts of frame_facts_ubsan, malloc and calloc as Kind B steps from any list hb of live harness blocks
    (b1_malloc_call, b1_calloc_call), FR across a run that writes the stack window, a list Wb of blocks of hb and
    longl's written bytes (b1_fr_hb), and a live block's cells, separation from the other blocks, slack and absence
    from the image's bytes and reserved pages (b1_hb, b1_sep, b1_slack_ok, b1_blk_rom, b1_blk_noimg,
    b1_blk_noimg_segs, b1_blk_present, b1_in_all).
-   Taken from reac-pw/fuzz_role's Prog/Seg/Tac_b1.v (commit 52bb2f1ed35d), itself
-   reac-pw/fuzz_pin's and libreac/fuzz_ctrl's released Prog/Seg/Tac_b1.v (origin/ossv/recipes 25e3d17bdb50)
+   Taken from reac-pw/fuzz_role's Prog/Seg/Tac_b1.v, itself
+   reac-pw/fuzz_pin's and libreac/fuzz_ctrl's released Prog/Seg/Tac_b1.v
    adapted, with segconf's numbers (frame 240, saved registers [S - 104, S), malloc at 0x17518, calloc at 0x172a0,
    the sink cells 0x53841, 0x53c68 .. 0x53c6c, 0x53c70 .. 0x53c78, the request bound 2^26 of SlotFR.resb_room).
    From role: b1_FR_malloc / b1_malloc_call take FR with any hb (of at most 16 blocks and 2^24 bytes) to FR with
@@ -279,8 +280,8 @@ Proof.
   rewrite Ep. replace (phi + (a - phi)) with a by lia. exact Hi.
 Qed.
 
-(* b1_blk_noimg in the form of seg_spec.blk_noimg rsegs phi n (commit
-   c7b9518dac31: the text of printf_facts_c.pf_img_free with segs := rsegs); its conclusion is that definition's body,
+(* b1_blk_noimg in the form of seg_spec.blk_noimg rsegs phi n (
+   the text of printf_facts_c.pf_img_free with segs := rsegs); its conclusion is that definition's body,
    so `exact (b1_blk_noimg_segs ..)` closes `blk_noimg rsegs phi n` by conversion. *)
 Lemma b1_blk_noimg_segs : forall g hb phi n L A regs mem md, FR B APIf ra empty g hb L A regs mem md ->
   Permutation (blocks L A) (hb ++ blocks (g_L g) (g_A g)) -> In (phi, n) hb ->

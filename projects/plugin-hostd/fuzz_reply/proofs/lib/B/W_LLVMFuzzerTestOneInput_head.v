@@ -4,11 +4,12 @@
    0x842a0 .. 0x843fc and the two exits), in the form of the cgif entry walk's run segments (proofs/cgif/cgif_file_fuzzer/
    lib/A/ACf5.v rt_from) and of lf_seg_jt in lib/A/W_LLVMFuzzerTestOneInput_cut.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_LLVMFuzzerTestOneInput_head.v, with its module paths, module names and numbers changed; 617 of its 1426 lines of code are new or changed and 668 lines of the source are left out. *)
-(* proves function LLVMFuzzerTestOneInput, segment SEG_HEAD (image B), as lf_seg_head_b against the frozen cut 7d4f6d8955b; reuse search and CONFIRM: seghead-r24.md (sha256 d185c49d4dec; internal record) *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* proves function LLVMFuzzerTestOneInput, segment SEG_HEAD (image B), as lf_seg_head_b against the frozen cut; reuse search and CONFIRM: seghead-r24.md (sha256 d185c49d4dec; internal record) *)
 (* SEG_HEAD of the ASan+UBSan walk of fuzz_reply's LLVMFuzzerTestOneInput (image B, fuzz_reply.asan-ubsan,
    sha256 10ffb5f9202ae2bd...): lf_seg_head_b below is exactly the Section hypothesis SEG_HEAD of
    lib/B/W_LLVMFuzzerTestOneInput_cut.v (:744).  A port of image A's lf_seg_head (lib/A/W_LLVMFuzzerTestOneInput_head.v
-   on a working branch ec4dd616ed1): A's structure, B's code.  Every pc, register, frame slot and object below is read
+   on a working branch): A's structure, B's code.  Every pc, register, frame slot and object below is read
    from B's own objdump (fuzz_reply.objdump.txt (sha256 17f5c434bf57; internal record) of the pinned image fuzz_reply.asan-ubsan, sha256 10ffb5f9202ae2bd...), none by offset
    arithmetic from A.
      0x845e0  beqz s5,84e64          in.n = 0: to the shutdown block X (B tests in.n AT the head, _cut.v difference (2))
@@ -257,8 +258,8 @@ Definition hd_kb (cx : lfcx) (m : lmod) : Z := if lm_k m + 1 <? c_n cx then in_b
 Definition hd_k' (cx : lfcx) (m : lmod) : Z := if lm_k m + 1 <? c_n cx then lm_k m + 2 else lm_k m + 1.
 
 (* ------------------------------------------------------------------ what this file takes beyond _cut's Section w
-   The seven premises of image A's lf_seg_head (lib/A/W_LLVMFuzzerTestOneInput_head.v :382-391, :949, :1003-1009 on
-   ec4dd616ed1), A's names and texts.  B's cut state does not give them: G_fr, B, RINV and LS are Section variables no
+   The seven premises of image A's lf_seg_head (lib/A/W_LLVMFuzzerTestOneInput_head.v :382-391, :949, :1003-1009),
+   A's names and texts.  B's cut state does not give them: G_fr, B, RINV and LS are Section variables no
    premise of _cut's Section w constrains (HG = gx_ok says only "in the image, not owned"; fr_gi only "inG ->
    writable"; AR_laws says nothing of errno or of which ranges have zero shadow; RINV and LS have no laws). *)
 (* g_nout's 8 bytes are in G_fr (the store at 0x8461c).  At the pin, G_fr := G_fr_c:

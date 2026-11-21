@@ -1,11 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the fixed-offset facts about the pre-revision ten-pair auxv (kn_auxv, kn_auxv_ok) are replaced by the revision's auxv walk (the key of every pair up to AT_NULL at 16k and this binary's AT_PHDR, AT_PHENT and AT_PHNUM values, for the CONFIG_RSEQ value rauxv_ok's walk fact names, with a readable span over the vector), since musl's static_dl_iterate_phdr walks the whole auxv on the __cxa_throw path, and the auxv region's fixed span is cut to the 16 bytes every layout has. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
 From OSSVerify.Proofs.simdjson.fuzz_element.lib.Lib Require Import Tac RegsEquiv Arr Ceiling.
 From OSSVerify.Proofs.simdjson.fuzz_element.lib.MallocU Require Import RMallocRep RMallocTree RMalloc_iface.
+From OSSVerify.simdjson.fuzz_element.images Require Ubsan.
 From OSSVerify.Proofs.simdjson.fuzz_element.lib.U Require Import Layout Sj_iface.
 From OSSVerify.Proofs.simdjson.fuzz_element.lib.P Require Import InitMem Rnd.
 From OSSVerify.Proofs.simdjson.fuzz_element.lib.AS Require Import PropExec CatExec AxSymExec3.
@@ -36,10 +38,10 @@ Definition xs_regs0 : list expr :=
 Definition kn_geom : list kentry :=
   [KRange XSP 0x700000000000 0x3fffffffffffffff; KAlign XSP 16;
    KRange XBLK 16 0x7fffff800000; KAlign XBLK 16;
-   KRange XAUXV 0x700000000000 0xffffffffffffff60;
+   KRange XAUXV 0x700000000000 0xfffffffffffffff0;
    KDisj (SA XSP (-16384)) (ELit 16400) (SA XBLK 0) (ELit 144);
-   KDisj (SA XSP (-16384)) (ELit 16400) (SA XAUXV 0) (ELit 160);
-   KDisj (SA XBLK 0) (ELit 144) (SA XAUXV 0) (ELit 160);
+   KDisj (SA XSP (-16384)) (ELit 16400) (SA XAUXV 0) (ELit 16);
+   KDisj (SA XBLK 0) (ELit 144) (SA XAUXV 0) (ELit 16);
    KDisj (SA XBLK 0) (ELit 144) (SA (ELit 0) 0x10000) (ELit 0x101000)].
 Definition kn_wr : list kentry :=
   [KWr (SA XSP (-16384)) (ELit 16400); KWr (SA XBLK 0) (ELit 144); KWr (SA (ELit 0) EL_EHG) (ELit 12); KWr (SA (ELit 0) EL_UNW) (ELit 8)].
@@ -55,20 +57,30 @@ Definition kn_consts : list kentry :=
    KWord (SA (ELit 0) 0xdd7b8) 8 (ELit 0x5f084); KWord (SA (ELit 0) 0xdd7c0) 8 (ELit 0x5f190)].
 Definition kn_cells : list kentry :=
   [KWord (SA (ELit 0) 0x10f7f8) 8 (EVar 42); KWord (SA (ELit 0) 0x10f820) 8 XAUXV].
-Definition kn_auxv : list kentry :=
-  [KWord (SA XAUXV 0) 8 (ELit 3); KWord (SA XAUXV 8) 8 (ELit 0x10040);
-   KWord (SA XAUXV 16) 8 (ELit 4); KWord (SA XAUXV 24) 8 (ELit 56);
-   KWord (SA XAUXV 32) 8 (ELit 5); KWord (SA XAUXV 40) 8 (ELit 10);
-   KWord (SA XAUXV 48) 8 (ELit 16); KWord (SA XAUXV 56) 8 (EVar 43);
-   KWord (SA XAUXV 64) 8 (ELit 6); KWord (SA XAUXV 72) 8 (EVar 48);
-   KWord (SA XAUXV 80) 8 (ELit 11); KWord (SA XAUXV 88) 8 (EVar 44);
-   KWord (SA XAUXV 96) 8 (ELit 12); KWord (SA XAUXV 104) 8 (EVar 46);
-   KWord (SA XAUXV 112) 8 (ELit 23); KWord (SA XAUXV 120) 8 (EVar 47);
-   KWord (SA XAUXV 128) 8 (ELit 25); KWord (SA XAUXV 136) 8 (EVar 45);
-   KWord (SA XAUXV 144) 8 (ELit 0); KWord (SA XAUXV 152) 8 (ELit 0)].
-Definition xs_kn0 (raval : Z) (uw : bool) : list kentry :=
-  kn_geom ++ kn_wr ++ kn_img ++ kn_blk ++ kn_ehg ++ kn_unw uw ++ [KWord (SA XSP 0) 8 (EVar 49); KWord (SA XSP 8) 8 (ELit raval)] ++ kn_consts ++ kn_cells ++ kn_auxv.
-Definition xs_ss0 (pc0 raval : Z) (uw : bool) : sym_state := SS pc0 xs_regs0 [] (xs_kn0 raval uw) 200.
+(* The old [kn_auxv] here claimed the ten COMPACTED pairs of the pre-revision
+   auxv vector at XAUXV + 0 .. 152, AT_PHDR first, terminated by a LITERAL
+   AT_NULL at 144/152.  The __cxa_throw path walks the auxv (musl's
+   static_dl_iterate_phdr reads every pair's key up to AT_NULL, then the AT_PHDR,
+   AT_PHENT and AT_PHNUM values), so the revision's vector is given instead, from
+   [RMallocTree.rauxv_ok]'s walk fact at the CONFIG_RSEQ value [b] it names: the
+   keys of the pairs and AT_NULL's at 16 k ([rauxv_keys b] then 0), this binary's
+   three program-header values at 216, 232 and 248, a [KUnk] over the whole vector
+   (so each value word the walk loads reads as a fresh variable), and the vector's
+   disjointness from the frame and the block. *)
+Definition auxv_span (b : bool) : Z := 16 * (Z.of_nat (length (rauxv_keys b)) + 1).
+Fixpoint kn_keys (o : Z) (ks : list Z) : list kentry :=
+  match ks with [] => [] | k :: r => KWord (SA XAUXV o) 8 (ELit k) :: kn_keys (o + 16) r end.
+Definition kn_walk (b : bool) : list kentry :=
+  [KDisj (SA XSP (-16384)) (ELit 16400) (SA XAUXV 0) (ELit (auxv_span b));
+   KDisj (SA XBLK 0) (ELit 144) (SA XAUXV 0) (ELit (auxv_span b))]
+  ++ kn_keys 0 (rauxv_keys b ++ [0])
+  ++ [KWord (SA XAUXV 216) 8 (ELit (Z.of_N (ph_addr Ubsan.M.phdrs)));
+      KWord (SA XAUXV 232) 8 (ELit (Z.of_N (ph_ent Ubsan.M.phdrs)));
+      KWord (SA XAUXV 248) 8 (ELit (Z.of_N (ph_num Ubsan.M.phdrs)));
+      KUnk (SA XAUXV 0) (ELit (auxv_span b))].
+Definition xs_kn0 (raval : Z) (uw b : bool) : list kentry :=
+  kn_geom ++ kn_wr ++ kn_img ++ kn_blk ++ kn_ehg ++ kn_unw uw ++ [KWord (SA XSP 0) 8 (EVar 49); KWord (SA XSP 8) 8 (ELit raval)] ++ kn_consts ++ kn_cells ++ kn_walk b.
+Definition xs_ss0 (pc0 raval : Z) (uw b : bool) : sym_state := SS pc0 xs_regs0 [] (xs_kn0 raval uw b) 200.
 
 Lemma estart_lit : forall E a, estart E (SA (ELit 0) a) = a.
 Proof. intros E a. unfold estart. cbn [a_base a_off edenot]. rewrite Z_to_bv_unsigned. change (bv_wrap 64 0) with 0. lia. Qed.
@@ -188,23 +200,73 @@ Proof.
   - apply IH; [lia| lia| exact HF| exact B2].
 Qed.
 
-Lemma kn_auxv_ok : forall E m av x16 x6 x11 x12 x23 rnd,
-  ev E 41 = wz av -> ev E 43 = wz x16 -> ev E 48 = wz x6 -> ev E 44 = wz x11 -> ev E 46 = wz x12 -> ev E 47 = wz x23 -> ev E 45 = wz rnd ->
-  0 <= av -> av + 160 <= 2^64 ->
-  bytes_at usegs m av (u64s (auxv_list 0x10040 56 10 x16 x6 x11 x12 x23 rnd)) ->
-  know_ok usegs E m kn_auxv.
+(* The auxv words [kn_walk] names, from [rauxv_ok]'s vector [u64s (map wz (flat_pairs L ++ [0; 0]))]. *)
+Lemma xs_fp_len : forall L, length (flat_pairs L) = (2 * length L)%nat.
+Proof. induction L as [|[k v] L IH]; [reflexivity|]. cbn [flat_pairs length]. rewrite IH. lia. Qed.
+
+Lemma xs_fp_nth : forall L i p, nth_error L i = Some p ->
+  nth_error (flat_pairs L) (2 * i) = Some (fst p) /\ nth_error (flat_pairs L) (2 * i + 1) = Some (snd p).
 Proof.
-  intros E m av x16 x6 x11 x12 x23 rnd E41 E43 E48 E44 E46 E47 E45 Ha Hh B.
-  unfold auxv_list in B. cbn [map u64s] in B. rewrite !app_nil_r in B.
-  assert (UA : bv_unsigned (edenot E XAUXV) = av) by (cbn [edenot XAUXV]; rewrite E41; apply unsigned_lit; lia).
-  unfold kn_auxv.
-  do 19 (let B1 := fresh "B1" in
-         apply Mem.bytes_at_app in B as [B1 B]; rewrite Mem.length_le8 in B;
-         lazymatch type of B with bytes_at _ _ (?x + ?y + ?z) _ => let w := eval cbv in (y + z) in replace (x + y + z) with (x + w) in B by lia | _ => idtac end;
-         constructor; [apply kword_at; rewrite ?UA; [lia| lia| lia| cbn [edenot]; unfold Mem.le8 in B1;
-           rewrite ?E43, ?E48, ?E44, ?E46, ?E47, ?E45; rewrite ?Z.add_0_r;
-           lazymatch goal with |- bytes_at _ _ ?a _ => lazymatch type of B1 with bytes_at _ _ ?a' _ => replace a with a' by lia end end; exact B1 ] |]).
-  constructor; [| constructor]. apply kword_at; rewrite ?UA; [lia| lia| lia|]. cbn [edenot]. unfold Mem.le8 in B. exact B.
+  induction L as [|[k v] L IH]; intros i p H; [destruct i; discriminate|].
+  destruct i as [|i].
+  - cbn in H. injection H as <-. split; reflexivity.
+  - cbn [nth_error] in H. destruct (IH i p H) as [H1 H2].
+    replace (2 * S i + 1)%nat with (S (S (2 * i + 1))) by lia. replace (2 * S i)%nat with (S (S (2 * i))) by lia.
+    split; [exact H1| exact H2].
+Qed.
+
+Lemma xs_u64s_word : forall m a ws j w, bytes_at usegs m a (u64s ws) -> nth_error ws j = Some w ->
+  bytes_at usegs m (a + 8 * Z.of_nat j) (le8 w).
+Proof.
+  intros m a ws j w B Hn. destruct (u64s_split _ _ _ Hn) as (pre & post & _ & _ & Eu & Hlu).
+  rewrite Eu in B. apply Mem.bytes_at_app in B as [_ B]. rewrite Hlu in B.
+  apply Mem.bytes_at_app in B as [B _]. replace (a + Z.of_nat (8 * j)) with (a + 8 * Z.of_nat j) in B by lia. exact B.
+Qed.
+
+Lemma xs_readable : forall m a bs i, bytes_at usegs m a bs -> 0x111000 <= a -> (i < length bs)%nat ->
+  m (wa (a + Z.of_nat i)) <> None.
+Proof.
+  intros m a bs i (H0 & H1 & H) Ha Hi E. specialize (H i Hi). unfold mrd in H. rewrite E in H.
+  assert (SR : OSSVerify.Proofs.simdjson.fuzz_element.lib.AS.PropExec.seg_rom usegs (wa (a + Z.of_nat i)) = None)
+    by (apply seg_rom_high; rewrite wa_unsigned by lia; lia).
+  assert (SR' : OSSVerify.Proofs.simdjson.fuzz_element.lib.Common.PropExec.seg_rom usegs (wa (a + Z.of_nat i)) = None) by exact SR.
+  rewrite SR' in H. cbn in H. symmetry in H. apply nth_error_None in H. lia.
+Qed.
+
+Lemma xs_keys_ok : forall E m av (W : list Z) (j : nat) (ks : list Z),
+  bv_unsigned (edenot E XAUXV) = av -> 0 <= av ->
+  bytes_at usegs m av (u64s (map wz W)) -> av + 8 * Z.of_nat (length W) <= 2^64 ->
+  (forall i k, nth_error ks i = Some k -> nth_error W (j + 2 * i) = Some k) ->
+  know_ok usegs E m (kn_keys (8 * Z.of_nat j) ks).
+Proof.
+  intros E m av W j ks UAV H0 B HW. revert j. induction ks as [|k ks IH]; intros j HN; [constructor|].
+  cbn [kn_keys]. constructor.
+  - pose proof (HN 0%nat k eq_refl) as N0. rewrite Nat.mul_0_r, Nat.add_0_r in N0.
+    assert (Hj : (j < length W)%nat) by (apply nth_error_Some; rewrite N0; discriminate).
+    apply kword_at; rewrite ?UAV; [lia| lia| lia|]. cbn [edenot].
+    exact (xs_u64s_word m av (map wz W) j (wz k) B ltac:(rewrite nth_error_map, N0; reflexivity)).
+  - replace (8 * Z.of_nat j + 16) with (8 * Z.of_nat (j + 2)) by lia. refine (IH (j + 2)%nat _).
+    intros i k' Hi. replace (j + 2 + 2 * i)%nat with (j + 2 * S i)%nat by lia. apply HN. exact Hi.
+Qed.
+
+(* The keys [kn_walk] names are the pairs' keys then AT_NULL's 0, at the even words. *)
+Lemma xs_keys_nth : forall (L : list (Z * Z)) i k,
+  nth_error (map fst L ++ [0]) i = Some k -> nth_error (flat_pairs L ++ [0; 0]) (2 * i) = Some k.
+Proof.
+  induction L as [|[k0 v0] L IH]; intros i k H.
+  - destruct i as [|i]; cbn in H; [injection H as <-; reflexivity|]. destruct i; discriminate.
+  - destruct i as [|i]; cbn in H.
+    + injection H as <-. reflexivity.
+    + replace (2 * S i)%nat with (S (S (2 * i))) by lia. exact (IH i k H).
+Qed.
+
+(* The value of pair [i] is the odd word [2 i + 1] of the vector. *)
+Lemma xs_pair_val : forall (L : list (Z * Z)) i k v, nth_error L i = Some (k, v) ->
+  nth_error (map wz (flat_pairs L ++ [0; 0])) (2 * i + 1) = Some (wz v).
+Proof.
+  intros L i k v H. destruct (xs_fp_nth L i (k, v) H) as [_ H2].
+  rewrite nth_error_map, nth_error_app1; [rewrite H2; reflexivity|].
+  apply nth_error_Some. rewrite H2. discriminate.
 Qed.
 
 Lemma stk_wr_at : forall m lo hi a n, stk usegs m lo hi -> lo <= a -> 0 <= n -> a + n <= hi -> wr_at usegs m a n.
@@ -239,32 +301,34 @@ Section EntryOK.
   Hypothesis RAS : rw_cells usegs m (usp + 8) [C8 (wz raval)].
   Hypothesis RAV : 0 <= raval < 2^64.
 
-  Theorem xs_entry : exists E : env,
-    CIX usegs fc E xs_W xs_RW m m (xs_ss0 pc0 raval uw) (MS R F (Z_to_bv 64 pc0) fc None m (seg_rom usegs))
+  (* The CONFIG_RSEQ value [b] is the one [rauxv_ok]'s walk fact names: the start state's
+     knowledge of the auxv walk ([kn_walk]) is read at it. *)
+  Theorem xs_entry : exists (b : bool) (E : env),
+    CIX usegs fc E xs_W xs_RW m m (xs_ss0 pc0 raval uw b) (MS R F (Z_to_bv 64 pc0) fc None m (seg_rom usegs))
     /\ (forall k, 0 <= k < 32 -> ev E (Z.to_nat k) = reg_get R (Z_to_bv 5 k))
     /\ ev E 40 = wz blk /\ fp_ok E F.
   Proof.
-    destruct AUX as (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & AC & AB & ARND & AH).
-    destruct AH as (H1 & H2 & H3 & H4 & H5 & R3 & R4 & R5 & R16 & R6 & R11 & R12 & R23 & RR & P3 & P4 & P5).
-    lazy in P3. lazy in P4. lazy in P5. subst x3 x4 x5.
+    (* [rauxv_ok] is layout-agnostic in the revision: av, the pair list L, and the
+       AT_RANDOM target rnd, with only generic bounds, and the walk fact: the keys of
+       L for a CONFIG_RSEQ value [bw] and this binary's AT_PHDR, AT_PHENT and AT_PHNUM
+       pairs.  The ten per-slot values the old ten-pair destruct named no longer exist. *)
+    destruct AUX as (av & L & rnd & AC & AB & ARND & AH & HF).
+    destruct AH as (H1 & H2 & H3 & H4 & H5 & H6).
+    destruct HF as (_ & _ & _ & _ & bw & HKEYS & HP13 & HP14 & HP15).
     pose proof alloc_ceiling_range as CR.
     destruct RB as (RB1 & RB2 & RB3 & RB4 & RB5).
-    exists (xs_E0 R F blk av canary x16 x6 x11 x12 x23 rnd w0).
+    exists bw.
+    exists (xs_E0 R F blk av canary 0 0 0 0 0 0 w0).
     split; [| split; [apply xs_E0_reg| split; [reflexivity| apply xs_E0_fp]]].
     split; [cbn; unfold FPB; lia|].
     intros E' HA. destruct HA as [HA _].
 
-    assert (EV : forall k, (k < 200)%nat -> ev E' k = ev (xs_E0 R F blk av canary x16 x6 x11 x12 x23 rnd w0) k) by (intros k Hk; symmetry; apply HA; exact Hk).
-    assert (E2 : ev E' 2 = sp) by (rewrite EV by lia; etransitivity; [apply (xs_E0_reg R F blk av canary x16 x6 x11 x12 x23 rnd w0 2); lia| reflexivity]).
+    assert (EV : forall k, (k < 200)%nat -> ev E' k = ev (xs_E0 R F blk av canary 0 0 0 0 0 0 w0) k) by (intros k Hk; symmetry; apply HA; exact Hk).
+    assert (E2 : ev E' 2 = sp) by (rewrite EV by lia; etransitivity; [apply (xs_E0_reg R F blk av canary 0 0 0 0 0 0 w0 2); lia| reflexivity]).
     assert (E40 : ev E' 40 = wz blk) by (rewrite EV by lia; reflexivity).
     assert (E41 : ev E' 41 = wz av) by (rewrite EV by lia; reflexivity).
     assert (E42 : ev E' 42 = canary) by (rewrite EV by lia; reflexivity).
-    assert (E43 : ev E' 43 = wz x16) by (rewrite EV by lia; reflexivity).
-    assert (E44 : ev E' 44 = wz x11) by (rewrite EV by lia; reflexivity).
-    assert (E45 : ev E' 45 = wz rnd) by (rewrite EV by lia; reflexivity).
-    assert (E46 : ev E' 46 = wz x12) by (rewrite EV by lia; reflexivity).
-    assert (E47 : ev E' 47 = wz x23) by (rewrite EV by lia; reflexivity).
-    assert (E48 : ev E' 48 = wz x6) by (rewrite EV by lia; reflexivity).
+    (* E43..E48 are gone with [kn_auxv]: those env slots now hold 0 and nothing reads them. *)
     assert (E49 : ev E' 49 = w0) by (rewrite EV by lia; reflexivity).
     assert (USP : bv_unsigned (edenot E' XSP) = usp) by (cbn [edenot XSP]; rewrite E2; reflexivity).
     assert (UBLK : bv_unsigned (edenot E' XBLK) = blk) by (cbn [edenot XBLK]; rewrite E40; apply unsigned_lit; lia).
@@ -279,7 +343,7 @@ Section EntryOK.
           let e := eval vm_compute in (sr_get xs_regs0 rr) in change (sr_get xs_regs0 rr) with e end;
         lazymatch goal with
         | |- _ = edenot E' (EVar ?k) => cbn [edenot]; rewrite EV by lia;
-              rewrite (xs_E0_regn R F blk av canary x16 x6 x11 x12 x23 rnd w0 k) by lia; cbn [Z.of_nat Pos.of_succ_nat Pos.succ];
+              rewrite (xs_E0_regn R F blk av canary 0 0 0 0 0 0 w0 k) by lia; cbn [Z.of_nat Pos.of_succ_nat Pos.succ];
               unfold getr; lazymatch goal with |- (if ?c then _ else _) = _ => let t := eval vm_compute in c in change c with t end; reflexivity
         | |- _ = edenot E' (ELit 0) => reflexivity
         | |- _ => idtac
@@ -303,11 +367,12 @@ Section EntryOK.
       destruct W0S as [[_ B0] _]. cbn [cells_bytes cbytes] in B0. rewrite app_nil_r in B0.
       destruct AC as [[_ BA] _]. cbn [cells_bytes cbytes] in BA. rewrite app_nil_r in BA.
       unfold xs_kn0.
-      apply know_ok_app; [| apply know_ok_app; [| apply know_ok_app; [| apply know_ok_app; [| apply know_ok_app; [| apply know_ok_app; [| apply know_ok_app; [| apply know_ok_app; [| apply know_ok_app]]]]]]]].
+      apply know_ok_app; [| apply know_ok_app; [| apply know_ok_app; [| apply know_ok_app; [| apply know_ok_app; [| apply know_ok_app;
+        [| apply know_ok_app; [| apply know_ok_app; [| apply know_ok_app]]]]]]]].
       -   unfold kn_geom.
         assert (GE : forall a b : Z, a <= b -> a <= b) by (intros; lia).
         unfold know_ok. repeat apply Forall_cons; [.. | apply Forall_nil]; cbn [kentry_ok]; unfold estart, elenZ; cbn [a_base a_off edenot];
-          rewrite ?E2, ?E40, ?E41; rewrite ?unsigned_lit by lia; clear GE BB BE BU BS1 BS2 BX BH BR B0 BA ARND WB WE WU; lia.
+          rewrite ?E2, ?E40, ?E41; rewrite ?unsigned_lit by lia; clear GE BB BE BU BS1 BS2 BX BH BR B0 BA AB ARND WB WE WU; lia.
       -   unfold kn_wr. constructor; [| constructor; [| constructor; [| constructor; [| constructor]]]].
         + apply kwr_var; rewrite ?E2; try lia. eapply stk_wr_at; [exact ST| lia| lia| lia].
         + apply kwr_var; rewrite ?E40, ?unsigned_lit; try lia. rewrite Z.add_0_r. exact WB.
@@ -331,7 +396,32 @@ Section EntryOK.
       -   unfold kn_cells. constructor; [| constructor; [| constructor]]; apply kword_at; rewrite ?U0; try lia; cbn [edenot XAUXV].
         + rewrite E42. exact BS2.
         + rewrite E41. exact BA.
-      -   eapply kn_auxv_ok; try eassumption; lia. }
+      -   unfold kn_walk.
+        assert (LLEN : length L = length (rauxv_keys bw)) by (rewrite <- HKEYS, length_map; reflexivity).
+        assert (SPL : auxv_span bw = 16 * (Z.of_nat (length L) + 1)) by (unfold auxv_span; rewrite LLEN; reflexivity).
+        assert (LL : (15 < length L)%nat) by (apply nth_error_Some; rewrite HP15; discriminate).
+        assert (WL : length (flat_pairs L ++ [0; 0]) = (2 * length L + 2)%nat) by (rewrite length_app, xs_fp_len; reflexivity).
+        apply know_ok_app; [| apply know_ok_app].
+        + (* the vector lies above the frame and the block: [B <= av] *)
+          constructor; [| constructor; [| constructor]]; cbn [kentry_ok]; left; unfold estart; cbn [a_base a_off];
+            rewrite ?USP, ?UBLK, ?UAV, elenZ_lit' by lia; lia.
+        + refine (xs_keys_ok E' m av (flat_pairs L ++ [0; 0]) 0 (rauxv_keys bw ++ [0]) UAV ltac:(lia) AB ltac:(rewrite WL; lia) _).
+          intros i k Hk. rewrite ?Nat.add_0_l. apply xs_keys_nth. rewrite HKEYS. exact Hk.
+        + constructor; [| constructor; [| constructor; [| constructor; [| constructor]]]].
+          * apply kword_at; rewrite ?UAV; try lia. replace (av + 216) with (av + 8 * Z.of_nat (2 * 13 + 1)) by lia.
+            exact (xs_u64s_word m av _ _ _ AB (xs_pair_val L 13 _ _ HP13)).
+          * apply kword_at; rewrite ?UAV; try lia. replace (av + 232) with (av + 8 * Z.of_nat (2 * 14 + 1)) by lia.
+            exact (xs_u64s_word m av _ _ _ AB (xs_pair_val L 14 _ _ HP14)).
+          * apply kword_at; rewrite ?UAV; try lia. replace (av + 248) with (av + 8 * Z.of_nat (2 * 15 + 1)) by lia.
+            exact (xs_u64s_word m av _ _ _ AB (xs_pair_val L 15 _ _ HP15)).
+          * cbn [kentry_ok]. rewrite (elenZ_lit' E' (auxv_span bw)) by lia.
+            unfold flat, estart. cbn [a_base a_off]. rewrite UAV.
+            split; [lia|]. intros i Hi.
+            assert (Hlen : (Z.to_nat i < length (u64s (map wz (flat_pairs L ++ [0%Z; 0%Z]))))%nat)
+              by (rewrite u64s_length, length_map, WL; lia).
+            pose proof (xs_readable m av _ (Z.to_nat i) AB ltac:(lia) Hlen) as RD.
+            rewrite Z2Nat.id in RD by lia. unfold wa in RD. rewrite Z.add_0_r. exact RD.
+      }
     split; [apply fullR_mkR|].
     split. { intros i Hi. rewrite EV by (unfold FPB; lia). apply xs_E0_fp. exact Hi. }
     cbn [ms_mem MS].

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the write steps take the buffer's access check (access_okb). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -88,6 +89,8 @@ Inductive to_wall : machine_state -> list byte -> (machine_state -> Prop) -> Pro
     bv_unsigned x8 = 64%Z ->
     ms_gpr ms 0 = fd ->
     ms_read_bytes ms (ms_gpr ms 1) (ms_gpr ms 2) = Some rest ->
+    (* the range [vfs_write]'s [access_ok] accepts; see [CatSim.write1_check_n] *)
+    access_okb (ms_gpr ms 1) (bv_unsigned (ms_gpr ms 2)) = true ->
     (1 <= length rest)%nat ->
     (forall n, (1 <= n)%nat -> (n <= length rest)%nat ->
        to_wall_tail (advance_past_svc (set_gpr0 ms (len_word (firstn n rest))))
@@ -165,6 +168,7 @@ Lemma twl_write_rec : forall (k : machine_state -> Prop) rest regs pc mem rom,
                    ms_svc_pending := Some (getr regs 17); ms_resv := None;
                    ms_fcsr := fp_csr; ms_mem := mem; ms_rom := rom |}
     (reg_get regs 11) (reg_get regs 12) = Some rest ->
+  access_okb (reg_get regs 11) (bv_unsigned (reg_get regs 12)) = true ->
   (1 <= length rest)%nat ->
   (forall n, (1 <= n)%nat -> (n <= length rest)%nat ->
      to_wall_tail (mkst (regupd regs 10 (len_word (firstn n rest)))
@@ -175,7 +179,7 @@ Lemma twl_write_rec : forall (k : machine_state -> Prop) rest regs pc mem rom,
              ms_fcsr := fp_csr; ms_mem := mem; ms_rom := rom |}
     rest k.
 Proof.
-  intros k rest regs pc mem rom H17 H10 Hr Hnb Hcont.
+  intros k rest regs pc mem rom H17 H10 Hr Hok Hnb Hcont.
   assert (E10 : Z_to_bv 5 (10 + Z.of_nat 0) = (10 : reg)) by (apply bv_eq; reflexivity).
   assert (E11 : Z_to_bv 5 (10 + Z.of_nat 1) = (11 : reg)) by (apply bv_eq; reflexivity).
   assert (E12 : Z_to_bv 5 (10 + Z.of_nat 2) = (12 : reg)) by (apply bv_eq; reflexivity).
@@ -184,6 +188,7 @@ Proof.
   - exact H17.
   - unfold ms_gpr. cbn [ms_regs]. rewrite E10. exact H10.
   - unfold ms_gpr. cbn [ms_regs]. rewrite E11, E12. exact Hr.
+  - unfold ms_gpr. cbn [ms_regs]. rewrite E11, E12. exact Hok.
   - exact Hnb.
   - intros n Hn1 Hn2. rewrite adv_set. exact (Hcont n Hn1 Hn2).
 Qed.
@@ -219,7 +224,7 @@ Proof.
   apply (to_wall_mutind
            (fun ms rest k => exists ms', k ms')
            (fun ms rest k => exists ms', k ms')).
-  - intros ms x8 rest k Hsvc Hno Hg Hr Hnb Hcont IH.
+  - intros ms x8 rest k Hsvc Hno Hg Hr Hok Hnb Hcont IH.
     exact (IH (length rest) Hnb (Nat.le_refl _)).
   - intros ms k Hk. exists ms. exact Hk.
   - intros ms rest k Hnb Hw IH. exact IH.

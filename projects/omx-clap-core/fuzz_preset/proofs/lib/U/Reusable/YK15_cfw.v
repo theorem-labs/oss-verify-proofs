@@ -26,24 +26,27 @@ Qed.
 Lemma cut_free_node : forall c (I : Type) evs nx,
 node_ok segs c I evs nx -> ~ budget_refused_at segs c -> (forall i, cut_free segs (nx i)) -> cut_free segs c.
 Proof using.
-intros c I evs nx [_ Hc] Hb H. apply (cut_free_of_succ c Hb). intros e c' Hs.
+intros c I evs nx [_ [Hc _]] Hb H. apply (cut_free_of_succ c Hb). intros e c' Hs.
 destruct (Hc e (SNext c') Hs) as (i & _ & E). injection E as ->. apply H.
 Qed.
 Lemma alloc_refused_false : forall i m, ~ In (bv_unsigned (in_sysno i)) alloc_mark_sysnos ->
 alloc_budget_refused_b i m = false.
 Proof using.
 intros i m Hn. unfold alloc_budget_refused_b.
-destruct (Z.eqb_spec (bv_unsigned (in_sysno i)) 214) as [E|_]; [exfalso; apply Hn; rewrite E; vm_compute; auto|].
-destruct (Z.eqb_spec (bv_unsigned (in_sysno i)) 216) as [E|_]; [exfalso; apply Hn; rewrite E; vm_compute; auto|].
-destruct (Z.eqb_spec (bv_unsigned (in_sysno i)) 222) as [E|_]; [exfalso; apply Hn; rewrite E; vm_compute; auto|].
-destruct (Z.eqb_spec (bv_unsigned (in_sysno i)) 226) as [E|_]; [exfalso; apply Hn; rewrite E; vm_compute; auto|].
+(* 727298f3: [Run.alloc_budget_refused_b] gained munmap (215), which is also in
+   [alloc_mark_sysnos]; the deeper list needs [auto 10] to reach 226. *)
+destruct (Z.eqb_spec (bv_unsigned (in_sysno i)) 214) as [E|_]; [exfalso; apply Hn; rewrite E; vm_compute; auto 10|].
+destruct (Z.eqb_spec (bv_unsigned (in_sysno i)) 215) as [E|_]; [exfalso; apply Hn; rewrite E; vm_compute; auto 10|].
+destruct (Z.eqb_spec (bv_unsigned (in_sysno i)) 216) as [E|_]; [exfalso; apply Hn; rewrite E; vm_compute; auto 10|].
+destruct (Z.eqb_spec (bv_unsigned (in_sysno i)) 222) as [E|_]; [exfalso; apply Hn; rewrite E; vm_compute; auto 10|].
+destruct (Z.eqb_spec (bv_unsigned (in_sysno i)) 226) as [E|_]; [exfalso; apply Hn; rewrite E; vm_compute; auto 10|].
 reflexivity.
 Qed.
 Lemma nr_node_sys : forall ms model x8 (I : Type) evs nx,
 node_ok segs (mkCfg ms model) I evs nx -> ms_svc_pending ms = Some x8 -> alloc_no_b (bv_unsigned x8) = false ->
 ~ budget_refused_at segs (mkCfg ms model).
 Proof using.
-intros ms model x8 I evs nx [_ Hc] Hsvc Hno (Hh & [(Hn & _) | (y8 & Hy8 & [Hb | (eff & m' & evs' & Hspec & Hh' & Hmat)])]);
+intros ms model x8 I evs nx [_ [Hc _]] Hsvc Hno (Hh & [(Hn & _) | (y8 & Hy8 & [Hb | (eff & m' & evs' & Hspec & Hh' & Hmat)])]);
 cbn [cfg_ms cfg_model] in *.
 - congruence.
 - rewrite Hsvc in Hy8. injection Hy8 as <-.
@@ -71,7 +74,7 @@ Qed.
 Lemma uniform_node : forall c (I : Type) evs nx,
 node_ok segs c I evs nx -> place_uniform segs c -> (forall i, uniform segs (nx i)) -> uniform segs c.
 Proof using.
-intros c I evs nx [_ Hc] Hp H. apply (uniform_intro segs c Hp). intros e c' Hs.
+intros c I evs nx [_ [Hc _]] Hp H. apply (uniform_intro segs c Hp). intros e c' Hs.
 destruct (Hc e (SNext c') Hs) as (i & _ & E). injection E as ->. apply H.
 Qed.
 Lemma place_uniform_sys : forall ms model x8,

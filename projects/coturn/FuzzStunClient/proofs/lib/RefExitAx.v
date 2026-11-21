@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, exit_pre1 also asks for the stdout channel's reader (m_channel_reader) and ref_exit1_flush takes it. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -82,7 +83,9 @@ Definition exit_pre1 (regs : bvmap 5 word) (mem : word -> option byte) (model : 
     /\ ( (pending = [] /\ exists wp1 rp1, file_clean mem 0x26548 wp1 rp1)
        \/ (exists (wb wp : Z) (bufp bufsz rp1 can : word),
               stdout_pending mem wb wp bufp bufsz rp1 can pending
-              /\ fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))) ).
+              /\ fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))
+              (* LPS 08b1429: flushing to the stdout channel needs its reader present *)
+              /\ m_channel_reader model = true) ).
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -136,10 +139,11 @@ Theorem ref_exit1_flush :
   stdout_pending mem wb wp bufp bufsz rp1 can pending ->
   m_halted model = None -> m_vm_lazy model = [] ->
   fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)) ->
+  m_channel_reader model = true ->   (* LPS 08b1429: RefStdioWrite.ref_stdio_write's reader premise *)
   realizes RSEGS (mkCfg (mkst regs (0x1baf8 : word) mem (seg_rom RSEGS)) model)
            (t_emit (W 1 pending) (t_exit (bv_and code (Z_to_bv 64 255)) (m_fs model))).
 Proof.
-  intros regs mem model sp tp code tid wp2 rp2 wb wp bufp bufsz rp1 can pending EC SP Hh Hlazy Hfd.
+  intros regs mem model sp tp code tid wp2 rp2 wb wp bufp bufsz rp1 can pending EC SP Hh Hlazy Hfd Hrdr.
   destruct EC. destruct SP as [P1l P1wp P1wb P1wr P1buf P1bsz P1fd P1rp P1re RANGE LEN PMAX BYTES [Ggot Gcan]].
   zaddr P1l; zaddr P1wp; zaddr P1wb; zaddr P1wr; zaddr P1buf; zaddr P1bsz; zaddr P1fd; zaddr P1rp; zaddr P1re.
   (* [comment removed for export] *)
@@ -173,7 +177,7 @@ Proof.
     | lia | lia
     | (* [comment removed for export] *) split; subst mem3; unfold mem_w3a, mem_w2, mem_w1x; zaddr_goal; rdn_solve
     | (* [comment removed for export] *) split; subst mem3; unfold mem_w3a, mem_w2, mem_w1x; rdn_solve
-    | lia | exact Hfd | exact Hh | exact Hlazy
+    | lia | exact Hfd | exact Hrdr | exact Hh | exact Hlazy
     | lia | lia | exact LEN
     | cbn [length]; u_norm; reflexivity
     | cbn [length]; lia
@@ -205,7 +209,7 @@ Theorem ref_exit1 : forall regs mem model code pending,
            (t_emit (W 1 pending) (t_exit (bv_and code (Z_to_bv 64 255)) (m_fs model))).
 Proof.
   intros regs mem model code pending (sp & tp & tid & wp2 & rp2 & EC & Hh & Hlazy & CASES).
-  destruct CASES as [(-> & wp1 & rp1 & F1) | (wb & wp & bufp & bufsz & rp1 & can & SP & Hfd)].
+  destruct CASES as [(-> & wp1 & rp1 & F1) | (wb & wp & bufp & bufsz & rp1 & can & SP & Hfd & Hrdr)].
   - eapply rz_conseq; [ | apply t_emit_nil_exit ].
     eapply ref_exit1_clean; eassumption.
   - eapply ref_exit1_flush; eassumption.

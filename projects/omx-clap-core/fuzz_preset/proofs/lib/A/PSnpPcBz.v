@@ -1,10 +1,10 @@
 (* printf_common's call contract at fuzz_manifest.asan, in the Bz vocabulary: the same statements as port-reply's
-   lib/A/PSnpPcBz.v (origin/cold/port-reply-pf-chain 970f7d733a4) pcom_pre and pcom_call, at fm's printf_common
+   lib/A/PSnpPcBz.v pcom_pre and pcom_call, at fm's printf_common
    (PSnpPcTbl.v PF_PRINTF_COMMON); the interceptor cells (port-reply's sni_cells / vfi_cells) are not here, they belong
    to the interceptor chain.
 
    This file proves no new function. `pcom_call` is c-asan-rt's printf_common walk (lib/A/Bz/A/I_pcxlist.v
-   pcom_genx_spec, relocated onto fuzz_manifest from fuzz_state 840c4afa7e2) with its section hypothesis rip_stmt
+   pcom_genx_spec, relocated onto fuzz_manifest from fuzz_state) with its section hypothesis rip_stmt
    discharged by R_isPoisoned.v rip_proof; what it adds is the stack bookkeeping that lets a caller with a deeper floor
    lo call it: pcom_genx_spec is used at the floor sp - PCOM_DEPTH (its own window), and the part of the caller's stack
    below that floor is carried across the call untouched (stk_split / stk_merge).
@@ -12,7 +12,7 @@
    pcom_pre is pcom_genx_spec's premises over the memory, bundled at that floor. Its argument list (Bz's
    I_pcxgram.parg) and its format check (pcomx_ok, printf_common's own grammar) are the caller's to compute; for a
    fixed format both are closed computations. *)
-(* Modified by Theorem Labs, 2026-10: c-libc-stdio's copy for fuzz_preset image A (route (a) P2, ASan's printf_common over ARx; parent c-libc-stdio 13:0xZ) of proofs/omx-clap-core/fuzz_manifest/lib/A/RT_pf_bz.v at origin/cold/port-fm-rtprintf-param 7e395de08f5: module paths fuzz_manifest -> fuzz_preset, lib/A/Bz -> lib/A/PSnpBz (the Bz files relocated to image A by c-asan's alreloc), FM glue modules -> their PSnp twins; nothing else changes (PF_PRINTF_COMMON from PSnpPcTbl.v). *)
+(* Modified by Theorem Labs, 2026-10: c-libc-stdio's copy for fuzz_preset image A (route (a) P2, ASan's printf_common over ARx; parent c-libc-stdio 13:0xZ) of proofs/omx-clap-core/fuzz_manifest/lib/A/RT_pf_bz.v: module paths fuzz_manifest -> fuzz_preset, lib/A/Bz -> lib/A/PSnpBz (the Bz files relocated to image A by c-asan's alreloc), FM glue modules -> their PSnp twins; nothing else changes (PF_PRINTF_COMMON from PSnpPcTbl.v). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A.PSnpBz Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

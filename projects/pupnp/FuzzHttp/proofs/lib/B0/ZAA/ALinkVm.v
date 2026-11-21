@@ -1,10 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap's cut). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap Madvise.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Placement.
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Lib Require Import Cfg.
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Lib Require Import LiaTuning ITree Nodes Decode Ceiling VmGap.
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Top Require Bridge.
@@ -223,7 +225,7 @@ Definition place_ok : Prop :=
 
 #[using="Type"] Lemma stwf_anon : forall (Q : exc Z -> Model -> Prop),
   lz_room mo nZ (nZ / 8 + 2 * page_size) ->
-  vm_gap_available h nZ = true ->
+  RelSpec.vm_place_available h (kb_thp (m_kernel mo)) (Z_to_bv 64 0) nZ = true ->
   place_ok ->
   (forall a : word, mmap_placed mo 0 len MAPF_ANON_PRIVATE a -> Q (Ok (bv_unsigned a)) (lmheap_post mo a len SHADOW_OFF)) ->
   stwfL (t_anon len avoid) mo Q.
@@ -244,6 +246,29 @@ Proof.
       rewrite D. cbn [Bridge.stwf]. exact (HQ a Hp).
 Qed.
 End Anon.
+
+(* LPS 727298f3: a NULL-hint anonymous grant is refused only when [linux_place] has no answer
+   ([NodesLZ.gap_refused]).  A free aligned window above [task_unmapped_base] and below
+   [alloc_top] is a fit of Linux's bottom-up search, so the search answers
+   ([Placement.linux_place_exists]); the window comes from the cost bound as in
+   [VmGap.vm_gap_available_of_cost]. *)
+Lemma vm_place_available_of_cost : forall h thp nZ c,
+  0x2aaaaab000 <= c -> c mod 4096 = 0 -> 0 < nZ -> nZ mod page_size = 0 ->
+  c + nZ + gap_cost nZ c (vm_reserved h ++ vm_maps h) <= alloc_top h ->
+  RelSpec.vm_place_available h thp (Z_to_bv 64 0) nZ = true.
+Proof.
+  intros h thp nZ c Hc Hal Hn Hnal Hcost. pose proof (alloc_top_lt h) as TOP. unfold two_pow_64 in TOP.
+  destruct (free_base_exists (vm_reserved h ++ vm_maps h) c (alloc_top h) nZ ltac:(lia) Hal Hn Hcost)
+    as (g & G1 & G2 & G3 & G4).
+  apply (proj2 (RelSpec.vm_place_available_spec h thp (Z_to_bv 64 0) nZ Hn Hnal)).
+  destruct (Placement.linux_place_exists h thp (Z_to_bv 64 0) nZ Hn Hnal) as (p & Hp).
+  { exists g. right. unfold gap_fits. split; [exact G2|].
+    split; [eapply Z.le_trans; [|exact (Z.le_trans _ _ _ Hc G1)]; vm_compute; discriminate|].
+    split; [exact G3|]. apply region_free_of_clear; [lia| lia| lia| exact G4]. }
+  destruct (Placement.linux_place_admissible _ _ _ _ p Hn Hnal Hp) as (_ & Hpos & Htop & _).
+  exists (Z_to_bv 64 p). rewrite Z_to_bv_unsigned, bv_wrap_small; [exact Hp|].
+  unfold bv_modulus. change (2 ^ Z.of_N 64) with (2 ^ 64). lia.
+Qed.
 
 Section AnonPost.
 Variables (mo : Model) (len off : Z) (a : word).
@@ -266,7 +291,7 @@ Proof. split; reflexivity. Qed.
   region_free (vm_reserved h) a (lenW len) = true /\ region_free (vm_maps h) a (lenW len) = true /\
   bv_unsigned (lenW len) = nZ.
 Proof.
-  destruct Hp as (P1 & P2 & P3 & P4 & P5). cbv zeta in P3, P4, P5.
+  destruct Hp as (P1 & P2 & P3 & P4 & P5 & _). cbv zeta in P3, P4, P5.
   change (page_round_up_Z (bv_unsigned (Z_to_bv 64 len))) with (lenZ len) in *.
   pose proof (alloc_top_lt h) as Ht.
   assert (En : bv_unsigned (lenW len) = nZ).
@@ -319,13 +344,29 @@ Definition unmap_post (mo : Model) (addr len : Z) : Model :=
        (maps_subtract (vm_noaccess h) (bv_unsigned A) (bv_unsigned A + bv_unsigned n))
        (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h)) mo.
 
+(* LPS 08b1429: munmap cuts with [maps_subtract]; on a separated ledger with
+   positive sizes the cut is the removal of the exact entry. *)
+Lemma cut_eq_remove_seps : forall l (a n : word), seps l -> Forall (fun q => 0 < S q) l -> In (a, n) l ->
+  maps_subtract l (bv_unsigned a) (bv_unsigned a + bv_unsigned n) = map_remove l a.
+Proof.
+  intros l a n Hs Hp Hin. pose proof (proj1 (Forall_forall _ _) Hp _ Hin) as Pa. unfold S in Pa. cbn [snd] in Pa.
+  apply RelSpec.maps_subtract_eq_remove; [exact Pa|].
+  intros e He. destruct (LZPages.seps_in_disjoint l e (a, n) Hs He Hin) as [E|D]; [left; exact E|right].
+  pose proof (proj1 (Forall_forall _ _) Hp e He) as Pe. unfold S in Pe.
+  unfold iv_disjoint in D. cbn [fst snd] in D.
+  split; [intros Eb; rewrite Eb in D; lia|]. split; [exact Pe|lia].
+Qed.
+
 Lemma stwf_unmap : forall addr len mo (Q : exc unit -> Model -> Prop), 0 <= len < 2^64 ->
   map_has (vm_maps (m_vmmaps mo)) (Z_to_bv 64 addr) (lenW len) = true ->
+  maps_subtract (vm_maps (m_vmmaps mo)) (bv_unsigned (Z_to_bv 64 addr))
+    (bv_unsigned (Z_to_bv 64 addr) + bv_unsigned (lenW len))
+  = map_remove (vm_maps (m_vmmaps mo)) (Z_to_bv 64 addr) ->
   Q (Ok tt) (unmap_post mo addr len) ->
   stwfL (t_unmap addr len) mo Q.
 Proof.
-  intros addr len mo Q Hl HS HQ. unfold t_unmap, enode. cbn [Bridge.stwf]. split; [| split].
-  - cbn [nsafeL nsafe]. split; [exact HS| exact I].
+  intros addr len mo Q Hl HS HC HQ. unfold t_unmap, enode. cbn [Bridge.stwf]. split; [| split].
+  - cbn [nsafeL nsafe]. split; [split; [exact HS| exact HC]| exact I].
   - intros code mo' HX. exact HX.
   - intros rsp mo' evs (-> & E & ->). split; [reflexivity|].
     rewrite (dec_unmapu_ok addr len rsp Hl E). cbn [Bridge.stwf]. exact HQ.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths and module names changed; 106 of its 134 lines of code are new or changed and 486 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: INSTANCE WITNESSES for the image facts at parse_items' image-B' top (lane PItemsB, owner;
    a Theorem Labs lane's UNIT RULING 16:45Z: every premise stating a fact about the image needs a lemma closed by computation at
    the real instance). Instance: B := YD2l.TfibB (image B', asan-ubsan pin d663f82d7f48, twin c90d4fa54d43), the
@@ -76,7 +77,7 @@ Qed.
 End lawx.
 
 (* ---- HZS and HIMG at the relation of record (a Theorem Labs lane 17:0xZ). Restated from PValueB's lib/B/Prog/PvB_Inst.v
-   (a working branch 32128e0aad52, blob 25ca37197437): pvI_zs_al, pvI_cover, pvI_const_incl,
+   (a working branch, blob 25ca37197437): pvI_zs_al, pvI_cover, pvI_const_incl,
    pvI_img_vis copied with TB := TfibB; that file cannot be Required on this base (it Requires PValueB's walk files,
    which are on the superseded parse text). pvh_hull_img (PvB_A_Home.v) is SHARPENED: its window
    lo + 64 <= a /\ a + n + 64 <= hi becomes lo <= a /\ a + n <= hi, valid because both bounds are 64-aligned
@@ -152,7 +153,7 @@ unfold SHADOW_OFF in *.
 split; [rewrite Z.mul_comm, Z.div_mul by lia; lia | lia].
 Qed.
 
-(* the laws at ARX (YGcallcf.v:242) *)
+(* the laws at ARX (YGcallcf.v:243) *)
 #[local] Notation LAWSX := (AR_laws_x_xs SEGS TfibB (AR_laws_ok_cf SEGS TfibB)).
 
 (* HZS: every zero-shadow range of TfibB is addressable with a visible hull, in every ARX state; NO edge premise *)
@@ -169,7 +170,7 @@ split.
   exact (pii_img_vis ly S Hp W mem md _ (proj1 HA) Hr).
 Qed.
 
-(* kept_img / kept_at are PER-INSTANCE since kit-oldpin 7176c4125950 (pa_lo + 64 <= p /\ p + n + 64 <= pa_hi of the
+(* kept_img / kept_at are PER-INSTANCE since kit-oldpin (pa_lo + 64 <= p /\ p + n + 64 <= pa_hi of the
    Section's PA); at PA := PI_prog_B they are exactly the PLO / PHI of the window lemmas above, so no rewrite *)
 
 (* HIMG: a kept image string is addressable with a visible hull, in every ARX state. The hull: PvB_Inst.v pvI_hkimg's

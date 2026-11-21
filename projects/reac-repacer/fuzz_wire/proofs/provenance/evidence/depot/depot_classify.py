@@ -2,10 +2,10 @@
 """depot_classify.py [--consumer GREPO KREPO] GRANT_LIB KNOCK_LIB CGIF_LIB FILE... -- every difference between fuzz_grant's released kernel text and
 libreac/fuzz_knock's released text of each FILE, classed depot / layout-grow / other.
 
-GRANT_LIB: fuzz_grant's released lib at origin/ossv/recipes 4f87de75d67 with lib/Reusable/* at its root (module text
+GRANT_LIB: fuzz_grant's released lib with lib/Reusable/* at its root (module text
 ...fuzz_grant.lib.Reusable -> ...fuzz_grant.lib; line numbers are those of lib/Reusable/<F>). KNOCK_LIB: fuzz_knock's
-released lib at origin/ossv/recipes 88154566652a (lib/Reusable/<F>, lib/A/...). CGIF_LIB: cgif_file_fuzzer's lib at
-c8557374ad2e (the cgif lineage knock's kernel was ported from), one <F> per FILE, flat. FILE: names like YG0r.v.
+released lib (lib/Reusable/<F>, lib/A/...). CGIF_LIB: cgif_file_fuzzer's lib
+ (the cgif lineage knock's kernel was ported from), one <F> per FILE, flat. FILE: names like YG0r.v.
 
 Method.
 1. Both texts are tokenized with comments removed; a unit's module paths become LIB / IMG and the record names
@@ -22,7 +22,7 @@ Method.
      layout-grow  residue naming the first-Put layout growth (layout_grow, gle_le, KnLayoutGle, KnBlockExt, nb_ext,
                   sb_ext, the ly_NB / ly_SB = 0 sentinel arms, vm_takes, kd_avoid, *_takes);
      other        any other residue: knock's proof or statement text differs from grant's in the one-trace configuration.
-   For each 'other' hunk the cgif lineage is read: whether grant's side and / or knock's side occur in cgif's c8557374ad2e
+   For each 'other' hunk the cgif lineage is read: whether grant's side and / or knock's side occur in cgif
    text (with three tokens of context).
 5. Output: a TSV (file, hunk, class, grant lines, knock lines, residue tokens, cgif lineage) on stdout, then per-file counts;
    the extra knock files each file Requires (DepotCfg, KnBlockExt, KnLayoutGle, YC85).

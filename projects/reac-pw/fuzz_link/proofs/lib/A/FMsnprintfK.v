@@ -1,9 +1,10 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfK.v (a working branch 3e35620c52e); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMsnprintfK.table). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfK.v (a working branch); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMsnprintfK.table). *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: relocated to omx-clap-core fuzz_manifest.asan (module paths). kcall generalizes A/AE3h.v vf_icpt_xcall (callee post handed in, regions after the
    stack region constrained by what they must avoid); kentry, kenv, st_ok_pc_mem_out and kstore0 are new. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Kit for the snprintf walks in the donor's symbolic engine: a call step that resumes a symbolic walk after a callee
    whose effect is given as an SRr fact (the donor's A/AE3h.v vf_icpt_xcall, with the callee's post handed in instead
    of fixed, and the regions after the stack region constrained by what they must avoid instead of by their base). *)

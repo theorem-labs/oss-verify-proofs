@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: REGENERATED (not relocated) from proofs/cgif/cgif_file_fuzzer/lib/AGhy.v
-   (cold/c-asan-realloc-primary 63b73430c18, file sha256 378d6b206c74) for omx-clap-core/fuzz_preset's asan-ubsan
+   (file sha256 378d6b206c74) for omx-clap-core/fuzz_preset's asan-ubsan
    image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53), method
    h-mani-a8's agreloc-method.md section 3.  No numeral of the cgif seed is carried
    over: A_Allocate and the two constant call-site arguments are the generated names of AU/FCimgB.v, and the
@@ -10,6 +10,7 @@
    image.  B deviates from the note in one point: REGS_G's a5 is kept as the generic can_fill atom [SOff 15 0]
    (fact (15%nat, mkAF 0 1 0)), as in the cgif seed, because AGhz / AGi0 / AGi2 / AGi4 and AllocG's contract are
    generic in cf; FCimgB.ALLOC_CF_MALLOC = 1 is the value of the malloc call site only, an instantiation. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The seeds of the frame-generic walk of Allocator::Allocate (the AG* files, generalized from YFhy-YFjg).
 
    The walk starts at Allocate's first instruction (A_Allocate) with the caller's frame abstract.  Over the

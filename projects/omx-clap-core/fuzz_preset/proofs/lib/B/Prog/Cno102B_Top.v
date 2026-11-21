@@ -15,15 +15,16 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_drain_pro.v, with its module paths, module names and numbers changed; 1682 of its 1766 lines of code are new or changed and 1187 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/PjGetB.v, with its module paths and module names changed; 617 of its 693 lines of code are new or changed and 1690 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/Caw102B.v, with its module paths and module names changed; 170 of its 211 lines of code are new or changed and 652 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image B' (asan-ubsan, harness fix #102: pin sha256 d663f82d7f488d30, twin c90d4fa54d43160b): CB_Top,
    the composition of check_no_overread's segment walk CB0 .. CB9 (entry B' 0x819f0 = slot 201 of the whole-program
-   listing) into the kit's text tcheck_no_overread_specX (lib/A/PRH_FnCheck.v c40cf3fdcd2a :738-823, the kit cut
-   7cdbb61b5fa0; the post-implication form with the copies' outcome clause and the
+   listing) into the kit's text tcheck_no_overread_specX (lib/A/PRH_FnCheck.v c40cf3fdcd2a :738-823, the kit cut;
+   the post-implication form with the copies' outcome clause and the
    budgeted post fpostFbm .. (wbudget [] 6)), with the memnorm invariant instantiated ONCE: P := cnb_mn D (the
    contract's instance; cnb_mn_laws / cnb_mn_call / cnb_mn_mn). Row R7-7 of a Theorem Labs lane's internal file PART7-ROWS.md
    (a Theorem Labs lane; family lead a Theorem Labs lane). Template: lib/B/Prog/Caw102B_Top.v caw_B_top (a working branch).
    rule 24: no function proved. rule 24: proves no function (kind: segment lemma; the composition of the segments).
-   INPUTS (blobs at this file's commit; contract head 0e85941c7687):
+   INPUTS (blobs at this file's commit; contract head):
      THE CONTRACT lib/B/Prog/Cno102B_Base.v 06098b64f859: cnb_pre (the text's premises at one record, verbatim; no
      DW), every cut cnb_at_* / exit cnb_ex_*, cnb_set_fpos, cnb_mn, cnb_post = cnb_ex_ret (the text's post, verbatim).
      The step kit lib/B/Prog/Cno102B_Ro.v c1b5ec3f8fff. Nothing here re-states the contract.

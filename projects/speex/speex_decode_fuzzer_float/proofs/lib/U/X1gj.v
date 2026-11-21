@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (open's path bound: the path ends below TASK_SIZE, the per-byte access check of the model's open). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
@@ -245,6 +246,12 @@ unfold got_ssp, ssp_guard in *.
 pose proof (munch_refl [(bv_unsigned sp - 112, bv_unsigned sp); (errno_addr tp, errno_addr tp + 4)]%Z m) as MU.
 pose proof (wmono_refl rsegs m) as WM.
 pose proof (bytes_at_bound _ _ _ _ SRC) as BP. rewrite length_app in BP. cbn [length] in BP.
+(* the path's TASK_SIZE bound [at_node]'s NOpen case carries since LPS 08b1429 ([read_cstr_aux]'s
+   per-byte access_ok): the path is mapped memory, which lies below [mem_top rsegs] = TASK_SIZE *)
+assert (PTS : (bv_unsigned a0 + Z.of_nat (length path) + 1 <= TASK_SIZE)%Z).
+{ assert (MT : mem_top rsegs = TASK_SIZE) by reflexivity.
+  pose proof (bytes_at_below _ _ _ _ MI SRC ltac:(intros Hn; apply app_eq_nil in Hn; destruct Hn as [_ Hn]; discriminate Hn)) as X.
+  rewrite MT, length_app in X. cbn [length] in X. lia. }
 apply impl_enode.
 carve_frame 96%nat ST.
 do 18 step. if_false. do 3 step. if_false. do 2 step.

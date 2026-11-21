@@ -3,9 +3,10 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/AF0x.v, with its module paths and module names changed; 571 of its 675 lines of code are new or changed and 468 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/B/FMW_rd_pre_k.v; 1663 of its 1843 lines of code are new or changed and 495 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lv2_locate_manifest_readings on fm.asan-ubsan (image B, pin ca61e5c9eabc0050): plain_local's loop at 0x8227c
    (lv2_locate.c:48-51, 139-145), the segment statement rd_seg_PL of lib/B/FMW_rd_cuts.v: rd_PL_holds (FMW_rd_top.v's
-   SEG_PL). A re-walk of A's lib/A/FMW_rd_pl.v (a working branch e2e59892bef) on B's code: B counts q up in s8
+   SEG_PL). A re-walk of A's lib/A/FMW_rd_pl.v (a working branch) on B's code: B counts q up in s8
    against n in a3 and keeps read_again in s1, local's bases in the frame (F+0x08 / 0x30 / 0x38, ~local at F+0x40).
    The walk, cut at seven pcs, each with its own symbolic state built from Props:
      A  0x8227c (rd_PL): ~local <u q is the UBSan guard 0x82280 (refuted by the facts: ~local >= 2^64 - 2^47 > q),

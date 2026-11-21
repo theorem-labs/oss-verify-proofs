@@ -1,5 +1,5 @@
 (* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050, unstripped twin b9568e38145a) of lib/A/FMW_name_char.v at
-   a working branch 6397116ac79 (= a working branch 0d38fb8ac64, unchanged to 433b7106168). name_char's 29 instructions
+   a working branch (= a working branch, unchanged to). name_char's 29 instructions
    are the same words on both images (elfdis.py: same mnemonics and operands, the `jal` offset 0x607c lands on each
    image's isalnum), so the walk is A's with its addresses relocated by symbol + offset:
    name_char 0x822c4 -> 0x825ac, every interior pc name_char + k on A -> name_char + k on B (b_reloc.py ad735a6c849a4c62
@@ -7,7 +7,7 @@
    here equals b_reloc's output except that A's import order is kept, so every name resolves as on A). Per-image values
    remap does not cover, re-derived by hand: the frame 16 (B `addi sp, sp, -0x10` at 0x825ac; ra at 8(sp), s0 at 0(sp)),
    NC_LEN 29 (116 bytes). No UBSan trap (`unimp`) lies in 0x825ac..0x82620. Imports by the image-B core's rule
-   (a working branch 305d8b1527f, coreab/REUSABLEB-LIST.txt): lib.A AB1v -> lib.ReusableB YB1v (listed); every
+   (a working branch, coreab/REUSABLEB-LIST.txt): lib.A AB1v -> lib.ReusableB YB1v (listed); every
    lib.Reusable module, YCbq included, stays lib.Reusable; fm's own files from lib.B; FMupoison shared from lib.A. *)
 (* name_char 0x825ac..0x82620 (lv2_locate.c:36-39) in fm.asan-ubsan: FMH_Fn.name_char_spec under musl isalnum's
    contract (FMH_Rt.aisalnum_realizes at PC_isalnum, a Section hypothesis). The walk uses the donor's journal engine

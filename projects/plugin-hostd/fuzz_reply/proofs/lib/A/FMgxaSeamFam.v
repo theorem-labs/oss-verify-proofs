@@ -1,4 +1,4 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamFam.v (a working branch 3242941dc96); relocated to plugin-hostd/fuzz_reply/fuzz_reply.asan by a Theorem Labs lane's pfinst/tool (reloc.py target reply-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_reply.asan, symbol + offset; table pfinst/tool/tables-3242941dc96/reply-A/FMgxaSeamFam.table); names: record RT_IImgA -> . *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamFam.v (a working branch); relocated to plugin-hostd/fuzz_reply/fuzz_reply.asan by a Theorem Labs lane's pfinst/tool (reloc.py target reply-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_reply.asan, symbol + offset; table pfinst/tool/tables/reply-A/FMgxaSeamFam.table); names: record RT_IImgA -> . *)
 (* Step 2 of the evt -> SRr seam at musl vfprintf: the FORMAT and the ARGUMENTS.
 
    The shared contract's family (FMsnprintfShared.v pf_family, refined in FMgxaSeamDef.v as

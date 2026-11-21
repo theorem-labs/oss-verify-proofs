@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (node_ok's third part, RomBase.sys_rob, at the munmap node, whose node now has the refused errno branch alongside the unmap; srzM_silent_all and srz_silent_all added; RomBase imported). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import
-YK16 YK0o YK0j YK0v YK15 YK0k YK0t YK1g.
+YK16 YK0o YK0j YK0v YK15 YK0k YK0t YK1g RomBase.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Export HaltsFO.
 Unset Lia Cache. Unset Nia Cache.
 Import ListNotations.
@@ -111,7 +112,7 @@ induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
 intros tr c' Hstar.
 - inversion Hstar as [|c1 e c2 tr2 c3 Hss Hstar2]; subst.
 + exists i0. left. apply is_prefix_nil.
-+ destruct Hnode as [_ Hsound].
++ destruct Hnode as [_ [Hsound _]].
 destruct (Hsound e (SNext c2) Hss) as (i & -> & Heq2).
 inversion Heq2; subst c2.
 exists i. right. exists tr2.
@@ -167,7 +168,7 @@ intros c T e c' H; revert e c';
 induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
 | c Hspin Hh | c T T' H IH Heq];
 intros e c' Hss.
-- destruct Hnode as [_ Hsound].
+- destruct Hnode as [_ [Hsound _]].
 destruct (Hsound e (SNext c') Hss) as (i & _ & Heq2).
 inversion Heq2; subst c'. exists (T i). apply Hcont.
 - exfalso. apply Hh. eapply sstep_halted_none; exact Hss.
@@ -185,7 +186,7 @@ intros c T e H; revert e;
 induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
 | c Hspin Hh | c T T' H IH Heq];
 intros e Hss.
-- destruct Hnode as [_ Hsound].
+- destruct Hnode as [_ [Hsound _]].
 destruct (Hsound e SError Hss) as (i & _ & Hbad). discriminate.
 - apply Hh. eapply sstep_halted_none; exact Hss.
 - destruct c as [ms model]; cbn in Hspin, Hh.
@@ -300,6 +301,27 @@ srealizes c' T ->
 srealizes c T.
 Proof. exact (srzM_silent1 true). Qed.
 
+(* The model's [srz_silent_all] at 08b1429 (Common/SpinAlg.v:463): a silent node whose every
+   resolution continues as the SAME shape; munmap's refusal family uses it. *)
+Lemma srzM_silent_all : forall b c (I : Type) (nx : I -> config) (T : TSet) (i0 : I),
+node_ok segs c I (fun _ => []) nx ->
+(forall i, srealizesM b (nx i) T) ->
+srealizesM b c T.
+Proof.
+intros b c I nx T i0 Hnode HT.
+assert (HT0 : T []) by (eapply srealizesM_nonempty; apply (HT i0)).
+apply (srzM_conseq b c (t_alt (fun _ : I => t_emit [] T))).
+- apply (srzM_node b c I (fun _ => []) nx (fun _ => T) i0 Hnode). intros i; exact (HT i).
+- intro tr. split.
++ intros [i Hi]. exact (proj1 (t_emit_nil_eq T HT0 tr) Hi).
++ intro H. exists i0. exact (proj2 (t_emit_nil_eq T HT0 tr) H).
+Qed.
+Lemma srz_silent_all : forall c (I : Type) (nx : I -> config) (T : TSet) (i0 : I),
+node_ok segs c I (fun _ => []) nx ->
+(forall i, srealizes (nx i) T) ->
+srealizes c T.
+Proof. exact (srzM_silent_all true). Qed.
+
 Lemma srzM_alt2 : forall b c (IA IB : Type) (nx : IA + IB -> config) (A B : TSet)
 (a0 : IA) (b0 : IB),
 node_ok segs c (IA + IB) (fun _ => []) nx ->
@@ -395,25 +417,40 @@ m_vm_lazy model = [] ->
 ms_svc_pending ms = Some x8 ->
 bv_unsigned x8 = 215%Z ->
 munmap_args_ok ms model ->
-node_ok segs (mkCfg ms model) unit (fun _ => [])
-(fun _ => mkCfg (advance_past_svc (apply_effect ms (munmap_eff ms)))
-(munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1))
-model)).
+node_ok segs (mkCfg ms model) ({e : Z | In e munmap_errnos} + unit)
+(fun _ => [])
+(fun i => match i with
+| inl (exist _ e _) =>
+mkCfg (advance_past_svc (set_gpr0 ms (errno_ret e))) model
+| inr _ =>
+mkCfg (advance_past_svc (apply_effect ms (munmap_eff ms)))
+(munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model)
+end).
 Proof.
-intros ms model x8 Hh Hlazy Hsvc Hno Hargs. split.
-- intros []. apply (sstep_syscall segs ms model x8 (munmap_eff ms)
+intros ms model x8 Hh Hlazy Hsvc Hno Hargs. split; [| split].
+- intros [[e He] | []]; cbn.
++ rewrite <- (apply_effect_no_write ms (errno_ret e)).
+apply (sstep_syscall segs ms model x8 (mkEffect (errno_ret e) [] []) model model []).
+* exact Hh.
+* exact Hsvc.
+* apply munmap_fail_ok; assumption.
+* exact Hh.
+* apply materialize_model_accesses_no_lazy. exact Hlazy.
++ apply (sstep_syscall segs ms model x8 (munmap_eff ms)
 (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model)
 (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) []).
-+ exact Hh.
-+ exact Hsvc.
-+ apply munmap_ok; assumption.
-+ rewrite munmap_model_halted; exact Hh.
-+ apply materialize_model_accesses_no_lazy.
+* exact Hh.
+* exact Hsvc.
+* apply munmap_ok; assumption.
+* rewrite munmap_model_halted; exact Hh.
+* apply materialize_model_accesses_no_lazy.
 exact (munmap_model_no_lazy _ _ _ Hlazy).
 - intros e st Hss.
 destruct (sstep_munmap_inv segs ms model x8 e st Hh Hlazy Hsvc Hno Hargs Hss)
-as [-> ->].
-exists tt. split; reflexivity.
+as [-> [(er & Her & ->) | ->]].
++ exists (inl (exist _ er Her)). split; reflexivity.
++ exists (inr tt). split; reflexivity.
+- apply (sys_rob_memfree segs ms model x8 Hsvc). rewrite Hno. exact memfree_215.
 Qed.
 
 

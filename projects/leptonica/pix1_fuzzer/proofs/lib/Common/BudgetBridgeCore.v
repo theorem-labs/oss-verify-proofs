@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (setlimv and setlim_self for the vm state's new kernel and vDSO fields). *)
 From Stdlib Require Import ZArith List Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad.
 Import ListNotations.
@@ -11,13 +12,13 @@ Definition setlimh (L : Z) (h : VmMaps) : VmMaps :=
 mkVmMapsFull (vm_reserved h) (vm_maps h) (vm_noaccess h) (vm_start_brk h)
 (vm_brk h) L (vm_mmap_base h) (vm_init_sp h).
 Definition setlimv (L : Z) (v : VmState) : VmState :=
-mkVmState (setlimh L (vmst_maps v)) (vmst_lazy v) (vmst_materialized v).
+mkVmState (setlimh L (vmst_maps v)) (vmst_lazy v) (vmst_materialized v) (vmst_kernel v) (vmst_vdso v).
 Definition setlim (L : Z) (m : Model) : Model :=
 mkModelOf (m_fd m) (setlimv L (m_vm m)) (m_io m) (m_fsys m) (m_proc m)
 (m_lim m) (m_time m).
 Lemma setlim_self : ltac2:(TCodec.tc2 tcn__Common_BudgetBridgeCore ";'B'4&I&G&Fr1%211%411%6213%83914pR2:1").
 Proof.
-intros [fd [[r ms na sb b l mb sp] lz mt] io fs pr lm tm]. reflexivity.
+intros [fd [[r ms na sb b l mb sp] lz mt kb vd] io fs pr lm tm]. reflexivity.
 Qed.
 Lemma setlim_setlim : ltac2:(TCodec.tc2 tcn__Common_BudgetBridgeCore ">'5'B'4&Ir3r2r1%4221%5241%6253%83921pR2:1pB<1p@=1").
 Proof. reflexivity. Qed.

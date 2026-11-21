@@ -4,7 +4,8 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/YO0y.v; 166 of its 252 lines of code are new or changed and 91 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/AllocPack3Malloc.v; 299 of its 311 lines of code are new or changed and 240 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/AllocPack3FreeR.v, with its module paths changed; 649 of its 736 lines of code are new or changed and 224 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/AllocPackFree.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_decode; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_decode.lib. *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/AllocPackFree.v for libdiginet/fuzz_decode; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_decode.lib. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List Bool Lia Arith.
 From OSSVerify.Proofs.libdiginet.fuzz_decode.lib.Reusable Require Import YO0i YO0f YO0g YO0h YO0w YO0s YO11 YO15 YO12 YO0z YO14 YO0u YO0q YO0v YO0t YO0e YO0m YO0x YO03 YO0p.
 From OSSVerify.Proofs.libdiginet.fuzz_decode.lib Require Import AllocSI AllocGS AllocRealloc AllocPack.

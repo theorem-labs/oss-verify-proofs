@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_cno_B2.v at a working branch 31d1eb57a40; every pc and register
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_cno_B2.v at a working branch; every pc and register
    re-derived from B's listing (internal path).
    check_no_overread 0x80bd4, the third and fourth copies: from P3 0x80d38 (after malloc (un + 18) -> u2) to Q3 0x80d54
    (memcpy (u2, up, un) done or skipped), and from P4 0x80db0 (after malloc (tn + 18) -> t2) to Q4 0x80dcc (memcpy (t2,
@@ -30,8 +30,8 @@ Open Scope Z_scope.
 
 Section S. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 Variable B : asyms.
-Hypothesis FB : FmB B.                                   (* FMW_seg.v:37: code addresses, GOT/cell values, statics not owned *)
-Hypothesis HB : TfibSyms B.                              (* YF0m.v:658 *)
+Hypothesis FB : FmB B.                                   (* FMW_seg.v:38: code addresses, GOT/cell values, statics not owned *)
+Hypothesis HB : TfibSyms B.                              (* YF0m.v:659 *)
 Hypothesis IMG : fm_img_facts tfibsegs B.                (* FMH_Fn.v:61 *)
 Hypothesis UNIV : fm_univ B.                             (* FMH_Fn.v:71: incl Tfib_universe (as_universe B) *)
 Hypothesis AMALLOC4 : amalloc04_rule tfibsegs B ameter_triv.   (* YC5d.v:57; ameter_triv YCbp.v:17, mo_ok = True *)

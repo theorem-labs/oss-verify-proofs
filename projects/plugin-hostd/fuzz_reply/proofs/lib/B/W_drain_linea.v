@@ -9,7 +9,7 @@
    (fuzz_reply.asan-ubsan) walk of fuzz_reply's drain.  Proves no function (kind: segment lemma):
    dr_linea : dr_linea_stmt B MT MMAX RG (lib/B/W_drain_cx.v), DLL 0x8399c -> DLN (S q) 0x839d4 or, through the
    PROGRAM CALL send_line, DLS 0x839f4, handed to the second half dr_lineb (Section hypothesis LINEB).
-   PORTED from lib/A/W_drain_linea.v (a working branch e6b5f95b285, the same proof over image A), with
+   PORTED from lib/A/W_drain_linea.v (a working branch, the same proof over image A), with
    image B's code (objdump of fuzz_reply.asan-ubsan) and lib/B's interface (a working branch):
      0x8399c ld a0,208(sp); srli a3,a0,3; ld a1,240(sp); add a3,a3,a1; lb a1,0(a3); bnez a1,83db4
                                     shadow of s->skip, base from the frame slot 240(sp) (A: s5)
@@ -21,6 +21,7 @@
    resolved to 0 by the token layer from la_SH, as on A.  STRUCTURE also cross-checked against the old h-lane
    framework's walk of the same bytes (a working branch lib/B/Prog/drain_p_line_test.v /
    drain_p_line_send.v); nothing is copied from them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -647,7 +648,7 @@ Qed.
 
 (* THE LIVENESS BRIDGE.  send_line_c.v:21-22 makes liveness depend on the length only through `len =? 0`
    (send_off cl br len = (cl <? 0) || (br =? 1) || (len =? 0); send_live = negb send_off && (dd =? 0)), and
-   W_drain_cx.v:414 dctl only moves br to dd and clears ei once the stream is off.  So the controller at the
+   W_drain_cx.v:415 dctl only moves br to dd and clears ei once the stream is off.  So the controller at the
    cut sends the next line exactly when the drain as a whole is live - EXCEPT in one configuration: the
    drain's reference stream has no line at all (dr_tot (dxh cx) = 0) while the controller is otherwise live
    (cl >= 0, br <> 1, dd = 0).  There the machine's send IS live and the model's is not.  That configuration
@@ -673,7 +674,7 @@ destruct (Z.eqb_spec (ct_dd (dxc cx)) 0) as [Hdd|Hdd].
 - rewrite !andb_false_r. reflexivity.
 Qed.
 
-(* THE CONTROLLER ADVANCES.  send_line's own controller step (W_contract.v:626 sl_ctl) applied to the
+(* THE CONTROLLER ADVANCES.  send_line's own controller step (W_contract.v:627 sl_ctl) applied to the
    controller after `tot` bytes is the controller after tot + len, because `off` depends on the length only
    through `len =? 0` and dctl already moved br to dd and cleared ei once the stream was off. *)
 Lemma la_ctl_step : forall (cx : dcx) tot ev len, 0 <= tot -> 0 < len ->
@@ -1833,7 +1834,7 @@ pose proof HEOK as (_ & Hskip & _). destruct Hskip as [Hsk0|Hsk1].
         split; [exact HPRs|].
         exists out2. split; [exists k2; eexists; exact HJ2|].
         split; [exact HAK2|]. split; [exact HMO2|]. split; [exact HPm2|]. split; [exact HO2 | exact HOFF2].
-      - (* The callee's footprint is the CURRENT g_out block, the journal's (dFP cx, W_contract.v:815) the
+      - (* The callee's footprint is the CURRENT g_out block, the journal's (dFP cx, W_contract.v:816) the
            ENTRY's.  A g_out block that is not one of the entry's blocks is a tmp block (YCbq.v:344).  One
            that is, is by DBASE's entry permutation the table block or a dxrest block - both impossible,
            since the current permutation lists them apart from g_out and ablocks has no duplicate - or an
@@ -2397,8 +2398,8 @@ End c.
 
 (* ---------------------------------------------------------------------------------------------------------
    THE GENERIC WALK (an internal work row): LINEA over any allocator relation ARx with its laws, at the room texts (the room
-   record RP, the entry's budget kr).  Section cx is lib/A/W_drain_linea.v's Section cx header (a working branch
-   806f50fb23a), in its order and names, with image B's texts (lib/B/W_drain_cx_x.v's Section c: A_OBJ 19 / 18 / 20 /
+   record RP, the entry's budget kr).  Section cx is lib/A/W_drain_linea.v's Section cx header (a working branch),
+   in its order and names, with image B's texts (lib/B/W_drain_cx_x.v's Section c: A_OBJ 19 / 18 / 20 /
    21 / 30, IMG_TOP, HERRAL, HSD): the variables B PST ARx MT RP MMAX RG, LAWS and, after it, the generic-relation
    facts this walk reads:
      HP0  (no hidden head in any ARx state, a Theorem Labs lane's ruling: the relay table's shadow facts are W_journal_x.v's
@@ -3846,7 +3847,7 @@ pose proof HEOK as (_ & Hskip & _). destruct Hskip as [Hsk0|Hsk1].
         exists out2. split; [exists k2; eexists; exact HJ2|].
         split; [exact HAK2|]. split; [exact HMO2|]. split; [exact HRM2|]. split; [exact HPm2|].
         split; [exact HO2 | exact HOFF2].
-      - (* The callee's footprint is the CURRENT g_out block, the journal's (dFP cx, W_contract.v:815) the
+      - (* The callee's footprint is the CURRENT g_out block, the journal's (dFP cx, W_contract.v:816) the
            ENTRY's.  A g_out block that is not one of the entry's blocks is a tmp block (YCbq.v:344).  One
            that is, is by DBASE's entry permutation the table block or a dxrest block - both impossible,
            since the current permutation lists them apart from g_out and ablocks has no duplicate - or an

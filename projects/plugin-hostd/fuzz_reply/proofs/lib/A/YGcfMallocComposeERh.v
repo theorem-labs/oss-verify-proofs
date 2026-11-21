@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10 (lane F2a, a working branch; plan row (c)): the PRIMED raw Deallocate contracts of the cf
    layer under the re-hide, beside YGcfMallocComposeE's released ones, for the realloc composition (lane CfR, R-1),
    the free composition (lane RealSegA, row (b)) and the primed free top (YGcfInstFreeTopRh).  rule 24: no function
@@ -11,13 +12,13 @@
      outside it) in place of DeallocG.dealloc_post_raw;
    - the run is YG0dH.amreal' over YGcfRehidePost.RZ_cf (amreal at the relation wle') in place of amreal.
    The errno, memnorm-keep, lpost and apath conjuncts are MemnormT's; the contract takes MemnormT's memory predicate MP
-   at Deallocate's entry memory (field round 3 part 3, MemnormT.v:474-489), and the cf form is at YGcfMallocComposeE's
+   at Deallocate's entry memory (field round 3 part 3, MemnormT.v:475-490), and the cf form is at YGcfMallocComposeE's
    MP := arodata_ok_cf (part 3c: memnorm is no longer part of MP).
 
    - [dealloc_leaf_raw_em_rh] / [adealloc_realizes_raw_em_rh] (+ their _of, dealloc_post_raw_rh_E_mono): in
      YGcfMallocComposeERhBase.v (below the cf compose layer, for the frame-generic big arm), re-exported here.
    - [adealloc_realizes_raw_cf_em_m_rh]: the twin of YGcfMallocComposeE.adealloc_realizes_raw_cf_em_m
-     (YGcfMallocComposeE.v:214-219), same arguments; [adealloc_realizes_raw_cf_em_m_rh_of]: the released one gives it.
+     (YGcfMallocComposeE.v:215-220), same arguments; [adealloc_realizes_raw_cf_em_m_rh_of]: the released one gives it.
    Generic over CfImg / CfParams; no image constant; no event term. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool.

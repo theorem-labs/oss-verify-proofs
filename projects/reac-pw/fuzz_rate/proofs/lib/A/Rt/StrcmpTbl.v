@@ -1,11 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-29: relocated from libreac/fuzz_grant (origin/cold/h-rw-cmd-7-rt 97c611eec86,
+(* Modified by Theorem Labs, 2026-10-29: relocated from libreac/fuzz_grant (
    proofs/libreac/fuzz_grant/lib/A/Rt/StrcmpTbl.v, owner h-rw-cmd-7) to libreac/fuzz_identity's ASan build (image A)
    by an address map recorded by the porting lane; module paths, GrantSyms ->
    TfibSyms, and scmp_ranges now states the trampoline word itself (see below). The proofs are h-rw-cmd-7's,
    unchanged. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/A/Rt/StrcmpTbl.v at origin/ossv/recipes 2d2ff01bb6f2 (donor image sha256 c954b804786c); module paths changed and addresses moved to reac-pw/fuzz_rate's ASan build (fuzz_rate.asan sha256 22bc8613d780) by port_core.py 1e42da8952ec, cross-checked numeral by numeral with alreloc a5c53bb2bed4 (ledger provenance/reloc/A-Rt-Strcmp.tsv); the two flag cells are rate's start-up rows at 0x136858 / 0x136860 behind rate's GOT slot 0x9be60 -> common_flags 0x136768; the comments keep fuzz_identity's addresses as the donor wrote them. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/A/Rt/StrcmpTbl.v (donor image sha256 c954b804786c); module paths changed and addresses moved to reac-pw/fuzz_rate's ASan build (fuzz_rate.asan sha256 22bc8613d780) by port_core.py 1e42da8952ec, cross-checked numeral by numeral with alreloc a5c53bb2bed4 (ledger provenance/reloc/A-Rt-Strcmp.tsv); the two flag cells are rate's start-up rows at 0x136858 / 0x136860 behind rate's GOT slot 0x9be60 -> common_flags 0x136768; the comments keep fuzz_identity's addresses as the donor wrote them. *)
 (* libreac/fuzz_identity, build asan: the code table of the strcmp interceptor walk (lib/A/Rt/Strcmp.v) and the
    A/AE2y.v phase lemmas over it (icpt_phase, icpt_phase_to, icpt_ld8 with tbl_icpt replaced by tbl_sc; same
    proofs). The table is A/AE34.v's tbl_icpt plus the one word of the trampoline
@@ -20,6 +20,7 @@
    tbl_icpt still supplies __asan::TryAsanInitFromRtl 0x59868 and __asan_region_is_poisoned 0x543d4, which the walk
    steps through; identity's AE34 must hold both for the already-relocated memchr walk as well. *)
 (* Modified by Theorem Labs, 2026-10-29: for r-identity's acceptance (cold/h-rw-ide-6-wrapacc), the record class is TfibSyms, not IdentTfibSyms (DECISIONS-LIVE 05:31Z: TfibSyms in both A and B, no --rename), and the core modules are Required by full path at the applied A core's names (lib/A/A*.v, lib/Reusable/YA0m, YE08, YE21). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch premises entry_launch_ok_va and valid_input; the run's CONFIG_RSEQ flag; the start-up stack anchored at its top; AT_EXECFN; the channel-reader flag that fdchan asks for): changed ARL, Hva, EL, envp, EL6, tfib_to_P; added Hargv, Hvl, Hlau, Hvi. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -30,17 +31,35 @@ Section d.
 Variable B : asyms.
 Hypothesis HB : TfibSyms B.
 Hypothesis ARL : AR_laws tfibsegs B.
-Variables (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte).
+Variables (sp brk mbase : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte) (rnd : EntryDraw).
+(* Shape copied from the in-tree ported donor YD1v.v:119-125 / YL0q.v Section b: binders
+   [sp brk mbase] .. [inp] .. [a0 p] .. [rnd], premises
+   [valid_sp; in_argv =; valid_argv (in_argv inp); valid_envp; valid_launch;
+    entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp; valid_input].
+   [entry_stack_fits] is DROPPED: it is implied by [entry_launch_ok_va]
+   ([entry_launch_ok_va_fits], 75d69e00 Run.v:3718-3722), and this section never carried it.
+   [Hva] now speaks of [in_argv inp], not of [[a0; p]]; [Hargv] converts the spelling. *)
+Hypothesis Hargv : in_argv inp = [a0; p].
 Hypothesis Hsp : valid_sp sp.
-Hypothesis Hva : valid_argv [a0; p].
+Hypothesis Hva : valid_argv (in_argv inp).
 Hypothesis Hve : valid_envp (in_envp inp).
-#[local] Notation EL := (YP08.E0 sp [a0; p] (in_envp inp) xw xd).
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp.
+Hypothesis Hvi : valid_input inp.
+(* [YP08.E0] is TOP-anchored and launch-indexed at 75d69e00 (YP08.v:209-210): entry-draw top,
+   the run's own [kb_rseq] flag, and the execfn. *)
+#[local] Notation EL := (YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd).
 #[local] Notation usp := (bv_unsigned sp).
 #[local] Notation envp := (in_envp inp).
+(* [z_rand] gained the rseq flag and [YP08.z_rand_end] is now discharged over YP08's own
+   section list, in its own order; [eapply] lets unification choose the instance, so this
+   call hard-codes no discharged arity. *)
 Lemma EL6 : usp <= bv_unsigned (ew EL 6).
 Proof.
-change (ew EL 6) with (Z_to_bv 64 (z_rand usp [a0; p] envp)).
-pose proof (YP08.z_rand_end sp [a0; p] envp Hsp Hva Hve) as Hz. pose proof (u64_range sp).
+change (ew EL 6) with (Z_to_bv 64 (z_rand usp (kb_rseq (in_kernel inp)) [a0; p] envp)).
+assert (Hz : z_rand usp (kb_rseq (in_kernel inp)) (in_argv inp) envp + 16 < 2 ^ 63)
+by (eapply YP08.z_rand_end; eassumption).
+rewrite Hargv in Hz. pose proof (u64_range sp).
 unfold z_rand in *. rewrite u64_lit by lia. lia.
 Qed.
 Lemma hdr_regions_ok : forall (E3 : YP0m.env) (H : word -> bool) m data buf pP h,
@@ -75,7 +94,7 @@ tail_at B S_P E' sp inp a0 p data W ms md ly S pb cap ->
 st_ok tfibsegs (E_P E' data (buf + 2 + config_len data)) (if config_len data =? 0 then ssP0 else ssP1) (restrict (w_H W) ms)
 /\ bv_unsigned (ew (E_P E' data (buf + 2 + config_len data)) K_PP) = buf + 2 + config_len data.
 Proof.
-intros ws W ms md ly S data pb cap E' buf Hok (HS & E41 & E42 & HR & HAI & HAR & HTOP & Hbl & Hnev & Hcap & HLc & HBLK & Hfs & Hfds & Hminv & HFI).
+intros ws W ms md ly S data pb cap E' buf Hok (HS & E41 & E42 & HR & HAI & HAR & HTOP & Hbl & Hnev & Hcap & HLc & HBLK & Hfs & Hfds & Hcr & Hminv & HFI).
 pose proof Hsp as (Ulo & Uhi & U16). pose proof (u64_range sp) as Usp. pose proof (proj1 (@YM05.alloc_ceiling_value rc)) as CV.
 pose proof (top_ok_ceil _ _ HTOP) as HCT. pose proof (YM05.ceil_le_top _ HCT) as CLE. unfold stack_max_size in CLE.
 pose proof (config_len_bound data) as Hcl. fold buf in E41, HBLK. unfold dlen in *.

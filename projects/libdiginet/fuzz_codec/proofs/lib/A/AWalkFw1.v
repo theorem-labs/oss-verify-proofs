@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: extracted from proofs/cgif/cgif_file_fuzzer/lib/A/ACer.v at c8557374ad2e, with its module paths changed (AB1v's tfibsegs is A/AWalkFw0.v's; ACef, AF0l, ACej, ACeh, ACem, ACep are knock's lib/A copies): lines 1-155, 165-175, 198-300 are taken; lines 156-164 (denot_and_m32, which uses YI0s.M64_val; knock has no YI0s) and lines 176-197 (fs_roF and fs_rwF, which name the harness walk's frame-shadow atom 88 and cgif's class-2 shadow window 0..32: harness scaffolding, in A/APgRt.v for knock's class 1) are left out; the Requires of YI0n, YI0s (line 11) and A/ACei (line 15) are dropped because no name of theirs is used. *)
+(* Modified by Theorem Labs, 2026-10: extracted from proofs/cgif/cgif_file_fuzzer/lib/A/ACer.v at theorem-labs/oss-verify-proofs@6b32741d849a, with its module paths changed (AB1v's tfibsegs is A/AWalkFw0.v's; ACef, AF0l, ACej, ACeh, ACem, ACep are knock's lib/A copies): lines 1-155, 165-175, 198-300 are taken; lines 156-164 (denot_and_m32, which uses YI0s.M64_val; knock has no YI0s) and lines 176-197 (fs_roF and fs_rwF, which name the harness walk's frame-shadow atom 88 and cgif's class-2 shadow window 0..32: harness scaffolding, in A/APgRt.v for knock's class 1) are left out; the Requires of YI0n, YI0s (line 11) and A/ACei (line 15) are dropped because no name of theirs is used. *)
 (* Modified by Theorem Labs, 2026-10: copied from projects/libreac/fuzz_knock/proofs/lib/A/AWalkFw1.v (donor image sha256 61768cf4739b), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

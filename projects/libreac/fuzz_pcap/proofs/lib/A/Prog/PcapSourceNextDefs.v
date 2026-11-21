@@ -122,7 +122,7 @@ Definition NS_F0 : Z := 112.      (* F: sd s2,0x70(s1) 0x8192c *)
    callee is the fread wrapper, AFREAD_STK = 8192 (lib/A/Stdio/PFreadISpec.v, FROZEN), called with
    sp = sp1. __asan_memmove and __asan_stack_malloc_0 run in ESTACK = 4096 below the same sp. So
    the call uses at most 240 + AFREAD_STK bytes below the caller's sp. NX_STK is the figure the
-   harness budgets for this call (PcapEntryDefs.v:249-250, 240 + 64 + AFREAD_STK = 8496); the 64
+   harness budgets for this call (PcapEntryDefs.v:250-251, 240 + 64 + AFREAD_STK = 8496); the 64
    extra bytes are slack (the machine-stack frame arm 0x818a0..0x818c4 that would use them is not
    reached: the use-after-return flag is 1, AR_const_law, and a Theorem Labs lane measured it 22:44Z).
    Depth: the caller's afn_pre gives astk_ok NX_STK ly sp0 with ly_bot = ly_top - 2 ^ 23

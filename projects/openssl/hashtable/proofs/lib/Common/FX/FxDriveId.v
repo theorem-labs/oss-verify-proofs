@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the system-call return clears the reservation). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From stdpp Require Import bitvector.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType RiscvSemantics State Run.
 From OSSVerify.Proofs.openssl.hashtable.lib.Common.Cfg Require Import
-  ShapeAlgBase ShapeCfg NodesCfg LedgerCfg AllocCfg MiscCfg.
+  RomBase ShapeAlgBase ShapeCfg NodesCfg LedgerCfg AllocCfg MiscCfg.
 From OSSVerify.Proofs.openssl.hashtable.lib.Common.FX Require Import
   W64 ITrie FxSpec FxInstr FxState FxMem FxExec FxRel FxKind FxMemSound FxValSound FxStepSound FxStepMain
   FxRun FxRn FxSys FxMisc FxDrive.
@@ -76,6 +77,9 @@ Definition is_sextw_a0 (fi : finstr) : bool :=
 
 Definition xsys_id (F : fstate) (L : fledger) (n : int) : option dres :=
   if negb (ecall_here code F) then None else
+  (* the model's syscall return clears the LR reservation ([sysret]); the fused
+     ecall+sext.w node keeps F's, so it fires only when there is none *)
+  match f_resv F with Some _ => None | None =>
   match conc (FxState.rget F 17) with
   | None => None
   | Some nr =>
@@ -90,6 +94,7 @@ Definition xsys_id (F : fstate) (L : fledger) (n : int) : option dres :=
           | None => None
           end
       end
+  end
   end.
 
 (* [comment removed for export] *)
@@ -229,6 +234,8 @@ Proof.
   pose proof (Rn_R _ _ _ _ _ _ HRn H0) as HR. pose proof (R_svc _ _ _ _ _ HR) as Hsvc.
   unfold xsys_id in Hsys.
   destruct (ecall_here code F) eqn:Hec; cbn [negb] in Hsys; [| discriminate Hsys].
+  destruct (f_resv F) eqn:Hrv; [discriminate Hsys |].
+  assert (Hmsr : ms_resv ms = None) by (eapply DInv_resv; [exact HD | exact Hrv]).
   pose proof (ecall_here_at segs code Hcode F Hec) as Hat.
   destruct (conc (FxState.rget F 17)) as [nr |] eqn:Hnr; [| discriminate Hsys].
   destruct (conc_sound R0 rho _ _ H0 Hnr) as [_ Hx8]. rewrite <- (pend_x8 segs IM rho F ms HR) in Hx8.
@@ -245,6 +252,7 @@ Proof.
                 (ms_pend_svc ms)) as Hiff.
   set (idw := sel (m_creds m)) in *.
   set (ms1 := sysret (ms_pend ms) idw (ms_mem (ms_pend ms))) in *.
+  split; [| rewrite Hx8; exact (memfree_getid _ sel Hno)].
   exists unit, tt, (fun _ => mkCfg ms1 m).
   split.
   { intros e st. rewrite Hiff. split.
@@ -272,7 +280,7 @@ Proof.
   { cbn [rsteps]. change (ms_svc_pending ms1) with (@None word). rewrite Hstep1. reflexivity. }
   (* [comment removed for export] *)
   assert (Hreg : reg_step ms ms2 (10%bv : bv 5) (sextw idw) (f_pc F + 4 + 4)%uint63).
-  { unfold reg_step. split; [reflexivity |]. split; [| split; [reflexivity | split; reflexivity]].
+  { unfold reg_step. split; [reflexivity |]. split; [| split; [reflexivity | split; [cbn; rewrite Hmsr; reflexivity | reflexivity]]].
     intros r. unfold ms2. rewrite core_of_ms_of, sem_rget_rset, sem_rget_with_pc.
     destruct (is_x0 r) eqn:Ex0; [reflexivity |].
     destruct (bv_eqb r (10%bv : bv 5)) eqn:Er; [reflexivity |].

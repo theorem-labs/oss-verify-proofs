@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: some recorded proofs replaced by tactic proofs; the new launch (process input, auxv, group id, exec file name); the BMode context. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -65,11 +66,15 @@ Hypothesis LIBU : forall sp, valid_sp sp ->
 (* [comment removed for export] *)
 Lemma norm_S : @plain_norm_stmt ES.loaded_segments ES.init_pc ES.phdrs cfg0 ShippedBudgets.lim_source.
 Proof.
-ltac2:(KReplay.run1 (kr_t_UbjEncPmStated ()) ["UbsanBaseStated"] "h01pp;1p;2p;3p;?g00MGj1?Tg004>j22Tg00N<j17Tg0000j11Tg007bj1>Tg00Nnj1:Tg0058j18Tg00OQj16Tg00;cj35Tg000Uj13Tg0013j10Tg002\j24Tg00=kj29Tg00PWj3=Tg00Q1l?;Tg00RSR0g00SaR1f5f4g00TlR2g00V@g00WNg00X\f3g00Yjf2g00[7g00\Ef1f0M?;p=<g00E;R3%?0'2%70,23g00Ac#1R0#1R4#1#>#:#8R5g00BHUp,4LIBS%61R1=531%30%04#0#0#3'4/9212313=g00K^X05E<o"). Qed.
+  exact (src0_realizes_spec_heap (bmK := bm_on_inst) cfg0 eq_refl eq_refl ShippedBudgets.lim_source LayS LStS DLLS
+           (fun _ => True) G_U LIBS LSXS BudgetS (or_introl eq_refl) (fun _ => I)).
+Qed.
 
 Lemma weird_S : @plain_g_stmt ES.loaded_segments ES.init_pc ES.phdrs cfg0 ShippedBudgets.lim_source G_U.
 Proof.
-ltac2:(KReplay.run1 (kr_t_UbjEncPmStated ()) ["UbsanBaseStated"] "h01pp;1p;2p;3p;?g00MGj1?Tg004>j22Tg00N<j17Tg0000j11Tg007bj1>Tg00Nnj1:Tg0058j18Tg00OQj16Tg00;cj35Tg000Uj13Tg0013j10Tg002\j24Tg00=kj29Tg00PWj3=Tg00]Vl?;Tg00RSR0g00SaR1f5f4g00TlR2g00V@g00WNg00X\f3g00Yjf2g00[7g00\Ef1f0M?;p=<g00E;R3%?0'2%70,23g00Ac#1R0#1R4#1#>#:#8R5g00BHUp,4LIBS%61R1=531%30%04#0#0#3'4/9212313=g00K^X05E<o"). Qed.
+  exact (src0_realizes_G_heap (bmK := bm_on_inst) cfg0 eq_refl eq_refl ShippedBudgets.lim_source LayS LStS DLLS
+           (fun _ => True) G_U LIBS LSXS BudgetS (or_introl eq_refl) (fun _ => I)).
+Qed.
 
 Lemma lim_target_val : ShippedBudgets.lim_target = 2 ^ 39.
 Proof.
@@ -77,12 +82,19 @@ ltac2:(KReplay.run1 (kr_t_UbjEncPmStated ()) ["UbsanBaseStated"] "p;1p;2p;3g0000
 
 Lemma tgt_U : @tgt_g_stmt EU.loaded_segments EU.init_pc EU.phdrs cfg0 ShippedBudgets.lim_target G_U.
 Proof.
-ltac2:(KReplay.run1 (kr_t_UbjEncPmStated ()) ["UbsanBaseStated"] "h02Hah16__sat1h22HGh34Hbrkh43Hcrh54Hfith63Hmbh73Hsph83Hvah93Hveh:4Hvfsh;2_Hh<3_H0h=7__arithh>4__ffh?6__sat0h@8__varmaphA5__withB3brkhC3inphD5mbasehE5rdrawhF2sphG1zp;1p;2p;3p;4p;7p;6p;Lg0000j10Tg007bj15Tg00Nnj18Tg00`Ij1?Tg00a>j2`Tg00b4j1HTg00c0j19Tg00cfj16Tg00d\j3ATg00eYj1@Tg00fPj1>Tg00gGj1=Tg00h;j1<Tg00hoj1_Tg00igj1UTg00j^j1TTg00kVj1GTg00;cj34Tg00lOj2ETg00MGj1DTg004>j22Tg00N<j1CTg0058j17Tg00OQj1BTg000Uj1:Tg0013j13Tg002\j2FTg00=kj21Tg001Xj2ITg002@j2;Tg0039j3JTg003]j2KTg004Xj1LTg005Xj1MTg0066j1NTg006Tj1OTg007?j2PTg008@j3QTg009Fj4RTg00>bj7STg00:Uj2^Tg00;7j2]Tg00<=j3\Tg00<\j4VTg00mbj6WTg00n@j3XTg00nZj6ZTg00oklL[Tg00RSR0g011MR1f0R2f1R3g00_5R4g012Yg013gg0155g00YjR5f2R6f3R7g016Cg017Qf4R8f5R9f6R:f7R;f8R<f9R=f:R>f;R?f<R@f=RAf>RBf?RCf@fAfBML[p=Yg00Ac#0RD#0RE#0RF#0#0#0#5#8RGg018bg019b%?8g01:\RH/`8%H8%97%675A;%98#@%69#>%=:#<%_;%U<#Tg01<8%G=g01<o341E5>g00E;RI%D0'2%C0,2I%5F#8#7g00BHRFUp,4LIBU%B1g00E[R154I%:DRD%3E#3#3RE#:RJ'FRK/14g00D6RLPK11K2XGL1IDJg00?FRM/;DRN11MJ1;MK[RO[11MDRPAJDJ3VFW011MK\F^0PP3g00Bd1KMD'2PNeO1POg00CJRO#L%7O%ML%NL%OLROg00?dg00@CRNPNg00@cRNPL1PLD%5E5QLREg00DTPECRg00ACFS1^ONP2P612I11]26=4I1dA\LM3CVb>b@bA11KKP2b=b1b?b1P4g01=fEW3XPCPBPAP@P?P>P=P<P;P:P9P8P7P2MCYW2W<W;W4W:W9W8W5W6W3W7WCWEXDGXBGWFPHg01?>g01@RP0P4P5EZeo"). Qed.
+  intros sp brk mbase rdraw inp Hsp Hbrk Hmb _ Hlau Hvl Hvi HG.
+  destruct (vie_parts inp Hvi) as (Hva & Hve & Hvfs & Hcr & _ & _ & Hrd & _).
+  exact (ub0_realizes_spec_heapX (bmK := bm_off_inst) cfg0 eq_refl eq_refl ShippedBudgets.lim_target LayU LStU DLLU
+           G_U (fun _ => True) LIBU LSXU BudgetU (or_intror (Z.eq_le_incl _ _ (eq_sym lim_target_val)))
+           sp brk mbase rdraw inp Hsp Hbrk Hmb Hvl Hlau Hva Hve Hvfs Hcr Hrd HG).
+Qed.
 
 (* [comment removed for export] *)
 Theorem ue_ubsan_base_stated :
   strong_universal_error_free_T_scfg_budgets_abort cfg0 ShippedBudgets.lim_source ShippedBudgets.lim_target
     (mkImage ES.loaded_segments ES.init_pc ES.phdrs) (mkImage EU.loaded_segments EU.init_pc EU.phdrs).
 Proof.
-ltac2:(KReplay.run1 (kr_t_UbjEncPmStated ()) ["UbsanBaseStated"] "p;?g01Adl?0Tg01C8g01DTg01Ehg01:\g01?>g01@Rg00RSg00Tlg00_5g00Yjg01G:g01HIg01IXg01Jhg01L9M?0o"). Qed.
+  exact (ue_base_abort ES.loaded_segments ES.init_pc ES.phdrs EU.loaded_segments EU.init_pc EU.phdrs cfg0
+           ShippedBudgets.lim_source ShippedBudgets.lim_target G_U frm_safe_Ms0 frm_safe_Mu0 norm_S weird_S tgt_U).
+Qed.
 End UbsanBaseStated.

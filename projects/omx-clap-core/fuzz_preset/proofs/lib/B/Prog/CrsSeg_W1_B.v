@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths and module names changed; 1422 of its 1495 lines of code are new or changed and 441 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image B' (the #102 pins, asan-ubsan d663f82d): segment W1 of the walk of check_reject_clean_starved
    (entry B' 0x820e0 = 532704, slot 645), B' 0x822bc (+476) to 0x822f0 (+528, H2) or 0x823c0 (+736, R). Row W1_B of the crcs B' rows
    (a Theorem Labs lane's internal file BRIEF-crcs-Bprime-seg.md); the closing lemma crs_seg_W1_B : crs_from_R_B -> crs_from_H2_B ->
@@ -9,15 +10,15 @@
    internal file index-crcs-Aprime.out, and an internal record of that lookup; CONFIRM by checker LookupCheckCrcsAp. At that search
    origin/ossv/recipes had no lib/A or lib/B, its released rows were lib/Prog (plain) and lib/U/Prog (ubsan) only, and no released asan
    Proof.v existed for check_reject_clean_starved). DONOR (reuse): the A' segment file lib/A/Prog/CrsSeg_W1.v blob
-   05579080a220 (a working branch 765482511a88, the A' kit v4 3adfdcc651aa), same lemma shapes, premise names
+   05579080a220 (a working branch, the A' kit v4), same lemma shapes, premise names
    and order with `_B`; every B' number is re-derived on the B' listing (w1_slots_B, crs_ro_atoms_B, vm_compute),
    never shifted from an A' decimal.
    INPUTS.
-   - Pin B' asan-ubsan d663f82d (harness.yaml of release/fuzz-preset-ran-out-pins 8f3e7e1a07f1).
+   - Pin B' asan-ubsan d663f82d (harness.yaml).
    - Listing lib/B/Listing_prog.v blob c97cc46b3e13 + lib/B/PAImg_prog.v blob 15fab93fe702; image record
      lib/B/PRH_ImgB.v blob 3216eca68342 (prh_img_B); W1_B = slots 764-776 of the B' listing (w1_slots_B).
-   - The B' kit lib/B/Prog/CrsKitBp.v blob 451cf8792b39 (a working branch fb124cd27931) over the kit's text
-     tcheck_reject_clean_starved_specX (lib/A/PRH_FnCheck.v blob 9ecd8eb167c6, the kit's tip of record f97c8b2f046b by
+   - The B' kit lib/B/Prog/CrsKitBp.v blob 451cf8792b39 (a working branch) over the kit's text
+     tcheck_reject_clean_starved_specX (lib/A/PRH_FnCheck.v blob 9ecd8eb167c6, the kit's tip of record by
      path); the ledger and fpre of lib/A/PRH_Base.v blob fdb45545469b; the callee texts lib/A/PRH_FnAlloc.v blob
      740f4d11d144 at prh_img_B / PI_prog_B; pj_write through the B' interim crs_wexact_B (lib/B/Prog/CrsWexBp.v blob
      0aa31ee7944a), its entry events supplied by crs_run_split_B and PRH_Supply.v's prhWriter_pjw_evs_w_evs (blob

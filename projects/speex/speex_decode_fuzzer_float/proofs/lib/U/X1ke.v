@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the auxv conjunct of rauxv_ok is carried as the launch's auxv keys, auxv_keys). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run Fs.
@@ -47,8 +48,8 @@ Proof.
 intros sfH_; first [ sf_destruct 14%nat sfH_ as av x3 x4 x5 x16 x6 x11 x12 x23 rnd AC AL RN H | sf_fb; destruct sfH_ as (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & AC & AL & RN & H) ]; intros AG HC.
 first [ unshelve sf_eexists 10%nat; [ exact (av) | exact (x3) | exact (x4) | exact (x5) | exact (x16) | exact (x6) | exact (x11) | exact (x12) | exact (x23) | exact (rnd) | ] | sf_fb; exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd ]. split; [|split; [|split; [|exact H]]].
 - eapply rrw_cells_magree; [exact AC| exact AG|]. cbn. intros a Ha X. destruct (HC a X) as [_ Y]. apply Y. exact Ha.
-- eapply rbytes_at_magree; [exact AL| exact AG|]. intros a Ha X. destruct (HC a X) as [Y _].
-rewrite rauxv_list_length in Ha. lia.
+- eapply auxv_keys_map; [|exact AL]. intros A0 w HA HB Hb. pose proof (length_le8 w) as LL.
+eapply rbytes_at_magree; [exact Hb| exact AG|]. intros a Ha X. destruct (HC a X) as [Y _]. rewrite LL in Ha. lia.
 - eapply rbytes_at_magree; [exact RN| exact AG|]. intros a Ha X. destruct (HC a X) as [Y _]. rewrite length_le8 in Ha. lia.
 Qed.
 

@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YG0g.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved-region ledger). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -118,8 +119,14 @@ assert (Rb : 0 <= b /\ b + n < 2 ^ 63) by (unfold kLowShadowBeg, kLowShadowEnd, 
 assert (Ub : bv_unsigned (w64 b) = b) by (apply w64_unsigned; lia).
 assert (Un : bv_unsigned (w64 n) = n) by (apply w64_unsigned; lia).
 assert (HR : region_free (vm_reserved (m_vmmaps md)) (w64 b) (w64 n) = true).
-{ rewrite (al_reserved _ _ _ _ L). apply (region_free_reserved segs); [exact (al_img_env segs ly S md LO L) | | lia | lia].
-unfold kImgEnd, kLowShadowBeg, kHighShadowBeg in *. lia. }
+{ destruct (al_reserved _ _ _ _ L) as (rx & Hrx & _ & HB & _). rewrite Hrx, YK13.region_free_app.
+apply andb_true_iff. split.
+- apply (region_free_reserved segs); [exact (al_img_env segs ly S md LO L) | | lia | lia].
+unfold kImgEnd, kLowShadowBeg, kHighShadowBeg in *. lia.
+- (* the tail starts in high memory, above both shadows *)
+apply region_free_forall. intros q Hq. right. rewrite Ub, Un.
+destruct (proj1 (Forall_forall _ _) HB q Hq) as [Q1 _].
+unfold kHighMemBeg, kLowShadowBeg, kLowShadowEnd, kHighShadowBeg, kHighShadowEnd in *. lia. }
 destruct Hin as [[I1 I2]|[I1 I2]].
 - apply (madvise_gate_intro _ (wiv (kLowShadowBeg, kLowShadowEnd - kLowShadowBeg))).
 + apply (al_band _ _ _ _ L). left. reflexivity.

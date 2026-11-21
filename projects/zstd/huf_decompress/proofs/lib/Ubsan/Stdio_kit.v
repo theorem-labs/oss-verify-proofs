@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (1 recorded proof replaced by written proofs (rw_cells_bytes_at')). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -17,8 +18,7 @@ Definition FMT_FP_DEPTH : Z := 4640.
 Definition fmt_fp_entry : Z := 0x252d4.
 
 Lemma rw_cells_bytes_at' : forall segs m A cs, rw_cells segs m A cs -> bytes_at segs m A (cells_bytes cs).
-Proof.
-ltac2:(KReplay.run1 (kr_t_Stdio_kit ()) [] "h02H0h11Ah21Hh32_Hh43_H0h52csh61mh74segsp;1p;4g0000j1:Tg000Pj10Tg0015j17Tg001Sj16Tg0026j1<Tg002Xj4;Tg003Nj48Tg004Ej14Tg005>j13Tg005^j45Tg006Pj11Tg007Jj42Tg008?j19Tg0096#:g00:5#0#0#0R0#0#0#0#7#6%70#6#<[g00:Zg00;8#:f3R0f2R1f1R2f0R3C;g00;mR4f4R5P0P1P2C8P5P0P1%42#3C5f5R6P5P0%11C2P3f6R1P6P5P0C8P4%95f7R4P1P6%15C2f8R5P4P1%46#3C5f9R6P5P4%11C2[P3%91f:R1P6P5%14C2f;P1P6%45#3C5P2W4W2W3P2P3O2n2001000000120000000W0P2P3O2n2001000000120000000W0W5W1W6W7o"). Qed.
+Proof. intros segs m A cs [[_ H] _]. exact H. Qed.
 
 (* [comment removed for export] *)
 Definition memset_postZ (ra : word) (q : Z) (gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32)

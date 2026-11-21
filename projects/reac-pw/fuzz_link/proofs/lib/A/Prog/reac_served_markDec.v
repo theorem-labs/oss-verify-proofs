@@ -24,7 +24,7 @@
      0x81d68: s_and_ptr (Reusable/YP0m.v:969-980) rewrites ps & 7 to 0 from the alignment fact, so `bnez` sees 0 and is
               not taken.
    These are the decisions of the released UBSan proof for the v1.8 image (proofs/libreac/fuzz_pcap/lib/U/Prog/
-   pcap_source_close.v on origin/ossv/recipes c8557374ad2e): close_closed :43 (if_false, premise bv_unsigned a0 <> 0 at
+   pcap_source_close.v): close_closed :43 (if_false, premise bv_unsigned a0 <> 0 at
    :23) and :45-46 (ub_align A8, premise bv_unsigned a0 mod 8 = 0 at :23), close_pro :82 and :84-85 (premises :58).
 
    The contract is lib/A's, not a copy (the shared-text rule): pb_pcap_source_closeX proves lib/A's image-generic
@@ -39,6 +39,7 @@
    getr / mkst / seg_rom come from YK11; nothing from lib/Lib is imported. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_pcap/lib/B/Prog/PcapSourceClose.v, with its module names changed; 3497 of its 3557 lines of code are new or changed and 570 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_pcap/lib/A/Prog/PcapHarnessTail.v, with its module paths and module names changed; 346 of its 396 lines of code are new or changed and 3507 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_served_mark (fuzz_link.asan 0x895a8) on image A: the DEC segment of its walk, from the DEC cut (+0x498, the read
    answered 0) through reac_served_decide to the four verdict cuts. Cut interface: lib/A/Prog/reac_served_markDefs.v;
    listing (internal path) (internal record, sha256 5943815fc488).

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (Linux's mmap placement and the reserved ledger). *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.openssl.bignum.lib.BgLib Require Import ImageBgA.
 
@@ -71,31 +72,38 @@ Proof.
       & _ & _ & _ & _ & _ & _ & _ & _ & (_ & H1 & H2) & _). lia.
 Qed.
 
-Lemma ledger_gap : forall Σ mo len, rt_wf Σ -> ARTM_A Σ mo -> 0 < len -> len mod 4096 = 0 -> len <= 2 ^ 32 ->
-  vm_gap_available (m_vmmaps mo) len = true.
+(* 08b1429: the grant is Linux's address, so the gap must lie in one of Linux's two windows; the
+   scan starts at task_unmapped_base (0x2aaaaab000 = 183251939328), the floor of the upper window
+   [task_unmapped_base, alloc_top], and [vm_place_available_of_gap] turns it into Linux's
+   placement for any hint. *)
+Lemma ledger_gap : forall Σ mo len hint, rt_wf Σ -> ARTM_A Σ mo -> 0 < len -> len mod 4096 = 0 -> len <= 2 ^ 32 ->
+  vm_place_available (m_vmmaps mo) (kb_thp (m_kernel mo)) hint len = true.
 Proof.
-  intros Σ mo len HW HA Hlen Hal Hsz. pose proof HA as (Hperm & Eres & _ & _ & (_ & _ & _ & Hisp & _ & _ & Hzb)).
+  intros Σ mo len hint HW HA Hlen Hal Hsz. pose proof HA as (Hperm & Eres & _ & _ & (_ & _ & _ & Hisp & _ & _ & Hzb)).
+  (* LPS@75d69e00: ARTM_A's reserved clause is the append form now (BgA/RT_rep.v), so the
+     ledger is the image's reservations plus a tail of at most two intervals totalling at
+     most 0x14000 bytes.  Both sums below gain exactly that. *)
+  destruct Eres as (rx & Eres & Ecnt & Erx & _).
   unfold maps_zbound in Hzb.
   pose proof HW as (HL & _). pose proof (rt_wf_budget _ HW) as (_ & Heg). pose proof (rt_wf_nsec _ HW) as Hns.
   pose proof (maps0_bounds _ HL) as (Hn0 & Hb0). pose proof (secmaps_bytes _ HW) as Hsb.
   pose proof HL as HL'. unfold layout_ok in HL'. destruct HL' as ((Hsp1 & Hsp2) & _).
   set (h := m_vmmaps mo) in *. set (L := vm_reserved h ++ vm_maps h).
-  assert (HLb : live_bytes L <= 0xbb6000 + 2 ^ 38 + 2 ^ 45).
-  { unfold L. rewrite live_bytes_app', Eres, asan_res_bytes.
+  assert (HLb : live_bytes L <= 0xbb6000 + 0x14000 + 2 ^ 38 + 2 ^ 45).
+  { unfold L. rewrite live_bytes_app', Eres, live_bytes_app', asan_res_bytes.
     rewrite <- (live_bytes_filter_vpos (vm_maps h)).
     rewrite (live_bytes_perm _ _ Hperm). unfold rt_maps. rewrite live_bytes_app'. lia. }
-  assert (HLn : Z.of_nat (length L) <= 4 + SEC_MAX + 64 + 1).
-  { unfold L. rewrite length_app, Eres, asan_res_len.
+  assert (HLn : Z.of_nat (length L) <= 2 + 4 + SEC_MAX + 64 + 1).
+  { unfold L. rewrite length_app, Eres, length_app, asan_res_len.
     rewrite (Permutation_length Hperm) in Hzb. unfold rt_maps in Hzb.
-    rewrite length_app, length_map, length_rev in Hzb. lia. }
+    rewrite length_app, length_map, length_rev in Hzb.
+    pose proof (Nat2Z.inj_le (length rx) 2) as Y. lia. }
   assert (Htop : alloc_top h = l_sp0 (lay Σ) - 2 ^ 23) by (unfold alloc_top, stack_max_size; rewrite Hisp; lia).
   unfold sp_window_lo, sp_window_hi, SEC_MAX in *.
-  destruct (Unforced.gap_exists L len 4096 (alloc_top h) ltac:(lia) ltac:(lia) ltac:(rewrite Htop; lia)
+  destruct (Unforced.gap_exists L len 183251939328 (alloc_top h) ltac:(lia) ltac:(lia) ltac:(rewrite Htop; lia)
               ltac:(reflexivity) ltac:(rewrite Unforced.gap_weight_sizes; nia))
     as (g & Hgal & HgF & Hgtop & Hgfree).
-  apply (proj2 (vm_gap_available_iff h len)). exists (Z_to_bv 64 g).
-  rewrite unsigned_lit by (rewrite Htop in Hgtop; lia).
-  split; [exact Hgal|]. split; [lia|]. split; [exact Hgtop|]. exact Hgfree.
+  exact (vm_place_available_of_gap h (kb_thp (m_kernel mo)) hint len g Hlen Hal Hgal HgF Hgtop Hgfree).
 Qed.
 
 Lemma region_free_apart : forall l (lo n : word) e, region_free l lo n = true -> In e l ->
@@ -130,6 +138,7 @@ Qed.
 Lemma grant_placement : sgrant_ok Σ (bv_unsigned a) len.
 Proof using HW HA Hlen Hg.
   pose proof HW as (HL & _). pose proof HA as (Hperm & Eres & _ & _ & (_ & _ & _ & Hisp & _)).
+  destruct Eres as (rx & Eres & _ & _ & _).
   destruct Hg as (G1 & G2 & G3 & G4).
   pose proof (maps0_shadow _ HL) as (HE2 & HE4). pose proof (maps0_e3 _ HL) as HE3.
   assert (Hin : forall e, In e (l_maps0 (lay Σ)) -> In e (vm_maps (m_vmmaps mo)))
@@ -147,7 +156,10 @@ Proof using HW HA Hlen Hg.
     pose proof asan_hull_cover as (_ & HC).
     unfold IMG_LO, IMG_HI in HC. unfold SEGTOP_A in Y.
     destruct (HC (Z.max (bv_unsigned a) 0x10000) ltac:(lia)) as (iv & Hiv & Z1 & Z2).
-    pose proof (region_free_apart _ _ _ iv G4 ltac:(apply in_or_app; left; rewrite Eres; exact Hiv)) as D.
+    (* the image's reservations are now a PREFIX of the ledger, so the membership step
+       takes one more in_or_app than it did. *)
+    pose proof (region_free_apart _ _ _ iv G4
+                  ltac:(apply in_or_app; left; rewrite Eres; apply in_or_app; left; exact Hiv)) as D.
     rewrite unsigned_lit in D by lia. unfold apart in D. lia.
   - apply Forall_forall. intros e He. exact (grant_apart_maps e (artm_in_maps Σ mo e HA He)).
 Qed.
@@ -169,13 +181,13 @@ Proof.
              (fun a => sgrant_ok Σ (bv_unsigned a) len) (fun a => K (bv_unsigned a))
              (fun a mo => ARTM_A (Σ' (bv_unsigned a)) mo /\ PMc mo) len).
     + lia.
-    + intros ms HPm. destruct (Hm ms HPm) as (S1 & S2 & S3 & S4 & S5 & S6). repeat (split; [assumption|]).
-      intros a Ha. rewrite Hrd. pose proof (S6 (bv_unsigned a) Ha) as X. rewrite Z_to_bv_bv_unsigned in X. exact X.
+    + intros ms HPm. destruct (Hm ms HPm) as (S1 & S2 & S3 & S4 & S5 & S6 & S7). repeat (split; [assumption|]).
+      intros a Ha. rewrite Hrd. pose proof (S7 (bv_unsigned a) Ha) as X. rewrite Z_to_bv_bv_unsigned in X. exact X.
     + intros mo (HA & HPc). pose proof HA as (Hperm & Eres & Elim & Heu & (Hwf & Hlz & Hsep & Hisp & Hcf & Hsl & Hzb & Hnp)).
       rewrite Hrd.
-      split; [exact Hwf|]. split; [exact Hlz|]. split; [exact (ledger_gap Σ mo len HW HA Hlen Hlal Hsz)|].
+      split; [exact Hwf|]. split; [exact Hlz|]. split; [intros hint; exact (ledger_gap Σ mo len hint HW HA Hlen Hlal Hsz)|].
       split; [rewrite Elim; unfold E0_MAX, VMLIMIT in *; lia|].
-      intros a Ha. destruct Ha as (G1 & G2 & G3 & G4 & G5).
+      intros hint a Ha. destruct Ha as (G0 & G1 & G2 & G3 & G4 & G5).
       assert (Hg : (bv_unsigned a mod page_size = 0) /\ (0 < bv_unsigned a) /\ (bv_unsigned a + len <= alloc_top (m_vmmaps mo))
                    /\ region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 len) = true)
         by (repeat split; assumption).
@@ -191,7 +203,12 @@ Proof.
           apply (Permutation_trans (l' := (a, Z_to_bv 64 len) :: rt_maps Σ)).
           - constructor. exact Hperm.
           - apply Permutation_sym. rewrite Z_to_bv_bv_unsigned in Hperm'. exact Hperm'. }
-        split; [rewrite mdl_mmap_rw_vmmaps; cbn [vm_reserved]; exact Eres|].
+        (* the grant conses its range onto [vm_maps] and leaves [vm_reserved] alone, so the
+           tail is unchanged and the only new obligation is that the NEW mapping is apart
+           from it -- which is the reserved half of the freeness the grant proved of itself. *)
+        split; [rewrite mdl_mmap_rw_vmmaps; cbn [vm_reserved vm_maps];
+                apply (artm_res_cons _ _ (a, Z_to_bv 64 len) Eres);
+                cbn [fst snd]; exact (proj2 (proj2 (proj2 Hg)))|].
         split; [rewrite mdl_mmap_rw_vmmaps; cbn [vm_limit]; exact Elim|].
         split.
         { pose proof (eager_used_mmap_rw_le mo a (Z_to_bv 64 len) (proj1 Hwf) Han) as Hle. rewrite Eul in Hle. lia. }
@@ -211,7 +228,7 @@ Proof.
         split; [|apply NodesA_madv.noaccess_pos_mmap_rw; exact Hnp].
         unfold maps_zbound in Hzb |- *. rewrite mdl_mmap_rw_vmmaps. cbn [vm_maps].
         rewrite filter_cons_pos by (cbn [snd]; rewrite Eul; lia). cbn [length]. rewrite !Nat2Z.inj_succ. clear - Hzb. lia.
-      * apply (HPMc mo); [apply mdl_mmap_rw_fds| apply mdl_mmap_rw_fs| exact HPc].
+      * apply (HPMc mo); [apply mdl_mmap_rw_fds| apply mdl_mmap_rw_fs| apply mdl_mmap_rw_reader| exact HPc].
     + intros mo (HA & _). pose proof HA as (_ & _ & _ & _ & (_ & _ & _ & Hisp & _)). unfold alloc_top, stack_max_size. rewrite Hisp. lia.
   - intros c Hc. exact Hc.
   - intros c (a & Ha & Hc). exists (bv_unsigned a). split; [exact Ha|]. rewrite (EA (bv_unsigned a)). exact Hc.

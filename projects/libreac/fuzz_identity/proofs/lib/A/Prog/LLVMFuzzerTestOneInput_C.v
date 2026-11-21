@@ -5,6 +5,7 @@
    projects/cgif/cgif_file_fuzzer/proofs/lib/A/ACja.v:107-118, for libreac/fuzz_identity's ASan build (lib/A). The same text
    also appears in projects/cgif/cgif_file_fuzzer/proofs/lib/A/ACa2.v:141-143. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/LLVMFuzzerTestOneInput_A.v; 865 of its 941 lines of code are new or changed and 504 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Segment C of LLVMFuzzerTestOneInput's ASan walk, 0x80a7c..0x80b20 (41 slots): seg_C of
    lib/A/Prog/LLVMFuzzerTestOneInput_inv.v.
 
@@ -211,7 +212,7 @@ Hypothesis AMEMSET : aintrin_realizes SEGS B OSet (SIGMA IS___asan_memset).
 Variable G : list (Z * Z).
 Hypothesis HIMG : forall (W : world SEGS) mem,
 arodata_okP SEGS pa_relro_lo pa_relro_hi B (aview SEGS (w_H W) mem) -> llvmf_img B G W mem.
-(* cgif ACfh.v:162-164, as LLVMFuzzerTestOneInput.v takes it: the walk's journal keeps the fds and the fs. *)
+(* cgif ACfh.v:163-165, as LLVMFuzzerTestOneInput.v takes it: the walk's journal keeps the fds and the fs. *)
 Hypothesis AJ_NIL_IO : forall STK sp0 ly S (W : world SEGS) mem md own ly' S' W' mem' md' k,
 ajournal SEGS B STK sp0 [] ly S W mem md own ly' S' W' mem' md' k ->
 m_fds md' = m_fds md /\ m_fs md' = m_fs md.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the writable stack is the launch's 6144513 bytes below sp0). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -41,7 +42,9 @@ Definition sr_H : list expr :=
 
 Definition kn_Hstack : list kentry :=
   [KAlign (EVar 0) 16; KRange (EVar 0) 0x7fff80000000 0x800000000000;
-   KWr (SA (EVar 0) (-8388608)) 8388608;
+   (* LPS 727298f3: the writable span the launch maps below sp0, 6144513 bytes
+      ([Drv/S1Cells.stack_writableZ], from [S1Start.main_entry_store_ok_win]) *)
+   KWr (SA (EVar 0) (-6144513)) 6144513;
    KWord (SA (EVar 0) (-56)) 8 (ELit 0xcfab0);
    KWord (SA (EVar 0) (-64)) 8 (spx 8); KWord (SA (EVar 0) (-72)) 8 (ELit 2);
    KWord (SA (EVar 0) (-80)) 8 (ELit 0x655e8); KWord (SA (EVar 0) (-88)) 8 (spx 32);

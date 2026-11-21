@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (lane F2a, a working branch): the generic cf layer's Deallocate interface, the call-site
    bridge of Put's QuarantineCache::Enqueue (YGcfInstEnq.enq_bridge_cf) at the layer's walk relation, over
    YGcfInstFreeMid's model and memory sides (its sections 0 / m).  rule 24: no function proved (kind:
    interface-instance discharge: the allocator relation re-established at Enqueue's call).
 
    Split from YGcfInstFreeMid.v (field round 3): lane F1's enq_pre_cf ends with the call memory's overlay normal form
-   and read-only bytes (YGcfInstEnq.v:152), which reach Put's call through round 3 part 3's MP: F1's enq_bridge_cf
-   takes them as premises right after dmem_m (YGcfInstEnq.v:292 at a working branch bfaddc527576), and this bridge
+   and read-only bytes (YGcfInstEnq.v:153), which reach Put's call through round 3 part 3's MP: F1's enq_bridge_cf
+   takes them as premises right after dmem_m (YGcfInstEnq.v:293 at a working branch), and this bridge
    returns them (the walk's sections, which YGcfInstFreeBigRq reads, stay in YGcfInstFreeMid).
    The image premises are YGcfInstFreePost's (FP_IZONE_ROM, FP_DSTAT, FP_DZONE_FP, FP_CONST, ERRB_APART, PF_APART),
    YGcfDIface's (IZONE_OWNED, DZONE_OWNED, IMG_COVER) and YGcfInstFreeView's FV_IAL.  Generic over CfImg / CfParams /
@@ -327,7 +328,7 @@ split.
   + rewrite (ms_batches S k z tr). exact (L24_room_cf _ S WF HBR).
 Qed.
 
-(* Lane F1's drain-entry byte premise enq_qb_t (YGcfInstEnq.v:272-279, the hull form of cf-f1 22b5f48d6248) at the
+(* Lane F1's drain-entry byte premise enq_qb_t (YGcfInstEnq.v:273-280, the hull form of cf-f1) at the
    layer's QB := lane F2b's QB_cf kQuarantineMax and L24 := L24MAX_cf: the split byte bounds from EP_cf and the push
    (YGcfInstDrainR.QB_cf_enq_post), the hull admission from the pre-state's and Enqueue's st_secs frame
    (YGcfInstEnq.enq_qb_hull_cf), the batch count from EP_cf's room for one more batch. *)

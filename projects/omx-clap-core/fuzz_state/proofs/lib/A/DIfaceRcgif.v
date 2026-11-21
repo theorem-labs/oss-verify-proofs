@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: new file. cgif_file's instance of DIfaceR (the raw-frame obligations of the
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DIfaceRcgif.v (a working branch 84ee52cd012, file sha256 8f4471468710) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-(* Modified by Theorem Labs, 2026-10: relocated to omx-clap-core fuzz_state image A (fs.asan): fs C5 - diface_r_cgif's U is tr_admit (as_universe B) S tr, the DIface / DIfaceR instance's trace premise, instead of In tr (as_universe B). *)
    generic Deallocate interface, DIfaceR.v), assembled from the proved fields, and its use in DGtop's raw contract. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DIfaceRcgif.v (a working branch, file sha256 8f4471468710) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: relocated to omx-clap-core fuzz_state image A (fs.asan): fs C5 - diface_r_cgif's U is tr_admit (as_universe B) S tr, the DIface / DIfaceR instance's trace premise, instead of In tr (as_universe B). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The record DIfaceR has four fields, all proved at cgif's instantiation (ARX := ARXr := ARX_cgif B, AOX := aowned B,
    DRq := DRq_cgif B, dpost := CLenqcgifRaw.dpost_enq_cgif B, and dbody / QB as dr_drain_cgif fixes them):
    - dr_enqueue  : CLenqcgifRaw.dr_enqueue_cgif (a Theorem Labs lane; a projection of CLenqcgif.di_enqueue_cgif, whose post
@@ -50,7 +51,7 @@ Definition adealloc_realizes_cgif_raw_of_bridge B (TB : TfibSyms B) (L24 : Z) (H
   DGtop.adealloc_realizes_cgif_raw_of B TB (ARX_cgif B) (CLenqcgifRaw.dpost_enq_cgif B) _ L24 _ (DGif1dr.DRq_cgif B) IF
     (diface_r_cgif B TB L24 HBR).
 
-(* With a Theorem Labs lane's DIface instance (DGif1.diface_cgif, c5 072d82e9f63): cgif's raw-framed Deallocate contract
+(* With a Theorem Labs lane's DIface instance (DGif1.diface_cgif, c5): cgif's raw-framed Deallocate contract
    resting only on diface_cgif's own premises (depot spec, 16385 <= L24, and its six drain-side fields) and the enqueue
    bridge. The binder types are diface_cgif's, inferred, so none of them is restated here. *)
 Definition adealloc_realizes_cgif_raw_di B TB L24 HD1 HL24 Hdr Hrx Hrr Hre Hrc Hcd (HBR : CLenqcgif.enq_bridge B L24) :=

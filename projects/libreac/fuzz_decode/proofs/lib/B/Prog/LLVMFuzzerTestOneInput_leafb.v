@@ -2,13 +2,14 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/A/AD1q.v (tfib_srealizesX),
    lib/A/AB1n.v (tfib_startup_T1, HS_ok) and lib/A/AD2o.v (TFIB_T_of_partsXF), in the form of fuzz_pcap's closing side
-   (proofs/libreac/fuzz_pcap/lib/A/PcapClose.v, a working branch 86b0e893fe8), for libreac/fuzz_decode's
+   (proofs/libreac/fuzz_pcap/lib/A/PcapClose.v, a working branch), for libreac/fuzz_decode's
    ASan image: one named Section hypothesis per remaining part, module paths and names changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_decode/lib/A/DecodeClose.v, with its module paths and module names changed; 1425 of its 1489 lines of code are new or changed and 431 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* LLVMFuzzerTestOneInput_leafb: the shared leaf-call bridge of the image-B (asan-ubsan) walk of
    libreac/fuzz_decode's LLVMFuzzerTestOneInput (the segment files LLVMFuzzerTestOneInput_seg*.v of lib/B/Prog).
-   It is image A's twin, lib/A/Prog/LLVMFuzzerTestOneInput_leafb.v (a working branch
-   8ca3e07aa60), lemma for lemma and with the same names, at image B's segments (decodesegsB0 = lib/B/Img0.v rsegs),
+   It is image A's twin, lib/A/Prog/LLVMFuzzerTestOneInput_leafb.v (a working branch),
+   lemma for lemma and with the same names, at image B's segments (decodesegsB0 = lib/B/Img0.v rsegs),
    image B's runtime cells (lib/B/AsanCells.v) and image B's leaf kit (lib/B/Prog/LeafCgKit.v).
    A program leaf of this unit is stated in lib/B/Prog/<leaf>_cg.v over the kit lib/B/Prog/LeafCgKit.v: its premises
    are footprint facts about the RAW call memory (Frame.stk, Mem.bytes_at, AsanCells.addressable / asan_cells,
@@ -23,9 +24,9 @@
        dec_leafb_bytes_le, dec_leafb_rom_bytes, dec_leafb_addressable, dec_leafb_addressable_block,
        dec_leafb_wr_at, dec_leafb_wr_block, the app_mem / off_stk arithmetic.
    (d) dec_leafb_asan_cells: asan_cells from dec_crt_cells B (check_round_trip_cg.v:109) and AR's am_const. Its
-       helpers are image A's, which took them from a working branch e6dfa363adb
+       helpers are image A's, which took them from a working branch
        proofs/libreac/fuzz_decode/lib/A/Prog/crtA_cells.v:23-237; image B's twin of that file is crtB_cells.v on
-       a working branch fb1f0100f0f (crt_* renamed dec_leafb_*; text otherwise the
+       a working branch (crt_* renamed dec_leafb_*; text otherwise the
        record's). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

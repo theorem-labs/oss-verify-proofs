@@ -5,14 +5,15 @@
    read); aj_snprintf_at_xrom keeps its statement and is the instance at wle. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcallSnp.v, with its module paths and module names changed; 366 of its 437 lines of code are new or changed and 191 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/FMsnprintfShared.v, with its module paths and numbers changed; 73 of its 107 lines of code are new or changed and 403 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_link, image A (the asan build, pin 059dae63e07c): ONE contract of snprintf(d, n, f, ...) at link's wrapper
    LA_W_SNPRINTF 0x43088, for its three call sites (link-a/libc/printf.md (internal record, sha256 7bbba2c3aa7f) section 1):
      0x89ea8 remember, tail `j`: d = mark's block + 4 + 16k (a heap block), n = 16, f = .str.37 0x21680 "%s";
      0x839c4 LLVMFuzzerTestOneInput: d = blk + 0x2094 + 16k (a heap block), n = 16, f = .str.21 0x21240 "%s";
      0x82b14 LLVMFuzzerTestOneInput: d = g_names + 8i (.bss, g_names 0x62fac0, 640 bytes), n = 8, f = .str 0x20fa0
              "nl%d", i = 0..63.
-   The donor's shared form (libreac/fuzz_disco lib/Rt/SnShared.v sh_asnprintf_realizes, origin/ossv/recipes
-   501c0d516c69, on link as lib/Rt/SnShared.v, with link's two added premises in lib/A/Rt/LinkSnDefs.v
+   The donor's shared form (libreac/fuzz_disco lib/Rt/SnShared.v sh_asnprintf_realizes,
+    on link as lib/Rt/SnShared.v, with link's two added premises in lib/A/Rt/LinkSnDefs.v
    lk_asnprintf_realizes), in disco's guarded form (lib/Rt/SnprintfDefR.v: arodata_okP instead of a caller-side
    consts_view, so the read-only constants the chain reads are fixed by the walk invariant every caller carries),
    with the destination premises replaced by plugin-hostd/fuzz_command lib/A/Rt/RtDefs.v awrite_ok's (ruling of

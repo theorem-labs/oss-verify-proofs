@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumA.v, with its module paths and module names changed; 544 of its 598 lines of code are new or changed and 724 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, program walk of round_trip_text on the #102 pins, image A' (asan, sha256 1be0f53d96cb9d6c, unstripped
    twin bff8519bbe3ea0e4, entry A' 0x8496c, slot 3299 of lib/A/Listing_prog.v): STRETCH X of the cut layer
    lib/A/Prog/Rtt102Cut.v (lane WalkRtt102.RttX for the text owner): RTT_SEG_X = rtt_seg RT_X rtt_at_x.
@@ -16,15 +17,15 @@
    THE PROOF. ONE run of the listing engine from a fresh symbolic state at +480 to the `ret`, through YGcallSx.v's
    aj_flag_store_xR (the journal's own [(1, pos)] becomes [] at stack_free_state 1 pos S), then YC1fP.v's
    paj_ret_at (a plain SRr, lifted by YA0nH.SRr_SRr'); the generic machine-level lemma is rx_run. AT THE R CUT
-   (Rtt102Cut.v at 448ecd157e57) the stretch concludes YA0nH.SRr' SEGS RZ_cf and the journal is at RZW := YA0nH.wle'
+   (Rtt102Cut.v) the stretch concludes YA0nH.SRr' SEGS RZ_cf and the journal is at RZW := YA0nH.wle'
    SEGS RZ_cf; the run keeps the world, so no fact crosses a wle' step. Template: S10TxString.v ts_G_entry / ts_at_G
-   (the S10 walk at 37251f6b9a5, class 0; here class 1, the frame 128 bytes, its shadow 16). The
+   (the S10 walk, class 0; here class 1, the frame 128 bytes, its shadow 16). The
    text's post rtt_Q is built from the cut's rtt_Qx by keeping every byte the run does not write (rx_wr: F's first
    word, F's 16 shadow bytes, the flag byte): the ledger by S1Ledger.v prh_ledger_kept_aview, the trees by
    PRH_Reader.v pj_nodeR_frame and rx_nodeR_lblk (the block predicate widened to the cut's ledger list; the pure
-   lemma s4_nodeR_lblk of the H2H5 walk head 1934271f1f40 lib/A/Prog/H5RttS4.v, restated here), the
+   lemma s4_nodeR_lblk of the H2H5 walk head lib/A/Prog/H5RttS4.v, restated here), the
    room by RL_stack_free / PresetRoomPosKeep.room_pos_stack_free, memnorm by YGcallMxmn.v memnorm_frame_of.
-   AT THE BATCH KIT'S CUT (Rtt102Cut.v at 80a1d52c32c7): rtt_J is the journal from the DEPOT-MOVED entry, so the run's journal
+   AT THE BATCH KIT'S CUT (Rtt102Cut.v): rtt_J is the journal from the DEPOT-MOVED entry, so the run's journal
    is too; the post is the BUDGETED fpostFbm, whose journal from the entry itself at a budget of at most 32 fresh wild
    traces is Rtt102Cut.v rtt_unbase of the run's journal and rtt_carry's last conjunct (rtt_wild at 32). rtt_Qx's
    copy <> 0 arm carries copy's ordered free list at every depth bound and K0-CAP (pj_ncapR); the run keeps both by
@@ -76,7 +77,7 @@ Open Scope Z_scope.
 Definition RTT_PC_A : Z := 4 * Z.of_nat (A_prog_slot AS_round_trip_text).
 
 (* ---- the tree with a wider block predicate (image-free; H5RttS4.v s4_cstr_lblk / s4_items_in / s4_mems_lblk /
-   s4_nodeR_lblk at 1934271f1f40, restated over this tree's PRH_Reader.v): a tree reads its block predicate only on
+   s4_nodeR_lblk, restated over this tree's PRH_Reader.v): a tree reads its block predicate only on
    the blocks of its own D, so any predicate that holds there serves ---- *)
 Section tr.
 Variable segs : list Segment.

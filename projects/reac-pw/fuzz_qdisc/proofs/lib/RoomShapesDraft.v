@@ -859,7 +859,7 @@ Definition canon_trace (cfg : SpuriousCfg) (p : policy) (img : Image) (lim : Z) 
     (inp : ProcInput) (tr : list event) : Prop :=
   match img, en with
   | mkImage segs pc ph, mkEntry sp brk0 mbase rnd =>
-    exists tr' c, canon_run p segs cfg (init_config segs pc ph sp brk0 mbase rnd lim inp) tr' c
+    exists tr' c, canon_run p (run_segments segs inp sp mbase) cfg (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp) tr' c
                   /\ is_prefix tr tr'
   end.
 
@@ -867,8 +867,8 @@ Definition canon_budget_refused (cfg : SpuriousCfg) (p : policy) (img : Image) (
     (en : ExecEntry) (inp : ProcInput) : Prop :=
   match img, en with
   | mkImage segs pc ph, mkEntry sp brk0 mbase rnd =>
-    exists tr c, canon_run p segs cfg (init_config segs pc ph sp brk0 mbase rnd lim inp) tr c
-                 /\ budget_refused_at segs c
+    exists tr c, canon_run p (run_segments segs inp sp mbase) cfg (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp) tr c
+                 /\ budget_refused_at (run_segments segs inp sp mbase) c
   end.
 
 (** An error that a canonical execution of [p] reaches, or that any other
@@ -878,10 +878,10 @@ Definition guarded_reaches_error (cfg : SpuriousCfg) (p : policy) (img : Image) 
   match img, en with
   | mkImage segs pc ph, mkEntry sp brk0 mbase rnd =>
     exists tr c evs,
-      ((star_guarded segs cfg (init_config segs pc ph sp brk0 mbase rnd lim inp) tr c
-        /\ ~ unplaced_at segs c /\ ~ budget_refused_at segs c)
-       \/ canon_run p segs cfg (init_config segs pc ph sp brk0 mbase rnd lim inp) tr c)
-      /\ sstep_cfg segs cfg c evs SError
+      ((star_guarded (run_segments segs inp sp mbase) cfg (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp) tr c
+        /\ ~ unplaced_at (run_segments segs inp sp mbase) c /\ ~ budget_refused_at (run_segments segs inp sp mbase) c)
+       \/ canon_run p (run_segments segs inp sp mbase) cfg (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp) tr c)
+      /\ sstep_cfg (run_segments segs inp sp mbase) cfg c evs SError
   end.
 
 Definition guarded_trace (cfg : SpuriousCfg) (p : policy) (img : Image) (lim : Z) (en : ExecEntry)
@@ -889,8 +889,8 @@ Definition guarded_trace (cfg : SpuriousCfg) (p : policy) (img : Image) (lim : Z
   match img, en with
   | mkImage segs pc ph, mkEntry sp brk0 mbase rnd =>
     exists tr' c,
-      (star_guarded segs cfg (init_config segs pc ph sp brk0 mbase rnd lim inp) tr' c
-       \/ canon_run p segs cfg (init_config segs pc ph sp brk0 mbase rnd lim inp) tr' c)
+      (star_guarded (run_segments segs inp sp mbase) cfg (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp) tr' c
+       \/ canon_run p (run_segments segs inp sp mbase) cfg (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp) tr' c)
       /\ is_prefix tr tr'
   end.
 
@@ -1023,7 +1023,7 @@ Lemma canon_complete_of_no_placement : forall vi cfg segs pc ph lim,
   (forall en inp, valid_entry (mkImage segs pc ph) en inp -> vi inp ->
      match en with
      | mkEntry sp brk0 mbase rnd =>
-       no_placement_from segs cfg (init_config segs pc ph sp brk0 mbase rnd lim inp)
+       no_placement_from (run_segments segs inp sp mbase) cfg (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp)
      end) ->
   canon_complete vi cfg (mkImage segs pc ph) lim.
 Proof.

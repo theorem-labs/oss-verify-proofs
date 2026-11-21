@@ -1,22 +1,23 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs (for the cf layer at plugin-hostd/fuzz_reply; row img-fqconst-A).
    rule 24: no function proved (kind: image row; a closed computation over reply image A's constant-cell table,
    fuzz_reply.asan, pin 42c58610e125).
 
    FQ_CONST at image A.  The cf layer's Definition FQ_CONST
-   (proofs/cgif/cgif_file_fuzzer/lib/YGcfInstFreeView.v:56-58 @ 587da63d252) is stated with const_at (the same file,
+   (proofs/cgif/cgif_file_fuzzer/lib/YGcfInstFreeView.v:56-58) is stated with const_at (the same file,
    :54-55):
      const_at ly a w v := exists e, In (ACell e w (AV (ANum v))) (as_const B ly) /\ aeval B ly e = a.
    The reply tree does not carry that layer file, so the Lemma below states FQ_CONST's body with const_at UNFOLDED, at
-   any B with the image's symbol facts (ImgBase.im_syms at AImg_reply, proofs/plugin-hostd/fuzz_reply/lib/A/AGif2reply.v:27
-   @ d2bd679271c, = lib/A/AF0m.v's TfibSyms).  The four cells are found by a scan of the table Tfib_const
-   (proofs/plugin-hostd/fuzz_reply/lib/A/AF0m.v:817 @ d2bd679271c; ImgBase.cell_lookup, vm_compute) at the instance
-   TFIB_INST = 0xa2a58 (lib/A/AF0m.v:17) plus o_q_max / o_q_maxcache / o_q_min / o_q_cmutex + 2
-   (proofs/plugin-hostd/fuzz_reply/lib/Reusable/YG0f.v:209-212 @ d2bd679271c); the values are kQuarantineMax /
+   any B with the image's symbol facts (ImgBase.im_syms at AImg_reply, proofs/plugin-hostd/fuzz_reply/lib/A/AGif2reply.v:28,
+   = lib/A/AF0m.v's TfibSyms).  The four cells are found by a scan of the table Tfib_const
+   (proofs/plugin-hostd/fuzz_reply/lib/A/AF0m.v:818; ImgBase.cell_lookup, vm_compute) at the instance
+   TFIB_INST = 0xa2a58 (lib/A/AF0m.v:18) plus o_q_max / o_q_maxcache / o_q_min / o_q_cmutex + 2
+   (proofs/plugin-hostd/fuzz_reply/lib/Reusable/YG0f.v:209-212); the values are kQuarantineMax /
    kQuarantineCacheMax / kQuarantineMin (lib/Reusable/YG00.v:28-30, same commit).  cgif's discharge pattern:
    tfib_const_lookup (proofs/cgif/cgif_file_fuzzer/lib/YF0x.v:206); FQ_CONST_cgif
-   (proofs/cgif/cgif_file_fuzzer/lib/YGcfInstFreeImgcgif.v:87 @ 672df6005e4). *)
+   (proofs/cgif/cgif_file_fuzzer/lib/YGcfInstFreeImgcgif.v:87). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -33,7 +34,7 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import ImgBas
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import AGif2reply.
 Open Scope Z_scope.
 
-(* FQ_CONST at image A: YGcfInstFreeView.v:56-58 with const_at (:54-55) unfolded, commit 587da63d252. *)
+(* FQ_CONST at image A: YGcfInstFreeView.v:57-59 with const_at (:54-55) unfolded. *)
 Lemma FQ_CONST_A : forall B, @im_syms AImg_reply B ->
   forall ly,
   (exists e, In (ACell e 8 (AV (ANum kQuarantineMax))) (as_const B ly) /\ aeval B ly e = as_inst B + o_q_max) /\

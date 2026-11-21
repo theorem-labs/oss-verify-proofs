@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02Tail.v at 1d255703e887 (its two check
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02Tail.v (its two check
    walks ch_mal / ch_abs and the cut lemma ch_cut_T, with the call-in-the-middle pattern they take from
    lib/A/RPgCheckStr.v) for reac-pw/fuzz_rate image A: role's pcs become rate's (ABS 0x82b7c, MAL 0x82c9c, the
    join A 0x82ca8), the one-byte role cell becomes rate's four-byte hz cell holding 0x5a5a5a5a, the register the
    cell's address lives in moves from role's s6 to rate's s5 (atom 21), the two real-frame cells the absent arm
    reloads are rate's R+0x78 (F) and R+0x58 (the flags byte) instead of role's R+0x28 and R+0x80, and the join's
    cut is rs_cut_A, which carries the flags byte where role's rs_cut_T carried the first block. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate, image A (fuzz_rate.asan, pinned sha256
    22bc8613d780c9a99353dc86368f9401311ef5c8358882651217836298529b6a; every address measured on the unstripped twin
    0d508f2c65c249840b6c8fe3c1960824f2548b175c23583632f06bb7956458c3, the same loaded bytes). Proves no function

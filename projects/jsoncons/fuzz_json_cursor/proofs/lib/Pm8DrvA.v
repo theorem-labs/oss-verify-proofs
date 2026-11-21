@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed drv_openA. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
@@ -151,8 +152,10 @@ Section DrvA.
       apply (nolazy_of_inv scfg L ar C IL HI HIok sp0 Hsp DL _ _ _ _ _ _ _ _ _ (di_inv _ _ _ _ _ _ _ _ _ _ DI0)); [lia|].
       intros k Hk. right. left. lia.
     - rewrite F1. reflexivity.
-    - split; [exact Hplen|]. split; [exact Hnonul|].
-      regv HR0 (11%bv : reg). cbn [edenot ev ENVA]. rewrite P2. exact Sr'.
+    - split; [exact Hplen|]. split; [exact Hnonul|]. split.
+      { regv HR0 (11%bv : reg). cbn [edenot ev ENVA]. rewrite P2. exact Sr'. }
+      regv HR0 (11%bv : reg). cbn [edenot ev ENVA]. rewrite P2.
+      unfold TASK_SIZE. pose proof (proj2 P1lo). lia.
     - exact Hpne.
     - exact Hppl.
     - rewrite F2. exact Hfile.
@@ -180,7 +183,7 @@ Section DrvA.
       rewrite F1. change (alloc_fd fds0) with (Z_to_bv 64 3).
       set (model1 := with_fds (fd_insert fds0 (Z_to_bv 64 3) (FdFile path (Z_to_bv 64 0))) model0).
       assert (DI1 : dinvA [] LK0 cr0 A0 M model1).
-      { apply (dinv_model scfg L ar C IL HI HIok sp0 Hsp DL M0 _ _ _ _ _ model0 model1 DI0); [apply with_fds_vm|].
+      { apply (dinv_model scfg L ar C IL HI HIok sp0 Hsp DL M0 _ _ _ _ _ model0 model1 DI0); [apply with_fds_vm| |apply with_fds_rdr].
         unfold model1. rewrite with_fds_halted'. exact (di_halt _ _ _ _ _ _ _ _ _ _ DI0). }
       assert (HK1 : know_ok ASEGS (ENVA vals) (mrestrict (ahid A0 model1) M) knA) by exact HK0.
       assert (G1 : m_fds model1 = fds1) by (unfold model1; apply with_fds_fds).

@@ -1,11 +1,11 @@
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/A/Prog/IdentBlkTail.v at origin/ossv/recipes 6ebe35ba632, with its module paths changed to reac-pw/fuzz_pin; no other change (the file names no address, no listing and no symbol). *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/A/Prog/IdentBlkTail.v, with its module paths changed to reac-pw/fuzz_pin; no other change (the file names no address, no listing and no symbol). *)
 (* The bytes of a heap block's last granule are present: what the runtime wrappers ask of a string that ends
    inside a heap block.
 
    `astrlen_realizes` (lib/A/Rt/StrlenDef.v:46), `amemchr_realizes` (lib/A/Rt/MemchrDef.v) and `tcheck_str_spec`
    (lib/A/Prog/check_str.v:79) each need, besides the string's own bytes, that every byte between the NUL and the
    end of the NUL's 8-byte word is readable: the interceptor's word loop reads the whole word that holds the NUL.
-   `AR_blocks_law` (lib/Reusable/YG0d.v:423) gives presence only on [p, p + req_size n), and a block's requested
+   `AR_blocks_law` (lib/Reusable/YG0d.v:424) gives presence only on [p, p + req_size n), and a block's requested
    size need not be a multiple of 8, so that word can run past the block's last byte.
 
    It does not run past what the allocator mapped: a chunk's extent covers its redzone, the rounded-up user size
@@ -14,10 +14,10 @@
    `blk_tail_present` below is that fact in the shape the three contracts consume. It names no address, no
    listing and no symbol of either build, so lib/B takes this same file.
 
-   Proof: `In_ablocks` (YG0s.v:562) gives the chunk; inside [p, p + req_size n) the byte is a client byte
+   Proof: `In_ablocks` (YG0s.v:563) gives the chunk; inside [p, p + req_size n) the byte is a client byte
    (`am_client` over `chunk_user`), beyond it the byte is in the chunk's tail junk range
    (`am_junk` over the last entry of `chunk_junk`), whose length is `ck_extent k - ck_rz k - ck_n k`;
-   `class_id_ok` (YG0a.v:57) for a primary chunk and `round_up_ge` for a secondary one bound the word's end by
+   `class_id_ok` (YG0a.v:58) for a primary chunk and `round_up_ge` for a secondary one bound the word's end by
    `p + ck_extent k - ck_rz k`. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.

@@ -1,4 +1,4 @@
-(* Modified by a Theorem Labs lane (ReallocPrimary.RealSegA), 2026-10-30: from proofs/plugin-hostd/fuzz_reply/lib/A/RGthinK.v (commit 66a127cb11e, sha256 84c6a42dadb9; internal record, reply A text, no relocation); no other change. *)
+(* Modified by a Theorem Labs lane (ReallocPrimary.RealSegA), 2026-10-30: from proofs/plugin-hostd/fuzz_reply/lib/A/RGthinK.v (sha256 84c6a42dadb9; internal record, reply A text, no relocation); no other change. *)
 (* fuzz_reply.asan (pinned sha256 42c58610e125e0b4...): the addresses of the realloc chain that the thin realloc
    segments run through, and the decode table of that code.
 

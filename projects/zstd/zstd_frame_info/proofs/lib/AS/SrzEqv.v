@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (sys_rob_eqv added: RomBase.sys_rob carries over cfg_eqv, for srealizes_eqv's node case; imports RomBase). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -10,6 +11,7 @@ From OSSVerify.Proofs.zstd.zstd_frame_info.lib.AS Require Import SimInv ShapeAlg
 From OSSVerify.Proofs.zstd.zstd_frame_info.lib.Lib Require Import Cfg.
 From OSSVerify.Proofs.zstd.zstd_frame_info.lib.Lib Require Import PropExec MState.
 From OSSVerify.Proofs.zstd.zstd_frame_info.lib.AS Require Import RegsEqv0.
+From OSSVerify.Proofs.zstd.zstd_frame_info.lib.AS Require Import RomBase.
 (* [comment removed for export] *)
 Local Instance srz_fx_as : OSSVerify.Proofs.zstd.zstd_frame_info.lib.AS.PropExec.FPState := OSSVerify.Proofs.zstd.zstd_frame_info.lib.AS.PropExec.fx0.
 Local Instance srz_fx_lib : OSSVerify.Proofs.zstd.zstd_frame_info.lib.Lib.PropExec.FPState := OSSVerify.Proofs.zstd.zstd_frame_info.lib.Lib.PropExec.fx0.
@@ -51,10 +53,21 @@ Proof.
   exists ms1', mo1. split; [reflexivity|]. exists (mkCfg ms1 mo1). split; [exact HP1|]. split; [exact Heq | reflexivity].
 Qed.
 
+(* LPS 727298f3: [srz_node] asks [RomBase.sys_rob]; an equivalent configuration has the same
+   memory, backing, pending call and model, and the same argument registers ([sys_input_eqv]) *)
+#[using="Type"] Lemma sys_rob_eqv : forall c c', sys_rob segs c -> cfg_eqv c c' -> sys_rob segs c'.
+Proof.
+  intros [ms mo] [ms' mo'] Hrob [Hms Hmo] r x8 Hr Hs o. cbn [cfg_ms cfg_model] in *. subst mo'.
+  pose proof Hms as (H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8).
+  assert (Hw : ms_eqv (wrom ms r) (wrom ms' r)) by (repeat split; first [assumption | reflexivity]).
+  rewrite <- (sys_input_eqv segs _ _ x8 Hw), <- (sys_input_eqv segs _ _ x8 Hms).
+  apply (Hrob r x8); [intros a b E; apply Hr; rewrite <- H8; exact E | exact (eq_trans H4 Hs)].
+Qed.
+
 #[using="Type"] Theorem srealizes_eqv : forall c T, srealizes segs c T -> forall c', cfg_eqv c c' -> srealizes segs c' T.
 Proof.
   intros c T H.
-  induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq]; intros c' Heqv.   (* [comment removed for export] *)
+  induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq]; intros c' Heqv.   (* [comment removed for export] *)
   - (* [comment removed for export] *)
     destruct Hnode as [Hfwd Hexact].
     set (I' := { p : I * config | sstep_cfg segs ACFG c' (evs (fst p)) (SNext (snd p)) /\ cfg_eqv (nx (fst p)) (snd p) }).
@@ -63,6 +76,7 @@ Proof.
     apply (srz_conseq segs c' (t_alt (fun q : I' => t_emit (evs (fst (proj1_sig q))) (T (fst (proj1_sig q)))))).
     + apply (srz_node segs c' I' (fun q => evs (fst (proj1_sig q))) (fun q => snd (proj1_sig q))
                       (fun q => T (fst (proj1_sig q))) q0).
+      2:{ exact (sys_rob_eqv c c' Hrob Heqv). }
       * split.
         -- intros [[i c2] [Hs He]]. cbn. exact Hs.
         -- intros e st Hss.

@@ -4,15 +4,16 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 823 of its 864 lines of code are new or changed and 970 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F3F.v, with its module paths, module names and addresses changed; 553 of its 762 lines of code are new or changed and 655 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/F4.v 2d4003b98bbc (the blob this tree had at release c5e779efe8c) at 51a11dec84a (its runs f4_dbc_call
+   FACTS, PAU pau-libreac-v190. Source: Seg/F4.v 2d4003b98bbc (the blob this tree had at release) (its runs f4_dbc_call
    :2183 and f4_dbc_calln :2246, Section S, Hypothesis HPARSE : reac_ctrl_parse_contract :66); the import block and
    the f4_ba_rel tactic are Seg/F4F.v's (blob 057dfbd37441); the plain callee contract is
    lib/A/Prog/reac_ctrl_parse_c.v blob 16c204a84a2a, reac_ctrl_parse_contract :38.
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: <r>_of_pre_post (r = f4_dbc_call, f4_dbc_calln) re-derives F4.<r> from <r>_pre_F and <r>_post_F at
    ExecF.RNG_all and the PLAIN callee contract between them; <r>_of_pre_post_verbatim checks by constr_eq that its
    type is the type of F4.<r> after F4's own first premise (Hypothesis HPARSE : reac_ctrl_parse_contract, F4.v:66).
@@ -24,7 +25,7 @@
    return pc 0x81e84). The callee contract is the PLAIN one, a Section Hypothesis in HPARSE's position.
    - <r>_pre_F / <r>_pre_Fs : 0x81e74 `mv a0,s7` ; 0x81e78 `li a1,0` ; 0x81e7c `ld a2,248(s1)` ; 0x81e80
      `jal reac_ctrl_parse`, up to the callee ENTRY state (pc = REAC_CTRL_PARSE, ra = 0x81e84, a0 = f, a1 = 0,
-     a2 = o). Cut from F4.v:2226 (`step. step. step. step.`; F4F.v:231-235 is the same stretch over StepF). One
+     a2 = o). Cut from F4.v:2226 (`step. step. step. step.`; F4F.v:232-236 is the same stretch over StepF). One
      access: the 8-byte load at A + 248, so one rng premise. No contract premise. _F carries the source run's whole
      premise list (source order) plus that rng premise; _Fs carries only what the four steps use: 0 <= A,
      A + 256 <= 2 ^ 64 (the address form of the load), the source's own read fact HRDcur (F4.v:2189 / :2252) and
@@ -81,7 +82,7 @@ Import YK11.
 Open Scope Z_scope.
 
 (* F4.v's Section S starts at its line 58, so its Ltac definitions are section-local and not exported: this is
-   F4F.v's copy (F4F.v:65-67), the same body under the same name. *)
+   F4F.v's copy (F4F.v:66-68), the same body under the same name. *)
 Ltac f4_ba_rel R :=
   first [ apply (proj1 (bytes_at_rel rsegs _ _ _ _ R)); assumption
         | apply (proj2 (bytes_at_rel rsegs _ _ _ _ R)); assumption ].

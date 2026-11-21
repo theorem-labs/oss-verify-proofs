@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: relocated by R4Printf.BzPrintfPort (a Theorem Labs lane) onto plugin-hostd/fuzz_reply.asan from a working branch 840c4afa7e2 proofs/omx-clap-core/fuzz_state/lib/A/Bz/A/I_pcxgram.v: module paths only (no fuzz_state.asan address numerals). *)
+(* Modified by Theorem Labs, 2026-10: relocated by R4Printf.BzPrintfPort (a Theorem Labs lane) onto plugin-hostd/fuzz_reply.asan from a working branch proofs/omx-clap-core/fuzz_state/lib/A/Bz/A/I_pcxgram.v: module paths only (no fuzz_state.asan address numerals). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A.Bz Require BvWfKernel.
@@ -10,11 +11,11 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope Z_scope.
 
-(* parg: the printf argument kinds, from openssl/ct lib/Spec/PrintfModel.v:37 (hub 60b8c89d30), unchanged. *)
+(* parg: the printf argument kinds, from openssl/ct lib/Spec/PrintfModel.v:37 (hub theorem-labs/oss-verify-proofs@6b32741d849a), unchanged. *)
 Inductive parg : Type := PA_s (s : list Z) | PA_sn | PA_i (i : Z) | PA_u (u : Z) | PA_z (u : Z) | PA_g (d : Z).
 
 (* The pcx grammar of printf_common's list walk (I_pcxlist.v): from openssl/ct lib/CtB/I_vsnstmt.v:24-147
-   (hub 60b8c89d30), unchanged; the vsnprintf statements of that file and their imports are not ported. *)
+   (hub theorem-labs/oss-verify-proofs@6b32741d849a), unchanged; the vsnprintf statements of that file and their imports are not ported. *)
 Inductive pcx_kind : Type := PK_int | PK_long | PK_char | PK_str.
 Inductive pcx_prec : Type := PP_none | PP_num | PP_star.
 

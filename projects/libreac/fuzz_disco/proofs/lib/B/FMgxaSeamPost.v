@@ -1,4 +1,4 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamPost.v (a working branch 0ddf65fd8cc); relocated to libreac/fuzz_disco.asan-ubsan by reloc.py (target disco-Y): module paths changed; 5 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan-ubsan, symbol + offset; table: this file's rows in provenance/evidence/g9-gxa/g9tool/g9-table-disco-Y.tsv); names: record RT_IImgA -> ; A-core -> Y-core (lib.Reusable): AB1v->YB1v. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamPost.v (a working branch); relocated to libreac/fuzz_disco.asan-ubsan by reloc.py (target disco-Y): module paths changed; 5 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan-ubsan, symbol + offset; table: this file's rows in provenance/evidence/g9-gxa/g9tool/g9-table-disco-Y.tsv); names: record RT_IImgA -> ; A-core -> Y-core (lib.Reusable): AB1v->YB1v. *)
 (* Step 3 of the evt -> SRr seam at musl vfprintf: GXA's post read as the harness's post, every
    piece of it except the final assembly (a Theorem Labs lane does that).
 

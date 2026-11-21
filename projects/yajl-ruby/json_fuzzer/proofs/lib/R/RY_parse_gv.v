@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (push_realloc reads the allocation-ceiling bound from rauxv_ok's new shape (the auxv address, a pair list and the AT_RANDOM address)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -290,7 +291,7 @@ Proof.
     split; [exists padw; exact FR2|].
     split.
     { eapply rauxv_ok_frame; [exact AX3| exact MU| exact WM|]. constructor; [| constructor]. cbn. unfold RAUXV_CELL.
-      pose proof AX3 as (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & _ & _ & _ & CB0 & _). unfold alloc_ceiling in CB0. clear -R1 CB0. lia. }
+      pose proof AX3 as (av & vs & rnd & _ & _ & _ & (CB0 & _) & _). unfold alloc_ceiling in CB0. clear -R1 CB0. lia. }
     split; [exact STK4|]. split; [eexists; rewrite (ry_errno_lit _ TP); unfold RERRNO; eassumption|]. split; [exact MI4|].
     split.
     { eapply ry_pres_trans; [exact PRES2|]. eapply ryajl_pres_of_munch; [exact MU| exact WM|].

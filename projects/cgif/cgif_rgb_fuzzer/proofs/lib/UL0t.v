@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the usage arm is stated over the run with the launch premises, and is proved once from the flag-free state, its auxv region dropped, that the two CONFIG_RSEQ states weaken to). *)
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -11,7 +12,7 @@ YQ0j YQ0c YQ0b YQ03 YQ0i YQ0h YQ09 YQ0a YQ04 YQ0d YQ05.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YP07 YP00.
 From OSSVerify.cgif.cgif_rgb_fuzzer.images Require Import Ubsan.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YO3v UH04 UH05 UH07 UO3p UO3k UO3q UO3r UO3j UO3t UO3m UL0q UL0g UL0l.
-From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YN05.
+From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YN05 YL05.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Open Scope bv_scope.
@@ -19,35 +20,55 @@ Open Scope Z_scope.
 Section b. Context {fx : YK11.FPState} {rc : YN05.RunCeil}.
 Lemma msg_usage_eq : forall a, msg_usage a = strB "usage: " ++ a ++ strB " INPUT" ++ nl.
 Proof. intros a. unfold msg_usage. vm_compute. reflexivity. Qed.
+(* #38: [ss_main false rs] is indexed by the run's CONFIG_RSEQ flag, and the two
+   states differ only in the auxv region (UL0g).  The usage path prints and
+   exits and reads no auxv, so the region is dropped ([ss_usage]) and the path
+   is proved once for both flags. *)
+Definition usage_cond : acond := mkAC BC_NE (SOff 3 0) (SLit 2).
+Definition L_usage : list (nat * YQ0b.region) := Eval vm_compute in (drop_auxv_mem (ss_mem ss_main_ft)).
+Definition ss_usage : sstate := Eval vm_compute in
+(let X := add_cond ss_main_ft usage_cond in mkSS (ss_pc X) (ss_regs X) (map snd L_usage) (ss_resv X) (ss_facts X)).
+Lemma st_ok_usage : forall rs E ms,
+st_ok ubs2segs E (add_cond (ss_main false rs) usage_cond) ms -> st_ok ubs2segs E ss_usage ms.
+Proof.
+intros rs E ms HS.
+pose proof (st_ok_relayout ubs2segs E _ ms L_usage HS ltac:(destruct rs; vm_compute; reflexivity)) as H.
+replace ss_usage with
+(mkSS (ss_pc (add_cond (ss_main false rs) usage_cond)) (ss_regs (add_cond (ss_main false rs) usage_cond))
+(map snd L_usage) (ss_resv (add_cond (ss_main false rs) usage_cond)) (ss_facts (add_cond (ss_main false rs) usage_cond)))
+by (destruct rs; vm_compute; reflexivity).
+exact H.
+Qed.
 Section c.
-Variable sp : word.
-Variable argv envp : list (list byte).
-Variable tid : word.
-Variable rnd : EntryDraw.
+Variables (sp brk mbase tid : word) (inp : ProcInput) (rnd : EntryDraw).
 Hypothesis Hsp : valid_sp sp.
-Hypothesis Hva : valid_argv argv.
-Hypothesis Hve : valid_envp envp.
-Hypothesis Hfits : entry_stack_fits sp argv envp.
-Hypothesis Hargc : (length argv <> 2)%nat.
+Hypothesis Hva : valid_argv (in_argv inp).
+Hypothesis Hve : valid_envp (in_envp inp).
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp.
+Hypothesis Hargc : (length (in_argv inp) <> 2)%nat.
+Local Notation argv := (in_argv inp) (only parsing).
+Local Notation envp := (in_envp inp) (only parsing).
+Local Notation efn := (in_execfn inp) (only parsing).
 Theorem ubs2_usage : forall ms model,
-st_ok ubs2segs (E_main sp argv envp tid rnd) (add_cond ss_main_f (mkAC BC_NE (SOff 3 0) (SLit 2))) ms ->
-runs_at (bv_unsigned sp) (ms_mem ms) (runs_main false sp argv envp rnd) ->
+st_ok ubs2segs (E_main sp inp argv envp efn tid rnd) (add_cond (ss_main false (kb_rseq (in_kernel inp))) usage_cond) ms ->
+runs_at (bv_unsigned sp) (ms_mem ms) (runs_main false sp (ed_top rnd) argv envp efn rnd) ->
 m_halted model = None -> m_vm_lazy model = [] -> fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) model ->
 realizes ubs2segs (mkCfg ms model) (diag (msg_usage (nth 0 argv [])) (m_fs model)).
 Proof.
-intros ms model HS HR Hh Hlz Hfd2.
+intros ms model HS0 HR Hh Hlz Hfd2.
+pose proof (st_ok_usage _ _ ms HS0) as HS. clear HS0.
 unfold diag, wr, ex, ch_stderr. rewrite msg_usage_eq.
-pose proof (argc_bounds argv Hva) as HA.
-pose proof (layout_facts sp argv envp Hsp Hva Hve) as L. unfold SP_LO, SP_HI in L.
-pose proof (z_argv_bounds sp argv envp 0 ltac:(lia)) as B0.
-pose proof (argv_no_nul argv Hva 0 ltac:(lia)) as Hnul.
-pose proof (argv_str_len argv Hva 0 ltac:(lia)) as Hlen0.
-pose proof (ewm1 sp argv envp Hsp Hva Hve rnd tid) as H1.
-pose proof (ew0 sp argv envp (xw_main sp argv envp tid rnd) (xd_main rnd)) as H0.
-change (E0 _ _ _ _ _) with (E_main sp argv envp tid rnd) in H0.
-pose proof (ew3 sp argv envp Hva (xw_main sp argv envp tid rnd) (xd_main rnd)) as H3.
-change (E0 _ _ _ _ _) with (E_main sp argv envp tid rnd) in H3.
-pose proof (z_argv_fits sp argv envp Hfits 0 ltac:(lia)) as F0. unfold SP_HI in F0.
+pose proof (argc_bounds inp Hva) as HA.
+pose proof (layout_facts inp mbase sp brk rnd Hsp Hlau) as L. unfold SP_LO, SP_HI in L.
+pose proof (z_argv_bounds inp rnd 0 ltac:(lia)) as B0.
+pose proof (argv_no_nul inp Hva 0 ltac:(lia)) as Hnul.
+pose proof (argv_str_len inp Hva 0 ltac:(lia)) as Hlen0.
+pose proof (ewm1 inp mbase sp brk rnd) as H1. lfeed H1. specialize (H1 tid).
+assert (H0 : bv_unsigned (ew (E_main sp inp argv envp efn tid rnd) 0) = bv_unsigned sp) by reflexivity.
+assert (H3 : bv_unsigned (ew (E_main sp inp argv envp efn tid rnd) 3) = Z.of_nat (length argv)).
+{ unfold E_main. eapply ew3; eassumption. }
+pose proof (z_argv_fits inp mbase sp brk rnd Hsp Hlau 0 ltac:(lia)) as F0. unfold SP_HI in F0.
 sym_norm HS.
 sym_run_to_with ubs2tbl_ok HS 0x207b8.
 fpf_memchr HS HR 1%nat 2%nat 1%nat 10%nat (nth 0 argv []).
@@ -141,7 +162,7 @@ Qed.
 End c.
 Theorem ubs2_usage_hyp : usage_hyp.
 Proof.
-unfold usage_hyp. intros sp argv envp tid rnd ms model Hsp Hva Hve Hfits Hargc HS HR Hh Hlz Hch.
-exact (ubs2_usage sp argv envp tid rnd Hsp Hva Hve Hfits Hargc ms model HS HR Hh Hlz Hch).
+unfold usage_hyp. intros sp brk mbase tid rnd inp ms model Hsp Hva Hve Hvl Hlau Hargc HS HR Hh Hlz Hch.
+eapply ubs2_usage; eassumption.
 Qed.
 End b.

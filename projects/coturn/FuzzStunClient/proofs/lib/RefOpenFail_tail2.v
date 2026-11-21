@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the section assumes the stderr write's channel reader (m_channel_reader) and passes it on. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -111,6 +112,7 @@ Section Tail2.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  Hypothesis Hrdr : m_channel_reader model = true.   (* LPS 08b1429: the stderr write's channel reader *)
 
   Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
   Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
@@ -136,7 +138,7 @@ Section Tail2.
     regs_ok (ENV BL vals) srH30 R -> know_ok RSEGS (ENV BL vals) M knH30 ->
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x1e734) M (seg_rom RSEGS)) model)
                (t_exit (exit_code 2) (m_fs model)).
-  Proof using Hvsp Hh Hlazy Hfd2 SPlo SPhi.
+  Proof using Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi.
     intros vals R M HL P0 HR HK.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
     (* [comment removed for export] *)
@@ -160,6 +162,7 @@ Section Tail2.
     - reflexivity.
     - reflexivity.
     - exact Hfd2.
+    - exact Hrdr.
     - exact Hh.
     - exact Hlazy.
     - apply t_exit_has_nil.
@@ -173,7 +176,7 @@ Section Tail2.
   (* [comment removed for export] *)
   Lemma of_segG3 : forall (path : list byte), Z.of_nat (length path) = 63%Z ->
     atG0 sp0 BL model path 63 (t_emit (W 2 (msg_cannot_open path)) (t_exit (exit_code 2) (m_fs model))).
-  Proof using Hvsp Hh Hlazy Hfd2 SPlo SPhi.
+  Proof using Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi.
     intros path HP vals R M HL P0 P113 HR HK SBp.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
     (* [comment removed for export] *)
@@ -227,6 +230,7 @@ Section Tail2.
       replace (17 + length path)%nat with (17 + length path)%nat by lia. exact B80.
     - cbn [edenot]. exact Hnl.
     - exact Hfd2.
+    - exact Hrdr.
     - exact Hh.
     - exact Hlazy.
     - apply t_exit_has_nil.
@@ -263,7 +267,7 @@ Section Tail2.
     regs_ok (ENV BL vals) srH40 R -> know_ok RSEGS (ENV BL vals) M knH40 ->
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x1e274) M (seg_rom RSEGS)) model)
                (t_emit (W 2 [Z_to_bv 8 10]) (t_exit (exit_code 2) (m_fs model))).
-  Proof using Hvsp Hh Hlazy Hfd2 SPlo SPhi.
+  Proof using Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi.
     intros vals R M HL P0 HR HK.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
     (* [comment removed for export] *)
@@ -290,6 +294,7 @@ Section Tail2.
       replace (bv_unsigned sp0 + -560)%Z with (bv_unsigned sp0 + -560)%Z by lia. exact Hb.
     - reflexivity.
     - exact Hfd2.
+    - exact Hrdr.
     - exact Hh.
     - exact Hlazy.
     - apply t_exit_has_nil.
@@ -310,7 +315,7 @@ Section Tail2.
     rdn RSEGS M pp (length path + 1) = Some (path ++ [Z_to_bv 8 0]) ->
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x1e274) M (seg_rom RSEGS)) model)
                (t_emit (W 2 (msg_cannot_open path)) (t_exit (exit_code 2) (m_fs model))).
-  Proof using Hvsp Hh Hlazy Hfd2 SPlo SPhi.
+  Proof using Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi.
     intros path pp P vals R M HP HPr HL P0 P2 P113 Hpp1 Hpp2 Hpp47 HR HK Hstr.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi. pose proof (u64_range pp) as Hppr.
     assert (Psmall : (bv_unsigned (edenot (ENV BL vals) (EVar 113)) < 2 ^ 31)%Z).
@@ -370,6 +375,7 @@ Section Tail2.
       replace (bv_unsigned sp0 + -560)%Z with (bv_unsigned sp0 + -560)%Z by lia. exact H17.
     - cbn [edenot ev ENV PX]. rewrite P2. exact Hsrc.
     - exact Hfd2.
+    - exact Hrdr.
     - exact Hh.
     - exact Hlazy.
     - apply t_emit_has_nil.
@@ -453,14 +459,14 @@ Section Tail2.
     rdn RSEGS M (Z_to_bv 64 (bv_unsigned pp + Z.of_nat (length path))) 8 = Some t8 ->
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x2409c) M (seg_rom RSEGS)) model)
                (t_die (msg_cannot_open path) (m_fs model)).
-  Proof using Hvsp Hh Hlazy Hfd2 SPlo SPhi.
+  Proof using Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi.
     intros path pp t8 vals R M Hnonul HPl HL P0 P2 P38 Hpp1 Hpp2 Hpp47 HR HK Hstr Ht8.
     unfold t_die.
     eapply (of_segBC sp0 BL model Hvsp Hh Hlazy path pp (Z.of_nat (length path)) _ t8 vals);
       try eassumption; try lia.
     intros vals' R' M' HL' Q0 Q2 Q113 HR' HK' Hstr'.
     destruct (Z.le_gt_cases (Z.of_nat (length path)) 62) as [Hle | Hgt].
-    - eapply (of_segF sp0 BL model Hvsp Hh Hlazy Hfd2 path pp _ vals'); try eassumption; lia.
+    - eapply (of_segF sp0 BL model Hvsp Hh Hlazy Hfd2 Hrdr path pp _ vals'); try eassumption; lia.
     - destruct (Z.le_gt_cases (Z.of_nat (length path)) 63) as [Hle2 | Hgt2].
       + assert (E63 : Z.of_nat (length path) = 63%Z) by lia. rewrite E63 in Q113.
         eapply (of_segF_gen sp0 BL model Hvsp Hh Hlazy path pp 63 _ vals'); try eassumption; try lia.

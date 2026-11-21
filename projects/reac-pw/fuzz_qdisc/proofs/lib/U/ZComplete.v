@@ -15,24 +15,25 @@ From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.U.Reusable Require Import
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.U Require Import
   ZImage TraceHalting TraceHaltingB ZTraceSpec AllocSlots AllocRoom.
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.U.Reusable Require Import DriverSlots.
+From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require RomStableK.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Open Scope Z_scope.
 #[local] Existing Instance YK11.fx0.
 Definition zlib_runtime_contracts : Prop :=
-  forall rc : RunCeil, exists API : @AllocAPI rc src0_msyms,
+  forall rc : RunCeil, exists API : @AllocAPI rc Cfg.AcfgMode src0_msyms,
     AllocExtra src0_msyms (aa_MR API) /\
     lib_contract_x_all (rc:=rc) (LS:=checksum_shape)
       src0_msyms API LIBPC RA_LIB EMPTY LIB_STACK.
 Definition zlib_runtime_contracts_G (LS : lib_shape) (G R : list (Z * Z)) (GI : nat -> (word -> option byte) -> Prop)
     (f : list byte -> list byte) : Prop :=
-  forall rc : RunCeil, exists API : @AllocAPI rc src0_msyms,
+  forall rc : RunCeil, exists API : @AllocAPI rc Cfg.AcfgMode src0_msyms,
     AllocExtra src0_msyms (aa_MR API) /\
     lib_contract_x_G_all (rc:=rc) (LS:=LS)
       src0_msyms API G R GI f LIBPC RA_LIB EMPTY LIB_STACK.
 Definition zlib_runtime_contracts_R (LS : lib_shape) (RI : list byte -> nat -> list (Z * Z) -> astate -> Prop) (G R : list (Z * Z))
     (GI : nat -> list (Z * Z) -> (word -> option byte) -> Prop) (f : list byte -> list byte) : Prop :=
-  forall rc : RunCeil, exists API : @AllocAPI rc src0_msyms,
+  forall rc : RunCeil, exists API : @AllocAPI rc Cfg.AcfgMode src0_msyms,
     AllocExtra src0_msyms (aa_MR API) /\
     lib_contract_x_R_all (rc:=rc) (LS:=LS)
       src0_msyms API RI G R GI f LIBPC RA_LIB EMPTY LIB_STACK.
@@ -74,19 +75,24 @@ Proof.
   intros LS RI G R GI f HLSP HDRV HG HR GIL GI0 HC. unfold Statements.ubsan_halts, halts_within_budget.
   intros [sp brk0 mbase rnd] inp Hentry Hinput Hbudget.
   apply (valid_entry_sv48 _ _ inp (valid_input_va_size inp Hinput)) in Hentry.
-  destruct Hentry as [Hsp [Hbrk [Hmb Hfits]]].
+  destruct Hentry as [Hsp [Hbrk [Hmb [_ Hlau]]]].
   set (rc := RunCeilOf (bv_unsigned sp) (valid_sp_window_for_ceil sp Hsp) Budgets.Standard.lim_source).
   destruct (HC rc) as [API [AX LX]].
-  change (must_exit_in_at_cfg forced_only_cfg zsegs zallowed
-    (init_config zsegs Ubsan.M.init_pc Ubsan.M.phdrs
+  (* LPS 727298f3: the run reads [run_segments zsegs ..]; the walk over the binary's own
+     segments is lifted by [RomStableK.run_init] (the image carries no vDSO text), as
+     TraceHaltingB.halts_budgets_of_realizes does. *)
+  change (must_exit_in_at_cfg forced_only_cfg (run_segments zsegs inp sp mbase) zallowed
+    (init_config (run_segments zsegs inp sp mbase) Ubsan.M.init_pc Ubsan.M.phdrs
       sp brk0 mbase rnd Budgets.Standard.lim_source inp)).
   eapply realizes_must_exit_forced_budget with (T:=SPECX (LS:=LS) inp).
-  - apply (src0_realizes_specX (rc:=rc) (LS:=LS) API AX GI RI f
+  - apply (RomStableK.run_init zsegs inp sp mbase Ubsan.M.init_pc Ubsan.M.phdrs brk0 rnd
+      Budgets.Standard.lim_source); [RomStableK.vdso_none|].
+    apply (src0_realizes_specX (rc:=rc) (LS:=LS) API AX GI RI f
       (G_local_T_mono src0segs G YL0k.src0_G GI HG GIL)
       (fun mem H => GI0 mem (G_img_mono src0segs G YL0k.src0_G mem HG H))
       (lib_contract_x_R_all_mono src0_msyms API RI G YL0k.src0_G R YL0k.src0_R GI f LIBPC RA_LIB EMPTY LIB_STACK HG HR LX)
       driver_obligationsX_proved HDRV sp brk0 mbase rnd
-      Budgets.Standard.lim_source inp Hsp Hbrk Hmb Hfits Hinput).
+      Budgets.Standard.lim_source inp Hsp Hbrk Hmb Hlau Hinput).
     + apply SRC_LIM_MIN_le_source.
     + unfold rc. apply ceil_of_top_run.
     + unfold rc. reflexivity.

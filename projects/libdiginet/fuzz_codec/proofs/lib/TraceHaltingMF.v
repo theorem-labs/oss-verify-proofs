@@ -35,9 +35,9 @@ Theorem realizes_must_exit_mf_halt : forall segs c T,
 Proof.
   intros segs c T H.
   induction H as [c I evs nx T i0 Hnode Hcont IH | c Hhalt | c T T' H IH Heq
-                 | c I nx T i0 Hnode Hcont IH | c T Hb];
+                 | c I nx T i0 Hnode Hcont IH | c T Hb Hrb];
     intros allowed HH HT.
-  - destruct Hnode as [Hcomp Hsound].
+  - destruct Hnode as [Hcomp [Hsound _]].
     apply must_exit_in_at_cfg_running.
     + exact (sstep_cfg_not_halted _ _ _ _ _ (Hcomp i0)).
     + exists (evs i0), (SNext (nx i0)). exact (Hcomp i0).
@@ -59,7 +59,7 @@ Proof.
     destruct HH as [Hin Hk].
     eapply must_exit_in_at_cfg_halted; eassumption.
   - exact (IH allowed HH (permitted_traces_sub allowed T T' HT Heq)).
-  - destruct Hnode as [Hcomp Hsound].
+  - destruct Hnode as [Hcomp [Hsound _]].
     apply must_exit_in_at_cfg_running.
     + exact (sstep_cfg_not_halted _ _ _ _ _ (Hcomp i0)).
     + exists [], (SNext (nx i0)). exact (Hcomp i0).

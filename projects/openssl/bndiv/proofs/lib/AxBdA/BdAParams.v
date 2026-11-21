@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (adds bda_segs_nk, proving by computation that no segment of this image is kernel-mapped, with a comment on why asum_ck_ok and the start-up need it). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith Bool List.
@@ -42,3 +43,13 @@ Proof. vm_compute. reflexivity. Qed.
 (* [comment removed for export] *)
 Lemma bda_cks_ok : cks_ok bda_tabs BDA_SEGS = true.
 Proof. vm_compute. reflexivity. Qed.
+
+(* asum_ck_ok and AxStart's Section Start take this as a premise rather than deriving
+   it: img_ok's seg_ok1 (AxEntryS.v) says nothing about seg_kernel_map, and segs is
+   abstract there, so Himg cannot give it.  BDA_SEGS is this unit's own ELF image, so
+   here it is concrete and closes by computation.  Shape and proof taken from the
+   sibling openssl/bignum BgAxBdA/BdAParams.v:46, whose BdAStart compiles; this unit
+   already proves the same fact the same way for its other two segment lists, at
+   AxA/BridgeA.v:40 (asegs_nk) and AxB/BridgeA.v:38 (bsegs_nk). *)
+Lemma bda_segs_nk : forallb (fun s => negb (seg_kernel_map s)) BDA_SEGS = true.
+Proof. vm_cast_no_check (eq_refl true). Qed.

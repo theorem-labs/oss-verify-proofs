@@ -31,7 +31,7 @@ By hand: download `openweave-bin.tar.zst` from release [v2026.10.0](https://gith
 
 ## How these binaries were built
 - Library: [openweave/openweave-core](https://github.com/openweave/openweave-core) at `e3c8ca3d416a2e1687d6f5b7cec0b7d0bf1e590e`, built with autotools:
-  - 1 patch, whose text is not in this release yet (it ships in the source bundle)
+  - 1 patch, whose text is not in this repository: it is in `recipe.tar.zst` in release [v2026.10.0-src](https://github.com/theorem-labs/oss-verify-proofs/releases/tag/v2026.10.0-src), under `patches/`, in the order `patches/series.tsv` gives
 - Harnesses: the harness files are modified in `FuzzCertificateConversion` (see each harness page)
 - Everywhere: static riscv64 compiled for RV64G, musl, clang 20.1.8 with `-Os -g`, and a small driver that reads the input file ([docs/running.md](../../docs/running.md)). The sanitizer flags and options are in [docs/building.md](../../docs/building.md). Each harness page lists what else its builds change, and which of its checks were confirmed in the binaries.
 - Builder image: `ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b`. A binary whose SHA-256 differs after a rebuild with it is a bug: please open an issue.

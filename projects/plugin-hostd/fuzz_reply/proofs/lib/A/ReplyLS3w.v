@@ -5,7 +5,7 @@
       exit must give back the entry's count bound: xcnt_pre (ReplyLS3c.v) bounds the entry's blocks other than the
       input, the kept table and g_out.  xcnt_post is the same bound at any (ly, S); xcnt_pre is xcnt_post at the
       entry's (c_ly, c_S) (xcnt_pre_post).  fr_LS3c_exit_cnt: at the premises of LS_exit_end (the model rule of
-      lib/A/W_LLVMFuzzerTestOneInput_exit_x.v:158-167 at a working branch bb9dae5d905: LS at S3 with
+      lib/A/W_LLVMFuzzerTestOneInput_exit_x.v:159-168 at a working branch: LS at S3 with
       ablocks S3 ~ input ++ model ++ rest, and ablocks S' ~ input ++ (lm_G m, ATABLE) :: aout_blks cap out ++ rest,
       the same rest), xcnt_post holds at S' with T0 := lm_G m: what S' holds besides the input, the table and g_out is
       fr_LS3's rest, and fr_CNT bounds the rest.  The one added premise is the block law's address bound (every live
@@ -19,7 +19,7 @@
       8 * 72,688 = 581,504 bytes; the table; the source's partial buffer; no out buffer.  The 72,687 lines carry
       1,671,801 key bytes and 72,687 newlines = 1,744,488 bytes, which 27 writes of at most 65,535 bytes carry
       (t = 27); the input is those bytes and 4 header bytes per write (op, source, two length bytes:
-      W_LLVMFuzzerTestOneInput_write.v:178-187), 1,744,596 bytes, all consumed.  The allocator state holds exactly the
+      W_LLVMFuzzerTestOneInput_write.v:179-188), 1,744,596 bytes, all consumed.  The allocator state holds exactly the
       input block and the model's blocks (ablocks = input ++ model ++ [], as ReplyLS3.v sat3 builds ls3_S from chunks;
       the 72,687 key chunks come from a Fixpoint), and the call's entry state holds only the input block.
       w_fr_LS3c proves fr_LS3c there; w_sec_cut evaluates ReplyLSCntM.fr_LS3c_sec_cut (106); w_counts computes the

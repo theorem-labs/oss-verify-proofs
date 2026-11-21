@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor raised to the 0x5D0000 bytes below sp that the launch guarantees ([STACK_GAP])). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -51,7 +52,7 @@ Theorem lftoi_par3 : forall (Σ Σg : rts RT) PMc (m mg : mem) (usp sp' f A lo d
   ((exists p n, In (p, n) (rt_live RT Σ) /\ p <= d /\ d + Z.of_nat (length bs) <= p + n) \/ (bs = [] /\ d < SEGTOP_A)) ->
   rt_frames RT Σ = [] -> (forall p n, In (p, n) (rt_live RT Σ) -> 0 < n) ->
   Z.of_nat (length (rt_live RT Σ)) + FUZZ_LIVE <= LIVE_MAX -> FUZZ_COST <= rt_credit RT Σ -> 8 + vcost_pushes (atp_P (chars bs)) 0 0 <= 2^31 + 2^26 ->
-  rt_sp0 RT Σ - STACK_WIN <= lo -> lo + FUZZ_STACK <= usp -> usp + 16 <= USTACK_TOP -> usp mod 16 = 0 ->
+  rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= lo -> lo + FUZZ_STACK <= usp -> usp + 16 <= USTACK_TOP -> usp mod 16 = 0 ->
   lp_inv RT LIB Σ Σg m mg usp sp' f lo d bs ra s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 h3 t A ->
   rw_cells bsegs mg (sp' + 136) (res_cellsA (f + 120) r j20) -> bv_unsigned r < 64 ->
   s2a_okres tape sbuf (roundup64 (doc_cap bs + 3)) (al_sbuf (doc_cap bs)) r mg ->

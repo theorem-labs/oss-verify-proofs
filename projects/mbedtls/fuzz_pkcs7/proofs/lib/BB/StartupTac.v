@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (region_side also unfolds wok_lo and stack_window_reach, for the stack window that now starts at wok_lo). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -51,8 +52,11 @@ Ltac len_rw :=
 
 (* [comment removed for export] *)
 Ltac region_side :=
-  unfold win_lo;
+  (* 08b1429: the window a launch maps starts at [wok_lo] ([MemSplit.store_ok_cmem_win]),
+     a fixed [stack_window_reach] above [win_lo]; unfold both, as jsoncons's StartupTac does *)
+  unfold win_lo, wok_lo;
   match goal with |- context [stack_max_size] => rewrite ?stack_max_size_val | _ => idtac end;
+  unfold stack_window_reach;
   len_rw;
   cbn [length Z.of_nat Pos.of_succ_nat Pos.succ Nat.add Nat.mul]; imm_norm; unorm; lia.
 

@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN1p.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed Zify, lits). *)
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -24,7 +25,6 @@ Unset Lia Cache. Unset Nia Cache.
 Open Scope Z_scope.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Section c. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
-Context {AM : AllocMode}.
 Lemma bt_ltu a b : 0 <= a < 2 ^ 64 -> 0 <= b < 2 ^ 64 -> branch_taken BC_LTU (Z_to_bv 64 a) (Z_to_bv 64 b) = (a <? b).
 Proof. intros Ha Hb. cbn [branch_taken]. unfold bv_ltu. rewrite !lit64_small by assumption. reflexivity. Qed.
 Lemma bt_geu a b : 0 <= a < 2 ^ 64 -> 0 <= b < 2 ^ 64 -> branch_taken BC_GEU (Z_to_bv 64 a) (Z_to_bv 64 b) = negb (a <? b).
@@ -36,7 +36,6 @@ Proof. intros Ha Hb. cbn [branch_taken]. unfold bv_eqb. rewrite !lit64_small by 
 End c.
 Ltac lits := unfold DEB, SCT, src0_D_debruijn32, src0_D_size_classes in *.
 Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
-Context {AM : AllocMode}.
 Section T0.
 Variables (L : layout) (A : astate) (regs : bvmap 5 word) (mem : word -> option byte) (md : Model) (n : Z).
 Hypothesis PRE : call_pre B (MRx B) L A regs mem md.

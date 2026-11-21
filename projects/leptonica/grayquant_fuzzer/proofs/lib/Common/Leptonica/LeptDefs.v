@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -145,7 +146,10 @@ Record W (C : lctx) (A : AS) (m : word -> option byte) (md : Model) : Prop := MK
   w_frm : FRM C (c_top C) (c_m0 C) m;
   w_keep : forall q k, live (c_A0 C) q = Some k -> live A q = Some k;
   w_live0 : forall q k i, live (c_A0 C) q = Some k -> 0 <= i < k -> m (at_ q i) = c_m0 C (at_ q i);
-  w_def : DEFK C (c_m0 C) m
+  w_def : DEFK C (c_m0 C) m;
+  (* LPS 08b1429: the vDSO pair stays inside the reservations (the allocator interface's premise) *)
+  w_vdso : incl (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) (vm_reserved (m_vmmaps md));
+  w_mb : vm_mmap_base (m_vmmaps md) = vm_mmap_base (c_vm C)
 }.
 
 (* [comment removed for export] *)
@@ -300,7 +304,7 @@ Proof.
   assert (Heq : forall a, ~ win C a -> ~ fresh_blk C A a -> m' a = m a).
   { intros a H1 H2. destruct (omem_eq_dec (m' a) (m a)) as [E|NE]; [exact E|].
     exfalso. destruct (Hch a NE) as [X|X]; [exact (H1 X)|exact (H2 X)]. }
-  pose proof HW as [Hinv Hpure Henv Hvm Hwin Hclr Hhdl Hfrm Hkeep Hlive0 Hdef].
+  pose proof HW as [Hinv Hpure Henv Hvm Hwin Hclr Hhdl Hfrm Hkeep Hlive0 Hdef Hvd Hmb].
   assert (Himg_nw : forall a, inZ ll_img (u a) -> ~ win C a).
   { intros a Hi Hw. destruct (win_facts C a CK Hw) as (X & _). exact (X Hi). }
   assert (Himg_nf : forall a, inZ ll_img (u a) -> ~ fresh_blk C A a).
@@ -343,6 +347,8 @@ Proof.
       destruct (ai_live_hull A m (m_vmmaps md) p n Hinv Lp) as (Hn0 & _ & _ & _). pose proof (round16_ge n Hn0).
       pose proof (ai_live_disjoint A m (m_vmmaps md) p n q k Hinv Lp L1 NE) as D. lia.
   - intros a H. destruct (Hdef a H) as [X|[X|X]]; [left; exact X | right; left; exact X | right; right; exact (Hg1 a X)].
+  - exact Hvd.
+  - exact Hmb.
 Qed.
 
 (* [comment removed for export] *)
@@ -551,10 +557,11 @@ Lemma W_after_call : forall C A m md A' m' vm' (s K : Z),
   (forall a, m a <> None -> u a < al_image_hi \/ owned A a \/ m' a <> None) ->
   vm_limit vm' = vm_limit (m_vmmaps md) -> alloc_top vm' = alloc_top (m_vmmaps md) ->
   vm_init_sp vm' = vm_init_sp (m_vmmaps md) -> vm_reserved vm' = vm_reserved (m_vmmaps md) ->
+  vm_mmap_base vm' = vm_mmap_base (m_vmmaps md) ->
   W C A' m' (with_vmmaps vm' md) /\ FRM C s m m'.
 Proof.
-  intros C A m md A' m' vm' s K CK HW HK Hlo Hhi Hinv' Hkeep' Hfr Hlive Hdef E1 E2 E3 E4.
-  pose proof HW as [Hinv Hpure Henv Hvm Hwin Hclr Hhdl Hfrm Hkeep Hlive0 Hdef0].
+  intros C A m md A' m' vm' s K CK HW HK Hlo Hhi Hinv' Hkeep' Hfr Hlive Hdef E1 E2 E3 E4 E5.
+  pose proof HW as [Hinv Hpure Henv Hvm Hwin Hclr Hhdl Hfrm Hkeep Hlive0 Hdef0 Hvd Hmb].
   pose proof CK as [T1 T2 T3 T4 T5]. laypins. pose proof pin_imghi as PIH.
   destruct Hvm as (V1 & V2 & V3 & V4).
   (* [comment removed for export] *)
@@ -601,6 +608,10 @@ Proof.
     destruct (ai_owned_where A m (m_vmmaps md) a Hinv Y) as [G|[[G1 G2] _]].
     + left. apply pin_glob in G. rewrite PIH. pose proof pin_ag_img. unfold inZ in *. lia.
     + right; left. split; [exact G1|]. rewrite <- V2. exact G2.
+  - rewrite with_vmmaps_vmmaps. change (m_kernel (with_vmmaps vm' md)) with (m_kernel md).
+    assert (Et : vdso_top vm' = vdso_top (m_vmmaps md)) by (unfold vdso_top, mmap_top, alloc_top; rewrite E3, E5; reflexivity).
+    rewrite Et, E4. exact Hvd.
+  - rewrite with_vmmaps_vmmaps, E5. exact Hmb.
 Qed.
 
 (* [comment removed for export] *)
@@ -649,12 +660,12 @@ Proof.
   unfold CALLOC_STACK, ALLOC_STACK in *.
   assert (Hs : 0 <= s < 2 ^ 64) by lia.
   eapply (ai_calloc fx A m md regs cnt sz ret (c_sp0 C) (c_argv C) (c_envp C) S
-            (w_inv _ _ _ _ HW) (w_pure _ _ _ _ HW) (w_env _ _ _ _ HW) H10 H11 Hcnt Hsz Hprod H1 (pin_ret _ Hret) H4).
+            (w_inv _ _ _ _ HW) (w_pure _ _ _ _ HW) (w_vdso _ _ _ _ HW) (w_env _ _ _ _ HW) H10 H11 Hcnt Hsz Hprod H1 (pin_ret _ Hret) H4).
   - rewrite H2, u_Z2bv by lia. exact Hs16.
   - rewrite H2, u_Z2bv by lia. rewrite V2. lia.
   - rewrite H2, u_Z2bv by lia. lia.
   - rewrite H2. intros a Ha. rewrite u_Z2bv in Ha by lia. exact (W_call_win C A m md s (1024 + 32) CK HW ltac:(lia) Hhi a Ha).
-  - intros A' m' vm' regs' res Hinv' Hres Hcs Hout Hfr Hlive Hdef E1 E2 E3 E4.
+  - intros A' m' vm' regs' res Hinv' Hres Hcs Hout Hfr Hlive Hdef E1 E2 E3 E4 E5.
     rewrite H2, u_Z2bv in Hfr by lia.
     assert (Hkeep' : (forall q k, live (c_A0 C) q = Some k -> live A' q = Some k) /\
                      (u res <> 0 -> live (c_A0 C) res = None)).
@@ -663,7 +674,7 @@ Proof.
       - destruct (keep_new C A A' res _ (w_keep _ _ _ _ HW) R2 R3 R4) as [X Y]. split; [exact X | intros _; exact Y]. }
     destruct Hkeep' as [Hkeep' Hres0].
     destruct (W_after_call C A m md A' m' vm' s (1024 + 32) CK HW ltac:(lia) ltac:(lia) Hhi
-                Hinv' Hkeep' Hfr (fun q k i L Hi => Hlive q k i (w_keep _ _ _ _ HW q k L) Hi) Hdef E1 E2 E3 E4) as [HW' F].
+                Hinv' Hkeep' Hfr (fun q k i L Hi => Hlive q k i (w_keep _ _ _ _ HW q k L) Hi) Hdef E1 E2 E3 E4 E5) as [HW' F].
     apply (HK A' m' vm' regs' res HW' Hres Hcs); [|split; [exact F|exact Hlive]].
     destruct Hout as [L|(R1 & R2 & R3 & R4 & R5 & R6)]; [left; exact L|right].
     destruct (ai_live_hull A' m' vm' res (cnt * sz) Hinv' R3) as (_ & AL16 & TOP & _).
@@ -692,12 +703,12 @@ Proof.
   unfold CALLOC_STACK, ALLOC_STACK in *.
   assert (Hs : 0 <= s < 2 ^ 64) by lia.
   eapply (ai_malloc fx A m md regs n ret (c_sp0 C) (c_argv C) (c_envp C) S
-            (w_inv _ _ _ _ HW) (w_pure _ _ _ _ HW) (w_env _ _ _ _ HW) H10 Hn H1 (pin_ret _ Hret) H4).
+            (w_inv _ _ _ _ HW) (w_pure _ _ _ _ HW) (w_vdso _ _ _ _ HW) (w_env _ _ _ _ HW) H10 Hn H1 (pin_ret _ Hret) H4).
   - rewrite H2, u_Z2bv by lia. exact Hs16.
   - rewrite H2, u_Z2bv by lia. rewrite V2. lia.
   - rewrite H2, u_Z2bv by lia. lia.
   - rewrite H2. intros a Ha. rewrite u_Z2bv in Ha by lia. exact (W_call_win C A m md s 1024 CK HW ltac:(lia) Hhi a Ha).
-  - intros A' m' vm' regs' res Hinv' Hres Hcs Hout Hfr Hlive Hdef E1 E2 E3 E4.
+  - intros A' m' vm' regs' res Hinv' Hres Hcs Hout Hfr Hlive Hdef E1 E2 E3 E4 E5.
     rewrite H2, u_Z2bv in Hfr by lia.
     assert (Hkeep' : (forall q k, live (c_A0 C) q = Some k -> live A' q = Some k) /\
                      (u res <> 0 -> live (c_A0 C) res = None)).
@@ -706,7 +717,7 @@ Proof.
       - destruct (keep_new C A A' res _ (w_keep _ _ _ _ HW) R2 R3 R4) as [X Y]. split; [exact X | intros _; exact Y]. }
     destruct Hkeep' as [Hkeep' Hres0].
     destruct (W_after_call C A m md A' m' vm' s 1024 CK HW ltac:(lia) ltac:(lia) Hhi
-                Hinv' Hkeep' Hfr (fun q k i L Hi => Hlive q k i (w_keep _ _ _ _ HW q k L) Hi) Hdef E1 E2 E3 E4) as [HW' F].
+                Hinv' Hkeep' Hfr (fun q k i L Hi => Hlive q k i (w_keep _ _ _ _ HW q k L) Hi) Hdef E1 E2 E3 E4 E5) as [HW' F].
     apply (HK A' m' vm' regs' res HW' Hres Hcs); [|split; [exact F|exact Hlive]].
     destruct Hout as [L|(R1 & R2 & R3 & R4 & R5)]; [left; exact L|right].
     destruct (ai_live_hull A' m' vm' res n Hinv' R3) as (_ & AL16 & TOP & _).
@@ -732,18 +743,18 @@ Proof.
   unfold CALLOC_STACK, ALLOC_STACK in *.
   assert (Hs : 0 <= s < 2 ^ 64) by lia.
   eapply (ai_free fx A m md regs p ret (c_sp0 C) (c_argv C) (c_envp C) S
-            (w_inv _ _ _ _ HW) (w_pure _ _ _ _ HW) (w_env _ _ _ _ HW) H10 (or_intror (ex_intro _ n Lp)) H1 (pin_ret _ Hret) H4).
+            (w_inv _ _ _ _ HW) (w_pure _ _ _ _ HW) (w_vdso _ _ _ _ HW) (w_env _ _ _ _ HW) H10 (or_intror (ex_intro _ n Lp)) H1 (pin_ret _ Hret) H4).
   - rewrite H2, u_Z2bv by lia. exact Hs16.
   - rewrite H2, u_Z2bv by lia. rewrite V2. lia.
   - rewrite H2, u_Z2bv by lia. lia.
   - rewrite H2. intros a Ha. rewrite u_Z2bv in Ha by lia. exact (W_call_win C A m md s 1024 CK HW ltac:(lia) Hhi a Ha).
-  - intros A' m' vm' regs' Hinv' Hcs Lp' EQ Hfr Hlive Hdef E1 E2 E3 E4 _.
+  - intros A' m' vm' regs' Hinv' Hcs Lp' EQ Hfr Hlive Hdef E1 E2 E3 E4 E5 _.
     rewrite H2, u_Z2bv in Hfr by lia.
     pose proof (keep_free C A A' p n (w_keep _ _ _ _ HW) Lp Lp0 Lp' EQ) as Hkeep'.
     assert (Hdef' : forall a, m a <> None -> u a < al_image_hi \/ owned A a \/ m' a <> None).
     { intros a Ha. destruct (Hdef a Ha) as [X|X]; [right; left; exact X | right; right; exact X]. }
     destruct (W_after_call C A m md A' m' vm' s 1024 CK HW ltac:(lia) ltac:(lia) Hhi Hinv' Hkeep' Hfr
-                (fun q k i L Hi => Hlive q k i (Hkeep' q k L) Hi) Hdef' E1 E2 E3 E4) as [HW' F].
+                (fun q k i L Hi => Hlive q k i (Hkeep' q k L) Hi) Hdef' E1 E2 E3 E4 E5) as [HW' F].
     exact (HK A' m' vm' regs' HW' Hcs Lp' EQ (conj F Hlive)).
 Qed.
 
@@ -847,9 +858,10 @@ Lemma W_entry : forall C md m1, Cok C -> c_vm C = m_vmmaps md ->
   (forall a, m1 a <> c_m0 C a -> win C a \/ hcell a) ->
   (forall a, c_m0 C a <> None -> m1 a <> None) ->
   rdn al_segs m1 (Z_to_bv 64 ll_hcell) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 ll_devnull)) ->
+  incl (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) (vm_reserved (m_vmmaps md)) ->
   W C (c_A0 C) m1 md.
 Proof.
-  intros C md m1 CK Evm Hinv Hpure Henv Hwin Hclr Hch Hgr Hhdl.
+  intros C md m1 CK Evm Hinv Hpure Henv Hwin Hclr Hch Hgr Hhdl Hvd.
   pose proof CK as [T1 T2 T3 T4 T5]. laypins. set (m := c_m0 C) in *. set (A := c_A0 C) in *.
   assert (Hhc_no : forall a, hcell a -> ~ owned A a).
   { intros a Hh Ho. unfold hcell in Hh. destruct (ai_owned_where A m (m_vmmaps md) a Hinv Ho) as [G|[[G _] _]].
@@ -885,6 +897,8 @@ Proof.
     + intros Hw. exact (proj2 (Hwin _ Hw) Ho).
     + intros Hh. exact (Hhc_no _ Hh Ho).
   - intros a Hx. right; right. exact (Hgr a Hx).
+  - exact Hvd.
+  - rewrite <- Evm. reflexivity.
 Qed.
 
 End Defs.

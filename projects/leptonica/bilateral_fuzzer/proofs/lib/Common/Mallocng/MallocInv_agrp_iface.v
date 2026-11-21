@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (proofs and definitions restated for the model's changed definitions). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -101,7 +102,7 @@ Definition ag_mmap_spec : Prop :=
     (* [comment removed for export] *)
     (forall s' A',
        II sp0 argv envp cb D A' s' -> FR A s A' s' -> ms_vm s' = ms_vm s -> agfail A A' m ->
-       (W = WOk -> exists len, 0 < len <= 2^21 /\ forall a, mmap_grant_ok MMrw (ms_vm s) a len = false) ->
+       (W = WOk -> exists len, 0 < len <= 2^21 /\ exists thp, forall a, mmap_grant_ok MMrw thp (ms_vm s) a len = false) ->
        (* [comment removed for export] *)
        (W <> WFail -> refusalP (grp_cap sc) (ms_vm s)) ->
        tsall W (K wm1 s') P) ->

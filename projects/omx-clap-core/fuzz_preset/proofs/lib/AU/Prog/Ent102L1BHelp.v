@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image B' (asan-ubsan, harness fix #102, pin sha256
    d663f82d7f488d30f8e8d7496cb814e595a2f3cbbf16bde81a65cb3ea9af0994, unstripped twin c90d4fa54d43160b): the SUPPORT
    LEMMAS of segment L1 of LLVMFuzzerTestOneInput (entry 0x816cc), listing +0x124 .. +0x148 (B' 0x817f0 .. 0x81818),
@@ -7,10 +8,10 @@
    a GENERIC image ({PA : PAImg B_prog_listing}, the PAListing PL_102_B), the program-call rule at a concrete call
    state of this body, the cut invariant ec_inv across a call and across the body's own store to g_own_ran_out, and
    the empty payload's src_rd.
-   THE B' TWIN of lib/A/Prog/Ent102L1AHelp.v (commit 90bcaf49278f), ported by port/a2b.py
+   THE B' TWIN of lib/A/Prog/Ent102L1AHelp.v, ported by port/a2b.py
    (sha256 f5113cbc90e503da) and then by hand: L := B_prog_listing, PL := PL_102_B, ec_A -> ec_B, e_A -> e_B, the B'
    twins Ent102L6BfLem / Ent102CallB, and l1_src_empty over ei_empty's B' bounds YImgTop.IMG_LO_B / IMG_TOP_B.
-   STATEMENT read: lib/AU/Ent102CutsB.v (at blob a74a7497b9d0, commit b1ed4e6c944d:
+   STATEMENT read: lib/AU/Ent102CutsB.v (at blob a74a7497b9d0:
    ec_inv with its wild budget wk (journal ajournal_xw at a budget WS, wbudget [] wk WS) and its (os_c, i_c) room
    position, ec_pre, ec_frame, ec_saved, ec_own, ec_cno_evs / l1_cno_evs, ec_img's ei_pst /
    ei_pst_ro / ei_sio / ei_sio_frame / ei_empty / ei_frame).

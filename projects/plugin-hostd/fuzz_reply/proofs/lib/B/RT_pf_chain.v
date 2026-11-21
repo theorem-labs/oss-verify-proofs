@@ -1,10 +1,10 @@
-(* Image B twin of lib/A/RT_pf_chain.v at 915f98b09fb: module paths lib.A -> lib.B; no image numeral (CHAINB-numerals.tsv sha256 3cedf5e564f7; internal record). *) (* The evt-level snprintf chain at fuzz_reply.asan-ubsan, with every Section hypothesis of its four pieces discharged:
+(* Image B twin of lib/A/RT_pf_chain.v: module paths lib.A -> lib.B; no image numeral (CHAINB-numerals.tsv sha256 3cedf5e564f7; internal record). *) (* The evt-level snprintf chain at fuzz_reply.asan-ubsan, with every Section hypothesis of its four pieces discharged:
      RT_pf_snf.v snprintf_icpt_ok  <- RT_pf_vsn_body.v vsnprintf_icpt_ok_body  <- RT_pf_vsn.v vsnprintf_icpt_ok
        <- RT_gxa_inst.v fr_vsnprintf_x (GXA's musl vsnprintf at A_img_vsn, memset at RT_gxa_calls_mem.v)
        <- RT_pf_vf.v vf_icpt_ok <- RT_gxa_inst.v fr_vfprintf_guarded (GXA's guarded musl vfprintf at A_img, memcpy /
           memset at RT_gxa_calls_mem.v, strnlen at RT_gxa_calls.v).
    snprintf_chain_closed proves RT_pf_stmt.v snprintf_icpt_stmt (the snprintf interceptor at __wrap_snprintf runs to
-   vsnprintf_x_post) at set_ready := RT_gxa_calls_mem.set_ready, in a Theorem Labs lane 3899f140f93's form (its facts are asked
+   vsnprintf_x_post) at set_ready := RT_gxa_calls_mem.set_ready, in a Theorem Labs lane's form (its facts are asked
    only when 0 <= n), and at vf_ready := vf_ready_icpt fr_vfb, fr_vfb being the guard of GXA's closed vfprintf body.
    This is RT_pf_vf.v:368-395's commented snprintf_chain_ok with the RT_pf_vsn.v step the comment lacks.  The only
    variable left is GXA's store invariant INV (RT_gxa_inst.v:49), which the evt -> SRr bridge chooses.

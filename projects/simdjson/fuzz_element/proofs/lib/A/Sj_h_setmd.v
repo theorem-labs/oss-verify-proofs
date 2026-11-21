@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB; taken in part from projects/simdjson/fuzz_dump/proofs/lib/A/Sj_h_setmd.v, lines 143, 202, 238. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -138,7 +139,7 @@ Definition setmd_cps : Prop :=
   rw_cells asegs m THIS (impl_cells2 pre40 md0 p48 (Z_to_bv 64 0) (Z_to_bv 64 0) p72) ->
   Z.of_nat (length (rt_live RT Σ)) + 2 <= LIVE_MAX -> mcost (8 * md) + mcost md <= rt_credit RT Σ ->
   ART RT Σ m -> mem_inv asegs m ->
-  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + 96 + RT_STACK <= bv_unsigned sp ->
+  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + 96 + RT_STACK <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 -> frm0 fc ->
   cps_f (ASTA RT Σ PMc (eq (entry_st ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11
                                        t3 t4 t5 t6 F fc e_setmd m)))
@@ -197,7 +198,7 @@ Proof using AF NEWA AFC.
     destruct RS2 as (u0 & u1 & u2 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & u3 & u4 & u5 & u6 & F2 & fc2 & ->).
     cbn [ms_fcsr] in FRM2. rewrite EU2 in ST2, PRES2. rewrite (ret_pc_even 0xe324c) in Hc2' by lia.
     assert (INT1 : In (THIS, 96) (rt_live RT Σ1)) by (rewrite LV1; right; exact INT).
-    assert (LOW1 : rt_sp0 RT Σ1 - STACK_WIN <= lo) by (rewrite SP1; exact LOW).
+    assert (LOW1 : rt_sp0 RT Σ1 - STACK_SPAN <= lo) by (rewrite SP1; exact LOW).
     assert (FR2 : rw_cells asegs m2 (usp + -64) (sm_frame ra s0 s1 s2 s3 s4 s5 s6)).
     { apply (rw_cells_agree asegs m1 m2 _ _ FR1); [| exact WM2]. apply (agree_of_pres _ _ _ _ _ _ PRES2). unfold sm_frame. pres_tac. }
     assert (TH2 : rw_cells asegs m2 THIS (impl_cells2 pre40 md0 p48 (Z_to_bv 64 0) (Z_to_bv 64 0) p72)).
@@ -233,7 +234,7 @@ Proof using AF NEWA AFC.
       destruct RS4 as (w0 & w1 & w2 & g1 & g2 & g3 & g4 & g5 & g6 & g7 & w3 & w4 & w5 & w6 & F4 & fc4 & ->).
       cbn [ms_fcsr] in FRM4. rewrite EU2 in ST4, PRES4. rewrite (ret_pc_even 0xe3284) in Hc4' by lia.
       assert (INT2 : In (THIS, 96) (rt_live RT Σ2)) by (rewrite LV2; right; exact INT1).
-      assert (LOW2 : rt_sp0 RT Σ2 - STACK_WIN <= lo) by (rewrite SP2; exact LOW1).
+      assert (LOW2 : rt_sp0 RT Σ2 - STACK_SPAN <= lo) by (rewrite SP2; exact LOW1).
       assert (FR4 : rw_cells asegs m4 (usp + -64) (sm_frame ra s0 s1 s2 s3 s4 s5 s6)).
       { apply (rw_cells_agree asegs m3 m4 _ _ FR3); [| exact WM4]. apply (agree_of_pres _ _ _ _ _ _ PRES4). unfold sm_frame. pres_tac. }
       assert (TH4 : rw_cells asegs m4 THIS (impl_cells2 pre40 md0 p48 (Z_to_bv 64 oc) (Z_to_bv 64 0) p72)).

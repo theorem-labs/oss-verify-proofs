@@ -4,16 +4,17 @@
    projects/cgif/cgif_file_fuzzer/proofs/lib/A/ACbk.v:76-79; projects/cgif/cgif_file_fuzzer/proofs/lib/A/AChd.v:200-203, 358-361,
    386-392, 532-535, for libreac/fuzz_identity's ASan build (lib/A). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_family_stem.v, with its module paths and module names changed; 95 of its 123 lines of code are new or changed and 244 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image A (fuzz_segconf.asan, pin sha256 48c5355bdacb...): the walk of fuzz_catalogue_row
    (0x8a038 = BASE + AF_fuzz_catalogue_row, 200 bytes, 50 instructions, frame 64 bytes, no side-stack frame;
    catalogue.c:29-35) against lib/A/Prog/fuzz_catalogue_row_c.v's fuzz_catalogue_row_contract at image A's numbers
    (SegInstA.v: STK_fuzz_catalogue_row, RLO_A, RHI_A, catA), in plugin-hostd/fuzz_command's lib/A/Prog form
    (afn_pre at the entry, SRr of apost_base at the return, over `Context {PI : PAImg seg_listing}`).
-   rule 24 (reuse): adapted proofs/reac-pw/fuzz_pin/lib/A/PPgRow.v at commit b4e9443a2b9c
+   rule 24 (reuse): adapted proofs/reac-pw/fuzz_pin/lib/A/PPgRow.v
    (pin_pb_rowX; same code, 43 of 50 words equal, the 7 others pc-relative), restated into fuzz_command's
    afn_pre / apost_base form over the image-A owner's fuzz_catalogue_row_c.v in the shape of fuzz_command's rec_shape_of walk
-   (lib/A/Prog/rec_shape_of.v at origin/ossv/recipes 501c0d516c69: the prologue to the loop head, then the loop);
-   plain template the plain / image-B owner's lib/Prog/fuzz_catalogue_row.v (440d61eaa8c8).
+   (lib/A/Prog/rec_shape_of.v: the prologue to the loop head, then the loop);
+   plain template the plain / image-B owner's lib/Prog/fuzz_catalogue_row.v.
    The segments are fuzz_catalogue_rowA_s.v's (the loop) over the kit fuzz_catalogue_rowA_k.v; this file runs the
    prologue (0x8a038 .. 0x8a084: the frame of eight saved registers, s1 = n, s2 = p, the shadow base through the
    GOT word and the cell, s0 = s3 = fuzz_catalogue, s5 its shadow address, s6 = 11) to the loop head of row 0 and

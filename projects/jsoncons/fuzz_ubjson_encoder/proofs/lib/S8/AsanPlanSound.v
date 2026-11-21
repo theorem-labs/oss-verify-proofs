@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the CONFIG_RSEQ flag. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
@@ -76,6 +77,10 @@ Hypothesis IT_ok : itab_sound SEGS IT.
 Variable A : atable.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+(* the run's CONFIG_RSEQ flag as 0 or 1; the plan cone carries it because
+   [node_x] reaches [node_pnscan]/[node_layout] and [check_all] reaches
+   [init_acs_of].  After LIMIT, before HS. *)
+Variable rz : Z.
 Variable HS : nat -> option acs.
 
 Variable XN : nat -> list expr -> acs -> option acs.
@@ -109,7 +114,7 @@ Variable FS0 : Fs.Fs.
 
 Variable KC : nat.
 
-#[local] Notation CHECK := (AP.check SEGS IT A nx0 LIMIT XN XE XB XON HS KC).
+#[local] Notation CHECK := (AP.check SEGS IT A nx0 LIMIT rz XN XE XB XON HS KC).
 
 #[local] Notation cfg := (cfg_of SEGS).
 
@@ -1398,7 +1403,7 @@ Definition always (cs : acs) : bool := true.
 
 Definition sys_stmt (y : snode) : Prop := node1_stmt (is_ecall_at SEGS) (node_sys A nx0 y).
 
-Definition x_stmt (x : xnode) : Prop := forall args, node1_stmt always (node_x SEGS A nx0 x args).
+Definition x_stmt (x : xnode) : Prop := forall args, node1_stmt always (node_x SEGS A nx0 rz x args).
 
 Definition fresh_stmt : Prop := forall r logc base, node1_stmt always (fun cs => node_fresh nx0 cs r logc base).
 
@@ -2922,7 +2927,7 @@ Proof. reflexivity. Qed.
 Proof. reflexivity. Qed.
 
 #[using="Type"] Lemma check_all_ok : forall (chk : acs -> plan -> cres) k css s,
-  check_all A chk k css = COk s ->
+  check_all A rz chk k css = COk s ->
   (exists cs1, In cs1 css /\ chk cs1 k = COk s /\ True) /\ (forall cs, In cs css -> chk cs k = COk s).
 Proof.
   intros chk k css s H. unfold check_all in H. destruct css as [|cs0 rest]; [discriminate|].
@@ -2990,7 +2995,7 @@ Proof.
   - destruct (is_ecall_at SEGS cs); [|discriminate]. destruct (node_mmapin A LIMIT false cs) as [[[csa csb] cscs]|]; [|discriminate].
     destruct (CHECK bfuel fuel lc csa ia) as [sa|] eqn:H1; [|discriminate].
     destruct (CHECK bfuel fuel lc csb ib) as [sb|] eqn:H2; [|discriminate].
-    destruct (check_all A (CHECK bfuel fuel lc) ic cscs) as [sc|] eqn:H3; [|discriminate].
+    destruct (check_all A rz (CHECK bfuel fuel lc) ic cscs) as [sc|] eqn:H3; [|discriminate].
     injection Hc as <-.
     destruct (check_all_ok _ _ _ _ H3) as [(cs1 & Hin1 & Hc1 & _) _].
     apply salt2_vars; [exact (IH _ ia _ sa H1) | apply salt2_vars; [exact (IH _ ib _ sb H2) | exact (IH _ ic _ sc Hc1)]].
@@ -3002,7 +3007,7 @@ Proof.
     destruct (CHECK bfuel fuel lc csa ka) as [sa|] eqn:H1; [|discriminate].
     destruct (CHECK bfuel fuel lc csb kb) as [sb|] eqn:H2; [|discriminate].
     injection Hc as <-. apply salt2_vars; [exact (IH _ ka _ sa H1) | exact (IH _ kb _ sb H2)].
-  - destruct (XON x); [|discriminate]. destruct (node_x SEGS A nx0 x args cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
+  - destruct (XON x); [|discriminate]. destruct (node_x SEGS A nx0 rz x args cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
   - destruct (XN xid xargs cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
   - destruct (XE eid eargs cs) as [[[fd ps] cs1]|]; [|discriminate].
     destruct (CHECK bfuel fuel lc cs1 k) as [s1|] eqn:H1; [|discriminate].
@@ -3049,7 +3054,7 @@ Proof.
     destruct (is_ecall_at SEGS cs); [|discriminate]. destruct (node_mmapin A LIMIT true cs) as [[[csa csb] cscs]|]; [|discriminate].
     destruct (CHECK bfuel fuel lc csa iha) as [sa|] eqn:H1; [|discriminate].
     destruct (CHECK bfuel fuel lc csb ihb) as [sb|] eqn:H2; [|discriminate].
-    destruct (check_all A (CHECK bfuel fuel lc) ihc cscs) as [sc|] eqn:H3; [|discriminate].
+    destruct (check_all A rz (CHECK bfuel fuel lc) ihc cscs) as [sc|] eqn:H3; [|discriminate].
     injection Hc as <-.
     destruct (check_all_ok _ _ _ _ H3) as [(cs1 & Hin1 & Hc1 & _) _].
     apply salt2_vars; [exact (IH _ iha _ sa H1) | apply salt2_vars; [exact (IH _ ihb _ sb H2) | exact (IH _ ihc _ sc Hc1)]].
@@ -4049,7 +4054,7 @@ Proof.
     destruct (node_mmapin A LIMIT false cs) as [[[csa csb] cscs]|] eqn:Hn; [|discriminate].
     destruct (CHECK bfuel fuel lc csa ia) as [sa|] eqn:H1; [|discriminate].
     destruct (CHECK bfuel fuel lc csb ib) as [sb|] eqn:H2; [|discriminate].
-    destruct (check_all A (CHECK bfuel fuel lc) ic cscs) as [sc|] eqn:H3; [|discriminate].
+    destruct (check_all A rz (CHECK bfuel fuel lc) ic cscs) as [sc|] eqn:H3; [|discriminate].
     injection Hc as <-.
     pose proof (proj2 (check_all_ok _ _ _ _ H3)) as Hall.
     eapply srz_conseq; [| eapply t_eq_trans; [| apply sd_salt2; exact HD]; apply t_eq_alt2; [apply t_eq_refl' | apply sd_salt2; exact HD]].
@@ -4074,7 +4079,7 @@ Proof.
     eapply (node_brk2_sound cs csa csb E R FULL model); [exact HC | exact Hec | exact Hn | exact (CONT ka csa sa H1) | exact (CONT kb csb sb H2)].
   -
     destruct (XON x) eqn:HXon; [|discriminate].
-    destruct (node_x SEGS A nx0 x args cs) as [cs1|] eqn:Hn; [|discriminate].
+    destruct (node_x SEGS A nx0 rz x args cs) as [cs1|] eqn:Hn; [|discriminate].
     eapply (node_x_sound x HXon args cs cs1 E R FULL model); [exact HC | reflexivity | exact Hn |]. exact (CONT k cs1 s Hc).
   -
     destruct (XN xid xargs cs) as [cs1|] eqn:Hn; [|discriminate].
@@ -4275,7 +4280,7 @@ Proof.
     destruct (node_mmapin A LIMIT true cs) as [[[csa csb] cscs]|] eqn:Hn; [|discriminate].
     destruct (CHECK bfuel fuel lc csa iha) as [sa|] eqn:H1; [|discriminate].
     destruct (CHECK bfuel fuel lc csb ihb) as [sb|] eqn:H2; [|discriminate].
-    destruct (check_all A (CHECK bfuel fuel lc) ihc cscs) as [sc|] eqn:H3; [|discriminate].
+    destruct (check_all A rz (CHECK bfuel fuel lc) ihc cscs) as [sc|] eqn:H3; [|discriminate].
     injection Hc as <-.
     pose proof (proj2 (check_all_ok _ _ _ _ H3)) as Hall.
     eapply srz_conseq; [| eapply t_eq_trans; [| apply sd_salt2; exact HD]; apply t_eq_alt2; [apply t_eq_refl' | apply sd_salt2; exact HD]].

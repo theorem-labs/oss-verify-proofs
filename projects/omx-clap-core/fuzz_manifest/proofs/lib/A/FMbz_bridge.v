@@ -4,7 +4,7 @@
 
    Three facts make it one short file:
    - the two trees name the same image: `asegs = tfibsegs` by reflexivity (FMbz_str.v:26);
-   - the two step relations are the same relation: Bz `mstep` (lib/A/Bz/Lib/Exec.v:16) is
+   - the two step relations are the same relation: Bz `mstep` (lib/A/Bz/Lib/Exec.v:17) is
      `ms_svc_pending ms = None /\ RiscvSemantics.step segs ms = MachineOk ms'`, which is what each
      step of the donor's `msteps` (lib/Reusable/YK0i.v:284-290) asks;
    - the donor already lifts its own `msteps` into `SRr` (`SRr_msteps`, lib/Reusable/YA0n.v:148),

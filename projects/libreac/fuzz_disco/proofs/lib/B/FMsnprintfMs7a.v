@@ -1,9 +1,10 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfMs7a.v (a working branch 0ddf65fd8cc); relocated to libreac/fuzz_disco.asan-ubsan by reloc.py (target disco-Y): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan-ubsan, symbol + offset; table: this file's rows in provenance/evidence/g9-gxa/g9tool/g9-table-disco-Y.tsv); names: A-core -> Y-core (lib.Reusable): AB1v->YB1v, AB1w->YB1w, AE20->YE20, AE2y->YE2y, AE34->YE34, AE3d->YE3d, AF0l->YF0l, AF0m->YF0m, AF0x->YF0x; zify flag override made Local. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfMs7a.v (a working branch); relocated to libreac/fuzz_disco.asan-ubsan by reloc.py (target disco-Y): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan-ubsan, symbol + offset; table: this file's rows in provenance/evidence/g9-gxa/g9tool/g9-table-disco-Y.tsv); names: A-core -> Y-core (lib.Reusable): AB1v->YB1v, AB1w->YB1w, AE20->YE20, AE2y->YE2y, AE34->YE34, AE3d->YE3d, AF0l->YF0l, AF0m->YF0m, AF0x->YF0x; zify flag override made Local. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: ARU form (proofs/omx-clap-core/fuzz_manifest/lib/A/FMupoison.v (a working branch 3e35620c52e)): ecall_preU over any U for ecall_pre; imports FMsnprintfMs79 (the ARU copy of A/AE79.v) in place of A/AE79.v; the notations take U. *)
+(* Modified by Theorem Labs, 2026-10: ARU form (proofs/omx-clap-core/fuzz_manifest/lib/A/FMupoison.v (a working branch)): ecall_preU over any U for ecall_pre; imports FMsnprintfMs79 (the ARU copy of A/AE79.v) in place of A/AE79.v; the notations take U. *)
 (* Modified by Theorem Labs, 2026-10: relocated to omx-clap-core fuzz_manifest.asan. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.libreac.fuzz_disco.lib.Rt Require Import SnUpoison.
 From Stdlib Require Import ZArith NArith List Lia Bool.

@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by a Theorem Labs lane (DeallocNmaxA), 2026-10-30: WfP_cf_add_sec proves WfP_cf's new field wfc_qsize (the queues do not change). *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YG07cf.v at commit fec7cbb6287c (the cf layer of record, field rounds 1 + 2), module paths changed; the preset-side hunks kept on top are listed in the round6f report. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YG07cf.v (the cf layer of record, field rounds 1 + 2), module paths changed; the preset-side hunks kept on top are listed in the round6f report. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset's second allocator instance (suffix cf), malloc_cf's law. cgif's YG07.v
    (malloc_gen :292, malloc_ok :470) restated over WfP_cf (YG01cf.v), atok_cf (YGcfTok.v) and malloc_cf
    (YG00cf.v), with the cache path of YG06bcf.v. malloc_gen_cf has NO event premise: cgif's regime_ok /
@@ -11,7 +12,7 @@
    The call premises are the live-state ones of the instance: Z.of_nat (length (st_sec_arr s)) <
    cf_sec_live_max (a secondary appends an entry), ERRB_ROOM (the class-full report may grow the errbuf) and
    batch_room_cf (class kBatchClass keeps cgif's map mcheck).
-   malloc_post_cf is cgif's malloc_post (YG01.v:449-456) with Wf_cf, with `st_nev s + 1 <= st_nev s'` for the
+   malloc_post_cf is cgif's malloc_post (YG01.v:450-457) with Wf_cf, with `st_nev s + 1 <= st_nev s'` for the
    equation (the class-full report's errbuf map ticks) and secs_ext_cf for secs_ext (the report rewrites
    the errbuf control entries in place).
    The class-full arm returns PNull WITHOUT a refused request, so cgif's `fst r = PNull -> ns = false`

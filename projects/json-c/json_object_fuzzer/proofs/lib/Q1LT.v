@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the new rz argument of AP.check and node_x; the reservations: vm_reserved is the segments' reservations plus bounded extra ones (resx_entry_ok), the maps lie apart from every reservation, and the launch's reservations with the vDSO pair (vdso_reserved, vdso_top) are among them; the channel-reader premise (co_rdr : m_channel_reader model = true)). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -95,6 +96,7 @@ Hypothesis IT_ok : itab_sound SEGS IT.
 Variable A : atable.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+Variable rz : Z.
 
 Variable USP : Z.
 Variable HS : nat -> option acs.
@@ -154,7 +156,14 @@ Variable FS0 : Fs.Fs.
 
 Variable KC : nat.
 
-#[local] Notation CHECK := (AP.check SEGS IT A nx0 LIMIT XN XE XB HS KC).
+Definition resx_entry_ok (iv : word * word) : Prop :=
+0 < bv_unsigned (snd iv)
+/\ bv_unsigned (fst iv) mod 4096 = 0
+/\ bv_unsigned (snd iv) mod 4096 = 0
+/\ img_hi A <= bv_unsigned (fst iv)
+/\ KHI + 4096 <= bv_unsigned (fst iv)
+/\ bv_unsigned (fst iv) + bv_unsigned (snd iv) <= 2 ^ 47.
+#[local] Notation CHECK := (AP.check SEGS IT A nx0 LIMIT rz XN XE XB HS KC).
 
 #[local] Notation cfg := (cfg_of SEGS).
 
@@ -262,7 +271,11 @@ co_halt  : m_halted model = None;
 co_fds   : fds_ok E (a_fd cs) model;
 co_fs    : m_fs model = FS0;
 co_tid   : a_tidset cs = false -> m_tid model = None;
-co_res   : vm_reserved (m_vmmaps model) = segments_reserved SEGS;
+co_res   : exists rx : list (word * word),
+vm_reserved (m_vmmaps model) = segments_reserved SEGS ++ rx
+/\ Forall resx_entry_ok rx
+/\ (length rx <= n_resx A)%nat
+/\ sum_sizes rx <= resx_bytes A;
 co_limit : vm_limit (m_vmmaps model) = LIMIT;
 
 co_maps  : maps_match E (a_maps cs) (vm_maps (m_vmmaps model));
@@ -300,7 +313,15 @@ in_ivs (bv_unsigned a) (vm_noaccess (m_vmmaps model)) = false ->
 page_in_ranges (page_base a) (m_vm_lazy model) = true ->
 in_ghost E cs (bv_unsigned a) = false ->
 FULL a = Some (Z_to_bv 8 0);
-co_sinv  : SINV E FULL
+co_sinv  : SINV E FULL;
+co_mres  : Forall (fun iv => Forall (iv_disjoint iv) (vm_reserved (m_vmmaps model)))
+(vm_maps (m_vmmaps model));
+co_vdso  : incl (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model)))
+(vm_reserved (m_vmmaps model));
+(* LPS 727298f3: the far end of the standard channels has a reader ([State.m_channel_reader]):
+   the launch seeds it from [in_channel_reader], which [Run.valid_input] pins to true, and no node
+   changes it; the writev nodes' channel arm reads it (as coturn's Asan/AsanPlanSound.v) *)
+co_rdr   : m_channel_reader model = true
 }.
 
 Lemma A_wf_allowA : forall E cs, A_wf (allowA E cs).
@@ -421,8 +442,10 @@ intros E cs R FULL model ss' R' FULL' model' HC Hs Hinv HR HL HK Hhid.
 pose proof (same_but_materialized_frame _ _ Hs) as Hfr.
 assert (Evm : m_vmmaps model' = m_vmmaps model) by apply Hfr.
 assert (Elz : m_vm_lazy model' = m_vm_lazy model) by apply Hfr.
+assert (Ekn : m_kernel model' = m_kernel model) by (rewrite Hs; reflexivity).
+assert (Erd : m_channel_reader model' = m_channel_reader model) by (rewrite Hs; reflexivity).
 destruct HC. constructor; cbn [with_ss a_ss a_maps a_totsz a_ylo a_eager a_vis a_abytes a_brk a_fd a_tidset kn];
-rewrite ?Evm, ?Elz; try assumption.
+rewrite ?Evm, ?Elz, ?Ekn, ?Erd; try assumption.
 - unfold Mr. rewrite (hid_same _ _ _ _ Hs). exact HK.
 - replace (m_halted model') with (m_halted model) by (symmetry; apply Hfr). assumption.
 - unfold fds_ok in *. replace (m_fds model') with (m_fds model) by (symmetry; apply Hfr).
@@ -1575,7 +1598,7 @@ Definition always (cs : acs) : bool := true.
 
 Definition sys_stmt (y : snode) : Prop := node1_stmt (is_ecall_at SEGS) (node_sys A nx0 y).
 
-Definition x_stmt (x : xnode) : Prop := forall args, node1_stmt always (node_x SEGS A nx0 x args).
+Definition x_stmt (x : xnode) : Prop := forall args, node1_stmt always (node_x SEGS A nx0 rz x args).
 
 Definition fresh_stmt : Prop := forall r logc base, node1_stmt always (fun cs => node_fresh nx0 cs r logc base).
 
@@ -3180,7 +3203,7 @@ destruct (CHECK bfuel fuel lc csa ka) as [sa|] eqn:H1; [|discriminate].
 destruct (CHECK bfuel fuel lc csb kb) as [sb|] eqn:H2; [|discriminate].
 destruct dec; [injection Hc as <-; exact (IH _ kb _ sb H2)|].
 destruct (shape_sim sa sb); [|discriminate]. injection Hc as <-. exact (IH _ ka _ sa H1).
-- destruct (node_x SEGS A nx0 x args cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
+- destruct (node_x SEGS A nx0 rz x args cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
 - destruct (XN xid xargs cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
 - destruct (XE eid eargs cs) as [[[fd ps] cs1]|]; [|discriminate].
 destruct (CHECK bfuel fuel lc cs1 k) as [s1|] eqn:H1; [|discriminate].
@@ -4246,7 +4269,7 @@ eapply (node_brk2u_sound cs csa csb E R FULL model); [exact HC | exact Hec | exa
 intros E' R' FULL' model' Hag HC' Hfs. eapply srz_conseq; [exact (CONT kb csb sb H2 E' R' FULL' model' Hag HC' Hfs)|].
 apply t_eq_sym. apply shape_sim_sd. exact Hsh.
 -
-destruct (node_x SEGS A nx0 x args cs) as [cs1|] eqn:Hn; [|discriminate].
+destruct (node_x SEGS A nx0 rz x args cs) as [cs1|] eqn:Hn; [|discriminate].
 eapply (node_x_sound x args cs cs1 E R FULL model); [exact HC | reflexivity | exact Hn |]. exact (CONT k cs1 s Hc).
 -
 destruct (XN xid xargs cs) as [cs1|] eqn:Hn; [|discriminate].

@@ -1,9 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by gabelogan195, 2026-11: copied from projects/openssl/bndiv/proofs/lib/Lib/LimRun.v at commit f92feaf8b7, whole, with the module path OSSVerify.Proofs.openssl.bndiv.lib.Lib changed to OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.Halts.Lim and nothing else. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the run lemmas cover the three vDSO arms of sstep (not_refused_vdso, vdso_post_setL, with_vdso_bump_setL), with comments on those arms. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia Classical.
-From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs RiscvSemantics MemImageType Run.
+(* Vdso supplies [vdso_fn_sysno], which [not_refused_vdso] below names.  The inversion
+   patterns in this file bind the vDSO arms POSITIONALLY and so never needed it -- which is
+   why Asan/SpinAlgCfg.v ports the same three arms with no Vdso import at all.  Naming a
+   constant is what requires the Require. *)
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs RiscvSemantics MemImageType Run Vdso.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import MustExit.
 From OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.Halts.Lim Require Import LimBase LimMm LimSpec.
 Import ListNotations.
@@ -104,6 +109,38 @@ Proof.
   exfalso. apply Hnb. split; [exact Hh|]. right. exists x8. split; [exact Hsvc|]. left. exact E.
 Qed.
 
+(* The vDSO counterpart of [not_refused_mark], and it needs no hypothesis about the budget
+   at all.  [Run.budget_refused_at] ([75d69e00:theories/LinuxProcessSem/Run.v:2849]) gives the vDSO path ONLY the
+   materialization-fault clause, with no [alloc_budget_refused_b] conjunct, and the model
+   says in prose why ([c0dd863a:theories/LinuxProcessSem/Run.v:2862-2900]): the grant clause belongs to a PENDING SYSCALL, while a
+   vDSO call's budget refusal is "exactly the premises of [sstep_vdso_materialization_fault]".
+   So [not_refused_mark]'s route is unavailable here -- it wants [ms_svc_pending ms = Some x8],
+   and every vDSO arm carries [ms_svc_pending ms = None] -- and it is also unnecessary:
+   [alloc_budget_refused_b] ([c0dd863a:theories/LinuxProcessSem/Run.v:1915]) dispatches on the literal sysno list
+   [alloc_mark_sysnos = [214; 215; 216; 222; 226]] and answers [false] for everything else,
+   while [vdso_fn_sysno] ([75d69e00:theories/LinuxProcessSem/Vdso.v:121-131]) is total over eight constructors with the
+   six sysnos 169, 113, 114, 168, 258 and 259 -- NOT ONE OF THEM ALLOCATING.  So this is a
+   computation on a literal, not an argument, and no premise is added to anything. *)
+Lemma not_refused_vdso : forall ms m fn n,
+  vdso_fn_sysno fn = Some n ->
+  alloc_budget_refused_b (sys_input segs ms (Z_to_bv 64 n)) m = false.
+Proof.
+  intros ms m fn n H. destruct fn; cbn in H; try discriminate; injection H as <-;
+    first [reflexivity | vm_compute; reflexivity].
+Qed.
+
+(* [vdso_post] reads the model only through [m_vdso], which [setL] keeps, and [with_vdso_bump]
+   and [setL] rebuild disjoint fields: the two equalities [step_up]'s vDSO arm needs. *)
+Lemma vdso_post_setL : forall L ms m f eff,
+  vdso_post segs ms (setL L m) f eff = vdso_post segs ms m f eff.
+Proof.
+  intros L ms m f eff. unfold vdso_post.
+  change (m_vdso (setL L m)) with (m_vdso m). reflexivity.
+Qed.
+
+Lemma with_vdso_bump_setL : forall L m, with_vdso_bump (setL L m) = setL L (with_vdso_bump m).
+Proof. intros L [fd vm io fsys pr lim tm]. destruct vm. reflexivity. Qed.
+
 (* [comment removed for export] *)
 Lemma step_up : forall L ms mb evs c',
   (L <= mlim mb)%Z ->
@@ -113,11 +150,17 @@ Lemma step_up : forall L ms mb evs c',
   exists cb', sstep_cfg segs cfg (mkCfg ms mb) evs (SNext cb') /\ c' = cfgL L cb' /\ mlim (cfg_model cb') = mlim mb.
 Proof.
   intros L ms mb evs c' HL Hnb H216 Hss.
+  (* [sstep_cfg] ([c0dd863a:theories/LinuxProcessSem/Run.v:2278]) has 11 constructors, the
+     vDSO arms at slots 4-6.  This lemma is indexed on [SNext c'], so the two SError vdso arms
+     discharge themselves and [vdso_call] is the one goal they add.  Binders as the sites in
+     Asan/SpinAlgCfg.v:384/:438/:490. *)
   inversion Hss as
     [ ms0 m0 ms1 m1 Hh Hsvc Hacc
+    | | | ms0 m0 fn n eff m1 m2 evs0 Hh Hsvc Hacc1 Hfn Hn Hs Hef Hh1 Hmat
     | | | ms0 m0 x8 eff m1 m2 evs0 Hh Hsvc Hs Hns Hh1 Hmat
     | | ms0 m0 x8 eff m1 evs0 code Hh Hsvc Hs Hh1 Hk1
-    | ms0 m0 x8 eff m1 evs0 sig Hh Hsvc Hs Hk1 | ]; subst.
+    | ms0 m0 x8 eff m1 evs0 sig Hh Hsvc Hs Hk1 | ].
+  all: subst.
   - (* [comment removed for export] *)
     unfold mi_account_step in Hacc.
     destruct (step_accesses segs ms) as [report| |] eqn:Est; try discriminate Hacc.
@@ -127,6 +170,25 @@ Proof.
     exists (mkCfg (@access_value _ report) mb'). split; [| split; [reflexivity | exact Hl]].
     apply sstep_cfg_instr; [exact Hh | exact Hsvc |].
     unfold mi_account_step. rewrite Est, Hb. reflexivity.
+  - (* vdso_call.  The budget side needs no hypothesis: [not_refused_vdso] above, because
+       [alloc_budget_refused_b] answers [false] at every vDSO sysno by computation; it is
+       taken at [setL L mb], the model the step ran at, which is where [syscall_spec_big]
+       reads it.  The two equalities this arm needs are [vdso_post_setL] and
+       [with_vdso_bump_setL] above: [setL] rewrites only [m_vmmaps] (LimBase.v:13) while
+       [vdso_post] reads the model only through [m_vdso]
+       ([c0dd863a:theories/LinuxProcessSem/Run.v:644-656]) and [with_vdso_bump] writes only
+       [m_vdso] ([c0dd863a:theories/LinuxProcessSem/State.v:5049]). *)
+    pose proof (not_refused_vdso ms (setL L mb) fn n Hn) as R.
+    destruct (syscall_spec_big L _ mb _ _ _ HL R Hs) as (mb1 & Hsb & -> & Hl1).
+    destruct (materialize_big L mb1 _ _ ltac:(rewrite Hl1; exact HL) Hmat) as (mb2 & Hmb & -> & Hl2).
+    exists (mkCfg (vdso_post segs ms mb (vdso_frame segs) eff) (with_vdso_bump mb2)).
+    split; [| split;
+      [ rewrite vdso_post_setL, with_vdso_bump_setL; reflexivity
+      | cbn [cfg_model]; change (mlim (with_vdso_bump mb2)) with (mlim mb2); rewrite Hl2; exact Hl1 ]].
+    eapply sstep_cfg_vdso_call;
+      [ exact Hh | exact Hsvc
+      | unfold mi_account_step; rewrite (mi_account_step_unmodeled_inv segs _ _ Hacc1); reflexivity
+      | exact Hfn | exact Hn | exact Hsb | exact Hef | exact Hh1 | exact Hmb ].
   - (* [comment removed for export] *)
     pose proof (not_refused_mark _ _ _ Hh Hsvc Hnb) as R.
     destruct (syscall_spec_big L _ mb _ _ _ HL R Hs) as (mb1 & Hsb & -> & Hl1).
@@ -155,21 +217,54 @@ Lemma error_up : forall L ms mb evs,
   exists evs', sstep_cfg segs cfg (mkCfg ms mb) evs' SError.
 Proof.
   intros L ms mb evs HL Hnb Hss.
+  (* 11 constructors, vDSO at slots 4-6.  This lemma is indexed on [SError], so [vdso_call]
+     discharges itself and the OTHER TWO vdso arms are live -- the mirror of [step_up]. *)
   inversion Hss as
-    [ | ms0 m0 Hh Hsvc Hacc | ms0 m0 Hh Hsvc Hacc
+    [ | ms0 m0 Hh Hsvc Hacc | ms0 m0 Hh Hsvc Hacc Hvd
+    | | ms0 m0 fn n eff m1 evs0 Hh Hsvc Hacc1 Hfn Hn Hs Hef Hh1 Hmat
+    | ms0 m0 fn Hh Hsvc Hacc1 Hfn Hun
     | | ms0 m0 x8 eff m1 evs0 Hh Hsvc Hs Hns Hh1 Hmat
-    | | | ms0 m0 x8 Hh Hsvc Hs ]; subst.
+    | | | ms0 m0 x8 Hh Hsvc Hs ].
+  all: subst.
   - (* [comment removed for export] *)
     unfold mi_account_step in Hacc.
     destruct (step_accesses segs ms) as [report| |] eqn:Est; try discriminate Hacc.
     + destruct (materialize_model_accesses (setL L mb) (@accessed_ranges _ report)) as [m'|] eqn:Em; [discriminate Hacc|].
-      exfalso. apply Hnb. split; [exact Hh|]. left. split; [exact Hsvc|]. exists report. split; [exact Est | exact Em].
+      exfalso. apply Hnb. split; [exact Hh|]. left. split; [exact Hsvc|]. left. exists report. split; [exact Est | exact Em].
     + exists []. apply sstep_cfg_instr_fault; [exact Hh | exact Hsvc |]. unfold mi_account_step. rewrite Est. reflexivity.
   - (* [comment removed for export] *)
     unfold mi_account_step in Hacc.
     destruct (step_accesses segs ms) as [report| |] eqn:Est; try discriminate Hacc.
     + destruct (materialize_model_accesses (setL L mb) (@accessed_ranges _ report)); discriminate Hacc.
-    + exists []. apply sstep_cfg_instr_unmodeled; [exact Hh | exact Hsvc |]. unfold mi_account_step. rewrite Est. reflexivity.
+    + exists []. apply sstep_cfg_instr_unmodeled; [exact Hh | exact Hsvc | | exact Hvd]. unfold mi_account_step. rewrite Est. reflexivity.
+  - (* vdso_materialization_fault.  [budget_refused_at]'s vDSO disjunct ([75d69e00:theories/LinuxProcessSem/Run.v:2849])
+       IS exactly this arm's premises, so the hypothesis is contradicted -- the LEFT branch
+       ([ms_svc_pending = None]) and its RIGHT alternative, where the syscall twin below takes
+       the outer right branch instead. *)
+    exfalso. apply Hnb. split; [exact Hh|]. left. split; [exact Hsvc|]. right.
+    split; [exact Hacc1|]. exists fn, n, eff, m1, evs0.
+    split; [exact Hfn|]. split; [exact Hn|]. split; [exact Hs|].
+    split; [exact Hef|]. split; [exact Hh1 | exact Hmat].
+  - (* vdso_unmodeled.  Nothing in [budget_refused_at] covers this one, so the arm is REBUILT
+       at [mb].  [mi_account_step = MachineUnmodeled] transfers because [step_accesses] does
+       not read the model ([mi_account_step_unmodeled_inv],
+       [c0dd863a:theories/LinuxProcessSem/Run.v:2984]), but [vdso_call_unmodeled]
+       ([c0dd863a:theories/LinuxProcessSem/Run.v:675-683]) DOES read it in two of its three disjuncts, so
+       they are carried over one at a time with the same big-model lemmas the syscall arms use. *)
+    pose proof (not_refused_vdso ms (setL L mb) fn) as Rv.
+    exists []. eapply sstep_cfg_vdso_unmodeled;
+      [ exact Hh | exact Hsvc
+      | unfold mi_account_step; rewrite (mi_account_step_unmodeled_inv segs _ _ Hacc1); reflexivity
+      | exact Hfn | ].
+    unfold vdso_call_unmodeled in Hun.
+    destruct Hun as [Hn0 | [(n & Hn & Hu) | (n & eff & m' & evs0 & Hn & Hs & Hside)]].
+    + left. exact Hn0.
+    + right; left. exists n. split; [exact Hn|].
+      exact (syscall_spec_big_unmodeled L _ mb HL (Rv n Hn) Hu).
+    + right; right.
+      destruct (syscall_spec_big L _ mb _ _ _ HL (Rv n Hn) Hs) as (mb1 & Hsb & -> & Hl1).
+      exists n, eff, mb1, evs0. split; [exact Hn|]. split; [exact Hsb|].
+      destruct Hside as [Hef | Hhl]; [left; exact Hef | right; exact Hhl].
   - (* [comment removed for export] *)
     exfalso. apply Hnb. split; [exact Hh|]. right. exists x8. split; [exact Hsvc|]. right.
     exists eff, m1, evs0. split; [exact Hs|]. split; [exact Hh1 | exact Hmat].
@@ -221,7 +316,46 @@ Proof.
     - destruct (mi_account_step segs ms (setL L mb)) as [[ms' m']| |] eqn:Ea.
       + eexists _, _. eapply sstep_instr; eassumption.
       + eexists _, _. eapply sstep_instr_fault; eassumption.
-      + eexists _, _. eapply sstep_instr_unmodeled; eassumption. }
+      + destruct (vdso_entry_fn segs (ms_pc ms)) as [fn|] eqn:Hvf.
+        2:{ eexists _, _. eapply sstep_instr_unmodeled; eassumption. }
+        (* A vDSO entry.  The call's outcome at [setL L mb] comes from the big model's step
+           [Hss], which at this pc is one of the three vDSO arms, through [syscall_spec_down]:
+           no vDSO sysno allocates ([not_refused_vdso]) and none is 216. *)
+        assert (Hacc : mi_account_step segs ms mb = MachineUnmodeled)
+          by (unfold mi_account_step; rewrite (mi_account_step_unmodeled_inv segs _ _ Ea); reflexivity).
+        destruct (vdso_fn_sysno fn) as [n|] eqn:Hn.
+        2:{ eexists _, _. eapply sstep_vdso_unmodeled; [eassumption.. |]. left. exact Hn. }
+        assert (Ho : exists o, syscall_spec (sys_input segs ms (Z_to_bv 64 n)) mb o).
+        { inversion Hss; subst; try congruence;
+            match goal with
+            | H1 : vdso_entry_fn _ _ = Some ?f, H2 : vdso_fn_sysno ?f = Some ?k, H3 : syscall_spec _ _ ?oo |- _ =>
+                rewrite Hvf in H1; injection H1 as <-; rewrite Hn in H2; injection H2 as <-; exists oo; exact H3
+            | H1 : vdso_entry_fn _ _ = Some ?f, Hu : vdso_call_unmodeled _ _ _ ?f |- _ =>
+                rewrite Hvf in H1; injection H1 as <-; unfold vdso_call_unmodeled in Hu;
+                destruct Hu as [Hu | [(k & Hk & Hu) | (k & eff & m' & evs0 & Hk & Hu & _)]];
+                [ congruence
+                | rewrite Hn in Hk; injection Hk as <-; exists Unmodeled; exact Hu
+                | rewrite Hn in Hk; injection Hk as <-; eexists; exact Hu ]
+            end. }
+        destruct Ho as [o Ho].
+        pose proof (not_refused_vdso ms (setL L mb) fn n Hn) as Rv.
+        assert (E216 : bv_unsigned (in_sysno (sys_input segs ms (Z_to_bv 64 n))) <> 216%Z).
+        { change (in_sysno (sys_input segs ms (Z_to_bv 64 n))) with (Z_to_bv 64 n).
+          destruct fn; cbn in Hn; try discriminate; injection Hn as <-;
+            intros Heq; vm_compute in Heq; discriminate Heq. }
+        destruct (syscall_spec_down L _ mb o HL Rv E216 Ho) as [Ha _].
+        destruct o as [eff m1 evs1|]; cbn [omap] in Ha.
+        * destruct (classic (eff_ret eff = errno_ret EFAULT)) as [Hef|Hef].
+          { eexists _, _. eapply sstep_vdso_unmodeled; [eassumption.. |]. right; right.
+            exists n, eff, (setL L m1), evs1. split; [exact Hn|]. split; [exact Ha | left; exact Hef]. }
+          destruct (m_halted (setL L m1)) as [c|] eqn:Hm1.
+          { eexists _, _. eapply sstep_vdso_unmodeled; [eassumption.. |]. right; right.
+            exists n, eff, (setL L m1), evs1. split; [exact Hn|]. split; [exact Ha | right; rewrite Hm1; discriminate]. }
+          destruct (materialize_model_accesses (setL L m1) (syscall_effect_accesses eff)) as [m2|] eqn:Hmat.
+          { eexists _, _. eapply sstep_vdso_call; eassumption. }
+          { eexists _, _. eapply sstep_vdso_materialization_fault; eassumption. }
+        * eexists _, _. eapply sstep_vdso_unmodeled; [eassumption.. |]. right; left.
+          exists n. split; [exact Hn | exact Ha]. }
   destruct Hu as (evs' & st' & Hu).
   apply (sstep_cfg_progress segs cfg ms (setL L mb) evs' st'); [| exact Hu].
   intros x8 _ _.

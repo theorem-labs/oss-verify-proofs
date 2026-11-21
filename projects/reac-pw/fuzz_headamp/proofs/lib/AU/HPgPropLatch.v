@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPropSel.v at a529a88a618 (pa_latch7, as
-   hbp_latch) and proofs/reac-pw/fuzz_role/lib/A/RPgProp.v at a529a88a618 (pa_piece_latch's LATCH7 half, as
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPropSel.v (pa_latch7, as
+   hbp_latch) and proofs/reac-pw/fuzz_role/lib/A/RPgProp.v (pa_piece_latch's LATCH7 half, as
    hbp_piece_latch) for reac-pw/fuzz_headamp's image B: one latch entry (image B has one), t0 / a3 / a7 / s2 / s4 in
    place of role's a6 / R+0xb8 / R+0x88 / s9, np at R+0x100 in place of R+0x90, the cut states of lib/AU/HPgSeg.v. *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/reac-pw/fuzz_headamp/lib/AU/HPgPropLatch.v, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPropSel.v at a529a88a618 (pa_latch7, as
-   hbp_latch) and proofs/reac-pw/fuzz_role/lib/A/RPgProp.v at a529a88a618 (pa_piece_latch's LATCH7 half, as
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPropSel.v (pa_latch7, as
+   hbp_latch) and proofs/reac-pw/fuzz_role/lib/A/RPgProp.v (pa_piece_latch's LATCH7 half, as
    hbp_piece_latch) for reac-pw/fuzz_headamp's image B: one latch entry (image B has one), t0 / a3 / a7 / s2 / s4 in
    place of role's a6 / R+0xb8 / R+0x88 / s9, np at R+0x100 in place of R+0x90, the cut states of lib/AU/HPgSeg.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image B (fuzz_headamp.asan-ubsan, pinned sha256
    53edda9bdeeba1803865babfecb1af6732babe47ab83c64d38cc59a90d717a94; every address below is measured on its
    unstripped twin sha256 1674e30a0698f381704e66d2398d7906c881f4ba8fc619cb41b89fb97ad112ff): the property loop's

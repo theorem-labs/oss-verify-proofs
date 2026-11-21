@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/leptonica/colorfill_fuzzer/lib/K5/Lib/StepFast.v, with its module paths changed; 3 of its 2198 lines of code are new or changed and 2 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_boxreg/lib/A/Bz/Lib/StepFast.v at origin/ossv/recipes f26f9fbd8777; module paths changed; no numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_boxreg/lib/A/Bz/Lib/StepFast.v; module paths changed; no numeral changed. *)
 (* Modified by Theorem Labs, 2026-10: the asan-ubsan twin of lib/A/Bz/Lib/StepFast.v of this library, for reac-pw/fuzz_pin's asan-ubsan image (fuzz_pin.asan-ubsan d6f83d301522) instead of its asan image (fuzz_pin.asan 3e4859aed23f): module paths lib.A -> lib.AU; no numeral changed (every address numeral checked on the asan-ubsan image). The comment lines above describe how lib/A/Bz/Lib/StepFast.v was made and quote the asan image's values; the code and comments below carry the asan-ubsan values. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vvar/vDSO pair in the initial model and its reservations); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.AU.Bz Require BvWfKernel.
 (* [comment removed for export] *)
 
@@ -45,7 +46,7 @@ Lemma sf_install_load : forall segs (ro m : word -> option byte) (a : word) (n :
     (K : word -> machine_result (core * (word -> option byte))) (r : machine_result machine_state),
   sf_load_goal segs m a n f = Some v ->
   lift_result ro (K v) = r ->
-  lift_result ro (match ov_read_bytes segs m a n with Some bs => K (f bs) | None => MachineFault end) = r.
+  lift_result ro (match ov_read_bytes segs m a n with Some bs => K (f bs) | None => if range_meets_vvar segs a n then MachineUnmodeled else MachineFault end) = r.
 Proof.
   intros segs ro m a n f v K r H1 H2. unfold sf_load_goal in H1. destruct (ov_read_bytes segs m a n); [|discriminate].
   injection H1 as <-. exact H2.

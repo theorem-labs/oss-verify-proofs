@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: Section SmearNode is generic in the Leaf class of its srealizes walks. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -10,6 +11,7 @@ From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import PropExec CatExec CatSim SeqExec StoreOk StepTac ShapeAlg SpinAlg AgentLib Hoare RefLayout AsanAcct AsanAcctShape.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import AxSymExec3 AxSymExec3Sound AxSymRun3 AsanPlan AsanPlanSound.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import AsanNodesAux AsanStartLoops AsanPlanCore Scfg.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import Leaf.
 Import ListNotations.
 Import AX2. Import AX2S. Import AP. Import APS.
 Open Scope Z_scope.
@@ -431,6 +433,7 @@ Section SmearNode.
   Variable argH : env -> word -> bool.
   Variable FS0 : Fs.Fs.
   Context {SC : StepCfg}.
+  Context {LF : Leaf}.
   Hypothesis SEGS_wx : wx_segs_nowrap SEGS.
   Hypothesis SEGS_in_hull : forall a : word, in_hull A (bv_unsigned a) = false -> find_segment SEGS (bv_unsigned a) 1 = None.
   Hypothesis HULL_ok : hull_ok A.

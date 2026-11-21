@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the auxv cells, which these steps do not use, are no longer read (auxv_cells). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp.bitvector Require Import definitions.
@@ -237,7 +238,6 @@ Proof.
   (* [comment removed for export] *)
   pose proof ES2 as (S_1 & S_2 & S_3 & S_4 & S_5 & S_6 & S_7 & S_8 & S_9 & S_10 & S_11 & S_12 & S_13 & S_14 & S_15 & S_16 & S_17 & S_18 & S_19 & S_20).
   unfold EH_CAUGHT, EH_UNCAUGHT, SYSCAT_GUARD, UW_FLAGS, TD_LOCALE, LOCALE_MSGCAT, GLOBAL_LOCALE, CANARY, AUXVP in S_1, S_2, S_3, S_4, S_5, S_6, S_7, S_8, S_9.
-  pose proof (auxv_cells M2 av uid rnd hw S_13) as (X_0 & X_1 & X_2 & X_3 & X_4 & X_5 & X_6 & X_7 & X_8 & X_9 & X_10 & X_11 & X_12 & X_13 & X_14 & X_15 & X_16 & X_17 & X_18 & X_19).
   assert (WUW: L5.writable RSEGS M2 462433 6). { apply (writable_img M2 UW_FLAGS 6 wseg_uwflags); unfold UW_FLAGS; kl. }
   assert (WUC: L5.writable RSEGS M2 459776 4). { apply (writable_img M2 EH_UNCAUGHT 4 wseg_uncaught); unfold EH_UNCAUGHT; kl. }
   unshelve epose proof (e3a2u_conc fx1 R2 M2 (S - 1008) (A + 128) u0_8 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)
@@ -370,7 +370,7 @@ Proof.
     constructor. apply L5PK.wr_scratch; lia.
     constructor. eapply L5PK.wr_fresh. exact FRSH_A. lia. lia.
     constructor. }
-  clear X_0 X_1 X_2 X_3 X_4 X_5 X_6 X_7 X_8 X_9 X_10 X_11 X_12 X_13 X_14 X_15 X_16 X_17 X_18 X_19 S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
+  clear S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
   clear AG3 FR3 MS3. try clear STAT3. try clear K2.
   try clear c2_Sm952. try clear c2_Sm960. try clear c2_Sm968. try clear c2_Sm976. try clear c2_Sm888. try clear c2_Sm896. try clear c2_Sm904. try clear c2_Sm912. try clear c2_Sm536. try clear c2_Sm544. try clear c2_Sm552. try clear c2_Sm560. try clear c2_Sm568. try clear c2_Sm576. try clear c2_Sm584. try clear c2_Sm592. try clear c2_Sm600. try clear c2_Sm608. try clear c2_Sm616. try clear c2_Sm624. try clear c2_Sm632. try clear c2_Sm488. try clear c2_Sm496. try clear c2_Sm424. try clear c2_Sm432. try clear c2_Sm440. try clear c2_Sm72. try clear c2_Sm80. try clear c2_Sm88. try clear c2_Sm96. try clear c2_Sm104. try clear c2_Sm112. try clear c2_Sm120. try clear c2_Sm128. try clear c2_Sm136. try clear c2_Sm144. try clear c2_Sm152. try clear c2_Sm160. try clear c2_Sm168. try clear c2_Sm24. try clear c2_Sm32. try clear c2_Sm8. try clear c2_Sm16. try clear c2_Sm808w1. try clear c2_Sm744w1. try clear c2_Sm720. try clear c2_Sm728. try clear c2_Sm712w1. try clear c2_Sm688. try clear c2_Sm696. try clear c2_Sm664w1. try clear c2_Sm528w1. try clear c2_Sm472w1. try clear c2_Sm344w1. try clear c2_Sm280w1. try clear c2_Sm248w1. try clear c2_Sm224. try clear c2_Sm232. try clear c2_Sm200w1. try clear c2_Sm176. try clear c2_Sm184. try clear c2_Sm64w1. try clear c2_Sm1056. try clear c2_Sm1048. try clear c2_Sm1032. try clear c2_Sm1024. try clear c2_Sm1016. try clear R2_2. try clear R2_3. try clear R2_4. try clear R2_8. try clear R2_9. try clear R2_10. try clear DEF2. try clear HH2. try clear HQ2. try clear ES2. try clear DEFA_2. try clear DEFd1_2. try clear DEFd2_2. try clear DEFd3_2. try clear DEFd4_2.
   assert (c3_Om128z8: forall i, 0 <= i < 8 -> L5.u8_at RSEGS M3 (A + i) 0). { clear - ZA3. intros i Hi. replace (A + i) with ((A + 128 - 128) + i) by lia. apply (u8_of_zeros M3 (A + 128 - 128) 144 i ZA3). lia. }
@@ -379,7 +379,6 @@ Proof.
   (* [comment removed for export] *)
   pose proof ES3 as (S_1 & S_2 & S_3 & S_4 & S_5 & S_6 & S_7 & S_8 & S_9 & S_10 & S_11 & S_12 & S_13 & S_14 & S_15 & S_16 & S_17 & S_18 & S_19 & S_20).
   unfold EH_CAUGHT, EH_UNCAUGHT, SYSCAT_GUARD, UW_FLAGS, TD_LOCALE, LOCALE_MSGCAT, GLOBAL_LOCALE, CANARY, AUXVP in S_1, S_2, S_3, S_4, S_5, S_6, S_7, S_8, S_9.
-  pose proof (auxv_cells M3 av uid rnd hw S_13) as (X_0 & X_1 & X_2 & X_3 & X_4 & X_5 & X_6 & X_7 & X_8 & X_9 & X_10 & X_11 & X_12 & X_13 & X_14 & X_15 & X_16 & X_17 & X_18 & X_19).
   assert (WUW: L5.writable RSEGS M3 462433 6). { apply (writable_img M3 UW_FLAGS 6 wseg_uwflags); unfold UW_FLAGS; kl. }
   assert (WUC: L5.writable RSEGS M3 459776 4). { apply (writable_img M3 EH_UNCAUGHT 4 wseg_uncaught); unfold EH_UNCAUGHT; kl. }
   unshelve epose proof (e3s1u_conc fx3 R3 M3 (S - 1008) (A + 128) _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)
@@ -522,7 +521,7 @@ Proof.
     exact GR4.
     constructor. apply L5PK.wr_scratch; lia.
     constructor. }
-  clear X_0 X_1 X_2 X_3 X_4 X_5 X_6 X_7 X_8 X_9 X_10 X_11 X_12 X_13 X_14 X_15 X_16 X_17 X_18 X_19 S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
+  clear S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
   assert (R4_19: getr R4 (reg 19) = Z_to_bv 64 u3_19) by (kin K4 19%nat; exact R3_19).
   clear AG4 FR4 MS4. try clear STAT4. try clear K3.
   try clear c3_Sm952. try clear c3_Sm960. try clear c3_Sm968. try clear c3_Sm976. try clear c3_Sm888. try clear c3_Sm896. try clear c3_Sm904. try clear c3_Sm912. try clear c3_Sm536. try clear c3_Sm544. try clear c3_Sm552. try clear c3_Sm560. try clear c3_Sm568. try clear c3_Sm576. try clear c3_Sm584. try clear c3_Sm592. try clear c3_Sm600. try clear c3_Sm608. try clear c3_Sm616. try clear c3_Sm624. try clear c3_Sm632. try clear c3_Sm488. try clear c3_Sm496. try clear c3_Sm424. try clear c3_Sm432. try clear c3_Sm440. try clear c3_Sm72. try clear c3_Sm80. try clear c3_Sm88. try clear c3_Sm96. try clear c3_Sm104. try clear c3_Sm112. try clear c3_Sm120. try clear c3_Sm128. try clear c3_Sm136. try clear c3_Sm144. try clear c3_Sm152. try clear c3_Sm160. try clear c3_Sm168. try clear c3_Sm24. try clear c3_Sm32. try clear c3_Sm8. try clear c3_Sm16. try clear c3_Sm808w1. try clear c3_Sm744w1. try clear c3_Sm720. try clear c3_Sm728. try clear c3_Sm712w1. try clear c3_Sm688. try clear c3_Sm696. try clear c3_Sm664w1. try clear c3_Sm528w1. try clear c3_Sm472w1. try clear c3_Sm344w1. try clear c3_Sm280w1. try clear c3_Sm248w1. try clear c3_Sm224. try clear c3_Sm232. try clear c3_Sm200w1. try clear c3_Sm176. try clear c3_Sm184. try clear c3_Sm64w1. try clear c3_Sm1056. try clear c3_Sm1048. try clear c3_Sm1032. try clear c3_Sm1024. try clear c3_Sm1016. try clear c3_Om128z8. try clear c3_Om80z12. try clear R3_1. try clear R3_2. try clear R3_3. try clear R3_4. try clear R3_8. try clear R3_9. try clear R3_10. try clear R3_11. try clear R3_20. try clear R3_19. try clear R3_18. try clear DEF3. try clear HH3. try clear HQ3. try clear ES3. try clear DEFA_3. try clear DEFd1_3. try clear DEFd2_3. try clear DEFd3_3. try clear DEFd4_3.

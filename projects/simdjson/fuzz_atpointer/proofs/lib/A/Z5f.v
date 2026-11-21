@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up per CONFIG_RSEQ value and the new auxv layout). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Monad Specs Run Fs.
 From OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.Lib Require Import MState Mem Frame Cells Step Arr Exec ImageA RzCPS.
 From OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.AS Require Import Zg2 Zp7 Z10a Z1b Z78 Z7a Z2z Z2y Z33
-  Z10c.
+  PlanRegen Z10q Z10qr.
 From OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.A Require Import Layout Shadow Zks D_defs Zbe Zbd Zbb Zm2 RT_rep Z3q.
 Import ListNotations.
 Import AX2. Import AX2S. Import AP.
@@ -44,24 +45,16 @@ Qed.
 
 End Lib.
 
-Lemma hs_lib_0 : hs_lib_ok HS_asan_0 = true.
+(* The hand-off states computed in the build, once per CONFIG_RSEQ value ([AS/Z10qr.v]); one
+   evaluation per closed value, joined by [destruct b]. *)
+Lemma hs_lib_r0 : forallb hs_lib_ok (HS_list_r 0) = true.
 Proof. vm_cast_no_check (eq_refl true). Qed.
-Lemma hs_lib_1000 : hs_lib_ok HS_asan_1000 = true.
-Proof. vm_cast_no_check (eq_refl true). Qed.
-Lemma hs_lib_2000 : hs_lib_ok HS_asan_2000 = true.
-Proof. vm_cast_no_check (eq_refl true). Qed.
-Lemma hs_lib_3000 : hs_lib_ok HS_asan_3000 = true.
+Lemma hs_lib_r1 : forallb hs_lib_ok (HS_list_r 1) = true.
 Proof. vm_cast_no_check (eq_refl true). Qed.
 
-Lemma hs_if_some_lib : forall (P : acs -> Prop) (b : bool) (s : acs) (r : option acs) (ch : acs),
-  P s -> (r = Some ch -> P ch) -> (if b then Some s else r) = Some ch -> P ch.
-Proof. intros P b s r ch Ps Pr H. destruct b; [injection H as <-; exact Ps | exact (Pr H)]. Qed.
-
-Lemma HS_lib_ok : forall h ch, HS_asan h = Some ch -> hs_lib_ok ch = true.
+Lemma HS_lib_ok : forall (b : bool) h ch, HS_asan_r (rseq_z b) h = Some ch -> hs_lib_ok ch = true.
 Proof.
-  intros h ch. unfold HS_asan.
-  apply (hs_if_some_lib (fun c => hs_lib_ok c = true)); [exact hs_lib_3000|].
-  apply (hs_if_some_lib (fun c => hs_lib_ok c = true)); [exact hs_lib_2000|].
-  apply (hs_if_some_lib (fun c => hs_lib_ok c = true)); [exact hs_lib_1000|].
-  apply (hs_if_some_lib (fun c => hs_lib_ok c = true)); [exact hs_lib_0| discriminate].
+  intros b h ch H. apply HS_asan_r_In in H.
+  assert (F : forallb hs_lib_ok (HS_list_r (rseq_z b)) = true) by (destruct b; [exact hs_lib_r1 | exact hs_lib_r0]).
+  exact (proj1 (forallb_forall _ _) F ch H).
 Qed.

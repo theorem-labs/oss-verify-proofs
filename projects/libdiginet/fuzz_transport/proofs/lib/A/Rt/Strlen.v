@@ -4,7 +4,8 @@
 (* Modified by Theorem Labs, 2026-10: the walk of the strlen wrapper of libreac/fuzz_identity.asan (trampoline 0x4218c -> ___interceptor_strlen 0x4221c -> musl strlen 0x94c64 -> the inline range check -> the epilogue), over cgif_file_fuzzer's lib/A/AE6x.v (the memchr wrapper: the entry phase, the lift of a musl msteps walk, the check, the epilogue) and lib/A/AE7d.v (the strnlen wrapper: the 2144-byte frame and its eight saved registers). The walked function is released as proofs/coturn/FuzzStunClient/lib/VAsanIcStrlenWalk.v:819 isl_run at coturn's addresses; this is that walk at fuzz_identity.asan's addresses in this release's engine, and its statement is lib/A/Rt/StrlenDef.v astrlen_realizes (cgif lib/YG0d.v:401-419 astrnlen_realizes without the n bound). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Rt/Strlen.v, with its module paths and module names changed; 15 of its 25 lines of code are new or changed and 495 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Rt/Strlen.v, with its module paths changed; 3 of its 24 lines of code are new or changed and 4 lines of the source are left out. *)
-(* Relocated from libreac/fuzz_identity's released proofs/lib/A/Rt/Strlen.v (c3777b3715d0) to libdiginet/fuzz_transport's
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Relocated from libreac/fuzz_identity's released proofs/lib/A/Rt/Strlen.v to libdiginet/fuzz_transport's
    image A, fuzz_transport.asan e89be137db17 (unstripped twin 86efc3a80314).
    The walked functions (the trampoline, ___interceptor_strlen, __asan_region_is_poisoned,
    __asan::TryAsanInitFromRtl, __sanitizer::mem_is_zero, 0xb58 above the donor's; musl strlen, 0x8bfc above)

@@ -5,6 +5,7 @@
    projects/cgif/cgif_rgb_fuzzer/proofs/lib/YC05.v:110-141, 221-225, 227-235, 264-270 [Apache-2.0 OR MIT], for
    libreac/fuzz_identity's ASan build (lib/A). The [Apache-2.0 OR MIT] text is used under Apache-2.0. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/LLVMFuzzerTestOneInput_L.v, with its module paths, module names and numbers changed; 222 of its 252 lines of code are new or changed and 1050 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs WRITER walk, image A (fs.asan): put's GROW arm (preset_file.c:454-476, A_put 0x8418c), the case
    `failed = 0 /\ cap < len + n + 1`, where put must enlarge the buffer before it copies.
 
@@ -15,12 +16,12 @@
 
    The route and the state shapes were MEASURED by a sub-lane of a Theorem Labs lane with the token engine in
    VM workspace (internal path) on a build machine over the pinned originals (sha256 64b53ff86172bb07...
-   fs.asan, 5ac5ce0954f87e2d... fs.asan-ubsan) and saved in lib/A/FSW_put_grow.draft at a working branch
-   664596ec1c9. Bx := FSW_K.fs_Bx, Bspan := FSW_K.fs_Bspan, SH := FSW_put.fsw_pf_SH = [mkSHE 10 0 32], entry
+   fs.asan, 5ac5ce0954f87e2d... fs.asan-ubsan) and saved in lib/A/FSW_put_grow.draft at a working branch.
+   Bx := FSW_K.fs_Bx, Bspan := FSW_K.fs_Bspan, SH := FSW_put.fsw_pf_SH = [mkSHE 10 0 32], entry
    state FSW_put.fsw_pf_ss0. Every run measured sh_obls = [] and sh_chk = true, so no __asan_report_* block is
    reached on this arm either (R2: no exit at or after an error branch's target).
 
-   The model side is proved in lib/A/FSW_put_grow_model.v (a Theorem Labs lane, 7a2986b06b8): put_grow_newcap_ge_4096
+   The model side is proved in lib/A/FSW_put_grow_model.v (a Theorem Labs lane): put_grow_newcap_ge_4096
    / _le / _class / _need_le, put_grow_wcalls_grow (= 1, so put_spec's journal count 3 * wcalls st' is 3 on this
    arm), put_grow_kept_refused / _granted / _kept_put1, put_grow_bsz_newcap.
 

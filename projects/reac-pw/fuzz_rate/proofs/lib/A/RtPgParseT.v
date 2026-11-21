@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseT.v at afaa3cb55c1d; for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseT.v; for
    reac-pw/fuzz_rate's reac_rate_prop_parse at image A: module paths and names are rate's, the pcs are those of
    fuzz_rate.asan, the range test of v and its return of -1 are removed (rate's T has no test: role's T_walk_sk, its
    entry state and the split of T_walk go), the store writes v mod 2^32 at Q and returns 1 (val_of_chunk_mod is new). *)

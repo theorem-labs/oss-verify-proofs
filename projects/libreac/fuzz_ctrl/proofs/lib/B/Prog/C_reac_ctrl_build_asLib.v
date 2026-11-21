@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10 (a Theorem Labs lane). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_ctrl image B (asan-ubsan, libreac v1.9.0): the proof-internal library of the cgif-form glue of
    reac_ctrl_build_as (lib/B/Prog/C_reac_ctrl_build_as.v).
    1. The statements the glue takes:
@@ -9,7 +10,7 @@
         no twin here;
       - the image-object facts: lib/B/Prog/CtrlRo.v's in_zs / img_shadow_vis (the PA layer's own definitions).
       The lifted stretch is a Theorem Labs lane's own reac_ctrl_build_asF.reac_ctrl_build_as_stretch_F_on (route (C), no
-      shadow_rw premise; a working branch 26e8a9dd8b0; Required qualified, glue brief (a working note, not in this delivery)).
+      shadow_rw premise; a working branch; Required qualified, glue brief (a working note, not in this delivery)).
    2. Lemmas (Qed): the world -> ctrl lib.Lib conversions at a cut, the transport of world facts across a lifted
       stretch that writes only the stack window, the call-kept algebra, the image bytes, and the lift of the stretch.
    Glue closure rule: the _F files are Required qualified; frame-route names (AsanRT, Frame, ExecF) only inside
@@ -50,7 +51,7 @@ Open Scope Z_scope.
 #[local] Notation ba_row := Prog.reac_ctrl_build_as_c.ba_row.
 (* names whose families exist as a core copy and an image-B copy in this file's closure (ctrlgate DUP), pinned to the
    constant `About` names in this file's context (measured 07:0xZ).  MemNorm is image B's lib/B/MemNorm.v, the copy
-   lib/B/MemNormF.v:15 and lib/B/MemNormTr.v:26 Import and the statements fed here use (a Theorem Labs lane 07:58Z). *)
+   lib/B/MemNormF.v:15 and lib/B/MemNormTr.v:27 Import and the statements fed here use (a Theorem Labs lane 07:58Z). *)
 #[local] Notation rsegs := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Img0.rsegs.
 #[local] Notation MS := lib.Lib.MState.MS.
 #[local] Notation ret_pc := lib.Lib.MState.ret_pc.
@@ -459,7 +460,7 @@ Definition bl_post (regs : bvmap 5 word) (memc : word -> option byte) (o md b d 
      /\ munch [(S - 80, S)] memc m' /\ wmono rsegs memc m' /\ MemNorm.ro_agree rsegs m' /\ stk rsegs m' Lo S).
 
 (* The stretch [entry, tail jump | ret 0] as a step of the world walk: reac_ctrl_build_as_stretch_F_on (route (C),
-   no shadow_rw premise; a working branch 26e8a9dd8b0) on normalize memc (by decision 27a of decisions.md (a working note, not in this delivery)),
+   no shadow_rw premise; a working branch) on normalize memc (by decision 27a of decisions.md (a working note, not in this delivery)),
    moved to memc by MemNormF.evtF_normalize_ro, lifted by bl_entry at RNG := RNG_W (w_H W); every footprint
    premise is a visibility fact. *)
 Lemma bl_stretch_on : lib.B.Prog.reac_ctrl_build_asF.reac_ctrl_build_as_stretch_F_on ->
@@ -806,7 +807,7 @@ Proof.
 Qed.
 
 (* The CTRL_FRAMES row ctrl_emit_as reads (rows 3..9 of the global (0xa0600, 264), PT_GNU_RELRO) is a read-only
-   registered global range in a Theorem Labs lane's tctrl_lay_block_ro form (C_ctrl_lay_block.v (at head lib/B/Prog/C_ctrl_lay_block.v:89-93; written on a working branch 079649851ae)), over a read-only
+   registered global range in a Theorem Labs lane's tctrl_lay_block_ro form (C_ctrl_lay_block.v (at head lib/B/Prog/C_ctrl_lay_block.v:89-93; written on a working branch)), over a read-only
    span [rlo, rhi) that contains CTRL_FRAMES [0xa0600, 0xa0708) and the registered-globals list GLOBS, given that
    CTRL_FRAMES is listed in GLOBS. *)
 Lemma bl_fr_ro : forall B (GLOBS : list (Z * Z)) (rlo rhi : Z), lib.Reusable.YF0m.CtrlTSyms B ->

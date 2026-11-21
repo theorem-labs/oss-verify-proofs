@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: generated from proofs/cgif/cgif_file_fuzzer/lib/YD2i.v and lib/YD2j.v (origin/ossv/recipes c8557374ad2e) for libreac/fuzz_scene's asan-ubsan image (sha256 e98b1ed286c1...) by a Theorem Labs lane's gen_ad2.py, with its module paths changed: sregs_main, TIDV, CANV and TFIB_MAIN from the 50 hand-off states of lib/AU/YB01.v, the image bounds from lib/AU/YB12.v and the rw window 0x9d000..0x5f9000; IMG_REGIONS below .data from the image and the owned static cells of the generated lib/AU/YF0m.v; owned static cells come from the GENERATED f0mgen2 AF0m (af0m.py, --base the hand-assembled reference) *)
+(* Modified by Theorem Labs, 2026-10: generated from proofs/cgif/cgif_file_fuzzer/lib/YD2i.v and lib/YD2j.v for libreac/fuzz_scene's asan-ubsan image (sha256 e98b1ed286c1...) by a Theorem Labs lane's gen_ad2.py, with its module paths changed: sregs_main, TIDV, CANV and TFIB_MAIN from the 50 hand-off states of lib/AU/YB01.v, the image bounds from lib/AU/YB12.v and the rw window 0x9d000..0x5f9000; IMG_REGIONS below .data from the image and the owned static cells of the generated lib/AU/YF0m.v; owned static cells come from the GENERATED f0mgen2 AF0m (af0m.py, --base the hand-assembled reference) *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require Import YP0m YP09.

@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: generated for libreac/fuzz_decode's ASan build in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACej.v (origin/ossv/recipes c8557374ad2e); module paths changed (cgif lib/X -> lib/Reusable/X). *)
+(* Modified by Theorem Labs, 2026-10: generated for libreac/fuzz_decode's ASan build in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACej.v (theorem-labs/oss-verify-proofs@6b32741d849a); module paths changed (cgif lib/X -> lib/Reusable/X). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* ACej: the trace universe of fuzz_decode's start-up certificate, image A.
    Image: the pinned fuzz_decode.asan,
    sha256 5973b76807d8d2e14b82dc6afde70a2c882923658406aeca43681719cb4e8036 (symbols from the unstripped
@@ -17,7 +18,7 @@
    commented block below, which that tool cannot emit. The two inputs are reassembled into this unit by
    provenance/startup-gen/A/acej/acej.py, whose control re-emits cgif's released lib/A/ACej.v byte for byte from
    cgif's own data. One generated definition is filtered out here, `--drop-def CTX_check_round_trip`:
-   that name belongs to lib/A/Prog/LLVMFuzzerTestOneInput_cg.v:196, and one name carries one meaning. *)
+   that name belongs to lib/A/Prog/LLVMFuzzerTestOneInput_cg.v:197, and one name carries one meaning. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require Import YG00 YG01.
 Import ListNotations.
@@ -58,7 +59,7 @@ Definition TRACES_target_run : list (list Z) :=
 (* override: gen_traces 59966c88 cannot emit; check_round_trip's last free is a tail jump `j __wrap_free` and its first malloc runs on the caller's s0; each row measured from the listing at <pc> *)
 (* The context the statements give check_round_trip. gen_traces printed a `CTX_check_round_trip := [[]]`
    here (it was given no --fp for this function); that name belongs to
-   lib/A/Prog/LLVMFuzzerTestOneInput_cg.v:196, so acej.py's --drop-def CTX_check_round_trip filter leaves
+   lib/A/Prog/LLVMFuzzerTestOneInput_cg.v:197, so acej.py's --drop-def CTX_check_round_trip filter leaves
    it out of this unit and the statements' value is the only one under that name. The equality
    CTX_check_round_trip_stmt = CTX_check_round_trip is the composition's, not this file's.
    The tool's TRACES_check_round_trip is kept: no statement owns that name (the statements carry the
@@ -66,7 +67,7 @@ Definition TRACES_target_run : list (list Z) :=
    dec_crt_ufix members and one dec_crt_uctx member of Tfib_universe. The value:
    CTX_check_round_trip = flat_map (fun r => [[r]; [r; RA_LLVMF]]) DEC_LLVMF_RA_CRT with
    DEC_LLVMF_RA_CRT = [0x8061c; 0x809dc] and RA_LLVMF = 0x7ff60
-   (lib/A/Prog/LLVMFuzzerTestOneInput_cg.v:167, :196; lib/A/Prog/check_round_trip_cg.v:345-348
+   (lib/A/Prog/LLVMFuzzerTestOneInput_cg.v:168, :197; lib/A/Prog/check_round_trip_cg.v:345-348
    dec_crt_uctx reads it). Measured in the image:
      0x80618: jal 0x5b0  -> 0x80bc8 check_round_trip   in LLVMFuzzerTestOneInput (0x80064, +0x5b4), ra 0x8061c
      0x809d8: jal 0x1f0  -> 0x80bc8 check_round_trip   in LLVMFuzzerTestOneInput (0x80064, +0x974), ra 0x809dc

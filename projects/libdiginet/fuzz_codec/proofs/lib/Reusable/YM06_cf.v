@@ -3,6 +3,7 @@ From Stdlib Require Import Wellfounded.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require Import YK11 YK0n YK0i YK15 YM06.
+From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require Import RomBase.
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable.R Require Import Cfg.
 Import ListNotations.
 Section d. Context {fx : YK11.FPState}.
@@ -78,7 +79,7 @@ Lemma avoid_node : forall c (I : Type) (nx : I -> config) Q,
   node_ok segs c I (fun _ => []) nx -> ~ budget_refused_at segs c ->
   (forall i, avoid (nx i) Q) -> avoid c Q.
 Proof using.
-  intros c I nx Q [_ Hc] Hb H c' Hr. inversion Hr as [c0 HQ E1 E2 | c0 e c1 c2 HQ Hs Hr' E1 E2]; subst.
+  intros c I nx Q [_ [Hc _]] Hb H c' Hr. inversion Hr as [c0 HQ E1 E2 | c0 e c1 c2 HQ Hs Hr' E1 E2]; subst.
   - exact Hb.
   - destruct (Hc e (SNext c1) Hs) as (i & _ & E). injection E as ->. exact (H i c' Hr').
 Qed.
@@ -233,7 +234,7 @@ Lemma avoidi_node : forall c (I : Type) (nx : I -> config) Q,
   node_ok segs c I (fun _ => []) nx -> ms_svc_pending (cfg_ms c) = None ->
   (forall i, avoidi (nx i) Q) -> avoidi c Q.
 Proof using.
-  intros c I nx Q [_ Hc] Hsv H c' Hr. inversion Hr as [c0 HQ E1 E2 | c0 e c1 c2 HQ Hs Hr' E1 E2]; subst.
+  intros c I nx Q [_ [Hc _]] Hsv H c' Hr. inversion Hr as [c0 HQ E1 E2 | c0 e c1 c2 HQ Hs Hr' E1 E2]; subst.
   - exact Hsv.
   - destruct (Hc e (SNext c1) Hs) as (i & _ & E). injection E as ->. exact (H i c' Hr').
 Qed.
@@ -280,7 +281,7 @@ Lemma avoidv_node : forall c (I : Type) (nx : I -> config) Q,
   (forall i, vml (nx i) = vml c) ->
   (forall i, avoidv (nx i) Q) -> avoidv c Q.
 Proof using.
-  intros c I nx Q [_ Hc] Hb HV H c' Hr. inversion Hr as [c0 HQ E1 E2 | c0 e c1 c2 HQ Hs Hr' E1 E2]; subst.
+  intros c I nx Q [_ [Hc _]] Hb HV H c' Hr. inversion Hr as [c0 HQ E1 E2 | c0 e c1 c2 HQ Hs Hr' E1 E2]; subst.
   - split; [exact Hb|]. split; [reflexivity|].
     intros e c'' Hs. destruct (Hc e (SNext c'') Hs) as (i & _ & E). injection E as ->. apply HV.
   - destruct (Hc e (SNext c1) Hs) as (i & _ & E). injection E as ->.

@@ -1,7 +1,7 @@
 # APPROVE 0 rows
 
 Fresh review of the WIRE-B-ALLOC acceptances (slice `proofs/reac-repacer/fuzz_wire/provenance/evidence/wire-b-alloc/`
-in a worktree at commit 5193e9e56091; kit cmpkit 4bbd3a74be89).
+in a worktree; kit cmpkit 4bbd3a74be89).
 Reviewer: a fresh reviewer, 2026-10-30. Read-only on every input; no file in the slice was changed.
 
 All 178 target pairs (67 functions) were re-measured from the two images with my own ELF/symtab reader

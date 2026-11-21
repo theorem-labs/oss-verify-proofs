@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: writes out encoded statements of rdn_tr, img_cell, vis_stk, stk_wr, stk_def, stk_sh0, hi_sh0, kimg_clear and kword_lit as plain Rocq lemmas, and turns the Section SE encoded pr_cell_vis into a plain universally quantified lemma; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Bo0DrvStdio.v, 31 lines within its lines 34-161. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -25,11 +26,17 @@ Definition EX_CELLS : list (Z * Z * Z) :=
 Definition DG_CELLS : list (Z * Z * Z) := [(1300248, 1, 1); (1300249, 1, 1); (1893820, 1, 1); (1296952, 8, 2147450880); (1270320, 8, 1171452); (1270696, 8, 1206244)].
 Definition DGS_CELLS : list (Z * Z * Z) :=
 [(1270616, 8, 1209096); (1270248, 8, 1205992); (0x13ca38, 8, 0x7fff8000); (0x13d728, 8, 0); (0x13d730, 8, 0); (0x13d720, 8, 2 ^ 47 - 1); (0x1ce663, 1, 1); (0x13d719, 1, 1); (0x1363a8, 8, 0x1267e4)].
-Lemma rdn_tr : ltac2:(TCodec.tc2 tcn__Jb0DrvStdio "R6'RByR0%211'9y8%511%311p051'C'8'7%116'?%:12&Q;&QGr5&RAr3%22B1r2%746521(3r1%22=1%=3<41&QLzr4%3221&QJ&QN%114%32A1&QO+2+R0%3221%<251'>r7%?21B&QMr6%=11%?251%42G1%8261r9%Q02Q@M%211r:%113%Q93Q?31p071pTDQ?1r8%Q82QHA%Q<4Q;21?%Q52Q@Q;%Q@3Q?21p061p0H1p0Q21p0Q71pT:QF1pTNQI1pT6QK1pQLQM1pQJQN1").
+Lemma rdn_tr : forall (M M' : word -> option byte) a (n : nat) bs,
+rdn ASEGS M (Z_to_bv 64 a) n = Some bs -> 0 <= a -> a + Z.of_nat n <= 2 ^ 64 ->
+(forall i, a <= i < a + Z.of_nat n -> M' (Z_to_bv 64 i) = M (Z_to_bv 64 i)) ->
+rdn ASEGS M' (Z_to_bv 64 a) n = Some bs.
 Proof.
 intros M M' a n bs H Ha Hn HF. rewrite <- H. apply rdn_agree. intros j Hj. rewrite u_small by lia. apply HF. lia.
 Qed.
-Lemma img_cell : ltac2:(TCodec.tc2 tcn__Jb0DrvStdio "R6'RByR0%211'9y8%511%311p051'C'8'7%116'?%:12&Q;&QG(1%11<q0@1&RAr3%22D1r2%948521(3r1%22?1%?3>41&QLzr4%3221&QJr5&QN%115%4231&QO+2+R0%3221%=251'>r7%@21C&QMr6%=11%@251%42H1%8261r9%Q12QCN%211%Q:3Q@1Q5p051pTDQ@1r8%Q72QI?%Q=4Q<21=%Q42QAK%QA3Q@21p061p0F1p0Q11p0Q61pT:QG1pTNQJ1pT6QL1pR0QN1").
+Lemma img_cell : forall (MV : word -> option byte) a (n : nat) bs,
+rdn ASEGS (fun _ => None) (Z_to_bv 64 a) n = Some bs -> 0 <= a -> a + Z.of_nat n <= 2 ^ 64 ->
+(forall i, a <= i < a + Z.of_nat n -> MV (Z_to_bv 64 i) = None) ->
+rdn ASEGS MV (Z_to_bv 64 a) n = Some bs.
 Proof. intros MV a n bs H Ha Hn HN. exact (rdn_tr (fun _ => None) MV a n bs H Ha Hn HN). Qed.
 Section FPX_1. Context {fx : PropExec.FPState}.
 Variable scfg : SpuriousCfg.
@@ -52,21 +59,12 @@ Variable M0 : word -> option byte.
 #[local] Notation usp := (bv_unsigned sp0).
 Lemma vis_low : ltac2:(TCodec.tc2 tcn__Jb0DrvStdio "QF'7';'C%2211%411&Q5%611&Q2'RByR0%211'9y8%511%311p051'K'Q8vR3vEvR@vNr7r6r5r4r3r2%;::987654321'>&QLz%2215&QM+Vb\P0%2281%7241'?'4&Q3&RA%12Q0?%33CA1(5%73621p091p0B1pT6Q=1pTLQ01pQJQ21p2Q>1pT<Q<1pQBQ>1pQ@QA1").
 Proof. intros LB LK cr A M model a D Ha. apply (vis_of_inv scfg L ar C IL HI HIok sp0 DL _ _ _ _ _ _ _ a (di_inv _ _ _ _ _ _ _ _ _ _ D)); lia. Qed.
-Lemma vis_stk : ltac2:(TCodec.tc2 tcn__Jb0DrvStdio "QM'7';'C%2211%411&Q5%611&Q2'RByR0%211'9y8%511%311p051'K'Q8vR3vEvR@vNr7r6r5r4r3r2%;::987654321'>&QL&R0&RC%12H=+XPPP0%4221%6219&QM&QO+2+R0%3221%52?1%>271'?'4&Q3&RA%12Q7F%33JH1(5%73621p091p0I1pT6QD1pTLQ71pQJQ91p2QE1pT<QC1pQBQE1pQ@QH1").
+Lemma vis_stk : forall LB LK cr A M (model : Model) a, dinvA LB LK cr A M model -> usp - 8388608 <= a < 2 ^ 64 -> ahid A model (Z_to_bv 64 a) = false.
 Proof. intros LB LK cr A M model a D Ha. pose proof Hsp. apply (vis_of_inv scfg L ar C IL HI HIok sp0 DL _ _ _ _ _ _ _ a (di_inv _ _ _ _ _ _ _ _ _ _ D)); lia. Qed.
-Section SE.
-Local Abbreviation SEC_T_pr_cell_vis := (ltac2:(TCodec.tc2 tcn__Jb0DrvStdio "R5'7';'C%2211%411&Q5%611&Q2'RByR0%211'9y8%511%311p051'K'Q8vR3vEvR@vNr9r8r7r6r5r4%;::987654321&QH%M2KL(:r3%24OO61r2%44Q0Q121&Q:%83721'?%Q71J%M11&Q;&QG&Q0&Q3%12FD%321F&RA%12Q7F&R1%11G%:49531(3&J%72Q=F%2251%42A1%C3A61p0E1p0O1pU:QJ1pTNQK1pT6QL1pTLQ?1pQJQA1p2QM1pT<QK1pQBQM1pQ@R01")) (only parsing).
-Variable LB : ltac:(sec_ty2 constr:(SEC_T_pr_cell_vis) 0%nat 0%nat).
-Variable LK : ltac:(sec_ty2 constr:(SEC_T_pr_cell_vis) 1%nat 0%nat).
-Variable cr : ltac:(sec_ty2 constr:(SEC_T_pr_cell_vis) 2%nat 0%nat).
-Variable A : ltac:(sec_ty2 constr:(SEC_T_pr_cell_vis) 3%nat 0%nat).
-Variable M : ltac:(sec_ty2 constr:(SEC_T_pr_cell_vis) 4%nat 0%nat).
-Variable model : ltac:(sec_ty2 constr:(SEC_T_pr_cell_vis) 5%nat 0%nat).
-Variable a : ltac:(sec_ty2 constr:(SEC_T_pr_cell_vis) 6%nat 0%nat).
-Variable n : ltac:(sec_ty2 constr:(SEC_T_pr_cell_vis) 7%nat 0%nat).
-Variable v : ltac:(sec_ty2 constr:(SEC_T_pr_cell_vis) 8%nat 0%nat).
-Lemma pr_cell_vis : ltac:(sec_stmt2 constr:(SEC_T_pr_cell_vis) 9%nat 0%nat).
+Lemma pr_cell_vis : forall LB LK cr A M (model : Model) a n v, dinvA LB LK cr A M model -> In (a, n, v) PR_CELLS ->
+rdn ASEGS (mrestrict (ahid A model) M) (Z_to_bv 64 a) (Z.to_nat n) = Some (word_to_le_bytes (Z.to_nat n) (Z_to_bv 64 v)).
 Proof.
+intros LB LK cr A M model a n v.
 intros D Hin.
 pose proof (di_inv _ _ _ _ _ _ _ _ _ _ D) as HH.
 destruct (aio_statics _ _ _ _ _ HIok _ _ _ _ _ _ _ HH) as (_ & CS). rewrite (dla_segs _ _ _ _ DL) in CS.
@@ -77,20 +75,27 @@ assert (B : 0 <= a /\ a + Z.of_nat (Z.to_nat n) <= 0x693000).
 { unfold PR_CELLS in Hin. cbn [In] in Hin. repeat (destruct Hin as [Hin|Hin]; [injection Hin as <- <- <-; cbn; lia|]). destruct Hin. }
 rewrite (u_small a) by lia. apply (vis_low _ _ _ _ _ _ _ D). lia.
 Qed.
-End SE.
-Lemma stk_wr : ltac2:(TCodec.tc2 tcn__Jb0DrvStdio "R?'7'RByR0%211%411'8y8%611%811p041'9%114p091'QD%>11'C&QE&QG(Q=&QFr6%211r5%5221r4r3%:49321'?'4&Q9%116(=%53421r8(2%@221vR@%:3Q221&QL&R0&RC%12Q75+XPPP0%4221%621F&QJ%12JH%9216zr2%<221&QN%113%82L1r9%A221&Ir=&RAr;%?21Q4%32QK1%64Q=51Q5%Q43Q31Q0p091p0?1pTFQM1pT>QD1p0E1p0I1p0Q11p0Q71p0Q>1pTNQJ1pT6QK1pTHQM1pR0R01pT@R41pU<R:1").
+Lemma stk_wr : forall vals ebs MV kn a n,
+know_ok ASEGS (Env (vals_ev vals) ebs) MV kn -> has_window kn = true -> vals_ev vals 0 = sp0 ->
+usp - 6144513 <= a -> a + n <= usp ->
+forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true.
 Proof.
 intros vals ebs MV kn a n HK Hw P0 Ha Hn d k Hd Hk.
 pose proof (window_store_ok sp0 vals ebs MV kn (a + d - usp) k HK Hw P0 ltac:(lia) ltac:(lia)) as W.
 replace (usp + (a + d - usp)) with (a + d) in W by ring. exact W.
 Qed.
-Lemma stk_def : ltac2:(TCodec.tc2 tcn__Jb0DrvStdio "RA'7'RByR0%211%411'8y8%611%811p041'9%114p091'QD%>11'C&QE&QG(Q=&QFr6%211r5%5221r4r3%:49321'?'4&Q9%116(=%53421r8(2%@221vR@%:3Q221&QL&R0&RC%12Q75+XPPP0%4221%621F&QJ%12JH%9216'>zr1%=221&QMr7%2241%7241&@r;&RAr9r2%@221%42QL1%611(1%11QJ%Q73QG31%;11p0=1pTDQF1p0G1p0K1p0Q31p0Q91p0Q@1pTNQL1pT6QM1pTHQO1pR0R21pT@R61pU<R<1").
+Lemma stk_def : forall vals ebs MV kn a n,
+know_ok ASEGS (Env (vals_ev vals) ebs) MV kn -> has_window kn = true -> vals_ev vals 0 = sp0 ->
+usp - 6144513 <= a -> a + n <= usp ->
+forall i, 0 <= i < n -> MV (Z_to_bv 64 (a + i)) <> None.
 Proof.
 intros vals ebs MV kn a n HK Hw P0 Ha Hn i Hi. pose proof Hsp.
 pose proof (stk_wr vals ebs MV kn a n HK Hw P0 Ha Hn i 1%nat ltac:(lia) ltac:(lia)) as W.
 apply (store_ok_defined sp0); [lia | exact W].
 Qed.
-Lemma stk_sh0 : ltac2:(TCodec.tc2 tcn__Jb0DrvStdio "R6'7';'C%2211%411&Q5%611&Q2'RByR0%211'9y8%511%311p051'K'Q8vR3vEvR@vNr7r6r5r4r3r2%;::987654321'>&QL&QJ&QK&R0&RC%12J?+XPPP0%4221+8%7221+QoooPP0%:221%<21?+1%;291%=217%?216%A2D1%C261'?&Q0&Q3%12MK&RA%12Q=L%533O1(3z%52Q>1%32Q>1%;3Q>51p0=1p0Q21pU@QM1pTLQ@1pQJQB1p2QN1pT<QL1pQBQN1pQ@R11").
+Lemma stk_sh0 : forall LB LK cr A M (model : Model) x, dinvA LB LK cr A M model ->
+(usp - 8388608) / 8 + 0x7fff8000 <= x <= (usp - 1) / 8 + 0x7fff8000 ->
+mrestrict (ahid A model) M (Z_to_bv 64 x) = Some (Z_to_bv 8 0).
 Proof.
 intros LB LK cr A M model x D Hx. pose proof Hsp as Hsp'. pose proof (di_inv _ _ _ _ _ _ _ _ _ _ D) as HH.
 pose proof (aio_wf _ _ _ _ _ HIok _ _ _ _ _ _ _ HH) as (_ & _ & _ & _ & _ & _ & STSH & _).
@@ -102,7 +107,10 @@ apply (di_stksh _ _ _ _ _ _ _ _ _ _ D). unfold in_shadow_of, S, SB, STKTOP. rewr
 assert (MX : usp <= Z.max usp (ar_stack_top ar)) by lia.
 split; [lia|]. assert ((usp - 1) / 8 <= (usp - 8388608 + (Z.max usp (ar_stack_top ar) - (usp - 8388608)) - 1) / 8) by (apply Z.div_le_mono; lia). lia.
 Qed.
-Lemma hi_sh0 : ltac2:(TCodec.tc2 tcn__Jb0DrvStdio "RA'7';'C%2211%411&Q5%611&Q2'RByR0%211'9y8%511%311p051'K'Q8vR3vEvR@vNr7r6r5r4r3r2%;::987654321&Q6&R0&Q4%11>+XPPP0%4221&QO+2+Q?%3221%9215%;3@61'>&QL&QJ&QK&RC%12Q5J%A21>+8%5221+QoooPP0%8221%:21J+1%H2@1%;217%=216%?2O1%A261'?&Q0&Q3%12Q8Q6&RA%12QGQ7%533Q:1(3z%52QH1%32QH1%;3QH51p0=1p0Q01p0Q=1pU@R81pTLQK1pQJQM1p2R91pT<R71pQBR91pQ@R<1").
+Lemma hi_sh0 : forall LB LK cr A M (model : Model) x, dinvA LB LK cr A M model ->
+shadow_allowed A (ahl_ceil ar) (2 ^ 47 - ahl_ceil ar) ->
+(usp - 8388608) / 8 + 0x7fff8000 <= x <= (2 ^ 47 - 1) / 8 + 0x7fff8000 ->
+mrestrict (ahid A model) M (Z_to_bv 64 x) = Some (Z_to_bv 8 0).
 Proof.
 intros LB LK cr A M model x D SAH Hx. pose proof Hsp as Hsp'.
 assert (CE : ahl_ceil ar = usp - 8388608) by (unfold ahl_ceil; rewrite (dla_sptop _ _ _ _ DL); reflexivity).
@@ -118,12 +126,15 @@ destruct (aic_img_shadow _ _ _ _ _ ICok _ _ _ _ _ _ _ HH a n) as (Z0 & SA);
 assert (IS : in_shadow_of a n x) by (unfold in_shadow_of, S, SB; exact Hx).
 unfold mrestrict. rewrite (vis_of_allowed _ _ _ _ _ SA IS). exact (Z0 x IS).
 Qed.
-Lemma kimg_clear : ltac2:(TCodec.tc2 tcn__Jb0DrvStdio "QE'QB'RByR0%211'9y8%511%311p051'7'QD%211'C&QE&QGr5r4r3%544321'?'4&QI&Q1(Q>r2%2281%411%63A1;(=%:3921'>&QLr1%22B1&QM%123C%6231r8&RA%12Q5?%311(1%11Q4%H3Q431p081pTDQ11p0A1p0M1pTBQ41pTJQ51pTHQ71pR0Q;1pQ:QD1").
+Lemma kimg_clear : forall E MV kn lo hi, know_ok ASEGS E MV kn -> existsb (kentry_eqb (KImg lo hi)) kn = true ->
+forall i, lo <= i < hi -> MV (Z_to_bv 64 i) = None.
 Proof.
 intros E MV kn lo hi HK Hb. apply existsb_exists in Hb as (K & Hin & Heq). apply kentry_eqb_eq in Heq. subst K.
 pose proof (proj1 (Forall_forall _ _) HK _ Hin) as X. cbn [kentry_ok] in X. exact (proj2 (proj2 X)).
 Qed.
-Lemma kword_lit : ltac2:(TCodec.tc2 tcn__Jb0DrvStdio "R;'QB'RByR0%211'9y8%511%311p051'7'QD%211'C'8'QC&QE&QGr6r5r4%544321'?'4&QI&Q1(Q?(Q@(Q<z%211%421;r3r2%83321%:11%<3I1A(=%@3?21&QL%12;E&QJ&QN%11H%32J1&QO+2+QO%3221%:251%Q81Q;%Q>11&Q;r9&RAr7%22QE1%54Q841Q7(3&J&QAr:%221Q;%42Q=1%62>1%Q;3>81p0A1p0K1p0N1p0Q@1pU:QG1pU>QI1pT6QK1pTHQM1pR0R11pQ:R:1").
+Lemma kword_lit : forall E MV kn a (w : nat) v, know_ok ASEGS E MV kn -> existsb (kentry_eqb (KWord (SA (ELit 0) a) w v)) kn = true ->
+0 <= a -> a + Z.of_nat w <= 2 ^ 63 ->
+rdn ASEGS MV (Z_to_bv 64 a) w = Some (word_to_le_bytes w (edenot E v)).
 Proof.
 intros E MV kn a w v HK Hb Ha Hw. apply existsb_exists in Hb as (K & Hin & Heq). apply kentry_eqb_eq in Heq. subst K.
 pose proof (proj1 (Forall_forall _ _) HK _ Hin) as X. cbn [kentry_ok] in X. destruct X as (_ & _ & X).

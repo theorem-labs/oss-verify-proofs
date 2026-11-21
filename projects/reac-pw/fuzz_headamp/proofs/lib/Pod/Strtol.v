@@ -1,5 +1,5 @@
 (** strtol(s, &end, 10)'s answer on the C string s, as the RELEASED musl strtol walk states it: plugin-hostd/fuzz_command,
-    origin/ossv/recipes (25e3d17bdb50), proofs/plugin-hostd/fuzz_command/lib/Prog/strtol_c.v (strtol_contract: a0 =
+    origin/ossv/recipes, proofs/plugin-hostd/fuzz_command/lib/Prog/strtol_c.v (strtol_contract: a0 =
     s10_val str, *endptr = A + s10_end str, for bytes_at A (str ++ [NUL])). That walk is relocated onto fuzz_headamp
     (lib/Prog/strtol{,_c}.v, __intscan{,_c}.v, __shlim{,_c}.v, __errno_location{,_c}.v and lib/Spec/CType.v; U/ twins
     for the UBSan build), so the model functions live there and this file only re-exports them: c_space, c_digit and

@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGjz.v (a working branch 84ee52cd012, file sha256 c6599b9f620c) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 f0d2e8d40c7e; pin d83eb25dbf0d); module paths changed; its 19 image addresses moved by code-verified function pairs (18 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py); 1 data addresses the tool read as sizes, by the same value MAPS prediction; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: relocated from the old pin A (pinned fuzz_preset.asan d83eb25dbf0d, twin f0d2e8d40c7e; this file at d1f93c50c87) to A' (#102 pin 1be0f53d96cb, twin bff8519bbe3e) by the relocation route of record, frozen alreloc 0474699fc83547e0 (a working branch 83209f9d9cd8), --assume-source, --resolve the internal file resolve-102.txt (0 lines name this file); 18 numerals changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGjz.v (a working branch, file sha256 c6599b9f620c) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 f0d2e8d40c7e; pin d83eb25dbf0d); module paths changed; its 19 image addresses moved by code-verified function pairs (18 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py); 1 data addresses the tool read as sizes, by the same value MAPS prediction; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: relocated from the old pin A (pinned fuzz_preset.asan d83eb25dbf0d, twin f0d2e8d40c7e; this file) to A' (#102 pin 1be0f53d96cb, twin bff8519bbe3e) by the relocation route of record, frozen alreloc 0474699fc83547e0 (a working branch), --assume-source, --resolve the internal file resolve-102.txt (0 lines name this file); 18 numerals changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -176,7 +177,7 @@ Variables (B : asyms) (S : astate).
 Hypothesis TS : TfibSyms B.
 Hypothesis HTSD : ly_tsd ly = TFIB_TSD.
 Hypothesis HARm : ARm B ly S (aview tfibsegs (w_H W) mem0).
-(* The walk's instance (register 10, a0 = this, at Allocate's entry, i.e. register 11 of the virtual regs0: INSTv :78, A/AGj0.v:119 HU10) is the model's allocator instance. *)
+(* The walk's instance (register 10, a0 = this, at Allocate's entry, i.e. register 11 of the virtual regs0: INSTv :78, A/AGj0.v:120 HU10) is the model's allocator instance. *)
 Hypothesis Hinst_eq : as_inst B = INSTv.
 Hypothesis Hgp : getr regs0 3 = w64 (as_gp B).
 Hypothesis Hidx_def : idx = Z.of_nat (length (st_sec_arr S)).

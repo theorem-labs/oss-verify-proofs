@@ -3,7 +3,7 @@
    PA : PAImg L: the model's four arms (PjGrammar.utf8), the symbolic entry state (atoms 2 sp, 10 o, 11 cp, 32 the
    shadow base; the k bytes at o writable) and its proof u8_entry, the byte-shape lemmas for the stored chunks, the
    per-run post u8_post with its memnorm keep (u8_P / u8_plaw, the memory invariant of YC1fPx's _inv runners), the
-   passage to the text's fpostm (u8_to_fpost, bound to the text on the kit's cut 7cdbb61b5fa0 lib/A/PRH_FnReader.v:290-303:
+   passage to the text's fpostm (u8_to_fpost, bound to the text on the kit's cut lib/A/PRH_FnReader.v:290-303:
    ledger with most / own carried by S1Ledger.v's prh_ledger_frame, fpostm's memnorm keep, room_live_cf, S' = S), and
    the run-finishing tactics u8_awr / u8_byte. What is NOT here is what computes on a listing: the runs themselves
    (paj_run_tok_x_inv vm_computes over the concrete listing), one file per image.
@@ -15,7 +15,7 @@
    entries WITHIN one image (ex_utf8 / put_utf8 have one body in A), never A to B.
    Form: YCbqG's afn_pre_x / apost_base_x over the allocator relation ARx; every conclusion of the image files is SRr
    (srealizes, YA0n.v). Helpers u8_low_byte_mod .. u8_region_nth are ported from a Theorem Labs lane's put_utf8_xw.v
-   (a working branch cfcf4ad0554, handed over by a Theorem Labs lane). *)
+   (a working branch, handed over by a Theorem Labs lane). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -76,7 +76,7 @@ Definition ss_u8 (eo k lo hi : Z) (cs : list acond) : sstate :=
               (32%nat, mkAF SHADOW_OFF SHADOW_OFF 0)] cs []).
 Definition u8_SH (k : Z) : list shent := [mkSHE 10 0 k].
 
-(* ---- image-free helpers, ported from a Theorem Labs lane's put_utf8_xw.v (a working branch cfcf4ad0554,
+(* ---- image-free helpers, ported from a Theorem Labs lane's put_utf8_xw.v (a working branch,
    handed over by a Theorem Labs lane): a stored chunk read back as a value, the low byte arithmetic ---- *)
 Lemma u8_low_byte_mod : forall u n k, 0 <= u -> (k < n)%nat ->
   Z_to_bv 8 (Z.shiftr (u mod 2 ^ (8 * Z.of_nat n)) (8 * Z.of_nat k)) = Z_to_bv 8 (Z.shiftr u (8 * Z.of_nat k)).

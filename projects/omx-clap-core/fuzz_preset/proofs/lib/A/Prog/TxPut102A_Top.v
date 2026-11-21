@@ -8,7 +8,7 @@
    comment), and closes with TxPut102A_Base.tp_text_of_walk.
    rule 24: proves function tx_put (reuse search: the internal file REWALK-102-PLAN.md section T3)
    The theorem is the TWIN text TxPutCall102.ttx_put_specX_ev (the kit's ttx_put_specX, lib/A/PRH_FnTx.v
-   88468bf162d8 at the batch kit c23331281d07, VERBATIM plus the ONE named premise tp_live, owner a Theorem Labs lane / the kit owner;
+   88468bf162d8 at the batch kit, VERBATIM plus the ONE named premise tp_live, owner a Theorem Labs lane / the kit owner;
    TxPutCall102.v's header says why). TxPutCall102.ttx_put_specX_of_ev carries it to the kit's text wherever tp_live
    holds.
    Numerals: none. No ADDRESS. *)

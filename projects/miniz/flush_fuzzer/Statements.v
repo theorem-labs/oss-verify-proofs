@@ -22,9 +22,12 @@
     deflate(Z_FULL_FLUSH) on the first 3 bytes, deflate(Z_FINISH) on the rest
     (after corrupting compr[3] of the already-emitted output), and deflateEnd
     must each return Z_OK (or Z_STREAM_END for the finish); anything else exits
-    1.  The harness makes no check of its own beyond not crashing, so a
-    statement about it says only that the code it calls never crashes, hangs or
-    trips a sanitizer.
+    1.  The harness makes no check of its own beyond not crashing.  Its halts
+    statements say only that the code it calls never crashes, hangs or trips a
+    sanitizer.  Its agreement statements say only that the code never crashes or
+    trips a sanitizer, and allow a run that never ends.  Its bound statements
+    say only how often its builds may disagree.  Its decidability statements say
+    only that some program decides where its builds agree.
 
     Whether each statement is open, proved or known false is recorded in the
     harness README, not here: this file changes only when a statement does. *)

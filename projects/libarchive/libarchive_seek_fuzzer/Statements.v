@@ -22,9 +22,13 @@
     WHAT THE HARNESS CHECKS.  Reads zip_seekable/7zip/rar/rar5/iso9660 (+ all
     filters) through read/seek/skip callbacks over the input (4 KiB chunks,
     clamped seeks); per entry (<= 50) calls pathname and size and drains
-    archive_read_data, which may seek. Nothing compared.  The harness makes no
-    check of its own beyond not crashing, so a statement about it says only that
-    the code it calls never crashes, hangs or trips a sanitizer.
+    archive_read_data, which may seek. Nothing compared. If allocating its data
+    buffer throws std::bad_alloc, it frees the archive and returns 0. Each call
+    first ignores SIGPIPE, as bsdtar and bsdcpio do.  The harness makes no check
+    of its own beyond not crashing.  Its halts statements say only that the code
+    it calls never crashes, hangs or trips a sanitizer.  Its agreement
+    statements say only that the code never crashes or trips a sanitizer, and
+    allow a run that never ends.
 
     Whether each statement is open, proved or known false is recorded in the
     harness README, not here: this file changes only when a statement does. *)

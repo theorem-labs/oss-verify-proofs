@@ -12,11 +12,11 @@
 #   YF0v-lia.patch     YF0v.v shadow_apart's last step `nia` -> `lia` (the text rules forbid nia; the goal is linear once
 #                      the divisions by 8 are rewritten)
 # Inputs (each named by sha):
-#   REL    port_core 0e4e065eab9f: git archive 7f0e4b05267 tools/pg-reloc/0e4e065eab9f
-#   DON    fuzz_grant's RELEASED lib at origin/ossv/recipes 4f87de75d67, normalised by mkdon-sm1.sh (core-A's rule):
-#            mkdon-sm1.sh 4f87de75d67 $DONROOT ; DON=$DONROOT/proofs/libreac/fuzz_grant/lib
+#   REL    port_core 0e4e065eab9f: git archive tools/pg-reloc/0e4e065eab9f
+#   DON    fuzz_grant's RELEASED lib, normalised by mkdon-sm1.sh (core-A's rule):
+#            mkdon-sm1.sh $DONROOT ; DON=$DONROOT/proofs/libreac/fuzz_grant/lib
 #          (lib/A/Rt/AF0r.v and AF0s.v keep their paths there, lib/Reusable/YF0v.v is YF0v.v; the three blobs are the
-#          same at 25e3d17bdb50, core-A's donor commit)
+#          same, core-A's donor commit)
 #   SYMS   ../../core-reloc/A/fuzz_grant.asan.syms.txt (core-A's --old-syms, sha256 b46268790c46)
 #   P, R   the pinned image trees: P holds libreac's fuzz_grant (asan c2c7559b29bd, its twin 57c26f993615), R holds
 #          reac-repacer's result/ (fuzz_uci.asan 6ea017c24525 = harness.yaml, twin 56822e263d76; fuzz_uci.asan-ubsan

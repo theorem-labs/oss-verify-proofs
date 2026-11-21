@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/plugin-hostd/fuzz_command/lib/A/Rt/RtBzAdapt.v at 2d2ff01bb6f; module paths changed to reac-pw/fuzz_headamp; 0 numeral(s) moved from fuzz_command.asan to fuzz_headamp.asan by alreloc a5c53bb2bed4; the donor's owned-byte count in the header comment recomputed for this image. *)
+(* Modified by Theorem Labs, 2026-10: proofs/plugin-hostd/fuzz_command/lib/A/Rt/RtBzAdapt.v; module paths changed to reac-pw/fuzz_headamp; 0 numeral(s) moved from fuzz_command.asan to fuzz_headamp.asan by alreloc a5c53bb2bed4; the donor's owned-byte count in the header comment recomputed for this image. *)
 (* The adapter between THIS tree's runtime contracts (lib/A/Rt/RtDefs.v: ecall_pre_stk, aread_ok, awrite_ok,
    astr_at, atail_vis, aguard_ok, rt_rom_view) and the premises the relocated bridge asks for (lib/A/Rt/RtBzHBase.v
    ecall_pre_k, rom_viewN / rom_viewO; lib/A/Bz: Mem.bytes_at, Frame.stk, I_qck.chk_ok, Step.ro_cells). It is the
@@ -6,7 +6,7 @@
 
    What each piece closes (of the gaps measured between the relocated bridge and our contracts):
    - G1, the pre vocabulary: ecall_pre_k's `alloc_ceiling <= ly_stk_lo ly` is a layout fact of every AR
-     (YG0f.v:339 lo_stk_ceil), so our ecall_pre_stk gives the bridge's ecall_pre_k (pre_k_of_stk). The strings of
+     (YG0f.v:340 lo_stk_ceil), so our ecall_pre_stk gives the bridge's ecall_pre_k (pre_k_of_stk). The strings of
      our contracts are astr_at + aread_ok + atail_vis, which give the walks' bytes_at, their slack after the
      terminator (G4), and their separation from the callee's stack window.
    - G2, rom_viewO: our contracts carry rt_rom_view, which is rom_viewN; the owned read-only bytes of this image

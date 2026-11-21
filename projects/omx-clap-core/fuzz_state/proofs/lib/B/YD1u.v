@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD1u.v, with its module paths changed and its addresses moved to omx-clap-core/fuzz_state's ASan+UBSan build (fuzz_state.asan-ubsan). *)
 (* Modified by Theorem Labs, 2026-10: follows YE00 and YE2k without cgif's output-file strings and fopen/fclose cells: tfib_AIL's case splits, FINV_IVS and finv_img_ivs lose the four string ranges; tfib_aenv_off_lib_fp and tfib_meta_off_lib_fp state that the library call's footprint (sink_token :: FS_PSTAT_FP) misses the cells YE01's kept lemmas keep. *)
-(* Modified by Theorem Labs, 2026-10-29: proof text synced to lib/A/AD1u.v at S0 946ad86dc9f (the sink's cells read through tfib_K's ak_owned: tfib_owned_iff, tfib_core_owned, the 5-arm case split), with lib.B's own modules (YE2k, YB1v, YF0m, YD1y, FSPstat) and AsanUbsan; the only image literals, 0x10000 and 0x5fd000, are the same in both images. *)
+(* Modified by Theorem Labs, 2026-10-29: proof text synced to lib/A/AD1u.v at S0 (the sink's cells read through tfib_K's ak_owned: tfib_owned_iff, tfib_core_owned, the 5-arm case split), with lib.B's own modules (YE2k, YB1v, YF0m, YD1y, FSPstat) and AsanUbsan; the only image literals, 0x10000 and 0x5fd000, are the same in both images. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

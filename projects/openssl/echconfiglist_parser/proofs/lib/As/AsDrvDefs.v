@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the target-run statement of Section TargetRun takes the channel-reader premise the printf to stdout needs, and its walk and continuation are over the run's segment list asegs ++ rt_tail from the configuration with that list's read-only backing). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -17,6 +18,7 @@ From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Lib Require Import Mem Cells Step Frame MState SysStep Exec.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.As Require Import ASegs AsShadow AsConst AsIface AsCXXHeap AsDriverLaws AsStack0 AsAuxv
   ECH_Xpres ECH_Iface AsPrintfFirst.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require RomBase RunTail.
 Import OSSVerify.Proofs.openssl.echconfiglist_parser.lib.PropExec.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -137,6 +139,9 @@ Definition ATR_STACK : Z := 65536.
 
 Section TargetRun.
   Context {HCEIL : HeapCeil}.
+  (* the run's tail ([RunTail.RunTail]): the target calls time(), which reads and enters the
+     vDSO, so the target's walk and its continuation are over the run's segment list *)
+  Context {RT : RunTail.RunTail}.
   Variable H : asr.
   Variable L : alib.
 
@@ -254,8 +259,15 @@ Section TargetRun.
     forall (sp : word) (A cap : Z) (data : list byte) (p : bptr) (s : as_St H) (LB : list block)
            (msF : machine_state) (mo : Model) (regs : bvmap 5 word) (mem : word -> option byte) (K : TSet),
       ATRpre sp A cap data p s LB msF mo regs mem ->
+      (* The printf to stdout needs the channel reader (As/AsDrvIO.v:55).  A
+         premise, not an ATRpre field, so ATRpre's construction (As/AsMainTop.v [x_header])
+         and its projections stay as they are. *)
+      m_channel_reader mo = true ->
       K [] ->
       (forall regs' mem' msF' mo' s', ATRpost sp A cap data p s LB mo regs mem regs' mem' msF' mo' s' ->
-         realizes asegs (mkCfg msF' mo') K) ->
-      realizes asegs (mkCfg msF mo) (t_emit (W 1 [Z_to_bv 8 48; Z_to_bv 8 10]) K).
+         realizes (asegs ++ RunTail.rt_tail)
+           (RomBase.cwrom (mkCfg msF' mo') (seg_rom (asegs ++ RunTail.rt_tail))) K) ->
+      realizes (asegs ++ RunTail.rt_tail)
+        (RomBase.cwrom (mkCfg msF mo) (seg_rom (asegs ++ RunTail.rt_tail)))
+        (t_emit (W 1 [Z_to_bv 8 48; Z_to_bv 8 10]) K).
 End TargetRun.

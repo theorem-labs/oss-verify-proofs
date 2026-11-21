@@ -3,6 +3,7 @@
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/Prog/LLVMFuzzerTestOneInput_fr.v, with its module paths and module names changed; 457 of its 575 lines of code are new or changed and 409 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/U/Prog/SegCF/Tac_slot.v; 481 of its 561 lines of code are new or changed and 495 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Cut-free (agreement) copy of lib/U/Prog/Seg/Tac_b1.v, over U/Prog/SlotInvCF.v (SR := SRcf). Model:
    reac-pw/fuzz_role's U/Prog/SegCF/Tac_b1.v, as libreac/fuzz_ctrl's
    released U/Prog/SegCF/*.v copy its U/Prog/Seg/*.v: the same text with SlotFR, SlotInv -> SlotInvCF, Seg ->
@@ -15,7 +16,7 @@
    cells, separation from the other blocks, slack and absence from the image (b1_hb, b1_sep, b1_slack_ok,
    b1_blk_rom, b1_blk_present, b1_in_all).
    The plain file (lib/Prog/Seg/Tac_b1.v) with the UBSan numbers below. Taken from reac-pw/fuzz_role's U/Prog/Seg/Tac_b1.v, itself reac-pw/fuzz_pin's and libreac/fuzz_ctrl's released Prog/Seg/Tac_b1.v
-   (origin/ossv/recipes 25e3d17bdb50) adapted, with headamp's UBSan numbers (frame 608, saved registers [S - 104, S), malloc
+   adapted, with headamp's UBSan numbers (frame 608, saved registers [S - 104, S), malloc
    at 0x1693c, the sink cells 0x509f1, 0x50e18 .. 0x50e1c, 0x50e20 .. 0x50e28, the request bound 2^26 of
    SlotFR.resb_room). Widened from one block to a list hb: b1_FR_malloc / b1_malloc_call take FR with any hb (of at
    most 16 blocks and 2^24 bytes) to FR with (res, n) :: hb, and give res mod 16 = 0 and the bytes of the blocks of

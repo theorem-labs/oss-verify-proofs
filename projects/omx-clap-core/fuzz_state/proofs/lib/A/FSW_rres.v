@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACer.v, with its module paths and module names changed; 1338 of its 1373 lines of code are new or changed and 261 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_K.v; 190 of its 277 lines of code are new or changed and 1286 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The resume state after a RUNTIME call (strlen, __asan_memcpy, __asan_memset, the poison / unpoison helpers,
    __asan_stack_malloc_N, any callee whose contract gives back ARU and a frame, not a journal): FSW_K's fsw_intrin_atU puts
    the caller's journal back on the memory after the call and keeps ARU there, but builds no symbolic state at the return
@@ -20,7 +21,7 @@
    bridge). The window bytes are present after the call by the journal's stack-window presence (the window lies in
    [sp0 - STK, sp0)) and ARU. The st_ok half of FSW_K's fsw_after_callU / fsw_after_callU_s0 and FSW_ret's
    fsw_after_callU_args, without the journal composition; the proved instance generalized is a Theorem Labs lane's crcs_resume_sm
-   (a working branch c4bfd3bc057, lib/A/FSH_check_reject_clean_starved.v). Owner: a Theorem Labs lane (walk
+   (a working branch, lib/A/FSH_check_reject_clean_starved.v). Owner: a Theorem Labs lane (walk
    kit). A kit: no function's contract is proved here (rule 24). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

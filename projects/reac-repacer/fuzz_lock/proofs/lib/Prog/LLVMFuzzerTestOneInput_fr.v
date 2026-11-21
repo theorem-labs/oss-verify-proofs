@@ -1,4 +1,4 @@
-(* libreac/fuzz_decode's lib/Prog/LLVMFuzzerTestOneInput_fr.v (release 25e3d17bdb50) for fuzz_lock.plain: the frame
+(* libreac/fuzz_decode's lib/Prog/LLVMFuzzerTestOneInput_fr.v (release) for fuzz_lock.plain: the frame
    relation lf_fr of LLVMFuzzerTestOneInput and its lemmas. Changed: LF_RES_TOP is the end of fuzz_lock.plain's segment
    reservations (lf_rsegs_ok checks it on Img0), lf_guard_img takes the guard's .got slot from LLVM_GUARD_GOT, and the
    return value is r (lf_post, llvm_sr_post) in place of 0. Modified by Theorem Labs. *)

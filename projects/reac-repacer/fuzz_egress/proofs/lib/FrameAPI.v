@@ -5,7 +5,8 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/AllocCut.v; 94 of its 156 lines of code are new or changed and 400 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/AllocPackCf.v, with its module names changed; 154 of its 182 lines of code are new or changed and 128 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/Prog/CF/SRCF.v, with its module paths changed; 71 of its 89 lines of code are new or changed and 164 lines of the source are left out. *)
-(* Modified by Theorem Labs: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/FrameAPI.v at 25e3d17bdb5059606131377a3722d585415ab5d6 for reac-repacer/fuzz_egress; the unit links no calloc: frame_plain binds ms_calloc B = None; the RELRO list is the unit image's; addresses moved by symbol and offset; module path OSSVerify.Proofs.reac_repacer.fuzz_egress.lib. *)
+(* Modified by Theorem Labs: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/FrameAPI.v for reac-repacer/fuzz_egress; the unit links no calloc: frame_plain binds ms_calloc B = None; the RELRO list is the unit image's; addresses moved by symbol and offset; module path OSSVerify.Proofs.reac_repacer.fuzz_egress.lib. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.reac_repacer.fuzz_egress.lib.Reusable Require Import YK11 YM05 YO0f YO0d YO09 YL0g YL0i YI14 YI16 YL01.

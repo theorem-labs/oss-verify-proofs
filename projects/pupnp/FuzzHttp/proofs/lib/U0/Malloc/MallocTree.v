@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the 27- or 29-pair auxv). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
-From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Lib Require Import Tac Image ZBridge SysStep SFModel ITree Nodes Decode Arr.
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.U0.Malloc Require Import F_syscalls MallocRep.
@@ -68,8 +69,10 @@ Definition ptr_rel (p : optr) (r : option bptr) : Prop :=
   | _, _ => False
   end.
 
-Definition auxv_list (x3 x4 x5 hw x6 x11 x12 x23 rnd : Z) : list word :=
-  map wz [3; x3; 4; x4; 5; x5; 16; hw; 6; x6; 11; x11; 12; x12; 23; x23; 25; rnd; 0; 0].
+(* LPS 727298f3: the launch's auxv is [StackLayout.auxv_entries] (27 pairs, 29 when CONFIG_RSEQ), with
+   AT_RANDOM's value the pointer [rnd]; mallocng's secret scan reads the keys and that value. *)
+Definition auxv_list (la : LaunchAuxv) (ph : PhdrInfo) (entry uid gid hw : word) (rnd : Z) (efn : word) : list word :=
+  flat_map (fun e => [fst e; snd e]) (auxv_entries la ph entry uid gid hw (wz rnd) efn).
 
 Lemma Forall_disjoint_from : forall (P : Z * Z -> Prop) W a n,
   Forall P W -> (forall lo hi, P (lo, hi) -> a + n <= lo \/ hi <= a) -> disjoint_from W a n.

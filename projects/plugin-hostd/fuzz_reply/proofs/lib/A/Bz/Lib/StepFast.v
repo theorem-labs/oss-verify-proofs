@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/leptonica/colorfill_fuzzer/lib/K5/Lib/StepFast.v, with its module paths changed; 2 of its 2198 lines of code are new or changed and 1 line of the source is left out. *)
-(* Ported from: a working branch 840c4afa7e2 proofs/omx-clap-core/fuzz_state/lib/A/Bz/Lib/StepFast.v.
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO pair and its reserved region); internal commit ids in comments replaced by public commits or removed. *)
+(* Ported from: a working branch proofs/omx-clap-core/fuzz_state/lib/A/Bz/Lib/StepFast.v.
    Changes (R1Str, 2026-10-29): module path fuzz_state -> fuzz_reply; no address numerals. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A.Bz Require BvWfKernel.
 (* [comment removed for export] *)
@@ -45,7 +46,7 @@ Lemma sf_install_load : forall segs (ro m : word -> option byte) (a : word) (n :
     (K : word -> machine_result (core * (word -> option byte))) (r : machine_result machine_state),
   sf_load_goal segs m a n f = Some v ->
   lift_result ro (K v) = r ->
-  lift_result ro (match ov_read_bytes segs m a n with Some bs => K (f bs) | None => MachineFault end) = r.
+  lift_result ro (match ov_read_bytes segs m a n with Some bs => K (f bs) | None => if range_meets_vvar segs a n then MachineUnmodeled else MachineFault end) = r.
 Proof.
   intros segs ro m a n f v K r H1 H2. unfold sf_load_goal in H1. destruct (ov_read_bytes segs m a n); [|discriminate].
   injection H1 as <-. exact H2.

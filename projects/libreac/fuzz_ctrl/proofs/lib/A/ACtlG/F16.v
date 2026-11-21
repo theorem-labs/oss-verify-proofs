@@ -5,13 +5,14 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/tx_put.v, with its module paths and module names changed; 2422 of its 2466 lines of code are new or changed and 984 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3a.v, with its module names changed; 1977 of its 2075 lines of code are new or changed and 2368 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3b.v, with its module paths, module names and numbers changed; 883 of its 974 lines of code are new or changed and 1984 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/F16.v -- GLUE for stage seg_F16 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput
    (lib/A/ACtl.v (at head lib/A/ACtl.v:791-792) (an earlier version, blob a3c6b7b35017, not in this delivery)).  Written by a Theorem Labs lane (claimed in FREE-PIECES.md (a working note, not in this delivery); block owner another lane);
    single writer.  rule 24: no function proved.  proves no function
    (kind: segment lemma).
    Pattern: glue-pattern.md (a working note, not in this delivery) (G1-G5, memory-writing run, callee inside,
    section 8: the callee's contract_F premise closed by its CLOSED theorem); shape of lib/A/ACtlG/A5.v, and of
-   a Theorem Labs lane's lib/A/ACtlG/F13.v (a working branch 7932c99a28f) for the memory side.
+   a Theorem Labs lane's lib/A/ACtlG/F13.v (a working branch) for the memory side.
 
    WHAT IT PROVES
      glue_seg_F16 : forall POST (j : nat), CF POST (ix_cut C_A8229c_at [Z.of_nat j]) -> CF POST (ix_cut C_A821d0_at [Z.of_nat j])
@@ -22,22 +23,22 @@
    of reac_identity_ingest at 0x82298, whose return is the exit cut 0x8229c.
 
    REUSE (rule 24, the three-clause search), proof-index glue_seg_F16 f16_evt_F f16_loop_F seg_F16, index v5 built
-   2026-10-29T06:12:16Z from main@c4c03c57ba1 ossv/recipes@e5e7eba2cc0 ossv/candidates@ee89628c997
-   b6a0088adcb (a hub release branch), lemma index 05:45:38Z over 10861 working branches:
+   2026-10-29T06:12:16Z from main ossv/recipes ossv/candidates
+   (a hub release branch), lemma index 05:45:38Z over 10861 working branches:
      glue_seg_F16: 0 named, 0 by address, 0 related, 0 released, 0 in the delivered package, 0 unreleased working-branch hits.
-     f16_evt_F / f16_loop_F: 0 released; UNRELEASED only lib/A/Prog/Seg/F16F.v:494 / :91 (a Theorem Labs lane's re-run, on
+     f16_evt_F / f16_loop_F: 0 released; UNRELEASED only lib/A/Prog/Seg/F16F.v:495 / :92 (a Theorem Labs lane's re-run, on
        this base; used here).
      seg_F16: 0 released; no match in the delivered proofs; UNRELEASED: Seg/F16.v:826 (the
-       source), ACtl.v:653 (the statement), image B's lib/B/ACtlW4c.v:288 (a plan, not proved).
-   At ossv/recipes c5e779efe8c (2026-10-31), glue_seg_F16, f16_evt_F / f16_loop_F and seg_F16 are defined only in this
-   unit (glue_seg_F16 in this file, f16_evt_F / f16_loop_F at lib/A/Prog/Seg/F16F.v:494 / :91, seg_F16 at
-   lib/A/Prog/Seg/F16.v:826 and lib/B/Prog/Seg/F16.v:1138, its statements lib/A/ACtl.v:792 and lib/B/ACtl.v:573 and image B's lib/B/ACtlW4c.v:4372, proved).
-   At ossv/recipes c5e779efe8c (2026-10-31), this glue has no released counterpart outside this unit; its pieces are the core's (ajournal_exec, frames_bounds, al_blocks,
+       source), ACtl.v:653 (the statement), image B's lib/B/ACtlW4c.v:289 (a plan, not proved).
+   At (2026-10-31), glue_seg_F16, f16_evt_F / f16_loop_F and seg_F16 are defined only in this
+   unit (glue_seg_F16 in this file, f16_evt_F / f16_loop_F at lib/A/Prog/Seg/F16F.v:495 / :92, seg_F16 at
+   lib/A/Prog/Seg/F16.v:826 and lib/B/Prog/Seg/F16.v:1138, its statements lib/A/ACtl.v:792 and lib/B/ACtl.v:574 and image B's lib/B/ACtlW4c.v:4373, proved).
+   At (2026-10-31), this glue has no released counterpart outside this unit; its pieces are the core's (ajournal_exec, frames_bounds, al_blocks,
    sep_block_frame), a Theorem Labs lane's bridge and lifts, the visibility lemmas ProgWorldVis{Win,Heap,Frame}, and the glue
    base's shared kits (Kit.kit_frac_move / kit_wx / kit_segs_low, KitMem.kitmem_frac_munch for FRAC at the exit).
 
    THE RUN.  Seg/F16F.v's f16_evt_F_on (a Theorem Labs lane's route (C) twin of its mechanical re-run f16_evt_F of
-   F16.f16_evt, F16F.v (at head lib/A/Prog/Seg/F16F.v:709; written on a working branch 66e4d6de408), Required, NOT assumed): f16_evt_F's statement
+   F16.f16_evt, F16F.v (at head lib/A/Prog/Seg/F16F.v:710; written on a working branch), Required, NOT assumed): f16_evt_F's statement
    with the callee premise reac_identity_ingest_contract_F -> _F_on and its `shadow_rw m` premise DROPPED.  The WHOLE
    segment, loop and callee included, as one ExecF.evtF under a footprint RNG.  F16F.v composes it from f16_loop_F
    (the source's own loop induction on the down-counter, branches stepped with lib/Lib/StepF.v) and the five tail
@@ -100,7 +101,7 @@
    several copies is written lib.Reusable.<X> / lib.Lib.<X> (core), or through a Module alias to the full path.
    SHADOWED NAMES: getr / mkst / seg_rom / cfg_at are lib.Reusable.YK11 / lib.Reusable.YG0d-qualified.
 
-   BUILD STATE: see the commit message (route (C) shell on a working branch 1899bed1aee, merged;
+   BUILD STATE: see the commit message (route (C) shell on a working branch, merged;
    no workspace substitution). *)
 
 From Coq Require Import ZArith List Lia Permutation Bool.

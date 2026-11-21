@@ -1,4 +1,4 @@
-(* CARRIED from commit d692856bfecbb98b2d89a0bba73b457c2098f96d,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YP0iR.v, sha256 543554e3b0c7daba2d1795c8cc5cfdd4fcdd377f87131f44477420a9895d00ca (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change made here is the module
    prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
@@ -11,6 +11,7 @@
    store_region_in with the read-region bound accs_in_rrange (YP09R.v) added; new lemmas step_rep,
    step_accesses_on_fetch, sload_region_in, sstore_region_in, region_accs, accs_one, accs_two and
    sym_step_sh_soundR. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.

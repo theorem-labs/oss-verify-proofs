@@ -6,7 +6,7 @@ proves no function (kind: statement text)
 sections 0 and 4-8 below. Section 3, the hunk classification, still holds.
 
 Row TCA. The integration owner's decision of 01:50Z: G hunks only, as port_core `--patch` files on the core's own
-donor text (fuzz_grant released lib, recipes 25e3d17bdb50); TransportDriver.v / TransportDrvG.v reduced to pcap's G
+donor text (fuzz_grant released lib, recipes); TransportDriver.v / TransportDrvG.v reduced to pcap's G
 content; the slot's G parameter stays on the program side; values as rows. Image-B twin: row TCB (the image-B core's writer).
 
 ## 0. Result
@@ -35,8 +35,8 @@ content; the slot's G parameter stays on the program side; values as rows. Image
 
 | input | sha |
 |---|---|
-| donor (grant, recipes 25e3d17bdb50) A/AD1m AD1p AD1r AD1w AD1y AD2f `*.grant.v` | b9464cf53bef 4df731e70fa1 b812695149e0 3d31d672edf0 300ce30e9150 2a125309dcd9 |
-| pcap (recipes 198234fa4d3) the same six `*.pcap.v` | 25a141b24062 560ac023744e 5bb9ff749248 9dbb509b244c 19df29583b38 9382f069a76d |
+| donor (grant, recipes) A/AD1m AD1p AD1r AD1w AD1y AD2f `*.grant.v` | b9464cf53bef 4df731e70fa1 b812695149e0 3d31d672edf0 300ce30e9150 2a125309dcd9 |
+| pcap (recipes) the same six `*.pcap.v` | 25a141b24062 560ac023744e 5bb9ff749248 9dbb509b244c 19df29583b38 9382f069a76d |
 | pcap PcapDriver.v / PcapDrvG.v / W_journalG.v | 5950f499d1a8 / b9c11d7e400e / 4094c746f86a |
 | stage-out (work-rec, = work83b) A/ACfn AD1w AD1m AD1p AD1q AD1r AD2f AD2d AD2e AD1x | 7abadaa10480 9b079df0c596 86c764a054b7 819a590a8082 382090c9bd14 452dbe19012e 8b62cf243df0 ce9876ce7cb8 88540dabc99c c287cea47173 |
 | start-up layer rec/lib/A/AD2j.v (region list) / AD1y.v (T3r's earlier layer) | db4ad395250e / e1543cdbc213 |

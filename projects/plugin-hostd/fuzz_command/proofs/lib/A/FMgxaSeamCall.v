@@ -45,7 +45,7 @@ Definition SEAM_INV : (word -> option byte) -> Prop := fun _ => True.
 (* musl vfprintf at fm.asan 0x8ede0, in CJ's evt form, under those three contracts, through the
    UNGUARDED released statement (G_vfprintf_snf.v:194): the guard's pieces are separate premises and
    the stack window is VFA_DEPTH = 368 + PC_DEPTH = 5552 below musl vfprintf's entry sp, 48 bytes
-   less than the guarded statement's 48 + VF_DEPTH (VfprintfCall.v:36), so the seam's window is
+   less than the guarded statement's 48 + VF_DEPTH (VfprintfCall.v:37), so the seam's window is
    exactly the VF_DEPTH = 5552 that the vfprintf-interceptor walk calls it at. *)
 Definition seam_vfprintf_a :
   @vfprintf_snf_a_stmt A_img (snf_out_ready copy_ready) set_ready strn_ready copy_ready SEAM_INV

@@ -6,8 +6,8 @@
    which depends on no callee contract: the call targets, the verb literal, the frame, and the five straight-line
    runs between the program calls (entry to record, record to arg_s, arg_s to arg_s, arg_s to rec_shape_of,
    rec_shape_of to the tail jump into answer), each stated for any continuation. The B re-walk of
-   lib/A/Prog/sup_policy_set_s1.v / _s2.v (a working branch 02d1c730d1b), whose code inlines record() and
-   xstrdup; B calls record() and arg_s() instead (lib/B/Prog/sup_policy_set_c.v on a working branch fc8bcbd8b42;
+   lib/A/Prog/sup_policy_set_s1.v / _s2.v (a working branch), whose code inlines record() and
+   xstrdup; B calls record() and arg_s() instead (lib/B/Prog/sup_policy_set_c.v on a working branch;
    record's call target is CmdRecAns.v's rca_sig_record).
    The B code has no inline ASan check and no UBSan trap site, so no run below meets a report or trap edge.
    Measured on fuzz_command.asan-ubsan (sha256 658cefbe...), .symtab sup_policy_set 0x8be08 size 0x70:
@@ -18,6 +18,7 @@
      ld s0,16(sp) / ld s1,8(sp) / ld s2,0(sp) / addi sp,sp,32 / 0x8be74 j answer (0x8aa10).
    Listing lines: lib/B/Prog/CmdList.v:5765-5792 (slot 5686 = 0x58d8 / 4); the auipc pair is
    `PHi a0 168; PAddHi a0 a0 168 (A_OBJ 71) 0`, an address formation (no load or store through an A_HI base). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -582,11 +583,11 @@ Qed.
 Variable MT : ameter_ops.
 (* the statement's own Section hypothesis (sup_policy_set_c.v:73) *)
 Hypothesis TREC_SHAPE_OF : trec_shape_of_spec B MT.
-(* the per-binary record and the read-only premise the A walk takes under these names (A sup_policy_set.v:55-79) *)
+(* the per-binary record and the read-only premise the A walk takes under these names (A sup_policy_set.v:56-80) *)
 Hypothesis HB : CmdBSyms B.
 Hypothesis CMD_RO_IN : cmd_ro_in (in_roP SEGS CMD_RLO CMD_RHI).
 
-(* the verb literal as rec_shape_of's contract asks for it, through astr_argA's read-only arm (a Theorem Labs lane 917ca7ac6b1:
+(* the verb literal as rec_shape_of's contract asks for it, through astr_argA's read-only arm (a Theorem Labs lane:
    cmd_addr_b / cmd_hull_b / the end in cmd_ro_ends, all by computation over the record's lists) *)
 Lemma sps_verb_arg : forall ly S (rd : reader),
 cmd_ro_ok rd -> Z.of_nat (length sps_verb) <= 16 ->

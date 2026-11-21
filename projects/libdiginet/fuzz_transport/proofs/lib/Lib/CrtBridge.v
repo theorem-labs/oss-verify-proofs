@@ -2,11 +2,12 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_decode/lib/B/Prog/LLVMFuzzerTestOneInput_segX_crt1_fevt.v, with its module paths and module names changed; 8 of its 61 lines of code are new or changed and 385 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* CrtBridge: the image-neutral half of the step that carries a footprint run (lib/Lib/ExecF.v) into cgif's SRr
    walk.  Nothing here mentions an image: the segment list is a Variable, as in ExecF.v, and the register map is
    arbitrary.  Image A uses it in lib/A/Prog/crtA_bridge.v, image B in its twin.
 
-   Why it is needed: cgif's configuration (lib/Reusable/YG0d.v:213 cfg_at, over lib/Reusable/YK11.v:17 mkst) carries
+   Why it is needed: cgif's configuration (lib/Reusable/YG0d.v:214 cfg_at, over lib/Reusable/YK11.v:17 mkst) carries
    the caller's own register map, while decode's footprint runs start from a state whose register map is `mkR` of
    the 31 register values (lib/Lib/Regs6ss.v:456 mkR_of).  The two maps are not equal, only xregs_eqv
    (Regs6ss.v:20), so a run has to be transported along ms_eqv (Regs6ss.v:144) first.  The transport is proved from

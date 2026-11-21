@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_pitems_dev.v, with its module paths and module names changed; 149 of its 179 lines of code are new or changed and 512 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_caw_epi.v
-   (a working branch 2ed11a3c43f), the same names over B's own code (B listing: capstone over the
+   (a working branch), the same names over B's own code (B listing: capstone over the
    unstripped twin of fs.asan-ubsan, whose instructions 0x8164c .. 0x81b5c equal the pinned image's).
    check_as_written over fs.asan-ubsan, the epilogue (B 0x81aa4 .. 0x81ad0): from the state FSW_caw_back.cawb_mid gives
    at the bcmp return 0x81aa4 (a0 = 0, equal bytes) or at the join 0x81aa8, to check_as_written_spec's post cawb_post:
@@ -19,18 +19,19 @@
    Section hypotheses: FSW_caw_back.v's Section W, by name (of the runtime, RTf only). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/FSW_caw_epi.v; 813 of its 871 lines of code are new or changed and 121 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_caw_back.v
-   (a working branch 2ed11a3c43f), the same names over B's own code. Every B literal below is from
+   (a working branch), the same names over B's own code. Every B literal below is from
    B's listing (capstone over the unstripped twin of fs.asan-ubsan, (internal path), whose
    instructions 0x8164c .. 0x81b5c equal the pinned image's, sha256 5ac5ce0954f8...) or from B's constants (lib/B/FSH_Base.v
    PC_free 0x530e0, PC_bcmp 0x426d8, FRAME_check_as_written = 64). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/FSW_caw_back.v, with its module names changed; 1171 of its 1260 lines of code are new or changed and 782 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_caw_front.v
-   (a working branch 98acdce1d16), re-walked on B's own listing (capstone over the unstripped twin
+   (a working branch), re-walked on B's own listing (capstone over the unstripped twin
    of fs.asan-ubsan, sha256 b1566a1c..., whose bytes 0x8164c .. 0x81b5c equal the pinned image's, sha256
    5ac5ce0954f8...). The image imports point at lib/B; the image-agnostic FSupoison, FSupoisonU, FSH_YC20, FSH_Gen stay
    lib/A's (as lib/B/FSW_K.v imports them); the shared B states (caw_tbl, caw_stk, caw_ss1, caw_ss810) are
    lib/B/FSW_caw_defs.v's and the scan loop's premises (caw_static, caw_memf, caw_six, caw_atoms) lib/B/FSW_caw_scan.v's,
-   both taken BY NAME (a working branch a0658ed93a0). *)
+   both taken BY NAME (a working branch). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (*   rule 24: proves no function (kind: segment lemma; check_as_written, B 0x8164c, CONFIRM by a Theorem Labs lane 04:15Z).
 
    check_as_written (fs.asan-ubsan 0x8164c): the FRONT of the function, machine code 0x8164c .. 0x8170c, in

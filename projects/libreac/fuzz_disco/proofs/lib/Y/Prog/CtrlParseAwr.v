@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: the hooked forms awrF_rec_with / awrFL_with of lib/A/Prog/DiscoACja.v:69-101 (26523666011) for the asan-ubsan walk of reac_ctrl_parse (lib/Y/Prog), which lib/Reusable/YCja.v does not carry: the read-only rule, then the caller's hook hd (the walk's pz_awr_hd), then YCja.v's rules for the own side-stack frame (516) and its shadow (529), as the local pzN_awr_rec of proofs/libreac/fuzz_disco/lib/Y/Prog/CtrlParseNone.v (a working branch 2924389eac29) states them. *)
+(* Modified by Theorem Labs, 2026-10: the hooked forms awrF_rec_with / awrFL_with of lib/A/Prog/DiscoACja.v:69-101 for the asan-ubsan walk of reac_ctrl_parse (lib/Y/Prog), which lib/Reusable/YCja.v does not carry: the read-only rule, then the caller's hook hd (the walk's pz_awr_hd), then YCja.v's rules for the own side-stack frame (516) and its shadow (529), as the local pzN_awr_rec of proofs/libreac/fuzz_disco/lib/Y/Prog/CtrlParseNone.v (a working branch) states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The write rights of a run's windows (awr_ok), region by region. awrFL_with hd AG fpos F EFA: hd is a tactic
    tried on each head region after the read-only rule (use ltac:(idtac; pz_awr_hd)); AG is the agreement of the
    current valuation with the entry one below atom 33; fpos the own frame's position; F its address; EFA a

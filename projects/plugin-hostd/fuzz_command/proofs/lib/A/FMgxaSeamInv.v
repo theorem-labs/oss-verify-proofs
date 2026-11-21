@@ -1,7 +1,7 @@
 (* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamInv.v; relocated to plugin-hostd/fuzz_command.asan by the GXA address relocator (target fuzz_command.asan): module paths changed; 0 address numerals moved (address checker 0767e70e074a, predict mode, fm.asan -> fuzz_command.asan, symbol + offset; the relocator's table for this file). *)
 (* Can the seam DERIVE GXA's store invariant from the harness state?  No; this file proves it.
 
-   GXA's musl-vfprintf statement takes `mem_inv img_segs m` (lib/CJ/RL/GXA/VfprintfCall.v:37;
+   GXA's musl-vfprintf statement takes `mem_inv img_segs m` (lib/CJ/RL/GXA/VfprintfCall.v:38;
    Mem.mem_inv, lib/CJ/Lib/Mem.v:88) over m = cjstore (w_H W) mem = mrestrict (w_H W) mem.  This
    file is why the seam's contract (FMsnprintfSx.v sh_avfprintf_icpt_realizesUx) carries no store
    premise and the seam runs GXA on the normalized store instead (FMgxaSeamNorm.v).  ARU and

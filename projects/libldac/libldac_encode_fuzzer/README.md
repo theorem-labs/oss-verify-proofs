@@ -12,7 +12,7 @@ FuzzedDataProvider picks channel mode, sample format, EQMID and rate, then loops
 - The harness source was modified for these builds; the modified copy is not in this release yet.
 
 ## What the harness checks
-The harness makes no check of its own beyond not crashing, so a statement about it says only that the code it calls never crashes, hangs or trips a sanitizer.
+The harness makes no check of its own beyond not crashing. Its halts statements say only that the code it calls never crashes, hangs or trips a sanitizer. Its agreement statements say only that the code never crashes or trips a sanitizer, and allow a run that never ends. Its bound statements say only how often its builds may disagree. Its decidability statements say only that some program decides where its builds agree.
 
 ## Statements ([Statements.v](Statements.v), [Characterise.v](Characterise.v), [Distribution.v](Distribution.v))
 

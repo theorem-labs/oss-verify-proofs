@@ -1,4 +1,4 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMrt_pre.v (a working branch 3e35620c52e); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMrt_pre.table); hand checks: Bz.A.I_strncmpw STOP: no twin: strncmp / strncasecmp are absent from both disco images (P0 README; FMrt_pre drops its use). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMrt_pre.v (a working branch); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMrt_pre.table); hand checks: Bz.A.I_strncmpw STOP: no twin: strncmp / strncasecmp are absent from both disco images (P0 README; FMrt_pre drops its use). *)
 (* Modified by Theorem Labs, 2026-10 (G9 row P5-A-clean-FMrt_pre, by hand after the tool): dropped `Require
    I_strncmpw`, `Module BSC`, icells_sc_of_ARm and icells_sc_of_ARm_clean (___interceptor_strncmp is absent from
    fuzz_disco.asan, so I_strncmpw has no twin; no route file uses the two lemmas), and dropped `Require
@@ -262,7 +262,7 @@ Proof.
   - apply cells_cons8; [c8 M|]. apply cells_cons8; [c8 M|]. c8 M.
 Qed.
 
-(* the memchr interceptor's cells (Bz I_memchrw.v:29) *)
+(* the memchr interceptor's cells (Bz I_memchrw.v:30) *)
 Lemma icells_mc_of_ARm : forall ly S H mem, ARm B ly S (aview tfibsegs H mem) -> BMC.icells_mc (mrestrict H mem).
 Proof.
   intros ly S H mem M. unfold BMC.icells_mc.

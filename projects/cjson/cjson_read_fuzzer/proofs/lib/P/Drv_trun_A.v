@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the one DMOD destructuring takes its new channel-reader field. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -161,7 +162,7 @@ Section S.
   Proof.
     intros until x31. intros IT K.
     destruct IT as (HL & INA & IND & PAY & CJ & [e ER] & MI & ST & [u TFR] & MFR & DS & INC & SEF & SOF & DM & FRM).
-    pose proof DM as [MOK' MFDS HFS].
+    pose proof DM as [MOK' MFDS HFS _].
     pose proof (munch_refl [(PINCB, PINCB + 1)] m) as MU1. pose proof (wmono_refl psegs m) as WM1. unfold PINCB in MU1, INC. unfold PINITFLAG. unfold PERRNO in ER.
     eapply rz_step_evt; [exact MOK'|].
     step. step. fix_lit_store. (* [comment removed for export] *)

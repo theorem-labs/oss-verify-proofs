@@ -378,7 +378,7 @@ Variables ra empty : Z.
 Hypothesis FF : frame_facts B APIf LS SH SK ra empty.
 Hypothesis MSET : OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog.asan_memset_c.asan_memset_contract.
 
-(* The cuts are SlotInv.v's own (push 9, 8fc81dafc88): Inv_A81578 is R3's exit, Inv_A81588 is R5's entry.  Both
+(* The cuts are SlotInv.v's own (push 9): Inv_A81578 is R3's exit, Inv_A81588 is R5's entry.  Both
    carry the spills [A + 128] = fr + 544, [A + 168] = fr + 2624, [A + 152] = S(fr) + 68, [A + 144] = fr + 2688,
    [A + 192] = fr + 2768, [A + 280] = fr + 3040, [A + 240] = fr + 3056, the frame cells at fr + 2688 / 2768 /
    3040 / 3056, s5 = fr + 2176, s2 = mrow and our[]'s 6 bytes addressable, none of which this segment writes; the

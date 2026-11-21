@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the silent-step helpers P_of_silent1 and SP_of_silent1 take a no-pending-system-call premise and pass rz_silent1 and srz_silent1 the new RomBase.sys_rob_instr fact. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -8,6 +9,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
 From OSSVerify.Proofs.simdjson.fuzz_ondemand.lib.AS Require Import CatSim.
 From OSSVerify.Proofs.simdjson.fuzz_ondemand.lib.AS Require Import ShapeAlg.
 From OSSVerify.Proofs.simdjson.fuzz_ondemand.lib.AS Require Import AsanAcct SpinAlg.
+From OSSVerify.Proofs.simdjson.fuzz_ondemand.lib.AS Require Import RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope bv_scope.
@@ -24,9 +26,9 @@ Proof. reflexivity. Qed.
 Let P_of (T : TSet) : config -> Prop := fun c => realizes segs c T.
 
 Let P_of_silent1 (T : TSet) : forall c c',
-    AsanAcct.node_ok segs c unit (fun _ => []) (fun _ => c') ->
+    AsanAcct.node_ok segs c unit (fun _ => []) (fun _ => c') -> ms_svc_pending (cfg_ms c) = None ->
     P_of T c' -> P_of T c :=
-  fun c c' Hn Hr => rz_silent1 segs c c' T Hn Hr.
+  fun c c' Hn Hs Hr => rz_silent1 segs c c' T Hn (sys_rob_instr segs c Hs) Hr.
 
 Theorem rz_step_restricted_T : forall A ms msr' model T,
   lazy_cover H (m_vm_lazy model) A -> A_wf A -> MInv A model ->
@@ -58,9 +60,9 @@ Qed.
 Let SP_of (T : TSet) : config -> Prop := fun c => srealizes segs c T.
 
 Let SP_of_silent1 (T : TSet) : forall c c',
-    AsanAcct.node_ok segs c unit (fun _ => []) (fun _ => c') ->
+    AsanAcct.node_ok segs c unit (fun _ => []) (fun _ => c') -> ms_svc_pending (cfg_ms c) = None ->
     SP_of T c' -> SP_of T c :=
-  fun c c' Hn Hr => srz_silent1 segs c c' T Hn Hr.
+  fun c c' Hn Hs Hr => srz_silent1 segs c c' T Hn (sys_rob_instr segs c Hs) Hr.
 
 Theorem srz_step_restricted_T : forall A ms msr' model T,
   lazy_cover H (m_vm_lazy model) A -> A_wf A -> MInv A model ->

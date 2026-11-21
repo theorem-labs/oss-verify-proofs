@@ -1,14 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's whole input replaces argv, envp, uid and hwcap and the invariant is SINV0L, read through SINV0L_ev; the end states' variable numbers K_* are renumbered by the map read from probes of the run at 727298f3, and the canary's is named K_CAN; cs_reserved and the main-entry record's pm_reserved state cs_ok's reserved ledger: the image's reservations followed by the launch's vDSO/vvar pair, every tracked mapping apart from the ledger, and the pair inside it; cs_reserved projects the first three parts of co_res, which now has a fourth (co_gres)). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Run.
 From OSSVerify.openssl.echconfiglist_parser.images Require Import Asan.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import
-  PropExec AxSymExec3 AxSymExec3Sound AxSymExec3B AsanAcct AsanPlanCore AsanPlan AsanPlanSound AsanInit AsHSTab AsMainVM AsMainState.
+  PropExec AxSymExec3 AxSymExec3Sound AxSymExec3B AsanAcct AsanPlanCore AsanPlan AsanPlanSound AsanInit AsanInitL AsHSTab AsMainVM AsMainState.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.AsCert Require Import AsImages AsPlanImages.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.As Require Import AsMainSyms.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.AsHole Require ES6Start.
 Import ListNotations. Import AX2. Import AX2S. Import AX2B. Import APC. Import AP. Import APS.
 Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -17,21 +19,30 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
-Definition K_TID : nat := 44.   (* [comment removed for export] *)
-Definition K_B04 : nat := 94.   Definition K_B05 : nat := 223.  Definition K_B06 : nat := 224.  Definition K_R06 : nat := 225.
-Definition K_B08 : nat := 242.  Definition K_B09 : nat := 243.  Definition K_B10 : nat := 244.  Definition K_B11 : nat := 261.
-Definition K_B12 : nat := 326.  Definition K_B13 : nat := 327.  Definition K_B16 : nat := 392.
-Definition K_META : nat := 409.
-Definition K_B20 (g : bool) : nat := if g then 409 else 410.
+(* LPS 727298f3: the hole end states' variables in the numbering of the run at 727298f3, by the map read from
+   probes of that run ([AsHole/ES6Start.vsh_hand]) that renumbers the end states themselves *)
+Definition K_TID : nat := Eval vm_compute in ES6Start.vsh_hand 44.   (* [comment removed for export] *)
+Definition K_B04 : nat := Eval vm_compute in ES6Start.vsh_hand 94.   Definition K_B05 : nat := Eval vm_compute in ES6Start.vsh_hand 223.
+Definition K_B06 : nat := Eval vm_compute in ES6Start.vsh_hand 224.  Definition K_R06 : nat := Eval vm_compute in ES6Start.vsh_hand 225.
+Definition K_B08 : nat := Eval vm_compute in ES6Start.vsh_hand 242.  Definition K_B09 : nat := Eval vm_compute in ES6Start.vsh_hand 243.
+Definition K_B10 : nat := Eval vm_compute in ES6Start.vsh_hand 244.  Definition K_B11 : nat := Eval vm_compute in ES6Start.vsh_hand 261.
+Definition K_B12 : nat := Eval vm_compute in ES6Start.vsh_hand 326.  Definition K_B13 : nat := Eval vm_compute in ES6Start.vsh_hand 327.
+Definition K_B16 : nat := Eval vm_compute in ES6Start.vsh_hand 392.
+Definition K_META : nat := Eval vm_compute in ES6Start.vsh_hand 409.
+Definition K_B20 : bool -> nat := Eval vm_compute in fun g : bool => if g then ES6Start.vsh_hand 409 else ES6Start.vsh_hand 410.
 (* [comment removed for export] *)
-Definition K_B21 (g : bool) : nat := 455.
-Definition K_B22 (g : bool) : nat := 456.
-Definition K_B23 (g : bool) : nat := 457.
-Definition K_B24 (g : bool) : nat := 465.
+Definition K_B21 : bool -> nat := Eval vm_compute in fun _ : bool => ES6Start.vsh_hand 455.
+Definition K_B22 : bool -> nat := Eval vm_compute in fun _ : bool => ES6Start.vsh_hand 456.
+Definition K_B23 : bool -> nat := Eval vm_compute in fun _ : bool => ES6Start.vsh_hand 457.
+Definition K_B24 : bool -> nat := Eval vm_compute in fun _ : bool => ES6Start.vsh_hand 465.
 (* [comment removed for export] *)
-Definition K_A1 : nat := 458.   Definition K_A2 : nat := 460.   Definition K_A3 : nat := 462.
-Definition K_G1 : nat := 459.   Definition K_G2 : nat := 461.   Definition K_G3 : nat := 463.   Definition K_G4 : nat := 464.
-Definition K_X (g : bool) : nat := 466.
+Definition K_A1 : nat := Eval vm_compute in ES6Start.vsh_hand 458.   Definition K_A2 : nat := Eval vm_compute in ES6Start.vsh_hand 460.
+Definition K_A3 : nat := Eval vm_compute in ES6Start.vsh_hand 462.
+Definition K_G1 : nat := Eval vm_compute in ES6Start.vsh_hand 459.   Definition K_G2 : nat := Eval vm_compute in ES6Start.vsh_hand 461.
+Definition K_G3 : nat := Eval vm_compute in ES6Start.vsh_hand 463.   Definition K_G4 : nat := Eval vm_compute in ES6Start.vsh_hand 464.
+Definition K_X : bool -> nat := Eval vm_compute in fun _ : bool => ES6Start.vsh_hand 466.
+(* the canary word's variable ([AsMainIfacePre.pre_can], [AsMainIfaceAlloc]) *)
+Definition K_CAN : nat := Eval vm_compute in ES6Start.vsh_hand 61.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -60,10 +71,15 @@ Definition Xof (g : bool) (E : env) : pm_syms :=
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
+(** #38: the run's whole input ([inp]) replaces argv/envp/uid/hw, and the invariant is
+    [AsanInitL.SINV0L], the mmap base closed inside; every lemma here reads [SINV0]'s first
+    conjunct only, which names no base ([SINV0L_ev]). Callers pass ten leading
+    underscores, one per Variable below. *)
 Section Generic.
-  Variables (sp0 brk0 : word) (rdraw : EntryDraw) (argv envp : list (list byte)) (uid hw : word) (fs : Fs.Fs).
+  Variables (sp0 brk0 : word) (rdraw : EntryDraw) (inp : ProcInput) (fs : Fs.Fs).
   Variables (E : env) (ch : acs) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model).
-  Hypothesis HC : cs_ok ASEGS ASAN_H AsanInit.LIMIT (SINV0 APH sp0 rdraw brk0 argv envp uid hw) (argH0 APH sp0 rdraw argv envp uid hw) fs E ch R FULL model.
+  Hypothesis HC : cs_ok ASEGS ASAN_H AsanInit.LIMIT (SINV0L APH Asan.M.init_pc sp0 rdraw brk0 inp) (argH0 sp0 rdraw inp) fs E ch R FULL model.
+  Let HE0 := SINV0L_ev _ _ _ _ _ _ _ _ (co_sinv _ _ _ _ _ _ _ _ _ _ _ HC).
 
   (* [comment removed for export] *)
   Lemma cs_reg_lin : forall r : Z, 0 < r < 32 ->
@@ -79,48 +95,48 @@ Section Generic.
   Qed.
 
   (* [comment removed for export] *)
-  Hypothesis Hva : valid_argv argv.
-  Hypothesis Hve : valid_envp envp.
+  Hypothesis Hva : valid_argv (in_argv inp).
+  Hypothesis Hve : valid_envp (in_envp inp).
   Hypothesis Hbrk : valid_brk ASEGS brk0.
   Lemma cs_v0 : vE E 0 = bv_unsigned sp0 / 32768.
   Proof.
-    destruct (co_sinv _ _ _ _ _ _ _ _ _ _ _ HC) as [HE _]. unfold vE. rewrite (HE 0%nat) by (unfold NX0; lia).
+    pose proof HE0 as HE. unfold vE. rewrite (HE 0%nat) by (unfold NX0; lia).
     cbn [ev E0 vals0 nth]. pose proof (u64_range sp0). apply u_of_Z. split; [apply Z.div_pos; lia | apply Z.div_lt_upper_bound; lia].
   Qed.
   Lemma cs_v6 : vE E 6 = (bv_unsigned sp0 mod 32768) / 4096.
   Proof.
-    destruct (co_sinv _ _ _ _ _ _ _ _ _ _ _ HC) as [HE _]. unfold vE. rewrite (HE 6%nat) by (unfold NX0; lia).
+    pose proof HE0 as HE. unfold vE. rewrite (HE 6%nat) by (unfold NX0; lia).
     cbn [ev E0 vals0 nth]. pose proof (Z.mod_pos_bound (bv_unsigned sp0) 32768). apply u_of_Z.
     split; [apply Z.div_pos; lia | apply Z.div_lt_upper_bound; lia].
   Qed.
   Lemma cs_v10 : vE E 10 = (bv_unsigned sp0 mod 4096) / 16.
   Proof.
-    destruct (co_sinv _ _ _ _ _ _ _ _ _ _ _ HC) as [HE _]. unfold vE. rewrite (HE 10%nat) by (unfold NX0; lia).
+    pose proof HE0 as HE. unfold vE. rewrite (HE 10%nat) by (unfold NX0; lia).
     cbn [ev E0 vals0 nth]. pose proof (Z.mod_pos_bound (bv_unsigned sp0) 4096). apply u_of_Z.
     split; [apply Z.div_pos; lia | apply Z.div_lt_upper_bound; lia].
   Qed.
-  Lemma cs_v1 : vE E 1 = Z.of_nat (length argv).
+  Lemma cs_v1 : vE E 1 = Z.of_nat (length (in_argv inp)).
   Proof.
-    destruct (co_sinv _ _ _ _ _ _ _ _ _ _ _ HC) as [HE _]. unfold vE. rewrite (HE 1%nat) by (unfold NX0; lia).
+    pose proof HE0 as HE. unfold vE. rewrite (HE 1%nat) by (unfold NX0; lia).
     cbn [ev E0 vals0 nth]. apply u_of_Z. destruct Hva as [? _]. lia.
   Qed.
-  Lemma cs_v2 : vE E 2 = Z.of_nat (length envp).
+  Lemma cs_v2 : vE E 2 = Z.of_nat (length (in_envp inp)).
   Proof.
-    destruct (co_sinv _ _ _ _ _ _ _ _ _ _ _ HC) as [HE _]. unfold vE. rewrite (HE 2%nat) by (unfold NX0; lia).
+    pose proof HE0 as HE. unfold vE. rewrite (HE 2%nat) by (unfold NX0; lia).
     cbn [ev E0 vals0 nth]. apply u_of_Z. destruct Hve as [? _]. lia.
   Qed.
   Lemma cs_v5 : vE E 5 = bv_unsigned brk0 / 4096.
   Proof.
-    destruct (co_sinv _ _ _ _ _ _ _ _ _ _ _ HC) as [HE _]. unfold vE. rewrite (HE 5%nat) by (unfold NX0; lia).
+    pose proof HE0 as HE. unfold vE. rewrite (HE 5%nat) by (unfold NX0; lia).
     cbn [ev E0 vals0 nth]. pose proof (u64_range brk0). apply u_of_Z. split; [apply Z.div_pos; lia | apply Z.div_lt_upper_bound; lia].
   Qed.
-  Lemma cs_v8 : vE E 8 = bv_unsigned uid.
+  Lemma cs_v8 : vE E 8 = bv_unsigned (in_uid inp).
   Proof.
-    destruct (co_sinv _ _ _ _ _ _ _ _ _ _ _ HC) as [HE _]. unfold vE. rewrite (HE 8%nat) by (unfold NX0; lia). reflexivity.
+    pose proof HE0 as HE. unfold vE. rewrite (HE 8%nat) by (unfold NX0; lia). reflexivity.
   Qed.
-  Lemma cs_v9 : vE E 9 = bv_unsigned hw.
+  Lemma cs_v9 : vE E 9 = bv_unsigned (in_hwcap inp).
   Proof.
-    destruct (co_sinv _ _ _ _ _ _ _ _ _ _ _ HC) as [HE _]. unfold vE. rewrite (HE 9%nat) by (unfold NX0; lia). reflexivity.
+    pose proof HE0 as HE. unfold vE. rewrite (HE 9%nat) by (unfold NX0; lia). reflexivity.
   Qed.
   (* [comment removed for export] *)
   Hypothesis Hsp : valid_sp sp0.
@@ -149,7 +165,7 @@ Section Generic.
     pose proof (Z.div_mod (bv_unsigned brk0) 4096 ltac:(lia)). lia.
   Qed.
 
-  #[local] Notation MR := (Mr ASAN_H (argH0 APH sp0 rdraw argv envp uid hw) E ch model FULL).
+  #[local] Notation MR := (Mr ASAN_H (argH0 sp0 rdraw inp) E ch model FULL).
 
   (* [comment removed for export] *)
   Lemma cs_fact : forall K, existsb (kentry_eqb K) (kn ch) = true -> kentry_ok ASEGS E MR K.
@@ -204,10 +220,23 @@ Section Generic.
   Proof. exact (co_fs _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
   Lemma cs_halted : m_halted model = None.
   Proof. exact (co_halt _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
+  (* 08b1429: the launch's channel reader, carried by [cs_ok] *)
+  Lemma cs_rdr : m_channel_reader model = true.
+  Proof. exact (co_rdr _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
   Lemma cs_limit : vm_limit (m_vmmaps model) = target_alloc_limit.
   Proof. exact (co_limit _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
-  Lemma cs_reserved : vm_reserved (m_vmmaps model) = segments_reserved ASEGS.
-  Proof. exact (co_res _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
+  (* LPS 727298f3: [cs_ok]'s [co_res]: the reserved ledger is the image's reservations followed
+     by the launch's extra entries [rx] (the vDSO/vvar pair), every tracked mapping lies apart
+     from the whole ledger, and the pair is inside it *)
+  Lemma cs_reserved :
+    (exists rx : list (word * word),
+        vm_reserved (m_vmmaps model) = segments_reserved ASEGS ++ rx
+        /\ Forall (APS.resx_entry_ok ASAN_H) rx /\ (length rx <= APC.n_resx ASAN_H)%nat /\ APS.sum_sizes rx <= APC.resx_bytes ASAN_H)
+    /\ Forall (fun iv => Forall (APS.iv_disjoint iv) (vm_reserved (m_vmmaps model))) (vm_maps (m_vmmaps model))
+    /\ incl (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) (vm_reserved (m_vmmaps model)).
+  Proof.
+    destruct (co_res _ _ _ _ _ _ _ _ _ _ _ HC) as (R1 & R2 & R3 & _). exact (conj R1 (conj R2 R3)).
+  Qed.
   Lemma cs_eager : eager_used model <= a_eager ch.
   Proof. exact (co_eager _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
 End Generic.
@@ -453,9 +482,17 @@ Section PMDef.
     (* [comment removed for export] *)
     pm_halted : m_halted (cfg_model c) = None;
     pm_fds    : m_fds (cfg_model c) = fds_std;
+    (* 08b1429: the launch's channel reader *)
+    pm_rdr    : m_channel_reader (cfg_model c) = true;
     pm_fs     : m_fs (cfg_model c) = in_fs inp;
     pm_limit  : vm_limit (m_vmmaps (cfg_model c)) = target_alloc_limit;
-    pm_reserved : vm_reserved (m_vmmaps (cfg_model c)) = segments_reserved ASEGS;
+    (* LPS 727298f3: the reserved ledger as [cs_ok] states it ([AsMainFacts.cs_reserved]) *)
+    pm_reserved : (exists rx : list (word * word),
+                      vm_reserved (m_vmmaps (cfg_model c)) = segments_reserved ASEGS ++ rx
+                      /\ Forall (APS.resx_entry_ok ASAN_H) rx /\ (length rx <= APC.n_resx ASAN_H)%nat
+                      /\ APS.sum_sizes rx <= APC.resx_bytes ASAN_H)
+                  /\ Forall (fun iv => Forall (APS.iv_disjoint iv) (vm_reserved (m_vmmaps (cfg_model c)))) (vm_maps (m_vmmaps (cfg_model c)))
+                  /\ incl (vdso_reserved (m_kernel (cfg_model c)) (vdso_top (m_vmmaps (cfg_model c)))) (vm_reserved (m_vmmaps (cfg_model c)));
     pm_topz   : TOP (cfg_model c) = pm_top sp0z;
     pm_brk    : vm_brk (m_vmmaps (cfg_model c)) = Z_to_bv 64 (if ps_granted X then brk0z + 0x2000 else brk0z);
     pm_eager  : eager_used (cfg_model c) <= 16838656;
@@ -474,8 +511,8 @@ Section PMOpen.
   Hypothesis Vav : valid_argv (in_argv inp).
   Hypothesis Vev : valid_envp (in_envp inp).
   Hypothesis Hh : HSF_asan h = Some ch.
-  Hypothesis HC : cs_ok ASEGS ASAN_H AsanInit.LIMIT (SINV0 APH sp0 rdraw brk0 (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-                        (argH0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model.
+  Hypothesis HC : cs_ok ASEGS ASAN_H AsanInit.LIMIT (SINV0L APH Asan.M.init_pc sp0 rdraw brk0 inp)
+                        (argH0 sp0 rdraw inp) (in_fs inp) E ch R FULL model.
 
   (* [comment removed for export] *)
   Lemma open_facts :
@@ -497,19 +534,19 @@ Section PMOpen.
     unfold kn_facts in Dkf.
     apply andb_prop in Dkf as [Dkf K0]. apply andb_prop in Dkf as [Dkf KTID]. apply andb_prop in Dkf as [Dkf K10].
     apply andb_prop in Dkf as [Dkf K6]. apply andb_prop in Dkf as [Dkf KREL]. apply andb_prop in Dkf as [KR06 KB06].
-    pose proof (cs_range _ _ _ _ _ _ _ _ _ _ _ _ _ HC _ _ _ KR06) as VR06. rewrite uE_var in VR06.
-    pose proof (cs_range _ _ _ _ _ _ _ _ _ _ _ _ _ HC _ _ _ KB06) as VB06. rewrite uE_var in VB06.
-    pose proof (cs_range _ _ _ _ _ _ _ _ _ _ _ _ _ HC _ _ _ K6) as V6. rewrite uE_var in V6.
-    pose proof (cs_range _ _ _ _ _ _ _ _ _ _ _ _ _ HC _ _ _ K10) as V10. rewrite uE_var in V10.
-    pose proof (cs_range _ _ _ _ _ _ _ _ _ _ _ _ _ HC _ _ _ KTID) as VTID. rewrite uE_var in VTID.
-    pose proof (cs_range _ _ _ _ _ _ _ _ _ _ _ _ _ HC _ _ _ K0) as V0. rewrite uE_var in V0.
-    pose proof (cs_range _ _ _ _ _ _ _ _ _ _ _ _ _ HC _ _ _ KREL) as VREL.
+    pose proof (cs_range _ _ _ _ _ _ _ _ _ _ HC _ _ _ KR06) as VR06. rewrite uE_var in VR06.
+    pose proof (cs_range _ _ _ _ _ _ _ _ _ _ HC _ _ _ KB06) as VB06. rewrite uE_var in VB06.
+    pose proof (cs_range _ _ _ _ _ _ _ _ _ _ HC _ _ _ K6) as V6. rewrite uE_var in V6.
+    pose proof (cs_range _ _ _ _ _ _ _ _ _ _ HC _ _ _ K10) as V10. rewrite uE_var in V10.
+    pose proof (cs_range _ _ _ _ _ _ _ _ _ _ HC _ _ _ KTID) as VTID. rewrite uE_var in VTID.
+    pose proof (cs_range _ _ _ _ _ _ _ _ _ _ HC _ _ _ K0) as V0. rewrite uE_var in V0.
+    pose proof (cs_range _ _ _ _ _ _ _ _ _ _ HC _ _ _ KREL) as VREL.
     pose proof (rel06_sound E ltac:(lia) VR06 ltac:(lia)) as REL.
-    pose proof (cs_sp0 _ _ _ _ _ _ _ _ _ _ _ _ _ HC Vsp) as SP.
-    pose proof (cs_sp0_mod _ _ _ _ _ _ _ _ _ _ _ _ _ HC Vsp) as SPM.
-    pose proof (cs_brk0 _ _ _ _ _ _ _ _ _ _ _ _ _ HC Vbrk) as BRK.
-    pose proof (cs_v1 _ _ _ _ _ _ _ _ _ _ _ _ _ HC Vav) as V1.
-    pose proof (cs_v2 _ _ _ _ _ _ _ _ _ _ _ _ _ HC Vev) as V2.
+    pose proof (cs_sp0 _ _ _ _ _ _ _ _ _ _ HC Vsp) as SP.
+    pose proof (cs_sp0_mod _ _ _ _ _ _ _ _ _ _ HC Vsp) as SPM.
+    pose proof (cs_brk0 _ _ _ _ _ _ _ _ _ _ HC Vbrk) as BRK.
+    pose proof (cs_v1 _ _ _ _ _ _ _ _ _ _ HC Vav) as V1.
+    pose proof (cs_v2 _ _ _ _ _ _ _ _ _ _ HC Vev) as V2.
     pose proof (stack_top_cls (bv_unsigned sp0) (vE E 0) (vE E 6) (vE E 10) cls ltac:(lia) V6 V10 Hcls) as STK.
     assert (TOPm : TOP model = bv_unsigned sp0 - 8388608).
     { rewrite (co_sp0 _ _ _ _ _ _ _ _ _ _ _ HC).
@@ -546,7 +583,7 @@ Section PMOpen.
     - (* [comment removed for export] *)
       cbn [cfg_ms cfg_of mkst ms_regs].
       assert (RG : forall n : nat, (0 < n < 32)%nat -> getr R (Z_to_bv 5 (Z.of_nat n)) = Z_to_bv 64 (lden E (nth n (DG_regs g) (0, [])))).
-      { intros n Hn. rewrite (cs_reg_lin _ _ _ _ _ _ _ _ _ _ _ _ _ HC (Z.of_nat n) ltac:(lia)). rewrite <- Dregs, Nat2Z.id.
+      { intros n Hn. rewrite (cs_reg_lin _ _ _ _ _ _ _ _ _ _ HC (Z.of_nat n) ltac:(lia)). rewrite <- Dregs, Nat2Z.id.
         change (0, []) with (lin_of (ELit 0)). rewrite map_nth. reflexivity. }
       Ltac reg1 RG SP V1 n := etransitivity; [exact (RG n ltac:(lia))|]; cbn [nth DG_regs]; unfold lSP, lENVP, lv, lvx; apply eqm_Z_to_bv; exists 0;
                               unfold lden, pm_envp; cbn [fst snd tden]; rewrite ?uE_var, <- ?SP, <- ?V1; lia.
@@ -557,16 +594,17 @@ Section PMOpen.
       assert (Hr2 : r = Z.of_nat 20 \/ r = Z.of_nat 21 \/ r = Z.of_nat 22 \/ r = Z.of_nat 23 \/ r = Z.of_nat 24 \/ r = Z.of_nat 25
                     \/ r = Z.of_nat 26 \/ r = Z.of_nat 27) by lia.
       destruct Hr2 as [-> |[-> |[-> |[-> |[-> |[-> |[-> | ->]]]]]]]; (rewrite RG; [destruct g; reflexivity | lia]).
-    - exact (cs_halted _ _ _ _ _ _ _ _ _ _ _ _ _ HC).
-    - exact (cs_fds _ _ _ _ _ _ _ _ _ _ _ _ _ HC Dfd).
-    - exact (cs_fs _ _ _ _ _ _ _ _ _ _ _ _ _ HC).
-    - exact (cs_limit _ _ _ _ _ _ _ _ _ _ _ _ _ HC).
-    - exact (cs_reserved _ _ _ _ _ _ _ _ _ _ _ _ _ HC).
+    - exact (cs_halted _ _ _ _ _ _ _ _ _ _ HC).
+    - exact (cs_fds _ _ _ _ _ _ _ _ _ _ HC Dfd).
+    - exact (cs_rdr _ _ _ _ _ _ _ _ _ _ HC).
+    - exact (cs_fs _ _ _ _ _ _ _ _ _ _ HC).
+    - exact (cs_limit _ _ _ _ _ _ _ _ _ _ HC).
+    - exact (cs_reserved _ _ _ _ _ _ _ _ _ _ HC).
     - (* [comment removed for export] *) cbn [cfg_model cfg_of]. unfold pm_top. exact TOPm.
-    - (* [comment removed for export] *) cbn [cfg_model cfg_of]. rewrite (cs_brk _ _ _ _ _ _ _ _ _ _ _ _ _ HC), Dbrk.
+    - (* [comment removed for export] *) cbn [cfg_model cfg_of]. rewrite (cs_brk _ _ _ _ _ _ _ _ _ _ HC), Dbrk.
       apply eqm_Z_to_bv. exists 0. unfold Xof; cbn [ps_granted]. destruct g; unfold lden, pgo, pg; cbn [fst snd tden]; rewrite ?uE_var; lia.
-    - (* [comment removed for export] *) cbn [cfg_model cfg_of]. pose proof (cs_eager _ _ _ _ _ _ _ _ _ _ _ _ _ HC) as EG. rewrite Deager in EG. destruct g; lia.
-    - (* [comment removed for export] *) cbn [cfg_model cfg_of]. rewrite (cs_maps _ _ _ _ _ _ _ _ _ _ _ _ _ HC Dnofog).
+    - (* [comment removed for export] *) cbn [cfg_model cfg_of]. pose proof (cs_eager _ _ _ _ _ _ _ _ _ _ HC) as EG. rewrite Deager in EG. destruct g; lia.
+    - (* [comment removed for export] *) cbn [cfg_model cfg_of]. rewrite (cs_maps _ _ _ _ _ _ _ _ _ _ HC Dnofog).
       transitivity (map (fun t : lin * lin * mkind => (Z_to_bv 64 (lden E (fst (fst t))), Z_to_bv 64 (lden E (snd (fst t)))))
                        (map (fun m => (lin_of (am_base m), lin_of (am_len m), am_kind m)) (a_maps ch))).
       { rewrite map_map. apply map_ext. intros m. reflexivity. }
@@ -575,10 +613,10 @@ Section PMOpen.
       destruct g; cbn [map fst snd DG_maps]; unfold lMETA, pg, pgo, lden; cbn [fst snd tden]; rewrite ?uE_var;
         repeat first [reflexivity | apply f_equal2]; f_equal; lia.
     - (* [comment removed for export] *) cbn [cfg_model cfg_of].
-      rewrite (proj1 (cs_noacc_lazy _ _ _ _ _ _ _ _ _ _ _ _ _ HC _ _ Dled)).
+      rewrite (proj1 (cs_noacc_lazy _ _ _ _ _ _ _ _ _ _ HC _ _ Dled)).
       apply DG_noacc_den; [exact VR06 | exact REL | intros _; exact BRK].
     - (* [comment removed for export] *) cbn [cfg_model cfg_of].
-      rewrite (proj2 (cs_noacc_lazy _ _ _ _ _ _ _ _ _ _ _ _ _ HC _ _ Dled)).
+      rewrite (proj2 (cs_noacc_lazy _ _ _ _ _ _ _ _ _ _ HC _ _ Dled)).
       exact (DG_lazy_den E g (bv_unsigned sp0) VR06 REL).
   Qed.
 End PMOpen.

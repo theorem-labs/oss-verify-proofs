@@ -1,11 +1,11 @@
-(* top_x's __asan_memcpy onto itself (a Theorem Labs lane): RR_x's Section hypothesis (W_relay_remove.v:131 and the W_rr_* files)
+(* top_x's __asan_memcpy onto itself (a Theorem Labs lane): RR_x's Section hypothesis (W_relay_remove.v:132 and the W_rr_* files)
      AMEMCPYS : amemcpy_same_realizes_x B ARx (SIGMA WS_asan_memcpy)
    PROVED at the instance of A's top_x (W_LLVMFuzzerTestOneInput_top_x.v), B := TfibB and ARx := TopX_RT.ARX_rt (top_x's
    ARX verbatim, so the plug is `exact` up to unfolding ARX).  The proof is lib/A/AE6same_x.v's acpy_same_icpt (the walk
    of __asan_memcpy at 0x52728 with the destination equal to the source, ported from fuzz_disco's released
    lib/A/Rt/AcpySame.v) at ARx := ARX_rt, with the interceptor law record TopX_INTRIN.icpt_laws_ARX.  The statement
-   W_sites_x.v:364 differs from acpy_same_icpt's only in form: its achecked premise is the conjunction of amem_range,
-   range_addressable and the shadow hull (W_sites.v:82), the source is d itself, and its post is aentry_post_x with an
+   W_sites_x.v:365 differs from acpy_same_icpt's only in form: its achecked premise is the conjunction of amem_range,
+   range_addressable and the shadow hull (W_sites.v:83), the source is d itself, and its post is aentry_post_x with an
    empty write set: the bytes of [d, d + n) read the same after the call (each gets the byte it had) and every other byte
    outside the scratch window is unchanged.  Its rom_view, 8-byte range and not-in-image premises are not used.
    No premise is left: topx_AMEMCPYS is closed.
@@ -47,7 +47,7 @@ Section topx_memcpys. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Local Notation segs := (@pa_segs _ fr_prog_listing PB_fr).
 #[local] Notation SIGMA := (@pa_sigma _ fr_prog_listing PB_fr).
 
-(* AMEMCPYS (W_relay_remove.v:131) at top_x's ARX *)
+(* AMEMCPYS (W_relay_remove.v:132) at top_x's ARX *)
 Lemma topx_AMEMCPYS : amemcpy_same_realizes_x TfibB ARX_rt (SIGMA WS_asan_memcpy).
 Proof.
   rewrite TI.asan_memcpy_id_sigma.
@@ -65,7 +65,7 @@ Proof.
   replace a with (d + (a - d)) by lia. exact (HCPY (a - d) ltac:(lia)).
 Qed.
 
-(* QMm W1: AMEMCPYS at top_x's W1 relation TopX_RT.ARX_rtW (lib/A/W_LLVMFuzzerTestOneInput_top_x.v:180-182, which adds arodata_ok_cf). The rule at
+(* QMm W1: AMEMCPYS at top_x's W1 relation TopX_RT.ARX_rtW (lib/A/W_LLVMFuzzerTestOneInput_top_x.v:181-183, which adds arodata_ok_cf). The rule at
    ARX_rt above, then the post rebuilt at ARX_rtW by TopX_RT.aentry_post_x_rtW: the write set is empty (the bytes of
    [d, d + n) read the same), so no kept byte is written, and the scratch window is ESTACK bytes above the image. *)
 Lemma topx_AMEMCPYS_W : amemcpy_same_realizes_x TfibB ARX_rtW (SIGMA WS_asan_memcpy).

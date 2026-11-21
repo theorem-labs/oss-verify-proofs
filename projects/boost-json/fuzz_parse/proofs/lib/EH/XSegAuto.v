@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: lemmas added for the revision. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib.EH Require EH0Gc1. (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -16,6 +17,17 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope Z_scope.
 
 Module SA.
+(* LPS 727298f3: the no-progress test of [seg_auto] also compares the registers.  A one-block loop
+   that stores nothing on some turns (musl's static [dl_iterate_phdr] walking the auxv, whose
+   revision-layout vector has keys above AT_MINSIGSTKSZ that the loop skips) returns to its own pc
+   with the same writes but a moved cursor register; the old test (pc and writes only) stopped it. *)
+Fixpoint regs_eqb (a b : list expr) : bool :=
+  match a, b with
+  | [], [] => true
+  | x :: a', y :: b' => (expr_eqb x y && regs_eqb a' b')%bool
+  | _, _ => false
+  end.
+
 Section WithSegs.
 Variable segs : ltac2:(zQ "20!jb!lhc@1$0$1").
 Variable IT : ltac2:(zQ "10!li7$0").
@@ -54,7 +66,7 @@ Fixpoint seg_auto (fuel : nat) (first : bool) (ends : list Z) (ss : sym_state) (
            else match step1 ends ss w with
                 | Some (ss', w') =>
                     (* [comment removed for export] *)
-                    if (Z.eqb (s_pc ss') (s_pc ss) && Nat.eqb (length w') (length w))%bool then None
+                    if (Z.eqb (s_pc ss') (s_pc ss) && Nat.eqb (length w') (length w) && regs_eqb (s_regs ss') (s_regs ss))%bool then None
                     else seg_auto f false ends (prune ss') w'
                 | None => None
                 end
@@ -82,7 +94,7 @@ Proof.
     nexists fx, E, R. split; [reflexivity|]. split; [apply XSegLib.APS.env_agree_refl|]. split; [lia|]. split; [exact HINV|]. split; [exact Hc|].
     apply mst_refl.
   - destruct (step1 ends ss w) as [[ss1 w1]|] eqn:Hs; [|discriminate].
-    destruct (Z.eqb (s_pc ss1) (s_pc ss) && Nat.eqb (length w1) (length w))%bool; [discriminate|].
+    destruct (Z.eqb (s_pc ss1) (s_pc ss) && Nat.eqb (length w1) (length w) && regs_eqb (s_regs ss1) (s_regs ss))%bool; [discriminate|].
     unfold step1 in Hs.
     npose (seg_step_sound segs IT x_cpy x_set 0 0 0 BFUEL IT_ok COPY FILL fx (pick ends (s_pc ss)) ss w ss1 w1 E R M
                   (pick_req ends (s_pc ss)) Hs HINV) as (fx1 & E1 & R1 & Hfc1 & Hag1 & Hle1 & HINV1 & Hms1).

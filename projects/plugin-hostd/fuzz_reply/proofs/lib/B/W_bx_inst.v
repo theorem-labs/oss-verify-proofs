@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: satisfiability witnesses, at image B's concrete global set, for the Section hypotheses of
    lib/B/W_LLVMFuzzerTestOneInput_exit.v (B SEG_EXIT) that are facts about G_fr, errno and the image: the method of
    lib/B/W_LLVMFuzzerTestOneInput_G.v (one concrete witness G_fr := G_fr_c B, as_errno B = TFIB_ERRNO_B = 0x5d994c, the
@@ -9,7 +10,7 @@
      HG_SL, GWR, XRF_ROM_OUT,
      AZS_s                      _G.v's c_HG_SL, c_glob_wr, c_rom_out, c_HZS, restated at the exit file's text.
    Witnesses outside this base (another lane's files): XE_LIT_S = ashp B (VAL (A_OBJ 25)) 1 is
-   f11434cea58 lib/B/W_shadow_pin_fr.v:48 ashp_str2_1_fr (and _remove.v:371 rm_ashp_str3); XR_GSHV's
+   lib/B/W_shadow_pin_fr.v:48 ashp_str2_1_fr (and _remove.v:371 rm_ashp_str3); XR_GSHV's
    ranges lie in g_s, whose ashp is the same commit's _G.v:464 c_gs_ashp.  Not witnessed here (as in _G.v): the LS /
    RINV rules (LS_rf_room, LS_exit_budget, LS_exit_end, RI_exit_slots, RI_exit_ends: Section variables, the W8Add LS
    lane's obligations), the callee specs (CSD, SR, CSHE, RFg: each proved in its own walk file), and the kit /

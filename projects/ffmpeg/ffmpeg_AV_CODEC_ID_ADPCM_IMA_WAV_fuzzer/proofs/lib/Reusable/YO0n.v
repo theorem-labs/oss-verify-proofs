@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YO0n.v, with its module paths changed. *)
 (* Modified by Trevor Hansen, 2026-11: copied from projects/zlib/checksum_fuzzer/proofs/lib/Reusable/YO0n.v for ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the refused munmap branch, OK4_if over the munmap answer). *)
 From OSSVerify.Proofs.ffmpeg.ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From OSSVerify.Proofs.ffmpeg.ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.lib.Reusable Require Import YK15 YM02.
@@ -122,10 +123,13 @@ intros p s5 tr5 Hy5 E5. cbn [snd] in E5. clear Hy5. apply OK4_ret. apply P3. rew
 eapply OK4_bind_y.
 { apply (OK4_ask_free (KMunmap (length (st_regions s)) (n + IB + UNIT)) s3 (fun x => snd x = s3)); [reflexivity | intros q; discriminate | intros b; reflexivity]. }
 intros b4 s4 tr4 Hy4 E4. cbn [snd] in E4. subst s4. clear Hy4.
-eapply OK4_bind_y; [apply OK4_kill; [exact RK | exact II3]|].
-intros u5 s5 tr5 Hy5 HK5. clear Hy5. apply OK4_ret.
-unfold KillPost in HK5. cbn [snd] in HK5. destruct HK5 as (II5 & K1 & K2 & K3 & K4 & K5 & K6 & K7 & K8 & K9 & K10).
-unfold MPost. cbn [snd]. split; [exact II5|]. rewrite Hmd. unfold PGSZ in *. repeat split; lia.
+eapply (OK4_bind_y (fun x => MPost s n (None, snd x))).
+{ apply OK4_if.
+  - eapply OK4_mono; [|apply OK4_kill; [exact RK | exact II3]].
+    intros [u5 s5] HK5. unfold KillPost in HK5. cbn [snd] in HK5. destruct HK5 as (II5 & K1 & K2 & K3 & K4 & K5 & K6 & K7 & K8 & K9 & K10).
+    unfold MPost. cbn [snd]. split; [exact II5|]. rewrite Hmd. unfold PGSZ in *. repeat split; lia.
+  - apply OK4_ret. apply (P3 None). reflexivity. }
+intros u5 s5 tr5 Hy5 HP5. clear Hy5. apply OK4_ret. exact HP5.
 -
 assert (Hmd : mdelta n = MMAX) by (unfold mdelta; rewrite Em; reflexivity).
 apply Z.leb_gt in Em. unfold MMAP_THRESHOLD in Em.
@@ -309,13 +313,15 @@ rq_bind RQ10 RQ11 RQ12. pose proof (reqs_ok_ask_inv _ _ RQ11) as RK.
 eapply OK4_bind_y.
 { apply (OK4_ask_free (KMunmap r len) s5 (fun x => snd x = s5)); [reflexivity | intros q; discriminate | intros b; reflexivity]. }
 intros b6 s6 tr6 Hy6 E6. cbn [snd] in E6. subst s6. clear Hy6.
-eapply OK4_mono; [|apply OK4_kill; [exact RK | exact II5]].
+apply OK4_if.
+{ eapply OK4_mono; [|apply OK4_kill; [exact RK | exact II5]].
 intros [u7 s7] HK. unfold KillPost in HK. cbn [snd] in HK. destruct HK as (II7 & K1 & K2 & K3 & K4 & K5 & K6 & K7 & K8 & K9 & K10).
 pose proof (meas_eq_all _ _ E50) as (Y1 & Y2 & Y3 & Y4 & Y5 & Y6 & Y7 & Y8 & Y9 & Y10).
 cbn [req_ok] in RK. destruct RK as (rg & _ & _ & _ & _ & Hlen0 & _). pose proof (page_round_bounds len Hlen0).
 unfold FPost. cbn [snd]. unfold LIVE_UB, SLOT_UB in *. rewrite K1, K2, K3, K4, K5, K6, K7, Y1, Y2, Y3, Y4, Y5.
 assert (ERt : resv_total s5 = resv_total s) by (unfold resv_total; unfold meas in E50; congruence).
 assert (ERc : resv_count s5 = resv_count s) by (unfold resv_count; unfold meas in E50; congruence).
-rewrite ERt, ERc. split; [exact II7|]. repeat split; try lia.
+rewrite ERt, ERc. split; [exact II7|]. repeat split; try lia. }
+apply OK4_ret. apply FPost_refl; [exact HII | exact E50].
 Qed.
 End d.

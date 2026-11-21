@@ -1,8 +1,9 @@
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (a Theorem Labs lane, a segment lemma: no function is walked here): the fclose / meter facts that
-   lib/A/Prog/PcapEntryInst.v (a working branch 8994a315428) takes as Section hypotheses, stated at its
+   lib/A/Prog/PcapEntryInst.v (a working branch) takes as Section hypotheses, stated at its
    instance SK := PcapSinkHeads.asan_sink_head, B := AD2l.PcapB, K := PSourceK.pcap_KS, MT := YCbp.ameter_triv in its
    own terms (SK, B, MT, SEGS, PIp, SEGSp, LOp, HIp below are the instance's Local Notations, text for text), so that
    a caller passes them to pcap_entry_inst by position. Each lemma COMPOSES lemmas that are already proved; none
@@ -12,7 +13,7 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
      FM               inst_FM rc (the donor's lemma, relocated: asrc_file_meter_trivB below).
      ra_fc1, ra_fc2   WFcloseI.WFI_FREE1 = 0x8e2b8, WFcloseI.WFI_JOIN = 0x8e2c0: the two return pcs of musl fclose's
                       two free calls, the names afclose_source_spec_icpt's own conclusion carries. No new Definition:
-                      the names exist (WFcloseI.v:87-88; WFclose.v:117-118 has the same two values as WF_FREE1 /
+                      the names exist (WFcloseI.v:88-89; WFclose.v:117-118 has the same two values as WF_FREE1 /
                       WF_JOIN, used by the musl body and met by conversion below). MEASURED by symbol + offset in
                       fuzz_pcap.objdump.txt (sha256 bf9d80d6e30f; internal record):
                         line 98686  000000000008e214 <fclose>:
@@ -26,10 +27,10 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
      HUfc1, HUfc2     inst_HUfc1, inst_HUfc2 (computation: as_universe PcapB = ACej.Tfib_universe, AD2l.v:43, whose
                       rows [0x52d14; 0x8e2b8] / [0x52d14; 0x8e2c0] are ACej.v:91-92; pc_free_ra0 (as_code PcapB) =
                       0x52d14 is the instance's inst_HFRA).
-   mc_lo / mc_hi are not positions any more: the instance binds them to AE39.MC_LO / MC_HI (8994a315428).
+   mc_lo / mc_hi are not positions any more: the instance binds them to AE39.MC_LO / MC_HI.
 
    inst_AFCLOSE IS THE COMPOSITION (every premise is discharged by a proved lemma on the base):
-     WFcloseI.afclose_source_spec_icpt  fx rc SK PcapB LOp HIp  TB  MUSL                       (WFcloseI.v:279)
+     WFcloseI.afclose_source_spec_icpt  fx rc SK PcapB LOp HIp  TB  MUSL                       (WFcloseI.v:280)
        TB    := AD2l.PcapB_syms : AF0m.PcapSyms PcapB                                          (AD2l.v, PcapB_syms)
        MUSL  := WFclose.afclose_source_spec_musl fx rc SK PcapB                               (WFclose.v:1219)
                   SEGS_LOW := PcapBFacts.PcapB_segs_low                                       (PcapBFacts.v:33)
@@ -37,25 +38,25 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
                   ML       := PcapBFacts.PcapB_ML                                             (PcapBFacts.v:53)
                   AFREE    := AF0q.pcap_afree_realizes rc fx                                  (AF0q.v:19)
                   K := pcap_KS, HKS := eq_refl
-                  ASIL     := fci_ASIL: AD1u.tfib_ASIL at SK := asan_sink_head (AD1u.v:86), the instance's own
+                  ASIL     := fci_ASIL: AD1u.tfib_ASIL at SK := asan_sink_head (AD1u.v:87), the instance's own
                               inst_ASIL proof (PcapEntryInst.v:351-355), restated here so this file does not
                               Require PcapEntryInst.v
                   HSK      := fci_HSK, HWRAPF := fci_HWRAPF, HRA0 := fci_HRA0 (computation)
                   rlo rhi := LOp HIp
-                  FFLUSH := WFflush.afflush_source_spec_icpt fx rc SK PcapB TB ASIL MSEEK LOp HIp  (WFflush.v:1118)
-                    MSEEK := WMseek.pcap_amseek_rewind fx rc SK PcapB ASIL                    (WMseek.v:246)
+                  FFLUSH := WFflush.afflush_source_spec_icpt fx rc SK PcapB TB ASIL MSEEK LOp HIp  (WFflush.v:1119)
+                    MSEEK := WMseek.pcap_amseek_rewind fx rc SK PcapB ASIL                    (WMseek.v:247)
    BRIDGES, each settled by conversion (delta, with iota, of named Definitions only; the kernel checks each):
-     segments   the walks state their segments as WFclose.wsegs (WFclose.v:40), AB1v.tfibsegs (AB1v.v:13),
+     segments   the walks state their segments as WFclose.wsegs (WFclose.v:40), AB1v.tfibsegs (AB1v.v:14),
                 WMseek.msegs, and the instance as SEGSp = pa_segs PI_pcap (PcapEntryTop.v:140-141) and SEGS; every
                 one is := Asan.M.loaded_segments.
      entry pc   the walk's IC_ENTRY is AE2e.IC_ENTRY := 0x415cc (AE2e.v:32; PStdioImgA.v no longer defines it, on
-                a working branch d3492742814), the instance's is pa_sigma PI_pcap
+                a working branch), the instance's is pa_sigma PI_pcap
                 PS___interceptor_trampoline_fclose = pcap_sigma .. = 0x415cc (PcapEntryTop.v:145, PcapAddr.v:35).
      rlo / rhi  NO bridge: afclose_source_spec_icpt, afclose_source_spec_musl and afflush_source_spec_icpt are general
                 in rlo rhi, so LOp / HIp are passed as they are.
      ra pair    the musl body concludes at WFclose.WF_FREE1 / WF_JOIN, the front takes WFcloseI.WFI_FREE1 / WFI_JOIN:
                 both := 0x8e2b8 / 0x8e2c0.
-     sink head  AOFL_HEAD at SK := asan_sink_head is sk_ofl_head asan_sink_head = 0x5f4f88 (PcapSinkHeads.v:30) =
+     sink head  AOFL_HEAD at SK := asan_sink_head is sk_ofl_head asan_sink_head = 0x5f4f88 (PcapSinkHeads.v:31) =
                 WFclose.WF_OFL_HEAD (WFclose.v:147).
      TL / PcapSyms   NOT NEEDED: the walks' AF0m.PcapSyms PcapB is AD2l.PcapB_syms, a proved lemma on the base; the
                 instance's TL : PALib PcapB is not used.
@@ -76,7 +77,7 @@ Import ListNotations.
 Local Open Scope Z_scope.
 
 (* ---- The meter law at ameter_triv: RELOCATED, not re-proved. ----
-   DONOR: cgif_file_fuzzer's released lib/A/ACke.v:33-34 (origin/ossv/recipes c8557374ad2e, blob 635fd728838d)
+   DONOR: cgif_file_fuzzer's released lib/A/ACke.v:33-34 (theorem-labs/oss-verify-proofs@6b32741d849a, blob 635fd728838d)
      Lemma afile_meter_trivB : forall segs B, afile_meter segs B ameter_triv.
      Proof. intros segs B. constructor; intros; exact I. Qed.
    over the donor's record afile_meter, lib/YC5n.v:24-42 (blob 0eb130c73f3). Changed: the module paths, the names
@@ -85,7 +86,7 @@ Local Open Scope Z_scope.
    except names; the two differences from the donor, both ruled not beyond names for this relocation (a Theorem Labs lane, 12:2xZ):
      (1) the donor's record has `Context {SK}` (implicit), pcap's has `Context (SK)` (explicit,
          PSourceMeter.v:41), so SK is a Variable here and is passed by position;
-     (2) the donor's FILE_BLOCK = 1264 (cgif lib/YE00.v:12) is pcap's SRC_FILE_BLOCK = 1304 (PSource.v:57, pcap's
+     (2) the donor's FILE_BLOCK = 1264 (cgif lib/YE00.v:12) is pcap's SRC_FILE_BLOCK = 1304 (PSource.v:58, pcap's
          measured block). At ameter_triv every field's conclusion is True, so the block size never enters the proof.
    The donor's unused Section variables K : asink_syms and XN : xnums are parameters of neither record. *)
 Section fm. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
@@ -112,13 +113,13 @@ Proof. exact (@asrc_file_meter_trivB rc SK SEGSp B). Qed.
 
 (* ---- The musl body's image side conditions at SK, PcapB, pcap_KS. ---- *)
 (* ASIL: the instance's inst_ASIL, same term (PcapEntryInst.v:348-355): AD1u.tfib_ASIL with pcap_head SK by
-   computation (sk_ofl_head asan_sink_head = 0x5f4f88, AD1u.v:54, PcapSinkHeads.v:30). *)
+   computation (sk_ofl_head asan_sink_head = 0x5f4f88, AD1u.v:55, PcapSinkHeads.v:31). *)
 Lemma fci_ASIL : asource_img_laws SK SEGS B pcap_KS.
 Proof.
-  (* conversion: AB1v.tfibsegs = Asan.M.loaded_segments (AB1v.v:13) *)
+  (* conversion: AB1v.tfibsegs = Asan.M.loaded_segments (AB1v.v:14) *)
   exact (AD1u.tfib_ASIL (SK := PcapSinkHeads.asan_sink_head) (PH := eq_refl) B AD2l.PcapB_syms).
 Qed.
-(* HSK: AOFL_HEAD = sk_ofl_head asan_sink_head = 0x5f4f88 = WFclose.WF_OFL_HEAD (YCbq.v:84, PcapSinkHeads.v:30). *)
+(* HSK: AOFL_HEAD = sk_ofl_head asan_sink_head = 0x5f4f88 = WFclose.WF_OFL_HEAD (YCbq.v:84, PcapSinkHeads.v:31). *)
 Lemma fci_HSK : @YCbq.AOFL_HEAD SK = WFclose.WF_OFL_HEAD.
 Proof. reflexivity. Qed.
 (* HWRAPF / HRA0: PcapB's code table is AF0m.Tfib_code (AD2l.v:19); by computation, as the instance's inst_HFRA. *)
@@ -133,7 +134,7 @@ Lemma inst_AFCLOSE : forall fx : YK11.FPState,
     (@pa_sigma rc pcap_listing PIp PS___interceptor_trampoline_fclose) WFcloseI.WFI_FREE1 WFcloseI.WFI_JOIN LOp HIp.
 Proof.
   intros fx.
-  (* conversion: AB1v.tfibsegs (AB1v.v:13) = pa_segs PI_pcap (PcapEntryTop.v:140-141) = Asan.M.loaded_segments, and
+  (* conversion: AB1v.tfibsegs (AB1v.v:14) = pa_segs PI_pcap (PcapEntryTop.v:140-141) = Asan.M.loaded_segments, and
      AE2e.IC_ENTRY = 0x415cc (AE2e.v:32) = pa_sigma PI_pcap PS___interceptor_trampoline_fclose (PcapEntryTop.v:145,
      PcapAddr.v:35), in the conclusion. Inside: WFclose.wsegs / WMseek.msegs / AB1v.tfibsegs = Asan.M.loaded_segments
      at the ASIL, SEGS_LOW, ENV and AFREE arguments, and WFclose.WF_FREE1 / WF_JOIN = WFcloseI.WFI_FREE1 / WFI_JOIN

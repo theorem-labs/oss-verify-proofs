@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the new launch (process input, auxv, group id, exec file name); the vDSO; the run over the run's segments; new lemmas. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
@@ -121,6 +122,14 @@ Proof.
     match goal with [ H : mi_account_step _ _ _ = MachineOk _ |- _ ] =>
       pose proof (mi_account_step_model_frame _ _ _ _ _ H) as (_ & _ & _ & _ & _ & Hp & _) end.
     rewrite (m_halted_of_proc _ _ Hp) in Hh. congruence.
+  - (* the vDSO call arm, new at LPS ca39bcd5: the post-model is
+       [with_vdso_bump model''], so the halt flag has to come back through the
+       bump before the materialization frame applies.  Both keep [m_proc]. *)
+    exfalso.
+    rewrite (m_halted_of_proc _ _ (m_proc_with_vdso_bump _)) in Hh.
+    match goal with [ H : materialize_model_accesses _ _ = Some _ |- _ ] =>
+      pose proof (materialize_model_accesses_frame _ _ _ H) as (_ & _ & _ & _ & _ & Hp & _) end.
+    rewrite (m_halted_of_proc _ _ Hp) in Hh. congruence.
   -   exfalso.
     match goal with [ H : materialize_model_accesses _ _ = Some _ |- _ ] =>
       pose proof (materialize_model_accesses_frame _ _ _ H) as (_ & _ & _ & _ & _ & Hp & _) end.
@@ -183,7 +192,7 @@ Theorem srealizes_must_exit_fo : forall c T,
   must_exit_in_at_cfg forced_only_cfg segs S c.
 Proof.
   intros c T H.
-  induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c Hspin Hh Hmode | c T T' H IH Heq | c T Hon Hbr HT0];
+  induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c Hspin Hh Hmode | c T T' H IH Heq | c T Hon Hbr Hbrob HT0];
     intros Hreach HE HK Hhalt.
   -
     destruct Hnode as [Hcomp Hsound].
@@ -230,25 +239,34 @@ Hypothesis BMON : bm_on = true.
 
 Lemma noref_of_within_budget : forall segs pc ph sp brk0 mb rnd lim inp,
   ~ run_scfg_budget_refused forced_only_cfg (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp ->
-  forall c, reach_fo segs (init_config segs pc ph sp brk0 mb rnd lim inp) c -> ~ budget_refused_at segs c.
+  forall c, reach_fo (run_segments segs inp sp mb)
+    (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) c ->
+    ~ budget_refused_at (run_segments segs inp sp mb) c.
 Proof.
   intros segs pc ph sp brk0 mb rnd lim inp Hnb c (tr & Hstar) Hbr.
   apply Hnb. cbn [run_scfg_budget_refused]. exists tr, c. split; [exact Hstar | exact Hbr].
 Qed.
 
+(* [Run.init_config] wraps [init_model] in [with_vdso] at LPS 727298f3; [with_vdso]
+   passes [m_proc] through, so the halt flag is unchanged (as the fuzz_bson_parser_max port). *)
+Lemma m_halted_with_vdso : forall v m, m_halted (with_vdso v m) = m_halted m.
+Proof. reflexivity. Qed.
+
 Theorem srealizes_init_must_exit : forall scfgD segs pc ph sp brk0 mb rnd lim inp S T,
-  srealizes0 segs scfgD (init_config segs pc ph sp brk0 mb rnd lim inp) T ->
+  srealizes0 (run_segments segs inp sp mb) scfgD
+    (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) T ->
   exit_codes_in S T -> kill_free T ->
   ~ run_scfg_budget_refused forced_only_cfg (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp ->
   must_exit_in_scfg forced_only_cfg S (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp.
 Proof.
   intros scfgD segs pc ph sp brk0 mb rnd lim inp S T Hs HE HK Hnb.
   cbn [must_exit_in_scfg].
-  eapply (srealizes_must_exit_fo segs scfgD BMON S _ (noref_of_within_budget _ _ _ _ _ _ _ _ _ Hnb)).
+  eapply (srealizes_must_exit_fo (run_segments segs inp sp mb) scfgD BMON S _ (noref_of_within_budget _ _ _ _ _ _ _ _ _ Hnb)).
   - exact Hs.
   - apply reach_fo_refl.
   - exact HE.
   - exact HK.
-  - intros code Hh. exfalso. unfold init_config in Hh. cbn [cfg_model] in Hh. rewrite m_halted_init_model in Hh. discriminate Hh.
+  - intros code Hh. exfalso. unfold init_config in Hh. cbn [cfg_model] in Hh.
+    rewrite m_halted_with_vdso, m_halted_init_model in Hh. discriminate Hh.
 Qed.
 End Top.

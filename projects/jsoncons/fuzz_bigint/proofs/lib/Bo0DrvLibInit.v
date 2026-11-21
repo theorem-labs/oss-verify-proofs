@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the library start-up reads the auxv base from its own slot of the main environment (auxvp) in place of argv[0]'s pointer minus 160, and the main entry's auxv is the launch's whole vector (LibIface.auxv_launch). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -20,7 +21,7 @@ Import SX2. Import SX2S.
 Definition LIBINIT_KN : list kentry :=
   [KImg 65536 884736; KImg 6360465 6360468; KImg 6360469 6363192; KImg 895824 895880; KImg 6495184 6495232;
    KWord (SA (ELit 0) 6494536) 8 (EVar 3); KWord (SA (ELit 0) 6363200) 8 (ELit 6363200); KWord (SA (ELit 0) 6363232) 4 (EVar 4); KRange (EVar 4) 1 4194303;
-   KWord (SA (ELit 0) 6363384) 8 (EVar 3); KWord (SA (ELit 0) 6363352) 8 (ELit 6495184); KWord (SA (ELit 0) 6495136) 8 (EAlu ALU_ADD (EVar 1) (ELit (-160)))].
+   KWord (SA (ELit 0) 6363384) 8 (EVar 3); KWord (SA (ELit 0) 6363352) 8 (ELit 6495184); KWord (SA (ELit 0) 6495136) 8 (EVar 5)].
 (* [comment removed for export] *)
 Definition LIBINIT_IMG : list (Z * Z) := [(65536, 884736); (6360465, 6360468); (6360469, 6363192); (895824, 895880); (6495184, 6495232)].
 
@@ -59,14 +60,17 @@ Section LibInit.
   #[local] Notation dinvA := (dinv ar HI sp0 M0).
   #[local] Notation usp := (bv_unsigned sp0).
 
-  Theorem lib_init_at_call : forall vals ebs kn LB LK cr A M (model : Model) (p0 : word),
+  Theorem lib_init_at_call : forall vals ebs kn LB LK cr A M (model : Model) (auxvp : word),
     know_ok ASEGS (Env (vals_ev vals) ebs) (mrestrict (ahid A model) M) kn ->
     forallb (fun K => existsb (kentry_eqb K) kn) LIBINIT_KN = true ->
-    vals_ev vals 1 = p0 ->
-    dinvA LB LK cr A M model -> auxv_atA sp0 p0 M0 ->
+    vals_ev vals 5 = auxvp ->
+    dinvA LB LK cr A M model -> auxv_atA sp0 auxvp M0 ->
     exists av uid rnd tid canary hw, lib_init_facts (lib_view Lay ar) av uid rnd tid canary hw M.
   Proof.
-    intros vals ebs kn LB LK cr A M model p0 HK HB P1 D (uidz & rnd & hwz & AW & AU & AH & AR1 & AR2 & AP & AP8).
+    intros vals ebs kn LB LK cr A M model auxvp HK HB P5 D
+      (uidz & rnd & hwz & la & ph & entry & gidw & ae & PA & PE & PN & AB & AW & AU & AH & AR1 & AR2 & AP & AP8).
+    assert (C27 : (27 <= StackLayout.auxv_count (StackLayout.la_rseq la))%nat)
+      by (unfold StackLayout.auxv_count; destruct (StackLayout.la_rseq la); lia).
     pose proof Hsp as Hsp'. set (E := Env (vals_ev vals) ebs) in *. set (MV := mrestrict (ahid A model) M) in *.
     pose proof (dinv_lzinv scfg L ar C IL HI HIok sp0 DL M0 _ _ _ _ _ _ D) as (HOFF & _).
     rewrite forallb_forall in HB.
@@ -84,17 +88,13 @@ Section LibInit.
     pose proof (KW 6363232 4%nat (EVar 4) ltac:(unfold LIBINIT_KN; cbn [In]; tauto) ltac:(apply Z.leb_le; reflexivity) ltac:(apply Z.leb_le; reflexivity)) as CT.
     pose proof (KW 6363384 8%nat (EVar 3) ltac:(unfold LIBINIT_KN; cbn [In]; tauto) ltac:(apply Z.leb_le; reflexivity) ltac:(apply Z.leb_le; reflexivity)) as CC.
     pose proof (KW 6363352 8%nat (ELit 6495184) ltac:(unfold LIBINIT_KN; cbn [In]; tauto) ltac:(apply Z.leb_le; reflexivity) ltac:(apply Z.leb_le; reflexivity)) as CL.
-    pose proof (KW 6495136 8%nat (EAlu ALU_ADD (EVar 1) (ELit (-160))) ltac:(unfold LIBINIT_KN; cbn [In]; tauto) ltac:(apply Z.leb_le; reflexivity) ltac:(apply Z.leb_le; reflexivity)) as CA.
+    pose proof (KW 6495136 8%nat (EVar 5) ltac:(unfold LIBINIT_KN; cbn [In]; tauto) ltac:(apply Z.leb_le; reflexivity) ltac:(apply Z.leb_le; reflexivity)) as CA.
     assert (TR : 1 <= bv_unsigned (vals_ev vals 4) <= 4194303).
     { pose proof (KB (KRange (EVar 4) 1 4194303) ltac:(unfold LIBINIT_KN; cbn [In]; tauto)) as Hb.
       apply existsb_exists in Hb as (K & Hin & Heq). apply kentry_eqb_eq in Heq. subst K.
       pose proof (proj1 (Forall_forall _ _) HK _ Hin) as X. cbn [kentry_ok edenot ev E] in X. exact X. }
-    cbn [edenot ev E] in CG, CS, CT, CC, CL, CA. rewrite P1 in CA.
-    assert (EA : alu64 ALU_ADD p0 (Z_to_bv 64 (-160)) = Z_to_bv 64 (bv_unsigned p0 - 160)).
-    { rewrite alu_add. unfold v_add. apply bv_eq. rewrite !Z_to_bv_unsigned, !bv_wrap64_mod. rewrite Zplus_mod_idemp_r. reflexivity. }
-    rewrite EA in CA.
-    set (av := bv_unsigned p0 - 160) in *.
-    exists av, uidz, rnd, (bv_unsigned (vals_ev vals 4)), (bv_unsigned (vals_ev vals 3)), hwz.
+    cbn [edenot ev E] in CG, CS, CT, CC, CL, CA. rewrite P5 in CA.
+    exists (bv_unsigned auxvp), uidz, rnd, (bv_unsigned (vals_ev vals 4)), (bv_unsigned (vals_ev vals 3)), hwz.
     destruct DLC as [d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 dimg _ _].
     unfold lib_init_facts. cbn [lib_view ll_heap heap_view HeapIface.hl_segs hl_sptop ll_init_img ll_td_self ll_td_tid ll_td_locale ll_locale ll_td_canary ll_guard ll_auxvp].
     rewrite LayL, (dla_segs _ _ _ _ DL), (dla_sptop _ _ _ _ DL), d1, d2, d3, d4, d5, d6, d7. unfold cellz.
@@ -108,11 +108,15 @@ Section LibInit.
     split. { intros k Hk. apply (img_cell M _ 8%nat _ (locale_imgA k Hk)); [lia | cbn; lia|].
              intros i Hi. apply (NONE 6495184 6495232); [unfold LIBINIT_KN; cbn [In]; tauto | lia | lia | cbn in Hi; lia]. }
     split; [exact CC|]. split; [exact CG|]. split; [pose proof (bv_unsigned_in_range _ (vals_ev vals 3)) as X; change (bv_modulus 64) with (2 ^ 64) in X; lia|].
-    split; [exact CA|]. split; [unfold av; lia|]. split; [unfold av; lia|].
-    split. { unfold av. rewrite <- Zminus_mod_idemp_l, AP8. reflexivity. }
-    split. { intros j Hj. unfold auxv_words. cbn [lib_view ll_phdr ll_phent ll_phnum]. rewrite d8, d9, d10.
-             apply (rdn_tr M0 M _ 8%nat _ (AW j Hj)); [unfold av; lia | unfold av; cbn; lia|].
-             intros i Hi. apply (di_above _ _ _ _ _ _ _ _ _ _ D). unfold av in *. cbn in Hi. lia. }
+    split; [exact CA|]. split; [lia|]. split; [lia|].
+    split; [exact AP8|].
+    (* LPS 727298f3: the launch's whole vector ([LibIface.auxv_launch]), the
+       main entry's [auxv_atA] carried up from [M0] by [di_above] *)
+    split. { unfold auxv_launch. exists la, ph, entry, gidw, ae.
+             cbn [lib_view ll_phdr ll_phent ll_phnum]. rewrite d8, d9, d10.
+             split; [exact PA|]. split; [exact PE|]. split; [exact PN|]. split; [exact AB|].
+             intros j Hj. unfold cellz. apply (rdn_tr M0 M _ 8%nat _ (AW j Hj)); [lia | cbn; lia|].
+             intros i Hi. apply (di_above _ _ _ _ _ _ _ _ _ _ D). cbn in Hi. lia. }
     repeat split; lia.
   Qed.
 End LibInit.

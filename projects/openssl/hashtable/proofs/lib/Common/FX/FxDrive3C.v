@@ -1,12 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the ledger counts the launch's reserved pair; memfree reads go through the read-only backing). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From stdpp Require Import bitvector.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType RiscvSemantics State Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap Mprotect.
+From OSSVerify.Proofs.openssl.hashtable.lib.Common.Cfg Require Import RomBase.
 From OSSVerify.Proofs.openssl.hashtable.lib.Common.Cfg Require Import
   ShapeAlgBase ShapeCfg NodesCfg LedgerCfg AllocCfg LazyCfg LazyAccCfg AllocLazyCfg EagerCfg CountCfg.
 From OSSVerify.Proofs.openssl.hashtable.lib.Common.FX Require Import
@@ -140,8 +142,8 @@ Hypothesis Hcode : code_ok segs code.
 Hypothesis Halloc : sc_alloc cfg = false.
 Variable R0 : list (word * word).
 Variable Rb Rc Lim : Z.
-Hypothesis HRb : live_bytes R0 <= Rb.
-Hypothesis HRc : Z.of_nat (length R0) <= Rc.
+Hypothesis HRb : res_cost R0 <= Rb.
+Hypothesis HRc : Z.of_nat (res_count R0) <= Rc.
 Variable keep : list int.
 Variable mem0 : word -> option byte.
 Variable XI : (int -> word) -> Model -> Prop.
@@ -164,6 +166,7 @@ Local Abbreviation NE := (node_ext cfg segs IM R0 BIG RTgt keep mem0 XI xtags).
 Local Abbreviation Rn := (FxRn.Rn segs IM).
 Local Abbreviation erase := (FxDrive3.erase wb0).
 Local Abbreviation SOK := (sys_ok3 cfg segs IM R0 Lim keep mem0 XI xtags fr0 fc0 rom0 hi wb0 na0 lz0 brk0 A0).
+Local Abbreviation SOK0 := (sys_ok30 cfg segs IM R0 Lim keep mem0 XI xtags fr0 fc0 rom0 hi wb0 na0 lz0 brk0 A0).
 
 (* [comment removed for export] *)
 Lemma commit_model_facts a nZ m :
@@ -199,7 +202,7 @@ Lemma commit_core n rho F L3 ms m t off len rg ec eo el :
   e_lo (den rho ec) <= bv_unsigned (rho t) + to_Z off ->
   bv_unsigned (rho t) + to_Z off + page_round_up_Z (to_Z len) <= e_hi (den rho ec) ->
   (forall e0, In e0 (fl_lazy L3) -> fent_tag e0 <> t -> fent_tag e0 <> fent_tag ec) ->
-  SOK n rho F L3 (D3One (fx_commit F t (off >> 12)%uint63 (Z.to_nat (to_Z (pg_up len >> 12)%uint63)))
+  SOK0 n rho F L3 (D3One (fx_commit F t (off >> 12)%uint63 (Z.to_nat (to_Z (pg_up len >> 12)%uint63)))
                         (commit_ledger3 L3 t off (pg_up len)) n) ms m.
 Proof.
   intros (HDI & HL & HS & HX) Hat Hstep Hx8 Ha0 Ha1 Ha2 Ha3 Ha5 Hrange Ht0 Hg0 Hpv Hacct He1 He2 He3 He4
@@ -530,7 +533,7 @@ Proof.
       intros Hc. exact (Hno0 t rg rf_get0 (Hin_rg _ Hc)).
     - exact Hcovs.
     - intros t1 rg1 Hg1. destruct (same_shape_get _ _ _ _ Hshape Hg1) as (rg10 & Hg10 & _).
-      exact (span_ok_shape R0 rho _ _ t1 rg10 rg1 Hshape Hkinds Hg10 Hg1 (Hsp t1 rg10 Hg10)).
+      exact (span_ok_shape segs R0 rho _ _ t1 rg10 rg1 Hshape Hkinds Hg10 Hg1 (Hsp t1 rg10 Hg10)).
     - exact Hexc. }
   exact (xpart_node _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HX Hne Fbrk).
 Qed.
@@ -545,7 +548,7 @@ Proof.
   destruct (proj1 (Forall_forall _ _) Hall o Ho) as (_ & _ & Hd). exists (snd o). split; [exact HP | exact Hd].
 Qed.
 
-Theorem sys_commit3_sound n rho F L3 ms m t off len res :
+Theorem sys_commit3_sound0 n rho F L3 ms m t off len res :
   sys_commit3 Lim keep F L3 n t off len = Some res ->
   D3 n rho F L3 ms m -> at_ecall F ->
   RiscvSemantics.step segs ms = MachineOk (ms_pend ms) ->
@@ -555,7 +558,7 @@ Theorem sys_commit3_sound n rho F L3 ms m t off len res :
   bv_unsigned (ms_gpr (ms_pend ms) 2) = 3 ->
   bv_unsigned (ms_gpr (ms_pend ms) 3) = 50 ->
   bv_unsigned (ms_gpr (ms_pend ms) 5) = 0 ->
-  SOK n rho F L3 res ms m.
+  SOK0 n rho F L3 res ms m.
 Proof.
   intros Hsys HD Hat Hstep Hx8 Ha0 Ha1 Ha2 Ha3 Ha5.
   unfold sys_commit3 in Hsys. cbv zeta in Hsys.
@@ -612,6 +615,22 @@ Proof.
     + rewrite Elo. lia.
     + rewrite Ehi. lia.
     + intros e0 He0 _. cbn [fent_tag fst]. exact (lazy_tag_free_sound tg L3 e0 Hlzf He0).
+Qed.
+
+Theorem sys_commit3_sound n rho F L3 ms m t off len res :
+  sys_commit3 Lim keep F L3 n t off len = Some res ->
+  D3 n rho F L3 ms m -> at_ecall F ->
+  RiscvSemantics.step segs ms = MachineOk (ms_pend ms) ->
+  bv_unsigned (ms_reg ms 17) = 222 ->
+  ms_gpr (ms_pend ms) 0 = adr rho t (to_Z off) ->
+  bv_unsigned (ms_gpr (ms_pend ms) 1) = to_Z len ->
+  bv_unsigned (ms_gpr (ms_pend ms) 2) = 3 ->
+  bv_unsigned (ms_gpr (ms_pend ms) 3) = 50 ->
+  bv_unsigned (ms_gpr (ms_pend ms) 5) = 0 ->
+  SOK n rho F L3 res ms m.
+Proof.
+  intros. split; [eapply sys_commit3_sound0; eassumption |].
+  match goal with H : bv_unsigned (ms_reg ms 17) = _ |- _ => rewrite H end. memfree_lit.
 Qed.
 
 End Drive3C.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -67,7 +68,7 @@ Lemma aevt_deldtor : deldtor_cps RT ->
   In (ia, nia) (rt_live RT Σ) -> In (oc, noc) (rt_live RT Σ) -> In (idx, nidx) (rt_live RT Σ) ->
   ia <> oc -> ia <> idx -> ia <> THIS -> oc <> idx -> oc <> THIS -> idx <> THIS -> 0 <= nia -> 0 <= noc -> 0 <= nidx ->
   ART RT Σ m -> mem_inv bsegs m ->
-  stk bsegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + 32 + RT_STACK <= bv_unsigned sp ->
+  stk bsegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + 32 + RT_STACK <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 -> unwind_ok ra s0 sp -> frm0 fc ->
   (forall (Σ' : rts RT) v t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F' fc' m', frm0 fc' ->
      rt_after_f RT Σ' (bv_unsigned sp) lo m m' -> rt_pres_fp (rt_live RT Σ') (rt_frames RT Σ) (bv_unsigned sp) [] m m' ->
@@ -97,7 +98,7 @@ Lemma aevt_vdestroy : vdestroy_cpsA RT ->
   bv_unsigned sp <= C -> C + 8 <= USTACK_TOP -> C mod 8 = 0 -> rw_cells bsegs m C [C8 (Z_to_bv 64 V)] ->
   vrepA m V A cap size els -> vliveA (rt_live RT Σ) A cap size L0 -> (forall p n, In (p, n) L0 -> 0 < n) -> 1 <= cap -> fobj RT Σ m V 24 ->
   ART RT Σ m -> mem_inv bsegs m ->
-  stk bsegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + ATPA_DESTROY_STACK <= bv_unsigned sp ->
+  stk bsegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + ATPA_DESTROY_STACK <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 -> unwind_ok ra s0 sp -> frm0 fc ->
   (forall (Σ' : rts RT) v t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F' fc' m', frm0 fc' ->
      rt_after_f RT Σ' (bv_unsigned sp) lo m m' -> rt_pres_fp L0 (rt_frames RT Σ) (bv_unsigned sp) [(V, V + 24)] m m' ->
@@ -149,7 +150,7 @@ Lemma aevt_newarr : new_cps RT e_newarr_nt ->
   1 <= n <= 0x20001000 -> a0 = Z_to_bv 64 n -> tp = Z_to_bv 64 0x656e70 ->
   Z.of_nat (length (rt_live RT Σ)) < LIVE_MAX -> mcost n <= rt_credit RT Σ ->
   ART RT Σ m -> mem_inv bsegs m ->
-  stk bsegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + 32 + RT_STACK <= bv_unsigned sp ->
+  stk bsegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + 32 + RT_STACK <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 -> frm0 fc ->
   (forall (Σ' : rts RT) p t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F' fc' m', frm0 fc' ->
      rt_after RT Σ' (bv_unsigned sp) lo m m' -> rt_pres (rt_live RT Σ) (rt_frames RT Σ) (bv_unsigned sp) m m' ->

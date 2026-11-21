@@ -1,6 +1,6 @@
 (* Modified by Theorem Labs, 2026-10: the helper lemmas and Ltacs (keep_frame, reg_atom, reg_off, the frame-shadow
    reader, the window and keep Ltacs, the write-window Ltac) are adapted from proofs/reac-pw/fuzz_role/lib/A/RPgE01.v
-   (fuzz_role's walk of the same harness, its run P2, uncommitted working copy over a1f54c45fc22); renamed e01h_,
+   (fuzz_role's walk of the same harness, its run P2, uncommitted working copy over); renamed e01h_,
    moved to headamp's class-4 frame, its slot R+0x138, its 80 frame shadow bytes and HPgE01D's cut states. *)
 (* reac-pw/fuzz_headamp image A (fuzz_headamp.asan, pinned sha256
    f3e0669d2819724922df0556b11c2dcd22d1e16fe7e0fe1535ce784b34436c47; every address below is measured on the

@@ -1,6 +1,7 @@
-(* CARRIED BY PATH from commit 9e87119fcf60, proofs/omx-clap-core/fuzz_preset/lib/A/WrapMallocAConsts.v, sha256 4d6db0468d01; internal record; image numerals relocated to fuzz_reply image A by alreloc frozen-a5c53bb2bed4ad03; one added module, AB1wMalloc, for 4 preset-AB1w symbols. *)
+(* CARRIED BY PATH from proofs/omx-clap-core/fuzz_preset/lib/A/WrapMallocAConsts.v, sha256 4d6db0468d01; internal record; image numerals relocated to fuzz_reply image A by alreloc frozen-a5c53bb2bed4ad03; one added module, AB1wMalloc, for 4 preset-AB1w symbols. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30: the image-A (asan, pin 1be0f53d96cb) code addresses the malloc walks of
    omx-clap-core/fuzz_preset share, and their `ceil` tactic, in a file of their own so that the malloc BODY walk
    (WrapMallocABody*.v) does not Require the wrapper's call segment (WrapMallocACall.v re-exports this file). Moved

@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/YGcfInstEnqTrreply.v (commit 4d286b2e618d, file sha256 333059a41c61) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 0 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstEnqTrcgif.v (commit 1223f55a2a51, CfF1 round-2 re-fit; file sha256 769598b6107a) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/YGcfInstEnqTrpreset.v at commit f303438be5b, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/YGcfInstEnqTrreply.v (file sha256 333059a41c61) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 0 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstEnqTrcgif.v (CfF1 round-2 re-fit; file sha256 769598b6107a) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/YGcfInstEnqTrpreset.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane F1 of the generic cf instance layer; integrator ReallocPrimary).
    cgif_file's image: the TRANSPORT fields of lane B2's frame-generic Enqueue interface (EnqGbase.v, taken by path)
    at the cf instance, i.e. at the layer's walk relation YGcfInstBase.ARX_cf B IOK Hp, owned set aowned B and call
@@ -56,7 +57,7 @@ Local Open Scope Z_scope.
 Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : CfParams}.
 Local Open Scope am_scope.
 
-(* MemnormLoc.YFf1_D_safe (MemnormLoc.v:104-118) over ARmcf. *)
+(* MemnormLoc.YFf1_D_safe (MemnormLoc.v:105-119) over ARmcf. *)
 Lemma YFf1cf_D_safe : forall (B : asyms) (ly : alayout) (X : astate) (rd : reader) (Hp : list Z) (M : ARmcf B ly X Hp rd)
   (lb : batch) (initr : list batch),
   rev (qc_list (st_qthread X)) = lb :: initr -> Z.of_nat (length (b_items lb)) < kBatchSlots ->
@@ -73,7 +74,7 @@ destruct (YFf1cf.D_cases B ly X rd Hp M lb initr Hrev Hroom sp Hsp IMG _ Hd) as 
 - apply MemnormHitG.mn_safe_high. unfold kHighMemBeg, kHighMemEnd, kImgEnd, TASK_SIZE in *. lia.
 Qed.
 
-(* MemnormLoc.YFf2_D_safe (MemnormLoc.v:134-149) over ARmcf. *)
+(* MemnormLoc.YFf2_D_safe (MemnormLoc.v:135-150) over ARmcf. *)
 Lemma YFf2cf_D_safe : forall (B : asyms) (ly : alayout) (X : astate) (rd : reader) (Hp : list Z) (M : ARmcf B ly X Hp rd),
   st_cache_inited X = true -> forall l : list Z, pc_chunks (cache X kBatchClass) = l -> l <> [] ->
   forall sp : Z, ly_stk_lo ly + YFew.QSTACK <= sp <= ly_stk_hi ly -> img_cover ly ->

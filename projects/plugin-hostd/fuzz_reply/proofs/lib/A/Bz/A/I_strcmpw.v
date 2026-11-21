@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Ported from, release commit 1aeda8ab8602, projects/leptonica/fhmtgen_fuzzer/proofs/lib/K5/A10/:
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Ported from, release, projects/leptonica/fhmtgen_fuzzer/proofs/lib/K5/A10/:
      I_strcmpw2.v    sha256 ca15b0ab0bdd  (shadow scans, slow-path calls, the two range checks)
      I_strcmpw.v     sha256 4fb85e4cffb5  (runtime cells and their transport lemmas)
      I_strcmp_spec.v sha256 dc1d443700b9  (cmpx, sc_pre)

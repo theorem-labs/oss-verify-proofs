@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported from proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v (the leaf walk) and
-   lib/A/AC8b.v (a loop by fuel induction) at c8557374ad2e: the walk of syntax_reply_matches on fuzz_command.asan.
+   lib/A/AC8b.v (a loop by fuel induction): the walk of syntax_reply_matches on fuzz_command.asan.
    This file: the walk's state (the entry facts, the invariant every segment carries, the post-condition) and the
    epilogue segment. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

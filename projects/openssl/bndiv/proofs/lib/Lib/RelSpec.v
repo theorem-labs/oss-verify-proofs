@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap_exact_outcome admits munmap's errno arm and uses mmap_fixed_destroyed_next; mmap_rw_outcome takes the place_declined_b premise and places by linux_place; writev_chan_outcome takes the channel-reader premise). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -403,23 +404,24 @@ Lemma munmap_exact_outcome : forall addr len i m o,
   let n := Z_to_bv 64 (page_round_up_Z (bv_unsigned len)) in
   map_has (vm_maps (m_vmmaps m)) addr n = true ->
   munmap_spec addr len i m o <->
-  o = Ok (mkEffectU (Z_to_bv 64 0) [] [] [(addr, n)] [] [])
-         (with_mmap_destroyed addr n
-            (mkVmMapsFull (vm_reserved (m_vmmaps m))
-               (map_remove (vm_maps (m_vmmaps m)) addr)
-               (maps_subtract (vm_noaccess (m_vmmaps m))
-                  (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n))
-               (vm_start_brk (m_vmmaps m)) (vm_brk (m_vmmaps m))
-               (vm_limit (m_vmmaps m)) (vm_mmap_base (m_vmmaps m)) (vm_init_sp (m_vmmaps m))) m) [].
+  (exists e, In e munmap_errnos /\ o = Ok (mkEffect (errno_ret e) [] []) m [])
+  \/ o = Ok (mkEffectU (Z_to_bv 64 0) [] [] [(addr, n)] [] [])
+         (with_mmap_destroyed addr n (mmap_fixed_destroyed_next (m_vmmaps m) addr n) m) [].
 Proof.
   intros addr len i m o Hal Hlen Hnw. cbv zeta. intros Hhas. unfold munmap_spec.
   rewrite (proj2 (Z.eqb_eq _ _) Hal), Hlen. cbn [negb orb].
   rewrite (proj2 (Z.ltb_ge _ _) Hnw). unfold with_mmap_destroyed. sys_unfold.
   split.
-  - destruct o as [x m' evs|]; intros H; inv_sys; rewrite Hhas in *; inv_sys. reflexivity.
-  - intros ->. eexists _, _, _, _. split; [reflexivity|]. rewrite Hhas.
-    split; [|reflexivity]. eexists _, _, _, _. split; [reflexivity|].
-    split; [|reflexivity]. eexists _, _, _, _. repeat split; reflexivity.
+  - destruct o as [x m' evs|]; intros H; inv_sys; rewrite Hhas in *; inv_sys.
+    + left. eexists; split; [eassumption|reflexivity].
+    + right. reflexivity.
+  - intros [(e & He & ->) | ->].
+    + eexists _, _, _, _. split; [reflexivity|]. rewrite Hhas.
+      split; [|reflexivity]. left. exists e, m, [], []. split; [exists e; split; [exact He|reflexivity]|].
+      split; reflexivity.
+    + eexists _, _, _, _. split; [reflexivity|]. rewrite Hhas.
+      split; [|reflexivity]. right. eexists _, _, _, _. split; [reflexivity|].
+      split; [|reflexivity]. eexists _, _, _, _. repeat split; reflexivity.
 Qed.
 
 (* [comment removed for export] *)
@@ -434,15 +436,18 @@ Lemma mmap_rw_outcome : forall addr len prot flags fd off i m o,
   mmap_anon_b flags = true ->
   w_is0 len = false ->
   mmap_modeled_b prot flags off = true ->
+  (* LPS 727298f3 (#146): a declined hint answers [unmodeled], so this iff is FALSE as it
+     stood -- the backward direction cannot produce an [Ok] for a declined call.  #144's
+     own treatment in [theories/Common]: the condition becomes a premise, discharged at the
+     call site (for a NULL hint by computation, through [negb (g =? 0)]). *)
+  place_declined_b (m_kernel m) (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len)) = false ->
   let h := m_vmmaps m in
   let nZ := page_round_up_Z (bv_unsigned len) in
   let n := Z_to_bv 64 nZ in
   mmap_spec addr len prot flags fd off i m o <->
-  mmap_err_out m o   (* [comment removed for export] *)
-  \/ exists a, ((bv_unsigned a mod page_size = 0)%Z
-                /\ (0 < bv_unsigned a)%Z
-                /\ (bv_unsigned a + nZ <= alloc_top h)%Z
-                /\ region_free (vm_reserved h ++ vm_maps h) a n = true
+  (* [comment removed for export] *)
+  mmap_err_out m o
+  \/ exists a, (linux_place h (kb_thp (m_kernel m)) addr nZ (bv_unsigned a)
                 /\ mmap_noreserve_backed_ok flags m nZ = true)
                /\ o = Ok (mkEffect a [] [(a, n)])
                         (with_mmap_backing flags a n
@@ -451,18 +456,26 @@ Lemma mmap_rw_outcome : forall addr len prot flags fd off i m o,
                                (vm_noaccess h) (vm_start_brk h) (vm_brk h) (vm_limit h)
                                (vm_mmap_base h) (vm_init_sp h)) m)) [].
 Proof.
-  intros addr len prot flags fd off i m o Hoff Hanon Hlen Hmod. cbv zeta. unfold mmap_spec.
+  intros addr len prot flags fd off i m o Hoff Hanon Hlen Hmod Hdecl. cbv zeta. unfold mmap_spec.
   rewrite Hoff, Hanon, Hlen, Hmod. cbn [negb].
+  (* The arm opens [m <- get_model ;; let h := … in if place_declined_b …], so the test
+     is under the bind and names the BOUND model, not [m], until the bind is hoisted.
+     [sys_unfold] alone does not do it -- after it the model is still the bound variable
+     of [Ok x m1 evs1] -- so hoist first, the idiom NodesA_mm.v:964 already uses. *)
+  rewrite bind_get_model. cbv zeta. rewrite Hdecl.
   (* [comment removed for export] *)
   unfold mmap_err_out. sys_unfold.
   split.
   - destruct o as [x m' evs|]; intros H; inv_sys.
     + left. eexists; split; [eassumption|reflexivity].
-    + right. eexists; split; [|reflexivity]. repeat split; assumption.
+    + right. eexists; split; [|reflexivity]. first [eassumption | split; eassumption].
   - intros [(e & He & ->) | (a & Ha & ->)].
     + left. exists e, m, [], []. split; [exists e; split; [exact He|reflexivity]|].
       split; reflexivity.
-    + right. eexists _, _, _, _. split; [reflexivity|]. split; [|reflexivity].
+    (* #144 HOISTED [m <- get_model] out of the [alt], so this case is one existential
+       layer shallower than it was: the layer that used to wrap the [choose] is gone.
+       The LEFT case above is unchanged -- the hoist moved only this one. *)
+    + right.
       eexists _, _, _, _. split; [exists a; split; [exact Ha|reflexivity]|].
       split; [|reflexivity]. eexists _, _, _, _. repeat split; reflexivity.
 Qed.
@@ -773,67 +786,68 @@ Qed.
 
 (* [comment removed for export] *)
 Lemma writev_chan_outcome : forall fd iov iovcnt i m o ch iovs bs,
-  fd_lookup (m_fds m) fd = Some (FdChannel ch) ->
-  w_is0 ch = false ->
-  import_iovecs (in_mem i) iov (iovcnt32 iovcnt) = ImpOk iovs ->
-  (iovs_total iovs <= MAX_RW_COUNT)%Z ->
-  gather_iovecs (in_mem i) iovs = Some bs ->
-  (1 <= Z.of_nat (length bs))%Z ->
-  let CA := import_iovecs_accesses (in_mem i) iov (iovcnt32 iovcnt) in
-  writev_spec fd iov iovcnt i m o <->
-  exists k, (1 <= k <= length bs)%nat /\
-    o = Ok (mkEffectU (Z_to_bv 64 (Z.of_nat k)) [] [] [] [] (CA ++ iov_prefix_accesses iovs k))
-           m (map (WriteEv ch) (firstn k bs)).
+fd_lookup (m_fds m) fd = Some (FdChannel ch) ->
+w_is0 ch = false ->
+m_channel_reader m = true ->
+import_iovecs (in_mem i) iov (iovcnt32 iovcnt) = ImpOk iovs ->
+(iovs_total iovs <= MAX_RW_COUNT)%Z ->
+gather_iovecs (in_mem i) iovs = Some bs ->
+(1 <= Z.of_nat (length bs))%Z ->
+let CA := import_iovecs_accesses (in_mem i) iov (iovcnt32 iovcnt) in
+writev_spec fd iov iovcnt i m o <->
+exists k, (1 <= k <= length bs)%nat /\
+o = Ok (mkEffectU (Z_to_bv 64 (Z.of_nat k)) [] [] [] [] (CA ++ iov_prefix_accesses iovs k))
+m (map (WriteEv ch) (firstn k bs)).
 Proof.
-  intros fd iov iovcnt i m o ch iovs bs Hfd Hch Himp Htot Hg Hbs1.
-  cbv zeta.
-  pose proof (gather_iovecs_length _ _ _ Hg) as Hlen.
-  pose proof (cap_iovecs_id_rw _ Htot) as Hcap.
-  assert (Herrk : forall k, (k <= length bs)%nat ->
-            addr_is_error_b (len_word (firstn k bs)) = false).
-  { intros k Hk. unfold addr_is_error_b, two_pow_64. apply Z.ltb_ge.
-    rewrite len_word_unsigned by (rewrite firstn_length_le by lia; unfold two_pow_64;
-                                   unfold MAX_RW_COUNT in Htot; lia).
-    rewrite firstn_length_le by lia. unfold MAX_RW_COUNT in Htot. lia. }
-  unfold writev_spec. rewrite (input_model_bind (fun i0 m0 => _)). cbv beta.
-  rewrite Hfd, Hch.
-  transitivity
-    (record_copyins (import_iovecs_accesses (in_mem i) iov (iovcnt32 iovcnt))
-       (ds <- choose (fun ds : list byte =>
-                       (1 <= Z.of_nat (length ds))%Z
-                       /\ (Z.of_nat (length ds) < two_pow_64)%Z
-                       /\ addr_is_error_b (len_word ds) = false
-                       /\ ds = firstn (length ds) bs) ;;
-        emit (map (WriteEv ch) ds) ;;
-        record_copyins (iov_prefix_accesses (cap_iovecs iovs) (length ds))
-          (ret_only (len_word ds)))%sys i m o).
-  { rewrite Himp. unfold writev_gathered.
-    rewrite Hcap, (gather_prefix_full _ _ _ Hg). cbv zeta.
-    rewrite <- Hlen.
-    replace (Z.of_nat (length bs) =? 0)%Z with false by (symmetry; apply Z.eqb_neq; lia).
-    replace (length bs =? 0)%nat with false by (symmetry; apply Nat.eqb_neq; lia).
-    replace (addr_is_error_b (len_word bs)) with false
-      by (symmetry; rewrite <- (firstn_all bs); rewrite (Herrk (length bs)) by lia; reflexivity).
-    reflexivity. }
-  rewrite Hcap. sys_unfold.
-  split.
-  - destruct o as [x m' evs|]; intros H; inv_sys.
-    match goal with Hds : ?ds = firstn (length ?ds) bs |- _ =>
-      exists (length ds); rewrite <- Hds;
-      assert (Hk : (length ds <= length bs)%nat)
-        by (rewrite Hds; rewrite length_firstn; apply Nat.le_min_r)
-    end.
-    split; [lia|]. rewrite !app_nil_r. unfold len_word. reflexivity.
-  - intros (k & Hk & ->).
-    assert (Hlk : length (firstn k bs) = k) by (apply firstn_length_le; lia).
-    eexists _, _, _, _. split.
-    + eexists _, _, _, _. split.
-      * exists (firstn k bs). split; [|reflexivity].
-        rewrite Hlk. split; [lia|]. split; [unfold two_pow_64, MAX_RW_COUNT in *; lia|].
-        split; [apply Herrk; lia|reflexivity].
-      * split; [|reflexivity]. eexists _, _, _, _. split; [reflexivity|]. split; [|reflexivity].
-        eexists _, _, _, _. split; [reflexivity|]. split; reflexivity.
-    + rewrite Hlk, !app_nil_r. unfold len_word. rewrite Hlk. split; reflexivity.
+intros fd iov iovcnt i m o ch iovs bs Hfd Hch Hrd Himp Htot Hg Hbs1.
+cbv zeta.
+pose proof (gather_iovecs_length _ _ _ Hg) as Hlen.
+pose proof (cap_iovecs_id_rw _ Htot) as Hcap.
+assert (Herrk : forall k, (k <= length bs)%nat ->
+addr_is_error_b (len_word (firstn k bs)) = false).
+{ intros k Hk. unfold addr_is_error_b, two_pow_64. apply Z.ltb_ge.
+rewrite len_word_unsigned by (rewrite firstn_length_le by lia; unfold two_pow_64;
+unfold MAX_RW_COUNT in Htot; lia).
+rewrite firstn_length_le by lia. unfold MAX_RW_COUNT in Htot. lia. }
+unfold writev_spec. rewrite (input_model_bind (fun i0 m0 => _)). cbv beta.
+rewrite Hfd, Hch.
+transitivity
+(record_copyins (import_iovecs_accesses (in_mem i) iov (iovcnt32 iovcnt))
+(ds <- choose (fun ds : list byte =>
+(1 <= Z.of_nat (length ds))%Z
+/\ (Z.of_nat (length ds) < two_pow_64)%Z
+/\ addr_is_error_b (len_word ds) = false
+/\ ds = firstn (length ds) bs) ;;
+emit (map (WriteEv ch) ds) ;;
+record_copyins (iov_prefix_accesses (cap_iovecs iovs) (length ds))
+(ret_only (len_word ds)))%sys i m o).
+{ rewrite Himp. unfold writev_gathered.
+rewrite Hcap, (gather_prefix_full _ _ _ Hg). cbv zeta.
+rewrite <- Hlen.
+replace (Z.of_nat (length bs) =? 0)%Z with false by (symmetry; apply Z.eqb_neq; lia).
+replace (length bs =? 0)%nat with false by (symmetry; apply Nat.eqb_neq; lia).
+replace (addr_is_error_b (len_word bs)) with false
+by (symmetry; rewrite <- (firstn_all bs); rewrite (Herrk (length bs)) by lia; reflexivity).
+rewrite Hrd. reflexivity. }
+rewrite Hcap. sys_unfold.
+split.
+- destruct o as [x m' evs|]; intros H; inv_sys.
+match goal with Hds : ?ds = firstn (length ?ds) bs |- _ =>
+exists (length ds); rewrite <- Hds;
+assert (Hk : (length ds <= length bs)%nat)
+by (rewrite Hds; rewrite length_firstn; apply Nat.le_min_r)
+end.
+split; [lia|]. rewrite !app_nil_r. unfold len_word. reflexivity.
+- intros (k & Hk & ->).
+assert (Hlk : length (firstn k bs) = k) by (apply firstn_length_le; lia).
+eexists _, _, _, _. split.
++ eexists _, _, _, _. split.
+* exists (firstn k bs). split; [|reflexivity].
+rewrite Hlk. split; [lia|]. split; [unfold two_pow_64, MAX_RW_COUNT in *; lia|].
+split; [apply Herrk; lia|reflexivity].
+* split; [|reflexivity]. eexists _, _, _, _. split; [reflexivity|]. split; [|reflexivity].
+eexists _, _, _, _. split; [reflexivity|]. split; reflexivity.
++ rewrite Hlk, !app_nil_r. unfold len_word. rewrite Hlk. split; reflexivity.
 Qed.
 
 (* [comment removed for export] *)

@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (one more register fact passed at each call of the generic mmap triple, whose statement now takes it; the two depot mmap steps give the restated triples' request non-refusability, at kd_place's address in Linux's bottom-up window, by MallocA/MmapSymG.v's not_refusable_of_place, and their post at every admissible address; MmapSymG required). *)
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
 #[local] Ltac2 tbs__ () := ["@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymState"; "sobj"; "valuation"; "sv"; "rw"; "sprop"; "SLit"; "ss_objs"; "ss_facts"; "ss_next"; "SVar"; "ss_lenient"; "agree_below"; "ss_pc"; "rm"; "eval"; "ss_regs"; "sprop_below"; "obj_range"; "reg_sv"; "mkSS"; "obj_wf"; "ss_fcsr"; "ss_fregs"; "ss_resv"; "SAlu"; "ranges_disjoint"; "holds"; "rl"; "sv_eqb"; "sstate"; "obj_holds"; "smatch"; "swf"; "SPAlign"; "enc_bytes"; "ro_addr"; "sv_below"; "@Corelib.Init.Datatypes"; "cons"; "nil"; "list"; "bool"; "app"; "true"; "prod"; "pair"; "length"; "nat"; "option"; "false"; "Some"; "snd"; "fst"; "None"; "@Corelib.Init.Logic"; "eq"; "and"; "ex"; "not"; "or"; "@Corelib.Numbers.BinNums"; "Z"; "positive"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocB.i0.CertStackFree"; "segsA"; "@Stdlib.ZArith.BinInt.Z"; "add"; "le"; "lt"; "div"; "modulo"; "to_nat"; "mul"; "pow"; "sub"; "of_nat"; "land"; "shiftr"; "@stdpp.bitvector.definitions"; "bv_unsigned"; "bv"; "Z_to_bv"; "bv_signed"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.SoundA"; "SPA"; "stableA"; "ok_frameA"; "jpredA"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.StepA"; "ax_S"; "leafA"; "mkLeafA"; "entailsA"; "axst"; "ax_base"; "ax_setS"; "la_state"; "ax_X"; "shadow_addr"; "sym_runA"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocB.Model"; "DG"; "dN"; "dFB"; "dF"; "dNB"; "dFP"; "list_upd"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocB.SegD_skel.Skel"; "JJ"; "QD"; "gmid"; "HS"; "jK"; "winDFP"; "insK"; "JJ2"; "nbK"; "insK5"; "TOPr"; "W0ok"; "armsF"; "cK"; "earmsF"; "PDb"; "PDf"; "arm_e"; "pend"; "REL"; "VS_NZ"; "c3K"; "curOK"; "dK"; "fK"; "VS_F"; "VS_T"; "VS_Z"; "pend_stable"; "VS_C1"; "VS_D"; "VS_E2"; "VS_F2"; "VS_N"; "VS_NB"; "ids_ok"; "pend_view"; "E7"; "InvF"; "InvFe"; "O_mtM2"; "O_mu2"; "PD0"; "R8"; "ids3"; "ids4"; "ids5"; "ids6f"; "ids7"; "ids_objs"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocB.SegD_states"; "NXD"; "vW"; "O_tw"; "NPRE"; "O_slotN"; "runA"; "vNB"; "vF"; "O_nid"; "F_D"; "vN"; "vSt"; "O_tf"; "O_nn"; "O_trD"; "RT_D"; "F_tw"; "mkFindB"; "F_N"; "O_bd"; "O_stc"; "add"; "F_nb"; "O_alloc"; "O_nh"; "O_nl"; "O_slot"; "vAL"; "PreD"; "RETPC"; "vD"; "F_n"; "mkT1"; "O_bdM"; "O_stcM"; "vM"; "O_mtM"; "O_mu"; "XE"; "fr_addr"; "mkFindZ"; "O_stb"; "O_stb1"; "PCE2"; "bd_addr"; "mkC1R"; "mkFindNZ"; "F_f"; "O_fr"; "PCJ"; "PostD"; "PreD1"; "bd1_addr"; "d1_tail_ok"; "idN"; "mkC1"; "mkI3b"; "mkI4"; "mkI5d"; "mkI5e2"; "mkI5f"; "mkIn"; "stc_addr"; "vS"; "F_NZ"; "F_S"; "F_a"; "F_af"; "F_d"; "F_dj"; "F_e2"; "F_f2"; "NXP"; "O_frN"; "O_nnE"; "SZMAX"; "carved4b"; "dropo"; "mkC3j"; "mkCONT"; "mkDj"; "mkE2h"; "mkFAIL"; "mkFAILf"; "mkJh"; "mkNBh"; "mkNBj"; "mkOK"; "mkOKf"; "nn_addr"; "node_addr"; "single_at"; "slotN_addr"; "slot_addr"; "vHS"; "vP"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocB.SegD_wf"; "dep_cost"; "droom"; "NBSZ"; "FBSZ"; "STORE"; "depot_vm"; "DNMAX"; "G_fblk"; "G_nblk"; "DFPw"; "DFP"; "G_page"; "JD"; "NODESMU"; "sumZ"; "DEPOT"; "MAP1"; "NFBLK"; "cellZ"; "dblocks"; "ranges_disjointZ"; "JLD"; "KD_laws"; "NIDS"; "TABSZ"; "depot_inv";
@@ -32,6 +33,8 @@ Import OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocB.SegD_states OSSVer
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocA Require Import SegD_mmap.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib Require LiaFast.
 Require OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.
+(* LPS 727298f3: [not_refusable_of_place], used qualified. *)
+From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocA Require MmapSymG.
 Import ListNotations.
 Close Scope bv_scope.
 Open Scope Z_scope.
@@ -3122,7 +3125,7 @@ S1S35S3aS49Q40M0S3R1Pb1A2A2S5dVG0;A1M1A3S3eG1SfbA2S35S3aS41S3dG1Z1A2Z10000A2Z0A3
 Proof.
   intros rho K177 HDN Hmod.
   apply (triple1_mmap_rw_objA segsA ok (JJ G0) (JJ G0) (fun a => JJ2 (G_nblk G0 (bv_unsigned a)) G0 (PDb a)) EBs rho tp0 NBSZ
-           (JJ_ok G0) (JJ2_okp G0 G0 PD0) (JJ_stable G0 (ss_next (ax_S EBs)) ltac:(rewrite EB_nx; unfold NPRE, NXD; lia)) EB_instr EB_r17 EB_r11 ltac:(reflexivity) ltac:(unfold NBSZ; lia)).
+           (JJ_ok G0) (JJ2_okp G0 G0 PD0) (JJ_stable G0 (ss_next (ax_S EBs)) ltac:(rewrite EB_nx; unfold NPRE, NXD; lia)) EB_instr EB_r17 EB_r10 EB_r11 ltac:(reflexivity) ltac:(unfold NBSZ; lia)).
   intros tr ms md Hsp HJ.
   destruct (pending_argsA segsA rho tp0 EBs tr ms md Hsp) as (Q0 & Q1 & Q2 & Q3 & Q4 & Q5).
   rewrite EB_r10 in Q0. rewrite EB_r11 in Q1. rewrite EB_r12 in Q2. rewrite EB_r13 in Q3. rewrite EB_r14 in Q4. rewrite EB_r15 in Q5.
@@ -3206,7 +3209,7 @@ S1S35S3aS49Q40M0S3R1Pb1A2A2S5dVG0;A1M1A3S3eG1SfbA2S35S3aS41S3dG1Z1A2Z10000A2Z0A3
 Proof.
   intros rho K177 HDN Hmod.
   apply (etriple_mmap_rw_objA segsA (JJ G0) (fun a => JJ2 (G_nblk G0 (bv_unsigned a)) G0 (PDb a)) EBs rho tp0 NBSZ
-           (JJ_stable G0 (ss_next (ax_S EBs)) ltac:(rewrite EB_nx; unfold NPRE, NXD; lia)) EB_instr EB_r17 EB_r11 ltac:(reflexivity) ltac:(unfold NBSZ; lia)).
+           (JJ_stable G0 (ss_next (ax_S EBs)) ltac:(rewrite EB_nx; unfold NPRE, NXD; lia)) EB_instr EB_r17 EB_r10 EB_r11 ltac:(reflexivity) ltac:(unfold NBSZ; lia)).
   intros tr ms md Hsp HJ.
   destruct (pending_argsA segsA rho tp0 EBs tr ms md Hsp) as (Q0 & Q1 & Q2 & Q3 & Q4 & Q5).
   rewrite EB_r10 in Q0. rewrite EB_r11 in Q1. rewrite EB_r12 in Q2. rewrite EB_r13 in Q3. rewrite EB_r14 in Q4. rewrite EB_r15 in Q5.
@@ -3217,15 +3220,20 @@ Proof.
   destruct (kd_room segsA K NPRE HKD G0 rho tp0 _ _ HK (conj HM HV)) as [Hroom _]. cbn [cfg_model w_cfg snd] in Hroom.
   assert (HroomN : headroom md tp0 >= NBSZ) by (unfold droom in Hroom; rewrite (proj2 (Z.eqb_eq _ _) Hmod) in Hroom; unfold PG, NBSZ in *; lia).
   split; [exact HroomN|].
-  destruct (kd_place segsA K NPRE HKD G0 rho tp0 tr md NBSZ HK (conj HM HV) ltac:(left; reflexivity)) as [a Hplm].
-  exists a.
+  destruct (kd_place segsA K NPRE HKD G0 rho tp0 tr md NBSZ HK (conj HM HV) ltac:(left; reflexivity)) as (a & Hplm & Hflo).
   assert (Hpl : mmap_place_ok (ms_gpr ms 0) (ms_gpr ms 3) md (ms_gpr ms 1) a).
   { rewrite Q0, Q1, Q3. pose proof Hplm as (P1 & P2 & P3 & P4). unfold mmap_place_ok.
     split; [exact P1|]. split; [exact P2|]. split; [exact P3|]. split; [exact P4|].
     rewrite (mmap_noreserve_backed_ok_plain (Z_to_bv 64 34) md _ eq_refl). apply Z.leb_le.
     rewrite NBSZ_nZ. pose proof (paid_ge_usedD md tp0). unfold headroom in HroomN. lia. }
-  split; [exact Hpl|].
-  exact (mmap_user_b rho tr ms md a Hsp HJ K177 HDN Hmod Q1 Hpl).
+  (* LPS 727298f3 (Fw3A/MmapA.v [etriple_mmap_rw_objA], restated): the request is not refusable,
+     as Linux places it in its bottom-up window, where [kd_place]'s address lies; and every
+     admissible address, Linux's among them, gives the post. *)
+  split.
+  { exact (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocA.MmapSymG.not_refusable_of_place
+             (ms_gpr ms 0) (ms_gpr ms 3) md (ms_gpr ms 1) a
+             ltac:(rewrite Q1; rewrite u64_lit by (unfold NBSZ; lia); unfold NBSZ; lia) Hflo Hpl). }
+  intros a' Hpl'. exact (mmap_user_b rho tr ms md a' Hsp HJ K177 HDN Hmod Q1 Hpl').
 Qed.
 
 Lemma earmB_main : ltac2:(tb__ "0|0|
@@ -3813,7 +3821,7 @@ Proof.
   intros G S rho tp tr ms md a Hsp HJ HCK HHS Hnbl G1 Hpl.
   pose proof HJ as [HREL [HK [[HM HV] _]]]. pose proof HCK as ((HIK & Hj & H178 & H179 & HROs & HDs) & U206 & HWC). pose proof HIK as (K177 & KW0 & KD1 & KD2).
   pose proof alloc_ceiling_valD as ACV. pose proof (urange a) as Ra. pose proof Hsz as Hs. unfold SZMAXT in Hs.
-  pose proof (smatch_pendingA_MI segsA _ _ _ _ _ _ Hsp) as HMI. pose proof HMI as (HW & HT & Hmat & Hsub & Hpaid & Hlc & Hivs & Hlim & Htm).
+  pose proof (smatch_pendingA_MI segsA _ _ _ _ _ _ Hsp) as HMI. pose proof HMI as (HW & HT & Hmat & Hsub & Hpaid & Hlc & Hivs & Hlim & Htm & _).
   pose proof (dm_N _ _ HM) as [HN _]. pose proof (dm_F _ _ HM) as (HF0 & HF11 & HF32 & _).
   destruct (kd_room segsA K NPRE HKD G rho tp _ _ HK (conj HM HV)) as [Hroom HDN].
   destruct (missing_block G _ S HM HHS Hnbl) as (HbL & HbR & HFB & HOFF).
@@ -3920,7 +3928,7 @@ S5cS3aS1S27S4aQ40M0A1M1A1S70R4R3R2A3S66R5R4A2S38S119S42S40R5Z100000A2A1S2dS3aS5e
 Proof.
   intros G S rho tp HCK HHS Hnbl.
   apply (triple1_mmap_lazyA segsA ok (JJ G) (JJ G) (fun a => JJ2 (G_fblk G (bv_unsigned a)) G (PDf G a)) EFr rho tp FBSZ
-           (JJ_ok G) (JJ2_okp G G PD0) (JJ_stable G (ss_next (ax_S EFr)) ltac:(rewrite EF_nx; unfold NPRE, NXD; lia)) EF_instr EF_r17 EF_r11 ltac:(reflexivity) ltac:(unfold FBSZ; lia)).
+           (JJ_ok G) (JJ2_okp G G PD0) (JJ_stable G (ss_next (ax_S EFr)) ltac:(rewrite EF_nx; unfold NPRE, NXD; lia)) EF_instr EF_r17 EF_r10 EF_r11 ltac:(reflexivity) ltac:(unfold FBSZ; lia)).
   intros tr ms md Hsp HJ.
   destruct (pending_argsA segsA rho tp EFr tr ms md Hsp) as (Q0 & Q1 & Q2 & Q3 & Q4 & Q5).
   rewrite EF_r10 in Q0. rewrite EF_r11 in Q1. rewrite EF_r12 in Q2. rewrite EF_r13 in Q3. rewrite EF_r14 in Q4. rewrite EF_r15 in Q5.
@@ -3936,7 +3944,7 @@ S5cS3aS1S27S4aQ40M0A1M1A1S70R4R3R2A3S66R5R4A2S38S119S42S40R5Z100000A2A1S2dS3aS5e
 Proof.
   intros G S rho tp HCK HHS Hnbl.
   apply (etriple_mmap_lazyA segsA (JJ G) (fun a => JJ2 (G_fblk G (bv_unsigned a)) G (PDf G a)) EFr rho tp FBSZ
-           (JJ_stable G (ss_next (ax_S EFr)) ltac:(rewrite EF_nx; unfold NPRE, NXD; lia)) EF_instr EF_r17 EF_r11 ltac:(reflexivity) ltac:(unfold FBSZ; lia)).
+           (JJ_stable G (ss_next (ax_S EFr)) ltac:(rewrite EF_nx; unfold NPRE, NXD; lia)) EF_instr EF_r17 EF_r10 EF_r11 ltac:(reflexivity) ltac:(unfold FBSZ; lia)).
   intros tr ms md Hsp HJ.
   destruct (pending_argsA segsA rho tp EFr tr ms md Hsp) as (Q0 & Q1 & Q2 & Q3 & Q4 & Q5).
   rewrite EF_r10 in Q0. rewrite EF_r11 in Q1. rewrite EF_r12 in Q2. rewrite EF_r13 in Q3. rewrite EF_r14 in Q4. rewrite EF_r15 in Q5.
@@ -3944,14 +3952,17 @@ Proof.
   split; [rewrite Q2, Q3, Q5; exact mmap_modeled_nr|].
   split; [rewrite Q3; exact mmap_noreserve_nr|].
   pose proof HJ as [_ [HK [[HM HV] _]]].
-  destruct (kd_place segsA K NPRE HKD G rho tp tr md FBSZ HK (conj HM HV) ltac:(right; reflexivity)) as [a Hplm].
-  exists a.
+  destruct (kd_place segsA K NPRE HKD G rho tp tr md FBSZ HK (conj HM HV) ltac:(right; reflexivity)) as (a & Hplm & Hflo).
   assert (Hpl : mmap_place_ok (ms_gpr ms 0) (ms_gpr ms 3) md (ms_gpr ms 1) a).
   { rewrite Q0, Q1, Q3. pose proof Hplm as (P1 & P2 & P3 & P4). unfold mmap_place_ok.
     split; [exact P1|]. split; [exact P2|]. split; [exact P3|]. split; [exact P4|].
     unfold mmap_noreserve_backed_ok. rewrite mmap_noreserve_nr. reflexivity. }
-  split; [exact Hpl|].
-  exact (mmap_user_f G S rho tp tr ms md a Hsp HJ HCK HHS Hnbl Q1 Hpl).
+  (* LPS 727298f3 (MallocA/SegD_mmap.v [etriple_mmap_lazyA], restated): as in [emmap_step_b]. *)
+  split.
+  { exact (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocA.MmapSymG.not_refusable_of_place
+             (ms_gpr ms 0) (ms_gpr ms 3) md (ms_gpr ms 1) a
+             ltac:(rewrite Q1; rewrite u64_lit by (unfold FBSZ; lia); unfold FBSZ; lia) Hflo Hpl). }
+  intros a' Hpl'. exact (mmap_user_f G S rho tp tr ms md a' Hsp HJ HCK HHS Hnbl Q1 Hpl').
 Qed.
 
 Lemma ro_win_setrm : ltac2:(tb__ "0|5|

@@ -1,9 +1,10 @@
-(* CARRIED from a working branch 3dd49fa29fa14b99e3c465cacbfe79a09756bb26,
+(* CARRIED from a working branch,
    proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfPath.v, sha256 8386a17af5e5a0f5ae89df855ce6a5fe2deed5fcfb15cb5da48738fee8121e65.
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change
    made here is the module prefix OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset's second allocator instance (suffix cf), the PATH lemmas of malloc_cf
    (YG00cf.v). They say what a malloc_cf path that returns PNull looks like, and when no such path exists.
    They need no invariant preservation, only the path structure of malloc_cf and a SHAPE of the start state:
@@ -13,7 +14,7 @@
      entries and malloc_cf returns PNull with the flag clear. shape_cf_of_WfP_cf derives it from WfP_cf.
    A path is cgif's apath (YG00.v:618-623) and "every answer granted" is cgif's gflag (YG0d.v:169-170),
    which is what c-asan's AllocG.alloc_leaf gives (`exists trc, apath (mt n tr S) trc r /\ gflag trc = true`).
-   With every answer granted, the ONLY PNull path is map_more_user_cf's class-full arm (YG00cf.v:184):
+   With every answer granted, the ONLY PNull path is map_more_user_cf's class-full arm (YG00cf.v:185):
    errb_report_cf c ;; set_exh_cf c ;; ret false. The errbuf steps touch only st_secs and st_nev.
    No address. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
@@ -131,7 +132,7 @@ Definition shape_cf (S : astate) : Prop :=
 length (st_regions S) = 32%nat /\ length (st_cache S) = 32%nat /\
 (st_cache_inited S = true -> forall c, 1 <= c <= 31 -> pc_max (cache S c) = max_cached c).
 
-(* What the class-full arm tests (YG00cf.v:172-174), as a failure and as a pass. *)
+(* What the class-full arm tests (YG00cf.v:173-175), as a failure and as a pass. *)
 Definition arm_full (r : region) (c need : Z) : Prop :=
 rg_mapped_user r < rg_alloc_user r + need * class_size c /\
 kFreeArrayOffset < rg_mapped_user r + round_up (rg_alloc_user r + need * class_size c - rg_mapped_user r) kUserMapSize.

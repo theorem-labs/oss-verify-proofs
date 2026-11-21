@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN3g.v, with its module paths and addresses changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader fact; the run's segment list with the vDSO pair and the ROM robustness (sys_rob); the iovec accesses of LPS 727298f3). *)
 From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -17,6 +18,7 @@ From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.U.Reusable Require Import
 YP0m YP0e YP09 YP02 YP0l YP0k YP06 YP03 YP04.
 From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.U.Reusable Require Import YN3v YH00 YN3f.
 From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.U.Reusable Require Import YM05.
+From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require Import RomBase.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Open Scope bv_scope.
@@ -143,19 +145,38 @@ realizes segs (mkCfg (mkst (regupd regs 10 (Z_to_bv 64 0)) (v_addi pc 4) mem rom
 realizes segs (mkCfg (pend_at regs pc mem rom) model) T.
 Proof.
 intros regs pc mem rom model fd ch b0 T Hh Hlz Hno Hfdc H32 Hfd Hcnt Hb0 Hl0 Hiok Hok0 Hc.
-eapply (rz_ret_only_copyins_silent segs regs pc mem rom model [(getr regs 11, 16%nat)]
-(Z_to_bv 64 0) model T Hh Hlz); [|exact Hh|exact Hlz|exact Hc].
-intros eff. rewrite (chk66 segs) by exact Hno. rewrite Hfd, H32.
-destruct Hfdc as [Hlk Hch].
-unfold check_writev. cbn [in_mem sys_input]. rewrite Hlk, Hch, Hcnt.
+assert (Hu64 : forall rom' a v, rom_ext rom rom' ->
+ms_read_u64 (pend_at regs pc mem rom) a = Some v -> ms_read_u64 (pend_at regs pc mem rom') a = Some v).
+{ intros rom' a v Hr. unfold ms_read_u64.
+destruct (ms_read_bytes (pend_at regs pc mem rom) a (Z_to_bv 64 8)) as [bs|] eqn:E; [|discriminate].
+pose proof (ms_read_bytes_wrom (pend_at regs pc mem rom) rom' a (Z_to_bv 64 8) bs Hr E) as E'.
+change (wrom (pend_at regs pc mem rom) rom') with (pend_at regs pc mem rom') in E'.
+rewrite E'. exact (fun X => X). }
+assert (Hchk : forall rom', rom_ext rom rom' -> forall eff,
+check_syscall (sys_input segs (pend_at regs pc mem rom') (getr regs 17)) eff model
+= check_ret_only_copyins [(getr regs 11, 16%nat)] eff (Z_to_bv 64 0) model []).
+{ intros rom' Hr eff.
+pose proof (Hu64 rom' _ _ Hr Hb0) as Hb0'. pose proof (Hu64 rom' _ _ Hr Hl0) as Hl0'.
+rewrite (chk66 segs) by exact Hno. rewrite Hfd, H32.
+(* fdchan is a three-way conjunction at the revision (the channel reader); the [if w_is0 ch]
+   gate survives the reductions below and is rewritten last.  As reac-repacer/fuzz_lock's YN3g.v. *)
+destruct Hfdc as [Hlk [Hch Hcr]].
+unfold check_writev. cbn [in_mem sys_input]. rewrite Hlk, Hcnt.
 change (iovcnt32 (Z_to_bv 64 1)) with (Z_to_bv 64 1).
 unfold import_iovecs, import_iovecs_accesses. rewrite bv_eqb_refl, Hiok. cbn [negb].
-rewrite (read_iovec_entry_of (pend_at regs pc mem rom) (getr regs 11) b0 (Z_to_bv 64 0) Hb0 Hl0)
+rewrite (read_iovec_entry_of (pend_at regs pc mem rom') (getr regs 11) b0 (Z_to_bv 64 0) Hb0' Hl0')
 by (change (bv_unsigned (Z_to_bv 64 0)) with 0%Z; lia).
 change (Z.min (bv_unsigned (Z_to_bv 64 0)) MAX_RW_COUNT) with 0%Z. rewrite Hok0. cbn [negb].
 cbv zeta.
 replace (iovs_total (cap_iovecs [(b0, Z_to_bv 64 0)]) =? 0)%Z with true by reflexivity.
-reflexivity.
+rewrite Hch. cbn [negb].
+(* the copy-in ledger is now [State.iovec_entry_accesses], which reads the length word at the
+   bitvector address [a + 8]; bridge it as read_iovec_entry_of's own proof does (YP0n). *)
+unfold iovec_entry_accesses.
+rewrite !read_u64_ms, word_add_BV, Hl0', Hb0'. reflexivity. }
+apply (rz_ret_only_copyins_silent segs regs pc mem rom model [(getr regs 11, 16%nat)]
+(Z_to_bv 64 0) model T Hh Hlz (Hchk rom (rom_ext_refl rom)) Hh Hlz); [| exact Hc].
+apply (rob_pend segs). intros rom' Hr eff. rewrite (Hchk rom' Hr), (Hchk rom (rom_ext_refl rom)). reflexivity.
 Qed.
 Lemma skeleton_forget_win : forall rs i lo hi, skeleton (forget_win rs i lo hi) = skeleton rs.
 Proof.

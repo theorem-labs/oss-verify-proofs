@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: relocated from omx-clap-core/fuzz_manifest lib/A/FMsnprintfSvsni.v (a working branch 3e35620c52e) to libreac/fuzz_boxreg.asan: module paths changed; 0 address numerals relocated (port_addr_check 5033540ba83b predict mode, symbol + offset); name TfibSyms -> BoxregSyms (2x; boxreg's lib/A/AF0m.v record); re-pointed Requires: FMsnprintfShared, FMsnprintfPf, FMsnprintfSx, FMupoison -> lib.A.Rt; FMH_Base -> lib.A.Rt.SnprintfFmh. *)
+(* Modified by Theorem Labs, 2026-10: relocated from omx-clap-core/fuzz_manifest lib/A/FMsnprintfSvsni.v (a working branch) to libreac/fuzz_boxreg.asan: module paths changed; 0 address numerals relocated (port_addr_check 5033540ba83b predict mode, symbol + offset); name TfibSyms -> BoxregSyms (2x; boxreg's lib/A/AF0m.v record); re-pointed Requires: FMsnprintfShared, FMsnprintfPf, FMsnprintfSx, FMupoison -> lib.A.Rt; FMH_Base -> lib.A.Rt.SnprintfFmh. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: fm.asan's __interceptor_vsnprintf 0x458a0 over the GXA-route contract
@@ -14,7 +14,8 @@
    s1 = s3 = size, s2 = str, a0 = res; run r_fEt), whose check WRITE_RANGE (str, size) is FMsnprintfGwrcT.v's
    vsn_wr_check_srrUT; there sn_len (n - 1) T = n. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/A/Rt/FMsnprintfSvsni.v, with its module paths and module names changed; 738 of its 805 lines of code are new or changed and 864 lines of the source are left out. *)
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfSvsn.v (a working branch 3e35620c52e); relocated to libreac/fuzz_disco.asan by reloc.py (target disco-A): module paths changed; 3 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table: this file's rows in provenance/evidence/g9-gxa/g9tool/g9-table-disco-A.tsv); YImgTop zify_pre_hook added after the last Require. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfSvsn.v (a working branch); relocated to libreac/fuzz_disco.asan by reloc.py (target disco-A): module paths changed; 3 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table: this file's rows in provenance/evidence/g9-gxa/g9tool/g9-table-disco-A.tsv); YImgTop zify_pre_hook added after the last Require. *)
 (* musl vsnprintf 0x91f0c (fm.asan) over the shared contracts in their GXA-route form: FMsnprintfSx's
    sh_avsnprintf_realizesUa (and its interceptor twin) from __wrap_memset's aintrin_realizesU and the vfprintf
    interceptor's sh_avfprintf_icpt_realizesUx, proved in the kit's vocabulary (FMsnprintfSk.v sn_walkA,

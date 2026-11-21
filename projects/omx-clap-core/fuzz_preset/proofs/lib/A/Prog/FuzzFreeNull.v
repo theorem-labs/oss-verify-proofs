@@ -7,8 +7,8 @@
    journal, the return and the register conjuncts pass through unchanged. No SRr' and no wle': the text is unprimed on
    purpose (no free is called on this path, so nothing is re-hidden).
    rule 24: reuses the walk of fuzz_free (lib/A/Prog/FuzzFree.v ff_p0, a Theorem Labs lane); no new walk.
-   Inputs: lib/A/PRH_FnAlloc.v at a working branch 199ce1959e69 (blob 9bdccdc2648e); lib/A/Prog/FuzzFree.v
-   at a working branch 0a79ffff7ef4. No numeral in this file. *)
+   Inputs: lib/A/PRH_FnAlloc.v at a working branch (blob 9bdccdc2648e); lib/A/Prog/FuzzFree.v
+   at a working branch. No numeral in this file. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

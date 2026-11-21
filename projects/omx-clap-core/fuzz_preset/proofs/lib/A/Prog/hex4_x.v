@@ -2,14 +2,15 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/ex_ws_x.v, with its module names and numbers changed; 947 of its 1030 lines of code are new or changed and 793 lines of the source are left out. *)
 (* Theorem Labs, 2026-10: hex4's walk in fuzz_preset's asan image (A, A_prog_sigma AS_hex4, 220 bytes), in the cgif donor's program-walk form over YCbqG's journal layer; the table is lib/A/PAImg_prog.v's A_prog_tbl. *)
-(* Modified by Theorem Labs, 2026-10: relocated to the #102 pin A' (asan 1be0f53d, unstripped twin bff8519bbe3e) from
-   origin/cold/h-rw-pre-5-hex4m b371d41abbaa (blob c77e46e7208d). hex4 is instruction-equal on A and A' (#102
+(* Modified by Theorem Labs, 2026-10: relocated to the #102 pin A' (asan 1be0f53d, unstripped twin bff8519bbe3e)
+    (blob c77e46e7208d). hex4 is instruction-equal on A and A' (#102
    the internal file INSN-COMPARE-9e1283d1.md); alreloc frozen-c4338d099cfb8025 moved 0 numerals here. The walk's one image binding moved
    from h-verbs-1's per-function listing PI_hex4 (lib/A/PAImg_leaves.v, generated at d83eb25d, no A' twin) to the
    #102 listing of record PI_prog_A (PAImg_prog.v 505a51ff7d08): the leaves names were renamed to its names, and
    hex4_A_pc states the entry as the listing's pa_sigma, since A_TEXT of a whole-program listing is the program base
    (A_prog_base), not hex4's entry. A_OBJ 0 / A_OBJ 12 are the shadow-base GOT word / cell in every listing
-   (YC1fP.v:318-330). *)
+   (YC1fP.v:319-331). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -42,7 +43,7 @@ Remark hex4_A_got : GOT_SHADOW_A = pa_val (PAImg := PI_prog_A) (A_OBJ 0). Proof.
 Remark hex4_A_cell : SHADOW_CELL_A = pa_val (PAImg := PI_prog_A) (A_OBJ 12). Proof. vm_compute. reflexivity. Qed.
 End pcs.
 (* the short image names this walk uses (CrcBp's wrong-image trap, owner 19:2xZ; Locate in this file's context on the
-   pins102 workspace of cf6f00470c9b: lib.A.Img0.rsegs, lib.A.PAImg_prog.PI_prog_A), checked against the full paths *)
+   pins102 workspace: lib.A.Img0.rsegs, lib.A.PAImg_prog.PI_prog_A), checked against the full paths *)
 Section g. Context {rc : YM05.RunCeil}.
 Lemma hex4_x_names_guard :
   rsegs = OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A.Img0.rsegs /\

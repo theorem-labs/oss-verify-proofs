@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: node_ok has the read-only-backing conjunct (RomBase.sys_rob), with rz_silent_all for silent nodes. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -49,6 +50,7 @@ End Allo9zm.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require MmapSim.
 Import OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.SimInv OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.CatSim.ExitSim OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.CatSim OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.MmapSim OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.MmapSim.AllocSim OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.ShapeAlg.Allo9zm OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.MmapSim.WallSim.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib Require Import Acfg.
+From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib Require RomBase.
 
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -161,10 +163,14 @@ Section WithSegs.
 Variable segs : list Segment.
 
 (* [comment removed for export] *)
+(* LPS 727298f3: a node's syscall reads the same over a larger read-only backing
+   ([RomBase.sys_rob]), so a walk over the image's segments lifts to the run's list
+   ([RomStable.run_init0]); the same third conjunct as lib/ShapeAlg.node_ok. *)
 Definition node_ok (c : config) (I : Type)
     (evs : I -> list event) (nx : I -> config) : Prop :=
   (forall i, sstep_cfg segs ACFG c (evs i) (SNext (nx i)))
-  /\ (forall e st, sstep_cfg segs ACFG c e st -> exists i, e = evs i /\ st = SNext (nx i)).
+  /\ (forall e st, sstep_cfg segs ACFG c e st -> exists i, e = evs i /\ st = SNext (nx i))
+  /\ RomBase.sys_rob segs c.
 
 (* [comment removed for export] *)
 Inductive realizes : config -> TSet -> Prop :=
@@ -248,6 +254,20 @@ Proof.
       [ apply (t_alt_unit (fun _ : unit => t_emit [] T))
       | apply t_emit_nil_eq; eapply realizes_nonempty; exact Hc ].
 Qed.
+Lemma rz_silent_all : forall c (I : Type) (nx : I -> config) (T : TSet) (i0 : I),
+  node_ok c I (fun _ => []) nx ->
+  (forall i, realizes (nx i) T) ->
+  realizes c T.
+Proof.
+  intros c I nx T i0 Hnode HT.
+  assert (HT0 : T []) by (eapply realizes_nonempty; apply (HT i0)).
+  apply (rz_conseq c (t_alt (fun _ : I => t_emit [] T))).
+  - apply (rz_node c I (fun _ => []) nx (fun _ => T) i0 Hnode).
+    intros i; exact (HT i).
+  - intro tr. split.
+    + intros [i Hi]. exact (proj1 (t_emit_nil_eq T HT0 tr) Hi).
+    + intro H. exists i0. exact (proj2 (t_emit_nil_eq T HT0 tr) H).
+Qed.
 
 (* [comment removed for export] *)
 Lemma rz_emit1 : forall c c' e T,
@@ -274,13 +294,14 @@ Lemma node_instr : forall ms model ms',
   RiscvSemantics.step segs ms = MachineOk ms' ->
   node_ok (mkCfg ms model) unit (fun _ => []) (fun _ => mkCfg ms' model).
 Proof.
-  intros ms model ms' Hh Hlazy Hsvc Hstep. split.
+  intros ms model ms' Hh Hlazy Hsvc Hstep. split; [|split].
   - intros []. apply (sstep_cfg_instr segs ACFG ms model ms' model);
       [assumption | assumption |].
     rewrite (mi_account_step_no_lazy segs ms model Hlazy), Hstep. reflexivity.
   - intros e st Hss.
     destruct (sstep_instr_inv segs ms model ms' e st Hlazy Hsvc Hstep (sstep_cfg_sub segs ACFG _ _ _ Hss)) as [-> ->].
     exists tt. split; reflexivity.
+  - apply RomBase.sys_rob_instr. exact Hsvc.
 Qed.
 
 Lemma rz_step : forall ms model ms' T,
@@ -326,7 +347,7 @@ Proof.
   set (code := bv_and (ms_gpr ms 0) (Z_to_bv 64 255)).
   unfold t_exit.
   eapply (rz_emit1 (mkCfg ms model) (mkCfg ms (with_halted code model))).
-  - split.
+  - split; [|split].
     + intros []. cbn.
       replace [ExitEv code (m_fs model)]
         with ([] ++ [ExitEv code (m_fs (with_halted code model))]) by reflexivity.
@@ -340,6 +361,7 @@ Proof.
     + intros e st Hss.
       destruct (sstep_exit_inv segs ms model x8 e st Hh Hsvc Hx8 (sstep_cfg_sub segs ACFG _ _ _ Hss)) as [-> ->].
       exists tt. split; reflexivity.
+    + exact (RomBase.sys_rob_exit segs ms model x8 Hsvc Hx8).
   - apply rz_halt. cbn. discriminate.
 Qed.
 

@@ -1,4 +1,5 @@
 (* This file states or restates instruction words of the task's compiled program (third-party object code: the upstream library at its pinned commit, the C library, the sanitizer runtime and the task authors' wrapper) for use in the proofs - see NOTICE. No Anthropic licence header is applied to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (abr_other re-proved by unfolding alloc_budget_refused_b, whose allocation calls now include munmap (215)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
@@ -841,6 +842,10 @@ Lemma abr_other : forall i m,
   bv_unsigned (in_sysno i) <> 222 -> bv_unsigned (in_sysno i) <> 226 ->
   alloc_budget_refused_b i m = false.
 Proof.
-  intros i m H1 H2 H3 H4. apply alloc_budget_refused_b_outside.
-  cbn [alloc_mark_sysnos In]. intros [E|[E|[E|[E|[]]]]]; congruence.
+  intros i m H1 H2 H3 H4. unfold alloc_budget_refused_b. cbv zeta.
+  rewrite (proj2 (Z.eqb_neq _ _) H1).
+  destruct (Z.eqb (bv_unsigned (in_sysno i)) 215) eqn:E215;
+    [ reflexivity
+    | rewrite (proj2 (Z.eqb_neq _ _) H2), (proj2 (Z.eqb_neq _ _) H3),
+              (proj2 (Z.eqb_neq _ _) H4); reflexivity ].
 Qed.

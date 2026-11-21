@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ARM_drain of the ASan+UBSan walk (image B) of fuzz_reply's LLVMFuzzerTestOneInput
    over the GENERIC allocator relation ARx, its FIRST stage: the ARx twin of lib/B/W_LLVMFuzzerTestOneInput_drain_entry.v
-   (a Theorem Labs lane's, a working branch af5c712458a; NOT edited): dr_stage_entry, from the arm's entry
+   (a Theorem Labs lane's, a working branch; NOT edited): dr_stage_entry, from the arm's entry
    0x8489c through the relay_source call to the latch (both skips) or to DLK (lib/B/..._drain_defs_x.v).
    Proves no function (kind: segment walk): relay_source is cut_x's named contract RSRC_x (:348), declared below
    verbatim in place of the AR file's RSRC.
@@ -16,8 +16,9 @@
    azs_range_addressable_x; the de_ transport kit (B latch's lt_ kit) after A's lib/A/W_LLVMFuzzerTestOneInput_latch_x.v
    lt_*_x.  The stage's states DE1 / DE2 take Hpe beside cx and Hp3 beside S3.
    The Section header is cut_x's Section w header (B .. RINV), the arm's MMAX, the room round's RP / dr_cnl_pk and the
-   interface record EV : dr_env_x.  The room round (an internal work row, image A's b5892edd1cb): the cut's NP S3 (lcut_x,
+   interface record EV : dr_env_x.  The room round (an internal work row, image A): the cut's NP S3 (lcut_x,
    after LSx) is threaded from dr_stage_entry's INV_A_x to de_mk_K's INV_K_x and to DLK. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -76,7 +77,7 @@ Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 #[local] Notation VAL := (@pa_val _ fr_prog_listing PB_fr).
 #[local] Notation SIGMA := (@pa_sigma _ fr_prog_listing PB_fr).
 #[local] Notation BASE := (@pa_val _ fr_prog_listing PB_fr A_TEXT).
-(* ---- cut_x's Section w (W_LLVMFuzzerTestOneInput_cut_x.v:199-244), verbatim ---- *)
+(* ---- cut_x's Section w (W_LLVMFuzzerTestOneInput_cut_x.v:200-245), verbatim ---- *)
 Variable B : asyms.
 Variable MT : ameter_ops.
 Variables XM_LIB XN_LIB : Z -> Z.
@@ -107,7 +108,7 @@ Variable EV : dr_env_x B MT NP G_fr PST ARx LSx RINV MMAX RP dr_cnl_pk.
 Let RUN := paj_run_x_x (PL := PL_fr) (PI := PB_fr) B PST ARx LAWS G_fr HG 0 [].
 Let RUNTO := paj_run_to_x_x (PL := PL_fr) (PI := PB_fr) B PST ARx LAWS G_fr HG 0 [].
 Let BR := paj_branch (PI := PB_fr).
-(* the cut_x's relay_source contract (lib/B/W_LLVMFuzzerTestOneInput_cut_x.v:583 RSRC_x), verbatim *)
+(* the cut_x's relay_source contract (lib/B/W_LLVMFuzzerTestOneInput_cut_x.v:584 RSRC_x), verbatim *)
 Hypothesis RSRC_x : forall W ly S Hp (regs : bvmap 5 word) mem md ch T es fd,
   afn_pre_x segs B ARx RSRC_STK ly S Hp W regs mem md ch ->
   getr regs 10 = w64 fd -> 0 <= fd < 2 ^ 32 ->

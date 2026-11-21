@@ -112,7 +112,7 @@ Qed.
    reac_ports_unknownF.v introduce HSW and clear it unused). So the _on twins DROP the premise (R = none). The post
    states no shadow_rw m', so the post is unchanged. The old statements are unchanged; each follows from its twin by
    forgetting shadow_rw m. The run calls no function, so no callee region enters. Twin of image A's
-   reac_ports_unknown_c.v (a Theorem Labs lane 299b1393ee0). *)
+   reac_ports_unknown_c.v (a Theorem Labs lane). *)
 
 Definition reac_ports_unknown_contract_on : Prop :=
   forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)

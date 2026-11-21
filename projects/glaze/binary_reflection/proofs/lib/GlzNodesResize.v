@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel reader and the vDSO reservation inclusion through the resize nodes). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -262,12 +263,14 @@ Lemma long_post_sound : forall cs E fx fx' R R' M M' mdl mdl' (ret : Z) ob ok nl
   FXOK fx' ->
   AINV ((bv_unsigned p, g) :: blocks_den E live') (GPS.bcost E live' + mcost g) (GPS.bcount live' + MCNT) M' mdl' ->
   m_halted mdl' = None -> m_vm_lazy mdl' = [] -> m_vm_materialized mdl' = [] -> m_fs mdl' = m_fs mdl -> m_fds mdl' = m_fds mdl ->
+  m_channel_reader mdl' = m_channel_reader mdl ->
+  incl (vdso_reserved (m_kernel mdl') (vdso_top (m_vmmaps mdl'))) (vm_reserved (m_vmmaps mdl')) ->
   exists E', env_agree nx0 E E' /\ env_agree (nxt cs) E E' /\ m_fs mdl' = m_fs mdl /\
     cs_ok E' (str_long_post2 G cs ret ob ok (reg cs 11) nlo' nhi Alo' Ahi' oldA bnd live' kept) fx' R' M' mdl'.
 Proof using G_img_hull G_img_ceil G_ro_img UINV_agree. clear - G_img_hull G_img_ceil G_ro_img UINV_agree.
   intros cs E fx fx' R R' M M' mdl mdl' ret ob ok nlo' nhi Alo' Ahi' oldA bnd live' kept spb spk tb tk p g o n
          HC Hfresh Ho Hobjw Hobv Hn Hnv Ho0 Ho24 Hn0 Hg1 Hg8 HgAlo HgAhi Hgn Hnlo HAlo0 Hpblk Hpal Hblk NUL RD0 RD1 RD2 Hobj
-         Hdisj Hperm Hflat Hsub Hsp Hspv Hsplo Hsptop Htop Htok REL HKept Hkv Hkept Ha0 HFX' HAINV' Hh' Hlz' Hmat' Hfs' Hfds'.
+         Hdisj Hperm Hflat Hsub Hsp Hspv Hsplo Hsptop Htop Htok REL HKept Hkv Hkept Ha0 HFX' HAINV' Hh' Hlz' Hmat' Hfs' Hfds' Hrdr' Hvdso'.
   pose proof (co_regs HC) as HR. pose proof (co_know HC) as HK.
   destruct (fresh_ok_parts nx0 cs Hfresh) as (Fsr & Fkn & Fmaps & Fallow & Fbrk & Ffd & Fle).
   set (v := nxt cs) in *.
@@ -440,6 +443,9 @@ Proof using G_img_hull G_img_ceil G_ro_img UINV_agree. clear - G_img_hull G_img_
   - rewrite (sptop_den_agree v E E' (a_brk cs) Hag Fbrk). exact (co_top HC).
   - exact Hmat'.
   - eapply GPS.floor_sem_agree; [exact Hag | exact Fbrk | exact Fmaps | exact (co_floor HC)].
+  - (* co_rdr: the allocator carried the reader across the call. *)
+    rewrite Hrdr'. exact (co_rdr HC).
+  - exact Hvdso'.
 Qed.
 
 (* [comment removed for export] *)
@@ -655,8 +661,9 @@ Proof using SEGS_wr G_img_hull G_img_ceil G_ro_img SEGS_out RZ_msteps UINV_agree
       * fold g. unfold mcost in *.
         pose proof (Z.div_mod (Z.max nhi 23 + 52) 8 ltac:(lia)). pose proof (Z.mod_pos_bound (Z.max nhi 23 + 52) 8 ltac:(lia)). lia.
       * unfold GPS.bcount. lia.
+      * exact (co_vdso HC).
       * (* [comment removed for export] *)
-        intros fx' R' M' mdl' p HFX' Hkept Ha0 Hpal Hpblk Hdisj Hperm Hblk RD0' RD1' RD2' NUL Hfr Hscr Hobj' HAINV' Hh' Hlz' Hmat' Hfs' Hfds'.
+        intros fx' R' M' mdl' p HFX' Hkept Ha0 Hpal Hpblk Hdisj Hperm Hblk RD0' RD1' RD2' NUL Hfr Hscr Hobj' HAINV' Hh' Hlz' Hmat' Hfs' Hfds' Hrdr' Hvdso'.
         fold g in Hpblk, Hdisj, Hperm, Hblk, RD0', HAINV'.
         pose proof Hpblk as (Hplo & Hphi & Hpimg). unfold GlzConst.PTRLO in Hplo.
         rewrite Hobjw in RD0'. rewrite Hou in RD1', RD2', Hobj'. rewrite Hobjw in Ha0. pose proof (u64_range p) as Hpr.
@@ -713,6 +720,8 @@ Proof using SEGS_wr G_img_hull G_img_ceil G_ro_img SEGS_out RZ_msteps UINV_agree
         -- exact Hmat'.
         -- exact Hfs'.
         -- exact Hfds'.
+        -- exact Hrdr'.
+        -- exact Hvdso'.
         -- apply (Hk2 E' fx' R' M' mdl'); [split; [exact HagA | exact HagB] | exact HC' | exact Hfs'].
   - (* [comment removed for export] *)
     destruct args1 as [|a2 args2]; [discriminate|]. destruct a2 as [|dv| | | | | |]; try discriminate.
@@ -941,8 +950,9 @@ Proof using SEGS_wr G_img_hull G_img_ceil G_ro_img SEGS_out RZ_msteps UINV_agree
       * exact DST1.
       * fold g. rewrite HB. clear -Hcost Hbc' HgAhi Hgt HA1 HA2 Nhi X1. unfold mcost in *. lia.
       * clear -Hcc. unfold GPS.bcount. lia.
+      * exact (co_vdso HC).
       * (* [comment removed for export] *)
-        intros fx' R' M' mdl' p HFX' Hkept Ha0 Hpal Hpblk Hdisj Hperm Hblk RD0' RD1' RD2' NUL Hfr Hscr Hobj' HAINV' Hh' Hlz' Hmat' Hfs' Hfds'.
+        intros fx' R' M' mdl' p HFX' Hkept Ha0 Hpal Hpblk Hdisj Hperm Hblk RD0' RD1' RD2' NUL Hfr Hscr Hobj' HAINV' Hh' Hlz' Hmat' Hfs' Hfds' Hrdr' Hvdso'.
         fold g in Hpblk, Hdisj, Hperm, Hblk, RD0', HAINV'.
         pose proof Hpblk as (Hplo & Hphi & Hpimg). unfold GlzConst.PTRLO in Hplo.
         rewrite Hobjw in RD0'. rewrite Hou in RD1', RD2', Hobj'. rewrite Hobjw in Ha0. pose proof (u64_range p) as Hpr.
@@ -1015,6 +1025,8 @@ Proof using SEGS_wr G_img_hull G_img_ceil G_ro_img SEGS_out RZ_msteps UINV_agree
         -- exact Hmat'.
         -- exact Hfs'.
         -- exact Hfds'.
+        -- exact Hrdr'.
+        -- exact Hvdso'.
         -- apply (Hk2 E' fx' R' M' mdl'); [split; [exact HagA | exact HagB] | exact HC' | exact Hfs'].
 Qed.
 End Sound.

@@ -4,7 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: the fifth segment of check_reply's walk (fuzz_command.asan, 0x86d78), the
    strcmp call of the refusal path (0x86fb8) and the branch into the epilogue, ported from
    proofs/cgif/cgif_file_fuzzer/lib/A/ACh2.v (the step through a call and back) and A/ACh5.v (a segment that ends
-   in another segment's statement), at c8557374ad2e.
+   in another segment's statement).
 
    The code of the segment is
      0x86fb8  jal  wrapper_strcmp       a0 = g_rec.reply, a1 = s3 = F + 32, which holds "resp <code>"
@@ -17,9 +17,10 @@
    memory, so the engine's frame is empty and every byte the walk reads is the byte of the state the segment was
    entered in. The interceptor's own writes are the ones its contract allows, inside its scratch window below sp. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_reply_s5.v, with its module paths and module names changed; 304 of its 336 lines of code are new or changed and 380 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The program points of sup_host_setting's ASan+UBSan walk (plugin-hostd/fuzz_command, fuzz_command.asan-ubsan,
    entry BASE + AF_sup_host_setting = 0x8b53c), and what holds at each: the B re-walk of the ASan walk's
-   lib/A/Prog/sup_host_setting_s0.v (a working branch e323bbe76d2), in the same form (one statement
+   lib/A/Prog/sup_host_setting_s0.v (a working branch), in the same form (one statement
    per point of the listing, a segment lemma from each point to the next), at B's points.
 
    B's code differs from A's (a Theorem Labs lane's gen/dis/sup_host_setting.s; measured with capstone on the pin, 239
@@ -125,9 +126,9 @@ Variable MT : ameter_ops.
 #[local] Notation RHI := CMD_RHI.
 
 (* The Section hypotheses of the walk, as one record so that each segment file carries one hypothesis. The first
-   twelve are tsup_host_setting_spec's own (sup_host_setting_c.v Section e, a Theorem Labs lane 92195a003c6: every callee and
-   runtime rule taken at every FP state); the others are the walk's, with a Theorem Labs lane's names (lib/B/Prog/CmdRecFacts.v
-   on 92195a003c6, a Theorem Labs lane's 09:0xZ convention; the model is a working branch c79a9f2daf7): the
+   twelve are tsup_host_setting_spec's own (sup_host_setting_c.v Section e, a Theorem Labs lane: every callee and
+   runtime rule taken at every FP state); the others are the walk's, with a Theorem Labs lane's names (lib/B/Prog/CmdRecFacts.v,
+   a Theorem Labs lane's 09:0xZ convention; the model is a working branch): the
    per-binary allocator record HB, the trampolines' and the side-stack entries' pcs TL / TLF, the meter's laws MTL /
    MTLF, the call targets SIGP, the auipc values VHIS (a Theorem Labs lane 08:12Z), the image facts IMG (a Theorem Labs lane's
    cmd_img_facts_tfib at this image, which also gives the snprintf contract's rt_rom_view by cmd_consts_view_snp), and
@@ -164,7 +165,7 @@ Record hs_hyps : Prop := {
 Lemma hs_prog_static : TFIB_PROG_STATIC = recb_PG.
 Proof. reflexivity. Qed.
 
-(* the facts the walk names, from a Theorem Labs lane's lemmas over IMG (lib/B/Prog/CmdRec*.v on 92195a003c6) *)
+(* the facts the walk names, from a Theorem Labs lane's lemmas over IMG (lib/B/Prog/CmdRec*.v) *)
 Section hh.
 Hypothesis HH : hs_hyps.
 Let LAWS : AR_laws SEGS B := AR_laws_ok SEGS B.

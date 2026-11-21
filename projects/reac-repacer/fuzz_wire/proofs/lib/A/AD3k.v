@@ -39,7 +39,8 @@
    The walk uses the symbolic runner of AFem.v (the mapped-case Put) with first-use seeds: AFem's Section s lemmas
    assume layout_ok and AFek's sstates carry DF_fixed (NB, SB >= 4096, n_uniq_ids >= 1), false at the first Put, so
    the seeds, the loop state and the frame invariant are rebuilt here; AFem's hash_loop is ported. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/A/AD3k.v at 88154566652a (donor image sha256 61768cf4739b), with its module paths changed, A/AB1v imported for A/AWalkFw0, names TfibSyms -> WireSyms, its addresses moved to reac-repacer/fuzz_wire's ASan build and its proofs' unfolds of YImgTop.IMG_TOP (in 5 of the donor's unfold steps) removed (this unit's lib/Reusable/YImgTop.v states the image bounds as notations, fuzz_knock's lib/Reusable/YImgTop.v as definitions). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/A/AD3k.v (donor image sha256 61768cf4739b), with its module paths changed, A/AB1v imported for A/AWalkFw0, names TfibSyms -> WireSyms, its addresses moved to reac-repacer/fuzz_wire's ASan build and its proofs' unfolds of YImgTop.IMG_TOP (in 5 of the donor's unfold steps) removed (this unit's lib/Reusable/YImgTop.v states the image bounds as notations, fuzz_knock's lib/Reusable/YImgTop.v as definitions). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YImgTop.
 From Stdlib Require Import ZArith NArith List Lia Bool.

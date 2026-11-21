@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the image table counts the launch's vDSO/vvar pair: two more reserved regions, of 20 pages ([n_resx], [p_resx])). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -14,7 +15,7 @@ Open Scope Z_scope.
 
 (* [comment removed for export] *)
 Definition H0T : atable :=
-  {| img_lo := 0x10000; img_hi := 0x30e000; n_res := 4; shadow_off := 0x7fff8000;
+  {| img_lo := 0x10000; img_hi := 0x30e000; n_res := 4; n_resx := 2; p_resx := 20; shadow_off := 0x7fff8000;
      a_entry := 0xdcf48; rw_lo := 0x27b000; rw_len := 0x93000; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 10;
      x_imemset := 0; x_imemcpy := 0; x_memset := 0x2769fc; x_memcpy := 0x27647c; x_memiszero := 0;
      x_istrncpy := 0; x_sealed := 0; x_popfree := 0;

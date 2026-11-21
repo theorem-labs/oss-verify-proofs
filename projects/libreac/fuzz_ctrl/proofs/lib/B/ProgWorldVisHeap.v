@@ -1,8 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/ProgWorldVisHeap.v (a working branch
-   26edf006f53, byte-identical to a Theorem Labs lane's copy on a working branch 5c587a76cbc; re-synced to
-   a working branch 1d23ced37fd = a working branch b3abb4ad52d, where A drops its two copied _stmt
+(* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/ProgWorldVisHeap.v (a working branch,
+   byte-identical to a Theorem Labs lane's copy on a working branch; re-synced to
+   a working branch = a working branch, where A drops its two copied _stmt
    Definitions, Requires A.ProgWorld and states `A.ProgWorld.heap_vis_stmt B` / `A.ProgWorld.heap_sh_vis_stmt B`,
    which this twin already did).  What differs from A:
    - the two statements are lib.B.ProgWorld's own, `lib.B.ProgWorld.heap_vis_stmt B` /
@@ -22,6 +22,7 @@
      shadow_hull_vis (YG0d.v:430-434), over the whole block; the cover of a sub-range lies in the block's cover.
      A byte the view reads is visible: a hidden byte is masked out of mem by mrestrict and, by the world's w_Hoff,
      lies in no segment, so seg_rom has no byte for it either. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require Reusable.YK04.

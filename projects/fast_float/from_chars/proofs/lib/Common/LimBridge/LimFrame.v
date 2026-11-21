@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the SIGPIPE answer of a write to a reader-gone channel). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad.
@@ -133,7 +134,17 @@ Ltac inner_scrut s :=
   | if ?s' then _ else _ => inner_scrut s'
   | _ => s
   end.
-Ltac split_on s := let s' := inner_scrut s in destruct s' eqn:?; cbv beta iota.
+(* LPS 08b1429: [write_file_tail] takes its fault and place post-states as an
+   [option (Sys _ -> Sys _)]; destructing one leaves an opaque continuation no stepper can
+   run, so unfold its producer ([write_fault_extend], [anon_write_fault], ...) instead.
+   Keyed on the type, never on a name, so [fd_lookup]'s [option FdEntry] still destructs. *)
+Ltac unfold_opt_k s :=
+  lazymatch type of s with
+  | option (Sys _ -> Sys _) =>
+      let h := head_of s in first [ is_const h | fail 1 "producer is not a constant" ]; unfold h
+  end.
+Ltac split_on s := let s' := inner_scrut s in
+  first [ unfold_opt_k s' | destruct s' eqn:?; cbv beta iota ].
 
 Ltac lrel_red := autorewrite with relim.
 
@@ -209,6 +220,17 @@ Ltac lrel_open :=
   end.
 Ltac lrel_go := repeat first [ lrel_step | progress lrel_red | lrel_unfold | lrel_open ].
 
+(* [raise_sigpipe] (LPS 08b1429) branches on the SIGPIPE disposition and mask, so a
+   [modify raise_sigpipe] keeps the limit only after case analysis. Keyed on that one
+   function: a blind case split over every [modify] explodes on the large model updates. *)
+Ltac lim_fin_pre :=
+  lazymatch goal with
+  | |- context[LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.ReadWrite.raise_sigpipe _] =>
+      unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Fs.ReadWrite.raise_sigpipe;
+      repeat match goal with |- context[if ?c then _ else _] => destruct c end;
+      reflexivity
+  end.
+
 Ltac lpres_step :=
   lazymatch goal with
   | |- lpres (pure _) => apply lpres_pure
@@ -223,8 +245,8 @@ Ltac lpres_step :=
   | |- lpres get_vmmaps => apply lpres_get_vmmaps
   | |- lpres (alt _ _) => apply lpres_alt
   | |- lpres (bind _ _) => apply lpres_bind; [| intros ?x]
-  | |- lpres (modify _) => apply lpres_modify; intros ?m; reflexivity
-  | |- lpres (fun _ m o => o = Ok _ _ _) => apply lpres_raw_modify; intros ?m; reflexivity
+  | |- lpres (modify _) => apply lpres_modify; intros ?m; first [ reflexivity | lim_fin_pre ]
+  | |- lpres (fun _ m o => o = Ok _ _ _) => apply lpres_raw_modify; intros ?m; first [ reflexivity | lim_fin_pre ]
   | |- lpres (match ?s with _ => _ end) => split_on s
   | |- lpres (if ?s then _ else _) => split_on s
   | |- lpres (let _ := _ in _) => cbv zeta

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO's mappings and steps): changed nodeV. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -697,7 +698,7 @@ idx = res ->
 at_N Wy md1 WIN (PSR Wy SH2 R) S_V Wy c1 -> AI tfibsegs (w_H Wy) (w_A Wy) (cfg_model c1) ->
 (forall m m' : word -> option byte, (forall x : word, ~ QR (bv_unsigned x) -> m' x = m x) -> R m -> R m') ->
 amwf (cfg_model c1) ->
-vm_reserved (m_vmmaps (cfg_model c1)) = segments_reserved tfibsegs ->
+(exists rx : list (word * word), vm_reserved (m_vmmaps (cfg_model c1)) = segments_reserved tfibsegs ++ rx /\ Forall (al_rx_ok ly) rx /\ (length rx <= 2)%nat) ->
 (forall sg, In sg tfibsegs -> 4096 <= Z.of_N (seg_base sg) /\ Z.of_N (seg_base sg) + Z.of_N (seg_size sg) <= kImgEnd) ->
 In (wiv (Qb, kPtrArrayResv)) (vm_maps (m_vmmaps (cfg_model c1))) ->
 eager_used (cfg_model c1) + A_bytes (w_A Wy) + 2 ^ 19 <= vm_limit (m_vmmaps (cfg_model c1)) ->
@@ -749,9 +750,13 @@ assert (CEILT : bv_unsigned (w64 QSv) + page_round_up_Z 131072 <= alloc_top (m_v
 assert (PLACE : region_free (vm_reserved (m_vmmaps mdN)) (w64 QSv) (Z_to_bv 64 (page_round_up_Z 131072)) = true /\
 map_contains (vm_maps (m_vmmaps mdN)) (w64 QSv) (Z_to_bv 64 (page_round_up_Z 131072)) = true).
 { rewrite pru17. split.
-- rewrite RSV. pose proof high_facts as (_ & _ & _ & _ & _ & _ & _ & _ & F9z & _).
+- destruct RSV as (rx & Erx & Frx & _). rewrite Erx, YG0h.region_free_app. apply andb_true_intro. split.
++ pose proof high_facts as (_ & _ & _ & _ & _ & _ & _ & _ & F9z & _).
 apply (tfib_region_free_reserved QSv 131072); [clear; zlia | clear - F9 F10 Q5 E1; ceil; unfold ASAN_CEIL, kPtrArrayResv in *; try unfold Qb in *; zlia |].
 clear - F9z F9 Q5 E1. unfold zone3, zone3cases, TFIB_IMG_LO, TFIB_IMG_END, kLowShadowBeg, kHighMemBeg, kPtrArrayResv in *. try unfold Qb in *. zlia.
++ apply YG0h.region_free_intro. intros e He. pose proof (proj1 (Forall_forall _ _) Frx e He) as (_ & _ & _ & _ & _ & _ & ZD & _).
+unfold zdisjoint in ZD. cbn [fst snd] in ZD. unfold YG0h.uw. fold (w64 131072). rewrite UQS, Un.
+clear - ZD F9 Q5. unfold kPtrArrayResv in *. try unfold Qb in *. zlia.
 - apply (YA09.map_contains_intro _ (w64 QSv) (w64 131072) (w64 Qb) (w64 kPtrArrayResv) INQ);
 unfold w64; rewrite !unsigned_lit_small by (clear - F9 F10 Q5 E1; ceil; unfold zone3, TFIB_IMG_LO, kLowShadowBeg, kHighMemBeg, ASAN_CEIL, kPtrArrayResv in *; try unfold Qb in *; zlia);
 clear - Q5 E1 Heq F9; unfold kPtrArrayResv in *; try unfold Qb in *; zlia. }

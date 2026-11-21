@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the proofs of the interceptor site results stated in lib/A/PresetD1preAx.v
-(* Theorem Labs, 2026-10-29: relocated image A (asan d83eb25d, twin f0d2e8d4) -> A' (#102 1be0f53d, twin bff8519b) by alreloc frozen-0474699fc83547e0 (a working branch 83209f9d9cd8): zero-shadow end 0x20f40 -> 0x20f60 (A' AF0m Tfib_zero_shadow), its decimal twin 134976 -> 135008; BY HAND the derived quotient (135008 - 65536) / 8 = 8684 (was 8680); the hull bound 0x20e00 KEPT (a chosen bound below the zero-shadow end, 0x20e00 <= 0x20f60, every caller's p + n <= 0x20cc4 on A': AE3i.v img_ro_chunks), so its quotient 16831 stays. *)
+(* Theorem Labs, 2026-10-29: relocated image A (asan d83eb25d, twin f0d2e8d4) -> A' (#102 1be0f53d, twin bff8519b) by alreloc frozen-0474699fc83547e0 (a working branch): zero-shadow end 0x20f40 -> 0x20f60 (A' AF0m Tfib_zero_shadow), its decimal twin 134976 -> 135008; BY HAND the derived quotient (135008 - 65536) / 8 = 8684 (was 8680); the hull bound 0x20e00 KEPT (a chosen bound below the zero-shadow end, 0x20e00 <= 0x20f60, every caller's p + n <= 0x20cc4 on A': AE3i.v img_ro_chunks), so its quotient 16831 stays. *)
    (fuzz_preset, asan image), ported from the core's lib/A (relocated from proofs/cgif/cgif_file_fuzzer/lib/A):
      icpt_pre_facts_cf / icpt_pre_room_cf                     from AD1k.v:191-206;
      rodata_zero_shadow_cf / rodata_hull_zero_cf / rodata_shadow_facts_cf   from AD1k.v:207-234 (over the regenerated
@@ -14,6 +14,7 @@
    The interceptor walks are the ARcf copies AE2xcf / AE2tcf / AE2ucf / AE2vcf / AE2wcf (port/cfcopy.py, rule 24: a
    port of the released walks) at a8's AR_laws_ok_cf. The AR-free image facts are AD1k.v's / AD1l.v's, cited.
    Rule 24: no function is proved here (composition / driver layer of a port). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -169,7 +170,7 @@ Qed.
 (* AD1k.v:273-311. *)
 Lemma tfib_fwrite_site_cf_sec : (forall H m, AE2p.stderr_written (mrestrict H m) -> est H m) -> fwrite_site_tfa_cf B est.
 Proof.
-intros ESTW ly S W regs mem md E p len msg T HPRE G10 G11 G12 G13 Hlen Hlen1 Hp1 Hp2 Hhole Himg HIMG Hfd HAI HPOST.
+intros ESTW ly S W regs mem md E p len msg T HPRE G10 G11 G12 G13 Hlen Hlen1 Hp1 Hp2 Hhole Himg HIMG Hfd Hcr HAI HPOST.
 pose proof (icpt_pre_facts_cf ly S W regs mem md HPRE) as (HEPRE & Hslo & Hwin & Hpres). pose proof (proj1 HEPRE) as HAR.
 pose proof (img_facts E _ HIMG) as ([IR1a IR1b] & IR2 & IR3 & Vcan).
 pose proof asan_consts as (C1 & C2 & C3 & C4 & C5).
@@ -197,7 +198,9 @@ unfold stderr_fields, AE2p.stderr_fields, AE2p.F_STDERR, AE2pcf.F_STDERR. repeat
 - left. unfold kLowMemEnd. lia.
 - exact (proj1 (rodata_shadow_facts_cf ly S W mem md p len HAR ltac:(unfold YImgTop.IMG_LO; lia) ltac:(lia) ltac:(lia))).
 - exact (proj2 (rodata_shadow_facts_cf ly S W mem md p len HAR ltac:(unfold YImgTop.IMG_LO; lia) ltac:(lia) ltac:(lia))).
-- split; [exact Hfd | reflexivity].
+(* [fdchan]'s third conjunct at LPS 727298f3 is the model's channel reader, which the site takes beside the
+   descriptor (as the core's AD1k.v). *)
+- split; [exact Hfd | split; [reflexivity | exact Hcr]].
 - exact HAI.
 - intros regs' mem' md' HAR' HP' Hsbm' Ha0' HFW' Hfr' Hpr' HAI'.
 apply (HPOST regs' mem' md' HAR' HP' Hsbm' Ha0').
@@ -210,7 +213,7 @@ Qed.
 (* AD1k.v:314-345. *)
 Lemma tfib_refused_site_cf_sec : (forall H m, AE3h.stderr_after_vfprintf (mrestrict H m) -> est H m) -> refused_site_tfa_cf B est.
 Proof.
-intros ESTV ly S W regs mem md E T HPRE G10 G11 G12 HIMG Hfd HAI HPOST.
+intros ESTV ly S W regs mem md E T HPRE G10 G11 G12 HIMG Hfd Hcr HAI HPOST.
 pose proof (icpt_pre_facts_cf ly S W regs mem md HPRE) as (HEPRE & Hslo & Hwin & Hpres). pose proof (proj1 HEPRE) as HAR.
 pose proof (img_facts E _ HIMG) as (IR1 & IR2 & IR3 & Vcan).
 pose proof asan_consts as (C1 & C2 & C3 & C4 & C5). pose proof msg_refused_eq as [ME ML].
@@ -230,7 +233,7 @@ unfold stderr_fields, AE2p.stderr_fields, AE2p.F_STDERR, AE2pcf.F_STDERR. repeat
 - exact (u64_range (sv_denot E (SOff 41 0))).
 - exact (ro_img_of_IMG E _ HIMG).
 - apply (rodata_hull_zero_cf ly S W mem md); [exact HAR | unfold YImgTop.IMG_LO, AE3lcf.FMT_refused; lia | unfold AE3lcf.FMT_refused; lia | lia].
-- split; [exact Hfd | reflexivity].
+- split; [exact Hfd | split; [reflexivity | exact Hcr]].
 - exact HAI.
 - intros regs' mem' md' HAR' HP' Hsbm' Ha0' HFW' Hfr' Hpr' HAI'.
 apply (HPOST regs' mem' md' HAR' HP' Hsbm').
@@ -243,7 +246,7 @@ Qed.
 
 (* AD1l.v:99-146: the common body of the three fprintf %s sites. *)
 Local Ltac fps_site_cf ESTV FPE THM LITS FMTV :=
-intros ly S W regs mem md E s str T HPRE G10 G11 G12 Hlen Hnn Hs1 Hs2 HBr Htail HIMG Hfd HAI HPOST;
+intros ly S W regs mem md E s str T HPRE G10 G11 G12 Hlen Hnn Hs1 Hs2 HBr Htail HIMG Hfd Hcr HAI HPOST;
 change (cfg_at tfibsegs A_icpt_fprintf regs mem md) with (cfg_at tfibsegs FPE regs mem md);
 pose proof (icpt_pre_facts_cf ly S W regs mem md HPRE) as (HEPRE & Hslo & Hwin & Hpres); pose proof (proj1 HEPRE) as HAR;
 pose proof HPRE as (_ & _ & _ & _ & _ & _ & _ & Hshi & _);
@@ -280,7 +283,7 @@ unfold stderr_fields, AE2p.stderr_fields, AE2p.F_STDERR, AE2pcf.F_STDERR; repeat
 | exact (u64_range (sv_denot E (SOff 41 0)))
 | exact (ro_img_of_IMG E _ HIMG)
 | apply (rodata_hull_zero_cf ly S W mem md); [exact HAR | unfold YImgTop.IMG_LO, FMTV; lia | unfold FMTV; lia | lia]
-| split; [exact Hfd | reflexivity]
+| split; [exact Hfd | split; [reflexivity | exact Hcr]]
 | exact HAI
 | intros regs' mem' md' HAR' HP' Hsbm' Ha0' HFW' Hfr' Hpr' HAI';
 apply (HPOST regs' mem' md' HAR' HP' Hsbm');

@@ -7,7 +7,7 @@
    Sources. refuse is reac_segconf.c:30-48: refused++; n_refusals >= 8 returns; dst = c->refusal[n]
    (c + 0x2e88 + 200 n); where = c->reading[0] ? c->reading : "reac-pw.conf"; k = snprintf(dst, 200,
    line > 0 ? "%s:%d: " : "%s: ", where[, line]); (unsigned) k > 199 returns; vsnprintf(dst + k, 200 - k, fmt, ap);
-   n_refusals++. The arguments are those of the plain walk of refuse (lib/Prog/refuse.v at commit db8c4beebf62:
+   n_refusals++. The arguments are those of the plain walk of refuse (lib/Prog/refuse.v:
    enc_refd, enc_kept, reading_facts,
    where_facts, dec_len10, fmt_addr_facts, KP_facts, refuse_kept, refuse_formats_ok, fmt_byte_n),
    restated here over readers and pure lists. The written bytes of a struct are read back as a list through

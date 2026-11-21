@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the call chain `gch` taken from proofs/cgif/cgif_file_fuzzer/lib/A/ACf5.v's `rt_ch`, with fuzz_grant's module paths, for the phases of libreac/fuzz_grant's entry function LLVMFuzzerTestOneInput; the rest of the file is new. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_grant/lib/A/Prog/GrantEntryDefs.v, with its module paths changed; 265 of its 330 lines of code are new or changed and 295 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* The walk of fuzz_pcap's entry function LLVMFuzzerTestOneInput (0x807c8, listing offset
    AF_LLVMFuzzerTestOneInput = 0x90) on the ASan build of libreac v1.9.0, cut into phases:
@@ -61,7 +62,7 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Prog Require pcap_source_struct_next
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Prog.Slot Require PWalk.
 (* The allocation-trace universe and its per-site facts. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.A Require ACej ACejSites.
-(* The journal with program-global ranges (W_journal.v, by path from fuzz_reply's lib/A/W_journal.v at commit 6328acea202). *)
+(* The journal with program-global ranges (W_journal.v, by path from fuzz_reply's lib/A/W_journal.v). *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.A Require Import W_journal.
 (* cgif's trivial meter, the one the closing side instantiates (donor AD1q.v:50 LIBX with XL0 XL0). *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YCbp.
@@ -232,7 +233,7 @@ Definition PP_K12r : Z := Eval compute in ((Symbols.Asan.s_LLVMFuzzerTestOneInpu
 Definition PP_leave : Z := Eval compute in ((Symbols.Asan.s_LLVMFuzzerTestOneInput + 0x96c) - Symbols.Asan.s_libreac_fuzz_fopen)%Z.   (* 0x81134, the frame is given back; the early return lands here *)
 Definition PP_ret : Z := Eval compute in ((Symbols.Asan.s_LLVMFuzzerTestOneInput + 0xa4c) - Symbols.Asan.s_libreac_fuzz_fopen)%Z.     (* 0x81214, the `ret`                                        *)
 Definition PP_abort : Z := Eval compute in ((Symbols.Asan.s_LLVMFuzzerTestOneInput + 0xb78) - Symbols.Asan.s_libreac_fuzz_fopen)%Z.   (* 0x81340, __asan_handle_no_return, then abort 0x81344       *)
-(* The 17 walks (a Theorem Labs lane's stage list, slot_lscps.v (sha256 15a609daf420; internal record) at 6954866e3be, at the v1.9.0 pcs):
+(* The 17 walks (a Theorem Labs lane's stage list, slot_lscps.v (sha256 15a609daf420; internal record), at the v1.9.0 pcs):
      entry   the first slot: ENTRY (size < 2^26) or EARLY, no instruction
      E       PP_entry -> __asan_stack_malloc_1 0x80838 -> malloc 0x80940 -> PP_K1
      EARLY   PP_entry -> __asan_stack_malloc_1 0x80838 -> PP_early -> PP_leave -> PP_ret

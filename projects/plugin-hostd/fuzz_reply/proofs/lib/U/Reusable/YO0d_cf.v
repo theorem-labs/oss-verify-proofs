@@ -312,34 +312,34 @@ Proof using.
   cbn in Hok, Hrm. destruct Hrm as [Hroom _]. unfold canswer04, canswer.
   destruct q as [|np| |ln|ln|pg|rr ln|mr mol mnl|p]; cbn [charged] in Hroom, Hx; cbn in Hk, Hok |- *.
   - destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hb). destruct Hx as [_ [Hsv _]].
-    destruct ((proj2 Hn) e (SNext c2) Hs) as (i & He & E). injection E as ->.
+    destruct ((proj1 (proj2 Hn)) e (SNext c2) Hs) as (i & He & E). injection E as ->.
     split; [exact He|]. exists (bit i). split; [exact (Hb i)|]. split; [apply Hc | rewrite (Hsv e (nx i) Hs); exact HV1].
   - destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hbits & _). destruct Hx as [_ [Hsv _]].
-    destruct ((proj2 Hn) e (SNext c2) Hs) as (i & He & E). injection E as ->.
+    destruct ((proj1 (proj2 Hn)) e (SNext c2) Hs) as (i & He & E). injection E as ->.
     split; [exact He|]. exists (bit i). split; [exact (Hbits i)|]. split; [apply Hc | rewrite (Hsv e (nx i) Hs); exact HV1].
   - destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hb). destruct Hx as [_ [Hsv _]].
-    destruct ((proj2 Hn) e (SNext c2) Hs) as (i & He & E). injection E as ->.
+    destruct ((proj1 (proj2 Hn)) e (SNext c2) Hs) as (i & He & E). injection E as ->.
     split; [exact He|]. exists (bit i). split; [exact (Hb i)|]. split; [apply Hc | rewrite (Hsv e (nx i) Hs); exact HV1].
   - destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hbits & H1). destruct Hok as [G _]. destruct Hx as [Hnr [Hsv _]].
     assert (NR : ~ budget_refused_at segs c1) by (apply Hnr; intros _; rewrite HV1; apply Hroom; reflexivity).
     assert (Hall : forall i, bit i = 1) by (destruct (H1 G) as [Hall | Hcut]; [exact Hall | contradiction]).
-    destruct ((proj2 Hn) e (SNext c2) Hs) as (i & He & E). injection E as ->.
+    destruct ((proj1 (proj2 Hn)) e (SNext c2) Hs) as (i & He & E). injection E as ->.
     split; [exact He|]. exists (bit i). split; [exact (Hall i)|]. split; [apply Hc | rewrite (Hsv e (nx i) Hs); exact HV1].
   - destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hbits & H1). destruct Hok as [G _]. destruct Hx as [Hnr [Hsv _]].
     assert (NR : ~ budget_refused_at segs c1) by (apply Hnr; intros E; discriminate E).
     assert (Hall : forall i, bit i = 1) by (destruct (H1 G) as [Hall | Hcut]; [exact Hall | contradiction]).
-    destruct ((proj2 Hn) e (SNext c2) Hs) as (i & He & E). injection E as ->.
+    destruct ((proj1 (proj2 Hn)) e (SNext c2) Hs) as (i & He & E). injection E as ->.
     split; [exact He|]. exists (bit i). split; [exact (Hall i)|]. split; [apply Hc | rewrite (Hsv e (nx i) Hs); exact HV1].
   - destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hbits & H1). destruct Hok as [G _]. destruct Hx as [Hnr [Hsv _]].
     assert (NR : ~ budget_refused_at segs c1) by (apply Hnr; intros _; rewrite HV1; apply Hroom; reflexivity).
     assert (Hall : forall i, bit i = 1) by (destruct (H1 G) as [Hall | Hcut]; [exact Hall | contradiction]).
-    destruct ((proj2 Hn) e (SNext c2) Hs) as (i & He & E). injection E as ->.
+    destruct ((proj1 (proj2 Hn)) e (SNext c2) Hs) as (i & He & E). injection E as ->.
     split; [exact He|]. exists (bit i). split; [exact (Hall i)|]. split; [apply Hc | rewrite (Hsv e (nx i) Hs); exact HV1].
   - destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hb). destruct Hx as [_ [Hsv _]].
-    destruct ((proj2 Hn) e (SNext c2) Hs) as (i & He & E). injection E as ->.
+    destruct ((proj1 (proj2 Hn)) e (SNext c2) Hs) as (i & He & E). injection E as ->.
     split; [exact He|]. exists (bit i). split; [exact (Hb i)|]. split; [apply Hc | rewrite (Hsv e (nx i) Hs); exact HV1].
   - destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hbits & _). destruct Hx as [_ [Hsv _]].
-    destruct ((proj2 Hn) e (SNext c2) Hs) as (i & He & E). injection E as ->.
+    destruct ((proj1 (proj2 Hn)) e (SNext c2) Hs) as (i & He & E). injection E as ->.
     split; [exact He|]. exists (bit i). split; [exact (Hbits i)|]. split; [apply Hc | rewrite (Hsv e (nx i) Hs); exact HV1].
   - exfalso. exact (HJ p eq_refl).
 Qed.
@@ -407,39 +407,39 @@ Proof using.
   cbn in Hg, Hrm. destruct Hrm as [Hroom _].
   destruct q as [|np| |ln|ln|pg|rr ln|mr mol mnl|p]; cbn [charged] in Hroom, Hx; cbn in Hk, Hg.
   - destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hb). destruct Hx as [_ [Hsv _]].
-    destruct ((proj2 Hn) e (SNext c2) Hs) as (i & He & E). injection E as ->.
+    destruct ((proj1 (proj2 Hn)) e (SNext c2) Hs) as (i & He & E). injection E as ->.
     pose proof (Hc i) as Hci. rewrite (Hb i) in Hci.
     split; [exact He|]. split; [exact Hci | rewrite (Hsv e (nx i) Hs); exact HV1].
   - destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hbits & H1). destruct Hg as [G _]. destruct Hx as [Hnr [Hsv _]].
     assert (NR : ~ budget_refused_at segs c1) by (apply Hnr; intros _; rewrite HV1; apply Hroom; reflexivity).
     assert (Hall : forall i, bit i = 1) by (destruct (H1 G) as [Hall | Hcut]; [exact Hall | contradiction]).
-    destruct ((proj2 Hn) e (SNext c2) Hs) as (i & He & E). injection E as ->.
+    destruct ((proj1 (proj2 Hn)) e (SNext c2) Hs) as (i & He & E). injection E as ->.
     pose proof (Hc i) as Hci. rewrite (Hall i) in Hci.
     split; [exact He|]. split; [exact Hci | rewrite (Hsv e (nx i) Hs); exact HV1].
   - destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hb). destruct Hx as [_ [Hsv _]].
-    destruct ((proj2 Hn) e (SNext c2) Hs) as (i & He & E). injection E as ->.
+    destruct ((proj1 (proj2 Hn)) e (SNext c2) Hs) as (i & He & E). injection E as ->.
     pose proof (Hc i) as Hci. rewrite (Hb i) in Hci.
     split; [exact He|]. split; [exact Hci | rewrite (Hsv e (nx i) Hs); exact HV1].
   - destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hbits & H1). destruct Hg as [G _]. destruct Hx as [Hnr [Hsv _]].
     assert (NR : ~ budget_refused_at segs c1) by (apply Hnr; intros _; rewrite HV1; apply Hroom; reflexivity).
     assert (Hall : forall i, bit i = 1) by (destruct (H1 G) as [Hall | Hcut]; [exact Hall | contradiction]).
-    destruct ((proj2 Hn) e (SNext c2) Hs) as (i & He & E). injection E as ->.
+    destruct ((proj1 (proj2 Hn)) e (SNext c2) Hs) as (i & He & E). injection E as ->.
     pose proof (Hc i) as Hci. rewrite (Hall i) in Hci.
     split; [exact He|]. split; [exact Hci | rewrite (Hsv e (nx i) Hs); exact HV1].
   - destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hbits & H1). destruct Hg as [G _]. destruct Hx as [Hnr [Hsv _]].
     assert (NR : ~ budget_refused_at segs c1) by (apply Hnr; intros E; discriminate E).
     assert (Hall : forall i, bit i = 1) by (destruct (H1 G) as [Hall | Hcut]; [exact Hall | contradiction]).
-    destruct ((proj2 Hn) e (SNext c2) Hs) as (i & He & E). injection E as ->.
+    destruct ((proj1 (proj2 Hn)) e (SNext c2) Hs) as (i & He & E). injection E as ->.
     pose proof (Hc i) as Hci. rewrite (Hall i) in Hci.
     split; [exact He|]. split; [exact Hci | rewrite (Hsv e (nx i) Hs); exact HV1].
   - destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hbits & H1). destruct Hg as [G _]. destruct Hx as [Hnr [Hsv _]].
     assert (NR : ~ budget_refused_at segs c1) by (apply Hnr; intros _; rewrite HV1; apply Hroom; reflexivity).
     assert (Hall : forall i, bit i = 1) by (destruct (H1 G) as [Hall | Hcut]; [exact Hall | contradiction]).
-    destruct ((proj2 Hn) e (SNext c2) Hs) as (i & He & E). injection E as ->.
+    destruct ((proj1 (proj2 Hn)) e (SNext c2) Hs) as (i & He & E). injection E as ->.
     pose proof (Hc i) as Hci. rewrite (Hall i) in Hci.
     split; [exact He|]. split; [exact Hci | rewrite (Hsv e (nx i) Hs); exact HV1].
   - destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hb). destruct Hx as [_ [Hsv _]].
-    destruct ((proj2 Hn) e (SNext c2) Hs) as (i & He & E). injection E as ->.
+    destruct ((proj1 (proj2 Hn)) e (SNext c2) Hs) as (i & He & E). injection E as ->.
     pose proof (Hc i) as Hci. rewrite (Hb i) in Hci.
     split; [exact He|]. split; [exact Hci | rewrite (Hsv e (nx i) Hs); exact HV1].
   - destruct Hg as [G _]. destruct G.

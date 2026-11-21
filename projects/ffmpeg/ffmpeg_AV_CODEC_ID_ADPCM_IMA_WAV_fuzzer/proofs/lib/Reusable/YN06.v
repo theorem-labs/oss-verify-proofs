@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN06.v, with its module paths, addresses and numbers changed. *)
 (* Modified by Trevor Hansen, 2026-11: copied from projects/zlib/checksum_fuzzer/proofs/lib/Reusable/YN06.v for ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer, with its module paths changed, and its addresses and numbers named by Reusable/YAddr.v, which holds this fuzz target's plain binary's values; musl's vmlock, which this binary's __vm_wait reads and zlib's binary does not link, added to the static memory the proofs track, and the proofs extended to it. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (free's munmap continuation keeps the region on a refused munmap; lg_rfree). *)
 From OSSVerify.Proofs.ffmpeg.ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -559,7 +560,7 @@ end.
 Lemma free_K_shape :
 free_K (mi, A') = match mi with
 | None => IRet (tt, A')
-| Some (k, l) => IAsk (KMunmap k l) A' (fun _ => IRet (tt, Af))
+| Some (k, l) => IAsk (KMunmap k l) A' (fun z => if negb (z =? 0) then IRet (tt, Af) else IRet (tt, A'))
 end.
 Proof. unfold free_K, Af. cbn [fst snd]. destruct mi as [[k l]|]; reflexivity. Qed.
 Lemma Af_same : st_metas Af = st_metas A' /\ st_areas Af = st_areas A /\ st_meta_alloc_shift Af = st_meta_alloc_shift A /\
@@ -672,6 +673,9 @@ split; rewrite ?ER, ?EL, ?EN; try apply LG.
 - intros k rg0 off Hk0. rewrite ER in Hk0. exact (lg_noaccess _ _ _ _ LG k rg0 off Hk0).
 - rewrite K2. exact (lg_brk _ _ _ _ LG).
 - intros k rg0 Hk0. rewrite ER in Hk0. exact (lg_placed _ _ _ _ LG k rg0 Hk0).
+(* 08b1429: lg_rfree, LAST in the record; same shape as the lg_maps bullet above, because
+   [rewrite ?ER] cannot reach [region_of A' k] under the binder. *)
+- intros k rg0 Hk0. rewrite ER in Hk0. exact (lg_rfree _ _ _ _ LG k rg0 Hk0).
 Qed.
 Lemma ledger_f : ledger_ok B1 L Af mdf /\ ledger_x L Af mdf /\
 m_halted mdf = None /\ m_vm_lazy mdf = [] /\ m_vm_materialized mdf = [] /\ (exists vm', mdf = with_vmmaps vm' md).
@@ -898,7 +902,7 @@ Qed.
 Lemma tail_some k l : mi = Some (k, l) ->
 SR src0segs (mkCfg (mkst regs2 (Z_to_bv 64 FREE_AFTER_NT) mem2 (seg_rom src0segs)) md)
 (fun c3 => knode src0segs c3 (KMunmap k l) A'
-(fun z c4 => mreal src0segs c4 (IRet (tt, Af)) (free_leaf B1 (MRx B1) L A regs mem md p (fr_n fr)))).
+(fun z c4 => mreal src0segs c4 (if negb (z =? 0) then IRet (tt, Af) else IRet (tt, A')) (free_leaf B1 (MRx B1) L A regs mem md p (fr_n fr)))).
 Proof.
 intros Hmi. destruct st_ok_after as (err & Herr & HS). pose proof (XRA err Herr) as XRA'.
 destruct (mc_md _ _ _ _ _ M) as (Hh & Hlz & Hmat). pose proof PRE as (_ & _ & HB & Hret & Hal & Hceil & Hsp63 & Hstk & Htp & Herrw & _).

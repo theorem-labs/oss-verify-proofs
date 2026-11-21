@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise is a section hypothesis of Tail2, passed to ref_exit_Z and of_segF). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -29,7 +30,7 @@ Ltac close_exit HR HK P0 Hh Hlazy sp0 :=
     [ | cbn [W map];
         replace (bv_and (Z_to_bv 64 2) (Z_to_bv 64 255)) with (exit_code 2) by (apply bv_eq; reflexivity);
         apply t_eq_sym; apply t_emit_nil_exit ];
-    apply ref_exit_Z;
+    apply ref_exit_Z; [ | assumption ];
     let Ktid := fresh "Ktid" in
     pose proof (know_nth segs _ _ kn ltac:(let i := kidx kn (is_krange (EVar 5)) in exact i) _ HK eq_refl)
       as Ktid; cbn [kentry_ok edenot ev ENV] in Ktid;
@@ -75,6 +76,8 @@ Section Tail2.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  (* 08b1429: a write to a channel without a reader is SIGPIPE; init_model seeds the reader and no step writes it *)
+  Hypothesis Hrdr : m_channel_reader model = true.
 
   Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
   Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
@@ -123,6 +126,7 @@ Section Tail2.
     - reflexivity.
     - reflexivity.
     - exact Hfd2.
+    - exact Hrdr.
     - exact Hh.
     - exact Hlazy.
     - apply t_exit_has_nil.
@@ -189,6 +193,7 @@ Section Tail2.
       replace (17 + length path)%nat with (17 + length path)%nat by lia. exact B80.
     - cbn [edenot]. exact Hnl.
     - exact Hfd2.
+    - exact Hrdr.
     - exact Hh.
     - exact Hlazy.
     - apply t_exit_has_nil.
@@ -251,6 +256,7 @@ Section Tail2.
       replace (bv_unsigned sp0 + -560)%Z with (bv_unsigned sp0 + -560)%Z by lia. exact Hb.
     - reflexivity.
     - exact Hfd2.
+    - exact Hrdr.
     - exact Hh.
     - exact Hlazy.
     - apply t_exit_has_nil.
@@ -330,6 +336,7 @@ Section Tail2.
       replace (bv_unsigned sp0 + -560)%Z with (bv_unsigned sp0 + -560)%Z by lia. exact H17.
     - cbn [edenot ev ENV PX]. rewrite P2. exact Hsrc.
     - exact Hfd2.
+    - exact Hrdr.
     - exact Hh.
     - exact Hlazy.
     - apply t_emit_has_nil.
@@ -419,7 +426,7 @@ Section Tail2.
       try eassumption; try lia.
     intros vals' R' M' HL' Q0 Q2 Q113 HR' HK' Hstr'.
     destruct (Z.le_gt_cases (Z.of_nat (length path)) 62) as [Hle | Hgt].
-    - eapply (of_segF sp0 BL model Hvsp Hh Hlazy Hfd2 path pp _ vals'); try eassumption; lia.
+    - eapply (of_segF sp0 BL model Hvsp Hh Hlazy Hfd2 Hrdr path pp _ vals'); try eassumption; lia.
     - destruct (Z.le_gt_cases (Z.of_nat (length path)) 63) as [Hle2 | Hgt2].
       + assert (E63 : Z.of_nat (length path) = 63%Z) by lia. rewrite E63 in Q113.
         eapply (of_segF_gen sp0 BL model Hvsp Hh Hlazy path pp 63 _ vals'); try eassumption; try lia.

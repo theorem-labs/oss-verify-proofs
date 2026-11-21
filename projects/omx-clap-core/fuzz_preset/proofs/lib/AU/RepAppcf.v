@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/RepAppcf.v (commit 4d286b2e618d, file sha256 84ac1337edea) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 11 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 2 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepAppcf.v (commit f01d79f3fb5, cf refill round 3; file sha256 3cc245387f4a) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 10 image addresses moved by function pairs the comparison kit cmpkit 86da41d3ef68 calls the same code except at the by-hand acceptances named below (strictcmp3 65688e94214a, by funcpair_reply 6963bc4a94fc on the cgif twin ce511d541cda; 8 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair; 1 pair(s) carry a BY-HAND acceptance (the internal file accept.tsv, re-measured each run): _ZN11__sanitizer17GetNamedMappingFdEPKcmPi+0x90 (lui-in-section: CONSTANT)), and 6 pcs named in comments; 4 hand maps (the internal file resolve-run-f01d79f3fb5.tsv, each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/RepAppcf.v (file sha256 84ac1337edea) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 11 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 2 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepAppcf.v (cf refill round 3; file sha256 3cc245387f4a) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 10 image addresses moved by function pairs the comparison kit cmpkit 86da41d3ef68 calls the same code except at the by-hand acceptances named below (strictcmp3 65688e94214a, by funcpair_reply 6963bc4a94fc on the cgif twin ce511d541cda; 8 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair; 1 pair(s) carry a BY-HAND acceptance (the internal file accept.tsv, re-measured each run): _ZN11__sanitizer17GetNamedMappingFdEPKcmPi+0x90 (lui-in-section: CONSTANT)), and 6 pcs named in comments; 4 hand maps (the internal file resolve-run.tsv, each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* Theorem Labs, 2026-10-30 (a prior worker, slice F4 of a Theorem Labs lane's class-full report walk):
    __asan::AppendToErrorMessageBuffer (0x55df8) of cgif_file_fuzzer's asan-ubsan image (pin 1c29845fe605)
-   realizes the model step errb_append_cf (YG00cf.v:133).  The statement proved here is
+   realizes the model step errb_append_cf (YG00cf.v:134).  The statement proved here is
    RepIFcf.append_spec_cf, which this file never edits.
    rule 24: proves function __asan::AppendToErrorMessageBuffer (reuse search: ossv proof index v5 built
    2026-10-30T01:54:20Z and 02:28:20Z over main / ossv/recipes / ossv/candidates /
@@ -56,11 +57,11 @@ Hypothesis errb_map_fits_cf :
   layout_ok ly -> img_cover ly -> TfibSyms B -> ly_tsd ly = TFIB_TSD ->
   ARcf tfibsegs B ly S Hp W mem md -> xs_mapped_cf ly S md -> qloose S -> cf_hull_ok S ->
   0 < nZ -> nZ mod kPage = 0 -> nZ <= cf_nob ->
-  (exists a, grant_ok_na_pin md a nZ = true) /\
+  (exists a, grant_ok_na_pin (Z_to_bv 64 0) md a nZ = true) /\
   eager_used md + A_bytes (w_A W) + nZ <= vm_limit (m_vmmaps md).
 
-(* The form the mmap node wants (YF05.v:149 anon_node, through YK13.v:239
-   grant_na_pin_not_grant_refusable): at the errbuf map the kernel's refusal is impossible.  The guard on
+(* The form the mmap node wants (YF05.v anon_node, through YK13.grant_na_pin_not_grant_refusable, at the
+   mmap call's NULL hint): at the errbuf map the kernel's refusal is impossible.  The guard on
    [mat] is necessary: vm_backing_used counts the materialized pages too (YK04.v:525), so a long enough
    materialized list refuses any size; every [mat] the invariant AI admits is within A_bytes (w_A W). *)
 Lemma errb_map_not_refusable :
@@ -70,13 +71,14 @@ Lemma errb_map_not_refusable :
   ARcf tfibsegs B ly S Hp W mem md -> xs_mapped_cf ly S md -> qloose S -> cf_hull_ok S ->
   0 < nZ -> nZ mod kPage = 0 -> nZ <= cf_nob ->
   Z.of_nat (length mat) * page_size <= A_bytes (w_A W) ->
-  mmap_grant_refusable (Z_to_bv 64 34) (with_vm_backing (m_vm_lazy md) mat md) nZ = false.
+  mmap_grant_refusable (Z_to_bv 64 34) (Z_to_bv 64 0) (with_vm_backing (m_vm_lazy md) mat md) nZ = false.
 Proof.
 intros Hp ly S W mem md mat nZ LY IMG TS TSD AR XM QL HT Hpos Hal Hnob Hmat.
 destruct (errb_map_fits_cf Hp ly S W mem md nZ LY IMG TS TSD AR XM QL HT Hpos Hal Hnob) as [[a Ha] Hroom].
 assert (Hvm : m_vmmaps (with_vm_backing (m_vm_lazy md) mat md) = m_vmmaps md) by apply m_vmmaps_wvb.
-apply (grant_na_pin_not_grant_refusable _ _ a).
-- unfold grant_ok_na_pin in Ha |- *. rewrite Hvm. exact Ha.
+apply (grant_na_pin_not_grant_refusable _ _ _ a).
+- (* [grant_ok_na_pin] reads m_vmmaps and m_kernel, which with_vm_backing keeps by computation. *)
+  exact Ha.
 - unfold mmap_noreserve_backed_ok.
   replace (mmap_noreserve_b (Z_to_bv 64 34)) with false by (vm_compute; reflexivity).
   cbv iota. apply Z.leb_le. rewrite vm_backing_used_split, Hvm.
@@ -88,7 +90,7 @@ Qed.
 
 (* --------------------------------------------------------------------------------------------------------- *)
 (* The image words the walk's callees branch on, out of the relation rather than out of the image: every one
-   of them is an as_const cell (TfibSyms' ts_const pins as_const to Tfib_const, YF0m.v:90-170), and ARcf's
+   of them is an as_const cell (TfibSyms' ts_const pins as_const to Tfib_const, YF0m.v:91-171), and ARcf's
    ARmcf field amc_const says each holds. *)
 Lemma rep_cell_lit :
   forall (Hp : list Z) (ly : alayout) (S : astate) (W : world tfibsegs) (mem : word -> option byte)
@@ -185,7 +187,7 @@ Qed.
 (* --------------------------------------------------------------------------------------------------------- *)
 (* Every size the append maps is within cf_nob, so errb_map_fits_cf applies at each of the (at most two)
    maps: the first map asks ERRB_INIT = 65536, and a growing map asks the new size, which the call's room
-   premise bounds.  round_up w kPage <= w + kPage is YG06bcf.v:330's RU. *)
+   premise bounds.  round_up w kPage <= w + kPage is YG06bcf.v:331's RU. *)
 Lemma rep_round_le : forall w, 0 < w -> round_up w kPage <= w + kPage.
 Proof.
 intros w Hw. pose proof (round_up_ge w kPage ltac:(unfold kPage; lia)) as [[_ R2] _]. lia.
@@ -206,10 +208,10 @@ pose proof (rep_round_le len Hl) as R2. split; lia.
 Qed.
 
 (* --------------------------------------------------------------------------------------------------------- *)
-(* The model step, reduced to the shape the walk meets it in.  errb_map_cf (YG00cf.v:122-127) is a single
-   refusable ask whose granted answer is a pure state step, and errb_append_cf (YG00cf.v:133-143) is one of
+(* The model step, reduced to the shape the walk meets it in.  errb_map_cf (YG00cf.v:123-128) is a single
+   refusable ask whose granted answer is a pure state step, and errb_append_cf (YG00cf.v:134-144) is one of
    three trees according to the two booleans the machine itself branches on.  Written without naming the
-   event counter: errb_frame (YG06bcf.v:67) says only st_secs and the counter moved. *)
+   event counter: errb_frame (YG06bcf.v:68) says only st_secs and the counter moved. *)
 Lemma rep_map_ask : forall (want : Z) (S : astate),
   exists (snap S1 : astate) (k : Z -> itree astate (unit * astate)),
   errb_map_cf want S = IAsk (KMmapSec (round_up want kPage)) snap k /\

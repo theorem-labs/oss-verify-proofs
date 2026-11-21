@@ -14,7 +14,7 @@ Open Scope Z_scope.
 (* Footprint twin of reac_braid_encode_exact_contract (crt_braid_need.v, entry REAC_BRAID_ENCODE, frame
    REAC_BRAID_ENCODE_FRAME), and reac_braid_encode_exact_contract_of_F, which gives the plain contract back at the
    footprint RNG_all. A relocation of the fuzz_ctrl A statement (proofs/libreac/fuzz_ctrl/lib/A/Prog/
-   reac_braid_encode_exact_c.v of a working branch, commit 8359926e36b), in the form of image B's statement: RNG
+   reac_braid_encode_exact_c.v of a working branch), in the form of image B's statement: RNG
    is the first binder, then the premises of the plain contract unchanged, then one rng premise per region the run
    reads or writes, then evtF in place of evt. The regions: the image span [YImgTop.IMG_LO, YImgTop.IMG_TOP), which holds the three
    words of the image that the run reads (the GOT cell GOT_CELL_K and the runtime cell CELL_K that hold the shadow

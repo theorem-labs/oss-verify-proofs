@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC1f.v, the walk library over fuzz_command's listing: module paths, csym, the malloc/free trampolines' names, the image's end 0x606000. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/Prog/CmdPaLib.v (origin/ossv/recipes 501c0d516c69) for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths; csym -> ssym; the trampolines CS___interceptor_trampoline_free/malloc -> SS_...; the listing modules Cmd* -> Seg*; the image's end 0x606000 -> YG0f.kImgEnd (0x601000). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/Prog/CmdPaLib.v for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths; csym -> ssym; the trampolines CS___interceptor_trampoline_free/malloc -> SS_...; the listing modules Cmd* -> Seg*; the image's end 0x606000 -> YG0f.kImgEnd (0x601000). *)
 (* Modified by Theorem Labs, 2026-10: copied from lib/A/Prog/SegPaLib.v for fuzz_segconf.asan-ubsan: module paths. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

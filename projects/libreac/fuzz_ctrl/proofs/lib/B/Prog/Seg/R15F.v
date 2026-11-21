@@ -4,13 +4,14 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names, addresses and numbers changed; 844 of its 926 lines of code are new or changed and 929 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/R13.v, with its module paths, module names, addresses and numbers changed; 33 of its 66 lines of code are new or changed and 893 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Provenance (route (a) bridge input, lead 22:18Z; auditor a Theorem Labs lane):
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
-   source runs: lib/B/Prog/Seg/R15.v r15_evt at a working branch 3803efccea0
+   source runs: lib/B/Prog/Seg/R15.v r15_evt at a working branch
      (blob 196bc0cc6cc4beb1e84291399ce9b65a8fb7ca44);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    compare: r15_evt_of_F (evtF_evt + the lib.Lib -> UL msteps bridge) re-derives the source statement, and
      r15_evt_src_check : r15_evt_stmt := R15.r15_evt checks by conversion that r15_evt_stmt IS that statement. *)
 (* rule 24: no function proved. *)
@@ -67,7 +68,7 @@ Qed.
 
 (* ---- compare: the source statement, re-derived from r15_evt_F ----
    The library engine's steps lift into the UL engine: the two msteps are the same relation on the same step
-   function (A3.v:87-94). *)
+   function (A3.v:88-95). *)
 
 Lemma r15_lib_msteps : forall s s', msteps rsegs s s' -> UE.msteps rsegs s s'.
 Proof.

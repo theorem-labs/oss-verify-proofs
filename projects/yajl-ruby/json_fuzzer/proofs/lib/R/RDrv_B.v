@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launchT context; the entry-block bounds read from BASE's RIMG_ok; argv pointers from ed_top and the exec name, with argv_cstring's new bounds; open_spec's TASK_SIZE premise discharged from the entry block; the stack window from usp0 - 6,144,513 in place of the 8 MiB below sp). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -64,6 +65,7 @@ End RC__0.
 
 Section B.
   Context {RC__ : OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Lib.RunCeiling.RunCeiling}.
+  Context {LT : launchT}.
   Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw) (arg0 arg1 : list byte) (TID : Z)
             (PAD : list byte) (S4 S5 S6 S7 S8 S9 S10 S11 : word).
   Hypothesis VSP : valid_sp sp0.
@@ -81,7 +83,6 @@ Section B.
   Notation usp0 := (bv_unsigned sp0).
   Notation gpv := (Z_to_bv 64 0x10800).
   Notation tpv := (Z_to_bv 64 RATP).
-  Notation IMGB := (build_stack_bytes rph sp0 argv envp uid hw rnd).
   Notation LO' := (LO sp0).
   Notation BASE' := (BASE sp0 argv envp uid hw rnd TID).
   Notation FRAME' mm := (MFRAME sp0 argv mm PAD S7 S6 S5 S4).
@@ -104,7 +105,7 @@ Section B.
   (* [comment removed for export] *)
   Lemma rz_fprintf_exit : forall (d : diag_msg) G (s : PState) (LB : list block) mo
       x1 t0 t1 t2 x9 (a1v a2v : word) x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 t3 t4 t5 t6 (F : bvmap 5 word) (fc : bv 32) (mm : mem),
-    diag_args d mm a1v a2v (usp0 - 8388608) (usp0 - 128) ->
+    diag_args d mm a1v a2v (usp0 - 6144513) (usp0 - 128) ->
     Forall (fun p => zlength p + INTERNAL_BUFSIZ <= WRITEV_MAX) (diag_pieces d) ->
     BASE' mm -> HKG G s LB mm mo -> frm0 fc ->
     realizes_cfg acfg rsegs (mkCfg (GST 0x13734 x1 t0 t1 t2 x9 (Z_to_bv 64 0x24a00) a1v a2v x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 t3 t4 t5 t6 F fc mm) mo)
@@ -117,7 +118,7 @@ Section B.
     destruct (di_ssp HKG DI _ _ _ _ _ HKx) as [SSP1 SSP2]. unfold RGOT_SSP, RSSP_GUARD in SSP1, SSP2.
     rz_seg Hh Hl. zstep. apply evt_done.
     unfold TDIE.
-    eapply (rz_fprintf_diag d) with (lo := usp0 - 8388608) (canary := rc_guard) (st := s);
+    eapply (rz_fprintf_diag d) with (lo := usp0 - 6144513) (canary := rc_guard) (st := s);
       [ apply TEXIT2_nil | exact Hmi | exact Hh
       | apply stderr_wfile0_wfile; exact SE | reflexivity
       | rewrite unsigned_lit by lia; replace (usp0 + -128) with (usp0 - 128) by lia; exact DA
@@ -128,7 +129,7 @@ Section B.
     rewrite !unsigned_lit in MUc by lia. rewrite !unsigned_lit in ST2 by lia.
     replace (ret_pc (Z_to_bv 64 0x13738)) with (Z_to_bv 64 0x13738) by (symmetry; rpc).
     pose proof (agree_on_of_munch _ _ _ MUc WMc) as AG.
-    assert (OUT2 : forall a, (0x10000 <= a < 0x56000 /\ ~ (0x24a00 <= a < 0x24a00 + 232)) -> (fun a0 : Z => outside [(usp0 - 8388608, usp0 + -128); (0x24a00, 0x24a00 + 232)] a0) a).
+    assert (OUT2 : forall a, (0x10000 <= a < 0x56000 /\ ~ (0x24a00 <= a < 0x24a00 + 232)) -> (fun a0 : Z => outside [(usp0 - 6144513, usp0 + -128); (0x24a00, 0x24a00 + 232)] a0) a).
     { intros a Ha. cbn. lia. }
     assert (HK2 : HKG G s LB m2 mo).
     { eapply (di_frame HKG DI); [exact HKx| exact MUc| exact WMc|].
@@ -184,7 +185,7 @@ Section B.
   (* [comment removed for export] *)
   Lemma rz_after_open_err : forall mo (t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 : word) (fc : bv 32) (mm : mem) (P1v : Z) (errv : word),
     FRAME' mm -> BASE' mm -> HK ps0 [] mm mo -> rw_cells rsegs mm RERRNO [C4 errv] -> frm0 fc -> m_fs mo = FS0 ->
-    nth_error (argv_ptrs sp0 argv envp) 1 = Some (Z_to_bv 64 P1v) -> 0 <= P1v < 2^64 ->
+    nth_error (argv_ptrs (ed_top rnd) argv envp L_EXECFN) 1 = Some (Z_to_bv 64 P1v) -> 0 <= P1v < 2^64 ->
     realizes_cfg acfg rsegs (mkCfg (GST 0x13514 (Z_to_bv 64 0x13514) t0 t1 t2 (Z_to_bv 64 2) (Z_to_bv 64 (-1)) a1 a2 a3 a4 a5 a6 a7
                                 (Z_to_bv 64 P1v) (Z_to_bv 64 (envp_addr sp0 argv)) S4 S5 S6 S7 t3 t4 t5 t6 bvmap_empty fc mm) mo)
              (TDIE (pieces_cannot_open (map bv_unsigned arg1)) stdout_init FS0).
@@ -197,8 +198,8 @@ Section B.
     assert (A1NN : ~ In (Z_to_bv 8 0) arg1) by (rewrite EARGV in NONUL; inversion NONUL as [|? ? ? X]; inversion X; assumption).
     assert (A1LEN : Z.of_nat (length arg1) <= 131071) by (rewrite EARGV in ARGLEN; inversion ARGLEN as [|? ? ? X]; inversion X; assumption).
     destruct (argv_cstring sp0 argv envp uid hw rnd mm IMG 1 arg1 ltac:(rewrite EARGV; reflexivity) ltac:(clear -SF; Z.div_mod_to_equations; lia))
-      as (p1 & slack1 & HP1' & P1LO & P1HI & STR1 & SLK1). unfold str_base, struct_size, argc, envc in P1LO.
-    pose proof (bytes_at_bound _ _ _ _ IMG) as IMGBD.
+      as (p1 & slack1 & HP1' & P1LO & P1HI & STR1 & SLK1 & TOP1).
+    pose proof (bytes_at_bound _ _ _ _ (proj1 IMG)) as IMGBD.
     assert (EP : p1 = P1v).
     { rewrite HP1 in HP1'. assert (E : bv_unsigned (Z_to_bv 64 P1v) = bv_unsigned (Z_to_bv 64 p1)) by congruence.
       rewrite !unsigned_lit in E by lia. lia. }
@@ -237,7 +238,7 @@ Section B.
     zstep. if_cases K0; zify_cond K0; try (exfalso; rewrite ?unsigned_lit in K0 by lia; lia). clear K0.
     zstep. zstep. zstep. zstep. apply evt_done.
     (* [comment removed for export] *)
-    eapply (di_mallocX HKG DI (G_fdfs (m_fds mo1) FS0) (frame_ok_G_fdfs _ _)) with (lo := usp0 - 8388608) (B := usp0) (s := ps0) (LB := []) (n := 65536);
+    eapply (di_mallocX HKG DI (G_fdfs (m_fds mo1) FS0) (frame_ok_G_fdfs _ _)) with (lo := usp0 - 6144513) (B := usp0) (s := ps0) (LB := []) (n := 65536);
       try reflexivity.
     all: unfold RATP; rewrite ?(unsigned_lit 0x34d40) by lia; rewrite ?(unsigned_lit (usp0 + -128)) by lia.
     - exact KL0.
@@ -286,7 +287,7 @@ Section B.
   Lemma after_open_facts : forall mo1 (a : sret) (mm m1 : mem) (fc : bv 32) (P1v : Z) stg,
     FRAME' mm -> BASE' mm -> HK ps0 [] mm MO -> RSTG mm stg ->
     munch [(bv_unsigned (Z_to_bv 64 (usp0 + -128)) - 112, bv_unsigned (Z_to_bv 64 (usp0 + -128))); (errno_addr tpv, errno_addr tpv + 4)]%Z mm m1 ->
-    wmono rsegs mm m1 -> mem_inv rsegs m1 -> stk rsegs m1 (usp0 - 8388608) (bv_unsigned (Z_to_bv 64 (usp0 + -128))) ->
+    wmono rsegs mm m1 -> mem_inv rsegs m1 -> stk rsegs m1 (usp0 - 6144513) (bv_unsigned (Z_to_bv 64 (usp0 + -128))) ->
     (exists n rsp evs, nstep (NOpen arg1) MO rsp mo1 evs /\ lazy_free_node (NOpen arg1) /\ n = NOpen arg1) -> m_vmmaps mo1 = m_vmmaps MO ->
     m_fs mo1 = m_fs MO ->
     FRAME' m1 /\ BASE' m1 /\ HK ps0 [] m1 mo1 /\ RSTG m1 stg.
@@ -313,7 +314,7 @@ Section B.
     FRAME' mm -> BASE' mm -> HK ps0 [] mm MO -> rw_cells rsegs mm RERRNO [C4 (Z_to_bv 64 0)] -> RSTG mm (repeat (Z_to_bv 8 0) (Z.to_nat STAGE)) -> frm0 fc ->
     (forall ent, KLOOP ent []) ->
     (forall ent s mo ms P1v, open_classify arg1 MO = OcMay ent ->
-        nth_error (argv_ptrs sp0 argv envp) 1 = Some (Z_to_bv 64 P1v) -> 0 <= P1v < 2^64 ->
+        nth_error (argv_ptrs (ed_top rnd) argv envp L_EXECFN) 1 = Some (Z_to_bv 64 P1v) -> 0 <= P1v < 2^64 ->
         RDINV 3 P1v ent 65536 [] s mo ms -> realizes_cfg acfg rsegs (mkCfg ms mo) (KLOOP ent)) ->
     realizes_cfg acfg rsegs
       (mkCfg (MS (mkR (Z_to_bv 64 0x17048) (Z_to_bv 64 (usp0 + -128)) gpv tpv t0 t1 t2
@@ -333,7 +334,7 @@ Section B.
     destruct (di_ssp HKG DI _ _ _ _ _ HK0) as [G1 G2]. unfold RGOT_SSP, RSSP_GUARD in G1, G2.
     (* [comment removed for export] *)
     destruct (argv_cstring sp0 argv envp uid hw rnd mm IMG 1 arg1 ltac:(rewrite EARGV; reflexivity) ltac:(clear -SF; Z.div_mod_to_equations; lia))
-      as (P1v & slack1 & HP1 & P1LO & P1HI & STR1 & SLK1). unfold str_base, struct_size, argc, envc in P1LO.
+      as (P1v & slack1 & HP1 & P1LO & P1HI & STR1 & SLK1 & TOP1).
     destruct (stack_pieces sp0 argv envp uid hw rnd mm IMG) as (_ & ARGVP & _).
     assert (A1NN : ~ In (Z_to_bv 8 0) arg1) by (rewrite EARGV in NONUL; inversion NONUL as [|? ? ? X]; inversion X; assumption).
     assert (A1LEN : Z.of_nat (length arg1) <= 131071) by (rewrite EARGV in ARGLEN; inversion ARGLEN as [|? ? ? X]; inversion X; assumption).
@@ -341,7 +342,7 @@ Section B.
     assert (STR1' : bytes_at rsegs mm P1v (arg1 ++ [Z_to_bv 8 0])).
     { change (arg1 ++ Z_to_bv 8 0 :: slack1) with (arg1 ++ ([Z_to_bv 8 0] ++ slack1)) in STR1. rewrite app_assoc in STR1. apply bytes_at_app in STR1. destruct STR1 as [S1 _]. exact S1. }
     rz_seg Hh Hl.
-    pose proof (u64ro_read mm (usp0 + 8) (argv_ptrs sp0 argv envp ++ [Z_to_bv 64 0]) 1 (Z_to_bv 64 P1v) (Z_to_bv 64 (usp0 + 16))
+    pose proof (u64ro_read mm (usp0 + 8) (argv_ptrs (ed_top rnd) argv envp L_EXECFN ++ [Z_to_bv 64 0]) 1 (Z_to_bv 64 P1v) (Z_to_bv 64 (usp0 + 16))
                   ARGVP ltac:(rewrite nth_error_app1 by (rewrite argv_ptrs_length, EARGV; cbn; lia); exact HP1) ltac:(lia) ltac:(unfold wa; f_equal; lia)) as RD.
     zstep. clear RD. zstep. zstep. zstep.
     apply evt_done.
@@ -349,7 +350,7 @@ Section B.
     pose proof (open_spec (Z_to_bv 64 0x13514) (Z_to_bv 64 (usp0 + -128)) gpv tpv t0 t1 t2 (Z_to_bv 64 2) (Z_to_bv 64 2)
                   (Z_to_bv 64 P1v) (Z_to_bv 64 0) (Z_to_bv 64 (envp_addr sp0 argv)) a3 a4 a5 a6 a7
                   (Z_to_bv 64 P1v) (Z_to_bv 64 (envp_addr sp0 argv)) S4 S5 S6 S7 S8 S9 S10 S11 t3 t4 t5 t6 bvmap_empty fc mm
-                  arg1 (Z_to_bv 64 0) rc_guard (usp0 - 8388608)) as IMO.
+                  arg1 (Z_to_bv 64 0) rc_guard (usp0 - 6144513)) as IMO.
     specialize (IMO ltac:(rewrite (unsigned_lit (usp0 + -128)) by lia; exact ST)
                     ltac:(rewrite (unsigned_lit P1v) by lia; exact STR1')
                     ltac:(unfold RATP; rewrite (unsigned_lit 0x34d40) by lia; exact ERR)
@@ -357,6 +358,8 @@ Section B.
     specialize (IMO ltac:(rewrite (unsigned_lit (usp0 + -128)) by lia; lia)).
     do 6 (specialize (IMO ltac:(unfold RATP, RF_syscalls.got_ssp, RF_syscalls.ssp_guard; rewrite ?(unsigned_lit 0x34d40) by lia; rewrite ?(unsigned_lit (usp0 + -128)) by lia; rewrite ?(unsigned_lit P1v) by lia; lia))).
     specialize (IMO ltac:(unfold RATP; rewrite ?(unsigned_lit 0x34d40) by lia; lia)).
+    (* LPS 08b1429: the path is an argv string on the stack, below TASK_SIZE *)
+    specialize (IMO ltac:(rewrite ?(unsigned_lit P1v) by lia; unfold TASK_SIZE; pose proof (bytes_at_bound _ _ _ _ (proj1 IMG)); lia)).
     destruct (open_classify arg1 MO) as [e|ent] eqn:OC.
     - (* [comment removed for export] *)
       eapply (rz_open_errno arg1 e _ _ MO); [exact IMO | exact Hmi | exact Hh | apply TDIE_nil | exact OC |].
@@ -370,7 +373,7 @@ Section B.
       { reflexivity. }
       { reflexivity. }
       unfold RATP in ERR1. rewrite ?(unsigned_lit 0x34d40) in ERR1 by lia. change (0x34d40 + -164) with RERRNO in ERR1.
-      eapply (rz_after_open_err MO); [exact FR1 | exact BA1 | exact HK1 | exact ERR1 | exact FRM | exact MOFS | exact HP1 | pose proof (bytes_at_bound _ _ _ _ IMG); lia].
+      eapply (rz_after_open_err MO); [exact FR1 | exact BA1 | exact HK1 | exact ERR1 | exact FRM | exact MOFS | exact HP1 | pose proof (bytes_at_bound _ _ _ _ (proj1 IMG)); lia].
     - (* [comment removed for export] *)
       eapply (rz_open_may arg1 ent _ _ MO); [exact IMO | exact Hmi | exact Hh | apply TDIE_nil | apply KL0 | exact OC | | | |].
       + rewrite MOFD. exact MOFD3.
@@ -385,7 +388,7 @@ Section B.
         { reflexivity. }
         { reflexivity. }
         unfold RATP in ERR1. rewrite ?(unsigned_lit 0x34d40) in ERR1 by lia. change (0x34d40 + -164) with RERRNO in ERR1.
-        eapply (rz_after_open_err MO); [exact FR1 | exact BA1 | exact HK1 | exact ERR1 | exact FRM | exact MOFS | exact HP1 | pose proof (bytes_at_bound _ _ _ _ IMG); lia].
+        eapply (rz_after_open_err MO); [exact FR1 | exact BA1 | exact HK1 | exact ERR1 | exact FRM | exact MOFS | exact HP1 | pose proof (bytes_at_bound _ _ _ _ (proj1 IMG)); lia].
       + intros ms' rsp evs Hst PO Hmi1. rewrite MOFD in *. rewrite (unsigned_lit 3) in PO by lia.
         destruct PO as (u0 & u1 & u2 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & u3 & u4 & u5 & u6 & m1 & -> & MUc & WMc & MI1 & ST1 & ERR1 & _ & _ & _ & _).
         cbn [open_ret open_errno] in *.

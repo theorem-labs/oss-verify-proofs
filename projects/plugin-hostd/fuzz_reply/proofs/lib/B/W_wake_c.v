@@ -15,6 +15,7 @@
    The post: a journal at G = [] (wake writes no global and no block; its fake frame is taken and released inside, so
    own = []), the callee-saved registers, the live blocks, the presence of every present IMAGE byte, g_wake[1] still -1,
    and errno's view (which the journal's image clause leaves out).  Frame 64 bytes, the stack allocator's scratch below it: WK_STK = 64 + ASTACK (the kit's RA_STK term). *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

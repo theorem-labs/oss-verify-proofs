@@ -1,7 +1,7 @@
-INPUTS USED by port_addr_check.py --git $HUB --src c8557374ad2e:proofs/cgif/cgif_file_fuzzer/lib/A --dst $PLANT/A-plant --src-image A=$IMG/cgif.A.pin:$IMG/cgif.A.twin --dst-image A=$IMG/cmd.A.pin:$IMG/cmd.A.twin --donors-from $BIN --cache cache --paired-only --summary --fail-on-flags --out full.tsv --include AB1v.v --include ACeg.v --include AE6k.v --include AE7d.v --dst-include AB1v.v --dst-include ACeg.v --dst-include AE6k.v --dst-include AE7d.v
+INPUTS USED by port_addr_check.py --git $HUB:proofs/cgif/cgif_file_fuzzer/lib/A --dst $PLANT/A-plant --src-image A=$IMG/cgif.A.pin:$IMG/cgif.A.twin --dst-image A=$IMG/cmd.A.pin:$IMG/cmd.A.twin --donors-from $BIN --cache cache --paired-only --summary --fail-on-flags --out full.tsv --include AB1v.v --include ACeg.v --include AE6k.v --include AE7d.v --dst-include AB1v.v --dst-include ACeg.v --dst-include AE6k.v --dst-include AE7d.v
   image src A  $IMG/cgif.A.pin  sha256 7093581aab04  589640 bytes  symbols: symtab of cgif.A.twin 488e39500746
   image dst A  $IMG/cmd.A.pin  sha256 c0661b96b5bd  634904 bytes  symbols: symtab of cmd.A.twin 68db792d5fa7
-  ref src  c8557374ad2e:proofs/cgif/cgif_file_fuzzer/lib/A  -> c8557374ad2e6c079948f0813d37e31638d1c0d1  (git $HUB)
+  ref src:proofs/cgif/cgif_file_fuzzer/lib/A  ->  (git $HUB)
   ref dst  $PLANT/A-plant  -> local path
   count symbols of src A: 1996
   count symbols of dst A: 2256

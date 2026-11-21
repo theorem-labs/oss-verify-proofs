@@ -1,17 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YEvtSRr.v, with its module paths changed; 16 of its 47 lines of code are new or changed and 91 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_boxreg/lib/A/FMbz_bridge.v at origin/ossv/recipes f26f9fbd8777; module paths changed (boxreg's lib.Lib modules as pin's lib.Lib modules); moved from lib/A/FMbz_bridge.v to lib/A/Rt/FMbz_bridge.v, and the Requires of the moved files follow; the comments are boxreg's, verbatim, and name fuzz_boxreg.asan's addresses. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_boxreg/lib/A/FMbz_bridge.v; module paths changed (boxreg's lib.Lib modules as pin's lib.Lib modules); moved from lib/A/FMbz_bridge.v to lib/A/Rt/FMbz_bridge.v, and the Requires of the moved files follow; the comments are boxreg's, verbatim, and name fuzz_boxreg.asan's addresses. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The generic half of the bridge between a body walk written over the machine state alone
    (lib/A/Bz: `evt asegs Q ms`, that is "some step chain from ms reaches a state in Q") and the
    donor's call-site form (`SRr segs W (cfg_at segs pc regs mem md) POST`).
 
    Three facts make it one short file:
-   - the two trees name the same image: `asegs = tfibsegs` by reflexivity (FMbz_str.v:26);
-   - the two step relations are the same relation: Bz `mstep` (lib/A/Bz/Lib/Exec.v:16) is
+   - the two trees name the same image: `asegs = tfibsegs` by reflexivity (FMbz_str.v:27);
+   - the two step relations are the same relation: Bz `mstep` (lib/A/Bz/Lib/Exec.v:17) is
      `ms_svc_pending ms = None /\ RiscvSemantics.step segs ms = MachineOk ms'`, which is what each
      step of the donor's `msteps` (lib/Reusable/YK0i.v:284-290) asks;
-   - the donor already lifts its own `msteps` into `SRr` (`SRr_msteps`, lib/Reusable/YA0n.v:148),
+   - the donor already lifts its own `msteps` into `SRr` (`SRr_msteps`, lib/Reusable/YA0n.v:149),
      and the donor's own walks of library code use it that way (cgif_file A/AE6x.v:190).
 
    The shadow half of the bridge (chk_ok from the donor's range facts) is RtStr's, in FMbz_str.v. *)

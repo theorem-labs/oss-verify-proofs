@@ -7,13 +7,14 @@
    build (lib/A). The [Apache-2.0 OR MIT] text is used under Apache-2.0. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_name_seg10.v, with its module paths and module names changed; 2634 of its 2686 lines of code are new or changed and 608 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_parse_value.v, with its module paths, module names, addresses and numbers changed; 233 of its 329 lines of code are new or changed and 2590 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs program part, lane ENTRY, IMAGE B (fs.asan-ubsan, pinned 5ac5ce0954f8), segments S0 + S1 (+ the dead S1') of the
    LLVMFuzzerTestOneInput walk (fs.asan-ubsan 0x80f8c-0x80ff8, the B twin of lib/A/FSW_entry_s01.v): fe_seg01, from the
    entry configuration to the resume after __asan_stack_malloc_0 (lib/B/FSW_entry_defs.v ss_B2 / INV_B2), in the form
    fe_enter; with A's lemma names and argument order, every numeral image B's own (B listing
    dis_fsB/LLVMFuzzerTestOneInput.fuzz_state.asan-ubsan.s), no CTX / trace premise.
    rule 24: proves function LLVMFuzzerTestOneInput (segment S01; reuse search: proof-index LLVMFuzzerTestOneInput,
-   ported from a working branch 08ad70da3bf).
+   ported from a working branch).
    - 0x80f8c-0x80fc0: sp -= 96, `sd zero, 0(sp)`, the eleven saves at s0 - 8 .. s0 - 88, s0 := the entry sp;
    - 0x80fc4-0x80ff0: `andi sp, sp, -32` (sp = s1 = fe_sp1), s3 := a1, s4 := a0, s6 := the shadow base (GOT 0x9fc10),
      a2 := the use-after-return flag (GOT 0x9fc68 -> 0xa8440, which holds 1 by AR_const_law at tl_got_uar /
@@ -32,8 +33,8 @@
    Tfib_code names), each discharged by the top file from the goal's premises (lib/B/FSW_entry_link.v fe_tl_* /
    fe_api_env / fe_model_laws and YCeg.tl_code over YCeg.TfibLib B, FsEntryRt, fs_img_facts). RELOC-B hypotheses
    (owner RELOC-B): none.
-   Ported from: a working branch 0d34d65d2b7 lib/A/FSW_entry_s01.v (itself from
-   a working branch c4bfd3bc057 lib/A/FSH_check_reject_clean_starved.v crcs_ss0 .. crcs_glob_keep). *)
+   Ported from: a working branch lib/A/FSW_entry_s01.v (itself from
+   a working branch lib/A/FSH_check_reject_clean_starved.v crcs_ss0 .. crcs_glob_keep). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

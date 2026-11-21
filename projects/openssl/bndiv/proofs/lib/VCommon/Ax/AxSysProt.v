@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mprotect's vDSO gate: the prot gate's new pg_vdso obligation is proved from mr_disj and mr_vdso; rzc_sys_silent takes the rob_sys_226 obligation). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
@@ -87,7 +88,17 @@ Proof.
     - unfold map_contains. apply existsb_exists. exists (ent_val ρ e0). split; [exact (mr_nacov2 segs fs0 ρ _ model H8 e0 He0 P1 Hnx)|].
       pose proof (ent_val_bas ρ e0 Hent) as Eb. pose proof (ent_val_bsz ρ e0 Hent) as Es. unfold bas, bsz in Eb, Es.
       rewrite Eb, Es, Un, R10. apply andb_true_intro. split; apply Z.leb_le; lia.
-    - exact (fg_own _ _ _ G). }
+    - exact (fg_own _ _ _ G).
+    (* pg_vdso, the sixth field of prot_gate (AxSysProt0.v:49-57), which this gate
+       construction never had an obligation for.  The request lies inside e0's
+       mapping, every vm_maps entry is disjoint from every vm_reserved entry
+       (AxModelRel.v mr_disj), and the vDSO pair is part of vm_reserved (mr_vdso). *)
+    - apply (proj2 (region_free_disj _ _ _)). intros q Hq.
+      pose proof (mr_disj segs fs0 ρ _ model H8 (ent_val ρ e0) q
+                    (MR_ent_in segs fs0 ρ _ model e0 H8 He0)
+                    (mr_vdso segs fs0 ρ _ model H8 q Hq)) as D.
+      rewrite (ent_val_bas ρ e0 Hent), (ent_val_bsz ρ e0 Hent) in D.
+      unfold iv_disj in D |- *. rewrite R10, Un. lia. }
   destruct (prot_shape_lit (rg ms (Z_to_bv 5 12)) R12) as [S1 S2].
   set (addr := rg ms (Z_to_bv 5 10)) in *. set (nw := fix_n (rg ms (Z_to_bv 5 11))) in *.
   set (m' := mprotect_model_next model addr nw).
@@ -102,7 +113,8 @@ Proof.
   assert (Hbok : mprotect_budget_ok model addr nw = true).
   { unfold mprotect_budget_ok, vm_backing_within_limit. fold m'. apply Z.leb_le. rewrite Hlim. lia. }
   apply (rzc_latch segs cfg ms model w (KT ρ o) H9 H3 Hf He).
-  apply (rzc_sys_silent segs cfg (latch ms) model (rg ms (Z_to_bv 5 17)) (KT ρ o) H9 eq_refl).
+  apply (rzc_sys_silent segs cfg (latch ms) model (rg ms (Z_to_bv 5 17)) (KT ρ o) H9 eq_refl
+           (rob_sys_226 segs (latch ms) model (rg ms (Z_to_bv 5 17)) eq_refl R17)).
   - rewrite (check_syscall_226 segs (latch ms) _ _ model R17).
     exact (chk_prot_modeled model addr (rg ms (Z_to_bv 5 11)) (rg ms (Z_to_bv 5 12)) S1 S2 PG _).
   - intros eff m1 evs Hc. rewrite (check_syscall_226 segs (latch ms) _ _ model R17) in Hc.

@@ -24,15 +24,16 @@
    (pass 5b) the stack from len - 16 present, from the statement's astack_pres kept by astack_pres_journal. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 521 of its 608 lines of code are new or changed and 4966 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/pf_seg_B8b_s.v, with its module paths and module names changed; 1037 of its 1132 lines of code are new or changed and 513 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image A (fuzz_segconf.asan): the SECOND HALF of segment A3 of reac_segconf_parse_file's walk,
    `a3_ret1_ok : A3_RET1_stmt B` (statement and cut a3_ret1 in lib/A/Prog/pf_a3_d.v). Segment A3's proof,
    2026-10-30.
    proves function reac_segconf_parse_file (segment A3; reuse search and CONFIRM:
-   the unit's internal record, commit dfb49d6ad789, path records/segp/g3-lookup.md, the rule-24 check
+   the unit's internal record, path records/segp/g3-lookup.md, the rule-24 check
    2026-10-30T15:42:08Z; reuse verdict none).
 
    From 0x87cec (the snprintf's return, BASE + PF_RET1) to HEAD 0x87ddc or DONE 0x88bb8 (the unit's internal
-   record, commit dfb49d6ad789, path records/segp/dis/reac_segconf_parse_file.fuzz_segconf.asan.s):
+   record, path records/segp/dis/reac_segconf_parse_file.fuzz_segconf.asan.s):
      0x87cec .. 0x87cfc  check #1 (load4 of c->gen; its slow block 0x88c68 .. 0x88c78)
      0x87d00 .. 0x87d14  c->gen++ (lw / addi / sw at s10 = &c->gen); s2 = 0x3000; a0 = c + RC_N
      0x87d18             s3 = slot 0x98 = SH + 8

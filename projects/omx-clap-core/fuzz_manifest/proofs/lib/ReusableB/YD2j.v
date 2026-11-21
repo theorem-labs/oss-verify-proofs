@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: generated for fuzz_manifest.asan-ubsan by a Theorem Labs lane's tools/startup/gen_ad2.py from its 50 collected hand-off states (lib/ReusableB/YB01.v), its atable (YB12), segments (YB1h), owned statics (YF0m) and image; template text: the image-B core's copy (a working branch 305d8b1527f) *)
+(* Modified by Theorem Labs, 2026-10: generated for fuzz_manifest.asan-ubsan by a Theorem Labs lane's tools/startup/gen_ad2.py from its 50 collected hand-off states (lib/ReusableB/YB01.v), its atable (YB12), segments (YB1h), owned statics (YF0m) and image; template text: the image-B core's copy (a working branch) *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD2j.v (donor image sha256 1c29845fe605), with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-10: the regions gen_ad2.py cut around owned cells renamed to fm A's AD2j names by rename_regions.py (R_A3_1 -> R_A3p, R_A3_2 -> R_A3, R_A5a_1 -> R_A5a, R_A5a_2 -> R_A5c, R_A5a_3 -> R_A5d, R_A5a_4 -> R_A5e), each checked equal in shape to its A twin; IMG_REGIONS = A's list *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_manifest.asan-ubsan (omx-clap-core/fuzz_manifest asan-ubsan) sha256 ca61e5c9eabc00501d5cebab7618d8c03e73419f52c9f0b9be51c8bedff96e5e; unstripped twin sha256 b9568e38145a50214b3744e4f26bfc2ec9f670eca737d4da9be2dca6a0cfc2de *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List.

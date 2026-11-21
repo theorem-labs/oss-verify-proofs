@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGc2.v (cold/c-asan-realloc-primary 4ca132dac82, file sha256 231fdaa2e59f) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53); module paths changed; its 3 image addresses moved by code-verified function pairs (4 port_addr_check 8a1de5003757 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 5 pcs named in comments; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10-29: c-asan's c5 change to this file, cold/c-asan-realloc-c5 ced28ed2383 (file sha256 231fdaa2e59f) -> 84ee52cd012 (file sha256 d46c0159df12), applied by a 3-way merge; no numeral of the changed lines names an image address. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGc2.v (file sha256 231fdaa2e59f) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53); module paths changed; its 3 image addresses moved by code-verified function pairs (4 port_addr_check 8a1de5003757 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 5 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-29: c-asan's c5 change to this file, (file sha256 231fdaa2e59f) -> (file sha256 d46c0159df12), applied by a 3-way merge; no numeral of the changed lines names an image address. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The can_fill = 0 arm of the frame-generic Allocate walk, k path (n <= 48).
    Ported from proofs/cgif/cgif_file_fuzzer/lib/YFhy.v..YFjg.v (cgif_file's released malloc walk, same image): the
    same scripts, with the caller's frame made abstract; the cf = 0 arm reuses the cf = 1 tail after 0x32d84.

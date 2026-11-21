@@ -154,8 +154,8 @@ Proof.
 Qed.
 
 (* The token the code accepts, written as one function: an optional '-', one digit that is not a '0' followed
-   by a digit, then the longest run of PjGrammar.numch. RESTATEMENT of pre338r2's PvDefs.num_tok
-   (45cffb16b86), which is that branch's reading of the same rows; that branch is a reading aid only - it is
+   by a digit, then the longest run of PjGrammar.numch. RESTATEMENT of pre338r2's PvDefs.num_tok,
+   which is that branch's reading of the same rows; that branch is a reading aid only - it is
    in the old vocabulary and over the original images, and nothing of it is cited as evidence here. *)
 Definition vrd_num_tok (x : list Z) : option (list Z * list Z) :=
   let j := match x with b :: _ => vrd_j b | [] => 0%nat end in
@@ -254,8 +254,8 @@ Proof.
   repeat match goal with |- context [if ?c then _ else _] => destruct c end; rewrite ?Z.shiftl_1_l; lia.
 Qed.
 
-(* row 312 `fclass.d a0, fa0` is ONE step, lib/Reusable/YFclsStep.v fp_step_fclass_d (a working branch
-   da73e1570f8, the settled home of the shared fclass step); this file's earlier twin vrd_fp_step_fclass is
+(* row 312 `fclass.d a0, fa0` is ONE step, lib/Reusable/YFclsStep.v fp_step_fclass_d (a working branch,
+   the settled home of the shared fclass step); this file's earlier twin vrd_fp_step_fclass is
    deleted in its favour. *)
 
 (* b - '-' as an unsigned 64-bit word is nonzero for every byte but '-' itself: for b > 45 it is b - 45, and for
@@ -450,7 +450,7 @@ intros sg t. induction t as [| | | txt bits | s | items IH | members IH] using j
   + right. exists b. split; [subst D; apply in_or_app; right; exact Hb | exact Hx].
 Qed.
 
-(* ---- THE LEAF ARMS' FREE ORDER (the kit's cut 7cdbb61b5fa0, PRH_FnParse.v blob f0d92dcec7e9: tparse_value_specX's
+(* ---- THE LEAF ARMS' FREE ORDER (the kit's cut, PRH_FnParse.v blob f0d92dcec7e9: tparse_value_specX's
    FREEORD-NONE conjunct in both arms of the result). At a value that is no container - the number arm, the string
    arm, a literal - the model's reader-side list prhPv_frees is PresetReqAt.lf of the value's own trace
    (PresetReqAt.v:270, jfv's leaf arm, at jr_value's fuel PjGrammar.v:319): the one block a leaf keeps, if any. And
@@ -603,7 +603,7 @@ Definition PV_RET : Z := 0x41c.   (* row 265, A 0x8632c: ret *)
    arm that returns from a callee which moved the f registers (the number arm, from strtod; the container arm,
    from parse_items) hands it in, and the Section's fx is parse_value's entry float state, which fregs_kept_x
    relates it to.
-   THE BUDGET (the kit's cut 7cdbb61b5fa0, PRH_FnParse.v blob f0d92dcec7e9): tparse_value_specX's post is fpostWFbm at
+   THE BUDGET (the kit's cut, PRH_FnParse.v blob f0d92dcec7e9): tparse_value_specX's post is fpostWFbm at
    YCbqGwild.wbudget CW 0, the journal at a budget WS of wild traces with at most 0 outside the cursor set CW
    (parse_string's and parse_items' posts are at that budget, so the string and container arms cannot give the empty
    one). So the journal below is at a budget WS with wbudget CW 0 WS, ONE conjunct in the place of the old ajournal_x
@@ -714,7 +714,7 @@ Local Unset Implicit Arguments.
    H_checked_memcpy_xm of lib/A/VrdNumTail.v, the one file whose proofs cross that call. *)
 
 (* musl strtod (row 298, A 0x9aef0 = STRTOD). NOT a hypothesis any more: a Theorem Labs lane's row has landed
-   (lib/Reusable/YStrtodRowX.v + lib/A/Prog/strtod_row.v, 94056d4f69e), and vrd_strtod_row below is
+   (lib/Reusable/YStrtodRowX.v + lib/A/Prog/strtod_row.v), and vrd_strtod_row below is
    strtod_row_aj_A at this slice's model and text predicate. The model is the frozen text's own
    PRH_Reader.prh_jr_strtod, read as the row's sm takes it, (bits, consumed); the bridge to the row's own
    strtod_model is strtod_model_scan_A (both are FloatScan.scan_strtod of the NUL-terminated token).
@@ -763,7 +763,7 @@ Qed.
    (vrd_disp_a: frames S = (0, pos) :: frames S0; the release is the tail's), so rd_blocks_move is spelled out
    with its frames clause at the join: frames S' is (0, pos) :: frames S0 up to order. The other three clauses
    are rd_blocks_move's verbatim. Every other conjunct is the text's own, VERBATIM and in the text's order, from
-   the kit's CUT 7cdbb61b5fa0 (a working branch, PRH_FnParse.v blob f0d92dcec7e9, tparse_value_specX's post
+   the kit's CUT (a working branch, PRH_FnParse.v blob f0d92dcec7e9, tparse_value_specX's post
    :314-384) with the entry state S read as S0: the ledger at the call's own `most own`, THE HULL USE
    (PresetHullBudget.hull_used from S0 over the all-granted events), the live-request Permutation
    (hlive_from), THE POSITION TRANSFER (quantified over any run and position the caller picks; no rp_* parameter and
@@ -960,7 +960,7 @@ Local Unset Implicit Arguments.
    position the caller picks). The text's position-free LIVE COUNTS (:251-254, which give the row-270 malloc its
    sec_cnt / ccnt24 premises) are vrd_disp_body's (VrdPro.v, one home), so this statement carries no copy of them;
    the instance fact cf_head = PresetReqAt.HEAD is the Section hypothesis HI_head of the files whose proofs use it
-   (VrdNumTail.v, VrdNumA.v). The flag word at F + 56 is vrd_frame's (VrdPro.v b50e4aac4a2), so no premise of this
+   (VrdNumTail.v, VrdNumA.v). The flag word at F + 56 is vrd_frame's (VrdPro.v), so no premise of this
    statement stands in for it. THE HULL BUDGET, the text's entry premise `hull_budget S0 (rd_hevs (prhPv_gtrace d ..))`
    (lib/Spec/PresetHullBudget.v), comes right after vrd_disp_a: the arm pays the row-270 malloc's one-event budget from
    it (the granted trace is that one allocation), and the post's hull use is that call's. *)

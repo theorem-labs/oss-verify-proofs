@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Classical_Prop.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
@@ -98,7 +99,7 @@ Variable segs : ltac2:(zQ "20!h8!jr2@1$0$1").
 Theorem realizes_must_exit_in : ltac2:(zQ "h40!j7!pd!ii3!hsd!il7!im4!hic!ima!in5!h8!igb!inb!ir9!it1!itb!hq9!jhd!n9!ji9!hlf>1c$d>1T$h1>0@4$h2?4segs?2SC^2^1>1S@1$9@1$1@1$0#k0>0@2$b@3$3@1$2@1$1@1$0#k0@1$7@1$4^4@1$5@1$1@1$0#k0@2$a@1$1@1$0#k0\4code@1$1@1$0#k0@2$6@3$3@1$2@1$1@1$0#k0@1$7@1$4^5@2$8@1$1@1$0#k0^1@2$6@3$h3@1$1@1$0#k0^1^2@3$3@1$2@1$1@1$0#k0@1$e@1$4^5@1$5@1$1@1$0#k0>0@2$f^2^4@4$c@1$h0?2SC?4segs^3^6").
 Proof.
   intros c T H.
-  induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq]; intros S Hc Hpin.
+  induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq]; intros S Hc Hpin.
   - destruct Hnode as [Hcomp Hsound].
     apply must_exit_in_at_cfg_running.
     + exact (sstep_cfg_not_halted _ _ _ _ _ (Hcomp i0)).

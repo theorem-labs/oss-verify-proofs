@@ -2,7 +2,7 @@
    0x85ebc). lib/A/Prog/m_file_s_entry_2.v walks from the entry to it (the prologue, the class-1 frame request,
    the frame header and shadow stores); lib/A/Prog/m_file_s_entry_3.v walks on from it (the label arms, snprintf,
    gen++, the *text test, the set-up, and the hand-offs to MF_HEAD / MF_EXIT).
-   A lane of the G2 walk owner. Closed against G2 FINAL (the image-A owner's contracts 6f783602b5e3). *)
+   A lane of the G2 walk owner. Closed against G2 FINAL (the image-A owner's contracts). *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

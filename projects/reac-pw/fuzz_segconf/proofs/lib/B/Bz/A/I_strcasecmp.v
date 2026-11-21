@@ -3,11 +3,12 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/openssl/bndiv/lib/A/I_strncmp.v, with its module paths and addresses changed; 130 of its 221 lines of code are new or changed and 99 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/A/Bz/A/I_strcasecmp.v, derived mechanically (derive_y.py b7b132fb12a7; every changed numeral checked against alreloc.py a5c53bb2bed4 and against image B), with its module paths changed (lib/A to lib/B) and its addresses moved to reac-pw/fuzz_segconf's ASan+UBSan build. The comments are the A file's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf image B (fuzz_segconf.asan-ubsan, sha256 c3796c0b38f3...): the strcasecmp wrapper
    ___interceptor_strcasecmp (0x44b84, 0x500 bytes) from its entry to its return, and the trampoline
    __interceptor_trampoline_strcasecmp (0x43aa8, `j 0x44b84`). Written for this unit on fuzz_command's kit
-   (lib/A/Bz/A/I_strncmp*.v); the shape is fuzz_manifest's strncasecmp walk (lib/A/Bz/A/I_scase.v at
-   origin/ossv/recipes 501c0d516c69) without the length bound.
+   (lib/A/Bz/A/I_strncmp*.v); the shape is fuzz_manifest's strncasecmp walk (lib/A/Bz/A/I_scase.v)
+   without the length bound.
 
    The path:
    - 0x44b84-0x44bcc: the frame (2176 bytes; ra, s0-s11 saved at sp - 104 .. sp - 8), s2 := x, s1 := y, s3 := ra;

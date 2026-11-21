@@ -1,9 +1,9 @@
 (* check_no_overread B 0x8124c (fs.c), fs.asan-ubsan: the fuzz_free call step of the tail, i.e. the CTX-free Prop
-   `cno_call_ffree_T B` of lib/B/FSW_check_no_overread.v Section I (the B interface, a working branch
-   decf0bae273), proved here with the name cno_call_ffree. Rule 24: this file proves PART of check_no_overread only
+   `cno_call_ffree_T B` of lib/B/FSW_check_no_overread.v Section I (the B interface, a working branch),
+   proved here with the name cno_call_ffree. Rule 24: this file proves PART of check_no_overread only
    (one call step); the walk file is a Theorem Labs lane's and is not edited here.
    TEMPLATE (text only; no byte offset is copied, B's bytes differ): lib/A/FSW_check_no_overread_ffree.v at
-   a working branch 59f0008819f, and the helpers that file took by path from
+   a working branch, and the helpers that file took by path from
    lib/A/FSW_check_no_overread_tail.v (same sha). Those helpers are restated in THIS file with the prefix cno_ff_
    (cno_ff_unp_off, cno_ff_unp_out, cno_ff_img_pstat, cno_ff_pstat_byte, cno_ff_geom, cno_ff_frame,
    cno_ff_sf_not_ush), so that this file builds without the sibling tail file and no short name clashes with it;

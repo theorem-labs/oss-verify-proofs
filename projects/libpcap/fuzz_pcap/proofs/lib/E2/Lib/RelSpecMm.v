@@ -1,12 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: mmap's freely placed arms (place_declined_b premises and lemmas, the linux_place address and its witnesses), mprotect's vDSO premise, munmap in the injected allocation family, and mremap's TASK_SIZE -EINVAL arm, split grow arm and move to Linux's one placement. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.Lib Require Import PropExec MState Mem Exec ITree RelSpec Nodes PlacementSearch.
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.Lib Require Export Lps04.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Placement.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope bv_scope.
@@ -22,20 +24,50 @@ Definition mmap_err_out (forced : bool) (m : Model) (o : outcome SyscallEffect) 
 Lemma mmap_err_out_false : forall m o, mmap_err_out false m o <-> False.
 Proof. intros m o. unfold mmap_err_out. cbn. split; [intros (e & [] & _) | intros []]. Qed.
 
+(* LPS 727298f3: the two freely placed arms of [mmap_spec] open with
+   [m <- get_model ;; ... if place_declined_b (m_kernel m) h addr nZ then unmodeled],
+   and the placed address is [linux_place]'s answer.  A NULL hint is never declined:
+   the first conjunct is [negb (hint_address hint =? 0)], false by computation. *)
+Lemma place_declined_b_null : forall kb h nZ,
+  place_declined_b kb h (Z_to_bv 64 0) nZ = false.
+Proof.
+  intros kb h nZ. unfold place_declined_b, hint_address.
+  rewrite (unsigned_lit 0) by lia. reflexivity.
+Qed.
+
+(* An [Ok] answer of a freely placed arm says the hint was not declined: the declined
+   branch answers [Unmodeled] only. *)
+Lemma mmap_ok_not_declined : forall addr len prot flags fd off i m eff m' evs,
+  mmap_off_aligned_b off = true -> mmap_anon_b flags = true ->
+  w_is0 len = false ->
+  (mmap_modeled_b prot flags off = true \/ mmap_noaccess_b prot flags off = true) ->
+  mmap_spec addr len prot flags fd off i m (Ok eff m' evs) ->
+  place_declined_b (m_kernel m) (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len)) = false.
+Proof.
+  intros addr len prot flags fd off i m eff m' evs Hoff Hanon Hlen Hmn H.
+  destruct (place_declined_b (m_kernel m) (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len)))
+    eqn:Hdecl; [exfalso|reflexivity].
+  revert H. unfold mmap_spec. rewrite Hoff, Hanon, Hlen. cbn [negb].
+  destruct (mmap_modeled_b prot flags off) eqn:Hm; cbv beta iota.
+  - rewrite bind_model. cbv beta zeta. rewrite Hdecl. intros H.
+    cbv beta iota delta [unmodeled] in H. discriminate H.
+  - destruct Hmn as [Hmn | Hmn]; [discriminate Hmn|]. rewrite Hmn. cbv beta iota.
+    rewrite bind_model. cbv beta zeta. rewrite Hdecl. intros H.
+    cbv beta iota delta [unmodeled] in H. discriminate H.
+Qed.
+
 (* [comment removed for export] *)
 Lemma mmap_rw_outcome : forall addr len prot flags fd off i m o,
   mmap_off_aligned_b off = true -> mmap_anon_b flags = true ->
   w_is0 len = false ->
   mmap_modeled_b prot flags off = true ->
+  place_declined_b (m_kernel m) (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len)) = false ->
   let h := m_vmmaps m in
   let nZ := page_round_up_Z (bv_unsigned len) in
   let n := Z_to_bv 64 nZ in
   mmap_spec addr len prot flags fd off i m o <->
   mmap_err_out true m o
-  \/ exists a, ((bv_unsigned a mod page_size = 0)%Z
-                /\ (0 < bv_unsigned a)%Z
-                /\ (bv_unsigned a + nZ <= alloc_top h)%Z
-                /\ region_free (vm_reserved h ++ vm_maps h) a n = true
+  \/ exists a, (linux_place h (kb_thp (m_kernel m)) addr nZ (bv_unsigned a)
                 /\ mmap_noreserve_backed_ok flags m nZ = true)
                /\ o = Ok (mkEffect a [] [(a, n)])
                         (with_mmap_backing flags a n
@@ -44,35 +76,69 @@ Lemma mmap_rw_outcome : forall addr len prot flags fd off i m o,
                                (vm_noaccess h) (vm_start_brk h) (vm_brk h) (vm_limit h)
                                (vm_mmap_base h) (vm_init_sp h)) m)) [].
 Proof.
-  intros addr len prot flags fd off i m o Hoff Hanon Hlen Hmod. cbv zeta. unfold mmap_spec.
-  rewrite Hoff, Hanon, Hlen, Hmod. cbn [negb]. unfold mmap_err_out, mmap_errnos_when. sys_unfold.
+  intros addr len prot flags fd off i m o Hoff Hanon Hlen Hmod Hdecl. cbv zeta. unfold mmap_spec.
+  rewrite Hoff, Hanon, Hlen, Hmod. cbn [negb].
+  rewrite bind_model. cbv beta zeta. rewrite Hdecl. cbv beta iota.
+  unfold mmap_err_out, mmap_errnos_when. sys_unfold.
   split.
   - destruct o as [x m' evs|]; intros H; inv_sys.
     + left. eexists; split; [eassumption|reflexivity].
-    + right. eexists; split; [|reflexivity]. repeat split; assumption.
+    + right. eexists; split; [|reflexivity]. split; assumption.
   - intros [(e & He & ->) | (a & Ha & ->)].
     + left. eexists _, _, _, _. split; [exists e; split; [exact He|reflexivity]|].
       split; reflexivity.
-    + right. eexists _, _, _, _. split; [reflexivity|]. split; [|reflexivity].
-      eexists _, _, _, _. split; [exists a; split; [exact Ha|reflexivity]|].
+    + right. eexists _, _, _, _. split; [exists a; split; [exact Ha|reflexivity]|].
       split; [|reflexivity]. eexists _, _, _, _. repeat split; reflexivity.
 Qed.
 
-(* [comment removed for export] *)
+(* Given an [Ok] answer: the decline is ruled out by the answer itself, and the placed
+   address meets the four conditions [Placement.linux_place_admissible] reads off
+   [linux_place]. *)
+Lemma mmap_rw_ok_inv : forall addr len prot flags fd off i m eff m' evs,
+  mmap_off_aligned_b off = true -> mmap_anon_b flags = true ->
+  w_is0 len = false ->
+  mmap_modeled_b prot flags off = true ->
+  let h := m_vmmaps m in
+  let nZ := page_round_up_Z (bv_unsigned len) in
+  let n := Z_to_bv 64 nZ in
+  mmap_spec addr len prot flags fd off i m (Ok eff m' evs) ->
+  mmap_err_out true m (Ok eff m' evs)
+  \/ exists a, ((bv_unsigned a mod page_size = 0)%Z
+                /\ (0 < bv_unsigned a)%Z
+                /\ (bv_unsigned a + nZ <= alloc_top h)%Z
+                /\ region_free (vm_reserved h ++ vm_maps h) a n = true
+                /\ mmap_noreserve_backed_ok flags m nZ = true)
+               /\ Ok eff m' evs = Ok (mkEffect a [] [(a, n)])
+                        (with_mmap_backing flags a n
+                          (with_vmmaps
+                            (mkVmMapsFull (vm_reserved h) ((a, n) :: vm_maps h)
+                               (vm_noaccess h) (vm_start_brk h) (vm_brk h) (vm_limit h)
+                               (vm_mmap_base h) (vm_init_sp h)) m)) [].
+Proof.
+  intros addr len prot flags fd off i m eff m' evs Hoff Hanon Hlen Hmod. cbv zeta. intros H.
+  pose proof (mmap_ok_not_declined _ _ _ _ _ _ _ _ _ _ _ Hoff Hanon Hlen (or_introl Hmod) H) as Hdecl.
+  apply (mmap_rw_outcome _ _ _ _ _ _ _ _ _ Hoff Hanon Hlen Hmod Hdecl) in H.
+  destruct H as [He | (a & (Hpl & Hnr) & Heq)]; [left; exact He|right].
+  assert (HnZ : (0 < page_round_up_Z (bv_unsigned len))%Z /\ (page_round_up_Z (bv_unsigned len) mod page_size = 0)%Z).
+  { split; [|apply page_round_up_Z_aligned].
+    pose proof (Syscall.w_is0_false_pos len Hlen). pose proof (page_round_up_Z_ge (bv_unsigned len)). lia. }
+  destruct (Placement.linux_place_admissible _ _ _ _ _ (proj1 HnZ) (proj2 HnZ) Hpl) as (A1 & A2 & A3 & A4).
+  rewrite Z_to_bv_bv_unsigned in A4.
+  exists a. split; [|exact Heq]. repeat split; assumption.
+Qed.
+
 Lemma mmap_noaccess_outcome : forall addr len prot flags fd off i m o,
   mmap_off_aligned_b off = true -> mmap_anon_b flags = true ->
   w_is0 len = false ->
   mmap_modeled_b prot flags off = false ->
   mmap_noaccess_b prot flags off = true ->
+  place_declined_b (m_kernel m) (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len)) = false ->
   let h := m_vmmaps m in
   let nZ := page_round_up_Z (bv_unsigned len) in
   let n := Z_to_bv 64 nZ in
   mmap_spec addr len prot flags fd off i m o <->
   mmap_err_out true m o
-  \/ exists a, ((bv_unsigned a mod page_size = 0)%Z
-                /\ (0 < bv_unsigned a)%Z
-                /\ (bv_unsigned a + nZ <= alloc_top h)%Z
-                /\ region_free (vm_reserved h ++ vm_maps h) a n = true)
+  \/ exists a, linux_place h (kb_thp (m_kernel m)) addr nZ (bv_unsigned a)
                /\ o = Ok (mkEffectU a [] [] [(a, n)] [] [])
                         (with_mmap_backing flags a n
                           (with_vmmaps
@@ -80,18 +146,52 @@ Lemma mmap_noaccess_outcome : forall addr len prot flags fd off i m o,
                                ((a, n) :: vm_noaccess h) (vm_start_brk h) (vm_brk h)
                                (vm_limit h) (vm_mmap_base h) (vm_init_sp h)) m)) [].
 Proof.
-  intros addr len prot flags fd off i m o Hoff Hanon Hlen Hmod Hna. cbv zeta. unfold mmap_spec.
-  rewrite Hoff, Hanon, Hlen, Hmod, Hna. cbn [negb]. unfold mmap_err_out, mmap_errnos_when. sys_unfold.
+  intros addr len prot flags fd off i m o Hoff Hanon Hlen Hmod Hna Hdecl. cbv zeta. unfold mmap_spec.
+  rewrite Hoff, Hanon, Hlen, Hmod, Hna. cbn [negb].
+  rewrite bind_model. cbv beta zeta. rewrite Hdecl. cbv beta iota.
+  unfold mmap_err_out, mmap_errnos_when. sys_unfold.
   split.
   - destruct o as [x m' evs|]; intros H; inv_sys.
     + left. eexists; split; [eassumption|reflexivity].
-    + right. eexists; split; [|reflexivity]. repeat split; assumption.
+    + right. eexists; split; [|reflexivity]. assumption.
   - intros [(e & He & ->) | (a & Ha & ->)].
     + left. eexists _, _, _, _. split; [exists e; split; [exact He|reflexivity]|].
       split; reflexivity.
-    + right. eexists _, _, _, _. split; [reflexivity|]. split; [|reflexivity].
-      eexists _, _, _, _. split; [exists a; split; [exact Ha|reflexivity]|].
+    + right. eexists _, _, _, _. split; [exists a; split; [exact Ha|reflexivity]|].
       split; [|reflexivity]. eexists _, _, _, _. repeat split; reflexivity.
+Qed.
+
+Lemma mmap_noaccess_ok_inv : forall addr len prot flags fd off i m eff m' evs,
+  mmap_off_aligned_b off = true -> mmap_anon_b flags = true ->
+  w_is0 len = false ->
+  mmap_modeled_b prot flags off = false ->
+  mmap_noaccess_b prot flags off = true ->
+  let h := m_vmmaps m in
+  let nZ := page_round_up_Z (bv_unsigned len) in
+  let n := Z_to_bv 64 nZ in
+  mmap_spec addr len prot flags fd off i m (Ok eff m' evs) ->
+  mmap_err_out true m (Ok eff m' evs)
+  \/ exists a, ((bv_unsigned a mod page_size = 0)%Z
+                /\ (0 < bv_unsigned a)%Z
+                /\ (bv_unsigned a + nZ <= alloc_top h)%Z
+                /\ region_free (vm_reserved h ++ vm_maps h) a n = true)
+               /\ Ok eff m' evs = Ok (mkEffectU a [] [] [(a, n)] [] [])
+                        (with_mmap_backing flags a n
+                          (with_vmmaps
+                            (mkVmMapsFull (vm_reserved h) ((a, n) :: vm_maps h)
+                               ((a, n) :: vm_noaccess h) (vm_start_brk h) (vm_brk h)
+                               (vm_limit h) (vm_mmap_base h) (vm_init_sp h)) m)) [].
+Proof.
+  intros addr len prot flags fd off i m eff m' evs Hoff Hanon Hlen Hmod Hna. cbv zeta. intros H.
+  pose proof (mmap_ok_not_declined _ _ _ _ _ _ _ _ _ _ _ Hoff Hanon Hlen (or_intror Hna) H) as Hdecl.
+  apply (mmap_noaccess_outcome _ _ _ _ _ _ _ _ _ Hoff Hanon Hlen Hmod Hna Hdecl) in H.
+  destruct H as [He | (a & Hpl & Heq)]; [left; exact He|right].
+  assert (HnZ : (0 < page_round_up_Z (bv_unsigned len))%Z /\ (page_round_up_Z (bv_unsigned len) mod page_size = 0)%Z).
+  { split; [|apply page_round_up_Z_aligned].
+    pose proof (Syscall.w_is0_false_pos len Hlen). pose proof (page_round_up_Z_ge (bv_unsigned len)). lia. }
+  destruct (Placement.linux_place_admissible _ _ _ _ _ (proj1 HnZ) (proj2 HnZ) Hpl) as (A1 & A2 & A3 & A4).
+  rewrite Z_to_bv_bv_unsigned in A4.
+  exists a. split; [|exact Heq]. repeat split; assumption.
 Qed.
 
 (* [comment removed for export] *)
@@ -153,15 +253,18 @@ Lemma mprotect_expose_outcome : forall addr len prot i m o,
   mprotect_modeled_b prot = true ->
   map_contains (vm_noaccess h) addr n = true ->
   map_contains (vm_maps h) addr n = true ->
+  (* LPS 727298f3: [mprotect_spec] answers [unmodeled] for a range that meets the
+     vDSO/vvar pair, before it reads the maps. *)
+  region_free (vdso_reserved (m_kernel m) (vdso_top h)) addr n = true ->
   mprotect_spec addr len prot i m o <->
   (exists e, In e mprotect_errnos
              /\ o = Ok (mkEffect (errno_ret e) [] []) m [])
   \/ (mprotect_budget_ok m addr n = true
       /\ o = Ok (mkEffect (Z_to_bv 64 0) [] [(addr, n)]) (mprotect_model_next m addr n) []).
 Proof.
-  intros addr len prot i m o Hgc Hal Hlen. cbv zeta. intros Hnw Hmod Hna Hmc.
+  intros addr len prot i m o Hgc Hal Hlen. cbv zeta. intros Hnw Hmod Hna Hmc Hvd.
   unfold mprotect_spec. rewrite Hgc, (proj2 (Z.eqb_eq _ _) Hal), Hlen, (proj2 (Z.leb_gt _ _) Hnw), Hmod.
-  cbn [negb]. rewrite bind_model. cbv beta. rewrite Hna, Hmc. cbn [andb]. sys_unfold.
+  cbn [negb]. rewrite bind_model. cbv beta zeta. rewrite Hvd. cbn [negb]. rewrite Hna, Hmc. cbn [andb]. sys_unfold.
   split.
   - destruct o as [x m' evs|]; intros H; inv_sys.
     + left. eexists; split; [eassumption|reflexivity].
@@ -198,7 +301,12 @@ Lemma family_off_216 : forall args, injected_family_off CFG (pure_input 216 args
 Proof. reflexivity. Qed.
 Lemma family_off_214 : forall args, injected_family_off CFG (pure_input 214 args) = true.
 Proof. reflexivity. Qed.
-Lemma family_on_215 : forall args, injected_family_off CFG (pure_input 215 args) = false.
+(* 08b1429: munmap (215) joined the injected allocation family (Run.v injected_table,
+   mkInjectedArm 215 FamAlloc munmap_errnos), so under CFG its family is off. *)
+Lemma family_off_215 : forall args, injected_family_off CFG (pure_input 215 args) = true.
+Proof. reflexivity. Qed.
+Lemma refusal_b_215 : forall args m r,
+  refusal_b (pure_input 215 args) m r = ret_in_errnos munmap_errnos r.
 Proof. reflexivity. Qed.
 
 (* [comment removed for export] *)
@@ -259,6 +367,68 @@ Proof.
   exists a. repeat split; try assumption. lia.
 Qed.
 
+(* The search's base [a] fits the revision's bottom-up window [task_unmapped_base,
+   alloc_top) ([bottomup_floor] is above [task_unmapped_base]), so [linux_place] has an
+   answer ([Placement.linux_place_exists]), whatever the hint. *)
+Lemma gap_base_fits : forall h nZ a,
+  band_ceiling <= alloc_top h ->
+  vm_find_base h nZ = Some a ->
+  gap_fits (vm_reserved h ++ vm_maps h) task_unmapped_base (alloc_top h) nZ (bv_unsigned a).
+Proof.
+  intros h nZ a Hband Ha. apply vm_find_base_sound in Ha as (A1 & A2 & A3 & A4 & A5).
+  unfold gap_fits. rewrite Z_to_bv_bv_unsigned.
+  split; [exact A1|]. split; [unfold task_unmapped_base, bottomup_floor in *; lia|].
+  split; [lia | exact A5].
+Qed.
+
+Lemma place_word_of : forall h thp hint nZ aZ,
+  (0 < nZ)%Z -> (nZ mod page_size = 0)%Z ->
+  linux_place h thp hint nZ aZ ->
+  exists a : word, aZ = bv_unsigned a /\ linux_place h thp hint nZ (bv_unsigned a).
+Proof.
+  intros h thp hint nZ aZ Hn1 Hn2 Hpl.
+  destruct (Placement.linux_place_admissible _ _ _ _ _ Hn1 Hn2 Hpl) as (_ & B2 & B3 & _).
+  pose proof (alloc_top_room h). unfold stack_max_size, two_pow_64 in *.
+  exists (Z_to_bv 64 aZ). rewrite unsigned_lit by lia. split; [reflexivity | exact Hpl].
+Qed.
+
+Lemma grant_place_witness : forall flags m hint nZ,
+  (0 < nZ)%Z -> (nZ mod page_size = 0)%Z ->
+  band_ceiling <= alloc_top (m_vmmaps m) ->
+  mmap_grant_refusable flags m nZ = false ->
+  exists a : word, linux_place (m_vmmaps m) (kb_thp (m_kernel m)) hint nZ (bv_unsigned a)
+                   /\ mmap_noreserve_backed_ok flags m nZ = true.
+Proof.
+  intros flags m hint nZ Hn1 Hn2 Hband H. unfold mmap_grant_refusable in H. apply orb_false_iff in H as [H1 H2].
+  apply negb_false_iff in H1. apply negb_false_iff in H2.
+  apply vm_gap_available_find in H2 as [a Ha].
+  destruct (Placement.linux_place_exists (m_vmmaps m) (kb_thp (m_kernel m)) hint nZ Hn1 Hn2) as [aZ HaZ].
+  { exists (bv_unsigned a). right. exact (gap_base_fits _ _ _ Hband Ha). }
+  destruct (place_word_of _ _ _ _ _ Hn1 Hn2 HaZ) as (a' & _ & Ha').
+  exists a'. split; [exact Ha' | exact H1].
+Qed.
+
+Lemma reserve_place_witness : forall m hint nZ,
+  (0 < nZ)%Z -> (nZ mod page_size = 0)%Z ->
+  band_ceiling <= alloc_top (m_vmmaps m) ->
+  mmap_reserve_refusable m nZ = false ->
+  exists a : word, linux_place (m_vmmaps m) (kb_thp (m_kernel m)) hint nZ (bv_unsigned a).
+Proof.
+  intros m hint nZ Hn1 Hn2 Hband H. unfold mmap_reserve_refusable in H. apply negb_false_iff in H.
+  apply vm_gap_available_find in H as [a Ha].
+  destruct (Placement.linux_place_exists (m_vmmaps m) (kb_thp (m_kernel m)) hint nZ Hn1 Hn2) as [aZ HaZ].
+  { exists (bv_unsigned a). right. exact (gap_base_fits _ _ _ Hband Ha). }
+  destruct (place_word_of _ _ _ _ _ Hn1 Hn2 HaZ) as (a' & _ & Ha').
+  exists a'. exact Ha'.
+Qed.
+
+Lemma len_round_pos : forall len : word, w_is0 len = false ->
+  (0 < page_round_up_Z (bv_unsigned len))%Z /\ (page_round_up_Z (bv_unsigned len) mod page_size = 0)%Z.
+Proof.
+  intros len Hlen. split; [|apply page_round_up_Z_aligned].
+  pose proof (Syscall.w_is0_false_pos len Hlen). pose proof (page_round_up_Z_ge (bv_unsigned len)). lia.
+Qed.
+
 Lemma page_round_up_Z_nonneg' : forall z, 0 <= z -> 0 <= page_round_up_Z z.
 Proof. intros z Hz. unfold page_round_up_Z, page_size. apply Z.mul_nonneg_nonneg; [|lia]. apply Z.div_pos; lia. Qed.
 
@@ -313,15 +483,18 @@ Qed.
 Proof.
   intros mo eff mo' evs Hoff Hanon Hlen Hmod Hband Hst. cbv zeta.
   pose proof (nstep_mmap_spec _ _ _ _ Hst) as (_ & Hsp & _).
-  pose proof (proj1 (mmap_rw_outcome _ _ _ _ _ _ _ _ _ Hoff Hanon Hlen Hmod) Hsp) as [(e & He & Heq) | Hg]; [|right; exact Hg].
+  pose proof (mmap_ok_not_declined _ _ _ _ _ _ _ _ _ _ _ Hoff Hanon Hlen (or_introl Hmod) Hsp) as Hdecl.
+  pose proof (mmap_rw_ok_inv _ _ _ _ _ _ _ _ _ _ _ Hoff Hanon Hlen Hmod Hsp) as [(e & He & Heq) | Hg]; [|right; exact Hg].
   left. apply Ok_inj in Heq as (-> & -> & ->). exists e. split; [|reflexivity].
   destruct (mmap_grant_refusable fw mo (page_round_up_Z (bv_unsigned lw))) eqn:Er; [exact He|]. exfalso.
-  destruct (grant_witness fw mo _ Hband Er) as (a & A1 & A2 & A3 & A4 & A5).
+  pose proof (len_round_pos lw Hlen) as [Hn1 Hn2].
+  destruct (grant_place_witness fw mo aw _ Hn1 Hn2 Hband Er) as (a & Hpl & Hnr).
   pose proof (nstep_mmap_errno_forced mo e mo [] _ _ _ Hst He
-                (proj2 (mmap_rw_outcome aw lw pw fw (Z_to_bv 64 (-1)) (Z_to_bv 64 0) i mo _ Hoff Hanon Hlen Hmod)
-                   (or_intror (ex_intro _ a (conj (conj A1 (conj A2 (conj A3 (conj A4 A5)))) eq_refl))))) as Hr.
+                (proj2 (mmap_rw_outcome aw lw pw fw (Z_to_bv 64 (-1)) (Z_to_bv 64 0) i mo _ Hoff Hanon Hlen Hmod Hdecl)
+                   (or_intror (ex_intro _ a (conj (conj Hpl Hnr) eq_refl))))) as Hr.
   cbn [eff_ret] in Hr. rewrite (ret_in_mmap_small a) in Hr; [discriminate|].
-  eapply grant_not_errno; [|exact A3]. apply page_round_up_Z_nonneg'. apply bv_unsigned_in_range.
+  destruct (Placement.linux_place_admissible _ _ _ _ _ Hn1 Hn2 Hpl) as (_ & _ & A3 & _).
+  eapply grant_not_errno; [|exact A3]. lia.
 Qed.
 
 (* [comment removed for export] *)
@@ -347,15 +520,18 @@ Qed.
 Proof.
   intros mo eff mo' evs Hoff Hanon Hlen Hmod Hna Hband Hst. cbv zeta.
   pose proof (nstep_mmap_spec _ _ _ _ Hst) as (_ & Hsp & _).
-  pose proof (proj1 (mmap_noaccess_outcome _ _ _ _ _ _ _ _ _ Hoff Hanon Hlen Hmod Hna) Hsp) as [(e & He & Heq) | Hg]; [|right; exact Hg].
+  pose proof (mmap_ok_not_declined _ _ _ _ _ _ _ _ _ _ _ Hoff Hanon Hlen (or_intror Hna) Hsp) as Hdecl.
+  pose proof (mmap_noaccess_ok_inv _ _ _ _ _ _ _ _ _ _ _ Hoff Hanon Hlen Hmod Hna Hsp) as [(e & He & Heq) | Hg]; [|right; exact Hg].
   left. apply Ok_inj in Heq as (-> & -> & ->). exists e. split; [|reflexivity].
   destruct (mmap_reserve_refusable mo (page_round_up_Z (bv_unsigned lw))) eqn:Er; [exact He|]. exfalso.
-  destruct (reserve_witness mo _ Hband Er) as (a & A1 & A2 & A3 & A4).
+  pose proof (len_round_pos lw Hlen) as [Hn1 Hn2].
+  destruct (reserve_place_witness mo aw _ Hn1 Hn2 Hband Er) as (a & Hpl).
   pose proof (nstep_mmap_errno_forced mo e mo [] _ _ _ Hst He
-                (proj2 (mmap_noaccess_outcome aw lw pw fw (Z_to_bv 64 (-1)) (Z_to_bv 64 0) i mo _ Hoff Hanon Hlen Hmod Hna)
-                   (or_intror (ex_intro _ a (conj (conj A1 (conj A2 (conj A3 A4))) eq_refl))))) as Hr.
+                (proj2 (mmap_noaccess_outcome aw lw pw fw (Z_to_bv 64 (-1)) (Z_to_bv 64 0) i mo _ Hoff Hanon Hlen Hmod Hna Hdecl)
+                   (or_intror (ex_intro _ a (conj Hpl eq_refl))))) as Hr.
   cbn [eff_ret] in Hr. rewrite (ret_in_mmap_small a) in Hr; [discriminate|].
-  eapply grant_not_errno; [|exact A3]. apply page_round_up_Z_nonneg'. apply bv_unsigned_in_range.
+  destruct (Placement.linux_place_admissible _ _ _ _ _ Hn1 Hn2 Hpl) as (_ & _ & A3 & _).
+  eapply grant_not_errno; [|exact A3]. lia.
 Qed.
 
 (* [comment removed for export] *)
@@ -394,6 +570,26 @@ Qed.
 
 End NstepMmap.
 
+(* An [Ok] answer of [mprotect_spec]'s modeled arm says the range missed the vDSO/vvar
+   pair: a range meeting it answers [Unmodeled] only. *)
+Lemma mprotect_ok_vdso_free : forall addr len prot i m eff m' evs,
+  mprotect_grows_conflict_b prot = false ->
+  (bv_unsigned addr mod page_size = 0)%Z ->
+  w_is0 len = false ->
+  (bv_unsigned addr + page_round_up_Z (bv_unsigned len) < two_pow_64)%Z ->
+  mprotect_modeled_b prot = true ->
+  mprotect_spec addr len prot i m (Ok eff m' evs) ->
+  region_free (vdso_reserved (m_kernel m) (vdso_top (m_vmmaps m))) addr
+    (Z_to_bv 64 (page_round_up_Z (bv_unsigned len))) = true.
+Proof.
+  intros addr len prot i m eff m' evs Hgc Hal Hlen Hnw Hmod H.
+  destruct (region_free (vdso_reserved (m_kernel m) (vdso_top (m_vmmaps m))) addr
+              (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))) eqn:Hvd; [reflexivity|exfalso].
+  revert H. unfold mprotect_spec. rewrite Hgc, (proj2 (Z.eqb_eq _ _) Hal), Hlen, (proj2 (Z.leb_gt _ _) Hnw), Hmod.
+  cbn [negb]. rewrite bind_model. cbv beta zeta. rewrite Hvd. cbn [negb]. intros H.
+  cbv beta iota delta [unmodeled] in H. discriminate H.
+Qed.
+
 (* [comment removed for export] *)
 Lemma nstep_mprotect_expose_outcome : forall addr len prot mo eff mo' evs,
   let aw := Z_to_bv 64 addr in let lw := Z_to_bv 64 len in let pw := Z_to_bv 64 prot in
@@ -418,14 +614,15 @@ Proof.
   set (i := pure_input 226 [aw; lw; pw]) in *.
   rewrite syscall_spec_226 in Hsp by reflexivity. cbn [in_arg in_args pure_input nth i] in Hsp.
   pose proof (mprotect_expose_outcome aw lw pw i mo) as Hout. cbv zeta in Hout. fold nZ n h in Hout.
-  apply (Hout _ Hgc Hal Hlen Hnw Hmod Hna Hmc) in Hsp as [(e & He & Heq) | Hg]; [|right; exact Hg].
+  pose proof (mprotect_ok_vdso_free aw lw pw i mo eff mo' evs Hgc Hal Hlen Hnw Hmod Hsp) as Hvd. fold nZ n h in Hvd.
+  apply (Hout _ Hgc Hal Hlen Hnw Hmod Hna Hmc Hvd) in Hsp as [(e & He & Heq) | Hg]; [|right; exact Hg].
   left. exists e. split; [|exact Heq]. apply Ok_inj in Heq as (-> & -> & ->).
   unfold mprotect_errnos_when, mprotect_refusable.
   destruct (mprotect_budget_ok mo aw n) eqn:Eb; [|exact He]. exfalso. apply Hns.
   split; [reflexivity|]. split; [unfold i; rewrite refusal_b_226; cbn [eff_ret]; apply ret_in_errnos_in; exact He|].
   eexists _, _, _. split.
   - unfold i. rewrite syscall_spec_226 by reflexivity. cbn [in_arg in_args pure_input nth].
-    apply (Hout _ Hgc Hal Hlen Hnw Hmod Hna Hmc). right. split; reflexivity.
+    apply (Hout _ Hgc Hal Hlen Hnw Hmod Hna Hmc Hvd). right. split; reflexivity.
   - unfold i. rewrite refusal_b_226. cbn [eff_ret]. reflexivity.
 Qed.
 
@@ -503,6 +700,11 @@ Let h := m_vmmaps mo.
 Let nZ := page_round_up_Z (bv_unsigned lw).
 
 Hypothesis Hlen : 0 < len < 2^64.
+(* LPS 727298f3: the freely placed arms answer [unmodeled] for a declined hint, so a
+   lemma that rules [Unmodeled] out takes the decline test as a premise; each caller
+   proves it where the hint is known. *)
+Hypothesis Hdecl : place_declined_b (m_kernel mo) (m_vmmaps mo) (Z_to_bv 64 addr)
+  (page_round_up_Z (bv_unsigned (Z_to_bv 64 len))) = false.
 
 #[using="nZ Hlen"] Lemma nsafe_mmap_lw : w_is0 lw = false.
 Proof. unfold lw. rewrite w_is0_lit by lia. apply Z.eqb_neq. lia. Qed.
@@ -534,7 +736,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="aw lw i sp h nZ Hlen"] Lemma nsafe_mmap_rw_gen :
+#[using="aw lw i sp h nZ Hlen Hdecl"] Lemma nsafe_mmap_rw_gen :
   mmap_off_aligned_b (Z_to_bv 64 0) = true -> mmap_anon_b fw = true -> mmap_modeled_b pw fw (Z_to_bv 64 0) = true ->
   nsafe (NMmap addr len prot flags) mo.
 Proof.
@@ -542,28 +744,33 @@ Proof.
   pose proof nsafe_mmap_lw as Hl. pose proof nsafe_mmap_nZ as [Hn1 Hn2].
   pose proof (mmap_rw_outcome aw lw pw fw (Z_to_bv 64 (-1)) (Z_to_bv 64 0) i mo) as Hout. cbv zeta in Hout. fold h nZ in Hout.
   assert (Herr : sp i mo (Ok (mkEffect (errno_ret ENOMEM) [] []) mo [])).
-  { apply (Hout _ Hoff Hanon Hl Hm). left. exists ENOMEM. split; [left; reflexivity|reflexivity]. }
+  { apply (Hout _ Hoff Hanon Hl Hm Hdecl). left. exists ENOMEM. split; [left; reflexivity|reflexivity]. }
   split.
   - apply (nsafe_of sp); [exact spec_i_iff| |eexists; exact Herr].
-    intros Hu. apply (Hout _ Hoff Hanon Hl Hm) in Hu. destruct Hu as [(e & _ & H) | (a & _ & H)]; discriminate H.
+    intros Hu. apply (Hout _ Hoff Hanon Hl Hm Hdecl) in Hu. destruct Hu as [(e & _ & H) | (a & _ & H)]; discriminate H.
   - intros _.
     destruct (mmap_noreserve_backed_ok fw mo nZ) eqn:Eb.
-    2:{ right. intros eff' m' evs' Hsp. apply spec_i_iff in Hsp. apply (Hout _ Hoff Hanon Hl Hm) in Hsp.
-        destruct Hsp as [(e & He & Heq) | (a & (_ & _ & _ & _ & A5) & _)]; [|congruence].
+    2:{ right. intros eff' m' evs' Hsp. apply spec_i_iff in Hsp. apply (Hout _ Hoff Hanon Hl Hm Hdecl) in Hsp.
+        destruct Hsp as [(e & He & Heq) | (a & (_ & A5) & _)]; [|congruence].
         apply Ok_inj in Heq as (-> & _ & _). unfold i. rewrite refusal_b_222. cbn [eff_ret]. apply ret_in_errnos_in. exact He. }
-    destruct (place_decides (fun a => bv_unsigned a mod page_size = 0 /\ 0 < bv_unsigned a /\ bv_unsigned a + nZ <= alloc_top h
-                                      /\ region_free (vm_reserved h ++ vm_maps h) a (Z_to_bv 64 nZ) = true) ltac:(intros; reflexivity))
-      as [[a (A1 & A2 & A3 & A4)] | Hno].
-    + left. eexists _, _, _. split.
-      * apply spec_i_iff. apply (Hout _ Hoff Hanon Hl Hm). right. exists a. split; [|reflexivity]. auto 6.
-      * unfold i. rewrite refusal_b_222. cbn [eff_ret]. apply ret_in_mmap_small. eapply grant_not_errno; [|exact A3]. lia.
-    + right. intros eff' m' evs' Hsp. apply spec_i_iff in Hsp. apply (Hout _ Hoff Hanon Hl Hm) in Hsp.
-      destruct Hsp as [(e & He & Heq) | (a & (A1 & A2 & A3 & A4 & _) & _)]; [|exfalso; apply (Hno a); auto].
+    (* the placement is [linux_place]'s answer; its executable twin decides whether one exists *)
+    assert (Hn0 : 0 < nZ) by lia.
+    destruct (Placement.linux_place_b_spec h (kb_thp (m_kernel mo)) aw nZ Hn0 Hn2) as [Hsome Hnone].
+    destruct (Placement.linux_place_b h (kb_thp (m_kernel mo)) aw nZ) as [aZ|] eqn:Ep.
+    + destruct (place_word_of _ _ _ _ _ Hn0 Hn2 (proj1 (Hsome aZ) eq_refl)) as (a & _ & Hpl).
+      left. eexists _, _, _. split.
+      * apply spec_i_iff. apply (Hout _ Hoff Hanon Hl Hm Hdecl). right. exists a. split; [|reflexivity].
+        split; [exact Hpl | first [exact Eb | reflexivity]].
+      * unfold i. rewrite refusal_b_222. cbn [eff_ret]. apply ret_in_mmap_small.
+        destruct (Placement.linux_place_admissible _ _ _ _ _ Hn0 Hn2 Hpl) as (_ & _ & A3 & _).
+        eapply grant_not_errno; [|exact A3]. lia.
+    + right. intros eff' m' evs' Hsp. apply spec_i_iff in Hsp. apply (Hout _ Hoff Hanon Hl Hm Hdecl) in Hsp.
+      destruct Hsp as [(e & He & Heq) | (a & (Hpl & _) & _)]; [|exfalso; exact (proj1 Hnone eq_refl _ Hpl)].
       apply Ok_inj in Heq as (-> & _ & _). unfold i. rewrite refusal_b_222. cbn [eff_ret]. apply ret_in_errnos_in. exact He.
 Qed.
 
 (* [comment removed for export] *)
-#[using="aw lw i sp h nZ Hlen"] Lemma nsafe_mmap_none_gen :
+#[using="aw lw i sp h nZ Hlen Hdecl"] Lemma nsafe_mmap_none_gen :
   mmap_off_aligned_b (Z_to_bv 64 0) = true -> mmap_anon_b fw = true -> mmap_modeled_b pw fw (Z_to_bv 64 0) = false ->
   mmap_noaccess_b pw fw (Z_to_bv 64 0) = true ->
   nsafe (NMmap addr len prot flags) mo.
@@ -572,19 +779,22 @@ Proof.
   pose proof nsafe_mmap_lw as Hl. pose proof nsafe_mmap_nZ as [Hn1 Hn2].
   pose proof (mmap_noaccess_outcome aw lw pw fw (Z_to_bv 64 (-1)) (Z_to_bv 64 0) i mo) as Hout. cbv zeta in Hout. fold h nZ in Hout.
   assert (Herr : sp i mo (Ok (mkEffect (errno_ret ENOMEM) [] []) mo [])).
-  { apply (Hout _ Hoff Hanon Hl Hm Hn). left. exists ENOMEM. split; [left; reflexivity|reflexivity]. }
+  { apply (Hout _ Hoff Hanon Hl Hm Hn Hdecl). left. exists ENOMEM. split; [left; reflexivity|reflexivity]. }
   split.
   - apply (nsafe_of sp); [exact spec_i_iff| |eexists; exact Herr].
-    intros Hu. apply (Hout _ Hoff Hanon Hl Hm Hn) in Hu. destruct Hu as [(e & _ & H) | (a & _ & H)]; discriminate H.
+    intros Hu. apply (Hout _ Hoff Hanon Hl Hm Hn Hdecl) in Hu. destruct Hu as [(e & _ & H) | (a & _ & H)]; discriminate H.
   - intros _.
-    destruct (place_decides (fun a => bv_unsigned a mod page_size = 0 /\ 0 < bv_unsigned a /\ bv_unsigned a + nZ <= alloc_top h
-                                      /\ region_free (vm_reserved h ++ vm_maps h) a (Z_to_bv 64 nZ) = true) ltac:(intros; reflexivity))
-      as [[a (A1 & A2 & A3 & A4)] | Hno].
-    + left. eexists _, _, _. split.
-      * apply spec_i_iff. apply (Hout _ Hoff Hanon Hl Hm Hn). right. exists a. split; [|reflexivity]. auto 6.
-      * unfold i. rewrite refusal_b_222. cbn [eff_ret]. apply ret_in_mmap_small. eapply grant_not_errno; [|exact A3]. lia.
-    + right. intros eff' m' evs' Hsp. apply spec_i_iff in Hsp. apply (Hout _ Hoff Hanon Hl Hm Hn) in Hsp.
-      destruct Hsp as [(e & He & Heq) | (a & (A1 & A2 & A3 & A4) & _)]; [|exfalso; apply (Hno a); auto].
+    assert (Hn0 : 0 < nZ) by lia.
+    destruct (Placement.linux_place_b_spec h (kb_thp (m_kernel mo)) aw nZ Hn0 Hn2) as [Hsome Hnone].
+    destruct (Placement.linux_place_b h (kb_thp (m_kernel mo)) aw nZ) as [aZ|] eqn:Ep.
+    + destruct (place_word_of _ _ _ _ _ Hn0 Hn2 (proj1 (Hsome aZ) eq_refl)) as (a & _ & Hpl).
+      left. eexists _, _, _. split.
+      * apply spec_i_iff. apply (Hout _ Hoff Hanon Hl Hm Hn Hdecl). right. exists a. split; [exact Hpl|reflexivity].
+      * unfold i. rewrite refusal_b_222. cbn [eff_ret]. apply ret_in_mmap_small.
+        destruct (Placement.linux_place_admissible _ _ _ _ _ Hn0 Hn2 Hpl) as (_ & _ & A3 & _).
+        eapply grant_not_errno; [|exact A3]. lia.
+    + right. intros eff' m' evs' Hsp. apply spec_i_iff in Hsp. apply (Hout _ Hoff Hanon Hl Hm Hn Hdecl) in Hsp.
+      destruct Hsp as [(e & He & Heq) | (a & Hpl & _)]; [|exfalso; exact (proj1 Hnone eq_refl _ Hpl)].
       apply Ok_inj in Heq as (-> & _ & _). unfold i. rewrite refusal_b_222. cbn [eff_ret]. apply ret_in_errnos_in. exact He.
 Qed.
 
@@ -593,14 +803,18 @@ End NsafeMmap.
 (* [comment removed for export] *)
 Lemma nsafe_mmap_rw : forall addr len mo,
   0 < len < 2^64 ->
+  place_declined_b (m_kernel mo) (m_vmmaps mo) (Z_to_bv 64 addr)
+    (page_round_up_Z (bv_unsigned (Z_to_bv 64 len))) = false ->
   nsafe (NMmap addr len (PROT_READ + PROT_WRITE) (MAP_PRIVATE + MAP_ANONYMOUS)) mo.
-Proof. intros addr len mo Hlen. apply nsafe_mmap_rw_gen; [exact Hlen|reflexivity|reflexivity|reflexivity]. Qed.
+Proof. intros addr len mo Hlen Hdecl. apply nsafe_mmap_rw_gen; [exact Hlen|exact Hdecl|reflexivity|reflexivity|reflexivity]. Qed.
 
 (* [comment removed for export] *)
 Lemma nsafe_mmap_none : forall addr len mo,
   0 < len < 2^64 ->
+  place_declined_b (m_kernel mo) (m_vmmaps mo) (Z_to_bv 64 addr)
+    (page_round_up_Z (bv_unsigned (Z_to_bv 64 len))) = false ->
   nsafe (NMmap addr len PROT_NONE (MAP_PRIVATE + MAP_ANONYMOUS)) mo.
-Proof. intros addr len mo Hlen. apply nsafe_mmap_none_gen; [exact Hlen|reflexivity|reflexivity|reflexivity|reflexivity]. Qed.
+Proof. intros addr len mo Hlen Hdecl. apply nsafe_mmap_none_gen; [exact Hlen|exact Hdecl|reflexivity|reflexivity|reflexivity|reflexivity]. Qed.
 
 (* [comment removed for export] *)
 Lemma nsafe_mmap_fixed_none : forall addr len mo,
@@ -661,9 +875,10 @@ Proof.
   split.
   - apply (nsafe_of sp).
     + intros o. rewrite syscall_spec_215 by reflexivity. reflexivity.
-    + intros Hu. apply Hout in Hu. discriminate Hu.
-    + eexists. apply Hout. reflexivity.
-  - intros Hoff. rewrite family_on_215 in Hoff. discriminate Hoff.
+    + intros Hu. apply Hout in Hu. destruct Hu as [(e & _ & Hu) | Hu]; discriminate Hu.
+    + eexists. apply Hout. right. reflexivity.
+  - intros _. left. eexists _, _, _. split; [apply Hout; right; reflexivity|].
+    rewrite refusal_b_215. reflexivity.
 Qed.
 
 (* [comment removed for export] *)
@@ -672,9 +887,10 @@ Lemma nsafe_mprotect_expose : forall addr len mo,
   addr + page_round_up_Z len < 2^64 ->
   map_contains (vm_noaccess (m_vmmaps mo)) (Z_to_bv 64 addr) (Z_to_bv 64 (page_round_up_Z len)) = true ->
   map_contains (vm_maps (m_vmmaps mo)) (Z_to_bv 64 addr) (Z_to_bv 64 (page_round_up_Z len)) = true ->
+  region_free (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo))) (Z_to_bv 64 addr) (Z_to_bv 64 (page_round_up_Z len)) = true ->
   nsafe (NMprotect addr len (PROT_READ + PROT_WRITE)) mo.
 Proof.
-  intros addr len mo Ha Hlen Hal Hnw Hna Hmc. cbn [nsafe node_input].
+  intros addr len mo Ha Hlen Hal Hnw Hna Hmc Hvd0. cbn [nsafe node_input].
   set (sp := mprotect_spec (Z_to_bv 64 addr) (Z_to_bv 64 len) (Z_to_bv 64 (PROT_READ + PROT_WRITE))).
   set (i := pure_input 226 [Z_to_bv 64 addr; Z_to_bv 64 len; Z_to_bv 64 (PROT_READ + PROT_WRITE)]).
   assert (H1 : bv_unsigned (Z_to_bv 64 addr) mod page_size = 0) by (rewrite unsigned_lit by lia; exact Hal).
@@ -685,8 +901,10 @@ Proof.
     by (rewrite unsigned_lit by lia; exact Hna).
   assert (H5 : map_contains (vm_maps (m_vmmaps mo)) (Z_to_bv 64 addr) (Z_to_bv 64 (page_round_up_Z (bv_unsigned (Z_to_bv 64 len)))) = true)
     by (rewrite unsigned_lit by lia; exact Hmc).
+  assert (H6 : region_free (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo))) (Z_to_bv 64 addr) (Z_to_bv 64 (page_round_up_Z (bv_unsigned (Z_to_bv 64 len)))) = true)
+    by (rewrite unsigned_lit by lia; exact Hvd0).
   pose proof (fun o => mprotect_expose_outcome (Z_to_bv 64 addr) (Z_to_bv 64 len) (Z_to_bv 64 (PROT_READ + PROT_WRITE))
-                         i mo o eq_refl H1 H2 H3 eq_refl H4 H5) as Hout.
+                         i mo o eq_refl H1 H2 H3 eq_refl H4 H5 H6) as Hout.
   assert (Hsi : forall o, syscall_spec i mo o <-> sp i mo o).
   { intros o. unfold i, sp. rewrite syscall_spec_226 by reflexivity. reflexivity. }
   cbv zeta in Hout.
@@ -708,6 +926,10 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
+(* LPS 727298f3: [mremap_spec] answers -EINVAL for a page-rounded new length above
+   TASK_SIZE before it reads the model; a grow with room in place charges the budget
+   there (a failing charge leaves only the errno answers), and a grow without room
+   moves to the one address [Mmap.linux_place] gives at hint 0 ([mremap_dst_ok]). *)
 Lemma mremap_exact_outcome : forall old oldlen newlen i m o,
   let h := m_vmmaps m in
   let onZ := page_round_up_Z (bv_unsigned oldlen) in
@@ -722,15 +944,18 @@ Lemma mremap_exact_outcome : forall old oldlen newlen i m o,
   map_has (vm_maps h) old on = true ->
   region_free (vm_noaccess h) old on = true ->
   mremap_spec old oldlen newlen (Z_to_bv 64 MREMAP_MAYMOVE) i m o <->
-     (onZ = nnZ /\ o = Ok (mkEffect old [] []) m [])
+     ((TASK_SIZE < nnZ)%Z /\ o = Ok (mkEffect (errno_ret EINVAL) [] []) m [])
+  \/ ((nnZ <= TASK_SIZE)%Z /\
+     ((onZ = nnZ /\ o = Ok (mkEffect old [] []) m [])
   \/ (onZ <> nnZ /\ exists e, In e mremap_errnos /\ o = Ok (mkEffect (errno_ret e) [] []) m [])
   \/ ((nnZ < onZ)%Z
       /\ o = Ok (mkEffectU old [] [] [((old + nn)%bv, Z_to_bv 64 (onZ - nnZ))] [] []) (mremap_model_next m old on old nn) [])
   \/ ((onZ < nnZ)%Z /\ mremap_inplace_grow_b m old on nn onZ nnZ = true
       /\ o = Ok (mkEffect old [] [((old + on)%bv, Z_to_bv 64 (nnZ - onZ))]) (mremap_model_next m old on old nn) [])
-  \/ (exists dst, (onZ < nnZ)%Z /\ mremap_fresh_b m onZ nnZ old on dst nn = true
+  \/ (exists dst, (onZ < nnZ)%Z /\ mremap_inplace_room_b m old on nn onZ nnZ = false
+      /\ mremap_dst_ok m onZ nnZ old on dst nn
       /\ o = Ok (mkEffectU dst [] [((dst + on)%bv, Z_to_bv 64 (nnZ - onZ))] [(old, on)] [mkCopy old dst on] [])
-               (mremap_model_next m old on dst nn) []).
+               (mremap_model_next m old on dst nn) []))).
 Proof.
   intros old oldlen newlen i m o h onZ nnZ on nn Hal Hol Hnl Hce Hnw Hlazy Hrf Hhas Hna.
   pose proof (bv_unsigned_in_range 64 old) as Rold. pose proof (bv_unsigned_in_range 64 oldlen) as Rol.
@@ -746,6 +971,7 @@ Proof.
   { subst nnZ. unfold page_round_up_Z, page_size. nia. }
   assert (Honw : (onZ < two_pow_64)%Z).
   { pose proof (alloc_top_lt h). lia. }
+  assert (EnnZ : nnZ = page_round_up_Z (bv_unsigned newlen)) by reflexivity.
   assert (Hg1 : negb (bv_unsigned (Z_to_bv 64 MREMAP_MAYMOVE) =? MREMAP_MAYMOVE)%Z = false) by reflexivity.
   assert (Hg2 : negb (bv_unsigned old mod page_size =? 0)%Z = false) by (rewrite Hal; reflexivity).
   assert (Hg3 : page_align_is0_b newlen = false).
@@ -755,7 +981,16 @@ Proof.
   assert (Hg5 : negb (mremap_source_b (m_vmmaps m) old on onZ && mremap_backing_uniform_b m old on) = false).
   { unfold mremap_source_b. fold h. rewrite (proj2 (Z.leb_le _ _) Hce), Hrf, Hhas, Hna.
     unfold mremap_backing_uniform_b. rewrite Hlazy. reflexivity. }
-  unfold mremap_spec. rewrite Hg1, Hg2, Hg3, Hg4. rewrite bind_model. cbv beta.
+  unfold mremap_spec. rewrite Hg1, Hg2, Hg3.
+  destruct (Z.ltb_spec TASK_SIZE (page_round_up_Z (bv_unsigned newlen))) as [Hbig|Hsmall].
+  { (* the new length leaves the user address space: -EINVAL, whatever the model *)
+    cbv beta iota. sys_unfold. split.
+    - intros H. left. split; [lia|]. destruct o; inv_sys. reflexivity.
+    - intros [[_ ->] | [Hs _]]; [reflexivity | lia]. }
+  assert (HR : forall P Q : Prop, ((TASK_SIZE < nnZ)%Z /\ P) \/ ((nnZ <= TASK_SIZE)%Z /\ Q) <-> Q).
+  { intros P Q. split; [intros [[Hc _]|[_ Hq]]; [lia | exact Hq] | intros Hq; right; split; [lia | exact Hq]]. }
+  rewrite HR. clear HR.
+  rewrite Hg4. cbv beta iota. rewrite bind_model. cbv beta zeta.
   fold onZ nnZ. fold on nn. rewrite Hg5. cbv beta iota.
   unfold mremap_inplace_effect, mremap_move_effect, mremap_tail.
   destruct (Z.eqb_spec onZ nnZ) as [Heq|Hne].
@@ -767,35 +1002,32 @@ Proof.
   - intros H. right. destruct o as [x m' evs|]; inv_sys.
     + left. split; [exact Hne|]. eexists. split; [eassumption|reflexivity].
     + destruct (Z.ltb_spec nnZ onZ) as [Hlt|Hge].
-      * inv_sys. right; left. split; [exact Hlt|]. replace (onZ <? nnZ)%Z with false by (symmetry; apply Z.ltb_ge; lia). reflexivity.
-      * assert (Hlt : (onZ < nnZ)%Z) by lia. replace (onZ <? nnZ)%Z with true in * by (symmetry; apply Z.ltb_lt; lia).
-        destruct (mremap_inplace_grow_b m old on nn onZ nnZ) eqn:Eg; inv_sys.
-        -- right; right; left. auto.
-        -- right; right; right. eexists. split; [exact Hlt|]. split; [eassumption|reflexivity].
-        -- right; right; right. eexists. split; [exact Hlt|]. split; [eassumption|reflexivity].
+      * inv_sys. right; left. split; [exact Hlt|]. try replace (onZ <? nnZ)%Z with false by (symmetry; apply Z.ltb_ge; lia). reflexivity.
+      * assert (Hlt : (onZ < nnZ)%Z) by lia. try replace (onZ <? nnZ)%Z with true in * by (symmetry; apply Z.ltb_lt; lia).
+        destruct (mremap_inplace_room_b m old on nn onZ nnZ) eqn:Er; inv_sys.
+        -- right; right; left. split; [exact Hlt|]. split; [|reflexivity].
+           unfold mremap_inplace_grow_b. rewrite Er. cbn [andb]. assumption.
+        -- right; right; right. eexists. split; [exact Hlt|]. split; [first [reflexivity | exact Er]|].
+           split; [eassumption|reflexivity].
     + exfalso. repeat first [ progress inv_sys
                             | match goal with
                               | H : (if ?b then _ else _) _ _ _ |- _ => destruct b
                               | H : (if ?b then _ else _) |- _ => destruct b
                               end ].
-  - intros [[Hc _] | [(_ & e & He & ->) | [[Hlt ->] | [(Hlt & Hg & ->) | (dst & Hlt & Hfr & ->)]]]]; [lia| | | |].
+  - intros [[Hc _] | [(_ & e & He & ->) | [[Hlt ->] | [(Hlt & Hg & ->) | (dst & Hlt & Hroom & Hdst & ->)]]]]; [lia| | | |].
     + left. eexists _, _, _, _. split; [exists e; split; [exact He|reflexivity]|]. split; reflexivity.
     + right. replace (nnZ <? onZ)%Z with true by (symmetry; apply Z.ltb_lt; lia).
       eexists _, _, _, _. split; [reflexivity|]. split; reflexivity.
-    + right. replace (nnZ <? onZ)%Z with false by (symmetry; apply Z.ltb_ge; lia). rewrite Hg.
-      replace (onZ <? nnZ)%Z with true by (symmetry; apply Z.ltb_lt; lia).
-      left. eexists _, _, _, _. split; [reflexivity|]. split; reflexivity.
     + right. replace (nnZ <? onZ)%Z with false by (symmetry; apply Z.ltb_ge; lia).
-      replace (onZ <? nnZ)%Z with true by (symmetry; apply Z.ltb_lt; lia).
-      assert (Hmove : (Monad.bind (choose (fun dst0 => mremap_fresh_b m onZ nnZ old on dst0 nn = true))
-                        (fun dst0 => Monad.bind (modify (fun _ => mremap_model_next m old on dst0 nn))
-                          (fun _ => pure (mkEffectU dst0 [] [((dst0 + on)%bv, Z_to_bv 64 (nnZ - onZ))] [(old, on)] [mkCopy old dst0 on] []))))
-                      i m (Ok (mkEffectU dst [] [((dst + on)%bv, Z_to_bv 64 (nnZ - onZ))] [(old, on)] [mkCopy old dst on] [])
-                               (mremap_model_next m old on dst nn) [])).
-      { sys_unfold. eexists _, _, _, _. split; [exists dst; split; [exact Hfr|reflexivity]|].
-        split; [|reflexivity]. eexists _, _, _, _. split; [reflexivity|]. split; reflexivity. }
-      revert Hmove. sys_unfold. intros Hmove.
-      destruct (mremap_inplace_grow_b m old on nn onZ nnZ); [right; exact Hmove| exact Hmove].
+      try replace (onZ <? nnZ)%Z with true by (symmetry; apply Z.ltb_lt; lia).
+      unfold mremap_inplace_grow_b in Hg. apply andb_prop in Hg as [Hroom Hbud]. rewrite Hroom.
+      eexists _, _, _, _. split; [exists tt; split; [exact Hbud|reflexivity]|].
+      split; [|reflexivity]. eexists _, _, _, _. split; [reflexivity|]. split; reflexivity.
+    + right. replace (nnZ <? onZ)%Z with false by (symmetry; apply Z.ltb_ge; lia).
+      try replace (onZ <? nnZ)%Z with true by (symmetry; apply Z.ltb_lt; lia).
+      rewrite Hroom.
+      eexists _, _, _, _. split; [exists dst; split; [exact Hdst|reflexivity]|].
+      split; [|reflexivity]. eexists _, _, _, _. split; [reflexivity|]. split; reflexivity.
 Qed.
 
 
@@ -852,29 +1084,6 @@ Proof.
   unfold iv_overlap in Hov. apply andb_false_iff in Hov as [Hov|Hov]; apply Z.ltb_ge in Hov; lia.
 Qed.
 
-Lemma mremap_budget_dst_indep : forall m (old on nn d1 d2 : word),
-  lazyfree m -> (0 < bv_unsigned nn)%Z ->
-  region_free (vm_noaccess (m_vmmaps m)) d1 nn = true ->
-  region_free (vm_noaccess (m_vmmaps m)) d2 nn = true ->
-  mremap_final_budget_b m old on d1 nn = mremap_final_budget_b m old on d2 nn.
-Proof.
-  intros m old on nn d1 d2 [Hl Hm] Hnn H1 H2.
-  assert (Hused : forall d, region_free (vm_noaccess (m_vmmaps m)) d nn = true ->
-            vm_backing_used (mremap_model_next m old on d nn)
-            = (bv_unsigned nn + live_bytes (maps_subtract_all (map_remove (vm_maps (m_vmmaps m)) old) (vm_noaccess (m_vmmaps m))))%Z).
-  { intros d Hd. unfold mremap_model_next, mremap_source_lazy_b. rewrite Hl. cbn [map_contains existsb].
-    unfold vm_resize_backing, vm_backing_used. cbv zeta.
-    change (m_vm_lazy (with_vmmaps ?h m)) with (m_vm_lazy m). change (m_vm_materialized (with_vmmaps ?h m)) with (m_vm_materialized m).
-    rewrite Hl, Hm. cbn [maps_subtract List.filter app].
-    change (m_vm_lazy (with_vm_backing [] [] ?x)) with (@nil (word * word)).
-    change (m_vm_materialized (with_vm_backing [] [] ?x)) with (@nil word).
-    change (m_vmmaps (with_vm_backing [] [] (with_vmmaps ?h m))) with h.
-    cbn [maps_subtract_all length Z.of_nat]. unfold vm_backed_maps, mremap_maps_next. cbn [vm_maps vm_noaccess].
-    change ((d, nn) :: map_remove (vm_maps (m_vmmaps m)) old) with ([(d, nn)] ++ map_remove (vm_maps (m_vmmaps m)) old).
-    rewrite maps_subtract_all_app, live_bytes_app, (maps_subtract_all_miss _ d nn Hnn Hd). cbn [live_bytes]. lia. }
-  unfold mremap_final_budget_b, vm_backing_within_limit. rewrite (Hused d1 H1), (Hused d2 H2). reflexivity.
-Qed.
-
 (* [comment removed for export] *)
 Lemma nsafe_mremap : forall old oldlen newlen mo,
   0 <= old -> old mod page_size = 0 -> 0 < oldlen -> 0 < newlen ->
@@ -914,46 +1123,53 @@ Proof.
   assert (Hnr_addr : forall a : word, bv_unsigned a + 0 <= alloc_top h -> ret_in_errnos mremap_errnos a = false).
   { intros a Ha. apply ret_in_mremap_small. lia. }
   assert (Hunn : bv_unsigned nn = nnZ) by (unfold nn; apply unsigned_lit; lia).
+  assert (Hn0 : 0 < nnZ) by lia.
+  assert (Hnal : nnZ mod page_size = 0) by (unfold nnZ; apply page_round_up_Z_aligned).
+  assert (Hinval : ret_in_errnos mremap_errnos (errno_ret EINVAL) = false) by (first [reflexivity | vm_compute; reflexivity]).
   split.
   - apply (nsafe_of sp); [exact Hsi| |].
     + intros Hu. apply Hg in Hu.
-      destruct Hu as [[_ H] | [(_ & e & _ & H) | [[_ H] | [(_ & _ & H) | (dst & _ & _ & H)]]]]; discriminate H.
-    + destruct (Z.eq_dec onZ nnZ) as [E|E].
-      * eexists. apply Hg. left. split; [exact E|reflexivity].
-      * eexists. apply Hg. right; left. split; [exact E|]. exists ENOMEM. split; [left; reflexivity|reflexivity].
+      destruct Hu as [[_ H] | [_ [[_ H] | [(_ & e & _ & H) | [[_ H] | [(_ & _ & H) | (dst & _ & _ & _ & H)]]]]]]; discriminate H.
+    + destruct (Z_lt_le_dec TASK_SIZE nnZ) as [Hbig|Hsmall].
+      * eexists. apply Hg. left. split; [exact Hbig|reflexivity].
+      * destruct (Z.eq_dec onZ nnZ) as [E|E].
+        -- eexists. apply Hg. right. split; [exact Hsmall|]. left. split; [exact E|reflexivity].
+        -- eexists. apply Hg. right. split; [exact Hsmall|]. right; left. split; [exact E|].
+           exists ENOMEM. split; [left; reflexivity|reflexivity].
   - intros _.
     assert (Hleft : forall eff m' , sp i mo (Ok eff m' []) -> ret_in_errnos mremap_errnos (eff_ret eff) = false ->
               (exists eff' m1 evs', syscall_spec i mo (Ok eff' m1 evs') /\ refusal_b i mo (eff_ret eff') = false)
               \/ (forall eff' m1 evs', syscall_spec i mo (Ok eff' m1 evs') -> refusal_b i mo (eff_ret eff') = true)).
     { intros eff m' Hs Hr. left. exists eff, m', []. split; [apply Hsi; exact Hs|]. unfold i. rewrite refusal_b_216. exact Hr. }
     assert (How : bv_unsigned ow + 0 <= alloc_top h) by (unfold ow; rewrite unsigned_lit by lia; lia).
+    destruct (Z_lt_le_dec TASK_SIZE nnZ) as [Hbig|Hsmall].
+    { (* -EINVAL is not one of the injected answers *)
+      eapply Hleft; [apply Hg; left; split; [exact Hbig|reflexivity]|]. cbn [eff_ret]. exact Hinval. }
     destruct (Z.eq_dec onZ nnZ) as [E|E].
-    { eapply Hleft; [apply Hg; left; split; [exact E|reflexivity]|]. cbn [eff_ret]. exact (Hnr_addr ow How). }
+    { eapply Hleft; [apply Hg; right; split; [exact Hsmall|]; left; split; [exact E|reflexivity]|]. cbn [eff_ret]. exact (Hnr_addr ow How). }
     destruct (Z.ltb_spec nnZ onZ) as [Hlt|Hge].
-    { eapply Hleft; [apply Hg; right; right; left; split; [exact Hlt|reflexivity]|]. cbn [eff_ret]. exact (Hnr_addr ow How). }
+    { eapply Hleft; [apply Hg; right; split; [exact Hsmall|]; right; right; left; split; [exact Hlt|reflexivity]|]. cbn [eff_ret]. exact (Hnr_addr ow How). }
     assert (Hgt : onZ < nnZ) by lia.
     destruct (mremap_inplace_grow_b mo ow on nn onZ nnZ) eqn:Eg.
-    { eapply Hleft; [apply Hg; right; right; right; left; split; [exact Hgt|split; reflexivity]|]. cbn [eff_ret]. exact (Hnr_addr ow How). }
-    (* [comment removed for export] *)
-    assert (Hmoves : forall dst, mremap_fresh_b mo onZ nnZ ow on dst nn = true ->
-              bv_unsigned dst mod page_size = 0 /\ 0 < bv_unsigned dst /\ bv_unsigned dst + nnZ <= alloc_top h
-              /\ region_free (vm_reserved h ++ vm_maps h) dst nn = true /\ mremap_final_budget_b mo ow on dst nn = true).
-    { intros dst Hf. unfold mremap_fresh_b in Hf. cbv zeta in Hf. fold h in Hf.
-      apply andb_true_iff in Hf as [Hf B]. apply andb_true_iff in Hf as [Hf F]. apply andb_true_iff in Hf as [Hf C].
-      apply andb_true_iff in Hf as [Hf P]. apply andb_true_iff in Hf as [_ A].
-      apply Z.eqb_eq in A. apply Z.ltb_lt in P. apply Z.leb_le in C. auto. }
-    destruct (place_in_model h nnZ) as [a|] eqn:Ep.
+    { eapply Hleft; [apply Hg; right; split; [exact Hsmall|]; right; right; right; left; split; [exact Hgt|split; [first [exact Eg | reflexivity]|reflexivity]]|].
+      cbn [eff_ret]. exact (Hnr_addr ow How). }
+    (* A grow with room in place but no budget has only the errno answers. *)
+    destruct (mremap_inplace_room_b mo ow on nn onZ nnZ) eqn:Er.
+    { right. intros eff' m1 evs' Hsp. apply Hsi, Hg in Hsp. unfold i. rewrite refusal_b_216.
+      destruct Hsp as [[Hc _] | [_ Hsp]]; [lia|].
+      destruct Hsp as [[Hc _] | [(_ & e & He & Heq) | [[Hc _] | [(_ & Hc & _) | (dst & _ & Hc & _)]]]]; try lia; try congruence.
+      apply Ok_inj in Heq as (-> & _ & _). cbn [eff_ret]. apply ret_in_errnos_in. exact He. }
+    (* Without room the move goes to Linux's one placement at hint 0. *)
+    destruct (Placement.linux_place_b_spec h (kb_thp (m_kernel mo)) (Z_to_bv 64 0) nnZ Hn0 Hnal) as [Hsome Hnone].
+    destruct (Placement.linux_place_b h (kb_thp (m_kernel mo)) (Z_to_bv 64 0) nnZ) as [aZ|] eqn:Ep.
     2:{ right. intros eff' m1 evs' Hsp. apply Hsi, Hg in Hsp. unfold i. rewrite refusal_b_216.
-        destruct Hsp as [[Hc _] | [(_ & e & He & Heq) | [[Hc _] | [(_ & Hc & _) | (dst & _ & Hf & _)]]]]; try lia; try congruence.
+        destruct Hsp as [[Hc _] | [_ Hsp]]; [lia|].
+        destruct Hsp as [[Hc _] | [(_ & e & He & Heq) | [[Hc _] | [(_ & Hc & _) | (dst & _ & _ & (Hpl & _) & _)]]]]; try lia; try congruence.
         - apply Ok_inj in Heq as (-> & _ & _). cbn [eff_ret]. apply ret_in_errnos_in. exact He.
-        - exfalso. destruct (Hmoves dst Hf) as (A1 & A2 & A3 & A4 & _).
-          destruct (place_in_model_complete h nnZ (bv_unsigned dst) ltac:(lia) ltac:(apply page_round_up_Z_aligned) A1) as [a' Ha'].
-          + unfold page_size in *. pose proof (Z.mod_divide (bv_unsigned dst) 4096 ltac:(lia)) as [Hd _]. destruct (Hd A1) as [k Hk]. lia.
-          + exact A3.
-          + rewrite Z_to_bv_bv_unsigned. exact A4.
-          + congruence. }
-    destruct (place_in_model_admissible h nnZ a ltac:(lia) Ep) as (Ea & A1 & A2 & A3 & A4).
-    fold nn in A4. set (dw := Z_to_bv 64 a) in *.
+        - exfalso. exact (proj1 Hnone eq_refl _ Hpl). }
+    destruct (place_word_of _ _ _ _ _ Hn0 Hnal (proj1 (Hsome aZ) eq_refl)) as (dw & _ & Hpl).
+    destruct (Placement.linux_place_admissible _ _ _ _ _ Hn0 Hnal Hpl) as (A1 & A2 & A3 & A4).
+    rewrite Z_to_bv_bv_unsigned in A4. fold nn in A4.
     destruct (mremap_final_budget_b mo ow on dw nn) eqn:Eb.
     + (* [comment removed for export] *)
       assert (Hne : bv_eqb dw ow = false).
@@ -965,13 +1181,16 @@ Proof.
         unfold iv_overlap in Hno. rewrite E1 in Hno. fold nn in Hno. unfold old_n in Hno. rewrite Hunn, Huon in Hno.
         apply andb_false_iff in Hno as [Hno|Hno]; apply Z.ltb_ge in Hno; lia. }
       eapply Hleft.
-      * apply Hg. right; right; right; right. exists dw. split; [exact Hgt|]. split; [|reflexivity].
+      * apply Hg. right. split; [exact Hsmall|]. right; right; right; right. exists dw. split; [exact Hgt|].
+        split; [first [exact Er | reflexivity]|]. split; [|reflexivity]. split; [exact Hpl|].
         unfold mremap_fresh_b. cbv zeta. fold h. rewrite Hne, (proj2 (Z.eqb_eq _ _) A1), (proj2 (Z.ltb_lt _ _) A2), (proj2 (Z.leb_le _ _) A3), A4, Eb. reflexivity.
       * cbn [eff_ret]. apply Hnr_addr. lia.
     + (* [comment removed for export] *)
       right. intros eff' m1 evs' Hsp. apply Hsi, Hg in Hsp. unfold i. rewrite refusal_b_216.
-      destruct Hsp as [[Hc _] | [(_ & e & He & Heq) | [[Hc _] | [(_ & Hc & _) | (dst & _ & Hf & _)]]]]; try lia; try congruence.
+      destruct Hsp as [[Hc _] | [_ Hsp]]; [lia|].
+      destruct Hsp as [[Hc _] | [(_ & e & He & Heq) | [[Hc _] | [(_ & Hc & _) | (dst & _ & _ & (Hpl' & Hfr) & _)]]]]; try lia; try congruence.
       * apply Ok_inj in Heq as (-> & _ & _). cbn [eff_ret]. apply ret_in_errnos_in. exact He.
-      * exfalso. destruct (Hmoves dst Hf) as (_ & _ & _ & B4 & B5).
-        rewrite (mremap_budget_dst_indep mo ow on nn dst dw Hlf ltac:(lia) (Hfresh dst B4) (Hfresh dw A4)) in B5. congruence.
+      * exfalso. pose proof (Placement.linux_place_unique _ _ _ _ _ _ Hpl Hpl') as Eu.
+        assert (dst = dw) by (apply bv_eq; symmetry; exact Eu). subst dst.
+        unfold mremap_fresh_b in Hfr. cbv zeta in Hfr. apply andb_true_iff in Hfr as [_ Hfr]. congruence.
 Qed.

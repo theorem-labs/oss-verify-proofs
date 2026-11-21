@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -30,7 +31,7 @@ Definition ixit2 (sp0 : Z) (m : mem) : Prop := ixit_rt sp0 m /\ xcells sp0 m.
 Local Ltac rwx C AGX WM := apply (rw_cells_agree asegs _ _ _ _ C); [apply AGX; cbn [cells_size csize Nat.add]; try lia | exact WM].
 Local Ltac rox C AGX := apply (ro_cells_agree asegs _ _ _ _ C); apply AGX; cbn [cells_size csize Nat.add]; try lia.
 
-Lemma IX_frame : forall sp0, IX_frame_stmt (ixit_rt sp0) (sp0 - STACK_WIN).
+Lemma IX_frame : forall sp0, IX_frame_stmt (ixit_rt sp0) (sp0 - STACK_SPAN).
 Proof.
   intros sp0 W lo hi m m' IX MU WM HLO SUB.
   assert (AGX : forall a n, (a + n <= lo) -> (a + n <= 0x176988 \/ 0x176988 + 232 <= a) -> (a + n <= 0x176b68 \/ 0x176b68 + 232 <= a) ->
@@ -55,7 +56,7 @@ Proof.
 Qed.
 
 Lemma xcells_frame : forall sp0 W lo hi m m',
-  xcells sp0 m -> munch W m m' -> wmono asegs m m' -> sp0 - STACK_WIN <= lo -> sub_fp W (XWI lo hi) -> xcells sp0 m'.
+  xcells sp0 m -> munch W m m' -> wmono asegs m m' -> sp0 - STACK_SPAN <= lo -> sub_fp W (XWI lo hi) -> xcells sp0 m'.
 Proof.
   intros sp0 W lo hi m m' (SP & RF & (G2 & G1 & RM & SHC & RI) & GM & AB & AS) MU WM HLO SUB.
   assert (AGX : forall a n, (a + n <= lo) -> (a + n <= 0x176988 \/ 0x176988 + 232 <= a) -> (a + n <= 0x176b68 \/ 0x176b68 + 232 <= a) ->
@@ -76,7 +77,7 @@ Proof.
     repeat split; try exact I; lia.
 Qed.
 
-Lemma IX2_frame : forall sp0, IX_frame_stmt (ixit2 sp0) (sp0 - STACK_WIN).
+Lemma IX2_frame : forall sp0, IX_frame_stmt (ixit2 sp0) (sp0 - STACK_SPAN).
 Proof.
   intros sp0 W lo hi m m' [IX XC] MU WM HLO SUB. split; [exact (IX_frame sp0 W lo hi m m' IX MU WM HLO SUB)| exact (xcells_frame sp0 W lo hi m m' XC MU WM HLO SUB)].
 Qed.
@@ -116,7 +117,7 @@ Section Lift.
   Qed.
 End Lift.
 
-Lemma xcells_CF : forall sp0 lo sp Fp m m', xcells sp0 m -> munch [(lo, sp); (Fp, Fp + 232)] m m' -> wmono asegs m m' -> sp0 - STACK_WIN <= lo ->
+Lemma xcells_CF : forall sp0 lo sp Fp m m', xcells sp0 m -> munch [(lo, sp); (Fp, Fp + 232)] m m' -> wmono asegs m m' -> sp0 - STACK_SPAN <= lo ->
   (Fp = RSTDOUT \/ Fp = RSTDERR) -> xcells sp0 m'.
 Proof.
   intros sp0 lo sp Fp m m' XC MU WM HLO FPC. apply (xcells_frame sp0 _ lo sp m m' XC MU WM HLO).

@@ -6,7 +6,7 @@
      premise is needed;
    - the musl constants (strlen/memchr read 0x10350 and 0x10368, 8 bytes each) and the caller's own .rodata
      strings: these are NOT owned, and aro_unowned below states them.
-   aro_unowned is the in-segment half of arodata_okP (lib/A/Prog/IdentBase.v:20), the fact the program walks
+   aro_unowned is the in-segment half of arodata_okP (lib/A/Prog/IdentBase.v:21), the fact the program walks
    carry; aro_unowned_of_arodata turns one into the other. Unlike YG0d's rom_view, it says nothing about owned
    image bytes, so it survives a call whose post keeps only the bytes that are unowned before and after
    (__asan_stack_malloc_*, YG0d.v:298-299): aro_unowned_keep. *)

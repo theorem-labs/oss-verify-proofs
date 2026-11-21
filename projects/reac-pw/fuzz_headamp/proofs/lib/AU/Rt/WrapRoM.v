@@ -2,7 +2,7 @@
    musl constants the strlen and memchr walks read (lib/AU/YE39.v mconsts_view: 0x10370 .. 0x10390). Those 32 bytes
    lie in a read-only segment (YE39.v mc_in_rom), are not in Tfib_owned_static (checked range by range below, so a
    core whose list covers them fails here and not in a walk), and are not errno. This replaces cgif's
-   mconsts_of_rom_view (AE39.v:40), whose premise rom_view a caller cannot carry across __asan_stack_malloc_*. *)
+   mconsts_of_rom_view (AE39.v:41), whose premise rom_view a caller cannot carry across __asan_stack_malloc_*. *)
 (* Modified by Theorem Labs, 2026-10-29: for a Theorem Labs lane's acceptance (a working branch), the record class is TfibSyms, not IdentTfibSyms (DECISIONS-LIVE: TfibSyms in both A and B, no --rename), and the core modules are Required by full path at the applied A core's names (lib/A/A*.v, lib/Reusable/YA0m, YE08, YE21). *)
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.

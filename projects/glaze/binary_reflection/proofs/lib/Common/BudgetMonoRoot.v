@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the three vDSO step arms of sstep and sstep_cfg; munmap and mremap cut with maps_subtract, with their TASK_SIZE gates and munmap's ENOMEM answer; mprotect's vDSO gate; the MAP_FIXED overflow arm and place_declined_b in mmap; brk's cut and grow bytes; VmState's kernel and vDSO fields and the new checked arms; run_segments in root_obligation_core_mono; node_ok_relim over CfgStep.node_ok_c, as rrealizes' node). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -258,9 +259,12 @@ Theorem mremap_charge_le : forall m old old_n dst new_n,
   (bv_unsigned new_n mod page_size = 0)%Z ->
   (0 < bv_unsigned new_n)%Z ->
   (bv_unsigned dst + bv_unsigned new_n < two_pow_64)%Z ->
-  (forall (a sz : word), In (a, sz) (map_remove (vm_maps (m_vmmaps m)) old) ->
+  (* 08b1429 Sys/Mm/Mremap.v: the source range is cut ([maps_subtract]), not the entry removed *)
+  (forall (a sz : word), In (a, sz) (maps_subtract (vm_maps (m_vmmaps m)) (bv_unsigned old)
+                                       (bv_unsigned old + bv_unsigned old_n)) ->
      (bv_unsigned a + bv_unsigned sz <= two_pow_64)%Z) ->
-  region_free (map_remove (vm_maps (m_vmmaps m)) old) dst new_n = true ->
+  region_free (maps_subtract (vm_maps (m_vmmaps m)) (bv_unsigned old)
+                 (bv_unsigned old + bv_unsigned old_n)) dst new_n = true ->
   (vm_backing_used (mremap_model_next m old old_n dst new_n)
    <= mremap_move_charge m old old_n new_n)%Z.
 Proof.
@@ -286,7 +290,8 @@ Proof.
   set (KP := List.filter (page_outside_range (bv_unsigned old)
                             (bv_unsigned old + bv_unsigned old_n))
                (m_vm_materialized m)) in *.
-  set (R0 := map_remove (vm_maps (m_vmmaps m)) old) in *.
+  set (R0 := maps_subtract (vm_maps (m_vmmaps m)) (bv_unsigned old)
+               (bv_unsigned old + bv_unsigned old_n)) in *.
   set (NA := vm_noaccess (m_vmmaps m)) in *.
   set (dhi := (bv_unsigned dst + bv_unsigned new_n)%Z) in *.
   set (dlo := bv_unsigned dst) in *.
@@ -456,8 +461,9 @@ Proof.
       pose proof (alloc_top_lt (m_vmmaps m));
       pose proof (mremap_charge_le m old old_n dst n Ha ltac:(rewrite Hnw; exact Hnmod)
                     ltac:(rewrite Hnw; exact Hnpos) ltac:(rewrite Hnw; lia)
-                    (fun a sz Hin => Hfit a sz (map_remove_In _ old a sz Hin))
-                    (region_free_map_remove' _ old _ _ (region_free_app_r' _ _ _ _ Hr))) as Hle
+                    (LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mremap.maps_subtract_fits _ _ _ Hfit)
+                    (LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mremap.region_free_subtract_fits
+                       _ _ _ _ _ Hfit (region_free_app_r' _ _ _ _ Hr))) as Hle
   end.
   rewrite mremap_move_budget_b_relim in Hmove. apply Z.leb_le in Hmove.
   assert (Hg1 : mremap_final_budget_b (relim L m) old old_n dst n = true).
@@ -473,6 +479,17 @@ Lemma mremap_backing_uniform_b_relim : forall L m old old_n,
   mremap_backing_uniform_b (relim L m) old old_n = mremap_backing_uniform_b m old old_n.
 Proof. reflexivity. Qed.
 
+(* [linux_place_is_vmrelim], used by the move branch below, is in BudgetMonoMm. *)
+Lemma mremap_inplace_room_b_relim : forall L m old old_n new_n oz nz,
+  mremap_inplace_room_b (relim L m) old old_n new_n oz nz
+  = mremap_inplace_room_b m old old_n new_n oz nz.
+Proof. reflexivity. Qed.
+
+(* 08b1429 Sys/Mm/Mremap.v + Checks/Sys/Mm/Mremap.v: a [TASK_SIZE] gate on the new length;
+   [mremap_inplace_grow_b] is [mremap_inplace_room_b && mremap_final_budget_b], and the
+   budget mark splits on the room: with room it is the final budget, without room the
+   move charge (recipes/limsim-arms.md part 3). The move branch is checked only without
+   room, so each branch reads exactly the conjunct its mark gives. *)
 Lemma relim_arm_mremap : forall i eff m L,
   (L <= mlim m)%Z ->
   maps_fit m ->
@@ -488,6 +505,7 @@ Proof.
   destruct (negb (bv_unsigned flags =? MREMAP_MAYMOVE)%Z); [reflexivity |].
   destruct (negb (bv_unsigned old mod page_size =? 0)%Z); [bm_go_relim |].
   destruct (page_align_is0_b new_size) eqn:Hnew; [bm_go_relim |].
+  destruct (TASK_SIZE <? page_round_up_Z (bv_unsigned new_size))%Z; [bm_go_relim |].
   destruct (page_align_is0_b old_size); [reflexivity |].
   set (old_nZ := page_round_up_Z (bv_unsigned old_size)) in *.
   set (new_nZ := page_round_up_Z (bv_unsigned new_size)) in *.
@@ -505,15 +523,22 @@ Proof.
     (* [comment removed for export] *)
     apply Z.ltb_ge in Hlt. apply Z.eqb_neq in Heq.
     rewrite (proj2 (Z.leb_gt new_nZ old_nZ) ltac:(lia)) in Hmk.
-    apply negb_false_iff, andb_true_iff in Hmk as [Hin Hmv].
-    unfold mremap_inplace_grow_b. cbv zeta.
-    rewrite !m_vmmaps_relim, !alloc_top_vmrelim. bm_vm_proj.
+    rewrite mremap_inplace_room_b_relim in Hmk.
+    unfold mremap_inplace_grow_b. rewrite mremap_inplace_room_b_relim.
+    destruct (mremap_inplace_room_b m old old_n new_n old_nZ new_nZ) eqn:Hroom;
+      cbn [andb]; [| first [reflexivity | bm_go_relim]].
+    apply negb_false_iff in Hmk. rename Hmk into Hin.
     rewrite Hin, (mremap_final_budget_b_mono L m old old_n old new_n HL Hin).
     bm_go_relim.
   - destruct (old_nZ <? new_nZ)%Z eqn:Hlt; cbn [andb]; [| reflexivity].
     apply Z.ltb_lt in Hlt.
     rewrite (proj2 (Z.leb_gt new_nZ old_nZ) Hlt) in Hmk.
-    apply negb_false_iff, andb_true_iff in Hmk as [Hin Hmv].
+    rewrite mremap_inplace_room_b_relim in Hmk |- *.
+    destruct (mremap_inplace_room_b m old old_n new_n old_nZ new_nZ) eqn:Hroom;
+      cbn [negb andb]; [first [reflexivity | bm_go_relim] |].
+    apply negb_false_iff in Hmk. rename Hmk into Hmv.
+    rewrite ?linux_place_is_vmrelim.
+    try change (m_kernel (relim L m)) with (m_kernel m).
     pose proof (mremap_fresh_b_relim L m old_nZ new_size old old_n r HL Hfit Hnew Hmv) as Hf.
     change (page_round_up_Z (bv_unsigned new_size)) with new_nZ in Hf.
     change (Z_to_bv 64 new_nZ) with new_n in Hf.
@@ -539,20 +564,23 @@ Definition arm_ok (c : CheckedArm) : Prop :=
 
 (* [comment removed for export] *)
 Lemma revs_frame : forall (f : Model -> check_result),
-  (forall S m, f (revs S m) = cr_map (revs S) (f m)) ->
+  (forall S m, vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
+     f (revs S m) = cr_map (revs S) (f m)) ->
   forall m m' evs, f m = CheckOk m' evs -> m_vm m' = m_vm m.
 Proof.
   intros f Hf m m' evs H.
-  pose proof (Hf (m_vm m) m) as E. rewrite revs_self, H in E. cbn [cr_map] in E.
+  pose proof (Hf (m_vm m) m eq_refl eq_refl) as E. rewrite revs_self, H in E. cbn [cr_map] in E.
   injection E as E. rewrite E at 1. reflexivity.
 Qed.
 
 (* [comment removed for export] *)
 Lemma revs_relim : forall (f : Model -> check_result),
-  (forall S m, f (revs S m) = cr_map (revs S) (f m)) ->
+  (forall S m, vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
+     f (revs S m) = cr_map (revs S) (f m)) ->
   forall L m, f (relim L m) = cr_map (relim L) (f m).
 Proof.
-  intros f Hf L m. rewrite relim_as_revs, Hf.
+  intros f Hf L m. rewrite relim_as_revs.
+  rewrite (Hf (mkVmState (vmrelim L (m_vmmaps m)) (m_vm_lazy m) (m_vm_materialized m) (m_kernel m) (m_vdso m)) m eq_refl eq_refl).
   destruct (f m) as [m' evs| |] eqn:E; cbn [cr_map]; [| reflexivity | reflexivity].
   pose proof (revs_frame f Hf m m' evs E) as Hv. f_equal.
   destruct m' as [fd' vm' io' fs' pr' li' ti']. cbn [m_vm] in Hv. subst vm'.
@@ -560,11 +588,12 @@ Proof.
 Qed.
 
 Lemma arm_ok_of_revs : forall c,
-  (forall i eff m S, ca_check c i eff (revs S m) = cr_map (revs S) (ca_check c i eff m)) ->
+  (forall i eff m S, vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
+     ca_check c i eff (revs S m) = cr_map (revs S) (ca_check c i eff m)) ->
   arm_ok c.
 Proof.
   intros c H i eff m L _ _ _ _.
-  exact (revs_relim (fun m => ca_check c i eff m) (fun S m => H i eff m S) L m).
+  exact (revs_relim (fun m => ca_check c i eff m) (fun S m Hk Hv => H i eff m S Hk Hv) L m).
 Qed.
 
 Lemma arm_ok_of_relim : forall c,
@@ -620,8 +649,10 @@ Proof.
   apply Forall_cons; [apply arm_ok_of_revs; exact revs_arm_exit_group |].
   apply Forall_cons; [apply arm_ok_of_revs; exact revs_arm_set_tid_address |].
   apply Forall_cons; [apply arm_ok_of_revs; exact revs_arm_futex |].
+  apply Forall_cons; [apply arm_ok_of_revs; exact revs_arm_set_robust_list |].
   apply Forall_cons; [apply arm_ok_of_revs; exact revs_arm_nanosleep |].
   apply Forall_cons; [apply arm_ok_of_revs; exact revs_arm_clock_gettime |].
+  apply Forall_cons; [apply arm_ok_of_revs; exact revs_arm_clock_getres |].
   apply Forall_cons; [apply arm_ok_of_revs; exact revs_arm_sched_setscheduler |].
   apply Forall_cons; [apply arm_ok_of_revs; exact revs_arm_sched_getaffinity |].
   apply Forall_cons; [apply arm_ok_of_revs; exact revs_arm_sched_yield |].
@@ -688,6 +719,7 @@ Proof.
   apply Forall_cons; [apply arm_ok_of_revs; exact revs_arm_wait4 |].
   apply Forall_cons; [apply arm_ok_of_revs; exact revs_arm_prlimit64 |].
   apply Forall_cons; [apply arm_ok_of_revs; exact revs_arm_getrandom |].
+  apply Forall_cons; [apply arm_ok_of_revs; exact revs_arm_pwritev2 |].
   apply Forall_cons; [apply arm_ok_of_revs; exact revs_arm_clone3 |].
   apply Forall_cons; [apply arm_ok_of_revs; exact revs_arm_faccessat2 |].
   apply Forall_nil.
@@ -707,7 +739,7 @@ Proof.
   exact (Hall c Hin i eff m L HL Hfit Hno Hmk).
 Qed.
 End BudgetMonoCheck.
-Require LinuxProcessSemantics.LinuxProcessSem.Checks.VmMapsDisjoint.
+Require LinuxProcessSemantics.LinuxProcessSem.Checks.VmMapsDisjoint LinuxProcessSemantics.LinuxProcessSem.Checks.MapsFit.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Module BudgetMonoFrameMm.
 (* [comment removed for export] *)
@@ -769,6 +801,23 @@ Ltac dife H := match type of H with
                | context [ if ?b then _ else _ ] => destruct b
                end.
 
+(* 75d69e00 Sys/Mm/Mmap.v:1801 [mmap_fixed_err_addr_b]: the MAP_FIXED overflow
+   branch ([check_mmap_fixed_overflow]) has two arms. An error-valued address
+   with a length the kernel lets through answers an errno from [mmap_errnos] or
+   the address itself, both with the model unchanged; every other address is the
+   -ENOMEM [check_ret_only] leaf it was. Neither arm moves the model. *)
+Lemma vm_pres_fixed_overflow : forall addr nZ eff m m' evs,
+  check_mmap_fixed_overflow addr nZ eff m = CheckOk m' evs -> vm_pres m m'.
+Proof.
+  intros addr nZ [r ws zs us cs ci] m m' evs H.
+  unfold check_mmap_fixed_overflow in H.
+  dife H.
+  - destruct ws, zs, us, cs, ci; try discriminate.
+    dife H; [|discriminate].
+    injection H as <- <-. apply vm_pres_refl.
+  - exact (vm_pres_ret_only _ _ _ _ _ _ H).
+Qed.
+
 (* [comment removed for export] *)
 
 Lemma pres_brk : forall req eff m m' evs,
@@ -785,20 +834,11 @@ Proof.
     [|discriminate].
   injection H as <- <-.
   apply (vm_pres_intro _ _ (brk_model_next (m_vmmaps m) req ret)); [apply vmm_brk_next | reflexivity |].
-  intros Hf. set (h := m_vmmaps m) in *.
-  unfold brk_model_next, brk_maps_next. cbn [vm_maps].
-  destruct (Z.ltb 0 (bv_unsigned (vm_brk h))
-            && Z.ltb (bv_unsigned ret) (bv_unsigned (vm_brk h))) eqn:Eshrink.
-  - apply fit_subtract. exact Hf.
-  - unfold brk_grants. destruct (brk_is_grow req ret (vm_brk h)) eqn:Egrow; cbn [app]; [| exact Hf].
-    apply fit_cons; [| exact Hf].
-    unfold brk_is_grow in Egrow.
-    apply andb_true_iff in Egrow as [_ Hlt]. apply Z.ltb_lt in Hlt.
-    pose proof (word_range ret) as Hr. pose proof (word_range (vm_brk h)) as Hb.
-    assert (Hsz : bv_unsigned (ret - vm_brk h)%bv = (bv_unsigned ret - bv_unsigned (vm_brk h))%Z).
-    { rewrite bv_sub_unsigned. apply bv_wrap_small.
-      change (bv_modulus 64) with (2 ^ 64)%Z. lia. }
-    rewrite Hsz. unfold two_pow_64. lia.
+  (* 08b1429 Sys/Mm/Mmap.v: shrink cuts through [brk_unmap_cut], grow records
+     [brk_page_range]; the model proves the fit of both (Checks/MapsFit.v) *)
+  intros Hf.
+  exact (LinuxProcessSemantics.LinuxProcessSem.Checks.MapsFit.brk_model_next_fit
+           (m_vmmaps m) req ret Hf).
 Qed.
 
 (* [comment removed for export] *)
@@ -808,14 +848,22 @@ Lemma pres_munmap : forall addr len eff m m' evs,
 Proof.
   intros addr len [ret ws zs us cs ci] m m' evs H.
   unfold check_munmap in H. cbv zeta in H.
-  dif H; [exact (vm_pres_ret_only _ _ _ _ _ _ H)|].
-  dif H; [exact (vm_pres_ret_only _ _ _ _ _ _ H)|].
-  dif H.
-  - destruct ws, zs, cs, ci; try discriminate.
-    dif H; [|discriminate]. injection H as <- <-.
-    eapply vm_pres_intro; [apply vmm_mmap_destroyed | reflexivity |].
-    cbn [vm_maps]. intros Hf. unfold map_remove. apply fit_filter. exact Hf.
-  - dif H; [exact (vm_pres_ret_only _ _ _ _ _ _ H) | discriminate].
+  (* 08b1429 Checks/Sys/Mm/Mmap.v: a TASK_SIZE gate, an -ENOMEM refusal beside the exact
+     unmap, and the partial-cut arm ([munmap_cut_ok]); every ok outcome is the model itself
+     or the [maps_subtract] cut, so split every test and close each leaf *)
+  repeat match type of H with
+         | context [if ?b then _ else _] => destruct b
+         | context [match ?l with [] => _ | _ :: _ => _ end] => destruct l
+         end.
+  all: first
+    [ discriminate H
+    | exact (vm_pres_ret_only _ _ _ _ _ _ H)
+    | (injection H as <- <-;
+       first [ apply vm_pres_refl
+             | eapply vm_pres_intro; [apply vmm_mmap_destroyed | reflexivity |];
+               cbn [vm_maps]; intros Hf;
+               first [ apply fit_subtract; exact Hf
+                     | unfold mmap_fixed_destroyed_next; cbn [vm_maps]; apply fit_subtract; exact Hf ] ]) ].
 Qed.
 
 Lemma pres_mprotect : forall addr len prot eff m m' evs,
@@ -827,6 +875,9 @@ Proof.
   dif H; [exact (vm_pres_ret_only _ _ _ _ _ _ H)|].
   dif H; [exact (vm_pres_ret_only _ _ _ _ _ _ H)|].
   dif H; [exact (vm_pres_ret_only _ _ _ _ _ _ H)|].
+  dif H; [discriminate|].
+  (* 08b1429 Checks/Sys/Mm/Mprotect.v:35-37: a request meeting the vdso/vvar pair
+     answers [CheckUnmodeled], so this gate has no [CheckOk] leaf *)
   dif H; [discriminate|].
   dif H.
   - destruct ws, us, cs, ci; try discriminate.
@@ -857,10 +908,15 @@ Proof.
   pose proof (alloc_top_lt (m_vmmaps m)) as Hac. unfold two_pow_64 in Hac.
   pose proof (word_range len) as Hlenr.
   pose proof (word_range addr) as Haddrr.
+  (* 08b1429 Checks/Sys/Mm/Mmap.v:78-83: the two argument gates moved. A misaligned
+     offset no longer consults [mmap_pglen_ok_b] (the constant is gone), and the
+     non-anonymous arm answers EBADF on an unknown descriptor instead of declining
+     outright, so it has a [check_ret_only] leaf where it had none. *)
   destruct (negb (mmap_off_aligned_b off)) eqn:Eoff.
-  { destruct (mmap_pglen_ok_b len); [|discriminate].
+  { exact (vm_pres_ret_only _ _ _ _ _ _ H). }
+  destruct (negb (mmap_anon_b flags)) eqn:Eanon.
+  { destruct (fd_lookup (m_fds m) (fd32 fd)) as [e|] eqn:Efd; [discriminate|].
     exact (vm_pres_ret_only _ _ _ _ _ _ H). }
-  destruct (negb (mmap_anon_b flags)) eqn:Eanon; [discriminate|].
   destruct (w_is0 len) eqn:Elen.
   { destruct (mmap_plain_anon_b flags); [|discriminate].
     exact (vm_pres_ret_only _ _ _ _ _ _ H). }
@@ -868,32 +924,45 @@ Proof.
   assert (HnZ : (0 < page_round_up_Z (bv_unsigned len))%Z)
     by (apply page_round_up_pos; lia).
   destruct (mmap_modeled_b prot flags off) eqn:Emod.
-  { destruct ws, us, cs, ci; try discriminate.
+  { destruct (place_declined_b (m_kernel m) (m_vmmaps m) addr
+                (page_round_up_Z (bv_unsigned len))) eqn:Edecl; [discriminate|].
+    destruct ws, us, cs, ci; try discriminate.
     dife H.
     { destruct zs; [|discriminate]. injection H as <- <-. apply vm_pres_refl. }
     difn H E; [|discriminate]. injection H as <- <-.
     eapply vm_pres_intro; [rewrite vmm_mmap_backing, vmm_vmmaps; reflexivity | reflexivity |].
     cbn [vm_maps]. intros Hf.
+    (* 08b1429 Placement.v:1038-1042: the freely placed arms gate on the single
+       predicate [linux_place_is] instead of a chain, and
+       [linux_place_is_admissible] yields the same four facts the chain gave --
+       alignment, positivity, the [alloc_top] ceiling and [region_free]. Only the
+       peeling changes; the bound below is argued from the same [Hceil]. *)
     apply andb_true_iff in E as [E Hzs].
-    apply andb_true_iff in E as [E Hbud].
-    apply andb_true_iff in E as [E Hfree].
-    apply andb_true_iff in E as [E Hceil].
-    apply Z.leb_le in Hceil.
+    apply andb_true_iff in E as [Hplace Hbud].
+    pose proof (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is_admissible
+                  _ _ _ _ _ HnZ
+                  (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.page_round_up_Z_aligned
+                     (bv_unsigned len)) Hplace)
+      as (Halign & Hpos & Hceil & Hfree).
     apply fit_cons; [rewrite u64 by lia; unfold two_pow_64; lia | exact Hf]. }
   destruct (mmap_noaccess_b prot flags off) eqn:Enoa.
-  { destruct ws, zs, cs, ci; try discriminate.
+  { destruct (place_declined_b (m_kernel m) (m_vmmaps m) addr
+                (page_round_up_Z (bv_unsigned len))) eqn:Edecln; [discriminate|].
+    destruct ws, zs, cs, ci; try discriminate.
     dife H.
     { destruct us; [|discriminate]. injection H as <- <-. apply vm_pres_refl. }
     difn H E; [|discriminate]. injection H as <- <-.
     eapply vm_pres_intro; [rewrite vmm_mmap_backing, vmm_vmmaps; reflexivity | reflexivity |].
     cbn [vm_maps]. intros Hf.
-    apply andb_true_iff in E as [E Hus].
-    apply andb_true_iff in E as [E Hfree].
-    apply andb_true_iff in E as [E Hceil].
-    apply Z.leb_le in Hceil.
+    apply andb_true_iff in E as [Hplace Hus].
+    pose proof (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is_admissible
+                  _ _ _ _ _ HnZ
+                  (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.page_round_up_Z_aligned
+                     (bv_unsigned len)) Hplace)
+      as (Halign & Hpos & Hceil & Hfree).
     apply fit_cons; [rewrite u64 by lia; unfold two_pow_64; lia | exact Hf]. }
   destruct (mmap_fixed_noaccess_b prot flags off) eqn:Efix.
-  { difn H Enomem; [exact (vm_pres_ret_only _ _ _ _ _ _ H)|].
+  { difn H Enomem; [exact (vm_pres_fixed_overflow _ _ _ _ _ _ H)|].
     difn H Eceil; [discriminate|].
     difn H Ealign; [exact (vm_pres_ret_only _ _ _ _ _ _ H)|].
     difn H Epos; [discriminate|].
@@ -932,7 +1001,7 @@ Proof.
   destruct (mmap_fixed_rw_b prot flags off) eqn:Efixrw.
   2: {
     destruct (mmap_noreplace_noaccess_b prot flags off) eqn:Enrn.
-    { difn H Enomem; [exact (vm_pres_ret_only _ _ _ _ _ _ H)|].
+    { difn H Enomem; [exact (vm_pres_fixed_overflow _ _ _ _ _ _ H)|].
       difn H Eceil; [discriminate|].
       difn H Ealign; [exact (vm_pres_ret_only _ _ _ _ _ _ H)|].
       difn H Epos; [discriminate|].
@@ -948,7 +1017,7 @@ Proof.
       - destruct ws, zs, us, cs, ci; try discriminate.
         difn H Eerr; [|discriminate]. injection H as <- <-. apply vm_pres_refl. }
     destruct (mmap_noreplace_rw_b prot flags off) eqn:Enrr; [|discriminate].
-    difn H Enomem; [exact (vm_pres_ret_only _ _ _ _ _ _ H)|].
+    difn H Enomem; [exact (vm_pres_fixed_overflow _ _ _ _ _ _ H)|].
     difn H Eceil; [discriminate|].
     difn H Ealign; [exact (vm_pres_ret_only _ _ _ _ _ _ H)|].
     difn H Epos; [discriminate|].
@@ -963,7 +1032,7 @@ Proof.
         apply fit_cons; [rewrite u64 by lia; unfold two_pow_64; lia | exact Hf].
     - destruct ws, zs, us, cs, ci; try discriminate.
       difn H Eerr; [|discriminate]. injection H as <- <-. apply vm_pres_refl. }
-  difn H Enomem; [exact (vm_pres_ret_only _ _ _ _ _ _ H)|].
+  difn H Enomem; [exact (vm_pres_fixed_overflow _ _ _ _ _ _ H)|].
   difn H Eceil; [discriminate|].
   difn H Ealign; [exact (vm_pres_ret_only _ _ _ _ _ _ H)|].
   difn H Epos; [discriminate|].
@@ -1017,6 +1086,10 @@ Proof.
   difn H Eflag; [discriminate|].
   difn H Ealign; [exact (vm_pres_ret_only _ _ _ _ _ _ H)|].
   difn H Enew; [exact (vm_pres_ret_only _ _ _ _ _ _ H)|].
+  (* 08b1429 Checks/Sys/Mm/Mremap.v:44-45: a [TASK_SIZE] gate on the new length,
+     between the two page-alignment gates; it answers EINVAL, so it is a
+     [check_ret_only] leaf, not a [CheckUnmodeled] one *)
+  difn H Etask; [exact (vm_pres_ret_only _ _ _ _ _ _ H)|].
   difn H Eold; [discriminate|].
   difn H Esrc; [discriminate|].
   difn H Eeq; [exact (vm_pres_ret_only _ _ _ _ _ _ H)|].
@@ -1044,7 +1117,7 @@ Proof.
       eapply vm_pres_intro; [apply vmm_mremap_next | reflexivity |].
       unfold mremap_maps_next. cbn [vm_maps]. intros Hf.
       apply fit_cons; [rewrite u64 by lia; unfold two_pow_64; lia |].
-      unfold map_remove. apply fit_filter. exact Hf.
+      first [ apply fit_subtract; exact Hf | unfold map_remove; apply fit_filter; exact Hf ].
     + difn H Egrow; [|discriminate].
       difn H Eok; [|discriminate]. injection H as <- <-.
       eapply vm_pres_intro; [apply vmm_mremap_next | reflexivity |].
@@ -1054,7 +1127,7 @@ Proof.
       apply andb_true_iff in Egrow as [Hgceil Hgfree].
       apply Z.leb_le in Hgceil.
       apply fit_cons; [rewrite u64 by lia; unfold two_pow_64; lia |].
-      unfold map_remove. apply fit_filter. exact Hf.
+      first [ apply fit_subtract; exact Hf | unfold map_remove; apply fit_filter; exact Hf ].
   - difn H Emove; [|discriminate]. injection H as <- <-.
     eapply vm_pres_intro; [apply vmm_mremap_next | reflexivity |].
     unfold mremap_maps_next. cbn [vm_maps]. intros Hf.
@@ -1068,7 +1141,7 @@ Proof.
     apply andb_true_iff in Hfresh as [Hfresh Hfceil].
     apply Z.leb_le in Hfceil.
     apply fit_cons; [rewrite u64 by lia; unfold two_pow_64; lia |].
-    unfold map_remove. apply fit_filter. exact Hf.
+    first [ apply fit_subtract; exact Hf | unfold map_remove; apply fit_filter; exact Hf ].
 Qed.
 End BudgetMonoFrameMm.
 Module BudgetMonoFrame.
@@ -1084,11 +1157,12 @@ Definition arm_pres (c : CheckedArm) : Prop :=
   forall i eff m m' evs, ca_check c i eff m = CheckOk m' evs -> vm_pres m m'.
 
 Lemma arm_pres_of_revs : forall c,
-  (forall i eff m S, ca_check c i eff (revs S m) = cr_map (revs S) (ca_check c i eff m)) ->
+  (forall i eff m S, vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
+     ca_check c i eff (revs S m) = cr_map (revs S) (ca_check c i eff m)) ->
   arm_pres c.
 Proof.
   intros c H i eff m m' evs E. apply vm_pres_vmmaps.
-  pose proof (revs_frame (fun m => ca_check c i eff m) (fun S m => H i eff m S) m m' evs E) as Hv.
+  pose proof (revs_frame (fun m => ca_check c i eff m) (fun S m Hk Hv => H i eff m S Hk Hv) m m' evs E) as Hv.
   unfold m_vmmaps. rewrite Hv. reflexivity.
 Qed.
 
@@ -1131,8 +1205,10 @@ Proof.
   apply Forall_cons; [apply arm_pres_of_revs; exact revs_arm_exit_group |].
   apply Forall_cons; [apply arm_pres_of_revs; exact revs_arm_set_tid_address |].
   apply Forall_cons; [apply arm_pres_of_revs; exact revs_arm_futex |].
+  apply Forall_cons; [apply arm_pres_of_revs; exact revs_arm_set_robust_list |].
   apply Forall_cons; [apply arm_pres_of_revs; exact revs_arm_nanosleep |].
   apply Forall_cons; [apply arm_pres_of_revs; exact revs_arm_clock_gettime |].
+  apply Forall_cons; [apply arm_pres_of_revs; exact revs_arm_clock_getres |].
   apply Forall_cons; [apply arm_pres_of_revs; exact revs_arm_sched_setscheduler |].
   apply Forall_cons; [apply arm_pres_of_revs; exact revs_arm_sched_getaffinity |].
   apply Forall_cons; [apply arm_pres_of_revs; exact revs_arm_sched_yield |].
@@ -1183,6 +1259,7 @@ Proof.
   apply Forall_cons; [apply arm_pres_of_revs; exact revs_arm_wait4 |].
   apply Forall_cons; [apply arm_pres_of_revs; exact revs_arm_prlimit64 |].
   apply Forall_cons; [apply arm_pres_of_revs; exact revs_arm_getrandom |].
+  apply Forall_cons; [apply arm_pres_of_revs; exact revs_arm_pwritev2 |].
   apply Forall_cons; [apply arm_pres_of_revs; exact revs_arm_clone3 |].
   apply Forall_cons; [apply arm_pres_of_revs; exact revs_arm_faccessat2 |].
   apply Forall_nil.
@@ -1347,10 +1424,86 @@ Proof.
   intros i m eff m' evs H. apply check_syscall_ok_iff in H. exact (check_syscall_pres _ _ _ _ _ H).
 Qed.
 
+(* ------------------------------------------------------------------------
+   THE THREE vDSO ARMS.  08b1429 Run.v:645 and :2216 each grew three
+   constructors between [*_instr_unmodeled] and [*_syscall] --
+   [*_vdso_call], [*_vdso_materialization_fault], [*_vdso_unmodeled] -- and
+   gave [*_instr_unmodeled] a fourth premise, [vdso_entry_fn segs (ms_pc ms)
+   = None].  ELEVEN constructors each, which is what the case tactics below
+   must spell.  The four lemmas here are what the new arms need and the
+   syscall arms did not.
+   ------------------------------------------------------------------------ *)
+
+(* [mi_account_step] answers [MachineUnmodeled] on the INSTRUCTION alone: the
+   model is read only under the [MachineOk] branch's materialization.  This is
+   the fact the [*_instr_unmodeled] cases below already prove inline. *)
+Lemma mi_unmodeled_model_irrel : forall ms m1 m2,
+  mi_account_step segs ms m1 = MachineUnmodeled ->
+  mi_account_step segs ms m2 = MachineUnmodeled.
+Proof.
+  intros ms m1 m2 H. unfold mi_account_step in *.
+  destruct (step_accesses segs ms) as [report| |]; try discriminate H.
+  - destruct (materialize_model_accesses m1 (@accessed_ranges _ report));
+      discriminate H.
+  - reflexivity.
+Qed.
+
+(* NO vDSO ENTRY STANDS FOR AN ALLOCATING SYSCALL.  [Vdso.vdso_fn_sysno]
+   answers only 169, 113, 114, 168, 258 and 259, and [alloc_mark_sysnos], the
+   list [alloc_budget_refused_b] dispatches on, is [214; 215; 216; 222; 226];
+   off that list the dispatcher's answer is its final [false].  That is what
+   lets [spec_relim_down], [spec_relim_up] and [spec_unmodeled_relim] be used
+   on a vDSO call's outcome with nothing left to discharge. *)
+Lemma alloc_vdso_false : forall ms m fn n,
+  LinuxProcessSemantics.LinuxProcessSem.Vdso.vdso_fn_sysno fn = Some n ->
+  alloc_budget_refused_b (sys_input segs ms (Z_to_bv 64 n)) m = false.
+Proof.
+  intros ms m fn n H. destruct fn; cbn in H; try discriminate H;
+    injection H as H; subst n; reflexivity.
+Qed.
+
+(* [relim] rebuilds [m_vmmaps] and nothing else, so [m_vdso] -- all that
+   [vdso_post] and [with_vdso_bump] read -- passes through it untouched. *)
+Lemma vdso_cfg_relim : forall L ms m f eff m2,
+  mkCfg (vdso_post segs ms m f eff) (relim L (with_vdso_bump m2))
+  = mkCfg (vdso_post segs ms (relim L m) f eff) (with_vdso_bump (relim L m2)).
+Proof. reflexivity. Qed.
+
+(* The decline predicate is three statements about [syscall_spec] at the
+   model, so it moves across [relim] by the three lemmas above. *)
+Lemma vdso_unmodeled_relim : forall ms m L fn,
+  (L <= mlim m)%Z -> maps_fit m ->
+  (vdso_call_unmodeled segs ms (relim L m) fn <-> vdso_call_unmodeled segs ms m fn).
+Proof.
+  intros ms m L fn HL Hfit. unfold vdso_call_unmodeled. split.
+  - intros [Hn | [(n & Hn & Hs) | (n & eff & m' & evs & Hn & Hs & Hbad)]].
+    + left. exact Hn.
+    + right. left. exists n. split; [exact Hn |].
+      exact (proj1 (spec_unmodeled_relim _ m L HL Hfit
+                      (alloc_vdso_false ms (relim L m) fn n Hn)) Hs).
+    + right. right.
+      destruct (spec_relim_down _ m L eff m' evs HL Hfit
+                  (alloc_vdso_false ms (relim L m) fn n Hn) Hs) as [m2 [Hs2 ->]].
+      exists n, eff, m2, evs. split; [exact Hn | split; [exact Hs2 | exact Hbad]].
+  - intros [Hn | [(n & Hn & Hs) | (n & eff & m' & evs & Hn & Hs & Hbad)]].
+    + left. exact Hn.
+    + right. left. exists n. split; [exact Hn |].
+      exact (proj2 (spec_unmodeled_relim _ m L HL Hfit
+                      (alloc_vdso_false ms (relim L m) fn n Hn)) Hs).
+    + right. right. exists n, eff, (relim L m'), evs.
+      split; [exact Hn |]. split; [| exact Hbad].
+      exact (spec_relim_up _ m L eff m' evs HL Hfit
+               (alloc_vdso_false ms (relim L m) fn n Hn) Hs).
+Qed.
+
 (* [comment removed for export] *)
 
 Ltac sstep_cases H :=
-  destruct H as [ms0 model0 ms' model' Hh Hs Ha | ms0 model0 Hh Hs Ha | ms0 model0 Hh Hs Ha
+  destruct H as [ms0 model0 ms' model' Hh Hs Ha | ms0 model0 Hh Hs Ha
+                | ms0 model0 Hh Hs Ha Hve
+                | ms0 model0 fn n eff model' model'' evs Hh Hs Ha Hfn Hno Hsp Hef Hh' Hm
+                | ms0 model0 fn n eff model' evs Hh Hs Ha Hfn Hno Hsp Hef Hh' Hm
+                | ms0 model0 fn Hh Hs Ha Hfn Hvu
                 | ms0 model0 x8 eff model' model'' evs Hh Hs Hsp Hh' Hm
                 | ms0 model0 x8 eff model' evs Hh Hs Hsp Hh' Hm
                 | ms0 model0 x8 eff model' evs code Hh Hs Hsp Hh' Hk
@@ -1364,6 +1517,11 @@ Proof.
   sstep_cases H; try discriminate Est; injection Est as <-; cbn [cfg_model].
   - apply vm_pres_vmmaps.
     exact (proj1 (proj2 (mi_account_step_model_frame segs ms0 model0 ms' model' Ha))).
+  - (* vDSO call: the syscall's own outcome, then [with_vdso_bump], which
+       rebuilds the VM subsystem's vdso field and leaves [m_vmmaps] alone *)
+    eapply vm_pres_trans; [eapply spec_pres; eassumption |].
+    eapply vm_pres_trans; [eapply mat_pres; eassumption |].
+    split; [reflexivity | exact (fun h => h)].
   - eapply vm_pres_trans; [eapply spec_pres; eassumption | eapply mat_pres; eassumption].
   - eapply spec_pres; eassumption.
   - eapply spec_pres; eassumption.
@@ -1399,7 +1557,10 @@ Lemma budget_refused_instr_mat : forall ms model report,
   materialize_model_accesses model (@accessed_ranges _ report) <> None.
 Proof.
   intros ms model report Hh Hx H Hs Hm. apply H. split; [exact Hh |].
-  left. split; [exact Hx |]. exists report. split; assumption.
+  (* 75d69e00 Run.v:2849: the no-pending branch of [budget_refused_at] is now a
+     disjunction, the instruction first-touch fault or the vDSO one (see
+     [sstep_relim_down]'s vDSO case); this is the instruction fault *)
+  left. split; [exact Hx |]. left. exists report. split; assumption.
 Qed.
 
 Theorem sstep_relim_down : forall L c e st1,
@@ -1433,12 +1594,34 @@ Proof.
       unfold mi_account_step. rewrite Es. reflexivity.
   - (* [comment removed for export] *)
     exists SError. split; [| reflexivity].
-    apply sstep_instr_unmodeled; [exact Hh | exact Hs |].
+    apply sstep_instr_unmodeled; [exact Hh | exact Hs | | exact Hve].
     unfold mi_account_step in *.
     destruct (step_accesses segs ms) as [report| |] eqn:Es; try discriminate Ha.
     + destruct (materialize_model_accesses (relim L model) (@accessed_ranges _ report));
         discriminate Ha.
     + reflexivity.
+  - (* vDSO call: lift the spec outcome and its materialization exactly as a
+       syscall's; no vDSO number is an allocation, so there is no mark to clear *)
+    pose proof (alloc_vdso_false ms (relim L model) fn n Hno) as Hmk.
+    destruct (spec_relim_down _ model L eff model' evs HL Hfit Hmk Hsp) as [m2 [Hs2 ->]].
+    destruct (spec_pres _ _ _ _ _ Hs2) as [Hl2 Hf2].
+    destruct (mat_relim_some L m2 _ model'' ltac:(rewrite Hl2; exact HL) Hm) as [y [Ey ->]].
+    eexists; split;
+      [ eapply sstep_vdso_call;
+          [exact Hh | exact Hs | exact (mi_unmodeled_model_irrel ms (relim L model) model Ha)
+          | exact Hfn | exact Hno | exact Hs2 | exact Hef | exact Hh' | exact Ey]
+      | reflexivity ].
+  - (* the budget refusing a vDSO call IS a refused configuration: 08b1429
+       [budget_refused_at]'s left branch, second disjunct, premise for premise *)
+    exfalso. apply Hnb. split; [exact Hh |]. left. split; [exact Hs |].
+    right. split; [exact Ha |]. exists fn, n, eff, model', evs.
+    split; [exact Hfn |]. split; [exact Hno |]. split; [exact Hsp |].
+    split; [exact Hef |]. split; [exact Hh' | exact Hm].
+  - exists SError. split; [| reflexivity].
+    eapply sstep_vdso_unmodeled;
+      [exact Hh | exact Hs | exact (mi_unmodeled_model_irrel ms (relim L model) model Ha)
+      | exact Hfn |].
+    exact (proj1 (vdso_unmodeled_relim ms model L fn HL Hfit) Hvu).
   - (* [comment removed for export] *)
     pose proof (budget_refused_syscall_mark ms _ x8 Hh Hs Hnb) as Hmk.
     destruct (spec_relim_down _ model L eff model' evs HL Hfit Hmk Hsp) as [m2 [Hs2 ->]].
@@ -1497,12 +1680,41 @@ Proof.
     + apply sstep_instr_fault; [exact Hh | exact Hs |].
       unfold mi_account_step. rewrite Es. reflexivity.
   - (* [comment removed for export] *)
-    apply sstep_instr_unmodeled; [exact Hh | exact Hs |].
+    apply sstep_instr_unmodeled; [exact Hh | exact Hs | | exact Hve].
     unfold mi_account_step in *.
     destruct (step_accesses segs ms) as [report| |] eqn:Es; try discriminate Ha.
     + destruct (materialize_model_accesses model (@accessed_ranges _ report));
         discriminate Ha.
     + reflexivity.
+  - (* vDSO call *)
+    pose proof (alloc_vdso_false ms (relim L model) fn n Hno) as Hmk.
+    pose proof (spec_relim_up _ model L eff model' evs HL Hfit Hmk Hsp) as Hs1.
+    destruct (spec_pres _ _ _ _ _ Hsp) as [Hl2 Hf2].
+    destruct (mat_some_relim L model' _ model'' ltac:(rewrite Hl2; exact HL) Hm) as [En | Es'].
+    + exfalso. apply Hnb. split; [exact Hh |]. left. split; [exact Hs |].
+      right. split; [exact (mi_unmodeled_model_irrel ms model (relim L model) Ha) |].
+      exists fn, n, eff, (relim L model'), evs.
+      split; [exact Hfn |]. split; [exact Hno |]. split; [exact Hs1 |].
+      split; [exact Hef |]. split; [exact Hh' | exact En].
+    + (* [cbn [relimc]] above leaves [relimc L {| .. |}] folded on the target *)
+      unfold relimc; cbn [cfg_ms cfg_model]. rewrite vdso_cfg_relim.
+      eapply sstep_vdso_call;
+        [exact Hh | exact Hs | exact (mi_unmodeled_model_irrel ms model (relim L model) Ha)
+        | exact Hfn | exact Hno | exact Hs1 | exact Hef | exact Hh' | exact Es'].
+  - (* a vDSO materialization fault at [relim L model] is itself refused *)
+    pose proof (alloc_vdso_false ms (relim L model) fn n Hno) as Hmk.
+    pose proof (spec_relim_up _ model L eff model' evs HL Hfit Hmk Hsp) as Hs1.
+    destruct (spec_pres _ _ _ _ _ Hsp) as [Hl2 Hf2].
+    exfalso. apply Hnb. split; [exact Hh |]. left. split; [exact Hs |].
+    right. split; [exact (mi_unmodeled_model_irrel ms model (relim L model) Ha) |].
+    exists fn, n, eff, (relim L model'), evs.
+    split; [exact Hfn |]. split; [exact Hno |]. split; [exact Hs1 |].
+    split; [exact Hef |]. split; [exact Hh' |].
+    exact (mat_none_relim L model' _ ltac:(rewrite Hl2; exact HL) Hm).
+  - eapply sstep_vdso_unmodeled;
+      [exact Hh | exact Hs | exact (mi_unmodeled_model_irrel ms model (relim L model) Ha)
+      | exact Hfn |].
+    exact (proj2 (vdso_unmodeled_relim ms model L fn HL Hfit) Hvu).
   - (* [comment removed for export] *)
     pose proof (budget_refused_syscall_mark ms (relim L model) x8 Hh Hs Hnb) as Hmk.
     pose proof (spec_relim_up _ model L eff model' evs HL Hfit Hmk Hsp) as Hs1.
@@ -1558,7 +1770,11 @@ Proof.
 Qed.
 
 Ltac sstep_cfg_cases H :=
-  destruct H as [ms0 model0 ms' model' Hh Hs Ha | ms0 model0 Hh Hs Ha | ms0 model0 Hh Hs Ha
+  destruct H as [ms0 model0 ms' model' Hh Hs Ha | ms0 model0 Hh Hs Ha
+                | ms0 model0 Hh Hs Ha Hve
+                | ms0 model0 fn n eff model' model'' evs Hh Hs Ha Hfn Hno Hsp Hef Hh' Hm
+                | ms0 model0 fn n eff model' evs Hh Hs Ha Hfn Hno Hsp Hef Hh' Hm
+                | ms0 model0 fn Hh Hs Ha Hfn Hvu
                 | ms0 model0 x8 eff model' model'' evs Hh Hs Hsp Hns Hh' Hm
                 | ms0 model0 x8 eff model' evs Hh Hs Hsp Hns Hh' Hm
                 | ms0 model0 x8 eff model' evs code Hh Hs Hsp Hh' Hk
@@ -1593,12 +1809,32 @@ Proof.
       apply sstep_cfg_instr_fault; [exact Hh | exact Hs |].
       unfold mi_account_step. rewrite Es. reflexivity.
   - exists SError. split; [| reflexivity].
-    apply sstep_cfg_instr_unmodeled; [exact Hh | exact Hs |].
+    apply sstep_cfg_instr_unmodeled; [exact Hh | exact Hs | | exact Hve].
     unfold mi_account_step in *.
     destruct (step_accesses segs ms) as [report| |] eqn:Es; try discriminate Ha.
     + destruct (materialize_model_accesses (relim L model) (@accessed_ranges _ report));
         discriminate Ha.
     + reflexivity.
+  - (* the cfg vDSO arms carry NO filter premise (Run.v:2238-2243: the vDSO's
+       numbers have no injected family), so they lift exactly as [sstep]'s *)
+    pose proof (alloc_vdso_false ms (relim L model) fn n Hno) as Hmk.
+    destruct (spec_relim_down _ model L eff model' evs HL Hfit Hmk Hsp) as [m2 [Hs2 ->]].
+    destruct (spec_pres _ _ _ _ _ Hs2) as [Hl2 Hf2].
+    destruct (mat_relim_some L m2 _ model'' ltac:(rewrite Hl2; exact HL) Hm) as [y [Ey ->]].
+    eexists; split;
+      [ eapply sstep_cfg_vdso_call;
+          [exact Hh | exact Hs | exact (mi_unmodeled_model_irrel ms (relim L model) model Ha)
+          | exact Hfn | exact Hno | exact Hs2 | exact Hef | exact Hh' | exact Ey]
+      | reflexivity ].
+  - exfalso. apply Hnb. split; [exact Hh |]. left. split; [exact Hs |].
+    right. split; [exact Ha |]. exists fn, n, eff, model', evs.
+    split; [exact Hfn |]. split; [exact Hno |]. split; [exact Hsp |].
+    split; [exact Hef |]. split; [exact Hh' | exact Hm].
+  - exists SError. split; [| reflexivity].
+    eapply sstep_cfg_vdso_unmodeled;
+      [exact Hh | exact Hs | exact (mi_unmodeled_model_irrel ms (relim L model) model Ha)
+      | exact Hfn |].
+    exact (proj1 (vdso_unmodeled_relim ms model L fn HL Hfit) Hvu).
   - pose proof (budget_refused_syscall_mark ms _ x8 Hh Hs Hnb) as Hmk.
     destruct (spec_relim_down _ model L eff model' evs HL Hfit Hmk Hsp) as [m2 [Hs2 ->]].
     destruct (spec_pres _ _ _ _ _ Hs2) as [Hl2 Hf2].
@@ -1650,12 +1886,39 @@ Proof.
                         (mat_none_relim L model _ HL Em)).
     + apply sstep_cfg_instr_fault; [exact Hh | exact Hs |].
       unfold mi_account_step. rewrite Es. reflexivity.
-  - apply sstep_cfg_instr_unmodeled; [exact Hh | exact Hs |].
+  - apply sstep_cfg_instr_unmodeled; [exact Hh | exact Hs | | exact Hve].
     unfold mi_account_step in *.
     destruct (step_accesses segs ms) as [report| |] eqn:Es; try discriminate Ha.
     + destruct (materialize_model_accesses model (@accessed_ranges _ report));
         discriminate Ha.
     + reflexivity.
+  - pose proof (alloc_vdso_false ms (relim L model) fn n Hno) as Hmk.
+    pose proof (spec_relim_up _ model L eff model' evs HL Hfit Hmk Hsp) as Hs1.
+    destruct (spec_pres _ _ _ _ _ Hsp) as [Hl2 Hf2].
+    destruct (mat_some_relim L model' _ model'' ltac:(rewrite Hl2; exact HL) Hm) as [En | Es'].
+    + exfalso. apply Hnb. split; [exact Hh |]. left. split; [exact Hs |].
+      right. split; [exact (mi_unmodeled_model_irrel ms model (relim L model) Ha) |].
+      exists fn, n, eff, (relim L model'), evs.
+      split; [exact Hfn |]. split; [exact Hno |]. split; [exact Hs1 |].
+      split; [exact Hef |]. split; [exact Hh' | exact En].
+    + (* as in [sstep_relim_up]: open [relimc] on the target first *)
+      unfold relimc; cbn [cfg_ms cfg_model]. rewrite vdso_cfg_relim.
+      eapply sstep_cfg_vdso_call;
+        [exact Hh | exact Hs | exact (mi_unmodeled_model_irrel ms model (relim L model) Ha)
+        | exact Hfn | exact Hno | exact Hs1 | exact Hef | exact Hh' | exact Es'].
+  - pose proof (alloc_vdso_false ms (relim L model) fn n Hno) as Hmk.
+    pose proof (spec_relim_up _ model L eff model' evs HL Hfit Hmk Hsp) as Hs1.
+    destruct (spec_pres _ _ _ _ _ Hsp) as [Hl2 Hf2].
+    exfalso. apply Hnb. split; [exact Hh |]. left. split; [exact Hs |].
+    right. split; [exact (mi_unmodeled_model_irrel ms model (relim L model) Ha) |].
+    exists fn, n, eff, (relim L model'), evs.
+    split; [exact Hfn |]. split; [exact Hno |]. split; [exact Hs1 |].
+    split; [exact Hef |]. split; [exact Hh' |].
+    exact (mat_none_relim L model' _ ltac:(rewrite Hl2; exact HL) Hm).
+  - eapply sstep_cfg_vdso_unmodeled;
+      [exact Hh | exact Hs | exact (mi_unmodeled_model_irrel ms model (relim L model) Ha)
+      | exact Hfn |].
+    exact (proj2 (vdso_unmodeled_relim ms model L fn HL Hfit) Hvu).
   - pose proof (budget_refused_syscall_mark ms (relim L model) x8 Hh Hs Hnb) as Hmk.
     pose proof (spec_relim_up _ model L eff model' evs HL Hfit Hmk Hsp) as Hs1.
     destruct (spec_pres _ _ _ _ _ Hsp) as [Hl2 Hf2].
@@ -1744,9 +2007,11 @@ Qed.
 
 (* [comment removed for export] *)
 
+(* Over the two step parts ([CfgStep.node_ok_c]) that [rrealizes]'s node asks; no
+   [RomBase.sys_rob] is derived at the changed limit. *)
 Lemma node_ok_relim : forall c (I : Type) (evs : I -> list event) (nx : I -> config),
-  good c -> node_ok segs c I evs nx ->
-  node_ok segs (relimc L c) I evs (fun i => relimc L (nx i)).
+  good c -> CfgStep.node_ok_c segs CfgStep.kit_cfg c I evs nx ->
+  CfgStep.node_ok_c segs CfgStep.kit_cfg (relimc L c) I evs (fun i => relimc L (nx i)).
 Proof.
   intros c I evs nx Hg [Hcomp Hsound]. split.
   - intros i. exact (good_up c (evs i) (SNext (nx i)) Hg (Hcomp i)).
@@ -1878,14 +2143,15 @@ Theorem root_obligation_core_mono : forall (img : Image) (lim lim' : Z) (S : Pro
     valid_entry img (mkEntry sp brk0 mb rnd) inp ->
     valid_input_core inp ->
     ~ run_scfg_budget_refused CfgStep.kit_cfg img lim (mkEntry sp brk0 mb rnd) inp ->
-    rrealizes (img_segments img)
-      (init_config (img_segments img) (img_init_pc img) (img_phdrs img) sp brk0 mb rnd lim inp)
+    rrealizes (run_segments (img_segments img) inp sp mb)
+      (init_config (run_segments (img_segments img) inp sp mb)
+         (img_init_pc img) (img_phdrs img) sp brk0 mb rnd lim inp)
       (S inp).
 Proof.
   intros [segs pc ph] lim lim' S HL H sp brk0 mb rnd inp He Hi Hb.
   cbn [img_segments img_init_pc img_phdrs] in *. cbn [run_scfg_budget_refused] in Hb.
-  exact (rrealizes_init_relim segs pc ph sp brk0 mb rnd lim lim' inp (S inp) HL
-           (H sp brk0 mb rnd inp He Hi) Hb).
+  exact (rrealizes_init_relim (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim lim' inp
+           (S inp) HL (H sp brk0 mb rnd inp He Hi) Hb).
 Qed.
 
 (* [comment removed for export] *)

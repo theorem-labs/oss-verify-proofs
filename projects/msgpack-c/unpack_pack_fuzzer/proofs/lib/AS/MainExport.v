@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the readable-range fact MRd, justified only by the hand-off state's readable-range claim at the same literal address and length; its meaning, justification, soundness case and equality test). *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
@@ -198,7 +199,9 @@ Inductive mfact : Type :=
 | MWr    (a : zexp) (n : Z)
 
 | MZeroS (a : zexp) (n : zexp)
-| MWrS   (a : zexp) (n : zexp).
+| MWrS   (a : zexp) (n : zexp)
+(* every byte of [n] from [a] is readable (the hand-off state's [KUnk]) *)
+| MRd    (a : zexp) (n : Z).
 
 Inductive pfact : Type :=
 | PVar   (n : nat) (lo hi : Z)
@@ -244,6 +247,7 @@ Definition mfact_ok (V : nat -> Z) (m : word -> option byte) (f : mfact) : Prop 
   | MWr a n => wr_at segs m (zv V a) n
   | MZeroS a n => forall i, 0 <= i < zv V n -> m (wa (zv V a + i)) = Some (Z_to_bv 8 0)
   | MWrS a n => wr_at segs m (zv V a) (zv V n)
+  | MRd a n => forall i, 0 <= i < n -> m (wa (zv V a + i)) <> None
   end.
 
 Definition pfact_ok (V : nat -> Z) (f : pfact) : Prop :=
@@ -286,6 +290,7 @@ Definition mjustify (kn : list kentry) (VR : vranges) (HLO HHI : Z) (f : mfact) 
     | MWr a n, KWr sa ne => lit_len ne n && addr_match VR sa a
     | MZeroS a n, KZero sa ne => sym_len VR ne n && addr_match VR sa a
     | MWrS a n, KWr sa ne => sym_len VR ne n && addr_match VR sa a
+    | MRd a n, KUnk sa ne => lit_len ne n && addr_match VR sa a
     | _, _ => false
     end) kn.
 
@@ -499,6 +504,11 @@ Proof.
     split; [lia|]. split; [unfold two64 in *; lia|]. intros i Hi.
     specialize (Hst i 1%nat ltac:(lia) ltac:(cbn; lia)). apply wview_MR. cbn [RiscvSemantics.store_ok] in Hst.
     destruct (wview segs MR _); [discriminate| discriminate Hst].
+  -
+    apply andb_prop in HKm as [HKm Ha]. apply lit_len_sound in HKm as [En Hn]. rewrite En in KOKK.
+    pose proof (addr_match_sound _ _ Ha) as Ea. destruct KOKK as (Hfl & Hz). rewrite Ea.
+    intros i Hi Hf. apply (Hz i ltac:(lia)). unfold wa in Hf. unfold mrestrict.
+    match goal with |- context [hidp ?x] => destruct (hidp x) end; [reflexivity | exact Hf].
 Qed.
 
 Lemma pjustify_sound : forall f, pjustify KN (var_ranges KN) f = true -> pfact_ok V f.
@@ -550,6 +560,7 @@ Definition mfact_eqb (f g : mfact) : bool :=
   | MWr a n, MWr a' n' => zexp_eqb a a' && Z.eqb n n'
   | MZeroS a n, MZeroS a' n' => zexp_eqb a a' && zexp_eqb n n'
   | MWrS a n, MWrS a' n' => zexp_eqb a a' && zexp_eqb n n'
+  | MRd a n, MRd a' n' => zexp_eqb a a' && Z.eqb n n'
   | _, _ => false
   end.
 

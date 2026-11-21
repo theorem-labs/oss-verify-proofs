@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by a Theorem Labs lane (ReallocPrimary.TkSecLink), 2026-10-30: the callee's trace premise in the P'' form (YG01.v admits), from the fixed trace through admits_fix, as fuzz_preset's own copy of this file does at commit 116f6c4dab1. *)
+(* Modified by a Theorem Labs lane (ReallocPrimary.TkSecLink), 2026-10-30: the callee's trace premise in the P'' form (YG01.v admits), from the fixed trace through admits_fix, as fuzz_preset's own copy of this file does. *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YCbq.v, with its module paths changed; off_img's image bounds cite fuzz_reply.asan's (YImgTop.IMG_LO, YImgTop.IMG_TOP_A) in place of cgif_file's 0x10000 and 0x5fb000. *)
 (* Modified by Theorem Labs, 2026-10: lib/B instantiation of lib/Reusable/YCbq.v for fuzz_reply.asan-ubsan: off_img cites YImgTop.IMG_TOP_B (this image's own top) where the shared copy cites IMG_TOP_A, and the modules YCbq, YCe5, YC5d, YCbp, YE01 are taken from lib/B. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: proc_but_pins lists the four new process-state fields (SIGPIPE pending, channel reader, SIGPIPE action, SIGPIPE terminal) and proc_but_pins_refl names them in its pattern; internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YImgTop.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -32,7 +33,9 @@ Ltac zlia := appn; lia.
 Definition proc_but_pins (md md' : Model) : Prop :=
 m_proc md' = mkProcState (procst_halted (m_proc md)) (procst_tid (m_proc md)) (procst_creds (m_proc md)) (procst_setsid_succeeded (m_proc md))
 (procst_sigmask (m_proc md)) (procst_children (m_proc md)) (procst_utsname (m_proc md)) (procst_sigaltstack_installed (m_proc md))
-(procst_killed (m_proc md)) (procst_sigabrt_pending (m_proc md)) (procst_abort_terminal (m_proc md)) (m_statpins md').
+(procst_killed (m_proc md)) (procst_sigabrt_pending (m_proc md)) (procst_abort_terminal (m_proc md)) (m_statpins md')
+(procst_sigpipe_pending (m_proc md)) (procst_channel_reader (m_proc md))
+(procst_sigpipe_action (m_proc md)) (procst_sigpipe_terminal (m_proc md)).
 Definition aos_step (FP : list (Z * Z)) (md md' : Model) : Prop :=
 m_io md' = m_io md /\ m_pipes md' = m_pipes md /\
 YI16.fds_rel (m_fds md) (m_fds md') /\ YI16.fs_rel (m_fs md) (m_fs md') /\
@@ -40,7 +43,7 @@ YI16.fds_rel (m_fds md) (m_fds md') /\ YI16.fs_rel (m_fs md) (m_fs md') /\
 proc_but_pins md md' /\
 (~ YI16.sink_open_fp FP -> m_fd md' = m_fd md /\ m_fsys md' = m_fsys md /\ m_proc md' = m_proc md).
 Lemma proc_but_pins_refl : forall md, proc_but_pins md md.
-Proof. intros [fd vm io fs [h ti c ss sm ch u sa k sp at_ pins] li tm]. reflexivity. Qed.
+Proof. intros [fd vm io fs [h ti c ss sm ch u sa k sp at_ pins spp cr spa spt] li tm]. reflexivity. Qed.
 Lemma proc_but_pins_trans : forall m1 m2 m3, proc_but_pins m1 m2 -> proc_but_pins m2 m3 -> proc_but_pins m1 m3.
 Proof.
 intros m1 m2 m3 H12 H23. unfold proc_but_pins, m_statpins in *. rewrite H23. rewrite H12. reflexivity.

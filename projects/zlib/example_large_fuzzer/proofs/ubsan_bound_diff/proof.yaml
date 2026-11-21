@@ -1,0 +1,4 @@
+schema: oss-fuzz-theorems/proof/1
+proves: zlib/example_large_fuzzer/ubsan_bound_diff
+bound: '0'
+fingerprint: a7db06b1bfa3d01ab145ef4c327e3f446686949f4d12836d9d6554dbf0cdae82

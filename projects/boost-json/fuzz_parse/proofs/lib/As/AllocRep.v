@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: statements written out as text, amaps_in_ledger's former body kept as amaps_in_ledger_pre with the lemma that gives the restated body from it. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -512,7 +513,88 @@ From OSSVerify.Proofs.boost_json.fuzz_parse.lib.As Require Import AllocBudget.  
 Section HCW3.
   Context {HCEIL : HeapCeil}.
 
-Definition amaps_in_ledger : ltac2:(zQ "20!ut0!ts6>1s$1>2mo$0P") := ltac2:(zQ "ie0!mre!hk8!is3!ut9!uu1!hmb!qjd!uub!uv5!oqb!uvf!ht0!tp0!it5!h9!vge!vl8!iq9!iq3!vm6!vn5!vnc!vod!vq1!vr0!vrc!vs6!mpb!kv4!hggd!hi2!hghf!tu6!ttf!nqb!ut0!hgia!hgj4!su0!ts6!hgk0!ksc!hgl0!mt0!hgl9!lia\1s$i7\2mo$i3=1h$i4@1$i5^1=2st$ia@1$i6^3@2$2>2mp$8>0@3$9$8^1@1$h9^2>0@1$6@3$0$3@1$4^2$h7>0>1c$e@2$2@1$6@3$0$3@1$4^4@1$h8^1@1$6@3$0$3@1$4^4@1$h5^1>0@1$6@3$0$3@1$4^4$h6>0@1$6@3$0$3@1$4^5$i8@2$2@3$9@2$i1@1$5@1$1#k0@1$5@1$1#k0@4$i0@1$5@1$1#k0@1$5@1$1#k0@2$hf@1$1#k0@1$7^6@2$hf@1$1#k0@1$ha^6@1$f^8@2$2@2$h1Z@1$7^6@2$h2@1$7^6@2$id+2+k0@2$2>2mp$8>0@3$9$8^1@1$h9^2>0@2$d@3$0$3@1$4^2$h7@2$d@2$i2$e\1c$e@2$d@3$0$3@1$4^3@1$h8^1@3$0$3@1$4^3@1$h5^1@3$0$3@1$4^2$h6>1x@1$5@1$1#k0>0@2$2@2$h1@1$7^4@2$a@1$1#k0^1@2$h2@2$a@1$1#k0^1@2$he@1$7^4@1$ha^4@2$2@3$0$b@2$h0^2@1$h3^7$c@3$0$b@2$h0^2@1$h4^9$c@2$2>2sc$hc>1x@1$5@1$1#k0>0@3$9$hc^2@1$i9^3>0@2$2@2$h1@1$hb^3@2$a@1$1#k0^2@2$h2@2$a@1$1#k0^2@2$he@1$hb^3@1$ib^3@3$0$b@2$h0^3@1$h4^8$c@2$2@1$ic@1$f^2@2$2@1$hd@1$f^2@1$hd@1$h3^2").
+(* LPS revision repair (75d69e00, checker 2c6b6db8).  amaps_in_ledger written out as explicit
+   text (rule 11; never re-encoded), transcribed from `Print amaps_in_ledger` of the encoded
+   definition in a farm round (image sha256:2c6b6db8...e590fe;
+   the two sides printed character-identical bodies), with EXACTLY ONE change: the ledger
+   membership of the first conjunct is now asked only of an entry whose ledger-word size is
+   non-zero.  OLD, beside NEW:
+     OLD  ... -> In (Z_to_bv 64 (mp_base mp), Z_to_bv 64 (mp_size mp)) (vm_maps h)
+                 /\ 0 <= mp_base mp < 2 ^ 64
+     NEW  ... -> (0 < bv_unsigned (Z_to_bv 64 (mp_size mp)) ->
+                  In (Z_to_bv 64 (mp_base mp), Z_to_bv 64 (mp_size mp)) (vm_maps h))
+                 /\ 0 <= mp_base mp < 2 ^ 64
+   WHY THE OLD FORM IS FALSE AT THE REVISION, and not merely unproved: at 75d69e00 munmap
+   produces maps_subtract (LazyLedger.v:567-572), and maps_subtract drops exactly the entries
+   whose nz_at (LazyLedger.v:456) test fails -- a zero-size entry based at a + msz.  Nothing in
+   this tree's state predicate excludes such an entry: placed_ok has no as_maps component (26
+   components printed, a farm round), WF's body is 24 conjuncts and not one
+   mentions as_maps (a farm round), and a zero-size entry satisfies both arms
+   of nooverlap and of entries_nowrap.  So a reachable post-munmap ledger refutes the old
+   conjunct for such an entry, exactly as rs_model's vm_maps conjunct was refuted in an
+   earlier repair, and the conjunct is restated the same way.  The guard is the bv-level one
+   because that is what nz_at tests: mp_size is a Z and nothing here bounds it by 2 ^ 64, so
+   `0 < mp_size mp` would leave the same hole open for a size that is 0 modulo 2 ^ 64.
+   The 0 <= mp_base mp < 2 ^ 64 half is UNCHANGED and still unconditional, so every consumer
+   that reads it for an arbitrary entry keeps it.
+   The definition carries no address and no literal, and is character-identical on both sides. *)
+(* Written with no explicit binder, as the encoded definition had and as `Print` shows it
+   (`amaps_in_ledger = fun (s : ast) (mo : Model), ...`), so the DISCHARGED argument list is
+   unchanged at `Arguments amaps_in_ledger s mo` and no consumer is re-aritied. *)
+Definition amaps_in_ledger : ast -> Model -> Prop :=
+  fun (s : ast) (mo : Model) =>
+  let h := m_vmmaps mo in
+  let st := a_st s in
+  (forall mp : mapping,
+     In mp (as_maps st) ->
+     mp_kind mp <> MkRegionInfo ->
+     (forall c : Z, mp_kind mp <> MkUserMap c /\ mp_kind mp <> MkFreeArrayMap c) ->
+     mp_kind mp <> MkPtrArrayCommit ->
+     mp_kind mp <> MkShadowRemap ->
+     (0 < bv_unsigned (Z_to_bv 64 (mp_size mp)) ->
+      In (Z_to_bv 64 (mp_base mp), Z_to_bv 64 (mp_size mp)) (vm_maps h))
+     /\ 0 <= mp_base mp < 2 ^ 64)
+  /\ (forall mp : mapping,
+        In mp (as_maps st) ->
+        mp_kind mp = MkRegionInfo \/ (exists c : Z, mp_kind mp = MkUserMap c \/ mp_kind mp = MkFreeArrayMap c) \/ mp_kind mp = MkPtrArrayCommit ->
+        forall x : word, mp_base mp <= bv_unsigned x < mp_base mp + mp_size mp ->
+          in_rangesb x (vm_noaccess h) = false /\ in_rangesb x (a_L s) = false)
+    /\ (forall (sc : schunk) (x : word), In sc (as_sec st) ->
+          sc_map_beg sc <= bv_unsigned x < sc_map_beg sc + sc_map_size sc -> in_rangesb x (a_L s) = false)
+      /\ nooverlap (vm_maps h) /\ entries_nowrap (vm_maps h) /\ entries_nowrap (vm_noaccess h).
+
+(* LPS 727298f3 port: amaps_in_ledger's former body (the encoded definition's at main, decoded;
+   the restatement above guards the first conjunct's ledger entry by a nonzero size, and is
+   otherwise the same text).  A recorded proof that builds the former body at main entry
+   (AS_InstMainK.v [amaps_main]) proves this constant; [amaps_in_ledger_of_pre] gives the
+   restated body from it. *)
+Definition amaps_in_ledger_pre : ast -> Model -> Prop :=
+  fun (s : ast) (mo : Model) =>
+  let h := m_vmmaps mo in
+  let st := a_st s in
+  (forall mp : mapping,
+     In mp (as_maps st) ->
+     mp_kind mp <> MkRegionInfo ->
+     (forall c : Z, mp_kind mp <> MkUserMap c /\ mp_kind mp <> MkFreeArrayMap c) ->
+     mp_kind mp <> MkPtrArrayCommit ->
+     mp_kind mp <> MkShadowRemap ->
+     In (Z_to_bv 64 (mp_base mp), Z_to_bv 64 (mp_size mp)) (vm_maps h)
+     /\ 0 <= mp_base mp < 2 ^ 64)
+  /\ (forall mp : mapping,
+        In mp (as_maps st) ->
+        mp_kind mp = MkRegionInfo \/ (exists c : Z, mp_kind mp = MkUserMap c \/ mp_kind mp = MkFreeArrayMap c) \/ mp_kind mp = MkPtrArrayCommit ->
+        forall x : word, mp_base mp <= bv_unsigned x < mp_base mp + mp_size mp ->
+          in_rangesb x (vm_noaccess h) = false /\ in_rangesb x (a_L s) = false)
+    /\ (forall (sc : schunk) (x : word), In sc (as_sec st) ->
+          sc_map_beg sc <= bv_unsigned x < sc_map_beg sc + sc_map_size sc -> in_rangesb x (a_L s) = false)
+      /\ nooverlap (vm_maps h) /\ entries_nowrap (vm_maps h) /\ entries_nowrap (vm_noaccess h).
+
+Lemma amaps_in_ledger_of_pre : forall (s : ast) (mo : Model), amaps_in_ledger_pre s mo -> amaps_in_ledger s mo.
+Proof.
+  intros s mo [A B]. split; [| exact B].
+  intros mp Hin H1 H2 H3 H4. destruct (A mp Hin H1 H2 H3 H4) as [Hm Hb].
+  split; [intros _; exact Hm | exact Hb].
+Qed.
 
 (* [comment removed for export] *)
 Definition ashadow_visible : ltac2:(zQ "10!ts6>1s$0P") := ltac2:(zQ "hb0!hk8!is3!ivc!uvf!iq9!iq3!ht0!tt8!mre!sue!hgm6!mpb!kv4!vl8!hi2!jg9!hmb!h9!su0!ts6!ksc!hgl0!lq9!qhc!lob!mt0!oqb\1s$h3=2st$h5@1$h2^1@2$1>1c$h1>1x@1$h0@1$0#k0>0@2$1@2$4Z^2@2$5^2$h7>0@2$1@2$4@1$2@2$9^5^3@2$3@1$0#k0^2@2$5@2$3@1$0#k0^2@2$e@1$2@2$9^5^3@2$f@1$h8@2$h6^4^3+8@3$8$6@2$d^3@1$a^6$7>2sc$c>1x@1$h0@1$0#k0>0@3$ha$c^2@1$h4^3>0@2$1@2$4@1$2@1$b^3@2$3@1$0#k0^2@2$5@2$3@1$0#k0^2@2$e@1$2@1$b^3@2$f@1$h9^3+8@3$8$6@2$d^3@1$a^6$7").
@@ -531,7 +613,19 @@ Definition AMODEL : ltac2:(zQ "20!ut0!ts6>1s$1>2mo$0P") := ltac2:(zQ "60!is3!ut0
 
 Lemma AMODEL_mat : ltac2:(zQ "40!ut0!hhof!ts6!hhpa>1s$2>2mo$0>3mo'$0>0@2$1^3^2>0@2$3^3^2@2$1^5^3").
 Proof.
-ltac2:(KReplay.run1 (kr_t_AllocRep ()) ["HCW3"] "h01ch12mph21vh31xh41Ah51Bh62B0h72B1h83Ffdh95Flazyh:5Fmapsh;2SBh<1Vh=2_Hh>1lh?2moh@3mo'hA5nd_i7hB1shC2scp;2p;1p;3p;4p;6p;7g06Mbj2NTg06Nhj2rTg06P>j2VTg06QMj1ITg06R\j2BTg06Scj1\Tg00A_j30Tg06TVj14Tg00<7j16Tg012]j1gTg013;j1fTg01DWj2dTg008Qj1bTg06UMj17Tg06VEj1ATg06W8j1CTg06Wmj1FTg06Xbj1;Tg06YVj1@Tg00DCR0j23Tg02Q=j1^Tg06ZKj1jTg02DTj3MTg06[Uj1=Tg00Vej19Tg06\_j1iTg06]ij1hTg06_3j1UTg06`=j2TTg06`cj1STg01B1j4eTg06amj1RTg00CJj21Tg004:j1QTg017Qj2cTg004Xj2LTg00Hbj2JTg01Okj2aTg01<kj2`Tg00Cfj22Tg06bcj1_Tg06c]j2PTg06dhj1]Tg02SQj1qTg04O^j1pTg04R2j1oTg06ekj1mTg06g3j1[Tg01@Kj6KTg06h@j1:Tg06iDj1ZTg06jOj1DTg06kRj1ETg00W[j2>Tg06KUj1<Tg06l^j1?Tg06mUj1YTg06nRj2XTg06oRj1WTg01;nj4HTg070Kj3lTg02COj7kTg00ecj6nTf3R1f2R2f1R330f0R4'3p=51334,32p=Gg00Lfg04O>704p=O1223/24p=8g01BQg071hR51N231r23f4R6/V1R7%I61B611N62f5R8#If6R9/B8g072^%\8%\930R:g073VR;%48%49R<30g00I<#6R=#6#6#6#6#6R>#gR?#fR@/d@RA#bRB%78%7930g074MRC%A8%A9g075ERD%C8%C9g076=RE%F8%F9g0777RF%;8%;9g0780RG%@8%@930C5C5C5C5f7RH/N8%4H90;<%7Hf8RH#750BPC%AHf9RC#APD%CH%CCPE%FH%FCPF%;H%;C%@H%@C50GC5C5C5C5f;RG/VCRH%IGRF1BGCRE'3P;f:RD#4R<g078jRIf=RJ#^#j9MI4RKg07:6RL%=3RMg07;@30RN#9g00HDRO%=1RP%i4RQ50L#9%h4RR90LP#9'3]0g07<JRS90LP#9%=6g07=T50L#9P@P@%U8RP,T?%S8,T?Ce%R95MAg00MfRA/1P%Q=%Q>'c,LP3G[[[[[]1%=2RP=0LQA0LPR'JX0O,aOA0LMS'J,JN%U1RN1`?4RS'1%S1,2N,LS'3%_8,P3#OfA#],P3#O'3[^3@[\K^1Ig02f<RIf>RK#^#q9MI3%p2RI1`?3R?'1%o2,2I,L?'3f@R?#],P2#O[[^3@]C%R4R@#m%[@%_4#['33G3GX2;P9%4CP2EKPHePFPEP8P0%:GR0,1A%ZD%DG#Eg07>^RE'>'2%<G;80%?<'1f</BDP6%:J,1A%ZJR6%DK#E/>E'2%<K%:K38%4JRD#?R<'1f?R0#:RG,1A%D0#E/>E,26%<0;8G/1<R<P3P;%4K%Y4%7KRK'X#W%D?#E/>ERE'2%<?RG%:?R?38%?4'1X2;PBPK%40R0#Y/X4#W/2E?8G?%?0'1X>BP4%7JP8EKPDP9EKP<eCHW7W6P3P4O2n2001000000120000000CHCHW=W9W:X8:Al981FkW5W<X47P3EnW;WAX@5W?WBo"). Qed.
+  (* Rule 11g: this replay proved the OLD body of amaps_in_ledger -- its first error was
+     `Illegal application: eq_ind_r ... VmMaps ...` at the motive carrying that body -- so it is
+     written out in the same series as the restatement.  The statement is UNCHANGED (still the
+     encoded one above); only the proof moves.  The text is this tree's own AMODEL_vm_ext
+     (As//Bs AS_InstLaws1.v:32-34) with its two vm/eager equations taken from
+     same_but_materialized instead of being assumed, exactly as rs_model_mat was rebuilt in an
+     earlier repair. *)
+  intros s mo mo' AM SB.
+  pose proof (same_but_materialized_fields _ _ SB) as (_ & E1 & E2 & _).
+  destruct AM as (A & V & B). split; [| split; [exact V|]].
+  - unfold amaps_in_ledger in *. rewrite E1. exact A.
+  - destruct B as [B0 B1]. split; [exact B0|]. unfold eager_used in *. rewrite E1, E2. exact B1.
+Qed.
 
 End HCW3.
 

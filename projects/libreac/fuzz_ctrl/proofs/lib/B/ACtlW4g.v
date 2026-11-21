@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/openssl/bignum/lib/BnP/BnKit2.v, with its module paths and module names changed; 1014 of its 1028 lines of code are new or changed and 33 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/tx_put.v, with its module paths and module names changed; 2422 of its 2466 lines of code are new or changed and 984 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3a.v, with its module names changed; 943 of its 1013 lines of code are new or changed and 2396 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/B/ACtlW4g.v -- piece W4g (frame turn, end: S_F37, S_F38) of fuzz_ctrl image B's (asan-ubsan) walk of
    LLVMFuzzerTestOneInput in the released cgif_file_fuzzer form.  One writer: a Theorem Labs lane's glue lane.
    rule 24: no function proved (stage glue of a walk; drafting).
@@ -33,7 +34,7 @@
      wrapper entry by the core's catalogue name (the sibling W2a's text).  LAWS: the core's AR_laws (for the not-an-entry-
      block step, the sibling W2a's w2_phi_not_entry argument through al_sep).
    - ctl_post_acall_kept : a Theorem Labs lane's allocator conversion (item 23), the image-B TWIN of its published text,
-     lib/A/ProgWorld.v (at head lib/A/ProgWorld.v:646-663; written on a working branch c03ce1627b6) (kept_class at head lib/A/ProgWorld.v:646-656, the lemma
+     lib/A/ProgWorld.v (at head lib/A/ProgWorld.v:646-663; written on a working branch) (kept_class at head lib/A/ProgWorld.v:646-656, the lemma
      at head lib/A/ProgWorld.v:658-663; PROVED there), changing only lib.Reusable -> Reusable, Lib.Mem -> lib.Lib.Mem and A.Img0 -> B.Img0.  The free rule ends in
      acall_kept (Reusable.YCbq.v:824-835), and from it the mrd read is kept at a VISIBLE address of a KEPT CLASS:
      high memory outside the call window, a live block off E, a non-owned non-errno image byte, a live frame's
@@ -45,7 +46,7 @@
    - (aview_vis_mrd, RTPOST-SHARED-B.txt's member and lib/B/ProgWorld.v:587's lemma, is not declared here: no lemma
      of this file takes it, measured by About / Arguments on the compiled lemmas.)
    - ctl_kind_name_addressable / ctl_kind_name_not_owned : the shared RtPost text's V6 / T10 twins for KIND_NAME
-     (lib/B/RTPOST-SHARED-B.txt (a working note, not in this delivery) at adc9b58a03c, owner a Theorem Labs lane), pasted token for token: FLI's KNT crosses the free
+     (lib/B/RTPOST-SHARED-B.txt (a working note, not in this delivery), owner a Theorem Labs lane), pasted token for token: FLI's KNT crosses the free
      through the post-call AR (addressability) and through ctl_post_acall_kept's image arm (the 112 bytes).
    - the runtime conjunct after the free (route (C), brief routeC-refit.md): the cut carries ctl_rt_C
      (B.ACtlRtC.ctl_rt_C B ly S m: asan cells, shadow_rw only on the cut's own shadow and the image's, ro_agree), and
@@ -60,9 +61,9 @@
    rng_of_visible / rsegs_spans / img_vis_W (a Theorem Labs lane, frozen), cited by name where a proof needs them.
    `_F` HYPOTHESES (a Theorem Labs lane; module ..lib.B.Prog.Seg.<File>F; RNG-first; split at EVERY call).  PUBLISHED texts
    are cited by Requiring their module, qualified (a Theorem Labs lane 23:38Z / 23:4xZ).  All image-B `_F` are now on ONE branch,
-   a working branch 12a7ea50807, cited from there; statuses as of
+   a working branch, cited from there; statuses as of
    bF-statements/ at 00:45Z:
-   - F37F.f37_evt_F (a working branch d511d09bbd7; F37.v:292; the PRE-CALL stretch
+   - F37F.f37_evt_F (a working branch; F37.v:292; the PRE-CALL stretch
      0x82ca0 -> the free wrapper entry 0x534b4, ra = 0x82d1c
      = the cut, so no post; rng premises `rng RNG (A + 224) 24` (the three spills) and `rng RNG (Sf + 22) 45` (the 23
      out-of-scope shadow marks))                                                                   PUBLISHED, proved
@@ -75,7 +76,7 @@
      header); that stretch is part of seg_F38's proof, so it is inside seg_F38_F's exit to 0x82eac (to check against
      the published text's Q when its status is proved).
    PROVENANCE: cut table rows 84-85; plan 2.3 rows 83-84, 2.5 (row 0x82d18), 3 (frame loop), 6.2 (no trap on W4g);
-   runs at 3803efccea0 (F37.v, F38.v); objdump L85620-L85660.
+   runs (F37.v, F38.v); objdump L85620-L85660.
 
    ABORT-SINK / TRAP OBLIGATIONS ON W4g (all branches into 0x82fa4 / 0x82fa0 in 0x82ca0-0x82d28 and on the F38 path
    0x81ec4-0x81ec8): ONE, 0x82ca4 `bne a0,s7,0x82fa4` (L85622), in S_F37.  No UBSan branch (plan 6.2). *)
@@ -178,14 +179,14 @@ Hypothesis CHAIN_OF_CUT : forall (cx : ctlcx) own ly3 S3 W3 mem3 md3 k (regsT : 
 
 (* ---- RtPost, image B: the shared text of record of this walk (RTPOST-SHARED-B.txt (a working note, not in this delivery), author a Theorem Labs lane for
    a Theorem Labs lane), pasted token for token; only the members this file's lemmas take are here.  SOURCE of
-   ctl_post_acall_kept: a Theorem Labs lane's lib/A/ProgWorld.v (at head lib/A/ProgWorld.v:646-663; written on a working branch c03ce1627b6), with
+   ctl_post_acall_kept: a Theorem Labs lane's lib/A/ProgWorld.v (at head lib/A/ProgWorld.v:646-663; written on a working branch), with
    lib.Reusable -> Reusable, Lib.Mem -> lib.Lib.Mem and A.Img0 -> B.Img0 and nothing else; a Theorem Labs lane's kept_class Definition is a Local Notation
    here and its PROVED lemma a named Section hypothesis, as RTPOST-SHARED-B.txt (a working note, not in this delivery) states it (lib/B/ProgWorld.v:681
    proves the same statement over its kept_class Definition).
    AT THIS FILE'S SITE (0x82d18, S_F37): E is the freed block (phi, flen cx j) and [slo, shi) is the ASTACK window
    [c_sp cx + o - ASTACK, c_sp cx + o) of ctl_W4g_free_82d18 below. ---- *)
 
-(* kept_class / ctl_post_acall_kept: lib/A/ProgWorld.v (at head lib/A/ProgWorld.v:646-663; written on a working branch c03ce1627b6) (PROVED on A).  The ceiling is YM05's RunCeil field
+(* kept_class / ctl_post_acall_kept: lib/A/ProgWorld.v (at head lib/A/ProgWorld.v:646-663; written on a working branch) (PROVED on A).  The ceiling is YM05's RunCeil field
    alloc_ceiling, as acall_kept (Reusable/YCbq.v:826) uses it; lyc / Sc are Reusable.YG0f.alayout /
    Reusable.YG00.astate (a Theorem Labs lane's kept_class binders; untyped in a Theorem Labs lane's lemma, fixed there by acall_kept).  At an
    allocator site: E = the new block (malloc) or the freed block (free), [slo, shi) = the ASTACK window
@@ -239,7 +240,7 @@ Proof.
 Qed.
 
 (* ---------------------------------------------------------------------------------------------------------
-   Generic stage helpers.  The first group is the sibling W2a's section 3b (a working branch 7cca696f747f,
+   Generic stage helpers.  The first group is the sibling W2a's section 3b (a working branch,
    names w2_x renamed w4g_x), with ProgBridge's PROVED fevt_of_evtF in place of the FEVT hypothesis; then the frame
    loop's model facts one turn needs, and the byte-level bridges between the core's view and lib/Lib's reads. *)
 Local Notation GR := lib.Reusable.YK11.getr.
@@ -806,7 +807,7 @@ Lemma ctl_W4g_free_82d18 : forall (cx : ctlcx) (j : nat) (phi : Z) ly3 S3 W3 (re
      Reusable.YA0n.SRr segs W2 (Reusable.YG0d.cfg_at segs 0x82d1c regs2 mem2 md2) Q) ->
   Reusable.YA0n.SRr segs W3 (Reusable.YG0d.cfg_at segs Reusable.YB1w.tfib_A_free regsT memT md3) Q.
 Proof.
-  (* The sibling W2a's w2_free_81a9c (a working branch d0e10c707373; the donor's free pattern A/ACf3.v:97-110)
+  (* The sibling W2a's w2_free_81a9c (a working branch; the donor's free pattern A/ACf3.v:97-110)
      at this site's constants. *)
   intros cx j phi ly3 S3 W3 regsT memT md3 k o ch Q HB HJ Hk Hj Hperm Hnin Ha0 Hsp Ho16 Ho Hgp Htp Hra Hch Htr HK.
   pose proof HB as ((_ & _ & _ & _ & _ & _ & _ & Hfr0 & Hnev0 & _) & _).   (* tfib_lib_pre_x, YCfn.v:32-45 *)

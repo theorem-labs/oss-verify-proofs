@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/AGif0n.v, with its module paths changed; 632 of its 664 lines of code are new or changed and 315 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The AR -> ARU transfer of a Theorem Labs lane's FROZEN primary Allocate interface records (a Theorem Labs lane):
    lib/Reusable/AGif0n.v's [AIface], [AIfaceK] and [AIfaceM], at the record level (rule 24: no function proved; kind:
    statement transfer of an interface record).
@@ -70,7 +71,7 @@ Local Open Scope am_scope.
 (* ---------------------------------------------------------------------------------------------------------------- *)
 
 (* The cached chunk sits in the primary space, above kHighMemBeg and below the ceiling.  The bound on v is hview.hv_v's
-   (c5 F1 form, a working branch 86aa4177b94); the class size is at most kMaxSize (YG0a.class_ok). *)
+   (c5 F1 form, a working branch); the class size is at most kMaxSize (YG0a.class_ok). *)
 Lemma Kv_bounds : forall ly cl v, layout_ok ly -> 1 <= cl <= 30 -> 0 <= v -> 16 * v + 2 ^ 16 <= 2 ^ 32 ->
 0 < class_size cl -> kHighMemBeg <= Kv ly cl v /\ Kv ly cl v + class_size cl <= ASAN_CEIL /\ Kv ly cl v mod 8 = 0.
 Proof.
@@ -571,7 +572,7 @@ apply upd_chunk_keeps; [exact Hk|]. cbn [new_chunk ck_beg]. exact (NOBEG k Hk).
 Qed.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* 5. The callee contract of AIfaceM (kind 5): AGif0n.v:284-299's if_refill, text unchanged, as a premise.          *)
+(* 5. The callee contract of AIfaceM (kind 5): AGif0n.v:285-300's if_refill, text unchanged, as a premise.          *)
 (* ---------------------------------------------------------------------------------------------------------------- *)
 
 Definition if_refill_t (B : asyms) (ARX : Z -> alayout -> astate -> world im_segs -> (word -> option byte) -> Model -> Prop)

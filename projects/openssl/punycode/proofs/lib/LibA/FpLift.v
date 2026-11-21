@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (lift_load cases on the new range_meets_vvar test of a failed load). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -56,7 +57,7 @@ Lemma lift_load : forall F fc n a (k k' : bv n -> eff) (M : word -> option byte)
   interp_eff_accesses segs (ELoad n a k') M = rmap F fc (interp_eff_accesses segs (ELoad n a k) M).
 Proof.
   intros F fc n a k k' M H. cbn [interp_eff_accesses].
-  destruct (ov_read_bytes segs M a (width_bytes n)) as [bs|]; [|reflexivity].
+  destruct (ov_read_bytes segs M a (width_bytes n)) as [bs|]; [|destruct (range_meets_vvar segs a (width_bytes n)); reflexivity].
   rewrite H. destruct (interp_eff_accesses segs (k _) M) as [rep| |]; reflexivity.
 Qed.
 

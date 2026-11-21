@@ -11,16 +11,16 @@
    H_ALLOC_FREE, H_RT_MEMCPY, H_TRACES_B, H_DRIVER (and their _U twins), so after End they are functions of those
    premises; their Print Assumptions shows axioms only, not those premises. The closed Statements.* come from the
    AD2o assembly, not from these conditional parts. *)
-(* Modified by Theorem Labs, 2026-10: taken for reac-pw/fuzz_qdisc image A from proofs/libreac/fuzz_knock/lib/A/AuditKnockClose.v
-   at origin/ossv/recipes 6ebe35ba632: the same pairs for qdisc's AD2o, QdiscAllocClose, QdiscAsanTop and QdiscClose;
+(* Modified by Theorem Labs, 2026-10: taken for reac-pw/fuzz_qdisc image A from proofs/libreac/fuzz_knock/lib/A/AuditKnockClose.v:
+   the same pairs for qdisc's AD2o, QdiscAllocClose, QdiscAsanTop and QdiscClose;
    qdisc's allocator closure is the one-trace text of fuzz_identity (no AD3j); names knock_* -> qdisc_*, module paths
    changed. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_qdisc/lib/A/AuditQdiscClose.v at 56ce9edaafc, for reac-pw/fuzz_role
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_qdisc/lib/A/AuditQdiscClose.v, for reac-pw/fuzz_role
    image A: the same pairs for role's AD2o, RoleAllocClose, RoleAsanTop and RoleClose, with `About` for each top (it
    lists the leading arguments: AD2o's open Section Variables role_lib_x_all and role_plain_slot_ag while their files
    have not landed, RoleAsanTop.PLAIN_SLOT_AG for the agreement statements, RoleClose's Section parts); names
    qdisc_* -> role_*, module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/AuditRoleClose.v at fa745625e7d, for reac-pw/fuzz_headamp
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/AuditRoleClose.v, for reac-pw/fuzz_headamp
    image A: the same pairs for headamp's AD2o, HeadampAllocClose, HeadampAsanTop and HeadampClose, and for the plain
    slot lib/A/HeadampPlainSlot.v headamp_plain_slot_ag_closed (AD2o's tops take no argument: image A's program
    contract is lib/A/HPgTopI.v headamp_lib_x_all); names role_* -> headamp_*, module paths changed. Every Print Assumptions over a top that
@@ -37,6 +37,7 @@
    agreement and the content of their walks' posts) and lib/Prog/SlotInvSat.v (the plain frame's slot invariant at
    its entry, read by the plain slot of the agreement statements); with Print Assumptions of image A's errno witness
    and of the slot invariant's two theorems. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.A Require AD2o HeadampAllocClose HeadampAsanTop HeadampClose
   HeadampPlainSlot HPgM3aSat.
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Pod Require Sat HeadampSat HeadampBin.

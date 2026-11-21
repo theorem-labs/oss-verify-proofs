@@ -99,7 +99,7 @@ Definition reac_ctrl_identity_reply_contract : Prop :=
       (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
           F (Z_to_bv 64 REAC_CTRL_IDENTITY_REPLY) fc None m (seg_rom rsegs)).
 
-(* ==== Route (C) (a Theorem Labs lane 09:20Z; form of record lib/A/ShadowRwOn.v, a working branch ea8776b2302; wave lead
+(* ==== Route (C) (a Theorem Labs lane 09:20Z; form of record lib/A/ShadowRwOn.v, a working branch; wave lead
    a Theorem Labs lane, ASSIGN.md (a working note, not in this delivery); writer a Theorem Labs lane): reac_ctrl_identity_reply_contract above with the
    universal premise `shadow_rw m` narrowed to
    `shadow_rw_on (reac_ctrl_identity_reply_shadow_R fr len pa pp pn S FS) m` and the post's `shadow_rw m'` stated as

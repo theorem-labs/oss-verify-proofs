@@ -12,7 +12,7 @@
    agreed with the G3 contracts lane (reac_segconf_parse_file, the one caller) and accepted by the contracts lane.
    The same code is walked in libreac/fuzz_identity's ASan image: its lib/A/Prog/reac_box_catalogue.v (tcat_spec)
    is one of the callee contracts with a proved walk that its lib/A/Prog/IdentEntryLink.v:22 lists (and :261-263
-   applies), at origin/ossv/recipes 501c0d516c69. Its spec takes the count pointer nonzero (8-aligned, in a
+   applies). Its spec takes the count pointer nonzero (8-aligned, in a
    side-stack frame or the real stack); this one keeps the plain contract's c = 0 arm, which the code has
    (beqz 0x8a108).
    What the code does (objdump of fuzz_segconf.asan, 0x8a100-0x8a144): a 16-byte frame (saves ra); c = 0 skips to
@@ -40,6 +40,7 @@
    parameters.
    The WALK takes no runtime entry as a Section hypothesis: the function calls none on its good path. *)
 (* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/A/Prog/reac_box_catalogue_c.v, derived mechanically (bkit derive_b.py): its Require lines name the lib/B copies; nothing else differs. The comments are the A file's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

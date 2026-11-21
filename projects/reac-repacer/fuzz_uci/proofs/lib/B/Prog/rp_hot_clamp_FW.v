@@ -5,14 +5,15 @@
    lib/A/Prog/rp_hot_clamp_F_c.v rp_hot_clamp_contract_F. It follows lib/Prog/rp_hot_clamp.v (the plain walk: one
    continuation-style lemma per field; its f_pf .. f_sv, model_split, f_mn_range, sx32_int and lts_lit / ltu_lit reused
    by name, its mcase / br / join tactics copied, join extended to the walk's invariant) in the footprint style of
-   proofs/libreac/fuzz_decode/lib/A/Prog/reac_frame_is_reac_F.v and reac_decode_F.v (origin/ossv/recipes 88154566652a:
+   proofs/libreac/fuzz_decode/lib/A/Prog/reac_frame_is_reac_F.v and reac_decode_F.v (
    StepF's step, one rng fact per access; rd_all, addr_four, lts_sm and the one-byte shadow window copied from that
    unit's ReacDecodeLib.v and reac_decode_F.v; rw_cells_app from lib/Prog/check_clamp.v). *)
-(* Modified by Theorem Labs, 2026-10: copied from this unit's lib/A/Prog/rp_hot_clamp_FW.v (commit e89702c42a3) for
+(* Modified by Theorem Labs, 2026-10: copied from this unit's lib/A/Prog/rp_hot_clamp_FW.v for
    image B, against the frozen lib/B/Prog/rp_hot_clamp_F_c.v rp_hot_clamp_contract_F: Img0 / AsanCells / AsanKA /
    AsanKAProof / rp_hot_clamp_c / rp_hot_clamp_F_c are lib/B's; every pc is fuzz_uci.asan-ubsan's (the body 0xe0 above
    image A's, the check targets 0xe4 above); the entry steps over image B's UBSan checks of p, refuted from the
    statement's premises `bv_unsigned a0 <> 0` and `bv_unsigned a0 mod 4 = 0`. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* rp_hot_clamp of fuzz_uci.asan-ubsan (entry 0x7fd38, 0x29c bytes): `addi sp, sp, -0x10`, `sd ra, 8(sp)`, then the
    UBSan checks of p, `beqz a0, 0x7feb4` and `andi a2, a0, 3` / `bnez a2, 0x7feb4` (`unimp` at 0x7feb4): a0 <> 0 and
    a0 mod 4 = 0 make both fall through. Then the shadow base through the GOT word 0x97128 and the cell 0x9f0f8, then the

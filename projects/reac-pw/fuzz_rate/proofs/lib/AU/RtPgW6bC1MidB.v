@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6bC1Mid.v at 32f84792c2a6; for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6bC1Mid.v; for image B
    (fuzz_rate.asan-ubsan): the pcs, the registers (the string in s9, l in s2 and s6, e62.body in s8) and the cell
    [R+0x130] (= F + 0x218, e62.body) are image B's; the prefix c1_ becomes c1b_. *)
 (* reac-pw/fuzz_rate image B (fuzz_rate.asan-ubsan, pinned sha256

@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: chain_words' walk on the ASan+UBSan build of plugin-hostd/fuzz_command
    (fuzz_command.asan-ubsan), segment S1 (chain_words_d.v cw_S1P): from the entry (0x8da84) through
    __asan_stack_malloc_3 (0x8daf4) to the refusal cut KR1 (0x8dd5c) or the first-check cut KC (0x8dca0). The B twin of
-   lib/A/Prog/chain_words_s1.v (a working branch 5e2cdad423e), in the form of
+   lib/A/Prog/chain_words_s1.v (a working branch), in the form of
    proofs/cgif/cgif_file_fuzzer/lib/A/ACa2.v (entry, aj_stack_malloc_atS, re-seat): a run to the call, the call, a
    re-seat that keeps the three stack regions and adds the frame (the call's a0) and its shadow (the alias of
    (s6 >> 3) + s8), a plain run through the 88 shadow stores, `ld a2,24(s1)` and the branch on ntok < 3, and the cut
@@ -14,6 +14,7 @@
    the realigned slots [s1 + 24, s1 + 48): pairwise disjoint in both realignment cases. __asan_stack_malloc_3's
    contract (YG0d.v astack_malloc_realizes) takes ecall_pre, which has no frame chain, so this segment builds none. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/chain_words_s1.v, with its module paths and module names changed; 269 of its 388 lines of code are new or changed and 473 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan+UBSan image B (fuzz_segconf.asan-ubsan, pin sha256 c3796c0b38f3): segment S00 of the walk
    of the test harness's entry function LLVMFuzzerTestOneInput (0x84dc0): from the entry to the
    cut K84f4c (0x84f4c), the statement lt_seg_S00_stmt of lib/B/Prog/LLVMFuzzerTestOneInput_defs.v.
@@ -22,8 +23,8 @@
    heads; the result is recorded with the commissioning brief; none: written new, ADAPTED from image A's S00 walk)
 
    THE FORM: the image-B twin of image A's S00 segment lib/A/Prog/LLVMFuzzerTestOneInput_s10.v
-   (image A's S00 commit 52ff1753c784; its form plugin-hostd/fuzz_command's lib/A/Prog/chain_words_s1.v and
-   lib/A/Prog/LLVMFuzzerTestOneInput_s10.v at origin/ossv/recipes 501c0d516c69), renamed by image B's map
+   (image A's S00; its form plugin-hostd/fuzz_command's lib/A/Prog/chain_words_s1.v and
+   lib/A/Prog/LLVMFuzzerTestOneInput_s10.v), renamed by image B's map
    (PLAN-asanubsan-main sections 3, 9.1, 11): the frame 352 bytes, the s1 slots 184 / 200 / 240, the cut K84f4c, the
    size test `beqz a1` (image A: `bnez a1`), and SH(FR) kept in 184(s1) only (image A: also in s5). The code
    (dis:2-99 of the neutral excerpt dis/LLVMFuzzerTestOneInput.fuzz_segconf.asan-ubsan.s):

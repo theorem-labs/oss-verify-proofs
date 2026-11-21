@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made for libreac/fuzz_knock from proofs/cgif/cgif_file_fuzzer/lib/A/AD2o.v and AD2p.v at
-   c8557374ad2e. This file is knock's closing assembly of lib/A/KnockClose.v's parts (rule 24: no function proved; kind:
+   theorem-labs/oss-verify-proofs@6b32741d849a. This file is knock's closing assembly of lib/A/KnockClose.v's parts (rule 24: no function proved; kind:
    assembly): it instantiates KnockClose's asan Section at closed parts, so fuzz_knock's two ASan statements rest on no
    Section hypothesis. cgif's AD2o keeps three program-walk hypotheses that its AD2p discharges; knock's program contract
    (lib/A/APgLib.v knock_lib_x_all) takes none, so the closing is one file and there is no AD2p. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_knock/lib/A/AD2o.v, with its module paths and module names changed; 34 of its 65 lines of code are new or changed and 19 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up hand-off states computed in the build, A/AB01r.v's HS_tfib_r, in place of the recorded ones); internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_codec's image-A closing assembly, in the form of projects/libreac/fuzz_knock/proofs/lib/A/AD2o.v: lib/A/CodecClose.v's
-   asan Section at its parts. The start-up is the certificate (AB01.HS_tfib, AB12.TFIB, AB1n.tfib_startup_T1); the
+   asan Section at its parts. The start-up is the certificate (AB01r.HS_tfib_r, AB12.TFIB, AB1n.tfib_startup_T1); the
    record is AD2l.TfibB, its trace universe by reflexivity; the allocator parts are lib/A/CodecAllocClose.v's; the
    driver main is lib/A/AD1q.v DRV_MAINX with TfibB's facts, the read check, the stdio sites and the program contract
    LIBX (ACfn.tfib_lib_contract_x_all at ameter_triv / XL0 / CA_RLO .. CA_RHI). LIBX comes from the program walks
@@ -18,7 +19,7 @@ From OSSVerify.libdiginet.fuzz_codec Require Statements.
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib Require AgreeCodec.
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require Import YK11 YG00 YG01 YG0f YG0d YC5d YCbp YM05.
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require YG0q.
-From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.A Require AWalkFw0 AB01 AB12 AB1n ACejTfib AD2l AD2m AD1k AD1o AD1l AD1j AD1q ACfn.
+From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.A Require AWalkFw0 AB01 AB01r AB12 AB1n ACejTfib AD2l AD2m AD1k AD1o AD1l AD1j AD1q ACfn.
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.A Require CodecAllocClose CodecAsanTop CodecClose.
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.A.Prog Require CPgWalk CPgClose.
 Local Open Scope Z_scope.
@@ -48,7 +49,7 @@ Lemma codec_driver_TfibB : forall rc : YM05.RunCeil,
   (forall fx : YK11.FPState, @aintrin_realizes fx rc AWalkFw0.tfibsegs AD2l.TfibB OCpy (pc_wrap_memcpy (as_code AD2l.TfibB))) ->
   universe_ok (as_universe AD2l.TfibB) ->
   (forall t, In t ACejTfib.Tfib_drv_traces -> In t (as_universe AD2l.TfibB)) ->
-  CodecClose.drv_mainA AB01.HS_tfib AB12.TFIB rc.
+  CodecClose.drv_mainA AB01r.HS_tfib_r AB12.TFIB rc.
 Proof.
   intros rc AM AF AI _ _.
   exact (@AD1q.DRV_MAINX rc AD2l.TfibB AD2l.TfibB_syms (AM YK11.fx0) (AF YK11.fx0) (AI YK11.fx0)
@@ -70,7 +71,7 @@ Qed.
 (* CodecClose's asan Section at its parts. *)
 Theorem ASAN_T_of_LIBX : CodecAsanTop.ASAN_T.
 Proof.
-  exact (CodecClose.ASAN_T_of_parts AB01.HS_tfib AB12.TFIB AB1n.tfib_startup_T1 AD2l.TfibB
+  exact (CodecClose.ASAN_T_of_parts AB01r.HS_tfib_r AB12.TFIB AB1n.tfib_startup_T1 AD2l.TfibB
     CodecAllocClose.codec_amalloc_closed CodecAllocClose.codec_afree_closed CodecAllocClose.codec_aicpy_closed eq_refl
     codec_driver_TfibB).
 Qed.

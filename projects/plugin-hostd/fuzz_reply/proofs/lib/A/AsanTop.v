@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/A/AZ03.v and lib/Halts_tfib.v for fuzz_grant: the plain side is fuzz_grant's proved realization (built as its lib/Prog/AgreeGrant.v and lib/AgreeFrame.v build it, at grant_shape), the halting corollary takes srealizes, module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_grant/lib/A/AsanTop.v, with its module paths and numbers changed; 63 of its 118 lines of code are new or changed and 59 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises)); internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_reply's four ASan statements from the ASan sides TFIB_T and TFIB_B_T (ReplyTFIB.v), in the form of
    proofs/cgif/cgif_file_fuzzer/lib/A/AZ03.v (agreement) and lib/Halts_tfib.v (halting), as a Theorem Labs lane carried it
-   through for libreac/fuzz_grant (proofs/libreac/fuzz_grant/lib/A/AsanTop.v on a working branch c2edc13c0fa):
+   through for libreac/fuzz_grant (proofs/libreac/fuzz_grant/lib/A/AsanTop.v on a working branch):
    - asan_agrees / asan_ubsan_agrees: shape_strong_equiv_efs_relim (Reusable/YM09.v) over the plain build's proved
      realization of SPECX at 2^34 (lib/AgreeTop.v plain_rz_of_contracts_R, with the plain entry-function contract
      that plain_halts uses, Prog/SlotAll.v fuzz_reply_slot_parts, at checksum_shape), the statement's plain budget
@@ -86,12 +87,12 @@ Proof.
   destruct en_s as [sp brk mb rnd].
   pose proof (valid_input_va_size _ Hinp) as Hsv48.
   unfold Images.asan in Hent.
-  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent. destruct Hent as [Hsp' [Hbrk' [Hmb' Hfit']]].
+  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent. destruct Hent as [Hsp' [Hbrk' [Hmb' [Hfit' Hlau']]]].
   exact (shape_strong_equiv_efs_relim SanitizerBudgets.lim_source ShippedBudgets.lim_source SanitizerBudgets.lim_target
     Plain.M.loaded_segments Plain.M.init_pc Plain.M.phdrs sp brk mb rnd
     replysegs0 Asan.M.init_pc Asan.M.phdrs sp' brk' mb' rnd'
     (SPECX (LS:=checksum_shape) inp) (SPECX (LS:=checksum_shape) inp) inp
-    asan_lim_source_le SWB HP (TFIB sp' brk' mb' rnd' inp Hsp' Hbrk' Hmb' Hfit' Hinp) (t_eq_refl _)).
+    asan_lim_source_le SWB HP (TFIB sp' brk' mb' rnd' inp Hsp' Hbrk' Hmb' Hfit' Hinp Hlau') (t_eq_refl _)).
 Qed.
 
 Theorem reply_asan_halts_of_tfib : Statements.asan_halts.
@@ -103,8 +104,8 @@ Proof.
     target_alloc_limit ShippedBudgets.lim_source lim_source_le_target (forced_only_cfg_least _)).
   intros sp brk mb rnd inp Hen Hinp. exists (SPECX (LS:=checksum_shape) inp). split.
   - pose proof (valid_input_va_size _ Hinp) as Hsv48.
-    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb Hfit]]].
-    exact (TFIB sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hinp).
+    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb [Hfit Hlau]]]].
+    exact (TFIB sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau).
   - exact (SPECX_shape_ok inp).
 Qed.
 End a.
@@ -120,12 +121,12 @@ Proof.
   destruct en_s as [sp brk mb rnd].
   pose proof (valid_input_va_size _ Hinp) as Hsv48.
   unfold Images.asan_ubsan in Hent.
-  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent. destruct Hent as [Hsp' [Hbrk' [Hmb' Hfit']]].
+  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent. destruct Hent as [Hsp' [Hbrk' [Hmb' [Hfit' Hlau']]]].
   exact (shape_strong_equiv_efs_relim SanitizerBudgets.lim_source ShippedBudgets.lim_source SanitizerBudgets.lim_target
     Plain.M.loaded_segments Plain.M.init_pc Plain.M.phdrs sp brk mb rnd
     replysegsB AsanUbsan.M.init_pc AsanUbsan.M.phdrs sp' brk' mb' rnd'
     (SPECX (LS:=checksum_shape) inp) (SPECX (LS:=checksum_shape) inp) inp
-    asan_lim_source_le SWB HP (TFIB sp' brk' mb' rnd' inp Hsp' Hbrk' Hmb' Hfit' Hinp) (t_eq_refl _)).
+    asan_lim_source_le SWB HP (TFIB sp' brk' mb' rnd' inp Hsp' Hbrk' Hmb' Hfit' Hinp Hlau') (t_eq_refl _)).
 Qed.
 
 Theorem reply_asan_ubsan_halts_of_tfib : Statements.asan_ubsan_halts.
@@ -137,8 +138,8 @@ Proof.
     AsanUbsan.M.phdrs target_alloc_limit ShippedBudgets.lim_source lim_source_le_target (forced_only_cfg_least _)).
   intros sp brk mb rnd inp Hen Hinp. exists (SPECX (LS:=checksum_shape) inp). split.
   - pose proof (valid_input_va_size _ Hinp) as Hsv48.
-    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb Hfit]]].
-    exact (TFIB sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hinp).
+    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb [Hfit Hlau]]]].
+    exact (TFIB sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau).
   - exact (SPECX_shape_ok inp).
 Qed.
 End b.

@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN0b.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the allocation mode (the ledger's counting fields in the forced mode only; munmap's errno arm a real outcome in the may-fail mode)). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -20,7 +21,6 @@ Unset Lia Cache. Unset Nia Cache.
 Open Scope bv_scope.
 Open Scope Z_scope.
 Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
-Context {AM : AllocMode}.
 Definition EV (xv : nat -> Z) : env := mkEnv (fun n => Z_to_bv 64 (xv n)) (fun _ => []).
 Definition regs_init : list sv := SLit 0 :: map (fun i => SOff i 0) (seq 1 31).
 Definition aRA := 1%nat. Definition aSP := 2%nat. Definition aTP := 4%nat. Definition aP := 10%nat.

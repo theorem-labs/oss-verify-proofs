@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor raised to the 0x5D0000 bytes below sp that the launch guarantees, bridged to the runtime's own floor). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -625,7 +626,7 @@ Proof.
     FDO MST Hk -> Hlen Hcr ART0 MI0 CALL.
   intros T cf Hc Hkont. cbn [ART rt_frames rt_live rt_sp0 rt_credit RTA] in *. unfold rtA_frames, rtA_live, rtA_sp0, rtA_credit in *.
   pose proof CALL as (ST & LOW & LOR & SPT & SPA).
-  destruct (sm_pre Σ m 2%nat lo ART0 ltac:(lia) LOW) as (FC & FH & FL & OK & NB & HH & FF & TLS & (dtvbeg & Hdb & TGA) & TC & (tb & te & TT)
+  destruct (sm_pre Σ m 2%nat lo ART0 ltac:(lia) ltac:(first [exact LOW | clear - LOW; cbn [rt_sp0 RTA] in LOW; unfold rtA_sp0 in *; lia])) as (FC & FH & FL & OK & NB & HH & FF & TLS & (dtvbeg & Hdb & TGA) & TC & (tb & te & TT)
     & M2S & FSOK & HLO & FSL & HD & HDL & HX & HXL & HT & HTL).
   assert (W1 : evt bsegs (sm2_post ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc (l_FSB (lay Σ)) (fss_hint (fs_of Σ 2))
                             (fss_flags (fs_of Σ 2)) lo m)
@@ -648,7 +649,7 @@ Proof.
     split; assumption. }
   destruct PURE as (Hj & Hfree).
   apply (sm_finish Σ PMc ra sp gp (Z_to_bv 64 0x653c30) s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 m 2%nat (Z.of_nat jn) lo fc _ c1 ART0 ltac:(lia)
-           ltac:(change (NF (Z.of_nat 2)) with 4096; lia) Hfree Hcr (cap_std 2%nat _ ltac:(lia) Hlen) LOW LOR SPT Hc2).
+           ltac:(change (NF (Z.of_nat 2)) with 4096; lia) Hfree Hcr (cap_std 2%nat _ ltac:(lia) Hlen) ltac:(first [exact LOW | clear - LOW; cbn [rt_sp0 RTA] in LOW; unfold rtA_sp0 in *; lia]) LOR SPT Hc2).
   intros ms HP.
   destruct HP as (t0' & t1' & t2' & a1' & a2' & a3' & a4' & a5' & a6' & a7' & t3' & t4' & t5' & t6' & m' & junk1 & junk2 & -> & MU & WM & MI
     & ST' & _ & _ & PH & PC & PF & FR & SH & PFr).
@@ -665,7 +666,7 @@ Proof.
     FDO MST Hk -> Hlen Hcr ART0 MI0 CALL.
   intros T cf Hc Hkont. cbn [ART rt_frames rt_live rt_sp0 rt_credit RTA] in *. unfold rtA_frames, rtA_live, rtA_sp0, rtA_credit in *.
   pose proof CALL as (ST & LOW & LOR & SPT & SPA).
-  destruct (sm_pre Σ m 4%nat lo ART0 ltac:(lia) LOW) as (FC & FH & FL & OK & NB & HH & FF & TLS & (dtvbeg & Hdb & TGA) & TC & (tb & te & TT)
+  destruct (sm_pre Σ m 4%nat lo ART0 ltac:(lia) ltac:(first [exact LOW | clear - LOW; cbn [rt_sp0 RTA] in LOW; unfold rtA_sp0 in *; lia])) as (FC & FH & FL & OK & NB & HH & FF & TLS & (dtvbeg & Hdb & TGA) & TC & (tb & te & TT)
     & M2S & FSOK & HLO & FSL & HD & HDL & HX & HXL & HT & HTL).
   assert (W1 : evt bsegs (sm4_post ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc (l_FSB (lay Σ)) (fss_hint (fs_of Σ 4))
                             (fss_flags (fs_of Σ 4)) lo m)
@@ -688,7 +689,7 @@ Proof.
     split; assumption. }
   destruct PURE as (Hj & Hfree).
   apply (sm_finish Σ PMc ra sp gp (Z_to_bv 64 0x653c30) s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 m 4%nat (Z.of_nat jn) lo fc _ c1 ART0 ltac:(lia)
-           ltac:(change (NF (Z.of_nat 4)) with 1024; lia) Hfree Hcr (cap_std 4%nat _ ltac:(lia) Hlen) LOW LOR SPT Hc2).
+           ltac:(change (NF (Z.of_nat 4)) with 1024; lia) Hfree Hcr (cap_std 4%nat _ ltac:(lia) Hlen) ltac:(first [exact LOW | clear - LOW; cbn [rt_sp0 RTA] in LOW; unfold rtA_sp0 in *; lia]) LOR SPT Hc2).
   intros ms HP.
   destruct HP as (t0' & t1' & t2' & a1' & a2' & a3' & a4' & a5' & a6' & a7' & t3' & t4' & t5' & t6' & m' & junk1 & junk2 & -> & MU & WM & MI
     & ST' & _ & _ & PH & PC & PF & FR & SH & PFr).

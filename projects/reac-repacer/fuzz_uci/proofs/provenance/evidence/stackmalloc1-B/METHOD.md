@@ -4,11 +4,11 @@ core-B's route (../core-B/METHOD.md) for three files; only the file list, one ov
 
 ## Donor
 
-fuzz_grant's RELEASED files at recipes 4f87de75d67 (the same release core-B ports): lib/B/Rt/YF0r.v (the code table,
+fuzz_grant's RELEASED files at recipes (the same release core-B ports): lib/B/Rt/YF0r.v (the code table,
 the symbolic runs, the probe loop), lib/B/Rt/YF0s.v (tfib_stack_malloc_at and the corollary stack_malloc1_contract,
 line 515) and lib/Reusable/YF0v.v (own_free_frame / own_free_frame_shadow, which YF0s.v uses). The released-proof lookup
 found no fuzz_uci class-1 contract (released or in flight), so the grant-B proof is ported. `../core-B/mkdon.sh
-4f87de75d67 fuzz_grant B` normalises the donor (lib/B/Rt/* -> Rt/*, lib/Reusable/* -> root).
+fuzz_grant B` normalises the donor (lib/B/Rt/* -> Rt/*, lib/Reusable/* -> root).
 
 ## Bodies first
 
@@ -41,7 +41,7 @@ Copyright, SPDX and Modified lines stay, undated and without the branch name the
 by one notice naming the donor file at its release commit, the donor image and the target image.
 `header-sm1-restore.py LIB HUB` then applies the corrected header rule (the repository's docs/adding-a-proof.md
 requirement 7): every inherited licence line (Copyright, SPDX, each donor `Modified by` line) is restored byte for byte
-from the donor blob at recipes 4f87de75d67, with only the release scrub table applied to it (a cold branch name becomes
+from the donor blob at recipes, with only the release scrub table applied to it (a cold branch name becomes
 `a working branch`). That puts back the donor's dates, and undoes port_core's rename inside inherited notice text
 (`TfibSyms renamed GrantSyms`). Our added line gets the head `Modified by Theorem Labs, 2026-10:`. Code bytes are
 checked unchanged, and no cold branch, host path or agent name is left in any comment.

@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported from this harness's lib/A/Prog/send_message_s2.v (the ASan walk,
-   a working branch 4f5a539710b) to the ASan+UBSan build fuzz_command.asan-ubsan (lib/B): B's program
-   points, the same offsets from the entry 0x86bf8. Re-fitted to a Theorem Labs lane's pass 4b (a working branch f490061c104): the memcpy
+   a working branch) to the ASan+UBSan build fuzz_command.asan-ubsan (lib/B): B's program
+   points, the same offsets from the entry 0x86bf8. Re-fitted to a Theorem Labs lane's pass 4b (a working branch): the memcpy
    entry at every FP state (forall fx0), used at the entry's. *)
 (* Modified by Theorem Labs, 2026-10: segment s2 of send_message's walk on plugin-hostd/fuzz_command's ASan+UBSan
    image, in the shape of proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v (cgif_close's backward
-   chain) at origin/ossv/recipes c8557374ad2e, the __asan_memcpy call step of A/ACgc.v (cgif_addframe: a copy into
+   chain), the __asan_memcpy call step of A/ACgc.v (cgif_addframe: a copy into
    the fresh block the malloc wrapper returned, from a live block). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

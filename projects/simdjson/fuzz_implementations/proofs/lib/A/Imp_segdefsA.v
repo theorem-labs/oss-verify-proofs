@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -19,7 +20,7 @@ Notation wz z := (Z_to_bv 64 z) (only parsing).
 Definition impG (sp0 usp sp' f lo : Z) : Prop :=
   0x6d2000 <= f /\ f mod 64 = 0 /\ f + 2048 <= sp0 - STACK_WIN /\ SHB <= shad f /\ shad f + 256 + 1 <= sp0 - STACK_WIN
   /\ (f + 2048 <= shad f \/ shad f + 256 <= f)
-  /\ sp0 - STACK_WIN <= lo /\ lo + FUZZ_STACK <= usp /\ usp + 16 <= USTACK_TOP /\ usp - 336 <= sp' <= usp - 320 /\ sp' mod 32 = 0
+  /\ sp0 - STACK_SPAN <= lo /\ lo + FUZZ_STACK <= usp /\ usp + 16 <= USTACK_TOP /\ usp - 336 <= sp' <= usp - 320 /\ sp' mod 32 = 0
   /\ 0x7fff80000000 <= sp0 /\ sp0 <= USTACK_TOP.
 
 Lemma impG_facts : forall sp0 usp sp' f lo, impG sp0 usp sp' f lo ->

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput: the section takes the input's fields and QpvH.launch_ok in place of entry_stack_fits; the vDSO layer: the two binaries' no-vDSO-segment facts, eq_refl, for the mixed error-free theorem; the heap interface's stack-bottom premise: the argument hole for QAWc.get_string_jo's new floor fact r8). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -36,7 +37,7 @@ Variable HIx : Qhd4.heap_iface_A Qwm6.Mq4.A4L.
 Lemma jo_preA_mono : forall A LBall LM FRS B m md sp tp ra lo stkb stkb' errv, stkb <= stkb' ->
 QsKa.Mqd.jo_preA HIx A LBall LM FRS B m md sp tp ra lo stkb' errv ->
 QsKa.Mqd.jo_preA HIx A LBall LM FRS B m md sp tp ra lo stkb errv.
-Proof. intros until errv. intros H (P1 & P2 & P3 & P4 & P5). split; [exact P1|]. split; [exact P2|]. split; [exact P3|]. split; [lia | exact P5]. Qed.
+Proof. intros until errv. intros H (P1 & P2 & P3 & P3b & P4 & P5). split; [exact P1|]. split; [exact P2|]. split; [exact P3|]. split; [exact P3b|]. split; [lia | exact P5]. Qed.
 Ltac stk_mono H S := intros; eapply S; try eassumption; eapply jo_preA_mono; [exact H | eassumption].
 Lemma get_num_mono : forall entry stkb stkb', stkb <= stkb' -> QJZd.Mq9.jo_get_num_A_stmt HIx entry stkb -> QJZd.Mq9.jo_get_num_A_stmt HIx entry stkb'.
 Proof. intros entry stkb stkb' H S. unfold QJZd.Mq9.jo_get_num_A_stmt in *. stk_mono H S. Qed.
@@ -78,20 +79,34 @@ Variable brk0 : word.
 Variable argv envp : list (list byte).
 Variable fs : Fs.Fs.
 Variables uid hw : word.
+Variable apc : N.
+Variable mbase : word.
+Variable ifs : Fs.Fs.
+Variable stdin : InputStream.
+Variable gid : word.
+Variable groups : list word.
+Variable net : NetQueue.
+Variables nofile sigmask : word.
+Variable abort_terminal : bool.
+Variable urnd : InputStream.
+Variable tmp : Fs.Fs.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variables rdr sgd sgt : bool.
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hfit : QpvH.launch_ok sp brk0 mbase rdraw (QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt).
 Variables (E : Qt8n.AX2.env) (R : bvmap 5 word) (FULL : word -> option byte) (mo : Model).
 Variable w : bool.
 Variable ch : QOTP.AP.acs.
 Hypothesis HCL : Q45h.HSCLASS_S w ch.
 Hypothesis CS : Q1LT.APS.cs_ok QXVi.JOB6SEGS QyaF.BJO6
-QVWI.Mq0.LIMIT (bv_unsigned sp) (QpvH.SINV0 QXVi.JOB6PH sp rdraw brk0 argv envp uid hw)
-(QpvH.argH0 QXVi.JOB6PH sp rdraw argv envp uid hw) fs E ch R FULL mo.
-Let RCJ : Q6q3.RunConsts := QoL1.Mq0.RCJ sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS.
+QVWI.Mq0.LIMIT (bv_unsigned sp) (QpvH.SINV0 QXVi.JOB6PH apc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt)
+(QpvH.argH0 sp rdraw argv envp kb execfn) fs E ch R FULL mo.
+Let RCJ : Q6q3.RunConsts := QoL1.Mq0.RCJ sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS.
 #[local] Existing Instance RCJ.
-#[local] Notation ARGS L := (L sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation ARGS L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
 #[local] Notation H6 := (ARGS QDDG.Mq0.H6_main).
 #[local] Notation HIx := (Qhd4.hi5_of_v6 Qwm6.Mq4.A4L H6).
 
@@ -109,7 +124,7 @@ Qed.
 Lemma gets_main : QJZd.Mq9.jo_get_string_A_stmt HIx QC6R.JO_GET_STRING_A QiVi.Mq6.AGET_STRING_STACK QiVi.Mq6.gsB.
 Proof.
 destruct (ARGS (@Qv81.Mq1.botj_cap)) as (BCAP & BJ).
-refine (QAWc.get_string_jo _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ BCAP _).
+refine (QAWc.get_string_jo _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ BCAP _).
 unfold Q6q3.alloc_ceiling. cbn. lia.
 Qed.
 
@@ -151,7 +166,7 @@ Qed.
 End PerState.
 
 Theorem target_all : QDDG.Mq0.OBL_TARGET_ALL_jo.
-Proof. intros sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS. exact (target_main sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS). Qed.
+Proof. intros sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS. exact (target_main sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS). Qed.
 
 Theorem json_object_both_ba_assembled :
 strong_universal_error_free_T_scfg_budgets_abort (alloc_only_cfg false) SanitizerBudgets.lim_source SanitizerBudgets.lim_target
@@ -190,9 +205,9 @@ Proof. exact (@target_all dcB_jo dcD_jo (@Qhls.deep_copy_A_closed) dcc_jo dc_tot
 Theorem handoff_rest_all : QGIC.OBL_HANDOFF_REST_jo.
 Proof.
 apply QDDG.Mq0.handoff_rest_of_driver_side.
-intros sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS.
-exact (QDDG.Mq0.driver_side_of_target sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS
-(target_all_closed sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS)).
+intros sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS.
+exact (QDDG.Mq0.driver_side_of_target sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS
+(target_all_closed sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS)).
 Qed.
 
 Theorem json_object_both_ef :
@@ -204,6 +219,7 @@ exact (QJur_c1.strong_universal_error_free_of_mixed
 Plain.M.loaded_segments Plain.M.init_pc Plain.M.phdrs
 AsanUbsan.M.loaded_segments AsanUbsan.M.init_pc AsanUbsan.M.phdrs
 (fun inp => QBxa.Mq5.spec (in_argv inp) (in_fs inp))
+eq_refl eq_refl
 (QHdY.drv_realizes_P OSSVerify.Proofs.json_c.json_object_fuzzer.lib.Jo3.TargetJoP.target_P2_proof)
 (QGIC.jo_both_tgt_srealizes handoff_rest_all)).
 Qed.

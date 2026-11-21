@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: restates text of proofs/reac-pw/fuzz_role/lib/A/RPgX01.v at 9bffaa83ff88
+(* Modified by Theorem Labs, 2026-10: restates text of proofs/reac-pw/fuzz_role/lib/A/RPgX01.v
    [Apache-2.0] (rx_reg_atom / rx_reg_ext / rx_ew_reg / rx_st_region / rx_chunk_zero / rx_flag0_of, the saved-slot
    chunk list rx_sv_chunks, the numeral tactics z5 / z5g and the flag-store tactic rx_run_flag, which passes
-   aj_flag_store its sixteen journal arguments) and of proofs/reac-pw/fuzz_role/lib/A/RPgCheck.v at 77f59d02b018
+   aj_flag_store its sixteen journal arguments) and of proofs/reac-pw/fuzz_role/lib/A/RPgCheck.v
    [Apache-2.0] (the shape of a `ret` leaf into a callee post), for reac-pw/fuzz_rate's image A: the walk is
    check_csv's release and epilogue, the side-stack class is 2 instead of 3, and the post is RtPgCSpec.rt_cpost_o,
    whose owned-set conjunct is discharged from the cut's layout, chunk and frame equalities. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_rate/lib/A/RtPgCcsvS3.v, with its module names changed; 181 of its 205 lines of code are new or changed and 302 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW7bE2.v at 7ef0f92b27f1 for the same unit's image B (fuzz_rate.asan-ubsan): the image is images.AsanUbsan; E2 is image B's 0x81718 .. 0x81770: e62's address is in s6 (loaded by E1) instead of a reload from a cell, the frame's shadow base is s3, the one cell the block reads is R+0x128 (the cursor, into s10), and the input left goes back from s8 to t1; lib/A/RtPgW7bBase.v / RtPgSteps.v are lib/AU/RtPgW7bBaseB.v / RtPgStepsB.v; the prefix w7_ becomes w7b_. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW7bE2.v for the same unit's image B (fuzz_rate.asan-ubsan): the image is images.AsanUbsan; E2 is image B's 0x81718 .. 0x81770: e62's address is in s6 (loaded by E1) instead of a reload from a cell, the frame's shadow base is s3, the one cell the block reads is R+0x128 (the cursor, into s10), and the input left goes back from s8 to t1; lib/A/RtPgW7bBase.v / RtPgSteps.v are lib/AU/RtPgW7bBaseB.v / RtPgStepsB.v; the prefix w7_ becomes w7b_. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14; addresses measured on the unstripped twin
    a1e5fa55ae27e657ea2719297ec4c037110f10fa9047c3ea7bb6ea7fcb358cb1, which holds the same loaded bytes): block E2 of

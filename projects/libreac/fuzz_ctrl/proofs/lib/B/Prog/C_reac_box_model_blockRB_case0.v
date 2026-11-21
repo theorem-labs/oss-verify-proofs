@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/openssl/ct/lib/CtColA/W_set0A.v, with its module paths and module names changed; 388 of its 406 lines of code are new or changed and 126 lines of the source are left out. *)
-(* GENERATED - do not edit.  C_reac_box_model_blockRB_case0.v is the re-based copy of lib/B/Prog/reac_box_model_block_case0.v at 20372bbcc3a
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* GENERATED - do not edit.  C_reac_box_model_blockRB_case0.v is the re-based copy of lib/B/Prog/reac_box_model_block_case0.v
    (source sha256 6ceeab617d6146d8be754411bf491cebccd719d1cbb6434e5c76ded6b8c5b10e) by gen_rb_modelblock.py
    (its sha256 is cited in the commit that adds this file); the substitutions are listed there.  Dropped here: c0_fin, c0_ex0, c0_st31, c0_sumtail, c0_sum, c0_tailc, c0_case0. *)
 From Stdlib Require Import ZArith List Lia Bool.

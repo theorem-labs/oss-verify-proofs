@@ -1,9 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: its imports. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement.
+From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap.
 Unset Lia Cache. Unset Nia Cache.
 Import ListNotations.
 Open Scope bv_scope.

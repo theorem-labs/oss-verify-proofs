@@ -2,11 +2,12 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/ExvB_Disp_word.v, with its module paths and module names changed; 116 of its 154 lines of code are new or changed and 465 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/Caw102A_Kit.v, with its module paths and module names changed; 236 of its 317 lines of code are new or changed and 73 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset lib/A, the #102 re-walk of tx_put on image A' (ASan build): segment S_END,
    the epilogue and the return, from the cut TP_PC_END (+332) to the text's caller-window post.
    rule 24: proves function tx_put (reuse search: the internal file REWALK-102-PLAN.md section T3)
-   PROVES tp_seg_END_holds : forall P, srr_inv_laws segs P -> tp_seg_END B SK CTX0 P (TxPut102A_Base.v on the batch kit
-   c23331281d07, post tp_text_postW = PRH_Base.fpostWb at the text's wild-trace budget) for an
+   PROVES tp_seg_END_holds : forall P, srr_inv_laws segs P -> tp_seg_END B SK CTX0 P (TxPut102A_Base.v on the batch kit,
+   post tp_text_postW = PRH_Base.fpostWb at the text's wild-trace budget) for an
    ABSTRACT P with its laws only (call-free: no srr_inv_call).
    P is never unfolded: the one engine run goes through the runner twin paj_run_x_inv (YC1fPx.v) with PLAW, premise the
    cut's P mem3; the return leaves the memory as it is, so the post's P is the run's.

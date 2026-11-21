@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/AGif1m.v at 95e6f1d72b6 (sha256 a8ba029fc832) into lib/B (libreac/fuzz_decode image B, fuzz_decode.asan-ubsan), with its module paths changed and its image numerals moved to fuzz_decode.asan-ubsan (pin sha256 5d05689fd5b1) by symbol + offset (alreloc 9b786608301; KEEP, regenerated and resolved values per proofs/libreac/fuzz_decode/provenance/alloc-reloc/B/resolve.txt); later the model labels became the model's tags (202260 -> 3, 449860 -> 12). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/AGif1m.v (sha256 a8ba029fc832) into lib/B (libreac/fuzz_decode image B, fuzz_decode.asan-ubsan), with its module paths changed and its image numerals moved to fuzz_decode.asan-ubsan (pin sha256 5d05689fd5b1) by symbol + offset (alreloc; KEEP, regenerated and resolved values per proofs/libreac/fuzz_decode/provenance/alloc-reloc/B/resolve.txt); later the model labels became the model's tags (202260 -> 3, 449860 -> 12). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The cgif_file instance of the miss-arm interface AGif0n.AIfaceM (iface_cgif_m), next to AGif1's instance of
    AIface: ARX = ARX_cgif, AOX = aowned, rpre = aregime /\ qmeter, mt = malloc, lpost = qtight, dpost = dpost_cgif,
    rtree = YFl1.refill_tree.  Ported from cgif_file's released miss arm (YFim / YFiw / YFkv / YFl1 / YFj1 / YFiv /

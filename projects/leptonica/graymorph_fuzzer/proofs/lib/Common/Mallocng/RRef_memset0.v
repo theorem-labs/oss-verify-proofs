@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (memset0_refines takes memset0_stmt's new transparent-huge-page flag and vdso_ok hypotheses and discharges its continuation's extra equation). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -29,7 +30,7 @@ Context {fx : FPState} {RL : Reloc} {RC : RelocCode RL} {RS : RelocSites RL}.
 Theorem memset0_refines : memset0_stmt.
 Proof.
   unfold memset0_stmt.
-  intros md regs mm rom s d n sp ret P L Hp Hvm Hag H2 Hal Hlo0 Hlo Hhi Hhi64 Hwt Hstk H1 Hret H4 H10 H11 H12 HS HK.
+  intros md regs mm rom s d n sp ret P L Hp Hvm Hthp Hvdo Hag H2 Hal Hlo0 Hlo Hhi Hhi64 Hwt Hstk H1 Hret H4 H10 H11 H12 HS HK.
   pose proof (minv_init s sp 0 Hlo0 Hlo ltac:(lia) Hhi Hhi64 Hwt) as HI.
   pose proof (mwin_init s mm sp 0 Hstk) as HW.
   rewrite <- (with_vmmaps_same md), <- Hvm. note_win HI.
@@ -67,7 +68,7 @@ Proof.
     lazymatch goal with |- realizes _ _ (?L0 ?r ?s') => eapply (HK r s' _ regs') end;
       [ exact HS
       | apply magree_wbytes; exact Hag
-      | reflexivity | reflexivity | reflexivity
+      | reflexivity | reflexivity | reflexivity | reflexivity
       | exact HA10
       | rewrite <- H2; apply HAG; cbv; intuition discriminate
       | intros x Hx; apply HAG; unfold memset_clob;

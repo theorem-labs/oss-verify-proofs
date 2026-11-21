@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (FpsU's tail certificate okBR_6 checked at every residue 0 to 3 of the printed string's address mod 4, not only at 0: in the launch's image at LPS 727298f3 argv[0] has any alignment). *)
 (* [comment removed for export] *)
 Local Set Warnings "-require-in-module".
 (* [comment removed for export] *)
@@ -994,7 +995,7 @@ Import ListNotations.
 Open Scope Z_scope.
 
 Lemma okBR_6 : ltac2:(tb__ "0|0|
-S4S1SdS0S0SbS8S9R1Z0SaScS7A7Ln;S5S2S0SeS6U43U7A2A4A3S3A3").
+S4S1SdS0S0SdS0S0SbS8S9R2R1SaScS7A7Lr;S5S2S0SeS6U0U4A2A4A3Ln;S5S2S0SeS6U43U7A2A4A3S3A3").
 Proof. vm_cast_no_check (@eq_refl bool true). Qed.
 End FpsU_a6.
 

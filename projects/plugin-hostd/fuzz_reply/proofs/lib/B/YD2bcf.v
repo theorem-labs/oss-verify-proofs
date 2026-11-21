@@ -3,8 +3,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD2b.v, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: image B's twin of lib/A/AD2bcf.v (a working branch 46f1762ad5a): A's hand
+(* Modified by Theorem Labs, 2026-10: image B's twin of lib/A/AD2bcf.v (a working branch): A's hand
    edits to its generator copy, applied to this generator copy with image B's modules and numerals (row A3). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises); the input-owned, top-anchored launch stack). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -40,17 +41,33 @@ Variable B : asyms.
 Variable NP : astate -> Prop.
 Hypothesis HB : TfibSyms B.
 Hypothesis ARL : AR_laws_cf tfibsegs B.
-Variables (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte).
+Variables (sp brk mbase : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte) (rnd : EntryDraw).
+(* Shape copied from the in-tree ported donor YD1v.v:119-125 / YL0q.v Section b: binders
+   [sp brk mbase] .. [inp] .. [a0 p] .. [rnd], premises
+   [valid_sp; in_argv =; valid_argv (in_argv inp); valid_envp; valid_launch;
+    entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp; valid_input].
+   [entry_stack_fits] is DROPPED: it is implied by [entry_launch_ok_va]
+   ([entry_launch_ok_va_fits], 75d69e00 Run.v:3718-3722), and this section never carried it.
+   [Hva] now speaks of [in_argv inp], not of [[a0; p]]; [Hargv] converts the spelling. *)
+Hypothesis Hargv : in_argv inp = [a0; p].
 Hypothesis Hsp : valid_sp sp.
-Hypothesis Hva : valid_argv [a0; p].
+Hypothesis Hva : valid_argv (in_argv inp).
 Hypothesis Hve : valid_envp (in_envp inp).
-#[local] Notation EL := (YP08.E0 sp [a0; p] (in_envp inp) xw xd).
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp.
+Hypothesis Hvi : valid_input inp.
+(* [YP08.E0] is TOP-anchored and launch-indexed at 75d69e00 (YP08.v:209-210): entry-draw top,
+   the run's own [kb_rseq] flag, and the execfn. *)
+#[local] Notation EL := (YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd).
 #[local] Notation usp := (bv_unsigned sp).
 #[local] Notation envp := (in_envp inp).
+(* Pin the whole entry-layout section, including the image fields absent from the bound. *)
 Lemma EL6 : usp <= bv_unsigned (ew EL 6).
 Proof.
-change (ew EL 6) with (Z_to_bv 64 (z_rand usp [a0; p] envp)).
-pose proof (YP08.z_rand_end sp [a0; p] envp Hsp Hva Hve) as Hz. pose proof (u64_range sp).
+change (ew EL 6) with (Z_to_bv 64 (z_rand usp (kb_rseq (in_kernel inp)) [a0; p] envp)).
+assert (Hz : z_rand usp (kb_rseq (in_kernel inp)) (in_argv inp) envp + 16 < 2 ^ 63)
+by exact (YP08.z_rand_end TSEGS TPH inp mbase AsanUbsan.M.init_pc sp brk rnd Hsp Hva Hve Hvl Hlau).
+rewrite Hargv in Hz. pose proof (u64_range sp).
 unfold z_rand in *. rewrite u64_lit by lia. lia.
 Qed.
 Lemma hdr_regions_ok : forall (E3 : YP0m.env) (H : word -> bool) m data buf pP h,

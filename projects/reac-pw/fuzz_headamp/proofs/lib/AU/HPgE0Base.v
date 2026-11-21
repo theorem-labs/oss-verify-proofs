@@ -9,12 +9,13 @@
 (* Modified by Theorem Labs, 2026-10: made from proofs/reac-pw/fuzz_role/lib/A/RPgW7bBase.v (w7_field, w7_awr_cons,
    w7_post, w7_post_of_run), RPgCfgChanges.v (kept_run), RPgW7bKit.v (w7_kept, w7_hull, w7_ra_kept, w7_hull_kept,
    w7_strok and its lemmas, w7_memcpy_at) and RPgW7bCall.v (w7_strlen_at, w7_first_byte_cstr, w7_first_byte_bytes,
-   w7_no_nul_Forall, w7_dec64_nz, w7_odd_nz, w7_chs_nonzero), all at 97ea9c9eafa, for reac-pw/fuzz_headamp's image B
+   w7_no_nul_Forall, w7_dec64_nz, w7_odd_nz, w7_chs_nonzero), all, for reac-pw/fuzz_headamp's image B
    (lib/AU/Img0U.v rsegs): the w7_ prefix renamed to e0_, image A's own code tables and pcs dropped, __asan_memcpy at
    image B's 0x51d8c, RPgBase.rl_cstr replaced by HPgBase.hd_cstr (whose last clause gives the NUL word's tail),
    RPgSeg.rs_g_of by HPgSeg.hsu_g_of, and the register-kept and region lemmas taken from lib/AU/HPgSteps.v; its
    e0_post, e0_post_of_run, e0_kept_run, e0_kept, e0_hull, e0_ra_kept, e0_hull_kept, e0_strok, e0_strz, e0_strok_kept
    and e0_strok_first_byte are lib/AU/HPgCaseB.v's cb_* since the dedup. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image B (fuzz_headamp.asan-ubsan, pinned sha256
    53edda9bdeeba1803865babfecb1af6732babe47ab83c64d38cc59a90d717a94; addresses measured on the unstripped twin
    1674e30a0698f381704e66d2398d7906c881f4ba8fc619cb41b89fb97ad112ff, same loaded bytes except .note.gnu.build-id): the block-post shape and the

@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from projects/cgif/cgif_file_fuzzer/proofs/lib/YG0c.v (donor image sha256 1c29845fe605), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed commit_node3). *)
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -19,6 +20,7 @@ From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require Import YK0c YK0
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require Import YG0f YG0n.
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require Import YM05 YK06.
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.ReusableB Require Import YG0b.
+From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require Import RomBase.
 Import ListNotations.
 Import AX2. Import AX2S. Import APG. Import APSG.
 Unset Lia Cache. Unset Nia Cache.
@@ -112,7 +114,8 @@ pose (ms' := fun i : unit => with_mmap_backing flags addr n (mmap_model addr n m
 exists unit, (fun i => mkCfg (advance_past_svc (apply_effect ms (effs i))) (ms' i)), (fun _ => 1), tt.
 split; [| split; [reflexivity |]].
 + apply (YA09.node_chk_grant_mat segs ms md (getr regs 17) unit tt effs ms' _ Hh eq_refl
-(YA09.off222 segs ms _ Hno) (YA09.rb222 segs ms _ md Hno)).
+(YA09.off222 segs ms _ Hno) (YA09.rb222 segs ms _ md Hno)
+(sys_rob_memfree segs ms md (getr regs 17) eq_refl ltac:(rewrite Hno; exact memfree_222))).
 * intros []; cbv beta iota delta [effs ms']; rewrite Hchk.
 rewrite Hnot, bv_eqb_refl, (proj2 (listNN_eqb_eq _ _) eq_refl). reflexivity.
 * intros []. exact Hnot.

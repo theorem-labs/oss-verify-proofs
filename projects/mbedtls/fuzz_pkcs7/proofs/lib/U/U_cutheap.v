@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved-ledger goal is closed by model1g_resv: the image's reservations, then the launch's vDSO and vvar pair; cut_heap_init_hyps takes cut_mem with the entry draw rd, reads the image data through main_entry_launch, and gives rauxv_ok_intro the launch's own auxv vector (read_auxv_all) and AT_RANDOM secret); and launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -72,59 +73,72 @@ Section CutHeap.
   Definition cut_rc : rconsts := ltac2:(CDefT.buildp (gd_tbl_P_cutheap ()) "(1:.(4.&40.(1;.Vrd,))(4.&40.(1<.Vrd,))(1=.(1;.Vrd,))(1=.(1<.Vrd,)))")
 (* [comment removed for export] *).
 
-  #[using="regs0 Hva Hve Hvsp Htid ME Hbrk SPlo SPhi"] Theorem cut_heap_init_hyps : ltac2:(CDefT.buildp (gd_tbl_P_cutheap ()) "PM,P,(0.&40.)(1.(0.&8.))Pfd3,$1>.P,(1?.Vsp0,Va0s,Vpath,Venvv,Vmem0,R2.)(20.Vsp0,$21.R3.(22.VAMB,VLM,Vsp0,Vtid,Vbrk,Vmbase,Vfs0,Vstdin0,R2.)(4.&40.Vsp0,))")
+  #[using="regs0 Hva Hve Hvsp Htid ME Hbrk SPlo SPhi"] Theorem cut_heap_init_hyps : ltac2:(CDefT.buildp (gd_tbl_P_cutheap ()) "PM,P,(0.&40.)(1.(0.&8.))Pfd3,$1>.P,(1?.VAMB,Vsp0,Va0s,Vpath,Venvv,Vrd,Vmem0,R2.)(20.Vsp0,$21.R3.(22.VAMB,VLM,Vsp0,Vtid,Vbrk,Vmbase,Vfs0,Vstdin0,R2.)(4.&40.Vsp0,))")
 (* [comment removed for export] *).
   Proof.
     intros M fd3 CM. pose proof SPlo as Hlo. pose proof SPhi as Hhi. pose proof (u64_range tid) as Htr.
     pose proof (cut_tail_mem sp0 a0s path envv tid rd regs0 mem0 Hvsp Htid ME M CM) as TM.
     destruct TM as [W RO GOT DA CO TI TR LO CA NL SI OF].
     assert (BE : forall a : Z, (0 <= a < 0x7e000)%Z -> M (Z_to_bv 64 a) = mem0 (Z_to_bv 64 a)).
-    { intros a Ha. apply (cm_below _ _ _ _ _ _ CM). rewrite u_small by lia. lia. }
+    { intros a Ha. apply (cm_below _ _ _ _ _ _ _ CM). rewrite u_small by lia. lia. }
     assert (RD : forall (a : Z) (n : nat), (0 <= a)%Z -> (a + Z.of_nat n <= 0x7e000)%Z ->
                  rdn usegs M (Z_to_bv 64 a) n = rdn usegs mem0 (Z_to_bv 64 a) n).
     { intros a n Ha Hn. apply rdn_agree. intros j Hj. rewrite u_small by lia. apply BE. lia. }
     assert (AB : forall a : Z, bv_unsigned sp0 <= a < 2 ^ 64 -> M (Z_to_bv 64 a) = mem0 (Z_to_bv 64 a)).
-    { intros a Ha. apply (cm_above _ _ _ _ _ _ CM). rewrite u_small by lia. lia. }
+    { intros a Ha. apply (cm_above _ _ _ _ _ _ _ CM). rewrite u_small by lia. lia. }
     assert (RDA : forall (a : Z) (n : nat), bv_unsigned sp0 <= a -> a + Z.of_nat n <= 2 ^ 64 ->
                  rdn usegs M (Z_to_bv 64 a) n = rdn usegs mem0 (Z_to_bv 64 a) n).
     { intros a n Ha Hn. apply rdn_agree. intros j Hj. rewrite u_small by lia. apply AB. lia. }
-    destruct (auxvp_u sp0 a0s path envv rd Hva Hve Hvsp) as [Hau Hab].
-    ddestruct (rnd_u sp0 a0s path envv rd Hva Hve Hvsp) as (Hr1 & Hr2 & Hr3 & Hr4).
+    (* LPS 727298f3: the image data and the auxv are read back through the launch [main_entry] names *)
+    destruct (main_entry_launch sp0 [a0s; path] envv tid rd regs0 mem0 ME)
+      as (inp & mb0 & brk0 & Eav & Eev & Euid & Egid & Ehw & Ekb & Eef & Hvl & Hlau & RDW & MD & RDD).
+    assert (Hva' : valid_argv (in_argv inp)) by (rewrite Eav; exact Hva).
+    assert (Hve' : valid_envp (in_envp inp)) by (rewrite Eev; exact Hve).
+    destruct (auxvp_u sp0 a0s path envv Hve Hvsp) as [Hau Hab].
+    ddestruct (rnd_u sp0 a0s path envv tid rd regs0 mem0 Hva Hve Hvsp ME) as (Hr1 & Hr2 & Hr3 & Hr4).
     set (auxvp0 := auxvp sp0 a0s path envv) in *. set (rnd0 := rnd sp0 a0s path envv) in *.
     pose proof (u64_range auxvp0) as Hapr. pose proof (u64_range rnd0) as Hrr.
+    assert (Er : rnd0 = at_random_ptr sp0 (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp))
+      by (unfold rnd0, rnd; rewrite Eav, Eev, Ekb; reflexivity).
+    assert (EA : auxvp0 = (sp0 + nat_to_word (auxv_off (in_argv inp) (in_envp inp)))%bv)
+      by (rewrite w_add_nat, Eav, Eev; unfold auxvp0; apply auxvp_eq).
+    (* the whole vector at auxvp, the launch's [StackLayout.auxv_bytes] *)
+    pose proof (read_auxv_all usegs Sv48 inp mb0 RPH (0x1d100 : word) sp0 brk0 rd) as AX.
+    repeat (specialize (AX ltac:(first [ exact Hva' | exact Hve' | exact Hvl | exact Hlau | exact (proj2 (proj2 Hvsp))
+                                       | (unfold sp_window_lo; lia) | (unfold sp_window_hi; lia) ]))).
+    set (L := U.HP_RMallocTree.rauxv_list (launch_auxv inp sp0 mb0) RPH (0x1d100 : word) (in_uid inp) (in_gid inp) (in_hwcap inp)
+                (Z_to_bv 64 (bv_unsigned rnd0)) (at_execfn_ptr (ed_top rd) (in_execfn inp))).
+    assert (LB : auxv_bytes (launch_auxv inp sp0 mb0) RPH (0x1d100 : word) (in_uid inp) (in_gid inp) (in_hwcap inp)
+                   (at_random_ptr sp0 (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp))
+                   (at_execfn_ptr (ed_top rd) (in_execfn inp)) = flat_map word_le8 L).
+    { unfold L. rewrite Z_to_bv_bv_unsigned, <- Er, auxv_bytes_words. reflexivity. }
+    assert (AS : (auxv_size (kb_rseq (in_kernel inp)) <= 464)%nat)
+      by (unfold auxv_size, auxv_count; destruct (kb_rseq (in_kernel inp)); lia).
+    assert (RV : rdn usegs M (Z_to_bv 64 (bv_unsigned auxvp0)) (length (flat_map word_le8 L)) = Some (flat_map word_le8 L)).
+    { rewrite <- LB, length_auxv_bytes.
+      change (la_rseq (launch_auxv inp sp0 mb0)) with (kb_rseq (in_kernel inp)).
+      rewrite RDA by lia. rewrite Z_to_bv_bv_unsigned.
+      rewrite RDW by lia.
+      pose proof (rdn_wmem_stack usegs inp mb0 RPH (0x1d100 : word) sp0 rd) as Hw. unfold wmem in Hw.
+      rewrite Hw by (try eassumption; lia).
+      rewrite EA. exact AX. }
+    assert (RC : rdn usegs M (Z_to_bv 64 512856) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 (bv_unsigned auxvp0)))).
+    { rewrite RD by (cbn; lia). rewrite RDD by (rewrite stack_max_size_val, u_small by lia; cbn; lia).
+      rewrite Z_to_bv_bv_unsigned. exact (D_main_auxvp sp0 a0s path envv tid rd Hvsp inp usegs Eav Eev). }
+    assert (RZ : rdn usegs M (Z_to_bv 64 (bv_unsigned rnd0 + 8)) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 (rc_secret cut_rc)))).
+    { rewrite RDA by lia. cbn [rc_secret cut_rc]. rewrite Z_to_bv_bv_unsigned.
+      exact (main_entry_secret sp0 a0s path envv tid rd regs0 mem0 Hva Hve Hvsp ME). }
     split.
     - (* [comment removed for export] *) intros a Ha. rewrite <- (Z_to_bv_bv_unsigned a). apply (cut_clear sp0 a0s path envv tid rd regs0 mem0 Hvsp ME M CM); lia.
     - (* [comment removed for export] *) apply rw_cell_of_rdn; [exact NL | exact I | cbn; lia].
     - (* [comment removed for export] *) apply rw_cell_of_rdn; [| exact I | cbn; lia]. cbn [csize cbytes].
-      rewrite RD by (cbn; lia). rewrite (main_entry_rdn_data sp0 [a0s; path] envv tid rd regs0 mem0 ME) by (rewrite stack_max_size_val, u_small by lia; cbn; lia).
-      apply (D_main_pagesize sp0 [a0s; path] envv tid rd Hva).
-    - (* [comment removed for export] *)
+      rewrite RD by (cbn; lia). rewrite RDD by (rewrite stack_max_size_val, u_small by lia; cbn; lia).
+      apply (D_main_pagesize inp sp0 tid rd Hva').
+    - (* the launch's own auxv vector ([HP_RMallocTree.rauxv_ok]) *)
       eapply (rauxv_ok_intro sp0 cut_rc M (bv_unsigned sp0) (bv_unsigned auxvp0) (bv_unsigned rnd0)
-                (bv_unsigned (nth 1 (auxv_words RPH rnd0 a_uid a_hwcap) (Z_to_bv 64 0)))
-                (bv_unsigned (nth 3 (auxv_words RPH rnd0 a_uid a_hwcap) (Z_to_bv 64 0)))
-                (bv_unsigned (nth 5 (auxv_words RPH rnd0 a_uid a_hwcap) (Z_to_bv 64 0)))
-                (bv_unsigned a_hwcap)
-                (bv_unsigned (nth 9 (auxv_words RPH rnd0 a_uid a_hwcap) (Z_to_bv 64 0)))
-                (bv_unsigned a_uid) (bv_unsigned a_uid) 0); try lia.
-      + rewrite RD by (cbn; lia). rewrite (main_entry_rdn_data sp0 [a0s; path] envv tid rd regs0 mem0 ME) by (rewrite stack_max_size_val, u_small by lia; cbn; lia).
-        rewrite Z_to_bv_bv_unsigned. apply (D_main_auxvp sp0 a0s path envv tid rd Hvsp).
-      + intros i v Hi.
-        destruct (Nat.lt_ge_cases i 20) as [Hi20|Hge]; [| rewrite (proj2 (nth_error_None _ _)) in Hi by (cbn; lia); discriminate].
-        rewrite RDA by lia.
-        rewrite (auxv_word_at sp0 a0s path envv tid rd regs0 mem0 Hva Hve Hvsp ME i Hi20). do 2 f_equal.
-        unfold auxv_words, auxv_entries. cbn [flat_map fst snd app nth] in Hi |- *.
-        do 20 (destruct i as [|i]; [cbn [nth_error] in Hi; injection Hi as <-; first [rewrite Z_to_bv_bv_unsigned; reflexivity | apply bv_eq; vm_compute; reflexivity] |]).
-        exfalso. clear - Hi20. lia.
-      + (* [comment removed for export] *) rewrite RDA by lia. cbn [rc_secret cut_rc]. rewrite Z_to_bv_bv_unsigned.
-        exact (main_entry_secret sp0 a0s path envv tid rd regs0 mem0 Hva Hve Hvsp ME).
-      + rewrite (U_alloc_ceiling_eq sp0 Hvsp). lia.
-      + pose proof (u64_range (nth 1 (auxv_words RPH rnd0 a_uid a_hwcap) (Z_to_bv 64 0))). lia.
-      + pose proof (u64_range (nth 3 (auxv_words RPH rnd0 a_uid a_hwcap) (Z_to_bv 64 0))). lia.
-      + pose proof (u64_range (nth 5 (auxv_words RPH rnd0 a_uid a_hwcap) (Z_to_bv 64 0))). lia.
-      + pose proof (u64_range a_hwcap). lia.
-      + pose proof (u64_range (nth 9 (auxv_words RPH rnd0 a_uid a_hwcap) (Z_to_bv 64 0))). lia.
-      + pose proof (u64_range a_uid). lia.
-      + pose proof (u64_range a_uid). lia.
+                (launch_auxv inp sp0 mb0) RPH (0x1d100 : word) (in_uid inp) (in_gid inp) (in_hwcap inp)
+                (at_execfn_ptr (ed_top rd) (in_execfn inp)) RC RV RZ);
+        [ rewrite (U_alloc_ceiling_eq sp0 Hvsp); lia | lia | lia | lia | lia | lia ].
     - (* [comment removed for export] *) apply rw_cell_of_rdn; [exact GOT | exact I | cbn; lia].
     - (* [comment removed for export] *)
       apply rw_cell_of_rdn; [| exact I | cbn; lia]. cbn [csize rc_canary cut_rc]. rewrite Z_to_bv_bv_unsigned.
@@ -137,7 +151,7 @@ Section CutHeap.
     - reflexivity.
     - reflexivity.
     - reflexivity.
-    - reflexivity.
+    - (* phi_resv: the image's reservations, then the launch's vDSO/vvar pair *) apply model1g_resv.
     - reflexivity.
     - exact Hbrk.
     - (* [comment removed for export] *) reflexivity.

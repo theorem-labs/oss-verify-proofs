@@ -40,7 +40,7 @@
    (G3) a text the reader reads after a call (parse_string: after fuzz_malloc; literal: bcmp after strlen) or keeps in
         its post (skip_ws) is kept_at (a live harness block's user bytes, or a read-only registered global) or inside a
         live allocator block whose base is NOT a hidden head (prhReader_home). MEASURED, which side each caller's text
-        falls on: the fuzzer input is a whole non-harness allocator block, or A_EMPTY with size 0 (PresetCfnA.v:858);
+        falls on: the fuzzer input is a whole non-harness allocator block, or A_EMPTY with size 0 (PresetCfnA.v:859);
         parse_noting's three texts are fuzz_copy copies taken with the malloc wrapper (check_no_overread, A 0x81a90 /
         0x81ad4 / 0x81b28):
         non-harness blocks; round_trip_text's and check_round_trip's texts are pj_write buffers (fuzz_realloc): harness
@@ -54,11 +54,11 @@
    (G5) skip_ws is a B-only function (A inlines it): the text is stated image-parametrically, as town_specX is, and
         only image B's walk uses it.
    (G6) runtime calls: literal's strlen over the word (cstr_ok) and bcmp over len bytes of the text and of the word
-        (both addressable). Their texts: YGcallMxmn.v:1175 astrlen_realizes_xro, YGcallMx.v:130 abcmp_realizes_x; nothing else.
+        (both addressable). Their texts: YGcallMxmn.v:1175 astrlen_realizes_xro, YGcallMx.v:131 abcmp_realizes_x; nothing else.
         THE WORD IS NOT kept_at (dropped, the kit owner's ruling): literal reads it only through strlen and then bcmp,
         with no program or allocator call between them (both keep the shadow), and the leaf-lemma author proved literal on both
-        images without it. Its premises are cstr_ok and the leaf-lemma author's leaf word premises (origin 4e25a816d2c,
-        lib/Prog/literal_xs.v:45 tliteral_specX), copied over rdW W mem with STK_literal for its LIT_STK (both are the
+        images without it. Its premises are cstr_ok and the leaf-lemma author's leaf word premises (origin,
+        lib/Prog/literal_xs.v:46 tliteral_specX), copied over rdW W mem with STK_literal for its LIT_STK (both are the
         frame 80 plus 2 * ESTACK): the bytes cw ++ 0 :: slack at w, no NUL in cw, the slack reaching the next 8-byte
         boundary, the 2 ^ 63 bound, and the word with its slack outside literal's stack window; so this text implies
         the leaf's. Background measurement (no premise rests on it): "true", "false", "null" at A .rodata 0x21460 /
@@ -84,7 +84,7 @@
    In (raZ regs :: spine ch) CTX; prh_free_univ_at (parse_string's free over the chain from q) is no longer taken: its
    chain's first word is a DATA word on B', held only by clause 4b's wild arm.
    CALLER REQUIREMENT (not a gap): the caller cells written above the entry sp (q's p field, hex4's out, a node in the
-   extension) are in FP, as fpostW asks; a caller composing such a call with YCbqG's ajournal_x_sub (aed5d9ab225)
+   extension) are in FP, as fpostW asks; a caller composing such a call with YCbqG's ajournal_x_sub
    names those cells in its own FP, or they lie in its own new fake frame or in a block it made (pj_parse names its
    struct pj_in, parse_string its out slot).
    The ASan owner's statement classes: (R1) every caller buffer a post keeps lies in a live block (the text: prhReader_home,
@@ -180,7 +180,7 @@
    THE OPEN CORRESPONDENCE (owned by the owner of P8 and the run model; NOT assumed by any text here): the
    allocator's real outcome at each harness allocation follows the model's grant list (a refusal in reading k exactly
    where okof o_k refuses, no refusal anywhere else). No kit statement uses it (`git grep -w okof` over lib/A and
-   lib/Spec/PresetRoomPos*.v at kit 5f43593d98f6: hits in this header only). It is what a caller still needs to
+   lib/Spec/PresetRoomPos*.v at kit: hits in this header only). It is what a caller still needs to
    CHOOSE the model run that matches the instance's outcomes (the post-implication form's late choice above). Its
    second half at CONSUMER positions (no refusal at an allocation hcons flags true) is no longer open for these
    texts: it is each text's outcome clause (THE OUTCOME above), derived from P8 and the engine's grant, not assumed.
@@ -199,7 +199,7 @@
    the P8 owner proves the correspondence.
    INTERIM, PENDING MEASUREMENT ON THE BATCH TEXTS (the unit owner's ruling through the kit owner, 2026-10-30, which
    REVERSES an earlier "A' needs no prefix" reading): the one result claiming this premise is unnecessary was
-   measured against an EARLIER VERSION OF THE TEXTS, not against our texts. The recursive-reader author's A' parse_items master 28657ce2d2a4 is
+   measured against an EARLIER VERSION OF THE TEXTS, not against our texts. The recursive-reader author's A' parse_items master is
    built on PRH_FnParse.v 94232293d483, which STILL HAS DW (9 uses) and has no pj_ncapR / pj_foR at all (ours: no DW;
    pj_foR :404, pj_ncapR :411); its rd_ledger_move already takes most and gt and carries prh_refused_peak on every arm, as ours
    (:188-197, :385). So that result says nothing about these texts (the B' walker measured the difference). The recursive-reader author
@@ -381,7 +381,7 @@ Definition tskip_ws_specX : Prop :=
 Definition LIVE_parse_string (Q : nat) : Z := Z.of_nat Q + 1 + cf_head.
 
 (* ---- THE RUN EVENTS OF THE READER (the position sweep in the post-implication form: the header). One home:
-   the slice walker's lib/A/Prog/S4_PsBase.v (blob ddfbf3f650fe, commit 322e57164236) proved
+   the slice walker's lib/A/Prog/S4_PsBase.v (blob ddfbf3f650fe) proved
    ps_evs, parse_string_room_evs_supply and ps_room_evs_mal / _fr over its entry record; they are taken here over the
    text's own binders, with the grant keyed on an outcome list ok instead of the harness's `cnt =? fail` (F1): on an
    arm of tparse_string_specX's / tgrow_specX's post, ok is the INSTANCE's outcomes on that arm; in the supply lemmas
@@ -1190,7 +1190,7 @@ Qed.
    use when n = cap); a moved array keeps them at its start (tfuzz_realloc_specX's firstn (min k n)). Writes: v's kids,
    keys and cap fields (v is the node, prhReader_at), the old blocks (freed by a successful realloc): FP.
    B's UBSan checks (v 8-aligned and non-null) hold under the premises. 
-   THE FORM ALREADY MEETS THE INVARIANT (the head-size census walker's arm-by-arm check on 9d33e3996f3a; the kit owner's three
+   THE FORM ALREADY MEETS THE INVARIANT (the head-size census walker's arm-by-arm check; the kit owner's three
    successive rulings on this text, 17:3xZ / 18:0xZ / 18:3xZ, superseded by it): each arm's list E and its advance are
    keyed on THE SAME THING, the arm's own machine outcome; nothing at entry asserts a model event, and cnt / fail
    appear in neither. RESIDUE, not this text's: if the MODEL emits grow's event where the MACHINE made none (a refusal

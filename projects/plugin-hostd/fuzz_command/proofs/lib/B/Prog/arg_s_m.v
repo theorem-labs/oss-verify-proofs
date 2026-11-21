@@ -3,8 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: arg_s's ASan+UBSan walk (plugin-hostd/fuzz_command, fuzz_command.asan-ubsan,
    entry 0x8a820) from B0 (+0x70, both arms of `bnez s3` meet) to the return, after
-   lib/A/Prog/sup_pin_accept_s2.v (a working branch 3cc8391594b: the inlined xstrdup's call and the two
-   checks and stores on the slot) and lib/B/Prog/socket_send.v (a working branch fb79536f218: xmalloc
+   lib/A/Prog/sup_pin_accept_s2.v (a working branch: the inlined xstrdup's call and the two
+   checks and stores on the slot) and lib/B/Prog/socket_send.v (a working branch: xmalloc
    through cl_callS, __asan_memcpy through aj_intrin_atS, the return through paj_ret_at), at B's addresses.
 
    The segment (lib/B/Prog/arg_s_aux.v lists the code):
@@ -26,6 +26,7 @@
      0x8a8c4 `blt a2,a1`: decide_cond2 (YP0e.v) on SLit (m + 1) and SLit m;
      0x8a8e0 `beqz a0` and 0x8a8f4 `beqz a1`: a0 is SOff 33 (8 + 8 m), atom 33 the slot with the fact
        [A_G_REC + 16, A_REC_SPILL] (as_factsB), so decide_cond2 decides a0 <> 0 and a0 >=u c + 8. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

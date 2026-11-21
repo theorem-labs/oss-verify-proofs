@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vdso_ok and THP-flag side-goal arms of rl_site_at). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import decidable.
@@ -278,7 +279,9 @@ Ltac rl_site_at c k :=
   cbv delta [ALLOC_STACK];
   lazymatch goal with
   | |- md_pure _ => mpure Hp
+  | |- vdso_ok _ => vdso_side HI
   | |- ms_vm _ = m_vmmaps _ => symmetry; apply with_vmmaps_vmmaps
+  | |- ms_thp _ = kb_thp (m_kernel _) => thp_side HI
   | |- magree _ _ => exact Hag
   | |- minv _ _ => exact HI
   | |- wtop _ => exact (minv_ceil _ _ HI)

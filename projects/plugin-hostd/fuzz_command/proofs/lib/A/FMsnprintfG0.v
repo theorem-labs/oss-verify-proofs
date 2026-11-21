@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: relocated from omx-clap-core/fuzz_manifest lib/A/FMsnprintfGvsni0.v (a working branch 3e35620c52e) to libreac/fuzz_boxreg.asan: module paths changed; 6 address numerals relocated (port_addr_check 5033540ba83b predict mode, symbol + offset); 0x140000 kept: a bound over vsni_rodata's regions (r_hi r <= 0x140000), not an address; the tool's label __sanitizer::useCounts+0xc3c0 is a coincidence (the A lane's decision for the same line in FMsnprintfGvsni.v); re-pointed Requires: FMupoison -> lib.A.Rt; FMH_Base -> lib.A.Rt.SnprintfFmh. *)
+(* Modified by Theorem Labs, 2026-10: relocated from omx-clap-core/fuzz_manifest lib/A/FMsnprintfGvsni0.v (a working branch) to libreac/fuzz_boxreg.asan: module paths changed; 6 address numerals relocated (port_addr_check 5033540ba83b predict mode, symbol + offset); 0x140000 kept: a bound over vsni_rodata's regions (r_hi r <= 0x140000), not an address; the tool's label __sanitizer::useCounts+0xc3c0 is a coincidence (the A lane's decision for the same line in FMsnprintfGvsni.v); re-pointed Requires: FMupoison -> lib.A.Rt; FMH_Base -> lib.A.Rt.SnprintfFmh. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: a new walk of fm.asan's __interceptor_vsnprintf 0x458a0; the entry-state tactics
@@ -9,6 +9,7 @@
    ra_xfer, hull_xfer, EOK_havoc_lt, ro_low, saved_range); it reaches no file that fixes fm's stack bands
    (FMsnprintfImg / Gk0 / Gt0 in place of I / GI / Gk / Gt, no FMH_Rt). FMsnprintfGvsni.v re-exports it. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/A/Rt/FMsnprintfGvsni0.v, with its module paths changed; 51 of its 79 lines of code are new or changed and 53 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfG0.v; relocated to plugin-hostd/fuzz_command.asan by the GXA address relocator (target fuzz_command.asan): module paths changed; 0 address numerals moved (address checker 0767e70e074a, predict mode, fm.asan -> fuzz_command.asan, symbol + offset; the relocator's table for this file); names: TfibSyms -> CmdBSyms. *)
 (* fm's snprintf glue, the window-free part of FMsnprintfG.v: what the snprintf walks read off their runs (reg_is,
    KEPT), the entry facts of atom 2 (sn_facts0), st_ok with the stack region only (st_ok_take1) and the stack's zero

@@ -4,7 +4,7 @@
    statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: made for reac-pw/fuzz_pin image A from
    proofs/libreac/fuzz_identity/lib/A/Rt/StrlenDef.v (astrlen_realizes, the premise and post shape) and
-   lib/Reusable/YG0d.v abcmp_realizes at origin/ossv/recipes 6ebe35ba632: the two wrappers reac_box_pin_parse
+   lib/Reusable/YG0d.v abcmp_realizes: the two wrappers reac_box_pin_parse
    calls for which no released ASan walk exists, strcspn and strncmp, are STATED here in that shape so that the
    P4b wrapper provers prove exactly these texts. The result specifications are pin's own plain ones:
    cspn_len is restated from proofs/reac-pw/fuzz_pin/lib/Prog/strcspn_c.v:12-16 (that file Requires the plain
@@ -45,6 +45,7 @@
               0x99cd8 = 0x5f45d8, the flags pointer 0x99040 = 0x133128;
      image B: REAL(strcspn) 0x9ae90 = 0x91970, REAL(strncmp) 0x9ae80 = 0x91b8c, the stack-guard GOT cell
               0x99df8 = 0x5f46d8, the flags pointer 0x99160 = 0x133228. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

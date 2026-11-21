@@ -1,5 +1,5 @@
 (* G4.ExDecl, IMAGE B: dseg_D4 (FMW_ex_decl_base.v), expected 0x8163c..0x81664 on fm.asan-ubsan
-   (fuzz_manifest.c:159-162). B twin of lib/A/FMW_ex_decl_d4.v (06d82004dc3); B's code (fm_b_expected_iface.out
+   (fuzz_manifest.c:159-162). B twin of lib/A/FMW_ex_decl_d4.v; B's code (fm_b_expected_iface.out
    lines 254-275, 431-433): strchr (ns, '>') answered r (a0): r = 0 is DCut -> 0x81900 s7 = 0, 0x81904 a0 = s7 ->
    EX_R with a0 = 0 = the scan's answer; else a1 = r, s8 = r - s8 = ns_len (s8 = text + ns): ns_len >= n (0x8164c) ->
    0x81680..0x8168c (a6 = ld F+0x78 = text, a7 = 6, t0 = ':', t1 = ld F+0x70 = the mask) -> EX_JUMP with a1 = text +

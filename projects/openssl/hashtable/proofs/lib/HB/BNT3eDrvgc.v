@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the state invariants take the launch record [LaunchX], and the argument area is read from it; the template and batch states are in the new launch layout and numbering). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -8,6 +9,7 @@ From OSSVerify.openssl.hashtable.images Require Import AsanUbsan.
 From OSSVerify.Proofs.openssl.hashtable.lib Require Import PropExec ShapeAlg AxSymExec3 AxSymExec3Sound AxSymRun3 AsanPlanCore AsanNodesIO AsanInit.
 From OSSVerify.Proofs.openssl.hashtable.lib Require Import CertRefl CxRel CxPlan CxPlanSound CxGlue CxBatch CxOfAps CxReblob.
 From OSSVerify.Proofs.openssl.hashtable.lib Require Import HBPlanImage HBAtable HBArg HBCheckG HBChain HBHop HBBatch HBFam2 HBParity HBSel BVT3Se BNT3eS0 BNT3eDgc BNT3eThmgc.
+From OSSVerify.Proofs.openssl.hashtable.lib Require HBReg.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Import AX2. Import AX2S. Import APC. Import CAP. Import CXS.
@@ -17,7 +19,7 @@ Abbreviation BASE := (BASE_ tt).
 Definition NB : nat := Eval vm_compute in nxt BASE.
 Definition lnums_ (_ : unit) : list cellq := [(17, 20, 0, 0); (16, 19, 1, 7); (21, 24, 0, 0); (20, 23, 1, 7); (25, 28, 0, 0); (24, 27, 1, 7); (37, 40, 0, 0); (36, 39, 1, 7); (41, 44, 0, 0); (40, 43, 1, 7); (49, 52, 0, 0); (48, 51, 1, 7); (53, 56, 0, 0); (52, 55, 1, 7); (81, 112, 0, 0); (80, 111, 1, 7); (177, 240, 0, 0); (176, 239, 1, 7); (369, 496, 0, 0); (368, 495, 1, 7); (1505, 2016, 0, 0); (1504, 2015, 1, 7); (2017, 3008, 0, 0); (2016, 3007, 1, 7); (3009, 4032, 0, 0); (3008, 4031, 1, 7); (6017, 8064, 0, 0); (6016, 8063, 1, 7)].
 Abbreviation lnums := (lnums_ tt).
-Definition DL_ (_ : unit) : list (nat * nat * Z * Z * Z) := [(235%nat, 236%nat, 4096, 17594333433856, 140600040943616)].
+Definition DL_ (_ : unit) : list (nat * nat * Z * Z * Z) := map (fun q : nat * nat * Z * Z * Z => let '(v1, v2, x, y, z) := q in (HBReg.V_F v1, HBReg.V_F v2, x, y, z)) [(235%nat, 236%nat, 4096, 17594333433856, 140600040943616)].
 Abbreviation DL := (DL_ tt).
 Lemma HNB : nxt BASE = NB. Proof. vm_compute. reflexivity. Qed.
 Lemma HNB0 : (NX0 <= NB)%nat. Proof. vm_compute. repeat constructor. Qed.
@@ -44,19 +46,20 @@ Section D.
   Variables argv envp : list (list byte).
   Variable fs : Fs.Fs.
   Variables uid hw : word.
+  Context {L : LaunchX}.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
   Let c := content_of argv fs.
-  #[local] Notation SV := (SINVm HAPH sp rdraw brk0 argv envp uid hw c).
-  #[local] Notation argH := (argH0 HAPH sp rdraw argv envp uid hw).
+  #[local] Notation SV := (SINVm HAPH sp rdraw brk0 argv envp uid hw L c).
+  #[local] Notation argH := (argH0 sp rdraw argv envp (lx_kb L) (lx_execfn L)).
   Hypothesis H_FE : fx_hole SV argH (bv_unsigned sp) fs TFE TFEE.
   Theorem drive : forall (PHIb : env -> Prop) E R FULL model,
     cs_ok HASEGS HAT AsanInit.LIMIT (SVG PHIb SV) argH (bv_unsigned sp) fs E BASE R FULL model -> 129 <= nb_of E <= 224 ->
     crz HASEGS (cfg_of HASEGS R (pc BASE) FULL model) (TGT false (calls_of E) (cnt_of E) (m_fs model)).
   Proof.
-    exact (grp_drive sp rdraw argv envp uid hw fs SV (SINVm_agree HAPH sp rdraw brk0 argv envp uid hw c) 1130%nat 1131%nat 1132%nat 1133%nat 1134%nat 1135%nat 1136%nat BASE NT3e_cs NB BNT3eDgc.N0
+    exact (grp_drive sp rdraw argv envp fs SV (SINVm_agree HAPH sp rdraw brk0 argv envp uid hw L c) 1130%nat 1131%nat 1132%nat 1133%nat 1134%nat 1135%nat 1136%nat BASE NT3e_cs NB BNT3eDgc.N0
              HNB HNB0 NB_spw Hfresh Hsub Hbump Hext Hvars HKN a0s leaves lnums shapeB sC2s sXs false Hshapes DL 129 224
              (BNT3eThmgc.grp_sound sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit H_FE) CHK).
   Qed.
@@ -64,7 +67,7 @@ Section D.
     cs_ok HASEGS HAT AsanInit.LIMIT (SVG PHIb SV) argH (bv_unsigned sp) fs E BASE R FULL model -> 289 <= nb_of E <= 352 ->
     crz HASEGS (cfg_of HASEGS R (pc BASE) FULL model) (TGT false (calls_of E) (cnt_of E) (m_fs model)).
   Proof.
-    exact (grp_drive sp rdraw argv envp uid hw fs SV (SINVm_agree HAPH sp rdraw brk0 argv envp uid hw c) 1130%nat 1131%nat 1132%nat 1133%nat 1134%nat 1135%nat 1136%nat BASE NT3e_cs NB BNT3eDgc.N0
+    exact (grp_drive sp rdraw argv envp fs SV (SINVm_agree HAPH sp rdraw brk0 argv envp uid hw L c) 1130%nat 1131%nat 1132%nat 1133%nat 1134%nat 1135%nat 1136%nat BASE NT3e_cs NB BNT3eDgc.N0
              HNB HNB0 NB_spw Hfresh Hsub Hbump Hext Hvars HKN a0s leaves lnums shapeB sC2s sXs false Hshapes DL 289 352
              (BNT3eThmgc.grp_sound sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit H_FE) CHK1).
   Qed.
@@ -72,7 +75,7 @@ Section D.
     cs_ok HASEGS HAT AsanInit.LIMIT (SVG PHIb SV) argH (bv_unsigned sp) fs E BASE R FULL model -> 385 <= nb_of E <= 448 ->
     crz HASEGS (cfg_of HASEGS R (pc BASE) FULL model) (TGT false (calls_of E) (cnt_of E) (m_fs model)).
   Proof.
-    exact (grp_drive sp rdraw argv envp uid hw fs SV (SINVm_agree HAPH sp rdraw brk0 argv envp uid hw c) 1130%nat 1131%nat 1132%nat 1133%nat 1134%nat 1135%nat 1136%nat BASE NT3e_cs NB BNT3eDgc.N0
+    exact (grp_drive sp rdraw argv envp fs SV (SINVm_agree HAPH sp rdraw brk0 argv envp uid hw L c) 1130%nat 1131%nat 1132%nat 1133%nat 1134%nat 1135%nat 1136%nat BASE NT3e_cs NB BNT3eDgc.N0
              HNB HNB0 NB_spw Hfresh Hsub Hbump Hext Hvars HKN a0s leaves lnums shapeB sC2s sXs false Hshapes DL 385 448
              (BNT3eThmgc.grp_sound sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit H_FE) CHK2).
   Qed.
@@ -80,7 +83,7 @@ Section D.
     cs_ok HASEGS HAT AsanInit.LIMIT (SVG PHIb SV) argH (bv_unsigned sp) fs E BASE R FULL model -> 641 <= nb_of E <= 896 ->
     crz HASEGS (cfg_of HASEGS R (pc BASE) FULL model) (TGT false (calls_of E) (cnt_of E) (m_fs model)).
   Proof.
-    exact (grp_drive sp rdraw argv envp uid hw fs SV (SINVm_agree HAPH sp rdraw brk0 argv envp uid hw c) 1130%nat 1131%nat 1132%nat 1133%nat 1134%nat 1135%nat 1136%nat BASE NT3e_cs NB BNT3eDgc.N0
+    exact (grp_drive sp rdraw argv envp fs SV (SINVm_agree HAPH sp rdraw brk0 argv envp uid hw L c) 1130%nat 1131%nat 1132%nat 1133%nat 1134%nat 1135%nat 1136%nat BASE NT3e_cs NB BNT3eDgc.N0
              HNB HNB0 NB_spw Hfresh Hsub Hbump Hext Hvars HKN a0s leaves lnums shapeB sC2s sXs false Hshapes DL 641 896
              (BNT3eThmgc.grp_sound sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit H_FE) CHK3).
   Qed.
@@ -88,7 +91,7 @@ Section D.
     cs_ok HASEGS HAT AsanInit.LIMIT (SVG PHIb SV) argH (bv_unsigned sp) fs E BASE R FULL model -> 1409 <= nb_of E <= 1920 ->
     crz HASEGS (cfg_of HASEGS R (pc BASE) FULL model) (TGT false (calls_of E) (cnt_of E) (m_fs model)).
   Proof.
-    exact (grp_drive sp rdraw argv envp uid hw fs SV (SINVm_agree HAPH sp rdraw brk0 argv envp uid hw c) 1130%nat 1131%nat 1132%nat 1133%nat 1134%nat 1135%nat 1136%nat BASE NT3e_cs NB BNT3eDgc.N0
+    exact (grp_drive sp rdraw argv envp fs SV (SINVm_agree HAPH sp rdraw brk0 argv envp uid hw L c) 1130%nat 1131%nat 1132%nat 1133%nat 1134%nat 1135%nat 1136%nat BASE NT3e_cs NB BNT3eDgc.N0
              HNB HNB0 NB_spw Hfresh Hsub Hbump Hext Hvars HKN a0s leaves lnums shapeB sC2s sXs false Hshapes DL 1409 1920
              (BNT3eThmgc.grp_sound sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit H_FE) CHK4).
   Qed.
@@ -96,7 +99,7 @@ Section D.
     cs_ok HASEGS HAT AsanInit.LIMIT (SVG PHIb SV) argH (bv_unsigned sp) fs E BASE R FULL model -> 2945 <= nb_of E <= 3968 ->
     crz HASEGS (cfg_of HASEGS R (pc BASE) FULL model) (TGT false (calls_of E) (cnt_of E) (m_fs model)).
   Proof.
-    exact (grp_drive sp rdraw argv envp uid hw fs SV (SINVm_agree HAPH sp rdraw brk0 argv envp uid hw c) 1130%nat 1131%nat 1132%nat 1133%nat 1134%nat 1135%nat 1136%nat BASE NT3e_cs NB BNT3eDgc.N0
+    exact (grp_drive sp rdraw argv envp fs SV (SINVm_agree HAPH sp rdraw brk0 argv envp uid hw L c) 1130%nat 1131%nat 1132%nat 1133%nat 1134%nat 1135%nat 1136%nat BASE NT3e_cs NB BNT3eDgc.N0
              HNB HNB0 NB_spw Hfresh Hsub Hbump Hext Hvars HKN a0s leaves lnums shapeB sC2s sXs false Hshapes DL 2945 3968
              (BNT3eThmgc.grp_sound sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit H_FE) CHK5).
   Qed.
@@ -104,7 +107,7 @@ Section D.
     cs_ok HASEGS HAT AsanInit.LIMIT (SVG PHIb SV) argH (bv_unsigned sp) fs E BASE R FULL model -> 12033 <= nb_of E <= 32256 ->
     crz HASEGS (cfg_of HASEGS R (pc BASE) FULL model) (TGT false (calls_of E) (cnt_of E) (m_fs model)).
   Proof.
-    exact (grp_drive sp rdraw argv envp uid hw fs SV (SINVm_agree HAPH sp rdraw brk0 argv envp uid hw c) 1130%nat 1131%nat 1132%nat 1133%nat 1134%nat 1135%nat 1136%nat BASE NT3e_cs NB BNT3eDgc.N0
+    exact (grp_drive sp rdraw argv envp fs SV (SINVm_agree HAPH sp rdraw brk0 argv envp uid hw L c) 1130%nat 1131%nat 1132%nat 1133%nat 1134%nat 1135%nat 1136%nat BASE NT3e_cs NB BNT3eDgc.N0
              HNB HNB0 NB_spw Hfresh Hsub Hbump Hext Hvars HKN a0s leaves lnums shapeB sC2s sXs false Hshapes DL 12033 32256
              (BNT3eThmgc.grp_sound sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit H_FE) CHK6).
   Qed.
@@ -112,7 +115,7 @@ Section D.
     cs_ok HASEGS HAT AsanInit.LIMIT (SVG PHIb SV) argH (bv_unsigned sp) fs E BASE R FULL model -> 48129 <= nb_of E <= 64512 ->
     crz HASEGS (cfg_of HASEGS R (pc BASE) FULL model) (TGT false (calls_of E) (cnt_of E) (m_fs model)).
   Proof.
-    exact (grp_drive sp rdraw argv envp uid hw fs SV (SINVm_agree HAPH sp rdraw brk0 argv envp uid hw c) 1130%nat 1131%nat 1132%nat 1133%nat 1134%nat 1135%nat 1136%nat BASE NT3e_cs NB BNT3eDgc.N0
+    exact (grp_drive sp rdraw argv envp fs SV (SINVm_agree HAPH sp rdraw brk0 argv envp uid hw L c) 1130%nat 1131%nat 1132%nat 1133%nat 1134%nat 1135%nat 1136%nat BASE NT3e_cs NB BNT3eDgc.N0
              HNB HNB0 NB_spw Hfresh Hsub Hbump Hext Hvars HKN a0s leaves lnums shapeB sC2s sXs false Hshapes DL 48129 64512
              (BNT3eThmgc.grp_sound sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit H_FE) CHK7).
   Qed.

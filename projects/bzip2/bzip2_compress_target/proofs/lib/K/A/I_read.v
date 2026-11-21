@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reservation the system-call return clears). *)
 (* [comment removed for export] *)
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -31,7 +32,7 @@ Import ListNotations.
 Open Scope Z_scope.
 
 Lemma nretA_MSsvc_w : forall R F pc x8 fc rv m ro r ws,
-  nretA (MSsvc R F pc x8 fc rv m ro) (mkEffect r ws []) = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4)%bv fc rv
+  nretA (MSsvc R F pc x8 fc rv m ro) (mkEffect r ws []) = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4)%bv fc None
     (apply_writes (apply_zeros (apply_unmaps m []) []) ws) ro.
 Proof. reflexivity. Qed.
 
@@ -314,7 +315,7 @@ Import ListNotations.
 Open Scope Z_scope.
 
 Lemma nretA_MSsvc_w : forall R F pc x8 fc rv m ro r ws,
-  nretA (MSsvc R F pc x8 fc rv m ro) (mkEffect r ws []) = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4)%bv fc rv
+  nretA (MSsvc R F pc x8 fc rv m ro) (mkEffect r ws []) = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4)%bv fc None
     (apply_writes (apply_zeros (apply_unmaps m []) []) ws) ro.
 Proof. reflexivity. Qed.
 

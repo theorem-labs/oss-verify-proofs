@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the launch's channel reader. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -40,7 +41,11 @@ Section MainPre.
   Definition AMAIN_COST : ltac2:(zQ "10!hf$0") := ltac2:(zQ "61!rb!s1!hg4!hgc!hh4!hl9&@2$1@2$3?1H@2$0+2+ha@2$2?1H@2$0+2+ha@2$1@2$4+c~0@2$1~0@2$4+4@2$5?1H@2$0+2+ha").
 
   (* [comment removed for export] *)
-  Definition astr_at : ltac2:(zQ "50!h9!jf!hne!ho6!hf>3mem>0@1$1@1$0#k0@1$3@1$1@1$0#8>3sp0@1$1@1$0#k0>1p$4>1s@1$2@1$1@1$0#8P") := ltac2:(zQ "h70!h9!jf!hne!hq4!hqb!hr5!ho6!s1!hrf!hs7!ig8!ik9!ilc!im1!ima!in1!in9!io0!io6!ipf!hf!ir9!qd\3mem>0@1$1@1$0#k0@1$6@1$1@1$0#8\3sp0@1$1@1$0#k0\1p$h4\1s@1$2@1$1@1$0#8@2$3@2$c@2$h6@1$0#k0^3^2@2$3@2$c@2$7@2$7^2@1$d@2$5@1$1@1$0#8^1+h1+ogggggggggg0@2$3@1$h2@3$h5@1$1@1$0#8@2$4@1$0#8Z^1@2$3@3$9@1$6@1$2@1$1@1$0#8@4$a$b^4@2$4@1$0#k0^2@2$h3@2$5@1$1@1$0#8^1N1@2$8@1$2@1$1@1$0#8@3$e@1$1@1$0#8^1@3$f@1$1@1$0#8@2$4@1$0#8Z@1$h0@1$1@1$0#8@2$h1@1$2@1$1@1$0#8\2t8@1$2@1$1@1$0#8@3$9@1$6@1$2@1$1@1$0#8@4$a$b^5@2$4@1$0#k0@2$7^3@1$d@2$5@1$1@1$0#8^2N8@2$8@1$2@1$1@1$0#8^1").
+  (* LPS 727298f3: the strings sit at the TOP of the entry block, so above the last argv NUL there are at least the
+     exec name's NUL and the eight-byte top slot (StackLayout.string_base_addr), and the block ends at or below
+     0x800000000000 (Run.valid_stack_top_va): the room is 10 bytes, where the old block's sixteen AT_RANDOM bytes
+     above the strings gave 17 (the one literal changed in the encoded body below). *)
+  Definition astr_at : ltac2:(zQ "50!h9!jf!hne!ho6!hf>3mem>0@1$1@1$0#k0@1$3@1$1@1$0#8>3sp0@1$1@1$0#k0>1p$4>1s@1$2@1$1@1$0#8P") := ltac2:(zQ "h70!h9!jf!hne!hq4!hqb!hr5!ho6!s1!hrf!hs7!ig8!ik9!ilc!im1!ima!in1!in9!io0!io6!ipf!hf!ir9!qd\3mem>0@1$1@1$0#k0@1$6@1$1@1$0#8\3sp0@1$1@1$0#k0\1p$h4\1s@1$2@1$1@1$0#8@2$3@2$c@2$h6@1$0#k0^3^2@2$3@2$c@2$7@2$7^2@1$d@2$5@1$1@1$0#8^1+a+ogggggggggg0@2$3@1$h2@3$h5@1$1@1$0#8@2$4@1$0#8Z^1@2$3@3$9@1$6@1$2@1$1@1$0#8@4$a$b^4@2$4@1$0#k0^2@2$h3@2$5@1$1@1$0#8^1N1@2$8@1$2@1$1@1$0#8@3$e@1$1@1$0#8^1@3$f@1$1@1$0#8@2$4@1$0#8Z@1$h0@1$1@1$0#8@2$h1@1$2@1$1@1$0#8\2t8@1$2@1$1@1$0#8@3$9@1$6@1$2@1$1@1$0#8@4$a$b^5@2$4@1$0#k0@2$7^3@1$d@2$5@1$1@1$0#8^2N8@2$8@1$2@1$1@1$0#8^1").
 
   Record AMpre (sp0 : word) (argv : list (list byte)) (s0 : as_St H) (msF : machine_state) (mo : Model)
                 (regs : bvmap 5 word) (mem : word -> option byte) (B tid can : Z) : Prop := AMPRE {
@@ -83,7 +88,9 @@ Section MainPre.
     am_al   : AMAIN_COST <= as_AL H s0;
     am_tr   : adrv_traces H;
     (* [comment removed for export] *)
-    am_fds : m_fds mo = [(Z_to_bv 64 0, FdChannel (Z_to_bv 64 0)); (Z_to_bv 64 1, FdChannel (Z_to_bv 64 1)); (Z_to_bv 64 2, FdChannel (Z_to_bv 64 2))] }.
+    am_fds : m_fds mo = [(Z_to_bv 64 0, FdChannel (Z_to_bv 64 0)); (Z_to_bv 64 1, FdChannel (Z_to_bv 64 1)); (Z_to_bv 64 2, FdChannel (Z_to_bv 64 2))];
+    (* LPS 727298f3: the launch's channel reader at main (cs_ok's co_rdr); the writes need it *)
+    am_rdr : m_channel_reader mo = true }.
 
   (* [comment removed for export] *)
   Definition as_main_realizes_stmt : ltac2:(zQ "00P") := ltac2:(zQ "h20!h9!jf!hf!hne!iud!ho6!ji0!jm3!jq0!jq9!jr7!ju6!kia!kj3!ko2!ks2!lge!ll1>3sp0@1$1@1$0#k0>4argv@1$3@1$3@1$1@1$0#8>2s0@1$d?1H>3msF$7>2mo$a>4regs@2$b@1$0#5@1$1@1$0#k0>3mem>0@1$1@1$0#k0@1$5@1$1@1$0#8>1B$2>3tid$2>3can$2>0@1$9^9>0@1$6@1$4^7>0@a$e^c^b^a^9^8^7^6^5^4^3@4$h0$c$f@2$8^a^9@2$h1^c@1$4^9").

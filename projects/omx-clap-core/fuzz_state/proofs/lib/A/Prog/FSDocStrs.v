@@ -46,9 +46,9 @@
    constants are plain by computation ([fd_consts_plain]) and the leaf by the encoder's output alphabet
    ([b64_enc_alphabet], by induction over every [bs], not from an example).
 
-   RELEASED RESULTS CONSUMED (blob shas; each file is byte-identical at c8557374ad2 (origin/ossv/recipes at the cut of
-   a working branch, an ancestor of this branch), at origin/ossv/recipes a8831f7c5c2 and at release/pau-projects-recipes
-   b6a0088adc):
+   RELEASED RESULTS CONSUMED (blob shas; each file is byte-identical (origin/ossv/recipes at the cut of
+   a working branch, an ancestor of this branch), and):
+   
      lib/Spec/PjTree.v                     180b25cdb3  jv
      lib/Prog/WriterSpec.v                 95b32834cf  special, b64c, b64_enc, bytes_ok
      lib/Prog/WriterSpecFacts.v            73cdcfb59a  list3_ind, bytes_ok_cons
@@ -60,7 +60,7 @@
 
    NOT RELEASED, IMPORTED FOR ITS PREDICATES: lib/A/FSH_Gen.v:144-156 (plain_byte, plain_bytes, jv_plain; a Theorem Labs lane's
    text, moved there by the S0 base so the port has one copy). [plain_not_special] is restated here over FSH_Gen's
-   [plain_byte] (same proof as lib/A/FSW_writer_model.v:19-26 of a working branch f995a01189d).
+   [plain_byte] (same proof as lib/A/FSW_writer_model.v:19-26 of a working branch).
 
    STATEMENTS (no Admitted, no Axiom, no Parameter, no Section hypothesis):
      FS_DOC_STRS             for every [bs] with [bytes_ok bs]:

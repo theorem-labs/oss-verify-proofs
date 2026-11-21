@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made from the TFIB_T definition of proofs/cgif/cgif_file_fuzzer/lib/YZ03.v (cgif_file's ASan+UBSan image) for fuzz_grant's ASan+UBSan image and grant_shape, as fuzz_decode's lib/A/DecodeTFIB.v states its TFIB_TB; module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: moved from lib/A/GrantTFIBB.v (a working branch b01a93fbf7f) to lib/B, so that lib/A stays grant image A's accepted tree; module path lib.A -> lib.B. *)
+(* Modified by Theorem Labs, 2026-10: moved from lib/A/GrantTFIBB.v (a working branch) to lib/B, so that lib/A stays grant image A's accepted tree; module path lib.A -> lib.B. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed TFIB_TB). *)
 (* What the ASan+UBSan side of fuzz_grant's two asan_ubsan statements proves: from every valid start, the ASan+UBSan
    build realizes the same trace set SPECX as the plain build (lib/Reusable/YK18.v srealizes, no cut). It is
    GrantTFIB.v's TFIB_T for the image AsanUbsan in place of Asan. *)
@@ -20,6 +21,8 @@ Definition TFIB_TB : Prop :=
 forall sp brk mbase rnd inp,
 valid_sp sp -> valid_brk grantsegsB0 brk -> valid_mmap_base mbase ->
 entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+(* LPS 727298f3: [Run.valid_entry]'s fifth conjunct, which the ASan+UBSan start-up reads; the statements give it *)
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 srealizes grantsegsB0
 (init_config grantsegsB0 AsanUbsan.M.init_pc AsanUbsan.M.phdrs sp brk mbase rnd target_alloc_limit inp)
 (SPECX (LS:=grant_shape) inp).

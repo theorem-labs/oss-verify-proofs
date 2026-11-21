@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/openssl/bignum/lib/BnP/BnKit2.v, with its module paths and module names changed; 1014 of its 1028 lines of code are new or changed and 33 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/tx_put.v, with its module paths and module names changed; 3018 of its 3112 lines of code are new or changed and 934 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW4e1.v, with its module paths and module names changed; 3670 of its 3875 lines of code are new or changed and 2907 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed w4_lift); internal commit ids in comments replaced by public commits or removed. *)
 (* lib/B/ACtlW4a.v -- piece W4a (frame turn, part 1: S_F1 .. S_F6) of fuzz_ctrl image B's (asan-ubsan) walk of
    LLVMFuzzerTestOneInput in the released cgif_file_fuzzer form.  One writer: a Theorem Labs lane's glue lane.
    rule 24: no function proved (stage glue of a walk; drafting).
@@ -37,7 +38,7 @@
      HPCM: B's malloc wrapper entry by the core's catalogue name (the sibling W2a's text).
    - AMEMCPY : __asan_memcpy @0x81f74, the core's rule `aintrin_realizes segs B OCpy <pc>` (donor YG0d.v:317-335) at the
      catalogue NAME Reusable.YB1w.tfib_A_asan_memcpy (porter 23:00Z), through Reusable.YCbq.aj_intrin_at (YCbq.v:1953).
-   - CITED, not Section hypotheses (the 15:40Z swap of RTPOST-SHARED-B.txt (a working note, not in this delivery; the swap written on a working branch 3131914eb3ca): lib/B/ProgWorld.v
+   - CITED, not Section hypotheses (the 15:40Z swap of RTPOST-SHARED-B.txt (a working note, not in this delivery; the swap written on a working branch): lib/B/ProgWorld.v
      and lib/B/ProgBridge.v are in the tree):
      B.ProgWorld.ctl_post_memcpy (ProgWorld.v:765): AMEMCPY's world-form post as visible-address facts; WR = the
        written range plus the callee window [sp - ESTACK, sp).  Used at 0x81f74 (seg_F2 step 1).
@@ -45,17 +46,17 @@
        kept at a visible address of a kept class (B.ProgWorld.kept_class; the local notation kept_class is its text).
        Used at 0x81f4c (seg_F1 step 3): E = the new block [res, res + req_size (flen cx j)), [slo, shi) =
        [A - ASTACK, A); and at the reac_ctrl_parse calls.
-     B.ProgBridge.img_vis_W (ProgBridge.v:121): the image range [IMG_LO, IMG_HI) is visible in every world.  Used for
+     B.ProgBridge.img_vis_W (ProgBridge.v:122): the image range [IMG_LO, IMG_HI) is visible in every world.  Used for
        PARSE's image premise and the KIND_NAME bytes.
-     B.ProgBridge.fevt_of_evtF (ProgBridge.v:30): the lift w4_lift.
+     B.ProgBridge.fevt_of_evtF (ProgBridge.v:31): the lift w4_lift.
      The last two are the former Section texts UP TO CONVERSION: Reusable.YB1v.tfibsegs = B.Img0.rsegs
      (B.ProgBridge.tfibsegs_rsegs, reflexivity); range_visible and B.Prog.ImgBounds.IMG_LO / IMG_HI unfold to the
      former written-out bounds 0x10000 / 0x5fe000 (Reusable.YImgTop.IMG_LO / IMG_TOP).
    - LAWS / segs_low : the core's AR laws for B and the image's place below kLowMemEnd, the sibling
-     lib/B/ACtlW4e1.v:236-237 text token for token.  Used by the stage kit only (heap / frame visibility, the journal
+     lib/B/ACtlW4e1.v:237-238 text token for token.  Used by the stage kit only (heap / frame visibility, the journal
      step YCbq.ajournal_exec).  Obligation: the core's api_of_core (aa_laws) and B's segment table; owner the core
      (a Theorem Labs lane).
-   - ROUTE (C) (a working branch shell 78699c46fe7): the cut's runtime premise is B.ACtlRtC.ctl_rt_C B ly3 S3 mem3; the stages
+   - ROUTE (C) (a working branch shell): the cut's runtime premise is B.ACtlRtC.ctl_rt_C B ly3 S3 mem3; the stages
      never read it (they consume no shadow_rw) and SUPPLY it at each successor cut by w4a_ctlrt, which cites the proved
      B.ProgWorldCtlRtC.ctl_rt_C_of_AR (CtrlTSyms + AR_laws + AR + arodata_okP; no stage-level runtime hypothesis).
    STAGE KIT (local lemmas w4a_*, after the Section hypotheses): the lift w4_lift (cfg_at -> the `_F` run's MS state,
@@ -74,7 +75,7 @@
    `_F` HYPOTHESES (a Theorem Labs lane; module ..lib.B.Prog.Seg.<File>F; RNG-first; split at EVERY call, a Theorem Labs lane 23:15Z).
    PUBLISHED texts are cited by Requiring their module, qualified (a Theorem Labs lane 23:38Z / 23:4xZ); statuses as of
    bF-statements/ at 00:25Z; all of W4a on a Theorem Labs lane,
-   a working branch a1dafb91d7d (F4F on a Theorem Labs lane):
+   a working branch (F4F on a Theorem Labs lane):
    - F1F: f1_body_F (F1.v:149), f1_tail2_F (:207), f1_tail1_F (:240) (sub-runs, no call) and f1_evt_F (:294, 0x81ec4 ->
           the malloc wrapper entry 0x534b8, ra = 0x81f50 = the cut, so no post) (a Theorem Labs lane; + the `_of_F` compares)
                                                                                                PUBLISHED, proved
@@ -85,7 +86,7 @@
                                                                                                PUBLISHED, proved
    - F3F.f3_head_F (a Theorem Labs lane; F3.v:26-75, 0x81f78 -> 0x81f94 / 0x82020; + f3_head_of_F)   PUBLISHED, proved (build
           in progress); with F2F.f2_st_F and F2F.f2_pcall_pre_F at the two parse blocks
-   - F4F.seg_F4_eq88_F / F4F.seg_F4_ne88_F (a Theorem Labs lane, a working branch 007c7fd6c63; seg_F4 :183 cut at the branch
+   - F4F.seg_F4_eq88_F / F4F.seg_F4_ne88_F (a Theorem Labs lane, a working branch; seg_F4 :183 cut at the branch
           0x81fe8 on record byte 12 = 0x88; no call; + the `_run` compares)                   PUBLISHED, proved
    - F5F.c_pre_F (F5.v:855; c_evt is the parse-call block 0x8214c -> 0x8215c: four instructions to the call 0x82158;
           ra = 0x8215c = the cut, so no post; no rng premise) (a Theorem Labs lane)                       PUBLISHED, proved
@@ -96,7 +97,7 @@
    - F6F: f6_loop_F (F6.v:210, the 32-turn byte sum, a run-level loop) and f6_run_evt_F (:301, 0x82098 -> 0x8214c;
           neither calls), then F5F.c_pre_F (a Theorem Labs lane)                                PUBLISHED, proved (build running)
    PROVENANCE: cut table rows 41-46; plan 2.3 rows 41-46, 2.5 (row 0x81f4c), 3 (frame loop), 6.2 rows S_F1 / S_F3 /
-   S_F4 / S_F6, F.4.1 rows 9-18; runs at 3803efccea0 (F1-F6); objdump L84725-L84900.
+   S_F4 / S_F6, F.4.1 rows 9-18; runs (F1-F6); objdump L84725-L84900.
 
    ABORT-SINK / TRAP OBLIGATIONS ON W4a (all branches into 0x82fa4 / 0x82fa0 in 0x81ec4-0x82158, one awk over the
    listing): 0x81ed4 / 0x81f04 / 0x81f3c (T10-T12, -> 0x82fa0), 0x81f5c (`j 0x82fa4`), 0x81f84 / 0x81f90 (T13-T14),
@@ -237,7 +238,7 @@ Hypothesis ctl_kind_name_not_owned : forall a : Z,
   ~ Exists (Reusable.YG0n.in_zr a) (Reusable.YG0f.as_owned_static B) /\
   ~ (Reusable.YG0f.as_errno B <= a < Reusable.YG0f.as_errno B + 4).
 
-(* The runtime fact at a cut, ROUTE (C) (a Theorem Labs lane 09:20Z / 11:03Z; a working branch shell a Theorem Labs lane 78699c46fe7): a stage supplies
+(* The runtime fact at a cut, ROUTE (C) (a Theorem Labs lane 09:20Z / 11:03Z; a working branch shell a Theorem Labs lane): a stage supplies
    B.ACtlRtC.ctl_rt_C at a successor cut by B.ProgWorldCtlRtC.ctl_rt_C_of_AR (w4a_ctlrt) and carries these lines of the
    shared lib/B/RTPOST-SHARED-B.txt (a working note, not in this delivery) token for token, MINUS its two route-(A) lines (the vis0-shadow and owned-ro
    premises), which route (C) deletes (a Theorem Labs lane's w4C brief item 3 (a working note, not in this delivery)).  arodata_okP at the state comes from ctl_base's
@@ -277,7 +278,7 @@ Hypothesis segs_low : forall a, Reusable.YG0d.in_img segs a -> 0 <= a < Reusable
 
 (* ---------------------------------------------------------------------------------------------------------
    PARSE: the cut callee reac_ctrl_parse in the cgif caller-journal form, cited as a Theorem Labs lane's IMAGE-B statement of
-   record: lib/B/Prog/C_reac_ctrl_parse.v (a working branch ea59dbb03aa, taken by path; blob
+   record: lib/B/Prog/C_reac_ctrl_parse.v (a working branch, taken by path; blob
    16774c751f5), `treac_ctrl_parse_spec (SK := SK) SEGS B RLO RHI` at SEGS := this walk's segs.  Image B's own entry
    0x83e04 and window 8800 (lib/B/Prog/reac_ctrl_parse_c.v:10, :13).  ONE named Section hypothesis, used by seg_F2
    (len = 0 arm), seg_F3, seg_F5, seg_F6 through w4a_parse.  OBLIGATION: a Theorem Labs lane proves it for image B
@@ -335,8 +336,8 @@ Qed.
 
 
 (* The five record-shadow stores S(fr) + 22 .. 26 (0x82020-0x82034 and 0x81f94-0x81fa8) are a Theorem Labs lane's
-   B.Prog.Seg.F2F.f2_st_noinv_F (lib/B/Prog/Seg/F2F.v, a working branch 11d4060c0f0, commit
-   ade8bed0efa): f2_st_F without the `mem_inv rsegs m` premise and post conjunct, which the cgif-form cut does not
+   B.Prog.Seg.F2F.f2_st_noinv_F (lib/B/Prog/Seg/F2F.v, a working branch):
+   f2_st_F without the `mem_inv rsegs m` premise and post conjunct, which the cgif-form cut does not
    carry (ACtlCut.v section 4).  Written by a Theorem Labs lane at this lane's request (via a Theorem Labs lane, 05:4xZ-06:1xZ); cited by
    name, never copied.  Its one memory premise is `rw_cells rsegs m (bv_unsigned s3 + 22) [CB 5 junk]`, which the
    stage builds from the owned frame's shadow by w4a_rw5 below. *)
@@ -496,7 +497,14 @@ Lemma w4_lift : forall (W : Reusable.YA0n.world segs) (pc : Z) (regs : bvmap 5 w
 Proof using tfibsegs_rsegs Hwx.
   intros W pc regs mem md P Q HE HK.
   rewrite B.ProgBridge.cfg_at_MS.
-  eapply Reusable.YA0nR.SRr_xregs_eqv; [| apply Lib.Regs6ss.xregs_eqv_sym, Lib.Regs6ss.mkR_of_eqv].
+  (* [YA0nR.SRr_xregs_eqv] takes the segments' [Regs6ss.NoVdso] (no vDSO image) as an instance at 727298f3;
+     this Section's [segs] is the image's own list ([tfibsegs_rsegs]), which has none.  The instance and
+     the registers are given by name, as B/ACtlW1.v's w1 lift names the registers, so the two goals come
+     in a fixed order. *)
+  assert (Hnv : Lib.Regs6ss.NoVdso segs)
+    by (unfold Lib.Regs6ss.NoVdso; first [rewrite tfibsegs_rsegs | rewrite <- tfibsegs_rsegs]; reflexivity).
+  apply (Reusable.YA0nR.SRr_xregs_eqv segs (Hnv := Hnv) W (Lib.Regs6ss.mkR_of regs) regs).
+  2: exact (Lib.Regs6ss.xregs_eqv_sym _ _ (Lib.Regs6ss.mkR_of_eqv regs)).
   replace (lib.Reusable.YK11.seg_rom segs) with (lib.Reusable.YK11.seg_rom B.Img0.rsegs)
     by (rewrite tfibsegs_rsegs; reflexivity).
   apply (Reusable.YA0nR.SRr_fevt_hid segs Hwx W _ md (B.ProgBridge.RNG_W (Reusable.YA0n.w_H W)) P Q).
@@ -4356,8 +4364,8 @@ Print Assumptions seg_F6.
      seg_F4 (B81fbc_at) : forall POST j, ctl_from POST (ix_cut C_B82098_at [j]) -> ctl_from POST (ix_cut C_B81fbc_at [j])
      seg_F5 (B82048_at) : forall POST j, ctl_from POST (ix_cut C_B8215c_at [j]) -> ctl_from POST (ix_cut C_B82048_at [j])
      seg_F6 (B82098_at) : forall POST j, ctl_from POST (ix_cut C_B8215c_at [j]) -> ctl_from POST (ix_cut C_B82098_at [j])
-   ([j] abbreviates [Z.of_nat j].)  Each seg_* is named and stated exactly as ACtl.v's Hypothesis of the same name
-   (576147dfd46), generic in SK and FP.
+   ([j] abbreviates [Z.of_nat j].)  Each seg_* is named and stated exactly as ACtl.v's Hypothesis of the same name,
+   generic in SK and FP.
    Sink / trap obligations (branch -> target: refuting lemma, step):
      0x81ed4 (T10) -> 0x82fa0 : seg_F1 step 1     0x81f04 (T11) -> 0x82fa0 : seg_F1 step 1
      0x81f3c (T12) -> 0x82fa0 : seg_F1 step 1     0x81f5c (j)   -> 0x82fa4 : seg_F2 step 1

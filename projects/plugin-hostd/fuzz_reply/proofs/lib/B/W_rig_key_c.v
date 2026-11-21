@@ -2,17 +2,18 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: IMAGE-B segment KEY of fuzz_reply's relay_instance_gone: the cut after the end arm
    (the representation's bytes kept through gesture_end, free and the move; GLIVE, GIN / GOUT's memory premises at the
-   exit).  The footprint lemmas are BRigTop's lib/B/W_rig_top_rep.v (a working branch ed59c8899b6),
+   exit).  The footprint lemmas are BRigTop's lib/B/W_rig_top_rep.v (a working branch),
    copied and renamed.  Proves no function (kind: segment lemma). *)
 (* Modified by Theorem Labs, 2026-10: ROUTE (b), STEP 3 (CONVERSION.md (sha256 1015972e02a9; internal record)), the RIGX round on
    image B: the end arm's cut over any allocator relation ARx with its laws and the room record RP, against the cx
    file's generic Section (lib/B/W_relay_instance_gone_cx.v; its Section c copied below), as the image-A twin's
-   conversion of its end arm (lib/A/W_rig_key.v, a Theorem Labs lane f4cd818e98d).  Every ARx state is read at the empty head
+   conversion of its end arm (lib/A/W_rig_key.v, a Theorem Labs lane).  Every ARx state is read at the empty head
    set (HP0: ARh below, with Local wrappers of the laws), so the walk's journals run from [] to [] (W_journal_x.v
    ajournal_gx_x) at the kit's RIG_STK_x (= RIG_STK + 128), and GLIVE's journal starts at the entry's head set gxHp,
    which is [] by GBASE (rk_gxHp).  The journal's image clause exempts PST, so the image bytes rkc_end / rkc_end2 keep
    from the cut's state take `~ Exists (in_zr a) PST` (the relay's cells are not PST by PSTG); the ROM view at the exit
    is ajournal_gx_rom_view_x with PSTR.  A live block lies off image B's band by W_kit_xb.v blk_off_imgB_x. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -190,7 +191,7 @@ Hypothesis PSTG : forall a,
 
 #[local] Set Default Proof Using "All".
 
-(* ==== the generic relation at the empty head set (the image-A twin's lib/A/W_rig_key.v:236-280; Local here, as every
+(* ==== the generic relation at the empty head set (the image-A twin's lib/A/W_rig_key.v:237-281; Local here, as every
    key file that needs them defines its own) ==== *)
 (* HP0: every ARx state these lemmas read has the head set [], so they state their facts at ARh (= ARx at []) and each
    journal from [] to [].  rk_alb is AR_blocks_law's seven conjuncts (alx_blocks' six and BLKN), in the AR walk's
@@ -219,8 +220,8 @@ Local Definition rk_boi ly S W mem md p n (H : ARh ly S W mem md) := blk_off_img
 Local Lemma rk_gxHp : forall cx, GBASE B ARx MT RP MMAX RG cx -> gxHp cx = [].
 Proof. intros cx HB. destruct HB as ((HAR & _) & _). exact (HP0 _ _ _ _ _ _ HAR). Qed.
 
-(* ==== The bytes the representations read (copied from lib/B/W_rig_top_rep.v, BRigTop, a working branch
-   ed59c8899b6: tc_alist_fp_blk / tc_asrc_fp_blk / tc_aentry_fp_blk / tl_aout_fp / tl_kept_trans / tc_aothers_kept and
+(* ==== The bytes the representations read (copied from lib/B/W_rig_top_rep.v, BRigTop, a working branch:
+   tc_alist_fp_blk / tc_asrc_fp_blk / tc_aentry_fp_blk / tl_aout_fp / tl_kept_trans / tc_aothers_kept and
    their list helpers, renamed rkc_; this file does not import any W_rig_top) ==== *)
 Lemma rkc_recs_len : forall rs, length (concat (map text_rec rs)) = (16 * length rs)%nat.
 Proof.
@@ -1290,7 +1291,7 @@ Hypothesis GE_R : ge_spec_xR B PST ARx R MT RP MMAX RG (BASE + AF_fr_gesture_end
 #[local] Notation rkb_gin_end_xR := (W_rig_key_b.rkb_gin_end_xR B PST ARx MT RP MMAX RG CTX_AFREE LAWS HP0 TL TLF MLAW IMGC BLKN OWNLOW WFx WFL SFREE SMALLOC ASMP ASF FFL MO_FR HGRIG HH41 HH42 HRGP HRGI HROMO ALOCK AUNLOCK ASNPRINTF ASTRLEN ASTRNCMP HEND5L HGOTG HCANR HLIT17 HLIT18 HLIT28 PSTR PSTG R R_trans WLE_R RO RO_ARx AFREE_R GE_R) (only parsing).
 #[local] Notation rkb_gout_end_xR := (W_rig_key_b.rkb_gout_end_xR B PST ARx MT RP MMAX RG CTX_AFREE LAWS HP0 TL TLF MLAW IMGC BLKN OWNLOW WFx WFL SFREE SMALLOC ASMP ASF FFL MO_FR HGRIG HH41 HH42 HRGP HRGI HROMO ALOCK AUNLOCK ASNPRINTF ASTRLEN ASTRNCMP HEND5L HGOTG HCANR HLIT17 HLIT18 HLIT28 PSTR PSTG R R_trans WLE_R RO RO_ARx AFREE_R GE_R) (only parsing).
 #[local] Notation rk_fp_orig_xR := (W_rig_key_e.rk_fp_orig_xR B PST ARx MT RP MMAX RG CTX_AFREE LAWS HP0 TL TLF MLAW IMGC BLKN OWNLOW WFx WFL SFREE SMALLOC ASMP ASF FFL MO_FR HGRIG HH41 HH42 HRGP HRGI HROMO ALOCK AUNLOCK ASNPRINTF ASTRLEN ASTRNCMP HEND5L HGOTG HCANR HLIT17 HLIT18 HLIT28 PSTR PSTG R R_trans WLE_R RO RO_ARx AFREE_R GE_R) (only parsing).
-(* ==== the generic relation at the empty head set (the image-A twin's lib/A/W_rig_key.v:236-280; Local here, as every
+(* ==== the generic relation at the empty head set (the image-A twin's lib/A/W_rig_key.v:237-281; Local here, as every
    key file that needs them defines its own) ==== *)
 (* HP0: every ARx state these lemmas read has the head set [], so they state their facts at ARh (= ARx at []) and each
    journal from [] to [].  rk_alb_xR is AR_blocks_law's seven conjuncts (alx_blocks' six and BLKN), in the AR walk's
@@ -1315,8 +1316,8 @@ Qed.
 Local Lemma rk_gxHp_xR : forall cx, GBASE B ARx MT RP MMAX RG cx -> gxHp cx = [].
 Proof. intros cx HB. destruct HB as ((HAR & _) & _). exact (HP0 _ _ _ _ _ _ HAR). Qed.
 
-(* ==== The bytes the representations read (copied from lib/B/W_rig_top_rep.v, BRigTop, a working branch
-   ed59c8899b6: tc_alist_fp_blk / tc_asrc_fp_blk / tc_aentry_fp_blk / tl_aout_fp / tl_kept_trans / tc_aothers_kept and
+(* ==== The bytes the representations read (copied from lib/B/W_rig_top_rep.v, BRigTop, a working branch:
+   tc_alist_fp_blk / tc_asrc_fp_blk / tc_aentry_fp_blk / tl_aout_fp / tl_kept_trans / tc_aothers_kept and
    their list helpers, renamed rkc_; this file does not import any W_rig_top) ==== *)
 Lemma rkc_recs_len_xR : forall rs, length (concat (map text_rec rs)) = (16 * length rs)%nat.
 Proof.

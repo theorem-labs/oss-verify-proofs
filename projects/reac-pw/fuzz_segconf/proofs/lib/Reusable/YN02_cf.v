@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN02.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the place_declined_b premise of the mmap decline; the vDSO pair and vDSO steps; munmap's refusal; the placement rule of mmap grants; brk growth's alignment premises). *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia Classical_Prop.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -33,7 +34,7 @@ Lemma kcf_vml_node : forall c (I : Type) evs (nx : I -> config),
   node_ok segs c I evs nx -> (forall i, vml (nx i) = vml c) ->
   forall e c2, sstep_cfg segs ACFG c e (SNext c2) -> vml c2 = vml c.
 Proof using.
-  intros c I evs nx [_ Hc] HV e c2 Hs. destruct (Hc e (SNext c2) Hs) as (i & _ & E). injection E as ->. apply HV.
+  intros c I evs nx [_ [Hc _]] HV e c2 Hs. destruct (Hc e (SNext c2) Hs) as (i & _ & E). injection E as ->. apply HV.
 Qed.
 
 Lemma kcf_not_refused : forall ms model x8,
@@ -138,7 +139,27 @@ split; [|split; [|split]].
     destruct Hsp as (_ & _ & _ & ->). apply brk_model_lazy. exact Hlz.
   + assert (Hok : Mmap.brk_budget_ok model (getr regs 10) = true).
     { unfold Mmap.brk_budget_ok. cbv zeta. apply Z.leb_le.
-      rewrite bv_sub_unsigned_nowrap by (unfold PGSZ in *; lia). unfold PGSZ in *. lia. }
+      (* 08b1429: brk_grow_bytes is now
+         `Z.max 0 (page_round_up_Z (bv_unsigned r) - page_round_up_Z (bv_unsigned (vm_brk h)))`
+         (rocq-linux-process-semantics@75d69e00:theories/LinuxProcessSem/Sys/Mm/Mmap.v:372-374) --
+         a Z subtraction of two ROUNDED values under a Z.max, where it used to subtract in
+         bitvectors, so there is no `bv_unsigned (_ - _)` subterm for bv_sub_unsigned_nowrap to
+         match and the step is arithmetic rather than a rewrite. *)
+      (* The arithmetic: both roundings are EXACT here, so brk_grow_bytes is PGSZ * npages.
+         `page_round_up_Z_aligned` is a four-way homonym:
+         YK02.v:387 is the equation wanted, YK10.v:30 is the modulus fact, A/AFg8.v:51
+         the 4096-literal variant, and Checks.Placement's is the model's that YP0n.v:17 refuses to
+         import. YN02_cf imports YK02 and neither YK10 nor Placement, so the name resolves to
+         YK02's. The two-premise `apply …; [lia|…]` shape is YP0n.v:1469-1472's, kernel-checked in
+         this tree. *)
+      assert (Hrb : page_round_up_Z (bv_unsigned (vm_brk (m_vmmaps model)))
+                    = bv_unsigned (vm_brk (m_vmmaps model)))
+        by (apply page_round_up_Z_aligned; [lia | exact Hbal]).
+      assert (Hru : page_round_up_Z (bv_unsigned (getr regs 10)) = bv_unsigned (getr regs 10)).
+      { rewrite Hreq. apply page_round_up_Z_aligned; [unfold PGSZ in *; lia|].
+        unfold PGSZ, page_size in *. rewrite Z.add_mod by lia. rewrite Hbal.
+        rewrite Z.mul_comm, Z.mod_mul by lia. reflexivity. }
+      unfold Mmap.brk_grow_bytes. rewrite Hrb, Hru, Hreq. unfold PGSZ in *. lia. }
     unfold alloc_budget_refused_b. cbv zeta. rewrite si_sysno, Hno, si_arg0.
     unfold Mmap.brk_budget_refused_b. rewrite Hok. rewrite !andb_false_r. reflexivity.
 - apply (kcf_vml_node _ _ _ _ (node_brk segs regs pc mem rom model Hh Hlz Hno)). intros i. apply kcf_brk_nx_vml.
@@ -151,6 +172,8 @@ m_halted model = None -> m_vm_lazy model = [] ->
 bv_unsigned (getr regs 17) = 222 ->
 getr regs 11 = Z_to_bv 64 len -> 0 < len < 2 ^ 63 -> getr regs 12 = Z_to_bv 64 3 ->
 getr regs 13 = Z_to_bv 64 34 -> getr regs 14 = Z_to_bv 64 (-1) -> getr regs 15 = Z_to_bv 64 0 ->
+place_declined_b (m_kernel model) (m_vmmaps model) (getr regs 10)
+  (page_round_up_Z (bv_unsigned (getr regs 11))) = false ->
 (forall e, In e mmap_errnos ->
 Kont 0 (mkCfg (mkst (regupd regs 10 (errno_ret e)) (v_addi pc 4) mem rom) model)) ->
 (forall a, grant_ok (getr regs 10) model a (page_round len) = true ->
@@ -165,8 +188,8 @@ ivs_bytes (vm_reserved (m_vmmaps model) ++ vm_maps (m_vmmaps model)) <= live_byt
 140735332483072 <= alloc_top (m_vmmaps model) ->
 knode_cf segs (mkCfg (pend_at regs pc mem rom) model) (KMmapRW len) snap Kont.
 Proof using.
-intros regs pc mem rom model snap len Kont Hh Hlz Hno Hlen Hrange Hprot Hflags Hfd Hoff HK0 HK1 HG Hmat Hlb Hcnt Hbyt Hceil.
-split; [exact (knode_mmap_rw segs regs pc mem rom model snap len Kont Hh Hlz Hno Hlen Hrange Hprot Hflags Hfd Hoff HK0 HK1 HG)|].
+intros regs pc mem rom model snap len Kont Hh Hlz Hno Hlen Hrange Hprot Hflags Hfd Hoff Hdecl HK0 HK1 HG Hmat Hlb Hcnt Hbyt Hceil.
+split; [exact (knode_mmap_rw segs regs pc mem rom model snap len Kont Hh Hlz Hno Hlen Hrange Hprot Hflags Hfd Hoff Hdecl HK0 HK1 HG)|].
 assert (Hlen0 : getr regs 11 <> Z_to_bv 64 0).
 { rewrite Hlen. intros E. apply (f_equal bv_unsigned) in E. rewrite !Z_to_bv_unsigned in E.
   change (bv_wrap 64 0) with 0 in E. rewrite bv_wrap_small in E; [lia | change (bv_modulus 64) with (2 ^ 64); lia]. }
@@ -188,10 +211,10 @@ split; [|split; [|split]].
     unfold alloc_budget_refused_b. cbv zeta.
     rewrite si_sysno, Hno, si_arg0, si_arg1, si_arg2, si_arg3, si_arg4, si_arg5, Hprot, Hflags, Hfd, Hoff.
     unfold Mmap.mmap_budget_refused_b. cbv zeta. rewrite Hw, Hru, Hnb. reflexivity.
-- apply (kcf_vml_node _ _ _ _ (node_mmap_rw segs regs pc mem rom model Hh Hlz Hno Hlen0 Hprot Hflags Hfd Hoff)).
+- apply (kcf_vml_node _ _ _ _ (node_mmap_rw segs regs pc mem rom model Hh Hlz Hno Hlen0 Hprot Hflags Hfd Hoff Hdecl)).
   intros [|]; reflexivity.
 - cbn [cfg_ms pend_at]. discriminate.
-- intros _ Hsl. apply (PolicyFit.canon_fit_mmap_rw segs regs pc mem rom model Hh Hlz Hno Hlen0 Hprot Hflags Hfd Hoff).
+- intros _ Hsl. apply (PolicyFit.canon_fit_mmap_rw segs regs pc mem rom model Hh Hlz Hno Hlen0 Hprot Hflags Hfd Hoff Hdecl).
   intros p st Hp Hst Hlim. rewrite Hru.
   destruct (Hsl eq_refl Hlim) as (Hlv & Hns & Hrq). cbn [req_len] in Hns, Hrq.
   change (vml (mkCfg (pend_at regs pc mem rom) model)) with (vm_limit (m_vmmaps model)) in Hlv.
@@ -209,15 +232,19 @@ Kont 1 (munmap_nx regs pc mem rom model tt) ->
 knode_cf segs (mkCfg (pend_at regs pc mem rom) model) (KMunmap r len) snap Kont.
 Proof using.
 intros regs pc mem rom model snap r len Kont Hh Hlz Hno Hal Hlen Hnw Hhas HK.
-split; [exact (knode_munmap segs regs pc mem rom model snap r len Kont Hh Hlz Hno Hal Hlen Hnw Hhas HK)|].
+(* 08b1429: munmap's single success child requires ACFG's non-failing mode.
+   Name AM on the nested node_munmap application: that argument elaborates
+   before kcf_vml_node can constrain its mode, so eq_refl alone cannot pick it. *)
+split; [exact (knode_munmap segs regs pc mem rom model snap r len Kont Hh Hlz Hno Hal Hlen Hnw Hhas eq_refl HK)|].
 assert (Hargs : munmap_args_ok (pend_at regs pc mem rom) model).
 { unfold munmap_args_ok. rewrite pend_gpr0, pend_gpr1. auto. }
 split; [|split; [|split]].
 - intros _. apply (kcf_not_refused (pend_at regs pc mem rom) model (getr regs 17) Hh eq_refl).
-  + intros eff m' evs Hsp. destruct (munmap_ok_inv segs _ _ model eff m' evs Hno Hargs Hsp) as (_ & -> & _).
+  + intros eff m' evs Hsp. destruct (munmap_ok_inv segs _ _ model eff m' evs Hno Hargs Hsp) as (_ & Hcase).
+    destruct Hcase as [(e & He & _ & ->) | (_ & ->)]; [exact Hlz|].
     apply munmap_model_no_lazy. exact Hlz.
   + unfold alloc_budget_refused_b. cbv zeta. rewrite si_sysno, Hno. reflexivity.
-- apply (kcf_vml_node _ _ _ _ (node_munmap segs regs pc mem rom model Hh Hlz Hno Hal Hlen Hnw Hhas)).
+- apply (kcf_vml_node _ _ _ _ (node_munmap (AM := Cfg.AcfgMode) segs regs pc mem rom model Hh Hlz Hno Hal Hlen Hnw Hhas eq_refl)).
   intros []. reflexivity.
 - cbn [cfg_ms pend_at]. discriminate.
 - intros _ _. apply kcf_fit_nonplacement. unfold RoomShapesDraft.placement_len. cbv zeta.
@@ -229,6 +256,8 @@ m_halted model = None -> m_vm_lazy model = [] ->
 bv_unsigned (getr regs 17) = 222 ->
 getr regs 11 = Z_to_bv 64 len -> 0 < len < 2 ^ 63 -> getr regs 12 = Z_to_bv 64 0 ->
 getr regs 13 = Z_to_bv 64 34 -> getr regs 14 = Z_to_bv 64 (-1) -> getr regs 15 = Z_to_bv 64 0 ->
+place_declined_b (m_kernel model) (m_vmmaps model) (getr regs 10)
+  (page_round_up_Z (bv_unsigned (getr regs 11))) = false ->
 (forall e, In e mmap_errnos ->
 Kont 0 (mkCfg (mkst (regupd regs 10 (errno_ret e)) (v_addi pc 4) mem rom) model)) ->
 (forall a, place_ok (getr regs 10) model a (page_round len) = true ->
@@ -240,8 +269,8 @@ ivs_bytes (vm_reserved (m_vmmaps model) ++ vm_maps (m_vmmaps model)) <= live_byt
 140735332483072 <= alloc_top (m_vmmaps model) ->
 knode_cf segs (mkCfg (pend_at regs pc mem rom) model) (KMmapNone len) snap Kont.
 Proof using.
-intros regs pc mem rom model snap len Kont Hh Hlz Hno Hlen Hrange H2 H3 H4 H5 HK0 HK1 HG Hcnt Hbyt Hceil.
-split; [exact (knode_mmap_none segs regs pc mem rom model snap len Kont Hh Hlz Hno Hlen Hrange H2 H3 H4 H5 HK0 HK1 HG)|].
+intros regs pc mem rom model snap len Kont Hh Hlz Hno Hlen Hrange H2 H3 H4 H5 Hdecl HK0 HK1 HG Hcnt Hbyt Hceil.
+split; [exact (knode_mmap_none segs regs pc mem rom model snap len Kont Hh Hlz Hno Hlen Hrange H2 H3 H4 H5 Hdecl HK0 HK1 HG)|].
 assert (Hlen0 : getr regs 11 <> Z_to_bv 64 0).
 { rewrite Hlen. intros E. apply (f_equal bv_unsigned) in E. rewrite !Z_to_bv_unsigned in E.
   change (bv_wrap 64 0) with 0 in E. rewrite bv_wrap_small in E; [lia | change (bv_modulus 64) with (2 ^ 64); lia]. }
@@ -251,7 +280,7 @@ assert (Hru : page_round_up_Z (bv_unsigned (getr regs 11)) = page_round len).
 split; [|split; [|split]].
 - intros _. apply (kcf_not_refused (pend_at regs pc mem rom) model (getr regs 17) Hh eq_refl).
   + intros eff m' evs Hsp. apply check_syscall_ok_iff in Hsp.
-    rewrite (chk_mmap_none04 segs regs pc mem rom model Hno Hlen0 H2 H3 H4 H5) in Hsp.
+    rewrite (chk_mmap_none04 segs regs pc mem rom model Hno Hlen0 H2 H3 H4 H5 Hdecl) in Hsp.
     destruct eff as [rv ws zs us cs ci]. destruct ws; [|discriminate]. destruct zs; [|discriminate].
     destruct cs; [|discriminate]. destruct ci; [|discriminate].
     destruct (errno_ret_in mmap_errnos rv).
@@ -261,10 +290,10 @@ split; [|split; [|split]].
     unfold alloc_budget_refused_b. cbv zeta.
     rewrite si_sysno, Hno, si_arg0, si_arg1, si_arg2, si_arg3, si_arg4, si_arg5, H2, H3, H4, H5.
     unfold Mmap.mmap_budget_refused_b. cbv zeta. rewrite Hw. reflexivity.
-- apply (kcf_vml_node _ _ _ _ (node_mmap_none segs regs pc mem rom model Hh Hlz Hno Hlen0 H2 H3 H4 H5)).
+- apply (kcf_vml_node _ _ _ _ (node_mmap_none segs regs pc mem rom model Hh Hlz Hno Hlen0 H2 H3 H4 H5 Hdecl)).
   intros [|]; reflexivity.
 - cbn [cfg_ms pend_at]. discriminate.
-- intros _ Hsl. apply (PolicyFit.canon_fit_mmap_none segs regs pc mem rom model Hh Hlz Hno Hlen0 H2 H3 H4 H5).
+- intros _ Hsl. apply (PolicyFit.canon_fit_mmap_none segs regs pc mem rom model Hh Hlz Hno Hlen0 H2 H3 H4 H5 Hdecl).
   intros p st Hp Hst Hlim. rewrite Hru.
   destruct (Hsl eq_refl Hlim) as (Hlv & Hns & Hrq). cbn [req_len] in Hns, Hrq.
   change (vml (mkCfg (pend_at regs pc mem rom) model)) with (vm_limit (m_vmmaps model)) in Hlv.
@@ -281,6 +310,9 @@ bv_unsigned (getr regs 10) + 4096 < two_pow_64 ->
 getr regs 12 = Z_to_bv 64 3 ->
 map_contains (vm_noaccess (m_vmmaps model)) (getr regs 10) (Z_to_bv 64 4096) = true ->
 map_contains (vm_maps (m_vmmaps model)) (getr regs 10) (Z_to_bv 64 4096) = true ->
+(* 08b1429: check_mprotect's vDSO gate *)
+region_free (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model)))
+  (getr regs 10) (Z_to_bv 64 4096) = true ->
 (forall e, In e mprotect_errnos ->
 Kont 0 (mkCfg (mkst (regupd regs 10 (errno_ret e)) (v_addi pc 4) mem rom) model)) ->
 (mprotect_budget_ok model (getr regs 10) (Z_to_bv 64 4096) = true ->
@@ -290,19 +322,20 @@ m_vm_materialized model = [] ->
 State.live_bytes (vm_maps (m_vmmaps model)) <= live_bytes snap ->
 knode_cf segs (mkCfg (pend_at regs pc mem rom) model) (KMprotect p) snap Kont.
 Proof using.
-intros regs pc mem rom model snap p Kont Hh Hlz Hno Hal Hlen Hnw Hprot Hna Hma HK0 HK1 Hmat Hlb.
-split; [exact (knode_mprotect segs regs pc mem rom model snap p Kont Hh Hlz Hno Hal Hlen Hnw Hprot Hna Hma HK0 HK1)|].
+intros regs pc mem rom model snap p Kont Hh Hlz Hno Hal Hlen Hnw Hprot Hna Hma Hvd HK0 HK1 Hmat Hlb.
+split; [exact (knode_mprotect segs regs pc mem rom model snap p Kont Hh Hlz Hno Hal Hlen Hnw Hprot Hna Hma Hvd HK0 HK1)|].
 assert (Hpr : page_round_up (getr regs 11) = Z_to_bv 64 4096) by (rewrite Hlen; reflexivity).
 assert (HprZ : page_round_up_Z (bv_unsigned (getr regs 11)) = 4096) by (rewrite Hlen; reflexivity).
 assert (Hlen0 : getr regs 11 <> Z_to_bv 64 0) by (rewrite Hlen; discriminate).
 assert (Hnw' : bv_unsigned (getr regs 10) + page_round_up_Z (bv_unsigned (getr regs 11)) < two_pow_64) by (rewrite HprZ; exact Hnw).
 assert (Hna' : map_contains (vm_noaccess (m_vmmaps model)) (getr regs 10) (page_round_up (getr regs 11)) = true) by (rewrite Hpr; exact Hna).
 assert (Hma' : map_contains (vm_maps (m_vmmaps model)) (getr regs 10) (page_round_up (getr regs 11)) = true) by (rewrite Hpr; exact Hma).
+  assert (Hvd' : region_free (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) (getr regs 10) (page_round_up (getr regs 11)) = true) by (rewrite Hpr; exact Hvd).
 split; [|split; [|split]].
 - intros Hroom. specialize (Hroom eq_refl). cbn [req_len] in Hroom. unfold vml in Hroom. cbn [cfg_model] in Hroom.
   apply (kcf_not_refused (pend_at regs pc mem rom) model (getr regs 17) Hh eq_refl).
   + intros eff m' evs Hsp. apply check_syscall_ok_iff in Hsp.
-    rewrite (chk_mprotect_rw04 segs regs pc mem rom model Hno Hal Hlen0 Hnw' Hprot Hna' Hma') in Hsp.
+    rewrite (chk_mprotect_rw04 segs regs pc mem rom model Hno Hal Hlen0 Hnw' Hprot Hna' Hma' Hvd') in Hsp.
     destruct eff as [rv ws zs us cs ci]. destruct ws; [|discriminate]. destruct us; [|destruct zs; discriminate].
     destruct cs; [|destruct zs; discriminate]. destruct ci; [|destruct zs; discriminate].
     destruct (errno_ret_in mprotect_errnos rv).
@@ -318,8 +351,8 @@ split; [|split; [|split]].
     rewrite si_sysno, Hno, si_arg0, si_arg1, si_arg2, Hlen, Hprot.
     unfold Mprotect.mprotect_budget_refused_b. cbv zeta.
     change (page_round_up_Z (bv_unsigned (Z_to_bv 64 4096))) with 4096.
-    rewrite (proj2 (Z.eqb_eq _ _) Hal), (proj2 (Z.leb_gt _ _) Hnw), Hna, Hma, Hb. reflexivity.
-- apply (kcf_vml_node _ _ _ _ (node_mprotect_rw segs regs pc mem rom model Hh Hlz Hno Hal Hlen0 Hnw' Hprot Hna' Hma')).
+    rewrite (proj2 (Z.eqb_eq _ _) Hal), (proj2 (Z.leb_gt _ _) Hnw), Hna, Hma, Hvd, Hb. reflexivity.
+- apply (kcf_vml_node _ _ _ _ (node_mprotect_rw segs regs pc mem rom model Hh Hlz Hno Hal Hlen0 Hnw' Hprot Hna' Hma' Hvd')).
   intros [|]; reflexivity.
 - cbn [cfg_ms pend_at]. discriminate.
 - intros _ _. apply kcf_fit_nonplacement. unfold RoomShapesDraft.placement_len. cbv zeta.

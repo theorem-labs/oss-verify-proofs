@@ -20,8 +20,8 @@
   Allocator::Allocate +0xdc: the same table (0x10428 / 0x10440, 64 bytes) and the same bytes as the re-run's
   bounded-byte-table settlement (section 2).
 
-Scope: the functions that the relocation of the closed primary-size Allocate (lib/B, 65 files; blob-identical in release
-88154566652a) pairs between cgif_file_fuzzer.asan-ubsan (image "cgif B") and fuzz_decode.asan-ubsan (image "decode B"),
+Scope: the functions that the relocation of the closed primary-size Allocate (lib/B, 65 files; blob-identical in release)
+pairs between cgif_file_fuzzer.asan-ubsan (image "cgif B") and fuzz_decode.asan-ubsan (image "decode B"),
 and their call closure. No proof file changes; rule 24: no function proved (a measurement record).
 
 Inputs (`out/twins.out`, `drvcmp.py twins`: each pin and its twin have an equal PT_LOAD layout, and their only differing
@@ -33,10 +33,10 @@ loadable bytes are in the ELF header [0x10000, 0x10040) and `.note.gnu.build-id`
 - Functions (`out/FNLIST8.txt`): Allocator::Allocate, CombinedAllocator::Allocate, SizeClassAllocator64LocalCache::Refill,
   memset, internal_mmap, StackDepotPut, PoisonShadow, TryMemCpy (the same 8 as the earlier version).
 
-Kit: cmpkit 86da41d3ef68 (hub commit 98e50c029045, `tools/cmpkit/86da41d3ef68/`); `sha256sum -c SHA256SUMS`: 9 of 9 OK before
+Kit: cmpkit 86da41d3ef68 (`tools/cmpkit/86da41d3ef68/`); `sha256sum -c SHA256SUMS`: 9 of 9 OK before
 the run; sha256(SHA256SUMS)[:12] = 86da41d3ef68. Members: strictcmp3 65688e94214a (THE compare), closure_strict3 a98d2b3e8857,
 jtcheck 8b0ea3862423, repin_check e6883477399d, drvcmp 4d70e90bc1fa, paircl 926a9a88afcd, bytecmp 1480ca2faea0, and the two
-exposure scans luiscan 9ae61e4a0e01 and ambiscan 9f61b4cee422. The kit files are NOT copied here: `git archive 98e50c029045
+exposure scans luiscan 9ae61e4a0e01 and ambiscan 9f61b4cee422. The kit files are NOT copied here: `git archive
 tools/cmpkit/86da41d3ef68` gives them (`tools/run.sh` takes that directory).
 
 ## 1. Kit verdict (strictcmp3, `out/strictcmp3-cmp.out`)
@@ -238,14 +238,14 @@ each was re-checked at the address its callers call, in both images: EQUAL-mod-p
 
 ## 10. Reproduce: `tools/run.sh`
 `tools/run.sh KIT_DIR CGIF_B_PIN CGIF_B_TWIN DECODE_B_PIN DECODE_B_TWIN`, with KIT_DIR the kit as run (`git archive
-98e50c029045 tools/cmpkit/86da41d3ef68`). It checks the kit's SHA256SUMS, then writes every `out/` and `scans/` file of this
+tools/cmpkit/86da41d3ef68`). It checks the kit's SHA256SUMS, then writes every `out/` and `scans/` file of this
 record in order. Every script takes its paths from the environment (`tools/common.py`); the planted copies go to PLANTDIR,
 never into the record; progress and timings go to stderr, never into the record. rerun8cmp.py reads the 8-function re-run
 beside the record (`../fncmp.cmpkit-4bbd3a74be89.log`, `../../cmpkit-4bbd3a74be89/settled.tsv`).
 
 **End-to-end runs.** run.sh was run as ONE command in two fresh copies of this directory, at the same time, each with its own
 (random) Python hash seed. Each copy held only `tools/`, the input `out/FNLIST8.txt`, `kit/SHA256SUMS` and `RECORD.md`, beside
-the two 8-function re-run files taken from the branch (`git show 6e74a7e62d4f:...`, sha256 eff9ccb831d8 / 41d7ccff1f7f), with
+the two 8-function re-run files taken from the branch (`git show:...`, sha256 eff9ccb831d8 / 41d7ccff1f7f), with
 KIT_DIR a fresh `git archive` of the kit (`sha256sum -c SHA256SUMS`: 9 of 9 OK). Both exited 0 (51 min 39 s and 50 min 43 s).
 - `diff -r` of the two copies after the run: **0 lines** (the whole directories).
 - `diff -r` of the second copy against the record as it then stood (`out/`, `scans/`, `tools/`, `kit/`; 50 output files):
@@ -272,7 +272,7 @@ row verdicts, and the luitrace verdicts are equal in every run):
 
 ## 11. The kit's own controls (`controls/`)
 Run as the kit README prescribes ("CONTROLS (controls/)"), by `controls/run-controls.sh RUN_DIR REG_RUN_ROOT`: fresh copies of
-the kit (`git archive 98e50c029045 tools/cmpkit/86da41d3ef68`, 9 of 9 sums OK) and of the old kit (`git archive 3c3e62ee278
+the kit (`git archive tools/cmpkit/86da41d3ef68`, 9 of 9 sums OK) and of the old kit (`git archive
 tools/cmpkit/4bbd3a74be89`, 7 of 7 OK), the cross-check directory (the old kit plus the kit's `controls/xchk/jtcheck_strict2.py`),
 the kit's `controls/oldtools/SHA256SUMS` (12 of 12 OK, checked by suite.py at start); `negctl.py kitrun`; `SUITE_OLD_KIT=<old
 kit> SUITE_XCHK_JT=<cross-check>/jtcheck_strict2.py suite.py <kit> OUT PLANTED 16`. `controls/compare.py` compares the outputs

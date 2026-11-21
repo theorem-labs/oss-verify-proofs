@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the entry block read off by offset over the launch's whole ProcInput and mmap base: Linux's layout with the 27- or 29-pair auxv by la_rseq (LA, auxws, AUXV, length_AUXV, length_auxws), the odd-item gap, AT_RANDOM, the arch_align_stack pad, the strings with the exec name and the eight-byte slot under the stack VMA's end (strarea, length_strarea); the window below sp from stack_window_lo (WLO); flat_pairs added; launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef)). *)
 From Stdlib Require Import ZArith NArith Bool List Lia.
 From LinuxProcessSemantics.Riscv Require Import Prelude.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType RiscvSemantics StackLayout Fs State Monad Specs Run.
@@ -108,94 +109,139 @@ Proof.
     replace (8 * S k + i - 8)%nat with (8 * k + i)%nat by lia. cbn [nth]. apply IH; lia.
 Qed.
 
-Section Entry.
-Variables (segs : list Segment) (pc : N) (ph : PhdrInfo) (sp : word) (argv envp : list (list byte)) (uid hwcap : word) (draw : EntryDraw).
+(* The launch's entry block ([Run.entry_stack_image]) read off by offset.
+   Linux's layout at LPS 08b1429: argc, the argv pointers, NULL, the envp
+   pointers, NULL, the auxv (27 or 29 pairs, by [la_rseq]), the odd-item gap,
+   the sixteen AT_RANDOM bytes, the [arch_align_stack] pad, the strings and
+   the exec name, and the eight-byte slot under the stack VMA's end. *)
+Lemma flat_pairs : forall es : list (word * word),
+  flat_map (fun e : word * word => word_le8 (fst e) ++ word_le8 (snd e)) es
+  = flat_map word_le8 (flat_map (fun e : word * word => [fst e; snd e]) es).
+Proof.
+  (* [word_le8] did NOT change at the revision (75d69e00
+     theories/LinuxProcessSem/BvBase.v:66; [git diff f1006fe8 75d69e00 --
+     theories/LinuxProcessSem/BvBase.v] is empty), so this is not a model
+     repair: the old script's [app_assoc] had nothing left to match once
+     [app_nil_r] had flattened the only right-nested append.  This is the
+     model's own proof of the same equation,
+     [Common.RefLayout.build_auxv_words] (75d69e00
+     theories/Common/RefLayout.v:105-113), with the normalisation steps made
+     optional so it holds whichever shape [cbn] leaves. *)
+  induction es as [|[t v] es IH]; [reflexivity|].
+  cbn [flat_map fst snd app]. rewrite IH, ?app_nil_r, <- ?app_assoc. reflexivity.
+Qed.
 
+Section Entry.
+Variables (segs : list Segment) (pc : N) (ph : PhdrInfo) (sp brk0 mbase : word) (inp : ProcInput) (draw : EntryDraw).
+Notation argv := (in_argv inp).
+Notation envp := (in_envp inp).
+Notation execfn := (in_execfn inp).
+Notation uid := (in_uid inp).
+Notation gid := (in_gid inp).
+Notation hwcap := (in_hwcap inp).
+
+Definition LA : LaunchAuxv := launch_auxv inp sp mbase.
+Definition ENTRY : word := Z_to_bv 64 (Z.of_N pc).
+Definition TOP : word := ed_top draw.
 Definition nargc : nat := length argv.
 Definition nenvc : nat := length envp.
-Definition sstruct : nat := (8 + (nargc + 1) * 8 + (nenvc + 1) * 8 + 160)%nat.
-Definition str_base : word := (sp + nat_to_word sstruct)%bv.
+Definition HEAD : nat := block_head_size (la_rseq LA) argv envp.
+Definition LSB : nat := launch_string_bytes argv envp execfn.
+Definition str_base : word := string_base_addr TOP argv envp execfn.
 Definition argv_ptrs : list word := fst (string_addrs str_base argv).
 Definition env_str_base : word := (str_base + nat_to_word (total_nat argv))%bv.
 Definition envp_ptrs : list word := fst (string_addrs env_str_base envp).
-Definition ARND : word := at_random_ptr sp argv envp.
-Definition AUXV : list byte := auxv_bytes ph ARND uid hwcap.
-Definition raw_len : nat := (sstruct + total_nat argv + total_nat envp)%nat.
-Definition pad : nat := Z.to_nat ((8 - Z.of_nat raw_len mod 8) mod 8).
-Definition BSB : list byte := build_stack_bytes ph sp argv envp uid hwcap draw.
-Definition IMG : list byte := entry_stack_image ph sp argv envp uid hwcap draw.
-Definition mem0 : word -> option byte := ms_mem (init_machine_state segs pc ph sp draw argv envp uid hwcap).
-Definition SP : Z := bv_unsigned sp.
-
+Definition ARND : word := at_random_ptr sp (la_rseq LA) argv envp.
+Definition AEXECFN : word := at_execfn_ptr TOP execfn.
 Definition auxws : list word :=
-  [ Z_to_bv 64 3; Z_to_bv 64 (Z.of_N (ph_addr ph)); Z_to_bv 64 4; Z_to_bv 64 (Z.of_N (ph_ent ph));
-    Z_to_bv 64 5; Z_to_bv 64 (Z.of_N (ph_num ph)); Z_to_bv 64 16; hwcap; Z_to_bv 64 6; Z_to_bv 64 4096;
-    Z_to_bv 64 11; uid; Z_to_bv 64 12; uid; Z_to_bv 64 23; Z_to_bv 64 0; Z_to_bv 64 25; ARND;
-    Z_to_bv 64 0; Z_to_bv 64 0 ].
+  flat_map (fun e : word * word => [fst e; snd e]) (auxv_entries LA ph ENTRY uid gid hwcap ARND AEXECFN).
+Definition AUXV : list byte := auxv_bytes LA ph ENTRY uid gid hwcap ARND AEXECFN.
+Definition gap : nat := (8 * (block_items argv envp mod 2))%nat.
+Definition pad : nat := block_pad_len (la_rseq LA) sp TOP argv envp execfn.
+Definition BSB : list byte := build_stack_bytes LA ph ENTRY sp TOP argv envp execfn uid gid hwcap draw.
+Definition IMG : list byte := entry_stack_image inp mbase ph ENTRY sp draw.
+Definition mem0 : word -> option byte := ms_mem (init_machine_state segs pc ph sp mbase draw inp).
+Definition SP : Z := bv_unsigned sp.
+Definition WLO : Z := stack_window_lo (in_kernel inp) mbase draw.
 
-Lemma AUXV_eq : AUXV = flat_map word_le8 auxws.
+Lemma LA_rseq : la_rseq LA = kb_rseq (in_kernel inp).
 Proof. reflexivity. Qed.
 
-Lemma length_AUXV : length AUXV = 160%nat.
+Lemma AUXV_eq : AUXV = flat_map word_le8 auxws.
+Proof. unfold AUXV, auxv_bytes, build_auxv, auxws. apply flat_pairs. Qed.
+
+Lemma length_AUXV : length AUXV = auxv_size (la_rseq LA).
 Proof. unfold AUXV. apply length_auxv_bytes. Qed.
 
+Lemma length_auxws : length auxws = (2 * auxv_count (la_rseq LA))%nat.
+Proof. unfold auxws, auxv_entries. destruct (la_rseq LA); reflexivity. Qed.
+
 Theorem BSB_eq : BSB = word_le8 (len_word argv) ++ flat_map word_le8 argv_ptrs ++ word_le8 (Z_to_bv 64 0)
-   ++ flat_map word_le8 envp_ptrs ++ word_le8 (Z_to_bv 64 0) ++ AUXV ++ flatten_strings argv ++ flatten_strings envp
-   ++ repeat (Z_to_bv 8 0) pad ++ at_random_bytes (ed_random draw).
+   ++ flat_map word_le8 envp_ptrs ++ word_le8 (Z_to_bv 64 0) ++ AUXV ++ repeat (Z_to_bv 8 0) gap
+   ++ at_random_bytes (ed_random draw) ++ repeat (Z_to_bv 8 0) pad
+   ++ flatten_strings argv ++ flatten_strings envp ++ execfn ++ [Z_to_bv 8 0] ++ repeat (Z_to_bv 8 0) 8.
 Proof.
-  unfold BSB, build_stack_bytes. rewrite length_auxv_bytes.
-  rewrite (string_addrs_pair argv). cbv beta iota. rewrite (string_addrs_pair envp). cbv beta iota zeta.
-  rewrite <- !app_assoc.
-  unfold pad, raw_len, AUXV, envp_ptrs, env_str_base, argv_ptrs, str_base, sstruct, nargc, nenvc, auxv_size.
-  rewrite !length_app, !length_flat_map_le8, !length_string_addrs_fst, !length_word_le8, length_auxv_bytes, !length_flatten_strings.
-  unfold auxv_size.
-  repeat (f_equal; try reflexivity; try lia).
+  unfold BSB, build_stack_bytes. cbv zeta.
+  rewrite (string_addrs_pair argv). cbv beta iota. rewrite (string_addrs_pair envp). cbv beta iota.
+  rewrite <- !app_assoc. reflexivity.
 Qed.
+
+Lemma IMG_eq : IMG = BSB.
+Proof. reflexivity. Qed.
 
 Lemma length_argv_ptrs : length argv_ptrs = nargc.
 Proof. unfold argv_ptrs. apply length_string_addrs_fst. Qed.
 Lemma length_envp_ptrs : length envp_ptrs = nenvc.
 Proof. unfold envp_ptrs. apply length_string_addrs_fst. Qed.
 
-Lemma length_BSB : length BSB = (raw_len + pad + 16)%nat.
-Proof.
-  rewrite BSB_eq. rewrite !length_app, !length_flat_map_le8, !length_word_le8, length_AUXV, !length_flatten_strings,
-    repeat_length, length_at_random_bytes, length_argv_ptrs, length_envp_ptrs.
-  unfold raw_len, sstruct. lia.
-Qed.
+Lemma length_BSB : length BSB = (HEAD + pad + LSB + 8)%nat.
+Proof. unfold BSB. rewrite length_build_stack_bytes. reflexivity. Qed.
 
-Lemma pad_lt8 : (pad < 8)%nat.
-Proof. unfold pad. pose proof (Z.mod_pos_bound (8 - Z.of_nat raw_len mod 8) 8 ltac:(lia)). lia. Qed.
-
-Lemma ARND_eq : ARND = (sp + nat_to_word (raw_len + pad))%bv.
-Proof.
-  unfold ARND, at_random_ptr, pad, raw_len, sstruct, nargc, nenvc. rewrite !length_flatten_strings. unfold auxv_size. reflexivity.
-Qed.
+Lemma HEAD_eq : Z.of_nat HEAD = 8 * Z.of_nat nargc + 8 * Z.of_nat nenvc + 24 + Z.of_nat (auxv_size (la_rseq LA)) + Z.of_nat gap + 16.
+Proof. unfold HEAD, block_head_size, gap, block_items, nargc, nenvc. cbv zeta. lia. Qed.
 
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
 Hypothesis Hsp : valid_sp sp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hlaunch : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase draw) inp.
 
 Lemma SP_lo : 0x7fff80000000 <= SP.
 Proof. unfold SP. destruct Hsp as [H _]. unfold sp_window_lo in H. exact H. Qed.
 
-Lemma BSB_span : Z.of_nat (length BSB) <= entry_stack_span argv envp.
+Lemma geom : SP + Z.of_nat HEAD + Z.of_nat LSB + 8 <= bv_unsigned TOP.
 Proof.
-  rewrite length_BSB. unfold entry_stack_span, raw_len, sstruct, nargc, nenvc, auxv_size.
-  rewrite !total_arg_bytes_nat. pose proof pad_lt8. lia.
+  pose proof Hlaunch as Hok. cbn [entry_launch_ok_va] in Hok. destruct Hok as (_ & (_ & _ & Hhi) & _).
+  unfold launch_sp_hi, align_down16 in Hhi. unfold HEAD, LSB, SP, TOP. rewrite LA_rseq.
+  pose proof (Z.mod_pos_bound
+    (bv_unsigned (ed_top draw) - 8 - Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp) (in_execfn inp)))
+    16 ltac:(lia)) as Hm.
+  lia.
 Qed.
 
-Lemma BSB_top : SP + Z.of_nat (length BSB) <= 0x800000000000.
-Proof. pose proof BSB_span. unfold entry_stack_fits, sp_window_hi in Hfit. unfold SP. lia. Qed.
+Lemma top_hi : bv_unsigned TOP <= 0x800000000000.
+Proof.
+  pose proof Hlaunch as Hok. cbn [entry_launch_ok_va] in Hok. destruct Hok as ((_ & Ht & _) & _ & _).
+  (* [valid_stack_top_va]'s bound is [va_stack_top Sv48] (75d69e00
+     theories/LinuxProcessSem/Run.v:3612), and [va_stack_top] only REDUCES to
+     [sp_window_hi] (75d69e00 theories/LinuxProcessSem/State.v:494-499), so the
+     constant [sp_window_hi] does not occur in [Ht] and [unfold ... in Ht]
+     had nothing to unfold.  Conversion settles it. *)
+  unfold TOP. exact Ht.
+Qed.
 
-Lemma IMG_eq : IMG = BSB ++ entry_slack sp BSB (ed_slack draw).
-Proof. reflexivity. Qed.
+Lemma pad_eq : Z.of_nat pad = bv_unsigned TOP - 8 - Z.of_nat LSB - SP - Z.of_nat HEAD.
+Proof. pose proof geom. unfold pad, block_pad_len. unfold HEAD, LSB, SP in *. rewrite Z2Nat.id by lia. lia. Qed.
+
+Lemma BSB_end : SP + Z.of_nat (length BSB) = bv_unsigned TOP.
+Proof. rewrite length_BSB. pose proof pad_eq. lia. Qed.
+
+Lemma BSB_top : SP + Z.of_nat (length BSB) <= 0x800000000000.
+Proof. rewrite BSB_end. exact top_hi. Qed.
 
 Lemma mem0_unfold : forall addr, mem0 addr =
   match stack_to_mem sp IMG addr with
   | Some b => Some b
-  | None => if (Z.leb (SP - stack_max_size) (bv_unsigned addr) && Z.ltb (bv_unsigned addr) SP)%bool then Some (Z_to_bv 8 0) else None
+  | None => if (Z.leb WLO (bv_unsigned addr) && Z.ltb (bv_unsigned addr) SP)%bool then Some (Z_to_bv 8 0) else None
   end.
 Proof. reflexivity. Qed.
 
@@ -207,26 +253,33 @@ Proof.
   rewrite mem0_unfold. unfold stack_to_mem. rewrite Z_to_bv64_unsigned by lia. fold SP.
   replace (SP <=? SP + Z.of_nat k) with true by (symmetry; apply Z.leb_le; lia).
   replace (SP + Z.of_nat k - SP) with (Z.of_nat k) by lia.
-  assert (Hlen : (length BSB <= length IMG)%nat) by (rewrite IMG_eq, length_app; lia).
-  replace (Z.of_nat k <? Z.of_nat (length IMG)) with true by (symmetry; apply Z.ltb_lt; lia).
-  rewrite Nat2Z.id, IMG_eq, nth_error_app1 by exact Hlt. rewrite Hk. reflexivity.
+  rewrite IMG_eq.
+  replace (Z.of_nat k <? Z.of_nat (length BSB)) with true by (symmetry; apply Z.ltb_lt; lia).
+  rewrite Nat2Z.id, Hk. reflexivity.
 Qed.
 
-Lemma mem0_below : forall a, SP - stack_max_size <= a < SP -> mem0 (Z_to_bv 64 a) = Some (Z_to_bv 8 0).
+Lemma mem0_below : forall a, WLO <= a < SP -> mem0 (Z_to_bv 64 a) = Some (Z_to_bv 8 0).
 Proof.
-  intros a Ha. pose proof SP_lo as Hlo. pose proof (u64_range sp) as Hu. rewrite mem0_unfold. unfold SP, stack_max_size, stack_to_mem in *.
+  intros a Ha. pose proof SP_lo as Hlo. pose proof (u64_range sp) as Hu. pose proof (u64_range mbase) as Hmb.
+  pose proof (stack_guard_gap_bytes_bounds (in_kernel inp)) as [Hg0 Hg1].
+  pose proof (Z.le_max_l (bv_unsigned (ed_top draw) - stack_max_size) (bv_unsigned mbase + stack_guard_gap_bytes (in_kernel inp))) as Hw.
+  (* #38 widened [stack_window_lo] to the MAXIMUM of the 8 MiB window and the
+     mmap base plus the guard gap; only the right arm bounds the window below
+     by a nonnegative address, so [Z.le_max_r] is what gives [0 <= a]. *)
+  pose proof (Z.le_max_r (bv_unsigned (ed_top draw) - stack_max_size) (bv_unsigned mbase + stack_guard_gap_bytes (in_kernel inp))) as Hwr.
+  rewrite mem0_unfold. unfold SP, WLO, stack_window_lo, stack_max_size, stack_to_mem in *.
   rewrite Z_to_bv64_unsigned by lia.
   replace (bv_unsigned sp <=? a) with false by (symmetry; apply Z.leb_gt; lia).
-  replace (bv_unsigned sp - 8 * 1024 * 1024 <=? a) with true by (symmetry; apply Z.leb_le; lia).
+  replace (Z.max (bv_unsigned (ed_top draw) - 8 * 1024 * 1024) (bv_unsigned mbase + stack_guard_gap_bytes (in_kernel inp)) <=? a) with true by (symmetry; apply Z.leb_le; lia).
   replace (a <? bv_unsigned sp) with true by (symmetry; apply Z.ltb_lt; lia). reflexivity.
 Qed.
 
-Lemma mem0_none_low : forall a, 0 <= a < SP - stack_max_size -> mem0 (Z_to_bv 64 a) = None.
+Lemma mem0_none_low : forall a, 0 <= a < WLO -> a < SP -> mem0 (Z_to_bv 64 a) = None.
 Proof.
-  intros a Ha. pose proof SP_lo as Hlo. pose proof (u64_range sp) as Hu. rewrite mem0_unfold. unfold SP, stack_max_size, stack_to_mem in *.
+  intros a Ha Hs. pose proof (u64_range sp) as Hu. rewrite mem0_unfold. unfold SP, WLO, stack_to_mem in *.
   rewrite Z_to_bv64_unsigned by lia.
   replace (bv_unsigned sp <=? a) with false by (symmetry; apply Z.leb_gt; lia).
-  replace (bv_unsigned sp - 8 * 1024 * 1024 <=? a) with false by (symmetry; apply Z.leb_gt; lia). reflexivity.
+  replace (stack_window_lo (in_kernel inp) mbase draw <=? a) with false by (symmetry; apply Z.leb_gt; lia). reflexivity.
 Qed.
 
 Lemma mem0_piece : forall pre mid post (i : nat),
@@ -285,7 +338,7 @@ Qed.
 Lemma argv_cons : exists a0 rest, argv = a0 :: rest.
 Proof.
   pose proof argc_range as H. unfold argcZ, nargc in H. clear -H.
-  destruct argv as [|a0 rest]; [cbn in H; lia | exists a0, rest; reflexivity].
+  destruct (in_argv inp) as [|a0 rest]; [cbn in H; lia | exists a0, rest; reflexivity].
 Qed.
 
 Lemma argv_ptr0 : forall a0 rest, argv = a0 :: rest -> nth 0 argv_ptrs (Z_to_bv 64 0) = str_base.
@@ -293,16 +346,23 @@ Proof.
   intros a0 rest Ha. unfold argv_ptrs. rewrite string_addrs_fst. rewrite Ha. reflexivity.
 Qed.
 
-Lemma str_base_val : bv_unsigned str_base = SP + Z.of_nat sstruct.
+Lemma LSB_eq : Z.of_nat LSB = Z.of_nat (total_nat argv) + Z.of_nat (total_nat envp) + Z.of_nat (length execfn) + 1.
+Proof. unfold LSB, launch_string_bytes. rewrite !length_flatten_strings. lia. Qed.
+
+Lemma str_base_val : bv_unsigned str_base = SP + Z.of_nat (HEAD + pad).
 Proof.
-  unfold str_base. apply nat_to_word_add. pose proof BSB_top. rewrite length_BSB in H. unfold raw_len in H. fold SP. lia.
+  pose proof geom as G. pose proof pad_eq as P. pose proof (u64_range (ed_top draw)) as UT. pose proof SP_lo.
+  unfold str_base, string_base_addr, nat_to_word, TOP in *.
+  rewrite bv_sub_unsigned, Z_to_bv_unsigned. unfold bv_wrap, bv_modulus. cbn [Z.of_N].
+  rewrite (Z.mod_small (Z.of_nat (8 + LSB))) by lia. rewrite Z.mod_small by lia. lia.
 Qed.
 
 Definition envp_off : Z := 16 + 8 * argcZ.
 
 Lemma envp_block : BSB = (word_le8 (len_word argv) ++ flat_map word_le8 argv_ptrs ++ word_le8 (Z_to_bv 64 0))
                          ++ (flat_map word_le8 envp_ptrs ++ word_le8 (Z_to_bv 64 0))
-                         ++ (AUXV ++ flatten_strings argv ++ flatten_strings envp ++ repeat (Z_to_bv 8 0) pad ++ at_random_bytes (ed_random draw)).
+                         ++ (AUXV ++ repeat (Z_to_bv 8 0) gap ++ at_random_bytes (ed_random draw) ++ repeat (Z_to_bv 8 0) pad
+                             ++ flatten_strings argv ++ flatten_strings envp ++ execfn ++ [Z_to_bv 8 0] ++ repeat (Z_to_bv 8 0) 8).
 Proof. rewrite BSB_eq. repeat rewrite app_assoc. reflexivity. Qed.
 
 Lemma envp_off_eq : Z.of_nat (length (word_le8 (len_word argv) ++ flat_map word_le8 argv_ptrs ++ word_le8 (Z_to_bv 64 0))) = envp_off.
@@ -319,10 +379,10 @@ Proof.
   intros i Hi. rewrite <- envp_off_eq. apply (mem0_piece _ envp_img _ i envp_block Hi).
 Qed.
 
-Lemma env_str_base_val : bv_unsigned env_str_base = SP + Z.of_nat sstruct + Z.of_nat (total_nat argv).
+Lemma env_str_base_val : bv_unsigned env_str_base = bv_unsigned str_base + Z.of_nat (total_nat argv).
 Proof.
-  unfold env_str_base. rewrite nat_to_word_add; rewrite str_base_val; [reflexivity|].
-  pose proof BSB_top. rewrite length_BSB in H. unfold raw_len in H. fold SP. lia.
+  pose proof geom as G. pose proof pad_eq as P. pose proof LSB_eq as L. pose proof str_base_val as S. pose proof (u64_range (ed_top draw)).
+  unfold env_str_base. apply nat_to_word_add. unfold TOP in *. lia.
 Qed.
 
 Lemma envp_ptr_val : forall k, (k < nenvc)%nat ->
@@ -339,10 +399,10 @@ Proof.
       { rewrite len_word_nat, word1_nat, nat_to_word_add_merge. rewrite nat_to_word_add; [lia|]. lia. }
       specialize (IH (base + len_word s + 1)%bv k ltac:(lia)). rewrite Hb in IH. lia. }
   intros k Hk. unfold envp_ptrs.
-  pose proof BSB_top as Htop. rewrite length_BSB in Htop. unfold raw_len in Htop.
-  pose proof env_str_base_val as Hev.
-  specialize (G envp env_str_base k Hk ltac:(rewrite Hev; fold SP; lia)). rewrite Hev in G.
-  unfold sstruct in G. lia.
+  pose proof geom as Gm. pose proof pad_eq as P. pose proof LSB_eq as L. pose proof str_base_val as S.
+  pose proof env_str_base_val as Hev. pose proof HEAD_eq as HE. pose proof (u64_range (ed_top draw)).
+  specialize (G envp env_str_base k Hk ltac:(rewrite Hev; unfold TOP in *; lia)). rewrite Hev in G.
+  unfold TOP in *. lia.
 Qed.
 
 Definition auxv_off : Z := 24 + 8 * argcZ + 8 * envcZ.
@@ -350,48 +410,51 @@ Definition auxv_off : Z := 24 + 8 * argcZ + 8 * envcZ.
 Lemma auxv_block : BSB = (word_le8 (len_word argv) ++ flat_map word_le8 argv_ptrs ++ word_le8 (Z_to_bv 64 0)
                           ++ flat_map word_le8 envp_ptrs ++ word_le8 (Z_to_bv 64 0))
                          ++ flat_map word_le8 auxws
-                         ++ (flatten_strings argv ++ flatten_strings envp ++ repeat (Z_to_bv 8 0) pad ++ at_random_bytes (ed_random draw)).
+                         ++ (repeat (Z_to_bv 8 0) gap ++ at_random_bytes (ed_random draw) ++ repeat (Z_to_bv 8 0) pad
+                             ++ flatten_strings argv ++ flatten_strings envp ++ execfn ++ [Z_to_bv 8 0] ++ repeat (Z_to_bv 8 0) 8).
 Proof. rewrite BSB_eq, AUXV_eq. repeat rewrite app_assoc. reflexivity. Qed.
 
-Lemma auxv_word : forall j, (j < 20)%nat -> word_at (SP + auxv_off + 8 * Z.of_nat j) (nth j auxws (Z_to_bv 64 0)).
+Lemma auxv_word : forall j, (j < length auxws)%nat -> word_at (SP + auxv_off + 8 * Z.of_nat j) (nth j auxws (Z_to_bv 64 0)).
 Proof.
   intros j Hj.
   replace (SP + auxv_off) with (SP + Z.of_nat (length (word_le8 (len_word argv) ++ flat_map word_le8 argv_ptrs ++ word_le8 (Z_to_bv 64 0)
                           ++ flat_map word_le8 envp_ptrs ++ word_le8 (Z_to_bv 64 0)))).
   2:{ rewrite !length_app, !length_word_le8, !length_flat_map_le8, length_argv_ptrs, length_envp_ptrs. unfold auxv_off, argcZ, envcZ. lia. }
-  eapply words_at_piece; [exact auxv_block|]. cbn. lia.
+  eapply words_at_piece; [exact auxv_block| exact Hj].
 Qed.
 
-Lemma ARND_val : bv_unsigned ARND = SP + Z.of_nat (raw_len + pad).
+Lemma ARND_val : bv_unsigned ARND = SP + Z.of_nat HEAD - 16.
 Proof.
-  rewrite ARND_eq. apply nat_to_word_add. pose proof BSB_top. rewrite length_BSB in H. fold SP. lia.
+  pose proof geom as G. pose proof HEAD_eq as HE. pose proof (u64_range (ed_top draw)).
+  (* [SP] is [bv_unsigned sp] by definition, but [lia] is syntactic on atoms:
+     [geom] speaks of [SP] and the side condition of [bv_unsigned sp], so the
+     two have to be spelled the same before [lia] sees them. *)
+  unfold ARND, at_random_ptr. fold HEAD.
+  rewrite nat_to_word_add by (unfold TOP, SP in *; lia). fold SP. lia.
 Qed.
 
-Lemma argv0_block : forall a0 rest, argv = a0 :: rest ->
+Lemma random_block :
   BSB = (word_le8 (len_word argv) ++ flat_map word_le8 argv_ptrs ++ word_le8 (Z_to_bv 64 0)
-         ++ flat_map word_le8 envp_ptrs ++ word_le8 (Z_to_bv 64 0) ++ AUXV)
-        ++ (a0 ++ [Z_to_bv 8 0])
-        ++ (flatten_strings rest ++ flatten_strings envp ++ repeat (Z_to_bv 8 0) pad ++ at_random_bytes (ed_random draw)).
-Proof.
-  intros a0 rest Ha. rewrite BSB_eq.
-  replace (flatten_strings argv) with ((a0 ++ [Z_to_bv 8 0]) ++ flatten_strings rest)
-    by (rewrite Ha; unfold flatten_strings; cbn [flat_map]; reflexivity).
-  repeat rewrite app_assoc. reflexivity.
-Qed.
+         ++ flat_map word_le8 envp_ptrs ++ word_le8 (Z_to_bv 64 0) ++ AUXV ++ repeat (Z_to_bv 8 0) gap)
+        ++ at_random_bytes (ed_random draw)
+        ++ (repeat (Z_to_bv 8 0) pad ++ flatten_strings argv ++ flatten_strings envp ++ execfn ++ [Z_to_bv 8 0] ++ repeat (Z_to_bv 8 0) 8).
+Proof. rewrite BSB_eq. repeat rewrite app_assoc. reflexivity. Qed.
 
-Lemma argv0_byte : forall a0 rest (i : nat), argv = a0 :: rest -> (i <= length a0)%nat ->
-  mem0 (Z_to_bv 64 (SP + Z.of_nat sstruct + Z.of_nat i)) = Some (nth i (a0 ++ [Z_to_bv 8 0]) (Z_to_bv 8 0)).
+Lemma random_byte : forall i : nat, (i < 16)%nat ->
+  mem0 (Z_to_bv 64 (SP + (Z.of_nat HEAD - 16) + Z.of_nat i)) = Some (nth i (at_random_bytes (ed_random draw)) (Z_to_bv 8 0)).
 Proof.
-  intros a0 rest i Ha Hi.
-  replace (SP + Z.of_nat sstruct) with (SP + Z.of_nat (length (word_le8 (len_word argv) ++ flat_map word_le8 argv_ptrs ++ word_le8 (Z_to_bv 64 0)
-         ++ flat_map word_le8 envp_ptrs ++ word_le8 (Z_to_bv 64 0) ++ AUXV))).
-  2:{ rewrite !length_app, !length_word_le8, !length_flat_map_le8, length_argv_ptrs, length_envp_ptrs, length_AUXV. unfold sstruct. lia. }
-  apply (mem0_piece _ (a0 ++ [Z_to_bv 8 0]) _ i (argv0_block a0 rest Ha)). rewrite length_app. cbn [length]. lia.
+  intros i Hi.
+  replace (SP + (Z.of_nat HEAD - 16)) with (SP + Z.of_nat (length (word_le8 (len_word argv) ++ flat_map word_le8 argv_ptrs ++ word_le8 (Z_to_bv 64 0)
+         ++ flat_map word_le8 envp_ptrs ++ word_le8 (Z_to_bv 64 0) ++ AUXV ++ repeat (Z_to_bv 8 0) gap))).
+  2:{ rewrite !length_app, !length_word_le8, !length_flat_map_le8, length_argv_ptrs, length_envp_ptrs, length_AUXV, repeat_length.
+      pose proof HEAD_eq. lia. }
+  apply (mem0_piece _ (at_random_bytes (ed_random draw)) _ i random_block). rewrite length_at_random_bytes. exact Hi.
 Qed.
 
 Lemma argv_null_block : BSB = (word_le8 (len_word argv) ++ flat_map word_le8 argv_ptrs) ++ word_le8 (Z_to_bv 64 0)
-        ++ (flat_map word_le8 envp_ptrs ++ word_le8 (Z_to_bv 64 0) ++ AUXV ++ flatten_strings argv ++ flatten_strings envp
-            ++ repeat (Z_to_bv 8 0) pad ++ at_random_bytes (ed_random draw)).
+        ++ (flat_map word_le8 envp_ptrs ++ word_le8 (Z_to_bv 64 0) ++ AUXV ++ repeat (Z_to_bv 8 0) gap
+            ++ at_random_bytes (ed_random draw) ++ repeat (Z_to_bv 8 0) pad
+            ++ flatten_strings argv ++ flatten_strings envp ++ execfn ++ [Z_to_bv 8 0] ++ repeat (Z_to_bv 8 0) 8).
 Proof. rewrite BSB_eq. repeat rewrite app_assoc. reflexivity. Qed.
 
 Lemma argv_null_word : word_at (SP + 8 + 8 * argcZ) (Z_to_bv 64 0).
@@ -399,6 +462,40 @@ Proof.
   replace (SP + 8 + 8 * argcZ) with (SP + Z.of_nat (length (word_le8 (len_word argv) ++ flat_map word_le8 argv_ptrs))).
   2:{ rewrite length_app, length_word_le8, length_flat_map_le8, length_argv_ptrs. unfold argcZ. lia. }
   exact (word_at_piece _ _ _ argv_null_block).
+Qed.
+
+(* The strings, the exec name, its NUL and the eight-byte slot: [str_base] up to the stack VMA's end. *)
+Definition strarea : list byte := flatten_strings argv ++ flatten_strings envp ++ execfn ++ [Z_to_bv 8 0] ++ repeat (Z_to_bv 8 0) 8.
+Lemma length_strarea : length strarea = (LSB + 8)%nat.
+Proof. unfold strarea, LSB, launch_string_bytes. rewrite !length_app, repeat_length. cbn [length]. lia. Qed.
+
+Lemma strarea_block :
+  BSB = (word_le8 (len_word argv) ++ flat_map word_le8 argv_ptrs ++ word_le8 (Z_to_bv 64 0)
+         ++ flat_map word_le8 envp_ptrs ++ word_le8 (Z_to_bv 64 0) ++ AUXV ++ repeat (Z_to_bv 8 0) gap
+         ++ at_random_bytes (ed_random draw) ++ repeat (Z_to_bv 8 0) pad)
+        ++ strarea ++ [].
+Proof. rewrite BSB_eq. unfold strarea. rewrite app_nil_r. repeat rewrite app_assoc. reflexivity. Qed.
+
+Lemma strarea_byte : forall i : nat, (i < length strarea)%nat ->
+  mem0 (Z_to_bv 64 (bv_unsigned str_base + Z.of_nat i)) = Some (nth i strarea (Z_to_bv 8 0)).
+Proof.
+  intros i Hi. rewrite str_base_val.
+  replace (SP + Z.of_nat (HEAD + pad)) with (SP + Z.of_nat (length (word_le8 (len_word argv) ++ flat_map word_le8 argv_ptrs ++ word_le8 (Z_to_bv 64 0)
+         ++ flat_map word_le8 envp_ptrs ++ word_le8 (Z_to_bv 64 0) ++ AUXV ++ repeat (Z_to_bv 8 0) gap
+         ++ at_random_bytes (ed_random draw) ++ repeat (Z_to_bv 8 0) pad))).
+  2:{ rewrite !length_app, !length_word_le8, !length_flat_map_le8, length_argv_ptrs, length_envp_ptrs, length_AUXV,
+        !repeat_length, length_at_random_bytes. pose proof HEAD_eq. lia. }
+  apply (mem0_piece _ strarea _ i strarea_block). exact Hi.
+Qed.
+
+Lemma argv0_byte : forall a0 rest (i : nat), argv = a0 :: rest -> (i <= length a0)%nat ->
+  mem0 (Z_to_bv 64 (bv_unsigned str_base + Z.of_nat i)) = Some (nth i (a0 ++ [Z_to_bv 8 0]) (Z_to_bv 8 0)).
+Proof.
+  intros a0 rest i Ha Hi.
+  assert (E : strarea = (a0 ++ [Z_to_bv 8 0]) ++ (flatten_strings rest ++ flatten_strings envp ++ execfn ++ [Z_to_bv 8 0] ++ repeat (Z_to_bv 8 0) 8)).
+  { unfold strarea. rewrite Ha. unfold flatten_strings at 1. cbn [flat_map]. rewrite <- app_assoc. reflexivity. }
+  rewrite strarea_byte by (rewrite E, length_app, length_app; cbn [length]; lia).
+  rewrite E. rewrite app_nth1 by (rewrite length_app; cbn [length]; lia). reflexivity.
 Qed.
 
 Lemma argv_ptr1 : forall a0 a1 rest, argv = a0 :: a1 :: rest ->
@@ -409,98 +506,12 @@ Proof.
 Qed.
 
 Lemma argv_ptr1_val : forall a0 a1 rest, argv = a0 :: a1 :: rest ->
-  bv_unsigned (nth 1 argv_ptrs (Z_to_bv 64 0)) = SP + Z.of_nat sstruct + Z.of_nat (length a0) + 1.
+  bv_unsigned (nth 1 argv_ptrs (Z_to_bv 64 0)) = bv_unsigned str_base + Z.of_nat (length a0) + 1.
 Proof.
   intros a0 a1 rest Ha. rewrite (argv_ptr1 a0 a1 rest Ha). rewrite len_word_nat, word1_nat, nat_to_word_add_merge.
-  pose proof BSB_top as HT. rewrite length_BSB in HT. unfold raw_len in HT.
+  pose proof geom as G. pose proof pad_eq as P. pose proof LSB_eq as L. pose proof str_base_val as S. pose proof (u64_range (ed_top draw)).
   assert (HA : (length a0 + 1 <= total_nat argv)%nat) by (rewrite Ha; cbn [total_nat]; lia).
-  rewrite nat_to_word_add; rewrite str_base_val; [lia|]. fold SP. lia.
-Qed.
-
-Lemma argv1_block : forall a0 a1 rest, argv = a0 :: a1 :: rest ->
-  BSB = (word_le8 (len_word argv) ++ flat_map word_le8 argv_ptrs ++ word_le8 (Z_to_bv 64 0)
-         ++ flat_map word_le8 envp_ptrs ++ word_le8 (Z_to_bv 64 0) ++ AUXV ++ (a0 ++ [Z_to_bv 8 0]))
-        ++ (a1 ++ [Z_to_bv 8 0])
-        ++ (flatten_strings rest ++ flatten_strings envp ++ repeat (Z_to_bv 8 0) pad ++ at_random_bytes (ed_random draw)).
-Proof.
-  intros a0 a1 rest Ha. rewrite BSB_eq.
-  replace (flatten_strings argv) with ((a0 ++ [Z_to_bv 8 0]) ++ (a1 ++ [Z_to_bv 8 0]) ++ flatten_strings rest)
-    by (rewrite Ha; unfold flatten_strings; cbn [flat_map]; repeat rewrite app_assoc; reflexivity).
-  repeat rewrite app_assoc. reflexivity.
-Qed.
-
-Lemma argv1_byte : forall a0 a1 rest (i : nat), argv = a0 :: a1 :: rest -> (i <= length a1)%nat ->
-  mem0 (Z_to_bv 64 (SP + Z.of_nat sstruct + Z.of_nat (length a0) + 1 + Z.of_nat i)) = Some (nth i (a1 ++ [Z_to_bv 8 0]) (Z_to_bv 8 0)).
-Proof.
-  intros a0 a1 rest i Ha Hi.
-  replace (SP + Z.of_nat sstruct + Z.of_nat (length a0) + 1) with (SP + Z.of_nat (length (word_le8 (len_word argv) ++ flat_map word_le8 argv_ptrs ++ word_le8 (Z_to_bv 64 0)
-         ++ flat_map word_le8 envp_ptrs ++ word_le8 (Z_to_bv 64 0) ++ AUXV ++ (a0 ++ [Z_to_bv 8 0])))).
-  2:{ rewrite !length_app, !length_word_le8, !length_flat_map_le8, length_argv_ptrs, length_envp_ptrs, length_AUXV. cbn [length]. unfold sstruct. lia. }
-  apply (mem0_piece _ (a1 ++ [Z_to_bv 8 0]) _ i (argv1_block a0 a1 rest Ha)). rewrite length_app. cbn [length]. lia.
-Qed.
-
-Lemma random_block :
-  BSB = (word_le8 (len_word argv) ++ flat_map word_le8 argv_ptrs ++ word_le8 (Z_to_bv 64 0)
-         ++ flat_map word_le8 envp_ptrs ++ word_le8 (Z_to_bv 64 0) ++ AUXV ++ flatten_strings argv ++ flatten_strings envp ++ repeat (Z_to_bv 8 0) pad)
-        ++ at_random_bytes (ed_random draw) ++ [].
-Proof. rewrite BSB_eq, app_nil_r. repeat rewrite app_assoc. reflexivity. Qed.
-
-Lemma random_byte : forall i : nat, (i < 16)%nat ->
-  mem0 (Z_to_bv 64 (SP + Z.of_nat (raw_len + pad) + Z.of_nat i)) = Some (nth i (at_random_bytes (ed_random draw)) (Z_to_bv 8 0)).
-Proof.
-  intros i Hi.
-  replace (SP + Z.of_nat (raw_len + pad)) with (SP + Z.of_nat (length (word_le8 (len_word argv) ++ flat_map word_le8 argv_ptrs ++ word_le8 (Z_to_bv 64 0)
-         ++ flat_map word_le8 envp_ptrs ++ word_le8 (Z_to_bv 64 0) ++ AUXV ++ flatten_strings argv ++ flatten_strings envp ++ repeat (Z_to_bv 8 0) pad))).
-  2:{ rewrite !length_app, !length_word_le8, !length_flat_map_le8, length_argv_ptrs, length_envp_ptrs, length_AUXV, !length_flatten_strings, repeat_length.
-      unfold raw_len, sstruct. lia. }
-  apply (mem0_piece _ (at_random_bytes (ed_random draw)) [] i random_block). rewrite length_at_random_bytes. exact Hi.
-Qed.
-
-Lemma ARND_aligned : bv_unsigned ARND mod 8 = 0 <-> SP mod 8 = 0.
-Proof.
-  rewrite ARND_val. unfold pad. set (r := Z.of_nat raw_len).
-  pose proof (Z.mod_pos_bound r 8 ltac:(lia)) as Hr. pose proof (Z.div_mod r 8 ltac:(lia)) as Hd.
-  assert (Hq : exists q, Z.of_nat (raw_len + Z.to_nat ((8 - r mod 8) mod 8)) = 8 * q).
-  { destruct (Z.eq_dec (r mod 8) 0) as [E|E].
-    - exists (r / 8). rewrite E. change ((8 - 0) mod 8) with 0. rewrite Nat.add_0_r. lia.
-    - exists (r / 8 + 1). rewrite (Z.mod_small (8 - r mod 8)) by lia. rewrite Nat2Z.inj_add, Z2Nat.id by lia. lia. }
-  destruct Hq as [q Hq]. rewrite Hq. replace (SP + 8 * q) with (SP + q * 8) by lia. rewrite Z_mod_plus_full. reflexivity.
-Qed.
-
-Definition strarea : list byte := flatten_strings argv ++ flatten_strings envp ++ repeat (Z_to_bv 8 0) pad.
-Lemma length_strarea : length strarea = (total_nat argv + total_nat envp + pad)%nat.
-Proof. unfold strarea. rewrite !length_app, !length_flatten_strings, repeat_length. lia. Qed.
-Lemma strarea_block :
-  BSB = (word_le8 (len_word argv) ++ flat_map word_le8 argv_ptrs ++ word_le8 (Z_to_bv 64 0)
-         ++ flat_map word_le8 envp_ptrs ++ word_le8 (Z_to_bv 64 0) ++ AUXV)
-        ++ strarea ++ at_random_bytes (ed_random draw).
-Proof. rewrite BSB_eq. unfold strarea. repeat rewrite app_assoc. reflexivity. Qed.
-Lemma strarea_byte : forall i : nat, (i < length strarea)%nat ->
-  mem0 (Z_to_bv 64 (SP + Z.of_nat sstruct + Z.of_nat i)) = Some (nth i strarea (Z_to_bv 8 0)).
-Proof.
-  intros i Hi.
-  replace (SP + Z.of_nat sstruct) with (SP + Z.of_nat (length (word_le8 (len_word argv) ++ flat_map word_le8 argv_ptrs ++ word_le8 (Z_to_bv 64 0)
-         ++ flat_map word_le8 envp_ptrs ++ word_le8 (Z_to_bv 64 0) ++ AUXV))).
-  2:{ rewrite !length_app, !length_word_le8, !length_flat_map_le8, length_argv_ptrs, length_envp_ptrs, length_AUXV. unfold sstruct. lia. }
-  apply (mem0_piece _ strarea _ i strarea_block). exact Hi.
-Qed.
-Lemma strarea_len8 : Z.of_nat (length strarea) mod 8 = 0.
-Proof.
-  rewrite length_strarea. unfold pad, raw_len, sstruct.
-  set (t := (total_nat argv + total_nat envp)%nat).
-  set (r := (8 + (nargc + 1) * 8 + (nenvc + 1) * 8 + 160 + total_nat argv + total_nat envp)%nat).
-  assert (Er : Z.of_nat r = Z.of_nat t + 8 * (Z.of_nat nargc + Z.of_nat nenvc + 23)) by (subst r t; lia).
-  pose proof (Z.mod_pos_bound (Z.of_nat r) 8 ltac:(lia)) as H1.
-  pose proof (Z.mod_pos_bound (8 - Z.of_nat r mod 8) 8 ltac:(lia)) as H2.
-  rewrite Nat2Z.inj_add, Z2Nat.id by lia.
-  assert (M : Z.of_nat r mod 8 = Z.of_nat t mod 8).
-  { rewrite Er. replace (Z.of_nat t + 8 * (Z.of_nat nargc + Z.of_nat nenvc + 23)) with (Z.of_nat t + (Z.of_nat nargc + Z.of_nat nenvc + 23) * 8) by lia.
-    apply Z.mod_add. lia. }
-  rewrite M in *. pose proof (Z.div_mod (Z.of_nat t) 8 ltac:(lia)) as D.
-  destruct (Z.eq_dec (Z.of_nat t mod 8) 0) as [Z0|NZ].
-  - rewrite Z0. change ((8 - 0) mod 8) with 0. rewrite Z.add_0_r. rewrite Z0 in D. replace (Z.of_nat t) with (8 * (Z.of_nat t / 8)) by lia. rewrite Z.mul_comm. apply Z_mod_mult.
-  - rewrite (Z.mod_small (8 - Z.of_nat t mod 8)) by lia.
-    replace (Z.of_nat t + (8 - Z.of_nat t mod 8)) with ((Z.of_nat t / 8 + 1) * 8) by lia. apply Z_mod_mult.
+  rewrite nat_to_word_add; [lia|]. unfold TOP in *. lia.
 Qed.
 
 End Entry.

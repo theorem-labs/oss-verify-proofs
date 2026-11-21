@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-11: whole copy of projects/jsoncons/fuzz_ubjson_parser_max/proofs/lib/Common/MustExitBudget.v at c395a1e0dfa, with OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib renamed to OSSVerify.Proofs.jsoncons.fuzz_bigint.lib and its Common.MustExit* requires renamed to Corpus.Corpus*. *)
+(* Modified by Theorem Labs, 2026-11: whole copy of projects/jsoncons/fuzz_ubjson_parser_max/proofs/lib/Common/MustExitBudget.v at theorem-labs/oss-verify-proofs@c5665593c2d8, with OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib renamed to OSSVerify.Proofs.jsoncons.fuzz_bigint.lib and its Common.MustExit* requires renamed to Corpus.Corpus*. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the budget transfer reads the run over run_segments, the image with the vDSO and vvar pages, as Common/BudgetBridge.v does, with a comment of this file's own on that in the proof of must_exit_in_scfg_budget_transfer, and the cited source commit is named by its public id. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs Run RiscvSemantics MemImageType StackLayout.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit.
@@ -52,13 +53,20 @@ must_exit_in_scfg cfg S img L2 en inp ->
 must_exit_in_scfg cfg S img L1 en inp.
 Proof.
 intros cfg S [segs pc ph] L1 L2 [sp brk0 mbase rnd] inp Hle Hme Hnr.
-unfold must_exit_in_scfg, run_scfg_budget_refused in *.
-set (c0 := init_config segs pc ph sp brk0 mbase rnd L1 inp) in *.
-assert (Hn : nref segs cfg c0).
+unfold must_exit_in_scfg, run_scfg_budget_refused in *. cbv zeta in *.
+(* [08b1429:theories/EquivalenceDefinition/MustExit.v:1310],
+   [c0dd863a:theories/LinuxProcessSem/Run.v:3129]: must_exit_in_scfg and
+   run_scfg_budget_refused both run over [run_segments segs inp sp mbase] (the
+   image plus the vDSO and vvar pages), not over [segs].  Every lemma of
+   Section Transfer above is stated over an arbitrary segment list, so it is
+   used at that list.  Same edit as Common/BudgetBridge.v's. *)
+set (vsegs := run_segments segs inp sp mbase) in *.
+set (c0 := init_config vsegs pc ph sp brk0 mbase rnd L1 inp) in *.
+assert (Hn : nref vsegs cfg c0).
 { intros tr c Hst Hb. apply Hnr. exists tr, c. split; assumption. }
-pose proof (init_config_okl segs pc ph sp brk0 mbase rnd L1 L2 inp Hle) as Hl. fold c0 in Hl.
-rewrite (init_config_setlim segs pc ph sp brk0 mbase rnd L1 L2 inp) in Hme. fold c0 in Hme.
-exact (must_exit_in_at_cfg_budget_transfer segs cfg L2 S _ Hme c0 eq_refl Hn Hl).
+pose proof (init_config_okl vsegs pc ph sp brk0 mbase rnd L1 L2 inp Hle) as Hl. fold c0 in Hl.
+rewrite (init_config_setlim vsegs pc ph sp brk0 mbase rnd L1 L2 inp) in Hme. fold c0 in Hme.
+exact (must_exit_in_at_cfg_budget_transfer vsegs cfg L2 S _ Hme c0 eq_refl Hn Hl).
 Qed.
 Corollary must_exit_in_scfg_of_larger_budget : forall cfg S img L1 L2 en inp,
 L1 <= L2 ->

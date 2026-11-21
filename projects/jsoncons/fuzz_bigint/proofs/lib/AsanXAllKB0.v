@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, asan_X_ALL takes the full launch input that AsanInitK's start state reads with its launch facts (valid_launch, entry_launch_ok_va) and the run's CONFIG_RSEQ flag (rz). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -21,21 +22,54 @@ Variable scfg : SpuriousCfg.
   Variable rdraw : EntryDraw.
   Variables argv envp : list (list byte).
   Variables uid hw : word.
+  Variable rz : Z.              (* [comment removed for export] *)
   Variable fs : Fs.Fs.
+  (* [AsanInitK]'s [Section Init] is parameterised by the full
+     [State.mkProcInput_full] field list, so [SINV0]/[argH0] discharge all
+     sixteen of [AsanInitK.inp]'s arguments plus [mbase] and [apc].  Same block
+     as [HandoffBridgeK.v:614-624]. *)
+  Variable mbase : word.
+  Variable stdin : InputStream.
+  Variable gid : word.
+  Variable groups : list word.
+  Variable net : NetQueue.
+  Variables nofile sigmask : word.
+  Variables abrt sdf : bool.
+  Variable ur : InputStream.
+  Variable kb : KernelBuild.
+  Variable execfn : list byte.
+  Variable apc : N.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
 
-  #[local] Notation SINV := (SINV0 APH0 sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 APH0 sp rdraw argv envp uid hw).
+  #[local] Notation INP :=
+    (AsanInitK.inp argv envp fs stdin uid gid hw groups net nofile sigmask abrt sdf ur kb execfn).
+  (* [Run.valid_input]'s exec-name conjunct and [Run.valid_entry]'s launch
+     conjunct: [AsanNodesStartXAsanKB0]'s two scan nodes read the stack image
+     the launch wrote, so they are premises here too. *)
+  Hypothesis Hlaunch : valid_launch INP.
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) INP.
+  (* [rz] stays this Section's free variable -- [SumsAsanCloseKB0]'s providers
+     are uniform in it -- but [XPnScan] reads [e_str0 rz], so for the scan nodes
+     it must be the flag the run's own kernel build carries.  This equation is
+     what a caller discharges with [eq_refl]; it is not a restriction a proof
+     could avoid, since a wrong flag puts the strings at the wrong address. *)
+  Hypothesis Hrz : rz = rseq_z (kb_rseq (in_kernel INP)).
 
-  Theorem asan_X_ALL : forall x, x_stmt ASEGS0 scfg ASAN0 NX0 AsanInitK.LIMIT SINV argH fs x.
+  #[local] Notation SINV :=
+    (SINV0 APH0 sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abrt sdf ur kb execfn apc).
+  #[local] Notation argH :=
+    (argH0 sp rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt sdf ur kb execfn).
+
+  Theorem asan_X_ALL : forall x, x_stmt ASEGS0 scfg ASAN0 NX0 AsanInitK.LIMIT rz SINV argH fs x.
   Proof.
-    pose proof (argH0_high APH0 sp rdraw argv envp uid hw Hsp Hva) as AH.
-    pose proof (argH0_agree APH0 sp rdraw argv envp uid hw) as AA.
-    pose proof (SINV0_frame APH0 sp rdraw brk0 argv envp uid hw) as SF.
-    pose proof (SINV0_agree APH0 sp rdraw brk0 argv envp uid hw) as SA.
+    rewrite Hrz.
+    pose proof (argH0_high sp rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt sdf ur kb execfn apc Hsp Hva) as AH.
+    pose proof (argH0_agree sp rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt sdf ur kb execfn) as AA.
+    pose proof (SINV0_frame APH0 sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abrt sdf ur kb execfn apc) as SF.
+    pose proof (SINV0_agree APH0 sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abrt sdf ur kb execfn apc) as SA.
     pose proof e_sp0_init as EI.
     intros [ | | | | | | | | | | ].
     - eapply asan_node_x_sound_XIMemset; eassumption.

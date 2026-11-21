@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Copyright 2026 Theorem Labs *)
 (* New for reac-repacer/fuzz_wire: the cut-free (SRcf) base of the UBSan image's agree chain, as
-   libreac/fuzz_decode's released lib/U/Prog/LLVMFuzzerTestOneInput_cfb.v (25e3d17bdb5) and reac-repacer/fuzz_uci's
-   (ddb6d58bbed): the SRcf twins of the run lemmas the U walks use (llvm_run_norm, llvm_run, kb_run), the agree room
+   libreac/fuzz_decode's released lib/U/Prog/LLVMFuzzerTestOneInput_cfb.v and reac-repacer/fuzz_uci's:
+   the SRcf twins of the run lemmas the U walks use (llvm_run_norm, llvm_run, kb_run), the agree room
    (room_ag: CAP_AG slots, 2^29 bytes), malloc's contract at that room (malloc_contract_ag, from the kit's
    malloc_contract_cf), and the cg / cf harness contracts. The UBSan image has no symbol named `calloc` (musl's __libc_calloc is linked), and fuzz_wire has no fd_* segments, so
    decode's calloc_contract_ag, its fd_env case of segs_tac and the run lemmas the U walks never call

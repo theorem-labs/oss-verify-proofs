@@ -5,17 +5,18 @@
    (proofs/cgif/cgif_file_fuzzer/lib/YD1y.v, YE22.v, YD29.v, as copied in lib/Reusable) with cgif's AR replaced by ARcf
    at any hidden-head set Hp, cgif's AR_laws by a Theorem Labs lane's AR_laws_cf (lib/Reusable/YG0dcf.v, used by FIELD NAME)
    and cgif's acall_post by acall_post_cf; the names are the donor's plus `_cf`:
-     drv_not_owned_cf          YD1y.v:75     AR_after_run_cf       YD1y.v:101
-     canary_got_kept_cf        YE22.v:38     drv_regions_kept_cf   YD1y.v:222
-     drv_window_after_call_cf  YD1y.v:290    drv_after_call_cf     YD1y.v:309
+     drv_not_owned_cf          YD1y.v:76     AR_after_run_cf       YD1y.v:102
+     canary_got_kept_cf        YE22.v:39     drv_regions_kept_cf   YD1y.v:223
+     drv_window_after_call_cf  YD1y.v:291    drv_after_call_cf     YD1y.v:310
    The AR-free lemmas of those files (in_wrange_drv, region_ok_kept_chunks, ...) are used as they stand.
    This file needs no file that imports lib/Reusable/YD2h.v (its closure ends at YD1y / YE22); so_not_owned_cf
    (YD29.v:57), whose STDOUT_MUT is lib/Reusable/YD1w.v's over YD2f's bounds, is in lib/AU/PresetD1rBso.v.
    Nothing in this file is a proof of a function (rule 24: the driver layer of a port). Its asan twin is lib/A/PresetD1rAx.v.
    NOT YET COMPILABLE: it imports lib/Reusable's B driver closure, which carries cgif_file_fuzzer's asan-ubsan
-   addresses until a Theorem Labs lane's B relocation (relocB) lands (lib/Reusable/YE20.v:507, YE34.v:39, YF0x.v:35, YCeg.v:60,
-   YB13.v:24, YB1h.v:37 fail on FACTS 0b89c6c1bd). The text is lib/A's twin with the B modules; names and argument
+   addresses until a Theorem Labs lane's B relocation (relocB) lands (lib/Reusable/YE20.v:507, YE34.v:39, YF0x.v:35, YCeg.v:61,
+   YB13.v:25, YB1h.v:38 fail on FACTS). The text is lib/A's twin with the B modules; names and argument
    orders are final. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

@@ -2,7 +2,7 @@
    (the m_file cut-statement lane's ruling): one model step never shrinks seg or kept and keeps the cursor inside seg, and so the
    kept list of any state on the way is no longer than the final model's, the premise of the shared m_refuse step
    (lib/A/Prog/m_file_rf.v mf_refuse_step). Build-independent: SegModel and m_file_m.v's model terms only.
-   Restated from the plain / image-B owner's plain proof lib/Prog/mfu_facts.v:112-222 at commit dec616e11c2f (a
+   Restated from the plain / image-B owner's plain proof lib/Prog/mfu_facts.v:112-222 (a
    file outside this tree): upd_nth_length, m_find_go_lt, m_find_lt, m_refuse_sizes, mf_grows (+ refl / trans),
    m_refuse_grows, m_upd_sizes, m_upd_grows, m_header_ok, m_key_grows, m_key_seg_len, m_line_ok, m_lines_ok;
    mf_cur_ok is m_file_m.v's (the same text as mfu_facts.v:109-110). mf_cur_ok_refuse, mf_kept_le_final and

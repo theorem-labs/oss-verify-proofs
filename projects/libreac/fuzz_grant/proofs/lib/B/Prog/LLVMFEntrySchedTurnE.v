@@ -3,9 +3,10 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntrySchedTurnCr), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AF0s.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_grant/lib/A/Prog/GrantEntrySchedTurnCr.v, with its module paths, module names and numbers changed; 439 of its 538 lines of code are new or changed and 248 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The image-B (UBSan) walk of the frame-loop turn's segment E,
    over image B's own addresses, registers, spill slots and UBSan guards; the shape is image A's.
-   Ported from proofs/libreac/fuzz_grant/lib/A/Prog/GrantEntrySchedTurnE.v at e6bd82f51c9. *)
+   Ported from proofs/libreac/fuzz_grant/lib/A/Prog/GrantEntrySchedTurnE.v. *)
 (* The frame-loop turn of LLVMFuzzerTestOneInput (0x80a3c) on the ASan+UBSan build, segment E:
    0x81c48 (GP_scn: want_of has agreed with the value) .. 0x81d5c (GP_end, the cut TF)
    (LLVMFEntrySchedTurnDefs.v). The stretch reads was_set[3c+p] twice, checks the scheduler's scene

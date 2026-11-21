@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the write-certified stack window). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -80,7 +81,12 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma hi_usp : (sp0 - USP_OFF) mod 16 = 0 /\ sp0 - USP_OFF < sp0 + 8 /\ sp0 - STACK_WIN + 0x100000 <= sp0 - USP_OFF
+(* OLD: ... /\ sp0 - STACK_WIN + 0x100000 <= sp0 - USP_OFF /\ ...
+   NEW: the headroom is measured from the write-certified floor, because that is the
+   floor START's [stk] conjunct now starts at and a bound against the mapping floor no
+   longer supplies what its consumer reads it for.  Comfortably true: USP_OFF = 48 and
+   0x100000 + 48 = 1048624 <= STACK_WOK = 6144513. *)
+Lemma hi_usp : (sp0 - USP_OFF) mod 16 = 0 /\ sp0 - USP_OFF < sp0 + 8 /\ sp0 - STACK_WOK + 0x100000 <= sp0 - USP_OFF
                /\ sp0 - USP_OFF <= sp0 /\ 0x7fff80000000 <= sp0.
 Proof.
   destruct hi_sp0 as [Hsp [Hlo Hhi]]. unfold sp_window_lo, sp_window_hi in *.
@@ -89,7 +95,11 @@ Proof.
   destruct (ealign_sound SEGS E _ (kn ch) e_sp0 HK) as [EA ED].
   assert (D4 : (2 ^ 4 | 2 ^ ealign (kn ch) e_sp0)) by (exists (2 ^ (ealign (kn ch) e_sp0 - 4)); rewrite <- Z.pow_add_r by lia; f_equal; lia).
   destruct (Z.divide_trans _ _ _ D4 ED) as [q Hq]. fold (uE E e_sp0) in Hq. rewrite <- Hsp in Hq.
-  unfold USP_OFF, STACK_WIN. change (2 ^ 4) with 16 in Hq.
+  (* STACK_WOK is [STACK_WIN - StoreOk.stack_window_reach] and StoreOk is not Imported
+     here, so [unfold] has no name for the reach; conversion does, and this equation is
+     all [lia] needs. *)
+  assert (WOKV : STACK_WOK = 6144513) by reflexivity.
+  unfold USP_OFF. change (2 ^ 4) with 16 in Hq.
   split; [rewrite Hq; replace (q * 16 - 48) with ((q - 3) * 16) by lia; apply Z.mod_mul; lia|]. lia.
 Qed.
 
@@ -244,7 +254,14 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Definition hs_stk_ok (ch : acs) : bool := kwr_cover (kn ch) e_sp0 (-8388608) (- USP_OFF) (S (length (kn ch))).
+(* The window this checks is the one the plan actually WRITES: the only stack KWr in the
+   model's plan is [KWr (SA e_sp0 (-6144513)) (ELit 6144513)] (Common/AsanInit.v:1028,
+   Common/AsanPlanCore.v:4466), and 6144513 is STACK_WOK.  Asking for coverage from
+   -8388608, the MAPPING floor, made this boolean FALSE for the real plan, so [hi_stk]
+   below was vacuous rather than wrong; at the write-certified floor it is a real check
+   that the plan passes.  Spelled as the literal, as the old line was, to match the
+   plan's own literal. *)
+Definition hs_stk_ok (ch : acs) : bool := kwr_cover (kn ch) e_sp0 (-6144513) (- USP_OFF) (S (length (kn ch))).
 
 Lemma rdn1_mrd : forall segs m a b, L_rdn segs m a 1 = Some [b] -> mrd segs m a = Some b.
 Proof.
@@ -286,7 +303,11 @@ Proof.
   change (Z.of_nat 0) with 0 in W. rewrite Z.add_0_r in W. exact W.
 Qed.
 
-Theorem hi_stk : hs_stk_ok ch = true -> stk SEGS (mH FULL model A') (sp0 - 8388608) (sp0 - USP_OFF).
+(* OLD: ... -> stk SEGS (mH FULL model A') (sp0 - 8388608) (sp0 - USP_OFF).
+   NEW: the floor the derivation below actually justifies.  Every address is carried by
+   kwr_cover_sound -> hi_wr_byte -> hk_kentry, i.e. by a KWr of the plan, and the plan's
+   only stack KWr covers [sp0 - 6144513, sp0).  The proof is unchanged. *)
+Theorem hi_stk : hs_stk_ok ch = true -> stk SEGS (mH FULL model A') (sp0 - 6144513) (sp0 - USP_OFF).
 Proof.
   intros H. destruct (APS.co_isp _ _ _ _ _ _ _ _ _ _ _ _ HC) as [I1 I2]. destruct HISP as [Hlo Hhi]. rewrite <- I1 in Hlo, Hhi.
   assert (Hsp : sp0 = APS.uE E e_sp0) by (change e_sp0 with e_spw; rewrite I1, I2; reflexivity).

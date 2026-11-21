@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise on fd 1 in M_loop (fd1chan); growable's limit check on the page-rounded growth of the break, as the model's brk). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Equivalence OmniEquivalence.
@@ -22,10 +23,10 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope bv_scope.
 
 Definition M_loop (model : Model) : Prop :=
-fd_lookup (m_fds model) (Z_to_bv 64 0) = Some (FdChannel (Z_to_bv 64 0)) /\
-fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)) /\
-m_halted model = None /\
-m_vm_lazy model = [].
+  fd_lookup (m_fds model) (Z_to_bv 64 0) = Some (FdChannel (Z_to_bv 64 0)) /\
+  fd1chan model /\
+  m_halted model = None /\
+  m_vm_lazy model = [].
 
 Fixpoint wseg_ok (segs : list Segment) (a : word) (n : nat) : bool :=
 match n with
@@ -181,20 +182,21 @@ Definition brk_model (req r : word) (m : Model) : Model :=
 with_brk_next m req r.
 
 Definition growable (reserved : list (word * word)) (lim top : Z) (t r : word)
-: Prop :=
-r <> Z_to_bv 64 0 /\ (bv_unsigned r + bv_unsigned t < 2 ^ 64)%Z /\
-(t = Z_to_bv 64 0 \/
-(((if (page_round_up_Z (bv_unsigned r)
-<? page_round_up_Z (bv_unsigned r + bv_unsigned t))%Z
-then (page_round_up_Z (bv_unsigned r + bv_unsigned t)
-<=? top)%Z
-&& region_free reserved
-(Z_to_bv 64 (page_round_up_Z (bv_unsigned r)))
-(Z_to_bv 64 (page_round_up_Z
-(bv_unsigned r + bv_unsigned t)
-+ page_size - page_round_up_Z (bv_unsigned r)))
-else true)
-&& (bv_unsigned t <=? lim)%Z)%bool = true)).
+    : Prop :=
+  r <> Z_to_bv 64 0 /\ (bv_unsigned r + bv_unsigned t < 2 ^ 64)%Z /\
+  (t = Z_to_bv 64 0 \/
+   (((if (page_round_up_Z (bv_unsigned r)
+          <? page_round_up_Z (bv_unsigned r + bv_unsigned t))%Z
+      then (page_round_up_Z (bv_unsigned r + bv_unsigned t)
+            <=? top)%Z
+           && region_free reserved
+                (Z_to_bv 64 (page_round_up_Z (bv_unsigned r)))
+                (Z_to_bv 64 (page_round_up_Z
+                               (bv_unsigned r + bv_unsigned t)
+                              + page_size - page_round_up_Z (bv_unsigned r)))
+      else true)
+     && (Z.max 0 (page_round_up_Z (bv_unsigned r + bv_unsigned t)
+                  - page_round_up_Z (bv_unsigned r)) <=? lim)%Z)%bool = true)).
 
 Definition T1 (reserved : list (word * word)) (lim top : Z) (t : word)
 (bufs : list (list byte))

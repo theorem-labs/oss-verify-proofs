@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: IMAGE-B segment KEY of fuzz_reply's relay_instance_gone: the block and representation lemmas (prefixes rk_ /
    rkr_: entry i as KEY reads it, the relay after the end-and-move, strncmp's view of a key and the prefix), ported
-   from k3's image-A lib/A/W_rig_key.v (a working branch 8cfff43c147).  Proves no function (kind:
+   from k3's image-A lib/A/W_rig_key.v (a working branch).  Proves no function (kind:
    segment lemma). *)
 (* Modified by Theorem Labs, 2026-10: ROUTE (b), STEP 3 (CONVERSION.md (sha256 1015972e02a9; internal record)), the RIGX round on
    image B: the block and representation lemmas over any allocator relation ARx with its laws, against the cx file's
@@ -10,6 +10,7 @@
    (lib/A/W_rig_key.v).  Every ARx state these lemmas read has the empty head set (HP0), so they state their facts at
    ARh (= ARx at []) through Local wrappers of the laws in the AR argument order (the image-A twin's rk_alb / rk_als /
    rk_alc / rk_boi).  rk_wr_blk's write window is the walk's journal budget, the kit's RIG_STK_x (= RIG_STK + 128). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -180,7 +181,7 @@ Hypothesis PSTG : forall a,
 
 #[local] Set Default Proof Using "All".
 
-(* ==== the generic relation at the empty head set (the image-A twin's lib/A/W_rig_key.v:236-280; Local here, as every
+(* ==== the generic relation at the empty head set (the image-A twin's lib/A/W_rig_key.v:237-281; Local here, as every
    key file that needs them defines its own) ==== *)
 (* HP0: every ARx state these lemmas read has the head set [], so they state their facts at ARh (= ARx at []).  rk_alb
    is AR_blocks_law's seven conjuncts (alx_blocks' six and BLKN), in the AR walk's argument order. *)
@@ -1122,7 +1123,7 @@ Hypothesis GE_R : ge_spec_xR B PST ARx R MT RP MMAX RG (BASE + AF_fr_gesture_end
 (* every lemma below takes the Section's hypotheses except the strict AFREE / DRAIN / GE / ALLOC_TAIL and R_refl /
    DRAIN_R (KEY needs none of them), so no route-R statement here carries a strict allocator rule *)
 #[local] Set Default Proof Using "-(AFREE DRAIN GE ALLOC_TAIL R_refl DRAIN_R)".
-(* ==== the generic relation at the empty head set (the image-A twin's lib/A/W_rig_key.v:236-280; Local here, as every
+(* ==== the generic relation at the empty head set (the image-A twin's lib/A/W_rig_key.v:237-281; Local here, as every
    key file that needs them defines its own) ==== *)
 (* HP0: every ARx state these lemmas read has the head set [], so they state their facts at ARh (= ARx at []).  rk_alb_xR
    is AR_blocks_law's seven conjuncts (alx_blocks' six and BLKN), in the AR walk's argument order. *)

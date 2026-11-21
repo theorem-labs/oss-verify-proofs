@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput; the launch premises valid_launch and entry_launch_ok_va; the channel-reader premise of writev). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -28,24 +29,32 @@ Import ListNotations.
 Open Scope Z_scope.
 
 Section UCc.
-Variable sp0 : word.
-Variables av ev : list (list byte).
-Variables uid tid hw : word.
+(* LPS 08b1429: the section takes the launch ([inp], [mbase], [entry], [brk]) instead of
+   argv/envp/uid/hwcap, as PDrvMain's Handoff and POpenCert's Handoff2 sections do. *)
+Variable inp : ProcInput.
+Variables mbase entry : word.
+Variables sp0 brk : word.
+Variable tid : word.
 Variable rdraw : EntryDraw.
 Variable regs : bvmap 5 word.
 Variable mem : word -> option byte.
+Local Notation av := (in_argv inp) (only parsing).
+Local Notation ev := (in_envp inp) (only parsing).
 Hypothesis Hsp : valid_sp sp0.
 Hypothesis Hva : valid_argv av.
 Hypothesis Hve : valid_envp ev.
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp0 brk mbase rdraw) inp.
 Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-Hypothesis ME : main_entry sp0 av ev uid tid hw rdraw regs mem.
+Hypothesis ME : main_entry inp mbase entry sp0 rdraw tid regs mem.
 Hypothesis Hargc2 : length av = 2%nat.
 Variable model : Model.
 Hypothesis Hh : m_halted model = None.
 Hypothesis Hl : m_vm_lazy model = [].
 Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+Hypothesis Hrd2 : m_channel_reader model = true.
 
-Let E := E_main sp0 av ev tid (canary rdraw) regs.
+Let E := E_main inp sp0 (ed_top rdraw) tid (canary rdraw) regs.
 
 #[using="Hsp"] Lemma SL2 : 0x7fff80000000 <= bv_unsigned sp0. Proof. LiaFast.lf_pins (fun (Hsp : LiaFast.U) => LiaFast.u0). exact (sp0_lo sp0 Hsp). Qed.
 #[using="Hsp"] Lemma SH2 : bv_unsigned sp0 <= 0x800000000000. Proof. LiaFast.lf_pins (fun (Hsp : LiaFast.U) => LiaFast.u0). exact (sp0_hi sp0 Hsp). Qed.
@@ -81,10 +90,10 @@ Qed.
 #[using="Hargc2"] Lemma agree_next : forall E1 E2 (L : sst), agree 200 E E1 -> (200 <= s_next L)%positive -> agree (s_next L) E1 E2 -> agree 200 E E2.
 Proof. LiaFast.lf_pins (fun (Hargc2 : LiaFast.U) => LiaFast.u0). intros E1 E2 L H1 Hn H2 x Hx. rewrite (H1 x Hx). apply H2. lia. Qed.
 
-#[using="uid hw Hsp Hva Hve Htid ME Hargc2 Hh Hl Hfd2"] Theorem cant_Cb : forall E1 ms1, agree 200 E E1 -> sden PSEGS E1 U4bc ms1 -> ms_rom ms1 = seg_rom PSEGS ->
+#[using="mbase entry brk Hsp Hva Hve Hvl Hlau Htid ME Hargc2 Hh Hl Hfd2 Hrd2"] Theorem cant_Cb : forall E1 ms1, agree 200 E E1 -> sden PSEGS E1 U4bc ms1 -> ms_rom ms1 = seg_rom PSEGS ->
   (forall x, outside E (s_rgs P_main2) x -> ms_mem ms1 x = mem x) ->
   realizes PSEGS (mkCfg ms1 model) (t_emit (W 2 SUFc) (TEXIT model)).
-Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve Htid ME Hargc2 Hh Hl Hfd2 : LiaFast.U) => LiaFast.u0).
+Proof. LiaFast.lf_pins (fun (mbase entry brk Hsp Hva Hve Hvl Hlau Htid ME Hargc2 Hh Hl Hfd2 Hrd2 : LiaFast.U) => LiaFast.u0).
   intros E1 ms1 Ha1 Hd1 Hrom1 Hmf1. pose proof SL2 as SL. pose proof SH2 as SH.
   apply (rzc_fx_explore_frame PSEGS DCFG TBL_P IMG_P 4000 S1 U4bc LCbc E1 ms1 model _ TBL_P_ok IMG_P_ok certCbc Hd1
            ltac:(vm_compute; reflexivity) Hh Hl).
@@ -153,6 +162,7 @@ Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve Htid ME Hargc2 Hh Hl Hfd2 : LiaF
   + exact SSP.
   + exact F48.
   + exact Hfd2.
+  + exact Hrd2.
   + exact Hh.
   + exact Hl.
   + unfold TASK_SIZE. lia.
@@ -190,7 +200,7 @@ Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve Htid ME Hargc2 Hh Hl Hfd2 : LiaF
     * unfold SP0. rewrite lden_lvar, HE3 by lia. reflexivity.
     * unfold T. rewrite lden_lvar, HE3 by lia. reflexivity.
     * lia.
-    * exact (exit_glob_of_MF2 sp0 av ev uid tid hw rdraw regs mem Hsp Hva Hve Htid ME Hargc2 (ms_mem ms3) MF4).
+    * exact (exit_glob_of_MF2 inp mbase entry sp0 brk tid rdraw regs mem Hsp Hva Hve Hvl Hlau Htid ME Hargc2 (ms_mem ms3) MF4).
     * exact Hh.
     * exact Hl.
     * vm_compute. reflexivity.

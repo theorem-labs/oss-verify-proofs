@@ -5,7 +5,8 @@
    istrlen_spec, R_small.v / I_ikit.v (the init gate) and I_consts.v rip_stmt. No other pinned binary has this code
    (EvBound), so it is written new, in the form of I_strlen.v / I_strlenw.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/Bz/A/I_strrchr.v, with its module paths, addresses and numbers changed; 261 of its 397 lines of code are new or changed and 235 lines of the source are left out. *)
-(* Ported by RtStr from cold/c-asan-rt-fmio-n affce6489c8 proofs/omx-clap-core/fuzz_manifest/lib/A/Bz/A/I_strchrw.v, unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Ported by RtStr from proofs/omx-clap-core/fuzz_manifest/lib/A/Bz/A/I_strchrw.v, unchanged. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.A.Bz Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

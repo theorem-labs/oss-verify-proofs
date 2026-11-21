@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the ASan walk of sup_connect (plugin-hostd/fuzz_command, 0x8ad20, 160
    instructions), in the form of cgif_file_fuzzer's cgif_close walk (lib/A/ACh1.v..ACh8.v, AChc.v, instantiated
-   in A/ACke.v at c8557374ad2e): the walk's parts, each proved over a stated state, composed here.
+   in A/ACke.v at theorem-labs/oss-verify-proofs@6b32741d849a): the walk's parts, each proved over a stated state, composed here.
      - sup_connect_s3.v `scn_seg_a`: the entry 0x8ad20 to record()'s join 0x8adac (both arms; the spill arm
        through rec_calls_free);
      - sup_connect_s7.v `scn_seg_b`: the join 0x8adac (the stores c->fn, c->nargs) and the verb's null check
@@ -19,6 +19,7 @@
    contracts at every FP state), with the two ports left as the walk sees them (`option (list byte)`: the binary
    checks each for NULL, the statement hands `Some`). The only printf-reaching callee is answer, the tail jump,
    so the walk runs at the entry's FP state throughout and sup_connect_s5.v closes with answer's fx'. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

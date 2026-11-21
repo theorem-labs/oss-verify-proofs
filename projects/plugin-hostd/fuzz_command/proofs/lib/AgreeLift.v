@@ -19,7 +19,7 @@ Proof using.
   intros ms model ms' Hh Hl Hsvc Hstep Hc tr c' Hstar.
   inversion Hstar as [c0 | c1 evs c2 tr' c3 Hs Hst]; subst.
   - exact (budget_refused_at_no_lazy_instr segs ms model Hl Hsvc).
-  - destruct (node_instr segs ms model ms' Hh Hl Hsvc Hstep) as [_ Hall].
+  - destruct (node_instr segs ms model ms' Hh Hl Hsvc Hstep) as [_ [Hall _]].
     destruct (Hall evs (SNext c2) Hs) as [[] [_ Heq]].
     injection Heq as ->. exact (Hc tr' c' Hst).
 Qed.

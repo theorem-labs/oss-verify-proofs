@@ -1,9 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (G_must_exit_ncfg is stated over the run's segment list run_segments and carries the walk there with RsLift.impl_rs_nodes; mo0_minv takes the channel-reader conjunct; G_must_exit rewrites the run's initial configuration with init_config_run). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From LinuxProcessSemantics.LinuxProcessSem Require Import Vdso.
+From OSSVerify.Proofs.openssl.bignum.lib.Common Require Import RsLift.
 From OSSVerify.Proofs.openssl.bignum.lib.Lib Require Import PropExec MState Frame Exec ITree Nodes RegsEquiv ITreeHalts.
 From OSSVerify.Proofs.openssl.bignum.lib.AS Require ShapeHalts.
 From OSSVerify.Proofs.openssl.bignum.lib Require Import TopLevel Obligations ProofBaseG TopE TopSides TopSidesG.
@@ -71,20 +74,37 @@ Hypothesis H_rc : forall ls d, lleaves (lib_one ls d) (fun r => snd r = 0).
 Theorem G_must_exit_ncfg : forall segs pc ph rstage lim,
   image_low segs -> KLIM + SMALLREQ <= lim -> implG_stmt segs pc ph rstage ->
   forall en inp, valid_entry (mkImage segs pc ph) en inp -> valid_input_either inp ->
-    must_exit_in_at_cfg ncfg segs codes02 (mkCfg (ms0 segs pc ph en inp) (mo0 segs lim en inp)).
+    (* At the revision [MustExit.must_exit_in_scfg] reads the RUN's segment list,
+       [run_segments segs inp sp mbase], so the ncfg statement moves to that list too;
+       [RsLift.impl_rs_nodes] carries the walk's [impl] over to it, as in
+       [TopLevel.run_of_tree]. *)
+    must_exit_in_at_cfg ncfg (run_segments segs inp (en_sp en) (en_mmap_base en)) codes02
+      (mkCfg (ms0 (run_segments segs inp (en_sp en) (en_mmap_base en)) pc ph en inp)
+             (mo0 segs lim en inp)).
 Proof.
   intros segs pc ph rstage lim Hlow Hlim HI en inp He Hi.
   destruct (progG_model_ok_run P T NBLK BSZ linv HP0 HC H_init H_one H_rc segs rstage pc ph lim Hlow Hlim en inp He Hi) as [Hl Hs].
   pose proof (G_side P T NBLK BSZ linv HP0 HC H_init H_one H_rc segs pc ph rstage lim Hlow Hlim HI en inp He Hi) as [Htr _].
-  apply (impl_must_exit node segs ncfg (at_node segs) nstep nexit minv nsafe (nodes_sound segs) codes02
-           (the_progG segs rstage inp en) (epost the_post)).
-  - split; [exact (HI en inp He Hi)|]. split; [exact Hl|]. split; [apply mo0_not_halted|]. split; [apply mo0_minv| exact Hs].
-  -
+  (* [Run.run_segments segs inp sp mbase = segs ++ vdso_segments (in_kernel inp) sp mbase] *)
+  set (tail := vdso_segments (in_kernel inp) (en_sp en) (en_mmap_base en)).
+  pose proof (vdso_segments_inert (in_kernel inp) (en_sp en) (en_mmap_base en)) as Hin. fold tail in Hin.
+  change (run_segments segs inp (en_sp en) (en_mmap_base en)) with (segs ++ tail).
+  pose proof (impl_rs_nodes segs tail Hin _ (the_progG segs rstage inp en) (epost the_post)
+                (ms0 segs pc ph en inp) (HI en inp He Hi)) as HI'.
+  change (rs_ms segs tail (ms0 segs pc ph en inp)) with (ms0 (segs ++ tail) pc ph en inp) in HI'.
+  apply (impl_must_exit node (segs ++ tail) ncfg (at_node (segs ++ tail)) nstep nexit minv nsafe
+           (nodes_sound (segs ++ tail)) codes02 (the_progG segs rstage inp en)
+           (fun r x => exists y, x = rs_ms segs tail y /\ epost the_post r y)).
+  - split; [exact HI'|]. split; [exact Hl|]. split; [apply mo0_not_halted|]. split; [apply mo0_minv; exact (vie_reader _ Hi)| exact Hs].
+  - (* [comment removed for export] *)
     intros tr c' Hstar tr0 code fs E.
     apply (canonT_exits02 (argv_Z (in_argv inp)) (in_fs inp) tr) with (tr0 := tr0) (fs' := fs); [| exact E].
-    apply Htr. rewrite run_scfg_eq. cbn [bh_traces].
-    destruct (init_behaviour_scfg_eqv segs ncfg pc ph (en_sp en) (en_draw en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (mo0 segs lim en inp))
+    apply Htr. rewrite run_scfg_eq. cbv zeta. cbn [bh_traces].
+    change (run_segments segs inp (en_sp en) (en_mmap_base en)) with (segs ++ tail).
+    destruct (init_behaviour_scfg_eqv (segs ++ tail) ncfg pc ph (en_sp en) (en_mmap_base en) (en_draw en) inp (mo0 segs lim en inp))
       as (Ht & _).
+    change (init_ms (segs ++ tail) pc ph (en_sp en) (en_mmap_base en) (en_draw en) inp)
+      with (ms0 (segs ++ tail) pc ph en inp) in Ht.
     apply Ht. exists tr, c'. split; [exact Hstar | apply is_prefix_refl].
 Qed.
 
@@ -95,11 +115,16 @@ Theorem G_must_exit : forall segs pc ph rstage lim,
 Proof.
   intros segs pc ph rstage lim Hlow Hlim HI en inp He Hi.
   pose proof (G_must_exit_ncfg segs pc ph rstage lim Hlow Hlim HI en inp He (valid_input_either_of_valid_input _ Hi)) as H.
-  destruct en as [sp brk mb rnd]. cbn [must_exit_in_scfg].
-  apply (must_exit_in_at_cfg_mono forced_only_cfg ncfg segs codes02); [apply forced_only_cfg_least | apply ShapeHalts.decided_from_classic |].
-  change (init_config segs pc ph sp brk mb rnd lim inp)
-    with (mkCfg (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (mo0 segs lim (mkEntry sp brk mb rnd) inp)).
-  apply (must_exit_in_at_cfg_eqv segs ncfg codes02 _ H).
+  (* [init_config_run] is instantiated at [mkEntry sp brk mb rnd] and its projections
+     reduced BEFORE it meets the destructed goal, for the reason [TopLevel.run_eq]
+     records: the goal carries [sp]/[mb], the lemma [en_sp]/[en_mmap_base] of the record. *)
+  destruct en as [sp brk mb rnd].
+  pose proof (init_config_run segs pc ph lim (mkEntry sp brk mb rnd) inp) as Hic.
+  cbn [en_sp en_brk en_mmap_base en_draw] in Hic, H.
+  cbn [must_exit_in_scfg]. cbv zeta. rewrite Hic.
+  apply (must_exit_in_at_cfg_mono forced_only_cfg ncfg (run_segments segs inp sp mb) codes02);
+    [apply forced_only_cfg_least | apply ShapeHalts.decided_from_classic |].
+  apply (must_exit_in_at_cfg_eqv (run_segments segs inp sp mb) ncfg codes02 _ H).
   split; [| reflexivity]. cbn [cfg_ms]. apply ms_eqv_sym. apply init_machine_state_eqv.
 Qed.
 

@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AD1k.v, with its module paths changed, names TfibSyms -> GrantSyms and its addresses moved to libreac/fuzz_grant's ASan build; the first range of Tfib_zero_shadow ends at fuzz_grant.asan's 0x20e90 (cgif_file_fuzzer.asan: 0x20e08), the rodata lemmas end at the first registered global, 0x20e80 (cgif_file_fuzzer.asan: 0x20e00), and the image chunks are those of fuzz_grant's IMG_REGIONS (A/AD2j.v). *)
 (* Modified by Theorem Labs, 2026-10: grant A's file relocated to image B (fuzz_grant.asan-ubsan fde52226dc48) by port_core 53ec3af2afc9, A -> B; the numbers below are image B's unless a comment says image A. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel reader that fdchan asks for at LPS 727298f3 carried beside the descriptor fact, from cs_ok's co_rdr). *)
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -283,7 +284,7 @@ unfold aview. rewrite Hm. unfold img_byte. reflexivity.
 Qed.
 Theorem tfib_fwrite_site : fwrite_site_tfa B est.
 Proof.
-intros ly S W regs mem md E p len msg T HPRE G10 G11 G12 G13 Hlen Hlen1 Hp1 Hp2 Hhole Himg HIMG Hfd HAI HPOST.
+intros ly S W regs mem md E p len msg T HPRE G10 G11 G12 G13 Hlen Hlen1 Hp1 Hp2 Hhole Himg HIMG Hfd Hcr HAI HPOST.
 pose proof (icpt_pre_facts ly S W regs mem md HPRE) as (HEPRE & Hslo & Hwin & Hpres). pose proof (proj1 HEPRE) as HAR.
 pose proof (img_facts E _ HIMG) as ([IR1a IR1b] & IR2 & IR3 & Vcan).
 pose proof asan_consts as (C1 & C2 & C3 & C4 & C5).
@@ -311,7 +312,9 @@ apply (tfib_not_owned_static B F_STDERR (F_STDERR + FILE_SZ) a HB); [vm_compute;
 - left. unfold kLowMemEnd. lia.
 - exact (proj1 (rodata_shadow_facts ly S W mem md p len HAR Hp1 ltac:(lia) ltac:(lia))).
 - exact (proj2 (rodata_shadow_facts ly S W mem md p len HAR Hp1 ltac:(lia) ltac:(lia))).
-- split; [exact Hfd | reflexivity].
+(* [fdchan]'s third conjunct at LPS 727298f3 is the model's channel reader, which the
+   site takes beside the descriptor. *)
+- split; [exact Hfd | split; [reflexivity | exact Hcr]].
 - exact HAI.
 - intros regs' mem' md' HAR' HP' Hsbm' Ha0' HFW' Hfr' Hpr' HAI'.
 apply (HPOST regs' mem' md' HAR' HP' Hsbm' Ha0').
@@ -324,7 +327,7 @@ Lemma msg_refused_eq : map (Z_to_bv 8) YE3l.msg_refused = YO05.msg_refused /\ Z.
 Proof. vm_compute. split; reflexivity. Qed.
 Theorem tfib_refused_site : refused_site_tfa B est.
 Proof.
-intros ly S W regs mem md E T HPRE G10 G11 G12 HIMG Hfd HAI HPOST.
+intros ly S W regs mem md E T HPRE G10 G11 G12 HIMG Hfd Hcr HAI HPOST.
 pose proof (icpt_pre_facts ly S W regs mem md HPRE) as (HEPRE & Hslo & Hwin & Hpres). pose proof (proj1 HEPRE) as HAR.
 pose proof (img_facts E _ HIMG) as (IR1 & IR2 & IR3 & Vcan).
 pose proof asan_consts as (C1 & C2 & C3 & C4 & C5). pose proof msg_refused_eq as [ME ML].
@@ -344,7 +347,7 @@ apply (tfib_not_owned_static B F_STDERR (F_STDERR + FILE_SZ) a HB); [vm_compute;
 - exact (u64_range (sv_denot E (SOff 41 0))).
 - exact (ro_img_of_IMG E _ HIMG).
 - apply (rodata_hull_zero ly S W mem md); [exact HAR | unfold FMT_refused; lia | unfold FMT_refused; lia | lia].
-- split; [exact Hfd | reflexivity].
+- split; [exact Hfd | split; [reflexivity | exact Hcr]].
 - exact HAI.
 - intros regs' mem' md' HAR' HP' Hsbm' Ha0' HFW' Hfr' Hpr' HAI'.
 apply (HPOST regs' mem' md' HAR' HP' Hsbm').

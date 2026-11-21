@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrecS3.v (commit 67fc7ef5787, lane B1 drain composition, DoRecycle chain; the chain's two function pairs, Quarantine::DoRecycle and LocalCache::Deallocate, re-checked EQUAL-mod-pcrel by cmpkit 4bbd3a74be89 strictcmp2 16982e3ef42b; file sha256 1eb86066e770) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrecS3.v (lane B1 drain composition, DoRecycle chain; the chain's two function pairs, Quarantine::DoRecycle and LocalCache::Deallocate, re-checked EQUAL-mod-pcrel by cmpkit 4bbd3a74be89 strictcmp2 16982e3ef42b; file sha256 1eb86066e770) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/DMrecS3.v, with its module paths and module names changed; 15 of its 223 lines of code are new or changed and 16 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* F1 priming row R3 (re-hide at a secondary recycle): Quarantine::DoRecycle (0x33cf8), the outer-loop and CacheDealloc-return seeds, at the re-hide
    twins (DMrecLRh's states), made from lib/A/DMrecS3.v (seed_O_r, seed_Q_r).  Seed_O_rh / seed_Q_rh: DMrecS3.seed_O_r / seed_Q_r with the state DMrecL.ostr / qstr -> DMrecLRh.ostrh / qstrh; the proofs read only the cut relation and the stack presence of the accumulated frame, so they are the released proofs with accrh's pattern.
    A new file, so that the released DMrec* files stay byte-unchanged.
    rule 24: proves function __sanitizer::Quarantine<__asan::QuarantineCallback, __asan::AsanChunk>::DoRecycle (the outer-loop and CacheDealloc-return seeds at
    the re-hide twins). *)
-(* Theorem Labs, 2026-10-30 (a Theorem Labs lane): the image-B (asan-ubsan) twin of lib/A/DMrecS3Rh.v at a working branch 2612386275a5, relocated by a Theorem Labs lane's alreloc a5c53bb2bed4ad03 (every moved numeral a Quarantine::DoRecycle pc, +0x58) with the A twins A<r> renamed to the B twins Y<r>; the comment blocks above keep the A file's text and its A pcs. *)
+(* Theorem Labs, 2026-10-30 (a Theorem Labs lane): the image-B (asan-ubsan) twin of lib/A/DMrecS3Rh.v at a working branch, relocated by a Theorem Labs lane's alreloc a5c53bb2bed4ad03 (every moved numeral a Quarantine::DoRecycle pc, +0x58) with the A twins A<r> renamed to the B twins Y<r>; the comment blocks above keep the A file's text and its A pcs. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

@@ -2,8 +2,8 @@
    1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44): THE INSTANCE of the parametric read_members walk
    (lib/A/Prog/read_members.v, read_members_holds) at the whole-program listing's image PA := PI_prog_A (lib/A/PAImg_prog.v
    505a51ff7d08, listing lib/A/Listing_prog.v 7ed1529926bd), the A' asyms record B := AD2l.TfibB (lib/A/AD2l.v eb321db7a357
-   over lib/A/AF0m.v 97f423adf6eb, AF0l dfca6bb1a8d7, ACej c4a400418590: the A' record files, by path from
-   origin/cold/h-rw-man-5-palib102i d00dd1234426) and the allocator instance ARx := ARcf rsegs TfibB at CfParams_preset.
+   over lib/A/AF0m.v 97f423adf6eb, AF0l dfca6bb1a8d7, ACej c4a400418590: the A' record files, by path)
+   and the allocator instance ARx := ARcf rsegs TfibB at CfParams_preset.
    DISCHARGED HERE: the laws and PALib (lib/A/PALibA.v 88c72c8175cf, palib_laws_A / palib_A, by path from the same branch,
    with lib/Reusable/YStrtodRowX.v 10e84e44e24e); HW by CfParamsPreset.preset_head_wide; RM_IMG (RM_IMG_at_Ap) and the image
    facts of PI_prog_A (the rmA_ lemmas), each by vm_compute over a boolean check whose soundness is proved below (the

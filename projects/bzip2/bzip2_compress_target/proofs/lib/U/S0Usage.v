@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the usage walk over the launch input ProcInput, the vDSO and the m_channel_reader premise). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -89,6 +90,11 @@ Section UTail.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  (* LPS 75d69e00: [S0LibStdioCall.stdio_call_sound] now asks that the far end of
+     the channel reads ([State.m_channel_reader]); without it the fd-2 writev
+     raises SIGPIPE.  Kept beside the other model facts, so the discharged
+     prefix reads sp0 model Hvsp Hh Hlazy Hfd2 Hrdr BL. *)
+  Hypothesis Hrdr : m_channel_reader model = true.
   Variable BL : list (list byte).   (* [comment removed for export] *)
 
   (* [comment removed for export] *)
@@ -212,6 +218,7 @@ Ltac close_exit_at HR HK P0 Hh Hlazy sp0 OFF WLO :=
       replace (bv_unsigned sp0 + -560)%Z with (bv_unsigned sp0 + -560)%Z by lia. exact MSG.
     - reflexivity.
     - exact Hfd2.
+    - exact Hrdr.
     - exact Hh.
     - exact Hlazy.
     - apply t_exit_has_nil.
@@ -659,6 +666,7 @@ Ltac close_exit_at HR HK P0 Hh Hlazy sp0 OFF WLO :=
     - reflexivity.
     - reflexivity.
     - exact Hfd2.
+    - exact Hrdr.
     - exact Hh.
     - exact Hlazy.
     - apply t_exit_has_nil.
@@ -715,6 +723,7 @@ Ltac close_exit_at HR HK P0 Hh Hlazy sp0 OFF WLO :=
       replace (7 + length a0s)%nat with (7 + length a0s)%nat by lia. exact B80.
     - cbn [edenot]. exact Hsuf.
     - exact Hfd2.
+    - exact Hrdr.
     - exact Hh.
     - exact Hlazy.
     - apply t_exit_has_nil.
@@ -776,6 +785,7 @@ Ltac close_exit_at HR HK P0 Hh Hlazy sp0 OFF WLO :=
       replace (bv_unsigned sp0 + -560)%Z with (bv_unsigned sp0 + -560)%Z by lia. exact Hb.
     - reflexivity.
     - exact Hfd2.
+    - exact Hrdr.
     - exact Hh.
     - exact Hlazy.
     - apply t_exit_has_nil.
@@ -836,6 +846,7 @@ Ltac close_exit_at HR HK P0 Hh Hlazy sp0 OFF WLO :=
       replace (bv_unsigned sp0 + -560)%Z with (bv_unsigned sp0 + -560)%Z by lia. exact Hw0.
     - cbn [edenot ev ENV LX]. rewrite P1. exact Hsrc.
     - exact Hfd2.
+    - exact Hrdr.
     - exact Hh.
     - exact Hlazy.
     - apply t_emit_has_nil.
@@ -959,7 +970,6 @@ Section ACeilS2. Context {ACEIL__ : ACeil} {RUNW__ : RunW}.
 Section Usage.
   Variable sp0 : word.
   Variables av envv : list (list byte).
-  Variable uid : word.   (* [comment removed for export] *)
   Variable hw : word.    (* [comment removed for export] *)
   Variable rnd : EntryDraw.   (* [comment removed for export] *)
   Variable tid : word.
@@ -971,16 +981,19 @@ Section Usage.
   Variable stdin0 : AmbIn.
   (* [comment removed for export] *)
   Variable lim : Z.
+  (* the launch, read from the run's own input ([mkProcInputA]) *)
+  Local Notation inp := (mkProcInputA av envv fs0 stdin0) (only parsing).
   Hypothesis Hva : valid_argv av.
   Hypothesis Hve : valid_envp envv.
   Hypothesis Hvsp : valid_sp sp0.
   Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-  Hypothesis ME : main_entry sp0 av envv uid hw rnd tid regs0 mem0.
-  Hypothesis Hfits : entry_stack_fits sp0 av envv.   (* [comment removed for export] *)
+  Hypothesis ME : main_launch inp hw mbase sp0 brk rnd tid regs0 mem0.
+  (* LPS 75d69e00: the far end of fd 2 reads; [model0] takes it from this [stdin0]. *)
+  Hypothesis HRDR : ia_channel_reader stdin0 = true.
   Hypothesis Hargc : length av <> 2%nat.
 
   Definition model0 : Model :=
-    with_tid tid (init_model (segments_reserved RSEGS) brk mbase sp0 lim (mkProcInputA av envv fs0 stdin0)).
+    with_tid tid (with_vdso (ia_vdso stdin0) (init_model (segments_reserved RSEGS) brk mbase sp0 lim (mkProcInputA av envv fs0 stdin0))).
 
   Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
   Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
@@ -989,6 +1002,7 @@ Section Usage.
   Lemma model0_lazy : m_vm_lazy model0 = []. Proof. reflexivity. Qed.
   Lemma model0_fd2 : fd_lookup (m_fds model0) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)). Proof. reflexivity. Qed.
   Lemma model0_fs : m_fs model0 = fs0. Proof. reflexivity. Qed.
+  Lemma model0_rdr : m_channel_reader model0 = true. Proof. exact HRDR. Qed.
 
   Lemma a0s_nonul : ~ In (Z_to_bv 8 0) (hd [] av).
   Proof.
@@ -1017,27 +1031,33 @@ Section Usage.
   Proof.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
     assert (Hlen : (1 <= length av <= 1024)%nat) by (destruct Hva as [[H1 H2] _]; lia).
-    assert (HR : regs_ok (EN sp0 av envv hw rnd tid regs0) sr_mainN regs0) by (eapply main_regs_okN; eassumption).
-    assert (HK : know_ok RSEGS (EN sp0 av envv hw rnd tid regs0) mem0 kn_mainN) by (eapply main_know_okN; eassumption).
-    assert (Hac : ev (EN sp0 av envv hw rnd tid regs0) 16 = argcN av) by (eapply evN_argc; eassumption).
-    change (EN sp0 av envv hw rnd tid regs0) with (ENV (blobsN hw rnd) (valsN sp0 av envv tid regs0)) in HR, HK, Hac.
-    set (vals := valsN sp0 av envv tid regs0) in *.
+    pose proof ME as (Hhw & Hvl & Hlau & ME').
+    assert (HR : regs_ok (EN inp sp0 rnd tid regs0) sr_mainN regs0)
+      by (eapply (main_regs_okN inp mbase (0x13434 : word) sp0 rnd tid regs0 mem0); eassumption).
+    assert (HK : know_ok RSEGS (EN inp sp0 rnd tid regs0) mem0 kn_mainN)
+      by (eapply (main_know_okN inp mbase (0x13434 : word) sp0 brk rnd tid regs0 mem0); eassumption).
+    assert (Hac : ev (EN inp sp0 rnd tid regs0) 16 = argcN inp)
+      by (eapply (evN_argc inp mbase (0x13434 : word) sp0 rnd tid regs0 mem0); eassumption).
+    unfold EN in HR, HK, Hac. rewrite Hhw in HR, HK. cbn [ev] in Hac.
+    change (Env (vals_ev (valsN inp sp0 rnd tid regs0)) (blobs_ev (blobsN hw rnd))) with (ENV (blobsN hw rnd) (valsN inp sp0 rnd tid regs0)) in HR, HK.
+    set (vals := valsN inp sp0 rnd tid regs0) in *.
     assert (HL : length vals = 38%nat) by (subst vals; unfold valsN; rewrite length_app, junk_vals_length; reflexivity).
     assert (P0 : vals_ev vals 0 = sp0) by reflexivity.
-    assert (P1 : vals_ev vals 1 = p0N sp0 av envv) by reflexivity.
+    assert (P1 : vals_ev vals 1 = p0N inp rnd) by reflexivity.
     cbn [ev ENV] in Hac.
-    edestruct (main_strN sp0 av envv uid hw rnd tid regs0 mem0) as (Sr & Slo & Shi & Slen & t8 & Ht8); try eassumption.
-    1:{ instantiate (1 := 0%nat). lia. }
-    pose proof (S0OpenFail.argv_ptr_fits sp0 av envv 0%nat Hva Hve ltac:(lia) ltac:(unfold argv_layout_slack; lia) Hfits) as Sts.
+    edestruct (main_strN inp mbase (0x13434 : word) sp0 brk rnd tid regs0 mem0) as (Sr & Slo & Shi & Slen & t8 & Ht8); try eassumption.
+    1:{ instantiate (1 := 0%nat). cbn [in_argv mkProcInputA]. lia. }
+    pose proof (argv_ptr_fits inp mbase sp0 brk rnd 0%nat Hlau ltac:(cbn [in_argv mkProcInputA]; lia)) as Sts.
+    cbn [in_argv in_envp in_execfn mkProcInputA] in Sr, Slo, Shi, Slen, Ht8, Sts.
     rewrite <- hd_nth in Sts.
     rewrite <- hd_nth in Sr, Slen, Ht8. set (a0s := hd [] av) in *.
-    pose proof (u64_range (cat_argv_ptr sp0 av envv 0)) as Hppr.
+    pose proof (u64_range (cat_argv_ptr (ed_top rnd) av envv (ia_execfn stdin0) 0)) as Hppr.
     clearbody vals.
     pose proof model0_halted as Hh.
     (* [comment removed for export] *)
     run_blk_keep u_scrA 38%nat.
     { unfold sc_denot. cbn [branch_taken edenot ev ENV]. rewrite Hac.
-      unfold bv_eqb. rewrite (u_argcN av Hva). change (bv_unsigned (Z_to_bv 64 2)) with 2%Z.
+      unfold bv_eqb. rewrite (u_argcN inp Hva). cbn [in_argv mkProcInputA]. change (bv_unsigned (Z_to_bv 64 2)) with 2%Z.
       apply Bool.negb_true_iff. apply Z.eqb_neq. lia. }
     assert (Habove : forall x : word, (bv_unsigned sp0 <= bv_unsigned x)%Z -> M x = mem0 x).
     { intros x Hx. rewrite EQM. apply (mem_denot_above (ENV (blobsN hw rnd) vals) mem0 _ 0%nat 0x66000);
@@ -1087,17 +1107,17 @@ Section Usage.
     set (vals1 := vals ++ junk_vals R2) in *.
     assert (HL1 : length vals1 = 70%nat) by (subst vals1; rewrite length_app, junk_vals_length, HL; reflexivity).
     assert (Q0 : vals_ev vals1 0 = sp0) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P0).
-    assert (Q1 : vals_ev vals1 1 = p0N sp0 av envv) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P1).
+    assert (Q1 : vals_ev vals1 1 = p0N inp rnd) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P1).
     clearbody vals1.
     change (Env (vals_ev vals1) (blobs_ev (blobsN hw rnd))) with (ENV (blobsN hw rnd) vals1) in HR, HK.
     rewrite <- model0_fs.
-    eapply (us_tail sp0 model0 Hvsp model0_halted model0_lazy model0_fd2 (blobsN hw rnd) a0s (p0N sp0 av envv) t8 vals1); try eassumption.
+    eapply (us_tail sp0 model0 Hvsp model0_halted model0_lazy model0_fd2 model0_rdr (blobsN hw rnd) a0s (p0N inp rnd) t8 vals1); try eassumption.
     - apply a0s_nonul.
-    - unfold p0N. lia.
-    - (* [comment removed for export] *) unfold p0N. subst a0s. lia.
-    - unfold p0N. rewrite rdn_wbytes_out; [ | | |]; subst dst; rewrite ?PRE7_len; unorm; try lia.
+    - unfold p0N; cbn [in_argv in_envp in_execfn mkProcInputA]. lia.
+    - (* [comment removed for export] *) unfold p0N; cbn [in_argv in_envp in_execfn mkProcInputA]. subst a0s. lia.
+    - unfold p0N; cbn [in_argv in_envp in_execfn mkProcInputA]. rewrite rdn_wbytes_out; [ | | |]; subst dst; rewrite ?PRE7_len; unorm; try lia.
       rewrite <- Sr. apply rdn_agree. intros j Hj. apply Habove. rewrite u_small by lia. lia.
-    - unfold p0N. rewrite rdn_wbytes_out; [ | | |]; subst dst; rewrite ?PRE7_len; unorm; try lia.
+    - unfold p0N; cbn [in_argv in_envp in_execfn mkProcInputA]. rewrite rdn_wbytes_out; [ | | |]; subst dst; rewrite ?PRE7_len; unorm; try lia.
       rewrite <- Ht8. apply rdn_agree. intros j Hj. apply Habove. unorm. lia.
   Qed.
 

@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfRealloc.v, with its module paths and module names changed; 63 of its 109 lines of code are new or changed and 93 lines of the source are left out. *)
-(* CARRIED from commit 0deb5310273b0d538ec2a1697f391a1c8ad21c34,
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YG0dcfR.v, sha256 b85371cd29aa65e96a9fcaefcb0e570d673920e99d4d6007b589368d877438c0 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the Require lines only:
    the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable

@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image B' (asan-ubsan, harness fix #102 pin sha256
    d663f82d7f488d30f8e8d7496cb814e595a2f3cbbf16bde81a65cb3ea9af0994): SEGMENT L5d of the walk of
    LLVMFuzzerTestOneInput (B' 0x816cc): cut_crs1 (+0x320, B' 0x819ec) -> cut_free (+0x1bc, B' 0x81888), the one
-   `j` (slot 200, `Jal 0 (-356)`). Proves seg_L5d_stmt of the B' cut file lib/AU/Ent102CutsB.v, read at
-   commit 8422ba84f257 (no DW, ec_pjf, ec_inv over a spent wild budget wk, the
+   `j` (slot 200, `Jal 0 (-356)`). Proves seg_L5d_stmt of the B' cut file lib/AU/Ent102CutsB.v, read
+    (no DW, ec_pjf, ec_inv over a spent wild budget wk, the
    journal `exists WS, ajournal_xw .. WS /\ wbudget [] wk WS`; cut_crs1 at ec_wk_crs1, cut_free at ec_wk_free).
    First PORTED by port/a2b.py (sha256 f5113cbc90e503da) from lib/A/Prog/Ent102L5dA.v (a Theorem Labs lane's Qed proof on A',
-   a working branch fcf2f3385c7); re-proved on the exact-position cuts: the `j` emits no event, so
+   a working branch); re-proved on the exact-position cuts: the `j` emits no event, so
    cut_crs1's position (e_os E ++ [trp], its index), `ec_ranout E trp = false` and `e_n E <= EC_NMAX` are cut_free's,
    carried unchanged; cut_free's accepted-arm tie `fst (jr_run (e_sm E) (e_x E) []) = Some t` is cut_crs1's
    `ck_read (e_x E) = Some t` by the record's lib/AU/Ent102PosB.v ec_rd_ck_read at ec_pre's

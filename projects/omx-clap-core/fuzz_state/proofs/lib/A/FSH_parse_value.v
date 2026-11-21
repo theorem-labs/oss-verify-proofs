@@ -6,12 +6,13 @@
    projects/cgif/cgif_rgb_fuzzer/proofs/lib/YC05.v:208-214, 227-233 [Apache-2.0 OR MIT], for libreac/fuzz_identity's ASan
    build (lib/A). The [Apache-2.0 OR MIT] text is used under Apache-2.0. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_name_seg10.v, with its module paths and module names changed; 2634 of its 2686 lines of code are new or changed and 608 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* parse_value 0x82f9c (pf.c:283-298) on fs.asan, 373 instructions: the walk of FSH_Fn_reader.v parse_value_spec k
    (level-indexed, narrow success form) against S0's statements. STAGE FORM: every machine stage below is proved; the
    composition into parse_value_spec k is FSW_parse_value_holds.parse_value_holds (front: FSW_parse_value_front.v,
    string arm and the frame chains: FSW_parse_value_str.v, object arm: FSW_parse_value_obj.v).
    rule 24 CONFIRM (a Theorem Labs lane 04:0xZ): no released ASan proof of the function, so the walk is new; the released
-   plain parse_value_c.v / Pv*.v and bump's parse_value_disp.v / PvJoin.v (a working branch 64ac962a8d2) are
+   plain parse_value_c.v / Pv*.v and bump's parse_value_disp.v / PvJoin.v (a working branch) are
    control-flow templates only (read, not imported: bump states SR over reader_env, a different framework).
    The decode table is FSW_parse_value_tbl.v. Control flow (MEASURED, capstone 5.0.7 on the pinned fs.asan sha256
    64b53ff86172bb07f93f146e67b81a0354bca88e0a580e93fb1da01406fb76e0):
@@ -50,7 +51,7 @@
      pq_ok, pv_str1         the string arm after the call 0x831d0 -> 0x83318 (v->str := the block, s5 := 0)
      pv_obj1                the object arm after the call 0x832f8 -> 0x83318 (s5 := the callee's 0); the object arm
                             up to and through the parse_items call is FSW_parse_value_calls.v (pvc_obj0, pvc_objcall,
-                            a Theorem Labs lane's, taken by path from a working branch 23c6ed08f60)
+                            a Theorem Labs lane's, taken by path from a working branch)
      pe_ok, pv_epi          the epilogue 0x83318 -> `ret` 0x833b8 (F's magic, F's shadow := f5 x 8, the flag byte := 0
                             releasing the frame through FSW_frame.fsw_flag_storeU) and the return through FSW_ret.fsw_retU
                             into fpostU, from any journal start / count, with the memory kept outside pe_wr
@@ -80,8 +81,8 @@
    journal top is pj_parse's RAISED ot while its s0 is its own entry sp s, with s < ot, so neither applies; pv_resume_sm
    here is crcs_resume_sm's text with the two separated (`s` bases the s0 region, `sp0` bounds the window:
    sp0 - STK <= sp1 + slo, s <= sp0, s mod 16 = 0).
-   BASE: S0 a working branch 4bed8e9c8ff with a working branch 67a8947cd73 (the left arm's s0 = q,
-   lib/A/FSH_Fn_reader.v from 81b380a2d74, and the parse_items lane's re-proof). *)
+   BASE: S0 a working branch with a working branch (the left arm's s0 = q,
+   lib/A/FSH_Fn_reader.v, and the parse_items lane's re-proof). *)
 
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -134,7 +135,7 @@ Definition pv_ss1 : sstate := Eval vm_compute in fst (sym_run_toN tfibsegs pv_tb
    pj_parse's struct pj_in above their own sp): the saved words at the s0 atom 8, window [lo, hi) with chunks cs; one
    stack slot region at atom nsl (the register holding the re-aligned sp), window [slo, shi); the granted frame at atom
    nF, [0, fs_frame_bytes cid), its flag word at fs_frame_bytes cid - 8 holding eflag.
-   Ported from: a Theorem Labs lane's crcs_resume_sm (a working branch c4bfd3bc057,
+   Ported from: a Theorem Labs lane's crcs_resume_sm (a working branch,
    lib/A/FSH_check_reject_clean_starved.v:201-289, marked there as to move into FSW_frame.v as fsw_resume_after_stack_mallocU), with the
    journal top sp0 and the s0 value s separated (crcs has s = sp0): the s0 region is read at s, the window bound is
    sp0 - STK <= sp1 + slo, and s <= sp0. Same proof otherwise. ---- *)

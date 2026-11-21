@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise of the start-up, main's entry block as the launch's (launch_of, valid_entry_launch), the vDSO/vvar pair apart from the brk window, and the no-vDSO-segment premise of realizes_spec_cfg_of_ms0; launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef); rsegs_rcost leaves room for the vDSO/vvar pair's two ledger entries; main_rz's launch record is taken at the entry's own stack pointer; KOWN and HEADc at the run's with_vdso start model; the start-up spec no longer takes the envp premise it does not use). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -53,27 +54,27 @@ Local Notation leafC := (ImplRzCfg.leaf (nstep_cfg acfg)).
 
 (* [comment removed for export] *)
 Lemma mo0_set_tid_leaf_cfg : forall lim en inp (r : exc Z) mo',
-  bv_unsigned (en_sp en) = rc_sp -> valid_sp (en_sp en) ->
+  bv_unsigned (en_sp en) = rc_sp -> valid_sp (en_sp en) -> in_channel_reader inp = true ->
   leafC (enode NSetTid dec_set_tid) (mo0 rsegs lim en inp) r mo' ->
   exists t, 0 < t < PID_MAX_ENVELOPE /\ r = Ok t /\ mo' = with_tid (Z_to_bv 64 t) (mo0 rsegs lim en inp).
 Proof.
-  intros lim en inp r mo' Hsp Vsp H. unfold enode in H. inversion H; subst.
+  intros lim en inp r mo' Hsp Vsp Hch H. unfold enode in H. inversion H; subst.
   match goal with Hn : nstep_cfg _ _ _ ?rsp _ _, Hl : ImplRzCfg.leaf _ _ _ _ _ |- _ =>
-    destruct (nstep_dec_set_tid _ _ _ _ (mo0_minv rsegs lim en inp Hsp Vsp) (nstep_cfg_sub _ _ _ _ _ _ Hn)) as (_ & t & D & Ht & Hmo);
+    destruct (nstep_dec_set_tid _ _ _ _ (mo0_minv rsegs lim en inp Hsp Vsp Hch) (nstep_cfg_sub _ _ _ _ _ _ Hn)) as (_ & t & D & Ht & Hmo);
     rewrite D in Hl; apply ImplRzCfg.leaf_ret_inv in Hl as [-> ->]; exists t end.
   rewrite mo0_tid in Hmo. destruct Hmo as [[? _] | [_ ->]]; [discriminate|]. auto.
 Qed.
 
 Lemma trz_startup_set_tid_cfg : forall lim en inp (T : TSet),
-  bv_unsigned (en_sp en) = rc_sp -> valid_sp (en_sp en) -> T [] ->
+  bv_unsigned (en_sp en) = rc_sp -> valid_sp (en_sp en) -> in_channel_reader inp = true -> T [] ->
   trz node (nstep_cfg acfg) nexit minv nsafe (enode NSetTid dec_set_tid) (mo0 rsegs lim en inp) (fun (_ : exc Z) _ => T) T.
 Proof.
-  intros lim en inp T Hsp Vsp HT. unfold enode.
-  apply (trz_vis_silent node (nstep_cfg acfg) nexit minv nsafe NSetTid _ (mo0 rsegs lim en inp) (fun _ _ => T) T (mo0_minv _ _ _ _ Hsp Vsp) I).
+  intros lim en inp T Hsp Vsp Hch HT. unfold enode.
+  apply (trz_vis_silent node (nstep_cfg acfg) nexit minv nsafe NSetTid _ (mo0 rsegs lim en inp) (fun _ _ => T) T (mo0_minv _ _ _ _ Hsp Vsp Hch) I).
   - exists (eff0 (Z_to_bv 64 1)), (with_tid (Z_to_bv 64 1) (mo0 rsegs lim en inp)), []. cbn [nstep_cfg node_off alloc_only_cfg sc_alloc sc_fs negb nstep].
     split; [reflexivity|]. exists (Z_to_bv 64 1). split; [reflexivity|]. rewrite mo0_tid.
     split; [| reflexivity]. unfold PID_MAX_ENVELOPE. rewrite unsigned_lit by lia. lia.
-  - intros rsp mo' evs H. destruct (nstep_dec_set_tid _ _ _ _ (mo0_minv rsegs lim en inp Hsp Vsp) (nstep_cfg_sub _ _ _ _ _ _ H)) as (-> & t & D & _ & _).
+  - intros rsp mo' evs H. destruct (nstep_dec_set_tid _ _ _ _ (mo0_minv rsegs lim en inp Hsp Vsp Hch) (nstep_cfg_sub _ _ _ _ _ _ H)) as (-> & t & D & _ & _).
     rewrite D. split; [reflexivity | apply trz_ret].
   - intros code mo' H. exact H.
   - exact HT.
@@ -85,7 +86,8 @@ End WithRC.
 (* [comment removed for export] *)
 Section WithRC2.
 Context {RC__ : RunCeiling}.
-Lemma rsegs_rcost : rcost (segments_reserved rsegs) <= RCMAXc.
+(* LPS 727298f3: room for the vDSO/vvar pair the initial ledger ends with (MSuccRaw.rcost_vdso_reserved) *)
+Lemma rsegs_rcost : rcost (segments_reserved rsegs) + 24 <= RCMAXc.
 Proof. vm_compute. discriminate. Qed.
 Lemma rsegs_top_pos : 0 < reserved_top (segments_reserved rsegs).
 Proof. vm_compute. reflexivity. Qed.
@@ -94,6 +96,10 @@ Proof.
   pose proof alloc_ceiling_ge_min as G. unfold sp_window_lo, stack_max_size in G.
   assert (reserved_top (segments_reserved rsegs) + brk_aslr_max + 4 * PGSZ <= 0x7fff7f800000) by (vm_compute; discriminate). lia.
 Qed.
+(* LPS 727298f3: the brk window ends far below the mmap-base floor, so the vDSO/vvar pair of
+   the initial reserved ledger misses it ([MallocKown.KL_init]). *)
+Lemma rsegs_top_mbase : reserved_top (segments_reserved rsegs) + brk_aslr_max + 32 * PGSZ <= mmap_base_min.
+Proof. vm_compute. discriminate. Qed.
 End WithRC2.
 
 (* [comment removed for export] *)
@@ -117,7 +123,8 @@ Section R_TopCfg.
     m_fs MO = fs -> valid_argv argv -> t_eq (DRV MO fs argv) (spec argv fs).
 
   (* [comment removed for export] *)
-  Hypothesis RZ_MAIN_DRV : forall (RC__ : RunCeiling) (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw),
+  (* LPS 08b1429: the entry block at [main] is the launch's ([R_Startup1.RIMG_ok] over a [launchT]). *)
+  Hypothesis RZ_MAIN_DRV : forall (RC__ : RunCeiling) (LT : launchT) (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw),
     valid_sp sp0 -> rc_sp = bv_unsigned sp0 -> rc_secret = bv_unsigned (secret_of (at_random_bytes (ed_random rnd))) ->
     entry_stack_fits sp0 argv envp -> valid_argv argv -> valid_envp envp ->
     forall (FS0 : Fs.Fs) (MO : Model),
@@ -139,29 +146,30 @@ Section R_TopCfg.
     let RC := rc_of en in
     valid_entry (mkImage rsegs r_init_pc r_phdrs) en inp -> valid_input inp ->
     0 < bv_unsigned tw < PID_MAX_ENVELOPE ->
-    rat_main (RC__:=RC) (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en) ms ->
+    rat_main (RC__:=RC) (LT:=launch_of inp (en_sp en) (en_mmap_base en) (en_draw en)) (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en) ms ->
     realizes_cfg acfg rsegs (mkCfg ms (with_tid tw (mo0 rsegs lim en inp)))
                  (spec (in_argv inp) (in_fs inp)).
   Proof.
     intros lim HLIM en inp tw ms RC VE VI Ht AM.
-    destruct (valid_entry_unpack _ _ _ _ _ VE VI) as (VSP & VBRK & _ & EFIT).
+    destruct (valid_entry_unpack _ _ _ _ _ VE VI) as (VSP & VBRK & VMB & EFIT).
     destruct (valid_input_unpack _ VI) as (VA & VEN & _ & _).
     assert (Hsp : bv_unsigned (en_sp en) = rc_sp) by reflexivity.
     assert (Hspw : sp_window_lo <= rc_sp <= sp_window_hi) by (destruct VSP as (L & H & _); cbn; split; assumption).
     set (MO := with_tid tw (mo0 rsegs lim en inp)).
     assert (MOFS : m_fs MO = in_fs inp) by reflexivity.
     eapply rz_conseq_cfg; [| apply (DRV_SPEC (in_fs inp) MO (in_argv inp) MOFS VA)].
-    apply (RZ_MAIN_DRV RC (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en) VSP (eq_sym Hsp) eq_refl EFIT VA VEN (in_fs inp) MO MOFS);
+    apply (RZ_MAIN_DRV RC (launch_of inp (en_sp en) (en_mmap_base en) (en_draw en)) (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en) VSP (eq_sym Hsp) eq_refl EFIT VA VEN (in_fs inp) MO MOFS);
       [reflexivity| reflexivity| reflexivity| reflexivity| | exact AM].
     intros m NONE LC LC2 GOT GUARD MI.
     destruct (RHEAP_init_proof m _ NONE LC LC2 GOT GUARD MI) as [HR AUXC]. split; [| exact AUXC].
     split; [exact HR|]. split.
     - (* [comment removed for export] *)
       unfold MO, mo0. apply (KOWN_with_tid GTrue (G_fs (in_fs inp))); [exact Ht| | intros _; reflexivity].
-      apply KOWN_init; [exact Hsp| exact Hspw| exact VBRK| apply rsegs_top_pos| apply rsegs_top_ceiling| exact I].
+      apply (KOWN_with_vdso GTrue GTrue); [| intros G; exact G].
+      apply KOWN_init; [exact Hsp| exact Hspw| exact VBRK| apply rsegs_top_pos| apply rsegs_top_ceiling| exact (valid_input_channel_reader _ VI)| exact (proj1 VMB)| apply rsegs_top_mbase| exact I].
     - (* [comment removed for export] *)
       unfold MO, mo0. change (map sigb []) with (@nil (bptr * Z)).
-      apply HEADc_init_lim; [exact Hsp| exact Hspw| exact VBRK| apply rsegs_top_pos| apply rsegs_top_ceiling| exact HLIM| apply rsegs_rcost| exact Ht].
+      apply HEADc_init_lim; [exact Hsp| exact Hspw| exact VBRK| apply rsegs_top_pos| apply rsegs_top_ceiling| exact (valid_input_channel_reader _ VI)| exact (proj1 VMB)| apply rsegs_top_mbase| exact HLIM| apply rsegs_rcost| exact Ht].
   Qed.
 
   Theorem R_realizes_cfg_lim : forall (lim : Z), VMINc <= lim -> forall en inp,
@@ -170,23 +178,26 @@ Section R_TopCfg.
                  (spec (in_argv inp) (in_fs inp)).
   Proof.
     intros lim HLIM en inp VE VI.
-    pose (RC := rc_of en).
+    pose proof (valid_entry_launch _ _ _ _ _ VE VI) as LOK.
+    pose proof VI as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & VL & _).
+    destruct en as [sp brk mb draw].
+    pose (RC := rc_of (mkEntry sp brk mb draw)).
     destruct (valid_entry_unpack _ _ _ _ _ VE VI) as (VSP & _ & _ & _).
     destruct (valid_input_unpack _ VI) as (VA & VEN & _ & _).
-    assert (Hsp : bv_unsigned (en_sp en) = rc_sp) by reflexivity.
-    assert (RCG : rc_guard = guard_of (at_random_bytes (ed_random (en_draw en)))) by reflexivity.
-    change (ms0 rsegs r_init_pc r_phdrs en inp)
-      with (init_ms rsegs r_init_pc r_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en)).
+    assert (Hsp : bv_unsigned (en_sp (mkEntry sp brk mb draw)) = rc_sp) by reflexivity.
+    assert (RCG : rc_guard = guard_of (at_random_bytes (ed_random draw))) by reflexivity.
+    change (ms0 rsegs r_init_pc r_phdrs (mkEntry sp brk mb draw) inp)
+      with (init_ms rsegs r_init_pc r_phdrs sp mb draw inp).
     apply (impl_trz_realizes_leaf_cfg acfg node rsegs (at_node rsegs) (nstep_cfg acfg) nexit minv nsafe (nodes_sound_cfg acfg rsegs)
              (enode NSetTid dec_set_tid)
-             (epost (fun _ => rat_main (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en)))
-             _ (mo0 rsegs lim en inp) (fun _ _ => spec (in_argv inp) (in_fs inp)) _
-             (rstartup_spec (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en) VSP VA VEN RCG)
-             (trz_startup_set_tid_cfg _ _ _ _ Hsp VSP (spec_nil _ _)) (mo0_not_halted _ _ _ _) (mo0_minv _ _ _ _ Hsp VSP)).
+             (epost (fun _ => rat_main (LT:=launch_of inp sp mb draw) sp (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) draw))
+             _ (mo0 rsegs lim (mkEntry sp brk mb draw) inp) (fun _ _ => spec (in_argv inp) (in_fs inp)) _
+             (rstartup_spec sp brk mb draw inp VSP VA VL LOK RCG)
+             (trz_startup_set_tid_cfg _ _ _ _ Hsp VSP (valid_input_channel_reader _ VI) (spec_nil _ _)) (mo0_not_halted _ _ _ _) (mo0_minv _ _ _ _ Hsp VSP (valid_input_channel_reader _ VI))).
     intros [|t] ms' mo' HQ L Hh Hmi.
-    - destruct (mo0_set_tid_leaf_cfg _ _ _ _ _ Hsp VSP L) as (t & _ & E & _). discriminate.
-    - destruct (mo0_set_tid_leaf_cfg _ _ _ _ _ Hsp VSP L) as (t' & Ht & E & ->). cbn in HQ.
-      apply (main_rz lim HLIM en inp (Z_to_bv 64 t') ms' VE VI); [rewrite unsigned_lit; unfold PID_MAX_ENVELOPE in *; lia | exact HQ].
+    - destruct (mo0_set_tid_leaf_cfg _ _ _ _ _ Hsp VSP (valid_input_channel_reader _ VI) L) as (t & _ & E & _). discriminate.
+    - destruct (mo0_set_tid_leaf_cfg _ _ _ _ _ Hsp VSP (valid_input_channel_reader _ VI) L) as (t' & Ht & E & ->). cbn in HQ.
+      apply (main_rz lim HLIM (mkEntry sp brk mb draw) inp (Z_to_bv 64 t') ms' VE VI); [rewrite unsigned_lit; unfold PID_MAX_ENVELOPE in *; lia | exact HQ].
   Qed.
 
   (* [comment removed for export] *)
@@ -198,7 +209,7 @@ Section R_TopCfg.
 
   Theorem R_realizes_spec_cfg_lim : forall (lim : Z), VMINc <= lim ->
     realizes_spec_cfg acfg rsegs r_init_pc r_phdrs lim (fun inp => spec (in_argv inp) (in_fs inp)).
-  Proof. intros lim HLIM. apply realizes_spec_cfg_of_ms0. exact (R_realizes_cfg_lim lim HLIM). Qed.
+  Proof. intros lim HLIM. apply realizes_spec_cfg_of_ms0; [reflexivity | exact (R_realizes_cfg_lim lim HLIM)]. Qed.
 
   Theorem R_realizes_spec_cfg :
     realizes_spec_cfg acfg rsegs r_init_pc r_phdrs source_alloc_limit (fun inp => spec (in_argv inp) (in_fs inp)).

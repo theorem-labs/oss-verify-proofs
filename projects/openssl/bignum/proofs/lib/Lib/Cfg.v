@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Monad Specs Run.
@@ -67,6 +68,9 @@ Proof.
   - eapply sstep_cfg_instr; eassumption.
   - eapply sstep_cfg_instr_fault; eassumption.
   - eapply sstep_cfg_instr_unmodeled; eassumption.
+  - eapply sstep_cfg_vdso_call; eassumption.
+  - eapply sstep_cfg_vdso_materialization_fault; eassumption.
+  - eapply sstep_cfg_vdso_unmodeled; eassumption.
 Qed.
 
 Lemma transparent_family_on : forall ms model x8,

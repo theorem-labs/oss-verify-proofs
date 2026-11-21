@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the mmap safety fact now carries the declined-hint part, the progress of munmap comes from its decided check as an allocation-family call, and nprog_read covers the four new fd kinds). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -10,7 +11,8 @@ From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs
 From LinuxProcessSemantics.LinuxProcessSem.Checks.Sys Require Import DispatchCompute.
 From LinuxProcessSemantics.LinuxProcessSem.Sys Require Import Uapi.
 From OSSVerify.Proofs.openssl.punycode.lib.Lib Require Import PropExec MState Mem ITree Nodes Decode.
-From OSSVerify.Proofs.openssl.punycode.lib.Lib Require Import Decode NodesCfg DecodeCfg.   (* [comment removed for export] *)
+From OSSVerify.Proofs.openssl.punycode.lib.Lib Require Import Decode NodesCfg DecodeCfg.
+From OSSVerify.Proofs.openssl.punycode.lib.Lib Require NodesCfgA.   (* [comment removed for export] *)
 From OSSVerify.Proofs.openssl.punycode.lib.Spec Require Import Prelim Monad Stdio Prog Canon ProgDetIface ProgDetLogic.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Local Notation nstep := NodesCfg.nstep_c (only parsing).
@@ -40,14 +42,15 @@ Proof.
       dispatch_pure check_syscall_brk. auto.
     + exfalso. apply (check_syscall_complete_unmodeled _ _ (eff0 (Z_to_bv 64 0))) in Hr. revert Hr.
       dispatch_pure check_syscall_brk. apply check_brk_not_unmodeled.
-  - pose proof (mmap_safe_noreserve _ _ _ _ _ _ _ Hsafe) as Hnr.
+  - destruct Hsafe as [Hsafe Hdecl].
+    pose proof (mmap_safe_noreserve _ _ _ _ _ _ _ Hsafe) as Hnr.
     pose proof (receptive (pure_input 222 [Z_to_bv 64 addr; Z_to_bv 64 len; Z_to_bv 64 prot; Z_to_bv 64 flags;
                                            Z_to_bv 64 (-1); Z_to_bv 64 0]) mo) as Hr.
     destruct (syscall_spec_witness _ mo) as [eff mo' evs|] eqn:W.
     + exists eff, mo', evs. apply Nodes.nstep_mmap_iff; [exact Hnr|]. apply check_syscall_ok_iff in Hr. revert Hr.
       dispatch_pure check_syscall_mmap. auto.
     + exfalso. apply (check_syscall_complete_unmodeled _ _ (eff0 (Z_to_bv 64 0))) in Hr. revert Hr.
-      dispatch_pure check_syscall_mmap. apply mmap_safe_no_unmodeled. exact Hsafe.
+      dispatch_pure check_syscall_mmap. apply mmap_safe_no_unmodeled; [exact Hsafe | exact Hdecl].
   - pose proof (receptive (pure_input 215 [Z_to_bv 64 addr; Z_to_bv 64 len]) mo) as Hr.
     destruct (syscall_spec_witness _ mo) as [eff mo' evs|] eqn:W.
     + exists eff, mo', evs. apply Nodes.nstep_munmap_iff. apply check_syscall_ok_iff in Hr. revert Hr.
@@ -68,8 +71,9 @@ Proof.
   intros n mo Hn Hsafe Hne. destruct n; try contradiction.
   - exact (NodesCfgA.node_live_brk req mo).
   - exact (proj2 Hne).
-  - destruct (nstep_mm_progress_u (NMunmap addr len) mo I Hsafe) as (rsp & mo' & evs & H). exists rsp, mo', evs.
-    exact (NodesCfg.nstep_c_of_nonalloc (NMunmap addr len) mo rsp mo' evs eq_refl H).
+  - (* munmap is an allocation-family call at the revision: its step is decided by [check_munmap] *)
+    apply NodesCfgA.node_live_of_decided; [apply DecodeCfg.node_decided_munmap|].
+    exact (nstep_mm_progress_u (NMunmap addr len) mo I Hsafe).
   - exact (proj2 Hne).
 Qed.
 
@@ -133,7 +137,9 @@ Lemma nprog_read : forall sel fd buf cnt mo,
   end -> nprog sel (NRead fd buf cnt) mo.
 Proof.
   intros sel fd buf cnt mo Hfd. apply nprog_of_nstep; [exact I|].
-  destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|pi pw|rd wr| ]|] eqn:E; try contradiction.
+  (* LPS 08b1429: [State.FdEntry] has 14 constructors (FdStream, FdEventfd, FdDgram, FdAnon added) *)
+  destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd))
+    as [[ch|p off|p off|p off|p off| |sk|pi pw|rd wr| |sid sside sst|ectx|fam|aid af]|] eqn:E; try contradiction.
   - destruct (fs_lookup (m_fs mo) p) as [data|] eqn:Hfs; [|contradiction].
     eexists _, _, []. apply NodesCfg.nstep_c_of_nonalloc; [reflexivity|]. cbn [Nodes.nstep]. rewrite E, Hfs. split; [reflexivity|]. split; reflexivity.
   - exists (efferr EISDIR), mo, []. apply NodesCfg.nstep_c_of_nonalloc; [reflexivity|]. cbn [Nodes.nstep]. rewrite E. auto.
@@ -238,7 +244,7 @@ Proof.
   destruct Hst as ((Hs & _) & Hst & _).
   assert (Hn' : match n with NBrk _ | NMunmap _ _ | NMprotect _ _ _ => True
              | NMmap _ _ _ flags => mmap_noreserve_b (Z_to_bv 64 flags) = false | _ => False end).
-  { destruct n; try exact I; try contradiction. cbn [nsafe] in Hs. eapply mmap_safe_noreserve. exact Hs. }
+  { destruct n; try exact I; try contradiction. cbn [nsafe] in Hs. eapply mmap_safe_noreserve. exact (proj1 Hs). }
   destruct (nstep_mm_vm_only n mo rsp mo' evs Hn' Hst) as ((Hfd & Hfs & _) & -> & _). auto.
 Qed.
 

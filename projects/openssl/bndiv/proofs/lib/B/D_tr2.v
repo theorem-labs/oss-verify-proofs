@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor lo is rt_sp0 - STACK_WOK, the bottom of the stack the launch zero-maps, instead of rt_sp0 - STACK_WIN; the fuzz contract's premise rt_sp0 - STACK_WIN <= lo is proved by win_le_wok). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -40,7 +41,7 @@ Hypothesis INCB_off : forall x, TR_INIT + 1 <= x < TR_INIT + 5 -> outside IO_FP 
 #[local] Notation LIB := lib_exit_cells.
 #[local] Notation LIB_loc := lib_exit_loc.
 
-Local Ltac ul := unfold SEGTOP_A, STACK_WIN, USTACK_TOP, RT_STACK, FUZZ_STACK, FUZZ_LIVE, LIVE_MAX, g_read_stage in *; lia.
+Local Ltac ul := unfold SEGTOP_A, STACK_WIN, STACK_WOK, USTACK_TOP, RT_STACK, FUZZ_STACK, FUZZ_LIVE, LIVE_MAX, g_read_stage in *; lia.
 
 Lemma outside_image_ranges : forall (W : list (Z * Z)), (forall x, in_ranges W x -> client_static x) ->
   forall x, SEGTOP_A <= x -> outside W x.
@@ -77,7 +78,7 @@ Proof using AF AF_DRV FUZZ LFR LEX VPR OUT_loc ERR_loc XENV_loc IO_img XENV_img 
                   & F & fc & m & HA & HT & Hk14 & HCR & HLN).
   pose proof HT as (ART0 & MI0 & CLX0 & FR0 & TF0 & ST0 & B16 & ULO & USP0 & SPW & LV & FRS & PL & PB & BD & P0 & P1 & CAP0 & UT0 & LB0 & IC0).
   pose proof (af_sp0_range RT AF Σ m ART0) as SP0R.
-  set (lo := rt_sp0 RT Σ - STACK_WIN) in *.
+  set (lo := rt_sp0 RT Σ - STACK_WOK) in *.
   set (CL := tr_live plen owned buf cap) in *.
   assert (EU : bv_unsigned (Z_to_bv 64 (usp - 160)) = usp - 160) by (apply unsigned_lit; ul).
   assert (B16'' : (usp - 160) mod 16 = 0) by (apply Z.mod_divide; [lia|]; apply Z.mod_divide in B16; [| lia]; destruct B16 as (q & ->); exists (q - 10); lia).
@@ -90,10 +91,10 @@ Proof using AF AF_DRV FUZZ LFR LEX VPR OUT_loc ERR_loc XENV_loc IO_img XENV_img 
     - destruct (P0 Z0) as [-> _]. split; [unfold TR_EMPTY; split; [split; [lia| reflexivity]| ul]|]. right. destruct payload; [reflexivity| cbn in PL; lia].
     - rewrite (P1 ltac:(lia)).
       pose proof (af_live_range RT AF Σ m owned plen ART0 (tr_live_in RT Σ LW _ _ _ _ _ LV (INO NZ))) as (R1 & R2 & _).
-      split; [split; [split; [lia| change (2^64) with 18446744073709551616; ul]| unfold lo; lia]|]. left. exists owned, plen. split; [exact (INO NZ)| lia]. }
+      split; [split; [split; [lia| change (2^64) with 18446744073709551616; ul]| unfold lo; ul]|]. left. exists owned, plen. split; [exact (INO NZ)| lia]. }
   apply (FUZZ Σ (PMfd fds0 fs) (Z_to_bv 64 0x1ee254) (Z_to_bv 64 (usp - 160)) gp (Z_to_bv 64 TP_A) t0 t1 t2 (Z_to_bv 64 plen)
            (Z_to_bv 64 d) (Z_to_bv 64 d) (Z_to_bv 64 plen) a2 a3 a4 a5 a6 a7 (Z_to_bv 64 owned) s3 (Z_to_bv 64 TR_INIT)
-           (Z_to_bv 64 k) (Z_to_bv 64 0) (Z_to_bv 64 (-2)) s8 s9 s10 s11 t3 t4 t5 t6 F fc m d payload lo LW CL); try reflexivity; try assumption.
+           (Z_to_bv 64 k) (Z_to_bv 64 0) (Z_to_bv 64 (-2)) s8 s9 s10 s11 t3 t4 t5 t6 F fc m d payload lo LW CL); try reflexivity; try assumption; try exact (win_le_wok _).
   - apply PMfd_fdfs_only.
   - apply PMfd_mat_stable.
   - rewrite <- PL. reflexivity.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs program part, READER lane (a Theorem Labs lane): the ASan walk of parse_items (A 0x84a04) against
    lib/A/FSH_Fn_reader.v's parse_items_spec k - the ENTRY stage and the writer-text model facts. The whole walk is
    FSW_parse_items_holds.v's parse_items_holds (ms = []: FSW_pitems_dev.v; ms <> []: FSW_parse_items_entry.v, then the
@@ -45,7 +46,7 @@
    THE OTHER STAGES (the member loop's five calls, the close and the return) are in the files named in the first
    paragraph; each is a Qed lemma, none is a named hypothesis.
    PORTED FROM r7 AND FROM bump: NOTHING, and why (brief step 2, a Theorem Labs lane 04:0xZ).
-   - a working branch 35255daf2a7 lib/A/Prog/parse_items_arms.v (3,345 lines, 132 Qed) is
+   - a working branch lib/A/Prog/parse_items_arms.v (3,345 lines, 132 Qed) is
      stated in the BESPOKE machine framework: `evt rsegs` / `SR rsegs (mkCfg (mkst ...) md)` over Img0, AsanRT,
      Contract and ALedger, with reader_env / rpost / aledger / a_call_post, and it Requires lib/A/Prog modules
      (parse_items_entry, parse_items_scan, parse_items_seg / _seg2, ALedger, AGlue, grow_c, parse_string_c,
@@ -56,7 +57,7 @@
      are over ALedger's zl / lsum / lsz / held / nlive, which S0 does not have either: it accounts with
      FSH_Fn_reader.v's rd_live / rd_ev / rd_sum and PjGrammar.held, so each would be a restatement, not a port.
      a Theorem Labs lane's file also ASSUMES parse_value's contract (PVC, line 195), parse_string's (PSC, 197) and PSFREE (329).
-   - a working branch 955803f9b2e carries the same bespoke family for parse_items (lib/A/Prog/
+   - a working branch carries the same bespoke family for parse_items (lib/A/Prog/
      parse_items*.v, 0.9 MB). Ruling (a Theorem Labs lane 04:18Z, re-stated by a Theorem Labs lane 04:5xZ): bump is a TEMPLATE
      ONLY, never bridged - a Theorem Labs lane's probe proved the bespoke statements strictly weaker on the refusal paths.
      TAKEN from bump: the STAGE DECOMPOSITION only - which cut points the walk needs and which arms are dead - as
@@ -87,23 +88,23 @@
    COPIED donor proofs: A/ACex.v:322,:330 stack_cells8 / RA_stack (as pi_stack_cells8 / pi_RA_stack), unchanged but
    for their names, to keep ACex (and with it AE2k's instance) out of the load closure - the implicit-instance guard
    of FSH_Gen.v:29. The object-vs-image and object-vs-shadow-band steps are NOT copied: FSW_rd.v
-   (a working branch 1fa49bd3226) proves them as fsw_pobj_off_img / fsw_pobj_off_shadow.
+   (a working branch) proves them as fsw_pobj_off_img / fsw_pobj_off_shadow.
    BASE, PER LEMMA (soundness label, a Theorem Labs lane 00:2xZ / 00:4xZ / 01:0xZ). Every lemma of this file is built over
-   RELOC's FP-keyed core as carried by the kit head a working branch e7266e15dbe (S0 400b2a240b3 +
-   reloc-wip 4b90d538804 + hv5 02c96da1fc5 + ret e8fef4c8127: ajournal's image clause WITH the ~ inFP FP exemption,
+   RELOC's FP-keyed core as carried by the kit head a working branch (S0 +
+   reloc-wip + hv5 + ret: ajournal's image clause WITH the ~ inFP FP exemption,
    awr_byte = awr_byte0 \/ static arm \/ caller-frame arm over fr0, YCbq.v:460-467), plus lib/A/FSupoisonStack.v
-   taken BY PATH from a working branch 52f226102ef (whose YCbq.v is the same FP-keyed core). No lemma
+   taken BY PATH from a working branch (whose YCbq.v is the same FP-keyed core). No lemma
    takes a callee spec - no allocator, nothing that writes fuzz/alloc.c's statics:
      measured (vm_compute only, no core clause involved): pi_K_val, pi_frame_val, pi_regions_wf, pi_static_ok,
        pi_run_entry, pi_run_entry_mem, pi_run_eq, pi_obls_84ad0, pi_run_ws0, pi_ws1_static_ok, pi_run_ws1,
        pi_lh_static_ok, pi_run_iter_a / _b / _c;
-     proved, no callee spec: pi_stack_cells8, pi_RA_stack, pitems_entry (these three also built over S0's older core
-       2bdd415d4f9 at e728a938779), pi_awr_ok and pitems_entry_run (over the FP-keyed core ONLY: they use awr_ok's
+     proved, no callee spec: pi_stack_cells8, pi_RA_stack, pitems_entry (these three also built over S0's older core),
+       pi_awr_ok and pitems_entry_run (over the FP-keyed core ONLY: they use awr_ok's
        (segs, B, .., own, fr0) arity and its caller-frame arm, and so cover BOTH arms of pobj, i.e. level k = 0 too).
    The call stages are built over this same core (FSW_parse_items_grow.v / _calls.v and the step files).
    Ported from: FSW_K.v, FSW_ret.v / FSW_rd.v (a Theorem Labs lane,
-   a working branch e8fef4c8127 via another working branch), FSW_pj.v (a working branch 12a083be217), S0
-   a working branch 400b2a240b3 via another working branch at e7266e15dbe. *)
+   a working branch via another working branch), FSW_pj.v (a working branch), S0
+   a working branch via another working branch. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -485,7 +486,7 @@ eapply range_addressable_sub; [apply zero_shadow_range; [exact Hm1 | exact Hm2 |
 Qed.
 
 (* ---- the write window of the entry state: what the engine's runs are allowed to touch ----
-   Over RELOC's core (YCbq.v:460-467 as in S0 400b2a240b3: awr_byte = awr_byte0 \/ static arm \/ caller-frame arm
+   Over RELOC's core (YCbq.v:460-467 as in S0: awr_byte = awr_byte0 \/ static arm \/ caller-frame arm
    with fr0 := frames S, passed after own). The regions of pi_ss0 with a window: the frame [sp - 144, sp) and struct
    pj_in [q, q + 24) are inside the journal's window [ot - STK', ot), STK' = STK + (ot - sp) (awr_byte0's first
    disjunct); the two shadow-base cells are read-only; the object [v, v + 56) is the caller's FP and lies either in
@@ -694,7 +695,7 @@ Qed.
    as an SRr implication: whatever the rest of the walk proves from the state there (run_post_tok_AJU, the kit's own
    continuation shape) holds at the entry configuration. This is the first step of the walk that RUNS, so it is the
    first that needs awr_ok; over RELOC's core it covers BOTH arms of pobj, so every level k = 0, 1.
-   BASE: hv5a e7266e15dbe (S0 400b2a240b3 + reloc-wip 4b90d538804, RELOC's FP-keyed core); no callee spec taken. *)
+   BASE: hv5a (S0 + reloc-wip, RELOC's FP-keyed core); no callee spec taken. *)
 Theorem pitems_entry_run :
   forall ly S Us (W : world tfibsegs) regs mem md ch q ot v text len p (tb : list byte) tcap d STK FP Q,
   afn_preU tfibsegs B STK ly S Us W regs mem md ch ->

@@ -3,10 +3,11 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/AChf.v, with its module paths, module names and addresses changed; 145 of its 210 lines of code are new or changed and 301 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_scene/lib/A/P_check_step_S0.v, with its module paths changed; 422 of its 472 lines of code are new or changed and 160 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment lemma cs_S1 of check_step's asan-ubsan walk (a Theorem Labs lane, 2026-10-29), proved against the cut statement of
    lib/AU/P_check_step_cut.v (unchanged by this lane). Rule 24 is met: this file proves one segment of the walk, not
    the function; the callees are the Section hypotheses.
-   The asan twin is at 637db22c883 (lib/A/P_check_step_S1.v); this file is its port to the
+   The asan twin is (lib/A/P_check_step_S1.v); this file is its port to the
    asan-ubsan image.
 
    Segment S1 of the ASan walk of check_step in fuzz_scene.asan-ubsan (sha256 e98b1ed286c1aa5c3d558cb2069011d2413d58b2122f741531364382a528833f): 0x833f4 .. 0x835c4.

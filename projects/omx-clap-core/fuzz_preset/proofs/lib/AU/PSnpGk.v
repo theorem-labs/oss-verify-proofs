@@ -1,7 +1,7 @@
 (* fm's snprintf glue, kit: the code table of the walks above printf_core, their run and return steps, dropping and
    adding a region of a symbolic state, and the frame bookkeeping of FMsnprintfI's snk_frame across runs and calls.
    New file. *)
-(* Modified by Theorem Labs, 2026-10: the image-bearing half of origin/cold/port-fm-rtprintf-param 7e395de08f5
+(* Modified by Theorem Labs, 2026-10: the image-bearing half of
    proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfGk.v (:25-71: g_ranges, tbl_g, tbl_g_eq, tbl_g_ok, g_phase,
    g_phase_to, g_ret) for the snprintf chain restated over ARx (route (a), c-omx-hpreset 10:51Z), re-pinned at preset
    image A (fuzz_preset.asan d83eb25d; symbols from its unstripped twin f0d2e8d4). The image-free half (register /
@@ -27,7 +27,7 @@
      ___interceptor_vsnprintf + 0                     0x46188    0x4620c
      ___interceptor_snprintf + 0                      0x46578    0x465fc
      __asan::TryAsanInitFromRtl + 0                   0x5a6a8    0x5a72c *)
-(* Modified by Theorem Labs, 2026-10: moved to the #102 pins, image B' (fuzz_preset.asan-ubsan d663f82d, unstripped c90d4fa5), from the old-pin donor origin/cold/c-libc-stdio-presetsnp-vfp ac1750cac8be: every code numeral by symbol + offset, checked equal to the B -> B' map of record (preset-F reloc102-maps bmap_b2bp.py 27b4c628bef6 over this file); B''s derived bounds from that map: the read-only top / writable start 0xa1000 -> 0xa2000, the image top 0x600000 -> 0x601000; kept as written: the IImg record keys, the instruction words and the segment sizes; audited by port_addr_check 0767e70e074a (only the record keys flag). Per-numeral table: c-libc-stdio scratch/p102/reloc/AU/PSnpGk.v.reloc.tsv. Comment numerals are as written. *)
+(* Modified by Theorem Labs, 2026-10: moved to the #102 pins, image B' (fuzz_preset.asan-ubsan d663f82d, unstripped c90d4fa5), from the old-pin donor: every code numeral by symbol + offset, checked equal to the B -> B' map of record (preset-F reloc102-maps bmap_b2bp.py 27b4c628bef6 over this file); B''s derived bounds from that map: the read-only top / writable start 0xa1000 -> 0xa2000, the image top 0x600000 -> 0x601000; kept as written: the IImg record keys, the instruction words and the segment sizes; audited by port_addr_check 0767e70e074a (only the record keys flag). Per-numeral table: c-libc-stdio scratch/p102/reloc/AU/PSnpGk.v.reloc.tsv. Comment numerals are as written. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

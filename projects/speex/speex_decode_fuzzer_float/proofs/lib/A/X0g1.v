@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (madvise_ok reads the reservation ledger through artm_res_free). *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
 From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.LibA Require Import X1d7 X1cx X1cy X1cm X1cq X1d0 X1da X1d1 X1d3 X1d2 X1cs.
@@ -50,7 +51,8 @@ cbn [fst snd]. rewrite !unsigned_lit by lia. unfold len. lia.
 cbn [fst snd]. rewrite !unsigned_lit by lia. unfold len. lia. }
 destruct Hin as (e & He & He1 & He2).
 apply (madvise_dontneed_ok_intro _ _ _ e He); rewrite ?Eua, ?Eul; [exact He1| exact He2| |].
-+ rewrite Eres. apply reserved_free_above. rewrite Eua. unfold SEGTOP_A. lia.
+    + apply (artm_res_free mo e _ _ Eres); [apply reserved_free_above; rewrite Eua; unfold SEGTOP_A; lia
+        | apply in_vpos; [exact He | lia] | rewrite ?Eua; lia | rewrite ?Eua, ?Eul; lia].
 + apply region_free_noaccess_of_uncovered; [exact Hnp| rewrite Eul; exact Hlen| rewrite Eua, Eul; unfold len; lia|].
 intros a Ha. rewrite Eua, Eul in Ha.
 refine (proj2 (Hsl a _)). unfold shreg, K_LOW_SHADOW_lo, K_LOW_SHADOW_hi, K_HIGH_SHADOW_lo, K_HIGH_SHADOW_hi. unfold len in Ha. lia.
@@ -96,7 +98,8 @@ cbn [fst snd]. rewrite !unsigned_lit by lia. unfold len. lia.
 cbn [fst snd]. rewrite !unsigned_lit by lia. unfold len. lia. }
 destruct Hin as (e & He & He1 & He2).
 apply (madvise_dontneed_ok_intro _ _ _ e He); rewrite ?Eua, ?Eul; [exact He1| exact He2| |].
-+ rewrite Eres. apply reserved_free_above. rewrite Eua. unfold SEGTOP_A. lia.
+    + apply (artm_res_free mo e _ _ Eres); [apply reserved_free_above; rewrite Eua; unfold SEGTOP_A; lia
+        | apply in_vpos; [exact He | lia] | rewrite ?Eua; lia | rewrite ?Eua, ?Eul; lia].
 + apply region_free_noaccess_of_uncovered; [exact Hnp| rewrite Eul; exact Hlen| rewrite Eua, Eul; unfold len; lia|].
 intros a Ha. rewrite Eua, Eul in Ha.
 refine (proj2 (Hsl a _)). unfold shreg, K_LOW_SHADOW_lo, K_LOW_SHADOW_hi, K_HIGH_SHADOW_lo, K_HIGH_SHADOW_hi. unfold len in Ha. lia.

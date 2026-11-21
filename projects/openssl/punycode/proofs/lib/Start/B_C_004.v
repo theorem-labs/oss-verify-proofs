@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the certificate lemma moved to Start/B_G_004.v, which checks this recorded plan renumbered where it is checked and from the hand-off table computed in the build for LPS 727298f3. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool.
 From LinuxProcessSemantics.Riscv Require Import Instr.
@@ -18,8 +19,3 @@ Definition B_IT_004 : itab := mk_itab_ranges B_SEGS B_ranges_004.
 Lemma B_IT_004_ok : itab_sound B_SEGS B_IT_004.
 Proof. apply APS.mk_itab_ranges_sound. Qed.
 Definition B_shape_004 : shape := SHole 0.
-
-Lemma B_cert_004 :
-  check B_SEGS B_IT_004 B_T NX0 AsanInit.LIMIT B_XN0 B_XE0 B_XB0 (HS_one B_HS_004) 0%nat 400000%nat 40000%nat None B_HS_003 B_plan_004
-  = COk B_shape_004.
-Proof. ltac2:(cert_refl_vm constr:(COk B_shape_004)). Qed.

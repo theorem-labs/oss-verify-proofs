@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported from proofs/cgif/cgif_file_fuzzer/lib/A/AFj0.v (SEED_ok: the entry state
    proved from the call precondition), A/AFis.v (E0, at_ST) and A/AFip.v (segA: the run of the seed to the wrapper's
    first call) to libreac/fuzz_decode's calloc wrapper chain in image A (fuzz_decode.asan); module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The seed of the calloc walk of image A, and its run to the wrapper's first call.
 
    [SEED_ok] proves the entry state DecodeCallocSkel.SS0 at the trampoline 0x540d0 from the unit's call precondition
@@ -40,7 +41,7 @@ Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Lemma decode_wx : wx_segs_nowrap tfibsegs.
 Proof. apply wx_segs_nowrap_of_b. vm_compute. reflexivity. Qed.
 
-(* No loaded segment of image A reaches IMG_TOP (YImgTop.v:44 segs_in_asan, decided against the image module). *)
+(* No loaded segment of image A reaches IMG_TOP (YImgTop.v:45 segs_in_asan, decided against the image module). *)
 Lemma find_segment_above : forall (l : list Segment) a,
 segs_in l = true -> IMG_TOP <= a -> find_segment l a 1 = None.
 Proof.

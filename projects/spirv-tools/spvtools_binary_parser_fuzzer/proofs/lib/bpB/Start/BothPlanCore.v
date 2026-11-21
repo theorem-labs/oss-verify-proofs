@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the group id launch variable V_GID, the auxv facts and start state for each CONFIG_RSEQ value, and the revised stack window). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool FunctionalExtensionality.
@@ -27,7 +28,8 @@ ltac2:(KReplay.run1 (kr_t_BothPlanCore ()) [] "h01mh11nh21Hp;2p;3p;1p-1R0p10000R
 Definition KHI : Z := 0x10007fff8000.
 
 Definition FLOOR : Z := 0x2aaaaaaab000.
-
+(** [AsanCeil.alloc_ceiling]: the number [gap_ok] compares against ([AsanPlacement.free_gap_of_totals]) *)
+Definition GAP_CEIL : Z := 0x7fff7f800000.
 Definition MBASE_MIN : Z := 0x154555557000.
 
 Definition PID_MAX : Z := 4194304.
@@ -35,11 +37,12 @@ Definition PID_MAX : Z := 4194304.
 Record atable : Type := AT {
   img_lo : Z; img_hi : Z;
   n_res : nat;
+  n_resx : nat;                    (** upper bound on the NUMBER of the launch's extra reserved intervals (vDSO/vvar, [State.vdso_reserved]) *)
+  p_resx : nat;                    (** upper bound on their total size, in pages *)
   shadow_off : Z;
   a_entry : Z;
   rw_lo : Z; rw_len : Z;
   ph_addr_z : Z; ph_ent_z : Z; ph_num_z : Z;
-
   x_imemset : Z; x_imemcpy : Z; x_memset : Z; x_memcpy : Z; x_memiszero : Z;
 
   x_istrncpy : Z; x_sealed : Z; x_popfree : Z;
@@ -51,6 +54,9 @@ Record atable : Type := AT {
   x_envscan : Z; x_envscan_k : Z; x_pnscan : Z; x_pnscan_k : Z;
   stops_more : list Z
 }.
+
+(** the byte allowance of the launch's extra reserved intervals (non-negative by construction) *)
+Definition resx_bytes (A : atable) : Z := Z.of_nat (p_resx A) * 4096.
 
 Section WithSegs.
 Variable segs : list Segment.
@@ -1716,8 +1722,10 @@ Proof.
 ltac2:(KReplay.run1 (kr_t_BothPlanCore ()) ["WithSegs"] "h01kh12msp;1p;3p;5g00Ekj10Tg06U2j15Tg06VFR0j12Tg06QIR1j11Tg001Hj34Tg019Ej53Tg00hW#0R2g05>k#0P2]1R3P0P1f0R1#5%21%11543eX02D3o"). Qed.
 
 Definition gap_ok (cs : acs) (nhi : Z) : bool :=
-  let cnt := Z.of_nat (n_res A + length (a_maps cs))%nat in
-  Z.leb (FLOOR + nhi + a_totsz cs + cnt * (nhi + 4095)) CEIL.
+  (* [n_resx A] counts the launch's extra reserved intervals: they sit in the
+     same ledger [free_gap_of_totals] measures. *)
+  let cnt := Z.of_nat (n_res A + n_resx A + length (a_maps cs))%nat in
+  Z.leb (FLOOR + nhi + a_totsz cs + cnt * (nhi + 4095)) GAP_CEIL.
 
 Definition budget_ok (cs : acs) (extra : Z) : bool :=
   Z.leb (a_eager cs + a_abytes cs + extra) LIMIT.
@@ -1801,10 +1809,14 @@ Definition mmap_fixed_grant (cs : acs) (ms0 : list amap) (b : expr) (off : Z) (n
   let cs1 := add_entry (with_maps0 cs ms0) (s_regs (a_ss cs)) k' (nxt cs) m nhi eager (a_ylo cs) in
   if visible then vis_add cs1 a ne (kmem ++ kn cs1) else Some cs1.
 
+(** the disjointness floor against the launch's extra reservations: [a_ylo cs] is at or below
+    every extra reserved base and [KHI] is the placement bound ([APS.resx_entry_ok]) *)
+Definition resx_clear (cs : acs) : Z := Z.min KHI (a_ylo cs).
+
 Definition mmap_fixed_free (cs : acs) (kind : mkind) (eager visible : bool) : option acs :=
   let k := kn cs in
   let a := reg cs 10 in
-  match fixed_args cs KHI false with
+  match fixed_args cs (resx_clear cs) false with
   | Some (b, off, ne, nlo, nhi) =>
       if (no_fog (a_maps cs)
           && forallb (fun m => ranges_apart_x k b off ne (am_base m) 0 (am_len m)) (a_maps cs)
@@ -2887,6 +2899,28 @@ Definition V_L1 : nat := 7.
 Definition V_UID : nat := 8.
 Definition V_HW : nat := 9.
 Definition V_S3 : nat := 10.
+Definition V_G : nat := 11.     (** [StackLayout.block_items argv envp mod 2]: the 8-byte gap [STACK_ROUND]
+                                    clears below the AT_RANDOM block so that it lands 16-aligned *)
+Definition V_R : nat := 12.     (** CONFIG_RSEQ of the run's kernel build, as 0/1 ([rseq_z (kb_rseq (in_kernel inp))]):
+                                    the auxv is 27 pairs (432 bytes) without it and 29 pairs (464 bytes) with it
+                                    ([StackLayout.auxv_entries], [StackLayout.auxv_size]).  [Run.valid_input] leaves
+                                    the kernel build free, so the plan carries the flag as a variable and one initial
+                                    state covers both builds. *)
+
+Definition V_GID : nat := 13.   (** the run's group id ([in_gid inp]): musl's [__init_libc] compares AT_GID with
+                                    AT_EGID, so both pairs carry this one launch variable *)
+
+(** the flag as a number *)
+Definition rseq_z (b : bool) : Z := if b then 1 else 0.
+
+(** The auxv's size in bytes, the ONE place the plan names it: [432 + 32 * rseq]. *)
+Definition e_auxsz : expr := eaddz (escale 32 (EVar V_R)) 432.
+
+Lemma auxv_size_rseq : forall b, Z.of_nat (StackLayout.auxv_size b) = 432 + 32 * rseq_z b.
+Proof. intros [|]; vm_compute; reflexivity. Qed.
+
+Lemma rseq_z_range : forall b, 0 <= rseq_z b <= 1.
+Proof. intros [|]; cbn; lia. Qed.
 
 Definition e_pg : expr := eadd (escale 32768 (EVar V_S1)) (escale 4096 (EVar V_S2)).
 Definition e_sp0 : expr := eadd e_pg (escale 16 (EVar V_S3)).
@@ -2895,12 +2929,14 @@ Definition e_sp8 : expr := eadd (escale 4096 (EVar V_S1)) (eadd (escale 512 (EVa
 
 Definition e_envp : expr := eadd e_sp0 (eadd (escale 8 (EVar V_ARGC)) (ELit 16)).
 Definition e_auxv : expr := eadd e_envp (eadd (escale 8 (EVar V_ENVC)) (ELit 8)).
-Definition e_str0 : expr := eaddz e_auxv 160.
+(** Linux's block, bottom to top: atrandom = auxv + (432 + 32*rseq) + 8*g; str0 = atrandom + 16 + pad
+    (the strings sit ABOVE the random bytes, at the top of the stack VMA) *)
+Definition e_atrandom : expr := eadd (eadd e_auxv e_auxsz) (escale 8 (EVar V_G)).
+Definition e_str0 : expr := eadd (eaddz e_atrandom 16) (EVar V_W).
 Definition e_str1 : expr := eadd e_str0 (eaddz (EVar V_L0) 1).
-Definition e_atrandom : expr := eadd e_str0 (escale 8 (EVar V_W)).
-
+(** (e_atrandom - 24 - 432) / 8 as a linear form *)
 Definition e_atr8 : expr :=
-  eadd e_sp8 (eadd (EVar V_ARGC) (eadd (EVar V_ENVC) (EVar V_W))).
+  eadd e_sp8 (eadd (EVar V_ARGC) (eadd (EVar V_ENVC) (eadd (escale 4 (EVar V_R)) (EVar V_G)))).
 
 Definition e_argv1w : expr := EMd M_MUL (EAlu ALU_SLTU (ELit 1) (EVar V_ARGC)) e_str1.
 
@@ -3558,7 +3594,7 @@ Definition mk_itab_ranges (rs : list (Z * nat)) : itab := mk_itab_ranges_acc rs 
 End WithSegs.
 
 Definition BRK_ASLR : Z := 0x80000000.
-Definition NX0 : nat := 11.
+Definition NX0 : nat := 14.   (** includes V_UID, V_HW, V_S3, V_G, V_R and V_GID *)
 
 Definition e_auxb : expr * Z := split_lit e_auxv.
 Definition e_atrb : expr * Z := split_lit e_atrandom.
@@ -3569,17 +3605,20 @@ Definition K_RND : nat := 25.
 
 Definition init_kn_with (atr : kentry) (A : atable) : list kentry :=
   [KRange (EVar V_S1) 0xFFFF0000 0xFFFFFFFF; KRange (EVar V_S2) 0 7; KRange (EVar V_S3) 0 255;
-   KRange (eaddz e_atrandom 16) 0x7fff800000c0 0x800000000000; KRange e_atr8 0xFFFF0000001 0xFFFFFFFFFE7;
+   KRange (eaddz e_atrandom 16) 0x7fff800000c0 0x800000000000; KRange e_atr8 0xFFFF0000001 0xFFFFFFFFFC5;
    KRange e_sp0 0x7fff80000000 0x7fffffffff40; KRange e_pg 0x7fff80000000 0x7ffffffff000;
    KRange e_sp8 0xFFFF0000000 0xFFFFFFFFFE8;
    KRange (EVar V_ARGC) 1 1024; KRange (EVar V_ENVC) 0 256; KRange (EVar V_L0) 0 131071; KRange (EVar V_L1) 0 131071;
-   KRange (EVar V_UID) 0 0xFFFFFFFE; KRange (EVar V_HW) 0x112d 0x2012ad;
-   KRange (EVar V_W) 0 280000; KRange (EVar V_BRK) (img_hi A / 4096) ((img_hi A + BRK_ASLR) / 4096);
-   KWr (SA e_sp0 (-8388608)) (ELit 8388608); KZero (SA e_sp0 (-8388608)) (ELit 8388608);
+   KRange (EVar V_UID) 0 0xFFFFFFFE; KRange (EVar V_HW) 0x112d 0x20112d; KRange (EVar V_G) 0 1; KRange (EVar V_R) 0 1;
+   KRange (EVar V_W) 0 4110; KRange (EVar V_BRK) (img_hi A / 4096) ((img_hi A + BRK_ASLR) / 4096);
+   KWr (SA e_sp0 (-6144513)) (ELit 6144513); KZero (SA e_sp0 (-6144513)) (ELit 6144513);
    KWord (SA e_sp0 0) 8 (EVar V_ARGC); KWord (SA e_sp0 8) 8 e_str0; kw_argv1 e_argv1w]
-  ++ auxw 0 3 (ELit (ph_addr_z A)) ++ auxw 1 4 (ELit (ph_ent_z A)) ++ auxw 2 5 (ELit (ph_num_z A)) ++ auxw 3 16 (EVar V_HW)
-  ++ auxw 4 6 (ELit 4096) ++ auxw 5 11 (EVar V_UID) ++ auxw 6 12 (EVar V_UID) ++ auxw 7 23 (ELit 0) ++ auxw 8 25 e_atrandom
-  ++ auxw 9 0 (ELit 0)
+  (* the pair indices are [StackLayout.auxv_entries]' order; pairs 0..25 sit at the same
+     index under both kernel builds.  Not claimed: ARCH_DLINFO's pairs 0..9, AT_CLKTCK (12),
+     AT_BASE (16), AT_FLAGS (17), AT_ENTRY (18), AT_GID/AT_EGID (21, 22), AT_EXECFN (25),
+     and everything after it (the CONFIG_RSEQ pair and AT_NULL move with the flag) *)
+  ++ auxw 13 3 (ELit (ph_addr_z A)) ++ auxw 14 4 (ELit (ph_ent_z A)) ++ auxw 15 5 (ELit (ph_num_z A)) ++ auxw 10 16 (EVar V_HW)
+  ++ auxw 11 6 (ELit 4096) ++ auxw 19 11 (EVar V_UID) ++ auxw 20 12 (EVar V_UID) ++ auxw 23 23 (ELit 0) ++ auxw 24 25 e_atrandom
   ++ [atr;
       KImg (img_lo A) (img_hi A); KWr (SA (ELit 0) (rw_lo A)) (ELit (rw_len A))].
 
@@ -3587,6 +3626,22 @@ Definition atr_entry : kentry := KBlob (SA (fst e_atrb) (snd e_atrb)) (ELit 16) 
 Definition atr_entry_zero : kentry := KZero (SA (fst e_atrb) (snd e_atrb)) (ELit 16).
 
 Definition init_kn (A : atable) : list kentry := init_kn_with atr_entry A.
+
+(** LPS 727298f3 (#38): the auxv is 27 pairs (29 with CONFIG_RSEQ) and musl's [__init_libc] walks every type
+    word up to AT_NULL, so the start state also gives: the type word of every pair whose value stays unknown
+    (ARCH_DLINFO's pairs 0..9, AT_EXECFN 25), the values the launch fixes (AT_CLKTCK 100, AT_BASE 0, AT_FLAGS 0,
+    AT_ENTRY), AT_GID/AT_EGID as [V_GID], the CONFIG_RSEQ pair when [r] is 1, AT_NULL at pair [26 + 2 r], and the
+    whole vector as readable.  [r] is the run's own flag ([KRange (EVar V_R) r r] in [init_kn_r]); the start
+    state is one per value of [r]. *)
+Definition auxt (i ty : Z) : kentry := KWord (SA (fst e_auxb) (snd e_auxb + 16 * i)) 8 (ELit ty).
+Definition auxv_rest (r : Z) (A : atable) : list kentry :=
+  [auxt 0 33; auxt 1 40; auxt 2 41; auxt 3 42; auxt 4 43; auxt 5 44; auxt 6 45; auxt 7 46; auxt 8 47; auxt 9 51]
+  ++ auxw 12 17 (ELit 100) ++ auxw 16 7 (ELit 0) ++ auxw 17 8 (ELit 0) ++ auxw 18 9 (ELit (a_entry A))
+  ++ auxw 21 13 (EVar V_GID) ++ auxw 22 14 (EVar V_GID) ++ [auxt 25 31; KRange (EVar V_GID) 0 0xFFFFFFFE]
+  ++ (if Z.eqb r 1 then auxw 26 27 (ELit 28) ++ auxw 27 28 (ELit 32) else [])
+  ++ auxw (26 + 2 * r) 0 (ELit 0)
+  ++ [KUnk (SA (fst e_auxb) (snd e_auxb)) (ELit (432 + 32 * r))].
+Definition init_kn_r (r : Z) (A : atable) : list kentry := [KRange (EVar V_R) r r] ++ init_kn A ++ auxv_rest r A.
 
 Definition init_regs : list expr := sr_upd (repeat (ELit 0) 32) 2 e_sp0.
 
@@ -3597,9 +3652,11 @@ Definition init_vis (A : atable) : list (expr * expr) :=
   [(ELit (img_lo A), ELit (img_hi A - img_lo A)); (e_stk, e_stklen)].
 
 Definition init_acs_of_with (kn0 : list kentry) (A : atable) : acs :=
-  ACS (mk_ss (a_entry A) init_regs kn0 NX0) [] (img_hi A - img_lo A) MBASE_MIN 0 (init_vis A) []
+  ACS (mk_ss (a_entry A) init_regs kn0 NX0) []
+      (img_hi A - img_lo A + resx_bytes A) (MBASE_MIN - resx_bytes A) 0 (init_vis A) []
       (vis_cost (img_hi A - img_lo A) + vis_cost STKLEN_MAX) (escale 4096 (EVar V_BRK)) FdStd false [].
 Definition init_acs_of (A : atable) : acs := init_acs_of_with (init_kn A) A.
+Definition init_acs_r (r : Z) (A : atable) : acs := init_acs_of_with (init_kn_r r A) A.
 
 Lemma e_pg_early_eq : e_pg_early = e_pg.
 Proof.
@@ -3609,7 +3666,7 @@ Proof.
 ltac2:(KReplay.run1 (kr_t_BothPlanCore ()) [] "p;1p;3p;2g002^j16Tg003Cj12Tg014Gj13Tg02^Pj15Tg02a\j34Tg02_Tj38Tg004Fj2:Tg001Hj39Tg012hj17Tf0R0#6#6p=0%70#7p=1g01:GR0g0878R1g087dR2g006Y#0#0R3#0#0#0#0R4#6#0#2#3g01;KR5#534%24#3%15#1#1R5#5542%23#3%15#1#554258138':g06C_g08:^590do"). Qed.
 
 Definition ASAN : atable :=
-  {| img_lo := 0x10000; img_hi := 0x671000; n_res := 4; shadow_off := 0x7fff8000;
+  {| img_lo := 0x10000; img_hi := 0x671000; n_res := 4; n_resx := 2; p_resx := 20; shadow_off := 0x7fff8000;
      a_entry := 0x4ba64; rw_lo := 0x142000; rw_len := 0x52f000; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 11;
      x_imemset := 0xe1f9c; x_imemcpy := 0xe1f20; x_memset := 0x116ab4; x_memcpy := 0x1166b0; x_memiszero := 0xe2600;
      x_istrncpy := 0xe24b0; x_sealed := 0x1205f; x_popfree := 0x52a70; x_smear := 0;
@@ -3622,7 +3679,7 @@ Definition ASAN_TEXT_N : nat := 252263.
 Definition asan_init : acs := init_acs_of ASAN.
 
 Definition BOTH : atable :=
-  {| img_lo := 0x10000; img_hi := 0x671000; n_res := 4; shadow_off := 0x7fff8000;
+  {| img_lo := 0x10000; img_hi := 0x671000; n_res := 4; n_resx := 2; p_resx := 20; shadow_off := 0x7fff8000;
      a_entry := 0x4ba54; rw_lo := 0x142000; rw_len := 0x52f000; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 11;
      x_imemset := 0xe1f8c; x_imemcpy := 0xe1f10; x_memset := 0x116aa4; x_memcpy := 0x1166a0; x_memiszero := 0xe25f0;
      x_istrncpy := 0xe24a0; x_sealed := 0x1205f; x_popfree := 0x52a60; x_smear := 0;

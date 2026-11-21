@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfInstDrainX.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the generic cf instance layer, lane F2b: the relation at the drain's two
    cuts from the cut memory, and the re-quarantine fields di_requar_x / di_requar_r at the cf instance.
    rule 24: no function proved (kind: interface-instance discharge of DMiface's re-quarantine fields; relation-level
@@ -25,11 +26,11 @@
    - [IMG_QAPART]: the instance's quarantine header words are apart from the depot / store / internal-allocator areas
      of the symbol table (cgif: by its numerals, YFey.v:578 / :585 / :638);
    - [ERRB_QAPART] (YGcfImgRows): the error-message buffer's object is apart from the instance object (cgif:
-     ERRB_QAPART_cgif, YGcfInstHitcgif.v:61 @ cf-hit 76362ece943);
+     ERRB_QAPART_cgif, YGcfInstHitcgif.v:61 @ cf-hit);
    - [CONST_APART]: each constant cell of the image is the two zero bytes after the mutex word (dmem_q pins them) or
      lies off the quarantine header words and off the primary reserve, for every layout with Base's
      YGcfInstBase.ly_img_ok (layout_ok, the TSD slot at the image's, the owned static inside ly_img: the stated row
-     over bare layout_ok was refuted at reply's image A, ReplyImg_constapart.v @ 507bcceac8e, by layouts that put
+     over bare layout_ok was refuted at reply's image A, ReplyImg_constapart.v, by layouts that put
      ly_tsd elsewhere) (cgif: YFev.Tfib_const_locd, DGif1dq.v:419-461);
    - [EXH_OFF_t] (YGcfImgRows, the unit row cf_exh_off = 68), from which the layer derives EXH_OFF_OK;
    - [errb_obj_owned_t]: Base's row (the error-message buffer's object is owned static);
@@ -70,7 +71,7 @@ forall B, im_syms B -> forall a, qhdr_inst B a ->
 
 (* ERRB_QAPART (the buffer's object apart from the instance object: the drain's walks write the instance's quarantine
    header words and the secondary recycle's four further instance words) is the class-free unit row of
-   YGcfImgRows.v (taken by path from a working branch 76362ece943; cgif: ERRB_QAPART_cgif, YGcfInstHitcgif.v:61).
+   YGcfImgRows.v (taken by path from a working branch; cgif: ERRB_QAPART_cgif, YGcfInstHitcgif.v:61).
    It is the first clause of YGcfErrbSep.ERRB_SEP_t. *)
 
 (* EXH_OFF_OK is a LAYER fact, derived from the one unit row YGcfImgRows.EXH_OFF_t (cf_exh_off = 68):

@@ -9,7 +9,7 @@
    - [errno_law_x_holds] : errno_law_x B ARx for EVERY ARx (lib/B/W_LLVMFuzzerTestOneInput_cut_x.v Section w,
      errno_law_x), in particular at reply B's top_x ARX (ARcf at CfParams_reply /\ Hp = [] /\ arodata_ok_cf), which is
      ReplyBTop's ERRL_x row: `forall rc fx, errno_law_x TfibB W_LLVMFuzzerTestOneInput_top_x.ARX`.
-   Unit facts used: TfibSyms B (YF0m.ts_errno: as_errno B = TFIB_ERRNO = 0x5d994c, YF0m.v:21), reply B's segment table
+   Unit facts used: TfibSyms B (YF0m.ts_errno: as_errno B = TFIB_ERRNO = 0x5d994c, YF0m.v:22), reply B's segment table
    (seg_rom on errno's bytes, by vm_compute) and its writable-segment table (segwb, by vm_compute).  Image A's zz_ERRL
    helpers (lib/A/W_LLVMFuzzerTestOneInput_addI.v:220-246, image-free) are restated here as errl_*, since image B has
    no addI file. *)

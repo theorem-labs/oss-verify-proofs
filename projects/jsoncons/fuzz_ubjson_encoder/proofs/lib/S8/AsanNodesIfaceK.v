@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the CONFIG_RSEQ flag. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
@@ -19,11 +20,12 @@ Variable scfg : SpuriousCfg.
 Variable A : atable.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+Variable rz : Z.
 Variable SINV : env -> (word -> option byte) -> Prop.
 Variable argH : env -> word -> bool.
 Variable FS0 : Fs.Fs.
 
-Definition OBL_mmap2 : Prop := forall split : bool, mm2_stmt SEGS scfg A nx0 LIMIT SINV argH FS0 (node_mmap2 A nx0 LIMIT split).
+Definition OBL_mmap2 : Prop := forall split : bool, mm2_stmt SEGS scfg A nx0 LIMIT SINV argH FS0 (node_mmap2 A nx0 LIMIT rz split).
 Definition OBL_mmapin : Prop := forall hole : bool, mm3_stmt SEGS scfg A nx0 LIMIT SINV argH FS0 (node_mmapin A LIMIT hole).
 Definition OBL_mprotect2 : Prop := mm2_stmt SEGS scfg A nx0 LIMIT SINV argH FS0 (node_mprotect2 A LIMIT).
 Definition OBL_brk2 : Prop := brk2_stmt SEGS scfg A nx0 LIMIT SINV argH FS0.
@@ -37,7 +39,7 @@ Lemma OBL_mmap2_unfold :
   forall split cs csa csb E R FULL model TB,
     cs_ok SEGS A LIMIT SINV argH FS0 E cs R FULL model ->
     is_ecall_at SEGS cs = true ->
-    node_mmap2 A nx0 LIMIT split cs = Some (csa, csb) ->
+    node_mmap2 A nx0 LIMIT rz split cs = Some (csa, csb) ->
     (forall E' R' FULL' model',
         env_agree nx0 E E' /\ env_agree (nxt cs) E E' ->
         cs_ok SEGS A LIMIT SINV argH FS0 E' csa R' FULL' model' -> m_fs model' = m_fs model ->

@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YL0i.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_codec/lib/Reusable/YL0i.v, with its module paths changed; 212 of its 255 lines of code are new or changed and 429 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The slot LLVMFuzzerTestOneInput (fuzz_link.c:764-790), plain image: the post of its SR frame (S-FR item 7).
 
    The obligation's continuation (lib/Reusable/YL0i.v lib_contract_x_T at lib/MemFileRI.v mf_shape, G = llvm_G,
@@ -15,7 +16,7 @@
    return: a0 = 0, the callee-saved registers restored, the NUL at long_alias[300], and the slot's own blocks
    hb either the new kept set (no block kept at entry) or none (the entry's kept FILE stays kept).
    cut_post_cfg gives the same from a cut CUT at the return address. Shape of libreac/fuzz_pcap
-   lib/Prog/Slot/PGlue.v post_FR (released 4b6f0df50aa); every fact is link's. *)
+   lib/Prog/Slot/PGlue.v post_FR (released); every fact is link's. *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

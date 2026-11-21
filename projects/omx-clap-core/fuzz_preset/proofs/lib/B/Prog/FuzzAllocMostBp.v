@@ -1,8 +1,8 @@
-(* proves function fuzz_alloc_most (reuse search: proof-index on main@8b3d60a62fb / ossv/recipes@8bece492f26 / ossv/candidates@ee89628c997 / release/pau-projects-recipes@b6a0088adcb + lemma index + live heads, and git grep of 0x85e14 / 0x862e0 on those four refs / `proof-index fuzz_alloc_most 0x85e14 0x862e0`)
+(* proves function fuzz_alloc_most (reuse search: proof-index on main / ossv/recipes / ossv/candidates / release/pau-projects-recipes + lemma index + live heads, and git grep of 0x85e14 / 0x862e0 on those four refs / `proof-index fuzz_alloc_most 0x85e14 0x862e0`)
    fuzz_preset row AL5, image B' (asan-ubsan, #102 pin): the B' twin of lib/A/Prog/FuzzAllocMostAp.v, the walk of
-   fuzz_alloc_most (merged alloc.c :186-189, `g_most = n`; entry B_prog_sigma AS_fuzz_alloc_most of a Theorem Labs lane's listing
-   d42e123915ae) against the text tfuzz_alloc_most_specX (lib/A/PRH_FnCheck.v:776, kit of record
-   decff67d721f): fuzz_alloc_most_holds_B. The conclusion is SRr (srealizes, YA0n.v).
+   fuzz_alloc_most (merged alloc.c :186-189, `g_most = n`; entry B_prog_sigma AS_fuzz_alloc_most of a Theorem Labs lane's listing)
+   against the text tfuzz_alloc_most_specX (lib/A/PRH_FnCheck.v:776, kit of record):
+   fuzz_alloc_most_holds_B. The conclusion is SRr (srealizes, YA0n.v).
    Listing (lib/B/Listing_prog.v, slots B_prog_slot AS_fuzz_alloc_most .. + 2):
      fuzz_alloc_most        auipc a1 ; sd a0 -> g_most ; ret                                           (3 words)
    No UBSan check and no instrumented access: the store goes to a static, which is PST.

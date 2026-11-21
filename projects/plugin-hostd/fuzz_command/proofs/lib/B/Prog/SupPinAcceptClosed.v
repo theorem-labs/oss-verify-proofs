@@ -10,11 +10,12 @@
    (lib/B/Prog/CmdRecRest.v), the image facts cmd_img_facts_tfib (lib/B/Prog/CmdRecImg.v). What remains is the
    statement's callee contracts (each at every FP state), the allocator record HB and the meter's laws MTL. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/SupQuarantineClearClosed.v, with its module names changed; 7 of its 37 lines of code are new or changed and 18 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The closing corollary of sup_pin_accept's ASan+UBSan walk (lib/B/Prog/sup_pin_accept.v, tsup_pin_accept_holds),
    in the pattern of a Theorem Labs lane's PASS4-REFIT.md section F: the walk's per-binary hypotheses discharged at the pinned
    image (lib/B/Prog/CmdImg.v's instance PB_cmd, whose segments are tfibsegs, and the sink head YE2k.tfib_sink_head),
-   as a Theorem Labs lane's RecBClosed.v (a working branch f349bdaedba, lib/A/Prog/RecBClosed.v:163-191) and
-   the worked example lib/A/Prog/SupRemoveAllRefitClosed.v:50-60 (a working branch e84227c9553) do on image A:
+   as a Theorem Labs lane's RecBClosed.v (a working branch, lib/A/Prog/RecBClosed.v:163-191) and
+   the worked example lib/A/Prog/SupRemoveAllRefitClosed.v:50-60 (a working branch) do on image A:
    - cmd_img_facts_tfib is a Theorem Labs lane's CmdRecImg.cmd_img_facts_tfib (lib/B/Prog/CmdRecImg.v:68);
    - cmd_sig_prog_PB is CmdRecRest.cmd_sig_prog_PB, and the statement's VOBJS is CmdRecRest.cmd_val_objs_PB
      (lib/B/Prog/CmdRecRest.v:169, :173);

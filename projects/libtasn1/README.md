@@ -3,7 +3,7 @@
 
 [gitlab.com/gnutls/libtasn1](https://gitlab.com/gnutls/libtasn1) · OSS-Fuzz: [projects/libtasn1](https://github.com/google/oss-fuzz/tree/bd2ce21991a94a362b92fb1bf25f86d5a1a60842/projects/libtasn1)
 
-**Status: available.** 9 of OSS-Fuzz's 9 fuzz targets have statements. 36 binaries, 12 MB. 129 statements: 0 proved, 0 known false, 0 suspected false, 0 blocked by the model, 129 open.
+**Status: available.** 9 of OSS-Fuzz's 9 fuzz targets have statements. 36 binaries, 12 MB. 129 statements: 3 proved, 0 known false, 0 suspected false, 0 blocked by the model, 126 open.
 
 Built from libtasn1 (commit `2b2065b2`).
 
@@ -13,7 +13,7 @@ Built from libtasn1 (commit `2b2065b2`).
 | [asn1_decode_simple_ber_fuzzer](asn1_decode_simple_ber_fuzzer/) | Checks one property, an invariant: When asn1_decode_simple_ber/der succeeds on the input (for both ASN1_ETYPE_BIT_STRING and ASN1_ETYPE_OCTET_STRING), the decoded content length is at most the input length. | none | 15 |
 | [asn1_decode_simple_der_fuzzer](asn1_decode_simple_der_fuzzer/) | Checks one property, an invariant: When asn1_decode_simple_ber/der succeeds on the input (for both ASN1_ETYPE_BIT_STRING and ASN1_ETYPE_OCTET_STRING), the decoded content length is at most the input length. | none | 15 |
 | [asn1_get_length_ber_fuzzer](asn1_get_length_ber_fuzzer/) | asn1_get_length_ber on inputs <= 512 bytes; returned length and ret_len ignored. | none | 15 |
-| [asn1_get_length_der_fuzzer](asn1_get_length_der_fuzzer/) | asn1_get_length_der on inputs <= 512 bytes; returned length and ret_len ignored. | none | 15 |
+| [asn1_get_length_der_fuzzer](asn1_get_length_der_fuzzer/) | asn1_get_length_der on inputs <= 512 bytes; returned length and ret_len ignored. | none | 15, 3 proved |
 | [asn1_get_object_id_der_fuzzer](asn1_get_object_id_der_fuzzer/) | asn1_get_object_id_der into a 256-byte buffer; return code and output ignored. | none | 15 |
 | [libtasn1_array2tree_fuzzer](libtasn1_array2tree_fuzzer/) | Builds an asn1_static_node table from fixed-size fuzz records and calls asn1_array2tree; the tree is freed on success, nothing checked. | none | 13 |
 | [libtasn1_gnutls_der_fuzzer](libtasn1_gnutls_der_fuzzer/) | DER-decodes the input as GNUTLS.DHParameter and as GNUTLS.GOSTParameters (after asn1_write_value on digestParamSet), then re-encodes the GOST structure with asn1_der_coding (size query then encode); the re-encoding is not compared with anything and its return code is ignored. | none | 13 |
@@ -45,7 +45,11 @@ By hand: download `libtasn1-bin.tar.zst` from release [v2026.10.0](https://githu
 - Builder image: `ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b`. A binary whose SHA-256 differs after a rebuild with it is a bug: please open an issue.
 
 ## Proofs
-None yet. See [docs/proving.md](../../docs/proving.md).
+| statement | result |
+|---|---|
+| [libtasn1/asn1_get_length_der_fuzzer/ubsan_agreement_decidable](asn1_get_length_der_fuzzer/proofs/ubsan_agreement_decidable) | proved |
+| [libtasn1/asn1_get_length_der_fuzzer/ubsan_agrees](asn1_get_length_der_fuzzer/proofs/ubsan_agrees) | proved |
+| [libtasn1/asn1_get_length_der_fuzzer/ubsan_disagrees_at_most](asn1_get_length_der_fuzzer/proofs/ubsan_disagrees_at_most) | proved |
 
 ## Licence
 The licence of libtasn1 is not recorded here yet. Each binary is a combined work of libtasn1, the harness, the C library, the compiler's runtime and every library it links; the SPDX expression of each is not recorded here yet. Corresponding source, in release [v2026.10.0-src](https://github.com/theorem-labs/oss-verify-proofs/releases/tag/v2026.10.0-src): `libtasn1-src.tar.zst`, the upstream source trees exactly as upstream publishes them; `libtasn1-src.MANIFEST.tsv`, which says where the build lays each one down; and `recipe.tar.zst`, that release's build recipe (the build scripts, pins and patches). Its binaries are under a GPL-family licence, so their corresponding source also takes `toolchain-src.tar.zst`, the source of the toolchain they were built with, in release [sources-v1](https://github.com/theorem-labs/oss-verify-proofs/releases/tag/sources-v1).

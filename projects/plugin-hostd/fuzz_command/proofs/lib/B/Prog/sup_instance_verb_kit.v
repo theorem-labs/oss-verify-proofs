@@ -2,9 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the helper layer of the ASan+UBSan walk of sup_reset (lib/B/Prog/sup_reset.v,
-   a working branch c79a9f2daf7, :62-640, the srb_* lemmas before tsup_reset_holds), carried over under
+   a working branch, :62-640, the srb_* lemmas before tsup_reset_holds), carried over under
    sivk_* names for the walk of sup_instance_verb (lib/B/Prog/sup_instance_verb.v), over the same statements (at
-   a working branch 713692f1e0c) and core (a working branch c022a2f6a88). The two contracts have the same footprint
+   a working branch) and core (a working branch). The two contracts have the same footprint
    (sup_reset_c.v:105, sup_instance_verb_c.v:142: g_rec, record.spill and the recorder's blocks), the same recorder
    representation (CmdRep.v's rec_repA) and the same string-argument form (CmdRep.v's astr_argA), so each lemma keeps
    sup_reset's statement; only the names change. One lemma hard-coded sup_reset's own call: srb_answer_slot is stated
@@ -17,6 +17,7 @@
    cmd_rodata_kept). No meter, no callee contract. At End d a lemma takes B, then HB and cmd_img_facts_tfib if its
    proof uses them, as explicit arguments; rc, SK and PI are implicit (RunCeil is a class, SK and PI come from the
    types), so a walk applies e.g. `sivk_FP_low B HB cmd_img_facts_tfib ly S W mem md O a HAR HOin Ha`. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -49,7 +50,7 @@ Local Set Warnings "-abstract-large-number".
 Open Scope bv_scope.
 Open Scope Z_scope.
 
-(* ---------- the representation's readers (sup_reset.v:62-158, the same CmdRep forms) ---------- *)
+(* ---------- the representation's readers (sup_reset.v:63-159, the same CmdRep forms) ---------- *)
 
 Lemma sivk_aval_keep : forall rd rd' a n v, aval_mem rd a n v ->
   (forall x, a <= x < a + Z.of_nat n -> rd' x = rd x) -> aval_mem rd' a n v.

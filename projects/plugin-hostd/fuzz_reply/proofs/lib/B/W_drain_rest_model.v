@@ -8,15 +8,16 @@
    image key_ptrs, and upds over one more relayed line.  The three stage walks of lib/B/W_drain_gs.v
    (gs_scan_stmt, gs_add_stmt, gs_free_stmt) cite it.
 
-   PORTED from image A's lib/A/W_drain_gs.v:59-599 on a working branch ed12337f74d (the file last
-   changed in 1ef2c00b5d5), every lemma name kept.  The block names no image address and no image-A
+   PORTED from image A's lib/A/W_drain_gs.v:60-600 on a working branch (the file last
+   changed), every lemma name kept.  The block names no image address and no image-A
    definition, so it is stated here over image B's own definitions: dcx, dW, drlp, dskp, drlq, dlrun, dlno,
    dloc, dlH, dlka, dbound and dline of lib/B/W_drain_cx.v (:411, :617-642; the same text as image A's), and
    the shared model of lib/A/W_drain_model.v and lib/Prog (lrun, seen_arr, seen_ka, seen_tr, index_of,
    set_nth, swap_remove, key_ptrs, keys_texts, scan, gesture, upds, with_nul).  The Require list is
    lib/B/W_drain_gs.v's, plus lib/Lib/Mem for le8. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/W_drain_gs_model.v; 64 of its 144 lines of code are new or changed and 415 lines of the source are left out. *)
-(* Image-B (fuzz_reply.asan-ubsan) copy of lib/A/W_drain_rest_model.v (a working branch e6b5f95b285), over lib/B's
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Image-B (fuzz_reply.asan-ubsan) copy of lib/A/W_drain_rest_model.v (a working branch), over lib/B's
    interface; only the imports and the Section header (lib/B/W_drain_lineb.v's) changed. *)
 (* The pure model facts of the REST segment of fuzz_reply's drain ASan walk
    (DLR 0x83a4c -> DI): when the relay's buffer dW s1 holds no NUL from p on, the line loop has nothing left to
@@ -56,7 +57,7 @@ Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Open Scope bv_scope.
 Open Scope Z_scope.
 
-(* ---- scan over NUL-free bytes, and the prefix [0, p) of the buffer (ported from W_drain_gs.v:67-172). ---- *)
+(* ---- scan over NUL-free bytes, and the prefix [0, p) of the buffer (ported from W_drain_gs.v:67-173). ---- *)
 Lemma rmx_scan_zero_fst : forall sk acc d, fst (scan sk acc (0 :: d)) = fst (scan false [] d).
 Proof. intros sk acc d. rewrite scan_zero. destruct (scan false [] d) as [[a b] c]. reflexivity. Qed.
 

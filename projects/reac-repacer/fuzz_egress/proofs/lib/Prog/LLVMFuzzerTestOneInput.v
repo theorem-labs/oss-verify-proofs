@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/Prog/LLVMFuzzerTestOneInput.v
-   at bc49657c087a and libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Prog/fd_entry.v and fd_exit.v at
-   25e3d17bdb50; module path, this harness's body and its callees. *)
+   and libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Prog/fd_entry.v and fd_exit.v;
+   module path, this harness's body and its callees. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The plain-image walk of the harness body LLVMFuzzerTestOneInput (fuzz_egress.c:143-170), 0x12c60, 436 bytes,
    against LLVMFuzzerTestOneInput_c.v's LLVMFuzzerTestOneInput_sr_contract. size >= 64 MiB returns at once
    (LLVMFuzzerTestOneInput_early.v); otherwise the body is split at each SR call:

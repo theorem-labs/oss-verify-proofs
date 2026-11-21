@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (2 recorded proofs replaced by written proofs (atop_range, sec_range)). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith Lia.
 From LinuxProcessSemantics.Riscv Require Import Prelude.
@@ -10,11 +11,9 @@ Ltac2 kr_t_RunDraw () := "K47Corelib7Numbers7BinNums8positive02K47Corelib7Number
 Open Scope Z_scope.
 
 Lemma atop_range {rc : runConstT} : 0x7fff7f800000 <= ATOP <= 0x7FFFFF800000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_RunDraw ()) [] "h02rcp;1p;2p;4g0000j10Tg000Uj16Tg0013j1;Tg001ij24Tg002Ej11Tg002jj18Tg003cj19Tg004\j4:Tf0R0#1#1p=<%10#1#1#1p=2%00#0p=5%00#0#0#0p=7%00#0#0#0#0#0#0#0p=3g0057R1g0064#<#2#2#2R2#0#2#2#0#5#7#3#3#6%;0R3'4%12#2#2#0#5#7#3#3#6,43%80%90C:X01P0O1W0o"). Qed.
+Proof. split; [apply ATOP_lo | apply ATOP_hi]. Qed.
 Lemma sec_range {rc : runConstT} : 0 <= SECRET < 2^64.
-Proof.
-ltac2:(KReplay.run1 (kr_t_RunDraw ()) [] "h02rcp;1g006Yj10Tg0057R0f0R1#0X00P1O1W0o"). Qed.
+Proof. apply SECRET_rng. Qed.
 
 (* [comment removed for export] *)
 Ltac atop_facts :=

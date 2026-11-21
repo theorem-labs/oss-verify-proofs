@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMseg_rjL.v (commit 9259077395a9, Quarantine::Drain walk set; file sha256 ab50045a7cc1) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 7 image addresses moved by code-verified function pairs (6 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 1 code pcs the tool read as sizes, by funcpair.py), and 12 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMseg_rjL.v (Quarantine::Drain walk set; file sha256 ab50045a7cc1) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 7 image addresses moved by code-verified function pairs (6 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 1 code pcs the tool read as sizes, by funcpair.py), and 12 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, WalkB1): a TWIN of DMseg_rj.v (base file, not edited) whose loop-path post
    [at_RJL] ALSO exports the two lock bytes and the two bytes after them at the loop head (the shell's R_QW, held
-   unchanged on that path), which the dequeue loop's premise DMdeq.deq_pre needs (dq_CQW, DMdeq.v:692) and the
+   unchanged on that path), which the dequeue loop's premise DMdeq.deq_pre needs (dq_CQW, DMdeq.v:693) and the
    released at_RJL drops (its MEQ frames everything but that word).  Everything else is DMseg_rj.v verbatim.
    rule 24: no function proved (kind: a twin of a segment already walked, DMseg_rj.segR; the lane's reuse search is
    LOOKUP-B1-drain.txt (sha256 c6e48b676fd5; internal record) 2026-10-29T23:07:48Z exit 0, rule-24 check B1LookupCheck CONFIRM).

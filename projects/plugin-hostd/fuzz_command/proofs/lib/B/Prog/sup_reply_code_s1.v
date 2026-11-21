@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the kit of sup_reply_code's ASan walk (plugin-hostd/fuzz_command), in the form of proofs/cgif/cgif_file_fuzzer/lib/A/AChc.v and AChd.v: the literal "resp " and the strncmp wrapper's answer on it, and the symbolic entry state with its seed. The step through a runtime entry and the facts carried over to a call are in lib/A/Prog/PaArt.v. *)
-(* Modified by Theorem Labs, 2026-10: ported from lib/A/Prog/sup_reply_code_s1.v (a working branch efc67a58cf8) to fuzz_command.asan-ubsan: module paths, the literal at 0x21d60 (RO_lit_21d60), the 32-byte frame. *)
+(* Modified by Theorem Labs, 2026-10: ported from lib/A/Prog/sup_reply_code_s1.v (a working branch) to fuzz_command.asan-ubsan: module paths, the literal at 0x21d60 (RO_lit_21d60), the 32-byte frame. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

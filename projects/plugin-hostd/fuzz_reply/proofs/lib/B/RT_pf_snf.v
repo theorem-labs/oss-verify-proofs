@@ -1,6 +1,6 @@
-(* Image B twin of lib/A/RT_pf_snf.v at d49bd1db505: module paths lib.A -> lib.B; 3 image numerals moved to fuzz_reply.asan-ubsan by symbol + offset, each checked against that image (CHAINB-numerals.tsv sha256 3cedf5e564f7; internal record). *) (* ___interceptor_snprintf at fuzz_reply.asan-ubsan: RT_pf_stmt.v snprintf_icpt_stmt, at __wrap_snprintf 0x42234, assembled
+(* Image B twin of lib/A/RT_pf_snf.v: module paths lib.A -> lib.B; 3 image numerals moved to fuzz_reply.asan-ubsan by symbol + offset, each checked against that image (CHAINB-numerals.tsv sha256 3cedf5e564f7; internal record). *) (* ___interceptor_snprintf at fuzz_reply.asan-ubsan: RT_pf_stmt.v snprintf_icpt_stmt, at __wrap_snprintf 0x42234, assembled
    from pieces that are already proved - no function is walked here:
-   - R4Printf's RELOCATED Bz walk (a working branch 5247aa4d0b9, lib/A/Bz/K/I_snprintfw.v): snprintf_walkA (the
+   - R4Printf's RELOCATED Bz walk (a working branch, lib/A/Bz/K/I_snprintfw.v): snprintf_walkA (the
      trampoline, the frame of 96, the va_start spill of a3..a7 at [q-40, q), TryAsanInitFromRtl, to the call of
      ___interceptor_vsnprintf 0x46538 with va_list = q-40) and snprintf_walkB (the epilogue);
    - the vsnprintf interceptor's own statement entered at its body 0x46538, taken as the Section hypothesis VSNI

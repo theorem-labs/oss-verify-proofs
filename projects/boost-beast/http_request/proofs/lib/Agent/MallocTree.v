@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -119,15 +120,34 @@ Definition ptr_rel (p : optr) (r : option bptr) : Prop :=
 
 Definition AUXV_CELL : Z := LIBC + 8.
 
-Definition auxv_list (x3 x4 x5 x6 x11 x12 x23 rnd : Z) : list word :=
-  map wz [3; x3; 4; x4; 5; x5; 6; x6; 11; x11; 12; x12; 23; x23; 25; rnd; 0; 0].
+(* Rule 26i/12k retable, THIRD copy in this unit.  This one is spelled
+   [auxv_list]/[auxv_ok] - no leading r - so a search for [rauxv_list] misses
+   it, and it carries only NINE pairs (no AT_HWCAP = 16), so the published
+   "16; 6; 11; 12; 23; 25" subsequence misses it too.  Found by SHAPE instead:
+   [map wz \[3;].  See Ref/RMallocTree.v for the vector and the derivation; this
+   copy has no weaken/frame lemmas and nothing unfolds [auxv_list], so the
+   retable is self-contained here. *)
+Definition auxv_keys (m : mem) (av rnd : Z) : Prop :=
+  bytes_at asegs m av (le8 (wz 33)) /\ bytes_at asegs m (av + 16) (le8 (wz 40)) /\ bytes_at asegs m (av + 32) (le8 (wz 41))
+  /\ bytes_at asegs m (av + 48) (le8 (wz 42)) /\ bytes_at asegs m (av + 64) (le8 (wz 43)) /\ bytes_at asegs m (av + 80) (le8 (wz 44))
+  /\ bytes_at asegs m (av + 96) (le8 (wz 45)) /\ bytes_at asegs m (av + 112) (le8 (wz 46)) /\ bytes_at asegs m (av + 128) (le8 (wz 47))
+  /\ bytes_at asegs m (av + 144) (le8 (wz 51)) /\ bytes_at asegs m (av + 160) (le8 (wz 16)) /\ bytes_at asegs m (av + 176) (le8 (wz 6))
+  /\ bytes_at asegs m (av + 192) (le8 (wz 17)) /\ bytes_at asegs m (av + 208) (le8 (wz 3)) /\ bytes_at asegs m (av + 224) (le8 (wz 4))
+  /\ bytes_at asegs m (av + 240) (le8 (wz 5)) /\ bytes_at asegs m (av + 256) (le8 (wz 7)) /\ bytes_at asegs m (av + 272) (le8 (wz 8))
+  /\ bytes_at asegs m (av + 288) (le8 (wz 9)) /\ bytes_at asegs m (av + 304) (le8 (wz 11)) /\ bytes_at asegs m (av + 320) (le8 (wz 12))
+  /\ bytes_at asegs m (av + 336) (le8 (wz 13)) /\ bytes_at asegs m (av + 352) (le8 (wz 14)) /\ bytes_at asegs m (av + 368) (le8 (wz 23))
+  /\ bytes_at asegs m (av + 384) (le8 (wz 25)) /\ bytes_at asegs m (av + 392) (le8 (wz rnd))
+  /\ bytes_at asegs m (av + 400) (le8 (wz 31))
+  /\ ((bytes_at asegs m (av + 416) (le8 (wz 27)) /\ bytes_at asegs m (av + 432) (le8 (wz 28))
+       /\ bytes_at asegs m (av + 448) (le8 (wz 0)))
+      \/ bytes_at asegs m (av + 416) (le8 (wz 0))).
 
 Definition auxv_ok (m : mem) (B : Z) : Prop :=
   exists av x3 x4 x5 x6 x11 x12 x23 rnd,
     rw_cells asegs m AUXV_CELL [C8 (wz av)]
-    /\ bytes_at asegs m av (u64s (auxv_list x3 x4 x5 x6 x11 x12 x23 rnd))
+    /\ auxv_keys m av rnd
     /\ bytes_at asegs m (rnd + 8) (zeros 8)
-    /\ alloc_ceiling <= B /\ B <= av /\ av + 144 <= 2^64 /\ B <= rnd + 8 /\ rnd + 16 <= 2^64
+    /\ alloc_ceiling <= B /\ B <= av /\ av + 464 <= 2^64 /\ B <= rnd + 8 /\ rnd + 16 <= 2^64
     /\ 0 <= x3 < 2^64 /\ 0 <= x4 < 2^64 /\ 0 <= x5 < 2^64 /\ 0 <= x6 < 2^64
     /\ 0 <= x11 < 2^64 /\ 0 <= x12 < 2^64 /\ 0 <= x23 < 2^64 /\ 0 <= rnd < 2^64.
 

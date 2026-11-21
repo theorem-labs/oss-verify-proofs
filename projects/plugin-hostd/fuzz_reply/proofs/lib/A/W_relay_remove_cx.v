@@ -36,24 +36,24 @@
    STATEMENT GAPS (facts the machine has that the first text lacked; each found at a prover's unprovable goal, each
    fixed by stating the fact and discharging it at PB_fr / fr_globals by vm_compute, never by weakening):
    - RLIVE own = [] (RigTail, the flag store / stack_malloc post): the fake frame read as an ENTRY frame; now
-     own = [(0, fpos)] (6322e1c462a).
+     own = [(0, fpos)].
    - HH59 / HH60 (RrPro, rregs_held / RRL's s7 / s9): the abstract PI leaves VAL (A_HI 59 / 60) - VAL (A_OBJ 7 / 8)
-     open (W_rebase.v:7-15) (d700f304923).
+     open (W_rebase.v:7-15).
    - key slack (RrPro / RrTail, arelay_at after the frame stores): W_rep.v bounded a key's slack only from below, so a
-     slack byte could sit on F or its shadow; W8's ruling-(A) W_rep.v removes slack (ead5de7cc24).
+     slack byte could sit on F or its shadow; W8's ruling-(A) W_rep.v removes slack.
    - HRGP (RrTail / RigTail, aout_at after the lock / unlock): counter-case rg_send_max = rg_lock + 4 with mx = 16;
      HRGI (RrTail): g_capsrc = F + 32 would make the final g_capsrc 0; HV4 (RrTail, the wake load 0x83fe0);
-     rregs_base s10 / s11 (RrTail, aregs_preserved: relay_remove never saves them) (eab4b19b11c).
+     rregs_base s10 / s11 (RrTail, aregs_preserved: relay_remove never saves them).
    - HROMO and HRGI's not-owned-static half (RigPro, rom_view and aout_at across __asan_stack_malloc_*, which keeps
-     only bytes that are not aowned) (cd96cd63ec8).
+     only bytes that are not aowned).
    - the MATCH prep (PREP.md (sha256 02e2eed258c7; internal record) (d)), rulings:
      Q1 METER: rr_tr omitted free (NULL) (the held array of an entry with no held keys; s->buf of an entry with
        cap 0) while gse_cost [] = mo_free and afree_null_cf_rule charge mo_free; W_contract.v rr_tr now counts both
        frees always (AFREEN added here for the buf free).
      Q9: rr_tr's drain prefix IS dr_spec's dr_tr (drain's own liveness), one description of the trace.
      Q2 ROOM: a send that does not grow g_out leaves sl_cap = cap, which tr_max / tr_alloc do not bound; rr_spec
-       (and RBASE) took cap < MMAX and blocks_bytes + tr_alloc + 4 * max cap tr_max <= LIVE_MAX (1744b876fbd).  C3
-       (475b8a2b569) removed both: the callees' room premises (dr_spec, ge_room, gse_room) are stated over their
+       (and RBASE) took cap < MMAX and blocks_bytes + tr_alloc + 4 * max cap tr_max <= LIVE_MAX.  C3
+       removed both: the callees' room premises (dr_spec, ge_room, gse_room) are stated over their
        traces' peak (W_contract.v tr_peak), so rr_spec asks only tr_max tr < MMAX and blocks_bytes S + tr_peak tr <=
        LIVE_MAX, and RBASE, RHELD and W_rr_match_cx.v rmbud carry the peak form (the kit is W_tr_peak.v).
      Q3: gse_spec's END5 literal: HEND5, W4's text.  Q4: covered by HRGP (lock, nsrc, src, capsrc, g_s, the
@@ -67,23 +67,24 @@
      so HEND5 (W4's text) and azs over "%s %d " / "param_gesture" could not be discharged.  ge_spec / gse_spec need
      only the bytes (HEND5L + rom_view); glit_at now carries W3's ashp (range_addressable over exactly [a, a + n) and
      the shadow hull).  Delete-and-rebuild check: no Qed piece used HEND5 or the azs conjunct.
-   CONSUMER NOTE (W8's ARM_remove, LLVMFuzzerTestOneInput's call of relay_remove): since C3 (475b8a2b569) rr_spec's
+   CONSUMER NOTE (W8's ARM_remove, LLVMFuzzerTestOneInput's call of relay_remove): since C3 rr_spec's
    room premises at the call are `tr_max tr < MMAX` and `blocks_bytes S + tr_peak tr <= LIVE_MAX`, with
    tr = rr_tr c mx |O| cap FD es h, which counts both frees of the matched entry always; the two premises
-   `cap < MMAX` and `blocks_bytes S + tr_alloc tr + 4 * Z.max cap (tr_max tr) <= LIVE_MAX` of 1744b876fbd are gone. *)
+   `cap < MMAX` and `blocks_bytes S + tr_alloc tr + 4 * Z.max cap (tr_max tr) <= LIVE_MAX` are gone. *)
 (* Modified by Theorem Labs, 2026-10: ROUTE (b), STEP 3 (CONVERSION.md (sha256 1015972e02a9; internal record)) in the room form
    (a Theorem Labs lane, lane RR_x): the segment interface over ANY allocator relation ARx with its laws.  Section c takes the
    generic relation (PST / ARx / hl / LAWS / HP0), the frame twins' hypotheses of W_frame_x.v (IMGC, BLKN, OWNLOW,
-   WFx / WFL, SFREE, SMALLOC; the template is commit 3d17f490d56, lib/A/W_relay_finish_h.v Section c), the PST facts
+   WFx / WFL, SFREE, SMALLOC; the template is, lib/A/W_relay_finish_h.v Section c), the PST facts
    PSTR / PSTG (the program statics hold no ROM byte and none of HRGP's cells: what the journal's image clause carries)
    and every callee in its _x room form (dr_spec_x, gse_spec_x, afree_cf_rule_c_x / afree_null_cf_rule_c_x,
    alock_realizes_x / aunlock_realizes_x, aintrin_realizes_x / amemcpy_same_realizes_x).  The entry record rcx gains
    the ghost set rxHp (after rxS) and the room budget rxkr; RBASE is rr_spec_x's premises EXACTLY (afn_pre_x at
-   RR_STK_x since W8's DRAIN_STK_x ruling, commit b9052387bcb; then the AR premises, then the room record:
+   RR_STK_x since W8's DRAIN_STK_x ruling; then the AR premises, then the room record:
    rp_RM RP S (Z.to_nat (tr_cost MT_rk tr) + kr) and cnt_ok_pk RP (rr_pk tr)), the post rPOST is rr_post_x.  The cut predicates' journal is ajournal_gx_x with the head set after each state, and they
    carry the room budget as they carry the meter: RHELD (RRL / RRM / RRU None) the whole budget
    rp_RM RP S1 (Z.to_nat (tr_cost MT_rk (rtr cx)) + kr) and the entry's count fact cnt_ok_pk RP (rr_pk (rtr cx)) at
    the current blocks; RDONE (RRU (Some i)) what is left after the last free, rp_RM RP S1 kr. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

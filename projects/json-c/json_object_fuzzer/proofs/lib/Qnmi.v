@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo, which jo_preA now carries after alloc_ceiling <= lo: the jo_set_double, jo_set_string and jo_set_string_len calls discharge it from HBOT). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -360,7 +361,7 @@ step. step. evt_done5.
 pose proof (ca_SETD _ _ _ _ _ _ _ CA) as SD. unfold jo_set_double_A_stmt, JO_SET_DOUBLE_A, JO_SETDBL_STK_A in SD. unfold JO_SETDBL_COSTB_A, JO_SETDBL_COSTD_A in *.
 eapply SD with (A := A) (BS := BS) (LB := LK ++ LB0) (r := r) (lo := lo) (errv := errv1);
 [ split; [exact HP1|]; rewrite unsigned_lit by lia;
-split; [exact ST1|]; split; [exact LO|]; split; [lia|]; split; [clear - SPA1; Z.div_mod_to_equations; lia|]; split; [lia|];
+split; [exact ST1|]; split; [exact LO|]; split; [first [assumption | lia]|]; split; [lia|]; split; [clear - SPA1; Z.div_mod_to_equations; lia|]; split; [lia|];
 split; [exact ERR1|]; split; [reflexivity | vm_compute; reflexivity]
 | exact RR1 | lia | lia | reflexivity |].
 intros ms' md' m' rv A' B' BS' (RS & VM' & ST' & HPR' & [errv' ERR']) [CHB CHD] ERRx RR' HP' BSEQ.
@@ -516,7 +517,7 @@ evt_done5.
 pose proof (ca_SETS _ _ _ _ _ _ _ CA) as SS. unfold jo_set_string_A_stmt, JO_SET_STRING_A, JO_SETSTR_STK_A, jo_setstr_costB in SS. unfold JO_SETSTR_COSTD_A in *.
 eapply SS with (A := A3) (BS := BS) (LB := LK ++ LB0) (FRS := [(Fr, 3)]) (B := B) (lo := lo) (p := p) (S := Fr + 128 + 1) (sb := str3) (slack := rest3) (r := r) (errv := errv3).
 - split; [exact HP3|]. rewrite unsigned_lit by lia.
-split; [exact ST3|]. split; [exact LO|]. split; [lia|]. split; [clear - SPA1; Z.div_mod_to_equations; lia|]. split; [lia|].
+split; [exact ST3|]. split; [exact LO|]. split; [first [assumption | lia]|]. split; [lia|]. split; [clear - SPA1; Z.div_mod_to_equations; lia|]. split; [lia|].
 split; [exact ERR3|]. split; [reflexivity | vm_compute; reflexivity].
 - exact RR3.
 - split; [exact SB|]. split; [apply Forall_forall; intros b Hb E0; apply NONUL3; replace (Z_to_bv 8 0) with b by (apply bv_eq; rewrite E0; reflexivity); exact Hb|].
@@ -685,7 +686,7 @@ pose proof (ca_SETSL _ _ _ _ _ _ _ CA) as SS. unfold jo_set_string_len_A_stmt, J
 assert (LSB : Z.of_nat (length (firstn (Z.to_nat n3) (str3 ++ Z_to_bv 8 0 :: rest3))) = n3) by (rewrite firstn_length_le by lia; lia).
 eapply SS with (A := A3) (BS := BS) (LB := LK ++ LB0) (FRS := [(Fr, 3)]) (B := B) (lo := lo) (p := p) (S := Fr + 192 + 1) (sb := firstn (Z.to_nat n3) (str3 ++ Z_to_bv 8 0 :: rest3)) (r := r) (errv := errv3).
 - split; [exact HP3|]. rewrite unsigned_lit by lia.
-split; [exact ST3|]. split; [exact LO|]. split; [lia|]. split; [clear - SPA1; Z.div_mod_to_equations; lia|]. split; [lia|].
+split; [exact ST3|]. split; [exact LO|]. split; [first [assumption | lia]|]. split; [lia|]. split; [clear - SPA1; Z.div_mod_to_equations; lia|]. split; [lia|].
 split; [exact ERR3|]. split; [reflexivity | vm_compute; reflexivity].
 - exact RR3.
 - split; [exact SBn|]. split; [exists Fr, 3; split; [left; reflexivity|]; rewrite fr_size_3; lia|].

@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MnRefillW.v (commit 3295f3a9fd5, CfInstMiss lane M field round 3 (cf-miss 3295f3a9fd5); file sha256 ede576499333) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MnRefillW.v (CfInstMiss lane M field round 3 (cf-miss); file sha256 ede576499333) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane M of the generic cf instance layer, a working branch; integrator ReallocPrimary).
    rule 24: no function proved (interface statements and window arithmetic over an abstract refill window; no machine
    walk is written).
 
-   WHY.  AGif0n.AIfaceM.if_refill's post AGif0n.rleaf (AGif0n.v:255-270: view frame :262, raw frame :266, presence :267)
-   and its add-ons ErrnoG.rleaf_ev / rleaf_e (ErrnoG.v:403-434) and MnRefill.rleaf_em (MnRefill.v:42-58: :49 / :52 /
+   WHY.  AGif0n.AIfaceM.if_refill's post AGif0n.rleaf (AGif0n.v:256-271: view frame :262, raw frame :266, presence :267)
+   and its add-ons ErrnoG.rleaf_ev / rleaf_e (ErrnoG.v:404-435) and MnRefill.rleaf_em (MnRefill.v:43-59: :49 / :52 /
    :55) fix the refill's stack window at ImgBaseAG.RSTACK = 1024 below the refill's sp.  A refill whose class-full path
    reports (Printf / SharedPrintfCode frames) writes more than that, so if_refill is false for it whatever the refill
    text.
@@ -22,7 +23,7 @@
      premise U (the cf instance's admits, YG01.v:155) reads the depot, and the entry state's U carries to the pop
      state only through the depot (YG01.admits_keep); the miss walks get the equation from the refill leaf;
    - the miss join's window uses (section j, under [176 + RW <= AFSTACK]): the four facts the miss arms read off the
-     refill's window (AGim.v:400-422 / :657 / :677, AGin.v:438-459 / :697 / :717 / :843 / :853, AGk1.v:206-220 / :310 /
+     refill's window (AGim.v:401-423 / :658 / :678, AGin.v:439-460 / :698 / :718 / :844 / :854, AGk1.v:207-221 / :311 /
      :320): the window lies in Allocate's window [win_af_w], above the stack's base [win_stk_w]; the refill keeps the
      caller's stack outside the window [stack_kept_w]; Allocate's window is present after the refill [pres_af_w].
    EVENT-FREE: no event counter, event bound, meter or regime; the only event term is the tick update inside the
@@ -56,7 +57,7 @@ Local Open Scope am_scope.
 (* ---------------------------------------------------------------------------------------------------------------- *)
 (* The leaves over the window RW.                                                                                   *)
 
-(* copy of AGif0n.v:255-270 with RSTACK -> RW *)
+(* copy of AGif0n.v:256-271 with RSTACK -> RW *)
 Definition rleaf_w (RW : Z) (ARX : Z -> alayout -> astate -> world im_segs -> (word -> option byte) -> Model -> Prop)
 (AOX : alayout -> astate -> Z -> Prop) (lpost : astate -> Prop)
 (inst : Z) (ly : alayout) (S0 : astate) (n cl : Z) (W : world im_segs) (regs : bvmap 5 word) (mem : word -> option byte)
@@ -73,7 +74,7 @@ wle W W' /\ aregs_preserved regs regs' /\ same_io md md' /\
 (forall a, spZ regs - RW <= a < spZ regs -> apresent (w_H W') mem' a) /\
 getr regs' 10 = w64 (match pc_chunks (cache (snd r) cl) with [] => 0 | _ => 1 end).
 
-(* copy of ErrnoG.v:403-418 with ImgBaseAG.RSTACK -> RW *)
+(* copy of ErrnoG.v:404-419 with ImgBaseAG.RSTACK -> RW *)
 Definition rleaf_ev_w (RW : Z) (B : asyms) (ARX : Z -> alayout -> astate -> world im_segs -> (word -> option byte) -> Model -> Prop)
 (AOX : alayout -> astate -> Z -> Prop) (lpost : astate -> Prop)
 (inst : Z) (ly : alayout) (S0 : astate) (n cl : Z) (W : world im_segs) (regs : bvmap 5 word) (mem : word -> option byte)
@@ -91,7 +92,7 @@ ErrnoG.errno_kept_v im_segs B W W' mem mem' /\
 (forall a, spZ regs - RW <= a < spZ regs -> apresent (w_H W') mem' a) /\
 getr regs' 10 = w64 (match pc_chunks (cache (snd r) cl) with [] => 0 | _ => 1 end).
 
-(* copy of ErrnoG.v:419-434 with ImgBaseAG.RSTACK -> RW *)
+(* copy of ErrnoG.v:420-435 with ImgBaseAG.RSTACK -> RW *)
 Definition rleaf_e_w (RW : Z) (B : asyms) (ARX : Z -> alayout -> astate -> world im_segs -> (word -> option byte) -> Model -> Prop)
 (AOX : alayout -> astate -> Z -> Prop) (lpost : astate -> Prop)
 (inst : Z) (ly : alayout) (S0 : astate) (n cl : Z) (W : world im_segs) (regs : bvmap 5 word) (mem : word -> option byte)
@@ -109,7 +110,7 @@ ErrnoG.errno_kept B mem mem' /\
 (forall a, spZ regs - RW <= a < spZ regs -> apresent (w_H W') mem' a) /\
 getr regs' 10 = w64 (match pc_chunks (cache (snd r) cl) with [] => 0 | _ => 1 end).
 
-(* copy of MnRefill.v:42-58 with ImgBaseAG.RSTACK -> RW *)
+(* copy of MnRefill.v:43-59 with ImgBaseAG.RSTACK -> RW *)
 Definition rleaf_em_w (RW : Z) (B : asyms) (ARX : Z -> alayout -> astate -> world im_segs -> (word -> option byte) -> Model -> Prop)
 (AOX : alayout -> astate -> Z -> Prop) (lpost : astate -> Prop)
 (inst : Z) (ly : alayout) (S0 : astate) (n cl : Z) (W : world im_segs) (regs : bvmap 5 word) (mem : word -> option byte)
@@ -157,7 +158,7 @@ Variable lpost : astate -> Prop.
 Variable rtree : Z -> M unit.
 Variable RW : Z.
 
-(* copy of AGif0n.v:285-300 (AIfaceM.if_refill) over rleaf_w RW *)
+(* copy of AGif0n.v:286-301 (AIfaceM.if_refill) over rleaf_w RW *)
 Definition refill_w_t : Prop :=
 forall inst ly S0 W mem0 md0 n (sp0 : Z) (regs : bvmap 5 word) (mem : word -> option byte) (mat : list word),
 ARX inst ly S0 W mem0 md0 -> rpre S0 n -> arodata_ok_cf im_segs B mem0 ->
@@ -175,7 +176,7 @@ amreal im_segs (rtree (chunk_class n) (set_nev (st_nev S0 + 1) S0)) W
   (cfg_at im_segs ag_refill regs mem (with_vm_backing (m_vm_lazy md0) mat md0))
   (rleaf_w RW ARX AOX lpost inst ly S0 n (chunk_class n) W regs mem (with_vm_backing (m_vm_lazy md0) mat md0)).
 
-(* copy of ErrnoG.ame_refill_v_t (ErrnoG.v:466-480) over rleaf_ev_w RW *)
+(* copy of ErrnoG.ame_refill_v_t (ErrnoG.v:467-481) over rleaf_ev_w RW *)
 Definition ame_refill_v_w_t : Prop :=
 forall inst ly S0 W mem0 md0 n (sp0 : Z) (regs : bvmap 5 word) (mem : word -> option byte) (mat : list word),
 ARX inst ly S0 W mem0 md0 -> rpre S0 n -> arodata_ok_cf im_segs B mem0 ->
@@ -193,7 +194,7 @@ amreal im_segs (rtree (chunk_class n) (set_nev (st_nev S0 + 1) S0)) W
   (cfg_at im_segs ag_refill regs mem (with_vm_backing (m_vm_lazy md0) mat md0))
   (rleaf_ev_w RW B ARX AOX lpost inst ly S0 n (chunk_class n) W regs mem (with_vm_backing (m_vm_lazy md0) mat md0)).
 
-(* copy of ErrnoG.ame_refill_t (ErrnoG.v:481-495) over rleaf_e_w RW *)
+(* copy of ErrnoG.ame_refill_t (ErrnoG.v:482-496) over rleaf_e_w RW *)
 Definition ame_refill_w_t : Prop :=
 forall inst ly S0 W mem0 md0 n (sp0 : Z) (regs : bvmap 5 word) (mem : word -> option byte) (mat : list word),
 ARX inst ly S0 W mem0 md0 -> rpre S0 n -> arodata_ok_cf im_segs B mem0 ->
@@ -211,7 +212,7 @@ amreal im_segs (rtree (chunk_class n) (set_nev (st_nev S0 + 1) S0)) W
   (cfg_at im_segs ag_refill regs mem (with_vm_backing (m_vm_lazy md0) mat md0))
   (rleaf_e_w RW B ARX AOX lpost inst ly S0 n (chunk_class n) W regs mem (with_vm_backing (m_vm_lazy md0) mat md0)).
 
-(* copy of MnRefill.amm_refill_t (MnRefill.v:78-92) over rleaf_em_w RW *)
+(* copy of MnRefill.amm_refill_t (MnRefill.v:79-93) over rleaf_em_w RW *)
 Definition amm_refill_w_t : Prop :=
 forall inst ly S0 W mem0 md0 n (sp0 : Z) (regs : bvmap 5 word) (mem : word -> option byte) (mat : list word),
 ARX inst ly S0 W mem0 md0 -> rpre S0 n -> arodata_ok_cf im_segs B mem0 ->
@@ -229,7 +230,7 @@ amreal im_segs (rtree (chunk_class n) (set_nev (st_nev S0 + 1) S0)) W
   (cfg_at im_segs ag_refill regs mem (with_vm_backing (m_vm_lazy md0) mat md0))
   (rleaf_em_w RW B ARX AOX lpost inst ly S0 n (chunk_class n) W regs mem (with_vm_backing (m_vm_lazy md0) mat md0)).
 
-(* copy of MnRefill.amm_refill_e (MnRefill.v:94-101) over RW *)
+(* copy of MnRefill.amm_refill_e (MnRefill.v:95-102) over RW *)
 Lemma amm_refill_w_e : amm_refill_w_t -> ame_refill_w_t.
 Proof.
 intros H inst ly S0 W mem0 md0 n sp0 regs mem mat H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 H16 H17 H18 H19
@@ -253,7 +254,7 @@ End v.
 (* ---------------------------------------------------------------------------------------------------------------- *)
 (* The records.                                                                                                     *)
 
-(* copy of AGif0n.v:273-393 (AIfaceM) with if_refill over RW (field [ifw_refill]) and the depot field at the pop state
+(* copy of AGif0n.v:274-394 (AIfaceM) with if_refill over RW (field [ifw_refill]) and the depot field at the pop state
    taking the depot equation (field [ifw_depot_miss]); the other fields are AIfaceM's, byte for byte, renamed
    if_ -> ifw_.                                                                                                     *)
 Record AIfaceMw (B : asyms) (U : list Z -> astate -> Prop) (mt : Z -> list Z -> M sptr)
@@ -349,7 +350,7 @@ Record AIfaceMw (B : asyms) (U : list Z -> astate -> Prop) (mt : Z -> list Z -> 
     AOX ly Sp a -> AOX ly (st_final Sp (chunk_class n) l off n tr z) a
 }.
 
-(* copy of ErrnoG.v:503-524 (ame_depot_miss_t) with the depot equation, as ifw_depot_miss *)
+(* copy of ErrnoG.v:504-525 (ame_depot_miss_t) with the depot equation, as ifw_depot_miss *)
 Definition ame_depot_miss_w_t (B : asyms) (U : list Z -> astate -> Prop)
 (ARX : Z -> alayout -> astate -> world im_segs -> (word -> option byte) -> Model -> Prop)
 (dpost : Z -> alayout -> astate -> world im_segs -> list Z -> Z -> (word -> option byte) -> Prop) : Prop :=
@@ -375,7 +376,7 @@ SRr im_segs W (mkCfg (mkst regs (Z_to_bv 64 ag_depot_put) mem (seg_rom im_segs))
   (forall a, apresent (w_H W) mem a -> apresent (w_H W) mem' a) /\
   dpost inst ly Sp W tr z mem').
 
-(* copy of ErrnoG.v:538-543 (AIfaceME) with the refill fields over RW and the depot field with the depot equation *)
+(* copy of ErrnoG.v:539-544 (AIfaceME) with the refill fields over RW and the depot field with the depot equation *)
 Record AIfaceMEw (B : asyms) (U : list Z -> astate -> Prop) (mt : Z -> list Z -> M sptr)
 (ARX : Z -> alayout -> astate -> world im_segs -> (word -> option byte) -> Model -> Prop)
 (AOX : alayout -> astate -> Z -> Prop) (rpre : astate -> Z -> Prop) (nmax lmax : Z) (lpost : astate -> Prop)
@@ -393,7 +394,7 @@ Section j.
 Variable RW : Z.
 Hypothesis RWB : 0 <= RW /\ 176 + RW <= AFSTACK.
 
-(* the refill's window is in Allocate's window (AGim.v:657 / :677, AGin.v:697 / :717 / :843 / :853, AGk1.v:310 / :320) *)
+(* the refill's window is in Allocate's window (AGim.v:658 / :678, AGin.v:698 / :718 / :844 / :854, AGk1.v:311 / :321) *)
 Lemma win_af_w : forall (sp0 a : Z) (regs : bvmap 5 word), spZ regs = sp0 - 176 ->
 spZ regs - RW <= a < spZ regs -> sp0 - AFSTACK <= a < sp0.
 Proof. intros sp0 a regs E Ha. rewrite E in Ha. pose proof RWB. unfold AFSTACK in *. lia. Qed.
@@ -425,7 +426,7 @@ intros AOX ly S0 ly' S' mem mem' sp0 regs E FR x N0 N1 NS.
 apply (FR x N0 N1). intros X. exact (NS (win_af_w sp0 (bv_unsigned x) regs E X)).
 Qed.
 
-(* the refill keeps the caller's stack outside its window (AGim.v:400-405 / AGin.v:438-443 / AGk1.v:206-211 STKkept,
+(* the refill keeps the caller's stack outside its window (AGim.v:401-406 / AGin.v:439-444 / AGk1.v:207-212 STKkept,
    with the stack not owned at either end (if_stack / ifw_stack)) *)
 Lemma stack_kept_w : forall (AOX : alayout -> astate -> Z -> Prop) ly S0 ly' S' (W W' : world im_segs) mem mem' (sp0 : Z)
 (regs : bvmap 5 word), spZ regs = sp0 - 176 ->
@@ -439,7 +440,7 @@ intros AOX ly S0 ly' S' W W' mem mem' sp0 regs E FR NOWN K1 K2 a Ha Hnw.
 destruct (NOWN a Ha) as [N0 N1]. apply (FR a ltac:(lia) N0 N1). rewrite E. exact Hnw.
 Qed.
 
-(* Allocate's window is present after the refill (AGim.v:413-422 / AGin.v:451-459 / AGk1.v:212-220 PRES'): in the
+(* Allocate's window is present after the refill (AGim.v:414-423 / AGin.v:452-460 / AGk1.v:213-221 PRES'): in the
    refill's window by its presence clause, elsewhere by the raw frame (the bytes are not owned at either end) and the
    world's order (a byte visible at W is visible at W') *)
 Lemma pres_af_w : forall (AOX : alayout -> astate -> Z -> Prop) ly S0 ly' S' (W W' : world im_segs) (mem mem' : word -> option byte)

@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN1u.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed Zify). *)
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -27,7 +28,6 @@ Unset Lia Cache. Unset Nia Cache.
 Open Scope Z_scope.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Section b. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
-Context {AM : AllocMode}.
 Lemma fetch_fret : fetch_word src0segs (Z_to_bv 64 FRET) = Some (0x00008067%bv : bv 32).
 Proof. rewrite <- (Z_to_bv_bv_unsigned 32 (0x00008067%bv : bv 32)). apply src0tbl_ok. vm_compute. reflexivity. Qed.
 Lemma decode_ret' : decode_any (0x00008067%bv : bv 32) = Some (Jalr 0 1 0, 4%Z).

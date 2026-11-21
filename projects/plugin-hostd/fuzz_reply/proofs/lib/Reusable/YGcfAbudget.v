@@ -1,4 +1,4 @@
-(* CARRIED from commit 0deb5310273b0d538ec2a1697f391a1c8ad21c34,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YGcfAbudget.v, sha256 54bdc25a36e3b2a84fa2605269228d18b6ab414a716fc2129954af80148eca32 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the Require lines only:
    the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
@@ -7,6 +7,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10-30: the hull field round (cf_hull replaces sec_live_hulls and RESMAX_k in the budget; both instances' laws, preset_hull_live_k, reply_hull_live_k). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30: the cf budget's step lemmas (the ledger restatement, Main's decisions of record
    2026-10-30). ARcf's ledger conjunct is the raw `A_bytes (w_A W) <= abudget_cf S` at every state; abudget_cf
    (YG0ncf.v) counts prim_committed / 8 and the unit's hull term cf_hull (YGcfNames.v: preset sec_hulls_cf, cgif's
@@ -38,7 +39,7 @@ Local Open Scope Z_scope.
    allowance form). A NEW cf-only constant:
    cgif's VM_HEAD (YG0n.v:542, 2 ^ 30) is unchanged. It must hold one call's grants (the errbuf remap, at most
    2 * cf_nob; the class-24 user map and its shadow; the free-array growths; any other map), which
-   ERRB_ROOM (YG00cf.v:107) does not bound against vm_limit. *)
+   ERRB_ROOM (YG00cf.v:108) does not bound against vm_limit. *)
 Definition CF_HEAD : Z := 2 ^ 33.
 
 Lemma CF_HEAD_val : CF_HEAD = 8589934592.
@@ -262,7 +263,7 @@ rewrite EW. lia.
 Qed.
 
 (* ---------------------------------------------------------------------------- *)
-(* 5. The eager part at the errbuf exits (item 2, form (A)). errb_map_cf (YG00cf.v:120-127) maps the new  *)
+(* 5. The eager part at the errbuf exits (item 2, form (A)). errb_map_cf (YG00cf.v:121-128) maps the new  *)
 (*    buffer and then the walk unmaps the old one (a Theorem Labs lane's RepF4Append order); eager_used moves    *)
 (*    by + esec [new] - esec [old] (eager_used_remap, from eager_used_mmap_model / eager_used_munmap,      *)
 (*    YG0j.v:103 / :124), and eager_cf by the same two terms (eager_cf_swap), so alc_eager_x is kept       *)

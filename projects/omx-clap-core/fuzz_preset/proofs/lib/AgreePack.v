@@ -51,7 +51,7 @@ Theorem plain_crealizes_of_cgpg : forall (LS : lib_shape) (CS : list byte -> lis
 Proof.
   intros LS CS G GI HCS HG GIL GI0 H [sp brk0 mbase rnd] inp lim Hentry Hinput Hlim.
   apply (valid_entry_sv48 _ _ inp (valid_input_va_size inp Hinput)) in Hentry.
-  destruct Hentry as [Hsp [Hbrk [Hmb Hfits]]].
+  destruct Hentry as [Hsp [Hbrk [Hmb [Hfits Hlau]]]].
   set (rc := RunCeilOf (bv_unsigned sp) (valid_sp_window_for_ceil sp Hsp)).
   assert (HG' : forall a, in_globals G a -> in_globals src0_G a) by (intros a h; exact (frame_G_src0 a (HG a h))).
   assert (HX : lib_contract_x_Rc_all src0_msyms (@zlib_API rc) (RI_Pc CS) src0_G src0_R
@@ -68,6 +68,6 @@ Proof.
   apply (zlib_pack_walk_crealizes rc LS CS (fun j T m => T = [] /\ GI j m) (fun _ => []) HCS
     (G_local_T_mono src0segs G src0_G _ HG' (G_local_T_of_G src0segs G GI GIL))
     (fun mem Hm => conj eq_refl (GI0 mem (G_img_mono src0segs G src0_G mem HG' Hm)))
-    HX sp brk0 mbase rnd lim inp Hsp Hbrk Hmb Hfits Hinput Hlim).
+    HX sp brk0 mbase rnd lim inp Hsp Hbrk Hmb Hfits Hlau Hinput Hlim).
   unfold rc. apply ceil_of_top_run.
 Qed.

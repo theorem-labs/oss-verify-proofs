@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/mbedtls/fuzz_pkcs7/lib/Lib/Asn1Aux.v; 416 of its 465 lines of code are new or changed and 400 lines of the source are left out. *)
 (* the walk of diginet_msg_next in fuzz_transport.ubsan (0x18844) proves its contract, and no UBSan check branch is taken. *)
-(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/diginet_msg_next.v at 9bd29914ffdef650a37285056a472ff186b4331a to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/diginet_msg_next.v to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The walk follows msg_step (DgnLib): the entry checks to 0x188a4, then the sysex scan (sloop, sfound,
    scut) or the channel message (chan, its data bytes, ccut, ctail); every exit ends at fin (0x18a18).
    The ten branches to the trap at 0x18a20 are each shown not taken (br false). The 40 bytes of the

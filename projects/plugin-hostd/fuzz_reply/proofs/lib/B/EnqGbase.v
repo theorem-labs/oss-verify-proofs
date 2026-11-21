@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/EnqGbase.v (commit 9910d964c1cb, B2's final arms, taken by path at F1; file sha256 21597ef008ab) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/EnqGbase.v at commit f303438be5b, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (1 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/EnqGbase.v (B2's final arms, taken by path at F1; file sha256 21597ef008ab) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/EnqGbase.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (1 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B2 of the Theorem Labs lane walk lanes; integrator ReallocPrimary).
    rule 24: proves function __sanitizer::QuarantineCache<__asan::QuarantineCallback>::Enqueue (the room / hit / miss
    arms as called from QuarantineChunk), frame-generic, at cgif_file_fuzzer's asan-ubsan image (Enqueue 0x360ec).
@@ -34,13 +35,13 @@
    file or in the arms.  Two Section Variables carry them:
    - [NMAXD], the block-size bound of the Deallocate side.  USED ONLY in [ir_nmax] / [ih_nmax] and in the premise
      of [ir_walk] / [ih_walk].  cgif_file's instance takes NMAXD := 2 ^ 28 (the released walk's own bound,
-     YFgp.v:97 fh_Hnn and the reg-35 atom :73; YFgq.v:125 / :99).  The cf instance takes NMAXD := cf_malloc_max,
+     YFgp.v:98 fh_Hnn and the reg-35 atom :73; YFgq.v:126 / :100).  The cf instance takes NMAXD := cf_malloc_max,
      whose walk is the widened one (route A or B of DEALLOC-NMAX): it plugs into the SAME field, with no change to
      this file or to the arms.
    - [RMAXD], the class-24 region's mapped-user bound, from which the walk's batch-byte bound is derived.  USED
      ONLY in [ih_rmax] and in the premise of [ih_walk].  cgif_file takes RMAXD := 2 ^ 31 (YFf2.nb_geom's fifth
-     conjunct, through YFgq.v:134 fh_hit and the reg-41 atom :104); the cf instance takes RMAXD := kFreeArrayOffset,
-     which its [batch_room_cf] premise (YG00cf.v:361-362) gives at once.
+     conjunct, through YFgq.v:135 fh_hit and the reg-41 atom :104); the cf instance takes RMAXD := kFreeArrayOffset,
+     which its [batch_room_cf] premise (YG00cf.v:362-363) gives at once.
 
    EVENT-TERM GATE (Main 22:59Z): the room comes from BYTES.  No field of this file names [st_nev], [EV_A],
    [EV_MAX], [EV_BIG], [mtr_ok], [aregime] or a non-cf [abudget]; the event count enters only through the opaque
@@ -95,7 +96,7 @@ Variables (NMAXD RMAXD : Z).
 (* The post of an arm.                                                                                               *)
 
 (* The call post MINUS the raw-memory clause: what an instance's AR transport delivers.  Clause by clause this is
-   CLenq.acall_post_x (CLenq.v:52-62) without its clause 7, over [ARX] / [AOX]. *)
+   CLenq.acall_post_x (CLenq.v:53-63) without its clause 7, over [ARX] / [AOX]. *)
 Definition acall_post_g0 (inst stk : Z) (ly : alayout) (S : astate) (W : world segs) (regs : bvmap 5 word)
 (mem : word -> option byte) (md : Model) (E : Z -> Prop)
 (ly' : alayout) (S' : astate) (W' : world segs) (regs' : bvmap 5 word)
@@ -106,7 +107,7 @@ aregs_preserved regs regs' /\ same_io md md' /\
 aview segs (w_H W') mem' a = aview segs (w_H W) mem a) /\
 (forall a, spZ regs - stk <= a < spZ regs -> apresent (w_H W') mem' a).
 
-(* CLenq.enq_leaf_x (CLenq.v:82-91) with [acall_post_g0] in place of [acall_post_x]. *)
+(* CLenq.enq_leaf_x (CLenq.v:83-92) with [acall_post_g0] in place of [acall_post_x]. *)
 Definition enq_leaf_g0 (inst : Z) (ly : alayout) (X : astate) (W : world segs) (regs : bvmap 5 word)
 (mem : word -> option byte) (md : Model) (k : chunk)
 (r : unit * astate) (W' : world segs) (c' : config) : Prop :=
@@ -191,7 +192,7 @@ Variable Shit : astate -> chunk -> list Z -> astate.
 
 Record EnqIfaceHit : Prop := {
   ih_nmax : forall inst ly X W regs mem md k, EPRE inst ly X W regs mem md k -> 1 <= ck_n k < NMAXD;
-  (* RMAXD's window, in B1's form (DMwalkIF.v:307 rmaxd_ok at 3e29c198d40; B1's RevIF2 measured that an upper
+  (* RMAXD's window, in B1's form (DMwalkIF.v:308 rmaxd_ok; B1's RevIF2 measured that an upper
      bound of 2 ^ 32 is FALSE at the frame: the class's free array sits at region_off c + kFreeArrayOffset while
      [puser] covers region_base .. + rg_alloc_user, so an allocated part above kFreeArrayOffset would put the
      free-array stores inside puser, YFgk.v:153 fh_Hoff).  It is an interface FIELD, not a Section hypothesis,
@@ -200,7 +201,7 @@ Record EnqIfaceHit : Prop := {
   ih_rmaxd_ok : 2 ^ 31 <= RMAXD <= kFreeArrayOffset;
   (* the class-24 region's mapped-user bound of this instance (RMAXD; no literal here).  cgif_file takes
      RMAXD := 2 ^ 31 (YFf2.nb_geom's fifth conjunct); the cf instance takes RMAXD := kFreeArrayOffset, which
-     [batch_room_cf] (YG00cf.v:361-362, `rg_mapped_user + kUserMapSize <= kFreeArrayOffset`) gives at once. *)
+     [batch_room_cf] (YG00cf.v:362-363, `rg_mapped_user + kUserMapSize <= kFreeArrayOffset`) gives at once. *)
   ih_rmax : forall inst ly X W regs mem md k l, EPRE inst ly X W regs mem md k ->
     need_new_batch (st_qthread X) = true -> pc_chunks (cache X kBatchClass) = l -> l <> [] ->
     rg_mapped_user (reg X kBatchClass) <= RMAXD;

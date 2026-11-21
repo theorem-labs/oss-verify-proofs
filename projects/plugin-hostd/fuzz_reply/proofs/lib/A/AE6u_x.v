@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AE6u.v (donor image sha256 7093581aab04), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, a Theorem Labs lane's TOPX-INTRIN-memset): the ARx twin of lib/A/AE6u.v over
    AE2y.icpt_laws_x, by the same AR -> ARx edit SitesCf made to the memset interceptor's chain (AE79 / AE7a / AE7b /
-   AE32 at a working branch 2b5eb4b4f3a): the Section's AR_laws -> a relation ARx with WL : icpt_laws_x,
+   AE32 at a working branch): the Section's AR_laws -> a relation ARx with WL : icpt_laws_x,
    the ghost list Hpx after S, ecall_pre -> ecall_pre_ix, AR in the posts -> ARx at Hpx, am_layout / am_const /
    al_frame / al_stack -> ilx_layout / ilx_const / ilx_frame / ilx_stack, icpt_rodata_ok -> icpt_rodata_ok_x, and the
    local notations' arguments; proof bodies otherwise unchanged.  AE6u.v is not edited; this file Requires no

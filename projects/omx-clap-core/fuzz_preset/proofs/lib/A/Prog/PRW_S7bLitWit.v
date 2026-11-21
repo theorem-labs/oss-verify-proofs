@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset image A' (#102 pin asan 1be0f53d, unstripped twin bff8519b), lane S7b (WalkS7bR,
    a Theorem Labs lane): the INSTANCE WITNESSES of the LITERAL image premises of the writer walks (unit ruling a Theorem Labs lane
    16:45Z: an image premise counts only beside a lemma closed by vm_compute at the real instance). Proves nothing about
@@ -7,11 +8,11 @@
    at PA := PI_prog_A, B := AD2l.TfibB, for EVERY allocator relation ARx with AR_laws_x at TfibB:
      pj_write HLIT      (PRW_pj_write.v:214-217)                                     : s7bl_pjw_hlit
      put_string HLIT17  (PRW_put_string_base.v:943-946; the same text in _a.v:117-120, _l.v:119-122,
-                         _t.v:150-153, PRW_put_string.v:94-97)                       : s7bl_ps_hlit17
+                         _t.v:150-153, PRW_put_string.v:95-98)                       : s7bl_ps_hlit17
      put_string HLIT85 / 87 / 91 / 93 / 89 (`ps_lit_fact B ARx k l`, PRW_put_string_base.v:937-940; _a.v:123-127,
-                         _e.v:127-131, PRW_put_string.v:98-102)                      : s7bl_ps_hlit85 / 87 / 91 / 93 / 89
+                         _e.v:127-131, PRW_put_string.v:99-103)                      : s7bl_ps_hlit85 / 87 / 91 / 93 / 89
      write_value HLIT   (PRW_write_value.v:1244-1249, all ten wv_lits)              : s7bl_wv_hlit
-   THE INSTANCE (the kit's cut 7cdbb61b5fa0): PAImg_prog.v 505a51ff7d08 (PI_prog_A),
+   THE INSTANCE (the kit's cut): PAImg_prog.v 505a51ff7d08 (PI_prog_A),
    Listing_prog.v 7ed1529926bd, AD2l.v eb321db7a357 (TfibB), AF0m.v 97f423adf6eb (Tfib_owned_static,
    Tfib_zero_shadow, Tfib_const_shadow, TFIB_ERRNO), PRH_Base.v ef7c8ca98529 (src_rd / kept_at / kept_img, route (a)),
    YImgShadowCover.v c773dcbec9bc, PresetRodata.v 4eb7e95e7e93. The segments are the FULLY QUALIFIED A' image
@@ -388,7 +389,7 @@ exact (s7bl_lit_A ARx HL LAWS (PRW_put_string_base.ps_str (rc := rc) (PA := PA) 
   (proj1 s7bl_c_ps65)).
 Qed.
 
-(* put_string's HLIT85 / 87 / 91 / 93 / 89 (PRW_put_string_a.v:124-128, PRW_put_string_e.v:128-132) *)
+(* put_string's HLIT85 / 87 / 91 / 93 / 89 (PRW_put_string_a.v:125-129, PRW_put_string_e.v:129-133) *)
 Lemma s7bl_ps_hlit85 : forall (ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte) -> Model -> Prop)
     (HL : Z), AR_laws_x SEGS TA ARx HL ->
   PRW_put_string_base.ps_lit_fact (PA := PA) TA ARx 85 [92; 116; 0].

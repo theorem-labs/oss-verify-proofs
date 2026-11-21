@@ -7,8 +7,8 @@
 #   YE6v.v: __asan_memset walk
 #   YE2s.v: bcmp entry of memcmp interceptor: no __interceptor_trampoline_bcmp / bcmp in fuzz_uci.asan-ubsan
 #   YE2z.v: bcmp walk
-# YD1q.v is in (as image A's A/AD1q.v at a8fc5eedae69): it takes fuzz_uci's plain-side checksum_shape (lib/ZTraceSpec.v) by B-ad1q-shape.patch.
-# The image-B start-up layer (19 lib/B files, commit 883082ed41ea) is --no-stage'd, not dropped (no-stage-B.txt).
+# YD1q.v is in (as image A's A/AD1q.v): it takes fuzz_uci's plain-side checksum_shape (lib/ZTraceSpec.v) by B-ad1q-shape.patch.
+# The image-B start-up layer (19 lib/B files) is --no-stage'd, not dropped (no-stage-B.txt).
 YB01.v
 YB03.v
 YB05.v

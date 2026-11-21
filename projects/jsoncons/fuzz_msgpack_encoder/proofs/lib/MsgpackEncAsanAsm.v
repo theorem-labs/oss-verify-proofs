@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: changed na0_tgt. *)
 From OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib Require BvWfKernel.
 (* [comment removed for export] *)
 From Stdlib Require Import NArith ZArith List Lia Bool.
@@ -56,11 +57,15 @@ Proof. exact (@PQALO.lib_okF ScfgP_cfg0 art_L art_C art_IL art_LR RES art_pma_la
 Theorem na0_tgt : as0_tgt_stmt cfg0.
 Proof.
   apply as0_tgt_of_run.
-  intros sp brk0 mbase rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur Hsp Hbrk Hva Hve Hfit Huid Hhw Hvfs.
+  intros sp brk0 mbase rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf
+         Hsp Hbrk Hmb Hva Hve Hfit Hlau Hvl Huid Hhw Hvfs.
+  (* [NraMainPhaseA]'s section binds the CONFIG_RSEQ flag [r] and ties it by [HRZ] to the run's own
+     flag, which discharges it *)
   exact (as0_realizes_spec_run cfg0 eq_refl eq_refl art_L art_C art_IL (PQHAS.LayA RES art_L)
            (fun _ => PQSTA.TopLSA Asan.M.loaded_segments PnLayoutA.ADDR_A PnLayoutA.AADDR_A PnLayoutQA.QADDR_A)
            PMA.EXT BUDGET0 BUDGET0_lo BUDGET0_hi na0_inst na0_free_null na0_h4e na0_icpt na0_ext na0_gap
            (@NTASMA.fam_ok ScfgP_cfg0 art_L art_C art_IL art_LR) na0_lib na0_fam na0_dla na0_consts na0_drv na0_usage PQALO.lsxfa
-           sp brk0 mbase rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur Hsp Hbrk Hva Hve Hfit Huid Hhw Hvfs).
+           sp brk0 mbase rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf _
+           Hsp Hbrk Hmb Hva Hve Hfit Hlau Hvl eq_refl Huid Hhw Hvfs).
 Qed.
 End Tgt.

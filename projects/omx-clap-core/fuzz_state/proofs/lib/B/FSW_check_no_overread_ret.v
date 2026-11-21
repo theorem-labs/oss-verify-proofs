@@ -5,14 +5,15 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/Reusable/YN0j.v, with its module paths and module names changed; 546 of its 584 lines of code are new or changed and 260 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segC.v, with its module names changed; 1538 of its 1613 lines of code are new or changed and 509 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segC2.v, with its module paths changed; 237 of its 289 lines of code are new or changed and 1561 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_no_overread B 0x8124c (fs.c), fs.asan-ubsan: the TAIL of the ASan walk - the epilogue, the `ret` and the R2
    arms of that range. a Theorem Labs lane owns the statement (lib/B/FSH_Fn_cno.v check_no_overread_spec); this file proves ONE
    of the call-step interface statements of lib/B/FSW_check_no_overread.v Section I, `cno_tail_ret_T B`
-   (= cno_from cno_ss_R INV_R, the CTX-free interface of a working branch decf0bae273), with the name
+   (= cno_from cno_ss_R INV_R, the CTX-free interface of a working branch), with the name
    cno_tail_ret. The other call steps of the tail are cno_call_bcmp / cno_call_afree (lib/B/FSW_check_no_overread_tail.v)
    and cno_call_ffree (lib/B/FSW_check_no_overread_ffree.v). Rule 24: this file proves PART of check_no_overread only.
    Template (text only; no byte offset is copied, B's bytes differ): lib/A/FSW_check_no_overread_ret.v at
-   a working branch 59f0008819f.
+   a working branch.
 
    RANGE (MEASURED: neutral_dis listing (internal path)
    check_no_overread.fuzz_state.asan-ubsan.s on the pinned fs.asan-ubsan; every address below is from it, and every
@@ -143,7 +144,7 @@ Proof. split; [vm_compute; discriminate | vm_compute; reflexivity]. Qed.
 
 (* ================= pure facts ================= *)
 (* fuzz/alloc.c's statics are image bytes (one loaded segment of fs.asan-ubsan holds .data and .bss from g_fail_at
-   0xa41c0 to g_count 0x5dab00, FSH_Base.v:101-104); shape of A's cno_glob_img (59f0008819f) at B's addresses *)
+   0xa41c0 to g_count 0x5dab00, FSH_Base.v:101-104); shape of A's cno_glob_img at B's addresses *)
 Lemma cno_glob_img : forall a, (G_FAIL <= a < G_FAIL + 8 \/ G_LIVE <= a < G_LIVE + 8 \/ G_PEAK <= a < G_PEAK + 8 \/
   G_COUNT <= a < G_COUNT + 8) -> in_img tfibsegs a.
 Proof.
@@ -196,7 +197,7 @@ Variable B : asyms.
 Let LAWS : AR_laws tfibsegs B := AR_laws_ok tfibsegs B.
 (* the two fake-stack laws FSW_frame's release step consumes. Both are PROVED here, not assumed: the free law is
    YG0t.astack_free_law_ok, and the flag law is AR_flag_law plus AR_client_img_law over S0's image cover
-   (B's YF0x.img_cover_of_ledger), A's cno_FFL (59f0008819f) at B's image. *)
+   (B's YF0x.img_cover_of_ledger), A's cno_FFL at B's image. *)
 Lemma cno_ASF : astack_free_law tfibsegs B.
 Proof. exact (astack_free_law_ok tfibsegs B). Qed.
 Lemma cno_FFL : frame_flag_lawP tfibsegs B.

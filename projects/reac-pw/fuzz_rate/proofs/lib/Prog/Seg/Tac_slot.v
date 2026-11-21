@@ -2,13 +2,14 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/Prog/LLVMFuzzerTestOneInput_fr.v, with its module paths and module names changed; 457 of its 574 lines of code are new or changed and 410 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Shared helpers for the segment lemmas of reac-pw/fuzz_rate LLVMFuzzerTestOneInput (plain): the accessors of
    FrameAPI.frame_facts_plain (the ff_ lemmas), the image bound SL_TOP, munch/writability transport, the run lemmas
    sl_run and sl_run_fp (evt -> SR through MemNorm; sl_run_fp for a run that ends with its own FP registers and
    fflags), FR from scratch (sl_fr_of), FR across a Kind A run (sl_fr_run, sl_mid, sl_mid_fp), and FR's window and
    bounds.
    Taken from reac-pw/fuzz_role's copy, itself reac-pw/fuzz_pin's Prog/Seg/Tac_slot.v, itself libreac/fuzz_ctrl's released Prog/Seg/Tac_slot.v
-   (origin/ossv/recipes 25e3d17bdb50) adapted, same lemma names, with rate's numbers: the frame is 544 bytes, so the
+   adapted, same lemma names, with rate's numbers: the frame is 544 bytes, so the
    saved registers at S - 104 are fsp g + 440 (sl_fp); the sink and errno numerals (sl_sink, sl_errno_val) are
    frame_facts_plain's (ofl_head 0x50460, ofl_lock 0x50458, __libc 0x50030, builtin_tls 0x2fda0); the last PT_LOAD
    ends at 0x50878, under SL_TOP. Every use of frame_facts_plain goes through the named accessors (the ff_ lemmas

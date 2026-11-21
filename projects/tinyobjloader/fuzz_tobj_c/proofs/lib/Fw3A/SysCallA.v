@@ -1,8 +1,9 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (unmodeled_at's new vDSO-call arm; ok_pframeA written as plain text with the new sys_rob premise, LPS 75d69e00, which the exit steps close by RomBase's tactics; vm_same and the frame lemma for MI keep the channel reader; RomBase imported). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
-#[local] Ltac2 tbs__ () := ["@Corelib.Init.Datatypes"; "list"; "pair"; "option"; "Some"; "prod"; "nat"; "nil"; "bool"; "None"; "true"; "cons"; "app"; "snd"; "fst"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "Model"; "event"; "SyscallEffect"; "m_halted"; "materialize_model_accesses"; "ExitEv"; "m_fs"; "SyscallInput"; "m_vm_lazy"; "m_vm_materialized"; "m_vmmaps"; "syscall_effect_accesses"; "vm_backing_used"; "FdEntry"; "MemCopy"; "VmMaps"; "mkEffectU"; "with_fds"; "with_halted"; "@Corelib.Init.Logic"; "eq"; "and"; "ex"; "not"; "or"; "False"; "@stdpp.bitvector.definitions"; "bv"; "Z_to_bv"; "bv_unsigned"; "@LinuxProcessSemantics.LinuxProcessSem.Run"; "config"; "mkCfg"; "sys_input"; "cfg_model"; "SError"; "advance_past_svc"; "apply_effect"; "cfg_ms"; "sstep"; "unmodeled_at"; "@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics"; "machine_state"; "ms_svc_pending"; "ms_read_byte"; "MachineOk"; "machine_result"; "ms_gpr"; "ms_pc"; "step"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymState"; "valuation"; "SLit"; "ss_next"; "ss_pc"; "sv"; "reg_sv"; "eval"; "ss_objs"; "obj_range"; "sobj"; "dflt_writable"; "holds"; "mem_match"; "ob_dflt"; "regs_match"; "sprop"; "ss_facts"; "sv_below"; "swf"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.StepA"; "ax_S"; "axst"; "axwf"; "shadow_ok"; "ax_setS"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.SysCallA.SC"; "smatch_pendingA"; "vm_same"; "only_okA"; "SPpA"; "ok_pframeA"; "A_after"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.Safety"; "world"; "wstep"; "etriple"; "tcons"; "triple1"; "assn"; "ok_src"; "ok_tgt"; "w_tr"; "triple"; "w_cfg"; "@LinuxProcessSemantics.Riscv.Instr"; "instr"; "Ecall"; "@Corelib.Numbers.BinNums"; "Z"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.SoundA"; "jpredA"; "SPA"; "stableA"; "smatchA"; "ok_frameA"; "hidz"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.Virt"; "vms"; "MI"; "hid"; "mat_equiv"; "headroom"; "paid"; "md_after"; "virt"; "vmd"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymStep"; "instr_at"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysStep"; "after_sys"; "exit_code"; "exited"; "only_ok"; "@Stdlib.ZArith.BinInt.Z"; "le"; "lt"; "add"; "of_nat"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.Restrict"; "ranges_avoid"; "range_avoids"; "@LinuxProcessSemantics.LinuxProcessSem.Specs"; "syscall_spec"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymCall"; "pending_of"; "smatch_pending"; "S_after"; "@LinuxProcessSemantics.LinuxProcessSem.Monad"; "Ok"; "Unmodeled"; "outcome"; "@Corelib.Init.Peano"; "lt"; "@Corelib.Lists.ListDef"; "Forall"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymExit"; "ok_halted"; "@Stdlib.Lists.List"; "In"].
+#[local] Ltac2 tbs__ () := ["@Corelib.Init.Datatypes"; "list"; "pair"; "option"; "Some"; "prod"; "nat"; "nil"; "bool"; "None"; "true"; "cons"; "app"; "snd"; "fst"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "Model"; "event"; "SyscallEffect"; "m_halted"; "materialize_model_accesses"; "ExitEv"; "m_fs"; "SyscallInput"; "m_vm_lazy"; "m_vm_materialized"; "m_vmmaps"; "syscall_effect_accesses"; "vm_backing_used"; "FdEntry"; "MemCopy"; "VmMaps"; "mkEffectU"; "with_fds"; "with_halted"; "@Corelib.Init.Logic"; "eq"; "and"; "ex"; "not"; "or"; "False"; "@stdpp.bitvector.definitions"; "bv"; "Z_to_bv"; "bv_unsigned"; "@LinuxProcessSemantics.LinuxProcessSem.Run"; "config"; "mkCfg"; "sys_input"; "cfg_model"; "SError"; "advance_past_svc"; "apply_effect"; "cfg_ms"; "sstep"; "unmodeled_at"; "@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics"; "machine_state"; "ms_svc_pending"; "ms_read_byte"; "MachineOk"; "machine_result"; "ms_gpr"; "ms_pc"; "step"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymState"; "valuation"; "SLit"; "ss_next"; "ss_pc"; "sv"; "reg_sv"; "eval"; "ss_objs"; "obj_range"; "sobj"; "dflt_writable"; "holds"; "mem_match"; "ob_dflt"; "regs_match"; "sprop"; "ss_facts"; "sv_below"; "swf"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.StepA"; "ax_S"; "axst"; "axwf"; "shadow_ok"; "ax_setS"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.SysCallA.SC"; "smatch_pendingA"; "vm_same"; "only_okA"; "SPpA"; "ok_pframeA"; "A_after"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.Safety"; "world"; "wstep"; "etriple"; "tcons"; "triple1"; "assn"; "ok_src"; "ok_tgt"; "w_tr"; "triple"; "w_cfg"; "@LinuxProcessSemantics.Riscv.Instr"; "instr"; "Ecall"; "@Corelib.Numbers.BinNums"; "Z"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.SoundA"; "jpredA"; "SPA"; "stableA"; "smatchA"; "ok_frameA"; "hidz"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.Virt"; "vms"; "MI"; "hid"; "mat_equiv"; "headroom"; "paid"; "md_after"; "virt"; "vmd"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymStep"; "instr_at"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysStep"; "after_sys"; "exit_code"; "exited"; "only_ok"; "@Stdlib.ZArith.BinInt.Z"; "le"; "lt"; "add"; "of_nat"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.Restrict"; "ranges_avoid"; "range_avoids"; "@LinuxProcessSemantics.LinuxProcessSem.Specs"; "syscall_spec"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymCall"; "pending_of"; "smatch_pending"; "S_after"; "@LinuxProcessSemantics.LinuxProcessSem.Monad"; "Ok"; "Unmodeled"; "outcome"; "@Corelib.Init.Peano"; "lt"; "@Corelib.Lists.ListDef"; "Forall"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymExit"; "ok_halted"; "@Stdlib.Lists.List"; "In"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "m_channel_reader"].
 #[local] Ltac2 tb__ s := OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.TermBlob.dec2 (tbs__ ()) s.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import PArith.
@@ -10,7 +11,7 @@ From stdpp Require Import bitvector.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
-From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw Require Import Safety SysSpec SysStep.
+From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw Require Import Safety SysSpec SysStep RomBase.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3 Require Import SymState SymStep SymSoundA SymSoundB SymSoundM SymSoundR SymComplete SymCall SymExit.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A Require Import Restrict Virt StepA SoundA.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib Require LiaFast.
@@ -208,7 +209,8 @@ Qed.
 Lemma pending_not_unmodeled_atA : ltac2:(tb__ "0|1|
 S34SeS27Q40A1M0S21S2G0A1S35R3A1S3G0R1A2A3S56S2cVsegs;R4R2A3R3A2S24S33Vsegs;S2bR5R4A2A2A1F_;F_;Fx8;Fm;Fms;").
 Proof using .
-  intros ms m x8 Hp [Hok _] [_ [[Hn _] | (x & Hx & Hs)]]; cbn in *; [congruence|].
+  (* LPS 08b1429: [unmodeled_at] has three arms; the two instruction arms need no pending syscall. *)
+  intros ms m x8 Hp [Hok _] [_ [[Hn _] | [[Hn _] | (x & Hx & Hs)]]]; cbn in *; [congruence|congruence|].
   rewrite Hp in Hx. inversion Hx; subst. exact (Hok Hs).
 Qed.
 
@@ -225,16 +227,28 @@ Proof using .
   intros Spec tr ms m x8 Ht Hp Hok. split; [exact Ht|]. cbn. exact (pending_not_unmodeled_atA ms m x8 Hp Hok).
 Qed.
 
-Definition ok_pframeA (ok : world -> Prop) (J : jpredA) : Prop := ltac2:(tb__ "0|2|
-S3cS0S27Q40A1M0A1S0SfA1M1S34SeG0VJ;R6R5R4R2A4S21S2G0A1S35R4A1S3G0R2A2A3S56S2cVsegs;R5R3A3R4A2Vok;S1G1S2aR7S2bR6R5A2A4A1F_;F_;F_;Fx8;Fmd;Fms;Ftr;Ftp;Frho;").
+(* LPS 75d69e00.  WAS AN ENCODED DEFINITION, NOW EXPLICIT HAND-WRITTEN TEXT WITH ONE PREMISE
+   ADDED: [RomBase.sys_rob segs (mkCfg ms md)], LAST.  The A-side twin of
+   [Fw3/SymCall.v]'s [ok_pframe] / [ok_pframeJ]; that file carries the reasoning and the
+   control-probe warrant, which covered this definition too (positive: this text without the
+   premise is convertible with the encoded body; negative: replacing [only_okA] by [only_ok]
+   fails [reflexivity]).  No re-encoding anywhere. *)
+Definition ok_pframeA (ok : world -> Prop) (J : jpredA) : Prop :=
+  forall (rho : valuation) (tp : list word) (tr : list event)
+         (ms : machine_state) (md : Model) (x8 : word),
+  J rho tp tr md ->
+  ms_svc_pending ms = Some x8 ->
+  only_okA (sys_input segs ms x8) md ->
+  RomBase.sys_rob segs (mkCfg ms md) ->
+  ok (tr, mkCfg ms md).
 
 Lemma ok_pframeA_tgt : ltac2:(tb__ "0|1|
 S0SfA1M0OF_;S68S3cS0S27Q40A1A1G0SeR5R4R3R2R1A4S5dR7R3A2F_;Fmd;Ftr;Ftp;Frho;S58S61Vsegs;R3A2R2A2F_;FJ;FSpec;").
-Proof using . intros Spec J HJ rho tp tr ms md x8 Hk Hp Hok. eapply ok_tgt_pendingA; eauto. Qed.
+Proof using . intros Spec J HJ rho tp tr ms md x8 Hk Hp Hok Hrob. eapply ok_tgt_pendingA; eauto. Qed.
 
 Lemma ok_pframeA_src : ltac2:(tb__ "0|1|
 S0SfA1M0OF_;S68S3cS0S27Q40A1A1G0SeR5R4R3R2R1A4S5dR7R3A2F_;Fmd;Ftr;Ftp;Frho;S58S60Vsegs;R3A2R2A2F_;FJ;FSpec;").
-Proof using . intros Spec J HJ rho tp tr ms md x8 Hk Hp Hok. eapply ok_src_pendingA; eauto. Qed.
+Proof using . intros Spec J HJ rho tp tr ms md x8 Hk Hp Hok Hrob. eapply ok_src_pendingA; eauto. Qed.
 
 Lemma materialize_nil : ltac2:(tb__ "0|0|
 SeS21S2SeA1S12R1S6S4S27Q40A1S5A2A1A2S3SeR1A2A3Fm;").
@@ -279,7 +293,7 @@ S27Q40A1M0S7F_;S80R1S6S4G0S5A2A1A2FH;").
 Proof using . intros H a n []. Qed.
 
 Definition vm_same (md md' : Model) : Prop := ltac2:(tb__ "0|1|
-S22S21S1dS18Vmd';A1S18Vmd;A1A3S22S21S0S4S27Q40A1M0G0A2A1S16Vmd';A1S16Vmd;A1A3S21S0G0A1S17Vmd';A1S17Vmd;A1A3A2A2").
+S22S21S1dS18Vmd';A1S18Vmd;A1A3S22S21S0S4S27Q40A1M0G0A2A1S16Vmd';A1S16Vmd;A1A3S22S21S0G0A1S17Vmd';A1S17Vmd;A1A3S21S7S8dVmd';A1S8dVmd;A1A3A2A2A2").
 
 Lemma vm_same_refl : ltac2:(tb__ "0|0|
 SeS55R1R1A2Fmd;").
@@ -295,12 +309,12 @@ Proof using . intros md md' tp ms H. unfold vms. rewrite (vm_same_hid md md' tp 
 
 Lemma vm_same_used : ltac2:(tb__ "0|0|
 SeSeS55R2R1A2S21S67S1aR2A1S1aR3A1A3F_;Fmd';Fmd;").
-Proof using . intros md md' (Hm & Hl & Hp). unfold vm_backing_used. rewrite Hm, Hl, Hp. reflexivity. Qed.
+Proof using . intros md md' (Hm & Hl & Hp & _). unfold vm_backing_used. rewrite Hm, Hl, Hp. reflexivity. Qed.
 
 Lemma vm_same_paid : ltac2:(tb__ "0|0|
 SeSeS0S27Q40A1A1S55R3R2A2S21S67S73R3R2A2S73R4R2A2A3F_;Ftp;Fmd';Fmd;").
 Proof using .
-  intros md md' tp H. pose proof H as (Hm & Hl & Hp). unfold paid, unpaid. rewrite (vm_same_used md md' H), Hl, Hp. reflexivity.
+  intros md md' tp H. pose proof H as (Hm & Hl & Hp & _). unfold paid, unpaid. rewrite (vm_same_used md md' H), Hl, Hp. reflexivity.
 Qed.
 
 Lemma vm_same_headroom : ltac2:(tb__ "0|0|
@@ -310,10 +324,10 @@ Proof using . intros md md' tp H. unfold headroom. rewrite (vm_same_paid md md' 
 Lemma vm_same_MI : ltac2:(tb__ "0|0|
 SeSeS0S27Q40A1A1S55R3R2A2S6fVsegs;R4R2A3S6fVsegs;R4R3A3F_;F_;Ftp;Fmd';Fmd;").
 Proof using .
-  intros md md' tp H (HW & HT & Hmat & Hsub & Hpaid & Hlc & Hivs & Hlm & Htm). pose proof H as (Hm & Hl & Hp).
+  intros md md' tp H (HW & HT & Hmat & Hsub & Hpaid & Hlc & Hivs & Hlm & Htm & Hrd). pose proof H as (Hm & Hl & Hp & Hr).
   unfold MI. rewrite Hp, Hl, Hm, (vm_same_paid md md' tp H).
   split; [exact HW|]. split; [exact HT|]. split; [exact Hmat|]. split; [exact Hsub|]. split; [exact Hpaid|]. split; [exact Hlc|].
-  split; [|split].
+  split; [|split; [|split; [|rewrite Hr; exact Hrd]]].
   - unfold BackingAlgebra.model_ivs_wf in Hivs |- *. rewrite Hm, Hl. exact Hivs.
   - unfold lazy_in_maps in Hlm |- *. rewrite Hm, Hl. exact Hlm.
   - unfold tp_in_maps in Htm |- *. rewrite Hm. exact Htm.
@@ -396,7 +410,7 @@ Proof using .
     assert (Hno : bv_unsigned (eval rho (reg_sv (ax_S A) 17)) = 93 \/ bv_unsigned (eval rho (reg_sv (ax_S A) 17)) = 94).
     { destruct H17 as [-> | ->]; cbn; [right | left]; reflexivity. }
     split.
-    + eapply Hokp; [exact Hk | exact Hp |]. apply only_okA_of_only_ok. apply exit_only_ok. exact Hno.
+    + eapply Hokp; try exact Hk; try exact Hp; try (solve [RomBase.rob_auto | eapply RomBase.sys_rob_exit; eassumption]). apply only_okA_of_only_ok. apply exit_only_ok. exact Hno.
     + intros w' Hw. rewrite (wstep_exit_inv Hp Hh Hno Hw).
       exists tr, ms, md. split; [exact Hk|]. split; [exact Hsp | reflexivity].
   - apply triple_halt. intros w' (tr & ms & md & Hk & Hsp & ->).

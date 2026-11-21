@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/Reusable/YN0j.v, with its module paths and module names changed; 546 of its 584 lines of code are new or changed and 260 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segC.v, with its module names changed; 1538 of its 1613 lines of code are new or changed and 509 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segC2.v, with its module paths and module names changed; 1522 of its 1679 lines of code are new or changed and 1456 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_round_trip 0x81a9c (fuzz_state.c:278-314 with round_trip_document fs.c:229-264 inlined), fs.asan (image
    tfibsegs, the pinned fuzz_state.asan sha256 64b53ff86172bb07f93f146e67b81a0354bca88e0a580e93fb1da01406fb76e0): lane C1
    of the ASan walk of FSH_Fn_crt.v check_round_trip_spec, segments 20-24, from the return of pj_set at 0x821a8 (0x821ac,
@@ -15,7 +16,7 @@
      23  0x821e8..0x821fc  pj_set (&state, "bytes" 0x20fc0, &v)
      24  0x82200..0x82214  pj_set (&doc, "state" 0x20f00, &state)       doc = s10 = F + 0x20
    rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from
-   a working branch d25a984c903 proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_sd10.v ..
+   a working branch proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_sd10.v ..
    check_round_trip_sd14.v (the steps st10 .. st14 across the stage cuts St10 .. St15 of check_round_trip_stdefs.v
    :375-439: the state's tree crt_s1 -> crt_s2 -> crt_st es, v zeroed by each pj_set and its blocks moved into the
    state's, the state's moved into the document's, the keys K_CONTEXT / V_PRESET / CRT_BYTES / CRT_STATE read-only
@@ -24,7 +25,7 @@
    reuse search, is the lane head (internal path) lines 6-21 (checker
    a Theorem Labs lane, CONFIRM 2026-10-29 04:3xZ).
    The segment step is FSH_crt_site.crt_seg_call_br (this lane's generic call crossing, moved into the shared file:
-   a Theorem Labs lane's crtB_seg_call, a working branch ba97feda29a lib/A/FSH_crt_segB.v:324-451, with a generic callee
+   a Theorem Labs lane's crtB_seg_call, a working branch lib/A/FSH_crt_segB.v:324-451, with a generic callee
    post and the leading `bnez a0` of every pj_* return). The keeps across a call are FSW_rd.v's (rtree_kept_call,
    pobj_kept_call, fs_rblock_kept_call, cstr_ok_kept_call) and the byte keeps below. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
@@ -395,7 +396,7 @@ Qed.
 End c1b.
 
 (* ================= the inner boundaries of lane C1 =================
-   St10 .. St14 of d25a984c903's check_round_trip_stdefs.v (:375-427) restated as S0 boundary invariants at the four
+   St10 .. St14 of's check_round_trip_stdefs.v (:375-427) restated as S0 boundary invariants at the four
    inner return addresses. crtC1_corex is the part every boundary of the lane shares, crt_INV_821ac's and
    crt_INV_82218's own form with the trees' blocks collected in one list D (the order of D is free: it enters only
    through Permutation and rd_sum): the s-registers, the block list and U, the text and decode blocks, the back object
@@ -912,7 +913,7 @@ Hypothesis IMG : fs_img_facts tfibsegs B.
 Hypothesis PJS : @pj_string_spec fx rc SK tfibsegs B.
 Hypothesis PJSET : @pj_set_spec fx rc SK tfibsegs B.
 
-(* ---- segment 20: pj_string (&v, "preset") at 0x821bc; St10 (d25a984c903 sd10.v): v = JStr V_PRESET on a fresh
+(* ---- segment 20: pj_string (&v, "preset") at 0x821bc; St10 (sd10.v): v = JStr V_PRESET on a fresh
    block of 7 bytes, its head joins U, g_live + 7; the document, the state and every other byte of crt are kept ---- *)
 Lemma crtC1_hcall_1ac : crt_hcall SK B crtC_sc_1ac 0x83be4 0x821c0 STK_pj_string (crt_INV_821ac B)
   (crtC1_INV_1c0 B).
@@ -1141,7 +1142,7 @@ Hypothesis PJSET : @pj_set_spec fx rc SK tfibsegs B.
    The callee's SRr, its FP relation and flag-word safety, and from any post state the boundary core at
    D' = Doth ++ Do (Do ~ the key block :: Dobj ++ Dval, obj's new tree), val zeroed, and what the caller needs to keep
    its other data across the call (the footprint misses every other frame byte and every Doth block, and no shadow
-   byte). St11 / St13 / St14 of d25a984c903 (sd11.v, sd13.v, sd14.v). ---- *)
+   byte). St11 / St13 / St14 (sd11.v, sd13.v, sd14.v). ---- *)
 Lemma crtC1_pjset_call : forall cx E k ly3 S3 U3 (W3 : world tfibsegs) regsC memC mdC ssC r oo ow kaddr kname
     (ms : list (list Z * PjTree.jv)) tv Dobj Dval Doth D num str kids keys Kb CNTb LIVEb same nsame dec live peak cnt
     (Q : env -> Z -> alayout -> astate -> list (Z * Z) -> world tfibsegs -> machine_state -> Model -> Prop),
@@ -1389,7 +1390,7 @@ intros cx ly3 S3 a Hfr EF Ha. right. exists 3, (c_pos cx). split; [rewrite Hfr; 
 rewrite EF, crt_frame3. exact Ha.
 Qed.
 
-(* ---- segment 21: pj_set (&state, "context", &v) at 0x821d4; St11 -> St12 (d25a984c903 sd11.v): the state becomes
+(* ---- segment 21: pj_set (&state, "context", &v) at 0x821d4; St11 -> St12 (sd11.v): the state becomes
    crt_s2 on its old blocks + the key block + v's block, v is zeroed; the document is kept ---- *)
 Lemma crtC1_hcall_1c0 : crt_hcall SK B crtC_sc_1c0 0x838e8 0x821d8 STK_pj_set (crtC1_INV_1c0 B) (crtC1_INV_1d8 B).
 Proof.
@@ -1483,7 +1484,7 @@ apply (crtC1_pjset_call cx E k ly3 S3 U3 W3 regsC memC mdC crtC_sc_1c0 0x821d8 0
   split; [exact POo|]. split; [exact HZ | exact POw].
 Qed.
 
-(* ---- segment 22: pj_string (&v, text) at 0x821e4; St12 -> St13 (d25a984c903 sd12.v): v = JStr es on a fresh block of
+(* ---- segment 22: pj_string (&v, text) at 0x821e4; St12 -> St13 (sd12.v): v = JStr es on a fresh block of
    |es| + 1 bytes (es = the re-encoded text, the text block's own string), its head joins U, g_live + |es| + 1; the
    document and the state are kept ---- *)
 Lemma crtC1_hcall_1d8 : crt_hcall SK B crtC_sc_1d8 0x83be4 0x821e8 STK_pj_string (crtC1_INV_1d8 B) (crtC1_INV_1e8 B).
@@ -1635,7 +1636,7 @@ split; [exact (pobj_kept_call B STK_pj_string (spZ regsC) FPs ly3 S3 U3 W3 memC 
 split; [exact HTV | exact HPV].
 Qed.
 
-(* ---- segment 23: pj_set (&state, "bytes", &v) at 0x821fc; St13 -> St14 (d25a984c903 sd13.v): the state becomes
+(* ---- segment 23: pj_set (&state, "bytes", &v) at 0x821fc; St13 -> St14 (sd13.v): the state becomes
    crt_st es, v is zeroed; the document is kept ---- *)
 Lemma crtC1_hcall_1e8 : crt_hcall SK B crtC_sc_1e8 0x838e8 0x82200 STK_pj_set (crtC1_INV_1e8 B) (crtC1_INV_200 B).
 Proof.
@@ -1725,7 +1726,7 @@ apply (crtC1_pjset_call cx E k ly3 S3 U3 W3 regsC memC mdC crtC_sc_1e8 0x82200 0
   split; [exact POo|]. split; [exact HZ | exact POw].
 Qed.
 
-(* ---- segment 24: pj_set (&doc, "state", &state) at 0x82214; St14 -> St15 (d25a984c903 sd14.v): the document becomes
+(* ---- segment 24: pj_set (&doc, "state", &state) at 0x82214; St14 -> St15 (sd14.v): the document becomes
    crt_doc es on its old blocks + the key block + all the state's blocks, the state object is zeroed; v stays zeroed ---- *)
 Lemma crtC1_hcall_200 : crt_hcall SK B crtC_sc_200 0x838e8 0x82218 STK_pj_set (crtC1_INV_200 B) (crt_INV_82218 B).
 Proof.

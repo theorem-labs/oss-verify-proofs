@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the memory-invariant (_inv) twin of lib/Reusable/YC80xf.v's frame runner, for pj_string's
    image-B walk (lib/B/Prog/pj_string_*.v): the walk writes v's node, which may lie in a caller's fake frame of the
-   entry state (YCbqG.v wr_fp_frame), so it runs YC80xf.v's paj_run_xf; the kit's post (fpostWm, kit d607d12e4b0f) asks
+   entry state (YCbqG.v wr_fp_frame), so it runs YC80xf.v's paj_run_xf; the kit's post (fpostWm, kit) asks
    the memnorm keep, which a run carries only as a memory invariant P in the runner's statement (YC80x.v's header:
-   SRr W c Q -> SRr W c (Q /\ P ..) has no generic proof). YC80x.v (engine set s1b 459129c18903) has the _inv forms
+   SRr W c Q -> SRr W c (Q /\ P ..) has no generic proof). YC80x.v (engine set s1b) has the _inv forms
    of the plain runners and YC1fPx.v their tactics; the frame runner has none, so this file states it:
    - SRr_chain_pi_tok_AJxf_inv: YC80xf.v's SRr_chain_pi_tok_AJxf with YC80x.v's SRr_msteps_inv in place of
      SRr_msteps and the post run_post_pi_tok_AJx_inv (YC80x.v's), so P reaches the end memory;

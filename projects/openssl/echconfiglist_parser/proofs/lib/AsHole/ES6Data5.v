@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the SBe base's two page variables are renumbered by the variable map read from probes of the run at 727298f3; the stack region's shape starts at offset 2244095, the launch's writable stack window [sp0 - 6144513, sp0) at 727298f3). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool Uint63 PrimString.
 From LinuxProcessSemantics.LinuxProcessSem Require Import MemImageType Run.
@@ -20,7 +21,7 @@ Definition START : APC.acs := s6start5.
 Definition TT0 : ttab_e := [(2%uint63, APC.eaddz APC.e_sp0_early (-8388608)); (4%uint63, AX2.ELit 0)].
 Definition shapes0 : list rshape :=
   [(0%uint63, 0x10000%uint63, 0xbd0000%uint63, 0%uint63, None);
-   (2%uint63, 0%uint63, 8388608%uint63, 4%uint63, Some PKUnk);
+   (2%uint63, 2244095%uint63, 8388608%uint63, 4%uint63, Some PKUnk);   (* LPS 727298f3: only [sp0 - 6144513, sp0) is writable at the launch (StoreOk.stack_window_reach = 2244095; AsanPlanCore.v's start KWr) *)
    (4%uint63, 2147459072%uint63, 2148999168%uint63, 12%uint63, Some PKZero)].   (* [comment removed for export] *)
 Definition classes0 : list (int * rclass) := [(0%uint63, RCHull); (2%uint63, RCTop); (4%uint63, RCSpan)].
 (* [comment removed for export] *)
@@ -42,9 +43,10 @@ Definition rootgen := fold_left root_step (APC.a_maps START) (TT0, shapes0, clas
 (* [comment removed for export] *)
 Definition TG : int := 26%uint63.
 Definition TSB : int := 27%uint63.
+(* LPS 727298f3: the base's two page variables in the numbering of the run at 727298f3 ([ES6Start.vsh_hand]) *)
 Definition SBe : AX2.expr :=
-  AX2.EAlu Instr.ALU_ADD (AX2.EAlu Instr.ALU_ADD (AX2.EMd Instr.M_MUL (AX2.ELit 4096) (AX2.EVar 224))
-                                                  (AX2.EMd Instr.M_MUL (AX2.ELit (-4096)) (AX2.EVar 225))) (AX2.ELit 65536).
+  AX2.EAlu Instr.ALU_ADD (AX2.EAlu Instr.ALU_ADD (AX2.EMd Instr.M_MUL (AX2.ELit 4096) (AX2.EVar (vsh_hand 224)))
+                                                  (AX2.EMd Instr.M_MUL (AX2.ELit (-4096)) (AX2.EVar (vsh_hand 225)))) (AX2.ELit 65536).
 (* [comment removed for export] *)
 Definition TTOP : int := 29%uint63.
 (* [comment removed for export] *)
@@ -103,4 +105,9 @@ Definition shp (l : int) : bool := ((l land 4095) =? 0)%uint63.   (* [comment re
 Definition oelse {T} (a b : option T) : option T := match a with Some x => Some x | None => b end.
 Definition xask (F : fstate) : option (int * int) := oelse (xask_b5 IM code F) (xask_band code F).
 Definition RC : Z := Z.of_nat (List.length (segments_reserved ASEGS)).
+(* 08b1429: the ledger also holds the launch's vDSO/vvar pair, so [Br3Trans.rest3x_chk] bounds
+   the reserved bytes and entries by the image's plus [APC.resx_bytes]/[APC.n_resx] of the table;
+   the driver's own budget [L3] stays over the image's reservations ([Br3Root.led_chk]). *)
+Definition RBX : Z := RBYTES + APC.resx_bytes ASAN_H.
+Definition RCX : Z := Z.of_nat (List.length (segments_reserved ASEGS) + APC.n_resx ASAN_H).
 (* [comment removed for export] *)

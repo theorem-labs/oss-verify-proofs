@@ -5,23 +5,24 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_box_model_block.v; 1090 of its 1202 lines of code are new or changed and 1063 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P5.v, with its module paths, module names, addresses and numbers changed; 1009 of its 1131 lines of code are new or changed and 1080 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A3.v, with its module paths, module names and addresses changed; 258 of its 469 lines of code are new or changed and 920 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Provenance (route (a) bridge input, lead 22:18Z; auditor a Theorem Labs lane):
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
    source runs: lib/B/Prog/Seg/A3.v a3_evt_mid (:286), a3_evt (:428) at a working branch
-     3803efccea0 (blob 58a6459b5bc00a145c2dbe52aefe900a1fafd88a);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+     (blob 58a6459b5bc00a145c2dbe52aefe900a1fafd88a);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    compare: both source runs call asan_set_shadow_f8 (jal 0x55144 at 0x8121c), so each is split at that call and
      no <run>_of_F is written.  The stretches re-run these source lines:
-       a3_evt_mid_pre_F  = A3.v:286-428, the 68 `a3_sb` shadow stores and the four instructions 0x81210..0x8121c,
+       a3_evt_mid_pre_F  = A3.v:287-429, the 68 `a3_sb` shadow stores and the four instructions 0x81210..0x8121c,
                            up to the callee entry 0x55144 (meta_fill_f8);
-       a3_evt_mid_post_F = A3.v:376-424, the bookkeeping the source does after `eapply evt_cut`, stated over the
+       a3_evt_mid_post_F = A3.v:377-425, the bookkeeping the source does after `eapply evt_cut`, stated over the
                            post-call machine state (no MemNorm.evt_normalize: the walk composes the callee itself);
-       a3_evt_pre_F      = A3.v:461-567, the spill word, the nine register instructions, the three header stores
+       a3_evt_pre_F      = A3.v:462-568, the spill word, the nine register instructions, the three header stores
                            and 0x810f8/0x810fc, then a3_evt_mid_pre_F;
-       a3_evt_post_F     = A3.v:570-598, the same bookkeeping for the whole-segment Q.
-     a3_lib_evt (A3.v:93) is the UL/lib.Lib engine bridge; every _F here is stated on the lib.Lib ExecF engine, so
+       a3_evt_post_F     = A3.v:571-599, the same bookkeeping for the whole-segment Q.
+     a3_lib_evt (A3.v:94) is the UL/lib.Lib engine bridge; every _F here is stated on the lib.Lib ExecF engine, so
      it has no _F twin (nothing to bridge).
    The statements are on the lib.Lib copies of MS / mkR / getr; the source states the UL copies, which are the
    same definitions (UL's MS is the same record, UL's mkR the same tree through #[local] Abbreviations). *)
@@ -487,7 +488,7 @@ Qed.
 Lemma a3_evt_post_F :
   forall (RNG : footprint) (R F : bvmap 5 word) (fc : bv 32) (m mf m' : word -> option byte)
          (sp gp tp s0 s1 s2 s6 s8 s9 s10 : word) (A fr : Z),
-    (* the geometry the run carries (A3.v:428-437: the frame, the spill word and the frame shadow are apart) *)
+    (* the geometry the run carries (A3.v:429-438: the frame, the spill word and the frame shadow are apart) *)
     AC.GT <= fr -> fr + 3136 <= A -> HIGHMEM_BEG <= A -> A + 344 <= 2 ^ 64 ->
     (fr + 3136 <= LOWMEM_END \/ HIGHMEM_BEG <= fr) ->
     (forall i, 0 <= i < 392 -> in_shadow (Sfr fr + i)) ->

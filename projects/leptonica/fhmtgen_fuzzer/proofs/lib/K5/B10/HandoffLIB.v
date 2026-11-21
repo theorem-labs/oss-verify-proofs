@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (module paths qualified against the K5.AS twins). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -19,7 +20,7 @@ Import ListNotations.
 Import AX2. Import AX2S. Import AP.
 Open Scope Z_scope.
 
-Local Instance hl_fx : PropExec.FPState := PropExec.fx0.
+Local Instance hl_fx : K5.AS.PropExec.FPState := K5.AS.PropExec.fx0.
 
 (* [comment removed for export] *)
 Definition hs_lib_ok (ch : acs) : bool :=

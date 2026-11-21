@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (FIXZ's reserved-ledger bound: every reservation ends in the image or lies apart from the fake-stack area, since the launch's vdso/vvar pair is in the ledger; ACCT_cov reads it at the fake area). *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Monad Specs Run.
@@ -108,8 +109,12 @@ Definition TIE (st : astate) (LBa : list ablock) : Prop :=
 
 Variable SHFIX : word -> Prop.
 
+(* LPS 727298f3: the reserved ledger holds the image's reservations and the launch's vdso/vvar pair
+   ([State.init_reserved]); each entry ends in the image or lies apart from the fake-stack area *)
 Definition FIXZ (L : alayout) (moc : Model) : Prop :=
-  Forall (fun e : word * word => bv_unsigned (fst e) + bv_unsigned (snd e) <= ABase.AIMG_HI) (vm_reserved (m_vmmaps moc))
+  Forall (fun e : word * word => bv_unsigned (fst e) + bv_unsigned (snd e) <= ABase.AIMG_HI
+                                 \/ bv_unsigned (fst e) + bv_unsigned (snd e) <= al_fake L
+                                 \/ al_fake L + 11571200 <= bv_unsigned (fst e)) (vm_reserved (m_vmmaps moc))
   /\ (forall z, al_fake L <= z < al_fake L + 11571200 -> page_in_ranges (page_base_of z) (m_vm_lazy moc) = false)
   /\ m_halted moc = None
   /\ lazy_shapeA C0A moc.
@@ -718,7 +723,8 @@ Proof.
       assert (Hx : Ab <= x < Ab + n) by (unfold x; Z.div_mod_to_equations; lia).
       destruct (RFK x ltac:(lia)) as (iv & Hiv & Hxi).
       destruct (AMI_resv_entry _ st (canon mo) iv HM Hiv) as [(e & He & E1 & E2)|(e & He & E1 & E2)].
-      * exfalso. pose proof (proj1 (Forall_forall _ _) RLO e He) as X. cbv beta in X. unfold B, S, ABase.AIMG_HI in *. lia.
+      * exfalso. pose proof (proj1 (Forall_forall _ _) RLO e He) as X. cbv beta in X. unfold B, S, ABase.AIMG_HI in *.
+        destruct X as [X|[X|X]]; lia.
       * exists e, x. split; [exact He|]. split; [lia|]. split; [unfold appz; lia|].
         f_equal. unfold x, shad. rewrite Z.shiftr_div_pow2 by lia. change (2 ^ 3) with 8. Z.div_mod_to_equations. lia.
 Qed.
@@ -832,8 +838,11 @@ Definition TIE (st : astate) (LBa : list ablock) : Prop :=
 
 Variable SHFIX : word -> Prop.
 
+(* LPS 727298f3: as the module above *)
 Definition FIXZ (L : alayout) (moc : Model) : Prop :=
-  Forall (fun e : word * word => bv_unsigned (fst e) + bv_unsigned (snd e) <= ABase.TwinB.AIMG_HI) (vm_reserved (m_vmmaps moc))
+  Forall (fun e : word * word => bv_unsigned (fst e) + bv_unsigned (snd e) <= ABase.TwinB.AIMG_HI
+                                 \/ bv_unsigned (fst e) + bv_unsigned (snd e) <= al_fake L
+                                 \/ al_fake L + 11571200 <= bv_unsigned (fst e)) (vm_reserved (m_vmmaps moc))
   /\ (forall z, al_fake L <= z < al_fake L + 11571200 -> page_in_ranges (page_base_of z) (m_vm_lazy moc) = false)
   /\ m_halted moc = None
   /\ lazy_shapeA C0A moc.
@@ -1442,7 +1451,8 @@ Proof.
       assert (Hx : Ab <= x < Ab + n) by (unfold x; Z.div_mod_to_equations; lia).
       destruct (RFK x ltac:(lia)) as (iv & Hiv & Hxi).
       destruct (AMI_resv_entry _ st (canon mo) iv HM Hiv) as [(e & He & E1 & E2)|(e & He & E1 & E2)].
-      * exfalso. pose proof (proj1 (Forall_forall _ _) RLO e He) as X. cbv beta in X. unfold B, S, ABase.TwinB.AIMG_HI in *. lia.
+      * exfalso. pose proof (proj1 (Forall_forall _ _) RLO e He) as X. cbv beta in X. unfold B, S, ABase.TwinB.AIMG_HI in *.
+        destruct X as [X|[X|X]]; lia.
       * exists e, x. split; [exact He|]. split; [lia|]. split; [unfold appz; lia|].
         f_equal. unfold x, shad. rewrite Z.shiftr_div_pow2 by lia. change (2 ^ 3) with 8. Z.div_mod_to_equations. lia.
 Qed.

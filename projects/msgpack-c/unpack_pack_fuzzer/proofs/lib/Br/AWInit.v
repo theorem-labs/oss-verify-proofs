@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (aw_init takes the mmap base's validity for the initial ledger's vdso/vvar pair, and its start model is with_vdso over init_model for any vDSO run state, the run's start model, by KREL_with_vdso). *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From stdpp Require Import base decidable list gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -107,26 +108,33 @@ Proof.
   lia.
 Qed.
 
-Theorem aw_init : forall (m : mem) brk0 mbase sp lim inp tid,
+Theorem aw_init : forall (m : mem) brk0 mbase sp lim inp tid v,
   valid_brk rsegs brk0 ->
   alloc_ceiling <= bv_unsigned sp - 8388608 < alloc_ceiling + 4096 ->
+  valid_mmap_base mbase ->
   2 ^ 31 <= lim ->
   (forall a, AST_LO <= a < AST_HI -> St.rb rsegs m a = St.img_byte rsegs a) ->
-  forall ws, NG ws -> aw_holds rsegs IMGX AWI (Z_to_bv 64 0) [] ws m (with_tid tid (init_model (segments_reserved rsegs) brk0 mbase sp lim inp)).
+  forall ws, NG ws -> aw_holds rsegs IMGX AWI (Z_to_bv 64 0) [] ws m (with_tid tid (with_vdso v (init_model (segments_reserved rsegs) brk0 mbase sp lim inp))).
 Proof.
-  intros m brk0 mbase sp lim inp tid Hbrk Hceil Hlim RB ws NGW. apply aw_holdsW_intro; [| exact NGW].
-  set (mo0 := init_model (segments_reserved rsegs) brk0 mbase sp lim inp).
-  assert (VM : m_vmmaps (with_tid tid mo0) = mkVmMapsFull (segments_reserved rsegs) [] [] brk0 brk0 lim mbase sp) by reflexivity.
+  intros m brk0 mbase sp lim inp tid v Hbrk Hceil Hmb Hlim RB ws NGW. apply aw_holdsW_intro; [| exact NGW].
+  (* LPS 727298f3: the run's start model installs the launch's vDSO draw by [with_vdso] over [init_model];
+     it rebuilds only the vDSO run state, which the heap invariant does not read *)
+  set (mo0 := with_vdso v (init_model (segments_reserved rsegs) brk0 mbase sp lim inp)).
+  (* [State.init_model] seeds the ledger with [State.init_reserved]: the
+     image's reservations and the vdso/vvar pair [execve] installed. *)
+  assert (VM : m_vmmaps (with_tid tid mo0)
+               = mkVmMapsFull (init_reserved (segments_reserved rsegs) mbase sp (in_kernel inp)) [] [] brk0 brk0 lim mbase sp)
+    by reflexivity.
   destruct (RHEAP_core_init m RB) as [RC MR].
   exists s0, []. split; [apply Permutation_refl|]. split; [exact RC|]. split; [| split; [| split; [| exact MR]]].
   - apply (KREL_frame s0 [] mo0); [reflexivity| reflexivity|].
-    unfold s0. apply KREL_init_ref; [exact Hbrk|].
+    unfold mo0. apply KREL_with_vdso. unfold s0. apply KREL_init_ref; [exact Hbrk| |exact Hmb].
     unfold ceil_ok, alloc_top.
     replace (vm_init_sp (m_vmmaps (init_model (segments_reserved rsegs) brk0 mbase sp lim inp))) with sp by reflexivity.
     unfold stack_max_size. lia.
   - reflexivity.
   - intros _. rewrite Z_to_bv_unsigned. cbn. split; [| left; auto].
-    apply (room_init _ brk0 lim mbase sp VM Hlim).
+    apply (room_init _ (in_kernel inp) brk0 lim mbase sp VM Hlim).
 Qed.
 
 End CEIL.
@@ -239,26 +247,30 @@ Proof.
   lia.
 Qed.
 
-Theorem aw_init : forall (m : mem) brk0 mbase sp lim inp tid,
+Theorem aw_init : forall (m : mem) brk0 mbase sp lim inp tid v,
   valid_brk rsegs brk0 ->
   alloc_ceiling <= bv_unsigned sp - 8388608 < alloc_ceiling + 4096 ->
+  valid_mmap_base mbase ->
   2 ^ 31 <= lim ->
   (forall a, AST_LO <= a < AST_HI -> St.rb rsegs m a = St.img_byte rsegs a) ->
-  forall ws, NG ws -> aw_holds rsegs IMGX AWI (Z_to_bv 64 0) [] ws m (with_tid tid (init_model (segments_reserved rsegs) brk0 mbase sp lim inp)).
+  forall ws, NG ws -> aw_holds rsegs IMGX AWI (Z_to_bv 64 0) [] ws m (with_tid tid (with_vdso v (init_model (segments_reserved rsegs) brk0 mbase sp lim inp))).
 Proof.
-  intros m brk0 mbase sp lim inp tid Hbrk Hceil Hlim RB ws NGW. apply aw_holdsW_intro; [| exact NGW].
-  set (mo0 := init_model (segments_reserved rsegs) brk0 mbase sp lim inp).
-  assert (VM : m_vmmaps (with_tid tid mo0) = mkVmMapsFull (segments_reserved rsegs) [] [] brk0 brk0 lim mbase sp) by reflexivity.
+  intros m brk0 mbase sp lim inp tid v Hbrk Hceil Hmb Hlim RB ws NGW. apply aw_holdsW_intro; [| exact NGW].
+  set (mo0 := with_vdso v (init_model (segments_reserved rsegs) brk0 mbase sp lim inp)).
+  (* twin of the module above *)
+  assert (VM : m_vmmaps (with_tid tid mo0)
+               = mkVmMapsFull (init_reserved (segments_reserved rsegs) mbase sp (in_kernel inp)) [] [] brk0 brk0 lim mbase sp)
+    by reflexivity.
   destruct (RHEAP_core_init m RB) as [RC MR].
   exists s0, []. split; [apply Permutation_refl|]. split; [exact RC|]. split; [| split; [| split; [| exact MR]]].
   - apply (KREL_frame s0 [] mo0); [reflexivity| reflexivity|].
-    unfold s0. apply KREL_init_ref; [exact Hbrk|].
+    unfold mo0. apply KREL_with_vdso. unfold s0. apply KREL_init_ref; [exact Hbrk| |exact Hmb].
     unfold ceil_ok, alloc_top.
     replace (vm_init_sp (m_vmmaps (init_model (segments_reserved rsegs) brk0 mbase sp lim inp))) with sp by reflexivity.
     unfold stack_max_size. lia.
   - reflexivity.
   - intros _. rewrite Z_to_bv_unsigned. cbn. split; [| left; auto].
-    apply (room_init _ brk0 lim mbase sp VM Hlim).
+    apply (room_init _ (in_kernel inp) brk0 lim mbase sp VM Hlim).
 Qed.
 
 End CEIL.

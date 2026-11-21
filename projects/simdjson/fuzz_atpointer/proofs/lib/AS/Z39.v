@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up per CONFIG_RSEQ value and the new auxv layout). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -228,6 +229,18 @@ Import AX2. Import AX2S. Import AP. Import APS.
 Section Node.
 Variable SEGS : list Segment.            Variable A : atable.
 Variable nx0 : nat.                      Variable LIMIT : Z.
+(* The run's CONFIG_RSEQ flag as 0 or 1 ([rseq_z]).  [x_stmt] reads it through
+   [node_x SEGS A nx0 RZ x args] (AS/Z33.v:2118, AS/Z2y.v:33,125), so
+   [node_x_sound_XSniff] below carries it; the XSniff branch of [node_x] is
+   [summary_smear A cs] (AS/Z2y.v:135), which does not use the flag, so the
+   proof is unchanged.  Declared immediately after [LIMIT], the slot
+   AS/Z33.v:115 puts it in, so the discharged form is
+   [x_stmt SEGS A nx0 LIMIT RZ SINV argH FS0 XSniff] -- what AS/Z2t.v:189 and
+   AS/Z3d.v:57 already spell.  A section [Variable] and not a [Let]: nothing
+   here derives the flag, and a literal would pin it when both values are
+   reachable.  [cs_ok] (:254 below) does not mention it, so no other export's
+   argument list moves. *)
+Variable RZ : Z.
 Variable SINV : env -> (word -> option byte) -> Prop.
 Variable argH : env -> word -> bool.     Variable FS0 : Fs.Fs.
 Hypothesis SEGS_wx : wx_segs_nowrap SEGS.
@@ -248,7 +261,7 @@ Proof.
   apply IH. cbn in Hn. lia.
 Qed.
 
-Theorem node_x_sound_XSniff : APS.x_stmt SEGS A nx0 LIMIT SINV argH FS0 XSniff.
+Theorem node_x_sound_XSniff : APS.x_stmt SEGS A nx0 LIMIT RZ SINV argH FS0 XSniff.
 Proof.
   intros args cs cs' E R FULL model T HC _ Hn Hk. cbv beta in Hn. unfold node_x, summary_smear in Hn.
   destruct (Z.eqb (pc cs) (x_sniff A)) eqn:Hpc; [|discriminate]. apply Z.eqb_eq in Hpc. cbn [negb] in Hn.

@@ -1,7 +1,7 @@
 #!/bin/sh
 # libdiginet/fuzz_transport image-A core relocation on the NEW asan pin e89be137db17 (row TCA): fuzz_frame's run.sh
 # (run.sh, sha256 437d65e84649; internal record) with only the pins, the names and the per-image values
-# changed. Same donor (fuzz_grant's released lib, recipes 25e3d17bdb50, normalised), same file list (core-files.txt of
+# changed. Same donor (fuzz_grant's released lib, recipes, normalised), same file list (core-files.txt of
 # the release minus YI0j, YO08), same --no-stage start-up layer (generated for the unit's own image by row T3r).
 #   run-transport.sh <workdir> ; NOPATCH=1 runs without the four --patch files (to re-cut them against this stage-out)
 set -eu

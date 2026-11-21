@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor lo := rt_sp0 - STACK_SPAN, the span the start state guarantees writable). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -61,13 +62,13 @@ Proof using AF MAL FRE MCP OUT_loc ERR_loc XENV_loc LIB_loc IO_img XENV_img.
   pose proof (cap_ok_double cap HCAP Htop) as HCAP2. pose proof (cap_ok_range _ HCAP2) as CAPR2.
   assert (INB : In (buf, cap) (rt_live RT Σ)) by (rewrite LV; left; reflexivity).
   pose proof (af_live_range RT AF Σ m buf cap ART0 INB) as (PR1 & PR2 & PR3).
-  set (lo := rt_sp0 RT Σ - STACK_WIN) in *.
+  set (lo := rt_sp0 RT Σ - STACK_SPAN) in *.
   assert (EU : bv_unsigned (Z_to_bv 64 (usp - 80)) = usp - 80) by (apply unsigned_lit; ul).
   (* [comment removed for export] *)
   apply (MAL Σ (PMfd (FD argvb cap) fs) (Z_to_bv 64 0x8bef0) (Z_to_bv 64 (usp - 80)) gp (Z_to_bv 64 TP_A) t0 t1 t2 (Z_to_bv 64 2)
            (Z_to_bv 64 buf) (Z_to_bv 64 (2 * cap)) a1 a2 a3 a4 a5 a6 a7 (Z_to_bv 64 path) (Z_to_bv 64 cap) (Z_to_bv 64 3)
            (Z_to_bv 64 (2 * cap)) (Z_to_bv 64 g_read_stage) (Z_to_bv 64 buf) s8 s9 s10 s11 t3 t4 t5 t6 F fc m (2 * cap) lo);
-    try reflexivity; try assumption.
+    try reflexivity; try assumption; try (match goal with |- _ - STACK_WIN <= lo => unfold lo, STACK_WIN; lia end).
   - apply PMfd_fdfs_only.
   - apply PMfd_mat_stable.
   - lia.
@@ -108,14 +109,14 @@ Proof using AF MAL FRE MCP OUT_loc ERR_loc XENV_loc LIB_loc IO_img XENV_img.
     apply (MCP Σ1 (PMfd (FD argvb cap) fs) (Z_to_bv 64 0x8bf0c) (Z_to_bv 64 (usp - 80)) gp (Z_to_bv 64 TP_A) t0' t1' t2'
              (Z_to_bv 64 2) (Z_to_bv 64 nb) (Z_to_bv 64 nb) (Z_to_bv 64 buf) (Z_to_bv 64 cap) a3' a4' a5' a6' a7' (Z_to_bv 64 path)
              (Z_to_bv 64 cap) (Z_to_bv 64 3) (Z_to_bv 64 (2 * cap)) (Z_to_bv 64 g_read_stage) (Z_to_bv 64 buf) s8 s9 s10 s11
-             t3' t4' t5' t6' F' fc' m1 nb buf bs lo); try reflexivity; try assumption.
+             t3' t4' t5' t6' F' fc' m1 nb buf bs lo); try reflexivity; try assumption; try (match goal with |- _ - STACK_WIN <= lo => unfold lo, STACK_WIN; lia end).
     + apply PMfd_fdfs_only.
     + apply PMfd_mat_stable.
     + rewrite LBS. reflexivity.
     + ul.
     + ul.
     + lia.
-    + rewrite LBS. exact (checked_src_live RT AF Σ1 m1 _ lo buf cap buf cap ART1 INB1 ltac:(lia) ltac:(lia) ltac:(rewrite SP1; lia)).
+    + rewrite LBS. exact (checked_src_live RT AF Σ1 m1 _ lo buf cap buf cap ART1 INB1 ltac:(try unfold lo; unfold STACK_WIN in *; lia) ltac:(try unfold lo; unfold STACK_WIN in *; lia) ltac:(rewrite SP1; try unfold lo; unfold STACK_WIN in *; lia)).
     + rewrite LBS. exact (checked_dst_live RT AF Σ1 m1 _ nb (2 * cap) nb cap ART1 INN1 ltac:(lia) ltac:(lia) ltac:(lia)).
     + rewrite LBS. lia.
     + unfold call_ok. rewrite EU, SP1. split; [exact ST1|]. ul.
@@ -143,7 +144,7 @@ Proof using AF MAL FRE MCP OUT_loc ERR_loc XENV_loc LIB_loc IO_img XENV_img.
       apply (FRE Σ1 (PMfd (FD argvb cap) fs) (Z_to_bv 64 0x8bf14) (Z_to_bv 64 (usp - 80)) gp (Z_to_bv 64 TP_A) u0 u1 u2
                (Z_to_bv 64 2) (Z_to_bv 64 nb) (Z_to_bv 64 buf) b1 b2 b3 b4 b5 b6 b7 (Z_to_bv 64 path) (Z_to_bv 64 cap)
                (Z_to_bv 64 3) (Z_to_bv 64 (2 * cap)) (Z_to_bv 64 g_read_stage) (Z_to_bv 64 buf) s8 s9 s10 s11 u3 u4 u5 u6
-               F2 fc2 m2 buf cap lo); try reflexivity; try assumption.
+               F2 fc2 m2 buf cap lo); try reflexivity; try assumption; try (match goal with |- _ - STACK_WIN <= lo => unfold lo, STACK_WIN; lia end).
       * apply PMfd_fdfs_only.
       * apply PMfd_mat_stable.
       * unfold call_ok. rewrite EU, SP1. split; [exact ST2|]. ul.

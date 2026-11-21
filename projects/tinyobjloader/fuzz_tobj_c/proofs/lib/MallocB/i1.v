@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (place_of_room_lo added: place_of_room with the address kept at or above the gap's floor GAPF, as Linux's bottom-up placement needs; depot_place_lo added: depot_place with the address at or above the model's task_unmapped_base, from place_of_room_lo). *)
 (* [comment removed for export] *)
 Local Set Warnings "-require-in-module".
 (* [comment removed for export] *)
@@ -254,6 +255,26 @@ Proof.
   split; [exact Hgal|]. split; [lia|]. split; [lia|]. exact Hfree.
 Qed.
 
+(* LPS 727298f3: [place_of_room] with the gap's floor kept: the address is at or above [GAPF]
+   ([gap_exists]), as Linux's bottom-up window needs (MallocA/MmapSymG.v [not_refusable_of_place]). *)
+Theorem place_of_room_lo : forall (md : Model) (nZ : Z),
+  0 < nZ -> nZ mod page_size = 0 -> GAPC <= alloc_top (m_vmmaps md) ->
+  GAPF + nZ + hwS (ledger (m_vmmaps md)) + hwN (ledger (m_vmmaps md)) * (nZ + 4095) <= GAPC ->
+  exists a : bv 64, mmap_place_ok_none (Z_to_bv 64 0) md (Z_to_bv 64 nZ) a /\ GAPF <= bv_unsigned a.
+Proof.
+  intros md nZ Hn Hal Htop Hroom.
+  pose proof (hwS_nonneg (ledger (m_vmmaps md))) as S0'. pose proof (hwN_nonneg (ledger (m_vmmaps md))) as N0'.
+  assert (HnZ64 : 0 <= nZ < 2 ^ 64) by (unfold GAPF, GAPC in Hroom; nia).
+  destruct (gap_exists (ledger (m_vmmaps md)) nZ ltac:(lia) Hroom) as (g & Hgal & Hgf & Hgc & Hfree).
+  exists (Z_to_bv 64 g). unfold GAPF, GAPC in *.
+  assert (Eg : bv_unsigned (Z_to_bv 64 g) = g).
+  { rewrite Z_to_bv_unsigned. unfold bv_wrap. change (bv_modulus 64%N) with (2 ^ 64). apply Z.mod_small. lia. }
+  split; [|rewrite Eg; lia].
+  unfold mmap_place_ok_none.
+  rewrite Eg. rewrite (mmap_nZ_lit nZ HnZ64 Hal). unfold mmap_n. rewrite (mmap_nZ_lit nZ HnZ64 Hal).
+  split; [exact Hgal|]. split; [lia|]. split; [lia|]. exact Hfree.
+Qed.
+
 Theorem room_of_gap_ok : ltac2:(tb__ "0|1|
 S22S29S1bR2R1A2S0S23R3A1S1aA2S0S2SfS8S25S21R4A1A1A2A1S16A2S0S2SfS8S24S21R5A1A1A2A1S15A2SaS0S18S1cR5A1M0A1S1eA2S0S17G0A1S20A2A2F_;F_;F_;F_;FV;FA;").
 Proof.
@@ -278,6 +299,31 @@ Proof.
   apply place_of_room; [unfold NBSZ, FBSZ in HL; lia | destruct HL as [-> | ->]; reflexivity | exact Htop |].
   assert (HLB : 0 < L <= FBSZ) by (unfold NBSZ, FBSZ in HL |- *; lia).
   unfold FBSZ in *. nia.
+Qed.
+
+(* LPS 727298f3: [depot_place] with the address at or above the model's [task_unmapped_base], the
+   floor of Linux's bottom-up window, which the request's non-refusability needs
+   (MallocA/MmapSymG.v [not_refusable_of_place]): the gap's floor [GAPF] of [place_of_room_lo]
+   lies above it.  Premises as [depot_place]'s (decoded from this file's [tbs__] table); written
+   as plain text. *)
+Theorem depot_place_lo : forall (A : AA) (md : Model) (L : Z),
+  gap_ok A (m_vmmaps md) -> aa_V A <= VCAP ->
+  Z.of_nat (length (dNB (aa_depot A))) <= NBMAX ->
+  Z.of_nat (length (dFB (aa_depot A))) <= FBMAX ->
+  GAPC <= alloc_top (m_vmmaps md) ->
+  (L = NBSZ \/ L = FBSZ) ->
+  exists a : bv 64, mmap_place_ok_none (Z_to_bv 64 0) md (Z_to_bv 64 L) a
+                    /\ LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.task_unmapped_base <= bv_unsigned a.
+Proof.
+  intros A md L HG HV HB1 HB2 Htop HL.
+  destruct (room_of_gap_ok A (m_vmmaps md) HG HV HB1 HB2) as [HS HN].
+  pose proof gap_closes as CL. pose proof (hwN_nonneg (ledger (m_vmmaps md))) as N0'.
+  assert (HP : exists a : bv 64, mmap_place_ok_none (Z_to_bv 64 0) md (Z_to_bv 64 L) a /\ GAPF <= bv_unsigned a).
+  { apply place_of_room_lo; [unfold NBSZ, FBSZ in HL; lia | destruct HL as [-> | ->]; reflexivity | exact Htop |].
+    assert (HLB : 0 < L <= FBSZ) by (unfold NBSZ, FBSZ in HL |- *; lia).
+    unfold FBSZ in *. nia. }
+  destruct HP as (a & Ha & Hlo). exists a. split; [exact Ha|].
+  unfold GAPF in Hlo. unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.task_unmapped_base. lia.
 Qed.
 End LedgerLaws.
 

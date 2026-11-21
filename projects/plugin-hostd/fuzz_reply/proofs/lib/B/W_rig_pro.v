@@ -12,8 +12,8 @@
    fuzz_reply.asan-ubsan from 0x82ca0, listing lib/B/W_listing.v).  The fake frame lies above image B's top by
    rgp_frm_off_imgB_x below (the kit's lib/B/W_frame_b.v frm_off_imgB over ARx). *)
 (* Modified by Theorem Labs, 2026-10: ROUTE (b), STEP 3 (CONVERSION.md (sha256 1015972e02a9; internal record); the image-A twin's
-   RIG_x round, a Theorem Labs lane f4cd818e98d): converted IN PLACE to the generic Section of
-   lib/B/W_relay_instance_gone_cx.v (commit 258ee8f57ad), any allocator relation ARx with its laws and the room record
+   RIG_x round, a Theorem Labs lane): converted IN PLACE to the generic Section of
+   lib/B/W_relay_instance_gone_cx.v, any allocator relation ARx with its laws and the room record
    RP.  The prologue runs on the donor journal ajournal_x (YC80x.v SRr_run_pi_tok_AJx); __asan_stack_malloc_1 is ASMP
    (astack_malloc_pres_x, class 1) through W_frame_x.v aj_stack_malloc_pres_at_raw_x with OWNLOW / WFx / WFL /
    SMALLOC (ASMP's frame clause kept, for errno); the lock is alock_realizes_x.  The journal's stack is the kit's
@@ -21,6 +21,7 @@
    set (the seat and the lock keep it), and gbud's room and count are GBASE's: the seat's state is a set_fs of the
    entry's (RPF_of keeps the room) with the same blocks, the lock keeps the state, and the requests still owed at
    entry 0 are gtr by conversion. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

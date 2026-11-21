@@ -1,4 +1,4 @@
-(* Ported by RtStr from cold/c-asan-rt-fmio-n affce6489c8 proofs/omx-clap-core/fuzz_manifest/lib/A/Spec/TwoWay.v, unchanged. *)
+(* Ported by RtStr from proofs/omx-clap-core/fuzz_manifest/lib/A/Spec/TwoWay.v, unchanged. *)
 From Stdlib Require Import ZArith Arith List Lia Bool.
 Import ListNotations.
 Open Scope nat_scope.

@@ -4,7 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: the TAIL segment of sup_chain's walk on plugin-hostd/fuzz_command's ASan+UBSan
    build (fuzz_command.asan-ubsan), from the loop exit BASE + SCB_LEXIT = 0x8c444 to the return 0x8c558, against the
    interface lib/B/Prog/sup_chain_d.v (scb_lctx, scb_inv) and the helpers lib/B/Prog/sup_chain_aux.v. Statement from
-   a Theorem Labs lane 707acd856cb (lib/B/Prog/sup_chain_c.v, tsup_chain_spec). The block bookkeeping of the post is the pure lemma
+   a Theorem Labs lane (lib/B/Prog/sup_chain_c.v, tsup_chain_spec). The block bookkeeping of the post is the pure lemma
    scb4_final_blocks; the release segment 0x8c47c .. 0x8c558 is scb4_rel; scb_tail composes the four calls with both.
 
    The code: ld s2,8(s1) (the slot); arg_s(slot, list) 0x8c450; free(list) 0x8c458; rec_shape_of("chain", 5)
@@ -12,6 +12,7 @@
    0x8c47c .. 0x8c4e4 (the magic 0x45e0360e at F, f5 at the frame's 16 shadow bytes, the flag byte through the word
    at F + 120), the epilogue (the saved registers back, sp := s0 - 192 + 192) and `ret`. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/sup_chain_s4.v, with its module paths, module names and numbers changed; 307 of its 334 lines of code are new or changed and 2024 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment EXIT of the image-A walk of LLVMFuzzerTestOneInput (fuzz_codec.asan 0x82f94-0x83108): seg_exit of
    lib/A/Prog/codec_amain_inv.v.
    Phase 1, from the EXIT cut (am_entry0 with the spills only, then the frame's first word and its shadow as regions):

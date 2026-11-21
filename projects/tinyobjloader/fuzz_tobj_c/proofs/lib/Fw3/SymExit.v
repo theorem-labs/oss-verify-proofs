@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (unmodeled_at's new vDSO-call arm; ok_pframe_src_K and ok_pframe_tgt_K take the frame obligation's new sys_rob premise, LPS 75d69e00, which the exit steps close by RomBase's tactics; RomBase imported). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -10,7 +11,7 @@ From Stdlib Require Import ZArith NArith List Lia Bool PArith.
 From stdpp Require Import bitvector.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
-From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw Require Import Safety SysSpec SysStep.
+From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw Require Import Safety SysSpec SysStep RomBase.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3 Require Import SymState SymStep SymSoundA SymSoundB SymSoundM SymSoundR SymComplete SymCall.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib Require LiaFast.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -27,8 +28,10 @@ Lemma ok_frame_src_K : ltac2:(tb__ "0|1|
 SaS0A1M0OF_;G0S1OF_;F_;S28R2R1A2S30Vsegs;S18Vsegs;R3A2R2A3F_;FK;FSpec;").
 Proof using .
   intros Spec K HK tr ms md ms' Hk [Hh Hl] Hp Hs. split; [exact (HK _ _ Hk)|].
-  cbn. intros [_ [[Hp' Hu] | [x8 [Hp' _]]]]; cbn in *; [|congruence].
-  rewrite (mi_account_step_lazy_nil segs ms md Hl), Hs in Hu. discriminate.
+  (* LPS 08b1429: [unmodeled_at] has three arms; the new middle one (a vDSO call the model does
+     not describe) carries the same [mi_account_step = MachineUnmodeled]. *)
+  cbn. intros [_ [[Hp' [Hu _]] | [[Hp' [Hu _]] | [x8 [Hp' _]]]]]; cbn in *; [| |congruence].
+  all: rewrite (mi_account_step_lazy_nil segs ms md Hl), Hs in Hu; discriminate.
 Qed.
 
 Lemma ok_frame_tgt_K : ltac2:(tb__ "0|1|
@@ -39,13 +42,22 @@ Proof using .
   destruct (sstep_error_step segs ms md evs Hh Hp Hst); congruence.
 Qed.
 
+(* LPS 75d69e00: [ok_pframe*] gained a fourth premise, [RomBase.sys_rob segs (mkCfg ms md)],
+   LAST (Fw3/SymCall.v:1031-1045).  These two K-variants are its producers here, so each takes
+   one more hypothesis and ignores it, exactly as [ok_pframe_src]/[ok_pframe_tgt] already do at
+   Fw3/SymCall.v:1056 and :1060 -- nothing they prove depends on the backing being stable.
+   Without the extra [intros] name the premise stays in the goal, [eapply ok_src_pending]
+   matches against it, and the unifier reports [only_ok ...] (the THIRD premise, unfolded as
+   [not syscall_spec .. Unmodeled /\ forall eff m' evs, ..]) against [sys_rob]'s
+   [forall r x8, rom_ext .. -> .. <-> ..].  That error names both shapes and is the one the
+   round reported at :46, characters 61-75. *)
 Lemma ok_pframe_src_K : ltac2:(tb__ "0|1|
 SaS0A1M0OF_;G0S1OF_;F_;S28R2R1A2S2dVsegs;S18Vsegs;R3A2R2A3F_;FK;FSpec;").
-Proof using . intros Spec K HK tr ms md x8 Hk Hp Hok. eapply ok_src_pending; eauto. Qed.
+Proof using . intros Spec K HK tr ms md x8 Hk Hp Hok Hrob. eapply ok_src_pending; eauto. Qed.
 
 Lemma ok_pframe_tgt_K : ltac2:(tb__ "0|1|
 SaS0A1M0OF_;G0S1OF_;F_;S28R2R1A2S2dVsegs;S19Vsegs;R3A2R2A3F_;FK;FSpec;").
-Proof using . intros Spec K HK tr ms md x8 Hk Hp Hok. eapply ok_tgt_pending; eauto. Qed.
+Proof using . intros Spec K HK tr ms md x8 Hk Hp Hok Hrob. eapply ok_tgt_pending; eauto. Qed.
 
 Definition ok_halted (ok : world -> Prop) (Spec : list event -> Prop) : Prop := ltac2:(tb__ "0|2|
 SaS0A1M0S20S1S27Q40A1M1S1bVSpec;R4A2S5S10G1A1S4R3A1SfG1R2A2A3Vok;SeG0S21R6S22R5R4A2A4A1F_;F_;Fcode;Fmd;Fms;Ftr;").
@@ -92,7 +104,7 @@ Proof using .
     assert (Hno : bv_unsigned (eval rho (reg_sv S 17)) = 93 \/ bv_unsigned (eval rho (reg_sv S 17)) = 94).
     { destruct H17 as [-> | ->]; cbn; [right | left]; reflexivity. }
     split.
-    + eapply Hokp; [exact Hk | exact Hp |]. apply exit_only_ok. exact Hno.
+    + eapply Hokp; try exact Hk; try exact Hp; try (solve [RomBase.rob_auto | eapply RomBase.sys_rob_exit; eassumption]). apply exit_only_ok. exact Hno.
     + intros w' Hw. rewrite (wstep_exit_inv Hp (model_idle_halted Hh) Hno Hw).
       exists tr, ms, md. split; [exact Hk|]. split; [exact Hsp | reflexivity].
   - apply triple_halt. intros w' (tr & ms & md & Hk & Hsp & ->).
@@ -132,7 +144,7 @@ Proof using .
     assert (Hno : bv_unsigned (eval rho (reg_sv S 17)) = 93 \/ bv_unsigned (eval rho (reg_sv S 17)) = 94).
     { destruct H17 as [-> | ->]; cbn; [right | left]; reflexivity. }
     split.
-    + eapply Hokp; [exact Hk | exact Hp |]. apply exit_only_ok. exact Hno.
+    + eapply Hokp; try exact Hk; try exact Hp; try (solve [RomBase.rob_auto | eapply RomBase.sys_rob_exit; eassumption]). apply exit_only_ok. exact Hno.
     + intros w' Hw. rewrite (wstep_exit_inv Hp (model_idle_halted Hh) Hno Hw).
       exists tr, ms, md. split; [exact Hk|]. split; [exact Hsp | reflexivity].
   - apply triple_halt. intros w' (tr & ms & md & Hk & Hsp & ->).

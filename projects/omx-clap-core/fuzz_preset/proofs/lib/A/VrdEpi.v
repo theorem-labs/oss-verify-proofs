@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumA.v, with its module paths and module names changed; 1213 of its 1267 lines of code are new or changed and 724 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/BTxString.v, with its module paths and module names changed; 437 of its 497 lines of code are new or changed and 1207 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, slice S5b (parse_value / parse_items), image A (asan, unstripped twin f0d2e8d4): THE SHARED EPILOGUE
    of parse_value. Lane PV-epilogue (worker a Theorem Labs lane, lane WalkAlive), from WalkPValueA's handoff
    (a Theorem Labs lane's handoff, the internal file VrdEpi-handoff.diff: its statement and its entry-state lemma, re-cut to
@@ -9,12 +10,12 @@
 
    rule 24: no function proved. rule 24: proves no function (kind: segment lemma).
 
-   BUILD SET (one coherent set): a working branch 4e6e65af6e1 (record PRH_FnParse.v blob 304770f5577,
-   PRH_Base 52730e74901, room invariant) + a working branch 8c691f4a3a0 (VrdPro.v blob 359e06ced8d) +
-   a working branch ec8b37517c2 (VrdNum.v blob 7e7610a89d1), all on a Theorem Labs lane's ENGINE FOLD 63997a07aa6
+   BUILD SET (one coherent set): a working branch (record PRH_FnParse.v blob 304770f5577,
+   PRH_Base 52730e74901, room invariant) + a working branch (VrdPro.v blob 359e06ced8d) +
+   a working branch (VrdNum.v blob 7e7610a89d1), all on a Theorem Labs lane's ENGINE FOLD
    (YCbqG blob 83da015952b; YGcallSx 17d7d2cdbcd, YC1fPx 8549c953fad, YC80x ec48991942e), listing PAImg_prog
-   0ece0b9f5a3, acceptance root f65cfdd5cac. cb type-check on base f65cfdd5cac0. First Qed (eac918c26af) was on the
-   pre-fold set vnum 709572908f6 + vpro b50e4aac4a2 (YCbqG 40fc8b95138); the move changed only LAWS (HL), FFLX
+   0ece0b9f5a3, acceptance root. cb type-check on base. First Qed was on the
+   pre-fold set vnum + vpro (YCbqG 40fc8b95138); the move changed only LAWS (HL), FFLX
    (the engine's narrower form) and the new FPRES below.
    FPRES (Section hypothesis, NOT a stand-in): the flag byte of a live fake frame is present. YGcallSx 17d7d2cdbcd
    dropped it from FFLX; at ARcf it is the FIRST conjunct of YG0dcf.v AR_flag_law_cf, proved by YG0scf.v
@@ -33,8 +34,8 @@
      row  265      `ret`.
    The whole tail is ONE symbolic run from row 225 to the `ret`, taken under aj_flag_store_x.
 
-   WHAT IT PROVES. `vrd_epi_holds`: from the join state (vrd_epi_a's conjuncts, lib/A/VrdNum.v:303-319 at
-   709572908f6), parse_value returns and the whole call meets the frozen text's caller-window post `fpostWF`, AT
+   WHAT IT PROVES. `vrd_epi_holds`: from the join state (vrd_epi_a's conjuncts, lib/A/VrdNum.v:303-319),
+   parse_value returns and the whole call meets the frozen text's caller-window post `fpostWF`, AT
    PARSE_VALUE'S ENTRY FLOAT STATE (the Section's fx, pinned with `(fx := fx)`: an unpinned fpostWF under a
    `forall fxj : FPState` binder elaborates at fxj, where its fregs_kept_x is trivial - the same trap waits in any
    statement that binds an FPState), at any post body Q, given one transfer premise (HQ) that carries the arm's answer
@@ -134,7 +135,7 @@ Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte
 Variable SK : YI16.sink_head.
 #[local] Abbreviation rdW W mem := (mrestrict (w_H W) mem).
 
-(* the laws of the frame-area release rule (lib/Reusable/YGcallSx.v:138-152, aj_flag_store_x's own Section
+(* the laws of the frame-area release rule (lib/Reusable/YGcallSx.v:139-153, aj_flag_store_x's own Section
    hypotheses), proved at ARcf by the bridge lib/Reusable/YGcallScf.v - not stand-ins *)
 Context {HL : Z}.   (* AR_laws_x's head length (YCbqG.v at the engine fold), implicit: inferred from LAWS *)
 Hypothesis LAWS : AR_laws_x SEGS B ARx HL.
@@ -161,7 +162,7 @@ Hypothesis SFX : forall ly S Hp W mem md cid pos, ARx ly S Hp W mem md -> In (ci
 Definition ve_E (regs regs0 : bvmap 5 word) (fl : Z) : env :=
   @Eimg _ A_prog_listing PI_prog_A (Ereg regs (w64 fl :: map (getr regs0) ve_saved_regs)).
 
-(* ---- THE STATEMENT. The premises are vrd_epi_a's conjuncts (VrdNum.v:303-319 at 709572908f6), plus the text's
+(* ---- THE STATEMENT. The premises are vrd_epi_a's conjuncts (VrdNum.v:303-319), plus the text's
    own frame bound for the 104 spilled bytes (an image fact, by computation at the instance), and the transfer
    premise HQ. ---- *)
 Definition vrd_epi_stmt (d : nat) : Prop :=
@@ -513,7 +514,7 @@ refine (@aj_flag_store_x fxj rc SK SEGS B prh_pst ARx _ LAWS (@pa_segs_low _ A_p
   + exact (Hnfl Hf).
 Qed.
 
-(* ---- THE BUDGETED STEP (the kit's cut 7cdbb61b5fa0, PRH_FnParse.v blob f0d92dcec7e9: tparse_value_specX's post is
+(* ---- THE BUDGETED STEP (the kit's cut, PRH_FnParse.v blob f0d92dcec7e9: tparse_value_specX's post is
    fpostWFbm at YCbqGwild.wbudget CW 0, so the join's journal is at a budget WS, VrdNum.vrd_epi_a). It is
    vrd_epi_holds at the entry state with its depot moved to the join's (YCbqGwild.ajournal_xw_rebase: the journal
    reads the entry depot only in its wild conjunct), then back (YCbqGwild.ajournal_xw_unbase0, with the join

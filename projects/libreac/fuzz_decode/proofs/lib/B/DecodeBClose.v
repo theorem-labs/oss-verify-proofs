@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/YD1q.v (tfib_srealizesX),
    lib/YB1n.v (tfib_startup_T1, HS_ok) and lib/YD2o.v (TFIB_TB_of_partsXF), in the form of fuzz_pcap's closing side
-   (proofs/libreac/fuzz_pcap/lib/A/PcapClose.v, a working branch 86b0e893fe8), for libreac/fuzz_decode's
+   (proofs/libreac/fuzz_pcap/lib/A/PcapClose.v, a working branch), for libreac/fuzz_decode's
    ASan+UBSan image: one named Section hypothesis per remaining part, module paths and names changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed HS_ok, H_STARTUP, RO_IN, H_DRIVER, decode_srealizesX_rc, decode_TFIB_TB_of_parts). *)
 (* The closing side of fuzz_decode's two ASan+UBSan statements (rule 24: no function proved; this file is assembly).
 
    TFIB_TB (lib/A/DecodeTFIB.v:28) is closed in the donor's two steps: cgif_file_fuzzer's lib/YD1q.v:79-98
@@ -16,8 +17,8 @@
    Variable or Hypothesis remains. From TFIB_TB, lib/A/AsanTop.v gives Statements.asan_ubsan_agrees and
    Statements.asan_ubsan_halts.
 
-   Image B's relocated core (a working branch dfa268302f2, with a Theorem Labs lane's -decB files of
-   7eb81ddb186) is on this unit, and every former Section variable is bound to its value (step 5b): B to lib/B/YD2l.v
+   Image B's relocated core (a working branch, with a Theorem Labs lane's -decB files)
+   is on this unit, and every former Section variable is bound to its value (step 5b): B to lib/B/YD2l.v
    TfibB, HS_ok to lib/B/YB1n.v HS_ok, the sink names to the core's instance. The driver H_DRIVER concludes
    `srealizes segs c (SPECX inp)` at a hand-off state c, where the donor concludes CLOSEDX; the donor's own proof
    passes from one to the other in the two steps of YD1q.v:54-61 (HS_ok_open, YB1n.v:74, and specx_closedx_eq,
@@ -56,6 +57,7 @@ From OSSVerify.Proofs.libreac.fuzz_decode.lib.B.Prog Require LLVMFuzzerTestOneIn
 From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require YE00.
 From OSSVerify.Proofs.libreac.fuzz_decode.lib.A.Prog Require PaBase.
 From OSSVerify.Proofs.libreac.fuzz_decode.lib.B Require YD2l YB1n YCfn YCeg YE2k YE01.
+From OSSVerify.Proofs.libreac.fuzz_decode.lib.B Require YD1q.
 From OSSVerify.Proofs.libreac.fuzz_decode.lib.B Require DecodeBStartupH DecodeBDriver DecodeBRtWalks
 DecodeBRtMem DecodeBRtStackMalloc DecodeBCallocTp DecodeBPcs DecodeBCrtFacts DecodeBSinkRo DecodeBLaws
 DecodeBAlloc DecodeBRows DecodeBRowsRt DecodeBRowsFill.
@@ -96,7 +98,7 @@ Module NDecode := OSSVerify.Proofs.libreac.fuzz_decode.lib.B.Prog.reac_decode_F_
 Module NPlainLe := OSSVerify.Proofs.libreac.fuzz_decode.lib.B.Prog.reac_decode_plain_le_F_nosh.
 Module NBraid := OSSVerify.Proofs.libreac.fuzz_decode.lib.B.Prog.reac_braid_encode_F_nosh.
 
-(* Image B's relocated core's record and instances (a working branch dfa268302f2) and the
+(* Image B's relocated core's record and instances (a working branch) and the
    step-5b row files that prove this file's former hypotheses at them. *)
 Module YE00 := OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable.YE00.
 Module PaBase := OSSVerify.Proofs.libreac.fuzz_decode.lib.A.Prog.PaBase.
@@ -123,7 +125,7 @@ Module DFill := OSSVerify.Proofs.libreac.fuzz_decode.lib.B.DecodeBRowsFill.
 Module DLeaf := OSSVerify.Proofs.libreac.fuzz_decode.lib.B.Prog.LeafCgClose.
 
 (* The plain build's six global sink instances are dropped from resolution by lib/A/DecodeCalloc.v
-   (a working branch 92fd0236203), which this file imports: every ASan statement here names
+   (a working branch), which this file imports: every ASan statement here names
    this image's own sink head dec_B_sink_head (musl's ofl_head of the image). *)
 
 Local Notation segs := decodesegsB0.
@@ -151,7 +153,7 @@ Section asan_ubsan.
 (* The image's data the parts are stated at. Owners in provenance/OBLIGATIONS.md.                         *)
 (* ===================================================================================================== *)
 (* Step 5b binds every Section variable of the earlier statement to image B's relocated core's value
-   (a working branch dfa268302f2), as cgif's lib/YD2o.v:45-47 / :71 binds the donor's;
+   (a working branch), as cgif's lib/YD2o.v:45-47 / :71 binds the donor's;
    none is free. The values are the ones the step-5b rows state their lemmas at. *)
 (* B: the image's symbol and trace record, donor lib/YD2l.v:14 TfibB, bound to the core's lib/B/YD2l.v:12 TfibB
    (TfibB_ok :47, and TfibB_syms : TfibSyms TfibB at :68). *)
@@ -194,18 +196,10 @@ Local Notation HS_ok := BB1n.HS_ok.
 (* H_STARTUP: donor lib/YB1n.v:52-72 tfib_startup_T1, at HS_ok and fuzz_decode's ASan+UBSan image; the donor's
    YA02.LIMIT is target_alloc_limit (Reusable/YA02.v:19) and the donor's YA02.inp is its body
    (mkProcInput_full ... false Sv48 ...). PROVED as lib/B/DecodeBStartupH.v:41 dec_H_STARTUP (the core's
-   lib/B/YB1n.v tfib_startup_T1 at these names; a Theorem Labs lane, -decB 7eb81ddb186 via -coreB dfa268302f2), applied
+   lib/B/YB1n.v tfib_startup_T1 at these names; a Theorem Labs lane, -decB via -coreB), applied
    unchanged. *)
-Lemma H_STARTUP :
-  forall (sp : word) (rdraw : EntryDraw) (brk0 mbase : word) (argv envp : list (list byte)) (fs : Fs.Fs)
-    (stdin : InputStream) (uid gid : word) (groups : list word) (net : NetQueue) (nofile sigmask hw : word)
-    (urnd : InputStream) (tmp : Fs.Fs),
-  valid_sp sp -> valid_brk segs brk0 -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp argv envp ->
-  valid_id uid -> valid_hwcap hw ->
-  forall T : TSet, T [] ->
-  (forall h c, HS_ok h sp rdraw brk0 argv envp uid hw (fs_seed_tmp fs tmp) c -> srealizes segs c T) ->
-  srealizes segs (init_config segs DAU.M.init_pc DAU.M.phdrs sp brk0 mbase rdraw target_alloc_limit
-    (mkProcInput_full argv envp fs stdin uid gid groups net nofile sigmask hw false Sv48 urnd tmp)) T.
+(* At LPS 727298f3 the statement is lib/B/DecodeBStartupH.v H_STARTUP_stmt, as lib/A/DecodeClose.v's. *)
+Lemma H_STARTUP : DStart.H_STARTUP_stmt HS_ok.
 Proof. exact DStart.dec_H_STARTUP. Qed.
 
 (* ===================================================================================================== *)
@@ -217,12 +211,13 @@ Lemma RO_IN : forall a, RLO <= a < RHI -> BCeg.in_ro_tfa a.
 Proof. intros a H. right. exact H. Qed.
 (* H_DRIVER: donor lib/YD1p.v:84 tfib_drv_main, as lib/YD1q.v:64-78 states it (drv_mainX_stmt / DRV_MAINX),
    composed with lib/YB1n.v:74 HS_ok_open and Reusable/YO01.v specx_closedx_eq, so that its hand-off is HS_ok and its
-   trace set is SPECX. PROVED as lib/B/DecodeBDriver.v:214 dec_H_DRIVER_TfibB (a working branch
-   ba49323448a, over lib/B/DecodeBROPinned.v:129 dec_ro_owned_pinned), at its three left premises: dec_rom_no_errno
-   TfibB (lib/B/DecodeBSinkRo.v:99 dec_HB_ROM_NO_ERRNO, the row HB_ROM_NO_ERRNO below), MT_FREE (mo_ok ameter_triv is
+   trace set is SPECX. PROVED as lib/B/DecodeBDriver.v:214 dec_H_DRIVER_TfibB (a working branch,
+   over lib/B/DecodeBROPinned.v:129 dec_ro_owned_pinned), at its three left premises: dec_rom_no_errno
+   TfibB (lib/B/DecodeBSinkRo.v:100 dec_HB_ROM_NO_ERRNO, the row HB_ROM_NO_ERRNO below), MT_FREE (mo_ok ameter_triv is
    True) and RO_IN above. The driver does not use universe_ok (as_universe B). The earlier premise arm_at_main rc and
    its Hypothesis H_ARM_AT_MAIN are DELETED: the driver does not use them (the core builds ARm at main itself,
    lib/B/YD1p.v tfib_AR), and H_DRIVER was their only consumer. *)
+(* At LPS 727298f3 the driver's statement is lib/B/YD1q.v drv_mainX_stmt itself, as lib/A/DecodeClose.v's. *)
 Lemma H_DRIVER : forall (rc : YM05.RunCeil),
   (forall fx : YK11.FPState, @amalloc_realizes fx rc segs B) ->
   (forall fx : YK11.FPState, @afree_realizes fx rc segs B) ->
@@ -230,24 +225,20 @@ Lemma H_DRIVER : forall (rc : YM05.RunCeil),
   @PL.dec_lib_contract_x_all rc decode_shape asink_syms KS asink_none ameta_inv arodata_okS
     RA_LLVMF A_EMPTY B MT XL XL RLO RHI ->
   universe_ok (as_universe B) ->
-  forall (sp : word) (rdraw : EntryDraw) (brk : word) (inp : ProcInput) (h : nat) (c : config),
-  valid_sp sp -> valid_brk segs brk -> entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
-  @YM05.ceil_of_top rc (bv_unsigned sp - stack_max_size) ->
-  HS_ok h sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (in_fs inp) c ->
-  srealizes segs c (SPECX (LS:=decode_shape) inp).
+  @YD1q.drv_mainX_stmt rc.
 Proof.
   exact (fun rc AM AF AI LIB _ =>
     @DDrv.dec_H_DRIVER_TfibB MT XL RLO RHI rc DSink.dec_HB_ROM_NO_ERRNO (fun _ _ => I) RO_IN AM AF AI LIB).
 Qed.
 
 (* ===================================================================================================== *)
-(* 3. The program walks (statement on a working branch, final e175e3e033a)                               *)
+(* 3. The program walks (statement on a working branch, final)                               *)
 (* ===================================================================================================== *)
 (* Both program walks of this image are PROVED and applied UNCHANGED here, so neither is a hypothesis.
    H_PROG_LLVMF keeps its name as a Lemma, whose statement is the hypothesis it replaces:
    lib/B/Prog/LLVMFuzzerTestOneInput_cg.v dec_llvmf_holds_stmt (cgif lib/YCfj.v:84-260 at fuzz_decode's callees,
-   slot lib/YCfn.v:59-71), PROVED as lib/B/Prog/LLVMFuzzerTestOneInput_walk.v:33 dec_llvmf_holds
-   (a working branch c4e3755d5a6, merged), with no premise beyond the statement's own. *)
+   slot lib/YCfn.v:59-71), PROVED as lib/B/Prog/LLVMFuzzerTestOneInput_walk.v:34 dec_llvmf_holds
+   (a working branch, merged), with no premise beyond the statement's own. *)
 Lemma H_PROG_LLVMF : forall (rc : YM05.RunCeil),
   @PL.dec_llvmf_holds_stmt rc asink_syms KS asink_none ameta_inv arodata_okS asink_img_laws ro_below_ofl
     RA_LLVMF A_EMPTY B MT XL RLO RHI.
@@ -257,8 +248,8 @@ Proof.
     RA_LLVMF A_EMPTY B MT XL RLO RHI).
 Qed.
 (* check_round_trip's walk is PROVED for this image: lib/B/Prog/check_round_trip_cgpf.v:54
-   dec_check_round_trip_cg_holds (a working branch beb498e78a3, the re-fit on the final
-   statement e175e3e033a), with no premise beyond the statement's own; the composition applies it below
+   dec_check_round_trip_cg_holds (a working branch, the re-fit on the final
+   statement), with no premise beyond the statement's own; the composition applies it below
    (CRT_HOLDS), so it is not a hypothesis of this image. *)
 
 (* ===================================================================================================== *)
@@ -269,7 +260,7 @@ Qed.
 (* Every runtime walk of this section is PROVED at B := TfibB on a step-5b row and applied unchanged; each keeps its
    name as a Lemma whose statement is the hypothesis it replaces. *)
 (* H_RT_MALLOC: donor lib/YF0w.v:44 tfib_amalloc_realizes. PROVED as lib/B/DecodeBRtWalks.v:42 dec_B_rt_malloc_at
-   (the core's lib/B/YF0w.v at TfibB; a Theorem Labs lane 03981fe440b), at its premise as_dhash TfibB = tfib_dhash, true by
+   (the core's lib/B/YF0w.v at TfibB; a Theorem Labs lane), at its premise as_dhash TfibB = tfib_dhash, true by
    definition (lib/B/YD2l.v:30). *)
 Lemma H_RT_MALLOC : forall (rc : YM05.RunCeil) (fx : YK11.FPState), @amalloc_realizes fx rc segs B.
 Proof. exact (DRtW.dec_B_rt_malloc_at (fun _ => eq_refl)). Qed.
@@ -277,13 +268,13 @@ Proof. exact (DRtW.dec_B_rt_malloc_at (fun _ => eq_refl)). Qed.
 Lemma H_RT_FREE : forall (rc : YM05.RunCeil) (fx : YK11.FPState), @afree_realizes fx rc segs B.
 Proof. exact (DRtW.dec_B_rt_free_at (fun _ => eq_refl)). Qed.
 (* H_RT_MEMCPY_WRAP: the memcpy interceptor, donor lib/YD2m.v:16 tfib_AICPY (the driver's YD1q.v:45 AICPY). PROVED
-   as lib/B/DecodeBRtMem.v:50 H_RT_MEMCPY_WRAP (a working branch d5d158b4f34). *)
+   as lib/B/DecodeBRtMem.v:51 H_RT_MEMCPY_WRAP (a working branch). *)
 Lemma H_RT_MEMCPY_WRAP : forall (rc : YM05.RunCeil) (fx : YK11.FPState),
   @aintrin_realizes fx rc segs B OCpy (pc_wrap_memcpy (as_code B)).
 Proof. exact DRtM.H_RT_MEMCPY_WRAP. Qed.
 (* H_RT_ASAN_MEMSET / H_RT_ASAN_MEMCPY: donor lib/YCfi.v:92 link_AMEMSET (lib/YE2r.v:566 asan_memset_realizes)
    and lib/YCfi.v:97 link_AMEMCPY (lib/YE2q.v:143 asan_memcpy_realizes), at fuzz_decode's own entries. PROVED as
-   lib/B/DecodeBRtMem.v:57 H_RT_ASAN_MEMSET and :67 H_RT_ASAN_MEMCPY. *)
+   lib/B/DecodeBRtMem.v:58 H_RT_ASAN_MEMSET and :67 H_RT_ASAN_MEMCPY. *)
 Lemma H_RT_ASAN_MEMSET : forall (rc : YM05.RunCeil) (fx : YK11.FPState),
   @aintrin_realizes fx rc segs B OSet (decodeb_sigma DB___asan_memset).
 Proof. exact DRtM.H_RT_ASAN_MEMSET. Qed.
@@ -291,14 +282,14 @@ Lemma H_RT_ASAN_MEMCPY : forall (rc : YM05.RunCeil) (fx : YK11.FPState),
   @aintrin_realizes fx rc segs B OCpy (decodeb_sigma DB___asan_memcpy).
 Proof. exact DRtM.H_RT_ASAN_MEMCPY. Qed.
 (* H_RT_BCMP: the bcmp interceptor (cgif's AsanAPI field aa_bcmp, Reusable/YG0d.v:353 abcmp_realizes). PROVED as
-   lib/B/DecodeBRtMem.v:77 H_RT_BCMP. *)
+   lib/B/DecodeBRtMem.v:78 H_RT_BCMP. *)
 Lemma H_RT_BCMP : forall (rc : YM05.RunCeil) (fx : YK11.FPState),
   @abcmp_realizes fx rc segs B (decodeb_sigma DB___interceptor_trampoline_bcmp).
 Proof. exact DRtM.H_RT_BCMP. Qed.
-(* H_RT_STACK_MALLOC0: the class-0 side stack, a Theorem Labs lane's lib/A/Rt/StackMalloc0.v:513 stack_malloc0_contract
+(* H_RT_STACK_MALLOC0: the class-0 side stack, a Theorem Labs lane's lib/A/Rt/StackMalloc0.v:514 stack_malloc0_contract
    (cgif's lib/YCfi.v:90 link_ASM2 is class 2; fuzz_decode calls class 0 once). PROVED as
-   lib/B/DecodeBRtStackMalloc.v:35 dec_rt_stack_malloc0 (lib/B/Rt/StackMalloc0.v stack_malloc0_contract at TfibB;
-   a working branch ce87b777d19). *)
+   lib/B/DecodeBRtStackMalloc.v:36 dec_rt_stack_malloc0 (lib/B/Rt/StackMalloc0.v stack_malloc0_contract at TfibB;
+   a working branch). *)
 Lemma H_RT_STACK_MALLOC0 : forall (rc : YM05.RunCeil) (fx : YK11.FPState),
   @astack_malloc_realizes fx rc segs B 0.
 Proof. exact DRtS.dec_rt_stack_malloc0. Qed.
@@ -309,7 +300,7 @@ Proof. exact DRtS.dec_rt_stack_malloc0. Qed.
 (* 5. The calloc walk over a Theorem Labs lane's AllocG (a working branch, lib/A/DecodeCalloc.v)               *)
 (* ===================================================================================================== *)
 (* Every calloc row of this section is PROVED at B := TfibB on image B's calloc tree of record
-   (a working branch cf6a735494c, carrying a Theorem Labs lane b8678d241d2) and applied unchanged; each keeps its name
+   (a working branch, carrying a Theorem Labs lane) and applied unchanged; each keeps its name
    as a Lemma whose statement is the hypothesis it replaces. *)
 (* H_CALLOC_ALLOCATE: the Allocator::Allocate contract the calloc walk consumes, lib/A/DecodeCalloc.v
    decode_aalloc_B (Reusable/YGAlloc.v aalloc_realizes at DEC_B_allocate = 0x31298, AllocType FROM_MALLOC,
@@ -326,8 +317,8 @@ Proof. exact DAlloc.dec_b_aalloc_TfibB. Qed.
 Lemma H_CALLOC_IMG_COVER : forall (fx : YK11.FPState) (rc : YM05.RunCeil),
   forall ly S W regs mem md ch, acall_pre segs B ly S W regs mem md ch -> dec_img_cover ly.
 Proof. exact (DRows.dec_b_img_cover B). Qed.
-(* H_CALLOC_TP: PROVED as lib/B/DecodeBCallocTp.v:18 H_CALLOC_TP_TfibB (a working branch
-   0c2b1b74143; ts_tp, TFIB_TP = DEC_B_TP). *)
+(* H_CALLOC_TP: PROVED as lib/B/DecodeBCallocTp.v:18 H_CALLOC_TP_TfibB (a working branch;
+   ts_tp, TFIB_TP = DEC_B_TP). *)
 Lemma H_CALLOC_TP : as_tp B = DEC_B_TP.
 Proof. exact DTp.H_CALLOC_TP_TfibB. Qed.
 (* H_CALLOC_INST: B's allocator instance is __asan::instance (DecodeCalloc.v DEC_B_instance = 0x9dcd8), the premise
@@ -372,15 +363,15 @@ Proof. exact (DRows.dec_b_img_const B BD2l.TfibB_syms). Qed.
 (* 6. The 10 program leaves and the kit the leaf translations stand on                                    *)
 (* ===================================================================================================== *)
 (* The leaf statements are lib/B/Prog/<leaf>_cg.v dec_<leaf>_cg_of_F_stmt on the shared kit lib/B/Prog/LeafCgKit.v
-   (a working branch fbea24d49f1); their footprint side <leaf>_contract_F is PROVED
+   (a working branch); their footprint side <leaf>_contract_F is PROVED
    on that branch, so each leaf below is the TRANSLATION only, with the kit's generic translation as its premise.
-   bridge_evtF is proved upstream (a working branch eea54967566, Reusable/YA0nR.v), ret_ok_stmt is proved
-   (lib/B/Prog/LeafCgFacts.v ret_ok_stmt_YK0s) and AR_stack_img_stmt is dropped (fbea24d49f1). The four kit / glue
+   bridge_evtF is proved upstream (a working branch, Reusable/YA0nR.v), ret_ok_stmt is proved
+   (lib/B/Prog/LeafCgFacts.v ret_ok_stmt_YK0s) and AR_stack_img_stmt is dropped. The four kit / glue
    rows below are PROVED, each a Lemma of its earlier hypothesis's name and statement. *)
 (* H_KIT_AVIEW_EXT / H_KIT_AVIEW_SOME: the two kit premises about aview that the kit states (LeafCgKit.v
    aview_ext_stmt, aview_some_stmt), at this unit's aview. PROVED as lib/B/Prog/LeafCgClose.v:17 dec_b_kit_aview_ext
    and :20 dec_b_kit_aview_some (LeafCgFacts.v aview_ext_stmt_YG0n / aview_some_stmt_YG0n;
-   a working branch 9436a8e5931). *)
+   a working branch). *)
 Lemma H_KIT_AVIEW_EXT : @LK.aview_ext_stmt (aview segs).
 Proof. exact DLeaf.dec_b_kit_aview_ext. Qed.
 Lemma H_KIT_AVIEW_SOME : @LK.aview_some_stmt (aview segs).
@@ -388,7 +379,7 @@ Proof. exact DLeaf.dec_b_kit_aview_some. Qed.
 (* H_LEAF_GLUE / H_LEAF_GLUE_FX: the ONE generic translation of the kit (LeafCgKit.v leaf_cg_of_evtF_stmt and its
    float-state twin leaf_cg_of_evtF_fx_stmt), from the two aview premises. PROVED as lib/B/Prog/LeafCgClose.v:26
    dec_b_leaf_glue and :42 dec_b_leaf_glue_fx (LeafCgGlue.v leaf_cg_of_evtF / leaf_cg_of_evtF_fx over the kit facts
-   of LeafCgFacts.v, a working branch 585df3525ed), for every record B. *)
+   of LeafCgFacts.v, a working branch), for every record B. *)
 Lemma H_LEAF_GLUE : forall (rc : YM05.RunCeil) (fx : YK11.FPState),
   @LK.aview_ext_stmt (aview segs) -> @LK.aview_some_stmt (aview segs) ->
   @PC.dec_leaf_wr_at rc B (@LK.leaf_cg_of_evtF_stmt) fx.
@@ -407,8 +398,8 @@ Proof. exact (DLeaf.dec_b_leaf_glue_fx B). Qed.
 (* HB_PC_WRAP_MALLOC / HB_PC_WRAP_FREE / HB_PC_STACK_MALLOC0: the code addresses the call rules and the class-0
    side stack are stated at are the listing's, in cgif's PALib form (cgif lib/YC1f.v:309-310 pal_malloc / pal_free;
    Reusable/YG0d.v:290 pc_stack_malloc). They replace the TfibLib record the earlier statement took. PROVED by
-   computation at TfibB: lib/B/DecodeBPcs.v:14 decB_pc_wrap_malloc, :17 decB_pc_wrap_free
-   (a working branch 0f01e37f954) and lib/B/DecodeBRtStackMalloc.v:43 dec_pc_stack_malloc0. *)
+   computation at TfibB: lib/B/DecodeBPcs.v:15 decB_pc_wrap_malloc, :17 decB_pc_wrap_free
+   (a working branch) and lib/B/DecodeBRtStackMalloc.v:44 dec_pc_stack_malloc0. *)
 Lemma HB_PC_WRAP_MALLOC : pc_wrap_malloc (as_code B) = decodeb_sigma DB___interceptor_trampoline_malloc.
 Proof. exact DPcs.decB_pc_wrap_malloc. Qed.
 Lemma HB_PC_WRAP_FREE : pc_wrap_free (as_code B) = decodeb_sigma DB___interceptor_trampoline_free.
@@ -419,24 +410,24 @@ Proof. exact DRtS.dec_pc_stack_malloc0. Qed.
    granules of the three REAC_MODE tables lie in as_zero_shadow B ranges (dec_tab_zshadow_at)
    (lib/B/Prog/check_round_trip_cg.v dec_crt_cells), which AR keeps at every state, as cgif keeps its own
    (lib/YF0m.v:28). PROVED by computation at TfibB: lib/B/DecodeBCrtFacts.v:54 dec_crt_cells_TfibB
-   (a working branch 5f5e232261b). *)
+   (a working branch). *)
 Lemma HB_CRT_CELLS : @PC.dec_crt_cells B.
 Proof. exact DCrt.dec_crt_cells_TfibB. Qed.
 (* HB_RO_RD_UNOWNED / HB_ROM_NO_ERRNO: the two instance facts about B the read-only reads need
    (check_round_trip_cg.v dec_ro_rd_unowned / dec_rom_no_errno): no DEC_RO_RD byte is an owned static of B, and
    errno is not in the read-only image. PROVED by computation at TfibB: lib/B/DecodeBCrtFacts.v:71
-   dec_ro_rd_unowned_TfibB and lib/B/DecodeBSinkRo.v:99 dec_HB_ROM_NO_ERRNO
-   (a working branch 37b882978fec). *)
+   dec_ro_rd_unowned_TfibB and lib/B/DecodeBSinkRo.v:100 dec_HB_ROM_NO_ERRNO
+   (a working branch). *)
 Lemma HB_RO_RD_UNOWNED : PC.dec_ro_rd_unowned B.
 Proof. exact DCrt.dec_ro_rd_unowned_TfibB. Qed.
 Lemma HB_ROM_NO_ERRNO : PC.dec_rom_no_errno B.
 Proof. exact DSink.dec_HB_ROM_NO_ERRNO. Qed.
 (* HB_SINK_KEPT / HB_META_KEPT: cgif's asink_none_kept / ameta_inv_kept (used at cgif lib/A/ACfj.v:193 / :199),
    specialised to one journal step, as the program walk's statement takes them. HB_SINK_KEPT carries the premise
-   `~ YI16.sink_open_fp FP` of the amended statement (a working branch cb3945d8e0b,
-   lib/B/Prog/LLVMFuzzerTestOneInput_cg.v:235); without it the fact is false at image B
+   `~ YI16.sink_open_fp FP` of the amended statement (a working branch,
+   lib/B/Prog/LLVMFuzzerTestOneInput_cg.v:236); without it the fact is false at image B
    (lib/B/DecodeBSinkRoProbe.v HB_SINK_KEPT_false). PROVED from the core's sink record laws:
-   lib/B/DecodeBSinkRo.v:48 dec_HB_SINK_KEPT (lib/B/YE01.v asink_none_kept) and :63 dec_HB_META_KEPT
+   lib/B/DecodeBSinkRo.v:49 dec_HB_SINK_KEPT (lib/B/YE01.v asink_none_kept) and :63 dec_HB_META_KEPT
    (lib/B/YE01.v ameta_inv_kept). *)
 Lemma HB_SINK_KEPT : forall (rc : YM05.RunCeil),
   forall STK sp0 FP ly S W0 mem0 md0 own ly' S' W' mem' md' k,
@@ -450,11 +441,11 @@ Lemma HB_META_KEPT : forall (rc : YM05.RunCeil),
     ameta_inv segs KS ly (mrestrict (w_H W0) mem0) M -> ameta_inv segs KS ly' (mrestrict (w_H W') mem') M.
 Proof. exact DSink.dec_HB_META_KEPT. Qed.
 (* HB_UNIVERSE_OK: the trace universe is well formed (Reusable/YG01.v:142 universe_ok); cgif gets it from
-   lib/YCej.v:153 Tfib_universe_ok. PROVED as lib/B/DecodeBLaws.v:32 HB_UNIVERSE_OK (TfibSyms's ts_universe at
-   TfibB_syms; a working branch 5bce41888be, file taken by path). *)
+   lib/YCej.v:153 Tfib_universe_ok. PROVED as lib/B/DecodeBLaws.v:33 HB_UNIVERSE_OK (TfibSyms's ts_universe at
+   TfibB_syms; a working branch, file taken by path). *)
 Lemma HB_UNIVERSE_OK : universe_ok (as_universe B).
 Proof. exact DLaws.HB_UNIVERSE_OK. Qed.
-(* HB_MODEL_LAWS: donor lib/YCfi.v:72 link_ML (Reusable/YG05.v model_laws_ok). PROVED as lib/B/DecodeBLaws.v:36
+(* HB_MODEL_LAWS: donor lib/YCfi.v:72 link_ML (Reusable/YG05.v model_laws_ok). PROVED as lib/B/DecodeBLaws.v:37
    HB_MODEL_LAWS. *)
 Lemma HB_MODEL_LAWS : model_laws (as_universe B).
 Proof. exact DLaws.HB_MODEL_LAWS. Qed.
@@ -462,7 +453,7 @@ Proof. exact DLaws.HB_MODEL_LAWS. Qed.
    at MT = ameter_triv below (section 7b). *)
 (* HB_SMP / HB_ASF / HB_FFL: donor lib/YCfi.v:74 link_SMP (Reusable/YG05.v stack_malloc_progress), :88 link_ASF
    (Reusable/YG0t.v astack_free_law_ok) and :76 link_FFL (AR_laws's al_flag and the image cover). PROVED at TfibB as
-   lib/B/DecodeBRtStackMalloc.v:47 dec_smp, :51 dec_asf and :57 dec_ffl. *)
+   lib/B/DecodeBRtStackMalloc.v:48 dec_smp, :51 dec_asf and :57 dec_ffl. *)
 Lemma HB_SMP : stack_malloc_progressP B.
 Proof. exact DRtS.dec_smp. Qed.
 Lemma HB_ASF : forall (rc : YM05.RunCeil), astack_free_law segs B.
@@ -470,11 +461,11 @@ Proof. exact DRtS.dec_asf. Qed.
 Lemma HB_FFL : forall (rc : YM05.RunCeil), frame_flag_lawP segs B.
 Proof. exact DRtS.dec_ffl. Qed.
 (* HB_SINK_IMG_LAWS: donor lib/YCfi.v:106 AIL (a Theorem Labs lane's lib/Reusable/YE01.v:28 asink_img_laws). PROVED as
-   lib/B/DecodeBSinkRo.v:44 dec_HB_SINK_IMG_LAWS (the core's lib/B/YD1u.v tfib_AIL at TfibB). *)
+   lib/B/DecodeBSinkRo.v:45 dec_HB_SINK_IMG_LAWS (the core's lib/B/YD1u.v tfib_AIL at TfibB). *)
 Lemma HB_SINK_IMG_LAWS : asink_img_laws segs B KS.
 Proof. exact DSink.dec_HB_SINK_IMG_LAWS. Qed.
 (* HB_RO_BELOW_OFL: donor lib/YCfi.v:45 tfib_ROB (cgif lib/YC20.v:49 ro_tfa_below_ofl at the sink head). PROVED as
-   lib/B/DecodeBSinkRo.v:81 dec_HB_RO_BELOW_OFL (every read-only loaded segment ends at or below the ofl head,
+   lib/B/DecodeBSinkRo.v:82 dec_HB_RO_BELOW_OFL (every read-only loaded segment ends at or below the ofl head,
    vm_compute), at RHI = 0x99ff8 <= DEC_B_ofl_head = 0x5f49d0. *)
 Lemma HB_RO_BELOW_OFL : ro_below_ofl segs RLO RHI.
 Proof.
@@ -491,7 +482,7 @@ Proof. exact DCrt.dec_crt_uctx_TfibB. Qed.
 Lemma HB_CRT_UFIX : @PC.dec_crt_ufix B.
 Proof. exact DCrt.dec_crt_ufix_TfibB. Qed.
 (* HB_COST: the meter bound of one call of the entry function (donor lib/YCfi.v:61-66 XL0_HXL / XL0_HXL2, at
-   XL0 = fun _ => 0 and ameter_triv). PROVED at MT = ameter_triv and XL = dec_XL0 as lib/B/DecodeBLaws.v:40
+   XL0 = fun _ => 0 and ameter_triv). PROVED at MT = ameter_triv and XL = dec_XL0 as lib/B/DecodeBLaws.v:41
    HB_COST (every mo_malloc and mo_free of ameter_triv is 0). *)
 Lemma HB_COST : forall n, 0 <= n -> @PL.dec_llvmf_cost MT n <= XL n.
 Proof. exact DLaws.HB_COST. Qed.
@@ -579,9 +570,9 @@ Qed.
 Section RC. Context {rc : YM05.RunCeil}.
 
 (* The ten leaves, each from its PROVED translation dec_<leaf>_cg_of_F (lib/B/Prog/<leaf>_cg.v,
-   a working branch d6060ccd6a6) over the kit's generic translation H_LEAF_GLUE /
+   a working branch) over the kit's generic translation H_LEAF_GLUE /
    H_LEAF_GLUE_FX, applied to its PROVED footprint contract (<leaf>_F.v, or <leaf>_F_nosh.v for the six leaves
-   whose statement dropped the shadow_rw premise, leaves 39c43113162). *)
+   whose statement dropped the shadow_rw premise, leaves). *)
 Lemma LEAF_IS_REAC : forall fx : YK11.FPState, @PC.dec_leaf_at rc B (@LIsReac.dec_reac_frame_is_reac_cg) fx.
 Proof.
   intros fx. exact (@LIsReac.dec_reac_frame_is_reac_cg_of_F fx (world segs) (@w_H segs) (SRr segs) alayout astate (@AR rc segs B) (aview segs) same_but_materialized
@@ -730,37 +721,28 @@ Proof.
   - exact HB_COST.
 Qed.
 
-(* donor lib/YD1q.v:79-98 tfib_srealizesX, the same proof. *)
+(* lib/B/YD1q.v tfib_srealizesX_of_main at the driver above, as lib/A/DecodeClose.v at LPS 727298f3. *)
 Lemma decode_srealizesX_rc : forall (sp : word) (rdraw : EntryDraw) (brk mb : word) (inp : ProcInput),
   valid_sp sp -> valid_brk segs brk -> valid_mmap_base mb ->
   entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
   @YM05.ceil_of_top rc (bv_unsigned sp - stack_max_size) ->
   srealizes segs (init_config segs DAU.M.init_pc DAU.M.phdrs sp brk mb rdraw target_alloc_limit inp)
     (SPECX (LS:=decode_shape) inp).
 Proof.
-  intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil.
-  destruct inp as [argv envp fs stdin uid gid groups net nofile sigmask hw ab mmu urnd tmp].
-  pose proof Hinp as (Hva & Hve & _ & _ & [Huid Hgid] & _ & _ & Hhw & Hab & Hmmu & _).
-  (* Only the input's projections are reduced: a bare `cbn in *` would also reduce the Section hypotheses in the
-     context, whose statements name the listing's lookups (decode_sigma), and does not finish. *)
-  cbn [in_argv in_envp in_uid in_hwcap in_abort_terminal in_va_size] in Hva, Hve, Huid, Hhw, Hab, Hmmu, Hfit.
-  subst ab mmu.
-  (* The trace set and the input are given explicitly: left as `_`, their unification problems
-     (?T [] against SPECX ?inp [], in_argv ?inp against argv) did not finish in an hour of elaboration. *)
-  apply (H_STARTUP sp rdraw brk mb argv envp fs stdin uid gid groups net nofile sigmask hw urnd tmp
-    Hsp Hbrk Hva Hve Hfit Huid Hhw (SPECX (LS:=decode_shape) (mkProcInput_full argv envp fs stdin uid gid groups net nofile sigmask hw false Sv48 urnd tmp)) (specx_has_nil _)).
-  intros h c Hok.
-  exact (H_DRIVER rc (H_RT_MALLOC rc) (H_RT_FREE rc) (H_RT_MEMCPY_WRAP rc) LIB_CONTRACT HB_UNIVERSE_OK
-    sp rdraw brk (mkProcInput_full argv envp fs stdin uid gid groups net nofile sigmask hw false Sv48 urnd tmp) h c Hsp Hbrk Hfit Hinp Hceil Hok).
+  intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil.
+  exact (@YD1q.tfib_srealizesX_of_main rc
+    (H_DRIVER rc (H_RT_MALLOC rc) (H_RT_FREE rc) (H_RT_MEMCPY_WRAP rc) LIB_CONTRACT HB_UNIVERSE_OK)
+    sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil).
 Qed.
 End RC.
 
 (* donor lib/YD2o.v:75-84 tfib_srealizesX_top and TFIB_TB_of_partsXF. *)
 Theorem decode_TFIB_TB_of_parts : TFIB_TB.
 Proof.
-  intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp.
+  intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau.
   exact (@decode_srealizesX_rc (YM05.RunCeilOf (bv_unsigned sp) (valid_sp_windowD sp Hsp)) sp rnd brk mbase inp
-    Hsp Hbrk Hmb Hfit Hinp (YM05.ceil_of_top_run _)).
+    Hsp Hbrk Hmb Hfit Hinp Hlau (YM05.ceil_of_top_run _)).
 Qed.
 
 (* The two ASan+UBSan statements of record, given only the named parts above. *)
@@ -769,7 +751,7 @@ Proof. exact (AsanTop.decode_asan_ubsan_agrees_of_tfib decode_TFIB_TB_of_parts).
 Theorem decode_asan_ubsan_halts_of_parts : DSt.asan_ubsan_halts.
 Proof. exact (AsanTop.decode_asan_ubsan_halts_of_tfib decode_TFIB_TB_of_parts). Qed.
 
-(* Inside the Section, as fuzz_grant's lib/A/GrantTop.v does it (a working branch 7d31e8f3534): About lists every
+(* Inside the Section, as fuzz_grant's lib/A/GrantTop.v does it (a working branch): About lists every
    part a statement rests on (the Section variables and hypotheses above), and Print Assumptions lists those parts
    next to the axioms toolchain/allowed-axioms.txt allows (origin/ossv/recipes:toolchain/allowed-axioms.txt). *)
 About decode_asan_ubsan_agrees_of_parts.

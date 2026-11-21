@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Trevor Hansen, 2026-11: module names. *)
+(* Modified by Theorem Labs, 2026-11: ported toward LPS 727298f3 by the change of the same file of cgif/cgif_rgb_fuzzer, its addresses relocated to this unit's binaries. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
@@ -248,7 +249,9 @@ end
 let a := R rs1 in
 if negb (aligned_dec G a (amo_bytes_of wd)) then SStop SR_align else
 match ss_resv ss with
-| None => SRun (mkSST (pc + 4) (sr_set (ss_regs ss) rd (SLit 1)) (ss_fregs ss) (ss_mem ss) None G)
+(* At 08b1429 a failing sc loads and stores back its bytes (Riscv/Sem.v, the Sc arm), so it
+   can fault and it reports an access. The walks never take this arm; stop here. *)
+| None => SStop SR_resv
 | Some a' =>
 if negb (sv_eqb a' a) then SStop SR_resv else
 match addr_of a with

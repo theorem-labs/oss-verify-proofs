@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the trees are checked for each launch rseq layout with the hole flags (hflag) and the dead-arm check (mtree_dead), and the main closure takes AsanInit's LPS 727298f3 launch with the run's filesystem seeded with tmp. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -12,7 +13,7 @@ From OSSVerify.Proofs.coturn.FuzzStunClient.lib Require Import Spec.
 From OSSVerify.Proofs.coturn.FuzzStunClient.lib.Asan Require Import
   AxSymExec3 AxSymExec3Sound AxSymRun3
   AsanPlanCore AsanPlan AsanPlanSound AsanPlanSound2 AsanInit
-  AsanNodesArg AsanNodesIO AsanNodesFX AsanNodesDepot AsanMainLib AsanShape FContractAsan.
+  AsanNodesArg AsanNodesIO AsanNodesFX AsanNodesDepot AsanMainLib AsanShape FContractAsan DeadArm.
 From OSSVerify.Proofs.coturn.FuzzStunClient.lib Require Import FPA_both.
 From OSSVerify.Proofs.coturn.FuzzStunClient.lib.Asan Require Import MainGlueDefsB.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -196,6 +197,7 @@ Proof.
 Qed.
 
 Section MainCheck.
+  Context {rsb : bool}.   (* the launch's kb_rseq; the table is ASAN_at/BOTH_at (rseq_z rsb) *)
   (* [comment removed for export] *)
   Variable HS_asan : nat -> option acs.
   Variables KCm BFUELm FUELm : nat.
@@ -203,11 +205,11 @@ Section MainCheck.
 
   (* [comment removed for export] *)
   #[local] Notation CHK C HS cs p :=
-    (check BSEGS ITm BOTH NX0 AsanInit.LIMIT (XNM (iotab_of C)) (XEm BSEGS BOTH NX0) (XBm BSEGS NX0 (iotab_of C))
+    (check BSEGS ITm (BOTH_at (rseq_z rsb)) NX0 AsanInit.LIMIT (XNM rsb (iotab_of C)) (XEm BSEGS (BOTH_at (rseq_z rsb)) NX0) (XBm BSEGS (BOTH_at (rseq_z rsb)) NX0 (iotab_of C))
            HS KCm BFUELm FUELm None cs p).
   (* [comment removed for export] *)
   #[local] Notation CHKL C HS cs p lc :=
-    (check BSEGS ITm BOTH NX0 AsanInit.LIMIT (XNM (iotab_of C)) (XEm BSEGS BOTH NX0) (XBm BSEGS NX0 (iotab_of C))
+    (check BSEGS ITm (BOTH_at (rseq_z rsb)) NX0 AsanInit.LIMIT (XNM rsb (iotab_of C)) (XEm BSEGS (BOTH_at (rseq_z rsb)) NX0) (XBm BSEGS (BOTH_at (rseq_z rsb)) NX0 (iotab_of C))
            HS KCm BFUELm FUELm lc cs p).
 
   (* [comment removed for export] *)
@@ -363,18 +365,10 @@ Section MainCheck.
     mtree_ok lo hi ch C (MSplit q mid le gt) = true.
   Proof. intros lo hi ch C q mid le gt H1 H2. cbn [mtree_ok]. rewrite H1, H2. reflexivity. Qed.
 
-  Lemma mtree_ok_leaf : forall lo hi ch C L p s,
-    (Nat.leb lo L && Nat.leb L hi)%bool = true ->
-    CHK C HS_none (pay_start ch C) p = COk s -> class_pay_ok L C s = true -> mtree_ok lo hi ch C (MLeaf L p) = true.
-  Proof. intros lo hi ch C L p s HL H1 H2. cbn [mtree_ok]. rewrite H1, H2, HL. reflexivity. Qed.
   (* [comment removed for export] *)
   Lemma mtree_ok_leaf0 : forall h C p s,
-    main_check HS_asan KCm BFUELm FUELm ITm h C p = COk s -> class_shape_ok C s = true -> mtree_ok 0 0 (HSA HS_asan h) C (MLeaf 0 p) = true.
+    main_check rsb HS_asan KCm BFUELm FUELm ITm h C p = COk s -> class_shape_ok C s = true -> mtree_ok 0 0 (HSA rsb HS_asan h) C (MLeaf 0 p) = true.
   Proof. intros h C p s H1 H2. cbn [mtree_ok]. unfold main_check, main_start in H1. rewrite H1. exact H2. Qed.
-  Lemma mtree_ok_leafP : forall lo hi ch C L p s,
-    (Nat.leb lo L && Nat.leb L hi)%bool = true ->
-    pay_check KCm BFUELm FUELm ITm ch C p = COk s -> class_pay_ok L C s = true -> mtree_ok lo hi ch C (MLeaf L p) = true.
-  Proof. intros lo hi ch C L p s HL H1 H2. eapply mtree_ok_leaf; eassumption. Qed.
 
   Lemma mtree_ok_seg : forall lo hi ch C L p HT PT s,
     (Nat.leb lo L && Nat.leb L hi)%bool = true ->
@@ -383,29 +377,12 @@ Section MainCheck.
     mtree_ok lo hi ch C (MPre L p HT PT) = true.
   Proof. intros lo hi ch C L p HT PT s HL H1 H2 H3 H4. rewrite mtree_ok_MPre, H1, H2, H3, H4, HL. reflexivity. Qed.
   (* [comment removed for export] *)
-  Lemma mtree_ok_pre0 : forall hi h C L p HT PT s,
-    Nat.leb L hi = true ->
-    pre_check HS_asan KCm BFUELm FUELm ITm h C HT p = COk s -> class_seg_ok (lv_of HT) L C s = true ->
-    mcover HT PT = true -> mforest_ok L HT C PT = true ->
-    mtree_ok 0 hi (HSA HS_asan h) C (MPre L p HT PT) = true.
-  Proof. intros hi h C L p HT PT s HL H1 H2 H3 H4. unfold pre_check, main_start in H1. exact (mtree_ok_seg 0%nat hi (HSA HS_asan h) C L p HT PT s HL H1 H2 H3 H4). Qed.
-  (* [comment removed for export] *)
   Lemma mtree_ok_segP : forall lo hi ch C L p HT PT s,
     (Nat.leb lo L && Nat.leb L hi)%bool = true ->
-    seg_check KCm BFUELm FUELm ITm ch C HT p = COk s -> class_seg_ok (lv_of HT) L C s = true ->
+    seg_check rsb KCm BFUELm FUELm ITm ch C HT p = COk s -> class_seg_ok (lv_of HT) L C s = true ->
     mcover HT PT = true -> mforest_ok L HT C PT = true ->
     mtree_ok lo hi ch C (MPre L p HT PT) = true.
   Proof. intros. eapply mtree_ok_seg; eassumption. Qed.
-
-  Lemma mtree_ok_case : forall lo hi ch C e mid le gt,
-    lshape_eqb (lvl_shape le) (lvl_shape gt) = true ->
-    mtree_ok lo hi (mcase_lo ch e mid) C le = true -> mtree_ok lo hi (mcase_hi ch e mid) C gt = true ->
-    mtree_ok lo hi ch C (MCase e mid le gt) = true.
-  Proof. intros lo hi ch C e mid le gt H0 H1 H2. cbn [mtree_ok]. rewrite H0, H1, H2. reflexivity. Qed.
-
-  Lemma mtree_ok_class : forall lo hi ch C C' t,
-    class_le C C' = true -> mtree_ok lo hi ch C' t = true -> mtree_ok lo hi ch C (MClass C' t) = true.
-  Proof. intros lo hi ch C C' t H0 H1. cbn [mtree_ok]. rewrite H0, H1. reflexivity. Qed.
 
   Lemma mtree_ok_empty : forall lo hi ch C L,
     (Nat.leb lo L && Nat.leb L hi)%bool = true -> class_empty C = true -> mtree_ok lo hi ch C (MEmpty L) = true.
@@ -435,18 +412,6 @@ Section MainCheck.
     intros HT PT j e HC He. unfold mcover in HC. rewrite forallb_forall in HC.
     specialize (HC (j, e) (ht_of_In _ _ _ He)). cbn [fst] in HC. destruct (lookupT PT j) as [t|]; [exists t; reflexivity | discriminate].
   Qed.
-  (* [comment removed for export] *)
-  Lemma mtree_ok_preS : forall lo hi ch C L p HR PT s,
-    (Nat.leb lo L && Nat.leb L hi)%bool = true ->
-    CHK C (hs_ofS HR) (pay_start ch C) p = COk s ->
-    class_pay_ok L C (subst_holes (rs_of HR) s) = true ->
-    mcoverS HR PT = true -> rforest_ok HR C PT = true ->
-    mtree_ok lo hi ch C (MPreS L p HR PT) = true.
-  Proof. intros lo hi ch C L p HR PT s HL H1 H2 H3 H4. cbn [mtree_ok]. rewrite H1, HL, H2, H3, H4. reflexivity. Qed.
-  Lemma rtree_ok_leaf : forall r ch C p s,
-    CHK C HS_none (pay_start ch C) p = COk s -> shape_eqb s r = true -> shape_vars_lt NX0 r = true ->
-    rtree_ok r ch C (RLeaf p) = true.
-  Proof. intros r ch C p s H1 H2 H3. cbn [rtree_ok]. rewrite H1, H2, H3. reflexivity. Qed.
   Lemma rtree_ok_class : forall r ch C C' t, class_le C C' = true -> rtree_ok r ch C' t = true -> rtree_ok r ch C (RClass C' t) = true.
   Proof. intros r ch C C' t H1 H2. cbn [rtree_ok]. rewrite H1, H2. reflexivity. Qed.
   Lemma rforest_ok_nil : forall HR C, rforest_ok HR C [] = true.
@@ -465,12 +430,119 @@ Section MainCheck.
     intros. cbn [rtree_ok]. destruct (check _ _ _ _ _ _ _ _ _ _ _ _ _ _ p) as [s|]; [|reflexivity].
     f_equal. unfold rforest_ok. induction RT as [|[j t'] RT IH]; [reflexivity|]. cbn [forallb fst snd]. rewrite IH. reflexivity.
   Qed.
-  Lemma rtree_ok_preS : forall r ch C p HR RT s,
-    CHK C (hs_ofS HR) (pay_start ch C) p = COk s -> shape_eqb (subst_holes (rs_of HR) s) r = true -> shape_vars_lt NX0 r = true ->
-    mcoverS HR RT = true -> rforest_ok HR C RT = true -> rtree_ok r ch C (RPreS p HR RT) = true.
-  Proof. intros r ch C p HR RT s H1 H2 H3 H4 H5. rewrite rtree_ok_RPreS, H1, H2, H3, H4, H5. reflexivity. Qed.
   (* [comment removed for export] *)
 End MainCheck.
+
+(* The dead-arm check of a tree: [DeadArm.dead_ok hf] of every plan of the tree, where the
+   subtree that fills a hole [j] with [hf j = false] is not asked (it is realized at the flag [false] only). *)
+Fixpoint rtree_dead (hf : nat -> bool) (t : rtree) : bool :=
+  match t with
+  | RLeaf p => dead_ok hf p
+  | RClass _ t' => rtree_dead hf t'
+  | RPreS p _ RT =>
+      dead_ok hf p &&
+      (fix forest (RT : list (nat * rtree)) : bool :=
+         match RT with
+         | [] => true
+         | (j, t') :: RT' => (negb (hf j) || rtree_dead hf t') && forest RT'
+         end) RT
+  end.
+
+Fixpoint rforest_dead (hf : nat -> bool) (RT : list (nat * rtree)) : bool :=
+  match RT with
+  | [] => true
+  | (j, t') :: RT' => (negb (hf j) || rtree_dead hf t') && rforest_dead hf RT'
+  end.
+
+Fixpoint mtree_dead (hf : nat -> bool) (t : mtree) : bool :=
+  match t with
+  | MLeaf _ p => dead_ok hf p
+  | MPre _ p _ PT =>
+      dead_ok hf p &&
+      (fix forest (PT : list (nat * mtree)) : bool :=
+         match PT with
+         | [] => true
+         | (j, t') :: PT' => (negb (hf j) || mtree_dead hf t') && forest PT'
+         end) PT
+  | MSplit _ _ le gt => mtree_dead hf le && mtree_dead hf gt
+  | MCase _ _ le gt => mtree_dead hf le && mtree_dead hf gt
+  | MClass _ t' => mtree_dead hf t'
+  | MEmpty _ => true
+  | MPreS _ p _ PT => dead_ok hf p && rforest_dead hf PT
+  | MPreX _ p _ PT _ RT =>
+      dead_ok hf p &&
+      (fix forest (PT : list (nat * mtree)) : bool :=
+         match PT with
+         | [] => true
+         | (j, t') :: PT' => (negb (hf j) || mtree_dead hf t') && forest PT'
+         end) PT &&
+      rforest_dead hf RT
+  | MLoop _ p _ _ _ _ PT =>
+      dead_ok hf p &&
+      (fix forest (PT : list (nat * mtree)) : bool :=
+         match PT with
+         | [] => true
+         | (j, t') :: PT' => (negb (hf j) || mtree_dead hf t') && forest PT'
+         end) PT
+  end.
+
+Lemma rforest_dead_In : forall hf RT j t, rforest_dead hf RT = true -> In (j, t) RT -> hf j = true -> rtree_dead hf t = true.
+Proof.
+  intros hf RT. induction RT as [|[j' t'] RT IH]; intros j t H Hin Hj; [destruct Hin|].
+  cbn [rforest_dead] in H. apply andb_prop in H as [H1 H2]. destruct Hin as [E|Hin].
+  - injection E as <- <-. rewrite Hj in H1. exact H1.
+  - exact (IH j t H2 Hin Hj).
+Qed.
+
+Lemma rdead_pres : forall hf p HR RT, rtree_dead hf (RPreS p HR RT) = true ->
+  dead_ok hf p = true /\ forall j t, In (j, t) RT -> hf j = true -> rtree_dead hf t = true.
+Proof.
+  intros hf p HR RT H. cbn [rtree_dead] in H. apply andb_prop in H as [Hp H]. split; [exact Hp|].
+  revert H. induction RT as [|[j' t'] RT IH]; intros H j t Hin Hj; [destruct Hin|].
+  cbn -[rtree_dead dead_ok] in H. apply andb_prop in H as [H1 H2]. destruct Hin as [E|Hin].
+  - injection E as <- <-. rewrite Hj in H1. exact H1.
+  - exact (IH H2 j t Hin Hj).
+Qed.
+
+Ltac mforest_In IH H j t Hin Hj :=
+  let H1 := fresh in let H2 := fresh in let E := fresh in
+  cbn -[mtree_dead dead_ok] in H; apply andb_prop in H as [H1 H2]; destruct Hin as [E|Hin];
+  [ injection E as <- <-; rewrite Hj in H1; exact H1 | exact (IH H2 j t Hin Hj) ].
+
+Lemma mdead_pre : forall hf L p HT PT, mtree_dead hf (MPre L p HT PT) = true ->
+  dead_ok hf p = true /\ forall j t, In (j, t) PT -> hf j = true -> mtree_dead hf t = true.
+Proof.
+  intros hf L p HT PT H. cbn [mtree_dead] in H. apply andb_prop in H as [Hp H]. split; [exact Hp|].
+  revert H. induction PT as [|[j' t'] PT IH]; intros H j t Hin Hj; [destruct Hin|]. mforest_In IH H j t Hin Hj.
+Qed.
+
+Lemma mdead_loop : forall hf L p b v h HT PT, mtree_dead hf (MLoop L p b v h HT PT) = true ->
+  dead_ok hf p = true /\ forall j t, In (j, t) PT -> hf j = true -> mtree_dead hf t = true.
+Proof.
+  intros hf L p b v h HT PT H. cbn [mtree_dead] in H. apply andb_prop in H as [Hp H]. split; [exact Hp|].
+  revert H. induction PT as [|[j' t'] PT IH]; intros H j t Hin Hj; [destruct Hin|]. mforest_In IH H j t Hin Hj.
+Qed.
+
+Lemma mdead_prex : forall hf L p HT PT HR RT, mtree_dead hf (MPreX L p HT PT HR RT) = true ->
+  dead_ok hf p = true /\ (forall j t, In (j, t) PT -> hf j = true -> mtree_dead hf t = true) /\
+  (forall j t, In (j, t) RT -> hf j = true -> rtree_dead hf t = true).
+Proof.
+  intros hf L p HT PT HR RT H. cbn [mtree_dead] in H. apply andb_prop in H as [H HR'].
+  apply andb_prop in H as [Hp H]. split; [exact Hp|]. split; [|exact (fun j t => rforest_dead_In hf RT j t HR')].
+  revert H. induction PT as [|[j' t'] PT IH]; intros H j t Hin Hj; [destruct Hin|]. mforest_In IH H j t Hin Hj.
+Qed.
+
+Lemma mdead_pres : forall hf L p HR PT, mtree_dead hf (MPreS L p HR PT) = true ->
+  dead_ok hf p = true /\ forall j t, In (j, t) PT -> hf j = true -> rtree_dead hf t = true.
+Proof.
+  intros hf L p HR PT H. cbn [mtree_dead] in H. apply andb_prop in H as [Hp H].
+  exact (conj Hp (fun j t => rforest_dead_In hf PT j t H)).
+Qed.
+
+(* The flag of a hole [h] of a tree realized at the flag [fl]. *)
+Definition hflag (fl : bool) (h : nat) : bool := fl && hf26 h.
+Lemma hflag_split : forall fl j, hflag fl j = true -> fl = true /\ hf26 j = true.
+Proof. intros fl j H. exact (andb_prop _ _ H). Qed.
 
 Lemma pc_set_kn : forall cs k, pc (set_kn cs k) = pc cs.
 Proof. reflexivity. Qed.
@@ -494,23 +566,32 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Section Main.
+  Context {rsb : bool}.   (* the launch's kb_rseq; the table is ASAN_at/BOTH_at (rseq_z rsb) *)
   (* [comment removed for export] *)
   Hypothesis Iwx : AsanAcct.wx_segs_nowrap BSEGS.
-  Hypothesis Ihull : forall a : word, APS.in_hull BOTH (bv_unsigned a) = false -> find_segment BSEGS (bv_unsigned a) 1 = None.
-  Hypothesis Ihok : APS.hull_ok BOTH.
-  Hypothesis Ishok : APS.shadow_ok BOTH.
+  Hypothesis Ihull : forall a : word, APS.in_hull (BOTH_at (rseq_z rsb)) (bv_unsigned a) = false -> find_segment BSEGS (bv_unsigned a) 1 = None.
+  Hypothesis Ihok : APS.hull_ok (BOTH_at (rseq_z rsb)).
+  Hypothesis Ishok : APS.shadow_ok (BOTH_at (rseq_z rsb)).
   Variable APH : PhdrInfo.
+  (* AsanInit's launch, in its section order *)
+  Variable apc : N.
   (* [comment removed for export] *)
   Variable sp : word.
   Variable rdraw : EntryDraw.
   Variable brk0 mbase : word.
   Variable argv envp : list (list byte).
-  Variable fs : Fs.Fs.
+  Variable imgfs : Fs.Fs.   (* the IMAGE filesystem the launch is built from; see the note at Hlau *)
   Variable stdin : InputStream.
   Variables uid gid : word.
   Variable hw : word.
   Variable groups : list word.
   Variable net : NetQueue.
+  Variables nofile sigmask : word.
+  Variable urnd : InputStream.
+  Variable tmp : Fs.Fs.
+  Variable kb : KernelBuild.
+  Variable execfn : list byte.
+  Context {sigpipe_default : bool}.   (* AsanInit's: the launch's SIGPIPE disposition at entry *)
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hbrk : valid_brk BSEGS brk0.
   Hypothesis Hmb : valid_mmap_base mbase.
@@ -518,17 +599,24 @@ Section Main.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
   Hypothesis Huid : valid_id uid.
+  (** The run's filesystem is [in_fs INPm] = the image fs seeded with [tmp], NOT the bare image
+      fs, and the two are not convertible ([c0dd863a:theories/LinuxProcessSem/State.v:7691-7692]): [in_fs (inp … ifs … tmp …) = ifs] is
+      refused by [eq_refl].  [imgfs] carries the image fs into the launch; [fs] abbreviates
+      the run's, exactly as BothStartupE.v does.  Every FS0 and every file read below reads [fs]. *)
+  #[local] Notation INPm := (@AsanInit.inp argv envp imgfs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sigpipe_default).
+  #[local] Notation fs := (in_fs INPm).
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) INPm.
 
   #[local] Notation c := (content_of argv fs).
-  #[local] Notation SINV0' := (SINV0 APH sp rdraw brk0 argv envp uid hw).
-  #[local] Notation SINV := (SINVm APH sp rdraw brk0 argv envp uid hw (content_of argv fs)).
-  #[local] Notation argH := (argH0 APH sp rdraw argv envp uid hw).
+  #[local] Notation SINV0' := (@SINV0 APH apc sp rdraw brk0 mbase argv envp imgfs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sigpipe_default).
+  #[local] Notation SINV := (@SINVm APH apc sp rdraw brk0 mbase argv envp imgfs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sigpipe_default (content_of argv fs)).
+  #[local] Notation argH := (argH0 sp rdraw argv envp kb execfn).
   #[local] Notation LIM := AsanInit.LIMIT.
 
   (* [comment removed for export] *)
   Variable HS_asan : nat -> option acs.
   (* [comment removed for export] *)
-  Hypothesis HSA_noblob : forall h ch, HS_asan h = Some ch -> acs_noblob ch = true.   (* [comment removed for export] *)
+  Hypothesis HSA_blob_fixed : forall h ch, HS_asan h = Some ch -> acs_blob_fixed ch = true.   (* [comment removed for export] *)
 
   (* [comment removed for export] *)
   Variables KCm BFUELm FUELm : nat.
@@ -542,20 +630,21 @@ Section Main.
   Hypothesis AA : forall E E' (a : word), env_agree NX0 E E' -> argH E a = argH E' a.
   Hypothesis SF : forall E M M', (forall a, argH E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
   Hypothesis SA : forall E E' M, env_agree NX0 E E' -> SINV E M -> SINV E' M.
-  Hypothesis Msys : forall y, sys_stmt BSEGS BOTH NX0 LIM SINV argH fs y.
-  Hypothesis Mbrk2 : brk2_stmt BSEGS BOTH NX0 LIM SINV argH fs.
-  Hypothesis Mbrk2s : brk2s_stmt BSEGS BOTH NX0 LIM SINV argH fs.
-  Hypothesis Mmmap2 : mm2_stmt BSEGS BOTH NX0 LIM SINV argH fs (node_mmap2 BOTH NX0 LIM).
-  Hypothesis Mmmapin : forall hole : bool, mm3_stmt BSEGS BOTH NX0 LIM SINV argH fs (node_mmapin BOTH LIM hole).
-  Hypothesis Mmprotect2 : mm2_stmt BSEGS BOTH NX0 LIM SINV argH fs (node_mprotect2 BOTH LIM).
-  Hypothesis Mexit : exit_stmt BSEGS BOTH LIM SINV argH fs.
-  Hypothesis Mx : forall x, x_stmt BSEGS BOTH NX0 LIM SINV argH fs x.
-  Hypothesis Mjoin : join_stmt BSEGS BOTH NX0 LIM SINV argH fs.
-  Hypothesis Mjoin_ok : join_ok_stmt BSEGS BOTH LIM SINV argH fs.
+  Hypothesis Msys : forall fl y, sys_stmt BSEGS (BOTH_at (rseq_z rsb)) NX0 LIM SINV argH fs fl y.
+  Hypothesis Mbrk2 : forall fl, brk2_stmt BSEGS (BOTH_at (rseq_z rsb)) NX0 LIM SINV argH fs fl.
+  Hypothesis Mmunmap2 : forall fl, munmap2_stmt BSEGS (BOTH_at (rseq_z rsb)) NX0 LIM SINV argH fs fl.
+  Hypothesis Mbrk2s : forall fl, brk2s_stmt BSEGS (BOTH_at (rseq_z rsb)) NX0 LIM SINV argH fs fl.
+  Hypothesis Mmmap2 : forall fl, mm2_stmt BSEGS (BOTH_at (rseq_z rsb)) NX0 LIM SINV argH fs fl (node_mmap2 (BOTH_at (rseq_z rsb)) NX0 LIM).
+  Hypothesis Mmmapin : forall fl (hole : bool), mm3_stmt BSEGS (BOTH_at (rseq_z rsb)) NX0 LIM SINV argH fs fl (node_mmapin (BOTH_at (rseq_z rsb)) LIM hole).
+  Hypothesis Mmprotect2 : forall fl, mm2_stmt BSEGS (BOTH_at (rseq_z rsb)) NX0 LIM SINV argH fs fl (node_mprotect2 (BOTH_at (rseq_z rsb)) LIM).
+  Hypothesis Mexit : forall fl, exit_stmt BSEGS (BOTH_at (rseq_z rsb)) LIM SINV argH fs fl.
+  Hypothesis Mx : forall fl x, x_stmt BSEGS (BOTH_at (rseq_z rsb)) NX0 LIM SINV argH fs fl x.
+  Hypothesis Mjoin : forall fl, join_stmt BSEGS (BOTH_at (rseq_z rsb)) NX0 LIM SINV argH fs fl.
+  Hypothesis Mjoin_ok : join_ok_stmt BSEGS (BOTH_at (rseq_z rsb)) LIM SINV argH fs.
   (* [comment removed for export] *)
-  Hypothesis Mxn : forall T, H_class_prop T argv fs SINV -> ext_stmt BSEGS BOTH NX0 LIM (XNM T) SINV argH fs.
-  Hypothesis Mxe : emit_stmt BSEGS BOTH NX0 LIM (XEm BSEGS BOTH NX0) SINV argH fs.
-  Hypothesis Mxb : forall T, H_class_prop T argv fs SINV -> ext2_stmt BSEGS BOTH NX0 LIM (XBm BSEGS NX0 T) SINV argH fs.
+  Hypothesis Mxn : forall T, H_class_prop T argv fs SINV -> forall fl, ext_stmt BSEGS (BOTH_at (rseq_z rsb)) NX0 LIM (XNM rsb T) SINV argH fs fl.
+  Hypothesis Mxe : forall fl, emit_stmt BSEGS (BOTH_at (rseq_z rsb)) NX0 LIM (XEm BSEGS (BOTH_at (rseq_z rsb)) NX0) SINV argH fs fl.
+  Hypothesis Mxb : forall T, H_class_prop T argv fs SINV -> forall fl, ext2_stmt BSEGS (BOTH_at (rseq_z rsb)) NX0 LIM (XBm BSEGS (BOTH_at (rseq_z rsb)) NX0 T) SINV argH fs fl.
   (* [comment removed for export] *)
   Hypothesis VF : forall E M, SINV E M -> know_ok BSEGS E M (vfacts (variant_of c)).
 
@@ -566,8 +655,8 @@ Section Main.
   Proof. reflexivity. Qed.
   Lemma HOLES0_nil : forall h E fs', HOLES0 h E fs' [].
   Proof. intros. reflexivity. Qed.
-  Lemma HS_none_sound : holes_stmt BSEGS BOTH LIM HS_none SINV argH HOLES0 fs.
-  Proof. intros h ch H. discriminate H. Qed.
+  Lemma HS_none_sound : forall HFL, holes_stmt BSEGS (BOTH_at (rseq_z rsb)) LIM HS_none SINV argH HOLES0 fs HFL.
+  Proof. intros HFL h ch H. discriminate H. Qed.
 
   (* [comment removed for export] *)
   Fixpoint lshape_lvl (x : lshape) : nat :=
@@ -581,60 +670,60 @@ Section Main.
   Proof. reflexivity. Qed.
 
   #[local] Notation CHK C HS cs p :=
-    (check BSEGS ITm BOTH NX0 LIM (XNM (iotab_of C)) (XEm BSEGS BOTH NX0) (XBm BSEGS NX0 (iotab_of C))
+    (check BSEGS ITm (BOTH_at (rseq_z rsb)) NX0 LIM (XNM rsb (iotab_of C)) (XEm BSEGS (BOTH_at (rseq_z rsb)) NX0) (XBm BSEGS (BOTH_at (rseq_z rsb)) NX0 (iotab_of C))
            HS KCm BFUELm FUELm None cs p).
   #[local] Notation CHKL C HS cs p lc :=
-    (check BSEGS ITm BOTH NX0 LIM (XNM (iotab_of C)) (XEm BSEGS BOTH NX0) (XBm BSEGS NX0 (iotab_of C))
+    (check BSEGS ITm (BOTH_at (rseq_z rsb)) NX0 LIM (XNM rsb (iotab_of C)) (XEm BSEGS (BOTH_at (rseq_z rsb)) NX0) (XBm BSEGS (BOTH_at (rseq_z rsb)) NX0 (iotab_of C))
            HS KCm BFUELm FUELm lc cs p).
-  #[local] Notation AH := (argH0_high APH sp argv envp uid Hsp Hva).
-  #[local] Notation AA := (argH0_agree APH sp argv envp uid).
+  #[local] Notation AH := (argH0_high apc sp rdraw argv envp kb execfn Hsp Hva).
+  #[local] Notation AA := (argH0_agree sp rdraw argv envp kb execfn).
 
   (* [comment removed for export] *)
-  Lemma main_check_sound : forall C HS HOLES,
+  Lemma main_check_sound : forall C HS HOLES (HFL : nat -> bool) (fl : bool),
     H_class_prop (iotab_of C) argv fs SINV ->
     (forall h E E' fs', env_agree NX0 E E' -> HOLES h E fs' = HOLES h E' fs') -> (forall h E fs', HOLES h E fs' []) ->
-    holes_stmt BSEGS BOTH LIM HS SINV argH HOLES fs ->
-    forall p cs s, CHK C HS cs p = COk s ->
-    forall E R FULL model, cs_ok BSEGS BOTH LIM SINV argH fs E cs R FULL model ->
-      srealizes BSEGS (cfg_of BSEGS R (pc cs) FULL model) (sd HOLES t_nil E (m_fs model) s).
+    holes_stmt BSEGS (BOTH_at (rseq_z rsb)) LIM HS SINV argH HOLES fs HFL ->
+    forall p cs s, CHK C HS cs p = COk s -> (fl = true -> dead_ok HFL p = true) ->
+    forall E R FULL model, cs_ok BSEGS (BOTH_at (rseq_z rsb)) LIM SINV argH fs E cs R FULL model ->
+      srealizesM BSEGS fl (cfg_of BSEGS R (pc cs) FULL model) (sd HOLES t_nil E (m_fs model) s).
   Proof.
-    intros C HS HOLES HCL HOa HOn HOs p cs s Hchk E R FULL model HC.
-    exact (check_sound BSEGS ITm ITm_ok BOTH NX0 LIM HS
-                  (XNM (iotab_of C)) (XEm BSEGS BOTH NX0) (XBm BSEGS NX0 (iotab_of C))
+    intros C HS HOLES HFL fl HCL HOa HOn HOs p cs s Hchk Hd E R FULL model HC.
+    exact (check_sound BSEGS ITm ITm_ok (BOTH_at (rseq_z rsb)) NX0 LIM HS
+                  (XNM rsb (iotab_of C)) (XEm BSEGS (BOTH_at (rseq_z rsb)) NX0) (XBm BSEGS (BOTH_at (rseq_z rsb)) NX0 (iotab_of C))
                   Iwx Ihull Ihok Ishok Inx0 SINV argH AH AT AA SF SA
-                  HOLES HOa HOn fs KCm
-                  Msys Mbrk2 Mbrk2s Mmmap2 Mmmapin Mmprotect2 Mexit Mx Mjoin Mjoin_ok
+                  HOLES HOa HOn fs KCm HFL
+                  Msys Mbrk2 Mmunmap2 Mbrk2s Mmmap2 Mmmapin Mmprotect2 Mexit Mx Mjoin Mjoin_ok
                   (Mxn _ HCL) Mxe (Mxb _ HCL) HOs
-                  FUELm BFUELm None p cs s Hchk E R FULL model t_nil HC I eq_refl).
+                  FUELm BFUELm None p cs s Hchk fl Hd E R FULL model t_nil HC I eq_refl).
   Qed.
 
   (* [comment removed for export] *)
-  Lemma main_check_sound_M : forall C HS HOLES b v h st,
+  Lemma main_check_sound_M : forall C HS HOLES (HFL : nat -> bool) (fl : bool) b v h st,
     H_class_prop (iotab_of C) argv fs SINV ->
     (forall h E E' fs', env_agree NX0 E E' -> HOLES h E fs' = HOLES h E' fs') -> (forall h E fs', HOLES h E fs' []) ->
-    holes_stmt BSEGS BOTH LIM HS SINV argH HOLES fs ->
-    forall p cs s, CHKL C HS cs p (Some (MC b v h st)) = COk s ->
-    forall E R FULL model, cs_ok BSEGS BOTH LIM SINV argH fs E cs R FULL model ->
+    holes_stmt BSEGS (BOTH_at (rseq_z rsb)) LIM HS SINV argH HOLES fs HFL ->
+    forall p cs s, CHKL C HS cs p (Some (MC b v h st)) = COk s -> (fl = true -> dead_ok HFL p = true) ->
+    forall E R FULL model, cs_ok BSEGS (BOTH_at (rseq_z rsb)) LIM SINV argH fs E cs R FULL model ->
     (NX0 <= b)%N -> (v < b)%N ->
-    (forall E' R' F' m', env_agree NX0 E E' -> cs_ok BSEGS BOTH LIM SINV argH fs E' st R' F' m' ->
+    (forall E' R' F' m', env_agree NX0 E E' -> cs_ok BSEGS (BOTH_at (rseq_z rsb)) LIM SINV argH fs E' st R' F' m' ->
        bv_unsigned (ev E v) < bv_unsigned (ev E' v) -> m_fs m' = m_fs model ->
-       srealizes BSEGS (cfg_of BSEGS R' (pc st) F' m') (HOLES h E' (m_fs model))) ->
-    srealizes BSEGS (cfg_of BSEGS R (pc cs) FULL model) (sd HOLES t_nil E (m_fs model) s).
+       srealizesM BSEGS fl (cfg_of BSEGS R' (pc st) F' m') (HOLES h E' (m_fs model))) ->
+    srealizesM BSEGS fl (cfg_of BSEGS R (pc cs) FULL model) (sd HOLES t_nil E (m_fs model) s).
   Proof.
-    intros C HS HOLES b v h st HCL HOa HOn HOs p cs s Hchk E R FULL model HC Hb Hv HM.
-    exact (check_sound_M BSEGS ITm ITm_ok BOTH NX0 LIM HS
-                  (XNM (iotab_of C)) (XEm BSEGS BOTH NX0) (XBm BSEGS NX0 (iotab_of C))
+    intros C HS HOLES HFL fl b v h st HCL HOa HOn HOs p cs s Hchk Hd E R FULL model HC Hb Hv HM.
+    exact (check_sound_M BSEGS ITm ITm_ok (BOTH_at (rseq_z rsb)) NX0 LIM HS
+                  (XNM rsb (iotab_of C)) (XEm BSEGS (BOTH_at (rseq_z rsb)) NX0) (XBm BSEGS (BOTH_at (rseq_z rsb)) NX0 (iotab_of C))
                   Iwx Ihull Ihok Ishok Inx0 SINV argH AH AT AA SF SA
-                  HOLES HOa HOn fs KCm
-                  Msys Mbrk2 Mbrk2s Mmmap2 Mmmapin Mmprotect2 Mexit Mx Mjoin Mjoin_ok
+                  HOLES HOa HOn fs KCm HFL
+                  Msys Mbrk2 Mmunmap2 Mbrk2s Mmmap2 Mmmapin Mmprotect2 Mexit Mx Mjoin Mjoin_ok
                   (Mxn _ HCL) Mxe (Mxb _ HCL) HOs
-                  FUELm BFUELm p cs b v h st s Hchk E R FULL model t_nil HC eq_refl Hb Hv HM).
+                  FUELm BFUELm p cs b v h st s Hchk fl Hd E R FULL model t_nil HC eq_refl Hb Hv HM).
   Qed.
 
   (* [comment removed for export] *)
   Lemma cs_ok_main_facts : forall E cs R FULL model,
-    cs_ok BSEGS BOTH LIM SINV argH fs E cs R FULL model ->
-    (forall n, (n < 8)%N -> ev E n = ev (E0 APH sp rdraw brk0 argv envp uid hw) n)
+    cs_ok BSEGS (BOTH_at (rseq_z rsb)) LIM SINV argH fs E cs R FULL model ->
+    (forall n, (n < 8)%N -> ev E n = ev (E0 sp rdraw brk0 argv envp uid gid kb execfn) n)
     /\ eb E 1%nat = nth 0 argv [] /\ eb E 2%nat = nth 1 argv [] /\ m_fs model = fs
     /\ know_ok BSEGS E FULL (vfacts (variant_of c)).
   Proof.
@@ -648,12 +737,24 @@ Section Main.
   (* [comment removed for export] *)
   Lemma cs_ok_pay_start : forall C E cs R FULL model,
     in_class C argv fs = true ->
-    cs_ok BSEGS BOTH LIM SINV argH fs E cs R FULL model ->
-    cs_ok BSEGS BOTH LIM SINV argH fs E (pay_start cs C) R FULL model.
+    cs_ok BSEGS (BOTH_at (rseq_z rsb)) LIM SINV argH fs E cs R FULL model ->
+    cs_ok BSEGS (BOTH_at (rseq_z rsb)) LIM SINV argH fs E (pay_start cs C) R FULL model.
   Proof.
     intros C E cs R FULL model HC HCS. unfold pay_start. apply cs_ok_set_kn; [exact HCS|]. apply Forall_app. split.
-    - eapply facts_of_class_sound; [eassumption.. | ]. apply (cs_ok_main_facts E cs R FULL model HCS).
+    (* [facts_of_class_sound]'s launch premise comes BEFORE its [in_class] premise, so with the
+       filesystem left as an evar [exact Hlau] solves the launch by setting it to [imgfs] and the
+       [in_class] goal then does not match [HC].  Pin it first.  [Hlau] itself crosses the
+       remaining conversion because [entry_launch_ok_va] never reads the input's filesystem;
+       [eassumption] does not cross it, [exact] does. *)
+    - eapply facts_of_class_sound with (fs := in_fs INPm);
+        [ first [ exact Hlau | eassumption ] .. | ].
+      apply (cs_ok_main_facts E cs R FULL model HCS).
     - exact (co_know _ _ _ _ _ _ _ _ _ _ _ HCS).
+    (* Every goal closes but the term still has evars: [facts_of_class_sound] discharges launch
+       arguments that appear in no premise and no conclusion, so [eapply] leaves them.  Bring
+       them back and close them. *)
+    Unshelve.
+    all: try first [ exact Hlau | eassumption ].
   Qed.
 
   Lemma in_class_split : forall C q mid,
@@ -661,8 +762,13 @@ Section Main.
     if qval q argv fs <=? mid then in_class (C ++ [(q, QMIN, mid)]) argv fs = true
     else in_class (C ++ [(q, mid + 1, QMAX)]) argv fs = true.
   Proof.
-    intros C q mid HC. pose proof (qval_bounds APH sp rdraw argv envp fs uid hw Hva Hfit q) as Hq.
-    destruct (Z.leb_spec (qval q argv fs) mid); rewrite in_class_app, HC; cbn;
+    (* [set] alone is not enough: [cbn] zeta-expands the local body of [RFS], so the goal loses the atom
+       [qval q argv RFS] that [Hq] keeps, and [lia] is syntactic on atoms.  [clearbody] drops the body after
+       [Hq] and [Hlau] have been type-checked against it, leaving one opaque name [cbn] cannot touch. *)
+    intros C q mid HC. set (RFS := in_fs INPm) in *.
+    pose proof (qval_bounds apc sp rdraw brk0 mbase argv envp RFS stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn (sigpipe_default := sigpipe_default) Hva Hfit Hlau q) as Hq.
+    clearbody RFS.
+    destruct (Z.leb_spec (qval q argv RFS) mid); rewrite in_class_app, HC; cbn;
       (apply andb_true_intro; split; [|reflexivity]); apply andb_true_intro; split; apply Z.leb_le; lia.
   Qed.
 
@@ -689,7 +795,7 @@ Section Main.
   (* [comment removed for export] *)
   Lemma qval_qrange : forall q, fst (qrange q) <= qval q argv fs <= snd (qrange q).
   Proof.
-    pose proof (argc_range argv Hva). pose proof (L0_range' argv Hva). pose proof (L1_range' APH sp rdraw argv envp uid hw Hva). pose proof (qlook_range sp argv envp fs Hva Hfit).
+    pose proof (argc_range argv Hva). pose proof (L0_range' argv Hva). pose proof (L1_range' apc sp rdraw argv envp kb execfn Hva). pose proof (qlook_range sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn (sigpipe_default := sigpipe_default) Hva Hfit Hlau).
     pose proof (cfglen_range (content_of argv fs)). pose proof (flen_range (content_of argv fs)).
     pose proof (bz_range 2 (content_of argv fs)). pose proof (bz_range 1 (content_of argv fs)).
     pose proof (Z.mod_pos_bound (bz 2 (content_of argv fs)) 4 ltac:(lia)).
@@ -702,7 +808,7 @@ Section Main.
   Lemma qbounds_sound : forall C q, in_class C argv fs = true -> fst (qbounds C q) <= qval q argv fs <= snd (qbounds C q).
   Proof.
     intros C q HC. unfold qbounds, clamp. cbn [fst snd].
-    pose proof (cbounds_sound C q argv fs HC (qval_bounds APH sp rdraw argv envp fs uid hw Hva Hfit q)). pose proof (qval_qrange q). lia.
+    pose proof (cbounds_sound C q argv fs HC (qval_bounds apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn (sigpipe_default := sigpipe_default) Hva Hfit Hlau q)). pose proof (qval_qrange q). lia.
   Qed.
   Lemma in_class_nonempty : forall C, in_class C argv fs = true -> class_empty C = false.
   Proof.
@@ -728,7 +834,7 @@ Section Main.
   Qed.
 
   (* [comment removed for export] *)
-  Lemma rtree_ok_vars : forall t r ch C, rtree_ok KCm BFUELm FUELm ITm r ch C t = true -> shape_vars_lt NX0 r = true.
+  Lemma rtree_ok_vars : forall t r ch C, rtree_ok (rsb := rsb) KCm BFUELm FUELm ITm r ch C t = true -> shape_vars_lt NX0 r = true.
   Proof.
     intros t. induction t as [p | C' t IHt | p HR RT IH] using rtree_ind2; intros r ch C HF.
     - cbn [rtree_ok] in HF. destruct (check _ _ _ _ _ _ _ _ _ _ _ _ _ _ p); [|discriminate]. apply andb_prop in HF as [_ H]. exact H.
@@ -739,21 +845,23 @@ Section Main.
 
   (* [comment removed for export] *)
   Lemma rtree_sound : forall t r ch C,
-    rtree_ok KCm BFUELm FUELm ITm r ch C t = true -> in_class C argv fs = true ->
+    rtree_ok (rsb := rsb) KCm BFUELm FUELm ITm r ch C t = true -> in_class C argv fs = true ->
+    forall fl, (fl = true -> rtree_dead hf26 t = true) ->
     forall E R FULL model,
-      cs_ok BSEGS BOTH LIM SINV argH fs E ch R FULL model ->
-      srealizes BSEGS (cfg_of BSEGS R (pc ch) FULL model) (sd HOLES0 t_nil E (m_fs model) r).
+      cs_ok BSEGS (BOTH_at (rseq_z rsb)) LIM SINV argH fs E ch R FULL model ->
+      srealizesM BSEGS fl (cfg_of BSEGS R (pc ch) FULL model) (sd HOLES0 t_nil E (m_fs model) r).
   Proof.
-    induction t as [p | C' t IHt | p HR RT IH] using rtree_ind2; intros r ch C HT0 HC E R FULL model HCS.
+    induction t as [p | C' t IHt | p HR RT IH] using rtree_ind2; intros r ch C HT0 HC fl Hd E R FULL model HCS.
     - cbn [rtree_ok] in HT0.
       destruct (check _ _ _ _ _ _ _ _ _ _ _ _ _ _ p) as [s| ] eqn:Hchk; [|discriminate].
       apply andb_prop in HT0 as [Heq _]. apply shape_eqb_eq in Heq. subst s.
       pose proof (cs_ok_pay_start C E ch R FULL model HC HCS) as HC2.
-      pose proof (in_class_H_class APH sp rdraw argv envp fs uid hw Hva Hfit C SINV HC SINVm_blob) as HCL.
-      pose proof (main_check_sound C HS_none HOLES0 HCL HOLES0_agree HOLES0_nil HS_none_sound p _ r Hchk E R FULL model HC2) as RZ.
+      pose proof (in_class_H_class apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn (sigpipe_default := sigpipe_default) Hva Hfit Hlau C SINV HC SINVm_blob) as HCL.
+      assert (HD : fl = true -> dead_ok (hflag fl) p = true) by (intros ->; exact (Hd eq_refl)).
+      pose proof (main_check_sound C HS_none HOLES0 (hflag fl) fl HCL HOLES0_agree HOLES0_nil (HS_none_sound _) p _ r Hchk HD E R FULL model HC2) as RZ.
       unfold pay_start in RZ. rewrite pc_set_kn in RZ. exact RZ.
     - cbn [rtree_ok] in HT0.
-      apply andb_prop in HT0 as [HLE H1]. exact (IHt r ch C' H1 (in_class_weaken C C' HLE HC) E R FULL model HCS).
+      apply andb_prop in HT0 as [HLE H1]. exact (IHt r ch C' H1 (in_class_weaken C C' HLE HC) fl Hd E R FULL model HCS).
     - (* [comment removed for export] *)
       rewrite rtree_ok_RPreS in HT0.
       destruct (check _ _ _ _ _ _ _ _ _ _ _ _ _ _ p) as [s| ] eqn:Hchk; [|discriminate].
@@ -776,7 +884,7 @@ Section Main.
       assert (HRn : forall h E1 fs', HOLESR h E1 fs' []).
       { intros h E1 fs'. unfold HOLESR. destruct (rs_of HR h) as [r'|]; [|reflexivity].
         exact (sd_has_nil HOLES0 HOLES0_nil t_nil E1 fs' r' eq_refl). }
-      assert (HRs : holes_stmt BSEGS BOTH LIM (hs_ofS HR) SINV argH HOLESR fs).
+      assert (HRs : holes_stmt BSEGS (BOTH_at (rseq_z rsb)) LIM (hs_ofS HR) SINV argH HOLESR fs (hflag fl)).
       { intros j chj Hj E1 R1 FULL1 model1 HC1.
         unfold hs_ofS in Hj. destruct (lookupT HR j) as [[rj chj']|] eqn:He; [|discriminate]. cbn [snd] in Hj. injection Hj as ->.
         unfold mcoverS in Hcov. pose proof Hcov as Hcov'. rewrite forallb_forall in Hcov'.
@@ -785,10 +893,13 @@ Section Main.
         pose proof HF as HF'. unfold rforest_ok in HF'. rewrite forallb_forall in HF'. specialize (HF' (j, t') (lookupT_In _ _ _ Ht')).
         cbn [fst snd] in HF'. rewrite He in HF'.
         unfold HOLESR, rs_of. rewrite He. cbn [fst].
-        exact (IH j t' (lookupT_In _ _ _ Ht') rj chj C HF' HC E1 R1 FULL1 model1 HC1). }
+        refine (IH j t' (lookupT_In _ _ _ Ht') rj chj C HF' HC (hflag fl j) _ E1 R1 FULL1 model1 HC1).
+        intros Hf. destruct (hflag_split fl j Hf) as [Hf1 Hf2].
+        exact (proj2 (rdead_pres hf26 p HR RT (Hd Hf1)) j t' (lookupT_In _ _ _ Ht') Hf2). }
       pose proof (cs_ok_pay_start C E ch R FULL model HC HCS) as HC2.
-      pose proof (in_class_H_class APH sp rdraw argv envp fs uid hw Hva Hfit C SINV HC SINVm_blob) as HCL.
-      pose proof (main_check_sound C (hs_ofS HR) HOLESR HCL HRa HRn HRs p _ s Hchk E R FULL model HC2) as RZ.
+      pose proof (in_class_H_class apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn (sigpipe_default := sigpipe_default) Hva Hfit Hlau C SINV HC SINVm_blob) as HCL.
+      assert (HD : fl = true -> dead_ok (hflag fl) p = true) by (intros ->; exact (proj1 (rdead_pres hf26 p HR RT (Hd eq_refl)))).
+      pose proof (main_check_sound C (hs_ofS HR) HOLESR (hflag fl) fl HCL HRa HRn HRs p _ s Hchk HD E R FULL model HC2) as RZ.
       unfold pay_start in RZ. rewrite pc_set_kn in RZ.
       eapply srz_conseq; [exact RZ|]. rewrite <- Heq.
       apply (sd_subst_holes HOLESR HOLES0 t_nil E (m_fs model) (rs_of HR) s).
@@ -797,7 +908,7 @@ Section Main.
 
   (* [comment removed for export] *)
   Lemma rforest_vars : forall HR C PT h r,
-    mcoverS HR PT = true -> rforest_ok KCm BFUELm FUELm ITm HR C PT = true -> rs_of HR h = Some r -> shape_vars_lt NX0 r = true.
+    mcoverS HR PT = true -> rforest_ok (rsb := rsb) KCm BFUELm FUELm ITm HR C PT = true -> rs_of HR h = Some r -> shape_vars_lt NX0 r = true.
   Proof.
     intros HR C PT h r Hcov HF Hr. unfold rs_of in Hr. destruct (lookupT HR h) as [[r' chj]|] eqn:Hl; [|discriminate].
     cbn [fst] in Hr. injection Hr as <-.
@@ -809,30 +920,32 @@ Section Main.
 
   (* [comment removed for export] *)
   Theorem mtree_sound : forall t lo hi ch C,
-    mtree_ok KCm BFUELm FUELm ITm lo hi ch C t = true -> in_class C argv fs = true ->
+    mtree_ok (rsb := rsb) KCm BFUELm FUELm ITm lo hi ch C t = true -> in_class C argv fs = true ->
     (lo <= mtree_lvl t)%nat /\ (mtree_lvl t <= hi)%nat /\
+    forall fl, (fl = true -> mtree_dead hf26 t = true) ->
     forall E R FULL model,
-      cs_ok BSEGS BOTH LIM SINV argH fs E ch R FULL model ->
-      srealizes BSEGS (cfg_of BSEGS R (pc ch) FULL model) (t_res (mtree_lvl t) argv fs).
+      cs_ok BSEGS (BOTH_at (rseq_z rsb)) LIM SINV argH fs E ch R FULL model ->
+      srealizesM BSEGS fl (cfg_of BSEGS R (pc ch) FULL model) (t_res (mtree_lvl t) argv fs).
   Proof.
     induction t as [L p | L p HT PT IH | q mid le gt IHle IHgt | e mid le gt IHle IHgt | C' t IHt | L | L p HR PT | L p HT PT HR RT IH
                     | L p b v h HT PT IH] using mtree_ind2; intros lo hi ch C HT0 HC.
     - (* [comment removed for export] *)
       cbn [mtree_ok] in HT0. apply andb_prop in HT0 as [HL HT0]. apply andb_prop in HL as [HL1 HL2].
       apply Nat.leb_le in HL1. apply Nat.leb_le in HL2. cbn [mtree_lvl lvl_shape lshape_lvl]. split; [exact HL1|]. split; [exact HL2|].
-      intros E R FULL model HCS.
+      intros fl Hd E R FULL model HCS.
       destruct (check _ _ _ _ _ _ _ _ _ _ _ _ _ _ p) as [s| ] eqn:Hchk; [|discriminate].
       pose proof (cs_ok_pay_start C E ch R FULL model HC HCS) as HC2.
       destruct (cs_ok_main_facts E _ R FULL model HC2) as (Hev & HB1 & HB2 & Hfs & HVF).
-      pose proof (in_class_H_class APH sp rdraw argv envp fs uid hw Hva Hfit C SINV HC SINVm_blob) as HCL.
-      pose proof (main_check_sound C HS_none HOLES0 HCL HOLES0_agree HOLES0_nil HS_none_sound p _ s Hchk E R FULL model HC2) as RZ.
+      pose proof (in_class_H_class apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn (sigpipe_default := sigpipe_default) Hva Hfit Hlau C SINV HC SINVm_blob) as HCL.
+      assert (HD : fl = true -> dead_ok (hflag fl) p = true) by (intros ->; exact (Hd eq_refl)).
+      pose proof (main_check_sound C HS_none HOLES0 (hflag fl) fl HCL HOLES0_agree HOLES0_nil (HS_none_sound _) p _ s Hchk HD E R FULL model HC2) as RZ.
       rewrite Hfs in RZ. unfold pay_start in RZ. rewrite pc_set_kn in RZ.
       eapply srz_conseq; [exact RZ|].
-      exact (class_pay_sound APH sp rdraw brk0 argv envp fs Hsp Hva Hve uid hw Hfit BSEGS L C s E _ HOLES0 t_nil HC HT0 Hev HB1 HB2 HVF).
+      exact (class_pay_sound APH apc sp rdraw brk0 mbase argv envp fs stdin Hsp Hva Hve uid hw gid groups net nofile sigmask urnd tmp kb execfn (sigpipe_default := sigpipe_default) Hfit Hlau BSEGS L C s E _ HOLES0 t_nil HC HT0 Hev HB1 HB2 HVF).
     - (* [comment removed for export] *)
       rewrite mtree_ok_MPre in HT0. apply andb_prop in HT0 as [HL HT0]. apply andb_prop in HL as [HL1 HL2].
       apply Nat.leb_le in HL1. apply Nat.leb_le in HL2. cbn [mtree_lvl lvl_shape lshape_lvl]. split; [exact HL1|]. split; [exact HL2|].
-      intros E R FULL model HCS.
+      intros fl Hd E R FULL model HCS.
       destruct (check _ _ _ _ _ _ _ _ _ _ _ _ _ _ p) as [s| ] eqn:Hchk; [|discriminate].
       apply andb_prop in HT0 as [HT0 HF]. apply andb_prop in HT0 as [Hseg Hcov].
       (* [comment removed for export] *)
@@ -841,20 +954,24 @@ Section Main.
       assert (HLa : forall h E1 E2 fs', env_agree NX0 E1 E2 -> HOLESL h E1 fs' = HOLESL h E2 fs') by reflexivity.
       assert (HLn : forall h E1 fs', HOLESL h E1 fs' []).
       { intros h E1 fs'. unfold HOLESL. destruct (lookupT PT h); [apply t_res_nil | reflexivity]. }
-      assert (HLs : holes_stmt BSEGS BOTH LIM (hs_of HT) SINV argH HOLESL fs).
+      assert (HLs : holes_stmt BSEGS (BOTH_at (rseq_z rsb)) LIM (hs_of HT) SINV argH HOLESL fs (hflag fl)).
       { intros j chj Hj E1 R1 FULL1 model1 HC1.
         unfold hs_of in Hj. destruct (ht_of HT j) as [[Lj chj']|] eqn:He; [|discriminate]. cbn [snd] in Hj. injection Hj as ->.
         destruct (mcover_sound HT PT j _ Hcov He) as (t' & Ht').
         pose proof (mforest_ok_sound KCm BFUELm FUELm ITm L HT C PT j t' _ HF (lookupT_In _ _ _ Ht') He) as Hok. cbn [fst snd] in Hok.
         destruct (IH j t' (lookupT_In _ _ _ Ht') L Lj chj C Hok HC) as (_ & _ & RZ).
-        unfold HOLESL. rewrite Ht', (co_fs _ _ _ _ _ _ _ _ _ _ _ HC1). exact (RZ E1 R1 FULL1 model1 HC1). }
+        unfold HOLESL. rewrite Ht', (co_fs _ _ _ _ _ _ _ _ _ _ _ HC1).
+        refine (RZ (hflag fl j) _ E1 R1 FULL1 model1 HC1).
+        intros Hf. destruct (hflag_split fl j Hf) as [Hf1 Hf2].
+        exact (proj2 (mdead_pre hf26 L p HT PT (Hd Hf1)) j t' (lookupT_In _ _ _ Ht') Hf2). }
       pose proof (cs_ok_pay_start C E ch R FULL model HC HCS) as HC2.
       destruct (cs_ok_main_facts E _ R FULL model HC2) as (Hev & HB1 & HB2 & Hfs & HVF).
-      pose proof (in_class_H_class APH sp rdraw argv envp fs uid hw Hva Hfit C SINV HC SINVm_blob) as HCL.
-      pose proof (main_check_sound C (hs_of HT) HOLESL HCL HLa HLn HLs p _ s Hchk E R FULL model HC2) as RZ.
+      pose proof (in_class_H_class apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn (sigpipe_default := sigpipe_default) Hva Hfit Hlau C SINV HC SINVm_blob) as HCL.
+      assert (HD : fl = true -> dead_ok (hflag fl) p = true) by (intros ->; exact (proj1 (mdead_pre hf26 L p HT PT (Hd eq_refl)))).
+      pose proof (main_check_sound C (hs_of HT) HOLESL (hflag fl) fl HCL HLa HLn HLs p _ s Hchk HD E R FULL model HC2) as RZ.
       rewrite Hfs in RZ. unfold pay_start in RZ. rewrite pc_set_kn in RZ.
       eapply srz_conseq; [exact RZ|].
-      eapply (class_seg_sound APH sp rdraw brk0 argv envp fs Hsp Hva Hve uid hw Hfit BSEGS (lv_of HT) L C s E _ HOLESL t_nil HC Hseg Hev HB1 HB2 HVF).
+      eapply (class_seg_sound APH apc sp rdraw brk0 mbase argv envp fs stdin Hsp Hva Hve uid hw gid groups net nofile sigmask urnd tmp kb execfn (sigpipe_default := sigpipe_default) Hfit Hlau BSEGS (lv_of HT) L C s E _ HOLESL t_nil HC Hseg Hev HB1 HB2 HVF).
       (* [comment removed for export] *)
       intros j Lj Hlv. unfold lv_of in Hlv. destruct (ht_of HT j) as [[Lj' chj]|] eqn:He; [|discriminate]. cbn [fst] in Hlv. injection Hlv as ->.
       destruct (mcover_sound HT PT j _ Hcov He) as (t' & Ht').
@@ -864,7 +981,10 @@ Section Main.
     - (* [comment removed for export] *)
       cbn [mtree_ok] in HT0. apply andb_prop in HT0 as [H1 H2]. rewrite mtree_lvl_split.
       pose proof (in_class_split C q mid HC) as HC'.
-      destruct (qval q argv fs <=? mid); [exact (IHle lo hi ch _ H1 HC') | exact (IHgt lo hi ch _ H2 HC')].
+      destruct (qval q argv fs <=? mid);
+        [destruct (IHle lo hi ch _ H1 HC') as (A1 & A2 & RZ) | destruct (IHgt lo hi ch _ H2 HC') as (A1 & A2 & RZ)];
+        (split; [exact A1|]); (split; [exact A2|]); intros fl Hd; apply RZ; intros Hf;
+        pose proof (Hd Hf) as X; cbn [mtree_dead] in X; destruct (andb_prop _ _ X) as [Xl Xg]; assumption.
     - (* [comment removed for export] *)
       cbn [mtree_ok] in HT0. apply andb_prop in HT0 as [HT0 H2]. apply andb_prop in HT0 as [Hsh H1].
       apply lshape_eqb_eq in Hsh.
@@ -872,16 +992,18 @@ Section Main.
       assert (Lhi : mtree_lvl (MCase e mid le gt) = mtree_lvl gt) by (unfold mtree_lvl; cbn [lvl_shape]; rewrite Hsh; reflexivity).
       destruct (IHle lo hi _ C H1 HC) as (A1 & A2 & RZle). destruct (IHgt lo hi _ C H2 HC) as (_ & _ & RZgt).
       rewrite Llo. split; [exact A1|]. split; [exact A2|].
-      intros E R FULL model HCS.
+      intros fl Hd E R FULL model HCS.
+      assert (Hdlg : fl = true -> mtree_dead hf26 le = true /\ mtree_dead hf26 gt = true).
+      { intros Hf. pose proof (Hd Hf) as X. cbn [mtree_dead] in X. exact (andb_prop _ _ X). }
       pose proof (u64_range (edenot E e)) as He. pose proof (co_know _ _ _ _ _ _ _ _ _ _ _ HCS) as HK.
       assert (HB : fst (ebounds (kn ch) e) <= uE E e <= snd (ebounds (kn ch) e)).
       { unfold ebounds. destruct (erange (kn ch) e) as [[blo bhi]|] eqn:Her; cbn [fst snd].
         - exact (erange_sound BSEGS E _ (kn ch) e blo bhi HK Her).
         - unfold uE, two64. lia. }
       destruct (Z.leb_spec (uE E e) mid) as [Hm|Hm].
-      + apply (RZle E R FULL model). unfold mcase_lo. apply cs_ok_set_kn; [exact HCS|].
+      + apply (RZle fl (fun Hf => proj1 (Hdlg Hf)) E R FULL model). unfold mcase_lo. apply cs_ok_set_kn; [exact HCS|].
         constructor; [cbn [kentry_ok]; unfold uE in *; lia | exact HK].
-      + rewrite <- Llo, Lhi. apply (RZgt E R FULL model). unfold mcase_hi. apply cs_ok_set_kn; [exact HCS|].
+      + rewrite <- Llo, Lhi. apply (RZgt fl (fun Hf => proj2 (Hdlg Hf)) E R FULL model). unfold mcase_hi. apply cs_ok_set_kn; [exact HCS|].
         constructor; [cbn [kentry_ok]; unfold uE, two64 in *; lia | exact HK].
     - (* [comment removed for export] *)
       cbn [mtree_ok] in HT0. apply andb_prop in HT0 as [HLE H1].
@@ -891,7 +1013,7 @@ Section Main.
     - (* [comment removed for export] *)
       cbn [mtree_ok] in HT0. apply andb_prop in HT0 as [HL HT0]. apply andb_prop in HL as [HL1 HL2].
       apply Nat.leb_le in HL1. apply Nat.leb_le in HL2. cbn [mtree_lvl lvl_shape lshape_lvl]. split; [exact HL1|]. split; [exact HL2|].
-      intros E R FULL model HCS.
+      intros fl Hd E R FULL model HCS.
       destruct (check _ _ _ _ _ _ _ _ _ _ _ _ _ _ p) as [s| ] eqn:Hchk; [|discriminate].
       apply andb_prop in HT0 as [HT0 HF]. apply andb_prop in HT0 as [Hpay Hcov].
       set (HOLESR := fun (h : nat) (E' : env) (fs' : Fs.Fs) =>
@@ -902,7 +1024,7 @@ Section Main.
       assert (HRn : forall h E1 fs', HOLESR h E1 fs' []).
       { intros h E1 fs'. unfold HOLESR. destruct (rs_of HR h) as [r|]; [|reflexivity].
         exact (sd_has_nil HOLES0 HOLES0_nil t_nil E1 fs' r eq_refl). }
-      assert (HRs : holes_stmt BSEGS BOTH LIM (hs_ofS HR) SINV argH HOLESR fs).
+      assert (HRs : holes_stmt BSEGS (BOTH_at (rseq_z rsb)) LIM (hs_ofS HR) SINV argH HOLESR fs (hflag fl)).
       { intros j chj Hj E1 R1 FULL1 model1 HC1.
         unfold hs_ofS in Hj. destruct (lookupT HR j) as [[rj chj']|] eqn:He; [|discriminate]. cbn [snd] in Hj. injection Hj as ->.
         unfold mcoverS in Hcov. pose proof Hcov as Hcov'. rewrite forallb_forall in Hcov'.
@@ -911,20 +1033,23 @@ Section Main.
         pose proof HF as HF'. unfold rforest_ok in HF'. rewrite forallb_forall in HF'. specialize (HF' (j, t') (lookupT_In _ _ _ Ht')).
         cbn [fst snd] in HF'. rewrite He in HF'.
         unfold HOLESR, rs_of. rewrite He. cbn [fst].
-        exact (rtree_sound t' rj chj C HF' HC E1 R1 FULL1 model1 HC1). }
+        refine (rtree_sound t' rj chj C HF' HC (hflag fl j) _ E1 R1 FULL1 model1 HC1).
+        intros Hf. destruct (hflag_split fl j Hf) as [Hf1 Hf2].
+        exact (proj2 (mdead_pres hf26 L p HR PT (Hd Hf1)) j t' (lookupT_In _ _ _ Ht') Hf2). }
       pose proof (cs_ok_pay_start C E ch R FULL model HC HCS) as HC2.
       destruct (cs_ok_main_facts E _ R FULL model HC2) as (Hev & HB1 & HB2 & Hfs & HVF).
-      pose proof (in_class_H_class APH sp rdraw argv envp fs uid hw Hva Hfit C SINV HC SINVm_blob) as HCL.
-      pose proof (main_check_sound C (hs_ofS HR) HOLESR HCL HRa HRn HRs p _ s Hchk E R FULL model HC2) as RZ.
+      pose proof (in_class_H_class apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn (sigpipe_default := sigpipe_default) Hva Hfit Hlau C SINV HC SINVm_blob) as HCL.
+      assert (HD : fl = true -> dead_ok (hflag fl) p = true) by (intros ->; exact (proj1 (mdead_pres hf26 L p HR PT (Hd eq_refl)))).
+      pose proof (main_check_sound C (hs_ofS HR) HOLESR (hflag fl) fl HCL HRa HRn HRs p _ s Hchk HD E R FULL model HC2) as RZ.
       rewrite Hfs in RZ. unfold pay_start in RZ. rewrite pc_set_kn in RZ.
       eapply srz_conseq; [exact RZ|].
       eapply t_eq_trans; [apply (sd_subst_holes HOLESR HOLES0 t_nil E fs (rs_of HR) s) |].
       { intros h. unfold HOLESR. destruct (rs_of HR h); apply t_eq_refl. }
-      exact (class_pay_sound APH sp rdraw brk0 argv envp fs Hsp Hva Hve uid hw Hfit BSEGS L C _ E _ HOLES0 t_nil HC Hpay Hev HB1 HB2 HVF).
+      exact (class_pay_sound APH apc sp rdraw brk0 mbase argv envp fs stdin Hsp Hva Hve uid hw gid groups net nofile sigmask urnd tmp kb execfn (sigpipe_default := sigpipe_default) Hfit Hlau BSEGS L C _ E _ HOLES0 t_nil HC Hpay Hev HB1 HB2 HVF).
     - (* [comment removed for export] *)
       rewrite mtree_ok_MPreX in HT0. apply andb_prop in HT0 as [HL HT0]. apply andb_prop in HL as [HL1 HL2].
       apply Nat.leb_le in HL1. apply Nat.leb_le in HL2. cbn [mtree_lvl lvl_shape lshape_lvl]. split; [exact HL1|]. split; [exact HL2|].
-      intros E R FULL model HCS.
+      intros fl Hd E R FULL model HCS.
       destruct (check _ _ _ _ _ _ _ _ _ _ _ _ _ _ p) as [s| ] eqn:Hchk; [|discriminate].
       apply andb_prop in HT0 as [HT0 HHF]. apply andb_prop in HT0 as [HT0 HRF]. apply andb_prop in HT0 as [HT0 HcovS].
       apply andb_prop in HT0 as [HT0 HF]. apply andb_prop in HT0 as [Hseg Hcov].
@@ -946,14 +1071,17 @@ Section Main.
       { intros h E1 fs'. unfold HOLESX, HOLESL. destruct (ht_of HT h).
         - destruct (lookupT PT h); [apply t_res_nil | reflexivity].
         - destruct (rs_of HR h) as [r|]; [|reflexivity]. exact (sd_has_nil HOLES0 HOLES0_nil t_nil E1 fs' r eq_refl). }
-      assert (HXs : holes_stmt BSEGS BOTH LIM (hs_ofX HT HR) SINV argH HOLESX fs).
+      assert (HXs : holes_stmt BSEGS (BOTH_at (rseq_z rsb)) LIM (hs_ofX HT HR) SINV argH HOLESX fs (hflag fl)).
       { intros j chj Hj E1 R1 FULL1 model1 HC1.
         unfold hs_ofX in Hj. destruct (ht_of HT j) as [[Lj chj']|] eqn:He.
         - cbn [snd] in Hj. injection Hj as ->.
           destruct (mcover_sound HT PT j _ Hcov He) as (t' & Ht').
           pose proof (mforest_ok_sound KCm BFUELm FUELm ITm L HT C PT j t' _ HF (lookupT_In _ _ _ Ht') He) as Hok. cbn [fst snd] in Hok.
           destruct (IH j t' (lookupT_In _ _ _ Ht') L Lj chj C Hok HC) as (_ & _ & RZ).
-          unfold HOLESX, HOLESL. rewrite He, Ht', (co_fs _ _ _ _ _ _ _ _ _ _ _ HC1). exact (RZ E1 R1 FULL1 model1 HC1).
+          unfold HOLESX, HOLESL. rewrite He, Ht', (co_fs _ _ _ _ _ _ _ _ _ _ _ HC1).
+          refine (RZ (hflag fl j) _ E1 R1 FULL1 model1 HC1).
+          intros Hf. destruct (hflag_split fl j Hf) as [Hf1 Hf2].
+          exact (proj1 (proj2 (mdead_prex hf26 L p HT PT HR RT (Hd Hf1))) j t' (lookupT_In _ _ _ Ht') Hf2).
         - unfold hs_ofS in Hj. destruct (lookupT HR j) as [[rj chj']|] eqn:Hr; [|discriminate]. cbn [snd] in Hj. injection Hj as ->.
           unfold mcoverS in HcovS. pose proof HcovS as Hcov'. rewrite forallb_forall in Hcov'.
           specialize (Hcov' (j, (rj, chj)) (lookupT_In _ _ _ Hr)). cbn [fst] in Hcov'.
@@ -961,11 +1089,14 @@ Section Main.
           pose proof HRF as HF'. unfold rforest_ok in HF'. rewrite forallb_forall in HF'. specialize (HF' (j, t') (lookupT_In _ _ _ Ht')).
           cbn [fst snd] in HF'. rewrite Hr in HF'.
           unfold HOLESX, rs_of. rewrite He, Hr. cbn [fst].
-          exact (rtree_sound t' rj chj C HF' HC E1 R1 FULL1 model1 HC1). }
+          refine (rtree_sound t' rj chj C HF' HC (hflag fl j) _ E1 R1 FULL1 model1 HC1).
+          intros Hf. destruct (hflag_split fl j Hf) as [Hf1 Hf2].
+          exact (proj2 (proj2 (mdead_prex hf26 L p HT PT HR RT (Hd Hf1))) j t' (lookupT_In _ _ _ Ht') Hf2). }
       pose proof (cs_ok_pay_start C E ch R FULL model HC HCS) as HC2.
       destruct (cs_ok_main_facts E _ R FULL model HC2) as (Hev & HB1 & HB2 & Hfs & HVF).
-      pose proof (in_class_H_class APH sp rdraw argv envp fs uid hw Hva Hfit C SINV HC SINVm_blob) as HCL.
-      pose proof (main_check_sound C (hs_ofX HT HR) HOLESX HCL HXa HXn HXs p _ s Hchk E R FULL model HC2) as RZ.
+      pose proof (in_class_H_class apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn (sigpipe_default := sigpipe_default) Hva Hfit Hlau C SINV HC SINVm_blob) as HCL.
+      assert (HD : fl = true -> dead_ok (hflag fl) p = true) by (intros ->; exact (proj1 (mdead_prex hf26 L p HT PT HR RT (Hd eq_refl)))).
+      pose proof (main_check_sound C (hs_ofX HT HR) HOLESX (hflag fl) fl HCL HXa HXn HXs p _ s Hchk HD E R FULL model HC2) as RZ.
       rewrite Hfs in RZ. unfold pay_start in RZ. rewrite pc_set_kn in RZ.
       eapply srz_conseq; [exact RZ|].
       eapply t_eq_trans; [apply (sd_subst_holes HOLESX HOLESL t_nil E fs (rs_ofX HT HR) s) |].
@@ -975,7 +1106,7 @@ Section Main.
           unfold hr_hole_free in HHF. rewrite forallb_forall in HHF. specialize (HHF (h, (r', chr)) (lookupT_In _ _ _ Hl)). cbn [fst snd] in HHF.
           rewrite (sd_hole_free HOLES0 HOLESL t_nil E fs r' HHF). apply t_eq_refl.
         - unfold HOLESL. rewrite Eh. apply t_eq_refl. }
-      eapply (class_seg_sound APH sp rdraw brk0 argv envp fs Hsp Hva Hve uid hw Hfit BSEGS (lv_of HT) L C _ E _ HOLESL t_nil HC Hseg Hev HB1 HB2 HVF).
+      eapply (class_seg_sound APH apc sp rdraw brk0 mbase argv envp fs stdin Hsp Hva Hve uid hw gid groups net nofile sigmask urnd tmp kb execfn (sigpipe_default := sigpipe_default) Hfit Hlau BSEGS (lv_of HT) L C _ E _ HOLESL t_nil HC Hseg Hev HB1 HB2 HVF).
       intros j Lj Hlv. unfold lv_of in Hlv. destruct (ht_of HT j) as [[Lj' chj]|] eqn:He; [|discriminate]. cbn [fst] in Hlv. injection Hlv as ->.
       destruct (mcover_sound HT PT j _ Hcov He) as (t' & Ht').
       pose proof (mforest_ok_sound KCm BFUELm FUELm ITm L HT C PT j t' _ HF (lookupT_In _ _ _ Ht') He) as Hok. cbn [fst snd] in Hok.
@@ -986,7 +1117,7 @@ Section Main.
       apply andb_prop in HL as [HL Hv]. apply andb_prop in HL as [HL Hb]. apply andb_prop in HL as [HL1 HL2].
       apply Nat.leb_le in HL1. apply Nat.leb_le in HL2. apply N.leb_le in Hb. apply N.ltb_lt in Hv.
       destruct (ht_of HT h) as [eh|] eqn:Hhn; [discriminate Hh|]. clear Hh.
-      cbn [mtree_lvl lvl_shape lshape_lvl]. split; [exact HL1|]. split; [exact HL2|].
+      cbn [mtree_lvl lvl_shape lshape_lvl]. split; [exact HL1|]. split; [exact HL2|]. intros fl Hd.
       destruct (check _ _ _ _ _ _ _ _ _ _ _ _ _ _ p) as [s| ] eqn:Hchk; [|discriminate].
       apply andb_prop in HT0 as [HT0 HF]. apply andb_prop in HT0 as [Hseg Hcov].
       (* [comment removed for export] *)
@@ -997,7 +1128,7 @@ Section Main.
       assert (HLn : forall h' E1 fs', HOLESL h' E1 fs' []).
       { intros h' E1 fs'. unfold HOLESL. destruct (Nat.eqb h' h); [apply t_res_nil|].
         destruct (lookupT PT h'); [apply t_res_nil | reflexivity]. }
-      assert (HLs : holes_stmt BSEGS BOTH LIM (hs_of HT) SINV argH HOLESL fs).
+      assert (HLs : holes_stmt BSEGS (BOTH_at (rseq_z rsb)) LIM (hs_of HT) SINV argH HOLESL fs (hflag fl)).
       { intros j chj Hj E1 R1 FULL1 model1 HC1.
         unfold hs_of in Hj. destruct (ht_of HT j) as [[Lj chj']|] eqn:He; [|discriminate]. cbn [snd] in Hj. injection Hj as ->.
         assert (Hjh : Nat.eqb j h = false).
@@ -1005,11 +1136,14 @@ Section Main.
         destruct (mcover_sound HT PT j _ Hcov He) as (t' & Ht').
         pose proof (mforest_ok_sound KCm BFUELm FUELm ITm L HT C PT j t' _ HF (lookupT_In _ _ _ Ht') He) as Hok. cbn [fst snd] in Hok.
         destruct (IH j t' (lookupT_In _ _ _ Ht') L Lj chj C Hok HC) as (_ & _ & RZ).
-        unfold HOLESL. rewrite Hjh, Ht', (co_fs _ _ _ _ _ _ _ _ _ _ _ HC1). exact (RZ E1 R1 FULL1 model1 HC1). }
-      pose proof (in_class_H_class APH sp rdraw argv envp fs uid hw Hva Hfit C SINV HC SINVm_blob) as HCL.
+        unfold HOLESL. rewrite Hjh, Ht', (co_fs _ _ _ _ _ _ _ _ _ _ _ HC1).
+        refine (RZ (hflag fl j) _ E1 R1 FULL1 model1 HC1).
+        intros Hf. destruct (hflag_split fl j Hf) as [Hf1 Hf2].
+        exact (proj2 (mdead_loop hf26 L p b v h HT PT (Hd Hf1)) j t' (lookupT_In _ _ _ Ht') Hf2). }
+      pose proof (in_class_H_class apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn (sigpipe_default := sigpipe_default) Hva Hfit Hlau C SINV HC SINVm_blob) as HCL.
       (* [comment removed for export] *)
       assert (HHL : forall j Lj, lv_of ((h, (L, ch)) :: HT) j = Some Lj ->
-                 exists L'', (L <= L'')%nat /\ (L'' <= Lj)%nat /\ t_eq (HOLESL j (E0 APH sp rdraw brk0 argv envp uid hw) fs) (t_res L'' argv fs)).
+                 exists L'', (L <= L'')%nat /\ (L'' <= Lj)%nat /\ t_eq (HOLESL j (E0 sp rdraw brk0 argv envp uid gid kb execfn) fs) (t_res L'' argv fs)).
       { intros j Lj Hlv. unfold lv_of in Hlv. cbn [ht_of] in Hlv. destruct (Nat.eqb_spec h j) as [<-|Hne].
         - cbn [fst] in Hlv. injection Hlv as <-. exists L. split; [lia|]. split; [lia|]. unfold HOLESL. rewrite Nat.eqb_refl. apply t_eq_refl.
         - destruct (ht_of HT j) as [[Lj' chj]|] eqn:He; [|discriminate]. cbn [fst] in Hlv. injection Hlv as ->.
@@ -1020,23 +1154,24 @@ Section Main.
           assert (Hjh : Nat.eqb j h = false) by (apply Nat.eqb_neq; intros ->; apply Hne; reflexivity).
           rewrite Hjh, Ht'. apply t_eq_refl. }
       (* [comment removed for export] *)
+      assert (HD : fl = true -> dead_ok (hflag fl) p = true) by (intros ->; exact (proj1 (mdead_loop hf26 L p b v h HT PT (Hd eq_refl)))).
       assert (IND : forall n : nat, forall E R FULL model,
-                 cs_ok BSEGS BOTH LIM SINV argH fs E ch R FULL model ->
+                 cs_ok BSEGS (BOTH_at (rseq_z rsb)) LIM SINV argH fs E ch R FULL model ->
                  (Z.to_nat (2 ^ 64 - bv_unsigned (ev E v)) <= n)%nat ->
-                 srealizes BSEGS (cfg_of BSEGS R (pc ch) FULL model) (t_res L argv fs)).
+                 srealizesM BSEGS fl (cfg_of BSEGS R (pc ch) FULL model) (t_res L argv fs)).
       { induction n as [|n IHn]; intros E R FULL model HCS Hn.
         - exfalso. pose proof (u64_range (ev E v)) as Hr. lia.
         - pose proof (cs_ok_pay_start C E ch R FULL model HC HCS) as HC2.
           destruct (cs_ok_main_facts E _ R FULL model HC2) as (Hev & HB1 & HB2 & Hfs & HVF).
-          pose proof (main_check_sound_M C (hs_of HT) HOLESL b v h ch HCL HLa HLn HLs p _ s Hchk E R FULL model HC2 Hb Hv) as RZ.
-          assert (HM : forall E' R' F' m', env_agree NX0 E E' -> cs_ok BSEGS BOTH LIM SINV argH fs E' ch R' F' m' ->
+          pose proof (main_check_sound_M C (hs_of HT) HOLESL (hflag fl) fl b v h ch HCL HLa HLn HLs p _ s Hchk HD E R FULL model HC2 Hb Hv) as RZ.
+          assert (HM : forall E' R' F' m', env_agree NX0 E E' -> cs_ok BSEGS (BOTH_at (rseq_z rsb)) LIM SINV argH fs E' ch R' F' m' ->
                          bv_unsigned (ev E v) < bv_unsigned (ev E' v) -> m_fs m' = m_fs model ->
-                         srealizes BSEGS (cfg_of BSEGS R' (pc ch) F' m') (HOLESL h E' (m_fs model))).
+                         srealizesM BSEGS fl (cfg_of BSEGS R' (pc ch) F' m') (HOLESL h E' (m_fs model))).
           { intros E' R' F' m' _ HC' Hlt Hfs'. unfold HOLESL. rewrite Nat.eqb_refl. rewrite Hfs.
             apply (IHn E' R' F' m' HC'). pose proof (u64_range (ev E' v)). pose proof (u64_range (ev E v)). lia. }
           specialize (RZ HM). rewrite Hfs in RZ. unfold pay_start in RZ. rewrite pc_set_kn in RZ.
           eapply srz_conseq; [exact RZ|].
-          eapply (class_seg_sound APH sp rdraw brk0 argv envp fs Hsp Hva Hve uid hw Hfit BSEGS (lv_of ((h, (L, ch)) :: HT)) L C s E _
+          eapply (class_seg_sound APH apc sp rdraw brk0 mbase argv envp fs stdin Hsp Hva Hve uid hw gid groups net nofile sigmask urnd tmp kb execfn (sigpipe_default := sigpipe_default) Hfit Hlau BSEGS (lv_of ((h, (L, ch)) :: HT)) L C s E _
                     HOLESL t_nil HC Hseg Hev HB1 HB2 HVF).
           intros j Lj Hlv. destruct (HHL j Lj Hlv) as (L'' & H1 & H2 & H3). exists L''. split; [exact H1|]. split; [exact H2|].
           exact H3. }
@@ -1050,24 +1185,28 @@ Section Main.
   Lemma HOLESM_nil : forall h E fs', HOLESM h E fs' [].
   Proof. intros. apply spec_nil. Qed.
 
-  #[local] Notation TREE_OK h := (mtree_ok KCm BFUELm FUELm ITm 0 0 (HSA HS_asan h)).
+  #[local] Notation TREE_OK h := (mtree_ok (rsb := rsb) KCm BFUELm FUELm ITm 0 0 (HSA rsb HS_asan h)).
 
   Variable TREE : nat -> nat -> mtree.
   Hypothesis TREES : forall h ch i, HS_asan h = Some ch -> (i < 6)%nat -> TREE_OK h (root_class i) (TREE h i) = true.
 
-  Theorem main_holes : holes_stmt BSEGS BOTH LIM HS_asan SINV0' argH HOLESM fs.
+  (* The main trees fill the holes of the start-up plan; at the flag [true] each tree passes the dead-arm check
+     ([mtree_dead hf26], computed per tree). *)
+  Theorem main_holes : forall fl,
+    (fl = true -> forall h ch i, HS_asan h = Some ch -> (i < 6)%nat -> mtree_dead hf26 (TREE h i) = true) ->
+    holes_stmt BSEGS (BOTH_at (rseq_z rsb)) LIM HS_asan SINV0' argH HOLESM fs (fun _ => fl).
   Proof.
-    intros h ch Hh E R FULL model HC.
-    assert (Ech : ch = HSA HS_asan h) by (unfold HSA; rewrite Hh; reflexivity).
+    intros fl Hd h ch Hh E R FULL model HC.
+    assert (Ech : ch = HSA rsb HS_asan h) by (unfold HSA; rewrite Hh; reflexivity).
     rewrite Ech in HC |- *.
     (* [comment removed for export] *)
-    pose proof (cs_ok_reblob BSEGS BOTH APH sp rdraw brk0 argv envp uid hw c LIM fs E (HSA HS_asan h) R FULL model
-                  (eq_ind ch (fun x => acs_noblob x = true) (HSA_noblob h ch Hh) _ Ech) HC) as HC1.
+    pose proof (cs_ok_reblob BSEGS (BOTH_at (rseq_z rsb)) APH apc sp rdraw brk0 mbase argv envp imgfs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn c LIM fs E (HSA rsb HS_asan h) R FULL model
+                  (eq_ind ch (fun x => acs_blob_fixed x = true) (HSA_blob_fixed h ch Hh) _ Ech) HC) as HC1.
     unfold HOLESM. rewrite (co_fs _ _ _ _ _ _ _ _ _ _ _ HC).
     destruct (root_cover argv fs Hva) as (i & Hi & HCi).
-    destruct (mtree_sound (TREE h i) 0 0 (HSA HS_asan h) (root_class i) (TREES h ch i Hh Hi) HCi) as (H1 & H2 & RZ).
+    destruct (mtree_sound (TREE h i) 0 0 (HSA rsb HS_asan h) (root_class i) (TREES h ch i Hh Hi) HCi) as (H1 & H2 & RZ).
     assert (HL : mtree_lvl (TREE h i) = 0%nat) by lia. rewrite HL in RZ. cbn [t_res] in RZ.
-    exact (RZ _ R FULL model HC1).
+    exact (RZ fl (fun Hf => Hd Hf h ch i Hh Hi) _ R FULL model HC1).
   Qed.
 
 End Main.

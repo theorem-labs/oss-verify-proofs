@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-11: added the HaltsCfgForcedOnly and allowed-exits modules and the halts theorem of the asan-ubsan build, copied from projects/openssl/echconfiglist_parser/proofs/lib/EchTopAsan.v at commit 874e3397a35 (its lines 23-31 and 53-59) with images.Asan replaced by images.AsanUbsan and lib.EchRowsAsan by lib.Both.EchRowsAsan. *)
+(* Modified by Theorem Labs, 2026-11: added the HaltsCfgForcedOnly and allowed-exits modules and the halts theorem of the asan-ubsan build, copied from projects/openssl/echconfiglist_parser/proofs/lib/EchTopAsan.v at commit theorem-labs/oss-verify-proofs@f92feaf8b7e6 (its lines 23-31 and 53-59) with images.Asan replaced by images.AsanUbsan and lib.EchRowsAsan by lib.Both.EchRowsAsan. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the plain binary's library is closed at the run instance, FZ_p of type Ref.ECH_LibTop.fuzz_vc_type); internal commit ids in comments replaced by public commits or removed. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List QArith Lia.
 Require LinuxProcessSemantics.EquivalenceDefinition.Equivalence.
@@ -31,8 +32,7 @@ Module OpensslEchconfiglistParserHaltsAsanUbsanExits <: LinuxProcessSemantics.Eq
 End OpensslEchconfiglistParserHaltsAsanUbsanExits.
 
 (* [comment removed for export] *)
-Definition FZ_p : forall (HCEIL : HeapCeil) (HSEC : HeapSecret),
-    @OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Ref.ECH_Iface.fuzz_stmt HCEIL (@OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Ref.MallocSR.HS HCEIL HSEC)
+Definition FZ_p : OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Ref.ECH_LibTop.fuzz_vc_type
   := OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Ref.ECH_LibTop.fuzz_closed.
 
 Section ThirdAsan.

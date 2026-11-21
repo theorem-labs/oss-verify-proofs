@@ -5,8 +5,8 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_K.v; 1536 of its 1692 lines of code are new or changed and 1217 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_write_value.v, with its numbers changed; 107 of its 179 lines of code are new or changed and 1620 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/ZZwv_defs.v, with its module paths changed; 62 of its 140 lines of code are new or changed and 101 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/ZZwv_defs.v (a working branch
-   1a5dc5b2e7c): same names, every address, frame slot and register re-measured on fs.asan-ubsan; imports point at lib/B's
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/ZZwv_defs.v (a working branch):
+   same names, every address, frame slot and register re-measured on fs.asan-ubsan; imports point at lib/B's
    image files and walk kit. The two call-composition steps wvc_after_call_ot / wvc_tail_otJ are NOT repeated here: they
    are proved in lib/B/FSW_write_value_entry.v (a Theorem Labs lane) and imported.
    rule 24: proves no function (kind: segment lemma) - the container arms of write_value B.
@@ -25,6 +25,7 @@
    wvc_cMULH) name the operands the engine meets at the ones it cannot decide from the atom facts alone, MEASURED.
    Rule 24 (proof-index, a Theorem Labs lane, unpiped): write_value has RELEASED proofs for fs's PLAIN and UBSAN
    builds only (lib/Prog, lib/U/Prog), none for an ASan image; 0x84010 is not in the released set. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the kit of the last two steps of segment K of LLVMFuzzerTestOneInput's ASan walk (plugin-hostd/fuzz_command, 0x86958 .. the jal to check_round_trip at 0x86970), in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh6.v (cl_seedX: the symbolic state at a point inside the function) and lib/A/Prog/check_refusal_s1.v (cr_entry): the symbolic state at 0x86958 and 0x86964 with the one frame word the step loads, and the transport of the cut's facts to a state that keeps the frame, the live blocks and the program's statics. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/LLVMFuzzerTestOneInput_Krefusal_s1.v, with its module paths and module names changed; 204 of its 238 lines of code are new or changed and 177 lines of the source are left out. *)
-(* B twin of lib/A/Prog/check_arity_s3.v (a working branch 9c6410fb32e): ca_seed, the symbolic
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* B twin of lib/A/Prog/check_arity_s3.v (a working branch): ca_seed, the symbolic
    state of check_arity_s1.v at the matched-row entry CA_SEG (0x87478) from the facts of the run, and the row
    interface every row walk of image B takes: ca_post, ca_row_pre, ca_row_open, ca_final_ok, ca_regs_back. A had the
    row interface at the head of its check_arity_s4.v; B keeps it here so that s5 .. s7 and the bcmp rows need only

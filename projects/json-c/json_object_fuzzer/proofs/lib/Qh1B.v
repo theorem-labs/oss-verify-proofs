@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (RomBase.sys_rob at the system-call nodes: ev_at_rob at the brk, mmap, munmap, mprotect and mremap event nodes, and a sys_rob premise on rz_classes). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -84,16 +85,32 @@ forall e L pbrk md ms1,
 eks e = true -> KL L pbrk md -> event_pre L e -> ev_at segs e ms1 -> EVND e L pbrk md ms1.
 Hypothesis evn : EVN.
 
+(* LPS 727298f3: a kernel event's ecall (brk, mmap, munmap, mprotect, mremap) reads no [in_mem], so
+   [RomBase.sys_rob] holds at its node *)
+#[using="Type"] Lemma ev_at_rob : forall e ms1 md, ev_at segs e ms1 -> Cfg.RomBase.sys_rob segs (mkCfg ms1 md).
+Proof.
+intros e ms1 md H. unfold ev_at in H.
+destruct (ev_node e) as [n|] eqn:En; [|destruct H].
+destruct e; cbn [ev_node] in En; try discriminate; injection En as <-; cbn [at_node] in H;
+eapply (Cfg.RomBase.sys_rob_memfree segs ms1 md); try exact (proj1 H).
+- change (bv_unsigned (Z_to_bv 64 214)) with 214%Z. exact Cfg.RomBase.memfree_214.
+- change (bv_unsigned (Z_to_bv 64 222)) with 222%Z. exact Cfg.RomBase.memfree_222.
+- change (bv_unsigned (Z_to_bv 64 215)) with 215%Z. exact Cfg.RomBase.memfree_215.
+- change (bv_unsigned (Z_to_bv 64 226)) with 226%Z. exact Cfg.RomBase.memfree_226.
+- change (bv_unsigned (Z_to_bv 64 216)) with 216%Z. exact Cfg.RomBase.memfree_216.
+Qed.
+
 #[using="Type"] Lemma rz_classes : forall c (I : Type) (nx : I -> config) (T : I -> TSet) (U : TSet) (i0 : I),
 node_ok segs c I (fun _ => []) nx ->
+Cfg.RomBase.sys_rob segs c ->
 (forall i, realizes segs (nx i) (T i)) ->
 (forall i tr, T i tr -> U tr) ->
 (forall tr, U tr -> exists i, T i tr) ->
 realizes segs c U.
 Proof.
-intros c I nx T U i0 Hnode HT Hsub Hcov.
+intros c I nx T U i0 Hnode Hrob HT Hsub Hcov.
 apply (rz_conseq segs c (t_alt (fun i : I => t_emit [] (T i)))).
-- apply (rz_node segs c I (fun _ => []) nx T i0 Hnode HT).
+- apply (rz_node segs c I (fun _ => []) nx T i0 Hnode Hrob HT).
 - intros tr. split.
 + intros [i Hi]. apply (Hsub i). exact (proj1 (t_emit_nil_eq (T i) (realizes_nonempty segs _ _ (HT i)) tr) Hi).
 + intros HU. destruct (Hcov tr HU) as [i Hi]. exists i. exact (proj2 (t_emit_nil_eq (T i) (realizes_nonempty segs _ _ (HT i)) tr) Hi).
@@ -170,7 +187,8 @@ eapply (HQ r s' ms' L' md''); eauto.
 * rewrite Em. apply ev_post_state_m.
 * rewrite Efa. apply (proj1 (ev_post_state_fa e (rspf i) s)).
 * rewrite Eso. apply (proj2 (ev_post_state_fa e (rspf i) s)). }
-apply (rz_classes (mkCfg ms1 md) I _ (fun i => TK Tn Ts (if eclass e (zf i) then kt else kf)) _ i0 NODE CH).
+apply (rz_classes (mkCfg ms1 md) I _ (fun i => TK Tn Ts (if eclass e (zf i) then kt else kf)) _ i0 NODE
+(ev_at_rob e ms1 md ltac:(unfold ev_at; rewrite Hn; exact Hat)) CH).
 +
 intros i tr Hi. destruct (egrant e) eqn:EG.
 * assert (HBf : FEAS e md) by (eapply BUD_feas; eauto; lia).

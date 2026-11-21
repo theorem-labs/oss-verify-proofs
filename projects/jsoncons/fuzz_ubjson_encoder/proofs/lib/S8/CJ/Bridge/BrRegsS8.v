@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the vDSO; the model's fetch-failure and unmodeled answers; fully qualified module paths. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
@@ -192,7 +193,7 @@ Lemma interp_eff_accesses_eqv : forall t t', eff_eqv t t' -> forall m,
   end.
 Proof.
   intros t t' H. induction H; intros m; cbn [interp_eff_accesses]; auto.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [| exact I].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|destruct (range_meets_vvar segs a (width_bytes n)); exact I].
     specialize (H0 (bv_extract 0 n (le_bytes_to_word bs)) m).
     destruct (interp_eff_accesses segs (k _) m) as [[[c1 m1] acc1]| |];
     destruct (interp_eff_accesses segs (k' _) m) as [[[c2 m2] acc2]| |]; cbn in *; try exact H0; try contradiction.
@@ -231,7 +232,8 @@ Proof.
   destruct (fetch_word segs (ms_pc_val ms)); [apply decode_exec_accesses_eqv; exact Heqv|].
   destruct (fetch_word_ov segs (ms_mem ms) (ms_pc_val ms)); [apply decode_exec_accesses_eqv; exact Heqv|].
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc_val ms)); [apply decode_exec_accesses_eqv; exact Heqv|].
-  unfold fetch_failure. destruct (negb _); [exact I|]. destruct (_ || _)%bool; exact I.
+  unfold fetch_failure.
+  repeat match goal with |- context [if ?b then _ else _] => destruct b end; exact I.
 Qed.
 
 Lemma step_eqv : forall ms ms', ms_eqv ms ms' ->
@@ -299,16 +301,16 @@ Proof. intros c c' [H1 H2]. split; [apply ms_eqv_sym; exact H1| congruence]. Qed
 Lemma cfg_eqv_trans : forall a b c, cfg_eqv a b -> cfg_eqv b c -> cfg_eqv a c.
 Proof. intros a b c [H1 H2] [G1 G2]. split; [eapply ms_eqv_trans; eassumption| congruence]. Qed.
 
-Lemma msteps_eqv : forall ms ms1, CatSim.msteps segs ms ms1 ->
-  forall ms', ms_eqv ms ms' -> exists ms1', CatSim.msteps segs ms' ms1' /\ ms_eqv ms1 ms1'.
+Lemma msteps_eqv : forall ms ms1, S8.CatSim.msteps segs ms ms1 ->
+  forall ms', ms_eqv ms ms' -> exists ms1', S8.CatSim.msteps segs ms' ms1' /\ ms_eqv ms1 ms1'.
 Proof.
   intros ms ms1 H. induction H as [ms | ms msa msb Hsvc Hstep Hms IH]; intros ms' Heqv.
-  - exists ms'. split; [apply CatSim.mst_refl| exact Heqv].
+  - exists ms'. split; [apply S8.CatSim.mst_refl| exact Heqv].
   - pose proof (step_eqv ms ms' Heqv) as K. rewrite Hstep in K.
     destruct (RiscvSemantics.step segs ms') as [msa'| |] eqn:E; simpl in K; try contradiction.
     destruct (IH msa' K) as (msb' & Hms' & Hb).
     exists msb'. split; [|exact Hb].
-    eapply CatSim.mst_step; [| exact E | exact Hms'].
+    eapply S8.CatSim.mst_step; [| exact E | exact Hms'].
     destruct Heqv as (_ & _ & _ & Hs & _). congruence.
 Qed.
 

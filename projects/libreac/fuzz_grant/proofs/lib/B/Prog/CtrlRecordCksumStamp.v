@@ -3,10 +3,11 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the contract and walk of ctrl_finish on fuzz_grant.asan, written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v, proofs/cgif/cgif_file_fuzzer/lib/YC20.v. *)
-(* Modified by Theorem Labs, 2026-10: rcs_val_mem1_of_chunk and rcs_aview_of_eq copied from lib/A/Prog/CtrlFinish.v's val_mem1_of_chunk and aview_of_eq (a working branch 5aae1e8a0ce, cgif-adapted; rcs_aview_of_eq fixes its H to w_H W); the rest written new for image B. *)
+(* Modified by Theorem Labs, 2026-10: rcs_val_mem1_of_chunk and rcs_aview_of_eq copied from lib/A/Prog/CtrlFinish.v's val_mem1_of_chunk and aview_of_eq (a working branch, cgif-adapted; rcs_aview_of_eq fixes its H to w_H W); the rest written new for image B. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Image B (fuzz_grant.asan-ubsan, bin/ sha256 fde52226dc48, symbols 5a5ee7c02b4e): the walk of
    reac_ctrl_record_cksum_stamp 0x82694 (listing offset 0x1c58), whose contract is
-   lib/B/Prog/GrantBContracts.v:808-836. The call sums the n - 1 bytes r[0..n-1) and stores
+   lib/B/Prog/GrantBContracts.v:809-837. The call sums the n - 1 bytes r[0..n-1) and stores
    (- sum) mod 128 at r + n - 1 (lib/Prog/RcRec.v stampck); for n = 1 the branch at 0x826b0 skips
    the loop and the stored byte is 0.
 
@@ -1180,7 +1181,7 @@ Qed.
 End C.
 End H.
 
-(* The walk: the contract of lib/B/Prog/GrantBContracts.v:835-836, from the runtime laws and PALib. *)
+(* The walk: the contract of lib/B/Prog/GrantBContracts.v:836-837, from the runtime laws and PALib. *)
 Theorem pb_reac_ctrl_record_cksum_stamp : walk_reac_ctrl_record_cksum_stamp B.
 Proof.
 unfold walk_reac_ctrl_record_cksum_stamp, hyps_reac_ctrl_record_cksum_stamp, RT_LAWS, RT_PALIB.

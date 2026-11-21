@@ -2,13 +2,13 @@
    (ev_item_next) of the walk of ex_value (A' 0x832a4) against the text tex_value_specX (lib/A/PRH_FnEx.v), in the
    srealizes / SRr form, over the piece interface lib/A/Prog/S8aIface.v (slice S8a). Hand: a Theorem Labs lane's sub-team for pieces 7 and 8.
    Piece 7: 0x837ec-0x83a50 and 0x83b1c-0x83b5c with their report arms (the internal file PIECES.md: 200 instructions); piece 8:
-   0x83a54-0x83b18 with 0x83b54-0x83b5c and their report arms (65). The C is fuzz_preset.c @0b89c6c1bd :257-288.
+   0x83a54-0x83b18 with 0x83b54-0x83b5c and their report arms (65). The C is fuzz_preset.c :257-288.
    THIS FILE (step 1, the interface):
    - ev_K, ev_at_next: the cut P_NEXT at 0x83a54 (EV_NEXT), internal to pieces 7 / 8: the recursive call has returned
      a0 = r, the cursor is at (x0 + p', dep', dl'), the item's name nm and value start iv are fixed, and the reading of
      the container from i0 is ev_K applied to the value's reading at nesting dep + 1 from iv.
    - ev_item_step_stmt (piece 7) and ev_item_next_stmt (piece 8), and their composition ev_item_holds_of.
-     (The ev_at_step_FIX / ev_item_spec_FIX twins of 2026-10-29T00:xxZ are GONE: S8aIface 3a46b4b4678b carries the
+     (The ev_at_step_FIX / ev_item_spec_FIX twins of 2026-10-29T00:xxZ are GONE: S8aIface carries the
      conjunct `val_mem segs (rdW W mem) (ea_S1 a + 104) 8 v'` in ev_at_step itself (:245), so the pieces are stated
      over the interface's own ev_at_step / ev_item_spec.)
   - The Section hypotheses' texts: ev_ws_loop (the shared whitespace loop, WalkS8a's, stated here in the form these
@@ -39,8 +39,8 @@ Import ListNotations.
 Local Open Scope Z_scope.
 
 (* ---- the read-only premise of the strcmp row in its xrom form (SCMP, S8aP7a.v): ev_pre's fpre carries the kit's
-   PRH_Base.arodata_okP (PRH_Base.v:156, kit bd0d3c3a486b); the engine of record's YGcallMxmn.astrcmp_realizes_xrom
-   (engine commit bb085d091bbe, blob b47cf7942c3d) asks the leaf PresetRodata.arodata_okP (lib/Spec/PresetRodata.v, blob
+   PRH_Base.arodata_okP (PRH_Base.v:156, kit); the engine of record's YGcallMxmn.astrcmp_realizes_xrom
+   (engine, blob b47cf7942c3d) asks the leaf PresetRodata.arodata_okP (lib/Spec/PresetRodata.v, blob
    4eb7e95e7e93), the one home the strcmp supplier cites too. The two are one body: by conversion. ---- *)
 Lemma aro_prh_to_mxmn : forall segs rlo rhi B (rd : reader),
   PRH_Base.arodata_okP segs rlo rhi B rd -> PresetRodata.arodata_okP segs rlo rhi B rd.
@@ -316,7 +316,7 @@ Definition ev7_seg4_stmt (n' : nat) : Prop :=
 (* ======== the Section hypotheses' texts ======== *)
 
 (* THE SHARED WHITESPACE LOOP, in the shape these pieces consume: WalkS8a's ev_ws_loop_spec (S8aIface.v:375-390 at
-   ws-rawframe 91e4dffbfb7, which now carries the raw-frame conjunct below), stated outside the iface's Section so that
+   ws-rawframe, which now carries the raw-frame conjunct below), stated outside the iface's Section so that
    it names B ARx SK explicitly. It is NOT a hypothesis: each user file proves it as `WS` by
    `exact (S8aWs.ev_ws_loop B ARx SK LAWS)` (WalkS8a's Qed loop lemma; its only Section hypothesis is LAWS). Pieces 7
    and 8 read the caller's stack locals after a loop (s1 + 24 .. s1 + 128: the spills of ev_spills, s1 + 96 kid,
@@ -340,7 +340,7 @@ Definition ev_ws_loop_spec_FIX : Prop :=
 
 
 (* a HARNESS block's user range past its hidden head (its base in Hp) has the block shadow and a visible hull. It is
-   exactly AR_laws_x's field alx_hshadow (ARx_hshadow_law hl, YCbqG.v:163 at journal 83da015952be) at hl := cf_head,
+   exactly AR_laws_x's field alx_hshadow (ARx_hshadow_law hl, YCbqG.v:164 at journal 83da015952be) at hl := cf_head,
    so it is DERIVED from the laws (ev_hshadow_of_laws, TREE section), not assumed. AR_laws_x's alx_shadow excludes these
    blocks (PRH_FnEx.v EX-HBLK-SHADOW); the tree's nodes, kids and keys arrays and key strings live in them. *)
 Definition ev_hshadow_law : Prop :=
@@ -890,14 +890,14 @@ Variable B : asyms.
 Variable ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop.
 Variable SK : YI16.sink_head.
 Context {RL : PrhRoomLive}.
-Context {hl : Z}.  (* AR_laws_x's head length (YCbqG.v at walkkit b77223726823), inferred from the laws *)
+Context {hl : Z}.  (* AR_laws_x's head length (YCbqG.v at walkkit), inferred from the laws *)
 (* ev_hshadow_law is AR_laws_x's field alx_hshadow at hl := cf_head *)
 Lemma ev_hshadow_of_laws : AR_laws_x segs B ARx cf_head -> ev_hshadow_law B ARx.
 Proof. intros HL. exact (alx_hshadow _ _ _ HL). Qed.
 #[local] Abbreviation rdW W mem := (mrestrict (w_H W) mem).
 (* Hand: h-walk-ctrl's EvTree (sub-slice TREE of EvItems). No machine step: 0 instructions.
    The tree is PRH_Reader.pj_nodeR (PRH_FnEx.prhex_tree's); the shadow facts come from the record journal's
-   AR_laws_x (YCbqG b092d73a858): alx_blocks (4096 <= a block), alx_shadow (a block that holds no Hp base),
+   AR_laws_x (YCbqG): alx_blocks (4096 <= a block), alx_shadow (a block that holds no Hp base),
    alx_zshadow_byte (`struct ex` on the real stack), and from ev_hshadow_law (a harness block, its base in Hp).
    Numerals: 24, 32 (LENGTH: offsets of kids / keys in a 56-byte node, PRH_Reader.pj_hdrR); 56 (LENGTH: a node);
    8 (LENGTH: a key slot, a shadow granule); 40 (LENGTH: `struct ex`); 5, 6 (WORD: PjTree.tag of JArr / JObj);
@@ -1090,7 +1090,7 @@ destruct (in_dec Z.eq_dec b Hp) as [Hb | Hb].
   eapply block_shadow_range; [exact Hbs | lia | lia].
 Qed.
 
-(* a visible shadow hull over a sub-range (S8aNumE.v:410-418 at b930551f458a eve_hull_sub, re-proved) *)
+(* a visible shadow hull over a sub-range (S8aNumE.v:410-418 eve_hull_sub, re-proved) *)
 Lemma ev_hull_sub : forall (rd : reader) p mm d n, shadow_hull_vis rd p mm -> p <= d -> d + n <= p + mm -> 0 < n ->
   shadow_hull_vis rd d n.
 Proof.
@@ -1102,7 +1102,7 @@ pose proof (R8 _ _ M1). pose proof (R8 _ _ M2). lia.
 Qed.
 
 (* a harness block of the ledger: its user bytes' shadow hull is visible (ev_hshadow_law's second part); prhex_tree
-   asks it of a node's 56 bytes since walkkit b77223726823 *)
+   asks it of a node's 56 bytes since walkkit *)
 Lemma ev_lam_hull : AR_laws_x segs B ARx hl -> ev_hshadow_law B ARx ->
   forall ly S Hp W mem md Lam peak cnt fail ran most own b m a len,
   ARx ly S Hp W mem md -> prh_ledger B ly S Hp W mem Lam peak cnt fail ran most own ->
@@ -1204,7 +1204,7 @@ Qed.
 (* ---- the callee's fpre at a mid-body call: its arodata_okP half ----
    PRH texts (tex_string_specX, tex_value_specX) take fpre = afn_pre_x /\ arodata_okP (PRH_Base.v:296-298), and the
    caller-window call rule (PRW_CallerJ.v aj_call_xW / aj_call_xWF) supplies only afn_pre_x. The read-only image
-   bytes are untouched by a run whose FP does not open the sink: ajournal_x's image clause (YCbqG.v:155-157) keeps
+   bytes are untouched by a run whose FP does not open the sink: ajournal_x's image clause (YCbqG.v:156-158) keeps
    every image byte outside the owned statics, errno and PST, and a read-only byte is in the image (its segment, or
    pa_relro_img). The one image fact this needs, that no static of PST is read-only, is a premise here; the walk
    discharges it at image A. Used by the ex_string call (SEG 2) and the recursive ex_value call (SEG 4). *)

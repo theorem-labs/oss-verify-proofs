@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -131,7 +132,7 @@ Definition xsputn_cpsA : Prop :=
   rw_cells asegs m OS (sb_cellsA pb (wz 0) (wz 0) dum) -> os_hullA m OS -> pj_os_roA m ->
   rw_cells asegs m S [CB (Z.to_nat CAP) bs] -> 0 <= N <= CAP -> 0 < S -> S + CAP <= lo -> acc asegs m S N -> buf_clsA RT Σ fO kO S CAP ->
   (S + CAP <= OS \/ OS + 288 <= S) ->
-  ART RT Σ m -> mem_inv asegs m -> stk asegs m lo q -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + PJ_OS_XSPUTN_STACK_A <= q ->
+  ART RT Σ m -> mem_inv asegs m -> stk asegs m lo q -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + PJ_OS_XSPUTN_STACK_A <= q ->
   q + 16 <= USTACK_TOP -> q mod 16 = 0 ->
   (forall t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F' m' (pb' pp' ep' : word) (dum' : list byte),
      ART RT Σ m' -> mem_inv asegs m' -> stk asegs m' lo q -> os_hullA m' OS ->

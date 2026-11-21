@@ -4,12 +4,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names, addresses and numbers changed; 2962 of its 3089 lines of code are new or changed and 884 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F36.v; 429 of its 728 lines of code are new or changed and 2790 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/F36.v blob 242c29c887f9 at fdd2ed9f9d7.
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   FACTS, PAU pau-libreac-v190. Source: Seg/F36.v blob 242c29c887f9.
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: each <r>_of_F re-derives F36.<r> at ExecF.RNG_all; <r>_of_F_verbatim checks by constr_eq that its type is
    the type of F36.<r>. Mechanical re-run, route (a) (lead 22:15Z); input to the ported walk only.
    NOTE: the two runs of Seg/F36.v that cross the call of reac_box_catalogue_match at 0x828d4 (f36_evt_call,
@@ -47,7 +48,7 @@
      rng_fp_cm stated at the caller's memory (moved to the normalized one by Seg/F36.v's f36_tls_rel).
    f36_evt_<run>_of_F re-derive Seg/F36.v's Exec.evt statements from the _F lemmas at RNG_all (ExecF.evtF_evt, every
    rng premise by rng_all); each one's statement is, word for word, the statement of the lemma of that name in the v1.9
-   Seg/F36.v (a working branch 7ecd59d267b), which keeps its own run lemmas; for the two call runs the first
+   Seg/F36.v (a working branch), which keeps its own run lemmas; for the two call runs the first
    premise, the callee's plain contract, is replaced by its contract_F (the plain contract does not give the _F one).
 
    The helpers only these runs use (f36_le1_byte, f36_eqb_lit and the branch tactics f36_bad / f36_nt / f36_tk) are

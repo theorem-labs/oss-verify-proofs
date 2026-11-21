@@ -3,7 +3,7 @@
 
 [openssl.org](https://www.openssl.org) · OSS-Fuzz: [projects/openssl](https://github.com/google/oss-fuzz/tree/bd2ce21991a94a362b92fb1bf25f86d5a1a60842/projects/openssl)
 
-**Status: available.** 34 of OSS-Fuzz's 186 fuzz targets have statements. 136 binaries, 739 MB. 442 statements: 62 proved, 0 known false, 0 suspected false, 21 blocked by the model, 359 open.
+**Status: available.** 34 of OSS-Fuzz's 186 fuzz targets have statements. 136 binaries, 739 MB. 442 statements: 83 proved, 0 known false, 0 suspected false, 21 blocked by the model, 338 open.
 
 Built from openssl (commit `47aae188`).
 
@@ -13,22 +13,22 @@ Built from openssl (commit `47aae188`).
 | [acert](acert/) | d2i_X509_ACERT, X509_ACERT_print to a null BIO, i2d_X509_ACERT; the re-encoding is freed without comparison. | none | 13 |
 | [asn1](asn1/) | For 144 ASN.1 item types (111 unconditional, 33 under OPENSSL_NO_CMS/OCSP/RFC3779/DH/EC/DEPRECATED_3_0 guards that the default Configure leaves enabled) plus TS/ESS/DH/DSA/RSA/EC/EVP_PKEY/SSL_SESSION d2i functions: d2i, print to a null BIO, i2d; outputs discarded (a d2i->i2d shape with no comparison). | none | 13 |
 | [asn1parse](asn1parse/) | ASN1_parse_dump() of the input to a null BIO; result cast to void. | none | 13 |
-| [bignum](bignum/) | Checks one property, a differential check: BN_mod_exp (optimised) vs BN_mod_exp_simple (reference) on the same a, b, m decoded from the input; a mismatch only prints the five numbers to stdout and the function still returns 0 (the OPENSSL_assert(success) was removed by c263ea553c, 2026-07-15). | 1 check (differential; 0 confirmed in the binary) | 13, 10 proved |
-| [bndiv](bndiv/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 13, 10 proved |
+| [bignum](bignum/) | Checks one property, a differential check: BN_mod_exp (optimised) vs BN_mod_exp_simple (reference) on the same a, b, m decoded from the input; a mismatch only prints the five numbers to stdout and the function still returns 0 (the OPENSSL_assert(success) was removed by c263ea553c, 2026-07-15). | 1 check (differential; 0 confirmed in the binary) | 13, 13 proved |
+| [bndiv](bndiv/) | No summary of this harness is recorded yet; its checks, if any, are listed below. | none | 13, 13 proved |
 | [client](client/) | TLS client handshake over a memory BIO fed the input, then SSL_read until error; nothing compared. | none | 13 |
 | [cmp](cmp/) | d2i_OSSL_CMP_MSG_bio, i2d + ASN1_item_print to a null BIO, then client-side ossl_cmp_msg_check_update and a CMP server processing the message with stub callbacks; results discarded. | none | 13 |
 | [cms](cms/) | d2i_CMS_bio then i2d_CMS_bio to a null BIO; re-encoding not compared. | none | 13 |
 | [conf](conf/) | NCONF_load_bio() on the input; result ignored. | none | 13 |
 | [crl](crl/) | d2i_X509_CRL, X509_CRL_print to a null BIO, i2d_X509_CRL; not compared. | none | 13 |
-| [ct](ct/) | d2i_SCT_LIST, SCT_LIST_print, i2d_SCT_LIST; re-encoding not compared. | none | 13, 6 proved |
+| [ct](ct/) | d2i_SCT_LIST, SCT_LIST_print, i2d_SCT_LIST; re-encoding not compared. | none | 13, 10 proved |
 | [decoder](decoder/) | OSSL_DECODER_from_data into an EVP_PKEY, print public/private/params, EVP_PKEY_dup + EVP_PKEY_eq(pkey, dup) with the result IGNORED, then param/public/private/pairwise checks with results ignored. | none | 13 |
 | [dtlsclient](dtlsclient/) | DTLS client handshake over memory BIOs, SSL_read loop; nothing compared. | none | 13 |
 | [dtlsserver](dtlsserver/) | DTLS server with fixed RSA/ECDSA/DSA keys and certs, handshake + SSL_read loop over the input; nothing compared. | none | 13 |
-| [echconfiglist_parser](echconfiglist_parser/) | OSSL_ECHSTORE_read_echconfiglist on the raw input and again on a copy whose length/version header is patched to pass the first checks; results ignored. | none | 13, 10 proved |
-| [hashtable](hashtable/) | Checks 3 properties (listed below); the first, a reference oracle: OP_FOREACH: ossl_ht_foreach_until finds the key's value iff the prediction table marks it allocated; OP_FILTER: ossl_ht_filter returns exactly 0 or 1 matching value as predicted. Only an empty table in a single-input run. | 1 check (reference-oracle; all confirmed in the binary) | 13, 6 proved |
+| [echconfiglist_parser](echconfiglist_parser/) | OSSL_ECHSTORE_read_echconfiglist on the raw input and again on a copy whose length/version header is patched to pass the first checks; results ignored. | none | 13, 13 proved |
+| [hashtable](hashtable/) | Checks 3 properties (listed below); the first, a reference oracle: OP_FOREACH: ossl_ht_foreach_until finds the key's value iff the prediction table marks it allocated; OP_FILTER: ossl_ht_filter returns exactly 0 or 1 matching value as predicted. Only an empty table in a single-input run. | 1 check (reference-oracle; all confirmed in the binary) | 13, 10 proved |
 | [ml-dsa](ml-dsa/) | Raw-key import from input bytes, keygen, todata/fromdata export-import (result unchecked), EVP_PKEY_eq(alice, alice)/(alice, bob) with results ignored. | none | 13, 7 blocked by the model |
 | [ml-kem](ml-kem/) | Key exchange op derives both ways but explicitly does not compare ("TODO add check of shared secrets"); export/import and EVP_PKEY_eq results ignored. | 1 check (roundtrip; 0 confirmed in the binary) | 13, 7 blocked by the model |
-| [pem](pem/) | PEM_read_bio_ex with flags from byte 0; on success writes the parts back into a BIO to touch the allocations; nothing compared. | none | 13, 7 proved |
+| [pem](pem/) | PEM_read_bio_ex with flags from byte 0; on success writes the parts back into a BIO to touch the allocations; nothing compared. | none | 13, 11 proved |
 | [pkcs12](pkcs12/) | d2i_PKCS12_bio, PKCS12_verify_mac with NULL and "" passwords, PKCS12_parse with NULL and ""; results ignored. | none | 13 |
 | [pkcs7_verify](pkcs7_verify/) | d2i_PKCS7 then PKCS7_verify(PKCS7_NOVERIFY) with the trailing bytes as detached content; result ignored. | none | 13 |
 | [provider](provider/) | Picks a digest/cipher/KDF/MAC/RAND algorithm from all providers by input index, fills its settable params from the input, runs a fixed operation; sig/asym/KEM/keyexch/keymgmt ops are stubs returning 0; results ignored. | none | 13 |
@@ -107,28 +107,41 @@ By hand: download `openssl-bin.tar.zst` from release [v2026.10.0](https://github
 | [openssl/bignum/asan_ubsan_disagrees_at_most](bignum/proofs/asan_ubsan_disagrees_at_most) | proved |
 | [openssl/bignum/asan_ubsan_halts](bignum/proofs/asan_ubsan_halts) | proved |
 | [openssl/bignum/plain_halts](bignum/proofs/plain_halts) | proved |
+| [openssl/bignum/ubsan_agreement_decidable](bignum/proofs/ubsan_agreement_decidable) | proved |
 | [openssl/bignum/ubsan_agrees](bignum/proofs/ubsan_agrees) | proved |
+| [openssl/bignum/ubsan_disagrees_at_most](bignum/proofs/ubsan_disagrees_at_most) | proved |
+| [openssl/bignum/ubsan_halts](bignum/proofs/ubsan_halts) | proved |
 | [openssl/bndiv/asan_agreement_decidable](bndiv/proofs/asan_agreement_decidable) | proved |
 | [openssl/bndiv/asan_agrees](bndiv/proofs/asan_agrees) | proved |
 | [openssl/bndiv/asan_disagrees_at_most](bndiv/proofs/asan_disagrees_at_most) | proved |
 | [openssl/bndiv/asan_halts](bndiv/proofs/asan_halts) | proved |
+| [openssl/bndiv/asan_ubsan_agreement_decidable](bndiv/proofs/asan_ubsan_agreement_decidable) | proved |
 | [openssl/bndiv/asan_ubsan_agrees](bndiv/proofs/asan_ubsan_agrees) | proved |
+| [openssl/bndiv/asan_ubsan_disagrees_at_most](bndiv/proofs/asan_ubsan_disagrees_at_most) | proved |
+| [openssl/bndiv/asan_ubsan_halts](bndiv/proofs/asan_ubsan_halts) | proved |
 | [openssl/bndiv/plain_halts](bndiv/proofs/plain_halts) | proved |
 | [openssl/bndiv/ubsan_agreement_decidable](bndiv/proofs/ubsan_agreement_decidable) | proved |
 | [openssl/bndiv/ubsan_agrees](bndiv/proofs/ubsan_agrees) | proved |
 | [openssl/bndiv/ubsan_disagrees_at_most](bndiv/proofs/ubsan_disagrees_at_most) | proved |
 | [openssl/bndiv/ubsan_halts](bndiv/proofs/ubsan_halts) | proved |
+| [openssl/ct/asan_agreement_decidable](ct/proofs/asan_agreement_decidable) | proved |
 | [openssl/ct/asan_agrees](ct/proofs/asan_agrees) | proved |
+| [openssl/ct/asan_disagrees_at_most](ct/proofs/asan_disagrees_at_most) | proved |
 | [openssl/ct/asan_ubsan_agreement_decidable](ct/proofs/asan_ubsan_agreement_decidable) | proved |
 | [openssl/ct/asan_ubsan_agrees](ct/proofs/asan_ubsan_agrees) | proved |
 | [openssl/ct/asan_ubsan_disagrees_at_most](ct/proofs/asan_ubsan_disagrees_at_most) | proved |
 | [openssl/ct/asan_ubsan_halts](ct/proofs/asan_ubsan_halts) | proved |
+| [openssl/ct/ubsan_agreement_decidable](ct/proofs/ubsan_agreement_decidable) | proved |
 | [openssl/ct/ubsan_agrees](ct/proofs/ubsan_agrees) | proved |
+| [openssl/ct/ubsan_disagrees_at_most](ct/proofs/ubsan_disagrees_at_most) | proved |
 | [openssl/echconfiglist_parser/asan_agreement_decidable](echconfiglist_parser/proofs/asan_agreement_decidable) | proved |
 | [openssl/echconfiglist_parser/asan_agrees](echconfiglist_parser/proofs/asan_agrees) | proved |
 | [openssl/echconfiglist_parser/asan_disagrees_at_most](echconfiglist_parser/proofs/asan_disagrees_at_most) | proved |
 | [openssl/echconfiglist_parser/asan_halts](echconfiglist_parser/proofs/asan_halts) | proved |
+| [openssl/echconfiglist_parser/asan_ubsan_agreement_decidable](echconfiglist_parser/proofs/asan_ubsan_agreement_decidable) | proved |
 | [openssl/echconfiglist_parser/asan_ubsan_agrees](echconfiglist_parser/proofs/asan_ubsan_agrees) | proved |
+| [openssl/echconfiglist_parser/asan_ubsan_disagrees_at_most](echconfiglist_parser/proofs/asan_ubsan_disagrees_at_most) | proved |
+| [openssl/echconfiglist_parser/asan_ubsan_halts](echconfiglist_parser/proofs/asan_ubsan_halts) | proved |
 | [openssl/echconfiglist_parser/plain_halts](echconfiglist_parser/proofs/plain_halts) | proved |
 | [openssl/echconfiglist_parser/ubsan_agreement_decidable](echconfiglist_parser/proofs/ubsan_agreement_decidable) | proved |
 | [openssl/echconfiglist_parser/ubsan_agrees](echconfiglist_parser/proofs/ubsan_agrees) | proved |
@@ -138,15 +151,23 @@ By hand: download `openssl-bin.tar.zst` from release [v2026.10.0](https://github
 | [openssl/hashtable/asan_agrees](hashtable/proofs/asan_agrees) | proved |
 | [openssl/hashtable/asan_disagrees_at_most](hashtable/proofs/asan_disagrees_at_most) | proved |
 | [openssl/hashtable/asan_halts](hashtable/proofs/asan_halts) | proved |
+| [openssl/hashtable/asan_ubsan_agreement_decidable](hashtable/proofs/asan_ubsan_agreement_decidable) | proved |
 | [openssl/hashtable/asan_ubsan_agrees](hashtable/proofs/asan_ubsan_agrees) | proved |
+| [openssl/hashtable/asan_ubsan_disagrees_at_most](hashtable/proofs/asan_ubsan_disagrees_at_most) | proved |
+| [openssl/hashtable/ubsan_agreement_decidable](hashtable/proofs/ubsan_agreement_decidable) | proved |
 | [openssl/hashtable/ubsan_agrees](hashtable/proofs/ubsan_agrees) | proved |
+| [openssl/hashtable/ubsan_disagrees_at_most](hashtable/proofs/ubsan_disagrees_at_most) | proved |
+| [openssl/pem/asan_agreement_decidable](pem/proofs/asan_agreement_decidable) | proved |
 | [openssl/pem/asan_agrees](pem/proofs/asan_agrees) | proved |
+| [openssl/pem/asan_disagrees_at_most](pem/proofs/asan_disagrees_at_most) | proved |
 | [openssl/pem/asan_ubsan_agreement_decidable](pem/proofs/asan_ubsan_agreement_decidable) | proved |
 | [openssl/pem/asan_ubsan_agrees](pem/proofs/asan_ubsan_agrees) | proved |
 | [openssl/pem/asan_ubsan_disagrees_at_most](pem/proofs/asan_ubsan_disagrees_at_most) | proved |
 | [openssl/pem/asan_ubsan_halts](pem/proofs/asan_ubsan_halts) | proved |
 | [openssl/pem/plain_halts](pem/proofs/plain_halts) | proved |
+| [openssl/pem/ubsan_agreement_decidable](pem/proofs/ubsan_agreement_decidable) | proved |
 | [openssl/pem/ubsan_agrees](pem/proofs/ubsan_agrees) | proved |
+| [openssl/pem/ubsan_disagrees_at_most](pem/proofs/ubsan_disagrees_at_most) | proved |
 | [openssl/punycode/asan_agreement_decidable](punycode/proofs/asan_agreement_decidable) | proved |
 | [openssl/punycode/asan_agrees](punycode/proofs/asan_agrees) | proved |
 | [openssl/punycode/asan_disagrees_at_most](punycode/proofs/asan_disagrees_at_most) | proved |

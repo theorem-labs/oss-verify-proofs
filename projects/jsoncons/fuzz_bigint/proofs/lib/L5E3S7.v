@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the auxv cells, which these steps do not use, are no longer read (auxv_cells). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp.bitvector Require Import definitions.
@@ -298,7 +299,6 @@ Proof.
   (* [comment removed for export] *)
   pose proof ES10 as (S_1 & S_2 & S_3 & S_4 & S_5 & S_6 & S_7 & S_8 & S_9 & S_10 & S_11 & S_12 & S_13 & S_14 & S_15 & S_16 & S_17 & S_18 & S_19 & S_20 & S_21 & S_22 & S_23 & S_24 & S_25).
   unfold EH_CAUGHT, EH_UNCAUGHT, SYSCAT_GUARD, UW_FLAGS, TD_LOCALE, LOCALE_MSGCAT, GLOBAL_LOCALE, CANARY, AUXVP in S_1, S_2, S_3, S_4, S_5, S_6, S_7, S_8, S_9, S_10, S_11, S_12, S_13, S_14.
-  pose proof (auxv_cells M10 av uid rnd hw S_18) as (X_0 & X_1 & X_2 & X_3 & X_4 & X_5 & X_6 & X_7 & X_8 & X_9 & X_10 & X_11 & X_12 & X_13 & X_14 & X_15 & X_16 & X_17 & X_18 & X_19).
   unshelve epose proof (e3p1_conc fx10 R10 M10 (S - 896) (A + 128) msg _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)
     as (fx11 & R11 & M11 & MS11 & K11 & R11_1 & R11_2 & R11_9 & R11_10 & R11_11 & FR11 & GR11).
   { (* [comment removed for export] *) pr. }
@@ -468,7 +468,7 @@ Proof.
     exact GR11.
     constructor. apply L5PK.wr_scratch; lia.
     constructor. }
-  clear X_0 X_1 X_2 X_3 X_4 X_5 X_6 X_7 X_8 X_9 X_10 X_11 X_12 X_13 X_14 X_15 X_16 X_17 X_18 X_19 S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20 S_21 S_22 S_23 S_24 S_25. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
+  clear S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20 S_21 S_22 S_23 S_24 S_25. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
   clear AG11 FR11 MS11. try clear STAT11. try clear K10.
   try clear c10_Sm840. try clear c10_Sm848. try clear c10_Sm856. try clear c10_Sm864. try clear c10_Sm872. try clear c10_Sm776. try clear c10_Sm784. try clear c10_Sm792. try clear c10_Sm800. try clear c10_Sm472. try clear c10_Sm480. try clear c10_Sm488. try clear c10_Sm496. try clear c10_Sm504. try clear c10_Sm512. try clear c10_Sm520. try clear c10_Sm528. try clear c10_Sm536. try clear c10_Sm544. try clear c10_Sm552. try clear c10_Sm560. try clear c10_Sm568. try clear c10_Sm424. try clear c10_Sm432. try clear c10_Sm360. try clear c10_Sm368. try clear c10_Sm376. try clear c10_Sm56. try clear c10_Sm64. try clear c10_Sm72. try clear c10_Sm80. try clear c10_Sm88. try clear c10_Sm96. try clear c10_Sm104. try clear c10_Sm112. try clear c10_Sm120. try clear c10_Sm128. try clear c10_Sm136. try clear c10_Sm144. try clear c10_Sm152. try clear c10_Sm8. try clear c10_Sm16. try clear c10_Sm696w1. try clear c10_Sm664w1. try clear c10_Sm640. try clear c10_Sm648. try clear c10_Sm632w1. try clear c10_Sm608. try clear c10_Sm616. try clear c10_Sm600w1. try clear c10_Sm464w1. try clear c10_Sm408w1. try clear c10_Sm280w1. try clear c10_Sm248w1. try clear c10_Sm216w1. try clear c10_Sm192. try clear c10_Sm200. try clear c10_Sm184w1. try clear c10_Sm160. try clear c10_Sm168. try clear c10_Sm48w1. try clear c10_Om128z8. try clear c10_Om80z12. try clear c10_Gp41w1. try clear c10_Gp0. try clear c10_Gp8. try clear c10_Gp16. try clear c10_Gp24. try clear c10_Gp32. try clear c10_Gp40w1. try clear c10_Sm880. try clear c10_Sm888. try clear c10_Sm896. try clear c10_Op0. try clear c10_Op8. try clear c10_Fp24. try clear c10_Fp32. try clear c10_Fp40. try clear c10_Fp48. try clear c10_Fp56. try clear c10_Fp64w1. try clear c10_Fp65w1. try clear c10_Fp16w4. try clear c10_Fp8. try clear c10_Fp0. try clear c10_Om8. try clear c10_Om40. try clear c10_Om48. try clear c10_Om56. try clear c10_Om64. try clear c10_Om68w4. try clear c10_Om16. try clear c10_Om120. try clear c10_Om24. try clear c10_Om32. try clear c10_Om88. try clear c10_Om104. try clear c10_Om112. try clear c10_Om96. try clear R10_1. try clear R10_2. try clear R10_3. try clear R10_4. try clear R10_8. try clear R10_9. try clear R10_10. try clear R10_11. try clear R10_12. try clear R10_18. try clear R10_19. try clear R10_20. try clear DEF10. try clear HH10. try clear HQ10. try clear ES10. try clear DEFref_10. try clear DEFmsg_10. try clear DEFA_10. try clear DEFd1_10. try clear DEFd2_10. try clear DEFd3_10. try clear DEFd4_10.
   (* [comment removed for export] *)

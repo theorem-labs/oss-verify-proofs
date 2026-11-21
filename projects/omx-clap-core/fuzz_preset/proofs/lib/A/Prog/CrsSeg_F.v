@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumA.v, with its module paths and module names changed; 396 of its 438 lines of code are new or changed and 736 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image A' (the #102 pins): row CR-F of the walk of check_reject_clean_starved against the text
    tcheck_reject_clean_starved_specX, the segment F (+680, A' 0x82408 .. 0x82410): `mv a0, s7` then `jal fuzz_free`,
    whose return site 0x82410 is R's entry (CrsKitAp.crs_pc_R_ret). The closing lemma crs_seg_F proves the kit's
@@ -11,14 +12,14 @@
    or lib/B, its released rows were lib/Prog (plain) and lib/U/Prog (ubsan) only, and no released asan
    Proof.v existed for check_reject_clean_starved). Written new.
    INPUTS.
-   - Pin A' asan sha256 1be0f53d96cb9d6c (harness.yaml of release/fuzz-preset-ran-out-pins 8f3e7e1a07f1).
-   - Listing lib/A/Listing_prog.v blob 7ed1529926bd + lib/A/PAImg_prog.v blob 505a51ff7d08 (h-verbs-1 listings v3,
-     cold/h-verbs-1-listing-pins102 74dcda1eda12); entry 0x82160 = slot 736 (A_entry_check_reject_clean_starved); F
+   - Pin A' asan sha256 1be0f53d96cb9d6c (harness.yaml).
+   - Listing lib/A/Listing_prog.v blob 7ed1529926bd + lib/A/PAImg_prog.v blob 505a51ff7d08 (h-verbs-1 listings v3);
+     entry 0x82160 = slot 736 (A_entry_check_reject_clean_starved); F
      is slots 906 / 907.
    - The text: tcheck_reject_clean_starved_specX in lib/A/PRH_FnCheck.v blob 9ecd8eb167c6, with lib/A/PRH_Base.v blob
-     fdb45545469b (the kit tip of record f97c8b2f046b, by path; its fpre ends with frm_zero (fp_csr fx),
+     fdb45545469b (the kit tip of record, by path; its fpre ends with frm_zero (fp_csr fx),
      supplied at the call from crs_base's frm_zero (fp_csr fxk)), through the kit v4 lib/A/Prog/CrsKitAp.v blob
-     b66ea3390c64 (kit commit 698a4dc55979); the callee: fuzz_free (NULL)
+     b66ea3390c64 (kit); the callee: fuzz_free (NULL)
      through the walk's shared interim lib/A/Prog/CrsFree0Ap.v blob 79d50622a638 (crs_free0 = tfuzz_free_specX of
      lib/A/PRH_FnAlloc.v blob 83fe93bc86e2 at p = 0, no position, no class-24 bound), called at most = c_most C and
      own = 0, the boundary ledger's two cells (crs_core's `LEDGER .. ran3 (c_most C) 0`), which its post keeps.

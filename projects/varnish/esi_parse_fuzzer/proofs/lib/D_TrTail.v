@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack-window row of knL/knTL and the window lemmas stk_ok_of_win/stk_of_win over the 6144512 bytes below sp0 that main_entry's window certifies, base_ok over the entry draw, and the channel-reader premise of the pending stdout flush at exit), as bzip2/bzip2_compress_target's main phase was. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -158,15 +159,16 @@ Section P0.
   Proof. intros x Hx. apply (as_find_segment_above (L:=LayoutP0)). cbn [al_image_hi LayoutP0]. exact Hx. Qed.
 
   (* [comment removed for export] *)
+  (* LPS 727298f3: main_entry's window row is the 6144512 bytes below sp0 ([D_Manqc.kn_stack]) *)
   Lemma stk_ok_of_win : forall vals ebs M kn iw (sp : word) K,
     know_ok RSEGS (Env (vals_ev vals) ebs) M kn ->
-    nth_error kn iw = Some (KWr (SA (EVar 0) (-8388608)) 8388608) ->
-    (bv_unsigned (vals_ev vals 0) - 8388608 <= bv_unsigned sp - K)%Z -> (bv_unsigned sp <= bv_unsigned (vals_ev vals 0))%Z -> (0 <= K)%Z ->
+    nth_error kn iw = Some (KWr (SA (EVar 0) (-6144512)) 6144512) ->
+    (bv_unsigned (vals_ev vals 0) - 6144512 <= bv_unsigned sp - K)%Z -> (bv_unsigned sp <= bv_unsigned (vals_ev vals 0))%Z -> (0 <= K)%Z ->
     stk_ok RSEGS M sp K.
   Proof.
     intros vals ebs M kn iw sp K HK Hn H1 H2 HK0 a n Ha Hn2.
     pose proof (u64_range (vals_ev vals 0)) as H0. pose proof (u64_range a) as Hau.
-    pose proof (kwr_store_ok RSEGS _ M kn iw (EVar 0) (-8388608) 8388608 (bv_unsigned a - bv_unsigned (vals_ev vals 0)) n HK Hn
+    pose proof (kwr_store_ok RSEGS _ M kn iw (EVar 0) (-6144512) 6144512 (bv_unsigned a - bv_unsigned (vals_ev vals 0)) n HK Hn
                   ltac:(lia) ltac:(lia)) as ST.
     unfold adenot, v_addi in ST. cbn [a_base a_off edenot ev] in ST.
     replace (bv_unsigned (vals_ev vals 0) + (bv_unsigned a - bv_unsigned (vals_ev vals 0)))%Z with (bv_unsigned a) in ST by lia.
@@ -176,14 +178,14 @@ Section P0.
   (* [comment removed for export] *)
   #[using="AI Clg"] Lemma stk_of_win : forall vals ebs M kn iw lo hi,
     know_ok RSEGS (Env (vals_ev vals) ebs) M kn ->
-    nth_error kn iw = Some (KWr (SA (EVar 0) (-8388608)) 8388608) ->
-    (bv_unsigned (vals_ev vals 0) - 8388608 <= lo)%Z -> (lo <= hi)%Z -> (hi <= bv_unsigned (vals_ev vals 0))%Z -> (0x63000 <= lo)%Z ->
+    nth_error kn iw = Some (KWr (SA (EVar 0) (-6144512)) 6144512) ->
+    (bv_unsigned (vals_ev vals 0) - 6144512 <= lo)%Z -> (lo <= hi)%Z -> (hi <= bv_unsigned (vals_ev vals 0))%Z -> (0x63000 <= lo)%Z ->
     Frame.stk RSEGS M lo hi.
   Proof.
     intros vals ebs M kn iw lo hi HK Hn H1 H2 H3 H4.
     pose proof (u64_range (vals_ev vals 0)) as H0.
     split; [lia|]. split; [lia|]. intros a Ha.
-    pose proof (kwr_store_ok RSEGS _ M kn iw (EVar 0) (-8388608) 8388608 (a - bv_unsigned (vals_ev vals 0)) 1 HK Hn
+    pose proof (kwr_store_ok RSEGS _ M kn iw (EVar 0) (-6144512) 6144512 (a - bv_unsigned (vals_ev vals 0)) 1 HK Hn
                   ltac:(lia) ltac:(cbn; lia)) as ST.
     unfold adenot, v_addi in ST. cbn [a_base a_off edenot ev] in ST.
     replace (bv_unsigned (vals_ev vals 0) + (a - bv_unsigned (vals_ev vals 0)))%Z with a in ST by lia.
@@ -343,8 +345,8 @@ Section P0.
   Lemma knL_lib_kimg : kimg_within (kn_keep knL RS_lib) 0x10000 0x63000 = true.
   Proof. vm_compute. reflexivity. Qed.
   (* [comment removed for export] *)
-  Definition knL_iw : nat := Eval vm_compute in match kindex (is_kwr_cov (EVar 0) (-8388608) 8388608) knL 0 with Some i => i | None => 0%nat end.
-  Lemma knL_win : nth_error knL knL_iw = Some (KWr (SA (EVar 0) (-8388608)) 8388608). Proof. vm_compute. reflexivity. Qed.
+  Definition knL_iw : nat := Eval vm_compute in match kindex (is_kwr_cov (EVar 0) (-6144512) 6144512) knL 0 with Some i => i | None => 0%nat end.
+  Lemma knL_win : nth_error knL knL_iw = Some (KWr (SA (EVar 0) (-6144512)) 6144512). Proof. vm_compute. reflexivity. Qed.
   Definition knL_dwi : nat := Eval vm_compute in match kindex (is_kwr_cov (ELit 0) 0x31000 0x32000) knL 0 with Some i => i | None => 0%nat end.   (* [comment removed for export] *)
 
   Lemma RS_lib_flat : forall vals ebs,
@@ -518,8 +520,10 @@ Local Ltac lia ::= OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib.Diet8z6.dli
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
-Definition knTL_iw : nat := Eval vm_compute in match kindex (is_kwr_cov (EVar 0) (-8388608) 8388608) knTL 0 with Some i => i | None => 0%nat end.
-Lemma knTL_win : nth_error knTL knTL_iw = Some (KWr (SA (EVar 0) (-8388608)) 8388608). Proof. vm_compute. reflexivity. Qed.
+(* LPS 727298f3: main_entry's window row is the 6144512 bytes below sp0 ([D_Manqc.kn_stack]).
+   [knL_win] and [knTL_win] check that knL and knTL carry that row unchanged. *)
+Definition knTL_iw : nat := Eval vm_compute in match kindex (is_kwr_cov (EVar 0) (-6144512) 6144512) knTL 0 with Some i => i | None => 0%nat end.
+Lemma knTL_win : nth_error knTL knTL_iw = Some (KWr (SA (EVar 0) (-6144512)) 6144512). Proof. vm_compute. reflexivity. Qed.
 Lemma knTL_free_incl : kn_incl knTL (kn_keep2 knTL (RS_call (-128) FREE_STACK) VICT ++ [kwr_data]) = true.
 Proof. vm_compute. reflexivity. Qed.
 
@@ -625,7 +629,7 @@ Section Tail.
 
   (* [comment removed for export] *)
   #[using="HCEIL Hvsp"] Theorem tail_free : forall vals R M (md : Model) A (b n0 v : Z) (wp2 rp2 : word) (pending : list byte) (areg : bool),
-    base_ok sp0 a0s path envv tid vals -> regs_ok (ENV a0s path rdraw vals) srX1 R ->
+    base_ok sp0 a0s path envv rdraw tid vals -> regs_ok (ENV a0s path rdraw vals) srX1 R ->
     vals_ev vals 20 = Z_to_bv 64 b -> vals_ev vals 24 = Z_to_bv 64 v -> (0 <= v < 256)%Z ->
     know_ok RSEGS (ENV a0s path rdraw vals) M knTL ->
     ainv A M md -> a_live A b = Some n0 -> Mem.mem_inv RSEGS M ->
@@ -633,7 +637,8 @@ Section Tail.
     ( (pending = [] /\ exists wp1 rp1, file_clean M 0x31698 wp1 rp1)
       \/ (exists (wb wp : Z) (bufp bufsz rp1 can : word),
             stdout_pending M wb wp bufp bufsz rp1 can pending /\ (0x62804 <= wb)%Z
-            /\ fd_lookup (m_fds md) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))) ) ->
+            /\ fd_lookup (m_fds md) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))
+            /\ m_channel_reader md = true) ) ->   (* LPS 727298f3: the stdout flush needs a reading far end *)
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x22e84) M (seg_rom RSEGS)) md)
              (t_emit (W 1 pending) (t_exit (exit_code v) (m_fs md))).
   Proof.
@@ -704,16 +709,17 @@ Section Tail.
       + krd_solve HK.   (* [comment removed for export] *)
       + OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib.AndN.rsplit; krd_solve HK.
       + apply (file_clean_zone M M1); [exact DZ| lia| lia| exact ERR].
-    - destruct OUT as [[-> (wp1 & rp1 & FC)] | (wb & wp & bufp & bufsz & rp1 & can & SP & Hwb & FD1)].
+    - destruct OUT as [[-> (wp1 & rp1 & FC)] | (wb & wp & bufp & bufsz & rp1 & can & SP & Hwb & FD1 & RD1)].
       + left. split; [reflexivity|]. exists wp1, rp1. apply (file_clean_zone M M1); [exact DZ| lia| lia| exact FC].
-      + right. exists wb, wp, bufp, bufsz, rp1, can. split.
+      + right. exists wb, wp, bufp, bufsz, rp1, can. split; [|split].
         * apply (stdout_pending_zone M M1); [exact DZ| exact Hwb| exact SP].
         * destruct MF1 as (FD & _). unfold m_fds. rewrite FD. exact FD1.
+        * destruct MF1 as (_ & _ & _ & PR & _). unfold m_channel_reader. rewrite PR. exact RD1.
   Qed.
 
   (* [comment removed for export] *)
   #[using="HCEIL Hvsp"] Theorem tail_exit : forall vals R M (md : Model) A (b n0 v : Z) (wp2 rp2 : word) (pending : list byte) (areg : bool),
-    base_ok sp0 a0s path envv tid vals -> junk_at vals R ->
+    base_ok sp0 a0s path envv rdraw tid vals -> junk_at vals R ->
     getr R 2 = Z_to_bv 64 (bv_unsigned sp0 - 128) -> getr R 3 = Z_to_bv 64 0x10800 -> getr R 4 = Z_to_bv 64 0x42158 ->
     vals_ev vals 20 = Z_to_bv 64 b -> vals_ev vals 24 = Z_to_bv 64 v -> (0 <= v < 256)%Z ->
     getr R 8 = Z_to_bv 64 v -> getr R 9 = Z_to_bv 64 b ->
@@ -723,7 +729,8 @@ Section Tail.
     ( (pending = [] /\ exists wp1 rp1, file_clean M 0x31698 wp1 rp1)
       \/ (exists (wb wp : Z) (bufp bufsz rp1 can : word),
             stdout_pending M wb wp bufp bufsz rp1 can pending /\ (0x62804 <= wb)%Z
-            /\ fd_lookup (m_fds md) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))) ) ->
+            /\ fd_lookup (m_fds md) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))
+            /\ m_channel_reader md = true) ) ->   (* LPS 727298f3: the stdout flush needs a reading far end *)
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x17d58) M (seg_rom RSEGS)) md)
              (t_emit (W 1 pending) (t_exit (exit_code v) (m_fs md))).
   Proof.

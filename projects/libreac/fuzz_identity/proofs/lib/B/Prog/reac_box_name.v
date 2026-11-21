@@ -6,6 +6,7 @@
    [Apache-2.0 OR MIT]; projects/cgif/cgif_rgb_fuzzer/proofs/lib/YC4t.v:438 [Apache-2.0 OR MIT], for libreac/fuzz_identity's
    asan-ubsan build (lib/B). The [Apache-2.0 OR MIT] text is used under Apache-2.0. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/B/Prog/reac_identity_ingest.v, with its module paths and module names changed; 131 of its 168 lines of code are new or changed and 3028 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_box_name (fuzz_identity.asan-ubsan 0x82d74, 0x85c bytes, listing offset AF_reac_box_name = 0x2600): its
    ASan+UBSan-build contract treac_box_name_spec, in the afn_pre / apost_base form (CONVENTIONS.md section 3;
    cgif lib/A/AChd.v:82-105, lib/YC7x.v:72-101): the call writes only its own stack window, its own class-3
@@ -55,7 +56,7 @@ From OSSVerify.Proofs.libreac.fuzz_identity.lib.B.Prog Require Import reac_box_n
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.B.Prog Require Import
 reac_box_name_seg_entry reac_box_name_seg_mid reac_box_name_seg_cp reac_box_name_seg_tok reac_box_name_seg_lit
 reac_box_name_seg_rel.
-(* The plain model of reac_box_name (released, origin/ossv/recipes c8557374ad2e), used as it is. *)
+(* The plain model of reac_box_name (released), used as it is. *)
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Prog Require Import disco_box_name_model.
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Prog Require reac_box_name_c.
 Import ListNotations.
@@ -229,7 +230,7 @@ End h.
 End f.
 End d.
 (* The predicates that moved to reac_box_name_inv.v, re-exported under their earlier names (files on the
-   integration tip cite them as reac_box_name.<name>, e.g. lib/B/Prog/LLVMFuzzerTestOneInput.v:261-274). *)
+   integration tip cite them as reac_box_name.<name>, e.g. lib/B/Prog/LLVMFuzzerTestOneInput.v:262-275). *)
 Notation rbn_fp := reac_box_name_inv.rbn_fp (only parsing).
 Notation rbn_cstr := reac_box_name_inv.rbn_cstr (only parsing).
 Notation rbn_glob := reac_box_name_inv.rbn_glob (only parsing).

@@ -4,10 +4,11 @@
    inner loop's body (fuzz_reply.asan-ubsan 0x82f08 and gesture_end's return 0x82f6c; B's register map, lib/B/W_traps.v
    seat recipe R1-R5).  Proves no function (kind: segment lemma). *)
 (* Modified by Theorem Labs, 2026-10: ROUTE (b), STEP 3 (CONVERSION.md (sha256 1015972e02a9; internal record); the image-A twin is
-   a Theorem Labs lane's RIG_x round, commit f4cd818e98d, lib/A/W_rig_key.v's rk_shok / rk_st_gen): the seats over any allocator
+   a Theorem Labs lane's RIG_x round, lib/A/W_rig_key.v's rk_shok / rk_st_gen): the seats over any allocator
    relation ARx, against the cx file's generic Section (copied below).  Each seat reads its allocator state at the
    empty head set (HP0: ARh below, the image-A twin's technique, with Local helpers): the block facts by alx_blocks and
    BLKN (rk_alb), the shadow ranges by W_journal_x.v range_addressable_of_block_hp0_x (rk_rab). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -237,7 +238,7 @@ Hypothesis PSTG : forall a,
 
 #[local] Set Default Proof Using "All".
 
-(* ==== the generic relation at the empty head set (the image-A twin's lib/A/W_rig_key.v:236-280; Local here, as every
+(* ==== the generic relation at the empty head set (the image-A twin's lib/A/W_rig_key.v:237-281; Local here, as every
    key file that needs them defines its own) ==== *)
 (* HP0: every ARx state a seat reads has the head set [], so the seats state it at ARh (= ARx at []).  rk_alb is
    AR_blocks_law's seven conjuncts (alx_blocks' six and BLKN), in the AR walk's argument order. *)
@@ -612,7 +613,7 @@ Hypothesis GE_R : ge_spec_xR B PST ARx R MT RP MMAX RG (BASE + AF_fr_gesture_end
 (* every lemma below takes the Section's hypotheses except the strict AFREE / DRAIN / GE / ALLOC_TAIL and R_refl /
    DRAIN_R (KEY needs none of them), so no route-R statement here carries a strict allocator rule *)
 #[local] Set Default Proof Using "-(AFREE DRAIN GE ALLOC_TAIL R_refl DRAIN_R)".
-(* ==== the generic relation at the empty head set (the image-A twin's lib/A/W_rig_key.v:236-280; Local here, as every
+(* ==== the generic relation at the empty head set (the image-A twin's lib/A/W_rig_key.v:237-281; Local here, as every
    key file that needs them defines its own) ==== *)
 (* HP0: every ARx state a seat reads has the head set [], so the seats state it at ARh (= ARx at []).  rk_alb_xR is
    AR_blocks_law's seven conjuncts (alx_blocks' six and BLKN), in the AR walk's argument order. *)

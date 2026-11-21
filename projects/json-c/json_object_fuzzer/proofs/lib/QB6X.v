@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: shallow_A_stmt takes it after alloc_ceiling <= lo; its sections take it as HBTlo). *)
 
 From Stdlib Require ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run Fs.
@@ -88,7 +89,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 (A : ASA A4L HIx) (LB BS LM : list blk) (FRS : list frame) (B : bud) (lo p D n : Z) (dold : word) (r : jroot) (errv : word),
 HEAPAx A (BS ++ LB) LM FRS B m md -> jroot_repA r m BS p -> r <> JRnull -> lh_globA m ->
 rw_cells asegs m D [C8 dold] -> arg_locA FRS D 8 -> unpoisoned asegs m A_SB D 8 -> D mod 8 = 0 ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - SH_STK_A ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - SH_STK_A ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] -> tp = wz A_TP -> bv_unsigned ra mod 2 = 0 ->
 sh_lenA r m p n -> sh_needB r n <= bB B -> 2 <= bD B ->
@@ -115,6 +116,7 @@ Hypothesis OBL_NEWOBJ : QC0u.jo_new_object_A3ok_stmt HIx.
 Variables (ra sp gp : word) (s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32).
 Variables (m0 : word -> option byte) (md0 : config) (LB BS LM : list blk) (FRS : list frame) (B0 : bud) (lo p D n : Z) (dold : word) (r : jroot) (T : TSet).
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis LOS : lo <= bv_unsigned sp - SH_STK_A.
 Hypothesis SPA : bv_unsigned sp mod 16 = 0.
 Hypothesis HT : bv_unsigned sp <= hiA_top A4L HIx.
@@ -1547,7 +1549,7 @@ Theorem shallow_A : forall HIx : heap_iface_A A4L,
 malloc_nf_stmt A4L HIx -> amemcpy_any_spec_A HIx -> QC0u.jo_new_object_A3ok_stmt HIx -> shallow_A_stmt HIx.
 Proof.
 intros HIx NF MCPY NEWOBJ. unfold shallow_A_stmt.
-intros until errv. intros HP JR NN G DC DLOC DU DAL ST LO LOS SPA HT ERR TP RA LEN BB BD A0 A4 K.
+intros until errv. intros HP JR NN G DC DLOC DU DAL ST LO HBT LOS SPA HT ERR TP RA LEN BB BD A0 A4 K.
 subst a0 a4 tp.
 eapply (sh_main HIx NF MCPY NEWOBJ); first [exact K | exact JR | eassumption].
 Qed.
@@ -1680,7 +1682,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 (A : ASA A4L HIx) (LB BS LM : list blk) (FRS : list frame) (B : bud) (lo p D n : Z) (dold : word) (r : jroot) (errv : word),
 HEAPAx A (BS ++ LB) LM FRS B m md -> jroot_repA r m BS p -> r <> JRnull -> lh_globA m ->
 rw_cells asegs m D [C8 dold] -> arg_locA FRS D 8 -> unpoisoned asegs m A_SB D 8 -> D mod 8 = 0 ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - SH_STK_A ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - SH_STK_A ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] -> tp = wz A_TP -> bv_unsigned ra mod 2 = 0 ->
 sh_lenA r m p n -> sh_needB r n <= bB B -> 2 <= bD B ->
@@ -1707,6 +1709,7 @@ Hypothesis OBL_AMEMCPY : amemcpy_any_spec_A HIx.
 Variables (ra sp gp : word) (s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32).
 Variables (m0 : word -> option byte) (md0 : config) (LB BS LM : list blk) (FRS : list frame) (B0 : bud) (lo p D n : Z) (dold : word) (r : jroot) (T : TSet).
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis LOS : lo <= bv_unsigned sp - SH_STK_A.
 Hypothesis SPA : bv_unsigned sp mod 16 = 0.
 Hypothesis HT : bv_unsigned sp <= hiA_top A4L HIx.
@@ -3161,7 +3164,7 @@ Theorem shallow_A : forall HIx : heap_iface_A A4L,
 malloc_nf_stmt A4L HIx -> amemset_spec_A HIx -> amemcpy_any_spec_A HIx -> shallow_A_stmt HIx.
 Proof.
 intros HIx NF MSET MCPY. unfold shallow_A_stmt.
-intros until errv. intros HP JR NN G DC DLOC DU DAL ST LO LOS SPA HT ERR TP RA LEN BB BD A0 A4 K.
+intros until errv. intros HP JR NN G DC DLOC DU DAL ST LO HBT LOS SPA HT ERR TP RA LEN BB BD A0 A4 K.
 subst a0 a4 tp.
 eapply (sh_main HIx NF MSET); first [exact K | exact JR | exact MCPY | eassumption].
 Qed.

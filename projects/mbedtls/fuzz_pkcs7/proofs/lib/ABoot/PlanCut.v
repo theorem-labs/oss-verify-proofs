@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the new two-branch munmap plan node PMunmap2 is handled in psize, psubs, pcut, pcutS, pkids, plabels, at_handoffs and ins_main). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.ABoot Require Import AxSymExec3 AsanPlanCore AsanPlan.
@@ -13,7 +14,7 @@ Fixpoint psize (p : plan) : nat :=
   | PHavoc _ k | PHavocBig _ k | PFresh _ _ _ k | PSys _ k | PX _ _ k | PExt _ _ k | PEmit _ _ k | PFog _ _ k | PFogNew _ _ k
   | PGhost _ _ k | PUnvis _ _ k | PHavocBrk _ _ k | PIntro _ _ k | PDiamond _ _ k | PRename _ k | PCompact k
   | PAbstractCell _ _ k | PHavocWords _ k | PRespell _ _ k => S (psize k)
-  | PSplit _ _ a b | PCase2 _ _ a b | PCaseDisj _ _ a b | PMmap a b | PMprotect a b | PBrk2 a b | PExt2 _ _ a b
+  | PSplit _ _ a b | PCase2 _ _ a b | PCaseDisj _ _ a b | PMmap a b | PMprotect a b | PMunmap2 a b | PBrk2 a b | PExt2 _ _ a b
   | PLoop _ _ _ a b | PVia _ _ _ a b => S (psize a + psize b)
   | PMmapIn a b c | PMmapInH a b c => S (psize a + psize b + psize c)
   | _ => 1%nat
@@ -26,7 +27,7 @@ Fixpoint psubs (d : nat) (p : plan) {struct p} : list plan :=
   | PHavoc _ k | PHavocBig _ k | PFresh _ _ _ k | PSys _ k | PX _ _ k | PExt _ _ k | PEmit _ _ k | PFog _ _ k | PFogNew _ _ k
   | PGhost _ _ k | PUnvis _ _ k | PHavocBrk _ _ k | PIntro _ _ k | PDiamond _ _ k | PRename _ k | PCompact k
   | PAbstractCell _ _ k | PHavocWords _ k | PRespell _ _ k => psubs d' k
-  | PSplit _ _ a b | PCase2 _ _ a b | PCaseDisj _ _ a b | PMmap a b | PMprotect a b | PBrk2 a b | PExt2 _ _ a b
+  | PSplit _ _ a b | PCase2 _ _ a b | PCaseDisj _ _ a b | PMmap a b | PMprotect a b | PMunmap2 a b | PBrk2 a b | PExt2 _ _ a b
   | PLoop _ _ _ a b | PVia _ _ _ a b => psubs d' a ++ psubs d' b
   | PMmapIn a b c | PMmapInH a b c => psubs d' a ++ psubs d' b ++ psubs d' c
   | _ => []
@@ -54,6 +55,7 @@ Fixpoint pcut (d : nat) (p : plan) (n : nat) {struct p} : plan * nat :=
   | PMmapIn a b c => let '(a', n1) := pcut d' a n in let '(b', n2) := pcut d' b n1 in let '(c', n3) := pcut d' c n2 in (PMmapIn a' b' c', n3)
   | PMmapInH a b c => let '(a', n1) := pcut d' a n in let '(b', n2) := pcut d' b n1 in let '(c', n3) := pcut d' c n2 in (PMmapInH a' b' c', n3)
   | PMprotect a b => let '(a', n1) := pcut d' a n in let '(b', n2) := pcut d' b n1 in (PMprotect a' b', n2)
+  | PMunmap2 a b => let '(a', n1) := pcut d' a n in let '(b', n2) := pcut d' b n1 in (PMunmap2 a' b', n2)
   | PBrk2 a b => let '(a', n1) := pcut d' a n in let '(b', n2) := pcut d' b n1 in (PBrk2 a' b', n2)
   | PX x args k => let '(k', n') := pcut d' k n in (PX x args k', n')
   | PExt i a k => let '(k', n') := pcut d' k n in (PExt i a k', n')
@@ -98,6 +100,7 @@ Fixpoint pcutS (thr : nat) (d : nat) (p : plan) (n : nat) {struct p} : plan * na
   | PMmapIn a b c => let '(a', n1) := pcutS thr d' a n in let '(b', n2) := pcutS thr d' b n1 in let '(c', n3) := pcutS thr d' c n2 in (PMmapIn a' b' c', n3)
   | PMmapInH a b c => let '(a', n1) := pcutS thr d' a n in let '(b', n2) := pcutS thr d' b n1 in let '(c', n3) := pcutS thr d' c n2 in (PMmapInH a' b' c', n3)
   | PMprotect a b => let '(a', n1) := pcutS thr d' a n in let '(b', n2) := pcutS thr d' b n1 in (PMprotect a' b', n2)
+  | PMunmap2 a b => let '(a', n1) := pcutS thr d' a n in let '(b', n2) := pcutS thr d' b n1 in (PMunmap2 a' b', n2)
   | PBrk2 a b => let '(a', n1) := pcutS thr d' a n in let '(b', n2) := pcutS thr d' b n1 in (PBrk2 a' b', n2)
   | PX x args k => let '(k', n') := pcutS thr d' k n in (PX x args k', n')
   | PExt i a k => let '(k', n') := pcutS thr d' k n in (PExt i a k', n')
@@ -138,7 +141,7 @@ Fixpoint pskip (n : nat) (p : plan) {struct n} : plan :=
 (* [comment removed for export] *)
 Definition pkids (p : plan) : list plan :=
   match p with
-  | PSplit _ _ a b | PCase2 _ _ a b | PCaseDisj _ _ a b | PMmap a b | PMprotect a b | PBrk2 a b | PExt2 _ _ a b
+  | PSplit _ _ a b | PCase2 _ _ a b | PCaseDisj _ _ a b | PMmap a b | PMprotect a b | PMunmap2 a b | PBrk2 a b | PExt2 _ _ a b
   | PLoop _ _ _ a b | PVia _ _ _ a b => [a; b]
   | PMmapIn a b c | PMmapInH a b c => [a; b; c]
   | _ => []
@@ -158,7 +161,7 @@ Fixpoint plabels (p : plan) : list nat :=
   | PHavoc _ k | PHavocBig _ k | PFresh _ _ _ k | PSys _ k | PX _ _ k | PExt _ _ k | PEmit _ _ k | PFog _ _ k | PFogNew _ _ k
   | PGhost _ _ k | PUnvis _ _ k | PHavocBrk _ _ k | PIntro _ _ k | PDiamond _ _ k | PRename _ k | PCompact k
   | PAbstractCell _ _ k | PHavocWords _ k | PRespell _ _ k => plabels k
-  | PSplit _ _ a b | PCase2 _ _ a b | PCaseDisj _ _ a b | PMmap a b | PMprotect a b | PBrk2 a b | PExt2 _ _ a b
+  | PSplit _ _ a b | PCase2 _ _ a b | PCaseDisj _ _ a b | PMmap a b | PMprotect a b | PMunmap2 a b | PBrk2 a b | PExt2 _ _ a b
   | PLoop _ _ _ a b | PVia _ _ _ a b => plabels a ++ plabels b
   | PMmapIn a b c | PMmapInH a b c => plabels a ++ plabels b ++ plabels c
   | PHandoff h => [h]
@@ -191,6 +194,7 @@ Fixpoint at_handoffs (f : nat -> plan) (p : plan) {struct p} : plan :=
   | PMmapIn a b c => PMmapIn (at_handoffs f a) (at_handoffs f b) (at_handoffs f c)
   | PMmapInH a b c => PMmapInH (at_handoffs f a) (at_handoffs f b) (at_handoffs f c)
   | PMprotect a b => PMprotect (at_handoffs f a) (at_handoffs f b)
+  | PMunmap2 a b => PMunmap2 (at_handoffs f a) (at_handoffs f b)
   | PBrk2 a b => PBrk2 (at_handoffs f a) (at_handoffs f b)
   | PX x args k => PX x args (at_handoffs f k)
   | PExt i a k => PExt i a (at_handoffs f k)
@@ -239,6 +243,7 @@ Fixpoint ins_main (d : nat) (f : plan -> plan) (p : plan) {struct d} : plan :=
   | PMmapIn a b c => if Nat.ltb (psize a) (psize b) then PMmapIn a (ins_main d' f b) c else PMmapIn (ins_main d' f a) b c
   | PMmapInH a b c => if Nat.ltb (psize a) (psize b) then PMmapInH a (ins_main d' f b) c else PMmapInH (ins_main d' f a) b c
   | PMprotect a b => pick2 PMprotect a b
+  | PMunmap2 a b => pick2 PMunmap2 a b
   | PBrk2 a b => pick2 PBrk2 a b
   | PX x args k => PX x args (ins_main d' f k)
   | PExt i a k => PExt i a (ins_main d' f k)

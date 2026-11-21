@@ -5,7 +5,7 @@
    resume after parse_value (0x851d0, FSW_parse_items_loop.pib_IH, the base of FSW_parse_items_seg.pib_ss_H), over the
    measured segments E, F, G of FSW_parse_items_seg.v and three call steps: skip_ws #3 (0x850b8 -> 0x850bc,
    FSW_parse_items_sw.pic_call_sw), __asan_memset (0x8516c -> 0x85170, the runtime contract HMS) and parse_value at level
-   k + 1 (0x851cc -> 0x851d0). Ports of the A walk's (a working branch 4480a5df1ae)
+   k + 1 (0x851cc -> 0x851d0). Ports of the A walk's (a working branch)
    lib/A/FSW_parse_items_calls.v pic_call_ms_84d78 / pic_call_pv_84d98 and lib/A/FSW_parse_items_stP.v / stM.v /
    stVc.v to B's addresses and names (q at atom 9 = s1, v at atom 19 = s3; B calls skip_ws where A inlines it).
    Section PI: the Variables, Lets and Hypotheses of parse_items_spec k's entry (the A walk's FSW_parse_items_loop.v
@@ -29,6 +29,7 @@
      piv_step_V  : IV at parse_value -> parse_value (k + 1) -> IH at 0x851d0
    rule 24: no function is proved in this file (kind: segment lemma - a composition of measured segments and call steps
    inside parse_items B; the function theorem parse_items_holds stays with its owner a Theorem Labs lane). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From Stdlib Require FunctionalExtensionality.

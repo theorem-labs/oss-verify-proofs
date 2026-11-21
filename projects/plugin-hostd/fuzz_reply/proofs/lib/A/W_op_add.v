@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the ASan walk of fuzz_reply's op_add, in the form of the cgif walks of
    proofs/cgif/cgif_file_fuzzer/lib/A/AC8h.v (call sites) and lib/A/ACbk.v (entry and return). *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* op_add () at 0x84f10 (fuzz_reply.c:573-594).  It scans g_s[0..3] for the first source whose open flag is 0;
    if there is none it returns with nothing changed.  Otherwise, for that slot i it calls source_reset (the slot
    is already closed, so the callee's o is None), bumps the global g_nfd, stores the new descriptor

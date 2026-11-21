@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: statements written out as text, lemmas added for the revision. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -43,6 +44,13 @@ Lemma sh_ceiling_range : ltac2:(zQ "40!sb!s6!ub!v0@2$3@2$2+hgggmvuvogg0@1$1@1$0?
 Proof. acb. unfold sh, ASHADOW_BASE. Z.div_mod_to_equations. lia. Qed.
 Lemma sh_ceiling_lt_AHI_LO : ltac2:(zQ "40!rd!sb!s6!v6@2$3@1$2@1$1?5HCEIL$0").
 Proof. pose proof sh_ceiling_range. unfold AHI_LO. lia. Qed.
+
+(* LPS 727298f3: the floor of the launch's vDSO/vvar pair, which [State.init_model] adds to the
+   reserved ledger below [vdso_top].  [vdso_top] is the page below [min mmap_base alloc_top]; the
+   main phase has [mmap_base_min <= vm_mmap_base] ([AsanPlanSound.co_res]) and [alloc_top = hceil]
+   far above it, and the pair is at most 20 pages ([State.vdso_len_bounds]), so its base is at least
+   0x154555543000.  This is that, rounded down; it lies far above [AHI_LO]. *)
+Definition ARESX_LO : Z := 0x154555000000.
 
 (* [comment removed for export] *)
 Definition ehigh : ltac2:(zQ "40!vb!hhe!hjc!hk4>1e@2$3@1$1@1$0#k0@1$1@1$0#k0$2") := ltac2:(zQ "60!vb!hhe!hk4!rd!ho8!hof\1e@2$2@1$1@1$0#k0@1$1@1$0#k0@2$5$3@1$4^1").      (* [comment removed for export] *)
@@ -125,6 +133,28 @@ Proof. intros f l1 l2. rewrite filter_app, map_app, zsum_app. reflexivity. Qed.
 Lemma ehigh_wz : ltac2:(zQ "e1!v0!vb!h9!jp2!ub!v6!isd!hhe!hjc!jp8!j0!hpd!ira!jq0&@2$0@2$4Z^2@2$5^2@2$6+2+k0>1a$2>1n$2>0~0>0~0@3$a$8@1$b@4$9@1$7@1$1#k0@1$7@1$1#k0@1$3^4@1$3^3@1$c@3$d^4^3Z").
 Proof. intros a n Ha Hn. unfold ehigh, schigh, KInv.ehi, wz. cbn [fst snd sc_map_beg sc_map_size]. rewrite !unsigned_lit by lia. reflexivity. Qed.
 
+(* LPS 727298f3: mappings apart from a ledger stay apart from it after a cut: every piece
+   [maps_subtract] leaves lies inside the entry it came from ([LazyRestrict.iv_subtract_within]).
+   Used where a step unmaps part of the mappings and [akernel_resx] must carry over. *)
+Lemma apart_maps_subtract : forall (L R : list (word * word)) (lo hi : Z),
+  entries_nowrap L -> hi <= 2 ^ 64 ->
+  (forall iv, In iv L -> forall e, In e R ->
+     bv_unsigned (fst iv) + bv_unsigned (snd iv) <= bv_unsigned (fst e)
+     \/ bv_unsigned (fst e) + bv_unsigned (snd e) <= bv_unsigned (fst iv)) ->
+  forall iv, In iv (maps_subtract L lo hi) -> forall e, In e R ->
+     bv_unsigned (fst iv) + bv_unsigned (snd iv) <= bv_unsigned (fst e)
+     \/ bv_unsigned (fst e) + bv_unsigned (snd e) <= bv_unsigned (fst iv).
+Proof.
+  intros L R lo hi NW Hhi HD. unfold entries_nowrap in NW.
+  induction L as [|[a sz] L IH]; intros iv Hiv e He; [destruct Hiv|].
+  cbn [maps_subtract] in Hiv. apply in_app_or in Hiv as [Hiv|Hiv].
+  - destruct iv as [b m].
+    assert (NA : bv_unsigned a + bv_unsigned sz <= 2 ^ 64) by exact (NW (a, sz) (or_introl eq_refl)).
+    destruct (iv_subtract_within a sz lo hi b m NA Hhi Hiv) as [W1 W2].
+    pose proof (HD (a, sz) (or_introl eq_refl) e He) as D. cbn [fst snd] in *. lia.
+  - apply IH; [intros x Hx; apply NW; right; exact Hx | intros x Hx; apply HD; right; exact Hx | exact Hiv | exact He].
+Qed.
+
 Section X.
   Variable s : ltac2:(zQ "10!ord$0").
   Let st : ltac2:(zQ "10!ir0$0") := ltac2:(zQ "10!or5@1$0?1s").
@@ -138,9 +168,76 @@ Section X.
   (* [comment removed for export] *)
   Definition flagsx_rep : ltac2:(zQ "10!jq8>1m$0P") := ltac2:(zQ "h30!li0!ita!jk9!kk9!lm3!v0!vb!hhe!lmf!ln5!lna!lo5!lp1!jp2!iqa!lp7!lq2!jq8!lqe\1m$h1@2$5@4$4$3^1$h0@3$1$0@1$8@1$d+hgg0@1$2$0@2$5@4$4$3^1$f@3$1$0@1$8@1$d$b@1$2$0@2$5@2$9@1$7@1$6#k0\1g@1$7@1$6#k0@4$4$3^2$b@3$1$0@1$8^1@1$2$0@2$5@4$4$3^1@2$e$a+tb@3$1$0@1$c@1$h2+1@1$2$0@2$9@1$7@1$6#8\1b@1$7@1$6#8@4$4$3^2@2$e$a+v4@3$1$0@1$c^1@1$2$0").
 
-  (* [comment removed for export] *)
-  (* [comment removed for export] *)
-  Definition akernel : ltac2:(zQ "10!lr4>2mo$0P") := ltac2:(zQ "k1d!vb!in4!v0!ub!hhe!iqa!j0!hjc!v6!js0!s6!kt6!lrd!io3!ls8!lsd!rd!lt5!ipb!jjd!h9!lu1!lv1!lv9!mg1!mgd!hk4!mh6!sb!is3!mi5!mj2!iod!mk7!ml6!mlc!mm3!mmc!mn5!jl0!mne!jp2!jj6!jp8!igb!ii9!lr4!moc!mp6!mq3!mqf!mre!mt5!mu1!muc!mv8!mvf!ng6!it3!iu2!imc!nh0!nhf!hu6!nm9&@2$ha@1$4@1$0#k0@1$4@1$0#k0&@2$3@1$h7?1s@2$1@1$0#k0^1&@2$8@2$1@1$0#k0^1@2$5@2$5@1$h7?1s$i8$he&@2$2~1~2&@2$3@1$f?1s@2$1@1$0#k0^1&@2$8@2$1@1$0#k0^1@2$5@1$f?1s$hf&@2$2~4~5&@2$3@1$a$h0@2$1@1$0#k0^1&@2$3@1$a$h0@2$1@1$0#k0^2&@2$5@2$1@1$0#k0^4@2$1@1$0#k0^3&@2$2@3$6$7@2$b^2@1$h6?1s$9@3$6$7@2$b^2@1$i3?1s$9&@2$3@1$a$h1@2$1@1$0#k0^2&@2$5@2$1@1$0#k0^2@2$1@1$0#k0^1\2mo$ie=1h$if@1$j1^1@2$2>1e~0>0@3$h3~0^1@1$i1^2@2$3@2$5@2$1@1$0#k0@3$ia@1$4@1$0#k0@1$4@1$0#k0^2@2$1@1$0#k0@3$ic@1$4@1$0#k0@1$4@1$0#k0^2$h1@2$2@2$2@3$6$h4@1$j4^1$j3@3$6$h4@1$j0^1@1$k0?5HCEIL@2$2>1x@1$4@1$0#k0>0@2$e@2$2@2$3@1$i6?1s@2$1@1$0#k0^1@2$8@2$1@1$0#k0^1@2$5@1$i6?1s$he@2$e@2$2@2$3@1$i4?1s@2$1@1$0#k0^1@2$8@2$1@1$0#k0^1@2$5@1$i4?1s+q0@2$e~3@2$e~6@2$e@2$2@2$3@1$i5?1s@2$1@1$0#k0^1@2$8@2$1@1$0#k0^1@2$5@1$i5?1s$j6@2$2~7@2$8@2$1@1$0#k0^1$h0@3$6$7@2$b^2@1$c^3$9@2$2>1a@1$4@1$0#k0>1n@1$4@1$0#k0>1c$h4>0@2$2@2$3Z^1@2$8^1$jd>0@2$3@2$i2?1s^2@2$1@1$0#k0^4>0@2$3@2$5@2$1@1$0#k0^5@2$1@1$0#k0^4@2$5@2$i2?1s^3$je@3$6$7@3$h5@1$c^7^6^5$9@2$2>1a@1$4@1$0#k0>1n@1$4@1$0#k0>0@2$3@1$f?1s@2$1@1$0#k0^2>0@2$3@2$5@2$1@1$0#k0^3@2$1@1$0#k0^2@2$5@1$f?1s$hf@3$6$7@3$h5@1$c^5^4^3$9@2$2>1a@1$4@1$0#k0>1n@1$4@1$0#k0>0~8>0@2$8Z@2$1@1$0#k0^2>0@2$3~9@1$a@1$hc?5HCEIL@3$6$7@3$h5@1$c^6^5^4$9@2$2>1x@1$4@1$0#k0>0~3@3$6$7@2$b^2@1$h6?1s$h9@2$2>1x@1$4@1$0#k0>0~6@3$6$7@2$b^2@1$h6?1s$h9@2$2>1x@1$4@1$0#k0>0@2$2~7@2$8@2$1@1$0#k0^1@1$a@1$hc?5HCEIL~a@2$2>1x@1$4@1$0#k0>0@3$6$7@2$b^1@1$hb^2$9@3$6$7@2$b^2@1$c^3$9@2$2>2sc$d>1x@1$4@1$0#k0>0@3$h3$d^2@1$hd?2st>0@2$2@2$3@1$i0^3@2$1@1$0#k0^2@2$8@2$1@1$0#k0^2@2$5@1$i0^3@1$h2^3@3$6$7@2$b^3@1$hb^5$h9@2$2>2sc$d>0@3$h3$d^1@1$hd?2st@3$h3~0@4$ib@1$4@1$0#k0@1$4@1$0#k0@1$i9@1$i0^2@1$i9@1$h2^2@1$c^3@2$2>1x@1$4@1$0#k0>0@2$2@2$3$h8@2$1@1$0#k0^1@2$8@2$1@1$0#k0^1$h0@3$6$7@2$b^2@1$c^3$9@2$2>1a@1$4@1$0#k0>1n@1$4@1$0#k0>0~b>0@2$8Z@2$1@1$0#k0^2>0@2$3~9@1$a$h8@3$6$7@3$h5@1$c^6^5^4$9@2$2>1x@1$4@1$0#k0>0@2$2@2$3@1$a$h1@2$1@1$0#k0^1@2$8@2$1@1$0#k0^1@1$a$h8~a@2$2>1x@1$4@1$0#k0>0@2$2@2$3$j5@2$1@1$0#k0^1@2$8@2$1@1$0#k0^1$h1@3$6$7@2$b^2@1$i1^3$9@2$2@2$2@2$3@1$ja@1$c^1@2$5$j7@2$jf$d@1$i7?2st@2$2@2$3@1$jb@1$c^1@2$5$j8@1$jc@4$id$d$h4$h2@1$i7?2st>2sc$d>0@3$h3$d^1@1$hd?2st@2$2@2$3Z@1$h2^2@2$3@1$h2^2$j9>1a@1$4@1$0#k0>1n@1$4@1$0#k0>0@2$e@2$2~8@2$3~c@1$a@1$hc?5HCEIL@2$2~b@2$3~c@1$a$h8@3$6$7@3$j2@1$hb^4^3^2$9").
+  (* LPS 727298f3: [akernel] is [akernel_pre /\ akernel_resx].  [akernel_pre] is the former
+     eighteen-conjunct invariant, in order, with only the first conjunct's list changed: that
+     bound held of [vm_reserved h] when the ledger was the image's reservations alone, and is
+     false now that [State.init_model] appends the launch's vDSO/vvar pair, which hangs off
+     [mmap_base], not off the image.  The bound keeps its text over the image's reservations,
+     and [akernel_resx] carries the pair.  An abbreviation, so that a hypothesis of the old
+     conjunction is still syntactically one (as in boost-beast/http_request's port). *)
+  #[local] Notation akernel_pre mo :=
+    ((let h := m_vmmaps mo in
+       (forall e, In e (segments_reserved asegs) -> bv_unsigned (fst e) + bv_unsigned (snd e) <= AIMG_TOP)
+    /\ (vm_limit h = target_alloc_limit /\ alloc_top h = hceil)
+    /\ (forall x : word,
+          (a_thr s <= bv_unsigned x < a_thr s + kPageSize \/ a_ctx s <= bv_unsigned x < a_ctx s + 160
+           \/ a_sb s <= bv_unsigned x < a_sb s + kSpaceSize + kPageSize \/ a_pa s <= bv_unsigned x < a_pa s + kPtrArrayReserve
+           \/ a_fsb s <= bv_unsigned x < a_fsb s + AFS_SIZE
+           \/ sh AHI_LO <= bv_unsigned x < AHI_LO) ->
+          in_rangesb x (vm_maps h) = true)
+    /\ (forall (a n : word) (c : Z), 0 <= c < kNumClasses -> RB s c <= bv_unsigned a -> bv_unsigned a + bv_unsigned n <= RB s c + kRegionSize ->
+          map_contains (vm_maps h) a n = true)
+    /\ (forall a n : word, a_pa s <= bv_unsigned a -> bv_unsigned a + bv_unsigned n <= a_pa s + kPtrArrayReserve ->
+          map_contains (vm_maps h) a n = true)
+    /\ (forall a n : word, sh AHI_LO <= bv_unsigned a -> 0 < bv_unsigned n -> bv_unsigned a + bv_unsigned n <= sh aceil ->
+          map_contains (vm_maps h) a n = true)
+    /\ (forall x : word, a_sb s <= bv_unsigned x < a_sb s + kSpaceSize + kPageSize -> in_rangesb x (a_Zr s) = false)
+    /\ (forall x : word, a_pa s <= bv_unsigned x < a_pa s + kPtrArrayReserve -> in_rangesb x (a_Zr s) = false)
+    /\ (forall x : word, sh AHI_LO <= bv_unsigned x < sh aceil -> in_rangesb x (a_Zr s) = true /\ in_rangesb x (a_L s) = true)
+    /\ (forall x : word, in_rangesb x (vm_noaccess h) = true -> in_rangesb x (vm_maps h) = true)
+    /\ (forall sc (x : word), In sc (as_sec st) -> sc_map_beg sc <= bv_unsigned x < sc_map_beg sc + sc_map_size sc ->
+          in_rangesb x (vm_noaccess h) = false)
+    /\ (forall sc, In sc (as_sec st) -> In (wz (sc_map_beg sc), wz (sc_map_size sc)) (vm_maps h))
+    /\ (forall x : word, ALOWSH_LO <= bv_unsigned x < AHI_LO -> in_rangesb x (vm_maps h) = true)
+    /\ (forall a n : word, sh AIMG_TOP <= bv_unsigned a -> 0 < bv_unsigned n -> bv_unsigned a + bv_unsigned n <= sh ALOWSH_LO ->
+          map_contains (vm_maps h) a n = true)
+    /\ (forall x : word, sh AIMG_TOP <= bv_unsigned x < sh ALOWSH_LO -> in_rangesb x (a_Zr s) = true /\ in_rangesb x (a_L s) = true)
+    /\ (forall x : word, AIMG_LO <= bv_unsigned x < AIMG_TOP -> in_rangesb x (vm_reserved h) = true)
+    /\ (hcnt (vm_maps h) <= AHC0 + zlen (hsec st) /\ hlen (vm_maps h) <= AHL0 + zsum (map sc_map_size (hsec st))
+        /\ (forall sc, In sc (as_sec st) -> 0 <= sc_map_size sc <= ASECMAX))
+    /\ (forall a n : word, (sh AHI_LO <= bv_unsigned a /\ bv_unsigned a + bv_unsigned n <= sh aceil)
+                           \/ (sh AIMG_TOP <= bv_unsigned a /\ bv_unsigned a + bv_unsigned n <= sh ALOWSH_LO) ->
+          region_free (vm_noaccess h) a n = true))) (only parsing).
+
+  (* The launch's extra reserved intervals (the vDSO/vvar pair, [AsanPlanSound.co_res]): the
+     ledger is the image's reservations followed by them; each is page-aligned, nonempty, above
+     the image, above [AHI_LO] (where every window this unit maps ends) and above [ARESX_LO];
+     there are at most two, of at most 81920 bytes together ([State.vdso_len_bounds]); and every
+     mapping is apart from every reserved interval (the third conjunct of [co_res]), which is
+     what frees a range inside a mapping from the ledger ([ak_resf_inside]). *)
+  Definition akernel_resx (mo : Model) : Prop :=
+    let h := m_vmmaps mo in
+    exists rx : list (word * word),
+      vm_reserved h = segments_reserved asegs ++ rx
+      /\ (forall e, In e rx ->
+            0 < bv_unsigned (snd e)
+            /\ bv_unsigned (fst e) mod 4096 = 0
+            /\ bv_unsigned (snd e) mod 4096 = 0
+            /\ AIMG_TOP <= bv_unsigned (fst e)
+            /\ AHI_LO + 4096 <= bv_unsigned (fst e)
+            /\ bv_unsigned (fst e) + bv_unsigned (snd e) <= 2 ^ 47
+            /\ ARESX_LO <= bv_unsigned (fst e))
+      /\ (length rx <= 2)%nat
+      /\ zsum (map (fun e => bv_unsigned (snd e)) rx) <= 81920
+      /\ (forall iv, In iv (vm_maps h) ->
+            forall e, In e (vm_reserved h) ->
+              bv_unsigned (fst iv) + bv_unsigned (snd iv) <= bv_unsigned (fst e)
+              \/ bv_unsigned (fst e) + bv_unsigned (snd e) <= bv_unsigned (fst iv)).
+
+  Definition akernel (mo : Model) : Prop := akernel_pre mo /\ akernel_resx mo.
+  (* The former conjunction as a constant: the result type of [AS_InstMainK.akernel_main]'s
+     recorded proof, which builds exactly that conjunction. *)
+  Definition akernel_pre_d (mo : Model) : Prop := akernel_pre mo.
 
   Definition AMODELX : ltac2:(zQ "10!lr4>2mo$0P") := ltac2:(zQ "40!v0!lr4!nn2!ns1\2mo$1@2$0@2$2?1s^1@1$3^1").
 
@@ -148,16 +245,60 @@ Section X.
   (* [comment removed for export] *)
   Section Derived.
     Variable mo : ltac2:(zQ "10!lr4$0").
-    Hypothesis AK : ltac2:(zQ "10!ns1@1$0?2mo").
+    Hypothesis AKfull : akernel mo.
+    (* LPS 727298f3: [AK] keeps naming the former conjunction, so the projections below read
+       as before; only the lemmas that need the launch's reserved intervals use [AKfull]. *)
+    #[local] Notation AK := (proj1 AKfull) (only parsing).
     Let h := m_vmmaps mo.
 
-    Lemma ak_resf : forall a k : word, AIMG_TOP <= bv_unsigned a -> region_free (vm_reserved h) a k = true.
+    Lemma ak_resx : exists rx : list (word * word),
+      vm_reserved h = segments_reserved asegs ++ rx
+      /\ (forall e, In e rx ->
+            0 < bv_unsigned (snd e)
+            /\ bv_unsigned (fst e) mod 4096 = 0
+            /\ bv_unsigned (snd e) mod 4096 = 0
+            /\ AIMG_TOP <= bv_unsigned (fst e)
+            /\ AHI_LO + 4096 <= bv_unsigned (fst e)
+            /\ bv_unsigned (fst e) + bv_unsigned (snd e) <= 2 ^ 47
+            /\ ARESX_LO <= bv_unsigned (fst e))
+      /\ (length rx <= 2)%nat
+      /\ zsum (map (fun e => bv_unsigned (snd e)) rx) <= 81920
+      /\ (forall iv, In iv (vm_maps h) ->
+            forall e, In e (vm_reserved h) ->
+              bv_unsigned (fst iv) + bv_unsigned (snd iv) <= bv_unsigned (fst e)
+              \/ bv_unsigned (fst e) + bv_unsigned (snd e) <= bv_unsigned (fst iv)).
+    Proof. exact (proj2 AKfull). Qed.
+
+    (* LPS 727298f3: a range above the image and below [ARESX_LO] misses the whole ledger: the
+       image's reservations end at [AIMG_TOP], the launch's pair starts at [ARESX_LO]. *)
+    Lemma ak_resf : forall a k : word, AIMG_TOP <= bv_unsigned a ->
+      bv_unsigned a + bv_unsigned k <= ARESX_LO -> region_free (vm_reserved h) a k = true.
     Proof.
-      intros a k Ha. destruct AK as (K1 & _). apply region_free_introZ. intros e sz He.
-      specialize (K1 (e, sz) He). cbn [fst snd] in K1. pose proof (bv_unsigned_in_range _ k). right. lia.
+      intros a k Ha Hk. destruct ak_resx as [rx [Hr [Hok _]]]. ndestruct AK as (K1 & _).
+      rewrite Hr. apply region_free_introZ. intros e sz He.
+      apply in_app_or in He as [He|He].
+      - specialize (K1 (e, sz) He). cbn [fst snd] in K1. pose proof (bv_unsigned_in_range _ k). right. lia.
+      - pose proof (Hok (e, sz) He) as (_ & _ & _ & _ & _ & _ & HK). cbn [fst] in HK. left. lia.
     Qed.
-    Lemma ak_resf_hi : forall a k : word, AHI_LO <= bv_unsigned a -> region_free (vm_reserved h) a k = true.
-    Proof. intros a k Ha. apply ak_resf. unfold AHI_LO, AIMG_TOP in *. lia. Qed.
+    (* LPS 727298f3: a range inside a mapping misses the whole ledger, by the mappings' apartness
+       from it ([akernel_resx]'s last conjunct); no upper bound on the range is needed. *)
+    Lemma ak_resf_inside : forall a k : word,
+      map_contains (vm_maps h) a k = true -> region_free (vm_reserved h) a k = true.
+    Proof.
+      intros a k Hmc. destruct ak_resx as [rx [_ [_ [_ [_ HD]]]]].
+      unfold map_contains in Hmc. apply existsb_exists in Hmc as [iv [Hiv Hb]].
+      cbv beta in Hb. apply andb_true_iff in Hb as [H1 H2].
+      apply Z.leb_le in H1. apply Z.leb_le in H2.
+      apply region_free_introZ. intros e sz He.
+      specialize (HD iv Hiv (e, sz) He). cbn [fst snd] in HD.
+      destruct HD as [HD|HD]; [left | right]; lia.
+    Qed.
+    (* LPS 727298f3: the allocator's [RESF] premise ([AS_Refill2], [AS_Refill3], [AS_Refill4],
+       [AS_Rta], [AS_LcDealloc], [AS_RecyclePrim]) names windows inside the primary region, which
+       is mapped, so it is keyed on [map_contains]; the [AHI_LO] premise is kept and unused. *)
+    Lemma ak_resf_hi : forall a k : word, AHI_LO <= bv_unsigned a ->
+      map_contains (vm_maps h) a k = true -> region_free (vm_reserved h) a k = true.
+    Proof. intros a k _ Hmc. exact (ak_resf_inside a k Hmc). Qed.
     (* [comment removed for export] *)
     Lemma ak_hcov : hcnt (vm_maps h) <= AHC0 + zlen (hsec st) /\ hlen (vm_maps h) <= AHL0 + zsum (map sc_map_size (hsec st))
                     /\ (forall sc, In sc (as_sec st) -> 0 <= sc_map_size sc <= ASECMAX).
@@ -228,7 +369,13 @@ Section X.
     Lemma ak_shrf2 : forall a n : word,
       (sh AHI_LO <= bv_unsigned a /\ bv_unsigned a + bv_unsigned n <= sh aceil) \/ (sh AIMG_TOP <= bv_unsigned a /\ bv_unsigned a + bv_unsigned n <= sh ALOWSH_LO) ->
       region_free (vm_reserved h) a n = true.
-    Proof. intros a n [[H1 H2]|[H1 H2]]; apply ak_resf; unfold sh, ASHADOW_BASE, AHI_LO, AIMG_TOP in *; lia. Qed.
+    (* LPS 727298f3: [ak_resf] carries the upper premise the launch's pair costs; both bands end
+       far below [ARESX_LO] ([sh_ceiling_range]: [sh aceil] is at most 0x10007fef8000). *)
+    Proof.
+      intros a n [[H1 H2]|[H1 H2]]; pose proof sh_ceiling_range;
+        apply ak_resf;
+        unfold sh, ASHADOW_BASE, AHI_LO, AIMG_TOP, ARESX_LO, ALOWSH_LO in *; lia.
+    Qed.
     (* [comment removed for export] *)
     Lemma ak_shna : forall a n : word,
       (sh AHI_LO <= bv_unsigned a /\ bv_unsigned a + bv_unsigned n <= sh aceil) \/ (sh AIMG_TOP <= bv_unsigned a /\ bv_unsigned a + bv_unsigned n <= sh ALOWSH_LO) ->
@@ -240,7 +387,7 @@ Section X.
 
   (* [comment removed for export] *)
   Lemma akernel_mat : ltac2:(zQ "30!lr4!ns1!nsc>2mo$0>3mo'$0>0@1$1^2>0@2$2^3^2@1$1^3").
-  Proof. intros mo mo' AK SB. unfold akernel in *. rewrite (same_but_materialized_vmmaps _ _ SB). exact AK. Qed.
+  Proof. intros mo mo' AK SB. unfold akernel, akernel_resx in *. rewrite (same_but_materialized_vmmaps _ _ SB). exact AK. Qed.
   Lemma AMODELX_mat : ltac2:(zQ "30!lr4!nu6!nsc>2mo$0>3mo'$0>0@1$1^2>0@2$2^3^2@1$1^3").
   Proof. intros mo mo' [A K] SB. split; [eapply AMODEL_mat; eassumption| eapply akernel_mat; eassumption]. Qed.
 
@@ -248,6 +395,48 @@ Section X.
   Lemma awin_vis_wmono : ltac2:(zQ "70!vb!nv1!hhe!jr6!kk9!jq8!oj9>1m$5>2m'>0@1$2@1$0#k0@1$3@1$2@1$0#8>0@1$1^2>0@3$6$4^3^2@1$1^3").
   Proof. intros m m' V W x Hx. apply W. apply V. exact Hx. Qed.
 End X.
+
+(* LPS 727298f3: [akernel_resx] of a model whose ledger is the image's reservations followed by the
+   launch's vDSO/vvar pair ([AsanPlanSound.co_res]): the pair sits below [vdso_top], the page
+   below [min mmap_base alloc_top]; with [mmap_base_min <= mmap_base] and [alloc_top = hceil]
+   (far above it) its base is at least 0x154555542001, its top at most [hceil < 2 ^ 47]. *)
+Lemma akernel_resx_intro : forall (mo : Model) kb,
+  vm_reserved (m_vmmaps mo) = segments_reserved asegs ++ vdso_reserved kb (vdso_top (m_vmmaps mo)) ->
+  mmap_base_min <= bv_unsigned (vm_mmap_base (m_vmmaps mo)) ->
+  alloc_top (m_vmmaps mo) = hceil ->
+  (forall iv, In iv (vm_maps (m_vmmaps mo)) -> forall e, In e (vm_reserved (m_vmmaps mo)) ->
+     bv_unsigned (fst iv) + bv_unsigned (snd iv) <= bv_unsigned (fst e)
+     \/ bv_unsigned (fst e) + bv_unsigned (snd e) <= bv_unsigned (fst iv)) ->
+  akernel_resx mo.
+Proof.
+  intros mo kb Hr Hmb AT Hd.
+  pose proof aceil_facts as AF.
+  pose proof (vdso_text_pages_pos kb) as TP1. pose proof (vdso_text_pages_le kb) as TP2.
+  assert (U : forall z, 0 <= z < 2 ^ 64 -> bv_unsigned (Z_to_bv 64 z) = z)
+    by (intros z Hz; rewrite Z_to_bv_unsigned; apply bv_wrap_small; unfold bv_modulus; exact Hz).
+  assert (TB : 0x154555556001 <= vdso_top (m_vmmaps mo) <= hceil /\ vdso_top (m_vmmaps mo) mod 4096 = 0).
+  { unfold vdso_top, mmap_top, page_round_down_Z, page_size. rewrite AT. unfold mmap_base_min in Hmb.
+    Z.div_mod_to_equations. lia. }
+  set (T := vdso_top (m_vmmaps mo)) in *.
+  assert (SH : vdso_reserved kb T =
+    [(Z_to_bv 64 (T - vdso_len kb), Z_to_bv 64 (vdso_vvar_pages * page_size));
+     (Z_to_bv 64 (T - vdso_len kb + vdso_vvar_pages * page_size), Z_to_bv 64 (vdso_text_pages kb * page_size))]).
+  { unfold vdso_reserved. cbv zeta.
+    replace (T - vdso_len kb <? page_size) with false; [reflexivity|].
+    symmetry. apply Z.ltb_ge. unfold vdso_len, vdso_vvar_pages, page_size. lia. }
+  unfold akernel_resx. cbv zeta. exists (vdso_reserved kb T).
+  split; [exact Hr|].
+  split.
+  { intros e He. rewrite SH in He. unfold vdso_len, vdso_vvar_pages, page_size in *.
+    unfold AIMG_TOP, AHI_LO, ARESX_LO.
+    destruct He as [<-|[<-|[]]]; cbn [fst snd]; rewrite !U by lia; Z.div_mod_to_equations; lia. }
+  split; [rewrite SH; cbn [length]; lia|].
+  split.
+  { rewrite SH. cbn [map zsum fst snd].
+    rewrite !U by (unfold vdso_len, vdso_vvar_pages, page_size in *; lia).
+    unfold vdso_len, vdso_vvar_pages, page_size in *. lia. }
+  exact Hd.
+Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -271,15 +460,40 @@ Proof.
   - unfold KInv.ehi, KInv.elo in *. pose proof (bv_unsigned_in_range _ (fst e)). lia.
   - lia.
 Qed.
-Theorem AGAP_of_akernel : ltac2:(zQ "h40!iqa!h9!or5!jl0!io3!ii9!lr4!ord!os4!mv8!mvf!osb!rd!imc!ipb!hu6!nm9!ub!v6!opb>1s$7>2mo$6>1n$1>0@2$b^3^2>0@2$h2Z^2>0@2$h1@2$0@2$0@2$0$c@2$0$a@1$d@4$5$4$1$e@1$3@1$2^5@2$h3@2$0$9@2$f$4@1$3@1$2^5@2$0^3+hgg0^3@1$h0?5HCEIL@2$8^4^5").
+(* LPS 727298f3: the launch's extra reserved intervals lie above the gate [AHI_LO], so they charge
+   the ledger: each entry costs its own size plus [n + 4096] ([SecGap.ecost]), so a list of them
+   costs at most its total size plus its length times that. *)
+Lemma cost_le_sizes : forall n E, 0 < n ->
+  cost n AHI_LO E <= zsum (map (fun e => bv_unsigned (snd e)) E) + Z.of_nat (length E) * (n + 4096).
+Proof.
+  intros n E Hn. induction E as [|e E IH]; [rewrite cost_nil; cbn; lia|].
+  rewrite cost_cons. cbn [map length zsum]. unfold ecost.
+  pose proof (bv_unsigned_in_range 64 (snd e)). unfold KInv.ehi, KInv.elo.
+  rewrite Nat2Z.inj_succ.
+  destruct (AHI_LO <? bv_unsigned (fst e) + bv_unsigned (snd e)); lia.
+Qed.
+(* LPS 727298f3: the room grows by what the launch's pair costs the ledger: at most two entries
+   ([akernel_resx]'s count) of at most 81920 bytes together (its size bound), each charging
+   [n + 4096]. *)
+Theorem AGAP_of_akernel : forall s mo n, akernel s mo -> 0 < n ->
+  AHI_LO + (AHL0 + zsum (map sc_map_size (hsec (a_st s)))) + (AHC0 + zlen (hsec (a_st s))) * (n + 4096) + n
+    + (81920 + 2 * (n + 4096)) <= hceil ->
+  AGAP n mo.
 Proof.
   intros s mo n AK Hn ROOM. unfold AGAP.
-  npose AK as (K1 & (_ & K2) & _). npose (ak_hcov s mo AK) as (C1 & C2 & _).
+  npose AK as ((K1 & (_ & K2) & _) & RX). npose (ak_hcov s mo AK) as (C1 & C2 & _).
   rewrite K2, cost_app.
-  assert (R0 : cost n AHI_LO (vm_reserved (m_vmmaps mo)) = 0).
-  { assert (L : Forall (fun e => KInv.ehi e <= AHI_LO) (vm_reserved (m_vmmaps mo))).
+  destruct RX as [rx [Hrx [Hok [Hcnt Hsz]]]].
+  (* the image's reservations cost nothing: they end at or below AIMG_TOP, below the gate *)
+  assert (R0seg : cost n AHI_LO (segments_reserved asegs) = 0).
+  { assert (L : Forall (fun e => KInv.ehi e <= AHI_LO) (segments_reserved asegs)).
     { apply Forall_forall. intros e He. specialize (K1 e He). unfold KInv.ehi, AHI_LO, AIMG_TOP in *. lia. }
     clear - L Hn. induction L as [|e E He L IH]; [apply cost_nil|]. rewrite cost_cons, IH, (ecost_below n AHI_LO e He). reflexivity. }
+  assert (R0 : cost n AHI_LO (vm_reserved (m_vmmaps mo)) <= 81920 + 2 * (n + 4096)).
+  { rewrite Hrx, cost_app, R0seg. pose proof (cost_le_sizes n rx Hn) as CLS.
+    assert (ML : Z.of_nat (length rx) * (n + 4096) <= 2 * (n + 4096))
+      by (apply Z.mul_le_mono_nonneg_r; lia).
+    lia. }
   pose proof (cost_high_bound n (vm_maps (m_vmmaps mo)) Hn) as CB.
   pose proof (hcnt_nonneg (vm_maps (m_vmmaps mo))). pose proof (hlen_nonneg (vm_maps (m_vmmaps mo))).
   assert (M : hcnt (vm_maps (m_vmmaps mo)) * (n + 4096) <= (AHC0 + zlen (hsec (a_st s))) * (n + 4096)) by (apply Z.mul_le_mono_nonneg_r; lia).

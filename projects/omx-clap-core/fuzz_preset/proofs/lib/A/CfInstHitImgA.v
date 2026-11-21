@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10-30: fuzz_preset (a Theorem Labs lane memnorm102): two image hypotheses of a Theorem Labs lane's cf hit / miss
    instances (cgif/cgif_file_fuzzer lib/YGcfInstHit.v (file sha256 3a63e7a692ce; donor not released) / cgif/cgif_file_fuzzer lib/YGcfInstMiss.v (file sha256 19108561272e; donor not released) / cgif/cgif_file_fuzzer lib/YGcfInstMissW.v (file sha256 8b390d808abb; donor not released), Section b) at A'
    (#102 pin fuzz_preset.asan 1be0f53d96cb; AImg_A / AGImg_A, TfibSyms), and the depot hash fact of the unit's own
@@ -110,7 +111,7 @@ unfold in_app, TFIB_TSD, AF0x.TFIB_IMG_LO, AF0x.TFIB_IMG_END, kThreadObjSize, t_
 lia.
 Qed.
 
-(* INST_CELLS_t at A' (YGcfInstHit.v:171-180): each instance cell is a constant cell of A/AF0m.v's table. *)
+(* INST_CELLS_t at A' (YGcfInstHit.v:172-181): each instance cell is a constant cell of A/AF0m.v's table. *)
 Theorem INST_CELLS_A : YGcfInstHit.INST_CELLS_t B.
 Proof.
 intros ly H mem LY HT CST.

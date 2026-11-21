@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by gabelogan195, 2026-11: made in part from this harness's proofs/lib/HaltsAsanB.v at commit f92feaf8b7: six of its import lines (lines 5, 6 and 8, and lines 7, 11 and 12 with their modules changed) and its final step, haltsB_of_must_exit_acfg with forced_only_cfg_least (line 24, as in proofs/lib/HaltsAsanBClosed.v, line 13, at the same commit), restated for the plain build; the rest of the file is new. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (halts_of_impl_tree_S's new premises: the channel reader, from the valid input, and segs_top segs <= 0x10000000, proved by computation). *)
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.zstd.zstd_frame_info Require Statements.
@@ -21,7 +22,8 @@ Proof.
   destruct (plain_tree_ok en inp Hen Heither) as (Himpl & Hleaves & Hsafe).
   exact (halts_of_impl_tree_S psegs p_init_pc p_phdrs source_alloc_limit EXITS02
            (Prog.prog psegs PREAD_STAGE inp en) _ en inp Hen
-           (valid_input_either_va_size _ Heither) (prog_texits _ _ _ _) Himpl Hleaves Hsafe).
+           (valid_input_either_va_size _ Heither) (valid_input_either_reader _ Heither)
+           ltac:(apply Z.leb_le; vm_compute; reflexivity) (prog_texits _ _ _ _) Himpl Hleaves Hsafe).
 Qed.
 
 Theorem plain_halts_holds : Statements.plain_halts.

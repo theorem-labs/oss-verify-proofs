@@ -7,7 +7,7 @@
    THE IMAGE: parametric over {PA : PAImg B_prog_listing} - lib/B/PAImg_prog.v (blob 4392ab2c09ba) fails at :160
    (B_prog_range) until the per-instance image bounds land, so its PI_prog_B does not build; tp_img (the image
    facts, each a vm_compute at PI_prog_B) is this file's one image hypothesis.
-   tx_put_holds_B is the kit's ttx_put_specX (lib/A/PRH_FnTx.v blob 88468bf162d8, the batch kit c23331281d07), the
+   tx_put_holds_B is the kit's ttx_put_specX (lib/A/PRH_FnTx.v blob 88468bf162d8, the batch kit), the
    GROW row taken with ARX_DEPOT (AR_laws_x's field 25 at ARcfx, TxPut102B_Base.v); the twin's tp_live is closed from
    the text's own iface_room_pos premise by PresetRoomCounts.counts_of_room_pos_ok / _rl
    (lib/Spec/PresetRoomCounts.v 8a4dfa84e8be).
@@ -49,7 +49,7 @@ Variable CTX0 : list (list Z).
    no refused path (the GROW row refutes the realloc's NULL), so there is no NULL row. *)
 Variable SEG_S0 : forall P, srr_inv_laws segs P -> srr_inv_call segs P -> tp_seg_S0 B SK CTX0 P.
 (* the realloc wrapper's two callee texts (tp_AREAL is the cf layer's primed row with room and the memnorm keep,
-   tp_AREALN the null row with the keep, TxPut102B_Base.v:538 / :540) and the GROW row in its ruled form
+   tp_AREALN the null row with the keep, TxPut102B_Base.v:539 / :541) and the GROW row in its ruled form
    tp_seg_GROW_stmt *)
 Variable AREAL : tp_AREAL B.
 Variable AREALN : tp_AREALN B.
@@ -114,7 +114,7 @@ Variable SK : YI16.sink_head.
 Variable CTX0 : list (list Z).
 Variable SEG_S0 : forall P, srr_inv_laws segs P -> srr_inv_call segs P -> tp_seg_S0 B SK CTX0 P.
 (* the realloc wrapper's two callee texts (tp_AREAL is the cf layer's primed row with room and the memnorm keep,
-   tp_AREALN the null row with the keep, TxPut102B_Base.v:538 / :540) and the GROW row in its ruled form
+   tp_AREALN the null row with the keep, TxPut102B_Base.v:539 / :541) and the GROW row in its ruled form
    tp_seg_GROW_stmt *)
 Variable AREAL : tp_AREAL B.
 Variable AREALN : tp_AREALN B.

@@ -2,8 +2,8 @@
 """depot_apply.py [--consumer] GRANT_REL KNOCK_REL CLASSES.tsv OUT_DIR [--take FILE:HUNK ...] -- the empty-depot switch of
 libreac/fuzz_knock's released kernel, taken into fuzz_grant's released kernel text hunk by hunk.
 
-GRANT_REL / KNOCK_REL: the two released libs in repository layout (proofs/libreac/fuzz_grant/lib at commit
-4f87de75d67, proofs/libreac/fuzz_knock/lib at 88154566652a). CLASSES.tsv: depot_classify.py's table. For every file it
+GRANT_REL / KNOCK_REL: the two released libs in repository layout (proofs/libreac/fuzz_grant/lib,
+proofs/libreac/fuzz_knock/lib). CLASSES.tsv: depot_classify.py's table. For every file it
 names, the line hunks are recomputed exactly as depot_classify.py numbers them (comment-stripped lines, difflib), and a
 hunk is TAKEN when its class is depot or layout-grow, or when it is named by --take FILE:HUNK (an 'other' hunk a ruling
 admits), or by --merge FILE:HUNK:OLD=NEW (a hunk mixing a depot change with a grant-lineage name: knock's lines with

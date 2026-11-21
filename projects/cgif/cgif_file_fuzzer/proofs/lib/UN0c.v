@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (Linux's mmap placement; the vDSO's mappings and steps): changed direct_grant_exists, auxv_pre_ext. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -19,6 +20,8 @@ From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require Import YO0s YO0u YO0v YO
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require Import YN2c YN2f YN2g YN2d UN0d.
 From Stdlib Require Import List.
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require Import YM05.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Placement.
+From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Mmap.
 Import ListNotations.
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require Import YM01.
 Unset Lia Cache. Unset Nia Cache.
@@ -287,19 +290,42 @@ pose proof (mc_ledger _ _ _ _ _ M) as G. pose proof (MRx_ledger_x _ _ _ _ _ MX) 
 unfold req_len in Hpos, Hlive, Hreq. unfold MG_LIVE, MG_SLOTS, MG_REQ in *.
 pose proof (live_bytes_nonneg A (mc_wf _ _ _ _ _ M)) as Hlb.
 destruct ubs0_reserved_small as [RS RL]. pose proof ubs0_reserved_bytes as RB.
-destruct (region_free_exists28_std (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) (page_round len)) as (a & Ha1 & Ha2 & Ha3 & Ha4).
-- lia.
-- rewrite length_app. rewrite (lg_reserved _ _ _ _ G). pose proof (lg_count _ _ _ _ G). change (ms_segs B) with ubs0segs. lia.
-- rewrite ivs_bytes_app, (lg_reserved _ _ _ _ G). change (ms_segs B) with ubs0segs.
-rewrite (ivs_bytes_live_bytes (vm_maps (m_vmmaps md))). pose proof (lx_lb _ _ _ LX). lia.
-- exists a. unfold grant_ok.
-rewrite (proj2 (Z.eqb_eq _ _) Ha1), (proj2 (Z.ltb_lt 0 _)) by lia.
+(* 08b1429: grant_ok's first conjunct is now Placement.linux_place_is, so a merely free slot is
+   no longer a witness. The free slot comes from region_free_exists28 run on the reserved and
+   mapped entries plus a dummy entry [0, task_unmapped_base), so the slot lies in Linux's second
+   window [task_unmapped_base, alloc_top); linux_place_exists then gives Linux's own address. *)
+set (T := 183251939328).
+assert (HT : LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.task_unmapped_base = T) by reflexivity.
+assert (Hn : 0 < page_round len) by lia.
+assert (Hnal : page_round len mod page_size = 0) by (unfold page_round, PGSZ, page_size; apply Z_mod_mult).
+assert (Hcnt : Z.of_nat (length (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md))) <= 2 ^ 16).
+{ rewrite length_app. destruct (lg_reserved _ _ _ _ G) as (rx & Erx & Lrx & _ & _). rewrite Erx, length_app. pose proof (lg_count _ _ _ _ G). change (ms_segs B) with ubs0segs. lia. }
+assert (Hbytes : ivs_bytes (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) <= 2 ^ 36).
+{ destruct (lg_reserved _ _ _ _ G) as (rx & Erx & _ & Brx & _). rewrite ivs_bytes_app, Erx, ivs_bytes_app. change (ms_segs B) with ubs0segs.
+rewrite (ivs_bytes_live_bytes (vm_maps (m_vmmaps md))). pose proof (lx_lb _ _ _ LX). lia. }
+assert (UT : bv_unsigned (Z_to_bv 64 T) = T) by (apply Z_to_bv64_small; unfold T; lia).
+destruct (region_free_exists28 ((Z_to_bv 64 0, Z_to_bv 64 T) :: (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md))) (page_round len))
+as (a & Ha1 & Ha2 & Ha3 & Ha4).
+- unfold slot28. lia.
+- cbn [length ivs_bytes snd]. rewrite Nat2Z.inj_succ, UT.
+assert (Hd : (T + ivs_bytes (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md))) / slot28 <= 2 ^ 12).
+{ apply Z.div_le_upper_bound; [unfold slot28; lia|]. unfold slot28, T. lia. }
+unfold JMAX. lia.
+- cbn [region_free] in Ha4. apply andb_prop in Ha4 as [Hov Ha4]. apply negb_true_iff in Hov.
+unfold iv_overlap in Hov. rewrite UT in Hov. change (bv_unsigned (Z_to_bv 64 0)) with 0 in Hov.
+pose proof (u64_range (Z_to_bv 64 (page_round len))) as Un.
+assert (HaT : T <= bv_unsigned a) by (apply andb_false_iff in Hov as [Hov|Hov]; apply Z.ltb_ge in Hov; lia).
 pose proof (YM05.ceil_le_top _ (lg_ceil _ _ _ _ G)) as Htop.
-assert (Ha3' : bv_unsigned a + page_round len <= alloc_top (m_vmmaps md)) by lia.
-rewrite (proj2 (Z.leb_le _ _) Ha3'), Ha4.
-rewrite (proj2 (Z.leb_le _ _)).
-2:{ pose proof (lg_backing _ _ _ _ G). pose proof (lg_limit _ _ _ _ G). unfold SRC_LIM_MIN in *. lia. }
-reflexivity.
+destruct (Checks.Placement.linux_place_exists (m_vmmaps md) (kb_thp (m_kernel md)) (Z_to_bv 64 0) (page_round len) Hn Hnal
+ltac:(exists (bv_unsigned a); right; split; [exact Ha1|]; split; [rewrite HT; lia|];
+split; [lia|]; rewrite Z_to_bv_bv_unsigned; exact Ha4)) as [g Hg].
+destruct (Checks.Placement.linux_place_admissible _ _ _ _ _ Hn Hnal Hg) as (_ & Hg0 & Hgt & _).
+assert (Hg64 : g < 2 ^ 64).
+{ pose proof (u64_range (vm_init_sp (m_vmmaps md))) as R. unfold alloc_top, stack_max_size in Hgt. lia. }
+exists (Z_to_bv 64 g). apply (grant_ok_intro _ _ _ _ Hn Hnal).
++ apply (proj2 (Checks.Placement.linux_place_is_iff _ _ _ _ _ Hn Hnal)).
+rewrite Z_to_bv64_small by lia. exact Hg.
++ pose proof (lg_backing _ _ _ _ G). pose proof (lg_limit _ _ _ _ G). unfold SRC_LIM_MIN in *. lia.
 Qed.
 Lemma in_wrange_list : forall E rs x,
 in_wrange E rs x ->
@@ -389,10 +415,15 @@ Lemma auxv_pre_ext : forall sec lo m m',
 (forall x, ms_libc B + 8 <= x < ms_libc B + 16 -> mbyte (ms_segs B) m' x = mbyte (ms_segs B) m x) ->
 auxv_pre B sec lo m -> auxv_pre B sec lo m'.
 Proof using.
-intros sec lo m m' Hhi Hlibc (av & ar & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10).
-exists av, ar. repeat split; try assumption.
+intros sec lo m m' Hhi Hlibc (rs & av & ar & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10).
+(* the auxv addresses are no longer [16 * k] and [16 * 8 + 8], so [lia] cannot
+   see that the word being read lands inside the vector; these give it the offsets'
+   values. *)
+pose proof (auxv_span_r_val rs). pose proof (auxv_n_le rs). pose proof at_random_voff_val.
+assert (HNlo : (27 <= AUXV_N rs)%nat) by (destruct rs; cbn; lia).
+exists rs, av, ar. repeat split; try assumption.
 - intros k Hk. rewrite Hlibc by lia. apply H1. exact Hk.
-- intros k Hk j Hj. rewrite Hhi by lia. apply H2; assumption.
+- intros k Hk j Hj. pose proof (auxv_off_range_r rs k Hk). rewrite Hhi by lia. apply H2; assumption.
 - intros k Hk. rewrite Hhi by lia. apply H3. exact Hk.
 - intros k Hk. rewrite Hhi by lia. apply H4. exact Hk.
 Qed.

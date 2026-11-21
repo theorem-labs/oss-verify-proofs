@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/DMdrainU3.v (commit ce1a656b52b7, file sha256 27158e8387d7) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 0 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainU3.v (commit 67fc7ef5787c2195464dbe4d4f7905278328dc0c, drain recycle tail; file sha256 a439da6ae1b6) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainU3.v at commit 2e76ed2595c, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (1 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/DMdrainU3.v (file sha256 27158e8387d7) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 0 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainU3.v (drain recycle tail; file sha256 a439da6ae1b6) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainU3.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (1 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, WalkB1): the two linked lists at Recycle's call of DoRecycle (0x345c8),
-   from the dequeue loop's post DMdeq.ATDR (DMdeq.v:193-207): the TEMP list [P] at Recycle's sp and the KEPT
-   list [R] in the quarantine.  The loop writes only each popped batch's NEXT word (DMdeq.DW, DMdeq.v:173-175),
+   from the dequeue loop's post DMdeq.ATDR (DMdeq.v:194-208): the TEMP list [P] at Recycle's sp and the KEPT
+   list [R] in the quarantine.  The loop writes only each popped batch's NEXT word (DMdeq.DW, DMdeq.v:174-176),
    so a batch's size, count and slot words survive from the loop's entry memory and are carried over by the
    frame; the next words come from ATDR itself.
    - [cells_off_dw]: a batch's cells beyond its next word lie outside the loop's written set.  The stack and
@@ -13,7 +14,7 @@
      are either the same object or 8192 apart (DMdeq.apart8192).
    - [lcn_from_parts]: a linked list from its next words (by index) and its other cells (by membership).
    - [plist_lcn] / [kept_lcn]: DMwalkIF.lcn for [P] and for [R] at the call's memory, which is what
-     DMdrainC.dr_pre_at_call (DMdrainC.v:105) takes as HPL and what the kept quarantine's cut relation needs.
+     DMdrainC.dr_pre_at_call (DMdrainC.v:106) takes as HPL and what the kept quarantine's cut relation needs.
    rule 24: no function proved (kind: list and memory-shape lemmas at a cut of a loop already walked; the
    lane's reuse search is the internal file LOOKUP-B1-drain.txt, `proof-index MergeBatches Recycle
    QuarantineCallback_Recycle Drain` 2026-10-29T23:07:48Z exit 0, rule-24 check B1LookupCheck CONFIRM).
@@ -77,14 +78,14 @@ Hypothesis BADDR : forall b, In b (P ++ R) ->
   ly_prim ly <= addrb ly b /\ addrb ly b + kBatchBytes <= ly_space ly + kSpaceSize /\
   addrb ly b mod 8192 = 0 /\ 0 <= addrb ly b < ASAN_CEIL.
 Hypothesis HSLOT : forall b, In b (P ++ R) -> (length (b_items b) <= Z.to_nat kBatchSlots)%nat.
-(* DMdeq.ATDR's raw frame (DMdeq.v:198), in address form *)
+(* DMdeq.ATDR's raw frame (DMdeq.v:199), in address form *)
 Hypothesis HFR : forall a, 0 <= a < 2 ^ 64 ->
   ~ (sp1 <= a < sp1 + 32) -> ~ (A_QUAR + 152 <= a < A_QUAR + 192) ->
   (forall b, In b P -> ~ (addrb ly b <= a < addrb ly b + 8)) ->
   mem' (Z_to_bv 64 a) = mem1 (Z_to_bv 64 a).
 (* the joined list at the loop's entry *)
 Hypothesis HLL : lcn ly iw m1 (P ++ R) 0.
-(* DMdeq.ATDR's next words (DMdeq.v:204-205) *)
+(* DMdeq.ATDR's next words (DMdeq.v:205-206) *)
 Hypothesis HPN : forall i b, nth_error P i = Some b ->
   val_mem tfibsegs m' (addrb ly b) 8 (next_addr ly P i).
 Hypothesis HRN : forall i b, nth_error R i = Some b ->

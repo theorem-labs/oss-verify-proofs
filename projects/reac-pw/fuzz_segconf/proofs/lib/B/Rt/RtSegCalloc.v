@@ -3,8 +3,9 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC5d.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/Reusable/YC5d.v, with its module paths and module names changed; 16 of its 43 lines of code are new or changed and 89 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan builds: the contract of the calloc wrapper (interface row 13,
-   proofs/reac-pw/fuzz_segconf/provenance/evidence/interceptors/INTERFACE-A-interceptors.md (commit 7068323e2626)), in the form of the kit's malloc rule
+   proofs/reac-pw/fuzz_segconf/provenance/evidence/interceptors/INTERFACE-A-interceptors.md), in the form of the kit's malloc rule
    (lib/Reusable/YC5d.v:58-75 amalloc04_rule), as the image-A owner ruled (2026-10-30 16:17Z) on the consumer's shape
    (the calloc call shape the harness walk of LLVMFuzzerTestOneInput asked for). Statement text only:
    no function of the binary is proved here.
@@ -21,7 +22,7 @@
    premise), so both can be imported.
 
    Image-independent: pc_calloc and cstk are parameters (image B: the calloc trampoline 0x56cc4, PC_calloc in
-   lib/B/Rt/SegRtPC.v). The image-B twin of lib/A/Rt/RtSegCalloc.v (commit 755e9278f8ff, sha256
+   lib/B/Rt/SegRtPC.v). The image-B twin of lib/A/Rt/RtSegCalloc.v (sha256
    53722c5175e3): the same Definition word for word over the image-B kit copies (lib/B). *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia Permutation.

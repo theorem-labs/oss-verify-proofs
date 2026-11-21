@@ -4,7 +4,7 @@
    windows written) and the three field reads; the two fuzz_realloc calls give their posts in the SHAPE-FREE form
    below (WalkS5a3's COM / COM2 forms, lib/A/Prog/PwGrow.v grow_from_J), which both the cap <> 0 walk (realloc's
    success arm) and the cap = 0 walk (fuzz_malloc's post through realloc's p = 0 arm) supply. The proof follows
-   WalkS5a3's arm-7 proof for image A (PwGrow.v :2533-2664 at walk-S5A 860f777e75d5) over image B's facts.
+   WalkS5a3's arm-7 proof for image A (PwGrow.v :2533-2664 at walk-S5A) over image B's facts.
    The live-request permutation and the position transfer are premises the walk composes from the two calls' posts.
    lia is scoped throughout (clear - ..): the walk's contexts are large (BGrow3R's measured runaway, PwGrowBCapnz.v). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.

@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from projects/cgif/cgif_file_fuzzer/proofs/lib/YG0j.v, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YG0j.v at origin/ossv/recipes 4b6f0df50aa7 (fuzz_knock's released ASan tree); module paths changed to libdiginet/fuzz_codec. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YG0j.v (fuzz_knock's released ASan tree); module paths changed to libdiginet/fuzz_codec. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vvar/vDSO pages; the reserved ledger with the vvar/vDSO pair; grant_ok's Linux placement and the call's hint; munmap's refusal under a may-fail allocator; the mmap-base premise); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -77,7 +78,7 @@ covered (vm_noaccess (m_vmmaps (munmap_model a n md)) ++ m_vm_lazy (munmap_model
 = covered (vm_noaccess (m_vmmaps md) ++ m_vm_lazy md) x.
 Proof.
 intros a n md x WF Hx. pose proof (model_ivs_wf_parts md WF) as (_ & Wn & Wl). pose proof (bv_unsigned_in_range 64 n) as Rn. unfold bv_modulus in Rn.
-unfold munmap_model, with_mmap_destroyed, vm_forget_range. mproj. cbn [vm_noaccess].
+unfold munmap_model, with_mmap_destroyed, vm_forget_range, mmap_fixed_destroyed_next. mproj. cbn [vm_noaccess].
 rewrite !cov_app, !cov_subtract_out by (assumption || lia). reflexivity.
 Qed.
 Lemma sum_count_ext_in : forall P Q l,
@@ -142,11 +143,25 @@ assert (D : bv_unsigned (fst q) + bv_unsigned (snd q) <= bv_unsigned (fst e) \/ 
 split; [|exact D]. intros Ef. rewrite Ef in D. lia. }
 assert (RM : map_remove (vm_maps (m_vmmaps md)) (fst e) = l1 ++ l2) by (rewrite E; apply map_remove_mid; intros q Hq; exact (proj1 (OTHER q Hq))).
 assert (VM' : vm_maps (m_vmmaps (munmap_model (fst e) (snd e) md)) = l1 ++ l2).
-{ unfold munmap_model, with_mmap_destroyed, vm_forget_range. mproj. cbn [vm_maps]. exact RM. }
+{ (* LPS 75d69e0079f9: munmap_model cuts vm_maps with maps_subtract (via
+   mmap_fixed_destroyed_next), not map_remove; on this exact, disjoint entry the two agree. *)
+rewrite <- RM.
+transitivity (maps_subtract (vm_maps (m_vmmaps md)) (bv_unsigned (fst e)) (bv_unsigned (fst e) + bv_unsigned (snd e))); [reflexivity|].
+apply maps_subtract_exact.
+- pose proof NZe. lia.
+- intros b s Hbs. pose proof (NE (b, s) Hbs) as X. cbn [fst snd] in X. lia.
+- intros b s Hbs Eb. rewrite E in Hbs. apply in_app_iff in Hbs as [Hq|[Hq|Hq]].
++ exfalso. apply (proj1 (OTHER (b, s) (in_or_app _ _ _ (or_introl Hq)))). exact Eb.
++ subst e. reflexivity.
++ exfalso. apply (proj1 (OTHER (b, s) (in_or_app _ _ _ (or_intror Hq)))). exact Eb.
+- intros b s Hbs Hne. rewrite E in Hbs. apply in_app_iff in Hbs as [Hq|[Hq|Hq]].
++ exact (proj2 (OTHER (b, s) (in_or_app _ _ _ (or_introl Hq)))).
++ exfalso. apply Hne. subst e. reflexivity.
++ exact (proj2 (OTHER (b, s) (in_or_app _ _ _ (or_intror Hq)))). }
 split; [|exact VM'].
 assert (WF' : YK0g.model_ivs_wf (munmap_model (fst e) (snd e) md)).
 { pose proof (bv_unsigned_in_range 64 (snd e)) as Rn. unfold bv_modulus in Rn.
-unfold YK0g.model_ivs_wf. rewrite VM'. unfold munmap_model, with_mmap_destroyed, vm_forget_range. mproj. cbn [vm_noaccess vm_init_sp].
+unfold YK0g.model_ivs_wf. rewrite VM'. unfold munmap_model, with_mmap_destroyed, vm_forget_range, mmap_fixed_destroyed_next. mproj. cbn [vm_noaccess vm_init_sp].
 split; [| split; [|split; [|exact Wsp]]; apply YK0g.maps_subtract_wf; try lia; intros q Hq; [exact (W2 q Hq) | exact (W3 q Hq)]].
 intros q Hq. apply W1. rewrite E. apply in_app_iff in Hq as [?|?]; apply in_app_iff; [left|right;right]; assumption. }
 rewrite (eager_used_sem _ WF'), (eager_used_sem _ WF), VM', E. rewrite !YK0g.sum_count_app. cbn [YK0g.sum_count].
@@ -231,13 +246,16 @@ WfP U pp cc bb S -> sec_placed ly S -> ALedger segs ly S md ->
 vm_maps (m_vmmaps md') = vm_maps (m_vmmaps md) -> vm_reserved (m_vmmaps md') = vm_reserved (m_vmmaps md) ->
 vm_limit (m_vmmaps md') = vm_limit (m_vmmaps md) -> vm_mmap_base (m_vmmaps md') = vm_mmap_base (m_vmmaps md) ->
 vm_init_sp (m_vmmaps md') = vm_init_sp (m_vmmaps md) ->
+(* 727298f3: the ledger names the kernel build's vvar/vDSO pair; the step keeps the build. *)
+m_kernel md' = m_kernel md ->
 cov_same_on_secs ly S md md' -> eager_used md' <= eager_used md ->
 (forall lo n, region_free (vm_noaccess (m_vmmaps md)) lo n = true -> region_free (vm_noaccess (m_vmmaps md')) lo n = true) ->
 ALedger segs ly S md'.
 Proof.
-intros U pp cc bb ly S md md' W PL L VM RES LIM MMB ISP COV EG NAF. pose proof (esec_same_on_secs U pp cc bb ly S md md' W PL COV) as ES.
+intros U pp cc bb ly S md md' W PL L VM RES LIM MMB ISP KER COV EG NAF.
+assert (VDSOR : vdso_reserved (m_kernel md') (vdso_top (m_vmmaps md')) = vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) by (unfold vdso_top, mmap_top, alloc_top; rewrite KER, MMB, ISP; reflexivity). pose proof (esec_same_on_secs U pp cc bb ly S md md' W PL COV) as ES.
 assert (TOP : alloc_top (m_vmmaps md') = alloc_top (m_vmmaps md)) by (unfold alloc_top; rewrite ISP; reflexivity).
-destruct L as [L1 L2 L3 L4 L5 L6 L7 L8 L9 L10 L11 L12 L13 L14 L15]. constructor; rewrite ?RES, ?LIM, ?VM, ?ES, ?TOP; try assumption; try (destruct L15 as [N1 N2]; split; apply NAF; assumption).
+destruct L as [L1 L2 L3 L4 L5 L6 L7 L8 L9 L10 L11 L12 L13 L14 L15]. constructor; rewrite ?RES, ?VDSOR, ?LIM, ?VM, ?ES, ?TOP; try assumption; try (destruct L15 as [N1 N2]; split; apply NAF; assumption).
 lia.
 Qed.
 Lemma cov_same_on_secs_Q : forall ly S md md',
@@ -255,6 +273,8 @@ layout_ok ly -> Forall (fun e => 4096 <= snd e < 2 ^ 64) (sec_extents ly S) -> s
 vm_maps (m_vmmaps md') = vm_maps (m_vmmaps md) -> vm_reserved (m_vmmaps md') = vm_reserved (m_vmmaps md) ->
 vm_limit (m_vmmaps md') = vm_limit (m_vmmaps md) -> vm_mmap_base (m_vmmaps md') = vm_mmap_base (m_vmmaps md) ->
 vm_init_sp (m_vmmaps md') = vm_init_sp (m_vmmaps md) ->
+(* 727298f3: the ledger names the kernel build's vvar/vDSO pair; the step keeps the build. *)
+m_kernel md' = m_kernel md ->
 (forall x, ~ (ly_Q ly <= x < ly_Q ly + kPtrArrayResv) ->
 covered (vm_noaccess (m_vmmaps md') ++ m_vm_lazy md') x = covered (vm_noaccess (m_vmmaps md) ++ m_vm_lazy md) x) ->
 eager_used md' <= eager_used md + 8 * kPtrArrayEntriesPerCommit ->
@@ -263,14 +283,15 @@ st_nev S' = st_nev S -> st_sec_reserved S' = st_sec_reserved S + kPtrArrayEntrie
 (forall lo n, region_free (vm_noaccess (m_vmmaps md)) lo n = true -> region_free (vm_noaccess (m_vmmaps md')) lo n = true) ->
 ALedger segs ly S' md'.
 Proof.
-intros ly S S' md md' LO W PL L VM RES LIM MMB ISP COV EG REG SE PC NEV SR NAF.
+intros ly S S' md md' LO W PL L VM RES LIM MMB ISP KER COV EG REG SE PC NEV SR NAF.
+assert (VDSOR : vdso_reserved (m_kernel md') (vdso_top (m_vmmaps md')) = vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) by (unfold vdso_top, mmap_top, alloc_top; rewrite KER, MMB, ISP; reflexivity).
 pose proof (esec_same_on_secs' ly S md md' W PL (cov_same_on_secs_Q ly S md md' LO PL COV)) as ES.
 assert (TOP : alloc_top (m_vmmaps md') = alloc_top (m_vmmaps md)) by (unfold alloc_top; rewrite ISP; reflexivity).
 destruct L as [L1 L2 L3 L4 L5 L6 L7 L8 L9 L10 L11 L12 L13 L14 L15].
 assert (MONO1 : forall c', 1 <= c' <= 31 -> rg_mapped_user (reg S c') <= rg_mapped_user (reg S' c') /\ rg_mapped_fa (reg S c') <= rg_mapped_fa (reg S' c'))
 by (intros c' Hc'; rewrite (REG c' Hc'); lia).
 assert (HOLES : forall c', 1 <= c' <= 31 -> rg_holes (reg S' c') = rg_holes (reg S c')) by (intros c' Hc'; rewrite (REG c' Hc'); reflexivity).
-constructor; rewrite ?RES, ?LIM, ?VM, ?SE, ?PC, ?NEV, ?SR, ?ES, ?TOP; try assumption; try (destruct L15 as [N1 N2]; split; apply NAF; assumption).
+constructor; rewrite ?RES, ?VDSOR, ?LIM, ?VM, ?SE, ?PC, ?NEV, ?SR, ?ES, ?TOP; try assumption; try (destruct L15 as [N1 N2]; split; apply NAF; assumption).
 - destruct L4 as (pieces & (P1 & P2 & P3) & P4). exists pieces. split; [split; [|split; [exact P2|]]|exact P4].
 + eapply Forall_impl; [|exact P1]. intros p (A & B & C). split; [exact A|]. split; apply (cut_ok_mono ly S S' MONO1); assumption.
 + intros a Ha. rewrite (P3 a Ha). rewrite (prim_hole_at_same ly S S' HOLES a). tauto.
@@ -281,6 +302,8 @@ layout_ok ly -> WfP U pp cc bb S -> sec_placed ly S -> ALedger segs ly S md ->
 vm_maps (m_vmmaps md') = vm_maps (m_vmmaps md) -> vm_reserved (m_vmmaps md') = vm_reserved (m_vmmaps md) ->
 vm_limit (m_vmmaps md') = vm_limit (m_vmmaps md) -> vm_mmap_base (m_vmmaps md') = vm_mmap_base (m_vmmaps md) ->
 vm_init_sp (m_vmmaps md') = vm_init_sp (m_vmmaps md) ->
+(* 727298f3: the ledger names the kernel build's vvar/vDSO pair; the step keeps the build. *)
+m_kernel md' = m_kernel md ->
 (forall x, ~ (ly_Q ly <= x < ly_Q ly + kPtrArrayResv) ->
 covered (vm_noaccess (m_vmmaps md') ++ m_vm_lazy md') x = covered (vm_noaccess (m_vmmaps md) ++ m_vm_lazy md) x) ->
 eager_used md' <= eager_used md + 8 * kPtrArrayEntriesPerCommit ->
@@ -291,15 +314,20 @@ ALedger segs ly S' md'.
 Proof.
 intros U pp cc bb ly S S' md md' LO W. exact (ALedger_qcommit' ly S S' md md' LO (sec_extents_sizes64P U pp cc bb ly S W)).
 Qed.
+(* The hint is the mmap call's addr argument (08b1429's check_mmap).  Every
+   anonymous-mmap path that reaches here writes NULL into a0 -- YF05.anon_node's
+   own hypothesis, A/AFjs's R10 -- so the hint is that NULL, and these two lemmas
+   name it rather than quantify over it.  A trace's register, not a kernel pin. *)
 Lemma anon_grant_facts : forall U pp cc bb ly S md (a n : word),
 layout_ok ly -> WfP U pp cc bb S -> sec_placed ly S -> ALedger segs ly S md ->
-grant_ok_na_pin md a (bv_unsigned n) = true -> 0 < bv_unsigned n -> bv_unsigned n mod 4096 = 0 ->
+grant_ok_na_pin (Z_to_bv 64 0) md a (bv_unsigned n) = true -> 0 < bv_unsigned n -> bv_unsigned n mod 4096 = 0 ->
 page_aligned (bv_unsigned a) /\ in_app (bv_unsigned a) (bv_unsigned n) /\ bv_unsigned a + bv_unsigned n <= ASAN_CEIL /\
 Forall (zdisjoint (bv_unsigned a, bv_unsigned n)) (static_extents ly ++ sec_extents ly S ++ perm_maps ly ++ band_maps).
 Proof.
 intros U pp cc bb ly S md a n LO W PL L G Hn Hnal.
 pose proof (bv_unsigned_in_range 64 a) as Ra. pose proof (bv_unsigned_in_range 64 n) as Rn. unfold bv_modulus in Ra, Rn.
-unfold grant_ok_na_pin in G. apply andb_prop in G as [G G4]. apply andb_prop in G as [G G3]. apply andb_prop in G as [G1 G2].
+pose proof (YK13.grant_ok_na_pin_facts _ _ _ _ Hn ltac:(unfold page_size; exact Hnal) G) as G0. clear G. rename G0 into G.
+unfold YK13.grant_ok_na_pin_b in G. apply andb_prop in G as [G G4]. apply andb_prop in G as [G G3]. apply andb_prop in G as [G1 G2].
 apply Z.eqb_eq in G1. apply Z.ltb_lt in G2. apply Z.leb_le in G3. unfold page_size in G1.
 assert (Hn64 : Z_to_bv 64 (bv_unsigned n) = n) by (apply w64_uw). rewrite Hn64 in G4.
 set (lo := bv_unsigned a) in *. set (len := bv_unsigned n) in *.
@@ -346,7 +374,7 @@ destruct (Z_lt_le_dec lo (fst (ly_img ly) + snd (ly_img ly))) as [X1|X1]; [|righ
 destruct (Z_lt_le_dec (fst (ly_img ly)) (lo + len)) as [X2|X2]; [|left; lia]. exfalso.
 set (x := Z.max lo (fst (ly_img ly))).
 destruct (L14 x ltac:(unfold in_zr; subst x; lia)) as (e & He & E1).
-pose proof (YK13.region_free_In _ a n (fst e) (snd e) G4 ltac:(apply in_app_iff; left; rewrite L3, <- surjective_pairing; exact He)) as D.
+pose proof (YK13.region_free_In _ a n (fst e) (snd e) G4 ltac:(apply in_app_iff; left; rewrite (proj1 L3); apply in_app_iff; left; rewrite <- surjective_pairing; exact He)) as D.
 subst lo len x. lia. }
 assert (PERM : Forall (zdisjoint (lo, len)) (perm_maps ly)).
 { apply Forall_forall. intros z Hz. lazymatch eval cbv in depot_has_trace with
@@ -376,7 +404,7 @@ unfold zdisjoint. cbn [fst snd]. left. unfold ASAN_CEIL in *. lia.
 Qed.
 Lemma ALedger_anon : forall U pp cc bb ly S S' md (a n : word) (r : nat) (av : Z),
 layout_ok ly -> WfP U pp cc bb S -> sec_placed ly S -> amwf md -> ALedger segs ly S md ->
-grant_ok_na_pin md a (bv_unsigned n) = true ->
+grant_ok_na_pin (Z_to_bv 64 0) md a (bv_unsigned n) = true ->
 aregime S   -> 0 < bv_unsigned n <= MALLOC_MAX + 4 * 4096 -> bv_unsigned n mod 4096 = 0 ->
 (forall c, 1 <= c <= 31 -> reg S' c = reg S c) -> prim_committed S' = prim_committed S ->
 sec_extents (set_ly_sec ly r av) S' = sec_extents ly S ++ [(bv_unsigned a, bv_unsigned n)] ->
@@ -392,7 +420,9 @@ assert (EP : ly_prim (set_ly_sec ly r av) = ly_prim ly) by reflexivity.
 assert (EQ : ly_Q (set_ly_sec ly r av) = ly_Q ly) by reflexivity.
 assert (EI : ly_img (set_ly_sec ly r av) = ly_img ly) by reflexivity.
 pose proof (bv_unsigned_in_range 64 a) as Ra. pose proof (bv_unsigned_in_range 64 n) as Rn. unfold bv_modulus in Ra, Rn.
-pose proof G as G'. unfold grant_ok_na_pin in G. apply andb_prop in G as [G G4]. apply andb_prop in G as [G G3]. apply andb_prop in G as [G1 G2].
+pose proof G as G'.
+pose proof G as G0. apply YK13.grant_ok_na_pin_facts in G0; [| lia | unfold page_size; exact Hal]. clear G. rename G0 into G.
+unfold YK13.grant_ok_na_pin_b in G. apply andb_prop in G as [G G4]. apply andb_prop in G as [G G3]. apply andb_prop in G as [G1 G2].
 apply Z.eqb_eq in G1. apply Z.ltb_lt in G2. apply Z.leb_le in G3.
 assert (Hn64 : Z_to_bv 64 (bv_unsigned n) = n) by (apply w64_uw).
 rewrite Hn64 in G4.
@@ -404,6 +434,8 @@ assert (LIM' : vm_limit (m_vmmaps md') = vm_limit (m_vmmaps md)) by (subst md'; 
 assert (MMB' : vm_mmap_base (m_vmmaps md') = vm_mmap_base (m_vmmaps md)) by (subst md'; unfold mmap_model; mproj; reflexivity).
 assert (ISP' : vm_init_sp (m_vmmaps md') = vm_init_sp (m_vmmaps md)) by (subst md'; unfold mmap_model; mproj; reflexivity).
 assert (TOP' : alloc_top (m_vmmaps md') = alloc_top (m_vmmaps md)) by (unfold alloc_top; rewrite ISP'; reflexivity).
+(* 727298f3: the ledger equation names the vvar/vDSO pair of [m_kernel] at [vdso_top]; an mmap keeps both. *)
+assert (VDSOR' : vdso_reserved (m_kernel md') (vdso_top (m_vmmaps md')) = vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) by (subst md'; first [reflexivity | unfold vdso_top, mmap_top, alloc_top; rewrite ?MMB', ?ISP'; reflexivity]).
 assert (NA' : vm_noaccess (m_vmmaps md') = vm_noaccess (m_vmmaps md)) by (subst md'; unfold mmap_model; mproj; reflexivity).
 assert (LZ' : m_vm_lazy md' = m_vm_lazy md) by (subst md'; unfold mmap_model; mproj; reflexivity).
 destruct L as [L1 L2 L3 L4 L5 L6 L7 L8 L9 L10 L11 L12 L13 L14 L15].
@@ -415,7 +447,7 @@ assert (EG : eager_used md' = eager_used md + esec (vm_noaccess (m_vmmaps md)) (
 assert (MONO1 : forall c', 1 <= c' <= 31 -> rg_mapped_user (reg S c') <= rg_mapped_user (reg S' c') /\ rg_mapped_fa (reg S c') <= rg_mapped_fa (reg S' c'))
 by (intros c' Hc'; rewrite (REG c' Hc'); lia).
 assert (HOLES : forall c', 1 <= c' <= 31 -> rg_holes (reg S' c') = rg_holes (reg S c')) by (intros c' Hc'; rewrite (REG c' Hc'); reflexivity).
-constructor; rewrite ?ELZ, ?EPM, ?EP, ?EQ, ?EI, ?VM', ?RES', ?LIM', ?MMB', ?TOP', ?NA', ?LZ', ?SE, ?PC, ?NEV', ?SR, ?EG; try assumption.
+constructor; rewrite ?ELZ, ?EPM, ?EP, ?EQ, ?EI, ?VM', ?RES', ?VDSOR', ?LIM', ?MMB', ?TOP', ?NA', ?LZ', ?SE, ?PC, ?NEV', ?SR, ?EG; try assumption.
 -   destruct L4 as (pieces & (P1 & P2 & P3) & P4). exists pieces. split; [split; [|split; [exact P2|]]|].
 + eapply Forall_impl; [|exact P1]. intros p (A & B & C). split; [exact A|].
 change (cut_ok (set_ly_sec ly r av) S' (fst p) /\ cut_ok (set_ly_sec ly r av) S' (fst p + snd p)) with (cut_ok ly S' (fst p) /\ cut_ok ly S' (fst p + snd p)).
@@ -481,11 +513,13 @@ assert (MWF : YK0g.model_ivs_wf md).
 { split; [|split; [|split]]; [intros q Hq; exact (W1 q Hq) | intros q Hq; exact (W2 q Hq) | intros q Hq; exact (W3 q Hq) | exact (ceil_top_init_sp_ok _ L13)]. }
 assert (SURV : forall x, In x (vm_maps (m_vmmaps md)) -> x <> wiv e -> In x (M1 ++ M2)).
 { intros x Hx Hne. rewrite EM in Hx. apply in_app_iff in Hx as [Hx|[Hx|Hx]]; [apply in_app_iff; left; exact Hx | exfalso; exact (Hne (eq_sym Hx)) | apply in_app_iff; right; exact Hx]. }
-assert (RES' : vm_reserved (m_vmmaps md') = vm_reserved (m_vmmaps md)) by (subst md'; unfold munmap_model, with_mmap_destroyed, vm_forget_range; mproj; reflexivity).
-assert (LIM' : vm_limit (m_vmmaps md') = vm_limit (m_vmmaps md)) by (subst md'; unfold munmap_model, with_mmap_destroyed, vm_forget_range; mproj; reflexivity).
-assert (MMB' : vm_mmap_base (m_vmmaps md') = vm_mmap_base (m_vmmaps md)) by (subst md'; unfold munmap_model, with_mmap_destroyed, vm_forget_range; mproj; reflexivity).
-assert (ISP' : vm_init_sp (m_vmmaps md') = vm_init_sp (m_vmmaps md)) by (subst md'; unfold munmap_model, with_mmap_destroyed, vm_forget_range; mproj; reflexivity).
+assert (RES' : vm_reserved (m_vmmaps md') = vm_reserved (m_vmmaps md)) by (subst md'; unfold munmap_model, with_mmap_destroyed, vm_forget_range, mmap_fixed_destroyed_next; mproj; reflexivity).
+assert (LIM' : vm_limit (m_vmmaps md') = vm_limit (m_vmmaps md)) by (subst md'; unfold munmap_model, with_mmap_destroyed, vm_forget_range, mmap_fixed_destroyed_next; mproj; reflexivity).
+assert (MMB' : vm_mmap_base (m_vmmaps md') = vm_mmap_base (m_vmmaps md)) by (subst md'; unfold munmap_model, with_mmap_destroyed, vm_forget_range, mmap_fixed_destroyed_next; mproj; reflexivity).
+assert (ISP' : vm_init_sp (m_vmmaps md') = vm_init_sp (m_vmmaps md)) by (subst md'; unfold munmap_model, with_mmap_destroyed, vm_forget_range, mmap_fixed_destroyed_next; mproj; reflexivity).
 assert (TOP' : alloc_top (m_vmmaps md') = alloc_top (m_vmmaps md)) by (unfold alloc_top; rewrite ISP'; reflexivity).
+(* 727298f3: a munmap keeps the kernel build and the two fields [vdso_top] reads. *)
+assert (VDSOR' : vdso_reserved (m_kernel md') (vdso_top (m_vmmaps md')) = vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) by (subst md'; first [reflexivity | unfold vdso_top, mmap_top, alloc_top; rewrite ?MMB', ?ISP'; reflexivity]).
 assert (ESX : esec (vm_noaccess (m_vmmaps md')) (m_vm_lazy md') (E1 ++ E2) = esec (vm_noaccess (m_vmmaps md)) (m_vm_lazy md) (E1 ++ E2)).
 { apply esec_ext.
 - apply Forall_forall. intros e' He'. assert (In e' (sec_extents ly S)) as Hin by (rewrite ES; apply in_app_iff in He' as [?|?]; apply in_app_iff; [left|right;right]; assumption).
@@ -497,7 +531,7 @@ assert (MONO1 : forall c', 1 <= c' <= 31 -> rg_mapped_user (reg S c') <= rg_mapp
 by (intros c' Hc'; rewrite (REG c' Hc'); lia).
 assert (HOLES : forall c', 1 <= c' <= 31 -> rg_holes (reg S' c') = rg_holes (reg S c')) by (intros c' Hc'; rewrite (REG c' Hc'); reflexivity).
 split; [| split; [exists M1, M2; split; [exact EM | exact VM'] | exact EG]].
-constructor; rewrite ?VM', ?RES', ?LIM', ?MMB', ?TOP', ?ES', ?PC, ?NEV, ?SR, ?ESX, ?EG; try assumption;
+constructor; rewrite ?VM', ?RES', ?VDSOR', ?LIM', ?MMB', ?TOP', ?ES', ?PC, ?NEV, ?SR, ?ESX, ?EG; try assumption;
 try (destruct L15 as [N1 N2];
 assert (NAS : vm_noaccess (m_vmmaps md') = maps_subtract (vm_noaccess (m_vmmaps md)) (bv_unsigned (w64 (fst e))) (bv_unsigned (w64 (fst e)) + bv_unsigned (w64 (snd e))))
 by (subst md'; destruct md as [fd0 [maps0 lz0 mt0] io0 fs0 proc0 lim0 tm0]; reflexivity);

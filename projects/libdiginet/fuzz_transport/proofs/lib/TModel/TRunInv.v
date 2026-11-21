@@ -2,7 +2,7 @@
    diginet_session_poll (AW69) and receive (AW70) call, at ANY timg I and ANY heap frame F. Image-free: this file
    Requires nothing under lib/A, lib/B or lib/Prog.
 
-   run_inv is AW68's srx_inv (lib/A/Prog/SrxCut.v on cold/h-rw-man-2-aw68, 9d34492e7703, lines 151-156), restated over
+   run_inv is AW68's srx_inv (lib/A/Prog/SrxCut.v on cold/h-rw-man-2-aw68, lines 151-156), restated over
    TModel's names: (1) M.fly.on <> 0 -> M.fly.len <= SPEC_MAX_FRAME; (2) the lengths of s->queue[0 .. s->queued) are at
    most DIGINET_CMD_MAX_LEN; (4) the PENDING commands below g_ncmd have a length of at most SPEC_CMD_MAX; (5)
    s->cfg.max_cmds and max_body are at least 1; and the two array bounds g_ncmd <= CMDS_MAX, s->queued <= QUEUE_MAX.

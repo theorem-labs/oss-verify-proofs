@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (P_of_silent1 and SP_of_silent1 restated for node_ok's read-only-backing fact, RomBase.sys_rob from ShapeAlg.rob_instr; lemma node_ok_same removed, the two node_ok no longer being equal; the RomBase import). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -11,6 +12,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
 From OSSVerify.Proofs.leptonica.pix1_fuzzer.lib.K5.AS Require Import CatSim.
 From OSSVerify.Proofs.leptonica.pix1_fuzzer.lib.K5.AS Require Import ShapeAlg. (* [comment removed for export] *)
 From OSSVerify.Proofs.leptonica.pix1_fuzzer.lib.K5.AS Require Import AsanAcct SpinAlg.
+From OSSVerify.Proofs.leptonica.pix1_fuzzer.lib.Common.Cfg Require RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope bv_scope.
@@ -21,15 +23,15 @@ Variable H : word -> bool.
 Hypothesis HH : H_off_segments segs H.
 Hypothesis Hwx : wx_segs_nowrap segs.
 
-Lemma node_ok_same : AsanAcct.node_ok segs = ShapeAlg.node_ok segs.
-Proof. reflexivity. Qed.
-
 Let P_of (T : TSet) : config -> Prop := fun c => realizes segs c T.
 
-Let P_of_silent1 (T : TSet) : forall c c',
-    AsanAcct.node_ok segs c unit (fun _ => []) (fun _ => c') ->
-    P_of T c' -> P_of T c :=
-  fun c c' Hn Hr => rz_silent1 segs c c' T Hn Hr.
+(* [ShapeAlg.node_ok] is [AsanAcct.node_ok] and [RomBase.sys_rob] *)
+Let P_of_silent1 (T : TSet) : forall ms model c', ms_svc_pending ms = None ->
+    AsanAcct.node_ok segs (mkCfg ms model) unit (fun _ => []) (fun _ => c') ->
+    P_of T c' -> P_of T (mkCfg ms model) :=
+  fun ms model c' Hs Hn Hr =>
+    rz_silent1 segs (mkCfg ms model) c' T
+      (ShapeAlg.node_ok_of_c segs (mkCfg ms model) unit _ _ Hn (ShapeAlg.rob_instr segs ms model Hs)) Hr.
 
 Theorem rz_step_restricted_T : forall A ms msr' model T,
   lazy_cover H (m_vm_lazy model) A -> A_wf A -> MInv A model ->
@@ -60,10 +62,12 @@ Qed.
 (* [comment removed for export] *)
 Let SP_of (T : TSet) : config -> Prop := fun c => srealizes segs c T.
 
-Let SP_of_silent1 (T : TSet) : forall c c',
-    AsanAcct.node_ok segs c unit (fun _ => []) (fun _ => c') ->
-    SP_of T c' -> SP_of T c :=
-  fun c c' Hn Hr => srz_silent1 segs c c' T Hn Hr.
+Let SP_of_silent1 (T : TSet) : forall ms model c', ms_svc_pending ms = None ->
+    AsanAcct.node_ok segs (mkCfg ms model) unit (fun _ => []) (fun _ => c') ->
+    SP_of T c' -> SP_of T (mkCfg ms model) :=
+  fun ms model c' Hs Hn Hr =>
+    srz_silent1 segs (mkCfg ms model) c' T
+      (ShapeAlg.node_ok_of_c segs (mkCfg ms model) unit _ _ Hn (ShapeAlg.rob_instr segs ms model Hs)) Hr.
 
 Theorem srz_step_restricted_T : forall A ms msr' model T,
   lazy_cover H (m_vm_lazy model) A -> A_wf A -> MInv A model ->

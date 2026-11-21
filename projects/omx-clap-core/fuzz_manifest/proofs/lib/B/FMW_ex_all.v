@@ -1,4 +1,4 @@
-(* G4, IMAGE B: expected_spec for fm.asan-ubsan (B twin of lib/A/FMW_ex_all.v, 06d82004dc3), every segment of FMW_ex_base.v discharged: only the shared Section hypotheses
+(* G4, IMAGE B: expected_spec for fm.asan-ubsan (B twin of lib/A/FMW_ex_all.v), every segment of FMW_ex_base.v discharged: only the shared Section hypotheses
    (TfibLib, fm_img_facts) and the callee contracts (strlen, strchr, strncmp, bcmp, plain) are left. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.

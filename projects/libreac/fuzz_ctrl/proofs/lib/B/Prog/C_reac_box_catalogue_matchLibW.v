@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 3060 of its 3101 lines of code are new or changed and 207 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/reac_box_catalogue_match.v, with its module paths and numbers changed; 1731 of its 2038 lines of code are new or changed and 2794 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_box_catalogue_match (0x84e40) of fuzz_ctrl's ASan+UBSan build (image B, libreac v1.9.0): stretches 2, 3, 4 and 6
    of C_reac_box_catalogue_matchLib.v, re-based on their own base memory mb as there, but each with ITS OWN write list
    (brief LIBW-BRIEF.md (a working note, not in this delivery); rulings
@@ -16,7 +17,7 @@
      cmWst Sp fr = [(Sp - 9136, Sp); (fr, fr + 256); (shadow_addr fr, shadow_addr fr + 32)]
    (the window, the stretch's own class-2 frame and that frame's shadow; stretch 6 writes nothing).
 
-   HOW.  The scripts behind the four stretches are copied from reac_box_catalogue_matchF.v (077bb7bcf14, the accepted
+   HOW.  The scripts behind the four stretches are copied from reac_box_catalogue_matchF.v (the accepted
    text; line numbers below are of that file), re-pointed at its route-(C) `_on` copy reac_box_catalogue_matchF_on.v
    (same lemma names; its Section hypothesis SRo : shadow_rw_on R m, R := reac_box_catalogue_match_shadow_R f len Sp FS,
    is each copy's `SR` premise; the copies take that file's patches where they copy its text: the frame's shadow bytes

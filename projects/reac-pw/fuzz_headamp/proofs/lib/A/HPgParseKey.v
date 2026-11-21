@@ -1,17 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: the run plumbing of proofs/reac-pw/fuzz_role/lib/A/RPgCfgChanges.v at 964efd2f474 (cfg_keep, cfg_kwr_ro and the same_io chain of cfg_leaf, as l_keep, l_kwr and l_post) and of proofs/reac-pw/fuzz_qdisc/lib/A/QPgCheck.v at b0f706c04a1 (awr_stk, as l_awr: the writable window is the frame [F, F + 0x60) at atom 2), for a segment of reac_role_prop_parse's walk that starts and ends at the cuts of lib/A/RPgParseBase.v; the entry states, exits, string lemmas and the walk below are new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseL.v at afaa3cb55c1d; for reac-pw/fuzz_rate's reac_rate_prop_parse at image A: module paths and the rl_ / Role names changed to rate's (rt_cstr, rt_fxk, Rate.harness_parse, Rate.RATE_KEY, RtPgStrcmp's rt_cstr_args and cstr_at_of_rt_cstr; kept_run and same_io_wvb from RtPgParseBase), the pcs and image constants are fuzz_rate.asan's (key 0x21720, strcmp wrapper 0x4219c), and on the three next-child paths the foreach back edge 0x84728 beqz is the taken side to L2 (its fall-through 0x8472c j 0x84554 is the impossible one). *)
+(* Modified by Theorem Labs, 2026-10: the run plumbing of proofs/reac-pw/fuzz_role/lib/A/RPgCfgChanges.v (cfg_keep, cfg_kwr_ro and the same_io chain of cfg_leaf, as l_keep, l_kwr and l_post) and of proofs/reac-pw/fuzz_qdisc/lib/A/QPgCheck.v (awr_stk, as l_awr: the writable window is the frame [F, F + 0x60) at atom 2), for a segment of reac_role_prop_parse's walk that starts and ends at the cuts of lib/A/RPgParseBase.v; the entry states, exits, string lemmas and the walk below are new. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseL.v; for reac-pw/fuzz_rate's reac_rate_prop_parse at image A: module paths and the rl_ / Role names changed to rate's (rt_cstr, rt_fxk, Rate.harness_parse, Rate.RATE_KEY, RtPgStrcmp's rt_cstr_args and cstr_at_of_rt_cstr; kept_run and same_io_wvb from RtPgParseBase), the pcs and image constants are fuzz_rate.asan's (key 0x21720, strcmp wrapper 0x4219c), and on the three next-child paths the foreach back edge 0x84728 beqz is the taken side to L2 (its fall-through 0x8472c j 0x84554 is the impossible one). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_rate/lib/A/RtPgParseL.v; 499 of its 567 lines of code are new or changed and 845 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseF.v at afaa3cb55c1d for reac-pw/fuzz_rate's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseF.v for reac-pw/fuzz_rate's
    reac_rate_prop_parse: module paths and the rl_ / Role names changed to rate's; the pcs are image A's of
    fuzz_rate.asan; the find loop's back edge is 0x845cc beqz -> L1 (taken: the next pass) with 0x845d0 j 0x84554
    (not taken: impossible, r' = 0 mod 4). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgParseF.v at f7246d55e8c3 for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgParseF.v for image B
    (fuzz_rate.asan-ubsan); the image is lib/AU/Img0.v's and the cut vocabulary lib/AU/RtPgParseBaseB.v's; the pcs are
    image B's; P + 8 is in a1 (atom 11) at L1, image A's a0; the ret 0 leaves go through 0x84804 li a0,0; the trap
    branch 0x848ac is new and image A's alignment branch 0x84638 is gone. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_rate/lib/AU/RtPgParseFB.v, with its module paths and module names changed; 1569 of its 1626 lines of code are new or changed and 510 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_headamp_prop_parse_result 0x845b4 of reac-pw/fuzz_headamp's ASan image A (fuzz_headamp.asan, pinned sha256
    f3e0669d2819724922df0556b11c2dcd22d1e16fe7e0fe1535ce784b34436c47; unstripped twin
    b5f352154c54a97c66fd92dfa228e8a854498f6cd313dba0107900546b043f9a, the same loaded bytes except .note.gnu.build-id), segment KEY: from the cut

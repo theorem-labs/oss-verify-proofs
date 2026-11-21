@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs: made for reac-repacer/fuzz_uci's ASan image from four files of libreac/fuzz_decode's lib/A: the boolean membership helpers and the cell / trace / read-only proofs of DecodeACrtFacts.v, the proof of DecodeClose.v's HB_API_ENV, the vm_compute checks of DecodeASinkRo.v (dec_A_ro_segs_chk, dec_A_rom_errno_chk, dec_HB_RO_BELOW_OFL, dec_HB_ROM_NO_ERRNO) and DecodeALaws.v's dec_XL0 / HB_COST, each at fuzz_uci's record UciB (lib/A/AD2l.v), segments ucisegs0 (lib/A/UciTFIB.v), sink head (lib/A/AE2k.v) and program statements (lib/A/Prog); module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* UciAFacts: the facts about image A's record that lib/A/UciClose.v takes, each proved by
-   computation at B := UciB (lib/A/AD2l.v:16) and segs := ucisegs0 (lib/A/UciTFIB.v, = lib/A/AB1v.v:13 tfibsegs).
+   computation at B := UciB (lib/A/AD2l.v:16) and segs := ucisegs0 (lib/A/UciTFIB.v, = lib/A/AB1v.v:14 tfibsegs).
    Each Lemma has the statement of the UciClose.v Lemma named with it:
    - uci_api_env_UciB (HB_API_ENV) : api_env segs B (Reusable/YCbq.v:809): errno (as_errno UciB = lib/A/AF0m.v
      TFIB_ERRNO) lies in low memory and inside one loaded segment, and the traces [pc_malloc_ra0] / [pc_free_ra0]

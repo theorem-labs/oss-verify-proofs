@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YL08.v, with its module paths changed. *)
 (* Modified by Trevor Hansen, 2026-11: copied from projects/zlib/checksum_fuzzer/proofs/lib/Reusable/YL08.v for ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer, with its module paths changed, and its addresses and numbers named by Reusable/YAddr.v, which holds this fuzz target's plain binary's values; musl's vmlock, which this binary's __vm_wait reads and zlib's binary does not link, added to the static memory the proofs track, and the proofs extended to it. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (auxv_check and auxv_pre_intro over the auxv per CONFIG_RSEQ: the 26 common pairs, the rseq pairs and AT_NULL; the initial ledger with the vvar/vDSO pair, vdso_top_mkVmMapsFull_init; heap_pristine_intro takes the brk/vDSO gap). *)
 From OSSVerify.Proofs.ffmpeg.ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -189,20 +190,38 @@ Proof.
 intros E a Ha. cbn [sv_denot]. rewrite Z_to_bv_unsigned. unfold bv_wrap.
 change (bv_modulus 64) with (2 ^ 64). apply Z.mod_small. exact Ha.
 Qed.
+(** [vdso_top] of a hand-built initial ledger, in the form [init_reserved] wants.
+    The model proves the same equation for [init_model] ([State.vdso_top_init_model]);
+    this is that proof over the bare constructor, so a lemma stating the initial ledger
+    literally can relate its own [vdso_top] to the launch's [mbase] and [sp]. *)
+Lemma vdso_top_mkVmMapsFull_init : forall reserved maps noacc sb bk lim mb isp,
+vdso_top (mkVmMapsFull reserved maps noacc sb bk lim mb isp)
+= page_round_down_Z (Z.min (bv_unsigned mb) (bv_unsigned isp - stack_max_size)).
+Proof.
+intros. unfold vdso_top, mmap_top, alloc_top. cbn.
+apply page_round_down_Z_min_r.
+Qed.
 Theorem heap_pristine_intro : forall E m rs md,
 mem_ok segs E m rs -> pristine_check rs = true ->
 vm_maps (m_vmmaps md) = [] -> vm_noaccess (m_vmmaps md) = [] ->
 vm_brk (m_vmmaps md) = vm_start_brk (m_vmmaps md) ->
 valid_brk segs (vm_brk (m_vmmaps md)) ->
 bv_unsigned (vm_brk (m_vmmaps md)) + 2 * 4096 <= alloc_ceiling ->
-vm_reserved (m_vmmaps md) = segments_reserved segs ->
+(* 08b1429: the initial ledger carries the vvar/vDSO pair above the image
+   ([State.v:7716-7721 init_reserved]), so the old [segments_reserved segs] form is
+   not a ledger any launch builds. *)
+vm_reserved (m_vmmaps md)
+  = segments_reserved segs ++ vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md)) ->
 SRC_LIM_MIN <= vm_limit (m_vmmaps md) ->
 vm_backing_used md <= 0 ->
 m_halted md = None -> m_vm_lazy md = [] -> m_vm_materialized md = [] ->
 YM05.ceil_of_top (alloc_top (m_vmmaps md)) ->
+(* The brk/vDSO gap, LAST so the bullet run below only gains one at the end.  Derived at the
+   caller from the launch facts (see YO0d's [hp_brk_vdso]). *)
+(bv_unsigned (vm_brk (m_vmmaps md)) + 23 * 4096 <= vdso_top (m_vmmaps md))%Z ->
 heap_pristine B m md.
 Proof.
-intros E m rs md HM Hck V1 V2 V3 V4 V5 V6 V7 V8 M1 M2 M3 HC.
+intros E m rs md HM Hck V1 V2 V3 V4 V5 V6 V7 V8 M1 M2 M3 HC HBV.
 unfold pristine_check in Hck.
 repeat match type of Hck with _ && _ = true => apply andb_prop in Hck as [Hck ?X] end.
 repeat match goal with H : (_ <=? _) = true |- _ => apply Z.leb_le in H | H : (_ <? _) = true |- _ => apply Z.ltb_lt in H end.
@@ -230,22 +249,28 @@ end.
 - exact (conj V1 (conj V2 (conj V3 (conj V4 (conj V5 (conj V6 (conj V7 V8))))))).
 - exact (conj M1 (conj M2 M3)).
 - exact HC.
+(* hp_vdso: a consequence of V6, not a new premise. *)
+- rewrite V6. apply incl_appr. apply incl_refl.
+(* hp_brk_vdso *)
+- exact HBV.
 Qed.
+(** Symbolic cells retain the vector base and random data, not the full key
+    layout. Entry memory supplies the flag-indexed words separately. *)
 Definition auxv_check (rs : smem) (G : facts) (na nr : nat) : bool :=
 match svword_at rs None (ms_libc B + 8) with Some v => sv_eqb v (SOff na 0) | None => false end &&
-forallb (fun k => word_check segs rs (SOff na (16 * Z.of_nat k)) (nth k AUXV_TYPES 0)) (seq 0 10) &&
-match svword_at rs (Some na) 136 with Some v => sv_eqb v (SOff nr 0) | None => false end &&
 sdata_at rs (Some nr) 8 &&
 match fact_of (f_atoms G) na, fact_of (f_atoms G) nr with
-| Some fa, Some fr => (4096 <=? af_lo fa) && (af_hi fa + 160 <=? 2 ^ 63) && (4096 <=? af_lo fr) && (af_hi fr + 16 <=? 2 ^ 63)
+| Some fa, Some fr => (4096 <=? af_lo fa) && (af_hi fa + 16 * Z.of_nat (length (auxv_types true)) <=? 2 ^ 63)
+  && (4096 <=? af_lo fr) && (af_hi fr + 16 <=? 2 ^ 63)
 | _, _ => false
 end.
 Theorem auxv_pre_intro : forall E m rs G na nr lo,
 mem_ok segs E m rs -> facts_ok E G -> auxv_check rs G na nr = true ->
+auxv_words_at segs m (bv_unsigned (ew E na)) (bv_unsigned (ew E nr)) ->
 lo <= bv_unsigned (ew E na) -> lo <= bv_unsigned (ew E nr) ->
 exists sec, 0 <= sec < 2 ^ 64 /\ auxv_pre B sec lo m.
 Proof.
-intros E m rs G na nr lo HM HG Hck Hlo1 Hlo2. unfold auxv_check in Hck.
+intros E m rs G na nr lo HM HG Hck (r & Hty & Har) Hlo1 Hlo2. unfold auxv_check in Hck.
 repeat match type of Hck with _ && _ = true => apply andb_prop in Hck as [Hck ?X] end.
 destruct (fact_of (f_atoms G) na) as [fa|] eqn:Hfa; [|discriminate].
 destruct (fact_of (f_atoms G) nr) as [fr|] eqn:Hfr; [|discriminate].
@@ -253,26 +278,16 @@ pose proof (fact_of_sound E _ na fa (proj1 HG) Hfa) as (Ba & _). pose proof (fac
 repeat match goal with H : (_ && _) = true |- _ => apply andb_prop in H as [H ?Y] end.
 repeat match goal with H : (_ <=? _) = true |- _ => apply Z.leb_le in H end.
 destruct (svword_at rs None (ms_libc B + 8)) as [v|] eqn:Hv; [|discriminate]. apply sv_eqb_eq in Hck. subst v.
-destruct (svword_at rs (Some na) 136) as [v|] eqn:Hv2; [|discriminate].
-match goal with H : sv_eqb v _ = true |- _ => apply sv_eqb_eq in H; subst v end.
+assert (Hlen : Z.of_nat (length (auxv_types r)) <= Z.of_nat (length (auxv_types true))) by (destruct r; cbn; lia).
 match goal with H : sdata_at rs (Some nr) 8 = true |- _ =>
 destruct (sdata_at_sound segs E m rs (Some nr) 8 HM H) as (sec & Hsec & Wsec) end.
 cbn [base_val] in Wsec.
 exists sec. split; [exact Hsec|].
-exists (bv_unsigned (ew E na)), (bv_unsigned (ew E nr)).
-assert (Dna : forall o, 0 <= o -> o <= 160 -> bv_unsigned (sv_denot E (SOff na o)) = bv_unsigned (ew E na) + o).
-{ intros o Ho Ho'. cbn [sv_denot]. rewrite Z_to_bv_unsigned. unfold bv_wrap. change (bv_modulus 64) with (2 ^ 64).
-apply Z.mod_small. lia. }
-split; [| split; [| split; [| split; [exact Wsec | lia]]]].
-- pose proof (svword_at_sound segs E m rs None _ _ HM Hv) as W. cbn [base_val] in W. rewrite Z.add_0_l in W.
-rewrite <- (Z.add_0_r (bv_unsigned (ew E na))). rewrite <- (Dna 0) by lia. exact W.
-- intros k Hk. rewrite <- (Dna (16 * Z.of_nat k)) by lia.
-eapply word_check_sound; [exact HM|].
-match goal with H : forallb _ (seq 0 10) = true |- _ => exact (forallb_In _ _ k H ltac:(apply in_seq; lia)) end.
-- pose proof (svword_at_sound segs E m rs (Some na) 136 _ HM Hv2) as W. cbn [base_val] in W.
-replace (bv_unsigned (ew E na) + 16 * 8 + 8) with (bv_unsigned (ew E na) + 136) by lia.
-replace (bv_unsigned (ew E nr)) with (bv_unsigned (sv_denot E (SOff nr 0)));
-[exact W | cbn [sv_denot]; rewrite Z.add_0_r, Z_to_bv_bv_unsigned; reflexivity].
+exists r, (bv_unsigned (ew E na)), (bv_unsigned (ew E nr)).
+split; [| split; [exact Hty | split; [exact Har | split; [exact Wsec | lia]]]].
+pose proof (svword_at_sound segs E m rs None _ _ HM Hv) as W. cbn [base_val] in W. rewrite Z.add_0_l in W.
+replace (bv_unsigned (ew E na)) with (bv_unsigned (sv_denot E (SOff na 0))); [exact W|].
+cbn [sv_denot]. rewrite Z.add_0_r, Z_to_bv_bv_unsigned. reflexivity.
 Qed.
 End h.
 End e.

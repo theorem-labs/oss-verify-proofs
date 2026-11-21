@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip_k.v
-   (origin/ossv/recipes 501c0d516c69, lines 34-234: ajournal_after_write_win and aj_set_shadow_atS, the step of a
+   (lines 34-234: ajournal_after_write_win and aj_set_shadow_atS, the step of a
    call of a shadow-fill entry __asan_set_shadow_XX on the shadow of the caller's own side-stack frame) for
    reac-pw/fuzz_segconf's image A, segment A2 of reac_segconf_parse_file (the image-A A2 segment lane of the image-A G3 walk owner): module paths
    only. The kit has no copy of this step (fuzz_command's PaRt.v is not in segconf's lib), so the segment carries it
    (brief g3-pf-seg.md). aj_stack_free_cls_atS of the same donor file is segment A4's and is not copied here.
    Modified by Theorem Labs, 2026-10 (the B5 segment lane of the image-B G3 walk owner): copied for image B (fuzz_segconf.asan-ubsan,
-   pin c3796c0b38f3) from the image-A G3 walk owner's lib/A/Prog/pf_a2_k.v (commit 385fd095481f), for segment
+   pin c3796c0b38f3) from the image-A G3 walk owner's lib/A/Prog/pf_a2_k.v, for segment
    B5 of reac_segconf_parse_file (the meta_fill_00 / meta_fill_f8 calls on buf's shadow, 0x8824c and 0x88608): module
    paths only (lib.A -> lib.B, the B kit copies of the 44 image-bound kit modules). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YK04M.v (cold/c-asan-cf-f2b-rhdc 5ad50e61fc6a, file sha256 bd90e54b1f87), CfF2b's DoRecycle re-hide lane (image-free; row A25); module paths changed only: 2 modules to this unit's lib/Reusable. No other edit; no image numeral is stated here. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YK04M.v (file sha256 bd90e54b1f87), CfF2b's DoRecycle re-hide lane (image-free; row A25); module paths changed only: 2 modules to this unit's lib/Reusable. No other edit; no image numeral is stated here. *)
 (* Modified by Theorem Labs, 2026-10: new file (SRr_stepM engine row srrm-matadds, additive; no existing text changed):
    materialize only adds accessed pages. LPS's materialize_model_accesses (State.v) sets the materialized-page ledger to
    newly_materialized_pages ++ the old ledger (or leaves it), and newly_materialized_pages is a filter of the accesses'
@@ -10,6 +10,7 @@
    materialize only adds accessed pages. LPS's materialize_model_accesses (State.v) sets the materialized-page ledger to
    newly_materialized_pages ++ the old ledger (or leaves it), and newly_materialized_pages is a filter of the accesses'
    pages, so every page of the new ledger is an old page or a page of one of the step's accesses. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

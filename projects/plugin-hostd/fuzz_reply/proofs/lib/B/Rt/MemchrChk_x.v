@@ -7,11 +7,12 @@
    (any allocator invariant ARx; ghost head set Hpx threaded unchanged): each walk lemma stated over ARx (<name>_x, and
    POSTr_x for the section post). *)
 (* Modified by Theorem Labs, 2026-10-30: the image-B twin of that generic part, as the new module Rt/MemchrChk_x beside
-   lib/B/Rt/MemchrChk.v (not edited): lib/A/Rt/MemchrChk.v at commit 8fe76247f18 moved to fuzz_reply.asan-ubsan by
+   lib/B/Rt/MemchrChk.v (not edited): lib/A/Rt/MemchrChk.v moved to fuzz_reply.asan-ubsan by
    alreloc ced0368250cb6538 (same-unit A -> B direct map, A<r> -> Y<r>; per-numeral report; the instruction word 472835
    kept by hand, as lib/B/Rt/MemchrChk.v has it).  Its Section e before Section f came out byte-identical to
    lib/B/Rt/MemchrChk.v:29-381, so that file is Required for it instead of a copy; the result is cut to the generic
    Sections f (mchr_check_srr_x) and g (mchr_check0_srr_x); the AR instances SA / gA are lib/B/Rt/MemchrChk.v's own. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

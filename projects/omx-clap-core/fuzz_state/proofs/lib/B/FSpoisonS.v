@@ -1,12 +1,12 @@
 (* fs.asan-ubsan (build B): the contracts of __asan_poison_memory_region (h, 16) and __asan_unpoison_memory_region
    (h, 16), STATEMENTS ONLY; lib/B/FSpoisonW.v proves them (tfib_poison16 / tfib_unpoison16).
-   Ported from: a working branch 52efd1c871f7 proofs/omx-clap-core/fuzz_manifest/lib/A/FMpoisonS.v:20-45 via
+   Ported from: a working branch proofs/omx-clap-core/fuzz_manifest/lib/A/FMpoisonS.v:20-45 via
    lib/A/FSpoisonS.v (this branch): the shapes apoison16_realizes / aunpoison16_realizes are A/FSpoisonS.v's, generic in
    the entry pc and stated once for both builds; this file instantiates them at B's entries, FSH_Base.PC_poison 0x54904
    and FSH_Base.PC_unpoison 0x54aa4 (lib/B/FSH_Base.v). Changed from the donor: the instantiation at B's names, and the
    shapes' last conjunct `(forall a, apresent (w_H W) mem a -> apresent (w_H W) mem' a)`: A/FSpoisonS.v's text is ONE
    CONJUNCT STRONGER than a Theorem Labs lane's FMpoisonS.v (global presence monotonicity, which the walk kit's fsw_intrin_atU,
-   a working branch 259ea2daea9, consumes; A/FSpoisonS.v's header says why), and B's two statements below
+   a working branch, consumes; A/FSpoisonS.v's header says why), and B's two statements below
    carry it through the shared definitions.
    Disassembly of the pinned fs.asan-ubsan (sha256 5ac5ce0954f8..., capstone 5.0.7): 0x54904 and 0x54aa4 are each
    `addi sp,sp,-0x40`; the two bodies (104 resp. 96 instructions) equal A's at 0x54894 / 0x54a34 instruction for

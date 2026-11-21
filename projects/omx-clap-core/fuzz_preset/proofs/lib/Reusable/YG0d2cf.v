@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the event-free second allocator instance (suffix cf), the REMAINING CALL FORMS
    over ARcf (the first batch, the stack forms and the AR laws are in YG0dcf.v). Statements only.
    Each form is cgif's statement word for word, with ecall_pre -> ecall_pre_cf, AR -> ARcf, and the
@@ -116,9 +117,9 @@ getr regs' 10 = w64 (x + k) /\
 (forall a, 0 <= a < 2 ^ 64 -> ~ (spZ regs - ESTACK <= a < spZ regs) -> aview segs (w_H W) mem' a = aview segs (w_H W) mem a) /\
 (forall a, apresent (w_H W) mem a -> apresent (w_H W) mem' a)).
 
-(* cgif_rgb_fuzzer's YG0e.v:48-59 (c8557374ad2e), plus ONE final conjunct: presence never shrinks
+(* cgif_rgb_fuzzer's YG0e.v:48-59 (theorem-labs/oss-verify-proofs@6b32741d849a), plus ONE final conjunct: presence never shrinks
    (forall a, apresent (w_H W) mem a -> apresent (w_H W) mem' a), exactly as FCiface.v's aset_shadow_realizes_x
-   at d9a884240c6e (mirrored from fuzz_state's SetShadowDef, 5c02ddf4dee). It does not follow from the aview
+   (mirrored from fuzz_state's SetShadowDef). It does not follow from the aview
    clause: on image bytes aview reads the rom, so aview-equality says nothing about presence there. *)
 Definition aset_shadow_realizes_cf (pc v : Z) : Prop :=
 forall ly S Hp W regs mem md cid pos q n,

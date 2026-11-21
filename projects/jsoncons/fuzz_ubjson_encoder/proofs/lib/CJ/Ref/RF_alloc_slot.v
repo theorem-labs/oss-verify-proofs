@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: recorded proofs replaced by tactic proofs. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -30,10 +31,16 @@ Context {RUNp : RunP}.
 Lemma ras_pre2_intro : forall st LB t sc n, RAREACH st LB -> RMFACTS st LB -> (s_tick st < t)%N -> 0 <= sc < 48 -> 0 <= n < 2^32 ->
   n + 4 <= 16 * size_class sc -> ras_pre2 st (set_tick t st) sc n FUEL.
 Proof.
-ltac2:(KReplay.run1 (kr_t_RF_alloc_slot ()) ["CEIL_WRAP_1"] "h06__sat2h14__x1h24__p1h33TT0h47__arithh56__sat1h64cstrh75cstr0h84__ffh98__varmaph:5__with;2Hah<2LBh=4__x2h>2ARh?3FITh@2MFhA1NhB2SChC2TThD1nhE2schF2sthG1tp;1p;4p;3p;2p;6p;<p;7p;8g0000j1GTg000Pj4ATg001nj3WTg003Jj1@Tg004ZR0j2HTg0056j1[Tg005[j13Tg006@j17Tg006^R1j20Tg007:j22Tg007Uj2KTg0082j2=Tg008Oj1BTg009cj29Tg00:@j26Tg00:\j2FTg00;nj3ETg00=Fj2\Tg00=`j2ZTg00?7j1YTg00@Gj4XTg00A_j44Tg00B:j4VTg00BTj2UTg00Cmj4TTg00ELj4STg00FbR2j1:Tg00G@j28Tg00GZj4PTg00HAj1CTg00Hdj2MTg00ILj3LTg00J0j2NTg00JQj1OTg00K1j2DTg00KOj1JTg00Kmj1RTg00LXj25Tg00M;j2ITg00M^j4>Tg00NIj6mTg00Nmj1lTg00OOj2kTg00P1j2jTg00P]j3_Tg00Q7j3^Tg00QVj4`Tg00RHj1]Tg00Rfj3aTg00SIj1bTg00Sgj4cTg00TEj3dTg00Thj3eTg00UKl<fTg00V0j7gTg00VTj7hTg00W8j8iTg00W\R3f0R4'6p=1g00X:R5g00XXR6P0P2P1g00Y6f5R1f4R2f3R0f2R7f1R8P4M<fp=QP8g00YVR9g00Z5R:P:g00ZUR;P4g00[5Fgp=;P7P9P:P:P;P8P4Fhp=?P0P9P:P:P;P7P8P4Gip=<g00[Ug00\g#GR<p,4RUNpR=g00^=R>P2P0CAAW>12f6R?#@/H2%12R@g00_VRA#[#3#3#3#3#7RB,02'2%3ARC#7RD%3CRE#3#3RF#3RG#7RH'KRI,02,2@%7ERE,=1%7FRF%B?'9'6P=P>f;R@P4CAf9RJ/F@9E=@'2X<<R@,\<f:RKf8RL/FKRM'ZRN%YMROf7RP#1RQ10PBRR'2RS%1?RT10?IRU'2RV1=?E%BP,9F'6R?'2RW'2RX'2RY'2P<P@PJP=P>PKPJCAAE=KMP1P=PKPLP0CXC4CVPNPY1UKLPOPXPKPLP>PKPJP2CTP0CSPSPWPQPR%@KRK/HL%:KRR%:LRQ'0RWPKPR186RPLPQ186QEQP0CPRQPW%CJRR%:J#1RKf<#@RS#CR2%:S#1RS1MDHR>103DRX%1H103I[RO[RY%1DRNg00`;R=ALDH8UW;RH%1I\=^;NRNP8g00`W1N3D'8PXeO1RXPOp-0R=g00a=R1#ORM%G1R11D68R@%J6R<%R6RZP61563g00aiR[1I6ARAC>,;ZR\PZP9P:P:P;P0EmR05?Z%l:R:P\C<1kZ;R;P4P7g00bPR\g00c0R9'81j47=_\9dA^638C`R3b8b9b:X16W2R9%14/28%18[^16^2=R\P4f>R]/0BP]PJO3b4b0b5b0b7b6b3PQPWPRPKP2PSP>PYPHPNPXPOPMP1P@P<PZP6PAg00cPR^156BC>,;ZR_9?Z0P:P_C<P;P3b8b9b:X16X2=104B,28108B[^16^2=P4%1]P]PJO3b4b0b5b0b7b6b3C4PVP?PTPUPQPWPRPKP2PSP>PYPHPNPXPOP9P\P4f=R\/0IP\PLO3b4b0b5b0b7b6b3PQPWPRPKP2PSP>PYPHPNPXPOPMP1P@P<PZP6PAP^156D%]G5a6C>,;ZRG9?Z0P:PGC<P;P3b8b9b:X16X2=104I,28108I[^16^2=P4%1\P\PLO3b4b0b5b0b7b6b3C4PQPWPRPKP2PSP>PYPHPNPXPOPMP1P61D67P8%b6CcP<PZP6156E9d6AP[156F1I6C5e6C>,;ZRZP:PZC<P;P3b8b9b:X16X=61=4E19F8'61=8E19F7'6[^16^=6P4%B]P\PPO3b4b0b5b0b7b6b3C4C4C4C4C4W?WAWBWCW@W>XD6XE6XG5W<WFo"). Qed.
+  intros st LB t sc n AR MF TT SC N FIT. split; [| split; [| split; [| repeat split; lia]]].
+  - exists LB. split; [exact AR| apply ist_top; exact TT].
+  - apply ER_refl_tick.
+  - apply ALLC_tick; [| exact TT]. exact (mf_cell_ticks _ _ MF).
+Qed.
 
 Theorem ralloc_slot_spec : ralloc_slot_stmt ras_pre2 as_inv2.
 Proof.
-ltac2:(KReplay.run1 (kr_t_RF_alloc_slot ()) ["CEIL_WRAP_1"] "h04fuelp;2p;1p;5p;3g00d7j25Tg00eRj14Tg00g2j20Tg00hVj51Tg00j0j13Tg00kCj32Tg00lfp,4RUNpR0g00^=R1,50%401001f0D1W0%30g00mE520eo"). Qed.
+  unfold ralloc_slot_stmt. intros fuel.
+  exact (ralloc_slot_ok ram_pre ralloc_meta_spec MallocFacts_inv4.ist_ampre_proof fuel).
+Qed.
 End CEIL_WRAP_1.
 

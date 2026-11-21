@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the auxv conjunct of rauxv_ok is carried as the launch's auxv keys, auxv_keys). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -92,7 +93,7 @@ Proof.
 intros C m m' B sfH_; first [ sf_destruct 14%nat sfH_ as av x3 x4 x5 x16 x6 x11 x12 x23 rnd C1 A1 A2 H | sf_fb; destruct sfH_ as (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & C1 & A1 & A2 & H) ]; intros HP HB HC.
 first [ unshelve sf_eexists 10%nat; [ exact (av) | exact (x3) | exact (x4) | exact (x5) | exact (x16) | exact (x6) | exact (x11) | exact (x12) | exact (x23) | exact (rnd) | ] | sf_fb; exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd ]. split; [|split; [|split; [|exact H]]].
 - eapply rpres_except_rw_cells; [exact HP| exact C1|]. cbn. intros a Ha. apply HC. lia.
-- eapply rpres_except_bytes_at; [exact HP| exact A1|]. intros a Ha. apply HB. lia.
+- eapply auxv_keys_map; [|exact A1]. intros A0 w HA HB' Hb. eapply rpres_except_bytes_at; [exact HP| exact Hb|]. intros a Ha. apply HB. lia.
 - eapply rpres_except_bytes_at; [exact HP| exact A2|]. intros a Ha. apply HB. lia.
 Qed.
 

@@ -6,8 +6,9 @@
    to the kit's rdword (through a Theorem Labs lane's CmdRecRest.v val_mem_of_aval), the transport of the recorder's
    representation (rec_repA) over a reader that keeps g_rec, record.spill and the live blocks, the blocks the
    recorder owns as live blocks, and the live-byte count over a permutation of the block list. The B twin of
-   lib/A/Prog/answer_t1.v (a working branch d28426fbb96) with the B kit's module paths; A's local copy of
+   lib/A/Prog/answer_t1.v (a working branch) with the B kit's module paths; A's local copy of
    val_mem_of_aval is a Theorem Labs lane's lemma. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

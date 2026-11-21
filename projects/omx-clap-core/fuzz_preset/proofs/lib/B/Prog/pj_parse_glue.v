@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the GLUE facts of pj_parse's image-B walk (fuzz_preset asan-ubsan, B 0x862ec): the pure
    Props pjp_g_* / pjp_glue of lib/B/Prog/pj_parse_defs.v, and the allocator-trace universe fact the parse_value call
    needs, from pj_parse's closure.
@@ -12,7 +13,7 @@
      (its rk_suf lemmas) at ANY strtod model (the plain one is stated at jr_strtod only).
    - pjp_g_depth / run / fail_in / norefuse / calls: PjGrammar's jr_value_depth, jr_run_eq, G7_1, G7_1_calls, G7_2,
      vspec_jr_value, ok_upto_dec.
-  - pjp_g_univ: the kit's prh_univ_closure_malloc / prh_univ_closure_realloc (walkkit a3bdeca3920: rd_pre's trace
+  - pjp_g_univ: the kit's prh_univ_closure_malloc / prh_univ_closure_realloc (walkkit: rd_pre's trace
     premises are the pc0-filtered prh_trace pc0 r [], parse text blob dcff6bfa302a). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -263,7 +264,7 @@ Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : Cf
 Context {SK : YI16.sink_head}.
 Variable B : asyms.
 
-(* The kit's prh_univ_closure_malloc / prh_univ_closure_realloc (walkkit a3bdeca3920, the pc0-filtered traces); the two
+(* The kit's prh_univ_closure_malloc / prh_univ_closure_realloc (walkkit, the pc0-filtered traces); the two
    site lists are non-empty at prh_img_B (vm_compute over the generated PRH_ImgB.v values) *)
 Theorem pjp_g_univ_holds : pjp_g_univ B.
 Proof.

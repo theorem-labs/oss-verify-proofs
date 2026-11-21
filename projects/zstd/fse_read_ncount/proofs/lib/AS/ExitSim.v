@@ -1,11 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (adds sstep_instr_inv, inside WithSegs: with no lazy mappings and no pending syscall, a machine step is an event-free sstep; imports the model's modules with Vdso by their LinuxProcessSem path). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit OmniEquivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run OmniRun.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.AS Require Import SimInv.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Vdso Run OmniRun.
 Unset Lia Cache.
 Import ListNotations.
 Open Scope bv_scope.
@@ -153,4 +155,49 @@ Definition on_path (c : config) : Prop :=
 (m_halted (cfg_model c) = None /\ m_vm_lazy (cfg_model c) = [] /\
 to_exit (cfg_ms c))
 \/ m_halted (cfg_model c) <> None.
+(* The Section used to END HERE, which left sstep_instr_inv below outside it while that lemma
+   still uses the Section's `segs` -- "The reference segs was not found in the current
+   environment" at :162. The End now sits after that lemma, at the last user of `segs`. *)
+
+Lemma sstep_instr_inv : forall ms model ms' evs st,
+  m_vm_lazy model = [] ->
+  ms_svc_pending ms = None ->
+  RiscvSemantics.step segs ms = MachineOk ms' ->
+  sstep segs (mkCfg ms model) evs st ->
+  evs = [] /\ st = SNext (mkCfg ms' model).
+Proof.
+  intros ms model ms' evs st Hlazy Hsvc Hstep Hss.
+  inversion Hss; subst.
+  - (* [comment removed for export] *)
+    match goal with H : mi_account_step segs ms model = MachineOk _ |- _ =>
+      rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
+      rewrite Hstep in H; inversion H; subst end.
+    split; reflexivity.
+  - (* [comment removed for export] *)
+    match goal with H : mi_account_step segs ms model = MachineFault |- _ =>
+      rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
+      rewrite Hstep in H; discriminate end.
+  - (* [comment removed for export] *)
+    match goal with H : mi_account_step segs ms model = MachineUnmodeled |- _ =>
+      rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
+      rewrite Hstep in H; discriminate end.
+  - (* [comment removed for export] *)
+    match goal with H : mi_account_step segs ms model = MachineUnmodeled |- _ =>
+      rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
+      rewrite Hstep in H; discriminate end.
+  - (* [comment removed for export] *)
+    match goal with H : mi_account_step segs ms model = MachineUnmodeled |- _ =>
+      rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
+      rewrite Hstep in H; discriminate end.
+  - (* [comment removed for export] *)
+    match goal with H : mi_account_step segs ms model = MachineUnmodeled |- _ =>
+      rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
+      rewrite Hstep in H; discriminate end.
+  - (* [comment removed for export] *) congruence.
+  - (* [comment removed for export] *) congruence.
+  - (* [comment removed for export] *) congruence.
+  - (* [comment removed for export] *) congruence.
+  - (* [comment removed for export] *) congruence.
+Qed.
+
 End WithSegs.

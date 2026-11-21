@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names, addresses and numbers changed; 2252 of its 2377 lines of code are new or changed and 886 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/R10A.v, with its numbers changed; 2171 of its 2324 lines of code are new or changed and 2224 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/R10.v, with its module paths changed; 731 of its 781 lines of code are new or changed and 2274 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/F3.v -- GLUE for stage seg_F3 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput
    (lib/A/ACtl.v seg_F3, W piece W4a): the frame turn's first reac_ctrl_parse call, at 0x81df8.  Written by
    a Theorem Labs lane (brief stage-parse-sites.md (a working note, not in this delivery)); single writer.
@@ -19,11 +20,11 @@
    mv a0,s7 ; mv a1,s2 ; ld a2,248(s1) (a2 = o = fr + 176) ; jal reac_ctrl_parse; return point 0x81dfc = the exit cut.
 
    THE ROUTE (a Theorem Labs lane 03:56Z): the walk applies a Theorem Labs lane's cgif-form treac_ctrl_parse_spec at the jal, cited as
-   the named Section hypothesis TPARSE (a working branch 621a4ba64dc, REAC_CTRL_PARSE_STK = 8800:
+   the named Section hypothesis TPARSE (a working branch, REAC_CTRL_PARSE_STK = 8800:
    the walk's 32768-byte LLVMF_STK window holds the callee's 8800 below sp).  Before the call, two lifted
    runs: F3F.f3_st_F (a Theorem Labs lane's _F, 0x81dd0 -> 0x81dec, writes the five shadow bytes) and this lane's narrowed
    pre stretch F3Fs.f3_calln_pre_Fs (0x81dec -> the callee entry 0x83578 with ra = 0x81dfc; reads [A + 248, A + 256)),
-   the split of F3.f3_calln granted by a Theorem Labs lane 04:01Z (F3Fs.v, commit c210c16fa5d).  There is no stretch after
+   the split of F3.f3_calln granted by a Theorem Labs lane 04:01Z (F3Fs.v).  There is no stretch after
    the call: TPARSE's post at the return point is the exit cut's configuration.  reac_ctrl_parse_contract(_F) is NOT
    used.
 
@@ -67,7 +68,7 @@
    TABLE VALUES (a Theorem Labs lane 05:52Z): two steps read the start-up tables, and neither picks a list position: KIND_NAME's
    112 bytes avoid Tfib_owned_static (OWB, a forallb decided by vm_compute) and lie in a Tfib_zero_shadow row (ZSB,
    an existsb decided by vm_compute).  Both booleans are true on the planning core this file type-checks against and
-   on the RECORD AF0m (a working branch e56483f863b, lines 2955-2981: the covering row is
+   on the RECORD AF0m (a working branch, lines 2955-2981: the covering row is
    (0x21aa0, 0x9e7d0 - 0x21aa0), and the owned row (0x9e7d0, 0x30) starts at KIND_NAME + 112), checked by a script.
 
    SECTION HYPOTHESES (exact text below)
@@ -78,7 +79,7 @@
      AR_states_owned_ro, so the former Section hypotheses VIS0 / OWNED_RO are gone.
 
    HELPERS: this file's f3g_* lemmas are stage-local; the generic ones are a Theorem Labs lane's, Required from
-   lib/A/ACtlG/F6_ebc.v (a working branch 072e322f65a) and cited as A.ACtlG.F6_ebc.f6g_* until they move
+   lib/A/ACtlG/F6_ebc.v (a working branch) and cited as A.ACtlG.F6_ebc.f6g_* until they move
    to the kit (a Theorem Labs lane's instruction); none is copied.
 
    SIX TWIN MODULES (porter a Theorem Labs lane 04:24Z / 04:33Z): YI04 / YI16 / YK11 / YK1b / YM05 / YO09 are named only
@@ -88,9 +89,9 @@
    Seg/F3.v and the frame route of record into the closure (rule 1).
 
    BUILD STATE (honest): on the glue base (planning core) a TYPE-CHECK WITH STAND-INS on the cb packed base
-   23b918fe0c2e (the closure reaches the planning core's lib/A/AE2k.v, AF0m.v, AF0l.v, whose undefined
+   (the closure reaches the planning core's lib/A/AE2k.v, AF0m.v, AF0l.v, whose undefined
    port_core_refused_<hex> names the build workspace replaces by the hex literal, never on the branch); on
-   a working branch (this branch merged with the interim core 5da74c9c931, which has none) a type-check
+   a working branch (this branch merged with the interim core, which has none) a type-check
    whose closure reaches no stand-in.  No Axiom, no Parameter, no Admitted, no admit. *)
 
 From Stdlib Require Import ZArith List Lia Permutation.

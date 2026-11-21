@@ -2,7 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN2n.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the allocation mode the allocator record carries (a refused munmap leaves a leaked map)). *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require YZ00.
+From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable.R Require Import Cfg.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -18,6 +20,7 @@ Unset Lia Cache. Unset Nia Cache.
 Local Open Scope Z_scope.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Section h. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {AM : AllocMode}.
 Definition slot_of (a : sptr) (k : Z) : sptr := padd a (AREA_HDR + META_SIZE * k).
 Definition hdr_cells (a : sptr) (next : option sptr) : list mcell :=
 [MCell (LMem a) 8 VSec; MCell (LMem (padd a 8)) 8 (optr next); MCell (LMem (padd a 16)) 4 (VZ METAS_PER_AREA)].

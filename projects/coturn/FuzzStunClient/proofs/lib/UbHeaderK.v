@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the stack window is 6144513 bytes, was 8388608, the reservation reads the launch's init_reserved, and world_k_of_read_post takes the launch's kernel build (Amb). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -501,8 +502,9 @@ Section HeaderK.
   Lemma stack_k : stack_writable M sp0.
   Proof.
     get_know extra Hlen HK.
-    pose proof (kf_wr _ _ _ HK (EVar 0) (-8388608) 8388608 ltac:(kin)) as W. kclean W.
-    intros d m Hd Hm. replace (bv_unsigned sp0 - 8388608 + d)%Z with (bv_unsigned sp0 + -8388608 + d)%Z by lia.
+    pose proof (kf_wr _ _ _ HK (EVar 0) (-6144513) 6144513 ltac:(kin)) as W. kclean W.
+    apply stack_writable_of_lit.
+    intros d m Hd Hm. replace (bv_unsigned sp0 - 6144513 + d)%Z with (bv_unsigned sp0 + -6144513 + d)%Z by lia.
     apply W; assumption.
   Qed.
 
@@ -522,13 +524,14 @@ Section HeaderK.
   Proof.
     pose proof (rk_vm _ _ _ _ _ _ _ _ _ _ _ _ _ _ RP) as VS.
     pose proof VS as (Hres & Hlim & Hvsp0 & rest & Hmaps & Hsm & Hlen & Hlive & (p & Hp & Hp1 & Hp2) & Hapart & Hseps).
+    rewrite log2_nb_of in Hlen by lia.
     pose proof area_eq as AE. pose proof hk_nums as (Hc1 & Hc2 & _ & Enb & _). pose proof capk_split as CS.
     pose proof world_k_intro as WK. pose proof (wk_B_rng _ _ _ _ _ _ _ WK) as RB.
     pose proof below_top as [TB TM].
     rewrite Enb in *. unfold nbk in *.
     destruct (vm_stage_seps VM sp0 mb B (capk k + 4096) ltac:(lia) ltac:(lia) VS) as [SEPS NW].
     constructor.
-    - exact Hres.
+    - rewrite Hvsp0. exact Hres.   (* LPS 08b1429: both read the launch's init_reserved *)
     - rewrite Hlim. unfold target_alloc_limit. lia.
     - rewrite Hmaps, Z_to_bv_bv_unsigned. left. reflexivity.
     - exists (fst p), (snd p). split; [rewrite Hmaps; right; destruct p; exact Hp | lia].
@@ -797,7 +800,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Theorem world_k_of_read_post : forall (k : Z) (sp0 p1 mb gm sec cn B e tid : word) (area brkv mas : Z) (content : list byte)
+Theorem world_k_of_read_post {AMB : Amb} : forall (k : Z) (sp0 p1 mb gm sec cn B e tid : word) (area brkv mas : Z) (content : list byte)
     (M0 : word -> option byte) (R : bvmap 5 word) (M : word -> option byte) (VM : VmMaps),
   (1 <= k <= 10)%Z -> valid_sp sp0 ->
   read_post k sp0 p1 mb gm sec cn B e content M0 R M VM ->

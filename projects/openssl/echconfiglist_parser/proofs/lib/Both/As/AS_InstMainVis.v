@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (HC and the MR notation are stated over AsanInitL's SINV0L and argH0 of the run's input). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -8,7 +9,7 @@ From OSSVerify.openssl.echconfiglist_parser.images Require Import AsanUbsan.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Lib Require Import Mem Cells Step Frame Arr CellsX TacX.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import HeapCeil AsanAllocModel LazyRestrict LazyLedger LazySR BackingAlgebra.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.As Require Import ASegs AsShadow AsConst AsIface AllocWf AllocRep AllocRepX AS_InstMainDefs.
-From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import PropExec AxSymExec3 AxSymExec3Sound AxSymExec3B AsanAcct AsanPlanCore AsanPlan AsanPlanSound AsanPlanSoundSums AsanInit AsanHexScan AsHSTab AsStartupHSF AsMainVM. From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both Require Import AsMainState AsMainFacts AsMainLazyChk AsMainLazy AsMainCells AsMainIface AsMainIfaceAlloc.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import PropExec AxSymExec3 AxSymExec3Sound AxSymExec3B AsanAcct AsanPlanCore AsanPlan AsanPlanSound AsanPlanSoundSums AsanInit AsanInitL AsanHexScan AsHSTab AsStartupHSF AsMainVM. From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both Require Import AsMainState AsMainFacts AsMainLazyChk AsMainLazy AsMainCells AsMainIface AsMainIfaceAlloc.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.AsCert Require Import AsImages AsPlanImages.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.As Require Import AsMainSyms.
 Import ListNotations. Import AX2. Import AX2S. Import AX2B. Import APC. Import AP. Import APS. Import APSX.
@@ -25,8 +26,8 @@ Section AT_MAIN.
   Hypothesis Vev : valid_envp (in_envp inp).
   Hypothesis Vfit : entry_stack_fits sp0 (in_argv inp) (in_envp inp).
   Hypothesis Hh : HSF_asan h = Some ch.
-  Hypothesis HC : cs_ok ASEGS ASAN_H AsanInit.LIMIT (SINV0 APH sp0 rdraw brk0 (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-                        (argH0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model.
+  Hypothesis HC : cs_ok ASEGS ASAN_H AsanInit.LIMIT (SINV0L APH AsanUbsan.M.init_pc sp0 rdraw brk0 inp)
+                        (argH0 sp0 rdraw inp) (in_fs inp) E ch R FULL model.
   #[local] Notation g := (hole_granted h).
   #[local] Notation cls := (hole_class h).
   #[local] Notation X := (Xof g E).
@@ -233,7 +234,7 @@ Section AT_MAIN.
 
   Variables (env : list Z) (ts : bool) (AL0 : Z).
   #[local] Notation s0 := (cert_s0 sp0z brk0z X env ts AL0).
-  #[local] Notation MR := (Mr ASAN_H (argH0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) E ch model FULL).
+  #[local] Notation MR := (Mr ASAN_H (argH0 sp0 rdraw inp) E ch model FULL).
   Let KNF := co_know _ _ _ _ _ _ _ _ _ _ _ HC.
 
   (* [comment removed for export] *)

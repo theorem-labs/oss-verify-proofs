@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main entry's recorded facts read as the main entry keeps them: BMKN, BPKN; imports MainEntryAsan, where they live). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -8,6 +9,7 @@
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude.
+From OSSVerify.Proofs.zstd.simple_decompress.lib.AS Require Import MainEntryAsan.
 From OSSVerify.Proofs.zstd.simple_decompress.lib.Lib Require Import PropExec MState Mem Cells Step Frame Arr Tac InitMem.
 From OSSVerify.Proofs.zstd.simple_decompress.lib.LibA Require Import ExecF.
 From OSSVerify.Proofs.zstd.simple_decompress.lib.Spec Require Import AsanEmbed.
@@ -62,8 +64,8 @@ Local Ltac pf V HP f H := pose proof (pfact_find V _ f HP ltac:(vm_compute; refl
 
 Section CANSEC2. Context {rc : runConstT}.
 Theorem afake_init : forall (V : nat -> Z) (w : bool) (U : list (list Z)) (m : amem),
-  Forall (mfact_ok bsegs V m) both_mem_facts ->
-  Forall (pfact_ok V) both_pure_facts ->
+  Forall (mfact_ok bsegs V m) BMKN ->
+  Forall (pfact_ok V) BPKN ->
   32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat - 8388608 = ATOP ->      (* [comment removed for export] *)
   AFAKE (mkALayout (LV V) w U) [] m.
 Proof.

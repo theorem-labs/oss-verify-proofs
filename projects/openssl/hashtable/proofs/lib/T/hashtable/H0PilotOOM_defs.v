@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the recorded run walks the auxv to AT_NULL in both CONFIG_RSEQ cases ([kn_tail]); [knC] is what both keep). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -62,10 +63,16 @@ Definition knB2 : list kentry := Eval vm_compute in fst (fst (carry [mc_store] k
 Definition srC0 : list expr := Eval vm_compute in sr_after_call_j srB (map ridx callee_kept) 41.
 
 (* [comment removed for export] *)
-Definition ssC0 : sym_state := SS 0x26c7dc srC0 [] knB2 73.
+(* LPS 727298f3: the walk below reads the auxv to AT_NULL, whose place CONFIG_RSEQ decides, so the
+   block runs over [kn_tail] in each case; the two ends differ only in a2, which the block after the
+   brk call overwrites first, and [knC] is what both keep of [knB2]. *)
+Definition ssC0 : sym_state := SS 0x26c7dc srC0 [] (knB2 ++ kn_tail false) 73.
 Definition rC := Eval vm_compute in run scr0 ssC0.
+Definition ssC1 : sym_state := SS 0x26c7dc srC0 [] (knB2 ++ kn_tail true) 73.
+Definition rC1 := Eval vm_compute in run scr0 ssC1.
 Definition srC : list expr := Eval vm_compute in s_regs (fst (fst rC)).
-Definition knC : list kentry := Eval vm_compute in kn_after rC knB2.
+Definition knC_raw : list kentry := Eval vm_compute in kn_after rC (knB2 ++ kn_tail false).
+Definition knC : list kentry := Eval vm_compute in firstn (length knC_raw - length (kn_tail false)) knC_raw.
 
 (* [comment removed for export] *)
 Definition b_expr : expr := EVar 73.
@@ -116,6 +123,9 @@ Lemma itinerary_ok :
   (s_pc (fst (fst rA)), snd (fst rA)) = (0x277634%Z, [])
   /\ (s_pc (fst (fst rB)), snd (fst rB)) = (0x27647c%Z, [])
   /\ (s_pc (fst (fst rC)), snd (fst rC)) = (0x26c8a4%Z, [])
+  /\ (s_pc (fst (fst rC1)), snd (fst rC1)) = (0x26c8a4%Z, [])
+  /\ knC_raw = knC ++ kn_tail false
+  /\ kn_after rC1 (knB2 ++ kn_tail true) = knC ++ kn_tail true
   /\ (s_pc (fst (fst rD)), snd (fst rD)) = (0x26c8c8%Z, [])
   /\ (s_pc (fst (fst rE)), snd (fst rE)) = (0x26e278%Z, [SCBr true BC_NE b_expr (EAlu ALU_ADD b_expr (ELit 8192))])
   /\ (s_pc (fst (fst rF)), snd (fst rF)) = (0x26fa04%Z, [])

@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx-GENERIC twin of ARM_remove (lib/A/W_LLVMFuzzerTestOneInput_remove.v lf_arm_remove),
    the jump table's arm 4 of the ASan walk of fuzz_reply's LLVMFuzzerTestOneInput (op_remove, fuzz_reply.c:619-631:
    the inlined relay_source search, relay_remove, check_no_loss_read when the entry was open, check_no_loss,
    check_shape_ends, check_shape_done, source_reset, back to the latch), a Theorem Labs lane's route (b), step 7.
-   - The AR proof is a Theorem Labs lane's: a working branch 30d91cacb63 (lf_arm_remove Qed on base ebe8aee727b,
+   - The AR proof is a Theorem Labs lane's: a working branch (lf_arm_remove Qed on base,
      fresh rc=0 wall 826, remove.vo real 182.87 s, Print Assumptions 13 Prim* + funext), adapted to the current cut and
-     kit on a working branch ddbe0ec6590 (statement unchanged).  The AR file is NOT edited here;
+     kit on a working branch (statement unchanged).  The AR file is NOT edited here;
      this file Requires it and cites every AR-free definition and lemma of it (the arm's addresses, sstates, model
      records and rules, register / frame-byte / permutation / keep lemmas); each lemma of it that reads AR, AR_laws, an
      AR journal, afn_pre, lf_base, an INV_* or RCUT, errno_law, ashp or gx_prog is restated here over ARx as NAME_x,
@@ -17,7 +18,7 @@
      journal / law lemmas they cite become one-line wrappers of the kit's _x lemmas with the AR argument layout
      (ajournal_gx_AR0 .. al_blocks_0).  Each callee spec is the kit's _x form taken at Hp := []; its post's Hp' is []
      by HP0.
-   - The Section header is cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:191-235), so lf_arm_remove_x's
+   - The Section header is cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:192-236), so lf_arm_remove_x's
      statement is cut_x's ARM_remove hypothesis (cut_x.v:306) at that Section's variables (checked at the end).
    - Section hypotheses: the AR file's, over ARx where they name AR (callee specs in their kit _x forms, errno_law_x,
      gx_prog_x), the model rules verbatim (LS is cut_x's LSx), and those the generic relation and PST force: BLKN30
@@ -88,8 +89,8 @@ Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 #[local] Notation SIGMA := (@pa_sigma _ fr_prog_listing PB_fr).
 #[local] Notation BASE := (@pa_val _ fr_prog_listing PB_fr A_TEXT).
 
-(* the arm's count peak (the room round, a Theorem Labs lane's ROOM-TEXTS (c)): a Theorem Labs lane's pk_rm (lib/A/ReplyLScnt.v,
-   commit ba8e99b5bd2) word for word: relay_remove's premise peak (its trace's peak + 4), plus check_no_loss's own peak
+(* the arm's count peak (the room round, a Theorem Labs lane's ROOM-TEXTS (c)): a Theorem Labs lane's pk_rm (lib/A/ReplyLScnt.v)
+   word for word: relay_remove's premise peak (its trace's peak + 4), plus check_no_loss's own peak
    over the lines the drain appended when the entry is open (its premise's + 2 is inside the 4); check_shape_ends and
    source_reset have premise peak 0.  check_no_loss's trace is ReplyTrPeakCnl.v:119-124's cnl_nm / cnl_tr / cnl_pk,
    restated here (that file Requires the AR arms) *)
@@ -105,7 +106,7 @@ Definition rm_pk (m : lmod) (h : hsrc) (j0 : nat) (P : Z -> bool) : nat :=
 (* the open entry's and the slot's facts the count rules RM_CNT_* read (a Theorem Labs lane's bundle), in W_rep.v's order:
    aentry_ok's skip, fd sign, capacity, partial-line and key-array clauses (W_rep.v:121, 123, 124, 125, 131-132) and the
    pending list's non-empty records (alist_at at lines = false, W_rep.v:91); the walk reads them off amodel_at at the
-   arm's start.  The fd sign matters: rr_tr is [] at a negative fd (W_contract.v:1295) *)
+   arm's start.  The fd sign matters: rr_tr is [] at a negative fd (W_contract.v:1296) *)
 Definition rm3_pre (e : rentry) (h : hsrc) : Prop :=
   (re_skip e = 0 \/ re_skip e = 1) /\
   0 <= re_fd e /\
@@ -114,7 +115,7 @@ Definition rm3_pre (e : rentry) (h : hsrc) : Prop :=
   ((re_hp e = 0 /\ re_keys e = []) \/ (re_hp e <> 0 /\ 8 <= re_kh e)) /\
   Forall (fun r => (1 <= length (snd r))%nat) (hl_recs (hs_pending h)).
 
-(* ---- cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:194-235), verbatim ---- *)
+(* ---- cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:195-236), verbatim ---- *)
 Variable B : asyms.
 Variable MT : ameter_ops.
 Variables XM_LIB XN_LIB : Z -> Z.
@@ -173,7 +174,7 @@ Hypothesis RI_rm_rr_pair : forall cx t m si h j0,
    plain proof's pair_ok, Prog/SlotInv.v:253-263) *)
 Hypothesis RI_rm_src : forall cx t m si h j0,
   RINV cx t m -> rm_at cx m si h j0 -> hl_recs (hs_expected h) = [].
-(* relay_remove's sizes and budget: a Theorem Labs lane's TX_LS_rm_rr_pre (lib/A/ReplyLS3Peak.v:152, commit 1318828167d)
+(* relay_remove's sizes and budget: a Theorem Labs lane's TX_LS_rm_rr_pre (lib/A/ReplyLS3Peak.v:152)
    in this Section's names (MMAX for CfParamsReply.fr_MMAX; its ent_capout_ok0 (c_W cx) (c_mem cx), ReplyLS3eCap.v:134,
    stated by its body: that file Requires the AR arms); conjuncts 3 and 6 in rr_spec_x's peak form *)
 Hypothesis LS_rm_rr_pre : forall cx t m ly S si h j0,
@@ -198,7 +199,7 @@ Hypothesis RI_rm_cnl_pre : forall cx t m si h j0 e1 h1 ev LB c2 O2 cap2,
   AREC * capb (hs_held h1) (hs_expected h1) < 2 ^ 32 /\ Z.of_nat (length O2) < 2 ^ 32 /\
   (lm_gn m = 0 -> exists rest, O2 = bstream (hs_expected h1) ++ rest).
 (* check_no_loss's allocator facts after relay_remove's charge: a Theorem Labs lane's TX_LS_rm_cnl_pre (lib/A/
-   ReplyLS3cTopxPost.v:178, commit d0d75bf92db) in this Section's names: the start model's block sizes (rm_mfacts) and
+   ReplyLS3cTopxPost.v:178) in this Section's names: the start model's block sizes (rm_mfacts) and
    the composed frame to the call's state (rm_fr).  LS_rm_cnl_pre, LS_rm_cshe_pre and LS_rm_sr_pre take, after rm_rr_ok,
    the arm's t bound (lregs_rmc's last conjunct) and the removed entry's partial-line bound (rm_Qc's rm3_pre);
    LS_rm_step takes the partial-line bound after LSx *)
@@ -263,8 +264,8 @@ Hypothesis LS_rm_step : forall cx t m ly0 S0 (ly : alayout) (S : astate)
    (exists r rs, hl_recs (hs_pending h) = r :: rs /\ 0 <= hs_off h < Z.of_nat (length (snd r)))) ->
   0 <= t < OPS_MAX ->
   LSx cx (t + 1) (rm_mk cx m si None j0 (rm_cev c2 ev5) O2 cap2 out2) ly S.
-(* the room round's count row (a Theorem Labs lane's ROOM-TEXTS (c); a Theorem Labs lane's lib/A/ReplyLScnt.v fr_LS3cp_cnt_rm at
-   commit ba8e99b5bd2): at the arm's start, the live counts plus the arm's peak rm_pk stay under RP's bounds.  The
+(* the room round's count row (a Theorem Labs lane's ROOM-TEXTS (c); a Theorem Labs lane's lib/A/ReplyLScnt.v fr_LS3cp_cnt_rm):
+   at the arm's start, the live counts plus the arm's peak rm_pk stay under RP's bounds.  The
    guards are the walk's facts there (the model's sizes come from amodel_at) *)
 Hypothesis LS_cnt : forall cx t m ly S (W : world segs) mem si h j0,
   LSx cx t m ly S -> RINV cx t m -> rm_at cx m si h j0 -> amodel_at B ly S W mem m -> 0 <= t < OPS_MAX ->
@@ -301,7 +302,7 @@ Hypothesis SR : sr_spec_g_x B PST ARx MT RP (BASE + AF_fr_source_reset).
 Hypothesis HGP : forall si, (si < 4)%nat -> gx_prog_x B ARx [(rm_HA si, ASRC)].
 (* _cut's errno_law over ARx: cut_x's errno_law_x *)
 Hypothesis ERR : errno_law_x B ARx.
-(* OWED: kit _x twin of W_shadow_pin_fr.ashp_str2_1_fr (W_shadow_pin_fr.v:44, `ashp (PI := PB_fr) B (VAL (A_OBJ 28))
+(* OWED: kit _x twin of W_shadow_pin_fr.ashp_str2_1_fr (W_shadow_pin_fr.v:45, `ashp (PI := PB_fr) B (VAL (A_OBJ 28))
    1`), over ARx: .str.2's shadow facts in every allocator state (W_contract_x.v ashp_x) *)
 Hypothesis HSTR2S : ashp_x ARx (VAL (A_OBJ 28)) 1.
 (* ---- forced by the generic relation and the placement PST ---- *)
@@ -309,7 +310,7 @@ Hypothesis HSTR2S : ashp_x ARx (VAL (A_OBJ 28)) 1.
    instance (YG0dcf.v:623 AR_blocks_law_cf: 0 <= n < cf_malloc_max = 2^30 - 2^20); ARx_blocks_law has no size
    conjunct *)
 Hypothesis BLKN30 : forall ly S Hp W mem md p n, ARx ly S Hp W mem md -> In (p, n) (ablocks B ly S) -> 0 <= n < 2 ^ 30.
-(* the ROM bytes lie outside PST: ajournal_gx_rom_view_x's premise (W_journal_x.v:329) *)
+(* the ROM bytes lie outside PST: ajournal_gx_rom_view_x's premise (W_journal_x.v:330) *)
 Hypothesis PST_ROM : forall a, in_rom segs a -> ~ Exists (in_zr a) PST.
 (* the image bytes outside the allocator's owned statics lie outside PST (the generic journal's image clause keeps only
    bytes outside PST; the AR journal's keeps every image byte outside G, the owned statics and errno) *)
@@ -774,7 +775,7 @@ Proof.
   destruct (rm_afn_pre_at_sp_x cx full ly3 S3 fpos k W mem md regs STK1 HB HJ HFR Hsp Hret Hra4 Hgp Htp Hs0 HSTK0
     HSTKb) as (ch & HPRE & _). exists ch. exact HPRE.
 Qed.
-(* the readable stack check_no_loss's last premise asks (W_contract.v:2076, cut's STKR): from F, the arm's frame is
+(* the readable stack check_no_loss's last premise asks (W_contract.v:2077, cut's STKR): from F, the arm's frame is
    present (the journal's stack window) and from the entry's sp up the entry's view is kept (the journal's view clause
    above the window, G_fr being image bytes) and readable (STKR, fr_lib_pre_cf_x's last conjunct) *)
 Lemma rm_stkr_x : forall cx ly3 S3 fpos k (W : world segs) mem md,

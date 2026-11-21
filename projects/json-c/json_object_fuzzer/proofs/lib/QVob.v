@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: PE_STATIC_A's new conjunct for it, named HBTs or skipped where STC is destructed). *)
 
 From Stdlib Require ZArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -49,7 +50,7 @@ Hypothesis GA_lh : forall m, GA m -> lh_globA m.
 Hypothesis NEWOBJ : jo_new_object_A3_stmt HIx.
 
 Ltac pe_openA STC INV :=
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
 destruct INV as [CORE REST];
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR);
 pose proof REST as (HP & LV & OBJ & ST & ERR & STR & PLEN & SBin & HPR & MDV & G & BUD).
@@ -725,7 +726,7 @@ AJ5 A4L HIx A T md
 (pe_msA asegs pf pa 0x972cc (t_co ts) gp t0 a0 (Z_to_bv 64 c) a2 a3 a4 a5 a6 a7 s3 s5 s6 s7 s8 s9 s11 t3 t4 t5 t6 F fc m).
 Proof.
 intros until fc. intros STC INV Hc K.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). destruct INV as [CORE REST].
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). destruct INV as [CORE REST].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR). pose proof REST as (HP & _).
 destruct ts as [depth levels co pb pbs x obj objs objbs]; cbn [t_depth t_levels t_co t_pb t_pbs t_x t_obj t_objs t_objbs pf_mxd] in *.
 destruct pf as [tk oldl newl len lenr sb spf pmd mxd fl]; cbn [pf_tk pf_spf pf_sb pf_len pf_lenr pf_oldl pf_newl pf_md pf_mxd pf_fl] in *.
@@ -767,7 +768,7 @@ AJ5 A4L HIx A T md
 (pe_msA asegs pf pa 0x9a068 (t_co ts) gp t0 a0 a1 a2 a3 a4 a5 a6 a7 s3 s5 s6 s7 s8 s9 s11 t3 t4 t5 t6 F fc m).
 Proof.
 intros until fc. intros STC INV K.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). destruct INV as [CORE REST].
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). destruct INV as [CORE REST].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR). pose proof REST as (HP & _).
 destruct ts as [depth levels co pb pbs x obj objs objbs]; cbn [t_depth t_levels t_co t_pb t_pbs t_x t_obj t_objs t_objbs pf_mxd] in *.
 destruct pf as [tk oldl newl len lenr sb spf pmd mxd fl]; cbn [pf_tk pf_spf pf_sb pf_len pf_lenr pf_oldl pf_newl pf_md pf_mxd pf_fl] in *.
@@ -832,7 +833,7 @@ Hypothesis GA_lh : forall m, GA m -> lh_globA m.
 Hypothesis NEWOBJ : jo_new_object_A3_stmt HIx.
 
 Ltac pe_openA STC INV :=
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
 destruct INV as [CORE REST];
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR);
 pose proof REST as (HP & LV & OBJ & ST & ERR & STR & PLEN & SBin & HPR & MDV & G & BUD).
@@ -1551,7 +1552,7 @@ AJ5 A4L HIx A T md
 (pe_msA asegs pf pa 0x96060 (t_co ts) gp t0 t1 t2 a0 (Z_to_bv 64 c) a2 a3 a4 a5 a6 a7 s5 s10 (Z_to_bv 64 (pa_F pa + 64)) F fc m).
 Proof.
 intros until fc. intros STC INV Hc K.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). destruct INV as [CORE REST].
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). destruct INV as [CORE REST].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR). pose proof REST as (HP & _).
 destruct ts as [depth levels co pb pbs x obj objs objbs]; cbn [t_depth t_levels t_co t_pb t_pbs t_x t_obj t_objs t_objbs pf_mxd] in *.
 destruct pf as [tk oldl newl len lenr sb spf pmd mxd fl]; cbn [pf_tk pf_spf pf_sb pf_len pf_lenr pf_oldl pf_newl pf_md pf_mxd pf_fl] in *.
@@ -1593,7 +1594,7 @@ AJ5 A4L HIx A T md
 (pe_msA asegs pf pa 0x98bec (t_co ts) gp t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 s5 s10 (Z_to_bv 64 (pa_F pa + 64)) F fc m).
 Proof.
 intros until fc. intros STC INV K.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). destruct INV as [CORE REST].
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). destruct INV as [CORE REST].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR). pose proof REST as (HP & _).
 destruct ts as [depth levels co pb pbs x obj objs objbs]; cbn [t_depth t_levels t_co t_pb t_pbs t_x t_obj t_objs t_objbs pf_mxd] in *.
 destruct pf as [tk oldl newl len lenr sb spf pmd mxd fl]; cbn [pf_tk pf_spf pf_sb pf_len pf_lenr pf_oldl pf_newl pf_md pf_mxd pf_fl] in *.

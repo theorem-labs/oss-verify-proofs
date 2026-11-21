@@ -3,9 +3,10 @@
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/Prog/LLVMFuzzerTestOneInput_fr.v, with its module paths and module names changed; 457 of its 575 lines of code are new or changed and 409 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/U/Prog/SegCF/Tac_slot.v, with its module paths and module names changed; 165 of its 194 lines of code are new or changed and 546 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The cut-free (agreement) slot of reac-pw/fuzz_headamp LLVMFuzzerTestOneInput (UBSan build): lib/U/Prog/HeadSlot.v
-   copied over U/Prog/SlotInvCF.v. Model: reac-pw/fuzz_role's U/Prog/SegCF/RoleSlotCF.v, as libreac/fuzz_ctrl's released U/Prog/SegCF/Slot.v copies its U/Prog/Seg/Slot.v (origin/ossv/recipes
-   25e3d17bdb50): the same text with SlotFR, SlotInv -> SlotInvCF, Seg -> SegCF, the segment statements from
+   copied over U/Prog/SlotInvCF.v. Model: reac-pw/fuzz_role's U/Prog/SegCF/RoleSlotCF.v, as libreac/fuzz_ctrl's released U/Prog/SegCF/Slot.v copies its U/Prog/Seg/Slot.v:
+   the same text with SlotFR, SlotInv -> SlotInvCF, Seg -> SegCF, the segment statements from
    SegCF/StmtsCF.v, frame_facts_ubsan -> SlotInvCF.frame_facts_cf; slot_lib proves lib_contract_cg (crealizes B, by
    SR_realizes_ms) for lib_contract_g; Section Link (ubsan_halts) is dropped.
    - the n >= 2^26 run: U/Prog/LLVMFuzzerTestOneInput_c.headamp_early_contract, the Section hypothesis EARLY (an evt,

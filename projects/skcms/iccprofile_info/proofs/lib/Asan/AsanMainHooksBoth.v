@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the IO hooks pass the table (A) to the IO nodes, which read its CONFIG_RSEQ layout. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.skcms.iccprofile_info.lib.AsLib Require BoBase.   (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -30,9 +31,9 @@ Section Hooks.
   Variables (segs : list Segment) (A : atable) (nx0 : nat) (RP : RPN.rptab) (T : ION.iotab).
   Definition XNm (id : nat) (args : list expr) (cs : acs) : option acs :=
     if (id <? 10)%nat then AN.xn segs A nx0 id args cs
-    else if (id <? 25)%nat then ION.xn segs T id args cs
+    else if (id <? 25)%nat then ION.xn segs T A id args cs
     else if (id <? 40)%nat then YN.xn segs A id args cs                (* [comment removed for export] *)
-    else if (id <? 100)%nat then ION.xn segs T id args cs
+    else if (id <? 100)%nat then ION.xn segs T A id args cs
     else if (id =? 105)%nat then SLN.xn segs nx0 (SLN.sltab_of A) id args cs   (* [comment removed for export] *)
     else if (id =? 106)%nat then SLN.xn segs nx0 (SLN.sltab_of A) id args cs   (* [comment removed for export] *)
     else if (id <? 110)%nat then RPN.xn segs nx0 RP id args cs
@@ -41,5 +42,5 @@ Section Hooks.
     else if ((id =? 120) || (id =? 121))%nat then GN.xn nx0 id args cs   (* [comment removed for export] *)
     else XLN.xn (XLNB.abi_of A) segs A nx0 id args cs.   (* [comment removed for export] *)
   Definition XEm (id : nat) (args : list expr) (cs : acs) : option (Z * list spiece * acs) := AN.xe segs A nx0 id args cs.
-  Definition XBm (id : nat) (args : list expr) (cs : acs) : option (acs * acs) := ION.xb segs nx0 T id args cs.
+  Definition XBm (id : nat) (args : list expr) (cs : acs) : option (acs * acs) := ION.xb segs nx0 T A id args cs.
 End Hooks.

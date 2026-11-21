@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """ae37gen.py -- write lib/A/AE23.v and lib/A/AE37.v of reac-pw/fuzz_link image A from their scratch bases.
 
-The bases are libreac/fuzz_pcap's lib/A/AE23.v and lib/A/AE37.v (origin/ossv/recipes 88154566652a) relocated to
+The bases are libreac/fuzz_pcap's lib/A/AE23.v and lib/A/AE37.v relocated to
 link.asan by alreloc 56664a20986e. alreloc left pcap's numerals where it could not map them: the asan_globals
 descriptor table (pcap's 4 descriptors at 0x9e100, link's 43 at 0xa62a0), ___asan_globals_registered, the shadow
 windows, one .rodata constant-pool address and one end of a musl range whose symbol name has several copies (buf).

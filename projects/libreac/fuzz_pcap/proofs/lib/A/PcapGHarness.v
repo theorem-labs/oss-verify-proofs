@@ -14,7 +14,7 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    - pcap_hg_img_laws: the record hg_img_laws below at g_file_len / g_file and PcapRelro's window: every byte of
      AE3i.v's img_ro_chunks is in a read-only segment, and every byte of the two globals is in the image; neither
      is in as_owned_static nor in errno. *)
-(* Modified by Theorem Labs, 2026-10: moved from a working branch 3c32fe5f906 (that branch is retired);
+(* Modified by Theorem Labs, 2026-10: moved from a working branch (that branch is retired);
    Requires renamed to the current files (G_HARNESS is in lib/A/Prog/PcapEntryA.v, gx_ok / inG in lib/A/W_journalG.v),
    so the qualifier PcapEntry.G_HARNESS became PcapEntryA.G_HARNESS (the same definition, moved); no other statement or
    proof text changed. Every numeral re-measured by symbol + offset on the pin fuzz_pcap.asan (sha256
@@ -23,6 +23,7 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    0x5d3f60, size 8, size_with_redzone 32 (redzone 24; symbol size 32). errno's 4 bytes: __errno_location (0x88628) is
    tp - 0xa4, and each of its callers' first access through the result is lw / sw. The meta cell's 8 bytes: metadata_mem
    (0xa1108, symbol size 16) holds the AddrHashMap, whose acquire (0x47b2c) reads its table_ with ld at offset 0. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import MemImageType.
@@ -32,7 +33,7 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib.A Require Import AB1v AF0m AE3i.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.A.Prog Require Import PcapBase PcapRelro.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.A.Prog Require PcapEntryA.
 (* The journal with program-global ranges: gx_ok / inG, in W_journalG.v (the image-free part of W_journal.v, a Theorem Labs lane's
-   copy from fuzz_reply's working branch 6328acea202). *)
+   copy from fuzz_reply's working branch). *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.A Require Import W_journalG.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.

@@ -4,12 +4,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names, addresses and numbers changed; 2962 of its 3089 lines of code are new or changed and 884 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F36.v, with its module names changed; 585 of its 687 lines of code are new or changed and 2987 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/F35.v 17bd7a8f7c8f (the blob this tree had at release c5e779efe8c) at fdd2ed9f9d7.
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   FACTS, PAU pau-libreac-v190. Source: Seg/F35.v 17bd7a8f7c8f (the blob this tree had at release).
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: each <r>_of_F re-derives F35.<r> at ExecF.RNG_all; <r>_of_F_verbatim checks by constr_eq that its type is
    the type of F35.<r>. Mechanical re-run, route (a) (lead 22:15Z); input to the ported walk only.
    DEVIATION from the spec's "the _F takes the callee's _contract_F in the SAME position": the callee premise of
@@ -42,7 +43,7 @@
    stays a mirror of the halts segment: a change to either statement in Seg/F35.v breaks that check.
 
    v1.9 (libreac v1.9.0): every pc is the v1.8 one + 0xac (b8refit, map b8refit-v190.tsv (a working note, not in this delivery)), and the six runtime
-   constants below are Seg/F35.v's v1.9 values (bcmp_wrap_c.v / memcmp_c.v, a Theorem Labs lane 3eade53eef2).  The image range
+   constants below are Seg/F35.v's v1.9 values (bcmp_wrap_c.v / memcmp_c.v, a Theorem Labs lane).  The image range
    [0x10000, 0x5ee000) of bcmp_wrap_contract_F and the read-only top 0x5fe000 are the same on v1.9.  No other line
    changes: F35's instructions and the wrapper's footprint are the same five instructions and the same ranges.
 
@@ -583,7 +584,7 @@ Qed.
    region across mem_rel by ShadowRwOnT.shadow_rw_on_rel, in place of this file's whole-shadow f35_srw_rel; its post
    has no shadow fact. f35_evt_of_F / f35_call_of_F get no twin: their only users are the constr_eq pins above
    (a Theorem Labs lane 11:53Z: a pin is not a user). *)
-(* This delivery then edited comment text only: the code is unchanged from release c5e779efe8c, the comments are not. *)
+(* This delivery then edited comment text only: the code is unchanged from release, the comments are not. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require bcmp_wrap_c_on.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A Require ShadowRwOn ShadowRwOnT.
 Module BWO := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog.bcmp_wrap_c_on.

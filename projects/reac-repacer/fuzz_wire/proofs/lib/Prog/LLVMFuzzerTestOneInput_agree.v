@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Copyright 2026 Theorem Labs *)
 (* New for reac-repacer/fuzz_wire: Statements.ubsan_agrees, as libreac/fuzz_decode's released
-   lib/Prog/LLVMFuzzerTestOneInput_agree.v (25e3d17bdb5) and reac-repacer/fuzz_uci's (ddb6d58bbed): the kit's
+   lib/Prog/LLVMFuzzerTestOneInput_agree.v and reac-repacer/fuzz_uci: the kit's
    ubsan_agrees_of_slots (lib/AgreeFrame.v) at ag_shape kept_shape, given the plain image's slot contract
    (lib/Prog/LLVMFuzzerTestOneInput_gfr.v: wire_slot_g_frame) and the UBSan image's cut-free one
    (lib/U/Prog/LLVMFuzzerTestOneInput_cgt.v: wire_slot_cg_frame). fuzz_wire returns 0 on every path

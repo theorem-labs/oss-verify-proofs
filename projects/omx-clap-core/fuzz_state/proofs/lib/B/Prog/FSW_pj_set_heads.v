@@ -5,11 +5,12 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_K.v; 190 of its 277 lines of code are new or changed and 1286 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_rres.v, with its module names changed; 301 of its 340 lines of code are new or changed and 238 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/Prog/FSW_pj_set_heads.v, with its module paths changed; 7 of its 345 lines of code are new or changed and 2 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) copy of lib/A/Prog/FSW_pj_set_heads.v (a working branch
-   e45b7c0a2da, taken there from a working branch 42571479544), same lemma names and bodies; imports point
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) copy of lib/A/Prog/FSW_pj_set_heads.v (a working branch,
+   taken there from a working branch), same lemma names and bodies; imports point
    at lib/B's image files and kit (YB1v, YB1w, FSH_Base, FSH_Rt, FSPstat, FSH_Fn_reader, FSW_rd, FSW_strkit); the
    Section binds the sink head explicitly (owner rule, a Theorem Labs lane); no image value (B's FS_PSTAT_FP and
    FS_IMG_END are read by name from lib/B). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* pj_set's composition (a Theorem Labs lane, FSW_pj_set_holds.v): the U / block bookkeeping across grow (B 0x83ca8), list and
    block reasoning only (no stage, no walk, no SRr). For grow called on an OBJECT (ty = 6, PjTree.tag PJ_OBJECT), with
    grow_spec's result (FSH_Fn_reader.v grow_res) and its post (the new slots' rd_blocks_ok, the Permutation of blocks,

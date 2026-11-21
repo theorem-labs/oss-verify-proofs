@@ -1,9 +1,9 @@
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_preset_base64_encode.v's image layer
-   (a working branch 402eb5565fc), the same names over image B's numerals and lib/B's files. *)
+   (a working branch), the same names over image B's numerals and lib/B's files. *)
 (*   rule 24: proves function preset_base64_encode (part W; reuse search: proof-index preset_base64_encode,
-   ported from a working branch 402eb5565fc + donor a working branch b96980d72d1).
-   Port-from: lib/A/FSW_preset_base64_encode.v at 402eb5565fc lines 1-733 (the definitions before Section W and
-   Section W up to `Section R.`); old-B donor a working branch 7676bbb0e23
+   ported from a working branch + donor a working branch).
+   Port-from: lib/A/FSW_preset_base64_encode.v lines 1-733 (the definitions before Section W and
+   Section W up to `Section R.`); old-B donor a working branch
    lib/B/Prog/preset_base64_encode_blocks.v:11-17 (ENC_KMAGIC 0x10320, ENC_MAGIC, ENC_TABLE 0x21060) and
    lib/B/Prog/preset_base64_encode.v:55-73 (enc_tab_bytes, enc_kmagic_bytes: the table and the magic word are
    read-only image bytes), 140-150 (enc_img_lo). *)

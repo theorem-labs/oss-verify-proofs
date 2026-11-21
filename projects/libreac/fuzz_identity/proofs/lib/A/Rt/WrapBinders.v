@@ -1,7 +1,7 @@
 (* libreac/fuzz_identity, build asan (image A): the closer's three wrapper binders ASTRLEN, ASTRCMP and AMEMCHR, each as
    one lemma whose statement is the binder's type, proved from the wrapper walk's theorem at the applied core's record.
 
-   The binder types are the A link's hypotheses (lib/A/Prog/IdentEntryLink.v:246, :247, :688), which the A closer
+   The binder types are the A link's hypotheses (lib/A/Prog/IdentEntryLink.v:247, :248, :689), which the A closer
    lib/A/IdentTop.v (Section asan) discharges with the lemmas below, at every fx and rc:
      ASTRLEN (IdentEntryLink.v:246) : forall (fx : YK11.FPState) (rc : YM05.RunCeil),
               @astrlen_realizes fx rc (SEGSr rc) IdentB (SIGMAr rc IS___interceptor_trampoline_strlen)
@@ -28,9 +28,9 @@
 
    Porting record (2026-10-28), what each walk is ported from:
      strlen: ported from proofs/coturn/FuzzStunClient/lib/VAsanIcStrlenWalk.v:819
-       isl_run (c8557374ad2e), restated in cgif_file's contract form lib/YG0d.v:401-419 astrnlen_realizes without the
+       isl_run, restated in cgif_file's contract form lib/YG0d.v:401-419 astrnlen_realizes without the
        n bound, at fuzz_identity's asan and asan-ubsan addresses.
-     strcmp: ported from proofs/coturn/FuzzStunClient/lib/VAsanIcStrcmpWalk.v:1116 isc_run (c8557374ad2e),
+     strcmp: ported from proofs/coturn/FuzzStunClient/lib/VAsanIcStrcmpWalk.v:1116 isc_run (theorem-labs/oss-verify-proofs@6b32741d849a),
        restated the same way.
      memchr: ported from cgif_file lib/A/AE6x.v memchr0_icpt_realizes (:453), relocated to
        fuzz_identity, then extended to the general case (any byte c, found or not found, NUL at k <= 16 with n = 17)
@@ -55,7 +55,7 @@ Open Scope Z_scope.
 Local Notation SEGSr rc := (@pa_segs _ ident_listing (@PI_ident rc)).
 Local Notation SIGMAr rc := (@pa_sigma _ ident_listing (@PI_ident rc)).
 
-(* ASTRLEN, the A link's hypothesis at lib/A/Prog/IdentEntryLink.v:246. *)
+(* ASTRLEN, the A link's hypothesis at lib/A/Prog/IdentEntryLink.v:247. *)
 Lemma astrlen_binder_A : forall (fx : YK11.FPState) (rc : YM05.RunCeil),
 @astrlen_realizes fx rc (SEGSr rc) IdentB (SIGMAr rc IS___interceptor_trampoline_strlen).
 Proof.
@@ -67,7 +67,7 @@ Qed.
 Check (astrlen_binder_A : forall (fx : YK11.FPState) (rc : YM05.RunCeil),
 @astrlen_realizes fx rc (SEGSr rc) IdentB (SIGMAr rc IS___interceptor_trampoline_strlen)).
 
-(* ASTRCMP, the A link's hypothesis at lib/A/Prog/IdentEntryLink.v:247. *)
+(* ASTRCMP, the A link's hypothesis at lib/A/Prog/IdentEntryLink.v:248. *)
 Lemma astrcmp_binder_A : forall (fx : YK11.FPState) (rc : YM05.RunCeil),
 @astrcmp_realizes fx rc (SEGSr rc) IdentB (SIGMAr rc IS___interceptor_trampoline_strcmp).
 Proof.
@@ -79,7 +79,7 @@ Qed.
 Check (astrcmp_binder_A : forall (fx : YK11.FPState) (rc : YM05.RunCeil),
 @astrcmp_realizes fx rc (SEGSr rc) IdentB (SIGMAr rc IS___interceptor_trampoline_strcmp)).
 
-(* AMEMCHR, the A link's hypothesis at lib/A/Prog/IdentEntryLink.v:688. *)
+(* AMEMCHR, the A link's hypothesis at lib/A/Prog/IdentEntryLink.v:689. *)
 Lemma amemchr_binder_A : forall (fx : YK11.FPState) (rc : YM05.RunCeil),
 @amemchr_realizes fx rc (SEGSr rc) IdentB (SIGMAr rc IS___interceptor_trampoline_memchr).
 Proof.

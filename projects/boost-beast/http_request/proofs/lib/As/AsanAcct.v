@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 From OSSVerify.Proofs.boost_beast.http_request.lib.Common Require KReplay.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -447,7 +448,7 @@ Proof.
     apply ranges_avoid_nil.
   - (* [comment removed for export] *)
     destruct (ov_read_bytes segs (mrestrict H m) a (width_bytes n)) as [bs|] eqn:Hrd;
-      [|discriminate].
+      [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
     destruct (ov_read_bytes_restrict _ m a bs Hrd) as [Hfull Hav].
     rewrite Hfull.
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) (mrestrict H m))
@@ -529,6 +530,7 @@ Proof.
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|].
   { exact (decode_exec_accesses_restrict ms w msr' rs' Hs). }
   exfalso. unfold fetch_failure in Hs.
+  destruct (vdso_text_at segs (ms_pc ms)); [discriminate|].
   destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
   destruct (fetch_byte_traps segs (ms_pc ms) || fetch_byte_traps segs (ms_pc ms + 1)
             || match fetch_half_any segs (ms_mem ms) (ms_pc ms) with
@@ -589,6 +591,7 @@ Proof.
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|]; [exact (Hdec w Hs)|].
   exfalso. destruct (fetch_failure segs (ms_mem ms) (ms_pc ms)) eqn:Hf; try discriminate.
   unfold fetch_failure in Hf.
+  destruct (vdso_text_at segs (ms_pc ms)); [discriminate|].
   destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
   destruct (fetch_byte_traps segs (ms_pc ms) || fetch_byte_traps segs (ms_pc ms + 1)
             || match fetch_half_any segs (ms_mem ms) (ms_pc ms) with
@@ -680,7 +683,9 @@ Lemma same_but_materialized_frame : forall m m',
   /\ m_rlimit_core m' = m_rlimit_core m /\ m_clock m' = m_clock m
   /\ eager_used m' = eager_used m.
 Proof.
-  ltac2:(KReplay.run [|constr:(@LinuxProcessSemantics.LinuxProcessSem.State.Model); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.AsanAcct.same_but_materialized); constr:(@Corelib.Init.Logic.eq_ind_r); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.with_vm_backing); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.m_vm_lazy); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.m_vm_materialized); constr:(@Corelib.Init.Logic.and); constr:(@Corelib.Init.Logic.eq); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.FdState); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.m_fd); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.VmMaps); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.m_vmmaps); constr:(@Corelib.Init.Datatypes.list); constr:(@Corelib.Init.Datatypes.prod); constr:(@stdpp.bitvector.definitions.bv); constr:(@Corelib.Numbers.BinNums.Npos); constr:(@Corelib.Numbers.BinNums.xO); constr:(@Corelib.Numbers.BinNums.xH); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.IoState); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.m_io); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.FsState); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.m_fsys); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.ProcState); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.m_proc); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.LimState); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.m_lim); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.TimeState); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.m_time); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.FdEntry); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.m_fds); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.PipeBuf); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.m_pipes); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.InputStream); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.m_stdin); constr:(@LinuxProcessSemantics.LinuxProcessSem.Fs.Fs); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.m_fs); constr:(@Corelib.Init.Datatypes.option); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.m_halted); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.m_tid); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.m_rlimit_core); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.m_clock); constr:(@Corelib.Numbers.BinNums.Z); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.AsanAcct.eager_used); constr:(@kc__1); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.VmState); constr:(@kc__2); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.mkModelOf); constr:(@Corelib.Init.Logic.conj); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.mkVmState); constr:(@Corelib.Init.Logic.eq_refl)|] [|@m'; @m; @m_time; @m_lim; @m_proc; @m_fsys; @m_io; @v; @tm; @lim; @proc; @fs; @io; @mat; @lazy; @maps; @vmst_materialized; @vmst_lazy; @vmst_maps; @m_vm; @fd; @m_fd; @H|] "#&o#9#`###&#%#N#P#R#T#V#$#D#F#\#^#e#<#(#'#h#K#J#`#j#*#)#=#M#X#Z#3#l#/#8#i#g#>#C#B#m#k#@#E#G#O#Q#S#U#W#Y#[#]#_#a#b#c#d#f#L#H#A#?#I=#F&#G%#H%#I'#J$#K$#L$#M$#N$#O$#P$#Q$#R$#S$#T$#U$#V$#W$#X$#Y$#Z$#[$#\$#]$#^&#_%VS+KC'E:K;$#E(C(D#L$#)C)D#M$#8S,8#8#8#8#8#US%#US&#<##9#'C'D#%$#*C*D#F$#+C+D#G$#,C,D#H$#-C-D#I$#.C.D#J$#<7S-9#/C/D#%$#<<S.9#0C0D#%$#1C1D#N$#2C2D#O$#US's#'3C3D#%$#4C4D#($#US%s#3US&#9#US'#5C5D#%$#6C6D#s#7$#7C7D#P$#$&#$*#$2#$6#$;#$?#$s###$s#)#$s#/#$s#3#$s#7#$s#;#$s#?#$s#C#$s#Q#$s#U#j#$Q#:E;s#J#C(##L#s#\)%#M#s#[''#s#Q#s#P*)#F#s#O++#G#s#N,-#H#s#M-/#I#s#L.1#J#s#K/3#s#I#s#H05#s#F#s#E17#N#s#D29#O#s#C3;#s#B#s#A4=#s#D#s#@5?#s#<#s#;6A#s#m#s#:7s###P#s#9$%#$(#$+#$.#$1#$4#$7#$:#$=#$@#$s###$s#&#$s#)#$s#,#$s#/#$s#2#j#%Q#[S(S)RS#DEKC'#:S/;$#%(#('#L$#)&)*#M$#')#s$.#,*+*/#F$#+.+2#G$#,1,5#H$#-4-8#I$#.7.;#J$#/:/>#s$,$#0=0A#s$*$#1@1s#$#N$#2s##2s#'#O$#3s#&3s#*#s$)$#4s#)4s#-#s$,$#5s#,5s#0#s$%$#6s#/6s#3#s$W$#7s#27s#6#P$#$&#$*#$.#$2#$6#$:#$>#$B#$s#&#$s#*#$s#.#$s#2#$s#6#$s#:#$s#=#$s#A#k#&J#k#'I#k#(H#k#)G#k#*F#j#+S$#9s$qWS0S)S*R[S(S1#S#DEKC'#:S2;$#%(#('#L$#)&)*#M$#')#s$|#,*+*/#F$#+.+2#G$#,1,5#H$#-4-8#I$#.7.;#J$#/:/>#s$z$#0=0A#s$x$#1@1s#$#N$#2s##2s#'#O$#3s#&3s#*#s$w$#4s#)4s#-#s$z$#5s#,5s#0#s$s$#6s#/6s#3#s%I$#7s#27s#6#P$#$&#$*#$.#$2#$6#$:#$>#$B#$s#&#$s#*#$s#.#$s#2#$s#6#$s#:#$s#=#%Ls#B%Ms#@%s%\s#H%Fs#=%Gs#;%Hs#9%Is#7%Js#5%s%Ns#3%s%Js#1%Ns#/%Os#-%s%Cs#+%s%Ds#)%s%;s#'%s%ks#%%Ps##&s#&s##$#&s#*s##&#&s#.s##(#&s#2s##*#&s#6s##,#&s#:s##.#&s#>s##0#&s#Bs##2#&s#Fs##4#&s#Js##6#&s#Ns##8#&s#Rs##:#&s#Vs##<#&s#Zs##>#&s#]s##@#&s#as##B#j#,J#j#-I#j#.H#j#/G#j#0F#j#1s#o#j#2s&%#j#3M#W#EKCj#4s#s#j#5s&)#j#6M#WS3s#w#Cj#7S$#j#8L#[#S*RS#DEKCj#&J#j#'I#j#(H#j#)G#j#*F#j#7S$#j#9L#WS4s$r#EZS5Qs&Gs%L#KCj#:s&K#j#$Q#j#%Q##"). Qed.
+  intros m m' ->. destruct m as [fd vm io fs proc lim tm]. destruct vm.
+  repeat split; reflexivity.
+Qed.
 
 
 (* [comment removed for export] *)
@@ -1054,8 +1059,10 @@ Qed.
 
 (* [comment removed for export] *)
 Variable P : config -> Prop.
+(* LPS 08b1429: an instruction node ([ms_svc_pending = None]) is robust by [RomBase.sys_rob_instr];
+   the interface hands that fact to [P_silent1], whose [rz_node]/[srz_node] ask it. *)
 Hypothesis P_silent1 : forall c c',
-  node_ok c unit (fun _ => []) (fun _ => c') -> P c' -> P c.
+  node_ok c unit (fun _ => []) (fun _ => c') -> ms_svc_pending (cfg_ms c) = None -> P c' -> P c.
 
 Theorem rz_step_restricted : forall A ms msr' model,
   lazy_cover H (m_vm_lazy model) A -> A_wf A -> MInv A model ->
@@ -1069,7 +1076,7 @@ Proof.
   intros A ms msr' model Hcov Hwf Hinv Hh Hsvc Hs Hk.
   destruct (node_instr_restricted A ms msr' model Hcov Hwf Hinv Hh Hsvc Hs)
     as (model' & Hinv' & Hsame & _ & _ & Hnode).
-  exact (P_silent1 _ _ Hnode (Hk model' Hinv' Hsame)).
+  exact (P_silent1 _ _ Hnode Hsvc (Hk model' Hinv' Hsame)).
 Qed.
 
 Theorem rz_msteps_restricted : forall A msr0 msr',
@@ -1090,7 +1097,7 @@ Proof.
   - rewrite restrict_svc_pending in Hsvc.
     destruct (node_instr_restricted A ms msr1 model Hcov Hwf Hinv Hh Hsvc Hstep)
       as (model1 & Hinv1 & Hsame1 & Hcl1 & _ & Hnode).
-    apply (P_silent1 _ _ Hnode).
+    apply (P_silent1 _ _ Hnode); [exact Hsvc |].
     pose proof (same_but_materialized_frame model model1 Hsame1) as Hfr.
     apply (IH (unrestrict H (ms_mem ms) msr1) model1).
     + symmetry. apply restrict_unrestrict_clean. exact Hcl1.

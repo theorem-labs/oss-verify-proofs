@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/U/Prog/LLVMFuzzerTestOneInput_cg.v, with its module paths and module names changed; 318 of its 348 lines of code are new or changed and 655 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_lock.ubsan's LLVMFuzzerTestOneInput (0x12bbc) against its contract: the walks of lt_segs.v composed with
    the contracts of check_no_overread (0x12d2c) and check_lookup (0x12e34), in the shape of
-   libreac/fuzz_decode's released lib/U/Prog/LLVMFuzzerTestOneInput.v (25e3d17bdb50).
+   libreac/fuzz_decode's released lib/U/Prog/LLVMFuzzerTestOneInput.v.
    Written by Theorem Labs. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

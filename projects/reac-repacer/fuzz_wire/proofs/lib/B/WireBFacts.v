@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs: copied from reac-repacer/fuzz_uci's lib/A/UciAFacts.v (itself made from libreac/fuzz_decode's lib/A DecodeACrtFacts.v, DecodeClose.v HB_API_ENV and DecodeASinkRo.v) for reac-repacer/fuzz_uci's image B as that unit's lib/B/UciBFacts.v (both paths at recipes commit 0295462466b2), at that unit's record UciB (lib/B/YD2l.v:17), segments ucisegsB0 (lib/B/UciBTFIB.v) and sink head (lib/B/YE2k.v); module paths changed; and with the seven COMPUTE rows of lib/B/UciBClose.v's block (HB_CELLS, HB_RO_RD_UNOWNED, HB_ROM_NO_ERRNO, HB_CNO_UCTX, HB_CNO_UFIX, HB_CV_UFIX, HB_COST), HB_RO_BELOW_OFL in its class form (lib/B/Prog/PaBase.v ro_below_ofl) and the meter bound uci_XL0, each decided at UciB by computation over the B core's tables and lib/B/Prog's statement definitions. *)
+(* Modified by Theorem Labs: copied from reac-repacer/fuzz_uci's lib/A/UciAFacts.v (itself made from libreac/fuzz_decode's lib/A DecodeACrtFacts.v, DecodeClose.v HB_API_ENV and DecodeASinkRo.v) for reac-repacer/fuzz_uci's image B as that unit's lib/B/UciBFacts.v (both paths at recipes), at that unit's record UciB (lib/B/YD2l.v:17), segments ucisegsB0 (lib/B/UciBTFIB.v) and sink head (lib/B/YE2k.v); module paths changed; and with the seven COMPUTE rows of lib/B/UciBClose.v's block (HB_CELLS, HB_RO_RD_UNOWNED, HB_ROM_NO_ERRNO, HB_CNO_UCTX, HB_CNO_UFIX, HB_CV_UFIX, HB_COST), HB_RO_BELOW_OFL in its class form (lib/B/Prog/PaBase.v ro_below_ofl) and the meter bound uci_XL0, each decided at UciB by computation over the B core's tables and lib/B/Prog's statement definitions. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* WireBFacts: the facts about image B's record that lib/B/WireBClose.v takes, each proved by computation at
-   B := WireB (lib/B/YD2l.v:17) and segs := wiresegsB0 (lib/B/WireBTFIB.v, = lib/B/YB1v.v:13 tfibsegs):
+   B := WireB (lib/B/YD2l.v:18) and segs := wiresegsB0 (lib/B/WireBTFIB.v, = lib/B/YB1v.v:14 tfibsegs):
    - HB_API_ENV : api_env segs B (lib/B/YCbq.v:809): errno (as_errno WireB = lib/B/YF0m.v TFIB_ERRNO) lies in low
      memory and inside one loaded segment, and the traces [pc_malloc_ra0] / [pc_free_ra0] (lib/B/YF0l.v) are in
      Tfib_universe (lib/B/YCej.v);
    - wire_ro_segs_chk / wire_ro_below_ofl_at: every non-writable loaded segment ends at or below the sink's ofl head
-     (lib/B/YE2k.v:28 A_ofl_head), so every read-only address of [RLO, RHI) with RHI <= A_ofl_head lies below it: the
+     (lib/B/YE2k.v:29 A_ofl_head), so every read-only address of [RLO, RHI) with RHI <= A_ofl_head lies below it: the
      body of the class ro_below_ofl (lib/B/Prog/PaBase.v), and HB_RO_BELOW_OFL its instance at RLO / RHI;
    - wire_rom_errno_chk: errno lies outside every non-writable loaded segment (the computation of HB_ROM_NO_ERRNO);
    - the computed rows, at their agreed names and statements.
@@ -167,7 +168,7 @@ Proof. vm_compute. reflexivity. Qed.
 Definition wire_XL0 : Z -> Z := fun _ => 0.
 
 (* HB_RO_BELOW_OFL in the class form of lib/B/Prog/PaBase.v, at WireBClose.v's RLO = 0x98318 and RHI = 0x99570
-   (lib/B/YB1w.v:17-18; below the ofl head 0x5f3e88). *)
+   (lib/B/YB1w.v:18-19; below the ofl head 0x5f3e88). *)
 Lemma HB_RO_BELOW_OFL : @PB.ro_below_ofl segs 0x98318 0x99570 BE2k.tfib_sink_head.
 Proof.
   intros a Ha. unfold PB.in_roP in Ha.
@@ -231,7 +232,7 @@ Proof.
   unfold PL.wire_llvmf_ufix. repeat split; apply In_of_existsb; vm_compute; reflexivity.
 Qed.
 
-(* HB_COST: every mo_malloc and mo_free of the B core's ameter_triv (lib/B/YCbp.v:19) is 0, so the entry's cost is 0,
+(* HB_COST: every mo_malloc and mo_free of the B core's ameter_triv (lib/B/YCbp.v:20) is 0, so the entry's cost is 0,
    which is wire_XL0 n. *)
 Lemma HB_COST : forall n, 0 <= n -> @PL.wire_llvmf_cost BCbp.ameter_triv n <= wire_XL0 n.
 Proof.

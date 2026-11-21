@@ -3,10 +3,11 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YCbq.v, with its module paths changed and off_img's image range set to libreac/fuzz_boxreg's own (Reusable/YImgTop.v IMG_LO, IMG_TOP). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/Reusable/YCbq.v, with its module paths and module names changed; 234 of its 308 lines of code are new or changed and 2888 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_frame.v from a working branch
-   2767db174a0, same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_frame.v from a working branch,
+   same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
    FSH_Fn_reader and the other lib/B FSW files); the image-agnostic FSupoison, FSupoisonU, FSH_YC20, FSH_Gen stay lib/A's.
    rule 24: proves no function (kind: segment lemma). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The fake-frame call steps of the walk kit for fs's ASan program part over fs.asan-ubsan (image tfibsegs), in the U form
    (FSupoison.unpoison: the user-poisoned shadow bytes of U read as 0, FSupoisonU's ARU): the journal transfer across
    the call to __asan_stack_malloc_<cid> that grants a fake frame, and the epilogue flag store that releases it.
@@ -17,7 +18,7 @@
    Port-from: cgif's S-form originals, origin/ossv/recipes proofs/cgif/cgif_file_fuzzer/lib/YCbq.v:1748
    `aj_stack_malloc_at` and :2361 `aj_flag_store` (same lemmas also at YCe5.v:1254 / :1867, YCbo.v, YC85.v, and
    cgif_rgb_fuzzer/lib/YC04.v). Rule 24, both discharges, against proof index v5 built 2026-10-28T21:58:24Z
-   (main@e966c513ee6, ossv/recipes@566eb6ffa5d, ossv/candidates@ee89628c997, release/pau-projects-recipes@b6a0088adcb;
+   (main, ossv/recipes, ossv/candidates, release/pau-projects-recipes;
    "every branch is where the index read it"), status read from a file, not through a pipe: `proof-index
    __asan_stack_malloc_3` exits 0 and reports 0 file(s) NAMED for it and 382 that use its address; the same report lists
    omx-clap-core/fuzz_state among the units it did NOT address-search. `git grep` over origin/main, origin/ossv/recipes,
@@ -149,7 +150,7 @@ split; [exact HARU2|].
 split; [exact Hres|]. split; [exact Hreg10|]. split; [exact Eab2|]. split; [exact Hfrs2|]. split; [exact Hfresh|].
 split; [exact Hnev2|]. split; [exact Hbb|]. split; [exact Hz|]. split; [exact Hflag|].
 (* Discharged per goal rather than by a positional list: RELOC's FP-keyed YCbq gives acall_kept_of_journal a sixth
-   premise (image bytes are not in FP1, YCbq.v:984-991 on 4aa3d96b823), so a fixed bracket list fits one base and
+   premise (image bytes are not in FP1, YCbq.v:984-991), so a fixed bracket list fits one base and
    breaks the other. Every goal here is one of the two journal facts or is vacuous on FP1 = []. *)
 rewrite Hsp' in HJ1. eapply (acall_kept_of_journal tfibsegs B fs_segs_low);
   (* each alternative must CLOSE its goal: an intro pattern can match the wrong goal and leave subgoals behind, so a
@@ -167,7 +168,7 @@ Qed.
    [0, bytes) at the atom holding its address (chunks cs) and its shadow [0, bytes / 8) at the atom holding its shadow
    address. Both are present and not runtime-owned (AR_frames_law, Reusable/YG0d.v:446-454), hence no shadow byte of U
    (FSupoison ush_facts) and writable on the machine's memory; in bounds by YCbq.frames_bounds.
-   Ported from: a Theorem Labs lane's starved lane, a working branch 6ff9f5bc4f4,
+   Ported from: a Theorem Labs lane's starved lane, a working branch,
    lib/A/FSH_check_reject_clean_starved.v:187-249 (crcs_unpoison_notowned, crcs_apresent_notowned,
    crcs_readd_frame_regions), handed over for the kit so the six fake-frame walks share one copy. Changed: crcs_* ->
    fsw_*, the redundant `forall B` dropped (this Section already fixes B), and st_ok_add_region' qualified as

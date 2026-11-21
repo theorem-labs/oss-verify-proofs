@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: afree04_sub, afree_null04_sub and amalloc04_sub follow the 04 rules and no longer take In (call_trace0 ...) (as_universe B). *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC85.v; ajournal_sub_tok is the core's ajournal_sub after the core's journal change (an inner footprint byte lies in a heap block), cl_callS takes that form, and aj_intrin_atS takes the core aj_intrin_at's premise for footprint writes to the program's statics or the caller's stack; the call rule cl_callS and the 04 call lemmas over fuzz_command's listing (csym, CmdPa), from this tree's C5 conversion (the trace premise removed from afree04_sub, afree_null04_sub and amalloc04_sub); module paths. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/Prog/PaCall.v (origin/ossv/recipes 501c0d516c69) for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths; csym -> ssym; CmdSyms, CmdPa -> SegSyms, SegPa. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/Prog/PaCall.v for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths; csym -> ssym; CmdSyms, CmdPa -> SegSyms, SegPa. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

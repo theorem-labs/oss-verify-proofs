@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the co_rdr field of cs_ok; the TASK_SIZE carriers and mrb_task_none for read_cstr's path bound; cstr_access_len's access_okb clamp; RomBase.sys_rob at the ioctl, close, openat-error and read nodes, a premise of node_chk_ev_nl). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -139,7 +140,7 @@ Proof.
   { unfold Mr. f_equal. apply functional_extensionality. intros a. unfold hid, vlz. unfold E'.
     rewrite <- in_shb_ptsubst, !map_app, Hvis, Hfake. reflexivity. }
   split; [|symmetry; exact Hpc].
-  destruct HC as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL]; constructor; try assumption.
+  destruct HC as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL CRD]; constructor; try assumption.
   - apply (proj1 (regs_ok_tsubst E th (s_regs (a_ss T)) R)).
     destruct (regs_ent_sound BSEGS E _ (kn cs) _ _ 0%nat CK Hregs) as [Hlen Hn].
     intros r. rewrite (CR r). unfold sr_get. destruct (bv_eqb r 0) eqn:Hr0; [reflexivity|]. symmetry. apply Hn.
@@ -619,7 +620,10 @@ Proof.
       unfold check_ioctl. rewrite Hlk1. replace (tty_only_request (cmd32 (Z_to_bv 64 21523))) with true by (vm_compute; reflexivity).
       apply check_ret_only_no_unmodeled.
     - exact (co_halt HC).
-    - reflexivity. }
+    - reflexivity.
+    - (* a terminal-only request reads no byte of the caller's memory *)
+      apply (RomSys.sys_rob_ioctl_tty BSEGS _ model (getr R 17));
+        [reflexivity | rewrite G17; apply u64_lit; unfold two64; lia | rewrite ms_gpr_epend1, G11; vm_compute; reflexivity]. }
   (* [comment removed for export] *)
   cbn beta. rewrite apply_effect_no_write, adv_set_epend, (v_addi_pc (pc cs) Hpc0 Hpc4).
   specialize (Hk E fx (regupd R 10 (errno_ret ENOTTY)) M model (conj (env_agree_refl _ _) (env_agree_refl _ _))).
@@ -682,10 +686,12 @@ Lemma node_chk_ev_nl : forall ms model x8 (I : Type)
   (forall eff, check_syscall (sys_input BSEGS ms x8) eff model <> CheckUnmodeled) ->
   (forall i, m_halted (ms' i) = None) ->
   (forall i p, In p (accesses_pages (syscall_effect_accesses (effs i)) []) -> page_in_ranges p (m_vm_lazy (ms' i)) = false) ->
+  RomBase.sys_rob BSEGS (mkCfg ms model) ->
   AsVocab.AsanAcct.node_ok BSEGS (mkCfg ms model) I evs
           (fun i => mkCfg (advance_past_svc (apply_effect ms (effs i))) (ms' i)).
 Proof.
-  intros ms model x8 I effs ms' evs Hna Hh Hsvc Hok Hinv Hnu Hh' Hacc.
+  intros ms model x8 I effs ms' evs Hna Hh Hsvc Hok Hinv Hnu Hh' Hacc Hrob.
+  apply (AsVocab.AsanAcct.node_ok_of_c BSEGS); [| exact Hrob].
   apply (CfgStep.node_transfer_on BSEGS CfgStep.kit_cfg); [exact (CfgStep.kit_pending_on_sysno BSEGS ms model x8 _ Hsvc eq_refl Hna) |].
   split.
   - intros i. apply (sstep_syscall BSEGS ms model x8 (effs i) (ms' i) (ms' i) (evs i) Hh Hsvc).
@@ -717,10 +723,13 @@ Lemma cs_ok_sys_ret : forall E cs fx R M model r v f model',
   edenot E r = v ->
   m_vm model' = m_vm model -> m_halted model' = m_halted model -> m_fs model' = m_fs model ->
   APS.fds_ok E f model' ->
+  (* [co_rdr] (AzGPS.v:244): the reader is a projection of [m_proc] and no setter on this
+     path writes it; the caller discharges this by conversion. *)
+  m_channel_reader model' = m_channel_reader model ->
   cs_okA E (DNA.ret_with cs r (kn cs) (nxt cs) f) fx (regupd R 10 v) M model'.
 Proof.
-  intros E cs fx R M model r v f model' HC Hr Hvm Hh Hfs Hfd.
-  destruct HC as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL].
+  intros E cs fx R M model r v f model' HC Hr Hvm Hh Hfs Hfd Hrdr.
+  destruct HC as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL CRD].
   constructor; cbn [DNA.ret_with a_ss s_regs s_log s_know kn a_maps a_totsz a_ylo a_eager a_vis a_ghost a_abytes a_brk a_fd a_tidset a_meter a_fake a_fbud mk_ss nxt pc];
     try assumption.
   - replace (10%bv : Prelude.reg) with (Z_to_bv 5 (Z.of_nat 10)) by (apply bv_eq; reflexivity).
@@ -730,6 +739,7 @@ Proof.
   - rewrite Hh. exact CH.
   - rewrite Hfs. exact CF.
   - eapply (AINV_f_vm SWIN GBOTH SHC AINVH HP); [exact CA | exact Hvm].
+  - (* co_rdr *) rewrite Hrdr. exact CRD.
 Qed.
 
 (* [comment removed for export] *)
@@ -774,7 +784,9 @@ Proof.
       rewrite in_arg0_si, ms_gpr_epend0, G10. rewrite fd32_small by (rewrite u64_lit; lia).
       unfold check_close. rewrite Hlk3. apply check_ret_only_no_unmodeled.
     - subst model'. rewrite with_fds_halted. exact (co_halt HC).
-    - reflexivity. }
+    - reflexivity.
+    - apply (RomBase.sys_rob_memfree BSEGS _ model (getr R 17)); [reflexivity |].
+      replace (bv_unsigned (getr R 17)) with 57 by (rewrite G17; symmetry; apply u64_lit; unfold two64; lia). exact RomBase.memfree_57. }
   cbn beta. rewrite apply_effect_no_write, adv_set_epend, (v_addi_pc (pc cs) Hpc0 Hpc4).
   refine (Hk E fx (regupd R 10 (Z_to_bv 64 0)) M model' (conj (env_agree_refl _ _) (env_agree_refl _ _)) _ _).
   2:{ subst model'. apply with_fds_fs. }
@@ -784,6 +796,7 @@ Proof.
   - apply with_fds_halted.
   - apply with_fds_fs.
   - cbn [APS.fds_ok]. subst model'. rewrite with_fds_fds, Hfds. reflexivity.
+  - (* co_rdr *) subst model'. reflexivity.
 Qed.
 End NodesSoundA2.
 End BoDrvNodesSoundA2.
@@ -818,6 +831,8 @@ Variable KCAP : Z.
 Variable AINVH : list (Z * Z) -> list (Z * Z) -> Z -> Z -> Z -> (word -> option byte) -> Model -> Prop.
 Variable SWIN : list (Z * Z).
 Hypothesis HP : hprops SWIN GBOTH SHC AINVH.
+Hypothesis SWIN_img : forall lo hi, In (lo, hi) SWIN ->
+  g_ro_hi GBOTH <= lo /\ hi <= g_img_hi GBOTH /\ (forall plo phi, In (plo, phi) (g_priv GBOTH) -> hi <= plo \/ phi <= lo).
 Variable PERMc : list (Z * Z).
 Variable SPTOPc : Z.
 Variable FS0 : Fs.Fs.
@@ -826,6 +841,16 @@ Variable M0c : word -> option byte.
 Variable B0c C0c : Z.
 Variable FTOPc : Z.
 Variable UINV : env -> Prop.
+(* [read_cstr_of_rdn] and [read_cstr_toolong_of_rdn] take, since LPS 26feb4a5
+   (75d69e00:theories/Common/FileSim.v:475-479; local copies Common/RefNodes.v:264, :302), a
+   bound of the path against [TASK_SIZE].  Nothing at the node bounds the path from above, so
+   the bound is carried by the frame: at or above [TASK_SIZE] the frame's memory is [M0c]'s
+   ([zone_task]), [M0c] maps nothing there ([M0c_task]), and no segment of the image reaches
+   there ([both_in_hull], a [vm_compute] over [Images.asan_ubsan]'s segments).  Both
+   hypotheses are stated in the model's [TASK_SIZE], so an image or a stack reaching the user
+   limit fails to discharge them visibly. *)
+Hypothesis SPTOPc_task : SPTOPc <= TASK_SIZE.
+Hypothesis M0c_task : forall a : word, TASK_SIZE <= u a -> M0c a = None.
 #[local] Notation AINVc := (AINV_f SWIN GBOTH AINVH PERMc SPTOPc HIDc HIDFc M0c B0c C0c).
 #[local] Notation VSHc := (VSHf HIDc HIDFc).
 #[local] Notation cs_okA := (GPS.cs_ok BSEGS PERMc SPTOPc FS0 SHC VSHc AINVc KCAP FTOPc fx_ok UINV).
@@ -1003,7 +1028,13 @@ Qed.
 (* [comment removed for export] *)
 Lemma cstr_access_len_le : forall mp fuel a, (cstr_access_len_aux mp a fuel <= fuel)%nat.
 Proof.
-  intros mp fuel. induction fuel as [|f IH]; intros a; cbn; [lia|].
+  (* 75d69e00 State.v:1488-1498: the walk now opens with strncpy_from_user's clamp,
+     [if negb (access_okb a 1) then O], so both arithmetic branches sit under one
+     more test.  [cbn] used to leave the [mp a] match at the top; it now leaves the
+     clamp, and [lia] met an [if] rather than a numeral -- which is what
+     "Cannot find witness" was reporting. *)
+  intros mp fuel. induction fuel as [|f IH]; intros a; cbn [cstr_access_len_aux]; [lia|].
+  destruct (negb (access_okb a 1)); [lia|].
   destruct (mp a) as [b|]; [|lia]. destruct (bv_eqb b (Z_to_bv 8 0)); [lia|]. specialize (IH (a + 1)%bv). lia.
 Qed.
 Lemma sea_copyins_ret : forall Rd r, syscall_effect_accesses (with_copyins Rd (mkEffect r [] [])) = Rd.
@@ -1102,7 +1133,13 @@ Proof.
       intros a n Hin. unfold open_copyins in Hin. destruct Hin as [Hin|[]].
       pose proof (f_equal fst Hin) as Ea. cbn [fst] in Ea. pose proof (proj2 (proj1 (pair_equal_spec _ _ _ _) Hin)) as En.   (* [comment removed for export] *)
       assert (Hn : (n <= 4096)%nat) by (rewrite <- En; apply (cstr_access_len_le _ 4096%nat)).
-      subst a ms. rewrite ms_gpr_epend1, G11. split; [exact Hceil |]. clear - Hn Hnw Rp Rl. unfold two64 in *. lia. }
+      subst a ms. rewrite ms_gpr_epend1, G11. split; [exact Hceil |]. clear - Hn Hnw Rp Rl. unfold two64 in *. lia.
+    - (* the path reads without a fault: [RomSys.sys_rob_openat] *)
+      apply (RomSys.sys_rob_openat BSEGS ms model (getr R 17) eq_refl Hx8).
+      assert (Hrb : ms_read_byte ms = mrb BSEGS M) by (subst ms; apply ms_read_byte_ependA).
+      assert (Ha1 : ms_gpr ms 1 = edenot E path) by (subst ms; rewrite ms_gpr_epend1; exact G11).
+      rewrite Hrb, Ha1.
+      destruct (Hspec path rest bs Hargs Hstr Hlen) as [[Hcs _] | (p & Hcs & _ & _)]; rewrite Hcs; discriminate. }
   cbn beta. subst eff ms. rewrite adv_eff_ret_copyins_ependA, (v_addi_pc (pc cs) Hpc0 Hpc4).
   refine (Hk E fx (regupd R 10 (errno_ret e)) M model (conj (env_agree_refl _ _) (env_agree_refl _ _)) _ eq_refl).
   unfold DNA.ret_simple. apply (cs_ok_sys_retI E cs fx R M model (ELit (DNA.two64 - e)) (errno_ret e) (a_fd cs) model HC).
@@ -1111,6 +1148,7 @@ Proof.
   - reflexivity.
   - reflexivity.
   - exact (co_fds HC).
+  - (* co_rdr *) reflexivity.
 Qed.
 (* [comment removed for export] *)
 Lemma cstring_rdn : forall E M pa bs,
@@ -1123,6 +1161,38 @@ Proof.
   destruct (Nat.lt_ge_cases i (length bs)) as [Hl|Hg].
   - rewrite app_nth1 by exact Hl. exact (Sb i Hl).
   - assert (Hi' : i = length bs) by lia. subst i. rewrite app_nth2 by lia. rewrite Nat.sub_diag. cbn [nth]. exact Sn.
+Qed.
+
+(* At or above [TASK_SIZE] a frame's memory is its start memory's: the zone holds there, since
+   [SPTOPc <= TASK_SIZE], [PERMc] lies under 2^47 ([perm_owned]) and [SWIN] inside the image. *)
+Lemma zone_task : forall Lc Lf B C K M mdl (a : word),
+  AINVc Lc Lf B C K M mdl -> TASK_SIZE <= u a -> AzFrame.zone SWIN GBOTH PERMc SPTOPc HIDc HIDFc a.
+Proof.
+  intros Lc Lf B C K M mdl a HA Ha. destruct HA as (_ & HPo & _).
+  split; [right; right; left; lia|]. split.
+  - intros HPw. pose proof (proj2 HPo (u a) HPw) as X. unfold two47, TASK_SIZE in *. lia.
+  - intros (lo & hi & Hin & Hz). destruct (SWIN_img lo hi Hin) as (_ & S2 & _).
+    cbn [g_img_hi GBOTH] in S2. unfold TASK_SIZE in Ha. lia.
+Qed.
+
+Lemma mem_task_none : forall Lc Lf B C K M mdl (a : word),
+  AINVc Lc Lf B C K M mdl -> TASK_SIZE <= u a -> M a = None.
+Proof.
+  intros Lc Lf B C K M mdl a HA Ha. pose proof (zone_task Lc Lf B C K M mdl a HA Ha) as Z.
+  destruct HA as (_ & _ & _ & HZ & _). rewrite (HZ a Z). exact (M0c_task a Ha).
+Qed.
+
+(* ... and the image's ROM reaches no such address: [both_in_hull] (AzImageBoth.v:74) rests on
+   [both_segs_in_hull] (AzImageBoth.v:71), a [vm_compute] over [AsanUbsan.M.loaded_segments],
+   the segment list [Images.asan_ubsan] is built from (Images.v:16). *)
+Lemma mrb_task_none : forall Lc Lf B C K M mdl (z : Z),
+  AINVc Lc Lf B C K M mdl -> 0 <= z < 2 ^ 64 -> TASK_SIZE <= z -> mrb BSEGS M (Z_to_bv 64 z) = None.
+Proof.
+  intros Lc Lf B C K M mdl z HA Hz Hts.
+  assert (Hu : u (Z_to_bv 64 z) = z) by (rewrite u64_lit by lia; reflexivity).
+  unfold mrb. rewrite (mem_task_none Lc Lf B C K M mdl (Z_to_bv 64 z) HA ltac:(rewrite Hu; exact Hts)).
+  apply (APS.seg_rom_off_hull BSEGS ABOTH both_in_hull). unfold APS.in_hull. cbn [img_lo img_hi ABOTH].
+  apply Bool.andb_false_iff. right. apply Z.ltb_ge. rewrite Hu. unfold TASK_SIZE in Hts. lia.
 Qed.
 
 Theorem node_openat_toolong_sound : forall args, N1 (DNA.node_openat_toolong BSEGS args).
@@ -1143,6 +1213,14 @@ Proof.
   apply (read_cstr_toolong_of_rdn BSEGS M _ (firstn 4096 bs)).
   - rewrite length_firstn. lia.
   - intros Hin. apply (NONUL2 E (co_uinv HC)). rewrite <- Hbs, <- (firstn_skipn 4096 bs). apply in_app_iff. left. exact Hin.
+  - (* the model's bound: otherwise byte 0 or byte 4095 would be defined at or above TASK_SIZE *)
+    rewrite Z_to_bv_bv_unsigned. pose proof (u64_range (edenot E path)) as Rp.
+    destruct (Z_lt_ge_dec (u (edenot E path) + 4096) (TASK_SIZE + 1)) as [Hfit|Hbad]; [lia|exfalso].
+    destruct (Z_lt_ge_dec (u (edenot E path)) TASK_SIZE) as [Hlow|Hhigh].
+    + pose proof (Sb 4095%nat ltac:(lia)) as B.
+      rewrite (mrb_task_none _ _ _ _ _ M model _ (co_ainv HC)) in B; [discriminate B | |]; unfold TASK_SIZE in *; lia.
+    + pose proof (Sb 0%nat ltac:(lia)) as B.
+      rewrite (mrb_task_none _ _ _ _ _ M model _ (co_ainv HC)) in B; [discriminate B | |]; unfold TASK_SIZE in *; lia.
   - replace 4096%nat with (length (firstn 4096 bs)) at 1 by (rewrite length_firstn; lia).
     apply rdn_of_mem. intros i Hi. rewrite length_firstn in Hi.
     rewrite nth_firstn. replace (i <? 4096)%nat with true by (symmetry; apply Nat.ltb_lt; lia).
@@ -1183,6 +1261,12 @@ Proof.
     apply (read_cstr_of_rdn BSEGS M _ bs).
     + lia.
     + destruct Sbs as [-> | ->]; [intros [] | exact (NONUL2 E (co_uinv HC))].
+    + (* the model's bound: otherwise the NUL byte would be defined at or above TASK_SIZE *)
+      rewrite Z_to_bv_bv_unsigned.
+      destruct (openat_ok_sound E cs fx R M model args L HC Hok) as (path' & rest' & bs' & Hargs' & _ & _ & _ & _ & _ & _ & Hlen' & _ & Hnw' & _).
+      rewrite Hargs in Hargs'. injection Hargs' as <- <-.
+      destruct (Z_lt_ge_dec (u (edenot E path) + Z.of_nat (length bs)) TASK_SIZE) as [Hfit|Hbad]; [exact Hfit|exfalso].
+      rewrite (mrb_task_none _ _ _ _ _ M model _ (co_ainv HC)) in Sn; [discriminate Sn | |]; unfold two64, TASK_SIZE in *; lia.
     + apply (cstring_rdn E M _ bs Hstr); [lia|].
       destruct (openat_ok_sound E cs fx R M model args L HC Hok) as (path' & rest' & bs' & Hargs' & _ & _ & _ & _ & _ & _ & Hlen' & _ & Hnw' & _).
       rewrite Hargs in Hargs'. injection Hargs' as <- <-. unfold two64 in *. lia.
@@ -1358,10 +1442,13 @@ Lemma cs_ok_sys_write : forall E cs fx R M M' model model' r v k' nx' f,
   APS.fds_ok E f model' ->
   know_ok BSEGS E (Mr E cs model M') k' ->
   (forall a : word, M' a <> M a -> GPS.in_wins PERMc (u a) /\ M' a <> None) ->
+  (* [co_rdr] (AzGPS.v:244): the reader is a projection of [m_proc] and no setter on this
+     path writes it; the caller discharges this by conversion. *)
+  m_channel_reader model' = m_channel_reader model ->
   cs_okA E (DNA.ret_with cs r k' nx' f) fx (regupd R 10 v) M' model'.
 Proof.
-  intros E cs fx R M M' model model' r v k' nx' f HC Hr Hvm Hh Hfs Hfd HK Hown.
-  destruct HC as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL].
+  intros E cs fx R M M' model model' r v k' nx' f HC Hr Hvm Hh Hfs Hfd HK Hown Hrdr.
+  destruct HC as [CR CL CK CH CF CD CA CU CX CP CT CK2 CFB CFL CRD].
   constructor; cbn [DNA.ret_with a_ss s_regs s_log s_know kn a_maps a_totsz a_ylo a_eager a_vis a_ghost a_abytes a_brk a_fd a_tidset a_meter a_fake a_fbud mk_ss nxt pc];
     try assumption.
   - replace (10%bv : Prelude.reg) with (Z_to_bv 5 (Z.of_nat 10)) by (apply bv_eq; reflexivity).
@@ -1373,6 +1460,7 @@ Proof.
   - eapply (AINV_f_vm SWIN GBOTH SHC AINVH HP); [|exact Hvm].
     eapply (AINV_f_frame SWIN GBOTH SHC AINVH HP both_G_ro_img2 drvA_G_img_al drvA_G_img_shlo PERMc SPTOPc HIDc HIDFc M0c B0c C0c); [exact CA|].
     intros a Ha. destruct (Hown a Ha) as [Hw Hs]. split; [|exact Hs]. left. right. left. exact Hw.
+  - (* co_rdr *) rewrite Hrdr. exact CRD.
 Qed.
 
 (* [comment removed for export] *)
@@ -1550,7 +1638,9 @@ Proof.
         refine (pages_in_image_not_lazy _ _ _ _ _ _ model _ (co_ainv HC) _ pg Hin).
         intros a n Ha. subst eff. cbn [syscall_effect_accesses eff_copyins eff_writes app] in Ha.
         apply delivered_accesses_in in Ha as [-> ->]. cbn [g_img_lo g_img_hi GBOTH]. rewrite u64_lit by lia.
-        clear - Hlo Hhi HLbs Hcr. lia. }
+        clear - Hlo Hhi HLbs Hcr. lia.
+      - apply (RomBase.sys_rob_memfree BSEGS ms model (getr R 17) eq_refl).
+        replace (bv_unsigned (getr R 17)) with 63 by (rewrite G17; symmetry; apply u64_lit; lia). exact RomBase.memfree_63. }
     cbn beta. subst eff ms.
     rewrite adv_delivered_epend, (v_addi_pc (pc cs) Hpc0 Hpc4). exact HK.
 Qed.
@@ -1661,7 +1751,7 @@ Proof.
       rewrite Hadd0.
       refine (Hk E fx _ _ _ (conj (env_agree_refl _ _) (env_agree_refl _ _)) _ _); [|apply with_fds_fs].
       unfold DNA.ret_simple. rewrite Hafd.
-      apply (cs_ok_sys_retI E cs fx R M model (ELit 0) (Z_to_bv 64 0) (FdFile kb len off) _ HC); [reflexivity | reflexivity | apply with_fds_halted | apply with_fds_fs |].
+      apply (cs_ok_sys_retI E cs fx R M model (ELit 0) (Z_to_bv 64 0) (FdFile kb len off) _ HC); [reflexivity | reflexivity | apply with_fds_halted | apply with_fds_fs | | (* co_rdr *) reflexivity].
       cbn [APS.fds_ok]. exists p, c. rewrite with_fds_fds, with_fds_fs. unfold APS.uE, GPS.uE.
       split; [reflexivity|]. split; [exact Hfs|]. split; [exact Hlen|]. split; [exact Hoff | exact Hch].
     + match type of Hn with (if ?b then _ else _) = _ => destruct b eqn:Hfull end.
@@ -1681,7 +1771,7 @@ Proof.
         rewrite Hlw, <- (eadd_bv E off (reg cs 12)).
         refine (Hk E fx _ _ _ (conj (env_agree_refl _ _) (env_agree_refl _ _)) _ _); [|apply with_fds_fs].
         apply (cs_ok_sys_write E cs fx R M _ model _ (reg cs 12) (edenot E (reg cs 12)) _ (nxt cs) _ HC eq_refl);
-          [reflexivity | apply with_fds_halted | apply with_fds_fs | | |].
+          [reflexivity | apply with_fds_halted | apply with_fds_fs | | | | (* co_rdr *) reflexivity].
         -- cbn [APS.fds_ok]. exists p, c. rewrite with_fds_fds, with_fds_fs. unfold APS.uE, GPS.uE.
            split; [reflexivity|]. split; [exact Hfs|]. split; [exact Hlen|]. split; [|exact Hch].
            rewrite eadd_bv, u_bv_add_small by lia. lia.
@@ -1710,7 +1800,7 @@ Proof.
         rewrite Hol, Hlw.
         refine (Hk E fx _ _ _ (conj (env_agree_refl _ _) (env_agree_refl _ _)) _ _); [|apply with_fds_fs].
         apply (cs_ok_sys_write E cs fx R M _ model _ (esub len off) (edenot E (esub len off)) _ (nxt cs) _ HC eq_refl);
-          [reflexivity | apply with_fds_halted | apply with_fds_fs | | |].
+          [reflexivity | apply with_fds_halted | apply with_fds_fs | | | | (* co_rdr *) reflexivity].
         -- cbn [APS.fds_ok]. exists p, c. rewrite with_fds_fds, with_fds_fs. unfold APS.uE, GPS.uE.
            split; [reflexivity|]. split; [exact Hfs|]. split; [exact Hlen|]. split; [lia | exact Hch].
         -- apply Forall_app. split.
@@ -1758,7 +1848,9 @@ Proof.
       - intros eff m' evs. rewrite Hrd, check_ret_only_ok_iff. tauto.
       - intros eff. rewrite Hrd. apply check_ret_only_no_unmodeled.
       - exact (co_halt HC).
-      - reflexivity. }
+      - reflexivity.
+      - apply (RomBase.sys_rob_memfree BSEGS _ model (getr R 17)); [reflexivity |].
+        replace (bv_unsigned (getr R 17)) with 63 by (rewrite G17; symmetry; apply u64_lit; lia). exact RomBase.memfree_63. }
     cbn beta. rewrite adv_eff_ret_epend, (v_addi_pc (pc cs) Hpc0 Hpc4), errno_EISDIR.
     refine (Hk E fx _ _ _ (conj (env_agree_refl _ _) (env_agree_refl _ _)) _ eq_refl).
     unfold DNA.ret_simple. rewrite Hafd.

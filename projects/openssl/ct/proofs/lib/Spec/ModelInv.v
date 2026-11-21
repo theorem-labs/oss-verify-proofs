@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (GI_init takes the channel-reader premise and reproves kl_resv, kl_resv_top and kl_vdso over the reserved list with the vDSO pair; GI_with_vdso carries GI to the run's initial model). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation String.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
@@ -577,16 +578,39 @@ Lemma GI_init : forall segs brk0 mbase sp lim inp,
   reserved_top (segments_reserved segs) + brk_aslr_max + 4 * PGSZ <= alloc_ceiling ->
   bv_unsigned sp - stack_max_size = alloc_ceiling ->     (* [comment removed for export] *)
   fs_keys_relative (in_image_fs inp) ->                  (* [comment removed for export] *)
+  (* LPS 727298f3: [minv_init] also takes the channel-reader conjunct; both callers hold
+     [valid_input_either inp], which contains it. *)
+  in_channel_reader inp = true ->
   GI [] (ps_init (reservedZ segs)) (init_model (segments_reserved segs) brk0 mbase sp lim inp).
 Proof.
-  intros segs brk0 mbase sp lim inp (Hlo & Hhi & Hal) Hpos Hceil Htop Hrel. unfold GI, OWN. split; [|split; [apply List.NoDup_nil| unfold Gso, so_ok; cbn [ps_so ps_init so_buf stdout_init]; unfold zlength, STDOUT_BUFSIZ; cbn; lia]].
+  intros segs brk0 mbase sp lim inp (Hlo & Hhi & Hal) Hpos Hceil Htop Hrel Hrdr. unfold GI, OWN. split; [|split; [apply List.NoDup_nil| unfold Gso, so_ok; cbn [ps_so ps_init so_buf stdout_init]; unfold zlength, STDOUT_BUFSIZ; cbn; lia]].
   exists (led_init (reservedZ segs)). split; [apply creach_init|]. split; [|intros c []].
   constructor; rewrite ?m_vmmaps_init_model; cbn -[Z.pow Z.mul Z.add init_model].
-  - apply minv_init. exact Hrel.
+  - apply minv_init; [exact Hrel| exact Hrdr].
   - reflexivity.
   - split; [intros e []| apply pwdisj_nil].
-  - reflexivity.
-  - intros e Hin. pose proof (reserved_top_ge _ _ Hin). unfold ehi. lia.
+  (* LPS 727298f3: [init_model]'s reserved list is the image's segments FOLLOWED BY the
+     vDSO/vvar pair ([State.init_reserved]), so [kl_resv] is the inclusion of the
+     segment prefix. *)
+  - unfold init_reserved; rewrite map_app; apply incl_appl, incl_refl.
+  (* [kl_resv_top]: the pair's suffix is at most two entries of at most 20 pages, and
+     every reserved entry is either below the break (the segments) or one of those two.
+     The witness is [State.vdso_reserved] at the ledger's [vdso_top]. *)
+  - exists (vdso_reserved (in_kernel inp)
+              (page_round_down_Z (Z.min (bv_unsigned mbase) (bv_unsigned sp - stack_max_size)))).
+    split; [|split].
+    + unfold vdso_reserved; cbv zeta; destruct (_ <? _); cbn [length]; lia.
+    + pose proof (vdso_len_bounds (in_kernel inp)) as HB.
+      pose proof (vdso_text_pages_pos (in_kernel inp)) as HPP.
+      pose proof (vdso_text_pages_le (in_kernel inp)) as HL.
+      unfold vdso_reserved, vdso_len, vdso_vvar_pages, page_size in *; cbv zeta.
+      destruct (_ <? 4096); cbn [live_bytes]; [lia|].
+      rewrite !bv_unsigned_Z_to_bv_u64 by (unfold two_pow_64 in *; lia); lia.
+    + intros e Hin. unfold init_reserved in Hin. apply in_app_or in Hin as [Hseg|Hvd].
+      * left. pose proof (reserved_top_ge _ _ Hseg). unfold ehi. lia.
+      * right. exact Hvd.
+  (* [kl_vdso]: [init_model] has no tracked maps, so the mapping side is [In e []]. *)
+  - intros r _ e [].
   - unfold PGSZ in *. unfold page_size in Hal. lia.
   - intros b l [].
   - intros b l k [].
@@ -594,6 +618,17 @@ Proof.
   - intros b l H. discriminate.
   - split; reflexivity.
   - exact Htop.
+Qed.
+
+(* LPS 727298f3: the walks start from [Run.init_config]'s model, which is [init_model]
+   with the launch's vDSO draw installed ([TopLevel.mo0]).  [with_vdso] changes only
+   [m_vdso], which neither [KL] nor [minv] nor [Gso] reads, so each field carries over. *)
+Lemma GI_with_vdso : forall X s v m, GI X s m -> GI X s (with_vdso v m).
+Proof.
+  intros X s v m [(L & Hc & HK & Hi) [Hnd HG]].
+  split; [|split; [exact Hnd| exact HG]].
+  exists L. split; [exact Hc|]. split; [|exact Hi].
+  destruct HK; constructor; assumption.
 Qed.
 
 Lemma argv_Z_short : forall argv, valid_argv argv -> Forall (fun a => zlength a < 2^32) (argv_Z argv).
@@ -632,12 +667,15 @@ Theorem prog_model_ok : forall segs rstage pc ph lim en inp,
   /\ tsafe nstep nsafe (prog segs rstage (in_argv inp)) (mo0 segs lim en inp).
 Proof.
   intros segs rstage pc ph lim [sp brk0 mbase] inp Hlow Hve Hvi Htop.
+  pose proof Hvi as Hvi0.
   destruct Hve as (_ & Hbrk & _). destruct Hvi as (Hargv & _ & _ & Hrel & _).
   unfold prog, mo0. cbn [en_brk en_mmap_base en_sp] in *.
   apply (mspec_program (GI []) (prog_with rstage (argv_Z (in_argv inp)))).
   - apply prog_with_GI; [apply argv_Z_short| apply argv_Z_paths]; exact Hargv.
   - unfold reservedZ. cbn [img_segments] in Hbrk. unfold valid_brk in Hbrk.
-    apply (GI_init segs); [exact Hbrk| exact (proj1 Hlow)| exact (image_low_ceil segs Hlow)| exact Htop| exact Hrel].
+    apply GI_with_vdso.
+    apply (GI_init segs); [exact Hbrk| exact (proj1 Hlow)| exact (image_low_ceil segs Hlow)| exact Htop| exact Hrel
+                          | red in Hvi0; repeat match goal with H : _ /\ _ |- _ => destruct H end; assumption].
 Qed.
 
 

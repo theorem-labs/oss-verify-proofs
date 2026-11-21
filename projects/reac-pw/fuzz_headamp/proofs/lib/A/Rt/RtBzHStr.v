@@ -1,5 +1,5 @@
-(* Modified by Theorem Labs, 2026-10: proofs/plugin-hostd/fuzz_command/lib/A/Rt/RtBzHStr.v at 2d2ff01bb6f; module paths changed to reac-pw/fuzz_headamp; 2 numeral(s) moved from fuzz_command.asan to fuzz_headamp.asan by alreloc a5c53bb2bed4. *)
-(* The runtime layer of omx-clap-core/fuzz_manifest: the strncmp interceptor's contract in the donor's per-call form (YG0d.v:317-419: ecall_pre,
+(* Modified by Theorem Labs, 2026-10: proofs/plugin-hostd/fuzz_command/lib/A/Rt/RtBzHStr.v; module paths changed to reac-pw/fuzz_headamp; 2 numeral(s) moved from fuzz_command.asan to fuzz_headamp.asan by alreloc a5c53bb2bed4. *)
+(* The runtime layer of omx-clap-core/fuzz_manifest: the strncmp interceptor's contract in the donor's per-call form (YG0d.v:318-420: ecall_pre,
    argument registers, range premises on aview, SRr to the return address with AR kept, callee-saved registers kept,
    same_but_materialized, a memory frame), the pure model of its answer, and the posts of a runtime call that writes
    nothing but its stack window (rt_post_ro; rt_post_roU inside fuzz_manifest's user-poison window). Statements only; no program

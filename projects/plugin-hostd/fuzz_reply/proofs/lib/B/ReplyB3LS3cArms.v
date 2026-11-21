@@ -2,17 +2,17 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ARM_drain (op 2) of the ASan walk of fuzz_reply's LLVMFuzzerTestOneInput over the
    GENERIC allocator relation ARx: the ARx conversion of lib/A/W_LLVMFuzzerTestOneInput_drain.v's lf_arm_drain.
-   The AR proof is a Theorem Labs lane's: a working branch 129f255c729 (dr_found_join / lf_arm_drain Qed on W8
-   base ec4dd616ed1: fresh rc=0 wall 604, Print Assumptions 13 Prim* + funext), adapted to the current cut on
-   a working branch cdc87da7be0 (b5 w8c rc=0).  lf_arm_drain_x's statement is the text of the
+   The AR proof is a Theorem Labs lane's: a working branch (dr_found_join / lf_arm_drain Qed on W8
+   base: fresh rc=0 wall 604, Print Assumptions 13 Prim* + funext), adapted to the current cut on
+   a working branch (b5 w8c rc=0).  lf_arm_drain_x's statement is the text of the
    Section hypothesis ARM_drain of lib/A/W_LLVMFuzzerTestOneInput_cut_x.v Section w (:349), checked at the end
    (lf_arm_drain_x_check).
-   THE ROOM ROUND (a working branch, on meet 393c0b2cb2a): the cut's invariants take NP
+   THE ROOM ROUND (a working branch, on meet): the cut's invariants take NP
    (lcut_x's NP S after LSx; DLK carries it); DRAIN / CNL take the room record RP (RP_NP ties its rp_RM to NP) and
    their count premises cnt_ok_pk RP (dr_pk ..) / (cnl_pk ..), the first from LS_cnt at the cut, the second at the
    state the drain leaves through the two pure model rules DR_CNT_grow / DR_CNT_cnl; LS_drain_pre's conjunct 5 is
    the peak form (with the three premises s5-r1d's rows take); LS_cnl_pre / LS_drain_step are a Theorem Labs lane's
-   TX_LS_cnl_pre / TX_LS_drain_step (d0d75bf92db), whose premises dc_stB (dcB_out) and dc_stE export.
+   TX_LS_cnl_pre / TX_LS_drain_step, whose premises dc_stB (dcB_out) and dc_stE export.
    The method (W8Entry-2's add_x method): this file Requires _drain.v and CITES every item of it that reads no AR
    and no Section variable (the model notions, the symbolic states, the pure list / byte lemmas); every item that
    reads a Section variable but no AR is restated VERBATIM (same name, same proof, up to cut_x's LS -> LSx and the
@@ -45,8 +45,9 @@
    strict SRr over the R journal (paj_run_x_xR) and are lifted by SRr_SRrG; the stages with a call conclude SRrG segs R
    (paj_run_x_xG runs, SRrG_bind / SRrG_mono).  The strict lemmas and their proofs are unchanged. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_LLVMFuzzerTestOneInput_drain_x.v, with its module paths and module names changed; 156 of its 217 lines of code are new or changed and 6985 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the image-B (fuzz_reply.asan-ubsan) port of lib/A/ReplyLS3cArms.v (sha256
-   e836fd1dfc9c; internal record) at d9e8f914caaf (the same blob as at 1b1e21bdbd40), for
+   e836fd1dfc9c; internal record) (the same blob as), for
    row G-BLS3-port: A's lemmas under A's names and statements over lib/B's records, with these swaps:
    - the Require header is lib/B/ReplyB3LS3c.v's plus lib/B/ReplyB3LS3Arms.v's (lib/A ReplyLSArms / ReplyRINV /
      ReplyLSDrainPre / ReplyLS3Arms / ReplyLSCntL / ReplyLS3c -> lib/B ReplyLSBArms / ReplyRINVB / ReplyLSBDrainPre /

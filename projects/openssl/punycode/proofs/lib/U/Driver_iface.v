@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (rmain_stmt takes the whole ProcInput and the mmap base, and assumes the stack head ends below the argument strings). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -29,6 +30,7 @@ Notation wz := MallocRep.wz.
 (* [comment removed for export] *)
 
 From OSSVerify.Proofs.openssl.punycode.lib.Lib Require Import Ceiling.
+From OSSVerify.Proofs.openssl.punycode.lib.P Require InitMem.   (* [head_size], [str_len] *)   (* qualified: an Import re-resolves LXW_*/RSTDOUT *)
 From OSSVerify.Proofs.openssl.punycode.lib.P Require Import Rnd.
 From OSSVerify.Proofs.openssl.punycode.lib.Malloc Require Import CeilWin.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -125,11 +127,12 @@ Definition rtarget_run_stmt : Prop :=
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Definition rmain_stmt : Prop :=
-  forall (sp0 : word) (argv envp : list (list byte)) (uid : word) (ms : machine_state),
-    valid_sp sp0 -> ceil_ok sp0 -> valid_argv argv -> valid_envp envp ->
-    entry_stack_fits sp0 argv envp ->
-    at_main sp0 argv envp uid ms ->
-    implM usegs (main_model io raw_malloc raw_free ustage alloc_init run alloc_count (argv_Z argv))
+  forall (sp0 : word) (inp : ProcInput) (mbase : word) (ms : machine_state),
+    valid_sp sp0 -> ceil_ok sp0 -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+    entry_stack_fits sp0 (in_argv inp) (in_envp inp) ->
+    (bv_unsigned sp0 + InitMem.head_size inp <= bv_unsigned (ed_top run_draw) - 8 - InitMem.str_len inp)%Z ->
+    at_main sp0 inp mbase ms ->
+    implM usegs (main_model io raw_malloc raw_free ustage alloc_init run alloc_count (argv_Z (in_argv inp)))
           (ps_init (reservedZ usegs))
           (fun code s' ms' => at_exit ps_so code s' ms') ms.
 End WithCeiling0.

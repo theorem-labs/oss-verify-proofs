@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset, ex_string's walk on image A' (#102 pin asan 1be0f53d96cb): the journal-level
    helpers every cut file uses. The geometry of the entry (ES_PRE), the facts a cut state has from ESB (the text kept,
    the text's and the scratch's shadow from AR_laws_x, the stack's shadow), the ledger across scratch writes, and the
    passage from the end of a run to the kit's post (es_finish).
-   PORTED from lib/B/Prog/ExsB_Lib.v at a Theorem Labs lane's batch-kit re-fit (a working branch 66eac2b9522a, blob of
+   PORTED from lib/B/Prog/ExsB_Lib.v at a Theorem Labs lane's batch-kit re-fit (a working branch, blob of
    record): the same lemmas, image-free in content, at image A's listing, segments and statics (S1ImgA.pst_in_img_A,
    A_prog_segs_low); es_geom carries a Theorem Labs lane's re-fit of the cut's relaxed src_rd (x0 + len + 8 <= alloc_ceiling from
    the text's own live block by AR_laws_x field 24 alx_blocks_ceil8; TESTED HERE: the text is in a live block by

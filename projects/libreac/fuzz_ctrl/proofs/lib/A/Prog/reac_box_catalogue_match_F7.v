@@ -3,8 +3,9 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 3060 of its 3101 lines of code are new or changed and 207 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/reac_box_catalogue_match.v, with its numbers changed; 399 of its 453 lines of code are new or changed and 3047 lines of the source are left out. *)
-(* Stretch S7 of the footprint (_F) re-run of reac_box_catalogue_match.v (source commit d69f7c708f6, proved on
-   FACTS ed6b6b7b0ab) by the same script over lib/Lib/StepF; image fuzz_ctrl v1.9.0 asan, ELF fuzz_ctrl.debug
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Stretch S7 of the footprint (_F) re-run of reac_box_catalogue_match.v (source, proved on
+   FACTS) by the same script over lib/Lib/StepF; image fuzz_ctrl v1.9.0 asan, ELF fuzz_ctrl.debug
    sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd; route (a) of 22:20Z; for the cgif-form
    walk C_reac_box_catalogue_match.v only.
 
@@ -12,7 +13,7 @@
    `sb zero,0(a0)` at 0x847bc) to the `ret` at 0x84860: `j`, `mv a0,s3`, `addi sp,s0,-128`, the twelve `ld` of the
    callee-saved registers from [S - 96, S), `addi sp,sp,128`, `ret` (the source's `do 17 step`), then the post.
 
-   Source lemma: cm_exit (reac_box_catalogue_match.v:2899), which runs 0x84724 -> `ret` through the release. The
+   Source lemma: cm_exit (reac_box_catalogue_match.v:2900), which runs 0x84724 -> `ret` through the release. The
    source script runs THROUGH the release (the 1-byte store of 0 at the class-2 in-use flag byte), which the
    cgif-form walk performs itself (astack_free_law / frame_flag_lawP), so the script is split there. This file
    holds everything of cm_exit's side-stack arm from 0x847c0 on, verbatim: the rw_cells transport of the twelve

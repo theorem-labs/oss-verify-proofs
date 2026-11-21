@@ -3,6 +3,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics 
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Mmap.
 From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Import EdAlloc EdBridge.
 From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QRjH QiVh.
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib.Cfg Require RomBase.
 Import ListNotations.
 
 (* An outcome the configured step keeps: a spec outcome that is not a spurious refusal. *)
@@ -112,12 +113,15 @@ Lemma ncl_ekept : forall (J : config -> Prop) ms model x8 (I : Type)
   (forall o, ekept (sys_input segs ms x8) model o <-> exists i, o = Ok (effs i) (ms' i) []) ->
   (forall i, m_halted (ms' i) = None) ->
   (forall i, m_vm_lazy (ms' i) = []) ->
+  (* LPS 727298f3: the call reads no [in_mem], so [RomBase.sys_rob] holds at the node *)
+  RomBase.memfree (bv_unsigned x8) ->
   (forall i, J (mkCfg (advance_past_svc (apply_effect ms (effs i))) (ms' i))) ->
   J (mkCfg ms model).
 Proof.
-  intros J ms model x8 I effs ms' i0 HJ Hh Hsvc Hnh Hk Hh' Hl Hc.
-  apply (HJ _ I (fun i => mkCfg (advance_past_svc (apply_effect ms (effs i))) (ms' i)) i0); [| exact Hc].
-  exact (node_ekept ms model x8 I effs ms' Hh Hsvc Hnh Hk Hh' Hl).
+  intros J ms model x8 I effs ms' i0 HJ Hh Hsvc Hnh Hk Hh' Hl Hmf Hc.
+  apply (HJ _ I (fun i => mkCfg (advance_past_svc (apply_effect ms (effs i))) (ms' i)) i0); [| | exact Hc].
+  - exact (node_ekept ms model x8 I effs ms' Hh Hsvc Hnh Hk Hh' Hl).
+  - exact (RomBase.sys_rob_memfree segs ms model x8 Hsvc Hmf).
 Qed.
 
 Lemma ncl_spec_family : forall (J : config -> Prop) ms model x8 (I : Type)
@@ -127,10 +131,11 @@ Lemma ncl_spec_family : forall (J : config -> Prop) ms model x8 (I : Type)
   (forall o, syscall_spec (sys_input segs ms x8) model o <-> exists i, o = Ok (effs i) (ms' i) []) ->
   (forall i, m_halted (ms' i) = None) ->
   (forall i, m_vm_lazy (ms' i) = []) ->
+  RomBase.memfree (bv_unsigned x8) ->
   (forall i, J (mkCfg (advance_past_svc (apply_effect ms (effs i))) (ms' i))) ->
   J (mkCfg ms model).
 Proof.
-  intros J ms model x8 I effs ms' i0 HJ Hh Hsvc Hiff Hh' Hl Hc.
+  intros J ms model x8 I effs ms' i0 HJ Hh Hsvc Hiff Hh' Hl Hmf Hc.
   assert (Hi0 : exists j, ~ spurious_refusal_cfg (alloc_only_cfg false) (sys_input segs ms x8) model (effs j)).
   { destruct (classic (spurious_refusal_cfg (alloc_only_cfg false) (sys_input segs ms x8) model (effs i0)))
       as [Hsp | Hns]; [| exists i0; exact Hns].
@@ -149,6 +154,7 @@ Proof.
       intros eff m' evs E. injection E as <- <- <-. exact Hj.
   - intros [j Hj]. exact (Hh' j).
   - intros [j Hj]. exact (Hl j).
+  - exact Hmf.
   - intros [j Hj]. exact (Hc j).
 Qed.
 
@@ -267,7 +273,8 @@ Lemma ncl_brk : forall (J : config -> Prop) ms model x8,
 Proof.
   intros J ms model x8 HJ Hh Hlazy Hsvc Hno Hc.
   destruct (ebrk_idx_inh ms model x8 Hno) as (r0 & Hr0 & Hns0).
-  apply (HJ _ _ _ (exist _ r0 (conj Hr0 Hns0) : ebrk_idx ms model x8) (node_brk_ekept ms model x8 Hh Hlazy Hsvc Hno)).
+  apply (HJ _ _ _ (exist _ r0 (conj Hr0 Hns0) : ebrk_idx ms model x8) (node_brk_ekept ms model x8 Hh Hlazy Hsvc Hno)
+    (RomBase.sys_rob_memfree segs ms model x8 Hsvc ltac:(rewrite Hno; exact RomBase.memfree_214))).
   intros [r [Hr Hns]]. exact (Hc (exist _ r Hr)).
 Qed.
 

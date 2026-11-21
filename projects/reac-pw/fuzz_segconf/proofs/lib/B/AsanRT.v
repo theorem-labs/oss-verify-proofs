@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/AsanRT.v at cold/port-fm-int 5d8d8a15571, relocated A->B by asan-kit elfmap.py + remap.py over the unstripped twins; every image numeral re-derived by symbol / section (fmb-b4 reloc report). *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/AsanRT.v, relocated A->B by asan-kit elfmap.py + remap.py over the unstripped twins; every image numeral re-derived by symbol / section (fmb-b4 reloc report). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Lib Require Import Mem.

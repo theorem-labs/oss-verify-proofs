@@ -5,7 +5,7 @@
 (* Modified by Theorem Labs, 2026-10: made for reac-pw/fuzz_qdisc's ASan harness walk from
    proofs/libreac/fuzz_knock/lib/A/APgLoop0.v (its part 0, lines 73-270) and
    proofs/libreac/fuzz_knock/lib/A/APgMain1.v (its local part, lines 120-260) and lines 98-112 of APgMain3.v
-   (in_region_keep), at origin/ossv/recipes 6ebe35ba632, with their module paths changed and knock's frame
+   (in_region_keep), with their module paths changed and knock's frame
    arguments (fpos, F, EFA) dropped from every tactic, because fuzz_qdisc's harness owns no fake frame. It adds
    fuzz_qdisc's own Z-level model of the harness loop: the frame-rate table and the selector's magic division
    by 6. rule 24 (reuse): no function is proved here; helpers, model lemmas, the walk states and the loop
@@ -16,6 +16,7 @@
    imports; section 3 (the env slots, the four states and their invariants) is re-cut on the asan-ubsan code,
    whose loop keeps the remaining count in s10 (x26), the complement of the table address in s9 (x25), saves
    twelve registers, and joins its byte-reading paths one block later, after the table address is formed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -158,7 +159,7 @@ intros s. unfold qd_fps, fps_table.
 change (2 ^ 31) with 2147483648.
 destruct (Z.to_nat s) as [|[|[|[|[|[|m]]]]]]; cbn [nth]; [lia|lia|lia|lia|lia|lia|destruct m; lia].
 Qed.
-(* The read-only-data lemmas of lib/A/QPgMain2.v:67-92 (there restated from that image's lib/A/AD1k.v
+(* The read-only-data lemmas of lib/A/QPgMain2.v:68-93 (there restated from that image's lib/A/AD1k.v
    img_cell_chk :24-27, val_mem_img :28-35 and img_rd_of_aview :58-65), carried here so that both the
    frame-rate read (lib/AU/APgMain2.v) and the divisor cell of the calls (lib/AU/APgMain3.v) take them. *)
 (* the n bytes of the pinned image at a are the little-endian bytes of v *)

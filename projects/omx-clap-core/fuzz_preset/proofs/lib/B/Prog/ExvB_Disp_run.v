@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Rebound onto the old-pin kit of record (4f18c75d4900): EXB carries the memnorm keep from the entry
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Rebound onto the old-pin kit of record: EXB carries the memnorm keep from the entry
    memory (exv_rm); the runs carry it by YC1fPx.v's _inv runners, exv_kt (ExvB_Open_kt.v) takes it at every exit. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B (asan-ubsan, rebuilt pin f8f98a95bc52, unstripped twin 3b5e1a099b53),
    ex_value, segment C1 DISP (lane ExvDisp): THE DISPATCH RUN, from CUT_C1 (exv_pc 0x11c = B 0x83648, after ex_ws

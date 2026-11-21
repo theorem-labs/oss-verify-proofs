@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (hm_J and J_hm_absent name the heap invariant HKv's new last conjunct, AMark.heap_mark, when they destructure it). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State.
@@ -92,7 +93,7 @@ Section Top.
   #[using="Type"] Theorem hm_J : forall h m mo, HK AL h mo -> bwf h -> hm_absent h m -> J m mo.
   Proof.
     intros h m mo [K VR] B HA. pose proof (bwf_L h B) as WL. dpose (wfL_geo (h_L h) WL) as (G1 & G2 & G3 & G4 & G5 & G6 & G7 & G8 & G9 & G10).
-    dpose K as (Hh & ND & GD & LZ & LIM & EB & BUD0 & WF & (TB & TN & TL & UC & (UNC & MPOS & LZK & MX & MH) & MND & MSEP & NZN & NZL & BANDM) & CE & RS & RC & VW & AT).
+    dpose K as (Hh & ND & GD & LZ & LIM & EB & BUD0 & WF & (TB & TN & TL & UC & (UNC & MPOS & LZK & MX & MH) & MND & MSEP & NZN & NZL & BANDM) & CE & RS & RC & VW & AT & MK).
     dpose VW as (TWF & APT2 & HWF & HAP & THA & STK0 & STK1 & STK2 & IMG0 & IMG1 & IMG2 & IMG3 & IMG4 & GWF & BANDCS & EB0 & TND & UW & USEP & HUL & UT).
     dpose WF as (W1 & W2 & W3 & W4). aceilb.
     split; [exact W1|]. split; [exact W2|]. split; [exact MSEP|].
@@ -150,7 +151,7 @@ Section Top.
   #[using="Type"] Theorem J_hm_absent : forall h m mo, HK AL h mo -> bwf h -> J m mo -> hm_absent h m.
   Proof.
     intros h m mo [K VR] B HJ x [HZ NT]. pose proof (bwf_L h B) as WL. dpose (wfL_geo (h_L h) WL) as (G1 & G2 & G3 & G4 & G5 & G6 & G7 & G8 & G9 & G10).
-    dpose K as (Hh & ND & GD & LZ & LIM & EB & BUD0 & WF & (TB & TN & TL & UC & (UNC & MPOS & LZK & MX & MH) & MND & MSEP & NZN & NZL & BANDM) & CE & RS & RC & VW & AT).
+    dpose K as (Hh & ND & GD & LZ & LIM & EB & BUD0 & WF & (TB & TN & TL & UC & (UNC & MPOS & LZK & MX & MH) & MND & MSEP & NZN & NZL & BANDM) & CE & RS & RC & VW & AT & MK).
     dpose VW as (TWF & APT2 & HWF & HAP & THA & STK0 & STK1 & STK2 & IMG0 & IMG1 & IMG2 & IMG3 & IMG4 & GWF & BANDCS & EB0 & TND & UW & USEP & HUL & UT).
     ddestruct HJ as (_ & _ & _ & _ & J5). aceilb. geo.
     (* [comment removed for export] *)

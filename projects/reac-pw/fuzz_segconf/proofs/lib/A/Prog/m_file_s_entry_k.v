@@ -3,7 +3,7 @@
    S_MF_ENTRY (lib/A/Prog/m_file_s_entry.v). Proves no function: invariant lemmas over any state whose AR holds.
 
    The callee contract is lib/A/Rt/RtPFCmd.v `asnprintf_sh pc gotw guard` = cmd_asnprintf_realizes FR_cmd CMD_SNP_K
-   ... (:310-343, :355-356), its family FR_cmd (:90-95), over the vocabulary of lib/A/Rt/RtPFShared.v:38-101. These
+   ... (:310-343, :355-356), its family FR_cmd (:90-95), over the vocabulary of lib/A/Rt/RtPFShared.v:39-102. These
    lemmas turn the reader-level facts of lib/A/Prog/SegABase.v (sa_str, sa_addr, sa_heap, sa_fframe, sa_img, sa_lit,
    sa_disj) into that contract's premises, so the walk supplies only reader-level facts:
    - mf_str_end_span: RtPFShared.str_end's slack is seg_spec.cstr_span (the read span SegABase keeps apart);
@@ -13,7 +13,7 @@
    - mf_heap_addr: a heap range's shadow facts (sa_addr) at ANY state whose AR holds.
    Image bounds come from AR alone (ALedger.al_img and layout_ok.lo_img: an image byte lies in [0x10000, kImgEnd)).
    mf_dest_heap takes ONE premise beyond the bundle's draft: the image cover of the layout, the type of the
-   listing's PAImg field pa_img_cover (lib/A/Prog/SegPa.v:52; image A's value SegImg.seg_img_cover). Without it
+   listing's PAImg field pa_img_cover (lib/A/Prog/SegPa.v:53; image A's value SegImg.seg_img_cover). Without it
    no fact of a generic segs keeps a heap block out of [0x10000 + |ly_img|, kImgEnd); the walk has it for SEGS.
    APtr is RtPFPf's constructor (RtPFShared Requires RtPFPf without re-exporting it), so it is written RtPFPf.APtr. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
@@ -177,7 +177,7 @@ split; [exact A2|]. split; [exact A3|]. apply A4. lia.
 Qed.
 
 (* 4: the destination, a range of one live heap block. The first premise is the image cover of the layout, the type
-   of the listing's PAImg field pa_img_cover (SegPa.v:52): with it the block, a client range, misses
+   of the listing's PAImg field pa_img_cover (SegPa.v:53): with it the block, a client range, misses
    [0x10000, kImgEnd) (al_client_img) *)
 Lemma mf_dest_heap : forall ly S (W : world segs) (regs : bvmap 5 word) mem md (d w : Z),
   (forall ly' S' md', ALedger segs ly' S' md' ->

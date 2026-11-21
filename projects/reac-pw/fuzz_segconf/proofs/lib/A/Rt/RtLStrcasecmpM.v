@@ -94,7 +94,7 @@ Lemma scc_res_stop : forall x y b1 b2,
   CM.scc_res (x :: b1) (y :: b2) = CM.zlc (bv_unsigned x) - CM.zlc (bv_unsigned y).
 Proof. intros x y b1 b2 E. unfold CM.scc_res. cbn [CM.scc_idx]. rewrite E. reflexivity. Qed.
 
-(* the walk answers 0 exactly when the strings with their NULs agree under lc (RtSeg.v:168's post) *)
+(* the walk answers 0 exactly when the strings with their NULs agree under lc (RtSeg.v:169's post) *)
 Theorem scc_res_zero_iff : forall sx sy : list byte, ~ In (Z_to_bv 8 0) sx -> ~ In (Z_to_bv 8 0) sy ->
   (CM.scc_res (sx ++ [Z_to_bv 8 0]) (sy ++ [Z_to_bv 8 0]) = 0 <->
    map RtSeg.lc (ZS sx ++ [0]) = map RtSeg.lc (ZS sy ++ [0])).

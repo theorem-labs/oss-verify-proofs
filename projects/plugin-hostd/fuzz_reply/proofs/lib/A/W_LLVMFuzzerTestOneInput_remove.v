@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: arm 4 (op_remove) of the ASan walk of fuzz_reply's LLVMFuzzerTestOneInput, in
    the form of the cgif walks (lib/A/ACf5.v rt_from segments) over the cut invariants of
    W_LLVMFuzzerTestOneInput_cut.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -452,9 +453,9 @@ Hypothesis ML : ameter_laws MT.                     (* the allocator instance's 
 (* the free interceptor's caller-context table (W_contract.v Section s6, K0_SITES' CTX_AFREE: free and free(NULL)
    enter one interceptor, so one table serves both) *)
 Variable CTX_AFREE : list (list Z).
-(* W6, lib/A/W_contract.v:1344 rr_spec at CTX_AFREE, verbatim *)
+(* W6, lib/A/W_contract.v:1345 rr_spec at CTX_AFREE, verbatim *)
 Hypothesis RR : rr_spec B MT MMAX fr_RG CTX_AFREE (BASE + AF_fr_relay_remove).
-(* rr_spec's caller context at this call (W_contract.v:1357-1362): relay_remove's free returns to relay_remove + 436
+(* rr_spec's caller context at this call (W_contract.v:1358-1363): relay_remove's free returns to relay_remove + 436
    (0x83f98), relay_remove returns to 0x849e0 (BASE + RET_RR1), and the chain below it is this arm's frame record,
    whose spine is [] or [RA_LLVMF] (rm_afn_pre_at_sp).  Closed facts of the table: K0's CTX_AFREE holds
    [0x83f98; 0x849e0] and [0x83f98; 0x849e0; 0x821e8] (vm_compute at the instance) *)
@@ -464,14 +465,14 @@ Hypothesis HCTX_rr1 : In [BASE + AF_fr_relay_remove + 436; BASE + RET_RR1; RA_LL
 Hypothesis CSD : csd_spec B (BASE + AF_fr_check_shape_done).
 (* W3's check_no_loss_read, restated (a working branch, W_contract.v cnlr_spec: a0 is a g_s slot), verbatim *)
 Hypothesis CNLR : cnlr_spec B (BASE + AF_fr_check_no_loss_read).
-(* W3's check_no_loss (W_check_no_loss.v cnl_spec, a working branch f39635d8c8a), verbatim; W3 proves it for any
+(* W3's check_no_loss (W_check_no_loss.v cnl_spec, a working branch), verbatim; W3 proves it for any
    G with gx_ok (pb_check_no_loss; the gx_rt premise here is implied, and the arm supplies it at its slot G) *)
 Hypothesis CNL : forall G, gx_ok segs B G -> gx_rt B G -> cnl_spec B MT G MMAX (BASE + AF_fr_check_no_loss).
-(* W3's check_shape_ends (a working branch f39635d8c8a, W_check_shape_ends.v cshe_spec: ashp on the read-only
+(* W3's check_shape_ends (a working branch, W_check_shape_ends.v cshe_spec: ashp on the read-only
    prefix), verbatim; W3 proves it for any G with gx_ok (its Section's HGR / HGRR / ROMNS / HEND5R / HEND5S / HGS are
    its instance facts) *)
 Hypothesis CSHE : forall G, gx_ok segs B G -> cshe_spec B MT G (BASE + AF_fr_check_shape_ends).
-(* W2's source_reset (W_contract.v sr_spec_g, gx_prog form of a working branch 7c2f4974baf), verbatim; taken at its
+(* W2's source_reset (W_contract.v sr_spec_g, gx_prog form of a working branch), verbatim; taken at its
    own G, the slot [(g_s + 96 si, 96)], and lifted to G_fr *)
 Hypothesis SR : sr_spec_g B MT (BASE + AF_fr_source_reset).
 (* the two checks' meter charges, the published ones *)
@@ -668,7 +669,7 @@ Proof.
 Qed.
 
 (* (K1) a callee's afn_pre at sp = F, from any state of the arm (W_LLVMFuzzerTestOneInput_latch.v lt_afn_pre_at), with
-   what a caller-context premise reads (rr_spec, W_contract.v:1362): room above sp for the caller's frame, and the
+   what a caller-context premise reads (rr_spec, W_contract.v:1363): room above sp for the caller's frame, and the
    chain's spine, [] or this frame's record on the entry's ([RA_LLVMF], fr_lib_pre_cf's raZ) *)
 Lemma rm_afn_pre_at_sp : forall cx full ly3 S3 fpos k (W : world segs) mem md regs STK1,
   lf_base B MT XM_LIB RLO RHI fr_live_pre G_fr cx ->
@@ -767,7 +768,7 @@ Proof.
   destruct (rm_afn_pre_at_sp cx full ly3 S3 fpos k W mem md regs STK1 HB HJ HFR Hsp Hret Hra4 Hgp Htp Hs0 HSTK0
     HSTKb) as (ch & HPRE & _). exists ch. exact HPRE.
 Qed.
-(* the readable stack check_no_loss's last premise asks (W_contract.v:2076, cut's STKR): from F, the arm's frame is
+(* the readable stack check_no_loss's last premise asks (W_contract.v:2077, cut's STKR): from F, the arm's frame is
    present (the journal's stack window) and from the entry's sp up the entry's view is kept (the journal's view clause
    above the window, G_fr being image bytes) and readable (STKR, fr_lib_pre_cf's last conjunct) *)
 Lemma rm_stkr : forall cx ly3 S3 fpos k (W : world segs) mem md,
@@ -4327,7 +4328,7 @@ Qed.
    ranges, ...); the instance's B satisfies it by construction (discharged at the top by the start-up instance) *)
 Hypothesis HT : AF0m.TfibSyms B.
 (* .str.2's shadow facts in every allocator state (W_check_shape_ends.v ashp): RomOutPlace's ashp_str2_1_fr
-   (W_shadow_pin_fr.v, a working branch 209a71e66fe), a theorem from AR's am_const / am_zshadow over AF0m's
+   (W_shadow_pin_fr.v, a working branch), a theorem from AR's am_const / am_zshadow over AF0m's
    Tfib_const_shadow: granule 0x20ee0's shadow byte 0x7fffc1dc is 1, the hull's other bytes are 0xf9 redzone cells *)
 Lemma HSTR2S : W_shadow_pin.ashp B (VAL (A_OBJ 28)) 1.
 Proof. exact (W_shadow_pin_fr.ashp_str2_1_fr B HT). Qed.
@@ -5376,7 +5377,7 @@ Qed.
    sr_cost (W_contract.v :412).  The form of LS_rm_cnl_pre / _drain.v LS_cnl_pre :660-677: LS at the arm's start and
    the meter charged since (rm_Q).  The plain op-4 proof passes source_reset the same room: ROK from p4_res
    (Prog/SlotPass4.v :3172-3175, used at :3191).  Discharged by the instance's LS: its budget covers the four charges
-   LS_rm_step sums (mok_station, Reusable/YC5d.v:35); with the instance's meter (mo_free = 0, W_journal.v:732)
+   LS_rm_step sums (mok_station, Reusable/YC5d.v:35); with the instance's meter (mo_free = 0, W_journal.v:733)
    sr_cost is 0. *)
 Hypothesis LS_rm_sr_pre : forall cx t m ly0 S0 (S : astate) si h j0 e1 h1 ev LB c2 O2 cap2 E' H' H'' ds cc,
   LS cx t m ly0 S0 -> RINV cx t m -> rm_at cx m si h j0 -> rm_rr_ok m h j0 e1 h1 ev LB c2 O2 cap2 ->
@@ -5609,7 +5610,7 @@ Hypothesis RI_rm_step : forall cx t m si h j0 e1 h1 ev LB c2 O2 cap2 out2 E' H' 
    allocator state.  Mirrors _drain.v LS_drain_step :684 (and _write.v LS_write_push :200); the plain step's budget
    fact is Prog/SlotPass4.v r_fin WT4 :3104 (nc_wt (remove_at q es) (remove_at q hj) <= nc_wt es hj).  errno (ev5)
    floats, as in RI_rm_step.  The last four premises are what LS v3's rule takes (ReplyLS3Arms.v fr_LS3_rm_step_p,
-   a working branch e7b7e567191): the composed frame from the arm's start and the start model's
+   a working branch): the composed frame from the arm's start and the start model's
    facts (P1) (P3) (P4); rm_Q carries them (rm_fr, rm_mfacts). *)
 Hypothesis LS_rm_step : forall cx t m ly0 S0 (ly : alayout) (S : astate)
     si h j0 e1 h1 ev LB c2 O2 cap2 out2 E' H' H'' ds cc ev5,

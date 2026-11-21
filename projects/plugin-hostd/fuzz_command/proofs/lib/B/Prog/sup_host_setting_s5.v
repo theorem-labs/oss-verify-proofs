@@ -3,9 +3,10 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the steps of a program walk through a runtime entry whose contract is art_post (lib/A/Rt/RtDefs.v) and whose writes leave the errno cell, after PaArt.v's aj_art_at and cgif_file_fuzzer's aj_intrin_atS: aj_art_own_at, for an entry that writes bytes the caller's journal may write (its side-stack frame, its footprint, a block made in the call), is the sup_resp walk's lemma (an earlier version of lib/A/Prog/sup_resp_s0.v); aj_art_blk_at, for an entry that writes inside one live heap block, and awrite_ok_of_block, the entry's write premise on a range of such a block, are the sup_host_setting walk's lemmas hs5_art_wr_at and hs6_wr_block (lib/A/Prog/sup_host_setting_s5.v and sup_host_setting_s6.v), stated over any segments and symbols. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/PaArtOwn.v, with its module paths and module names changed; 1176 of its 1235 lines of code are new or changed and 72 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Three segment lemmas of sup_host_setting's ASan+UBSan walk (plugin-hostd/fuzz_command, fuzz_command.asan-ubsan),
    on the points and statements of sup_host_setting_s0.v; the B twin of the ASan walk's lib/A/Prog/sup_host_setting_s5.v
-   (a working branch e323bbe76d2):
+   (a working branch):
    - hs_seg_l1h: from L1H n (0x8b6bc) the three UBSan checks of &tok[n] (0x8b6bc `bltu s6,s8`, 0x8b6c8 `beqz a0`,
      0x8b6cc `beqz s7`, all to the `unimp` 0x8b8c0), the load8 shadow check of &tok[n] (report edge 0x8b6dc), a0 :=
      tok[n] and the call of the strlen wrapper (0x4517c, at 0x8b6e4), back at L1R n (0x8b6e8);
@@ -631,10 +632,10 @@ psrr_branch_tok RUN BR HS SHOK hsb5_Bspan.
   rewrite (hsb_ub_6bc (i_ptok x) (8 * Z.of_nat n)) in Hc by lia. discriminate Hc. }
 (* 0x8b6c0 .. 0x8b6e4 with `bgeu s6,s8`, a0 := tok[n], the call of the strlen wrapper. The executor decides the
    other checks:
-   0x8b6c8: refuted by hsb5_seed_H at sup_host_setting_s5.v:175, from hs_regsL1's s2 = 1 and the seed fact
+   0x8b6c8: refuted by hsb5_seed_H at sup_host_setting_s5.v:176, from hs_regsL1's s2 = 1 and the seed fact
      4096 <= tok + 8n (hsb5_PTRF on atom 22): seqz s6 = 0, 1 xor 0 = 1, `beqz a0` not taken.
-   0x8b6cc: refuted by hsb5_seed_H at sup_host_setting_s5.v:175, from hs_regsL1's s7 = 1: `beqz s7` not taken.
-   0x8b6dc: refuted by shent_ok_of_range at sup_host_setting_s5.v:605, from range_addressable of &tok[n] (hsb5_arr_now
+   0x8b6cc: refuted by hsb5_seed_H at sup_host_setting_s5.v:176, from hs_regsL1's s7 = 1: `beqz s7` not taken.
+   0x8b6dc: refuted by shent_ok_of_range at sup_host_setting_s5.v:606, from range_addressable of &tok[n] (hsb5_arr_now
      on hs_cx's token-array premise): the token executor decides the load8 check, report 0x8b8e8 not reached. *)
 paj_run_tok RUN HS HJ SHOK hsb5_Bspan.
 { lazymatch goal with |- awr_ok _ _ ?Ex ?rs ?stk ?spx ?fp ?b0' ?bc ?fr ?lyx ?own =>
@@ -1147,7 +1148,7 @@ clearbody E.
 unfold hs_at.
 (* 0x8b708 .. 0x8b774: s6 := w, the store1 check of words[0], words[0] := 0, the join loop's set-up, `beqz s11` taken
    (s11 = 0); the run stops at 0x8b774 `bltu s5,s7`.
-   0x8b718/0x8b8c8: refuted by shent_ok_of_block at sup_host_setting_s5.v:1137, from the word list's live block
+   0x8b718/0x8b8c8: refuted by shent_ok_of_block at sup_host_setting_s5.v:1138, from the word list's live block
      (w, LIVE_XMALLOC (hs_wsz x)) in hs_mid's Nw: the token executor decides the store1 check and its slow path
      0x8b8c4 .. 0x8b8c8, report 0x8b8d0 not reached. *)
 paj_run_tok RUN HS HJ SHOK hsb5_Bspan.
@@ -1177,7 +1178,7 @@ psrr_branch_tok RUN BR HS SHOK hsb5_Bspan.
   unfold w64 in Hc. rewrite unsigned_lit_small, Z.add_0_r in Hc by lia.
   rewrite (hsb_ub_774 (i_ptok x) 0) in Hc by lia. discriminate Hc. }
 (* 0x8b778 .. 0x8b794: a0 := tok + 0, the load8 check of tok[0], a1 := tok[0], a0 := w, the call of the strcat wrapper.
-   0x8b788 (first pass): refuted by shent_ok_of_range at sup_host_setting_s5.v:1138, from range_addressable of tok[0]
+   0x8b788 (first pass): refuted by shent_ok_of_range at sup_host_setting_s5.v:1139, from range_addressable of tok[0]
      (hsb5_arr_now on hs_cx's token-array premise): the token executor decides the load8 check, report 0x8b8ec not
      reached. *)
 paj_run_tok RUN HS HJ SHOK hsb5_Bspan.

@@ -1,5 +1,5 @@
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/ZZwv_runs2.v (a working branch
-   1a5dc5b2e7c): same lemma names, every return address, frame slot and register re-measured on fs.asan-ubsan (B's loop
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/ZZwv_runs2.v (a working branch):
+   same lemma names, every return address, frame slot and register re-measured on fs.asan-ubsan (B's loop
    registers: s5 = i in 21, s7 = 56 i in 23, s9 = 8 i in 25, s6 = d + 1 in 22, s10 = 0 in 26); the runs that meet a UBSan
    guard the engine cannot decide take its condition (ZZwvB_defs.wvc_cKIDS / wvc_cMULH / wvc_cI60 / wvc_cKEYS), proved
    from the segment's premises; imports point at lib/B's image files and walk kit.

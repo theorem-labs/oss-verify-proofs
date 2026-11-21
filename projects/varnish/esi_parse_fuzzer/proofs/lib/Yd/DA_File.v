@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the channel-reader premise is threaded through the file views and the target run, and the views that hold the argument strings take the launch's argument layout. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -108,7 +109,7 @@ Section Walks.
 End Walks.
 
 Section MainRet.
-  Context {Clg : Ceiling} {AI : AsanAlloc LPA}.   (* [comment removed for export] *)
+  Context {Clg : Ceiling} {AI : AsanAlloc LPA} {LAY : ArgLayout}.   (* [comment removed for export] *)
   Variable usp : Z.
   Hypothesis HCEIL : alloc_ceiling = usp - 0x800000.   (* [comment removed for export] *)
   Variables argv envp : list (list byte).
@@ -143,7 +144,7 @@ Section MainRet.
   Proof.
     unfold mainret_stmt. intros until zt6. intros FV0 LV ST01.
     (first [ pose proof ((fv_usp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ FV0)) as dR_1; dand4 dR_1 as U1 U2 U3 U4 | pose proof (fv_usp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ FV0) as (U1 & U2 & U3 & U4) ]). pose proof U1 as U1'. unfold sp_window_lo in U1'.
-    pose proof FV0 as [AINV MI FS FDS CC AR SH STK FR].
+    pose proof FV0 as [AINV MI FS FDS CC AR SH STK FR FVR0].
     pose proof (munch_refl [] (aview A m)) as MU. pose proof (wmono_refl rsegs (aview A m)) as WM.
     assert (CF : client_fpx (L:=LPA) A (aview A m) []) by exact I.
     ago AINV. fold_cl_segs.
@@ -154,7 +155,8 @@ Section MainRet.
     lazymatch goal with H : stk _ (aview A m1) _ _ |- _ => rename H into ST1 end.
     assert (FV1 : FV A m1 md1 fds_std sof ini tid).
     { eapply (fview_stack usp HCEIL argv envp fs e0 e1 e2 e3 e4 e5 e6 e7 j8 A m md); try eassumption.
-      all: first [rewrite FS1; exact FS | rewrite FDS1; exact FDS | apply stack_only_nil | exact I]. }
+      all: first [match goal with H : same_but_materialized _ _ |- _ => exact (sbm_reader _ _ H) | H : amd_frame _ _ |- _ => exact (amd_frame_reader _ _ H) end   (* 08b1429: channel-reader-premise *)
+                 | rewrite FS1; exact FS | rewrite FDS1; exact FDS | apply stack_only_nil | exact I]. }
     replace (exit_code (if 128 <=? bv_unsigned d1 then 0 else st))
       with (bv_and (Z_to_bv 64 (if 128 <=? bv_unsigned d1 then 0 else st)) (Z_to_bv 64 255)).
     2:{ destruct (128 <=? bv_unsigned d1); [| destruct ST01 as [-> | ->]]; apply bv_eq; vm_compute; reflexivity. }
@@ -565,7 +567,7 @@ End Walks.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Section TargetRun.
-  Context {Clg : Ceiling} {AI : AsanAlloc LPA}.   (* [comment removed for export] *)
+  Context {Clg : Ceiling} {AI : AsanAlloc LPA} {LAY : ArgLayout}.   (* [comment removed for export] *)
   Variable usp : Z.
   Hypothesis HCEIL : alloc_ceiling = usp - 0x800000.   (* [comment removed for export] *)
   Variables argv envp : list (list byte).
@@ -603,19 +605,22 @@ Section TargetRun.
     tv_sh   : forall a, in_stksh a -> aview A m (Z_to_bv 64 a) = Some (Z_to_bv 8 0);
     tv_stk  : stk rsegs (aview A m) (STK_LO usp) (SPF usp + -80);
     tv_mfr  : rw_cells rsegs (aview A m) (SPF usp) MFRv;
-    tv_tfr  : rw_cells rsegs (aview A m) (SPF usp + -80) tfr
+    tv_tfr  : rw_cells rsegs (aview A m) (SPF usp + -80) tfr;
+    tv_rdr  : m_channel_reader md = true   (* 08b1429: channel-reader-premise, from cs_ok's co_rdr through dinv *)
   }.
 
   #[using="HCEIL"] Lemma tview_stack : forall A m md sof tidq tfr cb m' md' W,
     tview A m md sof tidq tfr cb -> cells_size tfr = 80%nat ->
     ainv A m' md' -> mem_inv rsegs (aview A m') -> m_fs md' = fs -> m_fds md' = fds_std ->
+    m_channel_reader md' = m_channel_reader md ->   (* 08b1429: channel-reader-premise *)
     munch W (aview A m) (aview A m') -> wmono rsegs (aview A m) (aview A m') ->
     stack_only usp W -> disjoint_from W (SPF usp + -80) 160 ->
     stk rsegs (aview A m') (STK_LO usp) (SPF usp + -80) ->
     tview A m' md' sof tidq tfr cb.
   Proof.
-    intros A m md sof tidq tfr cb m' md' W TV SZ AINV' MI' FS' FDS' MU WM SO DJ ST'.
-    destruct TV as [AINV MI FS FDS CC AR SH ST MFR0 TFR0].
+    intros A m md sof tidq tfr cb m' md' W TV SZ AINV' MI' FS' FDS' RDR' MU WM SO DJ ST'.
+    destruct TV as [AINV MI FS FDS CC AR SH ST MFR0 TFR0 RDR].
+    assert (RDRq : m_channel_reader md' = true) by (rewrite RDR'; exact RDR).   (* 08b1429: channel-reader-premise *)
     (first [ pose proof ((aa_usp _ _ _ _ AR)) as dR_1; dand4 dR_1 as U1 U2 U3 U4 | pose proof (aa_usp _ _ _ _ AR) as (U1 & U2 & U3 & U4) ]).
     (first [ pose proof ((bundle_stack_x usp argv envp HCEIL W _ _ tidq sof 1 cb MU SO U1 U2 CC AR SH)) as dR_2; dand4 dR_2 as CC' AR' SH' _ | destruct (bundle_stack_x usp argv envp HCEIL W _ _ tidq sof 1 cb MU SO U1 U2 CC AR SH) as (CC' & AR' & SH' & _) ]).
     assert (DJ1 : disjoint_from W (SPF usp) 80).
@@ -630,12 +635,14 @@ Section TargetRun.
   #[using="HCEIL"] Lemma tview_ccall : forall A A' m md m' md' sof tidq tfr cb (sp win : Z) (V N : Z -> Prop),
     tview A m md sof tidq tfr cb -> cells_size tfr = 80%nat ->
     ainv A' m' md' -> mem_inv rsegs (aview A' m') -> m_fs md' = fs -> m_fds md' = fds_std ->
+    m_channel_reader md' = m_channel_reader md ->   (* 08b1429: channel-reader-premise *)
     cframe LPA (owned A) (owned A') sp win V N (aview A m) (aview A' m') -> heapish V ->
     STK_LO usp <= sp - win -> sp <= SPF usp + -80 ->
     tview A' m' md' sof tidq tfr cb.
   Proof.
-    intros A A' m md m' md' sof tidq tfr cb sp win V N TV SZ AINV' MI' FS' FDS' CF HV WLO SPU.
-    destruct TV as [AINV MI FS FDS CC AR SH ST MFR0 TFR0].
+    intros A A' m md m' md' sof tidq tfr cb sp win V N TV SZ AINV' MI' FS' FDS' RDR' CF HV WLO SPU.
+    destruct TV as [AINV MI FS FDS CC AR SH ST MFR0 TFR0 RDR].
+    assert (RDRq : m_channel_reader md' = true) by (rewrite RDR'; exact RDR).   (* 08b1429: channel-reader-premise *)
     (first [ pose proof ((aa_usp _ _ _ _ AR)) as dR_3; dand4 dR_3 as U1 U2 U3 U4 | pose proof (aa_usp _ _ _ _ AR) as (U1 & U2 & U3 & U4) ]). pose proof U1 as U1'. unfold sp_window_lo in U1'.
     assert (CE : alloc_ceiling <= STK_LO usp) by ((let acv := fresh "ACV" in pose proof alloc_ceiling_val as acv); unfold STK_LO; lia).
     (first [ pose proof ((bundle_cframe_x usp argv envp HCEIL A A' m md (aview A' m') sp win V N tidq sof 1 cb AINV CF ltac:(lia) ltac:(unfold SPF in SPU; lia) HV CC AR SH)) as dR_4; dand4 dR_4 as CC' AR' SH' _ | destruct (bundle_cframe_x usp argv envp HCEIL A A' m md (aview A' m') sp win V N tidq sof 1 cb AINV CF ltac:(lia) ltac:(unfold SPF in SPU; lia) HV CC AR SH)
@@ -721,13 +728,15 @@ Section TargetRun.
   #[using="HCEIL"] Lemma tview_incb : forall A m md sof tidq tfr cb cb' m' md',
     tview A m md sof tidq tfr cb -> cells_size tfr = 80%nat ->
     ainv A m' md' -> mem_inv rsegs (aview A m') -> m_fs md' = fs -> m_fds md' = fds_std ->
+    m_channel_reader md' = m_channel_reader md ->   (* 08b1429: channel-reader-premise *)
     munch [(TR_INCB, TR_INCB + 1)] (aview A m) (aview A m') -> wmono rsegs (aview A m) (aview A m') ->
     stk rsegs (aview A m') (STK_LO usp) (SPF usp + -80) ->
     rw_cells rsegs (aview A m') TR_INCB [C1 (Z_to_bv 8 cb')] ->
     tview A m' md' sof tidq tfr cb'.
   Proof.
-    intros A m md sof tidq tfr cb cb' m' md' TV SZ AINV' MI' FS' FDS' MU WM ST' INCB'.
-    destruct TV as [AINV MI FS FDS CC AR SH ST MFR0 TFR0].
+    intros A m md sof tidq tfr cb cb' m' md' TV SZ AINV' MI' FS' FDS' RDR' MU WM ST' INCB'.
+    destruct TV as [AINV MI FS FDS CC AR SH ST MFR0 TFR0 RDR].
+    assert (RDRq : m_channel_reader md' = true) by (rewrite RDR'; exact RDR).   (* 08b1429: channel-reader-premise *)
     (first [ pose proof ((aa_usp _ _ _ _ AR)) as dR_1; dand4 dR_1 as U1 U2 U3 U4 | pose proof (aa_usp _ _ _ _ AR) as (U1 & U2 & U3 & U4) ]).
     pose proof U1 as U1'. unfold sp_window_lo in U1'. (let acv := fresh "ACV" in pose proof alloc_ceiling_val as acv).
     assert (MU2 : munch [(usp, usp); (TR_INCB, TR_INCB + 1)] (aview A m) (aview A m')).
@@ -790,7 +799,8 @@ Section TargetRun.
       ainv A m md -> mem_inv rsegs (aview A m) -> m_fs md = fs -> m_fds md = fds_std ->
       ccells (aview A m) tid sof 1 -> args_at usp argv envp (aview A m) ->
       (forall a, in_stksh a -> aview A m (Z_to_bv 64 a) = Some (Z_to_bv 8 0)) ->
-      stk rsegs (aview A m) (STK_LO usp) (SPF usp) -> rw_cells rsegs (aview A m) (SPF usp) MFRv ->
+    stk rsegs (aview A m) (STK_LO usp) (SPF usp) -> rw_cells rsegs (aview A m) (SPF usp) MFRv ->
+    m_channel_reader md = true ->   (* 08b1429: channel-reader-premise, for the fview MAINRET takes *)
       a_live A b = Some n0 -> (st = 0 \/ st = 2) ->
       srealizes rsegs
         (mkCfg (MS (mkR zra (Z_to_bv 64 (SPF usp)) gp (Z_to_bv 64 TPV) z0 z1 z2 (Z_to_bv 64 (b + 2)) (Z_to_bv 64 b) (Z_to_bv 64 st)
@@ -798,7 +808,7 @@ Section TargetRun.
                    F (Z_to_bv 64 TRUN_RET) fc None m rom) md)
         (t_emit (W 1 (pending_of sof)) (t_exit (exit_code (if cnt then 0 else st)) fs)).
   Proof.
-    intros until x20. intros AINV MI FS FDS CC AR SH ST FR LV ST01.
+    intros until x20. intros AINV MI FS FDS CC AR SH ST FR RDR LV ST01.
     unfold TRUN_RET. subst cnt.
     apply (MAINRET A m md tid sof 1 b n0 st d1); [| exact LV| exact ST01].
     constructor; assumption.
@@ -817,7 +827,7 @@ Section TargetRun.
   Proof.
     intros until zt6. intros TV LVb OB OWN.
     pose proof (cap_range k K10) as CKR. pose proof plen_range as PLR.
-    pose proof TV as [AINV MI FS FDS CC AR SH ST MFR0 TFR0].
+    pose proof TV as [AINV MI FS FDS CC AR SH ST MFR0 TFR0 TVR].
     (first [ pose proof ((aa_usp _ _ _ _ AR)) as dR_5; dand4 dR_5 as U1 U2 U3 U4 | pose proof (aa_usp _ _ _ _ AR) as (U1 & U2 & U3 & U4) ]). pose proof U1 as U1'. unfold sp_window_lo in U1'.
     assert (CEIL : alloc_ceiling <= STK_LO usp) by (unfold STK_LO; rewrite HCEIL; lia).
     assert (SPFV : SPF usp = usp - 128) by reflexivity.
@@ -832,8 +842,9 @@ Section TargetRun.
     lazymatch goal with H : stk _ (aview A m1) _ _ |- _ => rename H into ST1 end.
     assert (TV1 : tview A m1 md1 sof tid (TFRv j0) 0).
     { eapply (tview_stack A m md); try eassumption; try reflexivity.
-      all: first [rewrite FS1; exact FS | rewrite FDS1; exact FDS | apply stack_only_nil | exact I]. }
-    clear CC AR SH MFR0 TFR0 MU WM CF. pose proof TV1 as [_ _ FS1q FDS1q CC1 AR1 SH1 _ MFR1 TFR1].
+      all: first [match goal with H : same_but_materialized _ _ |- _ => exact (sbm_reader _ _ H) | H : amd_frame _ _ |- _ => exact (amd_frame_reader _ _ H) end   (* 08b1429: channel-reader-premise *)
+                 | rewrite FS1; exact FS | rewrite FDS1; exact FDS | apply stack_only_nil | exact I]. }
+    clear CC AR SH MFR0 TFR0 MU WM CF. pose proof TV1 as [_ _ FS1q FDS1q CC1 AR1 SH1 _ MFR1 TFR1 TVR1].
     (* [comment removed for export] *)
     pose proof FREE1 as FRE. unfold free1_stmt in FRE. cbv zeta in FRE.
     eapply FRE with (p := owned) (n0 := nown); clear FRE.
@@ -856,8 +867,9 @@ Section TargetRun.
       intros a [[X _]|[X _]]; exfalso; apply X; reflexivity. }
     assert (TV2 : tview A' m2 md2 sof tid (TFRv j0) 0).
     { eapply (tview_ccall A A' m1 md1 m2 md2); try eassumption; try reflexivity.
-      all: first [rewrite FS2; exact FS1q | rewrite FDS2; exact FDS1q | unfold ASTK, STK_LO, SPF; lia]. }
-    pose proof TV2 as [_ _ FS2q FDS2q CC2 AR2 SH2 ST2 MFR2 TFR2].
+      all: first [match goal with H : same_but_materialized _ _ |- _ => exact (sbm_reader _ _ H) | H : amd_frame _ _ |- _ => exact (amd_frame_reader _ _ H) end   (* 08b1429: channel-reader-premise *)
+                 | rewrite FS2; exact FS1q | rewrite FDS2; exact FDS1q | unfold ASTK, STK_LO, SPF; lia]. }
+    pose proof TV2 as [_ _ FS2q FDS2q CC2 AR2 SH2 ST2 MFR2 TFR2 TVR2].
     assert (LVb2 : a_live A' b = Some (cap k)) by (rewrite (LVO2 b (fun X => OB (eq_sym X))); exact LVb).
     (* [comment removed for export] *)
     pose proof (munch_refl [(SPF usp + -80, SPF usp + -80 + 80)] (aview A' m2)) as MU. pose proof (wmono_refl rsegs (aview A' m2)) as WM.
@@ -877,7 +889,9 @@ Section TargetRun.
     (first [ pose proof ((bundle_stack usp argv envp HCEIL _ _ _ tid sof 1 MU SO3 U1 U2 CC2 AR2 SH2)) as dR_9; dand4 dR_9 as CC3 AR3 SH3 _ | destruct (bundle_stack usp argv envp HCEIL _ _ _ tid sof 1 MU SO3 U1 U2 CC2 AR2 SH2) as (CC3 & AR3 & SH3 & _) ]).
     replace (Z_to_bv 64 (SPF usp + -80 + 80)) with (Z_to_bv 64 (SPF usp)) by (f_equal; lia).
     eapply (tr_return A' m3 md3 sof 0 (cap k)); try eassumption.
-    - rewrite FS3. exact FS2q. - rewrite FDS3. exact FDS2q. - left. reflexivity.
+    - rewrite FS3. exact FS2q. - rewrite FDS3. exact FDS2q.
+    - rewrite (sbm_reader _ _ SBM0). exact TVR2.   (* 08b1429: channel-reader-premise *)
+    - left. reflexivity.
   Qed.
 
   (* [comment removed for export] *)
@@ -919,7 +933,7 @@ Section TargetRun.
   Proof.
     induction jn as [|jn IH]; intros until zt6; intros J IJ TV LVb PAY OB LB NL FRS SCC PCC; [lia|].   (* [comment removed for export] *)
     pose proof calls_range as CAR. pose proof (cap_range k K10) as CKR. pose proof plen_range as PLR.
-    pose proof TV as [AINV MI FS FDS CC AR SH ST MFR0 TFR0].
+    pose proof TV as [AINV MI FS FDS CC AR SH ST MFR0 TFR0 TVR].
     (first [ pose proof ((aa_usp _ _ _ _ AR)) as dR_10; dand4 dR_10 as U1 U2 U3 U4 | pose proof (aa_usp _ _ _ _ AR) as (U1 & U2 & U3 & U4) ]). pose proof U1 as U1'. unfold sp_window_lo in U1'.
     assert (CEIL : alloc_ceiling <= STK_LO usp) by (unfold STK_LO; rewrite HCEIL; lia).
     assert (SPFV : SPF usp = usp - 128) by reflexivity.
@@ -943,12 +957,13 @@ Section TargetRun.
     { apply (stk_transport_disjoint rsegs _ _ _ _ _ (tv_stk _ _ _ _ _ _ _ TV) MU WM). cbn [disjoint_from]. unfold TR_INCB, STK_LO, SPF in *. lia. }
     assert (TV1 : tview A m1 md1 (sof_after i) tid (TFRv j0) 1).
     { eapply (tview_incb A m md); try eassumption; try reflexivity.
-      all: first [rewrite FS1; exact FS | rewrite FDS1; exact FDS]. }
+      all: first [match goal with H : same_but_materialized _ _ |- _ => exact (sbm_reader _ _ H) | H : amd_frame _ _ |- _ => exact (amd_frame_reader _ _ H) end   (* 08b1429: channel-reader-premise *)
+                 | rewrite FS1; exact FS | rewrite FDS1; exact FDS]. }
     assert (PAY1 : pay_ok A (aview A m1) aligned owned nown).
     { destruct PAY as [X|(P1 & P2 & P3 & P4 & P5)]; [left; exact X| right]. split; [exact P1|]. split; [exact P2|]. split; [exact P3|]. split; [exact P4|].
       subst owned. (first [ pose proof ((as_live_ok LPA A m md aligned plen AINV P4)) as dR_19; dand5 dR_19 as _ _ ALO AHI _ | destruct (as_live_ok LPA A m md aligned plen AINV P4) as (_ & _ & ALO & AHI & _) ]). unfold app_range, app_lo, app_hi, kLowAppEnd, kLowShadowMapBeg, kHighMemBeg in ALO; cbn [cl_image_lo cl_image_hi LPA] in ALO.
       eapply (rw_cells_transport rsegs); [exact P5| exact MU| exact WM|]. cbn [disjoint_from cells_size csize Nat.add]. unfold TR_INCB. lia. }
-    clear CC AR SH MU WM CF PAY. try clear MFR0. try clear TFR0. pose proof TV1 as [_ _ FS1q FDS1q CC1 AR1 SH1 _ MFR1 TFR1].
+    clear CC AR SH MU WM CF PAY. try clear MFR0. try clear TFR0. pose proof TV1 as [_ _ FS1q FDS1q CC1 AR1 SH1 _ MFR1 TFR1 TVR1].
     (* [comment removed for export] *)
     apply (LIB _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc m1 md1 A aligned (if plen =? 0 then [] else inp)
                  (sh alloc_ceiling) ((2^47 - alloc_ceiling) / 8) (TI i)).
@@ -995,14 +1010,15 @@ Section TargetRun.
     rewrite ?unsigned_lit in CFR by (unfold SPF, STK_LO in *; lia).
     assert (TV' : tview A' m' md' (sof_after i) tid (TFRv j0) 1).
     { eapply (tview_ccall A A' m1 md1 m' md'); try eassumption; try reflexivity.
-      all: first [rewrite FS'; exact FS1q | rewrite FDS'; exact FDS1q | unfold LIB_STACK, STK_LO, SPF; lia | idtac].
+      all: first [match goal with H : same_but_materialized _ _ |- _ => exact (sbm_reader _ _ H) | H : amd_frame _ _ |- _ => exact (amd_frame_reader _ _ H) end   (* 08b1429: channel-reader-premise, before the idtac below, which would otherwise leave it open *)
+                 | rewrite FS'; exact FS1q | rewrite FDS'; exact FDS1q | unfold LIB_STACK, STK_LO, SPF; lia | idtac].
       intros a Ha. do 6 right. unfold HBSS. cbn [vi_bss_vsc vi_bss_cp VIA] in Ha. lia. }
     assert (LVb' : a_live A' b = Some (cap k)) by (exact (LVE _ _ LVb)).
     assert (PAY' : pay_ok A' (aview A' m') aligned owned nown).
     { destruct PAY1 as [X|(P1 & P2 & P3 & P4 & P5)]; [left; exact X| right]. split; [exact P1|]. split; [exact P2|]. split; [exact P3|].
       split; [exact (LVE _ _ P4)|]. subst owned.
       refine (rw_cells_agree rsegs _ _ _ _ _ P5). intros q Hq. apply (LVB aligned plen q P4). cbn [cells_size csize Nat.add] in Hq. lia. }
-    clear CC1 AR1 SH1 MFR1 TFR1 PAY1. pose proof TV' as [_ _ FSq FDSq CC' AR' SH' ST' _ _].
+    clear CC1 AR1 SH1 MFR1 TFR1 PAY1. pose proof TV' as [_ _ FSq FDSq CC' AR' SH' ST' _ _ TVRq].
     (* [comment removed for export] *)
     pose proof CC' as (MCq & _ & _ & (_ & _ & INCB' & _)).
     pose proof (munch_refl [(SPF usp + -80 + -80, SPF usp + -80); (TR_INCB, TR_INCB + 1)] (aview A' m')) as MU. pose proof (wmono_refl rsegs (aview A' m')) as WM.
@@ -1070,6 +1086,7 @@ Section TargetRun.
              | |- bytes_at _ _ (sh _) _ => apply stksh_bytes; exact SH2
              | |- stdout_at _ _ => exact SOUT2
              | |- fd_lookup _ _ = _ => rewrite FDS2, FDSq; apply fds_std_1
+             | |- m_channel_reader _ = true => rewrite (sbm_reader _ _ SBM0); exact TVRq   (* 08b1429: channel-reader-premise *)
              | |- (exists g, ro_cells _ _ SSP_GUARD _) => exact (mc_canary _ _ MC2)
              | |- ro_cells _ _ SSP_GOT _ => exact GOT2
              | |- stk _ _ _ _ => ulit; exact ST2
@@ -1090,6 +1107,7 @@ Section TargetRun.
              | |- stdout_at _ _ => exact SOUT2
              | |- (length _ <= 6)%nat => rewrite zero_lines_length; lia
              | |- fd_lookup _ _ = _ => rewrite FDS2, FDSq; apply fds_std_1
+             | |- m_channel_reader _ = true => rewrite (sbm_reader _ _ SBM0); exact TVRq   (* 08b1429: channel-reader-premise *)
              | |- (exists g, ro_cells _ _ SSP_GUARD _) => exact (mc_canary _ _ MC2)
              | |- ro_cells _ _ SSP_GOT _ => exact GOT2
              | |- stk _ _ _ _ => ulit; exact ST2
@@ -1099,7 +1117,7 @@ Section TargetRun.
              end. }
     apply (VP FIN); [destruct i; reflexivity| unfold FIN; apply t_emit_has_nil|].
     clear VP.
-    (intros m3 md3 r AINV3; (first [ intro dR_42; dand3 dR_42 as FS3 FDS3 HH3 | intros (FS3 & FDS3 & HH3) ]); intros SOUT3 ms' POST).
+    (intros m3 md3 r AINV3; (first [ intro dR_42; dand4 dR_42 as FS3 FDS3 HH3 RDR3 | intros (FS3 & FDS3 & HH3 & RDR3) ]); intros SOUT3 ms' POST).
     (first [ dex14 POST as w0 w1 w2 wa1 wa2 wa3 wa4 wa5 wa6 wa7 wt3 wt4 wt5 wt6; dand5 POST as -> MU3 WM3 MI3 ST3 | dand19 POST as w0 w1 w2 wa1 wa2 wa3 wa4 wa5 wa6 wa7 wt3 wt4 wt5 wt6 -> MU3 WM3 MI3 ST3 | destruct POST as (w0 & w1 & w2 & wa1 & wa2 & wa3 & wa4 & wa5 & wa6 & wa7 & wt3 & wt4 & wt5 & wt6 & -> & MU3 & WM3 & MI3 & ST3) ]).
     replace (ret_pc (Z_to_bv 64 0x86dac)) with (Z_to_bv 64 0x86dac) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
     (* [comment removed for export] *)
@@ -1150,6 +1168,9 @@ Section TargetRun.
     assert (MU' : munch [(SPF usp + -80 + -80, SPF usp + -80)] (aview A' m3) (aview A' m4)).
     { replace (SPF usp + -80) with (SPF usp + -80 + -80 + 80) at 2 by lia. exact MU. }
     (first [ pose proof ((bundle_stack usp argv envp HCEIL _ _ _ tid (sof_after (S i)) 1 MU' SO4 U1 U2 CC3 AR3 SH3)) as dR_23; dand4 dR_23 as CC4 AR4 SH4 _ | destruct (bundle_stack usp argv envp HCEIL _ _ _ tid (sof_after (S i)) 1 MU' SO4 U1 U2 CC3 AR3 SH3) as (CC4 & AR4 & SH4 & _) ]).
+    (* 08b1429: channel-reader-premise; md4 reaches md' through SBM1, the vprintf md_io and SBM0. *)
+    assert (TVR4 : m_channel_reader md4 = true).
+    { rewrite (sbm_reader _ _ SBM1), RDR3, (sbm_reader _ _ SBM0). exact TVRq. }
     assert (TV4 : tview A' m4 md4 (sof_after (S i)) tid (TFRv j0) 0).
     { constructor; try assumption.
       all: try (rewrite FS4, FS3, FS2; exact FSq).
@@ -1212,7 +1233,7 @@ Section TargetRun.
     { intros l Hl. unfold LIB_PRIM. rewrite PCC, PRIMCRED0_eq. pose proof (cap_range 10 ltac:(lia)). unfold cap in *. lia. }
     (first [ pose proof ((fv_usp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ FV0)) as dR_25; dand4 dR_25 as U1 U2 U3 U4 | pose proof (fv_usp _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ FV0) as (U1 & U2 & U3 & U4) ]). pose proof U1 as U1'. unfold sp_window_lo in U1'.
     pose proof (fv_ceil _ HCEIL _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ FV0) as CEIL.
-    pose proof FV0 as [AINV MI FS FDS CC AR SH ST FR].
+    pose proof FV0 as [AINV MI FS FDS CC AR SH ST FR FVR0].
     assert (SPFV : SPF usp = usp - 128) by reflexivity.
     (first [ pose proof ((as_live_ok LPA A m md b (cap k) AINV LVb)) as dR_26; dand7 dR_26 as _ BAL BLO BHI _ BMP _ | destruct (as_live_ok LPA A m md b (cap k) AINV LVb) as (_ & BAL & BLO & BHI & _ & BMP & _) ]).
     rename BLO into BAPP. (let acv := fresh "ACV" in pose proof alloc_ceiling_val as acv).
@@ -1271,13 +1292,14 @@ Section TargetRun.
     assert (MFR1 : rw_cells rsegs (aview A m1) (SPF usp) MFRv).
     { eapply (rw_cells_transport rsegs); [exact (fv_fr _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ FV0)| exact MU| exact WM|].
       cbn [disjoint_from cells_size csize Nat.add MFR]. unfold TR_INITIALIZED, ATEXIT, SPF in *. lia. }
+    assert (TVR1 : m_channel_reader md1 = true) by (rewrite (sbm_reader _ _ SBM); exact FVR0).   (* 08b1429: channel-reader-premise *)
     assert (TV1 : tview A m1 md1 SO_pristine tid (TFRv j0) 0).
     { constructor; try assumption; [rewrite FS1; exact FS| rewrite FDS1; exact FDS]. }
     assert (DAT1 : rw_cells rsegs (aview A m1) b [CB (Z.to_nat L) data]).
     { eapply (rw_cells_transport rsegs); [exact (bs_data _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ BS)| exact MU| exact WM|].
       cbn [disjoint_from cells_size csize Nat.add]. unfold TR_INITIALIZED, ATEXIT, SPF, STK_LO in *. lia. }
     clear CC AR SH MU WM CF TRC1 MC0.
-    pose proof TV1 as [_ _ FS1q FDS1q _ _ SH1' _ _ _]. clear SH1'.
+    pose proof TV1 as [_ _ FS1q FDS1q _ _ SH1' _ _ _ _]. clear SH1'.
     fold_cl_segs.
     destruct (Z.eqb_spec plen 0) as [P0|P0].
     - (* [comment removed for export] *)
@@ -1290,7 +1312,8 @@ Section TargetRun.
       (first [ pose proof ((sbm_io md1 md2 SBM0)) as dR_30; dand3 dR_30 as FS2 FDS2 _ | pose proof (sbm_io md1 md2 SBM0) as (FS2 & FDS2 & _) ]).
       assert (TV2 : tview A m2 md2 SO_pristine tid (TFRv j0) 0).
       { eapply (tview_stack A m1 md1); try eassumption; try reflexivity.
-        all: first [rewrite FS2; exact FS1q | rewrite FDS2; exact FDS1q | apply stack_only_nil | exact I]. }
+        all: first [match goal with H : same_but_materialized _ _ |- _ => exact (sbm_reader _ _ H) | H : amd_frame _ _ |- _ => exact (amd_frame_reader _ _ H) end   (* 08b1429: channel-reader-premise *)
+                   | rewrite FS2; exact FS1q | rewrite FDS2; exact FDS1q | apply stack_only_nil | exact I]. }
       eapply srz_conseq; [| exact TI0_eq].
       replace (Z_to_bv 64 calls) with (Z_to_bv 64 (Z.of_nat (Z.to_nat calls))) by (f_equal; lia).
       apply (tr_loop (Z.to_nat calls) 0%nat A m2 md2 j0 TR_EMPTY 0 0); try assumption; try lia; try reflexivity.
@@ -1309,10 +1332,11 @@ Section TargetRun.
       lazymatch goal with H : stk _ (aview A m2) _ _ |- _ => rename H into ST2 end.
       assert (TV2 : tview A m2 md2 SO_pristine tid (TFRv j0) 0).
       { eapply (tview_stack A m1 md1); try eassumption; try reflexivity.
-        all: first [rewrite FS2; exact FS1q | rewrite FDS2; exact FDS1q | apply stack_only_nil | exact I]. }
+        all: first [match goal with H : same_but_materialized _ _ |- _ => exact (sbm_reader _ _ H) | H : amd_frame _ _ |- _ => exact (amd_frame_reader _ _ H) end   (* 08b1429: channel-reader-premise *)
+                   | rewrite FS2; exact FS1q | rewrite FDS2; exact FDS1q | apply stack_only_nil | exact I]. }
       assert (DAT2 : rw_cells rsegs (aview A m2) b [CB (Z.to_nat L) data]).
       { first [exact DAT1 | eapply (rw_cells_transport rsegs); [exact DAT1| exact MU| exact WM| exact I]]. }
-      clear MU WM CF DAT1. pose proof TV2 as [_ _ FS2q FDS2q CC2 AR2 SH2 _ MFR2 TFR2].
+      clear MU WM CF DAT1. pose proof TV2 as [_ _ FS2q FDS2q CC2 AR2 SH2 _ MFR2 TFR2 TVR2].
       eapply srz_conseq; [| exact TI0_eq].
       pose proof MALLOC1 as MA. unfold malloc1_stmt in MA. cbv zeta in MA.
       eapply MA with (n := plen); clear MA.
@@ -1348,11 +1372,12 @@ Section TargetRun.
         apply (cframe_of_frame_ok LPA) in FRK. rewrite ?unsigned_lit in FRK by (unfold SPF, STK_LO in *; lia).
         assert (TV' : tview A' m' md' SO_pristine tid (TFRv j0) 0).
         { eapply (tview_ccall A A' m2 md2 m' md'); try eassumption; try reflexivity.
-          all: first [rewrite FS'; exact FS2q | rewrite FDS'; exact FDS2q | apply heapish_nowhere | unfold ASTK, STK_LO, SPF; lia]. }
+          all: first [match goal with H : same_but_materialized _ _ |- _ => exact (sbm_reader _ _ H) | H : amd_frame _ _ |- _ => exact (amd_frame_reader _ _ H) end   (* 08b1429: channel-reader-premise *)
+                     | rewrite FS'; exact FS2q | rewrite FDS'; exact FDS2q | apply heapish_nowhere | unfold ASTK, STK_LO, SPF; lia]. }
         assert (DAT' : rw_cells rsegs (aview A' m') b [CB (Z.to_nat L) data]).
         { apply (rw_cells_blk_cframe A A' m2 md2 _ _ _ _ _ b (cap k) _ _ AINV2 FRK LVb DAT2); [lia| cbn [cells_size csize Nat.add]; lia| | intros q Hq X; exact X].
           (let acv := fresh "ACV" in pose proof alloc_ceiling_val as acv). unfold ASTK, STK_LO, SPF in *. lia. }
-        pose proof TV' as [_ _ FSq FDSq CC' AR' SH' ST' MFR' TFR'].
+        pose proof TV' as [_ _ FSq FDSq CC' AR' SH' ST' MFR' TFR' TVRq].
         (* [comment removed for export] *)
         (first [ pose proof ((rwCB_elim _ _ _ _ DAT')) as dR_37; dand3 dR_37 as DLEN' DB' _ | destruct (rwCB_elim _ _ _ _ DAT') as (DLEN' & DB' & _) ]).
         assert (SRC : bytes_at rsegs (aview A' m') (b + 2 + c + 4) inp).
@@ -1397,7 +1422,8 @@ Section TargetRun.
         lazymatch goal with H : stk _ (aview A' m3) _ _ |- _ => rename H into ST3 end.
         assert (TV3 : tview A' m3 md3 SO_pristine tid (TFRv j0) 0).
         { eapply (tview_stack A' m' md'); try eassumption; try reflexivity.
-          all: first [rewrite FS3; exact FSq | rewrite FDS3; exact FDSq
+          all: first [match goal with H : same_but_materialized _ _ |- _ => exact (sbm_reader _ _ H) | H : amd_frame _ _ |- _ => exact (amd_frame_reader _ _ H) end   (* 08b1429: channel-reader-premise *)
+                     | rewrite FS3; exact FSq | rewrite FDS3; exact FDSq
                      | apply (stack_only_cons_heap usp HCEIL); [eapply app_range_sub; [exact RAPP| lia| lia| lia]|];
                        unfold MEMCPY_ICPT_STACK; apply stack_only_cons; [unfold SPF, STK_LO; lia| unfold SPF; lia| apply stack_only_nil]
                      | unfold MEMCPY_ICPT_STACK, SPF; cbn; lia]. }
@@ -1440,7 +1466,7 @@ Open Scope bv_scope.
 Local Open Scope Z_scope.
 
 Section File.
-  Context {Clg : Ceiling} {AI : AsanAlloc LPA}.   (* [comment removed for export] *)
+  Context {Clg : Ceiling} {AI : AsanAlloc LPA} {LAY : ArgLayout}.   (* [comment removed for export] *)
   Variable usp : Z.
   Hypothesis HCEIL : alloc_ceiling = usp - 0x800000.   (* [comment removed for export] *)
   Variables argv envp : list (list byte).
@@ -1467,7 +1493,7 @@ Section File.
   Theorem file_ok : file_stmt usp argv envp fs.
   Proof.
     unfold file_stmt. intros until md. intros A a0s path data DI EA AV PNE PND PLEN DATA.
-    pose proof DI as DI'. destruct DI' as [AINV MI FS FDS FRN ST SPC SH [tid CC] GOT AR].
+    pose proof DI as DI'. destruct DI' as [AINV MI FS FDS FRN ST SPC SH [tid CC] GOT AR DIRD].
     pose proof AR as [P0 P1 S0 S1 K0 K1 B0 B1 (U1 & U2 & U3 & U4)]. pose proof U1 as U1'. unfold sp_window_lo in U1'.
     assert (A2 : e_argc argv = 2) by (rewrite AV; reflexivity).
     assert (P1E : nth 1 argv [] = path) by (rewrite AV; reflexivity).
@@ -1479,7 +1505,7 @@ Section File.
       [rewrite P1E; lia| right; rewrite P1E; split; [exact PNE|]; split; [exact PND|];
                          pose proof Hva as (_ & _ & _ & _ & APATH); rewrite AV in APATH; pose proof (Forall_inv APATH) as [PS PD];
                          split; [exact PD|]; split; [exact PS|]; split; [exists data; exact DATA| reflexivity]|].
-    intros m2 md2 tid2 j8 y0 y1 y2 ya1 ya2 ya3 ya4 ya5 ya6 ya7 yt3 yt4 yt5 yt6 AINV2 MI2 FS2 FDS2 CC2 AR2 SH2 ST2 FR2.
+    intros m2 md2 tid2 j8 y0 y1 y2 ya1 ya2 ya3 ya4 ya5 ya6 ya7 yt3 yt4 yt5 yt6 AINV2 MI2 FS2 FDS2 RDR2 CC2 AR2 SH2 ST2 FR2.
     rewrite P1E in FDS2.
     assert (FV2 : fview usp argv envp fs s0 s1 s2 s3 s4 s5 s6 s7 j8 A m2 md2 (fds3 (FdFile path (Z_to_bv 64 0))) SO_pristine 0 tid2)
       by (constructor; assumption).
@@ -1493,7 +1519,7 @@ Section File.
              (ea_live _ _ _ EA) (ea_bytes _ _ _ EA) (ea_nlive _ _ _ EA) ltac:(rewrite (ea_tiny _ _ _ EA), TINYCRED0_eq; lia) (ea_secc _ _ _ EA) (ea_primc _ _ _ EA) (ea_frames _ _ _ EA)).   (* [comment removed for export] *)
     intros A' m3 md3 b zra z0 z1 z2 za0 za1 za2 za3 za4 za5 za6 za7 zt3 zt4 zt5 zt6 FV3 BNZ LV LVO LB NL TC SCC PCC FRS.   (* [comment removed for export] *)
     clear dependent m2. clear dependent md2. clear AINV MI FS FDS ST SH CC GOT AR.
-    pose proof FV3 as [AINV3 MI3 FS3 FDS3 CC3 AR3 SH3 ST3 FR3].
+    pose proof FV3 as [AINV3 MI3 FS3 FDS3 CC3 AR3 SH3 ST3 FR3 FVR3].
     (first [ pose proof ((as_live_ok LPA A' m3 md3 b 65536 AINV3 LV)) as dR_1; dand5 dR_1 as _ BAL BLO BHI _ | destruct (as_live_ok LPA A' m3 md3 b 65536 AINV3 LV) as (_ & BAL & BLO & BHI & _) ]).
     (let acv := fresh "ACV" in pose proof alloc_ceiling_val as acv).
     (* [comment removed for export] *)

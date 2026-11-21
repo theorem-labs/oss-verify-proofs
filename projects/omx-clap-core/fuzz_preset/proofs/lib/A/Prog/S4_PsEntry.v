@@ -4,13 +4,14 @@
 (* Modified by Theorem Labs, 2026-10: the contract and walk of reac_ctrl_identity_poll_block on fuzz_grant.asan, written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v, proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_grant/lib/A/Prog/CtrlIdentityPollBlock.v, with its module paths, module names and numbers changed; 695 of its 772 lines of code are new or changed and 346 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/FuzzStrdup.v, with its module names changed; 517 of its 577 lines of code are new or changed and 712 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset lib/A, slice S4 (parse_string): the ENTRY stretch, offsets 0..131 of parse_string (DERIVED), from the
    entry to the scan loop head PS_SCAN (132) or the NULL return PS_RET0 (1284). The contract is S4_PsBase.v; this
    file proves its ps_seg_entry, with ps_seg_scan and ps_seg_ret0 as Section hypotheses.
-   KIT: the kit's cut 7cdbb61b5fa0; this file is INT102-READY there. Earlier it was on the KIT PREVIEW, walkkit-next
-   0afb3f76c28 (position pass + S' = S sweep), NOT on the kit of record; its acceptance artifact on the kit of
-   record preset-tree-at-2026-10-29T08-11-33Z.tsv (sha256 494eefc5b155; internal record) was commit preset-tree-at-2026-10-29T08-27-48Z.tsv (sha256 d86722ddcdf6; internal record) (same proof, its own header names
-   a3bdeca3920; it carries no preview text). Blob ids at the cut (git ls-tree 7cdbb61b5fa0), as the kit's cut
+   KIT: the kit's cut; this file is INT102-READY there. Earlier it was on the KIT PREVIEW, walkkit-next
+   (position pass + S' = S sweep), NOT on the kit of record; its acceptance artifact on the kit of
+   record preset-tree-at-2026-10-29T08-11-33Z.tsv (sha256 494eefc5b155; internal record) was commit preset-tree-at-2026-10-29T08-27-48Z.tsv (sha256 d86722ddcdf6; internal record) (same proof, its own header names;
+   it carries no preview text). Blob ids at the cut (git ls-tree), as the kit's cut
    preset-tree-at-2026-10-30T04-57-22Z.tsv (sha256 652fe98064b9; internal record) carries them:
      lib/A/PRH_Base.v ef7c8ca98529, lib/A/PRH_FnReader.v f1ae32e3b2cd, lib/A/PRH_FnAlloc.v 4d8aeba047e5,
      lib/A/PRH_Img.v 934516a622e8, lib/A/PRH_Reader.v 4266e709561a, lib/A/PRH_Charge.v 2b0b34262818,
@@ -46,7 +47,7 @@
    The journal starts at the widened window with ajournal_x_init_W (PRW_CallerJ.v) and the carried cj_kept is built
    by cj_kept_exec over each of the two straight-line runs and chained by cj_kept_trans. The stretch allocates
    nothing and makes no call, so the allocator state, the heap set and the world are the entry's throughout.
-   THE GENERIC-P FORM (a Theorem Labs lane 12:18Z / 12:22Z; base 44a91d58bb5, S4_PsBase.v
+   THE GENERIC-P FORM (a Theorem Labs lane 12:18Z / 12:22Z; base, S4_PsBase.v
    a59ce5bfcbe3, Section gp). An SRr post is OPAQUE once Qed, so an end-state invariant must be in the segment's
    statement: ps_entry_holdsP : ps_seg_entryP P is stated over any memory invariant P with srr_inv_laws segs P (the one
    premise: the stretch makes NO call, so no srr_inv_call). P of the end memory is PROVED FROM THE RUN, never from where

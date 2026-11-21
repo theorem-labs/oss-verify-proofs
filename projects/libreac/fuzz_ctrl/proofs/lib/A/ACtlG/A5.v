@@ -6,16 +6,16 @@
    WHAT IT PROVES
      glue_seg_A5 : forall POST (t : Z), CF POST C_A81414 -> CF POST (ix_cut C_A81400_at [t])
    with ACtl.v's own CF notation (SK := A.AE2k.tfib_sink_head, FP := []), i.e. exactly ACtl.v's Section hypothesis
-   seg_A5.  Segment A5 is 0x81400 -> 0x81414, five register-only instructions (Seg/A5.v:2-7 at e8259d2f41e):
+   seg_A5.  Segment A5 is 0x81400 -> 0x81414, five register-only instructions (Seg/A5.v:2-7):
      0x81400 mv s6,s7   0x81404 add a4,a4,a1   0x81408 addi a1,a1,1   0x8140c mv a0,a4   0x81410 mv s9,s8.
 
-   RULE 24 (released proofs first): proof-index LLVMFuzzerTestOneInput (index v5, built 2026-10-28 20:16:23Z
-   from e966c513ee6, ossv/recipes@a8831f7c5c), second-agent check a Theorem Labs lane 21:10Z CONFIRM: the released ASan
-   donor is cgif/cgif_file_fuzzer at origin/ossv/recipes c8557374ad2e; its walk lifts no outside-proved run (all its
+   RULE 24 (released proofs first): proof-index LLVMFuzzerTestOneInput (index v5, built 2026-10-28 20:16:23Z,
+   ossv/recipes), second-agent check a Theorem Labs lane 21:10Z CONFIRM: the released ASan
+   donor is cgif/cgif_file_fuzzer; its walk lifts no outside-proved run (all its
    runs are symbolic), so this glue has no donor counterpart.  Its pieces are the donor's: SRr (YA0n), the journal
    lemma ajournal_exec (YCbq.v:636 in the planning core), frames_bounds (YCbq.v:450), and a Theorem Labs lane's kit and
-   bridge (Reusable/YA0nR.v SRr_xregs_eqv / SRr_fevt at a working branch 5f2500c036a; A/ProgBridge.v
-   fevt_of_evtF, tfibsegs_rsegs, cfg_at_MS, same blob at 94d4995b31f and 5f2500c036a; type-checked there on the
+   bridge (Reusable/YA0nR.v SRr_xregs_eqv / SRr_fevt at a working branch; A/ProgBridge.v
+   fevt_of_evtF, tfibsegs_rsegs, cfg_at_MS, same blob; type-checked there on the
    planning core).
 
    THE PROOF, step by step (glue-pattern.md section 3 repeats it as the template)
@@ -43,13 +43,13 @@
 
    SECTION HYPOTHESES (exact text below; source of each)
    - seg_A5_run_F: the _F run.  COPIED from lib/A/Prog/Seg/Tac_slotF.v (not in this delivery) (seg_A5_run_F) at
-     a working branch df036f892c5: its start state (MS (Regs6ss.mkR_of regs) fp_regs 0x81400
+     a working branch: its start state (MS (Regs6ss.mkR_of regs) fp_regs 0x81400
      fp_csr None mem (seg_rom rsegs)), its post shape (exists R pc' mem', ms = MS R fp_regs pc' fp_csr None mem'
      (seg_rom rsegs) /\ K), and its conclusion ExecF.evtF rsegs RNG.  ADAPTED, as a mechanical v1.9 re-run is:
-     (a) RNG is the FIRST binder (a Theorem Labs lane's re-run convention, a Theorem Labs lane's A2F.v; a Theorem Labs lane a3d847b56c1);
+     (a) RNG is the FIRST binder (a Theorem Labs lane's re-run convention, a Theorem Labs lane's A2F.v; a Theorem Labs lane);
      (b) K is v1.9's: Tac_slotF's K is the v1.8 one (its exit cut was FRA alone, Tac_slot.v:558-561), which keeps
          only registers 2 3 4 8 9 19 26 and so cannot rebuild the v1.9 exit body; the K here is the K that v1.9's
-         seg_A5 gives sl_run (Seg/A5.v (not in this delivery) at a working branch e8259d2f41e), written with
+         seg_A5 gives sl_run (Seg/A5.v (not in this delivery) at a working branch), written with
          a5_evt's ou (Seg/A5.v (not in this delivery)) where Seg/A5.v (not in this delivery) writes fr + 2624;
      (c) a5_evt's five premises (Seg/A5.v:40: a1 = t, a4 = ou, 0 <= t, 0 <= ou, ou + t + 1 < 2 ^ 64), stated on the
          register map, which the v1.9 K needs (it names t and ou);
@@ -64,8 +64,8 @@
      the brief's list: the journal must cross the run's model materialization and the frame bound comes from the
      AR, and both lemmas are stated under LAWS.  ACtl.v discharges it where it discharges the donor-form laws.
    CITED BY NAME, NOT HYPOTHESES (a Theorem Labs lane 23:4xZ / 00:2xZ: use a Theorem Labs lane's landed names): SRr_fevt and
-   SRr_xregs_eqv are Reusable.YA0nR's (YA0nR.v:38 and :119, PROVED at a working branch 5f2500c036a,
-   lemmas in 6517e7b00a9, build 20261029T001125Z rc=0); fevt_of_evtF, tfibsegs_rsegs and cfg_at_MS are
+   SRr_xregs_eqv are Reusable.YA0nR's (YA0nR.v:38 and :119, PROVED at a working branch,
+   lemmas, build 20261029T001125Z rc=0); fevt_of_evtF, tfibsegs_rsegs and cfg_at_MS are
    A.ProgBridge's (ProgBridge.v:29-31, :75-76, :80-83).
    NOT USED: rt_of_core (ctl_RT): the run has no runtime premise.
 
@@ -80,11 +80,11 @@
    SHADOWED NAMES: getr / mkst / seg_rom / cfg_at are Reusable.YK11 / Reusable.YG0d-qualified everywhere.  Check:
      grep -nE '(^|[^.A-Za-z_])(mkst|getr|seg_rom|cfg_at)\b' lib/A/ACtlG/A5.v   -- hits only inside comments.
 
-   BUILD STATE (honest): TYPECHECKS on the image-A PLANNING core 5a85b67a5d8 (TYPE-CHECK ONLY, values do not count):
-   cb build on the packed fuzz_ctrl base 362baf478bf5 (FACTS ed6b6b7b0ab), with the core's undefined
+   BUILD STATE (honest): TYPECHECKS on the image-A PLANNING core (TYPE-CHECK ONLY, values do not count):
+   cb build on the packed fuzz_ctrl base (FACTS), with the core's undefined
    port_core_refused_<hex> names replaced by the hex literal in the build workspace only (core errors, reported
    to the porter a Theorem Labs lane).  lib/Reusable/YK04R.v, lib/Reusable/YA0nR.v and lib/A/ProgBridge.v are on this
-   branch BY PATH from a working branch 5f2500c036a (a Theorem Labs lane's, unchanged).  One fix at the
+   branch BY PATH from a working branch (a Theorem Labs lane's, unchanged).  One fix at the
    first build: the fp_avoids step named its hypothesis Hn, already taken by G1's destruct.  No Axiom, no
    Parameter, no Admitted, no admit; seg_A5_run_F and LAWS stay Section hypotheses. *)
 

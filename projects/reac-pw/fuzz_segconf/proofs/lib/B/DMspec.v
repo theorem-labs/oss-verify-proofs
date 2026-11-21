@@ -1,4 +1,4 @@
-(* copied from proofs/cgif/cgif_file_fuzzer/lib/DMspec.v @ 95e6f1d72b6 (c-asan, frozen), module paths changed only. *)
+(* copied from proofs/cgif/cgif_file_fuzzer/lib/DMspec.v (c-asan, frozen), module paths changed only. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* The contract of Quarantine::Drain (0x32f58) with the REAL MergeBatches, for the shared (reply / preset)
@@ -26,6 +26,7 @@
    DGif0cgif.DImg_cgif); transfer_g and DSTACK are ImgBaseDG's copies of YFeu's.  The contract is [drain_spec_cf]
    (released name tfib_drain_spec_cf; DGif0cgif keeps the old name as an abbreviation). *)
 (* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/Reusable/DMspec.v, derived mechanically (bkit derive_b.py): its Require lines name the lib/B copies; nothing else differs. The comments are the A file's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

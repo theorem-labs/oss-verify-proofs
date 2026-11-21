@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: relocated from the walk of the same function of libreac's fuzz_grant (the two are the same code at other addresses). *)
-(* Modified by Theorem Labs, 2026-10: the asan-ubsan twin, for fuzz_disco.asan-ubsan (lib_both3_0_listing): ported from a working branch edc3e948664 fuzz_grant/lib/B/Prog/CtrlParseTail3.v (image B's closed walk of the same code; Y pc = image B pc + 0x4d30), with fuzz_disco's plumbing of lib/A/Prog/CtrlParseTail3.v (a working branch 21fae839e81), over lib/Y/Prog/CtrlParseCut.v. *)
+(* Modified by Theorem Labs, 2026-10: the asan-ubsan twin, for fuzz_disco.asan-ubsan (lib_both3_0_listing): ported from a working branch fuzz_grant/lib/B/Prog/CtrlParseTail3.v (image B's closed walk of the same code; Y pc = image B pc + 0x4d30), with fuzz_disco's plumbing of lib/A/Prog/CtrlParseTail3.v (a working branch), over lib/Y/Prog/CtrlParseCut.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_ctrl_parse, the walk from cut B (AF_CUTB = AF_both3_reac_ctrl_parse + 0x1fc, image 0x876a0) to cut J
    (AF_JOIN = AF_both3_reac_ctrl_parse + 0x420, image 0x878c4) for the frames of class 3 (pz_P3):
    frame type cd ea, link 1: the call of kind_of_link1 on the opcode frame[22]. *)

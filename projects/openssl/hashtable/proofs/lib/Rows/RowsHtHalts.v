@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (each row also shows that the binary carries no vDSO segment, the new premise of [HtHaltsLib.full_stmt_init_cfg]). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List.
 Require LinuxProcessSemantics.EquivalenceDefinition.Equivalence.
@@ -68,6 +69,7 @@ Proof.
   - exact HtHaltsLib.in_codes02_2.
   - exact HtHaltsLib.exits_in_t_target_ht_02.
   - exact FULLP.
+  - (* the binary carries no vDSO segment *) reflexivity.
 Qed.
 
 Theorem halts_allowed_openssl_hashtable_halts_ubsan :
@@ -81,6 +83,7 @@ Proof.
   - exact HtHaltsLib.in_codes02_2.
   - exact HtHaltsLib.exits_in_t_target_ht_02.
   - exact FULLU.
+  - (* the binary carries no vDSO segment *) reflexivity.
 Qed.
 
 Theorem halts_allowed_openssl_hashtable_halts_asan :
@@ -94,6 +97,7 @@ Proof.
   - exact HtHaltsLib.in_codes02_2.
   - exact HtHaltsLib.exits_in_t_target_ht_02.
   - exact FULLA.
+  - (* the binary carries no vDSO segment *) reflexivity.
 Qed.
 
 Theorem halts_allowed_openssl_hashtable_halts_both :
@@ -107,6 +111,7 @@ Proof.
   - exact HtHaltsLib.in_codes02_2.
   - exact HtHaltsLib.exits_in_t_target_ht_02.
   - exact FULLB.
+  - (* the binary carries no vDSO segment *) reflexivity.
 Qed.
 
 End HtHalts.

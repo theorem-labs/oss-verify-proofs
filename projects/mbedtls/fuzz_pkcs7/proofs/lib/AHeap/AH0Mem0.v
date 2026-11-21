@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (h0_hm_maps' stack map runs from sp0 - 6144512, the window the launch maps below sp, which it reads from the new stack cell of main's entry, a new hypothesis, in place of the 8 MiB cell). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -34,6 +35,9 @@ Section Mem0.
   Hypothesis STKHI_47 : STKHI <= 2 ^ 47.
   (* [comment removed for export] *)
   Hypothesis HWIN : forall a : word, SP p <= bv_unsigned a < STKHI -> mem a <> None.
+  (* LPS 727298f3: the new stack cells at main's entry, at the run's CONFIG_RSEQ value [rz] *)
+  Variable rz : Z.
+  Hypothesis HSTK : Forall (cell_ok ASEGS mem) (cells_stk rz p).
   Let bp := bp_of p STKHI FOG TF.
   Local Ltac pv := cbn; tauto.
 
@@ -46,7 +50,7 @@ Section Mem0.
     pose proof (H (wa (lo + i)) ltac:(rewrite U; lia)) as D. unfold wview. destruct (mem (wa (lo + i))); [discriminate | exfalso; exact (D eq_refl)].
   Qed.
 
-  #[using="HCN HCOM HDEF STKHI_gt STKHI_47 HWIN"] Theorem h0_hm_maps : hm_maps (L0_of bp) mem.
+  #[using="HCN HCOM HDEF STKHI_gt STKHI_47 HWIN HSTK"] Theorem h0_hm_maps : hm_maps (L0_of bp) mem.
   Proof.
     pose proof HDEF as D. unfold me_def in D.
     ddestruct D as (_ & _ & _ & _ & Dfstk & _ & _ & Dtreg & Dthr & _ & _ & Dhigh & Dlow).
@@ -58,17 +62,22 @@ Section Mem0.
     split; [apply def_wr_at; [exact Dlow | lia | lia | lia]|].
     split; [apply def_wr_at; [exact Dhigh | lia | lia | lia]|].
     split.
-    { (* [comment removed for export] *)
-      replace (STKHI - (SP p - 2 ^ 23)) with (2 ^ 23 + (STKHI - SP p)) by lia.
-      apply (proj2 (wr_at_app asegs mem (SP p - 2 ^ 23) (2 ^ 23) (STKHI - SP p) ltac:(lia) ltac:(lia))). split.
-      - me_wr (HF mem p HCOM) ((((#0x8000 * v_s1) + (#16 * v_s2)) .+ (-0x800000)))%tm X.
-        pose proof (cwr_wr_at mem _ _ X) as W. revert W.
-        match goal with |- wr_at _ _ ?a ?n -> _ => replace a with (SP p - 2 ^ 23); [replace n with (2 ^ 23); [intros W; exact W|]|] end.
-        + rewrite u_zbv, Z.mod_small by lia. reflexivity.
-        + unfold ABoot.PropExec.v_addi. rewrite u_zbv.
-          match goal with |- _ = (bv_unsigned ?w + _) mod _ => change w with (winst p ((#0x8000 * v_s1) + (#16 * v_s2))%tm) end.
-          rewrite (zev_exact p) by (cbn [zev]; lia). cbn [zev]. unfold SP. rewrite Z.mod_small; lia.
-      - replace (SP p - 2 ^ 23 + 2 ^ 23) with (SP p) by lia. apply def_wr_at; [| unfold SP; lia | lia | lia]. intros a Ha. apply HWIN. lia. }
+    { (* LPS 727298f3: the stack floor is sp0 - 6144512.  Below sp the launch maps the window
+         [sp0 - 6144513, sp0), the first of the new stack cells [cells_stk]; above sp, the stack VMA. *)
+      replace (STKHI - (SP p - 6144512)) with (6144512 + (STKHI - SP p)) by lia.
+      apply (proj2 (wr_at_app asegs mem (SP p - 6144512) 6144512 (STKHI - SP p) ltac:(lia) ltac:(lia))). split.
+      - assert (X : cell_ok ASEGS mem (cinst p (TWr (AOff SP_T (-6144513)) (WLit 6144513)))).
+        { apply (proj1 (Forall_forall _ _) HSTK). unfold cells_stk, CELLS_stk. cbn [map In]. left. reflexivity. }
+        cbn [cinst ainst] in X.
+        pose proof (cwr_wr_at mem _ _ X) as W.
+        assert (UA : bv_unsigned (ABoot.PropExec.v_addi (winst p SP_T) (-6144513)) = SP p - 6144513).
+        { unfold ABoot.PropExec.v_addi. rewrite u_zbv. unfold SP_T.
+          rewrite (zev_exact p) by (cbn [zev]; lia). cbn [zev]. unfold SP. rewrite Z.mod_small; lia. }
+        assert (UN : bv_unsigned (winst p (WLit 6144513)) = 6144513) by (cbn [winst]; rewrite u_zbv; apply Z.mod_small; lia).
+        rewrite UA, UN in W.
+        replace (SP p - 6144512) with ((SP p - 6144513) + 1) by lia.
+        apply (wr_at_sub mem _ _ 1 6144512 W); lia.
+      - replace (SP p - 6144512 + 6144512) with (SP p) by lia. apply def_wr_at; [| unfold SP; lia | lia | lia]. intros a Ha. apply HWIN. lia. }
     split; [apply def_wr_at; [exact Dthr | lia | lia | lia]|].
     split; [apply def_wr_at; [exact Dtreg | lia | lia | lia]|].
     apply def_wr_at; [unfold kFakeBytes; exact Dfstk | lia | unfold kFakeBytes; lia | unfold kFakeBytes; lia].

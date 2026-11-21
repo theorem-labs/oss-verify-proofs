@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main entry's recorded facts read as the main entry keeps them: BMKNW, BMKN, BPKN). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -145,9 +146,9 @@ Proof.
 Qed.
 
 Theorem adepot_init : forall (V : nat -> Z) (w : bool) (U : list (list Z)) (m : amem),
-  Forall (mfact_ok bsegs V m) both_mem_facts ->
-  Forall (mfact_ok bsegs V m) (both_mem_facts_w w) ->
-  Forall (pfact_ok V) both_pure_facts ->
+  Forall (mfact_ok bsegs V m) BMKN ->
+  Forall (mfact_ok bsegs V m) (BMKNW w) ->
+  Forall (pfact_ok V) BPKN ->
   (length U <= 4096)%nat -> Forall (fun u => (length u <= 254)%nat) U ->
   32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat - 8388608 = ATOP ->      (* [comment removed for export] *)
   ADEPOTi (mkALayout (LV V) w U) m.
@@ -187,7 +188,7 @@ Proof.
             /\ rw_cells bsegs m (4096 * V 453%nat + 16) [C8 (Z_to_bv 64 (hw0 w))]
             /\ rw_cells bsegs m (4096 * V 454%nat) [C8 (Z_to_bv 64 (if w then 2 else 1))]
             /\ stk bsegs m (4096 * V 454%nat + 16) (4096 * V 454%nat + 8388608)).
-  { destruct w; cbn [tf0 bw0 hw0] in *; unfold both_mem_facts_w in HMW.
+  { destruct w; cbn [tf0 bw0 hw0] in *; unfold BMKNW in HMW.
     - mf V m HMW (MCell (ZLit 1711048) 8 (ZLit 3)) F1. mf V m HMW (MCell (ZLit 1711072) 4 (ZLit 3)) F2.
       mf V m HMW (MCell (ZLit 5353048) 4 (ZLit 1)) F3. mf V m HMW (MImg 1711080 5353048) F4. mf V m HMW (MImg 5353052 5970904) F5.
       mf V m HMW (MCell (ZAdd (ZMul (ZLit 4096) (ZV 453)) (ZLit 16)) 8 (ZLit 15947302641947485344)) F6.   (* [comment removed for export] *)

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack window below sp). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp Require Import gmap.
@@ -58,7 +59,7 @@ Section IFACE.
       /\ RHEAP s LB mm /\ ps_so s = stdout_init /\ ps_fa s = (0, 0)
       /\ rw_cells rsegs mm A [CB (length DATA) DATA; CB (Z.to_nat (cap - Z.of_nat (length DATA))) junk]
       /\ TRFRAME mm pad sc (ap_payload_len ap) A L /\ MFRAME sp0 argv mm mpad S7 S6 S5 S4
-      /\ stk rsegs mm (usp0 - 8388608) (usp0 + -208)
+      /\ stk rsegs mm (usp0 - 6144512) (usp0 + -208)
       /\ mem_inv rsegs mm /\ RSTAT TID mm /\ rauxv_ok mm usp0
       /\ stderr_wfile0 mm /\ stdout_file mm stdout_init
       /\ rw_cells rsegs mm RERRNO [C4 errv]

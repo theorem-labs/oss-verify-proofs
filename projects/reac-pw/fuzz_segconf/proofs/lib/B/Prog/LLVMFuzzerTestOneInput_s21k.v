@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC1h.v, walk helpers over fuzz_command's listing: module paths, csym; aview_above_of_journal keeps only bytes outside the call's footprint, as the journal now does. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/Prog/PaLibH.v (origin/ossv/recipes 501c0d516c69) for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths; csym -> ssym; the image's end 0x606000 -> YG0f.kImgEnd (0x601000). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/Prog/PaLibH.v for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths; csym -> ssym; the image's end 0x606000 -> YG0f.kImgEnd (0x601000). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/PaLibH.v, with its module names changed; 206 of its 239 lines of code are new or changed and 178 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan+UBSan image B (fuzz_segconf.asan-ubsan, pin sha256 c3796c0b38f3): the kit of segment
    S13 of the walk of the test harness's entry function LLVMFuzzerTestOneInput (lib/B/Prog/
    LLVMFuzzerTestOneInput_s21.v): the payload's quantities the segment reads (cap, the VLAN seed table), the model's

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (R_cover reads the image's reservations out of me_model's new reserved-ledger conjunct me_res, the image's intervals followed by the launch's vDSO pair; h0_reserved restated in plain text for the heap invariant's new eleventh conjunct, every reserved entry apart from every mapping, which me_res gives, with STKHI, fog and FOG_len added to its using list, and the false R_bounds removed; h0_vcensus restated for the census of the mappings only; new lemma h0_mark proves the invariant's new fifteenth conjunct, the heap mark, from me_res's high mark above kHighMemBeg, and h0_HKv uses it). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -219,18 +220,11 @@ Section K2.
   #[using="Type"] Lemma R_zz : ltac2:(CDefT.buildp (gd_tbl_AH0K2 ()) "(9.(0.(1.$>.$>.))(28.(1.(2.&40.)(2.&40.))(1.$>.$>.)$2>.(2?.$30.))(17.(1.$>.$>.)(31.$>.$>.+10000.+36000.)(17.(1.$>.$>.)(31.$>.$>.+46000.+:;000.)(17.(1.$>.$>.)(31.$>.$>.+?1000.+6000.)(17.(1.$>.$>.)(31.$>.$>.+?7000.+568000.)(1?.(1.$>.$>.)))))))")
 (* [comment removed for export] *).
   Proof. vm_compute. reflexivity. Qed.
-  Local Ltac2 Set LiaOrc.tbl := fun () => "0010?L30749989228.74000005S3hAR". (* [comment removed for export] *)
-  #[using="hAR sp fs p HMOD"] Lemma R_bounds : forall e, In e (vm_reserved (m_vmmaps md)) -> 0x10000 <= eB e /\ eB e + eS e <= 0x65f000.
-  Proof.
-    intros e He. mm X. rewrite Mres in He. apply (in_map zz) in He. rewrite R_zz in He. unfold zz in He.
-    cbn in He. destruct He as [H|[H|[H|[H|[]]]]]; injection H as H1 H2; rewrite <- H1, <- H2; lia.
-  Qed.
-  Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
   Local Ltac2 Set LiaOrc.tbl := fun () => "0030?L63839518770.86L63841627758.87L63841628141.8800000E00Z01<S3hAR1x2Hx2e02A12A21lS3hAR1x2e12B12B21l2l0S3hAR1x2e22C12C22l02l12Hx2e32D12D2". (* [comment removed for export] *)
   #[using="hAR sp fs p HMOD"] Lemma R_cover : ltac2:(CDefT.buildp (gd_tbl_AH0K2 ()) "Px,$>.P,(=.(:.+10000.R1.)(5.R1.+65?000.))(32.(1.(2.&40.)(2.&40.))Le,(1.(2.&40.)(2.&40.))(=.(4.(1.(2.&40.)(2.&40.))R1.(33.(34.Vmd,)))(=.(:.(6.&40.(<.(2.&40.)(2.&40.)R1.))R3.)(5.R3.(;.(6.&40.(<.(2.&40.)(2.&40.)R1.))(6.&40.(7.(2.&40.)(2.&40.)R1.)))))))")
 (* [comment removed for export] *).
   Proof.
-    intros x Hx. mm X. rewrite Mres. pose proof R_zz as Z4.
+    intros x Hx. mm X. destruct Mres as ((rx & MresE & _) & _ & _). rewrite MresE. pose proof R_zz as Z4.
     remember (segments_reserved ASEGS) as R eqn:HR. clear HR.
     destruct R as [|e0 [|e1 [|e2 [|e3 [|e4 R]]]]]; try discriminate Z4. cbn [map] in Z4. unfold zz in Z4.
     injection Z4 as A1 A2 B1 B2 C1 C2 D1 D2.
@@ -265,13 +259,13 @@ Section K2.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
   Local Ltac2 Set LiaOrc.tbl := fun () => "00:0?L14411627883.21L19708637957.21L24830330373.21L50161164051.19L59314873579.24L59579071077.20L59579071470.21L60679088009.20L67790704355.19L9656813402.23 00000700>00C00H00U00Z00_00d00i010S3hAR1pS3hAR1pS3hARS3hARS3hAR1e3Hfl1HS3hARS3hARS3hARS3hARS3hAR1e". (* [comment removed for export] *)
-  #[using="sp fs HCN HMOD HAC HSP HFOG"] Theorem h0_vcensus : vcensus v0 (vm_reserved (m_vmmaps md)) M.
+  #[using="sp fs HCN HMOD HAC HSP HFOG"] Theorem h0_vcensus : vcensus v0 [] M.
   Proof.
     unfold vcensus. unfold v0. cbn [vst_of v_cover v_cb20 v_cb23]. fold h0.
     split; [| split; [exact cover_nonneg | split; apply cb_of_ok; [lia | exact cover_nonneg | lia | exact cover_nonneg]]].
     intros e He Hfl Hce.
     apply in_app_iff in He as [He|He].
-    { exfalso. pose proof (R_bounds e He). unfold bottomup_floor in Hfl. lia. }
+    { destruct He. }
     unfold M in He. rewrite HFOG in He.
     Ltac cov C := exists C; split; [apply (proj2 (in_cover C)); left; unfold COVER_LIT, SH3; rewrite !in_app_iff; cbn [In]; tauto
                                    | unfold pinst; cbn [fst snd]; uvals; unfold kPrimHullLen, kPaHullLen, kFakeBytes; lia].
@@ -481,9 +475,21 @@ Section K2.
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
-  #[using="hAR sp fs p HMOD"] Theorem h0_reserved : ltac2:(CDefT.buildp (gd_tbl_AH0K2 ()) "(=.Pe,(1.(2.&40.)(2.&40.))P,(4.(1.(2.&40.)(2.&40.))R1.(33.(34.Vmd,)))(=.(:.(41.$42.)(6.&40.(<.(2.&40.)(2.&40.)R2.)))(:.(;.(6.&40.(<.(2.&40.)(2.&40.)R2.))(6.&40.(7.(2.&40.)(2.&40.)R2.)))(43.$42.)))Px,$>.P,(=.(:.(41.$42.)R1.)(5.R1.(43.$42.)))(32.(1.(2.&40.)(2.&40.))Le,(1.(2.&40.)(2.&40.))(=.(4.(1.(2.&40.)(2.&40.))R1.(33.(34.Vmd,)))(=.(:.(6.&40.(<.(2.&40.)(2.&40.)R1.))R3.)(5.R3.(;.(6.&40.(<.(2.&40.)(2.&40.)R1.))(6.&40.(7.(2.&40.)(2.&40.)R1.))))))))")
-(* [comment removed for export] *).
-  Proof. cbn [al_img_lo al_img_hi AL0]. split; [exact R_bounds | exact R_cover]. Qed.
+  (* LPS 727298f3: the heap invariant's eleventh conjunct is no longer "every reserved entry
+     inside the image" -- the launch's ledger ends in the vDSO pair -- but "every reserved entry
+     apart from every mapping", which [me_res]'s second part states at main's entry. *)
+  #[using="hAR sp fs p HMOD STKHI fog FOG_len"] Theorem h0_reserved :
+    (forall e : word * word, In e (vm_reserved (m_vmmaps md)) ->
+       clear (vm_maps (m_vmmaps md)) (bv_unsigned (fst e)) (bv_unsigned (fst e) + bv_unsigned (snd e)))
+    /\ (forall x : Z, al_img_lo AL0 <= x /\ x < al_img_hi AL0 ->
+          exists e : word * word, In e (vm_reserved (m_vmmaps md))
+            /\ bv_unsigned (fst e) <= x /\ x < bv_unsigned (fst e) + bv_unsigned (snd e)).
+  Proof.
+    split; [| cbn [al_img_lo al_img_hi AL0]; exact R_cover].
+    intros e He iv Hiv. mm X. destruct Mres as (_ & MD & _).
+    pose proof (proj1 (Forall_forall _ _) (proj1 (Forall_forall _ _) MD iv Hiv) e He) as D.
+    unfold iv_disjoint in D. lia.
+  Qed.
 
   (* [comment removed for export] *)
   Local Ltac2 Set LiaOrc.tbl := fun () => "0020?L56648762597.93L59885749579.9300000[01FS3hAR5STKHI3fog7FOG_len2pg1e2E12iv2C12B12B6S3hAR5STKHI3fog7FOG_len2pg1e2E22iv2C22B12B6". (* [comment removed for export] *)
@@ -596,6 +602,26 @@ Section K2.
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
+  (* LPS 727298f3: the heap invariant's fifteenth conjunct, [AMark.heap_mark], at main's entry.  The
+     launch gives it: [me_model]'s ledger conjunct [me_res] has, as its fourth part, the split of the
+     ledger at [kHighMemBeg] under a page-aligned high mark [Y <= mmap_top] with
+     [Y >= kHighMemBeg + 2 * MARKCAP + 2 * MARKSTEP] (= 18695992606720), which the start-up's
+     placement facts carry from the launch's vDSO base ([AsanPlanSound.co_split]).  The mark is
+     [K := kHighMemBeg]; the heap's budget [v_eb v0 + 4096 * vnb v0] is at least 0 ([vgood_card] on
+     the empty page list, [h0_eb]) and at most [VLIMIT] = [MARKCAP] ([h0_budget]). *)
+  #[using="sp fs HCN HMOD HAC HSP HFOG v0 M N Lz FOG_len FOG_small STKHI_gt STKHI_pg STKHI_47 STKHI_len TF_ok"] Lemma h0_mark :
+    AMark.heap_mark (m_vmmaps md) (v_eb v0 + 4096 * vnb v0).
+  Proof.
+    pose proof (proj2 h0_budget) as BUD.
+    assert (VN : 0 <= vnb v0)
+      by exact (vgood_card AL0 v0 (h0_vranges p HCN STKHI FOG TF HAC STKHI_gt fog_ok fog_len TF_ok) [] (NoDup_nil _) (Forall_nil _)).
+    assert (EB0 : 0 <= v_eb v0) by (unfold v0; cbn [vst_of v_eb]; fold h0; pose proof h0_eb as X0; unfold E0 in X0; lia).
+    mm X. destruct Mres as (_ & _ & _ & (Y & HY1 & HY2 & HY3 & HY4)).
+    exists AsanPlacement.kHighMemBeg, Y. unfold AMark.heap_mark_with.
+    refine (conj _ (conj _ (conj _ (conj _ (conj _ (conj HY2 (conj HY3 HY4))))))).
+    all: clear - BUD VN EB0 HY1; cbv [AsanPlacement.kHighMemBeg AMark.MARKCAP AMark.MARKSTEP AsanCeil.bottomup_floor VLIMIT] in *; lia.
+  Qed.
+
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   (* [comment removed for export] *)
@@ -614,7 +640,8 @@ Section K2.
     split; [exact (proj1 h0_reserved)|].
     split; [exact (proj2 h0_reserved)|].
     split; [exact (h0_vwf p HCN STKHI FOG TF HAC STKHI_gt STKHI_pg STKHI_47 STKHI_len fog_ok fog_len TF_ok fog_seps fog_apart)|].
-    exact h0_atop.
+    split; [exact h0_atop|].
+    exact h0_mark.
   Qed.
 
   #[using="sp fs HCN HMOD HAC HSP HFOG v0 M N Lz FOG_len FOG_small STKHI_gt STKHI_pg STKHI_47 STKHI_len TF_ok"] Theorem h0_HK : HK AL0 h0 md.

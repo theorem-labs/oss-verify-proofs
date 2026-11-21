@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: init_vm's reserved ledger is State.init_reserved (the image's reservations followed by the launch's vDSO pair for a kernel build kb), and vdso_in_reserved states that pair's inclusion in a model's ledger, as in fuzz_bigint's copy; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/HeapIface.v, lines 89-95, 237-244, 250. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -87,6 +88,14 @@ Fixpoint lb_remove (A : Z) (LB : list (Z * Z)) : list (Z * Z) :=
 Definition callee_saved_idx : list Z := [2; 3; 4; 8; 9; 18; 19; 20; 21; 22; 23; 24; 25; 26; 27].
 Definition regs_preserved (R R' : bvmap 5 word) : Prop :=
   forall r : bv 5, In (bv_unsigned r) callee_saved_idx -> getr R' r = getr R r.
+
+(* LPS 727298f3: [check_mprotect] answers [CheckUnmodeled] for a range meeting the
+   run's vdso/vvar pair, which [State.init_reserved] appends to the reserved ledger
+   and no step moves.  The fact is about the [VmMaps] alone (one measured vDSO image,
+   so [vdso_reserved] does not depend on the kernel build): the heap invariant
+   implies it, so no spec takes it as a premise. *)
+Definition vdso_in_reserved (m : Model) : Prop :=
+  incl (vdso_reserved (m_kernel m) (vdso_top (m_vmmaps m))) (vm_reserved (m_vmmaps m)).
 
 (* [comment removed for export] *)
 Definition model_but_vm (m m' : Model) : Prop :=
@@ -228,18 +237,22 @@ Record heap_iface_ok : Prop := HIOK {
 End Iface.
 
 (* [comment removed for export] *)
+(* LPS 727298f3: [init_model]'s ledger is [State.init_reserved], the image's
+   reservations followed by the vDSO pair of the run's kernel build [kb] (any build).
+   The ledger shape follows jsoncons/fuzz_json_cursor's HeapIface.v; the limit
+   conjunct stays (the statements launch with [source_alloc_limit]). *)
 (* [comment removed for export] *)
 Section InitVm.
 Context {bmK : BMode}.
 Definition init_vm (L : heap_layout) (lim : Z) (VM : VmMaps) : Prop :=
-  exists brk0 mbase isp,
-    VM = mkVmMapsFull (segments_reserved (hl_segs L)) [] [] brk0 brk0 lim mbase isp /\
+  exists brk0 mbase isp (kb : KernelBuild),
+    VM = mkVmMapsFull (init_reserved (segments_reserved (hl_segs L)) mbase isp kb) [] [] brk0 brk0 lim mbase isp /\
     valid_brk (hl_segs L) brk0 /\ valid_mmap_base mbase /\ valid_sp isp /\ bv_unsigned isp = hl_sptop L /\ (bm_on = true \/ 2 ^ 34 <= lim).
 End InitVm.
 (* [comment removed for export] *)
 
 Lemma init_vm_alloc_top : forall L lim VM, init_vm L lim VM -> alloc_top VM = hl_ceil L.
 Proof.
-  intros L lim VM (brk0 & mbase & isp & -> & _ & _ & _ & Hsp & _).
+  intros L lim VM (brk0 & mbase & isp & kb & -> & _ & _ & _ & Hsp & _).
   unfold alloc_top. cbn [vm_init_sp]. rewrite Hsp. rewrite stack_max_size_val. reflexivity.
 Qed.

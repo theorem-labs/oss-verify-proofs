@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/HaltsSpecX.v (via fuzz_grant's lib/A/HaltsSpecG.v, a working branch 0bed23e5b69) for fuzz_scene: the library shape is the one of scene's released agreement, AgreeShape.ag_shape ZTraceSpec.checksum_shape (= AgreeScene.ag_sil_shape; each call returns 0 and writes nothing, LIBK pl fs K = K (LL 0 fs [])), so cgif's lemmas for its file-writing shape are replaced by the one-line case; module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: made from proofs/libreac/fuzz_scene/lib/A/HaltsSpecS.v (a working branch e624b1e2c9a) for fuzz_disco, with its module paths changed (fuzz_scene -> fuzz_disco); the shape AgreeShape.ag_shape ZTraceSpec.checksum_shape is also the shape of fuzz_disco's released agreement (lib/DiscoAgree.v:25). *)
+(* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/HaltsSpecX.v (via fuzz_grant's lib/A/HaltsSpecG.v, a working branch) for fuzz_scene: the library shape is the one of scene's released agreement, AgreeShape.ag_shape ZTraceSpec.checksum_shape (= AgreeScene.ag_sil_shape; each call returns 0 and writes nothing, LIBK pl fs K = K (LL 0 fs [])), so cgif's lemmas for its file-writing shape are replaced by the one-line case; module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: made from proofs/libreac/fuzz_scene/lib/A/HaltsSpecS.v (a working branch) for fuzz_disco, with its module paths changed (fuzz_scene -> fuzz_disco); the shape AgreeShape.ag_shape ZTraceSpec.checksum_shape is also the shape of fuzz_disco's released agreement (lib/DiscoAgree.v:25). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_disco/lib/A/HaltsSpecD.v, with its module paths changed; 1 line of the source is left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* SPECX_shape_ok at fuzz_codec's agreement shape AgreeShape.ag_shape ZTraceSpec.checksum_shape (= AgreeCodec.ag_sil_shape):
    every trace of SPECX ends in exit 0 or 2. The proof is projects/libreac/fuzz_knock/proofs/lib/A/HaltsSpecK.v's, module paths changed. *)
 From Stdlib Require Import ZArith List Lia Bool.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up per CONFIG_RSEQ value and the new auxv layout). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -39,6 +40,17 @@ Proof. exact asan_popfree_spec. Qed.
 Section AsanNodes.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+(* The run's CONFIG_RSEQ flag as 0 or 1 ([rseq_z]).  [x_stmt] reads it through
+   [node_x ASEGS ASAN_A nx0 RZ x args] (AS/Z33.v:2118, AS/Z2y.v:33,125); none
+   of the seven branches proved below (the memset/memcpy/miz/istrncpy/popfree
+   summaries, AS/Z2y.v:127-134) uses the flag, so the proofs are unchanged.
+   Declared immediately after [LIMIT], the slot AS/Z33.v:115 puts it in, so
+   each export discharges as
+   [asan_node_x_sound_X* nx0 LIMIT RZ SINV argH ... FS0] and the consumer
+   AS/Z3d.v:61-70 supplies its own [RZ] there.  A section [Variable] and not a
+   [Let]: nothing here derives the flag, and a literal would pin it when both
+   values are reachable.  Image B's twin is AS/Z112.v. *)
+Variable RZ : Z.
 Variable SINV : AX2.env -> (word -> option byte) -> Prop.
 Variable argH : AX2.env -> word -> bool.
 Hypothesis argH_high : forall E (a : word), argH E a = true -> AP.CEIL <= bv_unsigned a.
@@ -47,7 +59,7 @@ Hypothesis SINV_frame : forall E M M', (forall a, argH E a = true -> M' a = M a)
 Hypothesis SINV_agree : forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E' M.
 Variable FS0 : Fs.Fs.
 
-#[local] Notation XSTMT := (APS.x_stmt ASEGS ASAN_A nx0 LIMIT SINV argH FS0).
+#[local] Notation XSTMT := (APS.x_stmt ASEGS ASAN_A nx0 LIMIT RZ SINV argH FS0).
 
 #[local] Ltac close_with NODE SPEC :=
   eapply NODE; try eassumption;

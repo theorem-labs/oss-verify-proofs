@@ -1,5 +1,5 @@
-(* Copied from origin/cold/port-reply-pf-calls 86b50358d34 proofs/plugin-hostd/fuzz_reply/lib/A/RT_gxa_calls_mem.v; changed: module path fuzz_reply -> fuzz_disco, instance RT_IImgA.A_img -> RecAsanA.N_img_asan, the bridge module RT_gxa_calls -> RT_gxa_bridge, comments dropped; set_ready asked only when 0 <= n, as fm cold/port-fm-rtprintf-param 3899f140f93 (memset_stack_contract and set_ready_intro re-proved for it). *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/RT_gxa_calls_mem.v at 2d2ff01bb6f2 relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
+(* Copied from proofs/plugin-hostd/fuzz_reply/lib/A/RT_gxa_calls_mem.v; changed: module path fuzz_reply -> fuzz_disco, instance RT_IImgA.A_img -> RecAsanA.N_img_asan, the bridge module RT_gxa_calls -> RT_gxa_bridge, comments dropped; set_ready asked only when 0 <= n, as fm (memset_stack_contract and set_ready_intro re-proved for it). *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/RT_gxa_calls_mem.v relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.

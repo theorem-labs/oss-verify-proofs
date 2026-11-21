@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFio.v, with its module paths changed, names TfibSyms -> CmdBSyms and its addresses moved to plugin-hostd/fuzz_command's ASan build; Htr is tr_admit (as_universe B) S tr (malloc_ok takes it); the inner walk gets the trace length (tr_admit_len). *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/AFio.v (donor image sha256 c0661b96b5bd), with its module paths changed, names CmdBSyms -> SegBSyms and its addresses moved to reac-pw/fuzz_segconf's ASan build. *)
 (* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/A/AFio.v, derived mechanically (derive_y.py b7b132fb12a7; every changed numeral checked against alreloc.py a5c53bb2bed4 and against image B), with its module paths changed (lib/A to lib/B) and its addresses moved to reac-pw/fuzz_segconf's ASan+UBSan build. The comments are the A file's. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (proof steps adapted to the changed model definitions and lemma arguments). *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -221,7 +222,7 @@ assert (EA : a = w64 A) by (unfold w64, A; symmetry; apply Z_to_bv_bv_unsigned).
 rewrite EA in GOK, AI2, MW2, IO2, EG2, VM2. rewrite EA.
 pose proof (YFjm.size_facts n Nrange) as (Z1 & Z2 & Z3 & Z4 & Z5 & Z6 & Z7 & Z8 & Z9 & _).
 assert (MSB : 0 < YFjm.MSv n <= MALLOC_MAX + 4 * 4096) by (clear - Z1 Z8; unfold MALLOC_MAX in *; lia).
-pose proof (YFia.grant_parts _ (w64 A) _ GOK) as (GP1 & GP2 & GP3 & _).
+pose proof (YFia.grant_parts _ (w64 A) _ MSB Z9 GOK) as (GP1 & GP2 & GP3 & _).
 pose proof (YFia.grant_zone B ly S _ _ (w64 A) _ HARm L1 MSB Z9 GOK) as GH.
 pose proof (YFia.grant_apart B ly S _ _ (w64 A) _ HARm L1 MSB Z9 GOK) as GA.
 assert (UA : bv_unsigned (w64 A) = A) by (rewrite <- EA; reflexivity). rewrite UA in GP1, GP2, GP3, GH, GA.

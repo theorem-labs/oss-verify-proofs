@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/Rt/StackMalloc4.v of a working branch 5251b347350, for stack_malloc_6 at 0x3dac0 of libreac/fuzz_disco's ASan build: class-6 frame constants (256 frames of 4096 bytes, 512 shadow bytes, hint at +48, flags at +0x8e00, frames at +0x609000), the probe loop's registers, the frame address in a0, the shadow-fill loop's two registers, image numbers and layout bounds from this image's definitions; the contract stated as libreac/fuzz_disco states it, in its unsized form only (astack_malloc_realizes); module names. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/Rt/StackMalloc4.v of a working branch, for stack_malloc_6 at 0x3dac0 of libreac/fuzz_disco's ASan build: class-6 frame constants (256 frames of 4096 bytes, 512 shadow bytes, hint at +48, flags at +0x8e00, frames at +0x609000), the probe loop's registers, the frame address in a0, the shadow-fill loop's two registers, image numbers and layout bounds from this image's definitions; the contract stated as libreac/fuzz_disco states it, in its unsized form only (astack_malloc_realizes); module names. *)
 (* Modified by Theorem Labs, 2026-10: the asan-ubsan twin of lib/A/Rt/StackMalloc6.v, relocated to libreac/fuzz_disco's asan-ubsan build: the same proof text over that image's addresses and the asan-ubsan core's module names. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

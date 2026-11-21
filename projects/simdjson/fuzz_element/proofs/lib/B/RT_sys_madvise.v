@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the advised range is shown free of the reserved list through the tracked mapping it lies in, which the runtime invariant keeps apart from the vDSO pair; taken in part from projects/simdjson/fuzz_ondemand/proofs/lib/B/RT_sys_madvise.v, lines 50-57. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -47,7 +48,14 @@ Proof.
         cbn [fst snd]. rewrite !unsigned_lit by lia. unfold len. lia. }
     destruct Hin as (e & He & He1 & He2).
     apply (madvise_dontneed_ok_intro _ _ _ e He); rewrite ?Eua, ?Eul; [exact He1| exact He2| |].
-    + rewrite Eres. apply reserved_free_above. rewrite Eua. unfold SEGTOP_A. lia.
+    (* LPS 75d69e00: [Eres] is no longer a bare equality -- the launch's vDSO pair follows
+       the image's reservations in the ledger.  The range being advised lies inside the
+       shadow mapping [e] that the runtime already tracks, and ARTM_A's reserved clause
+       puts every tracked mapping apart from the tail, which is what carves the pair out. *)
+    + apply (artm_res_free_in_maps mo _ _ _ Eres He);
+        [ rewrite Eua; exact He1
+        | rewrite Eua, Eul; exact He2
+        | apply reserved_free_above; rewrite Eua; unfold SEGTOP_A; lia ].
     + apply region_free_noaccess_of_uncovered; [exact Hnp| rewrite Eul; exact Hlen| rewrite Eua, Eul; unfold len; lia|].
       intros a Ha. rewrite Eua, Eul in Ha.
       refine (proj2 (Hsl a _)). unfold shreg, K_LOW_SHADOW_lo, K_LOW_SHADOW_hi, K_HIGH_SHADOW_lo, K_HIGH_SHADOW_hi. unfold len in Ha. lia.

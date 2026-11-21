@@ -1,6 +1,6 @@
 (* Theorem Labs, 2026-10: fuzz_preset literal (asan image A, entry pa_val A_TEXT of literal_listing): program walk against tliteral_leafX.
-   #102 (A', pin 1be0f53d96cb, unstripped twin bff8519bbe3e): relocated from the old-pin walk (origin/cold/h-verbs-1-lit-bridgeb
-   34b0f96319c6, pin d83eb25dbf0d) by the alreloc of record c4338d099cfb8025; it moved the three values of literal_entry_pin
+   #102 (A', pin 1be0f53d96cb, unstripped twin bff8519bbe3e): relocated from the old-pin walk (
+   pin d83eb25dbf0d) by the alreloc of record c4338d099cfb8025; it moved the three values of literal_entry_pin
    (literal, __wrap_strlen, __wrap_bcmp entries, each by symbol); everything else is cited by name from the #102 leaf listing
    (lib/A/Listing_leaves.v 34474a8ac69d, PAImg_leaves.v 9c07e1905609: same 74 slots, objects and relro shape as the old pin).
    Read-only premise (2026-10-29): tliteral_leafX at rlo := RLO, rhi := RHI (PI_literal's relro range, = PI_prog_A's

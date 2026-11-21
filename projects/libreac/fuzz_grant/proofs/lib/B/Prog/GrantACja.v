@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/GrantACja.v (a working branch d98082bd58b): image B's objects: the shadow-base GOT word is object 1 (atom 242), the side-stack flag's GOT word object 0 (atom 241), the shadow-base cell object 35 (atom 276) and the side-stack flag cell object 36 (atom 277); so img_factsF / img_hull_factsF give E240 E241 E242 E276 E277 and Hob241 Hob242 Hob276 Hob277; image A's file was made from proofs/cgif/cgif_file_fuzzer/lib/A/ACja.v. *)
+(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/GrantACja.v (a working branch): image B's objects: the shadow-base GOT word is object 1 (atom 242), the side-stack flag's GOT word object 0 (atom 241), the shadow-base cell object 35 (atom 276) and the side-stack flag cell object 36 (atom 277); so img_factsF / img_hull_factsF give E240 E241 E242 E276 E277 and Hob241 Hob242 Hob276 Hob277; image A's file was made from proofs/cgif/cgif_file_fuzzer/lib/A/ACja.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -30,7 +31,7 @@ Local Set Warnings "-abstract-large-number".
 Local Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Open Scope bv_scope.
 Open Scope Z_scope.
-(* relocated cgif tactic export, deliberate (cgif lib/A/ACja.v:31): it redefines evalE (lib/B/Prog/ACj1.v:93 /
+(* relocated cgif tactic export, deliberate (cgif lib/A/ACja.v:31): it redefines evalE (lib/B/Prog/ACj1.v:94 /
    :262) for every file that Requires this one, as cgif's released copy does. Measured call sites on
    a working branch: CheckGroupa.v 53, CtrlLayBlock.v 14, this file 13, ACbf.v 4, ACj1.v 3. The settings
    check (v5 94fd8aea1a50) lists it, as a relocated export, not as a setting this unit wrote. *)

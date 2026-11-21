@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (startup_STOT also states that startup keeps m_kernel; nstep_progress_mmap re-proved for the place_declined_b premise of mmap_safe_no_unmodeled, now part of nsafe; nstep_progress_munmap re-proved to pick a non-spurious munmap answer (exists_nonspurious)). *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
@@ -42,18 +43,20 @@ rewrite <- (check_syscall_mmap i) by reflexivity.
 apply check_syscall_ok_iff. exact Hs2.
 - exfalso. apply (check_syscall_complete_unmodeled _ _ (eff0 (Z_to_bv 64 0))) in Hr.
 rewrite (check_syscall_mmap i) in Hr by reflexivity. cbn [in_arg in_args nth pure_input i] in Hr.
-exact (mmap_safe_no_unmodeled _ _ _ _ _ _ _ _ Hsafe Hr).
+cbn [nsafe] in Hsafe. exact (mmap_safe_no_unmodeled _ _ _ _ _ _ _ _ (proj2 Hsafe) (proj1 Hsafe) Hr).
 Qed.
 Lemma nstep_progress_munmap : forall addr len mo,
-nsafe (NMunmap addr len) mo -> exists rsp mo' evs, nstep (NMunmap addr len) mo rsp mo' evs.
+  nsafe (NMunmap addr len) mo -> exists rsp mo' evs, nstep (NMunmap addr len) mo rsp mo' evs.
 Proof.
-intros addr len mo Hsafe. set (i := pure_input 215 [Z_to_bv 64 addr; Z_to_bv 64 len]).
-pose proof (receptive i mo) as Hr.
-destruct (syscall_spec_witness i mo) as [eff mo' evs|] eqn:E.
-- exists eff, mo', evs. apply nstep_munmap_iff. rewrite <- (check_syscall_munmap i) by reflexivity. apply check_syscall_ok_iff. exact Hr.
-- exfalso. apply (check_syscall_complete_unmodeled _ _ (eff0 (Z_to_bv 64 0))) in Hr.
-rewrite (check_syscall_munmap i) in Hr by reflexivity. cbn [in_arg in_args nth pure_input i] in Hr.
-exact (munmap_safe_no_unmodeled _ _ _ _ Hsafe Hr).
+  intros addr len mo Hsafe. set (i := pure_input 215 [Z_to_bv 64 addr; Z_to_bv 64 len]).
+  pose proof (receptive i mo) as Hr.
+  destruct (syscall_spec_witness i mo) as [eff mo' evs|] eqn:E.
+  - destruct (exists_nonspurious ACFG _ _ _ _ _ Hr) as (eff2 & mo2 & evs2 & Hs2 & Hns2).
+    exists eff2, mo2, evs2. apply nstep_munmap_iff. split; [|exact Hns2].
+    rewrite <- (check_syscall_munmap i) by reflexivity. apply check_syscall_ok_iff. exact Hs2.
+  - exfalso. apply (check_syscall_complete_unmodeled _ _ (eff0 (Z_to_bv 64 0))) in Hr.
+    rewrite (check_syscall_munmap i) in Hr by reflexivity. cbn [in_arg in_args nth pure_input i] in Hr.
+    exact (munmap_safe_no_unmodeled _ _ _ _ Hsafe Hr).
 Qed.
 Lemma nstep_progress_mprotect : forall addr len prot mo,
 nsafe (NMprotect addr len prot) mo -> exists rsp mo' evs, nstep (NMprotect addr len prot) mo rsp mo' evs.
@@ -500,7 +503,8 @@ exact (twf_tpath _ _ _ _ _ _ W Hp).
 + eexists _, _. unfold mbind. apply tpath_ebind. right. exists [], (st', s1), mo0, []. split; [exact EX|]. split; [| reflexivity]. cbn. auto.
 Qed.
 Theorem startup_STOT : forall s mo, minv mo -> m_halted mo = None ->
-STOTP (startup s) mo (fun _ s' mo' => s' = s /\ m_vmmaps mo' = m_vmmaps mo /\ m_fds mo' = m_fds mo /\ m_fs mo' = m_fs mo /\ minv mo' /\ m_halted mo' = None).
+  STOTP (startup s) mo (fun _ s' mo' => s' = s /\ m_vmmaps mo' = m_vmmaps mo /\ m_fds mo' = m_fds mo /\ m_fs mo' = m_fs mo /\ minv mo' /\ m_halted mo' = None
+                                       /\ m_kernel mo' = m_kernel mo).
 Proof.
 intros s mo Hmi Hh. unfold startup.
 eapply STOT_bind; [| intros a s' mo' H; exact (STOT_mono _ _ _ _ _ _ (STOT_ret _ _ tt s' mo') ltac:(intros ? ? ? (-> & -> & ->); exact H))].
@@ -508,7 +512,7 @@ apply STOT_sys.
 - intros rsp mo' evs Hst. pose proof (minv_preserved _ _ _ _ _ Hmi Hh Hst) as [Hh' Hmi'].
 pose proof (nstep_dec_set_tid mo _ _ _ Hmi Hst) as (-> & t & Hd & _ & _). split; [reflexivity|]. exists t. split; [exact Hd|].
 cbn [nstep] in Hst. destruct Hst as (_ & t' & -> & Ht). split; [reflexivity|].
-destruct (m_tid mo); [destruct Ht as [_ ->]; auto 6| destruct Ht as [_ ->]]. rewrite m_vmmaps_with_tid, m_fds_with_tid, m_fs_with_tid. auto 6.
+    destruct (m_tid mo); [destruct Ht as [_ ->]; auto 8| destruct Ht as [_ ->]]. rewrite m_vmmaps_with_tid, m_fds_with_tid, m_fs_with_tid. auto 8.
 - intros code mo' Hx. exact Hx.
 - apply nstep_progress_settid.
 Qed.

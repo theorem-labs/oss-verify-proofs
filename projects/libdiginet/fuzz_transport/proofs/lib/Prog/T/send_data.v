@@ -213,7 +213,7 @@ Qed.
 
 
 
-(* The kit's cell_of_bytes (Lib/Step.v:527) knows le8 / le4 / le2 and a one-element list, but not the bytes an
+(* The kit's cell_of_bytes (Lib/Step.v:528) knows le8 / le4 / le2 and a one-element list, but not the bytes an
    sb of a register writes, [le1 reg]; the store's aftermath would then be skipped and the world lost. One hook
    puts a one-byte store in the list form before the kit's own. *)
 Ltac sd_fix1 :=

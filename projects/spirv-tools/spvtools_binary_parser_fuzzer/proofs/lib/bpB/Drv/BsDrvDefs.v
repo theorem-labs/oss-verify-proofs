@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's channel reader, which a write to the standard channels needs, carried as a premise to the writes). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -254,6 +255,7 @@ Section TargetRun.
     forall (sp : word) (A cap : Z) (data : list byte) (p : bptr) (s : as_St H) (LB : list block)
            (msF : machine_state) (mo : Model) (regs : bvmap 5 word) (mem : word -> option byte) (K : TSet),
       ATRpre sp A cap data p s LB msF mo regs mem ->
+      m_channel_reader mo = true ->
       K [] ->
       (forall (fx' : DFP) regs' mem' msF' mo' s', ATRpost fx' sp A cap data p s LB mo regs mem regs' mem' msF' mo' s' ->
          realizes asegs (mkCfg msF' mo') K) ->

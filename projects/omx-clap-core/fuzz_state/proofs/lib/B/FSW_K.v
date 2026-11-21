@@ -8,18 +8,19 @@
    (lib/A). The [Apache-2.0 OR MIT] text is used under Apache-2.0. The same text also appears in
    projects/cgif/cgif_file_fuzzer/proofs/lib/A/ACai.v:156-159. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/sb_dec_A.v, with its module paths and module names changed; 1279 of its 1357 lines of code are new or changed and 927 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_K.v from a working branch
-   60d0985773d, same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_K.v from a working branch,
+   same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
    FSH_Fn_reader and the other lib/B FSW files); the image-agnostic FSupoison, FSupoisonU, FSH_YC20, FSH_Gen stay lib/A's.
    rule 24: proves no function (kind: segment lemma). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The walk kit for fs's ASan program part over fs.asan-ubsan (image tfibsegs): the image facts the donor engine (YCbq.v
    aj_run / SRr_run_AJ) asks for, the entry symbolic state of a function with a stack frame, the frame transfers below
    alloc_ceiling, register and frame reads of the symbolic state, the state after one program call, and the run / return
    tactics. A kit: no function's contract is proved here (rule 24).
-   Ported from: a Theorem Labs lane's proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_K.v (a working branch 6fb011b3936). Changed:
+   Ported from: a Theorem Labs lane's proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_K.v (a working branch). Changed:
    module path fuzz_manifest -> fuzz_state; fm -> fs names (fm_segs_low -> fs_segs_low, fm_wx -> fs_wx, fmw_* -> fsw_*,
    fm_glob_below -> fs_glob_below over FSH_Base.fs_glob, FM_RLO / FM_RHI -> FS_RLO / FS_RHI); YC20 -> FSH_YC20 (its
-   arodata_okP / apost_base); cstr_ok_below over FSH_Gen.cstr_ok (S0 7dd4849273a text, the same clauses as a Theorem Labs lane's
+   arodata_okP / apost_base); cstr_ok_below over FSH_Gen.cstr_ok (S0 text, the same clauses as a Theorem Labs lane's
    cstr_ok). Added for fs's U form (FSH_Gen.v afn_preU: afn_pre over the memory with the user-poisoned
    shadow bytes of U read as 0): fsw_sp / fsw_entry take afn_preU and read the entry state on the machine's own memory,
    fsw_sp_pre / fsw_entry_pre are the afn_pre corollaries (U = []); fsw_after_callU is fsw_after_call over journals of
@@ -28,7 +29,7 @@
    are the engine's runs with the symbolic state on the machine's memory, the journal over the unpoisoned memory, and
    ARU kept; fsw_ajournal_init_ot starts a journal at a window top ot above the entry sp (FSH_Fn_FORM.md 3a);
    fs_segs_img bounds the image by FSH_Base.FS_IMG_END.
-   Over RELOC's core (a working branch 4b90d538804, a Theorem Labs lane 4c30cd807c4's awr_byte text): awr_byte and
+   Over RELOC's core (a working branch, a Theorem Labs lane's awr_byte text): awr_byte and
    awr_ok take tfibsegs and B, and fr0 (the frames of the journal's entry state, frames S) after own; awr_byte is
    awr_byte0 (the donor's four cases) or an FP image byte that is no owned static or an FP byte of a frame of fr0.
    fsw_dest_okU takes awr_byte0, as YCbq.v awr_byte_present and aj_intrin_at do (an image byte need not be present);

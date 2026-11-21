@@ -14,7 +14,7 @@
 
    IMAGE ROOT: the ORIGINAL v1.9.0 set, which is what the statements target --
    the pinned fuzz_pcap images and their unstripped twins,
-   statements ed6b6b7b0ab. NOT the toolchain-N images: a runtime premise
+   statements. NOT the toolchain-N images: a runtime premise
    true on one can be false on the other (another proof's
    malloc_context_size = 1 is exactly such a premise, true on N and false here).
 
@@ -22,6 +22,7 @@
    (sha256 36da3052c383; the unstripped twin of the
    pin fuzz_pcap.asan (sha256 b7a91d9b1fb0)), from its nm / readelf / objdump dumps.
    Addresses are cited at each definition. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 (* val_mem / garr8 / bytes_ok come from pcap's own Reusable layer, which is

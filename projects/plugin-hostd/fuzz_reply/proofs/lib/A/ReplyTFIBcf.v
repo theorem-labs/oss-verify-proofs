@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/AD1pcf.v, with its module paths and module names changed; 115 of its 151 lines of code are new or changed and 210 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises)). *)
 (* The cf driver's top for plugin-hostd/fuzz_reply.asan: TFIB_T (lib/A/ReplyTFIB.v) from fuzz_reply's cf program
    interface at route R, fr_lib_contract_drvR (lib/A/AD1w_cf.v) at the world relation wle' tfibsegs RZ_cf (the library
    run can free), the form ReplyATop.v's DRIVER_CF consumes it in.
@@ -127,30 +128,32 @@ Let EXS : exit_site_tfa B est xst. Proof. eapply tfib_exit_site; eassumption. De
 Lemma reply_srealizesX_rc_cf : forall sp rdraw brk mb inp,
 valid_sp sp -> valid_brk TSEGS brk -> valid_mmap_base mb ->
 entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
 YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
 srealizes TSEGS (init_config TSEGS Asan.M.init_pc TPH sp brk mb rdraw target_alloc_limit inp) (SPECX inp).
 Proof.
-intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil.
+intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil.
 change target_alloc_limit with YA02.LIMIT.
 exact (tfib_srealizesX B HB NP NPI NPS NPT (AMALLOC rc) (AFREE rc) AICPY ARDCHK MT XM_LIB XN_LIB REPLY_RO_LO REPLY_RO_HI
   NS NRUN XNMAX MT_PRE NS_MO XN_BND HULL_NS nsec_malloc_cf nsec_free_cf NS_START RO_IN RO LIBX
   xst XFR PF1 PFN est ESTI ESTF FWS RFS FPO FPR FPU EXS HCOVD (HSTART rc) HSTART_ARO (HSTART_PF rc) HROWS HPFO
-  sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil).
+  sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil).
 Qed.
 End RC.
 Theorem reply_srealizesX_top_cf : forall sp rdraw brk mb inp,
 valid_sp sp -> valid_brk TSEGS brk -> valid_mmap_base mb ->
 entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
 srealizes TSEGS (init_config TSEGS Asan.M.init_pc TPH sp brk mb rdraw target_alloc_limit inp) (SPECX inp).
 Proof.
-intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp.
+intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau.
 exact (@reply_srealizesX_rc_cf (YM05.RunCeilOf (bv_unsigned sp) (valid_sp_windowX sp Hsp) target_alloc_limit) sp rdraw brk mb inp
-  Hsp Hbrk Hmb Hfit Hinp (YM05.ceil_of_top_run _)).
+  Hsp Hbrk Hmb Hfit Hinp Hlau (YM05.ceil_of_top_run _)).
 Qed.
 (* TFIB_T from the cf program interface, the meter's room at each call, the run count's laws, NP's laws, the cf
    allocator's realizers and drv_pre's read-only facts *)
 Theorem reply_TFIB_T_of_cf : TFIB_T.
-Proof. intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp. exact (reply_srealizesX_top_cf sp rnd brk mbase inp Hsp Hbrk Hmb Hfit Hinp). Qed.
+Proof. intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau. exact (reply_srealizesX_top_cf sp rnd brk mbase inp Hsp Hbrk Hmb Hfit Hinp Hlau). Qed.
 End b.
 
 

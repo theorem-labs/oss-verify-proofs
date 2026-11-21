@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO, walks lifted to the run's segments): changed noref_of_within_budget, srealizes_init_must_exit, srealizes_must_exit_fo and 1 more; added m_halted_with_vdso. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Classical.
@@ -125,6 +126,14 @@ Proof.
     match goal with [ H : mi_account_step _ _ _ = MachineOk _ |- _ ] =>
       pose proof (mi_account_step_model_frame _ _ _ _ _ H) as (_ & _ & _ & _ & _ & Hp & _) end.
     rewrite (m_halted_of_proc _ _ Hp) in Hh. congruence.
+  - (* the vDSO call arm, new at LPS ca39bcd5: the post-model is
+       [with_vdso_bump model''], so the halt flag has to come back through the
+       bump before the materialization frame applies.  Both keep [m_proc]. *)
+    exfalso.
+    rewrite (m_halted_of_proc _ _ (m_proc_with_vdso_bump _)) in Hh.
+    match goal with [ H : materialize_model_accesses _ _ = Some _ |- _ ] =>
+      pose proof (materialize_model_accesses_frame _ _ _ H) as (_ & _ & _ & _ & _ & Hp & _) end.
+    rewrite (m_halted_of_proc _ _ Hp) in Hh. congruence.
   - (* [comment removed for export] *) exfalso.
     match goal with [ H : materialize_model_accesses _ _ = Some _ |- _ ] =>
       pose proof (materialize_model_accesses_frame _ _ _ H) as (_ & _ & _ & _ & _ & Hp & _) end.
@@ -190,7 +199,7 @@ Theorem srealizes_must_exit_fo : forall c T,
   must_exit_in_at_cfg forced_only_cfg segs S c.
 Proof.
   intros c T H.
-  induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c Hspin Hh Hmode | c T T' H IH Heq | c T Hon Hbr HT0];
+  induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c Hspin Hh Hmode | c T T' H IH Heq | c T Hon Hbr Hbrob HT0];
     intros Hreach HE HK Hhalt.
   - (* [comment removed for export] *)
     destruct Hnode as [Hcomp Hsound].
@@ -236,28 +245,45 @@ Section Top.
 Context {fx : PropExec.FPState} {bmK : BMode}.
 Hypothesis BMON : bm_on = true.
 
-(* [comment removed for export] *)
+(* Native budget refusal uses the complete launch segment mapping. *)
 Lemma noref_of_within_budget : forall segs pc ph sp brk0 mb rnd lim inp,
   ~ run_scfg_budget_refused forced_only_cfg (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp ->
-  forall c, reach_fo segs (init_config segs pc ph sp brk0 mb rnd lim inp) c -> ~ budget_refused_at segs c.
+  forall c, reach_fo (run_segments segs inp sp mb)
+    (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) c ->
+    ~ budget_refused_at (run_segments segs inp sp mb) c.
 Proof.
   intros segs pc ph sp brk0 mb rnd lim inp Hnb c (tr & Hstar) Hbr.
   apply Hnb. cbn [run_scfg_budget_refused]. exists tr, c. split; [exact Hstar | exact Hbr].
 Qed.
 
+(** [Run.init_config] no longer hands [init_model] straight to [mkCfg]: at LPS
+    75d69e0079f9 (Run.v:1426-1431) it wraps it,
+      with_vdso (vdso_run_init (ed_vdso mi_draw)) (init_model ...)
+    so [State.m_halted_init_model]'s subterm [m_halted (init_model ...)] is no
+    longer present and the rewrite below failed with "Found no subterm
+    matching".  [with_vdso] (State.v:5031-5034) rebuilds the VM subsystem and
+    passes [m_proc] through unchanged, and [m_halted m := procst_halted
+    (m_proc m)] (State.v:4900), so this is the missing frame fact, in the same
+    one-line [reflexivity] form as the model's own [m_proc_with_vdso]
+    (State.v:5042).  Nothing is weakened: the conclusion below is unchanged. *)
+Lemma m_halted_with_vdso : forall v m, m_halted (with_vdso v m) = m_halted m.
+Proof. reflexivity. Qed.
+
 Theorem srealizes_init_must_exit : forall scfgD segs pc ph sp brk0 mb rnd lim inp S T,
-  srealizes segs scfgD (init_config segs pc ph sp brk0 mb rnd lim inp) T ->
+  srealizes (run_segments segs inp sp mb) scfgD
+    (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) T ->
   exit_codes_in S T -> kill_free T ->
   ~ run_scfg_budget_refused forced_only_cfg (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp ->
   must_exit_in_scfg forced_only_cfg S (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp.
 Proof.
   intros scfgD segs pc ph sp brk0 mb rnd lim inp S T Hs HE HK Hnb.
   cbn [must_exit_in_scfg].
-  eapply (srealizes_must_exit_fo segs scfgD BMON S _ (noref_of_within_budget _ _ _ _ _ _ _ _ _ Hnb)).
+  eapply (srealizes_must_exit_fo (run_segments segs inp sp mb) scfgD BMON S _ (noref_of_within_budget _ _ _ _ _ _ _ _ _ Hnb)).
   - exact Hs.
   - apply reach_fo_refl.
   - exact HE.
   - exact HK.
-  - intros code Hh. exfalso. unfold init_config in Hh. cbn [cfg_model] in Hh. rewrite m_halted_init_model in Hh. discriminate Hh.
+  - intros code Hh. exfalso. unfold init_config in Hh. cbn [cfg_model] in Hh.
+    rewrite m_halted_with_vdso, m_halted_init_model in Hh. discriminate Hh.
 Qed.
 End Top.

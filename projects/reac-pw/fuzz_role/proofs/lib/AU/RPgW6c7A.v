@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6c7A.v at 4c23b042570d for reac-pw/fuzz_role's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6c7A.v for reac-pw/fuzz_role's
    image B (fuzz_role.asan-ubsan): image B's pcs; the atoms are the B head's extra env slots (t in atom 33, s in atom
    34); the names are w6cb_; the module requires no image file; w6cb_s12_U added (the unsigned value, for the branch
    conditions). *)

@@ -1,6 +1,6 @@
 # G8: kept donor image geometry by value, roundconst v2, over the image B files (gate record)
 
-Proves no function (kind: measurement). Re-run 2026-10-30 on the series base b1afc3e80791 (`run.sh g8`).
+Proves no function (kind: measurement). Re-run 2026-10-30 on the series base (`run.sh g8`).
 
 ## Tool
 roundconst.py v2, sha256 `32b39f3b34e97818cd71be57afda15f6aba21ede5fe2d1016f939ede19ac26cc` (its README is the method
@@ -40,7 +40,7 @@ the hand-off states), `extent-to-next` 212, `extent-to-next/2` 112, `extent-to-n
 Each plant is a copy of one image B file with ONE numeral set back to the DONOR's numeral at that position (column 11
 of the unplanted run), checked with G7's command on that file (`--dst <copy dir> --include <file>`) and an unplanted
 copy of the same file, then roundconst v2 (and v1) on both tables.
-1. **Donor on donor**: port_addr_check 3d2eee813cce, cgif's lib c8557374ad2e against itself with cgif's four images
+1. **Donor on donor**: port_addr_check 3d2eee813cce, cgif's lib against itself with cgif's four images
    on both sides (`--include 'Y*.v'`, 1449 files paired), then roundconst with cgif's images and twins on both sides:
    504706 kept rows selected, **0 non-SAME**.
 2. **Kept donor PT_LOAD length** (rc2): `lib/Reusable/YB1h.v:47` `tfib_res_eq ... (Z_to_bv 64 0x30000, Z_to_bv 64

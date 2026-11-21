@@ -1,4 +1,4 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamBase.v (a working branch 3e35620c52e); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMgxaSeamBase.table); names: record RT_IImgA -> . *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamBase.v (a working branch); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMgxaSeamBase.table); names: record RT_IImgA -> . *)
 (* Step 1 of the evt -> SRr seam at musl vfprintf: the PRIMITIVE BRIDGES between the harness's
    view of memory and the CJ tree's.
 
@@ -28,7 +28,7 @@ Local Open Scope Z_scope.
 Definition cjstore (H : word -> bool) (mem : word -> option byte) : word -> option byte :=
   mrestrict H mem.
 
-(* a Theorem Labs lane's premise (a working branch 445e498a469 lib/A/FMbz_str.v:288), restated here because
+(* a Theorem Labs lane's premise (a working branch lib/A/FMbz_str.v:289), restated here because
    a Theorem Labs lane dropped it from asnprintf_realizes (design/SNPRINTF-SHARED.md section 3): the mutable
    store holds no byte at a read-only address and none above the user address limit.  The CJ engine
    asks for it under the name mem_inv at every walk. *)

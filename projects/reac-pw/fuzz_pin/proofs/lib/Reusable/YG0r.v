@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Ported to libreac/fuzz_knock by h-rw-kno-5 from proofs/cgif/cgif_file_fuzzer/lib/YG0r.v at c8557374ad2: module paths renamed; no statement, proof, or constant changed. *)
+(* Ported to libreac/fuzz_knock by h-rw-kno-5 from proofs/cgif/cgif_file_fuzzer/lib/YG0r.v at theorem-labs/oss-verify-proofs@6b32741d849a: module paths renamed; no statement, proof, or constant changed. *)
 (* Modified by Theorem Labs, 2026-10: the depot fields of init_facts and their proofs are picked by DepotCfg.depot_has_trace (one-trace text when true). *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YG0r.v at origin/ossv/recipes 6ebe35ba632 (fuzz_knock's released ASan tree); module paths changed to reac-pw/fuzz_pin. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YG0r.v (fuzz_knock's released ASan tree); module paths changed to reac-pw/fuzz_pin. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

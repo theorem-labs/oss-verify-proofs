@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/AGif0n.v at 95e6f1d72b6 (sha256 ce897a2285b6) into lib/Reusable (shared by both images), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/AGif0n.v (sha256 ce897a2285b6) into lib/Reusable (shared by both images), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The primary interface between the frame-generic Allocate walk (the AG* files) and an allocator model, over the image
    classes ImgBase.AImg / ImgBaseAG.AGImg (no image: cgif_file's values are in AGif2cgif.v and AGif0cgif.v): hview,
    hit_writes, wframe, at_RETw / at_RETkw, malloc_join_t, mview, rleaf, the records AIface / AIfaceK / AIfaceM and the
@@ -126,7 +127,7 @@ K6.WINT ly cl a \/ ((K6.Kv ly cl v <= a < K6.Kv ly cl v + 16) \/ (K6.Uv ly cl v 
 K6.PBW ly n cl v odd a \/ ag_dzone ly a \/ (K6.SUv ly cl v <= a < K6.SUv ly cl v + K6.N8D n / 8).
 
 (* The cache join with the spin tag of the dead shadow-remap branch as a parameter: [malloc_join_t 12] is
-   YFi3.malloc_join (cgif_file's [spin 449860], YG00.v:425); an instance with another tag keeps the same shape. *)
+   YFi3.malloc_join (cgif_file's [spin 449860], YG00.v:426); an instance with another tag keeps the same shape. *)
 Definition malloc_K_t (stag : Z) (n : Z) (trace : list Z) (ob : option sptr) : M sptr :=
 match ob with
 | None => ret PNull

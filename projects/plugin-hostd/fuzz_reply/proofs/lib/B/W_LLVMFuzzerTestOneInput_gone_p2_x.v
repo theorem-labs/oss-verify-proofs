@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx-GENERIC twin of ARM_gone's phase p2 on image B (lib/B/W_LLVMFuzzerTestOneInput_gone_p2.v,
-   a Theorem Labs lane's, fee5272ac13: the relay_reads loop, GL1 to GRG), for the conversion of ARM_gone to the cut invariants of
+   a Theorem Labs lane: the relay_reads loop, GL1 to GRG), for the conversion of ARM_gone to the cut invariants of
    lib/B/W_LLVMFuzzerTestOneInput_cut_x.v.  _gone_p2.v is not edited.
    - CITED from _gone_p2.v: its AR-free names (the run states, g2_azs_sub, g2_slot_open, g2_reads_*, g2_abk_*,
      g2_cs_pres, g2_prefix_kept, g2_gframe_kept, ...), with the Section variables they were generalized over;
    - RESTATED over ARx at the ghost list []: B's own steps (image B calls relay_reads out of line, image A inlines it):
      g2_mid / g2_head (the call, through cut_x's RRDS_x and base_x's gn_afn_pre_x, the callee's journal lifted by
      W_journal_x's ajournal_gx_G_mono_x / ajournal_gx_sub_x), g2_tail_post / g2_tail (the store), g2_step (tk_x's kept
-     lemmas), and, merged per item with SmallX's image-A twin lib/A/W_LLVMFuzzerTestOneInput_gone_p2_x.v (95a5de32ab2),
+     lemmas), and, merged per item with SmallX's image-A twin lib/A/W_LLVMFuzzerTestOneInput_gone_p2_x.v,
      g2_loop and the phase lemma gp2_l1_rig.
    Section hypotheses beyond cut_x's header: HZS / HERR verbatim (AR-free), cut_x's RRDS_x, BLKN (as on image A). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
@@ -135,9 +136,9 @@ Hypothesis HZS : GN_HZS B.
 (* errno's place: the base's model obligation, verbatim (amodel_at's aout_at reads errno across the call) *)
 (* @@ HDR-CITED-IN-AX Hypothesis HERR *)
 Hypothesis HERR : GN_ERRNO_LOW B.
-(* relay_reads (0x864e8): the cut's RRDS (lib/B/W_LLVMFuzzerTestOneInput_cut.v:707 at 61da015af91), text verbatim *)
+(* relay_reads (0x864e8): the cut's RRDS (lib/B/W_LLVMFuzzerTestOneInput_cut.v:707), text verbatim *)
 (* @@ B-ONLY-AR[afn_pre,aleafx_post] Hypothesis RRDS *)
-(* relay_reads (0x864e8): cut_x's Section hypothesis RRDS_x (W_LLVMFuzzerTestOneInput_cut_x.v:580), verbatim *)
+(* relay_reads (0x864e8): cut_x's Section hypothesis RRDS_x (W_LLVMFuzzerTestOneInput_cut_x.v:581), verbatim *)
 Hypothesis RRDS_x : forall W ly S Hp (regs : bvmap 5 word) mem md ch T es HA h,
   afn_pre_x segs B ARx RRDS_STK ly S Hp W regs mem md ch ->
   getr regs 10 = w64 HA -> 0 < HA -> HA mod 8 = 0 -> azs B HA 4 ->
@@ -238,7 +239,7 @@ Proof.
   assert (Hopen01 : 0 <= open <= 1) by (unfold open, g2_sopen; destruct (nth q (lm_hs m) None); lia).
   assert (HZSA : azs B (rg_s fr_RG + ASRC * Z.of_nat q + 4) 8)
     by (apply (g2_azs_sub B (rg_s fr_RG) (4 * ASRC)); [exact HZS | lia | lia]).
-  (* RRDS's shadow premise (cut 61da015af91): g_s[q]'s first four bytes, a sub-range of GN_HZS *)
+  (* RRDS's shadow premise (cut): g_s[q]'s first four bytes, a sub-range of GN_HZS *)
   assert (HZS4 : azs B (rg_s fr_RG + ASRC * Z.of_nat q) 4)
     by (apply (g2_azs_sub B (rg_s fr_RG) (4 * ASRC)); [exact HZS | lia | lia]).
   assert (HSH : (rg_s fr_RG + 4) / 8 + 12 * Z.of_nat q = (rg_s fr_RG + ASRC * Z.of_nat q + 4) / 8)
@@ -895,7 +896,7 @@ Proof.
   assert (Hopen01 : 0 <= open <= 1) by (unfold open, g2_sopen; destruct (nth q (lm_hs m) None); lia).
   assert (HZSA : azs B (rg_s fr_RG + ASRC * Z.of_nat q + 4) 8)
     by (apply (g2_azs_sub B (rg_s fr_RG) (4 * ASRC)); [exact HZS | lia | lia]).
-  (* RRDS's shadow premise (cut 61da015af91): g_s[q]'s first four bytes, a sub-range of GN_HZS *)
+  (* RRDS's shadow premise (cut): g_s[q]'s first four bytes, a sub-range of GN_HZS *)
   assert (HZS4 : azs B (rg_s fr_RG + ASRC * Z.of_nat q) 4)
     by (apply (g2_azs_sub B (rg_s fr_RG) (4 * ASRC)); [exact HZS | lia | lia]).
   assert (HSH : (rg_s fr_RG + 4) / 8 + 12 * Z.of_nat q = (rg_s fr_RG + ASRC * Z.of_nat q + 4) / 8)

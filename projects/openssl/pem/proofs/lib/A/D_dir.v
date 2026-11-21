@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the write-certified stack window). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -43,7 +44,7 @@ Hypothesis LIB_loc : fp_local LIB_FP LIB.
 Hypothesis IO_img : forall x, in_ranges IO_FP x -> client_static x /\ ~ drv_cell x /\ outside LIB_FP x.
 Hypothesis XENV_img : forall x, in_ranges XENV_FP x -> client_static x /\ ~ drv_cell x /\ outside IO_FP x /\ outside LIB_FP x.
 
-Local Ltac ul := unfold SEGTOP_A, STACK_WIN, USTACK_TOP, RT_STACK, g_read_stage in *; lia.
+Local Ltac ul := pose proof STACK_WOK_val; unfold SEGTOP_A, STACK_WIN, USTACK_TOP, RT_STACK, g_read_stage in *; lia.
 
 Lemma errno_A : errno_cell (Z_to_bv 64 TP_A) = ERRNO_A.
 Proof. unfold errno_cell, ERRNO_A, TP_A. rewrite unsigned_lit by lia. reflexivity. Qed.
@@ -63,7 +64,11 @@ Proof using AF AF_DRV MAL RDIR FPR EXC VARGV OUT_loc ERR_loc XENV_loc LIB_loc IO
   pose proof (af_sp0_range RT AF Σ m ART0) as SP0R.
   pose proof HSIG as (LV & FRS & CR & USP0' & SPW).
   destruct (path_b_facts argvb VARGV HL) as (NZ & NSL & NDD & LEN).
-  set (lo := rt_sp0 RT Σ - STACK_WIN) in *.
+  (* The hand-off certificate now carries [stk] from the write-certified floor, so the
+     abstract [lo] the interfaces are instantiated at has to be that floor too; the
+     interfaces' own side condition is [rt_sp0 - STACK_WIN <= lo], which a HIGHER lo
+     satisfies more easily. *)
+  set (lo := rt_sp0 RT Σ - STACK_WOK) in *.
   set (F1 := fd_insert fds0 (Z_to_bv 64 3) FdDir) in *.
   rewrite nth1_argv_Z.
   replace (evw 2 (msg_read_error (map bv_unsigned (nth 1 argvb []))))

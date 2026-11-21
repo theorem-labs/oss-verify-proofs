@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs: generated for reac-pw/fuzz_role image B by gen_ad2.py 8a509576b937 from this image's 50 collected hand-off states (lib/AU/YB01.v), its atable (lib/AU/YB12.v) and Tfib_owned_static (lib/AU/YF0m.v), templates proofs/cgif/cgif_file_fuzzer/lib/YD2i.v and YD2j.v at c8557374ad2e; Requires placed in lib.Reusable / lib.AU by proofs/libreac/fuzz_knock/lib/AU at origin/ossv/recipes 88154566652; the atable values read from atable.py 6a35bb77e745's numeral emission of the same table (gen_ad2 resolves only a Definition-form YImgTop.v, the unit's image-B layer takes the Notation form) *)
+(* Modified by Theorem Labs: generated for reac-pw/fuzz_role image B by gen_ad2.py 8a509576b937 from this image's 50 collected hand-off states (lib/AU/YB01.v), its atable (lib/AU/YB12.v) and Tfib_owned_static (lib/AU/YF0m.v), templates proofs/cgif/cgif_file_fuzzer/lib/YD2i.v and YD2j.v at theorem-labs/oss-verify-proofs@6b32741d849a; Requires placed in lib.Reusable / lib.AU by proofs/libreac/fuzz_knock/lib/AU; the atable values read from atable.py 6a35bb77e745's numeral emission of the same table (gen_ad2 resolves only a Definition-form YImgTop.v, the unit's image-B layer takes the Notation form) *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_role.asan-ubsan (reac-pw/fuzz_role asan-ubsan) sha256 b255d4935da5af137a3967dbe33380ea43be8e78bfe05d1e356e0a2be8a69ff0; unstripped twin sha256 dc791783f32962615e18a5f5cffae758ba56eb5dc87f70913c3579b101b4406a *)
 From OSSVerify.Proofs.reac_pw.fuzz_role.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List.

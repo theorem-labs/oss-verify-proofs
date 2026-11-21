@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module names changed; 1754 of its 1873 lines of code are new or changed and 892 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/Tac_f36.v, with its addresses changed; 323 of its 425 lines of code are new or changed and 1771 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Footprint (ExecF.evtF) twins of the machine runs of lib/B/Prog/Seg/Tac_f36.v (segment F36 of fuzz_ctrl
    LLVMFuzzerTestOneInput, asan-ubsan image B). Bridge input for the cgif-form walk only.
    rule 24: no function proved. *)
@@ -11,10 +12,10 @@
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
    source runs: lib/B/Prog/Seg/Tac_f36.v f36_evt_c20, f36_evt_c2c, f36_evt_hit, f36_evt_c24, f36_evt_last,
-     f36_evt_next, f36_evt_pre, f36_evt_call, f36_evt_call_ro at a working branch 3803efccea0
+     f36_evt_next, f36_evt_pre, f36_evt_call, f36_evt_call_ro at a working branch
      (blob 6c08f44bcc36243b384c97652381360492cd712c);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    compare: f36_evt_c20_of_F, f36_evt_c2c_of_F, f36_evt_hit_of_F, f36_evt_c24_of_F, f36_evt_pre_of_F
      (evtF_evt + rng_all) re-derive the source statements verbatim; f36_evt_next_of_F_bounded and
      f36_evt_last_of_F_bounded re-derive them under four added address bounds (the source statement bounds

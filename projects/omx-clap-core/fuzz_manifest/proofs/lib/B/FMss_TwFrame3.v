@@ -1,5 +1,5 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMss_TwFrame3.v at a working branch b6bc009d623, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
-(* lib/A/Prog/TwFrame3.v (a Theorem Labs lane's port, unchanged from a working branch affce6489c8), re-run over the
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMss_TwFrame3.v at a working branch, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
+(* lib/A/Prog/TwFrame3.v (a Theorem Labs lane's port, unchanged from a working branch), re-run over the
    local-shadow TW_ASAN, twoway post and memchr wrapper contract (FMss_TwAsan.v, FMss_twoway_strstr_c.v,
    FMss_memchr_wrap_c.v).  Changed lines: the imports, MCW's type and its unfold, and the memchr call's shadow
    premise (shvis_sub of the haystack's, as the line above it does for addressable). *)

@@ -1,16 +1,17 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Does not rest on tex_word_specX or memnorm: EXV_HYP has neither field since b29a52d6b76b / 379ec9e4a7d5. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Does not rest on tex_word_specX or memnorm: EXV_HYP has neither field. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B, ex_value: the SHARED CALL KIT of the segment lanes (owner ExvLoop,
    agreed with ExvOpen / ExvDisp 2026-10-29): the two facts every segment with a program call needs, stated over
-   ExvB_Stmt.v's EXB (ffa8f3087d2). This file STATES them (as Props); their proofs are lib/B/Prog/ExvB_Loop_kitP.v
+   ExvB_Stmt.v's EXB. This file STATES them (as Props); their proofs are lib/B/Prog/ExvB_Loop_kitP.v
    (exv_kit_call, exv_kit_chain), so a lane can code against the statement before the proof lands.
    (a) KIT_EXB_CALL: EXB at the state after a program call made from a cut's state with sp = s1 (the window callee
        form of YCbqGcallW.v aj_call_xW_sp / aj_call_xWF_sp: window e1 = exv_sp E + e_d E - exv_s1 E, so the callee's
        widened journal ends at exv_sp E + e_d E), the callee's footprint inside exv_FP E, the callee's Q giving the
        room (exv_room Sc S2: S2 = Sc for the kit's non-allocating texts, the room / iface implications and the hull
        use of the recursive call's post), the memnorm keep at the post memory (the callee's m-form keep composed with EXB's), Hp
-       / ablocks / ledger part (old-pin kit 4f18c75d4900 rebind, ExvLoop 2026-10-29); also the bytes [exv_s1 E, exv_sp E) of ex_value's own frame (the spills, the
+       / ablocks / ledger part (old-pin kit rebind, ExvLoop 2026-10-29); also the bytes [exv_s1 E, exv_sp E) of ex_value's own frame (the spills, the
        saved registers, 176(s1)) unchanged.
    (b) KIT_CALL_CHAIN: the frame chain a program call made from ex_value takes (aj_call_xW_sp's achain premise), and
        the prhex_ch_apart of it, which tex_value_specX asks of the nested call: ex_value keeps s0 = its entry sp, so

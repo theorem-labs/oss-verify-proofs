@@ -14,6 +14,6 @@ Each table starts with a comment line naming the image it was read from and how.
 How they were made: one read-only Python script (pyelftools for the ELF sections and symbols, capstone RISCV64+C for
 the disassembly of the pin's .text) run once over the pins and their unstripped twins, writing
 `<table>.<image>.tsv` into an output directory: `python3 image_measure.py OUTDIR`. The script is kept byte for byte,
-because its own text names the machine paths it read the binaries from, in the unit's internal record: commit
-811615904648c11c8fbe72140c0acec195b30f31, path records/image-tables/image_measure.py, sha256
+because its own text names the machine paths it read the binaries from, in the unit's internal record:,
+path records/image-tables/image_measure.py, sha256
 44639d31a95ae7d4a0d2a90c1112d343e3796fd57612a783de8730e5b515894d. (It was run under a working name; the record gives it this role name.)

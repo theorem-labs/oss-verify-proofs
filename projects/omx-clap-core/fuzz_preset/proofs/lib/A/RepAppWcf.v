@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepAppWcf.v (commit 3cae605a900a, blob 0428d3e06ef8) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; pin 1be0f53d96cb), from cgif_file_fuzzer asan-ubsan ce511d541cda (pin 1c29845fe605), the cf layer at part 3c; module paths changed; 65 image numerals moved by port_addr_check 3d2eee813cce MAPS predictions and the twins' symbol + offset map (0 model labels and sizes kept); no other numeral changed; comments removed (the source file keeps them). *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepAppWcf.v (blob 0428d3e06ef8) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; pin 1be0f53d96cb), from cgif_file_fuzzer asan-ubsan ce511d541cda (pin 1c29845fe605), the cf layer at part 3c; module paths changed; 65 image numerals moved by port_addr_check 3d2eee813cce MAPS predictions and the twins' symbol + offset map (0 model labels and sizes kept); no other numeral changed; comments removed (the source file keeps them). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -253,7 +254,8 @@ Proof.
 intros data cap lo hi Hc Hlh HB. destruct (ext_apart lo hi data cap data cap Hc ltac:(lia) ltac:(lia) ltac:(lia) HB) as [X|[X|X]]; lia.
 Qed.
 
-Lemma grant_wvb : forall md l mat a n, YK13.grant_ok_na_pin (with_vm_backing l mat md) a n = YK13.grant_ok_na_pin md a n.
+Lemma grant_wvb : forall hint md l mat a n,
+  YK13.grant_ok_na_pin hint (with_vm_backing l mat md) a n = YK13.grant_ok_na_pin hint md a n.
 Proof. intros. reflexivity. Qed.
 Lemma vm_frameH : forall (H H' : word -> bool) (mem mem' : word -> option byte) a n v,
   (forall k, (k < n)%nat -> H' (Z_to_bv 64 (a + Z.of_nat k)) = H (Z_to_bv 64 (a + Z.of_nat k)) /\
@@ -463,7 +465,7 @@ Definition remap_post (W : world tfibsegs) (regs : bvmap 5 word) (mem : word -> 
   wle W W' /\ w_A W' = w_A W /\
   (forall x : word, a <= bv_unsigned x < a + ncap -> w_H W' x = false) /\
   (forall x : word, ~ (a <= bv_unsigned x < a + ncap) -> w_H W' x = w_H W x) /\
-  YK13.grant_ok_na_pin md (w64 a) ncap = true /\ 0 < a /\ a + ncap < 2 ^ 64 /\
+  YK13.grant_ok_na_pin (Z_to_bv 64 0) md (w64 a) ncap = true /\ 0 < a /\ a + ncap < 2 ^ 64 /\
   c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom tfibsegs)) mdF /\
   regs_preserved regs regs' /\
   (forall x : word, ~ (sp - 512 <= bv_unsigned x < sp) -> ~ (O_ <= bv_unsigned x < O_ + 56) ->
@@ -496,11 +498,11 @@ Lemma app_grow : forall {R : Type} (K : Z -> itree astate R) (Q : R -> world tfi
      (data + i < sp - 512 \/ p + len + 1 <= data + i)) ->
   amwf md ->
   (forall mat, Z.of_nat (length mat) * page_size <= A_bytes (w_A W) ->
-     Placement.mmap_grant_refusable (w64 34) (with_vm_backing (m_vm_lazy md) mat md) ncap = false) ->
-  (forall a : word, YK13.grant_ok_na_pin md a ncap = true ->
+     Placement.mmap_grant_refusable (w64 34) (Z_to_bv 64 0) (with_vm_backing (m_vm_lazy md) mat md) ncap = false) ->
+  (forall a : word, YK13.grant_ok_na_pin (Z_to_bv 64 0) md a ncap = true ->
      (bv_unsigned a + ncap <= TFIB_IMG_LO \/ TFIB_IMG_END <= bv_unsigned a) /\
      (bv_unsigned a + ncap <= sp - 512 \/ p + len + 1 <= bv_unsigned a)) ->
-  (forall (a2 : Z) (pg : word), YK13.grant_ok_na_pin md (w64 a2) ncap = true -> a2 <= bv_unsigned pg ->
+  (forall (a2 : Z) (pg : word), YK13.grant_ok_na_pin (Z_to_bv 64 0) md (w64 a2) ncap = true -> a2 <= bv_unsigned pg ->
      bv_unsigned pg + page_size <= a2 + ncap -> page_in_ranges pg (m_vm_lazy md) = false) ->
   eager_used md + A_bytes (w_A W) + ncap <= vm_limit (m_vmmaps md) ->
   val_mem tfibsegs m 0xa1ff0 8 0x13a960 -> val_mem tfibsegs m 0x13a960 8 4096 ->
@@ -629,7 +631,7 @@ srr_branch_sh tbl_app_ok HS.
     assert (Ua : bv_unsigned (w64 a) = a) by (unfold w64; apply unsigned_lit_small; lia).
     destruct (HGA (w64 a) Hgr) as [GA1 GA2]. rewrite Ua in GA1, GA2.
     assert (GOD : a + ncap <= data \/ data + cap <= a).
-    { pose proof (YGcfXs.grant_apart_cf md a ncap data cap Hgr ltac:(lia) ltac:(lia) Hdin ltac:(lia) ltac:(lia)) as Z1.
+    { pose proof (YGcfXs.grant_apart_cf md a ncap data cap Hgr ltac:(lia) NCA ltac:(lia) ltac:(lia) Hdin ltac:(lia) ltac:(lia)) as Z1.
       unfold zdisjoint in Z1. cbn [fst snd] in Z1. lia. }
 
     assert (EQR : forall x : word, ~ AZ sp (bv_unsigned x) -> ~ (a <= bv_unsigned x < a + ncap) -> ~ (data <= bv_unsigned x < data + cap) -> memR x = mem x).
@@ -757,7 +759,7 @@ Definition first_post (W : world tfibsegs) (regs : bvmap 5 word) (mem : word -> 
   wle W W' /\ w_A W' = w_A W /\
   (forall x : word, a <= bv_unsigned x < a + ncap -> w_H W' x = false) /\
   (forall x : word, ~ (a <= bv_unsigned x < a + ncap) -> w_H W' x = w_H W x) /\
-  YK13.grant_ok_na_pin md (w64 a) ncap = true /\ 0 < a /\ a + ncap < 2 ^ 64 /\
+  YK13.grant_ok_na_pin (Z_to_bv 64 0) md (w64 a) ncap = true /\ 0 < a /\ a + ncap < 2 ^ 64 /\
   c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom tfibsegs)) mdF /\
   regs_preserved regs regs' /\
   (forall x : word, ~ (sp - 512 <= bv_unsigned x < sp) -> ~ (O_ <= bv_unsigned x < O_ + 56) ->
@@ -784,11 +786,11 @@ Lemma app_first1 : forall {R : Type} (K : Z -> itree astate R) (Q : R -> world t
   0 <= data < 2 ^ 64 -> 0 <= size < 2 ^ 47 -> len <= 65536 ->
   amwf md ->
   (forall mat, Z.of_nat (length mat) * page_size <= A_bytes (w_A W) ->
-     Placement.mmap_grant_refusable (w64 34) (with_vm_backing (m_vm_lazy md) mat md) ncap = false) ->
-  (forall a : word, YK13.grant_ok_na_pin md a ncap = true ->
+     Placement.mmap_grant_refusable (w64 34) (Z_to_bv 64 0) (with_vm_backing (m_vm_lazy md) mat md) ncap = false) ->
+  (forall a : word, YK13.grant_ok_na_pin (Z_to_bv 64 0) md a ncap = true ->
      (bv_unsigned a + ncap <= TFIB_IMG_LO \/ TFIB_IMG_END <= bv_unsigned a) /\
      (bv_unsigned a + ncap <= sp - 512 \/ p + len + 1 <= bv_unsigned a)) ->
-  (forall (a2 : Z) (pg : word), YK13.grant_ok_na_pin md (w64 a2) ncap = true -> a2 <= bv_unsigned pg ->
+  (forall (a2 : Z) (pg : word), YK13.grant_ok_na_pin (Z_to_bv 64 0) md (w64 a2) ncap = true -> a2 <= bv_unsigned pg ->
      bv_unsigned pg + page_size <= a2 + ncap -> page_in_ranges pg (m_vm_lazy md) = false) ->
   eager_used md + A_bytes (w_A W) + ncap <= vm_limit (m_vmmaps md) ->
   val_mem tfibsegs m 0xa1ff0 8 0x13a960 -> val_mem tfibsegs m 0x13a960 8 4096 ->
@@ -1102,11 +1104,11 @@ Hypothesis errb_map_fits_cf :
   layout_ok ly -> img_cover ly -> TfibSyms B -> ly_tsd ly = TFIB_TSD ->
   ARcf tfibsegs B ly S Hp W mem md -> xs_mapped_cf ly S md -> qloose S -> cf_hull_ok S ->
   0 < nZ -> nZ mod kPage = 0 -> nZ <= cf_nob ->
-  (exists a, YK13.grant_ok_na_pin md a nZ = true) /\
+  (exists a, YK13.grant_ok_na_pin (Z_to_bv 64 0) md a nZ = true) /\
   eager_used md + A_bytes (w_A W) + nZ <= vm_limit (m_vmmaps md).
 
 Hypothesis H_glazy : forall lk Hp ly S W mem md n, errb_call_pre B lk Hp ly S W mem md -> 0 < n -> n mod 4096 = 0 ->
-  forall (a2 : Z) (pg : word), YK13.grant_ok_na_pin md (w64 a2) n = true -> a2 <= bv_unsigned pg ->
+  forall (a2 : Z) (pg : word), YK13.grant_ok_na_pin (Z_to_bv 64 0) md (w64 a2) n = true -> a2 <= bv_unsigned pg ->
   bv_unsigned pg + page_size <= a2 + n -> page_in_ranges pg (m_vm_lazy md) = false.
 
 Hypothesis H_aledger : forall lk Hp ly S W mem md, errb_call_pre B lk Hp ly S W mem md -> RepRelcf.ALEDGER_X ly S md.

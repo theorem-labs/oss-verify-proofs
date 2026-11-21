@@ -2,14 +2,15 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_wire/lib/U/Prog/LLVMFuzzerTestOneInput_cfb.v, with its module paths changed; 532 of its 580 lines of code are new or changed and 97 lines of the source are left out. *)
-(* Modified by Theorem Labs: reac-repacer/fuzz_uci's lib/Prog/LLVMFuzzerTestOneInput_fr.v (6874bc78b1f) at fuzz_wire's
+(* Modified by Theorem Labs: reac-repacer/fuzz_uci's lib/Prog/LLVMFuzzerTestOneInput_fr.v at fuzz_wire's
    module paths; lf_guard_img reads this image's __stack_chk_guard GOT slot 0x1cef0; lf_fr_call_x is new. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_wire/lib/Prog/LLVMFuzzerTestOneInput_fr.v, with its module paths and module names changed; 455 of its 574 lines of code are new or changed and 461 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_role/lib/U/Prog/Seg/Tac_slot.v, with its module paths and module names changed; 214 of its 251 lines of code are new or changed and 537 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The slot of reac-pw/fuzz_role LLVMFuzzerTestOneInput (UBSan build) from its segment lemmas, and ubsan_halts from
    the frame. The plain file (lib/Prog/RoleSlot.v: reac-pw/fuzz_pin's Prog/PinSlot.v, itself libreac/fuzz_ctrl's
-   released Prog/Seg/Slot.v Sections Bridge and Bundle and Prog/Seg/SlotLink.v Section Link adapted, origin/ossv/recipes
-   25e3d17bdb50) with the UBSan code and modules:
+   released Prog/Seg/Slot.v Sections Bridge and Bundle and Prog/Seg/SlotLink.v Section Link adapted)
+   with the UBSan code and modules:
    - the n >= 2^26 run (early_evt): 0x12ec0 `addi sp,sp,-0x220`, the thirteen saves ra, s0 .. s11 (0x12ec4 ..
      0x12ef4), 0x12ef8 `srli a2,a1,26`, 0x12efc `beqz a2` not taken, 0x12f00 `j 0x141c4`: `mv a0,zero`, the
      thirteen restores, `addi sp,sp,0x220`, `ret` (0x141c4 .. 0x14200); outside GV (n < 2^26), so the slot runs it

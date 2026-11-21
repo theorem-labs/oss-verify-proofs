@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3; internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset image B' (#102 asan-ubsan pin d663f82d7f488d30, twin c90d4fa54d43160b), this
    file: the BASE of the program walk of put_string (B' listing slot 7473, 232 instructions) over the
    whole-range B' listing B_prog_listing (lib/B/Listing_prog.v c97cc46b3e13), generic in the image facts (Context
@@ -909,7 +910,7 @@ Qed.
 
 (* ---- the put call sites (B' put_string + 0x110, + 0x1c4, + 0x264, + 0x2d4, + 0x2e8) ---- *)
 Variable CTX0 : list (list Z).
-(* put's text (the batch kit's tput_specX, PRH_FnWriter.v at the cut 7cdbb61b5fa0), at THIS Section's float state: the ONE
+(* put's text (the batch kit's tput_specX, PRH_FnWriter.v at the cut), at THIS Section's float state: the ONE
    callee-text use of put in this file; the walk's later files take it at every float state (put_string's snprintf
    returns at some fx', the kit owner's 14:49Z ruling) *)
 Hypothesis PUT : tput_specX (PI := prh_img_B) (PA := PA) B ARx SK CTX0.
@@ -1417,7 +1418,7 @@ destruct Hk as [(b & m & Hin & Hb & Hp) | [(_ & Hlo & Hhi & Hall) | (Hlo & Hhi &
   assert (Hne : b <> buf').
   { intros Eb. rewrite EL in Hnd. cbn [map fst] in Hnd. inversion Hnd as [|x0 l0 Hnin Hnd0].
     apply Hnin. rewrite <- Eb. pose proof (in_map fst (l1 ++ l2) (b, m) Hin12) as Hx. cbn [fst] in Hx.
-    first [ exact Hx | apply list_elem_of_In; exact Hx | apply elem_of_list_In; exact Hx ]. }
+    first [ exact Hx | apply list_elem_of_In; exact Hx | apply list_elem_of_In; exact Hx ]. }
   assert (HinL' : In (b, m) Lam') by (rewrite EL; right; exact Hin12).
   pose proof (ledger_blocks_disj ly' S' Hp' W' mem' md' Lam' peak' cnt fail ran b m buf' (WriterApp.w_cap st')
     HAR Hled HinL' HinB' Hne) as Hdj.
@@ -1527,9 +1528,9 @@ destruct Hk as [(b & m & Hin & Hb & Hpe) | [(_ & _ & _ & Hro) | (_ & _ & Hro)]].
       destruct Hin as [Heq | Hin]; destruct Hbuf as [Heq' | Hbuf].
       - congruence.
       - exfalso. apply Hn1. injection Heq as E1 E2. subst x. pose proof (in_map fst t (buf, cap) Hbuf) as Hx.
-        cbn [fst] in Hx. first [ exact Hx | apply list_elem_of_In; exact Hx | apply elem_of_list_In; exact Hx ].
+        cbn [fst] in Hx. first [ exact Hx | apply list_elem_of_In; exact Hx | apply list_elem_of_In; exact Hx ].
       - exfalso. apply Hn1. injection Heq' as E1 E2. subst x. pose proof (in_map fst t (buf, m) Hin) as Hx.
-        cbn [fst] in Hx. first [ exact Hx | apply list_elem_of_In; exact Hx | apply elem_of_list_In; exact Hx ].
+        cbn [fst] in Hx. first [ exact Hx | apply list_elem_of_In; exact Hx | apply list_elem_of_In; exact Hx ].
       - apply IH; assumption. }
     subst m. clear - Hb Hpe Hd Hc0 Hn. lia.
   + pose proof (ledger_blocks_disj ly S Hp W mem md Lam peak cnt fail ran b m buf cap HAR Hled Hin Hbuf Hne) as Hdj.

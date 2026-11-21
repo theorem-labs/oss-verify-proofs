@@ -1,4 +1,4 @@
-# Lane-name audit at 4483a8de6e6f (the publication owner via the unit owner's ruling, 00:33Z) — read only
+# Lane-name audit (the publication owner via the unit owner's ruling, 00:33Z) — read only
 Greps over *.v (provenance/ excluded) for the start-up generators' own header markers (the af0m tool path and the start-up collector's generated-by markers), the
 collector-header text of every start-up generator, and lane / worker / branch tokens. Every hit classified.
 Counts: (a) Modified-by notice 71 (49 brief-marker + 22 extra), (b) registered KEEP line 2, (c) ordinary comment 83

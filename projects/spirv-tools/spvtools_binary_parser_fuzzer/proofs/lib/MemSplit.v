@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revised entry stack block, with the strings at its top, and the launch facts; the run's mmap base). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith List Lia Bool.
@@ -107,8 +108,14 @@ Qed.
 
 Definition win_lo (sp0 : word) : Z := bv_unsigned sp0 - stack_max_size.
 
+Definition wok_lo (sp0 : word) : Z :=
+  bv_unsigned sp0 + stack_window_reach - stack_max_size.
+
 Definition in_win (sp0 : word) (x : word) : Prop :=
-  win_lo sp0 <= bv_unsigned x < bv_unsigned sp0.
+  wok_lo sp0 <= bv_unsigned x < bv_unsigned sp0.
+
+Lemma win_lo_le_wok_lo : forall sp0, win_lo sp0 <= wok_lo sp0.
+Proof. intros. unfold win_lo, wok_lo, stack_window_reach. lia. Qed.
 
 Definition cmem (sp0 : word) (mem0 J D : word -> option byte) : word -> option byte :=
   fun a => if (bv_unsigned sp0 <=? bv_unsigned a) then mem0 a
@@ -122,6 +129,32 @@ Proof. intros sp0 b x _. discriminate. Qed.
 
 Lemma wfJ_wbytes : forall sp0 J a bs, wfJ sp0 J -> wfJ sp0 (wbytes J a bs).
 Proof. intros sp0 J a bs H x Hx. apply wbytes_grows. apply H. exact Hx. Qed.
+
+Definition stack_zero (lo : Z) : word -> option byte :=
+  fun x => if lo <=? bv_unsigned x then Some (Z_to_bv 8 0) else None.
+
+Lemma wfJ_stack_zero : forall inp (sp0 brk0 mbase : word) (rdraw : EntryDraw),
+  valid_launch inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp0 brk0 mbase rdraw) inp ->
+  wfJ sp0 (stack_zero (stack_window_lo (in_kernel inp) mbase rdraw)).
+Proof.
+  intros inp sp0 brk0 mbase rdraw Hvl Hlau x Hx. unfold in_win, wok_lo in Hx.
+  pose proof (stack_window_lo_valid inp sp0 brk0 mbase rdraw Hvl Hlau).
+  unfold stack_zero. rewrite (proj2 (Z.leb_le _ _)) by lia. discriminate.
+Qed.
+
+Lemma stack_zero_in_win :
+  forall inp (sp0 brk0 mbase : word) (rdraw : EntryDraw) (x : word),
+  valid_launch inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp0 brk0 mbase rdraw) inp ->
+  in_win sp0 x ->
+  stack_zero (stack_window_lo (in_kernel inp) mbase rdraw) x
+  = Some (Z_to_bv 8 0).
+Proof.
+  intros inp sp0 brk0 mbase rdraw x Hvl Hlau Hx. unfold in_win, wok_lo in Hx.
+  pose proof (stack_window_lo_valid inp sp0 brk0 mbase rdraw Hvl Hlau).
+  unfold stack_zero. rewrite (proj2 (Z.leb_le _ _)) by lia. reflexivity.
+Qed.
 
 Definition agree_above (lo : Z) (J J' : word -> option byte) : Prop :=
   forall x : word, lo <= bv_unsigned x -> J' x = J x.
@@ -205,7 +238,7 @@ Section CMem.
   Lemma cmem_at_win : forall J D (x : word),
     in_win sp0 x -> cmem sp0 mem0 J D x = J x.
   Proof.
-    intros J D x [Hlo Hhi]. unfold cmem.
+    intros J D x [Hlo Hhi]. pose proof (win_lo_le_wok_lo sp0). unfold cmem.
     rewrite (proj2 (Z.leb_gt _ _)) by lia. rewrite (proj2 (Z.leb_le _ _)) by lia. reflexivity.
   Qed.
 
@@ -218,11 +251,12 @@ Section CMem.
 
   Lemma store_ok_cmem_win : forall segs J D (a : word) n,
     wfJ sp0 J ->
-    win_lo sp0 <= bv_unsigned a ->
+    wok_lo sp0 <= bv_unsigned a ->
     bv_unsigned a + Z.of_nat n <= bv_unsigned sp0 ->
     store_ok segs (cmem sp0 mem0 J D) a n = true.
   Proof.
     intros segs J D a n HJ Hlo Hhi. pose proof (u64_range sp0).
+    pose proof (win_lo_le_wok_lo sp0).
     apply store_ok_of_all; [lia|].
     intros x Hx. unfold wview.
     rewrite cmem_at_win by (unfold in_win; lia).
@@ -237,16 +271,27 @@ Section CMem.
 
 End CMem.
 
-Lemma cmem_init : forall ph (sp0 : word) av ev uid hw (rdraw : EntryDraw),
-  wrap_mem ph sp0 av ev uid hw rdraw
-  = cmem sp0 (wrap_mem ph sp0 av ev uid hw rdraw) (fun _ => Some (Z_to_bv 8 0)) (fun _ => None).
+Lemma cmem_init :
+  forall inp mbase ph entry (sp0 brk0 : word) (rdraw : EntryDraw),
+  entry_launch_ok_va Sv48 (mkEntry sp0 brk0 mbase rdraw) inp ->
+  wrap_mem inp mbase ph entry sp0 rdraw
+  = cmem sp0 (wrap_mem inp mbase ph entry sp0 rdraw)
+      (stack_zero (stack_window_lo (in_kernel inp) mbase rdraw))
+      (fun _ => None).
 Proof.
-  intros ph sp0 av ev uid hw rdraw. apply functional_extensionality. intro x.
+  intros inp mbase ph entry sp0 brk0 rdraw Hlau.
+  apply functional_extensionality. intro x.
+  pose proof (stack_window_lo_ge_sp inp sp0 brk0 mbase rdraw Hlau) as Hge.
   unfold cmem.
   destruct (bv_unsigned sp0 <=? bv_unsigned x) eqn:E1; [reflexivity|].
   apply Z.leb_gt in E1.
-  unfold wrap_mem, win_lo.
-  assert (Hst : stack_to_mem sp0 (entry_stack_image ph sp0 av ev uid hw rdraw) x = None).
+  unfold wrap_mem, win_lo, stack_zero.
+  assert (Hst : stack_to_mem sp0 (entry_stack_image inp mbase ph entry sp0 rdraw) x
+                = None).
   { unfold stack_to_mem. rewrite (proj2 (Z.leb_gt _ _)) by lia. reflexivity. }
-  rewrite Hst. rewrite (proj2 (Z.ltb_lt _ _) E1), andb_true_r. reflexivity.
+  rewrite Hst. rewrite (proj2 (Z.ltb_lt _ _) E1), andb_true_r.
+  destruct (bv_unsigned sp0 - stack_max_size <=? bv_unsigned x) eqn:E2;
+    [reflexivity|].
+  apply Z.leb_gt in E2.
+  rewrite (proj2 (Z.leb_gt _ _)) by lia. reflexivity.
 Qed.

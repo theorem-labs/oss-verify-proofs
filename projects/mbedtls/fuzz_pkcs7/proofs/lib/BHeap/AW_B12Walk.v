@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (b12_laws written out in plain text with the placement premise ASys.placed_at on its grant law; the old encoded definition kept beside it and proved equal). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -29,8 +30,59 @@ Section Laws.
   Variables (EP EB ECAP ESZ : Z).
 
   (* [comment removed for export] *)
-  Definition b12_laws : Prop := ltac2:(CDefT.buildp (gd_tbl_AW_B12Walk ()) "(0.(1.VAL,VCS00,)(0.(2.VhAR,VAL,VCS00,VK00,)(0.Pa,$3.(1.VAL,A1.VCSx,R1.)(0.Pa,$3.(2.VhAR,VAL,A1.VCSx,R1.A1.VKx,R1.)(0.Pa,$3.Py,$3.P,A1.VCS00,R1.A2.VCSx,R3.R2.(0.Pmo,$4.Pa,(5.&40.)Pn,(5.&40.)P,A1.VK00,R3.P,(6.$7.(8.(9.(:.(5.&40.)(5.&40.))(;.(<.R4.))(=.(<.R4.)))R3.R2.)$>.)P,(?.+10000.(10.&40.R3.))P,(?.(11.(10.&40.R5.)(10.&40.R4.))(12.VhAR,))Px,$3.P,(13.A1.VCS00,R1.(0.(?.(14.VAL,)R1.)(15.R1.(16.VAL,))))(17.(0.(?.(10.&40.R8.)R2.)(15.R2.(11.(10.&40.R8.)(10.&40.R7.)))))(0.Pmo,$4.Pa,(5.&40.)P,(6.$3.VEB,=)P,A1.VK00,R3.P,(6.$3.(18.(10.&40.R3.)+1000.)=)P,(15.=(10.&40.R4.))P,(?.(11.(10.&40.R5.)$19.)(12.VhAR,))P,(6.$7.(8.(9.(:.(5.&40.)(5.&40.))(;.(<.R7.))(=.(<.R7.)))R6.(1:.&40.$19.))$>.)(0.A2.VKx,(10.&40.R7.)(1;.+22.R7.$19.R8.)(0.(1<.A1.VCSx,(10.&40.R7.)(10.&40.R7.)$19.)(0.(?.+65?000.(10.&40.R7.))(13.(?.(11.(10.&40.R7.)$19.)+7???7000.)(?.+10007???8000.(10.&40.R7.))))))(0.Pmo,$4.P,(6.$3.VEB,=)P,A1.VK00,R2.(1=.(5.&40.)La,(5.&40.)(1>.VhAR,+22.$19.R4.R1.))(0.P,(17.(6.$3.VEB,=))(1<.VCS00,VEB,$19.)(0.(1?.VEP,VEB,VECAP,VESZ,)P,(17.(6.$3.VEB,=))(0.(?.+65?000.VEB,)(?.(11.VEB,$19.)(12.VhAR,)))))))))))))")
-(* [comment removed for export] *).
+  (** LPS #38.  The GRANT field gains [ASys.placed_at kEmbBytes mo a]; blob
+      replaced with explicit text and probed inline.  See the AHeap twin. *)
+  Definition ZZ_b12_laws_old : Prop := ltac2:(CDefT.buildp (gd_tbl_AW_B12Walk ()) "(0.(1.VAL,VCS00,)(0.(2.VhAR,VAL,VCS00,VK00,)(0.Pa,$3.(1.VAL,A1.VCSx,R1.)(0.Pa,$3.(2.VhAR,VAL,A1.VCSx,R1.A1.VKx,R1.)(0.Pa,$3.Py,$3.P,A1.VCS00,R1.A2.VCSx,R3.R2.(0.Pmo,$4.Pa,(5.&40.)Pn,(5.&40.)P,A1.VK00,R3.P,(6.$7.(8.(9.(:.(5.&40.)(5.&40.))(;.(<.R4.))(=.(<.R4.)))R3.R2.)$>.)P,(?.+10000.(10.&40.R3.))P,(?.(11.(10.&40.R5.)(10.&40.R4.))(12.VhAR,))Px,$3.P,(13.A1.VCS00,R1.(0.(?.(14.VAL,)R1.)(15.R1.(16.VAL,))))(17.(0.(?.(10.&40.R8.)R2.)(15.R2.(11.(10.&40.R8.)(10.&40.R7.)))))(0.Pmo,$4.Pa,(5.&40.)P,(6.$3.VEB,=)P,A1.VK00,R3.P,(6.$3.(18.(10.&40.R3.)+1000.)=)P,(15.=(10.&40.R4.))P,(?.(11.(10.&40.R5.)$19.)(12.VhAR,))P,(6.$7.(8.(9.(:.(5.&40.)(5.&40.))(;.(<.R7.))(=.(<.R7.)))R6.(1:.&40.$19.))$>.)(0.A2.VKx,(10.&40.R7.)(1;.+22.R7.$19.R8.)(0.(1<.A1.VCSx,(10.&40.R7.)(10.&40.R7.)$19.)(0.(?.+65?000.(10.&40.R7.))(13.(?.(11.(10.&40.R7.)$19.)+7???7000.)(?.+10007???8000.(10.&40.R7.))))))(0.Pmo,$4.P,(6.$3.VEB,=)P,A1.VK00,R2.(1=.(5.&40.)La,(5.&40.)(1>.VhAR,+22.$19.R4.R1.))(0.P,(17.(6.$3.VEB,=))(1<.VCS00,VEB,$19.)(0.(1?.VEP,VEB,VECAP,VESZ,)P,(17.(6.$3.VEB,=))(0.(?.+65?000.VEB,)(?.(11.VEB,$19.)(12.VhAR,)))))))))))))").
+
+  Definition b12_laws_gen (GRANTF : Prop) : Prop :=
+       cs_ok AL CS00
+    /\ kinv AL CS00 K00
+    /\ (forall a : Z, cs_ok AL (CSx a))
+    /\ (forall a : Z, kinv AL (CSx a) (Kx a))
+    /\ (forall a y : Z, CS00 y -> CSx a y)
+    /\ (forall (mo : Model) (a n : word),
+          K00 mo ->
+          region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a n = true ->
+          65536 <= bv_unsigned n ->
+          bv_unsigned a + bv_unsigned n <= ACEIL ->
+          forall x : Z,
+            (CS00 x \/ (al_img_lo AL <= x /\ x < al_img_hi AL)) ->
+            ~ (bv_unsigned a <= x /\ x < bv_unsigned a + bv_unsigned n))
+    /\ GRANTF
+    /\ (forall mo : Model, EB = 0 -> K00 mo -> exists a : word, anon_grantable 0x22 kEmbBytes mo a)
+    /\ (EB <> 0 -> crange CS00 EB kEmbBytes)
+    /\ emb_wf EP EB ECAP ESZ
+    /\ (EB <> 0 -> 6680576 <= EB /\ EB + kEmbBytes <= ACEIL).
+
+  Definition ZZ_b12_grant_old : Prop :=
+    forall (mo : Model) (a : word),
+      EB = 0 ->
+      K00 mo ->
+      bv_unsigned a mod 4096 = 0 ->
+      0 < bv_unsigned a ->
+      bv_unsigned a + kEmbBytes <= ACEIL ->
+      region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 kEmbBytes) = true ->
+      Kx (bv_unsigned a) (anon_grant 0x22 a kEmbBytes mo)
+      /\ crange (CSx (bv_unsigned a)) (bv_unsigned a) kEmbBytes
+      /\ 6680576 <= bv_unsigned a
+      /\ (bv_unsigned a + kEmbBytes <= 2147446784 \/ 17594333495296 <= bv_unsigned a).
+
+  Lemma ZZ_b12_laws_faithful : ZZ_b12_laws_old = b12_laws_gen ZZ_b12_grant_old.
+  Proof. exact eq_refl. Qed.
+
+  Definition b12_laws : Prop := b12_laws_gen
+    (forall (mo : Model) (a : word),
+       EB = 0 ->
+       K00 mo ->
+       bv_unsigned a mod 4096 = 0 ->
+       0 < bv_unsigned a ->
+       bv_unsigned a + kEmbBytes <= ACEIL ->
+       region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 kEmbBytes) = true ->
+       ASys.placed_at kEmbBytes mo a ->
+       Kx (bv_unsigned a) (anon_grant 0x22 a kEmbBytes mo)
+       /\ crange (CSx (bv_unsigned a)) (bv_unsigned a) kEmbBytes
+       /\ 6680576 <= bv_unsigned a
+       /\ (bv_unsigned a + kEmbBytes <= 2147446784 \/ 17594333495296 <= bv_unsigned a)).
 End Laws.
 
 (* [comment removed for export] *)

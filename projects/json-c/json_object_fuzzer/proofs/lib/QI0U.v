@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: the tokparse proofs name jo_preA's conjunct and keep it in the clear before tokfree_segB; the calls of json_tokener_parse_ex_B_cps, tokfree_segB, hiA_stack_malloc and tokparse_verbose_B discharge it). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -243,7 +244,7 @@ AJ5 A4L HIx A T md
 F (Z_to_bv 64 tokparse_verbose_B_entry) fc None m (seg_rom asegs)).
 Proof.
 intros until jw. intros PRE SP32 LMN CSTR LEN LOC LCK G UTF WFR WSH FRN BB BD FRM A0 A1 K. subst a0 a1.
-destruct PRE as (HP & ST & LO & LOS & SPA & HT & ERR & TP & RA).
+destruct PRE as (HP & ST & LO & HBT & LOS & SPA & HT & ERR & TP & RA).
 destruct CSTR as (STR & NONUL & PAD & ALOC & UNP). destruct ALOC as (Fr & kf & INF & HF1 & HF2).
 assert (INF' : In (Fr, kf) ((Fw, 0) :: FRS)) by (right; exact INF).
 assert (INW : In (Fw, 0) ((Fw, 0) :: FRS)) by (left; reflexivity).
@@ -415,6 +416,7 @@ right. exists Fr, kf. split; [exact INF'|]. split; [exact HF1 | unfold len; lia]
 1: reflexivity.
 1: eassumption.
 1: exact LO.
+1: first [assumption | lia].
 1: (unfold PE_STK_A; lia).
 1: (clear - SP32 SPR; Z.div_mod_to_equations; lia).
 1: lia.
@@ -502,7 +504,7 @@ AJ5 A4L HIx A4 T md4
 (MS (mkR x1 (Z_to_bv 64 (bv_unsigned sp + -80)) gpx (Z_to_bv 64 6444320) y0 y1 y2 (Z_to_bv 64 r) (Z_to_bv 64 (r + 36)) (Z_to_bv 64 r4) b1 b2 b3 b4 b5 b6 b7
 (Z_to_bv 64 (Fw + 32)) z7 (Z_to_bv 64 2147450880) (Z_to_bv 64 (r / 8 + 2147450884)) z6 z8 y3 s9 s10 s11 y4 y5 y6 y7)
 F4 (Z_to_bv 64 0x938ac) fc4 None m4 (seg_rom asegs))).
-{ clear - K HD_le PUT ACR HT47 SPR LO LOS SPA HT RA Htlo Hthi Htal Hr BB BD HWal HWc EA8.
+{ clear - K HD_le PUT ACR HT47 SPR LO HBT LOS SPA HT RA Htlo Hthi Htal Hr BB BD HWal HWc EA8.
 intros m4 md4 A4 B4 F4 fc4 RBS4 r4 errv4 e4 j1 j2 x1 gpx y0 y1 y2 b1 b2 b3 b4 b5 b6 b7 z6 z7 z8 y3 y4 y5 y6 y7 HP4 RES4 TOKR4 PX4 VM4 FS4 FRM4 LOC4 LCK4 G4 UTF4 ST4 FR4 ERR4 WFR4 WSH4 BB4 BD4.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP4) as MI4.
 pose proof (munch_refl [] m4) as MU4. pose proof (wmono_refl asegs m4) as WM4.
@@ -511,7 +513,7 @@ step.
 evt_done5. unstash K.
 eapply (tokfree_segB HIx PUT (bv_unsigned sp + -80) r) with (BS := TBS) (LB := RBS4 ++ LK ++ LBc) (LM := LM) (FRS := (Fw, 0) :: FRS) (B := B4) (lo := lo) (errv := errv4);
 [ eapply (heapA_perm A4L HIx); [heap_nowA A4L HIx HP4 MU4 WM4 MI4 | apply Permutation_app_swap_app | apply Permutation_refl | apply Permutation_refl]
-| apply tokrep_g32; exact TOKR4 | exact Hr | unfold tfv_frame; exact FR4 | exact ST4 | unfold_consts_goal; lia | unfold put_stk_A; lia
+| apply tokrep_g32; exact TOKR4 | exact Hr | unfold tfv_frame; exact FR4 | exact ST4 | unfold_consts_goal; lia | first [assumption | lia] | unfold put_stk_A; lia
 | clear - SPA SPR; Z.div_mod_to_equations; lia | lia | lia | exact ERR4
 | unfold tokparse_costB in BB4; unfold tokfree_costB in *; lia
 | unfold tokparse_costD in BD4; lia | ].
@@ -698,7 +700,7 @@ AJ5 A4L HIx A T md
 F (Z_to_bv 64 json_tokener_parse_B_entry) fc None m (seg_rom asegs)).
 Proof.
 intros until errv. intros PRE SP32 LMN CSTR LEN LOC LCK G UTF FRN BB BD FRM A0 K. subst a0.
-destruct PRE as (HP & ST & LO & LOS & SPA & HT & ERR & TP & RA).
+destruct PRE as (HP & ST & LO & HBT & LOS & SPA & HT & ERR & TP & RA).
 pose proof CSTR as (STR & NONUL & PAD & ALOC & UNP). destruct ALOC as (Fr & kf & INF & HF1 & HF2).
 pose proof (heapA_frame A4L HIx _ _ _ _ _ _ _ _ _ HP INF) as (Hkf & HFal & HF0 & HFc & _).
 pose proof alloc_ceiling_range as ACR. pose proof (hiA_top_le A4L HIx) as HT47.
@@ -757,6 +759,7 @@ eapply (hiA_stack_malloc A4L HIx) with (k := 0) (bytes := 64) (lo := lo) (LB := 
 all: rewrite ?unsigned_lit by lia.
 1: eassumption.
 1: exact LO.
+1: first [assumption | lia].
 1: cbn [hl_stack_A A4L]; lia.
 1: clear - SPA SPR; Z.div_mod_to_equations; lia.
 1: lia.
@@ -850,7 +853,7 @@ destruct APART as [X|X].
 clear HPX2 G2.
 evt_done5. unstash CSTR.
 eapply tokparse_verbose_B with (md := md1) (T := T) (A := A1) (LBc := LBc) (LM := LM) (FRS := FRS) (B := B) (sb := sb) (lo := lo) (Fw := Fw) (str0 := str0) (slack := slack) (errv := errv1).
-1: { split; [exact HPc|]. split; [rewrite unsigned_lit by lia; eassumption|]. split; [exact LO|]. split; [rewrite unsigned_lit by lia; lia|].
+1: { split; [exact HPc|]. split; [rewrite unsigned_lit by lia; eassumption|]. split; [exact LO|]. split; [first [assumption | lia]|]. split; [rewrite unsigned_lit by lia; lia|].
 split; [rewrite unsigned_lit by lia; clear - SP32 SPR; Z.div_mod_to_equations; lia|]. split; [rewrite unsigned_lit by lia; lia|].
 split; [unfold A_ERRNO, A_TP; exact ERR1|]. split; [reflexivity | rewrite unsigned_lit by lia; reflexivity]. }
 1: (rewrite unsigned_lit by lia; clear - SP32 SPR; Z.div_mod_to_equations; lia).

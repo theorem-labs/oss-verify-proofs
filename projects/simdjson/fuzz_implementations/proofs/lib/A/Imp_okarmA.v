@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -565,7 +566,7 @@ Proof using AF RC RC2 FDO MST ROWS CTOR SER PUT STR LOCD IOSD.
   { intros Σz mz ocp ra' q0 q1 q2 p0 p1 p2 p3 p4 p5 p6 p7 q3 q4 q5 q6 sbv Fz bb j0 jmid j124 j260 jt LVz FRSz SPz CRz OCPP ARTz MIz STz FOz IOSz SHz LBz LXz FSz LOCz OUTz FTMPz ELz FBz PRESz.
     assert (INCLz : forall e, In e L -> In e (rt_live RT Σz)) by (intros e He; rewrite LVz; apply in_or_app; right; exact He).
     assert (INFz : In (f, 5%nat) (rt_frames RT Σz)) by (rewrite FRSz; left; reflexivity).
-    assert (SPLOz : rt_sp0 RT Σz - STACK_WIN <= lo) by (unfold STACK_WIN; rewrite SPz; exact SPLO).
+    assert (SPLOz : rt_sp0 RT Σz - STACK_SPAN <= lo) by (unfold STACK_WIN; rewrite SPz; exact SPLO).
     assert (CLAz : forall x, okclI S1 f L x -> aclient (rt_live RT Σz) (rt_frames RT Σz) S1 x) by (intros x Hx; exact (CLA Σz _ FRSz INCLz Hx)).
     pose proof (ROWS Σz mz ARTz) as (V1 & _).
     pose proof FOz as FOq. takeZ FOq 1%nat (f + 840) FOa. takeZ FOq 1%nat (f + 848) VSBz. takeZ FOq 1%nat (f + 856) IMPz. rename FOq into JMz.
@@ -673,7 +674,7 @@ Proof using AF RC RC2 FDO MST ROWS CTOR SER PUT STR LOCD IOSD.
   { intros Σy my st ra' q0 q1 q2 p0 p1 p2 p3 p4 p5 p6 p7 q3 q4 q5 q6 Fy bb LVy FRSy SPy CRy ARTy MIy STy OSSIy OUTy SHy LBy LXy FSy LOCy FOUTy FTMPy ELy FBy PRESy.
     assert (INCLy : forall e, In e L -> In e (rt_live RT Σy)) by (intros e He; rewrite LVy; apply in_or_app; right; exact He).
     assert (INFy : In (f, 5%nat) (rt_frames RT Σy)) by (rewrite FRSy; left; reflexivity).
-    assert (SPLOy : rt_sp0 RT Σy - STACK_WIN <= lo) by (unfold STACK_WIN; rewrite SPy; exact SPLO).
+    assert (SPLOy : rt_sp0 RT Σy - STACK_SPAN <= lo) by (unfold STACK_WIN; rewrite SPy; exact SPLO).
     pose proof OSSIy as [(PUTCy & REPy & NUMy) IOSy]. pose proof (OSNUMA_cap24 len st NUMy) as CAP24y. pose proof NUMy as (WBy & K0y & CAPBy & HBy).
     assert (LPOSy : forall p n, In (p, n) (oachunk st ++ L) -> 0 < n).
     { intros p n Hin. apply in_app_or in Hin. destruct Hin as [Hin|Hin]; [| exact (LPOS p n Hin)].
@@ -733,7 +734,7 @@ Proof using AF RC RC2 FDO MST ROWS CTOR SER PUT STR LOCD IOSD.
     intros Σ11 ocp n0 n1 n2 h0 h1 h2 h3 h4 h5 h6 h7 n3 n4 n5 n6 F11 m11 ART11 MI11 ST11 RES11 OCPB HM11 SHR11 SH11 LV11 FRS11 SP11 CR11 PRES11.
     rewrite (ret_pc_even 0xb519c) by lia. rewrite FRSy in FRS11, PRES11.
     assert (INCL11 : forall e, In e L -> In e (rt_live RT Σ11)) by (intros e He; rewrite LV11; apply in_or_app; right; exact (INCLy e He)).
-    assert (SPLO11 : rt_sp0 RT Σ11 - STACK_WIN <= lo) by (rewrite SP11; exact SPLOy).
+    assert (SPLO11 : rt_sp0 RT Σ11 - STACK_SPAN <= lo) by (rewrite SP11; exact SPLOy).
     assert (OCPPOS : forall p k, In (p, k) (ocp_chunks ocp) -> 0 < k).
     { intros p k Hin. destruct ocp as [[DATA SZ]|]; [| destruct Hin]. destruct Hin as [E|[]]. injection E as <- <-.
       destruct RES11 as (W23 & ESZ & _). pose proof (imp_S_range (oa_w st) W23). lia. }

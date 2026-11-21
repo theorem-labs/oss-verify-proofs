@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the ledger invariant's new entries_nonzero conjunct). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BW_0Gc.
@@ -717,7 +718,7 @@ Section FreeRefillMid.
                  | apply ZI; unfold AIMG_TOP, AIAINIT, AIAINST, wz, ATP, ATSD, AGOT_VALS, AINST in *; rewrite ?unsigned_lit in Ha by (clear; lia); clear - Ha; lia ]. }
 
     pose proof (AMODELX_mat s mo mo1 AMX SBM1) as AMX1. pose proof AMX1 as AMX1'. destruct AMX1' as [AM1 AK1].
-    pose proof AM1 as AM1'. destruct AM1' as (AIL1 & ASV1 & AB1). destruct AIL1 as (_ & _ & _ & NOV1 & NW1 & NWA1). destruct AB1 as [AB1a AB1b].
+    pose proof AM1 as AM1'. destruct AM1' as (AIL1 & ASV1 & AB1). destruct AIL1 as (_ & _ & _ & NOV1 & NW1 & NWA1 & _). destruct AB1 as [AB1a AB1b].
 
     replace (wz (TH + 2128)) with (wz (TH + OT_CACHE + PCLASS_SIZE * c)) in VIS1 by (unfold OT_CACHE, PCLASS_SIZE, c, kBatchClass; f_equal; clear; lia).
     eapply (refill_sreach (a_L s) (a_S s) (a_Zr s) msF1 mo1 Q (wz 0x96b64) (Z_to_bv 64 (bv_unsigned sp + -2272)) gp tp t0_1 t1_1 t2_1

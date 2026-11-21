@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's validity hypotheses; the process input's new fields; the reader fact of the output channels). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -28,8 +29,6 @@ Section LeafWorld.
   Variable sp0 : word.
   Variables a0s path : list byte.
   Variable envv : list (list byte).
-  Variable uid : word.   (* [comment removed for export] *)
-  Variable hw : word.    (* [comment removed for export] *)
   Variable rdraw : EntryDraw.   (* [comment removed for export] *)
   Variable tid : word.
   Variable regs0 : bvmap 5 word.
@@ -43,17 +42,23 @@ Section LeafWorld.
   Hypothesis Hve : valid_envp envv.
   Hypothesis Hvsp : valid_sp sp0.
   Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-  Hypothesis ME : main_entry sp0 [a0s; path] envv uid hw rdraw tid regs0 mem0.
+  Local Notation INP := (mkProcInputA [a0s; path] envv fs0 stdin0) (only parsing).
+  Local Notation uid := (ia_uid stdin0) (only parsing).
+  Local Notation hw := (ia_hwcap stdin0) (only parsing).
+  Hypothesis ME : main_entry sp0 INP mbase rdraw tid regs0 mem0.
+  Hypothesis Hvl : valid_launch INP.
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp0 brk mbase rdraw) INP.
   Hypothesis Hbrk : valid_brk RSEGS brk.
   Hypothesis Hfile : fs_lookup fs0 path = Some fdata.
   Hypothesis Hpne : path <> [].
   Hypothesis Hpns : path_has_slash path = false.   (* [comment removed for export] *)
   Hypothesis Hpnd : path_is_dirref path = false.   (* [comment removed for export] *)
   Hypothesis Hplen : (length path <= 4095)%nat.
+  Hypothesis Hcr : ia_channel_reader stdin0 = true.   (* LPS 727298f3: the stderr write's channel reader *)
 
   (* [comment removed for export] *)
   Definition vm_small (VM : VmMaps) (gm : word) : Prop :=
-    vm_reserved VM = segments_reserved RSEGS /\ vm_limit VM = LIM   (* [comment removed for export] *)
+    (exists VX, vm_reserved VM = segments_reserved RSEGS ++ VX /\ (length VX <= 2)%nat /\ Forall (fun p => (0 < bv_unsigned (snd p) <= 2 ^ 30)%Z /\ (bv_unsigned (fst p) + bv_unsigned (snd p) <= 2 ^ 64)%Z) VX) /\ vm_limit VM = LIM   (* [comment removed for export] *)
     /\ (length (vm_maps VM) <= 4)%nat
     /\ In (gm, Z_to_bv 64 69632) (vm_maps VM)
     /\ Forall (fun p => (0 < bv_unsigned (snd p) <= 69632)%Z /\ (bv_unsigned (fst p) + bv_unsigned (snd p) <= 2 ^ 64)%Z) (vm_maps VM)
@@ -63,7 +68,7 @@ Section LeafWorld.
   Definition after_malloc (K : TSet) : Prop :=
     forall (R : bvmap 5 word) (M : word -> option byte) (VM : VmMaps) (mb gm : word) (area brkv mas : Z),
       area = (bv_unsigned mb + 4096)%Z ->                    (* [comment removed for export] *)
-      read_pre sp0 (p1 sp0 a0s path envv) mb gm (canary_w rdraw) (secret_w rdraw) R M ->   (* [comment removed for export] *)
+      read_pre sp0 (p1 INP rdraw) mb gm (canary_w rdraw) (secret_w rdraw) R M ->   (* [comment removed for export] *)
       world0 (bv_unsigned sp0) area (bv_unsigned gm) brkv mas (bv_unsigned tid) (bv_unsigned (secret_w rdraw)) M ->
       main_frame (bv_unsigned sp0) M ->
       vm_pre VM sp0 mb gm -> vm_small VM gm ->
@@ -73,15 +78,15 @@ Section LeafWorld.
   (* [comment removed for export] *)
   Lemma brk_ok_sem : forall K, after_malloc K ->
     brk_ok_branch sp0 a0s path envv rdraw tid mem0 brk mbase fs0 stdin0 (t_alt2 (t_die msg_oom fs0) K).
-  Proof using Hva Hve Hvsp Htid ME Hbrk Hfile Hpne Hpns Hpnd Hplen.
-    intros K AM. exact (UbW65x.brk_ok_sem sp0 a0s path envv rdraw tid mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid Hbrk Hplen K AM).
+  Proof using All.
+    intros K AM. exact (UbW65x.brk_ok_sem sp0 a0s path envv rdraw tid mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid Hvl Hlau Hbrk Hplen Hcr K AM).
   Qed.
 
   (* [comment removed for export] *)
   Lemma mmap_ok_sem : forall K, after_malloc K ->
     mmap_ok_branch sp0 a0s path envv rdraw tid mem0 brk mbase fs0 stdin0 (t_alt2 (t_die msg_oom fs0) (t_alt2 (t_die msg_oom fs0) K)).
-  Proof using Hva Hve Hvsp Htid ME Hbrk Hfile Hpne Hpns Hpnd Hplen.
-    intros K AM. exact (UbW65x.mmap_ok_sem sp0 a0s path envv rdraw tid mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid Hbrk Hplen K AM).
+  Proof using All.
+    intros K AM. exact (UbW65x.mmap_ok_sem sp0 a0s path envv rdraw tid mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid Hvl Hlau Hbrk Hplen Hcr K AM).
   Qed.
 End LeafWorld.
 

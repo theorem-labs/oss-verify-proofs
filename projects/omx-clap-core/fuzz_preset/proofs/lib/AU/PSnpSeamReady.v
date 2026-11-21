@@ -42,7 +42,7 @@
         the bytes past the destination's end that pf_rng reads (dest_tail_of_amem8), and with them
         the destination's pf_rng (seam_dest_rng) and the memcpy clause up to the source hull
         (seam_ready_dest).
-   6. the hull of a range named only by pf_rng, from the world's w_H8 (YA0n.v:25), AR's shadow
+   6. the hull of a range named only by pf_rng, from the world's w_H8 (YA0n.v:26), AR's shadow
       presence and the hulls of R, and READY from READY's premises (seam_ready_holds):
       - each shadow byte of the range is present in cjnormv (NM.cjnormv_present_of_pf_rng); a byte s
         of the two aligned words around them shares its word with one of those bytes s0, so w_H8
@@ -58,10 +58,10 @@
       - seam_ready_holds: READY at fm's three predicates, for every R that carves out the
         destination and the stack window and whose hulls the harness sees.
 
-   THE DOCUMENTED CONTROL AGAINST THE OLD set_ready.  Before 3899f140f93, FMgxa_mem.set_ready asked
-   sp < 2 ^ 63 at every n (FMgxa_mem.v:219-224 at 8c70fb561b7).  Against that set_ready this file
-   proved the two lemmas below (proofs at e36171fe839, lib/A/FMgxaSeamReady.v:419-440; SG is
-   lib/A/FMgxaSeamGuard.v); cbe21760a93 removed them:
+   THE DOCUMENTED CONTROL AGAINST THE OLD set_ready.  Before, FMgxa_mem.set_ready asked
+   sp < 2 ^ 63 at every n (FMgxa_mem.v:219-224).  Against that set_ready this file
+   proved the two lemmas below (proofs at lib/A/FMgxaSeamReady.v:419-440; SG is
+   lib/A/FMgxaSeamGuard.v); removed them:
 
      Lemma seam_calls_ready_false : forall (m : word -> option byte) (q lo Fp CK D : Z) (dn : nat),
        ~ SG.seam_calls_ready copy_ready set_ready strn_ready m q lo Fp CK D dn.
@@ -75,9 +75,10 @@
    allows, and read sp < 2 ^ 63 off set_ready.  They no longer build: set_ready is now
    0 <= n -> (...) (FMgxa_mem.v:222-223), so at that negative N it holds vacuously and gives no
    sp < 2 ^ 63.  The memset clause they refuted now closes (seam_ready_set). *)
-(* Modified by Theorem Labs, 2026-10: c-libc-stdio's restatement for fuzz_preset image A (L3-V2, the GXA seam over ARx; parent c-libc-stdio 14:3xZ) of proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamReady.v at origin/cold/port-fm-rtprintf-param 3e35620c52e, without its AR half (now lib/A/PSnpSeamReadyAR.v: the hull lemmas, stack_view0 / stack_hull / stack_rng, prefix_hull, band_word / shadow_band), over the engine's ARx with the ghost head list Hp passed through unchanged instead of Poison's ARU over U (FMupoison.v is not ported; its wz is restated here): ecall_preU -> ecall_pre_x (a flat conjunction), stk_kHighMemBeg -> stk_bounds_x, am_layout -> alx_layout_ok. Two facts fm took from AR's internals are now: (1) the runtime's cells, which fm read through owned_agree and YG0q.const_cells_owned (ARm-internal), come from AR_laws_x's alx_const_cells (PSnpRodata.const_lookup_lx) through data_agree, the munch keeping every byte of the image's writable data [0xa1000, 0x600000) because READY's new premise puts the destination off the image's data (the contract's dest_off_globals; agreed by the parent 14:5xZ); (2) word_vis's presence of a visible band byte outside ly_vis0, which fm read from ahs_pres and client_band_vis, is the Section hypothesis alx_band_pres (asked of c-omx-alloc as AR_laws_x field 20, 14:56Z), its in_ush / ARU_poisoned branch vanishes, and the image env fm read from the ledger (al_img_env) is tfib_img_env by vm_compute; the world's w_H8 field is the local fact W_H8, taken from the world record's own field YA0n.w_H8 (YA0n.v:25), no Section hypothesis. The three ready predicates and contracts are c-libc-str's lib/A/PSnpL3/FMgxa_mem.v and RT_gxa_strnlen.v (FMgxa_bzcj.v for the Bz <-> CJ bridge), the cell predicates the Bz walks' lib/A/PSnpBz/A/I_memcpyw / I_memsetw / I_memchrw / I_strnlenw. Preset A's numbers: the image's writable data [0xa1000, 0x600000) (fm [0x99000, 0x5f7000)). The sentences above name fm's files and numbers. *)
-(* Modified by Theorem Labs, 2026-10: image B twin (fuzz_preset.asan-ubsan f8f98a95) of lib/A/PSnpSeamReady.v, by the unit's image-B convention (lib/AU/FCxA.v's rule): the image record CJ.RL.I.IImgA.N_img_asan -> CJ.RL.I.IImgB.N_img_asan (rebuilt pin, by path from h-hpreset-7-pvN-B 16345363f93d via c-libc-str f697dea427f), lib/A/PSnpBz -> lib/AU/PSnpBz, the image-A core A<x> -> image B's Y<x> (lib/Reusable), the PSnp seam files lib/A -> lib/AU. Preset B's numbers: the image's writable data [0xa1000, 0x600000), the same range as A's. Sentences above that name image A or fm describe the A twin. *)
-(* Modified by Theorem Labs, 2026-10: moved to the #102 pins, image B' (fuzz_preset.asan-ubsan d663f82d, unstripped c90d4fa5), from the old-pin donor origin/cold/c-libc-stdio-presetsnp-vfp ac1750cac8be: every code numeral by symbol + offset, checked equal to the B -> B' map of record (preset-F reloc102-maps bmap_b2bp.py 27b4c628bef6 over this file); B''s derived bounds from that map: the read-only top / writable start 0xa1000 -> 0xa2000, the image top 0x600000 -> 0x601000; kept as written: the IImg record keys, the instruction words and the segment sizes; audited by port_addr_check 0767e70e074a (only the record keys flag). Per-numeral table: c-libc-stdio scratch/p102/reloc/AU/PSnpSeamReady.v.reloc.tsv. Comment numerals are as written. *)
+(* Modified by Theorem Labs, 2026-10: c-libc-stdio's restatement for fuzz_preset image A (L3-V2, the GXA seam over ARx; parent c-libc-stdio 14:3xZ) of proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamReady.v, without its AR half (now lib/A/PSnpSeamReadyAR.v: the hull lemmas, stack_view0 / stack_hull / stack_rng, prefix_hull, band_word / shadow_band), over the engine's ARx with the ghost head list Hp passed through unchanged instead of Poison's ARU over U (FMupoison.v is not ported; its wz is restated here): ecall_preU -> ecall_pre_x (a flat conjunction), stk_kHighMemBeg -> stk_bounds_x, am_layout -> alx_layout_ok. Two facts fm took from AR's internals are now: (1) the runtime's cells, which fm read through owned_agree and YG0q.const_cells_owned (ARm-internal), come from AR_laws_x's alx_const_cells (PSnpRodata.const_lookup_lx) through data_agree, the munch keeping every byte of the image's writable data [0xa1000, 0x600000) because READY's new premise puts the destination off the image's data (the contract's dest_off_globals; agreed by the parent 14:5xZ); (2) word_vis's presence of a visible band byte outside ly_vis0, which fm read from ahs_pres and client_band_vis, is the Section hypothesis alx_band_pres (asked of c-omx-alloc as AR_laws_x field 20, 14:56Z), its in_ush / ARU_poisoned branch vanishes, and the image env fm read from the ledger (al_img_env) is tfib_img_env by vm_compute; the world's w_H8 field is the local fact W_H8, taken from the world record's own field YA0n.w_H8 (YA0n.v:26), no Section hypothesis. The three ready predicates and contracts are c-libc-str's lib/A/PSnpL3/FMgxa_mem.v and RT_gxa_strnlen.v (FMgxa_bzcj.v for the Bz <-> CJ bridge), the cell predicates the Bz walks' lib/A/PSnpBz/A/I_memcpyw / I_memsetw / I_memchrw / I_strnlenw. Preset A's numbers: the image's writable data [0xa1000, 0x600000) (fm [0x99000, 0x5f7000)). The sentences above name fm's files and numbers. *)
+(* Modified by Theorem Labs, 2026-10: image B twin (fuzz_preset.asan-ubsan f8f98a95) of lib/A/PSnpSeamReady.v, by the unit's image-B convention (lib/AU/FCxA.v's rule): the image record CJ.RL.I.IImgA.N_img_asan -> CJ.RL.I.IImgB.N_img_asan (rebuilt pin, by path from h-hpreset-7-pvN-B via c-libc-str), lib/A/PSnpBz -> lib/AU/PSnpBz, the image-A core A<x> -> image B's Y<x> (lib/Reusable), the PSnp seam files lib/A -> lib/AU. Preset B's numbers: the image's writable data [0xa1000, 0x600000), the same range as A's. Sentences above that name image A or fm describe the A twin. *)
+(* Modified by Theorem Labs, 2026-10: moved to the #102 pins, image B' (fuzz_preset.asan-ubsan d663f82d, unstripped c90d4fa5), from the old-pin donor: every code numeral by symbol + offset, checked equal to the B -> B' map of record (preset-F reloc102-maps bmap_b2bp.py 27b4c628bef6 over this file); B''s derived bounds from that map: the read-only top / writable start 0xa1000 -> 0xa2000, the image top 0x600000 -> 0x601000; kept as written: the IImg record keys, the instruction words and the segment sizes; audited by port_addr_check 0767e70e074a (only the record keys flag). Per-numeral table: c-libc-stdio scratch/p102/reloc/AU/PSnpSeamReady.v.reloc.tsv. Comment numerals are as written. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -434,7 +435,7 @@ End N.
 (* ===================================================================================== *)
 
 (* ---- the runtime's fixed cells as the interceptors read them.  bz_mrd_mbyte .. cells_cons8 are
-   cold/port-fm-walkvsn 3b35fff5df2 lib/A/FMrt_pre.v:77-233 (that file is not on this branch), proofs
+   lib/A/FMrt_pre.v:77-233 (that file is not on this branch), proofs
    unchanged up to module names and FMupoison.wz for its u64z ---- *)
 Lemma bz_mrd_mbyte : forall (m : word -> option byte) a, BzM.mrd BzI.asegs m (BzM.wa a) = mbyte tfibsegs m a.
 Proof. intros m a. reflexivity. Qed.
@@ -538,7 +539,7 @@ Section C. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Variable B : asyms.
 Variable ARx : alayout -> astate -> list Z -> world tfibsegs -> (word -> option byte) -> Model -> Prop.
 (* the AR_laws_x fields this file uses (YCbqG.v), each under its field's name, and the engine lemma stk_bounds_x's
-   statement (7792959a2abb YCbqG.v:308) *)
+   statement (YCbqG.v:309) *)
 Hypothesis alx_zshadow : ARx_zshadow_law tfibsegs B ARx.
 Hypothesis alx_zshadow_byte : ARx_zshadow_byte_law tfibsegs ARx.
 Hypothesis alx_const_cells : ARx_const_cells_law tfibsegs B ARx.
@@ -549,8 +550,8 @@ Hypothesis stk_bounds_x : forall ly S Hp W mem md,
    trace-carrier engine), written out inline until its Definition ARx_band_pres_law exists *)
 Hypothesis alx_band_pres : forall ly S Hp W mem md a, ARx ly S Hp W mem md -> in_band_rw a ->
   w_H W (w64 a) = false -> ~ in_vis0 ly a -> aview tfibsegs (w_H W) mem a <> None.
-(* the world's w_H8 field, exactly port-fm's YA0n.v:25 statement over every world, taken from the world record's own
-   field YA0n.w_H8 (YA0n.v:25): a local fact, no Section hypothesis *)
+(* the world's w_H8 field, exactly port-fm's YA0n.v:26 statement over every world, taken from the world record's own
+   field YA0n.w_H8 (YA0n.v:26): a local fact, no Section hypothesis *)
 Let W_H8 : forall (W : world tfibsegs) (a : Z), in_band_rw a ->
   w_H W (Z_to_bv 64 a) = w_H W (Z_to_bv 64 (a - a mod 8)) := fun W a H => YA0n.w_H8 W a H.
 Hypothesis TB : TfibSyms B.

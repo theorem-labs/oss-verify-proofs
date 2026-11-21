@@ -4,22 +4,23 @@
 (* Modified by Theorem Labs, 2026-10: ge_achain adapted from proofs/cgif/cgif_file_fuzzer/lib/A/ACf5.v (rt_chain) for the call chain of libreac/fuzz_grant's entry function; the rest of the file is written for fuzz_grant's entry walk. *)
 (* Modified by Theorem Labs, 2026-10: the walk of reac_ctrl_stamp_headamp on fuzz_grant.asan, written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v, proofs/cgif/cgif_file_fuzzer/lib/A/ACam.v, proofs/cgif/cgif_file_fuzzer/lib/A/ACbf.v, proofs/cgif/cgif_file_fuzzer/lib/A/ACf6.v, proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v. *)
 (* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/Prog/GrantEntrySeat.v, with denot_and_m32_add0 from lib/A/Prog/CtrlStampHeadamp.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/GrantEntrySeat.v as it
-   stands on a working branch 552860c636687 and a working branch 7c8c67da870 (blob 461df5149ef, 1052 lines, the
-   current generation's AB01 1e6f4323d1e), which includes image A's commit 4c7bf6b0b22 (ge_ss_c, ge_land_core,
+   stands on a working branch and a working branch (blob 461df5149ef, 1052 lines, the
+   current generation's AB01 1e6f4323d1e), which includes image A's (ge_ss_c, ge_land_core,
    ge_nth_map_seq, ge_sh_now, ge_gshadow_now, ge_land_ex), with every definition name kept. Four things are
    image B's, not image A's:
    - the OBJECT numbers. Image B renumbers: the shadow-base cell is `A_OBJ 35` (atom 276) and the use-after-return
      flag cell is `A_OBJ 36` (atom 277), where image A has 32 and 33; the GOT words 0 and 1 are unchanged. The
-     image atoms are `A_OBJ i = 241 + i`. lib/B/Prog/GrantPaLib.v:319-320 already names A_OBJ 35 in got_regionP
-     and bcell_regionP, and lib/B/Prog/GrantACja.v:145-156 already names 241, 242, 276 and 277, so only
+     image atoms are `A_OBJ i = 241 + i`. lib/B/Prog/GrantPaLib.v:320-321 already names A_OBJ 35 in got_regionP
+     and bcell_regionP, and lib/B/Prog/GrantACja.v:146-157 already names 241, 242, 276 and 277, so only
      `ge_obj_regions` and the two proofs that read it had to be re-keyed. The bare 32 of `GA_SB` is the shadow-base
      ATOM and STAYS 32.
    - `ge_F_facts` states image B's own image range, IMG_LO_B / IMG_TOP_B of lib/B/Prog/GrantTop.v (0x10000 and
-     0x5fb000), through lib/B/Prog/YC1h.v:131 `frm_off_imgB`. Image A's `frm_off_imgP` carries image A's top
+     0x5fb000), through lib/B/Prog/YC1h.v:132 `frm_off_imgB`. Image A's `frm_off_imgP` carries image A's top
      0x5fa000; on the integration tree off_img is lib/B/YCbq.v's, over image B's top 0x5fb000; the walk does not
      depend on which.
-   - `denot_and_m32_add0` is carried here from lib/A/Prog/CtrlStampHeadamp.v:53-68 on a working branch 130325d4e64
+   - `denot_and_m32_add0` is carried here from lib/A/Prog/CtrlStampHeadamp.v:53-68 on a working branch
      (blob 3ab7a72916e, current AB01), which has no lib/B twin: the head phase needs it for the `SAlu ALU_ADD (SAlu ALU_AND ..) (SLit 0)` that image B's
      `mv s1,sp` at 0x80a80 makes after `andi sp,sp,-32` at 0x80a7c.
   - `YC88` is Required from lib.B.Prog (image-free; its Require closure is Stdlib, LPS and lib/Reusable only), so it
@@ -402,7 +403,7 @@ Proof.
 Qed.
 
 (* Image B's own image range: IMG_LO_B / IMG_TOP_B of lib/B/Prog/GrantTop.v, through
-   lib/B/Prog/YC1h.v:131 `frm_off_imgB`. Image A's `off_img` carries image A's top; on the integration tree off_img
+   lib/B/Prog/YC1h.v:132 `frm_off_imgB`. Image A's `off_img` carries image A's top; on the integration tree off_img
    is lib/B/YCbq.v's, over image B's top 0x5fb000; the walk does not depend on which. *)
 Lemma ge_F_facts :
   4096 <= gF cx fp /\ gF cx fp + 1024 <= alloc_ceiling /\

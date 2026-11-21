@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (adwkG_time takes the vdso_func cell time() leaves, hvdso, the vDSO's clock_gettime entry, not 0). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import Sorting.Permutation.
@@ -1055,7 +1056,7 @@ Section RC.
     munch [(S1c - ATIME_STACK, S1c); (A_vdso_func, A_vdso_func + 8); (errno_addr (Z_to_bv 64 ATP), errno_addr (Z_to_bv 64 ATP) + 4)] m1 m2 -> wmono asegs m1 m2 ->
     mem_inv asegs m2 -> stk asegs m2 lo S1c -> ACONST m2 -> as_rauxv_ok H m2 B ->
     as_RHEAP H s1' (mid_errblocks M' ++ drest Lx NB LE) m2 ->
-    rw_cells asegs m2 A_vdso_func [C8 (Z_to_bv 64 0)] -> rw_cells asegs m2 (errno_addr (Z_to_bv 64 ATP)) [C4 errv2] ->
+    rw_cells asegs m2 A_vdso_func [C8 (Z_to_bv 64 hvdso)] -> rw_cells asegs m2 (errno_addr (Z_to_bv 64 ATP)) [C4 errv2] ->
     adwkG Lx NB S' (mkMID (mid_flag M') (mid_ctx M') (mid_err M') (mid_E M') true) LE fr1 wee v192 v200 v208 v224 v232 fr3 tpl shb b2 shd um uf m2 s1'.
   Proof using VIS0 A0 A1 SO SE SEO STL SSH MBO MP0 MN0 MBB MBS MSH PAY DS DSL PAYL PAYL2 NDsm LM SUBL CTX MF1 DJ6 HP KREL BUD BUDC AUX SPB BHI SPA ST CEIL LO ST0 ERR MI TP AC MCO RFS LFB ATH CHN CHB PF ALW RAE HH HX RAISE SM6 SF6 SSF8 PERM NAR NBR MST POS BTR BT_frame FRESH AUXV.
     intros until errv2. intros DW MU WM MI2 STK2 AC2 AUX2 HP2 VD2 ERR2.

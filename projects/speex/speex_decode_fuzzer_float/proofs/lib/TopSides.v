@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (P_side_at and U_side pass run_of_treeF the channel-reader fact valid_input_core_reader). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -36,7 +37,7 @@ side_canon Tc imgP lim.
 Proof.
 intros lim Hlim HP en inp He Hi0. pose proof (valid_input_core_of_either _ Hi0) as Hi.
 destruct (prog_plain_model_ok_at lim en inp Hlim He Hi) as [Hl Hs].
-destruct (run_of_treeF _ _ _ lim _ _ en inp (HP en inp He Hi) Hl Hs) as (Htr & Herr & _).
+destruct (run_of_treeF _ _ _ lim _ _ en inp (HP en inp He Hi) Hl Hs (valid_input_core_reader _ Hi)) as (Htr & Herr & _).
 split; [| exact Herr].
 intros tr. rewrite (Htr tr). exact (prog_det_plain_at lim en inp Hlim He Hi tr).
 Qed.
@@ -60,7 +61,7 @@ side_canon Tc imgU target_alloc_limit.
 Proof.
 intros HU en inp He Hi0. pose proof (valid_input_core_of_either _ Hi0) as Hi.
 destruct (prog_ubsan_model_ok en inp He Hi) as [Hl Hs].
-destruct (run_of_treeF _ _ _ target_alloc_limit _ _ en inp (HU en inp He Hi) Hl Hs) as (Htr & Herr & _).
+destruct (run_of_treeF _ _ _ target_alloc_limit _ _ en inp (HU en inp He Hi) Hl Hs (valid_input_core_reader _ Hi)) as (Htr & Herr & _).
 split; [| exact Herr].
 intros tr. rewrite (Htr tr). exact (prog_det_ubsan en inp He Hi tr).
 Qed.

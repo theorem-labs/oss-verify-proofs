@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Trevor Hansen, 2026-11: module names. *)
+(* Modified by Theorem Labs, 2026-11: ported toward LPS 727298f3 by the change of the same file of cgif/cgif_rgb_fuzzer, its addresses relocated to this unit's binaries. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From OSSVerify.Proofs.libtasn1.asn1_get_length_der_fuzzer.lib.C Require Import
 YP0j YP0g YP0h YP0i YP0q YP0m
@@ -71,11 +72,16 @@ apply Forall_forall. intros [q a] Hin Hml. cbn [snd] in *.
 apply (used_metas_iff s3 q a (proj1 (inv_keys HI3))) in Hin.
 assert (Hu : usedX [] s q a) by (apply EU2, EU3; exact Hin).
 pose proof (FRESH q a Hu). lia. }
-intros z' _. msimp. mbinds. eapply upd_region_kill_spec; [exact HI3 | apply Erg3; [exact Hr2 | reflexivity] | reflexivity | |].
+intros z' _. msimp.
+(* 08b1429: a refused munmap (z' = 0) leaves the fresh region live; malloc still returns 0 *)
+destruct (negb (z' =? 0)); cbv beta iota.
+{ mbinds. eapply upd_region_kill_spec; [exact HI3 | apply Erg3; [exact Hr2 | reflexivity] | reflexivity | |].
 { intros q a Hu _. apply EU3, EU2 in Hu. pose proof (FRESH q a Hu). lia. }
 intros s4 HI4 Em4 _. msimp. apply itok_ret. apply HQ. split; [exact HI4 |]. cbn [fst snd].
 eapply ub_same_trans; [| apply ub_same_metas; exact Em4]. eapply ub_same_trans; [| exact UB3].
-apply ub_same_metas. rewrite Em2, Es1. reflexivity.
+apply ub_same_metas. rewrite Em2, Es1. reflexivity. }
+{ try mbinds. try msimp. apply itok_ret. apply HQ. split; [exact HI3 |]. cbn [fst snd].
+eapply ub_same_trans; [| exact UB3]. apply ub_same_metas. rewrite Em2, Es1. reflexivity. }
 +
 intros g s3 HI3 NX Kg Mg (Ea3 & Eu3 & Erg3 & Len3 & Ec3) EU3 UB3. msimp.
 set (maplen := page_round (n + IB + UNIT) / 4096).

@@ -1,4 +1,4 @@
-(* rp_slot_width walk, fuzz_egress ubsan 44f6a3ebc228 0x133f0..0x13468 (repace_wire.c:101-109); ported from reac-repacer/fuzz_wire proofs/reac-repacer/fuzz_wire/lib/U/Prog/rp_slot_width.v at d876dac3b12: module path and the in-function pc literals moved by the function's shift; nothing else changed.
+(* rp_slot_width walk, fuzz_egress ubsan 44f6a3ebc228 0x133f0..0x13468 (repace_wire.c:101-109); ported from reac-repacer/fuzz_wire proofs/reac-repacer/fuzz_wire/lib/U/Prog/rp_slot_width.v: module path and the in-function pc literals moved by the function's shift; nothing else changed.
    UBSan traps, each `unimp` at 0x13468, all refuted on the n >= 50 path: 0x13410 beqz f (premise f <> 0), 0x13418
    bgeu f, -16 and 0x13428 bltu -18, f (bytes_at bound: f + 18 <= f + length bs <= 2^64).
    rp_frame_channels is the named Section hypothesis HFC (its contract, rp_frame_channels_c.v). *)

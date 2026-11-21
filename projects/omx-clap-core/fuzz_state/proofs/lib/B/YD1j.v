@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD1j.v, with its module paths changed and its addresses moved to omx-clap-core/fuzz_state's ASan+UBSan build (fuzz_state.asan-ubsan). *)
 (* Modified by Theorem Labs, 2026-10: F_STDERR 0xa4208 (__stderr_FILE), F_STDIN 0xa43e8 (__stdin_FILE), A_canary 0x5fb470 (__stack_chk_guard) with its GOT slot 0xa0898, STDOUT_BUFA 0x5fbb40 (buf + 8) and TFIB_TP 0x5db430 (builtin_tls + 0xc8) are fuzz_state.asan-ubsan's own values, read from its .debug symbols. *)
 (* Modified by Theorem Labs, 2026-10-29: completed_free's not-owned window is the 1 byte [0xa4dd0, 0xa4dd1), as A/AD1j.v's [0xa48d0, 0xa48d1) (donor [0xa2c10, 0xa2c11)); the relocated 0xa5051 was a slip that overlapped the regenerated Tfib_owned_static row (0xa4dd8, ...) of lib/B/YF0m.v. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's channel reader that fdchan asks for beside the descriptor (cs_ok's co_rdr, proved at the launch)). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -124,7 +125,7 @@ match type of Hr with ?lo <= a < ?hi => apply (G lo hi a); [vm_compute; reflexiv
 Qed.
 Theorem tfib_exit_site : exit_site_tfa B est xst.
 Proof.
-intros XI E W regs mem md ly S usp d fs code k HXI E0 [Ulo Uhi] U16 Htid Ha0 Hcode Hsp Hd Hret R3 R4 HMX Hwin HAI HAR HTOP Hnev HEST HK Hfd1 Hfs.
+intros XI E W regs mem md ly S usp d fs code k HXI E0 [Ulo Uhi] U16 Htid Ha0 Hcode Hsp Hd Hret R3 R4 HMX Hwin HAI HAR HTOP Hnev HEST HK Hfd1 Hcr Hfs.
 assert (HXI' : XI = IMG_X \/ XI = IMG_XL) by (destruct HXI as [[HX _] | HX]; [left | right]; exact HX).
 assert (HXC : exists cls, XC XI cls /\ ((XI = IMG_X /\ k = 0%nat /\ cls = ex_consts1) \/ (XI = IMG_XL /\ cls = ex_consts))).
 { destruct HXI as [[HX Hk] | HX]; [exists ex_consts1 | exists ex_consts]; (split; [| first [left; repeat split; assumption || reflexivity | right; split; [assumption | reflexivity]]]);
@@ -183,7 +184,8 @@ HPRE Hsp44 Hstk Hband Ha0 Hcode' HTPX HC Htidc ltac:(lia) Hgot Hcan (u64_range (
 * rewrite length_pend. lia.
 * rewrite HBS. lia.
 * intros i Hi. rewrite (HPEND i Hi). f_equal. f_equal. apply nth_indep. exact Hi.
-* split; [exact (Hfd1 Hk1) | reflexivity].
+(* [fdchan]'s third conjunct at LPS 727298f3 is the model's channel reader. *)
+* split; [exact (Hfd1 Hk1) | split; [reflexivity | exact (Hcr Hk1)]].
 * exact HXown.
 * exact HBown.
 * exact HAI.

@@ -12,13 +12,13 @@
    B.ProgWorldCtlRtC.ctl_rt_C_of_AR at that journal's AR with the image data there (the spec's P2 carried by the kept
    classes, rtop_aro); its parts give asan_cells, ro_agree and, by C_reac_ctrl_identity_replyCover.rrC_R_on, the
    run's narrowed premise.  No ProgWorld statement is a hypothesis.  The fr apartness of the three caller cells is no
-   Section hypothesis: under the accepted contract_F guard (a working branch 20372bbcc3a) it is needed only
+   Section hypothesis: under the accepted contract_F guard (a working branch) it is needed only
    under 50 <= len, where Base / SCBase prove it from AR_sep_law (P10's heap block vs P11's caller frames).
 
    rule 24: no function proved here.  Released-proof lookup of record
    (`proof-index reac_ctrl_identity_reply reac_ctrl_identity_reply_contract_F`,
    lookup-reac_ctrl_identity_reply.txt (a working note, not in this delivery), checker CONFIRM in
-   lookup-check.md (a working note, not in this delivery)): At ossv/recipes c5e779efe8c (2026-10-31), no released proof outside this unit.  Written new.
+   lookup-check.md (a working note, not in this delivery)): At (2026-10-31), no released proof outside this unit.  Written new.
 
    THE CHAIN (every piece Qed in its own file; this file only composes):
      entry 0x848fc --S-A + J1--> __asan_stack_malloc_1     C_reac_ctrl_identity_replyPf.rrB_to_E1
@@ -46,8 +46,8 @@
    KEPT NAMED (Section hypotheses below, each with its owner): RELRO_IMG (the spec's own Section hypothesis; the
      composer
    that instantiates RLO RHI with pa_relro discharges it); LAWS, ML, TS, errno_low, SMP, ASM1 (the core B bundle /
-   a Theorem Labs lane's class-1 rules); PC1 (core: ctrlb_pc_stack_malloc_1 at B := YD2l.CtrlB, a working branch
-   3cd6d1dbfb3; the theorem stays generic in B); ASF, FFL; TPARSE (a Theorem Labs lane,
+   a Theorem Labs lane's class-1 rules); PC1 (core: ctrlb_pc_stack_malloc_1 at B := YD2l.CtrlB, a working branch;
+   the theorem stays generic in B); ASF, FFL; TPARSE (a Theorem Labs lane,
    pb_reac_ctrl_parse).
    No Axiom, Parameter, Admitted, admit, Abort.  Nothing of image A is Required. *)
 From Stdlib Require Import ZArith List Lia Bool Permutation.
@@ -116,13 +116,13 @@ Hypothesis LAWS : lib.Reusable.YG0d.AR_laws rsegs B.
 Hypothesis ML : lib.Reusable.YG0d.model_laws (lib.Reusable.YG0f.as_universe B).
 Hypothesis TS : lib.Reusable.YF0m.CtrlTSyms B.
 Hypothesis errno_low : lib.Reusable.YCbq.api_env rsegs B.
-(* OWNER PENDING: a Theorem Labs lane's class-1 fake-stack rules, a working branch ff613211c11 (cgif lib/A/ACed.v:125-133) *)
+(* OWNER PENDING: a Theorem Labs lane's class-1 fake-stack rules, a working branch (cgif lib/A/ACed.v:125-133) *)
 Hypothesis SMP : lib.Reusable.YCbq.stack_malloc_progressP B.
 Hypothesis ASM1 : lib.Reusable.YG0d.astack_malloc_realizes rsegs B 1.
 Hypothesis ASF : lib.Reusable.YG0d.astack_free_law rsegs B.
 Hypothesis FFL : lib.Reusable.YCbq.frame_flag_lawP rsegs B.
-(* OWNER PENDING: core; proved as ctrlb_pc_stack_malloc_1 at B := YD2l.CtrlB (a working branch
-   3cd6d1dbfb3); the theorem is generic in B, so it is named *)
+(* OWNER PENDING: core; proved as ctrlb_pc_stack_malloc_1 at B := YD2l.CtrlB (a working branch);
+   the theorem is generic in B, so it is named *)
 Hypothesis PC1 : lib.Reusable.YG0f.pc_stack_malloc (lib.Reusable.YG0f.as_code B) 1 = ASAN_STACK_MALLOC_1.
 (* OWNER PENDING: a Theorem Labs lane, pb_reac_ctrl_parse (not Qed) *)
 Hypothesis TPARSE : lib.B.Prog.C_reac_ctrl_parse.treac_ctrl_parse_spec lib.Reusable.YB1v.tfibsegs B RLO RHI.

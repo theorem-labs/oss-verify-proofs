@@ -12,11 +12,12 @@
    realloc_leaf_x_R_wle (realloc_leaf_x is realloc_leaf_xR at acall_post_x, by reflexivity); arealloc_realizes_x keeps
    its text and implies arealloc_realizes_xR at R := wle (arealloc_realizes_x_R_wle); aj_realloc_at_x / aj_realloc_x
    keep their statements and are the R rules at R := wle, APOST := acall_post_x (POST_AR_x, POST_J_x). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the REALLOC call-site rule, GENERIC over the allocator invariant ARx of YCbqG.v, in the form of
    YGcallx.v's malloc / free rules. No allocator instance, no image class, no address and no ledger is named here.
 
    1. THE TEXT OF RECORD: c-asan's parametric realloc, lib/Reusable/ReallocP.v (copied from
-      proofs/cgif/cgif_rgb_fuzzer/lib/ReallocP.v at origin/cold/c-asan-realloc-primary b97c2fd1d44): realloc_tree_with,
+      proofs/cgif/cgif_rgb_fuzzer/lib/ReallocP.v): realloc_tree_with,
       realloc_null_tree_with, mt_refused, arealloc_realizes_allP, arealloc_null_realizesP, cited, not restated.
       ReallocP.v defines its own gflag (the same fixpoint as YG0d.gflag); this file's statements name YG0d.gflag, the
       flag amreal_SRr04 exports, and mt_refused keeps ReallocP's.
@@ -34,10 +35,10 @@
           NULL: ARx at Hp, writes allowed only on the extents XS before and after besides the allocator and the scratch
             (so the old block's bytes are kept; its shadow follows from ARx at the same Hp with the block still live),
             a0 = 0, errno = 12 (the wrapper's SetErrnoOnNull) and the allocator's out-of-memory byte = 1 (AllocG.v's
-            alloc_leaf at PNull, c615b709977; malloc_leaf_cf's NULL conjunct).
+            alloc_leaf at PNull; malloc_leaf_cf's NULL conjunct).
       arealloc_realizes_x is arealloc_realizes_allP (ReallocP.v:73-82) at these, written out, with rpre dropped and
       the freed base not hidden, ~ In (sptr_addr B ly p) Hp, after a0 (afree_realizes_x's premise and place,
-      YGcallx.v:200-201; h-mani-a8's YGcfRealloc.v arealloc_realizes_cf takes it at the same place, :96-97): the
+      YGcallx.v:201-202; h-mani-a8's YGcfRealloc.v arealloc_realizes_cf takes it at the same place, :96-97): the
       harness shows a hidden head before it reallocates (fuzz_realloc's disown, alloc.c:97, before its realloc,
       alloc.c:98), so the base is never hidden at the call. arealloc_null_realizes_x is arealloc_null_realizesP at
       these as it stands (its old pointer is NULL).
@@ -47,7 +48,7 @@
       atok_cf): from a WFx state with the realloc room RQ s n tr the realloc tree is safe, granted-progressing and not
       a spin, and every model path
       moves the blocks exactly: NULL keeps them, success turns l1 ++ (p, n_old) :: l2 into l1 ++ l2 ++ [(q, n)] (the
-      free's list surgery after the malloc's append, YG01.v:449-461). RQ is a separate predicate on the state, the
+      free's list surgery after the malloc's append, YG01.v:450-462). RQ is a separate predicate on the state, the
       size and the trace, not QM: the inner free of the old block runs after the inner malloc, so an instance may need
       room at the post-malloc state (cf: h-mani-a8's amx_realloc_cf needs batch_room_cf there), which QM at the entry
       state does not give. At cf, RQ := qtight s /\ ROOM_cf_k s (RK_realloc + k), and RMX is h-mani-a8's amx_realloc_cf

@@ -12,7 +12,7 @@
    AR_frames_law as in FSW_frame.fsw_readd_frame_regions); a second run to PC_memchr; the call is FsEntryRt's fe_memchr at
    FSW_K fsw_ecall_preU_k_at, its journal put back by FSW_K fsw_intrin_atU (window: memchr's stack window below sp);
    the canonical state at the return by FSW_entry_canon.fe_canon.
-   Ported from: a Theorem Labs lane's crcs lane, a working branch c4bfd3bc057,
+   Ported from: a Theorem Labs lane's crcs lane, a working branch,
    lib/A/FSH_check_reject_clean_starved.v:91-150 (crcs_img_keep, crcs_glob_img, crcs_roP_img, crcs_glob_keep): the image
    byte facts, here as s2_img_keep, s2_glob_img, s2_roP_img, s2_stat_keep. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.

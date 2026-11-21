@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise of writev; the SIGPIPE answer of a write to a reader-gone channel; RomBase.sys_rob at the system-call nodes; the vDSO run state; the launch's reservations with the vDSO pair; the place_declined_b premise on mmap; the model's m_kernel field; the model's placement rule). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool FunctionalExtensionality.
@@ -107,7 +108,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   destruct Hd as [Hsd Hwf Hbw Hh Hawf Hanz Hminv Hhoff Hres Hlim Hsp Hspok Hbrk Hsbrk Htid Hmaps Hgsh Hgtop Hivwf Hpd Hmres Hkind Hlzm Hzrsh Hzrm Hzr Hrl Hvmo Hproc Hfrz Hrom Hown Hblob].
   destruct (same_but_materialized_frame model model' Hsb) as (Hfd & Hvm & Hlz & Hio & Hfs & Hpr & Hli & Htm & _ & _ & _ & _ & Hhl & Htd & _).
   assert (HH : Hof E M model' = Hof E M model) by (unfold Hof; rewrite Hlz; reflexivity).
-  constructor; rewrite ?HH, ?Hvm, ?Hlz, ?Hhl, ?Htd, ?Hpr; try assumption.
+  constructor; rewrite ?HH, ?Hvm, ?Hlz, ?Hhl, ?Htd, ?Hpr, ?(same_but_materialized_kernel _ _ Hsb); try assumption.
   - unfold kind_ok in *. rewrite Forall_forall in *. intros g Hg. rewrite Hvm, Hlz. exact (Hkind g Hg).
   - unfold rl_ok, app_pt in *. rewrite Forall_forall in *. intros R HR. rewrite Hvm. exact (Hrl R HR).
   - destruct Hvmo as (H1 & H2 & H3 & H4 & H5). rewrite Hfd, Hio, Hfs, Hli, Htm. repeat split; assumption.
@@ -142,12 +143,13 @@ Qed.
   (forall eff, ~ spurious_refusal_cfg cfg (sys_input segs ms x8) model eff) ->
   (forall j, m_halted (MD j) = None) ->
   (forall j, syscall_effect_accesses (EF j) = []) ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   (forall j, realizes_cfg segs cfg (mkCfg (advance_past_svc (apply_effect ms (EF j))) (MD j)) (T j)) ->
   realizes_cfg segs cfg (mkCfg ms model) (t_alt (fun j => t_emit (EV j) (T j))).
 Proof. LiaFast.lf_pins LiaFast.u0.
-  intros ms model x8 I EF MD EV T i0 Hh Hsvc Hcomp Hsound Hnu Hns HhM Hacc HK.
+  intros ms model x8 I EF MD EV T i0 Hh Hsvc Hcomp Hsound Hnu Hns HhM Hacc Hrob HK.
   apply (rzc_node segs cfg (mkCfg ms model) I EV
-           (fun j => mkCfg (advance_past_svc (apply_effect ms (EF j))) (MD j)) T i0); [| exact HK].
+           (fun j => mkCfg (advance_past_svc (apply_effect ms (EF j))) (MD j)) T i0); [| exact Hrob | exact HK].
   apply (node_sys_cfg segs cfg ms model x8 I EF MD MD EV Hh Hsvc Hcomp); try assumption.
   - intros j. apply Hns.
   - intros eff m' evs Hs _. exact (Hsound eff m' evs Hs).
@@ -158,7 +160,7 @@ Qed.
 (* [comment removed for export] *)
 Definition post_fresh (L : sst) (fs : lin -> list fact) : sst :=
   SST (s_pc L + 4) (rset (s_regs L) (rkey a0r) (lvar (s_next L))) (s_rgs L) (fs (lvar (s_next L)) ++ s_facts L)
-      (Pos.succ (s_next L)) (s_resv L).
+      (Pos.succ (s_next L)) RNone.
 Definition sm_with_tid (M : smodel) (l : lin) : smodel :=
   SM (sm_maps M) (sm_allow M) (sm_zr M) (Some l) (sm_brk M) (sm_sbrk M) (sm_sp M) (sm_frz M) (sm_own M).
 Definition TID_FACTS (x : lin) : list fact := [FRange x 1 (2 ^ 22 - 1)].
@@ -217,14 +219,14 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     constructor.
     - rewrite HH. unfold ms1. rewrite (restrict_adv_eff H ms v [] [] [] (s_pc L)) by exact Hpc0.
       cbn [apply_zeros apply_unmaps].
-      destruct (res_sound_gen segs E L (restrict H ms) a0r None TID_FACTS (s_pc L + 4) v (ms_fregs ms) (ms_fcsr ms) (s_resv L) (ms_resv ms) Hsd)
+      destruct (res_sound_gen segs E L (restrict H ms) a0r None TID_FACTS (s_pc L + 4) v (ms_fregs ms) (ms_fcsr ms) RNone None Hsd)
         as (E2 & Ha2 & _ & Hs2).
       + intros E'' _ _ l Hl. discriminate.
       + intros E'' _ Hv''. unfold TID_FACTS. constructor; [|constructor]. cbn [fact_ok]. rewrite lden_lvar, Hv''.
         unfold PID_MAX_ENVELOPE in Hv. lia.
       + exact Hfrm0.
-      + intros E'' Ha''. destruct (Hsd E'' Ha'') as (_ & _ & Hrv & _). exact Hrv.
-      + rewrite with_resv_same in Hs2. unfold set_res in Hs2. cbn [s_next] in Hs2.
+      + intros E'' Ha''. reflexivity.
+      + unfold with_resv in Hs2. unfold set_res in Hs2. cbn [s_next] in Hs2.
         assert (HE2 : E2 (s_next L) = v).
         { destruct (sden_0 _ _ _ _ Hs2) as (_ & _ & _ & HR2 & _). specialize (HR2 a0r). cbn [s_regs mks ms_regs] in HR2.
           rewrite rget_rset_same in HR2 by (unfold a0r, rkey; discriminate). rewrite lden_lvar in HR2.
@@ -269,7 +271,8 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     - exact (rl_ok_agree_shape (s_next L) E E' model (with_tid v model) (s_rgs L) (s_rgs L) Hbw Ha eq_refl (with_tid_vmmaps v model) Hrl).
     - destruct Hvmo as (H1 & H2 & H3 & H4 & H5). destruct model. cbn in *. repeat split; assumption.
     - rewrite with_tid_tid. rewrite Htd in Hproc. unfold with_tid. cbn [m_proc]. unfold m_halted, m_creds, m_setsid_succeeded, m_sigmask,
-        m_utsname, m_sigaltstack_installed, m_sigabrt_pending, m_abort_terminal, m_statpins. rewrite Hproc. reflexivity.
+        m_utsname, m_sigaltstack_installed, m_sigabrt_pending, m_abort_terminal, m_statpins,
+        m_sigpipe_pending, m_channel_reader, m_sigpipe_action, m_sigpipe_terminal. rewrite Hproc. reflexivity.
     - apply (frz_keep mem0 E E' L (post_fresh L TID_FACTS) M (sm_with_tid M (lvar (s_next L))) ms _ model (with_tid v model) Hwf Ha eq_refl);
         [rewrite with_tid_vmmaps; reflexivity | | | exact Hfrz].
       + intros w _ Ho. cbn [post_fresh s_rgs]. apply (proj1 (outside_agree (s_next L) E E' (s_rgs L) _ Hbw Ha)). exact Ho.
@@ -280,11 +283,12 @@ Proof. LiaFast.lf_pins LiaFast.u0.
       + intros w Ho. cbn [post_fresh s_rgs] in Ho. exact (proj2 (outside_agree (s_next L) E E' (s_rgs L) _ Hbw Ha) Ho).
       + intros w _. unfold ms1. rewrite adv_eff_mem. reflexivity.
       + intros x Hx. rewrite HH. exact Hx.
-    - apply (blob_ok_step (s_next L) E E' M _ model _ _ Hwf Ha eq_refl); [rewrite with_tid_vmmaps; reflexivity | exact Hblob]. }
+    - apply (blob_ok_step (s_next L) E E' M _ model _ _ Hwf Ha eq_refl); [rewrite with_tid_vmmaps; reflexivity | exact Hblob].
+    - vdso_keep_tac; first [reflexivity | rewrite with_tid_vmmaps; reflexivity | unfold alloc_top; rewrite with_tid_vmmaps; reflexivity]. }
   eapply rzc_conseq.
   - apply (rzc_sys_na ms1 model x8 I (fun j => mkEffect (proj1_sig j) [] [])
              (fun j => with_tid (proj1_sig j) model) (fun _ => []) (fun _ => T) i0);
-      [exact Hh | reflexivity | | | | | | | exact Hcont].
+      [exact Hh | reflexivity | | | | | | | exact (RomWrite.rob_memfree_no segs ms1 model x8 96 eq_refl Hno RomBase.memfree_96) | exact Hcont].
     + intros [v Hv]. apply Hsp'. apply set_tid_fresh_ok; [exact Htd|]. exists v. auto.
     + intros eff m' evs Hs. apply Hsp' in Hs. apply set_tid_fresh_ok in Hs as (v & Hv & -> & -> & ->); [|exact Htd].
       exists (exist _ v Hv). auto.
@@ -438,7 +442,7 @@ Definition null_rgs (n : positive) (nZ : Z) (vis piece : bool) : list region :=
   (if vis then [RGz (NA n) nZ RZ TEmpty] else []) ++ (if piece then [RGz (NP n) (nZ / 8) RZ TEmpty] else []).
 Definition null_post (L : sst) (nZ : Z) (vis piece : bool) : sst :=
   SST (s_pc L + 4) (rset (s_regs L) (rkey a0r) (NA (s_next L))) (null_rgs (s_next L) nZ vis piece ++ s_rgs L)
-      (null_facts (s_next L) nZ ++ s_facts L) (Pos.succ (Pos.succ (s_next L))) (s_resv L).
+      (null_facts (s_next L) nZ ++ s_facts L) (Pos.succ (Pos.succ (s_next L))) RNone.
 Definition null_allow (n : positive) (nZ : Z) (k : gkind) (vis piece : bool) : list (lin * Z) :=
   (if (vis && gkind_eqb k GL)%bool then [(NA n, nZ)] else []) ++ (if piece then [(NP n, nZ / 8)] else []).
 Definition null_M (M : smodel) (n : positive) (nZ : Z) (k : gkind) (vis piece : bool) : smodel :=
@@ -542,6 +546,11 @@ Lemma fn_halted : forall na flags a n m, m_halted (fresh_next na flags a n m) = 
 Proof. intros. unfold m_halted. rewrite (proj1 (fn_other na flags a n m)). reflexivity. Qed.
 Lemma fn_tid : forall na flags a n m, m_tid (fresh_next na flags a n m) = m_tid m.
 Proof. intros. unfold m_tid. rewrite (proj1 (fn_other na flags a n m)). reflexivity. Qed.
+Lemma fn_kernel : forall na flags a n m, m_kernel (fresh_next na flags a n m) = m_kernel m.
+Proof.
+  intros na flags a n m. unfold fresh_next, fresh_na_next, fresh_rw_next, with_mmap_backing, vm_add_lazy.
+  destruct na, (mmap_noreserve_b flags); destruct m; reflexivity.
+Qed.
 
 Definition fresh_eff (na : bool) (a n : word) : SyscallEffect :=
   if na then mkEffectU a [] [] [(a, n)] [] [] else mkEffect a [] [(a, n)].
@@ -550,7 +559,7 @@ Definition fresh_mem (na : bool) (mem : word -> option byte) (a n : word) : word
 
 Lemma fresh_restrict : forall H ms na a n pcz, ms_pc_val ms = Z_to_bv 64 pcz ->
   restrict H (advance_past_svc (apply_effect (svc_set ms) (fresh_eff na a n))) =
-  mks (ms_fregs ms) (ms_fcsr ms) (rupd (ms_regs ms) a0r a) (Z_to_bv 64 (pcz + 4)) (ms_resv ms)
+  mks (ms_fregs ms) (ms_fcsr ms) (rupd (ms_regs ms) a0r a) (Z_to_bv 64 (pcz + 4)) None
       (mrestrict H (fresh_mem na (ms_mem ms) a n)) (ms_rom ms).
 Proof.
   intros H ms na a n pcz Hpc. unfold fresh_eff, fresh_mem. destruct na.
@@ -809,7 +818,7 @@ Proof. LiaFast.lf_pins (fun (Hsegb : LiaFast.U) => LiaFast.u0).
     { intros R HR'. unfold uE, rsz. unfold bases_wf in Hbw. rewrite forallb_forall in Hbw. destruct (andb_prop _ _ (Hbw R HR')) as [Hb1 Hb2].
       rewrite (lden_agree_wf _ E E'' _ Hb1 Ha0), (lden_agree_wf _ E E'' _ Hb2 Ha0). split; reflexivity. }
     unfold sden0, null_post. cbn [s_pc s_regs s_rgs s_facts s_resv mks ms_pc_val ms_svc_pending ms_resv ms_regs ms_mem ms_fcsr].
-    split; [reflexivity|]. split; [reflexivity|]. split; [exact Hrv|].
+    split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].
     split; [apply regs_ok_upd; [exact HR | exact (HNA E'' Ha'')]|].
     split; [|split; [|split; [|exact Hfrm]]].
     - (* [comment removed for export] *)
@@ -961,7 +970,7 @@ Proof. LiaFast.lf_pins (fun (Hsegb : LiaFast.U) => LiaFast.u0).
     + intros p Hp. unfold AM. rewrite HA', <- app_assoc. apply page_allowedb_app_r. exact (N3 p Hp).
     + intros p Hp. rewrite Hlz', page_in_ranges_app, (N4 p Hp), orb_true_r. reflexivity.
     + rewrite Hvm'. cbn [vm_limit]. rewrite Hlim. exact Hbud'.
-  - unfold H', Hof. apply (hoff_of segs _ _ (vm_maps (m_vmmaps model')) (vm_reserved (m_vmmaps model')) Hsegb);
+  - unfold H', Hof. eapply (hoff_of segs _ _ (vm_maps (m_vmmaps model')) (vm_reserved (m_vmmaps model')) Hsegb);
       [rewrite Hvm'; exact Hres | exact Hlzm' | exact Hmres'].
   - rewrite Hvm'. exact Hres.
   - rewrite Hvm'. exact Hlim.
@@ -1047,6 +1056,7 @@ Proof. LiaFast.lf_pins (fun (Hsegb : LiaFast.U) => LiaFast.u0).
       intros Hp. destruct (mmap_noreserve_b flags); [|discriminate]. rewrite Hli in Hp. apply page_in_one in Hp.
       rewrite HnZw in Hp. exact (Hav w Hop Hp).
   - exact Hblob'.
+  - vdso_keep_tac; [unfold model'; rewrite fn_vmmaps; reflexivity | exact Htop' | unfold model'; apply fn_kernel].
 Qed.
 End NullPost.
 
@@ -1116,8 +1126,11 @@ Definition null_ok (res : list (word * word)) (LIMIT : Z) (L : sst) (M : smodel)
         else mmap_modeled_b (Z_to_bv 64 prot) (Z_to_bv 64 flags) (Z_to_bv 64 off)) &&
        Z.eqb nZ (page_round_up_Z len) && shadow_ok M && (negb piece || zr_ok M) &&
        gkind_eqb k (if na then GN else if mmap_noreserve_b (Z_to_bv 64 flags) then GL else GE) && (negb vis || negb na) &&
-       (page_size + ledger_size res + gsize_sum (s_facts L) (sm_maps M)
-          + (Z.of_nat (length res + length (sm_maps M)) + mark_len (s_facts L) (sm_maps M)) * (nZ + page_size) + nZ
+       (* the legacy search floor is the model's [Mmap.task_unmapped_base] (AllocNodesCfg.place_ok_exists), and the
+          reserved ledger is [res] followed by the vDSO/vvar pair: at most two entries, twenty pages
+          (FxChDen.vdso_ledger_small) *)
+       (LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.task_unmapped_base + ledger_size res + 20 * page_size + gsize_sum (s_facts L) (sm_maps M)
+          + (Z.of_nat (length res + length (sm_maps M)) + 2 + mark_len (s_facts L) (sm_maps M)) * (nZ + page_size) + nZ
           <=? 0x7fff7f800000) &&
        (eager_sum (s_facts L) ((NA (s_next L), lconst nZ, k) :: sm_maps M) + allow_bound (null_allow (s_next L) nZ k vis piece ++ sm_allow M) <=? LIMIT))%bool
   | _, _, _, _, _, _ => false
@@ -1184,18 +1197,21 @@ Proof. LiaFast.lf_pins (fun (Hsegb Hoff : LiaFast.U) => LiaFast.u0).
     { pose proof (gsz_bounds E (s_facts L) (NA (s_next L), lconst nZ, k) HFL) as Gb. unfold gsz, uE in Gb. cbn [fst snd] in Gb.
       rewrite lden_lconst, fg64 in Gb by (unfold two64; lia). lia. }
     destruct (gkind_eqb k GE); lia. }
-  assert (Hex' : page_size + ledger_size (vm_reserved (m_vmmaps model) ++ vm_maps (m_vmmaps model))
+  assert (Hex' : 0x2aaaaab000 + ledger_size (vm_reserved (m_vmmaps model) ++ vm_maps (m_vmmaps model))
                  + Z.of_nat (length (vm_reserved (m_vmmaps model) ++ vm_maps (m_vmmaps model))) * (nZ + page_size) + nZ
                  <= alloc_top (m_vmmaps model)).
   { assert (HFL : Forall (fact_ok E) (s_facts L)) by (destruct (sden_0 _ _ _ _ Hsd) as (_ & _ & _ & _ & _ & _ & X & _); exact X).
-    rewrite ledger_size_app, length_app, Hres, Hmaps.
+    rewrite ledger_size_app, length_app, Hres, Hmaps, ledger_size_app, length_app.
+    destruct (vdso_ledger_small (m_kernel model) (vdso_top (m_vmmaps model))) as [Hvs Hvn].
     destruct (ledger_lden_bounds E model (s_facts L) _ _ HFL Hgsh (proj1 Hblob) (proj2 (proj2 Hblob))) as [Hls Hln].
     destruct Hspok as [Hsp1 _]. unfold init_sp_ok, sp_window_lo in Hsp1. unfold alloc_top, stack_max_size.
-    rewrite Nat2Z.inj_add in *.
+    rewrite !Nat2Z.inj_add in *.
     assert (Hmul : (Z.of_nat (length (segments_reserved segs)) + Z.of_nat (length (lden_maps E (blob_of model0) (sm_maps M)))) * (nZ + page_size)
                    <= (Z.of_nat (length (segments_reserved segs)) + Z.of_nat (length (sm_maps M)) + mark_len (s_facts L) (sm_maps M)) * (nZ + page_size))
       by (apply Z.mul_le_mono_nonneg_r; [unfold page_size; lia | lia]).
-    lia. }
+    assert (Hmv : Z.of_nat (length (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model)))) * (nZ + page_size) <= 2 * (nZ + page_size))
+      by (apply Z.mul_le_mono_nonneg_r; unfold page_size; lia).
+    unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.task_unmapped_base in Hex. unfold page_size in *. lia. }
   assert (Hkk : k = (if na then GN else if mmap_noreserve_b (Z_to_bv 64 flags) then GL else GE)).
   { match goal with H : gkind_eqb k _ = true |- _ => destruct k, na, (mmap_noreserve_b (Z_to_bv 64 flags)); try discriminate; reflexivity end. }
   assert (Hvn : vis = true -> na = false).
@@ -1205,18 +1221,27 @@ Proof. LiaFast.lf_pins (fun (Hsegb Hoff : LiaFast.U) => LiaFast.u0).
   { intros Hp. match goal with H : (negb piece || zr_ok M)%bool = true |- _ => rewrite Hp in H; exact H end. }
   assert (Hsvc : ms_svc_pending ms1 = Some (ms_reg ms 17)) by reflexivity.
   assert (Hno : bv_unsigned (ms_reg ms 17) = 222) by (rewrite Hx8; reflexivity).
+  (* R3: this mmap's hint a0 is the constant 0 ([Z.eqb c0 0] in [null_ok]), so
+     [place_declined_b] is [false] by computation ([place_declined_b_null]). *)
+  assert (Hdecl0 : forall nZ0, place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms1 0) nZ0 = false).
+  { intros nZ0.
+    match goal with Hc : Z.eqb c0 0 = true |- _ => apply Z.eqb_eq in Hc; subst c0 end.
+    assert (Hg0 : ms_gpr ms1 0 = Z_to_bv 64 0)
+      by exact (gpr_const segs E L (restrict H ms) ms 0 0 Hsd eq_refl ltac:(lia) H0).
+    rewrite Hg0.
+    apply place_declined_b_null. }
   destruct na.
   - (* [comment removed for export] *)
     match goal with H : (negb (mmap_modeled_b _ _ _) && mmap_noaccess_b _ _ _)%bool = true |- _ => apply andb_prop in H as [Hm Hna0] end.
     apply negb_true_iff in Hm.
-    apply (rzc_mmap_fresh_na segs cfg Hoff ms1 model (ms_reg ms 17) T Hh Hsvc Hno); rewrite ?Hg1, ?Hg2, ?Hg3, ?Hg5; try assumption.
+    apply (rzc_mmap_fresh_na segs cfg Hoff ms1 model (ms_reg ms 17) T Hh Hsvc Hno); rewrite ?Hg1, ?Hg2, ?Hg3, ?Hg5; try first [assumption | apply Hdecl0].
     + rewrite HnZ. exact (place_ok_exists model nZ HnZpos Hex').
     + intros a Hplace. rewrite HnZ in Hplace |- *.
       apply (Hk _ _ _ (null_den segs LIMIT model0 mem0 Hsegb E L M ms model nZ k vis piece (Z_to_bv 64 flags) true a Hd Hplace Hsh' Hzr'
                           HnZpos HnZal Hkk Hvn Hbud (proj1 (Havoid a Hplace)) (proj2 (Havoid a Hplace)))).
       exact (proj1 (agree2 (s_next L) E (zval a) (rval a) _ (agree_refl _ _))).
   - (* [comment removed for export] *)
-    apply (rzc_mmap_fresh_rw segs cfg Hoff ms1 model (ms_reg ms 17) T Hh Hsvc Hno); rewrite ?Hg1, ?Hg2, ?Hg3, ?Hg5; try assumption.
+    apply (rzc_mmap_fresh_rw segs cfg Hoff ms1 model (ms_reg ms 17) T Hh Hsvc Hno); rewrite ?Hg1, ?Hg2, ?Hg3, ?Hg5; try first [assumption | apply Hdecl0].
     + rewrite HnZ. apply (fresh_rw_guard_exists (Z_to_bv 64 flags) model nZ HnZpos); [|exact Hex'].
       unfold mmap_noreserve_backed_ok. destruct (mmap_noreserve_b (Z_to_bv 64 flags)) eqn:Hnr; [reflexivity|].
       apply Z.leb_le. rewrite Hlim. rewrite Hkk in Hbud0; rewrite ?Hnr in Hbud0. cbn in Hbud0. lia.

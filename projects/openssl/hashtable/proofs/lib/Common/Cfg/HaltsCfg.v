@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the image's run segments replace its segments, with the read-only backing check). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -99,7 +100,7 @@ Theorem realizes_cfg_must_exit_in : forall S c T,
   must_exit_in_at_cfg cfg segs S c.
 Proof.
   intros S c T H.
-  induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+  induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq];
     intros Hrun Hex.
   - destruct Hnode as [Hcomp Hsound].
     apply must_exit_in_at_cfg_running.
@@ -179,18 +180,18 @@ Qed.
 
 (* [comment removed for export] *)
 Lemma realizes_cfg_must_exit_in_scfg : forall cfg S img lim en inp T,
-  realizes_cfg cfg (img_segments img) (init_cfg img lim en inp) T ->
+  realizes_cfg cfg (image_run_segments img en inp) (init_cfg img lim en inp) T ->
   exits_in S T ->
   must_exit_in_scfg cfg S img lim en inp.
 Proof.
   intros cfg S [segs pc ph] lim [sp brk0 mbase rnd] inp T H Hex.
   cbn [must_exit_in_scfg].
-  exact (realizes_cfg_must_exit_in cfg segs S _ T H eq_refl Hex).
+  exact (realizes_cfg_must_exit_in cfg _ S _ T H eq_refl Hex).
 Qed.
 
 (* [comment removed for export] *)
 Lemma realizes_cfg_must_exit_in_forced_only : forall cfg S img lim en inp T,
-  realizes_cfg cfg (img_segments img) (init_cfg img lim en inp) T ->
+  realizes_cfg cfg (image_run_segments img en inp) (init_cfg img lim en inp) T ->
   exits_in S T ->
   must_exit_in_scfg forced_only_cfg S img lim en inp.
 Proof.
@@ -207,7 +208,7 @@ Theorem halts_of_realizes_cfg :
      valid_input inp ->
      source_within_budget_scfg forced_only_cfg lim img en inp ->
      exists T : TSet,
-       realizes_cfg cfg (img_segments img) (init_cfg img lim en inp) T
+       realizes_cfg cfg (image_run_segments img en inp) (init_cfg img lim en inp) T
        /\ exits_in S T) ->
   halts_allowed_T_scfg_budgets forced_only_cfg lim S img.
 Proof.
@@ -222,7 +223,7 @@ Corollary halts_of_realizes_cfg_nopremise :
      valid_entry img en inp ->
      valid_input inp ->
      exists T : TSet,
-       realizes_cfg cfg (img_segments img) (init_cfg img lim en inp) T
+       realizes_cfg cfg (image_run_segments img en inp) (init_cfg img lim en inp) T
        /\ exits_in S T) ->
   halts_allowed_T_scfg_budgets forced_only_cfg lim S img.
 Proof.

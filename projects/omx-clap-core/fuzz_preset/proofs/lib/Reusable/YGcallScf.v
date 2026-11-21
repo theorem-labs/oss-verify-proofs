@@ -13,7 +13,7 @@
       astack_malloc_realizes_cf_x: the cf text YG0dcf.v astack_malloc_realizes_cf IS the generic text at ARcf;
       astack_malloc_realizes_cf_xs: the cf text gives the text at ARxs.
    3. The flag store's laws at ARxs:
-      - ASFX : astack_free_x_xs, from h-asan-init-2's astack_free_law_ok_cf (YG0tcf.v:476) and xs_placed_cf kept by
+      - ASFX : astack_free_x_xs, from h-asan-init-2's astack_free_law_ok_cf (YG0tcf.v:477) and xs_placed_cf kept by
         stack_free_state (a set_fs);
       - FFLX : frame_flag_x_xs, from AR_flag_law_ok_cf and AR_client_img_law_ok_cf (YG0scf.v): the flag byte is
         runtime-owned, an application address, and off the image. No image premise.
@@ -79,7 +79,7 @@ cbn [ibind apath]; intros Hpath.
 - apply pair_equal_spec in Hpath as [E _]. discriminate E.
 Qed.
 
-(* cgif's stack_malloc_post (YG01.v:462) at a PFake result, from the definition: the frame pushed is fresh. *)
+(* cgif's stack_malloc_post (YG01.v:463) at a PFake result, from the definition: the frame pushed is fresh. *)
 Lemma stack_malloc_apath_post : forall S cid pos S', 0 <= cid <= 10 ->
 apath (stack_malloc cid S) [] (PFake cid pos, S') ->
 (exists f, S' = set_fs f S) /\ frames S' = (cid, pos) :: frames S /\ ~ In (cid, pos) (frames S).

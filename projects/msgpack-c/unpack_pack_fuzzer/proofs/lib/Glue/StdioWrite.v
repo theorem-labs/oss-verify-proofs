@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the syscall return clears the LR/SC reservation in post_done and post_loop; the far-end reader premise Hrdr of the site and of stdio_write_sound(_b), for writev_outcome; ACC and ACC0 follow wv_cps_in's and wv_eff0_in's offsets; loop_main names writev_outcome's premises and proves the writev node's RomBase.sys_rob by SysSpec.writev_rob, for rz_silent_all and rz_node; imports RomBase). *)
 From Stdlib Require Import ZArith Bool List Lia.
 From Stdlib Require Import PrimInt63 Uint63.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
@@ -9,6 +10,7 @@ From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Common Require Import Sha
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.FX Require Import
   W64 W64Proofs Val IMap Mem Instr State Step Plan ValProofs MemProofs StepSoundBase StepSoundMem StepSound PlanSound StepAcc.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue Require Import Nodes SysSpec StEqb.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.AS Require RomBase.
 Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Import W64 Val Mem FI St Step Plan ValP StepB StepM StepS PlanS FXN SysSpec.
@@ -251,10 +253,11 @@ Fixpoint explore (fuel : nat) (ra : int) (st : sstate) : option (list sstate * l
 Definition FUEL : nat := 6%nat.
 
 Definition post_done (X : ltpl) : sstate :=
-  let st := lt_st X in setpc (setr st X10 (VAR (lt_vr X))) (pc4 st).
+  (* LPS 08b1429: the syscall return clears the reservation ([svc_ret]). *)
+  let st := lt_st X in setresv (setpc (setr st X10 (VAR (lt_vr X))) (pc4 st)) RNone.
 Definition post_loop (X : ltpl) (sw : bool) : sstate :=
   let st := lt_st X in let kc := lt_kc X in
-  let st1 := setpc (setr st X10 (VAR kc)) (pc4 st) in
+  let st1 := setresv (setpc (setr st X10 (VAR kc)) (pc4 st)) RNone in
   let casef := if sw then FULt (VAR (lt_vl X)) (VAR kc) else FULe (VAR kc) (VAR (lt_vl X)) in
 
   let remf := FULe (sv_alu ALU_SUB (VAR (lt_vr X)) (VAR kc)) TWO30 in
@@ -1127,6 +1130,8 @@ Definition TI (X : ltpl) (EX : env) (n : Z) : Prop :=
 Hypothesis Hfd12 : fd = 1 \/ fd = 2.
 Hypothesis HMI : mstable MI.
 Hypothesis Hfds : forall mo, MI mo -> fd_lookup (m_fds mo) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)).
+(* LPS 08b1429: writev reads the far-end reader ([ReadWrite.writev_spec]); a run-level fact. *)
+Hypothesis Hrdr : forall mo, MI mo -> op_minv OPS mo -> m_channel_reader mo = true.
 Hypothesis HK0 : K [].
 Hypothesis HPwf : sstate_wfb P = true.
 Hypothesis Hcont : forall E' ms' mo', eb E' = eb E0 -> MI mo' -> st_ok segs OPS E' P ms' mo' -> realizes segs (mkCfg ms' mo') K.
@@ -1237,69 +1242,82 @@ Proof.
   { unfold isys. change (in_arg (sys_input segs (pend ms x8) x8) 2) with (ms_gpr (pend ms x8) 2). rewrite pend_gpr, (so_a2 segs OPS EX st ms model HS).
     unfold iovcnt32, abi_low32. rewrite U12. replace (length iovs) with (lt_c X) by (unfold iovs; destruct Hc as [-> | [-> _]]; reflexivity).
     rewrite Z.mod_small by (destruct Hc as [-> | [-> _]]; cbn; lia). reflexivity. }
+  (* LPS 727298f3: [writev_outcome]'s premises at the call's input, named: [HSPEC] and the
+     node's [RomBase.sys_rob] ([SysSpec.writev_rob]) both read them. *)
+  assert (HR : R = concat ((skipn (Z.to_nat (blen (curw X) - bv_unsigned (ev EX (lt_vl X)))) (BS (curw X))) :: (if Nat.eqb (lt_c X) 2 then [BS w1] else []))).
+  { unfold R, REM, tailB. destruct (Nat.eqb (lt_c X) 2); cbn [concat]; rewrite ?app_nil_r; reflexivity. }
+  assert (W1 : bv_unsigned (in_sysno isys) = 66).
+  { unfold isys. rewrite in_sysno_sys_input. exact U17. }
+  assert (W2 : fd_lookup (m_fds model) (fd32 (in_arg isys 0)) = Some (FdChannel (Z_to_bv 64 fd))).
+  { replace (fd32 (in_arg isys 0)) with (Z_to_bv 64 fd); [exact Hfdsm|].
+    unfold isys. change (in_arg (sys_input segs (pend ms x8) x8) 0) with (ms_gpr (pend ms x8) 0). rewrite pend_gpr, (so_a0 segs OPS EX st ms model HS).
+    symmetry. rewrite fd32_id by (rewrite U10; lia). apply bv_eq. rewrite U10, Z_to_bv_unsigned. symmetry. apply bv_wrap_small. unfold bv_modulus. lia. }
+  assert (W3 : w_is0 (Z_to_bv 64 fd) = false).
+  { unfold w_is0, bv_eqb. rewrite !Z_to_bv_unsigned, bv_wrap_small by (unfold bv_modulus; lia). apply Z.eqb_neq. change (bv_wrap 64 0) with 0. lia. }
+  (* LPS 08b1429: the far-end reader, a run-level fact *)
+  assert (W4 : m_channel_reader model = true) by exact (Hrdr model HMo (so_mf _ _ _ _ _ _ HS)).
+  assert (HLiov : (length iovs = 1 \/ length iovs = 2)%nat) by (unfold iovs; destruct (Nat.eqb (lt_c X) 2); cbn; auto).
+  assert (W7 : access_okb (in_arg isys 1) (16 * Z.of_nat (length iovs)) = true).
+  { rewrite Ha1. unfold access_okb, TASK_SIZE. apply andb_true_intro. split; apply Z.leb_le; unfold iovs; destruct (Nat.eqb (lt_c X) 2); cbn [length Z.of_nat Pos.of_succ_nat Pos.succ Z.mul Pos.mul]; lia. }
+  assert (W8 : iov_at (in_mem isys) (in_arg isys 1) iovs).
+  { rewrite Ha1. unfold iovs.
+    assert (M8 : forall a v, load8 segs st a = Some v -> read_u64 (in_mem isys) (den EX a) = Some (den EX v)).
+    { intros a v Hl. destruct (load8_sound EX st ms model a v HS Hl) as (bs & _ & _ & HU). unfold isys. exact HU. }
+    cbn [iov_at]. rewrite <- !den_addz_bv. split; [rewrite (M8 _ _ Lb), den_VAR; reflexivity|]. split; [rewrite (M8 _ _ Ll), den_VAR; reflexivity|].
+    split; [lia|].
+    destruct (Nat.eqb (lt_c X) 2) eqn:Q2; [|exact I]. apply Nat.eqb_eq in Q2.
+    destruct (Le1 Q2) as (b1 & l1 & He1 & Lb1 & Ll1). destruct Hc as [Hc|[_ Hc2]]; [rewrite Hc in Q2; discriminate Q2|].
+    destruct (w1_in Hc2) as (_ & _ & Hoe). rewrite Hoe in He1. injection He1 as <- <-.
+    destruct (w_den EX w1 HXenv (or_intror (conj Hc2 eq_refl))) as (_ & _ & Db1 & Dl1).
+    cbn [iov_at]. rewrite <- !den_addz_bv. split; [rewrite (M8 _ _ Lb1), Db1; reflexivity|]. split; [rewrite (M8 _ _ Ll1), Dl1; reflexivity|]. split; [|exact I].
+    destruct (Hent w1 (or_intror (conj Hc2 eq_refl))) as (_ & B & _).
+    rewrite Z_to_bv_unsigned, bv_wrap_small by (unfold bv_modulus; unfold blen, uZ in *; pose proof (u64_range (den E0 (we_len w1))); lia). lia. }
+  assert (W9 : Forall (fun bl => access_okb (fst bl) (bv_unsigned (snd bl)) = true) iovs).
+  { unfold iovs. constructor; [cbn [fst snd]; unfold access_okb, TASK_SIZE; apply andb_true_intro; split; apply Z.leb_le; lia|].
+    destruct (Nat.eqb (lt_c X) 2) eqn:Q2; [|constructor]. apply Nat.eqb_eq in Q2. destruct Hc as [Hc|[_ Hc2]]; [rewrite Hc in Q2; discriminate Q2|].
+    constructor; [|constructor]. cbn [fst snd].
+    destruct (Hent w1 (or_intror (conj Hc2 eq_refl))) as (B1 & B2 & B3 & _).
+    pose proof (u64_range (den E0 (we_len w1))) as R1. pose proof (u64_range (den E0 (we_base w1))) as R2. unfold bbase, blen, uZ in B1, B2, B3 |- *.
+    unfold access_okb, TASK_SIZE. rewrite !Z_to_bv_unsigned, !bv_wrap_small by (unfold bv_modulus; lia).
+    apply andb_true_intro. split; apply Z.leb_le; lia. }
+  assert (W10 : Forall2 (fun bl bs => read_bytes_map (in_mem isys) (fst bl) (snd bl) = Some bs) iovs
+                  ((skipn (Z.to_nat (blen (curw X) - bv_unsigned (ev EX (lt_vl X)))) (BS (curw X))) :: (if Nat.eqb (lt_c X) 2 then [BS w1] else []))).
+  { unfold iovs. constructor.
+    + cbn [fst snd].
+      assert (RB : read_bytes_map (ms_read_byte ms) (Z_to_bv 64 (bv_unsigned (ev EX (lt_vb X)))) (Z_to_bv 64 (Z.of_nat (Z.to_nat (bv_unsigned (ev EX (lt_vl X))))))
+                   = Some (skipn (Z.to_nat (blen (curw X) - bv_unsigned (ev EX (lt_vl X)))) (BS (curw X)))).
+      { apply (read_bytes_of_rb ms); [exact (so_rom _ _ _ _ _ _ HS) | lia | unfold two64; lia | lia | rewrite length_skipn; lia |].
+        intros i Hi. rewrite nth_skipn.
+        replace (bv_unsigned (ev EX (lt_vb X)) + i) with (bbase (curw X) + (blen (curw X) - bv_unsigned (ev EX (lt_vl X)) + i)) by lia.
+        rewrite BR by lia. f_equal. f_equal. lia. }
+      rewrite Z2Nat.id, !Z_to_bv_bv_unsigned in RB by lia. exact RB.
+    + destruct (Nat.eqb (lt_c X) 2) eqn:Q2; [|constructor]. apply Nat.eqb_eq in Q2. destruct Hc as [Hc'|[_ Hc2]]; [rewrite Hc' in Q2; discriminate Q2|].
+      constructor; [|constructor]. cbn [fst snd].
+      destruct (Hent w1 (or_intror (conj Hc2 eq_refl))) as (B1 & B2 & B3 & BL1).
+      destruct (w_bytes X EX ms model w1 HS HX HXenv (or_intror (conj Hc2 eq_refl))) as [BL' BR'].
+      pose proof (u64_range (den E0 (we_len w1))) as R1. pose proof (u64_range (den E0 (we_base w1))) as R2.
+      assert (Rb : 0 <= bbase w1) by (unfold bbase, uZ; lia). assert (Rl : 0 <= blen w1) by (unfold blen, uZ; lia).
+      assert (RB : read_bytes_map (ms_read_byte ms) (Z_to_bv 64 (bbase w1)) (Z_to_bv 64 (Z.of_nat (Z.to_nat (blen w1)))) = Some (BS w1)).
+      { apply (read_bytes_of_rb ms); [exact (so_rom _ _ _ _ _ _ HS) | lia | unfold two64; lia | lia | lia |].
+        intros i Hi. apply BR'. lia. }
+      rewrite Z2Nat.id in RB by lia. exact RB. }
+  assert (W11 : iovs_total iovs <= 2 ^ 30).
+  { unfold iovs. cbn [iovs_total]. destruct (Nat.eqb (lt_c X) 2) eqn:Q2; cbn [iovs_total].
+    + apply Nat.eqb_eq in Q2. destruct Hc as [Hc'|[_ Hc2]]; [rewrite Hc' in Q2; discriminate Q2|].
+      destruct (Hent w1 (or_intror (conj Hc2 eq_refl))) as (_ & B & _). pose proof (u64_range (den E0 (we_len w1))) as R1.
+      rewrite Z_to_bv_unsigned, bv_wrap_small by (unfold bv_modulus, blen, uZ in *; lia).
+      unfold tailn in Hn2. rewrite Q2 in Hn2. cbn [Nat.eqb] in Hn2. lia.
+    + unfold tailn in Hn2. rewrite Q2 in Hn2. cbn [Nat.eqb] in Hn2. lia. }
   assert (HSPEC : forall o, syscall_spec isys model o <->
      (R = [] /\ o = Ok (wv_eff0 isys) model []) \/
      (exists k, (1 <= k)%nat /\ (k <= length R)%nat /\ o = Ok (wv_eff isys iovs k) model (map (WriteEv (Z_to_bv 64 fd)) (firstn k R)))).
-  { intros o.
-    assert (HR : R = concat ((skipn (Z.to_nat (blen (curw X) - bv_unsigned (ev EX (lt_vl X)))) (BS (curw X))) :: (if Nat.eqb (lt_c X) 2 then [BS w1] else []))).
-    { unfold R, REM, tailB. destruct (Nat.eqb (lt_c X) 2); cbn [concat]; rewrite ?app_nil_r; reflexivity. }
-    rewrite HR. apply (writev_outcome isys model o (Z_to_bv 64 fd) iovs).
-    - unfold isys. rewrite in_sysno_sys_input. exact U17.
-    - replace (fd32 (in_arg isys 0)) with (Z_to_bv 64 fd); [exact Hfdsm|].
-      unfold isys. change (in_arg (sys_input segs (pend ms x8) x8) 0) with (ms_gpr (pend ms x8) 0). rewrite pend_gpr, (so_a0 segs OPS EX st ms model HS).
-      symmetry. rewrite fd32_id by (rewrite U10; lia). apply bv_eq. rewrite U10, Z_to_bv_unsigned. symmetry. apply bv_wrap_small. unfold bv_modulus. lia.
-    - unfold w_is0, bv_eqb. rewrite !Z_to_bv_unsigned, bv_wrap_small by (unfold bv_modulus; lia). apply Z.eqb_neq. change (bv_wrap 64 0) with 0. lia.
-    - unfold iovs. destruct (Nat.eqb (lt_c X) 2); cbn; auto.
-    - exact Hcnt.
-    - rewrite Ha1. unfold access_okb, TASK_SIZE. apply andb_true_intro. split; apply Z.leb_le; unfold iovs; destruct (Nat.eqb (lt_c X) 2); cbn [length Z.of_nat Pos.of_succ_nat Pos.succ Z.mul Pos.mul]; lia.
-    - rewrite Ha1. unfold iovs.
-      assert (M8 : forall a v, load8 segs st a = Some v -> read_u64 (in_mem isys) (den EX a) = Some (den EX v)).
-      { intros a v Hl. destruct (load8_sound EX st ms model a v HS Hl) as (bs & _ & _ & HU). unfold isys. exact HU. }
-      cbn [iov_at]. rewrite <- !den_addz_bv. split; [rewrite (M8 _ _ Lb), den_VAR; reflexivity|]. split; [rewrite (M8 _ _ Ll), den_VAR; reflexivity|].
-      split; [lia|].
-      destruct (Nat.eqb (lt_c X) 2) eqn:Q2; [|exact I]. apply Nat.eqb_eq in Q2.
-      destruct (Le1 Q2) as (b1 & l1 & He1 & Lb1 & Ll1). destruct Hc as [Hc|[_ Hc2]]; [rewrite Hc in Q2; discriminate Q2|].
-      destruct (w1_in Hc2) as (_ & _ & Hoe). rewrite Hoe in He1. injection He1 as <- <-.
-      destruct (w_den EX w1 HXenv (or_intror (conj Hc2 eq_refl))) as (_ & _ & Db1 & Dl1).
-      cbn [iov_at]. rewrite <- !den_addz_bv. split; [rewrite (M8 _ _ Lb1), Db1; reflexivity|]. split; [rewrite (M8 _ _ Ll1), Dl1; reflexivity|]. split; [|exact I].
-      destruct (Hent w1 (or_intror (conj Hc2 eq_refl))) as (_ & B & _).
-      rewrite Z_to_bv_unsigned, bv_wrap_small by (unfold bv_modulus; unfold blen, uZ in *; pose proof (u64_range (den E0 (we_len w1))); lia). lia.
-    - unfold iovs. constructor; [cbn [fst snd]; unfold access_okb, TASK_SIZE; apply andb_true_intro; split; apply Z.leb_le; lia|].
-      destruct (Nat.eqb (lt_c X) 2) eqn:Q2; [|constructor]. apply Nat.eqb_eq in Q2. destruct Hc as [Hc|[_ Hc2]]; [rewrite Hc in Q2; discriminate Q2|].
-      constructor; [|constructor]. cbn [fst snd].
-      destruct (Hent w1 (or_intror (conj Hc2 eq_refl))) as (B1 & B2 & B3 & _).
-      pose proof (u64_range (den E0 (we_len w1))) as R1. pose proof (u64_range (den E0 (we_base w1))) as R2. unfold bbase, blen, uZ in B1, B2, B3 |- *.
-      unfold access_okb, TASK_SIZE. rewrite !Z_to_bv_unsigned, !bv_wrap_small by (unfold bv_modulus; lia).
-      apply andb_true_intro. split; apply Z.leb_le; lia.
-    - unfold iovs. constructor.
-      + cbn [fst snd].
-        assert (RB : read_bytes_map (ms_read_byte ms) (Z_to_bv 64 (bv_unsigned (ev EX (lt_vb X)))) (Z_to_bv 64 (Z.of_nat (Z.to_nat (bv_unsigned (ev EX (lt_vl X))))))
-                     = Some (skipn (Z.to_nat (blen (curw X) - bv_unsigned (ev EX (lt_vl X)))) (BS (curw X)))).
-        { apply (read_bytes_of_rb ms); [exact (so_rom _ _ _ _ _ _ HS) | lia | unfold two64; lia | lia | rewrite length_skipn; lia |].
-          intros i Hi. rewrite nth_skipn.
-          replace (bv_unsigned (ev EX (lt_vb X)) + i) with (bbase (curw X) + (blen (curw X) - bv_unsigned (ev EX (lt_vl X)) + i)) by lia.
-          rewrite BR by lia. f_equal. f_equal. lia. }
-        rewrite Z2Nat.id, !Z_to_bv_bv_unsigned in RB by lia. exact RB.
-      + destruct (Nat.eqb (lt_c X) 2) eqn:Q2; [|constructor]. apply Nat.eqb_eq in Q2. destruct Hc as [Hc'|[_ Hc2]]; [rewrite Hc' in Q2; discriminate Q2|].
-        constructor; [|constructor]. cbn [fst snd].
-        destruct (Hent w1 (or_intror (conj Hc2 eq_refl))) as (B1 & B2 & B3 & BL1).
-        destruct (w_bytes X EX ms model w1 HS HX HXenv (or_intror (conj Hc2 eq_refl))) as [BL' BR'].
-        pose proof (u64_range (den E0 (we_len w1))) as R1. pose proof (u64_range (den E0 (we_base w1))) as R2.
-        assert (Rb : 0 <= bbase w1) by (unfold bbase, uZ; lia). assert (Rl : 0 <= blen w1) by (unfold blen, uZ; lia).
-        assert (RB : read_bytes_map (ms_read_byte ms) (Z_to_bv 64 (bbase w1)) (Z_to_bv 64 (Z.of_nat (Z.to_nat (blen w1)))) = Some (BS w1)).
-        { apply (read_bytes_of_rb ms); [exact (so_rom _ _ _ _ _ _ HS) | lia | unfold two64; lia | lia | lia |].
-          intros i Hi. apply BR'. lia. }
-        rewrite Z2Nat.id in RB by lia. exact RB.
-    - unfold iovs. cbn [iovs_total]. destruct (Nat.eqb (lt_c X) 2) eqn:Q2; cbn [iovs_total].
-      + apply Nat.eqb_eq in Q2. destruct Hc as [Hc'|[_ Hc2]]; [rewrite Hc' in Q2; discriminate Q2|].
-        destruct (Hent w1 (or_intror (conj Hc2 eq_refl))) as (_ & B & _). pose proof (u64_range (den E0 (we_len w1))) as R1.
-        rewrite Z_to_bv_unsigned, bv_wrap_small by (unfold bv_modulus, blen, uZ in *; lia).
-        unfold tailn in Hn2. rewrite Q2 in Hn2. cbn [Nat.eqb] in Hn2. lia.
-      + unfold tailn in Hn2. rewrite Q2 in Hn2. cbn [Nat.eqb] in Hn2. lia. }
+  { intros o. rewrite HR. exact (writev_outcome isys model o (Z_to_bv 64 fd) iovs _ W1 W2 W3 W4 HLiov Hcnt W7 W8 W9 W10 W11). }
+  (* LPS 727298f3: the writev node answers the same over a larger read-only backing *)
+  assert (ROB : RomBase.sys_rob segs (mkCfg (pend ms x8) model))
+    by exact (writev_rob segs (pend ms x8) model x8 (Z_to_bv 64 fd) iovs _ eq_refl W1 W2 W3 W4 HLiov Hcnt W7 W8 W9 W10 W11).
   assert (Eisys : sys_input segs (pend ms x8) x8 = isys) by reflexivity. clearbody isys.
 
   pose proof (u64_range (den EX (getr st X11))) as Ra1.
-  assert (HLiov : (length iovs = 1 \/ length iovs = 2)%nat) by (unfold iovs; destruct (Nat.eqb (lt_c X) 2); cbn; auto).
   assert (DESC : forall i j, (i < length iovs)%nat -> 0 <= j < 16 ->
              fx_acc segs EX (s_regs st) (bv_unsigned (den EX (getr st X11)) + 16 * Z.of_nat i + j)).
   { intros i j Hi Hj. destruct i as [|[|i]].
@@ -1328,16 +1346,18 @@ Proof.
   assert (ACC : forall k a nn j, In (a, nn) (wv_cps isys iovs k) -> 0 <= j < Z.of_nat nn ->
              op_cov OPS (insts EX (s_ops st)) (bv_unsigned a + j)).
   { intros k a nn j Hin Hj. apply (so_cover _ _ _ _ _ _ HS).
-    destruct (wv_cps_in isys iovs k a nn HLiov Hcnt Hin) as [[-> (i & Hi & Hx)] | (len & Hl & Hlen)].
+    destruct (wv_cps_in isys iovs k a nn HLiov Hcnt Hin) as [(i & d & Hi & Hd0 & Hd1 & Hx) | (len & Hl & Hlen)].
     - rewrite Hx, Ha1, bv_wrap_small by (unfold bv_modulus; destruct HLiov as [Q|Q]; rewrite Q in Hi; lia).
-      apply DESC; [exact Hi | cbn in Hj; lia].
+      (* wv_cps_in hands back a LEFT-associated sum (SysSpec.v:727), and DESC
+         wants the offset grouped as [d + j]: the re-association runs backwards. *)
+      rewrite <- Z.add_assoc. apply DESC; [exact Hi | lia].
     - apply (DATA a len j Hl). lia. }
   assert (ACC0 : forall a nn j, In (a, nn) (syscall_effect_accesses (wv_eff0 isys)) -> 0 <= j < Z.of_nat nn ->
              op_cov OPS (insts EX (s_ops st)) (bv_unsigned a + j)).
   { intros a nn j Hin Hj. apply (so_cover _ _ _ _ _ _ HS).
-    destruct (wv_eff0_in isys (length iovs) a nn HLiov Hcnt Hin) as [-> (i & Hi & Hx)].
+    destruct (wv_eff0_in isys (length iovs) a nn HLiov Hcnt Hin) as (i & d & Hi & Hd0 & Hd1 & Hx).
     rewrite Hx, Ha1, bv_wrap_small by (unfold bv_modulus; destruct HLiov as [Q|Q]; rewrite Q in Hi; lia).
-    apply DESC; [exact Hi | cbn in Hj; lia]. }
+    rewrite <- Z.add_assoc. apply DESC; [exact Hi | lia]. }
 
   assert (MAT : forall acc, (forall a nn j, In (a, nn) acc -> 0 <= j < Z.of_nat nn -> op_cov OPS (insts EX (s_ops st)) (bv_unsigned a + j)) ->
             materialize_model_accesses model acc = Some (matz model acc) /\ MI (matz model acc) /\ st_ok segs OPS EX st ms (matz model acc)).
@@ -1371,6 +1391,7 @@ Proof.
         -- intros [[_ ->] | (k & Hk1 & Hk2 & _)]; [exists tt; reflexivity | cbn in Hk2; lia].
         -- intros [[] ->]. left. split; reflexivity.
       * intros _. split; [exact MH | exact M1].
+    + exact ROB.
     + intros []. rewrite HR0. cbn [map]. unfold wv_eff0. rewrite apply_effect_nowrite. fold (svc_post ms x8 (Z_to_bv 64 0)).
       rewrite <- Hz. apply (rz_conseq segs _ K); [exact (DONE mo0 M2 M3) | apply t_eq_sym; apply t_emit_nil_eq; exact HK0].
   -
@@ -1388,7 +1409,7 @@ Proof.
       - intros i. split; [exact MH|]. rewrite wv_eff_accesses. exact (proj1 (MAT _ (ACC (proj1_sig i)))). }
     apply (rz_conseq segs _ (t_alt (fun i : wr_index R => t_emit (evs i) (t_emit (map (WriteEv (Z_to_bv 64 fd)) (skipn (proj1_sig i) R)) K)))).
     2:{ apply t_alt_wall; [exact HK0 | exact HRn]. }
-    apply (rz_node segs _ (wr_index R) evs nx _ (wr_full R HRn) NODE).
+    apply (rz_node segs _ (wr_index R) evs nx _ (wr_full R HRn) NODE ROB).
     intros [k [Hk1 Hk2]]. cbn [proj1_sig]. unfold nx, mo2. cbn [proj1_sig]. unfold wv_eff. rewrite apply_effect_nowrite.
     fold (svc_post ms x8 (Z_to_bv 64 (Z.of_nat k))).
     destruct (MAT _ (ACC k)) as (_ & HMk & HSmk). set (mok := matz model (wv_cps isys iovs k)) in *.
@@ -1489,7 +1510,8 @@ Definition explore_eqs (ra : int) (t : tplcert) : Prop :=
   explore segs it FUEL ra (post_loop (tc_tpl t) false) = Some ([], tc_ns t) /\
   (lt_c (tc_tpl t) = 2%nat -> explore segs it FUEL ra (post_loop (tc_tpl t) true) = Some ([], tc_sw t)).
 
-Theorem stdio_write_sound : forall (MP : Model -> Prop), mstable MP -> forall T P C E ms model K,
+Theorem stdio_write_sound : forall (MP : Model -> Prop), mstable MP ->
+  (forall mo, MP mo -> op_minv OPS mo -> m_channel_reader mo = true) -> forall T P C E ms model K,
   sw_verify segs it L fdok T P C = true ->
   run segs it [] T = SStop KEcall (c_T1 C) ->
   Forall (explore_eqs (c_ra C)) (c_tpls C) ->
@@ -1497,7 +1519,7 @@ Theorem stdio_write_sound : forall (MP : Model -> Prop), mstable MP -> forall T 
   (forall E' ms' mo', eb E' = eb E -> MP mo' -> st_ok segs OPS E' P ms' mo' -> realizes segs (mkCfg ms' mo') K) ->
   realizes segs (mkCfg ms model) (t_emit (map (WriteEv (sw_fd C)) (sw_bytes C E)) K).
 Proof.
-  intros MP HMP T P C E ms model K HV Hrun HX HS HMo HK0 Hcont.
+  intros MP HMP HRD T P C E ms model K HV Hrun HX HS HMo HK0 Hcont.
   unfold sw_verify in HV. cbv zeta in HV.
   apply andb_true_split in HV as [HV Vtpls]. apply andb_true_split in HV as [HV VA]. apply andb_true_split in HV as [HV Vwes].
   apply andb_true_split in HV as [HV Vfdok]. apply andb_true_split in HV as [HV Vlits]. apply andb_true_split in HV as [Vwf Vra].
@@ -1545,7 +1567,7 @@ Proof.
   assert (HMI : mstable MI).
   { intros mo acc mo' [H1 H2] M. split; [exact (HMP _ _ _ H1 M)|]. rewrite (mat_fds _ _ _ M). exact H2. }
   assert (MAIN := loop_main E (s_next T) fd wes ra P K MI (fun X => exists t, In t (tA :: tpls') /\ X = tc_tpl t) Hfd12
-            HMI (fun mo H => proj2 H) HK0 Vwf (fun E' ms' mo' He Hm HSP => Hcont E' ms' mo' He (proj1 Hm) HSP) Hwb Hc1).
+            HMI (fun mo H => proj2 H) (fun mo H => HRD mo (proj1 H)) HK0 Vwf (fun E' ms' mo' He Hm HSP => Hcont E' ms' mo' He (proj1 Hm) HSP) Hwb Hc1).
   assert (HENT : forall w, w = w0 wes \/ (c1 wes = 2%nat /\ w = w1 wes) ->
      bbase E w < 2 ^ 47 /\ blen E w <= 2 ^ 30 /\ bbase E w + blen E w <= 2 ^ 47 /\ Z.of_nat (length (BS E w)) = blen E w).
   { intros w Hw. unfold bbase, blen, BS, uZ.
@@ -1645,7 +1667,8 @@ Proof.
   apply StEqb.st_eqb_eq in H. subst. reflexivity.
 Qed.
 
-Theorem stdio_write_sound_b : forall (MP : Model -> Prop), mstable MP -> forall T P C E ms model K,
+Theorem stdio_write_sound_b : forall (MP : Model -> Prop), mstable MP ->
+  (forall mo, MP mo -> op_minv OPS mo -> m_channel_reader mo = true) -> forall T P C E ms model K,
   sw_verify segs it L fdok T P C = true ->
   sres_eqb (run segs it [] T) (c_T1 C) = true ->
   forallb (fun t => explore_chk_comb (lt_c (tc_tpl t)) (explore segs it FUEL (c_ra C) (post_done (tc_tpl t)))
@@ -1655,9 +1678,9 @@ Theorem stdio_write_sound_b : forall (MP : Model -> Prop), mstable MP -> forall 
   (forall E' ms' mo', eb E' = eb E -> MP mo' -> st_ok segs OPS E' P ms' mo' -> realizes segs (mkCfg ms' mo') K) ->
   realizes segs (mkCfg ms model) (t_emit (map (WriteEv (sw_fd C)) (sw_bytes C E)) K).
 Proof.
-  intros MP HMP T P C E ms model K H1 H2 H3 HS HMo HK Hcont.
+  intros MP HMP HRD T P C E ms model K H1 H2 H3 HS HMo HK Hcont.
   apply sres_eqb_eq in H2. apply explore_chk_sound in H3.
-  exact (stdio_write_sound MP HMP T P C E ms model K H1 H2 H3 HS HMo HK Hcont).
+  exact (stdio_write_sound MP HMP HRD T P C E ms model K H1 H2 H3 HS HMo HK Hcont).
 Qed.
 End Sound.
 

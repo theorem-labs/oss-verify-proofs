@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mmap placement by Linux's rule: the plan's room in llo_gap counts the bottom-up floor task_unmapped_base, and anon_place_ok's new first conjunct; munmap's cut as maps_subtract, map_remove on this ledger of nonempty entries (maps_munmap_exact); ki_resv admits reserved intervals in the high band below 2^47, the launch's vDSO pair). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -152,8 +153,10 @@ llo_lband : exists r, In r PERM /\ fst r <= kShadowOffset /\ kShadowOffset + kLo
 llo_bands : forall y, kLowEnd <= y < KHI -> exists r, In r PERM /\ fst r <= y < snd r;
 llo_exband: forall y, kLowEnd <= y < KHI -> in_zivs y (lv_excl LV) = true;
 llo_budget: 0 <= BUDGET;
+(* LPS 727298f3: the gap the plan reserves room for sits above Linux's bottom-up floor
+   task_unmapped_base = 0x2aaaaab000 (EdAlloc.vm_base_ok), so the room counts it *)
 llo_gap   : 0 <= TOT0 /\ 0 <= N0 /\
-page_size + (TOT0 + kMaxCnt * kMaxChunk) + (N0 + kMaxCnt + 1) * (kMaxChunk + 4095) <= QybZ.Mq0.alloc_ceiling
+page_size + 0x2aaaaab000 + (TOT0 + kMaxCnt * kMaxChunk) + (N0 + kMaxCnt + 1) * (kMaxChunk + 4095) <= QybZ.Mq0.alloc_ceiling
 }.
 
 Definition pdec (x y : word * word) : {x = y} + {x <> y}.
@@ -187,7 +190,10 @@ ki_nd   : List.NoDup (map fst (g_chunks g));
 ki_ne   : forall e, In e (vm_maps (m_vmmaps mo)) -> 0 < bv_unsigned (snd e);
 ki_sp0  : 0 <= g_spent g;
 ki_phi  : Phi LV mo + (BUDGET - g_spent g) <= vm_limit (m_vmmaps mo);
-ki_resv : forall e, In e (vm_reserved (m_vmmaps mo)) -> bv_unsigned (fst e) + bv_unsigned (snd e) <= kLowEnd;
+(* LPS 727298f3: the launch's ledger ends with the vDSO pair near the top (Q1LT's co_res rx, resx_entry_ok):
+   a reserved interval lies below kLowEnd or in the high band below 2^47 *)
+ki_resv : forall e, In e (vm_reserved (m_vmmaps mo)) -> bv_unsigned (fst e) + bv_unsigned (snd e) <= kLowEnd
+\/ (KHI <= bv_unsigned (fst e) /\ bv_unsigned (fst e) + bv_unsigned (snd e) <= 2^47);
 ki_base : forall iv y, In iv (lv_base LV) -> fst iv <= y < snd iv ->
 alloc_top (m_vmmaps mo) <= y \/ app_cov (m_vmmaps mo) y \/ (exists y', app_cov (m_vmmaps mo) y' /\ y = shz LV y');
 ki_tot  : gw_sizes (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) <= TOT0 + zsum (map snd (g_chunks g)) /\
@@ -451,7 +457,9 @@ assert (Hsum : zsum (map snd (g_chunks g)) <= kMaxCnt * kMaxChunk).
 apply (vm_gap_available_of_count (m_vmmaps mo) len (N0 + kMaxCnt) (TOT0 + kMaxCnt * kMaxChunk)); [lia| | |].
 - unfold zlen in T2, Hcnt. lia.
 - rewrite <- gw_sizes_zsumf. lia.
-- assert ((N0 + kMaxCnt + 1) * (len + 4095) <= (N0 + kMaxCnt + 1) * (kMaxChunk + 4095)) by (unfold kMaxCnt in *; nia). lia.
+- assert ((N0 + kMaxCnt + 1) * (len + 4095) <= (N0 + kMaxCnt + 1) * (kMaxChunk + 4095)) by (unfold kMaxCnt in *; nia).
+  (* LPS 727298f3: the floor is task_unmapped_base (QXmm.task_unmapped_base_val) *)
+  rewrite task_unmapped_base_val. change page_size with 4096 in G2. lia.
 Qed.
 
 Lemma ev_anon_safe g mo len avoid :
@@ -504,7 +512,7 @@ Qed.
 Lemma app_cov_bound g mo y : KI g mo -> app_cov (m_vmmaps mo) y -> 0 <= y < 2^47.
 Proof.
 intros K [(e & He & E1)|(r & Hr & Hex & R1)].
-- pose proof (ki_resv _ _ K e He). pose proof (u_range (fst e)). unfold kLowEnd in *. lia.
+- pose proof (u_range (fst e)). destruct (ki_resv _ _ K e He) as [Hr|[Hr1 Hr2]]; unfold kLowEnd in *; lia.
 - pose proof (llo_perm LL r Hr) as (A & B & C). rewrite kCeil_val in C. lia.
 Qed.
 
@@ -540,7 +548,7 @@ destruct (Z.lt_ge_cases z (snd iv)) as [H'|H']; [| right; exact H']. exfalso.
 destruct (ki_base _ _ K iv z Hiv ltac:(lia)) as [Ht|[Hc|(y' & Hc & Hs')]].
 + unfold QybZ.Mq0.alloc_ceiling, KHI, kHighMemBeg in *. lia.
 + destruct Hc as [(e & He & E1)|(r & Hr & Hex & R1)].
-* pose proof (ki_resv _ _ K e He). unfold kLowEnd in *. lia.
+* destruct (ki_resv _ _ K e He) as [Hr|[Hr1 Hr2]]; [unfold kLowEnd in *; lia | lia].
 *
 pose proof (llo_exband LL z Hb) as HX. apply in_zivs_true in HX as (x & Hx & Hzx).
 pose proof (proj1 (excl_entry_false LV (z2w r)) Hex x Hx) as D. pose proof (llo_perm LL r Hr) as (A & B & C).
@@ -598,6 +606,7 @@ destruct Hst as [_ (a & ws & Hpl & Hrev & Hwu & -> & ->)].
 
 unfold anon_place_ok in Hpl. apply andb_prop in Hpl as [Hpl Hfree].
 apply andb_prop in Hpl as [Hpl Htop]. apply andb_prop in Hpl as [Hal Hpos].
+apply andb_prop in Hal as [_ Hal]. (* LPS 727298f3: Linux's placement is the first conjunct *)
 apply Z.eqb_eq in Hal. apply Z.ltb_lt in Hpos. apply Z.leb_le in Htop.
 pose proof (ki_top_hi g mo K) as HtopC.
 assert (Hceil : bv_unsigned a + len <= kCeil) by (rewrite (rlen_aligned len Hmod) in Htop; lia).
@@ -906,9 +915,13 @@ pose proof K as [X EM PE CH ND NE SP PH RSV BASE TOT].
 assert (Hsub : forall c', In c' (remove_first (a, sz) (g_chunks g)) -> In c' (g_chunks g) /\ fst c' <> a).
 { intros c' Hc'. exact (remove_first_nodup (a, sz) (g_chunks g) c' ND Hc Hc'). }
 assert (C9m : region_free (map_remove (vm_maps (m_vmmaps mo)) (w64 a)) (w64 a) (w64 sz) = true) by (apply region_free_app in C9; apply C9).
-constructor; cbn [g_chunks g_spent]; rewrite ?maps_munmap, ?reserved_munmap, ?mbase_munmap, ?limit_munmap, ?top_munmap.
-- destruct X as [HF [HW [HX HY]]]. eapply xinvA_intro; [apply vm_onlyA_munmap| exact HF| apply wf_munmap; exact HW| apply excl_inside_munmap; exact HX| apply mbt_munmap; exact HY].
-- unfold excl_mapped. rewrite maps_munmap. intros x y Hx Hy.
+(* LPS 727298f3: the cut is maps_subtract; on this ledger of nonempty entries (ki_ne)
+   it is map_remove of the chunk (maps_munmap_exact). *)
+assert (Hmx : vm_maps (m_vmmaps (munmap_model mo (w64 a) (w64 sz))) = map_remove (vm_maps (m_vmmaps mo)) (w64 a))
+  by (apply maps_munmap_exact; [exact NE| exact C8| exact C9m| rewrite V2; exact C2]).
+constructor; cbn [g_chunks g_spent]; rewrite ?Hmx, ?reserved_munmap, ?mbase_munmap, ?limit_munmap, ?top_munmap.
+- destruct X as [HF [HW [HX HY]]]. eapply xinvA_intro; [apply vm_onlyA_munmap| exact HF| apply wf_munmap; exact HW| apply excl_inside_munmap; [exact HX| exact C8| exact C9m| rewrite V2; exact C2]| apply mbt_munmap; [exact HY| exact C8| exact C9m| rewrite V2; exact C2]].
+- unfold excl_mapped. rewrite Hmx. intros x y Hx Hy.
 rewrite (covered_map_remove _ (w64 a) (w64 sz) y C8 C9m ltac:(rewrite V2; exact C2)). rewrite (EM x y Hx Hy). cbn [andb].
 rewrite V1, V2. apply negb_true_iff. apply in_rng_false.
 destruct (Z.lt_ge_cases y a); [left; lia|]. destruct (Z.le_gt_cases (a + sz) y); [right; lia|]. exfalso.
@@ -918,7 +931,7 @@ apply excl_entry_true. exists x. unfold cent. cbn [fst snd]. rewrite V1, V2. rep
 assert (Hne : fst (z2w r) <> w64 a).
 { intros E. pose proof (P5 _ Hc) as Hd. unfold zdisj, civ in Hd. cbn [fst snd] in Hd.
 assert (fst r = a) by (rewrite <- U1, E; exact V1). lia. }
-unfold perm_ok. rewrite maps_munmap, reserved_munmap. split; [apply In_map_remove; split; [exact P1| exact Hne]|]. split.
+unfold perm_ok. rewrite Hmx, reserved_munmap. split; [apply In_map_remove; split; [exact P1| exact Hne]|]. split.
 { intros e He. apply In_map_remove in He as [He _]. exact (P2 e He). }
 split.
 { rewrite map_remove_filter, count_occ_filter_keep; [exact P3|]. cbn [fst]. destruct (bv_eqb (fst (z2w r)) (w64 a)) eqn:E; [|reflexivity].
@@ -928,7 +941,7 @@ split; [exact P4|]. intros c' Hc'. apply P5. apply (Hsub c' Hc').
 pose proof (CH c' Hin) as (D0 & D1 & D2 & D3 & D4 & D5 & D6 & D7 & D8 & D9 & D10). pose proof (chunk_u g mo c' K Hin) as (W1 & W2 & _).
 assert (Hne : w64 (fst c') <> w64 a).
 { intros E. apply Hfa. rewrite <- W1, E. exact V1. }
-unfold chunk_ok. rewrite maps_munmap, reserved_munmap.
+unfold chunk_ok. rewrite Hmx, reserved_munmap.
 split; [exact D0|]. split; [exact D1|]. split; [exact D2|]. split; [exact D3|]. split; [exact D4|]. split; [exact D5|]. split; [exact D6|].
 split; [apply In_map_remove; split; [exact D7| exact Hne]|]. split.
 { intros e He. apply In_map_remove in He as [He _]. exact (D8 e He). }

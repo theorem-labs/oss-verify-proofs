@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (node_ok's third conjunct RomBase.sys_rob carried through ms_eqv, realizes0_eqv re-proved over sstep_eqv for the vDSO call, and the vDSO materialization-fault arm of budget_refused_at_eqv). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -9,6 +10,7 @@ From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib Require ShapeAlg PropExec.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib Require Import BWorld.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib Require Import MState Frame Regs6ss.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib Require Import Acfg.
+From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib Require RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope bv_scope.
@@ -16,24 +18,60 @@ Open Scope bv_scope.
 Section WithSegs.
 Variable segs : list Segment.
 
+(* LPS 727298f3: a change of the read-only backing commutes with [ms_eqv], and robustness
+   ([RomBase.sys_rob], [ShapeAlg.node_ok]'s third conjunct) reads the state only through
+   [sys_input], its pending call and its backing. *)
+Lemma ms_eqv_wrom_both : forall ms ms' r, ms_eqv ms ms' -> ms_eqv (RomBase.wrom ms r) (RomBase.wrom ms' r).
+Proof.
+  intros ms ms' r (HR & HF & Hpc & Hsvc & Hrv & Hfc & Hm & _).
+  exact (conj HR (conj HF (conj Hpc (conj Hsvc (conj Hrv (conj Hfc (conj Hm eq_refl))))))).
+Qed.
+
+Lemma sys_rob_ms_eqv : forall ms ms' mo, ms_eqv ms ms' ->
+  RomBase.sys_rob segs (mkCfg ms mo) -> RomBase.sys_rob segs (mkCfg ms' mo).
+Proof.
+  intros ms ms' mo Hq Hrob. unfold RomBase.sys_rob in *. cbn [cfg_ms cfg_model] in *.
+  intros r x8 Hext Hpend o.
+  destruct Hq as (HR & HF & Hpc & Hsvc & Hrv & Hfc & Hm & Hro).
+  assert (Hq : ms_eqv ms ms') by exact (conj HR (conj HF (conj Hpc (conj Hsvc (conj Hrv (conj Hfc (conj Hm Hro))))))).
+  rewrite <- (sys_input_eqv segs _ _ x8 (ms_eqv_wrom_both ms ms' r Hq)).
+  rewrite <- (sys_input_eqv segs _ _ x8 Hq).
+  apply Hrob; [rewrite Hro; exact Hext | rewrite Hsvc; exact Hpend].
+Qed.
+
 (* [comment removed for export] *)
 Theorem realizes0_eqv : forall c T, ShapeAlg.realizes0 segs c T ->
   forall c', cfg_eqv c c' -> ShapeAlg.realizes0 segs c' T.
 Proof.
   intros c T H.
   induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq]; intros c' Heqv.
-  - destruct c as [ms mo], c' as [ms' mo']. destruct Heqv as [Hms Hmo]; cbn in Hms, Hmo. subst mo'.
-    destruct Hnode as [Hn1 Hn2].
-    apply (ShapeAlg.rz_node0 segs (mkCfg ms' mo) I evs (fun i => xport_cfg segs ms ms' (nx i)) T i0).
-    + split.
-      * intros i. exact (proj1 (sstep_xport segs ms ms' mo (evs i) (SNext (nx i)) Hms (Hn1 i))).
-      * intros e st Hst'.
-        destruct (sstep_xport segs ms' ms mo e st (ms_eqv_sym _ _ Hms) Hst') as [S _].
-        destruct (Hn2 e (xport segs ms' ms st) S) as (i & -> & Hx).
-        exists i. split; [reflexivity|].
-        rewrite <- (xport_round_trip segs ms ms' mo (evs i) st Hms Hst'). rewrite Hx. reflexivity.
-    + intros i. apply (IH i).
-      exact (proj2 (sstep_xport segs ms ms' mo (evs i) (SNext (nx i)) Hms (Hn1 i))).
+  - (* 08b1429: the vDSO call's next state is [vdso_post] of the new state, so the new node's
+       index carries its own next configuration with the step and the relation ([sstep_eqv]). *)
+    destruct c as [ms mo], c' as [ms' mo']. destruct Heqv as [Hms Hmo]; cbn in Hms, Hmo. subst mo'.
+    destruct Hnode as [Hn1 [Hn2 Hrob]].
+    set (I' := {i : I & {c2 : config | sstep_cfg segs ACFG (mkCfg ms' mo) (evs i) (SNext c2) /\ cfg_eqv (nx i) c2}}).
+    assert (Fwd : forall i, exists c2, sstep_cfg segs ACFG (mkCfg ms' mo) (evs i) (SNext c2) /\ cfg_eqv (nx i) c2).
+    { intros i. destruct (sstep_eqv segs ms ms' mo (evs i) (SNext (nx i)) Hms (Hn1 i)) as ([c2|] & Hs & Hto);
+        [|contradiction]. exists c2. split; [exact Hs | exact Hto]. }
+    destruct (Fwd i0) as (c20 & Hs0 & He0).
+    apply (ShapeAlg.rz_conseq0 segs (mkCfg ms' mo)
+             (ShapeAlg.t_alt (fun j : I' => ShapeAlg.t_emit (evs (projT1 j)) (T (projT1 j))))).
+    + apply (ShapeAlg.rz_node0 segs (mkCfg ms' mo) I' (fun j => evs (projT1 j)) (fun j => proj1_sig (projT2 j))
+               (fun j => T (projT1 j)) (existT i0 (exist _ c20 (conj Hs0 He0)))).
+      * split; [| split].
+        -- intros j. destruct j as [i [c2 [Hs He]]]. cbn [projT1 projT2 proj1_sig]. exact Hs.
+        -- intros e st Hst'.
+           destruct (sstep_eqv segs ms' ms mo e st (ms_eqv_sym _ _ Hms) Hst') as (X & Hs & Hto).
+           destruct (Hn2 e X Hs) as (i & -> & ->).
+           destruct st as [c2|]; cbn [to_eqv] in Hto; [|contradiction].
+           exists (existT i (exist _ c2 (conj Hst' (conj (ms_eqv_sym _ _ (proj1 Hto)) (eq_sym (proj2 Hto)))))).
+           split; reflexivity.
+        -- exact (sys_rob_ms_eqv ms ms' mo Hms Hrob).
+      * intros [i [c2 [Hs He]]]. cbn [projT1 projT2 proj1_sig]. exact (IH i c2 He).
+    + intros tr. split.
+      * intros (j & Hj). exists (projT1 j). exact Hj.
+      * intros (i & Hi). destruct (Fwd i) as (c2 & Hs & He).
+        exists (existT i (exist _ c2 (conj Hs He))). exact Hi.
   - apply ShapeAlg.rz_halt0. destruct Heqv as [_ <-]. exact Hh.
   - eapply ShapeAlg.rz_conseq0; [apply IH; exact Heqv| exact Heq].
 Qed.
@@ -42,14 +80,23 @@ Qed.
 Lemma budget_refused_at_eqv : forall c c', cfg_eqv c c' ->
   budget_refused_at segs c -> budget_refused_at segs c'.
 Proof.
+  (* 08b1429: the no-syscall case has a second arm, a vDSO call whose materialization fails *)
   intros [ms mo] [ms' mo'] [Hms Hmo] [Hh H]; cbn [cfg_ms cfg_model] in *. subst mo'.
-  pose proof Hms as (_ & _ & _ & Hsvc & _).
+  pose proof Hms as (_ & _ & Hpc & Hsvc & _).
+  assert (Hpc' : ms_pc ms' = ms_pc ms) by (unfold ms_pc; congruence).
   split; [exact Hh|]. cbn [cfg_ms cfg_model].
-  destruct H as [(Hn & report & Hstep & Hmat) | (x8 & Hx8 & H)].
-  - left. split; [congruence|].
+  destruct H as [(Hn & [(report & Hstep & Hmat) | (Hun & fn & n & eff & model' & evs & Hfn & Hsno & Hsys & Hef & Hh' & Hmat)]) | (x8 & Hx8 & H)].
+  - left. split; [congruence|]. left.
     pose proof (step_accesses_eqv segs ms ms' Hms) as Hrep. rewrite Hstep in Hrep.
     destruct (RiscvSemantics.step_accesses segs ms') as [report'| |] eqn:E; cbn in Hrep; try contradiction.
     destruct Hrep as [_ Hacc]. exists report'. split; [reflexivity|]. rewrite <- Hacc. exact Hmat.
+  - left. split; [congruence|]. right.
+    pose proof (mi_account_step_eqv segs ms ms' mo Hms) as Hres. rewrite Hun in Hres.
+    destruct (mi_account_step segs ms' mo) as [[ms1' mo1]| |] eqn:E; cbn in Hres; try contradiction.
+    split; [reflexivity|]. exists fn, n, eff, model', evs.
+    split; [rewrite Hpc'; exact Hfn|]. split; [exact Hsno|].
+    split; [rewrite <- (sys_input_eqv segs ms ms' _ Hms); exact Hsys|].
+    split; [exact Hef|]. split; [exact Hh' | exact Hmat].
   - right. exists x8. split; [congruence|]. rewrite <- (sys_input_eqv segs ms ms' x8 Hms). exact H.
 Qed.
 
@@ -59,7 +106,8 @@ Proof.
   intros c tr c1 Hstar. induction Hstar as [c | c1 evs c2 tr c3 Hss Hstar IH]; intros c' Heqv.
   - exists c'. split; [apply star_cfg_refl | exact Heqv].
   - destruct c1 as [ms mo], c' as [ms' mo']. destruct Heqv as [Hms Hmo]; cbn in Hms, Hmo. subst mo'.
-    destruct (sstep_xport segs ms ms' mo evs (SNext c2) Hms Hss) as [Hst Hto]. cbn [xport to_eqv] in Hst, Hto.
+    destruct (sstep_eqv segs ms ms' mo evs (SNext c2) Hms Hss) as ([c2'|] & Hst & Hto); [|contradiction].
+    cbn [to_eqv] in Hto.
     destruct (IH _ Hto) as (c3' & Hstar' & Heqv'). exists c3'.
     split; [eapply star_cfg_step; [exact Hst | exact Hstar'] | exact Heqv'].
 Qed.

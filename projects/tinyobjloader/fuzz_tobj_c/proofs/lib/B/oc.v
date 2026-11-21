@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the NULL-hint mmap witnesses are Linux's own address, place_ok_linux, written as plain text; the reserved ledger stated as the image's entries followed by the vDSO/vvar pair, vdso_pair_ok; TP18_below, the start-up's touched pages ending at or below the top of the shadow it cleared, max Q18 (Wz r6)). *)
 (* [comment removed for export] *)
 Local Set Warnings "-require-in-module".
 (* [comment removed for export] *)
@@ -1124,7 +1125,8 @@ Ltac blia := unfold SHADOW_BAND_LO, SHADOW_BAND_HI, SHADOW_RW_LO_END, SHADOW_RW_
 Section Seg8.
 
 Variables (m : Model) (a1 a2 : word) (B : Z).
-Hypothesis Hres : vm_reserved (m_vmmaps m) = segments_reserved segsA.
+(* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v [vdso_pair_ok]). *)
+Hypothesis Hres : exists V, vm_reserved (m_vmmaps m) = segments_reserved segsA ++ V /\ vdso_pair_ok V.
 Hypothesis Hmaps : vm_maps (m_vmmaps m) = [(a2, Z_to_bv 64 0x38e000); (a1, Z_to_bv 64 0x10000);
   (Z_to_bv 64 0x2008fff7000, Z_to_bv 64 0xdfff0001000); (Z_to_bv 64 0x8fff7000, Z_to_bv 64 0x20000000000); (Z_to_bv 64 0x7fff7000, Z_to_bv 64 0x10000000)].
 Hypothesis Hna : vm_noaccess (m_vmmaps m) = [(Z_to_bv 64 0x8fff7000, Z_to_bv 64 0x20000000000)].
@@ -1297,6 +1299,72 @@ Proof.
     + apply In_enspage_inv in Hp as [->|Hp]; [rewrite u64_of_lit by lia; lia | exact (T17 p Hp)].
 Qed.
 
+(* LPS 727298f3: every page the start-up touched ends at or below the top of the shadow it left
+   zero, [max Q18 (Wz r6)] (StartTop's ZX; Start7.v [Wz]: the start-up clears the stack's shadow up
+   to AT_RANDOM + 16).  The stack-shadow pages below the stack pointer (TP12) end below [Wz r6],
+   the shadow page of AT_RANDOM, which lies above the stack pointer; the others end at or below
+   [Q18] or [Wz r6] as in [TP18_facts].  So main's argument-shadow pages from that top up are pages
+   nothing touched (StartHandoff.v [stage0]). *)
+Lemma TP18_below : forall rho, rhoOK rho -> forall p, In p (TP18 rho) ->
+  bv_unsigned p + 4096 <= Z.max Q18 (Start7.Wz (r6of rho)).
+Proof.
+  clear - Hres Hmaps Htop Ha1 Ha2 HPL HPL4 HPL5 HPL6 HPL7 HPL8 HPL9 Hx H16 Hxtop HPL10.
+  intros rho HR p Hp. pose proof HR as (HV & H36 & H77 & H78 & H83 & Hx1 & V35 & H1 & H2 & H3).
+  pose proof (Start7.arith18 x Hx H16 _ H1 H2 H3) as AR.
+  destruct AR as (_ & _ & _ & A4 & _ & _ & _ & _ & _ & _ & _ & A12 & A13 & A14 & _ & A16 & A17 & A18 & _ & _ & _ & A22 & A23 & _).
+  assert (SXEv : Start7.SXE (r6of rho) = 2147450880 + Start7.XEz (r6of rho) / 8) by reflexivity.
+  pose proof HV as (_ & _ & _ & _ & H31 & _ & _ & H34 & Hv1).
+  pose proof CAx as CA. cbv zeta in CA. destruct CA as (Ct & CHPlo & CPEhi & CPEHP & CHPq & CPEe & CPEal & CLIM & CLIM0 & CPB & CLEN & Ce12al).
+  pose proof (priZ_facts rho HV) as (PR1 & PR2 & PR3 & PR4).
+  pose proof (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.o7.Start6.sbZ_facts' m a1 a2 Hres Hmaps Htop P b4 b5 b6 HPL HPL4 HPL5 HPL6 rho HV V35) as SB1. rewrite Hx1 in PR1, SB1.
+  pose proof b6_facts as (F6lo & _). unfold x1 in Hx1.
+  set (TOPZ := Z.max Q18 (Start7.Wz (r6of rho))) in *.
+  assert (MX : Q18 <= TOPZ /\ Start7.Wz (r6of rho) <= TOPZ) by (unfold TOPZ; lia).
+  assert (QP : Q18 = PEz x) by reflexivity.
+  assert (T11 : forall q, In q (TP11 rho) -> bv_unsigned q + 4096 <= TOPZ).
+  { intros q Hq. unfold TP11 in Hq. pose proof (Upri rho HV) as UP. pose proof (urange (rw rho 35%positive)) as U35.
+    assert (Hpri : 0x2008fff7000 <= priZ rho /\ priZ rho + 12288 + 4096 <= PEz x) by lia.
+    assert (Hq1 : 0x800bc000 <= q1Z rho /\ q1Z rho + 12288 + 4096 <= PEz x).
+    { unfold q1Z, sbZ in *. pose proof (Z.mod_pos_bound (bv_unsigned (rw rho 35%positive) + 2147450880) 4096 ltac:(lia)). split; lia. }
+    destruct (q1Z rho =? priZ rho); repeat (destruct Hq as [<-|Hq]; [first [rewrite u64_of_lit by lia | rewrite UP]; lia|]); destruct Hq. }
+  assert (T12 : forall q, In q (TP12 rho) -> bv_unsigned q + 4096 <= TOPZ).
+  { intros q Hq. unfold TP12 in Hq. apply in_app_iff in Hq as [Hq|Hq]; [|exact (T11 q Hq)].
+    apply In_pages_rev in Hq as (k & Hk & ->). apply Nat2Z.inj_lt in Hk. unfold pageZ.
+    unfold n12, q12, e12, shZ in *. rewrite Hx1 in *.
+    pose proof (pagedown_props (x / 8 + 2147450880 - 131072)) as [AQ RQ]. pose proof (pagedown_props (x / 8 + 2147450880 - 9)) as [AE RE].
+    set (q := x / 8 + 2147450880 - 131072 - (x / 8 + 2147450880 - 131072) mod 4096) in *.
+    set (e := x / 8 + 2147450880 - 9 - (x / 8 + 2147450880 - 9) mod 4096) in *.
+    assert (Hxd : 0x7fff80000000 / 8 <= x / 8 <= 2 ^ 47 / 8) by (split; apply Z.div_le_mono; lia).
+    change (0x7fff80000000 / 8) with 17591917608960 in Hxd. change (2 ^ 47 / 8) with 17592186044416 in Hxd.
+    assert (Hk' : Z.of_nat k <= (e - q) / 4096).
+    { rewrite Z2Nat.id in Hk; [lia|]. apply Z.add_nonneg_nonneg; [apply Z.div_pos; lia | lia]. }
+    assert (4096 * ((e - q) / 4096) <= e - q) by (apply Z.mul_div_le; lia).
+    (* the last stack-shadow page ends at e + 4096, at or below AT_RANDOM's shadow page [Wz r6] *)
+    assert (WE : e + 4096 <= Start7.Wz (r6of rho)).
+    { pose proof (Z.div_mod (Start7.XEz (r6of rho)) 8 ltac:(lia)) as DX. pose proof (Z.mod_pos_bound (Start7.XEz (r6of rho)) 8 ltac:(lia)) as MXz.
+      pose proof (Z.div_mod x 8 ltac:(lia)) as D8. pose proof (Z.mod_pos_bound x 8 ltac:(lia)) as M8.
+      pose proof (Z.div_mod (Start7.Wz (r6of rho)) 4096 ltac:(lia)) as DW. rewrite A13, Z.add_0_r in DW.
+      pose proof (Z.div_mod e 4096 ltac:(lia)) as DE. rewrite AE, Z.add_0_r in DE.
+      assert (e < Start7.Wz (r6of rho)) by lia. lia. }
+    rewrite u64_of_lit by lia. Z.to_euclidean_division_equations; lia. }
+  assert (T16 : forall q, In q (TP16 rho) -> bv_unsigned q + 4096 <= TOPZ).
+  { intros q Hq. unfold TP16 in Hq. unfold x1 in Hq. rewrite Hx1 in Hq.
+    destruct (n16_val x Hx H16) as [N16 N16b]. destruct (site_arith x Hx H16) as (_ & SQlo & _ & _ & SQPE & _).
+    pose proof (class_arith x Hx H16) as CAq. cbv zeta in CAq.
+    destruct CAq as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & CPEHPq & CHPloq & CPEhiq & _).
+    apply in_app_iff in Hq as [Hq|Hq].
+    - apply In_pages_rev in Hq as (k & Hk & ->). apply Nat2Z.inj_lt in Hk. unfold pageZ. rewrite u64_of_lit by lia. lia.
+    - apply In_enspage_inv in Hq as [->|Hq]; [rewrite u64_of_lit by lia; lia | exact (T12 q Hq)]. }
+  assert (T17 : forall q, In q (TP17 rho) -> bv_unsigned q + 4096 <= TOPZ).
+  { intros q Hq. apply In_TP17 in Hq as [(k & Hk & _ & Uk)|Hq]; [rewrite Uk; unfold LOWPG; lia | exact (T16 q Hq)]. }
+  unfold Start7.TP18 in Hp. destruct (Start7.nE x (r6of rho)) as [|k] eqn:EN.
+  - cbn [Nat.eqb] in Hp. exact (T17 p Hp).
+  - cbn [Nat.eqb] in Hp. specialize (A23 ltac:(discriminate)). unfold kHighMemBeg in *. apply in_app_iff in Hp as [Hp|Hp].
+    + apply In_pages_rev in Hp as (k' & Hk' & ->). unfold pageZ. apply Nat2Z.inj_lt in Hk'. rewrite Nat2Z.inj_sub in Hk' by lia. change (Z.of_nat 1) with 1 in Hk'.
+      rewrite u64_of_lit by lia. lia.
+    + apply In_enspage_inv in Hp as [->|Hp]; [rewrite u64_of_lit by lia; lia | exact (T17 p Hp)].
+Qed.
+
 Lemma run22_safe : forall rho tp,
   triple segsA ok (SPA segsA (KxA mo B18) K18 rho tp)
     (fun w => exists v rho1, agree_below 159%positive rho rho1 /\ SPA segsA (KxA mo B18) (E22_of v) rho1 tp w).
@@ -1356,7 +1424,8 @@ Proof.
     eapply sym_run_soundA; [exact (run23 v) | apply OKFx | destruct v; reflexivity | apply stableA_KxA].
 Qed.
 
-Hypothesis Hwit22 : exists a, mmap_place_ok_none (Z_to_bv 64 0) mo (Z_to_bv 64 1048576) a.
+(* LPS 727298f3: the witness is Linux's own address ([place_ok_linux], Fw/SysSpec.v), where a granted NULL-hint mmap now goes. *)
+Hypothesis Hwit22 : exists a, OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysSpec.place_ok_linux mo (Z_to_bv 64 1048576) a.
 
 Lemma enode22 : forall v rho tp, rhoOK rho ->
   etriple segsA (SPA segsA (KxA mo B18) (E22_of v) rho tp)
@@ -1504,7 +1573,8 @@ Proof.
     eapply sym_run_soundA; [exact (run24 v) | apply OKFx | destruct v; reflexivity | apply stableA_KxA].
 Qed.
 
-Hypothesis Hw23 : exists a, mmap_place_ok_none (Z_to_bv 64 0) (m22 b12) (Z_to_bv 64 8388608) a.
+(* LPS 727298f3: the witness is Linux's own address ([place_ok_linux], Fw/SysSpec.v), where a granted NULL-hint mmap now goes. *)
+Hypothesis Hw23 : exists a, OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysSpec.place_ok_linux (m22 b12) (Z_to_bv 64 8388608) a.
 
 Lemma enode23 : forall v rho tp, rhoOK rho -> rw rho 159%positive = b12 ->
   (forall p, In p tp -> 0x800bc000 <= bv_unsigned p /\ bv_unsigned p + 4096 <= SHADOW_BAND_HI) ->
@@ -1591,7 +1661,8 @@ Proof.
     eapply sym_run_soundA; [exact (runG v) | apply OKFx | destruct v; reflexivity | apply stableA_KxA].
 Qed.
 
-Hypothesis Hw24 : exists a, mmap_place_ok_none (Z_to_bv 64 0) (m23a b12 b13) (Z_to_bv 64 4096) a.
+(* LPS 727298f3: the witness is Linux's own address ([place_ok_linux], Fw/SysSpec.v), where a granted NULL-hint mmap now goes. *)
+Hypothesis Hw24 : exists a, OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysSpec.place_ok_linux (m23a b12 b13) (Z_to_bv 64 4096) a.
 
 Lemma enode24 : forall v rho tp, rhoOK rho -> rw rho 159%positive = b12 -> rw rho 160%positive = b13 ->
   etriple segsA (SPA segsA (KxA (m23a b12 b13) (B22a + 4096)) (E24_of v) rho tp)
@@ -1945,10 +2016,12 @@ Proof.
     exists 162%positive. split; [lia|]. eapply agree_below_trans; [exact Hag5|]. eapply agree_below_le; [|exact Hag6]. apply Pos.leb_le. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc.
 Qed.
 
+(* LPS 727298f3: the witness is Linux's own address ([place_ok_linux], Fw/SysSpec.v), where a granted NULL-hint mmap now goes. *)
 Hypothesis Hwit23 : forall b12, mmap_place_ok_none (Z_to_bv 64 0) mo (Z_to_bv 64 1048576) b12 ->
-  exists a, mmap_place_ok_none (Z_to_bv 64 0) (m22 b12) (Z_to_bv 64 8388608) a.
+  exists a, OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysSpec.place_ok_linux (m22 b12) (Z_to_bv 64 8388608) a.
+(* LPS 727298f3: the witness is Linux's own address ([place_ok_linux], Fw/SysSpec.v), where a granted NULL-hint mmap now goes. *)
 Hypothesis Hwit24 : forall b12 b13, mmap_place_ok_none (Z_to_bv 64 0) mo (Z_to_bv 64 1048576) b12 -> mmap_place_ok_none (Z_to_bv 64 0) (m22 b12) (Z_to_bv 64 8388608) b13 ->
-  exists a, mmap_place_ok_none (Z_to_bv 64 0) (m23a b12 b13) (Z_to_bv 64 4096) a.
+  exists a, OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysSpec.place_ok_linux (m23a b12 b13) (Z_to_bv 64 4096) a.
 
 Theorem eseg22 : forall rho, rhoOK rho -> etriple segsA (SPA segsA (KxA mo B18) K18 rho (TP18 rho)) (Post22 rho).
 Proof.

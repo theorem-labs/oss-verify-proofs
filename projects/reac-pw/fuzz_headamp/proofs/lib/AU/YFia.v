@@ -3,8 +3,9 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFia.v (donor image sha256 7093581aab04), with its module paths changed and its addresses moved to libreac/fuzz_scene's ASan build. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_scene/lib/A/AFia.v (donor image sha256 43654a025fd0), with its module paths changed and its addresses moved to reac-pw/fuzz_role's ASan build. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/reac-pw/fuzz_role/lib/A/AFia.v at 9f8c843f0e03 (image sha256 614cffc0864c), with its module paths changed and its addresses moved to reac-pw/fuzz_headamp's ASan build (image sha256 f3e0669d2819) by alreloc a5c53bb2bed4; comments kept as the source has them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/reac-pw/fuzz_headamp/lib/A/AFia.v at b0cad0df5623 (image sha256 f3e0669d2819), with its module names changed (A.Axyz -> AU.Yxyz) and its addresses moved to reac-pw/fuzz_headamp's ASan+UBSan build (image sha256 53edda9bdeeb) by derive_y.py b7b132fb12a7; the Modified-by lines above describe how lib/A/AFia.v was made and quote its ASan-build values. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/reac-pw/fuzz_role/lib/A/AFia.v (image sha256 614cffc0864c), with its module paths changed and its addresses moved to reac-pw/fuzz_headamp's ASan build (image sha256 f3e0669d2819) by alreloc a5c53bb2bed4; comments kept as the source has them. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/reac-pw/fuzz_headamp/lib/A/AFia.v (image sha256 f3e0669d2819), with its module names changed (A.Axyz -> AU.Yxyz) and its addresses moved to reac-pw/fuzz_headamp's ASan+UBSan build (image sha256 53edda9bdeeb) by derive_y.py b7b132fb12a7; the Modified-by lines above describe how lib/A/AFia.v was made and quote its ASan-build values. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (Linux's mmap placement for the NULL hint); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -52,11 +53,11 @@ cbn [snd] in *. pose proof (YG08.sec_map_size_bound (ck_req k) ltac:(lia)) as SB
 unfold YF06.NOB, MALLOC_MAX in *. lia.
 Qed.
 Lemma sec_grant_exists_AR : forall B ly S rd md nZ,
-ARm B ly S rd -> ALedger tfibsegs ly S md -> amwf md -> 0 < nZ <= YF06.NOB ->
-exists a, grant_ok_na_pin md a nZ = true.
+ARm B ly S rd -> ALedger tfibsegs ly S md -> amwf md -> 0 < nZ <= YF06.NOB -> nZ mod page_size = 0 ->
+exists a, grant_ok_na_pin (Z_to_bv 64 0) md a nZ = true.
 Proof.
-intros B ly S rd md nZ M L [_ NZ] HnZ.
-exact (sec_grant_exists tfibsegs ly S md nZ (am_layout _ _ _ _ M) L NZ (sec_extents_count B ly S rd M) (sec_extents_sizes B ly S rd M) HnZ).
+intros B ly S rd md nZ M L [_ NZ] HnZ HnZal.
+exact (sec_grant_exists tfibsegs ly S md nZ (am_layout _ _ _ _ M) L NZ (sec_extents_count B ly S rd M) (sec_extents_sizes B ly S rd M) HnZ HnZal).
 Qed.
 Section G.
 Variable B : asyms.
@@ -66,7 +67,7 @@ Hypothesis L : ALedger tfibsegs ly S md.
 Hypothesis Hev : aregime S.
 Hypothesis HnZ : 0 < nZ <= MALLOC_MAX + 4 * 4096.
 Hypothesis HnZal : nZ mod 4096 = 0.
-Hypothesis HG : grant_ok_na_pin md a nZ = true.
+Hypothesis HG : grant_ok_na_pin (Z_to_bv 64 0) md a nZ = true.
 Let A : Z := bv_unsigned a.
 Let LY : layout_ok ly := am_layout _ _ _ _ M.
 Lemma nZ_word : bv_unsigned (Z_to_bv 64 nZ) = nZ.
@@ -84,7 +85,8 @@ A mod 4096 = 0 /\ 0 < A /\ A + nZ <= alloc_top (m_vmmaps md) /\
 region_free (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) a (Z_to_bv 64 nZ) = true /\
 A + nZ <= alloc_top (m_vmmaps md).
 Proof.
-clear LY. pose proof HG as Hg. unfold grant_ok_na_pin in Hg.
+clear LY. pose proof (YK13.grant_ok_na_pin_facts _ _ _ _ (proj1 HnZ) ltac:(unfold page_size; exact HnZal) HG) as Hg.
+unfold YK13.grant_ok_na_pin_b in Hg.
 apply andb_prop in Hg as [Hg Hrf]. apply andb_prop in Hg as [Hg Htop]. apply andb_prop in Hg as [Hal Hpos].
 apply Z.eqb_eq in Hal. apply Z.ltb_lt in Hpos. apply Z.leb_le in Htop.
 unfold page_size in Hal. unfold A. repeat split; assumption.

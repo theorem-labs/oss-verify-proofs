@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/YD2o.v (ossv/recipes c8557374ad2) for
+(* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/YD2o.v (theorem-labs/oss-verify-proofs@6b32741d849a) for
    fuzz_disco, the asan-ubsan twin of lib/A/DiscoAsanT.v (fuzz_grant's lib/A/AGrantT.v shape): TFIB_T
    (lib/Reusable/YZ03.v) over the landed asan-ubsan core, with cgif's three program parts replaced by ONE named
    hypothesis, LIBX_ALL, the contract of fuzz_disco's program part (LLVMFuzzerTestOneInput). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the closing passes the launch's entry_launch_ok_va to Reusable/YD1q.v's tfib_srealizesX. *)
 (* The closing side of fuzz_disco's asan-ubsan obligation (rule 24: no function proved; this file is assembly).
 
    Every other input of lib/Reusable/YD1q.v tfib_srealizesX is a Let over the landed core, as cgif's YD2o.v does:
@@ -80,25 +81,27 @@ Let EXS : forall fq : YK11.FPState, exit_site_tfa (fx := fq) B est xst := fun fq
 Lemma disco_srealizesXU_rc : forall sp rdraw brk mb inp,
   valid_sp sp -> valid_brk TSEGS brk -> valid_mmap_base mb ->
   entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
   YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
   srealizes TSEGS (init_config TSEGS AsanUbsan.M.init_pc TPH sp brk mb rdraw target_alloc_limit inp) (SPECX inp).
 Proof.
-  intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil.
+  intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil.
   change target_alloc_limit with YA02.LIMIT.
   exact (tfib_srealizesX B HB AMALLOC AFREE AICPY ARDCHK ameter_triv (fun _ => 0) (fun _ => 0)
     YB1w.tfib_data_rel_ro_lo YB1w.tfib_got_hi MT_FREE RO_IN LIBX xst XFR PF1 PFN est ESTI ESTF FWS RFS FPO FPR FPU EXS
-    sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil).
+    sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil).
 Qed.
 End RC.
 Theorem disco_srealizesXU_top : forall sp rdraw brk mb inp,
   valid_sp sp -> valid_brk TSEGS brk -> valid_mmap_base mb ->
   entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
   srealizes TSEGS (init_config TSEGS AsanUbsan.M.init_pc TPH sp brk mb rdraw target_alloc_limit inp) (SPECX inp).
 Proof.
-  intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp.
+  intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau.
   exact (@disco_srealizesXU_rc (YM05.RunCeilOf (bv_unsigned sp) (valid_sp_windowX sp Hsp)) sp rdraw brk mb inp
-    Hsp Hbrk Hmb Hfit Hinp (YM05.ceil_of_top_run _)).
+    Hsp Hbrk Hmb Hfit Hinp Hlau (YM05.ceil_of_top_run _)).
 Qed.
 Theorem TFIB_TB_of_lib : TFIB_T.
-Proof. intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp. exact (disco_srealizesXU_top sp rnd brk mbase inp Hsp Hbrk Hmb Hfit Hinp). Qed.
+Proof. intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau. exact (disco_srealizesXU_top sp rnd brk mbase inp Hsp Hbrk Hmb Hfit Hinp Hlau). Qed.
 End b.

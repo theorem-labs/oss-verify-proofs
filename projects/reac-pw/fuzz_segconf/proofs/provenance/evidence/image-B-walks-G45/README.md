@@ -3,7 +3,7 @@
 The step plans of the 21 image-B walks of groups G4 and G5 (one plan-<F>.md per walked function: the image-A to
 image-B instruction map, the instrumented checks, the UBSan trap branches and the premise that refutes each, the
 calls and their callee contracts, the abort arms, the stack window, the segment split) are records, not shipped
-files. They are kept byte for byte in the unit's internal record at commit c83b0c95cf3bdf93055fd8ee791581efc9ad8acf,
+files. They are kept byte for byte in the unit's internal record,
 directory Bwalks-G45-plans/, with the sha256 of each file in that commit's MANIFEST.
 
 Some walk files cite a plan in a comment as "the unit record's Bwalks-G45-plans/plan-<F>.md"; that is the file in the
@@ -12,7 +12,7 @@ name_ok.v, name_ok_s1.v, reac_declared_vlan_add.v, reac_segconf_find.v, reac_seg
 (reac_segconf_find.v, reac_segconf_find_lem.v and reac_segconf_ignored.v also cite image A's plan of the same
 function, marked "image A's walk record"; that is image A's record, not one of these.)
 
-| record path (commit c83b0c95cf3b) | sha256 |
+| record path | sha256 |
 |---|---|
 | Bwalks-G45-plans/plan-check_absent.md | a051e153dc7f80882f1eff120f712bd8356e4a106b4725cbc20a6aef88eef23d |
 | Bwalks-G45-plans/plan-check_address.md | 4ca788db00349f09c06bb396d5029a7422711af700189b9f31dd30abb3096260 |

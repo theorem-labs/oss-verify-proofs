@@ -1,7 +1,8 @@
-(* copy of proofs/cgif/cgif_file_fuzzer/lib/CLenq.v@ced28ed2383; do not edit. Only this line is added, and the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib is this unit's OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable. *)
+(* copy of proofs/cgif/cgif_file_fuzzer/lib/CLenq.v; do not edit. Only this line is added, and the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib is this unit's OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* QuarantineCache::Enqueue's contract over a generic allocator relation [ARX], image-free.
 
    The released contract (YFew.tfib_enqueue_spec_nb, enq_pre YFew.v:25 with its AR conjunct at :27 and the post

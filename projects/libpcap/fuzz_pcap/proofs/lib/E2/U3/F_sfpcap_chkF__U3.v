@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack-floor hypothesis LO reads usp0 R - 6144512 <= lo, the floor 6144512 bytes below the entry sp (rc_lo at this revision), where it read usp0 R - 8388608 <= lo; the steps that unfold rc_lo do so in every hypothesis. *)
 (* [comment removed for export] *)
 From Stdlib Require Lia.
 (* [comment removed for export] *)
@@ -270,7 +271,7 @@ Section ChkF.
       name_sp sp (-96)%Z.
       apply evt_done. eapply (implM_bind usegs).
       { eapply (FREE _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ []); [| reflexivity].
-        split; [exact G7|]. split; [rewrite Hsp; eassumption|]. split; [unfold rc_lo; lia|]. split; [unfold FREE_STACK; rewrite Hsp; lia|].
+        split; [exact G7|]. split; [rewrite Hsp; eassumption|]. split; [unfold rc_lo in *; lia|]. split; [unfold FREE_STACK; rewrite Hsp; lia|].
         split; [rewrite Hsp; lia|]. split; [assumption|]. split; [exact TP| rewrite Hsp; apply aln16_add; [exact ALN| reflexivity]]. }
       intros [] ps7 ms7 PO. cbv beta in PO. destruct PO as (av7 & m7 & E & OF7 & MI7 & ST7 & AGf & Gf).
       unfold hpost_regs in E. destruct_exs E. subst ms7. rewrite Hsp in *. unname_sp.
@@ -328,7 +329,7 @@ Section ChkF.
       name_sp sp (-96)%Z.
       apply evt_done. eapply (implM_bind usegs).
       { eapply MALLOC; [| reflexivity | lia].
-        split; [exact G5'|]. split; [rewrite Hsp; eassumption|]. split; [unfold rc_lo; lia|]. split; [unfold MALLOC_STACK; rewrite Hsp; lia|].
+        split; [exact G5'|]. split; [rewrite Hsp; eassumption|]. split; [unfold rc_lo in *; lia|]. split; [unfold MALLOC_STACK; rewrite Hsp; lia|].
         split; [rewrite Hsp; lia|]. split; [assumption|]. split; [exact TP| rewrite Hsp; apply aln16_add; [exact ALN| reflexivity]]. }
       intros [bq|] ps6 ms6 PO; cbv beta iota in PO.
       - destruct PO as (av & m6 & E & OFm & MI6 & ST6 & AG6 & (B & bjunk & -> & G6 & BUF)).
@@ -414,7 +415,7 @@ Section ChkF.
       name_sp sp (-96)%Z.
       apply evt_done. eapply (implM_bind usegs).
       { eapply MALLOC; [| reflexivity | lia].
-        split; [exact G5'|]. split; [rewrite Hsp; eassumption|]. split; [unfold rc_lo; lia|]. split; [unfold MALLOC_STACK; rewrite Hsp; lia|].
+        split; [exact G5'|]. split; [rewrite Hsp; eassumption|]. split; [unfold rc_lo in *; lia|]. split; [unfold MALLOC_STACK; rewrite Hsp; lia|].
         split; [rewrite Hsp; lia|]. split; [assumption|]. split; [exact TP| rewrite Hsp; apply aln16_add; [exact ALN| reflexivity]]. }
       intros [bq|] ps6 ms6 PO; cbv beta iota in PO.
       - destruct PO as (av & m6 & E & OFm & MI6 & ST6 & AG6 & (B & bjunk & -> & G6 & BUF)).
@@ -744,7 +745,7 @@ Section NpCtxA2.
   Variables (self buffer f : hptr) (bufsize bufalloc : Z) (bufdata : list Z) (swapped : bool)
             (vmaj vmin snapshot linktype ltext prec brk : Z) (errbuf : list Z) (header : pkthdr)
             (hdrsize : Z) (lsw : lenswap_t) (scl : sf_scale_t) (j : pcap_junk) (pad bs : list byte).
-  Hypothesis LO : (usp0 R - 8388608 <= lo)%Z.
+  Hypothesis LO : (usp0 R - 6144512 <= lo)%Z.
   Hypothesis BU : (lo + 81920 <= bv_unsigned sp)%Z.
   Hypothesis SPM : (bv_unsigned sp <= rc_spmain R)%Z.
   Hypothesis TP : tp = rc_tp R.
@@ -843,7 +844,7 @@ Section NpCtxA2.
       rewrite (GIo_addr HO K HAL _ _ _ _ _ _ _ _ G5 ltac:(apply in_or_app; left; apply in_or_app; right; right; left; reflexivity)).
       rewrite Z.add_0_r.
       eapply FREAD; [| exact HinF | reflexivity | reflexivity | reflexivity | reflexivity | lia | exact BD | ].
-      { split; [exact G5|]. split; [rewrite Hsp; exact ST5|]. split; [unfold rc_lo; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
+      { split; [exact G5|]. split; [rewrite Hsp; exact ST5|]. split; [unfold rc_lo in *; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
         split; [rewrite Hsp; lia|]. split; [exact MI5|]. split; [exact TP| rewrite Hsp; apply aln16_add; [exact ALN| reflexivity]]. }
       left. intros a Ha. apply in_block_app. right. unfold in_block. apply Exists_cons_tl, Exists_cons_hd. cbn [cb_addr cb_size fst snd]. lia. }
     intros got ps6 ms6 PO. cbv beta in PO.
@@ -894,7 +895,7 @@ Section NpCtxA2.
       do 3 step.
       apply evt_done. apply (implM_bind_assoc usegs). name_sp sp (-4208)%Z. eapply (implM_bind usegs).
       { eapply FERROR; [| exact HinF | reflexivity].
-        split; [exact G6|]. split; [rewrite Hsp; exact ST6|]. split; [unfold rc_lo; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
+        split; [exact G6|]. split; [rewrite Hsp; exact ST6|]. split; [unfold rc_lo in *; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
         split; [rewrite Hsp; lia|]. split; [exact MI6|]. split; [exact TP| rewrite Hsp; apply aln16_add; [exact ALN| reflexivity]]. }
       intros r ps7 ms7 PO. cbv beta in PO. destruct PO as (av7 & m7 & E & MI7 & ST7 & AG7 & G7 & -> & -> & ERRNO).
       unfold hpost_regs in E. all: natfold_lits. destruct_exs E. subst ms7. rewrite Hsp in *. unname_sp.
@@ -1051,7 +1052,7 @@ Section NpCtxA2.
       { replace (CLc ++ [(self, P, 664%Z); (buffer, B, bufalloc)]) with ((CLc ++ [(self, P, 664%Z)]) ++ (buffer, B, bufalloc) :: []) in G5
           by (rewrite <- app_assoc; reflexivity).
         eapply REALLOC; [| reflexivity | reflexivity | lia | exact BUF].
-        split; [exact G5|]. split; [rewrite Hsp; exact ST5|]. split; [unfold rc_lo; lia|]. split; [unfold MALLOC_STACK; rewrite Hsp; lia|].
+        split; [exact G5|]. split; [rewrite Hsp; exact ST5|]. split; [unfold rc_lo in *; lia|]. split; [unfold MALLOC_STACK; rewrite Hsp; lia|].
         split; [rewrite Hsp; lia|]. split; [exact MI5|]. split; [exact TP| rewrite Hsp; apply aln16_add; [exact ALN| reflexivity]]. }
       intros [bq'|] ps6 ms6 PO; cbv beta iota in PO.
       + destruct PO as (av & m6 & E & OFr & MI6 & ST6 & AG6 & (A' & junk6 & -> & G6 & NEW)).

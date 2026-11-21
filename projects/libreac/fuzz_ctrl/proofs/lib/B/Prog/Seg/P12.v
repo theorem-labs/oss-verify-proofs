@@ -5,9 +5,10 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths and module names changed; 371 of its 396 lines of code are new or changed and 3828 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v, with its module paths and module names changed; 754 of its 794 lines of code are new or changed and 356 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F31.v, with its module paths, module names and addresses changed; 496 of its 556 lines of code are new or changed and 734 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment P12 of fuzz_ctrl LLVMFuzzerTestOneInput (asan-ubsan, libreac v1.9.0 image B): 0x81e08-0x81ec0 (no
    call), ending at the frame-loop head 0x81ec4 (turn 0) or, for a short input, at the epilogue cut 0x82eac.
-   The v1.9.0 move of the patched-image seg_P12 (a working branch 509cbbd9bd1).
+   The v1.9.0 move of the patched-image seg_P12 (a working branch).
    0x81e08-0x81e4c: the two instrumented checks of the name bytes at QMARK = 0x211e0 (a0, the reac_ctrl_kind_name
      result of P11, which Inv_B81e08 records). Each loads the shadow byte k of QMARK at (QMARK >> 3) + s10 and
      branches on it: k = 0 skips the slow block, otherwise the code goes to 0x82fb0 / 0x82fc0, which compare

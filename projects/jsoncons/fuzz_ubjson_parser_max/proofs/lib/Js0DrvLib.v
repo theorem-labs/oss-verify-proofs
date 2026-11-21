@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: decoded the encoded statements of hz_of_block_range, regions_alloc, regions_write, heap_block, know_blockwrite and other lemmas into plain Rocq, flattened Section SE lemmas, and replaced the literal 8388608 stack window with DRV_ZWIN in has_window; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Src0DrvLib.v, 85 lines within its lines 69-484. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -55,27 +56,28 @@ Definition SCm (sp : Z) (a : Z) : Prop := sp - hl_stack L <= a < sp.
 Definition sub_block (LB : list (Z * Z)) (A nb : Z) : Prop :=
 exists cap, 0 < nb <= cap /\ In (A, cap) LB /\ block_range L A cap.
 Definition hz (A n : Z) : Prop := 4096 <= A /\ (A + n <= 0x10000 \/ 0xe9000 <= A) /\ A + n <= bv_unsigned sp0 - 8388608.
-Lemma hz_of_block_range : ltac2:(TCodec.tc2 tcn__Js0DrvLib "<'Q6&R1vQ;r2r1%43321&RDr3%2215p041pXJ:1p2;1").
+Lemma hz_of_block_range : forall A n, block_range L A n -> hz A n.
 Proof.
 clear Hsp Hal. intros A n (B1 & B2 & B3 & B4 & B5). pose proof (dl_img_lo L sp0 DL) as IL. pose proof (dl_img_hi L sp0 DL) as IH.
 pose proof (dl_sptop L sp0 DL) as TOP. unfold hz. rewrite IL, IH in B2. rewrite TOP in B5. repeat split; try lia.
 Qed.
-Lemma hz_sub : ltac2:(TCodec.tc2 tcn__Js0DrvLib "I'Q6&RDr4r3%3221&SGr5%2214z%4216&SF%1259r7r6%4221%:241%?23:p021p091p0<1p0@1pXDE1pWNF1pXJG1p2H1").
+Lemma hz_sub : forall A n a m, hz A n -> A <= a -> 0 <= m -> a + m <= A + n -> hz a m.
 Proof. clear Hsp Hal. intros A n a m (H1 & H2 & H3) Ha Hm Ham. unfold hz. lia. Qed.
-Lemma sub_block_hz : ltac2:(TCodec.tc2 tcn__Js0DrvLib "@'8'='Q6%2211%411&REr3r2r1%43321&RD%1254p031pXL;1p2<1pRJ;1").
+Lemma sub_block_hz : forall LB A nb, sub_block LB A nb -> hz A nb.
 Proof.
 clear Hsp Hal. intros LB A nb (cap & Hnb & _ & HB). apply hz_of_block_range in HB. eapply hz_sub; [exact HB | lia | lia | lia].
 Qed.
-Section SE.
-Local Abbreviation SEC_T_regions_alloc := (ltac2:(TCodec.tc2 tcn__Js0DrvLib "SD'8'TFyR0%211%411'9y8%611%811p041'Q6'=%1272%=11%3244%?11'S7(S4&SAr6%211r5%5221'Mr7(2%8221vTB%53I21'L&SG&SK&SL+2+F%3221%511%721Bz%92D1%;231';%11Q0&QLr2r8%3221(3r1%22Q71%K3841&RE&TGr<r3%Q5221%42QF1%63Q11=p081pXLQA1pX<QG1r=%Q<218%;2QM1%Q221Dp0?1pX0QH1pYBQN1&SC(6u3u4(:%11R4%53R531%63R651%83R7L1%I2R;QB%QL2AQ2%K2R=1%QB231&SF+D%QC2QB1%3251+R0%QF2QE1%QI231%QK281p0=1pX<RE1'R0&SBr:+`P0r9&RF&RG&R=%B2F6%22R<1&RB%113%<<;R>:98QJL76RD31p0>1p0Q61p0Q>1p0R31p0R@1tR@RMRG1pRJRO1pYHS21pX2S31pY4S71pX8S91pYDS?1")) (only parsing).
-Variable vals : ltac:(sec_ty2 constr:(SEC_T_regions_alloc) 0%nat 0%nat).
-Variable ebs : ltac:(sec_ty2 constr:(SEC_T_regions_alloc) 1%nat 0%nat).
-Variable so : ltac:(sec_ty2 constr:(SEC_T_regions_alloc) 2%nat 0%nat).
-Variable bls : ltac:(sec_ty2 constr:(SEC_T_regions_alloc) 3%nat 0%nat).
-Variable vbnd : ltac:(sec_ty2 constr:(SEC_T_regions_alloc) 4%nat 0%nat).
-Variable LB : ltac:(sec_ty2 constr:(SEC_T_regions_alloc) 5%nat 0%nat).
-Lemma regions_alloc : ltac:(sec_stmt2 constr:(SEC_T_regions_alloc) 6%nat 0%nat).
+Lemma regions_alloc : forall vals ebs so bls vbnd LB,
+let E := Env (vals_ev vals) ebs in
+vals_ev vals 0 = sp0 ->
+- 2 ^ 22 <= so <= 0 ->
+(forall i nb, find_nz i bls = Some nb -> sub_block LB (bv_unsigned (vals_ev vals i)) nb) ->
+(forall v b, find_nz v vbnd = Some b -> bv_unsigned (vals_ev vals v) <= b) ->
+(forall i, In i [3%nat; 4%nat] -> bv_unsigned sp0 <= bv_unsigned (vals_ev vals i) /\ bv_unsigned (vals_ev vals i) + 2 ^ 20 <= 2 ^ 64) ->
+regions_ok RSEGS 0 so 16384 bls vbnd [3%nat; 4%nat] IMG_CLIENT IMG_RW E
+(CPm LB (bv_unsigned sp0 + so)) (SCm (bv_unsigned sp0 + so)).
 Proof.
+intros vals ebs so bls vbnd LB.
 intros E P0 Hso Hbl Hvb Hhi.
 pose proof (dl_stack L sp0 DL) as ST. pose proof (dl_img_lo L sp0 DL) as IL. pose proof (dl_img_hi L sp0 DL) as IH.
 pose proof (dl_errno L sp0 DL) as ER. pose proof (dl_sptop L sp0 DL) as TOP.
@@ -106,20 +108,24 @@ destruct Hin as [E1|[E1|[]]]; injection E1 as <- <-; (split; [lia|]); (split; [l
 + eapply (store_ok_window RSEGS Mx (Z_to_bv 64 0xb5000) _ 212992%nat m 0xb5000 0xe9000);
 [reflexivity | reflexivity | lia | exact wseg_5f000 | rewrite u_small by lia; lia | rewrite u_small by lia; lia].
 Qed.
-End SE.
-Lemma regs_preserved_kept : ltac2:(TCodec.tc2 tcn__Js0DrvLib "J&QFy5'TFyR0%211%5241&R;r2r1%3221%819&SC&RH%23351'M&RKr4%221:r5%421<%63@31p081pXN<1p0>1pSFC1pSDD1").
+Lemma regs_preserved_kept : forall R R', regs_preserved R R' -> forall r : reg, In r c_kept -> getr R' r = getr R r.
 Proof.
 intros R R' HP r Hr. apply HP. unfold c_kept in Hr. unfold callee_saved_idx.
 repeat (destruct Hr as [<-|Hr]; [cbn; tauto|]). destruct Hr.
 Qed.
-Lemma c_kept_no0 : ltac2:(TCodec.tc2 tcn__Js0DrvLib "=&O&SC'TFy5%211(TDz(J%33521/015&RH%:3721%<11").
+Lemma c_kept_no0 : ~ In (0%bv : reg) c_kept.
 Proof. unfold c_kept. intros H. repeat (destruct H as [H|H]; [discriminate|]). exact H. Qed.
-Lemma has_entry_nth : ltac2:(TCodec.tc2 tcn__Js0DrvLib "M'8'S9%211'M'5&SD&QMr1%211r2%53921(>%93821'N'9';%11?&SEr4%23B1<(3r3%22E1%D3741qX<:1%<2;1p0>1pRFJ1pX@J1").
+Lemma has_entry_nth : forall kn K, existsb (kentry_eqb K) kn = true -> exists i, nth_error kn i = Some K.
 Proof.
 intros kn K H. apply existsb_exists in H as (K' & Hin & Heq). apply kentry_eqb_eq in Heq. subst K'.
 apply In_nth_error in Hin. exact Hin.
 Qed.
-Lemma block_store_ok : ltac2:(TCodec.tc2 tcn__Js0DrvLib "RH'8'TFyR0%211%411'9y8%611%811p041';%114p091'S9%>11'Q6'S7(S4&SAr9%211r8%5221&S<&SBr1r7%443261'M'5&SD&QM(S5(S6(S3%119z%4221r6%7221%911%;3L1D(>%?3>21r<%K21H&TE%12Q=9%D3Q=31&SG%12>H&SH&SL+2+R0%3221%52Q31%82EQ4&SF&SJ%11Q7%32Q:1r;%>221&Q=r?r:%9251%F2R21%54Q=41QB%Q:3Q91Lp081p0?1p0A1p0H1p0K1p0Q11p0QB1tR@QNQH1pXDR:1pX>R11p2R21pXJR31pYBR>1pX@R61pS@R91pX8R=1pYDRC1").
+Lemma block_store_ok : forall vals ebs M kn v n (A : Z) (k : Z) (m : nat),
+let E := Env (vals_ev vals) ebs in
+know_ok RSEGS E M kn -> existsb (kentry_eqb (KWr (SA (EVar v) 0) n)) kn = true ->
+vals_ev vals v = Z_to_bv 64 A -> (0 <= A)%Z -> (A < 2 ^ 64)%Z ->
+(0 <= k)%Z -> (k + Z.of_nat m <= n)%Z ->
+store_ok RSEGS M (Z_to_bv 64 (A + k)) m = true.
 Proof.
 intros vals ebs M kn v n A k m E HK Hhas Pv HA HAn Hk Hm.
 destruct (has_entry_nth kn _ Hhas) as [i Hi].
@@ -127,25 +133,34 @@ pose proof (kwr_store_ok RSEGS E M kn i (EVar v) 0 n k m HK Hi Hk Hm) as W.
 unfold adenot in W. cbn [a_base a_off edenot ev E] in W. rewrite Pv in W. unfold v_addi in W.
 rewrite u_small in W by lia. exact W.
 Qed.
-Definition has_window (kn : list kentry) : bool := existsb (kentry_eqb (KWr (SA (EVar 0) (-8388608)) 8388608)) kn.
-Lemma has_window_nth : ltac2:(TCodec.tc2 tcn__Js0DrvLib "Q1'8'S9%211'M'5&RCr1%211(>%63521'N'9';%11<&SEr3%23?1:(3(S5(S6(S3(2%211-XPPP0%5221+XPPP0%8221%:2J1%I3?<1qX<B1%D2C1p0F1pX@N1").
+Definition has_window (kn : list kentry) : bool := existsb (kentry_eqb (KWr (SA (EVar 0) (- DRV_ZWIN)) DRV_ZWIN)) kn.
+Lemma has_window_nth : forall kn, has_window kn = true -> exists i, nth_error kn i = Some (KWr (SA (EVar 0) (- DRV_ZWIN)) DRV_ZWIN).
 Proof.
 intros kn H. unfold has_window in H. apply existsb_exists in H as (K & Hin & Heq). apply kentry_eqb_eq in Heq. subst K.
 apply In_nth_error in Hin. exact Hin.
 Qed.
-Lemma stack_ok_of_window : ltac2:(TCodec.tc2 tcn__Js0DrvLib "R<'8'TFyR0%211%411'9y8%611%811p041';%114p091'S9%>11'Q6'S7(S4&SAr5%211r4%5221&S<&SBr1r3%443261'M'5&RC%11:(>%53421r8(2%B221vTB%:3Q321'L&SG&SK&SL+2+F%3221%511%721Lz%92N1%;231&SIr6+@%3221%K3Q817&R<vQ;r9&SF&TG%12QKHr7%4221%83761p0:1p0@1p0M1p0Q31p0Q:1tR@QFQ@1pY4QH1pX@QJ1pS@QM1pX8R11pYDR71").
+Lemma stack_ok_of_window : forall vals ebs M kn so,
+let E := Env (vals_ev vals) ebs in
+know_ok RSEGS E M kn -> has_window kn = true ->
+vals_ev vals 0 = sp0 ->
+- 2 ^ 22 <= so <= 0 -> so mod 16 = 0 ->
+stack_ok L M (bv_unsigned sp0 + so).
 Proof.
 intros vals ebs M kn so E HK Hw P0 Hso Hsoal. destruct (has_window_nth kn Hw) as [i Hn]. pose proof (dl_stack L sp0 DL) as ST.
 pose proof Hsp as Hsp'. pose proof Hal as Hal'. pose proof (dl_sptop L sp0 DL) as TOP.
 unfold stack_ok. rewrite TOP. split; [|split; [lia|split; [lia|split; [lia|]]]].
 { rewrite Z.add_mod, Hal, Hsoal by lia. reflexivity. }
 intros d m Hd Hm.
-pose proof (kwr_store_ok RSEGS E M kn i (EVar 0) (-8388608) 8388608 (so - hl_stack L + d) m HK Hn ltac:(lia) ltac:(lia)) as W.
+pose proof (kwr_store_ok RSEGS E M kn i (EVar 0) (- DRV_ZWIN) DRV_ZWIN (so - hl_stack L + d) m HK Hn ltac:(lia) ltac:(lia)) as W.
 unfold adenot in W. cbn [a_base a_off edenot ev E] in W. rewrite P0 in W. unfold v_addi in W.
 rewrite (dl_segs L sp0 DL).
 replace (bv_unsigned sp0 + so - hl_stack L + d) with (bv_unsigned sp0 + (so - hl_stack L + d)) by lia. exact W.
 Qed.
-Lemma kn_blk_ok : ltac2:(TCodec.tc2 tcn__Js0DrvLib "QH'8'TFyR0%211%411'9y8%611%811p041';%114p091'Q6'S7(S4&SAr6%211r5%5221'Mr7r4%8221&TEr2%22I1%73I41r8(2%?221vTB%<3N21&R1vQ;%231=A&R6%139CE&S<&SBr9&RJ%12>E%544I31p071p0:1p0>1p0D1tR@Q3M1p2Q51pXJQ61pYBQ?1pSBQ91pX8Q=1pYDQC1").
+Lemma kn_blk_ok : forall vals ebs M' v n A,
+let E := Env (vals_ev vals) ebs in
+vals_ev vals v = Z_to_bv 64 A -> vals_ev vals 0 = sp0 ->
+block_range L A n -> defined M' A n ->
+know_ok RSEGS E M' (kn_blk v n).
 Proof.
 intros vals ebs M' v n A E Pv P0 HBR Hdef. pose proof HBR as (_ & _ & B2 & B3 & _).
 pose proof (hz_of_block_range _ _ HBR) as (Z1 & Z2 & Z3). pose proof Hsp as Hsp'.
@@ -169,14 +184,13 @@ apply Forall_nil.
 Qed.
 Definition IMG_W : list (Z * Z) := [(0xb5000, 0xe7ed0); (0xe7ed8, 0xe7ef0); (0xe8428, 0xe8854); (0xe8858, 0xe9000)]%Z.
 Definition CW (LB : list (Z * Z)) (a : Z) : Prop := ~ alloc_private L LB a.
-Section SE.
-Local Abbreviation SEC_T_regions_write := (ltac2:(TCodec.tc2 tcn__Js0DrvLib "R='8'TFyR0%211%411'9y8%611%811p041'='Q6%2271%=11%4233%?11'S7(S4&SAr4%211r3%5221'Mr5(2%8221vTB%53I21';%11C&QLr2r6%3221(3r1%22J1%?3841'L&Q4&7r9%22Q81%42G1&RE&TG%M25J%22Q>1%43@1A%;261p0=1pXLQ91pX<Q@1'R0&SB&SL+2+Q8%3221(:%11QA%21QI&RA%41QB&R@%11Q?'Kq0QI1%?<>Q<::Q=8765Q@31p0A1p0Q;1tR@QHQB1pRJQJ1pX2QM1pX8R21pYDR81")) (only parsing).
-Variable vals : ltac:(sec_ty2 constr:(SEC_T_regions_write) 0%nat 0%nat).
-Variable ebs : ltac:(sec_ty2 constr:(SEC_T_regions_write) 1%nat 0%nat).
-Variable bls : ltac:(sec_ty2 constr:(SEC_T_regions_write) 2%nat 0%nat).
-Variable LB : ltac:(sec_ty2 constr:(SEC_T_regions_write) 3%nat 0%nat).
-Lemma regions_write : ltac:(sec_stmt2 constr:(SEC_T_regions_write) 4%nat 0%nat).
+Lemma regions_write : forall vals ebs bls LB,
+let E := Env (vals_ev vals) ebs in
+vals_ev vals 0 = sp0 ->
+(forall i nb, find_nz i bls = Some nb -> (i < length vals)%nat /\ sub_block LB (bv_unsigned (vals_ev vals i)) nb) ->
+regions_ok RSEGS 0 (2 ^ 40) (2 ^ 40) bls [] [] IMG_W [] E (CW LB) (fun _ => True).
 Proof.
+intros vals ebs bls LB.
 intros E P0 Hbl.
 pose proof (dl_stack L sp0 DL) as ST. pose proof (dl_img_lo L sp0 DL) as IL. pose proof (dl_img_hi L sp0 DL) as IH.
 pose proof (dl_sptop L sp0 DL) as TOP.
@@ -207,8 +221,12 @@ intros a Ha; unfold CW, alloc_private; intros [[_ [_ A]]|A];
 | apply RO in A; lia ].
 - intros lo hi [].
 Qed.
-End SE.
-Lemma heap_block : ltac2:(TCodec.tc2 tcn__Js0DrvLib "RO'8'TFyR0%211%411'9y8%611%811p041'='Q6%2271%=11%4233%?11&R3';%11;p0@1'Q@'S;%F11'S7(S4&SAr8%211r7%5221'Mr9(2%8221vTB%53Q021%C1I&QLr2r:%3221(3r1%22Q01%>3841'L&Q4r3&7r=%22Q?1%5241&RE&TG%M257%22QE1%43A1B%<261p0>1pXLQ@1pX<QG1'5&QO&SL+2+Q8%3221(:%11QO&RAr4%97Q755Q8321(>%Q;3<21&R7vQ9r6%352Q>QCQA1&S=r5%231QF4%756Q:QB1QEp051p0:1p0H1p0QB1tR@QOQI1pXBR11pWLR41pS@R61pX6R:1pRJR<1pX2R?1pX8RD1pYDRJ1").
+Lemma heap_block : forall vals ebs bls LB cr M VM log,
+let E := Env (vals_ev vals) ebs in
+vals_ev vals 0 = sp0 ->
+(forall i nb, find_nz i bls = Some nb -> (i < length vals)%nat /\ sub_block LB (bv_unsigned (vals_ev vals i)) nb) ->
+log_in_b 0 (2 ^ 40) (2 ^ 40) bls [] IMG_W log = true ->
+hi_heap HI LB cr M VM -> hi_heap HI LB cr (mem_denot E M log) VM.
 Proof.
 intros vals ebs bls LB cr M VM log E P0 Hbl Hlog HH.
 apply (hio_frame L scfg HI HIok LB cr M (mem_denot E M log) VM HH).
@@ -218,7 +236,10 @@ unfold CW. tauto.
 - intros x Hx. exact (mem_denot_grows E M log x Hx).
 Qed.
 Definition CPstk (a : Z) : Prop := a < 4096 \/ (0x10000 <= a < 0xe9000) \/ bv_unsigned sp0 - 8388608 <= a.
-Lemma regions_stk : ltac2:(TCodec.tc2 tcn__Js0DrvLib "Q>'8'TFyR0%211%411'9y8%611%811p041'S7(S4&SAr2%211r1%5221'Mr3(2%8221vTB%53C21'R0&SB&SL+2+Q8%3221(:'='Q6%22K1%411%51M&RA%6255%811&R?'Kq091%B<AF==88764L31p0D1tR@Q1K1pX8Q31pYDQ91").
+Lemma regions_stk : forall vals ebs,
+let E := Env (vals_ev vals) ebs in
+vals_ev vals 0 = sp0 ->
+regions_ok RSEGS 0 (2 ^ 40) (2 ^ 40) [] [] [] IMG_W [] E CPstk (fun _ => True).
 Proof.
 intros vals ebs E P0.
 constructor; cbn [ev E]; rewrite ?P0.
@@ -233,20 +254,32 @@ constructor; cbn [ev E]; rewrite ?P0.
 destruct Hin as [E1|[E1|[E1|[E1|[]]]]]; injection E1 as <- <-; (split; [lia|]); (split; [lia|]); intros a Ha; unfold CPstk; lia.
 - intros lo hi [].
 Qed.
-Lemma mem_heap_frame : ltac2:(TCodec.tc2 tcn__Js0DrvLib "QO'8'TFyR0%211%411'9y8%611%811p041';%114p091'S;%>11'Q6'S7(S4&SAr5%211r4%5221'Mr6(2%8221vTB%53I21'5&QO&SL+2+Q8%3221(:'=%12Q0F%311%41Q2&RA%;7@77321D(>%D3>21&RD+1%22I1&S=r7&TE%12Q@O%44N3K1%412%N3Q:21p081p0<1p0L1tR@Q9Q31pWNQ;1pXBQ=1pS@Q@1pX8QD1pYDQJ1").
+Lemma mem_heap_frame : forall vals ebs M log (a : Z),
+let E := Env (vals_ev vals) ebs in
+vals_ev vals 0 = sp0 ->
+log_in_b 0 (2 ^ 40) (2 ^ 40) [] [] IMG_W log = true ->
+hz a 1 ->
+mem_denot E M log (Z_to_bv 64 a) = M (Z_to_bv 64 a).
 Proof.
 intros vals ebs M log a E P0 Hlog (Z1 & Z2 & Z3). pose proof Hsp as Hsp'.
 apply (mem_denot_frame_Z RSEGS 0 (2 ^ 40) (2 ^ 40) [] [] [] IMG_W E CPstk (fun _ => True) [] (regions_stk vals ebs P0) M log a Hlog).
 - lia.
 - unfold CPstk. lia.
 Qed.
-Lemma rdn_heap_frame : ltac2:(TCodec.tc2 tcn__Js0DrvLib "R6'8'TFyR0%211%411'9y8%611%811p041';%114p091'S;%>11'Q6'S7(S4&SAr6%211r5%5221'Mr7(2%8221vTB%53I21'5&QO&SL+2+Q8%3221(:'=%12Q0F%311%41Q2&RA%;7@77321D(>%D3>21&RD&SJr4%211%42K1%Q71Q9&RM&SB&S=r8%2381N&TE%12QFQ5%74631Q4%84752Q5%Q43:21p0<1p0B1p0Q21tR@Q?Q91pXJQK1pWNQB1pXBQD1pS@QG1pX8QK1pYDR11").
+Lemma rdn_heap_frame : forall vals ebs M log (a : Z) (n : nat),
+let E := Env (vals_ev vals) ebs in
+vals_ev vals 0 = sp0 ->
+log_in_b 0 (2 ^ 40) (2 ^ 40) [] [] IMG_W log = true ->
+hz a (Z.of_nat n) ->
+rdn RSEGS (mem_denot E M log) (Z_to_bv 64 a) n = rdn RSEGS M (Z_to_bv 64 a) n.
 Proof.
 intros vals ebs M log a n E P0 Hlog HZ. pose proof HZ as (Z1 & Z2 & Z3). pose proof Hsp as Hsp'.
 apply rdn_agree. intros j Hj. rewrite u_small by lia.
 apply (mem_heap_frame vals ebs M log); [exact P0 | exact Hlog | eapply hz_sub; [exact HZ| lia | lia | lia]].
 Qed.
-Lemma heap_wbytes : ltac2:(TCodec.tc2 tcn__Js0DrvLib "R3'8'='Q6%2211%411&R3'TFyR0%211';y8%511%311p051'Q@%?14&R7vQ9r8r7r6r5%6554321&SC(<r4%24HH51r9%53I21&SG%12:5&SF&SJ&7%12G9%311%52?1%62BA%9221%82ED&SL+2+R0%3221%?251r=r<&QKr;&TE%12Q;O%4331Or:%Q55Q48721p0:1p0A1p0J1p0M1p0Q41pX4Q<1pWNQJ1pXJQK1p2QL1pWLQA1pS@QC1pX6QL1pRJQN1").
+Lemma heap_wbytes : forall LB cr M VM (A n a : Z) bs,
+hi_heap HI LB cr M VM -> In (A, n) LB -> A <= a -> a + Z.of_nat (length bs) <= A + n -> A + n <= 2 ^ 64 ->
+hi_heap HI LB cr (wbytes M (Z_to_bv 64 a) bs) VM.
 Proof.
 intros LB cr M VM A n a bs HH Hin H1 H2 H3.
 destruct (hio_wf L scfg HI HIok LB cr M VM HH) as [WF _]. destruct (WF _ Hin) as (HBR & _ & _). cbn [fst snd] in *.
@@ -261,7 +294,11 @@ exfalso. destruct Hp as [[_ [Hnb _]]|Hro].
 - intros x Hx. exact (wbytes_grows bs M (Z_to_bv 64 a) x Hx).
 Qed.
 Definition CPout (A n : Z) (a : Z) : Prop := ~ (A <= a < A + n).
-Lemma regions_blockwrite : ltac2:(TCodec.tc2 tcn__Js0DrvLib "R?'8'TFyR0%211%411'9y8%611%811p041'Q6'S7(S4&SAr4%211r3%5221'Mr5(2%8221vTB%53D21&RD%12;9&SCr1(6u3u4(:%11K%53L31%63M51%93N81'L&SG&TG%12Q5Ar9r2%M221%52Q91%7251&SF&SL+2+D%3221%5271+R0%6251%@231%B2:1p0D1pX<QC1'R0&SBz'=%12QHQC%O11&RF&RG&R>r6%221Q@'Iq0QK1%=<<QB;;88Q476QH31p0?1p0Q?1p0QB1tR@QOQI1pXJR11p2R21pX8R41pYDR:1").
+Lemma regions_blockwrite : forall vals ebs A n,
+let E := Env (vals_ev vals) ebs in
+vals_ev vals 0 = sp0 -> hz A n ->
+(forall i, In i [3%nat; 4%nat] -> bv_unsigned sp0 <= bv_unsigned (vals_ev vals i) /\ bv_unsigned (vals_ev vals i) + 2 ^ 20 <= 2 ^ 64) ->
+regions_ok RSEGS 0 0 0 [] [] [3%nat; 4%nat] IMG_CLIENT IMG_RW E (CPout A n) (fun _ => False).
 Proof.
 intros vals ebs A n E P0 (Z1 & Z2 & Z3) Hhi. pose proof Hsp as Hsp'.
 constructor; cbn [ev E]; rewrite ?P0.
@@ -281,7 +318,12 @@ destruct Hin as [E1|[E1|[]]]; injection E1 as <- <-; (split; [lia|]); (split; [l
 + eapply (store_ok_window RSEGS Mx (Z_to_bv 64 0xb5000) _ 212992%nat m 0xb5000 0xe9000);
 [reflexivity | reflexivity | lia | exact wseg_5f000 | rewrite u_small by lia; lia | rewrite u_small by lia; lia].
 Qed.
-Lemma know_blockwrite : ltac2:(TCodec.tc2 tcn__Js0DrvLib "S9'8'TFyR0%211%411'9y8%611%811p041';%114p091'Q6'S9%?11'S7(S4&SAr8%211r7%5221'Mr9(2%8221vTB%53I21&RDr6%22:1&SG%12>3&SF&SJ&7%12N7%311%52B1%62@E%9221&SCr1(6u3u4(:%11Q;%53Q<31%63Q=51%93Q>81'L&TG%12QDKr?r2%Q7221%52QH1%K251&SL+2+D%3221%N261+R0%6251%Q3231%@291p0B1pX<R11&S<&SBr<%342Q<1QE&QKr=&TEr:%22R=1%5341QH&QNz'=%12R?R7%Q611&RF&RG%79QO6633Q621R5%B4AR491p0@1p0E1p0QC1p0QL1p0QO1p0R31tR@R@R:1pX@RB1pX4RJ1pWNRF1pXJRG1p2RH1pS@RJ1pX8RN1pYDS41").
+Lemma know_blockwrite : forall vals ebs M (A n a : Z) bs kn,
+let E := Env (vals_ev vals) ebs in
+vals_ev vals 0 = sp0 -> hz A n -> A <= a -> a + Z.of_nat (length bs) <= A + n ->
+(forall i, In i [3%nat; 4%nat] -> bv_unsigned sp0 <= bv_unsigned (vals_ev vals i) /\ bv_unsigned (vals_ev vals i) + 2 ^ 20 <= 2 ^ 64) ->
+know_ok RSEGS E M kn ->
+know_ok RSEGS E (wbytes M (Z_to_bv 64 a) bs) (kn_keep_g 0 0 0 [] [] [3%nat; 4%nat] IMG_CLIENT IMG_RW kn).
 Proof.
 intros vals ebs M A n a bs kn E P0 HZ Ha Hbs Hhi HK. pose proof HZ as (Z1 & Z2 & Z3). pose proof Hsp as Hsp'.
 eapply (know_keep_g_sound RSEGS 0 0 0 [] [] [3%nat; 4%nat] IMG_CLIENT IMG_RW E (CPout A n) (fun _ => False)
@@ -291,7 +333,8 @@ eapply (know_keep_g_sound RSEGS 0 0 0 [] [] [3%nat; 4%nat] IMG_CLIENT IMG_RW E (
 - apply wbytes_grows.
 - exact HK.
 Qed.
-Lemma vals_ev_junk : ltac2:(TCodec.tc2 tcn__Js0DrvLib "Q6'8'TFyR0%211%411&QFy5%2214'9&Q4r1uQ0%3221'M&SA&4r4&S1r3%211%53A41&Q0&7%12D7r2%4221%<261&RK&TE&SJ%116%32I1%52>1%D3N71p0F1pX<K1pSFM1pYDQ11").
+Lemma vals_ev_junk : forall vals R' i, (i < 32)%nat ->
+vals_ev (vals ++ junk_vals R') (length vals + i) = getr R' (Z_to_bv 5 (Z.of_nat i)).
 Proof.
 intros vals R' i Hi. rewrite vals_ev_app_r. unfold vals_ev, junk_vals. rewrite nth_map_seq by exact Hi. reflexivity.
 Qed.

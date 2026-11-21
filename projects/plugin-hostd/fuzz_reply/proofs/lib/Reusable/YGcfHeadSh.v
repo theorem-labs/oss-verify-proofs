@@ -1,9 +1,10 @@
-(* CARRIED from a working branch 3dd49fa29fa14b99e3c465cacbfe79a09756bb26,
+(* CARRIED from a working branch,
    proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfHeadSh.v, sha256 29ecfe07e1d303b146baa9a38d5c57e14303bfe46516d383347dcc402af7edd7.
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change
    made here is the module prefix OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the event-free second allocator instance (suffix cf), the shadow of a live block
    split at its hidden head, derived from AR_laws_cf / ARcf with no record change.
    - AR_head_shadow_cf, for a block whose base is in Hp: the user range past the head has the allocator's
@@ -89,7 +90,7 @@ rewrite (hd_skip_notin_cf Hp a Hn), Z.add_0_r, Z.sub_0_r in BS. exact BS.
 Qed.
 
 (* c-omx-alloc's head-split shadow law at the cf instance, a proposal with no source in c-omx-alloc yet (text
-   from CfCore, 2026-10-29). It mirrors ARx_shadow_law (YCbqG.v:92-97 at ea24ad37a3c) over req_size n, for a
+   from CfCore, 2026-10-29). It mirrors ARx_shadow_law (YCbqG.v:92-97) over req_size n, for a
    block whose base is in Hp: past a head of hl bytes, the user range has a block shadow and a visible hull. *)
 Definition ARx_hshadow_law_cf segs B (hl : Z) : Prop := forall ly S Hp W mem md b n, ARcf segs B ly S Hp W mem md -> In (b, n) (ablocks B ly S) -> In b Hp -> block_shadow (aview segs (w_H W) mem) SHADOW_OFF (b + hl) (req_size n - hl) /\ (hl < req_size n -> shadow_hull_vis (aview segs (w_H W) mem) (b + hl) (req_size n - hl)).
 

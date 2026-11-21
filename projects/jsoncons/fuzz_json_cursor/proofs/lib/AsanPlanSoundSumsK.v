@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed node_x_sound_XIMemcpy, node_x_sound_XIMemset, node_x_sound_XIStrncpy and 4 more; added rz. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -249,6 +250,9 @@ Variable scfg : SpuriousCfg.
 Variable A : atable.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+(* the run's CONFIG_RSEQ flag ([APCK.rseq_z]): [x_stmt] takes it (AsanPlanSoundK);
+   the summaries below do not read it *)
+Variable rz : Z.
 Hypothesis SEGS_wx : wx_segs_nowrap SEGS.
 Hypothesis SEGS_in_hull : forall a : word, in_hull A (bv_unsigned a) = false -> find_segment SEGS (bv_unsigned a) 1 = None.
 
@@ -538,39 +542,32 @@ Proof. ltac2:(Rpl.RP.run_k (rplG ()) 0 "S1234;A1;k669;vA;A1;i38;i103;Y2;1;A1;o1;
 Qed.
 
 Theorem node_x_sound_XIMemset :
-  fill_spec SEGS (x_imemset A) 256 -> x_stmt SEGS scfg A nx0 LIMIT SINV argH FS0 XIMemset.
-Proof. ltac2:(Rpl.RP.run_k (rplG ()) 0 "S2;A1;k698;vA;A1;o21;Y8;00;LSUM;RA3;k544;vSEGS;#0;#1;cdLargs;RA1;i38;i103;A3;k699;#0;#1;r2;A9;k700;vSEGS;vscfg;vA;vnx0;vLIMIT;vSINV;vargH;vFS0;o701;").
-Qed.
+  fill_spec SEGS (x_imemset A) 256 -> x_stmt SEGS scfg A nx0 LIMIT rz SINV argH FS0 XIMemset.
+Proof. intros SUM args. exact (summary_fill_sound _ _ SUM). Qed.
 
 Theorem node_x_sound_XMemset :
-  fill_spec SEGS (x_memset A) two64 -> x_stmt SEGS scfg A nx0 LIMIT SINV argH FS0 XMemset.
-Proof. ltac2:(Rpl.RP.run_k (rplG ()) 0 "S1;A1;k702;vA;LSUM;RA3;k544;vSEGS;#0;k292;cdLargs;RA1;i38;i103;A3;k699;#0;k292;r2;A9;k700;vSEGS;vscfg;vA;vnx0;vLIMIT;vSINV;vargH;vFS0;o703;").
-Qed.
+  fill_spec SEGS (x_memset A) two64 -> x_stmt SEGS scfg A nx0 LIMIT rz SINV argH FS0 XMemset.
+Proof. intros SUM args. exact (summary_fill_sound _ _ SUM). Qed.
 
 Theorem node_x_sound_XIMemcpy :
-  copy_spec SEGS (x_imemcpy A) -> x_stmt SEGS scfg A nx0 LIMIT SINV argH FS0 XIMemcpy.
-Proof. ltac2:(Rpl.RP.run_k (rplG ()) 0 "S1;A1;k704;vA;LSUM;RA2;k589;vSEGS;#0;cdLargs;RA1;i38;i103;A2;k705;#0;r2;A9;k700;vSEGS;vscfg;vA;vnx0;vLIMIT;vSINV;vargH;vFS0;o706;").
-Qed.
+  copy_spec SEGS (x_imemcpy A) -> x_stmt SEGS scfg A nx0 LIMIT rz SINV argH FS0 XIMemcpy.
+Proof. intros SUM args. exact (summary_copy_sound _ SUM). Qed.
 
 Theorem node_x_sound_XMemcpy :
-  copy_spec SEGS (x_memcpy A) -> x_stmt SEGS scfg A nx0 LIMIT SINV argH FS0 XMemcpy.
-Proof. ltac2:(Rpl.RP.run_k (rplG ()) 0 "S1;A1;k707;vA;LSUM;RA2;k589;vSEGS;#0;cdLargs;RA1;i38;i103;A2;k705;#0;r2;A9;k700;vSEGS;vscfg;vA;vnx0;vLIMIT;vSINV;vargH;vFS0;o708;").
-Qed.
+  copy_spec SEGS (x_memcpy A) -> x_stmt SEGS scfg A nx0 LIMIT rz SINV argH FS0 XMemcpy.
+Proof. intros SUM args. exact (summary_copy_sound _ SUM). Qed.
 
 Theorem node_x_sound_XMemIsZero :
-  miz_spec SEGS (x_memiszero A) -> x_stmt SEGS scfg A nx0 LIMIT SINV argH FS0 XMemIsZero.
-Proof. ltac2:(Rpl.RP.run_k (rplG ()) 0 "S0;LSUM;RA2;k572;vSEGS;A1;k573;vA;cdLargs;RA1;i38;i103;A1;k709;r2;A9;k700;vSEGS;vscfg;vA;vnx0;vLIMIT;vSINV;vargH;vFS0;o710;").
-Qed.
+  miz_spec SEGS (x_memiszero A) -> x_stmt SEGS scfg A nx0 LIMIT rz SINV argH FS0 XMemIsZero.
+Proof. intros SUM args. exact (summary_miz_sound SUM). Qed.
 
 Theorem node_x_sound_XIStrncpy :
-  istrncpy_spec SEGS (x_istrncpy A) (x_sealed A) -> x_stmt SEGS scfg A nx0 LIMIT SINV argH FS0 XIStrncpy.
-Proof. ltac2:(Rpl.RP.run_k (rplG ()) 0 "S0;LSUM;RA3;k644;vSEGS;A1;k645;vA;A1;k646;vA;cdLargs;RA1;i38;i103;A1;k711;r2;A9;k700;vSEGS;vscfg;vA;vnx0;vLIMIT;vSINV;vargH;vFS0;o712;").
-Qed.
+  istrncpy_spec SEGS (x_istrncpy A) (x_sealed A) -> x_stmt SEGS scfg A nx0 LIMIT rz SINV argH FS0 XIStrncpy.
+Proof. intros SUM args. exact (summary_istrncpy_sound SUM). Qed.
 
 Theorem node_x_sound_XPopFree :
-  popfree_spec SEGS (x_popfree A) -> x_stmt SEGS scfg A nx0 LIMIT SINV argH FS0 XPopFree.
-Proof. ltac2:(Rpl.RP.run_k (rplG ()) 0 "S0;LSUM;RA3;k668;k33;vSEGS;A1;k669;vA;cdLargs;RA1;i38;i103;A2;k713;r2;r1;A9;k700;vSEGS;vscfg;vA;vnx0;vLIMIT;vSINV;vargH;vFS0;o714;").
-Qed.
+  popfree_spec SEGS (x_popfree A) -> x_stmt SEGS scfg A nx0 LIMIT rz SINV argH FS0 XPopFree.
+Proof. intros SUM args. exact (summary_popfree_sound SUM args). Qed.
 
 End Sound.
 

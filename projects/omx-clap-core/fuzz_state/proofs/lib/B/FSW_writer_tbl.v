@@ -1,12 +1,12 @@
 (* fs WRITER walks, image B (fs.asan-ubsan, sha256 5ac5ce0954f8...): the decoded instruction table of the seven writer
    functions, in the donor's form (lib/B/YB1k.v: build_table over the image's own bytes, table_ok by build_table_ok0).
-   The lib/B twin of lib/A/FSW_writer_tbl.v (a working branch 1a264574ee7), same names, B addresses only.
+   The lib/B twin of lib/A/FSW_writer_tbl.v (a working branch), same names, B addresses only.
    The walks' symbolic runs (lib/B/FSW_K fsw_run_AJU / fsw_aj_runU) read instructions from it. The two ranges are
    RELOC-B's function extents (lib/B/YB1w.v tfib_A_f / tfib_E_f for each function f), each contiguous in B:
      pj_write 0x83f94, write_value 0x84010, put 0x8449c, preset_base64_encode 0x84700,
      preset_base64_decode 0x84c4c .. 0x84e70                                       = 951 words
      put_string 0x85fc8, indent 0x86368 .. 0x863d8                                  = 260 words
-   (fsw_wr_extents checks both counts against YB1w's extents; YB1w is RELOC-B's, unchanged on a working branch bddf781b317).
+   (fsw_wr_extents checks both counts against YB1w's extents; YB1w is RELOC-B's, unchanged on a working branch).
    rule 24: proves no function (kind: segment table). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.

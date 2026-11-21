@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO; the THP flag of the mmap placement). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import decidable.
@@ -36,7 +37,7 @@ Definition as_tav_xr (x : option (word * word)) (R' : bvmap 5 word) : Prop :=
 
 Lemma as_tav_piece {B} : forall md (R : bvmap 5 word) mm rom (s0 s : mstate) (pm m0 : word)
     (K : option (word * word) -> M B) (P : B -> mstate -> Prop) (L : B -> mstate -> TSet),
-  md_pure md -> magree s mm -> minv s0 s ->
+  md_pure md -> magree s mm -> minv s0 s -> ms_thp s0 = kb_thp (m_kernel md) -> vdso_ok (with_vmmaps (ms_vm s0) md) ->
   getr R 12 = m0 -> getr R 21 = pm -> getr R 22 = A_LOCK ->
   tsafe (MallocTree.mbind (as_tav pm m0) K s) P ->
   (forall x s' mm' R',
@@ -49,7 +50,7 @@ Lemma as_tav_piece {B} : forall md (R : bvmap 5 word) mm rom (s0 s : mstate) (pm
   realizes ml_segs (mkCfg (mkst R (pc+ PC_ALLOC_SLOT 0x60) mm rom) (with_vmmaps (ms_vm s) md))
            (tshape (MallocTree.mbind (as_tav pm m0) K s) L).
 Proof.
-  intros md R mm rom s0 s pm m0 K P L Hp Hag HI H12 H21 H22 HS HK.
+  intros md R mm rom s0 s pm m0 K P L Hp Hag HI Hthp0 Hvdo0 H12 H21 H22 HS HK.
   pose proof I as HW. pose proof I as Hret. note_win HI. sys_hyps.
   unfold as_tav, as_tav_xr in HS |- *. munf. mnorm HS.
   (* [comment removed for export] *)
@@ -148,7 +149,7 @@ Definition as_cnt_xr (x : word) (R' : bvmap 5 word) : Prop :=
 
 Lemma as_cnt_piece {B} : forall md (R : bvmap 5 word) mm rom (s0 s : mstate) (sc usage size : word)
     (K : word -> M B) (P : B -> mstate -> Prop) (L : B -> mstate -> TSet),
-  md_pure md -> magree s mm -> minv s0 s ->
+  md_pure md -> magree s mm -> minv s0 s -> ms_thp s0 = kb_thp (m_kernel md) -> vdso_ok (with_vmmaps (ms_vm s0) md) ->
   getr R 8 = sc -> getr R 10 = usage -> getr R 24 = size -> getr R 19 = v_slli sc 1 -> getr R 12 = Z_to_bv 64 8 ->
   tsafe (MallocTree.mbind (as_cnt sc usage size) K s) P ->
   (forall x s' mm' R',
@@ -161,7 +162,7 @@ Lemma as_cnt_piece {B} : forall md (R : bvmap 5 word) mm rom (s0 s : mstate) (sc
   realizes ml_segs (mkCfg (mkst R (pc+ PC_ALLOC_SLOT 0x218) mm rom) (with_vmmaps (ms_vm s) md))
            (tshape (MallocTree.mbind (as_cnt sc usage size) K s) L).
 Proof.
-  intros md R mm rom s0 s sc usage size K P L Hp Hag HI H8 H10 H24 H19 H12 HS HK.
+  intros md R mm rom s0 s sc usage size K P L Hp Hag HI Hthp0 Hvdo0 H8 H10 H24 H19 H12 HS HK.
   pose proof I as HW. pose proof I as Hret. note_win HI. sys_hyps.
   unfold as_cnt, as_cnt_xr in HS |- *. munf. mnorm HS.
   (* [comment removed for export] *)

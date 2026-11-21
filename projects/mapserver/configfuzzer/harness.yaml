@@ -3,7 +3,12 @@ project: mapserver
 harness: configfuzzer
 rocq: OSSVerify.mapserver.configfuzzer
 origin: upstream
-summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
+summary: Writes the input (Size from 10 to 10240 bytes) to a new file named by CPLGenerateTempFilename(NULL)
+  with .config appended, loads it as a MapServer config file with msLoadConfig and frees what that returns
+  with msFreeConfig, then deletes the file with VSIUnlink, frees the name and clears MapServer's error
+  list with msResetErrorList. It returns -1 for an input with Size below 10 or above 10240, returns 0
+  without loading anything when fopen cannot open the file for writing, and drops the results of fwrite,
+  fclose and VSIUnlink.
 entry: LLVMFuzzerTestOneInput
 source:
   files:
@@ -12,7 +17,7 @@ source:
     repository: https://github.com/MapServer/MapServer
     commit: fbcb5754b105707bd8cb639512e15f5b12ebd88c
     path: fuzzers/configfuzzer.c
-  modified: false
+  modified: true
   licence: Apache-2.0
 library:
   repository: https://github.com/MapServer/MapServer
@@ -23,11 +28,15 @@ modifications:
 - In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the program
   depends only on its input.
 - A small driver reads the input file, calls the harness one to four times and prints each return value.
+- 'The harness source is modified: source/configfuzzer.c is MapServer fbcb5754''s fuzzers/configfuzzer.c
+  with two Theorem Labs changes: its length check returns -1, not 1, for an input outside its limits (libFuzzer
+  rejects the input; the driver exits 0, not 78), and it returns 0, not 1, when fopen cannot open the
+  temporary file, so the driver does not exit with status 78 for that call.'
 builds:
   plain:
     file: configfuzzer.plain
-    bytes: 30111200
-    sha256: 9bb6313be7078049806550ae7fec6a9512ca003ede9068f2dad9d89600651b0e
+    bytes: 30111192
+    sha256: 609083e0e4348e61d9907d739d4bf4ef9c01684bcd03964e907105eb1e26fc02
     segments:
     - 2
     - 2
@@ -102,8 +111,8 @@ builds:
       sha256: 539ef9c90b070e1615db19d02ac34a1585c7cf3acdec41de6d789bc252701846
   ubsan:
     file: configfuzzer.ubsan
-    bytes: 32277520
-    sha256: b93fd1d3594cf6d6cf7c8dc88bc647c2eaa1a15b0956450c0577fe9f3c16a4e5
+    bytes: 32277512
+    sha256: 0189686075e10a13dc4d3a9b4c8a9d5c29a249ddfbfecfcdf6fc0ade7046896b
     segments:
     - 2
     - 2
@@ -179,7 +188,7 @@ builds:
   asan:
     file: configfuzzer.asan
     bytes: 49293944
-    sha256: 7a67a0c883c8020d182fe61f46a1f6b3a1ac0eb996a42e62e9f225376d2d9049
+    sha256: 03478bd7317ecbfacad12c6b0a73487de43b05012ab9e8a92feb7e74b97b36f5
     segments:
     - 3
     - 4
@@ -258,7 +267,7 @@ builds:
   asan-ubsan:
     file: configfuzzer.asan-ubsan
     bytes: 51530264
-    sha256: e518f28b96e8223ba567ae966168d8372b576d3a1fbcf32a164845ba1a03df0a
+    sha256: e763e74e0ba4c7487f3c4cbfb2f62a8b4c70bc8312beda5da59dab6286795a89
     segments:
     - 3
     - 4
@@ -336,6 +345,9 @@ builds:
       sha256: 539ef9c90b070e1615db19d02ac34a1585c7cf3acdec41de6d789bc252701846
 licence: NOASSERTION
 checks: []
+model_gap:
+- file-removal
+- other-files
 statements:
   asan_agrees:
     kind: agreement
@@ -345,7 +357,8 @@ statements:
     reading: alloc-forced-only
     budgets: asan
     abort: signal
-    status: open
+    status: model-gap
+    revision: 2
   ubsan_agrees:
     kind: agreement
     builds:
@@ -354,7 +367,8 @@ statements:
     reading: alloc-forced-only
     budgets: standard
     abort: signal
-    status: open
+    status: model-gap
+    revision: 2
   asan_ubsan_agrees:
     kind: agreement
     builds:
@@ -363,7 +377,8 @@ statements:
     reading: alloc-forced-only
     budgets: asan
     abort: signal
-    status: open
+    status: model-gap
+    revision: 2
   plain_halts:
     kind: halts
     builds:
@@ -373,7 +388,8 @@ statements:
     - 0
     - 2
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2
   asan_halts:
     kind: halts
     builds:
@@ -383,7 +399,8 @@ statements:
     - 0
     - 2
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2
   ubsan_halts:
     kind: halts
     builds:
@@ -393,7 +410,8 @@ statements:
     - 0
     - 2
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2
   asan_ubsan_halts:
     kind: halts
     builds:
@@ -403,4 +421,5 @@ statements:
     - 0
     - 2
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2

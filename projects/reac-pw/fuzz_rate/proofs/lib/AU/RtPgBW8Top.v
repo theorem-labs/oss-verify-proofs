@@ -1,23 +1,24 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Reusable/YCbq.v aj_intrin_at at 28fdc66416e (the call of
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Reusable/YCbq.v aj_intrin_at (the call of
    __asan_memcpy in the journal) restated as hd_memcpy with the wrapper's same_but_materialized kept in the post as
-   same_io, and proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v at 9e73ed57244 (m2_img_zone, m2_cstr_kept, the .rodata
+   same_io, and proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v (m2_img_zone, m2_cstr_kept, the .rodata
    zone of m2_szone) restated as hd_img_zone / hd_cstr_kept / hd_szone for the .rodata range only; the rest of the
    file is new. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_role/lib/A/RPgScanHead.v, with its module paths and module names changed; 428 of its 517 lines of code are new or changed and 925 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_role/lib/A/RPgW6cTail.v, with its module paths changed; 758 of its 829 lines of code are new or changed and 446 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW5Int.v at 3e85ad4cf5dd for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW5Int.v for
    reac-pw/fuzz_rate image A: the chained piece is rate's W8 instead of role's Int-7 pod, so there are four
    engine runs and three calls instead of two and one, the calls are __asan_memcpy as well as __asan_memset,
    the post is RtPgSteps.rts_post instead of a local copy, and the source of the two copies is the frame
    object e (which asks the frame / block separation of the kernel's AR_sep_law). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_rate/lib/A/RtPgW8Core.v; 17 of its 35 lines of code are new or changed and 811 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_rate/lib/A/RtPgW8Top.v, with its module paths and module names changed; 24 of its 48 lines of code are new or changed and 11 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW8Top.v at 8f1d7a0a9084 for the same unit's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW8Top.v for the same unit's
    image B (fuzz_rate.asan-ubsan): the piece statement is lib/AU/RtPgSegB.v's rsb_piece_W8_stmt; the runs are image
    B's four (lib/AU/RtPgBW8P.v, RtPgBW8C.v, RtPgBW8D.v) and the block lib/AU/RtPgBW8Core.v's; pod_write_ent's
    contract comes from its own walk (lib/AU/PweRun.v pod_write_ent_B); AR_laws is the kernel's YG0q.AR_laws_ok. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14): the lane's delivered lemma, the walk piece
    "write + record" of LLVMFuzzerTestOneInput (0x8076c), J 0x820dc -> C 0x813a0 / CL 0x824c0, as lib/AU/RtPgSegB.v

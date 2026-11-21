@@ -7,7 +7,7 @@
    (PG); the image facts the walk reads (grow's entry, the shadow-base GOT word and cell) are Section hypotheses that
    PAImg_prog.v's PI_prog_B meets. The engine is YC80x.v / YC80xf.v (SRr_run_pi_tok_AJx(f) over YCbqG's
    ajournal_x) stepped over the listing's ptree; the calls go through the engine's YCbqGcallW.v aj_call_xW.
-   FILE SET: the kit's cut 7cdbb61b5fa0, as it is (its kit texts PRH_FnReader f1ae32e3b2cd,
+   FILE SET: the kit's cut, as it is (its kit texts PRH_FnReader f1ae32e3b2cd,
    PRH_FnAlloc 4d8aeba047e5, PRH_Base ef7c8ca98529; its images, listing, engine and start-up files), plus this lane's
    files; PwGrowG.v / PwGrowLive.v are the shared image-free halves (one copy for A' and B'; image A's writer owns their
    changes).
@@ -260,7 +260,7 @@ Qed.
    drift from its text.
    THE TEXT: tgrow_specX of lib/A/PRH_FnReader.v, restated for the free / realloc move (the conclusion at
    SRr' segs RZ_cf and fpostWmR, the hull budget premise and the hull use, the world-free refusal evidence, the guarded
-   exclusion at the kids-refused arm), over the earlier cut 7cdbb61b5fa0 (no DW; the live room per event, prh_live_evs
+   exclusion at the kids-refused arm), over the earlier cut (no DW; the live room per event, prh_live_evs
    over prhPg_evs .. []; the two REFUSAL arms with their OUTCOME EXCLUSION and fuzz_realloc's refusal ledger,
    `mod 2 ^ 64` count); it carries the callee's refused ledgers itself.
    fuzz_realloc's text: tfuzz_realloc_specX of lib/A/PRH_FnAlloc.v, restated the same way (the realloc pair in u_fix,

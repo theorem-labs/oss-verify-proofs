@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_boxreg/lib/A/FMstrncmp.v at origin/ossv/recipes f26f9fbd8777; module paths changed (boxreg's lib.Lib modules as pin's lib.Lib modules); moved from lib/A/FMstrncmp.v to lib/A/Rt/FMstrncmp.v, and the Requires of the moved files follow; the symbol record class BoxregSyms renamed TfibSyms (pin's lib/A/AF0m.v); the comments are boxreg's, verbatim, and name fuzz_boxreg.asan's addresses. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_boxreg/lib/A/FMstrncmp.v; module paths changed (boxreg's lib.Lib modules as pin's lib.Lib modules); moved from lib/A/FMstrncmp.v to lib/A/Rt/FMstrncmp.v, and the Requires of the moved files follow; the symbol record class BoxregSyms renamed TfibSyms (pin's lib/A/AF0m.v); the comments are boxreg's, verbatim, and name fuzz_boxreg.asan's addresses. *)
 (* fm's runtime contract for the strncmp interceptor in the donor's form: astrncmp_realizes (FMH_Rt.v:124) at
    PC_strncmp = 0x413f8, the one-instruction trampoline `j 0x41ee0` (A/Bz/A/I_tramp.v tramp_strncmp) in front of
    the interceptor body, whose effect A/Bz/A/I_strncmp.v istrncmp_spec states (its range check's Section
@@ -7,7 +7,7 @@
      runtime's fixed cells) and writes the call site's registers out as the walk states them (bz_canon);
    - post side: FMrt_lift.v reads the walk at the call site (srr_of_canon_bz) and gives the donor-form post
      (rt_post_ro_win); FMrt_pre.v bz_window gives its window facts;
-   - the answer: the walk returns strncmp_res (A/Bz/A/IcptSpec.v:38), which is 0 exactly when the compared
+   - the answer: the walk returns strncmp_res (A/Bz/A/IcptSpec.v:39), which is 0 exactly when the compared
      prefixes of the two strings with their NULs agree (strn_eq, FMH_Rt.v:24); proved here on the byte values,
      as FMspec_str.v does for strncasecmp. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.

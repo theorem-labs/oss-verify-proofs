@@ -3,8 +3,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD2e.v, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: P'' (the Univ trace carrier, commit 94ab015e127b): the model-law / realizes premises take the trace as admits; the trace fact stays `In _ (as_universe B)` and is converted at each use by admits_fix. *)
-(* Modified by Theorem Labs, 2026-10: counts follow the generated IMG_REGIONS' 57 regions: PM_tailL 59 pieces, 61 in all (cgif 35, 37), as lib/A/AD2e.v (RelocA 27a91588cd0). *)
+(* Modified by Theorem Labs, 2026-10: P'' (the Univ trace carrier): the model-law / realizes premises take the trace as admits; the trace fact stays `In _ (as_universe B)` and is converted at each use by admits_fix. *)
+(* Modified by Theorem Labs, 2026-10: counts follow the generated IMG_REGIONS' 57 regions: PM_tailL 59 pieces, 61 in all (cgif 35, 37), as lib/A/AD2e.v (RelocA). *)
 (* Modified by Theorem Labs, 2026-10: over the cf allocator (ARcf) and tail_at's NP: the payload malloc takes drv_pre's
    ROOM_cf from NP and room_cf from drv_minv (drv_minv_room), its frame names the error-message buffer (B/YD26cf.v
    malloc_E_place); the first call of the loop enters B/YD1wcf.v's loop_L_x on the clipped view (B/YD2e_fp.v pl_to_LF)
@@ -13,8 +13,9 @@
    harness block yet (B/YFrInit_fp.v fr_hblks_init) and the run count's room for the loop's at most 4 calls
    (KF-COUNT #7: the payload malloc adds at most 1 to the prefix's count, nsec_malloc_cf, and NS_START at init_state
    pays the prefix and the 4 calls). *)
-(* Modified by Theorem Labs, 2026-10: image B's twin of lib/A/AD2ecf.v (a working branch 46f1762ad5a): A's hand
+(* Modified by Theorem Labs, 2026-10: image B's twin of lib/A/AD2ecf.v (a working branch): A's hand
    edits to its generator copy, applied to this generator copy with image B's modules and numerals (row A3). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises); the input-owned, top-anchored launch stack; the model's channel reader that fdchan asks for beside the descriptor (cs_ok's co_rdr, proved at the launch)). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -206,20 +207,33 @@ Hypothesis HULL_NS : forall S, NS S <= NRUN -> cf_hull_ok S.
 Hypothesis LOOPL : loop_L_x B NP NS NRUN XNMAX xst.
 (* field round 3 (Part A): the image fact behind the RELRO bytes' keep (B/YD1vcf.v relro_ok) *)
 Hypothesis RO : relro_ok.
-Variables (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte).
+Variables (sp brk mbase : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte) (rnd : EntryDraw).
+(* Shape copied from the in-tree ported donor YD1v.v:119-125 / YL0q.v Section b: binders
+   [sp brk mbase] .. [inp] .. [a0 p] .. [rnd], premises
+   [valid_sp; in_argv =; valid_argv (in_argv inp); valid_envp; valid_launch;
+    entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp; valid_input].
+   [entry_stack_fits] is DROPPED: implied by [entry_launch_ok_va]
+   ([entry_launch_ok_va_fits], 75d69e00 Run.v:3718-3722); this section never carried it. *)
 Hypothesis Hargv : in_argv inp = [a0; p].
 Hypothesis Hsp : valid_sp sp.
-Hypothesis Hva : valid_argv [a0; p].
+Hypothesis Hva : valid_argv (in_argv inp).
 Hypothesis Hve : valid_envp (in_envp inp).
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp.
+Hypothesis Hvi : valid_input inp.
 Hypothesis Hvfs : valid_fs (in_fs inp).
-#[local] Notation EL := (YP08.E0 sp [a0; p] (in_envp inp) xw xd).
+(* [YP08.E0] is TOP-anchored and launch-indexed at 75d69e00 (YP08.v:209-210). *)
+#[local] Notation EL := (YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd).
 #[local] Notation usp := (bv_unsigned sp).
 #[local] Notation envp := (in_envp inp).
 Let HWXi : wx_segs_nowrap tfibsegs := Hwx_tfa.
+(* Pin the whole entry-layout section, including the image fields absent from the bound. *)
 Lemma EL6 : usp <= bv_unsigned (ew EL 6).
 Proof.
-change (ew EL 6) with (Z_to_bv 64 (z_rand usp [a0; p] envp)).
-pose proof (YP08.z_rand_end sp [a0; p] envp Hsp Hva Hve) as Hz. pose proof (u64_range sp).
+change (ew EL 6) with (Z_to_bv 64 (z_rand usp (kb_rseq (in_kernel inp)) [a0; p] envp)).
+assert (Hz : z_rand usp (kb_rseq (in_kernel inp)) (in_argv inp) envp + 16 < 2 ^ 63)
+by exact (YP08.z_rand_end TSEGS TPH inp mbase AsanUbsan.M.init_pc sp brk rnd Hsp Hva Hve Hvl Hlau).
+rewrite Hargv in Hz. pose proof (u64_range sp).
 unfold z_rand in *. rewrite u64_lit by lia. lia.
 Qed.
 Lemma PM_img_facts : forall E (H : word -> bool) m,
@@ -444,7 +458,7 @@ bv_unsigned (ew E3 K_PP) = sptr_addr B ly pb + 2 + config_len data ->
 srealizes tfibsegs (mkCfg ms md) (run_shape (payload data) (calls data) (in_fs inp)).
 Proof.
 intros ws W ms md ly S Hp data pb cap Hlk Hok Hplpos HNS E3 HT E60.
-destruct HT as (HS & E41 & E42 & HR & HAI & HAR & HHp & HTOP & Hbl & HNP & HXS & Hcap & HLc & HBLK & Hfs & Hfds & Hminv & HFI & HU & HAD).
+destruct HT as (HS & E41 & E42 & HR & HAI & HAR & HHp & HTOP & Hbl & HNP & HXS & Hcap & HLc & HBLK & Hfs & Hfds & Hminv & HFI & HU & HAD & Hcr).
 pose proof Hsp as (Ulo & Uhi & U16). pose proof (u64_range sp) as Usp. pose proof (proj1 (@YM05.alloc_ceiling_value rc)) as CV.
 pose proof (top_ok_ceil _ _ HTOP) as HCT. pose proof (YM05.ceil_le_top _ HCT) as CLE. unfold stack_max_size in CLE.
 set (buf := sptr_addr B ly pb) in *. set (c0 := config_len data =? 0) in *. set (k := Z.of_nat (calls data)) in *.
@@ -638,7 +652,7 @@ assert (U83_4 : bv_unsigned (ew E4 A_PBLK) = nb) by (rewrite E4old by (unfold K_
 assert (Ed42 : ed E4 2 = data) by (change (ed E4 2) with (ed E3 2); exact Ed2).
 assert (UPL4 : U E4 sv_pl00 = payload_len data).
 { apply (U_pl00 E4 data d0 d1 (d2 :: rest) Ed42 Ed); unfold dlen; [rewrite E4old by (unfold K_PC, A_BUF, A_LEN, K_PP, A_PBLK; lia); rewrite E2old by (unfold K_PM, A_BUF, A_LEN, K_PP; lia); exact E42 | lia | lia]. }
-pose proof (same_but_materialized_frame _ _ Hs4) as (_ & _ & _ & _ & _ & _ & _ & _ & Hfds4 & _ & _ & Hfs4 & _).
+pose proof (same_but_materialized_frame _ _ Hs4) as (_ & _ & _ & _ & _ & Hpr4 & _ & _ & Hfds4 & _ & _ & Hfs4 & _).
 assert (Hwin4 : forall a, usp - 65536 <= a < usp -> apresent (w_H W') mem4 a) by (intros a Ha; apply Hpres4; apply Hwin3; exact Ha).
 rewrite <- restrict_mkst_fx in HS5.
 apply (SRr_srealizes tfibsegs W' _ _ _ (pl_run c0 k E4 W' regs4 mem4 md4 HS5) HAI4).
@@ -717,8 +731,13 @@ assert (HAD5 : arodata_ok_cf tfibsegs B (ms_mem ms5)).
   exact (aro_run B W' E4 (WIN (-208) :: rsPM) mem4 (ms_mem ms5) RO HFr5 WOK ltac:(rewrite E4_0; exact Ulo) HAD4). }
 assert (Hfds5 : m_fds md5 = APSG.fds_std) by (subst md5; rewrite wvb_fds', Hfds4; subst md3; rewrite wvb_fds', Efds; exact Hfds).
 assert (Hfs5 : m_fs md5 = in_fs inp) by (subst md5; rewrite wvb_fs', Hfs4; subst md3; rewrite wvb_fs', Efs; exact Hfs).
+(* The channel reader [fdchan] asks for at LPS 727298f3, carried as [Hfds5] is: the memcpy
+   site's [same_but_materialized] and malloc's [same_io] pin [m_proc], the ledgers leave it. *)
+assert (Hcr5 : m_channel_reader md5 = true).
+{ subst md5. rewrite wvb_rdr'. transitivity (m_channel_reader md3); [unfold m_channel_reader; rewrite Hpr4; reflexivity |].
+subst md3. rewrite wvb_rdr'. pose proof Hio as (_ & _ & _ & Hpr2). unfold m_channel_reader. rewrite Hpr2. exact Hcr. }
 change (run_shape (payload data) (calls data) (in_fs inp)) with (loop_tgt (payload data) (calls data) 0%nat (calls data) (in_fs inp)).
-apply (LOOPL sp inp xw xd E6 W' ms5 md5 ly' S' Hp a0 p data pb p' cap nb 0%nat (calls data) (in_fs inp) Hargv Hsp Hva Hve Hvfs Hlk ltac:(unfold dlen; lia)).
+apply (LOOPL sp brk mbase inp xw xd E6 W' ms5 md5 ly' S' Hp a0 p data pb p' cap nb 0%nat (calls data) (in_fs inp) rnd Hsp Hargv Hva Hve Hvl Hlau Hvi Hvfs Hlk ltac:(unfold dlen; lia)).
 + intros j Hj. rewrite ELold by (unfold K_L, K_M1 in *; lia). rewrite E4old by (unfold K_PC, K_M1 in *; lia). rewrite E2old by (unfold K_PM, K_M1 in *; lia). apply E3old. exact Hj.
 + change (ed E6 2) with (ed E3 2). exact Ed2.
 + rewrite ELold by (unfold K_L, A_BUF, A_LEN, K_PP, A_PBLK; lia). rewrite E4old by (unfold K_PC, A_BUF, A_LEN, K_PP, A_PBLK; lia). rewrite E2old by (unfold K_PM, A_BUF, A_LEN, K_PP; lia). rewrite Hpb'. exact E41.
@@ -754,7 +773,7 @@ apply (LOOPL sp inp xw xd E6 W' ms5 md5 ly' S' Hp a0 p data pb p' cap nb 0%nat (
 + left. split; [reflexivity | exact HIMG5].
 + exact HRO5.
 + exact HFI5.
-+ split; [intros k0; rewrite Hfds5; reflexivity|]. split; [rewrite Hfds5; reflexivity|]. split; [exact Hfs5 | exact (proj1 Hvfs)].
++ split; [intros k0; rewrite Hfds5; reflexivity|]. split; [rewrite Hfds5; reflexivity|]. split; [exact Hfs5|]. split; [exact (proj1 Hvfs) | exact Hcr5].
 + exact HAD5.
 Qed.
 End e.
@@ -768,8 +787,9 @@ Theorem tfib_run_QM (B : asyms) (NP : astate -> Prop) (NPT : YD1w_cf.iface_room_
 (NS_START : NS init_state + 12 + 4 * XNMAX <= NRUN) (XNMAX_NN : 0 <= XNMAX) (HULL_NS : forall S, NS S <= NRUN -> cf_hull_ok S)
 (LOOPL : loop_L_x B NP NS NRUN XNMAX xst) (RO : relro_ok) : run_QM_tfa B NP NS.
 Proof.
-intros sp inp xw xd ws W ms md ly S Hp a0 p data pb cap Hargv Hsp Hva Hve Hvfs Hlk Hok Hpl HNS E3 HT E60.
-exact (tfib_run_QM_at B NP NPT NPS HB ARL ML MSITE MCPY xst NS NRUN XNMAX nsec_malloc_cf NS_START XNMAX_NN HULL_NS LOOPL RO sp inp xw xd a0 p
-Hargv Hsp Hva Hve Hvfs ws W ms md ly S Hp data pb cap Hlk Hok Hpl HNS HT E60).
+intros sp brk mbase inp xw xd ws W ms md ly S Hp a0 p data pb cap rnd
+Hsp Hargv Hva Hve Hvl Hlau Hvi Hvfs Hlk Hok Hpl HNS E3 HT E60.
+exact (tfib_run_QM_at B NP NPT NPS HB ARL ML MSITE MCPY xst NS NRUN XNMAX nsec_malloc_cf NS_START XNMAX_NN HULL_NS LOOPL RO sp brk mbase inp xw xd a0 p
+rnd Hargv Hsp Hva Hve Hvl Hlau Hvi Hvfs ws W ms md ly S Hp data pb cap Hlk Hok Hpl HNS HT E60).
 Qed.
 End b.

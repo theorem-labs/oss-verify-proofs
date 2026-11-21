@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mmap placement by the model's Linux placement, the first conjunct of `anon_place_ok`; `RomBase.sys_rob` in the node-closure premise `J_nclosed`). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QCiC Q6sh QQwg QvDJ QzgH QCrt.
@@ -179,6 +180,7 @@ End NoSpin.
 End Mq0.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QQIi Qcrs QUcd QCUT QwAs Qc6I QJFf QVsB Qsn5 Qqyb Qknc QBrp Q2ui Q1KO Qpj5 QKTr QNqr QeDS QLiw.
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib.Cfg Require RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 Module Mq1.
@@ -312,6 +314,7 @@ destruct G as (Hlen & Hmod & H40 & _).
 cbn -[mmap_kind QKTr.PROT_RW QKTr.FL_ANON anon_place_ok grant_model rsp_grant reveal wunit rlenw rlen m_vmmaps] in Hst.
 rewrite kind_anon in Hst. destruct Hst as [_ (b & ws & Hpl & Hrev & Hwu & _ & ->)].
 unfold anon_place_ok in Hpl. apply andb_prop in Hpl as [Hpl Hfree]. apply andb_prop in Hpl as [Hpl Htop]. apply andb_prop in Hpl as [Hal Hpos].
+apply andb_prop in Hal as [_ Hal]. (* LPS 727298f3: Linux's placement is the first conjunct *)
 apply Z.eqb_eq in Hal. apply Z.ltb_lt in Hpos. apply Z.leb_le in Htop. unfold kPage in Hmod.
 rewrite (rlen_aligned len Hmod) in *. rewrite (rlenw_w64 len Hmod) in *. change (Z_to_bv 64 len) with (w64 len) in Hfree.
 pose proof (ki_top_hi LV BUDGET PERM TOT0 N0 g mo K) as HtopC. rewrite kCeil_val in HtopC. unfold kMaxChunk in H40.
@@ -428,8 +431,9 @@ Hypothesis Hbc : bands_cover LV.
 Notation KIx := (KI LV BUDGET PERM TOT0 N0).
 
 Variable J : config -> Prop.
+(* LPS 727298f3: a closure under nodes needs the node's [RomBase.sys_rob] *)
 Hypothesis J_nclosed : forall c (I : Type) (nx : I -> config) (i0 : I),
-node_ok segs c I (fun _ => []) nx -> (forall i, J (nx i)) -> J c.
+node_ok segs c I (fun _ => []) nx -> RomBase.sys_rob segs c -> (forall i, J (nx i)) -> J c.
 
 Theorem vj_ev : forall (e : evA) (g : ghost) c msv,
 at_nodeA LV segs (node_of e) msv ->

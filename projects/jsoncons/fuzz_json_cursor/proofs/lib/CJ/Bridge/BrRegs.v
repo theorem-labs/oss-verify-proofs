@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO): changed interp_eff_accesses_eqv, step_accesses_eqv. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import IndefiniteDescription.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -189,7 +190,7 @@ Lemma interp_eff_accesses_eqv : forall t t', eff_eqv t t' -> forall m,
   end.
 Proof.
   intros t t' H. induction H; intros m; cbn [interp_eff_accesses]; auto.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [| exact I].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [| destruct (range_meets_vvar segs a (width_bytes n)); exact I].
     specialize (H0 (bv_extract 0 n (le_bytes_to_word bs)) m).
     destruct (interp_eff_accesses segs (k _) m) as [[[c1 m1] acc1]| |];
     destruct (interp_eff_accesses segs (k' _) m) as [[[c2 m2] acc2]| |]; cbn in *; try exact H0; try contradiction.
@@ -228,7 +229,8 @@ Proof.
   destruct (fetch_word segs (ms_pc_val ms)); [apply decode_exec_accesses_eqv; exact Heqv|].
   destruct (fetch_word_ov segs (ms_mem ms) (ms_pc_val ms)); [apply decode_exec_accesses_eqv; exact Heqv|].
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc_val ms)); [apply decode_exec_accesses_eqv; exact Heqv|].
-  unfold fetch_failure. destruct (negb _); [exact I|]. destruct (_ || _)%bool; exact I.
+  unfold fetch_failure. destruct (vdso_text_at segs (ms_pc_val ms)); [exact I|].
+  destruct (negb _); [exact I|]. destruct (_ || _)%bool; exact I.
 Qed.
 
 Lemma step_eqv : forall ms ms', ms_eqv ms ms' ->

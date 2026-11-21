@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/PresetDeallocInstA.v, with its module paths changed; 2 of its 85 lines of code are new or changed and 1 line of the source is left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset's DEALLOCATE contract at image A', in the primed form, closed.
-   It is the A' twin of fuzz_reply's ReplyDeallocInst.adealloc_realizes_raw_cf_em_m_rh_reply (lib/A at
-   eb934de95d13), at B := AD2l.TfibB, IOK := the binary's own allocator object, CfImg_A and CfParams_preset.
+   It is the A' twin of fuzz_reply's ReplyDeallocInst.adealloc_realizes_raw_cf_em_m_rh_reply (lib/A),
+   at B := AD2l.TfibB, IOK := the binary's own allocator object, CfImg_A and CfParams_preset.
    Route: the layer's primed free top (YGcfInstFreeTopRh.adealloc_realizes_raw_cf_em_m_rh_cf) at the choices
    ARXr := YGcfInstDrainR.ARXr_cf, L24 := L24MAX_cf, QB := QB_cf kQuarantineMax, DRq := DRq_cf kQuarantineMax,
    with: this image's unit facts (PresetUnitFactsA.preset_unit_facts_A), its QB byte bound

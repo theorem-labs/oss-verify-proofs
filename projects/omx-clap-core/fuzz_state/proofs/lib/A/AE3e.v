@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AE3e.v, with its module paths changed and its addresses moved to omx-clap-core/fuzz_state's ASan build. *)
 (* Modified by Theorem Labs, 2026-10: five words are fuzz_state.asan's own: the jal words at __stdio_write+0x8c / +0x114 (F_17b98, F_17c20) reach __syscall_ret 0x8cda8 by -0x54e8 / -0x5570 (0xb19fa0ef, Jal 1 2075416; 0xa91fa0ef, Jal 1 2075280), and F_17bf4, F_17c24, F_17c40 are again 0x000a0593, 0x000a0993, 0x000a3703, which the address move had rewritten as if they were .data addresses. wl_done closes with YK15's realizes_emit_nil: fuzz_state's YK15 (from fuzz_manifest) has rz_cut and so no realizes_nonempty. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (writev's node obligation sys_rob, proved from the pending call); with libreac/fuzz_boxreg's repair of its copy of this file (its proofs/lib/A/AE3e.v). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -101,6 +102,7 @@ assert (Hr : (1 <= Z.to_nat (bv_unsigned ret))%nat /\ (Z.to_nat (bv_unsigned ret
 exists (exist _ (Z.to_nat (bv_unsigned ret)) Hr). unfold ef, writev_eff; cbn [proj1_sig].
 rewrite Z2Nat.id by lia. rewrite Z_to_bv_bv_unsigned, Hci. auto.
 + exact (fun _ => acfg_nonspurious_no _ _ _ _ _ _ Hno eq_refl).
++ exact (writev_rob_pend segs regs pc mem rom model fd ch iovs bs Hno Hfdc H32 Hfd Hcnt Hmax Himp Hiok Hbok Hg Htot Hnb).
 - intros [n [Hn1 Hn2]]. unfold ef; cbn [proj1_sig]. rewrite adv_pend.
 rewrite effmem_writev_eff. unfold writev_eff; cbn [eff_ret]. apply Hc; assumption.
 Qed.

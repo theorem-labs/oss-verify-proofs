@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: V_TLS, V_TID and V_CANARY move from 7, 8, 9 to 23, 24, 25, runs run1 to run6 are made once per CONFIG_RSEQ value from the entry table kn0_b, with their own itinerary lemmas, and joined at run6's end (KN6e, SR6e_join), and the later runs' fresh-variable and EVar literals move by +16, in both copies. *)
 (* [comment removed for export] *)
 From Stdlib Require Lia.
 (* [comment removed for export] *)
@@ -41,9 +42,15 @@ Import AX2. Import AX2S.
 Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
-Definition V_TLS : nat := 7.
-Definition V_TID : nat := 8.
-Definition V_CANARY : nat := 9.
+(* Slots ABOVE [EntryKn.vals0], which is 23 entries at 75d69e00 and was 7
+   before the revision: [V_TLS] must be exactly [length vals0], because
+   [BootState.ev_EB_tls] reads [a] out of [vals0 ++ [a; tid; c] ++ ...]
+   by [reflexivity].  7 -> 23 is forced by the table's width and by
+   nothing else; see Lib/EntryKn.v's PORT NOTE for why the width moved
+   (27/29 auxv pairs, plus V_RNDOFF/V_PAD/V_WLO/V_WLEN). *)
+Definition V_TLS : nat := 23.
+Definition V_TID : nat := 24.
+Definition V_CANARY : nat := 25.
 
 (* [comment removed for export] *)
 Definition FUEL : nat := 3000.
@@ -64,91 +71,128 @@ Definition c_scs (c : list kentry * list sidecond * list bool) : list sidecond :
 (* [comment removed for export] *)
 Definition kx : list kentry := [].  (* [comment removed for export] *)
 
-Definition KN0 : list kentry := kn0 PH A_img_lo A_img_hi A_rw_lo A_rw_len kx.
+(* PORTED to LPS 727298f3.  CONFIG_RSEQ ([kb_rseq (in_kernel inp)]) is free, and the entry
+   table [EntryKn.kn0_b] differs in the vector's tail with it, so the runs below are made once
+   per value ([_t]: CONFIG_RSEQ, 29 auxv pairs; [_f]: 27 pairs), with [*r rs] selecting one.
+   The two chains meet at the end of [run6] ([A_maxva_smeared], after musl's [__init_libc] has
+   returned and restored its callee-saved registers): [KN6e] keeps the facts both chains
+   hold, and the two register files are equal ([SR6e_join]).  The counters start at [NX0]
+   (the launch's 23 variables), [V_TID] and [V_CANARY] where they started at 7, 8 and 9. *)
+Definition KN0r (rs : bool) : list kentry := kn0_b rs PH A_img_lo A_img_hi A_rw_lo A_rw_len kx.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-Definition run1 := Eval vm_compute in (AX2F.sym_execF SEGS KN0 FUEL true [A_envloop] noscr (SS A_start sr_init [] KN0 7) []).
-Definition SS1 : sym_state := Eval vm_compute in (r_ss run1).
-Definition car1 := Eval vm_compute in (AX2F.carryF (s_log SS1) KN0 []).
-Definition KN1 : list kentry := Eval vm_compute in (c_kn car1).
-Definition SR1 : list expr := Eval vm_compute in (s_regs SS1).
-
-(* [comment removed for export] *)
-Definition SR2 : list expr := 
-  sr_upd (sr_upd SR1 9 e_auxv) 10 (ELit 0).
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-Definition run2 := Eval vm_compute in (AX2F.sym_execF SEGS KN1 FUEL true [A_pnloop] noscr (SS A_envloop_exit SR2 [] KN1 7) []).
-Definition SS2 : sym_state := Eval vm_compute in (r_ss run2).
-Definition car2 := Eval vm_compute in (AX2F.carryF (s_log SS2) KN1 []).
-Definition KN2 : list kentry := Eval vm_compute in (c_kn car2).
-Definition SR2e : list expr := Eval vm_compute in (s_regs SS2).
-
-(* [comment removed for export] *)
-Definition SR3 : list expr := 
-  sr_upd (sr_upd SR2e 11 e_str1) 13 (ELit 0).
-Definition KN3 : list kentry := 
-  List.filter (keep_b KN2 (ELit 0) A_progname (ELit 8)) KN2.
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-Definition run3 := Eval vm_compute in (AX2F.sym_execF SEGS KN3 FUEL true [] noscr (SS A_pnloop_exit SR3 [] KN3 7) []).
-Definition SS3 : sym_state := Eval vm_compute in (r_ss run3).
-Definition car3 := Eval vm_compute in (AX2F.carryF (s_log SS3) KN3 []).
-Definition KN3e : list kentry := Eval vm_compute in (c_kn car3).
-Definition SR3e : list expr := Eval vm_compute in (s_regs SS3).
-
-(* static_init_tls takes the builtin_tls path (the TLS block is in .bss, no mmap): run3 ends at the
-   set_tid_address ecall, which is where the state at the next phase starts. *)
-Definition KN4e : list kentry := KN3e.
-Definition SR4e : list expr := SR3e.
-
-Definition KN5 : list kentry := 
-  KN4e ++ [KRange (EVar V_TID) 1 4194303].
-Definition SR5 : list expr := 
-  sr_upd SR4e 10 (EVar V_TID).
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-Definition run5 := Eval vm_compute in (AX2F.sym_execF SEGS KN5 FUEL true [A_ssp_sb] noscr (SS A_set_tid_ret SR5 [] KN5 9) []).
-Definition SS5 : sym_state := Eval vm_compute in (r_ss run5).
-Definition car5 := Eval vm_compute in (AX2F.carryF (s_log SS5) KN5 []).
-Definition KN5e : list kentry := Eval vm_compute in (c_kn car5).
-Definition SR5e : list expr := Eval vm_compute in (s_regs SS5).
-
-(* [comment removed for export] *)
-Definition KN6 : list kentry := 
+(* CONFIG_RSEQ = true *)
+Definition run1_t := Eval vm_compute in (AX2F.sym_execF SEGS (KN0r true) FUEL true [A_envloop] noscr (SS A_start sr_init [] (KN0r true) NX0) []).
+Definition SS1_t : sym_state := Eval vm_compute in (r_ss run1_t).
+Definition car1_t := Eval vm_compute in (AX2F.carryF (s_log SS1_t) (KN0r true) []).
+Definition KN1_t : list kentry := Eval vm_compute in (c_kn car1_t).
+Definition SR1_t : list expr := Eval vm_compute in (s_regs SS1_t).
+Definition SR2_t : list expr := sr_upd (sr_upd SR1_t 9 e_auxv) 10 (ELit 0).
+Definition run2_t := Eval vm_compute in (AX2F.sym_execF SEGS KN1_t FUEL true [A_pnloop] noscr (SS A_envloop_exit SR2_t [] KN1_t NX0) []).
+Definition SS2_t : sym_state := Eval vm_compute in (r_ss run2_t).
+Definition car2_t := Eval vm_compute in (AX2F.carryF (s_log SS2_t) KN1_t []).
+Definition KN2_t : list kentry := Eval vm_compute in (c_kn car2_t).
+Definition SR2e_t : list expr := Eval vm_compute in (s_regs SS2_t).
+Definition SR3_t : list expr := sr_upd (sr_upd SR2e_t 11 e_str1) 13 (ELit 0).
+Definition KN3_t : list kentry := List.filter (keep_b KN2_t (ELit 0) A_progname (ELit 8)) KN2_t.
+Definition run3_t := Eval vm_compute in (AX2F.sym_execF SEGS KN3_t FUEL true [] noscr (SS A_pnloop_exit SR3_t [] KN3_t NX0) []).
+Definition SS3_t : sym_state := Eval vm_compute in (r_ss run3_t).
+Definition car3_t := Eval vm_compute in (AX2F.carryF (s_log SS3_t) KN3_t []).
+Definition KN3e_t : list kentry := Eval vm_compute in (c_kn car3_t).
+Definition SR3e_t : list expr := Eval vm_compute in (s_regs SS3_t).
+Definition KN4e_t : list kentry := KN3e_t.
+Definition SR4e_t : list expr := SR3e_t.
+Definition KN5_t : list kentry := KN4e_t ++ [KRange (EVar V_TID) 1 4194303].
+Definition SR5_t : list expr := sr_upd SR4e_t 10 (EVar V_TID).
+Definition run5_t := Eval vm_compute in (AX2F.sym_execF SEGS KN5_t FUEL true [A_ssp_sb] noscr (SS A_set_tid_ret SR5_t [] KN5_t (S V_TID)) []).
+Definition SS5_t : sym_state := Eval vm_compute in (r_ss run5_t).
+Definition car5_t := Eval vm_compute in (AX2F.carryF (s_log SS5_t) KN5_t []).
+Definition KN5e_t : list kentry := Eval vm_compute in (c_kn car5_t).
+Definition SR5e_t : list expr := Eval vm_compute in (s_regs SS5_t).
+Definition KN6_t : list kentry :=
   KWord (SA (ELit 0) A_stack_chk_guard) 8 (EVar V_CANARY)
-     :: List.filter (keep_b KN5e (ELit 0) A_stack_chk_guard (ELit 8)) KN5e.
-Definition SR6 : list expr := 
-  sr_upd SR5e 10 (EVar V_CANARY).
+     :: List.filter (keep_b KN5e_t (ELit 0) A_stack_chk_guard (ELit 8)) KN5e_t.
+Definition SR6_t : list expr := sr_upd SR5e_t 10 (EVar V_CANARY).
+Definition run6_t := Eval vm_compute in (AX2F.sym_execF SEGS KN6_t FUEL true [A_maxva_smeared] noscr (SS A_ssp_after_ld SR6_t [] KN6_t (S V_CANARY)) []).
+Definition SS6_t : sym_state := Eval vm_compute in (r_ss run6_t).
+Definition car6_t := Eval vm_compute in (AX2F.carryF (s_log SS6_t) KN6_t []).
+Definition KN6e_t : list kentry := Eval vm_compute in (c_kn car6_t).
+Definition SR6e_t : list expr := Eval vm_compute in (s_regs SS6_t).
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* CONFIG_RSEQ = false *)
+Definition run1_f := Eval vm_compute in (AX2F.sym_execF SEGS (KN0r false) FUEL true [A_envloop] noscr (SS A_start sr_init [] (KN0r false) NX0) []).
+Definition SS1_f : sym_state := Eval vm_compute in (r_ss run1_f).
+Definition car1_f := Eval vm_compute in (AX2F.carryF (s_log SS1_f) (KN0r false) []).
+Definition KN1_f : list kentry := Eval vm_compute in (c_kn car1_f).
+Definition SR1_f : list expr := Eval vm_compute in (s_regs SS1_f).
+Definition SR2_f : list expr := sr_upd (sr_upd SR1_f 9 e_auxv) 10 (ELit 0).
+Definition run2_f := Eval vm_compute in (AX2F.sym_execF SEGS KN1_f FUEL true [A_pnloop] noscr (SS A_envloop_exit SR2_f [] KN1_f NX0) []).
+Definition SS2_f : sym_state := Eval vm_compute in (r_ss run2_f).
+Definition car2_f := Eval vm_compute in (AX2F.carryF (s_log SS2_f) KN1_f []).
+Definition KN2_f : list kentry := Eval vm_compute in (c_kn car2_f).
+Definition SR2e_f : list expr := Eval vm_compute in (s_regs SS2_f).
+Definition SR3_f : list expr := sr_upd (sr_upd SR2e_f 11 e_str1) 13 (ELit 0).
+Definition KN3_f : list kentry := List.filter (keep_b KN2_f (ELit 0) A_progname (ELit 8)) KN2_f.
+Definition run3_f := Eval vm_compute in (AX2F.sym_execF SEGS KN3_f FUEL true [] noscr (SS A_pnloop_exit SR3_f [] KN3_f NX0) []).
+Definition SS3_f : sym_state := Eval vm_compute in (r_ss run3_f).
+Definition car3_f := Eval vm_compute in (AX2F.carryF (s_log SS3_f) KN3_f []).
+Definition KN3e_f : list kentry := Eval vm_compute in (c_kn car3_f).
+Definition SR3e_f : list expr := Eval vm_compute in (s_regs SS3_f).
+Definition KN4e_f : list kentry := KN3e_f.
+Definition SR4e_f : list expr := SR3e_f.
+Definition KN5_f : list kentry := KN4e_f ++ [KRange (EVar V_TID) 1 4194303].
+Definition SR5_f : list expr := sr_upd SR4e_f 10 (EVar V_TID).
+Definition run5_f := Eval vm_compute in (AX2F.sym_execF SEGS KN5_f FUEL true [A_ssp_sb] noscr (SS A_set_tid_ret SR5_f [] KN5_f (S V_TID)) []).
+Definition SS5_f : sym_state := Eval vm_compute in (r_ss run5_f).
+Definition car5_f := Eval vm_compute in (AX2F.carryF (s_log SS5_f) KN5_f []).
+Definition KN5e_f : list kentry := Eval vm_compute in (c_kn car5_f).
+Definition SR5e_f : list expr := Eval vm_compute in (s_regs SS5_f).
+Definition KN6_f : list kentry :=
+  KWord (SA (ELit 0) A_stack_chk_guard) 8 (EVar V_CANARY)
+     :: List.filter (keep_b KN5e_f (ELit 0) A_stack_chk_guard (ELit 8)) KN5e_f.
+Definition SR6_f : list expr := sr_upd SR5e_f 10 (EVar V_CANARY).
+Definition run6_f := Eval vm_compute in (AX2F.sym_execF SEGS KN6_f FUEL true [A_maxva_smeared] noscr (SS A_ssp_after_ld SR6_f [] KN6_f (S V_CANARY)) []).
+Definition SS6_f : sym_state := Eval vm_compute in (r_ss run6_f).
+Definition car6_f := Eval vm_compute in (AX2F.carryF (s_log SS6_f) KN6_f []).
+Definition KN6e_f : list kentry := Eval vm_compute in (c_kn car6_f).
+Definition SR6e_f : list expr := Eval vm_compute in (s_regs SS6_f).
 
-(* [comment removed for export] *)
-Definition run6 := Eval vm_compute in (AX2F.sym_execF SEGS KN6 FUEL true [A_maxva_smeared] noscr (SS A_ssp_after_ld SR6 [] KN6 10) []).
-Definition SS6 : sym_state := Eval vm_compute in (r_ss run6).
-Definition car6 := Eval vm_compute in (AX2F.carryF (s_log SS6) KN6 []).
-Definition KN6e : list kentry := Eval vm_compute in (c_kn car6).
-Definition SR6e : list expr := Eval vm_compute in (s_regs SS6).
+Definition KN1r (rs : bool) : list kentry := if rs then KN1_t else KN1_f.
+Definition KN2r (rs : bool) : list kentry := if rs then KN2_t else KN2_f.
+Definition KN3r (rs : bool) : list kentry := if rs then KN3_t else KN3_f.
+Definition KN3er (rs : bool) : list kentry := if rs then KN3e_t else KN3e_f.
+Definition KN4er (rs : bool) : list kentry := if rs then KN4e_t else KN4e_f.
+Definition KN5r (rs : bool) : list kentry := if rs then KN5_t else KN5_f.
+Definition KN5er (rs : bool) : list kentry := if rs then KN5e_t else KN5e_f.
+Definition KN6r (rs : bool) : list kentry := if rs then KN6_t else KN6_f.
+Definition KN6er (rs : bool) : list kentry := if rs then KN6e_t else KN6e_f.
+Definition SR2r (rs : bool) : list expr := if rs then SR2_t else SR2_f.
+Definition SR2er (rs : bool) : list expr := if rs then SR2e_t else SR2e_f.
+Definition SR3r (rs : bool) : list expr := if rs then SR3_t else SR3_f.
+Definition SR3er (rs : bool) : list expr := if rs then SR3e_t else SR3e_f.
+Definition SR4er (rs : bool) : list expr := if rs then SR4e_t else SR4e_f.
+Definition SR5r (rs : bool) : list expr := if rs then SR5_t else SR5_f.
+Definition SR5er (rs : bool) : list expr := if rs then SR5e_t else SR5e_f.
+Definition SR6r (rs : bool) : list expr := if rs then SR6_t else SR6_f.
+Definition SR6er (rs : bool) : list expr := if rs then SR6e_t else SR6e_f.
+Definition SS1r (rs : bool) : sym_state := if rs then SS1_t else SS1_f.
+Definition SS2r (rs : bool) : sym_state := if rs then SS2_t else SS2_f.
+Definition SS3r (rs : bool) : sym_state := if rs then SS3_t else SS3_f.
+Definition SS5r (rs : bool) : sym_state := if rs then SS5_t else SS5_f.
+Definition SS6r (rs : bool) : sym_state := if rs then SS6_t else SS6_f.
+
+(* the meeting point *)
+Definition KN6e : list kentry := Eval vm_compute in (List.filter (fun K => kn_sub [K] KN6e_f) KN6e_t).
+Definition SR6e : list expr := SR6e_t.
+Lemma KN6e_sub : forall rs, kn_sub KN6e (KN6er rs) = true.
+Proof. intros []; vmeq_refl. Qed.
+Lemma SR6e_join : forall rs, SR6er rs = SR6e.
+Proof. intros []; [reflexivity | vmeq_cast]. Qed.
 
 Definition MAXVA : Z := 2 ^ 47 - 1.
 Definition SR7 : list expr := sr_upd SR6e 10 (ELit MAXVA).
 
 (* [comment removed for export] *)
-Definition run7 := Eval vm_compute in (AX2F.sym_execF SEGS KN6e FUEL true [A_internal_mmap_ecall] noscr (SS A_maxva_smeared SR7 [] KN6e 10) []).
+Definition run7 := Eval vm_compute in (AX2F.sym_execF SEGS KN6e FUEL true [A_internal_mmap_ecall] noscr (SS A_maxva_smeared SR7 [] KN6e (S V_CANARY)) []).
 Definition SS7 : sym_state := Eval vm_compute in (r_ss run7).
 Definition car7 := Eval vm_compute in (AX2F.carryF (s_log SS7) KN6e []).
 Definition KN_E3 : list kentry := Eval vm_compute in (c_kn car7).
@@ -159,13 +203,20 @@ Definition SR_E3 : list expr := Eval vm_compute in (s_regs SS7).
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
+Lemma itinerary_ok_r : forall rs,
+  (s_pc (SS1r rs), s_pc (SS2r rs), s_pc (SS3r rs), s_pc (SS5r rs), s_pc (SS6r rs))
+  = (A_envloop, A_pnloop, A_set_tid_ecall, A_ssp_sb, A_maxva_smeared).
+Proof. intros []; vmeq_refl. Qed.
+Lemma itinerary_sc_t :
+  (r_scs run1_t, c_scs car1_t, r_scs run2_t, c_scs car2_t, r_scs run3_t, c_scs car3_t,
+   r_scs run5_t, c_scs car5_t, r_scs run6_t, c_scs car6_t) = ([], [], [], [], [], [], [], [], [], []).
+Proof. vmeq_refl. Qed.
+Lemma itinerary_sc_f :
+  (r_scs run1_f, c_scs car1_f, r_scs run2_f, c_scs car2_f, r_scs run3_f, c_scs car3_f,
+   r_scs run5_f, c_scs car5_f, r_scs run6_f, c_scs car6_f) = ([], [], [], [], [], [], [], [], [], []).
+Proof. vmeq_refl. Qed.
 Lemma itinerary_ok :
-  (s_pc SS1, r_scs run1, c_scs car1) = (A_envloop, [], [])
-  /\ (s_pc SS2, r_scs run2, c_scs car2) = (A_pnloop, [], [])
-  /\ (s_pc SS3, r_scs run3, c_scs car3) = (A_set_tid_ecall, [], [])
-  /\ (s_pc SS5, r_scs run5, c_scs car5) = (A_ssp_sb, [], [])
-  /\ (s_pc SS6, r_scs run6, c_scs car6) = (A_maxva_smeared, [], [])
-  /\ (s_pc SS7, r_scs run7, c_scs car7) = (A_internal_mmap_ecall, [], []).
+  (s_pc SS7, r_scs run7, c_scs car7) = (A_internal_mmap_ecall, [], []).
 Proof. vmeq_conj. Qed.
 
 (* [comment removed for export] *)
@@ -186,9 +237,10 @@ Import AX2. Import AX2S.
 Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
-Definition V_TLS : nat := 7.
-Definition V_TID : nat := 8.
-Definition V_CANARY : nat := 9.
+(* twin of :44-52; same reason, same numbers *)
+Definition V_TLS : nat := 23.
+Definition V_TID : nat := 24.
+Definition V_CANARY : nat := 25.
 
 (* [comment removed for export] *)
 Definition FUEL : nat := 3000.
@@ -209,91 +261,128 @@ Definition c_scs (c : list kentry * list sidecond * list bool) : list sidecond :
 (* [comment removed for export] *)
 Definition kx : list kentry := [].  (* [comment removed for export] *)
 
-Definition KN0 : list kentry := kn0 PH A_img_lo A_img_hi A_rw_lo A_rw_len kx.
+(* PORTED to LPS 727298f3.  CONFIG_RSEQ ([kb_rseq (in_kernel inp)]) is free, and the entry
+   table [EntryKn.kn0_b] differs in the vector's tail with it, so the runs below are made once
+   per value ([_t]: CONFIG_RSEQ, 29 auxv pairs; [_f]: 27 pairs), with [*r rs] selecting one.
+   The two chains meet at the end of [run6] ([A_maxva_smeared], after musl's [__init_libc] has
+   returned and restored its callee-saved registers): [KN6e] keeps the facts both chains
+   hold, and the two register files are equal ([SR6e_join]).  The counters start at [NX0]
+   (the launch's 23 variables), [V_TID] and [V_CANARY] where they started at 7, 8 and 9. *)
+Definition KN0r (rs : bool) : list kentry := kn0_b rs PH A_img_lo A_img_hi A_rw_lo A_rw_len kx.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-Definition run1 := Eval vm_compute in (AX2F.sym_execF SEGS KN0 FUEL true [A_envloop] noscr (SS A_start sr_init [] KN0 7) []).
-Definition SS1 : sym_state := Eval vm_compute in (r_ss run1).
-Definition car1 := Eval vm_compute in (AX2F.carryF (s_log SS1) KN0 []).
-Definition KN1 : list kentry := Eval vm_compute in (c_kn car1).
-Definition SR1 : list expr := Eval vm_compute in (s_regs SS1).
-
-(* [comment removed for export] *)
-Definition SR2 : list expr := 
-  sr_upd (sr_upd SR1 9 e_auxv) 10 (ELit 0).
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-Definition run2 := Eval vm_compute in (AX2F.sym_execF SEGS KN1 FUEL true [A_pnloop] noscr (SS A_envloop_exit SR2 [] KN1 7) []).
-Definition SS2 : sym_state := Eval vm_compute in (r_ss run2).
-Definition car2 := Eval vm_compute in (AX2F.carryF (s_log SS2) KN1 []).
-Definition KN2 : list kentry := Eval vm_compute in (c_kn car2).
-Definition SR2e : list expr := Eval vm_compute in (s_regs SS2).
-
-(* [comment removed for export] *)
-Definition SR3 : list expr := 
-  sr_upd (sr_upd SR2e 11 e_str1) 13 (ELit 0).
-Definition KN3 : list kentry := 
-  List.filter (keep_b KN2 (ELit 0) A_progname (ELit 8)) KN2.
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-Definition run3 := Eval vm_compute in (AX2F.sym_execF SEGS KN3 FUEL true [] noscr (SS A_pnloop_exit SR3 [] KN3 7) []).
-Definition SS3 : sym_state := Eval vm_compute in (r_ss run3).
-Definition car3 := Eval vm_compute in (AX2F.carryF (s_log SS3) KN3 []).
-Definition KN3e : list kentry := Eval vm_compute in (c_kn car3).
-Definition SR3e : list expr := Eval vm_compute in (s_regs SS3).
-
-(* static_init_tls takes the builtin_tls path (the TLS block is in .bss, no mmap): run3 ends at the
-   set_tid_address ecall, which is where the state at the next phase starts. *)
-Definition KN4e : list kentry := KN3e.
-Definition SR4e : list expr := SR3e.
-
-Definition KN5 : list kentry := 
-  KN4e ++ [KRange (EVar V_TID) 1 4194303].
-Definition SR5 : list expr := 
-  sr_upd SR4e 10 (EVar V_TID).
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-Definition run5 := Eval vm_compute in (AX2F.sym_execF SEGS KN5 FUEL true [A_ssp_sb] noscr (SS A_set_tid_ret SR5 [] KN5 9) []).
-Definition SS5 : sym_state := Eval vm_compute in (r_ss run5).
-Definition car5 := Eval vm_compute in (AX2F.carryF (s_log SS5) KN5 []).
-Definition KN5e : list kentry := Eval vm_compute in (c_kn car5).
-Definition SR5e : list expr := Eval vm_compute in (s_regs SS5).
-
-(* [comment removed for export] *)
-Definition KN6 : list kentry := 
+(* CONFIG_RSEQ = true *)
+Definition run1_t := Eval vm_compute in (AX2F.sym_execF SEGS (KN0r true) FUEL true [A_envloop] noscr (SS A_start sr_init [] (KN0r true) NX0) []).
+Definition SS1_t : sym_state := Eval vm_compute in (r_ss run1_t).
+Definition car1_t := Eval vm_compute in (AX2F.carryF (s_log SS1_t) (KN0r true) []).
+Definition KN1_t : list kentry := Eval vm_compute in (c_kn car1_t).
+Definition SR1_t : list expr := Eval vm_compute in (s_regs SS1_t).
+Definition SR2_t : list expr := sr_upd (sr_upd SR1_t 9 e_auxv) 10 (ELit 0).
+Definition run2_t := Eval vm_compute in (AX2F.sym_execF SEGS KN1_t FUEL true [A_pnloop] noscr (SS A_envloop_exit SR2_t [] KN1_t NX0) []).
+Definition SS2_t : sym_state := Eval vm_compute in (r_ss run2_t).
+Definition car2_t := Eval vm_compute in (AX2F.carryF (s_log SS2_t) KN1_t []).
+Definition KN2_t : list kentry := Eval vm_compute in (c_kn car2_t).
+Definition SR2e_t : list expr := Eval vm_compute in (s_regs SS2_t).
+Definition SR3_t : list expr := sr_upd (sr_upd SR2e_t 11 e_str1) 13 (ELit 0).
+Definition KN3_t : list kentry := List.filter (keep_b KN2_t (ELit 0) A_progname (ELit 8)) KN2_t.
+Definition run3_t := Eval vm_compute in (AX2F.sym_execF SEGS KN3_t FUEL true [] noscr (SS A_pnloop_exit SR3_t [] KN3_t NX0) []).
+Definition SS3_t : sym_state := Eval vm_compute in (r_ss run3_t).
+Definition car3_t := Eval vm_compute in (AX2F.carryF (s_log SS3_t) KN3_t []).
+Definition KN3e_t : list kentry := Eval vm_compute in (c_kn car3_t).
+Definition SR3e_t : list expr := Eval vm_compute in (s_regs SS3_t).
+Definition KN4e_t : list kentry := KN3e_t.
+Definition SR4e_t : list expr := SR3e_t.
+Definition KN5_t : list kentry := KN4e_t ++ [KRange (EVar V_TID) 1 4194303].
+Definition SR5_t : list expr := sr_upd SR4e_t 10 (EVar V_TID).
+Definition run5_t := Eval vm_compute in (AX2F.sym_execF SEGS KN5_t FUEL true [A_ssp_sb] noscr (SS A_set_tid_ret SR5_t [] KN5_t (S V_TID)) []).
+Definition SS5_t : sym_state := Eval vm_compute in (r_ss run5_t).
+Definition car5_t := Eval vm_compute in (AX2F.carryF (s_log SS5_t) KN5_t []).
+Definition KN5e_t : list kentry := Eval vm_compute in (c_kn car5_t).
+Definition SR5e_t : list expr := Eval vm_compute in (s_regs SS5_t).
+Definition KN6_t : list kentry :=
   KWord (SA (ELit 0) A_stack_chk_guard) 8 (EVar V_CANARY)
-     :: List.filter (keep_b KN5e (ELit 0) A_stack_chk_guard (ELit 8)) KN5e.
-Definition SR6 : list expr := 
-  sr_upd SR5e 10 (EVar V_CANARY).
+     :: List.filter (keep_b KN5e_t (ELit 0) A_stack_chk_guard (ELit 8)) KN5e_t.
+Definition SR6_t : list expr := sr_upd SR5e_t 10 (EVar V_CANARY).
+Definition run6_t := Eval vm_compute in (AX2F.sym_execF SEGS KN6_t FUEL true [A_maxva_smeared] noscr (SS A_ssp_after_ld SR6_t [] KN6_t (S V_CANARY)) []).
+Definition SS6_t : sym_state := Eval vm_compute in (r_ss run6_t).
+Definition car6_t := Eval vm_compute in (AX2F.carryF (s_log SS6_t) KN6_t []).
+Definition KN6e_t : list kentry := Eval vm_compute in (c_kn car6_t).
+Definition SR6e_t : list expr := Eval vm_compute in (s_regs SS6_t).
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* CONFIG_RSEQ = false *)
+Definition run1_f := Eval vm_compute in (AX2F.sym_execF SEGS (KN0r false) FUEL true [A_envloop] noscr (SS A_start sr_init [] (KN0r false) NX0) []).
+Definition SS1_f : sym_state := Eval vm_compute in (r_ss run1_f).
+Definition car1_f := Eval vm_compute in (AX2F.carryF (s_log SS1_f) (KN0r false) []).
+Definition KN1_f : list kentry := Eval vm_compute in (c_kn car1_f).
+Definition SR1_f : list expr := Eval vm_compute in (s_regs SS1_f).
+Definition SR2_f : list expr := sr_upd (sr_upd SR1_f 9 e_auxv) 10 (ELit 0).
+Definition run2_f := Eval vm_compute in (AX2F.sym_execF SEGS KN1_f FUEL true [A_pnloop] noscr (SS A_envloop_exit SR2_f [] KN1_f NX0) []).
+Definition SS2_f : sym_state := Eval vm_compute in (r_ss run2_f).
+Definition car2_f := Eval vm_compute in (AX2F.carryF (s_log SS2_f) KN1_f []).
+Definition KN2_f : list kentry := Eval vm_compute in (c_kn car2_f).
+Definition SR2e_f : list expr := Eval vm_compute in (s_regs SS2_f).
+Definition SR3_f : list expr := sr_upd (sr_upd SR2e_f 11 e_str1) 13 (ELit 0).
+Definition KN3_f : list kentry := List.filter (keep_b KN2_f (ELit 0) A_progname (ELit 8)) KN2_f.
+Definition run3_f := Eval vm_compute in (AX2F.sym_execF SEGS KN3_f FUEL true [] noscr (SS A_pnloop_exit SR3_f [] KN3_f NX0) []).
+Definition SS3_f : sym_state := Eval vm_compute in (r_ss run3_f).
+Definition car3_f := Eval vm_compute in (AX2F.carryF (s_log SS3_f) KN3_f []).
+Definition KN3e_f : list kentry := Eval vm_compute in (c_kn car3_f).
+Definition SR3e_f : list expr := Eval vm_compute in (s_regs SS3_f).
+Definition KN4e_f : list kentry := KN3e_f.
+Definition SR4e_f : list expr := SR3e_f.
+Definition KN5_f : list kentry := KN4e_f ++ [KRange (EVar V_TID) 1 4194303].
+Definition SR5_f : list expr := sr_upd SR4e_f 10 (EVar V_TID).
+Definition run5_f := Eval vm_compute in (AX2F.sym_execF SEGS KN5_f FUEL true [A_ssp_sb] noscr (SS A_set_tid_ret SR5_f [] KN5_f (S V_TID)) []).
+Definition SS5_f : sym_state := Eval vm_compute in (r_ss run5_f).
+Definition car5_f := Eval vm_compute in (AX2F.carryF (s_log SS5_f) KN5_f []).
+Definition KN5e_f : list kentry := Eval vm_compute in (c_kn car5_f).
+Definition SR5e_f : list expr := Eval vm_compute in (s_regs SS5_f).
+Definition KN6_f : list kentry :=
+  KWord (SA (ELit 0) A_stack_chk_guard) 8 (EVar V_CANARY)
+     :: List.filter (keep_b KN5e_f (ELit 0) A_stack_chk_guard (ELit 8)) KN5e_f.
+Definition SR6_f : list expr := sr_upd SR5e_f 10 (EVar V_CANARY).
+Definition run6_f := Eval vm_compute in (AX2F.sym_execF SEGS KN6_f FUEL true [A_maxva_smeared] noscr (SS A_ssp_after_ld SR6_f [] KN6_f (S V_CANARY)) []).
+Definition SS6_f : sym_state := Eval vm_compute in (r_ss run6_f).
+Definition car6_f := Eval vm_compute in (AX2F.carryF (s_log SS6_f) KN6_f []).
+Definition KN6e_f : list kentry := Eval vm_compute in (c_kn car6_f).
+Definition SR6e_f : list expr := Eval vm_compute in (s_regs SS6_f).
 
-(* [comment removed for export] *)
-Definition run6 := Eval vm_compute in (AX2F.sym_execF SEGS KN6 FUEL true [A_maxva_smeared] noscr (SS A_ssp_after_ld SR6 [] KN6 10) []).
-Definition SS6 : sym_state := Eval vm_compute in (r_ss run6).
-Definition car6 := Eval vm_compute in (AX2F.carryF (s_log SS6) KN6 []).
-Definition KN6e : list kentry := Eval vm_compute in (c_kn car6).
-Definition SR6e : list expr := Eval vm_compute in (s_regs SS6).
+Definition KN1r (rs : bool) : list kentry := if rs then KN1_t else KN1_f.
+Definition KN2r (rs : bool) : list kentry := if rs then KN2_t else KN2_f.
+Definition KN3r (rs : bool) : list kentry := if rs then KN3_t else KN3_f.
+Definition KN3er (rs : bool) : list kentry := if rs then KN3e_t else KN3e_f.
+Definition KN4er (rs : bool) : list kentry := if rs then KN4e_t else KN4e_f.
+Definition KN5r (rs : bool) : list kentry := if rs then KN5_t else KN5_f.
+Definition KN5er (rs : bool) : list kentry := if rs then KN5e_t else KN5e_f.
+Definition KN6r (rs : bool) : list kentry := if rs then KN6_t else KN6_f.
+Definition KN6er (rs : bool) : list kentry := if rs then KN6e_t else KN6e_f.
+Definition SR2r (rs : bool) : list expr := if rs then SR2_t else SR2_f.
+Definition SR2er (rs : bool) : list expr := if rs then SR2e_t else SR2e_f.
+Definition SR3r (rs : bool) : list expr := if rs then SR3_t else SR3_f.
+Definition SR3er (rs : bool) : list expr := if rs then SR3e_t else SR3e_f.
+Definition SR4er (rs : bool) : list expr := if rs then SR4e_t else SR4e_f.
+Definition SR5r (rs : bool) : list expr := if rs then SR5_t else SR5_f.
+Definition SR5er (rs : bool) : list expr := if rs then SR5e_t else SR5e_f.
+Definition SR6r (rs : bool) : list expr := if rs then SR6_t else SR6_f.
+Definition SR6er (rs : bool) : list expr := if rs then SR6e_t else SR6e_f.
+Definition SS1r (rs : bool) : sym_state := if rs then SS1_t else SS1_f.
+Definition SS2r (rs : bool) : sym_state := if rs then SS2_t else SS2_f.
+Definition SS3r (rs : bool) : sym_state := if rs then SS3_t else SS3_f.
+Definition SS5r (rs : bool) : sym_state := if rs then SS5_t else SS5_f.
+Definition SS6r (rs : bool) : sym_state := if rs then SS6_t else SS6_f.
+
+(* the meeting point *)
+Definition KN6e : list kentry := Eval vm_compute in (List.filter (fun K => kn_sub [K] KN6e_f) KN6e_t).
+Definition SR6e : list expr := SR6e_t.
+Lemma KN6e_sub : forall rs, kn_sub KN6e (KN6er rs) = true.
+Proof. intros []; vmeq_refl. Qed.
+Lemma SR6e_join : forall rs, SR6er rs = SR6e.
+Proof. intros []; [reflexivity | vmeq_cast]. Qed.
 
 Definition MAXVA : Z := 2 ^ 47 - 1.
 Definition SR7 : list expr := sr_upd SR6e 10 (ELit MAXVA).
 
 (* [comment removed for export] *)
-Definition run7 := Eval vm_compute in (AX2F.sym_execF SEGS KN6e FUEL true [A_internal_mmap_ecall] noscr (SS A_maxva_smeared SR7 [] KN6e 10) []).
+Definition run7 := Eval vm_compute in (AX2F.sym_execF SEGS KN6e FUEL true [A_internal_mmap_ecall] noscr (SS A_maxva_smeared SR7 [] KN6e (S V_CANARY)) []).
 Definition SS7 : sym_state := Eval vm_compute in (r_ss run7).
 Definition car7 := Eval vm_compute in (AX2F.carryF (s_log SS7) KN6e []).
 Definition KN_E3 : list kentry := Eval vm_compute in (c_kn car7).
@@ -304,13 +393,20 @@ Definition SR_E3 : list expr := Eval vm_compute in (s_regs SS7).
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
+Lemma itinerary_ok_r : forall rs,
+  (s_pc (SS1r rs), s_pc (SS2r rs), s_pc (SS3r rs), s_pc (SS5r rs), s_pc (SS6r rs))
+  = (A_envloop, A_pnloop, A_set_tid_ecall, A_ssp_sb, A_maxva_smeared).
+Proof. intros []; vmeq_refl. Qed.
+Lemma itinerary_sc_t :
+  (r_scs run1_t, c_scs car1_t, r_scs run2_t, c_scs car2_t, r_scs run3_t, c_scs car3_t,
+   r_scs run5_t, c_scs car5_t, r_scs run6_t, c_scs car6_t) = ([], [], [], [], [], [], [], [], [], []).
+Proof. vmeq_refl. Qed.
+Lemma itinerary_sc_f :
+  (r_scs run1_f, c_scs car1_f, r_scs run2_f, c_scs car2_f, r_scs run3_f, c_scs car3_f,
+   r_scs run5_f, c_scs car5_f, r_scs run6_f, c_scs car6_f) = ([], [], [], [], [], [], [], [], [], []).
+Proof. vmeq_refl. Qed.
 Lemma itinerary_ok :
-  (s_pc SS1, r_scs run1, c_scs car1) = (A_envloop, [], [])
-  /\ (s_pc SS2, r_scs run2, c_scs car2) = (A_pnloop, [], [])
-  /\ (s_pc SS3, r_scs run3, c_scs car3) = (A_set_tid_ecall, [], [])
-  /\ (s_pc SS5, r_scs run5, c_scs car5) = (A_ssp_sb, [], [])
-  /\ (s_pc SS6, r_scs run6, c_scs car6) = (A_maxva_smeared, [], [])
-  /\ (s_pc SS7, r_scs run7, c_scs car7) = (A_internal_mmap_ecall, [], []).
+  (s_pc SS7, r_scs run7, c_scs car7) = (A_internal_mmap_ecall, [], []).
 Proof. vmeq_conj. Qed.
 End TwB.
 End BootKn1.
@@ -345,55 +441,55 @@ Definition KN_E3d : list kentry := KDJ_TLS :: KN_E3.
 
 (* [comment removed for export] *)
 Definition SR8 : list expr := sr_upd SR_E3 10 (ELit 0x7fff7000).
-Definition run8 := Eval vm_compute in (AX2F.sym_execF SEGS KN_E3d FUEL true SHADOW_STOPS noscr (SS A_internal_mmap_ret SR8 [] KN_E3d 10) []).
+Definition run8 := Eval vm_compute in (AX2F.sym_execF SEGS KN_E3d FUEL true SHADOW_STOPS noscr (SS A_internal_mmap_ret SR8 [] KN_E3d 26) []).
 Definition SS8 : sym_state := Eval vm_compute in (r_ss run8).
 Definition car8 := Eval vm_compute in (AX2F.carryF (s_log SS8) KN_E3d []).
 Definition KN8e : list kentry := Eval vm_compute in (c_kn car8).
 Definition SR8e : list expr := Eval vm_compute in (s_regs SS8).
 (* [comment removed for export] *)
-Definition run8n := Eval vm_compute in (AX2F.sym_execF SEGS KN_E3d FUEL true [A_spin_shadow0] noscr (SS A_internal_mmap_ret (sr_upd SR_E3 10 (ELit (2 ^ 64 - 12))) [] KN_E3d 10) []).
-Definition run8x := Eval vm_compute in (AX2F.sym_execF SEGS KN_E3d FUEL true [A_spin_shadow0] noscr (SS A_internal_mmap_ret (sr_upd SR_E3 10 (ELit (2 ^ 64 - 17))) [] KN_E3d 10) []).
+Definition run8n := Eval vm_compute in (AX2F.sym_execF SEGS KN_E3d FUEL true [A_spin_shadow0] noscr (SS A_internal_mmap_ret (sr_upd SR_E3 10 (ELit (2 ^ 64 - 12))) [] KN_E3d 26) []).
+Definition run8x := Eval vm_compute in (AX2F.sym_execF SEGS KN_E3d FUEL true [A_spin_shadow0] noscr (SS A_internal_mmap_ret (sr_upd SR_E3 10 (ELit (2 ^ 64 - 17))) [] KN_E3d 26) []).
 
 (* [comment removed for export] *)
 Definition SR9 : list expr := sr_upd SR8e 10 (ELit 0x8fff7000).
-Definition run9 := Eval vm_compute in (AX2F.sym_execF SEGS KN8e FUEL true SHADOW_STOPS noscr (SS A_internal_mmap_ret SR9 [] KN8e 10) []).
+Definition run9 := Eval vm_compute in (AX2F.sym_execF SEGS KN8e FUEL true SHADOW_STOPS noscr (SS A_internal_mmap_ret SR9 [] KN8e 26) []).
 Definition SS9 : sym_state := Eval vm_compute in (r_ss run9).
 Definition car9 := Eval vm_compute in (AX2F.carryF (s_log SS9) KN8e []).
 Definition KN9e : list kentry := Eval vm_compute in (c_kn car9).
 Definition SR9e : list expr := Eval vm_compute in (s_regs SS9).
-Definition run9n := Eval vm_compute in (AX2F.sym_execF SEGS KN8e FUEL true [A_spin_shadow1] noscr (SS A_internal_mmap_ret (sr_upd SR8e 10 (ELit (2 ^ 64 - 12))) [] KN8e 10) []).
-Definition run9x := Eval vm_compute in (AX2F.sym_execF SEGS KN8e FUEL true [A_spin_shadow1] noscr (SS A_internal_mmap_ret (sr_upd SR8e 10 (ELit (2 ^ 64 - 17))) [] KN8e 10) []).
+Definition run9n := Eval vm_compute in (AX2F.sym_execF SEGS KN8e FUEL true [A_spin_shadow1] noscr (SS A_internal_mmap_ret (sr_upd SR8e 10 (ELit (2 ^ 64 - 12))) [] KN8e 26) []).
+Definition run9x := Eval vm_compute in (AX2F.sym_execF SEGS KN8e FUEL true [A_spin_shadow1] noscr (SS A_internal_mmap_ret (sr_upd SR8e 10 (ELit (2 ^ 64 - 17))) [] KN8e 26) []).
 
 (* [comment removed for export] *)
 Definition SR10 : list expr := sr_upd SR9e 10 (ELit 0x2008fff7000).
-Definition run10 := Eval vm_compute in (AX2F.sym_execF SEGS KN9e FUEL true SHADOW_STOPS noscr (SS A_internal_mmap_ret SR10 [] KN9e 10) []).
+Definition run10 := Eval vm_compute in (AX2F.sym_execF SEGS KN9e FUEL true SHADOW_STOPS noscr (SS A_internal_mmap_ret SR10 [] KN9e 26) []).
 Definition SS10 : sym_state := Eval vm_compute in (r_ss run10).
 Definition car10 := Eval vm_compute in (AX2F.carryF (s_log SS10) KN9e []).
 Definition KN10e : list kentry := Eval vm_compute in (c_kn car10).
 Definition SR10e : list expr := Eval vm_compute in (s_regs SS10).
-Definition run10n := Eval vm_compute in (AX2F.sym_execF SEGS KN9e FUEL true [A_spin_shadow2] noscr (SS A_internal_mmap_ret (sr_upd SR9e 10 (ELit (2 ^ 64 - 12))) [] KN9e 10) []).
-Definition run10x := Eval vm_compute in (AX2F.sym_execF SEGS KN9e FUEL true [A_spin_shadow2] noscr (SS A_internal_mmap_ret (sr_upd SR9e 10 (ELit (2 ^ 64 - 17))) [] KN9e 10) []).
+Definition run10n := Eval vm_compute in (AX2F.sym_execF SEGS KN9e FUEL true [A_spin_shadow2] noscr (SS A_internal_mmap_ret (sr_upd SR9e 10 (ELit (2 ^ 64 - 12))) [] KN9e 26) []).
+Definition run10x := Eval vm_compute in (AX2F.sym_execF SEGS KN9e FUEL true [A_spin_shadow2] noscr (SS A_internal_mmap_ret (sr_upd SR9e 10 (ELit (2 ^ 64 - 17))) [] KN9e 26) []).
 
 (* [comment removed for export] *)
 Definition junk5 (sr : list expr) (v : nat) : list expr :=
   sr_upd (sr_upd (sr_upd (sr_upd (sr_upd sr 11 (EVar v)) 12 (EVar (S v))) 13 (EVar (S (S v)))) 14 (EVar (3 + v))) 15 (EVar (4 + v)).
 Definition sealed_kn (dst : Z) (kn : list kentry) : list kentry :=
   [KWord (SA (ELit 0) dst) 8 (ELit SEALED_U64); KZero (SA (ELit 0) (dst + 8)) (ELit 4087)] ++ kimg_cut dst (dst + 4095) kn.
-Definition SR11 : list expr := junk5 SR10e 16.
+Definition SR11 : list expr := junk5 SR10e 32.
 Definition KN11 : list kentry := sealed_kn A_binary_name_cache KN10e.
 
 (* [comment removed for export] *)
-Definition run11 := Eval vm_compute in (AX2F.sym_execF SEGS KN11 FUEL true SHADOW_STOPS noscr (SS A_cbn_mid SR11 [] KN11 21) []).
+Definition run11 := Eval vm_compute in (AX2F.sym_execF SEGS KN11 FUEL true SHADOW_STOPS noscr (SS A_cbn_mid SR11 [] KN11 37) []).
 Definition SS11 : sym_state := Eval vm_compute in (r_ss run11).
 Definition car11 := Eval vm_compute in (AX2F.carryF (s_log SS11) KN11 []).
 Definition KN11e : list kentry := Eval vm_compute in (c_kn car11).
 Definition SR11e : list expr := Eval vm_compute in (s_regs SS11).
 
-Definition SR12 : list expr := junk5 SR11e 21.
+Definition SR12 : list expr := junk5 SR11e 37.
 Definition KN12 : list kentry := sealed_kn A_process_name_cache KN11e.
 
 (* [comment removed for export] *)
-Definition run12 := Eval vm_compute in (AX2F.sym_execF SEGS KN12 FUEL true SHADOW_STOPS noscr (SS A_init_after_cbn SR12 [] KN12 26) []).
+Definition run12 := Eval vm_compute in (AX2F.sym_execF SEGS KN12 FUEL true SHADOW_STOPS noscr (SS A_init_after_cbn SR12 [] KN12 42) []).
 Definition SS12 : sym_state := Eval vm_compute in (r_ss run12).
 Definition car12 := Eval vm_compute in (AX2F.carryF (s_log SS12) KN12 []).
 Definition KN_E6 : list kentry := Eval vm_compute in (c_kn car12).
@@ -450,55 +546,55 @@ Definition KN_E3d : list kentry := KDJ_TLS :: KN_E3.
 
 (* [comment removed for export] *)
 Definition SR8 : list expr := sr_upd SR_E3 10 (ELit 0x7fff7000).
-Definition run8 := Eval vm_compute in (AX2F.sym_execF SEGS KN_E3d FUEL true SHADOW_STOPS noscr (SS A_internal_mmap_ret SR8 [] KN_E3d 10) []).
+Definition run8 := Eval vm_compute in (AX2F.sym_execF SEGS KN_E3d FUEL true SHADOW_STOPS noscr (SS A_internal_mmap_ret SR8 [] KN_E3d 26) []).
 Definition SS8 : sym_state := Eval vm_compute in (r_ss run8).
 Definition car8 := Eval vm_compute in (AX2F.carryF (s_log SS8) KN_E3d []).
 Definition KN8e : list kentry := Eval vm_compute in (c_kn car8).
 Definition SR8e : list expr := Eval vm_compute in (s_regs SS8).
 (* [comment removed for export] *)
-Definition run8n := Eval vm_compute in (AX2F.sym_execF SEGS KN_E3d FUEL true [A_spin_shadow0] noscr (SS A_internal_mmap_ret (sr_upd SR_E3 10 (ELit (2 ^ 64 - 12))) [] KN_E3d 10) []).
-Definition run8x := Eval vm_compute in (AX2F.sym_execF SEGS KN_E3d FUEL true [A_spin_shadow0] noscr (SS A_internal_mmap_ret (sr_upd SR_E3 10 (ELit (2 ^ 64 - 17))) [] KN_E3d 10) []).
+Definition run8n := Eval vm_compute in (AX2F.sym_execF SEGS KN_E3d FUEL true [A_spin_shadow0] noscr (SS A_internal_mmap_ret (sr_upd SR_E3 10 (ELit (2 ^ 64 - 12))) [] KN_E3d 26) []).
+Definition run8x := Eval vm_compute in (AX2F.sym_execF SEGS KN_E3d FUEL true [A_spin_shadow0] noscr (SS A_internal_mmap_ret (sr_upd SR_E3 10 (ELit (2 ^ 64 - 17))) [] KN_E3d 26) []).
 
 (* [comment removed for export] *)
 Definition SR9 : list expr := sr_upd SR8e 10 (ELit 0x8fff7000).
-Definition run9 := Eval vm_compute in (AX2F.sym_execF SEGS KN8e FUEL true SHADOW_STOPS noscr (SS A_internal_mmap_ret SR9 [] KN8e 10) []).
+Definition run9 := Eval vm_compute in (AX2F.sym_execF SEGS KN8e FUEL true SHADOW_STOPS noscr (SS A_internal_mmap_ret SR9 [] KN8e 26) []).
 Definition SS9 : sym_state := Eval vm_compute in (r_ss run9).
 Definition car9 := Eval vm_compute in (AX2F.carryF (s_log SS9) KN8e []).
 Definition KN9e : list kentry := Eval vm_compute in (c_kn car9).
 Definition SR9e : list expr := Eval vm_compute in (s_regs SS9).
-Definition run9n := Eval vm_compute in (AX2F.sym_execF SEGS KN8e FUEL true [A_spin_shadow1] noscr (SS A_internal_mmap_ret (sr_upd SR8e 10 (ELit (2 ^ 64 - 12))) [] KN8e 10) []).
-Definition run9x := Eval vm_compute in (AX2F.sym_execF SEGS KN8e FUEL true [A_spin_shadow1] noscr (SS A_internal_mmap_ret (sr_upd SR8e 10 (ELit (2 ^ 64 - 17))) [] KN8e 10) []).
+Definition run9n := Eval vm_compute in (AX2F.sym_execF SEGS KN8e FUEL true [A_spin_shadow1] noscr (SS A_internal_mmap_ret (sr_upd SR8e 10 (ELit (2 ^ 64 - 12))) [] KN8e 26) []).
+Definition run9x := Eval vm_compute in (AX2F.sym_execF SEGS KN8e FUEL true [A_spin_shadow1] noscr (SS A_internal_mmap_ret (sr_upd SR8e 10 (ELit (2 ^ 64 - 17))) [] KN8e 26) []).
 
 (* [comment removed for export] *)
 Definition SR10 : list expr := sr_upd SR9e 10 (ELit 0x2008fff7000).
-Definition run10 := Eval vm_compute in (AX2F.sym_execF SEGS KN9e FUEL true SHADOW_STOPS noscr (SS A_internal_mmap_ret SR10 [] KN9e 10) []).
+Definition run10 := Eval vm_compute in (AX2F.sym_execF SEGS KN9e FUEL true SHADOW_STOPS noscr (SS A_internal_mmap_ret SR10 [] KN9e 26) []).
 Definition SS10 : sym_state := Eval vm_compute in (r_ss run10).
 Definition car10 := Eval vm_compute in (AX2F.carryF (s_log SS10) KN9e []).
 Definition KN10e : list kentry := Eval vm_compute in (c_kn car10).
 Definition SR10e : list expr := Eval vm_compute in (s_regs SS10).
-Definition run10n := Eval vm_compute in (AX2F.sym_execF SEGS KN9e FUEL true [A_spin_shadow2] noscr (SS A_internal_mmap_ret (sr_upd SR9e 10 (ELit (2 ^ 64 - 12))) [] KN9e 10) []).
-Definition run10x := Eval vm_compute in (AX2F.sym_execF SEGS KN9e FUEL true [A_spin_shadow2] noscr (SS A_internal_mmap_ret (sr_upd SR9e 10 (ELit (2 ^ 64 - 17))) [] KN9e 10) []).
+Definition run10n := Eval vm_compute in (AX2F.sym_execF SEGS KN9e FUEL true [A_spin_shadow2] noscr (SS A_internal_mmap_ret (sr_upd SR9e 10 (ELit (2 ^ 64 - 12))) [] KN9e 26) []).
+Definition run10x := Eval vm_compute in (AX2F.sym_execF SEGS KN9e FUEL true [A_spin_shadow2] noscr (SS A_internal_mmap_ret (sr_upd SR9e 10 (ELit (2 ^ 64 - 17))) [] KN9e 26) []).
 
 (* [comment removed for export] *)
 Definition junk5 (sr : list expr) (v : nat) : list expr :=
   sr_upd (sr_upd (sr_upd (sr_upd (sr_upd sr 11 (EVar v)) 12 (EVar (S v))) 13 (EVar (S (S v)))) 14 (EVar (3 + v))) 15 (EVar (4 + v)).
 Definition sealed_kn (dst : Z) (kn : list kentry) : list kentry :=
   [KWord (SA (ELit 0) dst) 8 (ELit SEALED_U64); KZero (SA (ELit 0) (dst + 8)) (ELit 4087)] ++ kimg_cut dst (dst + 4095) kn.
-Definition SR11 : list expr := junk5 SR10e 16.
+Definition SR11 : list expr := junk5 SR10e 32.
 Definition KN11 : list kentry := sealed_kn A_binary_name_cache KN10e.
 
 (* [comment removed for export] *)
-Definition run11 := Eval vm_compute in (AX2F.sym_execF SEGS KN11 FUEL true SHADOW_STOPS noscr (SS A_cbn_mid SR11 [] KN11 21) []).
+Definition run11 := Eval vm_compute in (AX2F.sym_execF SEGS KN11 FUEL true SHADOW_STOPS noscr (SS A_cbn_mid SR11 [] KN11 37) []).
 Definition SS11 : sym_state := Eval vm_compute in (r_ss run11).
 Definition car11 := Eval vm_compute in (AX2F.carryF (s_log SS11) KN11 []).
 Definition KN11e : list kentry := Eval vm_compute in (c_kn car11).
 Definition SR11e : list expr := Eval vm_compute in (s_regs SS11).
 
-Definition SR12 : list expr := junk5 SR11e 21.
+Definition SR12 : list expr := junk5 SR11e 37.
 Definition KN12 : list kentry := sealed_kn A_process_name_cache KN11e.
 
 (* [comment removed for export] *)
-Definition run12 := Eval vm_compute in (AX2F.sym_execF SEGS KN12 FUEL true SHADOW_STOPS noscr (SS A_init_after_cbn SR12 [] KN12 26) []).
+Definition run12 := Eval vm_compute in (AX2F.sym_execF SEGS KN12 FUEL true SHADOW_STOPS noscr (SS A_init_after_cbn SR12 [] KN12 42) []).
 Definition SS12 : sym_state := Eval vm_compute in (r_ss run12).
 Definition car12 := Eval vm_compute in (AX2F.carryF (s_log SS12) KN12 []).
 Definition KN_E6 : list kentry := Eval vm_compute in (c_kn car12).
@@ -560,7 +656,7 @@ Definition DS_E6 : list (saddr * expr) :=
    (SA (ELit 0x2008fff7000) 0, ELit 0xdfff0001000); (SA (ELit 0x8fff7000) 0, ELit (2 ^ 41)); (SA (ELit 0x7fff7000) 0, ELit (2 ^ 28))].
 
 (* [comment removed for export] *)
-Definition SR13 : list expr := sr_upd SR_E6 10 (EVar 26).
+Definition SR13 : list expr := sr_upd SR_E6 10 (EVar 42).
 Definition KCa3a_1 : list kentry := Eval vm_compute in (NFC.d_kl "$011$:00,$-.061$:00,$-.041$:'%,051$:'%,0',%###-#/,#&&$,'/'071$:00,$-.010,+,.@#?0$.+/'.&071$:00,$-.000,$-.00'.$,#&071$:00,$-.000$%.+.%#.'00--.,,-&&%./.071$:00,$-.00@,-.#/,/@&,000,.%#$&@'+@&,071$:00,$-.00$'++$##$&000@,,&,'+/@%&071$:00,$-.00$%.+.%#.'000$-@&.@&@071$:00,$-.01700'%,0010$$'?800010$$&?80&#+###'-@#&/@$+,-$4010$$%?80$#$&.&0010$$$?80,$-.0010$$#?80/+/@<").
 Definition KCa3a_2 : list kentry := Eval vm_compute in (NFC.d_kl "$0010$#@?800010$#/?80&-,/+8010$#.740'4010$#-?80,$'%.0010$#,?80'@,0010$#+?80,$-.0010$#'?80@-$+@0010$#&?80&'.,%0000$#$&.&080'%,0010$#%?802010$#$?80+.'@#0010$##?820100,@?010@@?80&,..&0010,-?800010,.?800010,/?400").
 Definition KCa3a_3 : list kentry := Eval vm_compute in (NFC.d_kl "$0010@/?80,$'%.0010@.?80%%'/-8010,/740$-'#'##+#4010,@?80&#+###'-@#&/@$+,-$4010&&?800010&%?800010&$?800010&#?800010%@?800010%/?800010%.?800010%-?800010%,?80,$'%.0010%+?802010%'?80+.'@#0010%&?80,$'%.0").
@@ -574,12 +670,12 @@ Definition KCa3a_10 : list kentry := Eval vm_compute in (NFC.d_kl "$05130$$&''>5
 Definition KCa3a_11 : list kentry := Eval vm_compute in (NFC.d_kl "$00201020400$011400$012-080:0201020400$011400$012.080$60201020400$011400$012/080%00201020400$011400$012@08160201020400$011400$012$#080<0201020400$011400$012$$080'%,00201020400$011400$012$%080$60201020400$011400$012$&08150201020400$011400$012$'080$80201020400$011400$012$+08150201020400$011400$012$,080%>0201020400$011400$012$-08000201020400$011400$012$.080&20201020400$011400$012$/0820201020400$01120400$012400$0140%$00201020400$011400$012$@08000201020400$011400$012%#0800").
 Definition KCa3a_12 : list kentry := Eval vm_compute in (NFC.d_kl "$02201020400$01120400$012400$014%$00%0$92201020400$011400$012%$020130213,$-.0+/&,+03+/&,,0,$#/&03,$#/'0,$'%.03,$'%.8,$'%/03,$'%@0,$'&$03,$'&$2$#$&.$03$#$&.%0$#$&.&03$#$&.'0$#$&.-03$#$.#$>$#$.#%03$#%$%->'.-#,%03'.-#,&0'.-#,+03'.-#,@0'.-#@.03'.-#@/0'.-$,&03'.-$,+2'.-$,,0").
 Definition KCa3a_13 : list kentry := Eval vm_compute in (NFC.d_kl "?3'.-$-$0'.-$--03'.-$-.0'.--.#0600+.#@+00'%@,.,0417'%,0517'%,0+,-%./%./$%#/071700'%,000,$-.00'.$,#&071700'%,010,+,.@#?0/.'-/-0117'808117+80/8117$+00&0117$/00&0117%&00&&0117+.00&-/061700'%,05182&%./@+>").
-Definition KN13 : list kentry := ltac:(nf_rope (KCa3a_1 ++ KCa3a_2 ++ KCa3a_3 ++ KCa3a_4 ++ KCa3a_5 ++ KCa3a_6 ++ KCa3a_7 ++ KCa3a_8 ++ KCa3a_9 ++ KCa3a_10 ++ KCa3a_11 ++ KCa3a_12 ++ KCa3a_13) ((kn_grant_d DS_E6 26 65536 KN_E6))).
-Lemma KN13_eq : kn_grant_d DS_E6 26 65536 KN_E6 = KN13. Proof. kn_fast. Qed.
+Definition KN13 : list kentry := ltac:(nf_rope (KCa3a_1 ++ KCa3a_2 ++ KCa3a_3 ++ KCa3a_4 ++ KCa3a_5 ++ KCa3a_6 ++ KCa3a_7 ++ KCa3a_8 ++ KCa3a_9 ++ KCa3a_10 ++ KCa3a_11 ++ KCa3a_12 ++ KCa3a_13) ((kn_grant_d DS_E6 42 65536 KN_E6))).
+Lemma KN13_eq : kn_grant_d DS_E6 42 65536 KN_E6 = KN13. Proof. kn_fast. Qed.
 
 
 (* [comment removed for export] *)
-Definition run13a := ltac:(nf_run KN13 ((AX2L.sym_execFS6 SEGS IT_Kn3a KN13 F8 true STOPS3 noscr (SS A_internal_mmap_ret SR13 [] KN13 27) []))).
+Definition run13a := ltac:(nf_run KN13 ((AX2L.sym_execFS6 SEGS IT_Kn3a KN13 F8 true STOPS3 noscr (SS A_internal_mmap_ret SR13 [] KN13 43) []))).
 Definition PC13a : Z := Eval lazy in (s_pc (fst (fst run13a))).
 Definition SR13a : list expr := Eval lazy in (s_regs (fst (fst run13a))).
 Definition LG13a : list sentry := s_log (fst (fst run13a)).
@@ -587,7 +683,7 @@ Definition SK13a : list kentry := s_know (fst (fst run13a)).
 Definition NX13a : nat := Eval lazy in (s_next (fst (fst run13a))).
 Definition SC13a : list sidecond := Eval lazy in (snd (fst run13a)).
 Definition SP13a : scripts := Eval lazy in (snd run13a).
-Lemma run13a_eq : sym_exec SEGS F8 true STOPS3 noscr (SS A_internal_mmap_ret SR13 [] KN13 27) [] = (SSR PC13a SR13a LG13a SK13a NX13a None, SC13a, SP13a).
+Lemma run13a_eq : sym_exec SEGS F8 true STOPS3 noscr (SS A_internal_mmap_ret SR13 [] KN13 43) [] = (SSR PC13a SR13a LG13a SK13a NX13a None, SC13a, SP13a).
 Proof. apply (AX2L.sym_exec_viaFS6 SEGS IT_Kn3a KN13); [exact IT_Kn3a_ok | reflexivity | vm_cast_no_check (eq_refl run13a)]. Qed.
 Definition KCa3a_14 : list kentry := Eval vm_compute in (NFC.d_kl "$0010,/?40.201$:$,-08201$:0,#%001$:$,,080-.,&>01$:$,+080$#&-&601$:,#&080$#%$'.:01$:,#%080+.+#%0000@-$,#08201$:0,#'0010$#.?80+.+#%0010$#-?80$#%$&@0010$#,?820100,@?010$#+?80&,$-,001$:$,'08201$:0,##001$:$,&080,@-+:01$:$,%080./,#801$:,#$080$#%$'.801$:,##080+.+#%0").
 Definition KCa3a_15 : list kentry := Eval vm_compute in (NFC.d_kl "$001$:$,$08201$:0+@/001$:$,#080-.',001$:$+@080.#&$>01$:+@@080$#%$'.601$:+@/080+.+#%001$:$+/08201$:0+@-001$:$+.080/$+'201$:$+-080/$+%801$:+@.080$#%$'.401$:+@-080+.+#%001$:$+,08201$:0+@+001$:$++080-$-%:01$:$+'080-.'&801$:+@,080$#%$'.201$:+@+080+.+#%001$:$+&08201$:0+@&0").
@@ -668,7 +764,7 @@ Proof. apply AX2L.carry_viaF3. vm_cast_no_check (eq_refl car13a). Qed.
 
 
 (* [comment removed for export] *)
-Definition run13b := ltac:(nf_run KN13a ((AX2L.sym_execFS6 SEGS IT_Kn3a KN13a F8 true STOPS3 noscr (SS PC13a SR13a [] KN13a 27) []))).
+Definition run13b := ltac:(nf_run KN13a ((AX2L.sym_execFS6 SEGS IT_Kn3a KN13a F8 true STOPS3 noscr (SS PC13a SR13a [] KN13a 43) []))).
 Definition PC13b : Z := Eval lazy in (s_pc (fst (fst run13b))).
 Definition SR13b : list expr := Eval lazy in (s_regs (fst (fst run13b))).
 Definition LG13b : list sentry := s_log (fst (fst run13b)).
@@ -676,7 +772,7 @@ Definition SK13b : list kentry := s_know (fst (fst run13b)).
 Definition NX13b : nat := Eval lazy in (s_next (fst (fst run13b))).
 Definition SC13b : list sidecond := Eval lazy in (snd (fst run13b)).
 Definition SP13b : scripts := Eval lazy in (snd run13b).
-Lemma run13b_eq : sym_exec SEGS F8 true STOPS3 noscr (SS PC13a SR13a [] KN13a 27) [] = (SSR PC13b SR13b LG13b SK13b NX13b None, SC13b, SP13b).
+Lemma run13b_eq : sym_exec SEGS F8 true STOPS3 noscr (SS PC13a SR13a [] KN13a 43) [] = (SSR PC13b SR13b LG13b SK13b NX13b None, SC13b, SP13b).
 Proof. apply (AX2L.sym_exec_viaFS6 SEGS IT_Kn3a KN13a); [exact IT_Kn3a_ok | reflexivity | vm_cast_no_check (eq_refl run13b)]. Qed.
 Definition KCa3a_84 : list kentry := Eval vm_compute in (NFC.d_kl "$001$:.-@080,&%@801$:$%%#080$#%$,$001$:$%$@080+.+#,0000@-$,#08201$:0$%%$0010$#.?80+.+#%0010$#-?80$#%$&@0010$#,?820100,,?010$#+?80&,&#+8010,+?40-:01$:.-/08201$:0$%$.001$:.-.080@.$-001$:.--080/#+/<01$:$%$/080$#%$,#201$:$%$.080+.+#%001$:.-,08201$:0$%$,001$:.-+080-'+%6").
 Definition KCa3a_85 : list kentry := Eval vm_compute in (NFC.d_kl "$001$:.-'080-.-,>01$:$%$-080$#%$,#001$:$%$,080+.+#%001$:.-&08201$:0$%$'001$:.-%080/.#%201$:.-$080$#./%401$:$%$+080$#%$+@801$:$%$'080+.'@/001$:.-#08201$:0$%$%001$:.,@080,,#@<01$:.,/080/&//201$:$%$&080$#%$+@001$:$%$%080+.+#%001$:.,.08201$:0$%$#001$:.,-080/-//401$:.,,080$#-,#8").
@@ -740,7 +836,7 @@ Proof. apply AX2L.carry_viaF3. vm_cast_no_check (eq_refl car13b). Qed.
 Definition SR13r : list expr := sr_upd SR_E6 10 (ELit (2 ^ 64 - 12)).
 
 (* [comment removed for export] *)
-Definition run13n := ltac:(nf_run KN_E6 ((AX2L.sym_execFS6 SEGS IT_Kn3a KN_E6 F8 true STOPS3 noscr (SS A_internal_mmap_ret SR13r [] KN_E6 26) []))).
+Definition run13n := ltac:(nf_run KN_E6 ((AX2L.sym_execFS6 SEGS IT_Kn3a KN_E6 F8 true STOPS3 noscr (SS A_internal_mmap_ret SR13r [] KN_E6 42) []))).
 Definition PC13n : Z := Eval lazy in (s_pc (fst (fst run13n))).
 Definition SR13n : list expr := Eval lazy in (s_regs (fst (fst run13n))).
 Definition LG13n : list sentry := s_log (fst (fst run13n)).
@@ -748,7 +844,7 @@ Definition SK13n : list kentry := s_know (fst (fst run13n)).
 Definition NX13n : nat := Eval lazy in (s_next (fst (fst run13n))).
 Definition SC13n : list sidecond := Eval lazy in (snd (fst run13n)).
 Definition SP13n : scripts := Eval lazy in (snd run13n).
-Lemma run13n_eq : sym_exec SEGS F8 true STOPS3 noscr (SS A_internal_mmap_ret SR13r [] KN_E6 26) [] = (SSR PC13n SR13n LG13n SK13n NX13n None, SC13n, SP13n).
+Lemma run13n_eq : sym_exec SEGS F8 true STOPS3 noscr (SS A_internal_mmap_ret SR13r [] KN_E6 42) [] = (SSR PC13n SR13n LG13n SK13n NX13n None, SC13n, SP13n).
 Proof. apply (AX2L.sym_exec_viaFS6 SEGS IT_Kn3a KN_E6); [exact IT_Kn3a_ok | reflexivity | vm_cast_no_check (eq_refl run13n)]. Qed.
 Definition KCa3a_134 : list kentry := Eval vm_compute in (NFC.d_kl "$0010$$%?80',%###-#/,#&/-.'+#8010$$$?80,$-.0010$$#?80/+/@<010$#@?800010$#/?80&--#%8010$#.?40$8010$$'?800010$$&?80&#+###'-@#&/@$+,-$4010$#.740'4010$#-?80,$'%.0010$#,?80'@,0010$#+?80,$-.0010$#'?80@-$+@0010$#&?80&'.,%0000$#$&.&080'%,0010$#%?802").
 Definition KCa3a_135 : list kentry := Eval vm_compute in (NFC.d_kl "$0010$#$?80+.'@#0010$##?820100,@?010@@?80&,..&0010,-?800010,.?800010,/?400010@/?80,$'%.0010@.?80%%'/-8010,/740$-'#'##+#4010,@?80&#+###'-@#&/@$+,-$4010&&?800010&%?800010&$?800010&#?800010%@?800010%/?800").
@@ -811,7 +907,7 @@ Definition DS_E6 : list (saddr * expr) :=
    (SA (ELit 0x2008fff7000) 0, ELit 0xdfff0001000); (SA (ELit 0x8fff7000) 0, ELit (2 ^ 41)); (SA (ELit 0x7fff7000) 0, ELit (2 ^ 28))].
 
 (* [comment removed for export] *)
-Definition SR13 : list expr := sr_upd SR_E6 10 (EVar 26).
+Definition SR13 : list expr := sr_upd SR_E6 10 (EVar 42).
 Definition KCb3a_147 : list kentry := Eval vm_compute in (NFC.d_kl "$011$:00,$-.061$:00,$-.041$:'%,051$:'%,0',%###-#/,#&&$,'/'071$:00,$-.010,+,.@#?0$.+/'.&071$:00,$-.000,$-.00'.$@%/071$:00,$-.000$%.+.%#.'00--.,,-&&%./.071$:00,$-.00@,-.#/,/@&,000,.%#$&@'+@&,071$:00,$-.00$'++$##$&000@,,&,'+/@%&071$:00,$-.00$%.+.%#.'000$-@&.@&@071$:00,$-.01700'%,0010$$'?800010$$&?80&#+###'-@#&/@$+,-$4010$$%?80$#$'.@0010$$$?80,$-.0010$$#?80/+/@<").
 Definition KCb3a_148 : list kentry := Eval vm_compute in (NFC.d_kl "$0010$#@?800010$#/?80&--#$8010$#.740'4010$#-?80,$+&'0010$#,?80'@,0010$#+?80,$-.0010$#'?80@-%,,0010$#&?80&'.-/0000$#$'.@080'%,0010$#%?802010$#$?80+.+@.0010$##?820100,@?010@@?80&,./@0010,-?800010,.?800010,/?400").
 Definition KCb3a_149 : list kentry := Eval vm_compute in (NFC.d_kl "$0010@/?80,$+&'0010@.?80%%+#&8010,/740$-'#'##+#4010,@?80&#+###'-@#&/@$+,-$4010&&?800010&%?800010&$?800010&#?800010%@?800010%/?800010%.?800010%-?800010%,?80,$+&'0010%+?802010%'?80+.+@.0010%&?80,$+&'0").
@@ -825,12 +921,12 @@ Definition KCb3a_156 : list kentry := Eval vm_compute in (NFC.d_kl "$05130$$&''>
 Definition KCb3a_157 : list kentry := Eval vm_compute in (NFC.d_kl "$00201020400$011400$012-080:0201020400$011400$012.080$60201020400$011400$012/080%00201020400$011400$012@08160201020400$011400$012$#080<0201020400$011400$012$$080'%,00201020400$011400$012$%080$60201020400$011400$012$&08150201020400$011400$012$'080$80201020400$011400$012$+08150201020400$011400$012$,080%>0201020400$011400$012$-08000201020400$011400$012$.080&20201020400$011400$012$/0820201020400$01120400$012400$0140%$00201020400$011400$012$@08000201020400$011400$012%#0800").
 Definition KCb3a_158 : list kentry := Eval vm_compute in (NFC.d_kl "$02201020400$01120400$012400$014%$00%0$92201020400$011400$012%$020130213,$-.0+/'-%03+/'-&0,$$/@03,$$@#0,$+&'03,$+&'8,$+&+03,$+&,0,$+&.03,$+&.2$#$'..03$#$'./0$#$'.@03$#$'/#0$#$'/&03$#$/#.>$#$/#/03$#%%&&>'.-$,/03'.-$,@0'.-$-$03'.-$-,0'.-%#'03'.-%#+0'.-%,@03'.-%-$2'.-%-%0").
 Definition KCb3a_159 : list kentry := Eval vm_compute in (NFC.d_kl "?3'.-%-.0'.-%.&03'.-%.'0'..#@,0600+.+%#00'%@,.,0417'%,0517'%,0+,-%./%./$%#/071700'%,000,$-.00'.$@%/071700'%,010,+,.@#?0/.'-/-0117'808117+80/8117$+00&0117$/00&0117%&00&&0117+.00&-/061700'%,05182&%./@+>").
-Definition KN13 : list kentry := ltac:(nf_rope (KCb3a_147 ++ KCb3a_148 ++ KCb3a_149 ++ KCb3a_150 ++ KCb3a_151 ++ KCb3a_152 ++ KCb3a_153 ++ KCb3a_154 ++ KCb3a_155 ++ KCb3a_156 ++ KCb3a_157 ++ KCb3a_158 ++ KCb3a_159) ((kn_grant_d DS_E6 26 65536 KN_E6))).
-Lemma KN13_eq : kn_grant_d DS_E6 26 65536 KN_E6 = KN13. Proof. kn_fast. Qed.
+Definition KN13 : list kentry := ltac:(nf_rope (KCb3a_147 ++ KCb3a_148 ++ KCb3a_149 ++ KCb3a_150 ++ KCb3a_151 ++ KCb3a_152 ++ KCb3a_153 ++ KCb3a_154 ++ KCb3a_155 ++ KCb3a_156 ++ KCb3a_157 ++ KCb3a_158 ++ KCb3a_159) ((kn_grant_d DS_E6 42 65536 KN_E6))).
+Lemma KN13_eq : kn_grant_d DS_E6 42 65536 KN_E6 = KN13. Proof. kn_fast. Qed.
 
 
 (* [comment removed for export] *)
-Definition run13a := ltac:(nf_run KN13 ((AX2L.sym_execFS6 SEGS IT_Kn3a KN13 F8 true STOPS3 noscr (SS A_internal_mmap_ret SR13 [] KN13 27) []))).
+Definition run13a := ltac:(nf_run KN13 ((AX2L.sym_execFS6 SEGS IT_Kn3a KN13 F8 true STOPS3 noscr (SS A_internal_mmap_ret SR13 [] KN13 43) []))).
 Definition PC13a : Z := Eval lazy in (s_pc (fst (fst run13a))).
 Definition SR13a : list expr := Eval lazy in (s_regs (fst (fst run13a))).
 Definition LG13a : list sentry := s_log (fst (fst run13a)).
@@ -838,7 +934,7 @@ Definition SK13a : list kentry := s_know (fst (fst run13a)).
 Definition NX13a : nat := Eval lazy in (s_next (fst (fst run13a))).
 Definition SC13a : list sidecond := Eval lazy in (snd (fst run13a)).
 Definition SP13a : scripts := Eval lazy in (snd run13a).
-Lemma run13a_eq : sym_exec SEGS F8 true STOPS3 noscr (SS A_internal_mmap_ret SR13 [] KN13 27) [] = (SSR PC13a SR13a LG13a SK13a NX13a None, SC13a, SP13a).
+Lemma run13a_eq : sym_exec SEGS F8 true STOPS3 noscr (SS A_internal_mmap_ret SR13 [] KN13 43) [] = (SSR PC13a SR13a LG13a SK13a NX13a None, SC13a, SP13a).
 Proof. apply (AX2L.sym_exec_viaFS6 SEGS IT_Kn3a KN13); [exact IT_Kn3a_ok | reflexivity | vm_cast_no_check (eq_refl run13a)]. Qed.
 Definition KCb3a_160 : list kentry := Eval vm_compute in (NFC.d_kl "$0010,/?40.201$:$,-08201$:0,#%001$:$,,080-.,&>01$:$,+080$#&-&601$:,#&080$#%%+':01$:,#%080+.,#@0000@-%,-08201$:0,#'0010$#.?80+.,#@0010$#-?80$#%%',0010$#,?820100,@?010$#+?80&,$/%001$:$,'08201$:0,##001$:$,&080,@-+:01$:$,%080./,#801$:,#$080$#%%+'801$:,##080+.,#@0").
 Definition KCb3a_161 : list kentry := Eval vm_compute in (NFC.d_kl "$001$:$,$08201$:0+@/001$:$,#080-.',001$:$+@080.#&$>01$:+@@080$#%%+'601$:+@/080+.,#@001$:$+/08201$:0+@-001$:$+.080/$+'201$:$+-080/$+%801$:+@.080$#%%+'401$:+@-080+.,#@001$:$+,08201$:0+@+001$:$++080-$-%:01$:$+'080-.'&801$:+@,080$#%%+'201$:+@+080+.,#@001$:$+&08201$:0+@&0").
@@ -919,7 +1015,7 @@ Proof. apply AX2L.carry_viaF3. vm_cast_no_check (eq_refl car13a). Qed.
 
 
 (* [comment removed for export] *)
-Definition run13b := ltac:(nf_run KN13a ((AX2L.sym_execFS6 SEGS IT_Kn3a KN13a F8 true STOPS3 noscr (SS PC13a SR13a [] KN13a 27) []))).
+Definition run13b := ltac:(nf_run KN13a ((AX2L.sym_execFS6 SEGS IT_Kn3a KN13a F8 true STOPS3 noscr (SS PC13a SR13a [] KN13a 43) []))).
 Definition PC13b : Z := Eval lazy in (s_pc (fst (fst run13b))).
 Definition SR13b : list expr := Eval lazy in (s_regs (fst (fst run13b))).
 Definition LG13b : list sentry := s_log (fst (fst run13b)).
@@ -927,7 +1023,7 @@ Definition SK13b : list kentry := s_know (fst (fst run13b)).
 Definition NX13b : nat := Eval lazy in (s_next (fst (fst run13b))).
 Definition SC13b : list sidecond := Eval lazy in (snd (fst run13b)).
 Definition SP13b : scripts := Eval lazy in (snd run13b).
-Lemma run13b_eq : sym_exec SEGS F8 true STOPS3 noscr (SS PC13a SR13a [] KN13a 27) [] = (SSR PC13b SR13b LG13b SK13b NX13b None, SC13b, SP13b).
+Lemma run13b_eq : sym_exec SEGS F8 true STOPS3 noscr (SS PC13a SR13a [] KN13a 43) [] = (SSR PC13b SR13b LG13b SK13b NX13b None, SC13b, SP13b).
 Proof. apply (AX2L.sym_exec_viaFS6 SEGS IT_Kn3a KN13a); [exact IT_Kn3a_ok | reflexivity | vm_cast_no_check (eq_refl run13b)]. Qed.
 Definition KCb3a_230 : list kentry := Eval vm_compute in (NFC.d_kl "$001$:.-@080,&%@801$:$%%#080$#%%,.001$:$%$@080+.,$&0000@-%,-08201$:0$%%$0010$#.?80+.,#@0010$#-?80$#%%',0010$#,?820100,,?010$#+?80&,&%$8010,+?40-:01$:.-/08201$:0$%$.001$:.-.080@.$,001$:.--080/#+/<01$:$%$/080$#%%,-201$:$%$.080+.,#@001$:.-,08201$:0$%$,001$:.-+080-'+%6").
 Definition KCb3a_231 : list kentry := Eval vm_compute in (NFC.d_kl "$001$:.-'080-.-,>01$:$%$-080$#%%,-001$:$%$,080+.,#@001$:.-&08201$:0$%$'001$:.-%080/.#%201$:.-$080$#./%401$:$%$+080$#%%,,801$:$%$'080+.,#,001$:.-#08201$:0$%$%001$:.,@080,,#@<01$:.,/080/&//201$:$%$&080$#%%,,001$:$%$%080+.,#@001$:.,.08201$:0$%$#001$:.,-080/-//401$:.,,080$#-,#8").
@@ -991,7 +1087,7 @@ Proof. apply AX2L.carry_viaF3. vm_cast_no_check (eq_refl car13b). Qed.
 Definition SR13r : list expr := sr_upd SR_E6 10 (ELit (2 ^ 64 - 12)).
 
 (* [comment removed for export] *)
-Definition run13n := ltac:(nf_run KN_E6 ((AX2L.sym_execFS6 SEGS IT_Kn3a KN_E6 F8 true STOPS3 noscr (SS A_internal_mmap_ret SR13r [] KN_E6 26) []))).
+Definition run13n := ltac:(nf_run KN_E6 ((AX2L.sym_execFS6 SEGS IT_Kn3a KN_E6 F8 true STOPS3 noscr (SS A_internal_mmap_ret SR13r [] KN_E6 42) []))).
 Definition PC13n : Z := Eval lazy in (s_pc (fst (fst run13n))).
 Definition SR13n : list expr := Eval lazy in (s_regs (fst (fst run13n))).
 Definition LG13n : list sentry := s_log (fst (fst run13n)).
@@ -999,7 +1095,7 @@ Definition SK13n : list kentry := s_know (fst (fst run13n)).
 Definition NX13n : nat := Eval lazy in (s_next (fst (fst run13n))).
 Definition SC13n : list sidecond := Eval lazy in (snd (fst run13n)).
 Definition SP13n : scripts := Eval lazy in (snd run13n).
-Lemma run13n_eq : sym_exec SEGS F8 true STOPS3 noscr (SS A_internal_mmap_ret SR13r [] KN_E6 26) [] = (SSR PC13n SR13n LG13n SK13n NX13n None, SC13n, SP13n).
+Lemma run13n_eq : sym_exec SEGS F8 true STOPS3 noscr (SS A_internal_mmap_ret SR13r [] KN_E6 42) [] = (SSR PC13n SR13n LG13n SK13n NX13n None, SC13n, SP13n).
 Proof. apply (AX2L.sym_exec_viaFS6 SEGS IT_Kn3a KN_E6); [exact IT_Kn3a_ok | reflexivity | vm_cast_no_check (eq_refl run13n)]. Qed.
 Definition KCb3a_280 : list kentry := Eval vm_compute in (NFC.d_kl "$0010$$%?80',%###-#/,#&/-.'+#8010$$$?80,$-.0010$$#?80/+/@<010$#@?800010$#/?80&--$/8010$#.?40$8010$$'?800010$$&?80&#+###'-@#&/@$+,-$4010$#.740'4010$#-?80,$+&'0010$#,?80'@,0010$#+?80,$-.0010$#'?80@-%,,0010$#&?80&'.-/0000$#$'.@080'%,0010$#%?802").
 Definition KCb3a_281 : list kentry := Eval vm_compute in (NFC.d_kl "$0010$#$?80+.+@.0010$##?820100,@?010@@?80&,./@0010,-?800010,.?800010,/?400010@/?80,$+&'0010@.?80%%+#&8010,/740$-'#'##+#4010,@?80&#+###'-@#&/@$+,-$4010&&?800010&%?800010&$?800010&#?800010%@?800010%/?800").
@@ -1056,7 +1152,7 @@ Proof. apply AX2F.mk_itab_rs_sound. apply AX2F.itab_leaf_sound. Qed.
 
 
 (* [comment removed for export] *)
-Definition run13c := ltac:(nf_run KN13b ((AX2L.sym_execFS6 SEGS IT_Kn3b KN13b F8 true STOPS3 noscr (SS PC13b SR13b [] KN13b 27) []))).
+Definition run13c := ltac:(nf_run KN13b ((AX2L.sym_execFS6 SEGS IT_Kn3b KN13b F8 true STOPS3 noscr (SS PC13b SR13b [] KN13b 43) []))).
 Definition PC13c : Z := Eval lazy in (s_pc (fst (fst run13c))).
 Definition SR13c : list expr := Eval lazy in (s_regs (fst (fst run13c))).
 Definition LG13c : list sentry := s_log (fst (fst run13c)).
@@ -1064,7 +1160,7 @@ Definition SK13c : list kentry := s_know (fst (fst run13c)).
 Definition NX13c : nat := Eval lazy in (s_next (fst (fst run13c))).
 Definition SC13c : list sidecond := Eval lazy in (snd (fst run13c)).
 Definition SP13c : scripts := Eval lazy in (snd run13c).
-Lemma run13c_eq : sym_exec SEGS F8 true STOPS3 noscr (SS PC13b SR13b [] KN13b 27) [] = (SSR PC13c SR13c LG13c SK13c NX13c None, SC13c, SP13c).
+Lemma run13c_eq : sym_exec SEGS F8 true STOPS3 noscr (SS PC13b SR13b [] KN13b 43) [] = (SSR PC13c SR13c LG13c SK13c NX13c None, SC13c, SP13c).
 Proof. apply (AX2L.sym_exec_viaFS6 SEGS IT_Kn3b KN13b); [exact IT_Kn3b_ok | reflexivity | vm_cast_no_check (eq_refl run13c)]. Qed.
 Definition KCa3b_1 : list kentry := Eval vm_compute in (NFC.d_kl "$0010$#+?80&,+#@8010-%?40@>01$:$+$$08201$:0$/&-001$:$+$#080/.+&201$:$+#@080.#+':01$:$/&.080$#%$-$201$:$/&-080+.+#%0000@-$,#08201$:0$/&/0010$#.?80+.+#%0010$#-?80$#%$&@0010$#,?820100-&?01$:$+#/08201$:0$/&+001$:$+#.080-%%.<01$:$+#-080-,+%201$:$/&,080$#%$-$001$:$/&+080+.+#%0").
 Definition KCa3b_2 : list kentry := Eval vm_compute in (NFC.d_kl "$001$:$+#,08201$:0$/&&001$:$+#+080-.@%:01$:$+#'080,@.,401$:$/&'080$#%$-#001$:$/&&080+.+#,001$:$+#&08201$:0$/&$001$:$+#%080/$+->01$:$+#$080.%,#201$:$/&%080$#%$,@>01$:$/&$080+.+#%001$:$+##08201$:0$/%@001$:$'@@080$$$'#:01$:$'@/080$#+%&801$:$/&#080$#%$,@<01$:$/%@080+.+#%001$:$'@.08201$:0$/%.0").
@@ -1152,7 +1248,7 @@ Proof. apply AX2F.mk_itab_rs_sound. apply AX2F.itab_leaf_sound. Qed.
 
 
 (* [comment removed for export] *)
-Definition run13c := ltac:(nf_run KN13b ((AX2L.sym_execFS6 SEGS IT_Kn3b KN13b F8 true STOPS3 noscr (SS PC13b SR13b [] KN13b 27) []))).
+Definition run13c := ltac:(nf_run KN13b ((AX2L.sym_execFS6 SEGS IT_Kn3b KN13b F8 true STOPS3 noscr (SS PC13b SR13b [] KN13b 43) []))).
 Definition PC13c : Z := Eval lazy in (s_pc (fst (fst run13c))).
 Definition SR13c : list expr := Eval lazy in (s_regs (fst (fst run13c))).
 Definition LG13c : list sentry := s_log (fst (fst run13c)).
@@ -1160,7 +1256,7 @@ Definition SK13c : list kentry := s_know (fst (fst run13c)).
 Definition NX13c : nat := Eval lazy in (s_next (fst (fst run13c))).
 Definition SC13c : list sidecond := Eval lazy in (snd (fst run13c)).
 Definition SP13c : scripts := Eval lazy in (snd run13c).
-Lemma run13c_eq : sym_exec SEGS F8 true STOPS3 noscr (SS PC13b SR13b [] KN13b 27) [] = (SSR PC13c SR13c LG13c SK13c NX13c None, SC13c, SP13c).
+Lemma run13c_eq : sym_exec SEGS F8 true STOPS3 noscr (SS PC13b SR13b [] KN13b 43) [] = (SSR PC13c SR13c LG13c SK13c NX13c None, SC13c, SP13c).
 Proof. apply (AX2L.sym_exec_viaFS6 SEGS IT_Kn3b KN13b); [exact IT_Kn3b_ok | reflexivity | vm_cast_no_check (eq_refl run13c)]. Qed.
 Definition KCb3b_50 : list kentry := Eval vm_compute in (NFC.d_kl "$0010$#+?80&,+%,8010-%?40@>01$:$+$$08201$:0$/&-001$:$+$#080/.+&201$:$+#@080.#+':01$:$/&.080$#%%-.201$:$/&-080+.,#@0000@-%,-08201$:0$/&/0010$#.?80+.,#@0010$#-?80$#%%',0010$#,?820100-&?01$:$+#/08201$:0$/&+001$:$+#.080-%%.<01$:$+#-080-,+%201$:$/&,080$#%%-.001$:$/&+080+.,#@0").
 Definition KCb3b_51 : list kentry := Eval vm_compute in (NFC.d_kl "$001$:$+#,08201$:0$/&&001$:$+#+080-.@%:01$:$+#'080,@.,401$:$/&'080$#%%--001$:$/&&080+.,$&001$:$+#&08201$:0$/&$001$:$+#%080/$+->01$:$+#$080.%,#201$:$/&%080$#%%-,>01$:$/&$080+.,#@001$:$+##08201$:0$/%@001$:$'@@080$$$'#:01$:$'@/080$#+%&801$:$/&#080$#%%-,<01$:$/%@080+.,#@001$:$'@.08201$:0$/%.0").
@@ -1250,7 +1346,7 @@ Proof. apply AX2F.mk_itab_rs_sound. apply AX2F.itab_leaf_sound. Qed.
 
 
 (* [comment removed for export] *)
-Definition run13d := ltac:(nf_run KN13c ((AX2L.sym_execFS6 SEGS IT_Kn3c KN13c F8 true STOPS3 noscr (SS PC13c SR13c [] KN13c 27) []))).
+Definition run13d := ltac:(nf_run KN13c ((AX2L.sym_execFS6 SEGS IT_Kn3c KN13c F8 true STOPS3 noscr (SS PC13c SR13c [] KN13c 43) []))).
 Definition PC13d : Z := Eval lazy in (s_pc (fst (fst run13d))).
 Definition SR13d : list expr := Eval lazy in (s_regs (fst (fst run13d))).
 Definition LG13d : list sentry := s_log (fst (fst run13d)).
@@ -1258,7 +1354,7 @@ Definition SK13d : list kentry := s_know (fst (fst run13d)).
 Definition NX13d : nat := Eval lazy in (s_next (fst (fst run13d))).
 Definition SC13d : list sidecond := Eval lazy in (snd (fst run13d)).
 Definition SP13d : scripts := Eval lazy in (snd run13d).
-Lemma run13d_eq : sym_exec SEGS F8 true STOPS3 noscr (SS PC13c SR13c [] KN13c 27) [] = (SSR PC13d SR13d LG13d SK13d NX13d None, SC13d, SP13d).
+Lemma run13d_eq : sym_exec SEGS F8 true STOPS3 noscr (SS PC13c SR13c [] KN13c 43) [] = (SSR PC13d SR13d LG13d SK13d NX13d None, SC13d, SP13d).
 Proof. apply (AX2L.sym_exec_viaFS6 SEGS IT_Kn3c KN13c); [exact IT_Kn3c_ok | reflexivity | vm_cast_no_check (eq_refl run13d)]. Qed.
 Definition KCa3c_1 : list kentry := Eval vm_compute in (NFC.d_kl "$0010%+?80,#$%@0010%'?80&%.$&0010%&?80,#$%@0010%%?80&%/,/8000,$'&$840&<000,#//$8102000,#//$0404010%,?80,$'%.0000,#$&.<102000$#%$-$>100000$#%$-$<102000$#%$-$:100000$#%$-$8100000$#%$-$6100000$#%$-$4100000$#%$-$2102").
 Definition KCa3c_2 : list kentry := Eval vm_compute in (NFC.d_kl "$0000$#%$-$0100000$#%$-#>100000$#%$-#<100000$#%$-#:100000$#%$-#8100000$#%$-#6100000$#%$-#4102000$#%$-#210$,8000$#%$-#010%+4000$#%$,@>100000$#%$,@<100000$#%$,@:102000$#%$,@8102000$#%$,@6100000$#%$,@4100000$#%$,@2100").
@@ -1323,7 +1419,7 @@ Proof. apply AX2L.carry_viaF3. vm_cast_no_check (eq_refl car13d). Qed.
 Definition SR14 : list expr := sr_upd SR13d 10 (ELit (2 ^ 47 - 1)).
 
 (* [comment removed for export] *)
-Definition run14 := ltac:(nf_run KN13d ((AX2L.sym_execFS6 SEGS IT_Kn3c KN13d F8 true STOPS3 noscr (SS A_maxva_smeared SR14 [] KN13d 27) []))).
+Definition run14 := ltac:(nf_run KN13d ((AX2L.sym_execFS6 SEGS IT_Kn3c KN13d F8 true STOPS3 noscr (SS A_maxva_smeared SR14 [] KN13d 43) []))).
 Definition PC14 : Z := Eval lazy in (s_pc (fst (fst run14))).
 Definition SR_E7 : list expr := Eval lazy in (s_regs (fst (fst run14))).
 Definition LG14 : list sentry := s_log (fst (fst run14)).
@@ -1331,7 +1427,7 @@ Definition SK14 : list kentry := s_know (fst (fst run14)).
 Definition NX14 : nat := Eval lazy in (s_next (fst (fst run14))).
 Definition SC14 : list sidecond := Eval lazy in (snd (fst run14)).
 Definition SP14 : scripts := Eval lazy in (snd run14).
-Lemma run14_eq : sym_exec SEGS F8 true STOPS3 noscr (SS A_maxva_smeared SR14 [] KN13d 27) [] = (SSR PC14 SR_E7 LG14 SK14 NX14 None, SC14, SP14).
+Lemma run14_eq : sym_exec SEGS F8 true STOPS3 noscr (SS A_maxva_smeared SR14 [] KN13d 43) [] = (SSR PC14 SR_E7 LG14 SK14 NX14 None, SC14, SP14).
 Proof. apply (AX2L.sym_exec_viaFS6 SEGS IT_Kn3c KN13d); [exact IT_Kn3c_ok | reflexivity | vm_cast_no_check (eq_refl run14)]. Qed.
 Definition KCa3c_52 : list kentry := Eval vm_compute in (NFC.d_kl "$0010&/?800010&.?800010&-?80$#$&.&0010&,?80%//#,'0010&+?80-@,&:010&'?800010&&?80&-,/+8010&%740'4010&$?802010&#?80,#/..0010%@?80$#%$&@0010%/?80,#$%@0010%.?80%,.'&0000,#/..2102010%-?800010%,?80,$'%.0").
 Definition KCa3c_53 : list kentry := Eval vm_compute in (NFC.d_kl "$0010%+?802010%'?80$#%$&@0010%&?80,#$%@0010%%?80&%/-@0000@-$,$080&&#&@8000+/&,'080$0000,$#/'0402000$#%$&/0100000+/&,-0404000$#%$&/2300000$#%$/+080&$#/&0000$#%$@%080&&#%'0000$#%$@&080&%@@.0000,$'%/080+,-%./&'&.'%'>000,$'&$840&<000,#//$8102").
@@ -1352,7 +1448,7 @@ Proof. apply AX2L.carry_viaF3. vm_cast_no_check (eq_refl car14). Qed.
 
 
 (* [comment removed for export] *)
-Definition gc7 (k : kentry) : bool := gc_keep_stack (-288) k && gc_keep_base 26 k.
+Definition gc7 (k : kentry) : bool := gc_keep_stack (-288) k && gc_keep_base 42 k.
 Definition KCa3c_62 : list kentry := Eval vm_compute in (NFC.d_kl "9010&%740'4010&$?802010&#?80,#/..0010%@?80$#%$&@0010%/?80,#$%@0010%.?80%,.'&0000,#/..2102010%-?800010%,?80,$'%.0").
 Definition KCa3c_63 : list kentry := Eval vm_compute in (NFC.d_kl "$0000$#%$'#0100000$#%$&@>100000$#%$&@<100000$#%$&@:100000$#%$&@8100000$#%$&@6100000$#%$&@4100000$#%$&@2100000$#%$&@0102000,#$&#040$#-0000,#$%@840%@0000$#$&.%0400000@-$,#08201$:0$/+@0000'.#-,'0200000'.#-,&080--+%4000'.#-,%0200").
 Definition KCa3c_64 : list kentry := Eval vm_compute in (NFC.d_kl "$0000'.#,@+0402000'.#,@%040%@2000'.#,@$080%$.@%+&/,@-$%&@/0000'.#,@#8400000'.#,@#0100000'.#,@'080--+%4000'.#,@&0402000'.#,@%<100000'.#,@%8200000,#$&@4100000,#$&$8100000,#$'$080--+%4000,#$'#8404000,#$'#0102000,#$&@8400000,#$&@0202").

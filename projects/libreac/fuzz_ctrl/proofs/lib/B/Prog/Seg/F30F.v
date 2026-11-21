@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module names changed; 2169 of its 2293 lines of code are new or changed and 887 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F30.v; 72 of its 209 lines of code are new or changed and 2156 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Footprint (ExecF.evtF) twins of the segment-F30 machine runs of lib/B/Prog/Seg/F30.v (fuzz_ctrl
    LLVMFuzzerTestOneInput, asan-ubsan image B). Bridge input for the cgif-form walk only.
    rule 24: no function proved. *)
@@ -11,10 +12,10 @@
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
    source runs: lib/B/Prog/Seg/F30.v f30s_evt (:356), f30s_evt_ro (:585) at
-     a working branch 3803efccea0 (blob d2349dd89bf7b15316e376f97e695d42605b62f1);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c),
-         lib/B/MemNormF.v blob 99f8b314301ceb0f253f1a6c8165b488b23ce218 (taken by path from dba073859bd);
+     a working branch (blob d2349dd89bf7b15316e376f97e695d42605b62f1);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release),
+         lib/B/MemNormF.v blob 99f8b314301ceb0f253f1a6c8165b488b23ce218 (taken by path);
    compare: f30s_evt_of_F (evtF_evt + rng_all) re-derives F30.f30s_evt verbatim.
    f30s_evt already stops AT the entry 0x837c4 of reac_ctrl_classify_box_frame with ra = 0x82af8, so it IS the
    pre stretch of the segment's one call and needs no further split; the stretch after the return pc 0x82af8 is

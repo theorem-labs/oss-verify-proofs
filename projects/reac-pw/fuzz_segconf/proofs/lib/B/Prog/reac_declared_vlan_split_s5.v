@@ -3,13 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: the walk of reac_box_catalogue on fuzz_segconf.asan-ubsan (image B, pin sha256
    c3796c0b38f3, twin 80e82127e8ca; entry 0x8a8a0, 84 bytes, 21 instructions, a 16-byte frame, no side-stack
    frame): reac_box_catalogue_contract of lib/B/Prog/reac_box_catalogue_c.v (image B's copy of the image-A owner's FINAL
-   text at 6f783602b5e3) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
+   text) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
    entry, SRr of apost_base at the return, over `Context {PI : PAImg seg_listing}` of image B's listing,
    lib/B/Prog/SegPa.v).
-   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane, commit
-   434ade288123, both arms): the same entry seeds, token runs and return steps over image B's listing modules and
+   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane,
+    both arms): the same entry seeds, token runs and return steps over image B's listing modules and
    B's kit copies. The UBSan alignment check is read from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_catalogue.v
-   at origin/ossv/recipes 3abc3740de97 (the same image-B code but 4 pc-relative words; caller-journal form, not
+   (the same image-B code but 4 pc-relative words; caller-journal form, not
    copied), whose token run decides it the same way.
    Image B's code differs from image A's by two instructions: `andi a1,a0,7` (0x8a8ac) and `bnez a1,0x8a8ec`
    (0x8a8b0) to `unimp` (0x8a8ec), the UBSan alignment check of the 8-byte store through c.
@@ -37,6 +37,7 @@
    definitions (SegInstA's names at image B): SegInstB.STK_reac_box_catalogue and SegInstB.catA, tied to this walk
    by the lemmas STK_reac_box_catalogue_B (the value 16) and catA_B (listing object 77 of B's seg_objs). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/reac_box_catalogue.v, with its module paths and module names changed; 387 of its 436 lines of code are new or changed and 404 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_declared_vlan_split on fuzz_segconf image B (fuzz_segconf.asan-ubsan): the point K5 (0x8a388, listing offset
    0x55c8), after the checked memcpy, to the point K6 (0x8a3b0), after name_ok.
    0x8a388 `not a0,s1`, 0x8a38c `bltu a0,s4` to the UBSan trap `unimp` 0x8a3d8 (parent + plen wraps; refuted:
@@ -90,7 +91,7 @@ Definition vs5_fs : list (nat * afact) := [(40%nat, mkAF 4096 (2 ^ 47 - 2) 0)].
 Definition vs5_al : sv := SAlu ALU_ADD (SOff 9 0) (SOff 20 0).
 
 (* 0x8a38c `bltu a0,s4`, a0 = not parent (0x8a388), s4 = plen: the branch to the trap is taken only when
-   parent + plen wraps (the image-B fuzz_command exemplar: sup_host_setting_aux.v hsb_ub_774 at 501c0d516c69) *)
+   parent + plen wraps (the image-B fuzz_command exemplar: sup_host_setting_aux.v hsb_ub_774) *)
 Lemma vs5_lxor_ones : forall x, 0 <= x < 2 ^ 64 -> Z.lxor x (2 ^ 64 - 1) = 2 ^ 64 - 1 - x.
 Proof.
 intros x Hx.

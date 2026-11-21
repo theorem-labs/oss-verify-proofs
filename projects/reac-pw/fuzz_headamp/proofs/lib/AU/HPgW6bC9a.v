@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6bC9.v at f3898085bda (c9_model, the
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6bC9.v (c9_model, the
    register helpers, blocks A and C with their entry states), with the block post w7_post / w7_post_of_run of
    proofs/reac-pw/fuzz_role/lib/A/RPgW7bBase.v and kept_run of proofs/reac-pw/fuzz_role/lib/A/RPgCfgChanges.v at
    the same commit (the licence lines above are theirs), for reac-pw/fuzz_headamp's image B: image B's pcs, the
    e62 pod object at F+0x210 read through R+0x130, R+0x118, R+0x40, pp through R+0x148 and R+0x138, the two
    pointer-overflow tests of the head, s7 set in the head, the tail's moves into t1, s4, a3 and s2, and image B's
    code table HPgW6bBase.hb_tbl. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image B (fuzz_headamp.asan-ubsan, pinned sha256
    53edda9bdeeba1803865babfecb1af6732babe47ab83c64d38cc59a90d717a94; every address measured on the unstripped twin
    1674e30a0698f381704e66d2398d7906c881f4ba8fc619cb41b89fb97ad112ff, same loaded bytes except .note.gnu.build-id): the two engine runs of

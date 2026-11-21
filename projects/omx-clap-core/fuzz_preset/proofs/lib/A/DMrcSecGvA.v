@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcSecGv.v (commit 5ad50e61fc6a, file sha256 d64a8429e51a) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; #102 pin 1be0f53d96cb); module paths changed; its 33 image addresses moved by code-verified function pairs (32 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 1 code pcs the tool read as sizes, by the internal file funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcSecGv.v (file sha256 d64a8429e51a) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; #102 pin 1be0f53d96cb); module paths changed; its 33 image addresses moved by code-verified function pairs (32 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 1 code pcs the tool read as sizes, by the internal file funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, slice H4): TWIN of YFgv.v at the secondary map bound 2 ^ 31 (a map's length is
    sec_map_size (ck_req k) <= req_size (ck_req k) + 2 ^ 14 (YG08.sec_map_size_bound) with the request below NMAXD <= 2 ^ 30), for the cf instances, whose secondary maps reach cf_malloc_max (fuzz_reply 2 ^ 30 - 2 ^ 20).  The
    released YFgv's runner facts bound the map length by 2 ^ 29 (:140 / :172 / :253) and the shadow count by 2 ^ 26

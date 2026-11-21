@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (RomBase.sys_rob at the system-call nodes). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -12,13 +13,14 @@ From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC.
 From OSSVerify.Proofs.leptonica.edge_fuzzer.lib.Common Require Import
   SimInv ExitSim PropExec CatExec CatSim SeqExec StreamExec FileSim
   ShapeAlg ShapeNodes Nodes StoreOk AgentLib SpecConsts RefNodes PureModel CfgStep.
+From OSSVerify.Proofs.leptonica.edge_fuzzer.lib.Common.Cfg Require Import RomBase RomWrite.
 Import ListNotations.
 Open Scope bv_scope.
 
 Lemma check_syscall_29 : forall segs ms x8 eff m,
   bv_unsigned x8 = 29%Z ->
   check_syscall (sys_input segs ms x8) eff m
-  = check_ioctl (fd32 (ms_gpr ms 0)) (cmd32 (ms_gpr ms 1)) eff m.
+  = check_ioctl (sys_input segs ms x8) (fd32 (ms_gpr ms 0)) (cmd32 (ms_gpr ms 1)) eff m.
 Proof. intros segs ms x8 eff m Hno. unfold check_syscall. rewrite in_sysno_si, Hno. reflexivity. Qed.
 
 Section At.
@@ -48,7 +50,9 @@ Proof.
   eapply rz_ecall; [exact Hh | exact Hlazy | exact HF | exact HE |].
   apply (rz_ret_only_silent segs (ecall_st regs pc mem rom) model (getr regs 17) (Z_to_bv 64 0)
            (with_fds (fd_remove (m_fds model) fd) model));
-    [exact Hh | reflexivity | | exact Hh | exact Hlazy | rewrite adv_setgpr0_st; exact Hc].
+    [exact Hh | reflexivity
+    | apply (sys_rob_memfree segs _ model (getr regs 17)); [reflexivity | rewrite H17; exact memfree_57]
+    | | exact Hh | exact Hlazy | rewrite adv_setgpr0_st; exact Hc].
   intros eff. rewrite (check_syscall_57 segs _ _ eff model H17). unfold check_close.
   rewrite ecall_st_gpr0, H10, (fd_small_32 fd Hfd), Hlk. reflexivity.
 Qed.
@@ -78,7 +82,18 @@ Proof.
   pose proof (mp_halted _ Hp) as Hh. pose proof (mp_lazy _ Hp) as Hlazy.
   eapply rz_ecall; [exact Hh | exact Hlazy | exact HF | exact HE |].
   apply (rz_ret_only_silent segs (ecall_st regs pc mem rom) model (getr regs 17) (errno_ret ENOTTY) model);
-    [exact Hh | reflexivity | | exact Hh | exact Hlazy | rewrite adv_setgpr0_st; exact Hc].
+    [exact Hh | reflexivity | | | exact Hh | exact Hlazy | rewrite adv_setgpr0_st; exact Hc].
+  { (* the run's larger backing: the TIOCGWINSZ arm reads no memory *)
+    apply sys_rob_of_check. intros r x8' Hr Hs eff.
+    assert (Hs0 : ms_svc_pending (ecall_st regs pc mem rom) = Some (getr regs 17)) by reflexivity.
+    rewrite Hs0 in Hs. injection Hs as <-.
+    rewrite (check_syscall_29 segs (wrom (ecall_st regs pc mem rom) r) _ eff model H17).
+    rewrite (check_syscall_29 segs (ecall_st regs pc mem rom) _ eff model H17).
+    unfold check_ioctl.
+    change (ms_gpr (wrom (ecall_st regs pc mem rom) r) 0) with (ms_gpr (ecall_st regs pc mem rom) 0).
+    change (ms_gpr (wrom (ecall_st regs pc mem rom) r) 1) with (ms_gpr (ecall_st regs pc mem rom) 1).
+    rewrite ecall_st_gpr0, ecall_st_gpr1, H10, (fd_small_32 fd Hfd), Hlk, (tty_winsz _ H11).
+    destruct e; try reflexivity; discriminate Hnd. }
   intros eff. rewrite (check_syscall_29 segs _ _ eff model H17). unfold check_ioctl.
   rewrite ecall_st_gpr0, ecall_st_gpr1, H10, (fd_small_32 fd Hfd), Hlk, (tty_winsz _ H11).
   destruct e; try reflexivity; discriminate Hnd.
@@ -100,7 +115,9 @@ Proof.
   pose proof (mp_halted _ Hp) as Hh. pose proof (mp_lazy _ Hp) as Hlazy.
   eapply rz_ecall; [exact Hh | exact Hlazy | exact HF | exact HE |].
   apply (rz_ret_only_silent segs (ecall_st regs pc mem rom) model (getr regs 17) (errno_ret EISDIR) model);
-    [exact Hh | reflexivity | | exact Hh | exact Hlazy | rewrite adv_setgpr0_st; exact Hc].
+    [exact Hh | reflexivity
+    | apply (sys_rob_memfree segs _ model (getr regs 17)); [reflexivity | rewrite H17; exact memfree_63]
+    | | exact Hh | exact Hlazy | rewrite adv_setgpr0_st; exact Hc].
   intros eff. rewrite (check_syscall_63 segs _ _ eff model H17). unfold check_read.
   rewrite ecall_st_gpr0, ecall_st_gpr1, ecall_st_gpr2, H10, (fd_small_32 fd Hfd), Hlk, Haok. reflexivity.
 Qed.
@@ -169,7 +186,9 @@ Proof.
   apply (rz_det segs ms model (getr regs 17)
            (mkEffect (len_word bs) (delivered_writes buf bs) [])
            (with_fds (fd_insert (m_fds model) fd (FdFile p (off + len_word bs))) model));
-    [exact Hh | reflexivity | exact Hchk | | exact Hh | exact Hlazy |].
+    [exact Hh | reflexivity
+    | apply (sys_rob_memfree segs ms model (getr regs 17)); [reflexivity | rewrite H17; exact memfree_63]
+    | exact Hchk | | exact Hh | exact Hlazy |].
   - intros eff Hs.
     rewrite (check_syscall_63 segs ms _ _ model H17) in Hs. unfold check_read in Hs.
     rewrite G0, G1, G2, (fd_small_32 fd Hfd), Hlk in Hs. cbv beta iota in Hs.
@@ -287,7 +306,10 @@ Proof.
   eapply rz_ecall; [exact Hh | exact Hlazy | exact HF | exact HE |].
   apply (rz_ret_only_copyins_silent segs (ecall_st regs pc mem (seg_rom segs)) model (getr regs 17)
            (open_copyins (ecall_st regs pc mem (seg_rom segs))) (errno_ret ENAMETOOLONG) model);
-    [exact Hh | reflexivity | | exact Hh | exact Hlazy | rewrite adv_setgpr0_st; exact Hc].
+    [exact Hh | reflexivity
+    | apply (openat_rob segs _ model (getr regs 17));
+        [reflexivity | exact H17 | rewrite ecall_st_read_byte, ecall_st_gpr1, Hpath; discriminate]
+    | | exact Hh | exact Hlazy | rewrite adv_setgpr0_st; exact Hc].
   intros eff. apply openat_toolong_check; [exact H17 | | ].
   - rewrite ecall_st_gpr2. apply modeled_open_flags_rd. exact Hfl.
   - rewrite ecall_st_read_byte, ecall_st_gpr1. exact Hpath.
@@ -306,7 +328,10 @@ Proof.
   eapply rz_ecall; [exact Hh | exact Hlazy | exact HF | exact HE |].
   apply (rz_ret_only_copyins_silent segs (ecall_st regs pc mem (seg_rom segs)) model (getr regs 17)
            (open_copyins (ecall_st regs pc mem (seg_rom segs))) (errno_ret ENOENT) model);
-    [exact Hh | reflexivity | | exact Hh | exact Hlazy | rewrite adv_setgpr0_st; exact Hc].
+    [exact Hh | reflexivity
+    | apply (openat_rob segs _ model (getr regs 17));
+        [reflexivity | exact H17 | rewrite ecall_st_read_byte, ecall_st_gpr1, Hpath; discriminate]
+    | | exact Hh | exact Hlazy | rewrite adv_setgpr0_st; exact Hc].
   intros eff. apply openat_empty_check; [exact H17 | | rewrite ecall_st_gpr2; exact Hfl].
   rewrite ecall_st_read_byte, ecall_st_gpr1. exact Hpath.
 Qed.
@@ -326,7 +351,10 @@ Proof.
   eapply rz_ecall; [exact Hh | exact Hlazy | exact HF | exact HE |].
   apply (rz_ret_only_copyins_silent segs (ecall_st regs pc mem (seg_rom segs)) model (getr regs 17)
            (open_copyins (ecall_st regs pc mem (seg_rom segs))) (errno_ret ENOENT) model);
-    [exact Hh | reflexivity | | exact Hh | exact Hlazy | rewrite adv_setgpr0_st; exact Hc].
+    [exact Hh | reflexivity
+    | apply (openat_rob segs _ model (getr regs 17));
+        [reflexivity | exact H17 | rewrite ecall_st_read_byte, ecall_st_gpr1, Hpath; discriminate]
+    | | exact Hh | exact Hlazy | rewrite adv_setgpr0_st; exact Hc].
   intros eff. apply (openat_absent_check _ _ model p H17).
   - rewrite ecall_st_gpr0. exact H10.
   - rewrite ecall_st_read_byte, ecall_st_gpr1. exact Hpath.
@@ -357,7 +385,10 @@ Proof.
   apply (rz_open segs (ecall_st regs pc mem (seg_rom segs)) model (getr regs 17)
            (open_copyins (ecall_st regs pc mem (seg_rom segs)))
            (fun fd => with_fds (fd_insert (m_fds model) fd (FdFile p (Z_to_bv 64 0))) model));
-    [exact Hh | exact Hlazy | reflexivity | kit_pending_on | | intros; exact Hh | intros; exact Hlazy | exact Hfree | | ].
+    [exact Hh | exact Hlazy | reflexivity
+    | apply (openat_rob segs _ model (getr regs 17));
+        [reflexivity | exact H17 | rewrite ecall_st_read_byte, ecall_st_gpr1, Hpath; discriminate]
+    | kit_pending_on | | intros; exact Hh | intros; exact Hlazy | exact Hfree | | ].
   - intros eff. apply (openat_rd_check segs _ _ model p d H17).
     + rewrite ecall_st_gpr0. exact H10.
     + rewrite ecall_st_read_byte, ecall_st_gpr1. exact Hpath.
@@ -389,7 +420,10 @@ Proof.
   apply (rz_open segs (ecall_st regs pc mem (seg_rom segs)) model (getr regs 17)
            (open_copyins (ecall_st regs pc mem (seg_rom segs)))
            (fun fd => with_fds (fd_insert (m_fds model) fd FdDir) model));
-    [exact Hh | exact Hlazy | reflexivity | kit_pending_on | | intros; exact Hh | intros; exact Hlazy | exact Hfree | | ].
+    [exact Hh | exact Hlazy | reflexivity
+    | apply (openat_rob segs _ model (getr regs 17));
+        [reflexivity | exact H17 | rewrite ecall_st_read_byte, ecall_st_gpr1, Hpath; discriminate]
+    | kit_pending_on | | intros; exact Hh | intros; exact Hlazy | exact Hfree | | ].
   - intros eff. apply (openat_dir_check _ _ model H17).
     + rewrite ecall_st_gpr0. exact H10.
     + rewrite ecall_st_read_byte, ecall_st_gpr1. exact Hpath.

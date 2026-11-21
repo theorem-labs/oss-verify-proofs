@@ -2,8 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the statement of the memory-checking runtime's fread WRAPPER as fuzz_pcap's
    program code calls it, for libreac/fuzz_pcap on libreac v1.9.0 (ASan build), in the DONOR'S CALLER-JOURNAL form
-   (cgif_file_fuzzer lib/YC20.v:311-365 tlzw_kept / tlzw_pR_ok / tlzw_post / tlzw_spec, origin/ossv/recipes
-   c8557374ad2e). Statement only; the proof is another owner's. It does not mention the C library's own contract:
+   (cgif_file_fuzzer lib/YC20.v:311-365 tlzw_kept / tlzw_pR_ok / tlzw_post / tlzw_spec).
+   Statement only; the proof is another owner's. It does not mention the C library's own contract:
    that enters only in the proof, as a Section hypothesis.
 
    WHY THE FORM CHANGED (a Theorem Labs lane). The earlier statement took afn_pre and gave apost_base.
@@ -61,6 +61,7 @@
 
    WITH SIZE 1 musl's fread returns the byte count, min(nm, what is left), so the post gives that count exactly;
    a read at the end of the stream returns 0 and keeps asource_at valid there (PSource asource_rest_eof). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require Import YK11 YK0s YK18 YM05.

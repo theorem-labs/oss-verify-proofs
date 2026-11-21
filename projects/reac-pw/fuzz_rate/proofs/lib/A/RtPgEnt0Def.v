@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgEnt0Def.v at 27540f54413f for reac-pw/fuzz_rate's image A; rate's pcs (the head's two out-of-line blocks 0x81b38 and 0x81b58, the arms DIG 0x813f8 and ODD 0x81b6c), registers (in.n in s10, &ch in s6, the `v / 10` multiplier in t2) and code table; the frame's shadow rows in RtPgMem's seven-flag words; the piece lemma rt7_piece from the three block statements. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgEnt0Def.v for reac-pw/fuzz_rate's image A; rate's pcs (the head's two out-of-line blocks 0x81b38 and 0x81b58, the arms DIG 0x813f8 and ODD 0x81b6c), registers (in.n in s10, &ch in s6, the `v / 10` multiplier in t2) and code table; the frame's shadow rows in RtPgMem's seven-flag words; the piece lemma rt7_piece from the three block statements. *)
 (* reac-pw/fuzz_rate image A (fuzz_rate.asan, pinned sha256
    22bc8613d780c9a99353dc86368f9401311ef5c8358882651217836298529b6a; every address measured on the unstripped twin
    0d508f2c65c249840b6c8fe3c1960824f2548b175c23583632f06bb7956458c3, same loaded bytes): the two inner cut states of

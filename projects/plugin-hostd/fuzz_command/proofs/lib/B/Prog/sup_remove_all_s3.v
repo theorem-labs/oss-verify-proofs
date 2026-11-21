@@ -16,13 +16,14 @@
    answer and state fields are program statics inside scn_FP, and the old answer's block is one of the recorder's
    blocks, so it is in scn_FP's ablocks_fp O or is a block the walk made. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/sup_connect_s5.v, with its module paths and module names changed; 204 of its 244 lines of code are new or changed and 262 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* sup_remove_all's walk on the ASan+UBSan build of plugin-hostd/fuzz_command (fuzz_command.asan-ubsan), the step at
    the tail jump `j answer` (0x8b458, to answer at 0x8aa10): sra_tail proves sra_tail_stmt (sup_remove_all_s2.v).
    The walk has reached answer's entry (world Wt) with the journal J1 from sup_remove_all's entry, after record()
    (0x8b440) and the frame's release; answer's contract (tanswer_spec, answer_c.v) is applied there through PaFx.v's
    cl_callS_wideF, which composes J1 with answer's journal by the core's ajournal_sub_wide (lib/Reusable/YCbq.v), and
    answer's post-condition gives sup_remove_all's. No symbolic execution. The B twin of
-   lib/A/Prog/sup_remove_all_refit_s3.v (a working branch e84227c9553, the pass-4/5 re-fit of a Theorem Labs lane's 59cc4017e62).
+   lib/A/Prog/sup_remove_all_refit_s3.v (a working branch, the pass-4/5 re-fit of a Theorem Labs lane).
 
    The B code differs from A's here in three ways: the shape "resp 0" is at 0x21d20 (RO_lit_21d20, end 0x21d26);
    a0 is record()'s return value rec_slot R, whose slot form answer asks (the call's index in the table, or the

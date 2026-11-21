@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 1665 of its 1776 lines of code are new or changed and 900 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment F5 of fuzz_ctrl LLVMFuzzerTestOneInput (asan-ubsan build of libreac v1.9.0, image B), frame-loop turn
    j, and the reac_ctrl_parse call block 0x8214c-0x82158 that F5 and F6 share. rule 24: no function proved (a slot
    segment).
@@ -39,8 +40,8 @@
    j)) = t_k j, s8 = t_k j is FM's and the first word at fr + 176 ([A+280], FLI) is the parse struct's kind byte
    (pBb, ctrlparse_kind_bytes).
 
-   CUTS. seg_F5 is S_F5 of a Theorem Labs lane's forms-asan-ubsan-v190.md (a working note, not in this delivery) over the official cuts of SlotInv.v (
-   217aa9d4cd9): Inv_B82048_at carries a0 = t_k j and flen g j < 50 (0x82048 is reached only from 0x81f64 beqz s4
+   CUTS. seg_F5 is S_F5 of a Theorem Labs lane's forms-asan-ubsan-v190.md (a working note, not in this delivery) over the official cuts of SlotInv.v:
+   Inv_B82048_at carries a0 = t_k j and flen g j < 50 (0x82048 is reached only from 0x81f64 beqz s4
    and 0x81f7c bltu s4,50), and LK's FLI carries KNT (the KIND_NAME table bytes and their addressability), from
    which seg_c gives the exit's explicit KIND_NAME pair. Inv_B8214c_join is internal to this unit (the join of F5
    and F6). *)
@@ -993,7 +994,7 @@ Proof.
   apply andb_true_iff in H as (H1 & H2). apply Z.leb_le in H1, H2. lia.
 Qed.
 
-(* ---- local views of the generated allocator laws (v1.9.0 Contract.v, a working branch 48004cf7bfc) ----
+(* ---- local views of the generated allocator laws (v1.9.0 Contract.v, a working branch) ----
    a Theorem Labs lane's rule (15:18Z / 15:32Z): a law's conjunct list is taken apart once per file, here, by a position-free
    proof, and every site of F4-F6 uses these views (F1.v has the same views for F1-F3). *)
 Ltac c_conj := repeat (match goal with |- _ /\ _ => split end).

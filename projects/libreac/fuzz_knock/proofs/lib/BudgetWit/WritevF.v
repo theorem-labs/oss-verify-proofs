@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN3f.v, with its module paths, addresses and numbers changed. *)
 (* Modified by Theorem Labs, 2026-11: made from Reusable/YN3f.v: its realizes lemmas restated over BudgetWit.Rzb.rzb. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed rzb_writev_dep). *)
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -16,6 +17,7 @@ From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require Import YM05.
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable.R Require Import Cfg.
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require Import YN3f.
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.BudgetWit Require Import Rzb.
+From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YP0n.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Open Scope bv_scope.
@@ -106,6 +108,8 @@ assert (Hr : (1 <= Z.to_nat (bv_unsigned ret))%nat /\ (Z.to_nat (bv_unsigned ret
 exists (exist _ (Z.to_nat (bv_unsigned ret)) Hr). unfold ef, writev_eff; cbn [proj1_sig].
 rewrite Z2Nat.id by lia. rewrite Z_to_bv_bv_unsigned, Hci. auto.
 + exact (fun _ => mcfg_nonspurious_no _ _ _ _ _ _ Hno eq_refl).
++ (* 727298f3: node_ok's read-only backing obligation ([RomBase.sys_rob]) *)
+  exact (YP0n.writev_rob_pend segs regs pc mem rom model fd ch iovs bs Hno Hfdc H32 Hfd Hcnt Hmax Himp Hiok Hbok Hg Htot Hnb).
 - eapply (grant_ok_no segs (pend_at regs pc mem rom) model (getr regs 17) 66);
 [reflexivity | exact Hno | reflexivity].
 - intros [n [Hn1 Hn2]]. unfold ef; cbn [proj1_sig]. rewrite adv_pend.

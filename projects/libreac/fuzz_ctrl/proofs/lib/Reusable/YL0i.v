@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YL0i.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed MR_rebase). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -404,7 +405,7 @@ Qed.
 Lemma MR_rebase : MR_laws B MR -> forall L A mem md fds' fs' pins', MR L A mem md -> MR L A mem (md_rebase md fds' fs' pins').
 Proof.
 intros LAWS L A mem md fds' fs' pins' H. destruct (mr_model B MR LAWS _ _ _ _ H) as (Hh & Hlz & Hmat).
-apply (mr_frame B MR LAWS L A mem mem md (md_rebase md fds' fs' pins') H); auto.
+apply (mr_frame B MR LAWS L A mem mem md (md_rebase md fds' fs' pins') H eq_refl); auto.
 intros p n i Hin Hi. exact (proj1 (mr_blocks B MR LAWS L A mem md p n i H Hin Hi)).
 Qed.
 End d.

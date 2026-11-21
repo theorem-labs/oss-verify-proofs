@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YG03.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-10: EV_MAX raised to 11776, as in omx-clap-core/fuzz_manifest's copy of this file; class_elems_count bounds rg_alloc_user by kFreeArrayOffset instead of 2 ^ 31. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/Reusable/YG03.v at 4f87de75d677 (donor image sha256 c2c7559b29bd), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/Reusable/YG03.v (donor image sha256 c2c7559b29bd), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From Stdlib Require Import Sorting.Permutation.
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require Import YG00 YG0a YG01 YG04 YG02 YG06 YG07.

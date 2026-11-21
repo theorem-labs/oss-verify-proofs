@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the fresh-variable literal of runs run15i and run15j moves from 28 to 44, by the 16 entries the launch's entry table gained, in both copies. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run.
@@ -24,7 +25,7 @@ Proof. apply AX2F.mk_itab_rs_sound. apply AX2F.itab_leaf_sound. Qed.
 
 
 (* [comment removed for export] *)
-Definition run15i := ltac:(nf_run KN15h ((AX2L.sym_execFS6 SEGS IT_Kn4e KN15h F8 true STOPS3 noscr (SS PC15h SR15h [] KN15h 28) []))).
+Definition run15i := ltac:(nf_run KN15h ((AX2L.sym_execFS6 SEGS IT_Kn4e KN15h F8 true STOPS3 noscr (SS PC15h SR15h [] KN15h 44) []))).
 Definition PC15i : Z := Eval lazy in (s_pc (fst (fst run15i))).
 Definition SR15i : list expr := Eval lazy in (s_regs (fst (fst run15i))).
 Definition LG15i : list sentry := s_log (fst (fst run15i)).
@@ -32,7 +33,7 @@ Definition SK15i : list kentry := s_know (fst (fst run15i)).
 Definition NX15i : nat := Eval lazy in (s_next (fst (fst run15i))).
 Definition SC15i : list sidecond := Eval lazy in (snd (fst run15i)).
 Definition SP15i : scripts := Eval lazy in (snd run15i).
-Lemma run15i_eq : sym_exec SEGS F8 true STOPS3 noscr (SS PC15h SR15h [] KN15h 28) [] = (SSR PC15i SR15i LG15i SK15i NX15i None, SC15i, SP15i).
+Lemma run15i_eq : sym_exec SEGS F8 true STOPS3 noscr (SS PC15h SR15h [] KN15h 44) [] = (SSR PC15i SR15i LG15i SK15i NX15i None, SC15i, SP15i).
 Proof. apply (AX2L.sym_exec_viaFS6 SEGS IT_Kn4e KN15h); [exact IT_Kn4e_ok | reflexivity | vm_cast_no_check (eq_refl run15i)]. Qed.
 Definition KCa4e_1 : list kentry := Eval vm_compute in (NFC.d_kl "$0000,#$+/080$,%/.-'&.#-.0000,#%++080@/@-:000,#%+'080-.$--,%%$&8000,#%##080,&.@:000,#$@@080%#&'//+.$$@<000,#$.&080$$%@#>000,#$.%080$@@-4000,#$-#080@#-&0000,#$,@080-.$--,'$,#>000,#$,&080$#',.4000,#$,%080$'#&&&#,$+,6000,#$+@080.'#'>000,#%@%080@%/#6000,#%@$080-.$--,'$,$:000,#%'%080$$#'@<000,#%'$080--/#,.''%,/$:").
 Definition KCa4e_2 : list kentry := Eval vm_compute in (NFC.d_kl "$0000,#$@+080@+'$4000,#$@'080%#%+:000,#$.$080@--,2000,#$.#080-+-$-#'#/,0000,#$,/080.'#&>000,#$,.080%#+@'@%,'+4000,#%@'080$#',/:000,#%@&080-+-$-#'#/,<000,#%&&080$#'-%8000,#%&%080,.8000,#$/@080,+-'>000,#$//080'$#///&$&&:000,#$-.080/-&&2000,#$--080$@@,>000,#$,-080@--@6000,#$,,080$#$-@'.+#,'8").
@@ -78,7 +79,7 @@ Proof. apply AX2L.carry_viaF3. vm_cast_no_check (eq_refl car15i). Qed.
 
 
 (* [comment removed for export] *)
-Definition run15j := ltac:(nf_run KN15i ((AX2L.sym_execFS6 SEGS IT_Kn4e KN15i F8 true STOPS3 noscr (SS PC15i SR15i [] KN15i 28) []))).
+Definition run15j := ltac:(nf_run KN15i ((AX2L.sym_execFS6 SEGS IT_Kn4e KN15i F8 true STOPS3 noscr (SS PC15i SR15i [] KN15i 44) []))).
 Definition PC15j : Z := Eval lazy in (s_pc (fst (fst run15j))).
 Definition SR15j : list expr := Eval lazy in (s_regs (fst (fst run15j))).
 Definition LG15j : list sentry := s_log (fst (fst run15j)).
@@ -86,7 +87,7 @@ Definition SK15j : list kentry := s_know (fst (fst run15j)).
 Definition NX15j : nat := Eval lazy in (s_next (fst (fst run15j))).
 Definition SC15j : list sidecond := Eval lazy in (snd (fst run15j)).
 Definition SP15j : scripts := Eval lazy in (snd run15j).
-Lemma run15j_eq : sym_exec SEGS F8 true STOPS3 noscr (SS PC15i SR15i [] KN15i 28) [] = (SSR PC15j SR15j LG15j SK15j NX15j None, SC15j, SP15j).
+Lemma run15j_eq : sym_exec SEGS F8 true STOPS3 noscr (SS PC15i SR15i [] KN15i 44) [] = (SSR PC15j SR15j LG15j SK15j NX15j None, SC15j, SP15j).
 Proof. apply (AX2L.sym_exec_viaFS6 SEGS IT_Kn4e KN15i); [exact IT_Kn4e_ok | reflexivity | vm_cast_no_check (eq_refl run15j)]. Qed.
 Definition KCa4e_36 : list kentry := Eval vm_compute in (NFC.d_kl "$0000,#$-@080$#'-&8000,#$-/080,-4000,#$,/080$#&#-<000,#$,.080$@$.0000,#$,&080$$%@/8000,#$,%080$@$.2000,#$+@080$$%@-8000,#$+/080$@$/0000,#%%,080/$#&2000,#%%+080$@$/<000,#%#,080@/@-:000,#%#+080-.$--,%%$&8000,#$.-080@+'%6000,#$.,080$'#&&&#',$+0000,#$-%080$#$%'4000,#$-$080'/+4").
 Definition KCa4e_37 : list kentry := Eval vm_compute in (NFC.d_kl "$0000,#$,+080,--&2000,#$,'080$'#&&&#',$+6000,#$,$080.,$%8000,#$,#080$'#&&&#',$+:000,#%%.080@@#$:000,#%%-080$@'-0000,#$.+080-,%%0000,#$.'080/$<000,#$-#080/#@/8000,#$,@080-.$--,%,%$0000,#%%@080,@'%0000,#%%/080$@'-2000,#%#%080.$/$:000,#%#$080,-6000,#%&$080$#&$&<000,#%&#080$@'/2").
@@ -149,7 +150,7 @@ Proof. apply AX2F.mk_itab_rs_sound. apply AX2F.itab_leaf_sound. Qed.
 
 
 (* [comment removed for export] *)
-Definition run15i := ltac:(nf_run KN15h ((AX2L.sym_execFS6 SEGS IT_Kn4e KN15h F8 true STOPS3 noscr (SS PC15h SR15h [] KN15h 28) []))).
+Definition run15i := ltac:(nf_run KN15h ((AX2L.sym_execFS6 SEGS IT_Kn4e KN15h F8 true STOPS3 noscr (SS PC15h SR15h [] KN15h 44) []))).
 Definition PC15i : Z := Eval lazy in (s_pc (fst (fst run15i))).
 Definition SR15i : list expr := Eval lazy in (s_regs (fst (fst run15i))).
 Definition LG15i : list sentry := s_log (fst (fst run15i)).
@@ -157,7 +158,7 @@ Definition SK15i : list kentry := s_know (fst (fst run15i)).
 Definition NX15i : nat := Eval lazy in (s_next (fst (fst run15i))).
 Definition SC15i : list sidecond := Eval lazy in (snd (fst run15i)).
 Definition SP15i : scripts := Eval lazy in (snd run15i).
-Lemma run15i_eq : sym_exec SEGS F8 true STOPS3 noscr (SS PC15h SR15h [] KN15h 28) [] = (SSR PC15i SR15i LG15i SK15i NX15i None, SC15i, SP15i).
+Lemma run15i_eq : sym_exec SEGS F8 true STOPS3 noscr (SS PC15h SR15h [] KN15h 44) [] = (SSR PC15i SR15i LG15i SK15i NX15i None, SC15i, SP15i).
 Proof. apply (AX2L.sym_exec_viaFS6 SEGS IT_Kn4e KN15h); [exact IT_Kn4e_ok | reflexivity | vm_cast_no_check (eq_refl run15i)]. Qed.
 Definition KCb4e_59 : list kentry := Eval vm_compute in (NFC.d_kl "$0000,#%,+080$,%/.-'&.#-.0000,#&,$080@/@,:000,#&,#080-.$--,%%$&8000,#&#-080,&.@:000,#&#,080%#&'//+.$$@<000,#%.@080$$%@#>000,#%./080$@@-4000,#%--080@#-%0000,#%-,080-.$--,'$,#>000,#%,@080$#',.4000,#%,/080$'#&&&#,$+,6000,#%,,080.'#'>000,#&@/080@%.@6000,#&@.080-.$--,'$,$:000,#&'/080$$#'@<000,#&'.080--/#,.''%,/$:").
 Definition KCb4e_60 : list kentry := Eval vm_compute in (NFC.d_kl "$0000,#&#$080@+'#4000,#&##080%#%+:000,#%..080@--+2000,#%.-080-+-$-#'#/,0000,#%-+080.'#&>000,#%-'080%#+@'@%,'+4000,#'##080$#',/:000,#&@@080-+-$-#'#/,<000,#&&@080$#'-%8000,#&&/080,.8000,#%@,080,+-'>000,#%@+080'$#///&$&&:000,#%.'080/-&&2000,#%.&080$@@,>000,#%-&080@--/6000,#%-%080$#$-@'.+#,'8").
@@ -203,7 +204,7 @@ Proof. apply AX2L.carry_viaF3. vm_cast_no_check (eq_refl car15i). Qed.
 
 
 (* [comment removed for export] *)
-Definition run15j := ltac:(nf_run KN15i ((AX2L.sym_execFS6 SEGS IT_Kn4e KN15i F8 true STOPS3 noscr (SS PC15i SR15i [] KN15i 28) []))).
+Definition run15j := ltac:(nf_run KN15i ((AX2L.sym_execFS6 SEGS IT_Kn4e KN15i F8 true STOPS3 noscr (SS PC15i SR15i [] KN15i 44) []))).
 Definition PC15j : Z := Eval lazy in (s_pc (fst (fst run15j))).
 Definition SR15j : list expr := Eval lazy in (s_regs (fst (fst run15j))).
 Definition LG15j : list sentry := s_log (fst (fst run15j)).
@@ -211,7 +212,7 @@ Definition SK15j : list kentry := s_know (fst (fst run15j)).
 Definition NX15j : nat := Eval lazy in (s_next (fst (fst run15j))).
 Definition SC15j : list sidecond := Eval lazy in (snd (fst run15j)).
 Definition SP15j : scripts := Eval lazy in (snd run15j).
-Lemma run15j_eq : sym_exec SEGS F8 true STOPS3 noscr (SS PC15i SR15i [] KN15i 28) [] = (SSR PC15j SR15j LG15j SK15j NX15j None, SC15j, SP15j).
+Lemma run15j_eq : sym_exec SEGS F8 true STOPS3 noscr (SS PC15i SR15i [] KN15i 44) [] = (SSR PC15j SR15j LG15j SK15j NX15j None, SC15j, SP15j).
 Proof. apply (AX2L.sym_exec_viaFS6 SEGS IT_Kn4e KN15i); [exact IT_Kn4e_ok | reflexivity | vm_cast_no_check (eq_refl run15j)]. Qed.
 Definition KCb4e_94 : list kentry := Eval vm_compute in (NFC.d_kl "$0000,#%.,080$#'-&8000,#%.+080,-4000,#%-+080$#&#-<000,#%-'080$@$.0000,#%,@080$$%@/8000,#%,/080$@$.2000,#%,,080$$%@-8000,#%,+080$@$/0000,#&&%080/$#&2000,#&&$080$@$/<000,#&$%080@/@,:000,#&$$080-.$--,%%$&8000,#%/&080@+'$6000,#%/%080$'#&&&#',$+0000,#%-/080$#$%'4000,#%-.080'/+4").
 Definition KCb4e_95 : list kentry := Eval vm_compute in (NFC.d_kl "$0000,#%-$080,--&2000,#%-#080$'#&&&#',$+6000,#%,.080.,$%8000,#%,-080$'#&&&#',$+:000,#&&'080@@##:000,#&&&080$@'-0000,#%/$080-,%%0000,#%/#080/$<000,#%--080/#@/8000,#%-,080-.$--,%,%$0000,#&&,080,@'%0000,#&&+080$@'-2000,#&#/080.$/$:000,#&#.080,-6000,#&&.080$#&$&<000,#&&-080$@'/2").

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO's mappings and steps): changed ledger_ok, MRc_init; added rfree_in, rfree_incl, rfree_sub, rfree_app_l. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -41,6 +42,41 @@ so_debruijn : forall k, 0 <= k < 32 ->
 exists b, seg_rom (ms_segs B) (w64 (ms_debruijn B + (Z.shiftr ((2 ^ k * 125613361) mod 2 ^ 32) 27))) = Some b /\
 bv_unsigned b = k
 }.
+Lemma rfree_in : forall l (lo n a sz : word),
+region_free l lo n = true -> In (a, sz) l -> iv_overlap lo n a sz = false.
+Proof.
+induction l as [|[b s] l IH]; intros lo n a sz H Hin; [destruct Hin|].
+cbn [region_free] in H. apply andb_prop in H as [H1 H2].
+destruct Hin as [E|Hin].
+- injection E as E1 E2. subst b s. apply negb_true_iff. exact H1.
+- exact (IH lo n a sz H2 Hin).
+Qed.
+Lemma rfree_incl : forall l1 l2 (lo n : word),
+incl l1 l2 -> region_free l2 lo n = true -> region_free l1 lo n = true.
+Proof.
+induction l1 as [|[a sz] l1 IH]; intros l2 lo n Hi H; [reflexivity|].
+cbn [region_free]. rewrite (rfree_in l2 lo n a sz H (Hi (a, sz) (or_introl eq_refl))). cbn [negb andb].
+apply (IH l2); [intros x Hx; apply Hi; right; exact Hx | exact H].
+Qed.
+Lemma rfree_sub : forall l (lo n lo' n' : word),
+region_free l lo n = true -> bv_unsigned lo <= bv_unsigned lo' ->
+bv_unsigned lo' + bv_unsigned n' <= bv_unsigned lo + bv_unsigned n ->
+region_free l lo' n' = true.
+Proof.
+induction l as [|[a sz] l IH]; intros lo n lo' n' H Hlo Hhi; [reflexivity|].
+cbn [region_free] in *. apply andb_prop in H as [H1 H2].
+rewrite (IH lo n lo' n' H2 Hlo Hhi), andb_true_r.
+unfold iv_overlap in *. apply negb_true_iff in H1. apply negb_true_iff.
+apply andb_false_iff in H1. apply andb_false_iff.
+destruct H1 as [H1|H1]; [left|right]; apply Z.ltb_ge in H1; apply Z.ltb_ge; lia.
+Qed.
+Lemma rfree_app_l : forall l1 l2 (lo n : word),
+region_free (l1 ++ l2) lo n = true -> region_free l1 lo n = true.
+Proof.
+induction l1 as [|[a sz] l1 IH]; intros l2 lo n H; [reflexivity|].
+cbn [region_free app] in *. apply andb_prop in H as [H1 H2].
+rewrite H1. cbn [andb]. exact (IH l2 lo n H2).
+Qed.
 Section f.
 Variable B : malloc_syms.
 Let segs := ms_segs B.
@@ -91,7 +127,8 @@ st_guard : exists g, word_mem segs mem (ms_guard B) g;
 st_tables : forall a, table_addr a -> mbyte segs mem a = seg_rom segs (w64 a)
 }.
 Record ledger_ok (L : layout) (A : astate) (md : Model) : Prop := {
-lg_reserved : vm_reserved (m_vmmaps md) = segments_reserved segs;
+lg_reserved : exists rx, vm_reserved (m_vmmaps md) = segments_reserved segs ++ rx
+/\ rx_ok (ly_brk0 L) rx;
 lg_limit : SRC_LIM_MIN <= vm_limit (m_vmmaps md);
 lg_maps : forall r rg, region_of A r = Some rg -> rg_live rg = true -> rg_kind rg <> RkBrk ->
 In (w64 (ly_reg L r), w64 (rg_len rg)) (vm_maps (m_vmmaps md));
@@ -113,7 +150,10 @@ ly_reg L r mod PGSZ = 0 /\ 4096 <= ly_reg L r /\ ly_reg L r + rg_len rg <= alloc
 lg_count : Z.of_nat (length (vm_maps (m_vmmaps md))) <= nslots A;
 lg_sizes : Forall (fun p => bv_unsigned (snd p) <= live_bytes A) (vm_maps (m_vmmaps md));
 lg_backing : vm_backing_used md <= live_bytes A;
-lg_ceil : YM05.ceil_of_top (alloc_top (m_vmmaps md))
+lg_ceil : YM05.ceil_of_top (alloc_top (m_vmmaps md));
+lg_vdso : incl (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) (vm_reserved (m_vmmaps md));
+lg_rfree : forall r rg, region_of A r = Some rg -> rg_live rg = true -> rg_kind rg <> RkBrk ->
+region_free (vm_reserved (m_vmmaps md)) (w64 (ly_reg L r)) (w64 (rg_len rg)) = true
 }.
 Record MRc (L : layout) (A : astate) (mem : word -> option byte) (md : Model) : Prop := {
 mc_syms : syms_ok B;
@@ -384,6 +424,8 @@ intros k Hk. rewrite le_byte_0. rewrite <- Z.add_assoc. apply (hp_ctx _ _ _ HP).
 + rewrite Hmaps. constructor.
 + cbn. lia.
 +   exact (hp_ceil _ _ _ HP).
++ exact (hp_vdso _ _ _ HP).
++ intros r rg Hr. unfold region_of in Hr. cbn in Hr. destruct r; discriminate.
 - exact (hp_model _ _ _ HP).
 Qed.
 Corollary MRc_init_ex : forall mem md sec,

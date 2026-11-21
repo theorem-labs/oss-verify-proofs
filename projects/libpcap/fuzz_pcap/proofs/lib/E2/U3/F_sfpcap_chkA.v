@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: chk_ctx's stack-floor conjunct reads usp0 R - 6144512 <= lo, the floor 6144512 bytes below the entry sp (rc_lo at this revision), where it read usp0 R - 8388608 <= lo; the steps that unfold rc_lo do so in every hypothesis. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool String.
@@ -85,7 +86,7 @@ Section Chk.
 
   (* [comment removed for export] *)
   Definition chk_ctx (sp tp : word) (R : rctx) (s : PState H hptr) (CL FB : list cblock) (lo MG FA EB ERR : Z) (f : hptr) (magic : list Z) (m : mem) : Prop :=
-    GIo K R s CL FB m /\ (usp0 R - 8388608 <= lo)%Z /\ (lo + 81920 <= bv_unsigned sp)%Z /\ (bv_unsigned sp <= rc_spmain R)%Z
+    GIo K R s CL FB m /\ (usp0 R - 6144512 <= lo)%Z /\ (lo + 81920 <= bv_unsigned sp)%Z /\ (bv_unsigned sp <= rc_spmain R)%Z
     /\ tp = rc_tp R /\ (bv_unsigned sp mod 16 = 0)%Z
     /\ In (f, FA, FILE_BLOCK) FB /\ sites = sites_at (bv_unsigned sp + D_CHECK_HEADER)
     /\ length magic = 4%nat /\ Forall (fun z => 0 <= z < 256)%Z magic
@@ -128,7 +129,7 @@ Section Chk.
       assert (MG' : rw_cells usegs mm MG [CB 4 (map b8 [k0; k1; k2; k3])])
         by (eapply rw_cells_recell; [eapply agrees_rw_cells; [exact AGW | exact MG3 | intros a Ha; cbn [outside cells_size csize Nat.add] in *; lia] | cbn; repeat split; exact Logic.I | reflexivity]);
       assert (G' : GIo K R ps3 CL FB mm)
-        by (eapply (GIo_client_frame K HFL SFL); [exact G3 | exact MU3 | exact WM3 |]; apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo; lia| apply Forall_nil])
+        by (eapply (GIo_client_frame K HFL SFL); [exact G3 | exact MU3 | exact WM3 |]; apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo in *; lia| apply Forall_nil])
     end.
     apply evt_done. unfold check_header_post.
     lazymatch goal with |- context [MS _ _ _ _ _ ?mm _] => exists (Z_to_bv 64 0), mm, (Z_to_bv 64 1) end.

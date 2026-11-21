@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/MemnormLoc.v (commit ce1a656b52b7, file sha256 6fda8ba66b7e) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 0 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MemnormLoc.v (commit 30a1993588f, c5 + memnorm; file sha256 6501a76bde7b) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-(* Modified by Theorem Labs, 2026-10: relocated from lib/A/MemnormLoc.v (commit d2dafa219c1, file sha256 55a52bb067f0) onto plugin-hostd/fuzz_reply's asan-ubsan image (unstripped fuzz_reply.asan-ubsan, sha256 3389287e1d61; pin 10ffb5f9202a) by alreloc ced0368250cb6538 (A -> B, direct map 541d2a13b9d2): 0 numerals moved; module paths lib.A -> lib.B and the image twins A<r> -> Y<r>. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/MemnormLoc.v (file sha256 6fda8ba66b7e) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 0 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MemnormLoc.v (c5 + memnorm; file sha256 6501a76bde7b) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: relocated from lib/A/MemnormLoc.v (file sha256 55a52bb067f0) onto plugin-hostd/fuzz_reply's asan-ubsan image (unstripped fuzz_reply.asan-ubsan, sha256 3389287e1d61; pin 10ffb5f9202a) by alreloc ced0368250cb6538 (A -> B, direct map 541d2a13b9d2): 0 numerals moved; module paths lib.A -> lib.B and the image twins A<r> -> Y<r>. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (task MEMNORM, callee add-ons): location lemmas for the memnorm keeps of the cgif_file
    Allocate / Deallocate callee walks (brief, the internal file CALLEE-BRIEF.md, measurement, the internal file callee-frames.md).
    rule 24: no function proved (kind: image / location lemmas).
@@ -24,7 +25,7 @@
      YFf2.D (Enqueue, hit; YFf2.D_owned :866, which also takes k), from YFf2.D_cases :335, YFf2.HIGH :316;
      YFey.D (Drain transfer; YFey.D_owned :744, plus TfibSyms for the instance cells), from YFey.D_cases :244,
        YFey.HIGH :225.
-   The window -> keep step for any other window W is MemnormT.memnorm_frame (MemnormT.v:71) with W's own location
+   The window -> keep step for any other window W is MemnormT.memnorm_frame (MemnormT.v:72) with W's own location
    facts (e.g. YFg0.WIN_zone, YFgs.WIN_zone, YFkm.XC_where, YFhm.TABW_range, YFg8.MAP_facts) and the helpers here. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.

@@ -53,7 +53,7 @@ Qed.
 Section rows.
 (* The composition's symbol record (DecodeBClose.v:111 Variable B). *)
 Variable B : asyms.
-(* The relocated core's symbol facts for B (lib/B/YF0m.v:321 TfibSyms), the composition's HB_TFIBSYMS. *)
+(* The relocated core's symbol facts for B (lib/B/YF0m.v:322 TfibSyms), the composition's HB_TFIBSYMS. *)
 Hypothesis HB_TFIBSYMS : TfibSyms B.
 
 (* ===================================================================================================== *)

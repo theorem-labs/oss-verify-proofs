@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 975 of its 992 lines of code are new or changed and 231 lines of the source are left out. *)
-(* Footprint (_F) re-run of reac_box_model_block_cases2.v at a working branch d69f7c708f6 (proved v1.9
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Footprint (_F) re-run of reac_box_model_block_cases2.v at a working branch (proved v1.9
    run of record) over lib/Lib/StepF, from its proof scripts; the script edits include RFSh cleared, Rp / Rb / Ro hidden and footprint steps, and the new lemmas rng_sub_at, sh_cover_sub and sh1_F.
    Image: fuzz_ctrl.asan (libreac v1.9.0), ELF sha256
-   78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd. FACTS ed6b6b7b0ab.
+   78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd. FACTS.
    Const cells checked against the v1.9.0 image bytes: none read (the five runs of this file read only the row at
    p, the name at rname row, the box at o and the function's own locals and frame; every image byte they touch is
    an instruction fetch, which is not an access).
@@ -24,7 +25,7 @@
       no new proof obligation;
    2. the _F output feeds ONLY the ported cgif-form walk: no W_cutfree_ok, no cut-free twin, no LSCPS join, no
       top-level claim;
-   3. the source runs are on ctrl's v1.9 record (FACTS ed6b6b7b0ab), with no stale AsanRT / off_img literal /
+   3. the source runs are on ctrl's v1.9 record (FACTS), with no stale AsanRT / off_img literal /
       wrong-image cell; the re-run's const cells are checked against fuzz_ctrl's v1.9.0 image bytes;
    4. this file carries its provenance above and goes to the auditor a Theorem Labs lane, who signs it against its proved
       run before it counts;
@@ -103,7 +104,7 @@ Ltac2 Notation "inst_exact" c(constr) := let r := inst c in exact $r.
 Set Default Proof Mode "Classic".
 
 (* ------------------------------------------------------------------------------------------------------- *)
-(* The footprint hooks of the walk (the text of 3c9fcc93205 reac_box_model_blockF.v, this function's own). *)
+(* The footprint hooks of the walk (the text of reac_box_model_blockF.v, this function's own). *)
 
 (* The store hook of reac_box_model_block_base.v, re-issued for the evtF walk: it also transports rd_mono. *)
 Local Ltac footprint_after_store segs m a bs ::=
@@ -121,7 +122,7 @@ Local Ltac footprint_after_store segs m a bs ::=
 (* An address the walk builds from a register holds [bv_unsigned (Z_to_bv 64 e)], which StepF's syntactic
    matching does not relate to the [rng] premise of its region.  Normalize the wrap, then close the bounds from
    an rng hypothesis by lia alone.
-   Text of reac_box_model_block_cases0aF.v:112-133 (the narrow hook): StepF calls acc_hint FIRST in solve_acc1, at
+   Text of reac_box_model_block_cases0aF.v:113-134 (the narrow hook): StepF calls acc_hint FIRST in solve_acc1, at
    every access of the run, under a backtracking match over every rng hypothesis, so it fires only on the wrapped
    shape and does no division reasoning (each lia already turns the division of a shadow byte x / 8 + off into
    equations).  The division argument of an accessed shadow byte is made ONCE per lemma, by sh1_F below, which
@@ -249,7 +250,7 @@ Section MainF.
   Hypothesis NDJ : p <> 0 -> (b = 5 \/ b = 6) -> has row <> 0 -> rname row <> 0 ->
     fp_dj [(rname row, rname row + Z.of_nat (length nb))] (fp_w [0%nat] FS).
 
-  (* The footprint and the nine regions of the function's own run (3c9fcc93205 reac_box_model_blockF.v:147-159). *)
+  (* The footprint and the nine regions of the function's own run (reac_box_model_blockF.v:148-160). *)
   Variable RNG : footprint.
   Hypothesis Rimg : rng RNG 0x10000 0x5ee000.
   Hypothesis Rwin : rng RNG (bv_unsigned sp - REAC_BOX_MODEL_BLOCK_K) REAC_BOX_MODEL_BLOCK_K.
@@ -457,7 +458,7 @@ Section MainF.
   (* One shadow BYTE of a covered range, in the bare rng form StepF's access solver matches cheaply (its own
      paths close an access with `lia` only, and the 8-aligned cover of sh_cover needs a division argument).  The
      division argument is made ONCE here, not at every access of the run.  Text of
-     reac_box_model_block_cases0aF.v:351-360, with the context cleared before the division argument (the hidden
+     reac_box_model_block_cases0aF.v:352-361, with the context cleared before the division argument (the hidden
      section hypotheses still hold divisions, which Z.div_mod_to_equations would generalize). *)
   Lemma sh1_F : forall a n x, 0 <= a -> 0 < n -> a <= x -> x < a + n -> sh_cover RNG a n ->
     rng RNG (x / 8 + ASAN_K) 1.
@@ -850,7 +851,7 @@ Section MainF.
     - intros u0 u1 u2 u11 u12 u13 u14 u15 u16 u17 u28 u29 u30 u31 mq1 PQ1.
       lazymatch type of PQ1 with ?h ?fr0 ?j0 ?n0 ?w0 ?mm ?X0 ?J0 => change (BV fr0 j0 n0 w0 mm X0 J0) in PQ1 end.
       unfold upd_bytes in PQ1. cbn [firstn skipn app length Nat.add] in PQ1.
-      (* C2AF.a4_cl_mc_loc_F states this continuation over BINV.RB (reac_box_model_block_cases2aF.v:271), which
+      (* C2AF.a4_cl_mc_loc_F states this continuation over BINV.RB (reac_box_model_block_cases2aF.v:272), which
          BINVF.RB_F does not unfold *)
       unfold RB, reac_box_model_block_binvF.RB_F, reac_box_model_block_binv.RB.
       (* 0x862e4 .. 0x863c8: the nine checked header bytes 4 2 0 13 0 2 0 254 8 of the box *)

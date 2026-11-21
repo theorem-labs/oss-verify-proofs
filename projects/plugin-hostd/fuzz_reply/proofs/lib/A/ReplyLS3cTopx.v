@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyLS.v, with its module names changed; 201 of its 283 lines of code are new or changed and 512 lines of the source are left out. *)
-(* top_x's LS rules at LS v3: the Section hypotheses LS_* of fr_contract_top_x (a working branch bb9dae5d905,
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* top_x's LS rules at LS v3: the Section hypotheses LS_* of fr_contract_top_x (a working branch,
    lib/A/W_LLVMFuzzerTestOneInput_top_x.v), each stated in top_x's text at LSx := fr_LS3c B (Section topx3c) or
    LSx := fr_LS3 B (Section topx3), RINV := fr_RINV, MT a Variable (KF-COUNT), TfibB := B, for the rows that had no
    lemma at that text and are provable from what exists.  proves no function (kind: invariant lemma).
@@ -10,8 +11,8 @@
    reads it: the rows' mo_ok conjuncts (and the rows that are only a mo_ok) are ReplyLSI.v's, proved there from its
    fr_SEC, so the lemmas here state the rows' other conjuncts.
    Names: top_x's W_LLVMFuzzerTestOneInput_remove.rm_at / rm_mk / rm_rr_ok / ... are ReplyRINV.v's copies
-   (definition texts identical to bb9dae5d905's _remove.v); the meters rm_rr_cost / rm_cnl_cost / rm_cshe_cost are
-   _remove.v's own; pro_m is ReplyRINV.v's copy (= bb9dae5d905 _pro.v's); lf_base_x and
+   (definition texts identical to's _remove.v); the meters rm_rr_cost / rm_cnl_cost / rm_cshe_cost are
+   _remove.v's own; pro_m is ReplyRINV.v's copy (= _pro.v's); lf_base_x and
    fr_lib_pre_cf_x are lib/A/W_LLVMFuzzerTestOneInput_cut_x.v's and fr_hblks is _cut.v's.  WR_MMAX (top_x's write
    rules) and CfParamsReply.fr_MMAX are equal by computation (topx_WR_MMAX_pin).  fr_live_pre is the driver's
    (ACfn_cf.fr_live_pre) where a rule needs it. *)
@@ -64,8 +65,8 @@ Import ListNotations.
 Local Set Warnings "-abstract-large-number".
 Open Scope Z_scope.
 
-(* top_x's write rules name WR_MMAX (this tree: 2^30 - 2^20; bb9dae5d905: CfParamsReply.fr_MMAX), its other rules
-   CfParamsReply.fr_MMAX: one value (ReplyATop.v atop_WR_MMAX_pin on a working branch 5ab58d26200) *)
+(* top_x's write rules name WR_MMAX (this tree: 2^30 - 2^20;: CfParamsReply.fr_MMAX), its other rules
+   CfParamsReply.fr_MMAX: one value (ReplyATop.v atop_WR_MMAX_pin on a working branch) *)
 Example topx_WR_MMAX_pin : WR_MMAX = CfParamsReply.fr_MMAX.
 Proof. reflexivity. Qed.
 
@@ -150,7 +151,7 @@ Proof.
   assert (E2 : LIVE_MAX = 17179869184) by reflexivity.
   rewrite Hbb. rewrite E1, E2 in *. unfold APARTIAL, ATABLE. lia.
 Qed.
-(* top_x :342 LS_pro at LSx := fr_LS3 B: fr_LS3_pro's proof (ReplyLS3.v:413) over lf_base_x's two facts; the premises
+(* top_x :342 LS_pro at LSx := fr_LS3 B: fr_LS3_pro's proof (ReplyLS3.v:414) over lf_base_x's two facts; the premises
    it does not read (aout_at, the controller, S2, mo_le) are top_x's *)
 Lemma topx3_LS_pro : forall XM_LIB RLO RHI LIBROOM NP G ARX cx Hp q T' pj c O cap out (S2 : astate) pos ly S,
   lf_base_x TfibB MT XM_LIB RLO RHI ACfn_cf.fr_live_pre LIBROOM NP G ARX cx Hp ->
@@ -297,9 +298,9 @@ Proof.
   intros cx t m ly0 S0 ly S si h j0 e1 h1 ev LB c2 O2 cap2 out2 E' H' H'' ds cc ev5 H _.
   exact (fr_LS3c_rm_step_p B cx t m ly0 S0 ly S si h j0 e1 h1 ev LB c2 O2 cap2 out2 E' H' H'' ds cc ev5 H I).
 Qed.
-(* top_x :342 LS_pro at LSx := fr_LS3c B was NOT provable at bb9dae5d905's text: fr_CNT at the first head needs the
+(* top_x :342 LS_pro at LSx := fr_LS3c B was NOT provable at's text: fr_CNT at the first head needs the
    count of the entry's live blocks other than the input, the kept table and g_out (xcnt_pre, ReplyLS3c.v:260), and
-   neither bb9dae5d905's lf_base_x (_cut_x.v:79-103, before the XCNT clause) nor any other premise of top_x's LS_pro
+   neither's lf_base_x (_cut_x.v:79-103, before the XCNT clause) nor any other premise of top_x's LS_pro
    bounded it.  The bridge: top_x's text with xcnt_pre in the entry split, as fr_LS3c_pro (ReplyLS3c.v:260) states
    it, over lf_base_x *)
 Lemma topx3c_LS_pro_xcnt : forall XM_LIB RLO RHI LIBROOM NP G ARX cx Hp q T' pj c O cap out (S2 : astate) pos ly S,

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/A/AFk0g.v at 88154566652a (donor image sha256 61768cf4739b), with its module paths changed and A/AB1v imported for A/AWalkFw0. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/A/AFk0g.v (donor image sha256 61768cf4739b), with its module paths changed and A/AB1v imported for A/AWalkFw0. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (a Theorem Labs lane, for a Theorem Labs lane's lib/A/AFk0.v; split agreed with a Theorem Labs lane): the ledger
    and amwf part of AD3j.AR_but_depot_grow's proof (the setup, ledger and amwf parts of the Lemma at lib/A/AD3j.v:1746),
    stated over ALedger at the walk's layout lyW instead of AR_but_depot: no exclusion list there, so the two

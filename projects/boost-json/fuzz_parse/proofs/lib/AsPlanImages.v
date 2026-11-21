@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: lemmas added for the revision. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib Require Top0Gc4. (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -15,6 +16,11 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Section FPX1. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
 Definition ASEGS : ltac2:(zQ "20!h8!l3@1$0$1") := ltac2:(zQ "10!p2$0").
 Definition APH : ltac2:(zQ "10!q4$0") := ltac2:(zQ "10!qf$0").
+(* The image's ELF entry, [Run.init_config]'s pc and the auxv's AT_ENTRY.  New at
+   75d69e00: [AsanInit]'s section takes it as [apc] and [SINV0]/[FULL0] carry it, so the
+   consumer cone needs a name for it beside [APH].  It belongs HERE, with the image's
+   other per-image constants, and never as a literal at a use site. *)
+Definition A_PC : N := Asan.M.init_pc.
 
 Lemma asan_wx : ltac2:(zQ "20!vb!hje@1$1$0").
 Proof. apply wx_segs_nowrap_of_b. vm_compute. reflexivity. Qed.

@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the INSTANCE WITNESSES of indent's image premises at image A' (the #102 asan pin 1be0f53d,
    unstripped twin bff8519bbe3e; unit ruling c-omx-hpreset 16:45Z: an image premise counts only beside a lemma closed
-   by vm_compute at the instance). The instance, all of it from the kit's cut 7cdbb61b5fa0: B := AD2l.TfibB (blob
+   by vm_compute at the instance). The instance, all of it from the kit's cut: B := AD2l.TfibB (blob
    eb321db7a357), PA := PAImg_prog.PI_prog_A (h-verbs-1's A' listing v3: PAImg_prog.v 505a51ff7d08, Listing_prog.v
    7ed1529926bd), PI := PRH_Img.prh_img_A (blob 934516a622e8, the SEVEN-cell table of the #102 kit), the const-shadow
    cells AF0m.Tfib_const_shadow (blob 97f423adf6eb), the segments lib/A/Img0.rsegs (the facts' A' image), named FULLY

@@ -10,7 +10,7 @@ Built from cctz (commit `590b10c5`).
 ## At a glance
 | harness | what it does | checks beyond "does not crash" | statements |
 |---|---|---|---|
-| [fuzz_cctz](fuzz_cctz/) | load_time_zone(fuzzed name); cctz::parse(fuzzed format, fuzzed date); convert(civil_second(6 fuzzed uint32)); cctz::format(fuzzed format); every return value discarded. | none | 13, 7 blocked by the model |
+| [fuzz_cctz](fuzz_cctz/) | load_time_zone(fuzzed name); only when it returns true, cctz::parse(fuzzed format, fuzzed date) in the loaded zone, then convert(civil_second(6 fuzzed uint32)) in that zone, whose time goes to cctz::format(fuzzed format). The parse result, the parsed time and the formatted string are dropped. | none | 13, 7 blocked by the model |
 
 Not included: **api-driver** (held from this release).
 

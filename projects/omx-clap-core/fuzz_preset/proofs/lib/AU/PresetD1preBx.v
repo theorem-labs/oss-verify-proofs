@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Theorem Labs, 2026-10: GENERATED from lib/A/PresetD1preAx.v (lane CwPreA, a working branch a9e03801db9b) by port/a2b.py (sha256 e4f47803449f38c2) with its measured literal map (a table literal in code is written as its image-B cell name from lib/Reusable/YImgCellsB.v) and --map 0x10000=0x10000 0x20e00=0x20e00 0x20f40=0x20f40 (image B's first zero-shadow range is also (YImgTop.IMG_LO, 0x20f40 - YImgTop.IMG_LO), lib/Reusable/YF0m.v Tfib_zero_shadow). No hand edit. PENDING YF0m, as PresetD1preB.v. *)
+(* Theorem Labs, 2026-10: GENERATED from lib/A/PresetD1preAx.v (lane CwPreA, a working branch) by port/a2b.py (sha256 e4f47803449f38c2) with its measured literal map (a table literal in code is written as its image-B cell name from lib/Reusable/YImgCellsB.v) and --map 0x10000=0x10000 0x20e00=0x20e00 0x20f40=0x20f40 (image B's first zero-shadow range is also (YImgTop.IMG_LO, 0x20f40 - YImgTop.IMG_LO), lib/Reusable/YF0m.v Tfib_zero_shadow). No hand edit. PENDING YF0m, as PresetD1preB.v. *)
 (* Modified by Theorem Labs, 2026-10: for omx-clap-core/fuzz_preset (asan-ubsan image), the driver's interceptor SITE
    results over the second allocator instance ARcf, made from the core's lib/Reusable (relocated from
    proofs/cgif/cgif_file_fuzzer/lib): YD1k.v:273 tfib_fwrite_site, :314 tfib_refused_site and YD1l.v:147 / :152 /
@@ -11,6 +11,7 @@
    lemmas. The proofs (PresetD1preBxPf.v) use the ARcf copies of the interceptor walks (YE2x / YE2t / YE2u / YE2v /
    YE2w and their closure, copied mechanically to <name>cf.v), not premises.
    Rule 24: no function is proved here (composition / driver layer of a port). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

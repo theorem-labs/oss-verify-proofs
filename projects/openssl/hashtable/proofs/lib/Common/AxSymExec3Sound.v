@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (soundness of the linear test's third pass (lin_test_pass_sound, lin_test_pin_sound)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -2381,19 +2382,98 @@ Proof.
     + apply Z.leb_gt in Hq. pose proof (IH _ _ _ _ _ _ _ _ Hr H) as [A B]. rewrite Hs in A, B. nia.
 Qed.
 
-Lemma lin_test_rel_sound : forall segs E M kn c ts test,
-  know_ok segs E M kn -> lin_test_rel kn c ts test = true ->
+(* one substitution pass of [lin_test_rel] over a list of sound sum facts *)
+Definition lin_test_pass (kn : list kentry) (fs : list sfact) (c : Z) (ts : list (Z * expr)) (test : Z -> Z -> bool) : bool :=
+  match sum_subst fs ts 0 0 false with
+  | (ts', (lo0, hi0), true) =>
+      match lin_range (erange kn) c ts' with
+      | Some (lo, hi) => test (lo + lo0)%Z (hi + hi0)%Z
+      | None => false
+      end
+  | _ => false
+  end.
+
+Lemma lin_test_pass_sound : forall segs E M kn fs c ts test,
+  know_ok segs E M kn -> Forall (sfact_ok E) fs -> lin_test_pass kn fs c ts test = true ->
   exists lo hi, test lo hi = true /\ (lo <= c + tden E ts <= hi)%Z.
 Proof.
-  intros segs E M kn c ts test Hkn H. unfold lin_test_rel in H.
-  pose proof (sum_facts_sound segs E M kn kn Hkn Hkn) as Hfs.
-  destruct (sum_facts kn kn) as [|f fs] eqn:Hsf; [discriminate|].
-  destruct (sum_subst (f :: fs) ts 0 0 false) as [[ts' [lo0 hi0]] hit] eqn:Hss.
+  intros segs E M kn fs c ts test Hkn Hfs H. unfold lin_test_pass in H.
+  destruct (sum_subst fs ts 0 0 false) as [[ts' [lo0 hi0]] hit] eqn:Hss.
   destruct hit; [|discriminate].
   pose proof (sum_subst_sound E _ _ _ _ _ _ _ _ _ Hfs Hss) as [A B].
   destruct (lin_range (erange kn) c ts') as [[lo hi]|] eqn:Hlr; [|discriminate].
   pose proof (lin_range_sound E (erange kn) (fun a lo hi Ha => erange_sound segs E M kn a lo hi Hkn Ha) _ _ _ _ Hlr) as Hb.
   exists (lo + lo0)%Z, (hi + hi0)%Z. split; [exact H|]. lia.
+Qed.
+
+(* every fact of [sf_bylen fs] is one of [fs] *)
+Lemma sf_from_In : forall n fs f, In f (sf_from n fs) -> In f fs.
+Proof.
+  induction n as [|m IH]; intros fs f H; cbn [sf_from] in H.
+  - apply filter_In in H. exact (proj1 H).
+  - apply in_app_or in H as [H|H]; [apply filter_In in H; exact (proj1 H) | exact (IH fs f H)].
+Qed.
+Lemma sf_bylen_Forall : forall (P : sfact -> Prop) fs, Forall P fs -> Forall P (sf_bylen fs).
+Proof.
+  intros P fs H. rewrite Forall_forall in H |- *. intros f Hf. unfold sf_bylen in Hf.
+  exact (H f (sf_from_In _ _ _ Hf)).
+Qed.
+
+(* the pinned terms move both bounds by the same amount *)
+Lemma pin_terms_width : forall allkn ts lo hi ts' lo' hi' hit,
+  pin_terms allkn ts lo hi = (ts', (lo', hi'), hit) -> (hi' - lo' = hi - lo)%Z.
+Proof.
+  intros allkn ts. induction ts as [|[k a] r IH]; intros lo hi ts' lo' hi' hit H; cbn [pin_terms] in H.
+  - injection H as <- <- <- <-. reflexivity.
+  - destruct (pin_terms allkn r lo hi) as [[r' [lo1 hi1]] h1] eqn:Hr. cbn iota beta in H.
+    pose proof (IH lo hi r' lo1 hi1 h1 Hr) as W.
+    destruct (erange allkn a) as [[c c']|]; cbn iota beta in H; [destruct (Z.eqb c c'); cbn iota beta in H|];
+      injection H as <- <- <- <-; lia.
+Qed.
+
+(* the third pass of [lin_test_rel]: the form's pinned terms replaced by their value, then the sum
+   facts most terms first *)
+Definition lin_test_pin (kn : list kentry) (fs : list sfact) (c : Z) (ts : list (Z * expr)) (test : Z -> Z -> bool) : bool :=
+  match pin_terms kn ts 0 0 with
+  | (tsp, (p0, _), true) => lin_test_pass kn (sf_bylen fs) (c - p0)%Z tsp test
+  | _ => false
+  end.
+
+Lemma lin_test_pin_sound : forall segs E M kn fs c ts test,
+  know_ok segs E M kn -> Forall (sfact_ok E) fs -> lin_test_pin kn fs c ts test = true ->
+  exists lo hi, test lo hi = true /\ (lo <= c + tden E ts <= hi)%Z.
+Proof.
+  intros segs E M kn fs c ts test Hkn Hfs H. unfold lin_test_pin in H.
+  destruct (pin_terms kn ts 0 0) as [[tsp [p0 p1]] hit] eqn:Hp. destruct hit; [|discriminate].
+  pose proof (pin_terms_width kn ts 0 0 tsp p0 p1 true Hp) as W.
+  pose proof (pin_terms_gen segs E M kn ts 0 0 tsp p0 p1 true Hkn Hp (- tden E ts)%Z ltac:(lia)) as G.
+  destruct (lin_test_pass_sound segs E M kn (sf_bylen fs) (c - p0)%Z tsp test Hkn (sf_bylen_Forall _ _ Hfs) H)
+    as (lo & hi & Ht & Hb).
+  exists lo, hi. split; [exact Ht | lia].
+Qed.
+
+Lemma lin_test_rel_unfold : forall kn c ts test,
+  lin_test_rel kn c ts test =
+  match sum_facts kn kn with
+  | [] => false
+  | fs => if lin_test_pass kn fs c ts test then true
+          else if lin_test_pass kn (sf_bylen fs) c ts test then true
+          else lin_test_pin kn fs c ts test
+  end.
+Proof. reflexivity. Qed.
+
+Lemma lin_test_rel_sound : forall segs E M kn c ts test,
+  know_ok segs E M kn -> lin_test_rel kn c ts test = true ->
+  exists lo hi, test lo hi = true /\ (lo <= c + tden E ts <= hi)%Z.
+Proof.
+  intros segs E M kn c ts test Hkn H. rewrite lin_test_rel_unfold in H.
+  pose proof (sum_facts_sound segs E M kn kn Hkn Hkn) as Hfs.
+  destruct (sum_facts kn kn) as [|f fs] eqn:Hsf; [discriminate|]. cbv beta iota zeta in H.
+  destruct (lin_test_pass kn (f :: fs) c ts test) eqn:H1.
+  - exact (lin_test_pass_sound segs E M kn (f :: fs) c ts test Hkn Hfs H1).
+  - destruct (lin_test_pass kn (sf_bylen (f :: fs)) c ts test) eqn:H2.
+    + exact (lin_test_pass_sound segs E M kn (sf_bylen (f :: fs)) c ts test Hkn (sf_bylen_Forall _ _ Hfs) H2).
+    + exact (lin_test_pin_sound segs E M kn (f :: fs) c ts test Hkn Hfs H).
 Qed.
 
 Lemma lin_test_sound : forall segs E M kn c ts test,

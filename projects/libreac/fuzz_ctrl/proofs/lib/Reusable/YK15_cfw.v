@@ -26,24 +26,32 @@ Qed.
 Lemma cut_free_node : forall c (I : Type) evs nx,
 node_ok segs c I evs nx -> ~ budget_refused_at segs c -> (forall i, cut_free segs (nx i)) -> cut_free segs c.
 Proof using.
-intros c I evs nx [_ Hc] Hb H. apply (cut_free_of_succ c Hb). intros e c' Hs.
+intros c I evs nx [_ [Hc _]] Hb H. apply (cut_free_of_succ c Hb). intros e c' Hs.
 destruct (Hc e (SNext c') Hs) as (i & _ & E). injection E as ->. apply H.
 Qed.
 Lemma alloc_refused_false : forall i m, ~ In (bv_unsigned (in_sysno i)) alloc_mark_sysnos ->
 alloc_budget_refused_b i m = false.
 Proof using.
 intros i m Hn. unfold alloc_budget_refused_b.
-destruct (Z.eqb_spec (bv_unsigned (in_sysno i)) 214) as [E|_]; [exfalso; apply Hn; rewrite E; vm_compute; auto|].
-destruct (Z.eqb_spec (bv_unsigned (in_sysno i)) 216) as [E|_]; [exfalso; apply Hn; rewrite E; vm_compute; auto|].
-destruct (Z.eqb_spec (bv_unsigned (in_sysno i)) 222) as [E|_]; [exfalso; apply Hn; rewrite E; vm_compute; auto|].
-destruct (Z.eqb_spec (bv_unsigned (in_sysno i)) 226) as [E|_]; [exfalso; apply Hn; rewrite E; vm_compute; auto|].
+destruct (Z.eqb_spec (bv_unsigned (in_sysno i)) 214) as [E|_]; [exfalso; apply Hn; rewrite E; vm_compute; auto 10|].
+(* sysno 215 (munmap) joined Run.injected_table at the revision: alloc_mark_sysnos is
+   [214; 215; 216; 222; 226] (75d69e00 Run.v:1856) and alloc_budget_refused_b gained a 215
+   arm at Run.v:1861, so four destructs no longer exhaust the ifs and the final reflexivity
+   met a disjunction instead of an equation.  The depth bump is MINE, not #38's: with 226 as
+   the FIFTH disjunct of the membership goal rather than the fourth, bare `auto` (default
+   depth 5) can no longer reach it, which a probe printed as the
+   226 branch still open beside `false = false`. *)
+destruct (Z.eqb_spec (bv_unsigned (in_sysno i)) 215) as [E|_]; [exfalso; apply Hn; rewrite E; vm_compute; auto 10|].
+destruct (Z.eqb_spec (bv_unsigned (in_sysno i)) 216) as [E|_]; [exfalso; apply Hn; rewrite E; vm_compute; auto 10|].
+destruct (Z.eqb_spec (bv_unsigned (in_sysno i)) 222) as [E|_]; [exfalso; apply Hn; rewrite E; vm_compute; auto 10|].
+destruct (Z.eqb_spec (bv_unsigned (in_sysno i)) 226) as [E|_]; [exfalso; apply Hn; rewrite E; vm_compute; auto 10|].
 reflexivity.
 Qed.
 Lemma nr_node_sys : forall ms model x8 (I : Type) evs nx,
 node_ok segs (mkCfg ms model) I evs nx -> ms_svc_pending ms = Some x8 -> alloc_no_b (bv_unsigned x8) = false ->
 ~ budget_refused_at segs (mkCfg ms model).
 Proof using.
-intros ms model x8 I evs nx [_ Hc] Hsvc Hno (Hh & [(Hn & _) | (y8 & Hy8 & [Hb | (eff & m' & evs' & Hspec & Hh' & Hmat)])]);
+intros ms model x8 I evs nx [_ [Hc _]] Hsvc Hno (Hh & [(Hn & _) | (y8 & Hy8 & [Hb | (eff & m' & evs' & Hspec & Hh' & Hmat)])]);
 cbn [cfg_ms cfg_model] in *.
 - congruence.
 - rewrite Hsvc in Hy8. injection Hy8 as <-.
@@ -71,7 +79,11 @@ Qed.
 Lemma uniform_node : forall c (I : Type) evs nx,
 node_ok segs c I evs nx -> place_uniform segs c -> canon_fit_at segs c -> (forall i, uniform segs (nx i)) -> uniform segs c.
 Proof using.
-intros c I evs nx [_ Hc] Hp Hf H. apply (uniform_intro segs c Hp Hf). intros e c' Hs.
+(* A round's error at :83: `Hc` cannot be applied to `e` because its type is
+   `(forall e st, sstep_cfg ... -> exists i, ...) /\ RomBase.sys_rob segs c`.  node_ok gained a
+   THIRD conjunct at the revision, so the two-component pattern [_ Hc] bound the second AND
+   third together as one conjunction.  Split it; the sys_rob component is unused here. *)
+intros c I evs nx [_ [Hc _]] Hp Hf H. apply (uniform_intro segs c Hp Hf). intros e c' Hs.
 destruct (Hc e (SNext c') Hs) as (i & _ & E). injection E as ->. apply H.
 Qed.
 Lemma place_uniform_sys : forall ms model x8,

@@ -4,6 +4,7 @@
    920 instructions), in the form of the cgif entry walk proofs/cgif/cgif_file_fuzzer/lib/A/ACfj.v (tfib_lib_x_body:
    the program contract from the entry segment and the run segments) and lib/A/ACf5.v (rt_from: a segment is an SRr
    from one cut point's invariant to the next). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* What this file proves, and how it differs from the other lanes' per-function theorems.
    - The other lanes prove `fn_spec B A_fnP`: an SRr from the function's entry under `afn_pre`, to a post that is an
      `ajournal` (aleaf_post / fc_post / hp_post, lib/A/W_contract.v) — a statement inside a caller's walk.
@@ -56,8 +57,8 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Prog Require Import HarnessRep
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import W_rep W_contract.
 (* Required, not Imported: rdword_of_val_mem, cited by its qualified name in the harness-block lemmas *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require W_frame.
-(* Required, not Imported: the count names (xcnt_ok, SEC0 / CLS0, cnt_sec / cnt_cls: lib/A/ReplyCnt.v, taken by path
-   from commit caaa86be8d4, THE ONE DEFINITION), cited by their qualified names *)
+(* Required, not Imported: the count names (xcnt_ok, SEC0 / CLS0, cnt_sec / cnt_cls: lib/A/ReplyCnt.v, taken by path,
+   THE ONE DEFINITION), cited by their qualified names *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require ReplyCnt.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
@@ -161,7 +162,7 @@ Definition fr_gi (ly : alayout) (S : astate) (W : world segs) (mem : word -> opt
    into the input block, g_src's table, g_out's buffer and the rest needs them live and pairwise distinct): THE
    HARNESS BLOCKS.  fr_hblks names the blocks the globals point to - g_src's table (G, ATABLE) when g_src reads
    G <> 0, g_out's buffer (o, c) when g_capout reads c <> 0 - read through the view at rg_src / rg_out / rg_capout.
-   This is THE ONE DEFINITION: lib/A/ACfn_cf.v:70-74's text (a working branch 5ab58d26200) with the cut's names
+   This is THE ONE DEFINITION: lib/A/ACfn_cf.v:70-74's text (a working branch) with the cut's names
    (segs, fr_RG = fr_globals); the driver takes it from here. *)
 Definition fr_hblks (W : world segs) (mem : word -> option byte) : list (Z * Z) :=
   let v := aview segs (w_H W) mem in
@@ -596,7 +597,7 @@ Definition lregs_K (cx : lfcx) (t : Z) (m : lmod) (FF : Z) (regs : bvmap 5 word)
   lregs_common cx FF regs /\ getr regs 27 = w64 t /\ 0 <= t < OPS_MAX /\
   getr regs 22 = w64 (c_p cx + lm_k m) /\ sv8 W mem (lf_F cx + 144) (c_n cx - lm_k m) /\ 0 <= lm_k m <= c_n cx.
 (* X 0x84bf8: the loop left (or never entered) after t operations; the exit block reads s1, s2, s7, s9, s10.  The last
-   conjunct bounds t (0 <= t <= OPS_MAX), which the exit's room facts read (lib/A/ReplyLS3oRf.v, commit 066a0abe56c);
+   conjunct bounds t (0 <= t <= OPS_MAX), which the exit's room facts read (lib/A/ReplyLS3oRf.v);
    every entry to X supplies it: SEG_PRO at t = 0, SEG_HEAD from lregs_H's t < OPS_MAX, SEG_LATCH from lregs_K's. *)
 Definition lregs_X (cx : lfcx) (t : Z) (m : lmod) (FF : Z) (regs : bvmap 5 word) (W : world segs)
     (mem : word -> option byte) : Prop :=

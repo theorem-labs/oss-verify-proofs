@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10-31: fuzz_preset (a Theorem Labs lane, row MISS-top at field round 3 part 3c): two image hypotheses of
    a Theorem Labs lane's cf hit / miss instances (YGcfInstHit.v / YGcfInstMiss.v / YGcfInstMissW.v, Section b) at B' (#102 pin
    fuzz_preset.asan-ubsan d663f82d7f48, twin c90d4fa54d43; AImg_cgif / AGImg_cgif, TfibSyms of lib/Reusable/YF0m.v),
@@ -9,13 +10,13 @@
    AGif0cgif / AGix) and B''s values.
    rule 24: no function proved (image arithmetic over this unit's generated facts).
    - [HCW_B]: the constant cells miss the thread cells the hit walk writes (ImgBaseAG.WINT), through AGif0cgif.CZONE
-     (lib/AU/AGif0cgif.v:65-67; AGix.const_cells_zone), as at B'.
+     (lib/AU/AGif0cgif.v:66-68; AGix.const_cells_zone), as at B'.
    - [INST_CELLS_B]: YGcfInstHit.INST_CELLS_t at B': the eight instance cells are constant cells of lib/Reusable/YF0m.v's
      table at B''s instance 0xa8098: Tfib_const_abs's z8 at 0xa8eb8 / 0xa8ec0 / 0xa80d8 / 0xa80f0 (TFIB_INST + 0xe20 /
      0xe28 / 64 / 88; the same stored values as at B') and z1 / z2 at 0xa8341 / 0xa8342 (+ 681 / + 682), found by value.
-   - [oom_const_B]: the oom byte 0x12d960 lies in the 4th owned static extent [0xaaf50, 0x5cdd50) (YF0m.v:1789); the
+   - [oom_const_B]: the oom byte 0x12d960 lies in the 4th owned static extent [0xaaf50, 0x5cdd50) (YF0m.v:1790); the
      absolute and shadow cells miss it by the closed check.
-   - [dhash_TfibB_B]: the depot hash of the B' record lib/Reusable/YD2l.v's TfibB is tfib_dhash (its field, YD2l.v:31). *)
+   - [dhash_TfibB_B]: the depot hash of the B' record lib/Reusable/YD2l.v's TfibB is tfib_dhash (its field, YD2l.v:32). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -72,7 +73,7 @@ destruct k as [|[|[|k]]].
 Qed.
 
 (* B' copy of YGcfInstMisscgif.v:49-55 (YFi5.v:342-348's check): every absolute and shadow constant cell lies wholly
-   below or wholly above the OOM byte TFIB_OOM = 0x12d960 (lib/Reusable/YF0m.v:18). *)
+   below or wholly above the OOM byte TFIB_OOM = 0x12d960 (lib/Reusable/YF0m.v:19). *)
 Definition oom_abs_ok_B (cc : acell) : bool :=
 match c_at cc with
 | ANum a => (a + Z.max 1 (Z.of_nat (c_w cc)) <=? TFIB_OOM) || (TFIB_OOM + 1 <=? a)
@@ -107,7 +108,7 @@ unfold in_app, TFIB_TSD, YF0x.TFIB_IMG_LO, YF0x.TFIB_IMG_END, kThreadObjSize, t_
 lia.
 Qed.
 
-(* INST_CELLS_t at B' (YGcfInstHit.v:171-180): each instance cell is a constant cell of lib/Reusable/YF0m.v's table. *)
+(* INST_CELLS_t at B' (YGcfInstHit.v:172-181): each instance cell is a constant cell of lib/Reusable/YF0m.v's table. *)
 Theorem INST_CELLS_B : YGcfInstHit.INST_CELLS_t B.
 Proof.
 intros ly H mem LY HT CST.
@@ -139,7 +140,7 @@ Qed.
 
 (* oom_const_t at B' (cgif/cgif_file_fuzzer lib/YGcfInstMiss.v (file sha256 7be6d43a1f59; donor not released) :312-314, over ly_img_ok; the script of
    a Theorem Labs lane's YGcfInstMisscgif.oom_const_cgif with this unit's names): the OOM byte lies in the owned static entry
-   (0xaaf50, 0x5cdd50 - 0xaaf50) (lib/Reusable/YF0m.v:1789), which ly_img_ok puts inside ly_img; the thread, context and D
+   (0xaaf50, 0x5cdd50 - 0xaaf50) (lib/Reusable/YF0m.v:1790), which ly_img_ok puts inside ly_img; the thread, context and D
    extents are apart from ly_img (lo_disj); the symbol cells' absolute addresses are not 0x12d960; the absolute and
    shadow cells miss it by the closed check. *)
 Theorem oom_const_B : YGcfInstMiss.oom_const_t B.
@@ -175,7 +176,7 @@ Qed.
 
 End b.
 
-(* The depot hash of the unit's symbol record (lib/Reusable/YD2l.v:31). *)
+(* The depot hash of the unit's symbol record (lib/Reusable/YD2l.v:32). *)
 Lemma dhash_TfibB_B : forall t, as_dhash YD2l.TfibB t = tfib_dhash t.
 Proof. reflexivity. Qed.
 

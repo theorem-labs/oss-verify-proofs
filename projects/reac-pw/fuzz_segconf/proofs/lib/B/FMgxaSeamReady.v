@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/FMgxaSeamReadyX.v, with its module paths and addresses changed; 575 of its 1033 lines of code are new or changed and 300 lines of the source are left out. *)
 (* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamReady.v; relocated to plugin-hostd/fuzz_command.asan by the GXA address relocator (target fuzz_command.asan): module paths changed; 8 address numerals moved (address checker 0767e70e074a, predict mode, fm.asan -> fuzz_command.asan, symbol + offset; the relocator's table for this file); by hand (each with its reason in that table): 0x20d00 -> 0x210a0; GXA symbol keys kept (0x1029e); names: TfibSyms -> SegBSyms. *)
 (* Modified by Theorem Labs, 2026-10: relocated from lib/A/<same path> to fuzz_command.asan-ubsan by the image-B address relocator (the A-to-B address map, keyed by the image maps' symbol names and by code; GXA symbol keys kept), whose check table lists every changed numeral *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* 2026-10-29: the world field w_H8 (fuzz_manifest's Reusable/YA0n.v:25), which our core's world record does not have
    yet, is the Prop class RtWH8.WH8 (lib/A/Rt/RtWH8.v), taken as `Context {H8 : RtWH8.WH8}` in Section C and used at its
    one place (word_vis, fm :1091); once the core has the field, RtWH8.v's one Instance line discharges it. *)
@@ -162,7 +163,7 @@ Module BzI := OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B.Bz.Lib.ImageA.
 Module BzM := OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B.Bz.Lib.Mem.
 Module BzCl := OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B.Bz.Lib.Cells.
 Module BzSt := OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B.Bz.Lib.Step.
-(* strn_ready counts with the Bz tree's strnlen_res (RT_gxa_strnlen.v:100) *)
+(* strn_ready counts with the Bz tree's strnlen_res (RT_gxa_strnlen.v:101) *)
 #[local] Abbreviation strnlen_res := BSF.strnlen_res.
 
 #[local] Existing Instance A_img.
@@ -375,7 +376,7 @@ split; [exact (chk_ok_of_pf_rng_loc m d Ld n PD VD ltac:(lia))|].
 exact (conj C1 C2).
 Qed.
 
-(* RT_gxa_strnlen.strn_ready_intro (RT_gxa_strnlen.v:153) with the hull of the bytes strnlen checks,
+(* RT_gxa_strnlen.strn_ready_intro (RT_gxa_strnlen.v:154) with the hull of the bytes strnlen checks,
    [S, S + min (strnlen_res N buf + 1) N) *)
 Lemma strn_ready_intro_loc : forall (m : word -> option byte) sp S N L buf,
   BR.kHighShadowEnd < sp - GNC.STRN_DEPTH -> sp < 2 ^ 63 ->

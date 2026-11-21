@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepReallocf.v (commit f01d79f3fb5, cf refill round 3; file sha256 4deef36cef72) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 4 image addresses moved by function pairs the comparison kit cmpkit 86da41d3ef68 calls the same code (strictcmp3 65688e94214a, by funcpair_reply 6963bc4a94fc on the cgif twin ce511d541cda; 4 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair), and 8 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepReallocf.v (cf refill round 3; file sha256 4deef36cef72) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 4 image addresses moved by function pairs the comparison kit cmpkit 86da41d3ef68 calls the same code (strictcmp3 65688e94214a, by funcpair_reply 6963bc4a94fc on the cgif twin ce511d541cda; 4 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair), and 8 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: realloc_node states its grant fact HGmd with grant_ok_na_pin_b (the alignment, bound and free-region check, as grant_ok_na_pin now takes a hint). *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, slice F4 of a Theorem Labs lane's class-full report walk, sub-slice Realloc):
    __sanitizer::InternalMmapVectorNoCtor<char, true>::Realloc (0x59e3c) of cgif_file_fuzzer's asan-ubsan image
    (pin 1c29845fe605) as the model's KMmapSec node: realloc_node, the amreal-IAsk contract RepF4Append consumes.
@@ -246,7 +247,7 @@ apply HM; clear HM.
 - intros a regs1 mem1 mat1. cbv zeta. intros Ha64 HG HP1 R1_10 FR1 ZR1 PR1 IO1.
 rewrite wvb_collapse in HG, IO1 |- *.
 assert (UA : bv_unsigned (w64 a) = a) by (unfold w64; apply unsigned_lit_small; lia).
-assert (HGmd : grant_ok_na_pin md (w64 a) ncap = true) by exact HG.
+assert (HGmd : grant_ok_na_pin_b md (w64 a) ncap = true) by exact HG.
 destruct (RepMmapcf.grant_pin_parts md (w64 a) ncap HGmd) as (Gal & Gpos & Gtop & Grf). rewrite UA in Gal, Gpos, Gtop.
 pose proof (RepMmapcf.alloc_top_lt (m_vmmaps md)) as ATL.
 destruct (GAP (w64 a) HGmd) as (Ga1 & Ga2 & Ga3). rewrite UA in Ga1, Ga2, Ga3.

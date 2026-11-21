@@ -3,10 +3,10 @@
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
    source run: lib/B/Prog/Seg/F16.v, the inline bullet of seg_F16 (:1138) stepped under f16_run_lib (:957),
-     proof lines 1324-1579, at a working branch 3803efccea0
+     proof lines 1324-1579, at a working branch
      (blob 547556a873af3b64417785a3a0cd6e4e29c6b5a3);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-     lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+     lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    compare: no <run>_of_F (an inline stretch, not a stated run). The stretch 0x823d8 -> 0x82464 has FOUR calls
      (record_sum_closes 0x823dc, joined_byte 0x82414, joined_byte 0x82438, reac_identity_ingest 0x82460), so the
      split rule (parent 23:50Z) gives four lemmas, each stopping AT a callee entry; no callee contract is stated

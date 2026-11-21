@@ -1,7 +1,8 @@
 (** * OSSVerify.Core.Shapes: what every statement in this collection says
 
-    Every statement in oss-fuzz-theorems is one of the definitions below,
-    applied to the memory images of specific binaries.  Each is written out
+    Every statement in oss-fuzz-theorems is one of the definitions below or,
+    for a classifier statement, one in ClassifierShapes.v, applied to the
+    memory images of specific binaries.  Each is written out
     in full.  Each agreement and halting shape, and the two classifier
     shapes, is proved EQUAL, by [reflexivity], to the definition in
     linux-process-semantics (lps) it corresponds to, so what you read here is

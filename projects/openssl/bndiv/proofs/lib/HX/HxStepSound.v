@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a failing sc now loads its bytes and stores them back: adds interp_ldst_w, interp_ldst_d and sc_fail_post and uses them in both failing-sc cases of hx_exec_sound_atomic). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith Lia Bool List.
@@ -476,6 +477,72 @@ Proof.
   apply Z.mod_small. apply bv_unsigned_in_range.
 Qed.
 
+(* A load of [a] whose continuation stores the loaded value straight back. *)
+Lemma interp_ldst_w (a : word) (K : eff) (bs : list byte) :
+  ov_read_bytes segs m a 4 = Some bs -> store_ok segs m a 4 = true ->
+  interp_eff segs (ELoad 32 a (fun v => EStore 32 a v K)) m
+  = interp_eff segs K (write_to_mem m a (Z_to_le_bytes 4 (bv_unsigned (sext 64 (bv_extract 0 32 (le_bytes_to_word bs)))))).
+Proof.
+  intros Hr Hs.
+  transitivity (interp_eff segs (store_val SZ4 a (sext 64 (bv_extract 0 32 (le_bytes_to_word bs))) K) m).
+  - cbn [store_val]. rewrite low32_sext. cbn [interp_eff].
+    first [ rewrite Hr | replace (ov_read_bytes segs m a (width_bytes 32)) with (Some bs) by (symmetry; exact Hr) ]. reflexivity.
+  - exact (interp_store SZ4 a _ K Hs).
+Qed.
+
+Lemma interp_ldst_d (a : word) (K : eff) (bs : list byte) :
+  ov_read_bytes segs m a 8 = Some bs -> store_ok segs m a 8 = true ->
+  interp_eff segs (ELoad 64 a (fun v => EStore 64 a v K)) m
+  = interp_eff segs K (write_to_mem m a (Z_to_le_bytes 8 (bv_unsigned (bv_extract 0 64 (le_bytes_to_word bs))))).
+Proof.
+  intros Hr Hs.
+  transitivity (interp_eff segs (store_val SZ8 a (bv_extract 0 64 (le_bytes_to_word bs)) K) m).
+  - cbn [store_val interp_eff].
+    first [ rewrite Hr | replace (ov_read_bytes segs m a (width_bytes 64)) with (Some bs) by (symmetry; exact Hr) ]. reflexivity.
+  - exact (interp_store SZ8 a _ K Hs).
+Qed.
+
+(* 08b1429: a failing sc loads its bytes and stores them back. *)
+Lemma sc_fail_post (S S' : sstate) (w : awidth) (rd rs1 : reg) :
+  R rho S (MS Rg F pc fc rv m ro) ->
+  den rho (rget S (rix_of_reg rs1)) (Sem.rget c0 rs1) ->
+  (pc + sz4)%bv = wbv (w_add (s_pc S) w_four) ->
+  match hx_load segs (s_mem S) (s_abs S) (rget S (rix_of_reg rs1)) (amo_sz w) true with
+  | Some v =>
+      match hx_store segs (s_mem S) (s_abs S) (rget S (rix_of_reg rs1)) (amo_sz w) v with
+      | Some M' => SNext (with_all S (rix_of_reg rd) (VC w_one) RNone M' (w_add (s_pc S) w_four))
+      | None => SStuck 9 S
+      end
+  | None => SStuck 7 S
+  end = SNext S' ->
+  exec_post rho Rg F fc m ro S S'
+    (interp_eff segs
+       (match w with
+        | AW => ELoad 32 (Sem.rget c0 rs1) (fun v => EStore 32 (Sem.rget c0 rs1) v
+                  (EDone (Sem.rset rd w1 (Sem.with_resv None (Sem.with_pc (bv_add pc sz4) c0)))))
+        | AD => ELoad 64 (Sem.rget c0 rs1) (fun v => EStore 64 (Sem.rget c0 rs1) v
+                  (EDone (Sem.rset rd w1 (Sem.with_resv None (Sem.with_pc (bv_add pc sz4) c0)))))
+        end) m).
+Proof.
+  intros HR Ha Hnpc H.
+  pose proof HR as (H0 & H1 & H2 & H3 & Hm).
+  destruct (hx_load segs (s_mem S) (s_abs S) (rget S (rix_of_reg rs1)) (amo_sz w) true) as [v|] eqn:El; [|discriminate].
+  destruct (hx_store segs (s_mem S) (s_abs S) (rget S (rix_of_reg rs1)) (amo_sz w) v) as [M'|] eqn:Es; [|discriminate].
+  injection H as <-.
+  destruct (hx_load_sound segs rho (s_mem S) (s_abs S) m _ (amo_sz w) true v _ Hm Ha El) as (bs & Ebs & Hv).
+  destruct (hx_store_sound segs rho (s_mem S) M' (s_abs S) m _ _ (amo_sz w) _ _ Hm Ha Hv Es)
+    as (Hok & Hm' & (t & rg & off & Eg & Ewr & Ex & Hin & _)).
+  assert (Hst : mem_step rho (s_mem S) m (write_to_mem m (Sem.rget c0 rs1)
+                  (Z_to_le_bytes (msz_nat (amo_sz w)) (bv_unsigned (load_word (amo_sz w) true bs))))).
+  { right. exists t, rg, off, (Z_to_le_bytes (msz_nat (amo_sz w)) (bv_unsigned (load_word (amo_sz w) true bs))).
+    rewrite length_Z_to_le_bytes, <- Ex. auto. }
+  destruct w; cbn [amo_sz msz_nat load_word] in *.
+  - rewrite (interp_ldst_w _ _ bs Ebs Hok). cbn [interp_eff].
+    apply post_all_store; [exact Hnpc | reflexivity | reflexivity | reflexivity | exact HR | reflexivity | reflexivity | exact Hm' | exact Hst].
+  - rewrite (interp_ldst_d _ _ bs Ebs Hok). cbn [interp_eff].
+    apply post_all_store; [exact Hnpc | reflexivity | reflexivity | reflexivity | exact HR | reflexivity | reflexivity | exact Hm' | exact Hst].
+Qed.
+
 Theorem hx_exec_sound_atomic (S S' : sstate) (i : instr) :
   R rho S (MS Rg F pc fc rv m ro) -> hx_exec segs (predec i) S = SNext S' ->
   match i with Lr _ _ _ _ _ | Sc _ _ _ _ _ _ | Amo _ _ _ _ _ _ _ => True | _ => False end ->
@@ -498,15 +565,9 @@ Proof.
     destruct (amo_al (ctx_of (s_mem S)) w (rget S (rix_of_reg rs1))) eqn:Eal; [|discriminate].
     pose proof (amo_al_sound rho _ w _ _ Hctx Eal Ha) as Hal.
     pose proof HR as (H0 & H1 & H2 & H3 & Hm). cbn [ms_resv MS] in H3. cbn [exec]. rewrite Hal. cbn [negb c_resv]. change (c_pc c0) with pc.
-    assert (Hfail : forall r', exec_post rho Rg F fc m ro S (with_all S (rix_of_reg rd) (VC w_one) RNone (s_mem S) (w_add (s_pc S) w_four))
-                                 (MachineOk (Sem.rset rd w1 (Sem.with_resv None (Sem.with_pc (bv_add pc sz4) c0)), m)) -> r' = tt -> True) by auto.
-    clear Hfail.
-    assert (Hno : exec_post rho Rg F fc m ro S (with_all S (rix_of_reg rd) (VC w_one) RNone (s_mem S) (w_add (s_pc S) w_four))
-                    (MachineOk (Sem.rset rd w1 (Sem.with_resv None (Sem.with_pc (bv_add pc sz4) c0)), m))).
-    { apply post_all_store; [exact Hnpc | reflexivity | reflexivity | reflexivity | exact HR | reflexivity | reflexivity | exact Hm | left; reflexivity]. }
     destruct (s_resv S) as [|xr|] eqn:Er; cbn [Rresv] in H3.
-    + injection H as <-. rewrite H3 in Hno |- *. exact Hno.
-    + destruct H3 as (w0 & Ew0 & Hw0). rewrite Ew0 in Hno |- *. rewrite ?(rget_any_resv (Some w0) rv) in Hno. rewrite ?(rget_any_resv (Some w0) rv).
+    + rewrite H3. exact (sc_fail_post S S' w rd rs1 HR Ha Hnpc H).
+    + destruct H3 as (w0 & Ew0 & Hw0). rewrite Ew0. rewrite ?(rget_any_resv (Some w0) rv).
       destruct (veq xr (rget S (rix_of_reg rs1))) as [[|]|] eqn:Ev; [| |discriminate].
       * rewrite (veq_sound rho _ _ true _ _ Ev Hw0 Ha).
         destruct (hx_store segs (s_mem S) (s_abs S) _ (amo_sz w) (rget S (rix_of_reg rs2))) as [M'|] eqn:Es; [|discriminate]. injection H as <-.
@@ -518,7 +579,7 @@ Proof.
            apply post_all_store; [exact Hnpc | reflexivity | reflexivity | reflexivity | exact HR | reflexivity | reflexivity | exact Hm' | exact Hst].
         -- rewrite (interp_estore64 _ _ _ Hok). cbn [interp_eff].
            apply post_all_store; [exact Hnpc | reflexivity | reflexivity | reflexivity | exact HR | reflexivity | reflexivity | exact Hm' | exact Hst].
-      * rewrite (veq_sound rho _ _ false _ _ Ev Hw0 Ha). injection H as <-. exact Hno.
+      * rewrite (veq_sound rho _ _ false _ _ Ev Hw0 Ha). exact (sc_fail_post S S' w rd rs1 HR Ha Hnpc H).
     + discriminate.
   - (* [comment removed for export] *)
     pose proof (rget_ok rho Rg F pc fc rv m ro S rs1 HR) as Ha. pose proof (rget_ok rho Rg F pc fc rv m ro S rs2 HR) as Hb.

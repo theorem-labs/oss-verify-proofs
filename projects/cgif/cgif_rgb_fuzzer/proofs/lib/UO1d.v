@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (map_grant_exists reads the reserved ledger as the image's reservations followed by the vDSO pair and takes the grant at Linux's own address, linux_place, from the free gap; grant_facts splits the placement conjunct of grant_ok; step_MM discharges the place_declined_b premise for the NULL hint; YK00 import). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import
-YK11 YK0s YK0i YK0j YK14 YK1b YK1a YK15 YK0v YK02 YQ0k YN06 YK1j YN00.
+YK11 YK0s YK0i YK0j YK14 YK1b YK1a YK15 YK0v YK02 YQ0k YN06 YK1j YN00 YK00.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import
 YQ0j YQ0b YQ03 YQ0i YQ0h YQ09 YQ04 YQ05 YQ0e YQ02.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import UH04 UH07 UH06.
@@ -202,19 +203,27 @@ destruct ubs2_reserved_small as [RS RL].
 destruct (region_free_exists_high (vm_reserved (m_vmmaps md1) ++ vm_maps (m_vmmaps md1)) (page_round len)) as (a & Ha1 & Ha2 & Ha3 & Ha4).
 - pose proof (page_round_ge len). pose proof (page_round_lt len). change (2 ^ 32) with 4294967296 in Hlive. change (2 ^ 39) with 549755813888. lia.
 - apply Forall_app. split.
-+ rewrite (lg_reserved _ _ _ _ G). exact RS.
++ destruct (lg_reserved _ _ _ _ G) as (rx & Hres & Hrx & _). rewrite Hres. apply Forall_app. split; [exact RS|].
+eapply Forall_impl; [| exact Hrx]. intros e (_ & _ & He). cbn beta. change (2 ^ 39) with 549755813888. lia.
 + apply Forall_forall. intros q Hq. pose proof (proj1 (Forall_forall _ _) (lg_sizes _ _ _ _ G) q Hq) as Hs. cbn beta in Hs.
 change (2 ^ 32) with 4294967296 in Hlive. change (2 ^ 39) with 549755813888. lia.
-- rewrite length_app. rewrite (lg_reserved _ _ _ _ G). pose proof (lg_count _ _ _ _ G). change (ms_segs B) with ubs2segs. lia.
-- exists a. unfold grant_ok.
-rewrite (proj2 (Z.eqb_eq _ _) Ha1), (proj2 (Z.ltb_lt 0 _)) by lia.
+- destruct (lg_reserved _ _ _ _ G) as (rx & Hres & _ & Hrxl). rewrite length_app, Hres, length_app.
+pose proof (lg_count _ _ _ _ G). change (ms_segs B) with ubs2segs. lia.
+- (* 08b1429: mmap takes Linux's own address ([linux_place]); the free gap gives one (Placement.linux_place_exists) *)
 pose proof (YN05.ceil_le_top _ (lg_ceil _ _ _ _ G)) as Htop.
 assert (Ha3' : bv_unsigned a + page_round len <= alloc_top (m_vmmaps md1)) by lia.
-rewrite (proj2 (Z.leb_le _ _) Ha3'), Ha4.
-rewrite (proj2 (Z.leb_le _ _)).
-2:{ pose proof (lg_backing _ _ _ _ G). pose proof (lg_limit _ _ _ _ G). unfold SRC_LIM_MIN in *.
-pose proof (page_round_ge len). pose proof (page_round_lt len). change (2 ^ 32) with 4294967296 in Hlive. lia. }
-reflexivity.
+assert (HnZ0 : 0 < page_round len) by (pose proof (YP0k.page_round_ge len); lia).
+assert (HnZal : page_round len mod page_size = 0) by exact (YP0k.page_round_mod len).
+assert (Hbud : vm_backing_used md1 + page_round len <= vm_limit (m_vmmaps md1)).
+{ pose proof (lg_backing _ _ _ _ G). pose proof (lg_limit _ _ _ _ G). unfold SRC_LIM_MIN in *. pose proof (page_round_ge len). pose proof (page_round_lt len). change (2 ^ 32) with 4294967296 in Hlive. lia. }
+assert (GF : LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.gap_fits (vm_reserved (m_vmmaps md1) ++ vm_maps (m_vmmaps md1)) LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.task_unmapped_base (alloc_top (m_vmmaps md1)) (page_round len) (bv_unsigned a)).
+{ unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.gap_fits. rewrite Z_to_bv_bv_unsigned. unfold page_size in *. unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.task_unmapped_base. repeat split; [exact Ha1 | lia | exact Ha3' | exact Ha4]. }
+destruct (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_exists (m_vmmaps md1) (kb_thp (m_kernel md1)) (Z_to_bv 64 0) (page_round len) HnZ0 HnZal
+(ex_intro _ (bv_unsigned a) (or_intror GF))) as (a' & Ha').
+destruct (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_admissible (m_vmmaps md1) _ (Z_to_bv 64 0) (page_round len) a' HnZ0 HnZal Ha') as (_ & Hpos' & Hhi' & _).
+pose proof (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.alloc_top_lt_two_pow_64 (m_vmmaps md1)) as Hat. unfold two_pow_64 in Hat.
+exists (Z_to_bv 64 a'). apply grant_ok_intro; [exact HnZ0 | exact HnZal | | exact Hbud].
+apply (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is_iff _ _ _ _ _ HnZ0 HnZal). rewrite u64_lit by lia. exact Ha'.
 Qed.
 Lemma to_Kf : forall regs3 mem3 RET, regs_ok E6 (ss_regs ss_MK) regs3 -> mem_ok ubs2segs E6 mem3 (ss_mem ss_MK) -> facts_ok E6 (ss_facts ss_MK) ->
 RET = Z_to_bv 64 (2 ^ 64 - 12) -> midrep B L1 s3 mem3 md1 -> FRcB mem3 ->
@@ -271,7 +280,7 @@ Proof.
 intros mm a len HM Hlen Hmod GR. pose proof (proj1 alloc_ceiling_val) as AC. pose proof (u64_range a) as Ua.
 assert (PR : page_round len = len) by (apply page_round_fixed; unfold PGSZ; exact Hmod). rewrite PR in GR.
 unfold grant_ok in GR. apply andb_prop in GR as [GR _]. apply andb_prop in GR as [GR RF].
-apply andb_prop in GR as [GR Htop]. apply andb_prop in GR as [Hal Ha0].
+apply andb_prop in GR as [GR Htop]. apply andb_prop in GR as [GR Ha0]. apply andb_prop in GR as [_ Hal].
 apply Z.eqb_eq in Hal. apply Z.ltb_lt in Ha0. apply Z.leb_le in Htop. unfold page_size in Hal.
 assert (Hceil : bv_unsigned a + len <= alloc_ceiling).
 { apply (YN05.grant_below_ceil _ _ (lg_ceil _ _ _ _ (mid_ledger _ _ _ _ _ HM))); [| exact Htop].
@@ -367,6 +376,7 @@ apply (knode_mmap_rw ubs2segs regs3 (Z_to_bv 64 (ubs2_A_mmap + 0xc4)) mem3 (seg_
 - rewrite (Hregs 13%bv), G13. reflexivity.
 - rewrite (Hregs 14%bv), G14. apply bv_eq. vm_compute. reflexivity.
 - rewrite (Hregs 15%bv), G15. reflexivity.
+- rewrite (Hregs 10%bv), G10. cbn [sv_denot]. apply place_declined_b_null.
 -
 intros e He. apply LF.
 assert (Ee : errno_ret e = Z_to_bv 64 (2 ^ 64 - 12)) by (destruct He as [<-|[]]; unfold errno_ret; apply bv_eq; reflexivity). rewrite Ee.

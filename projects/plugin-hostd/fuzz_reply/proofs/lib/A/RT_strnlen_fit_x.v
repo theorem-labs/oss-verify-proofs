@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/plugin-hostd/fuzz_reply/lib/A/RT_strnlen_fit_x.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* The strnlen wrapper's runtime contract at image A's site, over a generic allocator invariant
    ARx under a Theorem Labs lane's five-law record lib/Rt/RTx.v rt_laws plus YCbqG's zero-shadow law (the two inputs of
    lib/A/RTxIcpt.v icpt_laws_of_rt).  No function is walked here: the walk is lib/A/Rt/Strnlen.v:567
    strnlen_icpt_realizesM_x (the wrapper at 0x42190, musl strnlen, the memchr wrapper; Qed over AE2y.icpt_laws_x).
-   - The statement is RTx.v:172's astrnlen_whole_realizesM_x at segs := pa_segs PB_fr, lo / hi = 0x10350 / 0x10370
+   - The statement is RTx.v:173's astrnlen_whole_realizesM_x at segs := pa_segs PB_fr, lo / hi = 0x10350 / 0x10370
      (musl memchr's mask window, the cells consts_view reads) and pc := SIGMA WS_strnlen (W_place.v:44, 0x42190).
    - pa_segs PB_fr is tfibsegs (W_img.v:59 frsegs = Asan.M.loaded_segments = AB1v.v:13 tfibsegs) and
-     IcptRealizesX.v:124's text is RTx.v:172's at tfibsegs (RTxIcpt.astrnlen_whole_realizesM_x_iff), so the proof is
+     IcptRealizesX.v:125's text is RTx.v:173's at tfibsegs (RTxIcpt.astrnlen_whole_realizesM_x_iff), so the proof is
      the walk's theorem after the pc is rewritten to its numeral. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.

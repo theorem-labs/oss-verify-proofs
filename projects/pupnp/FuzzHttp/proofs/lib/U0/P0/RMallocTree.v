@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the 27- or 29-pair auxv). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
-From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Lib Require Import Tac Image ZBridge SysStep SFModel ITree Nodes Decode Arr.
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.U0.P0 Require Import Segs ImgFacts.
@@ -277,19 +278,19 @@ Proof.
   - intros b Hb. destruct c as [c|]; [|discriminate]. inversion Hb; subst. reflexivity.
 Qed.
 
+(* LPS 727298f3: the auxv is the launch's [StackLayout.auxv_entries] (at most 29 pairs, 464 bytes). *)
 Definition rauxv_ok {HGW : HasGuard} {HCEIL : HasCeiling} (m : mem) (B : Z) : Prop :=
-  exists av x3 x4 x5 hw x6 x11 x12 x23 rnd,
+  exists av rnd (la : LaunchAuxv) (ph : PhdrInfo) (entry uid gid hw efn : word),
     rw_cells rsegs m RAUXV_CELL [C8 (wz av)]
-    /\ bytes_at rsegs m av (u64s (auxv_list x3 x4 x5 hw x6 x11 x12 x23 rnd))
+    /\ bytes_at rsegs m av (u64s (auxv_list la ph entry uid gid hw rnd efn))
     /\ bytes_at rsegs m (rnd + 8) (le8 secret_word)
-    /\ alloc_ceiling <= B /\ B <= av /\ av + 160 <= 2^64 /\ B <= rnd + 8 /\ rnd + 16 <= 2^64
-    /\ 0 <= x3 < 2^64 /\ 0 <= x4 < 2^64 /\ 0 <= x5 < 2^64 /\ 0 <= hw < 2^64 /\ 0 <= x6 < 2^64
-    /\ 0 <= x11 < 2^64 /\ 0 <= x12 < 2^64 /\ 0 <= x23 < 2^64 /\ 0 <= rnd < 2^64.
+    /\ alloc_ceiling <= B /\ B <= av /\ av + 464 <= 2^64 /\ B <= rnd + 8 /\ rnd + 16 <= 2^64
+    /\ 0 <= rnd < 2^64.
 
 Lemma rauxv_ok_weaken {HGW : HasGuard} {HCEIL : HasCeiling} : forall m B B', rauxv_ok m B -> alloc_ceiling <= B' <= B -> rauxv_ok m B'.
 Proof.
-  intros m B B' (av & x3 & x4 & x5 & hw & x6 & x11 & x12 & x23 & rnd & H) HB.
-  exists av, x3, x4, x5, hw, x6, x11, x12, x23, rnd. repeat (split; [LiaTuning.ctauto|]). lia.
+  intros m B B' (av & rnd & la & ph & entry & uid & gid & hw & efn & H) HB.
+  exists av, rnd, la, ph, entry, uid, gid, hw, efn. repeat (split; [LiaTuning.ctauto|]). lia.
 Qed.
 
 Lemma rauxv_ok_frame {HGW : HasGuard} {HCEIL : HasCeiling} : forall m m' B W,
@@ -297,8 +298,8 @@ Lemma rauxv_ok_frame {HGW : HasGuard} {HCEIL : HasCeiling} : forall m m' B W,
   Forall (fun iv : Z * Z => snd iv <= B /\ (snd iv <= RAUXV_CELL \/ RAUXV_CELL + 8 <= fst iv)) W ->
   rauxv_ok m' B.
 Proof.
-  intros m m' B W (av & x3 & x4 & x5 & hw & x6 & x11 & x12 & x23 & rnd & C & A1 & A2 & H) MU WM FW.
-  exists av, x3, x4, x5, hw, x6, x11, x12, x23, rnd. split; [|split; [|split; [|exact H]]].
+  intros m m' B W (av & rnd & la & ph & entry & uid & gid & hw & efn & C & A1 & A2 & H) MU WM FW.
+  exists av, rnd, la, ph, entry, uid, gid, hw, efn. split; [|split; [|split; [|exact H]]].
   - eapply rw_cells_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [_ ?]. lia.
   - eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [? _]. lia.
   - eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [? _]. lia.

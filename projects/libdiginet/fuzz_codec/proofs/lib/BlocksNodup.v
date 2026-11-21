@@ -5,6 +5,8 @@ From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require Import YO0i YO0
 Import ListNotations.
 Local Open Scope Z_scope.
 Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+(* 08b1429: at any allocation mode (YO0d.AllocAPI carries its mode; the may-fail chain's record is at MayFail). *)
+Context {AM : Cfg.AllocMode}.
 Lemma NoDup_map_on {X Y} (f : X -> Y) : forall l,
 List.NoDup l -> (forall x y, In x l -> In y l -> f x = f y -> x = y) -> List.NoDup (map f l).
 Proof using.
@@ -52,7 +54,7 @@ exact (user_block_addr_inj L A p n q m HW HL Hp Hq E).
 Qed.
 Section c.
 Variable B : malloc_syms.
-Variable API : AllocAPI B.
+Variable API : AllocAPI (AM:=AM) B.
 Let MR := aa_MR API.
 Theorem blocks_nodup_ok : (forall L A mem md, MR L A mem md -> MRx B L A mem md) -> blocks_nodup B API.
 Proof using.

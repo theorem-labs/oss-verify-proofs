@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader fact, the 6144513-byte zero-filled stack window): changed know_okRE, re_tail, stack_writable; added Hrdr; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/U/Pm10ReadErr_u.v, lines 28-38, 45, 53, 75, 150-158. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -34,19 +35,24 @@ Definition re_ivs : list (Z * Z) :=
   [(0x10000,0xcb538); (0xcb541,0xcb589); (0xdb589,0xdcf40); (0xfd018,0xfd038); (0xdcf74,0xdcfc0); (0xdcfc8,0xdcfe0);
    (0xdcfe8,0xdd000); (0xdd010,0xdd020); (0xdd028,0xfd018); (0xfd050,0xfd280); (0xfd288,0xfd290); (0xfd2a1,0xfd2a8);
    (0xfd2b0,0xfd2b8); (0xfd2c8,0xfd2d0); (0xfd2d8,0xfd308);
-   (0xfd7d8,0xfe000)]%Z.   (* [comment removed for export] *)
+   (0xfd7d8,0xfe000)]%Z.
 
-(* [comment removed for export] *)
+(* THE ZERO-FILLED WINDOW, old beside new: [d + m <= 8388608] / [sp0 - 8388608 + d] ->
+   [d + m <= DRV_ZWIN] / [sp0 - DRV_ZWIN + d], DRV_ZWIN = 6144513 = StoreOk.stack_window_depth
+   (Pm6MainEntry_u5).  The 8 MiB claim is FALSE at LPS 75d69e00 (wrap_mem zero-fills only to
+   MemSplit.wok_lo sp0 = sp0 - 6144513).  Its only producer is Pm6DrvH_u5's [stack_writable] goal,
+   discharged off [Pm6MainEntry_u5.kn_stack]'s narrow row; its only consumer is [know_okRE] below,
+   for [knRE0]'s window entry, which is narrow too. *)
 Definition stack_writable (M : word -> option byte) (sp0 : word) : Prop :=
-  forall d m, (0 <= d)%Z -> (d + Z.of_nat m <= 8388608)%Z ->
-    store_ok RSEGS M (Z_to_bv 64 (bv_unsigned sp0 - 8388608 + d)) m = true.
+  forall d m, (0 <= d)%Z -> (d + Z.of_nat m <= DRV_ZWIN)%Z ->
+    store_ok RSEGS M (Z_to_bv 64 (bv_unsigned sp0 - DRV_ZWIN + d)) m = true.
 Definition cell (M : word -> option byte) (a : Z) (n : nat) (v : Z) : Prop :=
   rdn RSEGS M (Z_to_bv 64 a) n = Some (word_to_le_bytes n (Z_to_bv 64 v)).
 Definition img_clear (M : word -> option byte) (lo hi : Z) : Prop :=
   forall i, (lo <= i < hi)%Z -> M (Z_to_bv 64 i) = None.
 
 Section ReadErr.
-  Context {RE : RunEnv}.
+  Context {RE : RunEnv}. Context {RO : ReaderOn}.
   Variable sp0 : word.
   Variable BL : list (list byte).
   Variable model : Model.
@@ -54,6 +60,7 @@ Section ReadErr.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  Hypothesis Hrdr : m_channel_reader model = true.
 
   Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
   Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
@@ -76,12 +83,8 @@ Section ReadErr.
     eapply (re_segBC scfg sp0 BL model Hvsp Hh Hlazy path pp (Z.of_nat (length path)) _ t8 vals);
       try eassumption; try lia.
     intros vals' R' M' HL' Q0 Q2 Q113 HR' HK' Hstr'.
-    eapply (re_segF scfg sp0 BL model Hvsp Hh Hlazy Hfd2 path pp _ vals'); try eassumption; lia.
+    eapply (re_segF scfg sp0 BL model Hvsp Hh Hlazy Hfd2 Hrdr path pp _ vals'); try eassumption; lia.
   Qed.
-
-  (* [comment removed for export] *)
-  (* [comment removed for export] *)
-  (* [comment removed for export] *)
 
   Variables (pp : word) (tid : Z) (R : bvmap 5 word) (M : word -> option byte).
   (* [comment removed for export] *)
@@ -155,21 +158,22 @@ Section ReadErr.
     intros Hpp2. pose proof SPlo. pose proof SPhi. pose proof SPal.
     unfold know_ok, knRE0.
     repeat (apply Forall_cons; [|try apply Forall_nil]); cbn [kentry_ok].
-    - (* [comment removed for export] *) split; [lia|]. change (edenot E (EVar 0)) with sp0. exact SPal.
+    -   split; [lia|]. change (edenot E (EVar 0)) with sp0. exact SPal.
     - change (edenot E (EVar 0)) with sp0. lia.
-    - (* [comment removed for export] *) split; [apply flat_intro; cbn; lia|].
+    -   split; [apply flat_intro; cbn; lia|].
       intros d m Hd Hm. unfold estart. cbn [a_base a_off]. change (edenot E (EVar 0)) with sp0.
-      replace (bv_unsigned sp0 + -8388608 + d)%Z with (bv_unsigned sp0 - 8388608 + d)%Z by lia.
+      (* old: [bv_unsigned sp0 + -8388608 + d] = [bv_unsigned sp0 - 8388608 + d] *)
+      replace (bv_unsigned sp0 + - DRV_ZWIN + d)%Z with (bv_unsigned sp0 - DRV_ZWIN + d)%Z by lia.
       apply Mstack; lia.
     - change (edenot E (EVar 2)) with pp. lia.
-    - (* [comment removed for export] *) split; [apply flat_intro; cbn [edenot a_base a_off]; rewrite ?(u_small 0) by lia; lia|].
+    -   split; [apply flat_intro; cbn [edenot a_base a_off]; rewrite ?(u_small 0) by lia; lia|].
       intros d m Hd Hm. unfold estart. cbn [a_base a_off edenot]. rewrite (u_small 0) by lia.
       apply store_ok_data; rewrite u_small by lia; lia.
     - kimg. - kimg. - kimg. - kimg.
     - kcell Mself.
     - kcell Mtid.
     - kimg. - kimg. - kimg. - kimg. - kimg. - kimg.
-    - (* [comment removed for export] *)
+    -
       unfold elenZ, estart. cbn [edenot a_base a_off eb E ENV blobs_ev]. rewrite ?(u_small 8), ?(u_small 0) by lia.
       split; [unfold flat, estart; cbn [a_base a_off edenot]; rewrite ?(u_small 0) by lia; lia|].
       split; [unfold blobs_ev; rewrite Lcanary; reflexivity|].
@@ -181,7 +185,6 @@ Section ReadErr.
     - change (edenot E (EVar 5)) with (Z_to_bv 64 tid : word). rewrite u_small by lia. lia.
   Qed.
 
-  (* [comment removed for export] *)
   Theorem ref_read_error : forall (path : list byte) (t8 : list byte),
     ~ In (Z_to_bv 8 0) path -> (Z.of_nat (length path) <= 60)%Z ->
     (bv_unsigned pp + Z.of_nat (length path) + 8 <= bv_unsigned sp0 + 4194304)%Z ->

@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFia.v, with its module paths changed and its addresses moved to libreac/fuzz_knock's ASan build; AB1v's tfibsegs is A/AWalkFw0.v's. *)
 (* Modified by Theorem Labs, 2026-10: derived from lib/A/AFia.v of this library by derive_y.py: module names A.Axyz -> AU.Yxyz, addresses moved from libreac/fuzz_knock's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/AFia.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed sec_grant_exists_AR, grant_parts). *)
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YImgTop.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -51,11 +52,11 @@ cbn [snd] in *. pose proof (YG08.sec_map_size_bound (ck_req k) ltac:(lia)) as SB
 unfold YF06.NOB, MALLOC_MAX in *. lia.
 Qed.
 Lemma sec_grant_exists_AR : forall B ly S rd md nZ,
-ARm B ly S rd -> ALedger tfibsegs ly S md -> amwf md -> 0 < nZ <= YF06.NOB ->
-exists a, grant_ok_na_pin md a nZ = true.
+ARm B ly S rd -> ALedger tfibsegs ly S md -> amwf md -> 0 < nZ <= YF06.NOB -> nZ mod page_size = 0 ->
+exists a, grant_ok_na_pin (Z_to_bv 64 0) md a nZ = true.
 Proof.
-intros B ly S rd md nZ M L [_ NZ] HnZ.
-exact (sec_grant_exists tfibsegs ly S md nZ (am_layout _ _ _ _ M) L NZ (sec_extents_count B ly S rd M) (sec_extents_sizes B ly S rd M) HnZ).
+intros B ly S rd md nZ M L [_ NZ] HnZ HnZal.
+exact (sec_grant_exists tfibsegs ly S md nZ (am_layout _ _ _ _ M) L NZ (sec_extents_count B ly S rd M) (sec_extents_sizes B ly S rd M) HnZ HnZal).
 Qed.
 Section G.
 Variable B : asyms.
@@ -65,7 +66,7 @@ Hypothesis L : ALedger tfibsegs ly S md.
 Hypothesis Hev : aregime S.
 Hypothesis HnZ : 0 < nZ <= MALLOC_MAX + 4 * 4096.
 Hypothesis HnZal : nZ mod 4096 = 0.
-Hypothesis HG : grant_ok_na_pin md a nZ = true.
+Hypothesis HG : grant_ok_na_pin (Z_to_bv 64 0) md a nZ = true.
 Let A : Z := bv_unsigned a.
 Let LY : layout_ok ly := am_layout _ _ _ _ M.
 Lemma nZ_word : bv_unsigned (Z_to_bv 64 nZ) = nZ.
@@ -83,7 +84,8 @@ A mod 4096 = 0 /\ 0 < A /\ A + nZ <= alloc_top (m_vmmaps md) /\
 region_free (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) a (Z_to_bv 64 nZ) = true /\
 A + nZ <= alloc_top (m_vmmaps md).
 Proof.
-clear LY. pose proof HG as Hg. unfold grant_ok_na_pin in Hg.
+clear LY. pose proof (YK13.grant_ok_na_pin_facts _ _ _ _ (proj1 HnZ) ltac:(unfold page_size; exact HnZal) HG) as Hg.
+unfold YK13.grant_ok_na_pin_b in Hg.
 apply andb_prop in Hg as [Hg Hrf]. apply andb_prop in Hg as [Hg Htop]. apply andb_prop in Hg as [Hal Hpos].
 apply Z.eqb_eq in Hal. apply Z.ltb_lt in Hpos. apply Z.leb_le in Htop.
 unfold page_size in Hal. unfold A. repeat split; assumption.

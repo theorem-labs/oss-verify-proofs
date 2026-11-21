@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the walk of reac_ctrl_stamp_headamp on fuzz_grant.asan, written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v, proofs/cgif/cgif_file_fuzzer/lib/A/ACam.v, proofs/cgif/cgif_file_fuzzer/lib/A/ACbf.v, proofs/cgif/cgif_file_fuzzer/lib/A/ACf6.v, proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v. *)
-(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/CtrlStampHeadamp.v (ported from a working branch afd75724b5b, blob 3ab7a72916e): the walk over image B's listing and walk layer (lib/B/Prog), against the contract lib/B/Prog/GrantBContracts.v states (walk_reac_ctrl_stamp_headamp). *)
+(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/CtrlStampHeadamp.v (ported from a working branch, blob 3ab7a72916e): the walk over image B's listing and walk layer (lib/B/Prog), against the contract lib/B/Prog/GrantBContracts.v states (walk_reac_ctrl_stamp_headamp). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_ctrl_stamp_headamp, image B 0x8326c (624 bytes), on fuzz_grant's ASan + UBSan build.
 
    It takes a class-0 frame F on the side stack for frames, writes the three argument bytes into it (F + 32), refuses a

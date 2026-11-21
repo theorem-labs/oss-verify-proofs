@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGif1d.v (a working branch ced28ed2383, file sha256 d40e526854bd) onto omx-clap-core/fuzz_state's asan-ubsan image (fuzz_state.asan-ubsan, pinned sha256 5ac5ce0954f8; addresses read from its unstripped build b1566a1ca816); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGif1d.v (a working branch, file sha256 d40e526854bd) onto omx-clap-core/fuzz_state's asan-ubsan image (fuzz_state.asan-ubsan, pinned sha256 5ac5ce0954f8; addresses read from its unstripped build b1566a1ca816); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
 (* Modified by Theorem Labs, 2026-10: cgif_file's instance of the drain-side fields of DGif0.DIface (DMiface.v types),
    restated from the released drain / DoRecycle walks (YFeu, YFhf, YFhl): the facts DoRecycle reads from AR's ARm are
    exported over ARX_cgif and the recycle invariant DRq_cgif. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* cgif_file's instance of the drain-side fields of the generic Deallocate interface (DGif0.DIface), at the agreed
    instantiation ARX := ARXr := AllocGcgif.ARX_cgif B, AOX := aowned B, DRq := DRq_cgif B (below), QB := qloose,
    dbody := YFeu.drain_body.
@@ -46,7 +47,7 @@ Ltac splits := repeat match goal with |- _ /\ _ => split end.
 Section c. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 
 (* The cgif recycle invariant: [DRq_cgif B S its zs] with the chunks [its] and the batch objects [zs] still to
-   recycle (DGif0.v:253-255). *)
+   recycle (DGif0.v:254-256). *)
 Definition DRq_cgif (B : asyms) (S : astate) (its : list chunk) (zs : list Z) : Prop :=
 RIx (as_universe B) 0 0 0 S its [] zs.
 

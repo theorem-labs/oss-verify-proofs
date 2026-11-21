@@ -7,13 +7,14 @@
    1: `beqz a2` at 0x8aa7c falls through), the class-7 side-stack frame of __asan_stack_malloc_7 (at least 4096:
    `bnez s2` at 0x8aa9c skips the real-stack fallback 0x8aaa0 .. 0x8aac0), the frame's header and shadow, the two
    shadow fills, up to the BODY cut (answer_s1.v AN_BODY_stmt). The B twin of lib/A/Prog/answer_e.v
-   (a working branch d28426fbb96): B's code 0x8aa10 .. 0x8ab6c is A's 0x8a4c0 .. 0x8a61c instruction for
+   (a working branch): B's code 0x8aa10 .. 0x8ab6c is A's 0x8a4c0 .. 0x8a61c instruction for
    instruction (function-relative offsets equal; a Theorem Labs lane's gen/dis/answer.s); the runtime entries' contracts are the
    statement's, at every FP state, used at the ambient one (no call in this segment moves it); the allocator facts
    are a Theorem Labs lane's CmdRecRest.v cmd_model_laws / cmd_stack_malloc_progress and, stated there at tfibsegs only, its
    cmd_frame_flag_law at this walk's segments (a Section hypothesis under that lemma's name), the program statics'
    image facts a Theorem Labs lane's CmdRecImg.v cmd_prog_unowned over the image facts cmd_img_facts_tfib at this walk's segments,
    and the realignment's arithmetic CmdSnText.v's snt_sp1_facts / snt_denot_and_m32. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

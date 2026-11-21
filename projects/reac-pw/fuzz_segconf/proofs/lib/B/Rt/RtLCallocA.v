@@ -1,8 +1,8 @@
 (* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/A/Rt/RtLCallocA.v, derived mechanically (derive_y.py b7b132fb12a7; every changed numeral checked against alreloc.py a5c53bb2bed4 and against image B), with its module paths changed (lib/A to lib/B) and its addresses moved to reac-pw/fuzz_segconf's ASan+UBSan build. The comments are the A file's. *)
 (* reac-pw/fuzz_segconf image B: the Allocate contract at asan_calloc's call, in the form the calloc closing consumes
    (lib/A/Rt/RtLCallocR.v aseg_aalloc_calloc), from the closed primary-size Allocate of the AG family
-   (lib/A/AGtopcgifC.v aalloc_prim_realizes_cgif_closed, relocated from omx-clap-core/fuzz_state at origin/ossv/recipes
-   501c0d516c69; record in provenance/evidence/interceptors/calloc/ag/) at can_fill 0.
+   (lib/A/AGtopcgifC.v aalloc_prim_realizes_cgif_closed, relocated from omx-clap-core/fuzz_state;
+   record in provenance/evidence/interceptors/calloc/ag/) at can_fill 0.
 
    Rule 24: Allocator::Allocate (0x331a4) is proved by the relocated AG family; this file only restates that theorem.
    aalloc_prim_realizes_cgif B 0 (lib/A/AllocGcgif.v) is, by conversion, aseg_aalloc_calloc tfibsegs B TFIB_INST

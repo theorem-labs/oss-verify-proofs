@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 From OSSVerify.Proofs.boost_beast.http_request.lib.Common Require KReplay.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -59,11 +60,19 @@ Proof. try hcb. try hsb. intros H AG HC H0 H1. eapply RA2.rwr_at_agree; [exact H
 Lemma rauxv_ok_magree C m m' B :
   rauxv_ok m B -> magree C m m' -> (forall a, C a -> a < B /\ ~ (RAUXV_CELL <= a < RAUXV_CELL + 8)) -> rauxv_ok m' B.
 Proof. try hcb. try hsb.
-  intros (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & AC & AL & RN & H) AG HC.
-  exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. split; [|split; [|split; [|exact H]]].
+  (* [x16] is gone from [rauxv_ok]'s existentials and the auxv claim is now
+     [auxv_keys], not a [u64s (rauxv_list ...)] block - see Ub/RMallocTree.v.
+     The old second bullet bounded the region by the LIST LENGTH
+     ([unfold rauxv_list; rewrite u64s_length, map_length]), which no longer
+     exists; it goes through [auxv_keys_map] instead, exactly as
+     [rauxv_ok_frame] does, with [rbytes_at_magree] in place of the frame
+     proof's [bytes_at_transport]. *)
+  intros (av & x3 & x4 & x5 & x6 & x11 & x12 & x23 & rnd & AC & AL & RN & H) AG HC.
+  exists av, x3, x4, x5, x6, x11, x12, x23, rnd. split; [|split; [|split; [|exact H]]].
   - eapply rrw_cells_magree; [exact AC| exact AG|]. cbn. intros a Ha X. destruct (HC a X) as [_ Y]. apply Y. exact Ha.
-  - eapply rbytes_at_magree; [exact AL| exact AG|]. intros a Ha X. destruct (HC a X) as [Y _].
-    unfold rauxv_list in Ha. rewrite u64s_length, map_length in Ha. cbn in Ha. lia.
+  - eapply auxv_keys_map; [|exact AL]. intros A w HA HB Hb.
+    eapply rbytes_at_magree; [exact Hb| exact AG|]. intros a Ha X. destruct (HC a X) as [Y _].
+    rewrite length_le8 in Ha. lia.
   - eapply rbytes_at_magree; [exact RN| exact AG|]. intros a Ha X. destruct (HC a X) as [Y _]. rewrite length_le8 in Ha. lia.
 Qed.
 

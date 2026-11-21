@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the state invariant is the launch's [SINVL] over the launch record [LaunchX]; the emit nodes' argument pieces come from [extra_pieces_sound]). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -53,18 +54,19 @@ Section HAGCheck.
   Variable brk0 : word.
   Variables argv envp : list (list byte).
   Variables uid hw : word.
+  Context {L : LaunchX}.
   Variable fs : Fs.Fs.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
 
-  #[local] Notation argH := (argH0 HAPH sp rdraw argv envp uid hw).
+  #[local] Notation argH := (argH0 sp rdraw argv envp (lx_kb L) (lx_execfn L)).
   #[local] Notation ISP := (bv_unsigned sp).
   #[local] Notation LIM := AsanInit.LIMIT.
   (* [comment removed for export] *)
   Variable SV : env -> (word -> option byte) -> Prop.
-  Hypothesis SV_to1 : forall E M, SV E M -> HAArg.SINV1 sp brk0 argv envp rdraw hw uid E M.
+  Hypothesis SV_to1 : forall E M, SV E M -> HAArg.SINV1 (L:=L) sp brk0 argv envp rdraw hw uid E M.
   Hypothesis SV_frame : forall E M M', (forall a, argH E a = true -> M' a = M a) -> SV E M -> SV E M'.
   Hypothesis SV_agree : forall E E' M, env_agree NX0 E E' -> SV E M -> SV E' M.
 
@@ -72,20 +74,20 @@ Section HAGCheck.
 
   Lemma env_agree_NX0 : forall E E', env_agree NX E E' -> env_agree NX0 E E'.
   Proof. intros E E' H. eapply env_agree_le; [exact H | exact NX_ge]. Qed.
-  Lemma SVG_to1 : forall E M, SVG E M -> HAArg.SINV1 sp brk0 argv envp rdraw hw uid E M.
+  Lemma SVG_to1 : forall E M, SVG E M -> HAArg.SINV1 (L:=L) sp brk0 argv envp rdraw hw uid E M.
   Proof. intros E M [H _]. exact (SV_to1 E M H). Qed.
-  Lemma SVG_to0 : forall E M, SVG E M -> SINV0 HAPH sp rdraw brk0 argv envp uid hw E M.
+  Lemma SVG_to0 : forall E M, SVG E M -> SINVL HAPH sp rdraw brk0 argv envp uid hw L E M.
   Proof. intros E M H. exact (proj1 (SVG_to1 E M H)). Qed.
   Lemma SF_g : forall E M M', (forall a, argH E a = true -> M' a = M a) -> SVG E M -> SVG E M'.
   Proof. intros E M M' Hf [H1 H2]. split; [exact (SV_frame E M M' Hf H1) | exact H2]. Qed.
   Lemma SA_g : forall E E' M, env_agree NX E E' -> SVG E M -> SVG E' M.
   Proof. intros E E' M Hag [H1 H2]. split; [exact (SV_agree E E' M (env_agree_NX0 E E' Hag) H1) | exact (PHI_agree E E' Hag H2)]. Qed.
   Lemma AA_g : forall E E' (a : word), env_agree NX E E' -> argH E a = argH E' a.
-  Proof. intros E E' a Hag. exact (argH0_agree HAPH sp rdraw argv envp uid hw E E' a (env_agree_NX0 E E' Hag)). Qed.
+  Proof. intros E E' a Hag. exact (argH0_agree sp rdraw argv envp (lx_kb L) (lx_execfn L) E E' a (env_agree_NX0 E E' Hag)). Qed.
   Lemma SP_g : forall E M, SVG E M -> uE E e_pgsp = pgdown ISP.
-  Proof. intros E M H. exact (SINV0_pgsp HAPH sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit E M (SVG_to0 E M H)). Qed.
+  Proof. intros E M H. exact (SINVL_pgsp HAPH sp rdraw brk0 argv envp uid hw L Hsp E M (SVG_to0 E M H)). Qed.
 
-  Let AH := argH0_high HAPH sp rdraw argv envp uid hw Hsp Hva.
+  Let AH := argH0_high sp rdraw argv envp (lx_kb L) (lx_execfn L) Hsp Hva.
   Let AA := AA_g. Let SF := SF_g. Let SA := SA_g. Let SP := SP_g.
 
   (* [comment removed for export] *)
@@ -136,23 +138,47 @@ Section HAGCheck.
     - exact (APSX.node_x_sound_XMemIsZero HASEGS HAT NX LIMIT hat_segs_wx hat_in_hull hat_hull_ok SVG argH ISP
                AH NX_spw AA SF SA fs ha_miz_spec).
     - (* [comment removed for export] *)
-      eapply (x_sound_envscan HASEGS HAT NX LIMIT SVG argH ISP fs hat_segs_wx hat_in_hull hat_hull_ok SF W_51c410 W_51c414 W_51c418);
-        [ cbn; lia
-        | exact (fetch_at HASEGS _ _ _ eq_refl F_51c410) | exact (fetch_at HASEGS _ _ _ eq_refl F_51c414) | exact (fetch_at HASEGS _ _ _ eq_refl F_51c418)
-        | repeat split; reflexivity | exact D_51c410 | exact D_51c414 | exact D_51c418
-        | exact Hva | exact Hve | exact (sp_lo sp Hsp) | exact (sp_hi sp Hsp) | reflexivity
-        | exact (SINV0_vals HAPH sp rdraw brk0 argv envp Hsp Hva Hve uid hw Hfit SVG SVG_to0)
-        | exact (SINV0_envp HAPH sp rdraw brk0 argv envp uid hw SVG SVG_to0) ].
+      intros args cs cs' E R FULL model T0 HC.
+      pose proof (co_sinv _ _ _ _ _ _ _ _ _ _ _ _ HC) as HL. apply SVG_to0, SINVL_launch in HL. destruct HL as [Hlaunch Hlau].
+      assert (X : x_stmt HASEGS HAT NX LIM SVG argH ISP fs XEnvScan).
+      { eapply (x_sound_envscan HASEGS HAT NX LIMIT SVG argH ISP fs hat_segs_wx hat_in_hull hat_hull_ok SF W_51c410 W_51c414 W_51c418)
+          with (inp := inpL argv envp uid hw L) (mbase := lx_mbase L) (ph := HAPH) (entry := Z_to_bv 64 (Z.of_N (lx_apc L)))
+               (sp := sp) (brk := brk0) (rdraw := rdraw);
+          try solve [ cbn; lia | reflexivity | repeat split; reflexivity
+                    | exact (fetch_at HASEGS _ _ _ eq_refl F_51c410) | exact (fetch_at HASEGS _ _ _ eq_refl F_51c414)
+                    | exact (fetch_at HASEGS _ _ _ eq_refl F_51c418) | exact D_51c410 | exact D_51c414 | exact D_51c418
+                    | exact Hva | exact Hve | exact Hlaunch | exact Hlau | exact (sp_lo sp Hsp) | exact (sp_hi sp Hsp)
+                    | exact AH | exact AA | exact SF | exact SA | exact NX_spw
+                    | (eapply SINV0_vals; first [eassumption | exact SF | (intros ? ? Hs; exact (SVG_to0 _ _ Hs))])
+                    | (eapply SINV0_envp; first [eassumption | exact SF | (intros ? ? Hs; exact (SVG_to0 _ _ Hs))])
+                    | (eapply SINV0_str0; first [eassumption | exact SF | (intros ? ? Hs; exact (SVG_to0 _ _ Hs))]) ]. }
+      exact (X args cs cs' E R FULL model T0 HC).
     - (* [comment removed for export] *)
-      eapply (x_sound_pnscan HASEGS HAT NX LIMIT SVG argH ISP fs hat_segs_wx hat_in_hull hat_hull_ok AH NX_spw AA SF SA
-                W_51c4cc W_51c4d0 W_51c4d4 W_51c4d8 W_51c4dc);
-        [ cbn; lia
-        | exact (fetch_at HASEGS _ _ _ eq_refl F_51c4cc) | exact (fetch_at HASEGS _ _ _ eq_refl F_51c4d0) | exact (fetch_at HASEGS _ _ _ eq_refl F_51c4d4)
-        | exact (fetch_at HASEGS _ _ _ eq_refl F_51c4d8) | exact (fetch_at HASEGS _ _ _ eq_refl F_51c4dc)
-        | repeat split; reflexivity | exact D_51c4cc | exact D_51c4d0 | exact D_51c4d4 | exact D_51c4d8 | exact D_51c4dc
-        | exact Hva | exact Hve | exact (sp_lo sp Hsp) | exact (sp_hi sp Hsp) | reflexivity
-        | exact (SINV0_vals HAPH sp rdraw brk0 argv envp Hsp Hva Hve uid hw Hfit SVG SVG_to0)
-        | exact (SINV0_str0 HAPH sp rdraw brk0 argv envp Hva Hve uid hw Hfit SVG SVG_to0 SF) ].
+      intros args cs cs' E R FULL model T0 HC.
+      pose proof (co_sinv _ _ _ _ _ _ _ _ _ _ _ _ HC) as HL. apply SVG_to0, SINVL_launch in HL. destruct HL as [Hlaunch Hlau].
+      assert (X : x_stmt HASEGS HAT NX LIM SVG argH ISP fs XPnScan).
+      { eapply (x_sound_pnscan HASEGS HAT NX LIMIT SVG argH ISP fs hat_segs_wx hat_in_hull hat_hull_ok AH NX_spw AA SF SA
+                  W_51c4cc W_51c4d0 W_51c4d4 W_51c4d8 W_51c4dc)
+          with (inp := inpL argv envp uid hw L) (mbase := lx_mbase L) (ph := HAPH) (entry := Z_to_bv 64 (Z.of_N (lx_apc L)))
+               (sp := sp) (brk := brk0) (rdraw := rdraw);
+          try solve [ cbn; lia | reflexivity | repeat split; reflexivity
+                    | exact (fetch_at HASEGS _ _ _ eq_refl F_51c4cc) | exact (fetch_at HASEGS _ _ _ eq_refl F_51c4d0)
+                    | exact (fetch_at HASEGS _ _ _ eq_refl F_51c4d4) | exact (fetch_at HASEGS _ _ _ eq_refl F_51c4d8)
+                    | exact (fetch_at HASEGS _ _ _ eq_refl F_51c4dc)
+                    | exact D_51c4cc | exact D_51c4d0 | exact D_51c4d4 | exact D_51c4d8 | exact D_51c4dc
+                    | exact Hva | exact Hve | exact Hlaunch | exact Hlau | exact (sp_lo sp Hsp) | exact (sp_hi sp Hsp)
+                    | exact AH | exact AA | exact SF | exact SA | exact NX_spw
+                    | (eapply SINV0_vals; first [eassumption | exact SF | (intros ? ? Hs; exact (SVG_to0 _ _ Hs))])
+                    | (eapply SINV0_envp; first [eassumption | exact SF | (intros ? ? Hs; exact (SVG_to0 _ _ Hs))])
+                    | (eapply SINV0_str0; first [eassumption | exact SF | (intros ? ? Hs; exact (SVG_to0 _ _ Hs))])
+                    | (intros ?E ?M ?a ?HS ?Ha;
+                       eapply SINV0_str0 with (SINV := SVG) (ph := HAPH) (apc := lx_apc L) (sp := sp) (rdraw := rdraw)
+                         (brk0 := brk0) (mbase := lx_mbase L) (argv := argv) (envp := envp) (fs := lx_fs L)
+                         (stdin := lx_stdin L) (uid := uid) (gid := lx_gid L) (hw := hw) (groups := lx_groups L)
+                         (net := lx_net L) (nofile := lx_nofile L) (sigmask := lx_sigmask L) (kb := lx_kb L)
+                         (execfn := lx_execfn L) (crd := lx_crd L) (sgd := lx_sgd L) (sgt := lx_sgt L);
+                       first [exact HS | exact Ha | exact SVG_to0 | exact Hva | exact Hve | exact Hsp | exact Hfit | eassumption]) ]. }
+      exact (X args cs cs' E R FULL model T0 HC).
     - apply x_sound_layout.
     - exact (APSX.node_x_sound_XIStrncpy HASEGS HAT NX LIMIT hat_segs_wx hat_in_hull hat_hull_ok SVG argH ISP
                AH NX_spw AA SF SA fs ha_istrncpy_spec).
@@ -199,12 +225,17 @@ Section HAGCheck.
 
   Theorem hag_XE_sound : emit_stmt HASEGS HAT NX LIM (hag_XE NX) SVG argH ISP fs.
   Proof.
-    pose proof (HAArg.Lay_ha sp argv envp rdraw hw Hsp Hva Hve uid Hfit) as LAY. pose proof HAArg.istrlen_ecalls as EC.
-    eapply (xe_sound HASEGS HAT NX LIMIT SVG argH fs hat_in_hull hat_hull_ok ISP (HAArg.argH0_high_ha sp argv envp rdraw hw Hsp Hva uid) NX_spw AA SF SA
+    intros id args cs fd ps cs' E R FULL model T HC.
+    pose proof (co_sinv _ _ _ _ _ _ _ _ _ _ _ _ HC) as HLA. apply SVG_to1, HAArg.SINV1_launch in HLA.
+    pose proof (HAArg.Lay_ha sp brk0 argv envp rdraw hw Hsp Hva Hve uid Hfit HLA) as LAY. pose proof HAArg.istrlen_ecalls as EC.
+    revert id args cs fd ps cs' E R FULL model T HC.
+    change (emit_stmt HASEGS HAT NX LIM (hag_XE NX) SVG argH ISP fs).
+    eapply (xe_sound HASEGS HAT NX LIMIT SVG argH fs hat_in_hull hat_hull_ok ISP AH NX_spw AA SF SA
              RtStrlen.W_istrlen_0 RtStrlen.W_istrlen_4 RtStrlen.W_istrlen_8 RtStrlen.W_istrlen_12 RtStrlen.W_istrlen_16 RtStrlen.W_istrlen_20 RtStrlen.W_istrlen_24);
       [cbn; lia | exact EC | exact LAY
-      | exact (HAArg.vals_of_SV sp brk0 argv envp rdraw hw Hsp Hva Hve uid Hfit SVG SVG_to1)
-      | exact (HAArg.str_of_SV sp brk0 argv envp rdraw hw Hsp Hva Hve uid Hfit SVG SVG_to1)
+      | exact (extra_pieces_sound HASEGS HAT SVG argH hat_in_hull hat_hull_ok ISP AH _ _ _ _ _ _ LAY
+                 (HAArg.vals_of_SV sp brk0 argv envp rdraw hw Hsp Hva Hve uid Hfit SVG SVG_to1)
+                 (HAArg.str_of_SV sp brk0 argv envp rdraw hw Hsp Hva Hve uid Hfit SVG SVG_to1) eq_refl)
       | reflexivity | exact HAArg.Gro_ha | exact HAArg.stdio_ha | exact HAArg.Gfile_ha].
   Qed.
 

@@ -1,5 +1,5 @@
 (** reac-pw/fuzz_segconf, plain build (image 3776ca44d75c): satisfiability of the premises of contract families F2,
-    F3 and F4 (lib/Prog/*_c.v of commit aca5136e2baf):
+    F3 and F4 (lib/Prog/*_c.v):
     for each named premise one closed lemma [<premise>_sat] that it holds at a real call site with real values;
     [_dropin] lemmas add the other call site the contract's header names. The cut predicates of Prog/seg_cuts.v and
     the HEAD cuts' entry facts are in F234SatCuts.v.

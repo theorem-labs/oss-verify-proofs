@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: written for omx-clap-core/fuzz_preset's ASan image A. The shadow map of the whole image range
    [IMG_LO, IMG_TOP) (YImgTop.v, generated from the pinned image) is present in the view in every state AR holds:
-   img_shadow_vis, the donor's statement (proofs/libreac/fuzz_grant/lib/A/Prog/GrantRo.v at a970a282587, a fact there
+   img_shadow_vis, the donor's statement (proofs/libreac/fuzz_grant/lib/A/Prog/GrantRo.v, a fact there
    that a unit supplies), is PROVED here from the zero-shadow law, the const law and the cover check of
    lib/Reusable/YImgShadowCover.v, instantiated with the generated lists of A/AF0m.v: the zero-shadow ranges
    Tfib_zero_shadow and the shadow cells Tfib_const_shadow. tfib_img_shadow_cover is the cover check of those two lists,

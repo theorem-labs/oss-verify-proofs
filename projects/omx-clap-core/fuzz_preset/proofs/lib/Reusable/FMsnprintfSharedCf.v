@@ -1,12 +1,12 @@
-(* copy of proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfSharedCf.v@0ddf65fd8cc; module paths fuzz_manifest -> fuzz_preset, lib.A -> lib.Reusable *)
-(* The _cf twin of the shared snprintf top (FMsnprintfShared.v sh_asnprintf_realizes, cold/port-fm-rtprintf-param
-   4de9999bfe7, lines 156-188), for fuzz_preset's cf allocator instance (h-mani-a8). AR form only (preset has no
-   ecall_preU_cf). The changes follow c-libc-stdio's astrcmp_realizes_cf (origin/cold/h-mani-a8-preset-alloc
-   9d68c8a66d34, lib/Reusable/YGcfStr.v:123-, header :96), and nothing else changes:
+(* copy of proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfSharedCf.v; module paths fuzz_manifest -> fuzz_preset, lib.A -> lib.Reusable *)
+(* The _cf twin of the shared snprintf top (FMsnprintfShared.v sh_asnprintf_realizes,
+    lines 156-188), for fuzz_preset's cf allocator instance (h-mani-a8). AR form only (preset has no
+   ecall_preU_cf). The changes follow c-libc-stdio's astrcmp_realizes_cf (
+   lib/Reusable/YGcfStr.v:124-, header :96), and nothing else changes:
    - ecall_pre -> ecall_pre_cf (YG0dcf.v:80-), with the ghost list Hp;
    - AR -> ARcf (YG0ncf.v:299-301) in the post, Hp threaded unchanged (snprintf allocates nothing);
    - the destination's premise is the top's amem_range d (sn_len (n - 1) T + 8) (cold/port-fm-rtprintf-param, the
-     destination slack); preset's amem_range8 (YGcfStr.v:117) gives it (amem8_of_amem_range8 below);
+     destination slack); preset's amem_range8 (YGcfStr.v:118) gives it (amem8_of_amem_range8 below);
    - the per-call rom_view before SRr, as astrcmp_realizes_cf has it.
    FF, K, gc / gv, img_lo / img_hi, cr, dest_off_globals, frm0_entry, the 2^47 slot bound, the Sem.reg_get FP clause
    and the sn_bytes post are FMsnprintfShared's text. Image-neutral: a Section over segs B. Statement only. New file. *)

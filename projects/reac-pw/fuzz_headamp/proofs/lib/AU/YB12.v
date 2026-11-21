@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: emitted for reac-pw/fuzz_headamp image B by atable.py e88affcf0526 (the start-up tool set at f1417943331) from fuzz_headamp.asan-ubsan and its unstripped twin: TFIB_TEXT_N over this image's own .text, img_lo / img_hi cited from lib/Reusable/YImgTop.v. *)
+(* Modified by Theorem Labs, 2026-10: emitted for reac-pw/fuzz_headamp image B by atable.py e88affcf0526 (the start-up tool set) from fuzz_headamp.asan-ubsan and its unstripped twin: TFIB_TEXT_N over this image's own .text, img_lo / img_hi cited from lib/Reusable/YImgTop.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_headamp.asan-ubsan (reac-pw/fuzz_headamp asan-ubsan) sha256 53edda9bdeeba1803865babfecb1af6732babe47ab83c64d38cc59a90d717a94; unstripped twin sha256 1674e30a0698f381704e66d2398d7906c881f4ba8fc619cb41b89fb97ad112ff *)
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List.

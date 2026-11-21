@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: transport vDSO reservation inclusion across slot mmap and project reserved-layout grants. *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -271,7 +272,7 @@ Section ASM.
   Proof using HL_E HQF Hsp R4 Rra R2 HBUD Hreq Hlimbo Hsc HL bi. clear - HL_E HQF Hsp R4 Rra R2 HBUD Hreq Hlimbo Hsc HL bi.
     intros s3 M3 mdl3 r4 m cnt3 needed P3 NJ3 EL3 Hnil3 Um3 Zm3 NLm A10 A11 A12 A13 A14 A15 A18 A1 A9 A19 A24 A25
            ml stride Hc3 Eml Mpos N20 Hfit Hq S16 Hsingle Hpnd Rq4 Rbig XG.
-    pose proof P3 as [W3 RP3 LG3 Hh3 Hlz3 Hmat3 Hfs3 Hfds3 Hlim3 Hcan3 Herr3 BL3 LM3 MU3 FR3 DF3 SK3 Q2 Q8 Q20 Q21 Q22 Q23 KB3].
+    pose proof P3 as [W3 RP3 LG3 Hh3 Hlz3 Hmat3 Hfs3 Hfds3 Hlim3 Hcan3 Herr3 BL3 LM3 MU3 FR3 DF3 SK3 Q2 Q8 Q20 Q21 Q22 Q23 KB3 Hrdr3 HVDSO3].
     pose proof scl_rng as SCL. pose proof stk272 as S272. ceil.
     assert (Nmod : needed mod 4096 = 0) by (rewrite Eml, Z.mul_comm; apply Z.mod_mul; lia).
     pose proof (pru_aligned needed ltac:(lia) Nmod) as PRU.
@@ -289,13 +290,15 @@ Section ASM.
     (* [comment removed for export] *)
     pose proof (proj1 (LEDGERX_nil s3 _) LG3) as HLX.
     destruct (budget L mdl d HBUD s3 mdl3 W3 NJ3 ltac:(rewrite EL3, zlen_cons; unfold zlen in *; lia) Hlim3) as (_ & HCR & HRS).
-    destruct (ledgerx_grant_rw s3 L [] mdl3 W3 HLX xok_nil Hlz3 Hmat3 (getr r5 10) needed ltac:((first [ (clear MR8 H0 FR3 Herr3 Rbig Hpnd Hsingle HL_E; lia) | lia ])) ltac:(cbn [length Z.of_nat]; (first [ (clear MR8 Nmod H0 FR3 Rbig Hpnd Hsingle HL_E; lia) | lia ]))
+    destruct (ledgerx_grant_rw s3 L [] mdl3 W3 HLX xok_nil Hlz3 Hmat3 (getr r5 10) needed ltac:((first [ (clear MR8 H0 FR3 Herr3 Rbig Hpnd Hsingle HL_E; lia) | lia ]))
+                ltac:(unfold page_size; exact Nmod)
+                ltac:(cbn [length Z.of_nat]; (first [ (clear MR8 Nmod H0 FR3 Rbig Hpnd Hsingle HL_E; lia) | lia ]))
                 ltac:(rewrite XSUM_nil; (first [ (clear MR8 H0 FR3 Rbig Hpnd Hsingle HL_E; lia) | lia ]))) as (a0 & GR0 & _).
     assert (M4W : forall y, 0 <= y < 2 ^ 64 -> M4 (Z_to_bv 64 y) <> M3 (Z_to_bv 64 y) -> sp - 208 <= y < sp - 144).
     { intros y Hy NE. unfold M4, mm_frame in NE. wdiff NE M3 y. }
     assert (G34 : mem_grows M3 M4) by (intros z Hz; unfold M4, mm_frame; repeat apply (wbytes_grows _ _ _ z); exact Hz).
     apply (kat_of_kfx F bo).
-    apply (as_kfx_mmap_rw F r5 (0x683ac%bv : word) M4 rom mdl3 W_68358 needed HL Hh3 Hlz3 F_68358 E_68358 C17 C11 ltac:(lia) C12 C13 C14 C15 bi bo).
+    apply (as_kfx_mmap_rw F r5 (0x683ac%bv : word) M4 rom mdl3 W_68358 needed HL Hh3 Hlz3 F_68358 E_68358 C17 C11 ltac:(lia) C12 C13 C14 C15 ltac:(rewrite C10; apply place_declined_b_null) bi bo).
     { rewrite PRU. exists a0. exact GR0. }
     { (* [comment removed for export] *)
       unfold mmrw_fail. replace (errno_ret ENOMEM) with (Z_to_bv 64 (2 ^ 64 - 12)) by (apply bv_eq; reflexivity).
@@ -365,6 +368,8 @@ Section ASM.
         + rewrite Z20. exact Q20.
         + eapply keeps_big; [| exact Kf' | reflexivity]. apply keeps_but_upd; [|apply in_regs_dec; reflexivity].
           eapply keeps_big; [exact KB3 | exact K5 | reflexivity].
+        + (* f_rdr: this arm keeps the model [mdl3] of the incoming [pt]. *) exact Hrdr3.
+        + exact HVDSO3.
       - exact NJ3.
       - exact EL3.
       - exact NLm.
@@ -375,11 +380,11 @@ Section ASM.
     (* [comment removed for export] *)
     intros aw GR. apply (kfx_of_kat F HL bi). unfold mmrw_grant. rewrite PRU in GR |- *.
     replace (v_addi (0x683ac%bv : word) 4) with (0x683b0%bv : word) by (apply bv_eq; reflexivity).
-    pose proof GR as GR'. unfold grant_ok in GR'. rewrite !Bool.andb_true_iff in GR'. destruct GR' as [[[[GA1 GA2] GA3] GA4] GA5].
+    pose proof GR as GR'. unfold grant_ok in GR'. rewrite !Bool.andb_true_iff in GR'. destruct GR' as [[[[[GA0 GA1] GA2] GA3] GA4] GA5].
     apply Z.eqb_eq in GA1. apply Z.ltb_lt in GA2. apply Z.leb_le in GA3. unfold page_size in GA1.
     set (p0 := bv_unsigned aw) in *.
     assert (Ea : aw = Z_to_bv 64 p0) by (symmetry; apply Z_to_bv_u_eq'; reflexivity).
-    pose proof GA4 as GA4'. rewrite (lx_res s3 [] _ HLX) in GA4'.
+    pose proof (ledgerx_prefix_free s3 [] _ _ _ HLX GA4) as GA4'.
     destruct (grant_range_hz (m_vmmaps mdl3) (vm_maps (m_vmmaps mdl3)) aw (Z_to_bv 64 needed) (lx_top s3 [] _ HLX) GA4'
                 ltac:(rewrite u_Z2bv by (first [ (clear GA1 MR8 H0 FR3 Herr3 Rbig Hpnd Hsingle HL_E; lia) | lia ]); (first [ (clear GA1 MR8 H0 FR3 Herr3 Rbig Hpnd Hsingle HL_E; lia) | lia ])) ltac:(fold p0; (first [ (clear MR8 Nmod H0 FR3 Herr3 XG Rbig Hpnd Hsingle HL_E; lia) | lia ])) ltac:(rewrite u_Z2bv by (first [ (clear GA1 MR8 H0 FR3 Herr3 Rbig Hpnd Hsingle HL_E; lia) | lia ]); exact Nmod) ltac:(rewrite u_Z2bv by (first [ (clear GA1 MR8 H0 FR3 Herr3 Rbig Hpnd Hsingle HL_E; lia) | lia ]); fold p0; (first [ (clear MR8 H0 FR3 Herr3 Rbig Hpnd Hsingle HL_E; lia) | lia ]))) as [HCE IMGF].
     rewrite u_Z2bv in HCE by lia. rewrite u_Z2bv in IMGF by lia. fold p0 in HCE, IMGF.
@@ -393,13 +398,16 @@ Section ASM.
     pose (h1 := mkVmMapsFull (vm_reserved (m_vmmaps mdl3)) ((Z_to_bv 64 p0, Z_to_bv 64 needed) :: vm_maps (m_vmmaps mdl3)) (vm_noaccess (m_vmmaps mdl3))
                (vm_start_brk (m_vmmaps mdl3)) (vm_brk (m_vmmaps mdl3)) (vm_limit (m_vmmaps mdl3)) (vm_mmap_base (m_vmmaps mdl3)) (vm_init_sp (m_vmmaps mdl3))).
     pose proof (with_vmmaps_facts h1 mdl3) as MF. change (with_vmmaps h1 mdl3) with mdl5 in MF. destruct MF as (MF1 & MF2 & MF3 & MF4 & MF5 & MF6).
+    pose proof (with_vmmaps_rdr h1 mdl3) as MFR. change (with_vmmaps h1 mdl3) with mdl5 in MFR.
     assert (HLX5 : LEDGERX s3 [(Z_to_bv 64 p0, Z_to_bv 64 needed)] (m_vmmaps mdl5)).
-    { rewrite MF1. destruct LG3 as [G1 G2 G3 G4 G5]. constructor; cbn [h1 vm_maps vm_noaccess vm_brk vm_start_brk vm_reserved vm_mmap_base vm_init_sp app].
+    { rewrite MF1. destruct LG3 as [G1 G2 G3 G4 G5 G6]. constructor; cbn [h1 vm_maps vm_noaccess vm_brk vm_start_brk vm_reserved vm_mmap_base vm_init_sp app].
       - apply perm_skip. exact G1.
       - exact G2.
       - exact G3.
       - exact G4.
-      - exact G5. }
+      - exact G5.
+      - constructor; [|exact G6]. cbn [fst snd].
+        rewrite MhKXSys.MhGap.region_free_app in HRF. apply Bool.andb_true_iff in HRF. exact (proj1 HRF). }
     (* [comment removed for export] *)
     ceil; unfold HEAPLO in HP0.
     assert (M5W : forall y, 0 <= y < 2 ^ 64 -> M5 (Z_to_bv 64 y) <> M3 (Z_to_bv 64 y) -> (sp - 208 <= y < sp - 144) \/ (p0 <= y < p0 + needed)).
@@ -584,7 +592,11 @@ Section ASM.
       - kept_rw K8. kept_rw K7. exact D2.
       - kept_rw K8. kept_rw K7. rewrite D20. exact Q20.
       - eapply keeps_big; [|exact K8|reflexivity]. eapply keeps_big; [|exact K7|reflexivity]. eapply keeps_big; [|exact K6|reflexivity].
-        apply keeps_but_upd; [|apply in_regs_dec; reflexivity]. eapply keeps_big; [exact KB3 | exact K5 | reflexivity]. }
+        apply keeps_but_upd; [|apply in_regs_dec; reflexivity]. eapply keeps_big; [exact KB3 | exact K5 | reflexivity].
+      - (* q_rdr: one [with_vmmaps] step on top of the incoming [pt]'s model. *)
+        rewrite MFR. exact Hrdr3.
+      - eapply MhKXSys.MhGap.vdso_included_same; [| | | |exact HVDSO3];
+          cbn [mdl5 mmap_model with_vmmaps h1]; reflexivity. }
     (* [comment removed for export] *)
     apply (HL_E s4 MF mdl5 r8 m 0 P4 (XG s4 Km4 SCm4 Lm4 ltac:(rewrite ML4; exact (eq_sym Eml)) IG4)).
     - rewrite LB4, EL3. unfold zremove. cbn [List.filter]. rewrite Z.eqb_refl. cbn [negb]. apply zremove_notin. exact NLm.

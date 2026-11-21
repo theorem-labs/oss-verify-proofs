@@ -3,16 +3,17 @@
 (* Modified by Theorem Labs, 2026-10: the bcmp interceptor's contract at fuzz_reply.asan-ubsan's trampoline 0x42204, in
    the site form the image-B W walks take (abcmp_realizes at `SIGMA WS_bcmp`, the twin of lib/A/Rt/Bcmp.v).  The proof
    is cgif_file_fuzzer's released bcmp_icpt_contract (lib/YE2s.v:710, the asan-ubsan twin of A/AE2s.v, at
-   origin/ossv/recipes c8557374ad2e) and its chain YE3b.v YE6z.v YE70.v YE2z.v, relocated onto this image by pg-tools
+   theorem-labs/oss-verify-proofs@6b32741d849a) and its chain YE3b.v YE6z.v YE70.v YE2z.v, relocated onto this image by pg-tools
    port_core.py (sha256 718254b3f4dd; internal record) with five --override rows keyed by code bytes.  fuzz_reply's musl `bcmp` (0x9694c) is a
    `j` to the memcmp trampoline 0x42200, so the chain carries the memcmp interceptor's contract too (YE2z.v).  PB_fr's
    segments are the image's (W_tbl.v frsegs = AsanUbsan.M.loaded_segments = YB1v.v tfibsegs), so the site form is the
    relocated contract by conversion; the words below tie the chain to the pinned build. *)
 (* Modified by Theorem Labs, 2026-10: made generic in place over YE2y.v's icpt_laws_x (any allocator invariant ARx;
    ghost head set Hpx threaded unchanged), hunk for hunk as image A's twin lib/A/Rt/Bcmp.v was
-   (a working branch 6b4f6082575): bcmp_site_realizes_x states the site form over ARx; bcmp_site_realizes
+   (a working branch): bcmp_site_realizes_x states the site form over ARx; bcmp_site_realizes
    keeps its statement byte for byte and is re-proved from it at ARx := AR_x B (YE2y.icpt_laws_x_AR). Contract texts
    over ARx: lib/B/IcptRealizesX.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

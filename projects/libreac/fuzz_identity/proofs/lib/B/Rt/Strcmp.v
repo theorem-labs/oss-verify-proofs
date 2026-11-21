@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-29: relocated from libreac/fuzz_grant lib/A/Rt/Strcmp.v (a working branch 97c611eec86, owner a Theorem Labs lane, proved there on fuzz_grant.asan) to libreac/fuzz_identity image B (fuzz_identity.asan-ubsan, sha256 baf1a4d065e02f55521d39f05d8c8d9ed763a0ef798c70cc3eabe5816ffb3f66) by an address map recorded by the porting lane; module paths lib.A -> lib.B, GrantSyms -> TfibSyms, #[local] Zify override. The proof text is unchanged. The two theorems are strcmp_icpt_at (___interceptor_strcmp) and strcmp_icpt_contract (lib/B/Rt/StrcmpDef.STRCMP_ENTRY, the trampoline). *)
+(* Modified by Theorem Labs, 2026-10-29: relocated from libreac/fuzz_grant lib/A/Rt/Strcmp.v (a working branch, owner a Theorem Labs lane, proved there on fuzz_grant.asan) to libreac/fuzz_identity image B (fuzz_identity.asan-ubsan, sha256 baf1a4d065e02f55521d39f05d8c8d9ed763a0ef798c70cc3eabe5816ffb3f66) by an address map recorded by the porting lane; module paths lib.A -> lib.B, GrantSyms -> TfibSyms, #[local] Zify override. The proof text is unchanged. The two theorems are strcmp_icpt_at (___interceptor_strcmp) and strcmp_icpt_contract (lib/B/Rt/StrcmpDef.STRCMP_ENTRY, the trampoline). *)
 (* Written by Theorem Labs, 2026-10, for libreac/fuzz_identity's ASan+UBSan build (image B): the shared-core contract of the
    ASan strcmp interceptor, Reusable/AStrcmpDef.v's astrcmp_realizes, for ___interceptor_strcmp (0x427b0) and for the
    one-instruction trampoline __interceptor_trampoline_strcmp = __wrap_strcmp (0x421fc, `j 0x427b0`). The walk is the
@@ -17,6 +17,7 @@
       __sanitizer_weak_hook_strcmp 0x427ac, a0 = s4, the epilogue and `ret`.
    The checks use the callee stack [sp - 2192 - 72, sp - 2192), so the walk writes only [sp - 2264, sp). *)
 (* Modified by Theorem Labs, 2026-10-29: for a Theorem Labs lane's acceptance (a working branch), the record class is TfibSyms, not IdentTfibSyms, and the core modules are Required by full path at the applied B core's names: lib/B/A<x>.v -> lib/ReusableB/Y<x>.v (AB1v AB1w AE20 AE2y AE34 AE39 AE3a AE6y AF0l AF0m AF0x -> YB1v YB1w YE20 YE2y YE34 YE39 YE3a YE6y YF0l YF0m YF0x, qualified names included), lib/Reusable/YA0m, YE08, YE21. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

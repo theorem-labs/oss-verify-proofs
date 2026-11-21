@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the table's bounds on the launch's vDSO pair, and the start state for each CONFIG_RSEQ value). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith List.
@@ -14,7 +15,7 @@ Definition HSEGS : list Segment := AsanUbsan.M.loaded_segments.
 Definition HPH := AsanUbsan.M.phdrs.
 
 Definition ASAN_H : atable :=
-  {| img_lo := 0x10000; img_hi := 0x6e8000; n_res := 4; shadow_off := 0x7fff8000;
+  {| img_lo := 0x10000; img_hi := 0x6e8000; n_res := 4; n_resx := 2; p_resx := 20; shadow_off := 0x7fff8000;
      a_entry := 0x91258; rw_lo := 0x17e000; rw_len := 0x56a000; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 11;
      x_imemset := 0xcbd50; x_imemcpy := 0xcbcd4; x_memset := 0x176ea4; x_memcpy := 0x176aa0; x_memiszero := 0xcc29c;
      x_istrncpy := 0xcc17c; x_sealed := 0x11b9c; x_popfree := 0x97908; x_smear := 0xcd3b4;
@@ -24,6 +25,9 @@ Definition ASAN_H : atable :=
 
 Definition HLIMIT : Z := target_alloc_limit.
 Definition hinit : acs := init_acs_of ASAN_H.
+(** LPS 727298f3: the design-1 start state, one per CONFIG_RSEQ value [r] ([AsanPlanCore.init_acs_r]) *)
+Definition hinit_r (r : Z) : acs := init_acs_r r ASAN_H.
+
 
 Definition res_code (r : cres) : Z := match r with COk _ => -1 | CErr c _ _ => c end.
 Definition res_pc (r : cres) : Z := match r with COk _ => -1 | CErr _ _ cs => pc cs end.

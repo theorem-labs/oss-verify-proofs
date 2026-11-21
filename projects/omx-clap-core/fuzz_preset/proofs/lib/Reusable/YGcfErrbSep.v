@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfErrbSep.v (a working branch a999837d437c, file sha256 f62c93ec3f86), lane H on the cf layer of record ae2fa80b0325; module paths changed only: 18 modules to this unit's lib/Reusable. No other edit; no image numeral is stated here. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfErrbSep.v (a working branch, file sha256 f62c93ec3f86), lane H on the cf layer of record; module paths changed only: 18 modules to this unit's lib/Reusable. No other edit; no image numeral is stated here. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane M of the generic cf instance layer, a working branch; integrator ReallocPrimary).
    ERRB_SEP_t, the ONE image row that places the error-message-buffer object (YGcfInstBase.errb_cells_cf's 56 bytes
    at cf_errbuf_obj) apart from what the Allocate walks write: the instance object, the out-of-memory byte, errno and

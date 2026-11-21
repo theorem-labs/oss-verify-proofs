@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfInstFreeSig.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (lane F2a, a working branch): the Deallocate half of the SEAM between a unit's relocated
    walk and the generic cf instance layer.  rule 24: no function proved (kind: record of a unit's walk tops).
 
@@ -10,22 +11,22 @@
    layer's Deallocate top (YGcfInstFreeTop.v) consumes.  It is the twin of YGcfInstWalkSig.WalkSigA (the Allocate
    half, lane M), at the same segments [im_segs] so that the two halves share ONE allocator relation.
 
-   The field texts are a Theorem Labs lane's Deallocate walk tops (a working branch a12639a2201, the statements
-   at proofs/omx-clap-core/fuzz_preset/lib/A/MemnormD*.v listed below), which are a Theorem Labs lane's memnorm arm twins (a working branch
-   29b7505aa27, installed in c5 at 30a1993588f) relocated to the unit's image, with [tfibsegs] replaced by [im_segs],
+   The field texts are a Theorem Labs lane's Deallocate walk tops (a working branch, the statements
+   at proofs/omx-clap-core/fuzz_preset/lib/A/MemnormD*.v listed below), which are a Theorem Labs lane's memnorm arm twins (a working branch,
+   installed in c5) relocated to the unit's image, with [tfibsegs] replaced by [im_segs],
    the Deallocate entry pc (cgif's and preset's own values) by CfImg's [cf_pc_deallocate], and the call
    site's alloc_type argument (1 in every walk) by the section variable [atpD]:
-   - wsd_null    A/MemnormDnull.v:197    dealloc_null_arm_em  (c5 30a1993588f MemnormDnull.v:190)
+   - wsd_null    A/MemnormDnull.v:197    dealloc_null_arm_em  (c5 MemnormDnull.v:190)
    - wsd_common  A/MemnormDcommon.v:119  dealloc_common_em    (MemnormDcommon.v:110)
-   - wsd_mid     A/MemnormDmid.v:154     dealloc_mid_em       (MemnormDmid.v:141)
-   - wsd_drn     A/MemnormDmid.v:210     dealloc_drn_em       (MemnormDmid.v:197)
+   - wsd_mid     A/MemnormDmid.v:155     dealloc_mid_em       (MemnormDmid.v:141)
+   - wsd_drn     A/MemnormDmid.v:211     dealloc_drn_em       (MemnormDmid.v:197)
    These are the four arms MemnormDtop.adealloc_realizes_raw_em_g (MemnormDtop.v:72-101) splits over, on the
    enqueue side of free_cf's size test (rpre := the layer's rpreD_small_cf).  The fifth field, wsd_big, is the
    unit's big-block arm on the recycle side (rpreB := the layer's rpreD_big_cf), relocated from c5's DGbig.dealloc_big_em
-   (a working branch d501b72dd83, DeallocNmaxA): its walk top ends in MemnormT.dealloc_leaf_raw_em after Put's size
+   (a working branch, DeallocNmaxA): its walk top ends in MemnormT.dealloc_leaf_raw_em after Put's size
    test, and with MemnormDtop's NULL route it gives the whole Deallocate Prop there; its interface hypothesis
    DGbigIF.DIfaceBig is the layer's YGcfInstFreeBig.diface_big_cf.  DIfaceBig's recycle field dbg_rcs_t (PRIMED,
-   a working branch 3711d297cf5a) comes from WalkSigDrh's field wsr_rcs_rh (SEC_rh_t), through
+   a working branch) comes from WalkSigDrh's field wsr_rcs_rh (SEC_rh_t), through
    YGcfInstFreeBig.dbg_rcs_of_sec_rh_cf; the released wsd_rcs (SEC_t) has no cgif witness (Main 14:3xZ: no RCm route).
 
    Each walk top's SECTION HYPOTHESES are not fields: the unit discharges them when it instantiates its theorem at
@@ -37,7 +38,7 @@
    - DRNm : MnDrain.de_drain_m_t at the layer's ARX, lane F2b's YGcfInstDrain.de_drain_m_cf (from its seam
      YGcfInstDrainSig.DrainSigC);
    - EAimg / EAz3 / EAdz / EAiz : ErrnoApart's image facts (lane F1's YGcfInstErrno record).
-   A/DGg1.v:571 FH_m is NOT a field: its conclusion is the unit's seed record DGgm.free_hyps over its own image
+   A/DGg1.v:572 FH_m is NOT a field: its conclusion is the unit's seed record DGgm.free_hyps over its own image
    ([world tfibsegs], the walk's symbolic state DGgm.SS0), so it has no image-free statement; it is used only inside
    the mid / drain arms (MemnormDmid.v:156, :213), which the unit proves at its image.
 
@@ -93,7 +94,7 @@ Local Notation LEAFrh := (YGcfMallocComposeERhBase.dealloc_leaf_raw_em_rh im_seg
 
 (* The post of QuarantineCallback::Recycle on one chunk without the cache flag: DMrcSecNf.rchunk_sec_m_nf's, the
    RELEASED form, kept for the unit's released walk [SEC_t]; the primed [rcs_post_rh] below is DGbigIF.dbg_rcs_t's post
-   (DGbigIF.v:131-144 at a working branch 3711d297cf5a), compared by conversion in
+   (DGbigIF.v:132-145 at a working branch), compared by conversion in
    YGcfInstFreeBig.dbg_rcs_of_sec_rh_cf. *)
 Definition rcs_post (inst : Z) (ly : alayout) (X : astate) (k : chunk) (ks : list chunk) (zs : list Z)
   (W : world im_segs) (regs : bvmap 5 word) (mem : word -> option byte) (md : Model) :
@@ -119,7 +120,7 @@ Definition SEC_t : Prop :=
 
 (* Plan row (c), c0: the PRIMED twins, under the re-hide (a secondary Recycle unmaps the dead map and re-hides its
    shadow interior, so the walk runs at amreal' over RZ_cf and the call post is acall_post_x_rh).  [rcs_post_rh] is
-   DMrcRh.rchunk_sec_rh_nf's post (DMrcRh.v:482-491 at a working branch 3d8ad2aeb77e), which is row (d)'s primed
+   DMrcRh.rchunk_sec_rh_nf's post (DMrcRh.v:483-492 at a working branch), which is row (d)'s primed
    DGbigIF.dbg_rcs_t post; [SEC_rh_t] is the type of the primed walk field wsr_rcs_rh (the unit's relocation of
    rchunk_sec_rh_nf; its cgif witness is plan row (c4)). *)
 Definition rcs_post_rh (inst : Z) (ly : alayout) (X : astate) (k : chunk) (ks : list chunk) (zs : list Z)
@@ -176,7 +177,7 @@ Record WalkSigD : Prop := {
     amreal im_segs (ft p tr S) W (cfg_at im_segs cf_pc_deallocate regs mem md)
       (LEAF inst ly S W regs mem md p n tr);
   (* the big-block arm: Put's size test sends the chunk to QuarantineCallback::Recycle at once (c5 DGbig.dealloc_big_em,
-     a working branch d501b72dd83) *)
+     a working branch) *)
   wsd_big : forall inst so bp ly S W regs mem md p n tr,
     DeallocG.dealloc_pre im_segs B U ARX rpreB fpre atpD inst so bp ly S W regs mem md p n tr ->
     In (p, n) (blocks S) ->
@@ -184,7 +185,7 @@ Record WalkSigD : Prop := {
       (LEAF inst ly S W regs mem md p n tr);
   (* the big arm's secondary Recycle walk (the layer turns it into DGbigIF.dbg_rcs_t: YGcfInstFreeBig).  OPEN at cgif:
      it has no cgif witness.  The old one (YGcfInstFreeRcscgif) rested on rc_sec_free_ledger_t, FALSE at a real
-     recycle, and was deleted with it (cf layer 106590920c03).  Its non-vacuous twin is the PRIMED walk under the
+     recycle, and was deleted with it (cf layer).  Its non-vacuous twin is the PRIMED walk under the
      re-hide (DMrcRh.rchunk_sec_rh_nf, plan row (c)); Main 14:3xZ: no RCm route *)
   wsd_rcs : SEC_t
 }.

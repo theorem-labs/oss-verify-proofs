@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the run's launch is built from the entry draw, the input, the entry stack pointer and the mmap base, start-up is given the launch premises, and run_ok is proved and passed to main; launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Run.
@@ -41,25 +42,30 @@ Section Compose.
            (ms0 psegs Plain.M.init_pc Plain.M.phdrs en inp).
   Proof.
     intros [sp0 brk mbase draw] inp VE VI.
+    pose proof (vie_launch inp VI) as VL.
     rewrite (valid_entry_sv48 _ _ _ (vie_va_size _ VI)) in VE.
-    destruct VE as (VSP & _ & _ & FITS). destruct VI as (VARGV & VENVP & _). cbn [en_sp en_brk en_draw] in *.
+    destruct VE as (VSP & _ & _ & FITS & LOK). destruct VI as (VARGV & VENVP & _). cbn [en_sp en_brk en_draw en_mmap_base] in *.
 
-    set (RN0 := mkRunRnd draw (in_hwcap inp)).
+    set (RN0 := mkRunRnd draw inp sp0 mbase).
+    assert (ROK : @run_ok RN0 sp0 (in_argv inp) (in_envp inp)).
+    { apply (@run_ok_holds RN0 sp0 brk); assumption. }
 
     set (CE0 := ceiling_of_sp (bv_unsigned sp0)).
     assert (CEIL : @ceil_ok CE0 sp0).
     { unfold ceil_ok. subst CE0. destruct VSP as (SPL & SPH & SP16). unfold sp_window_lo, sp_window_hi in *.
       rewrite (ceiling_of_sp_eq (bv_unsigned sp0)) by lia. lia. }
-    unfold ms0. cbn [en_sp en_draw]. change draw with (@run_draw RN0). change (in_hwcap inp) with (@run_hw RN0).
+    unfold ms0. cbn [en_sp en_draw en_mmap_base].
     unfold prog.
     set (s0 := ps_init (reservedZ psegs)).
     eapply (impl_ebind _ _ _ _ _ (fun (_ : Empty_set * PState) (_ : machine_state) => True)).
     2:{ intros [v ?] ms' _. destruct v. }
     unfold prog_with. unfold Monad.mbind at 1.
-    eapply (impl_ebind _ _ _ _ _ (fun (p : unit * PState) ms' => at_main sp0 (in_argv inp) (in_envp inp) (in_uid inp) ms' /\ snd p = s0)).
+    eapply (impl_ebind _ _ _ _ _ (fun (p : unit * PState) ms' => @at_main RN0 sp0 (in_argv inp) (in_envp inp) (in_uid inp) ms' /\ snd p = s0)).
     - unfold startup, Monad.mbind.
-      eapply (impl_ebind _ _ _ _ _ (fun (p : Z * PState) ms' => at_main sp0 (in_argv inp) (in_envp inp) (in_uid inp) ms' /\ snd p = s0)).
-      + exact (impl_msys_of_enode psegs _ _ _ _ _ (startup_spec (RN__ := RN0) sp0 (in_argv inp) (in_envp inp) (in_uid inp) VSP VARGV VENVP FITS)).
+      eapply (impl_ebind _ _ _ _ _ (fun (p : Z * PState) ms' => @at_main RN0 sp0 (in_argv inp) (in_envp inp) (in_uid inp) ms' /\ snd p = s0)).
+      + (* [?Q (fst p)] is not a pattern: name the post-condition. *)
+        refine (impl_msys_of_enode psegs _ _ (fun _ => @at_main RN0 sp0 (in_argv inp) (in_envp inp) (in_uid inp)) _ _ _).
+        apply (@startup_spec RN0 sp0 brk); assumption.
       + intros [a s] ms' [H Hs]. cbn in H, Hs. cbn [fst snd]. apply impl_ret_ok. apply evt_done. cbn. auto.
     - intros [u s] ms' [AM Hs]. cbn in Hs. subst s. cbn [fst snd].
       change (implM psegs
@@ -67,7 +73,7 @@ Section Compose.
                              (fun code => exit_model io code))
                 s0 (fun _ _ _ => True) ms').
       eapply (implM_bind psegs).
-      + exact (MAIN CE0 RN0 sp0 (in_argv inp) (in_envp inp) (in_uid inp) ms' VSP CEIL VARGV VENVP FITS AM).
+      + exact (MAIN CE0 RN0 sp0 (in_argv inp) (in_envp inp) (in_uid inp) ms' VSP CEIL VARGV VENVP FITS ROK AM).
       + intros code s' ms'' AE. cbn in AE. apply exit_impl. exact AE.
   Qed.
 End Compose.

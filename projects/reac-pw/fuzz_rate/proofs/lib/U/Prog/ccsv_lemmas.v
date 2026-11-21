@@ -15,7 +15,7 @@ Import ListNotations.
 Open Scope Z_scope.
 
 (** memcmp of a list with itself. *)
-(* from 25e3d17bdb50:proofs/libreac/fuzz_ctrl/lib/Prog/Seg/G03.v:24 (g03_memcmp) *)
+(*:proofs/libreac/fuzz_ctrl/lib/Prog/Seg/G03.v:24 (g03_memcmp) *)
 Lemma ccsv_memcmp : forall l n, (n <= length l)%nat -> memcmp_model l l n = Some 0.
 Proof.
   induction l as [|x l IH]; intros [|n] Hn; cbn in *; try reflexivity; try lia.

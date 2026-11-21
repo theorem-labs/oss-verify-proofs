@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths and module names changed; 133 of its 180 lines of code are new or changed and 467 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset image B' (#102 pins, asan-ubsan d663f82d7f488d30): the HOME lemmas the walk of padded consumes.
    rule 24: no function proved. rule 24: proves no function (kind: state-level home lemmas).
    Pure state-level facts: no machine code is walked here. Consumer: lib/B/Prog/Padded102B.v (lane PaddedB102).
-   PORT, lemma for lemma, of PvB_A_Home.v at origin/cold/h-rw-pre-7-b-parse_value 2773b89e7e5 (lane PValueB,
+   PORT, lemma for lemma, of PvB_A_Home.v (lane PValueB,
    parse_value B segment A): pvh_* / pva_* renamed pdh_*, statements and proofs otherwise unchanged. Its Requires of
    lib/B/Prog PvB_Defs / PvB_Model, lib/A PRH_FnParse / PRH_Charge, lib/Spec PjGrammar / PjTree / PjRoundTrip,
    YCbqGcallW, YGcfRoomKeep and lib/B/PAImg_prog are dropped: nothing below names them. The file stays parametric over
@@ -46,7 +47,7 @@ Lemma pdh_req_eq : forall m, 0 < m -> req_size m = m.
 Proof. intros m Hm. unfold req_size. destruct (Z.eqb_spec m 0); lia. Qed.
 Lemma pdh_shadow_mono : forall x y, x <= y -> shadow_addr x <= shadow_addr y.
 Proof. intros x y H. unfold shadow_addr. apply Z.add_le_mono_l. apply Z.div_le_mono; lia. Qed.
-(* FuzzStrdupB.v:116 sd_hull_sub (cgif YCbq.v:1945 shadow_hull_vis_of_block): a hull covers its sub-ranges' hulls *)
+(* FuzzStrdupB.v:117 sd_hull_sub (cgif YCbq.v:1945 shadow_hull_vis_of_block): a hull covers its sub-ranges' hulls *)
 Lemma pdh_hull_sub : forall (rd : reader) p m d n, shadow_hull_vis rd p m -> p <= d -> d + n <= p + m -> 0 < n ->
   shadow_hull_vis rd d n.
 Proof.
@@ -56,7 +57,7 @@ assert (R8 : forall u v, u <= v -> u / 8 * 8 <= v / 8 * 8)
   by (intros u v Huv; apply Z.mul_le_mono_nonneg_r; [lia|]; apply Z.div_le_mono; lia).
 pose proof (R8 _ _ M1). pose proof (R8 _ _ M2). lia.
 Qed.
-(* FuzzStrdupB.v:126 sd_hull_img (GrantRo.v:82-100 ro_hull's arithmetic): the hull of a range at least 64 bytes inside
+(* FuzzStrdupB.v:127 sd_hull_img (GrantRo.v:82-100 ro_hull's arithmetic): the hull of a range at least 64 bytes inside
    [IMG_LO, IMG_TOP) is the shadow of image bytes *)
 Lemma pdh_hull_img : forall (lo hi : Z) a n s, 0 < n -> lo + 64 <= a -> a + n + 64 <= hi -> 0 <= lo -> hi <= 2 ^ 47 ->
   shadow_addr a / 8 * 8 <= s < shadow_addr (a + n - 1) / 8 * 8 + 8 ->
@@ -100,16 +101,16 @@ Hypothesis pdh_img_vis : forall ly S Hp W mem md a, ARx ly S Hp W mem md ->
   @pa_lo _ B_prog_listing PA <= a < @pa_hi _ B_prog_listing PA ->
   aview SEGS (w_H W) mem (shadow_addr a) <> None.
 (* MARKED image fact, discharged at PI_prog_B: the image's zero-shadow ranges are whole granules (YG0f.v asyms_ok's
-   aso_zshadow, a conjunct of ARcf's am_syms; FuzzStrdupB.v:470 reads it there) *)
+   aso_zshadow, a conjunct of ARcf's am_syms; FuzzStrdupB.v:471 reads it there) *)
 Hypothesis pdh_zs_al : forall r, In r (as_zero_shadow B) -> fst r mod 8 = 0 /\ snd r mod 8 = 0.
 
-(* FuzzStrdupB.v:143 sd_ro_img: a read-only byte is an image byte *)
+(* FuzzStrdupB.v:144 sd_ro_img: a read-only byte is an image byte *)
 Lemma pdh_ro_img : forall a, in_roP SEGS pa_relro_lo pa_relro_hi a -> in_img SEGS a.
 Proof.
 intros a [(sg & Hin & _ & Hr) | Hr]; [exists sg; split; [exact Hin | exact Hr] | exact (@pa_relro_img _ _ PA a Hr)].
 Qed.
 
-(* FuzzStrdupB.v:166 sd_garr8_move: bytes the view keeps keep their garr8 reading *)
+(* FuzzStrdupB.v:167 sd_garr8_move: bytes the view keeps keep their garr8 reading *)
 Lemma pdh_garr8_move : forall (W W' : world SEGS) m m' x d l, garr8 SEGS (mrestrict (w_H W) m) x l ->
   (forall j, (j < length l)%nat -> aview SEGS (w_H W') m' (d + Z.of_nat j) = aview SEGS (w_H W) m (x + Z.of_nat j)) ->
   garr8 SEGS (mrestrict (w_H W') m') d l.

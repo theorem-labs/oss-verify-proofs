@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the 6144513-byte zero-filled stack window): changed site_MO, site_MS; added vmc_refl; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/Pm9DiagArmMsg.v, lines 18, 305, 315-316, 448, 458. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -20,6 +21,7 @@ Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope Z_scope.
 Import SX2. Import SX2S.
+Local Ltac vmc_refl := first [ lazymatch goal with |- _ = ?b => vm_cast_no_check (@eq_refl _ b) end | vm_compute; reflexivity ].
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
 (* [comment removed for export] *)
@@ -316,7 +318,7 @@ Section Arm.
     Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
     assert (HS16 : S mod 16 = 0) by (unfold S; clear - Hal; lia).
     Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
-    assert (HW : has_window knMS = true) by (vm_compute; reflexivity).
+    assert (HW : has_window knMS = true) by vmc_refl.
     assert (G1r : getr R 1%bv = Z_to_bv 64 723828) by (regv HR (1%bv : reg); reflexivity).
     assert (G2r : getr R 2%bv = Z_to_bv 64 S) by (regv HR (2%bv : reg); cbn [edenot ev ENVA]; rewrite P0; apply alu_add_w_litA).
     assert (G10r : getr R 10%bv = Z_to_bv 64 141174) by (regv HR (10%bv : reg); reflexivity).
@@ -326,7 +328,8 @@ Section Arm.
     assert (CANc : rdn ASEGS MV (Z_to_bv 64 7084240) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 (bv_unsigned can)))).
     { rewrite Z_to_bv_bv_unsigned, <- P3. exact (kword_lit sp0 _ MV _ 7084240 8%nat (EVar 3) HK ltac:(vm_compute; reflexivity) ltac:(lia) ltac:(cbn; lia)). }
     pose proof (kimg_clear _ MV _ 1477960 1478200 HK ltac:(vm_compute; reflexivity)) as SEIMG.
-    assert (WIN : forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
+    (* WINDOW, old beside new (both WIN asserts): was [usp - 8388608 <= a]; DRV_ZWIN (stk_wr). *)
+    assert (WIN : forall a n, usp - DRV_ZWIN <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
       by (intros a n Ha Hn d k Hd Hk; exact (stk_wr sp0 Hsp vals _ MV _ a n HK HW P0 Ha Hn d k Hd Hk)).
     unfold t_die.
     apply (@fwrite1_run fxq scfg L ar C IL HI HIok ICok ILY sp0 Hsp DL Hdgm M0 [(A1, CAP)] LK0 crC A M model R S (bv_unsigned can) msg_short KX DI
@@ -363,9 +366,6 @@ Section Arm.
         split; [exact (ICe 1478192 8%nat (word_to_le_bytes 8 (Z_to_bv 64 1477960)) ltac:(img_rd) eq_refl) | exact (ICe 1478100 4%nat (word_to_le_bytes 4 (Z_to_bv 64 4294967295)) ltac:(img_rd) eq_refl)].
   Qed.
 
-  (* [comment removed for export] *)
-  (* [comment removed for export] *)
-  (* [comment removed for export] *)
   Lemma knMO1_eq : keep_fwA MSO knMO = knMO1.  Proof. vm_compute. reflexivity. Qed.
   Lemma srMO3_eq : sr_after_call_j srMO2 (map ridx c_kept) 105 = srMO3.  Proof. vm_compute. reflexivity. Qed.
   Lemma knMO3_eq : keep_allocA MSO 4096 [] [] knMO2 = knMO3.  Proof. vm_compute. reflexivity. Qed.
@@ -464,7 +464,7 @@ Section Arm.
     Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
     assert (HS16 : S mod 16 = 0) by (unfold S; clear - Hal; lia).
     Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
-    assert (HW : has_window knMO = true) by (vm_compute; reflexivity).
+    assert (HW : has_window knMO = true) by vmc_refl.
     assert (G1r : getr R 1%bv = Z_to_bv 64 723828) by (regv HR (1%bv : reg); reflexivity).
     assert (G2r : getr R 2%bv = Z_to_bv 64 S) by (regv HR (2%bv : reg); cbn [edenot ev ENVA]; rewrite P0; apply alu_add_w_litA).
     assert (G10r : getr R 10%bv = Z_to_bv 64 91283) by (regv HR (10%bv : reg); reflexivity).
@@ -474,7 +474,7 @@ Section Arm.
     assert (CANc : rdn ASEGS MV (Z_to_bv 64 7084240) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 (bv_unsigned can)))).
     { rewrite Z_to_bv_bv_unsigned, <- P3. exact (kword_lit sp0 _ MV _ 7084240 8%nat (EVar 3) HK ltac:(vm_compute; reflexivity) ltac:(lia) ltac:(cbn; lia)). }
     pose proof (kimg_clear _ MV _ 1477960 1478200 HK ltac:(vm_compute; reflexivity)) as SEIMG.
-    assert (WIN : forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
+    assert (WIN : forall a n, usp - DRV_ZWIN <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
       by (intros a n Ha Hn d k Hd Hk; exact (stk_wr sp0 Hsp vals _ MV _ a n HK HW P0 Ha Hn d k Hd Hk)).
     unfold t_die.
     apply (@fwrite2_run fxq scfg L ar C IL HI HIok ICok ILY sp0 Hsp DL Hdgm M0 [(A1, CAP)] LK0 crC A M model R S (bv_unsigned can) msg_overrun KX DI
@@ -511,9 +511,6 @@ Section Arm.
         split; [exact (ICe 1478192 8%nat (word_to_le_bytes 8 (Z_to_bv 64 1477960)) ltac:(img_rd) eq_refl) | exact (ICe 1478100 4%nat (word_to_le_bytes 4 (Z_to_bv 64 4294967295)) ltac:(img_rd) eq_refl)].
   Qed.
 
-  (* [comment removed for export] *)
-  (* [comment removed for export] *)
-  (* [comment removed for export] *)
   Theorem short_armA : (length fdata < 6)%nat -> close_kgA scfg ar HI sp0 fs0 fdata p0 p1 can M0 LK0 A0 CAP crC (t_die msg_short fs0).
   Proof.
     intros Hs. unfold close_kgA. intros vals R M model A A1 HL HV P48 P70 HR HK HC DI HINC G1 G2.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput, mmap base, entry point and entry draw in place of the ambient argv/envp (valid_launch, entry_launch_ok_va); the auxv values the start-up records (J_aux): AT_ENTRY, AT_BASE, AT_FLAGS, AT_CLKTCK, AT_GID/AT_EGID from the launch's gid, AT_EXECFN and AT_SYSINFO_EHDR; the CONFIG_RSEQ flag of the start-up layer (the AT_RSEQ pair in J_rseq, AT_RANDOM's place); the argument strings up to ed_top with the exec file name; launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef)). *)
 
 From Stdlib Require ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType.
@@ -580,6 +581,7 @@ Import QJyS QSpR.Mq3 QRjH.Mq0 QBxa.Mq6.
 Import Qhzw Q1SW QLxO Q5hz QoL3 QuT1 QSPu QU2A Q8LG QkD9 Q8Sj QJUR.
 Import ListNotations.
 Open Scope bv_scope.
+Local Set Default Proof Using "All".
 
 Abbreviation SEGS := Plain.M.loaded_segments.
 
@@ -594,27 +596,33 @@ End FPGEN1.
 
 Section P1.
 Context {fF : FPF} {fC : FPC}.
-Context {AMB : Amb}.
-Variable sp0 : word.
-Variables av ev : list (list byte).
+Variable v : VaSize.
+Variable inp : ProcInput.
+Variable mbase entry : word.
+Variable sp0 brk : word.
+Variable rdraw : EntryDraw.
+Local Notation av := (in_argv inp) (only parsing).
+Local Notation ev := (in_envp inp) (only parsing).
 Hypothesis Hva : valid_argv av.
 Hypothesis Hve : valid_envp ev.
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va v (mkEntry sp0 brk mbase rdraw) inp.
 Hypothesis Hlo : (0x7fff80000000 <= bv_unsigned sp0)%Z.
 Hypothesis Hhi : (bv_unsigned sp0 <= 0x800000000000)%Z.
 Hypothesis Hal : (bv_unsigned sp0 mod 16 = 0)%Z.
 
-Local Notation mem0 := (wrap_mem RPH sp0 av ev a_uid a_hwcap a_rnd) (only parsing).
-Local Notation CM := (cmem sp0 (wrap_mem RPH sp0 av ev a_uid a_hwcap a_rnd)) (only parsing).
+Local Notation mem0 := (wrap_mem inp mbase RPH entry sp0 rdraw) (only parsing).
+Local Notation CM := (cmem sp0 (wrap_mem inp mbase RPH entry sp0 rdraw)) (only parsing).
 
-Let argc : word := argcN av.
+Let argc : word := argcN inp.
 Local Notation argvp := (Z_to_bv 64 (bv_unsigned sp0 + 8)) (only parsing).
-Let envp : word := envp_ptr sp0 av.
-Let pn : word := cat_argv_ptr sp0 av ev 0.
+Let envp : word := envp_ptr inp sp0.
+Let pn : word := cat_argv_ptr (ed_top rdraw) av ev (in_execfn inp) 0.
 
-#[using="Hva"] Lemma u_argc : bv_unsigned argc = Z.of_nat (length av).
-Proof. exact (u_argcN av Hva). Qed.
+Lemma u_argc : bv_unsigned argc = Z.of_nat (length av).
+Proof. exact (u_argcN inp Hva). Qed.
 
-#[using="sp0 Hva"] Lemma len_av : (1 <= Z.of_nat (length av) <= 1024)%Z.
+Lemma len_av : (1 <= Z.of_nat (length av) <= 1024)%Z.
 Proof. destruct Hva as [[H1 H2] _]. lia. Qed.
 
 Definition J1 (J : word -> option byte) : word -> option byte :=
@@ -629,7 +637,7 @@ wbytes (wbytes (wbytes (wbytes
 (Z_to_bv 64 (bv_unsigned sp0 - 56)) (word_to_le_bytes 8 argc))
 (Z_to_bv 64 (bv_unsigned sp0 - 64)) (word_to_le_bytes 8 (Z_to_bv 64 0x209c0)).
 
-#[using="Hva Hve Hlo Hhi Hal"] Lemma p1_run : forall rom (J : word -> option byte),
+Lemma p1_run : forall rom (J : word -> option byte),
 wfJ sp0 J ->
 exists regs',
 msteps SEGS (mkst (regs_init sp0) (0x20874 : word) (CM J (fun _ => None)) rom)
@@ -663,7 +671,7 @@ chain_step; [reflexivity | eapply step_lw with (bs := word_to_le_bytes 4 argc) (
 [ exact F_20830 | reflexivity | exact D_20830
 | addr_norm; rewrite rdn_cmem_above by region_side;
 apply (rdn_low_bytes SEGS mem0 sp0 argc 4); [lia|];
-exact (read_argc_w SEGS RPH sp0 av ev a_uid a_hwcap a_rnd Hva Hve Hhi)
+eapply read_argc_w; first [exact Hva | exact Hve | exact Hvl | exact Hlau | exact Hlo | exact Hhi]
 | apply bytes_le_to_Z_4_small; rewrite Hargc; lia ]
 | step_simpl]; vnorm.
 rewrite (v_lw_small argc) by (rewrite Hargc; lia).
@@ -696,7 +704,7 @@ chain_step; [reflexivity | eapply step_ld with (bs := word_to_le_bytes 8 pn) (v 
 | addr_norm; rewrite rdn_cmem_above by region_side;
 replace (Z_to_bv 64 (bv_unsigned sp0 + 8)) with (sp0 + nat_to_word (8 + 8 * 0))
 by (rewrite word_add_nat; f_equal; lia);
-exact (read_argv_ptr_w SEGS RPH sp0 av ev a_uid a_hwcap a_rnd Hva Hve Hlo Hhi 0 ltac:(lia))
+eapply read_argv_ptr_w; first [exact Hva | exact Hve | exact Hvl | exact Hlau | exact Hlo | exact Hhi | lia]
 | apply bytes_le_to_Z_8 ]
 | step_simpl]; vnorm.
 stepiv F_4ea44 D_4ea44 (Z_to_bv 64 (8 * Z.of_nat (length av)))
@@ -958,8 +966,13 @@ Definition progname_off (s : list byte) : nat := after_last_slash s 0 0.
 
 Section Defs.
 Context {AMB : Amb}.
+Variable inp : ProcInput.
+Variable mbase entry : word.
 Variable sp0 : word.
-Variables av ev : list (list byte).
+Local Notation av := (in_argv inp) (only parsing).
+Local Notation ev := (in_envp inp) (only parsing).
+Local Notation uid := (in_uid inp) (only parsing).
+Local Notation hw := (in_hwcap inp) (only parsing).
 
 Definition aux_base : word := Z_to_bv 64 (bv_unsigned sp0 - 368).
 
@@ -967,19 +980,19 @@ Definition argv_w : word := Z_to_bv 64 (bv_unsigned sp0 + 8).
 Definition envp_w : word := Z_to_bv 64 (bv_unsigned sp0 + 16 + 8 * Z.of_nat (length av)).
 Definition auxv_w : word :=
 Z_to_bv 64 (bv_unsigned sp0 + 24 + 8 * Z.of_nat (length av) + 8 * Z.of_nat (length ev)).
-Definition argc_w : word := argcN av.
+Definition argc_w : word := argcN inp.
 
-Definition pn_w : word := cat_argv_ptr sp0 av ev 0.
+Definition pn_w : word := cat_argv_ptr (ed_top a_rnd) av ev (in_execfn inp) 0.
 Definition progname_w : word :=
 Z_to_bv 64 (bv_unsigned pn_w + Z.of_nat (progname_off (nth 0 av []))).
 
-Definition rnd_w : word := at_random_ptr sp0 av ev.
+Definition rnd_w : word := at_random_ptr sp0 (kb_rseq (in_kernel inp)) av ev.
 
 Definition D_libc : word -> option byte :=
 wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (fun _ => None)
 (Z_to_bv 64 0x75da0) (word_to_le_bytes 8 envp_w))
 (Z_to_bv 64 0x96108) (word_to_le_bytes 8 auxv_w))
-(Z_to_bv 64 0x96168) (word_to_le_bytes 8 a_hwcap))
+(Z_to_bv 64 0x96168) (word_to_le_bytes 8 hw))
 (Z_to_bv 64 0x96130) (word_to_le_bytes 8 (Z_to_bv 64 4096)))
 (Z_to_bv 64 0x960f8) (word_to_le_bytes 8 pn_w))
 (Z_to_bv 64 0x960f0) (word_to_le_bytes 8 progname_w).
@@ -996,18 +1009,37 @@ wbytes (wbytes (wbytes (wbytes
 (Z_to_bv 64 (bv_unsigned sp0 - 56)) (word_to_le_bytes 8 argc_w))
 (Z_to_bv 64 (bv_unsigned sp0 - 64)) (word_to_le_bytes 8 (Z_to_bv 64 0x209c0)).
 
+Definition J_rseq (J : word -> option byte) : word -> option byte :=
+if kb_rseq (in_kernel inp)
+then wbytes (wbytes J
+(Z_to_bv 64 (bv_unsigned sp0 - 152)) (word_to_le_bytes 8 (Z_to_bv 64 28)))
+(Z_to_bv 64 (bv_unsigned sp0 - 144)) (word_to_le_bytes 8 (Z_to_bv 64 32))
+else J.
+
 Definition J_aux (Jf : word -> option byte) : word -> option byte :=
-wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes
+J_rseq
+(wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes
+(wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes
 (wbytes Jf aux_base (zeros 304))
+(Z_to_bv 64 (bv_unsigned sp0 - 104))
+(word_to_le_bytes 8 (la_sysinfo_ehdr (launch_auxv inp sp0 mbase))))
+(Z_to_bv 64 (bv_unsigned sp0 - 240)) (word_to_le_bytes 8 hw))
+(Z_to_bv 64 (bv_unsigned sp0 - 320)) (word_to_le_bytes 8 (Z_to_bv 64 4096)))
+(Z_to_bv 64 (bv_unsigned sp0 - 232)) (word_to_le_bytes 8 (Z_to_bv 64 100)))
 (Z_to_bv 64 (bv_unsigned sp0 - 344)) (word_to_le_bytes 8 (Z_to_bv 64 0x10040)))
 (Z_to_bv 64 (bv_unsigned sp0 - 336)) (word_to_le_bytes 8 (Z_to_bv 64 56)))
 (Z_to_bv 64 (bv_unsigned sp0 - 328)) (word_to_le_bytes 8 (Z_to_bv 64 11)))
-(Z_to_bv 64 (bv_unsigned sp0 - 240)) (word_to_le_bytes 8 a_hwcap))
-(Z_to_bv 64 (bv_unsigned sp0 - 320)) (word_to_le_bytes 8 (Z_to_bv 64 4096)))
-(Z_to_bv 64 (bv_unsigned sp0 - 280)) (word_to_le_bytes 8 a_uid))
-(Z_to_bv 64 (bv_unsigned sp0 - 272)) (word_to_le_bytes 8 a_uid))
+(Z_to_bv 64 (bv_unsigned sp0 - 312)) (word_to_le_bytes 8 (Z_to_bv 64 0)))
+(Z_to_bv 64 (bv_unsigned sp0 - 304)) (word_to_le_bytes 8 (Z_to_bv 64 0)))
+(Z_to_bv 64 (bv_unsigned sp0 - 296)) (word_to_le_bytes 8 entry))
+(Z_to_bv 64 (bv_unsigned sp0 - 280)) (word_to_le_bytes 8 uid))
+(Z_to_bv 64 (bv_unsigned sp0 - 272)) (word_to_le_bytes 8 uid))
+(Z_to_bv 64 (bv_unsigned sp0 - 264)) (word_to_le_bytes 8 (in_gid inp)))
+(Z_to_bv 64 (bv_unsigned sp0 - 256)) (word_to_le_bytes 8 (in_gid inp)))
 (Z_to_bv 64 (bv_unsigned sp0 - 184)) (word_to_le_bytes 8 (Z_to_bv 64 0)))
-(Z_to_bv 64 (bv_unsigned sp0 - 168)) (word_to_le_bytes 8 rnd_w).
+(Z_to_bv 64 (bv_unsigned sp0 - 168)) (word_to_le_bytes 8 rnd_w))
+(Z_to_bv 64 (bv_unsigned sp0 - 120))
+(word_to_le_bytes 8 (at_execfn_ptr (ed_top a_rnd) (in_execfn inp)))).
 
 Definition D_tlsA (D : word -> option byte) : word -> option byte :=
 wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes

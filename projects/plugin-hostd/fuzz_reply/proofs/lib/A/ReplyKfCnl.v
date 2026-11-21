@@ -12,7 +12,7 @@
    - check_no_loss (kf_cnl_tr_le, kf_cnl_le): the potentials telescope (kf_cnl_psi); the held capacity either never
      moves or ends at most max 8 (2 (n + the begin records)) < 2^26 (kf_cnl_cap), so the trace costs at most
      ReplyKfC.kf_vec_range's 15.  No capacity premise.  The text premise is alist_at's (kf_alist_short).
-   - the SPEC costs, W8's fixed kit text (e09792169e4: gesture_model's charge is its trace's): gm_cost (W_contract.v)
+   - the SPEC costs, W8's fixed kit text (gesture_model's charge is its trace's): gm_cost (W_contract.v)
      is gmc (W_contract.v) at the held list's texts and capacity (kf_gm_cost_gmc); one gmc is at most the potential's rise to
      capstep's capacity (kf_gmc_le, kf_gm_cost_le, and kf_gm_cost_le_post over gm_post's H'), and per call between 0
      and 1 (kf_gm_cost_nonneg, kf_gm_cost_le1: at most one growth, the key copy primary, a free 0); over the expected

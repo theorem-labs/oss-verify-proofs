@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO reservation inclusion and the channel reader through operator new and free). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -3129,7 +3130,7 @@ Theorem ubsan_opnew_mspecR : forall bc cc,
 Proof.
   intros bc cc Hbc Hcc.
   unfold opnew_mspecR. intros fx R M mdl Lc B C ret n sp T PRE HT HK.
-  destruct PRE as (Hh & Hl & Hm & HFX & HA & Hra & Hret & Hev & Hn & Hnr & Hsp & Hal & Hceil & Htp & Hstk & HB & HC).
+  destruct PRE as (Hh & Hl & Hm & HFX & HA & Hra & Hret & Hev & Hn & Hnr & Hsp & Hal & Hceil & Htp & Hstk & HB & HC & HVDSO).
   assert (HPRE : malloc_pre (MSTK_M + 16) R M mdl B C ret n sp).
   { unfold malloc_pre. unfold MSTK_M. unfold MSTK_MALLOC in Hceil, Hstk.
     unfold NMAX in Hnr. unfold MH_NMAX. unfold mcost, GlzIface.MBLK, GBUDGET in HB, Hbc. unfold MH_GBUDGET, GlzAllocUbsanIface.MBLK.
@@ -3139,7 +3140,7 @@ Proof.
   unfold mkstF.
   apply (opnew_retry AINV (um_malloc AINV SWOK U fx) AINV_stack R M mdl Lc B C ret n sp HA HPRE T HT).
   intros d Hok.
-  destruct Hok as (R' & M' & mdl' & p & -> & RK & H10 & Hp16 & Hblk & Hdisj & Hdef & CH & ST & HA' & Hh' & Hl' & Hm' & Hfs' & Hfd').
+  destruct Hok as (R' & M' & mdl' & p & -> & RK & H10 & Hp16 & Hblk & Hdisj & Hdef & CH & ST & HA' & Hh' & Hl' & Hm' & Hfs' & Hfd' & Hrdr' & Hvdso').
   apply (HK fx R' M' mdl' p).
   unfold alloc_post_ok.
   repeat match goal with |- _ /\ _ => split end; try assumption;
@@ -3187,7 +3188,7 @@ Lemma free_mspecR_via : forall e : Z,
   free_mspecR USEGS AINV fx_ok RZ GUBSAN MSTK_MALLOC e.
 Proof.
   intros e STEPS. unfold free_mspecR.
-  intros fx R M mdl Lc Lc' B C B' C' ret sp p T Hh Hl Hm HFX HA Hra Hret Hev H10 Hcase Hsp Hal Hceil Htp Hstk HK.
+  intros fx R M mdl Lc Lc' B C B' C' ret sp p T Hh Hl Hm HFX HA Hra Hret Hev H10 Hcase Hsp Hal Hceil Htp Hstk HVDSO HK.
   unfold mkstF. apply (K_msteps USEGS (fun c => RZ c T) _ _ mdl (RZ_kc T) Hh Hl (STEPS fx R M)).
   assert (HPRE : free_pre MSTK_M R M mdl Lc Lc' B C B' C' ret sp p).
   { unfold free_pre. unfold MSTK_M. unfold MSTK_MALLOC in Hceil, Hstk. unfold mcost, GlzIface.MBLK, MCNT in Hcase. unfold GlzAllocUbsanIface.MBLK.
@@ -3195,7 +3196,7 @@ Proof.
     repeat match goal with |- _ /\ _ => split end; try assumption; lia. }
   pose proof (HF fx R M mdl Lc Lc' B C B' C' ret sp p HA HPRE) as KAT.
   unfold free_cfg, A_FREE in KAT. apply (KAT (fun c => RZ c T) (RZ_kc T)).
-  intros c' (R' & M' & mdl' & -> & RK & CH & ST & HA' & Hh' & Hl' & Hm' & Hfs' & Hfd').
+  intros c' (R' & M' & mdl' & -> & RK & CH & ST & HA' & Hh' & Hl' & Hm' & Hfs' & Hfd' & Hrdr' & Hvdso').
   apply (HK fx R' M' mdl' HFX).
   - rewrite same_csr'. exact RK.
   - intros a Ha. pose proof (CH a Ha) as X. unfold mh_changed in X. unfold alloc_changed.
@@ -3209,7 +3210,7 @@ Proof.
       | right; right; exists 0x8aaec, 0xaabd4; split; [cbv; tauto | lia] ].
   - intros a Ha. apply ST. unfold MSTK_M. unfold MSTK_MALLOC in Ha. lia.
   - exact HA'.
-  - exact Hh'. - exact Hl'. - exact Hm'. - exact Hfs'. - exact Hfd'.
+  - exact Hh'. - exact Hl'. - exact Hm'. - exact Hfs'. - exact Hfd'. - exact Hrdr'. - exact Hvdso'.
 Qed.
 
 Theorem ubsan_free_mspecR : free_mspecR USEGS AINV fx_ok RZ GUBSAN MSTK_MALLOC 0x66190.

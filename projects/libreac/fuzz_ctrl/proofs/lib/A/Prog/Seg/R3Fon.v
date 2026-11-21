@@ -5,12 +5,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_box_model_block.v; 1090 of its 1202 lines of code are new or changed and 1063 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P5.v, with its module paths, module names, addresses and numbers changed; 866 of its 1005 lines of code are new or changed and 1063 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/R3.v; 104 of its 253 lines of code are new or changed and 856 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/Prog/Seg/R3Fon.v -- route (C) twin of Seg/R3F.v's run r3_evt_F (a Theorem Labs lane's file, not edited here; not in this delivery).
    Writer: a Theorem Labs lane's stage lane (Seg *F.v twin rule, a Theorem Labs lane 12:52Z: an ADDITIVE beside-file; R3F.v (not in this delivery) stays
    unedited; its later version differs from the base below only in MState's module qualification).  proves no function (kind: segment lemma; the footprint run of stage R3, 0x8152c-0x81578).
 
-   BASED ON R3F.v (an earlier version, blob 4f46d6492cf, not in this delivery): the same blob on a Theorem Labs lane's fold (from a working branch 4bae33fdf54) and
-   on a working branch 1502cba0417 (diff empty), so either is the source.
+   BASED ON R3F.v (an earlier version, blob 4f46d6492cf, not in this delivery): the same blob on a Theorem Labs lane's fold (from a working branch) and
+   on a working branch (diff empty), so either is the source.
 
    WHAT CHANGES against r3_evt_F, and why (measured on R3F.v's proof):
    - the callee premise is reac_identity_init_contract_F_on (a Theorem Labs lane's reac_identity_init_c.v 6efe5449c39, LANDED

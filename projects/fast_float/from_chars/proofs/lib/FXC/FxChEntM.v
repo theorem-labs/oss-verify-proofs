@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO run state). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Monad Run Specs.
@@ -161,5 +162,6 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     destruct (Hown _ Hq' w Hw0) as [Hv Hm]. split; [rewrite HH; exact Hv|]. intros Hout.
     apply Hm. apply (proj2 (rgs_ent_outside E (s_rgs S) (s_rgs P) σ _ Hrge)). exact Hout.
   - exact (blob_ok_sub E σ MP model _ Hmk Hblob).
+  - vdso_keep_tac.
 Qed.
 End EntM.

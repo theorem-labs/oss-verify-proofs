@@ -3,7 +3,7 @@
    (lib/A/Prog/crtA_w_*.v) and the close onto lib/A/Prog/check_round_trip_cg.v use it.
 
    FORM (the porter's ruling, 2026-10-29 01:54Z): the function's own code runs as decode's footprint runs
-   (lib/A/Prog/crtA_segs.v and crtA_loop.v, ported from a working branch dc455613c81), each carried
+   (lib/A/Prog/crtA_segs.v and crtA_loop.v, ported from a working branch), each carried
    into SRr by LeafCgKit.v:101 bridge_evtF_stmt after the state transport of lib/Lib/CrtBridge.v; the journal is
    re-established across each run by lib/Reusable/YCbq.v:636 ajournal_exec; each call is cut by its callee
    contract.  The Pa engine cannot walk this function: its convert loop is float code and lib/Reusable/YP0l.v:265
@@ -34,8 +34,8 @@ Local Notation segs := decodesegs0.
 
 (* The bridge from a footprint run to cgif's walk: LeafCgKit.v:101 at cgif's world and SRr.  It is PROVED, in
    lib/A/Prog/crtA_fevt.v crtA_bridge_holds (image A's instance of lib/Lib/CrtFevt.v, itself the port of
-   a working branch eea54967566 lib/Reusable/YK04R.v / YA0nR.v at ExecF.mstepsF, following image B's
-   lib/B/Prog/crtB_fevt.v on a working branch at 82cbfac97a3), so the walk carries no bridge
+   a working branch lib/Reusable/YK04R.v / YA0nR.v at ExecF.mstepsF, following image B's
+   lib/B/Prog/crtB_fevt.v on a working branch), so the walk carries no bridge
    hypothesis. *)
 Local Notation BRIDGE := crtA_bridge_holds.
 

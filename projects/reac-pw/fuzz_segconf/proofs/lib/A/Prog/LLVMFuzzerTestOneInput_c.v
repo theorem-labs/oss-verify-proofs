@@ -4,8 +4,8 @@
    DRAFT v0 by the harness walk owner (G1) for the image-A owner (the owner of segconf image A's contracts), who
    reviews it and commits it into its contracts branch; from then on it is the image-A owner's text.
 
-   THE FORM. plugin-hostd/fuzz_command's lib/A/Prog/LLVMFuzzerTestOneInput_c.v:84-239 at origin/ossv/recipes
-   501c0d516c69 (tLLVMFuzzerTestOneInput_spec): afn_pre at the entry, SRr of apost_baseF at the return. The pre is
+   THE FORM. plugin-hostd/fuzz_command's lib/A/Prog/LLVMFuzzerTestOneInput_c.v:84-239
+    (tLLVMFuzzerTestOneInput_spec): afn_pre at the entry, SRr of apost_baseF at the return. The pre is
    tfib_lib_pre_x's (fuzz_command lib/A/ACfn.v:41-63) conjunct for conjunct, and the post gives what
    tfib_lib_post_x (ACfn.v:64-78) asks of the function, in the same words, so the close's bridge is fuzz_command's
    lib/A/Prog/CmdLibX.v cmd_lib_x with segconf's names (a lemma, no rewrite). The only premises beyond
@@ -37,8 +37,8 @@
    above the entry's blocks: at most 16616 + 9236 + 65536 = 91,388 (in the file loop). It writes no image byte but
    longl[0 .. 120) (memset(longl, 'L', 120) when the label byte has bit 7), and never longl[120], which every
    reader of the label needs as its NUL: hence the global invariant ltoi_GI, as the plain / UBSan owner's GI_SLOT
-   (lib/Prog/SlotFR.v:38-43). ltoi_PG and ltoi_GI are convertible to the listing's image-A SegGlob.seg_PG and
-   SegGlob.GI_segA (commit 53e3728a30bd) at LONGL := SegGlob.A_LONGL, so the close needs no
+   (lib/Prog/SlotFR.v:39-44). ltoi_PG and ltoi_GI are convertible to the listing's image-A SegGlob.seg_PG and
+   SegGlob.GI_segA at LONGL := SegGlob.A_LONGL, so the close needs no
    lemma for them; the names differ so that a walk can import both files.
 
    WHAT IT PROMISES. From afn_pre at A_LLVMF with the payload in a live block (or the empty object), it returns to
@@ -93,7 +93,7 @@ Definition LTOI_LITS : list (list Z) := [LIT_LABEL; LIT_PROBE; LIT_NOSUCH; LIT_E
 
 (* the program's writable statics: longl only (the plain / UBSan owner's frame_G, lib/FrameAPI.v:14) *)
 Definition ltoi_PG (LONGL : Z) : list (Z * Z) := [(LONGL, LONGL + LONGL_N)].
-(* the global invariant at call j: longl[120] is 0 (plain GI_SLOT, lib/Prog/SlotFR.v:41-43, over the reader); the
+(* the global invariant at call j: longl[120] is 0 (plain GI_SLOT, lib/Prog/SlotFR.v:42-44, over the reader); the
    body is SegGlob.zero_atA's at (LONGL + 120, 1) *)
 Definition ltoi_GI (LONGL : Z) (j : nat) (rd : reader) : Prop :=
 forall i, 0 <= i < 1 -> rd (LONGL + LONGL_W + i) = Some 0.

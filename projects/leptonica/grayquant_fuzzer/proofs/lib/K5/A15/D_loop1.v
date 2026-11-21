@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor lo := rt_sp0 - STACK_SPAN, the span the start state guarantees writable). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -72,7 +73,7 @@ Proof using HDATA AF RFILE OUT_loc ERR_loc XENV_loc LIB_loc IO_img XENV_img.
   pose proof HLS as (LV & FRS & CR & USP0').
   pose proof (cap_ok_range cap HCAP) as CAPR.
   pose proof (af_live_range RT AF Σ m buf cap ART0 ltac:(rewrite LV; left; reflexivity)) as (PR1 & PR2 & PR3).
-  set (lo := rt_sp0 RT Σ - STACK_WIN) in *.
+  set (lo := rt_sp0 RT Σ - STACK_SPAN) in *.
   set (count := Z.min (cap - len) 65536) in *.
   assert (CNT : 0 < count <= 65536) by lia.
   assert (EU : bv_unsigned (Z_to_bv 64 (usp - 80)) = usp - 80) by (apply unsigned_lit; ul).

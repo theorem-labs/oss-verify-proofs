@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made for libreac/fuzz_knock from proofs/cgif/cgif_file_fuzzer/lib/YD2o.v and YD2p.v at
-   c8557374ad2e; the asan-ubsan twin of lib/A/AD2o.v, equal to it up to module names and image constants. This file is
+   theorem-labs/oss-verify-proofs@6b32741d849a; the asan-ubsan twin of lib/A/AD2o.v, equal to it up to module names and image constants. This file is
    knock's closing assembly of lib/A/KnockClose.v's parts (rule 24: no function proved; kind: assembly): it instantiates
    KnockClose's asan_ubsan Section at closed parts, so fuzz_knock's two asan-ubsan statements rest on no Section hypothesis.
    cgif's YD2o keeps three program-walk hypotheses that its YD2p discharges; knock's program contract (lib/AU/APgLib.v
    knock_lib_x_all) takes none, so the closing is one file and there is no YD2p. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_knock/lib/AU/YD2o.v, with its module paths and module names changed; 33 of its 66 lines of code are new or changed and 19 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up hand-off states computed in the build, AU/YB01r.v's HS_tfib_r, in place of the recorded ones); internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_codec's image-B closing assembly, the twin of lib/A/AD2o.v (projects/libreac/fuzz_knock/proofs/lib/AU/YD2o.v's form):
-   lib/A/CodecClose.v's asan_ubsan Section at its parts. The start-up is image B's certificate (YB01.HS_tfib,
+   lib/A/CodecClose.v's asan_ubsan Section at its parts. The start-up is image B's certificate (YB01r.HS_tfib_r,
    YB12.TFIB, YB1n.tfib_startup_T1); the record is YD2l.TfibB; the allocator parts are lib/AU/YCodecAllocClose.v's;
    the driver main is lib/AU/YD1q.v DRV_MAINX with the program contract LIBX (YCfn.tfib_lib_contract_x_all at
    ameter_triv / XL0 / CB_RLO .. CB_RHI), which comes from the program walks through
@@ -19,7 +20,7 @@ From OSSVerify.libdiginet.fuzz_codec Require Statements.
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib Require AgreeCodec.
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require Import YK11 YG00 YG01 YG0f YG0d YC5d YCbp YM05.
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require YG0q.
-From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.AU Require AWalkFw0 YB01 YB12 YB1n YCejTfib YD2l YD2m YD1k YD1o YD1l YD1j YD1q YCfn.
+From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.AU Require AWalkFw0 YB01 YB01r YB12 YB1n YCejTfib YD2l YD2m YD1k YD1o YD1l YD1j YD1q YCfn.
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.A Require CodecAsanTop CodecClose.
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.AU Require YCodecAllocClose.
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.AU.Prog Require CPgWalkU CPgCloseU.
@@ -50,7 +51,7 @@ Lemma codec_driver_TfibB_U : forall rc : YM05.RunCeil,
   (forall fx : YK11.FPState, @aintrin_realizes fx rc AU.AWalkFw0.tfibsegs YD2l.TfibB OCpy (pc_wrap_memcpy (as_code YD2l.TfibB))) ->
   universe_ok (as_universe YD2l.TfibB) ->
   (forall t, In t YCejTfib.Tfib_drv_traces -> In t (as_universe YD2l.TfibB)) ->
-  CodecClose.drv_mainU YB01.HS_tfib YB12.TFIB rc.
+  CodecClose.drv_mainU YB01r.HS_tfib_r YB12.TFIB rc.
 Proof.
   intros rc AM AF AI _ _.
   exact (@YD1q.DRV_MAINX rc YD2l.TfibB YD2l.TfibB_syms (AM YK11.fx0) (AF YK11.fx0) (AI YK11.fx0)
@@ -72,7 +73,7 @@ Qed.
 (* CodecClose's asan_ubsan Section at its parts. *)
 Theorem ASAN_UBSAN_T_of_LIBX : CodecAsanTop.ASAN_UBSAN_T.
 Proof.
-  exact (CodecClose.ASAN_UBSAN_T_of_parts YB01.HS_tfib YB12.TFIB YB1n.tfib_startup_T1 YD2l.TfibB
+  exact (CodecClose.ASAN_UBSAN_T_of_parts YB01r.HS_tfib_r YB12.TFIB YB1n.tfib_startup_T1 YD2l.TfibB
     YCodecAllocClose.codec_amalloc_closed_U YCodecAllocClose.codec_afree_closed_U YCodecAllocClose.codec_aicpy_closed_U eq_refl
     codec_driver_TfibB_U).
 Qed.

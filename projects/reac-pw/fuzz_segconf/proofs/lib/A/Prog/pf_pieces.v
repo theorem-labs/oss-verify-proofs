@@ -4,7 +4,7 @@
    is stated, not proved. By the G3 walk owner, 2026-10-30. The image-A owner ruled (15:57Z) that these
    statements are walk-internal (they name image A's pcs) and not shared contracts.
 
-   THE FORM. fuzz_command's released segment form (origin/ossv/recipes 501c0d516c69, proofs/plugin-hostd/
+   THE FORM. fuzz_command's released segment form (proofs/plugin-hostd/
    fuzz_command/lib/A/Prog/): a bundle of the contract's variables (check_reply_m.v crv), the state at each cut as
    a predicate over the machine state (chain_words_d.v INV_K* / cw_fi, check_round_trip.v crt_J / crt_fr /
    crt_regs / crt_slots for the class-5 frame), and per cut "from this state the walk reaches the post"
@@ -18,10 +18,10 @@
    the plain H_* names are kept where the meaning is the same (H_HEAD, H_TAIL, H_LONG, H_HDR, H_KEY, H_ROLE,
    H_MODEL, H_IGN, H_INTENT, H_DONE, H_ENTRY); the loop is by the plain measure n, a bound on the text left.
 
-   SOURCES. Machine code: the excerpts in the unit's internal record, commit dfb49d6ad789, path
+   SOURCES. Machine code: the excerpts in the unit's internal record, path
    records/segp/dis/, reac_segconf_parse_file.fuzz_segconf.asan.s
    and g3.asan.ann.txt (every register / slot / shadow conjunct below cites the pc that sets it). Cut plan:
-   the unit's internal record, commit dfb49d6ad789, path records/segp/plans/PLAN-pf-asan.md
+   the unit's internal record, path records/segp/plans/PLAN-pf-asan.md
    (section 1 frames, 2 the 41 checks, 3 the 56 calls, 4.2 the 15-segment cover, re-checked
    by script against the excerpt: 1227 instructions, no gap, no overlap, the per-segment instruction, check and
    call counts of the plan's table). Two corrections to the plan found while stating: (1) s9 is `at` only up to
@@ -662,7 +662,7 @@ End d.
     state (`forall fx0 : YK11.FPState, ...`). Entries and call targets are LISTING terms (the image-A owner's
     ruling 16:54Z): a runtime entry or trampoline is `pa_sigma SS_<name>` (SegSyms.v), a program callee is
     `BASE + AF_<F>` (its call target `pa_sigma SS_<F>` by seg_sig_prog). The RtSeg rows are the interceptor
-    owner's accepted texts (commit 80d098bd1905, lib/A/Rt/RtSeg.v):
+    owner's accepted texts (lib/A/Rt/RtSeg.v):
       strchr        @RtSeg.astrchr_realizes fx0 rc SEGS B (pa_sigma SS___interceptor_trampoline_strchr)  A5, A7, A9
       strncasecmp   @RtSeg.astrncasecmp_realizes fx0 rc SEGS B
                       (pa_sigma SS___interceptor_trampoline_strncasecmp)                      A7

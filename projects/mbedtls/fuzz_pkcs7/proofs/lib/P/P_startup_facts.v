@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the D_main facts restated over the process input instead of argv, envp and hwcap; the main_entry facts moved to a new section MEFacts that goes through main_entry_launch; encoded statements and the D_main_cells data decoded to plain text, with the encoding table removed; import of MemSplit). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -10,7 +11,7 @@ From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout State Run.
 From OSSVerify.mbedtls.fuzz_pkcs7.images Require Import Plain.
-From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.BB Require Import Amb StartupTac ArgvEnv Layout.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.BB Require Import Amb StartupTac ArgvEnv Layout MemSplit.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.P Require Import P_startup_defs P_startup.
 Import ListNotations.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require Import PropExec.
@@ -18,16 +19,12 @@ From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require Import PropExec.
 Open Scope bv_scope.
 
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
-From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require CDefT.
-From Ltac2 Require Ltac2.
-Ltac2 gd_tbl_P_startup_facts () : Init.string Init.list := ["Corelib.Init.Datatypes.cons"; "Corelib.Init.Datatypes.prod"; "Corelib.Numbers.BinNums.Z"; "Corelib.Init.Datatypes.nat"; "Corelib.Init.Datatypes.pair"; "Corelib.Init.Datatypes.nil"; "Corelib.Init.Logic.eq"; "Corelib.Init.Datatypes.bool"; "range_disjoint_b"; "Corelib.Init.Datatypes.true"; "djw"; "Corelib.Init.Logic.or"; "Stdlib.ZArith.BinInt.Z.le"; "Stdlib.ZArith.BinInt.Z.add"; "Stdlib.ZArith.BinInt.Z.of_nat"; "Corelib.Init.Datatypes.fst"; "Corelib.Init.Datatypes.snd"; "Corelib.Init.Datatypes.list"; "LinuxProcessSemantics.LinuxProcessSem.MemImageType.Segment"; "D_main_missb"; "Corelib.Init.Datatypes.option"; "stdpp.bitvector.definitions.bv"; "OSSVerify.KrLib.Lib.PropExec.rdn"; "OSSVerify.KrLib.P.P_startup_defs.D_main"; "OSSVerify.KrLib.BB.Amb.a_hwcap"; "stdpp.bitvector.definitions.Z_to_bv"; "Corelib.Init.Datatypes.None"; "Corelib.Init.Datatypes.Some"; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.word_to_le_bytes"].
 
 
 Abbreviation RPH := Plain.M.phdrs.
 
 (* [comment removed for export] *)
-Definition D_main_cells : list (Z * nat) := ltac2:(CDefT.buildp (gd_tbl_P_startup_facts ()) "(0.(1.$2.$3.)(4.$2.$3.+598?8.#8.)(0.(1.$2.$3.)(4.$2.$3.+79<58.#8.)(0.(1.$2.$3.)(4.$2.$3.+79<;8.#8.)(0.(1.$2.$3.)(4.$2.$3.+79<80.#8.)(0.(1.$2.$3.)(4.$2.$3.+79<48.#8.)(0.(1.$2.$3.)(4.$2.$3.+79<40.#8.)(0.(1.$2.$3.)(4.$2.$3.+799?0.#8.)(0.(1.$2.$3.)(4.$2.$3.+79:00.#8.)(0.(1.$2.$3.)(4.$2.$3.+799?8.#8.)(0.(1.$2.$3.)(4.$2.$3.+79<68.#8.)(0.(1.$2.$3.)(4.$2.$3.+79<70.#8.)(0.(1.$2.$3.)(4.$2.$3.+599=8.#8.)(0.(1.$2.$3.)(4.$2.$3.+599<0.#8.)(0.(1.$2.$3.)(4.$2.$3.+59900.#8.)(0.(1.$2.$3.)(4.$2.$3.+79<50.#1.)(0.(1.$2.$3.)(4.$2.$3.+59928.#4.)(0.(1.$2.$3.)(4.$2.$3.+59920.#4.)(0.(1.$2.$3.)(4.$2.$3.+59998.#8.)(0.(1.$2.$3.)(4.$2.$3.+59978.#8.)(0.(1.$2.$3.)(4.$2.$3.+59908.#8.)(0.(1.$2.$3.)(4.$2.$3.+59910.#8.)(0.(1.$2.$3.)(4.$2.$3.+59918.#8.)(0.(1.$2.$3.)(4.$2.$3.+79<30.#4.)(0.(1.$2.$3.)(4.$2.$3.+79<34.#4.)(0.(1.$2.$3.)(4.$2.$3.+79<31.#1.)(0.(1.$2.$3.)(4.$2.$3.+599;8.#8.)(0.(1.$2.$3.)(4.$2.$3.+49820.#1.)(5.(1.$2.$3.)))))))))))))))))))))))))))))")
-(* [comment removed for export] *).
+Definition D_main_cells : list (Z * nat) := [(0x598f8, 8%nat); (0x79c58, 8%nat); (0x79cb8, 8%nat); (0x79c80, 8%nat); (0x79c48, 8%nat); (0x79c40, 8%nat); (0x799f0, 8%nat); (0x79a00, 8%nat); (0x799f8, 8%nat); (0x79c68, 8%nat); (0x79c70, 8%nat); (0x599d8, 8%nat); (0x599c0, 8%nat); (0x59900, 8%nat); (0x79c50, 1%nat); (0x59928, 4%nat); (0x59920, 4%nat); (0x59998, 8%nat); (0x59978, 8%nat); (0x59908, 8%nat); (0x59910, 8%nat); (0x59918, 8%nat); (0x79c30, 4%nat); (0x79c34, 4%nat); (0x79c31, 1%nat); (0x599b8, 8%nat); (0x49820, 1%nat)]%Z.
 
 Definition range_disjoint_b (a : Z) (n : nat) (c : Z * nat) : bool :=
   ((a + Z.of_nat n <=? fst c) || (fst c + Z.of_nat (snd c) <=? a))%Z.
@@ -38,31 +35,30 @@ Definition D_main_missb (a : Z) (n : nat) : bool :=
 (* [comment removed for export] *)
 Definition djw (P : Prop) : Prop := P.
 
-Lemma range_disjoint_djw : ltac2:(CDefT.buildp (gd_tbl_P_startup_facts ()) "Pa,$2.Pn,$3.Pc,(1.$2.$3.)P,(6.$7.(8.R3.R2.R1.)$9.)(:.(;.(<.(=.R4.(>.R3.))(?.$2.$3.R2.))(<.(=.(?.$2.$3.R2.)(>.(10.$2.$3.R2.)))R4.)))")
-(* [comment removed for export] *).
+Lemma range_disjoint_djw : forall a n (c : Z * nat), range_disjoint_b a n c = true ->
+  djw ((a + Z.of_nat n <= fst c)%Z \/ (fst c + Z.of_nat (snd c) <= a)%Z).
 Proof.
   intros a n [c l] H. unfold range_disjoint_b in H. cbn [fst snd] in *.
   apply orb_true_iff in H. unfold djw. destruct H as [H|H]; apply Z.leb_le in H; lia.
 Qed.
 
 Section Facts.
-  Context {AMB : Amb}.
+  Variable inp : ProcInput.
   Variable sp0 : word.
-  Variables av ev : list (list byte).
   Variable tid : word.
   Variable rd : EntryDraw.
-  Hypothesis Hva : valid_argv av.
+  Hypothesis Hva : valid_argv (in_argv inp).
   Hypothesis Hlo : (0x7fff80000000 <= bv_unsigned sp0)%Z.
   Hypothesis Hhi : (bv_unsigned sp0 <= 0x800000000000)%Z.
 
-  Let D := D_main sp0 av ev a_hwcap rd tid.
+  Let D := D_main sp0 inp rd tid.
 
-  #[using="Hva"] Lemma len_av : (1 <= Z.of_nat (length av) <= 1024)%Z.
+  #[using="Hva"] Lemma len_av : (1 <= Z.of_nat (length (in_argv inp)) <= 1024)%Z.
   Proof. destruct Hva as [[H1 H2] _]. lia. Qed.
 
   (* [comment removed for export] *)
-  #[using="Type"] Lemma D_main_miss : ltac2:(CDefT.buildp (gd_tbl_P_startup_facts ()) "Psegs,(11.$12.)Pa,$2.Pn,$3.P,(6.$7.(13.R2.R1.)$9.)(6.(14.(11.(15.&8.)))(16.R4.(17.Vsp0,Vav,Vev,(18.VAMB,)Vrd,Vtid,)(19.&40.R3.)R2.)(16.R4.L,(15.&40.)(1:.(15.&8.))(19.&40.R3.)R2.))")
-(* [comment removed for export] *).
+  #[using="Type"] Lemma D_main_miss : forall segs a n, D_main_missb a n = true ->
+    rdn segs (D_main sp0 inp rd tid) (Z_to_bv 64 a) n = rdn segs (fun _ => None) (Z_to_bv 64 a) n.
   Proof.
     intros segs a n Hb. pose proof (u64_range tid).
     unfold D_main_missb, D_main_cells in Hb. cbn [forallb] in Hb.
@@ -124,8 +120,8 @@ Section Facts.
   (* [comment removed for export] *)
   
   (* [comment removed for export] *)
-  #[using="Type"] Lemma D_main_self : ltac2:(CDefT.buildp (gd_tbl_P_startup_facts ()) "Psegs,(11.$12.)(6.(14.(11.(15.&8.)))(16.R1.VD,(19.&40.+59900.)#8.)(1;.(11.(15.&8.))(1<.#8.(19.&40.+59900.))))")
-(* [comment removed for export] *).
+  #[using="Type"] Lemma D_main_self : forall segs,
+    rdn segs D (Z_to_bv 64 0x59900) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 0x59900)).
   Proof.
     intros segs. pose proof (u64_range tid). subst D.
     unfold D_main, D_fd, D_ssp, D_tls, D_tlsB, D_tlsA, D_libc. peel.
@@ -145,7 +141,7 @@ Section Facts.
   
   (* [comment removed for export] *)
   #[using="Hva"] Lemma D_main_hwcap : forall segs,
-    rdn segs D (Z_to_bv 64 0x79cb8) 8 = Some (word_to_le_bytes 8 a_hwcap).
+    rdn segs D (Z_to_bv 64 0x79cb8) 8 = Some (word_to_le_bytes 8 (in_hwcap inp)).
   Proof.
     intros segs. pose proof (u64_range tid). pose proof len_av. subst D.
     unfold D_main, D_fd, D_ssp, D_tls, D_tlsB, D_tlsA, D_libc. peel.
@@ -153,36 +149,47 @@ Section Facts.
   Qed.
 
   (* [comment removed for export] *)
+  End Facts.
+
+Section MEFacts.
+  Context {AMB : Amb}.
+  Variable sp0 : word.
+  Variables av ev : list (list byte).
+  Variable tid : word.
+  Variable rd : EntryDraw.
+  Hypothesis Hlo : (0x7fff80000000 <= bv_unsigned sp0)%Z.
   Variable regs : bvmap 5 word.
   Variable mem : word -> option byte.
   Hypothesis ME : main_entry sp0 av ev tid rd regs mem.
 
-  #[using="AMB sp0 av ev tid rd Hlo regs ME"] Lemma main_entry_rdn_image : ltac2:(CDefT.buildp (gd_tbl_P_startup_facts ()) "Psegs,(11.$12.)Pa,$2.Pn,$3.P,(6.$7.(13.R2.R1.)$9.)(6.(14.(11.(15.&8.)))(16.R4.Vmem,(19.&40.R3.)R2.)(16.R4.L,(15.&40.)(1:.(15.&8.))(19.&40.R3.)R2.))")
-(* [comment removed for export] *).
-  Proof.
+  Lemma main_entry_rdn_image : forall segs a n, D_main_missb a n = true ->
+    rdn segs mem (Z_to_bv 64 a) n = rdn segs (fun _ => None) (Z_to_bv 64 a) n.
+  Proof using Hlo ME.
     intros segs a n Hb.
     assert (Hr : (0 <= a /\ a + Z.of_nat n <= 0x7b000)%Z).
     { unfold D_main_missb in Hb. apply andb_true_iff in Hb as [Hb H2]. apply andb_true_iff in Hb as [_ H1].
       apply Z.leb_le in H1. apply Z.leb_le in H2. lia. }
-    rewrite (main_entry_rdn_data sp0 av ev tid rd regs mem ME)
-      by (rewrite stack_max_size_val; unorm; lia).
-    apply D_main_miss. exact Hb.
+    destruct (main_entry_launch sp0 av ev tid rd regs mem ME) as (inp & mbase & brk & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & RD).
+    rewrite RD by (rewrite stack_max_size_val; unorm; lia).
+    eapply D_main_miss. exact Hb.
   Qed.
 
-  #[using="AMB sp0 av ev rd Hlo D regs ME"] Lemma main_entry_tid : forall segs,
+  Lemma main_entry_tid : forall segs,
     rdn segs mem (Z_to_bv 64 0x59920) 4 = Some (word_to_le_bytes 4 tid).
-  Proof.
-    intros segs. rewrite (main_entry_rdn_data sp0 av ev tid rd regs mem ME)
-      by (rewrite stack_max_size_val; unorm; lia). apply D_main_tid.
+  Proof using Hlo ME.
+    intros segs.
+    destruct (main_entry_launch sp0 av ev tid rd regs mem ME) as (inp & mbase & brk & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & RD).
+    rewrite RD by (rewrite stack_max_size_val; unorm; lia). eapply D_main_tid.
   Qed.
 
-  #[using="AMB sp0 av ev tid Hlo D regs ME"] Lemma main_entry_guard : forall segs,
+  Lemma main_entry_guard : forall segs,
     rdn segs mem (Z_to_bv 64 0x79c30) 8 = Some (canary_bytes rd).
-  Proof.
-    intros segs. rewrite (main_entry_rdn_data sp0 av ev tid rd regs mem ME)
-      by (rewrite stack_max_size_val; unorm; lia). apply D_main_guard.
+  Proof using Hlo ME.
+    intros segs.
+    destruct (main_entry_launch sp0 av ev tid rd regs mem ME) as (inp & mbase & brk & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & RD).
+    rewrite RD by (rewrite stack_max_size_val; unorm; lia). eapply D_main_guard.
   Qed.
+End MEFacts.
 
-  End Facts.
 
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).

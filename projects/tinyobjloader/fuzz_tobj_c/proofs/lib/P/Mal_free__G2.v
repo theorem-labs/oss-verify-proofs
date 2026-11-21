@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (MInvR, which gained the vDSO conjunct, taken apart by minvr_dest and built by minvr_split; the vDSO fact passed to mem_kept_weaken). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -907,7 +908,7 @@ Proof using .
   assert (E13 : rw rhoE 13%positive = rw rho 13%positive) by (symmetry; apply Hrw; vm_compute; reflexivity).
   assert (HP12' : addr_of L (frame_ptr am i fr) = bv_unsigned (rw rhoE 12%positive)) by (rewrite E12; exact HP12).
   assert (HP13' : fr_n fr = bv_unsigned (rw rhoE 13%positive)) by (rewrite E13; exact HP13).
-  unfold MInvR in HMI. cbn [ma_s ma_L] in HMI.
+  minvr_dest HMI. cbn [ma_s ma_L] in HMI.
   destruct (free_quick_instantiate s L g am i fr rhoE tr ms md Hsm' HMI HQ HP12' HP13' Htop') as (m1 & IH & Hout & Hin & HBLK & HsmP).
   set (rhoP := rho1 L g am i fr rhoE m1) in HsmP.
   set (K := fun tr' md' => Kc tr' md' /\ tr' = tr /\ md' = md).
@@ -942,10 +943,10 @@ Proof using .
   destruct (free_blocks s (frame_ptr am i fr) (fr_n fr) [] (free_quick_post s g am i) HW HUB Hy) as (l1 & l2 & E1 & E2).
   exists (mkMA (free_quick_post s g am i) L).
   exists (map (fun b : sptr * Z => (addr_of L (fst b), snd b)) l1), (map (fun b : sptr * Z => (addr_of L (fst b), snd b)) l2).
-  split; [unfold MInvR; cbn [ma_s ma_L]; exact HMI'|].
+  split; [minvr_split; cbn [ma_s ma_L]; exact HMI'|].
   split; [unfold ma_blocks, blocks; cbn [ma_s ma_L]; rewrite E1, map_app; cbn [map fst snd]; rewrite HP12, HP13; reflexivity|].
   split; [unfold ma_blocks, blocks; cbn [ma_s ma_L]; rewrite E2, map_app; reflexivity|].
-  split; [rewrite <- Erm; exact (mem_kept_weaken segsP C_P _ _ rhoE md (rho' am fr rhoE m1 rho2 ms') md _ _ client_addr_not_owned_P HMI ltac:(unfold MInvR; cbn [ma_s ma_L]; exact HMI') KEPT)|].
+  split; [rewrite <- Erm; exact (mem_kept_weaken segsP C_P _ _ rhoE md (rho' am fr rhoE m1 rho2 ms') md _ _ client_addr_not_owned_P (conj HMI VD) ltac:(minvr_split; cbn [ma_s ma_L]; exact HMI') KEPT)|].
   split; [split; [intros Hi0; exact Hi0 | reflexivity]|].
   exact HKc'.
 Qed.
@@ -993,7 +994,7 @@ Proof using .
   assert (E13 : rw rhoE 13%positive = rw rho 13%positive) by (symmetry; apply Hrw; vm_compute; reflexivity).
   assert (HP12' : addr_of L (frame_ptr am i fr) = bv_unsigned (rw rhoE 12%positive)) by (rewrite E12; exact HP12).
   assert (HP13' : fr_n fr = bv_unsigned (rw rhoE 13%positive)) by (rewrite E13; exact HP13).
-  unfold MInvR in HMI. cbn [ma_s ma_L] in HMI.
+  minvr_dest HMI. cbn [ma_s ma_L] in HMI.
 
   destruct (free_quick_instantiate s L g am i fr rhoE tr ms md Hsm' HMI HQ HP12' HP13' Htop') as (m1 & IH & Hout & Hin & HBLK & HsmP).
   set (rhoP := rho1 L g am i fr rhoE m1) in HsmP.
@@ -1027,10 +1028,10 @@ Proof using .
   destruct (free_blocks s (frame_ptr am i fr) (fr_n fr) [] (free_quick_post s g am i) HW HUB Hy) as (l1 & l2 & E1 & E2).
   exists (mkMA (free_quick_post s g am i) L).
   exists (map (fun b : sptr * Z => (addr_of L (fst b), snd b)) l1), (map (fun b : sptr * Z => (addr_of L (fst b), snd b)) l2).
-  split; [unfold MInvR; cbn [ma_s ma_L]; exact HMI'|].
+  split; [minvr_split; cbn [ma_s ma_L]; exact HMI'|].
   split; [unfold ma_blocks, blocks; cbn [ma_s ma_L]; rewrite E1, map_app; cbn [map fst snd]; rewrite HP12, HP13; reflexivity|].
   split; [unfold ma_blocks, blocks; cbn [ma_s ma_L]; rewrite E2, map_app; reflexivity|].
-  split; [rewrite <- Erm; exact (mem_kept_weaken segsP C_P _ _ rhoE md (rho' am fr rhoE m1 rho2 ms') md _ _ client_addr_not_owned_P HMI ltac:(unfold MInvR; cbn [ma_s ma_L]; exact HMI') KEPT)|].
+  split; [rewrite <- Erm; exact (mem_kept_weaken segsP C_P _ _ rhoE md (rho' am fr rhoE m1 rho2 ms') md _ _ client_addr_not_owned_P (conj HMI VD) ltac:(minvr_split; cbn [ma_s ma_L]; exact HMI') KEPT)|].
   split; [split; [intros Hi0; exact Hi0 | reflexivity]|].
   exact HKc'.
 Qed.
@@ -1061,7 +1062,7 @@ Proof using .
   assert (E13 : rw rhoE 13%positive = rw rho 13%positive) by (symmetry; apply Hrw; vm_compute; reflexivity).
   assert (HP12' : addr_of L (frame_ptr am i fr) = bv_unsigned (rw rhoE 12%positive)) by (rewrite E12; exact HP12).
   assert (HP13' : fr_n fr = bv_unsigned (rw rhoE 13%positive)) by (rewrite E13; exact HP13).
-  unfold MInvR in HMI. cbn [ma_s ma_L] in HMI.
+  minvr_dest HMI. cbn [ma_s ma_L] in HMI.
 
   destruct (free_quick_instantiate s L g am i fr rhoE tr ms md Hsm' HMI HQ HP12' HP13' Htop') as (m1 & IH & Hout & Hin & HBLK & HsmP).
   set (rhoP := rho1 L g am i fr rhoE m1) in HsmP.
@@ -1095,7 +1096,7 @@ Proof using .
   destruct (free_blocks s (frame_ptr am i fr) (fr_n fr) [] (free_quick_post s g am i) HW HUB Hy) as (l1 & l2 & E1 & E2).
   exists (mkMA (free_quick_post s g am i) L).
   exists (map (fun b : sptr * Z => (addr_of L (fst b), snd b)) l1), (map (fun b : sptr * Z => (addr_of L (fst b), snd b)) l2).
-  split; [unfold MInvR; cbn [ma_s ma_L]; exact HMI'|].
+  split; [minvr_split; cbn [ma_s ma_L]; exact HMI'|].
   split; [split; [exact Hini | reflexivity]|].
   split.
   { destruct HdrvN as (j & Hr & H0 & Hj). exists (Datatypes.S j). split; [| split; [lia | rewrite Nat2Z.inj_succ; lia]].
@@ -1104,7 +1105,7 @@ Proof using .
   split; [exact HVR|].
   split; [unfold ma_blocks, blocks; cbn [ma_s ma_L]; rewrite E1, map_app; cbn [map fst snd]; rewrite HP12, HP13; reflexivity|].
   split; [unfold ma_blocks, blocks; cbn [ma_s ma_L]; rewrite E2, map_app; reflexivity|].
-  split; [rewrite <- Erm; exact (mem_kept_weaken segsP C_P _ _ rhoE md (rho' am fr rhoE m1 rho2 ms') md _ _ client_addr_not_owned_P HMI ltac:(unfold MInvR; cbn [ma_s ma_L]; exact HMI') KEPT)|].
+  split; [rewrite <- Erm; exact (mem_kept_weaken segsP C_P _ _ rhoE md (rho' am fr rhoE m1 rho2 ms') md _ _ client_addr_not_owned_P (conj HMI VD) ltac:(minvr_split; cbn [ma_s ma_L]; exact HMI') KEPT)|].
   exact HKc'.
 Qed.
 
@@ -1138,7 +1139,7 @@ Proof using .
   assert (E13 : rw rhoE 13%positive = rw rho 13%positive) by (symmetry; apply Hrw; vm_compute; reflexivity).
   assert (HP12' : addr_of L (frame_ptr am i fr) = bv_unsigned (rw rhoE 12%positive)) by (rewrite E12; exact HP12).
   assert (HP13' : fr_n fr = bv_unsigned (rw rhoE 13%positive)) by (rewrite E13; exact HP13).
-  unfold MInvR in HMI. cbn [ma_s ma_L] in HMI.
+  minvr_dest HMI. cbn [ma_s ma_L] in HMI.
   destruct (free_quick_instantiate s L g am i fr rhoE tr ms md Hsm' HMI HQ HP12' HP13' Htop') as (m1 & IH & Hout & Hin & HBLK & HsmP).
   set (rhoP := rho1 L g am i fr rhoE m1) in HsmP.
   set (K := fun tr' md' => Kc tr' md' /\ tr' = tr /\ md' = md).
@@ -1172,7 +1173,7 @@ Proof using .
   destruct (free_blocks s (frame_ptr am i fr) (fr_n fr) [] (free_quick_post s g am i) HW HUB Hy) as (l1 & l2 & E1 & E2).
   exists (mkMA (free_quick_post s g am i) L).
   exists (map (fun b : sptr * Z => (addr_of L (fst b), snd b)) l1), (map (fun b : sptr * Z => (addr_of L (fst b), snd b)) l2).
-  split; [unfold MInvR; cbn [ma_s ma_L]; exact HMI'|].
+  split; [minvr_split; cbn [ma_s ma_L]; exact HMI'|].
   split; [split; [exact Hini | reflexivity]|].
   split.
   { destruct HdrvN as (j & Hr & H0 & Hj). exists (Datatypes.S j). split; [| split; [lia | rewrite Nat2Z.inj_succ; lia]].
@@ -1181,7 +1182,7 @@ Proof using .
   split; [exact HVR|].
   split; [unfold ma_blocks, blocks; cbn [ma_s ma_L]; rewrite E1, map_app; cbn [map fst snd]; rewrite HP12, HP13; reflexivity|].
   split; [unfold ma_blocks, blocks; cbn [ma_s ma_L]; rewrite E2, map_app; reflexivity|].
-  split; [rewrite <- Erm; exact (mem_kept_weaken segsP C_P _ _ rhoE md (rho' am fr rhoE m1 rho2 ms') md _ _ client_addr_not_owned_P HMI ltac:(unfold MInvR; cbn [ma_s ma_L]; exact HMI') KEPT)|].
+  split; [rewrite <- Erm; exact (mem_kept_weaken segsP C_P _ _ rhoE md (rho' am fr rhoE m1 rho2 ms') md _ _ client_addr_not_owned_P (conj HMI VD) ltac:(minvr_split; cbn [ma_s ma_L]; exact HMI') KEPT)|].
   exact HKc'.
 Qed.
 End TopE.

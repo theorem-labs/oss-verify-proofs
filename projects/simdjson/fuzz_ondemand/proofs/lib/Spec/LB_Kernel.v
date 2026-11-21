@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the brk proof carries page alignment of both ends, the munmap proof excludes the injected -ENOMEM and needs a well-formed map list, and a fresh region is shown clear of each reservation on either side. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
@@ -140,13 +141,21 @@ Proof.
   assert (PH : bv_unsigned (vm_brk h) = pbrk /\ 0 < pbrk /\ pbrk < req < 2^64 /\ req <> 0
                /\ BB (set_brkph BPDead L) = BB L
                /\ gm (if req =? req then match ld_brk L with BPQueried cur => set_brkph (BPGuard cur) L | _ => match ld_brkreg L with Some (b, l) => set_brkreg (Some (b, l + PGSZ)) L | None => L end end else set_brkph BPDead L) = gm L
-               /\ BB (if req =? req then match ld_brk L with BPQueried cur => set_brkph (BPGuard cur) L | _ => match ld_brkreg L with Some (b, l) => set_brkreg (Some (b, l + PGSZ)) L | None => L end end else set_brkph BPDead L) = BB L + (req - pbrk)).
+               /\ BB (if req =? req then match ld_brk L with BPQueried cur => set_brkph (BPGuard cur) L | _ => match ld_brkreg L with Some (b, l) => set_brkreg (Some (b, l + PGSZ)) L | None => L end end else set_brkph BPDead L) = BB L + (req - pbrk)
+               (* both ends page-aligned, so the 08b1429 page-rounded grant is the old shape *)
+               /\ pbrk mod PGSZ = 0 /\ req mod PGSZ = 0).
   { rewrite Z.eqb_refl. destruct Hpre as [(cur & Hph & ->)|(b & l & Hph & Hreg & ->)]; rewrite Hph in P |- *.
     - destruct P as (Ecur & Ebrk & Epbrk & Hreg). unfold BB. cbn. rewrite !Hph, !Hreg. cbn. rewrite ?Hph, ?Hreg.
-      rewrite (round_up_pg_aligned cur) by (rewrite Ecur; unfold PGSZ in S2; exact S2). unfold PGSZ in *. repeat split; try reflexivity; lia.
+      rewrite (round_up_pg_aligned cur) by (rewrite Ecur; unfold PGSZ in S2; exact S2). unfold PGSZ in *.
+      repeat split; try reflexivity; try lia.
+      (* [lia] may close these alignment goals itself; what it leaves takes the explicit proof *)
+      all: first [ rewrite Epbrk, Ecur; exact S2 | rewrite Ecur; rewrite Z.add_mod, S2 by lia; reflexivity ].
     - destruct P as (b' & l' & Hreg' & Ebrk & Epbrk). rewrite Hreg in Hreg'. inversion Hreg'; subst b' l'.
-      pose proof (kl_brkreg _ _ _ HK b l Hreg) as (R1 & R2 & R3 & R4 & R5 & _). unfold BB. cbn. rewrite !Hph, !Hreg. cbn. rewrite ?Hph, ?Hreg. unfold PGSZ in *. repeat split; try reflexivity; lia. }
-  destruct PH as (Ebrk & Hp0 & Hreq & NZ & BBd & GMg & BBg).
+      pose proof (kl_brkreg _ _ _ HK b l Hreg) as (R1 & R2 & R3 & R4 & R5 & _). unfold BB. cbn. rewrite !Hph, !Hreg. cbn. rewrite ?Hph, ?Hreg. unfold PGSZ in *.
+      repeat split; try reflexivity; try lia.
+      all: first [ rewrite Epbrk; rewrite Z.add_mod, R2, R4 by lia; reflexivity
+                 | rewrite Z.add_mod, Z.add_mod with (a := b), R2, R4 by lia; reflexivity ]. }
+  destruct PH as (Ebrk & Hp0 & Hreq & NZ & BBd & GMg & BBg & Hpa & Hra).
   destruct (nstep_brk_inv req mo rsp mo' evs Hst) as (r & Hok & Emo' & Ersp & _). fold h in Hok, Emo', Ersp.
   unfold event_post. rewrite (proj2 (Z.eqb_neq _ _) NZ).
   pose proof (dec_brk_Some _ _ _ _ Hd) as SH.
@@ -154,7 +163,8 @@ Proof.
   -
     destruct SH as [SH _].
     rewrite Ersp in SH. assert (Er : r = Z_to_bv 64 req) by (inversion SH; reflexivity). subst r.
-    destruct (brk_model_next_grown h req ltac:(lia) ltac:(lia)) as (_ & Emaps & _ & _ & _).
+    destruct (brk_model_next_grown h req ltac:(lia) ltac:(lia) ltac:(rewrite Ebrk; exact Hpa) ltac:(exact Hra))
+      as (_ & Emaps & _ & _ & _).
     pose proof (LI_gk _ _ HL) as HG. apply LI_elim in HL.
     split.
     + rewrite GMg, BBg. rewrite Emo', m_vmmaps_with_brk_next. unfold vm_live_bytes. fold h.
@@ -256,7 +266,8 @@ Proof.
   assert (Uhi : bv_unsigned (aw + nw)%bv = a + PGSZ).
   { rewrite bv_add_unsigned, Ua, Un. apply bv_wrap_small. unfold bv_modulus, PGSZ in *. lia. }
   assert (Hrf : region_free (vm_reserved h) aw nw = true).
-  { apply region_free_above. intros e He. rewrite Ua, Ha, Ecur. apply (kl_resv_top _ _ _ HK). exact He. }
+  { apply region_free_out. intros e He. rewrite Ua, Un, Ha, Ecur.
+    destruct (kl_resv_top _ _ _ HK e He) as [X|X]; [left; exact X| right; try fold h in X; unfold PGSZ in *; lia]. }
   assert (Hmc : map_contains (vm_maps h) aw nw = true).
   { unfold map_contains. apply existsb_exists. exists e0. split; [exact He0|]. rewrite Ua, Un. unfold elo, ehi in *.
     rewrite (proj2 (Z.leb_le _ _)) by lia. rewrite (proj2 (Z.leb_le _ _)) by (unfold PGSZ in *; lia). reflexivity. }
@@ -283,13 +294,15 @@ Qed.
 Lemma nstep_munmap_exact a len l0 mo rsp mo' evs :
   let h := m_vmmaps mo in let aw := Z_to_bv 64 a in let nw := Z_to_bv 64 (mmap_len l0) in
   0 < a -> a mod PGSZ = 0 -> 0 < l0 -> a + mmap_len l0 <= alloc_ceiling -> 0 < len < 2^64 -> mmap_len len = mmap_len l0 ->
-  In (aw, nw) (vm_maps h) ->
+  In (aw, nw) (vm_maps h) -> vmwf (vm_maps h) ->
   nstep (NMunmap a len) mo rsp mo' evs ->
   vm_maps (m_vmmaps mo') = map_remove (vm_maps h) aw
   /\ vm_limit (m_vmmaps mo') = vm_limit h /\ vm_start_brk (m_vmmaps mo') = vm_start_brk h.
 Proof.
-  intros h aw nw Ha Hal Hl0 Hceil Hlen Hmm Hin Hst. pose proof alloc_ceiling_lt as Hcl. pose proof (mmap_len_ge l0 Hl0) as ML.
-  apply nstep_munmap_iff in Hst. destruct rsp as [r ws zs us cs ci]. unfold check_munmap in Hst.
+  intros h aw nw Ha Hal Hl0 Hceil Hlen Hmm Hin Hwf Hst. pose proof alloc_ceiling_lt as Hcl. pose proof (mmap_len_ge l0 Hl0) as ML.
+  (* LPS 08b1429: under [ACFG] the node excludes munmap's injected -ENOMEM. *)
+  pose proof (nstep_munmap_nonrefusal _ _ _ _ _ _ Hst) as Hnr.
+  apply nstep_munmap_check in Hst. destruct rsp as [r ws zs us cs ci]. cbn [eff_ret] in Hnr. unfold check_munmap in Hst.
   fold h in Hst. rewrite (unsigned_lit a) in Hst by lia. rewrite page_size_eq in Hst. unfold PGSZ in Hal. rewrite Hal in Hst.
   rewrite w_is0_lit in Hst by lia. replace (len =? 0) with false in Hst by (symmetry; apply Z.eqb_neq; lia). cbn [negb orb Z.eqb] in Hst.
   cbv zeta in Hst. rewrite (unsigned_lit len) in Hst by lia. fold (mmap_len len) in Hst. rewrite Hmm in Hst. fold aw nw in Hst.
@@ -297,7 +310,9 @@ Proof.
   assert (Hhas : map_has (vm_maps h) aw nw = true).
   { unfold map_has. apply existsb_exists. exists (aw, nw). split; [exact Hin|]. cbn [fst snd]. rewrite !bv_eqb_refl. reflexivity. }
   rewrite Hhas in Hst. destruct ws; [|discriminate]. destruct zs; [|discriminate]. destruct cs; [|discriminate]. destruct ci; [|discriminate].
-  destruct (w_is0 r && listNN_eqb us [(aw, nw)]); [|discriminate]. inversion Hst; subst. rewrite m_vmmaps_with_mmap_destroyed. split; [|split]; reflexivity.
+  rewrite Hnr in Hst.
+  destruct (w_is0 r && listNN_eqb us [(aw, nw)]); [|discriminate]. inversion Hst; subst. rewrite m_vmmaps_with_mmap_destroyed.
+  split; [|split; reflexivity]. cbn [vm_maps]. rewrite <- (maps_subtract_exact_vmwf (vm_maps h) aw nw Hwf Hin). reflexivity.
 Qed.
 
 Lemma li_munmap L pbrk mo rsp mo' evs a l0 len z :
@@ -313,7 +328,7 @@ Proof.
   assert (Hlen3 : 0 < len < 2^64 /\ mmap_len len = mmap_len l0).
   { destruct Hlen as [-> | ->]; [split; [lia| reflexivity]| split; [lia| exact Hnn]]. }
   destruct Hlen3 as [Hlen1 Hlen2].
-  pose proof (nstep_munmap_exact a len l0 mo rsp mo' evs A2 ltac:(unfold PGSZ in A3; exact A3) ltac:(lia) A4 Hlen1 Hlen2 A5 Hst) as (Emaps & Elim & Ebrk).
+  pose proof (nstep_munmap_exact a len l0 mo rsp mo' evs A2 ltac:(unfold PGSZ in A3; exact A3) ltac:(lia) A4 Hlen1 Hlen2 A5 (kl_wf _ _ _ HK) Hst) as (Emaps & Elim & Ebrk).
   unfold went, wz in A5. pose proof (LI_gk _ _ HL) as HG. split.
   { unfold vm_live_bytes. rewrite Emaps, (live_bytes_remove _ _ _ (kl_wf _ _ _ HK) A5).
   change (event_post L (EMunmap a len) z) with (set_groups (g_remove a (ld_groups L)) L).

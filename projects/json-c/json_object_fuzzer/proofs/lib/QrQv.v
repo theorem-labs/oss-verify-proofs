@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: memappend_A_stmt2 and pe_epilogue_A take it after alloc_ceiling <= lo; PE_STATIC_A's conjunct HBTs or skipped). *)
 
 From Stdlib Require ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -45,7 +46,7 @@ forall (pf : pe_fix) (pa : pe_fixA) (LBall LM : list blk) (FRS : list frame) (B 
 HEAPA A4L HIx A LBall LM ((pa_F pa, 2) :: FRS) B m md ->
 pe_geomA pf pa -> 0 <= pf_spf pf < 2^62 ->
 pe_frameA asegs m pf pa cb nb pj sv ->
-stk asegs m lo (pf_spf pf) -> alloc_ceiling <= lo -> lo <= pf_spf pf - 12288 ->
+stk asegs m lo (pf_spf pf) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= pf_spf pf - 12288 ->
 bv_unsigned (pe_ra sv) mod 2 = 0 ->
 (forall m' md' (A' : ASA A4L HIx) (fp : Z),
 model_vm_only (cfg_model md) (cfg_model md') ->
@@ -65,7 +66,7 @@ AJ5 A4L HIx A T md
 (Z_to_bv 64 (shA (pa_F pa))) s3 s4 (Z_to_bv 64 (pa_F pa)) s6 s7 (Z_to_bv 64 (pa_F pa)) s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 APE_EPI) fc None m (seg_rom asegs)).
 Proof.
-intros until fc. intros HP GEO SP0 FR ST LO LOS RAE K.
+intros until fc. intros HP GEO SP0 FR ST LO HBT LOS RAE K.
 pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 destruct pf as [tk oldl newl len lenr sb spf pmd mxd fl]; cbn [pf_tk pf_spf pf_sb pf_len pf_lenr pf_oldl pf_newl pf_md pf_mxd pf_fl] in *.
 destruct pa as [sp0 Ff oldloc newloc bsl dsl]; cbn [pa_sp0 pa_F pa_oldloc pa_newloc pa_bslack pa_dslack] in *.
@@ -189,7 +190,7 @@ AJ5 A4L HIx A T md
 (pe_msA asegs pf pa APE_REDO (t_co ts) gp t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 s5 (Z_to_bv 64 (pf_tk pf + 56)) (Z_to_bv 64 (pa_F pa + 64)) F fc m).
 Proof.
 intros until fc. intros STC INV Hl K.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 destruct INV as [CORE REST].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR).
 pose proof REST as (HP & LV & _).
@@ -535,7 +536,7 @@ HEAPA A4L HIx A ((pb, PB_SZ) :: (buf, cap) :: LB) LM FRS B0 m0 md0 ->
 pbuf_core asegs m0 pb buf bpos cap content -> 0 <= n < 2^31 ->
 bytes_at asegs m0 b src -> Z.of_nat (length src) = n -> 0 <= b ->
 src_locA LB FRS b n -> (0 < n -> unpoisoned asegs m0 A_SB b n) ->
-stk asegs m0 lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 112 - 4096 ->
+stk asegs m0 lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 112 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m0 A_ERRNO [C4 errv] -> tp = Z_to_bv 64 A_TP -> bv_unsigned ra mod 2 = 0 ->
 a0 = Z_to_bv 64 pb -> a1 = Z_to_bv 64 b -> a2 = Z_to_bv 64 n ->
@@ -631,7 +632,7 @@ PE_REST_A HIx GA pf pa q LB0 LM FRS payload me lo m2 md2 A2 B2 ts2 errv2.
 Proof.
 intros pf pa q LB0 LM FRS payload me lo m1 m2 md md2 A A2 B B2 ts errv errv2 LBc co2 pb2 pbs2 x2 STC
 (HP & LV & OBJ & ST & ERR & STR & PLEN & SBin & HPR & MDV & G & BUD) VM12 HPRc Hincl ts2 HP2 ST2 ERR2 BUD2.
-pose proof STC as (LO & LOS & GEO & _). pose proof GEO as (Gspf & Gsp0 & Gle & _).
+pose proof STC as (LO & HBTs & LOS & GEO & _). pose proof GEO as (Gspf & Gsp0 & Gle & _).
 assert (AG : agree_on asegs (t_objbs ts ++ concat (map lvl_blocks (t_levels ts)) ++ LB0) m1 m2).
 { eapply (agree_of_heap_pres asegs A4H); [exact HPRc | reflexivity |]. intros b Hb. apply in_or_app; left. exact (Hincl b Hb). }
 assert (SBin2 := payload_locA_pres HIx pf pa LB0 FRS _ _ _ _ _ _ _ LBc _ _ _ HP (incl_tl _ (incl_refl _)) HPRc SBin).
@@ -667,7 +668,7 @@ PE_REST_A HIx GA pf pa q LB0 LM FRS payload me lo m2 md2 A2 B2 ts2 errv2.
 Proof.
 intros pf pa q LB0 LM FRS payload me lo m1 m2 md md2 A A2 B B2 ts ts2 errv errv2 LBc STC
 (HP & LV & OBJ & ST & ERR & STR & PLEN & SBin & HPR & MDV & G & BUD) VM12 HPRc Hincl HP2 LV2 OBJ2 ST2 ERR2 BUD2.
-pose proof STC as (LO & LOS & GEO & _). pose proof GEO as (Gspf & Gsp0 & Gle & _).
+pose proof STC as (LO & HBTs & LOS & GEO & _). pose proof GEO as (Gspf & Gsp0 & Gle & _).
 split; [exact HP2|]. split; [exact LV2|]. split; [exact OBJ2|]. split; [exact ST2|]. split; [exact ERR2|].
 assert (SBin2 := payload_locA_pres HIx pf pa LB0 FRS _ _ _ _ _ _ _ LBc _ _ _ HP (incl_tl _ (incl_refl _)) HPRc SBin).
 assert (FRI : incl (fr_ivs A4L FRS) (LBc ++ LM ++ fr_ivs A4L ((pa_F pa, 2) :: FRS))).
@@ -700,7 +701,7 @@ Proof.
 intros pf pa q LB0 LM FRS payload me lo m mc md A B ts cb nb pj sv errv l st' ss' c hn c' STC [CORE REST] Hl MU WM MI TOKc Lc Hm Hm' Hst Hss Hc Hz.
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR).
 assert (Hd : (t_depth ts < length (t_levels ts))%nat) by (apply nth_error_Some; rewrite Hl; discriminate).
-pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & (_ & (MX1 & _)) & _).
+pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & _ & (_ & (MX1 & _)) & _).
 assert (HW : Forall (pe_wtqA pf pa q) [(q + 32 * Z.of_nat (t_depth ts), q + 32 * Z.of_nat (t_depth ts) + 32)]).
 { apply Forall_cons; [right; cbn [fst snd]; lia | apply Forall_nil]. }
 assert (INq : In (q, 32 * pf_mxd pf) (pe_blocksA pf q LB0 ts)) by (unfold pe_blocksA; apply in_or_app; right; right; left; reflexivity).
@@ -769,7 +770,7 @@ destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR).
 unfold ts_push.
 set (lp := TL stp (tl_ss l) (tl_cur l) (tl_cs l) (tl_cbs l) (tl_name l) (tl_nbs l)) in *.
 set (ln := TL ST_eatws ST_start 0 None [] 0 []) in *.
-pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & (_ & (MX1 & _)) & _).
+pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & _ & (_ & (MX1 & _)) & _).
 assert (Hd : (t_depth ts < length (t_levels ts))%nat) by (apply nth_error_Some; rewrite Hl; discriminate).
 assert (Hd1' : (S (t_depth ts) < length (t_levels ts))%nat) by (rewrite LEN32; exact Hd1).
 destruct (nth_error (t_levels ts) (S (t_depth ts))) as [l1|] eqn:Hl1; [| apply nth_error_None in Hl1; lia].
@@ -883,7 +884,7 @@ rw_cells asegs mc (pa_F pa) (ff_cellsA cb' pj) ->
 pe_frameA asegs mc pf pa cb' nb pj sv.
 Proof.
 intros pf pa q LB0 LM FRS B ts A m mc md lo cb nb pj sv cb' STC HP (SLOTS & GAP & SAVED & _ & FSH) MU WM FFc.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & _). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & _). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 pose proof alloc_ceiling_range as ACR.
 assert (INtk : In (pf_tk pf, 72) (pe_blocksA pf q LB0 ts ++ LM)) by (apply in_or_app; left; unfold pe_blocksA; apply in_or_app; right; left; reflexivity).
 assert (INF : In (pa_F pa, 2) ((pa_F pa, 2) :: FRS)) by (left; reflexivity).
@@ -996,7 +997,7 @@ AJ5 A4L HIx A T md
 s3 (Z_to_bv 64 q) s6 s7 (Z_to_bv 64 (Z.of_nat (t_depth ts))) s9 s11 t3 t4 t5 t6 F fc m).
 Proof.
 intros until fc. intros STC INV Hl K.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 destruct INV as [CORE REST].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR).
 pose proof REST as (HP & LV & _).
@@ -1071,7 +1072,7 @@ AJ5 A4L HIx A T md
 Proof.
 intros until fc. intros STC INV Hl K. pose proof INV as INV0. revert INV.
 intros INV.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 destruct INV as [CORE REST].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR).
 pose proof REST as (HP & LV & _).
@@ -1133,7 +1134,7 @@ AJ5 A4L HIx A T md
 Proof.
 intros until fc. intros STC INV Hl K. pose proof INV as INV0. revert INV.
 intros INV.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 destruct INV as [CORE REST].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR).
 pose proof REST as (HP & LV & _).
@@ -1458,7 +1459,7 @@ HEAPA A4L HIx A ((pb, PB_SZ) :: (buf, cap) :: LB) LM FRS B0 m0 md0 ->
 pbuf_core asegs m0 pb buf bpos cap content -> 0 <= n < 2^31 ->
 bytes_at asegs m0 b src -> Z.of_nat (length src) = n -> 0 <= b ->
 src_locA LB FRS b n -> (0 < n -> unpoisoned asegs m0 A_SB b n) ->
-stk asegs m0 lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 112 - 4096 ->
+stk asegs m0 lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 112 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m0 A_ERRNO [C4 errv] -> tp = Z_to_bv 64 A_TP -> bv_unsigned ra mod 2 = 0 ->
 a0 = Z_to_bv 64 pb -> a1 = Z_to_bv 64 b -> a2 = Z_to_bv 64 n ->
@@ -1554,7 +1555,7 @@ PE_REST_A HIx GA pf pa q LB0 LM FRS payload me lo m2 md2 A2 B2 ts2 errv2.
 Proof.
 intros pf pa q LB0 LM FRS payload me lo m1 m2 md md2 A A2 B B2 ts errv errv2 LBc co2 pb2 pbs2 x2 STC
 (HP & LV & OBJ & ST & ERR & STR & PLEN & SBin & HPR & MDV & G & BUD) VM12 HPRc Hincl ts2 HP2 ST2 ERR2 BUD2.
-pose proof STC as (LO & LOS & GEO & _). pose proof GEO as (Gspf & Gsp0 & Gle & _).
+pose proof STC as (LO & HBTs & LOS & GEO & _). pose proof GEO as (Gspf & Gsp0 & Gle & _).
 assert (AG : agree_on asegs (t_objbs ts ++ concat (map lvl_blocks (t_levels ts)) ++ LB0) m1 m2).
 { eapply (agree_of_heap_pres asegs A4H); [exact HPRc | reflexivity |]. intros b Hb. apply in_or_app; left. exact (Hincl b Hb). }
 assert (SBin2 := payload_locA_pres HIx pf pa LB0 FRS _ _ _ _ _ _ _ LBc _ _ _ HP (incl_tl _ (incl_refl _)) HPRc SBin).
@@ -1590,7 +1591,7 @@ PE_REST_A HIx GA pf pa q LB0 LM FRS payload me lo m2 md2 A2 B2 ts2 errv2.
 Proof.
 intros pf pa q LB0 LM FRS payload me lo m1 m2 md md2 A A2 B B2 ts ts2 errv errv2 LBc STC
 (HP & LV & OBJ & ST & ERR & STR & PLEN & SBin & HPR & MDV & G & BUD) VM12 HPRc Hincl HP2 LV2 OBJ2 ST2 ERR2 BUD2.
-pose proof STC as (LO & LOS & GEO & _). pose proof GEO as (Gspf & Gsp0 & Gle & _).
+pose proof STC as (LO & HBTs & LOS & GEO & _). pose proof GEO as (Gspf & Gsp0 & Gle & _).
 split; [exact HP2|]. split; [exact LV2|]. split; [exact OBJ2|]. split; [exact ST2|]. split; [exact ERR2|].
 assert (SBin2 := payload_locA_pres HIx pf pa LB0 FRS _ _ _ _ _ _ _ LBc _ _ _ HP (incl_tl _ (incl_refl _)) HPRc SBin).
 assert (FRI : incl (fr_ivs A4L FRS) (LBc ++ LM ++ fr_ivs A4L ((pa_F pa, 2) :: FRS))).
@@ -1623,7 +1624,7 @@ Proof.
 intros pf pa q LB0 LM FRS payload me lo m mc md A B ts cb nb pj sv errv l st' ss' c hn c' STC [CORE REST] Hl MU WM MI TOKc Lc Hm Hm' Hst Hss Hc Hz.
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR).
 assert (Hd : (t_depth ts < length (t_levels ts))%nat) by (apply nth_error_Some; rewrite Hl; discriminate).
-pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & (_ & (MX1 & _)) & _).
+pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & _ & (_ & (MX1 & _)) & _).
 assert (HW : Forall (pe_wtqA pf pa q) [(q + 32 * Z.of_nat (t_depth ts), q + 32 * Z.of_nat (t_depth ts) + 32)]).
 { apply Forall_cons; [right; cbn [fst snd]; lia | apply Forall_nil]. }
 assert (INq : In (q, 32 * pf_mxd pf) (pe_blocksA pf q LB0 ts)) by (unfold pe_blocksA; apply in_or_app; right; right; left; reflexivity).
@@ -1689,7 +1690,7 @@ rw_cells asegs mc (pa_F pa) (ff_cellsA cb' pj) ->
 pe_frameA asegs mc pf pa cb' nb pj sv.
 Proof.
 intros pf pa q LB0 LM FRS B ts A m mc md lo cb nb pj sv cb' STC HP (SLOTS & GAP & SAVED & _ & FSH) MU WM FFc.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & _). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & _). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 pose proof alloc_ceiling_range as ACR.
 assert (INtk : In (pf_tk pf, 72) (pe_blocksA pf q LB0 ts ++ LM)) by (apply in_or_app; left; unfold pe_blocksA; apply in_or_app; right; left; reflexivity).
 assert (INF : In (pa_F pa, 2) ((pa_F pa, 2) :: FRS)) by (left; reflexivity).
@@ -1827,7 +1828,7 @@ forall (pf : pe_fix) (pa : pe_fixA) (LBall LM : list blk) (FRS : list frame) (B 
 HEAPA A4L HIx A LBall LM ((pa_F pa, 2) :: FRS) B m md ->
 pe_geomA pf pa -> 0 <= pf_spf pf < 2^62 ->
 pe_frameA asegs m pf pa cb nb pj sv ->
-stk asegs m lo (pf_spf pf) -> alloc_ceiling <= lo -> lo <= pf_spf pf - 12288 ->
+stk asegs m lo (pf_spf pf) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= pf_spf pf - 12288 ->
 bv_unsigned (pe_ra sv) mod 2 = 0 ->
 (forall m' md' (A' : ASA A4L HIx) (fp : Z),
 model_vm_only (cfg_model md) (cfg_model md') ->
@@ -1847,7 +1848,7 @@ AJ5 A4L HIx A T md
 (Z_to_bv 64 (shA (pa_F pa))) s3 s4 s5 (Z_to_bv 64 (pa_F pa)) (Z_to_bv 64 (pa_F pa)) s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 APE_EPI1) fc None m (seg_rom asegs)).
 Proof.
-intros until fc. intros HP GEO SP0 FR ST LO LOS RAE K.
+intros until fc. intros HP GEO SP0 FR ST LO HBT LOS RAE K.
 pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 destruct pf as [tk oldl newl len lenr sb spf pmd mxd fl]; cbn [pf_tk pf_spf pf_sb pf_len pf_lenr pf_oldl pf_newl pf_md pf_mxd pf_fl] in *.
 destruct pa as [sp0 Ff oldloc newloc bsl dsl]; cbn [pa_sp0 pa_F pa_oldloc pa_newloc pa_bslack pa_dslack] in *.

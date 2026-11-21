@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (SIGPIPE on a dead reader for sendto, with raise_sigpipe_sl and mlim_raise_sigpipe). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -12,6 +13,24 @@ Open Scope Z_scope.
 
 Section Arms.
 Variable L : Z.
+
+Lemma raise_sigpipe_sl : forall m, raise_sigpipe (sl L m) = sl L (raise_sigpipe m).
+Proof.
+  intros m. unfold raise_sigpipe.
+  change (m_sigpipe_default (sl L m)) with (m_sigpipe_default m).
+  change (m_sigmask (sl L m)) with (m_sigmask m).
+  destruct (negb (m_sigpipe_default m)); [reflexivity |].
+  destruct (sigpipe_blocked (m_sigmask m)); reflexivity.
+Qed.
+
+(* LPS 08b1429: a write to a dead reader raises SIGPIPE; the budget is untouched *)
+Lemma mlim_raise_sigpipe : forall m, mlim (raise_sigpipe m) = mlim m.
+Proof.
+  intros m. unfold raise_sigpipe.
+  destruct (negb (m_sigpipe_default m)); [reflexivity |].
+  destruct (sigpipe_blocked (m_sigmask m)); reflexivity.
+Qed.
+
 
 (* [comment removed for export] *)
 Lemma fr_arm_144 : forall i m, FR L i m (setid_spec cred_gids set_cred_gids false (uid32 (in_arg i 0))) (setid_spec cred_gids set_cred_gids false (uid32 (in_arg i 0))).
@@ -111,7 +130,11 @@ Proof. intros i m. unfold getpeername_spec. fq. Qed.
 
 (* [comment removed for export] *)
 Lemma fr_arm_206 : forall i m, FR L i m (sendto_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (in_arg i 5)) (sendto_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (in_arg i 5)).
-Proof. intros i m. unfold sendto_spec. fq. Qed.
+Proof. intros i m. unfold sendto_spec. fq.
+  all: try (cbv beta iota zeta; fq).
+  all: try apply raise_sigpipe_sl.
+  all: try apply mlim_raise_sigpipe.
+Qed.
 
 (* [comment removed for export] *)
 Lemma fr_arm_207 : forall i m, FR L i m (recvfrom_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2)) (recvfrom_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2)).

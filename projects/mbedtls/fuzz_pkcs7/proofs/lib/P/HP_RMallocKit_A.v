@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (rauxv_ok_pres destructures rauxv_ok's new witnesses (the launch's auxv)). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
@@ -76,8 +77,8 @@ Qed.
 #[using="Type"] Lemma rauxv_ok_pres : ltac2:(CDefT.buildp (gd_tbl_HP_RMallocKit_A ()) "PC,P,$5.SpPm,$2;.Pm',$2;.PB,$5.P,(2<.VhRP,R3.R1.)P,(2=.R5.R4.R3.)P,Pa,$5.P,(15.R4.R1.)(2>.A1.R8.R2.)P,Pa,$5.P,(22.(15.$2?.R1.)(23.R1.(17.$2?.+8.)))(2>.A1.R9.R2.)(2<.VhRP,R6.R5.)")
 (* [comment removed for export] *).
 Proof.
-  (intros C m m' B dd_H; ddestruct dd_H as (av & x3 & x4 & x5 & hw & x6 & x11 & x12 & x23 & rnd & C1 & A1 & A2 & H); intros HP HB HC).
-  dexists av, x3, x4, x5, hw, x6, x11, x12, x23, rnd. split; [|split; [|split; [|exact H]]].
+  (intros C m m' B dd_H; ddestruct dd_H as (av & la & ph & ent & uid & gid & hw & xfn & rnd & C1 & A1 & A2 & H); intros HP HB HC).
+  dexists av, la, ph, ent, uid, gid, hw, xfn, rnd. split; [|split; [|split; [|exact H]]].
   - eapply rpres_except_rw_cells; [exact HP| exact C1|]. cbn. intros a Ha. apply HC. lia.
   - eapply rpres_except_bytes_at; [exact HP| exact A1|]. intros a Ha. apply HB. lia.
   - eapply rpres_except_bytes_at; [exact HP| exact A2|]. intros a Ha. apply HB. lia.

@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: regenerated for reac-pw/fuzz_segconf image B by gen_ad1k.py 2a6885e5c27f from fuzz_segconf.asan-ubsan (sha256 c3796c0b38f3) and its collected hand-off states *)
 (* Read from: fuzz_segconf.asan-ubsan (reac-pw/fuzz_segconf asan-ubsan) sha256 c3796c0b38f3666f32a3ecff43c9fdb55ead356833af6013a07c404bd0254509; unstripped twin sha256 80e82127e8ca1e8b2ee142f113e0e529fd7b8052d654e8dfc120fd8d4ae40a21 *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader conjunct of fdchan). *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -384,7 +385,7 @@ apply (tfib_not_owned_static B F_STDERR (F_STDERR + FILE_SZ) a HB); [vm_compute;
 - left. unfold kLowMemEnd. lia.
 - exact (proj1 (rodata_shadow_facts ly S W mem md p len HAR Hp1 ltac:(lia) ltac:(lia))).
 - exact (proj2 (rodata_shadow_facts ly S W mem md p len HAR Hp1 ltac:(lia) ltac:(lia))).
-- split; [exact Hfd | reflexivity].
+- exact Hfd.
 - exact HAI.
 - intros regs' mem' md' HAR' HP' Hsbm' Ha0' HFW' Hfr' Hpr' HAI'.
 apply (HPOST regs' mem' md' HAR' HP' Hsbm' Ha0').
@@ -417,7 +418,7 @@ apply (tfib_not_owned_static B F_STDERR (F_STDERR + FILE_SZ) a HB); [vm_compute;
 - exact (u64_range (sv_denot E (SOff 41 0))).
 - exact (ro_img_of_IMG E _ HIMG).
 - apply (rodata_hull_zero ly S W mem md); [exact HAR | unfold FMT_refused; lia | unfold FMT_refused; lia | lia].
-- split; [exact Hfd | reflexivity].
+- exact Hfd.
 - exact HAI.
 - intros regs' mem' md' HAR' HP' Hsbm' Ha0' HFW' Hfr' Hpr' HAI'.
 apply (HPOST regs' mem' md' HAR' HP' Hsbm').

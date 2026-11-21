@@ -4,8 +4,8 @@
 (* Modified by Theorem Labs, 2026-10: the walk of sup_chain_clear on plugin-hostd/fuzz_command's ASan+UBSan build
    (fuzz_command.asan-ubsan, entry 0x8c570, 122 instructions to the `ret` at 0x8c754), proving a Theorem Labs lane's
    tsup_chain_clear_spec (lib/B/Prog/sup_chain_clear_c.v). A B re-walk of lib/A/Prog/sup_chain_clear.v and its _s1,
-   _s2 (a working branch abd8a14a6b8): B calls record (A inlines it) and inlines arg_i (A calls it), so the
-   frame, snprintf and release steps follow lib/A/Prog/answer_code.v (a working branch 2ba4488ce71). The B
+   _s2 (a working branch): B calls record (A inlines it) and inlines arg_i (A calls it), so the
+   frame, snprintf and release steps follow lib/A/Prog/answer_code.v (a working branch). The B
    code: a 96-byte frame realigned by `andi sp,sp,-32`; a class-0 side-stack frame from __asan_stack_malloc_0
    (0x8c5d0, the use-after-return flag read through the record's const cell) with its header and shadow; record(18)
    at 0x8c668; snprintf(b, 16, "%d", id) at 0x8c68c into the frame's buffer b = F + 32, in pass 4b's art form
@@ -16,10 +16,11 @@
    (achain_push, scc_chain_call). After the snprintf and answer, whose posts are at a new FP state, the walk goes on
    at that state (scc_st_ok_fx, PASS4-REFIT.md A.5's second way). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/sup_chain_clear.v, with its module paths and module names changed; 100 of its 144 lines of code are new or changed and 1728 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* sup_host_setting's ASan+UBSan walk (plugin-hostd/fuzz_command, fuzz_command.asan-ubsan, entry 0x8b53c = BASE +
    AF_sup_host_setting, 956 bytes, 239 instructions): a Theorem Labs lane's tsup_host_setting_spec (lib/B/Prog/sup_host_setting_c.v
-   on a working branch 92195a003c6, B BASE 2) at Qed, the B re-walk of the ASan walk lib/A/Prog/sup_host_setting.v
-   (a working branch e323bbe76d2).
+   on a working branch, B BASE 2) at Qed, the B re-walk of the ASan walk lib/A/Prog/sup_host_setting.v
+   (a working branch).
 
    The walk is cut at the program points of sup_host_setting_s0.v; each segment file proves the statement of one point
    from the next one's:
@@ -40,22 +41,22 @@
    The report and UBSan edges, each refuted at its branch (the comment line at each branch has the same text):
      0x8b6bc bltu s6,s8  -> unimp 0x8b8c0: refuted by hsb_ub_6bc at sup_host_setting_aux.v:94, from hs_cx's token
                             array premise (hsb5_arr_now)
-     0x8b6c8 beqz a0     -> unimp: refuted by hsb5_seed_H at sup_host_setting_s5.v:175, from hs_regsL1's s2 = 1
-     0x8b6cc beqz s7     -> unimp: refuted by hsb5_seed_H at sup_host_setting_s5.v:175, from hs_regsL1's s7 = 1
-     0x8b6dc bnez a0     -> report load8 0x8b8e8: refuted by shent_ok_of_range at sup_host_setting_s5.v:605, from
+     0x8b6c8 beqz a0     -> unimp: refuted by hsb5_seed_H at sup_host_setting_s5.v:176, from hs_regsL1's s2 = 1
+     0x8b6cc beqz s7     -> unimp: refuted by hsb5_seed_H at sup_host_setting_s5.v:176, from hs_regsL1's s7 = 1
+     0x8b6dc bnez a0     -> report load8 0x8b8e8: refuted by shent_ok_of_range at sup_host_setting_s5.v:606, from
                             range_addressable of &tok[n] (hsb5_arr_now)
-     0x8b718 / 0x8b8c8   -> report store1 0x8b8d0: refuted by shent_ok_of_block at sup_host_setting_s5.v:1137, from
+     0x8b718 / 0x8b8c8   -> report store1 0x8b8d0: refuted by shent_ok_of_block at sup_host_setting_s5.v:1138, from
                             xmalloc's block (w, LIVE_XMALLOC (hs_wsz x)) in hs_mid's Nw
      0x8b774 bltu s5,s7  -> unimp: refuted by hsb_ub_774 at sup_host_setting_aux.v:126, from hs_cx's token array
-                            premise (pass 0: sup_host_setting_s5.v:1169; passes n >= 1: sup_host_setting_s6.v:710)
-     0x8b788 bnez a1     -> report load8 0x8b8ec: refuted by shent_ok_of_range at sup_host_setting_s5.v:1138
-                            (pass 0) and by hsb6_seedS at sup_host_setting_s6.v:469 (passes n >= 1), from
+                            premise (pass 0: sup_host_setting_s5.v:1170; passes n >= 1: sup_host_setting_s6.v:711)
+     0x8b788 bnez a1     -> report load8 0x8b8ec: refuted by shent_ok_of_range at sup_host_setting_s5.v:1139
+                            (pass 0) and by hsb6_seedS at sup_host_setting_s6.v:470 (passes n >= 1), from
                             range_addressable of &tok[n]
-     0x8b754 / 0x8b7ac   -> report store_n 0x8b8f4: refuted by hsb6_seedS at sup_host_setting_s6.v:469, from the word
+     0x8b754 / 0x8b7ac   -> report store_n 0x8b8f4: refuted by hsb6_seedS at sup_host_setting_s6.v:470, from the word
                             list's block, with |join_sp (firstn n toks)| + 2 <= |join_sp toks| + 1 (hsb_join_sep_in)
-     0x8b768 / 0x8b7b8   -> report store_n 0x8b7c4: refuted by hsb6_seedS at sup_host_setting_s6.v:469, from the same
+     0x8b768 / 0x8b7b8   -> report store_n 0x8b7c4: refuted by hsb6_seedS at sup_host_setting_s6.v:470, from the same
      0x8b68c blez s5     -> the ntok <= 0 arm 0x8b7d8 .. (its store1 check 0x8b7f0 -> report 0x8b8e0): refuted by
-                            paj_run_to_sh at sup_host_setting_s4.v:147 (SRr_run_to_pi_AJ, the run of hs_seg_as1, seed fact s5 in
+                            paj_run_to_sh at sup_host_setting_s4.v:148 (SRr_run_to_pi_AJ, the run of hs_seg_as1, seed fact s5 in
                             [1, 64], hs4_ssA), from hs_cx's 1 <= length toks <= 64 (hsb_blez_ntok,
                             sup_host_setting_aux.v:86, states the same branch fact) *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.

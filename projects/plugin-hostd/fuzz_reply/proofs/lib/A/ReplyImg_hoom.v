@@ -1,18 +1,19 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyImg_hoom.v, with its module paths changed; 2 of its 19 lines of code are new or changed and 1 line of the source is left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, row img-hoom-A of a Theorem Labs lane's REPLY-IMG-ROWS.md (sha256 a33a582e3ffd; internal record), for the cf layer at
    plugin-hostd/fuzz_reply).
    rule 24: no function proved (kind: image row; a symbol-table fact at reply's image A, fuzz_reply.asan, pin
    42c58610e125). Reuse search: proof-index HOOM / as_oom_byte / ts_oom (index built 2026-10-30T04:38:19Z) and a
    grep of every working-branch ref for `as_oom_byte B = im_oom`: no discharge at any unit.
 
-   HOOM is the cf layer's unit premise `Hypothesis HOOM : as_oom_byte B = im_oom` (YGcfInstMiss.v:251, commit
-   f7a76d48d021; CF-UNIT-HYPS.md (sha256 77b3f94c95d2; internal record) row 31), taken under the symbol facts `Hypothesis TS : im_syms B`. Reply has not
+   HOOM is the cf layer's unit premise `Hypothesis HOOM : as_oom_byte B = im_oom` (YGcfInstMiss.v:252,;
+   CF-UNIT-HYPS.md (sha256 77b3f94c95d2; internal record) row 31), taken under the symbol facts `Hypothesis TS : im_syms B`. Reply has not
    taken the layer files, so hoom_A states that hypothesis's text VERBATIM at reply's image class instance AImg_reply
-   (A/AGif2reply.v:23, im_oom := TFIB_OOM and im_syms := TfibSyms), with TS as its premise; a consumer closes HOOM with
-   `exact (hoom_A B TS)`. The discharge is cgif's (AGif2cgif.v:26 `im_oom := TFIB_OOM` + YF0m.v:304 `ts_oom`): reply A's
-   TfibSyms field ts_oom (A/AF0m.v:882) with TFIB_OOM = 0x128320 (A/AF0m.v:20). *)
+   (A/AGif2reply.v:24, im_oom := TFIB_OOM and im_syms := TfibSyms), with TS as its premise; a consumer closes HOOM with
+   `exact (hoom_A B TS)`. The discharge is cgif's (AGif2cgif.v:26 `im_oom := TFIB_OOM` + YF0m.v:305 `ts_oom`): reply A's
+   TfibSyms field ts_oom (A/AF0m.v:883) with TFIB_OOM = 0x128320 (A/AF0m.v:21). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -33,6 +34,6 @@ Open Scope Z_scope.
 Lemma hoom_A : forall B, @im_syms AImg_reply B -> as_oom_byte B = @im_oom AImg_reply.
 Proof. intros B TS. exact (ts_oom B TS). Qed.
 
-(* The image class's OOM cell at reply A is the literal 0x128320 (A/AF0m.v:20). *)
+(* The image class's OOM cell at reply A is the literal 0x128320 (A/AF0m.v:21). *)
 Lemma hoom_A_value : @im_oom AImg_reply = 0x128320.
 Proof. reflexivity. Qed.

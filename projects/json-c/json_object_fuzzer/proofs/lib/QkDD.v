@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: the deep-copy sections take it as HBTlo; the calls of PUT, the hash lookup, OBL_STRDUP_NF, IHo and json_object_object_add_ex0_A_cps discharge it (jo_preA's conjunct for the last)). *)
 
 From Stdlib Require ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run Fs.
@@ -49,6 +50,7 @@ Hypothesis PUT : put_stmt_A HIx.
 Variables (ra sp gp : word) (s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32).
 Variables (m0 : word -> option byte) (md0 : config) (LB BS LM : list blk) (FRS : list frame) (B0 : bud) (lo p D w : Z) (r : jroot) (T : TSet).
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis LOS : lo <= bv_unsigned sp - dc_stkA (rdepth r).
 Hypothesis SPA : bv_unsigned sp mod 32 = 0.
 Hypothesis HT : bv_unsigned sp <= hiA_top A4L HIx.
@@ -150,7 +152,7 @@ assert (PC : put_costA so 1 VBS <= bB Bc).
 { unfold put_costA. destruct so; [change (1 =? 1) with true; cbv iota|]; unfold DC_KB in *; lia. }
 evt_done5.
 eapply PUT with (LB := BS ++ CBS ++ REM ++ LB) (LM := LM) (FRS := (Fr, 1) :: FRS) (B := Bc) (lo := lo) (errv := errs) (s := so) (BS := VBS) (p := v1) (rc := 1);
-[ exact HPp | exact PP | reflexivity | rewrite unsigned_lit by lia; exact STi | exact LO | rewrite unsigned_lit by lia; unfold put_stk_A; lia
+[ exact HPp | exact PP | reflexivity | rewrite unsigned_lit by lia; exact STi | exact LO | first [assumption | lia] | rewrite unsigned_lit by lia; unfold put_stk_A; lia
 | rewrite unsigned_lit by lia; clear - SPA; Z.div_mod_to_equations; lia | rewrite unsigned_lit by lia; lia | exact ERRs | reflexivity | reflexivity | exact PC | ].
 intros ms2 md2 A2 (m2 & rr & B2 & RS2 & VM2 & ST2 & HPR2 & ERR2 & BB2 & BD2 & OUT2).
 destruct RS2 as (y0 & y1 & y2 & y3 & y4 & y5 & y6 & y7 & y8 & y9 & y10 & y11 & y12 & y13 & F2 & fc2 & -> & FS2 & FRM2).
@@ -582,7 +584,7 @@ unstash Gi.
 evt_done5.
 eapply HASH with (LB := BS ++ CBS ++ VBS ++ REM ++ LB) (LM := LM) (FRS := (Fr, 1) :: FRS) (B := Bc) (lo := lo) (errv := errs) (kp := oe_k e) (kn := oe_kn e) (ks := oe_ks e);
 [ exact HP | apply HiB; exact INkB | exact CSk | exact Gi
-| rewrite unsigned_lit by lia; exact STi | exact LO | rewrite unsigned_lit by lia; unfold DC_C in HD_le; lia
+| rewrite unsigned_lit by lia; exact STi | exact LO | first [assumption | lia] | rewrite unsigned_lit by lia; unfold DC_C in HD_le; lia
 | rewrite unsigned_lit by lia; clear - SPA; Z.div_mod_to_equations; lia | rewrite unsigned_lit by lia; lia
 | exact ERRs | reflexivity | rewrite unsigned_lit by lia; reflexivity | exact FRM1
 | cbn [length]; clear - FRNo RD0; lia | reflexivity | ].
@@ -705,7 +707,7 @@ eapply OBL_STRDUP_NF with (u := UWpaid) (src := oe_k e) (ab := oe_k e) (nb := oe
 all: rewrite ?unsigned_lit by lia.
 1: exact INkA. 1: lia. 1: lia. 1: exact KB3. 1: exact NNk. 1: lia.
 1: exact ST3.
-1: exact LO. 1: cbn [hl_stack_A A4L]; lia. 1: clear - SPA; Z.div_mod_to_equations; lia. 1: lia.
+1: exact LO. 1: first [assumption | lia]. 1: cbn [hl_stack_A A4L]; lia. 1: clear - SPA; Z.div_mod_to_equations; lia. 1: lia.
 1: exact ERRs3. 1: reflexivity. 1: reflexivity. 1: exact I. 1: exact I. 1: exact BBs. 1: cbn [uw_cost]; lia.
 intros ms4 m4 md4 A4 r2 e4 RS4 VM4 ST4 HPR4 ERR4 Hr2 NEWK HP4. open_ret RS4.
 rewrite ?(unsigned_lit (bv_unsigned sp + -192)) in ST4, HPR4 by lia.
@@ -1101,7 +1103,7 @@ assert (USP : bv_unsigned (wz (bv_unsigned sp + -192)) = bv_unsigned sp + -192) 
 evt_done5.
 eapply PUT' with (s := Some sj) (BS := bsj) (p := le_v e') (rc := 1) (LB := (tblq, 40 * sizeq) :: RESTp) (lo := lo) (errv := errs3);
 a4l_goal; rewrite ?USP;
-first [ exact HPp | exact ST3 | exact ERRs3 | exact PC | exact LO | reflexivity
+first [ exact HPp | exact ST3 | exact ERRs3 | exact PC | exact LO | first [assumption | lia] | reflexivity
 | solve [cbn [QPZI.Mq4.put_pre]; split; [exact Hvo | split; [lia | exact JoC]]]
 | solve [clear - SPA; Z.div_mod_to_equations; lia] | solve [unfold put_stk_A; clear - LOSu RD0; lia] | solve [clear - HT; lia] | idtac ].
 clear PUT'.
@@ -1245,7 +1247,7 @@ eapply (IHo sk KIN) with (A := A) (LB := LBk) (BS := bs) (LM := LM) (FRS := (Fr,
 | exists Fr, 1; split; [left; reflexivity | rewrite fr_size_1; lia]
 | exact UNP | clear - D6; Z.div_mod_to_equations; lia
 | rewrite unsigned_lit by lia; exact STi | exact LO
-| rewrite unsigned_lit by lia; unfold dc_stkA, DC_F, DC_C; cbn [rdepth]; lia
+| first [assumption | lia] | rewrite unsigned_lit by lia; unfold dc_stkA, DC_F, DC_C; cbn [rdepth]; lia
 | rewrite unsigned_lit by lia; clear - SPA; Z.div_mod_to_equations; lia
 | rewrite unsigned_lit by lia; lia
 | exact ERRs | reflexivity | rewrite unsigned_lit by lia; reflexivity | exact FRM1
@@ -1471,6 +1473,7 @@ Hypothesis PUT : put_stmt_A HIx.
 Variables (ra sp gp : word) (s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32).
 Variables (m0 : word -> option byte) (md0 : config) (LB BS LM : list blk) (FRS : list frame) (B0 : bud) (lo p D w : Z) (r : jroot) (T : TSet).
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis LOS : lo <= bv_unsigned sp - dc_stkA (rdepth r).
 Hypothesis SPA : bv_unsigned sp mod 32 = 0.
 Hypothesis HT : bv_unsigned sp <= hiA_top A4L HIx.
@@ -1569,7 +1572,7 @@ assert (PC : put_costA so 1 VBS <= bB Bc).
 { unfold put_costA. destruct so; [change (1 =? 1) with true; cbv iota|]; unfold DC_KB in *; lia. }
 evt_done5.
 eapply PUT with (LB := BS ++ CBS ++ REM ++ LB) (LM := LM) (FRS := (Fr, 1) :: FRS) (B := Bc) (lo := lo) (errv := errs) (s := so) (BS := VBS) (p := v1) (rc := 1);
-[ exact HPp | exact PP | reflexivity | rewrite unsigned_lit by lia; exact STi | exact LO | rewrite unsigned_lit by lia; unfold put_stk_A; lia
+[ exact HPp | exact PP | reflexivity | rewrite unsigned_lit by lia; exact STi | exact LO | first [assumption | lia] | rewrite unsigned_lit by lia; unfold put_stk_A; lia
 | rewrite unsigned_lit by lia; clear - SPA; Z.div_mod_to_equations; lia | rewrite unsigned_lit by lia; lia | exact ERRs | reflexivity | reflexivity | exact PC | ].
 intros ms2 md2 A2 (m2 & rr & B2 & RS2 & VM2 & ST2 & HPR2 & ERR2 & BB2 & BD2 & OUT2).
 destruct RS2 as (y0 & y1 & y2 & y3 & y4 & y5 & y6 & y7 & y8 & y9 & y10 & y11 & y12 & y13 & F2 & fc2 & -> & FS2 & FRM2).
@@ -2006,7 +2009,7 @@ with (OBS := CBS) (VBS := VBS) (LB := BS ++ REM ++ LB) (LM := LM) (FRS := (Fr, 1
 (k := oe_k e) (kn := oe_kn e) (ks := oe_ks e) (kids := kids') (vs := vs) (errv := errs);
 [ unfold jo_preA; rewrite ?unsigned_lit by lia;
 split; [eapply (heapA_perm A4L HIx); [exact HP | perm | apply Permutation_refl | apply Permutation_refl] |];
-split; [exact STi|]; split; [exact LO|]; split; [unfold DC_C in HD_le; lia|]; split; [clear - SPA; Z.div_mod_to_equations; lia|]; split; [lia|];
+split; [exact STi|]; split; [exact LO|]; split; [first [assumption | lia]|]; split; [unfold DC_C in HD_le; lia|]; split; [clear - SPA; Z.div_mod_to_equations; lia|]; split; [lia|];
 split; [exact ERRs|]; split; reflexivity
 | exact Gi | exact JQ | exact JOB | apply in_or_app; left; exact INkB | exact CSk | exact KNk | exact FRM1
 | cbn [length]; clear - FRNo RD0; lia
@@ -2178,7 +2181,7 @@ eapply (IHo sk KIN) with (A := A) (LB := LBk) (BS := bs) (LM := LM) (FRS := (Fr,
 | exists Fr, 1; split; [left; reflexivity | rewrite fr_size_1; lia]
 | exact UNP | clear - D6; Z.div_mod_to_equations; lia
 | rewrite unsigned_lit by lia; exact STi | exact LO
-| rewrite unsigned_lit by lia; unfold dc_stkA, DC_F, DC_C; cbn [rdepth]; lia
+| first [assumption | lia] | rewrite unsigned_lit by lia; unfold dc_stkA, DC_F, DC_C; cbn [rdepth]; lia
 | rewrite unsigned_lit by lia; clear - SPA; Z.div_mod_to_equations; lia
 | rewrite unsigned_lit by lia; lia
 | exact ERRs | reflexivity | rewrite unsigned_lit by lia; reflexivity | exact FRM1

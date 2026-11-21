@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -65,7 +66,7 @@ Lemma od_exit_core : forall (Σ : rts RT) (K : config -> Prop) (usp S1 F lo IMPL
     (ra t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s8 s9 s11 t3 t4 t5 t6 : word) FR fc (m : mem)
     (j0 j80 j144 j176 j256 j432 h0 pre8 mid rest : list byte),
   S1 mod 32 = 0 -> usp - 560 <= S1 <= usp - 544 -> usp mod 16 = 0 -> usp + 16 <= USTACK_TOP ->
-  rt_sp0 RT Σ - STACK_WIN <= lo -> lo + OD_NEED <= S1 -> frm0 fc ->
+  rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + OD_NEED <= S1 -> frm0 fc ->
   ART RT Σ m -> mem_inv bsegs m -> stk bsegs m lo S1 ->
   rt_frames RT Σ = [(F, 3%nat)] ->
   rt_live RT Σ = (IA, 1024) :: (OC, 8192) :: (IDX, NIDX) :: (IMPL, 96) :: (SB, CAP) :: (COPY, NCOPY) :: vblockA A cap size ++ L0 ->
@@ -229,7 +230,7 @@ Proof using AF FDO MST RTF DELA DTOR VDES AFV.
   clear AG3 PR3 ACS3 ACF3 ACH3 ACV3 ACI3 ART2 MI2 WM2.
 
   assert (INF3 : In (F, 3%nat) (rt_frames RT Σ3)) by (rewrite FRS3; exact INF).
-  assert (LOW3 : rt_sp0 RT Σ3 - STACK_WIN <= lo) by (rewrite SP3; exact LOW).
+  assert (LOW3 : rt_sp0 RT Σ3 - STACK_SPAN <= lo) by (rewrite SP3; exact LOW).
   assert (FP3 : fp_ok RT Σ3 lo [(F + 144, F + 152)]).
   { apply Forall_cons; [| apply Forall_nil]. cbn [fst snd]. right; right; left. exists F, 3%nat. split; [exact INF3|].
     change (fs_size 3) with 512. clear. lia. }
@@ -284,7 +285,7 @@ Proof using AF FDO MST RTF DELA DTOR VDES AFV.
   clear AG5 PR5 ACS5 ACF5 ACH5 ACV5 ACI5 ART4 MI4 WM4.
 
   assert (INF5 : In (F, 3%nat) (rt_frames RT Σ5)) by (rewrite FRS5; exact INF).
-  assert (LOW5 : rt_sp0 RT Σ5 - STACK_WIN <= lo) by (rewrite SP5; exact LOW3).
+  assert (LOW5 : rt_sp0 RT Σ5 - STACK_SPAN <= lo) by (rewrite SP5; exact LOW3).
   assert (FP5 : fp_ok RT Σ5 lo [(F + 104, F + 112)]).
   { apply Forall_cons; [| apply Forall_nil]. cbn [fst snd]. right; right; left. exists F, 3%nat. split; [exact INF5|].
     change (fs_size 3) with 512. clear. lia. }

@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/glaze/binary_reflection/lib/BvWfKernel.v, with only its comments or blank lines changed. *)
 (* [comment removed for export] *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_boxreg/lib/A/Bz/BvWfKernel.v at origin/ossv/recipes f26f9fbd8777; module paths changed; no numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_boxreg/lib/A/Bz/BvWfKernel.v; module paths changed; no numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From stdpp Require Import bitvector.definitions.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Ltac bvk_ground_pos p :=

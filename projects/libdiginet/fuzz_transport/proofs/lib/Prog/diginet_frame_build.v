@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/mbedtls/fuzz_pkcs7/lib/Lib/Asn1Aux.v; 533 of its 587 lines of code are new or changed and 395 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/Prog/diginet_frame_build.v at 9bd29914ffdef650a37285056a472ff186b4331a to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/Prog/diginet_frame_build.v to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Walk of diginet_frame_build (src/diginet_frame.c:93-127 at 835f336c) in fuzz_transport.plain,
    0x178d8..0x17ad8, against diginet_frame_build_c.v. The exits -4, -10 and -5 restore the frame
    and leave the buffer as it was. On the frame length the walk splits the buffer into the two

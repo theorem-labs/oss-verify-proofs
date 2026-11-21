@@ -8,9 +8,10 @@
    realloc 0x535b0; libunwind's FDE cache (the runtime's own error path) excluded. No --fp list is given, so each
    trace is [ipc; the call site's return address]; a walk that needs a deeper trace fails loudly against it.
    The donor's cgif traces are gone: fuzz_state has none of cgif's functions. This file is REPLACED by a Theorem Labs lane's
-   shared st_nev trace allowance (C5, a working branch af454d3e557) when its A/ consumer hunks land; then ACej
+   shared st_nev trace allowance (C5, a working branch) when its A/ consumer hunks land; then ACej
    holds only the driver's traces. The generic lemmas (listZ_eqb .. Tfib_universe_ok) are the donor's text. *)
 (* Modified by Theorem Labs, 2026-10: with a Theorem Labs lane's C5 trace allowance (traces outside the universe charged to st_nev) the universe is the driver's traces, AF0m.v DRV_TRACES (main and target_run, and the frame-0 fallbacks [0x53314] and [0x531b4] that api_env asks for), plus fuzz_realloc's two realloc traces [0x535b0] and [0x535b0; 0x82b34], which stay because FS_AREALLOC_A (FSH_ReallocModel.v) still takes In (call_trace ..) U until realloc's contract takes the C5 form; the per-function CTX_* / TRACES_* lists and their _U lemmas are gone. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require Import YG00 YG01.
 Import ListNotations.

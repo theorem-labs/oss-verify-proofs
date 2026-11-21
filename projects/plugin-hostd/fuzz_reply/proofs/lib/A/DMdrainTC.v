@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainTC.v (commit 9259077395a9, Quarantine::Drain walk set; file sha256 dda2e1e2be97) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-(* Theorem Labs, 2026-10-30 (lane B1, WalkB1): DMiface.dmem_q IN FULL (DMiface.v:118-127) at the transferred
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainTC.v (Quarantine::Drain walk set; file sha256 dda2e1e2be97) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10-30 (lane B1, WalkB1): DMiface.dmem_q IN FULL (DMiface.v:119-128) at the transferred
    state, assembling the four clauses: the frame (DMdrainT2.dmem_frame), the cells (DMdrainTB.cut_cells), the
    presence kept off the quarantine's header, and the two bytes after the mutex word.  This is the whole machine
    side of the drain's cut; with DMiface.di_requar_x it gives ARX at the transferred state, and with
@@ -72,7 +73,7 @@ Hypothesis BADDR : forall b, In b (all_batches X) ->
 Hypothesis Hglast : forall lastb initr, rev G = lastb :: initr ->
   AFgj.GLv ly (st_qglobal X) = ly_space ly + b_self lastb /\ In lastb (all_batches X).
 (* presence on the quarantine's header is NOT needed: dmem_q's presence clause is stated for 0 <= a < 2^64 only, so
-   it never asks for a header word (DMiface.v:122-126) *)
+   it never asks for a header word (DMiface.v:123-127) *)
 
 (* decidable tests for the two windows *)
 Definition qhdrb (a : Z) : bool :=

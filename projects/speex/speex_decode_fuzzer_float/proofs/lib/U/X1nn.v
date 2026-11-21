@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the __init_libc walk over the launch's auxv: 26 or 28 pairs by CONFIG_RSEQ, the keys 38 and above skipped). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
@@ -131,10 +132,17 @@ do 2 lstep. release_frame FR ST (bv_unsigned sp). lstep.
 unfold rinit_ssp_post, rtd_cells. sys_finish.
 Qed.
 
-Definition rauxv20 (U HW rnd : word) : list word :=
-[Z_to_bv 64 3; Z_to_bv 64 0x10040; Z_to_bv 64 4; Z_to_bv 64 56; Z_to_bv 64 5; Z_to_bv 64 10;
-Z_to_bv 64 16; HW; Z_to_bv 64 6; Z_to_bv 64 4096; Z_to_bv 64 11; U; Z_to_bv 64 12; U; Z_to_bv 64 23; z64;
-Z_to_bv 64 25; rnd; z64; z64].
+(* LPS 727298f3: the launch's auxv ([StackLayout.auxv_entries]) as words: 26 pairs, then the two
+   CONFIG_RSEQ pairs when [r], then AT_NULL.  The UBSan image's AT_PHDR/PHENT/PHNUM are 0x10040, 56, 10. *)
+Definition rauxv (r : bool) (EH K0 K1 K2 K3 K4 K5 K6 K7 MSS HW ENT U G rnd XFN : word) : list word :=
+[Z_to_bv 64 33; EH; Z_to_bv 64 40; K0; Z_to_bv 64 41; K1; Z_to_bv 64 42; K2; Z_to_bv 64 43; K3;
+Z_to_bv 64 44; K4; Z_to_bv 64 45; K5; Z_to_bv 64 46; K6; Z_to_bv 64 47; K7; Z_to_bv 64 51; MSS;
+Z_to_bv 64 16; HW; Z_to_bv 64 6; Z_to_bv 64 4096; Z_to_bv 64 17; Z_to_bv 64 100;
+Z_to_bv 64 3; Z_to_bv 64 0x10040; Z_to_bv 64 4; Z_to_bv 64 56; Z_to_bv 64 5; Z_to_bv 64 10;
+Z_to_bv 64 7; z64; Z_to_bv 64 8; z64; Z_to_bv 64 9; ENT;
+Z_to_bv 64 11; U; Z_to_bv 64 12; U; Z_to_bv 64 13; G; Z_to_bv 64 14; G; Z_to_bv 64 23; z64;
+Z_to_bv 64 25; rnd; Z_to_bv 64 31; XFN]
+++ (if r then [Z_to_bv 64 27; Z_to_bv 64 28; Z_to_bv 64 28; Z_to_bv 64 32] else []) ++ [z64; z64].
 
 Notation RENVIRON := 0x4d380%Z (only parsing).
 Notation RPROGNAME := 0x6d6c8%Z (only parsing).
@@ -208,10 +216,12 @@ Section RInitLibc.
 Variables (ra sp gp t0 t1 t2 s0 s1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
 (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (lo : Z)
 (E : Z) (eps : list word) (U HW : word) (R : Z) (cw : word) (P : Z) (s : list byte)
+(r : bool) (EH ca0 ca1 ca2 ca3 ca4 ca5 ca6 ca7 MSS ENT G XFN : word)
 (pn0 pnf0 hw0 env0 : word) (gjunk : list byte).
 Notation W := [(bv_unsigned sp - 448, bv_unsigned sp); (RENVIRON, 0x4d388); (0x4d388, 0x4d4d8); (0x6d460, 0x6d490);
 (RGUARD, 0x6d6c0); (RPROGNAME, 0x6d6d8); (RLIBC, 0x6d748)]%Z.
 Notation AUXV := (E + 8 * (Z.of_nat (length eps) + 1))%Z.
+Notation AW := (rauxv r EH ca0 ca1 ca2 ca3 ca4 ca5 ca6 ca7 MSS HW ENT U G (Z_to_bv 64 R) XFN).
 
 Definition rinit_libc_post : Z -> machine_state -> Prop :=
 fun t ms' => exists t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' pg m',
@@ -233,7 +243,7 @@ F (ret_pc ra) fc None m' (seg_rom rsegs)
 /\ rw_cells rsegs m' RGOT3 [C8 (Z_to_bv 64 RENVIRON); C8 (Z_to_bv 64 0x6d6d0); C8 (Z_to_bv 64 RPROGNAME)]
 /\ rw_cells rsegs m' RGOT_SSP [C8 (Z_to_bv 64 RGUARD)]
 /\ rw_cells rsegs m' RGOT_DYNAMIC [C8 z64]
-/\ bytes_at rsegs m' E (u64s eps ++ le8 z64 ++ u64s (rauxv20 U HW (Z_to_bv 64 R)))
+/\ bytes_at rsegs m' E (u64s eps ++ le8 z64 ++ u64s AW)
 /\ bytes_at rsegs m' P (s ++ [Z_to_bv 8 0])
 /\ bytes_at rsegs m' R (le8 cw)
 /\ (0 < t < 4194304)%Z.
@@ -301,9 +311,13 @@ replace (Z_to_bv 64 (c + (bv_unsigned spv + -336))) with (Z_to_bv 64 (bv_unsigne
 end);
 lstep; lstep; ldaux AUXB ki; lstep; astep.
 
+
+(* a key above 37 (AT_L1I_CACHESIZE .. AT_MINSIGSTKSZ): [bltu] skips the store *)
+Ltac rskip_it AUXB ki := lstep; if_true; ldaux AUXB ki; lstep; astep.
+
 #[using="EPS NONUL LO LOLO SPE SPP SPR"] Lemma rinit_libc_spec : forall tp a0 a1,
 stk rsegs m lo (bv_unsigned sp) ->
-bytes_at rsegs m E (u64s eps ++ le8 z64 ++ u64s (rauxv20 U HW (Z_to_bv 64 R))) ->
+bytes_at rsegs m E (u64s eps ++ le8 z64 ++ u64s AW) ->
 bytes_at rsegs m P (s ++ [Z_to_bv 8 0]) ->
 bytes_at rsegs m R (le8 cw) ->
 rw_cells rsegs m RPROGNAME [C8 pn0; C8 pnf0] ->
@@ -328,7 +342,8 @@ intros tp a0 a1 ST ENV STR RND G2 HWC ENVC SI LC TDC MT DS GU GOT3 GG GD MI -> -
 unfold td_cells, libc_cells in *.
 pose proof (munch_refl W m) as MU. pose proof (wmono_refl rsegs m) as WM.
 pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn in RSP.
-pose proof (bytes_at_bound _ _ _ _ ENV) as EB. rewrite !app_length, !u64s_length, length_le8 in EB. cbn [length rauxv20] in EB.
+pose proof (bytes_at_bound _ _ _ _ ENV) as EB. rewrite !app_length, !u64s_length, length_le8 in EB.
+assert (LAW : (length AW <= 58)%nat) by (destruct r; unfold rauxv; cbn [length app]; lia).
 pose proof (bytes_at_bound _ _ _ _ STR) as PB. rewrite app_length in PB. cbn [length] in PB.
 pose proof (bytes_at_bound _ _ _ _ RND) as RB. rewrite length_le8 in RB.
 iprefix.
@@ -355,27 +370,35 @@ apply bytes_at_app in AUXB. destruct AUXB as [_ AUXB]. rewrite u64s_length, leng
 replace (E + Z.of_nat (8 * length eps) + Z.of_nat 8)%Z with AUXV in AUXB by lia.
 ldaux AUXB 0%nat. lstep. if_false. lstep. lstep. lstep. lstep.
 
-rscan_it AUXB 1%nat 2%nat. rscan_it AUXB 3%nat 4%nat. rscan_it AUXB 5%nat 6%nat. rscan_it AUXB 7%nat 8%nat.
-rscan_it AUXB 9%nat 10%nat. rscan_it AUXB 11%nat 12%nat. rscan_it AUXB 13%nat 14%nat. rscan_it AUXB 15%nat 16%nat.
-rscan_it AUXB 17%nat 18%nat.
+rscan_it AUXB 1%nat 2%nat.
+rskip_it AUXB 4%nat. rskip_it AUXB 6%nat. rskip_it AUXB 8%nat. rskip_it AUXB 10%nat. rskip_it AUXB 12%nat.
+rskip_it AUXB 14%nat. rskip_it AUXB 16%nat. rskip_it AUXB 18%nat. rskip_it AUXB 20%nat.
+rscan_it AUXB 21%nat 22%nat. rscan_it AUXB 23%nat 24%nat. rscan_it AUXB 25%nat 26%nat. rscan_it AUXB 27%nat 28%nat.
+rscan_it AUXB 29%nat 30%nat. rscan_it AUXB 31%nat 32%nat. rscan_it AUXB 33%nat 34%nat. rscan_it AUXB 35%nat 36%nat.
+rscan_it AUXB 37%nat 38%nat. rscan_it AUXB 39%nat 40%nat. rscan_it AUXB 41%nat 42%nat. rscan_it AUXB 43%nat 44%nat.
+rscan_it AUXB 45%nat 46%nat. rscan_it AUXB 47%nat 48%nat. rscan_it AUXB 49%nat 50%nat.
+(* the key after AT_EXECFN: AT_RSEQ_FEATURE_SIZE when CONFIG_RSEQ, else AT_NULL; [Er] keeps the flag's
+   value for the post, whose [AW] names the section's [r] *)
+destruct r eqn:Er; [try rewrite Er in *; rscan_it AUXB 51%nat 52%nat; rscan_it AUXB 53%nat 54%nat; rscan_it AUXB 55%nat 56%nat
+| try rewrite Er in *; rscan_it AUXB 51%nat 52%nat].
 
-steps_to 0x30e70%Z.
-astep. if_cases K; zify_cond K; [|exfalso; lia]. clear K.
-astep. if_cases K; zify_cond K; [|exfalso; lia]. clear K.
+all: steps_to 0x30e70%Z.
+all: astep; if_cases K; zify_cond K; [|exfalso; lia]; clear K.
+all: astep; if_cases K; zify_cond K; [|exfalso; lia]; clear K.
 
-steps_to 0x30eb0%Z.
-lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) =>
+all: steps_to 0x30eb0%Z.
+all: lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) =>
 call (rpn_loop (length s) 1 mm mm); [lia | lia | apply munch_refl | apply wmono_refl | exact MI | exact STR | exact G2 | ] end.
-rename POST into G2. try rename MI0 into MI.
+all: rename POST into G2. all: try rename MI0 into MI.
 
-apply (proj1 (rw_cells_app _ _ _ [_;_;_] _)) in AUX. destruct AUX as [AUXa AUX].
-apply (proj1 (rw_cells_app _ _ _ [_;_;_] _)) in AUX. destruct AUX as [AUX3 AUXb].
-cbn [cells_size csize Nat.add] in AUX3, AUXb. change (Z.of_nat 24) with 24%Z in *.
-replace (bv_unsigned sp + -336 + 24)%Z with (bv_unsigned sp + -312)%Z in AUX3 by lia.
-replace (bv_unsigned sp + -336 + 24 + 24)%Z with (bv_unsigned sp + -288)%Z in AUXb by lia.
-lstep. lstep.
-name_sp sp (-384)%Z. name_sp sp (-336)%Z.
-icallk (rinit_tls_spec _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+all: apply (proj1 (rw_cells_app _ _ _ [_;_;_] _)) in AUX. all: destruct AUX as [AUXa AUX].
+all: apply (proj1 (rw_cells_app _ _ _ [_;_;_] _)) in AUX. all: destruct AUX as [AUX3 AUXb].
+all: cbn [cells_size csize Nat.add] in AUX3, AUXb. all: change (Z.of_nat 24) with 24%Z in *.
+all: replace (bv_unsigned sp + -336 + 24)%Z with (bv_unsigned sp + -312)%Z in AUX3 by lia.
+all: replace (bv_unsigned sp + -336 + 24 + 24)%Z with (bv_unsigned sp + -288)%Z in AUXb by lia.
+all: lstep. all: lstep.
+all: name_sp sp (-384)%Z. all: name_sp sp (-336)%Z.
+all: icallk (rinit_tls_spec _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 lo z64 (Z_to_bv 64 4096) (Z_to_bv 64 AUXV)).
 all: lazymatch goal with
 | |- forall _, _ => ipost rsegs; unname_sp; unname_sp
@@ -384,23 +407,24 @@ first [ hyp_by_addr | reflexivity | lia
 | lazymatch goal with |- rw_cells _ _ (?b + -336 + 24)%Z _ =>
 replace (b + -336 + 24)%Z with (b + -312)%Z by lia; hyp_by_addr end ]
 end.
-rename PC into ST. unfold td_cells, libc_cells in *.
+all: rename PC into ST. all: unfold td_cells, libc_cells in *.
 
-lstep. lstep.
-call_sp (rinit_ssp_spec _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ lo R cw).
+all: lstep. all: lstep.
+all: call_sp (rinit_ssp_spec _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ lo R cw).
 all: lazymatch goal with
 | |- evt _ _ _ => idtac
 | |- ?g => first [ hyp_by_addr | reflexivity | lia ]
 end.
-match goal with H : stk _ _ _ _ |- _ => rename H into ST end.
+all: match goal with H : stk _ _ _ _ |- _ => rename H into ST end.
 
-do 3 lstep. if_false. lstep. lstep. lstep. if_false. lstep. lstep. if_true.
-do 5 lstep.
-join2 FRlo AUXa. join2 FRlo AUX3. join2 FRlo AUXb. join2 FRlo FRhi.
-release_frame FRlo ST (bv_unsigned sp).
-lstep.
-unfold rinit_libc_post, td_cells, rtd_cells, libc_cells in *. sys_finish; try lia.
-all: hyp_by_addr.
+(* AT_UID = AT_EUID, AT_GID = AT_EGID, AT_SECURE = 0 *)
+all: do 3 lstep. all: if_false. all: lstep. all: lstep. all: lstep. all: if_false. all: lstep. all: lstep. all: if_true.
+all: do 5 lstep.
+all: join2 FRlo AUXa. all: join2 FRlo AUX3. all: join2 FRlo AUXb. all: join2 FRlo FRhi.
+all: release_frame FRlo ST (bv_unsigned sp).
+all: lstep.
+all: unfold rinit_libc_post, td_cells, rtd_cells, libc_cells in *. all: sys_finish; try lia.
+all: first [ hyp_by_addr | rewrite Er; hyp_by_addr ].
 Qed.
 End RInitLibc.
 

@@ -1,21 +1,22 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset's arguments of the shared snprintf top (Reusable/FMsnprintfSharedCf.v
    sh_asnprintf_realizes_cf) at image A, for AsanAPI_cf's aa_snprintf_cf (CfApiPreset.v pa_snprintf_cf).
    PER-UNIT file, not in the shared set. Statements only; nothing is proved here.
    - FF_preset: the format family. put_string (src/preset_file.c:484-512) is the one caller of __wrap_snprintf in the
      target's code; the two formats that reach it in both images are "\\%c" and "\\u%04x" (the "\\n" / "\\t" / "\\r"
      cases compile to a 3-byte copy), so the pieces are literals, %c and %04x. The family is port-fm's FF_fm
-     (cold/port-fm-rtprintf-param 7e395de08f5, lib/A/FMsnprintfFmI.v:28-33) over these pieces: the format lies in the
+     (lib/A/FMsnprintfFmI.v:28-33) over these pieces: the format lies in the
      image from cf_img_lo up to the stack-protector GOT cell (GXA reads it as image data below that cell,
      FMgxaSeamDef.v:29-31 there) and is nonempty. FF_fm's pf_args_slack / pf_args_amem are left out: with no %s or
      %.*s piece every argument is an AInt, and both constrain only APtr arguments.
    - snp_K_A: the window, image A's cf_snprintf_glue (the four frames from the wrapper's entry down to musl
      vfprintf's entry) plus GXA's musl vfprintf depth SNP_VF_DEPTH (VF_DEPTH = VFA_DEPTH 368 + PC_DEPTH 5184:
-     lib/CJ/RL/GXA/G_printf_core_common.v:142 and G_vfprintf_snf.v:55 in fuzz_manifest's tree at 7e395de08f5;
+     lib/CJ/RL/GXA/G_printf_core_common.v:142 and G_vfprintf_snf.v:55 in fuzz_manifest's tree;
      port-fm's GXA_VF_DEPTH, FMsnprintfFm.v:30-32 there). Image A's musl vfprintf frame is 368.
    - snp_cr: the read-only ranges, every non-writable segment of segs (port-fm's fm_cr expression,
-     FMsnprintfCr.v:22-23 at 7e395de08f5).
+     FMsnprintfCr.v:22-23).
    The canary cells and the image range are CfImg_A's generated fields cf_got_stack_chk_guard, cf_stack_chk_guard,
    cf_img_lo and cf_img_top. No address. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.

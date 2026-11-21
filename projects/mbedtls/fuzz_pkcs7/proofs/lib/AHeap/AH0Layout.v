@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (L0_wf's alignment fact for the heap's stack floor, now sp0 - 6144512). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -179,8 +180,9 @@ Section Layout.
     { replace (32768 * uv p v_s1 + 4096 * uv p v_tpg) with ((8 * uv p v_s1 + uv p v_tpg) * 4096) by lia. apply Z_mod_mult. }
     assert (AL16a : (32768 * uv p v_s1 + 16 * uv p v_s2 - 48) mod 16 = 0).
     { replace (32768 * uv p v_s1 + 16 * uv p v_s2 - 48) with ((2048 * uv p v_s1 + uv p v_s2 - 3) * 16) by lia. apply Z_mod_mult. }
-    assert (AL16b : (32768 * uv p v_s1 + 16 * uv p v_s2 - 2 ^ 23) mod 16 = 0).
-    { replace (32768 * uv p v_s1 + 16 * uv p v_s2 - 2 ^ 23) with ((2048 * uv p v_s1 + uv p v_s2 - 2 ^ 19) * 16) by lia. apply Z_mod_mult. }
+    (* LPS 727298f3: the stack floor is sp0 - 6144512 (= sp0 - 16 * 384032) *)
+    assert (AL16b : (32768 * uv p v_s1 + 16 * uv p v_s2 - 6144512) mod 16 = 0).
+    { replace (32768 * uv p v_s1 + 16 * uv p v_s2 - 6144512) with ((2048 * uv p v_s1 + uv p v_s2 - 384032) * 16) by lia. apply Z_mod_mult. }
     repeat match goal with |- _ /\ _ => split end;
       first [ assumption
             | exact GS

@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_rd_pre_cuts.v (a working branch e2e59892bef),
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_rd_pre_cuts.v (a working branch),
    re-walked for B's registers (A s1 rp -> B s0, A s0 shadow base -> B s11, A s8 text -> B s6, A s6 uri_len -> B s1). *)
 (* lv2_locate_manifest_readings, entry segment PRE: the segment's internal cuts and what the pieces share.
    PRE runs 0x81e94 .. {RD_R, RD_L} (B-readings.lst lines 1-69); its pieces (one file each):

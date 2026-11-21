@@ -15,8 +15,8 @@ the same inputs.
 
 ## Command (run once, 2026-10-31T08:04:40Z to 08:11:02Z)
 
-    REL=REL_E0E9 DON=<fuzz_grant lib 25e3d17bdb50, normalised> PG=<fuzz_grant images> P=<fuzz_transport images> EV=EV
-    SYMS=<fuzz_grant.asan.syms.txt b46268790c46> LIB=LIB GRANTB=<recipes 4f87de75d67 lib/B> sh run.sh WORK_E0E9
+    REL=REL_E0E9 DON=<fuzz_grant lib, normalised> PG=<fuzz_grant images> P=<fuzz_transport images> EV=EV
+    SYMS=<fuzz_grant.asan.syms.txt b46268790c46> LIB=LIB GRANTB=<recipes lib/B> sh run.sh WORK_E0E9
 
 - run.sh is the run of record's own (14 `--patch` files), not edited; only REL and the run directory differ. REL_E0E9 is
   the release directory tools/pg-reloc/e0e94a04094b (port_core.py, sha256 e0e94a04094b1f52...; internal record);

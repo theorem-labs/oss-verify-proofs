@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/Prog/diginet_body_check_w.v at b8f2ecf2c3ff0406d93584348ebba6e5957c14ce to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/Prog/diginet_body_check_w.v to fuzz_transport's images *)
 (* Walk of diginet_body_check in fuzz_transport.plain against diginet_body_check_contract_w.
    For body <> 0 the walk is diginet_body_check_holds. For body = 0 the body is empty, and the
    entry state with a0 = 0 is the entry state of diginet_body_check_contract with body = 2^64

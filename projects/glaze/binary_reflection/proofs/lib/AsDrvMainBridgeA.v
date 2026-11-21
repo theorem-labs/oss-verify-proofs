@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput, the strings above the AT_RANDOM block and their shadow from the invariant's co_zero, the launch's stack window depth under sp, the image size from valid_launch's E2BIG bound, this run's per-flag hand-off state). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -39,62 +40,240 @@ Proof.
 Qed.
 
 Section Argv.
-Variables (ph : PhdrInfo) (sp : word) (rdraw : EntryDraw) (brk0 : word) (argv envp : list (list byte)) (uid hw : word).
+(* Moved onto [inp] with AsSInit.Init (AsSInit.v:50-120).  [apc] and [mbase]
+   are new because the image and [wrap_mem] take them; [argv envp uid hw]
+   are projections now; [AsSInit.inp], the function that built a ProcInput,
+   no longer exists. *)
+Variables (ph : PhdrInfo) (apc : N) (sp : word) (rdraw : EntryDraw) (brk0 mbase : word) (inp : ProcInput).
+Local Notation argv   := (in_argv inp) (only parsing).
+Local Notation envp   := (in_envp inp) (only parsing).
+Local Notation uid    := (in_uid inp) (only parsing).
+Local Notation hw     := (in_hwcap inp) (only parsing).
+Local Notation execfn := (in_execfn inp) (only parsing).
+Local Notation rseq   := (kb_rseq (in_kernel inp)) (only parsing).
+Local Notation top    := (ed_top rdraw) (only parsing).
+Local Notation entryw := (Z_to_bv 64 (Z.of_N apc)) (only parsing).
 Hypothesis Hsp : valid_sp sp.
-Hypothesis Hva : valid_argv argv.
-Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hva : valid_argv (in_argv inp).
+Hypothesis Hve : valid_envp (in_envp inp).
+Hypothesis Hfit : entry_stack_fits sp (in_argv inp) (in_envp inp).
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) inp.
 
-Definition lenb : Z := Z.of_nat (length (build_stack_bytes ph sp argv envp uid hw rdraw)).
-Definition STRv (k : nat) : Z := u sp + 8 * Z.of_nat (length argv) + 8 * Z.of_nat (length envp) + 184 + Z.of_nat (total_arg_bytes_nat (firstn k argv)).
-Definition XAv : Z := u sp + lenb - 16.
+(* Old beside new:
+     lenb : length (build_stack_bytes ph sp argv envp uid hw rdraw)
+          -> length (entry_stack_image inp mbase ph entryw sp rdraw)
+     STRv k : u sp + 8*argc + 8*envc + <the old constant>
+                   + total_arg_bytes_nat (firstn k argv)
+            -> u sp + cat_string_off rseq sp top argv envp execfn
+                   + total_arg_bytes_nat (firstn k argv)
+   The k-th argv string's address is the string base plus the bytes of the
+   strings before it (Common/CatExec.v:597, cat_argv_ptr_offset), and the
+   base is the model's own cat_string_off (Common/CatExec.v:578).  The old
+   base was 24 + the fixed 160-byte auxv above the pointer arrays, which is
+   the form an earlier round refuted. *)
+Definition lenb : Z := Z.of_nat (length (entry_stack_image inp mbase ph entryw sp rdraw)).
+Definition STRv (k : nat) : Z :=
+  u sp + Z.of_nat (cat_string_off rseq sp top argv envp execfn)
+       + Z.of_nat (total_arg_bytes_nat (firstn k argv)).
+(* OLD BESIDE NEW, and this one REVERSES AN ORDERING rather than moving an
+   offset, so it is the hazardous kind:
+     XAv := u sp + lenb - 16                  (sixteen below the IMAGE top)
+     XAv := u sp + block_head_size rseq argv envp - 16
+   [XAv] is the AT_RANDOM block's base.  Under the pre-revision layout the
+   random bytes WERE the top of the image and the strings lay below them;
+   at this revision the block is
+     head(C-16) ++ at_random(16) ++ pad ++ strings ++ 8 zero bytes
+   (LPS@08b1429 theories/LinuxProcessSem/StackLayout.v:560-589,
+   build_stack_bytes / block_below_random / block_above_random, with
+   length_build_stack_bytes giving C + pad + L + 8), and
+     at_random_ptr sp rseq argv envp = sp + (block_head_size rseq argv envp - 16)
+   (same file, :437-441).  So the random bytes are at sp + C - 16 and the
+   STRINGS ARE ABOVE THEM.  The old spelling is short by pad + L + 8, with
+   L = launch_string_bytes >= 1 always (the exec name's NUL), so it was
+   false for every input rather than merely unprovable.
+   The definition is taken from the MODEL, not from any AsSInit lemma, so
+   it stands however that file resolves. *)
+Definition XAv : Z := u sp + Z.of_nat (block_head_size rseq argv envp) - 16.
 Definition XBv : Z := 64 * ((u sp + lenb + 63) / 64).
-#[local] Notation E0 := (AsSInit.E0 ph sp rdraw brk0 argv envp uid hw).
+#[local] Notation E0 := (AsSInit.E0 sp rdraw brk0 inp).
 
 Lemma sp_rng : 0x7fff80000000 <= u sp /\ u sp <= 0x800000000000 /\ u sp mod 16 = 0.
 Proof. destruct Hsp as (H1 & H2 & H3). unfold sp_window_lo, sp_window_hi in *. lia. Qed.
 
-Lemma STRv0 : STRv 0 = u sp + 8 * Z.of_nat (length argv) + 8 * Z.of_nat (length envp) + 184.
-Proof. unfold STRv. change (firstn 0 argv) with (@nil (list byte)). change (total_arg_bytes_nat []) with 0%nat. lia. Qed.
+(* Old beside new: the right-hand side was the refuted closed form
+     u sp + 8*argc + 8*envc + <the old constant>
+   and is now the model's own string-block base. *)
+Lemma STRv0 : STRv 0 = u sp + Z.of_nat (cat_string_off rseq sp top argv envp execfn).
+Proof.
+  unfold STRv. change (firstn 0 argv) with (@nil (list byte)).
+  change (total_arg_bytes_nat []) with 0%nat. lia.
+Qed.
 
-(* [comment removed for export] *)
+(* THE STRING BLOCK'S CEILING IS NOT [XAv] ANY MORE, and this is the one
+   place in this file where the revision REVERSES an ordering rather than
+   moving an offset.
+   [XAv] is [u sp + lenb - 16] -- sixteen below the image's top -- and under
+   the pre-revision layout that WAS the AT_RANDOM block, with the strings
+   below it.  At this revision the block is
+     head(C-16) ++ at_random(16) ++ pad ++ strings ++ 8 zero bytes
+   (LPS@08b1429 StackLayout.v build_stack_bytes / block_below_random /
+   block_above_random / length_build_stack_bytes), so the AT_RANDOM bytes
+   sit at [sp + block_head_size - 16] and the STRINGS ARE ABOVE THEM,
+   running from [STRv 0] for [launch_string_bytes] bytes and ending eight
+   below the top.  [STRv 0 + total_arg_bytes_nat argv <= XAv] is therefore
+   FALSE in general -- take an empty envp and an empty exec name and the
+   argv strings end seven bytes above [XAv].
+   So the ceiling is restated as the string block's own end, which is what
+   every consumer below actually needs; the [XAv]/[XBv] conjuncts that are
+   about the IMAGE's top rather than the random block are unchanged and
+   still hold. *)
+Definition STRend : Z := STRv 0 + Z.of_nat (launch_string_bytes argv envp execfn).
+
+(* OLD BESIDE NEW, conjunct by conjunct.  Four of the nine change, and each
+   changes because the random block moved BELOW the strings rather than
+   because an offset moved:
+     1  STRv 0 + total_arg_bytes_nat argv <= XAv
+     -> STRv 0 + total_arg_bytes_nat argv <= STRend
+        The argv strings are a PREFIX of the string area, which ends at
+        STRend; they are no longer below the random block at all.
+     -  (new) STRend + 8 = u sp + lenb
+        The eight-byte slot create_init_stack_vma skips is all that lies
+        above the strings, so this is the block's decomposition and it is
+        what every later bound is read from.
+     3  XAv + 16 <= XBv      -> XAv + 16 <= STRv 0
+        was "the random block is below the 64-aligned top"; it is now the
+        sharper and true statement that the strings begin at or above the
+        top of the random block.
+     4  XBv <= XAv + 72      -> u sp + lenb <= XBv <= u sp + lenb + 63
+        XBv is the 64-aligned IMAGE top and has nothing to do with the
+        random block any more; stated against the top directly.
+   Unchanged and still true: XAv mod 8 = 0 (C is a sum of multiples of 8
+   and u sp mod 16 = 0); XBv mod 64 = 0; XBv <= 2^47; lenb <= 4000000.
+     8  u sp + <the old constant> <= XAv  ->  u sp + 456 <= XAv
+   STRENGTHENED rather than carried, and the number is changed so that no
+   occurrence of the refuted string-base constant survives anywhere in this
+   tree.  456 is the model's own minimum for C - 16: that quantity is
+   8*block_items + auxv_size rseq + 8*(block_items mod 2), block_items is
+   at least 1 + 0 + 3 = 4 so the first term is at least 32, and auxv_size
+   is 432 without CONFIG_RSEQ and 464 with it -- 24 + 432 = 456 at the
+   smallest.  Strictly stronger than the old bound, so every consumer's
+   [lia] still closes. *)
 Lemma blk_arith :
-  STRv 0 + Z.of_nat (total_arg_bytes_nat argv) <= XAv /\ XAv mod 8 = 0 /\ XAv + 16 <= XBv /\ XBv <= XAv + 72 /\ XBv mod 64 = 0
-  /\ XBv <= 2 ^ 47 /\ u sp + 184 <= XAv /\ lenb <= 4000000.
+  STRv 0 + Z.of_nat (total_arg_bytes_nat argv) <= STRend /\ STRend + 8 = u sp + lenb
+  /\ XAv mod 8 = 0 /\ XAv + 16 <= STRv 0
+  /\ u sp + lenb <= XBv /\ XBv <= u sp + lenb + 63 /\ XBv mod 64 = 0
+  /\ XBv <= 2 ^ 47 /\ u sp + 456 <= XAv /\ lenb <= 4000000.
 Proof.
   pose proof sp_rng as (S1 & S2 & S3).
-  pose proof (AsSInit.length_bsb_eq ph sp rdraw argv envp uid hw) as HL. fold lenb in HL.
-  pose proof (AsSInit.usp_fit ph sp rdraw argv envp uid hw Hfit) as HF. fold lenb in HF.
-  pose proof (AsSInit.W_range ph sp rdraw argv envp uid hw Hva Hve) as (W1 & W2 & W3). fold lenb in W1, W2, W3.
-  pose proof (AsSInit.bsb_ge ph sp rdraw argv envp uid hw) as (G1 & G2). fold lenb in G1, G2.
-  unfold AsSInit.stack_image_size in HL. rewrite !total_arg_bytes_Z in HL.
+  pose proof (AsSInit.length_bsb_eq ph apc sp rdraw brk0 mbase inp Hlau) as HL. fold lenb in HL.
+  pose proof (AsSInit.usp_fit ph apc sp rdraw brk0 mbase inp Hlau) as HF. fold lenb in HF.
+  pose proof (AsSInit.W_range apc sp rdraw brk0 mbase inp Hlau) as (W1 & W2).
+  pose proof (AsSInit.bsb_ge ph apc sp rdraw brk0 mbase inp Hlau) as (G1 & G2). fold lenb in G1, G2.
+  (* The launch's own two facts the decomposition below needs: the head, the
+     strings and the 8-byte slot fit under the stack top
+     ([launch_string_base_arith], Common/CatExec.v), so the pad's [Z.to_nat]
+     argument is not negative; and the image is at most 2101782 bytes under
+     [valid_launch]'s E2BIG bound ([bsb_bound], Mh32.v), which is where
+     [lenb <= 4000000] comes from. *)
+  pose proof (launch_string_base_arith Sv48 inp mbase sp brk0 rdraw Hlau) as HSA.
+  assert (HBB : lenb <= 2101782)
+    by (unfold lenb; exact (bsb_bound Sv48 inp mbase ph entryw sp brk0 rdraw Hvl Hlau)).
+  unfold AsSInit.stack_image_size in HL.
   pose proof (Nat2Z.is_nonneg (total_arg_bytes_nat argv)) as T1. pose proof (Nat2Z.is_nonneg (total_arg_bytes_nat envp)) as T2.
-  rewrite STRv0. unfold XAv, XBv.
-  set (ta := Z.of_nat (total_arg_bytes_nat argv)) in *. set (te := Z.of_nat (total_arg_bytes_nat envp)) in *.
-  set (ac := Z.of_nat (length argv)) in *. set (ec := Z.of_nat (length envp)) in *.
-  pose proof (valid_argv_len argv Hva) as VA. destruct Hve as [VE _]. fold ac in VA.
-  assert (VE' : ec <= 256) by (subst ec; lia).
+  (* THE TWO FACTS ABOUT C COME FROM THE MODEL'S OWN LEMMAS, NOT FROM AN
+     UNFOLD.  [block_head_size] is 8*items + auxv_size rseq + 8*(items mod 2)
+     + 16, and [auxv_size rseq] is [16 * auxv_count rseq] with
+     [auxv_count rseq = if rseq then 29 else 27] -- an opaque [if] over a
+     Section-variable bool.  Unfolding it and calling [lia] leaves that
+     [if] standing, and [lia] cannot reduce it; the model's own proofs of
+     both lemmas below end in [destruct rseq; lia] for exactly that reason.
+       Run.block_head_size_bounds (Run.v:3884)
+         8*(argc+envc) + 472 <= C <= 8*(argc+envc) + 512
+       Run.block_head_size_mod16 (Run.v:3899)
+         C mod 16 = 0
+     The lower bound is where [u sp + 456 <= XAv] comes from -- XAv is
+     u sp + C - 16 and 472 - 16 = 456 -- and the mod-16 fact is what gives
+     [XAv mod 8 = 0] with [u sp mod 16 = 0].  Both are rseq-independent,
+     which is the point: the flag never has to be evaluated here. *)
+  pose proof (block_head_size_bounds rseq argv envp) as (HCl & HCh).
+  pose proof (block_head_size_mod16 rseq argv envp) as HCm.
+  (* The second conjunct is [block_pad_len]'s own definition read forwards.
+     [block_pad_len rseq sp top argv envp execfn] is
+       Z.to_nat (top - 8 - L - sp - C)                (StackLayout.v:439-444)
+     whose argument [HSA] keeps non-negative, so
+       C + pad + L + 8 = top - sp = lenb              (length_bsb_eq)
+     and [STRend = u sp + C + pad + L] is eight below the top.  [STRend] is
+     unfolded BEFORE [STRv0] is rewritten, so that every [STRv 0] becomes the
+     same string base. *)
+  unfold STRend, XAv, XBv in *. rewrite !STRv0.
+  unfold cat_string_off, block_pad_len, launch_string_bytes in *.
+  rewrite !length_flatten_strings in *.
+  pose proof (valid_argv_len argv Hva) as VA. destruct Hve as [VE _].
+  pose proof (Nat2Z.is_nonneg (length (in_execfn inp))) as T3.
   repeat split; Z.div_mod_to_equations; lia.
 Qed.
 
 Lemma str_end : forall k, (k < length argv)%nat ->
-  STRv k + Z.of_nat (length (nth k argv [])) + 1 = STRv (S k) /\ STRv (S k) <= XAv /\ STRv 0 <= STRv k.
+  STRv k + Z.of_nat (length (nth k argv [])) + 1 = STRv (S k) /\ STRv (S k) <= STRend /\ STRv 0 <= STRv k.
 Proof.
   intros k Hk. pose proof blk_arith as (B1 & _).
   pose proof (total_arg_bytes_firstn_le (S k) argv) as F1. pose proof (targ_firstn_S argv k Hk) as F2.
-  rewrite STRv0 in *. unfold STRv in *. lia.
+  rewrite STRv0 in *. unfold STRend, STRv in *. lia.
 Qed.
 
-Lemma u_ptr : forall k, (k < length argv)%nat -> u (cat_argv_ptr sp argv envp k) = STRv k.
+(* LPS 727298f3: the stack VMA's end is page aligned ([Run.valid_stack_top_va]'s first
+   conjunct), so the 64-aligned image top [XBv] IS the end, the string block ends eight below
+   it, and the exec name's NUL ends the block ([StackLayout.launch_string_bytes]). *)
+Lemma top_arith :
+  u sp + lenb = u top /\ u top mod 4096 = 0 /\ XBv = u top /\ STRend + 8 = XBv /\ STRend mod 8 = 0
+  /\ STRv 0 + Z.of_nat (total_arg_bytes_nat argv) + 1 <= STRend.
 Proof.
-  intros k Hk. destruct Hsp as (H1 & H2 & _).
-  rewrite (u_cat_argv_ptr ph sp rdraw argv envp uid hw Hva Hve H1 H2 k Hk). unfold STRv, cat_struct_size.
-  change auxv_size with 160%nat. lia.
+  pose proof (AsSInit.length_bsb_eq ph apc sp rdraw brk0 mbase inp Hlau) as HL. fold lenb in HL.
+  unfold AsSInit.stack_image_size in HL.
+  assert (HT : u top mod 4096 = 0) by (pose proof Hlau as (Ht & _); destruct Ht as (Hm & _); exact Hm).
+  pose proof blk_arith as (B1 & B2 & _).
+  assert (HS : STRv 0 + Z.of_nat (total_arg_bytes_nat argv) + 1 <= STRend).
+  { unfold STRend, launch_string_bytes. rewrite !length_flatten_strings. lia. }
+  assert (HX : XBv = u top) by (unfold XBv; Z.div_mod_to_equations; lia).
+  assert (HE : STRend + 8 = u top) by lia.
+  split; [lia|]. split; [exact HT|]. split; [exact HX|]. split; [lia|]. split; [|exact HS].
+  clear - HT HE. Z.div_mod_to_equations. lia.
+Qed.
+
+(* Every argv string ends at least one byte (the exec name's NUL) below [STRend]. *)
+Lemma str_end1 : forall k, (k < length argv)%nat -> STRv (S k) + 1 <= STRend.
+Proof.
+  intros k Hk. pose proof top_arith as (_ & _ & _ & _ & _ & T6).
+  pose proof (total_arg_bytes_firstn_le (S k) argv) as F1.
+  rewrite STRv0 in T6. unfold STRv in *. lia.
+Qed.
+
+(* Old beside new:
+     u_ptr : u (cat_argv_ptr sp argv envp k)           = STRv k
+     u_ptr : u (cat_argv_ptr top argv envp execfn k)   = STRv k
+   [cat_argv_ptr] is anchored at the stack VMA's end now
+   (Common/CatExec.v:574) because the strings sit at the top of Linux's
+   block.  The old proof closed by [change auxv_size with 160%nat], a
+   constant that no longer exists; the new one goes through the model's
+   [cat_string_base_offset], so it holds at either auxv size. *)
+Lemma u_ptr : forall k, (k < length argv)%nat -> u (cat_argv_ptr top argv envp execfn k) = STRv k.
+Proof.
+  intros k Hk. pose proof sp_rng as (S1 & S2 & _).
+  pose proof (AsSInit.usp_fit ph apc sp rdraw brk0 mbase inp Hlau) as HF. fold lenb in HF.
+  pose proof (total_arg_bytes_firstn_le k argv) as F1.
+  rewrite (cat_argv_ptr_offset top argv envp execfn k Hk).
+  rewrite (cat_string_base_offset Sv48 inp mbase sp brk0 rdraw Hlau).
+  (* The address stays under 2^64 because the strings end eight below the stack top
+     ([blk_arith]), which [usp_fit] keeps under 2^47. *)
+  pose proof blk_arith as (B1 & B2 & _). pose proof STRv0 as B0.
+  rewrite nat_to_word_add_merge, word_add_nat, u64_lit by lia.
+  unfold STRv. lia.
 Qed.
 
 Section WithE.
 Variables (E : env) (M : word -> option byte).
-Hypothesis HS : AsSInit.SINV0 ph sp rdraw brk0 argv envp uid hw E M.
+Hypothesis HS : AsSInit.SINV0 ph apc sp rdraw brk0 mbase inp E M.
 
 Lemma sinv_val : forall e, expr_okb (fun n => Nat.ltb n NXS) e = true -> edenot E e = edenot E0 e.
 Proof.
@@ -102,41 +281,60 @@ Proof.
   intros n Hn. apply Nat.ltb_lt in Hn. exact (proj1 HS n Hn).
 Qed.
 
-Lemma sinv_hidden : forall a : word, STRv 0 <= u a < XAv -> M a = wrap_mem ph sp argv envp uid hw rdraw a.
+(* Old beside new, and the window moves for the same reason [blk_arith]'s
+   first conjunct does -- the hidden string block is [argH0]'s second
+   disjunct, which is now [STRv 0 .. STRv 0 + launch_string_bytes), not
+   "up to the random block":
+     sinv_hidden : STRv 0 <= u a < XAv -> M a = wrap_mem ph sp argv envp uid hw rdraw a
+     sinv_hidden : STRv 0 <= u a < STRend -> M a = wrap_mem inp mbase ph entryw sp rdraw a
+   Same change in [sinv_def].  [wrap_mem]'s restatement is
+   Common/PropExec.v:2454. *)
+Lemma sinv_hidden : forall a : word, STRv 0 <= u a < STRend -> M a = wrap_mem inp mbase ph entryw sp rdraw a.
 Proof.
   intros a Ha. apply (proj2 HS). unfold AsSInit.argH0.
   assert (Hsp0 : APS.uE E AP.e_sp0 = u sp).
-  { unfold APS.uE. rewrite (sinv_val AP.e_sp0 eq_refl). exact (AsSInit.u_e_sp0 ph sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit). }
-  cbv zeta. rewrite Hsp0, Z.eqb_refl. cbn [andb]. apply orb_true_iff. right.
-  pose proof (AsSInit.W_range ph sp rdraw argv envp uid hw Hva Hve) as (W1 & W2 & W3). fold lenb in W1, W2, W3.
-  fold lenb. rewrite STRv0 in Ha. unfold XAv in Ha.
+  { unfold APS.uE. rewrite (sinv_val AP.e_sp0 eq_refl). apply (AsSInit.u_e_sp0 ph apc sp rdraw brk0 mbase inp); assumption. }
+  cbv zeta. rewrite Hsp0, Z.eqb_refl. cbn [andb]. apply orb_true_iff. left. apply orb_true_iff. right.
+  rewrite STRv0 in Ha. unfold STRend, STRv in Ha.
+  change (firstn 0 argv) with (@nil (list byte)) in Ha. change (total_arg_bytes_nat []) with 0%nat in Ha.
   apply andb_true_iff. split; [apply Z.leb_le | apply Z.ltb_lt]; lia.
 Qed.
 
 Lemma sinv_byte : forall k j, (k < length argv)%nat -> (j <= length (nth k argv []))%nat ->
   M (Z_to_bv 64 (STRv k + Z.of_nat j)) = Some (nth j (nth k argv [] ++ [Z_to_bv 8 0]) (Z_to_bv 8 0)).
 Proof.
-  intros k j Hk Hj. pose proof sp_rng as (S1 & S2 & S3). pose proof blk_arith as (B1 & B2 & B3 & B4 & B5 & B6 & B7 & B8).
+  intros k j Hk Hj. pose proof sp_rng as (S1 & S2 & S3).
+  pose proof blk_arith as (B1 & B2 & B3 & B4 & B5 & B6 & B7 & B8 & B9 & B10).
   destruct (str_end k Hk) as (E1 & E2 & E3). pose proof STRv0 as S0.
-  assert (Ua : u (Z_to_bv 64 (STRv k + Z.of_nat j)) = STRv k + Z.of_nat j) by (apply u64_lit; unfold XAv in *; lia).
-  rewrite sinv_hidden by (rewrite Ua; lia).
+  assert (Ua : u (Z_to_bv 64 (STRv k + Z.of_nat j)) = STRv k + Z.of_nat j) by (apply u64_lit; unfold STRend in *; lia).
+  rewrite sinv_hidden by (rewrite Ua; unfold STRend in *; lia).
   rewrite wrap_above_sp by (rewrite Ua; lia).
   apply rdn1_off_image; [rewrite Ua; lia|].
-  replace (Z_to_bv 64 (STRv k + Z.of_nat j)) with (cat_argv_ptr sp argv envp k + nat_to_word j)%bv.
-  - apply read_argv_byte_k; [exact Hk | exact Hj | fold lenb; unfold XAv in *; lia].
+  replace (Z_to_bv 64 (STRv k + Z.of_nat j)) with (cat_argv_ptr top argv envp execfn k + nat_to_word j)%bv.
+  (* [read_argv_byte_k] takes the launch premise at this revision
+     (Common/CatExec.v:807: v segs inp mbase ph entry sp brk draw k j, with
+     entry_launch_ok_va first), and its no-wrap side condition is now
+     discharged by that premise rather than by a [bsb_nw] argument. *)
+  - apply (read_argv_byte_k Sv48 ASEGS inp mbase ph entryw sp brk0 rdraw k j Hlau Hk Hj).
   - rewrite word_add_nat. rewrite (u_ptr k Hk). reflexivity.
 Qed.
 
-Lemma sinv_def : forall a : word, STRv 0 <= u a < XAv -> M a <> None.
+Lemma sinv_def : forall a : word, STRv 0 <= u a < STRend -> M a <> None.
 Proof.
-  intros a Ha. pose proof sp_rng as (S1 & S2 & S3). pose proof blk_arith as (B1 & B2 & B3 & B4 & B5 & B6 & B7 & B8). pose proof STRv0 as S0.
+  intros a Ha. pose proof sp_rng as (S1 & S2 & S3).
+  pose proof blk_arith as (B1 & B2 & B3 & B4 & B5 & B6 & B7 & B8 & B9 & B10). pose proof STRv0 as S0.
   rewrite sinv_hidden by exact Ha.
-  rewrite wrap_above_sp by lia.
-  unfold stack_to_mem. replace (u sp <=? u a) with true by (symmetry; apply Z.leb_le; lia).
-  unfold entry_stack_image. rewrite length_app.
-  replace (u a - u sp <? Z.of_nat (length (build_stack_bytes ph sp argv envp uid hw rdraw) + length (entry_slack sp (build_stack_bytes ph sp argv envp uid hw rdraw) (ed_slack rdraw))))
-    with true by (symmetry; apply Z.ltb_lt; unfold XAv, lenb in *; lia).
-  apply nth_error_Some. rewrite length_app. unfold XAv, lenb in *. lia.
+  rewrite wrap_above_sp by (unfold STRend in *; lia).
+  unfold stack_to_mem. replace (u sp <=? u a) with true by (symmetry; apply Z.leb_le; unfold STRend in *; lia).
+  (* [entry_stack_image] IS Linux's whole block, sp .. ed_top: the model no
+     longer lays a shorter block and draws bytes above it, so [entry_slack]
+     and the draw's [ed_slack] field are both gone and there is no [++]
+     here for [length_app] to split.  The length wanted is [lenb], and
+     [blk_arith]'s second conjunct [STRend + 8 = u sp + lenb] is what puts
+     every address below [STRend] inside it. *)
+  replace (u a - u sp <? Z.of_nat (length (entry_stack_image inp mbase ph entryw sp rdraw)))
+    with true by (symmetry; apply Z.ltb_lt; unfold lenb in *; lia).
+  apply nth_error_Some. unfold lenb in *. lia.
 Qed.
 End WithE.
 End Argv.
@@ -179,29 +377,53 @@ Lemma vis_lit_b : forallb lit_vis_b (map (fun w => KWr (SA (fst w) 0) (snd w)) P
 
 Section Bridge.
 Context {RC : run_ceil}.
-Variables (ph : PhdrInfo) (sp : word) (rdraw : EntryDraw) (brk0 : word) (argv envp : list (list byte)) (uid hw : word) (fs : Fs.Fs).
+(* Moved onto [inp] with AsSInit.Init and with Module AsDrvBridgeArgv above.
+   [fs] is a projection now, so it leaves the variable list with the other
+   components. *)
+Variables (ph : PhdrInfo) (apc : N) (sp : word) (rdraw : EntryDraw) (brk0 mbase : word) (inp : ProcInput).
+Local Notation argv   := (in_argv inp) (only parsing).
+Local Notation envp   := (in_envp inp) (only parsing).
+Local Notation fs     := (in_fs inp) (only parsing).
+Local Notation uid    := (in_uid inp) (only parsing).
+Local Notation hw     := (in_hwcap inp) (only parsing).
+Local Notation execfn := (in_execfn inp) (only parsing).
+Local Notation rseq   := (kb_rseq (in_kernel inp)) (only parsing).
+Local Notation top    := (ed_top rdraw) (only parsing).
+Local Notation entryw := (Z_to_bv 64 (Z.of_N apc)) (only parsing).
+Local Notation RS     := (rseq_z (kb_rseq (in_kernel inp))) (only parsing).
 Hypothesis Hsp : valid_sp sp.
-Hypothesis Hva : valid_argv argv.
-Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
-#[local] Notation SINV := (AsSInit.SINV0 ph sp rdraw brk0 argv envp uid hw).
-#[local] Notation argH := (AsSInit.argH0 ph sp rdraw argv envp uid hw).
+Hypothesis Hva : valid_argv (in_argv inp).
+Hypothesis Hve : valid_envp (in_envp inp).
+Hypothesis Hfit : entry_stack_fits sp (in_argv inp) (in_envp inp).
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) inp.
+(* Old beside new:
+     SINV : AsSInit.SINV0 ph sp rdraw brk0 argv envp uid hw
+         -> AsSInit.SINV0 ph apc sp rdraw brk0 mbase inp
+     argH : AsSInit.argH0 ph sp rdraw argv envp uid hw
+         -> AsSInit.argH0 sp rdraw inp
+   Both are Definitions, so the arities come from their bodies: [argH0]
+   loses [ph] and [brk0] because its string-block bound is
+   [cat_string_off] now rather than an expression over the image. *)
+#[local] Notation SINV := (AsSInit.SINV0 ph apc sp rdraw brk0 mbase inp).
+#[local] Notation argH := (AsSInit.argH0 sp rdraw inp).
 #[local] Notation CSOK := (APS.cs_ok ASEGS AT_A LIMIT_S SINV argH ISP_S fs).
 
 Variable hs : acs.
-Hypothesis Hhs : hs = HS_1 \/ hs = HS_2.
+(* The hand-off states are per flag value; this run's own. *)
+Hypothesis Hhs : hs = HS_1 RS \/ hs = HS_2 RS.
 Variables (E : env) (R : bvmap 5 word) (M : word -> option byte) (model : Model).
 Hypothesis HC : CSOK E hs R M model.
 
-Lemma ent_syn : kn_ent AT_A (kn hs) (map (ktsubst (thA hs)) TKsyn) = true.
-Proof. destruct Hhs as [-> | ->]; [exact ent_syn_1 | exact ent_syn_2]. Qed.
-Lemma ent_boot : kn_ent AT_A (kn hs) BOOTF = true.
-Proof. destruct Hhs as [-> | ->]; [exact ent_boot_1 | exact ent_boot_2]. Qed.
-Lemma regs_h : regs_ent (kn hs) 0 (map (tsubst (thA hs)) regsM) (s_regs (a_ss hs)) = true.
-Proof. destruct Hhs as [-> | ->]; [exact regs_1 | exact regs_2]. Qed.
+Lemma ent_syn : kn_ent AT_A (kn hs) (map (ktsubst (thA RS hs)) TKsyn) = true.
+Proof. destruct Hhs as [-> | ->]; [exact (ent_syn_1 rseq) | exact (ent_syn_2 rseq)]. Qed.
+Lemma ent_boot : kn_ent AT_A (kn hs) (BOOTF RS) = true.
+Proof. destruct Hhs as [-> | ->]; [exact (ent_boot_1 rseq) | exact (ent_boot_2 rseq)]. Qed.
+Lemma regs_h : regs_ent (kn hs) 0 (map (tsubst (thA RS hs)) regsM) (s_regs (a_ss hs)) = true.
+Proof. destruct Hhs as [-> | ->]; [exact (regs_1 rseq) | exact (regs_2 rseq)]. Qed.
 Lemma hull_h : APS.kimg_in_hull AT_A (kn hs).
 Proof.
-  assert (H : hull_b (kn hs) = true) by (destruct Hhs as [-> | ->]; [exact hull_1 | exact hull_2]).
+  assert (H : hull_b (kn hs) = true) by (destruct Hhs as [-> | ->]; [exact (hull_1 rseq) | exact (hull_2 rseq)]).
   unfold APS.kimg_in_hull. apply Forall_forall. intros K HK. pose proof (proj1 (forallb_forall _ _) H K HK) as X.
   destruct K; try exact I. apply andb_prop in X as [X1 X2]. apply Z.leb_le in X1. apply Z.leb_le in X2. split; assumption.
 Qed.
@@ -210,33 +432,66 @@ Qed.
 Lemma know_full : know_ok ASEGS E M (kn hs).
 Proof.
   apply (BE.know_ok_full ASEGS AT_A LIMIT_S ISP_S SINV argH fs asan_S_in_hull asan_S_hull_ok
-           (AsSInit.argH0_high ph sp rdraw argv envp uid hw Hsp Hva) E hs R M model (kn hs) HC (APS.co_know _ _ _ _ _ _ _ _ _ _ _ _ HC) hull_h).
+           (* a LEMMA, so given by a tactic rather than a positional list *)
+           ltac:(apply AsSInit.argH0_high; assumption) E hs R M model (kn hs) HC (APS.co_know _ _ _ _ _ _ _ _ _ _ _ _ HC) hull_h).
 Qed.
 
-#[local] Notation Et := (GPS.tenv E (thA hs)).
+#[local] Notation Et := (GPS.tenv E (thA RS hs)).
 Lemma know_syn : know_ok ASEGS Et M TKsyn.
 Proof.
-  apply (proj1 (GPS.know_ok_ktsubst ASEGS E (thA hs) M TKsyn)).
+  apply (proj1 (GPS.know_ok_ktsubst ASEGS E (thA RS hs) M TKsyn)).
   exact (GPS.kn_ent_sound ASEGS AT_A asan_S_in_hull asan_S_hull_ok E M (kn hs) _ know_full ent_syn).
 Qed.
-Lemma know_boot : know_ok ASEGS E M BOOTF.
+Lemma know_boot : know_ok ASEGS E M (BOOTF RS).
 Proof. exact (GPS.kn_ent_sound ASEGS AT_A asan_S_in_hull asan_S_hull_ok E M (kn hs) _ know_full ent_boot). Qed.
 Lemma regs_syn : regs_ok Et regsM R.
-Proof. exact (BE.transport_regs ASEGS AT_A LIMIT_S ISP_S SINV argH fs asan_S_hull_ok E hs R M model (thA hs) regsM HC regs_h). Qed.
+Proof. exact (BE.transport_regs ASEGS AT_A LIMIT_S ISP_S SINV argH fs asan_S_hull_ok E hs R M model (thA RS hs) regsM HC regs_h). Qed.
 
 (* [comment removed for export] *)
 Variables (mk : Z) (bl : nat -> list byte).
-#[local] Notation STRv := (AsDrvBridgeArgv.STRv sp argv envp).
-#[local] Notation XAv := (AsDrvBridgeArgv.XAv ph sp rdraw argv envp uid hw).
-#[local] Notation XBv := (AsDrvBridgeArgv.XBv ph sp rdraw argv envp uid hw).
+(* Definitions, so their arities come from their bodies.  Old beside new:
+     STRv  AsDrvBridgeArgv.STRv sp argv envp
+        -> AsDrvBridgeArgv.STRv sp rdraw inp
+        ([rdraw] enters because the string base is anchored at [ed_top])
+     XAv   AsDrvBridgeArgv.XAv ph sp rdraw argv envp uid hw
+        -> AsDrvBridgeArgv.XAv sp inp
+        ([XAv] is [block_head_size]-based now and mentions neither the
+         image nor the draw)
+     XBv   AsDrvBridgeArgv.XBv ph sp rdraw argv envp uid hw
+        -> AsDrvBridgeArgv.XBv ph apc sp rdraw mbase inp *)
+#[local] Notation STRv := (AsDrvBridgeArgv.STRv sp rdraw inp).
+#[local] Notation STRend := (AsDrvBridgeArgv.STRend sp rdraw inp).
+#[local] Notation XAv := (AsDrvBridgeArgv.XAv sp inp).
+#[local] Notation XBv := (AsDrvBridgeArgv.XBv ph apc sp rdraw mbase inp).
 Definition L0v : Z := Z.of_nat (length (nth 0 argv [])).
 Definition L1v : Z := Z.of_nat (length (nth 1 argv [])).
-Definition D0v : Z := 8 * Z.of_nat (length argv) + 8 * Z.of_nat (length envp) + 232.
+(* OLD BESIDE NEW, and a search for the old number does not find this one:
+     D0v := 8*argc + 8*envc + <the old constant plus the frame's 48>
+     D0v := cat_string_off rseq sp top argv envp execfn + 48
+   [D0v] is the distance from the frame base [u sp - 48] to the first argv
+   string, and [HS0 : u sp - 48 + D0v = STRv 0] is where it is used.  With
+   [STRv 0] now [u sp + cat_string_off …], the old literal was THE REFUTED
+   STRING BASE DISPLACED BY THE FRAME OFFSET -- the same dead constant with
+   48 added, which is exactly why a search for the bare number finds
+   nothing here.  A wrong value fails as arithmetic inside fifteen
+   [unfold D0v; lia] sites, nowhere near any layout vocabulary. *)
+Definition D0v : Z := Z.of_nat (cat_string_off rseq sp top argv envp execfn) + 48.
+(* [D0v] in the start-up variables, the form [D0th RS] computes: [cat_string_off] is
+   [block_head_size + block_pad_len] and the head is
+   [8*items + 16*auxv_count + 8*(items mod 2) + 16] with [items = argc + envc + 3]
+   ([StackLayout.block_head_size]) and [auxv_count = 27 + 2 r] ([AsSInit.auxv_count_rz]). *)
+Lemma D0v_eq : D0v = 8 * Z.of_nat (length argv) + (8 * Z.of_nat (length envp) + (8 * Z.of_nat (block_items argv envp mod 2)
+                     + (Z.of_nat (block_pad_len rseq sp top argv envp execfn) + (520 + 32 * RS)))).
+Proof.
+  pose proof (AsSInit.auxv_count_rz rseq) as HA.
+  assert (HB : block_items argv envp = (length argv + length envp + 3)%nat) by reflexivity.
+  unfold D0v, cat_string_off, block_head_size, auxv_size. cbv zeta. lia.
+Qed.
 Definition ovr (n : nat) (w : word) : word :=
   match n with
   | 4%nat => Z_to_bv 64 mk
-  | 13%nat => Z_to_bv 64 (XAv - (STRv 0 + L0v))
-  | 14%nat => Z_to_bv 64 (XAv - (STRv 0 + L0v + 1 + L1v))
+  | 13%nat => Z_to_bv 64 (STRend - (STRv 0 + L0v))
+  | 14%nat => Z_to_bv 64 (STRend - (STRv 0 + L0v + 1 + L1v))
   | 26%nat => Z_to_bv 64 (XBv - (STRv 0 + L0v))
   | 27%nat => Z_to_bv 64 (XBv - (STRv 0 + L0v + 1 + L1v))
   | _ => w
@@ -255,56 +510,101 @@ Proof. exact (regs_ok_rel POV Et E' regsM R okb_regs E'_pov regs_syn). Qed.
 
 (* [comment removed for export] *)
 Lemma HSINV : SINV E M. Proof. exact (APS.co_sinv _ _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
-#[local] Notation E0 := (AsSInit.E0 ph sp rdraw brk0 argv envp uid hw).
+#[local] Notation E0 := (AsSInit.E0 sp rdraw brk0 inp).
 Lemma evE : forall n, (n < NXS)%nat -> ev E n = ev E0 n. Proof. exact (proj1 HSINV). Qed.
 Lemma uvar : forall n z, (n < NXS)%nat -> APS.uE E0 (EVar n) = z -> u (ev E n) = z.
 Proof. intros n z Hn H. rewrite (evE n Hn). exact H. Qed.
 
+(* Old beside new, the sixth conjunct, and the OLD one is FALSE rather than
+   stale -- it is the deleted [W]:
+     u (ev E 4) = (lenb - 16 - (8*argc + 8*envc + <the old constant>)) / 8
+  -> u (ev E 4) = Z.of_nat (block_pad_len rseq sp top argv envp execfn)
+   [V_W] CHANGED MEANING at this revision (AsSInit.v:132-139): it WAS the
+   number of 8-byte words of string block below the AT_RANDOM bytes, and it
+   IS the pad [arch_align_stack] left between the random block and argv[0],
+   in BYTES, 0..4110.  The old right-hand side is a word count computed from
+   an offset that no longer locates anything.
+   The seventh conjunct, R8V, is the AT_RANDOM block's 64-alignment slack at this revision
+   ([AsSInit.uE0_R8]: (64 * BV - (usp + C)) / 8 with BV = (usp + C + 63) / 64); the eighth is
+   V_G, the STACK_ROUND gap ([AsSInit.uE0_G]); the ninth V_T, [e_top]'s page index above
+   [32768 * V_S1] ([AsSInit.uE0_T]), which [cont_fact] reads the e_top window with.
+   [uE0_L1] and [uE0_G] mention neither the image nor the mmap base (their proofs do not
+   reach [length bsb]), so they take [E0]'s own variables and [apc]
+   (AsSInit's discharged argument lists). *)
+Definition TVv : Z := (u sp - 160 + 4095) / 4096 - 8 * (u sp / 32768).
 Lemma boot_vals :
   u (ev E 0%nat) = u sp / 32768 /\ u (ev E 6%nat) = u sp mod 32768 / 16 /\ u (ev E 1%nat) = Z.of_nat (length argv)
   /\ u (ev E 2%nat) = Z.of_nat (length envp) /\ u (ev E 3%nat) = L0v /\ u (ev E 7%nat) = L1v
-  /\ u (ev E 4%nat) = (AsDrvBridgeArgv.lenb ph sp rdraw argv envp uid hw - 16 - (8 * Z.of_nat (length argv) + 8 * Z.of_nat (length envp) + 184)) / 8
-  /\ u (ev E 12%nat) = (XBv - (u sp + AsDrvBridgeArgv.lenb ph sp rdraw argv envp uid hw)) / 8.
+  /\ u (ev E 4%nat) = Z.of_nat (block_pad_len rseq sp top argv envp execfn)
+  /\ u (ev E 12%nat) = (64 * ((u sp + Z.of_nat (block_head_size rseq argv envp) + 63) / 64)
+                        - (u sp + Z.of_nat (block_head_size rseq argv envp))) / 8
+  /\ u (ev E 13%nat) = Z.of_nat (block_items argv envp mod 2)
+  /\ u (ev E 10%nat) = TVv.
 Proof.
-  pose proof (AsSInit.uE0 ph sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit) as (U1 & U2 & U3 & U4 & U5 & U6 & _).
-  pose proof (AsSInit.uE0_L1 ph sp rdraw brk0 argv envp uid hw Hva) as U7.
-  pose proof (AsSInit.uE0_R8 ph sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit) as U8.
+  pose proof (AsSInit.uE0 ph apc sp rdraw brk0 mbase inp Hsp Hva Hve Hlau) as (U1 & U2 & U3 & U4 & U5 & U6 & _).
+  pose proof (AsSInit.uE0_L1 apc sp rdraw brk0 inp Hva) as U7.
+  pose proof (AsSInit.uE0_R8 ph apc sp rdraw brk0 mbase inp Hsp Hva Hve Hlau) as U8.
+  pose proof (AsSInit.uE0_G apc sp rdraw brk0 inp) as U9.
+  pose proof (AsSInit.uE0_T ph apc sp rdraw brk0 mbase inp Hsp Hva Hve Hlau) as U10.
   repeat split; (apply uvar; [unfold NXS; lia|]); assumption.
 Qed.
 
 (* [comment removed for export] *)
-#[local] Notation lenb := (AsDrvBridgeArgv.lenb ph sp rdraw argv envp uid hw).
+#[local] Notation lenb := (AsDrvBridgeArgv.lenb ph apc sp rdraw mbase inp).
 Definition fE (n : nat) : option Z :=
   match n with
   | 0%nat => Some (u sp / 32768) | 1%nat => Some (Z.of_nat (length argv)) | 2%nat => Some (Z.of_nat (length envp)) | 3%nat => Some L0v
-  | 4%nat => Some ((lenb - 16 - (8 * Z.of_nat (length argv) + 8 * Z.of_nat (length envp) + 184)) / 8)
-  | 6%nat => Some (u sp mod 32768 / 16) | 7%nat => Some L1v | 12%nat => Some ((XBv - (u sp + lenb)) / 8)
+  | 4%nat => Some (Z.of_nat (block_pad_len rseq sp top argv envp execfn))
+  | 6%nat => Some (u sp mod 32768 / 16) | 7%nat => Some L1v | 10%nat => Some TVv
+  | 12%nat => Some ((64 * ((u sp + Z.of_nat (block_head_size rseq argv envp) + 63) / 64)
+                     - (u sp + Z.of_nat (block_head_size rseq argv envp))) / 8)
+  | 13%nat => Some (Z.of_nat (block_items argv envp mod 2))
   | _ => None
   end.
 Lemma fE_ok : forall n x, fE n = Some x -> u (ev E n) = x mod 2 ^ 64.
 Proof.
-  pose proof boot_vals as (V0 & V6 & V1 & V2 & V3 & V7 & V4 & V12).
+  pose proof boot_vals as (V0 & V6 & V1 & V2 & V3 & V7 & V4 & V12 & V13 & V10).
   intros n x H.
   assert (G : u (ev E n) = x).
-  { do 13 (destruct n as [|n]; [cbn [fE] in H; first [discriminate H | injection H as <-; assumption]|]). discriminate H. }
+  { do 14 (destruct n as [|n]; [cbn [fE] in H; first [discriminate H | injection H as <-; assumption]|]). discriminate H. }
   rewrite <- G. symmetry. apply Z.mod_small. apply u64_range.
 Qed.
 
 Lemma hreg2 : hregh hs 2 = eaddz e_sp0 (-48).
-Proof. destruct Hhs as [-> | ->]; reflexivity. Qed.
+(* The hand-off state is a table lookup per CONFIG_RSEQ value, so the flag is split first. *)
+Proof. destruct Hhs as [-> | ->]; destruct (kb_rseq (in_kernel inp)); reflexivity. Qed.
 
 (* [comment removed for export] *)
+(* FIFTEEN CONJUNCTS, SAME COUNT AND SAME ORDER, deliberately: every
+   consumer destructures this as [(N1 & … & N15)] positionally and a
+   changed count would silently re-bind all of them.  Four are restated.
+   Old beside new:
+     7   STRv 0 = u sp + 8*argc + 8*envc + <the old constant>
+      -> STRv 0 = u sp + cat_string_off rseq sp top argv envp execfn
+     8   STRv 0 + L0v + 1 <= XAv   ->   STRv 0 + L0v + 1 <= STRend
+         argv[0] and its NUL end inside the STRING block; they are not
+         below the random block any more.
+     11  XBv <= XAv + 72   ->   XBv <= u sp + lenb + 63
+         XBv is the 64-aligned IMAGE top; it is no longer within 72 of the
+         random block, which sits pad + L + 8 below it.
+     15  XAv = u sp + lenb - 16
+      -> XAv = u sp + block_head_size rseq argv envp - 16
+         The AT_RANDOM block's real address
+         (LPS@08b1429 StackLayout.v:437-441).
+   Unchanged: 1-6, 9, 10, 12, 13, 14. *)
 Lemma nums : 0x7fff80000000 <= u sp /\ u sp mod 16 = 0 /\ 1 <= Z.of_nat (length argv) <= 1024 /\ Z.of_nat (length envp) <= 256
   /\ 0 <= L0v <= 131071 /\ 0 <= L1v <= 131071
-  /\ STRv 0 = u sp + 8 * Z.of_nat (length argv) + 8 * Z.of_nat (length envp) + 184
-  /\ STRv 0 + L0v + 1 <= XAv /\ XAv mod 8 = 0 /\ XAv + 16 <= XBv /\ XBv <= XAv + 72 /\ XBv mod 64 = 0 /\ XBv <= 2 ^ 47 /\ lenb <= 4000000
-  /\ XAv = u sp + lenb - 16.
+  /\ STRv 0 = u sp + Z.of_nat (cat_string_off rseq sp top argv envp execfn)
+  /\ STRv 0 + L0v + 1 <= STRend /\ XAv mod 8 = 0 /\ XAv + 16 <= XBv
+  /\ XBv <= u sp + lenb + 63 /\ XBv mod 64 = 0 /\ XBv <= 2 ^ 47 /\ lenb <= 4000000
+  /\ XAv = u sp + Z.of_nat (block_head_size rseq argv envp) - 16.
 Proof.
   pose proof (AsDrvBridgeArgv.sp_rng sp Hsp) as (S1 & S2 & S3).
-  pose proof (AsDrvBridgeArgv.blk_arith ph sp rdraw argv envp uid hw Hsp Hva Hve Hfit) as (B1 & B2 & B3 & B4 & B5 & B6 & B7 & B8).
-  pose proof (AsDrvBridgeArgv.STRv0 sp argv envp) as S0.
+  pose proof (AsDrvBridgeArgv.blk_arith ph apc sp rdraw brk0 mbase inp Hsp Hva Hve Hvl Hlau)
+    as (B1 & B2 & B3 & B4 & B5 & B6 & B7 & B8 & B9 & B10).
+  pose proof (AsDrvBridgeArgv.STRv0 sp rdraw inp) as S0.
   assert (Hk0 : (0 < length argv)%nat) by (destruct Hva as [[? ?] _]; lia).
-  destruct (AsDrvBridgeArgv.str_end ph sp rdraw argv envp uid hw Hsp Hva Hve Hfit 0 Hk0) as (E1 & E2 & E3).
+  destruct (AsDrvBridgeArgv.str_end ph apc sp rdraw brk0 mbase inp Hsp Hva Hve Hvl Hlau 0 Hk0) as (E1 & E2 & E3).
   pose proof (valid_argv_len argv Hva) as VA. destruct Hve as [VE _].
   pose proof (valid_argv_str_len argv 0 Hva Hk0) as VL0.
   assert (VL1 : L1v <= 131071).
@@ -313,8 +613,23 @@ Proof.
   unfold L0v, L1v in *. repeat split; try lia.
 Qed.
 
-Definition H0v : Z := XAv - (STRv 0 + L0v).
-Definition H1v : Z := XAv - (STRv 0 + L0v + 1 + L1v).
+(* LPS 727298f3: the string block's end against the stack top ([AsDrvBridgeArgv.top_arith]):
+   the block ends eight below the page-aligned top, past every argv string and the exec name's
+   NUL. *)
+Lemma strend_rng : STRend mod 8 = 0 /\ STRend + 8 = XBv /\ XBv = u sp + lenb /\ STRv 0 + L0v + 1 <= STRend
+  /\ (forall k, (k < length argv)%nat -> STRv (S k) + 1 <= STRend).
+Proof.
+  pose proof (AsDrvBridgeArgv.top_arith ph apc sp rdraw brk0 mbase inp Hsp Hva Hve Hvl Hlau) as (T1 & T2 & T3 & T4 & T5 & T6).
+  pose proof nums as (N1 & N2 & N3 & N4 & N5 & N6 & N7 & N8 & _).
+  split; [exact T5|]. split; [exact T4|]. split; [lia|]. split; [exact N8|].
+  exact (AsDrvBridgeArgv.str_end1 ph apc sp rdraw brk0 mbase inp Hsp Hva Hve Hvl Hlau).
+Qed.
+
+(* The witnesses for main's H0 / H1: the readable span after argv[k] runs to the string
+   block's end ([STRend], eight-aligned), no longer to the AT_RANDOM block, which sits below
+   the strings at this revision. *)
+Definition H0v : Z := STRend - (STRv 0 + L0v).
+Definition H1v : Z := STRend - (STRv 0 + L0v + 1 + L1v).
 Definition G0v : Z := XBv - (STRv 0 + L0v).
 Definition G1v : Z := XBv - (STRv 0 + L0v + 1 + L1v).
 Definition fE' (n : nat) : option Z :=
@@ -330,19 +645,23 @@ Lemma vals'_ok :
   /\ u (ev E' 13%nat) = H0v mod 2 ^ 64 /\ u (ev E' 14%nat) = H1v mod 2 ^ 64 /\ u (ev E' 26%nat) = G0v mod 2 ^ 64 /\ u (ev E' 27%nat) = G1v mod 2 ^ 64.
 Proof.
   pose proof nums as (N1 & N2 & N3 & N4 & N5 & N6 & N7 & _).
-  pose proof boot_vals as (V0 & V6 & V1 & V2 & V3 & V7 & V4 & V12).
+  pose proof boot_vals as (V0 & V6 & V1 & V2 & V3 & V7 & V4 & V12 & V13 & V10).
   assert (SM : forall w : word, u w = u w mod 2 ^ 64) by (intros w; symmetry; apply Z.mod_small; apply u64_range).
   repeat split.
   - change (ev E' 0%nat) with (edenot E (hregh hs 2)). rewrite hreg2.
     rewrite (zval_sound fE E (eaddz e_sp0 (-48)) (32768 * (u sp / 32768) + 16 * (u sp mod 32768 / 16) + -48) fE_ok eq_refl).
     f_equal. clear - N2. Z.div_mod_to_equations. lia.
   - change (ev E' 1%nat) with (ev E 1%nat). rewrite <- V1. apply SM.
-  - change (ev E' 2%nat) with (edenot E D0th).
-    rewrite (zval_sound fE E D0th (8 * Z.of_nat (length argv) + 8 * Z.of_nat (length envp) + 232) fE_ok eq_refl). reflexivity.
+  - change (ev E' 2%nat) with (edenot E (D0th RS)).
+    rewrite (zval_sound fE E (D0th RS) (8 * Z.of_nat (length argv) + (8 * Z.of_nat (length envp) + (8 * Z.of_nat (block_items argv envp mod 2)
+                     + (Z.of_nat (block_pad_len rseq sp top argv envp execfn) + (520 + 32 * RS))))) fE_ok eq_refl).
+    rewrite D0v_eq. reflexivity.
   - change (ev E' 3%nat) with (ev E 3%nat). rewrite <- V3. apply SM.
-  - change (ev E' 5%nat) with (edenot E (eadd D0th (eaddz (EVar 3) 1))).
-    rewrite (zval_sound fE E (eadd D0th (eaddz (EVar 3) 1)) (8 * Z.of_nat (length argv) + (8 * Z.of_nat (length envp) + L0v) + 233) fE_ok eq_refl).
-    f_equal. unfold D0v. lia.
+  - change (ev E' 5%nat) with (edenot E (EAlu Instr.ALU_ADD (D0th RS) (EAlu Instr.ALU_ADD (EVar 3) (ELit 1)))).
+    rewrite (zval_sound fE E (EAlu Instr.ALU_ADD (D0th RS) (EAlu Instr.ALU_ADD (EVar 3) (ELit 1)))
+               ((8 * Z.of_nat (length argv) + (8 * Z.of_nat (length envp) + (8 * Z.of_nat (block_items argv envp mod 2)
+                     + (Z.of_nat (block_pad_len rseq sp top argv envp execfn) + (520 + 32 * RS))))) + (L0v + 1)) fE_ok eq_refl).
+    f_equal. rewrite D0v_eq. lia.
   - change (ev E' 6%nat) with (ev E 7%nat). rewrite <- V7. apply SM.
 Qed.
 Lemma fE'_ok : forall n x, fE' n = Some x -> u (ev E' n) = x mod 2 ^ 64.
@@ -378,21 +697,22 @@ Hypothesis HSv : Sv = STRv k.
 Hypothesis HeS : u (edenot E' eS) = Sv.
 Hypothesis HeE : u (edenot E' eE) = Sv + Lv.
 Hypothesis HeL : u (edenot E' eL) = Lv.
-Hypothesis HeH : u (edenot E' eH) = XAv - (Sv + Lv).
+Hypothesis HeH : u (edenot E' eH) = STRend - (Sv + Lv).
 Hypothesis HeG : u (edenot E' eG) = XBv - (Sv + Lv).
-Hypothesis HeXA : u (edenot E' eXA) = XAv.
+Hypothesis HeXA : u (edenot E' eXA) = STRend.
 Hypothesis HeXB : u (edenot E' eXB) = XBv.
-Hypothesis HeLH : u (edenot E' eLH) = XAv - Sv.
+Hypothesis HeLH : u (edenot E' eLH) = STRend - Sv.
 Hypothesis Hbl : bl j = nth k argv [].
 
 Lemma str_facts :
   know_ok ASEGS E' M
-    [ KRange eG 17 4194304; KAlign eXB 64; KRange eXB 0 two47;
+    [ KRange eG 10 4194304; KAlign eXB 64; KRange eXB 0 two47;
       KWord (SA eE 0) 1 (ELit 0); KBlob (SA eS 0) eL j;
       KRange eH 1 4194304; KAlign eXA 8; KRange eXA 1 two47; KUnk (SA eS 0) eLH ].
 Proof.
   pose proof nums as (N1 & N2 & N3 & N4 & N5 & N6 & N7 & N8 & N9 & N10 & N11 & N12 & N13 & N14 & N15).
-  destruct (AsDrvBridgeArgv.str_end ph sp rdraw argv envp uid hw Hsp Hva Hve Hfit k Hk) as (E1 & E2 & E3).
+  destruct (AsDrvBridgeArgv.str_end ph apc sp rdraw brk0 mbase inp Hsp Hva Hve Hvl Hlau k Hk) as (E1 & E2 & E3).
+  pose proof strend_rng as (R1 & R2 & R3 & R4 & R5). pose proof (R5 k Hk) as R6.
   rewrite <- HLv, <- HSv in E1. rewrite <- HSv in E3.
   assert (HL131 : 0 <= Lv <= 131071) by (rewrite HLv; pose proof (valid_argv_str_len argv k Hva Hk); lia).
   unfold know_ok. repeat apply Forall_cons; try apply Forall_nil; cbn [kentry_ok].
@@ -401,23 +721,23 @@ Proof.
   - rewrite HeXB. unfold two47. lia.
   - split; [lia|]. split; [unfold flat, estart; cbn [a_base a_off]; rewrite HeE; lia|].
     rewrite (adenot_val E' eE 0 (Sv + Lv)) by (rewrite ?HeE; lia).
-    pose proof (AsDrvBridgeArgv.sinv_byte ph sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit E M HSINV k (length (nth k argv [])) Hk ltac:(lia)) as B.
+    pose proof (AsDrvBridgeArgv.sinv_byte ph apc sp rdraw brk0 mbase inp Hsp Hva Hve Hvl Hlau E M HSINV k (length (nth k argv [])) Hk ltac:(lia)) as B.
     rewrite <- HSv, <- HLv in B. rewrite nth_middle in B. exact (rdn1_mem M _ _ B).
   - unfold flat, estart, elenZ. cbn [a_base a_off eb E']. rewrite HeS, HeL, Hbl.
     split; [lia|]. split; [lia|]. intros i Hi.
-    pose proof (AsDrvBridgeArgv.sinv_byte ph sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit E M HSINV k (Z.to_nat i) Hk ltac:(lia)) as B.
+    pose proof (AsDrvBridgeArgv.sinv_byte ph apc sp rdraw brk0 mbase inp Hsp Hva Hve Hvl Hlau E M HSINV k (Z.to_nat i) Hk ltac:(lia)) as B.
     rewrite <- HSv in B. rewrite Z2Nat.id in B by lia. rewrite app_nth1 in B by lia. rewrite Z.add_0_r. exact B.
   - rewrite HeH. lia.
-  - rewrite HeXA. split; [lia | exact N9].
+  - rewrite HeXA. split; [lia | exact R1].
   - rewrite HeXA. unfold two47. lia.
   - unfold flat, estart, elenZ. cbn [a_base a_off]. rewrite HeS, HeLH. split; [lia|]. intros i Hi. rewrite Z.add_0_r.
-    apply (AsDrvBridgeArgv.sinv_def ph sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit E M HSINV).
+    apply (AsDrvBridgeArgv.sinv_def ph apc sp rdraw brk0 mbase inp Hsp Hva Hve Hvl Hlau E M HSINV).
     rewrite u64_lit by lia. lia.
 Qed.
 End Str.
 
 (* [comment removed for export] *)
-Lemma boot_in : forall K, In K BOOTF -> kentry_ok ASEGS E M K.
+Lemma boot_in : forall K, In K (BOOTF RS) -> kentry_ok ASEGS E M K.
 Proof. intros K HK. exact (proj1 (Forall_forall _ _) know_boot K HK). Qed.
 
 Lemma sp0_val : u (edenot E e_sp0) = u sp.
@@ -440,25 +760,187 @@ Proof.
   - lia.
 Qed.
 
-(* [comment removed for export] *)
+(* Route (C) for the strings' shadow (see AsDrvMainCertA.vis_ok).  [B64v] is [e_bend64], the
+   AT_RANDOM block's 64-aligned top; [TOPv] is [e_top = 4096 * ceil ((sp - 160) / 4096)]. *)
+Definition B64v : Z := 64 * ((u sp + Z.of_nat (block_head_size rseq argv envp) + 63) / 64).
+Definition TOPv : Z := 32768 * (u sp / 32768) + 4096 * TVv.
+
+Lemma vis_ok_h : vis_ok RS hs = true.
+Proof. destruct Hhs as [-> | ->]; [exact (vis_ok_1 rseq) | exact (vis_ok_2 rseq)]. Qed.
+
+(* The block head in the start-up variables' terms ([StackLayout.block_head_size], as in
+   [D0v_eq]). *)
+Lemma head_eq : Z.of_nat (block_head_size rseq argv envp)
+  = 8 * Z.of_nat (length argv) + (8 * Z.of_nat (length envp) + (8 * Z.of_nat (block_items argv envp mod 2) + (472 + 32 * RS))).
+Proof.
+  pose proof (AsSInit.auxv_count_rz rseq) as HA.
+  assert (HB : block_items argv envp = (length argv + length envp + 3)%nat) by reflexivity.
+  unfold block_head_size, auxv_size. cbv zeta. lia.
+Qed.
+
+(* The three start-up stack windows start above [sp - 8 MiB - 160] and end at [sp],
+   [e_top] and [e_bend64]. *)
+Lemma win_facts : forall p, existsb (pair_eqb p) (stk_wins RS) = true ->
+  u sp - 8388768 <= APS.uE E (fst p) /\ APS.uE E (fst p) + APS.uE E (snd p) <= Z.max B64v TOPv.
+Proof.
+  intros [e n] H.
+  pose proof nums as (N1 & N2 & N3 & N4 & N5 & N6 & N7 & N8 & N9 & N10 & N11 & N12 & N13 & N14 & N15).
+  pose proof head_eq as HE.
+  assert (HR : 0 <= RS <= 1) by (unfold rseq_z; destruct (kb_rseq (in_kernel inp)); lia).
+  assert (HG : 0 <= Z.of_nat (block_items argv envp mod 2) <= 1)
+    by (pose proof (Nat.mod_upper_bound (block_items argv envp) 2 ltac:(lia)); lia).
+  apply existsb_exists in H as ([e' n'] & Hq & Heq). cbn [fst snd].
+  apply APS.pair_eqb_eq in Heq. injection Heq as H1 H2. subst e' n'.
+  unfold stk_wins in Hq. cbn [In] in Hq. unfold APS.uE.
+  destruct Hq as [Hq|[Hq|[Hq|[]]]]; injection Hq as Ee En; subst e n.
+  - rewrite (evEb stk_w1 (32768 * (u sp / 32768) + 16 * (u sp mod 32768 / 16) + -8388608) eq_refl),
+      (evEb (ELit 8388608) 8388608 eq_refl);
+      unfold B64v, TOPv, TVv; Z.div_mod_to_equations; lia.
+  - rewrite (evEb stk_w2 (32768 * (u sp / 32768) + 4096 * TVv + -8388608) eq_refl),
+      (evEb (ELit 8388608) 8388608 eq_refl);
+      unfold B64v, TOPv, TVv; Z.div_mod_to_equations; lia.
+  - rewrite (evEb (stk_w3 RS) (32768 * (u sp / 32768) + (8 * Z.of_nat (length argv) + (8 * Z.of_nat (length envp)
+                 + (16 * (u sp mod 32768 / 16) + (8 * ((B64v - (u sp + Z.of_nat (block_head_size rseq argv envp))) / 8)
+                 + 8 * Z.of_nat (block_items argv envp mod 2))))) + (-4193832 + 32 * RS)) eq_refl),
+      (evEb (ELit 4194304) 4194304 eq_refl);
+      unfold B64v, TOPv, TVv; rewrite ?HE; Z.div_mod_to_equations; lia.
+Qed.
+
+(* A range the checker finds flat and apart from the high-shadow grant. *)
+Lemma apart_facts : forall p, apart_hsh (kn hs) p = true ->
+  0 <= APS.uE E (fst p) /\ APS.uE E (fst p) + APS.uE E (snd p) <= 2 ^ 64
+  /\ (APS.uE E (fst p) + APS.uE E (snd p) <= HSB \/ HSB + HSL <= APS.uE E (fst p)).
+Proof.
+  intros [e n]. unfold apart_hsh. cbn [fst snd].
+  destruct (split_lit e) as [pb pk] eqn:HSp. intros H. cbv beta iota in H.
+  apply andb_prop in H as [HF HR].
+  destruct (APS.flat_x_sound ASEGS E M (kn hs) pb pk n know_full HF) as (F1 & F2 & F3).
+  assert (U : APS.uE E e = estart E (SA pb pk)) by (unfold APS.uE; apply (APS.u_of_split E e pb pk HSp); lia).
+  pose proof (ranges_apart_x_sound ASEGS E M (kn hs) pb pk n (ELit 0) HSB (ELit HSL) know_full HR) as RA.
+  assert (S0 : estart E (SA (ELit 0) HSB) = HSB)
+    by (unfold estart; cbn [a_base a_off edenot]; rewrite u64_lit by lia; unfold HSB; lia).
+  rewrite S0, (elenZ_lit E HSL) in RA by (unfold HSL; lia). unfold elenZ in RA.
+  (* The three conjuncts are [F1], [F2] and [RA] as they stand; the unit's [lia] (MhTac)
+     does not close a goal whose last conjunct is a disjunction. *)
+  rewrite U. unfold APS.uE. split; [exact F1|]. split; [exact F2|]. exact RA.
+Qed.
+
+(* A range the checker also finds apart from the stack region [sp - 8 MiB, sp + 2^47). *)
+Lemma below_facts : forall p, apart_hsh (kn hs) p = true -> below_stk (kn hs) p = true ->
+  APS.uE E (fst p) + APS.uE E (snd p) <= u sp - 8388608 \/ u sp + 2 ^ 47 <= APS.uE E (fst p).
+Proof.
+  intros [e n]. unfold apart_hsh, below_stk. cbn [fst snd].
+  destruct (split_lit e) as [pb pk] eqn:HSp. intros H HB. cbv beta iota in H, HB.
+  apply andb_prop in H as [HF _].
+  destruct (APS.flat_x_sound ASEGS E M (kn hs) pb pk n know_full HF) as (F1 & F2 & F3).
+  assert (U : APS.uE E e = estart E (SA pb pk)) by (unfold APS.uE; apply (APS.u_of_split E e pb pk HSp); lia).
+  pose proof (ranges_apart_x_sound ASEGS E M (kn hs) pb pk n e_usp (-8388608) (ELit STKL) know_full HB) as RB.
+  pose proof (AsDrvBridgeArgv.sp_rng sp Hsp) as (S1 & S2 & S3).
+  assert (S0 : estart E (SA e_usp (-8388608)) = u sp - 8388608).
+  { unfold estart. cbn [a_base a_off].
+    rewrite (evEb e_usp (32768 * (u sp / 32768) + 16 * (u sp mod 32768 / 16)) eq_refl); Z.div_mod_to_equations; lia. }
+  rewrite S0, (elenZ_lit E STKL) in RB by (unfold STKL; lia). unfold elenZ in RB.
+  (* Stdlib's lia core: the unit's [lia] (MhTac) gives up on this goal shape. *)
+  rewrite U. unfold APS.uE. unfold STKL in RB. destruct RB as [RB|RB]; [left | right]; Zify.zify; xlia zchecker.
+Qed.
+
+(* The shadow of the stack bytes above [e_bend64] and [e_top] is zero: the shadow byte is
+   in the high-shadow grant, so it is mapped, lazy and not no-access ([co_maps],
+   [co_kinds]); no visible or ghost range covers it or its shadow ([vis_ok]); it lies
+   below the allocation top; so it is hidden and [co_zero] makes it zero. *)
+Lemma shadow_zero_hi : forall z, B64v <= z -> TOPv <= z -> z < XBv ->
+  M (Z_to_bv 64 (SB + z / 8)) = Some (Z_to_bv 8 0).
+Proof.
+  intros z Hz1 Hz2 Hz3.
+  pose proof nums as (N1 & N2 & N3 & N4 & N5 & N6 & N7 & N8 & N9 & N10 & N11 & N12 & N13 & N14 & N15).
+  assert (HB0 : u sp <= B64v) by (unfold B64v; Z.div_mod_to_equations; lia).
+  assert (Hy : HSB <= SB + z / 8 < HSB + HSL) by (unfold HSB, HSL, SB; Z.div_mod_to_equations; lia).
+  remember (SB + z / 8) as y eqn:Ey.
+  remember (Z_to_bv 64 y) as a eqn:Ea.
+  assert (UA : u a = y) by (rewrite Ea; apply u64_lit; unfold HSB, HSL in Hy; lia).
+  assert (SV : u (edenot E ISP_S) = u sp) by exact sp0_val.
+  assert (ATOP : alloc_top (m_vmmaps model) = u sp - 8388608).
+  { unfold alloc_top, stack_max_size. rewrite (APS.co_isp _ _ _ _ _ _ _ _ _ _ _ _ HC), SV. lia. }
+  assert (IH : img_hi AT_A = 0x65d000) by reflexivity.
+  assert (SO : shadow_off AT_A = SB) by reflexivity.
+  pose proof vis_ok_h as VO. unfold vis_ok in VO.
+  apply andb_prop in VO as [VO VM]. apply andb_prop in VO as [VV VG].
+  apply existsb_exists in VM as (m & Hm & Hmq). apply APS.amap_eqb_eq in Hmq. subst m.
+  assert (BND : u (edenot E (am_base hsh_map)) <= u a < u (edenot E (am_base hsh_map)) + u (edenot E (am_len hsh_map))).
+  { cbn [hsh_map am_base am_len edenot]. rewrite UA, !u64_lit by (unfold HSB, HSL; lia). unfold HSB, HSL in *. lia. }
+  pose proof (proj1 (Forall_forall _ _) (APS.co_kinds _ _ _ _ _ _ _ _ _ _ _ _ HC) hsh_map Hm) as K.
+  destruct (K eq_refl a BND) as [K1 K2].
+  assert (NV : APS.in_vis E hs y = false).
+  { apply Bool.not_true_iff_false. intros X. unfold APS.in_vis in X. apply existsb_exists in X as (p & Hp & Xp). cbv beta in Xp.
+    apply andb_prop in Xp as [X1 X2]. apply Z.leb_le in X1. apply Z.ltb_lt in X2.
+    pose proof (proj1 (forallb_forall _ _) VV p Hp) as Pp. cbv beta in Pp.
+    apply orb_prop in Pp as [W|W].
+    - destruct (win_facts p W) as (W1 & W2). unfold HSB, HSL in *. lia.
+    - apply andb_prop in W as [WA _]. destruct (apart_facts p WA) as (A1 & A2 & A3). lia. }
+  assert (NS : APS.in_sh AT_A E hs y = false).
+  { apply Bool.not_true_iff_false. intros X. unfold APS.in_sh in X. apply existsb_exists in X as (p & Hp & Xp). cbv beta in Xp.
+    apply andb_prop in Xp as [X1 X2]. apply Z.leb_le in X1. apply Z.ltb_lt in X2.
+    unfold APS.sh_lo, APS.sh_hi in X1, X2. rewrite SO in X1, X2.
+    pose proof (proj1 (forallb_forall _ _) VV p Hp) as Pp. cbv beta in Pp.
+    apply orb_prop in Pp as [W|W].
+    - destruct (win_facts p W) as (W1 & W2). Z.div_mod_to_equations. lia.
+    - apply andb_prop in W as [WA WB]. destruct (apart_facts p WA) as (A1 & A2 & A3).
+      destruct (below_facts p WA WB) as [B|B]; Z.div_mod_to_equations; lia. }
+  assert (NG : APS.in_ghost E hs y = false).
+  { apply Bool.not_true_iff_false. intros X. unfold APS.in_ghost in X. apply existsb_exists in X as (p & Hp & Xp). cbv beta in Xp.
+    apply andb_prop in Xp as [X1 X2]. apply Z.leb_le in X1. apply Z.ltb_lt in X2.
+    destruct (apart_facts p (proj1 (forallb_forall _ _) VG p Hp)) as (A1 & A2 & A3). lia. }
+  apply (APS.co_zero _ _ _ _ _ _ _ _ _ _ _ _ HC a).
+  - unfold APS.hid. apply orb_true_intro. right. apply negb_true_iff.
+    unfold APS.vis. cbv zeta. rewrite UA, ATOP, K2.
+    replace (APS.in_hull AT_A y) with false
+      by (symmetry; unfold APS.in_hull; rewrite IH; apply andb_false_iff; right; apply Z.ltb_ge; unfold HSB in Hy; lia).
+    replace (u sp - 8388608 <=? y) with false by (symmetry; apply Z.leb_gt; unfold HSB, HSL in Hy; lia).
+    unfold APS.in_allow. rewrite NV, NS. cbn [negb orb]. apply andb_false_r.
+  - eapply APS.in_ivs_maps_match; [exact (APS.co_maps _ _ _ _ _ _ _ _ _ _ _ _ HC) | exact Hm | reflexivity | exact BND].
+  - exact K1.
+  - exact K2.
+  - rewrite UA. exact NG.
+Qed.
+
+(* [cont_fact]: the shadow of [sp, top) is zero.  Below [e_bend64] it is the start state's
+   e_bend64 window ([BOOTF]'s KZero at [e_w64]); between [e_bend64] and [e_top] its e_top
+   window ([e_tsh]); above both, [shadow_zero_hi]. *)
 Lemma cont_fact : forall eLEN, u (edenot E' eLEN) = XBv - u sp -> kentry_ok ASEGS E' M (KShOk (SA SP0 48) eLEN).
 Proof.
   intros eLEN HLEN.
   pose proof nums as (N1 & N2 & N3 & N4 & N5 & N6 & N7 & N8 & N9 & N10 & N11 & N12 & N13 & N14 & N15).
-  pose proof (AsSInit.bsb_ge ph sp rdraw argv envp uid hw) as (G1 & G2). fold lenb in G1, G2.
-  assert (KZ : kentry_ok ASEGS E M (KZero (SA e_b64 2146926617) (ELit 524288))).
-  { apply boot_in. unfold BOOTF. apply in_or_app. right. right. right. left. reflexivity. }
-  destruct KZ as [_ HZ]. unfold estart, elenZ in HZ. cbn [a_base a_off edenot] in HZ. rewrite u64_lit in HZ by lia.
-  assert (Hb : u (edenot E e_b64) = XBv / 8 - 25).
-  { rewrite (evEb e_b64 (4096 * (u sp / 32768) + (Z.of_nat (length argv) + (Z.of_nat (length envp)
-               + ((lenb - 16 - (8 * Z.of_nat (length argv) + 8 * Z.of_nat (length envp) + 184)) / 8 + (2 * (u sp mod 32768 / 16) + (XBv - (u sp + lenb)) / 8))))) eq_refl);
-      rewrite N15 in *; Z.div_mod_to_equations; lia. }
-  rewrite Hb in HZ.
+  pose proof head_eq as HE.
+  assert (HR : 0 <= RS <= 1) by (unfold rseq_z; destruct (kb_rseq (in_kernel inp)); lia).
+  assert (HG : 0 <= Z.of_nat (block_items argv envp mod 2) <= 1)
+    by (pose proof (Nat.mod_upper_bound (block_items argv envp) 2 ltac:(lia)); lia).
+  assert (HB0 : u sp <= B64v <= u sp + 4000126 /\ B64v mod 64 = 0) by (unfold B64v; Z.div_mod_to_equations; lia).
+  assert (HT0 : u sp - 160 <= TOPv <= u sp + 3935) by (unfold TOPv, TVv; Z.div_mod_to_equations; lia).
+  assert (HW : u (edenot E e_w64) = B64v / 8 - 59 - 4 * RS).
+  { rewrite (evEb e_w64 (4096 * (u sp / 32768) + (Z.of_nat (length argv) + (Z.of_nat (length envp)
+               + (2 * (u sp mod 32768 / 16) + ((B64v - (u sp + Z.of_nat (block_head_size rseq argv envp))) / 8
+               + Z.of_nat (block_items argv envp mod 2)))))) eq_refl);
+      unfold B64v in *; rewrite ?HE in *; Z.div_mod_to_equations; lia. }
+  assert (HTs : 8 * u (edenot E e_tsh) = TOPv).
+  { rewrite (evEb e_tsh (4096 * (u sp / 32768) + 512 * TVv) eq_refl); unfold TOPv, TVv in *; Z.div_mod_to_equations; lia. }
   cbn [kentry_ok]. unfold flat, estart, elenZ. cbn [a_base a_off]. rewrite SP0_val, HLEN.
   split; [lia|]. split; [lia|].
   intros z Hz. exists (Z_to_bv 8 0). split; [|left; reflexivity].
-  replace (SB + z / 8) with (XBv / 8 - 25 + 2146926617 + (z / 8 - XBv / 8 + 524288)) by (unfold SB; lia).
-  apply HZ. rewrite N15 in *. Z.div_mod_to_equations. lia.
+  destruct (Z_lt_ge_dec z B64v) as [Hb|Hb].
+  - assert (KZ : kentry_ok ASEGS E M (KZero (SA e_w64 (2146926651 + 4 * RS)) (ELit 524288))).
+    { apply boot_in. unfold BOOTF. apply in_or_app. right. right. right. left. reflexivity. }
+    destruct KZ as [_ HZ]. unfold estart, elenZ in HZ. cbn [a_base a_off edenot] in HZ. rewrite u64_lit in HZ by lia.
+    replace (SB + z / 8) with (u (edenot E e_w64) + (2146926651 + 4 * RS) + (z / 8 - B64v / 8 + 524288))
+      by (rewrite HW; unfold SB; lia).
+    apply HZ. Z.div_mod_to_equations. lia.
+  - destruct (Z_lt_ge_dec z TOPv) as [Ht|Ht].
+    + assert (KZ : kentry_ok ASEGS E M (KZero (SA e_tsh 2146402304) (ELit 1048576))).
+      { apply boot_in. unfold BOOTF. apply in_or_app. right. right. right. right. right. left. reflexivity. }
+      destruct KZ as [_ HZ]. unfold estart, elenZ in HZ. cbn [a_base a_off edenot] in HZ. rewrite u64_lit in HZ by lia.
+      replace (SB + z / 8) with (u (edenot E e_tsh) + 2146402304 + (z / 8 - u (edenot E e_tsh) + 1048576))
+        by (unfold SB; lia).
+      apply HZ. Z.div_mod_to_equations. lia.
+    + exact (shadow_zero_hi z ltac:(lia) ltac:(lia) ltac:(lia)).
 Qed.
 
 Lemma okb_bootsh : forallb (kentry_okb (fun _ => false)) BOOT_SH = true. Proof. reflexivity. Qed.
@@ -474,15 +956,15 @@ Qed.
 Lemma STR1v : (1 < length argv)%nat -> STRv 1 = STRv 0 + L0v + 1.
 Proof.
   intros H1. assert (Hk0 : (0 < length argv)%nat) by lia.
-  destruct (AsDrvBridgeArgv.str_end ph sp rdraw argv envp uid hw Hsp Hva Hve Hfit 0 Hk0) as (E1 & _). unfold L0v. lia.
+  destruct (AsDrvBridgeArgv.str_end ph apc sp rdraw brk0 mbase inp Hsp Hva Hve Hvl Hlau 0 Hk0) as (E1 & _). unfold L0v. lia.
 Qed.
 
 Definition KS0 : list kentry :=
-  [ KRange G0 17 4194304; KAlign (eadd END0 G0) 64; KRange (eadd END0 G0) 0 two47;
+  [ KRange G0 10 4194304; KAlign (eadd END0 G0) 64; KRange (eadd END0 G0) 0 two47;
     KWord (SA END0 0) 1 (ELit 0); KBlob (SA STR0 0) L0 1;
     KRange H0 1 4194304; KAlign (eadd END0 H0) 8; KRange (eadd END0 H0) 1 two47; KUnk (SA STR0 0) (eadd L0 H0) ].
 Definition KS1 : list kentry :=
-  [ KRange G1 17 4194304; KAlign (eadd END1 G1) 64; KRange (eadd END1 G1) 0 two47;
+  [ KRange G1 10 4194304; KAlign (eadd END1 G1) 64; KRange (eadd END1 G1) 0 two47;
     KWord (SA END1 0) 1 (ELit 0); KBlob (SA STR1 0) L1 2;
     KRange H1 1 4194304; KAlign (eadd END1 H1) 8; KRange (eadd END1 H1) 1 two47; KUnk (SA STR1 0) (eadd L1 H1) ].
 
@@ -492,6 +974,7 @@ Lemma ks0_facts : bl 1%nat = nth 0 argv [] -> know_ok ASEGS E' M KS0.
 Proof.
   intros Hbl.
   pose proof nums as (N1 & N2 & N3 & N4 & N5 & N6 & N7 & N8 & N9 & N10 & N11 & N12 & N13 & N14 & N15).
+  pose proof strend_rng as (R1 & R2 & R3 & R4 & R5).
   assert (Hk0 : (0 < length argv)%nat) by lia.
   assert (HS0 : u sp - 48 + D0v = STRv 0) by (unfold D0v; lia).
   apply (str_facts 0 STR0 END0 (eadd END0 H0) (eadd END0 G0) L0 H0 G0 (eadd L0 H0) 1 (STRv 0) L0v Hk0 eq_refl eq_refl).
@@ -510,8 +993,9 @@ Lemma ks1_facts : (1 < length argv)%nat -> bl 2%nat = nth 1 argv [] -> know_ok A
 Proof.
   intros Hac Hbl.
   pose proof nums as (N1 & N2 & N3 & N4 & N5 & N6 & N7 & N8 & N9 & N10 & N11 & N12 & N13 & N14 & N15).
+  pose proof strend_rng as (R1 & R2 & R3 & R4 & R5). pose proof (R5 1%nat Hac) as R6.
   pose proof (STR1v Hac) as S1.
-  destruct (AsDrvBridgeArgv.str_end ph sp rdraw argv envp uid hw Hsp Hva Hve Hfit 1 Hac) as (E1 & E2 & E3). fold L1v in E1.
+  destruct (AsDrvBridgeArgv.str_end ph apc sp rdraw brk0 mbase inp Hsp Hva Hve Hvl Hlau 1 Hac) as (E1 & E2 & E3). fold L1v in E1.
   assert (HS0 : u sp - 48 + D0v = STRv 0) by (unfold D0v; lia).
   apply (str_facts 1 STR1 END1 (eadd END1 H1) (eadd END1 G1) L1 H1 G1 (eadd L1 H1) 2 (STRv 1) L1v Hac eq_refl eq_refl).
   - ev' (u sp - 48 + (D0v + L0v + 1)); lia.
@@ -542,19 +1026,33 @@ Proof.
   intros Hac.
   pose proof nums as (N1 & N2 & N3 & N4 & N5 & N6 & N7 & N8 & N9 & N10 & N11 & N12 & N13 & N14 & N15).
   pose proof (AsDrvBridgeArgv.sp_rng sp Hsp) as (S1 & S2 & S3).
-  assert (KW : kentry_ok ASEGS E M (kw_argv1 e_argv1w)).
+  assert (KW : kentry_ok ASEGS E M (kw_argv1 (e_argv1w RS))).
   { apply boot_in. unfold BOOTF. apply in_or_app. right. right. right. right. left. reflexivity. }
   unfold kw_argv1 in KW. destruct KW as (_ & _ & KW).
   rewrite (adenot_val E e_sp0 16 (u sp + 16)) in KW by (rewrite ?sp0_val; lia).
-  assert (Hs1 : u (edenot E e_str1) = STRv 0 + L0v + 1).
-  { rewrite (AsDrvBridgeArgv.sinv_val ph sp rdraw brk0 argv envp uid hw E M HSINV e_str1 eq_refl).
-    pose proof (AsSInit.u_e_str1 ph sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit) as U. unfold APS.uE in U. rewrite U. unfold L0v. lia. }
-  assert (Hw : edenot E e_argv1w = edenot E' STR1).
-  { apply bv_eq. rewrite (evE' STR1 (u sp - 48 + (D0v + L0v + 1)) eq_refl) by (unfold D0v; lia).
+  assert (Hs1 : u (edenot E (e_str1 RS)) = STRv 0 + L0v + 1).
+  { (* [e_str1 RS]'s variable check is decided per flag value (its literal is symbolic in RS). *)
+    rewrite (AsDrvBridgeArgv.sinv_val ph apc sp rdraw brk0 mbase inp E M HSINV (e_str1 RS)
+               ltac:(destruct (kb_rseq (in_kernel inp)); reflexivity)).
+    pose proof (AsSInit.u_e_str1 ph apc sp rdraw brk0 mbase inp Hsp Hva Hve Hlau) as U. unfold APS.uE in U. rewrite U.
+    unfold AsDrvBridgeArgv.STRv, L0v. change (firstn 0 argv) with (@nil (list byte)).
+    change (total_arg_bytes_nat []) with 0%nat. lia. }
+  assert (Hw : edenot E (e_argv1w RS) = edenot E' STR1).
+  { (* The range side condition: [D0v] is now [cat_string_off + 48], so its bound comes from
+       [Hs1]'s word, read back through [STRv 0]; Stdlib's lia core, as at [below_facts]. *)
+    apply bv_eq. rewrite (evE' STR1 (u sp - 48 + (D0v + L0v + 1)) eq_refl)
+      by (pose proof (u64_range (edenot E (e_str1 RS))) as UR; rewrite Hs1 in UR;
+          unfold AsDrvBridgeArgv.STRv in UR; change (firstn 0 argv) with (@nil (list byte)) in UR;
+          change (total_arg_bytes_nat []) with 0%nat in UR; unfold D0v; Zify.zify; xlia zchecker).
     unfold e_argv1w. cbn [edenot Sem.mul_div Sem.alu64 Sem.alu]. unfold bv_ltu.
     pose proof boot_vals as (_ & _ & V1 & _). change V_ARGC with 1%nat. rewrite V1.
     replace (u (Z_to_bv 64 1) <? Z.of_nat (length argv)) with true by (symmetry; apply Z.ltb_lt; rewrite u64_lit by lia; lia).
-    rewrite bv_mul_unsigned, bv_wrap64_mod, u64_lit by lia. rewrite Hs1. rewrite Z.mod_small by lia. unfold D0v. lia. }
+    rewrite bv_mul_unsigned, bv_wrap64_mod, u64_lit by lia. rewrite Hs1.
+    (* [Z.mod_small]'s range is [Hs1]'s word's own range; the last step reads [STRv 0]
+       off [nums] (N7).  Stdlib's lia core, as above. *)
+    rewrite Z.mod_small
+      by (pose proof (u64_range (edenot E (e_str1 RS))) as UR; rewrite Hs1 in UR; Zify.zify; xlia zchecker).
+    unfold D0v. Zify.zify; xlia zchecker. }
   cbn [kentry_ok]. split; [lia|]. split; [unfold flat, estart; cbn [a_base a_off]; rewrite SP0_val; lia|].
   rewrite (adenot_val E' SP0 64 (u sp + 16)) by (rewrite ?SP0_val; lia). rewrite <- Hw. exact KW.
 Qed.
@@ -692,22 +1190,24 @@ Lemma pure_vis : forall K, APS.kfoot E' K = None -> VISF K.
 Proof. intros K H z Hz. unfold AzKnowLib.in_kfoot in Hz. rewrite H in Hz. destruct Hz. Qed.
 
 Lemma str_vis : forall (eS eE eXA eXB eL eH eG eLH : expr) (j : nat) (Sv Lv : Z),
-  STRv 0 <= Sv -> 0 <= Lv -> Sv + Lv + 1 <= XAv ->
-  u (edenot E' eS) = Sv -> u (edenot E' eE) = Sv + Lv -> u (edenot E' eL) = Lv -> u (edenot E' eLH) = XAv - Sv ->
-  Forall VISF [ KRange eG 17 4194304; KAlign eXB 64; KRange eXB 0 two47; KWord (SA eE 0) 1 (ELit 0); KBlob (SA eS 0) eL j;
+  STRv 0 <= Sv -> 0 <= Lv -> Sv + Lv + 1 <= STRend ->
+  u (edenot E' eS) = Sv -> u (edenot E' eE) = Sv + Lv -> u (edenot E' eL) = Lv -> u (edenot E' eLH) = STRend - Sv ->
+  Forall VISF [ KRange eG 10 4194304; KAlign eXB 64; KRange eXB 0 two47; KWord (SA eE 0) 1 (ELit 0); KBlob (SA eS 0) eL j;
                 KRange eH 1 4194304; KAlign eXA 8; KRange eXA 1 two47; KUnk (SA eS 0) eLH ].
 Proof.
   intros eS eE eXA eXB eL eH eG eLH j Sv Lv HS0 HL0 HSL HeS HeE HeL HeLH.
   pose proof nums as (N1 & N2 & N3 & N4 & N5 & N6 & N7 & N8 & N9 & N10 & N11 & N12 & N13 & N14 & N15).
+  pose proof strend_rng as (R1 & R2 & R3 & R4 & R5).
   repeat apply Forall_cons; try apply Forall_nil; try (apply pure_vis; reflexivity).
   - intros z. apply (vis_app _ (Sv + Lv) 1); [cbn [APS.kfoot]; unfold estart; cbn [a_base a_off]; rewrite HeE, Z.add_0_r; reflexivity | lia | lia].
   - intros z. apply (vis_app _ Sv Lv); [cbn [APS.kfoot]; unfold estart, elenZ; cbn [a_base a_off]; rewrite HeS, HeL, Z.add_0_r; reflexivity | lia | lia].
-  - intros z. apply (vis_app _ Sv (XAv - Sv)); [cbn [APS.kfoot]; unfold estart, elenZ; cbn [a_base a_off]; rewrite HeS, HeLH, Z.add_0_r; reflexivity | lia | lia].
+  - intros z. apply (vis_app _ Sv (STRend - Sv)); [cbn [APS.kfoot]; unfold estart, elenZ; cbn [a_base a_off]; rewrite HeS, HeLH, Z.add_0_r; reflexivity | lia | lia].
 Qed.
 
 Lemma big0_vis : Forall VISF BIG0.
 Proof.
   pose proof nums as (N1 & N2 & N3 & N4 & N5 & N6 & N7 & N8 & N9 & N10 & N11 & N12 & N13 & N14 & N15).
+  pose proof strend_rng as (R1 & R2 & R3 & R4 & R5).
   assert (HS0 : u sp - 48 + D0v = STRv 0) by (unfold D0v; lia).
   unfold BIG0. apply Forall_app; split.
   { apply Forall_forall. intros K HK z Hz. pose proof (proj1 (forallb_forall _ _) vis_syn_b K HK) as X. cbv beta in X.
@@ -722,7 +1222,7 @@ Proof.
   { repeat apply Forall_cons; try apply Forall_nil.
     - intros z Hz. exact (sp_vis_sound (KWr (SA SP0 (- YLO)) (ELit YLO)) z eq_refl Hz).
     - intros z Hz. exact (sp_vis_sound (KUnk (SA SP0 (- YLO)) (ELit YLO)) z eq_refl Hz).
-    - intros z. apply (vis_shok SP0 (- YLO) (ELit (YLO + 48)) (u sp - 8388608) 8388608); [rewrite SP0_val; unfold YLO; lia | cbn [edenot]; rewrite u64_lit by (unfold YLO; lia); reflexivity | lia | lia | lia]. }
+    - intros z. apply (vis_shok SP0 (- YLO) (ELit (YLO + 48)) (u sp - 6144000) (YLO + 48)); [rewrite SP0_val; unfold YLO; lia | cbn [edenot]; rewrite u64_lit by (unfold YLO; lia); reflexivity | lia | unfold YLO; lia | unfold YLO; lia]. }
   apply Forall_app; split.
   { apply Forall_cons; [|apply Forall_nil]. intros z.
     apply (vis_shok SP0 48 _ (u sp) (XBv - u sp)); [rewrite SP0_val; lia | | lia | lia | lia].
@@ -734,8 +1234,9 @@ Lemma big1_vis : (1 < length argv)%nat -> Forall VISF BIG1.
 Proof.
   intros Hac.
   pose proof nums as (N1 & N2 & N3 & N4 & N5 & N6 & N7 & N8 & N9 & N10 & N11 & N12 & N13 & N14 & N15).
+  pose proof strend_rng as (R1 & R2 & R3 & R4 & R5). pose proof (R5 1%nat Hac) as R6.
   pose proof (STR1v Hac) as S1.
-  destruct (AsDrvBridgeArgv.str_end ph sp rdraw argv envp uid hw Hsp Hva Hve Hfit 1 Hac) as (E1 & E2 & E3). fold L1v in E1.
+  destruct (AsDrvBridgeArgv.str_end ph apc sp rdraw brk0 mbase inp Hsp Hva Hve Hvl Hlau 1 Hac) as (E1 & E2 & E3). fold L1v in E1.
   assert (HS0 : u sp - 48 + D0v = STRv 0) by (unfold D0v; lia).
   unfold BIG1. apply Forall_app; split.
   { apply (str_vis STR1 END1 (eadd END1 H1) (eadd END1 G1) L1 H1 G1 (eadd L1 H1) 2 (STRv 1) L1v); try lia.
@@ -786,7 +1287,13 @@ Proof.
   - exact (APS.co_halt _ _ _ _ _ _ _ _ _ _ _ _ HC).
   - exact (APS.co_fs _ _ _ _ _ _ _ _ _ _ _ _ HC).
   - rewrite S8. pose proof (APS.co_fds _ _ _ _ _ _ _ _ _ _ _ _ HC) as FD.
-    destruct Hhs as [-> | ->]; exact FD.
+    (* The hand-off state's descriptor table is [FdStd] at both CONFIG_RSEQ values; with the
+       flag symbolic the table lookup does not reduce, so it is rewritten first. *)
+    assert (AF : forall b, a_fd (HS_1 (rseq_z b)) = FdStd /\ a_fd (HS_2 (rseq_z b)) = FdStd)
+      by (intros [|]; split; vm_compute; reflexivity).
+    destruct Hhs as [-> | ->];
+      [rewrite (proj1 (AF (kb_rseq (in_kernel inp)))) in FD | rewrite (proj2 (AF (kb_rseq (in_kernel inp)))) in FD];
+      exact FD.
   - rewrite S3, S4, S9. exact HAINV.
   - exact HU.
   - exact Hfx.
@@ -796,6 +1303,8 @@ Proof.
   - rewrite S4, S10. cbn [length]. unfold GPS.uE. cbn [edenot]. rewrite u64_lit by (unfold FMIN; lia). unfold FMIN. lia.
   - rewrite S11, S6, S7. cbn [acs_floor GPS.floor_sem]. unfold GPS.sptop_den. rewrite HT.
     replace (u sp - 48 =? 0) with false by (symmetry; apply Z.eqb_neq; lia). unfold YLO. lia.
+  - (* [co_rdr], the record's field at this revision: the hand-off invariant's own reader. *)
+    exact (APS.co_rdr _ _ _ _ _ _ _ _ _ _ _ _ HC).
 Qed.
 
 (* [comment removed for export] *)

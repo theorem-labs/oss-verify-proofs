@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image B' (asan-ubsan, harness fix #102, PIN sha256
    d663f82d7f488d30f8e8d7496cb814e595a2f3cbbf16bde81a65cb3ea9af0994, unstripped twin c90d4fa5):
    SEGMENT L5b of LLVMFuzzerTestOneInput (entry 0x816cc), the call check_round_trip (&doc), proved against
@@ -17,7 +18,7 @@
              unchanged, the ledger, the tree at &doc, g_most kept, own' = 0, ran' = 0, the count growth
              ck_crt_count t cset, the exact advance by |round_trip t|).
    (A' 0x818e0 -> 0x818e8; B' 0x819cc -> 0x819d4.)
-   STATEMENT: lib/A/Ent102CutsB.v blob 856984d6c3cd (a working branch b1bc025047ea, CUT STABLE of the
+   STATEMENT: lib/A/Ent102CutsB.v blob 856984d6c3cd (a working branch, CUT STABLE of the
    decff kit sync on the exact room position: ec_inv's ledger is `exists most own, prh_ledger .. most own`):
    seg_L5b_stmt, cut_rm, cut_crt,
    ec_hyps (ech_texts / ech_img / ech_univ / ech_ccut_ok
@@ -26,16 +27,16 @@
    ec_pay's epay_crt / ecov_crt.
    LISTING: lib/B/Listing_prog.v blob 1ab147923c5d with the PAListing PL_102_B of lib/A/Ent102PLB.v; the image half
    stays generic ({PA : PAImg B_prog_listing}; lib/A/PAImg_prog.v is not loaded, no vm_compute on pa_val / pa_sigma).
-   THE BATCH KIT'S TEXT: lib/A/PRH_FnCheck.v tcheck_round_trip_specX, read at
-   commit b1ed4e6c944d + the CallA / CallB re-fit
-   3ea93d01b97c. THE WILD BUDGET: ec_inv's journal is budgeted
+   THE BATCH KIT'S TEXT: lib/A/PRH_FnCheck.v tcheck_round_trip_specX, read
+    + the CallA / CallB re-fit.
+   THE WILD BUDGET: ec_inv's journal is budgeted
    (`exists WS, ajournal_xw .. WS /\ wbudget [] wk WS`); each step's materialized model keeps the same WS (the local
    l5b_ajw_wvb: rebase, materialize, unbase0); the call goes through YCbqGwild.aj_call_xWFb with P := wbudget []
    (prh_wk F_check_round_trip), its room by Ent102CutsB.v ec_room_at from ec_wk_rm, and cut_crt's budget ec_wk_crt
-   by YCbqGwild.wbudget_app. The text's LAST premise (the kit 4b8f95c0455c), the live real stack `YGcallStackUp.astack_up_x
+   by YCbqGwild.wbudget_app. The text's LAST premise (the kit), the live real stack `YGcallStackUp.astack_up_x
    segs ly W (spZ regs) mem` at the call, is ec_pre's entry fact at e_sp0 E carried by the cut's journal to the
    callee's sp e_B E (a Theorem Labs lane's YGcallStackUp.astack_up_at_xw, any wild budget; the step of a Theorem Labs lane's
-   crt_up_at_call_B, a working branch dd5c35f62c70). No DW; its run is at ReaderRes.jr_strtod (no rp_sm binder), so
+   crt_up_at_call_B, a working branch). No DW; its run is at ReaderRes.jr_strtod (no rp_sm binder), so
    the cut's facts over e_sm E are rewritten through ec_pre's tie Hsm, including the post's position (an `exact`
    across the two strtod terms does not terminate). Its ledger premise `prh_ledger .. most 0` is ec_inv's ledger at
    the cut's ec_most / ec_own_is cells (lib/AU/Prog/Ent102CallB.v ec_ledger_cells, the shared copy). cut_crt's new
@@ -44,7 +45,7 @@
    PURE FACTS CITED: lib/A/Ent102ReqA.v ec_req_bound_holds (RQA_crt t <= g_most and RQ_crt t + cf_head <
    cf_malloc_max), lib/Prog/SlotSizes.v wlen_false_read / wlen_true_read (the two writer lengths).
    ONE NAMED PREMISE: sat_rq_crt, Ent102ReqA.v's own premise in its exact text (owner a Theorem Labs lane). It is DISCHARGED at
-   the preset instance by Ent102ReqA.v ec_req_bound_holds_preset (a working branch 1d8b9491bb66), through
+   the preset instance by Ent102ReqA.v ec_req_bound_holds_preset (a working branch), through
    a Theorem Labs lane's lib/Spec/PjReqBoundC.v (blob 196cc949112c) rq_crt_abs `RQ_crt t + cf_head <= 352321446` /
    rq_crt_cf_bound, stated at cp := CfParamsPreset.CfParams_preset. This Section is generic over {cp : CfParams},
    where the fact is not derivable, so the premise stays named here and the instantiation cites that lemma.
@@ -57,7 +58,7 @@
    exit=0, + 364 cold refs by name and by every cut address, checker CONFIRM; NEW walk on the #102 pins).
    NUMERALS: 0x300 / 0x304 / 0x308 are this lane's slot offsets (DERIVED: EC_AR_RM - EC_BASE, +4, +8); 128 / 120 / 104
    / 88 / 56 / 32 / 16 / 8 are LENGTHs; 144 is EC_SAVE + 16; 32768 is LLVMF_STK; 3 * 2 ^ 20 is the text's length
-   bound; 2 ^ 40, 2 ^ 47, 2 ^ 62, 2 ^ 64 and the ASan band constants are the engine's range facts. No ADDRESS.    THE B' TWIN of lib/A/Prog/Ent102L5bA.v (row LL5b, seg_L5b_A, Qed at 499d46f7590a (a working branch)), made with
+   bound; 2 ^ 40, 2 ^ 47, 2 ^ 62, 2 ^ 64 and the ASan band constants are the engine's range facts. No ADDRESS.    THE B' TWIN of lib/A/Prog/Ent102L5bA.v (row LL5b, seg_L5b_A, Qed (a working branch)), made with
    a Theorem Labs lane's port/a2b.py and then re-pointed at image B' by hand: L := B_prog_listing with the PAListing
    PL_102_B of lib/B/Ent102PLB.v, the statement from lib/AU/Ent102CutsB.v, and the two image-side helper
    modules swapped for their B twins (lib/AU/Prog/Ent102CallB.v, Ent102L6BfLem.v, same lemma names). The kit
@@ -144,7 +145,7 @@ Local Ltac l5b_pre H := clear - H; unfold ec_pre in H; ec_conj_pick H.
 (* The cut's journal is budgeted (YCbqGwild.ajournal_xw at the spent wild budget WS). A step's
    materialized model keeps it at the same WS: rebased to the empty budget (YCbqGwild.ajournal_xw_rebase),
    materialized there (YCbqG.ajournal_x_materialize), put back on WS by its own wild inclusion
-   (YCbqGwild.ajournal_xw_unbase0 with ajx_wild) - a Theorem Labs lane's l5d_ajw_wvb (LL5dB at commit 1e05beefe2a1) *)
+   (YCbqGwild.ajournal_xw_unbase0 with ajx_wild) - a Theorem Labs lane's l5d_ajw_wvb (LL5dB) *)
 (* over the world relation R of the journal (this lane's is wle', the free move) *)
 Lemma l5b_ajw_wvb : forall {R : world SEGS -> world SEGS -> Prop} STK sp0 FP ly S Hp (W : world SEGS) mem md own ly' S'
   Hp' (W' : world SEGS) mem' md' k WS X,
@@ -407,7 +408,7 @@ eapply SRrG_mono.
       - (* The batch kit's consumer window (Ent102Win.cons_from_after_cno): every allocation of round_trip t at cut_rm's
            index is a consumer event, because none of check_no_overread's three readings ran out *)
         rewrite <- Hsm. exact (ec_rt_window E trp t Hi0E Hsm HLXN Hrof Hread).
-      - (* THE LIVE REAL STACK at the call (the kit 4b8f95c0455c's last premise; HUPC above) *)
+      - (* THE LIVE REAL STACK at the call (the kit's last premise; HUPC above) *)
         exact HUPC. }
     intros W' c' _ HPOST. unfold fpostFbm, fpostFb, YCbqGwild.apost_base_xbF in HPOST.
     destruct HPOST as (fx' & ly' & S' & Hp' & regs' & mem' & md' & k' & WS' & Hc' & Hz' & Hfk' & HPW' & HJ' & Hpr'

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (new path for munmap's injected -ENOMEM refusal: the spin address A_SPIN_MUNMAPDIE, the refused state mu_refused, its postcondition mu_die_post and the lemma munmap_post_die that the refused branch spins silently). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -72,6 +73,48 @@ Section Munmap.
     unfold mu_answered, A_GOT_CFLAGS, A_CFLAGS, A_MMAP_LIMIT in *. lx_aceil.
     (* [comment removed for export] *)
     lx_run (PLAN [] [] 40%N). lx_postw.
+  Qed.
+  (* 08b1429: munmap of an exact mapping may answer an injected -ENOMEM
+     ([Mmap.munmap_spec]).  UnmapOrDie then calls ReportMunmapFailureAndDie, whose first
+     test (the word at A_GOT_SEALED2 is 1 and A_DYING is 0) executes [j .] before any
+     report: the refused branch is a silent spin (recipes/munmap-refused.md). *)
+  Definition A_SPIN_MUNMAPDIE : Z := 0x76630.
+
+  Definition mu_refused (SP : Z) (gp tp t0 t1 t2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 a2 a3 a4 a5 a6 : word)
+      (F : bvmap 5 word) (fc : bv 32) (addr size raw : Z) (mm : mem) : machine_state :=
+    OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.MState.MS
+      (OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Frame.mkR (Z_to_bv 64 509284) (Z_to_bv 64 (SP + -48)) gp tp t0 t1 t2 (Z_to_bv 64 size) (Z_to_bv 64 raw)
+         (Z_to_bv 64 (2^64 - 12)) (Z_to_bv 64 size) a2 a3 a4 a5 a6 (Z_to_bv 64 215) (Z_to_bv 64 addr)
+         s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
+      F (Z_to_bv 64 503032) fc None mm (OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.seg_rom OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.A.AImg.asegs).
+
+  Definition mu_die_post (fc : bv 32) : machine_state -> Prop :=
+    fun ms' => exists r F' mm, ms' = OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.MState.MS r F' (Z_to_bv 64 A_SPIN_MUNMAPDIE) fc None mm
+                                  (OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.PropExec.seg_rom OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.A.AImg.asegs).
+
+  #[using="IMG ALWF CSOK"] Lemma munmap_post_die :
+    forall (ra gp tp t0 t1 t2 s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 a2 a3 a4 a5 a6 : word)
+      (SP : Z) (F : bvmap 5 word) (fc : bv 32) (m0 mm : mem) (addr size raw lo : Z) (fr : list (bv 8)),
+    (0 < addr /\ addr < 2^47) -> (0 < size /\ size < 2^47) -> (0 <= raw /\ raw < 2) ->
+    OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Step.rw_cells OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.A.AImg.asegs mm (SP + -48)
+      [OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Cells.CB 16%nat fr; OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Cells.C8 s2; OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Cells.C8 s1; OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Cells.C8 s0; OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Cells.C8 ra] ->
+    OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Step.ro_cells OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.A.AImg.asegs mm A_GOT_SEALED2 [OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Cells.C8 (Z_to_bv 64 1)] ->
+    OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Step.ro_cells OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.A.AImg.asegs mm A_DYING [OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Cells.C4 (Z_to_bv 64 0)] ->
+    OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Frame.stk OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.A.AImg.asegs mm lo (SP + -48) ->
+    6664192 <= lo -> lo <= SP - 320 -> SP <= 2^63 ->
+    OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Frame.munch [(lo, SP)] m0 mm -> OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Frame.wmono OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.A.AImg.asegs m0 mm ->
+    OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Mem.mem_inv OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.A.AImg.asegs mm ->
+    OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA.ALazy.crange CS lo (SP - lo) ->
+    OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA.AEvtA.evtA OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.A.AImg.asegs AL CS (mu_die_post fc)
+      (mu_refused SP gp tp t0 t1 t2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 a2 a3 a4 a5 a6 F fc addr size raw mm).
+  Proof.
+    pose proof (I : lx_noaceil) as LXNOACEIL.
+    intros ra gp tp t0 t1 t2 s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 a2 a3 a4 a5 a6 SP F fc m0 mm addr size raw lo fr
+      AB SZ RW FR SEAL DY ST LOIMG SPL SPH MU WM MI SCS.
+    pose proof (cs_ok_sb _ _ CSOK) as SB64. pose proof ALWF as ALWF'; unfold al_wf in ALWF'. pose proof IMG as IMG'; unfold asan_img_ok in IMG'.
+    unfold mu_refused, A_GOT_SEALED2, A_DYING in *. lx_aceil.
+    lx_run (PLAN [0x76630] [] 120%N).
+    apply evtA_done. unfold mu_die_post, A_SPIN_MUNMAPDIE. do 3 eexists. reflexivity.
   Qed.
 End Munmap.
 

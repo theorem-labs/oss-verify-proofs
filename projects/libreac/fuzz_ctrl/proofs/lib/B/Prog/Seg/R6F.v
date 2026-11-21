@@ -2,12 +2,12 @@
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
    source run: lib/B/Prog/Seg/R6.v r6_evt (:347, call reac_ctrl_build_as) at
-     a working branch 3803efccea0 (blob d8957c66823992660227d2960c0c48a0a1559330);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+     a working branch (blob d8957c66823992660227d2960c0c48a0a1559330);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    compare: r6_evt is split at its single call into r6_evt_pre_F (stop at reac_ctrl_build_as entry 0x8528c,
-     ra = 0x81710; re-runs R6.v:453 do-9-step) and r6_evt_post_F (from the return pc 0x81710, which is the run's
-     exit, 0 further steps; re-runs R6.v:490-499 as a repackaging of the reac_ctrl_build_as post facts into the
+     ra = 0x81710; re-runs R6.v:454 do-9-step) and r6_evt_post_F (from the return pc 0x81710, which is the run's
+     exit, 0 further steps; re-runs R6.v:491-500 as a repackaging of the reac_ctrl_build_as post facts into the
      exit cut). Bridge inputs only to a Theorem Labs lane's cgif-form walk.
    rule 24: no function proved. *)
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
@@ -68,7 +68,7 @@ Proof.
 Qed.
 
 (* From the return pc 0x81710 (= the run's exit cut): 0 further steps; the reac_ctrl_build_as post facts the
-   proved run used, stated over the post-call state, give the run's exit Q (R6.v:411-434). *)
+   proved run used, stated over the post-call state, give the run's exit Q (R6.v:412-435). *)
 Lemma r6_evt_post_F : forall (RNG : footprint)
     (sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word)
     (F : bvmap 5 word) (fc : bv 32) (m m' : word -> option byte) (R : bvmap 5 word)

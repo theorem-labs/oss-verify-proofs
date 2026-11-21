@@ -13,8 +13,8 @@ is too narrow compiles and states a false fact. So each value below is derived, 
 - Each file is paired through the relocating runs' own stage map, not by path name: the core-recheck slice's
   `d9e0/files.tsv` (port_core runs A1 and A2 over cgif_file_fuzzer lib/A) and `inventory.tsv` (the route of every file
   of lib/A, lib/B, lib/Reusable, lib/A/Rt and lib/B/Rt), at the same bytes as the shipped core-recheck/d9e0/files.tsv (sha256 497cbf8baf06) and core-recheck/inventory.tsv (sha256 f0de038c6c2a).
-  - A core: a lib/A file of run A1 or A2 pairs with `proofs/cgif/cgif_file_fuzzer/lib/A/` of the same name at
-    c8557374ad2e; a lib/Reusable file whose route is a port_core run-1 copy or a copied donor model file pairs with the
+  - A core: a lib/A file of run A1 or A2 pairs with `proofs/cgif/cgif_file_fuzzer/lib/A/` of the same name;
+    a lib/Reusable file whose route is a port_core run-1 copy or a copied donor model file pairs with the
     cgif file of the same name at the cgif lib root.
   - B core: a lib/B file (made from our lib/A file by the A->B relay, or the B start-up set) pairs with cgif's own B
     twin `lib/Yxx.v` and with our `lib/A/Axx.v`. A value is donor-identical only when it equals the cgif B twin's;
@@ -24,8 +24,8 @@ is too narrow compiles and states a false fact. So each value below is derived, 
   - Files in neither map pair with the released cgif_file_fuzzer tree by base name; else they are the unit's own and
     are counted, not derived.
 - Missing mapping files: the donor named for lib/{A,B}/Rt/RtStrcmp*.v (proofs/libreac/fuzz_grant/lib/A/Rt/Strcmp*.v,
-  10 files) and for lib/B/Rt/RtSMxA.v (proofs/omx-clap-core/fuzz_preset/lib/A/FCxA.v) are at neither c8557374ad2e nor
-  781f46bc05cd; the best available copies (proofs/libreac/fuzz_ctrl/lib/{A,B}/Rt/, proofs/omx-clap-core/fuzz_state/lib/B/)
+  10 files) and for lib/B/Rt/RtSMxA.v (proofs/omx-clap-core/fuzz_preset/lib/A/FCxA.v) are at neither nor;
+  the best available copies (proofs/libreac/fuzz_ctrl/lib/{A,B}/Rt/, proofs/omx-clap-core/fuzz_state/lib/B/)
   are used. files.tsv lists lib/A/AF0r.v and lib/A/AF0s.v, which are not in the tree at plugin-hostd/fuzz_command tree (git tree 86ee7833f146; internal record).
 - An item is donor-identical when the same normalized text (module paths ignored) is in the paired donor file. Every
   donor-identical item that holds an address (234 address uses) was checked on the pins: each address is the same

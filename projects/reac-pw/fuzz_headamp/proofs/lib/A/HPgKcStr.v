@@ -12,7 +12,7 @@
    object). It subsumes the literal instance of libreac/fuzz_pcap lib/A/Rt/StrcmpDef.v (x = y, k = the literal's
    length, c1 = c2 = 0, result 0). *)
 (* Modified by Theorem Labs, 2026-10-29: taken by path from libreac/fuzz_grant lib/Reusable/AStrcmpDef.v
-   (a working branch 97c611eec86, owner a Theorem Labs lane, the text of record for the strcmp trampoline contract in
+   (a working branch, owner a Theorem Labs lane, the text of record for the strcmp trampoline contract in
    a Theorem Labs lane's registry). Only the module paths change (fuzz_grant -> fuzz_identity); the statement is identical. The
    walk is a Theorem Labs lane's lib/A/Rt/Strcmp.v, relocated to identity's addresses separately. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_identity/lib/AStrcmpDef.v (donor image sha256 c954b804786c), with its module paths changed. *)
@@ -21,7 +21,7 @@
    for the strcmp wrapper's contract astrcmp_realizes of lib/Reusable/AStrcmpDef.v (fuzz_identity's text, module paths
    changed): the same journal threading through ecall_pre_at and ajournal_after_write, with the strcmp contract's
    str_meet premise and its strcmp_res result in place of bcmp's n-byte compare. The string lemmas below are new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgStrcmp.v at afaa3cb55c1 for reac-pw/fuzz_headamp
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgStrcmp.v for reac-pw/fuzz_headamp
    image A; module paths changed; the contract astrcmp_realizes is taken as the Section hypothesis STRCMP at 0x41ba0,
    for every float state, with str_meet and strcmp_res unfolded (hks_meet / hks_res name the same two texts inside
    this file); aj_strcmp_at -> hks_strcmp_at, cstr_at -> hks_cstr_at, strcmp_res_0 -> hks_res_0, cstr_at_cons /
@@ -29,6 +29,7 @@
    hks_hull_sub / hks_src_sub (range_addressable_sub and amem_range_sub are YG0v.v's and HPgBase.hd_amem_range_le);
    rl_cstr_args -> hks_cstr_args (from HPgBase.hd_cstr, with the wrapper's 2 ESTACK window); hks_blk_args,
    hks_cstr_of_garr8, hks_zbytes_inj and the call-site lemma hks_strcmp_call are new. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image A (fuzz_headamp.asan, pinned sha256
    f3e0669d2819724922df0556b11c2dcd22d1e16fe7e0fe1535ce784b34436c47; every address below is measured on the
    unstripped twin b5f352154c54a97c66fd92dfa228e8a854498f6cd313dba0107900546b043f9a, whose loaded sections are
@@ -37,8 +38,8 @@
    THE CALLEE. The strcmp jump at 0x41ba0 enters the ASan strcmp interceptor (the same runtime as fuzz_role's and
    libreac/fuzz_identity's). It compares byte by byte up to the first index k where the bytes differ or s1's byte is
    0, checks the bytes it read, and returns CharCmpX (-1, 0 or 1). It uses at most 2 ESTACK bytes below sp and writes
-   no byte outside them. Its contract is libreac/fuzz_identity lib/Reusable/AStrcmpDef.v astrcmp_realizes at
-   origin/ossv/recipes 2d2ff01bb6f (the same text as reac-pw/fuzz_role lib/Reusable/AStrcmpDef.v, whose
+   no byte outside them. Its contract is libreac/fuzz_identity lib/Reusable/AStrcmpDef.v astrcmp_realizes
+    (the same text as reac-pw/fuzz_role lib/Reusable/AStrcmpDef.v, whose
    only difference is the module paths). No file this one Requires, directly or through another, defines
    astrcmp_realizes (lib/Reusable/AStrcmpDef.v and lib/A/Rt/StrcmpDef.v do), so the Section below takes the contract
    at 0x41ba0 as the hypothesis STRCMP, with str_meet and strcmp_res unfolded and beta-reduced word for word, and
@@ -136,7 +137,7 @@ Definition hks_meet (W : world segs) (mem : word -> option byte) (x y k c1 c2 : 
   (c1 <> c2 \/ c1 = 0).
 
 (* The strcmp wrapper's contract at image A's jump 0x41ba0: libreac/fuzz_identity lib/Reusable/AStrcmpDef.v
-   `astrcmp_realizes segs B A_STRCMP` (origin/ossv/recipes 2d2ff01bb6f; the same statement as reac-pw/fuzz_role
+   `astrcmp_realizes segs B A_STRCMP` (the same statement as reac-pw/fuzz_role
    lib/Reusable/AStrcmpDef.v), with str_meet and strcmp_res unfolded and beta-reduced, at every float
    state fx' (only cfg_at reads it). `exact` of the wrapper walk's theorem at 0x41ba0, stated for every float state,
    discharges it. *)

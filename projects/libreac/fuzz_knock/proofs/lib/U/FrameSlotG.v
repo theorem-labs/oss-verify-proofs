@@ -7,10 +7,13 @@ From OSSVerify.Proofs.libreac.fuzz_knock.lib.U.Reusable Require Import
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.U Require Import
   ZTraceSpec ZComplete ZAllocator SlotTopG Contract FrameAPI.
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Lib Require Mem.
+From OSSVerify.Proofs.libreac.fuzz_knock.lib.U.Reusable.R Require Import Cfg.
 Import ListNotations.
 Open Scope Z_scope.
-Section Bridge.
-Context {fx : FPState} {rc : RunCeil} {LS : lib_shape}.
+(* The pre/post bridge holds for an allocator API of either allocation mode ([FrameSlotGMF] uses it at
+   [MayFail]); the contract bridge [lib_contract_x_G_of_g] below is the forced one. *)
+Section BridgeA.
+Context {fx : FPState} {rc : RunCeil} {LS : lib_shape} {AM : AllocMode}.
 Variable B : malloc_syms.
 Variable API : AllocAPI B.
 Context {SH : sink_head} {SK : sink_syms}.
@@ -33,15 +36,23 @@ Proof using TBL.
   apply (ro_agree_of_rodata_ok B mem); [| exact (TBL L A mem md HMR)].
   repeat match type of Hpre with _ /\ ?R => destruct Hpre as [_ Hpre] end. exact Hpre.
 Qed.
+End BridgeA.
+Section Bridge.
+Context {fx : FPState} {rc : RunCeil} {LS : lib_shape}.
+Variable B : malloc_syms.
+Variable API : AllocAPI B.
+Context {SH : sink_head} {SK : sink_syms}.
+Hypothesis TBL : forall L A mem md, aa_MR API L A mem md -> forall a, static_owned B a -> 0 <= a < 2 ^ 64 ->
+  Mem.ro_addr (ms_segs B) (Z_to_bv 64 a) = true -> mbyte (ms_segs B) mem a = seg_rom (ms_segs B) (Z_to_bv 64 a).
 Lemma lib_contract_x_G_of_g : forall G R GI j pc ra empty stk,
   lib_contract_g B API G R GI j pc ra empty stk -> lib_contract_x_G B API G R GI (fun _ => []) j pc ra empty stk.
 Proof using TBL.
   intros G R GI j pc ra empty stk H L A regs mem md p n pl b K Hpre HGI HR Hfrm HK.
-  apply (H L A regs mem md p n pl b K Hpre HGI HR (ro_agree_of_pre_x stk empty L A regs mem md ra p n pl b Hpre)
+  apply (H L A regs mem md p n pl b K Hpre HGI HR (ro_agree_of_pre_x B API TBL stk empty L A regs mem md ra p n pl b Hpre)
     (lib_pre_x_sp B API stk empty L A regs mem md ra p n pl b Hpre) Hfrm).
   intros l c' (fx' & L' & A' & regs' & mem' & md' & Hc & Hf & Hp & HGI').
   apply HK. exists fx', L', A', regs', mem', md'. split; [exact Hc|]. split; [exact Hf|].
-  split; [exact (lib_post_x_G_of_g G stk L A regs mem md p n b l L' A' regs' mem' md' Hp) | exact HGI'].
+  split; [exact (lib_post_x_G_of_g B API G stk L A regs mem md p n b l L' A' regs' mem' md' Hp) | exact HGI'].
 Qed.
 End Bridge.
 Definition ivls_sub_b (G G' : list (Z * Z)) : bool :=
@@ -92,7 +103,7 @@ Theorem plain_halts_of_frame_slot : forall (G : list (Z * Z)) (GI : nat -> (word
   G_local_c src0_msyms G GI ->
   (forall mem, G_img_c src0_msyms G mem -> GI 0%nat mem) ->
   (forall (rc : RunCeil) (fx : FPState) (j : nat), (j < 4)%nat ->
-     @lib_contract_g fx rc checksum_shape src0_msyms (@zlib_API rc) src0_sink_head src0_sink
+     @lib_contract_g fx rc checksum_shape src0_msyms _ (@zlib_API rc) src0_sink_head src0_sink
        G frame_RELRO GI j ENTRY RA_LIB EMPTY SLOT_STACK) ->
   Statements.ubsan_halts.
 Proof.

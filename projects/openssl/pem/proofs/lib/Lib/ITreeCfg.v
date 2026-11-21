@@ -1,11 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a system call's reads over the larger read-only backing). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Monad Specs Run.
 From OSSVerify.Proofs.openssl.pem.lib.Common Require Import CfgStep CatSim ShapeAlg SpinAlg.
 From OSSVerify.Proofs.openssl.pem.lib.Lib Require Import PropExec MState Mem Exec ITree.
+From OSSVerify.Proofs.openssl.pem.lib.Common.Cfg Require RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 
@@ -39,7 +41,9 @@ Record node_sound_cfg : Prop := {
       nexit n mo code mo' ->
       m_halted mo' = Some code /\ sstep_cfg segs kit_cfg (mkCfg ms mo) [ExitEv code (m_fs mo')] (SNext (mkCfg ms mo'));
   nsc_progress : forall n ms mo, at_node n ms -> m_halted mo = None -> minv mo -> nsafe n mo ->
-      (exists rsp mo' evs, nstep n mo rsp mo' evs) \/ (exists code mo', nexit n mo code mo')
+      (exists rsp mo' evs, nstep n mo rsp mo' evs) \/ (exists code mo', nexit n mo code mo');
+  (* LPS 08b1429: the node's syscall reads the same over a larger read-only backing *)
+  nsc_rob : forall n ms mo, at_node n ms -> minv mo -> nsafe n mo -> RomBase.sys_rob segs (mkCfg ms mo)
 }.
 
 (* [comment removed for export] *)
@@ -181,9 +185,9 @@ Proof.
           rewrite <- Ec in Hp. exact (is_prefix_app_inv_l _ _ _ Hp). }
     destruct (nsc_progress NS n ms1 mo Hat Hh Hinv (proj1 Hsf)) as [(rsp & mo' & ev & Hst)|(code & mo' & Hex)].
     + eapply rz_conseq; [|exact Heq].
-      exact (rz_node segs _ (nidx n mo) evs nx T (inl (exist _ (rsp, mo', ev) Hst)) Hnode Hcont).
+      exact (rz_node segs _ (nidx n mo) evs nx T (inl (exist _ (rsp, mo', ev) Hst)) Hnode (nsc_rob NS n ms1 mo Hat Hinv (proj1 Hsf)) Hcont).
     + eapply rz_conseq; [|exact Heq].
-      exact (rz_node segs _ (nidx n mo) evs nx T (inr (exist _ (code, mo') Hex)) Hnode Hcont).
+      exact (rz_node segs _ (nidx n mo) evs nx T (inr (exist _ (code, mo') Hex)) Hnode (nsc_rob NS n ms1 mo Hat Hinv (proj1 Hsf)) Hcont).
   - destruct (tree_at_choice v k Q ms mo HT) as (ms1 & a & Hm & Hv & HT').
     destruct HT as (_ & _ & Hh & Hinv & _).
     apply (rz_msteps segs ms ms1 mo _ Hh (nsc_lazy NS mo Hinv) (msteps_CatSim ms ms1 Hm)).
@@ -243,9 +247,9 @@ Proof.
           right. exists b'. split; [reflexivity|]. exists tr'. split; assumption. }
     destruct (nsc_progress NS n ms1 mo Hat Hh Hinv (proj1 Hsf)) as [(rsp & mo' & ev & Hst)|(code & mo' & Hex)].
     + eapply rz_conseq; [|exact Heq].
-      exact (rz_node segs _ (nidx n mo) evs nx T (inl (exist _ (rsp, mo', ev) Hst)) Hnode Hcont).
+      exact (rz_node segs _ (nidx n mo) evs nx T (inl (exist _ (rsp, mo', ev) Hst)) Hnode (nsc_rob NS n ms1 mo Hat Hinv (proj1 Hsf)) Hcont).
     + eapply rz_conseq; [|exact Heq].
-      exact (rz_node segs _ (nidx n mo) evs nx T (inr (exist _ (code, mo') Hex)) Hnode Hcont).
+      exact (rz_node segs _ (nidx n mo) evs nx T (inr (exist _ (code, mo') Hex)) Hnode (nsc_rob NS n ms1 mo Hat Hinv (proj1 Hsf)) Hcont).
   - (* [comment removed for export] *)
     cbn in HL. destruct HL as (c & Hc).
     assert (Hpin : forall s, ttrace (Choice v k) mo s -> tr0 ++ s = c).

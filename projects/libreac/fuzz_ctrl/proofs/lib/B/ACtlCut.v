@@ -1,6 +1,6 @@
 (* lib/B/ACtlCut.v -- the cut layer of fuzz_ctrl image B's (asan-ubsan) walk of LLVMFuzzerTestOneInput, in the
    released cgif_file_fuzzer form.  Written by a Theorem Labs lane as the image-B twin of a Theorem Labs lane's lib/A/ACtlCut.v
-   (a working branch e76ced8e847 with a Theorem Labs lane's frame-law fix b535733d786): same definition names, only module
+   (a working branch with a Theorem Labs lane's frame-law fix): same definition names, only module
    paths and image constants differ (check: diff <(sed 's/\bA\./B./g' lib/A/ACtlCut.v) lib/B/ACtlCut.v); section 1b
    (ctl_chain, ctl_trace_in) is written here first and mirrored by image A.  Single writer.  The
    stage files lib/B/ACtlW*.v prove the walk between these cuts and must not edit this file; lib/B/ACtlCutP.v holds
@@ -11,8 +11,8 @@
    - translation of record: llvmf-B-walk-plan.md sections 2-5 (a working note, not in this delivery) and its rulings,
      the image-B twin of llvmf-cgif-walk-plan.md (a working note, not in this delivery); cut table
      cut-table-B.tsv (a working note, not in this delivery) (91 rows, every Inv_* verified at its cited line of
-     image B's lib/B/Prog/SlotInv.v at 23a791566db).
-   - donor, RELEASED: origin/ossv/recipes c8557374ad2e, proofs/cgif/cgif_file_fuzzer/lib.  The cut shell below is
+     image B's lib/B/Prog/SlotInv.v).
+   - donor, RELEASED:, proofs/cgif/cgif_file_fuzzer/lib.  The cut shell below is
      the donor's rt_from (A/ACf5.v:70-80) and its context record rtcx (:45-48), restated for ctrl.  The ENTRY
      and the EXIT are NOT restated: they are the donor's own lib contract, its image-B twin root YCfn.v
      (tfib_lib_pre_x :31-44, tfib_lib_post_x :45-56, tfib_lib_contract_x :57-67), which the relocated core carries
@@ -50,10 +50,10 @@
    lib/Reusable and are named Reusable.<file>: its YCfn.v is ...fuzz_ctrl.lib.Reusable.YCfn (image A's twin is
    lib.A.ACfn).  Reusable.YK11 is one of the 106 files ctrl shares with the donor, kept as ctrl's version.
 
-   BUILD STATE (honest): the core's files arrive with a Theorem Labs lane's relocated core; at 6f430a7d2fa this unit
+   BUILD STATE (honest): the core's files arrive with a Theorem Labs lane's relocated core; this unit
    carries none of those the walk needs (YA0n YA0i YK18 YG00 YG01 YG0f YG0n YG0d YC5d YCbp YCbq YC85 YE00 and
    the root YCfn).  So this file does NOT compile yet; it is a labelled stand-in, it contains no Axiom, no
-   Parameter and no Admitted, and it is scratch-typechecked (zfactsbuild on FACTS ed6b6b7b0ab + PAU
+   Parameter and no Admitted, and it is scratch-typechecked (zfactsbuild on FACTS + PAU
    pau-libreac-v190; there is no cb base, a Theorem Labs lane 21:22Z) the hour the core lands. *)
 
 From Coq Require Import ZArith List Permutation.
@@ -76,7 +76,7 @@ Import ListNotations.
 Local Open Scope Z_scope.
 
 (* The core's segment list.  The lib contract is stated over it (the donor's `Local Notation segs := tfibsegs`,
-   root YCfn.v:29, tfibsegs at root YB1v.v:11), so the cut layer must use the SAME list: a free Variable here would
+   root YCfn.v:29, tfibsegs at root YB1v.v:12), so the cut layer must use the SAME list: a free Variable here would
    make `world segs` a different type from the pre's.  The name `Reusable.YB1v.tfibsegs` is the porter's (22:45Z). *)
 Local Notation segs := Reusable.YB1v.tfibsegs.
 
@@ -135,7 +135,7 @@ Definition ctl_base (cx : ctlcx) : Prop :=
    (amalloc04_rule / afree04_rule, YC5d.v:56-96) take a chain_pre of the caller's frame-pointer chain and its call
    trace in the core's trace universe; the donor builds them per call site (rt_chain, A/ACf5.v:170-185, and
    rt_trace_in, A/ACf5.v:155-163, applied as A/ACf2.v:133-136 does).  Here they are stated once.  Source of the
-   statements: a Theorem Labs lane's HCHAIN (lib/B/ACtlW2a.v section 2, ffb9cb21497), split at its two conjuncts: the chain is
+   statements: a Theorem Labs lane's HCHAIN (lib/B/ACtlW2a.v section 2), split at its two conjuncts: the chain is
    ctl_chain, the trace is ctl_trace_in, and HCHAIN's premises are those of CHAIN_OF_CUT, the named Section
    hypothesis of lib/B/ACtl.v that gives both at every owning cut (a Theorem Labs lane 23:53Z: no Aborted lemma in a shell file,
    so it is a hypothesis where Print Assumptions shows it, not a lemma here).  The reader is the core's
@@ -294,7 +294,7 @@ End CtlCut.
    (after End CtlCut a definition takes only the section variables it uses, in declaration order: ctl_from
    takes B MT XM_LIB RLO RHI FP; ctl_post takes B MT XN_LIB; ctlcx and the cut records take none; the contexts
    fx / rc / LS / SK stay implicit.  The TOP instantiates SK EXPLICITLY with the core's
-   `Reusable.YE2k.tfib_sink_head` (root YE2k.v:44, ofl_head 0x5fcd48 = ctrl's B ofl_head; porter 22:45Z) and never
+   `Reusable.YE2k.tfib_sink_head` (root YE2k.v:45, ofl_head 0x5fcd48 = ctrl's B ofl_head; porter 22:45Z) and never
    lets instance search find YL0j's global src0_sink_head.)
 
    with the cut records C_* from lib/B/ACtlCutP.v.  Standing rules for those files: one local lemma per
@@ -306,7 +306,7 @@ End CtlCut.
    as the donor's ACfj.v:230-258 does. *)
 
 (* ajournal_fp_nil, COPIED VERBATIM from the donor, proofs/cgif/cgif_file_fuzzer/lib/A/ACfh.v:29-43 at
-   origin/ossv/recipes c8557374ad2e (its sections: d with {fx} {rc} {SK} :24-25, e with segs / B :26-28); only the
+   theorem-labs/oss-verify-proofs@6b32741d849a (its sections: d with {fx} {rc} {SK} :24-25, e with segs / B :26-28); only the
    module paths change, and the Section's sink head is passed BY NAME, `(SK := SK)`, to ajournal and
    fp_spares_closed (porter 00:59Z: an implicit sink head can elaborate to a global instance such as YI5b's
    src0_sink_head).  A/ACfh.v does not join the core (porter 22:43Z: its closure pulls 26 non-core files),

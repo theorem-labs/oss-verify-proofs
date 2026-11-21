@@ -29,9 +29,13 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t dataLen) {
 
     gzFile file;
     char fname[] = "gzio.XXXXXX";
-    close(mkstemp(fname));
+    int fd = mkstemp(fname);
+    if (fd < 0)
+      return 0;
+    close(fd);
     unsigned mode_sz = (dataLen ? (--dataLen, *data++) | 2 : 8) & 0xF;
     char mode[mode_sz];
+    memset(mode, 0, mode_sz);
     memcpy(mode, data, dataLen >= mode_sz ? mode_sz - 1: dataLen);
     mode[mode_sz - 1] = 0;
     file = gzopen(fname, mode);
@@ -52,6 +56,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t dataLen) {
         case 1: {
           unsigned sz = dataLen ? ((--dataLen, *data++)&0xF) + 1 : 8;
           char input[sz];
+          memset(input, 0, sz);
           memcpy(input, data, dataLen >= sz ? sz - 1: dataLen);
           input[sz - 1] = 0;
           if(gzputs(file, input) < 0)
@@ -63,6 +68,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t dataLen) {
           unsigned nitems = dataLen ? ((--dataLen, *data++)&0xF) + 1 : 8;
           unsigned count = sz * nitems;
           char input[count];
+          memset(input, 0, count);
           memcpy(input, data, dataLen >= count ? count - 1: dataLen);
           input[count - 1] = 0;
           if(gzfwrite(input, sz, nitems, file) <= 0)
@@ -71,7 +77,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t dataLen) {
         }
         case 3: {
           unsigned sz = dataLen ? (--dataLen, *data++) : 8;
-          char uncompr[sz];
+          char uncompr[sz + 1]; /* sz may be 0; a VLA must not be empty */
           if(gzread(file, uncompr, sz) < 0)
             goto exit;
           break;
@@ -79,7 +85,11 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t dataLen) {
         case 4: {
           int whences[5] = {SEEK_CUR, SEEK_SET, SEEK_END, 18};
           int whence = dataLen ? (--dataLen, whences[(*data++)%5]) : SEEK_CUR;
-          long offset = dataLen >= sizeof(long) ? (*(long*)data &0xFF) + 1: 1L;
+          long offset = 1L;
+          if (dataLen >= sizeof(long)) { /* data need not be aligned for long */
+            memcpy(&offset, data, sizeof(offset));
+            offset = (offset & 0xFF) + 1;
+          }
           if(gzseek(file, offset, whence) < 0)
             goto exit;
           break;
@@ -98,7 +108,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t dataLen) {
         }
         case 8: {
           unsigned sz = dataLen ? (--dataLen, *data++) : 8;
-          char uncompr[sz];
+          char uncompr[sz + 1]; /* sz may be 0; a VLA must not be empty */
           if(gzgets(file, uncompr, sz) < 0)
             goto exit;
           break;
@@ -119,12 +129,16 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t dataLen) {
           int nformat = dataLen ? (--dataLen, *data++)%5 : 1;
           switch(nformat) {
             case 0: {
-              int value = dataLen >= sizeof(int) ? *(int*)data : 1;
+              int value = 1;
+              if (dataLen >= sizeof(int))
+                memcpy(&value, data, sizeof(value));
               gzprintf(file, formats[nformat], value);
               break;
             }
             case 1: {
-              float value = dataLen >= sizeof(float) ? *(float*)data : 1;
+              float value = 1;
+              if (dataLen >= sizeof(float))
+                memcpy(&value, data, sizeof(value));
               gzprintf(file, formats[nformat], value);
               break;
             }
@@ -136,6 +150,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t dataLen) {
             case 3: {
              unsigned sz = dataLen ? ((--dataLen, *data++)&0xF)+1 : 8;
              char input[sz];
+             memset(input, 0, sz);
              memcpy(input, data, dataLen >= sz ? sz - 1: dataLen);
              input[sz - 1] = 0;
              gzprintf(file, formats[nformat], input);
@@ -187,7 +202,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t dataLen) {
         case 19: {
           unsigned sz = dataLen ? (--dataLen, *data++) : 8;
           unsigned nitems = dataLen ? (--dataLen, *data++) : 8;
-          char buffer[sz * nitems];
+          char buffer[sz * nitems + 1]; /* sz or nitems may be 0 */
           if(gzfread(buffer, sz, nitems, file) < 0)
             goto exit;
           break;

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's segment list run_segments). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Bool.
@@ -104,7 +105,7 @@ Variable S : list word.
   must_exit_in_at_cfg cfg segs S c.
 Proof.
   intros c T H;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq];
     intros Hnone HE HK.
   - destruct Hnode as [Hcomp Hsound].
     apply must_exit_in_at_cfg_running.
@@ -159,14 +160,14 @@ Qed.
 (* [comment removed for export] *)
 Lemma must_exit_in_scfg_of_realizes : forall cfg1 cfg2 segs pc ph sp brk0 mb rnd lim inp S T,
   cfg_le cfg1 cfg2 ->
-  realizes_cfg segs cfg2 (init_config segs pc ph sp brk0 mb rnd lim inp) T ->
+  realizes_cfg (run_segments segs inp sp mb) cfg2 (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) T ->
   exits_in S T ->
   kill_free T ->
   must_exit_in_scfg cfg1 S (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp.
 Proof.
   intros cfg1 cfg2 segs pc ph sp brk0 mb rnd lim inp S T Hle HR HE HK.
   cbn [must_exit_in_scfg].
-  apply (realizes_cfg_must_exit_in_le segs cfg1 cfg2 S _ T Hle HR); [| exact HE | exact HK].
+  apply (realizes_cfg_must_exit_in_le (run_segments segs inp sp mb) cfg1 cfg2 S _ T Hle HR); [| exact HE | exact HK].
   cbn [init_config cfg_model]. reflexivity.
 Qed.
 

@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/ExvB_Loop_kitQ.v, with its module paths and module names changed; 1533 of its 1572 lines of code are new or changed and 157 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* On the Step-1 contract texts (the re-hiding move): this slice runs at the world-relation contract (note
    the internal file WLE-CONTRACT.md). Its journals sit at R := YA0nH.wle' SEGS
    YGcfRehidePost.RZ_cf (AJ / AJW below), every stretch statement concludes `YA0nH.SRr' SEGS YGcfRehidePost.RZ_cf ..`,
    round_trip_text's post (fpostFbm, at wle') is crossed by YCbqGwild.aj_call_xbFR at R, and the length bound
    round_trip_text's text now asks after ck_frm0 is the Section hypothesis HOS4 (check_round_trip's own premise). *)
-(* base: commit 2fdcfd7be069 (post-landing line). kb round (brief
+(* base: (post-landing line). kb round (brief
    the internal file wild-budget-kb-reshape.md): crt_live carries its budget kb (M at 0, after
    rtt1 at 32, U at 64, J at 66 = prh_wk F_check_round_trip) and its journal at a budget WS with wbudget [] kb WS;
    arms_wild_budget is RESTATED in that form and DISCHARGED here (arms_wild_budget_goal, Qed, from the text's entry room
@@ -20,11 +21,11 @@
 
    INPUTS OF RECORD (taken by path; every file of this lane repeats them):
    - pins: A' asan 1be0f53d96cb9d6c (twin bff8519bbe3ea0e4), B' asan-ubsan d663f82d7f488d30 (twin c90d4fa54d43160b).
-   - base commit 3f43a64dfc31 (tail Qed; later merged at its descendant commit b21eb25a9c7): commit
-     c52965a03881 (the #102 pins) + the contract texts and Spec by path at the
-     kit tip 3ac20a5c9e30 (PRH_FnCheck.v 0844ed8c0608, PRH_Base.v ee2f5cd7ed35; model
-     PresetReqAt.v 43c958024221, the record; Spec/PresetFreeFo.v 50bc9df2f2de by path from
-     commit 815203ee06e) + the image files of record (YGcfStr 3aabb6857229 pin-free, PSstrlen
+   - base (tail Qed; later merged at its descendant):
+      (the #102 pins) + the contract texts and Spec by path at the
+     kit tip (PRH_FnCheck.v 0844ed8c0608, PRH_Base.v ee2f5cd7ed35; model
+     PresetReqAt.v 43c958024221, the record; Spec/PresetFreeFo.v 50bc9df2f2de by path)
+     + the image files of record (YGcfStr 3aabb6857229 pin-free, PSstrlen
      d2c60d9c2c9f, AF0l dfca6bb1a8d7, record YImgTop, listing v3). The ledger carries g_most and g_own_ran_out
      (prh_ledger .. ran most own); fpre carries frm_zero. AT THE LANDING CUT (PRH_FnCheck.v:1172-1301) round_trip_text is
      keyed on ReaderRes.jr_strtod (no rp_sm binder; this slice keeps check_round_trip's rp_sm with crt_pos's strtod
@@ -36,10 +37,10 @@
      [] (wdoc t p)) - with rd_blocks_wdoc and fo_tblk that is the glue's `.. ~ tblk t` at C3 and U - copy's ORDERED
      free list (FREEORD-COPY) and its capacities (CAP, pj_ncapR), which arms_rtt_bridge carries to the glue's
      forms. Its run events and window are given by ck_rtt_evs_supply / prh_cons_from_app_iff. Its last premise at the
-     kit text 4b8f95c0455c (PRH_FnCheck.v:1241), the UNGUARDED `YGcallStackUp.astack_up_x segs ly W (spZ regs) mem`
+     kit text (PRH_FnCheck.v:1241), the UNGUARDED `YGcallStackUp.astack_up_x segs ly W (spZ regs) mem`
      at the callee's sp, is given at both calls from check_round_trip's own last premise (Section hypothesis HUP0,
      :1390) through the journal from the entry (YGcallStackUp.astack_up_at_x; the measured witness
-     rtt_up_at_call_A, commit 5208cc4f6eb0). + the lane's glue
+     rtt_up_at_call_A). + the lane's glue
      lib/A/Prog/Crt102Glue.v (unchanged here; crt_at_J's r = 0 arm carries copy's ORDERED free list, crt_at_U copy's
      header cap) + S10Env.v + the siblings' Crt102Model.v and Crt102Img.v.
    - WHAT IS PROVED AND WHAT IS ASSUMED (measured on this file's build): every lemma is Qed. At the landing cut
@@ -50,12 +51,12 @@
      the internal file wild-budget-kb-reshape.md) it is restated in the kb form and
      discharged here from the text's entry room HWR0 (arms_wild_budget_goal); arms_rtt_call, arms_after_rtt1 and
      arms_at_M stay Qed implications from it.
-   - listing of record: v3, commit 74dcda1eda12 (lib/A/Listing_prog.v 7ed1529926bd,
-     lib/A/PAImg_prog.v 505a51ff7d08, = d42e123915ae's data); the segment cut DESIGN.md (sha256 d05697dd088c; internal record) (from
+   - listing of record: v3, (lib/A/Listing_prog.v 7ed1529926bd,
+     lib/A/PAImg_prog.v 505a51ff7d08, = a commit's data); the segment cut DESIGN.md (sha256 d05697dd088c; internal record) (from
      DESIGN.md (sha256 d05697dd088c; internal record)); the listing read
      the internal file crt.A.s; source
      src-102/new/fuzz_preset.c (sha256 c7b4007bba7bab3e) new:772-781.
-   - build route pins102: the internal file zfb-targets.85055e6079bccb28.sh (self-hashing), FACTS 8f3e7e1a07f1,
+   - build route pins102: the internal file zfb-targets.85055e6079bccb28.sh (self-hashing), FACTS,
      PAU pau-preset-102.
    - rule 24: no function proved, by the unit owner's INDEX lookup only (proof-index check_round_trip, exit 0,
      an internal record of that lookup; the index snapshot dates from 04:58Z): the released proofs are
@@ -126,7 +127,7 @@ Open Scope Z_scope.
 
 (* ======================================================================================================== *)
 (* ---- the tree predicates: a node is freeable by pj_free to its depth, and deeper (transcribed from an earlier walk's
-   lib/A/Prog/H5CrtS7.v at commit 1934271f1f40, cx_fshape_mono .. cx_nodeR_fd; that file is not in this tree; the same
+   lib/A/Prog/H5CrtS7.v, cx_fshape_mono .. cx_nodeR_fd; that file is not in this tree; the same
    bodies over PRH_Reader.v's R predicates) ---- *)
 Section rd.
 Variable segs : list Segment.
@@ -504,7 +505,7 @@ Hypothesis HFR : Z.of_nat (length (frames S)) <= ck_FRAMES_CAP - FR_check_round_
 (* the text's wild room at entry (PRH_FnCheck.v:1366, kb round): 66 = prh_wk F_check_round_trip fresh wild slots, of
    which each round_trip_text call takes prh_wk F_round_trip_text = 32; read only by arms_wild_budget_goal *)
 Hypothesis HWR0 : YCbqGwild.wild_room (as_universe B) [] (prh_wk F_check_round_trip) (st_depot S).
-(* the live real stack above the entry sp (the text's last premise at the 4b8f95c0455c kit text, PRH_FnCheck.v:1390,
+(* the live real stack above the entry sp (the text's last premise kit text, PRH_FnCheck.v:1390,
    unguarded); read only at the round_trip_text calls (arms_rtt_call), whose text takes it at the callee's sp *)
 Hypothesis HUP0 : YGcallStackUp.astack_up_x SEGS ly W (spZ regs) mem.
 
@@ -953,7 +954,7 @@ Qed.
    the lemmas that do not read it, and read only at the two round_trip_text calls (arms_rtt_call). lia's zify picks up
    a nat premise in context, so the lemmas below that do not reach arms_rtt_call and run lia (or a tactic that may)
    start with `clear HOS4`: it is abstracted only into arms_rtt_call, arms_after_rtt1, arms_at_M and crt102_arms
-   (measured at this file's probe build c03f6006f19f: Check of arms_after_rtt2, which uses every lemma between here
+   (measured at this file's probe build: Check of arms_after_rtt2, which uses every lemma between here
    and arms_after_rtt1 except arms_rtt_call, shows no HOS4) *)
 Hypothesis HOS4 : (length rp_os <= 4)%nat.
 
@@ -1097,11 +1098,11 @@ eapply (YSRrG.SRr'_bind SEGS YGcfRehidePost.RZ_cf).
         change (fs_frame_bytes CRT_CID) with 512 in Hd. unfold CRT_OFF_COPY. fold F in Hd. lia. }
     assert (HFRS : Z.of_nat (length (frames Sc)) <= ck_FRAMES_CAP - FR_round_trip_text).
     { rewrite HFRc. cbn [app length]. pose proof (cm_frames_before (length (frames S)) HFR). lia. }
-    (* THE LIVE REAL STACK ABOVE THE CALLEE'S sp (the text's last premise at the 4b8f95c0455c kit text,
+    (* THE LIVE REAL STACK ABOVE THE CALLEE'S sp (the text's last premise kit text,
        PRH_FnCheck.v:1241): from check_round_trip's own entry fact HUP0 through the journal from the entry
        (YGcallStackUp.astack_up_at_xwR at R, at the journal's budget), the callee's sp SP1 inside the entry's window
-       (arms_sp1, arms_stk). The proof of the measured witness rtt_up_at_call_A (RttStackUpA.v at
-       commit 5208cc4f6eb0, a file not in this tree), done here at the walk's binders *)
+       (arms_sp1, arms_stk). The proof of the measured witness rtt_up_at_call_A (RttStackUpA.v,
+       a file not in this tree), done here at the walk's binders *)
     assert (HUPc : YGcallStackUp.astack_up_x SEGS lyc Wc (spZ (ms_regs ms)) (ms_mem ms)).
     { rewrite Hspz. pose proof arms_stk as (Sk0 & Sk1). pose proof arms_sp1 as (_ & (Sp1 & Sp2) & _).
       (* the journal at its budget WS0 and at R: astack_up_at_xwR reads neither the budget nor

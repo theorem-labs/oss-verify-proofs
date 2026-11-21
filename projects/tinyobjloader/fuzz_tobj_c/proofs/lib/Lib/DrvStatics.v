@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (MInvR, which gained the vDSO conjunct, taken apart by minvr_dest). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -56,7 +57,7 @@ Proof using . intros A rd wok vm H. unfold MInv in H. decompose [and] H. assumpt
 Lemma statics_view_of_MInvR : ltac2:(tb__ "0|0|
 S51SdS46S55Vsegs;VC;R3R2R1A5S4S0S0S38S9R4A1R1A2Lg;A2F_;Fmd;Frho;FA;").
 Proof using .
-  intros A rho md H. unfold MInvR in H. apply MInv_statics_ok in H.
+  intros A rho md H. minvr_dest H. apply MInv_statics_ok in H.
   destruct H as (Hnl & _ & _ & _ & _ & _ & _ & _ & g & Hgot & Hg).
   exists g. split; [exact Hgot|]. split; [exact Hg|exact Hnl].
 Qed.

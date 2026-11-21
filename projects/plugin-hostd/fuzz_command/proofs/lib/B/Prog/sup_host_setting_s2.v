@@ -2,15 +2,16 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk of sup_instance_info (plugin-hostd/fuzz_command,
-   fuzz_command.asan-ubsan, 0x8bb70, 122 instructions), after lib/A/Prog/answer_code.v (a working branch
-   2ba4488ce71: a side-stack frame taken by __asan_stack_malloc_N, its header and shadow, the snprintf call and the
-   release by the flag store) and lib/A/Prog/sup_instance_info.v (a working branch 0de7ca03d26: the
+   fuzz_command.asan-ubsan, 0x8bb70, 122 instructions), after lib/A/Prog/answer_code.v (a working branch:
+   a side-stack frame taken by __asan_stack_malloc_N, its header and shadow, the snprintf call and the
+   release by the flag store) and lib/A/Prog/sup_instance_info.v (a working branch: the
    recorder's chain through record, arg_s, rec_shape_of and answer and the post), re-derived on B's code, against
-   a Theorem Labs lane's statement (a working branch f490061c104). The snprintf step through the shared contract and the change of FP
-   state after it follow a working branch 07b554c4785 (lib/B/Prog/answer_code.v:943-1070), the release
-   by the flag store answer_code.v's end, the post's block algebra a working branch b5e1a22725a
-   (descriptors_panel_get_aux.v dpgb_post_of), the calls after record a working branch c79a9f2daf7. *)
+   a Theorem Labs lane's statement (a working branch). The snprintf step through the shared contract and the change of FP
+   state after it follow a working branch (lib/B/Prog/answer_code.v:944-1071), the release
+   by the flag store answer_code.v's end, the post's block algebra a working branch
+   (descriptors_panel_get_aux.v dpgb_post_of), the calls after record a working branch. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/sup_instance_info.v, with its module paths and module names changed; 397 of its 567 lines of code are new or changed and 1652 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The entry segment of sup_host_setting's ASan+UBSan walk (plugin-hostd/fuzz_command, fuzz_command.asan-ubsan,
    entry BASE + AF_sup_host_setting = 0x8b53c), on the points and statements of sup_host_setting_s0.v:
    - hs_seg_entry: from the entry, the prologue (0x8b53c .. 0x8b580: the 160-byte frame, `sd zero,0(sp)`, the 13
@@ -19,7 +20,7 @@
      call of __asan_stack_malloc_0 (0x8b5b0) through aj_stack_malloc_atS, the frame's slot, header and shadow
      (0x8b5b4 .. 0x8b644), and the call of record(6) (0x8a728, at 0x8b648) through cl_callS_wide, back at REC
      (0x8b64c), where the statement ST_REC takes over. The statement's premise hs_fxrel (i_fx x) fx (the owner's
-     form since a Theorem Labs lane 713692f1e0c: the composition builds x with i_fx := fx) goes unchanged to
+     form since a Theorem Labs lane: the composition builds x with i_fx := fx) goes unchanged to
      ST_REC; __asan_stack_malloc_0 and record run at the Section's fx (hh_smalloc0 / hh_record taken at fx).
    Templates: the ASan walk of answer_code (A_answer_code.v: the side-stack frame's seed, run and keep facts), the B
    lane of sup_after_reply (B_sar_aux.v: the entry seed with the record's use-after-return const cell), and this

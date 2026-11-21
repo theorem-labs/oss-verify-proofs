@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the vvar arm of loads and the vDSO arm of fetch_failure; the walk transfer assumes a segment list with no vDSO text (vdso_entry_fn_none_eqv) and carries each node's RomBase.sys_rob premise across equivalent states (sys_rob_eqv). *)
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -227,7 +228,8 @@ Lemma interp_eff_accesses_eqv : forall t t', eff_eqv t t' -> forall m,
   end.
 Proof.
   intros t t' H. induction H; intros m; cbn [interp_eff_accesses]; auto.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [| exact I].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|];
+      [| destruct (range_meets_vvar segs a (width_bytes n)); exact I].
     specialize (H0 (bv_extract 0 n (le_bytes_to_word bs)) m).
     destruct (interp_eff_accesses segs (k _) m) as [r| |];
     destruct (interp_eff_accesses segs (k' _) m) as [r'| |]; cbn; try exact H0.
@@ -302,7 +304,8 @@ Proof.
   destruct (fetch_word segs (ms_pc_val ms)); [apply decode_exec_accesses_eqv; exact Heqv|].
   destruct (fetch_word_ov segs (ms_mem ms) (ms_pc_val ms)); [apply decode_exec_accesses_eqv; exact Heqv|].
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc_val ms)); [apply decode_exec_accesses_eqv; exact Heqv|].
-  unfold fetch_failure. destruct (negb _); [exact I|]. destruct (_ || _)%bool; exact I.
+  unfold fetch_failure. cbv zeta.
+  repeat match goal with |- context [if ?b then _ else _] => destruct b end; exact I.
 Qed.
 
 Lemma step_eqv : forall ms ms', ms_eqv ms ms' ->
@@ -397,6 +400,7 @@ Import RegsEqv0.
 From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.Lib Require PropExec.
 From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib Require PropExec.
 From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib Require Import ShapeAlg.
+From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib Require Import RomBase.
 From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.Lib Require Import Cfg.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
@@ -405,6 +409,12 @@ Open Scope bv_scope.
 
 Section WithSegs.
 Variable segs : list Segment.
+(* LPS 08b1429: [sstep_cfg] has vDSO arms at an exported entry of the list's vDSO text.  A binary's
+   own segment list has no vDSO text, so those arms never fire on it. *)
+Hypothesis Hvi : vdso_image segs = None.
+
+Lemma vdso_entry_fn_none_eqv : forall pc, vdso_entry_fn segs pc = None.
+Proof. intros pc. unfold vdso_entry_fn. rewrite Hvi. reflexivity. Qed.
 
 (* [comment removed for export] *)
 Definition xfer (ms' : machine_state) (mo : Model) (n : config) : config :=
@@ -480,6 +490,7 @@ Proof.
   intros ms ms' mo evs n Heqv Hst.
   pose proof Heqv as (_ & _ & _ & Hsvc & _).
   inversion Hst; subst.
+  all: try (exfalso; rewrite vdso_entry_fn_none_eqv in *; discriminate).
   - (* [comment removed for export] *)
     lazymatch goal with
     | Hacc : mi_account_step _ _ _ = MachineOk (?ms1, ?mo1), Hsv : ms_svc_pending ms = None |- _ =>
@@ -532,6 +543,7 @@ Proof.
   pose proof (ms_eqv_sym _ _ Heqv) as Heqv'.
   pose proof Heqv as (_ & _ & _ & Hsvc & _).
   inversion Hst'; subst.
+  all: try (exfalso; rewrite vdso_entry_fn_none_eqv in *; discriminate).
   - (* [comment removed for export] *)
     lazymatch goal with
     | Hacc : mi_account_step _ ms' _ = MachineOk (?ms1', ?mo1), Hsv : ms_svc_pending ms' = None |- _ =>
@@ -554,7 +566,7 @@ Proof.
     | Hacc : mi_account_step _ ms' _ = MachineUnmodeled |- _ =>
       pose proof (mi_account_step_eqv segs ms' ms mo Heqv') as K; rewrite Hacc in K;
       destruct (mi_account_step segs ms mo) as [[ms1 mo1]| |] eqn:E; try contradiction;
-      apply sstep_cfg_instr_unmodeled; [assumption | congruence | exact E]
+      apply sstep_cfg_instr_unmodeled; [assumption | congruence | exact E | apply vdso_entry_fn_none_eqv]
     end.
   - (* [comment removed for export] *)
     lazymatch goal with
@@ -620,15 +632,29 @@ Proof.
   - intros i. exact (proj2 (sstep_xfer ms ms' mo (evs i) (nx i) Heqv (Hsound i))).
 Qed.
 
+(* A node's robustness ([RomBase.sys_rob]) reads the state only through [sys_input]. *)
+Lemma sys_rob_eqv : forall ms ms' mo, ms_eqv ms ms' ->
+  sys_rob segs (mkCfg ms mo) -> sys_rob segs (mkCfg ms' mo).
+Proof.
+  intros ms ms' mo Heqv H r x8 Hr Hs o. cbn [cfg_ms cfg_model] in *.
+  pose proof Heqv as (HR & HF & Hpc & Hsvc & Hrv & Hfc & Hm & Hro).
+  assert (Hw : ms_eqv (wrom ms r) (wrom ms' r))
+    by (unfold wrom; repeat split; cbn [ms_regs ms_fregs ms_pc_val ms_svc_pending ms_resv ms_fcsr ms_mem ms_rom];
+        first [assumption | reflexivity]).
+  rewrite <- (sys_input_eqv segs _ _ x8 Hw), <- (sys_input_eqv segs _ _ x8 Heqv).
+  apply H; cbn [cfg_ms]; [rewrite Hro; exact Hr | rewrite Hsvc; exact Hs].
+Qed.
+
 (* [comment removed for export] *)
 Theorem realizes_cfg_eqv : forall c T,
   realizes segs c T -> forall c', cfg_eqv c c' -> realizes segs c' T.
 Proof.
-  intros c T H. induction H as [c I evs nx T i0 Hnode Hk IH | c Hh | c T T' H IH Heq];
+  intros c T H. induction H as [c I evs nx T i0 Hnode Hrob Hk IH | c Hh | c T T' H IH Heq];
     intros c' Heqv.
   - destruct c as [ms mo], c' as [ms' mo']. destruct Heqv as [Hms Hmo]; simpl in Hms, Hmo; subst mo'.
     destruct (node_ok_xfer ms ms' mo I evs nx Hms Hnode) as [Hnode' Hx].
-    apply (rz_node segs (mkCfg ms' mo) I evs (fun i => xfer ms' mo (nx i)) T i0 Hnode').
+    apply (rz_node segs (mkCfg ms' mo) I evs (fun i => xfer ms' mo (nx i)) T i0 Hnode'
+             (sys_rob_eqv ms ms' mo Hms Hrob)).
     intros i. apply (IH i). apply Hx.
   - apply rz_halt. destruct Heqv as [_ <-]. exact Hh.
   - apply (rz_conseq segs c' T T'); [apply IH; exact Heqv | exact Heq].
@@ -731,6 +757,7 @@ Qed.
 
 Section Junction.
 Variable segs : list Segment.
+Hypothesis Hvi : vdso_image segs = None.
 
 (* [comment removed for export] *)
 Corollary realizes_mkst_of_mkR : forall (regs : bvmap 5 word) (pc : word)
@@ -740,7 +767,7 @@ Corollary realizes_mkst_of_mkR : forall (regs : bvmap 5 word) (pc : word)
   realizes segs (mkCfg (@OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.PropExec.mkst OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.PropExec.fx0 regs pc mem
                           (OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.PropExec.seg_rom segs)) mo) T.
 Proof.
-  intros regs pc mem mo T H. apply (realizes_mkst_of_MS segs regs (mkR_of regs)); [|exact H].
+  intros regs pc mem mo T H. apply (realizes_mkst_of_MS segs Hvi regs (mkR_of regs)); [|exact H].
   intros r Hr. apply getr_mkR_of. exact Hr.
 Qed.
 
@@ -751,7 +778,7 @@ Corollary realizes_mkR_of_mkst : forall (regs : bvmap 5 word) (pc : word)
   realizes segs (mkCfg (OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.Lib.MState.MS (mkR_of regs) bvmap_empty pc (Z_to_bv 32 0) None mem
                           (OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.Lib.PropExec.seg_rom segs)) mo) T.
 Proof.
-  intros regs pc mem mo T H. apply (realizes_MS_of_mkst segs regs (mkR_of regs)); [|exact H].
+  intros regs pc mem mo T H. apply (realizes_MS_of_mkst segs Hvi regs (mkR_of regs)); [|exact H].
   intros r Hr. apply getr_mkR_of. exact Hr.
 Qed.
 End Junction.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the encoded statement of open_err_branch_cannot_open is written out in plain text from its decode, with the entry draw rd now passed to open_err_branch). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -42,7 +43,15 @@ Section Branch.
   Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
   Hypothesis ME : main_entry sp0 [a0s; path] envv tid rd regs0 mem0.
 
-  #[using="rd regs0 Hva Hve Hvsp ME"] Theorem open_err_branch_cannot_open : ltac2:(CDefT.buildp (gd_tbl_P_mainleaf_openfail_branch ()) "(0.VAMB,VLM,Vsp0,Va0s,Vpath,Venvv,Vtid,Vmem0,Vbrk,Vmbase,Vfs0,Vstdin0,(1.(2.Vpath,)Vfs0,))")
+  (* Was encoded (CDefT.buildp) over [open_err_branch]'s old arity.  At the revision
+     [open_err_branch] reads the entry draw [rd] (its [p0 a0s path envv rd]), so section closing
+     binds [rd] and the encoded term no longer typechecks (a build of this port said, at line 45,
+     "Illegal application").
+     Written out from its decode (cdeft_print.py), not re-encoded; the one change is [rd] in the
+     argument list, the section's own variable. *)
+  #[using="rd regs0 Hva Hve Hvsp ME"] Theorem open_err_branch_cannot_open :
+    @U_main_open.open_err_branch AMB LM sp0 a0s path envv tid rd mem0 brk mbase fs0 stdin0
+      (Spec.t_die (Spec.msg_cannot_open path) fs0)
 (* [comment removed for export] *).
   Proof.
     intros e vals R M He HL P0 P38 P1 P2 P5 HR HK Habove.

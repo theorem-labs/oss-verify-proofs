@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YA0h.v, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YA0h.v at origin/ossv/recipes 6ebe35ba632 (fuzz_knock's released ASan tree); module paths changed to reac-pw/fuzz_rate. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YA0h.v (fuzz_knock's released ASan tree); module paths changed to reac-pw/fuzz_rate. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the auxiliary vector sized by the run's CONFIG_RSEQ flag; the launch's ProcInput, mmap base and entry draw; the launch input with its SIGPIPE default free; the start-up nodes' CONFIG_RSEQ argument; the mprotect gate over the reservations; the launch's string area with the exec file name); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -33,8 +34,10 @@ Lemma XE0_sound : forall SEGS A nx0 LIMIT TOP SINV argH FS0, emit_stmt SEGS A nx
 Proof. intros ? ? ? ? ? ? ? ?. intros id args cs fd ps cs' E R FULL model T _ H _. discriminate H. Qed.
 Lemma XB0_sound : forall SEGS A nx0 LIMIT TOP SINV argH FS0, ext2_stmt SEGS A nx0 LIMIT TOP XB0 SINV argH FS0.
 Proof. intros ? ? ? ? ? ? ? ?. intros id args cs csa csb E R FULL model TA TB _ H. discriminate H. Qed.
-Lemma x_stmt_XSniff_dead : forall SEGS A nx0 LIMIT TOP SINV argH FS0, x_stmt SEGS A nx0 LIMIT TOP SINV argH FS0 XSniff.
-Proof. intros ? ? ? ? ? ? ? ?. intros args cs cs' E R FULL model T _ _ H. cbn [node_x] in H. discriminate H. Qed.
+(* [x_stmt] takes the run's CONFIG_RSEQ flag after [LIMIT] (YA0e's Section a0); the node is
+   dead, so the lemma holds for every flag. *)
+Lemma x_stmt_XSniff_dead : forall SEGS A nx0 LIMIT rz TOP SINV argH FS0, x_stmt SEGS A nx0 LIMIT rz TOP SINV argH FS0 XSniff.
+Proof. intros ? ? ? ? ? ? ? ? ?. intros args cs cs' E R FULL model T _ _ H. cbn [node_x] in H. discriminate H. Qed.
 Section c.
 Variable segs : list Segment.
 Variable A : atable.
@@ -82,6 +85,16 @@ Variable groups : list word.
 Variable net : NetQueue.
 Variables nofile sigmask : word.
 Variable urnd : InputStream. Variable tmp : Fs.Fs.
+(* The launch's kernel record, exec file name, SIGPIPE disposition and entry pc, as in
+   [YA02]'s Section: [kb], [execfn] and [sdef] are free (so the CONFIG_RSEQ flag [RZ] is the
+   run's own), and [apc] is a Variable because [FULL0], hence [asan_startup_gen]'s own
+   statement, reads it. *)
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variable sdef : bool.
+Variable apc : N.
+Let INP : ProcInput := YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef.
+Let RZ : Z := rseq_z (kb_rseq (in_kernel INP)).
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hbrk : valid_brk segs brk0.
 Hypothesis Hmb : valid_mmap_base mbase.
@@ -90,12 +103,20 @@ Hypothesis Hve : valid_envp envp.
 Hypothesis Hfit : entry_stack_fits sp argv envp.
 Hypothesis Huid : valid_id uid.
 Hypothesis Hhw : valid_hwcap hw.
-#[local] Notation SINV := (SINV0 ph sp rdraw brk0 argv envp uid hw).
-#[local] Notation argH := (argH0 ph sp rdraw argv envp uid hw).
-#[local] Notation E0a := (E0 ph sp rdraw brk0 argv envp uid hw).
+(* the rest of [YA02]'s premises, all given by the launch *)
+Hypothesis Hnof : valid_nofile nofile.
+Hypothesis Hsig : valid_sigmask INP.
+Hypothesis Hapc : Z.of_N apc = a_entry A.
+Hypothesis Hvl : valid_launch INP.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) INP.
+#[local] Notation SINV := (SINV0 ph sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef apc).
+#[local] Notation argH := (argH0 sp rdraw argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef).
+#[local] Notation E0a := (E0 sp rdraw brk0 argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef).
 #[local] Notation LIM := YA02.LIMIT.
 #[local] Notation TOP := (YA02.TOP sp).
 #[local] Notation FSQ := (fs_seed_tmp fs tmp).
+#[local] Notation FULLa := (FULL0 ph sp rdraw mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef apc).
+#[local] Notation MODELa := (model0 segs sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sdef).
 Hypothesis SUM_imemset : fill_spec segs (x_imemset A) 256.
 Hypothesis SUM_memset : fill_spec segs (x_memset A) two64.
 Hypothesis SUM_imemcpy : copy_spec segs (x_imemcpy A).
@@ -113,76 +134,83 @@ Variable startup_plan : plan.
 Variable startup_shape : shape.
 Variables KC0 BFUEL FUEL : nat.
 Hypothesis startup_cert :
-check segs IT0 A NX0G LIM (XNG segs XN1) XE0 XB0 HS hole_le KC0 BFUEL FUEL None (init_acs_of_g A) startup_plan = COk startup_shape.
+check segs IT0 A NX0G LIM RZ (XNG segs XN1) XE0 XB0 HS hole_le KC0 BFUEL FUEL None (init_acs_of_g RZ A) startup_plan = COk startup_shape.
 Variable HOLES : nat -> env -> Fs.Fs -> TSet.
 Hypothesis HOLES_agree : forall h E E' fs', env_agree NX0G E E' -> HOLES h E fs' = HOLES h E' fs'.
 Hypothesis HOLES_nil : forall h E fs', HOLES h E fs' [].
 Hypothesis HOLES_le : forall h' h E fs' tr, hole_le h' h = true -> HOLES h' E fs' tr -> HOLES h E fs' tr.
 Hypothesis HOLES_sound : holes_stmt segs A LIM TOP HS SINV argH HOLES FSQ.
 Let TOK : top_ok TOP := top_ok0 sp Hsp.
-Let AH := argH0_high ph sp rdraw argv envp uid hw Hsp Hva.
-Let AA := argH0_agree ph sp rdraw argv envp uid hw.
-Let SF := SINV0_frame ph sp rdraw brk0 argv envp uid hw.
-Let SA := SINV0_agree ph sp rdraw brk0 argv envp uid hw.
-Let SP0 := SINV0_sp0 ph sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit.
-Let SS1 := SINV0_s1 ph sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit.
-Lemma node_x_sound_all : forall x, x_stmt segs A NX0G LIM TOP SINV argH FSQ x.
+(* [YA02]'s lemmas are applied by unification on their conclusions, the hypotheses closed from
+   this Section's context (the idiom of cgif/cgif_file_fuzzer's YA0h.v in this working copy). *)
+Lemma AH : forall E (a : word), argH E a = true -> TOP <= bv_unsigned a.
+Proof. intros E a H. eapply argH0_high; try eassumption. Unshelve. all: assumption. Qed.
+Lemma AA : forall E E' (a : word), env_agree NX0G E E' -> argH E a = argH E' a.
+Proof. reflexivity. Qed.
+Lemma SF : forall E M M', (forall a, argH E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
+Proof. intros E M M' Hf HSv. eapply SINV0_frame; try eassumption. Unshelve. all: assumption. Qed.
+Lemma SA : forall E E' M, env_agree NX0G E E' -> SINV E M -> SINV E' M.
+Proof. intros E E' M Hag HSv. eapply SINV0_agree; try eassumption. Unshelve. all: assumption. Qed.
+Lemma SP0 : forall E M, SINV E M -> uE E e_sp0 = TOP + 8388608.
+Proof. intros E M HSv. eapply SINV0_sp0; try eassumption. Unshelve. all: assumption. Qed.
+Lemma SS1 : forall E M, SINV E M ->
+uE E e_sp0 = TOP + 8388608 /\ uE E (EVar V_S1) = (TOP + 8388608) / 32768 /\ (TOP + 8388608) mod 16 = 0.
+Proof. intros E M HSv. eapply SINV0_s1; try eassumption. Unshelve. all: assumption. Qed.
+Lemma node_x_sound_all : forall x, x_stmt segs A NX0G LIM RZ TOP SINV argH FSQ x.
 Proof.
 assert (SS0 : forall E M, SINV E M -> SINV E M) by (intros E M H; exact H).
 intros x. destruct x.
-- exact (node_x_sound_XIMemset segs A NX0G LIM TOP SEGS_wx SEGS_in_hull HULL_ok TOK SINV argH AH AA SF SA SS1 SHADOW_ok FSQ SUM_imemset).
-- exact (node_x_sound_XIMemcpy segs A NX0G LIM TOP SEGS_wx SEGS_in_hull HULL_ok TOK SINV argH AH AA SF SA FSQ SEGS_wr SUM_imemcpy).
-- exact (node_x_sound_XMemset segs A NX0G LIM TOP SEGS_wx SEGS_in_hull HULL_ok TOK SINV argH AH AA SF SA SS1 SHADOW_ok FSQ SUM_memset).
-- exact (node_x_sound_XMemcpy segs A NX0G LIM TOP SEGS_wx SEGS_in_hull HULL_ok TOK SINV argH AH AA SF SA FSQ SEGS_wr SUM_memcpy).
-- exact (node_x_sound_XMemIsZero segs A NX0G LIM TOP SEGS_wx SEGS_in_hull HULL_ok TOK SINV argH AH AA SF SA FSQ SUM_miz).
-- exact (init_x_sound_envscan segs A ph SEGS_wx SEGS_in_hull HULL_ok we1 we2 we3 Xenv Fe1 Fe2 Fe3 Ee De1 De2 De3
-sp rdraw brk0 argv envp FSQ Hsp Hva Hve uid hw Hfit SINV SS0 SF).
-- exact (init_x_sound_pnscan segs A ph SEGS_wx SEGS_in_hull HULL_ok wp0 wp1 wp2 wp3 wp4 Xpn Fp0 Fp1 Fp2 Fp3 Fp4 Ep Dp0 Dp1 Dp2 Dp3 Dp4
-sp rdraw brk0 argv envp FSQ Hsp Hva Hve uid hw Hfit SINV SS0 SF SA).
-- exact (init_x_sound_layout segs A ph sp rdraw argv envp FSQ uid hw SINV).
-- exact (node_x_sound_XIStrncpy segs A NX0G LIM TOP SEGS_wx SEGS_in_hull HULL_ok TOK SINV argH AH AA SF SA FSQ SUM_istrncpy).
-- exact (node_x_sound_XPopFree segs A NX0G LIM TOP SEGS_wx SEGS_in_hull HULL_ok TOK SINV argH AH AA SF SA FSQ SUM_popfree).
+- exact (node_x_sound_XIMemset segs A NX0G LIM RZ TOP SEGS_wx SEGS_in_hull HULL_ok TOK SINV argH AH AA SF SA SS1 SHADOW_ok FSQ SUM_imemset).
+- exact (node_x_sound_XIMemcpy segs A NX0G LIM RZ TOP SEGS_wx SEGS_in_hull HULL_ok TOK SINV argH AH AA SF SA FSQ SEGS_wr SUM_imemcpy).
+- exact (node_x_sound_XMemset segs A NX0G LIM RZ TOP SEGS_wx SEGS_in_hull HULL_ok TOK SINV argH AH AA SF SA SS1 SHADOW_ok FSQ SUM_memset).
+- exact (node_x_sound_XMemcpy segs A NX0G LIM RZ TOP SEGS_wx SEGS_in_hull HULL_ok TOK SINV argH AH AA SF SA FSQ SEGS_wr SUM_memcpy).
+- exact (node_x_sound_XMemIsZero segs A NX0G LIM RZ TOP SEGS_wx SEGS_in_hull HULL_ok TOK SINV argH AH AA SF SA FSQ SUM_miz).
+- eapply init_x_sound_envscan; try eassumption. Unshelve. all: first [ assumption | exact SS0 | exact SF | exact SA ].
+- eapply init_x_sound_pnscan; try eassumption. Unshelve. all: first [ assumption | exact SS0 | exact SF | exact SA ].
+- eapply init_x_sound_layout; try eassumption. Unshelve. all: first [ assumption | exact SS0 | exact SF | exact SA ].
+- exact (node_x_sound_XIStrncpy segs A NX0G LIM RZ TOP SEGS_wx SEGS_in_hull HULL_ok TOK SINV argH AH AA SF SA FSQ SUM_istrncpy).
+- exact (node_x_sound_XPopFree segs A NX0G LIM RZ TOP SEGS_wx SEGS_in_hull HULL_ok TOK SINV argH AH AA SF SA FSQ SUM_popfree).
 - apply x_stmt_XSniff_dead.
 Qed.
 Lemma XNG_sound : ext_stmt segs A NX0G LIM TOP (XNG segs XN1) SINV argH FSQ.
 Proof.
-intros id args. unfold XNG. destruct (Nat.eqb id XN_SPLITVIS); [eapply xn_splitvis_sound; eauto|].
+intros id args. unfold XNG. destruct (Nat.eqb id XN_SPLITVIS); [eapply xn_splitvis_sound; eauto using AH, AA, SF, SA, SS1|].
 destruct id as [|i].
-- eapply xn_havoccell_sound; eauto.
+- eapply xn_havoccell_sound; eauto using AH, AA, SF, SA, SS1.
 - apply XN1_sound.
 Qed.
 Theorem asan_startup_gen :
-srealizes segs (cfg_of segs (R0 sp) (a_entry A) (FULL0 ph sp rdraw argv envp uid hw)
-(model0 segs sp brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp))
+srealizes segs (cfg_of segs (R0 sp) (a_entry A) FULLa MODELa)
 (sd HOLES t_nil E0a FSQ startup_shape).
 Proof.
-pose proof (init_cs_ok_g segs A ph sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp IMG Hsp Hbrk Hva Hve Hfit Huid Hhw) as HC.
-assert (NSYS : forall y, sys_stmt segs A NX0G LIM TOP SINV argH FSQ y) by (eapply node_sys_sound; eauto).
-assert (NBRK : brk2_stmt segs A NX0G LIM TOP SINV argH FSQ) by (eapply node_brk2_sound; eauto).
-assert (NMM2 : mm2_stmt segs A NX0G LIM TOP SINV argH FSQ (node_mmap2g A NX0G LIM)) by (eapply node_mmap2g_sound_OBL; eauto).
-assert (NMIN : forall hole, mm3_stmt segs A NX0G LIM TOP SINV argH FSQ (node_mmapin_g A LIM hole)) by (eapply node_mmapin_g_sound_OBL; eauto).
-assert (NMIN2 : mm2_stmt segs A NX0G LIM TOP SINV argH FSQ (node_mmapin2_g A LIM)) by (eapply node_mmapin2_g_sound_OBL; eauto).
-assert (NMPR : mm2_stmt segs A NX0G LIM TOP SINV argH FSQ (node_mprotect2g A LIM)) by (eapply node_mprotect2g_sound_OBL; eauto).
-assert (NEXIT : exit_stmt segs A LIM TOP SINV argH FSQ) by (eapply node_exit_sound; eauto).
-assert (NJOIN : join_stmt segs A NX0G LIM TOP SINV argH FSQ) by (eapply node_join_sound; eauto).
-pose proof (check_sound segs IT0 IT0_ok A NX0G LIM TOP HS (XNG segs XN1) XE0 XB0
+assert (HC : cs_ok segs A LIM TOP SINV argH FSQ E0a (init_acs_of_g RZ A) (R0 sp) FULLa MODELa).
+{ eapply init_cs_ok_g; try eassumption. Unshelve. all: assumption. }
+assert (NSYS : forall y, sys_stmt segs A NX0G LIM TOP SINV argH FSQ y) by (eapply node_sys_sound; eauto using AH, AA, SF, SA, SS1, SP0).
+assert (NBRK : brk2_stmt segs A NX0G LIM TOP SINV argH FSQ) by (eapply node_brk2_sound; eauto using AH, AA, SF, SA, SS1, SP0).
+assert (NMM2 : mm2_stmt segs A NX0G LIM TOP SINV argH FSQ (node_mmap2g A NX0G LIM)) by (eapply node_mmap2g_sound_OBL; eauto using AH, AA, SF, SA, SS1, SP0).
+assert (NMIN : forall hole, mm3_stmt segs A NX0G LIM TOP SINV argH FSQ (node_mmapin_g A LIM hole)) by (eapply node_mmapin_g_sound_OBL; eauto using AH, AA, SF, SA, SS1, SP0).
+assert (NMIN2 : mm2_stmt segs A NX0G LIM TOP SINV argH FSQ (node_mmapin2_g A LIM)) by (eapply node_mmapin2_g_sound_OBL; eauto using AH, AA, SF, SA, SS1, SP0).
+assert (NMPR : mm2_stmt segs A NX0G LIM TOP SINV argH FSQ (node_mprotect2g A LIM)) by (eapply node_mprotect2g_sound_OBL; eauto using AH, AA, SF, SA, SS1, SP0).
+assert (NEXIT : exit_stmt segs A LIM TOP SINV argH FSQ) by (eapply node_exit_sound; eauto using AH, AA, SF, SA, SS1, SP0).
+assert (NJOIN : join_stmt segs A NX0G LIM TOP SINV argH FSQ) by (eapply node_join_sound; eauto using AH, AA, SF, SA, SS1, SP0).
+pose proof (check_sound segs IT0 IT0_ok A NX0G LIM RZ TOP HS (XNG segs XN1) XE0 XB0
 SEGS_wx SEGS_in_hull TOK HULL_ok SHADOW_ok SINV argH AH AA SF SA
 HOLES HOLES_agree HOLES_nil hole_le HOLES_le FSQ KC0
 NSYS NBRK NMM2 NMIN NMIN2 NMPR NEXIT node_x_sound_all NJOIN XNG_sound
 (XE0_sound _ _ _ _ _ _ _ _) (XB0_sound _ _ _ _ _ _ _ _) HOLES_sound
-FUEL BFUEL None startup_plan (init_acs_of_g A) startup_shape startup_cert
-E0a (R0 sp) (FULL0 ph sp rdraw argv envp uid hw)
-(model0 segs sp brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp) t_nil HC) as R.
+FUEL BFUEL None startup_plan (init_acs_of_g RZ A) startup_shape startup_cert
+E0a (R0 sp) FULLa MODELa t_nil HC) as R.
 exact (R I eq_refl).
 Qed.
-Theorem asan_startup_init : forall apc : N, Z.of_N apc = a_entry A ->
-srealizes segs (init_config segs apc ph sp brk0 mbase rdraw YA02.LIMIT
-(YA02.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp))
+(* [apc] and [Hapc] are Section entries now (they were this theorem's own [forall] and
+   premise), because [asan_startup_gen]'s statement reads [apc] through [FULL0]. *)
+Theorem asan_startup_init :
+srealizes segs (init_config segs apc ph sp brk0 mbase rdraw YA02.LIMIT INP)
 (sd HOLES t_nil E0a FSQ startup_shape).
 Proof.
-intros apc Hpc.
-rewrite (init_cfg_eq segs A ph sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp apc Hpc).
-exact asan_startup_gen.
+assert (HE : init_config segs apc ph sp brk0 mbase rdraw YA02.LIMIT INP = cfg_of segs (R0 sp) (a_entry A) FULLa MODELa).
+{ eapply init_cfg_eq; try eassumption. Unshelve. all: assumption. }
+rewrite HE. exact asan_startup_gen.
 Qed.
 End c.
 End b.

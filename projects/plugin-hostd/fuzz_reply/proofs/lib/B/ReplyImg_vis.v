@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, for a Theorem Labs lane's cf layer at plugin-hostd/fuzz_reply; row img-vis-B of
    REPLY-IMG-ROWS.md (sha256 a33a582e3ffd; internal record), CF-UNIT-HYPS.md (sha256 77b3f94c95d2; internal record) line 59).
    rule 24: no function proved (kind: image rows; closed computations at reply's image B, fuzz_reply.asan-ubsan).
 
-   The cf layer states these three rows as Section hypotheses of YGcfInstSec.v (commit 4c2fd365d8e) over its own
+   The cf layer states these three rows as Section hypotheses of YGcfInstSec.v over its own
    context; reply does not carry those layer files.  So each Lemma below states the hypothesis's text VERBATIM at
    reply's instance (the image class ImgBase.AImg at image B's AImg_reply, B/AGif2reply.v), with the image's symbol
-   facts TfibSyms (B/YF0m.v:868), and a consumer closes the layer's hypothesis with `exact` once the layer is on reply.
+   facts TfibSyms (B/YF0m.v:869), and a consumer closes the layer's hypothesis with `exact` once the layer is on reply.
    No Definition of the layer is copied; o_comb_stats and d_map1 are reply's own (Reusable/YG0f.v:210 / :228), the
    same numerals as the layer's (cgif YG0f.v:209 / :227).
    - COMB_VIS (YGcfInstSec.v:359-360): the combined allocator's 40 stats bytes [TFIB_INST + 688, + 728) =

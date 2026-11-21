@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: emitted for reac-pw/fuzz_segconf image A by atable.py e88affcf0526 (the start-up tool set of record at commit d9aa42da992) from fuzz_segconf.asan and its unstripped twin; TFIB_TEXT_N covers this image's own whole .text (0x31ed4, 112997 words); stops_more is the image's 13 self-loops; module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: emitted for reac-pw/fuzz_segconf image A by atable.py e88affcf0526 (the start-up tool set of record) from fuzz_segconf.asan and its unstripped twin; TFIB_TEXT_N covers this image's own whole .text (0x31ed4, 112997 words); stops_more is the image's 13 self-loops; module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_segconf.asan (reac-pw/fuzz_segconf asan) sha256 48c5355bdacbc5ba2e0a9ff843627969cb5d2913316654369904b549fc904ef8; unstripped twin sha256 4362701197e4cecdb46108f7694774021f7b8d5e7bd85cfe200fa90ad7a63c32 *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List.

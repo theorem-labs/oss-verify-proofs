@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: statements written out as text, the launch's channel reader. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib Require Ref0Gc. (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -54,9 +55,15 @@ Proof.
 ltac2:(KReplay.run1z (kr_t_MallocMF ()) ["HCW"] "##,lh01Lh11Kh22_Hh32moh45nd_i2h51sp;2p;1p;4p;3p;5p1001ip4p70R0p101jWp4p7210R1p8P!s9$k`!s9'2!s9'l!sY$10R0p8p100?j!si%3P1p8P3P2!s+$0p8g01mmj2GTg01Mfj1FTg01Nhj2=Tg01REj14Tg01o1j48Tg0117j25Tg020>j11!s/$cj1<Tg021Aj1;Tg00\Tj1:!s8$dj12Tg00iVj19Tg002mj30Tg00N<j2ETg00Gij17Tg022[j13Tg023Sj16Tg0243j5@Tg025Aj1?Tg026Aj5>Tg027Oj3ATg00m:j4B!s8$jj4CTg007Yj5DTg01hIg028of1R0f0R3'Gg01@9R2f3R1#F/=3R4p,5HCEILR5P3%41f2R6C8R7'5X02g01ER#1!s$-<#;R8#:R9%20%98R:301E88R;#7R<%30%6;R;30'5P4P7%26=09:%36=0<;'5P5P0f4R0#4P1C8%20!sD%0=0<;R;P5P6f5#4R<P0P3D@%78%?0%6830P5P6P!s=%>5A;CBW1X24CCX02P3DDW4W3W5o"). Qed.
 
 (* [comment removed for export] *)
-Lemma KMF_vm : ltac2:(zQ "c0!hm4!jn0!iua!khb!kh4!jp5!jq2!jqf!ki7!jr8!kn0!iqa>1s$b>2mo$2>3mo'$2>0@2$4^3^2>0@1$a^2>0@3$0@1$7@1$5@1$1#k0@1$9^3@1$6@1$5@1$1#k0>0@3$0$8@1$3^4@1$3^5@2$4^7^5").
+Lemma KMF_vm : forall s mo mo', KMF s mo -> mminv mo' -> m_halted mo' = None ->
+  m_kernel mo' = m_kernel mo -> m_channel_reader mo' = m_channel_reader mo ->
+  m_vmmaps mo' = m_vmmaps mo -> KMF s mo'.
+(* LPS 727298f3 port: restated with [m_kernel mo' = m_kernel mo] (the kernel relation's
+   vDSO fields read [m_kernel]); proof written out. *)
 Proof.
-ltac2:(KReplay.run1 (kr_t_MallocMF ()) ["HCW"] "h01Lh12CRh21Eh32HHh41Kh52MIh62moh73mo'h85nd_i3h91sp;2p;1p;3p;4p;9p;5g01mmj25Tg029ej1CTg020>j10Tg020cj19Tg021Aj1BTg00\Tj1<Tg021dj1;Tg00iVj1:Tg002mj36Tg02:kj17Tg01Mfj13Tg01Nhj24Tg01REj12Tg01o1j41Tg0117j28Tg02;bl9ATg00m:j4=Tg02=3j4>Tg027jj4?Tg007Yj5@Tg01hIg028oR0f2R1f1R2'5%C2g01ER#0#0#0#0#0#0#9#BR3#<%;1%:336g02=Mf3R3#7f4R4#736g01@9R5f7R6#3f0R7'4R8p,5HCEILR9P7%26f6R:C1R;'8X0515:4P8P;f5R;,56P9P2f8R:#2P6C1P5f:R<#3/47P9P7%2<P:C1'8X05P1f9R<#3/41P9P1%2<R<P6C1P2P9P1P<P:P6P7P;P4P3M9AC=C>W4X18C?X05P3D@W2W3W5W8X70W6W9o"). Qed.
+  intros s mo mo' K MI HH EK ER E. unfold KMF in *. destruct K as (L & CR & K).
+  exists L. split; [exact CR|]. exact (KLBM_vm_eq L (ps_brk s) mo mo' K MI HH EK ER E).
+Qed.
 
 (* [comment removed for export] *)
 Lemma KMF_of_budgeted : ltac2:(zQ "80!iua!kh4!hg8!kr6!kvb!iqa!jkd!ir4>1s$5>2mo$0>1L$2>0@2$4@1$7^3^1>0@4$3?5HCEIL^2@1$6^4^3@2$1^5^4").

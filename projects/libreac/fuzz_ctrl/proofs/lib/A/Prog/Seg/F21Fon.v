@@ -6,23 +6,24 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_box_catalogue_match.v, with its module paths and module names changed; 2419 of its 2557 lines of code are new or changed and 3153 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/Tac_slot.v, with its module paths and module names changed; 594 of its 661 lines of code are new or changed and 2490 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F21.v; 108 of its 236 lines of code are new or changed and 533 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/Prog/Seg/F21Fon.v -- route (C) twin of Seg/F21F.v's three footprint runs, WITHOUT the universal
    `shadow_rw m` premise.  ADDITIVE beside-file (a Theorem Labs lane 12:52Z twin rule): Seg/F21F.v stays unchanged apart from comment text.
    Writer: a Theorem Labs lane for a Theorem Labs lane.  proves no function (kind: segment lemma).
 
-   BASE: a Theorem Labs lane's fold blob of Seg/F21F.v, a working branch 4bae33fdf54, blob efae945746f;
-   a working branch 1899bed1aee carries the SAME blob (an earlier version, blob efae945746f, not in this delivery) (diffed: empty), so the base is both.
+   BASE: a Theorem Labs lane's fold blob of Seg/F21F.v, a working branch, blob efae945746f;
+   a working branch carries the SAME blob (an earlier version, blob efae945746f, not in this delivery) (diffed: empty), so the base is both.
 
    MEASURED (why the premise is removed, not narrowed): in F21F.v the premise `shadow_rw m` (named HSW) is never read
    and never stored through.  f21_evt_F hands it to f21_t2_F (by eassumption), f21_t2_F hands it to f21_harvc_F, and
-   f21_harvc_F's only use is `exact HSW` at the record verifier's contract (F21F.v:118).  The two shadow LOADS of the
+   f21_harvc_F's only use is `exact HSW` at the record verifier's contract (F21F.v:119).  The two shadow LOADS of the
    segment (0x82504 / 0x82524, the bytes of phi+18 / phi+19) are read from the byte premises Hs18 / Hs19, and the
    segment STORES no shadow byte.  So the twin drops the premise, and the callee is taken in its route-(C) form.
 
    CALLEE FORM: reac_ctrl_headamp_record_verify_contract_F_on (premise DROPPED; LANDED.md (a working note, not in this delivery), a Theorem Labs lane
-   a working branch 9509908083d, statement blob reac_ctrl_headamp_record_verify_c.v 86718f5a3d6), discharged
-   by its proof reac_ctrl_headamp_record_verify_holds_F_on (LANDED.md (a working note, not in this delivery), a Theorem Labs lane 36bfd511da3, in
-   a working branch 330e60af39d, blob reac_ctrl_headamp_record_verify_F.v 67d0e3dc3d4).
+   a working branch, statement blob reac_ctrl_headamp_record_verify_c.v 86718f5a3d6), discharged
+   by its proof reac_ctrl_headamp_record_verify_holds_F_on (LANDED.md (a working note, not in this delivery), a Theorem Labs lane, in
+   a working branch, blob reac_ctrl_headamp_record_verify_F.v 67d0e3dc3d4).
 
    THE TWINS (same statements as F21F.v's, minus the one premise; the proofs are F21F.v's text minus the hand-on):
      f21_harvc_F_on  <- f21_harvc_F  (0x82598 / 0x8259c, the record verifier call, landing at 0x825a0)

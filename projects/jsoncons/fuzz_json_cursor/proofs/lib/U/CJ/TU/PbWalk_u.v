@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed pb_inplace. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp.bitvector Require Import definitions.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -76,7 +77,9 @@ Proof.
   zstep.
   lazymatch goal with |- evt _ _ (MS _ _ _ _ _ (write_to_mem ?mm ?ad _) _) =>
     replace (write_to_mem mm ad (le1 (Z_to_bv 64 0))) with (write_to_mem mm (wa (o + (n + 2))) [Z_to_bv 8 0])
-      by (f_equal; try (unfold wa; f_equal; lia); try apply le1_lit);
+      (* U/ twin of CJ/TU/PbWalk.v:80 -- see the note there. *)
+      by (f_equal; try (unfold wa; f_equal; lia);
+          try (first [apply le1_lit | symmetry; apply le1_lit]));
     pose proof (u8arr_write rsegs mm o bs2 (n + 2) (Z_to_bv 8 0) BU2 ltac:(rewrite BL2; lia)) as BU3 end.
   clear BU2. store_done.
   do 10 zstep.

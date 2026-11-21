@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vm invariant's vm_res, now the res_ok conjunction that also bounds the vDSO pair, read through its ledger equation). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -54,7 +55,7 @@ Proof.
   pose proof (vm_top A h V) as T. pose proof (vm_top A' h' V') as T'.
   split; [exact Hl|]. split; [congruence|]. split.
   - unfold alloc_top in T, T'. rewrite <- (Z_to_bv_bv_unsigned 64 (vm_init_sp h')), <- (Z_to_bv_bv_unsigned 64 (vm_init_sp h)). f_equal. lia.
-  - rewrite (vm_res A h V), (vm_res A' h' V'). reflexivity.
+  - rewrite (proj1 (proj1 (vm_res A h V))), (proj1 (proj1 (vm_res A' h' V'))). reflexivity.
 Qed.
 
 Lemma FR_of_ntframe' : forall A A' s s', ntframe A s s' -> (forall x, owned_of A x -> owned_of A' x) ->

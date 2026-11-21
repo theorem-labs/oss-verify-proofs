@@ -4,10 +4,11 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module names and numbers changed; 1592 of its 1709 lines of code are new or changed and 894 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F12.v, with its module paths, module names and addresses changed; 1175 of its 1288 lines of code are new or changed and 1596 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment F17b of fuzz_ctrl LLVMFuzzerTestOneInput (asan-ubsan, libreac v1.9.0 image B): the opens_record body,
    from the split cut 0x82468 (the official Inv_B82468_at of lib/B/Prog/SlotInv.v) to the F18 entry cut 0x82634
    (Inv_B82634_at), S_F17b of forms-asan-ubsan-v190.md. The v1.9.0 move of the patched-image seg_F17b
-   (a working branch 0e6fdff1ed1, lib/B/Prog/Seg/F17.v (not in this delivery); patched 0x823e4-0x825b4), the B twin of image A's v1.9
+   (a working branch, lib/B/Prog/Seg/F17.v (not in this delivery); patched 0x823e4-0x825b4), the B twin of image A's v1.9
    seg_F17b (a working branch): v1.9.0 copies the first fragment's body into the frame object `first`
    with `jal __asan_memcpy` where the patched image saved two body bytes and the count to spills.
      0x82468 sltiu a0,s4,50 ; 0x8246c ld a1,248(s1) ; 0x82470 or a0,a0,a1 ; 0x82474 bnez a0,82634
@@ -171,7 +172,7 @@ Qed.
 
 (* ---- The turn's two frame records keep fixed lengths (model): the fragment record t_FG j 72 bytes (fg_next keeps
    72 in every class) and the identity record t_ID j 38 bytes (every ingest keeps 38, RcIdentModel.ING_length).
-   Copied from prover a Theorem Labs lane's lib/B/Prog/Seg/F20.v (a working branch 81dc3c31079, its rl_ lemmas), which this file does not
+   Copied from prover a Theorem Labs lane's lib/B/Prog/Seg/F20.v (a working branch, its rl_ lemmas), which this file does not
    import. IFS's transport across the call needs both records inside the frame body. ---- *)
 Lemma f18_fg_n : forall len g, fg_fr len g = true -> 1 <= fg_n g <= 22.
 Proof.
@@ -523,7 +524,7 @@ Proof.
 Defined.
 
 (* The first 6 bytes of a carried byte list (the bcmp operands of F18 / F19) and memcmp over them
-   (lib/B/Prog/Seg/F18.v ba_first6 / memcmp_firstn of a working branch 0e6fdff1ed1). *)
+   (lib/B/Prog/Seg/F18.v ba_first6 / memcmp_firstn of a working branch). *)
 Lemma f17_ba_first6 : forall m a bs, bytes_at rsegs m a bs -> (6 <= length bs)%nat ->
   bytes_at rsegs m a (firstn 6 bs) /\ length (firstn 6 bs) = 6%nat.
 Proof.

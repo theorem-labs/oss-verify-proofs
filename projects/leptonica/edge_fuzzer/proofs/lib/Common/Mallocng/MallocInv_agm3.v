@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the THP flag). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -28,8 +29,9 @@ Local Notation u := bv_unsigned (only parsing).
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-Lemma upd_eq : forall s1 s2 m h, ms_lo s2 = ms_lo s1 -> ms_hi s2 = ms_hi s1 -> upd s2 m h = upd s1 m h.
-Proof. intros [m1 h1 lo1 hi1] [m2 h2 lo2 hi2] m h; cbn; intros -> ->; reflexivity. Qed.
+(* LPS 727298f3: [mstate] carries [ms_thp], which [upd] copies, so the two states agree on it too *)
+Lemma upd_eq : forall s1 s2 m h, ms_lo s2 = ms_lo s1 -> ms_hi s2 = ms_hi s1 -> ms_thp s2 = ms_thp s1 -> upd s2 m h = upd s1 m h.
+Proof. intros [m1 h1 lo1 hi1 t1] [m2 h2 lo2 hi2 t2] m h; cbn; intros -> -> ->; reflexivity. Qed.
 
 Lemma FR_of_ntframe : forall A A' s s', ntframe A s s' -> (forall x, owned_of A x -> owned_of A' x) -> a_live A' = a_live A ->
   FR A s A' s'.
@@ -254,17 +256,18 @@ Proof.
   apply tsall_assoc.
   eapply (tw_lift W (ag_seq (Z_to_bv 64 sqv)) s1
             (fun sq' s2 => exists (sqn : Z) (reset : bool), sq' = Z_to_bv 64 sqn /\ 1 <= sqn <= 256 /\
-               RepW A1 (ms_mem s1) (reset_writes reset) (ms_mem s2) /\ WIN s2 /\ ms_vm s2 = ms_vm s1 /\ ms_lo s2 = ms_lo s1 /\ ms_hi s2 = ms_hi s1)).
+               RepW A1 (ms_mem s1) (reset_writes reset) (ms_mem s2) /\ WIN s2 /\ ms_vm s2 = ms_vm s1 /\ ms_lo s2 = ms_lo s1 /\ ms_hi s2 = ms_hi s1 /\
+               ms_thp s2 = ms_thp s1)).
   { intros K' P' HK'. apply (ag_seq_ok A1 s1 (ms_mem s1) [] sqv K' P' RW1 HWIN1 ltac:(clear - Hsqv; lia)).
-    intros s2 sq' reset Hsq RW2 HWIN2 Hvm2 Hlo2 Hhi2. apply HK'. exists sq', reset. rewrite app_nil_r in RW2. auto 10. }
-  intros sq' s2 (sqn & reset & -> & Hsqn & RW2 & HWIN2 & Hvm2 & Hlo2 & Hhi2).
+    intros s2 sq' reset Hsq RW2 HWIN2 Hvm2 Hlo2 Hhi2 Hthp2. apply HK'. exists sq', reset. rewrite app_nil_r in RW2. auto 12. }
+  intros sq' s2 (sqn & reset & -> & Hsqn & RW2 & HWIN2 & Hvm2 & Hlo2 & Hhi2 & Hthp2).
   apply tsall_assoc.
   eapply (tw_lift W (m_sb (Z_to_bv 64 (caddr KSeq)) (Z_to_bv 64 sqn)) s2
             (fun _ s3 => exists A2, II sp0 argv envp cb (m :: D) A2 s3 /\ ntframe A s s3 /\ hrel A A2)).
   { intros K' P' HK'. eapply (ts_sb_ctxW A1 s2 (ms_mem s1) (reset_writes reset) KSeq); [exact RW2 | exact HWIN2 | exact I | reflexivity |].
     intros m3 RW3. rewrite uZ in RW3 by (clear - Hsqn; lia).
     destruct (heur_commit sp0 argv envp cb (m :: D) A1 s1 _ m3 HII1 RW3 (seq_writes_slots sqn reset)) as (HII2 & NF2 & HR2).
-    rewrite (upd_eq s1 s2 m3 (ms_vm s2) Hlo2 Hhi2), Hvm2. apply HK'. eexists. split; [exact HII2|]. split; [exact (hrel_chain A A1 s s1 _ NF1 HR1 NF2) | exact (hrel_trans A A1 _ HR1 HR2)]. }
+    rewrite (upd_eq s1 s2 m3 (ms_vm s2) Hlo2 Hhi2 Hthp2), Hvm2. apply HK'. eexists. split; [exact HII2|]. split; [exact (hrel_chain A A1 s s1 _ NF1 HR1 NF2) | exact (hrel_trans A A1 _ HR1 HR2)]. }
   intros x3 s3 (A2 & HII2 & NF2 & HR2). clear x3.
   pose proof (ii_is HII2) as HI2. pose proof HI2 as [HW2 HRp2 _ HWIN2' _ _].
   (* [comment removed for export] *)
@@ -306,7 +309,7 @@ Proof.
   eapply tw_sys_mmap04; [rewrite HLu; clear - Hn3r; lia | rewrite HLu; clear - Hn3r; lia | |].
   - (* [comment removed for export] *)
     (* [comment removed for export] *)
-    intros Hnone. assert (HWf : W <> WOk \/ forall a0, mmap_grant_ok MMrw (ms_vm s3) a0 (mm_len (Z_to_bv 64 n3)) = false) by (right; exact Hnone).
+    intros Hnone. assert (HWf : W <> WOk \/ forall a0, mmap_grant_ok MMrw (ms_thp s3) (ms_vm s3) a0 (mm_len (Z_to_bv 64 n3)) = false) by (right; exact Hnone).
     eapply tw_set_errno; [exact HWIN2'|]. cbv beta.
     unfold MAP_FAILED at 1. rewrite wm1_eq, c_eq_Z by (clear; lia). rewrite Z.eqb_refl. cbv iota.
     set (se := upd s3 (errno_mem (ms_mem s3) ENOMEM) (ms_vm s3)).
@@ -342,10 +345,10 @@ Proof.
       * unfold Bf. rewrite (fmA_freelist A2 m fl (hd m fl) (last fl m)). unfold fl. rewrite Fl1. reflexivity.
     + (* [comment removed for export] *)
       intros HWk. destruct HWf as [HWf | Hall]; [exfalso; exact (HWf HWk)|].
-      exists n3. split; [clear - Hn3r; lia|]. intros a. specialize (Hall a). unfold mm_len in Hall. rewrite HLu, HprZ, Hvm3 in Hall. exact Hall.
+      exists n3. split; [clear - Hn3r; lia|]. exists (ms_thp s3). intros a. specialize (Hall a). unfold mm_len in Hall. rewrite HLu, HprZ, Hvm3 in Hall. exact Hall.
     + (* [comment removed for export] *)
       intros _. exists n3. split; [clear - Hn3r Hcap; lia|]. split; [exact Hn3m|].
-      intros a. specialize (Hnone a). unfold mm_len in Hnone. rewrite HLu, HprZ, Hvm3 in Hnone. exact Hnone.
+      exists (ms_thp s3). intros a. specialize (Hnone a). unfold mm_len in Hnone. rewrite HLu, HprZ, Hvm3 in Hnone. exact Hnone.
   - (* [comment removed for export] *)
     intros HWs a Hg. cbn [mmap_grant_ok] in Hg. unfold mm_len in Hg. rewrite HLu in Hg.
     pose proof (VMok_core A2 _ (ii_vm HII2)) as HVc2.

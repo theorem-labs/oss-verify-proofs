@@ -1,8 +1,8 @@
 (* LS_rf_room over LS v3's out half (lib/A/ReplyLS3o.v).  proves no function (kind: invariant lemma).
 
-   The arm's text (W_LLVMFuzzerTestOneInput_exit.v:329-330) is
+   The arm's text (W_LLVMFuzzerTestOneInput_exit.v:330-331) is
      LS_rf_room : LS cx t m ly S -> lx_rf_room MMAX (blocks_bytes S) (lm_c m) [] (lm_mx m) 0 (lm_cap m) (lm_es m),
-   and lx_rf_room (lib/A/W_LLVMFuzzerTestOneInput_exit.v:201) threads gestures_end's room gse_room (W_contract.v:1586), which is in PEAK form
+   and lx_rf_room (lib/A/W_LLVMFuzzerTestOneInput_exit.v:202) threads gestures_end's room gse_room (W_contract.v:1587), which is in PEAK form
    (tr_peak, C3; lib/A/ReplyTrPeakC.v).  This file proves LS_rf_room_p, that text at MMAX := WR_MMAX, from fr_LS3c
    and fr_OUT.
 
@@ -290,7 +290,7 @@ Section orf.
 Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Variable B : asyms.
 Variable OM : Z.
-(* the arm's LS_rf_room (W_LLVMFuzzerTestOneInput_exit.v:329-330) over relay_finish's run.  The premise
+(* the arm's LS_rf_room (W_LLVMFuzzerTestOneInput_exit.v:330-331) over relay_finish's run.  The premise
    `0 <= t <= OPS_MAX` is the loop's (lregs_H, _cut.v:549; SEG_LATCH passes t + 1), as in LS_exit_end3. *)
 Lemma LS_rf_room_p : forall cx t m ly S,
   fr_LS3c B cx t m ly S -> fr_OUT OM cx t m ly S -> 0 <= t <= OPS_MAX ->

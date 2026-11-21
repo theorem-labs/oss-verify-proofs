@@ -23,14 +23,15 @@
    achain_chain_pre of it. joined's new premises at its call: len's 8 bytes present (the journal's window), and
    (pass 5b) the stack from len - 16 present, from the statement's astack_pres kept by astack_pres_journal. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 665 of its 733 lines of code are new or changed and 4985 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca): the compare piece of
    segment B10b of reac_segconf_parse_file's walk, pb10_c_ok : PB10_C B (lib/B/Prog/pf_seg_B10b_k.v:
    HA_ROLEV n -> HA_BAD n -> H_INTENT n). A B10b sub-lane of the image-B G3 walk owner, 2026-10-30. proves no function
    (kind: segment lemma of reac_segconf_parse_file's walk, piece PB10_C of segment B10b).
-   ADAPTED from a working branch's lib/A/Prog/pf_a10b_b2.v (image A's bcmp-call helpers, 861a42d8f0c4),
-   501c0d516c69 proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_arity_s7.v (ca_bcmp_step: the run stops at the
-   trampoline, aj_bcmp_at, the `beqz a0` after it) and image B's lib/B/Prog/pf_seg_B10b_j.v (the B10b segment lane,
-   961c19ce3f65: the seed on a cut, the keep lemmas) and pf_seg_B5_r2.v (the B5 segment lane, 2305ce2c2c85: a branch
+   ADAPTED from a working branch's lib/A/Prog/pf_a10b_b2.v (image A's bcmp-call helpers),
+   proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_arity_s7.v (ca_bcmp_step: the run stops at the
+   trampoline, aj_bcmp_at, the `beqz a0` after it) and image B's lib/B/Prog/pf_seg_B10b_j.v (the B10b segment lane,:
+   the seed on a cut, the keep lemmas) and pf_seg_B5_r2.v (the B5 segment lane: a branch
    after a run, psrr_branch_pi), re-derived on image B's code.
    THE CODE (reac_segconf_parse_file.fuzz_segconf.asan-ubsan.s; listing lib/B/Prog/SegList.v :3836-3866):
    site k = 0 .. 4 at pc_k = 0x888e4 + 0x18 k:

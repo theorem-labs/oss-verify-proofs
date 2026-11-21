@@ -5,12 +5,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths and module names changed; 371 of its 396 lines of code are new or changed and 3828 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v, with its module paths and module names changed; 785 of its 828 lines of code are new or changed and 353 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/A3.v; 154 of its 243 lines of code are new or changed and 739 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/A3.v 0d4714ea12bd (the blob this tree had at release c5e779efe8c) at 6a74d5929d2.
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   FACTS, PAU pau-libreac-v190. Source: Seg/A3.v 0d4714ea12bd (the blob this tree had at release).
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: a3_evt_of_F re-derives A3.a3_evt at ExecF.RNG_all; a3_evt_of_F_verbatim checks by constr_eq that its
    type is the type of A3.a3_evt after the callee premise. Mechanical re-run, route (a) (lead 22:15Z); input to the
    ported walk only. *)
@@ -24,10 +25,10 @@
      reads must be a lib.Lib one. A3.a3_evt states its four write regions as lib.A.Tk.UL cells
      (US.rw_cells ... [UCl.CB n junk]); a3_evt_F states them UNCHANGED and converts them in the first four lines
      of the proof by lib/A/Tk/UL/CellBridge.v's rw_cells_ul_lib (that file is a Theorem Labs lane's image-B bridge, blob
-     7761521b3b52 at a working branch 7cfcf43257e, with the module paths changed to lib.A.Tk.UL).
+     7761521b3b52 at a working branch, with the module paths changed to lib.A.Tk.UL).
      The two cell inductives have the same five constructors, so the conversion is total.
    - The callee is taken through asan_set_shadow_cF.v's asan_set_shadow_f8_contract_F (PROVED by
-     asan_set_shadowF.v asan_set_shadow_f8_holds_F, both taken by path from a Theorem Labs lane 71a8e88cc7e), in the place
+     asan_set_shadowF.v asan_set_shadow_f8_holds_F, both taken by path from a Theorem Labs lane), in the place
      where A3.a3_evt takes the plain asan_set_shadow_f8_contract: the first premise, the R2F / R19F shape.
    - f8_callF is the evtF twin of A3.f8_call, used only inside a3_evt_F. A3.f8_call is the contract application
      itself: its start state IS the callee entry 0x55008 and its continuation is a universal hypothesis, so it is

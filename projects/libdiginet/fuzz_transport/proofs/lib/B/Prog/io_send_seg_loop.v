@@ -6,6 +6,7 @@
    453-455, 470-475, 477-486, 489-491, 502-505, 511-514, 1255-1258. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_name_seg_rel.v, with its module paths, module names and numbers changed; 706 of its 765 lines of code are new or changed and 1865 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_transport/lib/A/Prog/on_announce_seg_tail.v, with its module paths and module names changed; 1149 of its 1210 lines of code are new or changed and 704 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* io_send_seg_loop: the command count loop of the image-B walk of io_send (fuzz_transport.asan-ubsan 41113a03c82f,
    entry 0x82ffc = TImgB.v ti_io_send timg_B; the statement is lib/B/Prog/io_send_cg.v), from the cut
    0x83198 = transportb_text + IOS_LOOP to its exit 0x83220 = transportb_text + IOS_CMDS (fuzz_transport.c:858-862);
@@ -29,7 +30,7 @@
    state whose regions are read-only, so the run keeps the memory. The call of tagged_of is its leaf statement
    (lib/B/Prog/tagged_of_cg.v, read at this unit's model by DgnTransportBCg.v transport_leaf_at) at the walk's journal,
    through TransportGCg.v gx_call_leaf and the leaf bridge DgnTransportBLeafb.v decode_leafb_journal (lp_tagged, the
-   form of check_latest_sent_seg_cj.v cls_tagged of 3e843999860a): it keeps every byte outside its ESTACK window below
+   form of check_latest_sent_seg_cj.v cls_tagged): it keeps every byte outside its ESTACK window below
    sp, so every byte the loop reads, and every byte of io_send's frame and of G, stays as it was at the cut (lp_mem).
      lp_pre       +0x19c: s2 = 0, s7 = 0; to the head;
      lp_head      +0x1a4: f.body (atom 32) at sp + 56; facts at <= 2 ^ 32 and 4096 <= f.body decide the second

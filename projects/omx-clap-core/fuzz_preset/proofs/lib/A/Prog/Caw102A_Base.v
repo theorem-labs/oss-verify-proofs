@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: for omx-clap-core/fuzz_preset, the CALLER-WINDOW call kit over YCbqG.v's journal
    ajournal_x (allocator invariant a parameter ARx, ghost head set Hp after S, program statics PST), generic: no image
-   class, no address, no ledger. Credit: WalkS4, lib/A/Prog/PRW_CallerJ.v at 85a188622c5 (statements and proofs taken
+   class, no address, no ledger. Credit: WalkS4, lib/A/Prog/PRW_CallerJ.v (statements and proofs taken
    from there; changes below). Donors there: cj_kept from cgif_file_fuzzer lib/YC20.v:311-325 tlzw_kept and
    lib/YC8n.v:272-287 tlzw_kept_of_journal (origin/release/pau-projects-recipes), generalised to ajournal_x's keep
    clauses; aj_call_xW from YCbqGcall.v aj_call_x (cgif YCbq.v:1845-1883 aj_call, origin/ossv/recipes).
@@ -14,10 +14,10 @@
    - START: ajournal_x_init_W, the widened journal (STK + e) (sp + e) at the entry state.
    - CALL of a caller-window callee: aj_call_xW / aj_call_xWF (callee state in mkst form), aj_call_xW_sp /
      aj_call_xWF_sp (the entry form of YCbqGcall.v's aj_call_x_sp: st_ok, ss_resv, the machine state ms).
-     The footprint side condition is YCbqG.v's own fp_sub_x (h-hpreset-7 9052c7a7d74 :688-691), whose fourth
+     The footprint side condition is YCbqG.v's own fp_sub_x (h-hpreset-7 :688-691), whose fourth
      disjunct `sp0 - STK <= a < sp0` is the caller's window: WalkS4's fp_sub_xW is that predicate, so this file
      no longer states one and ajournal_x_sub_W (the name WalkS4's callers use) is YCbqG's ajournal_x_sub.
-   - vrd_call_W: h-verbs-3's lib/A/VrdArm.v call rule (6d4cddbdff5), premise shape kept, as a corollary of
+   - vrd_call_W: h-verbs-3's lib/A/VrdArm.v call rule, premise shape kept, as a corollary of
      aj_call_xW_sp at e1 := - o.
    - aj_call_xWF_d: WalkH6's caller-window float call rule (h-walk-identity's S8aCallW.v aj_call_xWF), verbatim: no
      fwin_x for the callee and no window-kept clause on either side.
@@ -38,19 +38,20 @@
    fpostW_x_R_lift: a plain fpostW_x (journal at wle) is fpostW_xR at every R that contains wle. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YCbqGcallW.v, with its module names changed; 482 of its 526 lines of code are new or changed and 767 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S4_PsFree.v, with its module paths and module names changed; 635 of its 689 lines of code are new or changed and 472 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset lib/A, the #102 re-walk of check_as_written on image A' (ASan build): the SHARED BASE of the segment
    lemmas (lane CawA102, h-rw-pre-5). States only: the entry record, the text's premises, the cut predicates and the
    segment statements; the segment files Caw102A_WA*.v prove them.
    rule 24: no function proved. rule 24: proves no function (kind: segment lemma).
    THE IMAGE: A' = asan pin sha256 1be0f53d96cb9d6c (twin bff8519bbe3ea0e4, code equal over the function range).
    THE INPUTS, each BY PATH (lane's own copies, cited by blob):
-  - listing of record: #102 listings v3 (owner 16:28Z), origin/cold/h-verbs-1-listing-pins102 74dcda1eda12,
-    lib/A/Listing_prog.v 7ed1529926bd (the re-emit d42e123915ae's listing 1ab147923c5d, its header comment only
+  - listing of record: #102 listings v3 (owner 16:28Z),
+    lib/A/Listing_prog.v 7ed1529926bd (the re-emit's listing 1ab147923c5d, its header comment only
     changed) (lib/A/PAImg_prog.v 505a51ff7d08 is NOT Required: its PI_prog_A certificate checks the #102 image's
-    bytes, which the cb base f65cfdd5cac0 does not carry; the walk is PARAMETRIC over {PA : PAImg A_prog_listing} and
+    bytes, which the cb base does not carry; the walk is PARAMETRIC over {PA : PAImg A_prog_listing} and
     uses the listing's own tables, PL_caw_A below, the terms of PAImg_prog.v 47eeb54e93be :177-181; v3 pre-evaluates
     its A_prog_tpi, which is equal to PL_caw_A's ptree_of_list by computation), lib/Reusable/YPsym.v
-    b6f5a85d234d. Slot check re-run on d42e123915ae (lane CawA102,
+    b6f5a85d234d. Slot check re-run (lane CawA102,
      13:2xZ): the 86 slots 630..715 are the twin's words except 13 relocation / call slots, all as the plan says
      (PHi 0x81fd4, PLdHi A_OBJ 0 0x81fd8, PCall __wrap_malloc 0x81ff4 / ex_value 0x82014 / __wrap_free 0x82020 /
      __asan_report_load1 0x82094 / __wrap_free 0x820a8 / fuzz_alloc_ran_out 0x820c4 / __asan_handle_no_return 0x82108 /
@@ -95,13 +96,13 @@
    for a generic final post Q; the last (WA6) ends in fpostF .. Qb for a generic post body Qb. The top composes them.
    THE ALLOCATOR: the cf instance, ARcfx := ARcf segs B /\ xs_placed_cf (FuzzFree.v / H2CawF.v / CawB102's choice),
    room_live_cf at a8's instance prh_room_live_a8 (YGcfRoomLive.room_live_room with the hull budget gives QM_cf at a call).
-   g_own_ran_out / g_most: the kit's Batch 2 has LANDED (decff67d721f: prh_glob / prh_ledger carry most and own; the text's
+   g_own_ran_out / g_most: the kit's Batch 2 has LANDED (prh_glob / prh_ledger carry most and own; the text's
    premise is `prh_ledger .. ran most 0` and its post `exists own', prh_ledger .. ran most own'`), so the threading this
-   base carried since c3fe12bc7ff1 (caw_pst, from a Theorem Labs lane's own_load_flip / own_load_only_empty_cut) is removed by
+   base carried (caw_pst, from a Theorem Labs lane's own_load_flip / own_load_only_empty_cut) is removed by
    citation: EVERY cut carries `caw_ledger D .. own` LAST, the entry's ledger values with the record's most and the byte
    the cut holds (0 up to the NULL arm's store, ownv at CHK / END); prh_ledger_own / prh_ledger_most project it.
   THE RUN POSITION (the post-implication form; the cno B' base's cnb_prog shape, Cno102B_Base.v b5421fc37cbc :386 on
-  a working branch 182081b57e58): the text binds no position at entry. So each cut carries
+  a working branch): the text binds no position at entry. So each cut carries
   caw_prog D E S for the events E made since entry: for ANY run position i at the entry state whose next events are
   E, a position i + length E of the cut's state. E = [] at caw_at_null (the refused malloc makes no event), caw_ev1 D =
   [HMal (size + 1)] at caw_at_X / caw_at_R, caw_evs D = [HMal (size + 1); HFr (size + 1)] at caw_at_OOM / caw_at_CHK,
@@ -160,7 +161,7 @@ Local Set Warnings "-notation-for-abbreviation".
 Open Scope bv_scope.
 Open Scope Z_scope.
 
-(* ---- the function's cut offsets (DERIVED byte offsets inside check_as_written, A' listing d42e123915ae) ---- *)
+(* ---- the function's cut offsets (DERIVED byte offsets inside check_as_written, A' listing) ---- *)
 (* caw's slot in the listing: DERIVED, = A_prog_slot AS_check_as_written of PAImg_prog.v 505a51ff7d08 :419
    (A_entry_check_as_written); the image fact cwi_entry below ties it to pa_sigma *)
 Definition CAW_SLOT : nat := 630.
@@ -236,7 +237,7 @@ Record caw_img : Prop := {
   cwi_pst_ok : forall a, Exists (in_zr a) prh_pst -> in_img segs a /\ ~ Exists (in_zr a) (as_owned_static B);
   (* the program statics are apart from errno: the runtime __wrap_free rows keep g_own_ran_out / g_most only given it
      (YCbq.v acall_kept's image clause exempts errno, which api_env puts inside the image); the A' twin of the cno
-     base's cni_pst_errno (Cno102A_Base.v 2aede65f76e5 :158, cold/h-rw-pre-5-cno102a-r 41dfdb047827). Closed by
+     base's cni_pst_errno (Cno102A_Base.v 2aede65f76e5 :158). Closed by
      vm_compute at the instance [a Theorem Labs lane, where B is bound] *)
   cwi_pst_errno : forall a, Exists (in_zr a) prh_pst -> ~ (as_errno B <= a < as_errno B + 4);
   (* ---- THE cf LAYER'S RELRO ROWS (lib/Reusable/YG0ncf.v relro_seg_t / errno_relro_t, YGcfAroBridge.v
@@ -254,7 +255,7 @@ Record caw_img : Prop := {
 
 Definition caw_pc (o : Z) : Z := BASE + CAW_OFF + o.
 
-(* ---- THE ENTRY DATA: every binder of tcheck_as_written_specX (PRH_FnCheck.v c40cf3fdcd2a :833 @7cdbb61b5fa0) ---- *)
+(* ---- THE ENTRY DATA: every binder of tcheck_as_written_specX (PRH_FnCheck.v c40cf3fdcd2a :833) ---- *)
 Record caw_in : Type := mkCawIn {
   cw_ly : alayout; cw_S : astate; cw_Hp : list Z; cw_W : world segs;
   cw_regs : bvmap 5 word; cw_mem : word -> option byte; cw_md : Model; cw_ch : list (Z * Z * Z);
@@ -595,9 +596,9 @@ Definition caw_cfg (fy : YK11.FPState) (o : Z) (regs3 : bvmap 5 word) (mem3 : wo
 (* a segment's post: the final post Q, and the invariant P at the end memory *)
 Definition caw_QP (P : (word -> option byte) -> Prop) (Q : world segs -> config -> Prop) : world segs -> config -> Prop :=
   fun W' c' => Q W' c' /\ P (ms_mem (cfg_ms c')).
-(* the ledger at a cut (the kit's Batch 2, decff67d721f): the entry's values, the record's most, and own, the byte
+(* the ledger at a cut (the kit's Batch 2): the entry's values, the record's most, and own, the byte
    g_own_ran_out holds at the cut (prh_ledger_own reads it; a hand step writes it only at the NULL arm's
-   `sb 1, g_own_ran_out`). It replaces the caw_pst threading of c3fe12bc7ff1 by citation. *)
+   `sb 1, g_own_ran_out`). It replaces the caw_pst threading by citation. *)
 Definition caw_ledger (D : caw_in) (ly3 : alayout) (S3 : astate) (Hp3 : list Z) (W3 : world segs)
   (mem3 : word -> option byte) (own : Z) : Prop :=
   prh_ledger B ly3 S3 Hp3 W3 mem3 (cw_Lam D) (cw_peak D) (cw_cnt D) (cw_fail D) (cw_ran D) (cw_most D) own.

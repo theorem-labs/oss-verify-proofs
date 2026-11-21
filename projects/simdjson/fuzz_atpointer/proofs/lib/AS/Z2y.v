@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up per CONFIG_RSEQ value and the new auxv layout). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -23,6 +24,14 @@ Variable IT : itab.
 Variable A : atable.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+(* The run's CONFIG_RSEQ flag as 0 or 1 ([rseq_z]), which fixes the auxv size
+   [AUXSZ rz] and so every address above the auxv.  It is a SECTION variable,
+   not a dispatch argument, exactly as the model has it
+   (75d69e00:theories/Common/AsanPlan.v:34) -- so [check] below carries it, and
+   a certificate is checked at one literal value of it (ibid.:35).  It is a
+   PARAMETER, never a pin: both values are reachable and the caller supplies
+   the free flag. *)
+Variable rz : Z.
 
 Inductive snode : Type :=
 | YMunmap
@@ -114,8 +123,8 @@ Definition node_x (x : xnode) (args : list expr) (cs : acs) : option acs :=
   | XMemcpy => summary_copy segs A nx0 cs (x_memcpy A)
   | XMemIsZero => summary_miz A nx0 cs
   | XEnvScan => node_envscan A cs
-  | XPnScan => node_pnscan A nx0 cs
-  | XLayout => node_layout cs args
+  | XPnScan => node_pnscan A nx0 rz cs
+  | XLayout => node_layout rz cs args
   | XIStrncpy => summary_istrncpy A nx0 cs
   | XPopFree => summary_popfree A nx0 cs args
   | XSniff => summary_smear A cs
@@ -134,7 +143,9 @@ Variable bfuel : nat.
 
 Definition check_all (chk : acs -> plan -> cres) (k : plan) (css : list acs) : cres :=
   match css with
-  | [] => CErr 3 k (init_acs_of A)
+  (* an arbitrary [acs] in a dead error payload; [init_acs_of_with] avoids
+     inventing an rseq value here, since nothing reads this one *)
+  | [] => CErr 3 k (init_acs_of_with [] A)
   | cs0 :: rest =>
       match chk cs0 k with
       | COk s0 =>

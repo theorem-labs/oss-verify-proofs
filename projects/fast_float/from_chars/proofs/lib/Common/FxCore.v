@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a failing sc, which stores the word back). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.
@@ -2065,7 +2066,9 @@ Definition fx_step (t : tree xi) (img : tree Z) (s : sst) : sres :=
             | Some rgs' => SOk (SST (pc + 4) (rset R rd lc0) rgs' fs (s_next s) RNone)
             | None => SStop
             end
-        | Some false => SOk (SST (pc + 4) (rset R rd (lconst 1)) (s_rgs s) fs (s_next s) RNone)
+        (* a FAILING sc reads the word and stores it back at this revision
+           (two memory accesses this abstract step does not model): decline. *)
+        | Some false => SStop
         | None => SStop
         end
       else SStop

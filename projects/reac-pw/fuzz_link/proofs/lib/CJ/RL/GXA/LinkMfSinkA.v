@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cjson/cjson_read_fuzzer/lib/RL/G/G_printf_snsink.v, with its module paths changed; 444 of its 486 lines of code are new or changed and 129 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: copied unchanged from plugin-hostd/fuzz_reply lib/CJ/RL/GXA at 568db058c1d; only the module path prefix is rewritten to this harness. *)
+(* Modified by Theorem Labs, 2026-10: copied unchanged from plugin-hostd/fuzz_reply lib/CJ/RL/GXA; only the module path prefix is rewritten to this harness. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/CJ/RL/GXA/G_printf_snfsink.v, with its module paths changed; 126 of its 168 lines of code are new or changed and 444 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_link, image A (fuzz_link.asan, GXA / CJ engine): the FILE sink of printf_core on link's memory
    FILE (fmemopen "w": the FILE at f, its 1024-byte buffer at f + 280).
 

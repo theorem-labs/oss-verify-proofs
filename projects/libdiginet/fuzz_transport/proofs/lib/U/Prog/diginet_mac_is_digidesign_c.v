@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/diginet_mac_is_digidesign_c.v at 9bd29914ffdef650a37285056a472ff186b4331a to fuzz_transport's images; the caller named is fuzz_frame's (its pcs dropped) *)
+(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/diginet_mac_is_digidesign_c.v to fuzz_transport's images; the caller named is fuzz_frame's (its pcs dropped) *)
 (* Contract of diginet_mac_is_digidesign in fuzz_transport.ubsan, the twin of
    Prog/diginet_mac_is_digidesign_c.v (fuzz_transport.plain).
    Source: src/diginet_frame.c:50-53 at 835f336c.

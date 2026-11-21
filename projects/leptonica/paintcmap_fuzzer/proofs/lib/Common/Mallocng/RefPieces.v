@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the THP-flag and vdso_ok premises of aslot_at, whose continuation now keeps the vm frame (vframe) and the THP flag). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import decidable.
@@ -498,7 +499,7 @@ Proof. intros sp. reflexivity. Qed.
 Definition aslot_at {fx : FPState} (fuel : nat) : Prop :=
   forall md regs mm rom (s : mstate) (sc req sp ret : word)
          (P : word -> mstate -> Prop) (L : word -> mstate -> TSet),
-  md_pure md -> ms_vm s = m_vmmaps md -> magree s mm ->
+  md_pure md -> ms_vm s = m_vmmaps md -> ms_thp s = kb_thp (m_kernel md) -> vdso_ok md -> magree s mm ->
   getr regs 2 = sp -> bv_unsigned sp mod 16 = 0 ->
   0 <= ms_lo s -> ms_lo s <= bv_unsigned sp - alloc_slot_D fuel -> bv_unsigned sp <= ms_hi s -> ms_hi s <= 2^64 ->
   wtop s ->
@@ -508,7 +509,8 @@ Definition aslot_at {fx : FPState} (fuel : nat) : Prop :=
   tsafe (m_alloc_slot fuel (at_ sp (-144)) sc req s) P ->
   (forall r s' mm' regs',
      P r s' -> magree s' mm' -> ms_lo s' = ms_lo s -> ms_hi s' = ms_hi s ->
-     alloc_top (ms_vm s') = alloc_top (ms_vm s) ->
+     vframe (ms_vm s') (ms_vm s) ->
+     ms_thp s' = ms_thp s ->
      getr regs' 10 = r -> getr regs' 2 = sp ->
      (forall x, callee_saved x -> getr regs' x = getr regs x) ->
      (forall a, ms_lo s <= bv_unsigned a < ms_hi s ->

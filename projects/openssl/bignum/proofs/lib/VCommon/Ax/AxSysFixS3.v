@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved ledger). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
@@ -21,11 +22,16 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 #[local] Arguments Uint63Axioms.to_Z : simpl never.
 #[local] Arguments Uint63Axioms.of_Z : simpl never.
 
+(* [comment removed for export] *)
 Ltac flia :=
   repeat match goal with
          | H : context [Z.modulo] |- _ => clear H
          | H : context [Z.div] |- _ => clear H
          end; lia.
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
 
 Lemma in_replace_nth' (A : list region) (i : nat) (R' X : region) :
   In X (replace_nth A i R') -> X = R' \/ exists k, k <> i /\ nth_error A k = Some X.
@@ -49,6 +55,7 @@ Proof.
   destruct i as [|i]; cbn [replace_nth nth_error] in *; [reflexivity | exact (IH i H)].
 Qed.
 
+(* [comment removed for export] *)
 Lemma regions_ok_shrink (ρ : valuation) (A : list region) (i : nat) (R R' : region) :
   regions_ok ρ A -> nth_error A i = Some R -> region_wf ρ R' ->
   rbase ρ R <= rbase ρ R' -> rbase ρ R' + to_Z (rg_n R') <= rbase ρ R + to_Z (rg_n R) ->
@@ -88,6 +95,10 @@ Proof.
     replace (i - j0)%nat with (S (i - S j0)) by lia. exact H2.
 Qed.
 
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
 Section PostCut.
 Variable segs : list Segment.
 Variable ρ : valuation.
@@ -104,16 +115,18 @@ Hypothesis Hcomp : comp_inv segs ρ A model.
 Hypothesis Hcov : mem_cov segs model m.
 Hypothesis Hna : na_ok segs ρ A model m.
 
+(* [comment removed for export] *)
 Hypothesis Hsub : forall R', In R' A' -> exists R, In R A /\ is_shadow R' = is_shadow R /\ forall z, in_rg ρ R' z -> in_rg ρ R z.
-
+(* [comment removed for export] *)
 Hypothesis Hcut_ss : forall z, a <= z < a + n -> ~ in_ss z.
 Hypothesis Hcut_segs : forall z, in_segs segs z -> ~ (a <= z < a + n).
-
+(* [comment removed for export] *)
 Hypothesis Hbg : forall z, in_ss z -> (forall S', In S' A' -> is_shadow S' = true -> ~ in_rg ρ S' z) ->
   (forall S, In S A -> is_shadow S = true -> ~ in_rg ρ S z) \/ m (wz z) = None \/ m (wz z) = Some (Z_to_bv 8 0).
-
+(* [comment removed for export] *)
 Hypothesis Hpre : forall S', In S' A' -> is_shadow S' = true -> forall z, in_rg ρ S' z -> forall q, preimage z q -> ~ (a <= q < a + n).
-
+(* [comment removed for export] *)
+(* [comment removed for export] *)
 Hypothesis Hled_w : forall q, ~ (a <= q < a + n) -> in_ledger_w segs (m_vmmaps model) q -> in_ledger_w segs (m_vmmaps model') q.
 Lemma Hled : forall q, ~ (a <= q < a + n) -> in_ledger segs (m_vmmaps model) q -> in_ledger segs (m_vmmaps model') q.
 Proof. exact (in_ledger_of_w_out segs _ _ (fun q => ~ (a <= q < a + n)) Hled_w). Qed.
@@ -163,6 +176,10 @@ Proof.
 Qed.
 
 End PostCut.
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
 
 Section Trim.
 Variable segs : list Segment.
@@ -229,9 +246,11 @@ Proof. destruct HRM as [Hok _]. exact (regions_ok_nth ρ A i R Hok Hi). Qed.
 Lemma trim_C_wf : region_wf ρ C.
 Proof. destruct HRM as [Hok _]. exact (regions_ok_nth ρ A j C Hok Hj). Qed.
 
+(* [comment removed for export] *)
 Lemma trim_old : hs_old ρ A m.
 Proof. apply (hs_old_of_sh ρ A m C (nth_error_In A j Hj)); [unfold is_shadow; rewrite HCk; reflexivity | exact Hhs]. Qed.
 
+(* [comment removed for export] *)
 Lemma trim_cut_ss (z : Z) : a <= z < a + nZ -> ~ in_ss z.
 Proof.
   intros Hz. destruct trim_old as [P1 _]. apply (P1 R (nth_error_In A i Hi)); [unfold is_shadow; rewrite HRk; reflexivity|].
@@ -252,6 +271,7 @@ Proof.
   - rewrite HC'b, HCb, HC'n, HCn, E1, E2. lia.
 Qed.
 
+(* [comment removed for export] *)
 Lemma trim_in (X : region) : In X A' -> X = C' \/ X = R' \/ exists k, k <> i /\ k <> j /\ nth_error A k = Some X.
 Proof.
   intros HX. unfold A' in HX. destruct (in_replace_nth' _ j C' X HX) as [->|[k [Hk Hn]]]; [left; reflexivity|]. right.
@@ -265,6 +285,7 @@ Proof.
   intros Hki Hkj Hk. unfold A'. apply (nth_error_In _ k). rewrite (nth_replace_nth_other _ j k C' Hkj), (nth_replace_nth_other A i k R' Hki). exact Hk.
 Qed.
 
+(* [comment removed for export] *)
 Lemma trim_old_frame (k : nat) (X : region) : k <> i -> nth_error A k = Some X -> forall z, in_rg ρ X z -> ~ (a <= z < a + nZ).
 Proof.
   intros Hki Hk z Hz Hr. destruct HRM as [Hok _]. pose proof (regions_ok_disj ρ A k i X R Hok Hk Hi Hki) as D.
@@ -276,7 +297,7 @@ Proof.
   apply Forall_forall. intros X HX. destruct HRM as [Hok HRR]. pose proof trim_R_wf as WR. pose proof trim_C_wf as WC.
   destruct trim_div2 as [E1 E2]. destruct trim_div as (D1 & D2 & D3).
   destruct (trim_in X HX) as [->|[->|[k (Hki & Hkj & Hk)]]].
-  -
+  - (* [comment removed for export] *)
     rewrite RRegion_ne by (unfold is_entry; rewrite HC'k; reflexivity). intros y Hy. pose proof (to_Z_bounded y) as Hyb.
     rewrite HC'n in Hy. rewrite HC'b.
     pose proof (zz_region_bytes segs ρ m C (proj1 (Forall_forall _ _) HRR C (nth_error_In A j Hj)) (or_intror HCk) HCc WC
@@ -288,7 +309,7 @@ Proof.
     split.
     + exists (Z_to_bv 8 0). split; [unfold rv in *; rewrite Em; exact Z1|]. rewrite (rbyte_zz segs C' y (or_intror HC'k) HC'c). reflexivity.
     + intros _. unfold wview in *. rewrite Em. exact Z2.
-  -
+  - (* [comment removed for export] *)
     rewrite RRegion_ne by (unfold is_entry; rewrite HR'k; reflexivity). intros y Hy. pose proof (to_Z_bounded y) as Hyb.
     rewrite HR'n in Hy. rewrite HR'b.
     pose proof (zz_region_bytes segs ρ m R (proj1 (Forall_forall _ _) HRR R (nth_error_In A i Hi)) (or_introl HRk) HRc WR
@@ -299,7 +320,7 @@ Proof.
     split.
     + exists (Z_to_bv 8 0). split; [unfold rv in *; rewrite Em; exact Z1|]. rewrite (rbyte_zz segs R' y (or_introl HR'k) HR'c). reflexivity.
     + intros _. unfold wview in *. rewrite Em. exact Z2.
-  -
+  - (* [comment removed for export] *)
     pose proof (regions_ok_nth ρ A k X Hok Hk) as WX.
     apply (RRegion_mframe segs ρ m m' X WX); [|exact (proj1 (Forall_forall _ _) HRR X (nth_error_In A k Hk))].
     intros z Hz. apply Hm_out. destruct WX as (W1 & _). pose proof (smod_range ρ (rg_ts X) (rg_bo X)) as Hb. fold (rbase ρ X) in Hb.
@@ -350,6 +371,10 @@ Qed.
 
 End Trim.
 
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
 Section Main.
 Variable segs : list Segment.
 Variable cfg : SpuriousCfg.
@@ -358,6 +383,9 @@ Variable LIM : Z.
 Variable fs0 : Fs.Fs.
 Variable KT : valuation -> list byte -> TSet.
 Hypothesis Hlow : segs_low segs.
+(* in_segs_reserved gained Section Grant's Hnk, discharged after Hlow; closed at the
+   top on the unit's own ELF image. *)
+Hypothesis Hnk : forallb (fun s => negb (seg_kernel_map s)) segs = true.
 
 Notation MRm := (MR segs fs0).
 Notation RR ρ := (R segs amodel (MRm ρ) LIM ρ).
@@ -368,6 +396,7 @@ Proof.
   replace (4096 * (z / 4096)) with ((512 * (z / 4096)) * 8) by lia. apply Z_mod_mult.
 Qed.
 
+(* [comment removed for export] *)
 Lemma comp_end_47 (a nR : Z) : a mod 8 = 0 -> nR mod 8 = 0 -> 0 <= a -> 8 <= nR -> in_ss (a / 8 + sh_off + nR / 8 - 1) -> a + nR <= 2 ^ 47.
 Proof.
   intros Ha Hn Ha0 Hn8 Hss. pose proof (Z.div_mod nR 8 ltac:(lia)) as D. rewrite Hn in D. pose proof (Z.div_mod a 8 ltac:(lia)) as Da. rewrite Ha in Da.
@@ -411,7 +440,7 @@ Proof.
   pose proof (rng_top segs fs0 ρ _ model H8 e0 He0 f nZ Hhi) as Htop.
   destruct (eb_above_sound ρ _ _ _ H11 Q2b) as [Hat _]. rewrite <- (mr_atop segs fs0 ρ _ model H8) in Hat.
   set (a := leval ρ f) in *.
-
+  (* [comment removed for export] *)
   pose proof (gate_of_MR segs fs0 ρ _ model H8 e0 He0 f len Hlen Hlo Hhi Hal (rg ms (Z_to_bv 5 10)) (rg ms (Z_to_bv 5 11)) R10 R11) as G.
   pose proof (fix_none_shape_lit (rg ms (Z_to_bv 5 12)) (rg ms (Z_to_bv 5 13)) (rg ms (Z_to_bv 5 15)) R12 ltac:(rewrite R13; exact Hfl) R15) as S.
   pose proof (gate_addr ρ f (rg ms (Z_to_bv 5 10)) R10) as Eaddr. fold a in Eaddr.
@@ -429,7 +458,7 @@ Proof.
       by (rewrite Wa, Wn; pose proof (alloc_top_lt (m_vmmaps model)) as Y; unfold two_pow_64 in Y; unfold AxAcct.two64; flia).
     specialize (X Hrange). flia. }
   assert (Hlim : vm_limit (m_vmmaps m') = LIM) by (unfold m'; rewrite fix_none_vmmaps; exact H10').
-
+  (* [comment removed for export] *)
   destruct (find_at_spec _ _ _ _ 0%nat i R EfR) as (_ & Hi & Rts & Rbo & Rc & [[Rk _]|[_ X]]); [|discriminate X]. rewrite Nat.sub_0_r in Hi.
   destruct (find_at_spec _ _ _ _ 0%nat j C EfC) as (_ & Hj & Cts & Cbo & Cc & [[_ X]|[Ck _]]); [discriminate X|]. rewrite Nat.sub_0_r in Hj.
   set (nR := to_Z (rg_n R)) in *.
@@ -445,14 +474,14 @@ Proof.
   assert (Ha47 : a + 0 <= 2 ^ 47) by flia.
   destruct (comp_rg_wf ρ (snd f) (wofZ (fst f)) 0 a (lin_al_tdiv8 f Q2) Hw8 Hsum Ha0 Ha47 (Z.le_refl 0)) as (Cb0 & _ & _).
   assert (Cb : rbase ρ C = a / 8 + sh_off) by (rewrite <- Cb0; unfold rbase, comp_rg; cbn [rg_ts rg_bo]; rewrite Cts, Cbo; reflexivity).
-
+  (* [comment removed for export] *)
   assert (H47 : a + nR <= 2 ^ 47).
   { apply (comp_end_47 a nR Ha8 Q5 Ha0 ltac:(flia)).
     assert (Hin : in_rg ρ C (a / 8 + sh_off + nR / 8 - 1)).
     { unfold in_rg. rewrite Cb, Q6. assert (1 <= nR / 8) by (apply Z.div_le_lower_bound; flia). clear - H. lia. }
     exact (proj1 (H14 C (nth_error_In _ j Hj) ltac:(unfold is_shadow; rewrite Ck; reflexivity) _ Hin)). }
   pose proof (regions_ok_nth ρ _ i R (proj1 H7) Hi) as (WR1 & _). rewrite Rb in WR1. fold nR in WR1.
-
+  (* [comment removed for export] *)
   set (f' := (fst f + nZ, snd f) : lin).
   assert (Hc' : 0 <= fst f' < 9223372036854775808) by (cbn [fst f']; flia).
   assert (Ef' : leval ρ f' = a + nZ) by (unfold leval, f', a; cbn [fst snd]; unfold leval; flia).
@@ -471,9 +500,10 @@ Proof.
   set (mem' := apply_unmaps (ms_mem ms) [(Z_to_bv 64 a, Z_to_bv 64 nZ)]).
   assert (Hin : forall x : word, a <= bv_unsigned x < a + nZ -> mem' x = None) by (intros x Hx; unfold mem'; apply unmaps_in; rewrite Wa, Wn; exact Hx).
   assert (Hout : forall x : word, ~ (a <= bv_unsigned x < a + nZ) -> mem' x = ms_mem ms x) by (intros x Hx; unfold mem'; apply unmaps_out; rewrite Wa, Wn; exact Hx).
-
+  (* [comment removed for export] *)
   apply (rzc_latch segs cfg ms model w (KT ρ o) H9 H3 Hf He).
-  apply (rzc_sys_silent segs cfg (latch ms) model (rg ms (Z_to_bv 5 17)) (KT ρ o) H9 eq_refl).
+  apply (rzc_sys_silent segs cfg (latch ms) model (rg ms (Z_to_bv 5 17)) (KT ρ o) H9 eq_refl
+           (rob_sys_222 segs (latch ms) model (rg ms (Z_to_bv 5 17)) eq_refl R17)).
   - rewrite (check_syscall_222 segs (latch ms) _ _ model R17).
     exact (chk_fix_none_modeled model addr (rg ms (Z_to_bv 5 11)) (rg ms (Z_to_bv 5 12)) flagsw (rg ms (Z_to_bv 5 14)) (rg ms (Z_to_bv 5 15)) S G _).
   - intros eff m1 evs Hc0. rewrite (check_syscall_222 segs (latch ms) _ _ model R17) in Hc0.
@@ -496,13 +526,15 @@ Proof.
                       (vm_start_brk (m_vmmaps model)) (vm_brk (m_vmmaps model)) (vm_limit (m_vmmaps model))
                       (vm_mmap_base (m_vmmaps model)) (vm_init_sp (m_vmmaps model)))
         by (unfold m'; rewrite fix_none_vmmaps, Wa, Wn; reflexivity).
-
+      (* [comment removed for export] *)
       assert (T_ss : forall z, a <= z < a + nZ -> ~ in_ss z).
       { eapply trim_cut_ss with (nR := nR) (R := R) (C := C); first [eassumption | reflexivity]. }
       assert (Hmode : plain_mode (a_mem A) -> plain_mode (replace_nth (replace_nth (a_mem A) i R') j C')).
       { intros [_ Hno]. exfalso. pose proof (Hno C (nth_error_In _ j Hj)) as X. unfold is_shadow in X. rewrite Ck in X. discriminate X. }
       assert (Hsegs : forall z, in_segs segs z -> ~ (a <= z < a + nZ)).
-      { intros z Hz Hr. destruct (in_segs_reserved segs Hlow z Hz) as [q [Hq Hzq]]. rewrite <- (mr_res segs fs0 ρ _ model H8) in Hq.
+      { intros z Hz Hr. destruct (in_segs_reserved segs Hlow Hnk z Hz) as [q [Hq Hzq]].
+        destruct (mr_res segs fs0 ρ _ model H8) as [rx [Hrx _]].
+        apply (fun h => in_or_app _ rx q (or_introl h)) in Hq. rewrite <- Hrx in Hq.
         pose proof (rng_res segs fs0 ρ _ model H8 e0 He0 f nZ Hlo Hhi q Hq) as D. unfold iv_disj in D. fold a in D. flia. }
       assert (Hled : forall q, ~ (a <= q < a + nZ) -> in_ledger_w segs (m_vmmaps model) q -> in_ledger_w segs (m_vmmaps m') q)
         by (intros q _ Hq; unfold in_ledger_w in *; rewrite Evm; exact Hq).

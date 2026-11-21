@@ -4,15 +4,16 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module names changed; 1327 of its 1387 lines of code are new or changed and 951 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/YTail.v, with its module paths and module names changed; 176 of its 306 lines of code are new or changed and 1257 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* rule 24: no function proved.
    Provenance (route (a) bridge input, lead 22:18Z; auditor a Theorem Labs lane):
      image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
        sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
      source runs: lib/B/Prog/Seg/YTail.v y3_evt (:66), y2_evt (:457), y2_evt_r (:521), y1_evt (:743),
-       jrel_evt_real (:1102), jrel_evt_side (:1133) at a working branch 3803efccea0
+       jrel_evt_real (:1102), jrel_evt_side (:1133) at a working branch
        (blob d015d45646020bf0fd03664b1ffe0a31aabe6bbd);
-     tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-           lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+     tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+           lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
      compare: y3_evt_of_F, jrel_evt_real_of_F, jrel_evt_side_of_F (evtF_evt + rng_all) re-derive the source
        statements verbatim.  The three runs with a call are split at the call and carry no callee contract:
        y1_pre_F re-runs YTail.v:783 (the `jal 3dd30 <frame_release_6>` at 0x82f48, up to the callee entry

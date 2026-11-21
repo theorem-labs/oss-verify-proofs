@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the MP_rdr hypothesis: in both sections NodesA.fd_inv_dir3 now needs the far-end channel reader, which aread_dir_sound_of_leaf carries across mrel by mrel_reader). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import PrimInt63 Uint63.
 From stdpp Require Import gmap.
@@ -60,6 +61,9 @@ Hypothesis ACCT_silent : forall aw L RNG st LBa mo,
   ACCT aw L RNG st LBa mo -> MP mo ->
   exists A0 moc, mrel A0 moc mo /\ minvA moc /\ m_halted moc = None /\
     twfS RNG A0 (Ret (Exc.Ok tt)) moc (acct_leaf_silent ACCT OPS OTHER MP mo aw L st LBa).
+(* LPS 08b1429: minv's eleventh conjunct is the far-end reader, so NodesA.fd_inv now carries it.
+   The concrete MP (GlueA.AsanDrun.MP) has it as its second conjunct; this is that projection. *)
+Hypothesis MP_rdr : forall mo, MP mo -> m_channel_reader mo = true.
 
 Lemma aread_dir_pre_inv : forall st, aread_dir_pre CFG_ASAN st = true ->
   CtrS.is_lit (Step.getr st X10) (wlit 3%uint63) = true /\ CtrS.is_lit (Step.getr st X11) (wlit 6275344%uint63) = true
@@ -199,7 +203,9 @@ Proof.
   - exact EV.
   - apply (twfA_read_dir NMAXt RNG A0 moc 3 STAGE cnt).
     + exact ACC.
-    + apply (NodesA.fd_inv_dir3 moc); rewrite <- FDE, FDS; reflexivity.
+    + apply (NodesA.fd_inv_dir3 moc);
+        [rewrite <- FDE, FDS; reflexivity
+        | rewrite <- (mrel_reader _ _ _ MR); exact (MP_rdr mo HMP)].
     + rewrite <- FDE, FDS. reflexivity.
     + subst cnt. lia.
     + repeat split; reflexivity.
@@ -269,6 +275,9 @@ Hypothesis ACCT_silent : forall aw L RNG st LBa mo,
   ACCT aw L RNG st LBa mo -> MP mo ->
   exists A0 moc, mrel A0 moc mo /\ minvA moc /\ m_halted moc = None /\
     twfS RNG A0 (Ret (Exc.Ok tt)) moc (acct_leaf_silent ACCT OPS OTHER MP mo aw L st LBa).
+(* LPS 08b1429: minv's eleventh conjunct is the far-end reader, so NodesA.fd_inv now carries it.
+   The concrete MP (GlueA.AsanDrun.TwinB.MP) has it as its second conjunct; this is that projection. *)
+Hypothesis MP_rdr : forall mo, MP mo -> m_channel_reader mo = true.
 
 Lemma aread_dir_pre_inv : forall st, aread_dir_pre CFG_ASAN st = true ->
   CtrS.is_lit (Step.getr st X10) (wlit 3%uint63) = true /\ CtrS.is_lit (Step.getr st X11) (wlit 6283984%uint63) = true
@@ -408,7 +417,9 @@ Proof.
   - exact EV.
   - apply (twfA_read_dir NMAXt RNG A0 moc 3 STAGE cnt).
     + exact ACC.
-    + apply (NodesA.fd_inv_dir3 moc); rewrite <- FDE, FDS; reflexivity.
+    + apply (NodesA.fd_inv_dir3 moc);
+        [rewrite <- FDE, FDS; reflexivity
+        | rewrite <- (mrel_reader _ _ _ MR); exact (MP_rdr mo HMP)].
     + rewrite <- FDE, FDS. reflexivity.
     + subst cnt. lia.
     + repeat split; reflexivity.

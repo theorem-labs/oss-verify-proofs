@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ProgWorldVisHeap.v -- fuzz_ctrl image A: the two heap rows of lib/A/ProgWorld.v Section Visible, proved.
    heap_vis (plan row V3): every byte of a sub-range of a live heap block is visible.  Source: AR_blocks_law
    (YG0d.v:423-429), whose apresent conjunct hides no byte of the block and whose placement facts
@@ -14,9 +15,9 @@
    STATEMENT TEXT: this file states a Theorem Labs lane's record text directly - `A.ProgWorld.heap_vis_stmt B` and
    `A.ProgWorld.heap_sh_vis_stmt B` - having been re-pointed on 10-29 at 05:4xZ from the local word-for-word copies
    it carried while A.ProgWorld could not compile here (lib/A/AE2k.v and AF0l.v carry undefined
-   `port_core_refused_*` names from the planning core's relocation run 5a85b67a5d8).  The copies were diffed against
-   ProgWorld.v at c03ce1627b6 before the change and were character-identical, so the proofs did not change and there
-   is no bridge lemma.  Replay verified on a Theorem Labs lane's integration head a48c4068c6e. *)
+   `port_core_refused_*` names from the planning core's relocation run).  The copies were diffed against
+   ProgWorld.v before the change and were character-identical, so the proofs did not change and there
+   is no bridge lemma.  Replay verified on a Theorem Labs lane's integration head. *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require Reusable.YK04.

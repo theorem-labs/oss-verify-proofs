@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the instance's envscan, pnscan and layout theorems take the launch's whole ProcInput (gid, kernel build kb, execfn and the rest), its entry, recorded kernel, valid_launch and entry_launch_ok_va, and pass x_stmt the CONFIG_RSEQ value of kb; the NX0 corollaries are dropped). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -29,69 +30,63 @@ Import AX2. Import AX2S. Import AP. Import APS.
 Open Scope Z_scope.
 
 Section AsanInstance.
-  Variable SC : SpuriousCfg.                 (* [comment removed for export] *)
+  Variable SC : SpuriousCfg.
+  Variable apc : N.
   Variable sp : word.
-  Variable rdraw : StackLayout.EntryDraw.     (* [comment removed for export] *)
+  Variable rdraw : StackLayout.EntryDraw.
   Variable brk0 mbase : word.
-  Variable hw : word.                         (* [comment removed for export] *)
+  Variable hw : word.
   Variable argv envp : list (list byte).
   Variable fs : Fs.Fs.
   Variable stdin : InputStream.
   Variable FS0 : Fs.Fs.
+  Variables uid gid : word.
+  Variable groups : list word.
+  Variable net : NetQueue.
+  Variables nofile sigmask : word.
+  Variable urnd : InputStream.
+  Variable tmp : Fs.Fs.
+  Variable kb : KernelBuild.
+  Variable execfn : list byte.
+  Variables rdr sgd sgt : bool.
+  Let INP := AsanInit.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn rdr sgd sgt.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
-  Variable uid : word.
-  Hypothesis Hfit : entry_stack_fits sp argv envp.   (* [comment removed for export] *)
+  Hypothesis Hfit : entry_stack_fits sp argv envp.
+  (* the kernel build as Run.valid_input records it: kb_rseq stays free (LPS 727298f3) *)
+  Hypothesis Hkernel : in_kernel INP = recorded_kernel (in_kernel INP).
+  Hypothesis Hlaunch : valid_launch INP.
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) INP.
+
+  #[local] Notation SINVx := (SINV0 APH apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn rdr sgd sgt).
+  #[local] Notation argHx := (argH0 sp rdraw argv envp kb execfn).
 
   Section AnySINV.
-    (* [comment removed for export] *)
     Variable SINV : env -> (word -> option byte) -> Prop.
-    Hypothesis SINV_SINV0 : forall E M, SINV E M -> SINV0 APH sp rdraw brk0 argv envp uid hw E M.
-    Hypothesis SINV_frame : forall E M M', (forall a, argH0 APH sp rdraw argv envp uid hw E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
-    (* [comment removed for export] *)
+    Hypothesis SINV_SINV0 : forall E M, SINV E M -> SINVx E M.
+    Hypothesis SINV_frame : forall E M M', (forall a, argHx E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
     Variable nx0 : nat.
     Hypothesis NX0_le : (NX0 <= nx0)%nat.
     Hypothesis SINV_agree : forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E' M.
 
-    Theorem node_x_sound_XEnvScan_asan_gen : x_stmt ASEGS SC ASAN5 nx0 LIMIT SINV (argH0 APH sp rdraw argv envp uid hw) FS0 XEnvScan.
+    Theorem node_x_sound_XEnvScan_asan_gen : x_stmt ASEGS SC ASAN5 nx0 LIMIT (rseq_z (kb_rseq kb)) SINV argHx FS0 XEnvScan.
     Proof.
-      eapply (init_x_sound_envscan ASEGS SC ASAN5 APH asan_wx asan_in_hull asan_hull_ok
-                W_910ec W_910f0 W_910f4
-                ltac:(cbn [x_envscan x_envscan_k ASAN5]; lia)
-                (fetch_lit _ _ _ _ eq_refl F_910ec) (fetch_lit _ _ _ _ eq_refl F_910f0) (fetch_lit _ _ _ _ eq_refl F_910f4)
-                ltac:(repeat split; reflexivity)
-                D_910ec D_910f0 D_910f4
-                sp rdraw brk0 argv envp FS0 Hsp Hva Hve uid hw Hfit SINV SINV_SINV0 SINV_frame nx0 NX0_le).
+      eapply init_x_sound_envscan.
+      all: first [ exact (fetch_lit _ _ _ _ eq_refl F_910ec) | exact (fetch_lit _ _ _ _ eq_refl F_910f0) | exact (fetch_lit _ _ _ _ eq_refl F_910f4) | exact (fetch_lit _ _ _ _ eq_refl F_911a8) | exact (fetch_lit _ _ _ _ eq_refl F_911ac) | exact (fetch_lit _ _ _ _ eq_refl F_911b0) | exact (fetch_lit _ _ _ _ eq_refl F_911b4) | exact (fetch_lit _ _ _ _ eq_refl F_911b8) | exact D_910ec | exact D_910f0 | exact D_910f4 | exact D_911a8 | exact D_911ac | exact D_911b0 | exact D_911b4 | exact D_911b8 | exact asan_wx | exact asan_in_hull | exact asan_hull_ok | eassumption
+                 | (cbn [x_envscan x_envscan_k x_pnscan x_pnscan_k ASAN5]; lia)
+                 | (repeat split; reflexivity) ].
     Qed.
 
-    Theorem node_x_sound_XPnScan_asan_gen : x_stmt ASEGS SC ASAN5 nx0 LIMIT SINV (argH0 APH sp rdraw argv envp uid hw) FS0 XPnScan.
+    Theorem node_x_sound_XPnScan_asan_gen : x_stmt ASEGS SC ASAN5 nx0 LIMIT (rseq_z (kb_rseq kb)) SINV argHx FS0 XPnScan.
     Proof.
-      eapply (init_x_sound_pnscan ASEGS SC ASAN5 APH asan_wx asan_in_hull asan_hull_ok
-                W_911a8 W_911ac W_911b0 W_911b4 W_911b8
-                ltac:(cbn [x_pnscan x_pnscan_k ASAN5]; lia)
-                (fetch_lit _ _ _ _ eq_refl F_911a8) (fetch_lit _ _ _ _ eq_refl F_911ac) (fetch_lit _ _ _ _ eq_refl F_911b0)
-                (fetch_lit _ _ _ _ eq_refl F_911b4) (fetch_lit _ _ _ _ eq_refl F_911b8)
-                ltac:(repeat split; reflexivity)
-                D_911a8 D_911ac D_911b0 D_911b4 D_911b8
-                sp rdraw brk0 argv envp FS0 Hsp Hva Hve uid hw Hfit SINV SINV_SINV0 SINV_frame nx0 NX0_le SINV_agree).
+      eapply init_x_sound_pnscan.
+      all: first [ exact (fetch_lit _ _ _ _ eq_refl F_910ec) | exact (fetch_lit _ _ _ _ eq_refl F_910f0) | exact (fetch_lit _ _ _ _ eq_refl F_910f4) | exact (fetch_lit _ _ _ _ eq_refl F_911a8) | exact (fetch_lit _ _ _ _ eq_refl F_911ac) | exact (fetch_lit _ _ _ _ eq_refl F_911b0) | exact (fetch_lit _ _ _ _ eq_refl F_911b4) | exact (fetch_lit _ _ _ _ eq_refl F_911b8) | exact D_910ec | exact D_910f0 | exact D_910f4 | exact D_911a8 | exact D_911ac | exact D_911b0 | exact D_911b4 | exact D_911b8 | exact asan_wx | exact asan_in_hull | exact asan_hull_ok | eassumption
+                 | (cbn [x_envscan x_envscan_k x_pnscan x_pnscan_k ASAN5]; lia)
+                 | (repeat split; reflexivity) ].
     Qed.
 
-    Theorem node_x_sound_XLayout_asan_gen : x_stmt ASEGS SC ASAN5 nx0 LIMIT SINV (argH0 APH sp rdraw argv envp uid hw) FS0 XLayout.
+    Theorem node_x_sound_XLayout_asan_gen : x_stmt ASEGS SC ASAN5 nx0 LIMIT (rseq_z (kb_rseq kb)) SINV argHx FS0 XLayout.
     Proof. apply x_sound_layout. Qed.
-
   End AnySINV.
-
-  (* [comment removed for export] *)
-  Theorem node_x_sound_XEnvScan_asan :
-    x_stmt ASEGS SC ASAN5 NX0 LIMIT (SINV0 APH sp rdraw brk0 argv envp uid hw) (argH0 APH sp rdraw argv envp uid hw) FS0 XEnvScan.
-  Proof. apply node_x_sound_XEnvScan_asan_gen; [auto | apply SINV0_frame | apply le_n]. Qed.
-
-  Theorem node_x_sound_XPnScan_asan :
-    x_stmt ASEGS SC ASAN5 NX0 LIMIT (SINV0 APH sp rdraw brk0 argv envp uid hw) (argH0 APH sp rdraw argv envp uid hw) FS0 XPnScan.
-  Proof. apply node_x_sound_XPnScan_asan_gen; [auto | apply SINV0_frame | apply le_n | apply SINV0_agree]. Qed.
-
-  Theorem node_x_sound_XLayout_asan :
-    x_stmt ASEGS SC ASAN5 NX0 LIMIT (SINV0 APH sp rdraw brk0 argv envp uid hw) (argH0 APH sp rdraw argv envp uid hw) FS0 XLayout.
-  Proof. apply x_sound_layout. Qed.
 End AsanInstance.

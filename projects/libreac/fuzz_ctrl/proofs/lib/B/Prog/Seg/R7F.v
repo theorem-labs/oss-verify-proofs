@@ -4,13 +4,14 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module names, addresses and numbers changed; 1202 of its 1292 lines of code are new or changed and 921 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/R7.v, with its module paths and module names changed; 77 of its 119 lines of code are new or changed and 1250 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Provenance (route (a) bridge input, lead 22:18Z; auditor a Theorem Labs lane):
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
    source runs: lib/B/Prog/Seg/R7.v r7_evt (:144), r7_evt0 (:165) at
-     a working branch 3803efccea0 (blob 0726d190dd685a9359793e49350524b0f5d90052);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+     a working branch (blob 0726d190dd685a9359793e49350524b0f5d90052);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    compare: r7_evt_of_F / r7_evt0_of_F re-derive the SOURCE statements (evtF_evt + rng_all, then the
      ul_evt_of_evt bridge of R5F.v, which carries a lib.Lib run into the lib.B.Tk.UL engine the source
      states its runs in); r7_evt_same / r7_evt0_same compile that those are R7.r7_evt's and R7.r7_evt0's
@@ -99,7 +100,7 @@ Qed.
    R7.r7_evt / R7.r7_evt0 state their runs on the lib.B.Tk.UL engine.  UL's [mstep] is the lib.Lib
    [mstep] (both are `ms_svc_pending ms = None /\ RiscvSemantics.step segs ms = MachineOk ms'`), so a
    lib.Lib run of a given Q is a UL run of it; the register and memory vocabulary (mkR, MS, getr,
-   ro_cells, seg_rom) is the same text in the two copies.  Same bridge as R5F.v:136-146; SmLib's
+   ro_cells, seg_rom) is the same text in the two copies.  Same bridge as R5F.v:137-147; SmLib's
    ul_entry / mkR_ul are not Required here, because SmLib pulls its UL + AK + AW closure and its image
    numerals, which the glue-closure rule bars. *)
 Module ULE := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Tk.UL.Exec.

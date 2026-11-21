@@ -1,11 +1,11 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfCr.v (cold/port-fm-rtprintf-param 3e35620c52e); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 7 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMsnprintfCr.table). *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMsnprintfCr.v at 2d2ff01bb6f2 relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfCr.v; relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 7 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMsnprintfCr.table). *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMsnprintfCr.v relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
 (* The read-only constants of fm's snprintf chain: cr = fm's non-writable segments (the same expression as Pcommon's
    RT_pf_shU.PCM_CR), with its bounds (fm_cr_bounds, fm_cr_in_image), the static side condition GXA's seam asks of a
    contract's constant list (FMgxaSeamNorm.ro_covered), and consts_view over it from the harness's two read-only views
    (FMH_Base.rom_viewN for the non-owned bytes, rom_viewO for the runtime-owned statics; errno lies above the image,
    AF0m's TfibSyms). New file. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/FMsnprintfCr.v at 71994ff034c7, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/FMsnprintfCr.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/FMsnprintfCr.v keeps its donor's comment text) is kept as lib/A/FMsnprintfCr.v writes it. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/FMsnprintfCr.v, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/FMsnprintfCr.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/FMsnprintfCr.v keeps its donor's comment text) is kept as lib/A/FMsnprintfCr.v writes it. *)
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

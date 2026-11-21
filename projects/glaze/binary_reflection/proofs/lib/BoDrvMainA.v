@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main lane from this run's per-flag hand-off state). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -834,33 +835,98 @@ Proof.
 Qed.
 
 Section MainA.
-Variables (ph : PhdrInfo) (sp : word) (rdraw : EntryDraw) (brk0 : word) (argv envp : list (list byte)) (uid hw : word) (fs : Fs.Fs).
+(* [apc] is NEW and is not an inherited detail: the revision's auxv carries
+   AT_ENTRY, so the entry stack image is a function of the ELF entry, and
+   [AsSInit.Init] made it a Section variable (AsSInit.v:58).  [mbase] joins it
+   for the same reason.  THE COMPONENT VARIABLES [argv envp fs uid hw] are
+   replaced by the whole [ProcInput]: [AsSInit.Init] moved onto [inp] at this
+   revision and [AsSInit.inp], the function that used to BUILD a [ProcInput]
+   from the components, no longer exists -- [inp] is a Section variable there
+   now.  The components are read back as projections, exactly as AsSInit reads
+   them, so every statement below keeps its meaning. *)
+Variables (ph : PhdrInfo) (apc : N) (sp : word) (rdraw : EntryDraw) (brk0 mbase : word) (inp : ProcInput).
+#[local] Notation argv := (in_argv inp) (only parsing).
+#[local] Notation envp := (in_envp inp) (only parsing).
+#[local] Notation fs   := (in_fs inp) (only parsing).
+#[local] Notation uid  := (in_uid inp) (only parsing).
+#[local] Notation hw   := (in_hwcap inp) (only parsing).
 Hypothesis Hsp : valid_sp sp.
-Hypothesis Hva : valid_argv argv.
-Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hva : valid_argv (in_argv inp).
+Hypothesis Hve : valid_envp (in_envp inp).
+Hypothesis Hfit : entry_stack_fits sp (in_argv inp) (in_envp inp).
+(* NEW, because they are new in [AsSInit.Init] (AsSInit.v:119-120): the launch
+   is well formed and its block fits the window.  Every AsSInit lemma about
+   the layout is abstracted over them now. *)
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) inp.
 Variable KCAP : Z.
 Hypothesis HKCAP : 0 <= KCAP.
 Hypothesis HKG : GKCAP <= KCAP.
 Hypothesis EXT : forall (RC : run_ceil) (hv : AsAinvOomCell3.BoAinvBoot3.bvars),
   AsKSys10.AsAinvBootF3.boot_facts (both_bt hv) -> AsKSys10.AsKSys11.boot_totals (both_bt hv) -> @DRV_EXT RC hv KCAP.
-#[local] Notation SINV := (AsSInit.SINV0 ph sp rdraw brk0 argv envp uid hw).
-#[local] Notation argH := (AsSInit.argH0 ph sp rdraw argv envp uid hw).
+(* Old beside new.  Both are Definitions, so the arities come from their
+   bodies (AsSInit.v:50-120):
+     SINV : AsSInit.SINV0 ph sp rdraw brk0 argv envp uid hw
+         -> AsSInit.SINV0 ph apc sp rdraw brk0 mbase inp
+     argH : AsSInit.argH0 ph sp rdraw argv envp uid hw
+         -> AsSInit.argH0 sp rdraw inp
+   [argH0] loses [ph] and [brk0] because its string-block bound is
+   [cat_string_off rseq sp top argv envp execfn] (Common/CatExec.v:578) now
+   rather than an expression over the image length, so it no longer mentions
+   the image at all. *)
+#[local] Notation SINV := (AsSInit.SINV0 ph apc sp rdraw brk0 mbase inp).
+#[local] Notation argH := (AsSInit.argH0 sp rdraw inp).
 #[local] Notation CSOK := (APS.cs_ok BSEGS AT_B LIMIT_S SINV argH ISP_S fs).
 
 Variable hs : acs.
-Hypothesis Hhs : hs = HS_1 \/ hs = HS_2.
+(* The hand-off states are per flag value; this run's own. *)
+Hypothesis Hhs : hs = HS_1 (rseq_z (kb_rseq (in_kernel inp))) \/ hs = HS_2 (rseq_z (kb_rseq (in_kernel inp))).
 Variables (E : env) (fx : GPS.FX) (R : bvmap 5 word) (M : word -> option byte) (model : Model).
 Hypothesis HC : CSOK E hs R M model.
 Hypothesis Hfx : fx_ok fx.
 
-Lemma pc_hs : pc hs = P_MAIN. Proof. destruct Hhs as [-> | ->]; reflexivity. Qed.
+Lemma pc_hs : pc hs = P_MAIN.
+Proof.
+  assert (P : forall b, pc (HS_1 (rseq_z b)) = P_MAIN /\ pc (HS_2 (rseq_z b)) = P_MAIN)
+    by (intros [|]; split; vm_compute; reflexivity).
+  destruct Hhs as [-> | ->]; apply P.
+Qed.
+
+(* [sp0_val] (BoDrvMainBridgeA.v:430) and [AsSInit.argH0_high] (AsSInit.v:200)
+   are Section LEMMAS, whose discharged argument lists are whatever their
+   proofs use.  They are pinned once here by a tactic rather than spelled as
+   positional lists, and the two names below are what the sites use. *)
+Let sp0v : u (edenot E e_sp0) = u sp.
+(* [apply] cannot find the image's variables, which [sp0_val]'s conclusion does not
+   mention; [eapply] leaves them to the section hypotheses ([HC], [Hlau]). *)
+Proof. eapply sp0_val; eassumption. Qed.
+Let argH_high : forall E0 (a : word), argH E0 a = true ->
+      sp_window_lo <= u a /\ u (edenot E0 ISP_S) <= u a.
+(* AsSInit's discharged list for [argH0_high] is [apc sp rdraw inp Hsp Hva]. *)
+Proof. exact (AsSInit.argH0_high apc sp rdraw inp Hsp Hva). Qed.
 
 Lemma alloc_top_main : alloc_top (m_vmmaps model) = u sp - 8388608.
 Proof.
   unfold alloc_top. rewrite (APS.co_isp _ _ _ _ _ _ _ _ _ _ _ _ HC). rewrite stack_max_size_val.
-  change ISP_S with e_sp0. rewrite (sp0_val ph sp rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit hs E R M model HC). reflexivity.
+  change ISP_S with e_sp0. rewrite sp0v. reflexivity.
 Qed.
+(* The TASK_SIZE carrier's start frame (BoDrvNodesSoundA5.v, [SPTOPc_task]/[M0c_task]), both
+   stated in the model's [TASK_SIZE].  Memory: at [main] it maps nothing at or above
+   TASK_SIZE, because [SINV0] pins those bytes to the initial memory, which maps nothing there
+   ([AsSInit.SINV0_task], [AsSInit.FULL0_task]: the launch's stack block ends at
+   [top <= sp_window_hi]).  The image's ROM reaches no such address either ([both_in_hull],
+   AzImageBoth.v:74, a [vm_compute] over [AsanUbsan.M.loaded_segments] = Images.v:16). *)
+Lemma M_task : forall a : word, TASK_SIZE <= u a -> M a = None.
+(* AsSInit's discharged list for [SINV0_task] is [ph apc sp rdraw brk0 mbase inp Hlau], then
+   [E M], the invariant and [uE E e_sp0 = usp]: spelled out, since after [eapply] the first
+   open goal is [Hlau] with its variables unfixed and the bullets above went to it. *)
+Proof.
+  exact (AsSInit.SINV0_task ph apc sp rdraw brk0 mbase inp Hlau E M
+           (APS.co_sinv _ _ _ _ _ _ _ _ _ _ _ _ HC) sp0v).
+Qed.
+(* Stack top: the frame's [SPTOPc] is [u sp - 48] and the launch puts [sp <= sp_window_hi]. *)
+Lemma SPTOP_task : u sp - 48 <= TASK_SIZE.
+Proof. pose proof (BoDrvMainBridgeA.BoDrvBridgeArgv.sp_rng sp Hsp) as (S1 & S2 & S3). unfold TASK_SIZE. lia. Qed.
 Lemma at_rng : CEIL0 <= alloc_top (m_vmmaps model) <= CEILMAX.
 Proof. rewrite alloc_top_main, <- stack_max_size_val. exact (alloc_top_rng_of_valid_sp sp Hsp). Qed.
 Definition RCm : run_ceil := run_ceil_of_top (alloc_top (m_vmmaps model)) at_rng.
@@ -874,14 +940,14 @@ Lemma ainv_main : exists hv : AsAinvOomCell3.BoAinvBoot3.bvars,
   /\ @AsAllocFFam.AsAinvDrvHist3.AAINV_DR RCm (both_bt hv) [] [] 0 0 0 M model.
 Proof.
   destruct Hhs as [Hh | Hh]; pose proof HC as HC'; rewrite Hh in HC'.
-  - exists (@BoAinvMainB.hv RCm E model).
-    split; [exact (@BoAinvMainB.boot_facts_main_1 RCm SINV argH fs E R M model HC' eq_refl)|].
-    split; [exact (@BoAinvMainB.boot_totals_main RCm SINV argH fs E R M model HC' eq_refl)|].
-    exact (@BoAinvMainB.BAINV_DR_at_main_1 RCm SINV argH fs both_S_in_hull (AsSInit.argH0_high ph sp rdraw argv envp uid hw Hsp Hva) E R M model HC' eq_refl).
-  - exists (@BoAinvMainB2.hv RCm E model).
-    split; [exact (@BoAinvMainB2.boot_facts_main_2 RCm SINV argH fs E R M model HC' eq_refl)|].
-    split; [exact (@BoAinvMainB2.boot_totals_main RCm SINV argH fs E R M model HC' eq_refl)|].
-    exact (@BoAinvMainB2.BAINV_DR_at_main_2 RCm SINV argH fs both_S_in_hull (AsSInit.argH0_high ph sp rdraw argv envp uid hw Hsp Hva) E R M model HC' eq_refl).
+  - exists (@BoAinvMainB.hv RCm (kb_rseq (in_kernel inp)) E model).
+    split; [exact (@BoAinvMainB.boot_facts_main_1 RCm SINV argH fs (kb_rseq (in_kernel inp)) E R M model HC' eq_refl)|].
+    split; [exact (@BoAinvMainB.boot_totals_main RCm SINV argH fs (kb_rseq (in_kernel inp)) E R M model HC' eq_refl)|].
+    exact (@BoAinvMainB.BAINV_DR_at_main_1 RCm SINV argH fs both_S_in_hull argH_high (kb_rseq (in_kernel inp)) E R M model HC' eq_refl).
+  - exists (@BoAinvMainB2.hv RCm (kb_rseq (in_kernel inp)) E model).
+    split; [exact (@BoAinvMainB2.boot_facts_main_2 RCm SINV argH fs (kb_rseq (in_kernel inp)) E R M model HC' eq_refl)|].
+    split; [exact (@BoAinvMainB2.boot_totals_main RCm SINV argH fs (kb_rseq (in_kernel inp)) E R M model HC' eq_refl)|].
+    exact (@BoAinvMainB2.BAINV_DR_at_main_2 RCm SINV argH fs both_S_in_hull argH_high (kb_rseq (in_kernel inp)) E R M model HC' eq_refl).
 Qed.
 
 (* [comment removed for export] *)
@@ -910,9 +976,9 @@ Qed.
 Definition Irun (SPTOP : Z) : dinst :=
   DI (@AzBridgeH.SHC_bt RCm bt) KCAP (@AzBridgePR.AINVH_pr RCm bt AsAllocFFam.AsAinvDrvHist3.drv_hist) (@AzBridgeH.AINVH_bt RCm bt)
      PERM_A_lit SPTOP [] [] M 0 0 FMIN.
-Lemma fhyps : forall SPTOP a0 p data, @file_hyps RCm stk_floor_default (Irun SPTOP) a0 p fs data.
+Lemma fhyps : forall SPTOP a0 p data, SPTOP <= TASK_SIZE -> @file_hyps RCm stk_floor_default (Irun SPTOP) a0 p fs data.
 Proof.
-  intros SPTOP a0 p data.
+  intros SPTOP a0 p data HSP.
   constructor; cbn [Irun di_SHC di_KCAP di_AINVH1 di_AINVH di_SWIN di_SPTOP di_HID di_HIDF di_M0 di_B0 di_C0 di_FTOP].
   - exact (AzInstBP.hprops_both_pr bt eq_refl AsAllocFFam.AsAinvDrvHist3.drv_hist PERM_A_lit SWIN_ok_A).
   - exact HPbt.
@@ -922,6 +988,8 @@ Proof.
   - unfold BCAP; lia.
   - unfold CCAP; lia.
   - cbn; lia.
+  - exact HSP.
+  - exact M_task.
   - intros UX HUX M0. exact (GCA SPTOP fs a0 p data UX M0 HUX).
   - exact FZN.
   - exact FZE.
@@ -975,6 +1043,7 @@ Definition SPEC_T (tX : acs) (T : list byte -> list byte -> Fs.Fs -> list byte -
        (forall a : word, M' a <> M1 a -> (in_lsb (u a) = true \/ in_mub (u a) = true) /\ M' a <> None) ->
        rdn BSEGS M' (Z_to_bv 64 DNA.DTOR_MU) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 0)) ->
        AINVH L LF B C K M' mdl) ->
+    SPTOPc <= TASK_SIZE -> (forall a : word, TASK_SIZE <= u a -> M0c a = None) ->
     forall Ex fx0 R0 M1 model0,
       GPS.cs_ok BSEGS PERM_A_lit SPTOPc fs0 SHC (VSHf HIDc HIDFc) (AINV_f SWIN GBOTH AINVH PERM_A_lit SPTOPc HIDc HIDFc M0c B0c C0c) KCAP0 FTOPc fx_ok
         (UINVd a0 p fs0 data UX0) Ex tX fx0 R0 M1 model0 ->
@@ -988,8 +1057,14 @@ Lemma spec_absent : SPEC_T tMoa (fun _ p fs0 _ => t_die (msg_cannot_open p) fs0)
 Lemma spec_empty : SPEC_T tMoz (fun _ _ fs0 _ => t_die (msg_cannot_open []) fs0). Proof. exact @cantopen_empty_spec. Qed.
 Lemma spec_toolong : SPEC_T tMot (fun _ p fs0 _ => t_die (msg_cannot_open p) fs0). Proof. exact @cantopen_toolong_spec. Qed.
 
-(* [comment removed for export] *)
-#[local] Notation E'x mk bl := (BoDrvMainBridgeA.E' ph sp rdraw argv envp uid hw hs E mk bl).
+(* [BoDrvMainBridgeA.E'] is a Definition, so its arity comes from its body
+   (BoDrvMainBridgeA.v:413-422): it is built from [ovr], hence from [XBv],
+   which is [ph apc sp rdraw mbase inp]-indexed now, and from [Et], hence from
+   [hs] and [E].  Old beside new:
+     BoDrvMainBridgeA.E' ph sp rdraw argv envp uid hw hs E mk bl
+  -> BoDrvMainBridgeA.E' ph apc sp rdraw mbase inp hs E mk bl
+   [brk0] and [fs] are absent from the body in both revisions. *)
+#[local] Notation E'x mk bl := (BoDrvMainBridgeA.E' ph apc sp rdraw mbase inp hs E mk bl).
 Lemma run_class : forall (tX : acs) (T : list byte -> list byte -> Fs.Fs -> list byte -> TSet) (a0 p data : list byte) (mk : Z) (bl : nat -> list byte),
   SPEC_T tX T -> pc tX = P_MAIN ->
   (forall (bt : as_boot), bt_ia bt = both_addrs ->
@@ -1012,7 +1087,7 @@ Proof.
   apply (HSPEC RCm stk_floor_default (@AzBridgeH.SHC_bt RCm bt) KCAP (@AzBridgeH.AINVH_bt RCm bt) PERM_A_lit (HPbt hv) SWIN_img_A (u sp - 48) [] [] M 0 0
            ltac:(lia) ltac:(lia) ltac:(unfold BCAP; lia) ltac:(unfold CCAP; lia) FMIN ltac:(cbn; lia) a0 p fs data
            (fun M0 => GCA hv XT (u sp - 48) fs a0 p data UX0 M0 UX0_agree) (proj1 (proj2 (proj2 (proj2 XT)))) (proj2 (proj2 (proj2 (proj2 XT))))
-           (M2S_H_A hv) (DTOR_H_A hv) (DTOR_FRAME_A hv) (E'x mk bl) fx R M model HCX).
+           (M2S_H_A hv) (DTOR_H_A hv) (DTOR_FRAME_A hv) SPTOP_task M_task (E'x mk bl) fx R M model HCX).
 Qed.
 
 (* [comment removed for export] *)
@@ -1044,6 +1119,23 @@ Lemma HCTm : @BE.ceil_top RCm model. Proof. unfold BE.ceil_top. apply Z.le_refl.
 Lemma HCSm : @GlzConst.RunCeil.CEIL RCm <= u sp - 8388608. Proof. rewrite RCm_ceil. apply page_floor_le. Qed.
 Lemma HSFm : @GPS.SFLOOR RCm stk_floor_default <= u sp - 8388608. Proof. exact HCSm. Qed.
 
+(* The [cs_tM*] theorems are Section LEMMAS of BoDrvMainBridgeA's Section
+   Bridge, which moved onto [inp] with AsSInit.Init.  A Section lemma's
+   discharged argument list is whatever its proof uses, so they are applied by
+   tactic below rather than by the positional list
+     RCm ph sp rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit hs Hhs ...
+   this file used to spell.  They are applied with [eapply]: their conclusions do
+   not mention every variable of the bridge (the image's [brk0] among them), so
+   [apply] cannot find those and [cs_bridge]'s [eassumption] fixes them from the
+   section hypotheses.  [cs_bridge] discharges the side goals the list
+   used to fill: the section hypotheses from the context, the three ceiling
+   facts just above, the [eq_refl] shapes, and the length arithmetic. *)
+Ltac cs_bridge :=
+  try eassumption;
+  try exact HCTm; try exact HCSm; try exact HSFm;
+  try reflexivity;
+  try (try unfold L0v; try unfold L1v; try unfold FLENHI; lia).
+
 Definition MKU : Z := DNA.CLS_ABSENT + 5.   (* [comment removed for export] *)
 Lemma U_none : forall data, U_drv a0 p1 fs data (E'x MKU (blA data)).
 Proof.
@@ -1061,21 +1153,17 @@ Proof.
   - replace a0 with (@nil byte) by (symmetry; apply length_zero_iff_nil; exact HL).
     apply (run_class tMu1z (fun _ _ fs0 _ => t_die (msg_usage []) fs0) a0 p1 [] MKU (blA []) spec_usage1z eq_refl); [|exact (U_none [])].
     intros bt BT AINVc UINV HA HUx.
-    exact (@cs_tMu1z RCm ph sp rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit hs Hhs E R M model HC MKU (blA []) bt BT HCTm HCSm stk_floor_default HSFm KCAP HKCAP
-             AINVc HA UINV HUx fx Hfx eq_refl H1 ltac:(unfold L0v; lia)).
+    eapply cs_tMu1z; cs_bridge.
   - apply (run_class tMu1n (fun x _ fs0 _ => t_die (msg_usage x) fs0) a0 p1 [] MKU (blA []) spec_usage1 eq_refl); [|exact (U_none [])].
     intros bt BT AINVc UINV HA HUx.
-    exact (@cs_tMu1n RCm ph sp rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit hs Hhs E R M model HC MKU (blA []) bt BT HCTm HCSm stk_floor_default HSFm KCAP HKCAP
-             AINVc HA UINV HUx fx Hfx eq_refl H1 ltac:(unfold L0v; lia)).
+    eapply cs_tMu1n; cs_bridge.
   - replace a0 with (@nil byte) by (symmetry; apply length_zero_iff_nil; exact HL).
     apply (run_class tMu3z (fun _ _ fs0 _ => t_die (msg_usage []) fs0) a0 p1 [] MKU (blA []) spec_usage3z eq_refl); [|exact (U_none [])].
     intros bt BT AINVc UINV HA HUx.
-    exact (@cs_tMu3z RCm ph sp rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit hs Hhs E R M model HC MKU (blA []) bt BT HCTm HCSm stk_floor_default HSFm KCAP HKCAP
-             AINVc HA UINV HUx fx Hfx eq_refl ltac:(lia) ltac:(unfold L0v; lia)).
+    eapply cs_tMu3z; cs_bridge.
   - apply (run_class tMu3n (fun x _ fs0 _ => t_die (msg_usage x) fs0) a0 p1 [] MKU (blA []) spec_usage3 eq_refl); [|exact (U_none [])].
     intros bt BT AINVc UINV HA HUx.
-    exact (@cs_tMu3n RCm ph sp rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit hs Hhs E R M model HC MKU (blA []) bt BT HCTm HCSm stk_floor_default HSFm KCAP HKCAP
-             AINVc HA UINV HUx fx Hfx eq_refl ltac:(lia) ltac:(unfold L0v; lia)).
+    eapply cs_tMu3n; cs_bridge.
 Qed.
 
 (* [comment removed for export] *)
@@ -1095,8 +1183,7 @@ Proof.
   intros H2 HL.
   apply (run_class tMot (fun _ x fs0 _ => t_die (msg_cannot_open x) fs0) a0 p1 [] MKU (blA []) spec_toolong eq_refl); [|exact (U_none [])].
   intros bt BT AINVc UINV HA HUx.
-  exact (@cs_tMot RCm ph sp rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit hs Hhs E R M model HC MKU (blA []) bt BT HCTm HCSm stk_floor_default HSFm KCAP HKCAP
-           AINVc HA UINV HUx fx Hfx eq_refl eq_refl H2 ltac:(unfold L1v; lia)).
+  eapply cs_tMot; cs_bridge.
 Qed.
 
 Theorem main_empty : length argv = 2%nat -> p1 = [] -> RZ (cfgF BSEGS fx R (pc hs) M model) (t_die (msg_cannot_open p1) fs).
@@ -1108,8 +1195,7 @@ Proof.
   replace (msg_cannot_open p1) with (msg_cannot_open []) by (rewrite HE; reflexivity).
   apply (run_class tMoz (fun _ _ fs0 _ => t_die (msg_cannot_open []) fs0) a0 p1 [] DNA.CLS_ABSENT (blA []) spec_empty eq_refl); [|exact HU].
   intros bt BT AINVc UINV HA HUx.
-  exact (@cs_tMoz RCm ph sp rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit hs Hhs E R M model HC DNA.CLS_ABSENT (blA []) bt BT HCTm HCSm stk_floor_default HSFm KCAP HKCAP
-           AINVc HA UINV HUx fx Hfx eq_refl eq_refl H2 ltac:(unfold L1v; rewrite HE; reflexivity) eq_refl).
+  eapply cs_tMoz; try (unfold L1v; rewrite HE; reflexivity); cs_bridge.
 Qed.
 
 Theorem main_absent : length argv = 2%nat -> (length p1 < 4096)%nat -> p1 <> [] -> Open.path_is_dirref p1 = false -> fs_lookup fs p1 = None ->
@@ -1124,8 +1210,7 @@ Proof.
   apply (run_class tMoa (fun _ x fs0 _ => t_die (msg_cannot_open x) fs0) a0 p1 [] DNA.CLS_ABSENT (blA []) spec_absent eq_refl); [|exact HU].
   intros bt BT AINVc UINV HA HUx.
   assert (HLn : (0 < length p1)%nat) by (destruct p1; [exfalso; apply Hne; reflexivity | cbn; lia]).
-  exact (@cs_tMoa RCm ph sp rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit hs Hhs E R M model HC DNA.CLS_ABSENT (blA []) bt BT HCTm HCSm stk_floor_default HSFm KCAP HKCAP
-           AINVc HA UINV HUx fx Hfx eq_refl eq_refl H2 ltac:(unfold L1v; lia) eq_refl).
+  eapply cs_tMoa; cs_bridge.
 Qed.
 
 (* [comment removed for export] *)
@@ -1142,10 +1227,11 @@ Proof.
   assert (HM8 : (u sp - 48) mod 8 = 0) by (clear - S3; Z.div_mod_to_equations; lia).
   pose proof (@ainv_wrap RCm bt (AsAllocFFam.AsAinvPrist3.AAINV_QX bt AsAllocFFam.AsAinvDrvHist3.drv_hist None) (u sp - 48) M model HDR HCE HM8) as HAI.     (* [comment removed for export] *)
   assert (HLn : (0 < length p1)%nat) by (destruct p1; [exfalso; apply Hne; reflexivity | cbn; lia]).
-  pose proof (@cs_tMod RCm ph sp rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit hs Hhs E R M model HC DNA.CLS_DIR (blA []) bt eq_refl HCTm HCSm stk_floor_default HSFm KCAP HKCAP
-                _ HAI (UINVd a0 p1 fs [] UX0) (conj HU I) fx Hfx eq_refl eq_refl H2 ltac:(unfold L1v; lia) eq_refl) as HCX.
   rewrite pc_hs. change P_MAIN with (pc tMod).
-  exact (@dir_spec RCm stk_floor_default (Irun hv (u sp - 48)) a0 p1 fs [] (fhyps hv XT (u sp - 48) a0 p1 []) (E'x DNA.CLS_DIR (blA [])) fx R M model HCX).
+  (* [cs_tMod] is a Section lemma, so it is discharged into the goal position
+     and applied by tactic rather than spelled as a positional list. *)
+  apply (@dir_spec RCm stk_floor_default (Irun hv (u sp - 48)) a0 p1 fs [] (fhyps hv XT (u sp - 48) a0 p1 [] SPTOP_task) (E'x DNA.CLS_DIR (blA [])) fx R M model).
+  eapply cs_tMod; try exact (conj HU I); cs_bridge.
 Qed.
 
 (* [comment removed for export] *)
@@ -1167,10 +1253,10 @@ Proof.
   assert (HM8 : (u sp - 48) mod 8 = 0) by (clear - S3; Z.div_mod_to_equations; lia).
   pose proof (@ainv_wrap RCm bt (AsAllocFFam.AsAinvPrist3.AAINV_QX bt AsAllocFFam.AsAinvDrvHist3.drv_hist None) (u sp - 48) M model HDR HCE HM8) as HAI.     (* [comment removed for export] *)
   assert (HLn : (0 < length p1)%nat) by (destruct p1; [exfalso; apply Hne; reflexivity | cbn; lia]).
-  pose proof (@cs_tMf RCm ph sp rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit hs Hhs E R M model HC (APS.flen data) (blA data) bt eq_refl HCTm HCSm stk_floor_default HSFm KCAP HKCAP
-                _ HAI (UINVd a0 p1 fs data (UXf data)) (conj HU HX) fx Hfx eq_refl eq_refl H2 ltac:(unfold L1v; lia) ltac:(unfold FLENHI; lia)) as HCX.
   rewrite pc_hs. change P_MAIN with (pc tMf).
-  exact (@file_spec RCm stk_floor_default (Irun hv (u sp - 48)) a0 p1 fs data (fhyps hv XT (u sp - 48) a0 p1 data) (E'x (APS.flen data) (blA data)) fx R M model HCX).
+  (* [cs_tMf] is a Section lemma; see [main_dir]. *)
+  apply (@file_spec RCm stk_floor_default (Irun hv (u sp - 48)) a0 p1 fs data (fhyps hv XT (u sp - 48) a0 p1 data SPTOP_task) (E'x (APS.flen data) (blA data)) fx R M model).
+  eapply cs_tMf; try exact (conj HU HX); cs_bridge.
 Qed.
 
 (* [comment removed for export] *)

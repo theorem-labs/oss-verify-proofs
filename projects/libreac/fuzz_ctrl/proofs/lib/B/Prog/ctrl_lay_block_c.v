@@ -114,7 +114,7 @@ Definition ctrl_lay_block_contract : Prop :=
 
 (* --------------------------------------------------------------------------------------------------------- *)
 (* Footprint form (RECIPE.md step 1 (a working note, not in this delivery), a Theorem Labs lane's rewalk-F-policy.md (a working note, not in this delivery) canonical shape; the shape of
-   reac_box_model_block_c.v's reac_box_model_block_contract_F, image A (a version not in this delivery; written on a working branch 9374082e8d)): the same
+   reac_box_model_block_c.v's reac_box_model_block_contract_F, image A (a version not in this delivery; written on a working branch)): the same
    run as an ExecF.evtF under a universally quantified footprint RNG, with the premises of ctrl_lay_block_contract
    unchanged and one rng premise per region the run reads or writes (instruction fetch is not an access).  The
    regions come from the steps of the run (lib/B/Prog/ctrl_lay_block.v) and from the contracts of the callees

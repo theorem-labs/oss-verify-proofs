@@ -1,6 +1,6 @@
 (* fuzz_lock's plain halting statement from the slot contract of LLVMFuzzerTestOneInput and the frame step of
    FrameRet.v (frame_ret_hyp, for a return of 0 or -1), in the form of libreac/fuzz_decode's lib/Prog/Statement.v
-   (release 25e3d17bdb50), which concludes from FrameAPI.v frame_plain. Written by Theorem Labs. *)
+   (release), which concludes from FrameAPI.v frame_plain. Written by Theorem Labs. *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.reac_repacer.fuzz_lock.lib.Reusable Require Import YK11 YK0s YK15 YM05 YO0f YO0d YO09 YO0o

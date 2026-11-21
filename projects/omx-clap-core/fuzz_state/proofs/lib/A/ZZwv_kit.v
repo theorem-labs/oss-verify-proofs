@@ -2,7 +2,7 @@
    carry the tree, the root object, the live list, arodata and the writer's statics across a callee's journal and
    across a run that writes write_value's own frame only.
    PROVENANCE (copied, not imported, because the lemmas live on another lane's branch): every lemma below is
-   a Theorem Labs lane's, from lib/A/FSW_pj_write.v on a working branch b6c5b22a453, lines 813-1376
+   a Theorem Labs lane's, from lib/A/FSW_pj_write.v on a working branch, lines 813-1376
    and 1880-1920 (zwk_avb .. zwk_j_arodata_journalU, zwk_p_stack_not_ush, zwk_p_zbytes_avb, zwk_p_above_kept),
    renamed zwk_ -> zwk_ so the two files can be imported together, proofs unchanged. pj_write's own lemmas are not
    copied. Rule 24: no function proved here (write_value's lookup: lane record (internal path), CHECKER CONFIRM
@@ -575,7 +575,7 @@ Qed.
    fp_spares FP; the read-only range is image bytes (zwk_j_roP_img), so the premise is fp_spares FP over it (a caller
    with ~ YI16.sink_open_fp FP, e.g. every FP whose ranges start above 0 (YCbq.sink_closed_pos), has it by
    YCbq.fp_spares_closed). Stated over the journal's own memories, then in the walk's raw-memory form. *)
-(* FP-keyed core (S0 400b2a240b3): the image clause spares an image byte that is not runtime-owned, not errno,
+(* FP-keyed core (S0): the image clause spares an image byte that is not runtime-owned, not errno,
    NOT in FP and fp_spares FP, so the caller states both FP premises over the read-only range. *)
 Lemma zwk_arodata_journal : forall STK sp0 FP ly S (W : world tfibsegs) mem md own ly' S' (W' : world tfibsegs) mem' md' k,
   ajournal tfibsegs B STK sp0 FP ly S W mem md own ly' S' W' mem' md' k ->

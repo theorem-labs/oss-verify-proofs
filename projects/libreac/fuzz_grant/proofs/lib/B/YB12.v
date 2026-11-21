@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: image B's (fuzz_grant.asan-ubsan fde52226dc48) start-up table in the form of proofs/cgif/cgif_file_fuzzer/lib/A/AB12.v; the values are image B's, from a working branch 35735e14404 lib/B/YB12.v. *)
+(* Modified by Theorem Labs, 2026-10: image B's (fuzz_grant.asan-ubsan fde52226dc48) start-up table in the form of proofs/cgif/cgif_file_fuzzer/lib/A/AB12.v; the values are image B's, from a working branch lib/B/YB12.v. *)
 (* Modified by Theorem Labs, 2026-10: reproduced by atable 1ce98fbad397 (startup-set-2026-10-29, no --apply) except the order of stops_more and the per-image YK09 Require. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List.
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.B Require Import YK09.

@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: generated for libdiginet/fuzz_codec's ASan build in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACej.v (origin/ossv/recipes 25e3d17bdb50); module paths changed (cgif lib/X -> lib/Reusable/X). *)
+(* Modified by Theorem Labs, 2026-10: generated for libdiginet/fuzz_codec's ASan build in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACej.v (theorem-labs/oss-verify-proofs@6b32741d849a); module paths changed (cgif lib/X -> lib/Reusable/X). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* ACej: the trace universe of fuzz_codec's start-up certificate, image A.
    Image: libdiginet/fuzz_codec's fuzz_codec.asan (result/bin/fuzz_codec/fuzz_codec.asan of libdiginet's pinned build),
    sha256 7d470194ffdbde8b30a9810840f8e81d620ba1c555d510c475daeff37548a422 (the pin of harness.yaml); symbols from

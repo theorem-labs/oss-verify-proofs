@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the place_declined_b premise of mmap, Linux's mmap placement, the model's munmap and the m_channel_reader premise). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -281,42 +282,64 @@ Lemma munmap_exact_outcome : forall addr len i m o,
   let n := Z_to_bv 64 (page_round_up_Z (bv_unsigned len)) in
   map_has (vm_maps (m_vmmaps m)) addr n = true ->
   munmap_spec addr len i m o <->
-  o = Ok (mkEffectU (Z_to_bv 64 0) [] [] [(addr, n)] [] [])
-         (with_mmap_destroyed addr n
-            (mkVmMapsFull (vm_reserved (m_vmmaps m))
-               (map_remove (vm_maps (m_vmmaps m)) addr)
-               (maps_subtract (vm_noaccess (m_vmmaps m))
-                  (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n))
-               (vm_start_brk (m_vmmaps m)) (vm_brk (m_vmmaps m))
-               (vm_limit (m_vmmaps m)) (vm_mmap_base (m_vmmaps m)) (vm_init_sp (m_vmmaps m))) m) [].
+  (exists e, In e munmap_errnos /\ o = Ok (mkEffect (errno_ret e) [] []) m [])
+  \/ o = Ok (mkEffectU (Z_to_bv 64 0) [] [] [(addr, n)] [] [])
+         (with_mmap_destroyed addr n (mmap_fixed_destroyed_next (m_vmmaps m) addr n) m) [].
 Proof.
   intros addr len i m o Hal Hlen Hnw. cbv zeta. intros Hhas. unfold munmap_spec.
   rewrite (proj2 (Z.eqb_eq _ _) Hal), Hlen. cbn [negb orb].
   rewrite (proj2 (Z.ltb_ge _ _) Hnw). unfold with_mmap_destroyed. sys_unfold.
   split.
-  - destruct o as [x m' evs|]; intros H; inv_sys; rewrite Hhas in *; inv_sys. reflexivity.
-  - intros ->. eexists _, _, _, _. split; [reflexivity|]. rewrite Hhas.
-    split; [|reflexivity]. eexists _, _, _, _. split; [reflexivity|].
-    split; [|reflexivity]. eexists _, _, _, _. repeat split; reflexivity.
+  - destruct o as [x m' evs|]; intros H; inv_sys; rewrite Hhas in *; inv_sys.
+    + left. eexists; split; [eassumption|reflexivity].
+    + right. reflexivity.
+  - intros [(e & He & ->) | ->].
+    + eexists _, _, _, _. split; [reflexivity|]. rewrite Hhas.
+      split; [|reflexivity]. left. exists e, m, [], []. split; [exists e; split; [exact He|reflexivity]|].
+      split; reflexivity.
+    + eexists _, _, _, _. split; [reflexivity|]. rewrite Hhas.
+      split; [|reflexivity]. right. eexists _, _, _, _. split; [reflexivity|].
+      split; [|reflexivity]. eexists _, _, _, _. repeat split; reflexivity.
 Qed.
 
 Definition mmap_err_out (m : Model) (o : outcome SyscallEffect) : Prop :=
   exists e, In e mmap_errnos /\ o = Ok (mkEffect (errno_ret e) [] []) m [].
 
+(* 727298f3 (#146).  The decline's FIRST conjunct is [negb (hint_address hint =? 0)]
+   (Sys/Mm/Mmap.v:1376), so a NULL hint is undeclined by computation alone.  Discharge
+   through this and never through [alloc_top]: #146 turned that bound from [alloc_top h]
+   into [alloc_top h - stack_guard_gap_bytes kb], and a discharge aimed at the first
+   conjunct survives the next such change.  Name agreed across the OSSV-266 unit owners;
+   [VCommon/Ax/AxSysMmap.v] states the same lemma for the files that cannot see this one. *)
+Lemma place_declined_b_null (kb : KernelBuild) (h : VmMaps) (nZ : Z) :
+  place_declined_b kb h (Z_to_bv 64 0) nZ = false.
+Proof.
+  unfold place_declined_b.
+  assert (Hz : hint_address (Z_to_bv 64 0) = 0%Z) by (vm_compute; reflexivity).
+  rewrite Hz. reflexivity.
+Qed.
+
+(* 727298f3 (#144 + #146): [mmap_spec] now reads
+     if place_declined_b (m_kernel m) h addr nZ then unmodeled else alt (...) (...)
+   -- Sys/Mm/Mmap.v:2152, deliberately OUTSIDE the [alt] so the spec never admits an [Ok]
+   and an [Unmodeled] for one call.  An iff is a consumer AND a producer at once: the
+   forward direction would survive, the backward one is false without the premise, which
+   is why only the iff shape stops being true as stated.  The premise is #144's own
+   choice in [theories/Common/]; it discharges at a NULL hint through
+   [AxSysMmap.place_declined_b_null]. *)
 Lemma mmap_rw_outcome : forall addr len prot flags fd off i m o,
   mmap_off_aligned_b off = true ->
   mmap_anon_b flags = true ->
   w_is0 len = false ->
   mmap_modeled_b prot flags off = true ->
+  place_declined_b (m_kernel m) (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len)) = false ->
   let h := m_vmmaps m in
   let nZ := page_round_up_Z (bv_unsigned len) in
   let n := Z_to_bv 64 nZ in
   mmap_spec addr len prot flags fd off i m o <->
+  (* [comment removed for export] *)
   mmap_err_out m o
-  \/ exists a, ((bv_unsigned a mod page_size = 0)%Z
-                /\ (0 < bv_unsigned a)%Z
-                /\ (bv_unsigned a + nZ <= alloc_top h)%Z
-                /\ region_free (vm_reserved h ++ vm_maps h) a n = true
+  \/ exists a, (linux_place h (kb_thp (m_kernel m)) addr nZ (bv_unsigned a)
                 /\ mmap_noreserve_backed_ok flags m nZ = true)
                /\ o = Ok (mkEffect a [] [(a, n)])
                         (with_mmap_backing flags a n
@@ -325,20 +348,31 @@ Lemma mmap_rw_outcome : forall addr len prot flags fd off i m o,
                                (vm_noaccess h) (vm_start_brk h) (vm_brk h) (vm_limit h)
                                (vm_mmap_base h) (vm_init_sp h)) m)) [].
 Proof.
-  intros addr len prot flags fd off i m o Hoff Hanon Hlen Hmod. cbv zeta. unfold mmap_spec.
+  intros addr len prot flags fd off i m o Hoff Hanon Hlen Hmod Hdecl. cbv zeta. unfold mmap_spec.
   rewrite Hoff, Hanon, Hlen, Hmod. cbn [negb].
 
+  (* 727298f3: the decline sits under the [get_model] bind, so the model is still the
+     bound [x] of [Ok x m1 evs1 = Ok m m []] after [sys_unfold] and a [rewrite Hdecl]
+     there reports "Found no subterm" (one farm round, and the goal print
+     in the next).  Hoist the bind first -- the idiom this tree
+     already uses at NodesA_mm.v:868 -- and the test is on [m] and rewrites. *)
+  rewrite bind_get_model. cbv zeta. rewrite Hdecl. cbv beta iota zeta.
   unfold mmap_err_out. sys_unfold.
   split.
   - destruct o as [x m' evs|]; intros H; inv_sys.
     + left. eexists; split; [eassumption|reflexivity].
-    + right. eexists; split; [|reflexivity]. repeat split; assumption.
+    + right. eexists; split; [|reflexivity]. first [eassumption | split; eassumption].
   - intros [(e & He & ->) | (a & Ha & ->)].
     + left. exists e, m, [], []. split; [exists e; split; [exact He|reflexivity]|].
       split; reflexivity.
-    + right. eexists _, _, _, _. split; [reflexivity|]. split; [|reflexivity].
-      eexists _, _, _, _. split; [exists a; split; [exact Ha|reflexivity]|].
-      split; [|reflexivity]. eexists _, _, _, _. repeat split; reflexivity.
+    (* #144 hoisted [m <- get_model] OUT of the [alt]: at 75d69e00 the spec read
+       [alt (err) (m <- get_model ;; ...)], at 727298f3 it reads
+       [m <- get_model ;; ... if place_declined_b ... then unmodeled else alt (err) (...)].
+       After [rewrite bind_get_model] above there is one existential layer FEWER here, so
+       the leading [eexists _,_,_,_. split; [reflexivity|]. split; [|reflexivity].] is
+       gone.  Goal read off a farm round's print. *)
+    + right. eexists _, _, _, _. split; [exists a; split; [exact Ha|reflexivity]|].
+      repeat esplit; reflexivity.
 Qed.
 
 Lemma read_dir_outcome : forall fd buf count i m o,
@@ -612,6 +646,9 @@ Qed.
 Lemma writev_chan_outcome : forall fd iov iovcnt i m o ch iovs bs,
   fd_lookup (m_fds m) fd = Some (FdChannel ch) ->
   w_is0 ch = false ->
+  (* At LPS 08b1429 a nonempty writev to a channel whose reader is gone raises SIGPIPE
+     (ReadWrite.v [writev_spec]); the delivered-prefix outcome holds only with a reader. *)
+  m_channel_reader m = true ->
   import_iovecs (in_mem i) iov (iovcnt32 iovcnt) = ImpOk iovs ->
   (iovs_total iovs <= MAX_RW_COUNT)%Z ->
   gather_iovecs (in_mem i) iovs = Some bs ->
@@ -622,7 +659,7 @@ Lemma writev_chan_outcome : forall fd iov iovcnt i m o ch iovs bs,
     o = Ok (mkEffectU (Z_to_bv 64 (Z.of_nat k)) [] [] [] [] (CA ++ iov_prefix_accesses iovs k))
            m (map (WriteEv ch) (firstn k bs)).
 Proof.
-  intros fd iov iovcnt i m o ch iovs bs Hfd Hch Himp Htot Hg Hbs1.
+  intros fd iov iovcnt i m o ch iovs bs Hfd Hch Hrd Himp Htot Hg Hbs1.
   cbv zeta.
   pose proof (gather_iovecs_length _ _ _ Hg) as Hlen.
   pose proof (cap_iovecs_id_rw _ Htot) as Hcap.
@@ -651,7 +688,7 @@ Proof.
     replace (length bs =? 0)%nat with false by (symmetry; apply Nat.eqb_neq; lia).
     replace (addr_is_error_b (len_word bs)) with false
       by (symmetry; rewrite <- (firstn_all bs); rewrite (Herrk (length bs)) by lia; reflexivity).
-    reflexivity. }
+    rewrite Hrd. reflexivity. }
   rewrite Hcap. sys_unfold.
   split.
   - destruct o as [x m' evs|]; intros H; inv_sys.

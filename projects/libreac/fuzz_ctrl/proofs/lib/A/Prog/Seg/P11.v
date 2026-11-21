@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 3817 of its 3853 lines of code are new or changed and 212 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths and module names changed; 371 of its 396 lines of code are new or changed and 3828 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v, with its addresses and numbers changed; 232 of its 267 lines of code are new or changed and 361 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment P11 of fuzz_ctrl LLVMFuzzerTestOneInput (asan, libreac v1.9.0 image A): 0x81c60-0x81c80, 9 instructions
    (v1.8 0x81bdc-0x81bf4, 7 instructions; S_P11 is CHANGED: each v1.8 `bne`/`bnez` to the error block became a
    `beq`/`beqz` over a `j` to it, branch relaxation after the function grew).
@@ -28,9 +29,9 @@
    FGBe move across the call with stk_call (the run keeps s6 / s9), as do push 12's spill [s1 + 144] = fr + 2688
    and the 17 addressable bytes at fr + 2691 and push 13's PRO (v1.9: 16 conjuncts, the last [A + 32] = fr + 2880;
    P11 writes no spill). The fragment-record spill is [s1 + 192] in v1.9 (v1.8 [s1 + 208]).
-   v1.9 re-fit BUILT on v1.9 facts: rc=0 on a build machine workspace (internal path) (a copy of (internal path) at a working branch e3c0b7a9d6,
-   FACTS ed6b6b7b0ab) with the cut base a working branch cf5ad0d7203, 2026-10-28. The callee constants are
-   the relocated ones (a working branch 3eade53eef2: REAC_CTRL_KIND_NAME 0x8351c, KIND_NAME 0x9e760,
+   v1.9 re-fit BUILT on v1.9 facts: rc=0 on a build machine workspace (internal path) (a copy of (internal path) at a working branch,
+   FACTS) with the cut base a working branch, 2026-10-28. The callee constants are
+   the relocated ones (a working branch: REAC_CTRL_KIND_NAME 0x8351c, KIND_NAME 0x9e760,
    QMARK 0x211e0). *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

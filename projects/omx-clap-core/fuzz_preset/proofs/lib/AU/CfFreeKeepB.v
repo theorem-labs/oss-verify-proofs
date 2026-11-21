@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10-31: fuzz_preset: preset's free at image B' (#102 pin
    fuzz_preset.asan-ubsan d663f82d7f48, twin c90d4fa54d43) in KEEP form under the re-hide, at B''s record
    B := lib/Reusable/YD2l.TfibB, the cf instance CfImg_B / CfParams_preset.
@@ -9,11 +10,11 @@
    [afree_realizes_cf_rh_keep_B] is YGcfMallocComposeKeep.afree_realizes_cf_rh_keep at tfibsegs / TfibB, by the
    layer's afree_realizes_cf_rh_of_parts_m_keep (lib/Reusable/YGcfMallocComposeKeep.v:469) at atpD := 1 (asan_free's
    alloc_type) and ARX := YGcfInstBase.ARXq_cf TfibB (fun i => i = as_inst TfibB) at AGif2cgif.AImg_cgif, from:
-   - the wrapper walk: lib/AU/WrapFreeBWit.v:40 wrap_free_walk_keep_cf_rh_B, the primed keep record, closed, at
+   - the wrapper walk: lib/AU/WrapFreeBWit.v:41 wrap_free_walk_keep_cf_rh_B, the primed keep record, closed, at
      that same relation (no bridge) and K := WrapFreeBF2.K_F;
-   - Deallocate: lib/AU/PresetDeallocInstB.v:86 adealloc_realizes_raw_cf_em_m_rh_preset, closed, at
+   - Deallocate: lib/AU/PresetDeallocInstB.v:87 adealloc_realizes_raw_cf_em_m_rh_preset, closed, at
      ARXq_cf TfibB IOK_preset.  [IOK_preset_TfibB] states that this is the walk's relation, by reflexivity
-     (lib/AU/PresetDeallocInstB.v:52 is IOK_preset), so no bridge is needed;
+     (lib/AU/PresetDeallocInstB.v:53 is IOK_preset), so no bridge is needed;
    - the relation's fact YGcfInstBase.ARXq_cf_ARcf, the relro rows (lib/AU/CfAroPresetB.v relro_seg_preset_AU /
      errno_relro_preset_AU).
    No premise is left: both parts are closed at TfibB.

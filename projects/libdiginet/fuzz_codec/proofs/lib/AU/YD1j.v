@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: copied from projects/cgif/cgif_file_fuzzer/proofs/lib/A/AD1j.v (donor image sha256 7093581aab04), with its module paths changed and its addresses moved to libreac/fuzz_scene's ASan build. *)
 (* Modified by Theorem Labs, 2026-10: copied from projects/libreac/fuzz_scene/proofs/lib/A/AD1j.v (donor image sha256 43654a025fd0), with its module paths changed and its addresses moved to libdiginet/fuzz_codec's ASan build. *)
 (* Modified by Theorem Labs, 2026-10: derived from lib/A/AD1j.v of this library by derive_y.py: module names A.Axyz -> AU.Yxyz, addresses moved from libdiginet/fuzz_codec's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/AD1j.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the fdchan premise of the channel-2 sites: the lookup, the live channel and its reader). *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -124,7 +125,7 @@ match type of Hr with ?lo <= a < ?hi => apply (G lo hi a); [vm_compute; reflexiv
 Qed.
 Theorem tfib_exit_site : exit_site_tfa B est xst.
 Proof.
-intros XI E W regs mem md ly S usp d fs code k HXI E0 [Ulo Uhi] U16 Htid Ha0 Hcode Hsp Hd Hret R3 R4 HMX Hwin HAI HAR HTOP Hnev HEST HK Hfd1 Hfs.
+intros XI E W regs mem md ly S usp d fs code k HXI E0 [Ulo Uhi] U16 Htid Ha0 Hcode Hsp Hd Hret R3 R4 HMX Hwin HAI HAR HTOP Hnev HEST HK Hfd1 Hcr1 Hfs.
 assert (HXI' : XI = IMG_X \/ XI = IMG_XL) by (destruct HXI as [[HX _] | HX]; [left | right]; exact HX).
 assert (HXC : exists cls, XC XI cls /\ ((XI = IMG_X /\ k = 0%nat /\ cls = ex_consts1) \/ (XI = IMG_XL /\ cls = ex_consts))).
 { destruct HXI as [[HX Hk] | HX]; [exists ex_consts1 | exists ex_consts]; (split; [| first [left; repeat split; assumption || reflexivity | right; split; [assumption | reflexivity]]]);
@@ -183,7 +184,7 @@ HPRE Hsp44 Hstk Hband Ha0 Hcode' HTPX HC Htidc ltac:(lia) Hgot Hcan (u64_range (
 * rewrite length_pend. lia.
 * rewrite HBS. lia.
 * intros i Hi. rewrite (HPEND i Hi). f_equal. f_equal. apply nth_indep. exact Hi.
-* split; [exact (Hfd1 Hk1) | reflexivity].
+* split; [exact (Hfd1 Hk1) | split; [reflexivity | exact (Hcr1 Hk1)]].
 * exact HXown.
 * exact HBown.
 * exact HAI.

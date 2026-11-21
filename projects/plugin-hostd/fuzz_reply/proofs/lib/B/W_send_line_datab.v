@@ -4,7 +4,7 @@
    (fuzz_reply.asan-ubsan), in the form of the cgif walks of proofs/cgif/cgif_file_fuzzer/lib/A/AC8h.v (call sites) and
    lib/A/AC8b.v (a loop over concrete cut states).  Proves no function (kind: segment lemma of send_line's image-B walk:
    W_send_line_cx.v sl_copy_stmt, the copy half J -> L or X; reuse search in W_send_line_cx.v's header,
-   `R24BSendLine: CONFIRM`).  STRUCTURE ported from image A's closed sl_copy (a working branch a78a220dc8e
+   `R24BSendLine: CONFIRM`).  STRUCTURE ported from image A's closed sl_copy (a working branch
    lib/A/W_send_line_datab.v: the seat at the join, the memcpy call, aout_at_copy, the exit); no theorem crosses images.
    From the join A_sl_join = 0x82a08 (W_send_line_cx.v SLM) to the loop head or the epilogue:
      0x82a08 ld a0,24(sp)      the spilled auipc value of g_out (A_HI 25)
@@ -27,6 +27,7 @@
    line has them over all of [line, line + len) by sl_line_ok's ashp (W_shadow_pin.v), and over the round's
    sub-range [line + sent, line + sent + n) by range_addressable_sub and sc_hull_sub.
    The Section header is W_send_line_cx.v's (Sections a / b / c, its Variables and Hypotheses in its order, its Lets). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

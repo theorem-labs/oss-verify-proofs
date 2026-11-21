@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (KL's reserved-ledger fields restated: ld_resv is a prefix of the model's ledger, each entry ending at or below the break's start or starting 4 pages above it; new KL fields kl_resv_vdso (the image's entries then the vDSO pair) and kl_maps_resv (every mapping misses the ledger); kl_resv_sub, KL_resv_free_brk, KL_vdso_free, vm_only_kernel and five region_free helpers added). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
@@ -37,8 +38,12 @@ Record KL (L : mled) (pbrk : Z) (mo : Model) : Prop := mkKL {
   kl_minv : minv mo;
   kl_halt : m_halted mo = None;
   kl_wf : vmwf (vm_maps (m_vmmaps mo));
-  kl_resv : ld_resv L = map wwZ (vm_reserved (m_vmmaps mo));
-  kl_resv_top : forall e, In e (vm_reserved (m_vmmaps mo)) -> ehi e <= bv_unsigned (vm_start_brk (m_vmmaps mo));
+  (* 08b1429: the launch appends the vDSO pair to the reserved ledger (State.init_reserved), at the top of the
+     mmap area; the ledger the C-side proof tracks is the image's, a prefix of the model's *)
+  kl_resv : exists V, map wwZ (vm_reserved (m_vmmaps mo)) = ld_resv L ++ V;
+  kl_resv_top : forall e, In e (vm_reserved (m_vmmaps mo)) ->
+      ehi e <= bv_unsigned (vm_start_brk (m_vmmaps mo))
+      \/ bv_unsigned (vm_start_brk (m_vmmaps mo)) + 4 * PGSZ <= elo e;
   kl_start : 0 < bv_unsigned (vm_start_brk (m_vmmaps mo))
       /\ bv_unsigned (vm_start_brk (m_vmmaps mo)) mod PGSZ = 0
       /\ bv_unsigned (vm_start_brk (m_vmmaps mo)) <= bv_unsigned (vm_brk (m_vmmaps mo))
@@ -69,7 +74,83 @@ Record KL (L : mled) (pbrk : Z) (mo : Model) : Prop := mkKL {
       | BPLive => exists b l, ld_brkreg L = Some (b, l) /\ bv_unsigned (vm_brk (m_vmmaps mo)) = b + l /\ pbrk = b + l
       | BPDead => True
       end;
-  kl_atop : ld_atop L = alloc_top (m_vmmaps mo)   (* [comment removed for export] *) }.
+  kl_atop : ld_atop L = alloc_top (m_vmmaps mo);   (* [comment removed for export] *)
+  (* LPS 727298f3: the reserved ledger is the image's entries, each ending at or below the break's
+     start, followed by the vDSO/vvar pair the launch reserves (State.init_reserved) *)
+  kl_resv_vdso : exists R0, vm_reserved (m_vmmaps mo) = R0 ++ vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo))
+      /\ (forall e, In e R0 -> ehi e <= bv_unsigned (vm_start_brk (m_vmmaps mo)));
+  (* LPS 727298f3: every tracked mapping misses the reserved ledger *)
+  kl_maps_resv : forall e, In e (vm_maps (m_vmmaps mo)) -> region_free (vm_reserved (m_vmmaps mo)) (fst e) (snd e) = true }.
+
+Lemma kl_resv_sub : forall L pbrk mo x, KL L pbrk mo -> In x (ld_resv L) -> In x (map wwZ (vm_reserved (m_vmmaps mo))).
+Proof. intros L pbrk mo x HK Hx. destruct (kl_resv _ _ _ HK) as (V & E). rewrite E. apply in_or_app. left. exact Hx. Qed.
+
+Lemma region_free_split : forall maps aw nw,
+  (forall e, In e maps -> ehi e <= bv_unsigned aw \/ bv_unsigned aw + bv_unsigned nw <= elo e) -> region_free maps aw nw = true.
+Proof.
+  induction maps as [|[e sz] maps IH]; intros aw nw H; [reflexivity|]. cbn [region_free].
+  rewrite IH by (intros e' He'; apply H; right; exact He'). unfold iv_overlap.
+  specialize (H (e, sz) (or_introl eq_refl)). unfold ehi, elo in H; cbn [fst snd] in H.
+  destruct H as [H|H].
+  - rewrite (proj2 (Z.ltb_ge _ _) H). reflexivity.
+  - rewrite (proj2 (Z.ltb_ge (bv_unsigned e) _) H). rewrite andb_false_r. reflexivity.
+Qed.
+
+(* the brk area's first pages miss the reserved ledger: image entries end below start_brk, the vDSO pair is far above *)
+Lemma KL_resv_free_brk : forall L pbrk mo (aw nw : word), KL L pbrk mo ->
+  bv_unsigned aw = bv_unsigned (vm_start_brk (m_vmmaps mo)) -> bv_unsigned nw <= 4 * PGSZ ->
+  region_free (vm_reserved (m_vmmaps mo)) aw nw = true.
+Proof.
+  intros L pbrk mo aw nw HK Ha Hn. apply region_free_split. intros e He.
+  destruct (kl_resv_top _ _ _ HK e He) as [H|H]; [left|right]; lia.
+Qed.
+
+(* LPS 727298f3: a range inside a range free of a ledger is free of it too *)
+Lemma region_free_within : forall maps (a n a' n' : word), region_free maps a n = true ->
+  bv_unsigned a <= bv_unsigned a' -> bv_unsigned a' + bv_unsigned n' <= bv_unsigned a + bv_unsigned n ->
+  region_free maps a' n' = true.
+Proof.
+  intros maps a n a' n' H H1 H2. apply region_free_split. intros [e sz] Hin.
+  pose proof (Decode.region_free_In _ _ _ _ _ H Hin) as D. unfold elo, ehi. cbn [fst snd]. lia.
+Qed.
+
+Lemma region_free_suffix : forall l1 l2 a n, region_free (l1 ++ l2) a n = true -> region_free l2 a n = true.
+Proof.
+  induction l1 as [|[e sz] l1 IH]; intros l2 a n H; [exact H|].
+  cbn [app region_free] in H. apply andb_prop in H as [_ H]. exact (IH _ _ _ H).
+Qed.
+
+(* LPS 727298f3: a range inside a tracked mapping misses the vDSO pair (the checker's mprotect gate) *)
+Lemma KL_vdso_free : forall L pbrk mo e (aw nw : word), KL L pbrk mo -> In e (vm_maps (m_vmmaps mo)) ->
+  elo e <= bv_unsigned aw -> bv_unsigned aw + bv_unsigned nw <= ehi e ->
+  region_free (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo))) aw nw = true.
+Proof.
+  intros L pbrk mo [a n] aw nw HK Hin H1 H2.
+  destruct (kl_resv_vdso _ _ _ HK) as (R0 & E & _).
+  pose proof (kl_maps_resv _ _ _ HK _ Hin) as F. rewrite E in F. cbn [fst snd] in F.
+  exact (region_free_within _ _ _ _ _ (region_free_suffix _ _ _ _ F) H1 H2).
+Qed.
+
+(* LPS 727298f3: a new entry free of the reserved ledger and the mappings keeps kl_maps_resv *)
+Lemma maps_resv_cons : forall R maps (a n : word),
+  (forall e, In e maps -> region_free R (fst e) (snd e) = true) ->
+  region_free (R ++ maps) a n = true ->
+  forall e, In e ((a, n) :: maps) -> region_free R (fst e) (snd e) = true.
+Proof.
+  intros R maps a n Hm Hrf e [<-|He]; [|exact (Hm e He)].
+  cbn [fst snd]. clear -Hrf. revert Hrf. induction R as [|[b s] R IH]; intros Hrf; [reflexivity|].
+  cbn [app region_free] in Hrf |- *. apply andb_prop in Hrf as [H1 H2]. rewrite H1. cbn [andb]. exact (IH H2).
+Qed.
+
+(* LPS 727298f3: entries each inside an old entry keep kl_maps_resv *)
+Lemma maps_resv_within : forall R maps maps',
+  (forall e, In e maps -> region_free R (fst e) (snd e) = true) ->
+  (forall e', In e' maps' -> exists e, In e maps /\ elo e <= elo e' /\ ehi e' <= ehi e) ->
+  forall e', In e' maps' -> region_free R (fst e') (snd e') = true.
+Proof.
+  intros R maps maps' Hm Hw e' He'. destruct (Hw e' He') as (e & He & W1 & W2).
+  exact (region_free_within _ _ _ _ _ (Hm e He) W1 W2).
+Qed.
 
 (* [comment removed for export] *)
 Definition frame_ok (G : PState -> Model -> Prop) : Prop :=
@@ -88,6 +169,8 @@ Definition ev_step_post (L : mled) (e : ev) (G : PState -> Model -> Prop) (s0 : 
 (* [comment removed for export] *)
 Lemma vm_only_init_sp : forall m m', vm_only m m' -> vm_init_sp (m_vmmaps m') = vm_init_sp (m_vmmaps m).
 Proof. intros m m' (_ & _ & _ & _ & _ & _ & H & _). exact H. Qed.
+Lemma vm_only_kernel : forall m m', vm_only m m' -> m_kernel m' = m_kernel m.
+Proof. intros m m' (_ & _ & _ & _ & _ & _ & _ & _ & H). exact H. Qed.
 Lemma vm_only_alloc_top : forall m m', vm_only m m' -> alloc_top (m_vmmaps m') = alloc_top (m_vmmaps m).
 Proof. intros m m' H. unfold alloc_top. rewrite (vm_only_init_sp _ _ H). reflexivity. Qed.
 Lemma alloc_top_of_init_sp : forall h h', vm_init_sp h' = vm_init_sp h -> alloc_top h' = alloc_top h.

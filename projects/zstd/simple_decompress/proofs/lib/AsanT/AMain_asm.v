@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader fact at main's entry; bmain_open's pure facts read through keep_facts). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -95,16 +96,17 @@ Section Asm.
     set (rc := run_consts_of en (Z_to_bv 64 0) (valid_sp_of_entry en inp Hv Hi)).
     assert (HA : atop_of (en_sp en) = @ATOP rc) by reflexivity.
     exists NMAX, (RNG0 V mo), (A0 V), (epostF TT).
-    pose proof HM as (_ & HV & _ & _ & HP & _ & _ & _ & _ & HMOD).
-    apply Forall_app in HP as [HP _].
+    pose proof HM as (_ & HV & _ & HMF0 & HPF0 & _ & _ & _ & _ & _ & HMOD).
+    destruct (keep_facts _ _ _ _ _ HMF0 HPF0) as (_ & _ & HP).
     rewrite HA.
     split; [exact (ADRV rc en inp w V m ms mo Hv Hi HM HA)|].
     split. { (* [comment removed for export] *)
       rewrite <- HA. destruct (equiv_PA_both_toP PREAD_STAGE ASTAGE V (en_sp en) _ _ _ en inp mo Hv Hi HMOD HP) as [_ HL].
       exact HL. }
     split. { rewrite m_halted_MX. exact (bm_halted _ _ _ _ HMOD). }
-    split. { apply minvA_std_fds; [rewrite m_fds_MX; exact (bm_fds _ _ _ _ HMOD) | reflexivity |].
-             rewrite m_vmmaps_MX, (bm_top _ _ _ _ HMOD). pose proof (bm_usp _ _ _ _ HMOD). unfold sp_window_lo, sp_window_hi. lia. }
+    split. { apply minvA_std_fds; [rewrite m_fds_MX; exact (bm_fds _ _ _ _ HMOD) | reflexivity | |].
+             - rewrite m_vmmaps_MX, (bm_top _ _ _ _ HMOD). pose proof (bm_usp _ _ _ _ HMOD). unfold sp_window_lo, sp_window_hi. lia.
+             - rewrite m_channel_reader_MX. exact (bm_reader _ _ _ _ HMOD). }
     split. { exact (MODEL_OK rc en inp w V m ms mo Hv Hi HM HA). }
     (* [comment removed for export] *)
     change (MX mo []) with (canon mo). apply mrel_canon.

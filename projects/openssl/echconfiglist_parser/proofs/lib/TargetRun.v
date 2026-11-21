@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (Section TR takes a RunTail and its realizes goals run over RSEGS ++ rt_tail, since time() enters the vDSO, with fz_sreach lifting the heap reach; printf0_first gets the channel-reader premise from hx_krel_rdr). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -20,6 +21,7 @@ From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Lib Require Import Mem Ce
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Agent Require Import InitMem.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Ref Require Import RSegs RMalloc_iface_stmt HeapSR_iface ECH_SR ECH_Img ECH_Xpres ECH_LibState ECH_Iface.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Spec Require Import Prog.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import RomBase RomStable RunTail.
 Import ListNotations.
 Import SymExec2.SX2. Import SymExec2Sound.SX2S.
 Import OSSVerify.Proofs.openssl.echconfiglist_parser.lib.PropExec.
@@ -67,6 +69,11 @@ Proof. intros a Ha. libx_lit Ha. lia. Qed.
 
 Section TR.
   Context {HCEIL : HeapCeil}.
+  (* the target calls time(), which reads and enters the vDSO: the harness's walk is over the
+     run's list [VS], and the heap instance [HS] is the run's (RefTop instantiates it with
+     [HeapSRRun.hsr_run]), whose reach is over [VS] ([MainDefs.hx_reach]) *)
+  Context {RT : RunTail}.
+  Local Notation VS := (RSEGS ++ rt_tail) (only parsing).
   Variable HS : hsr.
   Hypothesis HH : heap_sr_hyps HS.
   Hypothesis HX : heap_extra HS.
@@ -88,6 +95,12 @@ Section TR.
   Proof. destruct HH as (_ & _ & _ & _ & _ & _ & _ & _ & A & _). exact A. Qed.
   Let LBR : lb_remove_laws HS.
   Proof. destruct HH as (_ & _ & _ & _ & _ & _ & _ & _ & _ & A & _). exact A. Qed.
+
+  (* the heap instance's reach, from the target statement's binary-backed state, is a reach over
+     the run's list from the state with the run's backing *)
+  Lemma fz_sreach : forall Q c, hs_SR HS Q c -> ms_rom (cfg_ms c) = seg_rom RSEGS ->
+    sreach VS (fun c' => exists c0, c' = cwrom c0 (seg_rom VS) /\ Q c0) (cwrom c (seg_rom VS)).
+  Proof. intros Q c H Hr. exact (hx_reach HS HX Q c H Hr). Qed.
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
@@ -121,16 +134,18 @@ Section TR.
         Z.of_nat (length LIB') <= LIB_CNT_MAX -> lb_bytes LIB' <= LIB_BYTES_MAX -> lb_big LIB' <= LIB_BIG_MAX ->
         (is_fresh st = false -> LIB' = LIB) ->
         xpres LBc (bv_unsigned (getr regs 2)) LIBX mem mem' ->
-        realizes RSEGS (mkCfg (mkst regs' (Z_to_bv 64 ra) mem' (seg_rom RSEGS)) model') K) ->
-    realizes RSEGS (mkCfg (mkst regs (Z_to_bv 64 P_FUZZ_ENTRY) mem (seg_rom RSEGS)) model) K.
+        realizes VS (mkCfg (mkst regs' (Z_to_bv 64 ra) mem' (seg_rom VS)) model') K) ->
+    realizes VS (mkCfg (mkst regs (Z_to_bv 64 P_FUZZ_ENTRY) mem (seg_rom VS)) model) K.
   Proof.
     intros regs mem model s LIB LBc st D N lo B ds errv ra K Hra Hra64 Hra2 Htp Ha0 Ha1 HBY HLEN HN HD16 HBLK HEMP HRH HKR HLIB
            HLIVE HCNT HBIG HAU HB HB64 HSP16 HSTK HLO HLO2 HERR HINV HREL HK.
-    apply (realizes_eqv RSEGS (mkCfg (MS (mkR_of regs) bvmap_empty (Z_to_bv 64 P_FUZZ_ENTRY) (Z_to_bv 32 0) None mem (seg_rom RSEGS)) model)).
+    apply (realizes_eqv VS (mkCfg (MS (mkR_of regs) bvmap_empty (Z_to_bv 64 P_FUZZ_ENTRY) (Z_to_bv 32 0) None mem (seg_rom VS)) model)).
     2:{ split; [apply ms_eqv_sym; apply mkst_as_MS | reflexivity]. }
     rewrite mkR_of_getr. rewrite Hra, Htp, Ha0, Ha1.
+    (* the start state is the target statement's binary-backed state with the run's backing *)
+    change (mkCfg (MS ?R ?F ?pc ?fc None mem ?r) model) with (cwrom (mkCfg (MS R F pc fc None mem (seg_rom rsegs)) model) r).
     eapply sreach_realizes.
-    { apply (hx_sr HS HX).
+    { eapply fz_sreach; [| reflexivity].
       apply (FZ (Z_to_bv 64 ra) (getr regs 2) (getr regs 3) (Z_to_bv 64 RATP) (getr regs 5) (getr regs 6) (getr regs 7)
                 (getr regs 8) (getr regs 9) (Z_to_bv 64 D) (Z_to_bv 64 N) (getr regs 12) (getr regs 13) (getr regs 14)
                 (getr regs 15) (getr regs 16) (getr regs 17) (getr regs 18) (getr regs 19) (getr regs 20) (getr regs 21)
@@ -140,9 +155,10 @@ Section TR.
         try assumption; try reflexivity.
       - rewrite <- Htp. exact HERR.
       - rewrite u_small by lia. exact Hra2. }
-    intros c' (t0 & t1 & t2 & a1 & a2 & a3 & a4 & a5 & a6 & a7 & t3 & t4 & t5 & t6 & m' & errv' & s' & LIB' & LBc' & st' &
+    intros c' (c0 & -> & t0 & t1 & t2 & a1 & a2 & a3 & a4 & a5 & a6 & a7 & t3 & t4 & t5 & t6 & m' & errv' & s' & LIB' & LBc' & st' &
                Hms & HKR' & HMP & HINV' & HREL' & HSTK' & HERR' & HAU' & HRH' & HPERM & HLIB' & HFR' & HL1 & HL2 & HL3 & HSAME & HX').
-    destruct c' as [ms' mo']. cbn [cfg_ms cfg_model] in *. subst ms'.
+    destruct c0 as [ms' mo']. cbn [cfg_ms cfg_model] in *. subst ms'.
+    change (cwrom (mkCfg (MS ?R ?F ?pc ?fc None ?m ?ro) mo') ?r) with (mkCfg (MS R F pc fc None m r) mo').
     rewrite (ret_pc_even ra Hra64 Hra2).
     change (MS ?R ?F ?pc ?fc None ?m ?rom) with (mkst R pc m rom).
     eapply (HK _ m' mo' s' LIB' LBc' st' errv'); try exact HKR'; try exact HMP; try exact HINV'; try exact HREL'; try exact HSTK'; try exact HAU';
@@ -619,7 +635,7 @@ Section TR.
       (* [comment removed for export] *)
       Variable K : TSet.
       Hypothesis HPOST : forall regs' mem' model', TRpost HS sp A cap data LB model0 regs0 mem0 regs' mem' model' ->
-         realizes RSEGS (mkCfg (mkst regs' (Z_to_bv 64 0xdda4c) mem' (seg_rom RSEGS)) model') K.
+         realizes VS (mkCfg (mkst regs' (Z_to_bv 64 0xdda4c) mem' (seg_rom VS)) model') K.
 
       Let HD16 : Dz mod 16 = 0.
       Proof. destruct COPY as [(_ & -> & _) | (_ & _ & pD & _ & (_ & R2 & _))]; [reflexivity | exact R2]. Qed.
@@ -705,7 +721,7 @@ Section TR.
         tinv m -> tframe sp m (getr regs0 8) (getr regs0 9) (getr regs0 18) (getr regs0 19) (getr regs0 20) (getr regs0 21) (getr regs0 22) (getr regs0 23) ->
         hs_RHEAP HS sC LBf m -> (forall b, In b LB -> In b LBf) -> hs_KREL HS sC mo -> hs_MPRES HS model0 mo -> sto calls m ->
         cells_ok m atexit_reg_cells -> m (Z_to_bv 64 0x2ecb3c) = None ->
-        realizes RSEGS (mkCfg (mkst regs (Z_to_bv 64 0xddcc8) m (seg_rom RSEGS)) mo) K.
+        realizes VS (mkCfg (mkst regs (Z_to_bv 64 0xddcc8) m (seg_rom VS)) mo) K.
       Proof.
         intros regs m mo sC LBf LR K4 TI TF RH HLB KR MP STO ATX DGC. pose proof SPlo. pose proof SPhi.
         destruct (KRELh sC mo KR) as [Hh Hlazy].
@@ -736,7 +752,7 @@ Section TR.
       (* [comment removed for export] *)
       Lemma tr_free : forall regs m mo sC LIBc LBc st,
         lstate calls 1 regs m mo sC LIBc LBc st -> getr regs 19 = Z_to_bv 64 0 ->
-        realizes RSEGS (mkCfg (mkst regs (Z_to_bv 64 0xddca8) m (seg_rom RSEGS)) mo) K.
+        realizes VS (mkCfg (mkst regs (Z_to_bv 64 0xddca8) m (seg_rom VS)) mo) K.
       Proof.
         intros regs m mo sC LIBc LBc st [LR R21 K4 TI TF RH PERM LIB LIBN KR MP CPY STO ATX] R19. pose proof SPlo. pose proof SPhi.
         destruct (KRELh sC mo KR) as [Hh Hlazy].
@@ -800,8 +816,8 @@ Section TR.
         (k <= 4)%nat -> lstate k r regs m mo sC LIBc LBc st ->
         (forall regs' m' mo' sC' LIBc' LBc' st', lstate k r regs' m' mo' sC' LIBc' LBc' st' ->
            getr regs' 1 = Z_to_bv 64 0xddca8 -> getr regs' 11 = Z_to_bv 64 0 -> getr regs' 19 = Z_to_bv 64 0 ->
-           realizes RSEGS (mkCfg (mkst regs' (Z_to_bv 64 0xddd60) m' (seg_rom RSEGS)) mo') Kx) ->
-        realizes RSEGS (mkCfg (mkst regs (Z_to_bv 64 0xddc84) m (seg_rom RSEGS)) mo) Kx.
+           realizes VS (mkCfg (mkst regs' (Z_to_bv 64 0xddd60) m' (seg_rom VS)) mo') Kx) ->
+        realizes VS (mkCfg (mkst regs (Z_to_bv 64 0xddc84) m (seg_rom VS)) mo) Kx.
       Proof.
         intros k r regs m mo sC LIBc LBc st Kx Hk [LR R21 K4 TI TF RH PERM LIB (LN1 & LN2 & LN3) KR MP CPY STO ATX] HK. pose proof SPlo. pose proof SPhi.
         pose proof LIVE as (LV1 & LV2 & LV3). pose proof LB0_bytes as [LBB LBL]. pose proof HN as HN'.
@@ -883,8 +899,8 @@ Section TR.
         (1 <= k <= 3)%nat -> lstate k r regs m mo sC LIBc LBc st ->
         getr regs 1 = Z_to_bv 64 0xddca8 -> getr regs 11 = Z_to_bv 64 0 -> getr regs 19 = Z_to_bv 64 0 ->
         (forall regs' m', lstate (S k) r regs' m' mo sC LIBc LBc st -> getr regs' 19 = Z_to_bv 64 0 ->
-           realizes RSEGS (mkCfg (mkst regs' (Z_to_bv 64 0xddca8) m' (seg_rom RSEGS)) mo) Kx) ->
-        realizes RSEGS (mkCfg (mkst regs (Z_to_bv 64 0xddd60) m (seg_rom RSEGS)) mo) Kx.
+           realizes VS (mkCfg (mkst regs' (Z_to_bv 64 0xddca8) m' (seg_rom VS)) mo) Kx) ->
+        realizes VS (mkCfg (mkst regs (Z_to_bv 64 0xddd60) m (seg_rom VS)) mo) Kx.
       Proof.
         intros k r regs m mo sC LIBc LBc st Kx Hk [LR R21 K4 TI TF RH PERM LIB LIBN KR MP CPY STO ATX] R1 R11 R19 HK. pose proof SPlo. pose proof SPhi.
         destruct (KRELh sC mo KR) as [Hh Hlazy]. destruct k as [|k']; [lia|]. cbn [sto] in STO. destruct STO as [SA LBF].
@@ -897,9 +913,9 @@ Section TR.
           - rewrite <- Zminus_mod_idemp_l, SP16. reflexivity.
           - eapply stk_stk_ok; [exact (ti_stk _ TI) | unfold PF_FR, TR_STACK; rewrite u_small by lia; lia | rewrite u_small by lia; lia | unfold PF_FR; lia | lia].
           - apply mem_inv_ro_none. exact (ti_inv _ TI). }
-        destruct (printf0_buffered regs m (seg_rom RSEGS) (Z_to_bv 64 (bv_unsigned sp - 80)) w can PH R1 ltac:(exact Q2) R11)
+        destruct (printf0_buffered regs m (seg_rom VS) (Z_to_bv 64 (bv_unsigned sp - 80)) w can PH R1 ltac:(exact Q2) R11)
           as (regs' & mem' & RUN & KCS & FM & BY & WP & FL).
-        eapply rz_msteps; [exact Hh | exact Hlazy | exact RUN |]. clear RUN.
+        eapply rz_msteps; [exact Hh | exact Hlazy | exact (rt_msteps_sym _ _ _ RUN) |]. clear RUN.
         rewrite u_small in FM by lia.
         assert (RSp : forall rr, In rr [(Z_to_bv 64 (bv_unsigned sp - 80 - 1056), 1056); (Z_to_bv 64 0x2dc7a0, 4); (Z_to_bv 64 0x2dc7c8, 8); (Z_to_bv 64 w, 2)] -> pf_region rr).
         { intros rr Hr. subst w. pf_region Hr. }
@@ -950,8 +966,8 @@ Section TR.
         lstate 0 r regs m mo sC LIBc LBc st ->
         getr regs 1 = Z_to_bv 64 0xddca8 -> getr regs 11 = Z_to_bv 64 0 -> getr regs 19 = Z_to_bv 64 0 -> Kx [] ->
         (forall regs' m', lstate 1 r regs' m' mo sC LIBc LBc st -> getr regs' 19 = Z_to_bv 64 0 ->
-           realizes RSEGS (mkCfg (mkst regs' (Z_to_bv 64 0xddca8) m' (seg_rom RSEGS)) mo) Kx) ->
-        realizes RSEGS (mkCfg (mkst regs (Z_to_bv 64 0xddd60) m (seg_rom RSEGS)) mo) (t_emit (W 1 [Z_to_bv 8 48; Z_to_bv 8 10]) Kx).
+           realizes VS (mkCfg (mkst regs' (Z_to_bv 64 0xddca8) m' (seg_rom VS)) mo) Kx) ->
+        realizes VS (mkCfg (mkst regs (Z_to_bv 64 0xddd60) m (seg_rom VS)) mo) (t_emit (W 1 [Z_to_bv 8 48; Z_to_bv 8 10]) Kx).
       Proof.
         intros r regs m mo sC LIBc LBc st Kx [LR R21 K4 TI TF RH PERM LIB LIBN KR MP CPY STO ATX] R1 R11 R19 K0 HK. pose proof SPlo. pose proof SPhi.
         destruct (KRELh sC mo KR) as [Hh Hlazy]. cbn [sto] in STO.
@@ -963,7 +979,8 @@ Section TR.
           - eapply stk_stk_ok; [exact (ti_stk _ TI) | unfold TR_STACK; rewrite u_small by lia; lia | rewrite u_small by lia; lia | lia | lia].
           - apply mem_inv_ro_none. exact (ti_inv _ TI). }
         unfold W. cbn [map].
-        apply (printf0_first mo Hh Hlazy (Hfd1 mo MP) regs m (Z_to_bv 64 (bv_unsigned sp - 80)) can Kx PH K0).
+        (* [printf0_first] takes Section Plain's reader hypothesis after [Hfd1] *)
+        apply (printf0_first mo Hh Hlazy (Hfd1 mo MP) (hx_krel_rdr HS HX _ _ KR) regs m (Z_to_bv 64 (bv_unsigned sp - 80)) can Kx PH K0).
         intros regs' mem' PP. destruct PP. rewrite u_small in P_frame by lia.
         assert (RSp : forall rr, In rr [(Z_to_bv 64 (bv_unsigned sp - 80 - 1232), 1232); (Z_to_bv 64 0x2dc7a0, 232); (Z_to_bv 64 0x30ff60, 1)] -> pf_region rr).
         { intros rr Hr. pf_region Hr. }
@@ -991,7 +1008,7 @@ Section TR.
       Lemma tr_after_printf : forall (rn k : nat) regs m mo sC LIBc LBc st,
         (1 <= rn)%nat -> (k + rn = calls + 1)%nat -> (1 <= k)%nat ->
         lstate k (Z.of_nat rn) regs m mo sC LIBc LBc st -> getr regs 19 = Z_to_bv 64 0 ->
-        realizes RSEGS (mkCfg (mkst regs (Z_to_bv 64 0xddca8) m (seg_rom RSEGS)) mo) K.
+        realizes VS (mkCfg (mkst regs (Z_to_bv 64 0xddca8) m (seg_rom VS)) mo) K.
       Proof.
         induction rn as [|rn IH]; intros k regs m mo sC LIBc LBc st Hrn Hk Hk1 LS R19; [lia|].
         pose proof Hcalls as HC. pose proof SPlo. pose proof SPhi.
@@ -1014,7 +1031,7 @@ Section TR.
       (* [comment removed for export] *)
       Lemma tr_loop : forall regs m mo sC LIBc LBc st,
         lstate 0 (Z.of_nat calls) regs m mo sC LIBc LBc st -> K [] ->
-        realizes RSEGS (mkCfg (mkst regs (Z_to_bv 64 0xddc84) m (seg_rom RSEGS)) mo) (t_emit (W 1 [Z_to_bv 8 48; Z_to_bv 8 10]) K).
+        realizes VS (mkCfg (mkst regs (Z_to_bv 64 0xddc84) m (seg_rom VS)) mo) (t_emit (W 1 [Z_to_bv 8 48; Z_to_bv 8 10]) K).
       Proof.
         intros regs m mo sC LIBc LBc st LS K0.
         eapply (tr_call_harness 0 _ regs m mo sC LIBc LBc st _ ltac:(lia) LS).
@@ -1064,10 +1081,10 @@ Section TR.
     Variable K : TSet.
     Hypothesis K0 : K [].
     Hypothesis HPOST : forall regs' mem' model', TRpost HS sp A cap data LB model0 regs0 mem0 regs' mem' model' ->
-       realizes RSEGS (mkCfg (mkst regs' (Z_to_bv 64 0xdda4c) mem' (seg_rom RSEGS)) model') K.
+       realizes VS (mkCfg (mkst regs' (Z_to_bv 64 0xdda4c) mem' (seg_rom VS)) model') K.
 
     Theorem target_run_ok :
-      realizes RSEGS (mkCfg (mkst regs0 (Z_to_bv 64 0xddbc0) mem0 (seg_rom RSEGS)) model0) (t_emit (W 1 [Z_to_bv 8 48; Z_to_bv 8 10]) K).
+      realizes VS (mkCfg (mkst regs0 (Z_to_bv 64 0xddbc0) mem0 (seg_rom VS)) model0) (t_emit (W 1 [Z_to_bv 8 48; Z_to_bv 8 10]) K).
     Proof.
       pose proof SPlo as Hlo. pose proof SPhi as Hhi. pose proof HN as HN'. pose proof Hcfg as Hcfg'. pose proof Hcalls as HC.
       pose proof PRE as PRE'. destruct PRE' as [R1 R2 R4 R10 R11 R12 R13 L6 LHI _ _ _ STK STKC RH KR BLK [LB1 LB2] AUX CAP DATA RO INV CELLS PF1 REL LIBN TID ERRC CAN Hh Hlazy FD1 FD2].
@@ -1179,9 +1196,9 @@ Section TR.
                   eapply (MainMem.wr_at_store_ok mem4 D N 0 (Z.to_nat N)); [eapply (wr_at_of_CB sp); [exact CB4 | lia] | lia | lia | lia]
                 | subst PL; unorm; subst N cfg; unfold hdr_payload_len in *; lia | subst PL; unorm; subst N cfg; unfold hdr_payload_len in *; lia | unorm; lia]. }
         assert (RET : ret_ok (Z_to_bv 64 0xddc40)) by (apply ret_ok_even; reflexivity).
-        destruct (ref_memcpy mem4 (Z_to_bv 64 D) (Z_to_bv 64 PL) N ds (seg_rom RSEGS) MC regs5 (Z_to_bv 64 0xddc40) RET X1 X10 X11 X12) as (regs6 & RUN & KEEP6).
+        destruct (ref_memcpy mem4 (Z_to_bv 64 D) (Z_to_bv 64 PL) N ds (seg_rom VS) MC regs5 (Z_to_bv 64 0xddc40) RET X1 X10 X11 X12) as (regs6 & RUN & KEEP6).
         lazymatch type of RUN with msteps _ (mkst _ ?pc4 _ _) _ => replace (Z_to_bv 64 0x2798bc) with pc4 by (apply bv_eq; reflexivity) end.
-        eapply rz_msteps; [exact Hh4 | exact Hlazy4 | exact RUN |]. clear RUN.
+        eapply rz_msteps; [exact Hh4 | exact Hlazy4 | exact (rt_msteps_sym _ _ _ RUN) |]. clear RUN.
         set (mem5 := wbytes mem4 (Z_to_bv 64 D) ds) in *.
         assert (TI5 : tinv mem5) by (subst mem5; eapply tinv_wblock; [exact TI4 | exact HBR4 | rewrite Hds; lia]).
         assert (TF5 : tframe sp mem5 (getr regs0 8) (getr regs0 9) (getr regs0 18) (getr regs0 19) (getr regs0 20) (getr regs0 21) (getr regs0 22) (getr regs0 23)).

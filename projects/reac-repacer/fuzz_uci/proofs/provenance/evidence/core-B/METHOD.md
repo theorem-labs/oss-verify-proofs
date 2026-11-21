@@ -5,7 +5,7 @@ only the unit pins, the module prefix and the `Grant* -> <Unit>*` renames.
 
 ## Donor
 
-fuzz_grant's RELEASED image-B library: `proofs/libreac/fuzz_grant/lib` at recipes commit 4f87de75d67 ("Merge pull request
+fuzz_grant's RELEASED image-B library: `proofs/libreac/fuzz_grant/lib` at recipes ("Merge pull request
 #401: Pau proofs (libreac/fuzz_grant)"; the index rows libreac/fuzz_grant/asan_ubsan_halts and asan_ubsan_agrees are
 `proved`). No cgif image-B text and no other donor is used. In that release the image-B text is `lib/B/` (per-image
 files) over `lib/Reusable/` (files shared with image A). `mkdon.sh` lays both at the lib root, `B/` winning where a name is
@@ -13,13 +13,13 @@ in both (33 names), and rewrites the module text `...fuzz_grant.lib.Reusable` / 
 `...fuzz_grant.lib`: the shape port_core's `core-files-Y.txt` names (root `Y<x>.v`).
 
 Why this donor (measured, same tool, same target lib): fuzz_grant B refused 67 values and staged 369 per-image files;
-fuzz_identity's released `lib/ReusableB` (recipes 70952e1c8c9) refused 60 but left 3 partner-left FAIL rows and staged 395,
+fuzz_identity's released `lib/ReusableB` (recipes) refused 60 but left 3 partner-left FAIL rows and staged 395,
 the 26 more being kernel files that the grant donor keeps shared with image A (whose donor is also fuzz_grant), and its
 record names differ from image A's.
 
 ## Tool and inputs
 
-- port_core 0e4e065eab9f (`git archive 7f0e4b05267 tools/pg-reloc/0e4e065eab9f`), image-B mode: `--remap-images
+- port_core 0e4e065eab9f (`git archive tools/pg-reloc/0e4e065eab9f`), image-B mode: `--remap-images
   --reusable-dir B --kernel-dir Reusable --kernel-image <donor asan image>`, file list = the release's
   `core-files-Y.txt` minus the files the target does not need (files-B-core.txt says which and why), the unit's 19
   start-up files `--no-stage`d (no-stage-B.txt; they come from the start-up generator, not from the donor).

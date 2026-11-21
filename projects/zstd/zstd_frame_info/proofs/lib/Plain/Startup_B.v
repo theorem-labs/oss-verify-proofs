@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (pauxv20, the old 20-word auxv, replaced by pauxv over the launch's auxv entries, 27 pairs or 29 with CONFIG_RSEQ, with pauxv_length; rinit_libc_post and rinit_libc_spec restated over pauxv, with section variables for the launch auxv, entry, gid and exec name; the auxv-scan proof redone for both CONFIG_RSEQ cases, with a new rskip_it tactic for keys the loop skips). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Specs Run.
@@ -229,10 +230,13 @@ Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
 
 
 (* [comment removed for export] *)
-Definition pauxv20 (hw uid rnd : word) : list word :=
-  [Z_to_bv 64 3; Z_to_bv 64 0x10040; Z_to_bv 64 4; Z_to_bv 64 56; Z_to_bv 64 5; Z_to_bv 64 10; Z_to_bv 64 16; hw;
-   Z_to_bv 64 6; Z_to_bv 64 4096; Z_to_bv 64 11; uid; Z_to_bv 64 12; uid; Z_to_bv 64 23; z64;
-   Z_to_bv 64 25; rnd; z64; z64].
+(* The 08b1429 auxv as a word list: 27 pairs, or 29 with CONFIG_RSEQ. *)
+Definition pauxv (la : LaunchAuxv) (entry uid gid hw rnd efn : word) : list word :=
+  flat_map (fun e => [fst e; snd e]) (auxv_entries la p_phdrs entry uid gid hw rnd efn).
+
+Lemma pauxv_length : forall la entry uid gid hw rnd efn,
+  length (pauxv la entry uid gid hw rnd efn) = (2 * auxv_count (la_rseq la))%nat.
+Proof. intros [ehdr c msz [|]] ? ? ? ? ? ?; reflexivity. Qed.
 
 Notation RENVIRON := 0x2dd70%Z (only parsing).
 Notation RPROGNAME := 0x4e0b8%Z (only parsing).   (* [comment removed for export] *)
@@ -277,7 +281,8 @@ Section RInitLibc.
   Variables (ra sp gp t0 t1 t2 s0 s1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
             (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (lo : Z)
             (E : Z) (eps : list word) (R : Z) (P : Z) (s : list byte)
-            (pn0 pnf0 hw0 env0 uid hw cr : word) (gjunk : list byte).
+            (pn0 pnf0 hw0 env0 uid hw cr : word) (gjunk : list byte)
+            (la : LaunchAuxv) (entry gid efn : word).
   Notation W := [(bv_unsigned sp - 448, bv_unsigned sp); (RENVIRON, 0x2dd78); (RTD, 0x2dec8); (0x4de50, 0x4de80);
                  (RGUARD, 0x4e0b0); (RPROGNAME, 0x4e0c8); (RLIBC, 0x4e138)]%Z.
   Notation AUXV := (E + 8 * (Z.of_nat (length eps) + 1))%Z.
@@ -302,7 +307,7 @@ Section RInitLibc.
     /\ rw_cells rsegs m' RGOT3 [C8 (Z_to_bv 64 RENVIRON); C8 (Z_to_bv 64 0x4e0c0); C8 (Z_to_bv 64 RPROGNAME)]
     /\ rw_cells rsegs m' RGOT_SSP [C8 (Z_to_bv 64 RGUARD)]
     /\ rw_cells rsegs m' RGOT_DYNAMIC [C8 z64]
-    /\ bytes_at rsegs m' E (u64s eps ++ le8 z64 ++ u64s (pauxv20 hw uid (Z_to_bv 64 R)))
+    /\ bytes_at rsegs m' E (u64s eps ++ le8 z64 ++ u64s (pauxv la entry uid gid hw (Z_to_bv 64 R) efn))
     /\ bytes_at rsegs m' P (s ++ [Z_to_bv 8 0])
     /\ bytes_at rsegs m' R (le8 cr)
     /\ (0 < t < 4194304)%Z.
@@ -362,6 +367,9 @@ rewrite nth_error_app2 by lia. replace (Z.to_nat (j - 1) - length s)%nat with 0%
   Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
 
   (* [comment removed for export] *)
+  (* A key above AT_CNT-1 (37): the loop skips the store and loads the next key. *)
+  Ltac rskip_it AUXB ki := lstep; if_true; ldaux AUXB ki; lstep; astep.
+
   Ltac rscan_it AUXB vi ki :=
     lstep; if_false; ldaux AUXB vi; lstep; lstep;
     (try lazymatch goal with |- context [Z_to_bv 64 (bv_unsigned ?spv + -336 + ?c)] =>
@@ -376,7 +384,7 @@ rewrite nth_error_app2 by lia. replace (Z.to_nat (j - 1) - length s)%nat with 0%
 
   #[using="EPS NONUL LO LOLO SPE SPP SPR"] Lemma rinit_libc_spec : forall tp a0 a1,
     stk rsegs m lo (bv_unsigned sp) ->
-    bytes_at rsegs m E (u64s eps ++ le8 z64 ++ u64s (pauxv20 hw uid (Z_to_bv 64 R))) ->
+    bytes_at rsegs m E (u64s eps ++ le8 z64 ++ u64s (pauxv la entry uid gid hw (Z_to_bv 64 R) efn)) ->
     bytes_at rsegs m P (s ++ [Z_to_bv 8 0]) ->
     bytes_at rsegs m R (le8 cr) ->
     rw_cells rsegs m RPROGNAME [C8 pn0; C8 pnf0] ->
@@ -401,7 +409,7 @@ rewrite nth_error_app2 by lia. replace (Z.to_nat (j - 1) - length s)%nat with 0%
     unfold td_cells, libc_cells in *.
     pose proof (munch_refl W m) as MU. pose proof (wmono_refl rsegs m) as WM.
     pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn in RSP.
-    pose proof (bytes_at_bound _ _ _ _ ENV) as EB. rewrite !app_length, !u64s_length, length_le8 in EB. cbn [length pauxv20] in EB.
+    pose proof (bytes_at_bound _ _ _ _ ENV) as EB. rewrite !app_length, !u64s_length, length_le8, pauxv_length in EB.
     pose proof (bytes_at_bound _ _ _ _ STR) as PB. rewrite app_length in PB. cbn [length] in PB.
     pose proof (bytes_at_bound _ _ _ _ RND) as RB. rewrite length_le8 in RB.
     pose proof (bv_unsigned_in_range 64 hw) as RHW. unfold bv_modulus in RHW. cbn in RHW.
@@ -428,29 +436,45 @@ carve_frame 384%nat ST.
     pose proof ENV as AUXB. apply bytes_at_app in AUXB. destruct AUXB as [_ AUXB].
     apply bytes_at_app in AUXB. destruct AUXB as [_ AUXB]. rewrite u64s_length, length_le8 in AUXB.
     replace (E + Z.of_nat (8 * length eps) + Z.of_nat 8)%Z with AUXV in AUXB by lia.
-    ldaux AUXB 0%nat. lstep. if_false. lstep. lstep. lstep. lstep.
+    unfold pauxv, auxv_entries in AUXB.
+    try change (Z_to_bv 64 (Z.of_N (ph_addr p_phdrs))) with (Z_to_bv 64 0x10040) in AUXB.
+    try change (Z_to_bv 64 (Z.of_N (ph_ent p_phdrs))) with (Z_to_bv 64 56) in AUXB.
+    try change (Z_to_bv 64 (Z.of_N (ph_num p_phdrs))) with (Z_to_bv 64 10) in AUXB.
+    unfold AT_SYSINFO_EHDR, AT_L1I_CACHESIZE, AT_L1I_CACHEGEOMETRY, AT_L1D_CACHESIZE, AT_L1D_CACHEGEOMETRY,
+      AT_L2_CACHESIZE, AT_L2_CACHEGEOMETRY, AT_L3_CACHESIZE, AT_L3_CACHEGEOMETRY, AT_MINSIGSTKSZ,
+      AT_HWCAP, AT_PAGESZ, AT_CLKTCK, AT_PHDR, AT_PHENT, AT_PHNUM, AT_BASE, AT_FLAGS, AT_ENTRY,
+      AT_UID, AT_EUID, AT_GID, AT_EGID, AT_SECURE, AT_RANDOM, AT_EXECFN,
+      AT_RSEQ_FEATURE_SIZE, AT_RSEQ_ALIGN, AT_NULL in AUXB.
+    (* Both kernels: with CONFIG_RSEQ the loop runs two iterations more. *)
+    destruct (la_rseq la) eqn:HRSEQ; try rewrite HRSEQ in AUXB; cbv zeta in AUXB; cbn [app flat_map fst snd] in AUXB.
+    all: ldaux AUXB 0%nat; lstep; if_false; lstep; lstep; lstep; lstep.
     (* [comment removed for export] *)
-    rscan_it AUXB 1%nat 2%nat. rscan_it AUXB 3%nat 4%nat. rscan_it AUXB 5%nat 6%nat. rscan_it AUXB 7%nat 8%nat.
-    rscan_it AUXB 9%nat 10%nat. rscan_it AUXB 11%nat 12%nat. rscan_it AUXB 13%nat 14%nat. rscan_it AUXB 15%nat 16%nat.
-    rscan_it AUXB 17%nat 18%nat.
+    all: rscan_it AUXB 1%nat 2%nat.
+    all: rskip_it AUXB 4%nat; rskip_it AUXB 6%nat; rskip_it AUXB 8%nat; rskip_it AUXB 10%nat; rskip_it AUXB 12%nat.
+    all: rskip_it AUXB 14%nat; rskip_it AUXB 16%nat; rskip_it AUXB 18%nat; rskip_it AUXB 20%nat.
+    all: rscan_it AUXB 21%nat 22%nat; rscan_it AUXB 23%nat 24%nat; rscan_it AUXB 25%nat 26%nat; rscan_it AUXB 27%nat 28%nat.
+    all: rscan_it AUXB 29%nat 30%nat; rscan_it AUXB 31%nat 32%nat; rscan_it AUXB 33%nat 34%nat; rscan_it AUXB 35%nat 36%nat.
+    all: rscan_it AUXB 37%nat 38%nat; rscan_it AUXB 39%nat 40%nat; rscan_it AUXB 41%nat 42%nat; rscan_it AUXB 43%nat 44%nat.
+    all: rscan_it AUXB 45%nat 46%nat; rscan_it AUXB 47%nat 48%nat; rscan_it AUXB 49%nat 50%nat; rscan_it AUXB 51%nat 52%nat.
+    1: (rscan_it AUXB 53%nat 54%nat; rscan_it AUXB 55%nat 56%nat).
     (* [comment removed for export] *)
-    steps_to 0x1388c%Z.
-    astep. if_cases K; zify_cond K; [|exfalso; lia]. clear K.
-    astep. if_cases K; zify_cond K; [|exfalso; lia]. clear K.
+    all: steps_to 0x1388c%Z.
+    all: astep. all: if_cases K; zify_cond K; [|exfalso; lia]. all: clear K.
+    all: astep. all: if_cases K; zify_cond K; [|exfalso; lia]. all: clear K.
     (* [comment removed for export] *)
-    steps_to 0x138cc%Z.
-    lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) =>
+    all: steps_to 0x138cc%Z.
+    all: lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mm _) =>
       call (rpn_loop (length s) 1 mm mm); [lia | lia | apply munch_refl | apply wmono_refl | exact MI | exact STR | exact G2 | ] end.
-    rename POST into G2. try rename MI0 into MI.
+    all: rename POST into G2. all: try rename MI0 into MI.
     (* [comment removed for export] *)
-    apply (proj1 (rw_cells_app _ _ _ [_;_;_] _)) in AUX. destruct AUX as [AUXa AUX].
-    apply (proj1 (rw_cells_app _ _ _ [_;_;_] _)) in AUX. destruct AUX as [AUX3 AUXb].
-    cbn [cells_size csize Nat.add] in AUX3, AUXb. change (Z.of_nat 24) with 24%Z in *.
-    replace (bv_unsigned sp + -336 + 24)%Z with (bv_unsigned sp + -312)%Z in AUX3 by lia.
-    replace (bv_unsigned sp + -336 + 24 + 24)%Z with (bv_unsigned sp + -288)%Z in AUXb by lia.
-    lstep. lstep.
-    name_sp sp (-384)%Z. name_sp sp (-336)%Z.
-    icallk (rinit_tls_spec _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+    all: apply (proj1 (rw_cells_app _ _ _ [_;_;_] _)) in AUX. all: destruct AUX as [AUXa AUX].
+    all: apply (proj1 (rw_cells_app _ _ _ [_;_;_] _)) in AUX. all: destruct AUX as [AUX3 AUXb].
+    all: cbn [cells_size csize Nat.add] in AUX3, AUXb. all: change (Z.of_nat 24) with 24%Z in *.
+    all: replace (bv_unsigned sp + -336 + 24)%Z with (bv_unsigned sp + -312)%Z in AUX3 by lia.
+    all: replace (bv_unsigned sp + -336 + 24 + 24)%Z with (bv_unsigned sp + -288)%Z in AUXb by lia.
+    all: lstep. all: lstep.
+    all: name_sp sp (-384)%Z. all: name_sp sp (-336)%Z.
+    all: icallk (rinit_tls_spec _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
                lo z64 (Z_to_bv 64 4096) (Z_to_bv 64 AUXV)).
     all: lazymatch goal with
          | |- forall _, _ => ipost rsegs; unname_sp; unname_sp
@@ -459,22 +483,22 @@ carve_frame 384%nat ST.
                          | lazymatch goal with |- rw_cells _ _ (?b + -336 + 24)%Z _ =>
                              replace (b + -336 + 24)%Z with (b + -312)%Z by lia; hyp_by_addr end ]
          end.
-    rename PC into ST. unfold td_cells, libc_cells in *.
+    all: rename PC into ST. all: unfold td_cells, libc_cells in *.
     (* [comment removed for export] *)
-    lstep. lstep.
-    call_sp (rinit_ssp_spec _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ lo R cr).
+    all: lstep. all: lstep.
+    all: call_sp (rinit_ssp_spec _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ lo R cr).
     all: lazymatch goal with
          | |- evt _ _ _ => idtac
          | |- ?g => first [ hyp_by_addr | reflexivity | lia ]
          end.
-    match goal with H : stk _ _ _ _ |- _ => rename H into ST end.
+    all: match goal with H : stk _ _ _ _ |- _ => rename H into ST end.
     (* [comment removed for export] *)
-    do 3 lstep. if_false. lstep. lstep. lstep. if_false. lstep. lstep. if_true.
-    do 5 lstep.
-    join2 FRlo AUXa. join2 FRlo AUX3. join2 FRlo AUXb. join2 FRlo FRhi.
-    release_frame FRlo ST (bv_unsigned sp).
-    lstep.
-    unfold rinit_libc_post, td_cells, rtd_cells, libc_cells in *. sys_finish; try lia.
+    all: do 3 lstep. all: if_false. all: lstep. all: lstep. all: lstep. all: if_false. all: lstep. all: lstep. all: if_true.
+    all: do 5 lstep.
+    all: join2 FRlo AUXa. all: join2 FRlo AUX3. all: join2 FRlo AUXb. all: join2 FRlo FRhi.
+    all: release_frame FRlo ST (bv_unsigned sp).
+    all: lstep.
+    all: unfold rinit_libc_post, td_cells, rtd_cells, libc_cells in *. all: sys_finish; try lia.
     all: hyp_by_addr.
   Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
 End RInitLibc.

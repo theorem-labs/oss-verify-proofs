@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/YE05.v, with its module paths changed; 2671 of its 2756 lines of code are new or changed and 333 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segA.v, with its module paths and module names changed; 906 of its 1036 lines of code are new or changed and 2626 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/FSH_crt_site.v, with its module paths and module names changed; 910 of its 1110 lines of code are new or changed and 836 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_round_trip 0x81b9c (fuzz_state.c:278-314 with round_trip_document fs.c:229-264 inlined), fs.asan-ubsan (image
    tfibsegs = lib/B/YB1v.v, the pinned fuzz_state.asan-ubsan sha256
    5ac5ce0954f87e2d050c481b7b0599cfd55ef554eadc008e51491f44c053d204): the B twin of the BACK HALF of lane B1 of the
@@ -12,10 +13,10 @@
    lib/B/FSH_crt_base.v) - plus the three pj_set FP site lemmas of segments 15 / 17 / 19 (lane B2 uses them), with the
    class-3 fake frame live (own = [(3, pos)]). The front half (segments 10-11, crt_INV_82068 -> the two bcmp-return
    boundaries) is not in this file.
-   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from 09964cc9270)
-   Port source: a working branch 09964cc9270 proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segB.v (1266 lines,
-   on the A base / site / cstr of a working branch c6275044faa, v27), itself PORTED from a working branch
-   d25a984c903 proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_sd3.v (the stretch 0x82078 .. 0x8213c:
+   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED)
+   Port source: a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segB.v (1266 lines,
+   on the A base / site / cstr of a working branch, v27), itself PORTED from a working branch
+   proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_sd3.v (the stretch 0x82078 .. 0x8213c:
    crt_cmp_seg :239, crt_objs_seg :371, crt_seg3 :562, crt_obj_hdr :693; stage cuts St3 :260 / St4 :315 of
    check_round_trip_stdefs.v); the function's reuse search is crt-lane-head.md's rule-24 line (checker a Theorem Labs lane,
    CONFIRM 04:3xZ on (internal path)). Same Definition / Lemma names and statement
@@ -55,7 +56,7 @@
    12 writes no s-register (A wrote s11 := F + 0x1a0) and every s2 .. s11 at the call is its own atom; and the boundary
    invariants carry B crt_INV_8212c's register heads s2 = text, s4 = len, s5 = bd, s11 = F + 0xe0, s7 = F + 0x80,
    s6 = F + 0x1c0, s3 = F (A: s6 = F + 0xe0, s10 = F + 0x20, s11 = F + 0x1a0).
-   The sink head is a Section variable SK in every section (as A at a working branch be1fe777656, which
+   The sink head is a Section variable SK in every section (as A at a working branch, which
    replaced A's `#[local] Notation SK := AE2k.tfib_sink_head`; ENTRY instantiates it, build B's is
    YE2k.tfib_sink_head), so the chain (lib/B/FSH_crt_chain.v) composes these lemmas at its own SK.
 
@@ -228,7 +229,7 @@ fold F. rewrite <- E. exact (Hnf x Hx).
 Qed.
 
 (* the empty object pj_object leaves: its header is type 6 with str = kids = keys = n = cap = 0 (PjStruct.pj_node's JObj
-   arm with no blocks forces cap = 0, hence kids = keys = 0; n = |[]|). Port of d25a984c903 sd3 crt_obj_hdr :693. *)
+   arm with no blocks forces cap = 0, hence kids = keys = 0; n = |[]|). Port sd3 crt_obj_hdr :693. *)
 Lemma crtB_obj0_hdr : forall ly S (W : world tfibsegs) m v,
   rtree tfibsegs B ly S W m v (PjTree.JObj []) [] ->
   exists num, PjStruct.pj_hdr tfibsegs (mrestrict (w_H W) m) v 6 num 0 0 0 0 0.
@@ -259,7 +260,7 @@ Proof. intros W W' m m' v num K H. exact (PjStruct.pj_hdr_eq tfibsegs _ _ v 6 nu
 End walk.
 
 (* ================= segment 13: 0x82280 -> pj_object (state = s7 = F + 0x80) -> 0x82288 (A 0x82124 -> 0x8212c) =====
-   Port of d25a984c903 sd3 crt_objs_seg's second half (:371-557): `mv a0, s7; jal pj_object`. The boundary at 0x82280
+   Port sd3 crt_objs_seg's second half (:371-557): `mv a0, s7; jal pj_object`. The boundary at 0x82280
    is crt_INV_8212c without the state object (only its placement, pobj). *)
 Definition crtB_sc13 : sstate := Eval vm_compute in fst (sym_run_toN tfibsegs crt_tbl FUEL A_pj_object (crt_ss2 0x82280)).
 Lemma crtB_run13 : sym_run_toN tfibsegs crt_tbl FUEL A_pj_object (crt_ss2 0x82280) = (crtB_sc13, RS_running).
@@ -873,7 +874,7 @@ End brw.
    Two entries (the two exits of segment 11): crtB_seg12 from crtB_ss_8209c (the `bnez a0` on bcmp's answer first,
    crtB_seg_call_brw) and crtB_seg12z from crtB_ss_820a0 (crtB_seg_call_w). The run writes the frame's shadow (region 3:
    the 7 granules of each of doc / state / v / back and the n cell's granule set to 0) and the frame's n cell (region
-   2's chunk at 0x1a0); the callee part (crtB_hcall12) reads them off the call-site st_ok. Port of d25a984c903
+   2's chunk at 0x1a0); the callee part (crtB_hcall12) reads them off the call-site st_ok. Port of
    lib/A/Prog/check_round_trip_sd3.v crt_objs_seg (:371) first half, restated over the S0 predicates. MEASURED by the
    engine over crt_tbl. *)
 Definition crtB_csF12 : list YP09.chunk :=
@@ -1032,7 +1033,7 @@ split.
 split; [exact (RBK _ _ HRD) | exact (ZBK _ _ _ HRD Lld HZD)].
 Qed.
 (* a boundary run's write window (the saved words, the s1 slots, the frame and its shadow) holds no image byte and no
-   byte of a live block (port of FSH_crt_segD2_s36.v crtD2_w36, a5a8bfb0274, for any boundary pc) *)
+   byte of a live block (port of FSH_crt_segD2_s36.v crtD2_w36, for any boundary pc) *)
 Lemma crtB_w_out : forall cx E k ly3 S3 U3 (W3 : world tfibsegs) mem md3 r,
   crt_E cx E ->
   @ajournal rc SK tfibsegs B STK_check_round_trip (spZ (c_regs cx)) FS_PSTAT_FP (c_ly cx) (c_S cx) (c_W cx)

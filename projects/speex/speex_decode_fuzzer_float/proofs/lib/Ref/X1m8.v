@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the state at main over the process input and the mmap base, from the launch conjunct of valid_entry and valid_launch). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Run.
@@ -48,13 +49,13 @@ main_model io_diag raw_malloc raw_free RSTAGE_plain
 (target_alloc_init (St:=PState)) run (target_alloc_count (St:=PState)) (argv_Z argv).
 
 Definition rmain_stmt {RCEIL : RunCeiling} : Prop :=
-forall (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw) (F : bvmap 5 word) (ms : machine_state),
-valid_sp sp0 -> valid_argv argv -> valid_envp envp -> is_mkF F ->
+forall (sp0 mbase : word) (rnd : EntryDraw) (inp : ProcInput) (F : bvmap 5 word) (ms : machine_state),
+valid_sp sp0 -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> is_mkF F ->
 alloc_ceiling = bv_unsigned sp0 - 8388608 ->
 run_secret = rnd_w1 rnd ->
 run_canary = canary_of (rnd_w0 rnd) ->
-rat_main sp0 argv envp uid hw rnd F ms ->
-implM rsegs (rmain_model argv) (ps_init alloc_ceiling (reservedZ rsegs)) (fun code s' ms' => rat_exit code s' ms') ms.
+rat_main sp0 mbase rnd inp F ms ->
+implM rsegs (rmain_model (in_argv inp)) (ps_init alloc_ceiling (reservedZ rsegs)) (fun code s' ms' => rat_exit code s' ms') ms.
 
 Lemma rimpl_msys_of_enode : forall {St A} (n : node) (pl : resp -> option A) (Q : A -> machine_state -> Prop) (s : St) ms,
 impl rsegs (at_node rsegs) (enode n pl) (epost Q) ms ->
@@ -92,25 +93,25 @@ impl rsegs (at_node rsegs) (prog_plain rsegs RSTAGE_plain alloc_ceiling (in_argv
 (ms0F rsegs Plain.M.init_pc Plain.M.phdrs en inp).
 Proof.
 intros [sp0 brk mb rnd] inp VE VI HCEIL HSEC HCAN.
-pose proof (valid_entry_parts _ _ _ _ _ _ _ _ VI VE) as sfP_; first [ sf_destruct 4%nat sfP_ as VSP _ _ FIT | sf_fb; destruct sfP_ as (VSP & _ & _ & FIT) ]. clear VE.
+destruct (proj1 (valid_entry_core _ _ _ VI) VE) as (VSP & _ & _ & _ & LOK). clear VE.
+pose proof (valid_input_core_launch inp VI) as VL.
 pose proof VI as (VARGV & VENVP & _).
-destruct inp as [argv envp fs sin uid gid grps net nof sigm hw abt va].
-cbn [en_sp en_draw in_argv in_envp in_fs en_brk in_uid in_hwcap] in *.
-unfold ms0F. cbn [en_sp en_draw in_argv in_envp in_uid in_hwcap].
+cbn [en_sp en_draw en_brk en_mmap_base] in *.
+unfold ms0F. cbn [en_sp en_draw en_mmap_base].
 unfold prog_plain, prog.
 set (s0 := ps_init alloc_ceiling (reservedZ rsegs)).
 eapply (impl_ebind _ _ _ _ _ (fun (_ : Empty_set * PState) (_ : machine_state) => True)).
 2:{ intros [v ?] ms' _. destruct v. }
 unfold prog_with. unfold X1qx.mbind at 1.
-eapply (impl_ebind _ _ _ _ _ (fun (p : unit * PState) ms' => rat_main sp0 argv envp uid hw rnd mkF0 ms' /\ snd p = s0)).
+eapply (impl_ebind _ _ _ _ _ (fun (p : unit * PState) ms' => rat_main sp0 mb rnd inp mkF0 ms' /\ snd p = s0)).
 - unfold X1r6.startup, X1qx.mbind.
-eapply (impl_ebind _ _ _ _ _ (fun (p : Z * PState) ms' => rat_main sp0 argv envp uid hw rnd mkF0 ms' /\ snd p = s0)).
-+ exact (rimpl_msys_of_enode _ _ _ _ _ (rstartup_specF sp0 argv envp uid hw rnd VSP VARGV VENVP FIT)).
+eapply (impl_ebind _ _ _ _ _ (fun (p : Z * PState) ms' => rat_main sp0 mb rnd inp mkF0 ms' /\ snd p = s0)).
++ exact (rimpl_msys_of_enode _ _ _ _ _ (rstartup_specF sp0 brk mb rnd inp VSP VARGV VENVP VL LOK)).
 + intros [a s] ms' [H Hs]. cbn in H, Hs. cbn [fst snd]. apply impl_ret_ok. apply evt_done. cbn. auto.
 - intros [u s] ms' [AM Hs]. cbn in Hs. subst s. cbn [fst snd].
-change (X1qx.implM rsegs (X1qx.mbind (rmain_model argv) (fun code => io_exit code)) s0 (fun _ _ _ => True) ms').
+change (X1qx.implM rsegs (X1qx.mbind (rmain_model (in_argv inp)) (fun code => io_exit code)) s0 (fun _ _ _ => True) ms').
 eapply (X1qx.implM_bind rsegs).
-+ exact (MAIN sp0 argv envp uid hw rnd mkF0 ms' VSP VARGV VENVP is_mkF_mkF0 HCEIL HSEC HCAN AM).
++ exact (MAIN sp0 mb rnd inp mkF0 ms' VSP VARGV VENVP is_mkF_mkF0 HCEIL HSEC HCAN AM).
 + intros code s' ms'' AE. cbn in AE. apply rexit_from_rat_exit. exact AE.
 Qed.
 End Compose.

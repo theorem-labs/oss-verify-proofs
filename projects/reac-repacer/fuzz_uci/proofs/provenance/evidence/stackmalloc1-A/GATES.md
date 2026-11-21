@@ -1,7 +1,7 @@
 # fuzz_uci image-A class-1 stack_malloc contract: gate record
 
 The files: lib/A/Rt/AF0r.v, lib/A/Rt/AF0s.v and the shared lib/Reusable/YF0v.v (applied.txt), relocated from
-fuzz_grant's released lib/A/Rt/AF0r.v, AF0s.v and lib/Reusable/YF0v.v (recipes 4f87de75d67) by `run.sh` (port_core
+fuzz_grant's released lib/A/Rt/AF0r.v, AF0s.v and lib/Reusable/YF0v.v (recipes) by `run.sh` (port_core
 0e4e065eab9f, core-A's route): staged 3, kept 0, required.tsv empty, 0 override values, 2 / 2 patches, symbol gate PASS.
 port_core's FAIL rows are core-A's known `rename-new-undeclared UciSyms` (its Record is in the start-up file
 lib/A/AF0m.v, never staged) and three `data-symbol` review rows on the model constant FS_FROFF 0x109000 (METHOD.md);
@@ -29,7 +29,7 @@ the kit's, then the settlement.
 
 13 bodies (the code table's nine fuzz_uci rows by symbol and every callee of the class-1 code), 13 equal up to
 relocation; fuzz_grant's __asan_stack_malloc_0 / _2 / _4 rows have no body in fuzz_uci. The tool is the image-B
-record's fixed tool (51cfb939a547, sha256 f31bad62a6cb: a .got / .data.rel.ro cell by the symbol its value names, TLS
+record's fixed tool (sha256 f31bad62a6cb: a .got / .data.rel.ro cell by the symbol its value names, TLS
 symbols skipped; an unnamed place by section, NUL string and a 64-byte window; zero-fill only beyond p_filesz) plus one
 rule. That tool unchanged (`--no-addi0`) leaves TryAsanInitFromRtl's auipc pair to asan_inited as 2 DIFFERENT rows (the
 donor's low half is an `addi s0, a0, 0`, printed `mv`); the added rule decides it SAME, changes nothing else, and
@@ -83,7 +83,7 @@ e165 false positive to record.
 
 ## 2. codeptr, the atable replacement, and the by-value check
 
-### 2a. codeptr 12348302dfd2 (start-up set dbb5a97ad14, frozen-run.sh; records/codeptr.txt)
+### 2a. codeptr 12348302dfd2 (start-up set, frozen-run.sh; records/codeptr.txt)
 
 On fuzz_uci.asan, stale against fuzz_grant.asan with each file's donor text: 5 findings, every one a non-address
 (0x100000 = 1 << kStackSizeLog; 0x109000 = FS_FROFF; 0x160613 = the instruction word at FS_LOOP + 0x14; 0x160000 =
@@ -119,7 +119,7 @@ the donor's 0x3cf18 gives DONOR-STALE 1 (that row; TARGET 24 -> 23) and nothing 
 ## 3. v10: global_settings 439f8e3bd463 (records/settings-count.txt)
 
 The three files: ESCAPES 3, PLAIN 6, UNMEASURED 0, KERNEL 0 (TACTIC 9). fuzz_grant's released counterparts (lib/A/Rt/
-AF0r.v, AF0s.v, lib/Reusable/YF0v.v at 4f87de75d67): ESCAPES 3, PLAIN 6, UNMEASURED 0, KERNEL 0: equal. The three
+AF0r.v, AF0s.v, lib/Reusable/YF0v.v): ESCAPES 3, PLAIN 6, UNMEASURED 0, KERNEL 0: equal. The three
 ESCAPES rows are the donor's own global `Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).`,
 one per file. Control: a second global Zify flag line planted in AF0s.v gives ESCAPES 4.
 
@@ -133,7 +133,7 @@ twin: a row `src0_A___asan_stack_malloc_1 := 0x3c1b8` / `src0_E_ := 0x3c348` is 
 ## 5. Build (records/build.txt, records/print-assumptions.txt, records/consumer-fit.txt)
 
 `cb build` of lib/Reusable/YF0v.vo, lib/A/Rt/AF0r.vo, lib/A/Rt/AF0s.vo (dune, CB_COMPILE: each target compiled, the
-cache not consulted): rc 0, 4 PINNED at facts 25e3d17bdb50 (fuzz_uci.asan 6ea017c24525, asan-ubsan a1b86e424add, plain
+cache not consulted): rc 0, 4 PINNED at facts (fuzz_uci.asan 6ea017c24525, asan-ubsan a1b86e424add, plain
 a6119aa7f1f2, ubsan fa87ac3037db), each file's own `.vo (real ...)` line. Control: AF0r.v's data cell (0x9e860, ...)
 planted as (0x9e868, ...) fails the same build at AF0r.v:76 (`fsA_rodata_chk`, "Unable to unify "true" with
 "false""), rc 1; the plant was reverted before the build of record. No admit / Admitted / Axiom / Parameter and no nia /
@@ -143,7 +143,7 @@ Print Assumptions of `stack_malloc1_contract` (an uncommitted scratch file, buil
 (sub, ltb, lsr, lsl, lor, leb, land, int, eqb), PrimString (string, length, get), PrimArray.array and
 functional_extensionality_dep; every one is in toolchain/allowed-axioms.txt.
 
-The consumer's hypothesis: on a scratch merge (never pushed) of the consumer's commit 9ee6811b6c95 with this branch
+The consumer's hypothesis: on a scratch merge (never pushed) of the consumer's with this branch
 (no conflict), a scratch file states lib/A/UciClose.v:143's type `forall (rc : YM05.RunCeil) (fx : YK11.FPState),
 @astack_malloc_realizes fx rc segs B 1` under UciClose.v's bindings (segs := ucisegs0, B := AD2l.UciB) and closes it by
 `exact (@AF0s.stack_malloc1_contract fx rc B (AR_laws_ok tfibsegs B) AD2l.UciB_syms)`: cb rc 0, the same 14 axioms.

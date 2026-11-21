@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: T_canon and T_canon_e take the hypothesis that the image's loader segments carry no kernel mapping, and lift the walk over them to the run's segment list, which adds the vDSO, by RomStable.srun_init; taken in part from projects/simdjson/fuzz_ondemand/proofs/lib/TopLevelA.v, lines 12, 20-23, 41-44, 63-66. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -9,7 +10,7 @@ From OSSVerify.Proofs.simdjson.fuzz_element.lib.Lib Require Import PropExec MSta
 From OSSVerify.Proofs.simdjson.fuzz_element.lib Require Import TopLevel Obligations ProofBase TopPlain.
 From OSSVerify.Proofs.simdjson.fuzz_element.lib.Spec Require Import Prog ModelInv Canon ProgDetIface ProgDet.
 From OSSVerify.Proofs.simdjson.fuzz_element.lib.Spec Require Import ModelInvN MallocSome.
-From OSSVerify.Proofs.simdjson.fuzz_element.lib.AS Require Import ShapeAlg SpinAlg.
+From OSSVerify.Proofs.simdjson.fuzz_element.lib.AS Require Import ShapeAlg SpinAlg RomStable.
 From OSSVerify.simdjson.fuzz_element.images Require Import Plain.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
@@ -17,6 +18,10 @@ Open Scope Z_scope.
 
 Section TargetSide.
 Variables (tsegs : list Segment) (tpc : N) (tph : PhdrInfo).
+(* The walk is over the binary's own (loader) segments; the run reads the binary against
+   [run_segments], which adds the vDSO.  [RomStable.srun_init] lifts the walk; its premise is
+   that the loader list carries no kernel mapping, closed by computation for each image. *)
+Hypothesis NL : Forall (fun s => seg_kernel_map s = false) tsegs.
 
 Definition S3s_stmt : Prop :=
   forall en inp,
@@ -34,9 +39,10 @@ Theorem T_canon : S3s_stmt ->
 Proof.
   intros HS en inp He Hi. pose proof (HS en inp He Hi) as Hr.
   destruct en as [sp brk mb rnd]. cbn [run_scfg bh_traces bh_errors en_sp en_brk en_mmap_base en_draw] in *.
+  pose proof (srun_init tsegs inp sp mb tpc tph brk rnd target_alloc_limit _ NL Hr) as Hr'.
   split.
-  - intros tr. exact (srealizes_obs_iff tsegs _ _ Hr tr).
-  - exact (srealizes_no_error tsegs _ _ Hr).
+  - intros tr. exact (srealizes_obs_iff (run_segments tsegs inp sp mb) _ _ Hr' tr).
+  - exact (srealizes_no_error (run_segments tsegs inp sp mb) _ _ Hr').
 Qed.
 
 Definition S3s_stmt_e : Prop :=
@@ -55,9 +61,10 @@ Theorem T_canon_e : S3s_stmt_e ->
 Proof.
   intros HS en inp He Hi. pose proof (HS en inp He Hi) as Hr.
   destruct en as [sp brk mb rnd]. cbn [run_scfg bh_traces bh_errors en_sp en_brk en_mmap_base en_draw] in *.
+  pose proof (srun_init tsegs inp sp mb tpc tph brk rnd target_alloc_limit _ NL Hr) as Hr'.
   split.
-  - intros tr. exact (srealizes_obs_iff tsegs _ _ Hr tr).
-  - exact (srealizes_no_error tsegs _ _ Hr).
+  - intros tr. exact (srealizes_obs_iff (run_segments tsegs inp sp mb) _ _ Hr' tr).
+  - exact (srealizes_no_error (run_segments tsegs inp sp mb) _ _ Hr').
 Qed.
 
 Lemma S3s_of_e : S3s_stmt_e -> S3s_stmt.

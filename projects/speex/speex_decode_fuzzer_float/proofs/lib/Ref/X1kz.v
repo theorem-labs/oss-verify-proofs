@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (main over the process input and the mmap base, with the launch's head-size bound read off the state at main). *)
 From Stdlib Require Import ZArith List Lia Bool Permutation Strings.String.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run.
@@ -37,37 +38,40 @@ Hypothesis TOW : towrite_stmt.
 Hypothesis TRUN : rtarget_run_stmt.
 Hypothesis RHI : rheap_init_stmt.
 
-#[using="RHF RND RBD RBR MALLOC FREE FKP FPR FWX SWF FWR TOW TRUN"] Lemma main_from_P1 : forall (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw) (F : bvmap 5 word) (arg0 arg1 : list byte) (TID : Z) ms,
-valid_sp sp0 -> alloc_ceiling = LO sp0 -> valid_argv argv -> valid_envp envp -> argv = [arg0; arg1] -> 0 < TID < 4194304 -> is_mkF F ->
-P1 sp0 argv envp uid hw rnd TID F ms ->
+#[using="RHF RND RBD RBR MALLOC FREE FKP FPR FWX SWF FWR TOW TRUN"] Lemma main_from_P1 : forall (sp0 mbase : word) (rnd : EntryDraw) (inp : ProcInput) (F : bvmap 5 word) (arg0 arg1 : list byte) (TID : Z) ms,
+valid_sp sp0 -> alloc_ceiling = bv_unsigned sp0 - 8388608 -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+(bv_unsigned sp0 + head_size inp <= bv_unsigned (ed_top rnd) - 8 - str_len inp)%Z ->
+in_argv inp = [arg0; arg1] -> 0 < TID < 4194304 -> is_mkF F ->
+P1 sp0 mbase rnd inp TID F ms ->
 implM rsegs (ra <- read_all io_diag raw_malloc raw_free RSTAGE_plain (map bv_unsigned arg1) ;;
 match ra with RdExit => mret 2 | RdDone buf content => main_rest buf content end)
 (ps_init alloc_ceiling (reservedZ rsegs)) RQEXIT ms.
 Proof.
-intros sp0 argv envp uid hw rnd F arg0 arg1 TID ms VSP HCEIL VARGV VENVP EARGV HT MKF HP1.
+intros sp0 mbase rnd inp F arg0 arg1 TID ms VSP HCEIL VARGV VENVP HSP EARGV HT MKF HP1.
 first [ sf_destruct 31%nat HP1 as t0 t1 t2 a3 a4 a5 a6 a7 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 fc mm pad -> FR BA HP CJ ERR FRM [stg SG] | sf_fb; destruct HP1 as (t0 & t1 & t2 & a3 & a4 & a5 & a6 & a7 & s4 & s5 & s6 & s7 & s8 & s9 & s10 & s11 & t3 & t4 & t5 & t6 & fc & mm & pad & -> & FR & BA & HP & CJ & ERR & FRM & [stg SG]) ].
 eapply implM_bind.
-{ eapply (main_read_all sp0 argv envp uid hw rnd arg0 arg1 TID s4 s5 s6 s7 s8 s9 s10 s11);
-first [exact VSP| exact HCEIL| exact VARGV| exact VENVP| exact EARGV| exact HT| exact RHF| exact RND| exact RBD| exact RBR| exact MALLOC| exact FREE| exact FKP
+{ eapply (main_read_all sp0 mbase rnd inp arg0 arg1 TID s4 s5 s6 s7 s8 s9 s10 s11);
+first [exact VSP| exact HCEIL| exact VARGV| exact VENVP| exact HSP| exact EARGV| exact HT| exact RHF| exact RND| exact RBD| exact RBR| exact MALLOC| exact FREE| exact FKP
 | exact FPR| exact FWX| exact SWF| exact FWR| exact TOW| exists pad; exact FR| exact BA| exact HP| exact CJ| exact ERR| exact FRM| exact MKF| exact SG]. }
 cbv beta. intros ra s' ms' PB. destruct ra as [|buf content]; cbn [POSTB] in PB.
 - apply implM_ret. apply evt_done. exact PB.
-- eapply (phaseC sp0 argv envp uid hw rnd TID s4 s5 s6 s7 s8 s9 s10 s11 VSP HCEIL HT RHF RBR FREE FWR TOW); [exact PB|].
+- eapply (phaseC sp0 mbase rnd inp TID s4 s5 s6 s7 s8 s9 s10 s11 VSP HCEIL HT RHF RBR FREE FWR TOW); [exact PB|].
 intros DATA A cap cw L cfg sc s1 ms1 HC R0. rewrite HC.
-exact (phaseDE sp0 argv envp uid hw rnd TID s4 s5 s6 s7 s8 s9 s10 s11 VSP HCEIL HT RBR FREE TRUN buf A cap DATA cw L cfg sc s1 ms1 R0).
+exact (phaseDE sp0 mbase rnd inp TID s4 s5 s6 s7 s8 s9 s10 s11 VSP HCEIL HT RBR FREE TRUN buf A cap DATA cw L cfg sc s1 ms1 R0).
 Qed.
 
 #[using="RHF RND RBD RBR MALLOC FREE FKP FPR FWX SWF FWR TOW TRUN RHI"] Theorem ref_main_proof : rmain_stmt.
 Proof.
-intros sp0 argv envp uid hw rnd F ms VSP VARGV VENVP MKF HCEIL HSEC HCAN AM.
-destruct (Z.eq_dec (Z.of_nat (length argv)) 2) as [E2|NE2]; [| exact (main_usage sp0 argv envp uid hw rnd F VSP HCEIL HSEC HCAN VARGV VENVP RHI RHF FPR FWX SWF ms AM NE2)].
-destruct argv as [|arg0 [|arg1 [|x l]]] eqn:EARGV; cbn in E2; try lia. rewrite <- EARGV in *.
+intros sp0 mbase rnd inp F ms VSP VARGV VENVP MKF HCEIL HSEC HCAN AM.
+pose proof (rat_main_hsp sp0 mbase rnd inp F ms AM) as HSP.
+destruct (Z.eq_dec (Z.of_nat (length (in_argv inp))) 2) as [E2|NE2]; [| exact (main_usage sp0 mbase rnd inp F VSP HCEIL HSEC HCAN VARGV VENVP HSP RHI RHF FPR FWX SWF ms AM NE2)].
+destruct (in_argv inp) as [|arg0 [|arg1 [|x l]]] eqn:EARGV; rewrite ?EARGV in E2; cbn in E2; try lia. rewrite <- EARGV in *.
 eapply implM_mono with (Q := RQEXIT); [| intros code s' ms' H; exact H].
-rewrite (main_model_eq argv arg0 arg1 EARGV).
+rewrite (main_model_eq inp arg0 arg1 EARGV).
 eapply implM_evt.
-{ eapply (main_to_P1 sp0 argv envp uid hw rnd F VSP HCEIL HSEC HCAN VARGV VENVP RHI RHF arg0 arg1); [exact EARGV| exact AM|].
+{ eapply (main_to_P1 sp0 mbase rnd inp F VSP HCEIL HSEC HCAN VARGV VENVP HSP RHI RHF arg0 arg1); [exact EARGV| exact AM|].
 intros TID ms' HT HP1. apply evt_done.
-exact (main_from_P1 sp0 argv envp uid hw rnd F arg0 arg1 TID ms' VSP HCEIL VARGV VENVP EARGV HT MKF HP1). }
+exact (main_from_P1 sp0 mbase rnd inp F arg0 arg1 TID ms' VSP HCEIL VARGV VENVP HSP EARGV HT MKF HP1). }
 cbv beta. intros ms' H. exact H.
 Qed.
 End Main.

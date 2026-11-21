@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_boxreg/lib/A/Bz/A/I_tramp.v at origin/ossv/recipes f26f9fbd8777; module paths changed; 16 address numerals relocated from fuzz_boxreg.asan to fuzz_pin.asan (provenance/reloc-WStrncmp/ledger-bz.tsv). *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_boxreg/lib/A/Bz/A/I_tramp.v; module paths changed; 16 address numerals relocated from fuzz_boxreg.asan to fuzz_pin.asan (provenance/reloc-WStrncmp/ledger-bz.tsv). *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.A.Bz Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise: free2_null_A over the interface's hiA_bot as well as its top). *)
 
 From Stdlib Require ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -33,12 +34,12 @@ Section F2N.
 Variable J : aj_base (hl_segs A4L).
 Variable ASA : Type.
 Variable HEAPA : ASA -> list blk -> list blk -> list frame -> bud -> (word -> option byte) -> config -> Prop.
-Variable top : Z.
+Variables top bot : Z.
 Hypothesis Hpos : forall A LB LM FR B m c a n, HEAPA A LB LM FR B m c -> In (a, n) LM -> 0 < a.
 
-Theorem free2_null_A : hiA_free2_null_ty A4L J ASA HEAPA top.
+Theorem free2_null_A : hiA_free2_null_ty A4L J ASA HEAPA top bot.
 Proof.
-unfold hiA_free2_null_ty. intros until errv. intros -> HP _ ST LO LOS SPA HT ERR TP GP A0 K. subst a0.
+unfold hiA_free2_null_ty. intros until errv. intros -> HP _ ST LO HBT LOS SPA HT ERR TP GP A0 K. subst a0.
 cbn [hl_free2 hla_base A4L A4H hl_segs]. apply (aj_evt J).
 step. change (bv_eqb (Z_to_bv 64 0) (Z_to_bv 64 0)) with true. cbv iota. step.
 apply evt_done.
@@ -91,12 +92,12 @@ Section F2N.
 Variable J : aj_base (hl_segs A4L).
 Variable ASA : Type.
 Variable HEAPA : ASA -> list blk -> list blk -> list frame -> bud -> (word -> option byte) -> config -> Prop.
-Variable top : Z.
+Variables top bot : Z.
 Hypothesis Hpos : forall A LB LM FR B m c a n, HEAPA A LB LM FR B m c -> In (a, n) LM -> 0 < a.
 
-Theorem free2_null_A : hiA_free2_null_ty A4L J ASA HEAPA top.
+Theorem free2_null_A : hiA_free2_null_ty A4L J ASA HEAPA top bot.
 Proof.
-unfold hiA_free2_null_ty. intros until errv. intros -> HP _ ST LO LOS SPA HT ERR TP GP A0 K. subst a0.
+unfold hiA_free2_null_ty. intros until errv. intros -> HP _ ST LO HBT LOS SPA HT ERR TP GP A0 K. subst a0.
 cbn [hl_free2 hla_base A4L A4H hl_segs]. apply (aj_evt J).
 step. change (bv_eqb (Z_to_bv 64 0) (Z_to_bv 64 0)) with true. cbv iota. step.
 apply evt_done.

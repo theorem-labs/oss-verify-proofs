@@ -2,13 +2,14 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the OUTER composition of the image-B (fuzz_reply.asan-ubsan) walk of
    fuzz_reply's drain, the outer loop of relay.c:173-223, ported from lib/A/W_drain_outer.v (a working branch,
-   = a Theorem Labs lane's working branch f41c2c6ab05: DRB_rstart, dr_outer_core, dr_outer) onto
+   = a Theorem Labs lane's working branch: DRB_rstart, dr_outer_core, dr_outer) onto
    lib/B/W_drain_cx.v's cut predicates.  From DI (0x833c0) in the round state s1 to drain's post, by induction on
    dneed s1 (lib/A/W_drain_model.v dneed_dclr / dneed_dnext): TOP leads to DI again only through its EINTR arm,
    which dr_top_stmt offers only when ds_eintr s1 = true (so dneed drops by dneed_dclr), to DEND (END closes it),
    or to DRB 0, whose RSTART gives dneed_dnext's premises for the next round.  The statement is W_drain_cx.v's
    dr_outer_stmt; it takes TOP and DROP as segment statements and FEEDS, LINES and END as their conclusions, and
    walks no instruction.  Image-independent: the B proof reads only RSTART out of DRB. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

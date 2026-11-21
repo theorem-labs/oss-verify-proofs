@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image A' (asan #102 pin 1be0f53d96cb9d6c, unstripped twin bff8519bbe3ea0e4), the
    walk of same (fuzz_preset.c:65-86): the GENERIC kit of the walk - no image fact, no address. Taken from the image-B' file
-   lib/B/Prog/SameB_kit.v (a working branch e95b6ce78e87; itself the port of the old-A walk's
+   lib/B/Prog/SameB_kit.v (a working branch; itself the port of the old-A walk's
    lib/A/Prog/Wsame_kit.v, Wsame_pj.v, Wsame_base.v and the journal-generic parts of S911Kit.v at
-   a working branch 9a0674f0b5f2), with the smb_ / smbk_ names renamed sma_ / smak_. ONE change:
+   a working branch), with the smb_ / smbk_ names renamed sma_ / smak_. ONE change:
    the alloc.c ledger keep states prh_ledger at image A's PrhImg prh_img_A (lib/A/PRH_Img.v), with the #102 kit's seven
    cells (PRH_Base.v prh_glob, + g_most and g_own_ran_out), each cell's bound read from the generated table.
    Numerals: 8 / 64 (LENGTH: shadow granule / shadow word), 56 (LENGTH: struct pj), 2 ^ 46 / 2 ^ 47 / 4 (DERIVED: the stack

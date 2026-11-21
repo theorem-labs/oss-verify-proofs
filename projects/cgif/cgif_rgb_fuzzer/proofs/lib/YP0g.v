@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a refused munmap leaves its region live: an owned map must be live but a live map need not be owned, and regions_after keeps a refused munmap's region). *)
 From Stdlib Require Import ZArith List Bool Lia.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YP0j.
 Import ListNotations.
@@ -272,7 +273,9 @@ nodupb Nat.eqb owners &&
 forallb (fun k =>
 match region_of s k with
 | Some rg => match rg_kind rg with
-| RkMap => Bool.eqb (rg_live rg) (existsb (Nat.eqb k) owners)
+(* 08b1429: a refused munmap (injected -ENOMEM, ignored by musl) leaves its RkMap region live with no owner,
+   so an owned map must be live, but a live map need not be owned (a leak). *)
+| RkMap => implb (existsb (Nat.eqb k) owners) (rg_live rg)
 | _ => true
 end
 | None => true
@@ -996,7 +999,7 @@ match tr with
 | (KBrkGrow 2, z) :: t => regions_after (if z =? 0 then rs else rs ++ [mkRegion RkBrk (2 * PGSZ) [] true]) t
 | (KBrkGrow _, z) :: t =>
 regions_after rs t
-| (KMunmap r len, _) :: t => regions_after (lupd rs r (mkRegion RkMap (rg_len (nth r rs (mkRegion RkMap 0 [] false))) [] false)) t
+| (KMunmap r len, z) :: t => regions_after (if z =? 0 then rs else lupd rs r (mkRegion RkMap (rg_len (nth r rs (mkRegion RkMap 0 [] false))) [] false)) t
 | (KMremap r ol nl, z) :: t =>
 regions_after (if z =? 0 then rs
 else lupd (rs ++ [mkRegion RkMap nl [] true]) r

@@ -10,9 +10,9 @@
      here once as ASTRLEN), bcmp (row 19, the kit's abcmp_realizes) and snprintf (row 4, RtFormat.asnprintf_realizes,
      which the interceptor layer's closing gives through RtPFSeg's seg_all_rtformat).
    m_file's walk (12 of 13 segments) is not composed yet.
-   The walks are the G2 walks at 594d3b7864d5, merged into this close; FINAL
-   6f783602b5e3 is an ancestor (checked). This file states no contract: each lemma's statement is the contract of
-   lib/A/Prog/<F>_c.v at contracts FINAL 6f783602b5e3, at SegInstA's terms, as the walk states it.
+   The walks are the G2 walks, merged into this close; FINAL
+   is an ancestor (checked). This file states no contract: each lemma's statement is the contract of
+   lib/A/Prog/<F>_c.v at contracts FINAL, at SegInstA's terms, as the walk states it.
    proves no function (kind: merge; the composition of G2's walk theorems). *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.

@@ -1,4 +1,4 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamNormG.v (a working branch 3e35620c52e); relocated to plugin-hostd/fuzz_reply/fuzz_reply.asan by a Theorem Labs lane's pfinst/tool (reloc.py target reply-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_reply.asan, symbol + offset; table pfinst/tool/tables/reply-A/FMgxaSeamNormG.table). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamNormG.v (a working branch); relocated to plugin-hostd/fuzz_reply/fuzz_reply.asan by a Theorem Labs lane's pfinst/tool (reloc.py target reply-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_reply.asan, symbol + offset; table pfinst/tool/tables/reply-A/FMgxaSeamNormG.table). *)
 (* Modified by Theorem Labs, 2026-10: drop set parametrised. *)
 (* lib/MemNorm.v's normalization simulation (its section WithSegsCJ, :524-967) with the drop set a
    PARAMETER `drop` instead of MemNorm.cj_drop (:527).  The statements and proofs are MemNorm's with
@@ -175,7 +175,13 @@ Proof.
   - injection H as <-. eexists. split; [reflexivity|]. cbn [access_value fst snd].
     split; [reflexivity|]. split; [exact HR|]. intros x _. reflexivity.
   - revert H. destruct (ov_read_bytes segs m0 a (width_bytes n)) as [bs|] eqn:Eo; intros H;
-      cbn beta iota in H; [|discriminate H].
+      cbn beta iota in H;
+      (* 727298f3: interp_eff_accesses' ELoad/None arm is now
+         [if range_meets_vvar a (width_bytes n) then MachineUnmodeled else
+         MachineFault] (RiscvSemantics.v:1006-1018), a stuck [if] that
+         [discriminate] cannot see through.  Split it first, as the model's own
+         consumer does at Common/AsanAcct.v:645. *)
+      [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate H].
     rewrite (gov_read_rel m m0 a _ bs HR Eo). cbn beta iota.
     revert H.
     lazymatch goal with

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the node case of the srealizes transfer passes on the node's new sys_rob hypothesis. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -34,8 +35,8 @@ Theorem srealizes_LRT_AS : forall c (T : TSet),
   SRealizes.srealizes segs c T -> AS.SpinAlg.srealizes segs c T.
 Proof.
   intros c T H.
-  induction H as [c I evs nx T i0 Hnode Hk IH | c Hh | c Hj | c T T' H IH Heq].
-  - exact (AS.SpinAlg.srz_node segs c I evs nx T i0 (node_ok_AS c I evs nx Hnode) IH).
+  induction H as [c I evs nx T i0 Hnode Hrob Hk IH | c Hh | c Hj | c T T' H IH Heq].
+  - exact (AS.SpinAlg.srz_node segs c I evs nx T i0 (node_ok_AS c I evs nx Hnode) Hrob IH).
   - exact (AS.SpinAlg.srz_halt segs c Hh).
   - destruct Hj as [Hj Hh]. apply (AS.SpinAlg.srz_spin segs c); [apply to_jself_to_spin_AS; exact Hj| exact Hh].
   - exact (AS.SpinAlg.srz_conseq segs c T T' IH Heq).

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO fact as a section hypothesis for the post's MInvR, which minvr_split builds; MInvIR, which gained the vDSO conjunct, taken apart by minvir_dest). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -228,6 +229,7 @@ Local Abbreviation ze_sll := (§5§ P.Mal_mslow__G2.Mal_mslow_D.ze_sll).
 Local Abbreviation kd_cases := (@P.Mal_mslow__G2.Mal_mslow_D.kd_cases s0 s n g am idx rho b3 b16 HF Hb3 Hb16 Hsp).
 Local Abbreviation vo_cases := (@P.Mal_mslow__G2.Mal_mslow_D.vo_cases s0 s n g am idx rho b3 b16 HCS HF Hb3 Hb16).
 Variables (tr : list event) (md : Model) (ms' : machine_state) (rhoF : valuation).
+Context {Hvd : Contract.vdso_ok md}.
 Hypothesis EmW : ltac2:(tb__ "0|0|
 S2S39Q40A1S12S39Q8A1A1F_;VmW;S22Vrho;A1A3").
 Hypothesis Em0 : ltac2:(tb__ "0|0|
@@ -541,7 +543,7 @@ Qed.
 
 Lemma minvR' : ltac2:(tb__ "0|0|
 S72S1cS51S69S8bVs;Vn;Vam;Vrho;Vb3;Vb16;Vms';VrhoF;A8Vmd;A5").
-Proof using Em0 EmW Erd Evm Ewok HCS HF HLok HMI HP12 HUB HW0 HYA HagF Hb16 Hb3 Hdepth Hhdr Hm0_sct Hreach Hsm Hsm0 HsmF Hsp Hsp_high. unfold MInvR. cbn [rm rho']. rewrite (rd_of_CG m'), (wok_of_CG m'). exact minv'. Qed.
+Proof using Em0 EmW Erd Evm Ewok HCS HF HLok HMI HP12 HUB HW0 HYA HagF Hb16 Hb3 Hdepth Hhdr Hm0_sct Hreach Hsm Hsm0 HsmF Hsp Hsp_high Hvd. minvr_split. cbn [rm rho']. rewrite (rd_of_CG m'), (wok_of_CG m'). exact minv'. Qed.
 
 Lemma ctx_owned' : ltac2:(tb__ "0|1|
 S0S3S6Z59c90M0R1A2S8R1S7G0S7aA2A2A2S5eS51S69R2A3F_;Fx;").
@@ -595,7 +597,7 @@ Qed.
 
 Theorem kept_mid : ltac2:(tb__ "0|0|
 S6fS1cS51S5bVs;VL;A2S69S22Vrho;A1S8cVs;Vn;Vam;Vrho;Vb3;Vb16;Vms';VrhoF;A8A6").
-Proof using Em0 EmW Erd Evm Ewok HCS HF HLok HMI HP12 HUB HW0 HYA Hag0 HagF Hb16 Hb3 Hdepth Hhdr Hm0_sct Hreach Hsm Hsm0 HsmF Hsp Hsp_high.
+Proof using Em0 EmW Erd Evm Ewok HCS HF HLok HMI HP12 HUB HW0 HYA Hag0 HagF Hb16 Hb3 Hdepth Hhdr Hm0_sct Hreach Hsm Hsm0 HsmF Hsp Hsp_high Hvd.
   intros a Ha HcM HcA' NE NS.
   destruct (in_ranges_dec rhoF NL (wz a)) as [IN|OUT]; [|exact (m'_out _ OUT)].
   pose proof (NL_cases _ IN) as C. cbn zeta in C. unfold wz in C. rewrite u64 in C by lia.
@@ -615,7 +617,7 @@ Qed.
 
 Theorem kept : ltac2:(tb__ "0|0|
 S6fS1cS51S6aS69S22Vrho0;A1S8cVs;Vn;Vam;Vrho;Vb3;Vb16;Vms';VrhoF;A8A6").
-Proof using Em0 EmW Erd Evm Ewok HCS HF HLok HMI HP12 HUB HW0 HYA Hag0 HagF Hb16 Hb3 Hdepth Hext Hhdr Hkept2 Hm0_sct Hreach Hsm Hsm0 HsmF Hsp Hsp_high.
+Proof using Em0 EmW Erd Evm Ewok HCS HF HLok HMI HP12 HUB HW0 HYA Hag0 HagF Hb16 Hb3 Hdepth Hext Hhdr Hkept2 Hm0_sct Hreach Hsm Hsm0 HsmF Hsp Hsp_high Hvd.
   apply (mem_kept_trans segsP C_P AE (mkMA s L) A' (rm rho0) (rm rho) m').
   - intros a H1 _. apply (client_addr_blocks_mono segsP C_P AE). 3: exact H1.
     {   unfold AE. cbn [ma_L]. exact (layout_extends_top _ _ _ Hext). }
@@ -634,7 +636,7 @@ Qed.
 
 Theorem post_ok : ltac2:(tb__ "0|0|
 VKc;Vtr;Vmd;A2VOg;S9eS1cS1dVrho0;Sa1S1cS51S6bVNf;VOg;S6aVKc;A7SfS11S63A1S61Vtr;S62Vms';Vmd;A2A4A5F_;F_;").
-Proof using Em0 EmW Erd Evm Ewok HCS HF HF0 HLok HMI HP12 HUB HW0 HYA Hag0 HagF Hb16 Hb3 Hdepth Hext Hhdr Hkept2 Hm0_sct Hreach Hsm Hsm0 HsmF Hsp Hsp_high.
+Proof using Em0 EmW Erd Evm Ewok HCS HF HF0 HLok HMI HP12 HUB HW0 HYA Hag0 HagF Hb16 Hb3 Hdepth Hext Hhdr Hkept2 Hm0_sct Hreach Hsm Hsm0 HsmF Hsp Hsp_high Hvd.
   intros HKc HOg. exists (L_malloc_ok EC_P), (fun r0 r' t m => Og /\ JLm_ok segsP C_P AE Kc r0 r' t m), rho'.
   split; [right; left; reflexivity|].
   split; [exact agree_vals_rho0'|].
@@ -807,7 +809,7 @@ S18S8eSa9Vsc;A1R1A2S4S11S10S41S0A2A1M0G0S78S10S0S3eA2S40R3Vsc;Vn;Vs0;A4R1SfS0S3e
 
 Lemma HMI0 : ltac2:(tb__ "0|1|
 S95S51S15S3fA1S13S10S3fS0A2SfS3fS0Vg;Vidx;A4A2S79S5bVs;VL;A2S59S3dS22Vrho;A1M0A2S5aS3dG0A2S64Vmd;A1A8").
-Proof using HM2. pose proof HM2 as H. unfold MInvIR in H. rewrite rd_of_CG, wok_of_CG in H. exact H. Qed.
+Proof using HM2. pose proof HM2 as H. minvir_dest H. rewrite rd_of_CG, wok_of_CG in H. exact H. Qed.
 Lemma HF : ltac2:(tb__ "0|0|
 Sa5Vs;Vsc;Vn;Vg;Vam;Vidx;A6").
 Proof using HM2 Hfit2 Hhd2 Hidx2 Hsc2 Hu2.
@@ -1092,7 +1094,7 @@ Proof using ASI ASR PREFIX.
     by (clear - Htop; unfold top_high, V_DEPTH in Htop; cbn [ma_L] in Htop; exact Htop).
   pose proof (proj1 HC) as Hn.
   pose proof (proj1 (MInvR_IR segsP C_P (mkMA s0 L0) rho md) HM) as [HMI Hreach0]. cbn [ma_s] in Hreach0.
-  assert (HW0 : WF s0) by exact (mig_I HMI).
+  assert (HW0 : WF s0) by exact (mig_I (proj1 HMI)).
   pose proof (malloc_class_range s0 n Hn) as [Rsc Rfit].
   assert (ASI' : forall fuel ktr r s', yields (alloc_slot fuel (malloc_class s0 n) n s0) ktr (r, s') -> st_init_done s' = true).
   { intros fuel ktr r s' Hy. exact (ASI [] None U0 s0 _ n fuel ktr r s' HW0 Rsc Hy). }

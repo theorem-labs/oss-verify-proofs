@@ -77,7 +77,7 @@ Definition reac_box_catalogue_match_contract : Prop :=
 
 (* ---- The footprint form (RECIPE.md step 1 (a working note, not in this delivery); the form agreed with a Theorem Labs lane on 2026-10-28 at 18:08Z; templates
    reac_ctrl_classify_box_frame_contract_F, lib/A/Prog/reac_ctrl_classify_box_frame_c.v (at head lib/A/Prog/reac_ctrl_classify_box_frame_c.v:126), and
-   bcmp_wrap_contract_F (written on a working branch dcf92cb416), lib/A/Prog/bcmp_wrap_c.v (at head lib/A/Prog/bcmp_wrap_c.v:51-95)): the same run, from the same
+   bcmp_wrap_contract_F (written on a working branch), lib/A/Prog/bcmp_wrap_c.v (at head lib/A/Prog/bcmp_wrap_c.v:51-95)): the same run, from the same
    start state and with the same post as reac_box_catalogue_match_contract, as an ExecF.evtF under a footprint RNG (the
    first binder). The plain premises are unchanged and in the same order; then one rng premise per region that the run
    and its callees read or write:

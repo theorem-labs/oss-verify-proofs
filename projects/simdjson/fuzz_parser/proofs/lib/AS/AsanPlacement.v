@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: free_gap_of_totals concludes Linux's placement (linux_place) at the null hint over the bottom-up window, AsanCeil is imported, and the ledger-split and high-mark lemmas (ledger_split, null_hint_grant_above, null_hint_grant_step, kHighMemBeg_le) are added as the model states them. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State Monad Specs.
-From OSSVerify.Proofs.simdjson.fuzz_parser.lib.AS Require Import PlacementSearch.  (* [comment removed for export] *)
+From OSSVerify.Proofs.simdjson.fuzz_parser.lib.AS Require Import AsanCeil PlacementSearch.  (* [comment removed for export] *)
 (* [comment removed for export] *)
 Unset Lia Cache.
 Import ListNotations.
@@ -210,18 +211,199 @@ Proof.
   rewrite IH, Nat2Z.inj_succ. lia.
 Qed.
 
-Theorem free_gap_of_totals : forall (h : VmMaps) nZ tot lo hi,
-  0 <= nZ -> 0 <= lo -> lo mod page_size = 0 -> hi < 2 ^ 64 ->
+(* LPS 75d69e00: THE GRANT WITNESS, restated to the model's own shape at
+   theories/Common/AsanPlacement.v:227-232.  THE GAP IS NOT THE ANSWER any
+   more: the address Linux picks is its own, and that is what the conclusion
+   names; the slack argument only shows the search cannot come back empty
+   ([Placement.linux_place_exists], Checks/Placement.v:867).  The body still
+   goes through THIS tree's [free_gap_of_slack], instantiated at
+   [bottomup_floor] and [alloc_ceiling] where the model's copy has them baked
+   in -- the in-project sibling's intermediate version concludes a bare free
+   gap and never mentions [linux_place], so it is not taken. *)
+Theorem free_gap_of_totals : forall (h : VmMaps) (thp : bool) nZ tot,
+  0 < nZ -> nZ mod page_size = 0 ->
+  alloc_ceiling <= alloc_top h ->
   gw_sizes (vm_reserved h ++ vm_maps h) <= tot ->
-  lo + nZ + tot + Z.of_nat (length (vm_reserved h ++ vm_maps h)) * (nZ + 4095) <= hi ->
-  exists g, g mod page_size = 0 /\ lo <= g /\ g + nZ <= hi
-            /\ region_free (vm_reserved h ++ vm_maps h) (Z_to_bv 64 g) (Z_to_bv 64 nZ) = true.
+  bottomup_floor + nZ + tot + Z.of_nat (length (vm_reserved h ++ vm_maps h)) * (nZ + 4095) <= alloc_ceiling ->
+  (* LPS 727298f3: [linux_place] is [Sys/Mm/Mmap]'s, and [Checks.Placement] no longer
+     re-exports it under its own name; [Placement.linux_place_exists] still answers it. *)
+  exists g, Mmap.linux_place h thp (Z_to_bv 64 0) nZ g.
 Proof.
-  intros h nZ tot lo hi HnZ Hlo Hal Hhi Htot Hband.
-  destruct (free_gap_of_slack (vm_reserved h ++ vm_maps h) nZ HnZ lo hi (conj Hlo Hal) Hhi) as (g & Hgal & Hfl & Hc & Hfree).
+  intros h thp nZ tot HnZ HnAl Htop Htot Hband.
+  pose proof bottomup_floor_val as Hfv.
+  assert (Hlo : 0 <= bottomup_floor) by (rewrite Hfv; lia).
+  assert (Hloal : bottomup_floor mod page_size = 0) by (vm_compute; reflexivity).
+  assert (Hhi : alloc_ceiling < 2 ^ 64) by (unfold alloc_ceiling; lia).
+  destruct (free_gap_of_slack (vm_reserved h ++ vm_maps h) nZ ltac:(lia)
+              bottomup_floor alloc_ceiling (conj Hlo Hloal) Hhi)
+    as (g & Hgal & Hfl & Hc & Hfree).
   { rewrite gap_weight_sizes. lia. }
-  exists g. repeat split; assumption.
+  apply (Placement.linux_place_exists h thp (Z_to_bv 64 0) nZ HnZ HnAl).
+  exists g. right. repeat split;
+    [ exact Hgal
+    | match goal with
+      | |- (?L <= _)%Z =>
+          assert (HL : L = 0x2aaaaab000%Z) by (vm_compute; reflexivity);
+          rewrite HL; rewrite Hfv in Hfl; lia
+      end
+    | lia
+    | exact Hfree ].
 Qed.
 
 (* [comment removed for export] *)
+
+(* LPS 75d69e00: THE LEDGER-SPLIT / HIGH-MARK SECTION, absent from this copy of
+   AsanPlacement.v since the unit was generated.  Taken as a TWIN-IDENTITY HUNK
+   from the in-project sibling projects/simdjson/fuzz_dump/proofs/lib/AS/
+   AsanPlacement.v (342 lines to our 227) with the unit segment normalised, and
+   verified against the model theories/Common/AsanPlacement.v at 75d69e0079f9:
+   the section is identical to the model save one stripped doc comment (36 lines
+   to the model's 37).  [free_gap_of_totals] is deliberately NOT taken from that
+   sibling -- its copy concludes a bare free gap and never mentions [linux_place],
+   so on that section the twin points BACKWARDS and would regress gap_ok_sound. *)
+
+Definition ledger_split (l : list (word * word)) (K Y : Z) : Prop :=
+  forall b s, In (b, s) l -> bv_unsigned b + bv_unsigned s <= K \/ Y <= bv_unsigned b.
+
+Lemma ledger_split_nil : forall K Y, ledger_split [] K Y.
+Proof. intros K Y b s []. Qed.
+
+Lemma ledger_split_mono : forall l K Y Y',
+  ledger_split l K Y -> Y' <= Y -> ledger_split l K Y'.
+Proof. intros l K Y Y' H HY b s Hin. destruct (H b s Hin); [left|right]; lia. Qed.
+
+Lemma ledger_split_cons : forall l K Y b s,
+  ledger_split l K Y ->
+  bv_unsigned b + bv_unsigned s <= K \/ Y <= bv_unsigned b ->
+  ledger_split ((b, s) :: l) K Y.
+Proof.
+  intros l K Y b s H Hbs b' s' [Heq|Hin]; [injection Heq as <- <-; exact Hbs|].
+  exact (H b' s' Hin).
+Qed.
+
+Lemma ledger_split_app : forall l1 l2 K Y,
+  ledger_split l1 K Y -> ledger_split l2 K Y -> ledger_split (l1 ++ l2) K Y.
+Proof.
+  intros l1 l2 K Y H1 H2 b s Hin. apply in_app_iff in Hin as [Hin|Hin]; eauto.
+Qed.
+
+Lemma ledger_split_app_inv : forall l1 l2 K Y,
+  ledger_split (l1 ++ l2) K Y -> ledger_split l1 K Y /\ ledger_split l2 K Y.
+Proof.
+  intros l1 l2 K Y H. split; intros b s Hin; apply H; apply in_app_iff; auto.
+Qed.
+
+Lemma ledger_split_incl : forall l l' K Y,
+  ledger_split l K Y -> incl l' l -> ledger_split l' K Y.
+Proof. intros l l' K Y H Hincl b s Hin. apply H. apply Hincl. exact Hin. Qed.
+
+Lemma ledger_split_filter : forall f l K Y,
+  ledger_split l K Y -> ledger_split (List.filter f l) K Y.
+Proof.
+  intros f l K Y H. apply (ledger_split_incl l); [exact H|].
+  intros x Hx. apply filter_In in Hx. tauto.
+Qed.
+
+Lemma ledger_split_window_free : forall l K Y nZ,
+  0 <= K -> 0 < nZ -> K + 2 * nZ <= Y -> Y < 2 ^ 64 ->
+  ledger_split l K Y ->
+  region_free l (Z_to_bv 64 (Y - nZ)) (Z_to_bv 64 nZ) = true.
+Proof.
+  intros l K Y nZ HK HnZ HY HY64 Hsplit.
+  apply region_free_intro. intros b s Hin.
+  unfold iv_overlap. rewrite !fg_u64_lit by lia.
+  pose proof (bv_unsigned_in_range 64 s).
+  destruct (Hsplit b s Hin) as [Hlow|Hhigh].
+  - apply andb_false_iff. left. apply Z.ltb_ge. lia.
+  - apply andb_false_iff. right. apply Z.ltb_ge. lia.
+Qed.
+
+Theorem null_hint_grant_above : forall h (a : word) nZ K Y,
+  0 < nZ -> nZ mod page_size = 0 ->
+  bv_unsigned a mod page_size = 0 ->
+  Y mod page_size = 0 -> Y <= bv_unsigned (vm_mmap_base h) ->
+  0 <= K -> K + 2 * nZ <= Y ->
+  ledger_split (vm_reserved h ++ vm_maps h) K Y ->
+  placement_ok_b h (bv_unsigned a) nZ = true ->
+  bottomup_floor <= bv_unsigned a \/ Y - 2 * nZ < bv_unsigned a.
+Proof.
+  intros h a nZ K Y HnZ HnAl HaAl HYal HYB HK HY Hsplit Hpl.
+  pose proof (fg_u64_range a) as Ha.
+  pose proof (fg_u64_range (vm_mmap_base h)) as HB.
+  assert (HY64 : Y < 2 ^ 64) by (clear - HB HYB; lia).
+  assert (HgAl : (Y - nZ) mod page_size = 0).
+  { rewrite Zminus_mod, HYal, HnAl. reflexivity. }
+  pose proof (ledger_split_window_free _ K Y nZ HK HnZ HY HY64 Hsplit) as Hfree.
+  apply (placement_ok_b_iff h (bv_unsigned a) nZ (proj1 Ha) HnZ HaAl HnAl) in Hpl.
+  clear HnAl HaAl HYal.
+  destruct Hpl as [Hfl|Hnhf]; [left; exact Hfl|right].
+  destruct (Z.lt_ge_cases (Y - 2 * nZ) (bv_unsigned a)) as [Hlt|Hge]; [exact Hlt|exfalso].
+  assert (H1 : bv_unsigned a + nZ <= Y - nZ) by (clear - Hge; lia).
+  assert (H2 : Y - nZ + nZ <= bv_unsigned (vm_mmap_base h)) by (clear - HYB; lia).
+  pose proof (Hnhf (Y - nZ) HgAl H1 H2) as Hno.
+  rewrite Hfree in Hno. discriminate.
+Qed.
+
+Theorem null_hint_grant_step : forall h (a n : word) nZ K Y,
+  0 < nZ -> nZ mod page_size = 0 ->
+  bv_unsigned a mod page_size = 0 ->
+  Y mod page_size = 0 -> Y <= bv_unsigned (vm_mmap_base h) ->
+  0 <= K -> K < bottomup_floor -> K + 2 * nZ <= Y ->
+  ledger_split (vm_reserved h ++ vm_maps h) K Y ->
+  placement_ok_b h (bv_unsigned a) nZ = true ->
+  let Y' := Z.min Y (bv_unsigned a) in
+  K < bv_unsigned a
+  /\ (bottomup_floor <= Y' \/ Y - 2 * nZ + page_size <= Y') /\ Y' <= Y
+  /\ Y' mod page_size = 0 /\ Y' <= bv_unsigned (vm_mmap_base h)
+  /\ ledger_split (vm_reserved h ++ (a, n) :: vm_maps h) K Y'.
+Proof.
+  intros h a n nZ K Y HnZ HnAl HaAl HYal HYB HK HKfl HY Hsplit Hpl Y'.
+  pose proof (null_hint_grant_above h a nZ K Y HnZ HnAl HaAl HYal HYB HK HY Hsplit Hpl) as Habove.
+  pose proof bottomup_floor_val as Hfv.
+
+  pose proof (page_multiple_eq _ HaAl) as E1.
+  pose proof (page_multiple_eq _ HYal) as E2.
+  pose proof (page_multiple_eq _ HnAl) as E3.
+  clear HnAl HaAl HYal Hpl. unfold page_size.
+  set (qa := bv_unsigned a / 4096) in *. set (qy := Y / 4096) in *. set (qn := nZ / 4096) in *.
+  clearbody qa qy qn.
+  assert (Hqn : 1 <= qn) by lia.
+  assert (Hpage : bottomup_floor <= bv_unsigned a \/ Y - 2 * nZ + 4096 <= bv_unsigned a).
+  { destruct Habove as [Hfl|Hlt]; [left; exact Hfl|right]. lia. }
+  split; [|split; [|split; [|split; [|split]]]].
+  - destruct Habove; lia.
+  - subst Y'.
+    destruct (Z.le_gt_cases Y (bv_unsigned a));
+      [rewrite Z.min_l by lia; right; lia | rewrite Z.min_r by lia; destruct Hpage; [left|right]; lia].
+  - lia.
+  - subst Y'. destruct (Z.le_gt_cases Y (bv_unsigned a)); [rewrite Z.min_l by lia | rewrite Z.min_r by lia];
+      [rewrite E2 | rewrite E1]; apply Z_mod_mult.
+  - lia.
+  - apply ledger_split_app_inv in Hsplit as [Hr Hm].
+    apply ledger_split_app; [eapply ledger_split_mono; [exact Hr|lia]|].
+    apply ledger_split_cons; [eapply ledger_split_mono; [exact Hm|lia]|].
+    right. lia.
+Qed.
+
+
 Definition kHighMemBeg : Z := 0x10007fff8000.
+
+Lemma kHighMemBeg_below_mmap_base_min :
+  kHighMemBeg + 0x544d555f000 = mmap_base_min /\ mmap_base_min < bottomup_floor.
+Proof. unfold kHighMemBeg, mmap_base_min. rewrite bottomup_floor_val. split; reflexivity. Qed.
+
+Corollary kHighMemBeg_le : forall h (a : word) nZ Y,
+  0 < nZ -> nZ mod page_size = 0 ->
+  bv_unsigned a mod page_size = 0 ->
+  Y mod page_size = 0 -> Y <= bv_unsigned (vm_mmap_base h) ->
+  kHighMemBeg + 2 * nZ <= Y ->
+  ledger_split (vm_reserved h ++ vm_maps h) kHighMemBeg Y ->
+  placement_ok_b h (bv_unsigned a) nZ = true ->
+  kHighMemBeg < bv_unsigned a.
+Proof.
+  intros h a nZ Y HnZ HnAl HaAl HYal HYB HY Hsplit Hpl.
+  assert (HK : 0 <= kHighMemBeg) by (unfold kHighMemBeg; clear; lia).
+  destruct (null_hint_grant_above h a nZ kHighMemBeg Y HnZ HnAl HaAl HYal HYB HK HY Hsplit Hpl)
+    as [Hfl|Hlt]; clear HnAl HaAl HYal Hpl; [|lia].
+  rewrite bottomup_floor_val in Hfl. unfold kHighMemBeg. lia.
+Qed.

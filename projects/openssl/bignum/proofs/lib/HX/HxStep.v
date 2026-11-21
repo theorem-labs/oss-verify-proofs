@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the failing store-conditional's load and store-back). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith Lia Bool List.
@@ -209,9 +210,21 @@ Definition hx_exec (segs : list Segment) (d : dinstr) (S : sstate) : sres :=
       else SStuck 8 S
   | DSc wd rd rs1 rs2 =>
       let a := rget S rs1 in
+      (* 08b1429: a FAILING sc still loads its bytes and stores them back
+         (it must pass the store permission check), so the failing path
+         reads and writes [a] like the succeeding one. *)
+      let fail :=
+        match hx_load segs (s_mem S) (s_abs S) a (amo_sz wd) true with
+        | Some v =>
+            match hx_store segs (s_mem S) (s_abs S) a (amo_sz wd) v with
+            | Some M' => SNext (with_all S rd (VC w_one) RNone M' npc)
+            | None => SStuck 9 S
+            end
+        | None => SStuck 7 S
+        end in
       if amo_al (ctx_of (s_mem S)) wd a then
         match s_resv S with
-        | RNone => SNext (with_all S rd (VC w_one) RNone (s_mem S) npc)
+        | RNone => fail
         | RSome r =>
             match veq r a with
             | Some true =>
@@ -219,7 +232,7 @@ Definition hx_exec (segs : list Segment) (d : dinstr) (S : sstate) : sres :=
                 | Some M' => SNext (with_all S rd (VC w_zero) RNone M' npc)
                 | None => SStuck 9 S
                 end
-            | Some false => SNext (with_all S rd (VC w_one) RNone (s_mem S) npc)
+            | Some false => fail
             | None => SStuck 10 S
             end
         | RUnk => SStuck 10 S

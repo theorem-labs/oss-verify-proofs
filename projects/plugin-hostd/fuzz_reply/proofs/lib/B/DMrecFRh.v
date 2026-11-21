@@ -8,7 +8,7 @@
    A new file, so that DMrecF.v stays byte-unchanged.
    rule 24: proves function __sanitizer::Quarantine<__asan::QuarantineCallback, __asan::AsanChunk>::DoRecycle
    (frame-generic, count-0 arm, fuel length P, at the re-hide twins). *)
-(* Theorem Labs, 2026-10-30 (a Theorem Labs lane): the image-B (asan-ubsan) twin of lib/A/DMrecFRh.v at a working branch 2612386275a5, relocated by a Theorem Labs lane's alreloc a5c53bb2bed4ad03 (every moved numeral a Quarantine::DoRecycle pc, +0x58) with the A twins A<r> renamed to the B twins Y<r>; the comment blocks above keep the A file's text and its A pcs. *)
+(* Theorem Labs, 2026-10-30 (a Theorem Labs lane): the image-B (asan-ubsan) twin of lib/A/DMrecFRh.v at a working branch, relocated by a Theorem Labs lane's alreloc a5c53bb2bed4ad03 (every moved numeral a Quarantine::DoRecycle pc, +0x58) with the A twins A<r> renamed to the B twins Y<r>; the comment blocks above keep the A file's text and its A pcs. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YK11 YM05.

@@ -10,7 +10,7 @@
                          (FS_fpre B Up) <Deallocate 0x31be0> 1.
    Here they are proved ([fs_aalloc_AU], [fs_adealloc_raw_AU]) and fs_arealloc_AU is applied ([fs_arealloc_AU_closed]),
    from NAMED HYPOTHESES that are exactly what a Theorem Labs lane's relocation of a Theorem Labs lane's frozen chain onto image A delivers
-   (a working branch; c5 = a working branch ced28ed2383), plus the record transfers of
+   (a working branch; c5 = a working branch), plus the record transfers of
    lib/A/FSupoisonARXm{A,S,D}.v.  When the relocation builds, each hypothesis is closed by the relocated theorem named
    beside it (by conversion: the pcs are AB1w's symbols, the instance names AllocGcgif.ARX_cgif / rpre_cgif /
    DeallocGcgif.rpre_dealloc_cgif / fpre_cgif unfold to ARX_AR / FS_rpreA / FS_rpreD / (fun _ _ _ _ _ _ => True)).
@@ -23,26 +23,26 @@
    are IM0's; at IM0 := AImg_cgif it is AImg_cgif by conversion (AImg_cgif := {| im_segs := tfibsegs; .. |}).
 
    HYPOTHESES (each with the c5 statement it is the closed form of; in the relocation the same file name in lib/A):
-     (H1a) H_prim_if   AGtopcgif.aalloc_prim_realizes_if   AGtopcgif.v:28-58 (Section c: B U mt ARX AOX rpre nmax lmax
+     (H1a) H_prim_if   AGtopcgif.aalloc_prim_realizes_if   AGtopcgif.v:29-59 (Section c: B U mt ARX AOX rpre nmax lmax
                        lpost dpost mtag stag IF IFK TS cf HCF ARM_MISSGi ARM_MISSKi), pc 0x31ef4 on A
-     (H1b) H_missg     AGim0.alloc_missg_cf                AGim0.v:87-102 (Section b: .. IF TS rtree IFM), :500-503
-     (H1c) H_missk     AGin0.alloc_missk_cf                AGin0.v:50-65, :421-424
-     (H1d) H_sec       AGio.alloc_sec                      AGio.v:50-75 (Section f: .. IF IFS TS Hnmax cf Hcfv), :71-75
-     (H2)  H_dtop      DGtop.adealloc_realizes_raw_g       DGtop.v:37-52 (Section b: B TS U ft ARX ARXr AOX rpre lpost
+     (H1b) H_missg     AGim0.alloc_missg_cf                AGim0.v:88-103 (Section b: .. IF TS rtree IFM), :500-503
+     (H1c) H_missk     AGin0.alloc_missk_cf                AGin0.v:51-66, :422-425
+     (H1d) H_sec       AGio.alloc_sec                      AGio.v:51-76 (Section f: .. IF IFS TS Hnmax cf Hcfv), :71-75
+     (H2)  H_dtop      DGtop.adealloc_realizes_raw_g       DGtop.v:38-53 (Section b: B TS U ft ARX ARXr AOX rpre lpost
                        fpre dpost dbody L24 QB DRq IF), :103-105 (IR), pc 0x31be0 on A
-     (H3a) H_if        AGif1.iface_cgif                    AGif1.v:245-246
-     (H3k) H_ifk       AGif1k.iface_cgif_k                 AGif1k.v:162-163
-     (H3m) H_ifm       AGif1m.iface_cgif_m                 AGif1m.v:496-498
+     (H3a) H_if        AGif1.iface_cgif                    AGif1.v:246-247
+     (H3k) H_ifk       AGif1k.iface_cgif_k                 AGif1k.v:163-164
+     (H3m) H_ifm       AGif1m.iface_cgif_m                 AGif1m.v:497-499
      (H3s) H_ifs       AGif5.ifaceS_cgif                   AGif5.v:1147-1149
-     (H3d) H_dif       DGif1.diface_cgif with its six drain-side premises discharged as DGtopcgifC.v:31-41 does
+     (H3d) H_dif       DGif1.diface_cgif with its six drain-side premises discharged as DGtopcgifC.v:32-42 does
                        (DGif1d.di_drain_cgif, DGif1dI.di_requar_x/r/e_cgif, di_rchunk_cgif, di_cdealloc_cgif)
-                       DGif1.v:2286-2288
+                       DGif1.v:2287-2289
        H3* are stated at U := [UA B] = tr_admit (as_universe B): the relocation's C5 port of the instances (a Theorem Labs lane,
        12:13Z); the record parameters the instances fix (dpost_cgif, 3 / 12 (labels 202260 / 449860), refill_tree, CLdepot.dpost_x,
        drain_body, 16385, qloose, DRq_cgif) are the variables dpostA, mtagA, stagA, rtree, dpostD, dbody, L24, QB, DRq.
      (H4r) H_refill_U  if_refill at ARX_ARU (FSupoisonARXmA.if_refill_t): the ARU twin of AGif1m.refill_cgif
-                       (AGif1m.v:157), from a Theorem Labs lane's FSupoisonAllocRt.tfib_refill_okU
-     (H4d) H_difR_U    DIfaceR at ARX_ARU: the ARU twin of DIfaceRcgif.diface_r_cgif (DIfaceRcgif.v:38-42), from
+                       (AGif1m.v:158), from a Theorem Labs lane's FSupoisonAllocRt.tfib_refill_okU
+     (H4d) H_difR_U    DIfaceR at ARX_ARU: the ARU twin of DIfaceRcgif.diface_r_cgif (DIfaceRcgif.v:39-43), from
                        a Theorem Labs lane's FSupoisonAllocFeq.tfib_enqueue_nbU (dr_enqueue), FSupoisonAllocFdn / Fdr (dr_drain),
                        FSupoisonAllocFrs / Fcd (dr_rchunk, dr_cdealloc).  DIface's four callee fields at ARU are its
                        aview weakenings ([enq_of_R], [drain_of_R], [rchunk_of_R], [cdealloc_of_R]).
@@ -146,7 +146,7 @@ Context {AG : AGImg} {IMS : AImgS} {DI : DImg}.
 
 (* ---- (H1) the generic Allocate pieces, as the relocation closes them (c5 statements; see the header) ---- *)
 
-(* AGtopcgif.aalloc_prim_realizes_if (c5 AGtopcgif.v:28-58) *)
+(* AGtopcgif.aalloc_prim_realizes_if (c5 AGtopcgif.v:29-59) *)
 Hypothesis H_prim_if : forall (B : asyms) (U : list Z -> astate -> Prop) (mt : Z -> list Z -> M sptr)
   (ARX : Z -> alayout -> astate -> world tfibsegs -> (word -> option byte) -> Model -> Prop)
   (AOX : alayout -> astate -> Z -> Prop) (rpre : astate -> Z -> Prop) (nmax lmax : Z) (lpost : astate -> Prop)
@@ -166,7 +166,7 @@ Hypothesis H_prim_if : forall (B : asyms) (U : list Z -> astate -> Prop) (mt : Z
        (alloc_leaf tfibsegs B mt ARX AOX lpost TFIB_OOM inst ly S W regs mem md n tr)) ->
   aalloc_prim_realizes tfibsegs B U mt ARX AOX rpre nmax lmax lpost pcA TFIB_OOM 8 1 cf.
 
-(* AGim0.alloc_missg_cf (c5 AGim0.v:87-102, :500-503) *)
+(* AGim0.alloc_missg_cf (c5 AGim0.v:88-103, :501-504) *)
 Hypothesis H_missg : forall (B : asyms) (U : list Z -> astate -> Prop) (mt : Z -> list Z -> M sptr)
   (ARX : Z -> alayout -> astate -> world tfibsegs -> (word -> option byte) -> Model -> Prop)
   (AOX : alayout -> astate -> Z -> Prop) (rpre : astate -> Z -> Prop) (nmax lmax : Z) (lpost : astate -> Prop)
@@ -179,7 +179,7 @@ Hypothesis H_missg : forall (B : asyms) (U : list Z -> astate -> Prop) (mt : Z -
   amreal tfibsegs (mt n tr S) W (cfg_at tfibsegs pcA regs mem md)
     (alloc_leaf tfibsegs B mt ARX AOX lpost TFIB_OOM inst ly S W regs mem md n tr).
 
-(* AGin0.alloc_missk_cf (c5 AGin0.v:50-65, :421-424) *)
+(* AGin0.alloc_missk_cf (c5 AGin0.v:51-66, :422-425) *)
 Hypothesis H_missk : forall (B : asyms) (U : list Z -> astate -> Prop) (mt : Z -> list Z -> M sptr)
   (ARX : Z -> alayout -> astate -> world tfibsegs -> (word -> option byte) -> Model -> Prop)
   (AOX : alayout -> astate -> Z -> Prop) (rpre : astate -> Z -> Prop) (nmax lmax : Z) (lpost : astate -> Prop)
@@ -192,7 +192,7 @@ Hypothesis H_missk : forall (B : asyms) (U : list Z -> astate -> Prop) (mt : Z -
   amreal tfibsegs (mt n tr S) W (cfg_at tfibsegs pcA regs mem md)
     (alloc_leaf tfibsegs B mt ARX AOX lpost TFIB_OOM inst ly S W regs mem md n tr).
 
-(* AGio.alloc_sec (c5 AGio.v:50-75) *)
+(* AGio.alloc_sec (c5 AGio.v:51-76) *)
 Hypothesis H_sec : forall (B : asyms) (U : list Z -> astate -> Prop) (mt : Z -> list Z -> M sptr)
   (ARX : Z -> alayout -> astate -> world tfibsegs -> (word -> option byte) -> Model -> Prop)
   (AOX : alayout -> astate -> Z -> Prop) (rpre : astate -> Z -> Prop) (nmax lmax : Z) (lpost : astate -> Prop)
@@ -207,7 +207,7 @@ Hypothesis H_sec : forall (B : asyms) (U : list Z -> astate -> Prop) (mt : Z -> 
 
 (* ---- (H2) the generic raw Deallocate top ---- *)
 
-(* DGtop.adealloc_realizes_raw_g (c5 DGtop.v:37-52, :103-105) *)
+(* DGtop.adealloc_realizes_raw_g (c5 DGtop.v:38-53, :104-106) *)
 Hypothesis H_dtop : forall B : asyms, TfibSyms B ->
   forall (U : list Z -> astate -> Prop) (ft : sptr -> list Z -> M unit)
   (ARX ARXr : Z -> alayout -> astate -> world tfibsegs -> (word -> option byte) -> Model -> Prop)
@@ -232,17 +232,17 @@ Variable L24 : Z.
 Variable QB : astate -> Prop.
 Variable DRq : asyms -> astate -> list chunk -> list Z -> Prop.
 
-(* AGif1.iface_cgif (c5 AGif1.v:245-246), over the F1 form of hview.hv_v (16 * v + 2 ^ 16 <= 2 ^ 32; a Theorem Labs lane's
-   working branch 86aa4177b94, installs in c5 ~18:30Z), which holds at fs's EV_MAX 11776 (FS-INSTANCE.md 2.1).
+(* AGif1.iface_cgif (c5 AGif1.v:246-247), over the F1 form of hview.hv_v (16 * v + 2 ^ 16 <= 2 ^ 32; a Theorem Labs lane's
+   working branch, installs in c5 ~18:30Z), which holds at fs's EV_MAX 11776 (FS-INSTANCE.md 2.1).
    Its fs proof also takes fs's local AGiy / AGjc off_facts / v_facts edit (FS-INSTANCE.md 1.1). *)
 Hypothesis H_if : forall B : asyms, TfibSyms B -> AFl0.tfib_depot_spec B ->
   AIface B (UA B) YG00.malloc (ARX_AR im_segs B TFIB_INST) (aowned B) FS_rpreA MALLOC_MAX LIVE_MAX qtight
     (dpostA B) mtagA stagA.
-(* AGif1k.iface_cgif_k (c5 AGif1k.v:162-163) *)
+(* AGif1k.iface_cgif_k (c5 AGif1k.v:163-164) *)
 Hypothesis H_ifk : forall B : asyms, TfibSyms B -> AFl0.tfib_depot_spec B ->
   AIfaceK B (UA B) YG00.malloc (ARX_AR im_segs B TFIB_INST) (aowned B) FS_rpreA MALLOC_MAX LIVE_MAX qtight
     (dpostA B) mtagA stagA.
-(* AGif1m.iface_cgif_m (c5 AGif1m.v:496-498), over the same F1 hview.hv_v (see H_if). *)
+(* AGif1m.iface_cgif_m (c5 AGif1m.v:497-499), over the same F1 hview.hv_v (see H_if). *)
 Hypothesis H_ifm : forall B : asyms, TfibSyms B -> AFl0.tfib_depot_spec B ->
   AIfaceM B (UA B) YG00.malloc (ARX_AR im_segs B TFIB_INST) (aowned B) FS_rpreA MALLOC_MAX LIVE_MAX qtight
     (dpostA B) mtagA stagA rtree.
@@ -250,8 +250,8 @@ Hypothesis H_ifm : forall B : asyms, TfibSyms B -> AFl0.tfib_depot_spec B ->
 Hypothesis H_ifs : forall (B : asyms) (cf : Z), TfibSyms B -> AFl0.tfib_depot_spec B ->
   AIfaceS B (UA B) YG00.malloc (ARX_AR im_segs B TFIB_INST) (aowned B) FS_rpreA MALLOC_MAX LIVE_MAX qtight
     (dpostA B) mtagA stagA.
-(* DGif1.diface_cgif (c5 DGif1.v:2286-2288) at L24, its drain-side premises discharged as DGtopcgifC.v:31-41; over the
-   F2 form of DMiface.di_rview_t (the rg_alloc_user (reg X kBatchClass) <= 2 ^ 31 conjunct dropped, 86aa4177b94).  Its
+(* DGif1.diface_cgif (c5 DGif1.v:2287-2289) at L24, its drain-side premises discharged as DGtopcgifC.v:32-42; over the
+   F2 form of DMiface.di_rview_t (the rg_alloc_user (reg X kBatchClass) <= 2 ^ 31 conjunct dropped).  Its
    fs proof also takes fs's local DGif1 dgo_bgeom edit (FS-INSTANCE.md 1.1). *)
 Hypothesis H_dif : forall B : asyms, TfibSyms B -> AFl0.tfib_depot_spec B ->
   DIface B (UA B) YG00.free (ARX_AR im_segs B TFIB_INST) (ARX_AR im_segs B TFIB_INST) (aowned B) FS_rpreD qtight
@@ -283,10 +283,10 @@ Qed.
 
 (* ---- (H4) the ARU callee fields, from a Theorem Labs lane's ARU twins ---- *)
 
-(* if_refill at ARU (the ARU twin of AGif1m.refill_cgif, c5 AGif1m.v:157): FSupoisonAllocRt.tfib_refill_okU *)
+(* if_refill at ARU (the ARU twin of AGif1m.refill_cgif, c5 AGif1m.v:158): FSupoisonAllocRt.tfib_refill_okU *)
 Hypothesis H_refill_U : forall Up,
   FSupoisonARXmA.if_refill_t B (ARX_ARU im_segs B TFIB_INST Up) (aowned B) FS_rpreA qtight rtree.
-(* DIfaceR at ARU (the ARU twin of DIfaceRcgif.diface_r_cgif, c5 DIfaceRcgif.v:38-42) *)
+(* DIfaceR at ARU (the ARU twin of DIfaceRcgif.diface_r_cgif, c5 DIfaceRcgif.v:39-43) *)
 Hypothesis H_difR_U : forall Up,
   DIfaceR B (UA B) (ARX_ARU im_segs B TFIB_INST Up) (ARX_ARU im_segs B TFIB_INST Up) (aowned B) FS_rpreD qtight
     (fpreU im_segs B Up) (dpostD B) dbody L24 QB (DRq B).

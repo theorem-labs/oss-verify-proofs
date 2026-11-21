@@ -4,7 +4,7 @@
    %d and %s (LinkPfPiece.pf_link_piece), any format in [0x10000, 0xa2658) (FMsnprintfFmI.FF_fmP), with the
    destination off [img_lo, img_hi) or between the stack-guard .got word and the guard (the shared contract's
    dest_off_globals, generalized in place for the .bss site 0x82b14) and any window K >= 8160.
-   It is libreac/fuzz_disco's FMsnprintfDiscoR1.v (origin/ossv/recipes 501c0d516c69) at link's pieces: the four arms
+   It is libreac/fuzz_disco's FMsnprintfDiscoR1.v at link's pieces: the four arms
    of each piece (literal / %s: FMgxaSeamPf.v and RT_pf_sh.v; %d: FMpfArmPdSeam.v and RT_pf_d.v), then the ported
    FMsnprintfFmI.fm_snprintf_gxaP. The contract is the released shared form SnShared.sh_asnprintf_realizes
    (lib/Rt/SnShared.v), with its dest_off_globals premise given the second arm and its presence post excepting the

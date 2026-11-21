@@ -1,21 +1,22 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyImg_depkeep.v (commit 4d286b2e618d, file sha256 c93d654ed088) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 2 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 5 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyImg_depkeep.v (file sha256 c93d654ed088) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 2 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 5 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (fm port, row img-depkeep-B of a Theorem Labs lane's internal file REPLY-IMG-ROWS.md, for the cf layer at
    plugin-hostd/fuzz_reply). The B twin of a prior worker's lib/A/PresetImg_depkeep.v (
-   depkeep-a 7c7e587ea49), mirrored line for line: same helper names, same Section c form, same premises.
+   depkeep-a), mirrored line for line: same helper names, same Section c form, same premises.
    rule 24: no function proved (kind: image row; the constant cells and the depot's cells against the kept zones, at
    reply's image B, fuzz_reply.asan-ubsan).
 
-   The row is the cf layer's image premise dep_keep_img B KEEP (lane F1, YGcfInstDepot.v:154 at 
-   a8ad57cefdc; the table text is the internal file CF-UNIT-HYPS-F1.md row 7), at its two zone pairs:
+   The row is the cf layer's image premise dep_keep_img B KEEP (lane F1, YGcfInstDepot.v:155;
+   the table text is the internal file CF-UNIT-HYPS-F1.md row 7), at its two zone pairs:
    - Allocate:   KEEP := fun ly a => ag_dzone ly a \/ ag_czone ly a                    ([dep_keep_a_B]);
    - Deallocate: KEEP := fun ly a => dg_dzone ly a \/ (dg_czone ly a /\ ~ dg_izone a)   ([dep_keep_d_B]).
    cgif's discharge is YGcfInstF1Wcgif.v:96 dep_keep_a_cgif / :109 dep_keep_d_cgif.  Reply does not carry the layer's
    YGcfInstDepot.v yet, so each theorem states dep_keep_img's body, KEEP applied, at reply B's instances (ImgBase.AImg at
    AImg_cgif, B/AGif2cgif.v:24; ImgBaseAG.AGImg at AGImg_cgif, B/AGif0cgif.v:116; ImgBaseDG.DImg at DImg_cgif,
    B/DGif0cgif.v:30), and a consumer closes the layer's row by `exact` once the layer is on reply.
-   The depot premise is the layer head's `depot_fits (as_universe B) (st_depot S)` (YG01.v:153, the P'' depot model):
+   The depot premise is the layer head's `depot_fits (as_universe B) (st_depot S)` (YG01.v:154, the P'' depot model):
    preset's universe has wild prefixes (Reusable/YCej.v Tfib_wild), so its depot need not list only fixed traces.
 
    The section-c helpers (const_cells_zone, CZONE_range, DZONE_range, cell_holds_agree, aview_agree, depot_ids_bound,
@@ -151,7 +152,7 @@ Qed.
 End c.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* The row: dep_keep_img B KEEP (YGcfInstDepot.v:154), its body at reply's instances, at the two zone pairs.       *)
+(* The row: dep_keep_img B KEEP (YGcfInstDepot.v:155), its body at reply's instances, at the two zone pairs.       *)
 
 (* Allocate (YGcfInstF1Wcgif.v:96 dep_keep_a_cgif's twin): KEEP := ag_dzone \/ ag_czone, i.e. AGis.DZONE \/
    AGif0cgif.CZONE at AGImg_cgif. *)

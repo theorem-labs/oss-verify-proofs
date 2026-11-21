@@ -4,6 +4,7 @@
    (fuzz_reply.asan 0x845b4 .. 0x84b2c), the segment ARM_event of W_LLVMFuzzerTestOneInput_cut.v, in the form of the
    cgif walks of proofs/cgif/cgif_file_fuzzer/lib/A/AC8h.v (call sites) and lib/A/ACf5.v (a segment between cut
    points). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -63,18 +64,18 @@ Let BR := paj_branch (PI := PB_fr).
 
 (* ---- the tail's callees (lane ArmEventB, 0x84ac0 .. 0x84b2c), each a named hypothesis with its published text ---- *)
 #[local] Notation SIGMA := (@pa_sigma _ fr_prog_listing PB_fr).
-(* the request bound of the allocator's live-state rules (W_journal.v:766, the instance's cf_malloc_max) *)
+(* the request bound of the allocator's live-state rules (W_journal.v:767, the instance's cf_malloc_max) *)
 Variable MMAX : Z.
-(* the allocator instance, W_kit.v:356 PALib @ 5180fc7d18d: SIGMA WS_malloc / WS_free are its wrappers *)
+(* the allocator instance, W_kit.v:356 PALib: SIGMA WS_malloc / WS_free are its wrappers *)
 Hypothesis TL : PALib B.
-(* malloc (0x84acc) and free (0x84b1c): W_journal.v:777 amalloc_cf_rule and :727 afree_cf_rule @ 5180fc7d18d *)
+(* malloc (0x84acc) and free (0x84b1c): W_journal.v:778 amalloc_cf_rule and :727 afree_cf_rule *)
 Hypothesis AMALLOC : amalloc_cf_rule segs B MT MMAX.
 Hypothesis AFREE : afree_cf_rule segs B MT.
-(* __asan_memcpy (0x84ae0): the donor's intrinsic form, Reusable/YG0d.v:318 aintrin_realizes OCpy @ 5180fc7d18d (the
-   form W_drain_cx.v:109 and W_send_line_cx.v:74 take) *)
+(* __asan_memcpy (0x84ae0): the donor's intrinsic form, Reusable/YG0d.v:318 aintrin_realizes OCpy (the
+   form W_drain_cx.v:110 and W_send_line_cx.v:75 take) *)
 Hypothesis AMEMCPY : aintrin_realizes segs B OCpy (SIGMA WS_asan_memcpy).
-(* strnlen (0x84ac0): the shared StrnlenDef, lib/Rt/StrnlenDef.v:43 astrnlen_whole_realizesM with lib/Rt/ConstsViewDef.v:21
-   consts_view, on b8d26f9ae22 (the relocation, RESUME.md (sha256 704eb9d3afa6; internal record) section 12,
+(* strnlen (0x84ac0): the shared StrnlenDef, lib/Rt/StrnlenDef.v:44 astrnlen_whole_realizesM with lib/Rt/ConstsViewDef.v:22
+   consts_view, (the relocation, RESUME.md (sha256 704eb9d3afa6; internal record) section 12,
    at lo / hi = 0x10350 / 0x10370).  Neither file is on this base, so the two texts are copied verbatim. *)
 Definition et_consts_view (lo hi : Z) (W : world segs) (mem : word -> option byte) : Prop :=
 forall a, lo <= a < hi -> aview segs (w_H W) mem a = option_map (fun b : byte => bv_unsigned b) (seg_rom segs (Z_to_bv 64 a)).
@@ -95,25 +96,25 @@ AR segs B ly S W mem' md' /\ aregs_preserved regs regs' /\ same_but_materialized
 (forall a, 0 <= a < 2 ^ 64 -> ~ (spZ regs - 2 * ESTACK <= a < spZ regs) -> aview segs (w_H W) mem' a = aview segs (w_H W) mem a) /\
 (forall a, apresent (w_H W) mem a -> apresent (w_H W) mem' a)).
 Hypothesis ASTRNLEN : et_strnlen_spec 0x10350 0x10370 (SIGMA WS_strnlen).
-(* relay_event (0x84b0c): W5's re_spec, W_contract.v:1022 @ 5180fc7d18d, at relay_event's OWN G, the lock's 12 bytes and
-   send_line's G_SL (pb_relay_event, W_relay_event.v:210 on a working branch 378aa2733e7, proves re_spec at any G with
+(* relay_event (0x84b0c): W5's re_spec, W_contract.v:1022, at relay_event's OWN G, the lock's 12 bytes and
+   send_line's G_SL (pb_relay_event, W_relay_event.v:211 on a working branch, proves re_spec at any G with
    gx_ok; et_GRE is inside G_fr by HGlock and HG_SL below, so its journal lifts with ajournal_gx_G_mono) *)
 Definition et_GRE : list (Z * Z) := (rg_lock fr_RG, 12) :: G_SL B fr_RG.
 Hypothesis RE : re_spec B MT MMAX et_GRE fr_RG (BASE + AF_fr_relay_event).
-(* check_shape_event (0x84b14): W3's cse_spec, W_contract.v:575 @ 5180fc7d18d (pb_check_shape_event,
-   W_check_shape_event.v:279 on a working branch fab3e1764cf) *)
+(* check_shape_event (0x84b14): W3's cse_spec, W_contract.v:575 (pb_check_shape_event,
+   W_check_shape_event.v:279 on a working branch) *)
 Hypothesis CSE : cse_spec B (BASE + AF_fr_check_shape_event).
-(* the allocator instance's granule-tail fact, W7's text: W_drain_cx.v:131 ALLOC_TAIL on a working branch
-   6717914db00 (Main's ALLOC_TAIL; the instance lemma is amalloc_tail_vis_cf) *)
+(* the allocator instance's granule-tail fact, W7's text: W_drain_cx.v:132 ALLOC_TAIL on a working branch
+   (Main's ALLOC_TAIL; the instance lemma is amalloc_tail_vis_cf) *)
 Hypothesis ALLOC_TAIL : forall ly S W mem md p n a,
   AR segs B ly S W mem md -> In (p, n) (ablocks B ly S) ->
   p + req_size n - 1 < a < p + req_size n - 1 - (p + req_size n - 1) mod 8 + 8 ->
   aview segs (w_H W) mem a <> None.
-(* _cut.v's two shared facts (W_LLVMFuzzerTestOneInput_cut.v:326 glob_wr_law, :214 errno_law; _G.v c_glob_wr proves the
+(* _cut.v's two shared facts (W_LLVMFuzzerTestOneInput_cut.v:327 glob_wr_law, :214 errno_law; _G.v c_glob_wr proves the
    first for G_fr_c) *)
 Hypothesis GWR : glob_wr_law G_fr.
 Hypothesis ERRL : errno_law B.
-(* .rodata is outside G_fr, the allocator's statics, errno and the sink's overflow head: W_journal.v:396 rom_out, the
+(* .rodata is outside G_fr, the allocator's statics, errno and the sink's overflow head: W_journal.v:397 rom_out, the
    text W_xrf.v:191 XRF_ROM_OUT takes (_G.v c_rom_apart proves its G_fr conjunct) *)
 Hypothesis ET_ROM_OUT : rom_out segs B G_fr.
 (* G_fr facts, proved for G_fr_c in W_LLVMFuzzerTestOneInput_G.v: the lock and send_line's G (c_HGlock, c_HG_SL) *)
@@ -1036,8 +1037,8 @@ Hypothesis LS_event_malloc : forall cx t m ly S e,
   re_len e < MMAX /\ blocks_bytes S + re_len e <= LIVE_MAX /\ mo_ok MT S (mo_malloc MT (re_len e)).
 (* relay_event's room (re_spec's send_line premises), at the state after malloc: the stream is empty at the call
    (lregs_P1's lm_O m = []) and malloc's post adds the line's block (amalloc_cf_rule's ablocks equation); the
-   instance's witness is a Theorem Labs lane's fr_LS_event_relay_r (a working branch a8a8b593b2d,
-   lib/A/ReplyLSEvent3.v:209) *)
+   instance's witness is a Theorem Labs lane's fr_LS_event_relay_r (a working branch,
+   lib/A/ReplyLSEvent3.v:210) *)
 Hypothesis LS_event_relay : forall cx t m ly S (S1 : astate) e (ly1 : alayout) q,
   LS cx t m ly S -> RINV cx t m -> ev_evt cx m e ->
   mo_le MT S S1 (mo_malloc MT (re_len e)) ->

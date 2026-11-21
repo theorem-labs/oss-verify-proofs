@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up certificate per CONFIG_RSEQ value; topA_holes over the launch's ProcInput and its launch facts, with argH0_high given the entry pc; s3s_A_of lifted to the run's segment list (the image plus the vDSO pair) by the RUNSEG premise, which the new lemma topA_runseg discharges through SRomStable.srun_init; PropExec qualified as K5.AS.PropExec where a twin module shadows it). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -14,7 +15,8 @@ From OSSVerify.Proofs.leptonica.paintcmap_fuzzer.lib.K5.A21 Require Import Layou
 From OSSVerify.Proofs.leptonica.paintcmap_fuzzer.lib.K5.AG Require Import Shadow.
 From OSSVerify.Proofs.leptonica.paintcmap_fuzzer.lib.K5.A21 Require Import RT_iface D_iface D_defs D_libiface I_iodefs X_xdefs.
 From OSSVerify.Proofs.leptonica.paintcmap_fuzzer.lib.K5.AS Require Import PropExec.
-Local Instance topa2_fx : PropExec.FPState := PropExec.fx0.
+From OSSVerify.Proofs.leptonica.paintcmap_fuzzer.lib.Common.Cfg Require SRomStable.
+Local Instance topa2_fx : K5.AS.PropExec.FPState := K5.AS.PropExec.fx0.
 From OSSVerify.Proofs.leptonica.paintcmap_fuzzer.lib.K5.AS Require Import ShapeAlg SpinAlg AsanAcct AxSymExec3 AxSymExec3Sound AsanPlanCore AsanPlan AsanPlanSound.
 From OSSVerify.Proofs.leptonica.paintcmap_fuzzer.lib.K5.AS21 Require Import AsanPlanImages.
 From OSSVerify.Proofs.leptonica.paintcmap_fuzzer.lib.K5.AS Require Import AsanInit.
@@ -42,14 +44,16 @@ Section Cert.
   (* [comment removed for export] *)
   Variable IT0 : itab.
   Hypothesis IT0_ok : itab_sound ASEGS IT0.
-  Variable HS_asan : nat -> option acs.
-  Variable startup_plan : plan.
-  Variable startup_shape : shape.
+  (* one certificate and one hand-off table per CONFIG_RSEQ value [b] ([TopA_start]) *)
+  Variable HS_asan : bool -> nat -> option acs.
+  Variable startup_plan : bool -> plan.
+  Variable startup_shape : bool -> shape.
   Variables KC0 BFUEL FUEL : nat.
-  Hypothesis startup_cert :
-    check ASEGS IT0 ASAN_A NX0 AsanInit.LIMIT XN0 XE0 XB0 HS_asan KC0 BFUEL FUEL None asan_a_init startup_plan = COk startup_shape.
-  Hypothesis Hshape : holes_only startup_shape = true.
-  Hypothesis HS_ok : forall h ch, HS_asan h = Some ch -> hs_all_ok ch = true.
+  Hypothesis startup_cert : forall b,
+    check ASEGS IT0 ASAN_A NX0 AsanInit.LIMIT XN0 XE0 XB0 (HS_asan b) KC0 BFUEL FUEL None (asan_a_init (rseq_z b)) (startup_plan b)
+    = COk (startup_shape b).
+  Hypothesis Hshape : forall b, holes_only (startup_shape b) = true.
+  Hypothesis HS_ok : forall b h ch, HS_asan b h = Some ch -> hs_all_ok ch = true.
 
   (* [comment removed for export] *)
   Hypothesis FUZZ : fuzz_one_cps RTA LIB_A.   (* [comment removed for export] *)
@@ -57,30 +61,64 @@ Section Cert.
   Hypothesis IOC : forall Σ m, ART RTA Σ m -> io_consts m.
 
   (* [comment removed for export] *)
-  Lemma topA_holes : forall (sp : word) (rdraw : EntryDraw) (brk0 : word) (argv envp : list (list byte)) (uid hw : word) (fs : Fs.Fs),
-    valid_sp sp -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp argv envp ->
-    APS.holes_stmt ASEGS ASAN_A NX0 AsanInit.LIMIT HS_asan (SINV0 APH sp rdraw brk0 argv envp uid hw) (argH0 APH sp rdraw argv envp uid hw)
-               (fun _ _ fs' => canonT (argv_Z argv) fs') fs.
+  Lemma topA_holes : forall (b : bool) (sp : word) (rdraw : EntryDraw) (brk0 mbase : word) (inp : ProcInput),
+    valid_sp sp -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_launch inp ->
+    entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) inp ->
+    APS.holes_stmt ASEGS ASAN_A NX0 AsanInit.LIMIT (HS_asan b) (SINV0 APH Asan.M.init_pc sp rdraw brk0 mbase inp) (argH0 sp rdraw inp)
+               (fun _ _ fs' => canonT (argv_Z (in_argv inp)) fs') (in_fs inp).
   Proof using HS_ok FUZZ RC IOC.
-    intros sp rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit.
+    intros b sp rdraw brk0 mbase inp Hsp Hva Hve Hlaunch Hlau.
     intros h ch Hh E R FULL model HC.
-    pose proof (HS_ok h ch Hh) as HT. unfold hs_all_ok in HT.
+    pose proof (HS_ok b h ch Hh) as HT. unfold hs_all_ok in HT.
     apply andb_prop in HT as [HT HTL]. apply andb_prop in HT as [HT HTR]. apply andb_prop in HT as [Hpc HTS].
     apply Z.eqb_eq in Hpc. rewrite Hpc. cbv beta. rewrite (APS.co_fs _ _ _ _ _ _ _ _ _ _ _ _ HC).
-    exact (hs_hole_rt ASAN_A NX0 AsanInit.LIMIT fs APH sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit asan_in_hull asan_hull_ok
+    assert (AH : forall E (a : word), argH0 sp rdraw inp E a = true -> CEIL <= bv_unsigned a)
+      (* [argH0_high] is stated over [Section Init]'s [apc : N], which its conclusion does not
+         mention, so the entry pc is named here (as in TopA_start.v) *)
+      by (intros E1 a H; eapply argH0_high; first [eassumption | exact Asan.M.init_pc]).
+    exact (hs_hole_rt ASAN_A NX0 AsanInit.LIMIT (in_fs inp) APH Asan.M.init_pc sp rdraw brk0 mbase inp
+             Hsp Hva Hve Hlaunch Hlau asan_in_hull asan_hull_ok
              asan_segtop asan_shoff asan_lim E ch R FULL model HC HTS HTR LIB_A
-             (hs_lib ASAN_A NX0 AsanInit.LIMIT _ _ fs asan_in_hull asan_hull_ok (argH0_high APH sp rdraw argv envp uid hw Hsp Hva)
-                E ch R FULL model HC HTL)
-             (canonT (argv_Z argv) fs) (main_rta FUZZ RC IOC argv fs Hva)).
+             (hs_lib ASAN_A NX0 AsanInit.LIMIT _ _ (in_fs inp) asan_in_hull asan_hull_ok AH E ch R FULL model HC HTL)
+             (canonT (argv_Z (in_argv inp)) (in_fs inp)) (main_rta FUZZ RC IOC (in_argv inp) (in_fs inp) Hva)).
   Qed.
 
-  (* [comment removed for export] *)
+  (* the kernel is NOT pinned: [asan_startup_gen] takes the kernel of record from
+     [Run.valid_input] itself.  The premise WAS [KERNEL : forall inp, valid_input inp ->
+     in_kernel inp = default_kernel], which [kb_rseq = false] refutes. *)
+  (* LPS 08b1429: the run is against [Run.run_segments]; the walk above is over
+     the image's own segments.  The lift (the vDSO pair is r--, and the walk's
+     reads stay off it) is the run-segments bridge of recipes/run-segments.md. *)
+  Hypothesis RUNSEG : forall en inp T,
+    valid_entry (mkImage ASEGS Asan.M.init_pc APH) en inp -> valid_input inp ->
+    srealizes ASEGS (init_config ASEGS Asan.M.init_pc APH (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en)
+                                 target_alloc_limit inp) T ->
+    srealizes (run_segments ASEGS inp (en_sp en) (en_mmap_base en))
+              (init_config (run_segments ASEGS inp (en_sp en) (en_mmap_base en)) Asan.M.init_pc APH
+                           (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) target_alloc_limit inp) T.
+
   Theorem s3s_A_of : S3s_stmt Asan.M.loaded_segments Asan.M.init_pc Asan.M.phdrs.
-  Proof using IT0_ok startup_cert Hshape HS_ok FUZZ RC IOC.
+  Proof using IT0_ok startup_cert Hshape HS_ok FUZZ RC IOC RUNSEG.
     intros en inp Hve Hvi.
+    apply (RUNSEG en inp _ Hve Hvi).
     exact (asan_startup_gen IT0 IT0_ok HS_asan startup_plan startup_shape KC0 BFUEL FUEL startup_cert Hshape
              (fun argv fs => canonT (argv_Z argv) fs) (fun argv fs => canonT_nil (argv_Z argv) fs) topA_holes en inp Hve Hvi).
   Qed.
 
   (* [comment removed for export] *)
 End Cert.
+
+(* LPS 08b1429: [RUNSEG] (the walk over the image's own segments, lifted to the run's segment list
+   and start) is the shared lift [SRomStable.srun_init] (Common/Cfg/SRomStable.v, G3's file;
+   recipes/run-segments.md "srealizes variant").  The image has no vDSO text segment. *)
+Lemma topA_runseg : forall en inp T,
+  valid_entry (mkImage ASEGS Asan.M.init_pc APH) en inp -> valid_input inp ->
+  srealizes ASEGS (init_config ASEGS Asan.M.init_pc APH (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en)
+                               target_alloc_limit inp) T ->
+  srealizes (run_segments ASEGS inp (en_sp en) (en_mmap_base en))
+            (init_config (run_segments ASEGS inp (en_sp en) (en_mmap_base en)) Asan.M.init_pc APH
+                         (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) target_alloc_limit inp) T.
+Proof.
+  intros en inp T _ _ H.
+  exact (SRomStable.srun_init ASEGS inp (en_sp en) (en_mmap_base en) _ _ _ _ _ _ eq_refl H).
+Qed.

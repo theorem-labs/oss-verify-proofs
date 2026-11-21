@@ -3,11 +3,11 @@
 Unit: plugin-hostd/fuzz_command. Paths are relative to the unit's proofs folder (lib/A/AB1w.v). Images by role and
 sha256 (first 12): donor cgif_file_fuzzer.asan 7093581aab04 (unstripped twin 488e39500746); ours fuzz_command.asan
 c0661b96b5bd (twin 68db792d5fa7), fuzz_command.asan-ubsan bbe55d24d096 (for lib/B only). Our tree:
-plugin-hostd/fuzz_command tree (git tree 86ee7833f146; internal record); merged tree: commit 781f46bc05cd.
+plugin-hostd/fuzz_command tree (git tree 86ee7833f146; internal record); merged tree:.
 
 ## What was compared
 
-port_core d9e0589898fd was re-run `--dry` on the inputs of the two untagged runs of record (donor lib at c8557374ad2e):
+port_core d9e0589898fd was re-run `--dry` on the inputs of the two untagged runs of record (donor lib):
 
 | set | files | run of record | d9e0 run |
 |---|---|---|---|

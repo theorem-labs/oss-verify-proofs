@@ -73,7 +73,7 @@ Proof. exact ReplyImgRowsA.exh_off_A. Qed.
 
 (* PF_AG (YGcfInstHit.v's local premise, field round 3) at reply A: the projection of the layer row pf_cells_apart_t
    (reply A's proof ReplyRelroGeoA.pf_cells_apart_reply_A) through reply A's depot zone ag_dzone := AGis.DZONE
-   (A/AGis.v:230), whose static part starts at 0x177f88 = TFIB_STORE = as_store B (A/AF0m.v:18, ts_store); its node
+   (A/AGis.v:231), whose static part starts at 0x177f88 = TFIB_STORE = as_store B (A/AF0m.v:19, ts_store); its node
    and store blocks lie off the image window (ReplyImg_hdzx.hdzx_blocks_off_img_A), and the two cells (0x9f8b8 /
    0x137dd0, A/CfImgA.v:74 / :78) lie in it. *)
 Theorem hit_pf_ag_A : forall ly' a, layout_ok ly' -> @im_img_cover AImg_reply ly' -> ly_tsd ly' = as_tsd B ->

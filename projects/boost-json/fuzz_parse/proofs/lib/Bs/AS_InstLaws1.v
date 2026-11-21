@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the launch's channel reader. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -26,7 +27,7 @@ Section Laws.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   Lemma akernel_vm_ext : ltac2:(zQ "60!ie!j5!ne!pc!q1!u7>1s$5>2mo$0>3mo'$0>0@3$3$4@1$1^1@1$1^2>0@3$2?5HCEIL^4^3@3$2?5HCEIL^5^3").
-  Proof. intros s mo mo' E K. unfold akernel in *. rewrite E. exact K. Qed.
+  Proof. intros s mo mo' E K. unfold akernel, akernel_resx in *. rewrite E. exact K. Qed.
 
   Lemma AMODEL_vm_ext : ltac2:(zQ "b0!pc!hg6!ie!hgd!j5!hh8!hje!hlc!hm4!q1!u7>1s$a>2mo$2>3mo'$2>0@3$0$9@1$4^1@1$4^2>0@3$0@1$7@2$8@1$6@1$1#k0@1$6@1$1#k0@1$3^2@1$3^3>0@2$5^5^4@2$5^6^4").
   Proof.
@@ -153,6 +154,12 @@ Section Laws.
       + intros ms mo ms' mo' [_ K] LZ E1 E2. split; [exact LZ|]. cbn [cfg_model] in *. exact (IK_vm_ext s mo mo' E1 E2 K).
     - (* [comment removed for export] *) (intros mo mo' nd_i3; ndestruct nd_i3 as (Efd & _ & Efs & Epr & _)). unfold m_fs, m_fds, m_halted. rewrite Efd, Efs, Epr. repeat split; reflexivity.
     - (* [comment removed for export] *) intros mo mo' SB. exact (nonvm_same_mat mo mo' SB).
+    - (* [comment removed for export] *)
+      (* [adl_rdr]: [nonvm_same]'s fourth conjunct is the [m_proc] equation that the
+         [adl_mpres] bullet above already rewrites with to discharge [m_halted], and
+         [m_channel_reader] is the same projection of [m_proc] (State.v:4902, 4924). *)
+      (intros mo mo' nd_i3; ndestruct nd_i3 as (_ & _ & _ & Epr & _)).
+      unfold m_channel_reader. rewrite Epr. reflexivity.
     - (* [comment removed for export] *) exact inst_live.
   Qed.
 End Laws.

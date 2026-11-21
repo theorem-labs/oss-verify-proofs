@@ -7,9 +7,10 @@
                   narrowed to n), segment H's run (FSW_parse_items_seg.pib_run_H: v->n := n + 1 at 0x851e0, stop at
                   skip_ws), the member closed (pio_snoc) -> pib_IW4.
    The B form of the post-call half of the A walk's pi_step_Vc / pi_step_Ve (a working branch
-   4480a5df1ae lib/A/FSW_parse_items_stVc.v, stVe.v), up to where B calls skip_ws; pih_av / pih_av_unp copy its
+   lib/A/FSW_parse_items_stVc.v, stVe.v), up to where B calls skip_ws; pih_av / pih_av_unp copy its
    pvc_av / pvc_av_unp.
    rule 24: proves no function (kind: step lemma). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -76,8 +77,8 @@ destruct Hin as [<-|[<-|[<-|[<-|[<-|[]]]]]];
 Qed.
 
 Section A. Context {fx : YK11.FPState}.
-(* fs.asan's image bytes lie in [0x10000, FS_IMG_END) (the A walk's pic_img_lo, lib/A/FSW_parse_items_calls.v
-   4480a5df1ae, copied) *)
+(* fs.asan's image bytes lie in [0x10000, FS_IMG_END) (the A walk's pic_img_lo, lib/A/FSW_parse_items_calls.v,
+   copied) *)
 Lemma pih_img_lo : forall x, in_img tfibsegs x -> 0x10000 <= x < FS_IMG_END.
 Proof.
 intros x Hx. pose proof (fs_segs_img x Hx) as Hu. split; [|lia].

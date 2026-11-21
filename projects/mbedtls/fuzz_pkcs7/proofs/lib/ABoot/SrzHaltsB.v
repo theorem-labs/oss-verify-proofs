@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (node_must_exit reads node_ok's new third conjunct; srealizes_must_exit_in_scfg restated over the image's own segments, with the premise that the walked list is their run_segments). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib.Logic Require Import Classical_Prop.
@@ -204,7 +205,7 @@ Lemma node_must_exit : forall S c (I : Type) (evs : I -> list event) (nx : I -> 
   (forall i, fo_step segs c (evs i) (nx i) -> must_exit_in_at_cfg forced_only_cfg segs S (nx i)) ->
   must_exit_in_at_cfg forced_only_cfg segs S c.
 Proof.
-  intros S c I evs nx i0 [Hcomp Hsound] Hch.
+  intros S c I evs nx i0 [Hcomp [Hsound _]] Hch.
   apply must_exit_in_at_cfg_running.
   - exact (sstep_not_halted segs c (evs i0) (SNext (nx i0)) (Hcomp i0)).
   - destruct c as [ms model].
@@ -249,14 +250,19 @@ Proof.
   intros S c T H HS Hnone. exact (srealizes_must_exit S c T H HS (halted_in_of_running S c Hnone)).
 Qed.
 
-(* [comment removed for export] *)
-Corollary srealizes_must_exit_in_scfg : forall (S : list word) pc ph sp brk0 mbase rnd lim inp T,
+(* At the revision [must_exit_in_scfg] runs the image against
+   [Run.run_segments isegs inp sp mbase] (rocq-linux-process-semantics@75d69e00:
+   theories/EquivalenceDefinition/MustExit.v:1306-1312), so the walk this corollary
+   consumes is the one over the run's list: the section's [segs] IS that list. *)
+Corollary srealizes_must_exit_in_scfg : forall (S : list word) isegs pc ph sp brk0 mbase rnd lim inp T,
+  segs = run_segments isegs inp sp mbase ->
   srealizes segs (init_config segs pc ph sp brk0 mbase rnd lim inp) T ->
   exits_in S T ->
-  must_exit_in_scfg forced_only_cfg S (mkImage segs pc ph) lim (mkEntry sp brk0 mbase rnd) inp.
+  must_exit_in_scfg forced_only_cfg S (mkImage isegs pc ph) lim (mkEntry sp brk0 mbase rnd) inp.
 Proof.
-  intros S pc ph sp brk0 mbase rnd lim inp T H HS.
-  cbn [must_exit_in_scfg]. eapply srealizes_must_exit_running; [exact H | exact HS |].
+  intros S isegs pc ph sp brk0 mbase rnd lim inp T Hseg H HS.
+  cbn [must_exit_in_scfg]. rewrite <- Hseg.
+  eapply srealizes_must_exit_running; [exact H | exact HS |].
   reflexivity.
 Qed.
 

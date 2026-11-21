@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: relaxed the strnlen diagnostic's address bound hypothesis Hp from a 16-byte to a 9-byte margin below 2^47, widening the derived pointer range assertion Pr accordingly; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Bo0DiagStrnlen.v, lines 86, 104. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp.bitvector Require Import definitions.
@@ -69,7 +70,7 @@ Hypothesis Hal : s mod 16 = 0.
 Hypothesis HW : L5.writable RSEGS M (s - 4400) 4400.
 Hypothesis HD : L5.defined M (s - 4400) 4400.
 Hypothesis HIMG : L5.img_clear M 65536 1269760.
-Hypothesis Hp : s <= p /\ p + n + 1 + 16 <= 2 ^ 47.
+Hypothesis Hp : s <= p /\ p + n + 1 + 9 <= 2 ^ 47.
 Hypothesis Hn : n <= 131071.
 Hypothesis HSTR : cstr M p bs t8.
 Hypothesis HSH : forall x : word, SB + p / 8 - 7 <= bv_unsigned x < Z.min (SB + (p + n) / 8 + 8) (SB + 2 ^ 44) -> M x = Some (Z_to_bv 8 0).
@@ -77,7 +78,7 @@ Hypothesis HC : sn_cells M.
 Theorem wrap_strnlen_run : ltac2:(TCodec.tc2 tcn__Jb0DiagStrnlen "SH'9'D&<y5'Q;yR0%211%5241'6y8%611%311p061'7'A&I&FvQ3v?&Q:+\[W8%22@1v=&G%119%9587431r3r2+QSin4%:2H1r1%?554217%B3A71'8&E&Nu:%211%C2Q31%52<1&2vQ2%22Q01%811%I2Q71%<3Q761'4&J(1u2u3u4u8u9uBuCuDuEuFuGuHuIuJuK(5%11C%B3D31%C3E51%D3F71%E3G91%F3H;1%G3I=1%H3J?1%I3KA1%J3LC1%K3ME1%L3NG1%M3OI1%N3Q0K1%O3Q1M1%Q03Q2O1%Q23Q3QC1r4%Q@1QH%R12RA1%QC231%QD2R42%QF3RA21p071pR>Q;1&:&L&Q0vQ9+TY@%3221&Q<%12RLR3%7231&M%1237%RH231%<11%R=1R<%RB1R=%R83RN21p041pR4S51&H%12RGR?%S1231%S22F1%S32R31%S42RA1qNS61%SC2S71qQ2S=1%SE2S>1qR:SE1%SG2SF1").
 Proof.
 pose proof HC as (C1 & C2 & C3 & CG & C5 & C6).
-assert (Pr : 140735332552704 <= p <= 140737488355311) by lia.
+assert (Pr : 140735332552704 <= p <= 140737488355318) by lia.
 assert (Nr : 0 <= n <= 131071) by lia.
 cfeed P (sC1_conc fx R M (fun j => match j with 2%nat => s | 33%nat => p | 34%nat => n | _ => 0 end)) ltac:(first [apply UR | apply U_to | sc]).
 destruct P as (fx1 & R1 & M1 & MG1 & aFR & aFZ & (aMS & aKS & aR1 & aR2 & aR8 & aR9 & aR11 & aR12 & aR13 & aR18 & aR19 & aR20 & aC1 & aC2 & aC3 & aC4 & aC5 & aC6 & aC7 & aC8 & aC9 & aC10 & aC11 & aC12 & aC13 & aC14 & aC15 & aC16 & aC17 & aC18 & aD1 & aD2 & aD3)).

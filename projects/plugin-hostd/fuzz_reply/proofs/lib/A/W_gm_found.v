@@ -9,6 +9,7 @@
    ARx conversion (route (b), step 3; CONVERSION.md (sha256 1015972e02a9; internal record)): Section c proves pb_gm_found_x over a generic
    allocator relation ARx (Section hypotheses LAWS HP0 TL HG MTL ABCMP LFIND LPUSH LDROP HLITG HLITB HLITE, the callees
    at their _x specs); Section r re-derives gm_found, statement unchanged, at ARx := W_journal_x.ARi0. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -1020,8 +1021,8 @@ eapply SRrG_mono.
       + exact Hj.
       + exact HA8.
       + lia.
-      + (* list_drop's memmove premise: the capacity form (A's ldrop_spec until W1 eb49c578595) or the moved-bytes form
-           AREC * (n - 1 - j) (B's, and A's from eb49c578595): both follow from HAREC, 0 <= j and n <= cap *)
+      + (* list_drop's memmove premise: the capacity form (A's ldrop_spec until W1) or the moved-bytes form
+           AREC * (n - 1 - j) (B's, and A): both follow from HAREC, 0 <= j and n <= cap *)
         pose proof HL1 as (_ & _ & _ & _ & Lnc & _). pose proof (Nat2Z.is_nonneg j). unfold hl_n in *.
         unfold AREC in *. lia.
       + exact HZS.

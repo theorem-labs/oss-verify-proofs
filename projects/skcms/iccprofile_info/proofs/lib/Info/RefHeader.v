@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the recorded stack window is 6144513 bytes, was 8388608, and the section and header_phase take the stderr write's channel reader (a_channel_reader). *)
 (* [comment removed for export] *)
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Equivalence.
@@ -58,7 +59,7 @@ Definition sr_H : list expr :=
 (* [comment removed for export] *)
 Definition kn_Hstack : list kentry :=
   [KAlign (EVar 0) 16; KRange (EVar 0) 0x7fff80000000 0x800000000000;
-   KWr (SA (EVar 0) (-8388608)) 8388608;
+   KWr (SA (EVar 0) (-6144513)) (6144513);
    KWord (SA (EVar 0) (-56)) 8 (ELit 0x164e8);
    KWord (SA (EVar 0) (-64)) 8 (spx 8); KWord (SA (EVar 0) (-72)) 8 (ELit 2);
    KWord (SA (EVar 0) (-80)) 8 (ELit 0x12a88); KWord (SA (EVar 0) (-88)) 8 (spx 32);
@@ -436,6 +437,11 @@ Section Header.
   Variables (R0 : bvmap 5 word) (M0 : word -> option byte).
   Hypothesis HP : header_pre sp0 p1 gm tid sec cnr area content R0 M0.
   Hypothesis Hmap : map_has (vm_maps VM) gm (Z_to_bv 64 69632) = true.
+  (* LPS #38 (in 727298f3): [modelh] is a [mkModelC], whose [m_channel_reader] IS
+     [a_channel_reader] (Amb.v:49), so the stderr write's reader premise is this.
+     Declared LAST in the section, so it is the last section argument of every lemma
+     here that uses it. *)
+  Hypothesis Hrdr : @a_channel_reader AMB = true.
 
   Let L : Z := Z.of_nat (length content).
   Definition modelh : Model := model_post VM stdin0 fs0 tid.
@@ -532,7 +538,7 @@ Section Header.
       all: try (lazymatch goal with
                 | |- _ /\ (forall d m, _ -> _ -> store_ok _ _ (Z_to_bv 64 (?B + d)) m = true) =>
                     split; [lia|]; intros d m Hd Hm;
-                    first [ replace (B + d)%Z with (bv_unsigned sp0 - 8388608 + d)%Z by lia; apply Hst; lia
+                    first [ replace (B + d)%Z with (bv_unsigned sp0 - 6144513 + d)%Z by lia; apply Hst; lia
                           | replace (B + d)%Z with (bv_unsigned gm + d)%Z by lia; apply Hgr; lia
                           | apply Hma; lia
                           | replace (B + d)%Z with (0x20000 + d)%Z by lia; apply data_store_ok; lia ]
@@ -731,10 +737,10 @@ Section Header.
     match goal with HR' : regs_ok _ _ _, HK' : know_ok _ _ _ _ |- _ => err_tail_3 HL P0 P3 P4 HR' HK' end.
 
   Lemma err_tail_short : err_tail_stmt srSB0 knSB0.
-  Proof using HP Hmap. err_tail_tac. Qed.
+  Proof using HP Hmap Hrdr. err_tail_tac. Qed.
 
   Lemma err_tail_overrun : err_tail_stmt srOB0 knOB0.
-  Proof using HP Hmap. err_tail_tac. Qed.
+  Proof using HP Hmap Hrdr. err_tail_tac. Qed.
 
   (* [comment removed for export] *)
   Ltac usmall_off := repeat match goal with |- context [bv_unsigned (Z_to_bv 64 (bv_unsigned ?x + ?k))] => rewrite (u_small (bv_unsigned x + k)) by lia end.
@@ -765,6 +771,7 @@ Section Header.
                  _ _ msg_addr 31 HK eq_refl) by (cbn; lia);
       apply msg_img
     | apply fds_std_2
+    | exact Hrdr                       (* LPS #38 (in 727298f3), the reader slot *)
     | reflexivity
     | reflexivity
     | apply t_exit_has_nil
@@ -785,7 +792,7 @@ Section Header.
 
   Theorem header_short : (length content < 6)%nat ->
     realizes RSEGS (mkCfg (mkst R0 (Z_to_bv 64 0x12b84) M0 (seg_rom RSEGS)) modelh) (t_die msg_short fs0).
-  Proof using HP Hmap.
+  Proof using HP Hmap Hrdr.
     intros Hlt. destruct hdr_sym as (e & He & HR & HK0).
     pose proof (hdr_know_short e HK0 Hlt) as HK. clear HK0.
     pose proof hp_facts as ((SP & SPA) & (GM1 & GM2 & GMA) & TID & LL).
@@ -808,7 +815,7 @@ Section Header.
   Theorem header_overrun :
     (6 <= length content)%nat -> (Z.of_nat (length content) < 6 + hdr_cfglen content)%Z ->
     realizes RSEGS (mkCfg (mkst R0 (Z_to_bv 64 0x12b84) M0 (seg_rom RSEGS)) modelh) (t_die msg_overrun fs0).
-  Proof using HP Hmap.
+  Proof using HP Hmap Hrdr.
     intros Hge Hov. destruct hdr_sym as (e & He & HR & HK0).
     pose proof (hdr_know_long e HK0 Hge) as HK. clear HK0.
     pose proof hp_facts as ((SP & SPA) & (GM1 & GM2 & GMA) & TID & LL).
@@ -1150,6 +1157,11 @@ Theorem header_phase {AMB : Amb} : forall (sp0 p1 gm tid sec cnr : word) (area b
   (bv_unsigned gm + 69632 <= bv_unsigned sp0 - 8388608)%Z ->
   (Z.of_nat (length content) < 65536)%Z ->
   In (gm, Z_to_bv 64 69632) (vm_maps VM) ->
+  (* LPS #38 (in 727298f3): the two error branches write to stderr, so they need the
+     launch's reader; [model_post] is a [mkModelC] whose reader IS
+     [a_channel_reader] (Amb.v:49).  Placed BEFORE the continuation so the
+     continuation stays the single remaining goal at every call site. *)
+  @a_channel_reader AMB = true ->
   (forall R' M', target_pre (bv_unsigned sp0) (bv_unsigned gm) area brkv mas (bv_unsigned tid) (bv_unsigned sec) (bv_unsigned cnr)
                             content R' M' ->
      realizes RSEGS (mkCfg (mkst R' (Z_to_bv 64 0x12d58) M' (seg_rom RSEGS)) (model_post VM stdin0 fs0 tid))
@@ -1157,7 +1169,7 @@ Theorem header_phase {AMB : Amb} : forall (sp0 p1 gm tid sec cnr : word) (area b
   realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x12b84) M (seg_rom RSEGS)) (model_post VM stdin0 fs0 tid))
              (t_body content fs0).
 Proof using .
-  intros sp0 p1 gm tid sec cnr area brkv mas content VM stdin0 fs0 Rr Mr R M Hvsp RP W0r MFr Htop HL Hin HT.
+  intros sp0 p1 gm tid sec cnr area brkv mas content VM stdin0 fs0 Rr Mr R M Hvsp RP W0r MFr Htop HL Hin Hrdr HT.
   assert (Hsp : (0x7fff80000000 <= bv_unsigned sp0 <= 0x800000000000)%Z)
     by (destruct Hvsp as (SPlo & SPhi & _); unfold sp_window_lo, sp_window_hi in *; lia).
   pose proof (world0_after_read0 sp0 p1 gm content Rr Mr R M area brkv mas _ _ _ Hsp RP HL Htop W0r) as W0.
@@ -1168,12 +1180,12 @@ Proof using .
   unfold t_body.
   destruct (MAX_INPUT <=? Z.of_nat (length content))%Z eqn:E1; [apply Z.leb_le in E1; unfold MAX_INPUT in E1; lia|].
   destruct (length content <? 6)%nat eqn:E2.
-  - apply Nat.ltb_lt in E2. apply (header_short sp0 p1 gm tid sec cnr area content VM stdin0 fs0 R M HP Hmap E2).
+  - apply Nat.ltb_lt in E2. apply (header_short sp0 p1 gm tid sec cnr area content VM stdin0 fs0 R M HP Hmap Hrdr E2).
   - apply Nat.ltb_ge in E2.
     destruct (length content <? 6 + Z.to_nat ((bv_unsigned (nth 0 content (Z_to_bv 8 0)) +
                256 * bv_unsigned (nth 1 content (Z_to_bv 8 0))) mod 32768))%nat eqn:E3.
     + apply Nat.ltb_lt in E3.
-      apply (header_overrun sp0 p1 gm tid sec cnr area content VM stdin0 fs0 R M HP Hmap E2).
+      apply (header_overrun sp0 p1 gm tid sec cnr area content VM stdin0 fs0 R M HP Hmap Hrdr E2).
       unfold hdr_cfglen, hdr_cfg, hdr_b0, hdr_b1 in *. lia.
     + apply Nat.ltb_ge in E3.
       pose proof (t_body_target content fs0 ltac:(unfold MAX_INPUT; lia) ltac:(unfold hdr_cfg, hdr_b0, hdr_b1; lia)) as TB.

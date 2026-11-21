@@ -1,6 +1,6 @@
 (* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_scene/lib/A/P_check_step_cut.v (the entry facts, cut states
    and segment statements of check_step's walk) and the composer cs_chain of proofs/libreac/fuzz_scene/lib/A/P_check_step.v
-   lines 91-105, both at origin/ossv/recipes 501c0d516c69, for reac-pw/fuzz_rate's check_csv on image A: the contract is
+   lines 91-105, both, for reac-pw/fuzz_rate's check_csv on image A: the contract is
    a callee contract (RtPgCSpec.rt_check_csv_specX, post rt_cpost_o) that continues the caller's journal instead of
    opening one, so every cut carries the caller's journal with check_csv's class-2 frame pushed on the front of own;
    four segments instead of five; the entry facts are the contract's premises; the cuts carry the frame's shadow bytes,

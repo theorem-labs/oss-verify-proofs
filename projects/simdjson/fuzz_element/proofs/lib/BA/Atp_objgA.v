@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: a stack-floor fact handed to the allocator-ceiling premise of art_client_write is passed through lia, since the floor is now measured by STACK_SPAN. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -222,7 +223,7 @@ Section ObjG.
     eapply (obj_p7 _ q b P L0 Lk f D (Z.of_nat ix) D (Lk + 1)); [exact MI2| exact D0| ul| lia| exact FLO| exact FHI'| exact SHZ2| lia| exact DN2|].
     intros m3 MU3 WM3 MI3 NUL3.
     assert (ART3 : ART RT Σ2 m3).
-    { apply (art_client_write RT AF Σ2 m2 m3 (ae_lo E) ART2 ltac:(rewrite ES2; exact LWIN)); [| exact WM3].
+    { apply (art_client_write RT AF Σ2 m2 m3 (ae_lo E) ART2 ltac:(rewrite ES2; clear - LWIN; lia)); [| exact WM3].
       intros a NA. apply MU3. cbn [outside]. split; [| exact Logic.I]. intros Hin. apply NA. apply (lstr_cls_client RT Σ2 (ae_lo E) D cap _ CLD). clear - Hin LKC LKR; lia. }
     assert (ST3 : stk asegs m3 (ae_lo E) b).
     { apply (stk_transport _ _ m2 m3 (ae_lo E) b ST2 MU3 WM3). intros x Hx. left. cbn [outside]. split; [clear - Hx DLO LKC; lia| exact Logic.I]. }

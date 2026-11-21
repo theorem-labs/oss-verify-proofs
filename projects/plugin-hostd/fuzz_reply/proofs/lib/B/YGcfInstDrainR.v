@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* CARRIED from commit 0deb5310273b0d538ec2a1697f391a1c8ad21c34,
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YGcfInstDrainR.v, sha256 fcbd68ace16995977b466db6781f7370701d158acb2abb6c9b0951c923df759b (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the Require lines only:
    the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
@@ -14,9 +15,9 @@
    rule 24: no function proved (kind: instance definitions and model-level facts of DMiface's drain cuts).
 
    cgif's drain fields take ARXr := ARX_cgif and DRq := RIx (DGif1dI.v, DGif1dr.DRq_cgif): cgif's Wf has no
-   completeness clause, so AR survives the cuts.  The cf invariant Wf_cf adds wfc_compl0 (YG01cf.v:153), which a cut
+   completeness clause, so AR survives the cuts.  The cf invariant Wf_cf adds wfc_compl0 (YG01cf.v:154), which a cut
    breaks: between Recycle's pop and the CacheDealloc that returns a batch object, that object is allocated in class
-   kBatchClass but listed nowhere (DMiface.v:6-7).  So at the cf instance:
+   kBatchClass but listed nowhere (DMiface.v:7-8).  So at the cf instance:
    - [ARmcfR] / [ARcfR]: YG0ncf.ARmcf / ARcf with YG03cf.WfR_cf (WfP_cf without wfc_compl0) for Wf_cf, every other field
      verbatim; [ARmcfR_of_ARmcf] / [ARmcf_of_ARmcfR] convert, the latter under Compl0;
    - [ARXr_cf B IOK Hp]: the cut relation, indexed as YGcfInstBase.ARX_cf: the instance predicate and ARcfR;
@@ -74,7 +75,7 @@ Variable ly : alayout.
    side) carries its ALLOCATED shadow on the machine while the model already says shHeapFreed.  The cut relation
    therefore frees the VALUE of such a chunk's user granules and keeps only their PRESENCE (the machine's byte is
    there: a Theorem Labs lane's measurement reads 0).  Recycle writes the value, so no walk reads it (measured: the two readers
-   under ARXr_cf, YGcfInstRcPrim.v:1138-1143 and :751-753, test presence only).  With nothing pending the two forms
+   under ARXr_cf, YGcfInstRcPrim.v:1139-1144 and :752-754, test presence only).  With nothing pending the two forms
    agree (shadow_ok_of_weak_cf below), so the relation's ends are unchanged. *)
 Definition pending_cf (S : astate) (k : chunk) : Prop :=
 In k (st_chunks S) /\ ck_state k = CQuarantined /\ ~ In (ck_beg k) (map ck_beg (q_items S)).
@@ -173,7 +174,7 @@ amr_static_img : Forall (fun r => zr_sub r (ly_img ly)) (as_owned_static B ++ as
 amr_hp_live : Forall (fun p => exists k, In k (st_chunks S) /\ ck_state k = CAllocated /\
   p = sptr_addr B ly (ck_user k) /\ cf_head <= ck_n k) Hp;
 amr_xs_placed : xs_placed_cf ly S;
-(* field round 2 (layer 91e2b229c0f): the two machine cells and the two unit rows their ownership needs live in the
+(* field round 2 (layer): the two machine cells and the two unit rows their ownership needs live in the
    relation, so the walks' relations carry them instead of ARX_cf's conjuncts. *)
 amr_exh_cell : exh_cell_cf B ly S rd;
 amr_errb_cells : errb_cells_cf B ly S rd;
@@ -290,10 +291,10 @@ End QBs.
 
 Lemma kQuarantineMax_entry : kQuarantineMax <= 2 ^ 28. Proof. unfold kQuarantineMax. lia. Qed.
 
-(* QB_cf at Enqueue's post (DGif0.v:329's QB), PROVED from free_cf's guard: the pushed block has
+(* QB_cf at Enqueue's post (DGif0.v:330's QB), PROVED from free_cf's guard: the pushed block has
    ck_n k <= kQuarantineMax (free_cf's enqueue arm, Put's inclusive test), the two caches were within their bounds at
    Enqueue's pre-state (lane F1's EP_cf), Enqueue pushed exactly that block onto the thread cache and left the global
-   cache alone (DGif0.v:322 / :324), and Enqueue's post keeps quar_n <= queued_n (lane F1's YGcfInstEnq.QB_w). *)
+   cache alone (DGif0.v:323 / :325), and Enqueue's post keeps quar_n <= queued_n (lane F1's YGcfInstEnq.QB_w). *)
 Lemma QB_cf_enq_post : forall S0 X k nb,
 qc_bytes (st_qthread S0) <= kQuarantineCacheMax -> qc_bytes (st_qglobal S0) <= kQuarantineMax -> ck_n k <= kQuarantineMax ->
 st_qthread X = qc_push (st_qthread S0) k nb -> st_qglobal X = st_qglobal S0 -> quar_n X <= queued_n X ->
@@ -510,7 +511,7 @@ Definition LMAXD_cf : Z := sec_map_size kQuarantineMax.
 Definition NMAXD_big_cf : Z := cf_malloc_max.
 Definition LMAXD_big_cf : Z := sec_map_size cf_malloc_max.
 (* The batch class's allocated bound (DMwalkIF.rmaxd_ok): the class's free array begins at kFreeArrayOffset, so no
-   user byte of the class lies above it (DMwalkIF.v:304-308). *)
+   user byte of the class lies above it (DMwalkIF.v:305-309). *)
 Definition RMAXD_cf : Z := kFreeArrayOffset.
 
 Lemma rmaxd_ok_cf : 2 ^ 31 <= RMAXD_cf <= kFreeArrayOffset.
@@ -523,7 +524,7 @@ Lemma lmaxd_ok_cf : NMAXD_cf <= LMAXD_cf <= 2 ^ 31 - 8192.
 Proof. unfold NMAXD_cf, LMAXD_cf. vm_compute. split; discriminate. Qed.
 
 (* The big arm's bounds: NMAXD_big_cf is the unit's malloc limit (cf_malloc_max_bound caps it at 2 ^ 30 - 15), and
-   its mapped extent is one secondary map of that request, inside WalkB1's raised cap (DMwalkIF.v:417). *)
+   its mapped extent is one secondary map of that request, inside WalkB1's raised cap (DMwalkIF.v:418). *)
 Lemma nmaxd_ok_big_cf : 2 ^ 28 <= NMAXD_big_cf -> NMAXD_big_cf <= 2 ^ 30.
 Proof. intros H. unfold NMAXD_big_cf in *. pose proof YG08cf.cf_malloc_max_bound as MB. assert (2 ^ 30 = 1073741824) by reflexivity. lia. Qed.
 
@@ -585,7 +586,7 @@ Proof. intros Hp inst ly S W mem md (_ & HA & _). exact (amr_exh_cell _ _ _ _ _ 
 Lemma ARXr_cf_errb : forall Hp inst ly S W mem md, ARXr_cf Hp inst ly S W mem md ->
 errb_cells_cf B ly S (aview im_segs (w_H W) mem).
 Proof. intros Hp inst ly S W mem md (_ & HA & _). exact (amr_errb_cells _ _ _ _ _ (proj1 HA)). Qed.
-(* H3's rd_img (DMcdR.v:98-100 @ ec7e5fd0be9) at ARXr := ARXr_cf: the image's constant cells hold at the cut. *)
+(* H3's rd_img (DMcdR.v:99-101) at ARXr := ARXr_cf: the image's constant cells hold at the cut. *)
 Lemma rd_img_cf : forall Hp inst ly S W mem md, ARXr_cf Hp inst ly S W mem md ->
 Forall (cell_holds B ly (aview im_segs (w_H W) mem)) (as_const B ly).
 Proof. intros Hp inst ly S W mem md H. exact (amr_const _ _ _ _ _ (proj1 (ARXr_cf_ARcfR Hp inst ly S W mem md H))). Qed.

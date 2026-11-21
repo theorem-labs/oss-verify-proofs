@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyImg_depfp.v (commit 4d286b2e618d, file sha256 9e7745374ae4) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 2 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 5 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyImg_depfp.v (file sha256 9e7745374ae4) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 2 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 5 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a prior worker, row img-depfp-B of the internal file REPLY-IMG-ROWS.md, for a Theorem Labs lane's cf layer at
    plugin-hostd/fuzz_reply).
    rule 24: no function proved (kind: image row; a closed computation at reply's image B, fuzz_reply.asan-ubsan, pin
    10ffb5f9202a).  Reuse search: proof-index dep_fp_img footprint_DZONE dep_fp_a_cgif (index v5, 2026-10-30
-   04:38Z): dep_fp_img is only the layer's Definition (YGcfInstDepot.v:165); footprint_DZONE exists at cgif, decode,
+   04:38Z): dep_fp_img is only the layer's Definition (YGcfInstDepot.v:166); footprint_DZONE exists at cgif, decode,
    preset and state, none at fuzz_reply; no discharge of the row at any reply image.
 
-   The row is the cf layer's [dep_fp_img B DZ] (YGcfInstDepot.v:165-166 at c0780f715a3c, lane F1):
+   The row is the cf layer's [dep_fp_img B DZ] (YGcfInstDepot.v:166-167, lane F1):
      forall ly a, layout_ok ly -> im_img_cover ly -> ly_tsd ly = as_tsd B -> CLdepot.depot_footprint B ly a -> DZ ly a,
    for the two zones the layer uses, the Allocate zone ImgBaseAG.ag_dzone and the Deallocate zone ImgBaseDG.dg_dzone
    (cgif's discharges: YGcfInstF1Wcgif.v:82 dep_fp_a_cgif / :89 dep_fp_d_cgif, both by AGix.footprint_DZONE).  Reply
@@ -54,7 +55,7 @@ unfold CLdepot.depot_footprint in FP. rewrite (ts_depot B TS), (ts_store B TS) i
 change d_map1 with 4194320 in FP. unfold TFIB_DEPOT, TFIB_STORE in FP. lia.
 Qed.
 
-(* dep_fp_img B ag_dzone (YGcfInstDepot.v:165-166) at image B. *)
+(* dep_fp_img B ag_dzone (YGcfInstDepot.v:166-167) at image B. *)
 Lemma dep_fp_a_B : forall B, @im_syms AImg_cgif B ->
   forall ly a, layout_ok ly -> im_img_cover ly -> ly_tsd ly = as_tsd B -> CLdepot.depot_footprint B ly a ->
   @ImgBaseAG.ag_dzone AImg_cgif AGif0cgif.AGImg_cgif ly a.
@@ -63,7 +64,7 @@ intros B TS ly a _ _ _ FP. change (AGis.DZONE ly a). unfold AGis.DZONE.
 exact (depot_footprint_B B ly a TS FP).
 Qed.
 
-(* dep_fp_img B dg_dzone (YGcfInstDepot.v:165-166) at image B. *)
+(* dep_fp_img B dg_dzone (YGcfInstDepot.v:166-167) at image B. *)
 Lemma dep_fp_d_B : forall B, @im_syms AImg_cgif B ->
   forall ly a, layout_ok ly -> im_img_cover ly -> ly_tsd ly = as_tsd B -> CLdepot.depot_footprint B ly a ->
   @ImgBaseDG.dg_dzone AImg_cgif DGif0cgif.DImg_cgif ly a.

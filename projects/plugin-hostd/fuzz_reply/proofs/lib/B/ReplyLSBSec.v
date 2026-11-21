@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/W_LLVMFuzzerTestOneInput_top_x.v, with its module paths and module names changed; 1646 of its 1749 lines of code are new or changed and 1124 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Image B's fr_SEC: the secondary-allocation count clause of the B top's LS instance (KF-COUNT B #6), its keep lemmas,
    the meter conjuncts of the B top's rows and of gone_base's GN_RI_step at the counting meter MT_sec.  The B twin of
-   image A's lib/A/ReplyLSsec.v and lib/A/ReplyLSsecGn.v (s5-r1d 121b964360a): the same texts and proofs over lib/B's
+   image A's lib/A/ReplyLSsec.v and lib/A/ReplyLSsecGn.v (s5-r1d): the same texts and proofs over lib/B's
    names.  proves no function (kind: invariant lemma).
 
    THE CLAUSE.  At MT := ReplyKfMeterB.MT_sec nsec KMAX (mo_le s s' c := nsec s' <= nsec s + c, mo_ok s c :=
@@ -1621,7 +1622,7 @@ End lsip.
      `mo_le MT (c_S cx) .. (XN_LIB (c_n cx))`), the top's cost arguments verbatim.
    After the Section closes every lemma takes B nsec KMAX KC HKC first (then XM_LIB HXM for sec_entry, fr_SEC_pro and
    sec_LS_pro_oa; OM for sec_exit_room and sec_LS_exit_budget; XN_LIB HXN HNSF OM for sec_LS_exit_end).
-   F8 / F9 (KF-COUNT; W8's A texts, window aacecd50fedd, which a Theorem Labs lane's B top_x restate takes at the same
+   F8 / F9 (KF-COUNT; W8's A texts, window, which a Theorem Labs lane's B top_x restate takes at the same
    positions): the facts the counts need that the rows did not carry are now the rows' own premises, so no lemma here
    has a named hypothesis for them:
      LS_exit_budget: `0 <= t <= OPS_MAX` and every entry's keys not empty, after LSx (relay_finish's room comes from

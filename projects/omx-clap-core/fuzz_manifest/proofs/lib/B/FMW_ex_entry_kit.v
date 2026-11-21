@@ -1,5 +1,5 @@
 (* G4.ExEntry, IMAGE B (fm.asan-ubsan, pin ca61e5c9eabc0050): expected 0x81274 from its entry to EX_L / EX_R
-   (ex_seg_entry, lib/B/FMW_ex_base.v:178), the kit. B twin of lib/A/FMW_ex_entry_kit.v (06d82004dc3): the proof shape is
+   (ex_seg_entry, lib/B/FMW_ex_base.v:178), the kit. B twin of lib/A/FMW_ex_entry_kit.v: the proof shape is
    A's, every pc, register, slot and frame offset is B's (internal path).
    The segment is cut once more inside: EX_WL (0x812f8, ex_whole's loop head, s3 = a '<' of text), EX_B (0x8131c,
    a0 = r + 1 + n after strncmp (r + 1, uri, n) = 0 and guard 0x81314, the instrumented load of r[1 + n] next), EX_S

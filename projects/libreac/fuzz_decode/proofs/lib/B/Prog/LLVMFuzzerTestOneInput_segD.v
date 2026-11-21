@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* LLVMFuzzerTestOneInput_segD: the INSPECT segment of the image-B (asan-ubsan) walk of libreac/fuzz_decode's
    LLVMFuzzerTestOneInput, i.e. llvm_b_inspect_stmt of lib/B/Prog/LLVMFuzzerTestOneInput_segs.v: offsets
    +0x418 .. +0x5c8 of the listing lib/B/Prog/DecodeBList.v, from the return of malloc #2 (llvm_b_st_418) to
@@ -182,7 +183,7 @@ change 7 with (Z.of_nat 7). rewrite (BY 7%nat) by lia.
 f_equal. apply le_bytes8. exact Hr.
 Qed.
 
-(* The value of register r in the machine state of a symbolic state HS (lib/B/Prog/LLVMFuzzerTestOneInput_segA.v:368;
+(* The value of register r in the machine state of a symbolic state HS (lib/B/Prog/LLVMFuzzerTestOneInput_segA.v:369;
    the st_ok_pi case as lib/B/Prog/LLVMFuzzerTestOneInput_segC.v's cp_reg). *)
 Ltac reg_at HS r v H tac :=
   lazymatch type of HS with

@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-11-05: copied whole from projects/cgif/cgif_rgb_fuzzer/proofs/lib/LimSimMm.v at c395a1e0dfa, with
+(* Modified by Theorem Labs, 2026-11-05: copied whole from projects/cgif/cgif_rgb_fuzzer/proofs/lib/LimSimMm.v at theorem-labs/oss-verify-proofs@c5665593c2d8, with
    every occurrence of the module path OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib replaced by
    OSSVerify.Proofs.coturn.FuzzStunClient.lib.Corpus and that file lead comment replaced by this line; no other change. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the brk budget reads brk_grow_bytes, which brk_budget_ok_mono unfolds, and the mremap grow is simulated through its one budget gate: mremap_grow_marks takes the TASK_SIZE gate as a premise and gives each budget fact under the answer of the room test mremap_inplace_room_b that makes the mark read it, and sim_mremap proves its room and move side conditions with mremap_prep, a tactic this file adds, so dir_fwd_alt_r, dir_bwd_alt_r, mremap_inplace_grow_b_mono and the mremap sim_hook, which nothing here uses, are removed, this file's own comments explain the brk and mremap changes in place of the source's comment above mremap_grow_marks and its three comments in the proof of sim_mremap, and the cited source commit is named by its public id. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From stdpp Require Import bitvector.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Run Specs.
@@ -27,11 +28,6 @@ Proof.
   intros H. apply Z.leb_le in H. apply Z.leb_le. lia.
 Qed.
 
-(* [comment removed for export] *)
-Lemma dir_fwd_alt_r {A} : forall i m (c c1' c2' : Sys A), DIR L0 L true i m c c2' -> DIR L0 L true i m c (alt c1' c2').
-Proof. intros i m c c1' c2' H o Ho. destruct (H o Ho) as (o0 & H0 & R). exists o0. split; [right; exact H0 | exact R]. Qed.
-Lemma dir_bwd_alt_r {A} : forall i m (c1 c2 c' : Sys A), DIR L0 L false i m c2 c' -> DIR L0 L false i m (alt c1 c2) c'.
-Proof. intros i m c1 c2 c' H o Ho. destruct (H o Ho) as (o0 & H0 & R). exists o0. split; [right; exact H0 | exact R]. Qed.
 
 (* [comment removed for export] *)
 Ltac crunch_guard G :=
@@ -79,7 +75,9 @@ Proof. intros. unfold with_brk_next. rewrite forget_vm_ranges_limit. reflexivity
 
 Lemma brk_budget_ok_mono : forall m r, vm_limit (m_vmmaps m) = L0 -> brk_budget_ok (relim L m) r = true -> brk_budget_ok m r = true.
 Proof.
-  intros m r HM. unfold brk_budget_ok. rewrite rr_vm_backing_used, rr_m_vmmaps, rr_vm_limit, rr_vm_brk, HM.
+  (* LPS 08b1429: [brk_budget_ok] reads the grant through [brk_grow_bytes h r]
+     ([c0dd863a:theories/LinuxProcessSem/Sys/Mm/Mmap.v:372]), which hides the [vm_brk] the rewrite below names; unfold it. *)
+  intros m r HM. unfold brk_budget_ok, brk_grow_bytes. rewrite rr_vm_backing_used, rr_m_vmmaps, rr_vm_limit, rr_vm_brk, HM.
   intros H. apply Z.leb_le in H. apply Z.leb_le. lia.
 Qed.
 
@@ -206,12 +204,6 @@ Proof.
   intros m old old_n dst new_n HM. unfold mremap_final_budget_b. rewrite mremap_model_next_relim. apply within_limit_mono.
   rewrite mremap_model_next_limit. exact HM.
 Qed.
-Lemma mremap_inplace_grow_b_mono : forall m old old_n new_n oz nz, vm_limit (m_vmmaps m) = L0 ->
-  mremap_inplace_grow_b (relim L m) old old_n new_n oz nz = true -> mremap_inplace_grow_b m old old_n new_n oz nz = true.
-Proof.
-  intros m old old_n new_n oz nz HM. unfold mremap_inplace_grow_b. autorewrite with relim_rw.
-  rewrite !andb_true_iff. intros ((H1 & H2) & H3). repeat split; try assumption. exact (mremap_final_budget_b_mono _ _ _ _ _ HM H3).
-Qed.
 Lemma mremap_fresh_b_mono : forall m oz nz old old_n dst new_n, vm_limit (m_vmmaps m) = L0 ->
   mremap_fresh_b (relim L m) oz nz old old_n dst new_n = true -> mremap_fresh_b m oz nz old old_n dst new_n = true.
 Proof.
@@ -219,82 +211,103 @@ Proof.
   rewrite !andb_true_iff. intros (((((H1 & H2) & H3) & H4) & H5) & H6). repeat split; try assumption. exact (mremap_final_budget_b_mono _ _ _ _ _ HM H6).
 Qed.
 
-(* [comment removed for export] *)
+(* LPS 75d69e00: a grow has ONE resolution chosen by the room test ([mremap_inplace_room_b],
+   [c0dd863a:theories/LinuxProcessSem/Sys/Mm/Mremap.v:320]), and the mremap budget mark reads that
+   resolution's gate only ([c0dd863a:theories/LinuxProcessSem/Sys/Mm/Mremap.v:1016]): with room,
+   [negb (final budget in place)]; without room, [negb (mremap_move_budget_b ..)]. A [TASK_SIZE]
+   gate precedes the old-size gate. So this lemma returns each fact under the room answer that
+   makes the mark read it (with room, the move's charge is unconstrained by the mark).
+   Its only consumer is [sim_mremap] below. *)
 Lemma mremap_grow_marks : forall m old old_size new_size flags,
   mremap_budget_refused_b old old_size new_size flags (relim L m) = false ->
   negb (bv_unsigned flags =? MREMAP_MAYMOVE) = false ->
   negb (bv_unsigned old mod page_size =? 0) = false ->
-  page_align_is0_b new_size = false -> page_align_is0_b old_size = false ->
+  page_align_is0_b new_size = false ->
+  (TASK_SIZE <? page_round_up_Z (bv_unsigned new_size)) = false ->
+  page_align_is0_b old_size = false ->
   (mremap_source_b (m_vmmaps m) old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) (page_round_up_Z (bv_unsigned old_size))
    && mremap_backing_uniform_b m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))))%bool = true ->
   (page_round_up_Z (bv_unsigned new_size) <=? page_round_up_Z (bv_unsigned old_size)) = false ->
-  mremap_final_budget_b (relim L m) old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) old (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) = true
-  /\ mremap_move_charge m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) <= L.
+  (mremap_inplace_room_b m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size)))
+     (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size)) = true ->
+   mremap_final_budget_b (relim L m) old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) old (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) = true)
+  /\ (mremap_inplace_room_b m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size)))
+        (page_round_up_Z (bv_unsigned old_size)) (page_round_up_Z (bv_unsigned new_size)) = false ->
+      mremap_move_charge m old (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size))) (Z_to_bv 64 (page_round_up_Z (bv_unsigned new_size))) <= L).
 Proof.
-  intros m old old_size new_size flags GD E1 E2 E3 E4 E5 E6.
-  unfold mremap_budget_refused_b in GD. rewrite E1, E2, E3, E4 in GD. lazy zeta in GD.
+  intros m old old_size new_size flags GD E1 E2 E3 ET E4 E5 E6.
+  unfold mremap_budget_refused_b in GD. rewrite E1, E2, E3, ET, E4 in GD. lazy zeta in GD.
   replace (mremap_source_b (m_vmmaps (relim L m))) with (mremap_source_b (m_vmmaps m)) in GD by reflexivity.
   replace (mremap_backing_uniform_b (relim L m)) with (mremap_backing_uniform_b m) in GD by reflexivity.
   rewrite E5 in GD. cbn [negb] in GD. rewrite E6 in GD.
-  apply negb_false_iff in GD. apply andb_true_iff in GD. destruct GD as [G1 G2]. split; [exact G1|].
-  unfold mremap_move_budget_b in G2. rewrite mremap_move_charge_relim, rr_m_vmmaps, rr_vm_limit in G2. apply Z.leb_le in G2. exact G2.
+  replace (mremap_inplace_room_b (relim L m)) with (mremap_inplace_room_b m) in GD by reflexivity.
+  split; intros RM; rewrite RM in GD; apply negb_false_iff in GD; [exact GD|].
+  unfold mremap_move_budget_b in GD. rewrite mremap_move_charge_relim, rr_m_vmmaps, rr_vm_limit in GD. apply Z.leb_le in GD. exact GD.
 Qed.
 
-Ltac sim_hook ::=
-  lazymatch goal with |- DIR _ _ _ _ _ (if mremap_inplace_grow_b _ _ _ _ _ _ then _ else _) _ => fail 1 end.
+(* The gate facts [sim_mremap]'s two side conditions need, gathered from the hypotheses [sim]
+   destructed. A tactic over [i]/[m] rather than an [all:] block: under [all:] a pattern naming
+   [i] is interned with no goal context and rejected. *)
+Ltac mremap_prep i m :=
+  lazymatch goal with FL : negb (bv_unsigned (in_arg i 3) =? MREMAP_MAYMOVE) = false |- _ =>
+  lazymatch goal with AL : negb (bv_unsigned (in_arg i 0) mod page_size =? 0) = false |- _ =>
+  lazymatch goal with NZ : page_align_is0_b (in_arg i 2) = false |- _ =>
+  lazymatch goal with TS : (TASK_SIZE <? page_round_up_Z (bv_unsigned (in_arg i 2))) = false |- _ =>
+  lazymatch goal with OZ : page_align_is0_b (in_arg i 1) = false |- _ =>
+  lazymatch goal with SRC : context [map_has _ _ _] |- _ =>
+  lazymatch goal with UNI : context [map_contains (m_vm_lazy m) _ _] |- _ =>
+  lazymatch goal with NEQ : (page_round_up_Z (bv_unsigned (in_arg i 1)) =? page_round_up_Z (bv_unsigned (in_arg i 2))) = false |- _ =>
+  lazymatch goal with NLT : (page_round_up_Z (bv_unsigned (in_arg i 2)) <? page_round_up_Z (bv_unsigned (in_arg i 1))) = false |- _ =>
+  assert (SU : (mremap_source_b (m_vmmaps m) (in_arg i 0) (Z_to_bv 64 (page_round_up_Z (bv_unsigned (in_arg i 1)))) (page_round_up_Z (bv_unsigned (in_arg i 1)))
+                && mremap_backing_uniform_b m (in_arg i 0) (Z_to_bv 64 (page_round_up_Z (bv_unsigned (in_arg i 1)))))%bool = true)
+    by (unfold mremap_source_b, mremap_backing_uniform_b; rewrite SRC; exact UNI);
+  assert (NLE : (page_round_up_Z (bv_unsigned (in_arg i 2)) <=? page_round_up_Z (bv_unsigned (in_arg i 1))) = false)
+    by (apply Z.leb_gt; apply Z.eqb_neq in NEQ; apply Z.ltb_ge in NLT; lia);
+  assert (LT : (page_round_up_Z (bv_unsigned (in_arg i 1)) < page_round_up_Z (bv_unsigned (in_arg i 2)))%Z)
+    by (apply Z.eqb_neq in NEQ; apply Z.ltb_ge in NLT; lia);
+  pose proof FL as gFL; pose proof AL as gAL; pose proof NZ as gNZ; pose proof TS as gTS; pose proof OZ as gOZ;
+  clear SRC UNI
+  end end end end end end end end end.
 
 Lemma sim_mremap : forall (d : bool) i m, MOK L0 m -> (d = false -> MV_OK m) ->
   (d = false -> mremap_budget_refused_b (in_arg i 0) (in_arg i 1) (in_arg i 2) (in_arg i 3) (relim L m) = false) ->
   DIR L0 L d i m (mremap_spec (in_arg i 0) (in_arg i 1) (in_arg i 2) (in_arg i 3)) (mremap_spec (in_arg i 0) (in_arg i 1) (in_arg i 2) (in_arg i 3)).
 Proof.
   intros d i m HM MV GD. sim_arm m HM.
-  (* [comment removed for export] *)
-  set (osz := in_arg i 1) in *. set (nsz := in_arg i 2) in *. set (old := in_arg i 0) in *. set (flags := in_arg i 3) in *.
-  set (oz := page_round_up_Z (bv_unsigned osz)) in *. set (nz := page_round_up_Z (bv_unsigned nsz)) in *.
-  lazymatch goal with FL : negb (bv_unsigned flags =? MREMAP_MAYMOVE) = false |- _ =>
-  lazymatch goal with AL : negb (bv_unsigned old mod page_size =? 0) = false |- _ =>
-  lazymatch goal with NZ : page_align_is0_b nsz = false |- _ =>
-  lazymatch goal with OZ : page_align_is0_b osz = false |- _ =>
-  lazymatch goal with SRC : context [map_has _ _ _] |- _ =>
-  lazymatch goal with UNI : context [map_contains (m_vm_lazy m) _ _] |- _ =>
-  lazymatch goal with NEQ : (oz =? nz) = false |- _ =>
-  lazymatch goal with NLT : (nz <? oz) = false |- _ =>
-  assert (SU : (mremap_source_b (m_vmmaps m) old (Z_to_bv 64 oz) oz && mremap_backing_uniform_b m old (Z_to_bv 64 oz))%bool = true)
-    by (unfold mremap_source_b, mremap_backing_uniform_b; rewrite SRC; exact UNI);
-  assert (NLE : (nz <=? oz) = false) by (apply Z.leb_gt; apply Z.eqb_neq in NEQ; apply Z.ltb_ge in NLT; lia);
-  assert (LT : (oz < nz)%Z) by (apply Z.eqb_neq in NEQ; apply Z.ltb_ge in NLT; lia);
-  pose proof FL as gFL; pose proof AL as gAL; pose proof NZ as gNZ; pose proof OZ as gOZ;
-  clear SRC UNI
-  end end end end end end end end.
-  destruct d.
-  - (* [comment removed for export] *)
-    destruct (mremap_inplace_grow_b (relim L m) old (Z_to_bv 64 oz) (Z_to_bv 64 nz) oz nz) eqn:EL.
-    + rewrite (mremap_inplace_grow_b_mono _ _ _ _ _ _ HM EL). sim.
-      all: intros x Hx; exact (mremap_fresh_b_mono _ _ _ _ _ _ _ HM Hx).
-    + destruct (mremap_inplace_grow_b m old (Z_to_bv 64 oz) (Z_to_bv 64 nz) oz nz).
-      * apply dir_fwd_alt_r. sim. all: intros x Hx; exact (mremap_fresh_b_mono _ _ _ _ _ _ _ HM Hx).
-      * sim. all: intros x Hx; exact (mremap_fresh_b_mono _ _ _ _ _ _ _ HM Hx).
-  - (* [comment removed for export] *)
-    specialize (GD eq_refl). specialize (MV eq_refl).
-    destruct (mremap_grow_marks m old osz nsz flags GD gFL gAL gNZ gOZ SU NLE) as [GF GM].
-    assert (FRESH : forall x, mremap_fresh_b m oz nz old (Z_to_bv 64 oz) x (Z_to_bv 64 nz) = true ->
-                              mremap_fresh_b (relim L m) oz nz old (Z_to_bv 64 oz) x (Z_to_bv 64 nz) = true).
-    { intros x Hx. unfold mremap_fresh_b in Hx |- *. autorewrite with relim_rw.
-      rewrite !andb_true_iff in Hx. destruct Hx as (((((H1 & H2) & H3) & H4) & H5) & H6).
+  (* LPS 75d69e00: the grow is [if room then (choose budget ;; in place) else (dst <- choose
+     (mremap_dst_ok ..) ;; move)], so [sim] runs to the end and leaves exactly two
+     [dir_bind_choose] side conditions: the in-place budget (room = true) and the move
+     destination (room = false). *)
+  - (* room = true: the in-place budget gate. Forward is monotonicity; backward is the mark. *)
+    mremap_prep i m.
+    destruct d; intros _ H.
+    + exact (mremap_final_budget_b_mono _ _ _ _ _ HM H).
+    + specialize (GD eq_refl).
+      assert (RM : mremap_inplace_room_b m (in_arg i 0) (Z_to_bv 64 (page_round_up_Z (bv_unsigned (in_arg i 1))))
+                     (Z_to_bv 64 (page_round_up_Z (bv_unsigned (in_arg i 2))))
+                     (page_round_up_Z (bv_unsigned (in_arg i 1))) (page_round_up_Z (bv_unsigned (in_arg i 2))) = true)
+        by assumption.
+      exact (proj1 (mremap_grow_marks m (in_arg i 0) (in_arg i 1) (in_arg i 2) (in_arg i 3) GD gFL gAL gNZ gTS gOZ SU NLE) RM).
+  - (* room = false: the move destination. Its [linux_place] half reads only limit-free ledger
+       fields and [m_kernel], so it is the same proposition on both sides by conversion; the
+       [mremap_fresh_b] half is monotonicity forward and [MV_OK] plus the mark backward. *)
+    mremap_prep i m.
+    destruct d; intros x [Hpl Hfr]; split; [exact Hpl | | exact Hpl | ].
+    + exact (mremap_fresh_b_mono _ _ _ _ _ _ _ HM Hfr).
+    + specialize (GD eq_refl). specialize (MV eq_refl).
+      assert (RM : mremap_inplace_room_b m (in_arg i 0) (Z_to_bv 64 (page_round_up_Z (bv_unsigned (in_arg i 1))))
+                     (Z_to_bv 64 (page_round_up_Z (bv_unsigned (in_arg i 2))))
+                     (page_round_up_Z (bv_unsigned (in_arg i 1))) (page_round_up_Z (bv_unsigned (in_arg i 2))) = false)
+        by assumption.
+      pose proof (proj2 (mremap_grow_marks m (in_arg i 0) (in_arg i 1) (in_arg i 2) (in_arg i 3) GD gFL gAL gNZ gTS gOZ SU NLE) RM) as GM.
+      unfold mremap_fresh_b in Hfr |- *. autorewrite with relim_rw.
+      rewrite !andb_true_iff in Hfr. destruct Hfr as (((((H1 & H2) & H3) & H4) & H5) & H6).
       rewrite H1, H2, H3, H4, H5. cbn [andb].
       unfold mremap_final_budget_b, vm_backing_within_limit. rewrite mremap_model_next_relim, rr_vm_backing_used, rr_m_vmmaps, rr_vm_limit.
       apply Z.leb_le. etransitivity; [|exact GM].
-      apply (MV old osz nsz x SU LT); try assumption.
-      + apply Z.eqb_eq in H2. exact H2.
-      + apply Z.ltb_lt in H3. exact H3.
-      + apply Z.leb_le in H4. exact H4. }
-    destruct (mremap_inplace_grow_b m old (Z_to_bv 64 oz) (Z_to_bv 64 nz) oz nz) eqn:E0.
-    + assert (EL : mremap_inplace_grow_b (relim L m) old (Z_to_bv 64 oz) (Z_to_bv 64 nz) oz nz = true).
-      { unfold mremap_inplace_grow_b in E0 |- *. autorewrite with relim_rw. rewrite !andb_true_iff in E0. destruct E0 as ((E0a & E0b) & _).
-        rewrite E0a, E0b. cbn [andb]. cbv delta [oz nz]. exact GF. }
-      rewrite EL. sim. all: exact FRESH.
-    + destruct (mremap_inplace_grow_b (relim L m) old (Z_to_bv 64 oz) (Z_to_bv 64 nz) oz nz).
-      * apply dir_bwd_alt_r. sim. all: exact FRESH.
-      * sim. all: exact FRESH.
+      apply (MV (in_arg i 0) (in_arg i 1) (in_arg i 2) x SU LT); try assumption.
+      * apply Z.eqb_eq in H2. exact H2.
+      * apply Z.ltb_lt in H3. exact H3.
+      * apply Z.leb_le in H4. exact H4.
 Qed.
 End Mm.

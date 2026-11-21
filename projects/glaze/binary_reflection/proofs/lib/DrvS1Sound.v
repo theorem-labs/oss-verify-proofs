@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (VM0 states reserved_layout; the vDSO reservation inclusion and the channel reader through the first environment, the malloc results and cs_ok). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -128,7 +129,7 @@ Definition VM0 (mdl : Model) : Prop :=
       /\ bv_unsigned (vm_start_brk (m_vmmaps mdl)) mod 4096 = 0
       /\ IMG_HI <= bv_unsigned (vm_start_brk (m_vmmaps mdl))
       /\ bv_unsigned (vm_start_brk (m_vmmaps mdl)) + 2 ^ 31 + 8192 <= CEIL_run)
-  /\ vm_reserved (m_vmmaps mdl) = segments_reserved RSEGS
+  /\ MhInv.reserved_layout (m_vmmaps mdl)
   /\ page_floor (alloc_top (m_vmmaps mdl)) = CEIL_run
   /\ VMLIM <= vm_limit (m_vmmaps mdl).
 
@@ -229,9 +230,10 @@ Qed.
 Lemma first_env_xfer : forall TOP M0 M mdl B C auxw avl,
   fe_cells M0 auxw avl -> env_above_sp auxw avl TOP ->
   AINVc W0 TOP M0 [] B C M mdl ->
+  incl (vdso_reserved (m_kernel mdl) (vdso_top (m_vmmaps mdl))) (vm_reserved (m_vmmaps mdl)) ->
   first_env M mdl auxw avl /\ first_img M.
 Proof.
-  intros TOP M0 M mdl B C auxw avl (C1 & C2 & C3 & C4 & C5 & C6 & C7 & C8 & C9 & C10 & C11) [ATOP ARND] (HW & HP & HT & HZ & HD).
+  intros TOP M0 M mdl B C auxw avl (C1 & C2 & C3 & C4 & C5 & C6 & C7 & C8 & C9 & C10 & C11) [ATOP ARND] (HW & HP & HT & HZ & HD) HVDSO.
   destruct HW as (_ & Wctx & Werr & (V1 & V2 & V3 & V4 & V5 & V6)).
   assert (AGI : forall a k, (0x10000 <= a /\ a + Z.of_nat k <= 0x75768) \/ (0xa678c <= a /\ a + Z.of_nat k <= 0xa6820) ->
                 rdn RSEGS M (Z_to_bv 64 a) k = rdn RSEGS M0 (Z_to_bv 64 a) k).
@@ -256,7 +258,7 @@ Proof.
     + destruct C8 as (v & C8). exists v. unfold cell. rewrite (AGI A_CANARY 8%nat) by (unfold A_CANARY; cbn; lia). exact C8.
     + split; [exact V1 | exact V2].
     + exact V3.
-    + exact V4.
+    + split; [exact V4 | exact HVDSO].
     + exact V5.
     + exact V6.
   - constructor.
@@ -332,7 +334,7 @@ Proof.
   (* [comment removed for export] *)
   destruct (node_alloc_pre_sound RSEGS NXD PERM_Tc TOP (m_fs model) FDS0 (AINVc W0 TOP M0) fx_ok U GPLAIN BCAP CCAP P_MALLOC_T hM1 hN1 P_AFTER_MALLOC1'
               E fx R M model HC hM1_call_ok hM1_alloc) as [Hpc NPRE].
-  pose proof NPRE as (Hh & Hlz & Hmat & HFX & HAF & R1 & Rr & Re & Hn & Hnr & Hsp & Hal & Hspc & Hsptop & R4 & Hstk & HB & HBC).
+  pose proof NPRE as (Hh & Hlz & Hmat & HFX & HAF & R1 & Rr & Re & Hn & Hnr & Hsp & Hal & Hspc & Hsptop & R4 & Hstk & HB & HBC & HVDSO).
   pose proof (alloc_pre_of RSEGS SWIN_T GPLAIN fx_ok W0 PERM_Tc TOP [] M0 0 0 MSTK_M STK BCAP CCAP ltac:(unfold BCAP; lia) ltac:(unfold CCAP; lia)
                 fx R M model _ _ _ _ _ _ NPRE) as PRE.
   destruct hM1_parts as (E10 & E2 & EVIS & E1).
@@ -341,7 +343,7 @@ Proof.
   set (sp := uE E (reg hM1 2)) in *.
   cbn [blocks_den bcost bcount map app Z.add length Z.of_nat] in PRE, HAF.
   (* [comment removed for export] *)
-  destruct PRE as (_ & _ & _ & _ & _ & Q1 & Qret & Qev & Q10 & Qnr & Q2 & Qal & Qceil & Q4 & Qstk & QB & QC).
+  destruct PRE as (_ & _ & _ & _ & _ & Q1 & Qret & Qev & Q10 & Qnr & Q2 & Qal & Qceil & Q4 & Qstk & QB & QC & QVDSO).
   cbn [g_tp GPLAIN] in Q4.
   assert (MPRE : malloc_pre MSTK_M R M model 0 0 P_AFTER_MALLOC1' 65536 sp).
   { unfold malloc_pre. unfold MH_NMAX, MH_GBUDGET, MhDefs.MBLK, MhDefs.LMAX, TPV.
@@ -349,15 +351,15 @@ Proof.
     split; [rewrite <- (getr_z5'' R 1); exact Q1|]. split; [exact Qret|]. split; [exact Qev|].
     split; [rewrite <- (getr_z5'' R 10); exact Q10|]. split; [lia|].
     split; [rewrite <- (getr_z5'' R 2); exact Q2|]. split; [exact Qal|]. split; [exact Qceil|].
-    split; [rewrite <- (getr_z5'' R 4); exact Q4|]. split; [exact Qstk|]. lia. }
-  destruct (first_env_xfer TOP M0 M model _ _ auxw avl FEC ENV HAF) as [FE FI].
+    split; [rewrite <- (getr_z5'' R 4); exact Q4|]. split; [exact Qstk|]. repeat split; try assumption; lia. }
+  destruct (first_env_xfer TOP M0 M model _ _ auxw avl FEC ENV HAF QVDSO) as [FE FI].
   assert (ENVsp : env_above_sp auxw avl sp) by (apply (env_above_sp_mono auxw avl TOP); [exact Hsptop | exact ENV]).
   pose proof (HM1 fx R M model P_AFTER_MALLOC1' 65536 sp auxw avl FE FI ENVsp MPRE eq_refl) as KATS.
   rewrite Hpc. unfold cfgF.
   unfold malloc_cfg, A_MALLOC in KATS. unfold P_MALLOC_T, mkstF.
   apply (kats_ok_exact RSEGS SR SRX _ _ _ (B (m_fs model)) KATS).
   - (* [comment removed for export] *)
-    intros c' (R' & M' & mdl' & pw & -> & RK & H10 & Hp16 & Hblk & Hdisj & Hdef & CH & ST & HA' & Hh' & Hl' & Hm' & Hfs' & Hfd').
+    intros c' (R' & M' & mdl' & pw & -> & RK & H10 & Hp16 & Hblk & Hdisj & Hdef & CH & ST & HA' & Hh' & Hl' & Hm' & Hfs' & Hfd' & Hrdr' & Hvdso').
     (* [comment removed for export] *)
     assert (APOST : alloc_post_ok RSEGS X1 fx_ok GPLAIN MSTK_M fx R M model ([] ++ []) (0 + 0) (0 + 0) 65536 sp fx R' M' mdl' pw).
     { unfold alloc_post_ok.
@@ -386,7 +388,7 @@ Proof.
     (* [comment removed for export] *)
     assert (HCS : GPS.cs_ok RSEGS PERM_Tc TOP (m_fs model) FDS0 (AINVcS TOP M0) fx_ok U E' hN1 fx R' M' mdl').
     { destruct HC' as [CR CL CK CHh CZ CF CD CA CU CX CP CT CM CFL].
-      constructor; [exact CR | exact CL | exact CK | exact CHh | exact CZ | exact CF | exact CD | | exact CU | exact CX | exact CP | exact CT | exact CM | exact CFL].
+      constructor; [exact CR | exact CL | exact CK | exact CHh | exact CZ | exact CF | exact CD | | exact CU | exact CX | exact CP | exact CT | exact CM | exact CFL | (* co_rdr *) assumption | assumption].
       destruct CA as (HA & HP & HT & HZ & HD). split; [| split; [exact HP | split; [exact HT | split; [exact HZ | exact HD]]]].
       destruct HA as [(HL & _)|HA]; [| exact HA]. exfalso. revert HL. vm_compute. discriminate. }
     (* [comment removed for export] *)

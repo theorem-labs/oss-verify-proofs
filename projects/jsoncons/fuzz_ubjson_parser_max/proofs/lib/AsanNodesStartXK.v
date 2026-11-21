@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the env/argv-scan section now takes a ProcInput launch record and reads the stack through entry_stack_image, with STR0 at cat_string_off, rseq-parameterised e_str0/e_argv1w, new STR0 bound lemmas and envp_ptr_nz, and encoded statements decoded, as in fuzz_bigint's copy; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/AsanNodesStartXK.v, 113 lines within its lines 81-461. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -13,8 +14,6 @@ AsanAcct AsanAcctShape.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require Import AxSymExec3K AxSymExec3SoundK AxSymRun3K AsanPlanK AsanPlanSoundK.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require Import AsanNodesAuxK AsanStartLoops AsanPlanCoreK.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
-From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require TCodec.
-Ltac2 tcn__AsanNodesStartXK () := ([""; "Corelib.Init.Datatypes."; "Corelib.Init.Logic."; "Corelib.Init.Peano."; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AsanPlanK.APK."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AsanPlanSoundK.APSK."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AxSymExec3K.AX2K."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AxSymExec3SoundK.AX2SK."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.CatExec."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.PropExec."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.RefLayout."; "Stdlib.ZArith.BinInt.Z."; "stdpp.bitvector.definitions."], [["0A"; "1O"; "1Some"; "1cons"; "1length"; "1list"; "1nat"; "1nil"; "1option"; "2and"; "2eq"; "3le"; "3lt"; "0E"; "0EA"; "0FS0"]; ["0LIMIT"; "4word_to_le_bytes"; "0M"; "5V_ARGC"; "5XEnvScan"; "5XLayout"; "5XPnScan"; "5acs"; "5e_argv1w"; "5e_str1"; "5kw_argv1"; "6x_stmt"; "7ELit"; "7edenot"; "7env"; "7ev"]; ["7expr"; "8kentry_ok"; "9byte_at"; "9cat_argv_ptr"; ":rdn"; ":wrap_mem"; ";cat_envp_ptr"; "0SEGS"; "0SINV"; "0STR0"; "<add"; "<le"; "<lt"; "<mul"; "<of_nat"; "<pow"]; ["0a"; "0argH"; "0argc"; "0argv"; "0b"; "0bsb"; "0envc"; "0envp"; "0hw"; "0j"; "0k"; "0nx0"; "0ph"; "0rdraw"; "0s0"; "0scfg"]; ["0sp"; "=Z_to_bv"; "=bv"; "=bv_unsigned"; "0uid"; "0usp"; "0v"; "0v'"; "0x"]]).
 Local Instance asanreflect_fx : PropExec.FPState := PropExec.fx0.
 Import ListNotations.
 Import AX2K. Import AX2SK. Import APK. Import APSK.
@@ -64,85 +63,140 @@ Hypothesis Dp2 : decode_any wp2 = Some (Load SZ1 false 13 11 4095, 4%Z).
 Hypothesis Dp3 : decode_any wp3 = Some (Branch BC_EQ 13 12 8180, 4%Z).
 Hypothesis Dp4 : decode_any wp4 = Some (Branch BC_NE 13 0 8180, 4%Z).
 Variable ph : PhdrInfo.
+Variable inp : ProcInput.
+Variable mbase : word.
+Variable entry : word.
 Variable sp : word.
+Variable brk : word.
 Variable rdraw : EntryDraw.
-Variables argv envp : list (list byte).
-Variable uid : word.
-Variable hw : word.
-Hypothesis Hva : valid_argv argv.
-Hypothesis Hve : valid_envp envp.
+Hypothesis Hva : valid_argv (in_argv inp).
+Hypothesis Hve : valid_envp (in_envp inp).
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) inp.
 Hypothesis Hsp_lo : sp_window_lo <= bv_unsigned sp.
 Hypothesis Hsp_hi : bv_unsigned sp <= sp_window_hi.
+Let argv := in_argv inp.
+Let envp := in_envp inp.
+Let execfn := in_execfn inp.
+Let rseq := kb_rseq (in_kernel inp).
+Let top := ed_top rdraw.
 Let usp := bv_unsigned sp.
 Let argc := Z.of_nat (length argv).
 Let envc := Z.of_nat (length envp).
 Let s0 := nth 0 argv [].
-Let bsb := build_stack_bytes ph sp argv envp uid hw rdraw.
+Let bsb := entry_stack_image inp mbase ph entry sp rdraw.
 Let EA := usp + 8 * argc + 16.
-Let STR0 := usp + 8 * argc + 8 * envc + 184.
+Let STR0 := usp + Z.of_nat (cat_string_off rseq sp top argv envp execfn).
 Hypothesis SINV_vals : forall E M, SINV E M ->
-uE E e_envp = EA /\ ev E V_ENVC = Z_to_bv 64 envc /\ uE E e_str0 = STR0.
+uE E e_envp = EA /\ ev E V_ENVC = Z_to_bv 64 envc /\ uE E (e_str0 (rseq_z rseq)) = STR0.
 Hypothesis SINV_sp0 : forall E M, SINV E M -> uE E e_sp0 = usp.
 Hypothesis SINV_envp : forall E M (a : word), SINV E M ->
-EA <= bv_unsigned a < EA + 8 * envc + 8 -> M a = wrap_mem ph sp argv envp uid hw rdraw a.
+EA <= bv_unsigned a < EA + 8 * envc + 8 -> M a = wrap_mem inp mbase ph entry sp rdraw a.
 Hypothesis SINV_str0 : forall E M (a : word), SINV E M ->
-STR0 <= bv_unsigned a <= STR0 + Z.of_nat (length s0) -> M a = wrap_mem ph sp argv envp uid hw rdraw a.
-Lemma len_av : ltac2:(TCodec.tc2 tcn__AsanNodesStartXK "8'9&Q;+1vQB%3221+QP0%5231%7231").
-Proof. unfold argc. destruct Hva as [H _]. lia. Qed.
-Lemma len_ev : ltac2:(TCodec.tc2 tcn__AsanNodesStartXK "8'9&Q;zvQF%3221+X0%5231%7231").
-Proof. unfold envc. destruct Hve as [H _]. lia. Qed.
-Lemma len_s0 : ltac2:(TCodec.tc2 tcn__AsanNodesStartXK ";&Q;&Q>&4'R2y8%211vQN%5221%711+SooO%:221").
-Proof. unfold s0. apply (valid_argv_str_len argv 0 Hva). destruct Hva as [H _]. lia. Qed.
-Lemma usp_lo : ltac2:(TCodec.tc2 tcn__AsanNodesStartXK "4&Q;+SoonPPPPP0vR5%3221").
+STR0 <= bv_unsigned a <= STR0 + Z.of_nat (length s0) -> M a = wrap_mem inp mbase ph entry sp rdraw a.
+Lemma len_av : 1 <= argc <= 1024.
+Proof. unfold argc, argv. destruct Hva as [H _]. lia. Qed.
+Lemma len_ev : 0 <= envc <= 256.
+Proof. unfold envc, envp. destruct Hve as [H _]. lia. Qed.
+Lemma len_s0 : Z.of_nat (length s0) <= 131071.
+Proof. unfold s0, argv. apply (valid_argv_str_len (in_argv inp) 0 Hva). destruct Hva as [H _]. lia. Qed.
+Lemma usp_lo : 0x7fff80000000 <= usp.
 Proof. unfold usp. unfold sp_window_lo in Hsp_lo. lia. Qed.
-Lemma usp_hi : ltac2:(TCodec.tc2 tcn__AsanNodesStartXK "4&Q;vR5+TPPPPPPPP0%3221").
+Lemma usp_hi : usp <= 0x800000000000.
 Proof. unfold usp. unfold sp_window_hi in Hsp_hi. lia. Qed.
-Lemma bsb_nw : ltac2:(TCodec.tc2 tcn__AsanNodesStartXK "A&Q<&Q:vR5&Q>&4'R2y8%211vQE%5221%711%:291&Q?+2+R0%3221%@251").
-Proof. unfold usp, bsb. apply lay_bsb_nw; assumption. Qed.
-Lemma STR0_eq : ltac2:(TCodec.tc2 tcn__AsanNodesStartXK ">':'R2yR0%211&Q3vR0vQCvQG(1%544321&R1vQ9%22:1%=3:41").
+Lemma bsb_nw : usp + Z.of_nat (length bsb) < 2 ^ 64.
 Proof.
-pose proof len_av. pose proof len_ev. pose proof usp_hi.
-rewrite (cat_argv_ptr_offset sp argv envp 0) by (destruct Hva as [Hl _]; lia).
-unfold cat_string_base. rewrite nat_to_word_add_merge, word_add_nat.
-lazymatch goal with |- Z_to_bv 64 ?a = Z_to_bv 64 ?b => replace a with b; [reflexivity|] end.
-change (total_arg_bytes_nat (firstn 0 argv)) with 0%nat.
-unfold cat_struct_size, auxv_size, STR0, usp, argc, envc. lia.
+unfold usp, bsb.
+exact (entry_stack_image_no_wrap Sv48 inp mbase ph entry sp brk rdraw Hlau).
 Qed.
-Lemma rd_envp_k : ltac2:(TCodec.tc2 tcn__AsanNodesStartXK "R8'R2yR0%211'8y8%511%311pTB51'6&<r1&4'5%118vQG%4221%7261'9&Q;v>&R3%12D;%4231&Q<&Q:&Q=+8vQF%3221%52:1%6214%82:1%?2:1':r5r2%211&Q5vQLvR0vQCvR4vQHvQM%78654N3219%<3Q791p0>1pS2Q=1%Q=1Q3&Q4vQ7r4&R1&Q>r3%211%O2N1%Q12Q61%62QI1u8%;4:921(2&A&Q6%14IHQB:%3261%52QE1%Q23C71p0E1p0QE1pSFQN1pQ6R01").
+Lemma length_bsb_sum : Z.of_nat (length bsb)
+= Z.of_nat (cat_string_off rseq sp top argv envp execfn)
++ Z.of_nat (launch_string_bytes argv envp execfn) + 8.
+Proof.
+unfold bsb. rewrite entry_stack_image_block, length_build_stack_bytes.
+unfold cat_string_off, rseq, argv, envp, execfn, top.
+change (la_rseq (launch_auxv inp sp mbase)) with (kb_rseq (in_kernel inp)). lia.
+Qed.
+Lemma s0_le_strings :
+Z.of_nat (length s0) + 1 <= Z.of_nat (launch_string_bytes argv envp execfn).
+Proof.
+unfold launch_string_bytes, s0, argv, envp, execfn.
+pose proof (Nat2Z.is_nonneg (length (flatten_strings (in_envp inp)))).
+pose proof (Nat2Z.is_nonneg (length (in_execfn inp))).
+destruct (in_argv inp) as [|a t] eqn:Ea.
+- destruct Hva as [[Hc _] _]. cbn in Hc. lia.
+- cbn [flatten_strings flat_map nth]. rewrite !length_app. cbn [length]. lia.
+Qed.
+Lemma str0_hi : STR0 + Z.of_nat (length s0) + 9 <= usp + Z.of_nat (length bsb).
+Proof.
+pose proof s0_le_strings. pose proof length_bsb_sum. unfold STR0, usp in *. lia.
+Qed.
+Lemma str0_ge : usp <= STR0.
+Proof. unfold STR0, usp. lia. Qed.
+Lemma str0_nw : STR0 + Z.of_nat (length s0) + 2 < 2 ^ 64.
+Proof. pose proof str0_hi. pose proof bsb_nw. lia. Qed.
+Lemma STR0_eq :
+cat_argv_ptr (ed_top rdraw) (in_argv inp) (in_envp inp) (in_execfn inp) 0
+= Z_to_bv 64 STR0.
+Proof.
+pose proof len_av. pose proof len_ev. pose proof usp_hi. pose proof usp_lo. pose proof bsb_nw.
+unfold STR0, usp, rseq, argv, envp, execfn, top in *.
+rewrite (cat_argv_ptr_offset (ed_top rdraw) (in_argv inp) (in_envp inp) (in_execfn inp) 0)
+by (destruct Hva as [Hl _]; lia).
+change (total_arg_bytes_nat (firstn 0 (in_argv inp))) with 0%nat.
+rewrite (cat_string_base_offset Sv48 inp mbase sp brk rdraw Hlau).
+rewrite nat_to_word_add_merge, word_add_nat. f_equal. lia.
+Qed.
+Lemma rd_envp_k : forall M k, (k < length envp)%nat ->
+(forall a : word, EA <= bv_unsigned a < EA + 8 * envc + 8 -> M a = wrap_mem inp mbase ph entry sp rdraw a) ->
+rdn SEGS M (Z_to_bv 64 (EA + 8 * Z.of_nat k)) 8 = Some (word_to_le_bytes 8 (cat_envp_ptr top argv envp execfn k)).
 Proof.
 intros M k Hk HM. pose proof len_av. pose proof len_ev. pose proof usp_lo. pose proof usp_hi.
 assert (Hk' : Z.of_nat k < envc) by (unfold envc; lia).
-rewrite (rdn_ext SEGS 8 M (wrap_mem ph sp argv envp uid hw rdraw)).
+rewrite (rdn_ext SEGS 8 M (wrap_mem inp mbase ph entry sp rdraw)).
 - rewrite rdn_wrap_stack_above; [| rewrite u64_lit; unfold EA in *; lia | rewrite u64_lit; unfold EA in *; [change (Z.of_nat 8) with 8|]; lia].
+unfold argv, envp, execfn, top.
 rewrite <- n_to_le_8_spec.
-rewrite <- (read_envp_ptr_k SEGS ph sp rdraw argv envp uid hw Hva Hve Hsp_hi k Hk).
-f_equal. rewrite word_add_nat. f_equal. unfold envp_off, EA, argc, usp. lia.
+rewrite <- (read_envp_ptr_k SEGS Sv48 inp mbase ph entry sp brk rdraw Hvl Hlau Hsp_hi k Hk).
+f_equal. rewrite word_add_nat. f_equal. unfold envp_off, EA, argc, argv, envp, usp. lia.
 - rewrite u64_lit; unfold EA in *; [change (Z.of_nat 8) with 8|]; lia.
 - intros a Ha. rewrite u64_lit in Ha by (unfold EA in *; lia). change (Z.of_nat 8) with 8 in Ha. apply HM. lia.
 Qed.
-Lemma rd_envp_null : ltac2:(TCodec.tc2 tcn__AsanNodesStartXK "R1'R2yR0%211'8y8%511%311pTB51'9&Q;v>&R3r1%22<1%5241&Q<&Q:&Q=+8vQF%3221%52;1%6214%82:1%@2:1':r3r2%211&Q5vQLvR0vQCvQGvR4vQHvQM%887654321:%=3Q0:1p0?1pS2Q61'5%11Q5%Q811&Q4vQ7&R1&Q>&4%127@%311%Q22Q11%Q42Q:1%72QD1u8%;4:L21(2&Az%=2QJ1%3261%52C1%Q53C71p0G1pQ6QI1").
+Lemma rd_envp_null : forall M,
+(forall a : word, EA <= bv_unsigned a < EA + 8 * envc + 8 -> M a = wrap_mem inp mbase ph entry sp rdraw a) ->
+rdn SEGS M (Z_to_bv 64 (EA + 8 * Z.of_nat (length envp))) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 0)).
 Proof.
 intros M HM. pose proof len_av. pose proof len_ev. pose proof usp_lo. pose proof usp_hi.
-rewrite (rdn_ext SEGS 8 M (wrap_mem ph sp argv envp uid hw rdraw)).
+rewrite (rdn_ext SEGS 8 M (wrap_mem inp mbase ph entry sp rdraw)).
 - rewrite rdn_wrap_stack_above; [| rewrite u64_lit; unfold EA, envc in *; lia | rewrite u64_lit; unfold EA, envc in *; [change (Z.of_nat 8) with 8|]; lia].
+unfold argv, envp, execfn, top.
 rewrite <- n_to_le_8_spec.
-rewrite <- (read_envp_null SEGS ph sp rdraw argv envp uid hw Hva Hve Hsp_hi).
-f_equal. rewrite word_add_nat. f_equal. unfold envp_off, EA, argc, usp. lia.
+rewrite <- (read_envp_null SEGS Sv48 inp mbase ph entry sp brk rdraw Hvl Hlau Hsp_hi).
+f_equal. rewrite word_add_nat. f_equal. unfold envp_off, EA, argc, argv, envp, usp. lia.
 - rewrite u64_lit; unfold EA, envc in *; [change (Z.of_nat 8) with 8|]; lia.
 - intros a Ha. rewrite u64_lit in Ha by (unfold EA, envc in *; lia). change (Z.of_nat 8) with 8 in Ha. apply HM. unfold envc. lia.
 Qed.
-Lemma rd_str0_j : ltac2:(TCodec.tc2 tcn__AsanNodesStartXK "R5'R2yR0%211'8y8%511%311pTB51'6';r1&4vQN%2281%5241'9&Q;vQ9&R3%12B9%4231&Q:&Q>%11:%3271%9261%;261':r5r2%211&Q5vQLvR0vQCvQGvR4vQHvQM%887654321:%=3Q2:1p0?1pS2Q81'5%11Q7%Q:11&Q4vQ7r4&R1r3%M11%O2Q31%42QD1u1%948721(2(3&Q2%12Q?9(7%11QH%53QI31%72C1%Q53C91p0G1p0QD1pSDQK1pQ6QM1").
+Lemma rd_str0_j : forall M j, (j <= length s0)%nat ->
+(forall a : word, STR0 <= bv_unsigned a <= STR0 + Z.of_nat (length s0) -> M a = wrap_mem inp mbase ph entry sp rdraw a) ->
+rdn SEGS M (Z_to_bv 64 (STR0 + Z.of_nat j)) 1 = Some [byte_at s0 j].
 Proof.
 intros M j Hj HM. pose proof len_av. pose proof len_ev. pose proof usp_lo. pose proof usp_hi. pose proof len_s0.
-rewrite (rdn_ext SEGS 1 M (wrap_mem ph sp argv envp uid hw rdraw)).
-- rewrite rdn_wrap_stack_above; [| rewrite u64_lit; unfold STR0 in *; lia | rewrite u64_lit; unfold STR0 in *; [change (Z.of_nat 1) with 1|]; lia].
-unfold byte_at, s0.
-rewrite <- (read_argv_byte_k ph SEGS sp argv envp 0 j uid hw rdraw ltac:(destruct Hva as [Hl _]; lia) Hj bsb_nw).
-f_equal. rewrite STR0_eq, word_add_nat, u64_lit by (unfold STR0 in *; lia). reflexivity.
-- rewrite u64_lit; unfold STR0 in *; [change (Z.of_nat 1) with 1|]; lia.
-- intros a Ha. rewrite u64_lit in Ha by (unfold STR0 in *; lia). change (Z.of_nat 1) with 1 in Ha. apply HM. lia.
+pose proof bsb_nw. pose proof str0_hi. pose proof str0_ge. pose proof str0_nw.
+rewrite (rdn_ext SEGS 1 M (wrap_mem inp mbase ph entry sp rdraw)).
+- rewrite rdn_wrap_stack_above; [| rewrite u64_lit; lia | rewrite u64_lit; [change (Z.of_nat 1) with 1|]; lia].
+unfold byte_at, s0, argv, envp, execfn, top.
+rewrite <- (read_argv_byte_k Sv48 SEGS inp mbase ph entry sp brk rdraw 0 j Hlau ltac:(destruct Hva as [Hl _]; lia) Hj).
+f_equal. rewrite STR0_eq, word_add_nat, u64_lit by lia. reflexivity.
+- rewrite u64_lit; [change (Z.of_nat 1) with 1|]; lia.
+- intros a Ha. rewrite u64_lit in Ha by lia. change (Z.of_nat 1) with 1 in Ha. apply HM. lia.
 Qed.
-Theorem x_sound_envscan : ltac2:(TCodec.tc2 tcn__AsanNodesStartXK ";&KvQ7vQOv0vQKv@vQ8vQAv?(D%:9987654321").
+Lemma envp_ptr_nz : forall k, (k < length envp)%nat ->
+bv_unsigned (cat_envp_ptr top argv envp execfn k) <> 0.
+Proof.
+intros k Hk. unfold argv, envp, execfn, top.
+exact (cat_envp_ptr_nz Sv48 inp mbase ph entry sp brk rdraw Hvl Hlau Hsp_lo Hsp_hi k Hk).
+Qed.
+Theorem x_sound_envscan : x_stmt SEGS scfg A nx0 LIMIT (rseq_z rseq) SINV argH FS0 XEnvScan.
 Proof.
 intros args cs cs' E R FULL model T HC _ Hn Hk. cbn [node_x] in Hn. unfold node_envscan in Hn.
 destruct (Z.eqb (pc cs) (x_envscan A) && len_eqb (kn cs) (reg cs 9) e_envp)%bool eqn:Hc; [|discriminate].
@@ -158,12 +212,12 @@ assert (H9' : getr R 9%bv = Z_to_bv 64 (EA + 8 * Z.of_nat 0)).
 { rewrite H9. apply bv_eq. rewrite u64_lit by (unfold EA; lia). unfold uE in V1. rewrite V1. lia. }
 set (H2 := Hv E cs model).
 set (ms := mkst R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS)).
-assert (HM : forall a : word, EA <= bv_unsigned a < EA + 8 * envc + 8 -> mrestrict H2 FULL a = wrap_mem ph sp argv envp uid hw rdraw a).
+assert (HM : forall a : word, EA <= bv_unsigned a < EA + 8 * envc + 8 -> mrestrict H2 FULL a = wrap_mem inp mbase ph entry sp rdraw a).
 { intros a Ha. unfold H2. rewrite mrestrict_Hv_high by (pose proof (APSK.utop_bounds E); rewrite (SINV_sp0 E FULL HS) in *; unfold EA in *; lia). eapply SINV_envp; [exact HS | exact Ha]. }
 destruct (env_loop SEGS (x_envscan A) we1 we2 we3 ltac:(lia) Fe1 Fe2 Fe3 Ee1 Ee2 Ee3 De1 De2 De3
-(mrestrict H2 FULL) (seg_rom SEGS) EA (length envp) (cat_envp_ptr sp argv envp)
+(mrestrict H2 FULL) (seg_rom SEGS) EA (length envp) (cat_envp_ptr top argv envp execfn)
 ltac:(unfold EA, envc in *; lia)
-ltac:(intros k Kk; split; [apply rd_envp_k; [exact Kk | exact HM] | apply (cat_envp_ptr_nz ph sp rdraw argv envp uid hw Hva Hve Hsp_lo Hsp_hi k Kk)])
+ltac:(intros k Kk; split; [apply rd_envp_k; [exact Kk | exact HM] | apply (envp_ptr_nz k Kk)])
 (rd_envp_null _ HM) (length envp) 0%nat R ltac:(lia) H9') as [R' [Hms Hpost]].
 unfold cfg_of. fold ms.
 assert (Hms' : msteps SEGS (restrict H2 ms) (mkst R' (Z_to_bv 64 (x_envscan A + 12)) (mrestrict H2 FULL) (seg_rom SEGS))).
@@ -189,7 +243,7 @@ rewrite Z.mod_small by (unfold EA; lia). unfold envc. lia.
 - rewrite P10. rewrite edenot_lit. reflexivity.
 - intros r N1 N2. apply (Pag r). intros [H|H]; [exact (N1 H) | exact (N2 H)].
 Qed.
-Theorem x_sound_pnscan : ltac2:(TCodec.tc2 tcn__AsanNodesStartXK ";&KvQ7vQOv0vQKv@vQ8vQAv?(F%:9987654321").
+Theorem x_sound_pnscan : x_stmt SEGS scfg A nx0 LIMIT (rseq_z rseq) SINV argH FS0 XPnScan.
 Proof.
 intros args cs cs' E R FULL model T HC _ Hn Hk. cbn [node_x] in Hn. unfold node_pnscan in Hn.
 destruct (reg_lit cs 10) as [p|] eqn:Hp10; [|discriminate].
@@ -202,6 +256,7 @@ apply andb_prop in Hc as [Hc Hfresh]. apply andb_prop in Hc as [Hc Hhi]. apply a
 apply andb_prop in Hc as [Hc Hwr]. apply andb_prop in Hc as [Hpc Heq].
 apply Z.eqb_eq in Hpc. apply Z.leb_le in Hlo. apply Z.leb_le in Hhi.
 pose proof len_av as Lav. pose proof len_ev as Lev. pose proof usp_lo as U1. pose proof usp_hi as U2. pose proof len_s0 as Ls0.
+pose proof str0_ge as Sge. pose proof str0_nw as Snw. pose proof bsb_nw as Snb. pose proof str0_hi as Shi.
 destruct Xpn as (X1 & X2 & X3). destruct Ep as (Ep0 & Ep1 & Ep2 & Ep3 & Ep4).
 pose proof HULL_ok as HU; unfold hull_ok in HU; destruct HU as (HU0 & HU1 & HU2 & HU3).
 pose proof (co_sinv _ _ _ _ _ _ _ _ _ _ _ HC) as HS.
@@ -211,12 +266,12 @@ destruct (reg_lit_sound SEGS A LIMIT SINV argH FS0 E cs R FULL model 10 p HC lta
 replace (Z_to_bv 5 (Z.of_nat 10)) with (10%bv : bv 5) in H10 by (apply bv_eq; reflexivity).
 destruct (reg_lit_sound SEGS A LIMIT SINV argH FS0 E cs R FULL model 12 _ HC ltac:(lia) Hp12) as [H12 _].
 replace (Z_to_bv 5 (Z.of_nat 12)) with (12%bv : bv 5) in H12 by (apply bv_eq; reflexivity).
-pose proof (len_eqb_sound SEGS E _ (kn cs) (reg cs 11) (eaddz e_str0 1) HK Heq) as H11e.
+pose proof (len_eqb_sound SEGS E _ (kn cs) (reg cs 11) (eaddz (e_str0 (rseq_z rseq)) 1) HK Heq) as H11e.
 pose proof (reg_sound SEGS A LIMIT SINV argH FS0 E cs R FULL model 11 HC ltac:(lia)) as H11.
 replace (Z_to_bv 5 (Z.of_nat 11)) with (11%bv : bv 5) in H11 by (apply bv_eq; reflexivity). rewrite H11e in H11.
 assert (H11' : getr R 11%bv = Z_to_bv 64 (STR0 + Z.of_nat 0 + 1)).
-{ rewrite H11. unfold eaddz. rewrite mkAlu_denot, edenot_lit. apply bv_eq. rewrite u_add64, !u64_lit by (unfold STR0; lia).
-unfold uE in V3. rewrite V3. rewrite Z.mod_small by (unfold STR0; lia). lia. }
+{ rewrite H11. unfold eaddz. rewrite mkAlu_denot, edenot_lit. apply bv_eq. rewrite u_add64, !u64_lit by lia.
+unfold uE in V3. rewrite V3. rewrite Z.mod_small by lia. lia. }
 destruct (kwritable_sound SEGS E _ (kn cs) (kn cs) (ELit 0) p 8 HK HK Hwr ltac:(lia)) as (HKW & _ & _).
 unfold estart in HKW. cbn [a_base a_off] in HKW. rewrite edenot_lit, u64_lit in HKW by lia. rewrite Z.add_0_l in HKW.
 change (Z.to_nat 8) with 8%nat in HKW.
@@ -225,12 +280,12 @@ set (M0 := mrestrict H2 FULL).
 set (ms := mkst R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS)).
 assert (Hst0 : store_ok SEGS M0 (Z_to_bv 64 p) 8 = true).
 { eapply store_ok_mono; [apply Mr_grows_Hv | exact HKW]. }
-assert (HM : forall a : word, STR0 <= bv_unsigned a <= STR0 + Z.of_nat (length s0) -> M0 a = wrap_mem ph sp argv envp uid hw rdraw a).
-{ intros a Ha. unfold M0, H2. rewrite mrestrict_Hv_high by (pose proof (APSK.utop_bounds E); rewrite (SINV_sp0 E FULL HS) in *; unfold STR0 in *; lia). eapply SINV_str0; [exact HS | exact Ha]. }
+assert (HM : forall a : word, STR0 <= bv_unsigned a <= STR0 + Z.of_nat (length s0) -> M0 a = wrap_mem inp mbase ph entry sp rdraw a).
+{ intros a Ha. unfold M0, H2. rewrite mrestrict_Hv_high by (pose proof (APSK.utop_bounds E); rewrite (SINV_sp0 E FULL HS) in *; lia). eapply SINV_str0; [exact HS | exact Ha]. }
 destruct (pn_loop SEGS (x_pnscan A) wp0 wp1 wp2 wp3 wp4 ltac:(lia) Fp0 Fp1 Fp2 Fp3 Fp4 Ep0 Ep1 Ep2 Ep3 Ep4 Dp0 Dp1 Dp2 Dp3 Dp4
 M0 (seg_rom SEGS) p STR0 s0
-ltac:(unfold KHI in *; lia) ltac:(unfold STR0; lia) ltac:(left; unfold STR0, KHI in *; lia)
-(valid_argv_str_nz argv 0 Hva ltac:(destruct Hva as [Hl _]; lia))
+ltac:(unfold KHI in *; lia) ltac:(lia) ltac:(left; unfold KHI in *; lia)
+(valid_argv_str_nz (in_argv inp) 0 Hva ltac:(destruct Hva as [Hl _]; lia))
 (fun j Hj => rd_str0_j M0 j Hj HM) Hst0
 s0 0%nat R M0 eq_refl ltac:(lia) H10 H11' H12 (cellrel_refl M0 p)) as (R' & M' & Hms & Hpost & HM').
 unfold cfg_of. fold ms.
@@ -275,7 +330,7 @@ destruct HM' as [_ HM2]. apply HM2. unfold M0, mrestrict, H2, Hv. rewrite Hvx. c
 + unfold FULL', munrestrict. unfold H2 at 1. unfold Hv. rewrite Ha. reflexivity.
 Qed.
 End NodesD.
-Lemma some_inj_acs : ltac2:(TCodec.tc2 tcn__AsanNodesStartXK "?'G':'8%113(2r2%2261r1%4281%83631r3%:3;16p031pS:=1pS2>1").
+Lemma some_inj_acs : forall a b : acs, Some a = Some b -> a = b.
 Proof. intros a b H. exact (f_equal (fun o => match o with Some x => x | None => a end) H). Qed.
 Section LayoutSound.
 Variable SEGS : list Segment.
@@ -283,35 +338,37 @@ Variable scfg : SpuriousCfg.
 Variable A : atable.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+Variable rz : Z.
 Variable SINV : env -> (word -> option byte) -> Prop.
 Variable argH : env -> word -> bool.
 Variable FS0 : Fs.Fs.
-Lemma e_argv1w_ge2 : ltac2:(TCodec.tc2 tcn__AsanNodesStartXK "G'N&Q;+2&R3yR0&Or1&C%3221%6251%9281':'R2%119&Mr2&H%3221&I%5241%93731p0;1pLF1").
+Lemma e_argv1w_ge2 : forall E, 2 <= bv_unsigned (ev E V_ARGC) -> edenot E (e_argv1w rz) = edenot E (e_str1 rz).
 Proof.
 intros E H. unfold e_argv1w. cbn [edenot]. apply bv_eq. rewrite u_mul64, u_sltu64, u64_lit by lia.
 replace (1 <? bv_unsigned (ev E V_ARGC)) with true by (symmetry; apply Z.ltb_lt; lia).
-pose proof (u64_range (edenot E e_str1)). rewrite Z.mul_1_l. apply Z.mod_small. lia.
+pose proof (u64_range (edenot E (e_str1 rz))). rewrite Z.mul_1_l. apply Z.mod_small. lia.
 Qed.
-Lemma e_argv1w_le1 : ltac2:(TCodec.tc2 tcn__AsanNodesStartXK "I'N&Q;&R3yR0&Or1&C%3221%6251+1%9221':'R2%11:&Mr2&H%3221(Lz%211%7261%;3951p0=1pLH1").
+Lemma e_argv1w_le1 : forall E, bv_unsigned (ev E V_ARGC) <= 1 -> edenot E (e_argv1w rz) = edenot E (ELit 0).
 Proof.
 intros E H. unfold e_argv1w. cbn [edenot]. apply bv_eq. rewrite u_mul64, u_sltu64, !u64_lit by lia.
 replace (1 <? bv_unsigned (ev E V_ARGC)) with false by (symmetry; apply Z.ltb_ge; lia).
 reflexivity.
 Qed.
-Lemma kw_argv1_respell : ltac2:(TCodec.tc2 tcn__AsanNodesStartXK "Q1'N'R2yR0%211'8y8%511%311p051'Q0&Q1vQ7r4r3&Jr2%211%746541':&Mr5%2216%3229%53D21r6%;1<%@4?261p041p0;1pT@D1pT>E1pQ6G1pLQ01").
+Lemma kw_argv1_respell : forall E M v v',
+kentry_ok SEGS E M (kw_argv1 v) -> edenot E v' = edenot E v -> kentry_ok SEGS E M (kw_argv1 v').
 Proof. intros E M v v' HK Hv. unfold kw_argv1 in *. cbn [kentry_ok] in *. rewrite Hv. exact HK. Qed.
-Theorem x_sound_layout : ltac2:(TCodec.tc2 tcn__AsanNodesStartXK ";&KvQ7vQOv0vQKv@vQ8vQAv?(E%:9987654321").
+Theorem x_sound_layout : x_stmt SEGS scfg A nx0 LIMIT rz SINV argH FS0 XLayout.
 Proof.
 intros args cs cs' E R FULL model T HC _ Hn Hk. cbn [node_x] in Hn. unfold node_layout in Hn.
-destruct (existsb (kentry_eqb (kw_argv1 e_argv1w)) (kn cs)) eqn:Hex; [|discriminate]. cbn [negb] in Hn.
+destruct (existsb (kentry_eqb (kw_argv1 (e_argv1w rz))) (kn cs)) eqn:Hex; [|discriminate]. cbn [negb] in Hn.
 pose proof (co_know _ _ _ _ _ _ _ _ _ _ _ HC) as HK.
 apply existsb_exists in Hex as [K0 [Hin Heqb]]. apply kentry_eqb_eq in Heqb. subst K0.
 pose proof (proj1 (Forall_forall _ _) HK _ Hin) as HK0.
 assert (HK' : know_ok SEGS E (Mr A argH E cs model FULL)
-(List.filter (fun K => negb (kentry_eqb (kw_argv1 e_argv1w) K)) (kn cs)))
+(List.filter (fun K => negb (kentry_eqb (kw_argv1 (e_argv1w rz)) K)) (kn cs)))
 by (apply know_ok_filter; exact HK).
-assert (FIN : forall v, edenot E v = edenot E e_argv1w ->
-cs' = set_kn cs (kw_argv1 v :: List.filter (fun K => negb (kentry_eqb (kw_argv1 e_argv1w) K)) (kn cs)) ->
+assert (FIN : forall v, edenot E v = edenot E (e_argv1w rz) ->
+cs' = set_kn cs (kw_argv1 v :: List.filter (fun K => negb (kentry_eqb (kw_argv1 (e_argv1w rz)) K)) (kn cs)) ->
 srealizes SEGS scfg (cfg_of SEGS R (pc cs) FULL model) T).
 { intros v Hv ->. specialize (Hk E R FULL model (conj (env_agree_refl nx0 E) (env_agree_refl (nxt cs) E))).
 rewrite pc_set_kn in Hk. apply Hk; [|reflexivity].
@@ -328,6 +385,6 @@ apply (FIN (ELit 0)); [|symmetry; exact Hn]. symmetry. apply e_argv1w_le1. lia.
 destruct (xlo (kn cs) (EVar V_ARGC)) as [lo|] eqn:Hlo; [|discriminate].
 destruct (Z.leb 2 lo) eqn:Hle; [|discriminate]. apply Z.leb_le in Hle. apply some_inj_acs in Hn.
 pose proof (xlo_sound SEGS E _ (kn cs) (EVar V_ARGC) lo HK Hlo) as B. cbn [edenot] in B.
-apply (FIN e_str1); [|symmetry; exact Hn]. symmetry. apply e_argv1w_ge2. lia.
+apply (FIN (e_str1 rz)); [|symmetry; exact Hn]. symmetry. apply e_argv1w_ge2. lia.
 Qed.
 End LayoutSound.

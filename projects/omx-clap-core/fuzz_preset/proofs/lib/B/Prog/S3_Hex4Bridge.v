@@ -1,16 +1,16 @@
-(* fuzz_preset image B' (#102 pin asan-ubsan d663f82d, unstripped twin c90d4fa54d43; facts 8f3e7e1a07f1): the hex4
+(* fuzz_preset image B' (#102 pin asan-ubsan d663f82d, unstripped twin c90d4fa54d43; facts): the hex4
    ACCEPTANCE bridge on the #102 kit tree preset-tree-at-2026-10-29T18-51-23Z.tsv (sha256 c6f0aa3569e3; internal record) (an integration commit with its PRH_Base.v blob fdb45545469b is bound to it), hex4 at
    K0's text from h-verbs-1's proved MEMNORM leaf walk on B'.
    rule 24: no function proved
    rule 24: proves no function (kind: bridge lemma). hex4 itself is h-verbs-1's walk on B': lib/B/Prog/hex4_mn.v
-   hex4_x_holds_mnI (blob 887976512249) over lib/B/Prog/hex4_x.v (blob edb880336583), both taken BY PATH from
-   origin/cold/h-verbs-1-hex4-102 5415a69a43eb with the leaves listing they run over (lib/B/Listing_leaves.v
+   hex4_x_holds_mnI (blob 887976512249) over lib/B/Prog/hex4_x.v (blob edb880336583), both taken BY PATH
+    with the leaves listing they run over (lib/B/Listing_leaves.v
    a5b1100728d4, lib/B/PAImg_leaves.v 6b3656ad1a67) and their instance witness lib/B/Prog/hex4_witness.v c3b54480a9ed;
    none of them is changed here. This file only maps the text's premises onto the leaf's and the leaf's post onto the text's
-   fpostWm. It is the image-B' twin of lib/A/Prog/S3_Hex4Bridge.v (h-rw-pre-5 Hex4Ap, INT102-READY 38dc9806ac77; in
-   int102 at 7edddd96814): the same proof text with image B's names, written by hand, not a relocation (no B bridge
+   fpostWm. It is the image-B' twin of lib/A/Prog/S3_Hex4Bridge.v (h-rw-pre-5 Hex4Ap, INT102-READY; in
+   int102): the same proof text with image B's names, written by hand, not a relocation (no B bridge
    existed on the old pins, and the A' file holds no address numeral to move).
-   TEXT: thex4_specX, lib/A/PRH_FnReader.v blob c30f1da6a2d1 (f97c8b2f046b = #102 integration commit 0f2915503ca0), instantiated
+   TEXT: thex4_specX, lib/A/PRH_FnReader.v blob c30f1da6a2d1 (= #102 integration), instantiated
    at (PI := prh_img_B) (PA := PI_prog_B); PRH_Base.v fdb45545469b, PRH_ImgB.v 3216eca68342. The text is quoted
    verbatim in the A' twin's header; fpostWm .. Q is fpostW .. (fQmn mem Q), and fQmn mem Q is
    Q /\ (YAkMemnorm.memnorm segs mem -> YAkMemnorm.memnorm segs mem') (PRH_Base.v:895-911).
@@ -59,7 +59,7 @@ Open Scope Z_scope.
 (* FULLY QUALIFIED image names (CrcBp's wrong-image trap, owner 19:2xZ: in a closure that also loads the plain image a
    short image name can resolve to the wrong one). Every segment list, listing instance, entry table and PrhImg below
    is named by its full path through these local notations; hex4B_names_guard checks by reflexivity that they are
-   the ones the leaf and the kit instance use. Locate in this file's context (pins102 workspace of 482512594728):
+   the ones the leaf and the kit instance use. Locate in this file's context (pins102 workspace):
    rsegs and Img0.rsegs both resolve to OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.B.Img0.rsegs. *)
 #[local] Notation SEGS_B := OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.B.Img0.rsegs.
 #[local] Notation PI_B := OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.B.PAImg_prog.PI_prog_B.

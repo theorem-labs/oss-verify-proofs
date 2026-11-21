@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/PItems_head.v; 120 of its 156 lines of code are new or changed and 1270 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: parse_items' image-B walk COMPOSED AT THE INSTANCE: VrdUnit's step_PI for the kit's text
-   step_PI for the kit's record text tparse_items_specX (walk-S5b ae985686b11, lib/A/PRH_FnParse.v blob dcff6bfa302a; kit
+   step_PI for the kit's record text tparse_items_specX (walk-S5b, lib/A/PRH_FnParse.v blob dcff6bfa302a; kit
    (sha256 494eefc5b155; internal record)), at PIi := prh_img_B, cp := CfParams_preset, L := B_prog_listing, PA := PI_prog_B,
    PL := PL_prog_B. PItems_top.v's pi_step_PI is applied with every segment step it takes discharged by its Qed lemma:
      EPI          pi_epi_holds          (PItems_entry.v)
@@ -81,7 +82,7 @@ Variable B : asyms.
 Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte) -> Model -> Prop.
 Variable SK : YI16.sink_head.
 Variable CTX0 : list (list Z).
-(* The batch kit (03fcabb582d0): the cursor set of the texts *)
+(* The batch kit: the cursor set of the texts *)
 Variable CW : list (list Z).
 
 Hypothesis LAWS : AR_laws_x SEGS B ARx cf_head.

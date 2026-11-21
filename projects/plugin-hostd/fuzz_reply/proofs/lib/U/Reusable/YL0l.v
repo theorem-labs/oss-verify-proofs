@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YL0l.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: a0 dropped from the section as E_main and E_m1 now take the input; the md_loop lemmas' patterns take fdchan's new reader conjunct; src0_read_loop takes in_channel_reader inp = true and MD_file's new rnd argument, and meets the reader conjunct with it; the read-stage window lemmas in a section of either allocation mode (Section jw, as libreac/fuzz_knock's copy); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -13,6 +14,7 @@ YO0p YO0j YO0m YO0l YO0n YO0k YO0o YO09 YO06.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.U.Reusable Require Import YH00 YH01 YH03 YH02 YN3e YN35 YN3f YN3g YN34.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.U.Reusable Require Import YN03 YL07 YL01 YL08 YL0d YL0e YL0f YL02 YL0a YL0b YL00 YL0c YL09 YL0k YL0o YL0m.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.U.Reusable Require Import YM05.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.U.Reusable.R Require Import Cfg.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Open Scope bv_scope.
@@ -117,55 +119,14 @@ eexists. split; [do 3 right; left; reflexivity|].
 match goal with |- ?lo <= ?x < ?hi => let vl := eval vm_compute in lo in let vh := eval vm_compute in hi in change (vl <= x < vh) end.
 unfold RS_LO, src0_D_read_stage. lia.
 Qed.
-Section j.
+(* The read-stage window lemmas hold for the ledger of either allocation mode; YL0l_mf.v uses them at its
+   own mode, this file's Section j at the forced one. *)
+Section jw.
+Context {AM : AllocMode}.
 Variable API : AllocAPI src0_msyms.
 Hypothesis AX : AllocExtra src0_msyms (aa_MR API).
-Variables (sp tid : word) (a0 path : list byte) (inp : ProcInput) (data : list byte) (rnd : EntryDraw).
-Hypothesis Hlk : fs_lookup (in_fs inp) path = Some data.
-Let L : Z := Z.of_nat (length data).
-Let E9 : env := edset (E_main sp [a0; path] (in_envp inp) tid rnd) 2 data.
-Hypothesis HSA0 : forall G, anchored_atoms G = anchored_atoms RD_facts -> stack_anchored (E_main sp [a0; path] (in_envp inp) tid rnd) G.
-Variable PRES : dleaf * astate -> Prop.
-Definition E_lp (J : list word) (buf g len cap : Z) : env :=
-ewset (ewset (ewset (ewset (havoc E9 29 J) 14 (Z_to_bv 64 buf)) 26 (Z_to_bv 64 g)) 27 (Z_to_bv 64 len)) 28 (Z_to_bv 64 cap).
-Lemma ew_lp : forall J buf g len cap n,
-ew (E_lp J buf g len cap) n =
-if (n =? 28)%nat then Z_to_bv 64 cap else if (n =? 27)%nat then Z_to_bv 64 len
-else if (n =? 26)%nat then Z_to_bv 64 g else if (n =? 14)%nat then Z_to_bv 64 buf
-else if (n <? 29)%nat then ew E9 n else nth (n - 29) J (ew E9 n).
-Proof. intros. unfold E_lp, ewset, havoc. cbn [ew]. reflexivity. Qed.
-Lemma ed_lp : forall J buf g len cap, ed (E_lp J buf g len cap) = ed E9.
-Proof. intros. reflexivity. Qed.
-Lemma ed_lp2 : forall J buf g len cap, ed (E_lp J buf g len cap) 2 = data.
-Proof. intros. rewrite ed_lp. unfold E9, edset. cbn. reflexivity. Qed.
 Lemma u64_of_Z : forall z, 0 <= z < 2 ^ 64 -> bv_unsigned (Z_to_bv 64 z) = z.
 Proof. intros z Hz. rewrite Z_to_bv_unsigned. unfold bv_wrap. change (bv_modulus 64) with (2 ^ 64). apply Z.mod_small. exact Hz. Qed.
-Definition md_loop (md : Model) (off : Z) : Prop :=
-fd_lookup (m_fds md) (Z_to_bv 64 3) = Some (FdFile path (Z_to_bv 64 off)) /\
-fdchan (Z_to_bv 64 1) (Z_to_bv 64 1) md /\ fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) md /\ m_fs md = in_fs inp /\
-m_fds md = (Z_to_bv 64 3, FdFile path (Z_to_bv 64 off)) :: STDFDS.
-Definition md_post (md : Model) : Prop :=
-fdchan (Z_to_bv 64 1) (Z_to_bv 64 1) md /\ fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) md /\ m_fs md = in_fs inp /\
-m_fds md = STDFDS.
-Lemma md_loop_vm : forall md off vm, md_loop md off -> md_loop (with_vmmaps vm md) off.
-Proof. intros md off vm (H1 & [H2 H2'] & [H3 H3'] & H4 & H5). unfold md_loop, fdchan. autorewrite with model. repeat split; assumption. Qed.
-Lemma md_loop_ex : forall md md' off, md_loop md off -> (exists vm, md' = with_vmmaps vm md) -> md_loop md' off.
-Proof. intros md md' off H [vm ->]. apply md_loop_vm. exact H. Qed.
-Lemma md_loop_read : forall md off off' e,
-md_loop md off -> e = FdFile path (Z_to_bv 64 off') ->
-md_loop (with_fds (fd_insert (m_fds md) (Z_to_bv 64 3) e) md) off'.
-Proof.
-intros md off off' e (H1 & [H2 H2'] & [H3 H3'] & H4 & H5) ->. unfold md_loop, fdchan. autorewrite with model.
-rewrite fd_lookup_insert_eq. rewrite !fd_lookup_insert_neq by (intros H; apply (f_equal bv_unsigned) in H; discriminate).
-repeat split; try assumption. rewrite H5. apply fd_insert3_std.
-Qed.
-Lemma md_loop_close : forall md off,
-md_loop md off -> md_post (with_fds (fd_remove (m_fds md) (Z_to_bv 64 3)) md).
-Proof.
-intros md off (H1 & [H2 H2'] & [H3 H3'] & H4 & H5). unfold md_post, fdchan. autorewrite with model.
-rewrite !fd_lookup_remove_neq by (intros H; apply (f_equal bv_unsigned) in H; discriminate).
-repeat split; try assumption. rewrite H5. apply fd_remove3_std.
-Qed.
 Lemma win_not_static : forallb (fun r => (fst r + snd r <=? RS_LO) || (RS_LO + 65536 <=? fst r)) (static_ranges src0_msyms) = true
 /\ ((ms_ctx src0_msyms + CTX_SIZE <=? RS_LO) || (RS_LO + 65536 <=? ms_ctx src0_msyms)) = true.
 Proof. vm_compute. split; reflexivity. Qed.
@@ -215,6 +176,58 @@ destruct (Z_lt_dec (c + i) a) as [|Hge]; [lia|]. destruct (Z_lt_dec (c + i) (a +
 exfalso. apply (ax_blocks_img AX Lc A m md p sz (c + i - ptr_addr Lc p) HMR Hp ltac:(lia)).
 replace (ptr_addr Lc p + (c + i - ptr_addr Lc p)) with (RS_LO + (c + i - RS_LO)) by lia. apply read_stage_img. lia.
 Qed.
+End jw.
+Section j.
+Variable API : AllocAPI src0_msyms.
+Hypothesis AX : AllocExtra src0_msyms (aa_MR API).
+Variables (sp tid : word) (path : list byte) (inp : ProcInput) (data : list byte) (rnd : EntryDraw).
+(* [E_main] and [E_m1] read the entry strings and execfn from [inp] in this unit. *)
+Hypothesis Hlk : fs_lookup (in_fs inp) path = Some data.
+Let L : Z := Z.of_nat (length data).
+Let E9 : env := edset (E_main sp inp tid rnd) 2 data.
+Hypothesis HSA0 : forall G, anchored_atoms G = anchored_atoms RD_facts -> stack_anchored (E_main sp inp tid rnd) G.
+Variable PRES : dleaf * astate -> Prop.
+Definition E_lp (J : list word) (buf g len cap : Z) : env :=
+ewset (ewset (ewset (ewset (havoc E9 29 J) 14 (Z_to_bv 64 buf)) 26 (Z_to_bv 64 g)) 27 (Z_to_bv 64 len)) 28 (Z_to_bv 64 cap).
+Lemma ew_lp : forall J buf g len cap n,
+ew (E_lp J buf g len cap) n =
+if (n =? 28)%nat then Z_to_bv 64 cap else if (n =? 27)%nat then Z_to_bv 64 len
+else if (n =? 26)%nat then Z_to_bv 64 g else if (n =? 14)%nat then Z_to_bv 64 buf
+else if (n <? 29)%nat then ew E9 n else nth (n - 29) J (ew E9 n).
+Proof. intros. unfold E_lp, ewset, havoc. cbn [ew]. reflexivity. Qed.
+Lemma ed_lp : forall J buf g len cap, ed (E_lp J buf g len cap) = ed E9.
+Proof. intros. reflexivity. Qed.
+Lemma ed_lp2 : forall J buf g len cap, ed (E_lp J buf g len cap) 2 = data.
+Proof. intros. rewrite ed_lp. unfold E9, edset. cbn. reflexivity. Qed.
+Definition md_loop (md : Model) (off : Z) : Prop :=
+fd_lookup (m_fds md) (Z_to_bv 64 3) = Some (FdFile path (Z_to_bv 64 off)) /\
+fdchan (Z_to_bv 64 1) (Z_to_bv 64 1) md /\ fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) md /\ m_fs md = in_fs inp /\
+m_fds md = (Z_to_bv 64 3, FdFile path (Z_to_bv 64 off)) :: STDFDS.
+Definition md_post (md : Model) : Prop :=
+fdchan (Z_to_bv 64 1) (Z_to_bv 64 1) md /\ fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) md /\ m_fs md = in_fs inp /\
+m_fds md = STDFDS.
+Lemma md_loop_vm : forall md off vm, md_loop md off -> md_loop (with_vmmaps vm md) off.
+(* 08b1429: [fdchan] has THREE conjuncts, the third being [m_channel_reader model = true]
+   (Common/CatSim.v:1521).  The two-name patterns below left the reader bound up inside H2'
+   and H3', so the final [assumption] had nothing for the third goal. *)
+Proof. intros md off vm (H1 & [H2 [H2' H2r]] & [H3 [H3' H3r]] & H4 & H5). unfold md_loop, fdchan. autorewrite with model. repeat split; assumption. Qed.
+Lemma md_loop_ex : forall md md' off, md_loop md off -> (exists vm, md' = with_vmmaps vm md) -> md_loop md' off.
+Proof. intros md md' off H [vm ->]. apply md_loop_vm. exact H. Qed.
+Lemma md_loop_read : forall md off off' e,
+md_loop md off -> e = FdFile path (Z_to_bv 64 off') ->
+md_loop (with_fds (fd_insert (m_fds md) (Z_to_bv 64 3) e) md) off'.
+Proof.
+intros md off off' e (H1 & [H2 [H2' H2r]] & [H3 [H3' H3r]] & H4 & H5) ->. unfold md_loop, fdchan. autorewrite with model.
+rewrite fd_lookup_insert_eq. rewrite !fd_lookup_insert_neq by (intros H; apply (f_equal bv_unsigned) in H; discriminate).
+repeat split; try assumption. rewrite H5. apply fd_insert3_std.
+Qed.
+Lemma md_loop_close : forall md off,
+md_loop md off -> md_post (with_fds (fd_remove (m_fds md) (Z_to_bv 64 3)) md).
+Proof.
+intros md off (H1 & [H2 [H2' H2r]] & [H3 [H3' H3r]] & H4 & H5). unfold md_post, fdchan. autorewrite with model.
+rewrite !fd_lookup_remove_neq by (intros H; apply (f_equal bv_unsigned) in H; discriminate).
+repeat split; try assumption. rewrite H5. apply fd_remove3_std.
+Qed.
 Definition ext29 (E Ec : env) : Prop := (forall n, (n < 29)%nat -> ew Ec n = ew E n) /\ ed Ec = ed E.
 Lemma ext29_refl : forall E, ext29 E E.
 Proof. intros E. split; [intros; reflexivity | reflexivity]. Qed.
@@ -230,7 +243,7 @@ Lemma anch_lp : forall J buf g len cap Ec G,
 ext29 (E_lp J buf g len cap) Ec -> anchored_atoms G = anchored_atoms RD_facts -> stack_anchored Ec G.
 Proof.
 intros J buf g len cap Ec G [HX _] HG.
-apply (stack_anchored_ext (E_main sp [a0; path] (in_envp inp) tid rnd) Ec RD_facts G (HSA0 RD_facts eq_refl) HG).
+apply (stack_anchored_ext (E_main sp inp tid rnd) Ec RD_facts G (HSA0 RD_facts eq_refl) HG).
 intros [n K] Hin. cbn [fst].
 match type of Hin with In _ ?l => let v := eval vm_compute in l in change l with v in Hin end.
 assert (Hn : (n < 10)%nat /\ n <> 14%nat).
@@ -463,8 +476,8 @@ assert (Hbs : bs = firstn (Z.to_nat w) (skipn (Z.to_nat len) data)).
 { subst bs. rewrite file_read_unguarded. unfold word_to_nat. rewrite (denot_lit_U E1 (sr_get (ss_regs S_RE) 12%bv)), H12.
 change (U E1 (SOff A_WANT 0)) with (U E1 (SOff 46 0)). rewrite U_SOff, E46, Z.add_0_r, zcanon_id by (unfold M64; lia).
 rewrite !u64_of_Z by lia. reflexivity. }
-pose proof (MR_win Lc A mem _ md RS_LO bs HMR ltac:(lia) ltac:(lia) Hfr eq_refl) as HMR1.
-pose proof (blk_data_win Lc A mem _ md bufp cap RS_LO bs buf (firstn (Z.to_nat len) data) HMR Hin ltac:(lia) ltac:(rewrite (Hfl len); lia)
+pose proof (MR_win API AX Lc A mem _ md RS_LO bs HMR ltac:(lia) ltac:(lia) Hfr eq_refl) as HMR1.
+pose proof (blk_data_win API AX Lc A mem _ md bufp cap RS_LO bs buf (firstn (Z.to_nat len) data) HMR Hin ltac:(lia) ltac:(rewrite (Hfl len); lia)
 ltac:(lia) ltac:(lia) Hfr HD) as HD1.
 clear HMR HD.
 remember (Z.of_nat (length bs)) as n eqn:Hndef.
@@ -801,27 +814,32 @@ lazymatch type of HS' with st_ok _ _ _ ?msx =>
 apply (IHN fuel cap bufp (len + n) A Lc J' g msx _ K ltac:(lia) Hcap Hfuel ltac:(lia) ltac:(lia) Hub HW HB Hid HS' HMR Hmd1 HD HJt HGt HLt HK HPOST) end.
 Qed.
 Theorem src0_read_loop : forall (brk mbase : word) (lim : Z) regs' g ms md Lc A bufp vm (K : dleaf * astate -> TSet),
-st_ok src0segs (E_m1 sp tid [a0; path] (in_envp inp) rnd regs' g) ss_m1_post ms ->
+st_ok src0segs (E_m1 sp tid inp rnd regs' g) ss_m1_post ms ->
 getr regs' 10%bv = Z_to_bv 64 (ptr_addr Lc bufp) ->
 aa_MR API Lc A (ms_mem ms) md -> WF A -> bounded A -> st_init_done A = true ->
 user_blocks A = [(bufp, CAP0)] ->
-md = with_vmmaps vm (MD_file path tid brk mbase sp lim inp) ->
+md = with_vmmaps vm (MD_file path tid brk mbase sp lim inp rnd) ->
+(* The revision's [fdchan] carries a third conjunct, [m_channel_reader model = true], so the
+   [md_loop] this proof establishes at its base needs the launch's reader fact; the caller
+   (YL0j.v) discharges it from its own [Hcr], as libdiginet/fuzz_decode's copy does.
+   *)
+in_channel_reader inp = true ->
 jinv K (TREE READ_FUEL CAP0 bufp A) -> gtree mgrant (TREE READ_FUEL CAP0 bufp A) -> leaves PRES (TREE READ_FUEL CAP0 bufp A) ->
 (forall r, t_eq (K r) (leaf_shapeX data (in_fs inp) r)) ->
 POST K ->
 realizes src0segs (mkCfg ms md) (tset (TREE READ_FUEL CAP0 bufp A) K).
 Proof.
-intros brk mbase lim regs' g ms md Lc A bufp vm K HS Ha0 HMR HW HB Hid Hub Hmd HJ HG HL HK HPOST.
+intros brk mbase lim regs' g ms md Lc A bufp vm K HS Ha0 HMR HW HB Hid Hub Hmd Hcr HJ HG HL HK HPOST.
 destruct (mr_model _ _ (aa_laws API) _ _ _ _ HMR) as (Hh & Hlz & _).
 assert (Hin : In (bufp, CAP0) (user_blocks A)) by (rewrite Hub; left; reflexivity).
 pose proof (mr_blocks _ _ (aa_laws API) Lc A (ms_mem ms) md bufp CAP0 0 HMR Hin ltac:(unfold CAP0; lia)) as (_ & Hq1 & Hq2 & _).
 pose proof (mr_blocks_aligned _ _ (aa_laws API) Lc A (ms_mem ms) md bufp CAP0 HMR Hin) as Hqal.
 unfold CAP0 in Hq2. assert (Hac : alloc_ceiling < 2 ^ 47) by (pose proof YM05.alloc_ceiling_val; lia).
-set (E0 := E_m1 sp tid [a0; path] (in_envp inp) rnd regs' g) in HS.
+set (E0 := E_m1 sp tid inp rnd regs' g) in HS.
 assert (E14 : ew E0 14 = Z_to_bv 64 (ptr_addr Lc bufp)).
 { unfold E0, E_m1. change 14%nat with (K_M1 + 4)%nat. rewrite post_env_a0. exact Ha0. }
 assert (HSAE0 : forall G, anchored_atoms G = anchored_atoms RD_facts -> stack_anchored E0 G).
-{ intros G HGa. apply (stack_anchored_ext (E_main sp [a0; path] (in_envp inp) tid rnd) E0 RD_facts G (HSA0 RD_facts eq_refl) HGa).
+{ intros G HGa. apply (stack_anchored_ext (E_main sp inp tid rnd) E0 RD_facts G (HSA0 RD_facts eq_refl) HGa).
 intros [n K0] Hn. cbn [fst].
 match type of Hn with In _ ?l => let v := eval vm_compute in l in change l with v in Hn end.
 assert (Hn10 : (n < 10)%nat).
@@ -875,7 +893,7 @@ apply (loop_rd (S (Z.to_nat (2 ^ 28))) READ_FUEL CAP0 bufp 0 A Lc J g msx md K l
 ltac:(unfold CAP0; lia) ltac:(unfold L; lia) Hub HW HB Hid HS' HMR) end.
 + subst md. unfold md_loop, MD_file, fdchan. autorewrite with model. rewrite MD0_fds, MD0_fs.
 rewrite fd_lookup_insert_eq, !fd_lookup_insert_neq by (intros H'; apply (f_equal bv_unsigned) in H'; discriminate).
-repeat split; first [apply fd_insert_std3 | reflexivity].
+repeat split; first [apply fd_insert_std3 | reflexivity | (rewrite ?MD0_channel_reader; exact Hcr)].
 + cbn. apply (blk_data_nil src0_msyms).
 + exact HJ.
 + exact HG.

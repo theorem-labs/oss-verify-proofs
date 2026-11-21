@@ -1,6 +1,6 @@
 (* The closing file of reac-pw/fuzz_segconf image B's interceptor layer (fuzz_segconf.asan-ubsan): the image-B twin of
-   lib/A/Rt/SegRtClosed.v (commit 895530bdd2a0; the role of plugin-hostd/fuzz_command's lib/B/Rt/RtClosed.v at
-   501c0d516c69), the same theorems over image B's files: each row of the interceptor interface
+   lib/A/Rt/SegRtClosed.v (the role of plugin-hostd/fuzz_command's lib/B/Rt/RtClosed.v),
+   the same theorems over image B's files: each row of the interceptor interface
    (provenance/evidence/interceptors/INTERFACE-A-interceptors.md, rule 4) restated with its `AR_laws tfibsegs B` premise
    discharged by the kit's own law proof (Reusable/YG0q.v:804, `YG0q.AR_laws_ok tfibsegs B`), so that only the per-binary
    record `SegBSyms B` (B/YF0m.v) remains. Each theorem stays generic in the floating-point state and the run
@@ -77,7 +77,7 @@ Proof. exact (Memchr.memchr_icpt_realizesM B (YG0q.AR_laws_ok tfibsegs B) HB). Q
 
 (* ---- the closings of the other rows, re-exported here as each lands ---- *)
 
-(* rows 6-9 (commit 04abba419ff7): strchr (0x43ab4), strncasecmp (0x43aac), strstr
+(* rows 6-9: strchr (0x43ab4), strncasecmp (0x43aac), strstr
    (0x43ab0) and isalnum (musl's, 0x9094c, called directly); their posts in SegModel's terms are lib/A/Rt/RtLFmModel.v.
    isalnum reads no runtime cell, so its closing does not take the record. *)
 Theorem seg_strchr_closed : RtSeg.astrchr_realizes tfibsegs B SegRtPC.PC_strchr.
@@ -90,24 +90,24 @@ Proof. exact (RtLStrstr.seg_strstr_closed B HB). Qed.
 Theorem seg_isalnum_closed : RtSeg.aisalnum_realizes tfibsegs B SegRtPC.PC_isalnum.
 Proof. exact (RtLIsalnum.seg_isalnum_closed B). Qed.
 
-(* row 10 (commit 26143c78b97f): strcasecmp (0x43aa8); its post in SegModel's terms is
+(* row 10: strcasecmp (0x43aa8); its post in SegModel's terms is
    lib/A/Rt/RtLStrcasecmpM.v (casecmp_post_model) *)
 Theorem seg_strcasecmp_closed : RtSeg.astrcasecmp_realizes tfibsegs B SegRtPC.PC_strcasecmp.
 Proof. exact (RtLStrcasecmp.seg_strcasecmp_closed B HB). Qed.
 
-(* row 11 (commit bd8a77380141): strrchr (0x43ab8); its post in SegModel's terms is RtLStrrchr.seg_strrchr_model *)
+(* row 11: strrchr (0x43ab8); its post in SegModel's terms is RtLStrrchr.seg_strrchr_model *)
 Theorem seg_strrchr_closed : RtSeg.astrrchr_realizes tfibsegs B SegRtPC.PC_strrchr.
 Proof. exact (RtLStrrchr.seg_strrchr_closed B HB). Qed.
 
-(* row 3 (commit 974c1799c680): strtol (0x43b44) with a NULL end pointer *)
+(* row 3: strtol (0x43b44) with a NULL end pointer *)
 Theorem seg_strtol0_closed : RtSeg.astrtol0_realizes tfibsegs B RtAPI.PC_strtol RtAPI.A_SSP_GOT RtAPI.A_SSP_GUARD.
 Proof. exact (RtLStrtol0.seg_strtol0_closed B HB). Qed.
 
-(* row 12 (commit 72c15d54ad72): strncpy (0x43b40) *)
+(* row 12: strncpy (0x43b40) *)
 Theorem seg_strncpy_closed : RtSeg.astrncpy_realizes tfibsegs B SegRtPC.PC_strncpy.
 Proof. exact (RtLStrncpy.seg_strncpy_closed B HB). Qed.
 
-(* rows 4 and 5 (commit 4ab8ed78f4eb): snprintf (0x43af0) and vsnprintf (0x43ae8, the caller's va_list) over
+(* rows 4 and 5: snprintf (0x43af0) and vsnprintf (0x43ae8, the caller's va_list) over
    segconf's piece grammar, and snprintf in RtFormat's text *)
 Theorem seg_snprintf_closed : RtPFSeg.seg_asnprintf_realizes tfibsegs B RtPFCmd.CMD_IMG_LO RtPFCmd.CMD_IMG_HI
 RtPFCmd.CMD_SNP_CR RtAPI.PC_snprintf RtAPI.A_SSP_GOT RtAPI.A_SSP_GUARD.
@@ -118,7 +118,7 @@ Proof. exact (RtFSnprintfSeg.seg_vsnprintf_closed B HB). Qed.
 Theorem seg_rtformat_closed : RtFormat.asnprintf_realizes tfibsegs B RtAPI.PC_snprintf RtAPI.A_SSP_GOT RtAPI.A_SSP_GUARD.
 Proof. exact (RtFSnprintfSeg.seg_rtformat_closed B HB). Qed.
 
-(* row 13 (commit e70080ec7000): calloc (0x56cc4). The record's depot hash agreeing with the image's is a premise of the
+(* row 13: calloc (0x56cc4). The record's depot hash agreeing with the image's is a premise of the
    statement: SegBSyms B does not give it for every trace. The instance at YD2l.SegB, with no premise, follows End closed. *)
 Theorem seg_acalloc_closed : (forall t, as_dhash B t = YF0p.tfib_dhash t) -> forall fx0 : YK11.FPState,
 @RtSegCalloc.aseg_calloc04_rule fx0 rc YE2k.tfib_sink_head tfibsegs B YCbp.ameter_triv SegRtPC.PC_calloc

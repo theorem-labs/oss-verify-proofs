@@ -23,6 +23,7 @@
    achain_chain_pre of it. joined's new premises at its call: len's 8 bytes present (the journal's window), and
    (pass 5b) the stack from len - 16 present, from the statement's astack_pres kept by astack_pres_journal. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 552 of its 667 lines of code are new or changed and 4938 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image A (fuzz_segconf.asan): SEGMENT A1 of reac_segconf_parse_file's walk (0x87a78,
    lib/A/Prog/pf_pieces.v), ENTRY 0x87a78 -> FTAKEN 0x87b24, 43 instructions. It proves `S_A1 B`:
    from H_FTAKEN at every FP state, H_ENTRY at the ambient one.
@@ -35,11 +36,11 @@
        and the shadow base through 0xa2a50 -> 0xabff8 (objects 0 and 12), s6 = SHADOW_OFF; s2 = 0x4000 (0x87ae4);
      0x87ae8 `beqz a1`: the flag is AR's constant 1 (uar_cell_regionP), so the real-stack fallback is not taken;
      0x87aec-0x87af0 a0 = 0x480 and the call of __asan_stack_malloc_5 (frame_alloc_5), through the kit's
-       aj_stack_malloc_atS (lib/A/Prog/PaCall.v:237) with astack_malloc_realizes 5 and stack_malloc_progressP;
+       aj_stack_malloc_atS (lib/A/Prog/PaCall.v:238) with astack_malloc_realizes 5 and stack_malloc_progressP;
      0x87af4-0x87b04 s10 = 0x40e0, s7 = a0 = F, and `bnez a0` to FTAKEN: the frame's address is >= 4096, so the
        branch is taken and 0x87b08-0x87b20 (the real-stack fallback) is dead, as pf_pieces.v's head comment says.
    Model: plugin-hostd/fuzz_command's check_round_trip.v (crt_s0, the class-5 take at :786) and numberE.v (the
-   entry seed), at origin/ossv/recipes 501c0d516c69; the segconf shape of both is the refuse walk's refuse_a.v /
+   entry seed); the segconf shape of both is the refuse walk's refuse_a.v /
    refuse_e.v. Segment A1's proof, 2026-10-30.
 
    SECTION HYPOTHESES (pf_pieces.v's list for A1, in listing terms): astack_malloc_realizes 5 at every FP state

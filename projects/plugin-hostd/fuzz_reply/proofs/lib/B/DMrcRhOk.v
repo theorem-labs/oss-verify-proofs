@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcRhOk.v (commit 3d8ad2aeb77e, H4 stage B (slack-indexed post relation; DMrcDefs / DGif1Geo split; re-hide head); file sha256 d1a63d27efc0) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMrcRhOk.v at commit 2c35faeeaec, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (1 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcRhOk.v (H4 stage B (slack-indexed post relation; DMrcDefs / DGif1Geo split; re-hide head); file sha256 d1a63d27efc0) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMrcRhOk.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (1 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (F1 priming row R3, lane B1, slice H4; integrator a Theorem Labs lane): new file. rule 24: no function
    proved here (kind: F1 priming of already proved walks: the head of __asan::QuarantineCallback::Recycle (0x33e88) at
    the re-hide twin, from the secondary arm under the re-hide (DMrcRh.rchunk_sec_rh) and the primary arm, which
@@ -11,12 +12,12 @@
    WHAT.
    - the targets DIfaceRh.de_rchunk_m_rh_t, DMwalkIFRh.rchunk_m_rh_t / rchunk_ok_rh_t: reply's own field texts, by name
      (cgif's file inlines them as [de_rchunk_m_rh_t] / [rchunk_m_rh_t] / [rchunk_ok_rh_t]; ReplyDrainA dropped the three
-     inlined Definitions for R3's (commit bb0215cfee16): MnRecycle.de_rchunk_m_t / DMwalkIF.rchunk_m_t /
+     inlined Definitions for R3: MnRecycle.de_rchunk_m_t / DMwalkIF.rchunk_m_t /
      rchunk_ok_t over YG0dH.amreal' at YGcfRehidePost.RZ_cf with the call post YGcfRehidePost.acall_post_x_rh.
    - [rc_sec_pre_rh_t]: the read field of the re-hide's pre-state premises, DMrcRh's HULL / SREAL / M1 / M2 at the
      call, quantified like DMrcSecReads' fields.
    - [rc_sec_rehide_all_t]: DMrcRh.rc_sec_rehide_t at every call.
-   - [rc_prim_mach_rh_t]: DMrcPrim.rchunk_prim_m's statement (DMrcPrim.v:236, its Section hypotheses TfibSyms B,
+   - [rc_prim_mach_rh_t]: DMrcPrim.rchunk_prim_m's statement (DMrcPrim.v:237, its Section hypotheses TfibSyms B,
      rc_prim_reads and H3's cdealloc_g_t included) in its primed form: amreal' at YGcfRehidePost.RZ_cf, the call post
      YGcfRehidePost.acall_post_x_rh.  This file does not Require DMrcPrim or DMrc.
    - [rc_reads_rh]: DMrc.rc_reads with DMrcSecReads.rc_sec_step_g over the loosened post relation ARXsl (indexed by

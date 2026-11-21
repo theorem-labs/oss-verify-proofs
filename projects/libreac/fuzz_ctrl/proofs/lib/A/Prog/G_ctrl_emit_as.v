@@ -16,7 +16,7 @@
      composes the kept bytes of the three steps (GE_post.ge_keep_lay) and closes with GE_post.ge_post.
 
    Hypotheses of pb_ctrl_emit_as beyond the statement's binders:
-     HTS      : A.AF0m.CtrlTSyms B                  the bundle is ctrl's (AF0m.v:293); no binder of the statement gives it.
+     HTS      : A.AF0m.CtrlTSyms B                  the bundle is ctrl's (AF0m.v:294); no binder of the statement gives it.
      VIS0     : A.ProgWorld.AR_states_vis0_shadow B  ProgWorld.v, a Theorem Labs lane's named core fact; no proof.
      (AR_states_owned_ro is NOT a binder: a Theorem Labs lane's ProgWorldOwnedRo.AR_states_owned_ro_of_AR proves it from HTS.)
      (Names and types are the shared form: a Theorem Labs lane, adopted by a Theorem Labs lane 06:21Z.)
@@ -33,7 +33,7 @@
    compares it; with the range addressable the check passes and the error path is not reached.
 
    Glue closure rule (two Theorem Labs lanes): ctrl_emit_asF2 is Required qualified only; the six duplicated modules
-   (YI04 YI16 YK11 YK1b YM05 YO09) are written lib.Reusable.<X>. rule 24: At ossv/recipes c5e779efe8c (2026-10-31), no released proof of ctrl_emit_as outside this unit. *)
+   (YI04 YI16 YK11 YK1b YM05 YO09) are written lib.Reusable.<X>. rule 24: At (2026-10-31), no released proof of ctrl_emit_as outside this unit. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import GEbase.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require A.AF0m.
 Import ListNotations.
@@ -142,7 +142,7 @@ Proof.
   rewrite (gcv_mrd W W2 mc m5 _ Hh1 Hh2 E). exact Hb.
 Qed.
 
-(* (d) the stack window's shadow cover, from a Theorem Labs lane's win_sh_vis form (A/ProgWorldVisWin.v:56, rng_asan.v:80-81) *)
+(* (d) the stack window's shadow cover, from a Theorem Labs lane's win_sh_vis form (A/ProgWorldVisWin.v:57, rng_asan.v:80-81) *)
 Lemma gcv_al8_mono : forall x y, x <= y -> AsanRT.shadow_addr x / 8 * 8 <= AsanRT.shadow_addr y / 8 * 8.
 Proof.
   intros x y Hxy. apply Z.mul_le_mono_nonneg_r; [lia|]. apply Z.div_le_mono; [lia|].

@@ -10,12 +10,12 @@
    a Theorem Labs lane's shared lift rrB_lift (lib/B/Prog/GlueLift.v, moved there from C_reac_ctrl_identity_replyPf.v), which applies image B's
    MemNormF.evtF_normalize_ro (PROVED); this file takes no hypothesis for it.
 
-   The memory facts move to the normalized memory by image B's MemNormTr (a working branch
-   473ae68ba1c, merged here): stk_normalize_ro (the GUARDED form, a Theorem Labs lane 03:41Z name), addressable_normalize,
+   The memory facts move to the normalized memory by image B's MemNormTr (a working branch,
+   merged here): stk_normalize_ro (the GUARDED form, a Theorem Labs lane 03:41Z name), addressable_normalize,
    asan_cells_normalize, shadow_rw_normalize, rw_cells_normalize (with its not-read-only premise) and
    ro_addr_above_img_range; bytes_at by lib/B/MemNorm.v's bytes_at_normalize; mem_inv of mn is MemNorm.mem_inv_normalize.
-   fp and reac_box_model_block_tls move by MemNormTr's fp_normalize and tls_dj_normalize (a working branch
-   0fa3ec38d61; reac_box_model_block_tls is tls_dj m TP (fp_w [0%nat] FS ++ [(shadow_addr lo, shadow_addr hi)]) by
+   fp and reac_box_model_block_tls move by MemNormTr's fp_normalize and tls_dj_normalize (a working branch;
+   reac_box_model_block_tls is tls_dj m TP (fp_w [0%nat] FS ++ [(shadow_addr lo, shadow_addr hi)]) by
    reflexivity).  This file has NO Section hypothesis.
 
    Three places where mb_post_rebaseF's premises differ from hbF_ctx read at mb (for the auditor):

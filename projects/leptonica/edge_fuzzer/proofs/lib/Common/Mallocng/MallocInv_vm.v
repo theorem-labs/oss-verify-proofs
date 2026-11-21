@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the munmap answers, munmap's maps_subtract cut). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -108,6 +109,22 @@ Proof.
   - injection E1 as -> ->. right. destruct (proj1 (region_free_spec l b1 s1) Hf b2 s2 H2); llia.
   - injection E2 as -> ->. right. destruct (proj1 (region_free_spec l b2 s2) Hf b1 s1 H1); llia.
   - exact (IH b1 s1 b2 s2 Hpw H1 H2).
+Qed.
+
+(** A pairwise-free ledger with positive entries is exact for each of its
+    entries ([VmLedger.munmap_exact]), so munmap's [maps_subtract] cut is the
+    [map_remove] the invariant proofs reason about. *)
+Lemma munmap_exact_pw : forall l (a n : word),
+  maps_pw l -> (forall b sz, In (b, sz) l -> 0 < u sz) -> In (a, n) l -> munmap_exact l a n.
+Proof.
+  intros l a n Hpw Hpos Hin. split; [|split].
+  - intros [b sz] Hb. exact (Hpos b sz Hb).
+  - intros [b sz] Hb Hf. cbn [fst] in Hf. subst b.
+    pose proof (Hpos a sz Hb). pose proof (Hpos a n Hin).
+    destruct (maps_pw_in2 l a sz a n Hpw Hb Hin) as [E | [D | D]]; [exact E | lia | lia].
+  - intros [b sz] Hb Hne. cbn [fst snd].
+    destruct (maps_pw_in2 l b sz a n Hpw Hb Hin) as [E | [D | D]];
+      [exfalso; exact (Hne E) | left; exact D | right; exact D].
 Qed.
 
 Lemma maps_pw_cons_iff : forall a n l, maps_pw ((a, n) :: l) <-> region_free l a n = true /\ maps_pw l.

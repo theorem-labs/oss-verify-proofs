@@ -3,11 +3,12 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/boost-beast/http_request/lib/Lib/Step.v; 317 of its 350 lines of code are new or changed and 668 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/Prog/RcBraidLib.v, with its module paths, module names and numbers changed; 642 of its 674 lines of code are new or changed and 318 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_braid_encode of the fuzz_decode asan-ubsan image (B), entry 0x81cfc, frame 128 bytes:
    reac_braid_encode_exact_holds proves reac_braid_encode_exact_contract of crt_braid_need.v.
 
    A relocation of the fuzz_ctrl asan-ubsan proof (proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_braid_encode_exact.v of
-   a working branch, commit f227c3e2d1b, entry 0x879ec). The entry point: the fuzz_ctrl proof image is the patched
+   a working branch, entry 0x879ec). The entry point: the fuzz_ctrl proof image is the patched
    build (internal path, the binaries cb uses for fuzz_ctrl), where reac_braid_encode STARTS at 0x879ec
    (its nm.txt: 0x879ec, size 0x2ec). The released fuzz_ctrl build puts it at 0x879a0, so the +0x4c is only the
    difference between the two fuzz_ctrl builds, not a skipped prologue. In fuzz_decode the function starts at 0x81cfc

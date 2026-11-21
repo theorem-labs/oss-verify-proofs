@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (walks lifted to the run's segment list; the channel-reader fact; the TASK_SIZE bound of the user-memory reads; munmap's cut; the model's four new descriptor kinds; the iovec copy-in ledger's per-entry reads). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -8,7 +9,7 @@ From LinuxProcessSemantics.Riscv Require Import Prelude Sem.
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Lib Require Import Cfg.
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Lib Require Import PropExec MState Mem Exec ITree RelSpec RelSpecX Nodes Decode.
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.ASN Require AsanAcct BackingAlgebra.
-From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Top Require Import Realize SafeReach Bridge.
+From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Top Require Import RomBase Realize SafeReach Bridge.
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.LZ Require Import ITreeLZ BridgeLZ NodesLZ.
 Import ListNotations.
 Open Scope bv_scope.
@@ -71,11 +72,11 @@ Proof.
     repeat (split; [assumption|]). exists iovs. split; [eapply bytes_at_unrestrict; exact B1|]. split; [exact B2|].
     eapply Forall2_impl; [| exact B3]. cbn beta. intros iov bs [E Hb]. split; [exact E| eapply bytes_at_unrestrict; exact Hb].
   -
-    destruct Hat as (A1 & A2 & A3 & A4 & A5 & A6 & A7). repeat (split; [assumption|]). eapply bytes_at_unrestrict; exact A7.
+    destruct Hat as (A1 & A2 & A3 & A4 & A5 & A6 & A7 & A8). repeat (split; [assumption|]). split; [eapply bytes_at_unrestrict; exact A7| exact A8].
   -
     destruct Hat as (A1 & A2 & A3 & A4 & A5 & A6 & A7 & A8). repeat (split; [assumption|]). eapply wr_at_unrestrict; exact A8.
   -
-    destruct Hat as (A1 & A2 & A3 & A4 & A5 & A6 & A7 & A8 & A9). repeat (split; [assumption|]). eapply bytes_at_unrestrict; exact A9.
+    destruct Hat as (A1 & A2 & A3 & A4 & A5 & A6 & A7 & A8 & A9 & A10). repeat (split; [assumption|]). split; [eapply bytes_at_unrestrict; exact A9| exact A10].
   -
     destruct Hat as (A1 & A2 & A3 & A4 & A5 & A6 & A7 & A8 & iovs & B1 & B2 & B3).
     repeat (split; [assumption|]). exists iovs. split; [eapply bytes_at_unrestrict; exact B1|]. split; [exact B2|].
@@ -85,7 +86,7 @@ Proof.
     repeat (split; [assumption|]). split; [eapply bytes_at_unrestrict; exact A14|].
     split; eapply wr_at_unrestrict; eassumption.
   -
-    destruct Hat as (A1 & A2 & A3 & A4 & A5 & A6 & A7 & A8 & A9 & A10 & A11). repeat (split; [assumption|]). eapply bytes_at_unrestrict; exact A11.
+    destruct Hat as (A1 & A2 & A3 & A4 & A5 & A6 & A7 & A8 & A9 & A10 & A11 & A12). repeat (split; [assumption|]). split; [eapply bytes_at_unrestrict; exact A11| exact A12].
 Qed.
 
 End Restrict.
@@ -409,14 +410,33 @@ Proof.
   rewrite bv_wrap_add_idemp_l. f_equal. change (bv_unsigned (16 : word)) with 16%Z. lia.
 Qed.
 
+Lemma woff_add8 : forall (a : word) k, AsanAcct.woff (a + 8)%bv k = AsanAcct.woff a (8 + k).
+Proof.
+  intros a k. unfold AsanAcct.woff. apply bv_eq. rewrite !Z_to_bv_unsigned, bv_add_unsigned.
+  rewrite bv_wrap_add_idemp_l. f_equal. change (bv_unsigned (8 : word)) with 8%Z. lia.
+Qed.
+
+(* LPS 727298f3: an entry's own read is [(a, 16)], or [(a + 8, 8)] when only its length field
+   reads, or nothing. *)
+Lemma ranges_avoid_iovec_entry : forall H mp a,
+  (forall j, (j < 16)%nat -> H (AsanAcct.woff a j) = false) ->
+  AsanAcct.ranges_avoid H (iovec_entry_accesses mp a).
+Proof.
+  intros H mp a HV. unfold iovec_entry_accesses.
+  repeat match goal with |- context [match read_u64 ?m ?p with _ => _ end] => destruct (read_u64 m p) end;
+    first [ exact (AsanAcct.ranges_avoid_nil H)
+          | apply AsanAcct.ranges_avoid_cons; [| exact (AsanAcct.ranges_avoid_nil H)]; intros j Hj;
+            first [ apply HV; lia | rewrite woff_add8; apply HV; lia ] ].
+Qed.
+
 Lemma ranges_avoid_copy_iovecs : forall H mp k a,
   (forall j, (j < 16 * k)%nat -> H (AsanAcct.woff a j) = false) ->
   AsanAcct.ranges_avoid H (copy_iovecs_accesses mp a k).
 Proof.
   intros H mp k. induction k as [|k IH]; intros a HV; cbn [copy_iovecs_accesses].
   - apply AsanAcct.ranges_avoid_nil.
-  - apply AsanAcct.ranges_avoid_cons.
-    + intros j Hj. apply HV. lia.
+  - apply AsanAcct.ranges_avoid_app.
+    + apply ranges_avoid_iovec_entry. intros j Hj. apply HV. lia.
     + destruct (read_iovec_entry mp a); try apply AsanAcct.ranges_avoid_nil.
       apply IH. intros j Hj. rewrite woff_add16. apply HV. lia.
 Qed.
@@ -428,7 +448,7 @@ Proof.
   intros H mp a n HV. unfold import_iovecs_accesses.
   destruct (bv_eqb n (Z_to_bv 64 1)) eqn:E1.
   { apply bv_eqb_eq in E1. subst n. destruct (negb (access_okb a 16)); [apply AsanAcct.ranges_avoid_nil|].
-    apply AsanAcct.ranges_avoid_cons; [| apply AsanAcct.ranges_avoid_nil]. intros j Hj. apply HV.
+    apply ranges_avoid_iovec_entry. intros j Hj. apply HV.
     unfold word_to_nat. rewrite unsigned_lit64 by lia. cbn. lia. }
   destruct (bv_eqb n (Z_to_bv 64 0)); [apply AsanAcct.ranges_avoid_nil|].
   destruct (IOV_MAX <? bv_unsigned n)%Z; [apply AsanAcct.ranges_avoid_nil|].
@@ -628,8 +648,8 @@ Proof.
     apply (DET (errno_ret EBADF)).
     - intros o. rewrite D. apply (read_ebadf_outcome _ _ _ _ _ _ Hlk).
     - intros eff mo' evs. cbn [nstep]. rewrite m_fds_perase, Hlk. unfold efferr, eff0. tauto. }
-  destruct e as [ch | p off | p off | p off | p off | | sk | pid wr | dnr dnw | ].
-  9-10: exfalso; exact (MK _ _ Hlk).
+  destruct e as [ch | p off | p off | p off | p off | | sk | pid wr | dnr dnw | | sid sside sst | ectx | dfam | aid aaf].
+  9-14: exfalso; exact (MK _ _ Hlk).
   -   exfalso. apply MC in Hlk. rewrite unsigned_lit64 in Hlk by lia. lia.
   -
     destruct (fs_lookup (m_fs mo) p) as [data|] eqn:Hfs. 2:{ exfalso. exact (MF _ _ _ Hlk Hfs). }
@@ -680,7 +700,9 @@ Qed.
 #[using="Type"] Lemma cstr_access_len_le : forall path mp a fuel,
   bytes_in mp a (path ++ [Z_to_bv 8 0]) -> (cstr_access_len_aux mp (wa a) fuel <= length path + 1)%nat.
 Proof.
-  induction path as [|c path IH]; intros mp a fuel Hin; destruct fuel as [|fuel]; cbn [cstr_access_len_aux app length]; try lia.
+  induction path as [|c path IH]; intros mp a fuel Hin; destruct fuel as [|fuel]; cbn [cstr_access_len_aux app length]; try lia;
+    (* LPS 727298f3: a byte at or above TASK_SIZE is never fetched (the count is 0) *)
+    destruct (negb (access_okb (wa a) 1)); cbv beta iota; try lia.
   - apply bytes_in_cons in Hin as [E _]. rewrite E. unfold bv_eqb. rewrite Z.eqb_refl. lia.
   - apply bytes_in_cons in Hin as [E Hin]. rewrite E. destruct (bv_eqb c (Z_to_bv 8 0)); [lia|].
     fold (path ++ [Z_to_bv 8 0]) in Hin. rewrite wa_succ. specialize (IH mp (a + 1)%Z fuel Hin). lia.
@@ -693,8 +715,9 @@ Proof. intros R r. unfold syscall_effect_accesses, with_copyins. cbn. apply app_
   at_node segs (NOpen path) (restrict H msF) -> factsL segs (LNode (NOpen path)) H P msF mo (Z_to_bv 64 56).
 Proof.
   intros path HatR. pose proof (at_node_unrestrict segs H HO _ _ HatR) as Hat.
-  destruct Hat as (Hsvc & Ha0 & Hfl & Hnz & Hsl & Hrom & Hpath).
-  destruct HatR as (_ & _ & _ & _ & _ & _ & HpathR). unfold areg in HpathR. rewrite AsanAcct.restrict_mem, AsanAcct.restrict_regs in HpathR. fold (areg msF 11) in HpathR.
+  destruct Hat as (Hsvc & Ha0 & Hfl & Hnz & Hsl & Hrom & Hpath & Htk).
+  destruct HatR as (_ & _ & _ & _ & _ & _ & HpathR & _). unfold areg in HpathR. rewrite AsanAcct.restrict_mem, AsanAcct.restrict_regs in HpathR. fold (areg msF 11) in HpathR.
+  pose proof (bv_unsigned_in_range 64 (areg msF 11)) as [Hr0 _].
   pose proof HM0 as (M0 & M1 & M2 & MC & MF & MK & MT & ML & MS). rewrite !m_fds_strip_vm, ?m_fs_strip_vm, ?m_tid_strip_vm in *.
   set (i := sys_input segs msF (Z_to_bv 64 56)) in *.
   set (pathp := areg msF 11) in *. set (flags := areg msF 12) in *.
@@ -760,14 +783,14 @@ Proof.
   destruct (Nat.leb_spec path_max (length path)) as [Hlong|Hshort].
   {
     assert (Hc : read_cstr (in_mem i) pathp = CstrTooLong).
-    { unfold read_cstr. rewrite <- Hpw. apply (read_cstr_aux_toolong_bytes_in path_max path); [exact Hlong|exact Hnz|].
+    { unfold read_cstr. rewrite <- Hpw. apply (read_cstr_aux_toolong_bytes_in path_max path); [exact Hlong|exact Hnz|lia|unfold TASK_SIZE; lia|].
       apply bytes_in_app in Hin as [H1 _]. exact H1. }
     apply (DETC (errno_ret ENAMETOOLONG)).
     - intros o. rewrite D. apply (openat_toolong_outcome _ _ _ _ _ Hmfl _ Hc).
     - intros eff mo' evs. cbn [nstep]. rewrite (proj2 (Nat.leb_le _ _) Hlong). unfold efferr, eff0. tauto. }
   assert (Hleb : (path_max <=? length path)%nat = false) by (apply Nat.leb_gt; lia).
   assert (Hc : read_cstr (in_mem i) pathp = CstrOk path).
-  { unfold read_cstr. rewrite <- Hpw. apply read_cstr_aux_bytes_in; [exact Hshort|exact Hnz|exact Hin]. }
+  { unfold read_cstr. rewrite <- Hpw. apply read_cstr_aux_bytes_in; [exact Hshort|exact Hnz|lia|unfold TASK_SIZE; lia|exact Hin]. }
   destruct path as [|c path'].
   {
     apply (DETC (errno_ret ENOENT)).
@@ -877,7 +900,7 @@ Proof.
                    (import_iovecs_accesses (in_mem i) iovp (iovcnt32 (Z_to_bv 64 (Z.of_nat (length bufs))))
                       ++ iov_prefix_accesses iovs k))
                 mo (map (WriteEv (Z_to_bv 64 fd)) (firstn k bs))).
-    { intros o. rewrite D. apply (writev_chan_outcome _ _ _ _ _ _ _ iovs bs Hch Hch0 Himp Hrw Hgather Hbs1). }
+    { intros o. rewrite D. apply (writev_chan_outcome _ _ _ _ _ _ _ iovs bs Hch Hch0 (minv_channel_reader _ HM0) Himp Hrw Hgather Hbs1). }
     split.
     + exact Hsvc.
     + intros eff mo' evs Hs. apply OUT in Hs. destruct Hs as (k & Hk & Hs). apply Ok_inj in Hs as (-> & -> & ->). split.
@@ -900,7 +923,7 @@ Record mm_factsL (segs : list Segment) : Prop := mkMMF {
   mmf_munmap : forall H P msF mo addr len,
       lzframe segs minvL H P mo -> hzero H msF ->
       at_node segs (NMunmap addr len) (restrict H msF) -> nsafeL (LNode (NMunmap addr len)) (perase P mo) ->
-      factsL segs (LNode (NMunmap addr len)) H P msF mo (Z_to_bv 64 215);
+      factsL_ns segs (LNode (NMunmap addr len)) H P msF mo (Z_to_bv 64 215);
   mmf_mmap : forall H P msF mo addr len prot flags,
       lzframe segs minvL H P mo -> hzero H msF ->
       at_node segs (NMmap addr len prot flags) (restrict H msF) -> nsafeL (LNode (NMmap addr len prot flags)) (perase P mo) ->
@@ -950,7 +973,7 @@ Proof.
     + eexists. apply factsL_ns_of_factsL; [| apply ioctl_factsL; eassumption]; apply alloc_no_b_false; vm_compute; reflexivity.
     + eexists. apply factsL_ns_of_factsL; [| apply set_tid_factsL; eassumption]; apply alloc_no_b_false; vm_compute; reflexivity.
     + eexists. apply (mmf_mmap segs MMF); eassumption.
-    + eexists. apply factsL_ns_of_factsL; [| apply (mmf_munmap segs MMF); eassumption]; apply alloc_no_b_false; vm_compute; reflexivity.
+    + eexists. apply (mmf_munmap segs MMF); eassumption.
   - eexists. apply (mmf_heap segs MMF); eassumption.
   - eexists. apply (mmf_nr segs MMF); eassumption.
   - eexists. apply (mmf_fixed segs MMF); eassumption.
@@ -1012,6 +1035,20 @@ Proof.
     + right. eexists _, _. cbn [nexitL nexit]. split; reflexivity.
     + destruct (all_factsL n H P msF mo Hne Hat HF HZ Hsafe) as [x8 FL].
       destruct (node_kitL_ns segs n H P msF mo x8 FL HF HZ) as (_ & _ & Hp). left. exact Hp.
+  -
+    intros n msF mo H P Hat HF HZ Hsafe.
+    destruct n as [n|len off|len|addr len flags|addr len off|addr len]; cbn [at_nodeL] in Hat.
+    + exact (nodes_rob segs n msF mo (at_node_unrestrict segs H (lf_off _ _ _ _ _ HF) n msF Hat)).
+    + destruct Hat as [[Hs _] _]. rewrite AsanAcct.restrict_svc_pending in Hs.
+      apply (sys_rob_memfree segs msF mo _ Hs). rewrite unsigned_lit64 by lia. exact memfree_222.
+    + destruct Hat as [Hs _]. rewrite AsanAcct.restrict_svc_pending in Hs.
+      apply (sys_rob_memfree segs msF mo _ Hs). rewrite unsigned_lit64 by lia. exact memfree_222.
+    + destruct Hat as [[Hs _] _]. rewrite AsanAcct.restrict_svc_pending in Hs.
+      apply (sys_rob_memfree segs msF mo _ Hs). rewrite unsigned_lit64 by lia. exact memfree_222.
+    + destruct Hat as [[Hs _] _]. rewrite AsanAcct.restrict_svc_pending in Hs.
+      apply (sys_rob_memfree segs msF mo _ Hs). rewrite unsigned_lit64 by lia. exact memfree_222.
+    + destruct Hat as [[Hs _] _]. rewrite AsanAcct.restrict_svc_pending in Hs.
+      apply (sys_rob_memfree segs msF mo _ Hs). rewrite unsigned_lit64 by lia. exact memfree_233.
 Qed.
 
 End Assembly.

@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AF0m.v (donor image sha256 7093581aab04), with its module paths changed and its addresses moved to reac-pw/fuzz_headamp's ASan build. *)
-(* Modified by Theorem Labs, 2026-10: proofs/cgif/cgif_file_fuzzer/lib/A/AF0m.v at c8557374ad2e through port_core 0e4e065eab9f's stage-out; regenerated for reac-pw/fuzz_headamp image A by af0m.py from fuzz_headamp.asan and its 50 collected hand-off states, with Tfib_owned_static relocated by object against this image's symbols and bytes and the wrappers' read list appended with --reads *)
+(* Modified by Theorem Labs, 2026-10: proofs/cgif/cgif_file_fuzzer/lib/A/AF0m.v at theorem-labs/oss-verify-proofs@6b32741d849a through port_core 0e4e065eab9f's stage-out; regenerated for reac-pw/fuzz_headamp image A by af0m.py from fuzz_headamp.asan and its 50 collected hand-off states, with Tfib_owned_static relocated by object against this image's symbols and bytes and the wrappers' read list appended with --reads *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_headamp.asan (reac-pw/fuzz_headamp asan) sha256 f3e0669d2819724922df0556b11c2dcd22d1e16fe7e0fe1535ce784b34436c47; unstripped twin sha256 b5f352154c54a97c66fd92dfa228e8a854498f6cd313dba0107900546b043f9a *)
 (* owned read-only static bytes pinned as const cells from the image: 1272 bytes in 201 cells, from 52 ranges of Tfib_owned_static; counted from this file's own tables *)
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require YZ00.

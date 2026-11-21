@@ -1,8 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: new file, group RI-b of a Theorem Labs lane's TOPX owner table: the model rules of
-   W_LLVMFuzzerTestOneInput_top_x.v (integ bb9dae5d905) RI_exit_slots, RI_exit_ends, RI_rm_rr_pair, RI_rm_cnl_pre,
-   RI_rm_cshe_pre, RI_rm_csd at RINV := fr_RINV, against their `_obl` texts in ReplyRINV.v (atop 5ab58d26200).  Each
+   W_LLVMFuzzerTestOneInput_top_x.v (integ) RI_exit_slots, RI_exit_ends, RI_rm_rr_pair, RI_rm_cnl_pre,
+   RI_rm_cshe_pre, RI_rm_csd at RINV := fr_RINV, against their `_obl` texts in ReplyRINV.v (atop).  Each
    `_obl` is top_x's text with RINV := fr_RINV; the model functions it names are the same constants (_exit.v's) or
    byte-equal copies (ReplyRINV.v's copies of _remove.v's rm_at / rm_ent / rm_rr_ok / rm_cnl_ok / rm_cshe_ok / rm_A1
    and of W_contract.v's capb as rm_capb).
@@ -17,7 +17,7 @@
      offset, so lx_ends_run gives Some 0, not Some 6.  A second state, at lm_gn m = 0: the key text and the held
      text are the one byte NUL; the output starts with NUL, so check_shape_ends' first line is empty and
      CheckRep.ends_run gives None.  (RI_exit_ends_obl_false, RI_exit_ends_obl_false_nul)
-   - RI_rm_cnl_pre: fr_RINV does not bound the held count below 2 ^ 22 (ReplyRINV.v:254-256 says the same for the
+   - RI_rm_cnl_pre: fr_RINV does not bound the held count below 2 ^ 22 (ReplyRINV.v:255-257 says the same for the
      drain step).  State: lm_gn m = 0, one open slot 0 holding h, its entry at eof (re_eof = 1, so rm_rr_ok gives
      h1 = h), 2 ^ 22 held records with distinct 3-byte texts and one key for each; the cost is keys_total =
      8 * 2 ^ 22 = 2 ^ 25 <= lm_k m < c_n cx < 2 ^ 26.  Then hl_n (hs_held h1) + count_begin (texts (hs_expected h1))
@@ -36,8 +36,9 @@
    21 a begin line inside the row's cost < 2 ^ 26 give the 2 ^ 22 bound), fr_rm_cshe_pre_core (lm_gn m = 0; the
    new keys have no NUL byte) and fr_rm_csd_core (lm_gn m is 0 or 1; no NUL premise: a run of the check that succeeds
    has read only NUL-free texts).  RI_exit_ends_holds, RI_rm_cnl_pre_holds, RI_rm_cshe_pre_holds and RI_rm_csd_holds
-   state them at the restated top_x texts (a working branch 3f40808c334).  lines_nul_free and
+   state them at the restated top_x texts (a working branch).  lines_nul_free and
    upds_nul_free (RelayModel terms) say the drained lines and the keys they add have no NUL byte. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -250,8 +251,8 @@ Proof. intros cx0 x gn. apply a12_rm_at; [lia | lia | reflexivity]. Qed.
 Lemma a12_nd1 : forall x, NoDup (texts (a12_H1 x)).
 Proof. intros x. apply NoDup_ListNoDup. repeat constructor. intros []. Qed.
 
-(* the four rules as top_x stated them before the restatement (integ bb9dae5d905, = ReplyRINV.v's `_obl` at atop
-   5ab58d26200), at RINV := fr_RINV; the `_false` lemmas refute these texts *)
+(* the four rules as top_x stated them before the restatement (integ, = ReplyRINV.v's `_obl` at atop),
+   at RINV := fr_RINV; the `_false` lemmas refute these texts *)
 Definition RI_exit_ends_unrestated : Prop := forall cx t m, fr_RINV cx t m -> (0 < length (lm_es m))%nat ->
   lx_ends_run (lm_gn m) (lx_rf_O m) (lx_norder m) (lx_ord m) (lm_hs m) 0 = Some (Z.of_nat (length (lx_rf_O m))).
 Definition RI_rm_cnl_pre_unrestated : Prop := forall cx t m si h j0 e1 h1 ev LB c2 O2 cap2,
@@ -1068,7 +1069,7 @@ Proof.
 Qed.
 
 (* ================================================================== the four rows at their restated texts
-   (a working branch 3f40808c334, W_LLVMFuzzerTestOneInput_top_x.v RI_exit_ends / RI_rm_cnl_pre /
+   (a working branch, W_LLVMFuzzerTestOneInput_top_x.v RI_exit_ends / RI_rm_cnl_pre /
    RI_rm_cshe_pre / RI_rm_csd), at RINV := fr_RINV, with ReplyRINV.v's copies of _remove.v's model functions *)
 Lemma fr_a12_F2_l : forall (X Y : Type) (R : X -> Y -> Prop) l1 l2,
   Forall2 R l1 l2 -> forall x, In x l1 -> exists y, In y l2 /\ R x y.

@@ -1,15 +1,15 @@
 (* check_round_trip (fs.asan-ubsan 0x81b9c), build B: its two room premises crt_room_D1 (HROOM) and crt_room_C2
    (HROOM2) of lib/B/FSH_crt_base.v hold for every cx that satisfies crt_base, so a lane takes them from
    crt_room_D1_holds / crt_room_C2_holds instead of a Section hypothesis. The B twin of a working branch
-   532ce6e842d proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_room.v (blob a4f26d4b21f, a Theorem Labs lane), with the same names,
+   proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_room.v (blob a4f26d4b21f, a Theorem Labs lane), with the same names,
    statements and proofs over the B base (v33) and S0's lib/B statements.
-   rule 24: proves no function (kind: segment lemma / room lemma of check_round_trip's walk, PORTED from 532ce6e842d)
+   rule 24: proves no function (kind: segment lemma / room lemma of check_round_trip's walk, PORTED)
    Nothing here reads the image: the lemmas are about the shared writer / reader models (lib/Prog WriterSpec,
    WriterApp, WriterValue, check_round_trip_stages_b, lib/Spec PjRoundTrip) and the budget constants. B's constants are
    S0's lib/B statements' own (lib/B/FSH_Fn_crt.v EV_check_round_trip / LIVE_check_round_trip, FSH_Fn_alloc.v
    EV_fuzz_malloc / EV_fuzz_free / EV_fuzz_realloc, FSH_Fn_writer.v wev0 / wcalls / enc_size / dec_size, FSH_Fn_reader.v
    rd_ev / rd_live, FSH_Fn_crt.v CRT_ALLOCS, and the EV_ / HEAD terms of K / CNT / LIVE_82218); their definitions are
-   textually A's (checked against lib/A on S0 a9edd281227), so every closed value below (K_82218 = 19, CNT_82218 = 17,
+   textually A's (checked against lib/A on S0), so every closed value below (K_82218 = 19, CNT_82218 = 17,
    crtr_LC <= 4096, 78 / LIVE_check_round_trip) is the same number on B, and B makes the same calls (crt.calls.tsv).
    The A file's notes:
    - crtr_wcalls: pj_write's run makes at most 3 requests. Base64 has no `special` byte, so es is ONE piece; 140 bytes
@@ -20,8 +20,8 @@
    - crtr_rd_live: pj_parse's live bytes are |es| + 1352 (ech is the identity on base64 bytes).
    - crtr_es_len / crtr_tb_len: |es| <= 3 * 2 ^ 20 and |tb| <= 3 * 2 ^ 20 (crt_base's text bound and b64_dec).
    Clause 1 of crt_room_C2 is tight: 71 + wev0 <= 78, and wev0 = 7 on the 3-request path.
-   Ported from (A's): crtr_six_len / crtr_dec_len are FSH_crt_segC2.v c2_six_len / c2_dec_len (a working branch
-   be1fe777656, which port lib/Prog/check_no_overread.v:125-139); crtr_newcap22 / crtr_pow22 are
+   Ported from (A's): crtr_six_len / crtr_dec_len are FSH_crt_segC2.v c2_six_len / c2_dec_len (a working branch,
+   which port lib/Prog/check_no_overread.v:125-139); crtr_newcap22 / crtr_pow22 are
    lib/Prog/WriterSpecFacts.v newcap_le28 / pow4096_le with the bound 2 ^ 22. A new file: no licence lines. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

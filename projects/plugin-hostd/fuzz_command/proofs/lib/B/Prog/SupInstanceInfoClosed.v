@@ -5,20 +5,21 @@
    fuzz_command.asan-ubsan; lib/B/Prog/sup_pool_config.v, tsup_pool_config_holds) at the pinned image:
    lib/B/Prog/CmdImg.v's instance PB_cmd, whose segments are tfibsegs, and the sink head YE2k.tfib_sink_head. The
    pattern of a Theorem Labs lane's PASS4-REFIT.md section F, as lib/B/Prog/SupResetClosed.v and lib/B/Prog/AnswerCodeClosed.v
-   close theirs, with a Theorem Labs lane's B CmdRecFacts (a working branch 707acd856cb): the image facts are
+   close theirs, with a Theorem Labs lane's B CmdRecFacts (a working branch): the image facts are
    CmdRecImg.cmd_img_facts_tfib; the statement's VOBJS is CmdRecRest.cmd_val_objs_PB and its AFREE_LAW (the side-stack
    free law, astack_free_law) is CmdRecRest.cmd_astack_free_law; the walk's call targets, runtime pcs and shadow
    cells, side-stack pcs and use-after-return cells, and frame flag law are CmdRecRest.cmd_sig_prog_PB, cmd_palib,
    cmd_palibf and cmd_frame_flag_law. What remains is the allocator record HB, the meter's laws MTL and MTLF, and the
    statement's callee and runtime contracts at every FP state. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/SupPoolConfigClosed.v, with its module names changed; 16 of its 51 lines of code are new or changed and 23 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The closing pattern of a Theorem Labs lane's PASS4-REFIT.md section F for sup_instance_info's ASan+UBSan walk
    (lib/B/Prog/sup_instance_info.v, tsup_instance_info_holds): the per-binary facts the walk names as Section
    hypotheses are discharged at the pinned image (lib/B/Prog/CmdImg.v's instance PB_cmd, whose segments are B's
-   tfibsegs, and B's sink head YE2k.tfib_sink_head), as a Theorem Labs lane's RecBClosed.v (a working branch
-   f349bdaedba, lib/A/Prog/RecBClosed.v:163-191) and a Theorem Labs lane's SupRemoveAllRefitClosed.v (a working branch e84227c9553) do
-   on the ASan side, each by a Theorem Labs lane's lemma of that name (lib/B/Prog/CmdRecRest.v, CmdRecImg.v at a working branch
-   707acd856cb): IMG is cmd_img_facts_tfib, TL cmd_palib, TLF cmd_palibf, the frame flag law cmd_frame_flag_law,
+   tfibsegs, and B's sink head YE2k.tfib_sink_head), as a Theorem Labs lane's RecBClosed.v (a working branch,
+   lib/A/Prog/RecBClosed.v:163-191) and a Theorem Labs lane's SupRemoveAllRefitClosed.v (a working branch) do
+   on the ASan side, each by a Theorem Labs lane's lemma of that name (lib/B/Prog/CmdRecRest.v, CmdRecImg.v at a working branch):
+   IMG is cmd_img_facts_tfib, TL cmd_palib, TLF cmd_palibf, the frame flag law cmd_frame_flag_law,
    cmd_sig_prog_PB itself, the statement's VOBJS cmd_val_objs_PB and its AFREE_LAW (the side-stack free law)
    cmd_astack_free_law; LAWS is the core's AR_laws_ok inside the walk. What remains is the statement's own callee
    and runtime contracts (at every FP state), HB, MTL and MTLF. *)

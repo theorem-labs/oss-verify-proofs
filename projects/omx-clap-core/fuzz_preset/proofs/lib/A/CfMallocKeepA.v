@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/CfMallocKeepA.v, with its module paths changed; 18 of its 69 lines of code are new or changed and 6 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10-31: fuzz_preset: preset's malloc at image A' (#102 pin
    fuzz_preset.asan 1be0f53d96cb) in KEEP form, at preset's record B := A/AD2l.TfibB, the cf instance CfImg_A /
    CfParams_preset.
@@ -11,7 +12,7 @@
    nmax := cf_malloc_max, al := 8, atp := 1, acf := 1 (malloc's call) and ARX := WrapMallocAQ.ARXq_A TfibB, from:
    - the wrapper walk: A/WrapMallocATopG.v wrap_malloc_walk_keep_cf_A, at K := WrapMallocADefs.K_A;
    - Allocate: A/AllocGtopPresetM.v aalloc_realizes_cf_em_m_TfibB_A, at ARXq_cf TfibB (fun i => i =
-     as_inst TfibB).  [ARXq_A_TfibB] states that this is ARXq_A TfibB, by reflexivity (A/WrapMallocAQ.v:28 is that
+     as_inst TfibB).  [ARXq_A_TfibB] states that this is ARXq_A TfibB, by reflexivity (A/WrapMallocAQ.v:29 is that
      text at the instance AImg_A), so no bridge is needed;
    - the relation's facts ARXq_A_HXA / ARXq_A_xs (A/WrapMallocAQ.v), nmax_cf_ok (YGcfMallocComposeE.nmax_cf_ok_of_w),
      the relro rows (A/CfAroPresetA.v relro_seg_preset_A / errno_relro_preset_A).
@@ -86,7 +87,7 @@ intros HRW IFS IFSE.
 exact (YGcfMallocComposeKeep.amalloc_realizes_cf_of_keep tfibsegs AD2l.TfibB (amalloc_realizes_cf_keep_A HRW IFS IFSE)).
 Qed.
 
-(* ---- CLOSED: the three premises at preset's record are proved tops: HRW is lib/A/YGcfRefillToppreset.v:51
+(* ---- CLOSED: the three premises at preset's record are proved tops: HRW is lib/A/YGcfRefillToppreset.v:52
    refill_walk_cf_preset_closed (at AGImgA.AGImg_A), IFSc / IFSEc are lib/A/YGcfInstSecA.v ifaceSw_TfibB_A /
    ifaceSE_TfibB_A.  No premise is left. ---- *)
 Corollary amalloc_realizes_cf_keep_closed_A : YGcfMallocComposeKeep.amalloc_realizes_cf_keep tfibsegs AD2l.TfibB.

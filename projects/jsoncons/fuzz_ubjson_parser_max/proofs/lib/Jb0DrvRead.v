@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: decodes the rd_M1/rd_M2/rd_MV2, rd_cell, vis_of_allowed and w_lit statements into plain Rocq, turns the rd_post and aread_site section lemmas into intro-based lemmas, and adds a reader-preservation goal to the dinv_frame application; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Bo0DrvRead.v, 12 lines within its lines 56-381. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -46,41 +47,41 @@ Let M1 := munrestrict H M Ma.
 Let M2 := wbytes M1 (Z_to_bv 64 STAGE) bs.
 Let MV2 := mrestrict H M2.
 Definition rd_M1 := M1. Definition rd_M2 := M2. Definition rd_MV2 := MV2.
-Lemma rd_M1_restrict : ltac2:(TCodec.tc2 tcn__Jb0DrvRead "?'@'TAyR0%211':y8%511%311p051&QMvKvQC%3221vQH%>3621").
+Lemma rd_M1_restrict : mrestrict H M1 = Ma.
 Proof.
 apply mrestrict_munrestrict. intros a Ha. unfold Ma.
 destruct (Z_lt_le_dec (bv_unsigned a) (s - 2144)) as [L1|L1]; [rewrite (RDA_out MV raw s Hs R a) by lia; unfold MV, mrestrict; rewrite Ha; reflexivity|].
 destruct (Z_lt_le_dec (bv_unsigned a) s) as [L2|L2]; [rewrite (Hvis_fr a) in Ha by lia; discriminate|].
 rewrite (RDA_out MV raw s Hs R a) by lia. unfold MV, mrestrict. rewrite Ha. reflexivity.
 Qed.
-Lemma rd_M2_out : ltac2:(TCodec.tc2 tcn__Jb0DrvRead "Q:'TAyR0%211&B'?&S<&SBvT:+RTH%3221&TCr1%22;1%8241&S=%1238%<231%>11&RAr2%:2C1%@231&S;+RPP0%2261%;251%F251%H11'@':y8%O11%311vQDr3%211vQ@%113%:3631p0<1p0G1pYDQ71").
+Lemma rd_M2_out : forall x : word, ~ (s - 2200 <= bv_unsigned x < s) -> ~ (STAGE <= bv_unsigned x < STAGE + 65536) -> M2 x = M x.
 Proof.
 intros x N1 N2. unfold M2. unfold STAGE in *.
 rewrite wbytes_out by (rewrite u_small by lia; lia).
 unfold M1, munrestrict. destruct (H x) eqn:Hx; [reflexivity|].
 unfold Ma. rewrite (RDA_out MV raw s Hs R x) by lia. unfold MV, mrestrict. rewrite Hx. reflexivity.
 Qed.
-Lemma rd_M2_grows : ltac2:(TCodec.tc2 tcn__Jb0DrvRead "G'TAyR0%211&B'@':y8%711%311vQ@r1%211(1%116%:3631%<11vQDr2%211%?3;16%A11p061pYDD1").
+Lemma rd_M2_grows : forall x : word, M x <> None -> M2 x <> None.
 Proof.
 intros x Hd. unfold M2. apply wbytes_grows. unfold M1, munrestrict. destruct (H x) eqn:Hx; [exact Hd|].
 unfold Ma. apply RDA_grows. unfold MV, mrestrict. rewrite Hx. exact Hd.
 Qed.
-Lemma rd_MV2_grows : ltac2:(TCodec.tc2 tcn__Jb0DrvRead "4&RLvQFvQG%3221").
+Lemma rd_MV2_grows : mem_grows MV MV2.
 Proof.
 intros x Hd. unfold MV2, mrestrict. unfold MV, mrestrict in Hd. destruct (H x) eqn:Hx; [exact Hd|]. apply rd_M2_grows. exact Hd.
 Qed.
-Lemma rd_MV2_frames : ltac2:(TCodec.tc2 tcn__Jb0DrvRead "M'TAyR0%211'?&S<&SBvT:+RTH%3221&TCr1%22:1%8241&S=%1238%<231'@':y8%C11%311vQGr2%211vQH%113%:3631p0<1pYDJ1").
+Lemma rd_MV2_frames : forall x : word, s - 2200 <= bv_unsigned x < s -> MV2 x = Ma x.
 Proof.
 intros x Hx. unfold MV2, mrestrict. rewrite (Hvis_fr x Hx). unfold M2, STAGE in *.
 rewrite wbytes_out by (rewrite u_small by lia; lia).
 unfold M1, munrestrict. rewrite (Hvis_fr x Hx). reflexivity.
 Qed.
-Lemma rd_MV2_slot : ltac2:(TCodec.tc2 tcn__Jb0DrvRead "Q2'G'?&S<+8r1%3221+RTH%5231%7231'@':'8'TAy8%211%411%611&RH&S9vQG&T@yR0&SBvT:r2%3221%6251u8%;4:921vQH%=4<143%F3?31p0H1pX2Q11").
+Lemma rd_MV2_slot : forall k, 8 <= k <= 2200 -> rdn ASEGS MV2 (Z_to_bv 64 (s - k)) 8 = rdn ASEGS Ma (Z_to_bv 64 (s - k)) 8.
 Proof.
 intros k Hk. apply rdn_ext; [rewrite u_small by lia; cbn; lia|]. intros x Hx. rewrite u_small in Hx by lia. cbn in Hx.
 apply rd_MV2_frames. lia.
 Qed.
-Lemma rd_stage_bytes : ltac2:(TCodec.tc2 tcn__Jb0DrvRead "F'@':'8'TAy8%211%411%611&RH&S9vQD&T@yR0&RA%3221&7vSI%22<1%:49841(3%12>4%E3>31").
+Lemma rd_stage_bytes : rdn ASEGS M2 (Z_to_bv 64 STAGE) (length bs) = Some bs.
 Proof. unfold M2. apply rdn_wbytes_hit. unfold STAGE. rewrite u_small by lia. lia. Qed.
 End ReadMem.
 Section DrvRead.
@@ -100,7 +101,8 @@ Hypothesis Hcells : incl RD_CELLS (asc_cells C).
 Variable M0 : word -> option byte.
 Hypothesis M0_def : defined M0 (bv_unsigned sp0) (ar_stack_top ar - bv_unsigned sp0).
 #[local] Notation dinvA := (dinv ar HI sp0 M0).
-Lemma rd_cell : ltac2:(TCodec.tc2 tcn__Jb0DrvRead "QE'8'<'G%2211%411&R5%611&R1'TAyR0%211':y8%511%311p051&R9&R7vLr:r9r8r7r6r5r4%9887654321&S:%K2IJ(;r3%24MM61r2%44NO21&R@%83721&R4&S9&SC%11>%453B@1:p061p0@1pY:Q91pX:Q:1pW<Q;1pW:N1pS2Q01p2Q<1pWHQ:1pR2Q<1pQFQ=1pR0Q@1").
+Lemma rd_cell : forall LB FF LK cr A M V a n v, ri_inv HI LB FF LK cr A M V -> In (a, n, v) RD_CELLS ->
+cell_is ASEGS M a (Z.to_nat n) v.
 Proof.
 intros LB FF LK cr A M V a n v HH Hin.
 destruct (aio_statics _ _ _ _ _ HIok _ _ _ _ _ _ _ HH) as (_ & CS). rewrite (dla_segs _ _ _ _ DL) in CS.
@@ -111,7 +113,7 @@ Proof.
 intros LB FF LK cr A M model a n HH Ha Hn k Hk. unfold woff. rewrite (u_small a) by lia.
 apply (vis_of_inv scfg L ar C IL HI HIok sp0 DL _ _ _ _ _ _ _ (a + Z.of_nat k) HH); lia.
 Qed.
-Lemma vis_of_allowed : ltac2:(TCodec.tc2 tcn__Jb0DrvRead "Q0'8'<'G%2211%411'Q:&R8r5r3r2%43321&R6r4%23154'@'5&R2r7r6&T@yR0%221=%63541(6%:3921p0<1p0@1pYDI1pX:J1pW<K1pX6I1p2K1").
+Lemma vis_of_allowed : forall A (model : Model) a n x, shadow_allowed A a n -> in_shadow_of a n x -> ahid A model (Z_to_bv 64 x) = false.
 Proof.
 intros A model a n x SA Hx. unfold ahid, mkH. rewrite (SA x Hx). apply andb_false_r.
 Qed.
@@ -125,24 +127,11 @@ destruct (aic_img_shadow _ _ _ _ _ ICok _ _ _ _ _ _ _ HH 0x65f080 0x10050) as (Z
 - rewrite (aicl_poison IL ILY). repeat (apply Forall_cons; [cbn [fst snd]; lia|]). apply Forall_nil.
 - split; [exact (Z0 x Hx) | exact (vis_of_allowed A model _ _ x SA Hx)].
 Qed.
-Lemma w_lit : ltac2:(TCodec.tc2 tcn__Jb0DrvRead "A'G'TAyR0%211'@&TCr1%2251r2%53921&T@r3%22:1%93:15p051pYB<1pYF@1").
+Lemma w_lit : forall z (w : word), bv_unsigned w = z -> Z_to_bv 64 z = w.
 Proof. intros z w <-. apply Z_to_bv_bv_unsigned. Qed.
-Section SE.
-Local Abbreviation SEC_T_rd_post := (ltac2:(TCodec.tc2 tcn__Jb0DrvRead "VO'8'<'G%2211%411&R5%611&R1'TAyR0%211':y8%511%311p051'Q:&Q?y5%2219%D17'5p0<1&R2r8r6%3221&R?r1r5r4r2%56487321&S?&7r3%22G1%411&R7vLr?r>r=r<r;r:&R:r9%211%;8:9876541&S<+RPP0%22E1'?&SB&TCvT=%22Q@1+TPPP0%5221+TP0%7221%<21A%=2B6%;221'@&Q6&S9&QM%12Q<K&T@+RTH%B2L1%32R01uRTH%948621(=%<3QH21&R;%11Q3&RF(T?+:(>%33R221%52Q81%@2R=QM%F3R=21+2%83R716%:2Q>1+RS0%Q62QC1%G2RD1%M3RD41+1%?3R>1=%A2QF1+QUd`@%B3RJ1@/01RJ%Q43RK41+8%F3RE1D%H2QN1r@%Q42S11%Q:3S131+9%L3RK1J%N2R51+V[lT@%Q:2S71%Q@3S731+D%Q23S11Q0%Q42R<1%Q?2S<F%QE3S<21'A'QO&RGvSNrB+QTmn0%Q<3SD1Q:/01SD&RI%11QM%85763RI1rD%:59S41S73%<3R131%QE2S6QA%R02SMRM%R63SM21%QH2S9Q?rE%R42T11%R:3T131%QL2S=Q<%R<3T31;%QN2S?Q7rC%R021Q9%R@3T731%R22SCQ5%R324Q6%RC3T:21+B%R53T41R3%R72SH1%R8292%RH3T?21+C%R:3T91R8%R<2SM1%R=2>2%RM3TD21%R?2T0Q<%R@2AQ=%S03TG21&RE&RD%231Q9T5&BrF%SA21S0%SA2TOT<%SG221&S=%1235%SG231%811%T;1T?rA%11TA%S@3U331p051pYDU91&RL%12T=TI%T1231%T22C1%T32G1%T42K1%T52Q11%T62Q71%T72Q;1%T82Q@1%T92QC1%T:2QH1%T;2QL1qS<UB1%R;2UC1qSJU@1%R=2UA1p0R?1p0RE1p0RL1p0S31p0S;1p0SC1p0SL1p0SO1p0T=1p0TJ1p0TN1tX:V>U;1tS@V2UA1tQHULUH1pWDUO1pSHV11pSDV21pXDV<1pXFVE1pX6V81pS2V:1p2VF1pWHVD1pR2VF1pQFVG1pR0VJ1")) (only parsing).
-Variable LB : ltac:(sec_ty2 constr:(SEC_T_rd_post) 0%nat 0%nat).
-Variable FF : ltac:(sec_ty2 constr:(SEC_T_rd_post) 1%nat 0%nat).
-Variable LK : ltac:(sec_ty2 constr:(SEC_T_rd_post) 2%nat 0%nat).
-Variable cr : ltac:(sec_ty2 constr:(SEC_T_rd_post) 3%nat 0%nat).
-Variable A : ltac:(sec_ty2 constr:(SEC_T_rd_post) 4%nat 0%nat).
-Variable M : ltac:(sec_ty2 constr:(SEC_T_rd_post) 5%nat 0%nat).
-Variable model : ltac:(sec_ty2 constr:(SEC_T_rd_post) 6%nat 0%nat).
-Variable s : ltac:(sec_ty2 constr:(SEC_T_rd_post) 7%nat 0%nat).
-Variable raw : ltac:(sec_ty2 constr:(SEC_T_rd_post) 8%nat 0%nat).
-Variable R : ltac:(sec_ty2 constr:(SEC_T_rd_post) 9%nat 0%nat).
-Variable R2 : ltac:(sec_ty2 constr:(SEC_T_rd_post) 10%nat 0%nat).
-Variable bs : ltac:(sec_ty2 constr:(SEC_T_rd_post) 11%nat 0%nat).
-Lemma rd_post : ltac:(sec_stmt2 constr:(SEC_T_rd_post) 12%nat 0%nat).
+Lemma rd_post : ltac2:(TCodec.tc2 tcn__Jb0DrvRead "VO'8'<'G%2211%411&R5%611&R1'TAyR0%211':y8%511%311p051'Q:&Q?y5%2219%D17'5p0<1&R2r8r6%3221&R?r1r5r4r2%56487321&S?&7r3%22G1%411&R7vLr?r>r=r<r;r:&R:r9%211%;8:9876541&S<+RPP0%22E1'?&SB&TCvT=%22Q@1+TPPP0%5221+TP0%7221%<21A%=2B6%;221'@&Q6&S9&QM%12Q<K&T@+RTH%B2L1%32R01uRTH%948621(=%<3QH21&R;%11Q3&RF(T?+:(>%33R221%52Q81%@2R=QM%F3R=21+2%83R716%:2Q>1+RS0%Q62QC1%G2RD1%M3RD41+1%?3R>1=%A2QF1+QUd`@%B3RJ1@/01RJ%Q43RK41+8%F3RE1D%H2QN1r@%Q42S11%Q:3S131+9%L3RK1J%N2R51+V[lT@%Q:2S71%Q@3S731+D%Q23S11Q0%Q42R<1%Q?2S<F%QE3S<21'A'QO&RGvSNrB+QTmn0%Q<3SD1Q:/01SD&RI%11QM%85763RI1rD%:59S41S73%<3R131%QE2S6QA%R02SMRM%R63SM21%QH2S9Q?rE%R42T11%R:3T131%QL2S=Q<%R<3T31;%QN2S?Q7rC%R021Q9%R@3T731%R22SCQ5%R324Q6%RC3T:21+B%R53T41R3%R72SH1%R8292%RH3T?21+C%R:3T91R8%R<2SM1%R=2>2%RM3TD21%R?2T0Q<%R@2AQ=%S03TG21&RE&RD%231Q9T5&BrF%SA21S0%SA2TOT<%SG221&S=%1235%SG231%811%T;1T?rA%11TA%S@3U331p051pYDU91&RL%12T=TI%T1231%T22C1%T32G1%T42K1%T52Q11%T62Q71%T72Q;1%T82Q@1%T92QC1%T:2QH1%T;2QL1qS<UB1%R;2UC1qSJU@1%R=2UA1p0R?1p0RE1p0RL1p0S31p0S;1p0SC1p0SL1p0SO1p0T=1p0TJ1p0TN1tX:V>U;1tS@V2UA1tQHULUH1pWDUO1pSHV11pSDV21pXDV<1pXFVE1pX6V81pS2V:1p2VF1pWHVD1pR2VF1pQFVG1pR0VJ1").
 Proof.
+intros LB FF LK cr A M model s raw R R2 bs.
 intros H MV2 n HH Hn Hsr WOK Hret Q10 Q2 Q1 Q8 Q9 Q20.
 pose proof Hsp as Hsp'.
 assert (Hs : 0x1000000 <= s - 2200 /\ s < 2 ^ 64) by lia.
@@ -227,31 +216,9 @@ apply SHZ. lia. }
 exists R3, M3'. repeat (split; [assumption|]). split; [|exact GR].
 intros x Nx. apply OA. lia.
 Qed.
-End SE.
-Section SE.
-Local Abbreviation SEC_T_aread_site := (ltac2:(TCodec.tc2 tcn__Jb0DrvRead "\2'8'TAyR0%211%411'9y8%611%811p041'S1%;11'S2%=11&Q?y5%221=':%11;p0@1'Q:'<'G%2211%H11&R5%J11&R1&Q5%82H7%N11&RJ'S0(RO&S8rD%211rC%5221&S5r1rA%33251&S4&S9r2&QM&R2r<r@%3221%521:%94871?'@'5&S7&7rG%22QG1rE%5221(=%93821&S6rH%92QN1%3217%>3=16'Du1rI%?2R41%4231rJ(2%Q9221vT=%H3R:21&R=%11?%K3J1C&RF(T?+2(>%33R621%52F1&T@&S;&TC%12RH>r=%4221%62RK1%Q93RK81'?&S<&S@&SA+F%22A1%411r>%7221z%9231%;231&S>r?+@%3221%QJ3RI17rK+:%Q03S31N%Q2231+3%N2SC1%R13SC31rL+;%Q73S:1Q5%Q9231&RA%Q52SJ1%R83SJ31rM+<%Q>3SA1Q<%Q@231rF%Q<2T11%R?3T131+1%Q621R=+RPP0%Q82R?1%Q:231rO%QI3SL6QG%QK221%QF2T;S4%RI3T;21rB%Q@2Q81&S=+R0%QA2R01%3251%QF251%Q;2SAR3%S23T11Q?'R<vSFvLvQBrNrQ1rQ0%7:65RC4E3Q1Q821'Q8%T@11&Q<&Q=%117%321Q@(3(Q9%12QHRO%3291%SE3951%TJ1U3&Q4&Q>rQ2%211%421QI%;2U9S8%SM3721%U21TM&R0%12T8R5%@2U0T>%T23421&Er3rQ<%T32UH1%4231&R>vNrQ5%TN267%S82UO1%554Q931TE%S4271p0=1pX<U?1pX0V11rQ=%T@2V51%A2@1%U823A%SB2V91%S<21TO%S>241p0G1pW@UI1pY:V;1&Q3rQ3%SL2VA1%33QFQG1&4rQ?&RMr4%211%53VG41%UI1UC%UK216%U52VJU@&CrQA%U82VM1uQ0%4221%U>3VN61rQB%U=2W21u:%9221%V62Q?1&Q1%12W3B%UF3W831&RN&F%W=1VO&S3&RC%443W<21rQC%UK2W@1%83E31r8%V?3QM21rQ:r7%V:221%V<215&RBrQ4%24QN1Q;N%VC4VBQ641rQ>rQ;r9%S::S9S8UFS73QKR821=%W>2X0S3%X411%S214&Q;rQ@%S511&TBrQ9%Q22X4F%33X:21%S62F1%836TI1%VJ3;:1&Q2r:%S511%S61QD%VO3421&RH%VN2X?5%24W;W7TK1%SB2X@7%W43S>21%UJ2UBWB%T:2WCT8%UM221&B&SB%V72V5S5+RTH%3221%V221WE%TB2WF4%V5221%811%V62U;S=%V?2U<U0%TG2S?1%V:231%=11%VD2Y9RC%X311rQH%113%WJ3XM31p061p0<1p0F1pW<XM1'RKvT;(Q7&RGvSNrQ8%W32YH1&RI%11X@%655VA3VG1%821W3rQ7%<4XD;21p0>1p0Q91p0Q?1p0QE1p0R31p0R81p0RA1p0RM1p0S61tQDY:S>1tY>Z7SA1tWDZ4SH1pX8YI1pS4YK1pSFYO1+\[X8%WJ2Z?1%K5JI1CFrQ6%N221%Q14Y9Q01X?p071p0T71p0TB1p0U71p0U@1p0UL1p0V51p0V81p0V@1p0VF1p0VL1p0W41p0W<1p0WD1p0WJ1p0X71p0XF1p0XJ1p0Y01p0Y61p0Y<1p0YG1p0Z21tQBZ=Z71pQLZ?1pXBZI1pY@ZB1pWBZC1pXJZL1pWJ[;1pX>[A1pX@ZI1pWF[01p2ZO1pWHZM1pR2ZO1pR0[21pX6[71pS2[91pSD[=1pX4[A1pXN[D1pWL[G1pY<[M1")) (only parsing).
-Variable vals : ltac:(sec_ty2 constr:(SEC_T_aread_site) 0%nat 0%nat).
-Variable ebs : ltac:(sec_ty2 constr:(SEC_T_aread_site) 1%nat 0%nat).
-Variable sr : ltac:(sec_ty2 constr:(SEC_T_aread_site) 2%nat 0%nat).
-Variable kn : ltac:(sec_ty2 constr:(SEC_T_aread_site) 3%nat 0%nat).
-Variable R : ltac:(sec_ty2 constr:(SEC_T_aread_site) 4%nat 0%nat).
-Variable M : ltac:(sec_ty2 constr:(SEC_T_aread_site) 5%nat 0%nat).
-Variable model : ltac:(sec_ty2 constr:(SEC_T_aread_site) 6%nat 0%nat).
-Variable LB : ltac:(sec_ty2 constr:(SEC_T_aread_site) 7%nat 0%nat).
-Variable LK : ltac:(sec_ty2 constr:(SEC_T_aread_site) 8%nat 0%nat).
-Variable cr : ltac:(sec_ty2 constr:(SEC_T_aread_site) 9%nat 0%nat).
-Variable A : ltac:(sec_ty2 constr:(SEC_T_aread_site) 10%nat 0%nat).
-Variable cnt : ltac:(sec_ty2 constr:(SEC_T_aread_site) 11%nat 0%nat).
-Variable pth : ltac:(sec_ty2 constr:(SEC_T_aread_site) 12%nat 0%nat).
-Variable off : ltac:(sec_ty2 constr:(SEC_T_aread_site) 13%nat 0%nat).
-Variable data : ltac:(sec_ty2 constr:(SEC_T_aread_site) 14%nat 0%nat).
-Variable so : ltac:(sec_ty2 constr:(SEC_T_aread_site) 15%nat 0%nat).
-Variable bls : ltac:(sec_ty2 constr:(SEC_T_aread_site) 16%nat 0%nat).
-Variable vbnd : ltac:(sec_ty2 constr:(SEC_T_aread_site) 17%nat 0%nat).
-Variable ra : ltac:(sec_ty2 constr:(SEC_T_aread_site) 18%nat 0%nat).
-Variable K : ltac:(sec_ty2 constr:(SEC_T_aread_site) 19%nat 0%nat).
-Lemma aread_site : ltac:(sec_stmt2 constr:(SEC_T_aread_site) 20%nat 0%nat).
+Lemma aread_site : ltac2:(TCodec.tc2 tcn__Jb0DrvRead "\2'8'TAyR0%211%411'9y8%611%811p041'S1%;11'S2%=11&Q?y5%221=':%11;p0@1'Q:'<'G%2211%H11&R5%J11&R1&Q5%82H7%N11&RJ'S0(RO&S8rD%211rC%5221&S5r1rA%33251&S4&S9r2&QM&R2r<r@%3221%521:%94871?'@'5&S7&7rG%22QG1rE%5221(=%93821&S6rH%92QN1%3217%>3=16'Du1rI%?2R41%4231rJ(2%Q9221vT=%H3R:21&R=%11?%K3J1C&RF(T?+2(>%33R621%52F1&T@&S;&TC%12RH>r=%4221%62RK1%Q93RK81'?&S<&S@&SA+F%22A1%411r>%7221z%9231%;231&S>r?+@%3221%QJ3RI17rK+:%Q03S31N%Q2231+3%N2SC1%R13SC31rL+;%Q73S:1Q5%Q9231&RA%Q52SJ1%R83SJ31rM+<%Q>3SA1Q<%Q@231rF%Q<2T11%R?3T131+1%Q621R=+RPP0%Q82R?1%Q:231rO%QI3SL6QG%QK221%QF2T;S4%RI3T;21rB%Q@2Q81&S=+R0%QA2R01%3251%QF251%Q;2SAR3%S23T11Q?'R<vSFvLvQBrNrQ1rQ0%7:65RC4E3Q1Q821'Q8%T@11&Q<&Q=%117%321Q@(3(Q9%12QHRO%3291%SE3951%TJ1U3&Q4&Q>rQ2%211%421QI%;2U9S8%SM3721%U21TM&R0%12T8R5%@2U0T>%T23421&Er3rQ<%T32UH1%4231&R>vNrQ5%TN267%S82UO1%554Q931TE%S4271p0=1pX<U?1pX0V11rQ=%T@2V51%A2@1%U823A%SB2V91%S<21TO%S>241p0G1pW@UI1pY:V;1&Q3rQ3%SL2VA1%33QFQG1&4rQ?&RMr4%211%53VG41%UI1UC%UK216%U52VJU@&CrQA%U82VM1uQ0%4221%U>3VN61rQB%U=2W21u:%9221%V62Q?1&Q1%12W3B%UF3W831&RN&F%W=1VO&S3&RC%443W<21rQC%UK2W@1%83E31r8%V?3QM21rQ:r7%V:221%V<215&RBrQ4%24QN1Q;N%VC4VBQ641rQ>rQ;r9%S::S9S8UFS73QKR821=%W>2X0S3%X411%S214&Q;rQ@%S511&TBrQ9%Q22X4F%33X:21%S62F1%836TI1%VJ3;:1&Q2r:%S511%S61QD%VO3421&RH%VN2X?5%24W;W7TK1%SB2X@7%W43S>21%UJ2UBWB%T:2WCT8%UM221&B&SB%V72V5S5+RTH%3221%V221WE%TB2WF4%V5221%811%V62U;S=%V?2U<U0%TG2S?1%V:231%=11%VD2Y9RC%X311rQH%113%WJ3XM31p061p0<1p0F1pW<XM1'RKvT;(Q7&RGvSNrQ8%W32YH1&RI%11X@%655VA3VG1%821W3rQ7%<4XD;21p0>1p0Q91p0Q?1p0QE1p0R31p0R81p0RA1p0RM1p0S61tQDY:S>1tY>Z7SA1tWDZ4SH1pX8YI1pS4YK1pSFYO1+\[X8%WJ2Z?1%K5JI1CFrQ6%N221%Q14Y9Q01X?p071p0T71p0TB1p0U71p0U@1p0UL1p0V51p0V81p0V@1p0VF1p0VL1p0W41p0W<1p0WD1p0WJ1p0X71p0XF1p0XJ1p0Y01p0Y61p0Y<1p0YG1p0Z21tQBZ=Z71pQLZ?1pXBZI1pY@ZB1pWBZC1pXJZL1pWJ[;1pX>[A1pX@ZI1pWF[01p2ZO1pWHZM1pR2ZO1pR0[21pX6[71pS2[91pSD[=1pX4[A1pXN[D1pWL[G1pY<[M1").
 Proof.
+intros vals ebs sr kn R M model LB LK cr A cnt pth off data so bls vbnd ra K.
 intros E HR HK Hsv Hkv HL1 P0 Hiw
 R2 Hso Hsoal R10 R11 R12 Hcnt R1 Hra Hra2 DI Hfd Hfsl Hbl Hvb CONT.
 pose proof Hsp as Hsp'. unfold STAGE in *.
@@ -342,7 +309,7 @@ assert (EV3 : vml_of model3 = vml_of model).
 assert (Hh3 : m_halted model3 = None) by (rewrite (sbm_halted_eq _ _ SBM3); exact Hh2).
 assert (EH3 : ahid A model3 = H) by (rewrite (ahid_sbm A model2 model3 SBM3); exact EH2).
 assert (DI3 : dinvA LB LK cr A M3 model3).
-{ apply (dinv_frame scfg L ar C IL HI HIok sp0 Hsp DL M0 LB LK cr A M M3 model model3 DI); [ | exact GRW | exact EV3 | exact MI3 | exact Hh3].
+{ apply (dinv_frame scfg L ar C IL HI HIok sp0 Hsp DL M0 LB LK cr A M M3 model model3 DI); [ | exact GRW | exact EV3 | exact MI3 | exact Hh3 | rewrite (sbm_rdrA _ _ SBM3); unfold model2; rewrite with_fds_rdr; exact (sbm_rdrA _ _ SBM1)].
 intros a Ha NC. apply FRM; [exact Ha | |]; intros Hr; apply NC; unfold CWA.
 - right. left. unfold s in Hr. lia.
 - right. right. exists 0x65f090, 0x670a68. split; [unfold IMG_W_A; cbn [In]; tauto | lia]. }
@@ -411,6 +378,5 @@ apply rdn_ext; [rewrite u_small by lia; lia|]. intros x Hx. rewrite u_small in H
 unfold M3, munrestrict. rewrite (VST x) by lia. rewrite OUT3 by lia. unfold mrestrict. rewrite (VST x) by lia. reflexivity.
 + exact FRM.
 Qed.
-End SE.
 End DrvRead.
 End FPX_1.

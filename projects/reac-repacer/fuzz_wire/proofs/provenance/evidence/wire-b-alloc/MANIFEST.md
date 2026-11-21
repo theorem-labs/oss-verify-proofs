@@ -5,7 +5,7 @@ Written by mk_slice_manifest.py (this slice). Start with RECORD.md. The planted-
 | path | role | sha256 |
 |---|---|---|
 | `ACCEPTANCES.tsv` | every kit-reported row and target with its named measurement and settled verdict | `3bf810d95511bdbd852b0e0911919a93ddb917dc9bd619d9090c818b5863d731` |
-| `RECORD.md` | the record: verdict, fail-open shapes, criterion, tools, images, kit verdict, acceptances, hand traces, exposure scans, controls, limits, unit gates, checks | `f3c74b2025e1f20e396457b2e91b44e6cbaacb1238d270e6fd6fc2e38e227d0a` |
+| `RECORD.md` | the record: verdict, fail-open shapes, criterion, tools, images, kit verdict, acceptances, hand traces, exposure scans, controls, limits, unit gates, checks | `639c91753e50dc4c0abef9e04accacbef09bed017b5c40f1122b3d8a6c5d47f6` |
 | `ambiscan.out` | the kit exposure scan for names with several copies | `83d965f51362ac2aaa151fb617c199be2f5a7f4e68917e326abd4c875b135abe` |
 | `basescan.tsv` | every load / store / jalr base named as its full address in both images, with its settlement | `4d41eb735f1fa523ff2f8839bf25086d51be1765ee4a8c0415fddb36e72c0621` |
 | `cite-extra.tsv` | pinned-source citations used by the lui settlements | `02a68a19c5fe93e2d4fc0746134d8c70ffc5a3348db5216434a1a19a45115c85` |
@@ -35,8 +35,8 @@ Written by mk_slice_manifest.py (this slice). Start with RECORD.md. The planted-
 | `dupcheck.tsv` | every function compared by name: its symbol-table entries in X and Y, and the by-address check of a name with more than one | `2b93260199a11d9424b54a900a46d3cddfe6dfa0034ef19f5ec0f0e2aa441837` |
 | `earlier/SCRUB.tsv` | an archive's own record of its rewrites (role, time of day dropped, forbidden-word loader, sha256 pin repair, DIFFS.md note): each file's sha256 as its version ran and as shipped | `8609c9ec7e4d4c1eb98387733db0d76c133a6e23b647bb940ed52e5bc25c9d8b` |
 | `earlier/v4bbd3a74be89/ACCEPTANCES.tsv` | earlier run (previous tool version 4bbd3a74be89): every kit-reported row and target with its named measurement and settled verdict | `dfa10551e5a3be9ab3094e5eca7ba4ef8ef87804bd1d6dcf707ec0b1c81e5acf` |
-| `earlier/v4bbd3a74be89/RECORD.md` | earlier run (previous tool version 4bbd3a74be89): the record of its version directory | `4757579ca519fac9360d907de14cebb003ad4d068fe58f092434dba8b3dcdf19` |
-| `earlier/v4bbd3a74be89/REVIEW.md` | earlier run (previous tool version 4bbd3a74be89): the fresh reviewer's audit of the acceptances | `c4729ae0459da617f1eba7b935afa2aef82fae83fcbd5255fd7a199ef47506fb` |
+| `earlier/v4bbd3a74be89/RECORD.md` | earlier run (previous tool version 4bbd3a74be89): the record of its version directory | `5c735a63e2db2a8f5d8a3323815e206852ae830031286000cca9102f15fa9f32` |
+| `earlier/v4bbd3a74be89/REVIEW.md` | earlier run (previous tool version 4bbd3a74be89): the fresh reviewer's audit of the acceptances | `60caeb9641f43215f4e11b83315088341afb02d33fa95fb562a60d17a4e7a962` |
 | `earlier/v4bbd3a74be89/closure-grant.out` | earlier run (previous tool version 4bbd3a74be89): by-name closure comparison | `c7e5b91dcb48bf72aaf66a4be8df55fd5f6fd86adc1b8881d63951ce63348818` |
 | `earlier/v4bbd3a74be89/closure-identity.out` | earlier run (previous tool version 4bbd3a74be89): by-name closure comparison | `9198b2252e71c0abe154c1af107fe644f1247a50e2996906b2b7e9606227fec5` |
 | `earlier/v4bbd3a74be89/ctl-jtcheck-identity.out` | earlier run (previous tool version 4bbd3a74be89): a control run: a planted change, its untouched baseline, or identity B (known-equal) | `2f4a90f7081f6f9af7c286f091e05b5ff623f31f9843dc80fca8bc94572f2647` |
@@ -67,7 +67,7 @@ Written by mk_slice_manifest.py (this slice). Start with RECORD.md. The planted-
 | `earlier/v4bbd3a74be89/run.sh` | earlier run (previous tool version 4bbd3a74be89): reruns the measurements of its directory | `e8e6e676c9b975b13fc57a4481475010b7fc49cc7c510390aef83bf2d8ca66d1` |
 | `earlier/v4bbd3a74be89/settle.tsv` | earlier run (previous tool version 4bbd3a74be89): per-target settlement output | `dba718d81a20cdf4567212951be0e2501ec2fbc941809777572150f8b351d99b` |
 | `earlier/v4bbd3a74be89/tools.sha256` | earlier run (previous tool version 4bbd3a74be89): sha256 of every script run | `de15a8076206a885d39f4e4f68580e262b6fb784f2d4c79142d758ad4b6ad199` |
-| `earlier/v4bbd3a74be89/tools/DIFFS.md` | earlier run (previous tool version 4bbd3a74be89): each tool copy: its sha256, the original's sha256 and source, and the diff original -> copy | `8b9f15ed52f27dd3789512ffd5c2cd418fe3d15a6d7e6d039c3e46cb6c0196ea` |
+| `earlier/v4bbd3a74be89/tools/DIFFS.md` | earlier run (previous tool version 4bbd3a74be89): each tool copy: its sha256, the original's sha256 and source, and the diff original -> copy | `c628dabd44ead73a8472e2dadf1a855eb46557afa19f8bdf36d1be0a90cd6408` |
 | `earlier/v4bbd3a74be89/tools/bytecmp-1480ca2faea0.py` | earlier run (previous tool version 4bbd3a74be89): a script of the record (tools.sha256 names it; tools/DIFFS.md gives its source) | `145447a50bb2b51b84f7b39214a53261d63bd4ac7a8403b61846c4cbf91518a2` |
 | `earlier/v4bbd3a74be89/tools/closure_strict2.py` | earlier run (previous tool version 4bbd3a74be89): a script of the record (tools.sha256 names it; tools/DIFFS.md gives its source) | `21028c256d69b6802aaa3f86f5d4e170dc836a37e8389bf84926aa212372634a` |
 | `earlier/v4bbd3a74be89/tools/drvcmp.py` | earlier run (previous tool version 4bbd3a74be89): a script of the record (tools.sha256 names it; tools/DIFFS.md gives its source) | `5d36e4bd76c603759a93a2c9ce9fd6b1c18908b088fd416109019b4328c5d947` |
@@ -85,7 +85,7 @@ Written by mk_slice_manifest.py (this slice). Start with RECORD.md. The planted-
 | `earlier/v4bbd3a74be89/tools/strictcmp2.py` | earlier run (previous tool version 4bbd3a74be89): a script of the record (tools.sha256 names it; tools/DIFFS.md gives its source) | `61a95130e6d4b008bd55205ccfeb021cdc7ca6cb96bc1d2aa82076f643c55a38` |
 | `earlier/v4bbd3a74be89/tools/syms.py` | earlier run (previous tool version 4bbd3a74be89): a script of the record (tools.sha256 names it; tools/DIFFS.md gives its source) | `ebf764d5cdf2407a8172a220e5a9ac605a3a95b1b6341abb91bfdc4fb7d4100c` |
 | `earlier/v4bbd3a74be89/twins.out` | earlier run (previous tool version 4bbd3a74be89): PT_LOAD equality of each unstripped twin and its pin | `fea5fe45e0cba11da37c18452ebf0da64fb044b89ad10bc2895aa0aae1b40b91` |
-| `earlier/va88c2822a0f2/RECORD.md` | earlier run (previous tool version a88c2822a0f2): the record of its version directory | `d5632a5b6ae8d1a255b32d13835206bc0ebab63594b4ad2dfbc1b4334f39df51` |
+| `earlier/va88c2822a0f2/RECORD.md` | earlier run (previous tool version a88c2822a0f2): the record of its version directory | `5562913b16cf8f6b9676e916ebc1143d27c47d182b91fafd2d7f49ece9d98245` |
 | `earlier/va88c2822a0f2/cietable.out` | earlier run (previous tool version a88c2822a0f2): parseCIE jump table read entry by entry | `579b7aae26139f46f0b7b094087dd5d98fb1dd07642121a84223d0349b11c98a` |
 | `earlier/va88c2822a0f2/closure-grant.out` | earlier run (previous tool version a88c2822a0f2): by-name closure comparison | `df5238d731e4b2cecdc72c103e3eef4b02471a7f8bec4bd92e91f2fda8f8d2ab` |
 | `earlier/va88c2822a0f2/closure-identity.out` | earlier run (previous tool version a88c2822a0f2): by-name closure comparison | `bdfd45c45cc83ede4150e042fc7123e014e08fcfb12358788c7ef0e3027e63a6` |
@@ -128,7 +128,7 @@ Written by mk_slice_manifest.py (this slice). Start with RECORD.md. The planted-
 | `earlier/va88c2822a0f2/roots.tsv` | earlier run (previous tool version a88c2822a0f2): root-pair bytecmp verdicts | `c8599fe6ec2d9293e3458e71e62a790740967aac312b7156e750ebf6f0017aec` |
 | `earlier/va88c2822a0f2/run.sh` | earlier run (previous tool version a88c2822a0f2): reruns the measurements of its directory | `cc1a8465b1ffd92f491eb344aa5932deb4aa74734cd17c128f949109a4ea11f5` |
 | `earlier/va88c2822a0f2/tools.sha256` | earlier run (previous tool version a88c2822a0f2): sha256 of every script run | `0faaf35183ecbedc0129e3565755ab778f4b9e215bb2770ce18b6045d1d7bf15` |
-| `earlier/va88c2822a0f2/tools/DIFFS.md` | earlier run (previous tool version a88c2822a0f2): each tool copy: its sha256, the original's sha256 and source, and the diff original -> copy | `50347bce3f8a9c0011dace4de54383a7af900026c00da13df0681b0f1c848b0d` |
+| `earlier/va88c2822a0f2/tools/DIFFS.md` | earlier run (previous tool version a88c2822a0f2): each tool copy: its sha256, the original's sha256 and source, and the diff original -> copy | `02c466cd336b6f264d2d068afd1567043508cbc7ee8cebe9908da828aec27838` |
 | `earlier/va88c2822a0f2/tools/bytecmp-1480ca2faea0.py` | earlier run (previous tool version a88c2822a0f2): a script of the record (tools.sha256 names it; tools/DIFFS.md gives its source) | `145447a50bb2b51b84f7b39214a53261d63bd4ac7a8403b61846c4cbf91518a2` |
 | `earlier/va88c2822a0f2/tools/cietable.py` | earlier run (previous tool version a88c2822a0f2): a script of the record (tools.sha256 names it; tools/DIFFS.md gives its source) | `c82414f4b6d78d45d1fc214f8634985143635cdc03e512a7b4f7bee102eaa845` |
 | `earlier/va88c2822a0f2/tools/closure.py` | earlier run (previous tool version a88c2822a0f2): a script of the record (tools.sha256 names it; tools/DIFFS.md gives its source) | `b50998fb3bd3db5ec374b380157492a819044f992c3fd895d3cb2f2764578f77` |
@@ -178,7 +178,7 @@ Written by mk_slice_manifest.py (this slice). Start with RECORD.md. The planted-
 | `earlier/va88c2822a0f2/v9cbc3553c09e/pairtable-tmalloc-grant.out` | earlier run (previous tool version a88c2822a0f2): per-function table of a paircl pairing | `4e4151c68f9a16881fbd4939082d3b9e8d90f02258db08200c75fe4c5e0beccf` |
 | `earlier/va88c2822a0f2/v9cbc3553c09e/roots.tsv` | earlier run (previous tool version a88c2822a0f2): root-pair bytecmp verdicts | `c8599fe6ec2d9293e3458e71e62a790740967aac312b7156e750ebf6f0017aec` |
 | `earlier/va88c2822a0f2/v9cbc3553c09e/tools.sha256` | earlier run (previous tool version a88c2822a0f2): sha256 of every script run | `69b8d80a524544f153b9c8d55e5ae81d0eddd69767e2a7efdfde8fb8fcb58ce4` |
-| `earlier/va88c2822a0f2/v9cbc3553c09e/tools/DIFFS.md` | earlier run (previous tool version a88c2822a0f2): each tool copy: its sha256, the original's sha256 and source, and the diff original -> copy | `af60f88acb340015c5af4c74087a5ea8b6652bb5419f8b492f9c70c2bd2f06cf` |
+| `earlier/va88c2822a0f2/v9cbc3553c09e/tools/DIFFS.md` | earlier run (previous tool version a88c2822a0f2): each tool copy: its sha256, the original's sha256 and source, and the diff original -> copy | `e74ba66156c481233d9234bdf53e2da1f474565cb973288e2f108f2421819fd8` |
 | `earlier/va88c2822a0f2/v9cbc3553c09e/tools/bytecmp-1480ca2faea0.py` | earlier run (previous tool version a88c2822a0f2): a script of the record (tools.sha256 names it; tools/DIFFS.md gives its source) | `145447a50bb2b51b84f7b39214a53261d63bd4ac7a8403b61846c4cbf91518a2` |
 | `earlier/va88c2822a0f2/v9cbc3553c09e/tools/cietable.py` | earlier run (previous tool version a88c2822a0f2): a script of the record (tools.sha256 names it; tools/DIFFS.md gives its source) | `c82414f4b6d78d45d1fc214f8634985143635cdc03e512a7b4f7bee102eaa845` |
 | `earlier/va88c2822a0f2/v9cbc3553c09e/tools/closure.py` | earlier run (previous tool version a88c2822a0f2): a script of the record (tools.sha256 names it; tools/DIFFS.md gives its source) | `b50998fb3bd3db5ec374b380157492a819044f992c3fd895d3cb2f2764578f77` |
@@ -189,11 +189,11 @@ Written by mk_slice_manifest.py (this slice). Start with RECORD.md. The planted-
 | `earlier/va88c2822a0f2/v9cbc3553c09e/tools/repin_check-9cbc3553c09e.py` | earlier run (previous tool version a88c2822a0f2): a script of the record (tools.sha256 names it; tools/DIFFS.md gives its source) | `a406b7c1b76e325501c4c9584128ec0e86c8a402e8915365e64ac82c18f6313c` |
 | `earlier/va88c2822a0f2/v9cbc3553c09e/tools/syms.py` | earlier run (previous tool version a88c2822a0f2): a script of the record (tools.sha256 names it; tools/DIFFS.md gives its source) | `ebf764d5cdf2407a8172a220e5a9ac605a3a95b1b6341abb91bfdc4fb7d4100c` |
 | `fieldscan.tsv` | every load of each escaped field in both images (whole-image scan) | `2b725885053e9a2f21a2a20645f148d0d996dcb9ee434df48274c70b2300a1e4` |
-| `gate-base.txt` | one unit gate: its evidence lines and its `GATE ... VERDICT:` line | `f2662d61c3bddb4bbed9bec6a14c0c08c9cc4bfdf97fb5dae43b269c9b0aa90d` |
-| `gate-controls.txt` | the two negative controls of the gates: each must read FAIL | `0f45029bfd40992af5451899bf03188666adb3655de83548a01f114313c1deab` |
-| `gate-kit.txt` | one unit gate: its evidence lines and its `GATE ... VERDICT:` line | `393d76d789de45af27fe45b06c9164a8d56a61453a39db4fe4935ada5be86d2d` |
-| `gate-lui.txt` | one unit gate: its evidence lines and its `GATE ... VERDICT:` line | `c313cce655e1ae2f753ca6e338a8c40e5042ecb18b5e17a5173e33386b165de2` |
-| `gate-plants.txt` | one unit gate: its evidence lines and its `GATE ... VERDICT:` line | `72fab68ad687dc8086429ccbe6ff301e51fd9af68a540f138484826a7f3873c0` |
+| `gate-base.txt` | one unit gate: its evidence lines and its `GATE ... VERDICT:` line | `ec558c2079dc27bbb203989b2ce1923832d8f2de7fdf62b06d337bc498e95baf` |
+| `gate-controls.txt` | the two negative controls of the gates: each must read FAIL | `01494e72fcc366a67a9f2aa41809714f9237e5d96dc98f725a15ecb623347f21` |
+| `gate-kit.txt` | one unit gate: its evidence lines and its `GATE ... VERDICT:` line | `c9c5a5f5c278ffa64e8cdefe4bc3b5c54cd03c5ec5848444098d178583951b19` |
+| `gate-lui.txt` | one unit gate: its evidence lines and its `GATE ... VERDICT:` line | `2290c5bdf897c2bae0bc892d83706857eec3cb3c76ea029d1810f76c16e350ae` |
+| `gate-plants.txt` | one unit gate: its evidence lines and its `GATE ... VERDICT:` line | `fbb6a5d00cbab3bc6d0fa3b502251830ec63fdf5ddc8debf8eaab53daed86151` |
 | `handtable-read.md` | an independent reader's decode of the two hand-settled tables, without handtable.py | `937a5bb6cae436c281bd88217eee35e1ae4085d784a6cc62abd23c06a2ca7ea7` |
 | `handtable.out` | the hand settlement of each table jtcheck 226254f48c97 refuses: entries, dispatch and the bound by a CFG walk, on both images (tools/handtable.py) | `43101193ce5e690280ea1822042d257828c83a914315aeed44fb69795bb0599b` |
 | `images.sha256` | sha256 of every image read | `1ebb8975ccef98d2695d420fde41aece8c84e2952cf17b7c62f34604f70e7fab` |

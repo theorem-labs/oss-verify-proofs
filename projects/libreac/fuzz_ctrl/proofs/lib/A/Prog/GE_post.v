@@ -1,7 +1,7 @@
 (* fuzz_ctrl image A, ctrl_emit_as (0x849d8): the conclusion of the cgif-form glue of a Theorem Labs lane.
 
    The two lifted stretches of A/Prog/ctrl_emit_asF2.v now end at `aQg mbz W` (:392) with NARROW munch windows
-   (a Theorem Labs lane ca4c8f36aa1): the early return (EE = false) at `aQg m [(LO, SP0)]`, the stack window alone; when
+   (a Theorem Labs lane): the early return (EE = false) at `aQg m [(LO, SP0)]`, the stack window alone; when
    EE = true the first stretch at aAtLay with `munch aWL m mc`, aWL = [(LO, SP0); (o, o + LEN)], and the
    second stretch at `aQg m5 aWL`, m5 the memory ctrl_lay_block returns. No window holds a side-stack range
    or a shadow range, so every byte the caller-journal keeps (`tcj_kept`, A/Prog/CtrlCallerJ.v) is outside

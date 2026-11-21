@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor raised to the 0x5D0000 bytes below sp that the launch guarantees ([STACK_GAP])). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -111,7 +112,7 @@ Proof using OK.
   lia.
 Qed.
 
-Lemma checked_dst_stack : forall Σ m sp d n, ART RT Σ m -> rt_sp0 RT Σ - STACK_WIN + 64 <= d -> d + n <= USTACK_TOP - 16 ->
+Lemma checked_dst_stack : forall Σ m sp d n, ART RT Σ m -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP + 64 <= d -> d + n <= USTACK_TOP - 16 ->
   bv_unsigned sp <= d -> wr_at bsegs m d n -> checked_dst RT Σ m sp d n.
 Proof using AF.
   intros Σ m sp d n HA H1 H2 H3 WR. split; [| split].

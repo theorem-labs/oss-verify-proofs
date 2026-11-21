@@ -12,7 +12,7 @@ Open Scope Z_scope.
    a4 the flag (a0 <> 0), a5 / a6 the checked / loaded pointers and a7 / t0 the scratch.  The pure facts and the loop
    tactic are those of the inline loops (CrsHash.v, CrsSegA.v, CrsSegB.v), stated here on their own so that this file
    needs only the frozen check_reject_clean_starved_c.v and the contract.
-   Provenance: the same walk of the same code in the ubsan CF tree, origin/cold/h-rw-ide-17-p102-S-cf e7104a983098,
+   Provenance: the same walk of the same code in the ubsan CF tree,
    lib/U/Prog/CF/CrsHash.v (blob 89cd88f73658): crsu_iter :114-137 = fp_iter, crsu_lp :177-193 = fp_loop, crsu_pick
    :196-241 = fuzz_pick_holds (restated for fuzz_pick_contract's equality premises).  Copied, not Required: that file
    is another lane's, is not on this base (base blob c1e614aab40b is the old walk), and would put the CF contract and

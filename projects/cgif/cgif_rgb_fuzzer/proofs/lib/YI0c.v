@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (seg_dummy gives the Segment record's new seg_kind field, SegLoader). *)
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation String.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -25,7 +26,7 @@ Definition ND_cidx := 8%nat. Definition ND_leaf := 9%nat.
 Lemma lay_inside_RgbFrameConfig : lay_inside LAY_RgbFrameConfig RGBFC_SIZE = true. Proof. reflexivity. Qed.
 Lemma lay_inside_Node : lay_inside LAY_Node NODE_SIZE = true /\ lay_widths_ok LAY_Node = true. Proof. split; reflexivity. Qed.
 Definition seg_dummy : Segment :=
-{| seg_base := 0%N; seg_size := 0%N; seg_perms := String.EmptyString; seg_bytes := nil |}.
+{| seg_base := 0%N; seg_size := 0%N; seg_perms := String.EmptyString; seg_bytes := nil; seg_kind := SegLoader |}.
 Definition CGIF_RGB_FRAME_ATTR_INTERLACED : Z := 1.
 Definition CGIF_RGB_FRAME_ATTR_NO_DITHERING : Z := 2.
 Definition FATTR_USE_LOCAL_TABLE : Z := 1. Definition FATTR_HAS_ALPHA : Z := 2.

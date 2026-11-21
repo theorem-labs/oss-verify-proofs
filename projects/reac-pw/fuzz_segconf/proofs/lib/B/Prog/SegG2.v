@@ -1,8 +1,8 @@
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin sha256 c3796c0b38f3): the nine function walks of group
    G2 on image B (reac_box_catalogue, fuzz_catalogue_row, ieq, reac_box_catalogue_by_token, m_find, strip, fold,
    m_refuse, m_file) composed with each other at the walks' own abstract listing instance
-   (`Context {PI : PAImg seg_listing}`) and allocator record B. The twin of image A's lib/A/Prog/SegG2.v (commit
-   6f7a1561a103), with image B's two outlined functions strip and fold and with m_file, whose image-B walk is
+   (`Context {PI : PAImg seg_listing}`) and allocator record B. The twin of image A's lib/A/Prog/SegG2.v,
+   with image B's two outlined functions strip and fold and with m_file, whose image-B walk is
    complete. fuzz_catalogue_row's walk discharges the callee contract reac_box_catalogue_by_token's walk takes (FCR);
    m_file's callee contracts IEQ, M_FIND, M_REFUSE, ROW, STRIP, FOLD are discharged by those walks.
    What is left are Section hypotheses of exactly the walks' own texts:

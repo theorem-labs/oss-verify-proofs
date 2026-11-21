@@ -1,12 +1,12 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/RT_pf_bz.v (cold/port-fm-rtprintf-param 3e35620c52e); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/RT_pf_bz.table). *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/RT_pf_bz.v at 2d2ff01bb6f2 relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/RT_pf_bz.v; relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/RT_pf_bz.table). *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/RT_pf_bz.v relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
 (* printf_common's call contract at fuzz_manifest.asan, in the Bz vocabulary: the same statements as port-reply's
-   lib/A/RT_pf_bz.v (origin/cold/port-reply-pf-chain 970f7d733a4) pcom_pre and pcom_call, at fm's printf_common
+   lib/A/RT_pf_bz.v pcom_pre and pcom_call, at fm's printf_common
    (RT_pf_Tbl.v PF_PRINTF_COMMON); the interceptor cells (port-reply's sni_cells / vfi_cells) are not here, they belong
    to the interceptor chain.
 
    This file proves no new function. `pcom_call` is c-asan-rt's printf_common walk (lib/A/Bz/A/I_pcxlist.v
-   pcom_genx_spec, relocated onto fuzz_manifest from fuzz_state 840c4afa7e2) with its section hypothesis rip_stmt
+   pcom_genx_spec, relocated onto fuzz_manifest from fuzz_state) with its section hypothesis rip_stmt
    discharged by R_isPoisoned.v rip_proof; what it adds is the stack bookkeeping that lets a caller with a deeper floor
    lo call it: pcom_genx_spec is used at the floor sp - PCOM_DEPTH (its own window), and the part of the caller's stack
    below that floor is carried across the call untouched (stk_split / stk_merge).
@@ -14,7 +14,7 @@
    pcom_pre is pcom_genx_spec's premises over the memory, bundled at that floor. Its argument list (Bz's
    I_pcxgram.parg) and its format check (pcomx_ok, printf_common's own grammar) are the caller's to compute; for a
    fixed format both are closed computations. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RT_pf_bz.v at 71994ff034c7, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/RT_pf_bz.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/RT_pf_bz.v keeps its donor's comment text) is kept as lib/A/RT_pf_bz.v writes it. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RT_pf_bz.v, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/RT_pf_bz.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/RT_pf_bz.v keeps its donor's comment text) is kept as lib/A/RT_pf_bz.v writes it. *)
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.AU.Bz Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

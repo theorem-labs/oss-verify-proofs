@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: decodes the 49 encoded statements into plain Rocq, generalises reserved_free_above to reserved lists with extra resx entries, adapts node_brk2_sound's proof to them and to vdso/channel-reader fields, unfolds brk_grow_bytes in brk_grow_ok_aligned_elim, as in fuzz_bigint's copy; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/AsanNodesMmBK.v, 169 lines within its lines 34-1450. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -15,14 +16,14 @@ From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require Import Scfg Ki
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require Import AxSymExec3K AxSymExec3SoundK AxSymRun3K AsanPlanCoreK AsanPlanK AsanPlanSoundK.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require Import AsanCeil.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
-From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require TCodec.
-Ltac2 tcn__AsanNodesMmBK () := ([""; "Corelib.Init.Datatypes."; "Corelib.Init.Logic."; "Corelib.Init.Peano."; "Corelib.Lists.ListDef."; "Corelib.Numbers.BinNums."; "LinuxProcessSemantics.LinuxProcessSem.Fs."; "LinuxProcessSemantics.LinuxProcessSem.MemImageType."; "LinuxProcessSemantics.LinuxProcessSem.Run."; "LinuxProcessSemantics.LinuxProcessSem.State."; "LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap."; "LinuxProcessSemantics.Riscv.Prelude."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AsanAcct."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AsanCeil."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AsanPlacement."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AsanPlanK.APK."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AsanPlanSoundK.APSK."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AxSymExec3K.AX2K."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AxSymExec3SoundK.AX2SK."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AxSymRun3K."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.BackingAlgebra."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.MmapSim."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.PropExec."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.ShapeAlg."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.SpinAlg."; "Stdlib.Lists.List."; "Stdlib.ZArith.BinInt.Z."; "stdpp.bitvector.definitions."], [["0A"; "0Aset"; "1Some"; "1andb"; "1app"; "1bool"; "1cons"; "1false"; "1fst"; "1list"; "1nat"; "1negb"; "1option"; "1orb"; "1pair"; "1prod"]; ["1snd"; "1true"; "2I"; "2and"; "2eq"; "2ex"; "2not"; "3lt"; "4Forall"; "4map"; "5Z"; "0E"; "0E'"; "0FS0"; "0FULL"; "0FULL'"]; ["0L"; "0LIMIT"; "6Fs"; "7Segment"; "8segments_reserved"; "9Model"; "9VmMaps"; "9alloc_top"; "9iv_overlap"; "9m_fs"; "9m_vm_lazy"; "9m_vmmaps"; "9maps_subtract"; "9page_round_up_Z"; "9page_size"; "9region_free"]; ["9vm_backing_used"; "9vm_brk"; "9vm_limit"; "9vm_maps"; "9vm_noaccess"; "9vm_reserved"; "9with_vmmaps"; ":brk_grow_ok"; ";bvmap"; "0M"; "0R"; "0R'"; "<A_bytes"; "<A_wf"; "<MInv"; "<eager_used"]; ["=alloc_ceiling"; "=bottomup_floor"; ">kHighMemBeg"; "?ACS"; "?CEIL"; "?FLOOR"; "?KHI"; "?YBrk"; "?YMunmap"; "?YSetTid"; "?a_abytes"; "?a_brk"; "?a_eager"; "?a_fd"; "?a_ghost"; "?a_hlz"]; ["?a_hna"; "?a_maps"; "?a_ss"; "?a_tidset"; "?a_totsz"; "?a_vis"; "?a_ylo"; "?acs"; "?amap"; "?brk_base_ok"; "?brk_req"; "?flat_x"; "?img_hi"; "?is_ecall_at"; "?kn"; "?kzero_x"]; ["?len_eqb"; "?lit_diff"; "?mk_ss"; "?mmap_len"; "?node_munmap"; "?nxt"; "?page_aligned"; "?pc"; "?reg"; "?set_pc"; "?set_reg"; "?shadow_facts"; "?snode"; "?vis_add"; "?vis_cost"; "@brk2_stmt"]; ["@cfg_of"; "@cs_ok"; "@exit_stmt"; "@in_allow"; "@in_ivs"; "@iv_disjoint"; "@seps"; "@sum_sizes"; "@sys_stmt"; "ASA"; "Aedenot"; "Aenv"; "Aexpr"; "Akentry"; "As_regs"; "Asplit_lit"]; ["Atwo64"; "Axhi"; "BelenZ"; "Bestart"; "Bknow_ok"; "Bregs_ok"; "Cenv_agree"; "Dcovered"; "Din_rng"; "Div_wf"; "Divs_wf"; "Dsum_count"; "Ezfill"; "Fgetr"; "Fregupd"; "GTSet"]; ["Hsrealizes"; "0SEGS"; "0SINV"; "IIn"; "INoDup"; "Jadd"; "Jle"; "Jleb"; "Jlt"; "Jltb"; "Jmodulo"; "Jof_nat"; "Jpow"; "Jsub"; "0T"; "0a"]; ["0allkn"; "0argH"; "0b"; "0cs"; "0cs'"; "0cs2"; "0d"; "0e"; "0f"; "0h"; "0h'"; "0hi"; "0iv"; "0k"; "0l"; "0l1"]; ["0l2"; "0len"; "0lo"; "0m"; "0m'"; "0m1"; "0model"; "0model'"; "0ms"; "0n"; "0ne"; "0nhi"; "0nlo"; "0nx0"; "0off"; "0p"]; ["0q"; "0r"; "0scfg"; "0sr"; "KBV"; "KZ_to_bv"; "Kbv"; "Kbv_unsigned"; "0sz"; "0v"; "0x"; "0y"; "0z"]]).
 Local Instance asanreflect_fx : PropExec.FPState := PropExec.fx0.
 Import ListNotations.
 Open Scope Z_scope.
 Import AX2K. Import AX2SK. Import APK. Import APSK.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
-Lemma lit_diff_sound : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "Q:'SK'SL'J'D'<%113&S1r3r2%3221(2r1%22:1%:3841'C&TFz%2219&TH&T0%22<1%7241&TJ&TM&V7yR0&SJr5r4%3221%6251%524H%8271%:231%<21?%Q03Q11K%F2?1p0H1pZ>Q41pZBQ61pZ@Q71pQHQ91").
+Lemma lit_diff_sound : forall E e f d,
+lit_diff e f = Some d ->
+0 <= d < two64 /\ (bv_unsigned (edenot E e) - bv_unsigned (edenot E f)) mod two64 = d.
 Proof.
 intros E e f d H. unfold lit_diff in H.
 pose proof (mkAlu_denot E ALU_SUB e f) as D. unfold esub in H.
@@ -30,7 +31,8 @@ destruct (mkAlu ALU_SUB e f) eqn:Hm; try discriminate. injection H as <-.
 cbn [edenot] in D. apply (f_equal bv_unsigned) in D. rewrite u_sub64 in D. rewrite u_lit64 in D.
 split; [apply Z.mod_pos_bound; unfold two64; lia|]. unfold two64 in *. rewrite <- D. reflexivity.
 Qed.
-Lemma page_aligned_sound : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "Q='9'Q3%211'SK'V6yR0%211'<y8%511%311p051'SM%=11'SL&T4r5r4r3r2%544321'D'5&S6%1265(A%53421'J&TJ&V7&SJr6%221>%42L1+TP0%7221z%@3:21p0<1p0C1pZ@J1pZLL1pSDO1pQHQ81pY4Q:1").
+Lemma page_aligned_sound : forall SEGS E M k e,
+know_ok SEGS E M k -> page_aligned k e = true -> bv_unsigned (edenot E e) mod 4096 = 0.
 Proof.
 intros SEGS E M k e HK H. unfold page_aligned in H.
 assert (GEN : 12 <= ealign k e -> bv_unsigned (edenot E e) mod 4096 = 0).
@@ -40,20 +42,29 @@ destruct e; try (apply GEN; apply Z.leb_le; exact H).
 apply Z.eqb_eq in H. cbn [edenot]. rewrite u_lit64. unfold two64.
 rewrite Z.mod_mod_divide; [exact H|]. exists (2 ^ 52). reflexivity.
 Qed.
-Lemma region_free_false_of_overlap : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "Q3'9'?'V6yR0%211%4211%611&TC(>r2r1%347721r5%63821'D'5&Q8r4r3%34721:(A%73621&Q?r7r6%3321=(7%=3<21p071p0@1p\BJ1pZ0K1p[DL1p[6M1pR2L1").
+Lemma region_free_false_of_overlap : forall L (lo n a sz : word),
+In (a, sz) L -> iv_overlap lo n a sz = true -> region_free L lo n = false.
 Proof.
 intros L lo n a sz Hin Hov. induction L as [|[a' sz'] L IH]; [destruct Hin|].
 cbn [region_free]. destruct Hin as [E|Hin].
 - injection E as -> ->. rewrite Hov. reflexivity.
 - rewrite (IH Hin). apply andb_false_r.
 Qed.
-Lemma regs_ok_regupd_same : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "Q:'SK'9'SL%211&QHy5'V6yR0%211%5241%415&T5r5r4r3%43321'D&T=%1254r2%43<21&F(V4z(B%33D21%:3@=1%611r8r7&T>r6%231DC%F3541p071p0?1p0E1p\DM1p\4L1pSFN1p\8Q51pQHQ91").
+Lemma regs_ok_regupd_same : forall E sr R (r : Prelude.reg) v,
+regs_ok E sr R -> getr R r = v -> r <> 0%bv -> regs_ok E sr (regupd R r v).
 Proof.
 intros E sr R r v HR Hv Hr r'. destruct (bv_eq_dec _ r' r) as [->|Hne].
 - rewrite getr_same by exact Hr. rewrite <- Hv. apply HR.
 - rewrite getr_other by exact Hne. apply HR.
 Qed.
-Lemma brk_grow_ok_aligned_refuted : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "RH'Q5'J'V6yR0%211'Q6&Q;r4%211&QAr1%211'D&TJ&V7%12<5&Q>%4221z%73B21r6%8215%:3E14&THr7%2271%<2GC%4291&TEr5%@2K1r9%4221%521A&TL+2+R0%3221%?251&TC'?%12Q5Q5(>r8%24Q8Q8=1&4&QE%11G&QC%11I%53931%<3:71%Q62QALr:%Q82QC1%Q92QDH%L221%Q2251r;%Q=2QH1%Q>2QIAr<%Q2221%Q8241'5&QGr>&V5r=%Q92>1%32R31%63511(7%QM3921p0;1p0B1p0I1p0Q71p0QC1p0QF1p0QJ1p0QN1tZ6R>R71tZDR>R;1p\BR@1pZ0RA1pZ>RE1p[8RG1").
+Lemma brk_grow_ok_aligned_refuted : forall m d (a sz : word),
+let h := m_vmmaps m in
+let b := vm_brk h in
+(bv_unsigned b mod page_size = 0)%Z -> (d mod page_size = 0)%Z -> (0 < d)%Z ->
+(0 < bv_unsigned b)%Z -> (bv_unsigned b + d + page_size < 2 ^ 64)%Z ->
+In (a, sz) (vm_reserved h ++ vm_maps h) ->
+(bv_unsigned b < bv_unsigned a + bv_unsigned sz)%Z -> (bv_unsigned a < bv_unsigned b + d)%Z ->
+Mmap.brk_grow_ok m (Z_to_bv 64 (bv_unsigned b + d)) (Z_to_bv 64 (bv_unsigned b + d)) = false.
 Proof.
 intros m d a sz h b Hbal Hdal Hd Hb0 Hnw Hin Hov1 Hov2.
 unfold page_size in Hnw. pose proof (u64_range b) as Hbr.
@@ -72,11 +83,19 @@ rewrite (region_free_false_of_overlap _ b (Z_to_bv 64 (d + page_size)) a sz Hin)
 assert (Hov2' : (bv_unsigned a < bv_unsigned b + (d + page_size))%Z) by (unfold page_size in *; lia).
 rewrite (proj2 (Z.ltb_lt _ _) Hov1), (proj2 (Z.ltb_lt _ _) Hov2'). reflexivity.
 Qed.
-Lemma brk_grow_ok_aligned_elim : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "RI'Q5'J'Q6&Q;r2%211'V6yR0%211&QAr1%211'D&TJ&V7%1285&Q>%4221z%73B21r4%8215%:3E14&THr5%2271%<2C6%4291&TE%?2F5r7%3221%421@&TL+2+R0%3221%>251'5&QGr9&V5r6%M2Q41r8%A221%52Q71%83711(A%Q53;21'C&TF%Q62Q=F%I21=&Q7%11;%5231&Q?&4'?%12QDQD&QE%11B&QC%11D%73531%Q62JQB%J2QL1%;33Q61%QI3O1E&Q@r:%211%Q=21Q1&QB%11O%I231%K281%L2F1p0N1p0Q;1p0QF1p0QI1p0QM1p0R11tZ6R=R:1tZDRDRA1pZ>RF1p[8RH1").
+Lemma brk_grow_ok_aligned_elim : forall m d,
+let h := m_vmmaps m in
+let b := vm_brk h in
+(bv_unsigned b mod page_size = 0)%Z -> (d mod page_size = 0)%Z -> (0 < d)%Z ->
+(0 < bv_unsigned b)%Z -> (bv_unsigned b + d + page_size < 2 ^ 64)%Z ->
+Mmap.brk_grow_ok m (Z_to_bv 64 (bv_unsigned b + d)) (Z_to_bv 64 (bv_unsigned b + d)) = true ->
+(bv_unsigned b + d <= alloc_top h)%Z
+/\ region_free (vm_reserved h ++ vm_maps h) b (Z_to_bv 64 (d + page_size)) = true
+/\ (vm_backing_used m + d <= vm_limit h)%Z.
 Proof.
 intros m d h b Hbal Hdal Hd Hb0 Hnw Hg. unfold page_size in Hnw. pose proof (u64_range b) as Hbr.
 assert (Hureq : bv_unsigned (Z_to_bv 64 (bv_unsigned b + d)) = (bv_unsigned b + d)%Z) by (apply u64_lit; lia).
-unfold Mmap.brk_grow_ok, Mmap.brk_budget_ok in Hg. fold h in Hg. fold b in Hg. rewrite Hureq in Hg.
+unfold Mmap.brk_grow_ok, Mmap.brk_budget_ok, Mmap.brk_grow_bytes in Hg. fold h in Hg. fold b in Hg. rewrite Hureq in Hg.
 rewrite (proj2 (Z.ltb_lt 0 _) Hb0), (proj2 (Z.ltb_lt (bv_unsigned b) _)) in Hg by lia. cbn [andb] in Hg.
 rewrite (page_round_up_Z_aligned (bv_unsigned b)) in Hg by (first [lia | exact Hbal]).
 rewrite (page_round_up_Z_aligned (bv_unsigned b + d)) in Hg
@@ -84,31 +103,39 @@ by (first [lia | rewrite Z.add_mod, Hbal, Hdal by (unfold page_size; lia); refle
 rewrite (proj2 (Z.ltb_lt _ _)) in Hg by lia.
 replace (Z_to_bv 64 (bv_unsigned b)) with b in Hg by (symmetry; apply Z_to_bv_u_eq'; reflexivity).
 replace (bv_unsigned b + d + page_size - bv_unsigned b)%Z with (d + page_size)%Z in Hg by lia.
-replace (bv_unsigned (Z_to_bv 64 (bv_unsigned b + d) - b)) with d in Hg.
-2:{ rewrite bv_sub_unsigned, Hureq. rewrite bv_wrap_small by (unfold bv_modulus; lia). lia. }
+replace (Z.max 0 (bv_unsigned b + d - bv_unsigned b))%Z with d in Hg by lia.
 apply andb_prop in Hg as [Hg Hbud]. apply andb_prop in Hg as [Htop Hrf].
 apply Z.leb_le in Htop. apply Z.leb_le in Hbud. repeat split; assumption.
 Qed.
-Lemma sum_sizes_app : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "F'9'?'V6yR0%211%4211%611'D'J&SG&4r2r1%33821%511&TE%715%815%3221%<3;51p[2>1p[0?1").
+Lemma sum_sizes_app : forall l1 l2, sum_sizes (l1 ++ l2) = sum_sizes l1 + sum_sizes l2.
 Proof. intros l1 l2. induction l1 as [|iv l1 IH]; cbn [sum_sizes app]; [lia|]. rewrite IH. lia. Qed.
 Lemma Some_pair_inj : forall {T U : Type} (a c : T) (b d : U), Some (a, b) = Some (c, d) -> a = c /\ b = d.
 Proof. intros T U a c b d H. split; congruence. Qed.
-Lemma zfill_in : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "Q7'V6yR0%211'<y8%511%311p051'C&TF&V7r4%22;1r1%42=1%6231&TH&TEr3%92B1%3281%5271%>271'D&T<r5r2%342@91(2&V5z%22K1%42K1%:3K61p0<1p\FQ11p[8M1pZNQ31pZ6Q41").
+Lemma zfill_in : forall (b l : word) m (x : word),
+bv_unsigned b <= bv_unsigned x < bv_unsigned b + bv_unsigned l ->
+zfill b l m x = Some (Z_to_bv 8 0).
 Proof.
 intros b l m x Hx. unfold zfill, zmem.
 rewrite (proj2 (Z.leb_le _ _)) by lia. rewrite (proj2 (Z.ltb_lt _ _)) by lia. reflexivity.
 Qed.
-Lemma region_free_intro : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "Q1'9'?'V6yR0%211%4211%611&TC(>r2r1%347721r5%63821'D'5&Q8r4r3%34721:(7%73621p091p\BC1pZ0D1&Q?%1398A(A%>3=21p051p[DJ1p[6K1pR2J1").
+Lemma region_free_intro : forall L (lo n : word),
+(forall a sz, In (a, sz) L -> iv_overlap lo n a sz = false) -> region_free L lo n = true.
 Proof.
 intros L lo n H. induction L as [|[a sz] L IH]; [reflexivity|]. cbn [region_free].
 rewrite (H a sz (or_introl eq_refl)). cbn [negb andb]. apply IH. intros a' sz' Hin. apply H. right. exact Hin.
 Qed.
-Lemma eager_used_sem_brk : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "Q6'Q5&T:&QC&Q;r1%211%411%611'D'J&QOr2%211&T;&;&T7&4'?'V6yR0%211%4211&QDr3%E11%311&Q:%114%<3731%>21I%@11q\FF1%M1E%O11%E231%K3JG1p0M1p[8Q51").
+Lemma eager_used_sem_brk : forall m,
+ivs_wf (vm_maps (m_vmmaps m)) ->
+eager_used m = sum_count (fun x => negb (covered (vm_noaccess (m_vmmaps m) ++ m_vm_lazy m) x)) (vm_maps (m_vmmaps m)).
 Proof.
 intros m W. unfold eager_used, vm_backed_maps. rewrite <- maps_subtract_all_app_cuts.
 apply (proj1 (live_msa _ _ W)).
 Qed.
-Lemma eager_used_cons_le : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "QI'Q5'V6yR0%211'Q6&T:&QC&Q;r4%211%411%611&T9(>r3%24<<71%411'D'9'?%12AA%311%@18(6r5%<4FF1Ar6%D11%F11%63941%=3981&QD%11Hr7%K11%411%C3?41&TF&QO&QFr8%22A1%411&TE%614&V7%12Q<D%4231%;261p0=1p0D1p0Q31p0Q91pZFQA1p[DQC1pZ6QD1p[8QH1").
+Lemma eager_used_cons_le : forall m (b n : word) h',
+ivs_wf (vm_maps (m_vmmaps m)) -> iv_wf (b, n) ->
+vm_maps h' = (b, n) :: vm_maps (m_vmmaps m) ->
+vm_noaccess h' = vm_noaccess (m_vmmaps m) ->
+eager_used (with_vmmaps h' m) <= eager_used m + bv_unsigned n.
 Proof.
 intros m b n h' W Wb Hm Hn.
 assert (W' : ivs_wf (vm_maps (m_vmmaps (with_vmmaps h' m)))).
@@ -118,16 +145,19 @@ rewrite m_vmmaps_with_vmmaps, m_vm_lazy_with_vmmaps, Hm, Hn. cbn [sum_count].
 pose proof (zcount_le_len (fun x => negb (covered (vm_noaccess (m_vmmaps m) ++ m_vm_lazy m) x)) (B (b, n)) (Z.to_nat (S (b, n)))) as Hc.
 unfold iv_count. unfold S in *. cbn [snd] in *. pose proof (u64_range n). rewrite Z2Nat.id in Hc by lia. lia.
 Qed.
-Lemma vm_backing_used_le : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "K'9'?'J%2211%411'Q5&QMr2%211'QNr3%2214&TF&Q@%114&TE&QO%117&QLr4%211%6241%:281p0<1p0@1p[8D1p4F1").
+Lemma vm_backing_used_le : forall Aset m,
+A_wf Aset -> MInv Aset m -> vm_backing_used m <= eager_used m + A_bytes Aset.
 Proof.
 intros Aset m Hwf [N1 N2 N3 N4 N5]. rewrite vm_backing_used_split.
 pose proof (allowed_pages_bound Aset (m_vm_materialized m) Hwf N1 N2 N3). lia.
 Qed.
-Lemma in_ivs_cons : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "Q7'J'V6yR0%211'9'?%1233%311'D'5&SDr4(6(>r3r2%34==21r1%63<21%9281&=&3&TG&V7%12F:%321>&TI&TE%52J=%2251%42C1%:261%F2E?%=221%J3I?1pZNL1p[DQ11pZ0Q21p\JQ61").
+Lemma in_ivs_cons : forall z (a n : word) l,
+in_ivs z ((a, n) :: l) = (((bv_unsigned a <=? z) && (z <? bv_unsigned a + bv_unsigned n)) || in_ivs z l)%bool.
 Proof. reflexivity. Qed.
-Lemma seps_cons_inv : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "H'?'V6yR0%211%4211'9%112'SF(6r2r1%33721%511'C'H&SEr3%211%43>19%<1:%7221p091pZN@1p\0C1").
+Lemma seps_cons_inv : forall p l, seps (p :: l) -> Forall (iv_disjoint p) l /\ seps l.
 Proof. intros p l H. inversion H; subst; auto. Qed.
-Lemma seps_In_disjoint : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "Q;'9'?'V6yR0%211%4211%611'SFr3%211&TCr1r5%33821&THz&V7&@r2%23??1%42A1%7261p091pZJB1r4%?3D1=r6%A3F31&F'D%13I4B%311&SEr7%2218p041p091p0<1p0?1p0N1p\2Q31p\0Q41pZNQ41").
+Lemma seps_In_disjoint : forall l p q,
+seps l -> (forall iv, In iv l -> 0 < bv_unsigned (snd iv)) -> In p l -> In q l -> p <> q -> iv_disjoint p q.
 Proof.
 induction l as [|h t IH]; intros p q Hs Hpos Hp Hq Hne; [destruct Hp|].
 apply seps_cons_inv in Hs as [Hf Ht].
@@ -137,7 +167,7 @@ destruct Hp as [<-|Hp]; destruct Hq as [<-|Hq].
 - pose proof (proj1 (Forall_forall _ _) Hf p Hp) as D. unfold iv_disjoint in *. lia.
 - apply IH; auto. intros iv Hiv. apply Hpos. right. exact Hiv.
 Qed.
-Lemma seps_NoDup : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "L'9'?'V6yR0%211%4211%611'SFr1%211&TCr3%23741&THz&V7&@r2%23>>1%42@1%7261p091pZJA1'TD%12C=p031p0A1pZNE1").
+Lemma seps_NoDup : forall l, seps l -> (forall iv, In iv l -> 0 < bv_unsigned (snd iv)) -> List.NoDup l.
 Proof.
 induction l as [|h t IH]; intros Hs Hpos; [constructor|].
 apply seps_cons_inv in Hs as [Hf Ht]. constructor.
@@ -164,7 +194,7 @@ Hypothesis argH_agree : forall E E' (a : word), env_agree nx0 E E' -> argH E a =
 Hypothesis SINV_frame : forall E M M', (forall a, argH E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
 Hypothesis SINV_agree : forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E' M.
 #[local] Notation cs_ok := (APSK.cs_ok SEGS A LIMIT SINV argH FS0).
-Theorem node_exit_sound : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "9&SBvTAvV2v0vQ1vTBvU1vM%877654321").
+Theorem node_exit_sound : exit_stmt SEGS scfg A LIMIT SINV argH FS0.
 Proof.
 intros cs code E R FULL model HC Hec Hn.
 destruct (is_ecall_at_sound SEGS cs Hec) as (Hpc0 & Hpc4 & w & HF & HE).
@@ -184,7 +214,7 @@ assert (G17 : getr R (Z_to_bv 5 (Z.of_nat 17)) = Z_to_bv 64 94 \/ getr R (Z_to_b
 unfold cfg_of. rewrite <- (bv_and_255 c0 Hc0).
 eapply srz_exit_at_lazy; [exact HF | exact HE | exact (co_halt _ _ _ _ _ _ _ _ _ _ _ HC) | exact G17 | exact G10].
 Qed.
-Theorem node_sys_sound_YSetTid : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK ";&SHvTAvV2v0vUMvQ1vTBvU1vM(R9%:9987654321").
+Theorem node_sys_sound_YSetTid : sys_stmt SEGS scfg A nx0 LIMIT SINV argH FS0 YSetTid.
 Proof.
 intros cs cs' E R FULL model T HC Hec Hn Hk.
 destruct (is_ecall_at_sound SEGS cs Hec) as (Hpc0 & Hpc4 & w & HF & HE).
@@ -225,7 +255,9 @@ cbn [kentry_ok]. rewrite Hv. unfold PID_MAX. unfold PID_MAX_ENVELOPE in Htidr. l
 + intros _. exists tid. split; [reflexivity|]. unfold PID_MAX. unfold PID_MAX_ENVELOPE in Htidr. lia.
 - reflexivity.
 Qed.
-Lemma brk_keep_ok : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "QI'SK'RG&QHy5'V6yR0%211%5241'<y8%611%311p061'Q5'SAvTAv0vQ1vTBvU1vMr5r4r3r2r1%<;;:987654321r6&S9&S:u:&R;%11;%43<31&TE&S7%11?+4%4221%;261&T>(V4+:(B%33Q921&QA&Q;%11G%311%93K51%Q4;Q3Q2Q1Q0ONG;1KJp0I1p[>Q71pQNQ91pSFQ?1pZ8QF1pQHQH1").
+Lemma brk_keep_ok : forall E cs R FULL model,
+cs_ok E cs R FULL model ->
+cs_ok E (set_pc (set_reg cs 10 (a_brk cs)) (pc cs + 4)) (regupd R 10 (vm_brk (m_vmmaps model))) FULL model.
 Proof.
 intros E cs R FULL model HC.
 change (set_pc (set_reg cs 10 (a_brk cs)) (pc cs + 4))
@@ -236,7 +268,10 @@ eapply (cs_ok_frame SEGS A LIMIT SINV argH SINV_frame FS0);
 cbn [mk_ss s_regs]. apply (regs_ok_set_n);
 [exact (co_regs _ _ _ _ _ _ _ _ _ _ _ HC) | lia | symmetry; exact (co_brk _ _ _ _ _ _ _ _ _ _ _ HC)].
 Qed.
-Lemma brk_req_sound : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "R?'SK'RG&QHy5'V6yR0%211%5241'<y8%611%311p061'Q5'J'SAvTAv0vQ1vTBvU1vMr6r5r4r3r2%<;;:987654321'D%E1?&RJ%119(2%12C7%63531'C&THz%221=&TJ+TP0%22@1%>3L15&TF&TL+2+Q8%3221%52G1&TM&V7&SJr8&S8r7u:%3221%6251%82QE1&QA&Q;%11Q5%311%=2QJ1%?261&T0%K221%Q73QE1Q:%Q12D1%Q22K1%Q32Q01p0Q51p0Q=1pZ>QK1p[>QM1pQNQO1pSFR51pZ8R<1pQHR>1").
+Lemma brk_req_sound : forall E cs R FULL model d,
+cs_ok E cs R FULL model -> brk_req cs = Some d ->
+0 < d /\ d mod 4096 = 0 /\ d <= 2 ^ 40 /\
+(bv_unsigned (edenot E (reg cs 10)) - bv_unsigned (vm_brk (m_vmmaps model))) mod two64 = d.
 Proof.
 intros E cs R FULL model d HC H. unfold brk_req in H.
 destruct (lit_diff (reg cs 10) (a_brk cs)) as [d0|] eqn:Hld; [|discriminate].
@@ -247,7 +282,10 @@ apply Z.ltb_lt in H1. apply Z.eqb_eq in H2. apply Z.leb_le in H3.
 destruct (lit_diff_sound E _ _ _ Hld) as [_ Hm].
 rewrite (co_brk _ _ _ _ _ _ _ _ _ _ _ HC). auto.
 Qed.
-Lemma brk_base_ok_sound : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "R5'SK'RG&QHy5'V6yR0%211%5241'<y8%611%311p061'Q5'J'SAvTAv0vQ1vTBvU1vMr6r5r4r3r2%<;;:987654321'D'5&RI%13>95(A%53421&QA&Q;%11<%311'C&TJ&V7r1%22Q51+TP0%5221z%B3Q021&TH%1236&TF&RL%11Q2%321:&TE%12<N&R6%7221%C251%D2:1%E2=1tZ6QFG1p0L1p0Q31pZ>QA1p[>QC1pQNQE1pSFQK1pZ8R21pQHR41").
+Lemma brk_base_ok_sound : forall E cs R FULL model d,
+cs_ok E cs R FULL model -> brk_base_ok A cs d = true ->
+let b := vm_brk (m_vmmaps model) in
+bv_unsigned b mod 4096 = 0 /\ 0 < bv_unsigned b /\ img_hi A <= bv_unsigned b /\ bv_unsigned b + d <= KHI.
 Proof.
 intros E cs R FULL model d HC H b. unfold brk_base_ok in H.
 apply andb_prop in H as [Hal H].
@@ -261,7 +299,9 @@ pose proof (xhi_sound SEGS E _ (kn cs) _ hi HK Hhi) as Hh.
 pose proof (page_aligned_sound SEGS E _ (kn cs) _ HK Hal) as P.
 rewrite <- (co_brk _ _ _ _ _ _ _ _ _ _ _ HC) in L, Hh, P. unfold b. lia.
 Qed.
-Lemma brk_req_val : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "R3'SK'RG&QHy5'V6yR0%211%5241'<y8%611%311p061'Q5'J'SAvTAv0vQ1vTBvU1vMr6r5r4r3r2%<;;:987654321'D%E1?&RJ%119(2%12C7%63531'5&RIr7%23E1=(A%<3521&T=&V5&TKu:%211%42Q;1%62:1&TE&V7&QA&Q;%11M%311%52QA1%721O%>2QC1%M3QC:1p0B1p0I1p0Q11pZ>Q?1p[>QA1pQNQC1pSFQI1pZ8R01pQHR21").
+Lemma brk_req_val : forall E cs R FULL model d,
+cs_ok E cs R FULL model -> brk_req cs = Some d -> brk_base_ok A cs d = true ->
+getr R (Z_to_bv 5 (Z.of_nat 10)) = Z_to_bv 64 (bv_unsigned (vm_brk (m_vmmaps model)) + d).
 Proof.
 intros E cs R FULL model d HC Hr Hb.
 destruct (brk_req_sound E cs R FULL model d HC Hr) as (D1 & D2 & D3 & Dm).
@@ -273,7 +313,7 @@ Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
 nia.
 Qed.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
-Theorem node_sys_sound_YBrk : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK ";&SHvTAvV2v0vUMvQ1vTBvU1vM(R7%:9987654321").
+Theorem node_sys_sound_YBrk : sys_stmt SEGS scfg A nx0 LIMIT SINV argH FS0 YBrk.
 Proof.
 intros cs cs' E R FULL model T HC Hec Hn Hk.
 destruct (is_ecall_at_sound SEGS cs Hec) as (Hpc0 & Hpc4 & w & HF & HE).
@@ -318,7 +358,11 @@ all: apply in_or_app; right; exact (maps_match_In E _ _ m (co_maps _ _ _ _ _ _ _
 Qed.
 Let kn_grant_filter_ok := AsanNodesMmLibK.kn_grant_filter_ok SEGS A RES_len HULL_ok.
 Let kdisj_new_ok := AsanNodesMmLibK.kdisj_new_ok SEGS A RES_len HULL_ok.
-Lemma vis_add_shape : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "R@'RG'SL'9'SM%211'D'<%117&S=v0vQ1r5r4r3r2%76654321(2r1%22B1%>3<41'C'5&RK&RNr6%211&8'J&SO%11B%43M31&@%13O53%;4831E(A%N3>21&S7%11G%21>%Q23<21%Q61Q7&SN&RB%11M%311%31E%511%Q:3731'?%12Q@Q@%Q@11&RE%11Q6(6(>%14QFQFQ<Q;%51Q0%43821%QE3861'RH%QJ11&RA%11Q@%21Q7%QK3421&R>%11QD%21Q;%QO3B21%QA251%QB2<1%QC2H1%QD2Q11%QE2Q61p0QG1pZ<R;1pZLR81p[DR<1pZ6R=1pZ8R?1").
+Lemma vis_add_shape : forall cs b n k cs2,
+vis_add A LIMIT cs b n k = Some cs2 ->
+flat_x (kn cs) (fst (split_lit b)) (snd (split_lit b)) n = true
+/\ pc cs2 = pc cs /\ s_regs (a_ss cs2) = s_regs (a_ss cs) /\ a_vis cs2 = (b, n) :: a_vis cs
+/\ a_maps cs2 = a_maps cs /\ a_ghost cs2 = a_ghost cs.
 Proof.
 intros cs b n k cs2 Hv. rewrite vis_add_eq in Hv. unfold vis_add_ref in Hv.
 destruct (split_lit b) as [bb bk] eqn:Hsplit.
@@ -330,7 +374,7 @@ apply andb_prop in Hc as [Hc _]. apply andb_prop in Hc as [Hc _]. apply andb_pro
 apply andb_prop in Hc as [Hc _]. apply andb_prop in Hc as [Hc _]. apply andb_prop in Hc as [Hc Hflat].
 repeat split; try reflexivity. exact Hflat.
 Qed.
-Theorem node_brk2_sound : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK ":&S?vTAvV2v0vUMvQ1vTBvU1vM%9887654321").
+Theorem node_brk2_sound : brk2_stmt SEGS scfg A nx0 LIMIT SINV argH FS0.
 Proof.
 intros cs csa csb E R FULL model TA TB HC Hec Hn HkA HkB Hteq.
 destruct (is_ecall_at_sound SEGS cs Hec) as (Hpc0 & Hpc4 & w & HF & HE).
@@ -353,7 +397,7 @@ unfold brk_grow_maybe in Hposs. apply andb_prop in Hposs as [Hbase Hnf].
 destruct (brk_req_sound E cs R FULL model d HC Hreq) as (D1 & D2 & D3 & Dm).
 destruct (brk_base_ok_sound E cs R FULL model d HC Hbase) as (B1 & B2 & B3 & B4).
 pose proof (brk_req_val E cs R FULL model d HC Hreq Hbase) as G10.
-pose proof (co_res _ _ _ _ _ _ _ _ _ _ _ HC) as Hres.
+destruct (co_res _ _ _ _ _ _ _ _ _ _ _ HC) as (rxB & Hres & HGres & _ & _).
 pose proof (proj1 (APSK.maps_match_exact nx0 (fun _ => None) (fun _ _ _ => None) (fun _ _ _ => None) (fun _ _ _ => None) E _ _ Hnf) (co_maps _ _ _ _ _ _ _ _ _ _ _ HC)) as Hmaps.
 pose proof (co_limit _ _ _ _ _ _ _ _ _ _ _ HC) as Hlim. pose proof (co_sbrk _ _ _ _ _ _ _ _ _ _ _ HC) as Hsbrk.
 pose proof (co_brk _ _ _ _ _ _ _ _ _ _ _ HC) as Hbrk. pose proof (co_isp _ _ _ _ _ _ _ _ _ _ _ HC) as [ISP1 ISP2].
@@ -396,9 +440,13 @@ assert (MAPARTG : AsanNodesMmLibK.maps_apart E (a_maps cs) (bv_unsigned b) (d + 
 set (dw := Z_to_bv 64 d). assert (Udw : bv_unsigned dw = d) by (unfold dw; apply u64_lit; unfold KHI in *; lia).
 assert (Hrf : region_free (vm_reserved h ++ vm_maps h) b dw = true).
 { apply region_free_intro. intros a sz Hin. apply in_app_iff in Hin as [Hin|Hin].
-- rewrite Hres in Hin.
-pose proof (proj1 (Forall_forall _ _) RES_hull _ Hin) as [R1 R2]. cbn [fst snd] in R1, R2.
+- rewrite Hres in Hin. apply in_app_iff in Hin as [Hin|Hin].
++ pose proof (proj1 (Forall_forall _ _) RES_hull _ Hin) as [R1 R2]. cbn [fst snd] in R1, R2.
 unfold iv_overlap. apply andb_false_iff. left. apply Z.ltb_ge. lia.
++
+pose proof (proj1 (Forall_forall _ _) HGres _ Hin) as (_ & _ & _ & _ & Hk & _).
+cbn [fst] in Hk. unfold iv_overlap. rewrite Udw. apply andb_false_iff. right.
+apply Z.ltb_ge. unfold KHI in *. lia.
 - rewrite Hmaps in Hin. apply in_map_iff in Hin as (m & Em & Hin).
 unfold amap_den in Em. injection Em as <- <-.
 unfold iv_overlap. rewrite Udw. apply andb_false_iff.
@@ -477,6 +525,12 @@ rewrite Hmaps; apply Forall_forall; intros iv Hin; apply in_map_iff in Hin as (m
 unfold iv_disjoint, amap_den; cbn [fst snd]; rewrite Udw; destruct (APART m Hin); lia
 | |- model_ivs_wf _ =>
 apply model_ivs_wf_with_vmmaps; [exact co_wf0 | apply ivs_wf_cons; [exact Wb | exact Wf] | exact (proj1 (proj2 co_wf0)) | reflexivity]
+| |- Forall (fun _ => Forall _ _) (vm_maps _) =>
+rewrite Hvm'; unfold h'; cbn [vm_reserved vm_maps]; constructor; [|exact co_mres0];
+apply Forall_forall; intros [b0 s0] Hin0; unfold iv_disjoint; cbn [fst snd]; rewrite Udw;
+pose proof (RefNodes.region_free_In _ _ _ b0 s0 Hrf
+ltac:(apply in_app_iff; left; exact Hin0)) as DD;
+rewrite Udw in DD; lia
 | |- Forall _ (vm_maps _) =>
 rewrite Hvm'; unfold h'; cbn [vm_maps]; constructor; [|exact co_bounds0];
 cbn [fst snd]; rewrite Udw; unfold CEIL, KHI in *; repeat split; try lia
@@ -523,6 +577,10 @@ apply orb_prop in Hm as [Hm|Hm]; [|exact Hm]; apply andb_prop in Hm as [Hm _]; a
 apply orb_prop in Hm as [Hm|Hm]; [|exact Hm]; apply andb_prop in Hm as [_ Hm]; apply Z.ltb_lt in Hm; lia ]
 | |- SINV _ _ =>
 eapply SINV_frame; [|exact co_sinv0]; intros a Ha; apply F1; pose proof (argH_high _ _ Ha); unfold CEIL, KHI in *; lia
+| |- incl _ _ =>
+exact co_vdso0
+| |- m_channel_reader _ = true =>
+exact co_rdr0
 | |- ?g => idtac "UNSOLVED FIELD:" g
 end.
 +
@@ -618,7 +676,15 @@ Let A_wf_allowA' := APSK.A_wf_allowA A HS XN XE XB 0%nat.
 Let know_ok_unhide' := APSK.know_ok_unhide SEGS A.
 Let hid_hull' := APSK.hid_hull A HULL_ok argH argH_high.
 Let H_off_segments_cs' := APSK.H_off_segments_cs SEGS A SEGS_in_hull HULL_ok argH argH_high.
-Lemma mmap_len_sound : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "SB'SK'RG&QHy5'V6yR0%211%5241'<y8%611%311p061'Q5'SL'J'SAvTAv0vQ1vTBvU1vMr8r7r6r5r4%<;;:987654321'D'?%12A@%221A%I11&S3%11<(2(>r3%24IH<1r2%44:J21%62:1%>3:81&V7&SJr:&S8r9u;%3221%6251%82Q?1'C&T=&V5+;%22QF1%42:1r1%52QG1%Q03QG31&THz%2215&TL+2+R0%3221%72:1%A261r;%K21Q?&Q=%11?%D2R61%Q?3R641%?2>QC&TF%12QE5%226QE%L221&TJ+TP0%22:1%QH3R61F%Q72?Q5%Q:2L1r<%Q<213%QM3RD31%Q>2QCR4r=%Q@21R6%R13RH31p051pQJS01%Q<2<1%Q=2A1%Q>2F1%Q?2H1%Q@2O1%QA2Q91t[4RHQC1p0QM1p0R=1p[HRK1p[JRL1p[FRN1p[>S01pQNS21pSFS81pZ8S?1pQHSA1").
+Lemma mmap_len_sound : forall E cs R FULL model ne nlo nhi,
+CSOK E cs R FULL model -> mmap_len cs = Some (ne, nlo, nhi) ->
+let len := bv_unsigned (edenot E (reg cs 11)) in
+getr R (Z_to_bv 5 11) = Z_to_bv 64 len
+/\ 0 < len < 2 ^ 64
+/\ edenot E ne = Z_to_bv 64 (page_round_up_Z len)
+/\ 0 < nlo /\ nlo <= page_round_up_Z len <= nhi
+/\ page_round_up_Z len mod 4096 = 0
+/\ (forall E', edenot E' (reg cs 11) = edenot E (reg cs 11) -> edenot E' ne = edenot E ne).
 Proof.
 intros E cs R FULL model ne nlo nhi HC HML len.
 pose proof (co_know _ _ _ _ _ _ _ _ _ _ _ HC) as HK.
@@ -658,30 +724,46 @@ split; [unfold len in *; lia|]. split; [symmetry; apply Z_to_bv_bv_unsigned|].
 split; [lia|]. split; [unfold len in *; lia|]. split; [exact Hmod|].
 intros E' HE'. exact HE'.
 Qed.
-Lemma bv5_of_nat : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "A':&Gr1uQ0%3221'D'V6y5%211&V5&TKr2%211%4261%93611p0;1p[D@1"). Proof. reflexivity. Qed.
-Lemma bv5_10 : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "?'D'V6y5%211(V4+:(B%33521/015&V5&TKu:%211%42;1%>3;61"). Proof. apply bv_eq. reflexivity. Qed.
-Lemma bv5_11 : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "?'D'V6y5%211(V4+;(B%33521/015&V5&TKu;%211%42;1%>3;61"). Proof. apply bv_eq. reflexivity. Qed.
-Lemma bv5_12 : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "?'D'V6y5%211(V4+<(B%33521/015&V5&TKu<%211%42;1%>3;61"). Proof. apply bv_eq. reflexivity. Qed.
-Lemma bv5_13 : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "?'D'V6y5%211(V4+=(B%33521/015&V5&TKu=%211%42;1%>3;61"). Proof. apply bv_eq. reflexivity. Qed.
-Lemma bv5_14 : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "?'D'V6y5%211(V4+>(B%33521/015&V5&TKu>%211%42;1%>3;61"). Proof. apply bv_eq. reflexivity. Qed.
-Lemma bv5_15 : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "?'D'V6y5%211(V4+?(B%33521/015&V5&TKu?%211%42;1%>3;61"). Proof. apply bv_eq. reflexivity. Qed.
-Lemma bv5_17 : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "?'D'V6y5%211(V4+A(B%33521/015&V5&TKuA%211%42;1%>3;61"). Proof. apply bv_eq. reflexivity. Qed.
+Lemma bv5_of_nat : forall n, (n < 32)%nat -> Z_to_bv 5 (Z.of_nat n) = Z_to_bv 5 (Z.of_nat n). Proof. reflexivity. Qed.
+Lemma bv5_10 : (10%bv : bv 5) = Z_to_bv 5 (Z.of_nat 10). Proof. apply bv_eq. reflexivity. Qed.
+Lemma bv5_11 : (11%bv : bv 5) = Z_to_bv 5 (Z.of_nat 11). Proof. apply bv_eq. reflexivity. Qed.
+Lemma bv5_12 : (12%bv : bv 5) = Z_to_bv 5 (Z.of_nat 12). Proof. apply bv_eq. reflexivity. Qed.
+Lemma bv5_13 : (13%bv : bv 5) = Z_to_bv 5 (Z.of_nat 13). Proof. apply bv_eq. reflexivity. Qed.
+Lemma bv5_14 : (14%bv : bv 5) = Z_to_bv 5 (Z.of_nat 14). Proof. apply bv_eq. reflexivity. Qed.
+Lemma bv5_15 : (15%bv : bv 5) = Z_to_bv 5 (Z.of_nat 15). Proof. apply bv_eq. reflexivity. Qed.
+Lemma bv5_17 : (17%bv : bv 5) = Z_to_bv 5 (Z.of_nat 17). Proof. apply bv_eq. reflexivity. Qed.
 Lemma some_inj : forall {T} (a b : T), Some a = Some b -> a = b.
 Proof. intros T a b H. injection H as H1. exact H1. Qed.
-Lemma CEIL_eq : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "5'D'J&R0&R4%43321").
+Lemma CEIL_eq : alloc_ceiling = CEIL.
 Proof. reflexivity. Qed.
-Lemma KHI_eq : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "5'D'J&R2&R6%43321").
+Lemma KHI_eq : kHighMemBeg = KHI.
 Proof. reflexivity. Qed.
-Lemma FLOOR_eq : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "5'D'J&R1&R5%43321").
+Lemma FLOOR_eq : bottomup_floor = FLOOR.
 Proof. rewrite bottomup_floor_val. reflexivity. Qed.
-Lemma Z_to_bv64_m1 : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "C'J'Dr1&TM&T0+1%3221%63751'V6yR0%211&V5r2%2241-1%4261%?3631p0:1p[<B1").
+Lemma Z_to_bv64_m1 : forall m1, m1 = two64 - 1 -> Z_to_bv 64 m1 = Z_to_bv 64 (-1).
 Proof. intros m1 ->. apply bv_eq. rewrite !Z_to_bv_unsigned. reflexivity. Qed.
-Lemma reserved_free_above : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "Q7'Q5'V6yR0%211'D'9'?%1244%311&QE&Q;r3%211%411&Q4vTA%211%=3941&TF&RLv0%211&V7%12E<%6231'5&Q?r5%B11%D11r4%5321D(A%M3821p0:1p0B1p[DQ11p[6Q21p[>Q61").
+Lemma reserved_free_above : forall model (lo n : word),
+(exists rx : list (word * word),
+vm_reserved (m_vmmaps model) = segments_reserved SEGS ++ rx
+/\ Forall (resx_entry_ok A) rx
+/\ (length rx <= n_resx A)%nat
+/\ sum_sizes rx <= resx_bytes A) ->
+img_hi A <= bv_unsigned lo ->
+bv_unsigned lo + bv_unsigned n <= KHI ->
+region_free (vm_reserved (m_vmmaps model)) lo n = true.
 Proof.
-intros model lo n Hres Hlo. rewrite Hres. apply RefNodes.region_free_intro. intros b s Hin.
-pose proof (proj1 (Forall_forall _ _) RES_hullH _ Hin) as [H1 H2]. cbn [fst snd] in H1, H2. right. lia.
+intros model lo n (rx & Hres & HG & _ & _) Hlo Hkhi. rewrite Hres.
+apply RefNodes.region_free_intro. intros b s Hin. apply in_app_iff in Hin as [Hin|Hin].
+- pose proof (proj1 (Forall_forall _ _) RES_hullH _ Hin) as [H1 H2]. cbn [fst snd] in H1, H2. right. lia.
+- pose proof (proj1 (Forall_forall _ _) HG _ Hin) as (_ & _ & _ & _ & Hk & _).
+cbn [fst] in Hk. left. lia.
 Qed.
-Lemma vis_add_inv : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "RL'RG'SL'9'SM%211'D'<%117&S=v0vQ1r5r4r3r2%76654321(2r1%22B1%>3<41'E'J'C%A12&T1&RNr7%211%421A%=28<%I3721(R3&S2&S7%118&SN&RB%11;%311&4&S;&RA%11@r6%45Q3A21Q1%63Q:1Q1&S5%11E%@4>:31&RD%11H&RF%11J&R<%11L(6'?%12QHQH(>%14QJQJ@Q@&RE%11Q3%73531&R>%11Q6&TE&R:%11Q9&S>%11QD%5231&R;%11Q>&R=%11Q@&RC%11QB&R@%11QD&R?%11QF%QB=Q1Q7OMKCA;97531%R=3RBR51%QM2QE1q[HQO1%R12R01p0R31pZ<RG1pZLRD1p[DRH1pZ6RI1pZ8RK1").
+Lemma vis_add_inv : forall cs b n k cs2,
+vis_add A LIMIT cs b n k = Some cs2 ->
+exists nhi, xhi (kn cs) n = Some nhi /\
+cs2 = ACS (mk_ss (pc cs) (s_regs (a_ss cs)) (shadow_facts A (kn cs) (a_maps cs) b n ++ k) (nxt cs))
+(a_maps cs) (a_totsz cs) (a_ylo cs) (a_eager cs)
+((b, n) :: a_vis cs) (a_ghost cs) (a_abytes cs + vis_cost nhi) (a_brk cs) (a_fd cs) (a_tidset cs) (a_hna cs) (a_hlz cs).
 Proof.
 intros cs b n k cs2 Hv. rewrite vis_add_eq in Hv. unfold vis_add_ref in Hv.
 destruct (split_lit b) as [bb bk]. destruct (shadow_of A (kn cs) b n) as [[sb sk] sn] eqn:Hsh.
@@ -689,15 +771,19 @@ destruct (xhi (kn cs) n) as [nhi|]; [|discriminate].
 match type of Hv with (if ?c then _ else _) = _ => destruct c; [|discriminate] end.
 injection Hv as <-. exists nhi. split; [reflexivity|]. unfold shadow_facts. rewrite Hsh. reflexivity.
 Qed.
-Lemma in_allow_ext : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "L'SK'RG'D'9'?'SL%2211%411&REr1%211r2%411%;3631'J'5p\J21&SCv0r4%33219r3%53431%E3731p0;1pZ:H1pZ8I1pQHK1").
+Lemma in_allow_ext : forall E cs cs', a_vis cs' = a_vis cs -> in_allow A E cs' = in_allow A E cs.
 Proof. intros E cs cs' H. apply functional_extensionality. intros z. unfold in_allow, in_vis, in_sh. rewrite H. reflexivity. Qed.
-Lemma split_flat_estart : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "R7'SK'V6yR0%211'<y8%511%311p051'9'SM%211'SL'J&T4vTAr7r6r5%544321'D'?%12:9&SO%116(>r4r3%34@?21%93751'5&RK%14@>65(A%>3421'C&T3r:(SI%12FE%4231&V7&SJ%126K%32Q:1%I3Q051&TF&TE%62;F%82Q?1%32:1&TL+2+R0%3221%9251&THz%2219%H241%I2?1p0K1p0Q11p0Q<1p[DQD1p[NQD1pZ6QF1pZ@QG1pZLQI1pSDQM1pQHR61").
+Lemma split_flat_estart : forall E M k e b off n,
+know_ok SEGS E M k -> split_lit e = (b, off) -> flat_x k b off n = true ->
+estart E (SA b off) = bv_unsigned (edenot E e)
+/\ estart E (SA b off) + bv_unsigned (edenot E n) <= 2 ^ 64 /\ 0 < bv_unsigned (edenot E n).
 Proof.
 intros E M k e b off n HK Hsp Hfl.
 destruct (APSK.flat_x_sound SEGS E M k b off n HK Hfl) as (F1 & F2 & F3).
 pose proof (APSK.u_of_split E e b off Hsp ltac:(lia)). repeat split; lia.
 Qed.
-Lemma seps_map_disjoint : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "Q5'RH'?'V6yR0%211%4211p061'9%118'SF&Ir4r3%34=821%511&TC%13@45r5%33B61&F'D%13E4:%311&SEr8r6%211%31:%5221p071p0<1p0?1p0B1p[:Q11p[8Q21p[BK1pZBN1").
+Lemma seps_map_disjoint : forall (f : amap -> word * word) ms m m',
+seps (map f ms) -> In m ms -> In m' ms -> m <> m' -> iv_disjoint (f m) (f m').
 Proof.
 intros f ms. induction ms as [|h t IH]; intros m m' Hs Hm Hm' Hne; [destruct Hm|].
 cbn [map] in Hs. inversion Hs as [|p l Hf Hl]; subst.
@@ -707,9 +793,12 @@ destruct Hm as [<-|Hm]; destruct Hm' as [<-|Hm'].
 - pose proof (proj1 (Forall_forall _ _) Hf (f m) (in_map f t m Hm)) as D. unfold iv_disjoint in *. lia.
 - exact (IH m m' Hl Hm Hm' Hne).
 Qed.
-Lemma covered_maps_subtract : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "Q4'9'?'V6yR0%211%4211%611'J&T:r4%211&TFr3%2241'D'5&T7&Q<r6r5%3321;%5219&3%725;&;&T8%137A>%311%6251%?3>81p0A1p0E1p\FI1pZHJ1p[6K1pZNM1").
+Lemma covered_maps_subtract : forall l lo hi x,
+ivs_wf l -> lo <= hi ->
+covered (maps_subtract l lo hi) x = (covered l x && negb (in_rng lo hi x))%bool.
 Proof. intros. apply (proj2 (proj2 (maps_subtract_sem l lo hi H H0))). Qed.
-Lemma len_eqb_sound : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "Q6'SK'V6yR0%211'<y8%511%311p051'9'SM%211'SL&T4vTAr5r4r3%544321'D'5&S0r2%23761(A%63521&SJr7%221<%322<%;3K21p061p0>1p[8E1p[DF1pZLH1pSDL1pQHQ51").
+Lemma len_eqb_sound : forall E M k n m,
+know_ok SEGS E M k -> len_eqb k n m = true -> edenot E n = edenot E m.
 Proof.
 intros E M k n m HK H. unfold len_eqb in H. apply orb_prop in H as [H|H].
 - apply expr_eqb_eq in H. subst. reflexivity.
@@ -717,7 +806,10 @@ intros E M k n m HK H. unfold len_eqb in H. apply orb_prop in H as [H|H].
 pose proof (lin_ge0_sound SEGS E M k _ _ HK H1) as A1. pose proof (lin_ge0_sound SEGS E M k _ _ HK H2) as B1.
 cbn [xt_den] in A1, B1. apply bv_eq. lia.
 Qed.
-Lemma kzero_x_sound : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "RA'SK'V6yR0%211'<y8%511%311p051'9'SM%211'SL'J&T4vTAr7r6r5%544321r8%746153'D'5&ROr4r3%35;:921(A%73621'C&TFz&T3r:(SI%12CB%4231%7261&TE&T2%127@%3251&TL+2+R0%3221%@251r;%>2Q1Q0%A221&V7r1%22QC1%G241&TH%@28Q6%B271%3251%M251r2%=11(2&V5%12QKQ0%32QK1%Q<3QK51p081p\FR11%Q72F1%Q82Q01p0Q:1p0QC1p0QF1p[DQN1p[NQN1pZ6R01pZLR21pZ2R31pSDR71pQHR@1").
+Lemma kzero_x_sound : forall E M allkn k b off n,
+know_ok SEGS E M allkn -> know_ok SEGS E M k -> kzero_x allkn k b off n = true ->
+0 <= estart E (SA b off) /\ estart E (SA b off) + elenZ E n <= 2 ^ 64
+/\ forall x : word, estart E (SA b off) <= bv_unsigned x < estart E (SA b off) + elenZ E n -> M x = Some (Z_to_bv 8 0).
 Proof.
 intros E M allkn k b off n HA HK. induction k as [|K k IH]; intros H; [discriminate|].
 apply Forall_cons_iff in HK as [HKK HK]. cbn [kzero_x] in H.
@@ -799,7 +891,12 @@ Proof.
 intros T g h l. induction l as [|x l IH]; cbn; [reflexivity|].
 destruct (g x); cbn; rewrite IH; destruct (h x); cbn; rewrite ?orb_true_r; reflexivity.
 Qed.
-Lemma node_munmap_sound : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "RI'RG'SK&QHy5'V6yR0%211%5241'<y8%611%311p061'Q5&T?'SAvTAv0vQ1vTBvU1vMr5r7r4r3r2%<;;:987654321'D'5&RMr8%22@1(A%63521%K1Q3&S4r9%22E1(2%12Q89%=3631'C&T6vUMr<%3321F&S5r>%211%7315J%9251%Q5;Q4Q3Q2Q1Q0ON4LKJ&Q2&Q9%11Nr;%311%N3531'T@vV2&S@r6&S7r@%211%55QB41Q<Q:%84QC71;p0:1p0A1p0C1p[@QJ1pR0QL1pSHR21pQJR91%<1C%?5QLQ=1QE>%B4QMA1QGp041p0Q61p0Q>1p0QF1pYNR41p[>R61pQNR81pSFR>1pQHRE1pZ:RG1pZ8RH1").
+Lemma node_munmap_sound : forall cs cs' E R FULL model T,
+CSOK E cs R FULL model -> is_ecall_at SEGS cs = true ->
+node_munmap A cs = Some cs' ->
+(forall E' R' FULL' model', env_agree nx0 E E' /\ env_agree (nxt cs) E E' -> CSOK E' cs' R' FULL' model' -> m_fs model' = m_fs model ->
+srealizes SEGS scfg (cfg R' (pc cs') FULL' model') T) ->
+srealizes SEGS scfg (cfg R (pc cs) FULL model) T.
 Proof.
 intros cs cs' E R FULL model T HC Hec Hn HK.
 destruct (AsanNodesMmLibK.is_ecall_at_sound SEGS cs Hec) as (w & Hf & He & Hp0 & Hp4).
@@ -946,7 +1043,7 @@ rewrite Z_to_bv_unsigned, bv_wrap64_mod in D. unfold uE in A8b, A8n. lia.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false). }
 pose proof (co_halt _ _ _ _ _ _ _ _ _ _ _ HC) as Hhalt. pose proof (co_wf _ _ _ _ _ _ _ _ _ _ _ HC) as Hwf. pose proof Hwf as (W1 & W2 & W3 & Wsp).
 unfold cfg_of.
-eapply (srz_munmap_lazy SEGS scfg R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w addr len T Hf He Hhalt R17 R10 B2 R11 ltac:(lia)).
+eapply (srz_munmap_lazy SEGS scfg Halloc R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w addr len T Hf He Hhalt R17 R10 B2 R11 ltac:(lia)).
 { unfold TASK_SIZE. fold nZ. lia. }
 { fold nZ. rewrite HnZw. apply map_has_intro. rewrite <- Haddr. exact HIN. }
 fold nZ. rewrite HnZw. rewrite (v_addi_pc (pc cs) Hp0 Hp4).
@@ -955,7 +1052,20 @@ match goal with |- srealizes _ _ (mkCfg _ ?mo) _ => change mo with model' end.
 set (cs' := ACS _ _ _ _ _ _ _ _ _ _ _ _ _) in HK.
 specialize (HK E (regupd R (Z_to_bv 5 (Z.of_nat 10)) (Z_to_bv 64 0)) FULL' model' (conj (env_agree_refl' _ _) (env_agree_refl' _ _))).
 unfold cfg_of in HK. replace (pc cs') with (pc cs + 4) in HK by reflexivity. rewrite bv5_10. apply HK; [|reflexivity]. clear HK.
-assert (PM : vm_maps (m_vmmaps model') = map_remove (vm_maps (m_vmmaps model)) addr) by reflexivity.
+assert (PM : vm_maps (m_vmmaps model') = map_remove (vm_maps (m_vmmaps model)) addr).
+{ transitivity (maps_subtract (vm_maps (m_vmmaps model)) (bv_unsigned addr)
+(bv_unsigned addr + bv_unsigned n)); [reflexivity|].
+apply maps_subtract_exact.
+- pose proof (BPOS _ HIN) as Hpn. unfold amap_den in Hpn. cbn [snd] in Hpn. exact Hpn.
+- intros pb ps Hpin. exact (BPOS (pb, ps) Hpin).
+- intros pb ps Hpin Hpb. pose proof (UNIQ (pb, ps) Hpin Hpb) as Hpq.
+unfold amap_den in Hpq. injection Hpq as _ Hps. exact Hps.
+- intros pb ps Hpin Hpne.
+assert (Hpne' : (pb, ps) <> amap_den E m).
+{ intros Hpeq. apply Hpne. unfold amap_den in Hpeq. rewrite Haddr in Hpeq.
+injection Hpeq as Hpb _. exact Hpb. }
+pose proof (DISJl (pb, ps) Hpin Hpne') as Hpd. cbn [fst snd] in Hpd.
+unfold hi, lo in Hpd. lia. }
 assert (PN : vm_noaccess (m_vmmaps model') = maps_subtract (vm_noaccess (m_vmmaps model)) lo (lo + bv_unsigned n)) by reflexivity.
 assert (PL : m_vm_lazy model' = maps_subtract (m_vm_lazy model) lo (lo + bv_unsigned n)) by reflexivity.
 assert (PISP : vm_init_sp (m_vmmaps model') = vm_init_sp (m_vmmaps model)) by reflexivity.
@@ -1022,7 +1132,7 @@ assert (Hne' : m <> m').
 split; [exact Hm'|]. split; [exact Hne'|]. intros Hnf'. exact (DISJ' m' Hm' Hnf' Hne'). }
 assert (KNF : forall m', am_kind m' = KNONE \/ am_kind m' = KNONELAZY \/ am_kind m' = KRWLAZY -> is_fog m' = false).
 { intros m' Hk. unfold is_fog. destruct Hk as [-> |[-> | ->]]; reflexivity. }
-destruct HC as [Xregs Xlog Xknow Xhalt Xfds Xfs Xtid Xres Xlimit Xmaps Xholes Xseps Xwf Xbounds Xlazyb Xnasub Xnone Xkinds Xtotsz Xisp Xbrk Xsbrk Xeager Xabytes Xminv Xzero Xsinv Xhna Xhlz Xtidv].
+destruct HC as [Xregs Xlog Xknow Xhalt Xfds Xfs Xtid Xres Xlimit Xmaps Xholes Xseps Xwf Xbounds Xlazyb Xnasub Xnone Xkinds Xtotsz Xisp Xbrk Xsbrk Xeager Xabytes Xminv Xzero Xsinv Xhna Xhlz Xtidv Xmres Xvdso Xrdr].
 destruct Hlohi as (L1 & L2 & L3 & L4 & L5).
 assert (HAeq : ALLOW E cs' = flat_map (allow1 A E) (kept ++ gone ++ a_ghost cs)) by reflexivity.
 constructor; rewrite ?HAeq; subst cs'; cbn [a_ss a_maps a_totsz a_ylo a_eager a_vis a_ghost a_abytes a_brk a_fd a_tidset a_hna a_hlz kn s_regs s_log s_know s_next mk_ss];
@@ -1142,12 +1252,19 @@ rewrite Hxo' in Hh. cbn [negb] in Hh. rewrite !andb_true_r in Hh. rewrite !orb_f
 destruct SHX as (p & Hp & Hpx). destruct (GONE p Hp) as (_ & _ & G3 & _).
 pose proof (G3 x Hpx) as Z0. unfold Mr, mrestrict, hid in Z0. rewrite Hold in Z0.
 destruct (argH E x); [discriminate|]. cbn in Z0. exact Z0.
-- eapply SINV_frame; [|exact Xsinv]. intros x Hx. unfold FULL'. apply unfill_out. pose proof (argH_high _ _ Hx). pose proof (APSK.utop_bounds E). rewrite Un. subst hi. lia.
-- rewrite PN, Xhna. unfold RNA. cbn [hreplay]. unfold APSK.uE. rewrite Hne_eq. fold n. rewrite Un. fold addr. fold lo. fold hi. reflexivity.
-- rewrite PL, Xhlz. unfold RLZ. cbn [hreplay]. unfold APSK.uE. rewrite Hne_eq. fold n. rewrite Un. fold addr. fold lo. fold hi. reflexivity.
-- intros Ht. exact (Xtidv Ht).
+-  eapply SINV_frame; [|exact Xsinv]. intros x Hx. unfold FULL'. apply unfill_out. pose proof (argH_high _ _ Hx). pose proof (APSK.utop_bounds E). rewrite Un. subst hi. lia.
+-  rewrite PN, Xhna. unfold RNA. cbn [hreplay]. unfold APSK.uE. rewrite Hne_eq. fold n. rewrite Un. fold addr. fold lo. fold hi. reflexivity.
+-  rewrite PL, Xhlz. unfold RLZ. cbn [hreplay]. unfold APSK.uE. rewrite Hne_eq. fold n. rewrite Un. fold addr. fold lo. fold hi. reflexivity.
+-  intros Ht. exact (Xtidv Ht).
+-
+rewrite PM. unfold map_remove. apply Forall_forall. intros iv Hiv.
+apply filter_In in Hiv as [Hiv _]. exact (proj1 (Forall_forall _ _) Xmres iv Hiv).
+-
+exact Xvdso.
+-
+exact Xrdr.
 Qed.
-Theorem node_sys_sound_YMunmap : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK ";&SHvTAvV2v0vUMvQ1vTBvU1vM(R8%:9987654321").
+Theorem node_sys_sound_YMunmap : sys_stmt SEGS scfg A nx0 LIMIT SINV argH FS0 YMunmap.
 Proof. intros cs cs' E R FULL model T HC Hpre Hn HK. eapply node_munmap_sound; eauto. Qed.
 End SoundMunmap.
 Section SoundSys.
@@ -1170,7 +1287,7 @@ Hypothesis e_sp0_init : expr_vars_lt nx0 e_sp0 = true.
 Hypothesis argH_agree : forall E E' (a : word), env_agree nx0 E E' -> argH E a = argH E' a.
 Hypothesis SINV_frame : forall E M M', (forall a, argH E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
 Hypothesis SINV_agree : forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E' M.
-Theorem node_sys_sound : ltac2:(TCodec.tc2 tcn__AsanNodesMmBK "='S<&SHvTAvV2v0vUMvQ1vTBvU1vMr1%:9987654321p\H<1").
+Theorem node_sys_sound : forall y, sys_stmt SEGS scfg A nx0 LIMIT SINV argH FS0 y.
 Proof.
 assert (RES_hullH : RES_hull_def SEGS A) by exact RES_hull.
 intros [| |].

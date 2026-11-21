@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* LLVMFuzzerTestOneInput_seg_cmp_after: the second half of one turn of the bcmp double loop of the cmp segment of
    the image-A walk of libreac/fuzz_decode's LLVMFuzzerTestOneInput (lib/A/Prog/LLVMFuzzerTestOneInput_seg_cmp.v),
    cmp_l34_after : from cmp_q6f0 (+0x6f0, the bcmp return in turn (c, k), a0 = 0) to cmp_inv at (c, k + 1) or
@@ -21,7 +22,7 @@
    cmp_q6f0's, hence to mem5. Registers are read off the final symbolic state, slots off its region.
 
    Steps follow LLVMFuzzerTestOneInput_seg_cmp_loop.v / _seg_cmp_scan.v (this segment) and libreac/fuzz_boxreg's
-   ReadName.v (pb_read_name, 1d92330b7ad: paj_run_tok, psrr_branch_tok, rn_kupd, field_of_region). *)
+   ReadName.v (pb_read_name: paj_run_tok, psrr_branch_tok, rn_kupd, field_of_region). *)
 From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

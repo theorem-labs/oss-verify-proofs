@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the new launch (process input, auxv, group id, exec file name); new lemmas; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Src0DrvG.v, 72 lines within its lines 48-1061. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
@@ -23,8 +24,6 @@ Import SX2. Import SX2S.
 
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
-Local Ltac lia := first [ solve [ try (match goal with H : (length _ <= S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S _)))))))))))))))))))))))))))))))))%nat |- _ => clear dependent H end); Lia.lia ] | Lia.lia ].
-
 Tactic Notation "run_blockL" constr(scr) constr(NX) := run_block_gen FUEL STOPS_L scr NX false.
 Tactic Notation "run_blockL_keep" constr(scr) constr(NX) := run_block_gen FUEL STOPS_L scr NX true.
 Tactic Notation "run_blockQ" constr(scr) constr(NX) := run_block_gen FUEL STOPS_Q scr NX false.
@@ -33,6 +32,11 @@ Tactic Notation "run_blockQ_keep" constr(scr) constr(NX) := run_block_gen FUEL S
 Section FPX_1. Context {fx : PropExec.FPState}. Context {bmK : BMode}.
 Variable scfg : SpuriousCfg.
 
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
+(* [comment removed for export] *)
 Definition gr (R : bvmap 5 word) (i : nat) : word := getr R (Z_to_bv 5 (Z.of_nat i)).
 Definition relayV (vals : list word) (R : bvmap 5 word) (x38 x48 x70 : word) (ext : list word) : list word :=
   let z := Z_to_bv 64 0 in
@@ -42,24 +46,26 @@ Definition relayV (vals : list word) (R : bvmap 5 word) (x38 x48 x70 : word) (ex
   ++ [z; z; z; z; z; z; z; z; z; z; z; z; z; z; z; z; z; z; z; z; z; x70]
   ++ ext.
 
-#[using="Type"] Lemma relayV_len : forall vals R x38 x48 x70 ext, length (relayV vals R x38 x48 x70 ext) = (71 + length ext)%nat.
+Lemma relayV_len : forall vals R x38 x48 x70 ext, length (relayV vals R x38 x48 x70 ext) = (71 + length ext)%nat.
 Proof. intros. reflexivity. Qed.
-#[using="Type"] Lemma relayV_lo : forall vals R x38 x48 x70 ext j, (j < 6)%nat -> vals_ev (relayV vals R x38 x48 x70 ext) j = vals_ev vals j.
+Lemma relayV_lo : forall vals R x38 x48 x70 ext j, (j < 6)%nat -> vals_ev (relayV vals R x38 x48 x70 ext) j = vals_ev vals j.
 Proof. intros vals R x38 x48 x70 ext j Hj. do 6 (destruct j as [|j]; [reflexivity|]). lia. Qed.
-#[using="Type"] Lemma relayV_reg : forall vals R x38 x48 x70 ext i, (i < 32)%nat -> vals_ev (relayV vals R x38 x48 x70 ext) (6 + i) = gr R i.
+Lemma relayV_reg : forall vals R x38 x48 x70 ext i, (i < 32)%nat -> vals_ev (relayV vals R x38 x48 x70 ext) (6 + i) = gr R i.
 Proof. intros vals R x38 x48 x70 ext i Hi. do 32 (destruct i as [|i]; [reflexivity|]). lia. Qed.
-#[using="Type"] Lemma relayV_38 : forall vals R x38 x48 x70 ext, vals_ev (relayV vals R x38 x48 x70 ext) 38 = x38. Proof. reflexivity. Qed.
-#[using="Type"] Lemma relayV_48 : forall vals R x38 x48 x70 ext, vals_ev (relayV vals R x38 x48 x70 ext) 48 = x48. Proof. reflexivity. Qed.
-#[using="Type"] Lemma relayV_70 : forall vals R x38 x48 x70 ext, vals_ev (relayV vals R x38 x48 x70 ext) 70 = x70. Proof. reflexivity. Qed.
-#[using="Type"] Lemma relayV_71 : forall vals R x38 x48 x70 w ext, vals_ev (relayV vals R x38 x48 x70 (w :: ext)) 71 = w. Proof. reflexivity. Qed.
+Lemma relayV_38 : forall vals R x38 x48 x70 ext, vals_ev (relayV vals R x38 x48 x70 ext) 38 = x38. Proof. reflexivity. Qed.
+Lemma relayV_48 : forall vals R x38 x48 x70 ext, vals_ev (relayV vals R x38 x48 x70 ext) 48 = x48. Proof. reflexivity. Qed.
+Lemma relayV_70 : forall vals R x38 x48 x70 ext, vals_ev (relayV vals R x38 x48 x70 ext) 70 = x70. Proof. reflexivity. Qed.
+Lemma relayV_71 : forall vals R x38 x48 x70 w ext, vals_ev (relayV vals R x38 x48 x70 (w :: ext)) 71 = w. Proof. reflexivity. Qed.
 
-#[using="Type"] Lemma relayV_agree : forall a0s path hw rdraw fdata vals R x38 x48 x70 ext,
+(* [comment removed for export] *)
+Lemma relayV_agree : forall a0s path hw rdraw fdata vals R x38 x48 x70 ext,
   env_agree 6 (ENV a0s path hw rdraw fdata vals) (ENV a0s path hw rdraw fdata (relayV vals R x38 x48 x70 ext)).
 Proof.
   intros. split; [|reflexivity]. intros n Hn. cbn [ev ENV]. symmetry. apply relayV_lo. exact Hn.
 Qed.
 
-#[using="Type"] Lemma relay_know6 : forall a0s path hw rdraw fdata vals R x38 x48 x70 ext M kn kn6,
+(* [comment removed for export] *)
+Lemma relay_know6 : forall a0s path hw rdraw fdata vals R x38 x48 x70 ext M kn kn6,
   know_ok RSEGS (ENV a0s path hw rdraw fdata vals) M kn -> ksubl_b kn kn6 = true -> kn_vars_lt 6 kn6 = true ->
   know_ok RSEGS (ENV a0s path hw rdraw fdata (relayV vals R x38 x48 x70 ext)) M kn6.
 Proof.
@@ -68,16 +74,23 @@ Proof.
   eapply ksubl_sound; [exact HK | exact Hsub].
 Qed.
 
-#[using="Type"] Lemma knLP_split : knLP = kn_blk 48 65536 ++ knLP6. Proof. reflexivity. Qed.
-#[using="Type"] Lemma knLP6_vars : kn_vars_lt 6 knLP6 = true. Proof. vm_compute. reflexivity. Qed.
-#[using="Type"] Lemma knRD_split : knRD = cellR :: kn_blk 48 65536 ++ knLP6. Proof. reflexivity. Qed.
-#[using="Type"] Lemma knRe0_split : knRe0 = KRange (EVar 72) 1 65536 :: cellR :: kn_blk 48 65536 ++ knLP6. Proof. reflexivity. Qed.
-#[using="Type"] Lemma knGbase_sub : ksubl_b (kn_blk 48 65536 ++ knLP6 ++ [cellC]) knGbase = true. Proof. vm_compute. reflexivity. Qed.
+(* [comment removed for export] *)
+Lemma knLP_split : knLP = kn_blk 48 65536 ++ knLP6. Proof. reflexivity. Qed.
+Lemma knLP6_vars : kn_vars_lt 6 knLP6 = true. Proof. vm_compute. reflexivity. Qed.
+Lemma knRD_split : knRD = cellR :: kn_blk 48 65536 ++ knLP6. Proof. reflexivity. Qed.
+Lemma knRe0_split : knRe0 = KRange (EVar 72) 1 65536 :: cellR :: kn_blk 48 65536 ++ knLP6. Proof. reflexivity. Qed.
+Lemma knGbase_sub : ksubl_b (kn_blk 48 65536 ++ knLP6 ++ [cellC]) knGbase = true. Proof. vm_compute. reflexivity. Qed.
 
-#[using="Type"] Lemma mod_of_decompZ : forall a b q r : Z, (0 < b)%Z -> (0 <= r < b)%Z -> (a = b * q + r)%Z -> (a mod b = r)%Z.
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
+Lemma mod_of_decompZ : forall a b q r : Z, (0 < b)%Z -> (0 <= r < b)%Z -> (a = b * q + r)%Z -> (a mod b = r)%Z.
 Proof. intros a b q r Hb Hr He. symmetry. apply (Zmod_unique a b q r); lia. Qed.
 
-#[using="Type"] Lemma sub_as_add : forall c l : Z, (0 <= l <= c)%Z -> (c < 2 ^ 64)%Z ->
+(* [comment removed for export] *)
+Lemma sub_as_add : forall c l : Z, (0 <= l <= c)%Z -> (c < 2 ^ 64)%Z ->
   alu64 ALU_ADD (Z_to_bv 64 c) (mul_div M_MUL (Z_to_bv 64 (-1)) (Z_to_bv 64 l)) = Z_to_bv 64 (c - l).
 Proof.
   intros c l Hl Hc. apply bv_eq. rewrite alu_add. unfold v_add. rewrite u_mul64.
@@ -94,13 +107,14 @@ Proof.
     reflexivity.
 Qed.
 
-#[using="Type"] Lemma mul2_lit : forall c : Z, (0 <= c)%Z -> (2 * c < 2 ^ 64)%Z ->
+(* [comment removed for export] *)
+Lemma mul2_lit : forall c : Z, (0 <= c)%Z -> (2 * c < 2 ^ 64)%Z ->
   mul_div M_MUL (Z_to_bv 64 2) (Z_to_bv 64 c) = Z_to_bv 64 (2 * c).
 Proof.
   intros c H0 H1. apply bv_eq. rewrite u_mul64. rewrite !u_small by lia. rewrite Z.mod_small by lia. reflexivity.
 Qed.
 
-#[using="Type"] Lemma firstn_app_skipn : forall {A} (l : list A) (a b : nat),
+Lemma firstn_app_skipn : forall {A} (l : list A) (a b : nat),
   firstn a l ++ firstn b (skipn a l) = firstn (a + b) l.
 Proof.
   intros A l a. revert l. induction a as [|a IH]; intros l b.
@@ -108,23 +122,24 @@ Proof.
   - destruct l as [|x l]; cbn; [rewrite firstn_nil; reflexivity|]. rewrite IH. reflexivity.
 Qed.
 
-#[using="Type"] Lemma file_read_lit : forall data (off cnt : Z), (0 <= off < 2 ^ 64)%Z -> (0 <= cnt < 2 ^ 64)%Z ->
+Lemma file_read_lit : forall data (off cnt : Z), (0 <= off < 2 ^ 64)%Z -> (0 <= cnt < 2 ^ 64)%Z ->
   file_read data (Z_to_bv 64 off) (Z_to_bv 64 cnt) = firstn (Z.to_nat cnt) (skipn (Z.to_nat off) data).
 Proof. intros. rewrite file_read_unguarded, !word_to_nat_lit by lia. reflexivity. Qed.
 
-#[using="Type"] Lemma length_read : forall (data : list byte) (off cnt : Z), (0 <= off)%Z -> (off <= Z.of_nat (length data))%Z -> (0 <= cnt)%Z ->
+Lemma length_read : forall (data : list byte) (off cnt : Z), (0 <= off)%Z -> (off <= Z.of_nat (length data))%Z -> (0 <= cnt)%Z ->
   Z.of_nat (length (firstn (Z.to_nat cnt) (skipn (Z.to_nat off) data))) = Z.min cnt (Z.of_nat (length data) - off).
 Proof. intros. rewrite length_firstn, length_skipn. lia. Qed.
 
-#[using="Type"] Lemma lb_remove_2 : forall A2 n2 A n, A2 <> A -> lb_remove A [(A2, n2); (A, n)] = [(A2, n2)].
+Lemma lb_remove_2 : forall A2 n2 A n, A2 <> A -> lb_remove A [(A2, n2); (A, n)] = [(A2, n2)].
 Proof.
   intros A2 n2 A n H. cbn [lb_remove fst]. replace (A2 =? A)%Z with false by (symmetry; apply Z.eqb_neq; exact H).
   rewrite Z.eqb_refl. reflexivity.
 Qed.
 
-#[using="Type"] Lemma keep_rd_Re0 : keep_rd knRe0 = knRe0. Proof. vm_compute. reflexivity. Qed.
-#[using="Type"] Lemma keep_stage_RD : keep_stage [(48%nat, 65536%Z)] knRD = knRD. Proof. vm_compute. reflexivity. Qed.
+Lemma keep_rd_Re0 : keep_rd knRe0 = knRe0. Proof. vm_compute. reflexivity. Qed.
+Lemma keep_stage_RD : keep_stage [(48%nat, 65536%Z)] knRD = knRD. Proof. vm_compute. reflexivity. Qed.
 
+(* [comment removed for export] *)
 Fixpoint kbytes (kn : list kentry) (b : expr) (k : Z) (n : nat) : option (list Z) :=
   match n with
   | O => Some []
@@ -135,12 +150,12 @@ Fixpoint kbytes (kn : list kentry) (b : expr) (k : Z) (n : nat) : option (list Z
   end.
 Definition zbytes (zs : list Z) : list byte := flat_map (fun z => word_to_le_bytes 1 (Z_to_bv 64 z)) zs.
 
-#[using="Type"] Lemma msg_refused_k : kbytes knRa (EVar 0) (-560) 38 = Some (map bv_unsigned msg_refused) /\ zbytes (map bv_unsigned msg_refused) = msg_refused
+Lemma msg_refused_k : kbytes knRa (EVar 0) (-560) 38 = Some (map bv_unsigned msg_refused) /\ zbytes (map bv_unsigned msg_refused) = msg_refused
                       /\ length msg_refused = 38%nat.
 Proof. vm_compute. repeat split; reflexivity. Qed.
 
 Section DrvG.
-  Context {RE : RunEnv}.
+  Context {RE : RunEnv}. Context {RO : ReaderOn}.
   Local Open Scope Z_scope.
   Variable L : heap_layout.
   Variable HI : heap_iface.
@@ -163,7 +178,9 @@ Section DrvG.
   Hypothesis Hve : valid_envp envv.
   Hypothesis Hvsp : valid_sp sp0.
   Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-  Hypothesis ME : main_entry sp0 [a0s; path] envv uid hw rdraw tid regs0 mem0.
+  Variable inp : ProcInput.
+  Variable mbase entry : word.
+  Hypothesis ME : main_entry inp mbase entry sp0 [a0s; path] envv uid hw rdraw tid regs0 mem0.
   Hypothesis Hfile : fs_lookup fs0 path = Some fdata.
   Hypothesis Hplen : (length path <= 4095)%nat.
   Hypothesis DL : drv_layout L sp0.
@@ -176,50 +193,62 @@ Section DrvG.
   Let model1o (off : Z) (VM : VmMaps) : Model := model1o path tid fs0 stdin0 off VM.
   Let model2 (VM : VmMaps) : Model := model2 tid fs0 stdin0 VM.
 
+  (* [comment removed for export] *)
   Definition hdr_vals (vals : list word) : Prop :=
-    vals_ev vals 0 = sp0 /\ vals_ev vals 1 = p0 sp0 a0s path envv /\ vals_ev vals 2 = p1 sp0 a0s path envv /\
-    vals_ev vals 3 = auxvp sp0 a0s path envv /\ vals_ev vals 4 = rnd sp0 a0s path envv /\ vals_ev vals 5 = tid.
+    vals_ev vals 0 = sp0 /\ vals_ev vals 1 = p0 a0s path envv rdraw inp /\ vals_ev vals 2 = p1 a0s path envv rdraw inp /\
+    vals_ev vals 3 = auxvp sp0 a0s path envv /\ vals_ev vals 4 = rnd sp0 a0s path envv inp /\ vals_ev vals 5 = tid.
 
-  #[using="fdata Hplen LEN"] Lemma hdr_relay : forall vals R x38 x48 x70 ext, hdr_vals vals -> hdr_vals (relayV vals R x38 x48 x70 ext).
+  Lemma hdr_relay : forall vals R x38 x48 x70 ext, hdr_vals vals -> hdr_vals (relayV vals R x38 x48 x70 ext).
   Proof. intros vals R x38 x48 x70 ext H. unfold hdr_vals. rewrite !relayV_lo by lia. exact H. Qed.
 
-  #[using="uid hw rdraw Hva Hve Hvsp Hplen"] Lemma hiv_facts' : forall vals, hdr_vals vals ->
+  Lemma hiv_facts' : forall vals, hdr_vals vals ->
     forall i, In i [3%nat; 4%nat] -> (bv_unsigned sp0 <= bv_unsigned (vals_ev vals i))%Z /\ (bv_unsigned (vals_ev vals i) + 2 ^ 20 <= 2 ^ 64)%Z.
-  Proof. intros vals (_ & _ & _ & P3 & P4 & _) i Hi. exact (hiv_facts sp0 a0s path envv uid hw rdraw Hva Hve Hvsp Hplen vals P3 P4 i Hi). Qed.
+  (* same Es0DrvA prefix as Es0DrvB.v:145 and Es0DrvH.v:199:
+     [sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME Hplen] *)
+  Proof.
+    intros vals (_ & _ & _ & P3 & P4 & _) i Hi.
+    exact (hiv_facts sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME Hplen vals P3 P4 i Hi).
+  Qed.
 
+  (* [comment removed for export] *)
   Definition CAPk (k : Z) : Z := 65536 * 2 ^ k.
   Variables Kc Bc : Z.
   Hypothesis HKc : 0 <= Kc. Hypothesis HBc : 0 <= Bc.
   Definition cred (k : Z) (cr : credit) : Prop :=
     (10 - k) * hl_k_per_malloc L + Kc <= fst cr /\ (2 ^ 27 - 2 * CAPk k) + (10 - k) * hl_b_overhead L + Bc <= snd cr.
 
-  #[using="sp0 path fdata Hplen LEN"] Lemma CAPk_S : forall k, 0 <= k -> CAPk (k + 1) = 2 * CAPk k.
+  Lemma CAPk_S : forall k, 0 <= k -> CAPk (k + 1) = 2 * CAPk k.
   Proof. intros k Hk. unfold CAPk. rewrite Z.pow_add_r, Z.pow_1_r by lia. lia. Qed.
-  #[using="sp0 path fdata Hvsp Hplen Hsp LEN"] Lemma CAPk_range : forall k, 0 <= k <= 10 -> 65536 <= CAPk k <= 67108864.
+  Lemma CAPk_range : forall k, 0 <= k <= 10 -> 65536 <= CAPk k <= 67108864.
   Proof.
     intros k Hk. unfold CAPk. split.
     - assert (1 <= 2 ^ k) by (apply Z.pow_pos_nonneg || idtac; pose proof (Z.pow_le_mono_r 2 0 k); cbn in *; lia). lia.
     - pose proof (Z.pow_le_mono_r 2 k 10 ltac:(lia) ltac:(lia)) as H. change (2 ^ 10)%Z with 1024%Z in H. lia.
   Qed.
-  #[using="sp0 path fdata Hvsp Hplen Hsp LEN"] Lemma CAPk_lt10 : forall k, 0 <= k < 10 -> CAPk k <= 33554432.
+  Lemma CAPk_lt10 : forall k, 0 <= k < 10 -> CAPk k <= 33554432.
   Proof. intros k Hk. unfold CAPk. pose proof (Z.pow_le_mono_r 2 k 9 ltac:(lia) ltac:(lia)) as H. change (2 ^ 9)%Z with 512%Z in H. lia. Qed.
-  #[using="sp0 path fdata Hplen LEN"] Lemma CAPk_10 : forall k, 0 <= k <= 10 -> CAPk k = 67108864 \/ k < 10.
+  Lemma CAPk_10 : forall k, 0 <= k <= 10 -> CAPk k = 67108864 \/ k < 10.
   Proof. intros k Hk. destruct (Z.eq_dec k 10) as [->|]; [left; reflexivity | right; lia]. Qed.
 
-  #[using="scfg HIok"] Lemma heap_facts1 : forall A n cr M VM, hi_heap HI [(A, n)] cr M VM -> block_range L A n /\ defined M A n.
+  (* [comment removed for export] *)
+  Lemma heap_facts1 : forall A n cr M VM, hi_heap HI [(A, n)] cr M VM -> block_range L A n /\ defined M A n.
   Proof.
     intros A n cr M VM HH. destruct (hio_wf L scfg HI HIok _ cr M VM HH) as [WF _].
     destruct (WF (A, n) ltac:(left; reflexivity)) as (B & D & _). cbn [fst snd] in B, D. auto.
   Qed.
 
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
   Variable K : TSet.
   Hypothesis HK0 : K [].
 
+  (* [comment removed for export] *)
   Definition close_kg (CAP : Z) (crC : credit) (KC : TSet) : Prop :=
     forall vals R M VM (A1 : Z),
       length vals = 71%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 48 = Z_to_bv 64 A1 -> vals_ev vals 70 = Z_to_bv 64 LEN ->
-      vals_ev vals 1 = p0 sp0 a0s path envv -> vals_ev vals 2 = p1 sp0 a0s path envv ->
-      vals_ev vals 3 = auxvp sp0 a0s path envv -> vals_ev vals 4 = rnd sp0 a0s path envv -> vals_ev vals 5 = tid ->
+      vals_ev vals 1 = p0 a0s path envv rdraw inp -> vals_ev vals 2 = p1 a0s path envv rdraw inp ->
+      vals_ev vals 3 = auxvp sp0 a0s path envv -> vals_ev vals 4 = rnd sp0 a0s path envv inp -> vals_ev vals 5 = tid ->
       regs_ok (ENVb vals) srGL R ->
       (forall lo hi, (lo <= LEN <= hi)%Z -> know_ok RSEGS (ENVb vals) M (knG lo hi)) ->
       above M -> block_range L A1 CAP ->
@@ -227,6 +256,7 @@ Section DrvG.
       hi_heap HI [(A1, CAP)] crC M VM ->
       srealizes RSEGS scfg (mkCfg (mkst R (Z_to_bv 64 0xad438) M (seg_rom RSEGS)) (model2 VM)) KC.
 
+  (* [comment removed for export] *)
   Definition lp_at (z : Z) : Prop := forall (k len A : Z) vals R M VM cr,
       0 <= k <= 10 -> 0 <= len <= CAPk k -> len <= LEN -> LEN - len <= z ->
       length vals = 71%nat -> hdr_vals vals ->
@@ -236,6 +266,7 @@ Section DrvG.
       hi_heap HI [(A, CAPk k)] cr M VM -> cred k cr ->
       srealizes RSEGS scfg (mkCfg (mkst R (Z_to_bv 64 0x345cc) M (seg_rom RSEGS)) (model1o len VM)) K.
 
+  (* [comment removed for export] *)
   Definition rd_at (z : Z) : Prop := forall (k len want A : Z) vals R M VM cr,
       0 <= k <= 10 -> 0 <= len < CAPk k -> len <= LEN -> LEN - len <= z ->
       want = Z.min (CAPk k - len) 65536 ->
@@ -247,6 +278,7 @@ Section DrvG.
       hi_heap HI [(A, CAPk k)] cr M VM -> cred k cr ->
       srealizes RSEGS scfg (mkCfg (mkst R (Z_to_bv 64 0xad434) M (seg_rom RSEGS)) (model1o len VM)) K.
 
+  (* [comment removed for export] *)
   Definition refuse_k (KR : TSet) : Prop := forall (A : Z) vals R M VM cr,
       length vals = 71%nat -> hdr_vals vals ->
       vals_ev vals 38 = Z_to_bv 64 67108864 -> vals_ev vals 48 = Z_to_bv 64 A -> vals_ev vals 70 = Z_to_bv 64 67108864 ->
@@ -255,15 +287,19 @@ Section DrvG.
       srealizes RSEGS scfg (mkCfg (mkst R (Z_to_bv 64 0x345cc) M (seg_rom RSEGS)) (model1o 67108864 VM)) KR.
   Definition refuse_at : Prop := refuse_k K.
 
+  (* [comment removed for export] *)
   Hypothesis HKC : LEN < 67108864 -> forall CAP crC,
       65536 <= CAP <= 67108864 -> LEN < CAP -> Kc <= fst crC -> Bc <= snd crC -> close_kg CAP crC K.
   Hypothesis HREF : 67108864 <= LEN -> refuse_at.
 
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
   Ltac norm_srget := repeat match goal with |- context [sr_get ?sr ?r] =>
                       let x := eval vm_compute in (sr_get sr r) in change (sr_get sr r) with x end.
   Ltac norm_nth := repeat match goal with |- context [nth ?i ?l (ELit 0)] =>
                       let x := eval vm_compute in (nth i l (ELit 0)) in change (nth i l (ELit 0)) with x end.
-
+  (* [comment removed for export] *)
   Ltac relay_absurd := match goal with Hi : (0 < _ < 32)%nat |- _ => solve [exfalso; clear - Hi; Lia.lia] end.
   Ltac relay1 HR :=
     norm_nth;
@@ -278,10 +314,13 @@ Section DrvG.
     rewrite (reg_val _ _ _ _ HR); norm_srget; cbn [edenot ev ENVb ENV];
     rewrite ?relayV_38, ?relayV_48, ?relayV_70, ?relayV_71; unfold gr;
     rewrite ?(reg_val _ _ _ _ HR); norm_srget; cbn [edenot ev ENVb ENV].
-
+  (* [comment removed for export] *)
   Ltac regv1 HR := rewrite (reg_val _ _ _ _ HR); norm_srget; cbn [edenot ev ENVb ENV].
 
-  #[using="sp0 Hplen LEN"] Lemma sc_eq_70_38 : forall vals M (len cap : Z) t,
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+  Lemma sc_eq_70_38 : forall vals M (len cap : Z) t,
     vals_ev vals 70 = Z_to_bv 64 len -> vals_ev vals 38 = Z_to_bv 64 cap ->
     0 <= len < 2 ^ 64 -> 0 <= cap < 2 ^ 64 -> Z.eqb len cap = t ->
     sc_denot RSEGS M (ENVb vals) (SCBr t BC_EQ (EVar 70) (EVar 38)).
@@ -290,14 +329,14 @@ Section DrvG.
     unfold bv_eqb. rewrite !u_small by lia. exact Ht.
   Qed.
 
-  #[using="sp0 Hplen LEN"] Lemma want_x_val : forall vals (len cap : Z),
+  Lemma want_x_val : forall vals (len cap : Z),
     vals_ev vals 70 = Z_to_bv 64 len -> vals_ev vals 38 = Z_to_bv 64 cap -> 0 <= len <= cap -> cap < 2 ^ 64 ->
     edenot (ENVb vals) want_x = Z_to_bv 64 (cap - len).
   Proof.
     intros vals len cap P70 P38 H1 H2. cbn [want_x edenot ev ENVb ENV]. rewrite P70, P38. apply sub_as_add; lia.
   Qed.
 
-  #[using="sp0 Hvsp Hplen Hsp LEN"] Lemma sc_ltu_want : forall vals M (len cap : Z) t,
+  Lemma sc_ltu_want : forall vals M (len cap : Z) t,
     vals_ev vals 70 = Z_to_bv 64 len -> vals_ev vals 38 = Z_to_bv 64 cap -> 0 <= len <= cap -> cap < 2 ^ 64 ->
     Z.ltb (cap - len) 65536 = t ->
     sc_denot RSEGS M (ENVb vals) (SCBr t BC_LTU want_x (ELit 65536)).
@@ -306,14 +345,14 @@ Section DrvG.
     rewrite (want_x_val vals len cap P70 P38 H1 H2). cbn [edenot]. unfold bv_ltu. rewrite !u_small by lia. exact Ht.
   Qed.
 
-  #[using="sp0 Hplen LEN"] Lemma cap2_x_val : forall vals (cap : Z),
+  Lemma cap2_x_val : forall vals (cap : Z),
     vals_ev vals 70 = Z_to_bv 64 cap -> 0 <= cap -> 2 * cap < 2 ^ 64 ->
     edenot (ENVb vals) cap2_x = Z_to_bv 64 (2 * cap).
   Proof. intros vals cap P70 H1 H2. cbn [cap2_x edenot ev ENVb ENV]. rewrite P70. apply mul2_lit; lia. Qed.
 
-  #[using="Type"] Lemma m1o_but : forall off VM m', model_but_vm (model1o off VM) m' -> m' = model1o off (m_vmmaps m').
+  Lemma m1o_but : forall off VM m', model_but_vm (model1o off VM) m' -> m' = model1o off (m_vmmaps m').
   Proof. intros off VM m' H. exact H. Qed.
-  #[using="Type"] Lemma m1o_vm : forall off VM, m_vmmaps (model1o off VM) = VM.
+  Lemma m1o_vm : forall off VM, m_vmmaps (model1o off VM) = VM.
   Proof. intros. reflexivity. Qed.
 
   Lemma firstn_len_firstn : forall {X} (l : list X) w, firstn (length (firstn w l)) l = firstn w l.
@@ -325,15 +364,18 @@ Section DrvG.
     - destruct w as [|w]; [reflexivity|]. cbn. rewrite IH. reflexivity.
   Qed.
 
-  #[using="sp0 path fdata Hvsp Hplen DL Hsp LEN"] Lemma cred_exit : forall k cr, 0 <= k <= 10 -> cred k cr -> Kc <= fst cr /\ Bc <= snd cr.
+  Lemma cred_exit : forall k cr, 0 <= k <= 10 -> cred k cr -> Kc <= fst cr /\ Bc <= snd cr.
   Proof.
     intros k cr Hk [C1 C2]. pose proof (CAPk_range k Hk). pose proof (dl_k L sp0 DL). pose proof (dl_b L sp0 DL). nia.
   Qed.
 
-  #[using="fdata Hplen LEN"] Lemma hdr_app : forall vals ext, hdr_vals vals -> (6 <= length vals)%nat -> hdr_vals (vals ++ ext).
+  Lemma hdr_app : forall vals ext, hdr_vals vals -> (6 <= length vals)%nat -> hdr_vals (vals ++ ext).
   Proof. intros vals ext H HL. unfold hdr_vals. rewrite !vals_ev_app_l by lia. exact H. Qed.
 
-  #[using="HIok uid Hva Hve Hvsp Htid Hfile Hplen DL Hsp Hal model2 HKC"] Lemma read_ok : forall z, lp_at (z - 1) -> rd_at z.
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+  Lemma read_ok : forall z, lp_at (z - 1) -> rd_at z.
   Proof.
     intros z IH. unfold rd_at.
     intros k len want A vals R M VM cr Hk Hlen HlL Hz Hwant HL HV P38 P48 P70 P71 HR HK HA HC HH Hcr.
@@ -344,7 +386,7 @@ Section DrvG.
     pose proof HV as HV'. destruct HV' as (P0 & P1 & P2 & P3 & P4 & P5).
     pose proof (hiv_facts' vals HV) as HIV.
     assert (Hw : 1 <= want <= 65536 /\ want <= CAPk k - len) by lia.
-
+    (* [comment removed for export] *)
     eapply (rz_read_file RSEGS scfg _ _ M (model1o len VM) ECALLW (Z_to_bv 64 3) path (Z_to_bv 64 len) fdata want);
       try apply is_ecall_ECALLW.
     - vm_compute. reflexivity.
@@ -372,7 +414,7 @@ Section DrvG.
         by (apply bv_eq; rewrite bv_add_unsigned, !u_small by lia; symmetry; apply bv_wrap_small; change (bv_modulus 64) with (2 ^ 64)%Z; lia).
       change (mkModelE (fd_insert fds0 (Z_to_bv 64 3) (FdFile path (Z_to_bv 64 (len + nb)))) VM stdin0 fs0 None (Some tid) None)
         with (model1o (len + nb) VM).
-
+      (* [comment removed for export] *)
       set (M1 := wbytes M (Z_to_bv 64 759305) bs).
       assert (HH1 : hi_heap HI [(A, CAPk k)] cr M1 VM).
       { subst M1. apply (heap_stagewrite scfg L HI HIok sp0 Hvsp DL); [lia | exact HH]. }
@@ -392,7 +434,7 @@ Section DrvG.
       { subst M1. apply rdn_wbytes_self. rewrite u_small by lia. lia. }
       clearbody M1. clear HK HH HA HC HDEF.
       destruct (Z.eq_dec nb 0) as [Hz0 | Hnz].
-      +
+      + (* [comment removed for export] *)
         assert (HlenL : len = LEN) by lia.
         rewrite Hz0, Z.add_0_r.
         set (vals1 := vals ++ [Z_to_bv 64 0]).
@@ -409,7 +451,7 @@ Section DrvG.
         change (sr_upd srRD (ridx 10) (ELit 0)) with srRf0 in HR2.
         pose proof (hiv_facts' vals1 HV1) as HIV1.
         clear HR HR1 HK1. rename HR2 into HR. rename HK2 into HK.
-
+        (* [comment removed for export] *)
         run_blockL_keep scr0 73%nat.
         assert (HH2 : hi_heap HI [(A, CAPk k)] cr M0 VM).
         { rewrite EQM. eapply (heap_block scfg L HI HIok sp0 Hsp' DL vals1 _ []); [exact Q0 | intros i nb' Hf; discriminate | vm_compute; reflexivity | exact HH1]. }
@@ -420,7 +462,7 @@ Section DrvG.
           rewrite HlenL in HC1. unfold LEN in HC1. rewrite Nat2Z.id, firstn_all in HC1. exact HC1. }
         destruct (heap_facts1 _ _ _ _ _ HH2) as [_ HDEF2].
         clear EQM HH1 HA1 HC1 HDEF1.
-
+        (* [comment removed for export] *)
         eapply (rz_close RSEGS scfg _ _ M0 (model1o len VM) ECALLW (Z_to_bv 64 3)); try apply is_ecall_ECALLW.
         * vm_compute. reflexivity.
         * reflexivity.
@@ -462,7 +504,7 @@ Section DrvG.
           -- exact HBR.
           -- exact HC2.
           -- exact HH2.
-      +
+      + (* [comment removed for export] *)
         set (vals1 := vals ++ [Z_to_bv 64 nb]).
         assert (HL1 : length vals1 = 73%nat) by (subst vals1; rewrite length_app, HL; reflexivity).
         assert (HV1 : hdr_vals vals1) by (subst vals1; unfold hdr_vals; rewrite !vals_ev_app_l by (rewrite HL; lia); exact HV).
@@ -481,10 +523,10 @@ Section DrvG.
         { constructor; [|exact HK2]. cbn [kentry_ok edenot ev ENVb ENV]. rewrite Q72, u_small by lia. lia. }
         pose proof (hiv_facts' vals1 HV1) as HIV1.
         clear HR HR1 HK1 HK2. rename HR2 into HR. rename HK3 into HK.
-
+        (* [comment removed for export] *)
         run_blockL_keep scr0 73%nat.
         cbn [mem_denot] in EQM. subst M0.
-
+        (* [comment removed for export] *)
         assert (Hbl : length bs = Z.to_nat nb) by lia.
         assert (WST : store_ok RSEGS M1 (Z_to_bv 64 (A + len)) (length bs) = true).
         { apply store_ok_of_defined; [lia | lia |]. intros i Hi. replace (A + len + i) with (A + (len + i)) by lia. apply HDEF1. lia. }
@@ -531,7 +573,7 @@ Section DrvG.
         assert (X72 : vals_ev vals2 72 = Z_to_bv 64 nb) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact Q72).
         pose proof (hiv_facts' vals2 XV) as HIV2.
         clearbody M2. clear HH1 HA1 HC1 HDEF1 HSRC WST MCH KP.
-
+        (* [comment removed for export] *)
         run_blockL_keep scr0 105%nat.
         cbn [mem_denot] in EQM. subst M0.
         lazymatch goal with |- srealizes _ _ (mkCfg (mkst ?Rc _ _ _) _) _ =>
@@ -560,7 +602,12 @@ Section DrvG.
         * exact Hcr.
   Qed.
 
-  #[using="sp0 Hplen LEN"] Lemma know_LP_ranges : forall vals M (len cap lo70 hi70 lo38 hi38 : Z),
+
+
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+  Lemma know_LP_ranges : forall vals M (len cap lo70 hi70 lo38 hi38 : Z),
     vals_ev vals 70 = Z_to_bv 64 len -> vals_ev vals 38 = Z_to_bv 64 cap -> 0 <= len < 2 ^ 64 -> 0 <= cap < 2 ^ 64 ->
     lo70 <= len <= hi70 -> lo38 <= cap <= hi38 ->
     know_ok RSEGS (ENVb vals) M knLP ->
@@ -570,7 +617,7 @@ Section DrvG.
     constructor; [|constructor; [|exact HK]]; cbn [kentry_ok edenot ev ENVb ENV]; rewrite ?P70, ?P38, u_small by lia; lia.
   Qed.
 
-  #[using="Hvsp Hplen Hsp"] Lemma content_block_len : forall vals M log (A n len : Z),
+  Lemma content_block_len : forall vals M log (A n len : Z),
     vals_ev vals 0 = sp0 -> log_in_b 0 (2 ^ 40) (2 ^ 40) [] [] IMG_W log = true ->
     hz sp0 A n -> 0 <= len <= n -> len <= LEN ->
     rdn RSEGS M (Z_to_bv 64 A) (Z.to_nat len) = Some (firstn (Z.to_nat len) fdata) ->
@@ -582,7 +629,7 @@ Section DrvG.
     apply (content_block' sp0 a0s path hw rdraw fdata Hvsp vals); [exact P0 | exact Hlog | eapply (hz_sub sp0); [exact HZ | lia | lia | rewrite HLn; lia] | exact HC].
   Qed.
 
-  #[using="HIok uid Hva Hve Hvsp Htid Hplen DL Hsp Hal HKc HBc HK0 HREF"] Lemma loop_step : forall z, rd_at z -> lp_at z.
+  Lemma loop_step : forall z, rd_at z -> lp_at z.
   Proof.
     intros z HRD. unfold lp_at.
     intros k len A vals R M VM cr Hk Hlen HlL Hz HL HV P38 P48 P70 HR HK HA HC HH Hcr.
@@ -594,7 +641,7 @@ Section DrvG.
     pose proof (hiv_facts' vals HV) as HIV.
     pose proof (dl_k L sp0 DL) as Hkpm. pose proof (dl_b L sp0 DL) as Hovh.
     destruct (Z_lt_le_dec len (CAPk k)) as [Hlt | Hge].
-    -
+    - (* [comment removed for export] *)
       pose proof (know_LP_ranges vals M len (CAPk k) 0 67108863 65536 67108864 P70 P38 ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia) HK) as HK1.
       change (KRange (EVar 70) 0 67108863 :: KRange (EVar 38) 65536 67108864 :: knLP) with knLPp in HK1.
       clear HK. rename HK1 into HK.
@@ -629,25 +676,25 @@ Section DrvG.
             - intros i Hi. apply HDEF1. lia. }
           rewrite knRD_split. constructor; [exact (Forall_inv K6)|]. apply Forall_app. split; [exact KB | exact (Forall_inv_tail K6)]. }
       destruct (Z_lt_le_dec (CAPk k - len) 65536) as [Hsmall | Hbig].
-      +
+      + (* [comment removed for export] *)
         run_blockL_keep (SCR [false; true] [] []) 71%nat.
         { apply (sc_ltu_want vals _ len (CAPk k) true P70 P38); [lia | lia | apply Z.ltb_lt; lia]. }
         { apply (sc_eq_70_38 vals _ len (CAPk k) false P70 P38); [lia | lia | apply Z.eqb_neq; lia]. }
         apply (TAIL (CAPk k - len) _ _ want_x); [lia | exact HR | apply (want_x_val vals len (CAPk k) P70 P38); lia | exact HK | exact EQM].
-      +
+      + (* [comment removed for export] *)
         run_blockL_keep (SCR [false; false] [] []) 71%nat.
         { apply (sc_ltu_want vals _ len (CAPk k) false P70 P38); [lia | lia | apply Z.ltb_ge; lia]. }
         { apply (sc_eq_70_38 vals _ len (CAPk k) false P70 P38); [lia | lia | apply Z.eqb_neq; lia]. }
         apply (TAIL 65536 _ _ (ELit 65536)); [lia | exact HR | reflexivity | exact HK | exact EQM].
-    -
+    - (* [comment removed for export] *)
       assert (Heq : len = CAPk k) by lia.
       destruct (Z.eq_dec k 10) as [Hk10 | Hk10].
-      +
+      + (* [comment removed for export] *)
         assert (HC10 : CAPk k = 67108864) by (rewrite Hk10; reflexivity).
         assert (Hl10 : len = 67108864) by lia.
         rewrite Hl10 in P70 |- *. rewrite HC10 in P38, HH.
         apply (HREF ltac:(lia) A vals R M VM cr); assumption.
-      +
+      + (* [comment removed for export] *)
         pose proof (CAPk_lt10 k ltac:(lia)) as HC25.
         pose proof (know_LP_ranges vals M len (CAPk k) 65536 33554432 65536 33554432 P70 P38 ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia) HK) as HK1.
         change (KRange (EVar 70) 65536 33554432 :: KRange (EVar 38) 65536 33554432 :: knLP) with knLPg in HK1.
@@ -655,7 +702,7 @@ Section DrvG.
         run_blockL_keep (SCR [true] [] []) 71%nat.
         { apply (sc_eq_70_38 vals _ len (CAPk k) true P70 P38); [lia | lia | apply Z.eqb_eq; lia]. }
         cbn [mem_denot] in EQM. subst M0.
-
+        (* [comment removed for export] *)
         lazymatch goal with |- srealizes _ _ (mkCfg (mkst ?Rc _ _ _) _) _ =>
         lazymatch type of HK with know_ok _ _ _ ?kn =>
         eapply (malloc_site scfg L HI HIok sp0 Hsp' Hal' DL vals _ srGa kn Rc M (model1o len VM) [(A, CAPk k)] cr (2 * CAPk k) (-128)
@@ -690,14 +737,14 @@ Section DrvG.
         assert (X48 : vals_ev vals2 48 = Z_to_bv 64 A) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); exact P48).
         assert (X70 : vals_ev vals2 70 = Z_to_bv 64 (CAPk k)) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL; lia); rewrite <- Heq; exact P70).
         pose proof (hiv_facts' vals2 XV) as HIV2.
-
+        (* [comment removed for export] *)
         apply Forall_app in HK' as [HKB HK'].
         assert (HKU : know_ok RSEGS (ENVb vals2) M' knGb0).
         { change knGb0 with (kn_blk2 81 ++ keep_alloc MSO [(48%nat, 65536%Z)] [] knGa). apply Forall_app. split.
           - unfold kn_blk2. apply Forall_cons; [|apply Forall_cons; [|apply Forall_nil]]; cbn [kentry_ok edenot ev ENVb ENV]; rewrite HA2, u_small by lia; lia.
           - exact HK'. }
         clear HK' HKB HK HR. rename HKU into HK. rename HR' into HR.
-
+        (* [comment removed for export] *)
         destruct (hio_wf L scfg HI HIok _ _ _ _ HH') as [WF2 _].
         destruct (WF2 (A2, 2 * CAPk k) ltac:(left; reflexivity)) as (_ & HDEF2 & _). cbn [fst snd] in HDEF2.
         assert (WST : store_ok RSEGS M' (Z_to_bv 64 A2) (Z.to_nat (CAPk k)) = true).
@@ -706,7 +753,7 @@ Section DrvG.
         { rewrite <- Heq, <- HC. symmetry. apply rdn_agree. intros j Hj. rewrite u_small by lia. symmetry. apply HBLK; [lia|].
           exists (A, CAPk k). split; [left; reflexivity|]. cbn [fst snd]. lia. }
         clear HC HH HDEF.
-
+        (* [comment removed for export] *)
         run_blockL_keep scr0 103%nat.
         cbn [mem_denot] in EQM. subst M0.
         assert (HFL : length (firstn (Z.to_nat (CAPk k)) fdata) = Z.to_nat (CAPk k)) by (rewrite length_firstn; unfold LEN in HlL; lia).
@@ -752,10 +799,10 @@ Section DrvG.
         clearbody M3 vals3. clear HC2 WST HDEF2 WF2.
         assert (NEQ : A2 <> A).
         { specialize (HAP (A, CAPk k) ltac:(left; reflexivity)). cbn [fst snd] in HAP. lia. }
-
+        (* [comment removed for export] *)
         run_blockL_keep scr0 135%nat.
         cbn [mem_denot] in EQM. subst M0.
-
+        (* [comment removed for export] *)
         lazymatch goal with |- srealizes _ _ (mkCfg (mkst ?Rc _ _ _) _) _ =>
         lazymatch type of HK with know_ok _ _ _ ?kn =>
         eapply (free_site scfg L HI HIok sp0 Hsp' Hal' DL vals3 _ srGc kn Rc M3 (model1o len VM2) [(A2, 2 * CAPk k); (A, CAPk k)]
@@ -795,7 +842,7 @@ Section DrvG.
         assert (HA4 : above M4).
         { intros a Ha. rewrite HAB4 by exact Ha. apply HA3. exact Ha. }
         clear HR HK HC3 HA3 HH3. rename HR4 into HR. rename HK4 into HK.
-
+        (* [comment removed for export] *)
         run_blockL_keep scr0 167%nat.
         assert (HH5 : hi_heap HI [(A2, 2 * CAPk k)] (debit L cr (2 * CAPk k)) M0 VM4).
         { rewrite EQM. eapply (heap_block scfg L HI HIok sp0 Hsp' DL vals4 _ []); [exact W0 | intros i nb Hf; discriminate | vm_compute; reflexivity | exact HH4]. }
@@ -805,7 +852,7 @@ Section DrvG.
         { rewrite EQM. apply (content_block_len vals4 _ _ A2 (2 * CAPk k) (CAPk k)); [exact W0 | vm_compute; reflexivity | exact HZ2 | lia | lia | exact HC4]. }
         destruct (heap_facts1 _ _ _ _ _ HH5) as [_ HDEF5].
         clear EQM HH4 HA4 HC4.
-
+        (* [comment removed for export] *)
         lazymatch goal with |- srealizes _ _ (mkCfg (mkst ?Rc _ _ _) _) _ =>
         set (valsR := relayV vals4 Rc (gr Rc 21) (gr Rc 9) (gr Rc 19) [gr Rc 12]);
         apply (HRD (k + 1) len 65536 A2 valsR Rc M0 VM4 (debit L cr (2 * CAPk k)))
@@ -837,16 +884,24 @@ Section DrvG.
         * destruct Hcr as [Hc1 Hc2]. unfold cred, debit. cbn [fst snd]. rewrite CAPk_S by lia. split; nia.
   Qed.
 
-  #[using="HIok uid Hva Hve Hvsp Htid Hfile Hplen DL Hsp Hal model2 HKc HBc HK0 HKC HREF"] Lemma loop_ok : forall n : nat, lp_at (Z.of_nat n).
+
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+  Lemma loop_ok : forall n : nat, lp_at (Z.of_nat n).
   Proof.
     induction n as [|n IH].
     - apply loop_step. apply read_ok. unfold lp_at. intros. exfalso. lia.
     - apply loop_step. apply read_ok. replace (Z.of_nat (S n) - 1) with (Z.of_nat n) by lia. exact IH.
   Qed.
 
+  (* [comment removed for export] *)
   Hypothesis Hcr0 : cred 0 (debit L cr0 65536).
 
-  #[using="HIok uid Hva Hve Hvsp Htid Hfile Hplen DL Hsp Hal LEN ENVb above model1o model2 Kc Bc HKc HBc HK0 HKC HREF Hcr0"] Theorem drv_file : file_k scfg L HI sp0 a0s path envv hw rdraw tid mem0 fs0 stdin0 fdata cr0 K.
+  (* [file_k] (Es0DrvA.v:137-145) reads [p0 .. inp] and [p1 .. inp], so Es0DrvA's
+     section discharges [inp] as well and [K] was absorbed into that slot -
+     "The term "K" has type "TSet" while it is expected to have type "ProcInput"". *)
+  Theorem drv_file : file_k scfg L HI sp0 a0s path envv hw rdraw tid mem0 fs0 stdin0 fdata cr0 inp K.
   Proof.
     unfold file_k.
     intros vals R M VM A1 HL P0 P48 P1 P2 P3 P4 P5 HR HK HA HBR HH.
@@ -857,7 +912,7 @@ Section DrvG.
     change (Env (vals_ev vals) (blobs_ev (blobs0 a0s path hw rdraw ++ [fdata]))) with (ENVb vals) in HR, HK |- *.
     change (Es0DrvA.above_sp0 sp0 mem0 M) with (above M) in HA.
     change (model1 path tid fs0 stdin0 VM) with (model1o 0 VM).
-
+    (* [comment removed for export] *)
     run_blockL_keep scr0 70%nat.
     assert (HH1 : hi_heap HI [(A1, 65536)] (debit L cr0 65536) M0 VM).
     { rewrite EQM. eapply (heap_block scfg L HI HIok sp0 Hsp' DL vals _ []); [exact P0 | intros i nb Hf; discriminate | vm_compute; reflexivity | exact HH]. }
@@ -896,7 +951,11 @@ Section DrvG.
     - exact Hcr0.
   Qed.
 
-  #[using="Hvsp Hplen Hsp LEN"] Lemma kbytes_rdn_sp : forall vals M kn n k zs,
+
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+  Lemma kbytes_rdn_sp : forall vals M kn n k zs,
     vals_ev vals 0 = sp0 -> know_ok RSEGS (ENVb vals) M kn -> kbytes kn (EVar 0) k n = Some zs ->
     - 2 ^ 20 <= k -> k + Z.of_nat n <= 0 ->
     rdn RSEGS M (Z_to_bv 64 (bv_unsigned sp0 + k)) n = Some (zbytes zs).
@@ -914,7 +973,8 @@ Section DrvG.
         apply IH; [exact P0 | exact HK | exact Hrest | lia | lia].
   Qed.
 
-  #[using="Hvsp Hplen Hsp Hal LEN"] Lemma sc_and3_sp : forall vals M (off : Z) (c : branch_cond) (t : bool),
+  (* [comment removed for export] *)
+  Lemma sc_and3_sp : forall vals M (off : Z) (c : branch_cond) (t : bool),
     vals_ev vals 0 = sp0 -> off mod 4 <> 0 -> - 2 ^ 20 <= off <= 0 ->
     match c with BC_NE => t = true | BC_EQ => t = false | _ => False end ->
     sc_denot RSEGS M (ENVb vals) (SCBr t c (EAlu ALU_AND (EAlu ALU_ADD (EVar 0) (ELit off)) (ELit 3)) (ELit 0)).
@@ -932,9 +992,10 @@ Section DrvG.
     destruct c; try contradiction; subst t; cbn [sc_denot branch_taken]; rewrite Hv; reflexivity.
   Qed.
 
-  #[using="Type"] Lemma m1o_fd2 : forall off VM, fd_lookup (m_fds (model1o off VM)) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  Lemma m1o_fd2 : forall off VM, fd_lookup (m_fds (model1o off VM)) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
   Proof. intros. reflexivity. Qed.
 
+  (* [comment removed for export] *)
   Ltac close_exit2m HR HK P0 P5 :=
     lazymatch type of HK with know_ok ?segs ?E ?M ?kn =>
     lazymatch goal with |- srealizes _ _ (mkCfg _ ?model) _ =>
@@ -971,13 +1032,13 @@ Section DrvG.
           krd HK 0xcaf98%Z 4%nat Htc; rewrite Htc; cbn [ev ENVb ENV]; rewrite P5;
           rewrite ext_val_zx_id by (change (2 ^ (8 * Z.of_nat 4))%Z with 4294967296%Z; lia);
           rewrite Z_to_bv_bv_unsigned; reflexivity
-        | krd_solve HK | krd_solve HK | krd_solve HK | krd_solve HK | krd_solve HK | krd_solve HK | krd_solve HK | (exists AX0; split; krd_solve HK) | krd_solve HK   | krd_solve HK
+        | krd_solve HK | krd_solve HK | krd_solve HK | krd_solve HK | krd_solve HK | krd_solve HK | krd_solve HK | (exists AX0; split; krd_solve HK) | krd_solve HK | krd_solve HK
         | repeat split; krd_solve HK
         | repeat split; krd_solve HK ]
       | left; split; [reflexivity|]; eexists; eexists; repeat split; krd_solve HK ]
     end end end.
 
-  #[using="Hvsp Htid Hplen Hsp Hal LEN"] Theorem drv_refuse : refuse_k (t_die msg_refused fs0).
+  Theorem drv_refuse : refuse_k (t_die msg_refused fs0).
   Proof.
     unfold refuse_k.
     intros A vals R M VM cr HL HV P38 P48 P70 HR HK HA HH.
@@ -987,7 +1048,7 @@ Section DrvG.
                   ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia) HK) as HK1.
     change (KRange (EVar 70) 67108864 67108864 :: KRange (EVar 38) 67108864 67108864 :: knLP) with knLPr in HK1.
     clear HK. rename HK1 into HK.
-
+    (* [comment removed for export] *)
     run_blockQ_keep scr_refuse 71%nat.
     { apply (sc_and3_sp vals _ (-535) BC_EQ false P0); [vm_compute; lia | lia | reflexivity]. }
     { apply (sc_and3_sp vals _ (-546) BC_NE true P0); [vm_compute; lia | lia | reflexivity]. }
@@ -1000,7 +1061,7 @@ Section DrvG.
     unfold t_die, W;
     assert (HSC : stdio_call 71 sr kn = Some scR) by (vm_compute; reflexivity);
     pose proof (stdio_call_sound_fr scfg vals _ sr kn Rc Mc (model1o 67108864 VM) scR msg_refused []
-             (t_exit (exit_code 2) fs0) HR HK (eq_trans (f_equal (fun n => stdio_call n sr kn) HL) HSC)) as Hsc;
+             (t_exit (exit_code 2) fs0) ltac:(rdr) HR HK (eq_trans (f_equal (fun n => stdio_call n sr kn) HL) HSC)) as Hsc;
     cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn scR app Z.of_nat] in Hsc;
     rewrite app_nil_r, LB38 in Hsc;
     apply Hsc; clear Hsc HSC
@@ -1026,7 +1087,7 @@ Section DrvG.
       assert (P0' : vals_ev (vals ++ junk_vals R') 0 = sp0) by (rewrite vals_ev_app_l by (rewrite HL; lia); exact P0).
       assert (P5' : vals_ev (vals ++ junk_vals R') 5 = tid) by (rewrite vals_ev_app_l by (rewrite HL; lia); exact P5).
       change (Env (vals_ev (vals ++ junk_vals R')) (blobs_ev (blobs0 a0s path hw rdraw ++ [fdata]))) with (ENVb (vals ++ junk_vals R')) in HR, HK.
-
+      (* [comment removed for export] *)
       run_blockQ scr0 103%nat.
       close_exit2m HR HK P0' P5'.
   Qed.

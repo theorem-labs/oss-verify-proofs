@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths and module names changed; 371 of its 396 lines of code are new or changed and 3828 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v, with its module paths, module names and numbers changed; 1486 of its 1528 lines of code are new or changed and 354 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F12.v, with its module paths, module names and addresses changed; 540 of its 667 lines of code are new or changed and 1401 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment R5 of fuzz_ctrl LLVMFuzzerTestOneInput (asan, image A): [0x81588, 0x815c8], 17 instructions, no call, no
    instrumented check, no branch. Turn b = 0 of the round trip: s7 = b = 0, the round-trip constants spilled at the
    spill base A = s1 ([A + 8] = s2 + 16, [A + 112] = s2 (the catalogue row), [A + 0] = s2 + 20, [A + 104] =
@@ -18,7 +19,7 @@
    registers (A + 416 <= S), and off the FRA spills [A + 16, A + 32) and [A + 304, A + 312). r5_fra_store moves
    FRA across one such store.
 
-   Cuts (SlotInv push 5, b6dbb4eafee). Entry: Inv_A81588_loc = Inv_A81588 plus the two spills the exit carries and
+   Cuts (SlotInv push 5). Entry: Inv_A81588_loc = Inv_A81588 plus the two spills the exit carries and
    this segment does not write ([A + 128] = fr + 544, set 0x81378/0x814e4; [A + 168] = fr + 2624, set
    0x813b4/0x813f4). Exit: seg_R5 lands in the pushed Inv_A815cc_at at b = 0; seg_R5_loc lands in Inv_A815cc_loc_at,
    which adds what R6 / R7 read and only this segment (and the latch 0x81948-0x81950) sets: a0 = fr + 544 (loaded
@@ -186,7 +187,7 @@ Context {SH : sink_head} {SK : sink_syms}.
 Variables ra empty : Z.
 Hypothesis FF : frame_facts B APIf LS SH SK ra empty.
 
-(* The cuts are SlotInv.v's own (push 10, 09daa0603a8): Inv_A81588 is R4's exit, and Inv_A815cc_at at turn 0 is
+(* The cuts are SlotInv.v's own (push 10): Inv_A81588 is R4's exit, and Inv_A815cc_at at turn 0 is
    the loop head with a0 = fr + 544, s8 = 36 and [A + 64] = 0xe38f0000 (R6's build_as call reads a0; R7's
    Inv_A815ec_at needs s8 and [A + 64]), the row spill [A + 112] = mrow (0x81594 `sd s2,112(s1)` with the entry's
    s2 = mrow, before 0x81598 moves s2), RXS (this segment's own [A + 8] = mrow + 16 and [A + 0] = mrow + 20, the

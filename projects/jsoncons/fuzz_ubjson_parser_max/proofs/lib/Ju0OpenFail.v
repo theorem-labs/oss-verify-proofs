@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: decoded 13 encoded statements, re-parameterised main_entry and p1 over launch input inp and entry, added init_reserved to model0, and reworked path_facts via main_entry_inp with new TASK_SIZE bound subgoals in open-fail proofs; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Ub0OpenFail.v, 80 lines within its lines 32-316. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -25,7 +26,8 @@ Ltac2 tcn__Ju0OpenFail () := ([""; "Corelib.Init.Datatypes."; "Corelib.Init.Logi
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Section FPX_1. Context {fx : PropExec.FPState}.
 Variable scfg : SpuriousCfg.
-Lemma errno_ret_range : ltac2:(TCodec.tc2 tcn__Ju0OpenFail "H'D'>&R0+1r1%3221+SoO%5231%7231&R3&R2+2+R0%3221%5218&RByR0&Jr2%211%5241%C271p0>1pT>G1").
+Lemma errno_ret_range : forall e, (1 <= e <= 4095)%Z ->
+(2 ^ 64 - 4095 <= bv_unsigned (errno_ret e))%Z.
 Proof. intros e He. unfold errno_ret. rewrite Z_to_bv_unsigned, bv_wrap64_mod.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
 replace ((- e) mod 2 ^ 64)%Z with (2 ^ 64 - e)%Z; [lia|].
@@ -36,13 +38,13 @@ Lemma In_firstn : forall {A} (l : list A) n x, In x (firstn n l) -> In x l.
 Proof.
 intros A l n x H. rewrite <- (firstn_skipn n l). apply in_app_iff. left. exact H.
 Qed.
-Lemma openat_errnos_range : ltac2:(TCodec.tc2 tcn__Ju0OpenFail "?'D&QMr1&Q1%33421'>&R0+1r2%3221+SoO%5231%7231p091pT>>1").
+Lemma openat_errnos_range : forall e, In e openat_errnos -> (1 <= e <= 4095)%Z.
 Proof.
 intros e He. unfold openat_errnos in He. cbn in He.
 unfold ENOMEM, EACCES, EMFILE, ENFILE in He. lia.
 Qed.
 Section OpenFail.
-Context {RE : RunEnv}.
+Context {RE : RunEnv}. Context {RO : ReaderOn}.
 Variable sp0 : word.
 Variables a0s path : list byte.
 Variable envv : list (list byte).
@@ -61,54 +63,68 @@ Hypothesis Hva : valid_argv [a0s; path].
 Hypothesis Hve : valid_envp envv.
 Hypothesis Hvsp : valid_sp sp0.
 Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-Hypothesis ME : main_entry sp0 [a0s; path] envv uid hw rdraw tid regs0 mem0.
-Hypothesis Hfits : entry_stack_fits sp0 [a0s; path] envv.
+Variable inp : ProcInput.
+Variable entry : word.
+Hypothesis ME : main_entry inp mbase entry sp0 [a0s; path] envv uid hw rdraw tid regs0 mem0.
 Hypothesis Hfs : sc_fs scfg = true.
 Definition ENV (vals : list word) : env := Env (vals_ev vals) (blobs_ev (blobs0 a0s path hw rdraw)).
 Definition model0 : Model :=
-mkModelE fds_init (mkVmMapsFull (segments_reserved RSEGS) [] [] brk brk lim mbase sp0) stdin0 fs0 None (Some tid) None.
+mkModelE fds_init (mkVmMapsFull (init_reserved (segments_reserved RSEGS) mbase sp0 (in_kernel inp)) [] [] brk brk lim mbase sp0) stdin0 fs0 None (Some tid) None.
 Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
 Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
-Lemma model0_halted : ltac2:(TCodec.tc2 tcn__Ju0OpenFail "<'?':'RAyR0%211%411&N&Q9%211(0%116%;3631").
+Lemma model0_halted : m_halted model0 = None.
 Proof. reflexivity. Qed.
-Lemma model0_lazy : ltac2:(TCodec.tc2 tcn__Ju0OpenFail ">'?'7';'RAyR0%211%4211%611&O&Q9%211(9%116%=3631").
+Lemma model0_lazy : m_vm_lazy model0 = [].
 Proof. reflexivity. Qed.
-Lemma model0_fd2 : ltac2:(TCodec.tc2 tcn__Ju0OpenFail "B'?':'I%211&K&L&Q9%211&R@yR0+2%3221%8251(2(H%114%32>1%A3>51").
+Lemma model0_fd2 : fd_lookup (m_fds model0) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
 Proof. reflexivity. Qed.
-Lemma model0_fs : ltac2:(TCodec.tc2 tcn__Ju0OpenFail "7'?&E&M&Q9%211vR8%63521").
+Lemma model0_fs : m_fs model0 = fs0.
 Proof. reflexivity. Qed.
-Lemma path_nonul : ltac2:(TCodec.tc2 tcn__Ju0OpenFail ";&A&QM'RAy8%211&R@z%2241vR;%83521%:11").
+Lemma path_nonul : ~ In (Z_to_bv 8 0) path.
 Proof.
 destruct Hva as (_ & _ & _ & Hn & _). inversion Hn as [|x l Hx Hl]; subst. inversion Hl; subst. assumption.
 Qed.
-Lemma path_len : ltac2:(TCodec.tc2 tcn__Ju0OpenFail ";&R0&R1&6'RAy8%211vR;%5221%711+SooO%:221").
+Lemma path_len : (Z.of_nat (length path) <= 131071)%Z.
 Proof.
 destruct Hva as (_ & _ & Hl & _ & _). inversion Hl as [|x l Hx Hl']; subst. inversion Hl'; subst. assumption.
 Qed.
-Lemma path_facts : ltac2:(TCodec.tc2 tcn__Ju0OpenFail "R2'>'?':'7'RAy8%211%411%611&Q>&QLvR:&Q7vR>vR5vR;vR7%544321&B&6%12>5u1%4221%>4=<61(2&3(5&R@z%22H1(9%11I%63J31%83KB1%:2K1%Q23K<1&R0&RByR0%221J%322G%5221&QN+RPZUH%2251%9251&R1%11K%6281+A%8221+TPPPPPPPP0%@221'@%K2@6u8%Q?4Q>Q=21r1%Q22QC1%QJ3QC31qU8QE1%82QF1%QN2:1%QO2B1%R02G1%R12N1").
+Lemma path_facts :
+rdn RSEGS mem0 (p1 a0s path envv rdraw inp) (length path + 1) = Some (path ++ [Z_to_bv 8 0])
+/\ (bv_unsigned sp0 <= bv_unsigned (p1 a0s path envv rdraw inp))%Z
+/\ (bv_unsigned (p1 a0s path envv rdraw inp) <= bv_unsigned sp0 + 2107576)%Z
+/\ (bv_unsigned (p1 a0s path envv rdraw inp) + Z.of_nat (length path) + 9 <= 0x800000000000)%Z
+/\ exists t8, rdn RSEGS mem0 (Z_to_bv 64 (bv_unsigned (p1 a0s path envv rdraw inp) + Z.of_nat (length path))) 8 = Some t8.
 Proof.
 pose proof SPlo as Hlo. pose proof SPhi as Hhi.
-destruct (main_str sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hva Hve Hvsp ME 1%nat ltac:(lia)) as (Sr & Slo & Shi & Slen).
-pose proof (main_str_fits sp0 a0s path envv uid hw rdraw Hva Hve Hvsp Hfits 1%nat ltac:(lia)) as Sfit.
+destruct (main_str sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME 1%nat ltac:(lia)) as (Sr & Slo & Shi & Slen).
+pose proof (main_str_fits sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME 1%nat ltac:(lia)) as Sfit.
 cbn [nth] in Sr, Slo, Shi, Slen, Sfit. unfold p1.
 split; [exact Sr|]. split; [exact Slo|]. split; [exact Shi|]. split; [exact Sfit|].
-pose proof (lay_bsb_nw RPH sp0 rdraw [a0s; path] envv uid hw Hva Hve ltac:(unfold sp_window_hi; lia)) as Hnw.
-destruct (read_word_stack RPH RSEGS sp0 [a0s; path] envv 1 (length path) uid hw rdraw ltac:(cbn; lia) ltac:(cbn; lia) Hnw)
+destruct (main_entry_inp inp mbase entry sp0 [a0s; path] envv uid hw rdraw tid regs0 mem0 ME) as (Eav & Eev & _ & _ & Hvl & brk' & Hlau).
+pose proof (entry_stack_image_no_wrap Sv48 inp mbase RPH entry sp0 brk' rdraw Hlau) as Hnw.
+destruct (read_word_stack Sv48 RSEGS inp mbase RPH entry sp0 brk' rdraw 1 (length path) Hlau ltac:(rewrite Eav; cbn; lia) ltac:(rewrite Eav; cbn; lia) Hnw)
 as (t8 & Hl8 & Hr8).
-exists t8. rewrite w_add_nat in Hr8.
-pose proof (u64_range (cat_argv_ptr sp0 [a0s; path] envv 1)).
-rewrite (main_entry_rdn_above sp0 [a0s; path] envv uid hw rdraw tid regs0 mem0 ME) by (rewrite u_small by lia; lia).
-pose proof (rdn_wmem_stack RSEGS RPH sp0 [a0s; path] envv uid hw rdraw) as Hw. unfold wmem in Hw.
+exists t8. rewrite w_add_nat in Hr8. rewrite Eav, Eev in Hr8.
+pose proof (u64_range (cat_argv_ptr (ed_top rdraw) [a0s; path] envv (in_execfn inp) 1)).
+rewrite (main_entry_rdn_above inp mbase entry sp0 [a0s; path] envv uid hw rdraw tid regs0 mem0 ME) by (rewrite u_small by lia; lia).
+pose proof (rdn_wmem_stack RSEGS inp mbase RPH entry sp0 rdraw) as Hw. unfold wmem in Hw.
 rewrite Hw by (rewrite u_small by lia; lia). exact Hr8.
 Qed.
-Theorem ref_open_fail_errno : ltac2:(TCodec.tc2 tcn__Ju0OpenFail "SC'D'7'RAyR0%211%411&Q4y5%2214':y8%911%311p091'>&R0+1r4%3221+SoO%5231%7231'?'8&6%12E8uQ7%53421&QKr5(1%3221vR>%;3M21r6uQ6%8221&Jr7%211%B3Q441u2%>241&Q7vR5vR;vR7%44?321%J3Q<61&QJ&Q8r8%211&QH&Q;&QG(R?+:(=%33QD21%511(QF%11K%:3931%?3<1J&QI&QLr9%B11&Q:%5442Q01&RB%12R5Q8r1%32R71%QL231r:r2%211vR:%113%QK3R531p071pU<R?1'QEvR=(G&Q=vR9&R@+e\[0%22RH1&Q@%11K%756B3K1&Q9%:221&QD&QC%11QFvR8%4221%B4Q4A61p0D1p0Q21p0Q91p0QJ1p0R31p0R;1p0RB1p0RI1pR<S21pR>S81pU:S<1pT>SB1").
+Theorem ref_open_fail_errno : forall e vals R M,
+(1 <= e <= 4095)%Z ->
+length vals = 39%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 38 = errno_ret e ->
+vals_ev vals 2 = p1 a0s path envv rdraw inp ->
+regs_ok (ENV vals) (sr_upd srA (ridx 10) (EVar 38)) R -> know_ok RSEGS (ENV vals) M knA ->
+(forall x : word, (bv_unsigned sp0 <= bv_unsigned x)%Z -> M x = mem0 x) ->
+srealizes RSEGS scfg (mkCfg (mkst R (Z_to_bv 64 0xab160) M (seg_rom RSEGS)) model0)
+(t_die (msg_cannot_open path) fs0).
 Proof.
 intros e vals R M He HL P0 P38 P2 HR HK Habove.
 pose proof SPlo as Hlo. pose proof SPhi as Hhi. pose proof path_len as HPl.
 destruct path_facts as (Sr & Slo & Shi & Sfit & t8 & Ht8).
-pose proof (u64_range (p1 sp0 a0s path envv)) as Hpr.
+pose proof (u64_range (p1 a0s path envv rdraw inp)) as Hpr.
 rewrite <- model0_fs.
-eapply (of_tail scfg sp0 (blobs0 a0s path hw rdraw) model0 Hvsp model0_halted model0_lazy model0_fd2 path (p1 sp0 a0s path envv) t8 vals);
+eapply (of_tail scfg sp0 (blobs0 a0s path hw rdraw) model0 Hvsp model0_halted model0_lazy model0_fd2 ltac:(rdr) path (p1 a0s path envv rdraw inp) t8 vals);
 try eassumption.
 - apply path_nonul.
 - rewrite P38. apply errno_ret_range. exact He.
@@ -117,17 +133,23 @@ try eassumption.
 - rewrite <- Sr. apply rdn_agree. intros j Hj. apply Habove. rewrite u_small by lia. lia.
 - rewrite <- Ht8. apply rdn_agree. intros j Hj. apply Habove. unorm. lia.
 Qed.
-Lemma of_blockA : ltac2:(TCodec.tc2 tcn__Ju0OpenFail "RN&QB'7'RAyR0%211%411&Q4y5%2214':y8%911%311p091'?'8&6r3%22>1uQ6%63521&QKr4(1%3221vR>%<3F21r5u2%8221&Q7vR5vR;vR7%449321%E3O61&QJ&Q8r6%211&Q;%5321>&QI&QLr7%811&Q:%5442D1&R0&RB%12Q?Ir1%32QA1%5231r8r2%211vR:%113%Q=3Q?31p071pU<QI1'QEvR=(G&Q=vR9&R@+e\ZL%22R21&Q@%11L%756B3L1&Q9%:221r:%>4Q1=21p0@1p0O1p0Q61p0Q=1p0QG1p0QN1pR<R61pR>R<1pU:R@1vR<+V_`L%E2RE1%H5G31Q0B%J21A%M4Q@L1Q4p071pT:RM1").
+Lemma of_blockA : forall T,
+(forall vals R M,
+length vals = 38%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = p1 a0s path envv rdraw inp ->
+regs_ok (ENV vals) srA R -> know_ok RSEGS (ENV vals) M knA ->
+(forall x : word, (bv_unsigned sp0 <= bv_unsigned x)%Z -> M x = mem0 x) ->
+srealizes RSEGS scfg (mkCfg (mkst R (Z_to_bv 64 0xab15c) M (seg_rom RSEGS)) model0) T) ->
+srealizes RSEGS scfg (mkCfg (mkst regs0 (Z_to_bv 64 0x33e1c) mem0 (seg_rom RSEGS)) model0) T.
 Proof.
 intros T HA.
 pose proof SPlo as Hlo. pose proof SPhi as Hhi.
-pose proof (main_regs_ok sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hvsp Htid ME) as HR.
-pose proof (main_know_ok sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hva Hve Hvsp Htid ME) as HK.
-change (E0 sp0 a0s path envv hw rdraw tid regs0) with (ENV (vals0 sp0 a0s path envv tid regs0)) in HR, HK.
-set (vals := vals0 sp0 a0s path envv tid regs0) in *.
+pose proof (main_regs_ok sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME) as HR.
+pose proof (main_know_ok sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME) as HK.
+change (E0 sp0 a0s path envv hw rdraw tid regs0 inp) with (ENV (vals0 sp0 a0s path envv rdraw tid regs0 inp)) in HR, HK.
+set (vals := vals0 sp0 a0s path envv rdraw tid regs0 inp) in *.
 assert (HL : length vals = 38%nat) by (subst vals; unfold vals0; rewrite length_app, junk_vals_length; reflexivity).
 assert (P0 : vals_ev vals 0 = sp0) by reflexivity.
-assert (P2 : vals_ev vals 2 = p1 sp0 a0s path envv) by reflexivity.
+assert (P2 : vals_ev vals 2 = p1 a0s path envv rdraw inp) by reflexivity.
 clearbody vals.
 pose proof model0_halted as Hh.
 run_blk_keep scr0 38%nat.
@@ -135,7 +157,10 @@ apply (HA vals); try assumption.
 intros x Hx. rewrite EQM. apply (mem_denot_above (ENV vals) mem0 _ 0%nat 0xea000);
 [vm_compute; reflexivity | cbn [ev ENV]; rewrite P0; lia | cbn [ev ENV]; rewrite P0; lia | lia].
 Qed.
-Lemma openat_regs : ltac2:(TCodec.tc2 tcn__Ju0OpenFail "R0'7'RAyR0%211%411&Q4y5%2214'?&QKr2u2%3221&Q7vR>vR5vR;vR7%544321%;3@71&QJ&Q8r3%211&Q;%5321?'>&Q<(R?+A(=%33I21%52:1&R@+QH%22Q11%L3Q141+:%:3Q018%<2A1&Q3%Q13Q621+;%?3Q51=%A2F1%Q53Q:1K'D&QO&RB+<%F3Q<1D%H2M1%42QB1&Q0%7221z%Q@3:21%O2<1%Q02A1%Q12G1p0Q31p0Q:1pR>QG1pU:QK1").
+Lemma openat_regs : forall vals R,
+vals_ev vals 2 = p1 a0s path envv rdraw inp -> regs_ok (ENV vals) srA R ->
+getr R 17 = Z_to_bv 64 56 /\ getr R 10 = AT_FDCWD /\ getr R 11 = p1 a0s path envv rdraw inp
+/\ Z.ldiff (bv_unsigned (getr R 12)) open_ignored_flags = 0%Z.
 Proof.
 intros vals R P2 HR. repeat split.
 - regv HR (17 : reg). reflexivity.
@@ -143,7 +168,13 @@ intros vals R P2 HR. repeat split.
 - regv HR (11 : reg). cbn [edenot ev ENV]. exact P2.
 - regv HR (12 : reg). vm_compute. reflexivity.
 Qed.
-Lemma after_openat_fail : ltac2:(TCodec.tc2 tcn__Ju0OpenFail "S>'D'7'RAyR0%211%411&Q4y5%2214':y8%911%311p091'>&R0+1r4%3221+SoO%5231%7231'?'8&6%12E8uQ6%53421&QKr5(1%3221vR>%;3M21r6u2%8221&Q7vR5vR;vR7%449321%D3Q661&QJ&Q8r7%211&Q;%5321>&QI&QLr8%811&Q:%5442D1&RB%12QEHr1%32QG1%Q<231r9r2%211vR:%113%Q;3QE31p071pU<QO1'QEvR=(G&Q=vR9&Q?(R?+:(=%33R621&Jr;%211%83E41&QA&R@+e\ZL%22RB1+4%5221&Q@%11Q7%C5B93Q71&Q9%F221&QD&QC%11QHvR8%4221%N4Q@M61p0Q01p0Q>1p0QE1p0QL1p0R61p0R=1p0RD1pR<RM1pR>S31pU:S71pT>S=1").
+Lemma after_openat_fail : forall e vals R M,
+(1 <= e <= 4095)%Z ->
+length vals = 38%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = p1 a0s path envv rdraw inp ->
+regs_ok (ENV vals) srA R -> know_ok RSEGS (ENV vals) M knA ->
+(forall x : word, (bv_unsigned sp0 <= bv_unsigned x)%Z -> M x = mem0 x) ->
+srealizes RSEGS scfg (mkCfg (mkst (regupd R 10 (errno_ret e)) (v_addi (Z_to_bv 64 0xab15c) 4) M (seg_rom RSEGS)) model0)
+(t_die (msg_cannot_open path) fs0).
 Proof.
 intros e vals R M He HL P0 P2 HR HK Habove.
 rewrite v_addi_pc4 by lia. change (0xab15c + 4)%Z with 0xab160%Z.
@@ -163,8 +194,8 @@ Theorem ref_open_fail_toolong : ltac2:(TCodec.tc2 tcn__Ju0OpenFail "Q1'CuTP0&6'R
 Proof.
 intros Hlong. apply of_blockA. intros vals R M HL P0 P2 HR HK Habove.
 pose proof SPlo as Hlo. pose proof SPhi as Hhi.
-destruct path_facts as (Sr & Slo & Shi & _).
-pose proof (u64_range (p1 sp0 a0s path envv)) as Hpr. pose proof path_len as HPl.
+destruct path_facts as (Sr & Slo & Shi & Sfit & _).
+pose proof (u64_range (p1 a0s path envv rdraw inp)) as Hpr. pose proof path_len as HPl.
 destruct (openat_regs vals R P2 HR) as (A17 & A10 & A11 & A12).
 assert (HF : fetch_word RSEGS (Z_to_bv 64 0xab15c) = Some ECALLW) by (vm_compute; reflexivity).
 eapply (rz_openat_toolong RSEGS scfg R _ M model0 ECALLW HF is_ecall_ECALLW
@@ -175,37 +206,40 @@ by (rewrite firstn_app; replace (4096 - length path)%nat with 0%nat by lia; cbn 
 apply (rdn_firstn RSEGS M (length path + 1)); [| lia].
 rewrite <- Sr. apply rdn_agree. intros j Hj. apply Habove. rewrite u_small by lia. lia.
 - intros Hin. apply path_nonul. eapply In_firstn. exact Hin.
+- rewrite A11. unfold TASK_SIZE. lia.
 - apply (after_openat_fail ENAMETOOLONG vals); try assumption. unfold ENAMETOOLONG. lia.
 Qed.
 Theorem ref_open_fail_empty : ltac2:(TCodec.tc2 tcn__Ju0OpenFail "Q2'?'7'RAy8%211%411vR;(9%114%93431'QE&QLvR=(G&Q=vR9vR<&R@yR0+V_`L%3221vR:&Q@%11<%:598431&Q9%=221&QD&QC%11GvR8%4221%F4ED61p0H1").
 Proof.
 intros Hnil. apply of_blockA. intros vals R M HL P0 P2 HR HK Habove.
 pose proof SPlo as Hlo. pose proof SPhi as Hhi.
-destruct path_facts as (Sr & Slo & Shi & _).
-pose proof (u64_range (p1 sp0 a0s path envv)) as Hpr.
+destruct path_facts as (Sr & Slo & Shi & Sfit & _).
+pose proof (u64_range (p1 a0s path envv rdraw inp)) as Hpr.
 destruct (openat_regs vals R P2 HR) as (A17 & A10 & A11 & A12).
 assert (HF : fetch_word RSEGS (Z_to_bv 64 0xab15c) = Some ECALLW) by (vm_compute; reflexivity).
 eapply (rz_openat_empty RSEGS scfg R _ M model0 ECALLW HF is_ecall_ECALLW
 model0_halted model0_lazy A17 A10 A12).
-- split; [cbn; lia|]. split; [intros [] |]. rewrite A11.
+- split; [cbn; lia|]. split; [intros [] |].
+split; [rewrite A11; cbn [length]; unfold TASK_SIZE; lia|]. rewrite A11.
 replace (length path + 1)%nat with 1%nat in Sr by (rewrite Hnil; reflexivity).
 replace (path ++ [Z_to_bv 8 0]) with [Z_to_bv 8 0] in Sr by (rewrite Hnil; reflexivity).
 cbn [length Nat.add app].
-rewrite <- Sr. apply rdn_agree. intros j Hj. apply Habove. rewrite u_small by lia. lia.
+rewrite <- Sr; apply rdn_agree; intros j Hj; apply Habove; rewrite u_small by lia; lia.
 - apply (after_openat_fail ENOENT vals); try assumption. unfold ENOENT. lia.
 Qed.
 Theorem ref_open_fail_absent : ltac2:(TCodec.tc2 tcn__Ju0OpenFail "QH'C&6'RAy8%211vR;%5221uSoO%8221&A'?'7%118(9%11:%533:1%711'4&Q2%11>(<%;3421':%11;&FvR8%221E(0%11@%C3631'QE&QLvR=(G&Q=vR9vR<&R@yR0+V_`L%3221vR:&Q@%11<%:598431&Q9%=221&QD&QC%11Q<%321I%E4DC51p0G1p0Q01p0Q61p0Q?1").
 Proof.
 intros Hlen Hne Hnd Hfsl. apply of_blockA. intros vals R M HL P0 P2 HR HK Habove.
 pose proof SPlo as Hlo. pose proof SPhi as Hhi.
-destruct path_facts as (Sr & Slo & Shi & _).
-pose proof (u64_range (p1 sp0 a0s path envv)) as Hpr. pose proof path_len as HPl.
+destruct path_facts as (Sr & Slo & Shi & Sfit & _).
+pose proof (u64_range (p1 a0s path envv rdraw inp)) as Hpr. pose proof path_len as HPl.
 destruct (openat_regs vals R P2 HR) as (A17 & A10 & A11 & A12).
 assert (HF : fetch_word RSEGS (Z_to_bv 64 0xab15c) = Some ECALLW) by (vm_compute; reflexivity).
 eapply (rz_openat_absent RSEGS scfg R _ M model0 ECALLW HF is_ecall_ECALLW
 model0_halted model0_lazy A17 A10 A12 path).
 - split; [exact Hlen|]. split; [apply path_nonul|]. rewrite A11.
-rewrite <- Sr. apply rdn_agree. intros j Hj. apply Habove. rewrite u_small by lia. lia.
+split; [unfold TASK_SIZE; lia|].
+rewrite <- Sr; apply rdn_agree; intros j Hj; apply Habove; rewrite u_small by lia; lia.
 - exact Hne.
 - exact Hnd.
 - exact Hfsl.

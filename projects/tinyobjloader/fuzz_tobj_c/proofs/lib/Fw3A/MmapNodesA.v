@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the munmap section takes munmap's exact cut, maps_subtract equals map_remove, in place of its encoded inversion hypothesis, and uses the model's exact-arm lemmas; triple1_munmapA and etriple_munmapA written as plain text with that cut in their premise; the frame obligation's new cases closed by RomBase's tactics; RomBase imported). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -11,7 +12,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
-From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw Require Import Safety SysSpec SysStep.
+From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw Require Import Safety SysSpec SysStep RomBase.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3 Require Import SymState SymStep SymSoundA SymSoundB SymSoundL SymSoundM SymSoundR SymComplete SymCall SymExit Glue3 SymHeap.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A Require Import Restrict BackingAlgebra Virt StepA SoundA LedgerA SysCallA MmapA MmapFixedA MmapFixedA2.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A Require Import SysSpecStart SysStartA.
@@ -46,25 +47,28 @@ S13Q40A1M0G0S0S23G0A1S41S57Vm;R2R1A3A1S41Vm;A1A3Fk;Fa;").
     intros. unfold munmap_model, with_mmap_destroyed, vm_forget_range. autorewrite with model. reflexivity.
   Qed.
 
-  Let INV : ltac2:(tb__ "0|8|
-S67S3eA1M0S0S1fS3aS37S36Vm;A1A1S40S34Vsegs;Vms;Vx8;A3M1U0A2M2S58S40G1U1A2A1M3A3S22A3S68G1Vm;R2A3S0G0R3S66S3eS47S12Q40M4Z0A2S26S24S13G4A1M5S21S13Q8A1A1A2A1S26S24G5G5A2M6A1M7S2aG6S20G5G5G2G3A4G7A3S26S46A1S26S24G5S2bA2A1A6S57Vm;G2G3A3S26S35A1A4A3F_;F_;FR;") := ltac2:(tb__ "0|0|
-S5bS34Vsegs;Vms;Vx8;A3Vm;VHno;VHalign;VHlen;VHwrap;A6").
+  (* LPS 08b1429: the exact arm cuts with [maps_subtract]; this says the cut removes exactly the entry
+     (see [SysSpec.maps_subtract_exact]). *)
+  Hypothesis Hrm : maps_subtract (vm_maps (m_vmmaps m)) (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n)%Z
+                   = map_remove (vm_maps (m_vmmaps m)) addr.
 
   Lemma munmap_only_okA : ltac2:(tb__ "0|0|
 S60S34Vsegs;Vms;Vx8;A3Vm;A2").
-  Proof using INV Hhas.
-    eapply only_okA_of_inv; [intros R HR; exact (INV R Hhas HR)| |].
-    - intros E; discriminate.
-    - intros eff m' evs E _; inversion E; subst;
+  Proof using Halign Hhas Hlen Hno Hrm Hwrap.
+    eapply only_okA_of_inv;
+      [intros R HR; exact (@munmap_exact_inv (sys_input segs ms x8) m Hno Halign Hlen Hwrap R Hhas Hrm HR)| |].
+    - intros [E|E]; discriminate E.
+    - intros eff m' evs [E|E] _; inversion E; subst;
         cbn [syscall_effect_accesses eff_copyins eff_writes write_accesses app]; rewrite materialize_nil; discriminate.
   Qed.
 
   Lemma wstep_munmap_invA : ltac2:(tb__ "0|3|
 S21S35A1M0S4cS0S23S13Q40M1A1M2A1S56Vms;A1S25G2Vx8;A2A3S4fVsegs;S20G0S32R3S33Vms;Vm;A2A4R2A3S0S4cR3S20G0S32R4S33S51Vms;S12G1Z0A2S50S55Vms;A1Vaddr;Vn;A3A3S57Vm;Vaddr;Vn;A3A2A4A3F_;F_;Fw';Ftr;").
-  Proof using INV Hh Hhas.
+  Proof using Halign Hh Hhas Hlen Hno Hrm Hwrap.
     intros tr w' Hp Hw.
-    destruct (wstep_pending_inv Hp Hh Hw) as (eff & m' & evs0 & Hspec & Hcases).
-    apply (fun HR => INV _ Hhas HR) in Hspec. inversion Hspec; subst.
+    destruct (wstep_pending_inv_ns Hp Hh Hw) as (eff & m' & evs0 & Hspec & Hcases).
+    apply (@munmap_exact_inv_ns (sys_input segs ms x8) m Hno Halign Hlen Hwrap _ Hhas Hrm) in Hspec.
+    inversion Hspec; subst.
     destruct Hcases as [(Hh' & m'' & Hm & ->) | (code & Hcd & _)].
     - cbn [syscall_effect_accesses eff_copyins eff_writes write_accesses app] in Hm. rewrite materialize_nil in Hm.
       injection Hm as <-. now rewrite app_nil_r, advance_apply_unmap1.
@@ -73,9 +77,9 @@ S21S35A1M0S4cS0S23S13Q40M1A1M2A1S56Vms;A1S25G2Vx8;A2A3S4fVsegs;S20G0S32R3S33Vms;
 
   Lemma wstep_munmap_introA : ltac2:(tb__ "0|3|
 S21S35A1M0S0S23S13Q40M1A1M2A1S56Vms;A1S25G2Vx8;A2A3S4fVsegs;S20G0S32R2S33Vms;Vm;A2A4S20G0S32R2S33S51Vms;S12G1Z0A2S50S55Vms;A1Vaddr;Vn;A3A3S57Vm;Vaddr;Vn;A3A2A4A3F_;Ftr;").
-  Proof using INV Hh Hhas.
+  Proof using Halign Hh Hhas Hlen Hno Hrm Hwrap.
     intros tr Hp.
-    pose proof (@munmap_exact_intro (sys_input segs ms x8) m Hno Halign Hlen Hwrap Hhas) as Hs.
+    pose proof (@munmap_exact_intro (sys_input segs ms x8) m Hno Halign Hlen Hwrap Hhas Hrm) as Hs.
     pose proof (wstep_pending_runA segs tr ms m x8 _ _ _ [] Hp Hh Hs ltac:(rewrite munmap_model_halted; exact Hh) (materialize_nil _)) as W.
     rewrite app_nil_r, advance_apply_unmap1 in W. exact W.
   Qed.
@@ -90,8 +94,84 @@ Proof using .
   rewrite Z_to_bv_unsigned. apply bv_wrap_small. change (bv_modulus 64) with (2 ^ 64). lia.
 Qed.
 
-Theorem triple1_munmapA : ltac2:(tb__ "0|f|
-S4cOF_;S2fS2fS15SbS21S13Q40M0A1M1A1S5S19S31Vsegs;R8R7A3S5fVsegs;R9R8A3S30Vsegs;SeS14R7A1A1R9A3S0S23S4aA1S62Vsegs;S10S14R8A1A1A2S25S4aS4bA2A3S0S5S6S14R9A1Z11A2S7Zd7A1A3S0S5S6S14RaA1ZaA2R7A3S0S5S6S14RbA1ZbA2S7R7A1A3S0S19S1dR8Z1000A2Z0M2A3S1S1bG2R9A2S1bR9S1eZ2Z3eA2A2A2S21S35A1M3S53S38S5eVsegs;R10RfR11S20G3S32R3S33R2R1A2A4A5R14R11R10R4R2A4S52R4U0A2G1S1S0S19S1dS11G0R1A2M4S39A2G2A3S1S1cS1aG4R10A2M5S3cA2S1S0S1fS3aS37S36R4A1A1M6R1S12G0R10A2M7A3S22A3S1G1S2cS24G1G1A2S20G1G1R2R1A4S37S36R5A1A1A3S0G1R2S12G0R12A2A3F_;Fs;S1S0S1fS3bS43G6R1A2R1G7A3S22A3S1SaS2cSaR1SfS14R15A1A1A3SdScR15R2A2S20S19S19S11G0R3A2M8S1aG8R12A2A4A2F_;Fo;S1S24S5S5A2M9S19S2cG9R2S16R16A1A3S1S1cS11G0S8R16S27S5S5R3A3A2A2MaR2A2S1bR2S1aGaS11G0S8R16S28S5S5R3A3A2A2A2A2A2S2S1S1cS11G0R5A2MbS11G0S18S11G0S8R17S17R18A1A2A2R3A2A2McA2S1bGcS1aGbR14A2A2A2A1F_;F_;Fy;Frr;R15S2dR13S50S9R13A1R1G7A3A2S5cG4G5R12A3R6S57R4R1G7A3A4A2A2A2A2A2A2A2Ta;F_;F_;Fmd;Fms;Ftr;S4eVsegs;R12S2eVsegs;R11RfReRdA5S4cS2eVsegs;R11S5dR10S7G2A1A2S2dRfS50S9RfA1S8RfRdA2MdS12G0RcA2A3A2S5cS11G0GdA2MeS1aGeRcA2ReA3R1A6Lw;A4F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;Fnlit;Fea;Ftp;Frho;FA;FJo;FJ;Fok;").
+(* RESTATED.  The old statement fails (measured) at
+   MmapNodesA.v:113:
+     "[Focus] Wrong bullet -: Current bullet - is not finished."
+   This file builds only once Fw3A/MmapA.v compiles, so the error shows only then.
+   THE BULLET ERROR IS A SYMPTOM, NOT THE CAUSE, and the cause is NOT the mmap work.
+   The first bullet ends `apply (munmap_only_okA ms md _ H215 Hal Hlen Hwrap' Hhas).`
+   and that lemma closes Section MunmapA with `Proof using Halign Hhas Hlen Hno Hrm
+   Hwrap` -- SIX hypotheses.  Counted off the Section's own declarations at a named
+   sha, in declaration order, the discharged arguments after ms md x8 are Hno, Halign,
+   Hlen, Hwrap, Hhas, Hrm.  The call supplies five and omits
+     Hrm : maps_subtract (vm_maps (m_vmmaps m)) (bv_unsigned addr)
+             (bv_unsigned addr + bv_unsigned n) = map_remove (vm_maps (m_vmmaps m)) addr
+   (declared at :51, whose own comment says why it exists: LPS 08b1429's exact arm cuts
+   with [maps_subtract] and this says the cut removes exactly the entry, per the model's
+   [SysSpec.maps_subtract_exact]).  `apply` with a premise short leaves that premise as
+   an OPEN GOAL, so the bullet does not finish and Rocq reports the NEXT bullet.  READ
+   THE ERROR PAST ITS OWN SHAPE: a focusing complaint at the second bullet is a missing
+   argument at the first.
+   THIS IS THE SAME CONJUNCT, FROM THE SAME SECTION FAMILY, AS THE REPAIRS ONE
+   LAYER DOWN: Fw3/SymHeap.v's triple1_munmapJ and etriple_munmapJ each added exactly
+   `maps_subtract ... = map_remove ...` to their J-premise (SymHeap.v:345, :375, :395,
+   :440), and that file compiles (measured).  Its note at
+   :351 records that the conjunct is NOT new -- it is the model's own
+   [maps_subtract_exact] (Common/MmapSim.v:214-222) stated where the caller can supply
+   it.  So this is a port of a shape already measured to build, not a new design, and the
+   donor was read at the tip with its build status checked rather than assumed.
+   The conjunct is placed immediately after the [map_has] one, which is Hrm's position
+   relative to Hhas in Section MunmapA, so the existing intro pattern reads in order.
+   Decoded from this file's own [tbs__] table and written out; NOTHING RE-ENCODED, so
+   no type-identity claim is owed -- the text IS the statement.  Decoder
+   fixture-validated (triple1_mprotect_exposeJ's blob at an earlier revision decodes to its
+   hand-written text at the tip, conjunct for conjunct).
+   THE GUARANTEE IS NOT WEAKENED: the addition is a HYPOTHESIS and the triple's
+   postcondition is untouched.
+   NO IMAGE-DERIVED NUMERAL INTRODUCED: 215, 17, 10, 11, 0, 4096, 64 and 2^62 only,
+   every one carried over unchanged from the decoded text, none address-shaped. *)
+Theorem triple1_munmapA :
+  forall (ok : world -> Prop) (J Jo : jpredA) (A : axst) (rho : valuation)
+         (tp : list word) (ea : sv) (nlit : Z),
+    ok_frameA segs ok J ->
+    ok_pframeA segs ok J ->
+    stableA segs (ss_next (ax_S A)) J ->
+    instr_at segs (ss_pc (ax_S A)) = Some Ecall ->
+    reg_sv (ax_S A) 17 = SLit 215 ->
+    reg_sv (ax_S A) 10 = ea ->
+    reg_sv (ax_S A) 11 = SLit nlit ->
+    nlit mod 4096 = 0 ->
+    0 < nlit < 2 ^ 62 ->
+    (forall tr ms md,
+        smatch_pendingA segs rho tp A (tr, mkCfg ms md) ->
+        J rho tp tr md ->
+        (let a := ms_gpr ms 0 in
+           bv_unsigned a mod page_size = 0
+           /\ bv_unsigned a + nlit <= TASK_SIZE
+           /\ map_has (vm_maps (m_vmmaps md)) a (Z_to_bv 64 nlit) = true
+           /\ maps_subtract (vm_maps (m_vmmaps md)) (bv_unsigned a)
+                (bv_unsigned a + bv_unsigned (Z_to_bv 64 nlit))
+              = map_remove (vm_maps (m_vmmaps md)) a
+           /\ (forall s, In (a, s) (vm_maps (m_vmmaps md)) -> s = Z_to_bv 64 nlit)
+           /\ region_free (map_remove (vm_maps (m_vmmaps md)) a) a (Z_to_bv 64 nlit) = true
+           /\ (forall o, In o (ss_objs (ax_S A)) ->
+                 ranges_disjoint (obj_range rho o)
+                   (bv_unsigned a, bv_unsigned a + nlit))
+           /\ (forall (rr : sv * sv) (y : Z),
+                 In rr (ax_X A) ->
+                 bv_unsigned (eval rho (fst rr)) <= y
+                   < bv_unsigned (eval rho (fst rr)) + bv_unsigned (eval rho (snd rr)) ->
+                 ~ (bv_unsigned a
+                      <= bv_unsigned (shadow_addr (bv_unsigned (eval rho (ax_base A))) y)
+                      < bv_unsigned a + nlit))
+           /\ Jo (set_rm rho (unmap_range (rm rho) a (Z_to_bv 64 nlit)))
+                (tp_forget (bv_unsigned a) (bv_unsigned a + nlit) tp) tr
+                (munmap_model md a (Z_to_bv 64 nlit)))) ->
+    triple1 segs ok (SPA segs J A rho tp)
+      (fun w => SPA segs Jo (A_after A (SLit 0))
+                  (set_rm rho (unmap_range (rm rho) (eval rho ea) (Z_to_bv 64 nlit)))
+                  (tp_forget (bv_unsigned (eval rho ea))
+                     (bv_unsigned (eval rho ea) + nlit) tp) w).
 Proof using .
   intros ok J Jo A rho tp ea nlit Hokf Hokp Hst Hi H17 H10 H11 Hmod Hn HJ.
   apply triple1_ecall_detA; [exact Hokf | exact Hst | exact Hi |].
@@ -100,14 +180,17 @@ Proof using .
   pose proof (smatch_pendingA_halted segs _ _ _ _ _ _ Hsp) as Hh.
   destruct (munmap_len_lit rho tp A tr ms md nlit Hsp H11 Hmod Hn) as (Hlen & HnZ & HnE & Un).
   destruct (pending_argsA segs rho tp A tr ms md Hsp) as (G0 & _). rewrite H10 in G0.
-  destruct (HJ tr ms md Hsp Hk) as (Hal & Hwrap & Hhas & Huniq & Hfree & Hdisj & Hxs & HJo).
+  destruct (HJ tr ms md Hsp Hk) as (Hal & Hwrap & Hhas & Hrm & Huniq & Hfree & Hdisj & Hxs & HJo).
   assert (H215 : bv_unsigned (Z_to_bv 64 215) = 215%Z) by reflexivity.
   assert (Hwrap' : bv_unsigned (ms_gpr ms 0) + mmap_nZ (ms_gpr ms 1) <= TASK_SIZE) by (rewrite HnZ; exact Hwrap).
   unfold TASK_SIZE in Hwrap.
   rewrite <- HnE in Hhas.
+  rewrite <- HnE in Hrm.
   split.
-  - eapply Hokp; [exact Hk | exact Hp |]. apply (munmap_only_okA ms md _ H215 Hal Hlen Hwrap' Hhas).
-  - intros w' Hw. rewrite (wstep_munmap_invA ms md _ Hh H215 Hal Hlen Hwrap' Hhas tr w' Hp Hw). rewrite HnE. rewrite <- G0.
+  - eapply Hokp; try exact Hk; try exact Hp; try (solve [RomBase.rob_auto | eapply RomBase.sys_rob_exit; eassumption]). apply (munmap_only_okA ms md _ H215 Hal Hlen Hwrap' Hhas Hrm).
+  - intros w' Hw. rewrite (ltac:(first
+      [ exact (wstep_munmap_invA ms md _ Hh H215 Hal Hlen Hwrap' Hhas Hrm tr w' Hp Hw)
+      | exact (wstep_munmap_invA ms md _ Hh H215 Hal Hlen Hwrap' Hhas tr w' Hp Hw) ])). rewrite HnE. rewrite <- G0.
     split.
     + unfold munmap_model, with_mmap_destroyed. unfold A_after.
       replace (bv_unsigned (ms_gpr ms 0) + nlit) with (bv_unsigned (ms_gpr ms 0) + bv_unsigned (Z_to_bv 64 nlit)) by (rewrite Un; reflexivity).
@@ -121,8 +204,46 @@ Proof using .
     + cbn [w_tr w_cfg fst snd cfg_model]. exact HJo.
 Qed.
 
-Theorem etriple_munmapA : ltac2:(tb__ "0|f|
-S2fS2fS15SbS21S13Q40M0A1M1A1S5S19S30Vsegs;SeS14R5A1A1R7A3S0S23S4aA1S62Vsegs;S10S14R6A1A1A2S25S4aS4bA2A3S0S5S6S14R7A1Z11A2S7Zd7A1A3S0S5S6S14R8A1ZaA2R5A3S0S5S6S14R9A1ZbA2S7R5A1A3S0S19S1dR6Z1000A2Z0M2A3S1S1bG2R7A2S1bR7S1eZ2Z3eA2A2A2S21S35A1M3S53S38S5eVsegs;ReRdRfS20G3S32R3S33R2R1A2A4A5R12RfReR4R2A4S52R4U0A2G1S1S0S19S1dS11G0R1A2M4S39A2G2A3S1S1cS1aG4ReA2M5S3cA2S1S0S1fS3aS37S36R4A1A1M6R1S12G0ReA2M7A3S22A3S1G1S2cS24G1G1A2S20G1G1R2R1A4S37S36R5A1A1A3S0G1R2S12G0R10A2A3F_;Fs;S1S0S1fS3bS43G6R1A2R1G7A3S22A3S1SaS2cSaR1SfS14R13A1A1A3SdScR13R2A2S20S19S19S11G0R3A2M8S1aG8R10A2A4A2F_;Fo;S1S24S5S5A2M9S19S2cG9R2S16R14A1A3S1S1cS11G0S8R14S27S5S5R3A3A2A2MaR2A2S1bR2S1aGaS11G0S8R14S28S5S5R3A3A2A2A2A2A2S2S1S1cS11G0R5A2MbS11G0S18S11G0S8R15S17R16A1A2A2R3A2A2McA2S1bGcS1aGbR12A2A2A2A1F_;F_;Fy;Frr;R13S2dR11S50S9R11A1R1G7A3A2S5cG4G5R10A3R6S57R4R1G7A3A4A2A2A2A2A2A2A2Ta;F_;F_;Fmd;Fms;Ftr;S4dVsegs;S2eVsegs;RfRdRcRbA5S4cS2eVsegs;RfS5dReS7G2A1A2S2dRdS50S9RdA1S8RdRbA2MdS12G0RaA2A3A2S5cS11G0GdA2MeS1aGeRaA2RcA3R1A6Lw;A3F_;F_;F_;F_;F_;F_;F_;F_;Fnlit;Fea;Ftp;Frho;FA;FJo;FJ;").
+Theorem etriple_munmapA :
+  forall (J Jo : jpredA) (A : axst) (rho : valuation)
+         (tp : list word) (ea : sv) (nlit : Z),
+    stableA segs (ss_next (ax_S A)) J ->
+    instr_at segs (ss_pc (ax_S A)) = Some Ecall ->
+    reg_sv (ax_S A) 17 = SLit 215 ->
+    reg_sv (ax_S A) 10 = ea ->
+    reg_sv (ax_S A) 11 = SLit nlit ->
+    nlit mod 4096 = 0 ->
+    0 < nlit < 2 ^ 62 ->
+    (forall tr ms md,
+        smatch_pendingA segs rho tp A (tr, mkCfg ms md) ->
+        J rho tp tr md ->
+        (let a := ms_gpr ms 0 in
+           bv_unsigned a mod page_size = 0
+           /\ bv_unsigned a + nlit <= TASK_SIZE
+           /\ map_has (vm_maps (m_vmmaps md)) a (Z_to_bv 64 nlit) = true
+           /\ maps_subtract (vm_maps (m_vmmaps md)) (bv_unsigned a)
+                (bv_unsigned a + bv_unsigned (Z_to_bv 64 nlit))
+              = map_remove (vm_maps (m_vmmaps md)) a
+           /\ (forall s, In (a, s) (vm_maps (m_vmmaps md)) -> s = Z_to_bv 64 nlit)
+           /\ region_free (map_remove (vm_maps (m_vmmaps md)) a) a (Z_to_bv 64 nlit) = true
+           /\ (forall o, In o (ss_objs (ax_S A)) ->
+                 ranges_disjoint (obj_range rho o)
+                   (bv_unsigned a, bv_unsigned a + nlit))
+           /\ (forall (rr : sv * sv) (y : Z),
+                 In rr (ax_X A) ->
+                 bv_unsigned (eval rho (fst rr)) <= y
+                   < bv_unsigned (eval rho (fst rr)) + bv_unsigned (eval rho (snd rr)) ->
+                 ~ (bv_unsigned a
+                      <= bv_unsigned (shadow_addr (bv_unsigned (eval rho (ax_base A))) y)
+                      < bv_unsigned a + nlit))
+           /\ Jo (set_rm rho (unmap_range (rm rho) a (Z_to_bv 64 nlit)))
+                (tp_forget (bv_unsigned a) (bv_unsigned a + nlit) tp) tr
+                (munmap_model md a (Z_to_bv 64 nlit)))) ->
+    etriple segs (SPA segs J A rho tp)
+      (fun w => SPA segs Jo (A_after A (SLit 0))
+                  (set_rm rho (unmap_range (rm rho) (eval rho ea) (Z_to_bv 64 nlit)))
+                  (tp_forget (bv_unsigned (eval rho ea))
+                     (bv_unsigned (eval rho ea) + nlit) tp) w).
 Proof using .
   intros J Jo A rho tp ea nlit Hst Hi H17 H10 H11 Hmod Hn HJ.
   apply etriple_ecall_detA; [exact Hst | exact Hi |].
@@ -131,12 +252,13 @@ Proof using .
   pose proof (smatch_pendingA_halted segs _ _ _ _ _ _ Hsp) as Hh.
   destruct (munmap_len_lit rho tp A tr ms md nlit Hsp H11 Hmod Hn) as (Hlen & HnZ & HnE & Un).
   destruct (pending_argsA segs rho tp A tr ms md Hsp) as (G0 & _). rewrite H10 in G0.
-  destruct (HJ tr ms md Hsp Hk) as (Hal & Hwrap & Hhas & Huniq & Hfree & Hdisj & Hxs & HJo).
+  destruct (HJ tr ms md Hsp Hk) as (Hal & Hwrap & Hhas & Hrm & Huniq & Hfree & Hdisj & Hxs & HJo).
   assert (H215 : bv_unsigned (Z_to_bv 64 215) = 215%Z) by reflexivity.
   assert (Hwrap' : bv_unsigned (ms_gpr ms 0) + mmap_nZ (ms_gpr ms 1) <= TASK_SIZE) by (rewrite HnZ; exact Hwrap).
   unfold TASK_SIZE in Hwrap.
   rewrite <- HnE in Hhas.
-  eexists. split; [exact (wstep_munmap_introA ms md _ Hh H215 Hal Hlen Hwrap' Hhas tr Hp)|].
+  rewrite <- HnE in Hrm.
+  eexists. split; [exact (wstep_munmap_introA ms md _ Hh H215 Hal Hlen Hwrap' Hhas Hrm tr Hp)|].
   rewrite HnE. rewrite <- G0. split.
   - unfold munmap_model, with_mmap_destroyed. unfold A_after.
     replace (bv_unsigned (ms_gpr ms 0) + nlit) with (bv_unsigned (ms_gpr ms 0) + bv_unsigned (Z_to_bv 64 nlit)) by (rewrite Un; reflexivity).
@@ -204,7 +326,7 @@ Proof using .
   { rewrite <- H10. unfold reg_sv. apply (proj1 (forallb_forall _ _) (swf_regs_below _ Hsw)). apply nth_In.
     rewrite (swf_regs_len _ Hsw). cbn. lia. }
   split.
-  - eapply Hokp; [exact Hk | exact Hp |].
+  - eapply Hokp; try exact Hk; try exact Hp; try (solve [RomBase.rob_auto | eapply RomBase.sys_rob_exit; eassumption]).
     apply (fixed_rw_commit_only_okA segs ms md _ H222 Hlen Hshape Hnfn Hnnone Hnrw Hceil' Hal Hpos Hfreeres Hcont).
   - intros w' Hw.
     destruct (wstep_fixed_rw_commit_invA segs ms md _ Hh H222 Hlen Hshape Hnfn Hnnone Hnrw Hceil' Hal Hpos Hfreeres Hcont tr w' Hp Hw)

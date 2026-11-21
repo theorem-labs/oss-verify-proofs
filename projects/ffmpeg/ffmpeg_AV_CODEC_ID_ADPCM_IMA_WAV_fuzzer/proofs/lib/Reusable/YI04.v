@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YI04.v, with its module paths changed. *)
 (* Modified by Trevor Hansen, 2026-11: copied from projects/zlib/checksum_fuzzer/proofs/lib/Reusable/YI04.v for ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (fetch_failure's vDSO-text branch). *)
 From OSSVerify.Proofs.ffmpeg.ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -31,7 +32,7 @@ Proof.
 induction t as [c0| | | | | |n a k IH|n a v k IH]; intros m c1 m' H; cbn [interp_eff0] in H;
 try discriminate.
 - injection H as <- <-. apply mem_grows_refl.
-- destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|discriminate]. eapply IH. exact H.
+- destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate]. eapply IH. exact H.
 - destruct (store_ok segs m a (width_bytes n)); [|discriminate].
 eapply mem_grows_trans; [apply write_to_mem_grows|]. eapply IH. exact H.
 Qed.
@@ -48,7 +49,7 @@ Qed.
 Lemma fetch_failure_not_ok : forall m a st', fetch_failure segs m a = MachineOk st' -> False.
 Proof.
 intros m a st' H. unfold fetch_failure in H.
-destruct (negb _); [discriminate|]. destruct (_ || _ || _)%bool; discriminate.
+try (destruct (vdso_text_at _ _); [discriminate|]). destruct (negb _); [discriminate|]. destruct (_ || _ || _)%bool; discriminate.
 Qed.
 Lemma step_mem_grows : forall st st',
 RiscvSemantics.step segs st = MachineOk st' -> mem_grows (ms_mem st) (ms_mem st').

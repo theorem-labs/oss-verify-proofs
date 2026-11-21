@@ -4,6 +4,7 @@
    projects/cgif/cgif_file_fuzzer/proofs/lib/YN13.v:121-125; projects/cgif/cgif_rgb_fuzzer/proofs/lib/YC1n.v:201-203, for
    libreac/fuzz_identity's asan-ubsan build (lib/B). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/B/Prog/LLVMFuzzerTestOneInput_seg_D1.v, with its addresses and numbers changed; 1003 of its 1137 lines of code are new or changed and 5931 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Segment L of LLVMFuzzerTestOneInput's ASan+UBSan walk (image B), +0x1bec .. +0x1cd0
    (0x82360 .. 0x82444, 57 slots): the three frees of the output buffers, the use-after-scope
    re-poisoning of the frame's variables, the frame release and the epilogue.
@@ -32,7 +33,7 @@
    __asan_set_shadow_00 at +0x1c8c is the machine-stack fallback's release and is not reached.
 
    The shadow-fill call's journal step is proved here (l_shadow) rather than through
-   ajournal_after_write: aset_shadow_realizes (lib/B/Rt/SetShadowDef.v:21) says the call changes
+   ajournal_after_write: aset_shadow_realizes (lib/B/Rt/SetShadowDef.v:22) says the call changes
    nothing outside the 128 shadow bytes but not that memory stays present, which
    ajournal_after_write (YCbq.v:520) asks of every address; the journal needs it only on the stack
    window, where apresent_transfer gives it. *)
@@ -159,11 +160,11 @@ Hypothesis HUMF : forall c,
 In c (map (fun o => [BASE + o; RA_LLVMF]) LLVMF_FREE_RAS ++ map (fun o => [BASE + o]) LLVMF_FREE_RAS) ->
 In (firstn kUnwindMax (pc_free_ra0 (as_code B)
 :: flat_map (fun r => if r =? pc_free_ra0 (as_code B) then [] else [r]) c)) (as_universe B).
-(* cgif ACfh.v:29-31 *)
+(* cgif ACfh.v:30-32 *)
 Hypothesis AJ_FP_NIL : forall STK sp0 FP ly S W mem md own ly' S' W' mem' md' k,
 ajournal SEGS B STK sp0 [] ly S W mem md own ly' S' W' mem' md' k ->
 ajournal SEGS B STK sp0 FP ly S W mem md own ly' S' W' mem' md' k.
-(* cgif ACfh.v:162-164 *)
+(* cgif ACfh.v:163-165 *)
 Hypothesis AJ_NIL_IO : forall STK sp0 ly S (W : world SEGS) mem md own ly' S' W' mem' md' k,
 ajournal SEGS B STK sp0 [] ly S W mem md own ly' S' W' mem' md' k ->
 m_fds md' = m_fds md /\ m_fs md' = m_fs md.

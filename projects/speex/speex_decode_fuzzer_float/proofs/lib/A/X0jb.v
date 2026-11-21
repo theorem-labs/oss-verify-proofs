@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (hs_all_ok and HS_asan_ok per value of the CONFIG_RSEQ flag over the hand-off states computed in the build, in place of the three recorded hand-off lemmas; handoff_holes over the launch's ProcInput and launch premises; PlanRegen imported). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.speex.speex_decode_fuzzer_float.images Require Import Asan.
@@ -9,7 +10,7 @@ From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.A Require Import X0bp 
 From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.AS Require Import X0ms.
 Local Instance topah_fx : X0ms.FPState := X0ms.fx0.
 From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.AS Require Import X0mx X0n0 X0k2 X0m4 X0m6
-X0li X0lh X0ll X0lj X0kj X0ly X0lv X0n2 X0n6 X0lx.
+X0li X0lh X0ll X0lj X0kj X0ly X0lv PlanRegen X0n2 X0n6 X0lx.
 From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.A Require Import X03o X03r X03n X03l X03m X03k
 X0fy X0fg X0ed X0ef X03q X03p X0jf.
 From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.A Require Import X002.
@@ -36,8 +37,9 @@ Import AX2. Import AX2S. Import AP.
 Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
-Definition hs_all_ok (ch : acs) : bool :=
-(Z.eqb (pc ch) a_main && hs_start_ok ch && hs_rt_ok ASAN_B ch && hs_lib_ok ch)%bool.
+(* per value of the plan's CONFIG_RSEQ flag [r] (through [hs_start_ok r], A/X03k.v) *)
+Definition hs_all_ok (r : Z) (ch : acs) : bool :=
+(Z.eqb (pc ch) a_main && hs_start_ok r ch && hs_rt_ok ASAN_B ch && hs_lib_ok ch)%bool.
 
 Lemma asan_segtop : img_hi ASAN_B = SEGTOP_A.
 Proof. reflexivity. Qed.
@@ -46,27 +48,20 @@ Proof. reflexivity. Qed.
 Lemma asan_lim : X0kj.LIMIT = VMLIMIT.
 Proof. reflexivity. Qed.
 
-Lemma hs_ok_0 : hs_all_ok HS_both_0 = true.
-Proof. vm_cast_no_check (eq_refl true). Qed.
-Lemma hs_ok_2000 : hs_all_ok HS_both_2000 = true.
-Proof. vm_cast_no_check (eq_refl true). Qed.
-Lemma hs_ok_3000 : hs_all_ok HS_both_3000 = true.
-Proof. vm_cast_no_check (eq_refl true). Qed.
-
-Lemma hs_if_some_ok : forall (P : acs -> Prop) (b : bool) (s : acs) (r : option acs) (ch : acs),
-P s -> (r = Some ch -> P ch) -> (if b then Some s else r) = Some ch -> P ch.
-Proof. intros P b s r ch Ps Pr H. destruct b; [injection H as <-; exact Ps | exact (Pr H)]. Qed.
-
-Lemma HS_asan_ok : forall h ch, HS_both h = Some ch -> hs_all_ok ch = true.
+(* every hand-off state AS/X0n3.v computes passes [hs_all_ok] at its flag; [HS_both r] is empty
+   at every other [r] *)
+Lemma HS_asan_ok : forall r h ch, HS_both r h = Some ch -> hs_all_ok r ch = true.
 Proof.
-intros h ch. unfold HS_both.
-apply (hs_if_some_ok (fun c => hs_all_ok c = true)); [exact hs_ok_3000|].
-apply (hs_if_some_ok (fun c => hs_all_ok c = true)); [exact hs_ok_2000|].
-apply (hs_if_some_ok (fun c => hs_all_ok c = true)); [exact hs_ok_0| discriminate].
+intros r h ch. unfold HS_both.
+destruct (Z.eqb r 0) eqn:E0; [apply Z.eqb_eq in E0; subst r;
+  apply (hlookup_forall (hs_all_ok 0)); vm_cast_no_check (eq_refl true)|].
+destruct (Z.eqb r 1) eqn:E1; [apply Z.eqb_eq in E1; subst r;
+  apply (hlookup_forall (hs_all_ok 1)); vm_cast_no_check (eq_refl true)|].
+discriminate.
 Qed.
 
-Lemma startup_shape_holes : holes_only startup_shape = true.
-Proof. reflexivity. Qed.
+Lemma startup_shape_holes : forall b : bool, holes_only (startup_shape (rseq_z b)) = true.
+Proof. intros [|]; vm_compute; reflexivity. Qed.
 
 Section Main.
 
@@ -76,21 +71,23 @@ Hypothesis T_nil : forall argv fs, T argv fs [].
 Hypothesis MAIN : forall (argv : list (list byte)) (fs : Fs.Fs), valid_argv argv -> D argv fs ->
 forall c, STARTF RTA OUT_repA ERR_repA XENVA LIB_A argv fs c -> realizes bsegs c (T argv fs).
 
-Lemma handoff_holes : forall (sp : word) (rdraw : EntryDraw) (brk0 : word) (argv envp : list (list byte)) (uid hw : word) (fs : Fs.Fs),
-valid_sp sp -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp argv envp -> D argv fs ->
-APS.holes_stmt ASEGS ASAN_B NX0 X0kj.LIMIT HS_both (SINV0 APH sp rdraw brk0 argv envp uid hw) (argH0 APH sp rdraw argv envp uid hw)
-(fun _ _ fs' => T argv fs') fs.
+Lemma handoff_holes : forall (sp : word) (rdraw : EntryDraw) (brk0 mbase : word) (inp : ProcInput),
+valid_sp sp -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_launch inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) inp -> D (in_argv inp) (in_fs inp) ->
+APS.holes_stmt ASEGS ASAN_B NX0 X0kj.LIMIT (HS_both (rseq_z (kb_rseq (in_kernel inp))))
+(SINV0 APH AsanUbsan.M.init_pc sp rdraw brk0 mbase inp) (argH0 sp rdraw inp)
+(fun _ _ fs' => T (in_argv inp) fs') (in_fs inp).
 Proof using MAIN.
-intros sp rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit HD.
+intros sp rdraw brk0 mbase inp Hsp Hva Hve Hvl Hlau HD.
 intros h ch Hh E R FULL model HC.
-pose proof (HS_asan_ok h ch Hh) as HT. unfold hs_all_ok in HT.
+pose proof (HS_asan_ok _ h ch Hh) as HT. unfold hs_all_ok in HT.
 apply andb_prop in HT as [HT HTL]. apply andb_prop in HT as [HT HTR]. apply andb_prop in HT as [Hpc HTS].
 apply Z.eqb_eq in Hpc. rewrite Hpc. cbv beta. rewrite (APS.co_fs _ _ _ _ _ _ _ _ _ _ _ _ HC).
-exact (hs_hole_rt ASAN_B NX0 X0kj.LIMIT fs APH sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit asan_in_hull asan_hull_ok
-asan_segtop asan_shoff asan_lim E ch R FULL model HC HTS HTR LIB_A
-(hs_lib ASAN_B NX0 X0kj.LIMIT _ _ fs asan_in_hull asan_hull_ok (argH0_high APH sp rdraw argv envp uid hw Hsp Hva)
+exact (hs_hole_rt ASAN_B NX0 X0kj.LIMIT (in_fs inp) APH AsanUbsan.M.init_pc sp rdraw brk0 mbase inp Hsp Hva Hve Hvl Hlau
+asan_in_hull asan_hull_ok asan_segtop asan_shoff asan_lim E ch R FULL model HC HTS HTR LIB_A
+(hs_lib ASAN_B NX0 X0kj.LIMIT _ _ (in_fs inp) asan_in_hull asan_hull_ok (argH0_high AsanUbsan.M.init_pc sp rdraw inp Hsp Hva)
 E ch R FULL model HC HTL)
-(T argv fs) (MAIN argv fs Hva HD)).
+(T (in_argv inp) (in_fs inp)) (MAIN (in_argv inp) (in_fs inp) Hva HD)).
 Qed.
 
 Theorem asan_side_of_main : forall en inp,
@@ -99,7 +96,7 @@ srealizes ASEGS (init_config ASEGS AsanUbsan.M.init_pc APH (en_sp en) (en_brk en
 target_alloc_limit inp)
 (T (in_argv inp) (in_fs inp)).
 Proof using T_nil MAIN.
-exact (asan_startup_gen IT0 IT0_ok HS_both startup_plan startup_shape KC0 BFUEL FUEL startup_cert startup_shape_holes T D T_nil handoff_holes).
+exact (asan_startup_gen IT0 IT0_ok HS_both su_plan startup_shape KC0 BFUEL FUEL startup_cert startup_shape_holes T D T_nil handoff_holes).
 Qed.
 End Main.
 End B_TWIN.
@@ -109,8 +106,9 @@ Import AX2. Import AX2S. Import AP.
 Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
-Definition hs_all_ok (ch : acs) : bool :=
-(Z.eqb (pc ch) a_main && hs_start_ok ch && hs_rt_ok ASAN_A ch && hs_lib_ok ch)%bool.
+(* per value of the plan's CONFIG_RSEQ flag [r] (through [hs_start_ok r], A/X03k.v) *)
+Definition hs_all_ok (r : Z) (ch : acs) : bool :=
+(Z.eqb (pc ch) a_main && hs_start_ok r ch && hs_rt_ok ASAN_A ch && hs_lib_ok ch)%bool.
 
 Lemma asan_segtop : img_hi ASAN_A = SEGTOP_A.
 Proof. reflexivity. Qed.
@@ -119,27 +117,20 @@ Proof. reflexivity. Qed.
 Lemma asan_lim : X0kj.LIMIT = VMLIMIT.
 Proof. reflexivity. Qed.
 
-Lemma hs_ok_0 : hs_all_ok HS_asan_0 = true.
-Proof. vm_cast_no_check (eq_refl true). Qed.
-Lemma hs_ok_2000 : hs_all_ok HS_asan_2000 = true.
-Proof. vm_cast_no_check (eq_refl true). Qed.
-Lemma hs_ok_3000 : hs_all_ok HS_asan_3000 = true.
-Proof. vm_cast_no_check (eq_refl true). Qed.
-
-Lemma hs_if_some_ok : forall (P : acs -> Prop) (b : bool) (s : acs) (r : option acs) (ch : acs),
-P s -> (r = Some ch -> P ch) -> (if b then Some s else r) = Some ch -> P ch.
-Proof. intros P b s r ch Ps Pr H. destruct b; [injection H as <-; exact Ps | exact (Pr H)]. Qed.
-
-Lemma HS_asan_ok : forall h ch, HS_asan h = Some ch -> hs_all_ok ch = true.
+(* every hand-off state AS/X0n2.v computes passes [hs_all_ok] at its flag; [HS_asan r] is empty
+   at every other [r] *)
+Lemma HS_asan_ok : forall r h ch, HS_asan r h = Some ch -> hs_all_ok r ch = true.
 Proof.
-intros h ch. unfold HS_asan.
-apply (hs_if_some_ok (fun c => hs_all_ok c = true)); [exact hs_ok_3000|].
-apply (hs_if_some_ok (fun c => hs_all_ok c = true)); [exact hs_ok_2000|].
-apply (hs_if_some_ok (fun c => hs_all_ok c = true)); [exact hs_ok_0| discriminate].
+intros r h ch. unfold HS_asan.
+destruct (Z.eqb r 0) eqn:E0; [apply Z.eqb_eq in E0; subst r;
+  apply (hlookup_forall (hs_all_ok 0)); vm_cast_no_check (eq_refl true)|].
+destruct (Z.eqb r 1) eqn:E1; [apply Z.eqb_eq in E1; subst r;
+  apply (hlookup_forall (hs_all_ok 1)); vm_cast_no_check (eq_refl true)|].
+discriminate.
 Qed.
 
-Lemma startup_shape_holes : holes_only startup_shape = true.
-Proof. reflexivity. Qed.
+Lemma startup_shape_holes : forall b : bool, holes_only (startup_shape (rseq_z b)) = true.
+Proof. intros [|]; vm_compute; reflexivity. Qed.
 
 Section Main.
 
@@ -149,21 +140,23 @@ Hypothesis T_nil : forall argv fs, T argv fs [].
 Hypothesis MAIN : forall (argv : list (list byte)) (fs : Fs.Fs), valid_argv argv -> D argv fs ->
 forall c, STARTF RTA OUT_repA ERR_repA XENVA LIB_A argv fs c -> realizes asegs c (T argv fs).
 
-Lemma handoff_holes : forall (sp : word) (rdraw : EntryDraw) (brk0 : word) (argv envp : list (list byte)) (uid hw : word) (fs : Fs.Fs),
-valid_sp sp -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp argv envp -> D argv fs ->
-APS.holes_stmt ASEGS ASAN_A NX0 X0kj.LIMIT HS_asan (SINV0 APH sp rdraw brk0 argv envp uid hw) (argH0 APH sp rdraw argv envp uid hw)
-(fun _ _ fs' => T argv fs') fs.
+Lemma handoff_holes : forall (sp : word) (rdraw : EntryDraw) (brk0 mbase : word) (inp : ProcInput),
+valid_sp sp -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_launch inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) inp -> D (in_argv inp) (in_fs inp) ->
+APS.holes_stmt ASEGS ASAN_A NX0 X0kj.LIMIT (HS_asan (rseq_z (kb_rseq (in_kernel inp))))
+(SINV0 APH Asan.M.init_pc sp rdraw brk0 mbase inp) (argH0 sp rdraw inp)
+(fun _ _ fs' => T (in_argv inp) fs') (in_fs inp).
 Proof using MAIN.
-intros sp rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit HD.
+intros sp rdraw brk0 mbase inp Hsp Hva Hve Hvl Hlau HD.
 intros h ch Hh E R FULL model HC.
-pose proof (HS_asan_ok h ch Hh) as HT. unfold hs_all_ok in HT.
+pose proof (HS_asan_ok _ h ch Hh) as HT. unfold hs_all_ok in HT.
 apply andb_prop in HT as [HT HTL]. apply andb_prop in HT as [HT HTR]. apply andb_prop in HT as [Hpc HTS].
 apply Z.eqb_eq in Hpc. rewrite Hpc. cbv beta. rewrite (APS.co_fs _ _ _ _ _ _ _ _ _ _ _ _ HC).
-exact (hs_hole_rt ASAN_A NX0 X0kj.LIMIT fs APH sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit asan_in_hull asan_hull_ok
-asan_segtop asan_shoff asan_lim E ch R FULL model HC HTS HTR LIB_A
-(hs_lib ASAN_A NX0 X0kj.LIMIT _ _ fs asan_in_hull asan_hull_ok (argH0_high APH sp rdraw argv envp uid hw Hsp Hva)
+exact (hs_hole_rt ASAN_A NX0 X0kj.LIMIT (in_fs inp) APH Asan.M.init_pc sp rdraw brk0 mbase inp Hsp Hva Hve Hvl Hlau
+asan_in_hull asan_hull_ok asan_segtop asan_shoff asan_lim E ch R FULL model HC HTS HTR LIB_A
+(hs_lib ASAN_A NX0 X0kj.LIMIT _ _ (in_fs inp) asan_in_hull asan_hull_ok (argH0_high Asan.M.init_pc sp rdraw inp Hsp Hva)
 E ch R FULL model HC HTL)
-(T argv fs) (MAIN argv fs Hva HD)).
+(T (in_argv inp) (in_fs inp)) (MAIN (in_argv inp) (in_fs inp) Hva HD)).
 Qed.
 
 Theorem asan_side_of_main : forall en inp,
@@ -172,6 +165,6 @@ srealizes ASEGS (init_config ASEGS Asan.M.init_pc APH (en_sp en) (en_brk en) (en
 target_alloc_limit inp)
 (T (in_argv inp) (in_fs inp)).
 Proof using T_nil MAIN.
-exact (asan_startup_gen IT0 IT0_ok HS_asan startup_plan startup_shape KC0 BFUEL FUEL startup_cert startup_shape_holes T D T_nil handoff_holes).
+exact (asan_startup_gen IT0 IT0_ok HS_asan su_plan startup_shape KC0 BFUEL FUEL startup_cert startup_shape_holes T D T_nil handoff_holes).
 Qed.
 End Main.

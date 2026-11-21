@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (P_file_exists and P_realizes_spec written out in plain text from their encoded forms; the start models now from the launch's vDSO run; P_realizes_spec gains the channel-reader, valid_launch and entry_launch_ok_va premises and destructs the five new ProcInput fields; file_kont_stmt and dir_kont_stmt pass the entry draw rd to file_seg2_kont_g and dir_seg2_kont). *)
 (* [comment removed for export] *)
 From Stdlib Require Import NArith ZArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -47,7 +48,7 @@ Definition file_kont_stmt {LM : Lim} : Prop :=
     valid_argv [a0s; path] -> valid_envp envv -> valid_sp sp0 -> (0 < bv_unsigned tid < 2 ^ 22)%Z ->
     main_entry sp0 [a0s; path] envv tid rd regs0 mem0 -> valid_brk Plain.M.loaded_segments brk ->
     fs_lookup fs0 path = Some fdata -> path <> [] -> path <> dot_path -> (length path <= 4095)%nat ->
-    file_seg2_kont_g sp0 a0s path envv tid mem0 brk mbase fs0 stdin0 (FdFile path (Z_to_bv 64 0)) (t_opened fdata fs0).
+    file_seg2_kont_g sp0 a0s path envv tid rd mem0 brk mbase fs0 stdin0 (FdFile path (Z_to_bv 64 0)) (t_opened fdata fs0).
 
 (* [comment removed for export] *)
 Definition dir_kont_stmt {LM : Lim} : Prop :=
@@ -55,7 +56,7 @@ Definition dir_kont_stmt {LM : Lim} : Prop :=
          (regs0 : bvmap 5 word) (mem0 : word -> option byte) (brk mbase : word) (fs0 : Fs) (stdin0 : InputStream),
     valid_argv [a0s; dot_path] -> valid_envp envv -> valid_sp sp0 -> (0 < bv_unsigned tid < 2 ^ 22)%Z ->
     main_entry sp0 [a0s; dot_path] envv tid rd regs0 mem0 -> valid_brk Plain.M.loaded_segments brk ->
-    dir_seg2_kont sp0 a0s envv tid mem0 brk mbase fs0 stdin0 (t_opened_dir dot_path fs0).
+    dir_seg2_kont sp0 a0s envv tid rd mem0 brk mbase fs0 stdin0 (t_opened_dir dot_path fs0).
 
 Section Skel.
   Context {LM : Lim}.   (* [comment removed for export] *)
@@ -87,11 +88,13 @@ Section Skel.
     Hypothesis Hpnd : path <> dot_path.
     Hypothesis Hplen : (length path <= 4095)%nat.
 
-    #[using="FILE rd Hva Hve Hvsp Htid ME Hbrk Hfile Hpne Hpnd Hplen"] Theorem P_file_exists : ltac2:(CDefT.buildp (gd_tbl_P_main_skel ()) "(0.$1.(2.(3.$4.Vregs0,(5.&40.+1<=<<.$6.)Vmem0,(7.$1.))(8.Vtid,(9.(:.$1.)Vbrk,Vmbase,Vsp0,(;.VLM,)(<.VAMB,(=.(>.(?.&8.))Va0s,(=.(>.(?.&8.))Vpath,(10.(>.(?.&8.)))))Venvv,Vfs0,Vstdin0,))))(11.(12.(13.Vpath,)Vfs0,)(14.Vfdata,Vfs0,)))")
-(* [comment removed for export] *).
+    #[using="FILE rd Hva Hve Hvsp Htid ME Hbrk Hfile Hpne Hpnd Hplen"] Theorem P_file_exists : (realizes Plain.M.loaded_segments (mkCfg (mkst regs0 (0x1cdcc : word) mem0 (seg_rom Plain.M.loaded_segments))
+                      (with_tid tid (with_vdso a_vdso (init_model (segments_reserved Plain.M.loaded_segments) brk mbase sp0 (@LIM LM)
+                         (mkProcInputC [a0s; path] envv fs0 stdin0)))))
+                (t_alt2 (t_die (msg_cannot_open path) fs0) (t_opened fdata fs0))).
     Proof.
       replace (0x1cdcc : word) with (Z_to_bv 64 0x1cdcc) by (apply bv_eq; reflexivity).
-      change (with_tid tid (init_model (segments_reserved Plain.M.loaded_segments) brk mbase sp0 LIM (mkProcInputC [a0s; path] envv fs0 stdin0)))
+      change (with_tid tid (with_vdso a_vdso (init_model (segments_reserved Plain.M.loaded_segments) brk mbase sp0 LIM (mkProcInputC [a0s; path] envv fs0 stdin0))))
         with (model0 sp0 a0s path envv tid brk mbase fs0 stdin0).
       apply (file_seg1 sp0 a0s path envv tid rd regs0 mem0 brk mbase fs0 stdin0 fdata Hva Hve Hvsp Htid ME Hfile Hpne Hpnd Hplen).
       - apply (open_err_branch_cannot_open sp0 a0s path envv tid rd regs0 mem0 brk mbase fs0 stdin0 Hva Hve Hvsp ME).
@@ -106,13 +109,13 @@ Section Skel.
     main_entry sp0 [a0s; dot_path] envv tid rd regs0 mem0 -> valid_brk Plain.M.loaded_segments brk ->
     realizes Plain.M.loaded_segments
       (mkCfg (mkst regs0 (0x1cdcc : word) mem0 (seg_rom Plain.M.loaded_segments))
-             (with_tid tid (init_model (segments_reserved Plain.M.loaded_segments) brk mbase sp0 LIM
-                                       (mkProcInputC [a0s; dot_path] envv fs0 stdin0))))
+             (with_tid tid (with_vdso a_vdso (init_model (segments_reserved Plain.M.loaded_segments) brk mbase sp0 LIM
+                                       (mkProcInputC [a0s; dot_path] envv fs0 stdin0)))))
       (t_alt2 (t_die (msg_cannot_open dot_path) fs0) (t_opened_dir dot_path fs0)).
   Proof.
     intros sp0 a0s envv tid rd regs0 mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid ME Hbrk.
     replace (0x1cdcc : word) with (Z_to_bv 64 0x1cdcc) by (apply bv_eq; reflexivity).
-    change (with_tid tid (init_model (segments_reserved Plain.M.loaded_segments) brk mbase sp0 LIM (mkProcInputC [a0s; dot_path] envv fs0 stdin0)))
+    change (with_tid tid (with_vdso a_vdso (init_model (segments_reserved Plain.M.loaded_segments) brk mbase sp0 LIM (mkProcInputC [a0s; dot_path] envv fs0 stdin0))))
       with (model0 sp0 a0s dot_path envv tid brk mbase fs0 stdin0).
     apply (dir_seg1 sp0 a0s envv tid rd regs0 mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid ME).
     - apply (open_err_branch_cannot_open sp0 a0s dot_path envv tid rd regs0 mem0 brk mbase fs0 stdin0 Hva Hve Hvsp ME).
@@ -120,19 +123,27 @@ Section Skel.
   Qed.
 
   (* [comment removed for export] *)
-  #[using="FILE DIR"] Theorem P_realizes_spec : ltac2:(CDefT.buildp (gd_tbl_P_main_skel ()) "Psp,(?.&40.)Pbrk,(?.&40.)Pmbase,(?.&40.)Prd,$15.Pinp,$16.P,(17.R5.)P,(18.$19.R5.)P,(1:.(1;.R3.))P,(1<.(1=.R4.))P,(1>.(1?.R5.))P,(20.R:.(1;.R6.)(1=.R6.))(0.$19.(21.$19.$22.$23.R;.R:.R9.R8.(;.VLM,)R7.)(24.(1;.R7.)(1?.R7.)))")
-(* [comment removed for export] *).
+  #[using="FILE DIR"] Theorem P_realizes_spec : forall sp brk mbase (rd : EntryDraw) (inp : ProcInput),
+    valid_sp sp -> valid_brk psegs' brk ->
+    valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
+    entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+    in_channel_reader inp = true -> valid_launch inp ->
+    entry_launch_ok_va Sv48 (mkEntry sp brk mbase rd) inp ->
+    realizes psegs' (init_config psegs' ppc pph sp brk mbase rd (@LIM LM) inp) (spec (in_argv inp) (in_fs inp)).
   Proof.
-    intros sp brk mbase rd [argv envp ifs stdin0 uid gid groups net nf sm hwc ab va ur tm] Hsp Hbrk Hva Hve Hfs Hfit.
+    intros sp brk mbase rd [argv envp ifs stdin0 uid gid groups net nf sm hwc ab va ur tm kb ef cr sd st]
+      Hsp Hbrk Hva Hve Hfs Hfit Hrd Hvl Hlau.
     (* [comment removed for export] *)
     unfold in_fs in *. cbn [in_argv in_envp in_image_fs in_tmp] in *.
     set (fs0 := fs_seed_tmp ifs tm) in *.
-    pose (AMB := amb_of (mkProcInput_full argv envp ifs stdin0 uid gid groups net nf sm hwc ab va ur tm)).
-    apply ref_startup; try assumption. cbn [in_argv in_envp].
-    change (amb_of _) with AMB.
-    match goal with |- context [init_model ?r ?b ?m ?s ?l (mkProcInput_full _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)] =>
-      change (init_model r b m s l (mkProcInput_full argv envp ifs stdin0 uid gid groups net nf sm hwc ab va ur tm))
+    pose (AMB := amb_of (mkProcInput_full argv envp ifs stdin0 uid gid groups net nf sm hwc ab va ur tm kb ef cr sd st)
+                   Hrd (Vdso.vdso_run_init (ed_vdso rd))).
+    apply (ref_startup sp brk mbase rd LIM _ _ Hrd Hsp Hbrk Hva Hve Hfit Hvl Hlau).
+    change (amb_of _ _ _) with AMB.
+    match goal with |- context [init_model ?r ?b ?m ?s ?l (mkProcInput_full _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)] =>
+      change (init_model r b m s l (mkProcInput_full argv envp ifs stdin0 uid gid groups net nf sm hwc ab va ur tm kb ef cr sd st))
         with (init_model r b m s l (@mkProcInputC AMB argv envp fs0 stdin0)) end.
+    change (Vdso.vdso_run_init (ed_vdso rd)) with (@a_vdso AMB).
     intros tid regs mem Htid ME.
     destruct argv as [|a0s [|path [|x l]]].
     - apply (ref_usage_w sp [] envp tid rd regs mem brk mbase fs0 stdin0 LIM Hva Hve Hsp Htid ME). cbn; lia.

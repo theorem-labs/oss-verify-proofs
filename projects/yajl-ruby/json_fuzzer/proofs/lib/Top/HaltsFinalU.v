@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launchT argument of rz_main_drv, and the premise that the binary carries no vDSO segment). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List.
 Require LinuxProcessSemantics.EquivalenceDefinition.Equivalence.
@@ -49,8 +50,8 @@ Module UbsanSide.
   Proof. intros RC__ G s LB m mo A B C. exact (conj A (conj B C)). Qed.
 
   Definition URZ_lim := U_realizes_cfg_lim (@RHKG) RHKG_intro DRV DRV_spec
-     (fun RC__ sp0 argv envp uid hw rnd VSP RCSP RCS EFIT VA VE FS0 MO =>
-        @rz_main_drv RC__ sp0 argv envp uid hw rnd VSP RCSP RCS EFIT VA VE RHKG FS0 drv_iface_U (yfuzz_rz_U FS0) MO).
+     (fun RC__ LT sp0 argv envp uid hw rnd VSP RCSP RCS EFIT VA VE FS0 MO =>
+        @rz_main_drv RC__ LT sp0 argv envp uid hw rnd VSP RCSP RCS EFIT VA VE RHKG FS0 drv_iface_U (yfuzz_rz_U FS0) MO).
 End UbsanSide.
 
 Lemma U_realizes_16 : forall en inp,
@@ -68,6 +69,7 @@ Theorem halts_ubsan :
 Proof.
   apply (halts_allowed_of_realizes_ms0 acfg usegs u_init_pc u_phdrs source_alloc_limit halts_codes
            (fun inp => spec (in_argv inp) (in_fs inp))).
+  - (* the binary carries no vDSO segment *) reflexivity.
   - exact U_realizes_16.
   - intros inp _. apply spec_exits_in.
 Qed.

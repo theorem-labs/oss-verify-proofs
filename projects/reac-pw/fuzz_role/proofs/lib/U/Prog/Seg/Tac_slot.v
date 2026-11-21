@@ -2,16 +2,17 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_wire/lib/U/Prog/LLVMFuzzerTestOneInput_cfb.v, with its module paths changed; 532 of its 580 lines of code are new or changed and 97 lines of the source are left out. *)
-(* Modified by Theorem Labs: reac-repacer/fuzz_uci's lib/Prog/LLVMFuzzerTestOneInput_fr.v (6874bc78b1f) at fuzz_wire's
+(* Modified by Theorem Labs: reac-repacer/fuzz_uci's lib/Prog/LLVMFuzzerTestOneInput_fr.v at fuzz_wire's
    module paths; lf_guard_img reads this image's __stack_chk_guard GOT slot 0x1cef0; lf_fr_call_x is new. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_wire/lib/Prog/LLVMFuzzerTestOneInput_fr.v, with its module paths and module names changed; 455 of its 574 lines of code are new or changed and 461 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Shared helpers for the segment lemmas of reac-pw/fuzz_role LLVMFuzzerTestOneInput (UBSan): the accessors of
    FrameAPI.frame_facts_ubsan (the ff_ lemmas), the image bound SL_TOP, munch/writability transport, the run lemmas
    sl_run and sl_run_fp (evt -> SR through MemNorm; sl_run_fp for a run that ends with its own FP registers and
    fflags), FR from scratch (sl_fr_of), FR across a Kind A run (sl_fr_run, sl_mid, sl_mid_fp), and FR's window and
    bounds.
    The plain file (lib/Prog/Seg/Tac_slot.v) with the UBSan numbers below. Taken from reac-pw/fuzz_pin's U/Prog/Seg/Tac_slot.v, itself libreac/fuzz_ctrl's released Prog/Seg/Tac_slot.v
-   (origin/ossv/recipes 25e3d17bdb50) adapted, same lemma names, with role's UBSan numbers: the frame is 544 bytes, so the
+   adapted, same lemma names, with role's UBSan numbers: the frame is 544 bytes, so the
    saved registers at S - 104 are fsp g + 440 (sl_fp); the sink and errno numerals (sl_sink, sl_errno_val) are
    frame_facts_ubsan's (ofl_head 0x4fcd0, ofl_lock 0x4fcc8, __libc 0x4f8a0, builtin_tls 0x2f610); the last PT_LOAD
    ends at 0x500e8, under SL_TOP. Every use of frame_facts_ubsan goes through the named accessors (the ff_ lemmas

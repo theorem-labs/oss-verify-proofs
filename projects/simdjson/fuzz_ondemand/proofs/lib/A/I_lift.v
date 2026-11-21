@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -57,14 +58,14 @@ Proof using AF_SHW.
 Qed.
 
 Lemma icpt_after : forall Σ m m' usp lo (W : list (Z * Z)) d n,
-  ART RT Σ m -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo <= usp -> usp <= USTACK_TOP ->
+  ART RT Σ m -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo <= usp -> usp <= USTACK_TOP ->
   munch W m m' -> wmono asegs m m' ->
   (forall x, in_ranges W x -> (d <= x < d + n) \/ (lo <= x < usp)) ->
   (forall i, 0 <= i < n -> aclient (rt_live RT Σ) (rt_frames RT Σ) usp (d + i)) ->
   ART RT Σ m' /\ rt_pres_ex (rt_live RT Σ) (rt_frames RT Σ) usp d n m m'.
 Proof using AF.
   intros Σ m m' usp lo W d n ART0 L1 L2 L3 MU WM HW HD. split.
-  - apply (af_frame RT AF Σ m m' lo ART0 L1); [| exact WM].
+  - apply (af_frame RT AF Σ m m' lo ART0 ltac:(lia)); [| exact WM].
     intros a Ha. apply MU. apply outside_of_not_in_ranges'. intros Hin. destruct (HW _ Hin) as [Hd|Hs].
     + apply Ha. assert (E : bv_unsigned a = d + (bv_unsigned a - d)) by lia. rewrite E.
       specialize (HD (bv_unsigned a - d) ltac:(lia)).

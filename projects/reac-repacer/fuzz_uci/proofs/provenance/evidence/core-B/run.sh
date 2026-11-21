@@ -5,11 +5,11 @@
 #                                  imgtop-require.py fuzz_uci <lib> applied.txt (B files Require B's own YImgTop)
 #
 # Inputs (each named by sha; nothing is read from a host path the tree does not name):
-#   REL    port_core 0e4e065eab9f: git archive 7f0e4b05267 tools/pg-reloc/0e4e065eab9f
-#   DON    the donor = fuzz_grant's RELEASED image-B lib, origin/ossv/recipes 4f87de75d67, normalised by mkdon.sh beside
+#   REL    port_core 0e4e065eab9f: git archive tools/pg-reloc/0e4e065eab9f
+#   DON    the donor = fuzz_grant's RELEASED image-B lib, normalised by mkdon.sh beside
 #          this file (lib/B over lib/Reusable at the lib root, module text ...fuzz_grant.lib.{Reusable,B} -> ...fuzz_grant.lib):
-#            mkdon.sh 4f87de75d67 fuzz_grant B $DONROOT ; DON=$DONROOT/proofs/libreac/fuzz_grant/lib
-#          Chosen over fuzz_identity's released lib/ReusableB (70952e1c8c9) by a measured dry run of both on the same target
+#            mkdon.sh fuzz_grant B $DONROOT ; DON=$DONROOT/proofs/libreac/fuzz_grant/lib
+#          Chosen over fuzz_identity's released lib/ReusableB by a measured dry run of both on the same target
 #          lib (README.md): grant refused 67 / staged 369 per-image files, identity refused 60 + 3 partner-left FAIL rows /
 #          staged 395 (26 kernel files grant keeps shared with image A, whose donor is grant); grant's names are image A's.
 #   SYMS   fuzz_grant.asan-ubsan.syms.txt beside this file: mksyms.py over the donor's unstripped twin (sha256 5a5ee7c02b4e;
@@ -17,8 +17,8 @@
 #   P, R   the pinned image trees of the pipeline (bin/<unit>/ and result/unstripped/<unit>/): P holds libreac's fuzz_grant
 #          (asan-ubsan fde52226dc48, asan c2c7559b29bd), R holds reac-repacer's result/ (fuzz_uci.asan-ubsan a1b86e424add =
 #          harness.yaml, unstripped twin 8d07ffcf5948; fuzz_uci.asan 6ea017c24525)
-#   LIB    the target lib proofs/reac-repacer/fuzz_uci/lib of this branch before the run: the trunk 147218220547 with image
-#          A's core (a8fc5eedae69) and the image-B start-up layer (883082ed41ea) merged in (merge 5a77a109158). Every shared
+#   LIB    the target lib proofs/reac-repacer/fuzz_uci/lib of this branch before the run: the trunk with image
+#          A's core and the image-B start-up layer merged in (merge). Every shared
 #          kernel file is KEPT from it (lib/Reusable is image A's), the 19 start-up files of no-stage-B.txt are never
 #          staged, and the zero-shadow / CZONE rules read the unit's own B/YF0m.v from it. This run writes lib/B core
 #          files only.

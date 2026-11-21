@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyImg_su_errb.v (commit eb934de95d13, blob 1eeb1794d82c) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; pin 1be0f53d96cb), from reply A d751b179ea49 (pin 42c58610e125); module paths changed; 3 image numerals moved by port_addr_check 3d2eee813cce MAPS predictions and the twins' symbol + offset map (0 model labels and sizes kept); no other numeral changed; comments removed (the source file keeps them); preset's YA02.SINV0 takes the segment list first, as in A/AD1d.v:61. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyImg_su_errb.v (blob 1eeb1794d82c) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; pin 1be0f53d96cb), from reply A d751b179ea49 (pin 42c58610e125); module paths changed; 3 image numerals moved by port_addr_check 3d2eee813cce MAPS predictions and the twins' symbol + offset map (0 model labels and sizes kept); no other numeral changed; comments removed (the source file keeps them); preset's YA02.SINV0 takes the segment list first, as in A/AD1d.v:61. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises); the input-owned, top-anchored launch stack; the start-up certificate per CONFIG_RSEQ flag with states computed in the build). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -8,7 +9,7 @@ BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
 From OSSVerify.omx_clap_core.fuzz_preset.images Require Import Asan.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YK11 YP09 YK00 YK04 YA0i YA0n YK0g YK0c YK0d YK0e YK0f YK09 YA01 YA0c YA0e YA0d YA02 YA0j.
-From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require Import AB12 AB1h AB13 AB01.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require Import AB12 AB1h AB13 AB01r.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YG00 YG01 YG0f YG0v YG0n YG0r YG0b.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require Import AF0m.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YM05 YD1h.
@@ -30,7 +31,7 @@ Definition RINFO_ZERO : kentry := KZero (SA AD1g.eSp1 137439019008) (ELit 4096).
 
 Definition su_errb_check (ch : acs) : bool :=
 (kn_img ch ERRB_OBJ ERRB_OBJ_LEN && kn_mem RINFO_ZERO ch)%bool.
-Lemma su_errb_check_all : forallb su_errb_check HS_tfib_list = true.
+Lemma su_errb_check_all : forallb su_errb_check HS_tfib_list_all = true.
 Proof. vm_compute. reflexivity. Qed.
 
 Lemma errb_obj_rom_zero : forall k, (k < 56)%nat ->
@@ -47,21 +48,32 @@ Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv (in_argv inp).
 Variable h : nat.
 Variables (ch : acs) (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model).
-Hypothesis Hch : HS_tfib h = Some ch.
+Hypothesis Hch : HS_tfib_r (rseq_z (kb_rseq (in_kernel inp))) h = Some ch.
 #[local] Notation argv := (in_argv inp).
 #[local] Notation envp := (in_envp inp).
 #[local] Notation uid := (in_uid inp).
 #[local] Notation hw := (in_hwcap inp).
-#[local] Notation SINV := (YA02.SINV0 TSEGS TPH sp rdraw brk argv envp uid hw).
-#[local] Notation argH := (YA02.argH0 TPH sp rdraw argv envp uid hw).
+(* LPS 727298f3: the start-up invariant is abstract, as in the core sections (A/AD2i.v, A/AD1g.v),
+   with the stack-top fact the drivers read; the hidden stack bytes read the input's fields. *)
+Variable SINV : env -> (word -> option byte) -> Prop.
+#[local] Notation argH := (YA02.argH0 sp rdraw argv envp
+  (in_image_fs inp) (in_stdin inp) uid (in_gid inp) hw (in_groups inp) (in_net inp)
+  (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp) (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp)).
 #[local] Notation TOP := (YA02.TOP sp).
 #[local] Notation LIM := YA02.LIMIT.
+Hypothesis SINV_sp0 : forall E' M, SINV E' M -> uE E' e_sp0 = TOP + 8388608.
 Hypothesis HC : cs_ok TSEGS TFIB LIM TOP SINV argH (in_fs inp) E ch R FULL model.
 Context {rc : YM05.RunCeil}.
+(* the core sections' lemmas, applied through those of their binders in Section order (A/AD2i.v,
+   A/AD1g.v) that this section has *)
+Ltac instS H := try specialize (H fx); try specialize (H sp); try specialize (H rdraw); try specialize (H brk);
+try specialize (H inp); try specialize (H Hsp); try specialize (H Hva); try specialize (H h); try specialize (H ch);
+try specialize (H E); try specialize (H R); try specialize (H FULL); try specialize (H model); try specialize (H Hch);
+try specialize (H SINV); try specialize (H SINV_sp0); try specialize (H HC); try specialize (H rc).
 #[local] Notation MR := (Mr TFIB TOP argH E ch model FULL).
 #[local] Notation m1 := (mrestrict (AD2i.H1 sp rdraw inp ch E model) FULL).
 #[local] Notation u := (uE E).
-Let CHK : su_errb_check ch = true := proj1 (forallb_forall _ _) su_errb_check_all ch (HS_tfib_In h ch Hch).
+Let CHK : su_errb_check ch = true := proj1 (forallb_forall _ _) su_errb_check_all ch (HS_tfib_r_In _ h ch Hch).
 Let MRm1 := AD2i.mbyte_MR_m1 sp rdraw inp Hsp Hva ch E FULL model.
 
 Theorem errb_obj_zero_start : val_mem tfibsegs m1 ERRB_OBJ 56 0.
@@ -84,7 +96,7 @@ val_mem tfibsegs m1 (ly_space (AD1g.ly0 ch E model) + kRegionInfoOff + 128 * c +
 Proof.
 intros c Hc.
 pose proof CHK as H. unfold su_errb_check in H. apply andb_prop in H as [_ Kzero].
-pose proof (AD1g.uSp sp rdraw brk inp h ch E R FULL model Hch HC) as (S1 & _).
+pose proof ltac:(let L := fresh in pose proof (@AD1g.uSp) as L; instS L; exact L) as (S1 & _).
 intros k Hk. destruct k as [|k]; [|lia]. cbn [Z.of_nat]. rewrite Z.add_0_r.
 pose proof (ho_zero_at TSEGS TFIB LIM TOP SINV argH (in_fs inp) E ch R FULL model HC _ _ Kzero (128 * c + 68)) as Z0.
 unfold elenZ, estart in Z0. cbn [a_base a_off edenot] in Z0. rewrite u64_lit in Z0 by lia.

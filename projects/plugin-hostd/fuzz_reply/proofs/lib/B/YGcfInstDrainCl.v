@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: the generic cf instance layer, lane F2b (second hand of the lane): the LEDGER half of F11,
    the cf ledger ALedger_cf carried across the free-array grant of SizeClassAllocator64LocalCache::Deallocate
    (EnsureFreeArraySpace -> one KMapFreeArray map of kFreeArrayMapSize bytes at the class's next free-array slot).
@@ -40,7 +41,7 @@ Local Open Scope Z_scope.
 Section U. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : CfParams} {IM : AImg}.
 Variable B : asyms.
 
-(* YG08cf.sec_extents_sizes64P_cf (YG08cf.v:150) over the cut invariant WfR_cf: its proof reads only the chunks. *)
+(* YG08cf.sec_extents_sizes64P_cf (YG08cf.v:151) over the cut invariant WfR_cf: its proof reads only the chunks. *)
 Lemma sec_extents_sizes_R : forall U pp cc bb ly s, WfR_cf U pp cc bb s ->
 Forall (fun e => 4096 <= snd e < 2 ^ 64) (sec_extents ly s).
 Proof.

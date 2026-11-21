@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_box_model_block (0x85b44) on fuzz_ctrl's ASan build, image A: the cgif caller-journal contract,
    STATEMENT ONLY. No proof of the walk is in this file; `pb_reac_box_model_block_stmt` states what the walk
    proves. (rule 24: no function is proved here.)
 
-   Guide of record: a working branch d69f7c708f6 (the v1.9.0 listing, 12 files, tool
-   bfeab2e7364, PA 13 primitives). a Theorem Labs lane's working branch d385ad485f1 stays a record of the plain contract. Every
+   Guide of record: a working branch (the v1.9.0 listing, 12 files, tool,
+   PA 13 primitives). a Theorem Labs lane's working branch stays a record of the plain contract. Every
    numeral below is from that listing or from the PIN binary; none from lib/A/Prog/SlotModel.v.
 
    The call. Both callers hand it 32 bytes `o` inside their own side-stack frame (reac_box_catalogue_match
@@ -15,7 +16,7 @@
 
    Segments and the read-only premise (two Theorem Labs lanes, 23:37Z). The contract is stated over the walk's
    segment list SEGS := AB1v.tfibsegs, not over an abstract PA image's pa_segs: the PA values (VAL, BASE,
-   pa_relro_lo, pa_relro_hi) are those of the CONCRETE image instance CtrlImg.PI_ctrl (CtrlImg.v:82), whose
+   pa_relro_lo, pa_relro_hi) are those of the CONCRETE image instance CtrlImg.PI_ctrl (CtrlImg.v:83), whose
    pa_segs is tfibsegs, so CtrlCallerJ's shapes, stated over pa_segs PI, apply by conversion. The read-only
    premise is YE01.arodata_okS (core), as in a Theorem Labs lane's ctl_base, not arodata_okP SEGS pa_relro_lo
    pa_relro_hi; the glue reaches arodata_okP from it by a Theorem Labs lane's ProgWorld lemma arodata_okP_of_S.
@@ -71,7 +72,7 @@ Open Scope Z_scope.
 Section b. Context {fx : lib.Reusable.YK11.FPState} {rc : lib.Reusable.YM05.RunCeil}.
 Context {SK : lib.Reusable.YI16.sink_head}.
 Section d.
-(* The PA layer is instantiated with the CONCRETE instance CtrlImg.PI_ctrl (CtrlImg.v:82, whose pa_segs is
+(* The PA layer is instantiated with the CONCRETE instance CtrlImg.PI_ctrl (CtrlImg.v:83, whose pa_segs is
    AB1v.tfibsegs), not with an abstract `Context {PI : PAImg ctrl_listing}` (a Theorem Labs lane 23:49Z). *)
 #[local] Notation SEGS := AB1v.tfibsegs.
 #[local] Notation VAL := (@pa_val _ ctrl_listing CtrlImg.PI_ctrl).

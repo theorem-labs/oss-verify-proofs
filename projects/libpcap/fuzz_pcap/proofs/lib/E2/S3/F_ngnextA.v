@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: in both copies the stack-floor hypothesis LO reads usp0 R - 6144512 <= lo, the floor 6144512 bytes below the entry sp (rc_lo at this revision), where it read usp0 R - 8388608 <= lo; the steps that unfold rc_lo do so in every hypothesis. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool String.
@@ -128,7 +129,7 @@ Section NgnCtx.
   (* [comment removed for export] *)
   Definition pv (bq : hptr) (alloc : Z) (data eb : list Z) (s : pcap_ng_sf) (i : option hptr) : pcap hptr hptr :=
     mkPcap self f bufsize alloc bq data swapped vmaj vmin snapshot linktype ltext prec brk eb header (PrivNg s i).
-  Hypothesis LO : (usp0 R - 8388608 <= lo)%Z.
+  Hypothesis LO : (usp0 R - 6144512 <= lo)%Z.
   Hypothesis BU : (lo + 81920 <= bv_unsigned sp)%Z.
   Hypothesis SPM : (bv_unsigned sp <= rc_spmain R)%Z.
   Hypothesis TP : tp = rc_tp R.
@@ -346,7 +347,7 @@ Section NgnCtx.
     eapply evt_cut.
     { eapply (SNPRINTF _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ R ps (CLc ++ PB') FB lo (P + 216)%Z 256%Z FMTA fs args (firstn 256 (pj_g jx)));
         [| reflexivity | reflexivity | reflexivity | lia | exact FMT5 | exact FOK | exact LA | rewrite Hsp; exact FW | exact CE1 | left; exact HinP].
-      split; [exact G5|]. split; [rewrite Hsp; exact ST5|]. split; [unfold rc_lo; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
+      split; [exact G5|]. split; [rewrite Hsp; exact ST5|]. split; [unfold rc_lo in *; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
       split; [rewrite Hsp; lia|]. split; [exact MI5|]. split; [exact TP| rewrite Hsp; apply aln16_add; [exact ALN| reflexivity]]. }
     cbv beta. intros ms' PO. destruct PO as (av & m6 & junk6 & E & MU6 & WM6 & MI6 & ST6 & -> & HEB6).
     unfold hpost_regs in E. destruct_exs E. subst ms'. rewrite Hsp in *. unname_sp.
@@ -359,7 +360,7 @@ Section NgnCtx.
     apply (agrees_rw_cells _ _ _ _ _ AGS) in HD; [| intros a Ha; cbn [cells_size] in Ha; rewrite Hd in Ha; cbn [outside]; unfold rc_lo in LO; lia].
     assert (G6 : GIo K R ps (CLc ++ PB') FB m6).
     { eapply (GIo_pcap_frame K HFL SFL); [exact G5 | exact MU6 | exact WM6 |].
-      apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo; lia|]. apply Forall_cons; [| apply Forall_nil].
+      apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo in *; lia|]. apply Forall_cons; [| apply Forall_nil].
       right. rewrite EPB. unfold iv_in_block, pcap_blocks. apply Exists_cons_hd. cbn [cb_addr cb_size fst snd]. lia. }
     assert (PC6 : forall e, PCAPR_closable (hptr:=hptr) P (set_errbuf e p') PB' FB m6).
     { intros e. eapply (PCAPRC_errbuf _ _ _ _ _ _ _ _ _ _ _ _ G5 PC5 AGS); [| exact HEB6 | pose proof (snprintf_length 256 fs args); cbn [cells_size csize Nat.add]; lia].
@@ -591,7 +592,7 @@ Section NgnCtx.
   (* [comment removed for export] *)
   Definition pv (bq : hptr) (alloc : Z) (data eb : list Z) (s : pcap_ng_sf) (i : option hptr) : pcap hptr hptr :=
     mkPcap self f bufsize alloc bq data swapped vmaj vmin snapshot linktype ltext prec brk eb header (PrivNg s i).
-  Hypothesis LO : (usp0 R - 8388608 <= lo)%Z.
+  Hypothesis LO : (usp0 R - 6144512 <= lo)%Z.
   Hypothesis BU : (lo + 81920 <= bv_unsigned sp)%Z.
   Hypothesis SPM : (bv_unsigned sp <= rc_spmain R)%Z.
   Hypothesis TP : tp = rc_tp R.
@@ -838,7 +839,7 @@ Section NgnCtx.
     eapply evt_cut.
     { eapply (SNPRINTF _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ R ps (CLc ++ PB') FB lo (P + 216)%Z 256%Z FMTA fs args (firstn 256 (pj_g jx)));
         [| reflexivity | reflexivity | reflexivity | lia | exact FMT5 | exact FOK | exact LA | rewrite Hsp; exact FW | exact CE1 | left; exact HinP].
-      split; [exact G5|]. split; [rewrite Hsp; exact ST5|]. split; [unfold rc_lo; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
+      split; [exact G5|]. split; [rewrite Hsp; exact ST5|]. split; [unfold rc_lo in *; lia|]. split; [unfold STDIO_STACK; rewrite Hsp; lia|].
       split; [rewrite Hsp; lia|]. split; [exact MI5|]. split; [exact TP| rewrite Hsp; apply aln16_add; [exact ALN| reflexivity]]. }
     cbv beta. intros ms' PO. destruct PO as (av & m6 & junk6 & E & MU6 & WM6 & MI6 & ST6 & -> & HEB6).
     unfold hpost_regs in E. destruct_exs E. subst ms'. rewrite Hsp in *. unname_sp.
@@ -851,7 +852,7 @@ Section NgnCtx.
     apply (agrees_rw_cells _ _ _ _ _ AGS) in HD; [| intros a Ha; cbn [cells_size] in Ha; rewrite Hd in Ha; cbn [outside]; unfold rc_lo in LO; lia].
     assert (G6 : GIo K R ps (CLc ++ PB') FB m6).
     { eapply (GIo_pcap_frame K HFL SFL); [exact G5 | exact MU6 | exact WM6 |].
-      apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo; lia|]. apply Forall_cons; [| apply Forall_nil].
+      apply Forall_cons; [left; cbn [fst snd]; unfold rc_lo in *; lia|]. apply Forall_cons; [| apply Forall_nil].
       right. rewrite EPB. unfold iv_in_block, pcap_blocks. apply Exists_cons_hd. cbn [cb_addr cb_size fst snd]. lia. }
     assert (PC6 : forall e, PCAPR_closable (hptr:=hptr) P (set_errbuf e p') PB' FB m6).
     { intros e. eapply (PCAPRC_errbuf _ _ _ _ _ _ _ _ _ _ _ _ G5 PC5 AGS); [| exact HEB6 | pose proof (snprintf_length 256 fs args); cbn [cells_size csize Nat.add]; lia].

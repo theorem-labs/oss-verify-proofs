@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, support for segment L6x of image A''s LLVMFuzzerTestOneInput (pin sha256
    1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44; lib/A/Prog/Ent102L6A.v): the FLAG-STORE RULE
    WITH A RUN INVARIANT. A function that releases its own ASan fake frame inline in its epilogue (`ld a0, (frame slot);
@@ -10,7 +11,7 @@
    srr_inv_laws_memnorm_k is the P the lane takes). The only change to the proof: SRr_msteps -> SRr_msteps_inv, with
    P on the start memory (a premise after the journal) and on the end memory (a premise of the continuation, after
    the journal), as YC80x.v's _inv twins place it.
-   PORTED FROM (by path, image-free): lib/B/Prog/EntS7FlagB.v of a working branch c3e54cc5ad62 (the
+   PORTED FROM (by path, image-free): lib/B/Prog/EntS7FlagB.v of a working branch (the
    lane's own flag rule at the old pins), here replaced by the engine's aj_flag_store_x.
    Generic: no image class instance, no address, no ledger, no ARcf; the Section hypotheses are YGcallSx.v's.
    rule 24: proves function LLVMFuzzerTestOneInput, segment L6x (reuse search: main / ossv/recipes / ossv/candidates /
@@ -54,7 +55,7 @@ Local Notation AJ := (ajournal_x segs B PST ARx).
 Context {HL : Z}.
 Hypothesis LAWS : AR_laws_x segs B ARx HL.
 Hypothesis segs_low : forall a, in_img segs a -> 0 <= a < kLowMemEnd.
-(* YGcallSx.v:214-226, verbatim: the free law, the flag facts and the model's stack_free post, in ARx form *)
+(* YGcallSx.v:215-227, verbatim: the free law, the flag facts and the model's stack_free post, in ARx form *)
 Hypothesis ASFX : forall ly S Hp W mem md mem' md' cid pos,
   ARx ly S Hp W mem md -> In (cid, pos) (frames S) ->
   aview segs (w_H W) mem' (flag_addr ly cid pos) = Some 0 ->

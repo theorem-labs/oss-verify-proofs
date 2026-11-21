@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/A/AD1q.v (tfib_srealizesX),
    lib/A/AB1n.v (tfib_startup_T1, HS_ok) and lib/A/AD2o.v (TFIB_T_of_partsXF), in the form of fuzz_pcap's closing side
-   (proofs/libreac/fuzz_pcap/lib/A/PcapClose.v, a working branch 86b0e893fe8), for libreac/fuzz_decode's
+   (proofs/libreac/fuzz_pcap/lib/A/PcapClose.v, a working branch), for libreac/fuzz_decode's
    ASan image: one named Section hypothesis per remaining part, module paths and names changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_decode/lib/A/DecodeClose.v, with its module paths and module names changed; 1425 of its 1489 lines of code are new or changed and 431 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_decode/lib/B/Prog/LLVMFuzzerTestOneInput_leafb.v, with its module paths and module names changed; 316 of its 463 lines of code are new or changed and 1342 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* DgnTransportBCgRun: image B's twin of lib/A/Prog/DgnTransportCgRun.v, for the image-B caller-journal walks of
    fuzz_transport.asan-ubsan (lib/B/Prog/*_cg.v walks) on the footprint route. The same lemmas, over image B's
    segments (lib/B/YB1v.v tfibsegs, lib/B/Img0.v rsegs), runtime cells (lib/B/AsanCells.v) and kit

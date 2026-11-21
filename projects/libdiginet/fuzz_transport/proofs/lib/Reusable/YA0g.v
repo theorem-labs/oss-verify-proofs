@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YA0g.v, with its module paths changed. *)
-(* Relocated from proofs/libreac/fuzz_grant/lib/YA0g.v at 25e3d17bdb50 by port_core 83f5203d2a2f onto libdiginet/fuzz_transport (asan). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Relocated from proofs/libreac/fuzz_grant/lib/YA0g.v by port_core 83f5203d2a2f onto libdiginet/fuzz_transport (asan). *)
 From Stdlib Require Import ZArith Lia.
 Unset Lia Cache. Unset Nia Cache.
 Open Scope Z_scope.

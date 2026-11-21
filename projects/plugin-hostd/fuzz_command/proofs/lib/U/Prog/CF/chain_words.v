@@ -12,6 +12,7 @@
    the statement's AMALLOC4 and TL (CmdPaLib.v: the malloc trampoline is the rule's entry, the GOT shadow cell). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/rec_canonical.v, with its module paths and module names changed; 696 of its 835 lines of code are new or changed and 2224 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/U/Prog/CF/rec_canonical.v; 1022 of its 1119 lines of code are new or changed and 738 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed cw_mid). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
@@ -783,8 +784,8 @@ Proof using SEGS TP EOFF AX ERRNO_NO.
     - intros a [].
     - intros p n _ _ _ F. exact F.
     - intros p n _ H1 H2. contradiction.
-    - intros HI. specialize (HAUX HI). destruct HAUX as (av & ar & W1 & W2 & W3 & W4 & B1 & B2 & B3 & B4 & L1 & L2).
-      exists av, ar.
+    - intros HI. specialize (HAUX HI). destruct HAUX as (auxrs & av & ar & W1 & W2 & W3 & W4 & B1 & B2 & B3 & B4 & L1 & L2).
+      exists auxrs, av, ar. pose proof (auxv_types_len_ge auxrs). unfold AUXV_RAND_K in *.
       assert (LIB : forall k, (k < 8)%nat ->
                 0 <= ms_libc B + 8 + Z.of_nat k < 2 ^ 64 /\ Frame.outside W (ms_libc B + 8 + Z.of_nat k)).
       { intros k Hk. assert (SO : owned B L A (ms_libc B + 8 + Z.of_nat k)) by (right; unfold static_owned; lia).

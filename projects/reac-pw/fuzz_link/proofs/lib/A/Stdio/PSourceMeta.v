@@ -1,16 +1,17 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ASan meta-region invariant and the image laws for libreac/fuzz_pcap's
    READ stream, stated over PSource.v's asource_syms.
 
    WHY THIS FILE EXISTS. The core states the meta invariant (ameta_ok, YE00.v:110; ameta_inv,
-   YE01.v:137) and the image laws that make it usable (asink_img_laws, YE01.v:25) over cgif's
+   YE01.v:138) and the image laws that make it usable (asink_img_laws, YE01.v:26) over cgif's
    SINK record asink_syms, because cgif's harness writes a file. pcap's harness READS a memory
    stream and has no sink: no path, no write trailer. a Theorem Labs lane (21:20Z) found that PFclose.v's
    `ameta_inv` premise therefore had no definition over asource_syms. The two options were to
    drop it or define it; it is DEFINED here, because it cannot be dropped:
      - the donor's fclose proof consumes it (cgif lib/A/AE24.v:122 via ameta_ptr_of_AR), and the
-       donor preserves it across the call (ameta_inv_kept, YE01.v:151) for 20+ consumer files;
+       donor preserves it across the call (ameta_inv_kept, YE01.v:152) for 20+ consumer files;
      - the meta region is where the allocator keeps the state free() updates, so fclose's two
        frees cannot be walked without it.
    Carrying a whole asink_syms just for its two meta fields would be worse than either: the
@@ -18,14 +19,14 @@
    program that has no sink.
 
    WHAT IS COPIED AND WHAT IS NOT. The bodies below are the donor's, field for field, with
-   ak_* -> as_* (PSource.v:87-101 already carries as_meta_ptr / as_meta_mem / as_can_got /
+   ak_* -> as_* (PSource.v:88-102 already carries as_meta_ptr / as_meta_mem / as_can_got /
    as_icells, mirroring asink_syms). The stdio environment's cells are pcap's, not cgif's:
      threaded, need_locks, ofl_lock (+16, lock and head, as the donor's aenv_addr), the
      "rb\0" mode literal (as_mode, 3 bytes), musl's "rwa\0" mode-set literal (as_rwa, 4 bytes --
      the donor's ak_rwa; a field of the record, not a named constant), and the canary (8 bytes).
    No path and no trailer, because pcap has neither.
 
-   THE DONOR'S TWO LEMMAS over these definitions are PORTED below (Section L), from YE01.v:139-169
+   THE DONOR'S TWO LEMMAS over these definitions are PORTED below (Section L), from YE01.v:140-170
    (ameta_ptr_of_AR, ameta_inv_kept) with ak_* -> as_*, AIL -> ASIL, ail_* -> asil_*, ameta_inv ->
    asrc_meta_inv. They are invariant lemmas over definitions, ported from a released proof: no
    function is proved here.
@@ -67,7 +68,7 @@ Definition asrc_env_addr (K : asource_syms) (a : Z) : Prop :=
   (as_mode K <= a < as_mode K + 3) \/ (as_rwa K <= a < as_rwa K + 4) \/
   (as_canary K <= a < as_canary K + 8).
 
-(* The image laws for the read stream: the source analogue of asink_img_laws (YE01.v:25), clause
+(* The image laws for the read stream: the source analogue of asink_img_laws (YE01.v:26), clause
    for clause. Discharged ONCE, at instantiation with pcap's measured addresses, by whoever builds
    the concrete asource_syms -- not per walk.
    SK is an EXPLICIT parameter (a Theorem Labs lane, 21:58Z), unlike the donor's {SK}: it fixes
@@ -105,14 +106,14 @@ Definition asrc_meta_ok (m : word -> option byte) (M : Z) : Prop :=
   0 <= M /\ M + AMETA_SIZE <= 2 ^ 47 /\ M mod 4096 = 0 /\
   (forall a, M <= a < M + AMETA_SIZE -> mbyte segs m a = Some (Z_to_bv 8 0)).
 
-(* The source analogue of YE01.v:137 ameta_inv, body identical. *)
+(* The source analogue of YE01.v:138 ameta_inv, body identical. *)
 Definition asrc_meta_inv (ly : alayout) (m : word -> option byte) (M : Z) : Prop :=
   In (M, AMETA_SIZE) (ly_extra ly) /\ (forall a, in_img segs a -> a < M) /\ asrc_meta_ok m M.
 
 End M.
 
 (* ---------------------------------------------------------------------------------------------- *)
-(* The donor's meta lemmas, PORTED from YE01.v:139-169 with the renaming in the header. The proofs  *)
+(* The donor's meta lemmas, PORTED from YE01.v:140-170 with the renaming in the header. The proofs  *)
 (* are the donor's line for line: the journal (ajournal), the allocator relation (AR) and the       *)
 (* helpers (am_const, fp_spares_below, AR_extra_law_ok, val_mem_frame, mbyte_kept_of_aview) are the  *)
 (* same core objects; only the symbol record and its laws record change. One mechanical difference: *)
@@ -128,7 +129,7 @@ Hypothesis ASIL : asource_img_laws SK segs B K.
 Local Notation ajournal := (ajournal segs B).
 Local Notation rd W mem := (mrestrict (w_H W) mem).
 
-(* YE01.v:139 ameta_ptr_of_AR *)
+(* YE01.v:140 ameta_ptr_of_AR *)
 Lemma asrc_meta_ptr_of_AR : forall ly S W mem md,
 AR segs B ly S W mem md -> val_mem segs (rd W mem) (as_meta_ptr K) 8 (as_meta_mem K).
 Proof.
@@ -142,7 +143,7 @@ change (YO0f.le_byte (as_meta_mem K) 8 k) with (YG0f.le_byte (as_meta_mem K) 8 k
 unfold bv_wrap. change (bv_modulus 8) with 256%Z. apply Z.mod_small. apply Z.mod_pos_bound. lia.
 Qed.
 
-(* YE01.v:151 ameta_inv_kept *)
+(* YE01.v:152 ameta_inv_kept *)
 Lemma asrc_meta_inv_kept : forall STK sp0 FP ly S W mem md own ly' S' W' mem' md' k M,
 ajournal STK sp0 FP ly S W mem md own ly' S' W' mem' md' k ->
 asrc_meta_inv segs K ly (rd W mem) M -> asrc_meta_inv segs K ly' (rd W' mem') M.

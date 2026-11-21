@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the brk proof reads the ledger through co_resx and keeps the three-part co_res for the new heap range; Sections SoundMunmap and SoundSys take ALLOC_OFF, the alloc family not failing, and munmap's next vm_maps, the model's maps_subtract, is shown to be the entry's removal, keeping co_res; munmap keeps the channel reader, cs_ok's co_rdr). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -564,7 +565,7 @@ Proof.
   destruct (brk_req_sound E cs R FULL model d HC Hreq) as (D1 & D2 & D3 & Dm).
   destruct (brk_base_ok_sound E cs R FULL model d HC Hbase) as (B1 & B2 & B3 & B4).
   pose proof (brk_req_val E cs R FULL model d HC Hreq Hbase) as G10.
-  pose proof (co_res _ _ _ _ _ _ _ _ _ _ _ HC) as Hres.
+  pose proof (co_resx _ _ _ _ _ _ _ _ _ _ _ HC) as Hres.
   pose proof (proj1 (APS.maps_match_exact nx0 (fun _ => None) (fun _ _ _ => None) (fun _ _ _ => None) (fun _ _ _ => None) E _ _ Hnf) (co_maps _ _ _ _ _ _ _ _ _ _ _ HC)) as Hmaps.
   pose proof (co_limit _ _ _ _ _ _ _ _ _ _ _ HC) as Hlim. pose proof (co_sbrk _ _ _ _ _ _ _ _ _ _ _ HC) as Hsbrk.
   pose proof (co_brk _ _ _ _ _ _ _ _ _ _ _ HC) as Hbrk.
@@ -758,6 +759,15 @@ Proof.
           rewrite Hlz'; eapply lhull_incl; [|exact co_lhull0]; intros m0 Hm0; right; exact Hm0
       | |- nao_ok _ _ =>   (* [comment removed for export] *)
           rewrite Hvm'; unfold h'; cbn [vm_noaccess vm_maps]; apply nao_ok_cons_map; exact co_nao0
+      | |- (exists rx : list (word * word), _) /\ _ =>   (* co_res (LPS 08b1429): the ledger is unchanged; the new heap range is free of it *)
+          destruct co_res0 as (RX & MR & VD);
+          rewrite Hvm'; unfold h'; cbn [vm_reserved vm_maps];
+          split; [exact RX|]; split; [|exact VD];
+          constructor; [|exact MR];
+          apply Forall_forall; intros [b0 s0] Hin0; unfold iv_disjoint; cbn [fst snd]; rewrite Udw;
+          rewrite RefNodes.region_free_app in Hrfg0; apply andb_prop in Hrfg0 as [Hrf1 _];
+          pose proof (RefNodes.region_free_In _ _ _ b0 s0 Hrf1 Hin0) as DD;
+          rewrite u64_lit in DD by (unfold page_size; lia); unfold page_size in DD; lia
       | |- ?g => idtac "UNSOLVED FIELD:" g
       end.
     + (* [comment removed for export] *)
@@ -829,6 +839,8 @@ End SoundB.
 Section SoundMunmap.
 Variable SEGS : list Segment.
 Variable SC : SpuriousCfg.   (* [comment removed for export] *)
+(* Statements.v:88,102 (alloc-forced): the refused munmap outcome is dropped through the config. *)
+Hypothesis ALLOC_OFF : family_may_fail SC FamAlloc = false.
 Variable A : atable.
 Variable nx0 : nat.
 Variable LIMIT : Z.
@@ -1267,7 +1279,7 @@ Proof.
   (* [comment removed for export] *)
   pose proof (co_halt _ _ _ _ _ _ _ _ _ _ _ HC) as Hhalt. pose proof (co_wf _ _ _ _ _ _ _ _ _ _ _ HC) as Hwf. pose proof Hwf as (W1 & W2 & W3 & Wsp).
   unfold cfg_of.
-  eapply (crz_munmap_lazy SC SEGS R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w addr len T Hf He Hhalt R17 R10 B2 R11 ltac:(lia)).
+  eapply (crz_munmap_lazy SC SEGS ALLOC_OFF R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w addr len T Hf He Hhalt R17 R10 B2 R11 ltac:(lia)).
   { unfold TASK_SIZE. fold nZ. destruct Hlohi as (_ & L2 & _). lia. }  (* [comment removed for export] *)
   { fold nZ. rewrite HnZw. apply map_has_intro. rewrite <- Haddr. exact HIN. }
   fold nZ. rewrite HnZw. rewrite (v_addi_pc (pc cs) Hp0 Hp4).
@@ -1277,7 +1289,21 @@ Proof.
   specialize (HK E (regupd R (Z_to_bv 5 (Z.of_nat 10)) (Z_to_bv 64 0)) FULL' model' (conj (env_agree_refl' _ _) (env_agree_refl' _ _))).
   unfold cfg_of in HK. replace (pc cs') with (pc cs + 4) in HK by reflexivity. rewrite bv5_10. apply HK; [|reflexivity]. clear HK.
   (* [comment removed for export] *)
-  assert (PM : vm_maps (m_vmmaps model') = map_remove (vm_maps (m_vmmaps model)) addr) by reflexivity.
+  (* LPS 08b1429: munmap cuts [vm_maps] with [maps_subtract] ([Mmap.mmap_fixed_destroyed_next]);
+     the range is exactly the entry [amap_den E m] and every other entry is apart from it. *)
+  assert (PM : vm_maps (m_vmmaps model') = map_remove (vm_maps (m_vmmaps model)) addr).
+  { change (vm_maps (m_vmmaps model'))
+      with (maps_subtract (vm_maps (m_vmmaps model)) (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n)).
+    destruct Hlohi as (_ & _ & Hlh & _ & _).
+    apply MmapSim.maps_subtract_exact.
+    - subst hi. rewrite Un. lia.
+    - intros bq sq HinQ. exact (BPOS (bq, sq) HinQ).
+    - intros bq sq HinQ Hb0Q. pose proof (UNIQ (bq, sq) HinQ Hb0Q) as EbsQ.
+      unfold amap_den in EbsQ. injection EbsQ as _ EsQ. exact EsQ.
+    - intros bq sq HinQ HbneQ.
+      assert (HbneQ' : (bq, sq) <> amap_den E m).
+      { unfold amap_den. rewrite Haddr. intros HeqQ. injection HeqQ as EbQ _. exact (HbneQ EbQ). }
+      destruct (DISJl (bq, sq) HinQ HbneQ') as [DQ|DQ]; cbn [fst snd] in DQ; subst hi; subst lo; [left|right]; lia. }
   assert (PAT : alloc_top (m_vmmaps model') = alloc_top (m_vmmaps model)) by reflexivity.   (* [comment removed for export] *)
   assert (PPT : APS.ptop (m_vmmaps model') = APS.ptop (m_vmmaps model)) by reflexivity.   (* [comment removed for export] *)
   assert (PN : vm_noaccess (m_vmmaps model') = maps_subtract (vm_noaccess (m_vmmaps model)) lo (lo + bv_unsigned n)) by reflexivity.
@@ -1350,7 +1376,7 @@ Proof.
   assert (KNF : forall m', am_kind m' = KNONE \/ am_kind m' = KNONELAZY \/ am_kind m' = KRWLAZY -> is_fog m' = false).
   { intros m' Hk. unfold is_fog. destruct Hk as [-> |[-> | ->]]; reflexivity. }
   pose proof (fun x Hx => APS.cs_argH_top SEGS A LIMIT SINV argH argH_sp0 FS0 _ _ _ _ _ x HC Hx) as ARGH.   (* [comment removed for export] *)
-  destruct HC as [Xregs Xlog Xknow Xhalt Xfds Xfs Xtid Xres Xlimit Xmaps Xholes Xseps Xwf Xbounds Xlazyb Xnasub Xnone Xkinds Xtotsz Xsplit Xbrk Xsbrk Xeager Xabytes Xminv Xzero Xsinv Xsp0 Xspmax Xpsp0 Xtidv Xlhull Xnao Xbpos].
+  destruct HC as [Xregs Xlog Xknow Xhalt Xfds Xfs Xtid Xres Xlimit Xmaps Xholes Xseps Xwf Xbounds Xlazyb Xnasub Xnone Xkinds Xtotsz Xsplit Xbrk Xsbrk Xeager Xabytes Xminv Xzero Xsinv Xsp0 Xspmax Xpsp0 Xtidv Xlhull Xnao Xbpos Xrdr].
   destruct Hlohi as (L1 & L2 & L3 & L4 & L5).
   assert (HAeq : ALLOW E cs' = flat_map (allow1 A E) (kept ++ gone ++ a_ghost cs)) by reflexivity.
   constructor; rewrite ?HAeq; subst cs'; cbn [a_ss a_maps a_totsz a_ylo a_eager a_vis a_ghost a_abytes a_brk a_fd a_tidset kn s_regs s_log s_know s_next mk_ss];
@@ -1377,7 +1403,10 @@ Proof.
   - unfold fds_ok in *. exact Xfds.
   - exact Xfs.
   - exact Xtid.
-  - exact Xres.
+  - (* co_res (LPS 08b1429): the unmapped entries leave vm_maps, the ledger and the kernel build stay *)
+    destruct Xres as (Xresx & Xmres & Xvdso). split; [exact Xresx|]. split; [|exact Xvdso].
+    rewrite PM. unfold map_remove. apply Forall_forall. intros iv Hiv. apply filter_In in Hiv as [Hiv _].
+    exact (proj1 (Forall_forall _ _) Xmres iv Hiv).
   - exact Xlimit.
   - rewrite PM. exact MAPS'.
   - (* [comment removed for export] *)
@@ -1491,6 +1520,8 @@ Proof.
     intros m0 Hm0 Hb0. rewrite (UNIQ m0 Hm0 Hb0). unfold amap_den. rewrite Haddr. reflexivity.
   - (* [comment removed for export] *) rewrite PM. unfold map_remove. apply Forall_forall. intros iv Hiv. apply filter_In in Hiv as [Hiv _].
     exact (proj1 (Forall_forall _ _) Xbpos iv Hiv).
+  - (* co_rdr: munmap does not write the channel reader *)
+    first [exact Xrdr | unfold model'; cbn; exact Xrdr | unfold model', m_channel_reader in *; cbn; exact Xrdr].
 Qed.
 
 
@@ -1505,6 +1536,7 @@ End SoundMunmap.
 Section SoundSys.
 Variable SEGS : list Segment.
 Variable SC : SpuriousCfg.
+Hypothesis ALLOC_OFF : family_may_fail SC FamAlloc = false.
 Variable A : atable.
 Variable nx0 : nat.
 Variable LIMIT : Z.
@@ -1524,7 +1556,7 @@ Hypothesis NX0_S : nx0_sp_ok nx0.
 Theorem node_sys_sound : forall y, sys_stmt SEGS SC A nx0 LIMIT SINV argH FS0 y.
 Proof.
   intros [| |].
-  - eapply (node_sys_sound_YMunmap SEGS SC A nx0 LIMIT SINV argH); eauto; first [exact (fun _ => None) | exact (fun _ _ _ => None)].
+  - eapply (node_sys_sound_YMunmap SEGS SC ALLOC_OFF A nx0 LIMIT SINV argH); eauto; first [exact (fun _ => None) | exact (fun _ _ _ => None)].
   - eapply (node_sys_sound_YBrk SEGS SC A nx0 LIMIT SINV argH); eauto.
   - eapply (node_sys_sound_YSetTid SEGS SC A nx0 LIMIT SINV argH); eauto.
 Qed.

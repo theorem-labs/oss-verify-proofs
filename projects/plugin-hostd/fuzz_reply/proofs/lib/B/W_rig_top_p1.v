@@ -4,12 +4,13 @@
    half: RGO i (0x82e1c) -> g_src + 56 i and its traps (0x82e38-0x82e48), the shadow check and load of s->eof
    (0x82e4c-0x82e60), drain (s) when s->eof = 0 (0x82e68) -> the mid cut PD (0x82e6c, W_rig_top_defs.v).  The B run is
    fuzz_reply.objdump.txt (sha256 17f5c434bf57; internal record) 86226-86246; the shape of the image-A TOP.
-   ROUTE (b), STEP 3 (the image-A twin: a Theorem Labs lane's RIG_x round of lib/A/W_rig_top.v top_p1, commit f4cd818e98d): over
+   ROUTE (b), STEP 3 (the image-A twin: a Theorem Labs lane's RIG_x round of lib/A/W_rig_top.v top_p1): over
    ARx at W_relay_instance_gone_cx.v's generic Section; the runners paj_run_x_x / paj_run_to_x_x, the shadow entries by
    range_addressable_of_block_hp0_x (HP0), drain's call by gx_callS_x at DRAIN_STK_x with dr_spec_x's room (dr_kr) and
    count premise (stmt_top_room), the count step after drain from stmt_dr_cnt (lib/B/W_rr_m_dcnt.v rmc_dr_cnt), and the
    entry alignment by q1_sa_align (W_drain_sa.v's lemma over alx_blocks).
    Proves no function (kind: segment lemma). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

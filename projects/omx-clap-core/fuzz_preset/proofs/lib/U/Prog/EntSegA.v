@@ -17,7 +17,7 @@ Local Abbreviation MOSTv := ltac:(let v := eval cbv in GL_MOST in exact v) (only
 
 (* The segment walks of LLVMFuzzerTestOneInput on the #102 ubsan pin 45b0357d (fuzz_preset.c:800-836 of the #102
    source; unstripped twin 27566683952ebd54..., FUNC 0x13718 size 336): the plain walks of lib/Prog/EntSegA.v
-   (cold/h-rw-pre-4-rw102-ent f3c1596d9c63) at the ubsan addresses. The ubsan entry is the plain one instruction for
+   at the ubsan addresses. The ubsan entry is the plain one instruction for
    instruction, 0xf0 higher; only the jal targets (callees by symbol: check_no_overread 0x13868, parse_noting 0x13a38,
    check_as_written 0x13ad4, check_reject_clean_starved 0x13c3c, pj_free 0x16340, read_members 0x13e94,
    check_round_trip 0x1408c) and s5's offset differ (auipc s5, 0x22 at 0x13748: s5 = GL_OWN_RAN_OUT + 0x4f8;

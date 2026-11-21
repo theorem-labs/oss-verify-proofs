@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: munmap cuts its range out of the maps with maps_subtract, so FRONTR_unmap takes the unmapped entry and reads the cut through iv_subtract_keep, pwd_In_cases and subtract_shrink; an anonymous mmap is placeable where Linux places it, so FRONTR's room counts from FR_FLOOR (task_unmapped_base) and FRONTR_placeable and FRONTR_placeable_big take a page-aligned length and go through mmap_placeable_of_bounds. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -32,6 +33,10 @@ Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.
 Definition FR_NMAX : Z := 2^23.
 Definition FR_MINGRANT : Z := 2^16.
 Definition FR_COEF : Z := 130.
+(* the floor of Linux's bottom-up placement window, from which LGap04.linux_place_of_sum counts *)
+Definition FR_FLOOR : Z := task_unmapped_base.
+Lemma FR_FLOOR_val : FR_FLOOR = 0x2aaaaab000.
+Proof. reflexivity. Qed.
 
 (* [comment removed for export] *)
 Definition fr_phi (mo : Model) : Z :=
@@ -45,7 +50,7 @@ Definition FR_RBIG : Z := 2^39 - 2^35.
 Definition fr_count (mo : Model) : Z := Z.of_nat (length (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo))).
 
 Definition FRONTR (mo : Model) (R : Z) : Prop :=
-  (0 <= R /\ 4096 + fr_phi mo + FR_NMAX + FR_COEF * R <= alloc_ceiling /\ FR_KW * fr_count mo + R <= target_alloc_limit) /\ noaccess_pos mo.
+  (0 <= R /\ FR_FLOOR + fr_phi mo + FR_NMAX + FR_COEF * R <= alloc_ceiling /\ FR_KW * fr_count mo + R <= target_alloc_limit) /\ noaccess_pos mo.
 
 Lemma FRONTR_noaccess_pos : forall mo R, FRONTR mo R -> noaccess_pos mo.
 Proof. intros mo R [_ H]. exact H. Qed.
@@ -115,29 +120,83 @@ Proof.
   apply noaccess_pos_commit. exact (FRONTR_noaccess_pos _ _ H).
 Qed.
 
-(* [comment removed for export] *)
-Lemma FRONTR_unmap : forall mo R addr n, FRONTR mo R -> FRONTR (mm_unmap addr n mo) R.
+(* munmap's exact arm cuts [addr, addr + n) out of the maps with maps_subtract.  Where (addr, n)
+   is an entry of a disjoint list, the cut drops that entry and leaves every other one whole
+   (its size unchanged), so the count and the size-only cost do not grow. *)
+Lemma iv_subtract_keep : forall (b s a n : word),
+  (b, s) = (a, n) \/ rdisj (b, s) (a, n) ->
+  iv_subtract b s (bv_unsigned a) (bv_unsigned a + bv_unsigned n) = []
+  \/ exists e, iv_subtract b s (bv_unsigned a) (bv_unsigned a + bv_unsigned n) = [e] /\ bv_unsigned (snd e) = bv_unsigned s.
 Proof.
-  intros mo R addr n [[H0 [H HK]] NP]. split; [| apply noaccess_pos_unmap; exact NP]. split; [exact H0|]. unfold fr_phi, fr_count in *.
+  intros b s a n Hc. pose proof (bv_unsigned_in_range 64 s) as Rs. pose proof (bv_unsigned_in_range 64 n) as Rn.
+  change (bv_modulus 64) with (2^64) in *. unfold iv_subtract. cbv zeta.
+  destruct Hc as [E|D].
+  - injection E as -> ->. left.
+    rewrite (proj2 (Z.ltb_ge _ _) (Z.le_refl (bv_unsigned a))), (proj2 (Z.ltb_ge _ _) (Z.le_refl (bv_unsigned a + bv_unsigned n))).
+    reflexivity.
+  - unfold rdisj, uz in D. cbn [fst snd] in D.
+    destruct (Z.ltb_spec (bv_unsigned b) (bv_unsigned a)) as [L1|L1];
+      destruct (Z.ltb_spec (bv_unsigned a + bv_unsigned n) (bv_unsigned b + bv_unsigned s)) as [L2|L2]; cbn [app].
+    + exfalso. lia.
+    + right. eexists. split; [reflexivity|]. cbn [snd]. rewrite Z.min_l by lia. rewrite Z_to_bv_bv_unsigned. reflexivity.
+    + right. eexists. split; [reflexivity|]. cbn [snd]. rewrite Z.max_l by lia.
+      replace (bv_unsigned b + bv_unsigned s - bv_unsigned b) with (bv_unsigned s) by lia.
+      rewrite Z_to_bv_bv_unsigned. reflexivity.
+    + left. reflexivity.
+Qed.
+
+Lemma pwd_In_cases : forall l x y, pwd l -> In x l -> In y l -> x = y \/ rdisj x y.
+Proof.
+  intros l x y H. induction H as [|e l Hd Hl IH]; intros Hx Hy; [destruct Hx|].
+  destruct Hx as [<-|Hx]; destruct Hy as [<-|Hy].
+  - left. reflexivity.
+  - right. exact (Hd y Hy).
+  - right. apply rdisj_sym. exact (Hd x Hx).
+  - exact (IH Hx Hy).
+Qed.
+
+Lemma subtract_shrink : forall (f : word * word -> Z) (a n : word),
+  (forall e e', bv_unsigned (snd e) = bv_unsigned (snd e') -> f e = f e') -> (forall e, 0 <= f e) ->
+  forall l, (forall e, In e l -> e = (a, n) \/ rdisj e (a, n)) ->
+  zsumf f (maps_subtract l (bv_unsigned a) (bv_unsigned a + bv_unsigned n)) <= zsumf f l
+  /\ (length (maps_subtract l (bv_unsigned a) (bv_unsigned a + bv_unsigned n)) <= length l)%nat.
+Proof.
+  intros f a n Hf Hf0 l. induction l as [|[b s] l IH]; intros Hc; [cbn; lia|].
+  cbn [maps_subtract]. rewrite zsumf_app, length_app.
+  destruct (IH (fun e H => Hc e (or_intror H))) as [IH1 IH2].
+  change (zsumf f ((b, s) :: l)) with (f (b, s) + zsumf f l). change (length ((b, s) :: l)) with (S (length l)).
+  destruct (iv_subtract_keep b s a n (Hc (b, s) (or_introl eq_refl))) as [E|(e & E & Es)]; rewrite E.
+  - change (zsumf f []) with 0. cbn [length]. pose proof (Hf0 (b, s)). lia.
+  - change (zsumf f [e]) with (f e + 0). cbn [length]. rewrite (Hf e (b, s) Es). lia.
+Qed.
+
+Lemma FRONTR_unmap : forall mo R addr n, LOK bsegs mo -> map_has (vm_maps (m_vmmaps mo)) addr n = true ->
+  FRONTR mo R -> FRONTR (mm_unmap addr n mo) R.
+Proof.
+  intros mo R addr n HO Hh [[H0 [H HK]] NP]. split; [| apply noaccess_pos_unmap; exact NP]. split; [exact H0|]. unfold fr_phi, fr_count in *.
   rewrite (mm_unmap_maps addr n mo).
   replace (vm_reserved (m_vmmaps (mm_unmap addr n mo))) with (vm_reserved (m_vmmaps mo)) by reflexivity.
   rewrite zsumf_app in *. rewrite length_app in *.
-  assert (Hle : zsumf (jcost FR_NMAX) (map_remove (vm_maps (m_vmmaps mo)) addr) <= zsumf (jcost FR_NMAX) (vm_maps (m_vmmaps mo))).
-  { unfold map_remove. apply zsumf_filter_le. intros e _. apply jcost_nonneg. unfold FR_NMAX. lia. }
-  assert (Hlen : (length (map_remove (vm_maps (m_vmmaps mo)) addr) <= length (vm_maps (m_vmmaps mo)))%nat).
-  { unfold map_remove. apply List.filter_length_le. }
+  destruct (subtract_shrink (jcost FR_NMAX) addr n
+              ltac:(intros e e' E; unfold jcost, esz; rewrite E; reflexivity)
+              ltac:(intros e; apply jcost_nonneg; unfold FR_NMAX; lia)
+              (vm_maps (m_vmmaps mo))
+              (fun e He => pwd_In_cases _ e (addr, n) (lok_maps_pwd _ _ HO) He (map_has_In _ _ _ Hh))) as [Hle Hlen].
   unfold FR_KW in *. split; lia.
 Qed.
 
 (* [comment removed for export] *)
-Theorem FRONTR_placeable : forall mo R n, LOK bsegs mo -> FRONTR mo R -> 0 <= n -> n <= FR_NMAX ->
+Theorem FRONTR_placeable : forall mo R n, LOK bsegs mo -> FRONTR mo R -> 0 < n -> n mod 4096 = 0 -> n <= FR_NMAX ->
   mmap_placeable mo n.
 Proof.
-  intros mo R n HO [[H0 [H _]] _] Hn Hle. apply (mmap_placeable_gap bsegs mo n HO).
-  apply vm_gap_available_of_sum; [exact Hn|]. rewrite (lok_top _ _ HO).
-  assert (Hm : zsumf (jcost n) (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) <= fr_phi mo).
-  { unfold fr_phi. apply zsumf_mono. intros e _. apply jcost_mono. exact Hle. }
-  unfold FR_COEF in *. lia.
+  intros mo R n HO [[H0 [H _]] _] Hn Hna Hle.
+  unfold fr_phi in H. rewrite zsumf_jcost in H.
+  set (K := Z.of_nat (length (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)))) in *.
+  set (S := zsumf esz (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo))) in *.
+  apply (mmap_placeable_of_bounds bsegs mo n K S HO Hn Hna); [unfold K; lia| unfold S; lia|].
+  assert (K0 : 0 <= K) by (unfold K; lia).
+  assert (KM : K * (n + 4095) <= K * (FR_NMAX + 4095)) by (apply Z.mul_le_mono_nonneg_l; lia).
+  unfold FR_FLOOR, FR_COEF in *. lia.
 Qed.
 
 (* [comment removed for export] *)
@@ -164,7 +223,7 @@ Lemma FRONTR_intro : forall mo R K S,
   0 <= R ->
   Z.of_nat (length (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo))) <= K ->
   zsumf esz (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) <= S ->
-  4096 + S + K * (FR_NMAX + 4095) + FR_NMAX + FR_COEF * R <= alloc_ceiling ->
+  FR_FLOOR + S + K * (FR_NMAX + 4095) + FR_NMAX + FR_COEF * R <= alloc_ceiling ->
   FR_KW * K + R <= target_alloc_limit ->
   noaccess_pos mo ->
   FRONTR mo R.
@@ -175,19 +234,19 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Theorem FRONTR_placeable_big : forall mo R n, LOK bsegs mo -> FRONTR mo R -> 0 <= n -> n <= FR_NBIG -> FR_RBIG <= R ->
+Theorem FRONTR_placeable_big : forall mo R n, LOK bsegs mo -> FRONTR mo R -> 0 < n -> n mod 4096 = 0 -> n <= FR_NBIG -> FR_RBIG <= R ->
   mmap_placeable mo n.
 Proof.
-  intros mo R n HO HF Hn Hle HR.
-  destruct (Z_le_gt_dec n FR_NMAX) as [Hs|Hb]; [exact (FRONTR_placeable mo R n HO HF Hn Hs)|].
-  destruct HF as [[H0 [H HK]] _]. apply (mmap_placeable_gap bsegs mo n HO).
-  apply vm_gap_available_of_sum; [exact Hn|]. rewrite (lok_top _ _ HO).
-  unfold fr_phi in H. rewrite zsumf_jcost in *. unfold fr_count in HK.
+  intros mo R n HO HF Hn Hna Hle HR.
+  destruct (Z_le_gt_dec n FR_NMAX) as [Hs|Hb]; [exact (FRONTR_placeable mo R n HO HF Hn Hna Hs)|].
+  destruct HF as [[H0 [H HK]] _].
+  unfold fr_phi in H. rewrite zsumf_jcost in H. unfold fr_count in HK.
   set (K := Z.of_nat (length (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)))) in *.
   set (S := zsumf esz (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo))) in *.
+  apply (mmap_placeable_of_bounds bsegs mo n K S HO Hn Hna); [unfold K; lia| unfold S; lia|].
   assert (HK0 : 0 <= K) by (unfold K; lia).
   assert (HKB : K <= 2^19) by (unfold FR_KW, FR_RBIG, target_alloc_limit in *; lia).
-  unfold FR_COEF, FR_NMAX, FR_NBIG, FR_RBIG in *. nia.
+  unfold FR_FLOOR, FR_COEF, FR_NMAX, FR_NBIG, FR_RBIG in *. nia.
 Qed.
 
 End CeilWrap.

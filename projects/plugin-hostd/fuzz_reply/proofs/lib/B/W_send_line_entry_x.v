@@ -3,11 +3,12 @@
 (* Modified by Theorem Labs, 2026-10: the entry segment of fuzz_reply's send_line walk on IMAGE B
    (fuzz_reply.asan-ubsan 0x82854), in the form of the cgif walks of proofs/cgif/cgif_file_fuzzer/lib/A/AC8b.v (a cut
    at a loop head) and lib/A/ACfj.v (segments joined at cut points).  Structure ported from image A's
-   lib/A/W_send_line_entry.v (a working branch 9367674296a, sl_entry) and from the old image-B walk
-   a working branch 37280b674f71 lib/B/Prog/send_line_front.v (the entry to the loop top 0x828f8). *)
+   lib/A/W_send_line_entry.v (a working branch, sl_entry) and from the old image-B walk
+   a working branch lib/B/Prog/send_line_front.v (the entry to the loop top 0x828f8). *)
 (* Modified by Theorem Labs, 2026-10-30 (a Theorem Labs lane, row G-BSL-b):
    the ARx-generic room-form twin of W_send_line_entry.v's entry segment: sl_entry_x over ARx, the C3 peak line and
    the room threading (the B twin of a Theorem Labs lane's lib/A/W_send_line_entry_x.v) *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The entry runs the prologue (13 saved registers into the 144-byte frame at 40(sp) .. 136(sp)), the three early
    tests of relay.c:68-70 (g_client < 0, len = 0, g_client_broken) and the setup of the loop's registers
    (fuzz_reply.c:282-290: sent = 0, the flag line <> 0, EINTR, the shadow base, the kept auipc registers and the five
@@ -19,7 +20,7 @@
    sl_entry_x over any allocator relation ARx with its laws and HP0 and any room record RP, stated as
    W_send_line_cx_x.v's sl_entry_stmt_x (room form).  Its text is W_send_line_entry.v (image B's AR walk, not edited;
    its AR-free helpers are copied here) under the conversion image A's lib/A/W_send_line_entry.v underwent into
-   lib/A/W_send_line_entry_x.v (a working branch 0828d5d79f5): the journal is W_journal_x.ajournal_gx_x at
+   lib/A/W_send_line_entry_x.v (a working branch): the journal is W_journal_x.ajournal_gx_x at
    PST ARx with the ghost list Hp after S, the run chain W_journal_x's paj_run_x_x / paj_run_to_x_x, the AR-stated
    helpers their _x twins (alx_blocks / alx_const for the laws).  B's numerals, frame, spills and trap-site handling
    are the AR walk's, and so is its Section: it states no runtime or allocator site (the entry makes no call), so A's
@@ -397,7 +398,7 @@ Hypothesis HA_call : forall lyc Sc regsT ch p n, mo_ok MT Sc (mo_malloc MT n + m
 Let RUNG := paj_run_x_xG B PST ARx LAWS R (G_SL B RG) HG 0 [].
 Let RUNTOG := paj_run_to_x_xG B PST ARx LAWS R (G_SL B RG) HG 0 [].
 Let BRR := paj_branch_xR (PI := PI) (R := R).
-(* W_send_line_entry_x.v:653 sl_off_exit_x at R *)
+(* W_send_line_entry_x.v:654 sl_off_exit_x at R *)
 Lemma sl_off_exit_xR : forall W ly S Hp regs mem md ch c O mx no cap out Bl regsX memX mdX kr,
 afn_pre_x SEGS B ARx SL_STK ly S Hp W regs mem md ch ->
 aout_at B RG ly S W mem c O mx no cap out -> rp_RM RP S kr ->
@@ -433,7 +434,7 @@ assert (Hctl : sl_ctl c (Z.of_nat (length Bl)) = c)
   by (destruct c as [cl br dd ei ev]; unfold sl_ctl; cbn [ct_cl ct_br ct_dd ct_ei ct_ev] in *; rewrite Hoff; reflexivity).
 rewrite Hctl. split; [exact (aout_moved_x ly S Hp W mem md mem' c O mx no cap out HAR HOUT KL' GR') | intros _; reflexivity].
 Qed.
-(* W_send_line_entry_x.v:418 sl_to_loop_x at R *)
+(* W_send_line_entry_x.v:419 sl_to_loop_x at R *)
 Lemma sl_to_loop_xR : @sl_loop_stmt_xR fx rc SK PI B PST ARx MT RP MMAX RG R ->
 forall W ly S Hp regs mem md ch c O mx no cap out line Bl regsL memL mdL kr,
 afn_pre_x SEGS B ARx SL_STK ly S Hp W regs mem md ch ->
@@ -496,7 +497,7 @@ split; [intros Hd; unfold sl_cost in HRM; rewrite (Hlive Hd) in HRM; rewrite Z.a
 split; [intros _; exact (RMM_of RP S kr _ (Nat.le_add_l _ _) HRM)|].
 exact HCNT.
 Qed.
-(* W_send_line_entry_x.v:482 sl_entry_x at R *)
+(* W_send_line_entry_x.v:483 sl_entry_x at R *)
 Theorem sl_entry_xR : @sl_entry_stmt_xR fx rc SK PI B PST ARx MT RP MMAX RG R.
 Proof.
 intros LOOP W ly S Hp regs mem md ch c O mx no cap out line Bl HPRE H10 H11 HOUT HROM HBL Hl0 Hl63 HLOK HLG HCAP HLIVE

@@ -3,10 +3,11 @@
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/Prog/LLVMFuzzerTestOneInput_c.v, with its module paths changed; 150 of its 167 lines of code are new or changed and 50 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_lock/lib/Prog/FrameRet.v, with its module paths and addresses changed; 232 of its 268 lines of code are new or changed and 131 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The cut-free (agreement) form of the slot of reac-pw/fuzz_segconf LLVMFuzzerTestOneInput (UBSan, [0x13888,
    0x14268)): U/Prog/SlotFR.v and U/Prog/SlotInv.v with SR := SRcf, in the form of reac-pw/fuzz_pin's
-   U/Prog/SlotInvCF.v (commit a2a7540da98; itself libreac/fuzz_ctrl's released U/Prog/SlotInvCF.v,
-   commit 25e3d17bdb50). The U segment files of the slot (U/Prog/Seg/*.v, U/Prog/SegSlot.v) are copied
+   U/Prog/SlotInvCF.v (itself libreac/fuzz_ctrl's released U/Prog/SlotInvCF.v).
+   The U segment files of the slot (U/Prog/Seg/*.v, U/Prog/SegSlot.v) are copied
    to U/Prog/SegCF/*.v over this file, which each copy imports after SlotFR and SlotInv. Changes:
    - SR, its lemmas, Contract.evt_SR(_canon) and KindBGlue.kb_run are redefined under the same names (pin's block,
      verbatim), so the copied segment proofs prove the cut-free run (crealizes: realizes, cut_free and uniform,

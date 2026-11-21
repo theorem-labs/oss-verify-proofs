@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's segment list run_segments). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -325,7 +326,7 @@ Section Cover.
   Variable N : Z.
   Hypothesis Hnw : bv_unsigned d + N < 2^64.
 
-  #[using="Hnw"] Lemma zstores_miss : forall ws m (x : word),
+  Lemma zstores_miss : forall ws m (x : word),
     ws_inb ws N = true ->
     (forall on, In on ws -> covers_off (bv_unsigned x - bv_unsigned d) on = false) ->
     zstores m d ws x = m x.
@@ -344,7 +345,7 @@ Section Cover.
         cbn [fst snd] in Hc; lia.
   Qed.
 
-  #[using="Hnw"] Lemma zstores_hit : forall ws m (x : word),
+  Lemma zstores_hit : forall ws m (x : word),
     ws_inb ws N = true ->
     (exists on, In on ws /\ covers_off (bv_unsigned x - bv_unsigned d) on = true) ->
     zstores m d ws x = Some (Z_to_bv 8 0).
@@ -366,7 +367,7 @@ Section Cover.
       f_equal. apply nth_zeros.
   Qed.
 
-  #[using="Hnw"] Lemma zstores_cover : forall ws m (n : nat),
+  Lemma zstores_cover : forall ws m (n : nat),
     Z.of_nat n = N ->
     ws_inb ws N = true ->
     ws_cover ws n = true ->
@@ -451,7 +452,9 @@ Ltac zlit :=
 
 (* [comment removed for export] *)
 Ltac region_side :=
-  unfold win_lo; rewrite ?stack_max_size_val, ?length_N_to_le_bytes, ?length_zeros, ?repeat_length;
+  unfold win_lo, wok_lo; rewrite ?stack_max_size_val;
+  unfold stack_window_reach;
+  rewrite ?length_N_to_le_bytes, ?length_zeros, ?repeat_length;
   cbn [length Z.of_nat Pos.of_succ_nat Pos.succ Nat.add Nat.mul]; imm_norm; unorm; lia.
 
 (* [comment removed for export] *)
@@ -613,6 +616,44 @@ Definition bwd (segs : list Segment) (G : machine_state -> Prop) : Prop :=
 
 Lemma bwd_msteps : forall segs tgt, bwd segs (fun st => msteps segs st tgt).
 Proof. intros segs tgt st st' H1 H2. eapply msteps_trans; eassumption. Qed.
+
+(* A walk over the binary's own segments is the same walk over the run's
+   segment list ([StoreOk.step_run_segments]), so a goal closed backwards
+   over [run_segments] is closed backwards over the binary's walk. *)
+Lemma msteps_run_segments : forall segs inp (sp mbase : word) st st',
+  msteps segs st st' -> msteps (run_segments segs inp sp mbase) st st'.
+Proof.
+  intros segs inp sp mbase st st' H.
+  induction H as [ms | ms ms' ms'' Hs Hstep _ IH]; [apply mst_refl|].
+  eapply mst_step; [exact Hs | apply step_run_segments; exact Hstep | exact IH].
+Qed.
+
+Lemma bwd_run_segments : forall segs inp (sp mbase : word) G,
+  bwd (run_segments segs inp sp mbase) G -> bwd segs G.
+Proof.
+  intros segs inp sp mbase G HG st st' Hm HG'.
+  apply (HG st st'); [apply msteps_run_segments; exact Hm | exact HG'].
+Qed.
+
+(* A store of bytes the memory already holds changes nothing. *)
+Lemma wbytes_same_m : forall bs m (a : word),
+  (bv_unsigned a + Z.of_nat (length bs) <= 2 ^ 64)%Z ->
+  (forall j, (j < length bs)%nat ->
+     m (Z_to_bv 64 (bv_unsigned a + Z.of_nat j)) = Some (nth j bs (Z_to_bv 8 0))) ->
+  wbytes m a bs = m.
+Proof.
+  intros bs m a Hnw Hall. apply FunctionalExtensionality.functional_extensionality. intros x.
+  pose proof (u64_range x) as Hx. pose proof (u64_range a) as Ha.
+  destruct (Z_lt_dec (bv_unsigned x) (bv_unsigned a)) as [Hlt|Hge].
+  { apply wbytes_outside; lia. }
+  destruct (Z_lt_dec (bv_unsigned x) (bv_unsigned a + Z.of_nat (length bs))) as [Hin|Hout].
+  2: { apply wbytes_outside; lia. }
+  rewrite wbytes_inside by lia.
+  assert (Hxj : x = Z_to_bv 64 (bv_unsigned a
+                     + Z.of_nat (Z.to_nat (bv_unsigned x - bv_unsigned a)))).
+  { apply bv_eq. rewrite u_Z2bv by lia. lia. }
+  rewrite Hxj at 2. symmetry. apply Hall. lia.
+Qed.
 
 (* [comment removed for export] *)
 Ltac gsteps HG := eapply HG.

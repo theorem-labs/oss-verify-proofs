@@ -3,10 +3,11 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the kit of check_reply_answer's ASan walk (plugin-hostd/fuzz_command), in the form of proofs/cgif/cgif_file_fuzzer/lib/A/AChc.v (the walk's kit: regions, facts, register files, seed lemma cl_seed) over fuzz_command's listing (lib/A/Prog/CmdList.v). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_reply_answer_k.v, with its module paths, module names and numbers changed; 313 of its 439 lines of code are new or changed and 303 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The pieces of the ASan walk of check_provenance (fuzz_segconf image A, 0x872e0) that are not the run itself: the
    call rule of the strcmp wrapper in the journal form the walk uses, the byte bridges from the contract's reader
    forms (lib/A/Prog/SegABase.v) to the wrapper's (lib/A/Rt/RtDefs.v), the symbolic entry state and its seed lemma.
-   The form is plugin-hostd/fuzz_command's lib/A/Prog/check_reply_answer_k.v at origin/ossv/recipes 501c0d516c69
+   The form is plugin-hostd/fuzz_command's lib/A/Prog/check_reply_answer_k.v
    (acall_rule, acall_of_art, call_strcmp_of, cra_entry), over segconf's listing (lib/A/Prog/SegList.v). *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

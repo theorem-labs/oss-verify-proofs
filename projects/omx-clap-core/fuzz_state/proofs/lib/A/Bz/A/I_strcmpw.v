@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/simdjson/fuzz_element/lib/BA/R_strncasecmp.v, with its module paths and addresses changed; 4 of its 22 lines of code are new or changed and 651 lines of the source are left out. *)
-(* copied by path from a working branch 51f06361767: its first 25 lines (to icells_sc); the 289 lines after them, definitions and lemmas nothing here uses, are removed *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* copied by path from a working branch: its first 25 lines (to icells_sc); the 289 lines after them, definitions and lemmas nothing here uses, are removed *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.A.Bz Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

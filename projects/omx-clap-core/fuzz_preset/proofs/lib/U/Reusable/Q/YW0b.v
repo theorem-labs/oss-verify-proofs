@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -155,9 +156,9 @@ Qed.
 Lemma skel_S2 : forall r, skeleton (ss_mem (S2 r)) = skeleton (entry_mem r).
 Proof. intros r. rewrite S2_mem. destruct r; reflexivity. Qed.
 
-Lemma mem_S2no : forall r, ss_mem (S2no r) = ss_mem (S2 r).
+Lemma mem_S2no : forall e r, ss_mem (S2no e r) = ss_mem (S2 r).
 Proof.
-intros r. rewrite S2_mem. destruct r; vm_compute; reflexivity. Qed.
+intros e r. rewrite S2_mem. destruct r; vm_compute; reflexivity. Qed.
 Lemma wr_entry : forall E r x, in_wrange E (entry_mem r) x ->
 (base_val E (Some aSP) - 8256 <= x < base_val E (Some aSP)) \/ (base_val E (Some aTP) - 164 <= x < base_val E (Some aTP) - 160).
 Proof.
@@ -171,8 +172,8 @@ lia.
 Qed.
 Lemma wr_after : forall E x, in_wrange E after_memR x -> base_val E (Some aSP) - 8256 <= x < base_val E (Some aSP).
 Proof. intros E x (rg & [<-|[]] & Hx). cbn [r_base r_wlo r_whi] in Hx. lia. Qed.
-Lemma S4_view2 : forall r, view [19; 20; 21; 22]%nat (S4 r) = [SOff aB16 0; SLit 4095; SOff aP 0; SOff aN 0].
-Proof. intros r. destruct r; vm_compute; reflexivity. Qed.
+Lemma S4_view2 : forall e r, In e [12; 22]%Z -> view [19; 20; 21; 22]%nat (S4 e r) = [SOff aB16 0; SLit 4095; SOff aP 0; SOff aN 0].
+Proof. intros e r He. destruct He as [<-|[<-|[]]]; destruct r; vm_compute; reflexivity. Qed.
 Lemma S8_view2 : view [19; 20; 21; 22]%nat S8 = [SOff aB16 0; SLit 4095; SOff aP 0; SOff aN 0].
 Proof. vm_compute. reflexivity. Qed.
 Lemma S10_view2 : view [19; 20; 21; 22]%nat S10 = [SOff aB16 0; SLit 4095; SOff aP 0; SOff aN 0].

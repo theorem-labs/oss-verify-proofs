@@ -1,4 +1,4 @@
-(* lib/A/Prog/memchr_wrap_c.v (RtStr's port, unchanged from cold/c-asan-rt-fmio-n affce6489c8) with the one change
+(* lib/A/Prog/memchr_wrap_c.v (RtStr's port, unchanged) with the one change
    of the local-shadow variant (FMss_shv.v): `shadow_rw m` becomes `shvis m P N` for the checked range, and the post's
    `shadow_rw m'` becomes `shvis m' P N`.  The constants and memchr_n stay in the original module. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.

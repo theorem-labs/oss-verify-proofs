@@ -2,11 +2,12 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: new walk for libreac/fuzz_pcap (a Theorem Labs lane). The generic helpers pe_land_m32,
    pe_denot_and_m32(_add0), pe_trim_* / pe_submem_to / pe_prreg_raw / pe_add_fact / pe_sregion are cgif_file_fuzzer
-   lib/A/ACer.v's (origin/ossv/recipes c8557374ad2e) as a Theorem Labs lane's lib/A/Prog/PcapSourceOpen.v restates them
-   (a working branch f0d76b020fe); pe_U_srl, pe_cbyte .. pe_word_at and pe_saved_of are
-   a Theorem Labs lane's lib/A/Prog/GrantEntryHead.v (a working branch b83b8251684) restated over PAImg pcap_listing. *)
+   lib/A/ACer.v's as a Theorem Labs lane's lib/A/Prog/PcapSourceOpen.v restates them
+   (a working branch); pe_U_srl, pe_cbyte .. pe_word_at and pe_saved_of are
+   a Theorem Labs lane's lib/A/Prog/GrantEntryHead.v (a working branch) restated over PAImg pcap_listing. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_pcap/lib/A/Prog/PcapHarnessPE.v, with its module paths and module names changed; 303 of its 358 lines of code are new or changed and 1252 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_link/lib/A/Prog/model_readHead.v, with its module names changed; 802 of its 861 lines of code are new or changed and 299 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* model_read on image A: the tail of its walk, from the branch on name at +0x15c (model_readDefs.v MR_AT15C, the
    frame's regions set aside) to the exit: the -EINVAL refusals (no name, an empty name), the call of index_of and
    the -ENODEV refusal, and the read (checked_memset, the request in the frame, talk) to the exit +0x208, where

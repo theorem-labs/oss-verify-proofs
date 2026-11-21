@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: statements written out as text, the system-call robustness premise (sys_rob). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -6,6 +7,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics 
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib.Lib Require Import PropExec MState Mem Exec.
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib Require Export Scfg.
+From OSSVerify.Proofs.boost_json.fuzz_parse.lib.Common.Cfg Require RomBase.
 Require Import OSSVerify.Proofs.boost_json.fuzz_parse.lib.Lib.CDef.
 Local Ltac2 zQ s := CDef.cdeft "3h5LinuxProcessSemanticsfLinuxProcessSem5State0dSyscallEffect3h5LinuxProcessSemanticsfLinuxProcessSemeRiscvSemanticsjddmachine_state79OSSVerify6Proofsaboost_jsonafuzz_parse3lib3Lib5ITree~~~~~~o44resp3h5LinuxProcessSemanticsfLinuxProcessSem3Runs7h0advance_past_svcs7capply_effect37Corelib4Init9Datatypeshh64list3h5LinuxProcessSemanticsfLinuxProcessSemcMemImageTypehj67Segment05Model05event37Corelib7Numbers7BinNumsho44Npos35stdpp9bitvectorbdefinitionshq52bv" s.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -14,7 +16,8 @@ Open Scope bv_scope.
 
 (* [comment removed for export] *)
 Definition resp : ltac2:(zQ "00S") := ltac2:(zQ "10!ie$0").
-Definition nret : ltac2:(zQ "20!n4!s0>2ms$0>3eff$1$0") := ltac2:(zQ "40!n4!v3!hg7!s0\2ms$0\3eff$3@1$1@2$2^2^1").
+Definition nret (ms : machine_state) (eff : resp) : machine_state :=
+  advance_past_svc (apply_effect ms eff).
 
 (* [comment removed for export] *)
 Module Exc.
@@ -82,7 +85,12 @@ Record node_sound : Prop := {
       m_halted mo' = Some code /\ SSTEP (mkCfg ms mo) [ExitEv code (m_fs mo')] (SNext (mkCfg ms mo'));
   (* [comment removed for export] *)
   ns_progress : forall n ms mo, at_node n ms -> m_halted mo = None -> minv mo -> nsafe n mo ->
-      (exists rsp mo' evs, nstep n mo rsp mo' evs) \/ (exists code mo', nexit n mo code mo')
+      (exists rsp mo' evs, nstep n mo rsp mo' evs) \/ (exists code mo', nexit n mo code mo');
+  (* LPS 727298f3: the node's system-call specification is the same over every larger read-only
+     backing ([RomBase.sys_rob]; [ShapeAlg.rz_node] and [SReach.sr_step] ask it); boost-beast's
+     Lib/ITree.v field. *)
+  ns_rob : forall n ms mo, at_node n ms -> m_halted mo = None -> minv mo -> nsafe n mo ->
+      RomBase.sys_rob segs (mkCfg ms mo)
 }.
 
 (* [comment removed for export] *)

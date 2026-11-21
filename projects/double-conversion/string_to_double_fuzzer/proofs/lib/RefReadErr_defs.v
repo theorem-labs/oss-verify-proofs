@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's zero-filled stack run is the 6144513 bytes below sp0). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -44,7 +45,7 @@ Definition srRE0 : list expr := Eval vm_compute in sr_after_call_j srRE_base KEP
 (* [comment removed for export] *)
 Definition knRE0 : list kentry :=
   [KAlign (EVar 0) 16; KRange (EVar 0) 0x7fff80000000 0x800000000000;
-   KWr (SA (EVar 0) (-8388608)) 8388608;
+   KWr (SA (EVar 0) (-6144513)) 6144513;
    KRange (EVar 2) 0x7fff80000000 0x800000400000;
    KWr (SA (ELit 0) 0xb2000) 0x34000;
    KImg 0x10000 0xb2ea0; KImg 0xb2ea1 0xb2ee9; KImg 0xc2ee9 0xc4848; KImg 0xe4920 0xe4940;   (* [comment removed for export] *)

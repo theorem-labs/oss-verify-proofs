@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFhc.v, with its module paths changed and its addresses moved to libreac/fuzz_pcap's ASan build. *)
-(* Modified by Theorem Labs, 2026-10: free_hyps.fh_Hb asks b + kBatchBytes <= SB + region_off kBatchClass + kFreeArrayOffset instead of + 2 ^ 31, and derived_ranges gives b + kBatchBytes <= SB + 24 * 2 ^ 32 + 3758096384 (a Theorem Labs lane 2c257ca7d7a's text); EV_MAX-free. *)
+(* Modified by Theorem Labs, 2026-10: free_hyps.fh_Hb asks b + kBatchBytes <= SB + region_off kBatchClass + kFreeArrayOffset instead of + 2 ^ 31, and derived_ranges gives b + kBatchBytes <= SB + 24 * 2 ^ 32 + 3758096384 (a Theorem Labs lane's text); EV_MAX-free. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_link.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

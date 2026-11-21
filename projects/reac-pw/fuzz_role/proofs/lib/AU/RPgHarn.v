@@ -1,5 +1,5 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgHarn.v at 3c7e900fc63 and the harness section
-   of proofs/reac-pw/fuzz_rate/lib/AU/RtPgSegB.v at 24c66d54276 (its lines 1265-1523) for reac-pw/fuzz_role image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgHarn.v and the harness section
+   of proofs/reac-pw/fuzz_rate/lib/AU/RtPgSegB.v (its lines 1265-1523) for reac-pw/fuzz_role image B
    (fuzz_role.asan-ubsan): image B's pcs, frame class, real-frame size and flag word and the record lib/AU/RPgImgA.v
    role_himg_B; the cuts and the segment statements in fuzz_rate image B's continuation form (rh_common, rh_from_C1
    .. rh_from_C4, S_E01 / S_M01 / S_M02 / S_X01, rh_S_C23_stmt, rh_seg_chain) with role's one-byte header in place of

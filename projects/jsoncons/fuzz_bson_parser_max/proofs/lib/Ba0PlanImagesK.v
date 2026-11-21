@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved-interval ledger): changed asan0_img_facts. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -156,4 +157,7 @@ Proof.
   - rewrite asan0_res_sizes. reflexivity.
   - cbn [rw_lo rw_len ASAN0]. split; [lia|]. intros m x Hx. apply asan0_rw_window. lia.
   - exact asan0_shadow_ok.
+  (* [if_resx], the field appended at 75d69e00: this binary's own table
+     declares n_resx := 2 and p_resx := 20, read from Ba0DefsK's literal. *)
+  - cbn [n_resx p_resx ASAN0]. split; lia.
 Qed.

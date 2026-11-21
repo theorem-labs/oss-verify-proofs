@@ -4,9 +4,10 @@
 (* Modified by Theorem Labs, 2026-10: the boundary states and segment statements of LLVMFuzzerTestOneInput's ASan+UBSan walk (plugin-hostd/fuzz_command image B, 0x86530), the B twin of lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh6.v (the CL_*_stmtX statements: from a point of the function to its return, under the entry's context) and A/ACf5.v (rtcx, rt_base: the entry's facts bundled once). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths, module names, addresses and numbers changed; 469 of its 518 lines of code are new or changed and 289 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths and module names changed; 118 of its 143 lines of code are new or changed and 493 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3): segment B5 of reac_segconf_parse_file
    (the line driver, 116 instructions), its INTERNAL points. The B5 segment lane of the image-B G3 walk owner, 2026-10-30. ADAPTED from
-   the image-A G3 walk owner's image-A lib/A/Prog/pf_a5_d.v (commit 385fd095481f): the same points in the C, the
+   the image-A G3 walk owner's image-A lib/A/Prog/pf_a5_d.v: the same points in the C, the
    pcs, registers and spill slots re-derived from image B's code
    (the neutral excerpt reac_segconf_parse_file.fuzz_segconf.asan-ubsan.s). Statement text only:
    pf_seg_B5.v chains the lemmas that prove these statements into S_B5 (lib/B/Prog/pf_pieces.v).

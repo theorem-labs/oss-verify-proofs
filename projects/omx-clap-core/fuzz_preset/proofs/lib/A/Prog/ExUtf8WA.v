@@ -1,9 +1,9 @@
-(* fuzz_preset image A' (asan, #102 pin 1be0f53d96cb, unstripped twin bff8519bbe3e, facts 8f3e7e1a07f1): the walk of
+(* fuzz_preset image A' (asan, #102 pin 1be0f53d96cb, unstripped twin bff8519bbe3e, facts): the walk of
    put_utf8 (A' 0x88164, slot 6881) and of ex_utf8 (A' 0x84764, slot 3169), ONE proof run from either entry slot of the
    whole-range listing A_prog_listing (lib/A/Listing_prog.v, PAImg_prog.v A_entry_put_utf8 / A_entry_ex_utf8), and the
-   text tput_utf8_specX (the kit's cut 7cdbb61b5fa0, lib/A/PRH_FnReader.v:290-303) at PA := PI_prog_A: pb_put_utf8X_Ap.
+   text tput_utf8_specX (the kit's cut, lib/A/PRH_FnReader.v:290-303) at PA := PI_prog_A: pb_put_utf8X_Ap.
    RELOCATED A -> A' (a Theorem Labs lane's order: B' first, then A'): the old-pin A walk a working branch
-   dafa4151f91 lib/A/Prog/ExUtf8.v (image A f0d2e8d40c7e) moved to A'. bytecmp 1480ca2faea0: put_utf8 old A 0x87c28 vs
+   lib/A/Prog/ExUtf8.v (image A f0d2e8d40c7e) moved to A'. bytecmp 1480ca2faea0: put_utf8 old A 0x87c28 vs
    A' 0x88164, 520 bytes each, EQUAL-mod-pcrel (11 pc-relative words, 0 real differences; a planted one-word change reads
    DIFFERENT); all 14 pc-relative targets name the same place (put_utf8+0x178 x3, __asan_report_store1 x10; the
    auipc+ld at +0x8 reads .got +0x60, __asan_shadow_memory_dynamic_address, on both). The only numbers that move are the
@@ -387,7 +387,7 @@ Qed.
 
 End a.
 
-(* ---- the TEXT (cut 7cdbb61b5fa0 lib/A/PRH_FnReader.v:290-303 tput_utf8_specX) at image A': PA := PI_prog_A (the
+(* ---- the TEXT (cut lib/A/PRH_FnReader.v:290-303 tput_utf8_specX) at image A': PA := PI_prog_A (the
    whole-program listing's instance), PI := prh_img_A (PRH_Img.v), cp := CfParams_preset (the instance the B' twin and
    a Theorem Labs lane's parse_string use). Discharged here from the image files: HOBJ (the shadow-base GOT word and cell are image
    bytes: find_segment over PI_prog_A's segments), HPST (S1ImgA.v pst_in_img_A), the head width (CfParamsPreset.v

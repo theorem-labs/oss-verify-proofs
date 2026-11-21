@@ -1,4 +1,4 @@
-(* copied by path from a working branch 51f06361767, unchanged *)
+(* copied by path from a working branch, unchanged *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.A.Bz Require BvWfKernel.
 (* [comment removed for export] *)
 From LinuxProcessSemantics.LinuxProcessSem Require Import MemImageType.

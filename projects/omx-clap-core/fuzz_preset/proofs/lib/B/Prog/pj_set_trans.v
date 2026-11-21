@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the TREE-TRANSPORT facts of pj_set's image-B walk (fuzz_preset asan-ubsan): pure lemmas
    over the reader's tree predicates (lib/A/PRH_Reader.v: pj_nodeR, pj_memsR, pj_hdrR, pj_cstrR, pj_agreeR, ...),
    generic over the segment list and two memories m m'. The walk's segments use them to carry an object tree across
@@ -376,7 +377,7 @@ destruct t as [| | | txt bits | s | items | members]; cbn [pj_nodeR] in H |- *;
 Qed.
 
 (* ---- S6: the member list moved to new arrays a' (values, 56 bytes each) and ka' (key pointers, 8 bytes each).
-   The pj_memsR move across grow's realloc; plays the role of donor 427ad2ede0bc lib/B/Prog/pj_set_miss.v
+   The pj_memsR move across grow's realloc; plays the role of donor lib/B/Prog/pj_set_miss.v
    m_g_di :3263 / m_g_node_w :3196 / m_g_key :3282 in the old framework. ---- *)
 Lemma pjst_mems_move : forall mbs m m' lblk lblk' a ka a' ka' D,
   pj_memsR segs m lblk (pj_nodeR segs m lblk) a ka mbs D ->

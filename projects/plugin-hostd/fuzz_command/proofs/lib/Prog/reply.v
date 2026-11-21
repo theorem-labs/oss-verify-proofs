@@ -399,8 +399,8 @@ Proof using SEGS FREE_PC ERRNO_LOW GOTG GUARDV GFRAME GOWN AX BSP CTXO SLEN SSEN
       split; [rewrite E1_4; exact HTP|].
       split; [intros a Ha; apply WM1; rewrite SEGS; apply HERR; exact Ha|].
       intros HI. specialize (HAUX HI). rewrite SP1.
-      destruct HAUX as (av & ar & W1 & W2 & W3 & W4 & B1 & B2 & B3 & B4 & LL1 & LL2).
-      exists av, ar.
+      destruct HAUX as (auxrs & av & ar & W1 & W2 & W3 & W4 & B1 & B2 & B3 & B4 & LL1 & LL2).
+      exists auxrs, av, ar. pose proof (auxv_types_len_ge auxrs). unfold AUXV_RAND_K in *.
       split.
       { eapply word_mem_munch; [exact MU1 | | exact W1]. intros k Hk.
         assert (SO : owned B L A (ms_libc B + 8 + Z.of_nat k)) by (right; unfold static_owned; lia).

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the new launch (process input, auxv, group id, exec file name); taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Src0StartupFacts.v, 23 lines within its lines 42-273. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
@@ -41,17 +42,17 @@ Qed.
 
 Section Facts.
   Context {RE : RunEnv}.
+  Variable inp : ProcInput.
   Variable sp0 : word.
-  Variables av ev : list (list byte).
-  Variable uid : word.
-  Variable hw : word.
   Variable rdraw : EntryDraw.
   Variable tid : word.
+  Local Notation av := (in_argv inp) (only parsing).
+  Local Notation hw := (in_hwcap inp) (only parsing).
   Hypothesis Hva : valid_argv av.
   Hypothesis Hlo : (0x7fff80000000 <= bv_unsigned sp0)%Z.
   Hypothesis Hhi : (bv_unsigned sp0 <= 0x800000000000)%Z.
 
-  Let D := D_main sp0 av ev hw (ed_random rdraw) tid.
+  Let D := D_main inp sp0 rdraw (ed_random rdraw) tid.
   Local Notation RND := (ed_random rdraw) (only parsing).
 
   Lemma len_av : (1 <= Z.of_nat (length av) <= 1024)%Z.
@@ -59,7 +60,7 @@ Section Facts.
 
   Lemma D_main_miss : forall segs (a : Z) (n : nat),
     D_main_missb a n = true ->
-    rdn segs (D_main sp0 av ev hw (ed_random rdraw) tid) (Z_to_bv 64 a) n = rdn segs (fun _ => None) (Z_to_bv 64 a) n.
+    rdn segs (D_main inp sp0 rdraw (ed_random rdraw) tid) (Z_to_bv 64 a) n = rdn segs (fun _ => None) (Z_to_bv 64 a) n.
   Proof.
     intros segs a n Hb. pose proof (u64_range tid). pose proof (u64_range hw).
     unfold D_main_missb, D_main_cells in Hb. cbn [forallb] in Hb.
@@ -129,7 +130,7 @@ Section Facts.
   Qed.
 
   Lemma D_main_environ : forall segs,
-    rdn segs D (Z_to_bv 64 0xcaf70) 8 = Some (word_to_le_bytes 8 (envp_w sp0 av)).
+    rdn segs D (Z_to_bv 64 0xcaf70) 8 = Some (word_to_le_bytes 8 (envp_w inp sp0)).
   Proof.
     intros segs. pose proof (u64_range tid). pose proof (u64_range hw). pose proof len_av. subst D.
     unfold D_main, D_fd, D_ssp, D_tls, D_tlsB, D_tlsA, D_libc. peel.
@@ -221,9 +222,25 @@ Section Facts.
     D (Z_to_bv 64 (0xeb338 + i)) = Some (nth (Z.to_nat i) (word_to_le_bytes 8 hw) (Z_to_bv 8 0)).
   Proof. pt8 D_cover_hwcap D_main_hwcap. Qed.
 
+End Facts.
+
+Section FactsME.
+  Context {RE : RunEnv}.
+  Variable sp0 : word.
+  Variables av ev : list (list byte).
+  Variable uid : word.
+  Variable hw : word.
+  Variable rdraw : EntryDraw.
+  Variable tid : word.
+  Hypothesis Hva : valid_argv av.
+  Hypothesis Hlo : (0x7fff80000000 <= bv_unsigned sp0)%Z.
+  Hypothesis Hhi : (bv_unsigned sp0 <= 0x800000000000)%Z.
   Variable regs : bvmap 5 word.
   Variable mem : word -> option byte.
-  Hypothesis ME : main_entry sp0 av ev uid hw rdraw tid regs mem.
+  Variable inp : ProcInput.
+  Variable mbase entry : word.
+  Hypothesis ME : main_entry inp mbase entry sp0 av ev uid hw rdraw tid regs mem.
+  Local Notation RND := (ed_random rdraw) (only parsing).
 
   Lemma main_entry_rdn_image : forall segs (a : Z) (n : nat),
     D_main_missb a n = true ->
@@ -233,25 +250,32 @@ Section Facts.
     assert (Hr : (0 <= a /\ a + Z.of_nat n <= 0xec000)%Z).
     { unfold D_main_missb in Hb. apply andb_true_iff in Hb as [Hb H2]. apply andb_true_iff in Hb as [_ H1].
       apply Z.leb_le in H1. apply Z.leb_le in H2. lia. }
-    rewrite (main_entry_rdn_data sp0 av ev uid hw rdraw tid regs mem ME)
-      by (rewrite stack_max_size_val; unorm; lia).
-    apply D_main_miss. exact Hb.
+    destruct (main_entry_launch inp mbase entry sp0 av ev uid hw rdraw tid regs mem ME)
+      as (brk & E1 & _ & _ & _ & _ & _ & _ & _ & _ & Hrd).
+    rewrite Hrd by (rewrite stack_max_size_val; unorm; lia).
+    subst av. first [ apply (D_main_miss inp sp0 rdraw tid Hva Hlo Hhi) | apply (D_main_miss inp sp0 rdraw tid Hva) | apply (D_main_miss inp sp0 rdraw tid) ]; exact Hb.
   Qed.
 
   Lemma main_entry_tid : forall segs,
     rdn segs mem (Z_to_bv 64 0xcaf98) 4 = Some (word_to_le_bytes 4 tid).
   Proof.
-    intros segs. rewrite (main_entry_rdn_data sp0 av ev uid hw rdraw tid regs mem ME)
-      by (rewrite stack_max_size_val; unorm; lia). apply D_main_tid.
+    intros segs.
+    destruct (main_entry_launch inp mbase entry sp0 av ev uid hw rdraw tid regs mem ME)
+      as (brk & E1 & _ & _ & _ & _ & _ & _ & _ & _ & Hrd).
+    rewrite Hrd by (rewrite stack_max_size_val; unorm; lia).
+    subst av. first [ apply (D_main_tid inp sp0 rdraw tid Hva Hlo Hhi) | apply (D_main_tid inp sp0 rdraw tid Hva) | apply (D_main_tid inp sp0 rdraw tid) ].
   Qed.
 
   Lemma main_entry_guard : forall segs,
     rdn segs mem (Z_to_bv 64 0xeb2b0) 8 = Some (word_to_le_bytes 8 (canary_w RND)).
   Proof.
-    intros segs. rewrite (main_entry_rdn_data sp0 av ev uid hw rdraw tid regs mem ME)
-      by (rewrite stack_max_size_val; unorm; lia). apply D_main_guard.
+    intros segs.
+    destruct (main_entry_launch inp mbase entry sp0 av ev uid hw rdraw tid regs mem ME)
+      as (brk & E1 & _ & _ & _ & _ & _ & _ & _ & _ & Hrd).
+    rewrite Hrd by (rewrite stack_max_size_val; unorm; lia).
+    subst av. first [ apply (D_main_guard inp sp0 rdraw tid Hva Hlo Hhi) | apply (D_main_guard inp sp0 rdraw tid Hva) | apply (D_main_guard inp sp0 rdraw tid) ].
   Qed.
-End Facts.
+End FactsME.
 End FPX_1.
 
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).

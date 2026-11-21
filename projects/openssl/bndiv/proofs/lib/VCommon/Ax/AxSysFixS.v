@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (R_sys_post_B, adv_zeros and adv_unmaps state that advance_past_svc clears the reservation; the mmap (222) step passes the sys_rob premise rob_sys_222). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
@@ -205,15 +206,19 @@ Variable LIM : Z.
 
 Notation MRm := (MR segs fs0).
 Notation RR ρ := (R segs amodel (MRm ρ) LIM ρ).
-
+(* WAS `a_resv B = a_resv A` with `(ms_resv ms)` in the conclusion.  advance_past_svc
+   clears the reservation at this revision (LPS@75d69e00 Run.v:221-227), so the
+   post-syscall machine state carries None and the abstract post-state built by
+   AxSys.v's with_model carries RNone.  Same restatement as AxSysSound.v's R_sys_post,
+   which this lemma is the mem'-varying twin of. *)
 Lemma R_sys_post_B (ρ : valuation) (A B : AST) (ms : machine_state) (model m' : Model) (ret : word) (rv : xv) (mem' : word -> option byte) :
   RR ρ A (mkCfg ms model) ->
-  a_pc B = npc A -> pc_ok (npc A) = true -> a_regs B = aset (a_regs A) reg_a0 rv -> a_resv B = a_resv A ->
+  a_pc B = npc A -> pc_ok (npc A) = true -> a_regs B = aset (a_regs A) reg_a0 rv -> a_resv B = RNone ->
   xv_val ρ rv ret -> sat ρ (a_facts B) -> MRm ρ (a_model B) m' -> m_halted m' = None ->
   vm_backing_used m' <= a_budget B -> vm_limit (m_vmmaps m') = LIM ->
   RMem segs ρ (a_mem B) mem' -> hs_ok ρ (a_mem B) mem' -> mem_cov segs m' mem' -> comp_inv segs ρ (a_mem B) m' ->
   na_ok segs ρ (a_mem B) m' mem' ->
-  RR ρ B (mkCfg (setx ms (Z_to_bv 5 10) ret (ms_pc_val ms + Z_to_bv 64 4) (ms_resv ms) mem') m').
+  RR ρ B (mkCfg (setx ms (Z_to_bv 5 10) ret (ms_pc_val ms + Z_to_bv 64 4) None mem') m').
 Proof.
   intros HR Epc Hok Eregs Eresv Hv Hsat HM Hh Hb Hl HRM Hhs Hcov Hcomp Hna.
   destruct HR as [H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15]. cbn [cfg_ms cfg_model] in *.
@@ -222,19 +227,21 @@ Proof.
   - rewrite Epc. exact (pc_ok_spec _ Hok).
   - reflexivity.
   - rewrite Eregs. change reg_a0 with (ri (Z_to_bv 5 10)). apply RRegs_set; assumption.
-  - rewrite Eresv. exact H5.
+  - rewrite Eresv. reflexivity.
   - split; assumption.
 Qed.
 
 (* [comment removed for export] *)
+(* The fifth (reservation) argument WAS `(ms_resv ms)` in both of these; see
+   AxSysSound.v's adv_effect for the one field advance_past_svc moved. *)
 Lemma adv_zeros (ms : machine_state) (ret a n : word) :
   advance_past_svc (apply_effect (latch ms) (mkEffect ret [] [(a, n)]))
-  = setx ms (Z_to_bv 5 10) ret (ms_pc_val ms + Z_to_bv 64 4) (ms_resv ms) (apply_zeros (ms_mem ms) [(a, n)]).
+  = setx ms (Z_to_bv 5 10) ret (ms_pc_val ms + Z_to_bv 64 4) None (apply_zeros (ms_mem ms) [(a, n)]).
 Proof. reflexivity. Qed.
 
 Lemma adv_unmaps (ms : machine_state) (ret a n : word) :
   advance_past_svc (apply_effect (latch ms) (mkEffectU ret [] [] [(a, n)] [] []))
-  = setx ms (Z_to_bv 5 10) ret (ms_pc_val ms + Z_to_bv 64 4) (ms_resv ms) (apply_unmaps (ms_mem ms) [(a, n)]).
+  = setx ms (Z_to_bv 5 10) ret (ms_pc_val ms + Z_to_bv 64 4) None (apply_unmaps (ms_mem ms) [(a, n)]).
 Proof. reflexivity. Qed.
 
 End Post.
@@ -476,7 +483,8 @@ Proof.
     apply Z.leb_le. rewrite Hlim. lia. }
   (* [comment removed for export] *)
   apply (rzc_latch segs cfg ms model w (KT ρ o) H9 H3 Hf He).
-  apply (rzc_sys_silent segs cfg (latch ms) model (rg ms (Z_to_bv 5 17)) (KT ρ o) H9 eq_refl).
+  apply (rzc_sys_silent segs cfg (latch ms) model (rg ms (Z_to_bv 5 17)) (KT ρ o) H9 eq_refl
+           (rob_sys_222 segs (latch ms) model (rg ms (Z_to_bv 5 17)) eq_refl R17)).
   - rewrite (check_syscall_222 segs (latch ms) _ _ model R17).
     exact (chk_fix_rw_modeled model addr (rg ms (Z_to_bv 5 11)) (rg ms (Z_to_bv 5 12)) flagsw (rg ms (Z_to_bv 5 14)) (rg ms (Z_to_bv 5 15)) S G _).
   - intros eff m1 evs Hc. rewrite (check_syscall_222 segs (latch ms) _ _ model R17) in Hc.

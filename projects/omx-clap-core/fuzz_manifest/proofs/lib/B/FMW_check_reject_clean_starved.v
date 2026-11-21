@@ -62,7 +62,7 @@ Hypothesis HCTX : In [0x80fd4] CTXn.
 Hypothesis CRC : check_reject_clean_spec tfibsegs B.
 Hypothesis IMG : fm_img_facts tfibsegs B.
 
-(* B only: names_spec asks spZ < ly_top at the call (B4b 620968d59c7, a Theorem Labs lane 07:48Z); the journal's stack facts give
+(* B only: names_spec asks spZ < ly_top at the call (B4b, a Theorem Labs lane 07:48Z); the journal's stack facts give
    sp0 <= ly_top at any point, and the call's sp is below sp0. *)
 Lemma g5_sp_top : forall STK sp0 FP ly S0 W mem md own ly' S' W' mem' md' k,
   ajournal tfibsegs B STK sp0 FP ly S0 W mem md own ly' S' W' mem' md' k -> sp0 <= ly_top ly'.

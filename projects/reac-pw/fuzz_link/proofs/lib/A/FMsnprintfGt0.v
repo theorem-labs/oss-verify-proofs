@@ -7,7 +7,8 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_disco/lib/A/FMsnprintfSk.v, with its module paths and module names changed; 97 of its 190 lines of code are new or changed and 757 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: relocated from lib/A/<same path> to fuzz_command.asan-ubsan by the image-B address relocator (the A-to-B address map, keyed by the image maps' symbol names and by code; GXA symbol keys kept), whose check table lists every changed numeral *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Rt/RtFSprintfK.v, with its module paths and module names changed; 26 of its 52 lines of code are new or changed and 164 lines of the source are left out. *)
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfGt0.v (a working branch 3e35620c52e); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMsnprintfGt0.table). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfGt0.v (a working branch); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMsnprintfGt0.table). *)
 (* fm's snprintf glue, transport without any stack window (split out of FMsnprintfGt.v, which re-exports it): a
    world-hidden byte's writability kept with its presence, and ecall_preU from ARU, the registers and the ESTACK window.
    New file. *)

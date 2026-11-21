@@ -1,4 +1,4 @@
-(* Ported from: a working branch cedf3d02589 proofs/omx-clap-core/fuzz_manifest/lib/A/FMbz_bridge.v (a Theorem Labs lane).
+(* Ported from: a working branch proofs/omx-clap-core/fuzz_manifest/lib/A/FMbz_bridge.v (a Theorem Labs lane).
    Changes for fuzz_state (a Theorem Labs lane, 2026-10-28): module path fuzz_manifest -> fuzz_state; imports FSbz_str for FMbz_str. *)
 (* The generic half of the bridge between a body walk written over the machine state alone
    (lib/A/Bz: `evt asegs Q ms`, that is "some step chain from ms reaches a state in Q") and the
@@ -6,7 +6,7 @@
 
    Three facts make it one short file:
    - the two trees name the same image: `asegs = tfibsegs` by reflexivity (FMbz_str.v:26);
-   - the two step relations are the same relation: Bz `mstep` (lib/A/Bz/Lib/Exec.v:16) is
+   - the two step relations are the same relation: Bz `mstep` (lib/A/Bz/Lib/Exec.v:17) is
      `ms_svc_pending ms = None /\ RiscvSemantics.step segs ms = MachineOk ms'`, which is what each
      step of the donor's `msteps` (lib/Reusable/YK0i.v:284-290) asks;
    - the donor already lifts its own `msteps` into `SRr` (`SRr_msteps`, lib/Reusable/YA0n.v:148),

@@ -1,0 +1,29 @@
+(* TRIAL NOT-OFFICIAL: AS/AsanStartupCert2 = our text + 727298f3's own edits to theories/Common/AsanStartupCert2.v, 3-way merged (proposal md5 a5341170); the old text is kept aside *)
+(* an earlier development run 727298f3: certificate 2 (the hand-off to the main body) at 727298f3, for both rseq values (r = 0 / 1). *)
+From Stdlib Require Import ZArith List Bool Lia.
+Require Import OSSVerify.Proofs.zlib.zlib_uncompress3_fuzzer.lib.asan_agrees_alloc_forced_only.AS.AxSymExec3 OSSVerify.Proofs.zlib.zlib_uncompress3_fuzzer.lib.asan_agrees_alloc_forced_only.UnpW.AS.AsanPlanCore OSSVerify.Proofs.zlib.zlib_uncompress3_fuzzer.lib.asan_agrees_alloc_forced_only.UnpW.AS.AsanPlan OSSVerify.Proofs.zlib.zlib_uncompress3_fuzzer.lib.asan_agrees_alloc_forced_only.UnpW.AS.AsanPlanSound OSSVerify.Proofs.zlib.zlib_uncompress3_fuzzer.lib.asan_agrees_alloc_forced_only.X2W.AS.AsanPlanImages OSSVerify.Proofs.zlib.zlib_uncompress3_fuzzer.lib.asan_agrees_alloc_forced_only.UnpW.AS.AsanInit OSSVerify.Proofs.zlib.zlib_uncompress3_fuzzer.lib.asan_agrees_alloc_forced_only.UnpW.AS.AsanNodesWJoin OSSVerify.Proofs.zlib.zlib_uncompress3_fuzzer.lib.asan_agrees_alloc_forced_only.X2W.AS.AsanStartup OSSVerify.Proofs.zlib.zlib_uncompress3_fuzzer.lib.asan_agrees_alloc_forced_only.UnpW.AS.StartupPlanAsan OSSVerify.Proofs.zlib.zlib_uncompress3_fuzzer.lib.asan_agrees_alloc_forced_only.UnpW.AS.StartupHSAsan OSSVerify.Proofs.zlib.zlib_uncompress3_fuzzer.lib.asan_agrees_alloc_forced_only.UnpW.AS.StartupPlan2Asan OSSVerify.Proofs.zlib.zlib_uncompress3_fuzzer.lib.asan_agrees_alloc_forced_only.UnpW.AS.StartupHS2Asan OSSVerify.Proofs.zlib.zlib_uncompress3_fuzzer.lib.asan_agrees_alloc_forced_only.X2W.AS.AsanStartupCert OSSVerify.Proofs.zlib.zlib_uncompress3_fuzzer.lib.asan_agrees_alloc_forced_only.UnpW.AS.AsanRenum OSSVerify.Proofs.zlib.zlib_uncompress3_fuzzer.lib.asan_agrees_alloc_forced_only.UnpW.AS.StartupHSAsan727.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Import ListNotations. Import AX2. Import AP.
+Open Scope Z_scope.
+
+Definition IT2 : itab := mk_itab_ranges ASEGS startup2_plan_ranges.
+Lemma IT2_ok : itab_sound ASEGS IT2.
+Proof. apply APS.mk_itab_ranges_sound. Qed.
+Definition NXS2 : nat := nx727 453.
+Lemma NXS2_ge : (NX0 <= NXS2)%nat. Proof. vm_compute. lia. Qed.
+Definition startup2_shape_r30 : shape := SCase (eaddz (esub (escale 16 (EVar 6)) (escale 4096 (EVar 344))) 3935) 4030 (SHole 1) (SHole 2).
+Definition startup2_shape (r : Z) : shape := shape727 r startup2_shape_r30.
+From Ltac2 Require Import Ltac2 Constr Std Control.
+Ltac2 vm_cert_refl (rhs : constr) :=
+  let g := Control.goal () in
+  let r := constr:(@eq_refl cres $rhs) in
+  Std.exact_no_check (Constr.Unsafe.make (Constr.Unsafe.Cast r Constr.Cast.vm g)).
+Lemma startup2_cert0 :
+  check ASEGS IT2 ASAN NXS2 AsanInit.LIMIT 0 (XNS ASEGS ASAN NXS2 AsanInit.LIMIT) XE0 XB0 (HS727_2 0) KC0 BFUEL FUEL None (HS727D_0 0) (plan727 0 startup2_plan) = COk (startup2_shape 0).
+Proof. Time (vm_cert_refl constr:(COk (startup2_shape 0))). Time Qed.
+Lemma startup2_cert1 :
+  check ASEGS IT2 ASAN NXS2 AsanInit.LIMIT 1 (XNS ASEGS ASAN NXS2 AsanInit.LIMIT) XE0 XB0 (HS727_2 1) KC0 BFUEL FUEL None (HS727D_0 1) (plan727 1 startup2_plan) = COk (startup2_shape 1).
+Proof. Time (vm_cert_refl constr:(COk (startup2_shape 1))). Time Qed.
+Lemma startup2_cert : forall b : bool,
+  check ASEGS IT2 ASAN NXS2 AsanInit.LIMIT (rseq_z b) (XNS ASEGS ASAN NXS2 AsanInit.LIMIT) XE0 XB0 (HS727_2 (rseq_z b)) KC0 BFUEL FUEL None (HS727D_0 (rseq_z b)) (plan727 (rseq_z b) startup2_plan) = COk (startup2_shape (rseq_z b)).
+Proof. ltac1:(intros [|]; [exact startup2_cert1 | exact startup2_cert0]). Qed.

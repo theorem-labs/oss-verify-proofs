@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumA.v, with its module names changed; 299 of its 346 lines of code are new or changed and 731 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image A' (asan, sha256 1be0f53d96cb9d6c, unstripped twin bff8519bbe3ea0e4): the A'-ONLY part of lane RttFR1's
    kit (WalkRtt102 for the text owner): the concrete steps of register-only code, whose premises compute on A''s listing, and
    the image facts the generic kit Rtt102FR1Kit.v takes as Section hypotheses, discharged at A'.
    rule 24: proves no function (kind: segment lemma helpers); the function-level lookup is the brief's.
    1. fr_addi / fr_jal / fr_beqz_tk / fr_beqz_ft: H5RttS4.v s4_addi / s4_jal / s4_beqz_tk / s4_beqz_ft
-      (the H2H5 walk head 1934271f1f40), this lane's copy over YC4aP's classes. A stretch that writes no byte
+      (the H2H5 walk head), this lane's copy over YC4aP's classes. A stretch that writes no byte
       needs neither the symbolic runner's write premise nor its shadow tokens.
       fr_bnez_tk / fr_bnez_ft / fr_auipc / fr_ld / fr_lw / fr_lbu: the same over YK11.v's step_bne_* / step_auipc /
       step_ld / step_lw / step_lbu, a load's bytes read off a value cell by YN2e.v rdn_cell / bytes_le_to_Z_le_list.

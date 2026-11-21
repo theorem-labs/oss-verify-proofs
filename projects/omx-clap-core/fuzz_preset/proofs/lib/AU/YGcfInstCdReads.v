@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/YGcfInstCdReads.v (commit ce1a656b52b7, file sha256 6291faa98741) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 10 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 1 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/YGcfInstCdReads.v (file sha256 6291faa98741) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 10 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 1 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the generic cf instance layer, lane F2b (second hand of the lane): lane B1 slice H3's read
-   fields of the CacheDealloc walk (DMcdR.v at commit a9be0b35655) at the cf instance, ARXr := YGcfInstDrainR.ARXr_cf
+   fields of the CacheDealloc walk (DMcdR.v) at the cf instance, ARXr := YGcfInstDrainR.ARXr_cf
    at reply B's image (AGif2cgif.AImg_cgif; DMcdR is stated over world tfibsegs and the image cover / TSD slot).
    rule 24: no function proved (kind: relational facts of the cf cut relation ARXr_cf for the CacheDealloc walk).
 
@@ -16,7 +17,7 @@
    discharges it as a closed image row) and PROVED at reply B ([CONST_CD_APART_preset], from YFg7.Tfib_const_locr).
    CacheDealloc writes the thread object only at or above its per-class caches (t_cache = 208): the count / slot words
    at T + 208 + 80 c (YFgk.WINF), T + 2784 .. 2792, and the two stats windows T + 2768 .. 2800 / T + 2872 .. 2888
-   (DMcdR.v:180).  A constant cell of the image may lie in the thread object (cell_owned's core extents include
+   (DMcdR.v:181).  A constant cell of the image may lie in the thread object (cell_owned's core extents include
    (ly_T, kThreadObjSize)), so the const cells after the call hold only if none lies in that part.  The premise reads
    the image's segments as the cut relation's ledger places them (alc_img) and the TSD slot as ARmcfR pins it (amr_tsd).
    Section hypotheses (non-vacuity): TS : TfibSyms B (reply B's symbol record, YF0m.v) and HIOK : IOK_ok B IOK

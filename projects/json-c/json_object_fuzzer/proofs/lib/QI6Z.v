@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: mf_objA_stmt, maybe_free_A_cps, tokfree_bodyA, tf_bodyB and tf_loopB take it after alloc_ceiling <= lo, and their calls of mf_scalarA, mf_strA, mf_arrA, the object case MFO, tf_bodyB and tok_reset_level_B_cps discharge it). *)
 
 From Stdlib Require ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -259,7 +260,7 @@ s = Sobj kids ->
 HEAPAx A (BS ++ LB) LM FRS B m md ->
 jval asegs A4F s m BS x 0 ->
 mf_frameA ra sp s0 s1 s2 s3 m junk8 ->
-stk asegs m lo (bv_unsigned sp + -48) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp + -48 - 96 - 4096 ->
+stk asegs m lo (bv_unsigned sp + -48) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp + -48 - 96 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] -> bv_unsigned ra mod 2 = 0 ->
 model_vm_only (cfg_model md0) (cfg_model md) -> heap_pres A4H (LB ++ LM ++ fr_ivs A4L FRS) (bv_unsigned sp) m0 m -> fsaved F F1 -> (frm0 fc -> frm0 fc1) -> rc = 1 ->
@@ -277,7 +278,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 (A : ASA A4L HIx) (LB LM : list blk) (FRS : list frame) (B : bud) (lo : Z) (errv : word) (s : jshape) (BS : list blk) (x rc : Z),
 HEAPAx A (BS ++ LB) LM FRS B m md ->
 x <> 0 -> 1 <= rc < 2^31 -> jval asegs A4F s m BS x rc ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 48 - 96 - 4096 ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 48 - 96 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] -> tp = Z_to_bv 64 A_TP -> bv_unsigned ra mod 2 = 0 ->
 a0 = Z_to_bv 64 x -> a1 = Z_to_bv 64 0 ->
@@ -288,7 +289,7 @@ AJ5 A4L HIx A T md
 (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 0x9abd0) fc None m (seg_rom asegs)).
 Proof.
-intros until rc. intros HP Hx Hrc J ST LO LOS SPA HT ERR TP RA A0 A1 BB K.
+intros until rc. intros HP Hx Hrc J ST LO HBT LOS SPA HT ERR TP RA A0 A1 BB K.
 unfold_consts. unfold A_SB, A_TP, A_ERRNO in *. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
 pose proof (heapA_budget A4L HIx _ _ _ _ _ _ _ HP) as [HB00 HD00].
@@ -450,7 +451,7 @@ evt_done5.
 eapply (mf_scalarA HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB LM FRS B lo errv Sbool BS x 1 T) with (n := 48) (PBS := PBS);
 [ subst BS; cbn [app] in HP3 |- *; exact HP3 | lia | exact HDR3 | left; reflexivity
 | eapply opt_pbuf_agree; [exact OPB | exact AG3 | intros bb Hbb; apply INCLo; [subst BS; in_sub Hbb | ]]
-| exact FR3 | exact ST3 | clia | clia | exact SPA | exact HT | exact ERR3 | exact RA | apply model_vm_only_refl | exact HPR3
+| exact FR3 | exact ST3 | clia | first [assumption | lia] | clia | exact SPA | exact HT | exact ERR3 | exact RA | apply model_vm_only_refl | exact HPR3
 | apply fsaved_refl | intros Hf; exact Hf | reflexivity | lia | subst BS; cbn [length app] in *; lia | subst BS; cbn [length app] in *; lia | exact K ].
 subst BS. intros E. cbn in E.
 pose proof (heapA_blk_nodup A4L HIx _ _ _ _ _ _ _ HP1) as NDx. cbn in NDx. inversion NDx as [|z l Hni Hnd]. apply Hni.
@@ -499,7 +500,7 @@ evt_done5.
 eapply (mf_scalarA HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB LM FRS B lo errv (Sdouble true) BS x 1 T) with (n := 48) (PBS := PBS);
 [ exact HP3 | lia | exact HDR3 | right; left; reflexivity
 | eapply opt_pbuf_agree; [exact OPB2 | exact AG3 | intros [ba bn] Hbb; apply in_others; [right; exact Hbb |]]
-| exact FR3 | exact ST3 | clia | clia | exact SPA | exact HT | exact ERR3 | exact RA | exact VM2 | exact HPR3
+| exact FR3 | exact ST3 | clia | first [assumption | lia] | clia | exact SPA | exact HT | exact ERR3 | exact RA | exact VM2 | exact HPR3
 | apply fsaved_refl | intros Hf; exact Hf | reflexivity | cbn [bD charge] in *; lia
 | subst BS; cbn [bB charge length app] in *; lia | subst BS; cbn [bB charge length app] in *; lia | exact K ].
 intros E. pose proof (heapA_blk_nodup A4L HIx _ _ _ _ _ _ _ HP2) as NDx. cbn in NDx. inversion NDx as [|z l Hni Hnd]. apply Hni.
@@ -516,7 +517,7 @@ evt_done5.
 eapply (mf_scalarA HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB LM FRS B lo errv (Sdouble false) BS x 1 T) with (n := 48) (PBS := PBS);
 [ subst BS; cbn [app] in HP3 |- *; exact HP3 | lia | exact HDR3 | right; left; reflexivity
 | eapply opt_pbuf_agree; [exact OPB | exact AG3 | intros bb Hbb; apply INCLo; [subst BS; in_sub Hbb | ]]
-| exact FR3 | exact ST3 | clia | clia | exact SPA | exact HT | exact ERR3 | exact RA | apply model_vm_only_refl | exact HPR3
+| exact FR3 | exact ST3 | clia | first [assumption | lia] | clia | exact SPA | exact HT | exact ERR3 | exact RA | apply model_vm_only_refl | exact HPR3
 | apply fsaved_refl | intros Hf; exact Hf | reflexivity | lia | subst BS; cbn [length app] in *; lia | subst BS; cbn [length app] in *; lia | exact K ].
 subst BS. intros E. cbn in E.
 pose proof (heapA_blk_nodup A4L HIx _ _ _ _ _ _ _ HP1) as NDx. cbn in NDx. inversion NDx as [|z l Hni Hnd]. apply Hni.
@@ -534,7 +535,7 @@ evt_done5.
 eapply (mf_scalarA HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB LM FRS B lo errv Sint BS x 1 T) with (n := 56) (PBS := PBS);
 [ subst BS; cbn [app] in HP3 |- *; exact HP3 | lia | exact HDR3 | right; right; reflexivity
 | eapply opt_pbuf_agree; [exact OPB | exact AG3 | intros bb Hbb; apply INCLo; [subst BS; in_sub Hbb | ]]
-| exact FR3 | exact ST3 | clia | clia | exact SPA | exact HT | exact ERR3 | exact RA | apply model_vm_only_refl | exact HPR3
+| exact FR3 | exact ST3 | clia | first [assumption | lia] | clia | exact SPA | exact HT | exact ERR3 | exact RA | apply model_vm_only_refl | exact HPR3
 | apply fsaved_refl | intros Hf; exact Hf | reflexivity | lia | subst BS; cbn [length app] in *; lia | subst BS; cbn [length app] in *; lia | exact K ].
 subst BS. intros E. cbn in E.
 pose proof (heapA_blk_nodup A4L HIx _ _ _ _ _ _ _ HP1) as NDx. cbn in NDx. inversion NDx as [|z l Hni Hnd]. apply Hni.
@@ -562,7 +563,7 @@ evt_done5.
 assert (J3 : jval asegs A4F (Sstr h) m3 BS x 0)
 by (apply (CLOSE m3 0); [cbn [app]; unfold jhdr_cells in HDR3; cbn [app] in HDR3; exact HDR3 | eapply agree_on_trans; [exact AG1 | exact AG3]]).
 eapply (mf_strA HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB LM FRS B lo errv (Sstr h) BS x 1 T h);
-[ reflexivity | exact HP3 | exact J3 | exact FR3 | exact ST3 | clia | clia | exact SPA | exact HT | exact ERR3 | exact RA
+[ reflexivity | exact HP3 | exact J3 | exact FR3 | exact ST3 | clia | first [assumption | lia] | clia | exact SPA | exact HT | exact ERR3 | exact RA
 | apply model_vm_only_refl | exact HPR3 | apply fsaved_refl | intros Hf; exact Hf | reflexivity | lia | lia | exact BB | exact K ].
 +
 assert (EU : Z_to_bv 64 udel = Z_to_bv 64 0 /\ Z_to_bv 64 ud = Z_to_bv 64 0).
@@ -583,7 +584,7 @@ assert (J3 : jval asegs A4F (Sobj kids) m3 BS x 0)
 by (apply (CLOSE m3 0); [cbn [app]; unfold jhdr_cells in HDR3; cbn [app] in HDR3; exact HDR3 | eapply agree_on_trans; [exact AG1 | exact AG3]]).
 pose proof MF_OBJ as MFO. unfold mf_objA_stmt in MFO.
 eapply (MFO ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB LM FRS B lo errv (Sobj kids) BS x 1 T kids);
-[ reflexivity | exact HP3 | exact J3 | exact FR3 | exact ST3 | clia | clia | exact SPA | exact HT | exact ERR3 | exact RA
+[ reflexivity | exact HP3 | exact J3 | exact FR3 | exact ST3 | clia | first [assumption | lia] | clia | exact SPA | exact HT | exact ERR3 | exact RA
 | apply model_vm_only_refl | exact HPR3 | apply fsaved_refl | intros Hf; exact Hf | reflexivity | lia | lia | exact BB | exact K ].
 +
 assert (EU : Z_to_bv 64 udel = Z_to_bv 64 0 /\ Z_to_bv 64 ud = Z_to_bv 64 0).
@@ -603,7 +604,7 @@ evt_done5.
 assert (J3 : jval asegs A4F (Sarr kids) m3 BS x 0)
 by (apply (CLOSE m3 0); [cbn [app]; unfold jhdr_cells in HDR3; cbn [app] in HDR3; exact HDR3 | eapply agree_on_trans; [exact AG1 | exact AG3]]).
 eapply (mf_arrA HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB LM FRS B lo errv (Sarr kids) BS x 1 T kids);
-[ reflexivity | exact HP3 | exact J3 | exact FR3 | exact ST3 | clia | clia | exact SPA | exact HT | exact ERR3 | exact RA
+[ reflexivity | exact HP3 | exact J3 | exact FR3 | exact ST3 | clia | first [assumption | lia] | clia | exact SPA | exact HT | exact ERR3 | exact RA
 | apply model_vm_only_refl | exact HPR3 | apply fsaved_refl | intros Hf; exact Hf | reflexivity | lia | lia | exact BB | exact K ].
 -
 if_falsex. step. step.
@@ -689,7 +690,7 @@ lvl_ok asegs A4F m l ->
 tstack asegs m q levels ->
 rw_cells asegs m r (tok_cells pb depth q x) ->
 tf_frameA m SP s8v s7v s6v s5v s4v s3v s2v s1v s0v rav ->
-stk asegs m lo (SP - 80) -> alloc_ceiling <= lo -> lo <= SP - 80 - put_stk_A ->
+stk asegs m lo (SP - 80) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= SP - 80 - put_stk_A ->
 SP mod 16 = 0 -> SP <= hiA_top A4L HIx -> 0 <= SP < 2^64 ->
 heap_pres A4H (LB0 ++ LM ++ fr_ivs A4L FRS) SP me m ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
@@ -704,7 +705,7 @@ AJ5 A4L HIx A T md
 (Z_to_bv 64 (r / 8 + 2147450887)) (Z_to_bv 64 (-16)) s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 tokfree_loop_A_pc) fc None m (seg_rom asegs)).
 Proof.
-intros until rav. intros Hl Hi LEN HP EREST LOK TS BLK FR ST LO LOS SPA HT SPR HPR ERR BB K.
+intros until rav. intros Hl Hi LEN HP EREST LOK TS BLK FR ST LO HBT LOS SPA HT SPR HPR ERR BB K.
 unfold put_stk_A in LOS. unfold_consts. unfold A_SB, A_TP, A_ERRNO, tokfree_loop_A_pc in *.
 assert (INrR : In (r, 72) REST) by (rewrite EREST; apply in_or_app; right; left; reflexivity).
 assert (INqR : In (q, 1024) REST) by (rewrite EREST; apply in_or_app; right; right; left; reflexivity).
@@ -1189,7 +1190,7 @@ s = Sobj kids ->
 HEAPAx A (BS ++ LB) LM FRS B m md ->
 jval asegs A4F s m BS x 0 ->
 mf_frameA ra sp s0 s1 s2 s3 s4 s5 s6 m ->
-stk asegs m lo (bv_unsigned sp + -64) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp + -64 - 96 - 4096 ->
+stk asegs m lo (bv_unsigned sp + -64) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp + -64 - 96 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] -> bv_unsigned ra mod 2 = 0 ->
 model_vm_only (cfg_model md0) (cfg_model md) -> heap_pres A4H (LB ++ LM ++ fr_ivs A4L FRS) (bv_unsigned sp) m0 m -> fsaved F F1 -> (frm0 fc -> frm0 fc1) -> rc = 1 ->
@@ -1207,7 +1208,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 (A : ASA A4L HIx) (LB LM : list blk) (FRS : list frame) (B : bud) (lo : Z) (errv : word) (s : jshape) (BS : list blk) (x rc : Z),
 HEAPAx A (BS ++ LB) LM FRS B m md ->
 x <> 0 -> 1 <= rc < 2^31 -> jval asegs A4F s m BS x rc ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 64 - 96 - 4096 ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 64 - 96 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] -> tp = Z_to_bv 64 A_TP -> bv_unsigned ra mod 2 = 0 ->
 a0 = Z_to_bv 64 x -> a1 = Z_to_bv 64 0 ->
@@ -1218,7 +1219,7 @@ AJ5 A4L HIx A T md
 (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 0x9c240) fc None m (seg_rom asegs)).
 Proof.
-intros until rc. intros HP Hx Hrc J ST LO LOS SPA HT ERR TP RA A0 A1 BB K.
+intros until rc. intros HP Hx Hrc J ST LO HBT LOS SPA HT ERR TP RA A0 A1 BB K.
 unfold_consts. unfold A_SB, A_TP, A_ERRNO in *. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
 pose proof (heapA_budget A4L HIx _ _ _ _ _ _ _ HP) as [HB00 HD00].
@@ -1362,7 +1363,7 @@ evt_done5.
 eapply (mf_scalarA HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB LM FRS B lo errv Sbool BS x 1 T) with (n := 48) (PBS := PBS);
 [ subst BS; cbn [app] in HP3 |- *; exact HP3 | lia | exact HDR3 | left; reflexivity
 | eapply opt_pbuf_agree; [exact OPB | exact AG3 | intros bb Hbb; apply INCLo; [subst BS; in_sub Hbb | ]]
-| exact FR3 | exact ST3 | clia | clia | exact SPA | exact HT | exact ERR3 | exact RA | apply model_vm_only_refl | exact HPR3
+| exact FR3 | exact ST3 | clia | first [assumption | lia] | clia | exact SPA | exact HT | exact ERR3 | exact RA | apply model_vm_only_refl | exact HPR3
 | apply fsaved_refl | intros Hf; exact Hf | reflexivity | lia | subst BS; cbn [length app] in *; lia | subst BS; cbn [length app] in *; lia | exact K ].
 subst BS. intros E. cbn in E.
 pose proof (heapA_blk_nodup A4L HIx _ _ _ _ _ _ _ HP1) as NDx. cbn in NDx. inversion NDx as [|z l Hni Hnd]. apply Hni.
@@ -1411,7 +1412,7 @@ evt_done5.
 eapply (mf_scalarA HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB LM FRS B lo errv (Sdouble true) BS x 1 T) with (n := 48) (PBS := PBS);
 [ exact HP3 | lia | exact HDR3 | right; left; reflexivity
 | eapply opt_pbuf_agree; [exact OPB2 | exact AG3 | intros [ba bn] Hbb; apply in_others; [right; exact Hbb |]]
-| exact FR3 | exact ST3 | clia | clia | exact SPA | exact HT | exact ERR3 | exact RA | exact VM2 | exact HPR3
+| exact FR3 | exact ST3 | clia | first [assumption | lia] | clia | exact SPA | exact HT | exact ERR3 | exact RA | exact VM2 | exact HPR3
 | apply fsaved_refl | intros Hf; exact Hf | reflexivity | cbn [bD charge] in *; lia
 | subst BS; cbn [bB charge length app] in *; lia | subst BS; cbn [bB charge length app] in *; lia | exact K ].
 intros E. pose proof (heapA_blk_nodup A4L HIx _ _ _ _ _ _ _ HP2) as NDx. cbn in NDx. inversion NDx as [|z l Hni Hnd]. apply Hni.
@@ -1428,7 +1429,7 @@ evt_done5.
 eapply (mf_scalarA HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB LM FRS B lo errv (Sdouble false) BS x 1 T) with (n := 48) (PBS := PBS);
 [ subst BS; cbn [app] in HP3 |- *; exact HP3 | lia | exact HDR3 | right; left; reflexivity
 | eapply opt_pbuf_agree; [exact OPB | exact AG3 | intros bb Hbb; apply INCLo; [subst BS; in_sub Hbb | ]]
-| exact FR3 | exact ST3 | clia | clia | exact SPA | exact HT | exact ERR3 | exact RA | apply model_vm_only_refl | exact HPR3
+| exact FR3 | exact ST3 | clia | first [assumption | lia] | clia | exact SPA | exact HT | exact ERR3 | exact RA | apply model_vm_only_refl | exact HPR3
 | apply fsaved_refl | intros Hf; exact Hf | reflexivity | lia | subst BS; cbn [length app] in *; lia | subst BS; cbn [length app] in *; lia | exact K ].
 subst BS. intros E. cbn in E.
 pose proof (heapA_blk_nodup A4L HIx _ _ _ _ _ _ _ HP1) as NDx. cbn in NDx. inversion NDx as [|z l Hni Hnd]. apply Hni.
@@ -1446,7 +1447,7 @@ evt_done5.
 eapply (mf_scalarA HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB LM FRS B lo errv Sint BS x 1 T) with (n := 56) (PBS := PBS);
 [ subst BS; cbn [app] in HP3 |- *; exact HP3 | lia | exact HDR3 | right; right; reflexivity
 | eapply opt_pbuf_agree; [exact OPB | exact AG3 | intros bb Hbb; apply INCLo; [subst BS; in_sub Hbb | ]]
-| exact FR3 | exact ST3 | clia | clia | exact SPA | exact HT | exact ERR3 | exact RA | apply model_vm_only_refl | exact HPR3
+| exact FR3 | exact ST3 | clia | first [assumption | lia] | clia | exact SPA | exact HT | exact ERR3 | exact RA | apply model_vm_only_refl | exact HPR3
 | apply fsaved_refl | intros Hf; exact Hf | reflexivity | lia | subst BS; cbn [length app] in *; lia | subst BS; cbn [length app] in *; lia | exact K ].
 subst BS. intros E. cbn in E.
 pose proof (heapA_blk_nodup A4L HIx _ _ _ _ _ _ _ HP1) as NDx. cbn in NDx. inversion NDx as [|z l Hni Hnd]. apply Hni.
@@ -1474,7 +1475,7 @@ evt_done5.
 assert (J3 : jval asegs A4F (Sstr h) m3 BS x 0)
 by (apply (CLOSE m3 0); [cbn [app]; unfold jhdr_cells in HDR3; cbn [app] in HDR3; exact HDR3 | eapply agree_on_trans; [exact AG1 | exact AG3]]).
 eapply (mf_strA HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB LM FRS B lo errv (Sstr h) BS x 1 T h);
-[ reflexivity | exact HP3 | exact J3 | exact FR3 | exact ST3 | clia | clia | exact SPA | exact HT | exact ERR3 | exact RA
+[ reflexivity | exact HP3 | exact J3 | exact FR3 | exact ST3 | clia | first [assumption | lia] | clia | exact SPA | exact HT | exact ERR3 | exact RA
 | apply model_vm_only_refl | exact HPR3 | apply fsaved_refl | intros Hf; exact Hf | reflexivity | lia | lia | exact BB | exact K ].
 +
 assert (EU : Z_to_bv 64 udel = Z_to_bv 64 0 /\ Z_to_bv 64 ud = Z_to_bv 64 0).
@@ -1495,7 +1496,7 @@ assert (J3 : jval asegs A4F (Sobj kids) m3 BS x 0)
 by (apply (CLOSE m3 0); [cbn [app]; unfold jhdr_cells in HDR3; cbn [app] in HDR3; exact HDR3 | eapply agree_on_trans; [exact AG1 | exact AG3]]).
 pose proof MF_OBJ as MFO. unfold mf_objA_stmt in MFO.
 eapply (MFO ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB LM FRS B lo errv (Sobj kids) BS x 1 T kids);
-[ reflexivity | exact HP3 | exact J3 | exact FR3 | exact ST3 | clia | clia | exact SPA | exact HT | exact ERR3 | exact RA
+[ reflexivity | exact HP3 | exact J3 | exact FR3 | exact ST3 | clia | first [assumption | lia] | clia | exact SPA | exact HT | exact ERR3 | exact RA
 | apply model_vm_only_refl | exact HPR3 | apply fsaved_refl | intros Hf; exact Hf | reflexivity | lia | lia | exact BB | exact K ].
 +
 assert (EU : Z_to_bv 64 udel = Z_to_bv 64 0 /\ Z_to_bv 64 ud = Z_to_bv 64 0).
@@ -1515,7 +1516,7 @@ evt_done5.
 assert (J3 : jval asegs A4F (Sarr kids) m3 BS x 0)
 by (apply (CLOSE m3 0); [cbn [app]; unfold jhdr_cells in HDR3; cbn [app] in HDR3; exact HDR3 | eapply agree_on_trans; [exact AG1 | exact AG3]]).
 eapply (mf_arrA HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB LM FRS B lo errv (Sarr kids) BS x 1 T kids);
-[ reflexivity | exact HP3 | exact J3 | exact FR3 | exact ST3 | clia | clia | exact SPA | exact HT | exact ERR3 | exact RA
+[ reflexivity | exact HP3 | exact J3 | exact FR3 | exact ST3 | clia | first [assumption | lia] | clia | exact SPA | exact HT | exact ERR3 | exact RA
 | apply model_vm_only_refl | exact HPR3 | apply fsaved_refl | intros Hf; exact Hf | reflexivity | lia | lia | exact BB | exact K ].
 -
 if_falsex. bstep. bstep.
@@ -1616,7 +1617,7 @@ forall (spv r : Z) (i : nat) (x1 gp t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 s1 s2 s4 s5
 (F : bvmap 5 word) (fc : bv 32) (m me : word -> option byte) (md : config) (T : TSet)
 (A : ASA A4L HIx) (REST LB0 P LM : list blk) (FRS : list frame) (B : bud) (lo : Z) (errv : word)
 (q pb depth : Z) (x : tscal) (levels : list tlevel) (l : tlevel) (s8v s7v s6v s5v s4v s3v s2v s1v s0v rav : word),
-alloc_ceiling <= lo -> lo <= spv - 64 - put_stk_A -> spv mod 16 = 0 -> spv <= hiA_top A4L HIx -> 0 <= spv < 2^64 ->
+alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= spv - 64 - put_stk_A -> spv mod 16 = 0 -> spv <= hiA_top A4L HIx -> 0 <= spv < 2^64 ->
 nth_error levels i = Some l -> (i < 32)%nat -> length levels = 32%nat ->
 HEAPAx A (lvl_blocks l ++ REST) LM FRS B m md ->
 REST = P ++ (r, 72) :: (q, 1024) :: LB0 ->
@@ -1634,7 +1635,7 @@ AJ5 A4L HIx A T md (MS (mkR x1 (Z_to_bv 64 spv) gp (Z_to_bv 64 A_TP) t0 t1 t2 (Z
 s2 (Z_to_bv 64 (Z.of_nat i)) s4 s5 s6 s7 (Z_to_bv 64 (-1)) s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 tokfree_loop_B_pc) fc None m (seg_rom asegs)).
 Proof.
-intros until rav. intros LO LOS SPA HT SPR Hl Hi LEN HP EREST LOK TS BLK FR ST HPR ERR BB K.
+intros until rav. intros LO HBT LOS SPA HT SPR Hl Hi LEN HP EREST LOK TS BLK FR ST HPR ERR BB K.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
 pose proof (wmono_refl asegs m) as WM. pose proof (munch_refl [] m) as MU.
 destruct LOK as [JO NM].
@@ -1648,7 +1649,7 @@ eapply (tok_reset_level_B_cps HIx PUT) with (i := i) (l := l) (levels := levels)
 [ exact Hl | lia | lia | exact LEN | exact HP | exact EREST
 | unfold put_pre; destruct (tl_cs l) as [s'|]; [destruct JO as [Hp J]; split; [exact Hp | split; [lia | exact J]] | exact JO]
 | exact NM | exact TS | exact BLK
-| rewrite unsigned_lit by lia; exact ST | unfold_consts_goal; lia | rewrite unsigned_lit by lia; unfold put_stk_A; clear - LOS; lia
+| rewrite unsigned_lit by lia; exact ST | unfold_consts_goal; lia | first [assumption | lia] | rewrite unsigned_lit by lia; unfold put_stk_A; clear - LOS; lia
 | rewrite unsigned_lit by lia; exact SPA | rewrite unsigned_lit by lia; exact HT
 | apply heap_pres_refl | exact ERR
 | unfold put_costA; destruct (tl_cs l); [rewrite Z.eqb_refl; unfold lvl_blocks in BB; rewrite length_app, Nat2Z.inj_add in BB; lia | lia]
@@ -1696,7 +1697,7 @@ forall (i : nat) (spv r : Z) (x1 gp t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 s1 s2 s4 s5
 (F : bvmap 5 word) (fc : bv 32) (m me : word -> option byte) (md : config) (T : TSet)
 (A : ASA A4L HIx) (PBS LB0 LM : list blk) (FRS : list frame) (B : bud) (lo : Z) (errv : word)
 (q pb depth : Z) (x : tscal) (levels : list tlevel) (s8v s7v s6v s5v s4v s3v s2v s1v s0v rav : word),
-alloc_ceiling <= lo -> lo <= spv - 64 - put_stk_A -> spv mod 16 = 0 -> spv <= hiA_top A4L HIx -> 0 <= spv < 2^64 ->
+alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= spv - 64 - put_stk_A -> spv mod 16 = 0 -> spv <= hiA_top A4L HIx -> 0 <= spv < 2^64 ->
 (i < 32)%nat -> length levels = 32%nat ->
 HEAPAx A (lvblocks levels (S i) ++ PBS ++ (r, 72) :: (q, 1024) :: LB0) LM FRS B m md ->
 (forall j l, nth_error levels j = Some l -> (j <= i)%nat -> lvl_ok asegs A4F m l) ->
@@ -1713,11 +1714,11 @@ AJ5 A4L HIx A T md (MS (mkR x1 (Z_to_bv 64 spv) gp (Z_to_bv 64 A_TP) t0 t1 t2 (Z
 s2 (Z_to_bv 64 (Z.of_nat i)) s4 s5 s6 s7 (Z_to_bv 64 (-1)) s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 tokfree_loop_B_pc) fc None m (seg_rom asegs)).
 Proof.
-induction i as [|i IH]; intros until rav; intros LO LOS SPA HT SPR Hi LEN HP LOK TS BLK FR ST HPR ERR BB K.
+induction i as [|i IH]; intros until rav; intros LO HBT LOS SPA HT SPR Hi LEN HP LOK TS BLK FR ST HPR ERR BB K.
 -
 destruct (nth_error levels 0) as [l|] eqn:Hl; [| apply nth_error_None in Hl; lia].
 rewrite (lvblocks_S _ _ _ Hl) in HP, BB. rewrite <- app_assoc in HP. rewrite lvblocks_0, app_nil_r in BB.
-eapply (tf_bodyB spv r 0) with (P := PBS); [exact LO | exact LOS | exact SPA | exact HT | exact SPR | exact Hl | lia | exact LEN | exact HP | rewrite lvblocks_0; reflexivity
+eapply (tf_bodyB spv r 0) with (P := PBS); [exact LO | exact HBT | exact LOS | exact SPA | exact HT | exact SPR | exact Hl | lia | exact LEN | exact HP | rewrite lvblocks_0; reflexivity
 | eapply LOK; [exact Hl | lia] | exact TS | exact BLK | exact FR | exact ST | exact HPR | exact ERR | cbn [Z.of_nat length] in BB |- *; lia |].
 intros ms1 md1 A1 (m1 & B1 & F1 & fc1 & y1 & u0 & u1 & u2 & w0 & v1 & v2 & v3 & v4 & v5 & v6 & v7 & u3 & u4 & u5 & u6 & -> & FS1 & FRM1 & VM1 & HP1 & TS1 & BLK1 & FR1 & ST1 & HPR1 & ERR1 & AG1 & BB1 & BD1).
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP1) as MI1.
@@ -1737,7 +1738,7 @@ rewrite (lvblocks_S _ _ _ Hl), lvblocks_0, app_nil_r. change (Z.of_nat 1) with 1
 -
 destruct (nth_error levels (S i)) as [l|] eqn:Hl; [| apply nth_error_None in Hl; lia].
 rewrite (lvblocks_S _ _ _ Hl) in HP, BB. rewrite <- app_assoc in HP. rewrite length_app, Nat2Z.inj_add in BB.
-eapply (tf_bodyB spv r (S i)) with (P := lvblocks levels (S i) ++ PBS); [exact LO | exact LOS | exact SPA | exact HT | exact SPR | exact Hl | lia | exact LEN | exact HP | rewrite <- app_assoc; reflexivity
+eapply (tf_bodyB spv r (S i)) with (P := lvblocks levels (S i) ++ PBS); [exact LO | exact HBT | exact LOS | exact SPA | exact HT | exact SPR | exact Hl | lia | exact LEN | exact HP | rewrite <- app_assoc; reflexivity
 | eapply LOK; [exact Hl | lia] | exact TS | exact BLK | exact FR | exact ST | exact HPR | exact ERR | lia |].
 intros ms1 md1 A1 (m1 & B1 & F1 & fc1 & y1 & u0 & u1 & u2 & w0 & v1 & v2 & v3 & v4 & v5 & v6 & v7 & u3 & u4 & u5 & u6 & -> & FS1 & FRM1 & VM1 & HP1 & TS1 & BLK1 & FR1 & ST1 & HPR1 & ERR1 & AG1 & BB1 & BD1).
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP1) as MI1.
@@ -1749,7 +1750,7 @@ step. if_truex.
 replace (Z.of_nat (S i) + -1) with (Z.of_nat i) by lia.
 evt_done5.
 eapply (IH spv r _ gp _ _ _ _ _ _ _ _ _ _ _ s1 s2 s4 s5 s6 s7 s9 s10 s11 _ _ _ _ F1 fc1 m1 me md1 T A1 PBS LB0 LM FRS B1 lo errv q pb depth x (lupd levels (S i) lvl_reset) s8v s7v s6v s5v s4v s3v s2v s1v s0v rav);
-[exact LO | exact LOS | exact SPA | exact HT | exact SPR | lia | rewrite lupd_length; exact LEN | rewrite lvblocks_lupd_ge by lia; heap_nowA A4L HIx HP1 MU WM MI1 | | exact TS1 | exact BLK1 | exact FR1 | exact ST1 | exact HPR1 | exact ERR1 | rewrite lvblocks_lupd_ge by lia; lia |].
+[exact LO | exact HBT | exact LOS | exact SPA | exact HT | exact SPR | lia | rewrite lupd_length; exact LEN | rewrite lvblocks_lupd_ge by lia; heap_nowA A4L HIx HP1 MU WM MI1 | | exact TS1 | exact BLK1 | exact FR1 | exact ST1 | exact HPR1 | exact ERR1 | rewrite lvblocks_lupd_ge by lia; lia |].
 + intros j l' Hj Hji. rewrite nth_error_lupd_neq in Hj by lia.
 eapply lvl_ok_agree; [eapply LOK; [exact Hj | lia] | exact AG1 | apply incl_appl; eapply incl_tran; [| eapply lvblocks_incl; [exact Hj | lia]]; unfold lvl_blocks; apply incl_appl; apply incl_refl].
 + intros ms2 md2 A2 (m2 & B2 & F2 & fc2 & levels2 & y1' & u0' & u1' & u2' & w0' & v1' & v2' & v3' & v4' & v5' & v6' & v7' & u3' & u4' & u5' & u6' & s3' & -> & FS2 & FRM2 & VM2 & HP2 & LEN2 & RES2 & SAME2 & TS2 & BLK2 & FR2 & ST2 & HPR2 & ERR2 & AG2 & BB2 & BD2).

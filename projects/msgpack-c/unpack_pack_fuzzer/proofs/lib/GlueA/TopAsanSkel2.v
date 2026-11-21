@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the plain walk read over the run's segment list; MainEntry.asan_side_ok lifts the ASan walk itself). *)
 From Stdlib Require Import ZArith NArith Bool List Lia.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType RiscvSemantics StackLayout Fs State Run.
@@ -31,7 +32,8 @@ Variables (ssegs : list Segment) (spc : N) (sph : PhdrInfo).
 
 Hypothesis SRC : forall en inp, valid_entry (mkImage ssegs spc sph) en inp -> valid_input_either inp ->
   ~ run_scfg_budget_refused fcfg (mkImage ssegs spc sph) SanitizerBudgets.lim_source en inp ->
-  OUR.realizes ssegs (init_config ssegs spc sph (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) SanitizerBudgets.lim_source inp) (DrvShape.K inp).
+  OUR.realizes (run_segments ssegs inp (en_sp en) (en_mmap_base en))
+    (init_config (run_segments ssegs inp (en_sp en) (en_mmap_base en)) spc sph (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) SanitizerBudgets.lim_source inp) (DrvShape.K inp).
 
 Hypothesis MAIN : forall en inp, valid_entry (mkImage AI.asegs AI.a_init_pc AI.a_phdrs) en inp -> valid_input_either inp ->
   forall ms mo, ME.amain_at en inp ms mo -> OUR.realizes AI.asegs (mkCfg ms mo) (DrvShape.K inp).

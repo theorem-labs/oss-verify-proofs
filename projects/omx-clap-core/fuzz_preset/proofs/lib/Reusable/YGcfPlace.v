@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* Theorem Labs, 2026-10: the LPS placement lemma for the event-free second allocator instance (suffix cf).
    c-asan's sec_grant_exists_AR_P (SecGrantP.v) instantiated with
      AR := ARmcf (YG0ncf.v), Wf := Wf_cf (YG01cf.v), LG := ALedger_cf, xs := xs_cf (the live
@@ -87,10 +88,10 @@ Qed.
 Theorem sec_grant_exists_cf_live : forall segs B ly S Hp rd md nZ,
 ARmcf B ly S Hp rd -> ALedger_cf segs ly S md -> amwf md ->
 Z.of_nat (length (st_sec_arr S)) + Z.of_nat (length (xs_cf ly S)) <= cf_place_limit ->
-0 < nZ <= cf_nob ->
-exists a, grant_ok_na_pin md a nZ = true.
+0 < nZ <= cf_nob -> nZ mod page_size = 0 ->
+exists a, grant_ok_na_pin (Z_to_bv 64 0) md a nZ = true.
 Proof.
-intros segs B ly S Hp rd md nZ M L W LIVE HnZ.
+intros segs B ly S Hp rd md nZ M L W LIVE HnZ HnZal.
 assert (WS : wf_sec_cf S) by exact (wfc_secondary _ _ _ _ _ (amc_wf _ _ _ _ _ M)).
 exact (sec_grant_exists_AR_P cf_nob cf_place_limit cf_malloc_max segs (Wf_cf (as_universe B))
 (fun ly0 S0 => ARmcf B ly0 S0 Hp rd) (ALedger_cf segs) xs_cf
@@ -98,26 +99,27 @@ cf_nob_lo cf_nob_al cf_place_ok cf_sizes_ok
 (fun ly0 S0 M0 => amc_layout _ _ _ _ _ M0) (fun ly0 S0 M0 => amc_wf _ _ _ _ _ M0)
 (sec_chunks_ok_of_WfP_cf (as_universe B) 0 0 0)
 (fun ly0 S0 md0 L0 => ledger_cover_of_ALedger_cf segs ly0 S0 md0 L0)
-ly S md nZ M L W LIVE (xs_cf_ok ly S WS) HnZ).
+ly S md nZ M L W LIVE (xs_cf_ok ly S WS) HnZ HnZal).
 Qed.
 
 (* Over ARcf, with the strict live count the call forms carry. *)
 Theorem sec_grant_exists_ARcf : forall segs B ly S Hp W mem md nZ,
 ARcf segs B ly S Hp W mem md -> Z.of_nat (length (st_sec_arr S)) < cf_sec_live_max -> 0 < nZ <= cf_nob ->
-exists a, grant_ok_na_pin md a nZ = true.
+nZ mod page_size = 0 ->
+exists a, grant_ok_na_pin (Z_to_bv 64 0) md a nZ = true.
 Proof.
-intros segs B ly S Hp W mem md nZ (M & L & _ & MW & _) LIVE HnZ.
-apply (sec_grant_exists_cf_live segs B ly S Hp _ md nZ M L MW); [|exact HnZ].
+intros segs B ly S Hp W mem md nZ (M & L & _ & MW & _) LIVE HnZ HnZal.
+apply (sec_grant_exists_cf_live segs B ly S Hp _ md nZ M L MW); [|exact HnZ|exact HnZal].
 pose proof (xs_cf_length ly S). pose proof cf_sec_live_ok. lia.
 Qed.
 
 (* At an allocator call: the grant for a new map of at most cf_nob bytes. *)
 Theorem sec_grant_exists_cf : forall segs B ly S Hp W regs mem md ch nZ,
-acall_pre_cf segs B ly S Hp W regs mem md ch -> 0 < nZ <= cf_nob ->
-exists a, grant_ok_na_pin md a nZ = true.
+acall_pre_cf segs B ly S Hp W regs mem md ch -> 0 < nZ <= cf_nob -> nZ mod page_size = 0 ->
+exists a, grant_ok_na_pin (Z_to_bv 64 0) md a nZ = true.
 Proof.
-intros segs B ly S Hp W regs mem md ch nZ (AR & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & LIVE & _) HnZ.
-exact (sec_grant_exists_ARcf segs B ly S Hp W mem md nZ AR LIVE HnZ).
+intros segs B ly S Hp W regs mem md ch nZ (AR & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & LIVE & _) HnZ HnZal.
+exact (sec_grant_exists_ARcf segs B ly S Hp W mem md nZ AR LIVE HnZ HnZal).
 Qed.
 
 End PL.

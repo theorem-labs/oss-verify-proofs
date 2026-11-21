@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: only the contract of the shadow-fill entries (__asan_set_shadow_XX), restated over the asan-state definitions of the cgif_file_fuzzer proof as libreac/fuzz_grant holds them; module names. *)
-(* Modified by Theorem Labs, 2026-10: relocated from proofs/libreac/fuzz_grant/lib/A/Rt/SetShadowDef.v (a working branch 2cca9ac80d0) by port_core.py (sha256 a72dc417b140): module paths only (no numerals); placed in lib/Reusable because it is image-neutral (one Definition for images A and B). *)
+(* Modified by Theorem Labs, 2026-10: relocated from proofs/libreac/fuzz_grant/lib/A/Rt/SetShadowDef.v (a working branch) by port_core.py (sha256 a72dc417b140): module paths only (no numerals); placed in lib/Reusable because it is image-neutral (one Definition for images A and B). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

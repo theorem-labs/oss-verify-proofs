@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntryRaw), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/ACjo.v. *)
 (* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/Prog/GrantEntryRaw.v. *)
-(* Ported from lib/A/Prog/GrantEntryRaw.v of a working branch 7c8c67da870 (blob 17ba816574a). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Ported from lib/A/Prog/GrantEntryRaw.v of a working branch (blob 17ba816574a). *)
 (* The hand-built allocation phase of LLVMFuzzerTestOneInput on image B
    (fuzz_grant.c:363-387; slots 0x8181c .. 0x81944): GI_raw reaches GI_sched0. The phase is
    the chain of its segments (LLVMFEntryRawDefs.v names the cuts):

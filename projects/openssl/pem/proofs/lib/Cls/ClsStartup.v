@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up facts stated over the launch's ProcInput). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -27,9 +28,9 @@ Open Scope bv_scope.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-Definition J_main (sp0 : word) (av ev : list (list byte)) (uid hw : word) (s1v : word) : word -> option byte :=
-  let J6 := J_tls sp0 (J_aux sp0 av ev uid hw (J_lsm sp0 av (fun _ => Some (Z_to_bv 8 0))))
-              (Z_to_bv 64 0x115c4) (pn_w sp0 av ev) s1v (Z_to_bv 64 0x14310)
+Definition J_main (sp0 : word) (inp : ProcInput) (mbase entry : word) (rdraw : EntryDraw) (s1v : word) : word -> option byte :=
+  let J6 := J_tls sp0 (J_aux sp0 inp mbase entry rdraw (J_lsm sp0 inp (fun _ => Some (Z_to_bv 8 0))))
+              (Z_to_bv 64 0x115c4) (pn_w inp rdraw) s1v (Z_to_bv 64 0x14310)
               (Z_to_bv 64 0) (Z_to_bv 64 0) (Z_to_bv 64 0) in
   wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes J6
     (Z_to_bv 64 (bv_unsigned sp0 - 8)) (word_to_le_bytes 8 (Z_to_bv 64 0)))           (* [comment removed for export] *)
@@ -39,7 +40,7 @@ Definition J_main (sp0 : word) (av ev : list (list byte)) (uid hw : word) (s1v :
     (Z_to_bv 64 (bv_unsigned sp0 - 40)) (word_to_le_bytes 8 (Z_to_bv 64 0)))          (* [comment removed for export] *)
     (Z_to_bv 64 (bv_unsigned sp0 - 56)) (word_to_le_bytes 8 (Z_to_bv 64 0x117c0)))    (* [comment removed for export] *)
     (Z_to_bv 64 (bv_unsigned sp0 - 64)) (word_to_le_bytes 8 (argv_w sp0)))             (* [comment removed for export] *)
-    (Z_to_bv 64 (bv_unsigned sp0 - 72)) (word_to_le_bytes 8 (argc_w av)))              (* [comment removed for export] *)
+    (Z_to_bv 64 (bv_unsigned sp0 - 72)) (word_to_le_bytes 8 (argc_w inp)))              (* [comment removed for export] *)
     (Z_to_bv 64 (bv_unsigned sp0 - 88)) (word_to_le_bytes 8 (Z_to_bv 64 0x11710)))    (* [comment removed for export] *)
     (Z_to_bv 64 (bv_unsigned sp0 - 96)) (word_to_le_bytes 8 (Z_to_bv 64 0x13080)). (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -47,12 +48,10 @@ Definition J_main (sp0 : word) (av ev : list (list byte)) (uid hw : word) (s1v :
 
 Section Assembly.
   Variable sp : word.
-  Variables argv envp : list (list byte).
-  Variable uid : word.
-  Variable hw : word.
+  Variable inp : ProcInput.
   Variable rdraw : EntryDraw.
-  Hypothesis Hva : valid_argv argv.
-  Hypothesis Hve : valid_envp envp.
+  Hypothesis Hva : valid_argv (in_argv inp).
+  Hypothesis Hve : valid_envp (in_envp inp).
   Hypothesis Hvsp : valid_sp sp.
 
   (* [comment removed for export] *)
@@ -104,8 +103,7 @@ Proof. intros tid H. unfold PID_MAX_ENVELOPE in H. exact H. Qed.
 
 Section Consumers.
   Variable sp0 : word.
-  Variables av ev : list (list byte).
-  Variables uid hw : word.
+  Variable inp : ProcInput.
   Variable rdraw : EntryDraw.
   Variable tid : word.
   Variable regs : bvmap 5 word.

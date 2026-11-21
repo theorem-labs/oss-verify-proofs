@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the hand-off's ledger is the launch's reserved ledger ([res_vm], with the vDSO/vvar pair below the mmap base), and the stack region is the launch's window, 1500 pages below the stack pointer, not 8 MiB). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63.
@@ -26,12 +27,12 @@ Proof. vm_compute. reflexivity. Qed.
 
 (* [comment removed for export] *)
 Lemma vm_exact_ledger_inv : forall (VM : VmMaps) (sp0 mb bw B : word) (nb : Z),
-  vm_reserved VM = segments_reserved RSEGS -> LIM <= vm_limit VM -> vm_init_sp VM = sp0 ->     (* [comment removed for export] *)
+  res_vm VM -> LIM <= vm_limit VM -> vm_init_sp VM = sp0 ->     (* [comment removed for export] *)
   0x7fff80000000 <= bv_unsigned sp0 <= 0x800000000000 ->
   vm_exact VM sp0 mb bw B nb ->
   0 < nb < 2 ^ 62 -> nb mod 4096 = 0 ->
   0 < bv_unsigned mb -> bv_unsigned mb mod 4096 = 0 -> bv_unsigned mb + 8192 <= bv_unsigned sp0 - 8388608 ->
-  LedgerCfg.ledger_inv (segments_reserved RSEGS) LIM 2 (nb + 8192) VM.
+  LedgerCfg.ledger_inv (vm_reserved VM) LIM 2 (nb + 8192) VM.
 Proof.
   intros VM sp0 mb bw B nb Vres Vlim Visp Hsp (Xm & Xn & Xs & Xb & Xbw & Xr & Xal & Xpos & Xtop & Xrf & Xdj & Xbrk) Hnb Hnbal Hmb Hmbal Hmbtop.
   assert (Un : bv_unsigned (Z_to_bv 64 nb) = nb) by (apply LedgerCfg.u64_lit; lia).
@@ -40,7 +41,7 @@ Proof.
   assert (Ub : bv_unsigned (Z_to_bv 64 (bv_unsigned mb + 8192)) = bv_unsigned mb + 8192) by (apply LedgerCfg.u64_lit; lia).
   assert (Atop : alloc_top VM = bv_unsigned sp0 - 8388608) by (unfold alloc_top, stack_max_size; rewrite Visp; reflexivity).
   constructor; rewrite ?Xm, ?Xn, ?Xs, ?Xb, ?Atop.
-  - exact Vres.
+  - reflexivity.
   - exact Vlim.
   - rewrite Visp. unfold sp_window_lo. lia.
   - rewrite Visp. unfold sp_window_hi. lia.
@@ -49,7 +50,8 @@ Proof.
   - repeat constructor; unfold LedgerCfg.e_hi, LedgerCfg.e_sz, LedgerCfg.e_lo; cbn [fst snd]; rewrite ?Un, ?U8; lia.
   - constructor; [|constructor; [|constructor]].
     + apply LedgerCfg.region_free_iff. exact Xrf.
-    + apply LedgerCfg.region_free_iff. apply LedgerCfg.region_free_above_top. exact Xr.
+    + apply LedgerCfg.region_free_iff. apply res_vm_rf_add; [exact Vres | apply LedgerCfg.region_free_above_top; exact Xr |].
+      rewrite hreserved_top in Xbrk. rewrite U8. unfold brk_aslr_max, mmap_base_min in *. lia.
   - cbn [LedgerCfg.pw_disj]. split; [|split; [constructor | exact I]].
     constructor; [|constructor]. unfold LedgerCfg.e_disj, LedgerCfg.e_hi, LedgerCfg.e_sz, LedgerCfg.e_lo. cbn [fst snd]. rewrite Un, U8. lia.
   - cbn [length]. lia.
@@ -61,7 +63,6 @@ Proof.
   - rewrite Ub. lia.
   - rewrite Ub. unfold page_size. rewrite Z.add_mod, Hmbal by lia. reflexivity.
   - rewrite Ub. lia.
-  - exact Xr.
 Qed.
 
 (* [comment removed for export] *)
@@ -110,7 +111,7 @@ Definition facts_frame : list hfact :=
     hcell T_STK (8388608 - 80) 8 0xdd09c; hval T_STK (8388608 - 88) T_STK (8388608 + 32);
     hcell T_STK (8388608 - 96) 8 0; hcell T_STK (8388608 - 104) 8 0; hcell T_STK (8388608 - 112) 8 0; hcell T_STK (8388608 - 120) 8 0;
     hcell 0 0x30c1e8 1 1;
-    hwr T_STK 0 8388608 ].
+    hwr T_STK 2244608 6144000 ].
 
 (* [comment removed for export] *)
 Definition facts_img : list hfact := map (fun iv => hclear (fst iv) (snd iv)) img_clear_ivs.
@@ -140,10 +141,10 @@ Definition facts_slot0 : list hfact :=
 
 (* [comment removed for export] *)
 Definition facts_geom (nb : Z) : list hfact :=
-  [ hregion T_STK 0 8388608 4; hregion T_BRK 0 8192 12; hregion T_BRK 4096 8192 12; hregion T_BUF 0 nb 12;
-    hdisj 0 0x10000 0x30e000 T_STK 0 8388608; hdisj 0 0x10000 0x30e000 T_BRK 0 8192; hdisj 0 0x10000 0x30e000 T_BRK 4096 8192;
-    hdisj 0 0x10000 0x30e000 T_BUF 0 nb; hdisj T_STK 0 8388608 T_BRK 0 8192; hdisj T_STK 0 8388608 T_BRK 4096 8192;
-    hdisj T_STK 0 8388608 T_BUF 0 nb; hdisj T_BRK 0 8192 T_BUF 0 nb; hdisj T_BRK 4096 8192 T_BUF 0 nb ].
+  [ hregion T_STK 2244608 8388608 4; hregion T_BRK 0 8192 12; hregion T_BRK 4096 8192 12; hregion T_BUF 0 nb 12;
+    hdisj 0 0x10000 0x30e000 T_STK 2244608 8388608; hdisj 0 0x10000 0x30e000 T_BRK 0 8192; hdisj 0 0x10000 0x30e000 T_BRK 4096 8192;
+    hdisj 0 0x10000 0x30e000 T_BUF 0 nb; hdisj T_STK 2244608 8388608 T_BRK 0 8192; hdisj T_STK 2244608 8388608 T_BRK 4096 8192;
+    hdisj T_STK 2244608 8388608 T_BUF 0 nb; hdisj T_BRK 0 8192 T_BUF 0 nb; hdisj T_BRK 4096 8192 T_BUF 0 nb ].
 
 Definition facts_k0 : list hfact :=
   facts_regs_opaque ++ facts_regs 32 ++ facts_frame ++ facts_img ++ facts_libc ++ facts_ctx0 ++ facts_area0 ++ facts_grp0 ++ facts_geom 69632.
@@ -199,7 +200,9 @@ Section Common.
     - eapply (hcell_ok RSEGS rho R pc M); [exact rho1 | | | | | exact F9]; zside.
     - eapply (hcell_ok RSEGS rho R pc M); [exact rho0 | | | | | exact F10]; zside.
     - eapply (hwr_ok_store RSEGS rho R pc M); [exact rho1 | reflexivity | zclosed | zclosed |].
-      intros i Hi. rewrite Z.add_0_r. apply (SW i 1%nat); lia.
+      intros i Hi. lazymatch goal with |- store_ok _ _ (Z_to_bv 64 ?x) _ = _ =>
+        replace x with (bv_unsigned sp0 - 6144000 + i)%Z by lia end.
+      apply (SW i 1%nat); lia.
   Qed.
 
   Lemma img_ok : Forall (fun iv => img_clear M (fst iv) (snd iv)) img_clear_ivs -> Forall (hholds RSEGS rho ms) facts_img.
@@ -377,9 +380,9 @@ Theorem handoff_k0x : forall (sp0 : word) (buf : Z) (can : word) (content : list
     rho 0%uint63 = Z_to_bv 64 0
     /\ buf = bv_unsigned B + 32
     /\ Forall (hholds RSEGS rho (mkst R pc M (seg_rom RSEGS))) facts_k0b
-    /\ vm_reserved VM = segments_reserved RSEGS /\ (LIM <= vm_limit VM) /\ vm_init_sp VM = sp0
+    /\ res_vm VM /\ (LIM <= vm_limit VM) /\ vm_init_sp VM = sp0
     /\ vm_exact VM sp0 mb bw B 69632
-    /\ LedgerCfg.ledger_inv (segments_reserved RSEGS) LIM 2 (69632 + 8192) VM
+    /\ LedgerCfg.ledger_inv (vm_reserved VM) LIM 2 (69632 + 8192) VM
     /\ 0 < tid < 2 ^ 22
     /\ 0 <= err < 2 ^ 32.      (* [comment removed for export] *)
 Proof.
@@ -419,9 +422,9 @@ Theorem handoff_k0 : forall (sp0 : word) (buf : Z) (can : word) (content : list 
     rho 0%uint63 = Z_to_bv 64 0
     /\ buf = bv_unsigned B + 32
     /\ Forall (hholds RSEGS rho (mkst R pc M (seg_rom RSEGS))) facts_k0
-    /\ vm_reserved VM = segments_reserved RSEGS /\ (LIM <= vm_limit VM) /\ vm_init_sp VM = sp0
+    /\ res_vm VM /\ (LIM <= vm_limit VM) /\ vm_init_sp VM = sp0
     /\ vm_exact VM sp0 mb bw B 69632
-    /\ LedgerCfg.ledger_inv (segments_reserved RSEGS) LIM 2 (69632 + 8192) VM.
+    /\ LedgerCfg.ledger_inv (vm_reserved VM) LIM 2 (69632 + 8192) VM.
 Proof.
   intros sp0 buf can content VM R M pc uw gw TF.
   destruct (handoff_k0x sp0 buf can content VM R M pc uw gw TF) as (mb & bw & B & sec & tid & err & H).
@@ -618,9 +621,9 @@ Theorem handoff_kx : forall (sp0 : word) (k buf : Z) (can : word) (content : lis
     rho 0%uint63 = Z_to_bv 64 0
     /\ buf = bv_unsigned B + offk k
     /\ Forall (hholds RSEGS rho (mkst R pc M (seg_rom RSEGS))) (facts_kb k)
-    /\ vm_reserved VM = segments_reserved RSEGS /\ (LIM <= vm_limit VM) /\ vm_init_sp VM = sp0
+    /\ res_vm VM /\ (LIM <= vm_limit VM) /\ vm_init_sp VM = sp0
     /\ vm_exact VM sp0 mb bw B (nbk k)
-    /\ LedgerCfg.ledger_inv (segments_reserved RSEGS) LIM 2 (nbk k + 8192) VM
+    /\ LedgerCfg.ledger_inv (vm_reserved VM) LIM 2 (nbk k + 8192) VM
     /\ 0 < tid < 2 ^ 22
     /\ 0 <= err < 2 ^ 32.      (* [comment removed for export] *)
 Proof.
@@ -664,9 +667,9 @@ Theorem handoff_k : forall (sp0 : word) (k buf : Z) (can : word) (content : list
     rho 0%uint63 = Z_to_bv 64 0
     /\ buf = bv_unsigned B + offk k
     /\ Forall (hholds RSEGS rho (mkst R pc M (seg_rom RSEGS))) (facts_k k)
-    /\ vm_reserved VM = segments_reserved RSEGS /\ (LIM <= vm_limit VM) /\ vm_init_sp VM = sp0
+    /\ res_vm VM /\ (LIM <= vm_limit VM) /\ vm_init_sp VM = sp0
     /\ vm_exact VM sp0 mb bw B (nbk k)
-    /\ LedgerCfg.ledger_inv (segments_reserved RSEGS) LIM 2 (nbk k + 8192) VM.
+    /\ LedgerCfg.ledger_inv (vm_reserved VM) LIM 2 (nbk k + 8192) VM.
 Proof.
   intros sp0 k buf can content VM R M pc uw gw Hk TF.
   destruct (handoff_kx sp0 k buf can content VM R M pc uw gw Hk TF) as (mb & bw & B & sec & tid & err & H).

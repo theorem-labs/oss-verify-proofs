@@ -1,4 +1,4 @@
-(* CARRIED from commit 0deb5310273b0d538ec2a1697f391a1c8ad21c34,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YGcfLeafWiden.v, sha256 907e6e3fcd92cacdddbbf32477c7599e50a4bc8b4bc2d1da9c3252fbe213e602 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the Require lines only:
    the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
@@ -11,7 +11,7 @@
    rule 24: no function proved (a lemma about the malloc leaf; no walk).
 
    The unit premise YGcfMallocCompose.malloc_leaf_widen_cf, proved ONCE for every image. The text is fuzz_preset's
-   lib/A/WrapMallocABodyUnit.v (a Theorem Labs lane, commit ff8885d4e860, blob d1d839b2df97): bu_apresent_hi,
+   lib/A/WrapMallocABodyUnit.v (a Theorem Labs lane, blob d1d839b2df97): bu_apresent_hi,
    bu_blocks_below, bu_xs_below and malloc_leaf_widen_A, made generic. Only the names changed (bu_ -> lw_,
    tfibsegs -> segs, the local copies malloc_leaf_cf_w_L / MALLOC_IN_STK_L -> the layer's malloc_leaf_cf_w /
    MALLOC_IN_STK_CF), and the two image facts A1's text read became premises:

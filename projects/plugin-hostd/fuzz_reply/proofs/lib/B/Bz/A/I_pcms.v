@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B.Bz Require BvWfKernel.
 (* [comment removed for export] *)
@@ -75,7 +76,7 @@ Local Ltac zidle_end_m m :=
     lazymatch goal with MU : munch _ m mm, WM : wmono _ m mm |- _ =>
       unfold zidle in *; transport_after_call asegs m mm MU WM end end.
 
-(* wr_at_app and rw_cells_app: from openssl/ct lib/CtB/F_fwritex.v:55-79 (hub 60b8c89d30), unchanged; F_fwritex is not
+(* wr_at_app and rw_cells_app: from openssl/ct lib/CtB/F_fwritex.v:55-79 (hub theorem-labs/oss-verify-proofs@6b32741d849a), unchanged; F_fwritex is not
    in this tree, and imemset40_spec below uses rw_cells_app. *)
 Lemma wr_at_app : forall segs m a n1 n2, (0 <= n1)%Z -> (0 <= n2)%Z ->
   wr_at segs m a (n1 + n2) <-> wr_at segs m a n1 /\ wr_at segs m (a + n1) n2.

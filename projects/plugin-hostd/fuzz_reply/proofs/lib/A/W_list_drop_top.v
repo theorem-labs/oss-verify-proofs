@@ -6,6 +6,7 @@
    lib/A/W_check_bounded.v); the strong-rule forms pb_list_drop_x / pb_list_drop_ro_x and the context-rule
    G-generic form pb_list_drop_ro_cx_x are corollaries of it, and the AR theorems pb_list_drop and pb_list_drop_ro
    are re-derived from them at ARx := ARi0, PST := []. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -354,7 +355,7 @@ eapply SRr_bind.
     (fst (nth i recs (0, []))) (Z.of_nat (length (snd (nth i recs (0, []))))) (getr regs 1) kr
     HJ Ub R1 Hra Hra4 R3 R4 R8 R9 R10 R18 R19 HiZ (conj Hn0 Hcap) HLA8 HLG HZS MvC MnC McC MawrC MsC Hs64
     Hvin Hsin Hlen0 Hvne FPs FPv Hcap32 Hmo
-    (* the free's room premise: MT_rk charges 1 for a free (W_contract_x.v:258), so Z.to_nat (mo_free MT_rk) + kr
+    (* the free's room premise: MT_rk charges 1 for a free (W_contract_x.v:259), so Z.to_nat (mo_free MT_rk) + kr
        is 1 + kr by conversion; its count premise is the spec's, cnt_ok being cnt_ok_pk at peak 0 *)
     HRM HCNT HromC). }
 cbv beta. intros W' c' Hwle' (ly' & S' & Hp' & regs' & mem' & md' & -> & HJ' & HCL & Hbl & Hfrs & Hmole & HRM' & HKhi &
@@ -500,7 +501,7 @@ Hypothesis RO_ARx : forall ly S Hp (W : world SEGS) mem md, ARx ly S Hp W mem md
 Hypothesis AFREE_R : afree_cf_rule_c_xR SEGS B PST ARx MT RP RO CTX R.
 Let RUNG := paj_run_x_xG B PST ARx LAWS R G HG 0 [].
 Let RUNTOG := paj_run_to_x_xG B PST ARx LAWS R G HG 0 [].
-(* :182 pb_list_drop_cx_x (line at 87fe4e86c75) *)
+(* :182 pb_list_drop_cx_x (line) *)
 Theorem pb_list_drop_cx_xR : ldrop_spec_xR B PST ARx R MT RP G A_list_dropP.
 Proof.
 intros W ly S Hp regs mem md ch LA l lines i HPRE H10 H11 HL Hi HLA8 HLA4 Hcap32 HZS HLGx HVoff Hmo kr HRM HCNT Hrom.
@@ -674,7 +675,7 @@ eapply (SRrG_bind SEGS R R_trans).
     (fst (nth i recs (0, []))) (Z.of_nat (length (snd (nth i recs (0, []))))) (getr regs 1) kr
     HJ Ub R1 Hra Hra4 R3 R4 R8 R9 R10 R18 R19 HiZ (conj Hn0 Hcap) HLA8 HLG HZS MvC MnC McC MawrC MsC Hs64
     Hvin Hsin Hlen0 Hvne FPs FPv Hcap32 Hmo
-    (* the free's room premise: MT_rk charges 1 for a free (W_contract_x.v:258), so Z.to_nat (mo_free MT_rk) + kr
+    (* the free's room premise: MT_rk charges 1 for a free (W_contract_x.v:259), so Z.to_nat (mo_free MT_rk) + kr
        is 1 + kr by conversion; its count premise is the spec's, cnt_ok being cnt_ok_pk at peak 0 *)
     HRM HCNT HromC). }
 cbv beta. intros W' c' HR' (ly' & S' & Hp' & regs' & mem' & md' & -> & HJ' & HCL & Hbl & Hfrs & Hmole & HRM' & HKhi &
@@ -847,8 +848,8 @@ assert (HCTX0 : In [BASE + AF_fr_list_drop + 0x60] [[BASE + AF_fr_list_drop + 0x
 eapply pb_list_drop_cx_xR with (R := R) (RO := RO); eassumption.
 Qed.
 End wR.
-(* The G-generic form: a G-generic ldrop_spec over gx_ok and gx_rt alone was deleted from W_contract.v at
-   7086983dbc8, because the body (ld_bodyX_x) needs ROMS at the G it runs at, i.e. no ROM byte in G (at least none
+(* The G-generic form: a G-generic ldrop_spec over gx_ok and gx_rt alone was deleted from W_contract.v,
+   because the body (ld_bodyX_x) needs ROMS at the G it runs at, i.e. no ROM byte in G (at least none
    in the list head's 16 bytes), and neither gx_ok, gx_rt nor the relation gives that.  W_journal.v's rom_out G
    gives ROMS, so a caller that holds gx_ok, gx_rt and rom_out at its G takes pb_list_drop_ro_x below. *)
 End d.

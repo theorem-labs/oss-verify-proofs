@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: only cgif_file_fuzzer lib/YG0d.v's astrnlen_realizes, restated for the strnlen wrapper over a buffer that is addressable for all n bytes (the sibling of lib/Rt/MemchrDef.v's amemchr_realizes): n < 2^32, [x, x+n) checked and present, and the result is the first NUL index k within n, or n when there is none, so the k + 8 <= n premise and the slack-word premise are dropped; the stack frame stays 2 * ESTACK, because the wrapper calls musl strnlen, which calls the memchr wrapper. The constant-bytes form takes lib/Rt/ConstsViewDef.v's consts_view over lo / hi; module paths. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_disco/lib/Rt/StrnlenDef.v
-   (a working branch a58fbc98b07, the shared strnlen text, a Theorem Labs lane 23:57Z), with its module paths changed. *)
+   (a working branch, the shared strnlen text, a Theorem Labs lane 23:57Z), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

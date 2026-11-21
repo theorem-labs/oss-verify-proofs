@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: both copies of open_w_spec take the pathname walk's access_ok bound (a0 + length path + 1 <= 2^47), which at_node's NOpenW case now carries. *)
 (* [comment removed for export] *)
 From Stdlib Require Lia.
 (* [comment removed for export] *)
@@ -5617,6 +5618,8 @@ Definition open_w_spec__stmt : Prop := forall ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a
   (errno_addr tp + 4 <= ssp_guard \/ ssp_guard + 8 <= errno_addr tp)%Z ->
   (got_ssp + 8 <= errno_addr tp \/ errno_addr tp + 4 <= got_ssp)%Z ->
   (164 <= bv_unsigned tp)%Z ->
+  (* the pathname walk's access_ok bound, which [at_node]'s NOpenW case carries at LPS 727298f3 *)
+  (bv_unsigned a0 + Z.of_nat (length path) + 1 <= 2^47)%Z ->
   impl ssegs (at_node ssegs) (npeek ssegs) (enode (NOpenW path 384) dec_openw)
        (epost (open_post ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc (bv_unsigned a0) path errv canary lo m))
        (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
@@ -5625,7 +5628,7 @@ Section Sz1.
 Variables ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m path errv canary lo : ltac2:(SecDiet.SzSec.tyM 'open_w_spec__stmt "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv" @ra).
 #[using="Type"] Lemma open_w_spec__body : ltac2:(SecDiet.SzSec.bodyP 'open_w_spec__stmt "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv").
 Proof.
-  intros ST SRC ERR GOT SSP MI -> Ha2 NUL NSLASH LO SEP1 SEP2 SEP3 SEP4 SEP5 SEP6 TP.
+  intros ST SRC ERR GOT SSP MI -> Ha2 NUL NSLASH LO SEP1 SEP2 SEP3 SEP4 SEP5 SEP6 TP P47.
   unfold got_ssp, ssp_guard in *.
   pose proof (munch_refl [(bv_unsigned sp - 112, bv_unsigned sp); (errno_addr tp, errno_addr tp + 4)]%Z m) as MU.
   pose proof (wmono_refl ssegs m) as WM.
@@ -6038,6 +6041,8 @@ Definition open_w_spec__stmt : Prop := forall ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a
   (errno_addr tp + 4 <= ssp_guard \/ ssp_guard + 8 <= errno_addr tp)%Z ->
   (got_ssp + 8 <= errno_addr tp \/ errno_addr tp + 4 <= got_ssp)%Z ->
   (164 <= bv_unsigned tp)%Z ->
+  (* the pathname walk's access_ok bound, which [at_node]'s NOpenW case carries at LPS 727298f3 *)
+  (bv_unsigned a0 + Z.of_nat (length path) + 1 <= 2^47)%Z ->
   impl usegs (at_node usegs) (npeek usegs) (enode (NOpenW path 384) dec_openw)
        (epost (open_post ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc (bv_unsigned a0) path errv canary lo m))
        (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
@@ -6046,7 +6051,7 @@ Section Sz1.
 Variables ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m path errv canary lo : ltac2:(SecDiet.SzSec.tyM 'open_w_spec__stmt "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv" @ra).
 #[using="Type"] Lemma open_w_spec__body : ltac2:(SecDiet.SzSec.bodyP 'open_w_spec__stmt "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv").
 Proof.
- intros ST SRC ERR GOT SSP MI -> Ha2 NUL NSLASH LO SEP1 SEP2 SEP3 SEP4 SEP5 SEP6 TP.
+ intros ST SRC ERR GOT SSP MI -> Ha2 NUL NSLASH LO SEP1 SEP2 SEP3 SEP4 SEP5 SEP6 TP P47.
   unfold got_ssp, ssp_guard in *.
   pose proof (munch_refl [(bv_unsigned sp - 112, bv_unsigned sp); (errno_addr tp, errno_addr tp + 4)]%Z m) as MU.
   pose proof (wmono_refl usegs m) as WM.

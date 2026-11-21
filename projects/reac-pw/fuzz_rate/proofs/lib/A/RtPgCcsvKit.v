@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: restates text of proofs/reac-pw/fuzz_rate/lib/Reusable/YCbq.v at 7379c28ff70f
+(* Modified by Theorem Labs, 2026-10: restates text of proofs/reac-pw/fuzz_rate/lib/Reusable/YCbq.v
    [Apache-2.0 OR MIT] (SRr_run_AJ / SRr_run_to_AJ and the tactics aj_run / aj_run_to, here over the shadow-aware runs
    of YP0i; aj_stack_malloc_at, here with the conjunct S2 = set_fs f Sc added to its post), of
-   proofs/reac-pw/fuzz_rate/lib/A/RtPgSteps.v at 816e60e510b7 (rts_fbounds and the four frame write rights, here for
-   a general side-stack class) and of proofs/reac-pw/fuzz_role/lib/A/RPgX01.v at 9bffaa83ff88 [Apache-2.0] (rx_jF,
+   proofs/reac-pw/fuzz_rate/lib/A/RtPgSteps.v (rts_fbounds and the four frame write rights, here for
+   a general side-stack class) and of proofs/reac-pw/fuzz_role/lib/A/RPgX01.v [Apache-2.0] (rx_jF,
    rx_ffacts, here for a general class), for reac-pw/fuzz_rate's image A. The [Apache-2.0 OR MIT] text is used under
    Apache-2.0. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image A (fuzz_rate.asan, pinned sha256
    22bc8613d780c9a99353dc86368f9401311ef5c8358882651217836298529b6a; every address is measured on its unstripped twin
    sha256 0d508f2c65c249840b6c8fe3c1960824f2548b175c23583632f06bb7956458c3): the engine kit of the walk of check_csv

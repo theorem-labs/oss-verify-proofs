@@ -1,11 +1,11 @@
-(* Image B twin of lib/A/RT_gxa_calls_mem.v at d49bd1db505: module paths lib.A -> lib.B; 8 image numerals moved to fuzz_reply.asan-ubsan by symbol + offset, each checked against that image (CHAINB-numerals.tsv sha256 3cedf5e564f7; internal record). *) (* GXA's interceptor call contracts for memcpy and memset (lib/CJ/RL/GXA/CopyCall.v:29-41 memcpy_stack_contract,
+(* Image B twin of lib/A/RT_gxa_calls_mem.v: module paths lib.A -> lib.B; 8 image numerals moved to fuzz_reply.asan-ubsan by symbol + offset, each checked against that image (CHAINB-numerals.tsv sha256 3cedf5e564f7; internal record). *) (* GXA's interceptor call contracts for memcpy and memset (lib/CJ/RL/GXA/CopyCall.v:29-41 memcpy_stack_contract,
    SetCall.v:28-37 memset_stack_contract), discharged at the ASan instance A_img (RT_IImgA.v) on the pinned
    fuzz_reply.asan-ubsan, and memset's also at musl vsnprintf's instance A_img_vsn (a corollary of the A_img proof).
    The twin of RT_gxa_calls.v (strnlen), in the same shape; the statements, ready predicates and intro lemmas are
    word for word fuzz_manifest's lib/A/FMgxa_mem.v (a Theorem Labs lane), so a unit can take either by relocation.
 
-   This file proves no new function.  It composes walks that are already in the tree, relocated from
-   origin/cold/c-asan-rt-stateio-n 840c4afa7e2 (proofs/omx-clap-core/fuzz_state/lib) by code pairing
+   This file proves no new function.  It composes walks that are already in the tree, relocated
+    (proofs/omx-clap-core/fuzz_state/lib) by code pairing
    (RT_gxa_mem_Tbl.v holds the table, the counts and the stack measurement):
    - memcpy: the Bz walk of ___interceptor_memcpy 0x534bc (lib/A/Bz/A/I_memcpy.v imemcpy_spec, over I_memcpyw.v /
      I_memcpyw2.v), with its two Section hypotheses rip_stmt (R_isPoisoned.v rip_proof) and memcpy_stmt (musl
@@ -17,7 +17,7 @@
    - the CJ / Bz vocabulary bridge and the strnlen kit of RT_gxa_calls.v (bz_cj_evt, mem_inv_cj_bz, mem_inv_bz_cj,
      chk_ok_of_pf_rng).
    What it adds is glue only: the two trampolines (one `j` each, under A_img GXA's call targets `sym 0x21334` and
-   `sym 0x21738`, RT_IImgA.v:57-58), the CB-cell conversion between the two trees (an Inductive in each), and the
+   `sym 0x21738`, RT_IImgA.v:58-59), the CB-cell conversion between the two trees (an Inductive in each), and the
    two ready predicates.
    The ready predicates are exactly what the interceptor walks ask beyond the contracts' own premises, with the
    walk's stack floor lo := sp - DEPTH (GXA's depths equal the walks', RT_gxa_mem_Tbl.v):
@@ -102,14 +102,14 @@ Lemma memset_tramp_step : forall (Q : machine_state -> Prop)
       F (Z_to_bv 64 TBL.MS_TRAMP) fc None m (seg_rom asegs)).
 Proof. unfold TBL.MS_ICPT, TBL.MS_TRAMP. intros until m. intros H. lstep. exact H. Qed.
 
-(* GXA's call targets under A_img: the trampolines (RT_IImgA.v:57-58) *)
+(* GXA's call targets under A_img: the trampolines (RT_IImgA.v:58-59) *)
 Lemma A_sym_memcpy : @CJR.sym RTA.A_img 0x21334 = TBL.MC_TRAMP.
 Proof. vm_compute. reflexivity. Qed.
 
 Lemma A_sym_memset : @CJR.sym RTA.A_img 0x21738 = TBL.MS_TRAMP.
 Proof. vm_compute. reflexivity. Qed.
 
-(* musl vsnprintf's instance has the same memset row (RT_IImgA.v:105-109: A_img_vsn differs only at 0x7f000400) *)
+(* musl vsnprintf's instance has the same memset row (RT_IImgA.v:106-110: A_img_vsn differs only at 0x7f000400) *)
 Lemma A_sym_vsn_memset : @CJR.sym RTA.A_img_vsn 0x21738 = TBL.MS_TRAMP.
 Proof. vm_compute. reflexivity. Qed.
 
@@ -194,7 +194,7 @@ Qed.
 
 (* ---- memset ---- *)
 
-(* Asked only when 0 <= n, as a Theorem Labs lane's FMgxa_mem.v:222-223 since 3899f140f93: GXA's pc_guard
+(* Asked only when 0 <= n, as a Theorem Labs lane's FMgxa_mem.v:222-223: GXA's pc_guard
    (G_printf_core_common.v:156) asks set_ready at every D + N + 8 <= q with N unbounded below, where sp < 2 ^ 63
    cannot follow, so without the premise the clause cannot hold (a Theorem Labs lane proved pc_guard_set_false against the
    old form; FMgxaSeamReady.v header).  The contract applies set_ready only at bv_unsigned a2 (SetCall.v:35). *)
@@ -243,7 +243,7 @@ Proof.
     exact (rw_cb_bz_cj m' _ _ _ RW).
 Qed.
 
-(* musl vsnprintf's instance (RT_IImgA.v:107), whose memset call G_vsnprintf.v:143 takes as SPEC_memset.  The memset
+(* musl vsnprintf's instance (RT_IImgA.v:108), whose memset call G_vsnprintf.v:143 takes as SPEC_memset.  The memset
    contract reads the image record only through its segments and its memset row (SetCall.v:14-37), and set_ready
    reads it not at all, so it moves between any two images that agree on those two: no walk is re-run.
    The transfer is stated over abstract images on purpose: A_img and A_img_vsn are never compared as terms (they

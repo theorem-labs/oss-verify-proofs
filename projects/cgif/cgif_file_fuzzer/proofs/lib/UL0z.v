@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (AT_EXECFN): changed HSA0. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -42,7 +43,8 @@ Hypothesis AX : AllocExtra ubs0_msyms (aa_MR API).
 Hypothesis LIBX : lib_contract_x_all ubs0_msyms API LIBPC RA_LIB EMPTY LIB_STACK.
 Hypothesis FRM : frm_zero fp_csr.
 Variables (sp tid : word) (a0 path : list byte) (inp : ProcInput) (data : list byte) (rnd : EntryDraw).
-Hypothesis HSA0 : forall G, anchored_atoms G = anchored_atoms RD_facts -> stack_anchored (E_main sp [a0; path] (in_envp inp) tid rnd) G.
+(* [E_main] gained [inp] and [efn] (UN3e.v:69-71). *)
+Hypothesis HSA0 : forall G, anchored_atoms G = anchored_atoms RD_facts -> stack_anchored (E_main sp inp [a0; path] (in_envp inp) (in_execfn inp) tid rnd) G.
 Variable RBD : rbound.
 Hypothesis ROOMX : room_calls (payload_len data) (calls data) RBD.
 Hypothesis Hvfs : valid_fs (in_fs inp).

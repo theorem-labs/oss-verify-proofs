@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: in both copies L_T0's ledger variables and at_T0's ev indices move by +16 (102 and 103 to 118 and 119, 28-101 to 44-117), and at_T0's environment EB takes mbase. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -28,22 +29,22 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
 (* [comment removed for export] *)
-Definition L_T0 (lb : Z) : ledger := Ledger ((EVar 103, 4096) :: (EVar 102, 8192) :: l_maps L30) lb (l_eager L30 + 12288).
+Definition L_T0 (lb : Z) : ledger := Ledger ((EVar 119, 4096) :: (EVar 118, 8192) :: l_maps L30) lb (l_eager L30 + 12288).
 Lemma DS_T0_std : forall lb, DS_std (L_T0 lb) = DS_T0. Proof. intros lb. vmeq_refl. Qed.
 
 Definition at_T0 (sp brk mbase : word) (draw : EntryDraw) (lim : Z) (inp : ProcInput)
     (a tid c : word) (pl : placements) (p8 sb p10 p12 p15 : word) (W lb : Z) (js : list word)
     (R : bvmap 5 word) (M : word -> option byte) (mdl : Model) : Prop :=
-  let E := EB sp draw inp a tid c pl js in
+  let E := EB sp mbase draw inp a tid c pl js in
   bootS sp brk mbase draw lim inp (H10 sp sp p8 sb p10 p12 a W) (A10 sp sp sb p12 a W) a tid c pl js SR_T0 KN_T0 (L_T0 lb)
         (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl
   /\ (lb = 0 \/ lb = 8192)
   /\ bv_unsigned sb = SBV p8
-  /\ ev E 28 = p8 /\ ev E 29 = sb /\ ev E 36 = p10 /\ ev E 38 = p12
+  /\ ev E 44 = p8 /\ ev E 45 = sb /\ ev E 52 = p10 /\ ev E 54 = p12
   /\ (bv_unsigned p15 + 4096 <= 0x2008fff7000 \/ SHB_HI <= bv_unsigned p15)
-  /\ ev E 62 = Z_to_bv 64 (STv sp) /\ ev E 63 = Z_to_bv 64 (XQv sp) /\ ev E 64 = Z_to_bv 64 (PBv sp)
-  /\ ev E 84 = Z_to_bv 64 W /\ ev E 85 = Z_to_bv 64 (Wdst sp) /\ bv_unsigned sp / 8 + CSH <= W /\ W + 8 <= SHB_HI
-  /\ ev E 101 = brk.
+  /\ ev E 78 = Z_to_bv 64 (STv sp) /\ ev E 79 = Z_to_bv 64 (XQv sp) /\ ev E 80 = Z_to_bv 64 (PBv sp)
+  /\ ev E 100 = Z_to_bv 64 W /\ ev E 101 = Z_to_bv 64 (Wdst sp) /\ bv_unsigned sp / 8 + CSH <= W /\ W + 8 <= SHB_HI
+  /\ ev E 117 = brk.
 
 (* [comment removed for export] *)
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3 Require BootS2. From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3 Require BootKn3c__B3. From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3 Require BootS5 BootS6 BootS7 BootS9 BootS10a. From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.B3 Require BootKn10b__B3.
@@ -75,21 +76,21 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
 (* [comment removed for export] *)
-Definition L_T0 (lb : Z) : ledger := Ledger ((EVar 103, 4096) :: (EVar 102, 8192) :: l_maps L30) lb (l_eager L30 + 12288).
+Definition L_T0 (lb : Z) : ledger := Ledger ((EVar 119, 4096) :: (EVar 118, 8192) :: l_maps L30) lb (l_eager L30 + 12288).
 Lemma DS_T0_std : forall lb, DS_std (L_T0 lb) = DS_T0. Proof. intros lb. vmeq_refl. Qed.
 
 Definition at_T0 (sp brk mbase : word) (draw : EntryDraw) (lim : Z) (inp : ProcInput)
     (a tid c : word) (pl : placements) (p8 sb p10 p12 p15 : word) (W lb : Z) (js : list word)
     (R : bvmap 5 word) (M : word -> option byte) (mdl : Model) : Prop :=
-  let E := EB sp draw inp a tid c pl js in
+  let E := EB sp mbase draw inp a tid c pl js in
   bootS sp brk mbase draw lim inp (H10 sp sp p8 sb p10 p12 a W) (A10 sp sp sb p12 a W) a tid c pl js SR_T0 KN_T0 (L_T0 lb)
         (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl
   /\ (lb = 0 \/ lb = 8192)
   /\ bv_unsigned sb = SBV p8
-  /\ ev E 28 = p8 /\ ev E 29 = sb /\ ev E 36 = p10 /\ ev E 38 = p12
+  /\ ev E 44 = p8 /\ ev E 45 = sb /\ ev E 52 = p10 /\ ev E 54 = p12
   /\ (bv_unsigned p15 + 4096 <= 0x2008fff7000 \/ SHB_HI <= bv_unsigned p15)
-  /\ ev E 62 = Z_to_bv 64 (STv sp) /\ ev E 63 = Z_to_bv 64 (XQv sp) /\ ev E 64 = Z_to_bv 64 (PBv sp)
-  /\ ev E 84 = Z_to_bv 64 W /\ ev E 85 = Z_to_bv 64 (Wdst sp) /\ bv_unsigned sp / 8 + CSH <= W /\ W + 8 <= SHB_HI
-  /\ ev E 101 = brk.
+  /\ ev E 78 = Z_to_bv 64 (STv sp) /\ ev E 79 = Z_to_bv 64 (XQv sp) /\ ev E 80 = Z_to_bv 64 (PBv sp)
+  /\ ev E 100 = Z_to_bv 64 W /\ ev E 101 = Z_to_bv 64 (Wdst sp) /\ bv_unsigned sp / 8 + CSH <= W /\ W + 8 <= SHB_HI
+  /\ ev E 117 = brk.
 End TwB.
 (* [comment removed for export] *) Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).

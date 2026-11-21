@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: open_spec also asks the path to end below TASK_SIZE, since the path read checks access_ok at every byte; taken in part from projects/simdjson/fuzz_utf8/proofs/lib/AsanW/F_syscalls.v, lines 279-280, 291. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -277,6 +278,8 @@ Lemma open_spec : forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 
   (errno_addr tp + 4 <= ssp_guard \/ ssp_guard + 8 <= errno_addr tp)%Z ->
   (got_ssp + 8 <= errno_addr tp \/ errno_addr tp + 4 <= got_ssp)%Z ->
   (164 <= bv_unsigned tp)%Z ->
+  (* LPS 08b1429: [read_cstr_aux] tests [access_okb] at every byte; the path's NUL lies below [TASK_SIZE]. *)
+  (bv_unsigned a0 + Z.of_nat (length path) < TASK_SIZE)%Z ->
   (* [comment removed for export] *)
   rng RNG lo (bv_unsigned sp - lo) ->
   rng RNG (errno_addr tp) 4 ->
@@ -287,7 +290,7 @@ Lemma open_spec : forall RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 
        (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
            F (Z_to_bv 64 0xef0c8) fc None m (seg_rom asegs)).
 Proof.
-  intros until lo. intros ST SRC ERR GOT SSP MI -> NUL NSL LO SEP1 SEP2 SEP3 SEP4 SEP5 SEP6 TP RSTK RERR RSRC RIMG.
+  intros until lo. intros ST SRC ERR GOT SSP MI -> NUL NSL LO SEP1 SEP2 SEP3 SEP4 SEP5 SEP6 TP TSZ RSTK RERR RSRC RIMG.
   unfold got_ssp, ssp_guard in *.
   pose proof (munch_refl [(bv_unsigned sp - 112, bv_unsigned sp); (errno_addr tp, errno_addr tp + 4)]%Z m) as MU.
   pose proof (wmono_refl asegs m) as WM.

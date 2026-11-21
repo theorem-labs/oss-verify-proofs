@@ -1,7 +1,7 @@
 (* reac-pw/fuzz_segconf, ASan+UBSan image B (fuzz_segconf.asan-ubsan, pin sha256 c3796c0b38f3): the part of the
    harness walk's instantiation that lib/B/Prog/SegInstB.v (this walk's instantiation lane, image B's copy of
    the image-A owner's SegInstA names) does not state: the room the harness's own window leaves its callees. The image-B
-   twin of lib/A/Prog/LLVMFuzzerTestOneInput_inst.v (image A's cut-statement commit 6888a1bad128). Statement text
+   twin of lib/A/Prog/LLVMFuzzerTestOneInput_inst.v (image A's cut-statement). Statement text
    only: no function of the binary is proved here.
 
    Every number of the walk comes from SegInstB (STK_LLVMFuzzerTestOneInput and the callees' STK_<F>, emptyA,

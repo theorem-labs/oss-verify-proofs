@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the m_channel_reader premise; the vDSO; module paths qualified against the K5 twins). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -19,7 +20,7 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.  (* [comment removed for export] *)
 Local Ltac Zify.zify_internal_to_euclidean_division_equations ::= zify_fast_euclid.
 
-Local Instance asanreflect_fx : PropExec.FPState := PropExec.fx0.
+Local Instance asanreflect_fx : K5.AS.PropExec.FPState := K5.AS.PropExec.fx0.
 Import ListNotations.
 Open Scope Z_scope.
 
@@ -277,6 +278,17 @@ Definition lazy_in_maps (mo : Model) : Prop :=
     exists e, In e (vm_maps (m_vmmaps mo)) /\ bv_unsigned (fst e) <= bv_unsigned (fst iv)
               /\ bv_unsigned (fst iv) + bv_unsigned (snd iv) <= bv_unsigned (fst e) + bv_unsigned (snd e).
 
+(* LPS 08b1429: the launch's extra reserved intervals (the vDSO pair,
+   [State.init_reserved]): page-aligned, above the image hull and a page clear
+   of [KHI], below 2^47. *)
+Definition resx_entry_ok (iv : word * word) : Prop :=
+  0 < bv_unsigned (snd iv)
+  /\ bv_unsigned (fst iv) mod 4096 = 0
+  /\ bv_unsigned (snd iv) mod 4096 = 0
+  /\ img_hi A <= bv_unsigned (fst iv)
+  /\ KHI + 4096 <= bv_unsigned (fst iv)
+  /\ bv_unsigned (fst iv) + bv_unsigned (snd iv) <= 2 ^ 47.
+
 Record cs_ok (E : env) (cs : acs) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model) : Prop := CS_OK {
   (* [comment removed for export] *)
   co_regs  : regs_ok E (s_regs (a_ss cs)) R;
@@ -287,7 +299,19 @@ Record cs_ok (E : env) (cs : acs) (R : bvmap 5 word) (FULL : word -> option byte
   co_fds   : fds_ok E (a_fd cs) model;
   co_fs    : m_fs model = FS0;
   co_tid   : a_tidset cs = false -> m_tid model = None;
-  co_res   : vm_reserved (m_vmmaps model) = segments_reserved SEGS;
+  (* LPS 08b1429: the ledger is the image's reservations followed by the
+     launch's extra ones; no tracked mapping meets a reserved interval; the
+     launch's vDSO pair is in the ledger.  Packed in one field so that [cs_ok]
+     keeps its arity; projections [co_resx], [co_mres], [co_vdso] below. *)
+  co_res   : (exists rx : list (word * word),
+                vm_reserved (m_vmmaps model) = segments_reserved SEGS ++ rx
+                /\ Forall resx_entry_ok rx
+                /\ (length rx <= n_resx A)%nat
+                /\ sum_sizes rx <= resx_bytes A)
+             /\ Forall (fun iv => Forall (iv_disjoint iv) (vm_reserved (m_vmmaps model)))
+                       (vm_maps (m_vmmaps model))
+             /\ incl (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model)))
+                     (vm_reserved (m_vmmaps model));
   co_limit : vm_limit (m_vmmaps model) = LIMIT;
   (* [comment removed for export] *)
   co_maps  : maps_match E (a_maps cs) (vm_maps (m_vmmaps model));
@@ -335,8 +359,28 @@ Record cs_ok (E : env) (cs : acs) (R : bvmap 5 word) (FULL : word -> option byte
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   co_naal : Forall (fun iv => bv_unsigned (fst iv) mod 4096 = 0 /\ bv_unsigned (snd iv) mod 4096 = 0 /\ 0 < bv_unsigned (snd iv))
-              (vm_noaccess (m_vmmaps model))
+              (vm_noaccess (m_vmmaps model));
+  (* LPS 08b1429: the far end of the standard channels has a reader. [init_model] seeds it from
+     [in_channel_reader], which the launch predicate pins, and no model setter writes it;
+     [writev_spec]'s channel arm reads it. *)
+  co_rdr : m_channel_reader model = true
 }.
+
+Lemma co_resx : forall E cs R FULL model, cs_ok E cs R FULL model ->
+  exists rx : list (word * word),
+    vm_reserved (m_vmmaps model) = segments_reserved SEGS ++ rx
+    /\ Forall resx_entry_ok rx
+    /\ (length rx <= n_resx A)%nat
+    /\ sum_sizes rx <= resx_bytes A.
+Proof using . intros E cs R FULL model HC. exact (proj1 (co_res _ _ _ _ _ HC)). Qed.
+
+Lemma co_mres : forall E cs R FULL model, cs_ok E cs R FULL model ->
+  Forall (fun iv => Forall (iv_disjoint iv) (vm_reserved (m_vmmaps model))) (vm_maps (m_vmmaps model)).
+Proof using . intros E cs R FULL model HC. exact (proj1 (proj2 (co_res _ _ _ _ _ HC))). Qed.
+
+Lemma co_vdso : forall E cs R FULL model, cs_ok E cs R FULL model ->
+  incl (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) (vm_reserved (m_vmmaps model)).
+Proof using . intros E cs R FULL model HC. exact (proj2 (proj2 (co_res _ _ _ _ _ HC))). Qed.
 
 (* [comment removed for export] *)
 Lemma e_band_eq : e_band = eaddz e_sp0 (-8388608).
@@ -512,8 +556,9 @@ Proof using SINV_frame.
   pose proof (same_but_materialized_frame _ _ Hs) as Hfr.
   assert (Evm : m_vmmaps model' = m_vmmaps model) by apply Hfr.
   assert (Elz : m_vm_lazy model' = m_vm_lazy model) by apply Hfr.
+  assert (Ekn : m_kernel model' = m_kernel model) by (unfold same_but_materialized in Hs; rewrite Hs; reflexivity).
   destruct HC. constructor; cbn [with_ss a_ss a_maps a_totsz a_ylo a_eager a_vis a_abytes a_brk a_fd a_tidset kn];
-    rewrite ?Evm, ?Elz; try assumption.
+    rewrite ?Evm, ?Elz, ?Ekn; try assumption.
   - unfold Mr. rewrite (hid_same _ _ _ _ Hs). exact HK.
   - replace (m_halted model') with (m_halted model) by (symmetry; apply Hfr). assumption.
   - unfold fds_ok in *. replace (m_fds model') with (m_fds model) by (symmetry; apply Hfr).
@@ -525,6 +570,7 @@ Proof using SINV_frame.
   - intros a Hh. rewrite (hid_same _ _ _ _ Hs) in Hh. rewrite (Hhid a Hh). auto.
   - eapply SINV_frame; [|eassumption]. intros a Ha. apply Hhid. unfold hid. rewrite Ha. reflexivity.
   - unfold lazy_in_maps in *. rewrite Evm, Elz. assumption.
+  - pose proof Hfr as (_ & _ & _ & _ & _ & Hpr & _). unfold m_channel_reader. rewrite Hpr. assumption.
 Qed.
 
 (* [comment removed for export] *)
@@ -2248,6 +2294,7 @@ Definition holes_stmt : Prop :=
   forall E R FULL model, cs_ok E ch R FULL model ->
     srealizes SEGS (cfg R (pc ch) FULL model) (HOLES (hole_of h) E (m_fs model)).   (* [comment removed for export] *)
 
+(* [comment removed for export] *)
 Definition brk2s_stmt : Prop :=
   forall cs csa csb E R FULL model T,
     cs_ok E cs R FULL model -> is_ecall_at SEGS cs = true -> node_brk2s A LIMIT cs = Some (csa, csb) ->
@@ -2259,11 +2306,12 @@ Definition brk2s_stmt : Prop :=
         srealizes SEGS (cfg R' (pc csb) FULL' model') T) ->
     srealizes SEGS (cfg R (pc cs) FULL model) T.
 
+(* [comment removed for export] *)
 Hypothesis node_sys_sound : forall y, sys_stmt y.
 Hypothesis node_brk2_sound : brk2_stmt.
-Hypothesis node_brk2s_sound : brk2s_stmt.   
+Hypothesis node_brk2s_sound : brk2s_stmt.   (* [comment removed for export] *)
 Hypothesis node_mmap2_sound : mm2_stmt (node_mmap2 A nx0 LIMIT).
-Hypothesis node_mmapin_sound : forall hole : bool, mm3_stmt (node_mmapin A LIMIT hole).   
+Hypothesis node_mmapin_sound : forall hole : bool, mm3_stmt (node_mmapin A LIMIT hole).   (* [comment removed for export] *)
 Hypothesis node_mprotect2_sound : mm2_stmt (node_mprotect2 A LIMIT).
 Hypothesis node_exit_sound : exit_stmt.
 Hypothesis node_x_sound : forall x, x_stmt x.
@@ -2273,6 +2321,9 @@ Hypothesis node_emit_sound : emit_stmt.
 Hypothesis node_ext2_sound : ext2_stmt.
 Hypothesis HS_sound : holes_stmt.
 
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
 
 Lemma split_sound : forall cs e mid lo hi E R FULL model,
   cs_ok E cs R FULL model -> erange (kn cs) e = Some (lo, hi) ->
@@ -2319,7 +2370,7 @@ Proof using .
   destruct e; [exact (LIT _ eq_refl H)|..]; clear LIT;
   (destruct (erange k _) as [[l1 h1]|] eqn:He; [pose proof (erange_sound SEGS E M k _ l1 h1 HK He)|];
    destruct (lin_brange k _) as [[l2 h2]|] eqn:Hb; [pose proof (lin_brange_sound SEGS E M k _ l2 h2 HK Hb)| |pose proof (lin_brange_sound SEGS E M k _ l2 h2 HK Hb)|];
-   [..|  destruct (lin_srange k _) as [[l3 h3]|] eqn:Hs; [pose proof (lin_srange_sound SEGS E M k _ l3 h3 HK Hs)|]];
+   [..| (* [comment removed for export] *) destruct (lin_srange k _) as [[l3 h3]|] eqn:Hs; [pose proof (lin_srange_sound SEGS E M k _ l3 h3 HK Hs)|]];
    try discriminate; injection H as <-; lia).
 Qed.
 
@@ -2331,10 +2382,11 @@ Proof using .
   destruct e; [exact (LIT _ eq_refl H)|..]; clear LIT;
   (destruct (erange k _) as [[l1 h1]|] eqn:He; [pose proof (erange_sound SEGS E M k _ l1 h1 HK He)|];
    destruct (lin_brange k _) as [[l2 h2]|] eqn:Hb; [pose proof (lin_brange_sound SEGS E M k _ l2 h2 HK Hb)| |pose proof (lin_brange_sound SEGS E M k _ l2 h2 HK Hb)|];
-   [..|  destruct (lin_srange k _) as [[l3 h3]|] eqn:Hs; [pose proof (lin_srange_sound SEGS E M k _ l3 h3 HK Hs)|]];
+   [..| (* [comment removed for export] *) destruct (lin_srange k _) as [[l3 h3]|] eqn:Hs; [pose proof (lin_srange_sound SEGS E M k _ l3 h3 HK Hs)|]];
    try discriminate; injection H as <-; lia).
 Qed.
 
+(* [comment removed for export] *)
 Lemma deand_sound : forall E e e' s, deand e = (e', s) ->
   0 <= s /\ exists rho, 0 <= rho <= s /\ bv_unsigned (edenot E e) = (bv_unsigned (edenot E e') - rho) mod 2 ^ 64.
 Proof using .
@@ -2346,7 +2398,7 @@ Proof using .
   destruct op;
     try (injection Hd as <- <-; split; [lia|]; exists 0; split; [lia|];
          rewrite Z.sub_0_r, Z.mod_small by (apply u64_range); reflexivity).
-  - 
+  - (* [comment removed for export] *)
     destruct (deand a) as [a' s1] eqn:Ha. destruct (deand b) as [b' s2] eqn:Hb. injection Hd as <- <-.
     destruct (IHa a' s1 eq_refl) as [Hs1 [ra [Hra Ea]]]. destruct (IHb b' s2 eq_refl) as [Hs2 [rb [Hrb Eb]]].
     split; [lia|]. exists (ra + rb). split; [lia|].
@@ -2356,7 +2408,7 @@ Proof using .
     set (A1 := bv_unsigned (edenot E a')) in *. set (B1 := bv_unsigned (edenot E b')) in *.
     nia.
     Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
-  - 
+  - (* [comment removed for export] *)
     destruct b as [m| | | | | | |];
       try (injection Hd as <- <-; split; [lia|]; exists 0; split; [lia|];
            rewrite Z.sub_0_r, Z.mod_small by (apply u64_range); reflexivity).
@@ -2438,6 +2490,7 @@ Proof using .
   injection H as <-. exact (proj2 (xb2_sound E M k e l h HK Hb)).
 Qed.
 
+(* [comment removed for export] *)
 Lemma crange_sound : forall E M k e lo hi, know_ok SEGS E M k -> crange k e = Some (lo, hi) ->
   lo <= bv_unsigned (edenot E e) <= hi.
 Proof using .
@@ -2457,6 +2510,7 @@ Proof using .
     (constructor; [cbn [kentry_ok]; lia | exact (co_know _ _ _ _ _ HC)]).
 Qed.
 
+(* [comment removed for export] *)
 Lemma residue_fact_sound : forall E E' M M' k e ne,
   know_ok SEGS E M k ->
   edenot E' ne = edenot E e ->
@@ -2478,14 +2532,14 @@ Qed.
 Lemma fact_ok_sound : forall E M k K, know_ok SEGS E M k -> fact_ok k K = true -> kentry_ok SEGS E M K.
 Proof using .
   intros E M k K HK H. destruct K as [| | | |e m|e lo hi| |[b1 k1] n1 [b2 k2] n2| |]; try discriminate; cbn [fact_ok] in H.
-  -  apply andb_prop in H as [H H3]. apply andb_prop in H as [H1 H2].
+  - (* [comment removed for export] *) apply andb_prop in H as [H H3]. apply andb_prop in H as [H1 H2].
     apply Z.ltb_lt in H1. apply Z.eqb_eq in H2. apply Z.leb_le in H3. cbn [kentry_ok]. split; [exact H1|].
     destruct (ealign_sound SEGS E M k e HK) as [Hr Hd].
     rewrite H2. apply Z.mod_divide; [lia|]. eapply Z.divide_trans; [|exact Hd]. apply pow2_divide_le. split; [apply Z.log2_nonneg | exact H3].
-  -  destruct (xlo2 k e) as [l|] eqn:Hl; [|discriminate]. destruct (xhi2 k e) as [h|] eqn:Hh; [|discriminate].
+  - (* [comment removed for export] *) destruct (xlo2 k e) as [l|] eqn:Hl; [|discriminate]. destruct (xhi2 k e) as [h|] eqn:Hh; [|discriminate].
     apply andb_prop in H as [H1 H2]. apply Z.leb_le in H1. apply Z.leb_le in H2.
     pose proof (xlo2_sound E M k e l HK Hl). pose proof (xhi2_sound E M k e h HK Hh). cbn [kentry_ok]. lia.
-  -  cbn [kentry_ok]. exact (ranges_apart_x_sound SEGS E M k b1 k1 n1 b2 k2 n2 HK H).
+  - (* [comment removed for export] *) cbn [kentry_ok]. exact (ranges_apart_x_sound SEGS E M k b1 k1 n1 b2 k2 n2 HK H).
 Qed.
 
 Lemma fact_sound : forall E cs R FULL model K,
@@ -2498,6 +2552,7 @@ Qed.
 Lemma regs_ok_ext_eq : forall E sr sr' R, sr = sr' -> regs_ok E sr R -> regs_ok E sr' R.
 Proof using . intros; subst; assumption. Qed.
 
+(* [comment removed for export] *)
 Lemma entails_sound : forall E cs ch R FULL model,
   cs_ok E cs R FULL model -> entails cs ch = true -> cs_ok E ch R FULL model /\ pc ch = pc cs.
 Proof using .
@@ -2529,6 +2584,7 @@ Proof using .
 Qed.
 
 
+(* [comment removed for export] *)
 Lemma ridx_lit : forall n, (n < 32)%nat -> ridx (Z_to_bv 5 (Z.of_nat n)) = n.
 Proof using .
   intros n Hn. unfold ridx. rewrite Z_to_bv_unsigned. unfold bv_wrap.
@@ -2563,6 +2619,7 @@ Proof using .
   destruct (lit_of_sound E (reg cs n) z H) as [He Hz]. rewrite (reg_sound E cs R FULL model n HC Hn), He. auto.
 Qed.
 
+(* [comment removed for export] *)
 Lemma regs_ok_respell : forall E sr R n e,
   regs_ok E sr R -> (0 < n < 32)%nat -> edenot E e = edenot E (nth n sr (ELit 0)) ->
   regs_ok E (sr_upd sr n e) R.
@@ -2578,6 +2635,7 @@ Proof using .
   rewrite Hnz, ridx_lit by lia. symmetry. exact He.
 Qed.
 
+(* [comment removed for export] *)
 Lemma regs_ok_set_n : forall E sr R n e v,
   regs_ok E sr R -> (0 < n < 32)%nat -> edenot E e = v ->
   regs_ok E (sr_upd sr n e) (regupd R (Z_to_bv 5 (Z.of_nat n)) v).
@@ -2590,6 +2648,7 @@ Proof using .
   replace (bv_unsigned (0%bv : bv 5)) with 0%Z in Hz by reflexivity. lia.
 Qed.
 
+(* [comment removed for export] *)
 Lemma fresh_ok_parts : forall cs, fresh_ok nx0 cs = true ->
   AP.sr_vars_lt (nxt cs) (s_regs (a_ss cs)) = true /\ AP.kn_vars_lt (nxt cs) (kn cs) = true
   /\ maps_vars_lt (nxt cs) (a_maps cs) = true /\ pairs_vars_lt (nxt cs) (a_vis cs ++ a_ghost cs) = true
@@ -2657,6 +2716,7 @@ Proof using .
   - destruct HM as (l' & -> & HM). exists l'. split; [reflexivity | exact (IH _ Hag Hr HM)].
 Qed.
 
+(* [comment removed for export] *)
 Lemma holes_agree : forall b E E' y l ms,
   env_agree b E E' -> maps_vars_lt b ms = true -> Forall (hole_ok E y l) ms -> Forall (hole_ok E' y l) ms.
 Proof using .
@@ -2690,7 +2750,7 @@ Proof using SINV_agree argH_agree.
   - eapply fds_ok_agree; eassumption.
   - eapply maps_match_agree; [exact Hag | exact Fmaps | assumption].
   - eapply holes_agree; [exact Hag | exact Fmaps | assumption].
-  -  apply Forall_forall. intros m Hin Hk.
+  - (* [comment removed for export] *) apply Forall_forall. intros m Hin Hk.
     pose proof (proj1 (forallb_forall _ _) Fmaps m Hin) as Hm. apply andb_prop in Hm as [H1 H2].
     unfold amap_den. rewrite <- (edenot_agree' (nxt cs) E E' _ Hag H1), <- (edenot_agree' (nxt cs) E E' _ Hag H2).
     exact (proj1 (Forall_forall _ _) co_none0 m Hin Hk).
@@ -2706,6 +2766,7 @@ Proof using SINV_agree argH_agree.
 Qed.
 
 
+(* [comment removed for export] *)
 Lemma fresh_ok_mono : forall gb cs, (nx0 <= gb)%nat -> fresh_ok gb cs = true -> fresh_ok nx0 cs = true.
 Proof using .
   intros gb cs Hle H. unfold fresh_ok in *.
@@ -2723,7 +2784,7 @@ Lemma run_block_sound : forall gb bfuel stops cs cs' E R FULL model T,
   srealizes SEGS (cfg R (pc cs) FULL model) T.
 Proof using HS HULL_ok IT_ok SEGS_in_hull SEGS_wx SINV_agree SINV_frame XB XE XN argH_agree argH_high.
   intros gb bfuel stops cs cs' E R FULL model T Hgb Hrb HC Hk.
-  rewrite run_block_eq in Hrb.  unfold run_block_ref in Hrb.
+  rewrite run_block_eq in Hrb. (* [comment removed for export] *) unfold run_block_ref in Hrb.
   destruct (fresh_ok gb cs) eqn:Hf0; [|discriminate].
   pose proof (fresh_ok_mono gb cs Hgb Hf0) as Hf.
   destruct (fresh_ok_parts cs Hf) as (Fsr & Fkn & Fmaps & Fallow & Fbrk & Ffd & Fle).
@@ -2734,6 +2795,7 @@ Proof using HS HULL_ok IT_ok SEGS_in_hull SEGS_wx SINV_agree SINV_frame XB XE XN
   set (ss' := sym_execTX SEGS IT KC bfuel true stops (SS p sr [] k nx)) in Hrb.
   destruct (carry (s_log ss') (s_know ss') []) as [[kn' scs] hs] eqn:Hc.
   destruct scs; [|discriminate]. injection Hrb as <-.
+  (* [comment removed for export] *)
   set (H := hid E cs model). set (MR := Mr E cs model FULL).
   rewrite sr_vars_lt_eq in Fsr. rewrite kn_vars_lt_eq in Fkn.
   pose proof (runTX_sound SEGS IT KC bfuel stops p sr k nx E MR (seg_rom SEGS) R IT_ok HR HK Fsr Fkn) as HX.
@@ -2781,6 +2843,7 @@ Proof using HS HULL_ok IT_ok SEGS_in_hull SEGS_wx SINV_agree SINV_frame XB XE XN
   intros E' R' FULL' model' Hag HC1 Hfs. rewrite <- (pc_cs_gc gb cs1). apply (Hk E' R' FULL' model'); [exact Hag | apply cs_gc_ok; exact HC1 | exact Hfs].
 Qed.
 
+(* [comment removed for export] *)
 Lemma u_small : forall z, (0 <= z < 2 ^ 64)%Z -> bv_unsigned (Z_to_bv 64 z) = z.
 Proof using . intros. apply u64_lit. assumption. Qed.
 
@@ -2830,6 +2893,7 @@ Proof using SINV_agree argH_agree.
     apply bv_eq. rewrite u_mul64. rewrite (u_small c) by lia. rewrite (u_small q) by lia. rewrite Z.mod_small by nia. lia. }
   assert (He_sem : edenot E e = alu64 ALU_SUB (edenot E (reg cs r)) (edenot E b)) by (unfold e, esub; apply mkAlu_denot).
   apply (Hk E' R FULL model); [split; [eapply env_agree_le; [exact Hag | exact Fle] | exact Hag] | | reflexivity].
+  (* [comment removed for export] *)
   assert (HKf : know_ok SEGS E' (Mr E' cs model FULL)
             ((KRange (EVar v) ((lo + c - 1) / c) (hi / c) :: KRange (esub e (escale c (EVar v))) 0 0
                :: residue_fact (kn cs) e (escale c (EVar v)))
@@ -2856,6 +2920,7 @@ Proof using SINV_agree argH_agree.
 Qed.
 
 
+(* [comment removed for export] *)
 Lemma find_disj_sound : forall E M k b1 b2 c1 o1 n1 c2 o2 n2,
   know_ok SEGS E M k -> find_disj k b1 b2 = Some (c1, o1, n1, c2, o2, n2) ->
   estart E (SA c1 o1) + elenZ E n1 <= estart E (SA c2 o2) \/ estart E (SA c2 o2) + elenZ E n2 <= estart E (SA c1 o1).
@@ -2913,6 +2978,7 @@ Proof using .
   - rewrite (Z.mod_small c) by nia. apply Z.mod_small. nia.
 Qed.
 
+(* [comment removed for export] *)
 Lemma direct_fact_sound : forall E M k cA oA nA cB oB,
   know_ok SEGS E M k ->
   estart E (SA cA oA) + elenZ E nA <= estart E (SA cB oB) ->
@@ -2980,6 +3046,7 @@ Proof using .
     + rewrite <- Hdf. apply direct_fact_sound; [exact HK | exact Hd].
 Qed.
 
+(* [comment removed for export] *)
 Lemma casedisj_nxt : forall cs b1 b2 csa csb, node_casedisj cs b1 b2 = Some (csa, csb) -> nxt csa = nxt cs /\ nxt csb = nxt cs.
 Proof using .
   intros cs b1 b2 csa csb H. unfold node_casedisj in H.
@@ -3018,7 +3085,7 @@ Qed.
 Lemma shdisj_sound : forall cs b1 n1 b2 n2 cs' E R FULL model,
   cs_ok E cs R FULL model -> node_shdisj A cs b1 n1 b2 n2 = Some cs' -> cs_ok E cs' R FULL model /\ pc cs' = pc cs.
 Proof using SHADOW_ok.
-  intros cs b1 n1 b2 n2 cs' E R FULL model HC H. rewrite node_shdisj_eq in H.  unfold node_shdisj_ref in H.
+  intros cs b1 n1 b2 n2 cs' E R FULL model HC H. rewrite node_shdisj_eq in H. (* [comment removed for export] *) unfold node_shdisj_ref in H.
   pose proof (co_know _ _ _ _ _ HC) as HK.
   destruct (split_lit b1) as [c1 o1] eqn:S1. destruct (split_lit b2) as [c2 o2] eqn:S2.
   destruct (shadow_of A (kn cs) b1 n1) as [[sb1 sk1] sn1] eqn:H1. destruct (shadow_of A (kn cs) b2 n2) as [[sb2 sk2] sn2] eqn:H2.
@@ -3029,6 +3096,7 @@ Proof using SHADOW_ok.
   apply andb_prop in Hc as [Hc Ln2]. apply andb_prop in Hc as [Hc Lb2]. apply andb_prop in Hc as [Lb1 Ln1].
   apply Z.leb_le in Lb1. apply Z.leb_le in Ln1. apply Z.leb_le in Lb2. apply Z.leb_le in Ln2.
   split; [|reflexivity]. unfold add_kn. apply cs_ok_set_kn; [exact HC|]. constructor; [|exact HK].
+  (* [comment removed for export] *)
   assert (END : forall b n, shd_end_ok (kn cs) b n = true -> bv_unsigned (edenot E b) + bv_unsigned (edenot E n) <= 2 ^ 47).
   { intros b n Hs. unfold shd_end_ok in Hs.
     destruct (xhi (kn cs) b) as [h|] eqn:Xh; destruct (xhi (kn cs) n) as [m|] eqn:Xm.
@@ -3061,6 +3129,7 @@ Proof using SHADOW_ok.
   clear - AP0 Rb1 Rb2 Rn1 Rn2 SO. lia.
 Qed.
 
+(* [comment removed for export] *)
 Lemma expr_vars_lt_mono : forall b b' e, AP.expr_vars_lt b e = true -> (b <= b')%nat -> AP.expr_vars_lt b' e = true.
 Proof using .
   intros b b' e H Hle. induction e; cbn [AP.expr_vars_lt] in *; try reflexivity;
@@ -3082,6 +3151,7 @@ Proof using .
     + apply andb_prop in Hsr as [H1 H2]. rewrite H1, (IH _ H2 He). reflexivity.
 Qed.
 
+(* [comment removed for export] *)
 Fixpoint ext_list (E : env) (nx : nat) (vals : list word) : env :=
   match vals with
   | [] => E
@@ -3145,6 +3215,7 @@ Proof using SINV_agree argH_agree.
   apply andb_prop in Hb as [H1 H2]. apply Nat.ltb_lt in H1. apply Nat.ltb_lt in H2. lia.
 Qed.
 
+(* [comment removed for export] *)
 Fixpoint kn_bigexprs (K : nat) (k : list kentry) : list expr :=
   match k with
   | [] => []
@@ -3234,6 +3305,7 @@ Proof using SINV_agree argH_agree.
     intros i Hi. unfold E2. rewrite ext_list_at by (unfold vals; rewrite length_map; exact Hi).
     unfold vals. change (Z_to_bv 64 0) with (edenot E1 (ELit 0)). rewrite map_nth.
     eapply (edenot_agree' (nxt cs1)); [apply ext_list_agree|].
+    (* [comment removed for export] *)
     clear - Fkn Hi. revert i Hi. generalize (kn cs1) Fkn. intros k Hk.
     induction k as [|x r IH]; intros i Hi; [cbn in Hi; lia|].
     cbn [AP.kn_vars_lt] in Hk. apply andb_prop in Hk as [Hx Hr]. cbn [kn_bigexprs] in Hi |- *.
@@ -3242,6 +3314,9 @@ Proof using SINV_agree argH_agree.
     destruct i as [|i]; cbn [nth]; [cbn [AP.kentry_vars_lt] in Hx; apply andb_prop in Hx as [_ Hx]; exact Hx | apply IH; [exact Hr | cbn [length] in Hi; lia]].
 Qed.
 
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
 
 Definition upd (E : env) (J : nat) (w : word) : env := Env (fun n => if Nat.eqb n J then w else ev E n) (eb E).
 
@@ -3287,6 +3362,7 @@ Proof using .
     apply (kentry_ok_ksubst E J e M K); assumption.
 Qed.
 
+(* [comment removed for export] *)
 Lemma inst_allowA : forall E J e inv, allowA E (inst inv J e) = allowA (upd E J (edenot E e)) inv.
 Proof using .
   intros E J e inv. unfold allowA, inst. cbn [a_vis a_ghost]. rewrite <- map_app, flat_map_concat_map, flat_map_concat_map, map_map.
@@ -3333,6 +3409,7 @@ Proof using .
   - split; (intros [HM|(iv & l' & -> & Hsz & HM)]; [left; apply IH; exact HM | right; exists iv, l'; split; [reflexivity|]; split; [exact Hsz | apply IH; exact HM]]).
   - split; (intros (l' & -> & HM); exists l'; split; [reflexivity | apply IH; exact HM]).
 Qed.
+(* [comment removed for export] *)
 Lemma holes_msubst : forall E J e y l ms,
   Forall (hole_ok E y l) (map (msubst J e) ms) <-> Forall (hole_ok (upd E J (edenot E e)) y l) ms.
 Proof using .
@@ -3379,7 +3456,7 @@ Proof using SINV_agree argH_agree.
   - apply fds_ok_inst. assumption.
   - apply (proj1 (maps_match_msubst E J e _ _)). assumption.
   - apply (proj1 (holes_msubst E J e _ _ _)). assumption.
-  -  apply Forall_forall. intros m Hin Hk.
+  - (* [comment removed for export] *) apply Forall_forall. intros m Hin Hk.
     pose proof (proj1 (Forall_forall _ _) co_none0 (msubst J e m) ltac:(apply in_map; exact Hin) Hk) as X.
     unfold amap_den, msubst in X |- *. cbn [am_base am_len am_kind] in X. rewrite !esubst_denot in X. exact X.
   - apply Forall_forall. intros m Hin Hk a Ha.
@@ -3411,7 +3488,9 @@ Proof using SINV_agree argH_agree.
   - intros a Ha. apply co_argh0. rewrite <- (argH_agree E (upd E J (edenot E e)) a AG). exact Ha.
 Qed.
 
+(* [comment removed for export] *)
 
+(* [comment removed for export] *)
 Lemma kentry_eqb_h_sound : forall E M k X K,
   know_ok SEGS E M k -> kentry_ok SEGS E M X -> kentry_eqb_h X K = true -> kflat_h k K = true -> kentry_ok SEGS E M K.
 Proof using .
@@ -3452,6 +3531,7 @@ Proof using .
     pose proof (SAD b o b' o' _ _ Heq H1 Hfl) as ES. split; [unfold flat in *; rewrite ES; exact H1|]. rewrite ES. exact H2.
 Qed.
 
+(* [comment removed for export] *)
 Lemma seg_rom_off_hull : forall a : word, in_hull A (bv_unsigned a) = false -> seg_rom SEGS a = None.
 Proof using SEGS_in_hull.
   intros a Ha. unfold seg_rom.
@@ -3505,7 +3585,7 @@ Proof using SEGS_in_hull.
     apply HP. apply Hall. lia. }
   destruct K as [[kb kk] w v|[kb kk] [l| | | | | | |]|[kb kk] [l| | | | | | |] bk| | | | | |[kb kk] [l| | | | | | |] fc|[kb kk] [l| | | | | | |]];
     try discriminate.
-  - 
+  - (* [comment removed for export] *)
     destruct (expr_eqb b kb && Z.leb kk i && Z.ltb i (kk + Z.of_nat w))%bool eqn:Hcnd; [|discriminate]. injection Hhit as <-.
     apply andb_prop in Hcnd as [Hcnd X]. apply andb_prop in Hcnd as [Hb X0].
     apply expr_eqb_eq in Hb. subst kb. apply Z.leb_le in X0. apply Z.ltb_lt in X.
@@ -3513,11 +3593,11 @@ Proof using SEGS_in_hull.
     pose proof (flat_u E _ _ Hfl) as Hu. destruct Hfl as (F1 & F2 & F3 & F4). unfold estart in *; cbn [a_base a_off] in *. unfold uE.
     split; [lia|]. intros j Hj Hh. split; [lia|].
     apply (rdn_bytes_some M _ w _ Hrd); rewrite ?Hu, ?u64_lit by lia; [lia | exact Hh].
-  -  eapply (ZF kb kk l (fun x => x = Some (Z_to_bv 8 0))); [exact HKK | intros x ->; discriminate | exact Hhit].
-  -  cbn [kentry_ok] in HKK. destruct HKK as (Hfl & Hlen & Hall).
+  - (* [comment removed for export] *) eapply (ZF kb kk l (fun x => x = Some (Z_to_bv 8 0))); [exact HKK | intros x ->; discriminate | exact Hhit].
+  - (* [comment removed for export] *) cbn [kentry_ok] in HKK. destruct HKK as (Hfl & Hlen & Hall).
     eapply (ZF kb kk l (fun x => exists b0, x = Some b0)); [split; [exact Hfl | intros i0 Hi0; eexists; apply Hall; exact Hi0] | intros x [b0 ->]; discriminate | exact Hhit].
-  -  eapply (ZF kb kk l (fun x => x = Some (Z_to_bv 8 fc))); [exact HKK | intros x ->; discriminate | exact Hhit].
-  -  eapply (ZF kb kk l (fun x => x <> None)); [exact HKK | intros x Hx; exact Hx | exact Hhit].
+  - (* [comment removed for export] *) eapply (ZF kb kk l (fun x => x = Some (Z_to_bv 8 fc))); [exact HKK | intros x ->; discriminate | exact Hhit].
+  - (* [comment removed for export] *) eapply (ZF kb kk l (fun x => x <> None)); [exact HKK | intros x Hx; exact Hx | exact Hhit].
 Qed.
 
 Lemma cover_x_sound : forall fuel E M k b i stop,
@@ -3562,6 +3642,7 @@ Proof using HULL_ok SEGS_in_hull.
   pose proof (proj1 (forallb_forall _ _) H K Hin) as HK1. unfold kn_incl1_h in HK1.
   destruct (existsb (fun X => kentry_eqb X K) k) eqn:Hex1.
   { apply existsb_exists in Hex1 as [X [HinX Heq]]. apply kentry_eqb_eq in Heq. subst. exact (proj1 (Forall_forall _ _) HK K HinX). }
+  (* [comment removed for export] *)
   assert (IMG : kimg_sub_covered k K = true -> kentry_ok SEGS E M K).
   { intros Hc. unfold kimg_sub_covered in Hc. destruct K as [| | |lo hi| | | | | |]; try discriminate.
     apply existsb_exists in Hc as [X [HinX HX]]. destruct X as [| | |lo' hi'| | | | | |]; try discriminate.
@@ -3576,6 +3657,7 @@ Proof using HULL_ok SEGS_in_hull.
   - destruct (kimg_sub_covered k K) eqn:Himg; [exact (IMG eq_refl)|]. eapply kunk_covered_sound; [exact HK | exact HK1].
 Qed.
 
+(* [comment removed for export] *)
 Definition is_havoc (lo hi : nat) (t : expr) : option nat :=
   match t with EVar v => if (Nat.leb lo v && Nat.ltb v hi)%bool then Some v else None | _ => None end.
 
@@ -3608,6 +3690,7 @@ Proof using .
   apply is_havoc_range in Hv as [_ Hv]. cbn [upd ev]. destruct (Nat.eqb_spec n v); [lia|]. apply IH. exact Hn.
 Qed.
 
+(* [comment removed for export] *)
 Lemma regs_match_h_char : forall lo hi seen rs ts, regs_match_h lo hi seen rs ts = true ->
   length rs = length ts /\
   forall i, (i < length ts)%nat ->
@@ -3674,6 +3757,7 @@ Proof using .
   - rewrite Heq in Hvl |- *. eapply (edenot_agree' lo); [apply henv_agree | exact Hvl].
 Qed.
 
+(* [comment removed for export] *)
 Lemma cs_ok_reenv : forall b E E' cs sr' R FULL model,
   cs_ok E cs R FULL model -> env_agree b E E' -> (nx0 <= b)%nat ->
   AP.kn_vars_lt b (kn cs) = true -> maps_vars_lt b (a_maps cs) = true -> pairs_vars_lt b (a_vis cs ++ a_ghost cs) = true ->
@@ -3727,6 +3811,7 @@ Proof using HULL_ok SEGS_in_hull SINV_agree argH_agree.
   repeat match goal with Hz : Z.leb _ _ = true |- _ => apply Z.leb_le in Hz end.
   set (E' := henv lo hi E (s_regs (a_ss cs)) (s_regs (a_ss T))).
   exists E'. split; [apply henv_agree|]. split; [intros; apply henv_high; assumption|]. split; [|symmetry; exact Hpc].
+  (* [comment removed for export] *)
   set (Tc := set_regs T (s_regs (a_ss cs))).
   assert (Evis : a_vis Tc = a_vis cs) by (unfold Tc; cbn [set_regs with_ss a_vis]; symmetry; exact Hallow).
   assert (HA : allowA E Tc = allowA E cs) by (unfold allowA; unfold Tc; cbn [set_regs with_ss a_vis a_ghost]; rewrite Hallow, Hghost; reflexivity).
@@ -3740,6 +3825,7 @@ Proof using HULL_ok SEGS_in_hull SINV_agree argH_agree.
     - destruct co_split0 as [Y HY]. exists Y. split; [unfold Tc; cbn [set_regs with_ss a_ylo]; lia | apply HY].
     - intros a. rewrite HH. replace (in_ghost E Tc) with (in_ghost E cs) by (unfold in_ghost, Tc; cbn [set_regs with_ss a_ghost]; rewrite Hghost; reflexivity).
       exact (co_zero0 a). }
+  (* [comment removed for export] *)
   assert (ET : T = set_regs Tc (s_regs (a_ss T))).
   { subst Tc. clear - HL HRV. destruct T as [[p sr lg k nx rv] m t y e v g ab br f ti]. cbn in HL, HRV. subst lg rv. reflexivity. }
   rewrite ET at 1. eapply (cs_ok_reenv lo); try eassumption.
@@ -3748,6 +3834,7 @@ Proof using HULL_ok SEGS_in_hull SINV_agree argH_agree.
   - apply regs_match_h_sound; [exact Hregs | exact Hlen | exact (co_regs _ _ _ _ _ HC)].
 Qed.
 
+(* [comment removed for export] *)
 Lemma diamond_join_sound : forall nx joinpc rs ca cb csj,
   node_diamond_join A nx0 nx joinpc rs ca cb = Some csj ->
   (forall E R FULL model, cs_ok E ca R FULL model ->
@@ -3791,7 +3878,12 @@ Proof using . reflexivity. Qed.
 Lemma nxt_inst : forall inv J e, nxt (inst inv J e) = nxt inv.
 Proof using . reflexivity. Qed.
 
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
 
+(* [comment removed for export] *)
+(* [comment removed for export] *)
 Lemma check_all_ok : forall (chk : acs -> plan -> cres) k css s,
   check_all A chk k css = COk s ->
   (exists cs1, In cs1 css /\ chk cs1 k = COk s /\ True) /\ (forall cs, In cs css -> chk cs k = COk s).
@@ -3905,33 +3997,34 @@ Proof using .
   - destruct (node_abstractcell A cs ab an) as [cs1|]; [|discriminate]. exact (IH _ ak cs1 s Hc).
   - destruct (node_havocwords nx0 cs hws) as [cs1|]; [|discriminate]. exact (IH _ hwk cs1 s Hc).
   - destruct (node_respell cs rsr rse) as [cs1|]; [|discriminate]. exact (IH _ rsk cs1 s Hc).
-  - 
+  - (* [comment removed for export] *)
     destruct (is_ecall_at SEGS cs); [|discriminate]. destruct (node_mmapin A LIMIT true cs) as [[[csa csb] cscs]|]; [|discriminate].
     exact (IH _ ihb _ s Hc).
-  - 
+  - (* [comment removed for export] *)
     destruct (node_havoccell SEGS nx0 cs hcb hcn) as [cs1|]; [|discriminate]. exact (IH _ hck cs1 s Hc).
-  - 
+  - (* [comment removed for export] *)
     destruct (is_ecall_at SEGS cs); [|discriminate]. destruct (node_brk2s A LIMIT cs) as [[csa csb]|]; [|discriminate].
     destruct (CHECK bfuel fuel lc csa bka) as [sa|] eqn:H1; [|discriminate].
     destruct (CHECK bfuel fuel lc csb bkb) as [sb|] eqn:H2; [|discriminate].
     destruct (shape_eqb sa sb); [|discriminate]. injection Hc as <-. exact (IH _ bka _ sa H1).
-  - 
+  - (* [comment removed for export] *)
     destruct (node_casedisj cs cjb1 cjb2) as [[csa csb]|]; [|discriminate].
     destruct (run_block_gc SEGS IT _ KC bfuel (cjp :: STOPS A) csa) as [ca|]; [|discriminate].
     destruct (run_block_gc SEGS IT _ KC bfuel (cjp :: STOPS A) csb) as [cb|]; [|discriminate].
     destruct (node_diamond_join A nx0 (nxt cs) cjp cjrs ca cb) as [csj|]; [|discriminate]. exact (IH _ cjk csj s Hc).
-  - 
+  - (* [comment removed for export] *)
     match type of Hc with context [AX2.deand ?x] => destruct (AX2.deand x) as [fe fsa] end. cbv beta iota in Hc.
     match type of Hc with context [node_fresh ?a1 ?a2 ?a3 ?a4 ?a5] => destruct (node_fresh a1 a2 a3 a4 a5) as [cs1|] end; [|discriminate].
     exact (IH _ fak cs1 s Hc).
-  - 
+  - (* [comment removed for export] *)
     destruct (vis_slice A LIMIT cs vsb vsn) as [cs1|]; [|discriminate]. exact (IH _ vsk cs1 s Hc).
-  - 
+  - (* [comment removed for export] *)
     destruct (node_kwrjoin cs kjb1 kjo1 kjn1 kjb2 kjo2 kjn2) as [cs1|]; [|discriminate]. exact (IH _ kjk cs1 s Hc).
-  - 
+  - (* [comment removed for export] *)
     destruct (node_introw nx0 cs iww iwfs) as [cs1|]; [|discriminate]. exact (IH _ iwk cs1 s Hc).
 Qed.
 
+(* [comment removed for export] *)
 Lemma list_set_nth_maps_match : forall E ms l i m sz,
   nth_error ms i = Some m -> is_fog m = false -> 0 <= sz < two64 ->
   bv_unsigned (edenot E (am_len m)) <= sz ->
@@ -3988,13 +4081,13 @@ Proof using .
   assert (HA : allowA E (with_maps cs ms') = allowA E cs) by reflexivity.
   destruct HC; constructor; unfold with_maps; rewrite ?HMr, ?HA;
     cbn [a_ss a_maps a_totsz a_ylo a_eager a_vis a_ghost a_abytes a_brk a_fd a_tidset kn] in *; try assumption.
-  -  apply Forall_forall. intros m Hin Hk. destruct (Hsub m Hin) as [Hm|Hm].
+  - (* [comment removed for export] *) apply Forall_forall. intros m Hin Hk. destruct (Hsub m Hin) as [Hm|Hm].
     + rewrite Hm in Hk. cbn in Hk. discriminate.
     + exact (proj1 (Forall_forall _ _) co_holes0 m Hm Hk).
-  -  apply Forall_forall. intros m Hin Hk. destruct (Hsub m Hin) as [Hm|Hm].
+  - (* [comment removed for export] *) apply Forall_forall. intros m Hin Hk. destruct (Hsub m Hin) as [Hm|Hm].
     + rewrite Hm in Hk. cbn in Hk. destruct Hk; discriminate.
     + exact (proj1 (Forall_forall _ _) co_none0 m Hm Hk).
-  -  apply Forall_forall. intros m Hin Hk. destruct (Hsub m Hin) as [Hm|Hm].
+  - (* [comment removed for export] *) apply Forall_forall. intros m Hin Hk. destruct (Hsub m Hin) as [Hm|Hm].
     + rewrite Hm in Hk. cbn in Hk. discriminate.
     + exact (proj1 (Forall_forall _ _) co_kinds0 m Hm Hk).
 Qed.
@@ -4069,7 +4162,9 @@ Proof using HS KC SHADOW_ok XB XE XN.
     unfold in_ghost in H5 |- *. cbn [a_ghost] in H5. rewrite existsb_app in H5. apply orb_false_iff in H5 as [H5 _]. exact H5.
 Qed.
 
+(* [comment removed for export] *)
 
+(* [comment removed for export] *)
 Lemma kzero_x_sound0 : forall E M allkn k b off n,
   know_ok SEGS E M allkn ->
   know_ok SEGS E M k -> kzero_x allkn k b off n = true ->
@@ -4141,7 +4236,7 @@ Qed.
 Lemma unvis_sound : forall E cs R FULL model b n cs',
   cs_ok E cs R FULL model -> node_unvis A cs b n = Some cs' -> cs_ok E cs' R FULL model /\ pc cs' = pc cs.
 Proof using SHADOW_ok.
-  intros E cs R FULL model b n cs' HC H. rewrite node_unvis_eq in H.  unfold node_unvis_ref in H.
+  intros E cs R FULL model b n cs' HC H. rewrite node_unvis_eq in H. (* [comment removed for export] *) unfold node_unvis_ref in H.
   destruct (split_lit b) as [bb bk] eqn:Hsp.
   destruct (shadow_of A (kn cs) b n) as [[sb sk] sn] eqn:Hsh.
   destruct (xhi (kn cs) b) as [bh|] eqn:Hbh; [|discriminate].
@@ -4160,6 +4255,7 @@ Proof using SHADOW_ok.
   match goal with Hl : ranges_apart_x (kn cs) bb bk n (ELit SW_LO) 0 (ELit (KHI - SW_LO)) = true |- _ => rename Hl into Hswap end.
   pose proof (co_know _ _ _ _ _ HC) as HK.
   set (M := Mr E cs model FULL) in *.
+  (* [comment removed for export] *)
   pose proof (xhi_sound SEGS E M (kn cs) b bh HK Hbh) as Hbh'. pose proof (xhi_sound SEGS E M (kn cs) n nh HK Hnh) as Hnh'.
   pose proof (flat_x_sound E M (kn cs) bb bk n HK Hfl) as (F1 & F2 & F3).
   pose proof (split_lit_denot E b bb bk Hsp) as Hbd.
@@ -4182,9 +4278,11 @@ Proof using SHADOW_ok.
   { unfold S. destruct D8b as [qb ->]. destruct D8n as [qn ->].
     rewrite Z.div_mul, <- Z.mul_add_distr_r, !Z.div_mul by lia. lia. }
   pose proof (kzero_x_sound0 E M (kn cs) (kn cs) sb sk sn HK HK Hkz) as (Hzero & _ & _). rewrite HSS, HSn in Hzero.
+  (* [comment removed for export] *)
   assert (GONE : Forall (fun p => p = (b, n)) (List.filter (vis_here b n) (a_vis cs))).
   { apply Forall_forall. intros p Hp. apply filter_In in Hp as [_ Hp]. apply vis_here_eq. exact Hp. }
   set (cs' := ACS _ _ _ _ _ _ _ _ _ _ _).
+  (* [comment removed for export] *)
   assert (ALLOW_sub : forall z, in_allow E cs' z = true -> in_allow E cs z = true).
   { intros z Hz. unfold in_allow, in_vis, in_sh in *. unfold cs' in Hz; cbn [a_vis] in Hz.
     apply orb_true_iff in Hz. apply orb_true_iff.
@@ -4228,6 +4326,7 @@ Proof using SHADOW_ok.
     - destruct (hid E cs' model x); [reflexivity | exact Hx]. }
   assert (M_eq : forall x, ~ (ub <= bv_unsigned x < ub + un) -> ~ (S <= bv_unsigned x < S + un / 8) -> M' x = M x).
   { intros x H1 H2. unfold M, M', Mr, mrestrict. rewrite (HID_eq x H1 H2). reflexivity. }
+  (* [comment removed for export] *)
   set (k1 := kn_unfill (kn cs) bb bk n).
   set (Mmid := fun x : word => if ((ub <=? bv_unsigned x) && (bv_unsigned x <? ub + un))%bool then M' x else M x).
   assert (Mmid_out : forall x : word, bv_unsigned x < ub \/ ub + elenZ E n <= bv_unsigned x -> Mmid x = M x).
@@ -4257,6 +4356,7 @@ Proof using SHADOW_ok.
       destruct ((ub <=? bv_unsigned x) && (bv_unsigned x <? ub + un))%bool eqn:Hb; [reflexivity|].
       apply M_eq; [|lia]. intros Hin. assert (X : ((ub <=? bv_unsigned x) && (bv_unsigned x <? ub + un))%bool = true); [|rewrite X in Hb; discriminate].
       apply andb_true_intro. split; [apply Z.leb_le | apply Z.ltb_lt]; lia. }
+  (* [comment removed for export] *)
   assert (HA : allowA E cs' = flat_map (allow1 E) (List.filter (fun p => negb (vis_here b n p)) (a_vis cs))
                                ++ flat_map (allow1 E) (a_ghost cs) ++ allow1 E (b, n)).
   { unfold allowA, cs'. cbn [a_vis a_ghost]. rewrite !flat_map_app. cbn [flat_map]. rewrite app_nil_r, app_assoc. reflexivity. }
@@ -4289,7 +4389,8 @@ Proof using SHADOW_ok.
        | |- MInv _ _ => destruct HMI as [N1 N2 N3 N4 N5]; constructor; try assumption; [intros pg Hpg; apply HPG; apply N3; exact Hpg | lia]
        | |- _ => idtac
        end.
-   intros a H1 H2 H3 H4 H5.
+  (* [comment removed for export] *) intros a H1 H2 H3 H4 H5.
+    (* [comment removed for export] *)
     assert (NA : ~ (ub <= bv_unsigned a < ub + un)).
     { intros Hin. destruct H5 as [H5|H5].
       - unfold in_ghost in H5. unfold cs' in H5; cbn [a_ghost] in H5. rewrite existsb_app in H5. apply orb_false_iff in H5 as [_ H6].
@@ -4306,7 +4407,7 @@ Proof using SHADOW_ok.
     destruct (hid E cs model a) eqn:Hh.
     + apply (HZ0 a Hh H2 H3 H4). exact H5'.
     + destruct (Z_le_dec S (bv_unsigned a)) as [L1|L1]; [destruct (Z_lt_dec (bv_unsigned a) (S + un / 8)) as [L2|L2]|].
-      * 
+      * (* [comment removed for export] *)
         pose proof (Hzero (bv_unsigned a - S) ltac:(lia)) as Z0.
         replace (S + (bv_unsigned a - S)) with (bv_unsigned a) in Z0 by lia. rewrite Z_to_bv_bv_unsigned in Z0.
         unfold M, Mr, mrestrict in Z0. rewrite Hh in Z0. exact Z0.
@@ -4339,10 +4440,11 @@ Proof using SINV_agree argH_agree.
   destruct HC'; constructor; unfold cs'; rewrite ?HMr, ?HA;
     cbn [a_ss a_maps a_totsz a_ylo a_eager a_vis a_ghost a_abytes a_brk a_fd a_tidset kn mk_ss s_regs s_log s_know s_pc s_next] in *;
     try assumption; try reflexivity.
-  -  constructor; [|exact co_know0]. cbn [kentry_ok]. rewrite Hv, HB0. lia.
-  -  symmetry. exact Hv.
+  - (* [comment removed for export] *) constructor; [|exact co_know0]. cbn [kentry_ok]. rewrite Hv, HB0. lia.
+  - (* [comment removed for export] *) symmetry. exact Hv.
 Qed.
 
+(* [comment removed for export] *)
 Lemma intro_sound : forall E cs R FULL model lo hi cs',
   cs_ok E cs R FULL model -> node_intro nx0 cs lo hi = Some cs' ->
   exists E', (env_agree nx0 E E' /\ env_agree (nxt cs) E E') /\ cs_ok E' cs' R FULL model /\ pc cs' = pc cs.
@@ -4365,9 +4467,10 @@ Proof using SINV_agree argH_agree.
   destruct HC'; constructor; unfold cs'; rewrite ?HMr, ?HA;
     cbn [with_ss a_ss a_maps a_totsz a_ylo a_eager a_vis a_ghost a_abytes a_brk a_fd a_tidset kn mk_ss s_regs s_log s_know s_pc s_next] in *;
     try assumption; try reflexivity.
-  -  constructor; [|exact co_know0]. cbn [kentry_ok]. rewrite Hv. lia.
+  - (* [comment removed for export] *) constructor; [|exact co_know0]. cbn [kentry_ok]. rewrite Hv. lia.
 Qed.
 
+(* [comment removed for export] *)
 Lemma introw_eval_sound : forall E v w e z, bv_unsigned (edenot E (EVar v)) = w -> introw_eval v w e = Some z ->
   bv_unsigned (edenot E e) = z.
 Proof using .
@@ -4422,11 +4525,12 @@ Proof using SINV_agree argH_agree.
   destruct HC'; constructor; unfold cs'; rewrite ?HMr, ?HA;
     cbn [with_ss a_ss a_maps a_totsz a_ylo a_eager a_vis a_ghost a_abytes a_brk a_fd a_tidset kn mk_ss s_regs s_log s_know s_pc s_next] in *;
     try assumption; try reflexivity.
-  -  apply Forall_app. split; [|exact co_know0].
+  - (* [comment removed for export] *) apply Forall_app. split; [|exact co_know0].
     apply Forall_forall. intros K HK. apply (introw_fact_sound E' _ v w K Hv).
     exact (proj1 (forallb_forall _ _) Hfs K HK).
 Qed.
 
+(* [comment removed for export] *)
 Section Rename.
   Variable m : list (nat * nat).
   Variables fw bw : list (option nat).
@@ -4596,6 +4700,7 @@ Section RenameCS.
       exists iv, l'. split; [reflexivity|]. split; [exact Hsz | exact (IH _ Hr HM)].
     - destruct HM as (l' & -> & HM). exists l'. split; [reflexivity | exact (IH _ Hr HM)].
   Qed.
+  (* [comment removed for export] *)
   Lemma holes_rename : forall E y l ms,
     forallb (fun m0 => evars_all (ren_ok fw bw) (am_base m0) && evars_all (ren_ok fw bw) (am_len m0)) ms = true ->
     Forall (hole_ok E y l) ms -> Forall (hole_ok (ren_env bw E) y l) (map (mrename fw) ms).
@@ -4635,20 +4740,20 @@ Section RenameCS.
     - apply fds_ok_rename; assumption.
     - apply maps_match_rename; assumption.
     - apply holes_rename; assumption.
-    -  apply Forall_forall. intros m0 Hin Hk. apply in_map_iff in Hin as (m1 & <- & Hin).
+    - (* [comment removed for export] *) apply Forall_forall. intros m0 Hin Hk. apply in_map_iff in Hin as (m1 & <- & Hin).
       pose proof (proj1 (forallb_forall _ _) Hmaps m1 Hin) as Hmm. apply andb_prop in Hmm as [H1 H2].
       unfold amap_den, mrename in *. cbn [am_base am_len am_kind] in *. rewrite !(ER E) by assumption.
       exact (proj1 (Forall_forall _ _) co_none0 m1 Hin Hk).
-    -  apply Forall_forall. intros m0 Hin Hk a Ha. apply in_map_iff in Hin as (m1 & <- & Hin).
+    - (* [comment removed for export] *) apply Forall_forall. intros m0 Hin Hk a Ha. apply in_map_iff in Hin as (m1 & <- & Hin).
       pose proof (proj1 (forallb_forall _ _) Hmaps m1 Hin) as Hmm. apply andb_prop in Hmm as [H1 H2].
       unfold mrename in *. cbn [am_base am_len am_kind] in *. rewrite !(ER E) in Ha by assumption.
       exact (proj1 (Forall_forall _ _) co_kinds0 m1 Hin Hk a Ha).
     - rewrite (ER E) by assumption. assumption.
     - intros a. rewrite HH, (in_ghost_rename E cs nx Hgh). exact (co_zero0 a).
     - eapply SINV_agree; [eapply env_agree_le; [apply ren_agree | exact Hgb] | assumption].
-    -  intros E2 Hag2. apply co_isp0.
+    - (* [comment removed for export] *) intros E2 Hag2. apply co_isp0.
       eapply env_agree_trans; [eapply env_agree_le; [apply ren_agree | exact Hgb] | exact Hag2].
-    -  intros a Ha. apply co_argh0.
+    - (* [comment removed for export] *) intros a Ha. apply co_argh0.
       rewrite (argH_agree E (ren_env bw E) a) by (eapply env_agree_le; [apply ren_agree | exact Hgb]). exact Ha.
   Qed.
 End RenameCS.
@@ -4675,6 +4780,8 @@ Lemma compact_sound : forall gb E cs R FULL model cs',
 Proof using SINV_agree argH_agree. intros gb E cs R FULL model cs' Hgb HC H. unfold node_compact in H. eapply rename_sound; eassumption. Qed.
 
 
+(* [comment removed for export] *)
+(* [comment removed for export] *)
 Lemma abstractcell_sound : forall E cs R FULL model b n cs',
   cs_ok E cs R FULL model -> node_abstractcell A cs b n = Some cs' -> cs_ok E cs' R FULL model /\ pc cs' = pc cs.
 Proof using HULL_ok SEGS_in_hull.
@@ -4721,7 +4828,7 @@ Proof using .
     destruct X as [a' w v| | | | | | | | |];
       try (destruct (IH Hr Hvr) as [IH1 IH2]; split; [constructor; [apply KEEP | exact IH1] | cbn [AP.kn_vars_lt]; rewrite KEEPV, IH2; reflexivity]).
     destruct (saddr_eqb a' a) eqn:Hs.
-    + 
+    + (* [comment removed for export] *)
       split.
       * constructor.
         -- cbn [kentry_ok] in HX |- *. destruct HX as (Hw & Hf & Hrd).
@@ -4772,6 +4879,7 @@ Proof using SINV_agree argH_agree.
     rewrite (hid_agree (nxt cs) E E' cs model Hag Fle Fallow). exact HK'.
 Qed.
 
+(* [comment removed for export] *)
 Lemma havoccell_sound : forall E cs R FULL model b n cs',
   cs_ok E cs R FULL model -> node_havoccell SEGS nx0 cs b n = Some cs' ->
   exists E', (env_agree nx0 E E' /\ env_agree (nxt cs) E E') /\ cs_ok E' cs' R FULL model /\ pc cs' = pc cs.
@@ -4814,6 +4922,7 @@ Proof using SINV_agree argH_agree.
     + exact (co_know _ _ _ _ _ HC2).
 Qed.
 
+(* [comment removed for export] *)
 Lemma respell_ok_sound : forall E M k a e,
   know_ok SEGS E M k -> respell_ok k a e = true -> edenot E a = edenot E e.
 Proof using .
@@ -4871,12 +4980,14 @@ Proof using .
   - exact (co_halt _ _ _ _ _ HC).
 Qed.
 
+(* [comment removed for export] *)
 Definition LCOK (lc : option loopctx) (D : TSet) (E : env) (fs : Fs.Fs) : Prop :=
   match lc with
   | None => True
   | Some (LC h nx lo hi) => ((nx0 <= lo)%nat /\ (lo <= hi)%nat /\ length (s_regs (a_ss nx)) = 32%nat) /\
               forall E' R' F' m', env_agree lo E E' -> cs_ok E' nx R' F' m' -> m_fs m' = fs ->
                 srealizes SEGS (cfg R' h F' m') D
+  (* [comment removed for export] *)
   | Some (JC j js sk b lo) => ((nx0 <= b)%nat /\ (b <= lo)%nat /\ length (s_regs (a_ss js)) = 32%nat) /\
               forall E' R' F' m', env_agree b E E' -> cs_ok E' js R' F' m' -> m_fs m' = fs ->
                 srealizes SEGS (cfg R' (pc js) F' m') (sd D E' fs sk)
@@ -4896,6 +5007,7 @@ Proof using .
   intros E2 R' F' m' Hag2; apply HL; (eapply env_agree_trans; [eapply env_agree_le; [exact Hag | lia] | exact Hag2]).
 Qed.
 
+(* [comment removed for export] *)
 Lemma LCOK_agree_gb : forall lc D E E' fs,
   LCOK lc D E fs -> env_agree (match lc with Some c => lc_bnd c | None => nx0 end) E E' -> LCOK lc D E' fs.
 Proof using .
@@ -4904,6 +5016,7 @@ Proof using .
   intros E2 R' F' m' Hag2; apply HL; (eapply env_agree_trans; [eapply env_agree_le; [exact Hag | lia] | exact Hag2]).
 Qed.
 
+(* [comment removed for export] *)
 Lemma cont_agree : forall bfuel fuel lc k cs cs' s E model D,
   CHECK bfuel fuel lc cs' k = COk s ->
   LCOK lc D E (m_fs model) -> lc_guard lc cs = true -> D [] ->
@@ -4934,16 +5047,16 @@ Proof using HOLES_agree HOLES_nil HS_sound HULL_ok IT_ok SEGS_in_hull SEGS_wx SH
             srealizes SEGS (cfg R (pc cs') FULL model) (sd D E (m_fs model) s')).
   { intros k cs' s' Hk HC'. refine (CONT k cs' s' Hk E R FULL model (conj (env_agree_refl _ _) (env_agree_refl _ _)) HC' eq_refl). }
   destruct p as [stops k|e mid k1 k2|ce cmid ck1 ck2|db1 db2 dk1 dk2|sb1 sn1 sb2 sn2 k| |K k|jb joff jn k|ixs k|db dn k|gws k|bm k|hrs k|hbK k|r logc fb k|y k|ma mb|ia ib ic|qa qb|ka kb|x args k|xid xargs k|eid eargs k|bid bargs kb1 kb2|lJ lN linv lbody lk| |h| | |fi fsz fk|gi gsz gk|gb gn gk2|ub un uk|hlo hhi hk|ilo ihi ik|djp drs dk|rnm rnk|cpk|vj vjs vlo vka vk|mj|ab an ak|hws hwk|rsr rse rsk|iha ihb ihc|hcb hcn hck|bka bkb|cjb1 cjb2 cjp cjrs cjk|far fak|vsb vsn vsk|kjb1 kjo1 kjn1 kjb2 kjo2 kjn2 kjk|iww iwfs iwk].
-  - 
+  - (* [comment removed for export] *)
     destruct (run_block_gc SEGS IT _ KC bfuel (stops ++ STOPS A) cs) as [cs1|] eqn:Hrb; [|discriminate].
     pose proof (LCOK_bnd lc D E (m_fs model) HL) as Hgb.
     eapply run_block_gc_sound; [exact Hgb | exact Hrb | exact HC |].
     intros E' R' FULL' model' Hag HC1 Hfs. exact (CONT k cs1 s Hc E' R' FULL' model' Hag HC1 Hfs).
-  - 
+  - (* [comment removed for export] *)
     destruct (AP.expr_vars_lt nx0 e) eqn:Hv; [|discriminate].
     destruct (crange (kn cs) e) as [[lo hi]|] eqn:Hr; [|discriminate].
     destruct (Z.leb lo mid && Z.ltb mid hi)%bool.
-    2: { 
+    2: { (* [comment removed for export] *)
          pose proof (crange_sound E _ (kn cs) e lo hi (co_know _ _ _ _ _ HC) Hr) as Hb.
          destruct (Z.leb_spec hi mid) as [Hle|Hgt]; [exact (SAME k1 _ s Hc HC) | exact (SAME k2 _ s Hc HC)]. }
     destruct (CHECK bfuel fuel lc (set_kn cs (KRange e lo mid :: kn cs)) k1) as [s1|] eqn:H1; [|discriminate].
@@ -4953,7 +5066,7 @@ Proof using HOLES_agree HOLES_nil HS_sound HULL_ok IT_ok SEGS_in_hull SEGS_wx SH
     destruct (Z.leb_spec (bv_unsigned (edenot E e)) mid) as [Hle|Hgt].
     + exact (SAME k1 _ s1 H1 (HCl Hle)).
     + exact (SAME k2 _ s2 H2 (HCr ltac:(lia))).
-  - 
+  - (* [comment removed for export] *)
     destruct (crange (kn cs) ce) as [[lo hi]|] eqn:Hr; [|discriminate].
     destruct (Z.leb lo cmid && Z.ltb cmid hi)%bool.
     2: { cbn [negb] in Hc. destruct (Z.leb hi cmid); [exact (SAME ck1 _ s Hc HC) | exact (SAME ck2 _ s Hc HC)]. }
@@ -4973,7 +5086,7 @@ Proof using HOLES_agree HOLES_nil HS_sound HULL_ok IT_ok SEGS_in_hull SEGS_wx SH
     destruct (Z.leb_spec (bv_unsigned (edenot E ce)) cmid) as [Hle|Hgt].
     + exact (SAME ck1 _ s1 H1 (HCl Hle)).
     + exact (SAME ck2 _ s1 H2 (HCr ltac:(lia))).
-  - 
+  - (* [comment removed for export] *)
     destruct (node_casedisj cs db1 db2) as [[csa csb]|] eqn:Hn; [|discriminate].
     destruct (CHECK bfuel fuel lc csa dk1) as [s1|] eqn:H1; [|discriminate].
     destruct (CHECK bfuel fuel lc csb dk2) as [s2|] eqn:H2; [|discriminate].
@@ -4981,79 +5094,79 @@ Proof using HOLES_agree HOLES_nil HS_sound HULL_ok IT_ok SEGS_in_hull SEGS_wx SH
     destruct (casedisj_sound cs db1 db2 csa csb E R FULL model HC Hn) as [[HC' Hpc]|[HC' Hpc]]; rewrite <- Hpc.
     + exact (SAME dk1 _ s1 H1 HC').
     + exact (SAME dk2 _ s1 H2 HC').
-  - 
+  - (* [comment removed for export] *)
     destruct (node_shdisj A cs sb1 sn1 sb2 sn2) as [cs1|] eqn:Hn; [|discriminate].
     destruct (shdisj_sound cs sb1 sn1 sb2 sn2 cs1 E R FULL model HC Hn) as [HC' Hpc]. rewrite <- Hpc.
     exact (SAME k _ s Hc HC').
-  - 
+  - (* [comment removed for export] *)
     destruct (kn_contra (kn cs)) eqn:Hk; [|discriminate]. exfalso.
     exact (kn_contra_sound E _ (kn cs) (co_know _ _ _ _ _ HC) Hk).
-  - 
+  - (* [comment removed for export] *)
     destruct (fact_ok (kn cs) K) eqn:Hf; [|discriminate].
     exact (SAME k _ s Hc (fact_sound E cs R FULL model K HC Hf)).
-  - 
+  - (* [comment removed for export] *)
     destruct (node_join SEGS cs jb joff jn) as [cs1|] eqn:Hn; [|discriminate].
     eapply (node_join_sound jb joff jn cs cs1 E R FULL model); [exact HC | reflexivity | exact Hn |]. exact (CONT k cs1 s Hc).
-  - 
+  - (* [comment removed for export] *)
     exact (SAME k _ s Hc (forget_sound E cs R FULL model ixs HC)).
-  - 
+  - (* [comment removed for export] *)
     assert (Hpc : pc (node_droprange cs db dn) = pc cs) by (unfold node_droprange; destruct (split_lit db); reflexivity).
     rewrite <- Hpc. exact (SAME k _ s Hc (droprange_sound E cs R FULL model db dn HC)).
-  - 
+  - (* [comment removed for export] *)
     rewrite <- (pc_set_kn cs (kn_keep (kn cs) gws)).
     exact (SAME k _ s Hc (cs_ok_set_kn E cs R FULL model _ HC (know_ok_filter E _ _ (kn cs) (co_know _ _ _ _ _ HC)))).
-  - 
+  - (* [comment removed for export] *)
     destruct (node_bump cs bm) as [cs1|] eqn:Hn; [|discriminate].
     destruct (bump_sound E cs R FULL model bm cs1 HC Hn) as [HC1 Hpc]. rewrite <- Hpc.
     exact (SAME k _ s Hc HC1).
-  - 
+  - (* [comment removed for export] *)
     destruct (node_havoc nx0 cs hrs) as [cs1|] eqn:Hn; [|discriminate].
     destruct (havoc_sound E cs R FULL model hrs cs1 HC Hn) as (E' & Hag & HC1 & Hpc). rewrite <- Hpc.
     exact (CONT k cs1 s Hc E' R FULL model Hag HC1 eq_refl).
-  - 
+  - (* [comment removed for export] *)
     destruct (node_havocbig nx0 cs hbK) as [cs1|] eqn:Hn; [|discriminate].
     destruct (havocbig_sound E cs R FULL model hbK cs1 HC Hn) as (E' & Hag & HC1 & Hpc). rewrite <- Hpc.
     exact (CONT k cs1 s Hc E' R FULL model Hag HC1 eq_refl).
-  - 
+  - (* [comment removed for export] *)
     destruct (node_fresh nx0 cs r logc fb) as [cs1|] eqn:Hn; [|discriminate].
     eapply (node_fresh_sound_pf r logc fb cs cs1 E R FULL model); [exact HC | reflexivity | exact Hn |]. exact (CONT k cs1 s Hc).
-  - 
+  - (* [comment removed for export] *)
     destruct (is_ecall_at SEGS cs) eqn:Hec; [|discriminate].
     destruct (node_sys A nx0 y cs) as [cs1|] eqn:Hn; [|discriminate].
     eapply (node_sys_sound y cs cs1 E R FULL model); [exact HC | exact Hec | exact Hn |]. exact (CONT k cs1 s Hc).
-  - 
+  - (* [comment removed for export] *)
     destruct (is_ecall_at SEGS cs) eqn:Hec; [|discriminate].
     destruct (node_mmap2 A nx0 LIMIT cs) as [[csa csb]|] eqn:Hn; [|discriminate].
     eapply (node_mmap2_sound cs csa csb E R FULL model); [exact HC | exact Hec | exact Hn | exact (CONT mb csb s Hc)].
-  - 
+  - (* [comment removed for export] *)
     destruct (is_ecall_at SEGS cs) eqn:Hec; [|discriminate].
     destruct (node_mmapin A LIMIT false cs) as [[[csa csb] cscs]|] eqn:Hn; [|discriminate].
     eapply (node_mmapin_sound false cs csa csb cscs E R FULL model); [exact HC | exact Hec | exact Hn | exact (CONT ib csb s Hc)].
-  - 
+  - (* [comment removed for export] *)
     destruct (is_ecall_at SEGS cs) eqn:Hec; [|discriminate].
     destruct (node_mprotect2 A LIMIT cs) as [[csa csb]|] eqn:Hn; [|discriminate].
     eapply (node_mprotect2_sound cs csa csb E R FULL model); [exact HC | exact Hec | exact Hn | exact (CONT qb csb s Hc)].
-  - 
+  - (* [comment removed for export] *)
     destruct (is_ecall_at SEGS cs) eqn:Hec; [|discriminate].
     destruct (node_brk2 A LIMIT cs) as [[csa csb]|] eqn:Hn; [|discriminate].
     eapply (node_brk2_sound cs csa csb E R FULL model); [exact HC | exact Hec | exact Hn | exact (CONT kb csb s Hc)].
-  - 
+  - (* [comment removed for export] *)
     destruct (node_x SEGS A nx0 x args cs) as [cs1|] eqn:Hn; [|discriminate].
     eapply (node_x_sound x args cs cs1 E R FULL model); [exact HC | reflexivity | exact Hn |]. exact (CONT k cs1 s Hc).
-  - 
+  - (* [comment removed for export] *)
     destruct (XN xid xargs cs) as [cs1|] eqn:Hn; [|discriminate].
     eapply (node_ext_sound xid xargs cs cs1 E R FULL model); [exact HC | reflexivity | exact Hn |]. exact (CONT k cs1 s Hc).
-  - 
+  - (* [comment removed for export] *)
     destruct (XE eid eargs cs) as [[[fd ps] cs1]|] eqn:Hn; [|discriminate].
     destruct (CHECK bfuel fuel lc cs1 k) as [s1|] eqn:H1; [|discriminate]. injection Hc as <-. cbn [sd].
     eapply (node_emit_sound eid eargs cs fd ps cs1 E R FULL model); [exact HC | exact Hn | apply sd_has_nil; exact HD |]. exact (CONT k cs1 s1 H1).
-  - 
+  - (* [comment removed for export] *)
     destruct (XB bid bargs cs) as [[csa csb]|] eqn:Hn; [|discriminate].
     destruct (CHECK bfuel fuel lc csa kb1) as [sa|] eqn:H1; [|discriminate].
     destruct (CHECK bfuel fuel lc csb kb2) as [sb|] eqn:H2; [|discriminate].
     injection Hc as <-. cbn [sd].
     eapply (node_ext2_sound bid bargs cs csa csb E R FULL model); [exact HC | exact Hn | exact (CONT kb1 csa sa H1) | exact (CONT kb2 csb sb H2)].
-  - 
+  - (* [comment removed for export] *)
     destruct (loop_ok nx0 cs lJ lN linv) as [nhi|] eqn:Hlo; [|discriminate].
     destruct (Z.eqb (pc linv) (pc cs) && entails_h A (Datatypes.S lJ) (nxt linv) cs (inst linv lJ (ELit 0)))%bool eqn:Ht; [|discriminate].
     apply andb_prop in Ht as [Hpc Hent]. apply Z.eqb_eq in Hpc.
@@ -5066,11 +5179,12 @@ Proof using HOLES_agree HOLES_nil HS_sound HULL_ok IT_ok SEGS_in_hull SEGS_wx SH
     set (D0 := sd D E (m_fs model) s).
     assert (HD0 : D0 []) by (apply sd_has_nil; exact HD).
     set (h := pc cs) in *.
+    (* [comment removed for export] *)
     assert (Q : forall m j E' R' F' m', j = Nv - Z.of_nat m -> 0 <= j -> env_agree (nxt cs) E E' ->
                cs_ok E' (inst linv lJ (ELit j)) R' F' m' -> m_fs m' = m_fs model ->
                srealizes SEGS (cfg R' h F' m') D0).
     { induction m as [|m IHm]; intros j E' R' F' m' Hj Hj0 Hag HCj Hfs.
-      - 
+      - (* [comment removed for export] *)
         assert (HNe : edenot E' lN = edenot E' (ELit j)).
         { cbn [edenot]. rewrite <- (edenot_agree' (nxt cs) E E' lN Hag FvN). apply bv_eq. rewrite u_small by lia. cbn in Hj. lia. }
         assert (HCN : cs_ok E' (inst linv lJ lN) R' F' m').
@@ -5080,7 +5194,7 @@ Proof using HOLES_agree HOLES_nil HS_sound HULL_ok IT_ok SEGS_in_hull SEGS_wx SH
         rewrite <- Hfs. replace h with (pc (inst linv lJ lN)) by (unfold h; rewrite pc_inst; exact Hpc).
         apply (IH bfuel lc lk _ s Hk E' R' F' m' D HCN); [|exact HD].
         rewrite Hfs. eapply LCOK_agree; [exact HL | exact Hg | exact Hag].
-      - 
+      - (* [comment removed for export] *)
         set (E'' := upd E' lJ (Z_to_bv 64 j)).
         assert (Hjlt : j < Nv) by lia.
         assert (HCinv : cs_ok E'' linv R' F' m').
@@ -5098,6 +5212,7 @@ Proof using HOLES_agree HOLES_nil HS_sound HULL_ok IT_ok SEGS_in_hull SEGS_wx SH
             rewrite Z.mod_small by lia. lia. }
         replace h with (pc (loop_body_state lJ lN nhi linv)) by exact Hpc.
         refine (IH bfuel _ lbody _ SNext Hbody E'' R' F' m' D0 HCb _ HD0).
+        (* [comment removed for export] *)
         cbn [LCOK]. split.
         { split; [lia|]. split; [lia|]. unfold inst. cbn [a_ss s_regs mk_ss]. rewrite length_map. exact Flen. }
         intros E3 R3 F3 m3 Hag3 HC3 Hfs3.
@@ -5111,54 +5226,55 @@ Proof using HOLES_agree HOLES_nil HS_sound HULL_ok IT_ok SEGS_in_hull SEGS_wx SH
         + apply (proj2 (cs_ok_inst E4 lJ (ELit (j + 1)) linv R3 F3 m3 ltac:(lia) Flog)).
           unfold E4. cbn [edenot]. rewrite upd_upd. rewrite <- Hnext.
           apply (proj1 (cs_ok_inst E3 lJ (eaddz (EVar lJ) 1) linv R3 F3 m3 ltac:(lia) Flog)). exact HC3. }
+    (* [comment removed for export] *)
     destruct (entails_h_sound (Datatypes.S lJ) (nxt linv) E cs (inst linv lJ (ELit 0)) R FULL model HC Hent ltac:(lia)
                 ltac:(unfold inst; cbn [a_ss s_regs mk_ss]; rewrite length_map; exact Flen)) as (E1 & Hag1 & _ & HC1 & _).
     unfold D0 in Q. apply (Q (Z.to_nat Nv) 0 E1 R FULL model); [lia | lia | eapply env_agree_le; [exact Hag1 | lia] | exact HC1 | reflexivity].
-  - 
+  - (* [comment removed for export] *)
     destruct lc as [[h nx lo hi|j' js' sk' b' lo']|]; [|discriminate|discriminate].
     destruct (Z.eqb (pc cs) h && entails_h A lo hi cs nx)%bool eqn:Ht; [|discriminate]. injection Hc as <-. cbn [sd].
     apply andb_prop in Ht as [Hpc Hent]. apply Z.eqb_eq in Hpc.
     cbn [LCOK] in HL. destruct HL as [(Hn0 & Hlh & Hlen) HL]. cbn [lc_guard lc_bnd] in Hg. apply Nat.leb_le in Hg.
     destruct (entails_h_sound lo hi E cs nx R FULL model HC Hent Hn0 Hlen) as (E' & Hag & _ & HC' & Hpc').
     rewrite Hpc. exact (HL E' R FULL model Hag HC' eq_refl).
-  - 
+  - (* [comment removed for export] *)
     destruct (HS h) as [ch|] eqn:Hh; [|discriminate].
     destruct (entails cs ch) eqn:He; [|discriminate]. injection Hc as <-. cbn [sd].
     destruct (entails_sound E cs ch R FULL model HC He) as [HC' Hpc].
     rewrite <- Hpc. exact (HS_sound h ch Hh E R FULL model HC').
-  - 
+  - (* [comment removed for export] *)
     destruct (is_ecall_at SEGS cs) eqn:Hec; [|discriminate].
     destruct (node_exit cs) as [code|] eqn:Hn; [|discriminate]. injection Hc as <-. cbn [sd].
     eapply node_exit_sound; eassumption.
-  - 
+  - (* [comment removed for export] *)
     destruct (node_spin SEGS cs) eqn:Hn; [|discriminate]. injection Hc as <-. cbn [sd].
     exact (node_spin_sound cs E R FULL model HC Hn).
-  - 
+  - (* [comment removed for export] *)
     destruct (node_fog cs fi fsz) as [cs1|] eqn:Hn; [|discriminate].
     destruct (fog_sound E cs R FULL model fi fsz cs1 HC Hn) as [HC1 Hpc]. rewrite <- Hpc. exact (SAME fk _ s Hc HC1).
-  - 
+  - (* [comment removed for export] *)
     destruct (node_fognew cs gi gsz) as [cs1|] eqn:Hn; [|discriminate].
     destruct (fognew_sound E cs R FULL model gi gsz cs1 HC Hn) as [HC1 Hpc]. rewrite <- Hpc. exact (SAME gk _ s Hc HC1).
-  - 
+  - (* [comment removed for export] *)
     destruct (node_ghost LIMIT cs gb gn) as [cs1|] eqn:Hn; [|discriminate].
     destruct (ghost_sound E cs R FULL model gb gn cs1 HC Hn) as [HC1 Hpc]. rewrite <- Hpc. exact (SAME gk2 _ s Hc HC1).
-  - 
+  - (* [comment removed for export] *)
     destruct (node_unvis A cs ub un) as [cs1|] eqn:Hn; [|discriminate].
     destruct (unvis_sound E cs R FULL model ub un cs1 HC Hn) as [HC1 Hpc]. rewrite <- Hpc. exact (SAME uk _ s Hc HC1).
-  - 
+  - (* [comment removed for export] *)
     destruct (node_havocbrk nx0 cs hlo hhi) as [cs1|] eqn:Hn; [|discriminate].
     destruct (havocbrk_sound E cs R FULL model hlo hhi cs1 HC Hn) as (E' & Hag & HC1 & Hpc). rewrite <- Hpc.
     exact (CONT hk cs1 s Hc E' R FULL model Hag HC1 eq_refl).
-  - 
+  - (* [comment removed for export] *)
     destruct (node_intro nx0 cs ilo ihi) as [cs1|] eqn:Hn; [|discriminate].
     destruct (intro_sound E cs R FULL model ilo ihi cs1 HC Hn) as (E' & Hag & HC1 & Hpc). rewrite <- Hpc.
     exact (CONT ik cs1 s Hc E' R FULL model Hag HC1 eq_refl).
-  - 
+  - (* [comment removed for export] *)
     destruct (branch_probe IT cs) as [e|] eqn:Hbp; [|discriminate].
     destruct (crange (kn cs) e) as [[lo hi]|] eqn:Hr; [|discriminate].
     pose proof (LCOK_bnd lc D E (m_fs model) HL) as Hgb.
     destruct (Z.ltb hi 1 || Z.ltb 0 lo)%bool eqn:Hdec.
-    { 
+    { (* [comment removed for export] *)
       destruct (run_block_gc SEGS IT _ KC bfuel (djp :: STOPS A) cs) as [cs1|] eqn:Hrb; [|discriminate].
       destruct (Z.eqb (pc cs1) djp); [|discriminate].
       eapply run_block_gc_sound; [exact Hgb | exact Hrb | exact HC |].
@@ -5184,19 +5300,19 @@ Proof using HOLES_agree HOLES_nil HS_sound HULL_ok IT_ok SEGS_in_hull SEGS_wx SH
       change (env_agree (nxt cs) E E') in Hag1.
       exact (CONT dk csj s Hc E'' R' FULL' model'
                (conj (env_agree_trans _ _ _ _ Hag0 Hag2a) (env_agree_trans _ _ _ _ Hag1 Hag2b)) HC2 Hfs).
-  - 
+  - (* [comment removed for export] *)
     destruct (node_rename _ cs rnm) as [cs1|] eqn:Hn; [|discriminate].
     pose proof (LCOK_bnd lc D E (m_fs model) HL) as Hgb.
     destruct (rename_sound _ E cs R FULL model rnm cs1 Hgb HC Hn) as (E' & Hag & HC1 & Hpc). rewrite <- Hpc.
     rewrite (sd_agree D E E' (m_fs model) s (env_agree_le _ _ _ _ Hag Hgb) (check_vars _ _ _ _ _ _ Hc)).
     eapply IH; [exact Hc | exact HC1 | eapply LCOK_agree_gb; [exact HL | exact Hag] | exact HD].
-  - 
+  - (* [comment removed for export] *)
     destruct (node_compact _ cs) as [cs1|] eqn:Hn; [|discriminate].
     pose proof (LCOK_bnd lc D E (m_fs model) HL) as Hgb.
     destruct (compact_sound _ E cs R FULL model cs1 Hgb HC Hn) as (E' & Hag & HC1 & Hpc). rewrite <- Hpc.
     rewrite (sd_agree D E E' (m_fs model) s (env_agree_le _ _ _ _ Hag Hgb) (check_vars _ _ _ _ _ _ Hc)).
     eapply IH; [exact Hc | exact HC1 | eapply LCOK_agree_gb; [exact HL | exact Hag] | exact HD].
-  - 
+  - (* [comment removed for export] *)
     destruct (via_ok nx0 cs vjs vlo) eqn:Hv; [|discriminate].
     destruct (CHECK bfuel fuel lc vjs vk) as [sk|] eqn:Hk; [|discriminate].
     unfold via_ok in Hv. repeat match type of Hv with (_ && _)%bool = true => apply andb_prop in Hv as [Hv ?X] end.
@@ -5211,7 +5327,7 @@ Proof using HOLES_agree HOLES_nil HS_sound HULL_ok IT_ok SEGS_in_hull SEGS_wx SH
     intros E' R' F' m' Hag HC' Hfs. rewrite <- Hfs.
     apply (IH bfuel lc vk vjs sk Hk E' R' F' m' D HC'); [|exact HD].
     rewrite Hfs. eapply LCOK_agree_gb; [exact HL|]. eapply env_agree_le; [exact Hag | exact Hgb'].
-  - 
+  - (* [comment removed for export] *)
     destruct lc as [[h nx lo hi|j' js' sk' b' lo']|]; [discriminate| |discriminate].
     destruct (Nat.eqb mj j' && Z.eqb (pc cs) (pc js') && shape_vars_lt nx0 sk' && entails_h A lo' (nxt js') cs js')%bool eqn:Ht; [|discriminate].
     injection Hc as <-.
@@ -5221,32 +5337,32 @@ Proof using HOLES_agree HOLES_nil HS_sound HULL_ok IT_ok SEGS_in_hull SEGS_wx SH
     assert (Hn0l : (nx0 <= lo')%nat) by lia.
     rewrite (sd_agree D E E' (m_fs model) sk' (env_agree_le nx0 lo' E E' Hag Hn0l) Hsv). rewrite Hpc.
     exact (HJ E' R FULL model (env_agree_le _ _ _ _ Hag Hbl) HC' eq_refl).
-  - 
+  - (* [comment removed for export] *)
     destruct (node_abstractcell A cs ab an) as [cs1|] eqn:Hn; [|discriminate].
     destruct (abstractcell_sound E cs R FULL model ab an cs1 HC Hn) as [HC1 Hpc]. rewrite <- Hpc. exact (SAME ak _ s Hc HC1).
-  - 
+  - (* [comment removed for export] *)
     destruct (node_havocwords nx0 cs hws) as [cs1|] eqn:Hn; [|discriminate].
     destruct (havocwords_sound E cs R FULL model hws cs1 HC Hn) as (E' & Hag & HC1 & Hpc). rewrite <- Hpc.
     exact (CONT hwk cs1 s Hc E' R FULL model Hag HC1 eq_refl).
-  - 
+  - (* [comment removed for export] *)
     destruct (node_respell cs rsr rse) as [cs1|] eqn:Hn; [|discriminate].
     destruct (respell_sound E cs R FULL model rsr rse cs1 HC Hn) as [HC1 Hpc]. rewrite <- Hpc. exact (SAME rsk _ s Hc HC1).
-  - 
+  - (* [comment removed for export] *)
     destruct (is_ecall_at SEGS cs) eqn:Hec; [|discriminate].
     destruct (node_mmapin A LIMIT true cs) as [[[csa csb] cscs]|] eqn:Hn; [|discriminate].
     eapply (node_mmapin_sound true cs csa csb cscs E R FULL model); [exact HC | exact Hec | exact Hn | exact (CONT ihb csb s Hc)].
-  - 
+  - (* [comment removed for export] *)
     destruct (node_havoccell SEGS nx0 cs hcb hcn) as [cs1|] eqn:Hn; [|discriminate].
     destruct (havoccell_sound E cs R FULL model hcb hcn cs1 HC Hn) as (E' & Hag & HC1 & Hpc). rewrite <- Hpc.
     exact (CONT hck cs1 s Hc E' R FULL model Hag HC1 eq_refl).
-  - 
+  - (* [comment removed for export] *)
     destruct (is_ecall_at SEGS cs) eqn:Hec; [|discriminate].
     destruct (node_brk2s A LIMIT cs) as [[csa csb]|] eqn:Hn; [|discriminate].
     destruct (CHECK bfuel fuel lc csa bka) as [sa|] eqn:H1; [|discriminate].
     destruct (CHECK bfuel fuel lc csb bkb) as [sb|] eqn:H2; [|discriminate].
     destruct (shape_eqb sa sb) eqn:Hse; [|discriminate]. injection Hc as <-. apply shape_eqb_eq in Hse. subst sb.
     eapply (node_brk2s_sound cs csa csb E R FULL model); [exact HC | exact Hec | exact Hn | exact (CONT bka csa sa H1) | exact (CONT bkb csb sa H2)].
-  - 
+  - (* [comment removed for export] *)
     destruct (node_casedisj cs cjb1 cjb2) as [[csa csb]|] eqn:Hn; [|discriminate].
     pose proof (LCOK_bnd lc D E (m_fs model) HL) as Hgb.
     destruct (run_block_gc SEGS IT _ KC bfuel (cjp :: STOPS A) csa) as [ca|] eqn:Hra; [|discriminate].
@@ -5267,19 +5383,19 @@ Proof using HOLES_agree HOLES_nil HS_sound HULL_ok IT_ok SEGS_in_hull SEGS_wx SH
       rewrite Nb in Hag1.
       exact (CONT cjk csj s Hc E'' R' FULL' model'
                (conj (env_agree_trans _ _ _ _ Hag0 Hag2a) (env_agree_trans _ _ _ _ Hag1 Hag2b)) HC2 Hfs).
-  - 
+  - (* [comment removed for export] *)
     match type of Hc with context [AX2.deand ?x] => destruct (AX2.deand x) as [fe fsa] end. cbv beta iota in Hc.
     match type of Hc with context [node_fresh ?a1 ?a2 ?a3 ?a4 ?a5] => destruct (node_fresh a1 a2 a3 a4 a5) as [cs1|] eqn:Hn end; [|discriminate].
     eapply (node_fresh_sound_pf far 0 (Some (eaddz fe (- fsa))) cs cs1 E R FULL model); [exact HC | reflexivity | exact Hn |]. exact (CONT fak cs1 s Hc).
-  - 
+  - (* [comment removed for export] *)
     destruct (vis_slice A LIMIT cs vsb vsn) as [cs1|] eqn:Hn; [|discriminate].
     destruct (visslice_sound E cs vsb vsn cs1 R FULL model Hn HC) as [HC' Hpc]. rewrite <- Hpc.
     exact (SAME vsk _ s Hc HC').
-  - 
+  - (* [comment removed for export] *)
     destruct (node_kwrjoin cs kjb1 kjo1 kjn1 kjb2 kjo2 kjn2) as [cs1|] eqn:Hn; [|discriminate].
     destruct (kwrjoin_sound cs kjb1 kjo1 kjn1 kjb2 kjo2 kjn2 cs1 E R FULL model HC Hn) as [HC' Hpc]. rewrite <- Hpc.
     exact (SAME kjk _ s Hc HC').
-  - 
+  - (* [comment removed for export] *)
     destruct (node_introw nx0 cs iww iwfs) as [cs1|] eqn:Hn; [|discriminate].
     destruct (introw_sound E cs R FULL model iww iwfs cs1 HC Hn) as (E' & Hag & HC1 & Hpc). rewrite <- Hpc.
     exact (CONT iwk cs1 s Hc E' R FULL model Hag HC1 eq_refl).

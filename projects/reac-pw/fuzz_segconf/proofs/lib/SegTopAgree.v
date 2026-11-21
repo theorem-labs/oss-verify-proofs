@@ -2,7 +2,7 @@
    at the cut records CPseg of both builds; E01, M01, L01, L03, X01 of both builds and K_M01, K_L01 discharged there),
    its remaining premises discharged by the walks of the other segments and by the callee bundles of Prog/SegTop.v
    (plain K_L02, K_M02, K_V01) and U/Prog/SegTop.v (UBSan K_L02, K_M02, K_V01), as reac-pw/fuzz_pin's
-   AgreePin.ubsan_agrees_holds (commit aa56e9780de) is pin's.
+   AgreePin.ubsan_agrees_holds is pin's.
    - plain: seg_L02_stmt by Prog/Seg/L02T.seg_L02, seg_M02_stmt by Prog/Seg/M02.seg_M02, seg_V01_stmt by
      Prog/Seg/V01.seg_V01; K_L02, K_M02, K_V01 by Prog/SegTop.K_L02_holds, K_M02_holds, K_V01_holds;
    - UBSan: SlotTopCF.evt_L02_stmt by U_evt_L02_holds below (U/Prog/Seg/L02.evt_L02_of_inner over

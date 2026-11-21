@@ -1,5 +1,5 @@
 (* fuzz_preset, slice S5b (a Theorem Labs lane): THE POSITION AFTER A CALL of parse_items' loop - vrd_pos_after_call, with its
-   two helpers vc_fregs_trans / vc_iregs_pres. Written once by the Ival walk (a working branch e5220a09e8f, in
+   two helpers vc_fregs_trans / vc_iregs_pres. Written once by the Ival walk (a working branch, in
    VrdCallKeep.v) at the S3 walk's request; the parse_string call at row 148 (the S3 walk's VrdIKey.v) and the parse_value call
    at row 231 (the Ival walk's VrdIVal.v) cite it. MOVED here unchanged by the S3 walk (2026-10-29, a Theorem Labs lane's approval): it
    needs VrdLedgerStep.vl_blocks_move_app, VrdLedgerStep needs VrdIStep, and VrdIStep (IelemE) needs VrdCallKeep, so
@@ -10,8 +10,8 @@
    vrd_iframe, vrd_iregs and vrd_ijrn at P2 (P2's views), and vrd_call_keep's byte keep from Pc's restricted view
    rdW (ip_W Pc) (ip_mem Pc) to P2's. The callee-specific parts stay with the caller (vrd_icur / vrd_inode at P2, the
    ledger and the model). The composed trace's held peak is a premise.
-   SET: a working branch on a working branch 6372b90e841 (texts ee649e1b39d over the kit's preview
-   walkkit-next 2d523216ac5 by path; engine set a Theorem Labs lane s1b 7792959a2abb by path; listing v4). A-only.
+   SET: a working branch on a working branch (texts over the kit's preview
+   walkkit-next by path; engine set a Theorem Labs lane s1b by path; listing v4). A-only.
    Numerals: 144 / 56 / 20 / 16 / 8 (LENGTH, as VrdCallKeep.v), 224 / 512 (LENGTH: the reader's charge, PRH_FnParse.v),
    4096 (LENGTH: bound). No ADDRESS literal. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
@@ -62,7 +62,7 @@ Variable H_pst_ro : forall a, Exists (in_zr a) prh_pst -> ~ in_roP SEGS pa_relro
    parts stay with the caller: vrd_icur / vrd_inode at P2 (IelemE's vrd_icur_after_call / vrd_node_ra_after_call for
    the facts no journal keeps), the ledger and the model. The composed trace's held peak is a premise (it is the
    callee's grammar that bounds it).
-   The kit's CUT (lane RBase, 7cdbb61b5fa0): DW -> CW; the callee's journal is at ITS budget WS1 (the reader callees post
+   The kit's CUT (lane RBase): DW -> CW; the callee's journal is at ITS budget WS1 (the reader callees post
    at wbudget CW 0, PRH_FnParse.v f0d92dcec7e9 / PRH_FnReader.v f1ae32e3b2cd) and the composed journal from the
    entry is at the caller's budget ie_CW E followed by WS1 (YCbqGwild.aj_call_xWFb's WS0 ++ WS1), which the callee's
    `wbudget CW 0 WS1` folds back to vrd_ijrn's budget ie_CW E (VrdIElem.vrd_budget_back).

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the recorded proofs of rw_cells_read, ro_cells_read, rw_cells_readn, ro_cells_readn, rw_cells_read_at, ro_cells_read_at and 22 more replaced by plain proofs). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -8,8 +9,6 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics 
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
 From OSSVerify.Proofs.leptonica.pix_orient_fuzzer.lib.K5.Lib Require Import PropExec MState Mem Cells Exec.
 From OSSVerify.Proofs.leptonica.pix_orient_fuzzer.lib.K5.Lib Require Export FP ZBridge.
-From OSSVerify.Proofs.leptonica.pix_orient_fuzzer.lib Require KReplay.
-Ltac2 kr_t_Step () := "K47Corelib7Numbers7BinNums8positive02K47Corelib7Numbers7BinNums1N02I45stdpp9bitvector;definitions2bv00I47Corelib4Init9Datatypes6option00I47Corelib4Init9Datatypes4list00c69OSSVerify5KrLib2K53Lib4Step8rw_cellsC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib2K53Lib5Cells8cells_atC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib2K53Lib5Cells:cells_sizeC1?~~~~~~~~~~~~~~~C56Stdlib6ZArith6BinInt1Z6of_natC69OSSVerify5KrLib2K53Lib3Mem5wr_atC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib2K53Lib5Cells7cell_atC1?~~~~~~~~~~~~~~~K47Corelib4Init9Datatypes6option01I47Corelib4Init5Logic2eq00C56Stdlib6ZArith6BinInt1Z3addC69OSSVerify5KrLib2K53Lib3Mem2waC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib2K53Lib5Cells5csizeC1?~~~~~~~~~~~~~~~C4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics=ov_read_bytesC69OSSVerify5KrLib2K53Lib5Cells6cbytesC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib2K53Lib5Cells=cells_at_readC1?~~~~~~~~~~~~~~~K47Corelib7Numbers7BinNums8positive03I47Corelib7Numbers7BinNums1Z00I69OSSVerify5KrLib2K53Lib5Cells4cell00C1?~~~~~~~~~~~~~~~I47Corelib4Init9Datatypes3nat00I47Corelib4Init5Logic3and00c69OSSVerify5KrLib2K53Lib4Step8ro_cellsC1?~~~~~~~~~~~~~~~c69OSSVerify5KrLib2K53Lib4Step=rw_cells_readC1?~~~~~~~~~~~~~~~C47Corelib4Init5Logic8eq_ind_rc69OSSVerify5KrLib2K53Lib4Step=ro_cells_readC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib2K53Lib5Cells;cb_split_okC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib2K53Lib5Cells8cb_splitC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib2K53Lib5CellsAcells_at_cb_splitC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib2K53Lib5Cells;cells_at_wfC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib2K53Lib5CellsCcells_size_cb_splitC1?~~~~~~~~~~~~~~~K47Corelib4Init5Logic3and01I47Corelib4Init9Datatypes4bool00K47Corelib4Init9Datatypes4bool01C69OSSVerify5KrLib2K53Lib5Cells=cell_at_splitC1?~~~~~~~~~~~~~~~I47Corelib4Init5Logic2ex00C47Corelib4Init3Nat3addI47Corelib4Init5Peano2le00C56Stdlib6ZArith6BinInt1Z2leK47Corelib4Init5Logic2eq01C56Stdlib6ZArith4Znat5Nat2Z7inj_iffC47Corelib4Init5Logic7iff_symC46Stdlib9micromega;ZifyClasses5mkrelC46Stdlib9micromega;ZifyClasses7rew_iffC56Stdlib6ZArith4Znat5Nat2Z9is_nonnegK47Corelib4Init9Datatypes3nat02K46Stdlib9micromega=RingMicromega5Psatz02K47Corelib7Numbers7BinNums1Z03K46Stdlib9micromega7EnvRing3Pol01K46Stdlib9micromega=RingMicromega5Psatz04K46Stdlib9micromega=RingMicromega5Psatz06K46Stdlib9micromega:ZMicromega;ZArithProof02K47Corelib4Init9Datatypes4list01K47Corelib4Init9Datatypes4list02K46Stdlib9micromega6VarMap1t02K46Stdlib9micromega6VarMap1t01K46Stdlib9micromega6VarMap1t03I46Stdlib9micromega6VarMap1t00I46Stdlib9micromega=RingMicromega7Formula00K46Stdlib9micromega7EnvRing5PExpr01K46Stdlib9micromega7EnvRing5PExpr02K46Stdlib9micromega=RingMicromega7Formula01K47Corelib4Init9Datatypes6option02K47Corelib7Numbers7BinNums8positive01K46Stdlib9micromega7EnvRing5PExpr03C46Stdlib9micromega5Tauto8BFormulaC46Stdlib9micromega:ZMicromega=ZTautoCheckerC46Stdlib9micromega6VarMap4findC46Stdlib9micromega:ZMicromegaCZTautoChecker_soundC46Stdlib9micromega;ZifyClasses;rew_iff_revC69OSSVerify5KrLib2K53Lib5Cells>cells_size_appC1?~~~~~~~~~~~~~~~C47Corelib4Init9Datatypes3appC69OSSVerify5KrLib2K53Lib5Cells8cell_updC1?~~~~~~~~~~~~~~~C46Stdlib9micromega;ZifyClasses6mkapp2K46Stdlib9micromega5Tauto8GFormula04K46Stdlib9micromega5Tauto8GFormula08C56Stdlib5Arith8PeanoNat3Nat3addC56Stdlib6ZArith4Znat5Nat2Z7inj_addC56Stdlib6ZArith4Znat5Nat2Z6inj_leC46Stdlib9micromega5Tauto5eKindI47Corelib4Init9Datatypes4unit00K46Stdlib9micromega5Tauto4kind01K47Corelib4Init9Datatypes4unit01K47Corelib7Numbers7BinNums1Z01I46Stdlib9micromega:ZMicromega;ZArithProof00K47Corelib4Init9Datatypes3nat01K46Stdlib9micromega:ZMicromega;ZArithProof01K46Stdlib9micromega=RingMicromega3Op203K46Stdlib9micromega=RingMicromega3Op201C4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics8store_okc69OSSVerify5KrLib2K53Lib4Step=cell_at_boundC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib2K53Lib3Mem>wr_at_store_okC1?~~~~~~~~~~~~~~~c69OSSVerify5KrLib2K53Lib4StepArw_cells_store_okC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib2K53Lib5Cells7cell_wfC1?~~~~~~~~~~~~~~~C4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics<write_to_memC69OSSVerify5KrLib2K53Lib5Cells>cells_at_writeC1?~~~~~~~~~~~~~~~C47Corelib4Init5Logic6eq_indC69OSSVerify5KrLib2K53Lib3Mem;wr_at_writeC1?~~~~~~~~~~~~~~~C47Corelib4Init9Datatypes6lengthK47Corelib7Numbers7BinNums1Z02C56Stdlib6ZArith6BinInt1Z3powI47Corelib4Init5Logic2or00C69OSSVerify5KrLib2K53Lib5Cells>cells_at_frameC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib2K53Lib5Cells>cells_at_boundC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib2K53Lib3Mem7mem_invC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib2K53Lib5Cells=cbytes_lengthC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib2K53Lib3Mem=mem_inv_storeC1?~~~~~~~~~~~~~~~C45stdpp9bitvector;definitions;bv_unsignedC45stdpp9bitvector;definitions5bv_eqC45stdpp9bitvector;definitions7Z_to_bvC45stdpp9bitvector;definitions7bv_wrapC45stdpp9bitvector;definitions:bv_modulusC56Stdlib6ZArith6BinInt1Z6moduloC46Stdlib6ZArith4ZdivAZplus_mod_idemp_lC45stdpp9bitvector;definitions@Z_to_bv_unsignedI47Corelib7Numbers7BinNums1N00C46Stdlib6ZArith4ZdivAZplus_mod_idemp_rC56Stdlib6ZArith6BinInt1Z3subC46Stdlib6ZArith4ZdivBZminus_mod_idemp_lC45stdpp9bitvector;definitions6bv_addC45stdpp9bitvector;definitions?bv_add_unsignedC45stdpp9bitvector;definitionsDbv_unsigned_in_rangeC45stdpp9bitvector;definitions=bv_wrap_smallc69OSSVerify5KrLib2K53Lib4Step@Z_to_bv_lit_selfC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib2K53Lib3Mem=store_bytes_8C1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib2K53Lib3Mem=store_bytes_4C1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib2K53Lib3Mem=store_bytes_2C1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib2K53Lib3Mem=store_bytes_1C1?~~~~~~~~~~~~~~~".
 Import ListNotations.
 Open Scope bv_scope.
 
@@ -28,98 +27,103 @@ Definition rw_cells (m : word -> option byte) (A : Z) (cs : list cell) : Prop :=
 Lemma rw_cells_read : forall m A cs k c,
   rw_cells m A cs -> cell_at cs k = Some c ->
   ov_read_bytes segs m (wa (A + Z.of_nat k)) (csize c) = Some (cbytes c).
-Proof.
-ltac2:(KReplay.run1 (kr_t_Step ()) ["WithSegs"] "h01Ah11Hh22H0h32_Hh41ch52csh61kh71mp;1p;3p;4p;2p;7g0000j10Tg000Uj19Tg0013j14Tg001Vj12Tg0028j1:Tg002Xj3<Tg003Qj47Tg004Kj15Tg005Gj11Tg005gj46Tg006\j2;Tg007Uj23Tg0087j38Tg008Qj2BTg008nj1ATg009`j1@Tg00:Wj4=Tg00;\j1>Tg00<Tj7?Tg00=S#0#0#0R0#0#0#0#9#4%90#4R0#2[g00>8g00>VR1#:g00?Nf4R2f3R3f2R43<g00?mp,4segsR5f5R6P2P3C7P5P6P2%53#1C6%211;23131438%:0R0#2P5f7R4f6R7%12'B#A%@3C=%>3,3038[f0R0P5P4P7P6C7P5f8R3P4%57#1C6P5f9P3P4P7P6f1R6F?W3W1P6P0O2n2001000000120000000W2X41W6W5W0W7o"). Qed.
+Proof. intros m A cs k c [H _]. apply cells_at_read. exact H. Qed.
 
 Lemma ro_cells_read : forall m A cs k c,
   ro_cells m A cs -> cell_at cs k = Some c ->
   ov_read_bytes segs m (wa (A + Z.of_nat k)) (csize c) = Some (cbytes c).
-Proof.
-ltac2:(KReplay.run1 (kr_t_Step ()) ["WithSegs"] "h01Ah11Hh21ch32csh41kh51mp;1p;3p;7g0000j10Tg000Uj12Tg0013j11Tg001Vj13Tg0028j16Tg00@Hj35Tg00<Tj74Tg00=S#0#0#0R0#0#0#0#2#1%20#1#3[g00>8g00>VR0#6g00?Nf4R1f3R2f2R335p,4segsf5P1P2P3f1f0F4W1X20W4W3W0W5o"). Qed.
+Proof. intros m A cs k c H. apply cells_at_read. exact H. Qed.
 
 Lemma rw_cells_readn : forall m A cs k c n,
   rw_cells m A cs -> cell_at cs k = Some c -> n = csize c ->
   ov_read_bytes segs m (wa (A + Z.of_nat k)) n = Some (cbytes c).
-Proof.
-ltac2:(KReplay.run1 (kr_t_Step ()) ["WithSegs"] "h01nh11Ah21ch32csh41kh51mp;1p;3p;2p;4p;7p;6g0000j10Tg000Uj16Tg0013j14Tg001Vj12Tg0028j17Tg002Xj3<Tg006\j2;Tg007Uj25Tg0087j31Tg009`j13Tg005Gj18Tg008Qj29Tg008nj1:Tg00:Wj4@Tg00;\j1?Tg00AAj7>Tg00B?j6=Tg00=S#0#0#0R0#0#0#0#6#4%60#4R0#2[g00>8g00>VR1#7g00?NR2f5R3f4R4f3R53<%211;45f2R6,5131%359126P2%34%70R0#2p,4segsf9f8R7f6R8#8'9#:f0R9C@%?3,5031X02P7f7P8P3P4P6f1F>P5P9E=UUUX02X21W4W3W1W5o"). Qed.
+Proof. intros; subst; eapply rw_cells_read; eauto. Qed.
 
 Lemma ro_cells_readn : forall m A cs k c n,
   ro_cells m A cs -> cell_at cs k = Some c -> n = csize c ->
   ov_read_bytes segs m (wa (A + Z.of_nat k)) n = Some (cbytes c).
-Proof.
-ltac2:(KReplay.run1 (kr_t_Step ()) ["WithSegs"] "h01nh11Ah21ch32csh41kh51mp;1p;3p;2p;4p;7p;6g0000j10Tg000Uj16Tg0013j14Tg001Vj12Tg0028j17Tg00@Hj3<Tg006\j2;Tg007Uj25Tg0087j31Tg009`j13Tg005Gj18Tg008Qj29Tg008nj1:Tg00:Wj4@Tg00;\j1?Tg00B]j7>Tg00B?j6=Tg00=S#0#0#0R0#0#0#0#6#4%60#4R0#2[g00>8g00>VR1#7g00?NR2f5R3f4R4f3R53<%211;45f2R6,5131%359126P2%34%70R0#2p,4segsf9f8R7f6R8#8'9#:f0R9C@%?3,5031X02P7f7P8P3P4P6f1F>P5P9E=UUUX02X21W4W3W1W5o"). Qed.
+Proof. intros; subst; eapply ro_cells_read; eauto. Qed.
 
 Lemma rw_cells_read_at : forall m A cs k c n a,
   rw_cells m A cs -> cell_at cs k = Some c -> n = csize c -> a = wa (A + Z.of_nat k) ->
   ov_read_bytes segs m a n = Some (cbytes c).
-Proof.
-ltac2:(KReplay.run1 (kr_t_Step ()) ["WithSegs"] "h01ah11nh21Ah31ch42csh51kh61mp;1p;3p;2p;4p;7p;6g0000j10Tg000Uj17Tg0013j16Tg001Vj13Tg0028j1;Tg002Xj3>Tg006\j2=Tg007Uj25Tg0087j31Tg009`j12Tg005Gj14Tg008Qj28Tg008nj19Tg00:Wj4<Tg00;\j1@Tg00AAj7?Tg00B?j6:Tg00=S#0#0#0R0#0#0#0#7#6R1%70#6R0#3[g00>8g00>VR2#;g00?NR3f6R4f5R5f4R63>%321=56f3R7,5231%269137f8R8%44'8#99117P3%24%;0R0#3R9p,4segsR:f;R;P5f0R<C<f7R=#@,50R031X13P1f9R>%4='8#9P:P;P<%2=C<=190X01f:P>P8P=P4P7f2F?P6P<E:P5f1E:UUUUX01X13X32W5W4W2W6o"). Qed.
+Proof. intros; subst; eapply rw_cells_read; eauto. Qed.
 
 Lemma ro_cells_read_at : forall m A cs k c n a,
   ro_cells m A cs -> cell_at cs k = Some c -> n = csize c -> a = wa (A + Z.of_nat k) ->
   ov_read_bytes segs m a n = Some (cbytes c).
-Proof.
-ltac2:(KReplay.run1 (kr_t_Step ()) ["WithSegs"] "h01ah11nh21Ah31ch42csh51kh61mp;1p;3p;2p;4p;7p;6g0000j10Tg000Uj17Tg0013j16Tg001Vj13Tg0028j1;Tg00@Hj3>Tg006\j2=Tg007Uj25Tg0087j31Tg009`j12Tg005Gj14Tg008Qj28Tg008nj19Tg00:Wj4<Tg00;\j1@Tg00B]j7?Tg00B?j6:Tg00=S#0#0#0R0#0#0#0#7#6R1%70#6R0#3[g00>8g00>VR2#;g00?NR3f6R4f5R5f4R63>%321=56f3R7,5231%269137f8R8%44'8#99117P3%24%;0R0#3R9p,4segsR:f;R;P5f0R<C<f7R=#@,50R031X13P1f9R>%4='8#9P:P;P<%2=C<=190X01f:P>P8P=P4P7f2F?P6P<E:P5f1E:UUUUX01X13X32W5W4W2W6o"). Qed.
+Proof. intros; subst; eapply ro_cells_read; eauto. Qed.
 
 Lemma rw_cells_cb_split : forall m A cs cs2 k n,
   rw_cells m A cs -> cb_split_ok cs k n = true -> cs2 = cb_split cs k n -> rw_cells m A cs2.
 Proof.
-ltac2:(KReplay.run1 (kr_t_Step ()) ["WithSegs"] "h01Hh13cs2h21nh31Ah42Hch53Hokh62Hwh72csh81kh91mp;1p;3p;4p;8p;5p;6g0000j10Tg000Uj1;Tg0013j19Tg001Vj1<Tg0028j1ATg002Xj36Tg003Qj45Tg004Kj12Tg005Gj13Tg005gj41Tg00C[j38Tg0087j34Tg00DXj37Tg00ERj8@Tg00FUj5?Tg00GRj5>Tg00B?j6:Tg00HWj4=Tg00=S#0#0#0R0#0#0#0#;#9%;0#9#<[g00>8g00>V#AR0g00?NR1f5R2f4R3f3R436g00?mp,4segsR5f6R6P2P3C5P5P6P2%23#3C1g00I2R7f2R89824g00IRR934A76349402f9R3f8R:;66[[f0R;P5P:f7R<P6C5P5P3P:%2<#3C1A8:62=479A73<6940:P0f:R6?7:<R9f=R7f<R2;6;X10P5P2f;R=P9C5P5P2P=%29R9#3C1P5P2P=P6P:P<P4f1R>G@P1%26P5P7P2%3;C1X21P8P9P6P:P<P5P2P=P6P4D?P>D>E:C=P3P;E:W0W5W6W4P>P;O2n2001000000120000000W0X21W8X10W7W3W9o"). Qed.
+  intros m A cs cs2 k n [Hc Hw] Hok ->. split.
+  - apply cells_at_cb_split; assumption.
+  - rewrite cells_size_cb_split; [exact Hw| exact (cells_at_wf _ _ _ _ Hc) | exact Hok].
+Qed.
 
 Lemma ro_cells_cb_split : forall m A cs cs2 k n,
   ro_cells m A cs -> cb_split_ok cs k n = true -> cs2 = cb_split cs k n -> ro_cells m A cs2.
-Proof.
-ltac2:(KReplay.run1 (kr_t_Step ()) ["WithSegs"] "h03cs2h11Ah21Hh32Hch43Hokh52csh61kh71mh81np;1p;3p;8p;6g0000j10Tg000Uj15Tg0013j14Tg001Vj16Tg0028j1:Tg00@Hj33Tg00C[j39Tg0087j32Tg00DXj31Tg00ERj87Tg00B?j68Tg00=S#0#0#0R0#0#0#0#5#4%50#4#6[g00>8g00>V#:R0g00?NR1f5R2f4R3f3R433g00I2f2R5f1R6593g00IR32A12459203P0f6R7?134f9f8R8f0R933X00p,4segsP8f7P7P3P4P5P6G7P2P9E8W2W4W3X81W6X00W5W1W7o"). Qed.
+Proof. intros m A cs cs2 k n Hc Hok ->. apply cells_at_cb_split; assumption. Qed.
 
 Lemma cell_at_bound : forall cs k c, cell_at cs k = Some c -> (k + csize c <= cells_size cs)%nat.
 Proof.
-ltac2:(KReplay.run1 (kr_t_Step ()) ["WithSegs"] "p'0h04posth12H0h21Hh33preh44__x1h54__x2h64__x3h74__x4h82csh93Hszh:4Hsz0h;2_Hh<7__arithh=4__ffh>8__varmaph?5__with@1chA4cstrhB5cstr0hC5cstr1hD5cstr2hE1ehF1khG1nhH1xi001xhI1yp;1p;2p;3p;5p;<p;4p;6p;7p;Bp;8g0028j1STg001Vj1qTg006\j2CTg007Uj2ATg0087j30j1LTg00J2j5kTg004Kj11Tg00?mR0j2:Tg00K1R1j2?Tg009`j18Tg00KKj25Tg00KbR2j26Tg005GR3j12Tg008QR4j2;Tg00L<R5j29Tg00LXj2<Tg00M2j2\Tg00MUj3[Tg00N2l<KTg00NWj4ZTg00O>j1=Tg00Ocj1JTg00PBj2FTg00Pkj1YTg00QIj2XTg00Qjj3WTg00RSj3ITg00S<j2VTg00Shj1UTg00THj3GTg00Thj2HTg00UFj1TTg00Udj4RTg00VBj1pTg00V`j1oTg00WKj2nTg0000j1PTg00Wnj2>Tg00XQj4DTg00Y<j1lTg00Y^j1iTg00ZCj3ETg00Zfj2gTg00[Hj2fTg00\4j3eTg00\Sj4bTg00]Ej4cTg00^0j2aTg00B?j6`j7hTg00_0j3NTg00_Mj3QTg00`GlB_Tg00`mj7^Tg00aQj8mTg00>VR6f2R7f1R8f0R95G63Np=3g00?NR:?089p=4f5R;f4R<f3R=?Q78;09':p=7AQ=78=0<9p=OAG689p=jP:P:P:g00>8R>P>P>g00b5P3P3P3P4g00bUP;P<P=P7P8P9MB_p=BP:P>P2P3P5g00c8P;P<P=P7P8P9M<Kp=]P8g00cZR5g00d9R2P2g00dYR4P9g00e9F^p=@P=P5P2P2P4P7P8P9Gmp=MAN689p=d%S6R5%q6R?1C781A6930P=P7P8P8P9DkA38=9R@905;%18RA/4<P5P;P<P=P@E7':X05,?5X35,?5P1P5f6R@A38<9RB50514A;P5P@P;P<PBE7':X05,?5X35%8=,5<%1;RB'6P9f8RCA38@9RD505f7RE,4AP5PCPEP@PDE7':X05,?5P1P5f9R1A37E9RD505%17RA/4CP5P1PCPEPDE7':X05%8E,5C%11RD'6P9f;RFA3<19RG505%1<f:RH'4P5PFPHP1PGE7':P0f<RGA3;H8RI50514BFP5PGPFPHPIE7%8F,5Gf=RI#1RB'6P9f>RJA3EG=505P5A3CI<RCf?RK,C91A6J50?%1HRLf@RM'4RNP5P8PMPKA3HK@R@E7fA%8M'5RO/6A[]2X851CCJ1A6I50?14DKP5A31J;RDPKPJPDE7P0PNP5P@PMPKP@DOA3FME#1,6OP9%1GfBRO'4P5A3IO1RIfCR1POPIDOP:%1JRI1j1HRH#1'5ROfEfDRF#8'5/69XG:%81R1,5FRE151LR@,5IRN'6%2FR0%21RD';R?%2IRC%2LRA,;DRP';RQ'9PEP?PFP01<>0R?P1PD1<>DRREBPNPQPIPC1<>CRQP@PPP1PDPRPLPA1<>AEBEBE]14IFA0>C0RAP:P>%L:P3%L>%28%2950>14891\893[XI:XH:PIPCPQPFP0P?M<KP8CZPA%1KRA#=g00eYR?%2A'9fFRA#=%2A,9?%=B%2B,9?fG#8RB#=%2B,9?g00f7RBg00fcRA#JR0#J,F>g00=SRQ#Y,X>1F>05W>1F>A5I>5I>g00gB'V%UB3G%SBP>P>1H><P7%T>CRP81H>=CR%p>%o>RBP>1n>?g00gnRA%PQR0#P,>>RCCD,@B%l2R2PBP>%iQ,>>RIg00hU1>>QRQCD,@BP2P>1>>0R09E>QPAAE>0C9E>ICD,@BCMCM1gB4P9P7g00I2RBg00IRR4'<1f97=0B4dAe>?8Cbb=b>b?X4>X5>X6>X7>19?=A0>=81;7=1;=;,;<'9[[^4>^5>^6>^7>P9%1M#2%1F#2fI#8#2fJ#2P7P;O6b<bDbCbBbAb:Cc16EOe1dJH#11aJHE`W;W9P8P9O2n2001000000121000000W1W2PKP9PGFhW1P8P9O2n2001000000121000000W1X05P8P9O2n2001000000121100000W1X35P8P9O2n2001000000121100000bEW2X@6XF:W8o"). Qed.
+  intros cs k c H. destruct (cell_at_split cs k c c H) as (pre & post & -> & Hsz & _).
+  rewrite cells_size_app. cbn. lia.
+Qed.
 
 Lemma rw_cells_store_ok : forall m A cs k c (j : nat),
   rw_cells m A cs -> cell_at cs k = Some c -> j = csize c ->
   store_ok segs m (wa (A + Z.of_nat k)) j = true.
 Proof.
-ltac2:(KReplay.run1 (kr_t_Step ()) ["WithSegs"] "h04__x1h11Hh22H0h37__arithh44__ffh58__varmaph65__with74__x2h84__x3h94cstrh:5cstr0h;5cstr1h<1jh=1Ah>2Hch?2Hkh@2HwhA1chB2cshC1khD1mp;1p;3p;4p;2p;9p;6p;Bp;<p;7p;8g0000j14Tg000Uj1JTg0013j1CTg001Vj1>Tg0028j1KTg002Xj3XTg003Qj4FTg004Kj12Tg005GR0j10Tg005gj4@Tg006\j2?Tg007Uj2ATg0087j37Tg009`j13Tg008QR1j26Tg008nj1GTg00i<j4ITg00j<j4VTg00KKj2ETg00KbR2j2DTg00L<R3j29Tg00LXj28Tg00NWj4RTg00O>j15Tg00Shj1QTg00Thj2:Tg00VBj1PTg00V`j1OTg00WKj2NTg00Wnj2;Tg00XQj4HTg00Y<j1MTg00Zfj2LTg00[Hj2UTg00\4j3bTg00\Sj4aTg00Udj4`Tg00ZCj3_Tg00Y^j1^Tg00k:l9\Tg00B?j6YTg00`GlBZTg00N2l<[Tg00`mj7WTg00aQj8]Tg00I2R4f0R5g00IRR637p=<g00?NR7P7P7g00>8R8P8P8g00b5P0P0P0P1g00bUf5R1f4R9f3R:f2R;f1R<P5MBZp=TP7P8P2P0P3g00c8P1P9P:P;P<P5M<[p=Sg00eYR3/95p=1P<g00cZR0g00d9R2P2g00dYR=P5g00e9FWp==P:P0P2P2P=P;P<P5G]p=Bg00=SR0#4R>#4#4R?#4#4#4#J#C%J?#C#>[g00>VR?#KAX19:g00?mp,4segsR@f6RAP1P9CFP@PAP1%29#0C@%>?RB1?191A?:37%39977:P@f9R1f8RC%0A'6#GP9CI#<[[P5P@PCf7RDPACFP@P1PC%2D#0C@1?CD1A?A57B%3D977AP7%3CRAP@f=RBf<REf:RF#0RG'6#GP5CI#<X<7PFP1PCP<CV1E1A%2F'DP@PBPEf;RB#2R@#0RAPG%31R1P:1EF1RC/D@%01RH,6GRI/9ARJPCPIPFPG188GP1PH188HETP@PA188AESP5CRRAPJ%5B%0B#1%3BRB#5%0B#1f>RB#2R@#5%0@#1g00f7R@#QRH%K@R@1:8<%P8R1%O8RGP81N83g00gnRF1;80RICH,=GRC%M2R2PCCB1LG=R=P5P;18461U5;#<dAb83<CaR3b4b5b6X08%15%1<[^08P5f?#0R6P:O2b3b;b:b9b2PAPJ%2ERJ#5%0J#1%5E%0E#1%3ERE#5%0E#1PHP@P81:8;P<1:8:C`P1PGP81;8>9_8IPF%^0,;8CH,=GRGP2PGCBP=P3b4b5b6X08X78X88165</9;16<;/9:[^08^78^88P5f@#2#0%3B#0P6P9O4b3b;b:b9b2M9\b1PDP5EYW1W?W@W>P<P5O2n2001000000121000000W1X<7XA?XC7WBX=8WDo"). Qed.
+  intros m A cs k c j [Hc Hw] Hk ->. pose proof (cell_at_bound _ _ _ Hk).
+  apply (wr_at_store_ok segs m A (Z.of_nat (cells_size cs))); [exact Hw| lia | lia].
+Qed.
 
 Lemma rw_cells_store_ok_at : forall m A cs k c (j : nat) a,
   rw_cells m A cs -> cell_at cs k = Some c -> j = csize c -> a = wa (A + Z.of_nat k) ->
   store_ok segs m a j = true.
-Proof.
-ltac2:(KReplay.run1 (kr_t_Step ()) ["WithSegs"] "h01ah11jh21Ah31ch42csh51kh61mp;1p;3p;2p;4p;9p;6g0000j10Tg000Uj16Tg0013j14Tg001Vj13Tg0028j1@Tg002Xj3=Tg006\j2<Tg007Uj2;Tg0087j31Tg009`j12Tg005Gj17Tg008Qj28Tg008nj15Tg00i<j4:Tg00LXj2?Tg00l8l9>Tg00B?j69Tg00=S#0#0#0R0#0#0#0#6#4R1%60#4#3[g00>8g00>VR0#@g00?NR2f6R3f5R4f4R53=%301<45f3R6,;031%259126f8R7%73'8#59116P2%23R8g00I2R9p,4segsR:f;R;P4f0R<C:g00IRR=31X12P1f9R>f7R?#7'8#5P:P;P<%2?C:=19=X01f:P>P7P?P3P8P6f21?28M9>P5P<E9P4f1E9UUUUX01X12X30W5W4W2W6o"). Qed.
+Proof. intros; subst. eapply rw_cells_store_ok; eauto. Qed.
 
 Lemma rw_cells_write : forall m A cs k c c',
   rw_cells m A cs -> cell_at cs k = Some c -> csize c' = csize c -> cell_wf c' ->
   rw_cells (write_to_mem m (wa (A + Z.of_nat k)) (cbytes c')) A (cell_upd cs k c').
 Proof.
-ltac2:(KReplay.run1 (kr_t_Step ()) ["WithSegs"] "p'0h01Hh14posth22Hwh32Hch42Hkh51nh63preh72csh81Ah93Hszh:4Hszph;3Hwfh<1ch=2c'h>1eh?1kh@1lhA1mi001xp;1p;3p;4p;2p;;p;5p;6p;7p;9g0000j1=Tg000Uj1QTg0013j1MTg001Vj1JTg0028j1ZTg002Xj3NTg003Qj4BTg004Kj10Tg006\j2DTg007Uj2FTg0087j36Tg009`j1?Tg00m:j1OTg00;\j19Tg00n3j38Tg00_Mj32Tg00o7l;XTg00J2j5WTg00?mR0j2>Tg00K1R1j2ETg00KKj2;Tg005Gj1ATg005gj4CTg00^0j2KTg0107j6VTg010Sj7UTg00B?j6Gl9RTg00HWj4STg008Qj2TTg008nj1YTg00THj3PTg00_0j3ITf3R2f2R3f1R4f0R5#ACCp=@g00?NR6?645p=3%A5,T4#Yp=:P2P3P4%05#ACCp=5g00>VR7AP7457I3p=1A6345,>2p=7AP745p=4AI7459623p=<AI745p=Hf4R8A2234;65p=Lg00=S#=#=#=R9#=#=#=#Q#M%Q9#M#J[g00>8%Z7R9f5R:?N82P0p,4segsR;f6R<P:P8CBP;P<P:%08R=C@%J7R>1D:81F7236%?2%?8'3%O8f:R?f9R@f7RA':%9:38f8RB?2A:7N@[[[P5P;PBPAP<CBP;P@PBPAC51DBA1F7<56>%?<%?A'3%OAP;f=RCf<RD/:?%9B38REPDf;RF?2?BRGCBP;PEPDPGC5P;PCPDPFP?P@PBP8P3P4P5M;XPFP?P@PBP3DWA14F5RG969C%04RE/3DP9A2CD?RHA14?5C7'>X19,E9X69,E9P1P9P9f>RIP414D5C<13ECP9A2ICFPGC7'>X19,E9X69P;f?RG1:ID%9?38PIPHC5P5P9f@RHP414I5RJC<13EGP9A2HGCA14C5C7'>X19,E9P1P9P9fAR1P314G5C<%03/3HP9A21HIRK1H3JC7'>X19P;fCRJfBRL/:H%9I38PLPKC5P5P9PJP81415C<13=LP9A2JLHA18H5C7'>P0P9fDR=P:14L4C<%0:/3JP9A2=J1A1:14C7P;fGRJfFRK/:=%9L38PKfERM?2=LC5P5P9PKPA14=2C<P9A1BM8RMP;fJR=fIRNP5CBP;fKROP=PEC@1D3NfHR3,F756>%0D/3=REP9A22=3A1D3BR2C7P;fNRPfMRQ/:O%9N38RRPQA28ONC5[]4]2]3X79P;PNP3PMCBP;P=PNA1@K:C5A1?J</D31F7J56>%0F/3NP9A1F3A?2NJA1FJAC7P0PEP9A1DNBP=P3P2DLP;PRPQA1C=@?2ONC5P5%0IRNfLR='3P9A1G=FPQPOA1GOFDLP914=DRO,HHRFP;fRR@fQRRfO':R2%9QR338RBPRP5C5X@9P6%0HRE%0O';P;PBPR%A5R0CCX56P614QDRD,HHRA#0P;P@PRP0CCX56P<%0D,;ERE1KHDEVP;PRfPRDPEC@P6%?PREP;fS1:@D%9P38P@%0L1;5N';C@X56P;P@PR%01R1%0C,;E';#AP2P3P5FU%?QPKEGP;PBPR14QC#0,;1C@eb2%0F1KHOEGA2AP=P5EGW0W:P4P5O2n2001000000121000000W0W4W2W3PJP5PHPGPIM9RW0P4P5O2n2001000000121000000W0X19P4P5O2n2001000000121100000W0X69P4P5O2n2001000000121100000b>CSW;W9W4W2W3P4P5O2n2001000000121000000W0X=7X<7X?6W7W8WAo"). Qed.
+  intros m A cs k c c' [Hc Hw] Hk Hsz Hwf. split.
+  - eapply cells_at_write; eauto.
+  - destruct (cell_at_split cs k c c' Hk) as (pre & post & -> & Hszp & ->).
+    rewrite cells_size_app in *. cbn [cells_size] in *. rewrite Hsz. apply wr_at_write. exact Hw.
+Qed.
 
 Lemma rw_cells_frame : forall m A cs (a : Z) bs,
   rw_cells m A cs -> (0 <= a)%Z -> (a + Z.of_nat (length bs) <= 2^64)%Z ->
   (A + Z.of_nat (cells_size cs) <= a \/ a + Z.of_nat (length bs) <= A)%Z ->
   rw_cells (write_to_mem m (wa a) bs) A cs.
 Proof.
-ltac2:(KReplay.run1 (kr_t_Step ()) ["WithSegs"] "h01Ah11Hh22Hah32Hch42Hdh52Hlh62Hwh71ah82bsh92csh:1mp;1p;3p;4p;2p;:p;7g0000j13Tg000Uj1?Tg0013j19Tg001Vj1@Tg0028j1<Tg002Xj3=Tg003Qj47Tg004Kj14Tg005Gj11Tg005gj46Tg00L<j20Tg011Nj25Tg008Qj22Tg011nj1>Tg012Lj2DTg012ij2;Tg008nj1:Tg00n3j38Tg013Cl:CTg010Sj7BTg00HWj4ATg00=S#3R0#3#3R1#3#3#3R2#?#9%?1#9R1#@[g00>8R3g00>V#<%<1f4R4f3R5f2R63=g00?mp,4segsR7f5R8P4P5C7P7P8P4%45#1C6g00eYR9/051515#1,24%>0%>2'DR2'0f7R0f6R:#4#1R;'2/081514#1,28/00';f9R<%::;88f8R=;=0[[[f0R>P7P0P:P8C7P7P=P0P;C6109:151:#1,20/02f:R2%4<#1'2/0=1510#1,2=/02';P7f<R0%:<R1;8=R:f;R9P2C7P7P:P9%42#1R:C6P7P0P9P2P<P=P4P6f1R6P>M:CP7P0P9P:P1P=P5FBCAW4W5W2W6W3P6P>O2n2001000000120000000W1W8X73W9W0W:o"). Qed.
+  intros m A cs a bs [Hc Hw] Ha Hl Hd. split.
+  - apply cells_at_frame; assumption.
+  - apply wr_at_write. exact Hw.
+Qed.
 
 Lemma ro_cells_frame : forall m A cs (a : Z) bs,
   ro_cells m A cs -> (0 <= a)%Z -> (a + Z.of_nat (length bs) <= 2^64)%Z ->
   (A + Z.of_nat (cells_size cs) <= a \/ a + Z.of_nat (length bs) <= A)%Z ->
   ro_cells (write_to_mem m (wa a) bs) A cs.
-Proof.
-ltac2:(KReplay.run1 (kr_t_Step ()) ["WithSegs"] "h01Ah11ah22bsh32csh41mp;1p;3p;2p;:g0000j10Tg000Uj17Tg0013j16Tg001Vj1;Tg0028j18Tg00@Hj3<Tg00L<j21Tg011Nj25Tg005Gj12Tg008Qj23Tg011nj14Tg012Lj2:Tg004Kj19Tg012ij2>Tg013Cl:=Tg00=S#0R0#0#0R1#0#0#0R2#7#6%71#6R1#;[g00>8R3g00>V#8%81f4R4f3R5f2R63<g00eY/161516#2,35%40%42':'1f6R2f5R0#9#2'3/141515#2,34/12'>p,4segsf8f7P2P0P4P5P6f1f0M:=UUUUW2X13W3W0W4o"). Qed.
+Proof. intros. apply cells_at_frame; assumption. Qed.
 
 Lemma rw_cells_bound : forall m A cs, rw_cells m A cs -> (0 <= A /\ A + Z.of_nat (cells_size cs) <= 2^64)%Z.
-Proof.
-ltac2:(KReplay.run1 (kr_t_Step ()) ["WithSegs"] "h01Ah11Hh22H0h32_Hh42csh51mp;1p;3p;4p;2p;5g0000j10Tg000Uj18Tg0013j14Tg001Vj1:Tg0028j1?Tg002Xj3;Tg003Qj45Tg004Kj11Tg005Gj12Tg005gj46Tg00L<j23Tg008Qj29Tg011nj17Tg012Lj2>Tg00?mR0j2=Tg014Cj5<Tg00=S#0R1#0#0R2#0#0#0R3#8#4%82#4#:[g00>8g00>V#?f2R2f1R4f0R53;P0p,4segsR0f3R6P2P4C5P0P6P2%14#2C6g00eY/36%12#2,96%71%73'>'3'=P5P0f5R3f4R1P6C5P0f6R6P3%11#2C6P0f7P6P3P4D<W3W1P4P5O2n2001000000120000000W2W4W0W5o"). Qed.
+Proof. intros m A cs [H _]. eapply cells_at_bound; eauto. Qed.
 Lemma ro_cells_bound : forall m A cs, ro_cells m A cs -> (0 <= A /\ A + Z.of_nat (cells_size cs) <= 2^64)%Z.
-Proof.
-ltac2:(KReplay.run1 (kr_t_Step ()) ["WithSegs"] "h01Ah11Hh22csh31mp;1p;3p;5g0000j10Tg000Uj12Tg0013j11Tg001Vj13Tg0028j16Tg00@Hj35Tg014Cj54Tg00=S#0#0#0R0#0#0#0#2#1%20#1#3[g00>8g00>V#6f2R0f1R1f0R235p,4segsf3P0P1P2D4W1W2W0W3o"). Qed.
+Proof. intros m A cs H. eapply cells_at_bound; eauto. Qed.
 
 (* [comment removed for export] *)
 Lemma mem_inv_store_cbytes : forall m a c',
   mem_inv segs m -> cell_wf c' -> store_ok segs m a (csize c') = true ->
   mem_inv segs (write_to_mem m a (cbytes c')).
 Proof.
-ltac2:(KReplay.run1 (kr_t_Step ()) ["WithSegs"] "h04Hinvh13Hokh23Hwfh31ah42c'h51mh61np;1p;2p;4p;3p;6g0000j10Tg000Uj15Tg0013j14Tg001Vj16Tg015Cj2=Tg00m:j1;Tg009`j13Tg00i<j42Tg0087j31Tg00;\j17Tg011Nj28Tg016:j29Tg00B?j6:Tg0179j6<Tg00=S#0#0#0R0#0#0#0#5#4R1%50#4R0#6[g00>Vp,4segsR2f2R3'=f1R4#;g00I2R5P2f4R6f3R7%33C2g00IRR831P2f5R9P6%77R6P3g00?NR3%37P2f6P9f0R9C2=158X63P918061974E:E<W1W2W0W4X31W5o"). Qed.
+  intros m a c' Hinv Hwf Hok. apply mem_inv_store; [assumption|].
+  rewrite cbytes_length by assumption. exact Hok.
+Qed.
 
 End WithSegs.
 
@@ -131,43 +135,38 @@ End WithSegs.
 
 Lemma unsigned_Z_to_bv_add : forall e d, Z_to_bv 64 (bv_unsigned (Z_to_bv 64 e) + d) = Z_to_bv 64 (e + d).
 Proof.
-ltac2:(KReplay.run1 (kr_t_Step ()) [] "h01zh12b1h22b2h31nh41Hh51dh61ep;1p;3p;2p;6g0013j15Tg0087j39Tg0186j20Tg018`j3?Tg0000j14Tg000Uj1=Tg019Dj27Tg008Qj21Tg019jj22Tg01:Pj1<Tg01;9j26Tg00LXj2;Tg01;Yj3>Tg00B?j68Tg01<@j2:Tg00>8R0f1R1f0R239p=3g01<oR3%52R4%51R5g00?mf2R6#5?912f3R7/061071'3R8[10611062'3%57?961[R9f4#5?976\8A?612P2n2001000000120000000W2W1W3P9^25^14^33P2g00=S#4#4#4#4#4#4#=R31736,03R4/11R5,73R91161R8,73R:P012351176R;,73,03R<,32X00P01236R=1126,23/3<X00P01238R<1237/16,23/32X00P0%<3R7,68R>16;7,32X001;0>1667/11/67A>617E811=1,23/3<e103:1:38E8P41:36E810391:35E8O4b4X50X60o"). Qed.
+  intros. apply bv_eq. rewrite !Z_to_bv_unsigned. unfold bv_wrap. rewrite Zplus_mod_idemp_l. reflexivity.
+Qed.
 
 Lemma unsigned_Z_to_bv_add_r : forall e d, Z_to_bv 64 (d + bv_unsigned (Z_to_bv 64 e)) = Z_to_bv 64 (d + e).
 Proof.
-ltac2:(KReplay.run1 (kr_t_Step ()) [] "h01zh12b1h22b2h31nh41Hh51dh61ep;1p;3p;2p;6g0013j15Tg0087j39Tg0186j20Tg018`j3?Tg0000j14Tg000Uj1=Tg019Dj27Tg008Qj21Tg019jj22Tg01:Pj1<Tg01;9j26Tg00LXj2;Tg01=Mj3>Tg00B?j68Tg01<@j2:Tg00>8R0f1R1f0R239p=3g01<oR3%52R4%51R5g00?mf2R6#5?912f3R7/061071'3R8[10611062'3%57?961[R9f4#5?976\8A?612P2n2001000000120000000W2W1W3P9^25^14^33P2g00=S#4#4#4#4#4#4#=R31736,03R4,11R5,73R91116R8,73R:P012351167R;,73,03R<,32X00P01236R=1162,23/3<X00P01238R<1237,16,23/32X00P0%<3R7,68R>16;7,32X001;0>1667,11/67A>617E8111=,23/3<e103:1:38E8P41:36E810391:35E8O4b4X50X60o"). Qed.
+  intros. apply bv_eq. rewrite !Z_to_bv_unsigned. unfold bv_wrap. rewrite Zplus_mod_idemp_r. reflexivity.
+Qed.
 
 Lemma unsigned_Z_to_bv_sub : forall e d, Z_to_bv 64 (bv_unsigned (Z_to_bv 64 e) - d) = Z_to_bv 64 (e - d).
 Proof.
-ltac2:(KReplay.run1 (kr_t_Step ()) [] "h01zh12b1h22b2h31nh41Hh51dh61ep;1p;3p;2p;6g0013j15Tg0087j39Tg0186j20Tg018`j3?Tg0000j14Tg000Uj1=Tg019Dj27Tg01>4j21Tg019jj22Tg01:Pj1<Tg01;9j26Tg00LXj2;Tg01>Qj3>Tg00B?j68Tg01<@j2:Tg00>8R0f1R1f0R239p=3g01<oR3%52R4%51R5g00?mf2R6#5?912f3R7/061071'3R8[10611062'3%57?961[R9f4#5?976\8A?612P2n2001000000120000000W2W1W3P9^25^14^33P2g00=S#4#4#4#4#4#4#=R31736,03R4/11R5,73R91161R8,73R:P012351176R;,73,03R<,32X00P01236R=1126,23/3<X00P01238R<1237/16,23/32X00P0%<3R7,68R>16;7,32X001;0>1667/11/67A>617E811=1,23/3<e103:1:38E8P41:36E810391:35E8O4b4X50X60o"). Qed.
+  intros. apply bv_eq. rewrite !Z_to_bv_unsigned. unfold bv_wrap. rewrite Zminus_mod_idemp_l. reflexivity.
+Qed.
 
 Lemma bv_add_canon : forall (x y : word), (x + y : word) = Z_to_bv 64 (bv_unsigned x + bv_unsigned y).
-Proof.
-ltac2:(KReplay.run1 (kr_t_Step ()) [] "h02b1h12b2h21nh31zh41Hh51xh61yp;1p;3p;2p;6g0000j13Tg000Uj1=Tg0013j12Tg0087j31Tg0186j20Tg018`j3;Tg01?9j3:Tg008Qj25Tg019Dj26Tg019jj24Tg00LXj28Tg01<@j29Tg00B?j67Tg01?^j3<Tg00=S#3#3#3#3#3#3#=R0#2R1g01<oR2f0R3#2R4f1R5#2R6g00?mf2R7#2?153g00>8R8f3R9/07109531R:[10751073518%29?175[R;f4#2?197\:A;753P3n2001000000120000000W1W0W2P;^16^04^22P3P0A:075R21007R41005'5R6,60R;P81406R:1009/54R4,60,009183X38P8P:1404=183X38188:100;1906E71002A<075E7O4b4X61W5o"). Qed.
+Proof. intros. apply bv_eq. rewrite bv_add_unsigned, Z_to_bv_unsigned. reflexivity. Qed.
 
 Lemma Z_to_bv_lit_self : forall (x : word), Z_to_bv 64 (bv_unsigned x) = x.
-Proof.
-ltac2:(KReplay.run1 (kr_t_Step ()) [] "h02b1h12b2h21nh31Hh41xh51zp;1p;3p;2p;6g0000j13Tg000Uj1;Tg0013j11Tg0087j32Tg0186j20Tg018`j3:Tg019Dj29Tg019jj25Tg01@Lj26Tg01A?j37Tg01<@j24Tg00B?j68Tg00=S#3#3#3#3#3#3#;R0#1g01<oR1f0R2#1R3f1R4#1R5g00?mf2R6#1?242g00>8R7f3R8/06108432R9[10641062527%18?264[R:f4#1?286\9A:642P2n2001000000120000000W1W0W2P:^15^03^21P2P01004R1,90R3P4P7150110069272X571604970110031401E8O4b3W4o"). Qed.
+Proof. intros. apply bv_eq. rewrite Z_to_bv_unsigned. apply bv_wrap_small. apply bv_unsigned_in_range. Qed.
 
 Lemma wa_of_Z_to_bv : forall E e, E = e -> wa e = Z_to_bv 64 E.
-Proof.
-ltac2:(KReplay.run1 (kr_t_Step ()) [] "h01Eh11ep;3p;1p;2p;6g0087j31Tg0000j10Tg000Uj14Tg0013j13Tg008nj17Tg019Dj22Tg00LXj26Tg00B?j65Tg00>8R0f1R1f0R2510P0P1g00=S#0#0#0#0#0#0#4R3#3R4f2R5#7123231X001231,64P5P2E5UX10W0o"). Qed.
+Proof. intros; subst; reflexivity. Qed.
 Lemma wa_of_var : forall (x : word) e, bv_unsigned x = e -> wa e = x.
-Proof.
-ltac2:(KReplay.run1 (kr_t_Step ()) [] "h01eh11xp;1p;2p;3p;6g0000j10Tg000Uj17Tg0013j14Tg0186j22Tg0087j31Tg008nj13Tg01Akj16Tg0107j65Tg00=S#0#0#0#0#0#0#7R0#4R1g00>8R2f1R3,20f0R4512P2f2R5,20R0%34f3511X02%65%30=115eP3P4E5UW0W1o"). Qed.
+Proof. intros; subst. unfold wa. apply Z_to_bv_lit_self. Qed.
 
 Lemma store_bytes_8' : forall v : word, Z_to_le_bytes 8 (bv_unsigned v) = le8 v.
-Proof.
-ltac2:(KReplay.run1 (kr_t_Step ()) [] "g01Blo"). Qed.
+Proof. exact store_bytes_8. Qed.
 Lemma store_bytes_4' : forall v : word, Z_to_le_bytes 4 (bv_unsigned (low32 v)) = le4 v.
-Proof.
-ltac2:(KReplay.run1 (kr_t_Step ()) [] "g01Cio"). Qed.
+Proof. exact store_bytes_4. Qed.
 Lemma store_bytes_2' : forall v : word, Z_to_le_bytes 2 (bv_unsigned (bv_extract 0 16 v)) = le2 v.
-Proof.
-ltac2:(KReplay.run1 (kr_t_Step ()) [] "g01Dfo"). Qed.
+Proof. exact store_bytes_2. Qed.
 Lemma store_bytes_1' : forall v : word, Z_to_le_bytes 1 (bv_unsigned (bv_extract 0 8 v)) = le1 v.
-Proof.
-ltac2:(KReplay.run1 (kr_t_Step ()) [] "g01Eco"). Qed.
+Proof. exact store_bytes_1. Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)

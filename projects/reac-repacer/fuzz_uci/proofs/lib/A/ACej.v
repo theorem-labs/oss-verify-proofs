@@ -1,20 +1,22 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs: generated for reac-repacer/fuzz_uci's ASan build in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACej.v (origin/ossv/recipes 25e3d17bdb50); module paths changed (cgif lib/X -> lib/Reusable/X). *)
+(* Modified by Theorem Labs: generated for reac-repacer/fuzz_uci's ASan build in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACej.v (theorem-labs/oss-verify-proofs@6b32741d849a); module paths changed (cgif lib/X -> lib/Reusable/X). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* ACej: the trace universe of fuzz_uci's start-up certificate, image A.
    Image: reac-repacer/fuzz_uci's fuzz_uci.asan (result/bin/fuzz_uci/fuzz_uci.asan of reac-repacer's pinned build),
    sha256 6ea017c24525e6946fa06dc7e3075459ad2c5146d59af49873bf3c51a46e885d (the pin of harness.yaml); symbols from
    the unstripped twin result/unstripped/fuzz_uci/fuzz_uci.asan of the same build, sha256
    56822e263d767986a76ec862cbfbee7571b0e64df2413ad18d7201205a7563fb, whose .text is byte-equal to the image's.
    CTX_<f> / TRACES_<f> and Tfib_universe below are machine-generated from that image by port_core 0e4e065eab9f's
-   gen_traces.py (tools/pg-reloc/0e4e065eab9f/gen_traces.py at commit 7f0e4b05267), sha256
+   gen_traces.py (tools/pg-reloc/0e4e065eab9f/gen_traces.py), sha256
    a78026af1ae206cc68df7256ad677ca595768d16ceedd89936dd82bd9ee7c80d, run as
      gen_traces.py bin/fuzz_uci/fuzz_uci.asan unstripped/fuzz_uci/fuzz_uci.asan
        --ipc malloc=0x51a24 --ipc free=0x518c4
        --exclude _ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE3addEmmmm
    (14 traces, from 12 call sites in 4 functions; stderr empty), and reassembled into this unit by
-   provenance/startup-gen/A/acej/acej.py (fuzz_decode's, sha256 5db4ca1babf0), whose control re-emits cgif's
+   provenance/startup-gen/A/acej/acej.py (fuzz_decode's, sha256 5db4ca1babf0: proofs/libreac/fuzz_decode/provenance/
+   startup-gen/A/acej/acej.py), whose control re-emits cgif's
    released lib/A/ACej.v byte for byte from cgif's own data. The ipc are the return addresses of the
    GetCurrentPc calls on the unwinding arm of __interceptor_malloc (0x51a20) and __interceptor_free (0x518c0).
    No --fp: no function on an allocation path sets s0 = sp + imm, so the fast unwinder stops after the call's
@@ -25,7 +27,8 @@
    __wrap_free, after its epilogue (0x7f5e8: ld ra, 0x38(sp) ... 0x7f604: addi sp, sp, 0x40), so it pushes no
    return address: the recorded trace is [0x518c4; 0x7f430], 0x7f430 the return address of check_no_overread's
    only call (0x7f42c: jal in LLVMFuzzerTestOneInput). It is a row of TRACES_check_no_overread.
-   Each pc below is checked against the image by provenance/startup-gen/A/acej/xcheck_pcs.py (capstone, a
+   Each pc below is checked against the image by provenance/startup-gen/A/acej/xcheck_pcs.py (this unit's:
+   proofs/reac-repacer/fuzz_uci/provenance/startup-gen/A/acej/xcheck_pcs.py; capstone, a
    decoder and frame model independent of gen_traces). *)
 From Stdlib Require Import ZArith List Bool Lia.
 From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require Import YG00 YG01.

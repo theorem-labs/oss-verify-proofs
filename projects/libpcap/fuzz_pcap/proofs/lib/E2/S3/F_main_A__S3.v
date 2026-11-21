@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: in the Plain and Ubsan kits main's stack image is entry_stack_image over the run context's launch tuple, the argv proofs take its SPAN and top alignment from CORE_STK's new launch conjunct, rc_lo is the 6144512-byte floor (was 8388608), GI_init takes entry_launch_ok_va in place of entry_stack_fits, the open call's 2^47 path bound is discharged, and argc is length argv. *)
 (* [comment removed for export] *)
 From Stdlib Require Lia.
 (* [comment removed for export] *)
@@ -222,14 +223,16 @@ Section Main.
   Definition main_entry (R : rctx) (s : PState H hptr) (ms : machine_state) : Prop :=
     exists (t0 t1 t2 a3 a4 a5 a6 a7 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word) (m : mem),
       ms = MS (mkR (Z_to_bv 64 0x17f08) (Z_to_bv 64 (usp0 R + -48)) (Z_to_bv 64 0x10800) (rc_tp R) t0 t1 t2
-                   (Z_to_bv 64 (usp0 R + 8)) (Z_to_bv 64 (argc (rc_argv R)))
-                   (Z_to_bv 64 (argc (rc_argv R))) (Z_to_bv 64 (usp0 R + 8)) (Z_to_bv 64 (envp_addr (rc_sp0 R) (rc_argv R))) a3 a4 a5 a6 a7
+                   (Z_to_bv 64 (usp0 R + 8)) (Z_to_bv 64 (Z.of_nat (length (rc_argv R))))
+                   (Z_to_bv 64 (Z.of_nat (length (rc_argv R)))) (Z_to_bv 64 (usp0 R + 8)) (Z_to_bv 64 (envp_addr (rc_sp0 R) (rc_argv R))) a3 a4 a5 a6 a7
                    (Z_to_bv 64 0x13b10) (Z_to_bv 64 (envp_addr (rc_sp0 R) (rc_argv R))) s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
               bvmap_empty (Z_to_bv 64 0x13b10) (Z_to_bv 32 0) None m (seg_rom ssegs)
       /\ GI K R s [] m /\ mem_inv ssegs m /\ stk ssegs m (rc_lo R) (usp0 R + -48) /\ valid_argv (rc_argv R)
       /\ (usp0 R mod 16 = 0)%Z
-      (* [comment removed for export] *)
-      /\ (usp0 R + Z.of_nat (length (build_stack_bytes Plain.M.phdrs (rc_sp0 R) (rc_argv R) (rc_envp R) (rc_uid R) (rc_hw R) (rc_rnd R))) <= 2^47)%Z.
+      (* PORTED to 75d69e00: the image is [Run.entry_stack_image] of the ported
+         tuple (Run.v:1344); the seven-argument [build_stack_bytes] is gone
+         (StackLayout.v:483 takes twelve). *)
+      /\ (usp0 R + Z.of_nat (length (entry_stack_image (rc_inp R) (rc_mb R) (rc_ph R) (rc_entry R) (rc_sp0 R) (rc_rnd R))) <= 2^47)%Z.
 
   Definition main_post : Z -> PState H hptr -> machine_state -> Prop :=
     fun code s' ms' => at_exit (St:=PState H hptr) (SXGI K) SEF code s' ms'.
@@ -257,10 +260,11 @@ Section Main.
   Proof using EPR_USAGE HFL SEF_range SFL. pin_using (fun (EPR_USAGE HFL SEF_range SFL : unit) => tt). ceil_facts.
     intros Hcb (t0 & t1 & t2 & a3 & a4 & a5 & a6 & a7 & s4 & s5 & s6 & s7 & s8 & s9 & s10 & s11 & t3 & t4 & t5 & t6 & m & -> & G & MI & ST & VA & AL16 & STKTOP) HC.
     pose proof (GI_spw K _ _ _ _ G) as SPW. pose proof (GI_ceil_lo K _ _ _ _ G) as CLO__. unfold rc_lo in CLO__. pose proof VA as VA'. destruct VA' as (VA1 & VA2 & VA3 & VA4 & VA5).
-    destruct (GI_core K _ _ _ _ G) as (_ & _ & _ & CM & _ & CS). destruct CM as (CM1 & CM2 & _). unfold CORE_STK in CS.
+    destruct (GI_core K _ _ _ _ G) as (_ & _ & _ & CM & _ & CS). destruct CM as (CM1 & CM2 & _). unfold CORE_STK in CS. destruct CS as (LAUNCH & CS).
+    pose proof (rc_span R LAUNCH) as SPAN. pose proof (rc_top_align R LAUNCH) as TOP8.
     destruct (rc_argv R) as [|argv0 argvr] eqn:EARGV; [cbn in VA1; lia|].
-    pose proof (raw_len_nonneg Plain.M.phdrs (rc_sp0 R) (argv0 :: argvr) (rc_envp R) (rc_uid R) (rc_hw R) (rc_rnd R)) as RN.
-    pose proof (build_stack_bytes_length Plain.M.phdrs (rc_sp0 R) (argv0 :: argvr) (rc_envp R) (rc_uid R) (rc_hw R) (rc_rnd R)) as BL.
+    pose proof (InitMem.raw_len_nonneg (rc_inp R) (rc_sp0 R) (rc_rnd R)) as RN.
+    pose proof (InitMem.entry_image_length_raw (rc_inp R) (rc_mb R) (rc_ph R) (rc_entry R) (rc_sp0 R) (rc_rnd R)) as BL.
     pose proof (bytes_at_bound _ _ _ _ CS) as CSB. fold (usp0 R) in BL, CSB.
     unfold main_prog, main_model. unfold argv_Z at 1. rewrite length_map.
     replace (Z.of_nat (length (argv0 :: argvr)) =? 2)%Z with false by (symmetry; apply Z.eqb_neq; exact HC). cbn [negb].
@@ -268,13 +272,13 @@ Section Main.
     unfold rc_lo in ST. unfold implM. iprefix.
     carve_frame 80%nat ST.
     do 11 lstep.
-    lstep. if_true_by (neq_cond (argc (argv0 :: argvr)) 2 ltac:(unfold argc; lia) ltac:(lia) ltac:(unfold argc; exact HC)).
+    lstep. if_true_by (neq_cond (Z.of_nat (length (argv0 :: argvr))) 2 ltac:(lia) ltac:(lia) ltac:(exact HC)).
     (* [comment removed for export] *)
     lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?m1 _) =>
-      destruct (stack_argv_string_slack ssegs Plain.M.phdrs (rc_sp0 R) (argv0 :: argvr) (rc_envp R) (rc_uid R) (rc_hw R) (rc_rnd R) m1 CS
-                  ltac:(fold (usp0 R); clear -AL16; Z.div_mod_to_equations; lia) 0 argv0 eq_refl)
+      destruct (stack_argv_string_slack ssegs (rc_inp R) (rc_mb R) (rc_ph R) (rc_entry R) (rc_sp0 R) (rc_rnd R) SPAN m1 CS
+                  TOP8 0 argv0 ltac:(exact (f_equal (fun l => nth_error l 0) EARGV)))
         as (P0 & slack0 & HP0 & P0lo & P0hi & STR0 & SLK0 & END0);
-      pose proof (stack_argv_ptr_read ssegs Plain.M.phdrs (rc_sp0 R) (argv0 :: argvr) (rc_envp R) (rc_uid R) (rc_hw R) (rc_rnd R) m1 CS 0 _ HP0) as RD0
+      pose proof (stack_argv_ptr_read ssegs (rc_inp R) (rc_mb R) (rc_ph R) (rc_entry R) (rc_sp0 R) (rc_rnd R) SPAN m1 CS 0 _ HP0) as RD0
     end.
     replace (bv_unsigned (rc_sp0 R) + 8 + 8 * Z.of_nat 0)%Z with (usp0 R + 8)%Z in RD0 by (unfold usp0; lia).
     unfold InitMem.str_base, InitMem.env_base, InitMem.str_base in P0lo, P0hi. fold (usp0 R) in P0lo, P0hi.
@@ -443,7 +447,7 @@ Section Main.
                      & -> & HPC & MB & HC & HL & PATH & HP1 & HFD).
     destruct MB as (G & MI & ST & (j0 & f1 & f2 & f3 & f4 & f5 & f6 & f7 & f8 & FR) & (junk & BUF) & HLC & HCAP & (j & Hj) & AL16).
     pose proof (GI_spw K _ _ _ _ G) as SPW. pose proof (GI_ceil_lo K _ _ _ _ G) as CLO__. unfold rc_lo in CLO__. destruct (GI_core K _ _ _ _ G) as (_ & _ & _ & (CM1 & CM2 & _) & _ & _).
-    assert (ELO : rc_lo R = (usp0 R - 8388608)%Z) by reflexivity.
+    assert (ELO : rc_lo R = (usp0 R - 6144512)%Z) by reflexivity.
     destruct st as [q cap len chunks]; cbn [rd_buf rd_cap rd_len rd_chunks] in *. subst len.
     destruct (GI_blocks K _ _ _ _ G) as [BO _]. apply Forall_cons_iff in BO as [Bq _].
     unfold block_ok in Bq; cbn [cb_addr cb_size fst snd] in Bq. destruct Bq as (B1 & B2 & B3 & B4 & B5 & B6).
@@ -614,7 +618,7 @@ Section Main.
     pose proof (GI_spw K _ _ _ _ G) as SPW. pose proof (GI_ceil_lo K _ _ _ _ G) as CLO__. unfold rc_lo in CLO__. destruct (GI_core K _ _ _ _ G) as (CT & _ & _ & (CM1 & CM2 & _) & _ & _).
     unfold CORE_TLS in CT. let z := fresh "sblz" in let x := fresh "sbl" in pose (z := repeat (Z_to_bv 8 0) 3616); change (repeat (Z_to_bv 8 0) 3616) with z in CT; pose (x := 3616%nat); change 3616%nat with x in CT; destruct CT as (t & e & T1 & T2 & T3 & T4 & T5 & T6 & Ht); subst z x.
     pose proof (GI_tls K _ _ _ _ G) as [_ TB]. pose proof TB as TB'. unfold tls_block_ok in TB'. destruct TB' as (TBA & TB0 & TBC & TBI).
-    assert (ELO : rc_lo R = (usp0 R - 8388608)%Z) by reflexivity.
+    assert (ELO : rc_lo R = (usp0 R - 6144512)%Z) by reflexivity.
     destruct st1 as [q cap len chunks]; cbn [rd_buf rd_cap rd_len rd_chunks] in *. subst len.
     set (len := Z.of_nat (length CBs)) in *.
     destruct (GI_blocks K _ _ _ _ G) as [BO _]. apply Forall_cons_iff in BO as [Bq _].
@@ -827,7 +831,7 @@ Section Main.
                    s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
               F (Z_to_bv 64 0x13b40) fc None m (seg_rom ssegs)
       /\ GI K R s [] m /\ mem_inv ssegs m /\ stk ssegs m (rc_lo R) (usp0 R + -128) /\ mframe R m /\ (usp0 R mod 16 = 0)%Z
-      /\ (usp0 R + Z.of_nat (length (build_stack_bytes Plain.M.phdrs (rc_sp0 R) (rc_argv R) (rc_envp R) (rc_uid R) (rc_hw R) (rc_rnd R))) <= 2^47)%Z.
+      /\ (usp0 R + Z.of_nat (length (entry_stack_image (rc_inp R) (rc_mb R) (rc_ph R) (rc_entry R) (rc_sp0 R) (rc_rnd R))) <= 2^47)%Z.
 
   (* [comment removed for export] *)
   Definition RAX (R : rctx) (res : rd_result (ptr:=hptr)) (s : PState H hptr) (ms : machine_state) : Prop :=
@@ -852,17 +856,18 @@ Section Main.
     intros (ra & gp & t0 & t1 & t2 & s1 & a0 & a2 & a3 & a4 & a5 & a6 & a7 & s2 & s3 & s4 & s5 & s6 & s7 & s8 & s9 & s10 & s11 & t3 & t4 & t5 & t6 & F & fc & m
                            & -> & G & MI & ST & (j0 & f1 & f2 & f3 & f4 & f5 & f6 & f7 & f8 & FR) & AL16 & STKTOP) HA1 VA.
     pose proof (GI_spw K _ _ _ _ G) as SPW. pose proof (GI_ceil_lo K _ _ _ _ G) as CLO__. unfold rc_lo in CLO__. pose proof VA as VA'. destruct VA' as (VA1 & VA2 & VA3 & VA4 & VA5).
-    destruct (GI_core K _ _ _ _ G) as (CT & _ & CLI & (CM1 & CM2 & _) & _ & CS). unfold CORE_STK in CS.
+    destruct (GI_core K _ _ _ _ G) as (CT & _ & CLI & (CM1 & CM2 & _) & _ & CS). unfold CORE_STK in CS. destruct CS as (LAUNCH & CS).
     unfold CORE_TLS in CT. let z := fresh "sblz" in let x := fresh "sbl" in pose (z := repeat (Z_to_bv 8 0) 3616); change (repeat (Z_to_bv 8 0) 3616) with z in CT; pose (x := 3616%nat); change 3616%nat with x in CT; destruct CT as (t & e & T1 & T2 & T3 & T4 & T5 & T6 & Ht); subst z x. destruct CLI as (L1 & L2 & L3 & L4 & L5).
     pose proof (GI_tls K _ _ _ _ G) as [_ TB]. pose proof TB as TB'. unfold tls_block_ok in TB'. destruct TB' as (TBA & TB0 & TBC & TBI).
-    assert (ELO : rc_lo R = (usp0 R - 8388608)%Z) by reflexivity.
-    pose proof (raw_len_nonneg Plain.M.phdrs (rc_sp0 R) (rc_argv R) (rc_envp R) (rc_uid R) (rc_hw R) (rc_rnd R)) as RN.
-    pose proof (build_stack_bytes_length Plain.M.phdrs (rc_sp0 R) (rc_argv R) (rc_envp R) (rc_uid R) (rc_hw R) (rc_rnd R)) as BL.
+    assert (ELO : rc_lo R = (usp0 R - 6144512)%Z) by reflexivity.
+    pose proof (rc_span R LAUNCH) as SPAN. pose proof (rc_top_align R LAUNCH) as TOP8.
+    pose proof (InitMem.raw_len_nonneg (rc_inp R) (rc_sp0 R) (rc_rnd R)) as RN.
+    pose proof (InitMem.entry_image_length_raw (rc_inp R) (rc_mb R) (rc_ph R) (rc_entry R) (rc_sp0 R) (rc_rnd R)) as BL.
     pose proof (bytes_at_bound _ _ _ _ CS) as CSB. fold (usp0 R) in BL, CSB.
-    destruct (stack_argv_string_slack ssegs Plain.M.phdrs (rc_sp0 R) (rc_argv R) (rc_envp R) (rc_uid R) (rc_hw R) (rc_rnd R) m CS
-                ltac:(fold (usp0 R); clear -AL16; Z.div_mod_to_equations; lia) 1 argv1 HA1) as (P1 & slack1 & HP1 & P1lo & P1hi & STRS & SLK1 & END1).
+    destruct (stack_argv_string_slack ssegs (rc_inp R) (rc_mb R) (rc_ph R) (rc_entry R) (rc_sp0 R) (rc_rnd R) SPAN m CS
+                TOP8 1 argv1 HA1) as (P1 & slack1 & HP1 & P1lo & P1hi & STRS & SLK1 & END1).
     destruct (proj1 (bytes_at_app ssegs m P1 (argv1 ++ [Z_to_bv 8 0]) slack1) ltac:(rewrite <- app_assoc; exact STRS)) as [STR1 _].
-    pose proof (stack_argv_ptr_read ssegs Plain.M.phdrs (rc_sp0 R) (rc_argv R) (rc_envp R) (rc_uid R) (rc_hw R) (rc_rnd R) m CS 1 _ HP1) as RD1.
+    pose proof (stack_argv_ptr_read ssegs (rc_inp R) (rc_mb R) (rc_ph R) (rc_entry R) (rc_sp0 R) (rc_rnd R) SPAN m CS 1 _ HP1) as RD1.
     replace (bv_unsigned (rc_sp0 R) + 8 + 8 * Z.of_nat 1)%Z with (usp0 R + 16)%Z in RD1 by (unfold usp0; lia).
     unfold InitMem.str_base, InitMem.env_base, InitMem.str_base in P1lo, P1hi. fold (usp0 R) in P1lo, P1hi.
     assert (HNUL : ~ In (Z_to_bv 8 0) argv1). { apply (proj1 (Forall_forall _ _) VA4). eapply nth_error_In. exact HA1. }
@@ -885,7 +890,8 @@ Section Main.
         | exact (proj1 HSLD) | exact (proj2 HSLD)
         | rewrite Hspm, ELO; lia | rewrite Hspm; unfold utp in *; lia | rewrite Hspm, unsigned_lit by lia; lia
         | rewrite unsigned_lit by lia; unfold utp in *; lia | rewrite Hspm; unfold ssp_guard; lia
-        | unfold ssp_guard, utp in *; lia | unfold got_ssp, utp in *; lia | unfold utp in *; lia ]. }
+        | unfold ssp_guard, utp in *; lia | unfold got_ssp, utp in *; lia | unfold utp in *; lia
+        | rewrite unsigned_lit by lia; exact HP47 ]. }
     intros r ms' PO. unfold open_post in PO. destruct_exs PO. destruct PO as (-> & MU & WM & MI' & ST' & ERR & STR & GOT & GUARD & Hr).
     replace (ret_pc (Z_to_bv 64 0x13b50)) with (Z_to_bv 64 0x13b50) by (symmetry; apply ret_pc_even; [lia|reflexivity]).
     change (bv_unsigned (rc_tp R)) with (utp R) in *. rewrite unsigned_lit in STR by lia.
@@ -1167,14 +1173,14 @@ Section Main.
   Definition main_entry (R : rctx) (s : PState H hptr) (ms : machine_state) : Prop :=
     exists (t0 t1 t2 a3 a4 a5 a6 a7 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word) (m : mem),
       ms = MS (mkR (Z_to_bv 64 0x186c8) (Z_to_bv 64 (usp0 R + -48)) (Z_to_bv 64 0x10800) (rc_tp R) t0 t1 t2
-                   (Z_to_bv 64 (usp0 R + 8)) (Z_to_bv 64 (argc (rc_argv R)))
-                   (Z_to_bv 64 (argc (rc_argv R))) (Z_to_bv 64 (usp0 R + 8)) (Z_to_bv 64 (envp_addr (rc_sp0 R) (rc_argv R))) a3 a4 a5 a6 a7
+                   (Z_to_bv 64 (usp0 R + 8)) (Z_to_bv 64 (Z.of_nat (length (rc_argv R))))
+                   (Z_to_bv 64 (Z.of_nat (length (rc_argv R)))) (Z_to_bv 64 (usp0 R + 8)) (Z_to_bv 64 (envp_addr (rc_sp0 R) (rc_argv R))) a3 a4 a5 a6 a7
                    (Z_to_bv 64 0x13b84) (Z_to_bv 64 (envp_addr (rc_sp0 R) (rc_argv R))) s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
               bvmap_empty (Z_to_bv 64 0x13b84) (Z_to_bv 32 0) None m (seg_rom usegs)
       /\ GI K R s [] m /\ mem_inv usegs m /\ stk usegs m (rc_lo R) (usp0 R + -48) /\ valid_argv (rc_argv R)
       /\ (usp0 R mod 16 = 0)%Z
-      (* [comment removed for export] *)
-      /\ (usp0 R + Z.of_nat (length (build_stack_bytes Ubsan.M.phdrs (rc_sp0 R) (rc_argv R) (rc_envp R) (rc_uid R) (rc_hw R) (rc_rnd R))) <= 2^47)%Z.
+      (* PORTED to 75d69e00: [Run.entry_stack_image] of the ported tuple. *)
+      /\ (usp0 R + Z.of_nat (length (entry_stack_image (rc_inp R) (rc_mb R) (rc_ph R) (rc_entry R) (rc_sp0 R) (rc_rnd R))) <= 2^47)%Z.
 
   Definition main_post : Z -> PState H hptr -> machine_state -> Prop :=
     fun code s' ms' => at_exit (St:=PState H hptr) (SXGI K) SEF code s' ms'.
@@ -1202,10 +1208,11 @@ Section Main.
   Proof using EPR_USAGE HFL SEF_range SFL. pin_using (fun (EPR_USAGE HFL SEF_range SFL : unit) => tt). ceil_facts.
     intros Hcb (t0 & t1 & t2 & a3 & a4 & a5 & a6 & a7 & s4 & s5 & s6 & s7 & s8 & s9 & s10 & s11 & t3 & t4 & t5 & t6 & m & -> & G & MI & ST & VA & AL16 & STKTOP) HC.
     pose proof (GI_spw K _ _ _ _ G) as SPW. pose proof (GI_ceil_lo K _ _ _ _ G) as CLO__. unfold rc_lo in CLO__. pose proof VA as VA'. destruct VA' as (VA1 & VA2 & VA3 & VA4 & VA5).
-    destruct (GI_core K _ _ _ _ G) as (_ & _ & _ & CM & _ & CS). destruct CM as (CM1 & CM2 & _). unfold CORE_STK in CS.
+    destruct (GI_core K _ _ _ _ G) as (_ & _ & _ & CM & _ & CS). destruct CM as (CM1 & CM2 & _). unfold CORE_STK in CS. destruct CS as (LAUNCH & CS).
+    pose proof (rc_span R LAUNCH) as SPAN. pose proof (rc_top_align R LAUNCH) as TOP8.
     destruct (rc_argv R) as [|argv0 argvr] eqn:EARGV; [cbn in VA1; lia|].
-    pose proof (raw_len_nonneg Ubsan.M.phdrs (rc_sp0 R) (argv0 :: argvr) (rc_envp R) (rc_uid R) (rc_hw R) (rc_rnd R)) as RN.
-    pose proof (build_stack_bytes_length Ubsan.M.phdrs (rc_sp0 R) (argv0 :: argvr) (rc_envp R) (rc_uid R) (rc_hw R) (rc_rnd R)) as BL.
+    pose proof (InitMem.raw_len_nonneg (rc_inp R) (rc_sp0 R) (rc_rnd R)) as RN.
+    pose proof (InitMem.entry_image_length_raw (rc_inp R) (rc_mb R) (rc_ph R) (rc_entry R) (rc_sp0 R) (rc_rnd R)) as BL.
     pose proof (bytes_at_bound _ _ _ _ CS) as CSB. fold (usp0 R) in BL, CSB.
     unfold main_prog, main_model. unfold argv_Z at 1. rewrite length_map.
     replace (Z.of_nat (length (argv0 :: argvr)) =? 2)%Z with false by (symmetry; apply Z.eqb_neq; exact HC). cbn [negb].
@@ -1213,13 +1220,13 @@ Section Main.
     unfold rc_lo in ST. unfold implM. iprefix.
     carve_frame 80%nat ST.
     do 11 lstep.
-    lstep. if_true_by (neq_cond (argc (argv0 :: argvr)) 2 ltac:(unfold argc; lia) ltac:(lia) ltac:(unfold argc; exact HC)).
+    lstep. if_true_by (neq_cond (Z.of_nat (length (argv0 :: argvr))) 2 ltac:(lia) ltac:(lia) ltac:(exact HC)).
     (* [comment removed for export] *)
     lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?m1 _) =>
-      destruct (stack_argv_string_slack usegs Ubsan.M.phdrs (rc_sp0 R) (argv0 :: argvr) (rc_envp R) (rc_uid R) (rc_hw R) (rc_rnd R) m1 CS
-                  ltac:(fold (usp0 R); clear -AL16; Z.div_mod_to_equations; lia) 0 argv0 eq_refl)
+      destruct (stack_argv_string_slack usegs (rc_inp R) (rc_mb R) (rc_ph R) (rc_entry R) (rc_sp0 R) (rc_rnd R) SPAN m1 CS
+                  TOP8 0 argv0 ltac:(exact (f_equal (fun l => nth_error l 0) EARGV)))
         as (P0 & slack0 & HP0 & P0lo & P0hi & STR0 & SLK0 & END0);
-      pose proof (stack_argv_ptr_read usegs Ubsan.M.phdrs (rc_sp0 R) (argv0 :: argvr) (rc_envp R) (rc_uid R) (rc_hw R) (rc_rnd R) m1 CS 0 _ HP0) as RD0
+      pose proof (stack_argv_ptr_read usegs (rc_inp R) (rc_mb R) (rc_ph R) (rc_entry R) (rc_sp0 R) (rc_rnd R) SPAN m1 CS 0 _ HP0) as RD0
     end.
     replace (bv_unsigned (rc_sp0 R) + 8 + 8 * Z.of_nat 0)%Z with (usp0 R + 8)%Z in RD0 by (unfold usp0; lia).
     unfold InitMem.str_base, InitMem.env_base, InitMem.str_base in P0lo, P0hi. fold (usp0 R) in P0lo, P0hi.
@@ -1388,7 +1395,7 @@ Section Main.
                      & -> & HPC & MB & HC & HL & PATH & HP1 & HFD).
     destruct MB as (G & MI & ST & (j0 & f1 & f2 & f3 & f4 & f5 & f6 & f7 & f8 & FR) & (junk & BUF) & HLC & HCAP & (j & Hj) & AL16).
     pose proof (GI_spw K _ _ _ _ G) as SPW. pose proof (GI_ceil_lo K _ _ _ _ G) as CLO__. unfold rc_lo in CLO__. destruct (GI_core K _ _ _ _ G) as (_ & _ & _ & (CM1 & CM2 & _) & _ & _).
-    assert (ELO : rc_lo R = (usp0 R - 8388608)%Z) by reflexivity.
+    assert (ELO : rc_lo R = (usp0 R - 6144512)%Z) by reflexivity.
     destruct st as [q cap len chunks]; cbn [rd_buf rd_cap rd_len rd_chunks] in *. subst len.
     destruct (GI_blocks K _ _ _ _ G) as [BO _]. apply Forall_cons_iff in BO as [Bq _].
     unfold block_ok in Bq; cbn [cb_addr cb_size fst snd] in Bq. destruct Bq as (B1 & B2 & B3 & B4 & B5 & B6).
@@ -1559,7 +1566,7 @@ Section Main.
     pose proof (GI_spw K _ _ _ _ G) as SPW. pose proof (GI_ceil_lo K _ _ _ _ G) as CLO__. unfold rc_lo in CLO__. destruct (GI_core K _ _ _ _ G) as (CT & _ & _ & (CM1 & CM2 & _) & _ & _).
     unfold CORE_TLS in CT. let z := fresh "sblz" in let x := fresh "sbl" in pose (z := repeat (Z_to_bv 8 0) 3616); change (repeat (Z_to_bv 8 0) 3616) with z in CT; pose (x := 3616%nat); change 3616%nat with x in CT; destruct CT as (t & e & T1 & T2 & T3 & T4 & T5 & T6 & Ht); subst z x.
     pose proof (GI_tls K _ _ _ _ G) as [_ TB]. pose proof TB as TB'. unfold tls_block_ok_u in TB'. destruct TB' as (TBA & TB0 & TBC & TBI).
-    assert (ELO : rc_lo R = (usp0 R - 8388608)%Z) by reflexivity.
+    assert (ELO : rc_lo R = (usp0 R - 6144512)%Z) by reflexivity.
     destruct st1 as [q cap len chunks]; cbn [rd_buf rd_cap rd_len rd_chunks] in *. subst len.
     set (len := Z.of_nat (length CBs)) in *.
     destruct (GI_blocks K _ _ _ _ G) as [BO _]. apply Forall_cons_iff in BO as [Bq _].
@@ -1772,7 +1779,7 @@ Section Main.
                    s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
               F (Z_to_bv 64 0x13bb4) fc None m (seg_rom usegs)
       /\ GI K R s [] m /\ mem_inv usegs m /\ stk usegs m (rc_lo R) (usp0 R + -128) /\ mframe R m /\ (usp0 R mod 16 = 0)%Z
-      /\ (usp0 R + Z.of_nat (length (build_stack_bytes Ubsan.M.phdrs (rc_sp0 R) (rc_argv R) (rc_envp R) (rc_uid R) (rc_hw R) (rc_rnd R))) <= 2^47)%Z.
+      /\ (usp0 R + Z.of_nat (length (entry_stack_image (rc_inp R) (rc_mb R) (rc_ph R) (rc_entry R) (rc_sp0 R) (rc_rnd R))) <= 2^47)%Z.
 
   (* [comment removed for export] *)
   Definition RAX (R : rctx) (res : rd_result (ptr:=hptr)) (s : PState H hptr) (ms : machine_state) : Prop :=
@@ -1797,17 +1804,18 @@ Section Main.
     intros (ra & gp & t0 & t1 & t2 & s1 & a0 & a2 & a3 & a4 & a5 & a6 & a7 & s2 & s3 & s4 & s5 & s6 & s7 & s8 & s9 & s10 & s11 & t3 & t4 & t5 & t6 & F & fc & m
                            & -> & G & MI & ST & (j0 & f1 & f2 & f3 & f4 & f5 & f6 & f7 & f8 & FR) & AL16 & STKTOP) HA1 VA.
     pose proof (GI_spw K _ _ _ _ G) as SPW. pose proof (GI_ceil_lo K _ _ _ _ G) as CLO__. unfold rc_lo in CLO__. pose proof VA as VA'. destruct VA' as (VA1 & VA2 & VA3 & VA4 & VA5).
-    destruct (GI_core K _ _ _ _ G) as (CT & _ & CLI & (CM1 & CM2 & _) & _ & CS). unfold CORE_STK in CS.
+    destruct (GI_core K _ _ _ _ G) as (CT & _ & CLI & (CM1 & CM2 & _) & _ & CS). unfold CORE_STK in CS. destruct CS as (LAUNCH & CS).
     unfold CORE_TLS in CT. let z := fresh "sblz" in let x := fresh "sbl" in pose (z := repeat (Z_to_bv 8 0) 3616); change (repeat (Z_to_bv 8 0) 3616) with z in CT; pose (x := 3616%nat); change 3616%nat with x in CT; destruct CT as (t & e & T1 & T2 & T3 & T4 & T5 & T6 & Ht); subst z x. destruct CLI as (L1 & L2 & L3 & L4 & L5).
     pose proof (GI_tls K _ _ _ _ G) as [_ TB]. pose proof TB as TB'. unfold tls_block_ok_u in TB'. destruct TB' as (TBA & TB0 & TBC & TBI).
-    assert (ELO : rc_lo R = (usp0 R - 8388608)%Z) by reflexivity.
-    pose proof (raw_len_nonneg Ubsan.M.phdrs (rc_sp0 R) (rc_argv R) (rc_envp R) (rc_uid R) (rc_hw R) (rc_rnd R)) as RN.
-    pose proof (build_stack_bytes_length Ubsan.M.phdrs (rc_sp0 R) (rc_argv R) (rc_envp R) (rc_uid R) (rc_hw R) (rc_rnd R)) as BL.
+    assert (ELO : rc_lo R = (usp0 R - 6144512)%Z) by reflexivity.
+    pose proof (rc_span R LAUNCH) as SPAN. pose proof (rc_top_align R LAUNCH) as TOP8.
+    pose proof (InitMem.raw_len_nonneg (rc_inp R) (rc_sp0 R) (rc_rnd R)) as RN.
+    pose proof (InitMem.entry_image_length_raw (rc_inp R) (rc_mb R) (rc_ph R) (rc_entry R) (rc_sp0 R) (rc_rnd R)) as BL.
     pose proof (bytes_at_bound _ _ _ _ CS) as CSB. fold (usp0 R) in BL, CSB.
-    destruct (stack_argv_string_slack usegs Ubsan.M.phdrs (rc_sp0 R) (rc_argv R) (rc_envp R) (rc_uid R) (rc_hw R) (rc_rnd R) m CS
-                ltac:(fold (usp0 R); clear -AL16; Z.div_mod_to_equations; lia) 1 argv1 HA1) as (P1 & slack1 & HP1 & P1lo & P1hi & STRS & SLK1 & END1).
+    destruct (stack_argv_string_slack usegs (rc_inp R) (rc_mb R) (rc_ph R) (rc_entry R) (rc_sp0 R) (rc_rnd R) SPAN m CS
+                TOP8 1 argv1 HA1) as (P1 & slack1 & HP1 & P1lo & P1hi & STRS & SLK1 & END1).
     destruct (proj1 (bytes_at_app usegs m P1 (argv1 ++ [Z_to_bv 8 0]) slack1) ltac:(rewrite <- app_assoc; exact STRS)) as [STR1 _].
-    pose proof (stack_argv_ptr_read usegs Ubsan.M.phdrs (rc_sp0 R) (rc_argv R) (rc_envp R) (rc_uid R) (rc_hw R) (rc_rnd R) m CS 1 _ HP1) as RD1.
+    pose proof (stack_argv_ptr_read usegs (rc_inp R) (rc_mb R) (rc_ph R) (rc_entry R) (rc_sp0 R) (rc_rnd R) SPAN m CS 1 _ HP1) as RD1.
     replace (bv_unsigned (rc_sp0 R) + 8 + 8 * Z.of_nat 1)%Z with (usp0 R + 16)%Z in RD1 by (unfold usp0; lia).
     unfold InitMem.str_base, InitMem.env_base, InitMem.str_base in P1lo, P1hi. fold (usp0 R) in P1lo, P1hi.
     assert (HNUL : ~ In (Z_to_bv 8 0) argv1). { apply (proj1 (Forall_forall _ _) VA4). eapply nth_error_In. exact HA1. }
@@ -1830,7 +1838,8 @@ Section Main.
         | exact (proj1 HSLD) | exact (proj2 HSLD)
         | rewrite Hspm, ELO; lia | rewrite Hspm; unfold utp in *; lia | rewrite Hspm, unsigned_lit by lia; lia
         | rewrite unsigned_lit by lia; unfold utp in *; lia | rewrite Hspm; unfold ssp_guard; lia
-        | unfold ssp_guard, utp in *; lia | unfold got_ssp, utp in *; lia | unfold utp in *; lia ]. }
+        | unfold ssp_guard, utp in *; lia | unfold got_ssp, utp in *; lia | unfold utp in *; lia
+        | rewrite unsigned_lit by lia; exact HP47 ]. }
     intros r ms' PO. unfold open_post in PO. destruct_exs PO. destruct PO as (-> & MU & WM & MI' & ST' & ERR & STR & GOT & GUARD & Hr).
     replace (ret_pc (Z_to_bv 64 0x13bc4)) with (Z_to_bv 64 0x13bc4) by (symmetry; apply ret_pc_even; [lia|reflexivity]).
     change (bv_unsigned (rc_tp R)) with (utp R) in *. rewrite unsigned_lit in STR by lia.
@@ -2066,7 +2075,7 @@ Section MainB.
   Lemma free_ret_spec__body : ltac2:(SecDiet.SzSec.bodyP 'free_ret_spec__stmt "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv").
   Proof using FREE SEF_range. pin_using (fun (FREE SEF_range : unit) => tt). ceil_facts.
     intros Hcb G MI ST (j0 & f1 & f2 & f3 & f4 & f5 & f6 & f7 & f8 & FR) AL16.
-    pose proof (GI_spw K _ _ _ _ G) as SPW. pose proof (GI_ceil_lo K _ _ _ _ G) as CLO__. unfold rc_lo in CLO__. assert (ELO : rc_lo R = (usp0 R - 8388608)%Z) by reflexivity.
+    pose proof (GI_spw K _ _ _ _ G) as SPW. pose proof (GI_ceil_lo K _ _ _ _ G) as CLO__. unfold rc_lo in CLO__. assert (ELO : rc_lo R = (usp0 R - 6144512)%Z) by reflexivity.
     pose proof (bv_unsigned_in_range 64 (rc_sp0 R)) as RSP0. unfold bv_modulus in RSP0. cbn in RSP0. fold (usp0 R) in RSP0.
     destruct (GI_blocks K _ _ _ _ G) as [BO _]. apply Forall_cons_iff in BO as [Bq _].
     unfold block_ok in Bq; cbn [cb_addr cb_size fst snd] in Bq. destruct Bq as (B1 & B2 & B3 & B4 & B5 & B6).
@@ -2119,7 +2128,7 @@ Section MainB.
     destruct RX as (ra & gp & t0 & t1 & t2 & a0 & a1 & a2 & a3 & a4 & a5 & a6 & a7 & s2 & s4 & s5 & s6 & s7 & s8 & s9 & s10 & s11 & t3 & t4 & t5 & t6 & F & fc & m & A & cap & CBs
                     & -> & MB & ->).
     destruct MB as (G & MI & ST & FRm & (junk & BUF) & HLC & HCAP & HJ & AL16).
-    pose proof (GI_spw K _ _ _ _ G) as SPW. pose proof (GI_ceil_lo K _ _ _ _ G) as CLO__. unfold rc_lo in CLO__. assert (ELO : rc_lo R = (usp0 R - 8388608)%Z) by reflexivity.
+    pose proof (GI_spw K _ _ _ _ G) as SPW. pose proof (GI_ceil_lo K _ _ _ _ G) as CLO__. unfold rc_lo in CLO__. assert (ELO : rc_lo R = (usp0 R - 6144512)%Z) by reflexivity.
     pose proof (bv_unsigned_in_range 64 (rc_sp0 R)) as RSP0. unfold bv_modulus in RSP0. cbn in RSP0. fold (usp0 R) in RSP0.
     destruct (GI_core K _ _ _ _ G) as (_ & _ & _ & (CM1 & CM2 & _) & _ & _).
     destruct (GI_blocks K _ _ _ _ G) as [BO _]. apply Forall_cons_iff in BO as [Bq _].
@@ -2398,7 +2407,7 @@ Section MainB.
   Lemma free_ret_spec__body : ltac2:(SecDiet.SzSec.bodyP 'free_ret_spec__stmt "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv").
   Proof using FREE SEF_range. pin_using (fun (FREE SEF_range : unit) => tt). ceil_facts.
     intros Hcb G MI ST (j0 & f1 & f2 & f3 & f4 & f5 & f6 & f7 & f8 & FR) AL16.
-    pose proof (GI_spw K _ _ _ _ G) as SPW. pose proof (GI_ceil_lo K _ _ _ _ G) as CLO__. unfold rc_lo in CLO__. assert (ELO : rc_lo R = (usp0 R - 8388608)%Z) by reflexivity.
+    pose proof (GI_spw K _ _ _ _ G) as SPW. pose proof (GI_ceil_lo K _ _ _ _ G) as CLO__. unfold rc_lo in CLO__. assert (ELO : rc_lo R = (usp0 R - 6144512)%Z) by reflexivity.
     pose proof (bv_unsigned_in_range 64 (rc_sp0 R)) as RSP0. unfold bv_modulus in RSP0. cbn in RSP0. fold (usp0 R) in RSP0.
     destruct (GI_blocks K _ _ _ _ G) as [BO _]. apply Forall_cons_iff in BO as [Bq _].
     unfold block_ok in Bq; cbn [cb_addr cb_size fst snd] in Bq. destruct Bq as (B1 & B2 & B3 & B4 & B5 & B6).
@@ -2451,7 +2460,7 @@ Section MainB.
     destruct RX as (ra & gp & t0 & t1 & t2 & a0 & a1 & a2 & a3 & a4 & a5 & a6 & a7 & s2 & s4 & s5 & s6 & s7 & s8 & s9 & s10 & s11 & t3 & t4 & t5 & t6 & F & fc & m & A & cap & CBs
                     & -> & MB & ->).
     destruct MB as (G & MI & ST & FRm & (junk & BUF) & HLC & HCAP & HJ & AL16).
-    pose proof (GI_spw K _ _ _ _ G) as SPW. pose proof (GI_ceil_lo K _ _ _ _ G) as CLO__. unfold rc_lo in CLO__. assert (ELO : rc_lo R = (usp0 R - 8388608)%Z) by reflexivity.
+    pose proof (GI_spw K _ _ _ _ G) as SPW. pose proof (GI_ceil_lo K _ _ _ _ G) as CLO__. unfold rc_lo in CLO__. assert (ELO : rc_lo R = (usp0 R - 6144512)%Z) by reflexivity.
     pose proof (bv_unsigned_in_range 64 (rc_sp0 R)) as RSP0. unfold bv_modulus in RSP0. cbn in RSP0. fold (usp0 R) in RSP0.
     destruct (GI_core K _ _ _ _ G) as (_ & _ & _ & (CM1 & CM2 & _) & _ & _).
     destruct (GI_blocks K _ _ _ _ G) as [BO _]. apply Forall_cons_iff in BO as [Bq _].
@@ -2680,14 +2689,23 @@ Section Init.
   Hypothesis HINIT : heap_init_law.
   Hypothesis SINIT : stdio_init_law.
 
-  Lemma GI_init : forall sp0 argv envp uid hw tp ms,
-    valid_sp sp0 -> valid_argv argv -> entry_stack_fits sp0 argv envp ->     (* [comment removed for export] *)
-    at_main sp0 argv envp uid hw rnd0 tp ms ->
-    main_entry K (mkRC sp0 argv envp uid hw rnd0 tp false) (set_tls_pin HO (bv_unsigned tp - 200) (ps_init h0)) ms.
+  (* PORTED to 75d69e00.  The seven-tuple (sp0, argv, envp, uid, hw, rnd) is
+     gone: argv, envp, the exec file name and the credentials are read off
+     [inp], and the image needs [mb] and [entry] as well
+     ([Run.entry_stack_image], Run.v:1344).  [entry_stack_fits] alone no longer
+     bounds the image (the kernel's block can outrun [entry_stack_span],
+     AmoStep__Musl.v:204-206), so the premise is [entry_launch_ok_va], which is
+     [valid_entry_va]'s FIFTH conjunct (Run.v:3733) and which the published
+     [valid_entry] at every call site already supplies. *)
+  Lemma GI_init : forall inp mb entry sp0 brk tp ms,
+    valid_sp sp0 -> valid_argv (in_argv inp) ->
+    entry_launch_ok_va Sv48 (mkEntry sp0 brk mb rnd0) inp ->
+    at_main inp mb entry sp0 rnd0 tp ms ->
+    main_entry K (mkRC inp mb Plain.M.phdrs entry sp0 rnd0 tp false) (set_tls_pin HO (bv_unsigned tp - 200) (ps_init h0)) ms.
   Proof using HINIT SINIT. pin_using (fun (HINIT SINIT : unit) => tt). ceil_facts.
-    intros sp0 argv envp uid hw tp ms VSP VA FITS AM.
-    pose proof (entry_bounds Plain.M.phdrs sp0 argv envp uid hw rnd0 VSP FITS) as [_ EB].
-    pose proof (bsb_le_esi Plain.M.phdrs sp0 argv envp uid hw rnd0) as BLE. unfold sp_window_hi in EB.
+    intros inp mb entry sp0 brk tp ms VSP VA LAUNCH AM.
+    pose proof (entry_bounds inp mb Plain.M.phdrs entry sp0 rnd0 brk VSP LAUNCH) as [_ EB].
+    unfold sp_window_hi in EB.
     (* [comment removed for export] *)
     unfold at_main in AM. let z := fresh "sblz" in pose (z := repeat (Z_to_bv 8 0) 3616); change (repeat (Z_to_bv 8 0) 3616) with z in AM.
     let x := fresh "sbl" in pose (x := 3616%nat); change 3616%nat with x in AM.
@@ -2742,28 +2760,28 @@ Section Init.
     match type of PS with rw_cells _ _ ?a _ => let v := eval vm_compute in a in change a with v in PS end.
     unfold main_entry. repeat (lazymatch goal with |- ex _ => eexists end).
     split; [reflexivity|].
-    cbn [rc_sp0 rc_argv rc_envp rc_uid rc_hw rc_rnd rc_tp rc_cb usp0 rc_lo].
+    cbn [rc_inp rc_mb rc_ph rc_entry rc_sp0 rc_rnd rc_tp rc_cb rc_argv rc_envp rc_uid rc_gid rc_hw usp0 rc_lo].
     split.
     { (* [comment removed for export] *)
-      exists []. cbn [app ps_heap ps_libc ps_outfile ps_tls set_tls_pin set_tls set_heap ps_init utp rc_tp usp0 rc_sp0 rc_argv rc_envp rc_uid rc_hw rc_rnd rc_cb].
-      split. { pose proof HINIT as HI. unfold heap_init_law in HI. apply (HI (mkRC sp0 argv envp uid hw rnd0 tp false) m); [reflexivity | | exact TB | exact SPW | unfold rc_lo, usp0; cbn [rc_sp0]; exact CLO]. unfold heap_init_mem, rc_canary; cbn [rc_rnd].
+      exists []. cbn [app ps_heap ps_libc ps_outfile ps_tls set_tls_pin set_tls set_heap ps_init utp rc_tp usp0 rc_inp rc_mb rc_ph rc_entry rc_sp0 rc_rnd rc_cb rc_argv rc_envp rc_uid rc_gid rc_hw].
+      split. { pose proof HINIT as HI. unfold heap_init_law in HI. apply (HI (mkRC inp mb Plain.M.phdrs entry sp0 rnd0 tp false) m); [reflexivity | | exact TB | exact SPW | unfold rc_lo, usp0; cbn [rc_sp0]; lia]. unfold heap_init_mem, rc_canary; cbn [rc_rnd].
                split; [exact HPL|]. split; [exact HPCB|]. split; [exact HPCW|]. split; [exact NL|]. split; [exact PS|]. split; [exact GG|]. split; [exact GU| exact HREPL]. }
-      split. { pose proof SINIT as SI'. unfold stdio_init_law in SI'. apply (SI' (mkRC sp0 argv envp uid hw rnd0 tp false) m). split; [exact SF1| exact SF2]. }
+      split. { pose proof SINIT as SI'. unfold stdio_init_law in SI'. apply (SI' (mkRC inp mb Plain.M.phdrs entry sp0 rnd0 tp false) m). split; [exact SF1| exact SF2]. }
       split. { unfold HARNR. split; [eexists; exact HA1|]. split; [eexists; exact HA2| exact HA3]. }
       split. { unfold CORE_TLS, rc_canary. cbn [utp rc_tp rc_rnd]. exists t, (Z_to_bv 64 0).
                split; [exact TD|]. split; [exact ERR|]. split; [exact TD2|]. split; [exact CAN|]. split; [exact DTV|]. split; [exact DTVB| exact Ht]. }
       split. { unfold PCAP_TLS. cbn [utp rc_tp]. eexists. exact TLS. }
-      split. { unfold CORE_LIBC, rc_canary. cbn [rc_sp0 rc_argv rc_envp rc_rnd]. split; [exact LC|]. split; [exact GG|]. split; [exact GU|]. split; [exact SI|].
+      split. { unfold CORE_LIBC, rc_canary. cbn [rc_inp rc_sp0 rc_rnd rc_argv rc_envp]. split; [exact LC|]. split; [exact GG|]. split; [exact GU|]. split; [exact SI|].
                exists pg, P0. split; [exact PG| exact HP0]. }
       split. { unfold CORE_MISC. split; [exact M1a|]. split; [exact M2a|]. split; [exact M3|]. split; [exact M2b|]. split; [exact M1b| exact M1c]. }
       split. { unfold CORE_EXIT. split; [exact EXL|].
                split. { exists false, (repeat (Z_to_bv 8 0) 3), (Z_to_bv 64 0), (Z_to_bv 64 0), (repeat (Z_to_bv 8 0) 248), (repeat (Z_to_bv 8 0) 248).
                         split; [exact FLG|]. split; [exact ATX|]. split; [exact BLTN| intros X; discriminate X]. }
                split; [exact GF|]. split; [exact FA|]. split; [exact FIN|]. split; [exact G2| exact DSO]. }
-      split. { unfold CORE_STK. cbn [usp0 rc_sp0 rc_argv rc_envp rc_uid rc_hw rc_rnd]. exact STKB. }
+      split. { unfold CORE_STK. cbn [usp0 rc_inp rc_mb rc_ph rc_entry rc_sp0 rc_rnd]. split; [exists brk; exact LAUNCH| exact STKB]. }
       split; [reflexivity|]. split; [exact TB|]. split; [split; [constructor| exact I]|]. split; [split; [exact SPW| exact SPH]| unfold rc_lo, usp0; cbn [rc_sp0]; exact CLO]. }
     split; [exact MI|]. split; [exact ST|]. split; [exact VA|]. split; [cbn [usp0 rc_sp0]; exact V16|].
-    unfold usp0. cbn [rc_sp0 rc_argv rc_envp rc_uid rc_hw rc_rnd]. change (2^47)%Z with 140737488355328%Z. lia.
+    unfold usp0. cbn [rc_inp rc_mb rc_ph rc_entry rc_sp0 rc_rnd]. change (2^47)%Z with 140737488355328%Z. lia.
   Qed.
 End Init.
 
@@ -2879,14 +2897,18 @@ Section Init.
   Hypothesis HINIT : heap_init_law.
   Hypothesis SINIT : stdio_init_law.
 
-  Lemma GI_init : forall sp0 argv envp uid hw tp ms,
-    valid_sp sp0 -> valid_argv argv -> entry_stack_fits sp0 argv envp ->     (* [comment removed for export] *)
-    at_main sp0 argv envp uid hw rnd0 tp ms ->
-    main_entry K (mkRC sp0 argv envp uid hw rnd0 tp false) (set_tls_pin HO (bv_unsigned tp - 200) (ps_init h0)) ms.
+  (* PORTED to 75d69e00, identically to the Plain kit (F_main_A__S3.v:2687-2704):
+     the premise is [entry_launch_ok_va], [valid_entry_va]'s fifth conjunct
+     (Run.v:3733), because [entry_stack_fits] alone no longer bounds the image. *)
+  Lemma GI_init : forall inp mb entry sp0 brk tp ms,
+    valid_sp sp0 -> valid_argv (in_argv inp) ->
+    entry_launch_ok_va Sv48 (mkEntry sp0 brk mb rnd0) inp ->
+    at_main inp mb entry sp0 rnd0 tp ms ->
+    main_entry K (mkRC inp mb Ubsan.M.phdrs entry sp0 rnd0 tp false) (set_tls_pin HO (bv_unsigned tp - 200) (ps_init h0)) ms.
   Proof using HINIT SINIT. pin_using (fun (HINIT SINIT : unit) => tt). ceil_facts.
-    intros sp0 argv envp uid hw tp ms VSP VA FITS AM.
-    pose proof (entry_bounds Ubsan.M.phdrs sp0 argv envp uid hw rnd0 VSP FITS) as [_ EB].
-    pose proof (bsb_le_esi Ubsan.M.phdrs sp0 argv envp uid hw rnd0) as BLE. unfold sp_window_hi in EB.
+    intros inp mb entry sp0 brk tp ms VSP VA LAUNCH AM.
+    pose proof (entry_bounds inp mb Ubsan.M.phdrs entry sp0 rnd0 brk VSP LAUNCH) as [_ EB].
+    unfold sp_window_hi in EB.
     (* [comment removed for export] *)
     unfold at_main in AM. let z := fresh "sblz" in pose (z := repeat (Z_to_bv 8 0) 3616); change (repeat (Z_to_bv 8 0) 3616) with z in AM.
     let x := fresh "sbl" in pose (x := 3616%nat); change 3616%nat with x in AM.
@@ -2941,28 +2963,28 @@ Section Init.
     match type of PS with rw_cells _ _ ?a _ => let v := eval vm_compute in a in change a with v in PS end.
     unfold main_entry. repeat (lazymatch goal with |- ex _ => eexists end).
     split; [reflexivity|].
-    cbn [rc_sp0 rc_argv rc_envp rc_uid rc_hw rc_rnd rc_tp rc_cb usp0 rc_lo].
+    cbn [rc_inp rc_mb rc_ph rc_entry rc_sp0 rc_rnd rc_tp rc_cb rc_argv rc_envp rc_uid rc_gid rc_hw usp0 rc_lo].
     split.
     { (* [comment removed for export] *)
-      exists []. cbn [app ps_heap ps_libc ps_outfile ps_tls set_tls_pin set_tls set_heap ps_init utp rc_tp usp0 rc_sp0 rc_argv rc_envp rc_uid rc_hw rc_rnd rc_cb].
-      split. { pose proof HINIT as HI. unfold heap_init_law in HI. apply (HI (mkRC sp0 argv envp uid hw rnd0 tp false) m); [reflexivity | | exact TB | exact SPW | unfold rc_lo, usp0; cbn [rc_sp0]; exact CLO]. unfold heap_init_mem, rc_canary; cbn [rc_rnd].
+      exists []. cbn [app ps_heap ps_libc ps_outfile ps_tls set_tls_pin set_tls set_heap ps_init utp rc_tp usp0 rc_inp rc_mb rc_ph rc_entry rc_sp0 rc_rnd rc_cb rc_argv rc_envp rc_uid rc_gid rc_hw].
+      split. { pose proof HINIT as HI. unfold heap_init_law in HI. apply (HI (mkRC inp mb Ubsan.M.phdrs entry sp0 rnd0 tp false) m); [reflexivity | | exact TB | exact SPW | unfold rc_lo, usp0; cbn [rc_sp0]; lia]. unfold heap_init_mem, rc_canary; cbn [rc_rnd].
                split; [exact HPL|]. split; [exact HPCB|]. split; [exact HPCW|]. split; [exact NL|]. split; [exact PS|]. split; [exact GG|]. split; [exact GU| exact HREPL]. }
-      split. { pose proof SINIT as SI'. unfold stdio_init_law in SI'. apply (SI' (mkRC sp0 argv envp uid hw rnd0 tp false) m). split; [exact SF1| exact SF2]. }
+      split. { pose proof SINIT as SI'. unfold stdio_init_law in SI'. apply (SI' (mkRC inp mb Ubsan.M.phdrs entry sp0 rnd0 tp false) m). split; [exact SF1| exact SF2]. }
       split. { unfold HARNR. split; [eexists; exact HA1|]. split; [eexists; exact HA2| exact HA3]. }
       split. { unfold CORE_TLS, rc_canary. cbn [utp rc_tp rc_rnd]. exists t, (Z_to_bv 64 0).
                split; [exact TD|]. split; [exact ERR|]. split; [exact TD2|]. split; [exact CAN|]. split; [exact DTV|]. split; [exact DTVB| exact Ht]. }
       split. { unfold PCAP_TLS. cbn [utp rc_tp]. eexists. exact TLS. }
-      split. { unfold CORE_LIBC, rc_canary. cbn [rc_sp0 rc_argv rc_envp rc_rnd]. split; [exact LC|]. split; [exact GG|]. split; [exact GU|]. split; [exact SI|].
+      split. { unfold CORE_LIBC, rc_canary. cbn [rc_inp rc_sp0 rc_rnd rc_argv rc_envp]. split; [exact LC|]. split; [exact GG|]. split; [exact GU|]. split; [exact SI|].
                exists pg, P0. split; [exact PG| exact HP0]. }
       split. { unfold CORE_MISC. split; [exact M1a|]. split; [exact M2a|]. split; [exact M3|]. split; [exact M2b|]. split; [exact M1b| exact M1c]. }
       split. { unfold CORE_EXIT. split; [exact EXL|].
                split. { exists false, (repeat (Z_to_bv 8 0) 3), (Z_to_bv 64 0), (Z_to_bv 64 0), (repeat (Z_to_bv 8 0) 248), (repeat (Z_to_bv 8 0) 248).
                         split; [exact FLG|]. split; [exact ATX|]. split; [exact BLTN| intros X; discriminate X]. }
                split; [exact GF|]. split; [exact FA|]. split; [exact FIN|]. split; [exact G2| exact DSO]. }
-      split. { unfold CORE_STK. cbn [usp0 rc_sp0 rc_argv rc_envp rc_uid rc_hw rc_rnd]. exact STKB. }
+      split. { unfold CORE_STK. cbn [usp0 rc_inp rc_mb rc_ph rc_entry rc_sp0 rc_rnd]. split; [exists brk; exact LAUNCH| exact STKB]. }
       split; [reflexivity|]. split; [exact TB|]. split; [split; [constructor| exact I]|]. split; [split; [exact SPW| exact SPH]| unfold rc_lo, usp0; cbn [rc_sp0]; exact CLO]. }
     split; [exact MI|]. split; [exact ST|]. split; [exact VA|]. split; [cbn [usp0 rc_sp0]; exact V16|].
-    unfold usp0. cbn [rc_sp0 rc_argv rc_envp rc_uid rc_hw rc_rnd]. change (2^47)%Z with 140737488355328%Z. lia.
+    unfold usp0. cbn [rc_inp rc_mb rc_ph rc_entry rc_sp0 rc_rnd]. change (2^47)%Z with 140737488355328%Z. lia.
   Qed.
 End Init.
 
@@ -6304,14 +6326,20 @@ Section ProgImpl.
     intros en inp tp s ms -> [_ EDRAW] VE VI AM.
     pose proof (valid_entry_sp _ _ _ VI VE) as VSP.
     apply (valid_entry_sv48 _ _ _ (valid_input_sv48 inp VI)) in VE.
-    destruct en as [sp0 brk mb rnd]. destruct VE as (_ & _ & _ & FITS). destruct inp as [argv envp fs sin uid gid groups net nofile sigmask hw abterm vasz].
-    cbn [en_sp en_draw in_argv in_envp in_uid in_hwcap] in *. subst rnd.
+    (* PORTED to 75d69e00.  [inp] is kept WHOLE -- the ported [at_main] and
+       [rctx] carry it rather than its projections -- and [valid_entry_va] now
+       has FIVE conjuncts (Run.v:3733), the fifth being [entry_launch_ok_va],
+       which is exactly the premise [GI_init] needs and which [entry_stack_fits]
+       no longer supplies. *)
+    destruct en as [sp0 brk mb rnd]. destruct VE as (_ & _ & _ & _ & LAUNCH).
+    cbn [en_sp en_draw en_mmap_base] in *. subst rnd.
     destruct VI as (VARGV & _).
-    unfold main_of. cbn [in_argv].
-    change (argv_Z argv) with (argv_Z (rc_argv (mkRC sp0 argv envp uid hw rnd0 tp false))).
+    unfold main_of.
+    change (argv_Z (in_argv inp))
+      with (argv_Z (rc_argv (mkRC inp mb Plain.M.phdrs (Z_to_bv 64 (Z.of_N Plain.M.init_pc)) sp0 rnd0 tp false))).
     eapply (implM_mono ssegs).
     - apply (main_spec HO K sites_of (sites (mkEntry sp0 brk mb rnd0)) SEF SEF_range HFL SFL HCB SCB MALLOC FREE (FUZZ _) VPR EPR_USAGE EPR_OPEN EPR_READ EPR_BIG EFW (SITE_RS _)); [reflexivity|reflexivity|].
-      apply (GI_init HO K h0 rnd0 HINIT SINIT); [exact VSP | exact VARGV | exact FITS | exact AM].
+      apply (GI_init HO K h0 rnd0 HINIT SINIT) with (brk := brk); [exact VSP | exact VARGV | exact LAUNCH | exact AM].
     - intros code s' ms' HP. exact HP.
   Qed.
 
@@ -6430,14 +6458,17 @@ Section ProgImpl.
     intros en inp tp s ms -> [_ EDRAW] VE VI AM.
     pose proof (valid_entry_sp _ _ _ VI VE) as VSP.
     apply (valid_entry_sv48 _ _ _ (valid_input_sv48 inp VI)) in VE.
-    destruct en as [sp0 brk mb rnd]. destruct VE as (_ & _ & _ & FITS). destruct inp as [argv envp fs sin uid gid groups net nofile sigmask hw abterm vasz].
-    cbn [en_sp en_draw in_argv in_envp in_uid in_hwcap] in *. subst rnd.
+    (* PORTED to 75d69e00, identically to the Plain kit: [inp] stays WHOLE and
+       the premise is [valid_entry_va]'s FIFTH conjunct (Run.v:3733). *)
+    destruct en as [sp0 brk mb rnd]. destruct VE as (_ & _ & _ & _ & LAUNCH).
+    cbn [en_sp en_draw en_mmap_base] in *. subst rnd.
     destruct VI as (VARGV & _).
-    unfold main_of. cbn [in_argv].
-    change (argv_Z argv) with (argv_Z (rc_argv (mkRC sp0 argv envp uid hw rnd0 tp false))).
+    unfold main_of.
+    change (argv_Z (in_argv inp))
+      with (argv_Z (rc_argv (mkRC inp mb Ubsan.M.phdrs (Z_to_bv 64 (Z.of_N Ubsan.M.init_pc)) sp0 rnd0 tp false))).
     eapply (implM_mono usegs).
     - apply (main_spec HO K sites_of (sites (mkEntry sp0 brk mb rnd0)) SEF SEF_range HFL SFL HCB SCB MALLOC FREE (FUZZ _) VPR EPR_USAGE EPR_OPEN EPR_READ EPR_BIG EFW (SITE_RS _)); [reflexivity|reflexivity|].
-      apply (GI_init HO K h0 rnd0 HINIT SINIT); [exact VSP | exact VARGV | exact FITS | exact AM].
+      apply (GI_init HO K h0 rnd0 HINIT SINIT) with (brk := brk); [exact VSP | exact VARGV | exact LAUNCH | exact AM].
     - intros code s' ms' HP. exact HP.
   Qed.
 

@@ -1,4 +1,4 @@
-(* Ported by a Theorem Labs lane from a working branch affce6489c8 proofs/omx-clap-core/fuzz_manifest/lib/A/Spec/StrWin.v, unchanged. *)
+(* Ported by a Theorem Labs lane from a working branch proofs/omx-clap-core/fuzz_manifest/lib/A/Spec/StrWin.v, unchanged. *)
 From Stdlib Require Import ZArith Arith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase.
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.A.Spec Require Import StrStr StrFun.

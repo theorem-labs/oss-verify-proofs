@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (HK_emb's encoded statement written out in plain text with the new placement premise ASys.placed_at at the emb size; the old encoding kept as ZZ_HK_emb_old, with ZZ_HK_emb_faithful proving it equal to the statement without that premise; AMark imported for the GRANT_MAX bound the proof now discharges). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State.
@@ -9,6 +10,7 @@ From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require Import MState.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.ABoot Require Import BackingAlgebra.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA Require Import ALazy AShadow.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.AHeap Require Import AModel AModelX ASys ASysS AKinv AFreeSlot AVmLib AVm AVst AVstT.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.AHeap Require AMark.
 Import ListNotations.
 Open Scope Z_scope.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.AHeap Require Import ACeil.
@@ -51,15 +53,48 @@ Section TRANS.
   Hypothesis IML : al_img_lo AL <= 0x10000.
   Hypothesis IMH : al_img_hi AL = 0x65b000.
 
-  #[using="ASB IML IMH"] Theorem HK_emb : ltac2:(CDefT.buildp (gd_tbl_AVstE ()) "Ph,$15.Pmo,$16.Pa,(17.&40.)Ph',$15.P,(18.VhAR,VAL,R4.R3.)Zua,$4.(19.&40.R3.)P,(1.$4.(1:.R1.+1000.)=)P,(1;.=R2.)P,(1<.(1=.R3.$1>.)(1?.VhAR,))P,(1.$20.(21.(22.(?.(17.&40.)(17.&40.))(23.(24.R8.))(25.(24.R8.)))R7.(26.&40.$1>.))$27.)P,(1<.(1=.(1=.(28.(29.R:.))(2:.+1000.(2;.(29.R:.))))$2<.)$2=.)P,(2>.R;.R6.R8.)(0.(18.VhAR,VAL,R9.(2?.+22.R:.$1>.R;.))(0.(30.(31.VAL,(29.R9.))R7.$1>.)(0.(1<.+65;000.R7.)(32.(1<.(1=.R7.$1>.)+7???7000.)(1<.+10007???8000.R7.)))))")
-(* [comment removed for export] *).
+  (* The original blob certifies the explicit statement before the placement premise. *)
+  Definition ZZ_HK_emb_old : Prop := ltac2:(CDefT.buildp (gd_tbl_AVstE ()) "Ph,$15.Pmo,$16.Pa,(17.&40.)Ph',$15.P,(18.VhAR,VAL,R4.R3.)Zua,$4.(19.&40.R3.)P,(1.$4.(1:.R1.+1000.)=)P,(1;.=R2.)P,(1<.(1=.R3.$1>.)(1?.VhAR,))P,(1.$20.(21.(22.(?.(17.&40.)(17.&40.))(23.(24.R8.))(25.(24.R8.)))R7.(26.&40.$1>.))$27.)P,(1<.(1=.(1=.(28.(29.R:.))(2:.+1000.(2;.(29.R:.))))$2<.)$2=.)P,(2>.R;.R6.R8.)(0.(18.VhAR,VAL,R9.(2?.+22.R:.$1>.R;.))(0.(30.(31.VAL,(29.R9.))R7.$1>.)(0.(1<.+65;000.R7.)(32.(1<.(1=.R7.$1>.)+7???7000.)(1<.+10007???8000.R7.)))))").
+
+  Lemma ZZ_HK_emb_faithful : ZZ_HK_emb_old =
+    (forall (h : ahst) (mo : Model) (a : word) (h' : ahst),
+       HK AL h mo ->
+       let ua := bv_unsigned a in
+       ua mod 4096 = 0 ->
+       0 < ua ->
+       ua + kEmbBytes <= ACEIL ->
+       region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 kEmbBytes) = true ->
+       v_eb (vst_of h) + 4096 * vnb (vst_of h) + CE <= VLIMIT ->
+       R_emb h ua h' ->
+       HK AL h' (anon_grant 0x22 a kEmbBytes mo)
+       /\ crange (vcs AL (vst_of h')) ua kEmbBytes
+       /\ 0x65b000 <= ua
+       /\ Pband ua kEmbBytes).
+  Proof. exact eq_refl. Qed.
+
+  #[using="ASB IML IMH"] Theorem HK_emb :
+    forall (h : ahst) (mo : Model) (a : word) (h' : ahst),
+      HK AL h mo ->
+      let ua := bv_unsigned a in
+      ua mod 4096 = 0 ->
+      0 < ua ->
+      ua + kEmbBytes <= ACEIL ->
+      region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 kEmbBytes) = true ->
+      v_eb (vst_of h) + 4096 * vnb (vst_of h) + CE <= VLIMIT ->
+      R_emb h ua h' ->
+      ASys.placed_at kEmbBytes mo a ->
+      HK AL h' (anon_grant 0x22 a kEmbBytes mo)
+      /\ crange (vcs AL (vst_of h')) ua kEmbBytes
+      /\ 0x65b000 <= ua
+      /\ Pband ua kEmbBytes.
   Proof.
-    intros h mo a h' K ua AAL A0 ACE RF SL RE. pose proof K as [Kv VR]. unfold kEmbBytes in *.
+    intros h mo a h' K ua AAL A0 ACE RF SL RE FL. pose proof K as [Kv VR]. unfold kEmbBytes in *.
     assert (N16 : bv_unsigned (Z_to_bv 64 0x10000) = 0x10000) by (apply u64_lit; lia).
     pose proof (HKv_fresh_above_img AL (vst_of h) mo a (Z_to_bv 64 0x10000) Kv RF A0 IML ltac:(rewrite IMH; lia) ltac:(rewrite N16; lia) ltac:(rewrite N16; exact ACE)) as IMA. rewrite IMH in IMA. fold ua in IMA.
     pose proof (HKv_fresh_band AL (vst_of h) mo a (Z_to_bv 64 0x10000) Kv RF ltac:(rewrite N16; lia)) as BND. rewrite N16 in BND. fold ua in BND.
     pose proof (HKv_grant_eager AL (vst_of h) mo a 0x10000 true Kv ltac:(rewrite ASB; lia) ltac:(rewrite ASB; lia) AAL A0 ACE ltac:(lia) eq_refl ltac:(rewrite IMH; exact IMA) RF) as K'.
     cbn zeta in K'. fold ua in K'. specialize (K' ltac:(rewrite vnb_add_eager; unfold CE, npg_shadow, kEmbBytes in SL; cbn [v_eb v_add_eager]; clear - SL; lia)).
+    specialize (K' FL). specialize (K' ltac:(unfold AMark.GRANT_MAX; lia)).
     pose proof (vst_of_emb h ua h' RE) as P. unfold kEmbBytes in P.
     split; [| split; [| exact (conj IMA BND)]].
     - apply (HK_perm AL h' _ _ P K'). apply vranges_ok_eager; [exact VR| lia| lia].

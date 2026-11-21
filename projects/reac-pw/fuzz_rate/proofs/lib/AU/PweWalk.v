@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPropIntB.v at 5afd8b87436 (its entry-state proof, the run / keep / register-value chain and the call through the runtime's intrinsic law) and proofs/reac-pw/fuzz_role/lib/A/RPgCheck.v at 77f59d02b01 (the `ret` leaf) for reac-pw/fuzz_rate's image B: the walk is of pod_write_ent 0x83cc4 against lib/AU/PweSpec.v's pod_write_ent_specX. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPropIntB.v (its entry-state proof, the run / keep / register-value chain and the call through the runtime's intrinsic law) and proofs/reac-pw/fuzz_role/lib/A/RPgCheck.v (the `ret` leaf) for reac-pw/fuzz_rate's image B: the walk is of pod_write_ent 0x83cc4 against lib/AU/PweSpec.v's pod_write_ent_specX. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The walk of pod_write_ent at 0x83cc4 on reac-pw/fuzz_rate's image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14; every address is measured on its unstripped
    twin sha256 a1e5fa55ae27e657ea2719297ec4c037110f10fa9047c3ea7bb6ea7fcb358cb1).

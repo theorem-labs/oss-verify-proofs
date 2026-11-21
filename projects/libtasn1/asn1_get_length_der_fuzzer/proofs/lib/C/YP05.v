@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Trevor Hansen, 2026-11: module names. *)
+(* Modified by Theorem Labs, 2026-11: ported toward LPS 727298f3 by the change of the same file of cgif/cgif_rgb_fuzzer, its addresses relocated to this unit's binaries. *)
 From Stdlib Require Import ZArith List Bool Lia FunctionalExtensionality.
 From OSSVerify.Proofs.libtasn1.asn1_get_length_der_fuzzer.lib.C Require Import YK15 YN02.
 From OSSVerify.Proofs.libtasn1.asn1_get_length_der_fuzzer.lib.C Require Import YP0j YP0g YP0h YP0r YP0c YP0e YP07 YP04.
@@ -103,7 +104,7 @@ lazymatch goal with
 | |- GT (KEEP ?s0) (?m ?s) =>
 tryif constr_eq s0 s then (apply (GT_KEEP_presK m s))
 else (eapply GT_mono; [ | apply (GT_KEEP_presK m s) ];
-[ intros [? ?] ?; eapply KEEP_trans; [ | eassumption]; split; cbn; reflexivity | ])
+[ intros [? ?] ?; eapply (KEEP_trans _ _ tt); [ | eassumption]; split; cbn; reflexivity | ])
 end.
 Ltac kgo := repeat kstep.
 Section j. Context {fx : YK11.FPState} {rc : YN05.RunCeil}.
@@ -485,44 +486,298 @@ Proof. intros. eapply GT_gtree. apply GT_malloc; auto. Qed.
 End a1.
 Ltac solve_gtree_concrete :=
 vm_compute; repeat split; try discriminate; try reflexivity.
-Ltac gstep :=
-lazymatch goal with
-| |- gtree _ (IRet _) => exact I
-| |- gtree _ (ret _ _) => exact I
-| |- gtree _ (bind (ret _) _ _) => rewrite bind_ret_l; cbv beta iota
-| |- gtree _ (bind (bind _ _) _ _) => rewrite bind_assoc
-| |- gtree _ (bind (if ?c then _ else _) _ _) => rewrite bind_if
-| |- gtree _ ((if ?c then _ else _) _) => jif c
-| |- gtree _ (if ?c then _ else _) => jif c
-| |- gtree _ (bind (read_phase (S _) _ _ _) _ _) => rewrite read_phase_S
-| |- gtree _ (bind (read_phase O _ _ _) _ _) => rewrite read_phase_O
-| |- gtree _ (bind (read_phase ?f _ _ _) _ _) => let v := eval cbv in f in change f with v
-| |- gtree _ (bind (malloc (payload_len _)) _ _) =>
-apply gtree_mbind;
-[ apply gtree_malloc;
-[ unfold payload_len, HDR_MIN, config_len, dlen, CAP0, MAX_INPUT in *; bool_hyps; lia
-| vm_compute; discriminate
-| vm_compute; discriminate
-| vm_compute; discriminate ]
-| intros ? [?|] ? ?; exact I ]
-| |- gtree _ (bind (malloc ?n) _ ?s) =>
-eapply gtree_mbind_leaves;
-[ solve_gtree_concrete
-| solve_cleaves
-| let a := fresh "a" in let s' := fresh "s" in let Hin := fresh "Hin" in
-intros a s' Hin; in_cases Hin; cbv beta iota ]
-| |- gtree _ (bind (free (Some ?b)) _ ?s) =>
-eapply gtree_mbind_leaves;
-[ solve_gtree_concrete
-| solve_cleaves
-| let a := fresh "a" in let s' := fresh "s" in let Hin := fresh "Hin" in
-intros a s' Hin; in_cases Hin; cbv beta iota ]
-end.
-Ltac gwalk := repeat (progress gstep).
+(* 08b1429 cause (3): munmap may answer an injected -ENOMEM, so every munmap in free has two leaves (refused:
+   the region stays live; unmapped). A concrete walk that enumerates both leaves at every munmap is exponential in
+   the number of frees (read_phase frees up to nine mapped buffers), so the driver's gtree is proved here by an
+   invariant over read_phase instead: GT_free holds for BOTH munmap answers at once, and the refused leaf's leak
+   stays inside the live budget (read_phase_live_bound). Only the first malloc is walked concretely. *)
+Section a2. Context {fx : YK11.FPState} {rc : YN05.RunCeil}.
+Definition REGPOS (s : astate) : Prop := forall rg, In rg (st_regions s) -> 0 <= rg_len rg.
+Lemma REGPOS_check s : forallb (fun rg => 0 <=? rg_len rg) (st_regions s) = true -> REGPOS s.
+Proof. intros H rg Hin. rewrite forallb_forall in H. apply Z.leb_le. exact (H rg Hin). Qed.
+Lemma In_lupd_inv {X} (l : list X) r v x : In x (lupd l r v) -> In x l \/ x = v.
+Proof.
+revert r. induction l as [|y l IH]; intros [|r] H; cbn [lupd In] in H; try contradiction.
+- destruct H as [<-|H]; [right; reflexivity | left; right; exact H].
+- destruct H as [<-|H]; [left; left; reflexivity|].
+  destruct (IH r H) as [H'|H']; [left; right; exact H' | right; exact H'].
+Qed.
+Lemma region_slots_dead k len rw : region_slots (mkRegion k len rw false) = 0.
+Proof. reflexivity. Qed.
+Lemma live_lupd_kill (l : list region) r :
+(forall rg, In rg l -> 0 <= rg_len rg) ->
+fold_right (fun rg acc => if rg_live rg then rg_len rg + acc else acc) 0
+  (lupd l r (mkRegion RkMap (rg_len (nth r l (mkRegion RkMap 0 [] false))) [] false))
+<= fold_right (fun rg acc => if rg_live rg then rg_len rg + acc else acc) 0 l.
+Proof.
+revert r. induction l as [|y l IH]; intros [|r] H; cbn [lupd nth fold_right rg_live]; try lia.
+- pose proof (H y (or_introl eq_refl)). destruct (rg_live y); lia.
+- assert (H' : forall rg, In rg l -> 0 <= rg_len rg) by (intros rg Hr; apply H; right; exact Hr).
+  specialize (IH r H'). destruct (rg_live y); lia.
+Qed.
+Lemma slots_lupd_kill (l : list region) r :
+(forall rg, In rg l -> 0 <= rg_len rg) ->
+fold_right (fun rg acc => region_slots rg + acc) 0
+  (lupd l r (mkRegion RkMap (rg_len (nth r l (mkRegion RkMap 0 [] false))) [] false))
+<= fold_right (fun rg acc => region_slots rg + acc) 0 l.
+Proof.
+assert (P : forall rg, 0 <= rg_len rg -> 0 <= region_slots rg).
+{ intros rg Hr. unfold region_slots. destruct (rg_live rg); [|lia].
+  destruct (rg_kind rg); [apply Z.div_pos; unfold PGSZ; lia | lia | lia]. }
+revert r. induction l as [|y l IH]; intros [|r] H; cbn [lupd nth fold_right]; try lia.
+- rewrite region_slots_dead. pose proof (P y (H y (or_introl eq_refl))). lia.
+- assert (H' : forall rg, In rg l -> 0 <= rg_len rg) by (intros rg Hr; apply H; right; exact Hr).
+  specialize (IH r H'). lia.
+Qed.
+Lemma kill_bounds s r : REGPOS s ->
+let s' := set_regions (lupd (st_regions s) r
+  (mkRegion RkMap (rg_len (nth r (st_regions s) (mkRegion RkMap 0 [] false))) [] false)) s in
+live_bytes s' <= live_bytes s /\ nslots s' <= nslots s /\ amc s' = amc s /\ REGPOS s'.
+Proof.
+intros HR s'. unfold s', live_bytes, nslots, REGPOS. cbn [st_regions set_regions st_avail_meta_count].
+split; [apply live_lupd_kill; exact HR|]. split; [apply slots_lupd_kill; exact HR|]. split; [reflexivity|].
+intros rg Hin. apply In_lupd_inv in Hin as [Hin| ->]; [apply HR, Hin|]. cbn [rg_len].
+destruct (nth_in_or_default r (st_regions s) (mkRegion RkMap 0 [] false)) as [Hn|Hn];
+[apply HR, Hn | rewrite Hn; cbn [rg_len]; lia].
+Qed.
+Definition FQ (s : astate) {A} (r : A * astate) : Prop :=
+live_bytes (snd r) <= live_bytes s /\ nslots (snd r) <= nslots s /\ amc (snd r) = amc s /\ REGPOS (snd r).
+Lemma FQ_KEEP s {A} (r : A * astate) : REGPOS s -> KEEP s r -> FQ s r.
+Proof.
+intros HR [E1 E2]. unfold FQ, live_bytes, nslots, REGPOS. rewrite E1, E2.
+split; [lia|]. split; [lia|]. split; [reflexivity | exact HR].
+Qed.
+Lemma k_nontrivial_free : forall fuel g i, presK (nontrivial_free fuel g i).
+Proof.
+induction fuel as [|f IH]; intros g i; cbn [nontrivial_free]; [apply presK_fail|].
+unfold okay_to_free. cbv zeta. kgo.
+Qed.
+(* free never asks for memory: its only fallible ask is KMunmap (mgrant is True), and NEITHER munmap answer
+   raises live_bytes, nslots or amc. No assumption is made about which answer comes back. *)
+Lemma GT_free p s : REGPOS s -> GT (FQ s) (free (Some p) s).
+Proof.
+intros HR. unfold free.
+eapply (GT_bind (KEEP s)); [apply (GT_KEEP_presK (find_frame p) s); auto with presK|].
+intros gi s1 K1. cbv zeta.
+eapply (GT_bind (KEEP s1)); [apply (GT_KEEP_presK _ s1); auto with presK|].
+intros am s2 K2.
+eapply (GT_bind (KEEP s2)); [apply (GT_KEEP_presK _ s2); auto with presK|].
+intros [] s3 K3.
+eapply (GT_bind (KEEP s3)); [apply (GT_KEEP_presK _ s3); auto with presK|].
+intros [] s4 K4.
+assert (K04 : KEEP s (tt, s4)).
+{ eapply KEEP_trans; [eapply KEEP_trans; [eapply KEEP_trans; [exact K1 | exact K2] | exact K3] | exact K4]. }
+cbv beta. apply GT_if.
+- eapply (GT_mono (KEEP s4)); [| kgo].
+  intros [u s5] K5. apply FQ_KEEP; [exact HR|]. eapply KEEP_trans; [exact K04 | exact K5].
+- eapply (GT_bind (KEEP s4)); [apply (GT_KEEP_presK _ s4); apply k_nontrivial_free|].
+  intros mi s5 K5. assert (K05 : KEEP s (tt, s5)) by (eapply KEEP_trans; [exact K04 | exact K5]).
+  destruct mi as [[r len]|].
+  + eapply (GT_bind (fun x : bool * astate => snd x = s5)).
+    { apply GT_ask; [intros _; cbn; exact I | intros p0 Hp0; discriminate | intros b; reflexivity]. }
+    intros ok2 s6 E6. cbn [snd] in E6. subst s6.
+    destruct ok2.
+    * unfold upd_region. apply GT_modify. cbv beta.
+      destruct K05 as [E1 E2]. cbn [snd] in E1, E2.
+      assert (HR5 : REGPOS s5) by (unfold REGPOS; rewrite E1; exact HR).
+      destruct (kill_bounds s5 r HR5) as (B1 & B2 & B3 & B4).
+      assert (L5 : live_bytes s5 = live_bytes s) by (unfold live_bytes; rewrite E1; reflexivity).
+      assert (N5 : nslots s5 = nslots s) by (unfold nslots; rewrite E1; reflexivity).
+      unfold FQ. cbn [snd]. split; [lia|]. split; [lia|]. split; [rewrite B3; exact E2 | exact B4].
+    * apply GT_ret. apply FQ_KEEP; [exact HR | exact K05].
+  + apply GT_ret. apply FQ_KEEP; [exact HR | exact K05].
+Qed.
+Lemma GT_alloc_meta_regs s :
+0 < amc s ->
+GT (fun r : option sptr * astate => st_regions (snd r) = st_regions s /\ amc s - 1 <= amc (snd r)) (alloc_meta s).
+Proof.
+intros Hc. unfold alloc_meta.
+change (GT ?Q (bind (modify (set_init_done true)) ?k s)) with (GT Q (k tt (set_init_done true s))). cbv beta.
+eapply GT_bind; [apply (GT_KEEP_presK _ (set_init_done true s)); auto with presK|].
+intros fm s1 [R1 C1]. cbn [snd st_regions st_avail_meta_count set_init_done] in R1, C1.
+destruct fm as [m|].
+- apply GT_ret. cbn [snd]. split; [exact R1 | lia].
+- change (GT ?Q (bind get ?k s1)) with (GT Q (k s1 s1)). cbv beta.
+  assert (E : (0 <? amc s1) = true) by (apply Z.ltb_lt; lia).
+  rewrite E. rewrite bind_ret_l. cbn [negb].
+  change (GT ?Q (bind get ?k s1)) with (GT Q (k s1 s1)). cbv beta.
+  match goal with |- GT ?Q (bind (put ?s2) ?k ?s0) => change (GT Q (k tt s2)) end. cbv beta.
+  eapply GT_bind; [apply GT_KEEP_presK; auto with presK|].
+  intros [] s3 [R3 C3]. apply GT_ret. cbn [snd] in *.
+  cbn [st_regions st_avail_meta_count set_avail_meta set_avail_meta_count] in R3, C3.
+  split; [congruence | lia].
+Qed.
+Definition MQ (n : Z) (s0 : astate) {A} (r : A * astate) : Prop :=
+live_bytes (snd r) <= live_bytes s0 + page_round (n + IB + UNIT) /\ nslots (snd r) <= nslots s0 + 1 /\
+amc s0 - 1 <= amc (snd r) /\ REGPOS (snd r).
+(* A large malloc: one fresh mapping of page_round (n + IB + UNIT) bytes and at most one meta. If the
+   meta allocation fails, the fresh mapping is unmapped again, and the refused answer (mapping leaked) is
+   still inside the bound because the mapping's bytes are already counted. *)
+Lemma GT_malloc_big n s0 :
+MMAP_THRESHOLD <= n < 2 ^ 27 -> 1 <= amc s0 ->
+live_bytes s0 + page_round (n + IB + UNIT) <= MG_LIVE -> nslots s0 <= MG_SLOTS -> REGPOS s0 ->
+GT (MQ n s0) (malloc n s0).
+Proof.
+intros Hn Hc HL HN HR.
+assert (Hn' : 131052 <= n < 2 ^ 27) by (unfold MMAP_THRESHOLD in Hn; exact Hn).
+pose proof (page_round_bounds (n + IB + UNIT) ltac:(unfold IB, UNIT; lia)) as PB.
+assert (Q0 : forall A (a : A), MQ n s0 (a, s0)).
+{ intros A a. unfold MQ. cbn [snd]. unfold IB, UNIT in *. split; [lia|]. split; [lia|]. split; [lia | exact HR]. }
+unfold malloc, size_overflows.
+rewrite (proj2 (Z.leb_gt (2 ^ 63 - 4096) n)) by lia.
+rewrite (proj2 (Z.leb_le MMAP_THRESHOLD n)) by lia.
+cbv zeta.
+eapply (GT_bind (fun r : bool * astate => snd r = s0)).
+{ apply GT_ask; [ | intros p0 Hp0; discriminate | intros b; reflexivity ].
+  intros _. cbn [mgrant req_len]. unfold IB, UNIT in *. lia. }
+intros ok s1 E1. cbn [snd] in E1. subst s1.
+destruct ok; cbn [negb].
+2: { apply GT_ret. apply Q0. }
+apply GT_bind_new_region_map. cbv beta.
+pose proof (live_bytes_add_map s0 (page_round (n + IB + UNIT))) as L1.
+pose proof (nslots_add_map s0 (page_round (n + IB + UNIT))) as N1.
+pose proof (amc_set_regions s0 (st_regions s0 ++ [mkRegion RkMap (page_round (n + IB + UNIT)) [] true])) as C1.
+assert (R1 : REGPOS (set_regions (st_regions s0 ++ [mkRegion RkMap (page_round (n + IB + UNIT)) [] true]) s0)).
+{ unfold REGPOS. cbn [st_regions set_regions]. intros rg Hin.
+  apply in_app_iff in Hin as [Hin|[<-|[]]]; [apply HR, Hin | simpl; unfold IB, UNIT in *; lia]. }
+set (s1 := set_regions (st_regions s0 ++ [mkRegion RkMap (page_round (n + IB + UNIT)) [] true]) s0) in *.
+eapply (GT_bind (KEEP s1)); [apply (GT_KEEP_presK step_seq s1); auto with presK|].
+intros [] s2 K2. destruct K2 as [E2 F2]. cbn [snd] in E2, F2.
+eapply GT_bind; [apply GT_alloc_meta_regs; rewrite F2, C1; lia|].
+intros og s3 [E3 F3]. cbn [snd] in E3, F3.
+assert (L3 : live_bytes s3 = live_bytes s1) by (unfold live_bytes; rewrite E3, E2; reflexivity).
+assert (N3 : nslots s3 = nslots s1) by (unfold nslots; rewrite E3, E2; reflexivity).
+assert (R3 : REGPOS s3) by (unfold REGPOS; rewrite E3, E2; exact R1).
+destruct og as [g|]; cbv beta iota.
+- eapply (GT_mono (KEEP s3)).
+  { intros [a s4] [E4 F4]. cbn [snd] in E4, F4. unfold MQ. cbn [snd].
+    assert (L4 : live_bytes s4 = live_bytes s3) by (unfold live_bytes; rewrite E4; reflexivity).
+    assert (N4 : nslots s4 = nslots s3) by (unfold nslots; rewrite E4; reflexivity).
+    split; [lia|]. split; [lia|]. split; [lia|]. unfold REGPOS; rewrite E4; exact R3. }
+  kgo.
+- eapply (GT_bind (fun x : bool * astate => snd x = s3)).
+  { apply GT_ask; [intros _; cbn; exact I | intros p0 Hp0; discriminate | intros b; reflexivity]. }
+  intros ok2 s4 E4. cbn [snd] in E4. subst s4.
+  destruct ok2.
+  + eapply (GT_bind (fun x : unit * astate => MQ n s0 x)).
+    { unfold upd_region. apply GT_modify. cbv beta.
+      match goal with |- context [lupd (st_regions s3) ?r _] =>
+        destruct (kill_bounds s3 r R3) as (B1 & B2 & B3 & B4) end.
+      unfold MQ. cbn [snd]. split; [lia|]. split; [lia|]. split; [lia | exact B4]. }
+    intros [] s5 H5. apply GT_ret. exact H5.
+  + eapply (GT_bind (fun x : unit * astate => MQ n s0 x)).
+    { apply GT_ret. unfold MQ. cbn [snd]. split; [lia|]. split; [lia|]. split; [lia | exact R3]. }
+    intros [] s5 H5. apply GT_ret. exact H5.
+Qed.
+Lemma GT_malloc_any n s0 :
+0 <= n < 2 ^ 27 -> 64 <= amc s0 -> live_bytes s0 + 2 ^ 28 <= MG_LIVE -> nslots s0 + 1 <= MG_SLOTS -> GT TT (malloc n s0).
+Proof.
+intros Hn HA HL HN. unfold malloc.
+destruct (size_overflows n) eqn:Eo.
+{ unfold size_overflows in Eo. apply Z.leb_le in Eo. lia. }
+destruct (MMAP_THRESHOLD <=? n) eqn:Em.
+-
+eapply (GT_bind (fun r => snd r = s0)).
+{ apply GT_ask; [ | intros; discriminate | intros; reflexivity ].
+intros _. cbn [mgrant req_len]. unfold MG_LIVE, MG_SLOTS in *.
+pose proof (page_round_bounds (n + IB + UNIT)) as PB. unfold IB, UNIT in *. lia. }
+intros ok s1 E1. cbn [snd] in E1. subst s1.
+tstep; [tstep|].
+apply GT_bind_new_region_map.
+pose proof (amc_set_regions s0 (st_regions s0 ++ [mkRegion RkMap (page_round (n + IB + UNIT)) [] true])) as C1.
+set (s1 := set_regions _ s0) in *.
+eapply (GT_bind (fun r => 0 < amc (snd r))).
+{ eapply GT_mono; [|apply (GT_KEEP_presK _ s1); auto with presK]. intros [u s2] [R C]. cbn in R, C |- *. rewrite C. subst s1. cbn. lia. }
+intros [] s2 C2. cbn [snd] in C2.
+eapply (GT_bind TT). { eapply GT_TT_any. apply GT_alloc_meta. exact C2. }
+intros og s3 _. repeat tstep.
+-
+change (GT ?Q (bind get ?c s0)) with (GT Q (c s0 s0)). cbv beta. lazy zeta.
+match goal with |- GT _ (bind _ (fun r => bind (match r with Some gi => ret (Some gi) | None => bind (alloc_slot _ ?sc _) _ end) _) _) =>
+set (scz := sc) end.
+eapply (GT_bind (KEEP s0)).
+{ kgo. }
+intros r s1 [R1 C1]. cbn in R1, C1.
+eapply (GT_bind TT).
+{ destruct r as [gi|]; [apply GT_ret; exact I|].
+eapply (GT_bind TT).
+{ eapply GT_TT_any. apply GT_alloc_slot.
+{ unfold PRE, NEST_FUEL, MMAX, MG_LIVE, MG_SLOTS, live_bytes, nslots in *. rewrite R1, C1. cbn [Z.of_nat Pos.of_succ_nat Pos.succ]. lia. }
+apply Z.leb_gt in Em. unfold MMAP_THRESHOLD in Em. lia. }
+intros idx s2 _. repeat tstep. }
+intros gi s2 _. repeat tstep.
+Qed.
+(* The read loop's budget. Each round mallocs 2*cap (a fresh mapping) and frees the old buffer; a refused
+   munmap leaks that buffer, so in the worst case every buffer stays live. The invariant live <= 2^24 + 3*cap
+   covers that: the round adds at most page_round (2*cap + 20) <= 2*cap + 4115 <= 3*(2*cap) - 3*cap. *)
+Definition RINV (f : nat) (cap : Z) (s : astate) : Prop :=
+REGPOS s /\ (CAP0 <= cap /\ cap < 2 ^ 27) /\ live_bytes s <= 2 ^ 24 + 3 * cap /\
+nslots s + Z.of_nat f <= 62 /\ 64 + Z.of_nat f <= amc s.
+Definition RPOST (L : Z) (r : rd_result * astate) : Prop :=
+live_bytes (snd r) <= 2 ^ 24 + 3 * 2 ^ 27 /\ nslots (snd r) <= 62 /\ 64 <= amc (snd r) /\
+match fst r with RdLoaded _ cap => L < cap /\ cap < 2 ^ 27 | _ => True end.
+Lemma GT_read_phase : forall f L cap buf s, RINV f cap s -> GT (RPOST L) (read_phase f L cap buf s).
+Proof.
+induction f as [|f IH]; intros L cap buf s (HR & Hcap & HL & HN & HC).
+- cbn [read_phase]. apply GT_ret. unfold RPOST. cbn [fst snd]. unfold CAP0 in *. repeat split; lia.
+- cbn [read_phase].
+  destruct (L <? cap) eqn:EL.
+  { apply GT_ret. unfold RPOST. cbn [fst snd]. apply Z.ltb_lt in EL. unfold CAP0 in *. repeat split; lia. }
+  destruct (MAX_INPUT <=? cap) eqn:EM.
+  { apply GT_ret. unfold RPOST. cbn [fst snd]. unfold CAP0 in *. repeat split; lia. }
+  apply Z.leb_gt in EM. unfold MAX_INPUT in EM.
+  pose proof (page_round_bounds (2 * cap + IB + UNIT) ltac:(unfold IB, UNIT, CAP0 in *; lia)) as PB.
+  eapply GT_bind.
+  { apply (GT_malloc_big (2 * cap) s).
+    - unfold MMAP_THRESHOLD, CAP0 in *. lia.
+    - lia.
+    - unfold MG_LIVE, IB, UNIT, CAP0 in *. lia.
+    - unfold MG_SLOTS. lia.
+    - exact HR. }
+  intros p s1 HQ. unfold MQ in HQ. cbn [snd] in HQ. destruct HQ as (L1 & N1 & C1 & R1).
+  destruct p as [nb|]; cbv beta iota.
+  + eapply GT_bind; [apply (GT_free buf s1 R1)|].
+    intros [] s2 HF. unfold FQ in HF. cbn [snd] in HF. destruct HF as (L2 & N2 & C2 & R2).
+    apply IH. unfold RINV. unfold IB, UNIT, CAP0 in *.
+    split; [exact R2|]. split; [lia|]. split; [lia|]. split; lia.
+  + apply GT_ret. unfold RPOST. cbn [fst snd]. unfold IB, UNIT, CAP0 in *. repeat split; lia.
+Qed.
+(* The worst-case leak bound: whatever the munmap answers, every state the read loop ends in has at most
+   2^24 + 3*2^27 < 2^29 live bytes, far inside MG_LIVE = 2^30. *)
+Lemma read_phase_live_bound : forall f L cap buf s, RINV f cap s ->
+leaves (fun r : rd_result * astate => live_bytes (snd r) < 2 ^ 29) (read_phase f L cap buf s).
+Proof.
+intros f L cap buf s H. destruct (GT_read_phase f L cap buf s H) as [_ Hl].
+eapply leaves_mono; [|exact Hl]. intros [r s'] (B & _). cbn [snd] in *. lia.
+Qed.
+End a2.
 Section b1. Context {fx : YK11.FPState} {rc : YN05.RunCeil}.
 Theorem do_gtree_proved : forall data, gtree mgrant (driver_tree data).
 Proof.
 intros data. unfold driver_tree, driver_m.
-gwalk.
+eapply gtree_mbind_leaves; [solve_gtree_concrete | solve_cleaves |].
+intros a s' Hin. in_cases Hin; cbv beta iota.
+all: try exact I.
+all: apply (GT_gtree TT).
+all: eapply GT_bind;
+  [ apply GT_read_phase; unfold RINV; repeat split;
+    first [ apply REGPOS_check; vm_compute; reflexivity
+          | unfold CAP0; lia
+          | apply Z.leb_le; vm_compute; reflexivity ]
+  | ].
+all: intros r s2 HP; destruct r as [| |buf cap]; cbv beta iota; [apply GT_ret; exact I | apply GT_ret; exact I |].
+all: unfold RPOST in HP; cbn [fst snd] in HP; destruct HP as (HL & HN & HC & Hl1 & Hl2).
+all: destruct (dlen data <? HDR_MIN) eqn:E1; [apply GT_ret; exact I|].
+all: destruct (dlen data <? HDR_MIN + config_len data) eqn:E2; [apply GT_ret; exact I|].
+all: destruct (payload_len data =? 0) eqn:E3; [apply GT_ret; exact I|].
+all: pose proof (Z.mod_pos_bound (cfg_word data) 32768 ltac:(lia)) as CW.
+all: eapply GT_bind;
+  [ apply GT_malloc_any;
+    [ unfold payload_len, HDR_MIN, config_len in *; bool_hyps; lia
+    | lia
+    | unfold MG_LIVE; lia
+    | unfold MG_SLOTS; lia ]
+  | ].
+all: intros p s3 _; destruct p; apply GT_ret; exact I.
 Qed.
 End b1.

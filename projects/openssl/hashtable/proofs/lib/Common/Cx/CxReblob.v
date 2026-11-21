@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the state invariant takes the launch record (LaunchX)). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import Logic.FunctionalExtensionality.
@@ -199,17 +200,18 @@ Section Main.
   Variables (segs : list Segment) (A : atable) (ph : PhdrInfo).
   Variables (sp : word) (rdraw : EntryDraw) (brk0 : word) (argv envp : list (list byte)).
   Variables (uid hw : word).
+  Variable L : LaunchX.
   Variable c : list byte.
 
   (* [comment removed for export] *)
   Definition SINVm (E : env) (M : word -> option byte) : Prop :=
-    SINV0 ph sp rdraw brk0 argv envp uid hw E M /\ eb E 1%nat = nth 0 argv [] /\ eb E 2%nat = nth 1 argv []
+    SINVL ph sp rdraw brk0 argv envp uid hw L E M /\ eb E 1%nat = nth 0 argv [] /\ eb E 2%nat = nth 1 argv []
     /\ forall j, eb E (JB + j)%nat = chunk j c.
 
-  Lemma SINVm_SINV0 : forall E M, SINVm E M -> SINV0 ph sp rdraw brk0 argv envp uid hw E M.
+  Lemma SINVm_SINV0 : forall E M, SINVm E M -> SINVL ph sp rdraw brk0 argv envp uid hw L E M.
   Proof. intros E M [H _]. exact H. Qed.
 
-  Lemma SINVm_frame : forall E M M', (forall a, argH0 ph sp rdraw argv envp uid hw E a = true -> M' a = M a) -> SINVm E M -> SINVm E M'.
+  Lemma SINVm_frame : forall E M M', (forall a, argH0 sp rdraw argv envp (lx_kb L) (lx_execfn L) E a = true -> M' a = M a) -> SINVm E M -> SINVm E M'.
   Proof. intros E M M' Hf (H0 & H1 & H2 & H3). split; [eapply SINV0_frame; eassumption | auto]. Qed.
 
   Lemma SINVm_agree : forall E E' M, env_agree NX0 E E' -> SINVm E M -> SINVm E' M.
@@ -218,7 +220,7 @@ Section Main.
     rewrite <- Heb. auto.
   Qed.
 
-  Lemma SINVm_reblob : forall E M, SINV0 ph sp rdraw brk0 argv envp uid hw E M -> SINVm (reblob E argv c) M.
+  Lemma SINVm_reblob : forall E M, SINVL ph sp rdraw brk0 argv envp uid hw L E M -> SINVm (reblob E argv c) M.
   Proof.
     intros E M [Hev HM]. split; [split; [exact Hev | exact HM]|].
     split; [reflexivity|]. split; [reflexivity|]. intros j. cbn [reblob eb].
@@ -228,7 +230,7 @@ Section Main.
 
   Lemma hid_reblob : forall E cs model,
     forallb pair_bf (a_vis cs) = true ->
-    hid A (argH0 ph sp rdraw argv envp uid hw) (reblob E argv c) cs model = hid A (argH0 ph sp rdraw argv envp uid hw) E cs model.
+    hid A (argH0 sp rdraw argv envp (lx_kb L) (lx_execfn L)) (reblob E argv c) cs model = hid A (argH0 sp rdraw argv envp (lx_kb L) (lx_execfn L)) E cs model.
   Proof.
     intros E cs model Hv. apply functional_extensionality. intros a. unfold hid, vis, APS.in_allow.
     rewrite (in_vis_evsame E (reblob E argv c) (reblob_evsame E argv c) cs _ Hv).
@@ -237,8 +239,8 @@ Section Main.
 
   Theorem cs_ok_reblob : forall LIMIT ISP FS0 E cs R FULL model,
     acs_noblob cs = true ->
-    cs_ok segs A LIMIT (SINV0 ph sp rdraw brk0 argv envp uid hw) (argH0 ph sp rdraw argv envp uid hw) ISP FS0 E cs R FULL model ->
-    cs_ok segs A LIMIT SINVm (argH0 ph sp rdraw argv envp uid hw) ISP FS0 (reblob E argv c) cs R FULL model.
+    cs_ok segs A LIMIT (SINVL ph sp rdraw brk0 argv envp uid hw L) (argH0 sp rdraw argv envp (lx_kb L) (lx_execfn L)) ISP FS0 E cs R FULL model ->
+    cs_ok segs A LIMIT SINVm (argH0 sp rdraw argv envp (lx_kb L) (lx_execfn L)) ISP FS0 (reblob E argv c) cs R FULL model.
   Proof.
     intros LIMIT ISP FS0 E cs R FULL model Hnb HC.
     unfold acs_noblob in Hnb.

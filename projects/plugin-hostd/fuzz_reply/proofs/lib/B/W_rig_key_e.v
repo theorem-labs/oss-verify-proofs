@@ -15,6 +15,7 @@
    rp_RM RP S2 kr rk_ge's conclusion; the free is afree_cf_rule_c_x (W_journal_x.v Section hc) with rp_RM (1 + kr)
    and cnt_ok, its post's rp_RM RP S2 kr returned the same way, so the caller threads the room and the counts.  The
    journal's image clause exempts PST: rk_keep_img takes `~ Exists (in_zr a) PST`. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -219,7 +220,7 @@ Hypothesis PSTG : forall a,
 #[local] Notation rk_nodup_app_disj := (W_rig_key_r.rk_nodup_app_disj B PST ARx MT RP MMAX RG CTX_AFREE LAWS HP0 TL TLF MLAW IMGC BLKN OWNLOW WFx WFL SFREE SMALLOC ASMP ASF FFL MO_FR HGRIG HH41 HH42 HRGP HRGI HROMO ALLOC_TAIL ALOCK AUNLOCK AFREE ASNPRINTF ASTRLEN ASTRNCMP DRAIN GE HEND5L HGOTG HCANR HLIT17 HLIT18 HLIT28 PSTR PSTG) (only parsing).
 #[local] Notation rk_blk_apart := (W_rig_key_r.rk_blk_apart B PST ARx MT RP MMAX RG CTX_AFREE LAWS HP0 TL TLF MLAW IMGC BLKN OWNLOW WFx WFL SFREE SMALLOC ASMP ASF FFL MO_FR HGRIG HH41 HH42 HRGP HRGI HROMO ALLOC_TAIL ALOCK AUNLOCK AFREE ASNPRINTF ASTRLEN ASTRNCMP DRAIN GE HEND5L HGOTG HCANR HLIT17 HLIT18 HLIT28 PSTR PSTG) (only parsing).
 
-(* ==== the generic relation at the empty head set (the image-A twin's lib/A/W_rig_key.v:236-280; Local here, as every
+(* ==== the generic relation at the empty head set (the image-A twin's lib/A/W_rig_key.v:237-281; Local here, as every
    key file that needs them defines its own) ==== *)
 (* HP0: every ARx state these lemmas read has the head set [], so they state their facts at ARh (= ARx at []) and each
    journal from [] to [].  rk_alb is AR_blocks_law's seven conjuncts (alx_blocks' six and BLKN), in the AR walk's
@@ -616,7 +617,7 @@ Hypothesis GE_R : ge_spec_xR B PST ARx R MT RP MMAX RG (BASE + AF_fr_gesture_end
 #[local] Notation rk_ablocks_nodup_xR := (W_rig_key_r.rk_ablocks_nodup_xR B PST ARx MT RP MMAX RG CTX_AFREE LAWS HP0 TL TLF MLAW IMGC BLKN OWNLOW WFx WFL SFREE SMALLOC ASMP ASF FFL MO_FR HGRIG HH41 HH42 HRGP HRGI HROMO ALOCK AUNLOCK ASNPRINTF ASTRLEN ASTRNCMP HEND5L HGOTG HCANR HLIT17 HLIT18 HLIT28 PSTR PSTG R R_trans WLE_R RO RO_ARx AFREE_R GE_R) (only parsing).
 #[local] Notation rk_nodup_app_disj_xR := (W_rig_key_r.rk_nodup_app_disj_xR B PST ARx MT RP MMAX RG CTX_AFREE LAWS HP0 TL TLF MLAW IMGC BLKN OWNLOW WFx WFL SFREE SMALLOC ASMP ASF FFL MO_FR HGRIG HH41 HH42 HRGP HRGI HROMO ALOCK AUNLOCK ASNPRINTF ASTRLEN ASTRNCMP HEND5L HGOTG HCANR HLIT17 HLIT18 HLIT28 PSTR PSTG R R_trans WLE_R RO RO_ARx AFREE_R GE_R) (only parsing).
 #[local] Notation rk_blk_apart_xR := (W_rig_key_r.rk_blk_apart_xR B PST ARx MT RP MMAX RG CTX_AFREE LAWS HP0 TL TLF MLAW IMGC BLKN OWNLOW WFx WFL SFREE SMALLOC ASMP ASF FFL MO_FR HGRIG HH41 HH42 HRGP HRGI HROMO ALOCK AUNLOCK ASNPRINTF ASTRLEN ASTRNCMP HEND5L HGOTG HCANR HLIT17 HLIT18 HLIT28 PSTR PSTG R R_trans WLE_R RO RO_ARx AFREE_R GE_R) (only parsing).
-(* ==== the generic relation at the empty head set (the image-A twin's lib/A/W_rig_key.v:236-280; Local here, as every
+(* ==== the generic relation at the empty head set (the image-A twin's lib/A/W_rig_key.v:237-281; Local here, as every
    key file that needs them defines its own) ==== *)
 (* HP0: every ARx state these lemmas read has the head set [], so they state their facts at ARh (= ARx at []) and each
    journal from [] to [].  rk_alb_xR is AR_blocks_law's seven conjuncts (alx_blocks' six and BLKN), in the AR walk's

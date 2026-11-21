@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the THP flag ms_thp of mstate, carried by ts_seq_next and the fg-root TAIL and REST steps). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -225,6 +226,7 @@ Section CtxSteps.
     RepW A m0 ws (ms_mem s) -> WIN s -> wfree_range ws (caddr KSeq) 1 ->
     (forall s1 (sq : Z) (reset : bool), 1 <= sq <= 256 ->
        RepW A m0 (reset_writes reset ++ ws) (ms_mem s1) -> WIN s1 -> ms_vm s1 = ms_vm s -> ms_lo s1 = ms_lo s -> ms_hi s1 = ms_hi s ->
+       ms_thp s1 = ms_thp s ->
        tsafe (K (Z_to_bv 64 sq) s1) P) ->
     tsafe ((sq <- m_seq_next A_CTX ;; K sq) s) P.
   Proof using HW MLok. pu_keep (HW, MLok).
@@ -244,9 +246,9 @@ Section CtxSteps.
       reassoc. rewrite (addr_ctx_off 872).
       eapply (ts_st_ctxrW A _ m0 _ 8 (CTX + 872)); [exact RW3 | exact HWIN | lia | unfold CTX_END, CTX; cbn; lia |]. intros m4 RW4. change (bv_unsigned w0) with 0 in RW4.
       apply ts_bind_ret. change (Z.of_nat 8) with 8 in RW4.
-      apply (HK (upd s m4 (ms_vm s)) 1 true ltac:(lia)); [exact RW4 | exact HWIN | reflexivity | reflexivity | reflexivity].
+      apply (HK (upd s m4 (ms_vm s)) 1 true ltac:(lia)); [exact RW4 | exact HWIN | reflexivity | reflexivity | reflexivity | reflexivity].
     - apply ts_bind_ret. rewrite v_addi_Z.
-      apply (HK s (old + 1) false ltac:(lia)); [exact RW | exact HWIN | reflexivity | reflexivity | reflexivity].
+      apply (HK s (old + 1) false ltac:(lia)); [exact RW | exact HWIN | reflexivity | reflexivity | reflexivity | reflexivity].
   Qed.
 End CtxSteps.
 
@@ -412,14 +414,15 @@ Section FgRoot.
     (* [comment removed for export] *)
     assert (TAIL : forall s2 ws,
       RepW A2 (ms_mem s1) ws (ms_mem s2) -> WIN s2 -> ms_vm s2 = ms_vm s1 -> ms_lo s2 = ms_lo s1 -> ms_hi s2 = ms_hi s1 ->
+      ms_thp s2 = ms_thp s1 ->
       ((ws = [] /\ 48 <= sc) \/ (ws = [FCT (caddr (KUsage sc)) 8 (usage_of A1 sc - cnt)] /\ sc < 48)) ->
       tsafe ((r <- (if negb (is0 (v_srli (Z_to_bv 64 W) 12)) then nt_fg_root (Z_to_bv 64 ma) (Z_to_bv 64 sc) else nt_fg_nested rec (Z_to_bv 64 ma)) ;; K r) s2) P).
     2:{ eapply (ts_nt_usage A2 HWA2 s1 (ms_mem s1) [] ma (mtD mt) W sc); [exact RW0 | exact HWIN | exact Hma2 | unfold mt_w32; rewrite mtD_f; reflexivity | lia | lia | apply wfree_range_nil | | |].
         - intros Hsc48. destruct (usage_now Hsc48) as [EU HU]. split; [apply wfree_range_nil|]. change (a_ctx A2 (KUsage sc)) with (a_ctx A1 (KUsage sc)). rewrite EU. lia.
-        - intros Hsc48. apply (TAIL s1 [] RW0 HWIN eq_refl eq_refl eq_refl). left. auto.
-        - intros Hsc48 m' RW'. apply (TAIL (upd s1 m' (ms_vm s1)) _ RW' HWIN eq_refl eq_refl eq_refl). right.
+        - intros Hsc48. apply (TAIL s1 [] RW0 HWIN eq_refl eq_refl eq_refl eq_refl). left. auto.
+        - intros Hsc48 m' RW'. apply (TAIL (upd s1 m' (ms_vm s1)) _ RW' HWIN eq_refl eq_refl eq_refl eq_refl). right.
           destruct (usage_now Hsc48) as [EU HU]. change (a_ctx A2 (KUsage sc)) with (a_ctx A1 (KUsage sc)). rewrite EU. split; [reflexivity | exact Hsc48]. }
-    intros s2 wsu RWu HWIN2 Hvm2 Hlo2 Hhi2 Hwsu.
+    intros s2 wsu RWu HWIN2 Hvm2 Hlo2 Hhi2 Hthp2 Hwsu.
     assert (Hwsu_free : forall a n, (a + n <= caddr (KUsage sc) \/ caddr (KUsage sc) + 8 <= a) -> wfree_range wsu a n).
     { intros a n Ha. destruct Hwsu as [(-> & _) | (-> & _)]; [apply wfree_range_nil | apply wfree_range_cons; [cbn [f_a f_n]; lia | apply wfree_range_nil]]. }
     unfold W. rewrite (wmaplen_eq mt) by lia. rewrite is0_Z by (pose proof (maplen_nonneg mt ltac:(lia)); unfold mt_maplen, w_maplen in *; split; [lia | apply Z.div_lt_upper_bound; lia]).
@@ -427,10 +430,13 @@ Section FgRoot.
     unfold nt_fg_root. reassoc.
     pose proof (ctx_slot_range KSeq I) as (S1 & S2 & S3). pose proof (ctx_slot_range (KUsage sc)) as SU. pose proof layout_nums as LN.
     eapply (ts_seq_next A2 HWA2 s2 (ms_mem s1) wsu); [exact RWu | exact HWIN2 | apply Hwsu_free; cbn [caddr clen]; unfold C_SEQ, C_USAGE; lia |].
-    intros s3 sq reset Hsq RW3 HWIN3 Hvm3 Hlo3 Hhi3.
+    intros s3 sq reset Hsq RW3 HWIN3 Hvm3 Hlo3 Hhi3 Hthp3.
     set (d := sc - 7).
     (* [comment removed for export] *)
-    assert (REST : forall s4 ws4, RepW A2 (ms_mem s1) ws4 (ms_mem s4) -> WIN s4 -> ms_vm s4 = ms_vm s1 -> ms_lo s4 = ms_lo s1 -> ms_hi s4 = ms_hi s1 ->
+    (* [ms_thp] is the fourth mstate field and the only one REST did not carry.
+       [upd] copies thp, so the fact holds by construction at each call; TAIL and
+       [ts_seq_next] carry it ([Hthp2], [Hthp3]) so it is not lost at their binders. *)
+    assert (REST : forall s4 ws4, RepW A2 (ms_mem s1) ws4 (ms_mem s4) -> WIN s4 -> ms_vm s4 = ms_vm s1 -> ms_lo s4 = ms_lo s1 -> ms_hi s4 = ms_hi s1 -> ms_thp s4 = ms_thp s1 ->
       ws4 = seq_writes d sq reset ++ wsu ->
       tsafe ((r <- (w4 <- m_ld (at_ (Z_to_bv 64 ma) 32) ;;
                     base <- m_ld (at_ (Z_to_bv 64 ma) 16) ;;
@@ -443,17 +449,17 @@ Section FgRoot.
         - rewrite <- (ZZ_mod (sc + -7)). rewrite c_ltu_Z by (pose proof (Z.mod_pos_bound (sc + -7) (2^64)); lia).
           replace (31 <? (sc + -7) mod 2 ^ 64) with true.
           2:{ symmetry. apply Z.ltb_lt. replace (sc + -7) with (-(7 - sc)) by lia. rewrite Z.mod_opp_l_nz by lia. rewrite Z.mod_small by lia. lia. }
-          apply ts_bind_ret. apply (REST (upd s3 m4 (ms_vm s3)) _ RW4 HWIN3); [cbn; rewrite Hvm3; exact Hvm2 | cbn; rewrite Hlo3; exact Hlo2 | cbn; rewrite Hhi3; exact Hhi2 |].
+          apply ts_bind_ret. apply (REST (upd s3 m4 (ms_vm s3)) _ RW4 HWIN3); [cbn; rewrite Hvm3; exact Hvm2 | cbn; rewrite Hlo3; exact Hlo2 | cbn; rewrite Hhi3; exact Hhi2 | cbn; first [reflexivity | assumption | congruence] |].
           unfold seq_writes, reset_writes, d. replace (0 <=? sc - 7) with false by (symmetry; apply Z.leb_gt; lia). reflexivity.
         - rewrite c_ltu_Z by lia. destruct (Z.ltb_spec 31 (sc + -7)) as [H38 | H38].
-          + apply ts_bind_ret. apply (REST (upd s3 m4 (ms_vm s3)) _ RW4 HWIN3); [cbn; rewrite Hvm3; exact Hvm2 | cbn; rewrite Hlo3; exact Hlo2 | cbn; rewrite Hhi3; exact Hhi2 |].
+          + apply ts_bind_ret. apply (REST (upd s3 m4 (ms_vm s3)) _ RW4 HWIN3); [cbn; rewrite Hvm3; exact Hvm2 | cbn; rewrite Hlo3; exact Hlo2 | cbn; rewrite Hhi3; exact Hhi2 | cbn; first [reflexivity | assumption | congruence] |].
             unfold seq_writes, reset_writes, d. replace (sc - 7 <=? 31) with false by (symmetry; apply Z.leb_gt; lia). rewrite andb_false_r. reflexivity.
           + rewrite addr_useq.
             eapply (ts_sb_ctxW A2 _ (ms_mem s1) _ (KUseq (sc + -7))); [exact RW4 | exact HWIN3 | cbn; lia | reflexivity |]. intros m5 RW5. rewrite uZ in RW5 by lia.
-            apply (REST (upd (upd s3 m4 (ms_vm s3)) m5 (ms_vm (upd s3 m4 (ms_vm s3)))) _ RW5 HWIN3); [cbn; rewrite Hvm3; exact Hvm2 | cbn; rewrite Hlo3; exact Hlo2 | cbn; rewrite Hhi3; exact Hhi2 |].
+            apply (REST (upd (upd s3 m4 (ms_vm s3)) m5 (ms_vm (upd s3 m4 (ms_vm s3)))) _ RW5 HWIN3); [cbn; rewrite Hvm3; exact Hvm2 | cbn; rewrite Hlo3; exact Hlo2 | cbn; rewrite Hhi3; exact Hhi2 | cbn; first [reflexivity | assumption | congruence] |].
             unfold seq_writes, reset_writes, d. replace (0 <=? sc - 7) with true by (symmetry; apply Z.leb_le; lia).
             replace (sc - 7 <=? 31) with true by (symmetry; apply Z.leb_le; lia). cbn [andb app]. replace (sc + -7) with (sc - 7) by lia. reflexivity. }
-    intros s4 ws3 RW4 HWIN4 Hvm4 Hlo4 Hhi4 Ews3.
+    intros s4 ws3 RW4 HWIN4 Hvm4 Hlo4 Hhi4 Hthp4 Ews3.
     (* [comment removed for export] *)
     set (c' := fun k => match k with
       | KSeq => sq
@@ -561,7 +567,8 @@ Section FgRoot.
             destruct Hm4 as [-> | [-> | [-> | ->]]]; [right; right; right; left | right; right; left | right; left | left]; f_equal; lia. }
     (* [comment removed for export] *)
     pose proof (IS_commit sp0 argv envp cb A2 A3 s1 ws3 (ms_mem s4) HIS2 RW4 WO3 HW3 HR3) as HIS3.
-    assert (Es4 : upd s1 (ms_mem s4) (ms_vm s1) = s4) by (destruct s4; unfold upd; cbn in *; subst; reflexivity).
+    assert (Es4 : upd s1 (ms_mem s4) (ms_vm s1) = s4)
+      by (destruct s4; unfold upd; cbn in *; subst; reflexivity).
     rewrite Es4 in HIS3.
     pose proof (ntframe_commit A2 s1 ws3 (ms_mem s4) HWA2 RW4 WO3) as HF3. rewrite Es4 in HF3.
     assert (A3_meta : forall x, a_meta A3 x = a_meta A2 x) by (intros x; reflexivity).

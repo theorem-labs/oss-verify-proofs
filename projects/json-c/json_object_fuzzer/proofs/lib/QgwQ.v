@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: the deep-copy sections take it as HBTlo; the DCOPY proofs name it and pass it to dc_tail_ud, dc_pro, dc_leafA, dc_obj_loop and dc_arr). *)
 
 From Stdlib Require ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run Fs.
@@ -136,6 +137,7 @@ Section TopCtx.
 Variables (ra sp gp : word) (s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32).
 Variables (m0 : word -> option byte) (md0 : config) (LB BS LM : list blk) (FRS : list frame) (B0 : bud) (lo p D w : Z) (r : jroot) (T : TSet).
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis LOS : lo <= bv_unsigned sp - dc_stkA (rdepth r).
 Hypothesis SPA : bv_unsigned sp mod 32 = 0.
 Hypothesis HT : bv_unsigned sp <= hiA_top A4L HIx.
@@ -285,7 +287,7 @@ assert (INp3 : In (p, 48) ((BS ++ CBS ++ LB) ++ LM)) by (apply in_or_app; left; 
 assert (INq3 : In (q, 48) ((BS ++ CBS ++ LB) ++ LM)) by (apply in_or_app; left; apply in_or_app; right; apply in_or_app; left; rewrite ECBS; left; reflexivity).
 assert (HPc' : HEAPAx A3 (BS ++ [(q, 48)] ++ [] ++ LB) LM ((Fr, 1) :: FRS) B3 mc md3) by (rewrite ECBS in HPc; exact HPc).
 pose proof (proj1 HC) as UL. assert (BB3q : bB B0 - (16 * 48 + 512) <= bB B3) by (revert BB3; rewrite ?Er; intros BB3; exact BB3).
-eapply (Qeia.Mq3.dc_tail_ud HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m0 md0 LB BS LM FRS B0 lo p D w r T LO LOS SPA HT DLOC DAL NN JR0 Kont OBL_STRDUP_NF
+eapply (Qeia.Mq3.dc_tail_ud HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m0 md0 LB BS LM FRS B0 lo p D w r T LO HBTlo LOS SPA HT DLOC DAL NN JR0 Kont OBL_STRDUP_NF
 _ _ _ _ _ _ _ _ _ _ _ _ x19 _ _ _ _ _ _ _ _ _ _ _ F3 fc3 mc md3 A3 B3 Fr (wz 0) (CB 8 j24) j16 _ _
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ q pb0 ud udn uds bits bits' []);
 [ exact INVc | exact FS3 | exact FRM3 | exact HPc' | exact SCRc | reflexivity
@@ -386,7 +388,7 @@ Lemma dcopy_step : forall r,
 (forall kids s', r = JRtree (Sobj kids) \/ r = JRtree (Sarr kids) -> In (Some s') kids -> DCOPY HIx (JRtree s')) ->
 r <> JRnull -> DCOPY HIx r.
 Proof.
-intros r IH NN. unfold DCOPY. intros until errv. intros HP JR _ G DC DLOC DU DAL ST LO LOS SPA HT ERR TP RA FRM FRN WT WLT BBW BDW A0 A4 A5 K.
+intros r IH NN. unfold DCOPY. intros until errv. intros HP JR _ G DC DLOC DU DAL ST LO HBT LOS SPA HT ERR TP RA FRM FRN WT WLT BBW BDW A0 A4 A5 K.
 subst a0 a4 a5 tp.
 pose proof (heapA_blk_nodup A4L HIx _ _ _ _ _ _ _ HP) as ND0.
 assert (ND : List.NoDup (map blk_addr BS)) by (pose proof ND0 as X; rewrite !map_app in X; apply NoDup_app_remove_r in X; apply NoDup_app_remove_r in X; exact X).
@@ -403,10 +405,10 @@ AJ5 A4L HIx A T md
 (MS (mkR ra sp gp (wz A_TP) t0 t1 t2 s0 s1 (wz p) a1 a2 a3 (wz D) (wz SH_A) a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (wz DCR_A) fc None m (seg_rom asegs))).
 { intros n LEAF WT' SW LEN OKW W2.
 assert (NEEDB : sh_needB r n = sh_okB r n) by (destruct r as [|[| | | | |]| |]; try reflexivity; exfalso; exact LEAF).
-eapply (Qoif.Mq2.dc_pro HIx SHALLOW ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB BS LM FRS B lo p D w r T LO LOS SPA HT FRM DLOC DAL NN JR K) with (n := n);
+eapply (Qoif.Mq2.dc_pro HIx SHALLOW ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB BS LM FRS B lo p D w r T LO HBT LOS SPA HT FRM DLOC DAL NN JR K) with (n := n);
 [exact HP | exact ST | exact G | exact DC | exact DU | exact FRN' | exact LEN | rewrite NEEDB; clear - OKW BBW; lia | clear - W2 BDW; lia | exact BBW | exact BDW | rewrite NEEDB; clear - OKW; lia | exact W2 |].
 intros Fr q CBS m3 md3 A3 B3 j40 j16 jf F3 fc3 x1 t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' x19 t3' t4' t5' t6' INV3 FS3 FRM3 HP3 SCR3 FF3 FSH3 JR3 Hq DD3 SC3 SHP3 BB3 BD3.
-eapply (dc_leafA ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB BS LM FRS B lo p D w r T LO LOS SPA HT DLOC DAL NN JR K Fr q CBS m3 md3 A3 B3 j40 j16 jf F3 fc3 _ _ _ _ _ _ _ _ _ _ _ x19 _ _ _ _ n);
+eapply (dc_leafA ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB BS LM FRS B lo p D w r T LO HBT LOS SPA HT DLOC DAL NN JR K Fr q CBS m3 md3 A3 B3 j40 j16 jf F3 fc3 _ _ _ _ _ _ _ _ _ _ _ x19 _ _ _ _ n);
 [exact LEAF | exact WT' | exact SW | exact OKW | exact BBW | exact BDW | exact INV3 | exact FS3 | exact FRM3 | exact HP3 | exact SCR3 | exact FF3 | exact FSH3 | exact JR3 | exact Hq | exact DD3 | exact SC3 | exact SHP3 | exact BB3 | exact BD3]. }
 destruct r as [|sh|tojsx|]; [exfalso; exact (NN eq_refl) | | |]; cbn [dc_wtA] in WT.
 2:{  apply (LEAFGO 0); [exact I | exact WT | exact I | exact I | cbn [sh_okB]; unfold DC_KB; clear - WT; lia | clear - WT; lia]. }
@@ -444,7 +446,7 @@ destruct (jval_obj_view asegs A4F kids m BS p 1 J POS) as (opb & OPBS & ot & OTB
 destruct (jtx_obj_kidw kids m BS p opb OPBS ot OTBS oes OKBS Y w R ND OV WT) as (ows & LWo & EWo & NNWo & KW1o & KW2o).
 pose proof (QSHS.Mq1.obj_wsum_nonneg (map (fun e => (oe_k e, oe_kn e)) oes) ows NNWo) as WS0.
 assert (IHo : forall s', In (Some s') kids -> DCOPY HIx (JRtree s')) by (intros s' Hin; eapply IH; [left; reflexivity | exact Hin]).
-eapply (Qoif.Mq2.dc_pro HIx SHALLOW ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB BS LM FRS B lo p D w _ T LO LOS SPA HT FRM DLOC DAL NN (conj Hp J) K) with (n := 0);
+eapply (Qoif.Mq2.dc_pro HIx SHALLOW ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB BS LM FRS B lo p D w _ T LO HBT LOS SPA HT FRM DLOC DAL NN (conj Hp J) K) with (n := 0);
 [exact HP | exact ST | exact G | exact DC | exact DU | exact FRN' | exact I
 | change (sh_needB (JRtree (Sobj kids)) 0) with 14464; unfold DC_KB in *; clear - BBW EWo WS0; lia | clear - BDW EWo WS0; lia | exact BBW | exact BDW
 | change (sh_needB (JRtree (Sobj kids)) 0) with 14464; unfold DC_KB in *; clear - EWo WS0; lia | clear - EWo WS0; lia |].
@@ -470,7 +472,7 @@ kids eq_refl FRN opb ot OPBS OTBS oes OKBS ows OV LWo EWo NNWo _ _ _ _ _ _ _ _ _
 [exact INVc | exact FS3 | exact FRM3 | exact HPc | exact SCRc | apply KF; [exact (ff_split_obj _ _ _ _ _ _ FF3) | cbn; lia] | apply KSH; [exact FSH3 | cbn; lia]
 | exact Hq | apply KD; exact DD3 | exact JQ | exact LCBS | exact CAPQ | exact JTXQ | exact BD3 | exact BB3 |].
 intros e0 He0 mc' c0 c1 INV' HP' OWN' COPY'.
-eapply (QkDD.Mq0.dc_obj_loop HIx PUT ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB BS LM FRS B lo p D w _ T LO LOS SPA HT DLOC DAL NN (conj Hp J) K
+eapply (QkDD.Mq0.dc_obj_loop HIx PUT ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB BS LM FRS B lo p D w _ T LO HBT LOS SPA HT DLOC DAL NN (conj Hp J) K
 kids eq_refl FRN IHo opb ot OPBS OTBS oes OKBS ows OV LWo NNWo KW1o KW2o WLT BBW BDW LF OBL_AMEMSET OBL_ISTRCMP HD HD_ge HD_le HASH OBL_STRDUP_NF
 (length oes - 0)%nat 0%nat e0 _ _ _ _ _ _ _ _ _ _ _ _ x19 _ _ _ _ _ _ _ _ _ F3 fc3 mc' md3 A3 B3 Fr q 24 _ CBS []);
 [reflexivity | exact He0 | exact INV' | exact FS3 | exact FRM3 | exact HP' | exact OWN' | exact COPY' | cbn [skipn]; exact (eq_sym EWo)].
@@ -482,7 +484,7 @@ assert (WT2 : jtx (Sarr kids) ((((p, 48) :: [(a, AL_SZ); (arr, 8 * size)] ++ con
 destruct (QSHS.Mq1.jtx_arr_kidw asegs A4F m kids ps KBS PBS (p, 48) (a, AL_SZ) (arr, 8 * size) Y w R (akids_okp _ _ _ _ _ _ KIDS) WT2) as (ws & LW & EW & NNW & KW1 & KW2).
 pose proof (QSHS.Mq1.arr_wsum_nonneg ws NNW) as WS0.
 assert (IHa : forall s', In (Some s') kids -> DCOPY HIx (JRtree s')) by (intros s' Hin; eapply IH; [right; reflexivity | exact Hin]).
-eapply (Qoif.Mq2.dc_pro HIx SHALLOW ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB BS LM FRS B lo p D w _ T LO LOS SPA HT FRM DLOC DAL NN (conj Hp J) K) with (n := 0);
+eapply (Qoif.Mq2.dc_pro HIx SHALLOW ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB BS LM FRS B lo p D w _ T LO HBT LOS SPA HT FRM DLOC DAL NN (conj Hp J) K) with (n := 0);
 [exact HP | exact ST | exact G | exact DC | exact DU | exact FRN' | exact I
 | change (sh_needB (JRtree (Sarr kids)) 0) with 7936; unfold DC_KB in *; clear - BBW EW WS0; lia | clear - BDW EW WS0; lia | exact BBW | exact BDW
 | change (sh_needB (JRtree (Sarr kids)) 0) with 7936; unfold DC_KB in *; clear - EW WS0; lia | clear - EW WS0; lia |].
@@ -500,7 +502,7 @@ as (HPc & INVc & KF & KSH & KB & AG & KD).
 cbn [sh_shapeA] in SHP3. destruct SHP3 as [LCBS CAPQ]. cbn [QrIB.Mq0.scopy] in SC3.
 assert (JQ : jval asegs A4F (Sarr []) mc CBS q 1).
 { eapply (jval_agree asegs A4F); [exact SC3 | eapply agree_on_incl; [exact AG | intros b Hb; apply in_or_app; right; apply in_or_app; left; exact Hb] | apply incl_refl]. }
-eapply (QRcT.Mq1.dc_arr HIx PUT ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB BS LM FRS B lo p D w _ T LO LOS SPA HT DLOC DAL NN (conj Hp J) K
+eapply (QRcT.Mq1.dc_arr HIx PUT ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB BS LM FRS B lo p D w _ T LO HBT LOS SPA HT DLOC DAL NN (conj Hp J) K
 kids eq_refl FRN IHa pb a PBS AL ps KBS ws EBS HDR HAL L1 L2 KIDS LW EW NNW KW1 KW2 WLT BBW BDW
 _ _ _ _ _ _ _ _ _ _ _ _ x19 _ _ _ _ F3 fc3 mc md3 A3 B3 Fr q _ CBS);
 [exact INVc | exact FS3 | exact FRM3 | exact HPc | | exact Hq | apply KD; exact DD3 | exact JQ | exact LCBS | exact CAPQ | exact BD3 | exact BB3].
@@ -724,6 +726,7 @@ Section TopCtx.
 Variables (ra sp gp : word) (s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32).
 Variables (m0 : word -> option byte) (md0 : config) (LB BS LM : list blk) (FRS : list frame) (B0 : bud) (lo p D w : Z) (r : jroot) (T : TSet).
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis LOS : lo <= bv_unsigned sp - dc_stkA (rdepth r).
 Hypothesis SPA : bv_unsigned sp mod 32 = 0.
 Hypothesis HT : bv_unsigned sp <= hiA_top A4L HIx.
@@ -874,7 +877,7 @@ assert (INp3 : In (p, 48) ((BS ++ CBS ++ LB) ++ LM)) by (apply in_or_app; left; 
 assert (INq3 : In (q, 48) ((BS ++ CBS ++ LB) ++ LM)) by (apply in_or_app; left; apply in_or_app; right; apply in_or_app; left; rewrite ECBS; left; reflexivity).
 assert (HPc' : HEAPAx A3 (BS ++ [(q, 48)] ++ [] ++ LB) LM ((Fr, 1) :: FRS) B3 mc md3) by (rewrite ECBS in HPc; exact HPc).
 pose proof (proj1 HC) as UL. assert (BB3q : bB B0 - (16 * 48 + 512) <= bB B3) by (revert BB3; rewrite ?Er; intros BB3; exact BB3).
-eapply (Qeia.Mq9.dc_tail_ud HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m0 md0 LB BS LM FRS B0 lo p D w r T LO LOS SPA HT RA DLOC DAL NN JR0 Kont OBL_STRDUP_NF
+eapply (Qeia.Mq9.dc_tail_ud HIx ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m0 md0 LB BS LM FRS B0 lo p D w r T LO HBTlo LOS SPA HT RA DLOC DAL NN JR0 Kont OBL_STRDUP_NF
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F3 fc3 mc md3 A3 B3 Fr (wz 0) j16a (CB 8 j8) j16 _ _
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ q pb0 ud udn uds bits bits' []);
 [ exact INVc | exact FS3 | exact FRM3 | exact HPc' | exact SCRc | reflexivity
@@ -975,7 +978,7 @@ Lemma dcopy_step : forall r,
 (forall kids s', r = JRtree (Sobj kids) \/ r = JRtree (Sarr kids) -> In (Some s') kids -> DCOPY HIx (JRtree s')) ->
 r <> JRnull -> DCOPY HIx r.
 Proof.
-intros r IH NN. unfold DCOPY. intros until errv. intros HP JR _ G DC DLOC DU DAL ST LO LOS SPA HT ERR TP RA FRM FRN WT WLT BBW BDW A0 A4 A5 K.
+intros r IH NN. unfold DCOPY. intros until errv. intros HP JR _ G DC DLOC DU DAL ST LO HBT LOS SPA HT ERR TP RA FRM FRN WT WLT BBW BDW A0 A4 A5 K.
 subst a0 a4 a5 tp.
 pose proof (heapA_blk_nodup A4L HIx _ _ _ _ _ _ _ HP) as ND0.
 assert (ND : List.NoDup (map blk_addr BS)) by (pose proof ND0 as X; rewrite !map_app in X; apply NoDup_app_remove_r in X; apply NoDup_app_remove_r in X; exact X).
@@ -992,10 +995,10 @@ AJ5 A4L HIx A T md
 (MS (mkR ra sp gp (wz A_TP) t0 t1 t2 s0 s1 (wz p) a1 a2 a3 (wz D) (wz SH_A) a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (wz DCR_A) fc None m (seg_rom asegs))).
 { intros n LEAF WT' SW LEN OKW W2.
 assert (NEEDB : sh_needB r n = sh_okB r n) by (destruct r as [|[| | | | |]| |]; try reflexivity; exfalso; exact LEAF).
-eapply (Qoif.Mq6.dc_pro HIx SHALLOW ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB BS LM FRS B lo p D w r T LO LOS SPA HT FRM DLOC DAL NN JR K) with (n := n);
+eapply (Qoif.Mq6.dc_pro HIx SHALLOW ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB BS LM FRS B lo p D w r T LO HBT LOS SPA HT FRM DLOC DAL NN JR K) with (n := n);
 [exact HP | exact ST | exact G | exact DC | exact DU | exact FRN' | exact LEN | rewrite NEEDB; clear - OKW BBW; lia | clear - W2 BDW; lia | exact BBW | exact BDW | rewrite NEEDB; clear - OKW; lia | exact W2 |].
 intros Fr q CBS m3 md3 A3 B3 j48 j16 jf F3 fc3 x1 t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' x21 t3' t4' t5' t6' INV3 FS3 FRM3 HP3 SCR3 FF3 FSH3 JR3 Hq DD3 SC3 SHP3 BB3 BD3.
-eapply (dc_leafA ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB BS LM FRS B lo p D w r T LO LOS SPA HT RA DLOC DAL NN JR K Fr q CBS m3 md3 A3 B3 j48 j16 jf F3 fc3 _ _ _ _ _ _ _ _ _ _ _ x21 _ _ _ _ n);
+eapply (dc_leafA ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB BS LM FRS B lo p D w r T LO HBT LOS SPA HT RA DLOC DAL NN JR K Fr q CBS m3 md3 A3 B3 j48 j16 jf F3 fc3 _ _ _ _ _ _ _ _ _ _ _ x21 _ _ _ _ n);
 [exact LEAF | exact WT' | exact SW | exact OKW | exact BBW | exact BDW | exact INV3 | exact FS3 | exact FRM3 | exact HP3 | exact SCR3 | exact FF3 | exact FSH3 | exact JR3 | exact Hq | exact DD3 | exact SC3 | exact SHP3 | exact BB3 | exact BD3]. }
 destruct r as [|sh|tojsx|]; [exfalso; exact (NN eq_refl) | | |]; cbn [dc_wtA] in WT.
 2:{  apply (LEAFGO 0); [exact I | exact WT | exact I | exact I | cbn [sh_okB]; unfold DC_KB; clear - WT; lia | clear - WT; lia]. }
@@ -1033,7 +1036,7 @@ destruct (jval_obj_view asegs A4F kids m BS p 1 J POS) as (opb & OPBS & ot & OTB
 destruct (jtx_obj_kidw kids m BS p opb OPBS ot OTBS oes OKBS Y w R ND OV WT) as (ows & LWo & EWo & NNWo & KW1o & KW2o).
 pose proof (QSHS.Mq1.obj_wsum_nonneg (map (fun e => (oe_k e, oe_kn e)) oes) ows NNWo) as WS0.
 assert (IHo : forall s', In (Some s') kids -> DCOPY HIx (JRtree s')) by (intros s' Hin; eapply IH; [left; reflexivity | exact Hin]).
-eapply (Qoif.Mq6.dc_pro HIx SHALLOW ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB BS LM FRS B lo p D w _ T LO LOS SPA HT FRM DLOC DAL NN (conj Hp J) K) with (n := 0);
+eapply (Qoif.Mq6.dc_pro HIx SHALLOW ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB BS LM FRS B lo p D w _ T LO HBT LOS SPA HT FRM DLOC DAL NN (conj Hp J) K) with (n := 0);
 [exact HP | exact ST | exact G | exact DC | exact DU | exact FRN' | exact I
 | change (sh_needB (JRtree (Sobj kids)) 0) with 15488; unfold DC_KB in *; clear - BBW EWo WS0; lia | clear - BDW EWo WS0; lia | exact BBW | exact BDW
 | change (sh_needB (JRtree (Sobj kids)) 0) with 15488; unfold DC_KB in *; clear - EWo WS0; lia | clear - EWo WS0; lia |].
@@ -1059,7 +1062,7 @@ kids eq_refl FRN opb ot OPBS OTBS oes OKBS ows OV LWo EWo NNWo _ _ _ _ _ _ _ _ _
 [exact INVc | exact FS3 | exact FRM3 | exact HPc | exact SCRc | apply KF; [exact (ff_split_obj _ _ _ _ _ _ FF3) | cbn; lia] | apply KSH; [exact FSH3 | cbn; lia]
 | exact Hq | apply KD; exact DD3 | exact JQ | exact LCBS | exact CAPQ | exact JTXQ | exact BD3 | exact BB3 |].
 intros e0 He0 mc' c0 c1 INV' HP' OWN' COPY'.
-eapply (QkDD.dc_obj_loop HIx PUT ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB BS LM FRS B lo p D w _ T LO LOS SPA HT RA DLOC DAL NN (conj Hp J) K
+eapply (QkDD.dc_obj_loop HIx PUT ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB BS LM FRS B lo p D w _ T LO HBT LOS SPA HT RA DLOC DAL NN (conj Hp J) K
 kids eq_refl FRN IHo opb ot OPBS OTBS oes OKBS ows OV LWo NNWo KW1o KW2o WLT BBW BDW LF OBL_AMEMSET OBL_ISTRCMP HD HD_ge HD_le HASH
 (length oes - 0)%nat 0%nat e0 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F3 fc3 mc' md3 A3 B3 Fr q 24 _ CBS []);
 [reflexivity | exact He0 | exact INV' | exact FS3 | exact FRM3 | exact HP' | exact OWN' | exact COPY' | cbn [skipn]; exact (eq_sym EWo)].
@@ -1071,7 +1074,7 @@ assert (WT2 : jtx (Sarr kids) ((((p, 48) :: [(a, AL_SZ); (arr, 8 * size)] ++ con
 destruct (QSHS.Mq1.jtx_arr_kidw asegs A4F m kids ps KBS PBS (p, 48) (a, AL_SZ) (arr, 8 * size) Y w R (akids_okp _ _ _ _ _ _ KIDS) WT2) as (ws & LW & EW & NNW & KW1 & KW2).
 pose proof (QSHS.Mq1.arr_wsum_nonneg ws NNW) as WS0.
 assert (IHa : forall s', In (Some s') kids -> DCOPY HIx (JRtree s')) by (intros s' Hin; eapply IH; [right; reflexivity | exact Hin]).
-eapply (Qoif.Mq6.dc_pro HIx SHALLOW ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB BS LM FRS B lo p D w _ T LO LOS SPA HT FRM DLOC DAL NN (conj Hp J) K) with (n := 0);
+eapply (Qoif.Mq6.dc_pro HIx SHALLOW ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB BS LM FRS B lo p D w _ T LO HBT LOS SPA HT FRM DLOC DAL NN (conj Hp J) K) with (n := 0);
 [exact HP | exact ST | exact G | exact DC | exact DU | exact FRN' | exact I
 | change (sh_needB (JRtree (Sarr kids)) 0) with 7936; unfold DC_KB in *; clear - BBW EW WS0; lia | clear - BDW EW WS0; lia | exact BBW | exact BDW
 | change (sh_needB (JRtree (Sarr kids)) 0) with 7936; unfold DC_KB in *; clear - EW WS0; lia | clear - EW WS0; lia |].
@@ -1089,7 +1092,7 @@ as (HPc & INVc & KF & KSH & KB & AG & KD).
 cbn [sh_shapeA] in SHP3. destruct SHP3 as [LCBS CAPQ]. cbn [QrIB.Mq0.scopy] in SC3.
 assert (JQ : jval asegs A4F (Sarr []) mc CBS q 1).
 { eapply (jval_agree asegs A4F); [exact SC3 | eapply agree_on_incl; [exact AG | intros b Hb; apply in_or_app; right; apply in_or_app; left; exact Hb] | apply incl_refl]. }
-eapply (QRcT.Mq3.dc_arr HIx PUT ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB BS LM FRS B lo p D w _ T LO LOS SPA HT RA DLOC DAL NN (conj Hp J) K
+eapply (QRcT.Mq3.dc_arr HIx PUT ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB BS LM FRS B lo p D w _ T LO HBT LOS SPA HT RA DLOC DAL NN (conj Hp J) K
 kids eq_refl FRN IHa pb a PBS AL ps KBS ws EBS HDR HAL L1 L2 KIDS LW EW NNW KW1 KW2 WLT BBW BDW
 _ _ _ _ _ _ _ _ _ _ _ x21 _ _ _ _ F3 fc3 mc md3 A3 B3 Fr q _ CBS j16a j8 j16 _ _ _ _);
 [exact INVc | exact FS3 | exact FRM3 | exact HPc | exact SCRc | apply KF; [exact (ff_split_arr _ _ _ _ _ _ FF3) | cbn; lia] | apply KSH; [exact FSH3 | cbn; lia]

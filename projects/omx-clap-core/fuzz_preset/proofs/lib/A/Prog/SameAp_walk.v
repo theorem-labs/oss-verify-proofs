@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset, the walk of same at image A' (asan #102 pin 1be0f53d96cb9d6c, unstripped twin
    bff8519bbe3ea0e4): Section W (the walk's premises, each with its owner), Section E (one nesting level: the entry
-   state, the invariant, the segment lemmas, the item loop), then same_holds_Ap, the kit's tsame_specX (PRH_FnEx.v :353, cut
-   7cdbb61b5fa0) at PI_prog_A, by strong induction on the nesting.
+   state, the invariant, the segment lemmas, the item loop), then same_holds_Ap, the kit's tsame_specX (PRH_FnEx.v :353, cut)
+   at PI_prog_A, by strong induction on the nesting.
    THE TWO DONORS. The instruction walk is the old-A walk lib/A/Prog/Wsame.v (a Theorem Labs lane's slice S9,
-   a working branch 9a0674f0b5f2, old pin d83eb25d), relocated: A' same is the same code modulo
+   a working branch, old pin d83eb25d), relocated: A' same is the same code modulo
    19 words (lib/A/Prog/SameAp_defs.v's header), so each segment is Wsame's, with its pcs in SMA_AT form. The statement,
    kit and engine are the cut's, re-stated as a Theorem Labs lane's image-B' walk lib/B/Prog/SameB_walk.v
-   (a working branch e95b6ce78e87) did for the four text changes from the old tsame_specX (PRH_FnEx blob
+   (a working branch) did for the four text changes from the old tsame_specX (PRH_FnEx blob
    76731d160419 :320) to the cut's (be1dd5ecaaf6 :353): prh_ledger carries most own; the guarded live-stack premise
    after fpre (HSUP); fpostm (the memnorm keep: sma_INV's sixth conjunct, each run's HMNP, the memnorm-keeping runtime
    rows astrcmp_realizes_xrom / abcmp_realizes_xm, the callee's keep through the induction hypothesis); S' = S
@@ -33,7 +34,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YGca
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YG0ncf YG0scf YGcfBlockRange.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YGcfNames YP0b YPsym YC4aP YImgTop.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YGcfRoomKeep.
-(* c-omx-alloc's engine leaf (blob 136e8c774182, origin/cold/c-omx-alloc-preset-s1b f027ed1fab66): astack_up_x and
+(* c-omx-alloc's engine leaf (blob 136e8c774182): astack_up_x and
    astack_up_journal_x *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YGcallStackUp.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YC1fP YAkMemnorm.

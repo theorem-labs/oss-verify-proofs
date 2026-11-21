@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (kernel_both_pre over the run segment list through RomStable.run_init, with the launch and channel-reader facts of valid_input; s3s_closed given topA_runseg; the RomStable import). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -22,6 +23,7 @@ From OSSVerify.Proofs.leptonica.kernel_fuzzer.lib.K5.Top Require TopLevelA.
 Require OSSVerify.Proofs.leptonica.kernel_fuzzer.lib.K5.B17.TopA_final.
 From OSSVerify.Proofs.leptonica.kernel_fuzzer.lib.Top Require Import SpecCanonBridge.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+From OSSVerify.Proofs.leptonica.kernel_fuzzer.lib.Common.Cfg Require Import RomStable.
 Import ListNotations.
 
 Section Pre.
@@ -39,14 +41,17 @@ Section Pre.
     destruct (TopLevelA.T_canon _ _ _ S3A ent inp Hvt Hvi) as [HtrT HerrT].
     pose proof (valid_input_va_size _ Hvi) as Hsv.
     rewrite (valid_entry_sv48 _ _ _ Hsv) in Hvs.
-    destruct Hvs as (Hsps & Hbrks & _ & Hfits).
+    destruct Hvs as (Hsps & Hbrks & _ & Hfits & Hlaus).
+    pose proof (valid_input_channel_reader _ Hvi) as Hrd. pose proof (valid_input_launch _ Hvi) as Hvl.
     destruct Hvi as (Hva & Hve & _).
-    assert (Hsrc : realizes Plain.M.loaded_segments
-                     (init_config Plain.M.loaded_segments
+    (* the run reads the binary against its segments and the vDSO pair: [RomStable.run_init] *)
+    assert (Hsrc : realizes (run_segments Plain.M.loaded_segments inp sps mbs)
+                     (init_config (run_segments Plain.M.loaded_segments inp sps mbs)
                         Plain.M.init_pc Plain.M.phdrs
                         sps brks mbs draws ShippedBudgets.lim_source inp)
                      (spec (in_argv inp) (in_fs inp))).
-    { apply (@O17Main.ref_realizes_spec_pins ALs CLs ASRs PINs FZs); try assumption.
+    { apply run_init; [reflexivity |].
+      apply (@O17Main.ref_realizes_spec_pins ALs CLs ASRs PINs FZs); try assumption.
       unfold ShippedBudgets.lim_source, source_alloc_limit. apply Z.le_refl. }
     split; [| split].
     - cbn. eapply realizes_no_error; exact Hsrc.
@@ -63,5 +68,5 @@ Theorem strong_universal_error_free_kernel_fuzzer_both :
     (mkImage Plain.M.loaded_segments Plain.M.init_pc Plain.M.phdrs)
     (mkImage AsanUbsan.M.loaded_segments AsanUbsan.M.init_pc AsanUbsan.M.phdrs).
 Proof.
-  exact (@kernel_both_pre _ _ (acr_sure (AllocCredit:=s17_credit)) O17Tail.O17Pins.s17_pins (s17_fuzz_call s17_credit) OSSVerify.Proofs.leptonica.kernel_fuzzer.lib.K5.B17.TopA_final.s3s_closed).
+  exact (@kernel_both_pre _ _ (acr_sure (AllocCredit:=s17_credit)) O17Tail.O17Pins.s17_pins (s17_fuzz_call s17_credit) (OSSVerify.Proofs.leptonica.kernel_fuzzer.lib.K5.B17.TopA_final.s3s_closed OSSVerify.Proofs.leptonica.kernel_fuzzer.lib.K5.B17.TopA.topA_runseg)).
 Qed.

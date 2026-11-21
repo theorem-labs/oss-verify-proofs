@@ -2,7 +2,7 @@
    Rule 24: no function is proved here. Kind: start-up facts; a fact about the image and its asyms record, proved by
    computation.
    - ro_owned_pinned / ro_img_word: the image-generic definitions of lib/A/DecodeROPinned.v:33-52 (blob 7e20ccff6520,
-     a working branch 2f6c3143ebd; segs and B are parameters), taken by Require, not Import. This file
+     a working branch; segs and B are parameters), taken by Require, not Import. This file
      names nothing else of lib/A.
    - img_word, pinb, zbytes, ro_pinned_chk, their soundness lemmas, the gate and the instance: lib/A/DecodeROPinned.v
      :54-163 restated over image B: tfibsegs (lib/B/YB1v.v:11), Tfib_const_abs and Tfib_owned_static (lib/B/YF0m.v),
@@ -12,7 +12,7 @@
      [0x30054, 0x97d50) (R E) (pyelftools readelf.py -l). No step trusts them: owned_ro_ok checks against the loaded
      segments that every owned range meeting a non-writable segment lies inside one of them, and decB_ro_pinned checks
      every owned byte inside them against the image.
-   - as_const TfibB ly = Tfib_const ly = Tfib_const_sym ++ Tfib_const_abs ++ Tfib_const_shadow (lib/B/YF0m.v:302) and
+   - as_const TfibB ly = Tfib_const ly = Tfib_const_sym ++ Tfib_const_abs ++ Tfib_const_shadow (lib/B/YF0m.v:303) and
      as_owned_static TfibB = Tfib_owned_static (lib/B/YD2l.v:33); the gate runs over Tfib_const_abs. *)
 From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Bool Lia.

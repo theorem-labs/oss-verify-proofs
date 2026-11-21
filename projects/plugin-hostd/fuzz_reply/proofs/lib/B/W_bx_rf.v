@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: new file, block `rf` of image B's SEG_EXIT (fuzz_reply.asan-ubsan): proves
    lib/B/W_bx_defs.v's lx_rf_site_S, the two relay_finish call sites `sd zero,-1892(s10); jal relay_finish` at
    0x84f00 (AX_join, back at 0x84f08 = AX_after_rf) and 0x84fe0 (AX_noord, back at 0x84fe8 = AX_done), relay_finish
-   at 0x82344 (AF_fr_relay_finish 0).  Ported from the PROVED image-A donor (b86949b953d
+   at 0x82344 (AF_fr_relay_finish 0).  Ported from the PROVED image-A donor (
    lib/A/W_LLVMFuzzerTestOneInput_exit.v) lines 1817-2932 (xrf_clear_O ..
    lx_rf_site) and :959-965 (lxk_sv8_kept).  B vs A here (B's objdump, asan-ubsan sha256 10ffb5f9202ae2bd...):
    g_nout = s10 - 1892 (x26 = HI_G_NOUT 0x5d95a4; A: s9 + 1668), SB in x27 (A: x26), aframe_at without `full`,
@@ -12,6 +12,7 @@
    0x5fc000 of lib/B/W_img.v fr_img_range.  Two lemmas are new here: xrf_errno_lo (errno >= g_out + 8 = 0x5d90c8, from
    XRF_ERRNO) and xrf_frm_off_img (a fake frame is off image B's top 0x5fc000: lib/B/W_frame.v frm_off_imgP states the
    shared core's off_img, whose top is image A's 0x5fb000). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -42,7 +43,7 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Prog Require CheckRep.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import W_rep W_contract W_shadow_pin W_frame.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import W_LLVMFuzzerTestOneInput_cut.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import W_bx_defs W_traps.
-(* B's K0 tables (5128b798413, by path): rf_spec's caller-context table is K0's free table *)
+(* B's K0 tables (by path): rf_spec's caller-context table is K0's free table *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require YCk0.
 (* RelocB's sink-instance guard, after every Import of YE2k: no sink class is a hint after it *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require ReplyGuardB.

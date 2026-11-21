@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the committed range is free of the reserved ledger, now the image's reservations followed by the launch's vDSO pair, by the ledger's own space-reserve fact). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
@@ -198,9 +199,12 @@ Context {Clg : Ceiling}.
   Lemma cr_contained : region_free (vm_reserved (m_vmmaps md3)) begw lenw = true /\ map_contains (vm_maps (m_vmmaps md3)) begw lenw = true.
   Proof.
     pose proof SBF as (S1 & S2 & S3 & S4 & S5). pose proof RANGE as (R1 & R2 & R3 & R4 & R5).
-    destruct LED3 as (L1 & _).
+    destruct LED3 as (L1 & L2 & _).
     split.
-    - rewrite (proj2 (proj2 COV3)). apply pa_reserved_free; kung_all; lia.
+    - (* LPS 727298f3: the reserved ledger is the image's reservations, then the launch's vDSO pair
+         ([acover_]); the range is inside the space reserve, which the ledger keeps free of all of it *)
+      destruct (proj2 (proj2 COV3)) as (rx & RXE & _). rewrite RXE in L2 |- *.
+      apply (region_free_sub _ (wz (a_b6 A)) (wz kSpaceReserve) _ _ L2); rewrite ?BEGW, ?LENW, !unsigned_lit by (kung_all; lia); kung_all; lia.
     - unfold map_contains. apply existsb_exists. exists (wz (a_b6 A), wz kSpaceReserve). split.
       + apply L1. unfold big_maps_. cbn. left. reflexivity.
       + cbn [fst snd]. rewrite BEGW, LENW, !unsigned_lit by (kung_all; lia). apply andb_true_iff. split; apply Z.leb_le; kung_all; lia.

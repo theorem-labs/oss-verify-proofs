@@ -1,4 +1,4 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamNorm.v (a working branch 3e35620c52e); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 17 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMgxaSeamNorm.table); GXA symbol keys kept (0x1029e, 0x22e18); names: record RT_IImgA -> A_img RecAsanVfA.N_img_asan_vf. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamNorm.v (a working branch); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 17 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMgxaSeamNorm.table); GXA symbol keys kept (0x1029e, 0x22e18); names: record RT_IImgA -> A_img RecAsanVfA.N_img_asan_vf. *)
 (* The NORMALIZATION layer of the GXA seam at musl vfprintf.
 
    GXA's statement (lib/CJ/RL/GXA/VfprintfCall.v:22 vfprintf_guarded_stmt) asks `mem_inv img_segs m`

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 
 
@@ -136,31 +137,47 @@ Qed.
 (* [comment removed for export] *)
 Lemma read_cstr_aux_bytes_in : forall str fuel mp a,
   (length str < fuel)%nat -> ~ In (Z_to_bv 8 0) str ->
+  (0 <= a)%Z -> (a + Z.of_nat (length str) < TASK_SIZE)%Z ->
   bytes_in mp a (str ++ [Z_to_bv 8 0]) ->
   read_cstr_aux mp (wa a) fuel = CstrOk str.
 Proof.
-  induction str as [|b str IH]; intros fuel mp a Hf Hnz H.
+  induction str as [|b str IH]; intros fuel mp a Hf Hnz Ha0 Hlo H.
   - destruct fuel as [|fuel]; [cbn in Hf; lia|]. cbn [app] in H. apply bytes_in_cons in H as [Hb _].
-    cbn [read_cstr_aux]. rewrite Hb. reflexivity.
+    cbn [length] in Hlo.
+    rewrite read_cstr_aux_accepted
+      by (rewrite access_okb_one, wa_unsigned
+            by (unfold TASK_SIZE in *; change (2^64)%Z with 18446744073709551616%Z; lia);
+          apply Z.ltb_lt; lia).
+    rewrite Hb. reflexivity.
   - destruct fuel as [|fuel]; [cbn in Hf; lia|]. cbn [app] in H. apply bytes_in_cons in H as [Hb H].
-    cbn [read_cstr_aux]. rewrite Hb.
+    cbn [length] in Hlo.
+    rewrite read_cstr_aux_accepted
+      by (rewrite access_okb_one, wa_unsigned
+            by (unfold TASK_SIZE in *; change (2^64)%Z with 18446744073709551616%Z; lia);
+          apply Z.ltb_lt; lia).
+    rewrite Hb.
     assert (Hne : bv_eqb b (Z_to_bv 8 0) = false).
     { destruct (bv_eqb b (Z_to_bv 8 0)) eqn:E; [|reflexivity]. apply bv_eqb_eq in E. exfalso. apply Hnz. left. congruence. }
-    rewrite Hne, wa_succ. rewrite (IH fuel mp (a + 1)); [reflexivity| cbn in Hf; lia | |exact H].
+    rewrite Hne, wa_succ. rewrite (IH fuel mp (a + 1)); [reflexivity| cbn in Hf; lia | | lia | lia | exact H].
     intro Hin. apply Hnz. right. exact Hin.
 Qed.
 
 Lemma read_cstr_aux_toolong_bytes_in : forall fuel str mp a,
   (fuel <= length str)%nat -> ~ In (Z_to_bv 8 0) str ->
+  (0 <= a)%Z -> (a + Z.of_nat fuel <= TASK_SIZE)%Z ->
   bytes_in mp a str ->
   read_cstr_aux mp (wa a) fuel = CstrTooLong.
 Proof.
-  induction fuel as [|fuel IH]; intros str mp a Hf Hnz H; [reflexivity|].
+  induction fuel as [|fuel IH]; intros str mp a Hf Hnz Ha0 Hlo H; [reflexivity|].
   destruct str as [|b str]; [cbn in Hf; lia|]. apply bytes_in_cons in H as [Hb H].
-  cbn [read_cstr_aux]. rewrite Hb.
+  rewrite read_cstr_aux_accepted
+    by (rewrite access_okb_one, wa_unsigned
+          by (unfold TASK_SIZE in *; change (2^64)%Z with 18446744073709551616%Z; lia);
+        apply Z.ltb_lt; lia).
+  rewrite Hb.
   assert (Hne : bv_eqb b (Z_to_bv 8 0) = false).
   { destruct (bv_eqb b (Z_to_bv 8 0)) eqn:E; [|reflexivity]. apply bv_eqb_eq in E. exfalso. apply Hnz. left. congruence. }
-  rewrite Hne, wa_succ. rewrite (IH str mp (a + 1)); [reflexivity| cbn in Hf; lia | |exact H].
+  rewrite Hne, wa_succ. rewrite (IH str mp (a + 1)); [reflexivity| cbn in Hf; lia | | lia | lia | exact H].
   intro Hin. apply Hnz. right. exact Hin.
 Qed.
 
@@ -414,7 +431,8 @@ Definition nstep (n : node) (mo : Model) (eff : resp) (mo' : Model) (evs : list 
           end
       | Some (FdChannel _) | Some (FdFileW _ _) | Some (FdSocket _) | Some (FdPipe _ _)
       | Some (FdFileA _ _) | Some (FdFileRW _ _) | Some (FdDevNull _ _)   (* [comment removed for export] *)
-      | Some FdUrandom => False   (* [comment removed for export] *)
+      | Some FdUrandom | Some (FdStream _ _ _) | Some (FdEventfd _) | Some (FdDgram _)
+      | Some (FdAnon _ _) => False   (* [comment removed for export] *)
       end
   | NClose fd =>
       evs = [] /\ 3 <= fd < 2^32 /\   (* [comment removed for export] *)

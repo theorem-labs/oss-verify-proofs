@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -43,7 +44,7 @@ Lemma od_tail_sb : forall (Σ : rts RT) (K : config -> Prop) (usp S1 F lo IMPL i
     (ra t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 s3 s5 s6 s8 s9 t3 t4 t5 t6 : word) FR fc (m : mem)
     (j0 j136 j256 j432 h0 l12 l13 l14 l15 l16 l17 l18 pre8 mid rest : list byte),
   S1 mod 32 = 0 -> usp - 560 <= S1 <= usp - 544 -> usp mod 16 = 0 -> usp + 16 <= USTACK_TOP ->
-  rt_sp0 RT Σ - STACK_WIN <= lo -> lo + OD_NEED <= S1 -> frm0 fc ->
+  rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + OD_NEED <= S1 -> frm0 fc ->
   ART RT Σ m -> mem_inv bsegs m -> stk bsegs m lo S1 ->
   rt_frames RT Σ = [(F, 3%nat)] ->
   rt_live RT Σ = (ia, nia) :: (oc, noc) :: (idx, nidx) :: (IMPL, 96) :: (SB, CAP) :: vblockA A cap size ++ L0 ->
@@ -174,7 +175,7 @@ Proof using AF FDO MST RTF DELA DTOR VDES AFV.
   clear AG2 PR2 ACS2 ACF2 ACH2 ACV2 ACI2 ART1 MI1 WM1.
 
   assert (INF2 : In (F, 3%nat) (rt_frames RT Σ2)) by (rewrite FRS2; exact INF).
-  assert (LOW2 : rt_sp0 RT Σ2 - STACK_WIN <= lo) by (rewrite SP2; exact LOW).
+  assert (LOW2 : rt_sp0 RT Σ2 - STACK_SPAN <= lo) by (rewrite SP2; exact LOW).
   assert (FP3 : fp_ok RT Σ2 lo [(F + 104, F + 112)]).
   { apply Forall_cons; [| apply Forall_nil]. cbn [fst snd]. right; right; left. exists F, 3%nat. split; [exact INF2|].
     change (fs_size 3) with 512. clear. lia. }
@@ -219,7 +220,7 @@ Lemma od_errx_core : forall (Σ : rts RT) (K : config -> Prop) (usp S1 F lo IMPL
     (ra t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 s3 s5 s6 s8 s9 t3 t4 t5 t6 c136 c368 : word) FR fc (m : mem)
     (j0 j144 j176 j256 j376 j432 h0 jd pre8 mid rest : list byte),
   S1 mod 32 = 0 -> usp - 560 <= S1 <= usp - 544 -> usp mod 16 = 0 -> usp + 16 <= USTACK_TOP ->
-  rt_sp0 RT Σ - STACK_WIN <= lo -> lo + OD_NEED <= S1 -> frm0 fc ->
+  rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + OD_NEED <= S1 -> frm0 fc ->
   ART RT Σ m -> mem_inv bsegs m -> stk bsegs m lo S1 ->
   rt_frames RT Σ = [(F, 3%nat)] ->
   rt_live RT Σ = (IA, 1024) :: (OC, 8192) :: (IDX, NIDX) :: (IMPL, 96) :: (SB, CAP) :: LC ++ vblockA A cap size ++ L0 ->
@@ -451,7 +452,7 @@ Proof using AF FDO MST RTF DELA DTOR VDES AFV.
     assert (VR3 : vrepA m3 (F + 32) A cap size els).
     { unfold vrepA, zlength. split; [exact VSZ|]. split; [exact VSC|]. split; [exact VCAP|]. split; [exact VA0|]. split; [exact VAT|].
       split; [exact VS|]. right. split; [exact CAP1|]. split; [exact A16|]. split; [exact APOS| exact VEL]. }
-    assert (LOW3 : rt_sp0 RT Σ3 - STACK_WIN <= lo) by (rewrite SP3; exact LOW).
+    assert (LOW3 : rt_sp0 RT Σ3 - STACK_SPAN <= lo) by (rewrite SP3; exact LOW).
     eapply (od_tail_sb Σ3 K usp S1 F lo IMPL IDX OC IA NIDX 8192 1024 SB CAP A cap size els L0
               cra cgp cs0 cs1 cs2 cs3 cs4 cs5 cs6 cs7 cs8 cs9 cs10 cs11);
       [ exact S32 | exact S1R | exact U16 | exact UT | exact LOW3 | exact LOR | exact FRM3 | exact ART3 | exact MI3 | exact ST3

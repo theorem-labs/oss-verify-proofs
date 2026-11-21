@@ -2,7 +2,7 @@
    the listing layer asks for (its SegRecRo / SegRecRest, the twins of fuzz_command's CmdRecRo /
    CmdRecRest). Statement text only: no function of the binary is proved here.
 
-   Taken by path from proofs/plugin-hostd/fuzz_command/lib/A/Prog/CmdRep.v at origin/ossv/recipes 501c0d516c69,
+   Taken by path from proofs/plugin-hostd/fuzz_command/lib/A/Prog/CmdRep.v,
    with its module paths changed. That file has no copyright or SPDX line of its own; its head comment names its
    source as fuzz_command's released plain lib/Prog/RecInv.v read over the ASan side's reader.
 

@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B' (asan-ubsan #102 pin d663f82d7f48, unstripped twin c90d4fa54d43), the walk of
    same (fuzz_preset.c:65-86): the GENERIC kit of the walk - no image fact, no address. Ported from the image-A walk of
-   same (h-hpreset-7's slice S9, origin/cold/h-hpreset-7-walk-s9-got-rob 9a0674f0b5f2): lib/A/Prog/Wsame_kit.v (hand
+   same (h-hpreset-7's slice S9): lib/A/Prog/Wsame_kit.v (hand
    loads, the journal through a materializing step, a state re-expressed in another valuation), Wsame_pj.v (the tree
    facts PRH_Reader.v's frame section does not state), Wsame_base.v (shadow arithmetic) and the journal-generic parts of
    S911Kit.v (the entry facts of afn_pre_x, the frame-below keep, the alloc.c ledger keep and the branch tactic), with
-   the s9_ / s911_ names renamed smb_ / smbk_. Two changes, both forced by the #102 kit decff67d721f: the ledger keep
+   the s9_ / s911_ names renamed smb_ / smbk_. Two changes, both forced by the #102 kit: the ledger keep
    states prh_ledger at image B's PrhImg prh_img_B with #102's two cells (most own, PRH_Base.v prh_glob: g_most and
    g_own_ran_out), and it reads those two cells' bounds from the generated table like the other five.
    Numerals: 8 / 64 (LENGTH: shadow granule / shadow word), 56 (LENGTH: struct pj), 2 ^ 46 / 2 ^ 47 / 4 (DERIVED: the stack

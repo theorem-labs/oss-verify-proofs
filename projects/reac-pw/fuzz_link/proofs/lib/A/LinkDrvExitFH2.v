@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AE3h.v, with its module paths changed, names TfibSyms -> BoxregSyms and its addresses moved to libreac/fuzz_boxreg's ASan build. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/A/AE3h.v, with its module paths and module names changed; 605 of its 757 lines of code are new or changed and 1572 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's channel-reader flag carried into exf_mid (LinkDrvExitF.v's sbm_rdr)). *)
 From OSSVerify.Proofs.reac_pw.fuzz_link.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -369,7 +370,7 @@ Qed.
 Theorem exf_head_ok : exf_head_tfa B xst.
 Proof.
 intros E' W regs mem md ly S usp fs code k f E0u [Ulo Uhi] U16 Htid8 Ha0 Hc02 Hsp R3 R4 HM Hpres
-  HAI HAR HTOP Hnev HSO Hfds Hfs HFI Hblk.
+  HAI HAR HTOP Hnev HSO Hfds Hcr Hfs HFI Hblk.
 pose proof (YG0q.AR_laws_ok tfibsegs B) as LAWS.
 pose proof (x1_realizes B LAWS (cov0 B HB)) as X1.
 pose proof (x3_realizes B LAWS (completed_free B HB)) as X3.
@@ -489,9 +490,9 @@ ltac:(reflexivity) ltac:(unfold OSP_X1; lia) ltac:(unfold OSP_X1; lia) ltac:(unf
 (exf_hrest_ok E0 hH_rest2 (as_tp B) ltac:(vm_compute; reflexivity) U4_0
   ltac:(rewrite HTPX; unfold TFIB_TPX; lia) ltac:(rewrite HTPX; unfold TFIB_TPX; lia))
 ltac:(intros r a Hr Ha; destruct (exf_hrest_range E0 hH_rest2 (as_tp B) ltac:(vm_compute; reflexivity) U4_0 r a Hr Ha)
-  as [[HcanR Hcr]|Hcr];
-[ split; [left; exact HcanR | unfold XW1; unfold A_GOT_canary in Hcr; GEO]
-| split; [right; apply HXown; exact Hcr | unfold XW1; unfold ex_cell_range, vo_file, vf_file in Hcr; GEO] ])
+  as [[HcanR HcrR]|HcrR];
+[ split; [left; exact HcanR | unfold XW1; unfold A_GOT_canary in HcrR; GEO]
+| split; [right; apply HXown; exact HcrR | unfold XW1; unfold ex_cell_range, vo_file, vf_file in HcrR; GEO] ])
 ltac:(intros a Hx; unfold XW1 in Hx; unfold vf_band; GEO)
 (exf_hrest_w E0 hH_rest2 ltac:(vm_compute; reflexivity))
 (proj1 VX2) Hsp44 Hal16 Hstk Htop (proj1 (proj2 (proj2 VX2))) ltac:(exact I))|]. cbv beta.
@@ -550,9 +551,9 @@ ltac:(reflexivity) ltac:(unfold OSP_X23; lia) ltac:(unfold OSP_X23; lia) ltac:(u
 (exf_hrest_ok E1 hH_rest3 (as_tp B) ltac:(vm_compute; reflexivity) U4_1
   ltac:(rewrite HTPX; unfold TFIB_TPX; lia) ltac:(rewrite HTPX; unfold TFIB_TPX; lia))
 ltac:(intros r a Hr Ha; destruct (exf_hrest_range E1 hH_rest3 (as_tp B) ltac:(vm_compute; reflexivity) U4_1 r a Hr Ha)
-  as [[HcanR Hcr]|Hcr];
-[ split; [left; exact HcanR | unfold XW3; unfold A_GOT_canary in Hcr; GEO]
-| split; [right; apply HXown; exact Hcr | unfold XW3; unfold ex_cell_range, vo_file, vf_file in Hcr; GEO] ])
+  as [[HcanR HcrR]|HcrR];
+[ split; [left; exact HcanR | unfold XW3; unfold A_GOT_canary in HcrR; GEO]
+| split; [right; apply HXown; exact HcrR | unfold XW3; unfold ex_cell_range, vo_file, vf_file in HcrR; GEO] ])
 ltac:(intros a Hx; unfold XW3 in Hx; unfold vf_band; GEO)
 (exf_hrest_w E1 hH_rest3 ltac:(vm_compute; reflexivity))
 (proj1 VX3) Hsp44 Hal16 Hstk Htop (proj1 (proj2 (proj2 VX3))) ltac:(exact X3P))|]. cbv beta.
@@ -608,9 +609,9 @@ ltac:(reflexivity) ltac:(unfold OSP_X23; lia) ltac:(unfold OSP_X23; lia) ltac:(u
 (exf_hrest_ok E2 hH_rest4 (as_tp B) ltac:(vm_compute; reflexivity) U4_2
   ltac:(rewrite HTPX; unfold TFIB_TPX; lia) ltac:(rewrite HTPX; unfold TFIB_TPX; lia))
 ltac:(intros r a Hr Ha; destruct (exf_hrest_range E2 hH_rest4 (as_tp B) ltac:(vm_compute; reflexivity) U4_2 r a Hr Ha)
-  as [[HcanR Hcr]|Hcr];
-[ split; [left; exact HcanR | unfold XW2; unfold A_GOT_canary in Hcr; GEO]
-| split; [right; apply HXown; exact Hcr | unfold XW2; unfold ex_cell_range, vo_file, vf_file in Hcr; GEO] ])
+  as [[HcanR HcrR]|HcrR];
+[ split; [left; exact HcanR | unfold XW2; unfold A_GOT_canary in HcrR; GEO]
+| split; [right; apply HXown; exact HcrR | unfold XW2; unfold ex_cell_range, vo_file, vf_file in HcrR; GEO] ])
 ltac:(intros a Hx; unfold XW2 in Hx; unfold vf_band; GEO)
 (exf_hrest_w E2 hH_rest4 ltac:(vm_compute; reflexivity))
 (proj1 VX4) Hsp44 Hal16 Hstk Htop (proj1 (proj2 (proj2 VX4))) ltac:(exact I))|]. cbv beta.
@@ -769,6 +770,7 @@ split.
   - right. split; [exact Hk1|]. apply (XFR k (w_H W) (w_H W) mem (ms_mem ms5) HX).
     intros a Ha. apply STDO. unfold STDOUT_MUT, STDOUT_LO, STDOUT_HI, SOBUF_LO, SOBUF_HI in Ha. lia. }
 split; [intros j; rewrite (proj1 (sbm_fds_fs md _ (with_vm_backing_same md mat5))); exact (Hfds j)|].
+split; [rewrite (sbm_rdr md _ (with_vm_backing_same md mat5)); exact Hcr|].
 split; [rewrite (proj2 (sbm_fds_fs md _ (with_vm_backing_same md mat5))); exact Hfs|].
 (* the open-file head and the FILE, kept from the caller *)
 split.

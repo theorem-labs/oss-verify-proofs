@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/Rt/StrcmpLoop.v (commit 97c611eec86, file sha256 df262e182c54; donor not released), with its module paths changed, GrantSyms renamed PcapSyms and its addresses moved to libreac/fuzz_pcap's v1.9.0 ASan build. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/Rt/StrcmpLoop.v (file sha256 df262e182c54; donor not released), with its module paths changed, GrantSyms renamed PcapSyms and its addresses moved to libreac/fuzz_pcap's v1.9.0 ASan build. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_pcap/lib/A/Rt/StrcmpLoop.v, with its module paths and module names changed; 1747 of its 1785 lines of code are new or changed and 189 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_link, image A (the asan build, pin 059dae63e07c): the walk of musl mwrite 0x96cc0 at k = 0
    pending bytes, i.e. LinkRwDefs.v's amwrite_mf_k0_realizes = amwrite_mf_at (48 + ESTACK) 0 LA_MWRITE.
 

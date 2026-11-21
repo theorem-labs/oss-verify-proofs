@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: generated from proofs/cgif/cgif_file_fuzzer/lib/A/AD2i.v and lib/A/AD2j.v (origin/ossv/recipes c8557374ad2e) for libreac/fuzz_identity's asan-ubsan image (sha256 baf1a4d065e0...) by a Theorem Labs lane's gen_ad2.py, with its module paths changed to identity's lib.B: sregs_main, TIDV, CANV and TFIB_MAIN from the 50 hand-off states of lib/ReusableB/YB01.v, the image bounds from lib/ReusableB/YB12.v and lib/ReusableB/YB1h.v; IMG_REGIONS below .data from the image and the owned static cells of lib/ReusableB/YF0m.v, from .data on cgif's regions placed at the donor's offsets from the objects of the unstripped twin (43b44d50be8a...) and cut around the same owned cells, every CVal value read from the hand-off states *)
+(* Modified by Theorem Labs, 2026-10: generated from proofs/cgif/cgif_file_fuzzer/lib/A/AD2i.v and lib/A/AD2j.v for libreac/fuzz_identity's asan-ubsan image (sha256 baf1a4d065e0...) by a Theorem Labs lane's gen_ad2.py, with its module paths changed to identity's lib.B: sregs_main, TIDV, CANV and TFIB_MAIN from the 50 hand-off states of lib/ReusableB/YB01.v, the image bounds from lib/ReusableB/YB12.v and lib/ReusableB/YB1h.v; IMG_REGIONS below .data from the image and the owned static cells of lib/ReusableB/YF0m.v, from .data on cgif's regions placed at the donor's offsets from the objects of the unstripped twin (43b44d50be8a...) and cut around the same owned cells, every CVal value read from the hand-off states *)
 (* Modified by Theorem Labs, 2026-10-29: re-emitted at the release's two-image path lib/ReusableB/YD2j.v with the same content as before, only its Require paths mapped to the release layout (lib.B.A* -> lib.ReusableB.Y*, image-specific Reusable modules -> lib.ReusableB). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed R_RS). *)
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List.
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require Import YP0m YP09.
@@ -226,6 +227,11 @@ mkChunk 662537 (CImg 71) ].
 Definition R_RS : region :=
 mkRegion None 6060304 6125840 0 0
 [  ].
+(* LPS 727298f3: every computed hand-off state of ReusableB/YB01r.v knows the byte at 6125844 only as image
+   bytes ([KImg 6060298 6128000], both CONFIG_RSEQ flags: lib/ReusableB/ZZ_iddrvB.v, outputs ZZIDDB_E0 /
+   ZZIDDB_E1), and that image byte is 0 (it is in .bss of fuzz_identity.asan-ubsan, sha256 baf1a4d065e0...,
+   zero-filled), so the entry check reads [SLit 0] there through the [KImg] fact.  The released cell stays as
+   it was (as A/AD2j.v). *)
 Definition R_A5a : region :=
 mkRegion None 6125840 6128044 6125840 6128044
 [ mkChunk 6125840 (CImg 4);

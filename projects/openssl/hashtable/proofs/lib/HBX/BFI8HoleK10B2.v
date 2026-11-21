@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the state invariants take the launch record [LaunchX], and the argument area is read from it). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -43,11 +44,12 @@ Section FIHole.
   Variables argv envp : list (list byte).
   Variable fs : Fs.Fs.
   Variables uid hw : word.
+  Context {L : LaunchX}.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Let c := content_of argv fs.
-  #[local] Notation SV := (SINVm HAPH sp rdraw brk0 argv envp uid hw c).
-  #[local] Notation argH := (argH0 HAPH sp rdraw argv envp uid hw).
+  #[local] Notation SV := (SINVm HAPH sp rdraw brk0 argv envp uid hw L c).
+  #[local] Notation argH := (argH0 sp rdraw argv envp (lx_kb L) (lx_execfn L)).
   #[local] Notation ISP := (bv_unsigned sp).
 
   Theorem fi_hole_k10b2 : HBChain.fx_hole SV argH ISP fs START0 END0.
@@ -55,15 +57,15 @@ Section FIHole.
     pose proof (fx_hole3x_chk CxRel.cfg0 HASEGS IM code (build_code_ok HASEGS fi_pcs code code_eq) eq_refl
                   (mk_fimage_ok HASEGS IM IM_eq) (mk_fimage_wr_ok HASEGS IM IM_eq)
                   HAT AsanInit.LIMIT SV argH ISP fs hat_in_hull hat_hull_ok
-                  (argH0_high HAPH sp rdraw argv envp uid hw Hsp Hva) APC.NX0 eq_refl
-                  (argH0_agree HAPH sp rdraw argv envp uid hw)
-                  (SINVm_agree HAPH sp rdraw brk0 argv envp uid hw c)
-                  (SINVm_frame HAPH sp rdraw brk0 argv envp uid hw c)
+                  (argH0_high sp rdraw argv envp (lx_kb L) (lx_execfn L) Hsp Hva) APC.NX0 eq_refl
+                  (argH0_agree sp rdraw argv envp (lx_kb L) (lx_execfn L))
+                  (SINVm_agree HAPH sp rdraw brk0 argv envp uid hw L c)
+                  (SINVm_frame HAPH sp rdraw brk0 argv envp uid hw L c)
                   TT NTAG shapes [] classes START d bs L3 W RBYTES RC shp xask BP 20%nat 1000000%nat END aux XF XA HK
                   fi_trans_check ltac:(lia)) as Hh.
     rewrite <- START_eq, <- END_eq in Hh.
     exact (fx_hole_resp CxRel.cfg0 HASEGS HAT AsanInit.LIMIT SV argH ISP fs
-             (SINVm_frame HAPH sp rdraw brk0 argv envp uid hw c) RTs RTe START0 END0 fi_resp_check fi_end_back Hh).
+             (SINVm_frame HAPH sp rdraw brk0 argv envp uid hw L c) RTs RTe START0 END0 fi_resp_check fi_end_back Hh).
   Qed.
 End FIHole.
 Check fi_hole_k10b2.

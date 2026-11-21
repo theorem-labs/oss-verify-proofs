@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: some recorded proofs replaced by tactic proofs; the BMode context. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -68,10 +69,14 @@ ltac2:(KReplay.run1 (kr_t_UbjEncPmAsanBase ()) ["AsanBases"] "h01Vh17__arithh24_
 (* [comment removed for export] *)
 Lemma norm_S31 : @plain_norm_stmt ES.loaded_segments ES.init_pc ES.phdrs cfg0 SanitizerBudgets.lim_source.
 Proof.
-ltac2:(KReplay.run1 (kr_t_UbjEncPmAsanBase ()) ["AsanBases"] "h01pp;1p;2p;3p;?g00U>j1?Tg0013j22Tg01?Sj17Tg0000j11Tg00=8j1>Tg00N8j1:Tg00:Nj18Tg01@Ej16Tg002Oj35Tg000Uj13Tg001Mj10Tg0022j24Tg00ACj29Tg01AKj3=Tg01Ael?;Tg00hVR0g00HGR1f4f3g003lR2g016Mg00mag01CGf2g01:Kg01DUg01Egg01G5f1f0M?;p=<g00KgR3%?0'2%70,23g003G#1R0#1R4#1#>#:#8R5g00IRU%61R1=531%30%04#0#0#3'4/9212313=g01HFX05D<o"). Qed.
+  exact (src0_realizes_spec_heap (bmK := bm_on_inst) cfg0 eq_refl eq_refl SanitizerBudgets.lim_source LayS LStS DLLS
+           (fun _ => True) G_A LIBS31 LSXS BudgetS (or_introl eq_refl) (fun _ => I)).
+Qed.
 Lemma weird_S31 : @plain_g_stmt ES.loaded_segments ES.init_pc ES.phdrs cfg0 SanitizerBudgets.lim_source G_A.
 Proof.
-ltac2:(KReplay.run1 (kr_t_UbjEncPmAsanBase ()) ["AsanBases"] "h01pp;1p;2p;3p;?g00U>j1?Tg0013j22Tg01?Sj17Tg0000j11Tg00=8j1>Tg00N8j1:Tg00:Nj18Tg01@Ej16Tg002Oj35Tg000Uj13Tg001Mj10Tg0022j24Tg00ACj29Tg01AKj3=Tg01Hbl?;Tg00hVR0g00HGR1f4f3g003lR2g016Mg00mag01CGf2g01:Kg01DUg01Egg01G5f1f0M?;p=<g00KgR3%?0'2%70,23g003G#1R0#1R4#1#>#:#8R5g00IRU%61R1=531%30%04#0#0#3'4/9212313=g01HFX05D<o"). Qed.
+  exact (src0_realizes_G_heap (bmK := bm_on_inst) cfg0 eq_refl eq_refl SanitizerBudgets.lim_source LayS LStS DLLS
+           (fun _ => True) G_A LIBS31 LSXS BudgetS (or_introl eq_refl) (fun _ => I)).
+Qed.
 
 (* [comment removed for export] *)
 Let ROWS_A : forall (ar : asan_run) (HIk : list (list Z) -> asan_iface),
@@ -90,11 +95,15 @@ Theorem ue_asan_base :
   strong_universal_error_free_T_scfg_budgets_abort cfg0 SanitizerBudgets.lim_source SanitizerBudgets.lim_target
     (mkImage ES.loaded_segments ES.init_pc ES.phdrs) (mkImage EA.loaded_segments EA.init_pc EA.phdrs).
 Proof.
-ltac2:(KReplay.run1 (kr_t_UbjEncPmAsanBase ()) ["AsanBases"] "p;?g01JAl?0Tg01KUg01M1g01NEg01OWg01Q5g01RKg00hVg003lg005Bg01:Kg01S_g01Tng01V=g01WQf0M?0p=1p,4TGTA#1o"). Qed.
+  exact (ue_base_abort ES.loaded_segments ES.init_pc ES.phdrs EA.loaded_segments EA.init_pc EA.phdrs cfg0
+           SanitizerBudgets.lim_source SanitizerBudgets.lim_target G_A frm_safe_Ms0 frm_safe_Ma0 norm_S31 weird_S31 TGTA).
+Qed.
 (* [comment removed for export] *)
 Theorem ue_both_base :
   strong_universal_error_free_T_scfg_budgets_abort cfg0 SanitizerBudgets.lim_source SanitizerBudgets.lim_target
     (mkImage ES.loaded_segments ES.init_pc ES.phdrs) (mkImage EB.loaded_segments EB.init_pc EB.phdrs).
 Proof.
-ltac2:(KReplay.run1 (kr_t_UbjEncPmAsanBase ()) ["AsanBases"] "p;?g01JAl?0Tg01KUg01M1g01NEg01Xfg01ZDg01[Zg00hVg003lg005Bg01:Kg01S_g01\ng01V=g01WQf0M?0p=1p,4TGTB#1o"). Qed.
+  exact (ue_base_abort ES.loaded_segments ES.init_pc ES.phdrs EB.loaded_segments EB.init_pc EB.phdrs cfg0
+           SanitizerBudgets.lim_source SanitizerBudgets.lim_target G_A frm_safe_Ms0 frm_safe_Mb0 norm_S31 weird_S31 TGTB).
+Qed.
 End AsanBases.

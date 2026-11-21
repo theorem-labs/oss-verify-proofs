@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's reservations with the vDSO pair). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -313,7 +314,16 @@ Proof. LiaFast.lf_pins LiaFast.u0.
         replace (uE E (lconst 8388608)) with 8388608 by (unfold uE; rewrite lden_lconst; symmetry; apply u_small64; unfold two64; lia). exact D. }
     assert (Hbnd : Forall (fun R0 => 0 <= rsz E R0 /\ uE E (rg_base R0) + rsz E R0 <= two64) [R]) by (constructor; [split; [exact P1 | exact P2] | constructor]).
     assert (Hok1 : forallb (dep_sep_b (s_facts L) (sm_maps M) (vm_reserved (m_vmmaps model)) jD1 jB1 (sm_sp M) (fst (a_dep a)) (snd (a_dep a))) [R] = true).
-    { cbn [forallb]. rewrite (dn_res _ _ _ _ _ _ _ _ _ Hd). fold ASEGSR. rewrite Hokb. reflexivity. }
+    { cbn [forallb]. rewrite (dn_res _ _ _ _ _ _ _ _ _ Hd). fold ASEGSR. rewrite andb_true_r.
+      (* the launch ledger is the segments' then the vDSO pair's ([dn_res]); a region inside a
+         segment reservation is inside the longer ledger ([sep_res_b_app]) *)
+      unfold dep_sep_b in Hokb |- *. apply andb_prop in Hokb as [Hokb H3]. apply andb_prop in Hokb as [H1 H2].
+      apply orb_prop in H2. apply orb_prop in H3. rewrite H1.
+      destruct H2 as [H2|H2]; destruct H3 as [H3|H3].
+      - rewrite H2, H3. reflexivity.
+      - rewrite H2, (FxChSep.sep_res_b_app _ _ _ H3), !orb_true_r. reflexivity.
+      - rewrite H3, (FxChSep.sep_res_b_app _ _ _ H2), !orb_true_r. reflexivity.
+      - rewrite (FxChSep.sep_res_b_app _ _ _ H2), !orb_true_r. reflexivity. }
     pose proof (dep_outside_rgs E (s_facts L) (sm_maps M) model (sm_sp M) _ HF (dn_maps _ _ _ _ _ _ _ _ _ Hd) (dn_pd _ _ _ _ _ _ _ _ _ Hd)
            (dn_gsh _ _ _ _ _ _ _ _ _ Hd) (dn_gtop _ _ _ _ _ _ _ _ _ Hd) (dn_sp _ _ _ _ _ _ _ _ _ Hd) Hshi Hsok (dn_mres _ _ _ _ _ _ _ _ _ Hd)
            (dn_res _ _ _ _ _ _ _ _ _ Hd) [R] jD1 jB1 _ _ (fst (a_dep a)) (snd (a_dep a)) Hbnd HgD eq_refl eq_refl HgB eq_refl eq_refl (find_grant_nomark _ _ _ _ HD1 _) (find_grant_nomark _ _ _ _ HB1 _) Hok1 x Hx Hdw) as Ho.
@@ -349,7 +359,15 @@ Proof. LiaFast.lf_pins LiaFast.u0.
         replace (uE E (lconst 8388608)) with 8388608 by (unfold uE; rewrite lden_lconst; symmetry; apply u_small64; unfold two64; lia). exact D. }
   assert (Hbnd : Forall (fun R0 => 0 <= rsz E R0 /\ uE E (rg_base R0) + rsz E R0 <= two64) [R]) by (constructor; [split; [exact P1 | exact P2] | constructor]).
   assert (Hok1 : forallb (dep_sep_b (s_facts L) (sm_maps M) (vm_reserved (m_vmmaps model)) jD1 jB1 (sm_sp M) (fst (a_dep a)) (snd (a_dep a))) [R] = true).
-  { cbn [forallb]. rewrite (dn_res _ _ _ _ _ _ _ _ _ Hd). fold ASEGSR. rewrite Hokb. reflexivity. }
+  { cbn [forallb]. rewrite (dn_res _ _ _ _ _ _ _ _ _ Hd). fold ASEGSR. rewrite andb_true_r.
+    (* as in [Hok1] above: the launch ledger is the segments' then the vDSO pair's *)
+    unfold dep_sep_b in Hokb |- *. apply andb_prop in Hokb as [Hokb H3]. apply andb_prop in Hokb as [H1 H2].
+    apply orb_prop in H2. apply orb_prop in H3. rewrite H1.
+    destruct H2 as [H2|H2]; destruct H3 as [H3|H3].
+    - rewrite H2, H3. reflexivity.
+    - rewrite H2, (FxChSep.sep_res_b_app _ _ _ H3), !orb_true_r. reflexivity.
+    - rewrite H3, (FxChSep.sep_res_b_app _ _ _ H2), !orb_true_r. reflexivity.
+    - rewrite (FxChSep.sep_res_b_app _ _ _ H2), !orb_true_r. reflexivity. }
   pose proof (dep_outside_rgs E (s_facts L) (sm_maps M) model (sm_sp M) _ HF (dn_maps _ _ _ _ _ _ _ _ _ Hd) (dn_pd _ _ _ _ _ _ _ _ _ Hd)
          (dn_gsh _ _ _ _ _ _ _ _ _ Hd) (dn_gtop _ _ _ _ _ _ _ _ _ Hd) (dn_sp _ _ _ _ _ _ _ _ _ Hd) Hshi Hsok (dn_mres _ _ _ _ _ _ _ _ _ Hd)
          (dn_res _ _ _ _ _ _ _ _ _ Hd) [R] jD1 jB1 _ _ (fst (a_dep a)) (snd (a_dep a)) Hbnd HgD eq_refl eq_refl HgB eq_refl eq_refl (find_grant_nomark _ _ _ _ HD1 _) (find_grant_nomark _ _ _ _ HB1 _) Hok1 x Hx Hdw) as Ho.

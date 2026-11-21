@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyLSBDrainPre.v, with its module names changed; 896 of its 1045 lines of code are new or changed and 537 lines of the source are left out. *)
-(* The image-B (fuzz_reply.asan-ubsan) port of lib/A/ReplyLS3Peak.v at
-   1318828167d3 (sha256 1962b69c8fbd; internal record), row G-BLS-drain:
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* The image-B (fuzz_reply.asan-ubsan) port of lib/A/ReplyLS3Peak.v
+    (sha256 1962b69c8fbd; internal record), row G-BLS-drain:
    the same lemmas under the same names over lib/B's records, at
    LS := lib/B/ReplyB3LS3.v fr_LS3 B CALL_ROOM_B, RINV := lib/B/ReplyRINVB.v fr_RINV; no lemma reads a meter except
    the top_x-text corollaries at MT := ameter_triv (KF-COUNT B step 3, below).
@@ -149,7 +150,7 @@ Definition TX_LS_rm_rr_pre : Prop :=
   mo_ok MT S ((ReplyB3LS3cTopxPost.tx_rm_rr_cost MT) m h) /\ lm_cap m < CfParamsReply.fr_MMAX /\
   blocks_bytes S + tr_peak (rm_rr_tr m h) + 4 * Z.max (lm_cap m) (tr_max (rm_rr_tr m h)) <= LIVE_MAX.
 
-(* GN_LS_rig (A's ReplyLS3cTopxDefs.v:177, W8's G8 text 1fcc03569d3); R2 and R5 in peak form; added: gn_op, |re_U|
+(* GN_LS_rig (A's ReplyLS3cTopxDefs.v:177, W8's G8 text); R2 and R5 in peak form; added: gn_op, |re_U|
    of every entry, the model blocks' sizes, every slot's HSRC, HCAP0 (A :168-184) *)
 Variable MMAX : Z.
 Definition TX_GN_LS_rig : Prop := forall cx t m ly S hs,

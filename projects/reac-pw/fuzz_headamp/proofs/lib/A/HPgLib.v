@@ -1,17 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/A/APgLib.v at origin/ossv/recipes 6ebe35ba632
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/A/APgLib.v
    (lines 73-75 and 111-124, the names XL0, RO_LO, RO_HI, the contract and its _all form; lines 368-371, the
    adapter) for reac-pw/fuzz_role image A. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgLib.v at
-   0de5d668c87 for reac-pw/fuzz_headamp image A: module paths changed, the role_ prefix renamed to headamp_, and
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgLib.v
+    for reac-pw/fuzz_headamp image A: module paths changed, the role_ prefix renamed to headamp_, and
    RO_LO / RO_HI measured on headamp's own pin. The text is lib/A/HPgCSpec.v's hd_lib_contract_x at image A's
    segments, sink and harness constants, in fuzz_grant's exists-fx' form (headamp's harness changes float
    registers, as role's does); the proof of the contract is not here: headamp_lib_x_all_stmt states it, with the
    allocator's two operations as premises (headamp's harness allocates and frees FOUR blocks, LIFO; the
    allocator's laws are per call, so the four blocks add no premise beyond role's two), for the closing to take as
    a Section variable until the walk proves it. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image A (fuzz_headamp.asan, pinned sha256
    f3e0669d2819724922df0556b11c2dcd22d1e16fe7e0fe1535ce784b34436c47): the whole-run contract of
    LLVMFuzzerTestOneInput (0x80bc0, 12924 bytes) as the closing (lib/A/AD2o.v) consumes it, and its statement.
@@ -30,7 +31,7 @@
 
    The order of headamp_lib_x_all_stmt's premises is the closing's: the lib shape's one-leaf law (LEAF), then the
    free operation, then the malloc operation, each for every float state (fuzz_ctrl's walk top takes its free and
-   malloc hypotheses in this order, lib/A/ACtl.v at origin/ossv/recipes 75ff9552daa). *)
+   malloc hypotheses in this order, lib/A/ACtl.v). *)
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

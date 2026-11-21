@@ -3,8 +3,9 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntrySetHead), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v. *)
 (* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/Prog/GrantEntrySetHead.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/GrantEntrySetHead.v, ported from a working branch
-   7c8c67da870 (blob 78c497fed2d; the image-A file carries no licence lines, so none are copied).
+   (blob 78c497fed2d; the image-A file carries no licence lines, so none are copied).
 
    The head of a turn of the set loop of fuzz_grant's entry function LLVMFuzzerTestOneInput on image B: the
    slots 0x80ef8 .. 0x80ff8 (fuzz/fuzz_grant.c:201-203), from the loop's head GIn to the three returns of
@@ -143,7 +144,7 @@ Qed.
 
 (* ---- the call of reac_headamp_tx_set ---- *)
 (* The bytes the set may write lie in the table (image B's contract names them
-   thd_set_fp, GrantBContracts.v:116). *)
+   thd_set_fp, GrantBContracts.v:117). *)
 Lemma hd_fp_in : forall t c q v a, 0 <= c -> 0 <= q < 256 -> 0 <= v < 256 ->
   inFP (thd_set_fp t c q v) a -> t <= a < t + 460.
 Proof.

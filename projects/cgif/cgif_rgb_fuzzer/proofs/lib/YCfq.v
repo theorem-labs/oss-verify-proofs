@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (aj_flag_store_sh destructs the Model record in its new layout, two more fields in its VmState part and two fewer at its end). *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From Stdlib Require Import FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -407,9 +408,9 @@ assert (HAR' : AR segs B lyc (stack_free_state cid pos Sc) W memc' (with_vm_back
 destruct (Hwr a HWa) as [Hw | Hw]; [|exact (Hne Hw)].
 exact (proj1 (awr_byte_cases segs B LAWS _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ a HJ Hw) Ho).
 - intros a Hv. eapply aview_keeps_vis; [exact Hgr' | exact Hv].
-- rewrite Emd. destruct mdc as [f [mp lz mt] io fs pr li ti sg sc]; reflexivity.
-- rewrite Emd. destruct mdc as [f [mp lz mt] io fs pr li ti sg sc]; reflexivity.
-- rewrite Emd. destruct mdc as [f [mp lz mt] io fs pr li ti sg sc]; reflexivity.
+- rewrite Emd. destruct mdc as [f [mp lz mt kb_mdc vd_mdc] io fs pr li ti]; reflexivity.
+- rewrite Emd. destruct mdc as [f [mp lz mt kb_mdc vd_mdc] io fs pr li ti]; reflexivity.
+- rewrite Emd. destruct mdc as [f [mp lz mt kb_mdc vd_mdc] io fs pr li ti]; reflexivity.
 - intros a _ Hh. subst memc'. cbn [unrestrict ms_mem]. unfold munrestrict. rewrite Hh. reflexivity. }
 apply (Hk (unrestrict (w_H W) (ms_mem ms) msr') (m_vm_materialized model')).
 - rewrite Hrr. exact HS'.

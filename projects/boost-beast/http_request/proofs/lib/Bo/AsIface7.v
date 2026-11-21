@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the wild free takes the caller's stack floor, inside the stack window the launch maps, as its last premise). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -63,6 +64,9 @@ Section Iface7.
       ACONST m ->
       bv_unsigned s0 <> bv_unsigned sp + 8 ->          (* [comment removed for export] *)
       a0 = Z_to_bv 64 A ->
+      (* LPS 727298f3: the caller's stack floor is inside the window the launch maps ([hceil + 2244096 =
+         sp0 - 6144512] at main), so the report's frame walk reads stack the heap invariant holds present *)
+      hceil + 2244096 <= lo ->
       SR (free_wild_post ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc s LB p n lo B errv m mo) (mkCfg msF mo).
 
   (* [comment removed for export] *)

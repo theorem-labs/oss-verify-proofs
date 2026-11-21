@@ -1,5 +1,107 @@
 # Changelog
 
+## 2026.11.3 (2026-11-21)
+
+- 20,659 statements: 695 proved, 58 known false (56 shown by a counterexample, 2 witnessed false), 3 suspected false, 478 blocked by the model, 19,425 open. 524 of the 526 statements that 2026.11.2 proved are still proved, and their statements do not change. Their proofs, on 89 fuzz targets, are repaired for this release's model and checked at it. The other 2 change (below).
+- 171 new proofs on 28 fuzz targets in 13 projects: 54 halts, 15 agreement, 15 bound, 15 decidability, 26 classifier-total, 20 classifier-sound and 26 classifier-bound statements. 109 of them are on zlib. Two of those, `zlib/checksum_fuzzer/plain_halts` and `zlib/checksum_fuzzer/plain_halts_may_fail`, replace the proofs that 2026.11.2 had of the same names, because their statements changed (below).
+- zlib is now built from zlib 1.4 (madler/zlib at `99623ef7`). 2026.11.2 used zlib 1.3.1. The builds carry 8 patches, each from a public pull request: madler/zlib #1390 and #1361, and google/oss-fuzz #16582, #16316, #16411, #16428 and #16429. [projects/zlib/project.yaml](projects/zlib/project.yaml) lists them.
+  - zlib has 384 statements on 10 fuzz targets. 2026.11.2 had 146 of them, for zlib 1.3.1. Each of these 146 statements changes its meaning, and its revision goes from 1 to 2. The other 238 statements are new.
+  - zlib publishes 60 classifiers and 36 originals beside its 40 builds, in `zlib-bin.tar.zst`, which also holds the files of two fuzz targets that this release does not describe. Its statements use the new statement kinds (below): 168 of them are classifier statements, and 70 are twins.
+  - 109 of zlib's statements are proved, on 8 fuzz targets. Each `_bound_good` and `_bound_diff` proof is at a bound of 0.
+    - `zlib/checksum_fuzzer/plain_halts@r2`, `zlib/checksum_fuzzer/plain_halts_may_fail@r2`, `zlib/checksum_fuzzer/{plain,ubsan,asan,asan_ubsan}_halts_any_exit`, `zlib/checksum_fuzzer/{ubsan,asan,asan_ubsan}_agrees_alloc_forced_only`, `zlib/checksum_fuzzer/{ubsan,asan,asan_ubsan}_{ca,cb}_{total,sound}` and `zlib/checksum_fuzzer/{ubsan,asan,asan_ubsan}_bound_{good,diff}`: 27 statements.
+    - `zlib/compress_fuzzer/plain_halts_any_exit`: 1 statement.
+    - `zlib/example_flush_fuzzer/{plain,ubsan}_halts_any_exit` and `zlib/example_flush_fuzzer/ubsan_agrees_alloc_forced_only`: 3 statements.
+    - `zlib/example_large_fuzzer/ubsan_halts_any_exit`, `zlib/example_large_fuzzer/ubsan_agrees_alloc_forced_only`, `zlib/example_large_fuzzer/ubsan_{ca,cb}_{total,sound}` and `zlib/example_large_fuzzer/ubsan_bound_{good,diff}`: 8 statements.
+    - `zlib/example_small_fuzzer/{plain,ubsan}_halts_any_exit`: 2 statements.
+    - `zlib/zlib_uncompress_fuzzer/{plain,ubsan,asan,asan_ubsan}_halts_any_exit`, `zlib/zlib_uncompress_fuzzer/{ubsan,asan,asan_ubsan}_agrees_alloc_forced_only`, `zlib/zlib_uncompress_fuzzer/{ubsan,asan,asan_ubsan}_{ca,cb}_{total,sound}` and `zlib/zlib_uncompress_fuzzer/{ubsan,asan,asan_ubsan}_bound_{good,diff}`: 25 statements.
+    - `zlib/zlib_uncompress2_fuzzer/{plain,ubsan,asan,asan_ubsan}_halts_any_exit`, `zlib/zlib_uncompress2_fuzzer/{ubsan,asan,asan_ubsan}_agrees_alloc_forced_only`, `zlib/zlib_uncompress2_fuzzer/{ubsan,asan,asan_ubsan}_{ca,cb}_total`, `zlib/zlib_uncompress2_fuzzer/ubsan_{ca,cb}_sound` and `zlib/zlib_uncompress2_fuzzer/{ubsan,asan,asan_ubsan}_bound_{good,diff}`: 21 statements.
+    - `zlib/zlib_uncompress3_fuzzer/{plain,asan,asan_ubsan}_halts_any_exit`, `zlib/zlib_uncompress3_fuzzer/{ubsan,asan,asan_ubsan}_agrees_alloc_forced_only`, `zlib/zlib_uncompress3_fuzzer/{ubsan,asan,asan_ubsan}_{ca,cb}_total`, `zlib/zlib_uncompress3_fuzzer/{ubsan,asan}_{ca,cb}_sound` and `zlib/zlib_uncompress3_fuzzer/{ubsan,asan,asan_ubsan}_bound_{good,diff}`: 22 statements.
+- New statement kinds: classifier statements and twins ([docs/statements.md](docs/statements.md)).
+  - A harness can now publish classifiers and originals (`classifiers` and `originals` in `harness.yaml`). A classifier is a static riscv64 program that reads the same input file as the builds. It answers yes (exit 0), no (exit 1) or maybe (exit 2). An original is built by the same recipe as its published build, but with none of the patches. Classifier A is about where the two originals of a sanitizer pair agree. Classifier B is about where each build agrees with its original.
+  - `classifier-total` (`<build>_ca_total`, `<build>_cb_total`): the classifier answers on every valid finite input.
+  - `classifier-sound` (`<build>_ca_sound`, `<build>_cb_sound`): when the classifier answers yes, its property holds. Where its property holds, it never answers no.
+  - `classifier-maybe` (`<build>_maybe_good`, `<build>_maybe_diff`): for an input drawn from `Distribution.v`, the classifier gives no firm answer with probability at most `b`.
+  - `classifier-bound` (`<build>_bound_good`, `<build>_bound_diff`): for an input drawn from `Distribution.v`, the classifier does not answer yes with probability at most `b`.
+  - The shapes of these statements are in [theories/ClassifierShapes.v](theories/ClassifierShapes.v). The model that this release pins does not have these definitions yet. So the file carries a verbatim copy of their text, and proves each shape equal to its copy. `oft lint` checks that the copy does not change. The fingerprint of a classifier statement also hashes the code of `theories/ClassifierShapes.v`, and the SHA-256 of its classifier and of each original that it names.
+  - A twin is a second statement beside a first one. It differs from the first statement in one way, and it has its own name, status and proof. `<build>_halts_any_exit` allows any exit status, beside `<build>_halts`. In `<build>_agrees_alloc_forced_only`, the environment refuses a memory request only when the budget is spent or no address range is free. It sits beside `<build>_agrees`, in which the environment may refuse every kind of call that the model lets fail, at any time.
+- The model is now rocq-linux-process-semantics at commit [`c0dd863a`](https://github.com/theorem-labs/rocq-linux-process-semantics/commit/c0dd863a0f8f307beca7f2ee5cb4d7686a875779). 2026.11.2 used commit `f1006fe8`. The pinned checker image is rebuilt from it, at `ghcr.io/theorem-labs/oss-fuzz-theorems-checker@sha256:dbe610615b7e22cf20e45ac04c0740b05ce9d1ad4211006abf546f845fc3f12f`. Every proof of this release, 695 in all, is checked again in that image.
+  - The model now describes one system: stable Linux v6.18.46 on riscv64. `f1006fe8` described Linux and QEMU user mode together. Where the two give different answers, the model gives the Linux answer. So a proof does not cover a QEMU run that depends on such a difference. The model's SCOPE.md lists each known difference, and the known soundness gaps of the model ([docs/semantics.md](docs/semantics.md)).
+  - The model update moves no fingerprint and no revision, because a fingerprint hashes the model's version string, not its commit. [theories/Premises.v](theories/Premises.v), which shows that the entry and input premises of each shape can hold, changes for the new model.
+  - The checker image now holds the model's proof library `LinuxProcessSemantics.Common` and its tactics ([docs/checking.md](docs/checking.md)).
+- Trevor Hansen and gabelogan195 proved these statements on the public repository:
+  - `libtasn1/asn1_get_length_der_fuzzer/ubsan_{agrees,disagrees_at_most,agreement_decidable}`, by Trevor Hansen ([theorem-labs/oss-verify-proofs#19](https://github.com/theorem-labs/oss-verify-proofs/pull/19)).
+  - `cgif/cgif_rgb_fuzzer/ubsan_{disagrees_at_most,agreement_decidable}`, by Trevor Hansen ([theorem-labs/oss-verify-proofs#20](https://github.com/theorem-labs/oss-verify-proofs/pull/20)).
+  - `mbedtls/fuzz_pkcs7/{ubsan,asan_ubsan}_{disagrees_at_most,agreement_decidable}`, by Trevor Hansen ([theorem-labs/oss-verify-proofs#21](https://github.com/theorem-labs/oss-verify-proofs/pull/21)).
+  - 14 statements of five openssl fuzz targets, by Trevor Hansen ([theorem-labs/oss-verify-proofs#22](https://github.com/theorem-labs/oss-verify-proofs/pull/22)): `openssl/bignum/ubsan_{disagrees_at_most,agreement_decidable}`, `openssl/bndiv/asan_ubsan_{disagrees_at_most,agreement_decidable}`, `openssl/ct/{asan,ubsan}_{disagrees_at_most,agreement_decidable}`, `openssl/echconfiglist_parser/asan_ubsan_{disagrees_at_most,agreement_decidable}` and `openssl/pem/{asan,ubsan}_{disagrees_at_most,agreement_decidable}`.
+  - `openssl/hashtable/{ubsan,asan_ubsan}_{disagrees_at_most,agreement_decidable}`, by Trevor Hansen ([theorem-labs/oss-verify-proofs#23](https://github.com/theorem-labs/oss-verify-proofs/pull/23)).
+  - `ffmpeg/ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer/plain_halts`, by Trevor Hansen ([theorem-labs/oss-verify-proofs#24](https://github.com/theorem-labs/oss-verify-proofs/pull/24)).
+  - `skcms/iccprofile_info/{asan,asan_ubsan}_halts`, by gabelogan195 ([theorem-labs/oss-verify-proofs#33](https://github.com/theorem-labs/oss-verify-proofs/pull/33)).
+  - `glaze/binary_reflection/{plain,ubsan,asan,asan_ubsan}_halts`, by gabelogan195 ([theorem-labs/oss-verify-proofs#35](https://github.com/theorem-labs/oss-verify-proofs/pull/35)).
+  - `jsoncons/fuzz_msgpack_encoder/{plain,asan}_halts`, by gabelogan195 ([theorem-labs/oss-verify-proofs#36](https://github.com/theorem-labs/oss-verify-proofs/pull/36)).
+  - `zstd/fse_read_ncount/ubsan_halts`, by gabelogan195 ([theorem-labs/oss-verify-proofs#38](https://github.com/theorem-labs/oss-verify-proofs/pull/38)).
+  - `zstd/zstd_frame_info/{plain,ubsan}_halts`, by gabelogan195 ([theorem-labs/oss-verify-proofs#40](https://github.com/theorem-labs/oss-verify-proofs/pull/40)).
+- 23 more new proofs, by Theorem Labs, on 10 fuzz targets: `cgif/cgif_rgb_fuzzer/ubsan_halts{,_may_fail}`, `coturn/FuzzStunClient/{plain,ubsan,asan,asan_ubsan}_halts`, `jsoncons/fuzz_bigint/{plain,ubsan,asan,asan_ubsan}_halts`, `jsoncons/fuzz_json_cursor/ubsan_{halts,disagrees_at_most,agreement_decidable}`, `libpcap/fuzz_pcap/{asan,asan_ubsan}_halts`, `openssl/bignum/ubsan_halts`, `openssl/bndiv/asan_ubsan_halts`, `openssl/echconfiglist_parser/asan_ubsan_halts`, `skcms/iccprofile_info/{plain,ubsan}_halts` and `spirv-tools/spvtools_binary_parser_fuzzer/asan_ubsan_{halts,disagrees_at_most,agreement_decidable}`.
+- The 298 statements of 28 fuzz targets change their meaning: their binaries are built again from fuzz harnesses that Theorem Labs patched. Each statement's revision goes from 1 to 2. No statement is weakened: each one says what it said before about a harness that no longer has the fault.
+  - libarchive, 18 fuzz targets. 17 of them, all but `libarchive_fuzzer`, catch `std::bad_alloc` from their own allocations, where they aborted before: 16 free what they opened and return 0, and in `libarchive_write_fuzzer` the write callback returns -1, so that libarchive's write fails. 17 of them, all but `libarchive_write_fuzzer`, also ignore SIGPIPE at the start of each call, as libarchive's own `bsdtar` and `bsdcpio` do. When one of them starts an outside decompression program that stops reading, libarchive's write fails with "broken pipe" and it goes on, where the harness was killed by SIGPIPE. `libarchive_fuzzer` gets only that change.
+  - mapserver (2), trafficserver (4) and wt (4), 10 fuzz targets: the harness returns -1 to reject an input, where it returned 1, a value that libFuzzer reserves. mapserver `configfuzzer` and `mapfuzzer` also return 0 where they cannot open their temporary file.
+- 249 of these statements are now blocked by the model: their fuzz targets make calls that the model does not cover yet. They were open, all but the 5 of `libarchive_xar_fuzzer` below.
+  - `libarchive/libarchive_7zip_fuzzer`, `libarchive/libarchive_ar_fuzzer`, `libarchive/libarchive_cab_fuzzer`, `libarchive/libarchive_cpio_fuzzer`, `libarchive/libarchive_filter_fuzzer`, `libarchive/libarchive_fuzzer`, `libarchive/libarchive_iso9660_fuzzer`, `libarchive/libarchive_lha_fuzzer`, `libarchive/libarchive_mtree_fuzzer`, `libarchive/libarchive_rar5_fuzzer`, `libarchive/libarchive_rar_fuzzer`, `libarchive/libarchive_seek_fuzzer`, `libarchive/libarchive_tar_fuzzer`, `libarchive/libarchive_warc_fuzzer`, `libarchive/libarchive_xar_fuzzer`, `libarchive/libarchive_zip_fuzzer`: threads (`clone` with `CLONE_VM|CLONE_VFORK`: the `vfork` that starts an outside decompression program, on an input that starts with the first bytes of an lrzip, grzip, lz4 or lzop file); resource-limits (`prlimit64` of `RLIMIT_NOFILE`, in the child process of that program); nonblocking-io (`fcntl` with `F_SETFL` and `O_NONBLOCK`, on the pipes to that program); signal-handlers (`rt_sigaction`, which sets SIGPIPE to be ignored, on every input).
+  - `libarchive/libarchive_roundtrip_fuzzer`: signal-handlers (`rt_sigaction`, which sets SIGPIPE to be ignored, on every input).
+  - `libarchive/libarchive_write_fuzzer`: open-flags (`openat` in `/tmp` with `O_TMPFILE`); other-files (`openat` of a path that the model does not name).
+  - `mapserver/configfuzzer`: file-removal (`unlinkat` of a path that the model does not name); other-files (`openat` of a path that the model does not name).
+  - `mapserver/mapfuzzer`: file-removal (`unlinkat` of a path that the model does not name); other-files (`openat` of a path that the model does not name); working-directory (`getcwd` with a size of 1024).
+  - `trafficserver/fuzz_rec_http`: process-control (`prctl` with `PR_GET_NAME`).
+- The statements of 7 fuzz targets stay open: `trafficserver/fuzz_json`, `trafficserver/fuzz_proxy_protocol`, `trafficserver/fuzz_yamlcpp`, `wt/fuzz-css`, `wt/fuzz-eval`, `wt/fuzz-http`, `wt/fuzz-uri`.
+- The 5 statements of `libarchive_xar_fuzzer` that 2026.10.1 published as false (witnessed) are no longer published as false: the fault that a witness showed was in the fuzz harness, which no longer aborts. They are blocked by the model, as the other statements of that fuzz target are.
+- The changed statements, one line for each fuzz target:
+  - `libarchive/libarchive_7zip_fuzzer/*@r2`
+  - `libarchive/libarchive_ar_fuzzer/*@r2`
+  - `libarchive/libarchive_cab_fuzzer/*@r2`
+  - `libarchive/libarchive_cpio_fuzzer/*@r2`
+  - `libarchive/libarchive_filter_fuzzer/*@r2`
+  - `libarchive/libarchive_fuzzer/*@r2`
+  - `libarchive/libarchive_iso9660_fuzzer/*@r2`
+  - `libarchive/libarchive_lha_fuzzer/*@r2`
+  - `libarchive/libarchive_mtree_fuzzer/*@r2`
+  - `libarchive/libarchive_rar5_fuzzer/*@r2`
+  - `libarchive/libarchive_rar_fuzzer/*@r2`
+  - `libarchive/libarchive_roundtrip_fuzzer/*@r2`
+  - `libarchive/libarchive_seek_fuzzer/*@r2`
+  - `libarchive/libarchive_tar_fuzzer/*@r2`
+  - `libarchive/libarchive_warc_fuzzer/*@r2`
+  - `libarchive/libarchive_write_fuzzer/*@r2`
+  - `libarchive/libarchive_xar_fuzzer/*@r2`
+  - `libarchive/libarchive_zip_fuzzer/*@r2`
+  - `mapserver/configfuzzer/*@r2`
+  - `mapserver/mapfuzzer/*@r2`
+  - `trafficserver/fuzz_json/*@r2`
+  - `trafficserver/fuzz_proxy_protocol/*@r2`
+  - `trafficserver/fuzz_rec_http/*@r2`
+  - `trafficserver/fuzz_yamlcpp/*@r2`
+  - `wt/fuzz-css/*@r2`
+  - `wt/fuzz-eval/*@r2`
+  - `wt/fuzz-http/*@r2`
+  - `wt/fuzz-uri/*@r2`
+- No other statement's fingerprint or revision changes, so every other published pin still holds.
+- `./oft check` now has dune build each proof directory once, with an empty dune cache of its own, and checks the `.vo` files that dune built. It no longer compiles each proof file itself. Its log says how many library targets it compiled and how many rules it ran. It builds the whole `OSSVerify.Core` theory.
+- `./oft check` compares each binary that it reads with its pin in `harness.yaml`, whatever `--parts` names. Before, only a run whose `--parts` named statements compared them.
+- `oft lint` refuses a bound proof whose `proof.yaml` names a bound of 1 or more: a `_disagrees_at_most` proof, or a classifier-bound or classifier-maybe proof. At such a bound the statement holds trivially. Every bound proof of this release is at a bound of 0.
+- The pages and the `Statements.v` comments that `oft generate` writes say only what each statement says. `oft lint` refuses a counterexample witness that cannot refute the statement that it is attached to.
+- `harness.yaml` can now say how a fuzz target's binaries differ from OSS-Fuzz's build, which scenarios they leave out and what a debug build adds. `oft generate` writes the left-out scenarios and the debug builds into the generated pages. Each statement can carry one input on which its premises hold, and `oft lint` and `./oft check` check it.
+- `oft lint` checks each `Read from:` comment in a proof file of a fuzz target. The comment must name a build that the fuzz target's own `harness.yaml` publishes. Each SHA-256 in it, other than that of the build's unstripped copy, must be the pin of that build.
+- `harness.yaml` accepts `rust-allocator-shim`, rustc's allocator shim, as uninstrumented code in the `asan` and `asan-ubsan` builds of a Rust fuzz target.
+- `./oft lint --release` accepts a build record of a port-built project whose builder image is one that its project lists. A build record of a recipe-built project must still name the first image of `images.builder`, and lint now says why when it does not.
+- A proof that writes its own `(see <path>)` or `File "<path>"` text can no longer make `./oft lps-impact` read a file outside its run.
+- `./oft prove --json` names its schema, `oss-verify/prove/1`.
+- `tools/budgetwit/` is new. It reads a released Rocq library as text and writes the files of a budget-premise witness for a fuzz target (Known issue, below). It runs no Rocq.
+- In the pull request checks, the job `lps_pin` runs for each change to `release.yaml`, `toolchain/` or `theories/`. It checks that the model files of `release.yaml`'s `semantics.commit` hash to the pin in `toolchain/checker.Dockerfile`, verifies the attestation of the pinned checker image, and compiles `theories/` in that image. For a new checker pin, it also holds the image to the change's own build definition.
+- Three new pull request checks. `held-content` refuses a pull request that adds a line that matches one of its detectors. `statement-freeze` prints one line for each change to a `Statements.v` or to a row of `index/statements.tsv`, and fails until a code owner approves that head of the pull request. `pin-coherence` requires that a change to a build's `sha256` gives each statement about that build a new fingerprint, and leaves the statement `open` unless a proof of that fuzz target changes in the same pull request.
+- Two changes from the public repository: `oft lint` names the files of the public repository's review by their exact paths ([theorem-labs/oss-verify-proofs#47](https://github.com/theorem-labs/oss-verify-proofs/pull/47)), and the tests of the plan step for a push set `GITHUB_REPOSITORY` ([theorem-labs/oss-verify-proofs#46](https://github.com/theorem-labs/oss-verify-proofs/pull/46)).
+
+### Known issue
+
+- Each proved agreement statement, and each proved halts statement except the nine `*_halts_may_fail` statements, assumes that the run stays in its memory budget. The premise is `~ run_scfg_budget_refused` or its equivalent, in [theories/Shapes.v](theories/Shapes.v). This release proves 492 such statements. For 281 of them, on 82 fuzz targets in 31 projects, a file `BudgetWitness.v` in the fuzz target's `proofs/lib/` shows that this premise holds on one input, together with the statement's other premises. In each case that input does not give the program the arguments it expects, so the program prints its usage line and exits before it reaches the fuzz target. For the other 211 statements it is not shown. No classifier statement has a budget premise.
+
 ## 2026.11.2 (2026-11-08)
 
 - 20,421 statements: 526 proved, 63 known false (56 shown by a counterexample, 7 witnessed false), 3 suspected false, 229 blocked by the model, 19,600 open.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (DSEED also proves free_hyps' new field fh_gate, the image's zero cell at 0x13bcdc that the munmap-failure report reads, from the allocator invariant's constant table). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import Logic.FunctionalExtensionality.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -250,6 +251,10 @@ unfold YF23.MAP. clear - DQ. img_lia.
 - splits; [img_try (img_exact Y10a) | img_try (img_exact Y10b) | | | | | img_try (img_exact TJP)]; clear - JR5 JR6; img_lia.
 - intros a Ha. img_apply PXFER; [img_try (img_apply SHP; img_exact Ha)|]. img_apply OUTD; unfold SHAv, CNTv in Ha; clear - Ha Hlo hS1 hCE hT1 M1 M2 M4; numconst;
 pose proof (Z.div_pos MAP 8 ltac:(img_lia) ltac:(img_lia)); pose proof (Z.div_le_mono _ _ 8 ltac:(img_lia) M2); Z.div_mod_to_equations; img_lia.
+- assert (YG : val_mem tfxsegs (mrestrict H0 memD) (0x13bcdc + D_10c0) 4 0).
+{ img_apply XI; [ img_try (img_exact (YF8r.tfx_const_lookup B TB ly X (w_H W) mem (0x13bcdc + D_10c0) 4 0 M ltac:(img_try ((img_case; vm_compute); img_refl))))
+| img_try (clear; numconst; img_lia) | img_try (clear; cbn; numconst; img_lia) | img_try (clear; cbn; numconst; img_lia) ]. }
+img_exact YG.
 -
 pose proof hI1 as J1'. pose proof hI2 as J2'. rewrite hIE in J1', J2'.
 pose proof HPRES as HPRES'. clear XFER XI XM XQ XTI XC HPRES MQD H1v H2v H4v HPm T1 T2 T3 T4 T5 T6 I1 I2 I3 I4 JV1 JV2 JV3 JV4 JV5 JV6 QLV QLP L24 L24P QIV

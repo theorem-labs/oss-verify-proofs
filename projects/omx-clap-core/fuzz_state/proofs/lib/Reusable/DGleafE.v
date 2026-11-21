@@ -1,6 +1,7 @@
-(* copied from proofs/cgif/cgif_file_fuzzer/lib/DGleafE.v @ 57e82b93d43 (a working branch: the fs install head of record, to be byte-checked against the ~20:30Z installed sha), module paths changed only. *)
+(* copied from proofs/cgif/cgif_file_fuzzer/lib/DGleafE.v (a working branch: the fs install head of record, to be byte-checked against the ~20:30Z installed sha), module paths changed only. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The errno-kept forms the Deallocate arms and DGtop share (step 2 of the errno-kept twins, beside DIfaceR).
 
    DIfaceR gives the arms one proof for both frames ([rawb]: the view frame, plus the raw frame when [rawb = true]).

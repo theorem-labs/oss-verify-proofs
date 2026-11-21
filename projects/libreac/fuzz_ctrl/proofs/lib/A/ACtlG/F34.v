@@ -4,9 +4,10 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 1114 of its 1252 lines of code are new or changed and 873 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F34.v, with its module paths and module names changed; 702 of its 781 lines of code are new or changed and 1173 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/F34.v -- GLUE for stage seg_F34 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput (lib/A/ACtl.v,
-   `Hypothesis seg_F34`, :658 at glue base 7a69ca2336c, :660 at 08fb04899f5, :709 at 8ee48574229 (a Theorem Labs lane's Batch3
-   d36efc6152d merged); the statement is unchanged).  Written by a Theorem Labs lane
+   `Hypothesis seg_F34`, :658 at glue base, :660, :709 (a Theorem Labs lane's Batch3
+   merged); the statement is unchanged).  Written by a Theorem Labs lane
    (a working branch), re-fitted to Batch3 by a Theorem Labs lane (branch
    a working branch); single writer.  The
    pattern is glue-pattern.md (a working note, not in this delivery) (G1-G5, section 4 for a run that writes
@@ -31,7 +32,7 @@
    __asan_memcpy by their _F_on proofs).  The whole run is lifted ONCE with Reusable.YA0nR.SRr_fevt_hid at
    RNG := A.ProgBridge.RNG_W (w_H W3).  No split.
 
-   ROUTE (C) (L3; ACtlCut.v (at head lib/A/ACtlCut.v:243); from a working branch 8ce82d7e310): ctl_from's runtime premise is
+   ROUTE (C) (L3; ACtlCut.v (at head lib/A/ACtlCut.v:243); from a working branch): ctl_from's runtime premise is
    A.ACtlRtC.ctl_rt_C B ly3 S3 mem3 = asan_cells /\ shadow_rw_on (cut_shadow B ly3 S3) /\ shadow_rw_on img_shadow /\
    ro_agree (was ACtlCut.ctl_rt mem3).  The Section never had VIS0 / OWNED_RO.  Consumption rows
    (shadow-rw-consumers-A.md:334-337), each with its region (L3 recipe section 2c):
@@ -86,7 +87,7 @@
                   run's post (the regions do not move: ly3, S3 unchanged) and ro_agree from the run's post.
 
    FRAC AND BATCH3'S TRAILER WORD.  This stage PRODUCES FRAC at its exit C_A82888_at [j; i] at the run's new memory
-   m', and since Batch3 (a Theorem Labs lane, d36efc6152d) FRAC's last conjunct is the fake-frame trailer word
+   m', and since Batch3 (a Theorem Labs lane) FRAC's last conjunct is the fake-frame trailer word
    `q64 m (fr + 4088) (flag_addr (c_ly cx) 6 (c_fpos cx))` (ACtlCutP.v (at head lib/A/ACtlCutP.v:1078)).  f34_frac_keep proves it with every other
    q64 / bytes_at conjunct of FRAC, by FRAC's own unfolding (no conjunct is counted): its bytes [fr + 4088, fr + 4096)
    lie in the class-6 frame [fr, fr + 4096) and outside the slot [fr + 64, fr + 96), so the premise Hfr_out (every
@@ -95,7 +96,7 @@
    LLVMFuzzerTestOneInput writes is [fr, fr + 3136); 3136 < 4088.  The G1 destruct of FRAC is by statement
    (f34_split + assumption), never by position.
 
-   SECTION HYPOTHESES (the Section mirrors ACtl.v's Section Ctl, ACtl.v:183-238 at 8ee48574229, restricted to what
+   SECTION HYPOTHESES (the Section mirrors ACtl.v's Section Ctl, ACtl.v:183-238, restricted to what
    this stage uses, in its order):
      - RELRO_CAT : ACtl.v's own Section hypothesis (ACtl.v:205, added by Batch3), same NAME and same TEXT:
        `RLO <= A.Prog.SlotModel.CAT /\ A.Prog.SlotModel.CAT + A.Prog.SlotModel.CAT_N * A.Prog.SlotModel.CAT_ROW <= RHI`;
@@ -106,14 +107,14 @@
      - TFIB_SYMS : A.AF0m.CtrlTSyms B (ACtl.v:225): as_zero_shadow B (ts_zsh), as_owned_static B (ts_owned) and
        as_errno B (ts_errno).
      - IMG_SHADOW_VIS : A.Prog.CtrlRo.img_shadow_vis segs B (CtrlRo.v:44-46, under its own name; glue-base blob
-       befbf83b8dc, the blob a Theorem Labs lane's PA layer 40391d573a9 brought; a Theorem Labs lane's record line e56483f863b carries no
+       befbf83b8dc, the blob a Theorem Labs lane's PA layer brought; a Theorem Labs lane's record line carries no
        CtrlRo.v).  Owner a Theorem Labs lane (the walk / core start-up side).  Every shadow byte of the image's read range is
        mapped; it gives the row's 8-aligned shadow words through CtrlRo.ro_hull.
 
    WHY THE ROW'S SHAPE CHANGED (2026-10-29, lane owner + a Theorem Labs lane): the first version took both the row's addressability
    and its shadow-word visibility from Tfib_zero_shadow's 4th row (ProgWorldVisFrame.glob_sh_vis).  That was
    derivable only from the planning core's WIDE stand-in row (port_core_refused_20ec0, 0xa4380 - ..).  The record AF0m
-   (a working branch e56483f863b, lib/A/AF0m.v:2955) has a fine per-global list: its row 37,
+   (a working branch, lib/A/AF0m.v:2956) has a fine per-global list: its row 37,
    (0x9e800, 0xcb8), covers the catalogue exactly, so addressability still holds, but the 64-byte hull of the i = 10
    row reaches 0x9f4c0, past that row's end 0x9f4b8, into the gap before the next row 0x9f7e0.  So the shadow words
    come from CtrlRo.ro_hull under IMG_SHADOW_VIS, as CtrlRo.v's header (:16) prescribes for a walk that reads a table.
@@ -121,11 +122,11 @@
    THE COVERING ROW (formerly a known stand-in dependence): the covering row of `CtrlRo.in_zs B (CAT + 296 i) 296` is
    found by a boolean search (existsb, vm_compute) over Tfib_zero_shadow, not by position.  On the old planning core
    the row it found was the stand-in row (port_core_refused_20ec0 -> 0x20ec0, 0xa4380 - 0x20ec0).  The stand-in-free
-   base 121bf608343 carries the record AF0m, whose fine list holds (0x9e800, 0x9f4b8 - 0x9e800) (AF0m.v:2963), the
+   base carries the record AF0m, whose fine list holds (0x9e800, 0x9f4b8 - 0x9e800) (AF0m.v:2964), the
    only row covering the catalogue [0x9e800, 0x9f4b8); the build on that base re-checked this step.
 
    LOCAL HELPERS (proof-internal, every premise discharged here; candidates for the kit, statements in the report):
-   f34_aview_vis_mrd / f34_mrd_of_aview_some (ProgWorld 7f07ac65e7b's aview_vis_mrd / mrd_of_aview_some, not on this
+   f34_aview_vis_mrd / f34_mrd_of_aview_some (ProgWorld's aview_vis_mrd / mrd_of_aview_some, not on this
    base), f34_opt_inj, f34_sa_eq, f34_mrd_high, f34_wview_some, f34_spill_keep, f34_stk_keep, f34_hb_keep,
    f34_f1in_keep, f34_flsi_keep, f34_lk_keep, f34_flsx_keep, f34_lt_keep, f34_frac_keep: the transported bundles over
    ANY write set W (the kept set is a parameter: each lemma takes the ranges it reads as `outside W`).
@@ -142,14 +143,14 @@
    and lib/Lib's Mem / Frame / PropExec / MState (each also under lib/A/Bz/Lib, lib/AZ/Lib, lib/B/Bz/Lib) through the
    full-path aliases LMem / LFrm / LPEx / LMSt.  Every other module this file names exists once (Locate checked).
 
-   BUILD STATE (2026-10-29): TYPE-CHECK ON INTERIM 5da74c9c931, CLOSURE REACHES NO STAND-IN, not acceptance.  The
-   glue base a working branch 121bf608343 carries a Theorem Labs lane's stand-in-free 29ddfc3ea99 (a Theorem Labs lane's interim core
-   5da74c9c931 + Batch3 + a Theorem Labs lane's ProgWorld files): the closure's lib/A/AE2k.v, AF0l.v and AF0m.v hold no
+   BUILD STATE (2026-10-29): TYPE-CHECK ON INTERIM, CLOSURE REACHES NO STAND-IN, not acceptance.  The
+   glue base a working branch carries a Theorem Labs lane's stand-in-free (a Theorem Labs lane's interim core
+   + Batch3 + a Theorem Labs lane's ProgWorld files): the closure's lib/A/AE2k.v, AF0l.v and AF0m.v hold no
    port_core_refused name, and the build substitutes nothing.  F34.vo compiles from a fresh clone through
-   cb (BASE 23b918fe0c2e; the lane report names the commit, log and .vo mtime); Print Assumptions
+   cb (BASE; the lane report names the commit, log and .vo mtime); Print Assumptions
    glue_seg_F34 = the Rocq primitives (PrimInt63, PrimString, PrimArray) + functional_extensionality_dep (from
    SRr_fevt_hid); RELRO_CAT, LAWS, TFIB_SYMS and IMG_SHADOW_VIS are its Section-hypothesis arguments.  No Axiom, no
-   Parameter, no Admitted.  The Batch3 re-fit itself type-checked first on 8ee48574229 with the stand-ins. *)
+   Parameter, no Admitted.  The Batch3 re-fit itself type-checked first with the stand-ins. *)
 
 From Coq Require Import ZArith List Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -182,7 +183,7 @@ Local Notation segs := A.AB1v.tfibsegs.
 (* ---------------------------------------------------------------------------------------------------------
    1. Readers and addresses. *)
 
-(* At a visible address the core's view is ctrl's mrd (ProgWorld 7f07ac65e7b aview_vis_mrd, restated). *)
+(* At a visible address the core's view is ctrl's mrd (ProgWorld aview_vis_mrd, restated). *)
 Lemma f34_aview_vis_mrd : forall (W : Reusable.YA0n.world segs) (mem : word -> option byte) (a : Z),
   Reusable.YA0n.w_H W (Z_to_bv 64 a) = false ->
   Reusable.YG0n.aview segs (Reusable.YA0n.w_H W) mem a =
@@ -194,7 +195,7 @@ Proof.
   rewrite Hh. reflexivity.
 Qed.
 
-(* A byte the view reads is what mrd reads (ProgWorld 7f07ac65e7b mrd_of_aview_some, restated; the visibility
+(* A byte the view reads is what mrd reads (ProgWorld mrd_of_aview_some, restated; the visibility
    premise comes from the read itself, ProgWorldVisFrame.vis_of_aview). *)
 Lemma f34_mrd_of_aview_some : forall (W : Reusable.YA0n.world segs) (mem : word -> option byte) (a v : Z),
   Reusable.YG0n.aview segs (Reusable.YA0n.w_H W) mem a = Some v ->
@@ -531,7 +532,7 @@ Variable B : Reusable.YG0f.asyms.
 Variable MT : Reusable.YC5d.ameter_ops.
 Variable XM_LIB : Z -> Z.
 Variables RLO RHI : Z.
-(* ACtl.v's own Section hypothesis RELRO_CAT (ACtl.v (at head lib/A/ACtl.v:239; written on a working branch 8ee48574229), added by Batch3), mirrored
+(* ACtl.v's own Section hypothesis RELRO_CAT (ACtl.v (at head lib/A/ACtl.v:239; written on a working branch), added by Batch3), mirrored
    with its NAME and TEXT, which ACtl.v passes by `exact`.  The catalogue rows [CAT, CAT + 11 * 296) =
    [0x9e800, 0x9f4b8) lie in the core pre's read-only span [RLO, RHI) (the arodata_okS of A.ACfn.tfib_lib_pre_x,
    ACfn.v:41).  NEEDED because they lie in the image's WRITABLE third segment [0x9e000, 0xa1000) (seg_writable =
@@ -544,8 +545,8 @@ Hypothesis LAWS : Reusable.YG0d.AR_laws segs B.
 (* The core's symbol facts for B (ACtl.v:225). *)
 Hypothesis TFIB_SYMS : A.AF0m.CtrlTSyms B.
 (* Every shadow byte of the image's read range [0x10000, 0x5fe000) is mapped in every state: CtrlRo.v's own
-   start-up fact (lib/A/Prog/CtrlRo.v (at head lib/A/Prog/CtrlRo.v:44-46) (an earlier version, blob befbf83b8dc, not in this delivery), which came with a Theorem Labs lane's PA layer
-   40391d573a9; owner a Theorem Labs lane), taken under its own name as that file's header (at head lib/A/Prog/CtrlRo.v:16) prescribes for a walk that
+   start-up fact (lib/A/Prog/CtrlRo.v (at head lib/A/Prog/CtrlRo.v:44-46) (an earlier version, blob befbf83b8dc, not in this delivery), which came with a Theorem Labs lane's PA layer;
+   owner a Theorem Labs lane), taken under its own name as that file's header (at head lib/A/Prog/CtrlRo.v:16) prescribes for a walk that
    reads an image table.  It gives the row's 8-aligned shadow words through CtrlRo.ro_hull. *)
 Hypothesis IMG_SHADOW_VIS : A.Prog.CtrlRo.img_shadow_vis segs B.
 

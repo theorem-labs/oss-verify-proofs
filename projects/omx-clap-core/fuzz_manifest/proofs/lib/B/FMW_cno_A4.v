@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_cno_A4.v at a working branch 31d1eb57a40.
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_cno_A4.v at a working branch.
    check_no_overread 0x80bd4, segment R3 0x80d8c -> P4 0x80db0: the overflow check at 0x80d8c, the shadow check and the
    NUL store at u2 + un + 17, then malloc (tn + 18) -> t2.
      0x80d8c  bltu s6, s9, 0x80ea0   s6 = ~u2, s9 = un + 17: u2 + un + 17 would wrap. Dead: cno_not_ge (un <= 255).

@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN0e.v, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/Reusable/YN0e_cf.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_transport; 10 image values moved to fuzz_transport's binaries by symbol and offset (provenance/evidence/kit-relocation/values.tsv); module path OSSVerify.Proofs.libdiginet.fuzz_transport.lib. *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/Reusable/YN0e_cf.v for libdiginet/fuzz_transport; 10 image values moved to fuzz_transport's binaries by symbol and offset (provenance/evidence/kit-relocation/values.tsv); module path OSSVerify.Proofs.libdiginet.fuzz_transport.lib. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the place_declined_b premise of the mmap decline threaded to its callers); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -592,6 +593,8 @@ eapply (knode_cf_mmap_rw src0segs regs2 _ mem2 (seg_rom src0segs) md A (n + IB +
 - rewrite (Hregs2 13%bv). vm_compute. reflexivity.
 - rewrite (Hregs2 14%bv). eval_sr_get. cbn [sv_denot]. apply bv_eq. vm_compute. reflexivity.
 - rewrite (Hregs2 15%bv). vm_compute. reflexivity.
+(* #146's decline premise; this walk pins a0 to the literal 0. *)
+- rewrite (Hregs2 10%bv). eval_sr_get. cbn [sv_denot]. apply place_declined_b_null.
 -
 intros e He. destruct He as [<- | []].
 match goal with |- mreal_cf _ _ ?t _ => change t with (@IRet astate (option sptr * astate) (None, A)) end.

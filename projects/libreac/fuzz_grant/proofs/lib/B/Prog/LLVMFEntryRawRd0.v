@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: image-B walk segment; lines 192-198 follow the shape of cgif_file_fuzzer lib/A/ACgb.v:547 (licscan run). *)
-(* Ported from lib/A/Prog/GrantEntryRawRd0.v of a working branch 7c8c67da870 (blob 6a899525174). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Ported from lib/A/Prog/GrantEntryRawRd0.v of a working branch (blob 6a899525174). *)
 (* Case 0 of the head of the hand-built allocation phase of LLVMFuzzerTestOneInput on image B
    (fuzz_grant.c:367-368): no byte of input is left. The slots 0x81824 .. 0x818b4, from
    GR_hd0I to GR_malI (LLVMFEntryRawDefs.v).

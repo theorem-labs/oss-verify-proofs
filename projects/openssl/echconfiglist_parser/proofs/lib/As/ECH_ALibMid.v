@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (LIBMID_xagree's, LIBMID_vdso's and LIBMID_xsX's vdso_func cell holds hvdso, the vDSO's clock_gettime entry, not 0, once resolved). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -253,7 +254,7 @@ Section W.
     (forall a, rin_ivs X a -> ~ (0x538000 <= a < 0x5b1000)) ->
     (forall a, rin_ivs X a -> ~ in_block LIB a) -> (forall a, rin_ivs X a -> ~ in_block_sh LIB a) ->
     (forall a, rin_ivs X a -> ~ in_block_sh (mid_errblocks M) a) ->
-    MEMFLAG m' f' -> rw_cells asegs m' A_vdso_func [C8 (wz (if v' then 0 else P_cgt_init))] ->
+    MEMFLAG m' f' -> rw_cells asegs m' A_vdso_func [C8 (wz (if v' then hvdso else P_cgt_init))] ->
     (forall a, rin_ivs X a -> ~ in_block (mid_errblocks M) a) ->          (* [comment removed for export] *)
     LIBMID LIB m' (mkMID f' (mid_ctx M) (mid_err M) (mid_E M) v').
   Proof.
@@ -402,7 +403,7 @@ Section W.
     as_RHEAP H s LBx m0 ->
     LIBMID LIB m M -> mid_ctx M = CtxReady x -> xpres H LBx SP VDSO_X m m' ->
     (forall b, In b LIB -> In b LBx) -> (forall b, In b (mid_errblocks M) -> In b LBx) ->
-    rw_cells asegs m' A_vdso_func [C8 (wz 0)] ->
+    rw_cells asegs m' A_vdso_func [C8 (wz hvdso)] ->
     LIBMID LIB m' (mkMID (mid_flag M) (mid_ctx M) (mid_err M) (mid_E M) true).
   Proof.
     intros s m0 LIB LBx SP m m' M x HP LM CX XP SUBL SUBE VD'. pose proof LM as (_ & MF & _).
@@ -459,7 +460,7 @@ Section W.
     (forall a, rin_ivs X a -> ~ (0x538000 <= a < 0x5b1000)) ->
     (forall a, rin_ivs X a -> ~ in_block LIB a) -> (forall a, rin_ivs X a -> ~ in_block_sh LIB a) ->
     (forall a, rin_ivs X a -> ~ in_block_sh (mid_errblocks M) a) ->
-    MEMFLAG m' f' -> rw_cells asegs m' A_vdso_func [C8 (wz (if v' then 0 else P_cgt_init))] ->
+    MEMFLAG m' f' -> rw_cells asegs m' A_vdso_func [C8 (wz (if v' then hvdso else P_cgt_init))] ->
     (forall a, rin_ivs X a -> ~ in_block (mid_errblocks M) a) ->          (* [comment removed for export] *)
     LIBMID LIB m' (mkMID f' (mid_ctx M) (mid_err M) (mid_E M) v').
   Proof.

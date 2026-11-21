@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO reservation fact w_vdso and the mmap-base equation passed through ai_calloc_psure and W_after_call). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -47,16 +48,16 @@ Proof.
   unfold CALLOC_STACK, ALLOC_STACK in *.
   assert (Hs : 0 <= s < 2 ^ 64) by lia.
   eapply (ai_calloc_psure fx A m md regs cnt sz k p ret (c_sp0 C) (c_argv C) (c_envp C) S
-            (w_inv _ _ _ _ HW) (w_pure _ _ _ _ HW) (w_env _ _ _ _ HW) H10 H11 Hcnt Hsz Hprod Hroom Hk Hp Hmax H1 (pin_ret _ Hret) H4).
+            (w_inv _ _ _ _ HW) (w_pure _ _ _ _ HW) (w_vdso _ _ _ _ HW) (w_env _ _ _ _ HW) H10 H11 Hcnt Hsz Hprod Hroom Hk Hp Hmax H1 (pin_ret _ Hret) H4).
   - rewrite H2, u_Z2bv by lia. exact Hs16.
   - rewrite H2, u_Z2bv by lia. rewrite V2. lia.
   - rewrite H2, u_Z2bv by lia. lia.
   - rewrite H2. intros a Ha. rewrite u_Z2bv in Ha by lia. exact (W_call_win C A m md s (1024 + 32) CK HW ltac:(lia) Hhi a Ha).
-  - intros A' m' vm' regs' res Hinv' Hres Hcs R1 R2 R3 R4 Rnew R6 Hfr Hlive Hdef E1 E2 E3 E4 Hroom'.
+  - intros A' m' vm' regs' res Hinv' Hres Hcs R1 R2 R3 R4 Rnew R6 Hfr Hlive Hdef E1 E2 E3 E4 E5 Hroom'.
     rewrite H2, u_Z2bv in Hfr by lia.
     destruct (keep_new C A A' res _ (w_keep _ _ _ _ HW) R2 R3 R4) as [Hkeep' Hres0].
     destruct (W_after_call C A m md A' m' vm' s (1024 + 32) CK HW ltac:(lia) ltac:(lia) Hhi
-                Hinv' Hkeep' Hfr (fun q k0 i L Hi => Hlive q k0 i (w_keep _ _ _ _ HW q k0 L) Hi) Hdef E1 E2 E3 E4) as [HW' F].
+                Hinv' Hkeep' Hfr (fun q k0 i L Hi => Hlive q k0 i (w_keep _ _ _ _ HW q k0 L) Hi) Hdef E1 E2 E3 E4 E5) as [HW' F].
     destruct (ai_live_hull A' m' vm' res (cnt * sz) Hinv' R3) as (_ & AL16 & TOP & _).
     rewrite E2, V2 in TOP.
     exact (HK A' m' vm' regs' res HW' Hres Hcs R1 R2 R3 Hres0 R4 R6 AL16 TOP (conj F Hlive) Hroom').

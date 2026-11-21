@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: copied from lib/R_memchr.v. *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/libreac/fuzz_scene/lib/U/Prog/memchr_c.v, with its module paths and addresses changed. *)
-(* Ported by RtStr from cold/c-asan-rt-fmio-n affce6489c8 proofs/omx-clap-core/fuzz_manifest/lib/A/Prog/memchr_c.v, unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Ported by RtStr from proofs/omx-clap-core/fuzz_manifest/lib/A/Prog/memchr_c.v, unchanged. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Lib Require Import PropExec MState Mem Exec Frame Step Cells Arr Bytes.

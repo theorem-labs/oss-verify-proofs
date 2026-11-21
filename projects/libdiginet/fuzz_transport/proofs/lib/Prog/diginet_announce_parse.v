@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/Prog/diginet_announce_parse.v at 9bd29914ffdef650a37285056a472ff186b4331a to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/Prog/diginet_announce_parse.v to fuzz_transport's images *)
 (* Walk of diginet_announce_parse (src/diginet_frame.c:138-151 at 835f336c) in fuzz_transport.plain,
    0x17adc..0x17c38. The two loops at 0x17b2c and 0x17b70 are the inlined copy_strz
    (src/diginet_frame.c:130-136) of the version (body + 15) and of the name (body + 24); each

@@ -7,10 +7,10 @@
    send_line*.v (another image) and does not cover lib/B; git grep over origin/cold/* finds two donors and no lib/B
    W_send_line* or pb_send_line (checker line `R24BSendLine: CONFIRM`).  Ported here, STRUCTURE only (no theorem
    crosses either framework):
-   - image A, new framework: a working branch 9367674296a lib/A/W_send_line_cx.v / _entry.v / _loop.v /
+   - image A, new framework: a working branch lib/A/W_send_line_cx.v / _entry.v / _loop.v /
      _datab_cx.v / _grow_cx.v / W_send_line.v (pb_send_line_g, sl_grow_stmt its one premise) and the copy half
-     a working branch 99ad96efcc6 lib/A/W_send_line_datab.v (sl_copy);
-   - image B, old framework: a working branch 37280b674f71 lib/B/Prog/send_line_*.v (send_line_b.v:2283
+     a working branch lib/A/W_send_line_datab.v (sl_copy);
+   - image B, old framework: a working branch lib/B/Prog/send_line_*.v (send_line_b.v:2283
      send_line_holds; its cuts, its trap handling and its data arm send_line_seg.v asl_grow_call / asl_copy_call).
    send_line (line, len) at 0x82854 (relay.c:66-86, fuzz_send inlined from fuzz_reply.c:278-313), 168 instructions,
    frame 144 (13 saved registers at 40(sp) .. 136(sp); the auipc values of g_client_broken, g_send_max, g_capout,
@@ -36,10 +36,11 @@
 (* Modified by Theorem Labs, 2026-10-30 (a Theorem Labs lane, row G-BSL-b):
    made from W_send_line_cx.v's growth-half cut (SLN, sl_grow_stmt): the same, over ARx in room form (the B twin of
    a Theorem Labs lane's lib/A/W_send_line_grow_cx_x.v) *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30: the ARx-GENERIC twin of the growth half's statements in lib/B/W_send_line_cx.v (the cut N
-   0x829cc of image B's send_line data round to the join, row G-BSL-b), from its text at 6df41a6c5267 (sha256
-   ec7655862ed0; internal record), transformed as image A's lib/A/W_send_line_grow_cx.v was into lib/A/W_send_line_grow_cx_x.v at
-   a0c781b35e6 (sha256 ebaaa557c2fe; internal record). B has no W_send_line_grow_cx.v: its one interface file
+   0x829cc of image B's send_line data round to the join, row G-BSL-b), from its text (sha256
+   ec7655862ed0; internal record), transformed as image A's lib/A/W_send_line_grow_cx.v was into lib/A/W_send_line_grow_cx_x.v
+    (sha256 ebaaa557c2fe; internal record). B has no W_send_line_grow_cx.v: its one interface file
    W_send_line_cx.v holds SLN and sl_grow_stmt, so this file cites it. W_send_line_cx.v is NOT edited.
    proves no function (kind: statement text; plus the AR bridges).
    - The Section header is W_send_line_cx_x.v's (W_send_line_cx.v's over ARx, LAWS, PST, RP, HP0).
@@ -50,7 +51,7 @@
    - BRIDGES as W_send_line_cx_x.v's: Section br (ARi, iff, every Hp) and Section br0 (ARi0: SLN_x_AR0 / SLN_x_of_AR0,
      sl_grow_stmt_x_AR0 / sl_grow_stmt_x_of_AR0).
    No statement difference is forced by ARx.
-   THE ROOM FORM (image A's a0c781b35e6 / 0828d5d79f5), as W_send_line_cx_x.v's: `Variable RP : roomp` after MT,
+   THE ROOM FORM (image A), as W_send_line_cx_x.v's: `Variable RP : roomp` after MT,
    AREALLOC (caller-context form, CTX_R / HCTX_slr) at RP, HP0, SLN_x with C3's peak (W_send_line_cx.v SLN, unchanged)
    and after frames the room budget of the rounds from this one on (sl_cost_run at MT_rk, on top of kr) and the
    entry's cnt_ok_pk RP sl_pk; SLN_x and sl_grow_stmt_x take the post's kr after n. The bridges are at RP := RP_AR. *)
@@ -106,7 +107,7 @@ Context {hl : Z}.
 Hypothesis LAWS : AR_laws_x SEGS B ARx hl.
 (* a Theorem Labs lane's HP0 ruling: the generic relation holds at the empty ghost list only *)
 Hypothesis HP0 : forall ly S Hp W mem md, ARx ly S Hp W mem md -> Hp = [].
-(* W_send_line_cx_x.v's header (W_send_line_cx.v:97-140 over ARx, LAWS, PST, RP, HP0) *)
+(* W_send_line_cx_x.v's header (W_send_line_cx.v:98-141 over ARx, LAWS, PST, RP, HP0) *)
 Hypothesis HG : gx_ok SEGS B (G_SL B RG).
 Hypothesis HGR : forall a, inG (G_SL B RG) a -> ~ in_rom SEGS a.
 Hypothesis HROMO : rom_out SEGS B (G_SL B RG).
@@ -117,7 +118,7 @@ Hypothesis AERRNO : aerrno_realizes_x B ARx (SIGMA WS_errno_location).
 Hypothesis AMEMCPY : aintrin_realizes_x SEGS B ARx OCpy (SIGMA WS_asan_memcpy).
 (* The realloc site rule in its caller-context form (W_journal_x.v Section hc), as the top's ARE_x states it
    (CTX_AREALLOC, YCk0.v:34, holds [0x829f4]; YCk0.v:169 is send_line's edge to it); send_line hands the rule a cut
-   chain (ch = []), so the trace is the return address alone (image A's a0c781b35e6..0828d5d79f5 form). *)
+   chain (ch = []), so the trace is the return address alone (image A.. form). *)
 Variable CTX_R : list (list Z).
 Hypothesis AREALLOC : arealloc_cf_rule_c_x SEGS B PST ARx MT MMAX RP CTX_R (SIGMA WS_realloc).
 Hypothesis HCTX_slr : In [BASE + AF_fr_send_line + 0x1a0] CTX_R.   (* realloc returns to 0x829f4 *)
@@ -144,7 +145,7 @@ Hypothesis HRGD : zpairwise_disjoint
  (rg_capout RG, rg_capout RG + 8); (rg_out RG, rg_out RG + 8);
  (as_errno B, as_errno B + 4)].
 
-(* W_send_line_cx.v:317 SLN: the state at N (0x829cc) of a round that has to grow g_out; kr is the post's *)
+(* W_send_line_cx.v:318 SLN: the state at N (0x829cc) of a round that has to grow g_out; kr is the post's *)
 Definition SLN_x (regsE : bvmap 5 word) ly S (Hp : list Z) W mem md (c : ctl) (O : list byte) (mx no cap out line : Z)
 (Bl : list byte) (WN : world SEGS) (regsN : bvmap 5 word) (memN : word -> option byte) (mdN : Model) (sent n : Z)
 (kr : nat) : Prop :=
@@ -174,7 +175,7 @@ Permutation (ablocks B ly S) (aout_blks cap out ++ rest) /\ Permutation (ablocks
 frames SN = frames S /\
 rp_RM RP SN (Z.to_nat (sl_cost_run MT_rk (Z.to_nat (len - sent)) mx (no + sent) capN (len - sent)) + kr) /\
 cnt_ok_pk RP sl_pk (ablocks B ly S).
-(* W_send_line_cx.v:378 sl_grow_stmt *)
+(* W_send_line_cx.v:379 sl_grow_stmt *)
 Definition sl_grow_stmt_x : Prop :=
 forall regsE ly S Hp W mem md c O mx no cap out line Bl WN regsN memN mdN sent n kr,
 SLN_x regsE ly S Hp W mem md c O mx no cap out line Bl WN regsN memN mdN sent n kr ->
@@ -199,7 +200,7 @@ Variable HA : alayout -> astate -> bvmap 5 word -> list (Z * Z * Z) -> Z -> Z ->
 Hypothesis RO_ARx : forall ly S Hp (W : world SEGS) mem md, ARx ly S Hp W mem md -> RO mem.
 Hypothesis HA_call : forall lyc Sc regsT ch p n, mo_ok MT Sc (mo_malloc MT n + mo_free MT) -> HA lyc Sc regsT ch p n.
 Hypothesis AREALLOC_R : arealloc_cf_rule_c_xR SEGS B PST ARx MT MMAX RP RO HA CTX_R R (SIGMA WS_realloc).
-(* W_send_line_grow_cx_x.v:145 SLN_x at R *)
+(* W_send_line_grow_cx_x.v:146 SLN_x at R *)
 Definition SLN_xR (regsE : bvmap 5 word) ly S (Hp : list Z) W mem md (c : ctl) (O : list byte) (mx no cap out line : Z)
 (Bl : list byte) (WN : world SEGS) (regsN : bvmap 5 word) (memN : word -> option byte) (mdN : Model) (sent n : Z)
 (kr : nat) : Prop :=
@@ -229,7 +230,7 @@ Permutation (ablocks B ly S) (aout_blks cap out ++ rest) /\ Permutation (ablocks
 frames SN = frames S /\
 rp_RM RP SN (Z.to_nat (sl_cost_run MT_rk (Z.to_nat (len - sent)) mx (no + sent) capN (len - sent)) + kr) /\
 cnt_ok_pk RP sl_pk (ablocks B ly S).
-(* W_send_line_grow_cx_x.v:175 sl_grow_stmt_x at R *)
+(* W_send_line_grow_cx_x.v:176 sl_grow_stmt_x at R *)
 Definition sl_grow_stmt_xR : Prop :=
 forall regsE ly S Hp W mem md c O mx no cap out line Bl WN regsN memN mdN sent n kr,
 SLN_xR regsE ly S Hp W mem md c O mx no cap out line Bl WN regsN memN mdN sent n kr ->

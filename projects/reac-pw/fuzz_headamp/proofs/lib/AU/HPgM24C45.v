@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/A/APgRt.v at 6ebe35ba632; its rt_chain is ported here as rl_c23_chain (statement kept, proof by the kernel's achain_push); the rest of this file is new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgM24Mal.v at be048d930b4 (image A's
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/A/APgRt.v; its rt_chain is ported here as rl_c23_chain (statement kept, proof by the kernel's achain_push); the rest of this file is new. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgM24Mal.v (image A's
    malloc(first) step C6 -> C7) for image B's malloc(out) step C4 -> C5: lib/AU/HPgSegM.v hqu_S_C45_stmt at
    lib/AU/Img0U.v rsegs, the jal 0x83740 -> 0x82f34, ra 0x83744 -> 0x82f38, malloc's entry 0x53060 -> 0x530e0, the
    real frame 0x1e0 -> 0x220, the request 3 max(rc, 0) + (it == 0) -> 3 cap + 3, k = 3 -> 2 events, the blocks
    pp / pod / out -> pp / pod, image B's cut lists (hi_L4 -> hi_L5) and call-site lemmas (lib/AU/HPgSiteB.v), four
    float saves in place of three, the post hqu_cut_C5 (the record, the shadow of pod and out, pod and out apart, an
    errno value readable); the step-independent lemmas in lib/AU/HPgM24MalKit.v (prefix hk_ -> hkb_). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image B (fuzz_headamp.asan-ubsan, pinned sha256
    53edda9bdeeba1803865babfecb1af6732babe47ab83c64d38cc59a90d717a94; every address measured on the unstripped twin
    1674e30a0698f381704e66d2398d7906c881f4ba8fc619cb41b89fb97ad112ff, same loaded bytes except .note.gnu.build-id): THE malloc(out) STEP of the

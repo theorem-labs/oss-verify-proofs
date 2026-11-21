@@ -15,7 +15,7 @@ Local Open Scope Z_scope.
 (* The rc != 0 stage of LLVMFuzzerTestOneInput on the #102 ubsan pin (fuzz_preset.c:825-830, unchanged from the base
    source): check_reject_clean_starved (0x13c3c) is called at 0x13834 with (data, size, took, NULL) and returns to
    0x13838, which jumps to 0x137e4: return 0 and the epilogue (EntSegA.ent_segC2). The callee's contract
-   (check_reject_clean_starved_c @ rw102-crcs 6d86620145430ef7) needs both flag bytes 0, which the stage has
+   (check_reject_clean_starved_c @ rw102-crcs) needs both flag bytes 0, which the stage has
    (ent_flags). HKW: the callee's stack fits below the entry's 112-byte frame (SLOT_K = 112 + CRT_K = 14704). *)
 
 Lemma ents1_growth0 : forall x took, 0 <= took -> 0 <= crcs_growth x took 0 JNull <= took.

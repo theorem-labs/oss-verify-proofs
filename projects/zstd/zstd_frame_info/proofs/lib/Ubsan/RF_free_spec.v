@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (rauxv_ok_pres_B re-proved for the startup auxv premise rauxv_ok, now stated over the launch values). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From stdpp Require Import gmap.
@@ -27,8 +28,8 @@ Section CANSEC1. Context {rc : runConstT}.
   (forall a, B <= a -> ~ C a) -> (forall a, RAUXV_CELL <= a < RAUXV_CELL + 8 -> ~ C a) ->
   rauxv_ok m' B.
 Proof.
-  intros C m m' B (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & C1 & A1 & A2 & H) HP HB HC.
-  exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. split; [|split; [|split; [|exact H]]].
+  intros C m m' B (av & rnd & la & ent & uid & gid & hw & efn & C1 & A1 & A2 & H) HP HB HC.
+  exists av, rnd, la, ent, uid, gid, hw, efn. split; [|split; [|split; [|exact H]]].
   - eapply rpres_except_rw_cells; [exact HP| exact C1|]. cbn. intros a Ha. apply HC. Local Ltac2 Set LiaHints.tbl := fun () => "0020>31848951228.256568648877.25 00000400:S2HaS1H2Ha".
 lia.
   - eapply rpres_except_bytes_at; [exact HP| exact A1|]. intros a Ha. apply HB. lia.

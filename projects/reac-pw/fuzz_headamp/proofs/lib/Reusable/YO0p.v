@@ -2,11 +2,13 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YO0p.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the RomBase facts of the syscall nodes' read-only backing). *)
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require Import YK11 YK0s YK0i YK15 YM06 YM02 YP09.
+From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require Import RomBase.
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require Import YO0i YO0f YO0x YO0d.
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require Import YM05.
 Import ListNotations.
@@ -125,11 +127,11 @@ apply (SR_node segs c1 J nx i0); [exact Hn|]. intros i.
 destruct (Hbits i) as [Hi|Hi]; (eapply STEP; [| | apply Hc]); rewrite Hi; auto.
 +   destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hb).
 apply (SR_node segs c1 J nx i0); [exact Hn|]. intros i. eapply STEP; [exact (Hb i) | rewrite (Hb i); exact Hok | apply Hc].
-+   destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hbits & H1). destruct Hok as [G Ho1]. destruct (H1 G) as [Hall | Hcut]; [| apply SR_cut; exact Hcut].
++   destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hbits & H1). destruct Hok as [G Ho1]. destruct (H1 G) as [Hall | Hcut]; [| apply SR_cut; [exact Hcut | exact (proj2 (proj2 Hn))]].
 apply (SR_node segs c1 J nx i0); [exact Hn|]. intros i. eapply STEP; [exact (Hall i) | rewrite (Hall i); exact Ho1 | apply Hc].
-+   destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hbits & H1). destruct Hok as [G Ho1]. destruct (H1 G) as [Hall | Hcut]; [| apply SR_cut; exact Hcut].
++   destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hbits & H1). destruct Hok as [G Ho1]. destruct (H1 G) as [Hall | Hcut]; [| apply SR_cut; [exact Hcut | exact (proj2 (proj2 Hn))]].
 apply (SR_node segs c1 J nx i0); [exact Hn|]. intros i. eapply STEP; [exact (Hall i) | rewrite (Hall i); exact Ho1 | apply Hc].
-+   destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hbits & H1). destruct Hok as [G Ho1]. destruct (H1 G) as [Hall | Hcut]; [| apply SR_cut; exact Hcut].
++   destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hbits & H1). destruct Hok as [G Ho1]. destruct (H1 G) as [Hall | Hcut]; [| apply SR_cut; [exact Hcut | exact (proj2 (proj2 Hn))]].
 apply (SR_node segs c1 J nx i0); [exact Hn|]. intros i. eapply STEP; [exact (Hall i) | rewrite (Hall i); exact Ho1 | apply Hc].
 +   destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hb).
 apply (SR_node segs c1 J nx i0); [exact Hn|]. intros i. eapply STEP; [exact (Hb i) | rewrite (Hb i); exact Hok | apply Hc].

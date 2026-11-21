@@ -3,7 +3,7 @@
    composed BOTTOM-UP from the walk statements walk_<f> of that file. This file proves no function: it composes
    walks and walks none.
 
-   The shape is grant image A's lib/A/GrantTop.v (a working branch 7d31e8f3534):
+   The shape is grant image A's lib/A/GrantTop.v (a working branch):
    - every PROVED walk is plugged in by its theorem `pb_<f> : walk_<f> B` (three in GrantBContracts.v itself, the
      others in the walk files under lib/B/Prog), never as a hypothesis;
    - every still-OPEN walk is ONE named Section hypothesis `PB_<f> : walk_<f> ... B`, with the statement its owner's
@@ -32,7 +32,7 @@
    grantB_sink_head, whose overflow head is image B's `ofl_head` 0x5f9008. The plain build's sink hints are removed,
    and every walk, contract and fact below names `(SK := grantB_sink_head)` where its statement takes SK;
    sk_probe_is_asan_ubsan shows what a bare `sink_head` resolves to. The image is named the same way:
-   `(PI := PI_grant)`, image B's PAImg instance (lib/B/Prog/GrantImg.v:152). The runtime's symbol record B : asyms
+   `(PI := PI_grant)`, image B's PAImg instance (lib/B/Prog/GrantImg.v:153). The runtime's symbol record B : asyms
    and the two machine parameters fx / rc stay Section variables: they are parameters of the contract itself.
 
    Print Assumptions of the top (inside the Section, and again after it) lists exactly the open walks PB_<f>, the
@@ -93,9 +93,9 @@ Lemma sk_probe_is_asan_ubsan : sk_probe = grantB_sink_head.
 Proof. reflexivity. Qed.
 
 (* ---- IMG_RO_BELOW, closed by computation ------------------------------------------------------------------------
-   ro_below_ofl (lib/B/PaBase.v:27): every address of the read-only range lies below the sink's overflow head.
+   ro_below_ofl (lib/B/PaBase.v:28): every address of the read-only range lies below the sink's overflow head.
    On image B the read-only range is the two PT_LOADs that are not writable (they end at 0x2f984 and 0x9bfc8) and the
-   RELRO range [0x9d000, 0x9e3c8) (GrantImg.v:89-90); all of it lies below 0x5f9008. The check runs over
+   RELRO range [0x9d000, 0x9e3c8) (GrantImg.v:90-91); all of it lies below 0x5f9008. The check runs over
    grantsegsB0's segment records. *)
 Lemma ro_below_ofl_grantB : forall a, in_roP grantsegsB0 grant_relro_lo grant_relro_hi a -> a < B_ofl_head.
 Proof.
@@ -113,74 +113,74 @@ Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Variable B : asyms.
 
 (* ---- the runtime and image facts, one named hypothesis each (the conjuncts of the hyps_<f>) ------------------- *)
-(* RT_LAWS: AR_laws: the runtime's state laws (GrantBContracts.v:333). *)
+(* RT_LAWS: AR_laws: the runtime's state laws (GrantBContracts.v:334). *)
 Hypothesis RT_LAWS : GrantBContracts.RT_LAWS (PI := PI_grant) B.
-(* RT_PALIB: PALib: the walk layer's library facts (GrantBContracts.v:334). *)
+(* RT_PALIB: PALib: the walk layer's library facts (GrantBContracts.v:335). *)
 Hypothesis RT_PALIB : GrantBContracts.RT_PALIB (PI := PI_grant) B.
-(* RT_PALIBF: PALibF: the side-stack library facts (GrantBContracts.v:335). *)
+(* RT_PALIBF: PALibF: the side-stack library facts (GrantBContracts.v:336). *)
 Hypothesis RT_PALIBF : GrantBContracts.RT_PALIBF (PI := PI_grant) B.
-(* RT_ML: model_laws of the trace universe (GrantBContracts.v:336). *)
+(* RT_ML: model_laws of the trace universe (GrantBContracts.v:337). *)
 Hypothesis RT_ML : GrantBContracts.RT_ML B.
-(* RT_SMP: stack_malloc_progressP (GrantBContracts.v:337). *)
+(* RT_SMP: stack_malloc_progressP (GrantBContracts.v:338). *)
 Hypothesis RT_SMP : GrantBContracts.RT_SMP B.
-(* RT_ASF: astack_free_law (GrantBContracts.v:338). *)
+(* RT_ASF: astack_free_law (GrantBContracts.v:339). *)
 Hypothesis RT_ASF : GrantBContracts.RT_ASF (PI := PI_grant) B.
-(* RT_FFL: frame_flag_lawP (GrantBContracts.v:339). *)
+(* RT_FFL: frame_flag_lawP (GrantBContracts.v:340). *)
 Hypothesis RT_FFL : GrantBContracts.RT_FFL (PI := PI_grant) B.
-(* RT_TP_FS: the fake stack's thread-local pointer (GrantBContracts.v:367). *)
+(* RT_TP_FS: the fake stack's thread-local pointer (GrantBContracts.v:368). *)
 Hypothesis RT_TP_FS : GrantBContracts.RT_TP_FS (PI := PI_grant) B.
-(* RT_MALLOC: the malloc wrapper's jump 0x52edc (GrantBContracts.v:341). *)
+(* RT_MALLOC: the malloc wrapper's jump 0x52edc (GrantBContracts.v:342). *)
 Hypothesis RT_MALLOC : GrantBContracts.RT_MALLOC (PI := PI_grant) B.
-(* RT_FREE: the free wrapper's jump 0x52ed8 (GrantBContracts.v:342). *)
+(* RT_FREE: the free wrapper's jump 0x52ed8 (GrantBContracts.v:343). *)
 Hypothesis RT_FREE : GrantBContracts.RT_FREE (PI := PI_grant) B.
-(* RT_MEMCPY: __asan_memcpy 0x51b88 (GrantBContracts.v:344). *)
+(* RT_MEMCPY: __asan_memcpy 0x51b88 (GrantBContracts.v:345). *)
 Hypothesis RT_MEMCPY : GrantBContracts.RT_MEMCPY (PI := PI_grant) B.
-(* RT_MEMSET: __asan_memset 0x52024 (GrantBContracts.v:345). *)
+(* RT_MEMSET: __asan_memset 0x52024 (GrantBContracts.v:346). *)
 Hypothesis RT_MEMSET : GrantBContracts.RT_MEMSET (PI := PI_grant) B.
-(* RT_BCMP: the bcmp wrapper's jump 0x424d0 (GrantBContracts.v:347). *)
+(* RT_BCMP: the bcmp wrapper's jump 0x424d0 (GrantBContracts.v:348). *)
 Hypothesis RT_BCMP : GrantBContracts.RT_BCMP (PI := PI_grant) B.
-(* RT_SM0: __asan_stack_malloc_0 0x3cf4c (GrantBContracts.v:352, c = 0). *)
+(* RT_SM0: __asan_stack_malloc_0 0x3cf4c (GrantBContracts.v:353, c = 0). *)
 Hypothesis RT_SM0 : GrantBContracts.RT_SM (PI := PI_grant) B 0.
-(* RT_SM1: __asan_stack_malloc_1 0x3d0c0 (GrantBContracts.v:352, c = 1). *)
+(* RT_SM1: __asan_stack_malloc_1 0x3d0c0 (GrantBContracts.v:353, c = 1). *)
 Hypothesis RT_SM1 : GrantBContracts.RT_SM (PI := PI_grant) B 1.
-(* RT_SM2: __asan_stack_malloc_2 0x3d250 (GrantBContracts.v:352, c = 2). *)
+(* RT_SM2: __asan_stack_malloc_2 0x3d250 (GrantBContracts.v:353, c = 2). *)
 Hypothesis RT_SM2 : GrantBContracts.RT_SM (PI := PI_grant) B 2.
-(* RT_SM4: __asan_stack_malloc_4 0x3d3ec (GrantBContracts.v:352, c = 4). *)
+(* RT_SM4: __asan_stack_malloc_4 0x3d3ec (GrantBContracts.v:353, c = 4). *)
 Hypothesis RT_SM4 : GrantBContracts.RT_SM (PI := PI_grant) B 4.
-(* RT_SM6: __asan_stack_malloc_6 0x3d5b8 (GrantBContracts.v:352, c = 6). *)
+(* RT_SM6: __asan_stack_malloc_6 0x3d5b8 (GrantBContracts.v:353, c = 6). *)
 Hypothesis RT_SM6 : GrantBContracts.RT_SM (PI := PI_grant) B 6.
-(* RT_SF6: __asan_stack_free_6 0x3d754 (GrantBContracts.v:354). *)
+(* RT_SF6: __asan_stack_free_6 0x3d754 (GrantBContracts.v:355). *)
 Hypothesis RT_SF6 : GrantBContracts.RT_SF6 (PI := PI_grant) B.
-(* RT_SS00: __asan_set_shadow_00 0x54a48 (GrantBContracts.v:356). *)
+(* RT_SS00: __asan_set_shadow_00 0x54a48 (GrantBContracts.v:357). *)
 Hypothesis RT_SS00 : GrantBContracts.RT_SS00 (PI := PI_grant) B.
-(* RT_SSF5: __asan_set_shadow_f5 0x54b50 (GrantBContracts.v:357). *)
+(* RT_SSF5: __asan_set_shadow_f5 0x54b50 (GrantBContracts.v:358). *)
 Hypothesis RT_SSF5 : GrantBContracts.RT_SSF5 (PI := PI_grant) B.
-(* RT_SSF8: __asan_set_shadow_f8 0x54b68 (GrantBContracts.v:358). *)
+(* RT_SSF8: __asan_set_shadow_f8 0x54b68 (GrantBContracts.v:359). *)
 Hypothesis RT_SSF8 : GrantBContracts.RT_SSF8 (PI := PI_grant) B.
-(* RT_IMGSH: the shadow of image B's read range is mapped (GrantBContracts.v:361). *)
+(* RT_IMGSH: the shadow of image B's read range is mapped (GrantBContracts.v:362). *)
 Hypothesis RT_IMGSH : GrantBContracts.RT_IMGSH (PI := PI_grant) B.
-(* RT_GLOBS: image B's 13 registered globals are marked (GrantBContracts.v:362). *)
+(* RT_GLOBS: image B's 13 registered globals are marked (GrantBContracts.v:363). *)
 Hypothesis RT_GLOBS : GrantBContracts.RT_GLOBS (PI := PI_grant) B.
-(* IMG_CTRL_ROW: the row B_ROW 0x9d4d0: aligned, placed, in as_zero_shadow, apart (GrantBContracts.v:969). *)
+(* IMG_CTRL_ROW: the row B_ROW 0x9d4d0: aligned, placed, in as_zero_shadow, apart (GrantBContracts.v:970). *)
 Hypothesis IMG_CTRL_ROW : GrantBContracts.IMG_CTRL_ROW (PI := PI_grant) B.
-(* IMG_CTRL_ROW_FIN: the row's bytes ctrl_finish reads (GrantBContracts.v:974). *)
+(* IMG_CTRL_ROW_FIN: the row's bytes ctrl_finish reads (GrantBContracts.v:975). *)
 Hypothesis IMG_CTRL_ROW_FIN : GrantBContracts.IMG_CTRL_ROW_FIN (PI := PI_grant) B.
-(* IMG_CTRL_LAY_JT: entry 2 of ctrl_lay_block's jump table 0x21034 (GrantBContracts.v:992). *)
+(* IMG_CTRL_LAY_JT: entry 2 of ctrl_lay_block's jump table 0x21034 (GrantBContracts.v:993). *)
 Hypothesis IMG_CTRL_LAY_JT : GrantBContracts.IMG_CTRL_LAY_JT (PI := PI_grant) B.
-(* IMG_CTRL_STAMP_TM: the last conjunct of IMG_CTRL_STAMP (GrantBContracts.v:1011): the template TM the row names. *)
+(* IMG_CTRL_STAMP_TM: the last conjunct of IMG_CTRL_STAMP (GrantBContracts.v:1012): the template TM the row names. *)
 Hypothesis IMG_CTRL_STAMP_TM : exists TM, GrantBContracts.tmpl_place (PI := PI_grant) B TM /\ GrantBContracts.IMG_CTRL_ROW_LAY (PI := PI_grant) B TM /\
     GrantBContracts.IMG_CTRL_TMPL (PI := PI_grant) B TM.
-(* IMG_BGS_ROWS: the three row tables reac_ctrl_build_grant_sweep copies (GrantBContracts.v:1017). *)
+(* IMG_BGS_ROWS: the three row tables reac_ctrl_build_grant_sweep copies (GrantBContracts.v:1018). *)
 Hypothesis IMG_BGS_ROWS : GrantBContracts.IMG_BGS_ROWS (PI := PI_grant) B.
-(* IMG_reac_ctrl_parse: .str.4 (object 15): its entry, place and six 0xff bytes (GrantBContracts.v:1626). *)
+(* IMG_reac_ctrl_parse: .str.4 (object 15): its entry, place and six 0xff bytes (GrantBContracts.v:1627). *)
 Hypothesis IMG_reac_ctrl_parse : GrantBContracts.IMG_reac_ctrl_parse (PI := PI_grant) B.
-(* IMG_check_groupa: __const.check_groupa.frame (object 9) (GrantBContracts.v:1699). *)
+(* IMG_check_groupa: __const.check_groupa.frame (object 9) (GrantBContracts.v:1700). *)
 Hypothesis IMG_check_groupa : GrantBContracts.IMG_check_groupa (PI := PI_grant) B.
-(* IMG_LLVMF_TRACES (GrantBContracts.v:1896) is PROVED here, by GrantBTraces.img_llvmf_traces_grant
-   (lib/B/Prog/GrantBTraces.v:85), from three facts of the runtime's symbol record B. Each is the field of image A's
+(* IMG_LLVMF_TRACES (GrantBContracts.v:1897) is PROVED here, by GrantBTraces.img_llvmf_traces_grant
+   (lib/B/Prog/GrantBTraces.v:86), from three facts of the runtime's symbol record B. Each is the field of image A's
    concrete record that image A's proof reads, and each closes by reflexivity at image B's concrete asyms record,
-   lib/B/GrantBCloseInst.v:366, :369, :372. *)
-(* H_universe_B: B's trace universe is image B's (lib/B/YCej.v:61 Tfib_universe); A: lib/A/AD2l.v:38
+   lib/B/GrantBCloseInst.v:367, :370, :373. *)
+(* H_universe_B: B's trace universe is image B's (lib/B/YCej.v:62 Tfib_universe); A: lib/A/AD2l.v:38
    `as_universe := Tfib_universe`. *)
 Hypothesis H_universe_B : as_universe B = YCej.Tfib_universe.
 (* H_malloc_ra0_B: the malloc interceptor's return address after its GetCurrentPc call, 0x53178 on image B;
@@ -188,9 +188,9 @@ Hypothesis H_universe_B : as_universe B = YCej.Tfib_universe.
 Hypothesis H_malloc_ra0_B : pc_malloc_ra0 (as_code B) = 0x53178.
 (* H_free_ra0_B: the free interceptor's, 0x53018 on image B; A: lib/A/AF0l.v:11 `pc_free_ra0 := 0x52c8c`. *)
 Hypothesis H_free_ra0_B : pc_free_ra0 (as_code B) = 0x53018.
-(* IMG_LLVMF_SWEEP: the four read-only tables the entry reads (GrantBContracts.v:1911). *)
+(* IMG_LLVMF_SWEEP: the four read-only tables the entry reads (GrantBContracts.v:1912). *)
 Hypothesis IMG_LLVMF_SWEEP : GrantBContracts.IMG_LLVMF_SWEEP (PI := PI_grant) B.
-(* IMG_NEXT_DIV3: reac_headamp_tx_next's multiplier 0xAAAAAAAAAAAAAAAB at object 34 (0x10320) (GrantBContracts.v:690), a
+(* IMG_NEXT_DIV3: reac_headamp_tx_next's multiplier 0xAAAAAAAAAAAAAAAB at object 34 (0x10320) (GrantBContracts.v:691), a
    conjunct of hyps_reac_headamp_tx_next on the core; b_next_div3_check (:173) checks its bytes on image B. *)
 Hypothesis IMG_NEXT_DIV3 : GrantBContracts.IMG_NEXT_DIV3 (PI := PI_grant) B.
 
@@ -198,10 +198,10 @@ Hypothesis IMG_NEXT_DIV3 : GrantBContracts.IMG_NEXT_DIV3 (PI := PI_grant) B.
    theorem in the composition below. *)
 
 (* ---- the two image facts that are closed on image B ------------------------------------------------------------ *)
-(* IMG_RO_BELOW (GrantBContracts.v:1029) at image B's sink and image: ro_below_ofl_grantB above. *)
+(* IMG_RO_BELOW (GrantBContracts.v:1030) at image B's sink and image: ro_below_ofl_grantB above. *)
 Lemma img_ro_below_B : GrantBContracts.IMG_RO_BELOW (SK := grantB_sink_head) (PI := PI_grant).
 Proof. exact ro_below_ofl_grantB. Qed.
-(* IMG_CTRL_ROW_IMG (GrantBContracts.v:1001): the row B_ROW = object 18 + 240 = 0x9d4d0 (GrantImg.v grant_row_val) and its
+(* IMG_CTRL_ROW_IMG (GrantBContracts.v:1002): the row B_ROW = object 18 + 240 = 0x9d4d0 (GrantImg.v grant_row_val) and its
    24 bytes lie in image B's RELRO range [0x9d000, 0x9e3c8), which is image B's (GrantImg.v grant_relro_img). *)
 Lemma img_ctrl_row_img_B : GrantBContracts.IMG_CTRL_ROW_IMG (PI := PI_grant).
 Proof.
@@ -209,7 +209,7 @@ Proof.
   assert (HR : GrantBContracts.B_ROW (PI := PI_grant) = 0x9d4d0) by exact grant_row_val.
   rewrite HR in Ha. apply grant_relro_img. unfold grant_relro_lo, grant_relro_hi. lia.
 Qed.
-(* IMG_CTRL_STAMP (GrantBContracts.v:1011), from its five conjuncts. *)
+(* IMG_CTRL_STAMP (GrantBContracts.v:1012), from its five conjuncts. *)
 Lemma img_ctrl_stamp_B : GrantBContracts.IMG_CTRL_STAMP (PI := PI_grant) B.
 Proof. exact (conj IMG_CTRL_ROW (conj img_ctrl_row_img_B (conj IMG_CTRL_ROW_FIN (conj IMG_CTRL_LAY_JT IMG_CTRL_STAMP_TM)))). Qed.
 
@@ -268,34 +268,34 @@ Lemma hyps_LLVMFuzzerTestOneInput_B : hyps_LLVMFuzzerTestOneInput (SK := grantB_
 Proof. exact (conj RT_LAWS (conj RT_PALIB (conj RT_PALIBF (conj RT_ML (conj RT_SMP (conj RT_ASF (conj RT_FFL (conj RT_MALLOC (conj RT_FREE (conj RT_MEMSET (conj RT_BCMP (conj RT_SM4 (conj RT_SSF5 (conj RT_IMGSH (conj RT_GLOBS (conj RT_TP_FS (conj img_ro_below_B (conj img_llvmf_traces_B IMG_LLVMF_SWEEP)))))))))))))))))). Qed.
 
 (* ---- the composition, bottom-up: each contract from its walk, its facts and its callees' contracts -------------- *)
-(* kind_of_link1: PROVED, pb_walk_kind_of_link1 (lib/B/Prog/GrantBContracts.v:420). *)
+(* kind_of_link1: PROVED, pb_walk_kind_of_link1 (lib/B/Prog/GrantBContracts.v:421). *)
 Lemma tb_kind_of_link1_holds_B : tb_kind_of_link1_spec (SK := grantB_sink_head) (PI := PI_grant) B.
 Proof. exact (pb_walk_kind_of_link1 (SK := grantB_sink_head) (PI := PI_grant) B hyps_kind_of_link1_B). Qed.
-(* reac_headamp_tx_init: PROVED, pb_walk_reac_headamp_tx_init (lib/B/Prog/GrantBContracts.v:425). *)
+(* reac_headamp_tx_init: PROVED, pb_walk_reac_headamp_tx_init (lib/B/Prog/GrantBContracts.v:426). *)
 Lemma tb_reac_headamp_tx_init_holds_B : tb_reac_headamp_tx_init_spec (SK := grantB_sink_head) (PI := PI_grant) B.
 Proof. exact (pb_walk_reac_headamp_tx_init (SK := grantB_sink_head) (PI := PI_grant) B hyps_reac_headamp_tx_init_B). Qed.
-(* reac_headamp_default: PROVED, pb_walk_reac_headamp_default (lib/B/Prog/GrantBContracts.v:430). *)
+(* reac_headamp_default: PROVED, pb_walk_reac_headamp_default (lib/B/Prog/GrantBContracts.v:431). *)
 Lemma tb_reac_headamp_default_holds_B : tb_reac_headamp_default_spec (SK := grantB_sink_head) (PI := PI_grant) B.
 Proof. exact (pb_walk_reac_headamp_default (SK := grantB_sink_head) (PI := PI_grant) B hyps_reac_headamp_default_B). Qed.
-(* reac_headamp_tx_set: PROVED, HeadampTxSet.pb_reac_headamp_tx_set (lib/B/Prog/HeadampTxSet.v:655). *)
+(* reac_headamp_tx_set: PROVED, HeadampTxSet.pb_reac_headamp_tx_set (lib/B/Prog/HeadampTxSet.v:656). *)
 Lemma tb_reac_headamp_tx_set_holds_B : tb_reac_headamp_tx_set_spec (SK := grantB_sink_head) (PI := PI_grant) B.
 Proof.
   exact (HeadampTxSet.pb_reac_headamp_tx_set (SK := grantB_sink_head) (PI := PI_grant) B
            hyps_reac_headamp_tx_set_B).
 Qed.
-(* reac_headamp_tx_effective: PROVED, HeadampTxEffective.pb_reac_headamp_tx_effective (lib/B/Prog/HeadampTxEffective.v:523). *)
+(* reac_headamp_tx_effective: PROVED, HeadampTxEffective.pb_reac_headamp_tx_effective (lib/B/Prog/HeadampTxEffective.v:524). *)
 Lemma tb_reac_headamp_tx_effective_holds_B : tb_reac_headamp_tx_effective_spec (SK := grantB_sink_head) (PI := PI_grant) B.
 Proof.
   exact (HeadampTxEffective.pb_reac_headamp_tx_effective (SK := grantB_sink_head) (PI := PI_grant) B
            hyps_reac_headamp_tx_effective_B).
 Qed.
-(* reac_headamp_tx_arm_scene: PROVED, HeadampTxArmScene.pb_reac_headamp_tx_arm_scene (lib/B/Prog/HeadampTxArmScene.v:612). *)
+(* reac_headamp_tx_arm_scene: PROVED, HeadampTxArmScene.pb_reac_headamp_tx_arm_scene (lib/B/Prog/HeadampTxArmScene.v:613). *)
 Lemma tb_reac_headamp_tx_arm_scene_holds_B : tb_reac_headamp_tx_arm_scene_spec (SK := grantB_sink_head) (PI := PI_grant) B.
 Proof.
   exact (HeadampTxArmScene.pb_reac_headamp_tx_arm_scene (SK := grantB_sink_head) (PI := PI_grant) B
            hyps_reac_headamp_tx_arm_scene_B).
 Qed.
-(* reac_headamp_tx_set_resweep: PROVED, HeadampTxSetResweep.pb_reac_headamp_tx_set_resweep (lib/B/Prog/HeadampTxSetResweep.v:179). *)
+(* reac_headamp_tx_set_resweep: PROVED, HeadampTxSetResweep.pb_reac_headamp_tx_set_resweep (lib/B/Prog/HeadampTxSetResweep.v:180). *)
 Lemma tb_reac_headamp_tx_set_resweep_holds_B : tb_reac_headamp_tx_set_resweep_spec (SK := grantB_sink_head) (PI := PI_grant) B.
 Proof.
   exact (HeadampTxSetResweep.pb_reac_headamp_tx_set_resweep (SK := grantB_sink_head) (PI := PI_grant) B
@@ -307,49 +307,49 @@ Proof.
   exact (CtrlBlockCksumStamp.pb_reac_ctrl_block_cksum_stamp (SK := grantB_sink_head) (PI := PI_grant) B
            hyps_reac_ctrl_block_cksum_stamp_B).
 Qed.
-(* reac_ctrl_record_cksum_stamp: PROVED, CtrlRecordCksumStamp.pb_reac_ctrl_record_cksum_stamp (lib/B/Prog/CtrlRecordCksumStamp.v:1184). *)
+(* reac_ctrl_record_cksum_stamp: PROVED, CtrlRecordCksumStamp.pb_reac_ctrl_record_cksum_stamp (lib/B/Prog/CtrlRecordCksumStamp.v:1185). *)
 Lemma tb_reac_ctrl_record_cksum_stamp_holds_B : tb_reac_ctrl_record_cksum_stamp_spec (SK := grantB_sink_head) (PI := PI_grant) B.
 Proof.
   exact (CtrlRecordCksumStamp.pb_reac_ctrl_record_cksum_stamp (SK := grantB_sink_head) (PI := PI_grant) B
            hyps_reac_ctrl_record_cksum_stamp_B).
 Qed.
-(* reac_ctrl_checksum_verify: PROVED, CtrlChecksumVerify.pb_reac_ctrl_checksum_verify (lib/B/Prog/CtrlChecksumVerify.v:355). *)
+(* reac_ctrl_checksum_verify: PROVED, CtrlChecksumVerify.pb_reac_ctrl_checksum_verify (lib/B/Prog/CtrlChecksumVerify.v:356). *)
 Lemma tb_reac_ctrl_checksum_verify_holds_B : tb_reac_ctrl_checksum_verify_spec (SK := grantB_sink_head) (PI := PI_grant) B.
 Proof.
   exact (CtrlChecksumVerify.pb_reac_ctrl_checksum_verify (SK := grantB_sink_head) (PI := PI_grant) B
            hyps_reac_ctrl_checksum_verify_B).
 Qed.
-(* reac_ctrl_headamp_record_verify: PROVED, CtrlHeadampRecordVerify.pb_reac_ctrl_headamp_record_verify (lib/B/Prog/CtrlHeadampRecordVerify.v:361). *)
+(* reac_ctrl_headamp_record_verify: PROVED, CtrlHeadampRecordVerify.pb_reac_ctrl_headamp_record_verify (lib/B/Prog/CtrlHeadampRecordVerify.v:362). *)
 Lemma tb_reac_ctrl_headamp_record_verify_holds_B : tb_reac_ctrl_headamp_record_verify_spec (SK := grantB_sink_head) (PI := PI_grant) B.
 Proof.
   exact (CtrlHeadampRecordVerify.pb_reac_ctrl_headamp_record_verify (SK := grantB_sink_head) (PI := PI_grant) B
            hyps_reac_ctrl_headamp_record_verify_B).
 Qed.
-(* reac_ctrl_identity_poll_block: PROVED, CtrlIdentityPollBlock.pb_reac_ctrl_identity_poll_block (lib/B/Prog/CtrlIdentityPollBlock.v:315). *)
+(* reac_ctrl_identity_poll_block: PROVED, CtrlIdentityPollBlock.pb_reac_ctrl_identity_poll_block (lib/B/Prog/CtrlIdentityPollBlock.v:316). *)
 Lemma tb_reac_ctrl_identity_poll_block_holds_B : tb_reac_ctrl_identity_poll_block_spec (SK := grantB_sink_head) (PI := PI_grant) B.
 Proof.
   exact (CtrlIdentityPollBlock.pb_reac_ctrl_identity_poll_block (SK := grantB_sink_head) (PI := PI_grant) B
            hyps_reac_ctrl_identity_poll_block_B).
 Qed.
-(* ctrl_lay_block: PROVED, CtrlLayBlock.pb_walk_ctrl_lay_block (lib/B/Prog/CtrlLayBlock.v:1175). *)
+(* ctrl_lay_block: PROVED, CtrlLayBlock.pb_walk_ctrl_lay_block (lib/B/Prog/CtrlLayBlock.v:1176). *)
 Lemma tb_ctrl_lay_block_holds_B : tb_ctrl_lay_block_spec (SK := grantB_sink_head) (PI := PI_grant) B.
 Proof.
   exact (CtrlLayBlock.pb_walk_ctrl_lay_block (SK := grantB_sink_head) (PI := PI_grant) B
            hyps_ctrl_lay_block_B).
 Qed.
-(* reac_grant_alloc_fits: PROVED, GrantAllocFits.pb_reac_grant_alloc_fits (lib/B/Prog/GrantAllocFits.v:272). *)
+(* reac_grant_alloc_fits: PROVED, GrantAllocFits.pb_reac_grant_alloc_fits (lib/B/Prog/GrantAllocFits.v:273). *)
 Lemma tb_reac_grant_alloc_fits_holds_B : tb_reac_grant_alloc_fits_spec (SK := grantB_sink_head) (PI := PI_grant) B.
 Proof.
   exact (GrantAllocFits.pb_reac_grant_alloc_fits (SK := grantB_sink_head) (PI := PI_grant) B
            hyps_reac_grant_alloc_fits_B).
 Qed.
-(* reac_grant_allocate: PROVED, GrantAllocate.pb_reac_grant_allocate (lib/B/Prog/GrantAllocate.v:597). *)
+(* reac_grant_allocate: PROVED, GrantAllocate.pb_reac_grant_allocate (lib/B/Prog/GrantAllocate.v:598). *)
 Lemma tb_reac_grant_allocate_holds_B : tb_reac_grant_allocate_spec (SK := grantB_sink_head) (PI := PI_grant) B.
 Proof.
   exact (GrantAllocate.pb_reac_grant_allocate (SK := grantB_sink_head) (PI := PI_grant) B
            hyps_reac_grant_allocate_B).
 Qed.
-(* reac_headamp_tx_next: PROVED, HeadampTxNextClose.pb_reac_headamp_tx_next (lib/B/Prog/HeadampTxNextClose.v:57);
+(* reac_headamp_tx_next: PROVED, HeadampTxNextClose.pb_reac_headamp_tx_next (lib/B/Prog/HeadampTxNextClose.v:58);
    callees: reac_headamp_tx_effective. *)
 Lemma tb_reac_headamp_tx_next_holds_B : tb_reac_headamp_tx_next_spec (SK := grantB_sink_head) (PI := PI_grant) B.
 Proof.
@@ -364,7 +364,7 @@ Proof.
            hyps_want_of_B
            tb_reac_headamp_default_holds_B).
 Qed.
-(* ctrl_finish: PROVED, CtrlFinish.pb_ctrl_finish (lib/B/Prog/CtrlFinish.v:834); callees: reac_ctrl_record_cksum_stamp,
+(* ctrl_finish: PROVED, CtrlFinish.pb_ctrl_finish (lib/B/Prog/CtrlFinish.v:835); callees: reac_ctrl_record_cksum_stamp,
    reac_ctrl_block_cksum_stamp. *)
 Lemma tb_ctrl_finish_holds_B : tb_ctrl_finish_spec (SK := grantB_sink_head) (PI := PI_grant) B.
 Proof.
@@ -373,7 +373,7 @@ Proof.
            tb_reac_ctrl_record_cksum_stamp_holds_B
            tb_reac_ctrl_block_cksum_stamp_holds_B).
 Qed.
-(* reac_ctrl_stamp_headamp: PROVED, CtrlStampHeadamp.pb_reac_ctrl_stamp_headamp (lib/B/Prog/CtrlStampHeadamp.v:1548);
+(* reac_ctrl_stamp_headamp: PROVED, CtrlStampHeadamp.pb_reac_ctrl_stamp_headamp (lib/B/Prog/CtrlStampHeadamp.v:1549);
    callees: ctrl_lay_block, ctrl_finish. *)
 Lemma tb_reac_ctrl_stamp_headamp_holds_B : tb_reac_ctrl_stamp_headamp_spec (SK := grantB_sink_head) (PI := PI_grant) B.
 Proof.
@@ -382,8 +382,8 @@ Proof.
            tb_ctrl_lay_block_holds_B
            tb_ctrl_finish_holds_B).
 Qed.
-(* reac_ctrl_build_grant_sweep: PROVED, CtrlBuildGrantSweep.pb_reac_ctrl_build_grant_sweep (lib/B/Prog/CtrlBuildGrantSweep.v:4229),
-   accepted at a working branch 583b6421912 (a Theorem Labs build tool: rc=0, 1931 files, 0 failed:
+(* reac_ctrl_build_grant_sweep: PROVED, CtrlBuildGrantSweep.pb_reac_ctrl_build_grant_sweep (lib/B/Prog/CtrlBuildGrantSweep.v:4230),
+   accepted at a working branch (a Theorem Labs build tool: rc=0, 1931 files, 0 failed:
    an internal build log; its audit leaf is not part of the release tree);
    callees: reac_ctrl_stamp_headamp. *)
 Lemma tb_reac_ctrl_build_grant_sweep_holds_B : tb_reac_ctrl_build_grant_sweep_spec (SK := grantB_sink_head) (PI := PI_grant) B.
@@ -392,7 +392,7 @@ Proof.
            hyps_reac_ctrl_build_grant_sweep_B
            tb_reac_ctrl_stamp_headamp_holds_B).
 Qed.
-(* reac_grant_build_sweep: PROVED, GrantBuildSweepWalk.pb_reac_grant_build_sweep (lib/B/Prog/GrantBuildSweepWalk.v:37);
+(* reac_grant_build_sweep: PROVED, GrantBuildSweepWalk.pb_reac_grant_build_sweep (lib/B/Prog/GrantBuildSweepWalk.v:38);
    callees: reac_headamp_tx_effective, reac_ctrl_build_grant_sweep. *)
 Lemma tb_reac_grant_build_sweep_holds_B : tb_reac_grant_build_sweep_spec (SK := grantB_sink_head) (PI := PI_grant) B.
 Proof.
@@ -401,14 +401,14 @@ Proof.
            tb_reac_headamp_tx_effective_holds_B
            tb_reac_ctrl_build_grant_sweep_holds_B).
 Qed.
-(* reac_ctrl_parse: PROVED, CtrlParse.pb_reac_ctrl_parse (lib/B/Prog/CtrlParse.v:347); callees: kind_of_link1. *)
+(* reac_ctrl_parse: PROVED, CtrlParse.pb_reac_ctrl_parse (lib/B/Prog/CtrlParse.v:348); callees: kind_of_link1. *)
 Lemma tb_reac_ctrl_parse_holds_B : tb_reac_ctrl_parse_spec (SK := grantB_sink_head) (PI := PI_grant) B.
 Proof.
   exact (CtrlParse.pb_reac_ctrl_parse (SK := grantB_sink_head) (PI := PI_grant) B
            hyps_reac_ctrl_parse_B
            tb_kind_of_link1_holds_B).
 Qed.
-(* check_groupa: PROVED, CheckGroupa.pb_check_groupa (lib/B/Prog/CheckGroupa.v:1381); callees: reac_ctrl_parse,
+(* check_groupa: PROVED, CheckGroupa.pb_check_groupa (lib/B/Prog/CheckGroupa.v:1382); callees: reac_ctrl_parse,
    reac_headamp_tx_effective, reac_ctrl_headamp_record_verify, reac_ctrl_checksum_verify. *)
 Lemma tb_check_groupa_holds_B : tb_check_groupa_spec (SK := grantB_sink_head) (PI := PI_grant) B.
 Proof.
@@ -419,8 +419,8 @@ Proof.
            tb_reac_ctrl_headamp_record_verify_holds_B
            tb_reac_ctrl_checksum_verify_holds_B).
 Qed.
-(* LLVMFuzzerTestOneInput: PROVED, LLVMFuzzerTestOneInput.pb_LLVMFuzzerTestOneInput (lib/B/Prog/LLVMFuzzerTestOneInput.v:184),
-   accepted at a working branch 1061c1773db, merged at 4a431dd26e1 with header and settings lines only (a Theorem Labs build tool: rc=0, 2012 files, 0 failed:
+(* LLVMFuzzerTestOneInput: PROVED, LLVMFuzzerTestOneInput.pb_LLVMFuzzerTestOneInput (lib/B/Prog/LLVMFuzzerTestOneInput.v:185),
+   accepted at a working branch, merged with header and settings lines only (a Theorem Labs build tool: rc=0, 2012 files, 0 failed:
    an internal build log; its Print Assumptions audit leaf is not part of the release tree);
    callees: reac_headamp_tx_init, reac_headamp_tx_set, reac_headamp_tx_effective, reac_headamp_default, reac_grant_alloc_fits,
    reac_grant_allocate, reac_grant_build_sweep, want_of, check_groupa, reac_ctrl_identity_poll_block,
@@ -471,9 +471,9 @@ Qed.
    as the Hypothesis TFIBB at lib/B/AsanUbsanTop.v:28. The step that joins this file's entry top with TFIB_TB is
    lib/B/Prog/GrantBTFIB.v:524 grant_TFIB_TB_of_lib (used at lib/B/GrantBTop.v:184).
    Therefore (the statement owner's decision) this file takes neither module walk and none of
-   RTC_INIT, RTC_VCHK, RTC_REG, RTC_UNREG (GrantBContracts.v:1977-1978, :1997-1998). The two module walks stay proved
-   on their branches (a working branch 9c0eb366154, lib/B/Prog/AsanModuleCtor.v:461 there; a working branch
-   6a46e28f21c, lib/B/Prog/AsanModuleDtor.v:259 there); this file does not Require them, and this branch does not carry them. A note for the core port:
+   RTC_INIT, RTC_VCHK, RTC_REG, RTC_UNREG (GrantBContracts.v:1978-1979, :1998-1999). The two module walks stay proved
+   on their branches (a working branch, lib/B/Prog/AsanModuleCtor.v:461 there; a working branch,
+   lib/B/Prog/AsanModuleDtor.v:259 there); this file does not Require them, and this branch does not carry them. A note for the core port:
    RTC_REG / RTC_UNREG as GrantBContracts.v states them are satisfiable only if the poisoned redzone
    shadow that the registration writes (about 0x7fffa1d8 .. 0x8000bab7, outside every PT_LOAD) is in AR's owned set. *)
 
@@ -494,39 +494,39 @@ Print Assumptions tb_LLVMFuzzerTestOneInput_holds_B.
    Open walks: none. Every walk that reaches the top is taken by its theorem.
 
    Runtime and image facts that reach the top undischarged (33):
-     RT_LAWS: AR_laws: the runtime's state laws (GrantBContracts.v:333)
-     RT_PALIB: PALib: the walk layer's library facts (GrantBContracts.v:334)
-     RT_PALIBF: PALibF: the side-stack library facts (GrantBContracts.v:335)
-     RT_ML: model_laws of the trace universe (GrantBContracts.v:336)
-     RT_SMP: stack_malloc_progressP (GrantBContracts.v:337)
-     RT_ASF: astack_free_law (GrantBContracts.v:338)
-     RT_FFL: frame_flag_lawP (GrantBContracts.v:339)
-     RT_TP_FS: the fake stack's thread-local pointer (GrantBContracts.v:367)
-     RT_MALLOC: the malloc wrapper's jump 0x52edc (GrantBContracts.v:341)
-     RT_FREE: the free wrapper's jump 0x52ed8 (GrantBContracts.v:342)
-     RT_MEMCPY: __asan_memcpy 0x51b88 (GrantBContracts.v:344)
-     RT_MEMSET: __asan_memset 0x52024 (GrantBContracts.v:345)
-     RT_BCMP: the bcmp wrapper's jump 0x424d0 (GrantBContracts.v:347)
-     RT_SM0: __asan_stack_malloc_0 0x3cf4c (GrantBContracts.v:352, c = 0)
-     RT_SM1: __asan_stack_malloc_1 0x3d0c0 (GrantBContracts.v:352, c = 1)
-     RT_SM2: __asan_stack_malloc_2 0x3d250 (GrantBContracts.v:352, c = 2)
-     RT_SM4: __asan_stack_malloc_4 0x3d3ec (GrantBContracts.v:352, c = 4)
-     RT_SM6: __asan_stack_malloc_6 0x3d5b8 (GrantBContracts.v:352, c = 6)
-     RT_SF6: __asan_stack_free_6 0x3d754 (GrantBContracts.v:354)
-     RT_SS00: __asan_set_shadow_00 0x54a48 (GrantBContracts.v:356)
-     RT_SSF5: __asan_set_shadow_f5 0x54b50 (GrantBContracts.v:357)
-     RT_SSF8: __asan_set_shadow_f8 0x54b68 (GrantBContracts.v:358)
-     RT_IMGSH: the shadow of image B's read range is mapped (GrantBContracts.v:361)
-     RT_GLOBS: image B's 13 registered globals are marked (GrantBContracts.v:362)
-     IMG_CTRL_ROW: the row B_ROW 0x9d4d0: aligned, placed, in as_zero_shadow, apart (GrantBContracts.v:969)
-     IMG_CTRL_ROW_FIN: the row's bytes ctrl_finish reads (GrantBContracts.v:974)
-     IMG_CTRL_LAY_JT: entry 2 of ctrl_lay_block's jump table 0x21034 (GrantBContracts.v:992)
-     IMG_CTRL_STAMP_TM: the last conjunct of IMG_CTRL_STAMP (GrantBContracts.v:1011): the template TM the row names
-     IMG_BGS_ROWS: the three row tables reac_ctrl_build_grant_sweep copies (GrantBContracts.v:1017)
-     IMG_reac_ctrl_parse: .str.4 (object 15): its entry, place and six 0xff bytes (GrantBContracts.v:1626)
-     IMG_check_groupa: __const.check_groupa.frame (object 9) (GrantBContracts.v:1699)
-     IMG_LLVMF_SWEEP: the four read-only tables the entry reads (GrantBContracts.v:1911)
-     IMG_NEXT_DIV3: reac_headamp_tx_next's multiplier at object 34 (GrantBContracts.v:690)
+     RT_LAWS: AR_laws: the runtime's state laws (GrantBContracts.v:334)
+     RT_PALIB: PALib: the walk layer's library facts (GrantBContracts.v:335)
+     RT_PALIBF: PALibF: the side-stack library facts (GrantBContracts.v:336)
+     RT_ML: model_laws of the trace universe (GrantBContracts.v:337)
+     RT_SMP: stack_malloc_progressP (GrantBContracts.v:338)
+     RT_ASF: astack_free_law (GrantBContracts.v:339)
+     RT_FFL: frame_flag_lawP (GrantBContracts.v:340)
+     RT_TP_FS: the fake stack's thread-local pointer (GrantBContracts.v:368)
+     RT_MALLOC: the malloc wrapper's jump 0x52edc (GrantBContracts.v:342)
+     RT_FREE: the free wrapper's jump 0x52ed8 (GrantBContracts.v:343)
+     RT_MEMCPY: __asan_memcpy 0x51b88 (GrantBContracts.v:345)
+     RT_MEMSET: __asan_memset 0x52024 (GrantBContracts.v:346)
+     RT_BCMP: the bcmp wrapper's jump 0x424d0 (GrantBContracts.v:348)
+     RT_SM0: __asan_stack_malloc_0 0x3cf4c (GrantBContracts.v:353, c = 0)
+     RT_SM1: __asan_stack_malloc_1 0x3d0c0 (GrantBContracts.v:353, c = 1)
+     RT_SM2: __asan_stack_malloc_2 0x3d250 (GrantBContracts.v:353, c = 2)
+     RT_SM4: __asan_stack_malloc_4 0x3d3ec (GrantBContracts.v:353, c = 4)
+     RT_SM6: __asan_stack_malloc_6 0x3d5b8 (GrantBContracts.v:353, c = 6)
+     RT_SF6: __asan_stack_free_6 0x3d754 (GrantBContracts.v:355)
+     RT_SS00: __asan_set_shadow_00 0x54a48 (GrantBContracts.v:357)
+     RT_SSF5: __asan_set_shadow_f5 0x54b50 (GrantBContracts.v:358)
+     RT_SSF8: __asan_set_shadow_f8 0x54b68 (GrantBContracts.v:359)
+     RT_IMGSH: the shadow of image B's read range is mapped (GrantBContracts.v:362)
+     RT_GLOBS: image B's 13 registered globals are marked (GrantBContracts.v:363)
+     IMG_CTRL_ROW: the row B_ROW 0x9d4d0: aligned, placed, in as_zero_shadow, apart (GrantBContracts.v:970)
+     IMG_CTRL_ROW_FIN: the row's bytes ctrl_finish reads (GrantBContracts.v:975)
+     IMG_CTRL_LAY_JT: entry 2 of ctrl_lay_block's jump table 0x21034 (GrantBContracts.v:993)
+     IMG_CTRL_STAMP_TM: the last conjunct of IMG_CTRL_STAMP (GrantBContracts.v:1012): the template TM the row names
+     IMG_BGS_ROWS: the three row tables reac_ctrl_build_grant_sweep copies (GrantBContracts.v:1018)
+     IMG_reac_ctrl_parse: .str.4 (object 15): its entry, place and six 0xff bytes (GrantBContracts.v:1627)
+     IMG_check_groupa: __const.check_groupa.frame (object 9) (GrantBContracts.v:1700)
+     IMG_LLVMF_SWEEP: the four read-only tables the entry reads (GrantBContracts.v:1912)
+     IMG_NEXT_DIV3: reac_headamp_tx_next's multiplier at object 34 (GrantBContracts.v:691)
 
    Facts of the runtime's symbol record B that reach the top (3; each closes by reflexivity at B's concrete record):
      H_universe_B: as_universe B = YCej.Tfib_universe (A: lib/A/AD2l.v:38)
@@ -536,7 +536,7 @@ Print Assumptions tb_LLVMFuzzerTestOneInput_holds_B.
    No RTC_* fact and no module walk reaches the top: see INIT AND EXIT PATHS above.
 
    Discharged here, not hypotheses of the top: IMG_LLVMF_TRACES (img_llvmf_traces_B, from the three record facts by
-   GrantBTraces.img_llvmf_traces_grant, a working branch efbbabd737d), IMG_RO_BELOW (img_ro_below_B, by
+   GrantBTraces.img_llvmf_traces_grant, a working branch), IMG_RO_BELOW (img_ro_below_B, by
    computation over image B's
    segments and RELRO range at the sink 0x5f9008) and IMG_CTRL_ROW_IMG (img_ctrl_row_img_B, from GrantImg.v
    grant_row_val and grant_relro_img).
@@ -547,27 +547,27 @@ Print Assumptions tb_LLVMFuzzerTestOneInput_holds_B.
    : want_of's `0 <= c < 48` at the two SWEEP call sites 0x8163c and 0x816e8 is not a branch of the entry; it
    follows from reac_grant_allocate's post `base + width <= 48` and the success test at 0x8138c. It is owed by the
    walk of the SWEEP phase of LLVMFuzzerTestOneInput, next to `0 <= p < 3`, and that walk is
-   proved (a working branch 1061c1773db).
+   proved (a working branch).
 
-   THE MERGED WALK HEADS. This branch is image B's walk layer on the core (a working branch c3515bfe0db, on
-   a working branch e47e01e8e06), with the heads that carry every proved walk onto it. Each walk file below comes from the
+   THE MERGED WALK HEADS. This branch is image B's walk layer on the core (a working branch, on
+   a working branch), with the heads that carry every proved walk onto it. Each walk file below comes from the
    head named. With comments and Require lines removed, 18 of these 22 files and 81 of the 84 parts are equal to their heads; the other 4 files (CtrlStampHeadamp.v, CheckGroupa.v, CtrlLayBlock.v, CtrlBuildGrantSweep.v) and 3 parts (GrantBuildSweep.v, GrantBuildSweepCell.v, LLVMFEntryInit.v) add helper tactics or lemmas and also change existing proof steps. The line numbers are this tree's. Acceptance builds of the
-   walk heads (a Theorem Labs build tool, FACTS f0e6eb38667): an internal build log
-   (twelve walks), an internal build log (seven walks at
-   13b1d4fdf0a, reac_grant_build_sweep included; six earlier ones also at 4d49926a82f,
+   walk heads (a Theorem Labs build tool, FACTS): an internal build log
+   (twelve walks), an internal build log (seven walks,
+   reac_grant_build_sweep included; six earlier ones also,
    an internal build log), and LLVMFuzzerTestOneInput's (below).
      branch                                        head          file (lib/B/Prog)           theorem taken here
-     a working branch (layer)               c3515bfe0db   GrantBContracts.v           pb_walk_kind_of_link1 :420
+     a working branch (layer)   GrantBContracts.v           pb_walk_kind_of_link1 :420
                                                                  GrantBContracts.v           pb_walk_reac_headamp_tx_init :425
                                                                  GrantBContracts.v           pb_walk_reac_headamp_default :430
-     a working branch                      13b1d4fdf0a   HeadampTxSet.v              pb_reac_headamp_tx_set :655
+     a working branch   HeadampTxSet.v              pb_reac_headamp_tx_set :655
                                                                  HeadampTxEffective.v        pb_reac_headamp_tx_effective :523
                                                                  HeadampTxArmScene.v         pb_reac_headamp_tx_arm_scene :612
                                                                  HeadampTxSetResweep.v       pb_reac_headamp_tx_set_resweep :179
                                                                  CtrlStampHeadamp.v          pb_reac_ctrl_stamp_headamp :1548
                                                                  HeadampTxNextClose.v (+ 8 parts)pb_reac_headamp_tx_next :57
                                                                  GrantBuildSweepWalk.v (+ 4) pb_reac_grant_build_sweep :37
-     a working branch                      893bc4d10e1   CtrlChecksumVerify.v        pb_reac_ctrl_checksum_verify :355
+     a working branch   CtrlChecksumVerify.v        pb_reac_ctrl_checksum_verify :355
                                                                  CtrlHeadampRecordVerify.v   pb_reac_ctrl_headamp_record_verify :361
                                                                  CtrlIdentityPollBlock.v     pb_reac_ctrl_identity_poll_block :315
                                                                  GrantAllocFits.v            pb_reac_grant_alloc_fits :272
@@ -579,8 +579,8 @@ Print Assumptions tb_LLVMFuzzerTestOneInput_holds_B.
                                                                  CtrlParse.v (+ 15 parts)    pb_reac_ctrl_parse :347
                                                                  CheckGroupa.v               pb_check_groupa :1381
                                                                  CtrlLayBlock.v              pb_walk_ctrl_lay_block :1175
-     a working branch                       4a431dd26e1   LLVMFuzzerTestOneInput.v (+ 57)pb_LLVMFuzzerTestOneInput :184
-     a working branch                        583b6421912   CtrlBuildGrantSweep.v       pb_reac_ctrl_build_grant_sweep :4229
-   AsanModuleCtor.v and AsanModuleDtor.v are not on this branch: their pre-core copies (ctor2 9c0eb366154, dtor2
-   6a46e28f21c, which Require lib.A.Prog) were removed (approved 2026-10-29); the module walks are not taken here
+     a working branch   LLVMFuzzerTestOneInput.v (+ 57)pb_LLVMFuzzerTestOneInput :184
+     a working branch   CtrlBuildGrantSweep.v       pb_reac_ctrl_build_grant_sweep :4229
+   AsanModuleCtor.v and AsanModuleDtor.v are not on this branch: their pre-core copies (ctor2, dtor2,
+   which Require lib.A.Prog) were removed (approved 2026-10-29); the module walks are not taken here
    (INIT AND EXIT PATHS). *)

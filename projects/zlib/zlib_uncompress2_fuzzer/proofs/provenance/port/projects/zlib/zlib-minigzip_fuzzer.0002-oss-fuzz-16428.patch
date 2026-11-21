@@ -1,0 +1,15 @@
+diff --git a/projects/zlib/minigzip_fuzzer.c b/projects/zlib/minigzip_fuzzer.c
+index d124e634b4e9..74e942b739cb 100644
+--- a/projects/zlib/minigzip_fuzzer.c
++++ b/projects/zlib/minigzip_fuzzer.c
+@@ -456,6 +456,10 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t dataLen) {
+     return 0;
+ 
+   in = fopen(inFileName, "w");
++  if (in == NULL) {
++    perror(inFileName);
++    return 0;
++  }
+   if (fwrite(data, 1, (unsigned)dataLen, in) != dataLen)
+     error("failed fwrite");
+   if (fclose(in))

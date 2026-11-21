@@ -3,12 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: cgif_file_fuzzer lib/A/AE6x.v's walk of the memchr wrapper, generalised to any byte c in a1 and to a window that may hold no c: the musl call is MemchrMusl's walk, and after it the found case keeps AE6x's check (AE6y, count a0 - s2 + 1) while the not-found case takes the twin check of MemchrChk (count s1). *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_disco/lib/A/Rt/Memchr.v
-   (a working branch 3b8a77d146c, the general memchr), with its module paths changed and its seven addresses moved to fuzz_reply.asan by code pairing: trampoline 0x429dc -> 0x421b0, musl memchr 0x99674 -> 0x963d0, return 0x441fc -> 0x445a4, epilogue 0x4425c -> 0x44604, REAL(memchr) cell 0xa2238 -> 0x9f728, and the musl mask window 0x10368/0x10388 -> 0x10350/0x10370 (AE39.v mc_bounds). *)
+   (a working branch, the general memchr), with its module paths changed and its seven addresses moved to fuzz_reply.asan by code pairing: trampoline 0x429dc -> 0x421b0, musl memchr 0x99674 -> 0x963d0, return 0x441fc -> 0x445a4, epilogue 0x4425c -> 0x44604, REAL(memchr) cell 0xa2238 -> 0x9f728, and the musl mask window 0x10368/0x10388 -> 0x10350/0x10370 (AE39.v mc_bounds). *)
 (* Modified by Theorem Labs, 2026-10: made generic in place over AE2y.v's icpt_laws_x (any allocator invariant ARx;
    ghost head set Hpx threaded unchanged), as SitesCf did for AE2t / AE6y / AE7e: each walk lemma is stated over ARx
    (<name>_x, and POSTr_x / POSTC_x for the section posts); every theorem or lemma that took AR_laws keeps its
    statement byte for byte (its post definition too) and is re-proved from its _x at ARx := AR_x B
    (AE2y.icpt_laws_x_AR), in a section named <section>A. Contract texts over ARx: lib/A/IcptRealizesX.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

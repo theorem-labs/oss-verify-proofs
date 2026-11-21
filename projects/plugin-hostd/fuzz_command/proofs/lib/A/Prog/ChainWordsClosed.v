@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the closing file of the ASan+UBSan walk of arg_line (plugin-hostd/fuzz_command,
    fuzz_command.asan-ubsan), the pattern of a Theorem Labs lane's PASS4-REFIT.md section F (lib/A/Prog/SupRemoveAllRefitClosed.v,
-   a working branch e84227c9553; a Theorem Labs lane's lib/A/Prog/RecBClosed.v, a working branch f349bdaedba): the
+   a working branch; a Theorem Labs lane's lib/A/Prog/RecBClosed.v, a working branch): the
    walk's targ_line_holds (lib/B/Prog/arg_line.v) with the per-binary facts it names as Section hypotheses discharged
    at the pinned image (lib/B/Prog/CmdImg.v's instance PB_cmd, whose segments are tfibsegs, and the sink head
    YE2k.tfib_sink_head): cmd_val_objs_PB, cmd_sig_prog_PB and PRW (cmd_prw_tfib: the program's statics lie in
@@ -10,6 +10,7 @@
    statement's own hypotheses (rec_canonical's contract and the strlen wrapper's, each at every FP state), HB and
    MTL. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/ArgLineClosed.v, with its module paths and module names changed; 21 of its 47 lines of code are new or changed and 20 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The closing pattern of the re-fit to statement passes 4-5 for chain_words' ASan walk (lib/A/Prog/chain_words.v,
    chain_words_proved): the per-binary record hypotheses it names discharged at the pinned image (lib/A/Prog/CmdImg.v's
    instance PB_cmd, whose segments are tfibsegs, and the sink head AE2k.tfib_sink_head), by the kit's closing

@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the port of zstd/zstd_frame_info's same file). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -10,8 +11,6 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
 From OSSVerify.Proofs.zstd.huf_decompress.lib.AS Require Import
   PropExec ShapeAlg SpinAlg AgentLib AsanAcct AsanAcctShape AxSymExec3 AxSymExec3Sound AxSymRun3
   AsanPlanCore AsanPlan AsanPlanSound.
-From OSSVerify.Proofs.zstd.huf_decompress.lib Require KReplay.
-Ltac2 kr_t_AsanNodesIface () := "K47Corelib7Numbers7BinNums8positive02K47Corelib7Numbers7BinNums8positive01K47Corelib7Numbers7BinNums1N02I45stdpp9bitvector;definitions2bv00C4ELinuxProcessSemantics5Riscv7Prelude5bvmapI47Corelib4Init9Datatypes6option00I69OSSVerify5KrLib2AS=AsanPlanSound3APS5cs_ok00C1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib2AS8AsanPlan2AP;is_ecall_atC1?~~~~~~~~~~~~~~~I47Corelib4Init5Logic2eq00I47Corelib4Init9Datatypes4prod00C69OSSVerify5KrLib2AS8AsanPlan2AP:node_mmap2C1?~~~~~~~~~~~~~~~K47Corelib4Init9Datatypes4prod01K47Corelib4Init9Datatypes6option01C59OSSVerify5KrLib2AS9AxSymRun39env_agreeC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib2AS8AsanPlan2AP3nxtC1?~~~~~~~~~~~~~~~I47Corelib4Init5Logic3and00C4ELinuxProcessSemantics?LinuxProcessSem5State4m_fsC69OSSVerify5KrLib2AS8AsanPlan2AP2pcC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib2AS=AsanPlanSound3APS6cfg_ofC1?~~~~~~~~~~~~~~~I59OSSVerify5KrLib2AS7SpinAlg9srealizes00C1?~~~~~~~~~~~~~~~K47Corelib4Init5Logic3and01C47Corelib4Init5Logic3iffI69OSSVerify5KrLib2AS8AsanPlan2AP3acs00C1?~~~~~~~~~~~~~~~I69OSSVerify5KrLib2AS:AxSymExec33AX23env00C1?~~~~~~~~~~~~~~~K47Corelib7Numbers7BinNums8positive03I4ELinuxProcessSemantics?LinuxProcessSem5State5Model00C59OSSVerify5KrLib2AS8ShapeAlg4TSetC1?~~~~~~~~~~~~~~~I47Corelib4Init9Datatypes4bool00K47Corelib4Init9Datatypes4bool01C4ELinuxProcessSemantics?LinuxProcessSem2Fs2Fsc59OSSVerify5KrLib2AS>AsanNodesIface9OBL_mmap2C1?~~~~~~~~~~~~~~~".
 Import ListNotations.
 Import AX2. Import AX2S. Import AP. Import APS.
 Open Scope Z_scope.
@@ -38,7 +37,7 @@ Definition OBL_all : Prop := OBL_mmap2 /\ OBL_mmapin /\ OBL_mprotect2 /\ OBL_brk
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
-Lemma OBL_mmap2_unfold :
+#[using="Type"] Lemma OBL_mmap2_unfold :
   OBL_mmap2 <->
   forall cs csa csb E R FULL model TB,
     cs_ok SEGS A LIMIT SINV argH FS0 E cs R FULL model ->

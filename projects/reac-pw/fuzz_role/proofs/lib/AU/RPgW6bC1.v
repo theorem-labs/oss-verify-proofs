@@ -1,10 +1,10 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6bC1.v at 32f84792c2a6; for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6bC1.v; for image B
    (fuzz_rate.asan-ubsan): the block lemma is w6bb_c1 of lib/AU/RtPgW6bBaseB.v over RtPgStepsB.rtsb_post; the pcs,
    registers and real-frame cells are image B's; the pod object is e62 (F + 0x210) in the class-4 frame (4, pos); the
    kind byte and what is left reach the tail through the spill cells [R+0x128] and [R+0x70]; the cursor stays in s10;
    the strlen wrapper's hypothesis is at image B's entry 0x421ec (lib/A/Rt/StrlenDef.v astrlen_realizes, the
    image-parametric definition only); the prefix c1_ becomes c1b_. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgW6bC1B.v at a191d52e2a9a for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgW6bC1B.v for
    reac-pw/fuzz_role's image B (fuzz_role.asan-ubsan): module paths changed (lib/AU/Img0.rsegs, lib/A/RPgBase and
    RPgCSpec, lib/AU/RPgSteps.v rl_ and lib/AU/RPgMem.v rm_ names, lib/AU/Rt/StrlenDef.v); the block lemma is
    lib/AU/RPgW6bBase.v's w6bb_c1_stmt over RPgSteps.rl_wpost; the chain runs through role B's pcs (checked_memcpy

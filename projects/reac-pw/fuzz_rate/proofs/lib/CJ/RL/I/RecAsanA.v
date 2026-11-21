@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/CJ/RL/I/RecAsanA.v at 2d2ff01bb6f2; module paths changed; the values moved to reac-pw/fuzz_rate's ASan image A by symbol + offset (ledger provenance/reloc/A-Snp.tsv), the keys kept; it names the map IImgAG.v in place of IImgA.v. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/CJ/RL/I/RecAsanA.v; module paths changed; the values moved to reac-pw/fuzz_rate's ASan image A by symbol + offset (ledger provenance/reloc/A-Snp.tsv), the keys kept; it names the map IImgAG.v in place of IImgA.v. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.RL.Reloc Require Import RStep.

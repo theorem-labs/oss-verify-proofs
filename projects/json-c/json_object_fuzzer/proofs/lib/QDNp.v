@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the CONFIG_RSEQ flag of the start-up layer: both AsanNodes sections take its value rz for APS.x_stmt). *)
 
 From Stdlib Require ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -47,6 +48,7 @@ Proof. exact asan_popfree_spec. Qed.
 Section AsanNodes.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+Variable rz : Z.
 Variable USP : Z.
 Hypothesis NX0_ge : APS.nx0_ge nx0.
 Variable SINV : AX2.env -> (word -> option byte) -> Prop.
@@ -57,7 +59,7 @@ Hypothesis SINV_frame : forall E M M', (forall a, argH E a = true -> M' a = M a)
 Hypothesis SINV_agree : forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E' M.
 Variable FS0 : Fs.Fs.
 
-#[local] Notation XSTMT := (APS.x_stmt JOB6SEGS BJO6 nx0 LIMIT USP SINV argH FS0).
+#[local] Notation XSTMT := (APS.x_stmt JOB6SEGS BJO6 nx0 LIMIT rz USP SINV argH FS0).
 
 Theorem asan_node_x_sound_XIMemset : XSTMT AP.XIMemset.
 Proof. eapply APSX.node_x_sound_XIMemset; try eassumption; try apply asan_segs_wr; try apply asan_wx; try apply asan_in_hull;
@@ -139,6 +141,7 @@ Proof. exact asan_popfree_spec. Qed.
 Section AsanNodes.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+Variable rz : Z.
 Variable USP : Z.
 Hypothesis NX0_ge : APS.nx0_ge nx0.
 Variable SINV : AX2.env -> (word -> option byte) -> Prop.
@@ -149,7 +152,7 @@ Hypothesis SINV_frame : forall E M M', (forall a, argH E a = true -> M' a = M a)
 Hypothesis SINV_agree : forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E' M.
 Variable FS0 : Fs.Fs.
 
-#[local] Notation XSTMT := (APS.x_stmt JO6SEGS AJO6 nx0 LIMIT USP SINV argH FS0).
+#[local] Notation XSTMT := (APS.x_stmt JO6SEGS AJO6 nx0 LIMIT rz USP SINV argH FS0).
 
 Theorem asan_node_x_sound_XIMemset : XSTMT AP.XIMemset.
 Proof. eapply APSX.node_x_sound_XIMemset; try eassumption; try apply asan_segs_wr; try apply asan_wx; try apply asan_in_hull;

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image A' (asan, harness fix #102, pin sha256
    1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44): the KEEP LEMMAS of the walk of parse_noting
    (row N10-PNA; cut table lib/A/Prog/PN102Cuts.v): the frame invariant pn_frame (its journal at a budget WS, the batch kit's wild
@@ -9,23 +10,23 @@
    instance. No function is proved here.
    rule 24: proves function parse_noting (reuse search: `proof-index parse_noting` exit 4 at 2026-10-30 07:2xZ,
    index v5 06:36:24Z: 0 named / 0 by address / 0 related / 0 released; the unreleased hits are this lane's own N10-PNA
-   files and the plain / UBSan / B' twins; R24Pna CONFIRM 2026-10-29 18:2xZ; own signed walk 13970867e0c9, its one
+   files and the plain / UBSan / B' twins; R24Pna CONFIRM 2026-10-29 18:2xZ; own signed walk, its one
    announced re-bind). This file: support lemmas of that walk only.
-   THE BATCH KIT'S RE-BIND: a Theorem Labs lane's signed A' file of the same role (a working branch 13970867e0c9),
-   re-fit to the batch kit's cut (commit 7cdbb61b5fa0) as the B' twin was re-fit
-   (a working branch c7276d935095 lib/B/Prog/PN102B<same role>.v, read back at PI_prog_A / prh_img_A).
+   THE BATCH KIT'S RE-BIND: a Theorem Labs lane's signed A' file of the same role (a working branch),
+   re-fit to the batch kit's cut as the B' twin was re-fit
+   (a working branch lib/B/Prog/PN102B<same role>.v, read back at PI_prog_A / prh_img_A).
    The batch kit's changes: the journal carries a budget (pn_ajw_materialize: YCbqGwild.v rebase / unbase0 around YCbqG.v
    ajournal_x_materialize); pn_R_keep carries the batch kit's pn_R, the tree's free order and capacities by
    PRH_PjOrder.pj_foR_frame and PvB_Frees.pvf_ncap_frame (lane PValueB's image-free file, taken by path from
-   a working branch c7276d935095, blob 67d0dad82edc). The statics' read-only check is S1ImgA.v
+   a working branch, blob 67d0dad82edc). The statics' read-only check is S1ImgA.v
    pst_not_ro_A, as in the signed walk.
    OVER A WORLD RELATION R (the free / realloc move: after pj_parse, which frees, the cut's journal is at
    YA0nH.wle' segs RZ_cf): FRAME is PN102Cuts.v pn_frameR at R. Used on both sides of the free, so each with its
    form over R BESIDE it (pn_img_keepR, pn_frame_stepR) and the old name as the instance at wle: pn_img_keep,
    pn_frame_step. Used only over R (after or across the free), so restated in place over R: pn_ajw_materialize,
    pn_frame_call, pn_R_keep. The journals over R are YCbqG.v ajournal_xwR, read through the ajxR_* projections.
-   SHAPES TAKEN: the read-only keep is lib/A/Prog/Ent102L2A.v l2_imgkeep's second half (a working branch
-   b1bc025047ea), restated at PST := prh_pst prh_img_A with S1ImgA.v pst_not_ro_A.
+   SHAPES TAKEN: the read-only keep is lib/A/Prog/Ent102L2A.v l2_imgkeep's second half (a working branch),
+   restated at PST := prh_pst prh_img_A with S1ImgA.v pst_not_ro_A.
    NUMERALS: 48 (the frame), 8 .. 40 (the save slots), 8 (a word). No ADDRESS. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

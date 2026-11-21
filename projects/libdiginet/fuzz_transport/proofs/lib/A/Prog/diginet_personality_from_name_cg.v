@@ -12,11 +12,12 @@
    object). It subsumes the literal instance of libreac/fuzz_pcap lib/A/Rt/StrcmpDef.v (x = y, k = the literal's
    length, c1 = c2 = 0, result 0). *)
 (* Modified by Theorem Labs, 2026-10-29: taken by path from libreac/fuzz_grant lib/Reusable/AStrcmpDef.v
-   (a working branch 97c611eec86, owner a Theorem Labs lane, the text of record for the strcmp trampoline contract in
+   (a working branch, owner a Theorem Labs lane, the text of record for the strcmp trampoline contract in
    a Theorem Labs lane's registry). Only the module paths change (fuzz_grant -> fuzz_identity); the statement is identical. The
    walk is a Theorem Labs lane's lib/A/Rt/Strcmp.v, relocated to identity's addresses separately. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_identity/lib/AStrcmpDef.v (donor image sha256 c954b804786c), with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_codec/lib/Reusable/AStrcmpDef.v, with its module paths and module names changed; 71 of its 108 lines of code are new or changed and 16 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* diginet_personality_from_name_cg: the ASan walk contract of diginet_personality_from_name (src/diginet_codec.c:17-25;
    plain contract lib/Prog/diginet_personality_from_name_c.v, result codec_cells.v from_name_res) on
    fuzz_transport.asan (e89be137db17) at 0x8c484 = transport_sigma TS_diginet_personality_from_name, size 172, as

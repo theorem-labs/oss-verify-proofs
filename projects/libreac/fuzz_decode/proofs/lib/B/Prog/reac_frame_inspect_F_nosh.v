@@ -24,7 +24,7 @@ From OSSVerify.Proofs.libreac.fuzz_decode.lib.B.Prog Require Import reac_frame_i
    sk_joinF_at proves the meeting point once, for every value x of that register (Rf x is the register file with x in
    its slot), and closes both paths with it: each shadow check leaves one goal, not two (shadow_passF doubles the
    goals, 64 at the end of this proof). sk_joinF tries the register slots a4, a3, a2, a1, a0; only the andi destination
-   lets the k <> 0 path close. Same join as a Theorem Labs lane's sk_join in lib/A/Prog/reac_frame_inspect_F.v (87f7a42a104). *)
+   lets the k <> 0 path close. Same join as a Theorem Labs lane's sk_join in lib/A/Prog/reac_frame_inspect_F.v. *)
 Local Ltac sk_joinF_at a0 off U k SK MB Rf x :=
   lazymatch goal with
   | |- evtF ?segs ?RNG ?Q (MS ?R ?F (if _ then _ else Z_to_bv 64 ?pc) ?fc ?rv ?m ?ro) =>

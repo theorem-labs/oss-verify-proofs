@@ -3,7 +3,7 @@
    no function of the binary is proved here, and every lemma below is closed (no segment lemma is assumed: each is
    a premise).
 
-   THE FORM: plugin-hostd/fuzz_command's lib/A/Prog/LLVMFuzzerTestOneInput_s02.v (origin/ossv/recipes 501c0d516c69):
+   THE FORM: plugin-hostd/fuzz_command's lib/A/Prog/LLVMFuzzerTestOneInput_s02.v:
    - lt_file_loop, the file loop (head K85024, the harness's structure map section 1.2: at most 4 turns, nfiles = 1 + in[2] % 4),
      by downward induction on the turn with the base case refuted by K85024's `f < nfiles` and lt_nfiles_range;
    - lt_mdecl_loop, the inlined m_declared loop (head K858f4, cut K85ac4 inside the turn), by downward induction on

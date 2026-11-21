@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput: the section takes the input's fields (apc, mbase, kb, execfn and the other QpvH.inp fields) with QpvH.launch_ok in place of entry_stack_fits, and SINV0 / argH0 over them; the CONFIG_RSEQ flag of the start-up layer: the checks over the four main-entry states of HSCLASS_S; the main-entry states' variable numbers renumbered for the states the build computes, by the map read off the new start-up run). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -91,11 +92,11 @@ kn_rw_cells k QkfD.SEC_NRES [C8 (wz 0); C8 (wz 0)]
 && kn_rw_cells k QUnM.IA_FLAG [C1 (b8 0); C1 (b8 0); C1 (b8 0); C1 (b8 0)]
 && kn_has (KImg IA_IMG_LO IA_IMG_HI) k && img_zero IA_LO (IA_HI - IA_LO)
 
-&& kn_has (KZero (SA (EMd Instr.M_MUL (ELit 4096) (EVar 237)) 80) (ELit 3088)) k
-&& kn_has (KWr (SA (EMd Instr.M_MUL (ELit 4096) (EVar 237)) 0) (ELit 4096)) k
-&& kn_has (KRange (EVar 237) 1 34359736319) k.
+&& kn_has (KZero (SA (EMd Instr.M_MUL (ELit 4096) (EVar 241)) 80) (ELit 3088)) k
+&& kn_has (KWr (SA (EMd Instr.M_MUL (ELit 4096) (EVar 241)) 0) (ELit 4096)) k
+&& kn_has (KRange (EVar 241) 1 34359736319) k.
 
-Lemma RSQ_CHECKS : forall w ch, HSCLASS_S w ch -> rsq_checks (kn_view ch) = true.  Proof. intros [|] ch [-> | ->]; vm_compute; reflexivity. Qed.
+Lemma RSQ_CHECKS : forall w ch, HSCLASS_S w ch -> rsq_checks (kn_view ch) = true.  Proof. intros [|] ch [-> | [-> | [-> | ->]]]; vm_compute; reflexivity. Qed.
 
 Section OfKn.
 Context {BAND : Band}.
@@ -105,26 +106,40 @@ Variable brk0 : word.
 Variable argv envp : list (list byte).
 Variable fs : Fs.Fs.
 Variables uid hw : word.
+Variable apc : N.
+Variable mbase : word.
+Variable ifs : Fs.Fs.
+Variable stdin : InputStream.
+Variable gid : word.
+Variable groups : list word.
+Variable net : NetQueue.
+Variables nofile sigmask : word.
+Variable abort_terminal : bool.
+Variable urnd : InputStream.
+Variable tmp : Fs.Fs.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variables rdr sgd sgt : bool.
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hfit : QpvH.launch_ok sp brk0 mbase rdraw (QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt).
 Variables (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (mo : Model).
 Variable w : bool.
 Variable ch : acs.
 Hypothesis HCL : HSCLASS_S w ch.
-Hypothesis CS : cs_ok JO6SEGS AJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JO6PH sp rdraw brk0 argv envp uid hw) (argH0 JO6PH sp rdraw argv envp uid hw) fs E ch R FULL mo.
+Hypothesis CS : cs_ok JO6SEGS AJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JO6PH apc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) (argH0 sp rdraw argv envp kb execfn) fs E ch R FULL mo.
 Hypothesis HB : band_lo = atopE E.
 #[local] Notation m := (view (LV_J E) mo FULL).
 #[local] Notation P f := (f _ _ _ _ _ _ _ _ _ _ _ _ CS) (only parsing).
-#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw Hsp E R FULL mo w ch HCL CS) (only parsing).
-#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
-#[local] Notation LA L := (L sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS HB) (only parsing).
+#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation LA L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS HB) (only parsing).
 
 Let KO : know_ok asegs E m (kn_view ch) := MV4 main_know_view.
 
-Let T : Z := pg E 237.
-Let parr : Z := pg E 236.
+Let T : Z := pg E 241.
+Let parr : Z := pg E 240.
 
 Lemma ch_split :
 kn_rw_cells (kn_view ch) QkfD.SEC_NRES [C8 (wz 0); C8 (wz 0)] = true
@@ -135,21 +150,21 @@ kn_rw_cells (kn_view ch) QkfD.SEC_NRES [C8 (wz 0); C8 (wz 0)] = true
 /\ kn_rw_cells (kn_view ch) QUnM.GQ [C8 (wz 0); C8 (wz 0); C8 (wz 0); C8 (wz 0)] = true
 /\ kn_rw_cells (kn_view ch) QUnM.IA_FLAG [C1 (b8 0); C1 (b8 0); C1 (b8 0); C1 (b8 0)] = true
 /\ kn_has (KImg IA_IMG_LO IA_IMG_HI) (kn_view ch) = true /\ img_zero IA_LO (IA_HI - IA_LO) = true
-/\ kn_has (KZero (SA (EMd Instr.M_MUL (ELit 4096) (EVar 237)) 80) (ELit 3088)) (kn_view ch) = true
-/\ kn_has (KWr (SA (EMd Instr.M_MUL (ELit 4096) (EVar 237)) 0) (ELit 4096)) (kn_view ch) = true
-/\ kn_has (KRange (EVar 237) 1 34359736319) (kn_view ch) = true.
+/\ kn_has (KZero (SA (EMd Instr.M_MUL (ELit 4096) (EVar 241)) 80) (ELit 3088)) (kn_view ch) = true
+/\ kn_has (KWr (SA (EMd Instr.M_MUL (ELit 4096) (EVar 241)) 0) (ELit 4096)) (kn_view ch) = true
+/\ kn_has (KRange (EVar 241) 1 34359736319) (kn_view ch) = true.
 Proof.
 pose proof (RSQ_CHECKS w ch HCL) as CH. unfold rsq_checks in CH. do 11 (apply andb_prop in CH as [CH ?X]). repeat split; assumption.
 Qed.
 
-Lemma T_val : zden E (EMd Instr.M_MUL (ELit 4096) (EVar 237)) = Some T.
+Lemma T_val : zden E (EMd Instr.M_MUL (ELit 4096) (EVar 241)) = Some T.
 Proof. reflexivity. Qed.
 
 Lemma T_range : 4096 <= T /\ T + 4096 <= 2^47 /\ (T + 4096 <= 0x10000 \/ 0x645000 <= T).
 Proof.
 destruct ch_split as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & R240).
-pose proof (kn_range_var E m (kn_view ch) KO 237 _ _ R240).
-pose proof ((LA obj_facts) (237%nat, 4096) ltac:(inw)) as (_ & _ & _ & _ & OH & TOP). cbn [fst snd] in OH, TOP.
+pose proof (kn_range_var E m (kn_view ch) KO 241 _ _ R240).
+pose proof ((LA obj_facts) (241%nat, 4096) ltac:(inw)) as (_ & _ & _ & _ & OH & TOP). cbn [fst snd] in OH, TOP.
 pose proof (MA main_atop_bounds) as AB. subst T. unfold pg. lia.
 Qed.
 
@@ -227,11 +242,11 @@ End OfKn.
 
 Theorem RSec_at_main : at_main_stmt (fun BAND sp w E m => QkfD.RSec Q6sh.astate0 [] (RE_main sp w E) (X_main E) m).
 Proof.
-intros sp rdraw brk0 argv envp fs uid hw E R FULL mo Hsp Hva Hve Hfit w ch HCL CS BAND HB HG.
-exact (RSec_main sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS HB).
+intros sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt E R FULL mo Hsp Hva Hve Hfit w ch HCL CS BAND HB HG.
+exact (RSec_main sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS HB).
 Qed.
 Theorem RQuar_at_main : at_main_stmt (fun BAND sp w E m => @QUnM.RQuar BAND Q6sh.astate0 [] G_main (RE_main sp w E) (X_main E) m).
 Proof.
-intros sp rdraw brk0 argv envp fs uid hw E R FULL mo Hsp Hva Hve Hfit w ch HCL CS BAND HB HG.
-exact (RQuar_main sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS HB).
+intros sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt E R FULL mo Hsp Hva Hve Hfit w ch HCL CS BAND HB HG.
+exact (RQuar_main sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS HB).
 Qed.

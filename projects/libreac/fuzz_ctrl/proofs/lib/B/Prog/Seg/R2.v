@@ -3,10 +3,11 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names, addresses and numbers changed; 741 of its 860 lines of code are new or changed and 892 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment R2 of fuzz_ctrl LLVMFuzzerTestOneInput (asan-ubsan, image B, libreac v1.9.0): [0x815fc, 0x8163c],
    17 instructions, cut Inv_B815fc (v1.9 pc 0x815fc) -> cut Inv_B81640 (v1.9 pc 0x81640) (plan-asan-ubsan.md
    section 2, row R2; section 4, SH00 = __asan_set_shadow_00).  Re-fit of the v1.8 proof
-   (a working branch ebc9154f47d) onto the v1.9.0 bytes and cuts; the only code change is the end of the
+   (a working branch) onto the v1.9.0 bytes and cuts; the only code change is the end of the
    run (v1.8 0x815a8 `sd s11,24(s1)` is gone; the fill's base is s11, spilled to [A + 8], no longer s9 to [A + 16]).
    rule 24: no function proved (a slot segment).  After reac_box_catalogue(a0 = s4 = fr + 2656) the code checks the
    result a0 = BOX_CATALOGUE = CAT <> 0 (0x815fc, the abort branch 0x81600 to 0x82fa4 not taken) and the catalogue

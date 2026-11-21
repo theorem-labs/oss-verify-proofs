@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-29: copied from proofs/omx-clap-core/fuzz_preset/lib/A/RGthinS4.v (hub 9f4806388ad, blob ab2a295d7ba3) rt_seg_nret, restated as YGcfReallocCompose.wrap_realloc_walk_cf's field rw_nret at image A (entry facts rentry_cf, errno / oom byte from TfibSyms, memnorm kept). *)
+(* Modified by Theorem Labs, 2026-10-29: copied from proofs/omx-clap-core/fuzz_preset/lib/A/RGthinS4.v (blob ab2a295d7ba3) rt_seg_nret, restated as YGcfReallocCompose.wrap_realloc_walk_cf's field rw_nret at image A (entry facts rentry_cf, errno / oom byte from TfibSyms, memnorm kept). *)
 (* Modified by Theorem Labs, 2026-10-31: field round 3 part 3c (the record's segments no longer keep the overlay normal
    form): rw_nret_A's memnorm conjunct and its proof removed. *)
 (* Modified by Theorem Labs, 2026-10-31: rw_nret_A takes the form of the realloc keep record's field rwk_nret
@@ -8,7 +8,8 @@
    RGcfSegs2a.memnorm_se (m4 changes only a stack window above the image and errno, which lies in the image's
    writable window). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/RGcfSegs4.v, with its module paths and module names changed; 34 of its 148 lines of code are new or changed and 52 lines of the source are left out. *)
-(* Modified by a Theorem Labs lane (ReallocPrimary.RealSegA), 2026-10-30: from proofs/plugin-hostd/fuzz_reply/lib/A/RGthinS4.v (commit 66a127cb11e, sha256 e51e99b48d0e; internal record, reply A text, no relocation); module paths: lib.Reusable -> lib.A for AllocG DeallocG ReallocG RGtop; no other change. *)
+(* Modified by a Theorem Labs lane (ReallocPrimary.RealSegA), 2026-10-30: from proofs/plugin-hostd/fuzz_reply/lib/A/RGthinS4.v (sha256 e51e99b48d0e; internal record, reply A text, no relocation); module paths: lib.Reusable -> lib.A for AllocG DeallocG ReallocG RGtop; no other change. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_reply.asan: the thin segments S4 (RGtop.seg_nret) and S6 (RGtop.seg_npost):
    - S4: Allocate's return into Reallocate with NULL -> realloc's return with a0 = 0 and errno = ENOMEM, over the
      machine run RGthinM2.m4 (ported from cgif_rgb's YF68.v:104 c_null, relocated to fuzz_reply's image);

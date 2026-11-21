@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-11: added base_scfg, the unbudgeted strong_universal_error_free_T_scfg for the ubsan image; its proof text is copied from projects/jsoncons/fuzz_json_cursor/proofs/lib/PmCasanFinal.v:119-138 at 874e3397a35, with the ubsan target half Pm10HeapBridge_u.src0_realizes_spec_heap_lim in place of pm_casan_tgt. *)
+(* Modified by Theorem Labs, 2026-11: added base_scfg, the unbudgeted strong_universal_error_free_T_scfg for the ubsan image; its proof text is copied from projects/jsoncons/fuzz_json_cursor/proofs/lib/PmCasanFinal.v:119-138 at theorem-labs/oss-verify-proofs@c5665593c2d8, with the ubsan target half Pm10HeapBridge_u.src0_realizes_spec_heap_lim in place of pm_casan_tgt. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (walks lifted to the run's segments): changed base_scfg; internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import NArith ZArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -15,6 +16,7 @@ From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib.U Require PmLibSpecs_u PmFin
 From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib.U.CJ.Bridge Require PmHeapInst10_u.
 From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib.U.PmTop Require TopGlueC_u.
 From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib.U.PmInteg Require PmLibInstC_u.
+From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib.Common.Cfg Require SRomStable.
 Import ListNotations.
 Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -68,10 +70,19 @@ Proof.
   intros [rsp rbrk rmb rrnd] [asp abrk amb arnd] inp Hens Hent Hvalid.
   pose proof (valid_input_va_size _ Hvalid) as Hsv48.
   rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hens. rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent.
-  destruct Hens as [Hrsp [Hrbrk [Hrmb Hrfit]]]. destruct Hent as [Hasp [Habrk [Hamb Hafit]]].
-  destruct Hvalid as (Hargv & Henvp & Hfs & _ & Hcreds & _).
-  specialize (SRC0 rsp rbrk rmb rrnd inp Hrsp Hrbrk Hrmb Hrfit Hargv Henvp Hfs Hcreds).
-  specialize (TGT0 asp abrk amb arnd inp Hasp Habrk Hamb Hafit Hargv Henvp Hfs Hcreds).
+  (* each entry's 5th conjunct is the launch; valid_input is read through the model's BY-NAME
+     accessors, for Pm10DrvMain(_u)'s src_realizes_stmt2_lim (.. Hmb Hvl Hlau Hargv Henvp Hfs
+     Hcreds Hcr) *)
+  destruct Hens as [Hrsp [Hrbrk [Hrmb [_ Hrlau]]]]. destruct Hent as [Hasp [Habrk [Hamb [_ Halau]]]].
+  pose proof (valid_input_argv _ Hvalid) as Hargv. pose proof (valid_input_envp _ Hvalid) as Henvp.
+  pose proof (valid_input_fs _ Hvalid) as Hfs. pose proof (valid_input_creds _ Hvalid) as Hcreds.
+  pose proof (valid_input_launch _ Hvalid) as Hvl. pose proof (valid_input_channel_reader _ Hvalid) as Hcr.
+  specialize (SRC0 rsp rbrk rmb rrnd inp Hrsp Hrbrk Hrmb Hvl Hrlau Hargv Henvp Hfs Hcreds Hcr).
+  specialize (TGT0 asp abrk amb arnd inp Hasp Habrk Hamb Hvl Halau Hargv Henvp Hfs Hcreds Hcr).
+  (* both walks are over the binaries' own segments; the run reads them with the run's vDSO
+     appended, so [SRomStable.srun_init] lifts each ([vdso_image] [None] by computation) *)
+  apply (SRomStable.srun_init PmFinal.cfg0 Plain.M.loaded_segments inp rsp rmb _ _ _ _ _ _ eq_refl) in SRC0.
+  apply (SRomStable.srun_init PmFinal_u.cfg0 Ubsan.M.loaded_segments inp asp amb _ _ _ _ _ _ eq_refl) in TGT0.
   split; [| split].
   - eapply srealizes_error_free_big; [exact SRC0 | exact nbr_limit_source].
   - eapply srealizes_error_free_big; [exact TGT0 | exact nbr_limit_target].

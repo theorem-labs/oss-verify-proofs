@@ -54,11 +54,12 @@
    asks).
    Call site: LLVMFuzzerTestOneInput 0x85c10 (segA/evidence/callsites.asan.tsv).
    The WALK takes these runtime entries as Section hypotheses (the interceptor lane's interface
-   provenance/evidence/interceptors/INTERFACE-A-interceptors.md (commit 7068323e2626); rows 16-19 were added by the
-   accepted v1, 5e0b8a44fdc):
+   provenance/evidence/interceptors/INTERFACE-A-interceptors.md; rows 16-19 were added by the
+   accepted v1):
      RtString.astrcmp_realizes (row 17) at the strcmp trampoline (image A 0x43a14), once per entry.
    It is NOT a premise of this contract: the statement does not mention it. *)
 (* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/A/Prog/check_declared_c.v, derived mechanically (bkit derive_b.py): its Require lines name the lib/B copies; nothing else differs. The comments are the A file's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

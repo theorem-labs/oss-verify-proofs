@@ -2,14 +2,15 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the contract and walk of reac_ctrl_identity_poll_block on fuzz_grant.asan, written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v, proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v. *)
-(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan, bin/ sha256 fde52226dc48, symbols 5a5ee7c02b4e) twin of proofs/libreac/fuzz_grant/lib/A/Prog/CtrlIdentityPollBlock.v at a working branch 5aae1e8a0ce, in that file's shape but NOT its text: image B's code is 96 bytes where image A's is 80, because the UBSan build adds the overflow guard `not a5,a3; bltu a5,a4' at 0x83604 / 0x83608 and the `mul a4,a0,a2' that feeds it, so this walk adds that branch and the refutation of its trap arm (0x83638).  The contract also differs: image B drops image A's `arodata_okP' premise, and the write right is `twr_ok', which per destination byte adds `~ aowned B lyc Sc a' and `~ (sp - ESTACK <= a < sp)' to image A's `awr_byte' and `apresent'. *)
+(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan, bin/ sha256 fde52226dc48, symbols 5a5ee7c02b4e) twin of proofs/libreac/fuzz_grant/lib/A/Prog/CtrlIdentityPollBlock.v at a working branch, in that file's shape but NOT its text: image B's code is 96 bytes where image A's is 80, because the UBSan build adds the overflow guard `not a5,a3; bltu a5,a4' at 0x83604 / 0x83608 and the `mul a4,a0,a2' that feeds it, so this walk adds that branch and the refutation of its trap arm (0x83638).  The contract also differs: image B drops image A's `arodata_okP' premise, and the write right is `twr_ok', which per destination byte adds `~ aowned B lyc Sc a' and `~ (sp - ESTACK <= a < sp)' to image A's `awr_byte' and `apresent'. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Image B (fuzz_grant.asan-ubsan, bin/ sha256 fde52226dc48, symbols 5a5ee7c02b4e) walk of
    reac_ctrl_identity_poll_block, 0x835dc = BASE 0x80a3c + AF_reac_ctrl_identity_poll_block 0x2ba0
    (lib/B/Prog/GrantList.v).  The one theorem of this file is
    GrantBContracts.walk_reac_ctrl_identity_poll_block; the contract is stated there and is only REFERRED to
    here.
 
-   Ported from lib/A/Prog/CtrlIdentityPollBlock.v (image A, 0x82d3c) at a working branch 5aae1e8a0ce,
+   Ported from lib/A/Prog/CtrlIdentityPollBlock.v (image A, 0x82d3c) at a working branch,
    whose AB01 blob is 1e6f4323d1e, a Theorem Labs lane's current generation.  Its whole Require closure inside this unit
    is 152 files, grepped for `Admitted|admit\b|Axiom|Parameter': 0 hits.  Every address, constant and byte
    below is image B's, and the shape of the proof is image A's, not its text: the segments are grantsegsB0

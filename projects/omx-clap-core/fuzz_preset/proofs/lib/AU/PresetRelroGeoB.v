@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyRelroGeoB.v (commit 8f6c4bb5cbbf, file sha256 fceaf8ad8dfd) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal, jump-table offsets and list indices by the same stage map), 0 list indices re-picked, and 7 addresses named in comments; facts preset already states are cited, not restated; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyRelroGeoB.v (file sha256 fceaf8ad8dfd) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal, jump-table offsets and list indices by the same stage map), 0 list indices re-picked, and 7 addresses named in comments; facts preset already states are cited, not restated; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (Geo, a subagent of a prior worker, for a Theorem Labs lane's cf layer round 3 at plugin-hostd/fuzz_reply).
    rule 24: no function proved (kind: measurement; per-unit image facts about the layout of reply's image B,
    fuzz_reply.asan-ubsan, pin sha256 10ffb5f9202a, unstripped twin 3389287e1d61; no function walk).
@@ -19,8 +20,8 @@
       (B/YD1y.v:41, the driver's image windows start at 0xa24f8, above cf_relro_hi = 0xa4000).
    2. relro_seg_preset_B: round 3's relro_seg_t (Reusable/YG0ncf.v:646-647) at tfibsegs: one segment holds the range.
    3. errno_relro_preset_B: round 3's errno_relro_t (Reusable/YG0ncf.v:648) at TfibSyms: errno (TFIB_ERRNO) is above.
-   4. pf_ial_apart_preset_B: the layer's pf_ial_apart_t (Reusable/YG0ncf.v:189 on this base, 
-      b38406ef4b14) at TfibSyms: Printf's two cells lie outside the internal allocator's arena and its flag.
+   4. pf_ial_apart_preset_B: the layer's pf_ial_apart_t (Reusable/YG0ncf.v:189 on this base)
+      at TfibSyms: Printf's two cells lie outside the internal allocator's arena and its flag.
    5. dzone_static_text_B: the FIRST disjunct of YFgi.DZONE (B/YFgi.v:484-485) is [dzone_static_lo, dzone_static_hi),
       by reflexivity. DZONE writes the two bounds as inline numerals; the names here are other files' names for the
       same addresses: dzone_static_lo := TFIB_STORE (B/YF0m.v:17, __sanitizer::stackStore), dzone_static_hi :=
@@ -88,7 +89,7 @@ Qed.
 (* 8. zones_miss_relro_preset_B (field round 3 part 3; the statement is a Theorem Labs lane's, 18:21Z, agreed with DeallocNmaxA, whose
    lib/B/DGmpcf.v is to Require this file and close its zones_miss_relro by exact): the unit image row behind the
    Deallocate walks' keep law of arodata_ok_cf (cgif: DGmpcf.zones_miss_relro_cgif, proofs/cgif/
-   cgif_file_fuzzer/lib/DGmpcf.v:82-117 at e8a7dd66acf; its proof with CfImg_cgif -> CfImg_B and YF0x -> YF0x). At the
+   cgif_file_fuzzer/lib/DGmpcf.v:82-117; its proof with CfImg_cgif -> CfImg_B and YF0x -> YF0x). At the
    seed's geometry (DGgm.free_hyps), no non-owned byte of the RELRO range lies in the walk's window (DGif0.dwin_m), the
    depot zone (DGgi.DZONE), the internal allocator's zone (DGgi.IZONE) or the freed block's shadow (DGif0.dshadow).
    Part 3c: the covered set is YG0dcf.aro_addr_cf (the RELRO range and the report reads cf_ro_reads).

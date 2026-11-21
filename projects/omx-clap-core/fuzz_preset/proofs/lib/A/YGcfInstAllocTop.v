@@ -1,16 +1,17 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstAllocTop.v (a working branch 3cae605a900a, file sha256 8a8dcf4d199e), the generic cf instance layer, field round 3 part 3c; module paths changed only: 35 modules to this unit's lib/Reusable and AGtop to lib/A, which this unit keeps per image. No other edit; no image numeral is stated here. *)
+(* Modified by Theorem Labs, 2026-10-31: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstAllocTop.v (a working branch, file sha256 8a8dcf4d199e), the generic cf instance layer, field round 3 part 3c; module paths changed only: 35 modules to this unit's lib/Reusable and AGtop to lib/A, which this unit keeps per image. No other edit; no image numeral is stated here. *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The cf layer's Allocate TOP (lane M, a working branch): YGcfMallocComposeE's three Allocate Props at the
    call-site relation ARXq_cf, from a unit's walk tops (YGcfInstWalkSig.WalkSigA at every ghost set).
 
    rule 24: no function proved (kind: top-level composition over the unit's walk tops).  The case split is
-   MemnormAtop.aalloc_prim_realizes_em_of_arms's (A/MemnormAtop.v:79-101, itself AGtopE.v:85-102), with cgif's
+   MemnormAtop.aalloc_prim_realizes_em_of_arms's (A/MemnormAtop.v:80-102, itself AGtopE.v:85-102), with cgif's
    [tfibsegs] / 0x31550 replaced by [im_segs] / CfImg's [cf_pc_allocate], and its UNINIT hypothesis PROVED from
    ARcf's Wf_cf (the class records' wrc_cache: an uninited cache is pclass0).
 
-   Fixed arguments, as YGcfMallocComposeE.v:94-108 states the Props: U := the universe trace premise, mt := malloc_cf,
+   Fixed arguments, as YGcfMallocComposeE.v:95-109 states the Props: U := the universe trace premise, mt := malloc_cf,
    AOX := AOXm_cf B, rpre := rpre_cfr B (ROOM_cf is the caller's), nmax := cf_malloc_max, lmax := LIVE_MAX,
    lpost := qtight, pcA := cf_pc_allocate, oomb := as_oom_byte B, al / atp := 8 / 1, can_fill [cf] in {0, 1}.
    EVENT-FREE and MT-FREE. *)

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -37,7 +38,7 @@ Definition pid0_cps : Prop :=
   Z.of_nat (length (rt_live RT Σ)) + 7 <= LIVE_MAX ->
   pid_costA 0 <= rt_credit RT Σ ->
   LIB m -> ART RT Σ m -> mem_inv bsegs m ->
-  stk bsegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + PID_STACK <= bv_unsigned sp ->
+  stk bsegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + PID_STACK <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 -> frm0 fc ->
   cps_f (ASTA RT Σ PMc (eq (entry_st ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11
                                          t3 t4 t5 t6 F fc e_pid m)))
@@ -83,7 +84,7 @@ Theorem pid_tail0 : forall (Σ3 : rts RT) PMc (ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 
   impl mod 16 = 0 -> idx mod 16 = 0 -> oc mod 16 = 0 -> ia mod 16 = 0 -> tape mod 16 = 0 -> sbuf mod 16 = 0 ->
   Z.of_nat (length (rt_live RT Σ3)) < LIVE_MAX ->
   bv_unsigned sp <= RES -> RES + 40 <= USTACK_TOP ->
-  rt_sp0 RT Σ3 - STACK_WIN <= lo -> lo + PID_STACK <= bv_unsigned sp -> bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 -> frm0 fc ->
+  rt_sp0 RT Σ3 - STACK_SPAN <= lo -> lo + PID_STACK <= bv_unsigned sp -> bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 -> frm0 fc ->
   cps_f (ASTA RT Σ3 PMc (eq (MS (PIREGT rax (Z_to_bv 64 (bv_unsigned sp + -112)) gp (Z_to_bv 64 0x6b6ea8) t0 t1 t2 RES P BUF 0 a0 a1 a2 a3 a4 a5 a6 a7
                                         s1v (Z_to_bv 64 0) (Z_to_bv 64 0) (Z_to_bv 64 cap) t3 t4 t5 t6)
                                 F (Z_to_bv 64 0xb7bd4) fc None m (seg_rom bsegs))))
@@ -187,7 +188,7 @@ Proof using AF MSET PARSE0 AFV.
     assert (V64 : bv_unsigned v < 64) by (rewrite V13; lia). assert (VN : bv_unsigned v <> 0) by (rewrite V13; lia).
     destruct RS2 as (u0 & u1 & u2 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & u3 & u4 & u5 & u6 & F2 & fc2 & ->).
     cbn [ms_fcsr] in FRM2. rewrite EU2 in ST2, PRES2. rewrite (ret_pc_even 0xb7c5c) in Hc2' by (clear; lia).
-    assert (LOW4 : rt_sp0 RT Σ4 - STACK_WIN <= lo) by (rewrite SP4; exact LOW).
+    assert (LOW4 : rt_sp0 RT Σ4 - STACK_SPAN <= lo) by (rewrite SP4; exact LOW).
     assert (INF4 : In (f, k) (rt_frames RT Σ4)) by (rewrite FRS4; exact INF).
 
     assert (OUTX : forall x, ~ in_live (rt_live RT Σ3) x ->
@@ -347,7 +348,7 @@ Theorem pid_main0 : forall (Σ2 : rts RT) PMc (ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 
   impl mod 16 = 0 -> idx mod 16 = 0 -> oc mod 16 = 0 -> ia mod 16 = 0 -> tape mod 16 = 0 -> sbuf mod 16 = 0 ->
   Z.of_nat (length (rt_live RT Σ2)) < LIVE_MAX ->
   bv_unsigned sp <= RES -> RES + 40 <= USTACK_TOP ->
-  rt_sp0 RT Σ2 - STACK_WIN <= lo -> lo + PID_STACK <= bv_unsigned sp -> bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 -> frm0 fc' ->
+  rt_sp0 RT Σ2 - STACK_SPAN <= lo -> lo + PID_STACK <= bv_unsigned sp -> bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 -> frm0 fc' ->
   cps_f (ASTA RT Σ2 PMc (eq (MS (mkR (Z_to_bv 64 0xb7e18) (Z_to_bv 64 (bv_unsigned sp + -112)) gp (Z_to_bv 64 0x6b6ea8) t0 t1 t2 (Z_to_bv 64 RES) s1
                                      (Z_to_bv 64 0) a1 a2 a3 a4 a5 a6 a7
                                      (Z_to_bv 64 0) (Z_to_bv 64 d) (Z_to_bv 64 (P + 8)) (Z_to_bv 64 P) (Z_to_bv 64 0) (Z_to_bv 64 0) (Z_to_bv 64 cap)
@@ -406,7 +407,7 @@ Proof using AF RTF PARSE0 ALLOC CREATE AFV AFI.
   destruct (ASTA_unpack_f RT Σ2 _ _ c2 Hc2 FC2) as (ms2 & (m2 & u0 & u1 & u2 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & u3 & u4 & u5 & u6 & F2 & fc2 & j & q1 & q17 & q57 & q12 & q28 & q50
                                                     & -> & ART2 & MI2 & ST2 & FR2 & PC2 & FOBJ2 & IC2 & RC2 & BS2 & LIB2 & CH2) & FRM2 & Hc2'). clear Hc2.
   cbn [ms_fcsr] in FRM2. cbn [length] in Hc2'. change (Z.of_nat 0) with 0 in Hc2'.
-  assert (LOW2 : rt_sp0 RT Σ2 - STACK_WIN <= lo) by (rewrite SP2; exact LOW).
+  assert (LOW2 : rt_sp0 RT Σ2 - STACK_SPAN <= lo) by (rewrite SP2; exact LOW).
   apply (pid_main0 RT AF (rf_asan_memset RT RTF) PARSE0 AFV
            Σ2 PMc ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 u0 u1 u2 b1 b2 b3 b4 b5 b6 b7 u3 u4 u5 u6 F2 fc2 m2 lo RES P 0 32 impl idx oc ia tape sbuf
            (rt_live RT Σ) jr j q1 q17 q57 q12 q28 q50 FDO MST eq_refl ltac:(lia) ART2 MI2 ST2 FR2 PC2 FOBJ2 IC2 RC2 LIB2 LV2 LVPOS IM16 IX16 OC16 IA16 TP16 SB16);

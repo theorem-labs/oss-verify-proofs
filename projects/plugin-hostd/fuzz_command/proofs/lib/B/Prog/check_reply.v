@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: ported from this harness's lib/A/Prog/check_reply.v (the ASan walk, a working branch 91059853ab1) to the ASan+UBSan build fuzz_command.asan-ubsan (lib/B, entry 0x86e64): B's addresses, the words' clause with `ww mod 8 = 0`, and the record facts carried under a Theorem Labs lane's names with B's stack-guard cells (A_SSP_GOT 0xa6bf8, A_SSP_GUARD 0x604158). *)
+(* Modified by Theorem Labs, 2026-10: ported from this harness's lib/A/Prog/check_reply.v (the ASan walk, a working branch) to the ASan+UBSan build fuzz_command.asan-ubsan (lib/B, entry 0x86e64): B's addresses, the words' clause with `ww mod 8 = 0`, and the record facts carried under a Theorem Labs lane's names with B's stack-guard cells (A_SSP_GOT 0xa6bf8, A_SSP_GUARD 0x604158). *)
 (* Modified by Theorem Labs, 2026-10: check_reply's ASan+UBSan walk (fuzz_command.asan-ubsan, 0x86e64) assembled from its
    segments, as proofs/cgif/cgif_file_fuzzer/lib/A/ACh5.v assembles cgif_close's (pb_cgif_closeX):
      s1 the entry to the memchr call, s2 memchr / check_reply_answer / sup_reply_code, s3 the code's split,
@@ -17,6 +17,7 @@
    take the image facts IMG (cmd_img_facts); the segments take CmdRecImg's cmd_heap_tail_vis, and its
    cmd_prog_unowned and cmd_rom_view_on at IMG, so no record fact is a Section hypothesis (RULING-STMT.md section 1
    and 2). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

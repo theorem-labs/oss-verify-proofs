@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AD29.v, with its module paths changed, names TfibSyms -> BoxregSyms. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed so_not_owned, Hargv, Hva, EL, EL6, tfib_main_tail; added Hvl, Hlau, Hvi, efn; its imports changed. *)
 From OSSVerify.Proofs.libreac.fuzz_boxreg.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -63,19 +64,36 @@ apply Exists_exists in Y as ([lo l] & Hin & Hz). unfold in_zr in Hz. cbn in Hz.
 unfold Tfib_owned_static in Hin. unfold STDOUT_MUT, STDOUT_LO, STDOUT_HI, SOBUF_LO, SOBUF_HI in Ha. cbn in Hin.
 repeat (destruct Hin as [Heq|Hin]; [injection Heq as <- <-; lia|]). exact Hin.
 Qed.
-Variables (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte).
+Variables (sp brk mbase : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte) (rnd : EntryDraw).
 Hypothesis Hargv : in_argv inp = [a0; p].
+(* Shape copied from the in-tree ported donor AD1v.v:119-125 / YL0q.v Section b: binders
+   [sp brk mbase] .. [inp] .. [a0 p] .. [rnd], premises
+   [valid_sp; in_argv =; valid_argv (in_argv inp); valid_envp; valid_launch;
+    entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp; valid_input].
+   [entry_stack_fits] is not added: [entry_launch_ok_va] implies it
+   ([entry_launch_ok_va_fits], 75d69e00 Run.v:3718-3722), and this section never had it.
+   [Hva] matches YP08's input-indexed validity hypothesis (YP08.v:493). *)
 Hypothesis Hsp : valid_sp sp.
-Hypothesis Hva : valid_argv [a0; p].
+Hypothesis Hva : valid_argv (in_argv inp).
 Hypothesis Hve : valid_envp (in_envp inp).
-#[local] Notation EL := (YP08.E0 sp [a0; p] (in_envp inp) xw xd).
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp.
+Hypothesis Hvi : valid_input inp.
+(* [YP08.E0] is TOP-anchored and launch-indexed at 75d69e00 (YP08.v:209-210): entry-draw top,
+   the run's own [kb_rseq] flag, and the execfn. *)
+#[local] Notation EL := (YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd).
 #[local] Notation usp := (bv_unsigned sp).
 #[local] Notation envp := (in_envp inp).
+#[local] Notation efn := (in_execfn inp).
 Let HWXi : wx_segs_nowrap tfibsegs := Hwx_tfa.
+(* [z_rand] remains SP-anchored and uses the run's rseq flag. This unit's [YP08]
+   retains the full section prefix, including unused image arguments (YP08.v:481-496). *)
 Lemma EL6 : usp <= bv_unsigned (ew EL 6).
 Proof.
-change (ew EL 6) with (Z_to_bv 64 (z_rand usp [a0; p] envp)).
-pose proof (YP08.z_rand_end sp [a0; p] envp Hsp Hva Hve) as Hz. pose proof (u64_range sp).
+change (ew EL 6) with (Z_to_bv 64 (z_rand usp (kb_rseq (in_kernel inp)) [a0; p] envp)).
+assert (Hz : z_rand usp (kb_rseq (in_kernel inp)) (in_argv inp) envp + 16 < 2 ^ 63)
+by (eapply (YP08.z_rand_end TSEGS TPH inp mbase AsanUbsan.M.init_pc sp brk rnd Hsp Hva Hve Hvl Hlau)).
+rewrite Hargv in Hz. pose proof (u64_range sp).
 unfold z_rand in *. rewrite u64_lit by lia. lia.
 Qed.
 Definition at_rs (rs : smem) (ss' : sstate) (E : YP0m.env) (W : world tfibsegs) (mem0 : word -> option byte) (md : Model) : world tfibsegs -> config -> Prop :=
@@ -109,10 +127,10 @@ st_ok tfibsegs E S_CM (restrict (w_H W) ms) ->
 AI tfibsegs (w_H W) (w_A W) md -> AR tfibsegs B ly S W (ms_mem ms) md -> top_ok usp ly ->
 In (pb, cap) (blocks S)   -> qtight S -> st_nev S + 2 <= EV_MAX ->
 so_state k (w_H W) (ms_mem ms) ->
-(forall fd, fd_lookup (m_fds md) fd = fd_lookup APSG.fds_std fd) -> m_fs md = fs ->
+(forall fd, fd_lookup (m_fds md) fd = fd_lookup APSG.fds_std fd) -> m_channel_reader md = true -> m_fs md = fs ->
 srealizes tfibsegs (mkCfg ms md) (wr ch_stdout (concat (repeat line0 (k - 1))) (ex (if count_mode data then 0 else v) fs)).
 Proof.
-intros E W ms md ly S data pb cap v k fs HEE HEd Hlen E41 E79 Hv HS HAI HAR HTOP Hbl HQT Hnev HSO Hfds Hfs.
+intros E W ms md ly S data pb cap v k fs HEE HEd Hlen E41 E79 Hv HS HAI HAR HTOP Hbl HQT Hnev HSO Hfds Hcr Hfs.
 pose proof Hsp as (Ulo & Uhi & U16). pose proof (u64_range sp) as Usp. pose proof (proj1 (@YM05.alloc_ceiling_value rc)) as CV.
 pose proof (top_ok_ceil _ _ HTOP) as HCT. pose proof (YM05.ceil_le_top _ HCT) as CLE. unfold stack_max_size in CLE.
 set (buf := sptr_addr B ly pb) in *.
@@ -242,6 +260,7 @@ rewrite E6_0. intros a Ha. exact (apresent_some' _ _ _ (Hwin8 a Ha)).
 - rewrite Hnev6. lia.
 - apply (so_state_frame k (w_H W2) E6 (WIN (-128) :: rs_FB) _ _ HFr8 (proj1 (proj2 CM_so_ok))); [rewrite E6_0; exact Ulo | rewrite E6_0, E6old by (unfold K_FB; lia); exact E6' | exact HSO6].
 - intros fd. rewrite wvb_fds', Efds6. subst md1. rewrite wvb_fds'. apply Hfds.
+- rewrite YK04.wvb_channel_reader, (same_io_channel_reader _ _ Hio6). subst md1. rewrite YK04.wvb_channel_reader. exact Hcr.
 - rewrite wvb_fs', Efs6. subst md1. rewrite wvb_fs'. exact Hfs.
 Qed.
 End c.

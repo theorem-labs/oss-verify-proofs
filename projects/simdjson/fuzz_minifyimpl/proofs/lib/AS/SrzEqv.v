@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: srealizes_eqv carries the node's RomBase.sys_rob to an equivalent state (sys_rob_eqv); taken in part from projects/simdjson/fuzz_ondemand/proofs/lib/A/SrzEqv.v, lines 11, 289-298. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -9,6 +10,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
 From OSSVerify.Proofs.simdjson.fuzz_minifyimpl.lib.AS Require Import SimInv ShapeAlg DivergeSim SpinAlg.
 From OSSVerify.Proofs.simdjson.fuzz_minifyimpl.lib.Lib Require Import PropExec MState.
 From OSSVerify.Proofs.simdjson.fuzz_minifyimpl.lib.AS Require Import RegsEqv0.
+From OSSVerify.Proofs.simdjson.fuzz_minifyimpl.lib.AS Require Import RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 (* [comment removed for export] *)
 Local Instance srz_fx_as : OSSVerify.Proofs.simdjson.fuzz_minifyimpl.lib.AS.PropExec.FPState := OSSVerify.Proofs.simdjson.fuzz_minifyimpl.lib.AS.PropExec.fx0.
@@ -58,11 +60,24 @@ Proof.
   exists ms1', mo1. split; [reflexivity|]. exists (mkCfg ms1 mo1). split; [exact HP1|]. split; [exact Heq | reflexivity].
 Qed.
 
+(* [RomBase.sys_rob] depends on the state only through [sys_input], which equivalent states
+   share ([RegsEqv0.sys_input_eqv]), also after the same larger backing is put under both. *)
+Lemma sys_rob_eqv : forall c1 c2, cfg_eqv c1 c2 -> sys_rob segs c1 -> sys_rob segs c2.
+Proof.
+  intros [ms1 m1] [ms2 m2] [Hms Hm] Hrob r x8 Hr Hs o. cbn [cfg_ms cfg_model] in *. subst m2.
+  pose proof Hms as (Hrg & Hf & Hp & Hsv & Hrs & Hfc & Hme & Hro).
+  assert (Hw : ms_eqv (wrom ms1 r) (wrom ms2 r))
+    by exact (conj Hrg (conj Hf (conj Hp (conj Hsv (conj Hrs (conj Hfc (conj Hme eq_refl))))))).
+  rewrite <- (sys_input_eqv segs (wrom ms1 r) (wrom ms2 r) x8 Hw), <- (sys_input_eqv segs ms1 ms2 x8 Hms).
+  apply (Hrob r x8); cbn [cfg_ms]; [rewrite Hro; exact Hr | rewrite Hsv; exact Hs].
+Qed.
+
 Theorem srealizes_eqv : forall c T, srealizes segs c T -> forall c', cfg_eqv c c' -> srealizes segs c' T.
 Proof.
   intros c T H.
-  induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq]; intros c' Heqv.   (* [comment removed for export] *)
+  induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq]; intros c' Heqv.   (* [comment removed for export] *)
   - (* [comment removed for export] *)
+    pose proof (sys_rob_eqv c c' Heqv Hrob) as Hrob'.
     destruct Hnode as [Hfwd Hexact].
     set (I' := { p : I * config | sstep_cfg segs ACFG c' (evs (fst p)) (SNext (snd p)) /\ cfg_eqv (nx (fst p)) (snd p) }).
     destruct (sstep_next_eqv c c' (evs i0) (nx i0) Heqv (Hfwd i0)) as (c20 & Hs0 & He0).
@@ -77,6 +92,7 @@ Proof.
            destruct (Hexact e X HssX) as (j & -> & ->).
            destruct st as [c2|]; cbn in HX; [|contradiction].
            exists (exist _ (j, c2) (conj Hss (cfg_eqv_sym _ _ HX))). cbn. split; reflexivity.
+      * exact Hrob'.
       * intros [[i c2] [Hs He]]. cbn. exact (IH i c2 He).
     + (* [comment removed for export] *)
       intros tr. split.

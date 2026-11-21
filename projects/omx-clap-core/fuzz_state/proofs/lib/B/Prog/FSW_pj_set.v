@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the IMAGE B (fs.asan-ubsan, UBSan trap mode) walk of grow against
-   lib/B/FSH_Fn_reader.v grow_spec (:575, CTX-free; the text of S0 a working branch f32db4da382 = a working branch adfa7850046 on this branch): the STAGES.
+   lib/B/FSH_Fn_reader.v grow_spec (:575, CTX-free; the text of S0 a working branch = a working branch on this branch): the STAGES.
    rule 24 (lane brief (internal path), CONFIRM a Theorem Labs lane): proves function
    grow - fuzz_state image B asan-ubsan, entry 0x83ca8, success form. Reuse search, the three
    result lines:
@@ -11,7 +11,7 @@
        9 named and 48 name(s) holding it
      proof-index 0x83ca8 (exit 4): 0x83ca8: 0 named, 0 by address, 0 related, 0 lemma(s), 0 by file name, an earlier delivery 0
        named and 0 name(s) holding it, 108 unreleased
-   Port source (Lookup result): ported from a working branch 75e39a1f41d:
+   Port source (Lookup result): ported from a working branch:
    proofs/omx-clap-core/fuzz_state/lib/B/Prog/grow.v (blob bf8e2804f8dd, 3835 lines, 35 Qed, no admit; grow_holds :
    fuzz_realloc_contract ... -> grow_contract ... CAP, matching rdn1b's grow_c.v a8d1dc75b495): its walk is restated
    against grow_spec's frame (fpreU / fpostU / SRr over W, rd_sum Dold0 <= live, quiet, no CTX) lemma by lemma; NOT
@@ -21,17 +21,18 @@
    HA8 Z.land v 7 = 0; here the symbolic engine decides both from v's fact), the shadow walk (gr_sh = SHADOW_OFF + x / 8 cells, here FSW_grow_shcell's regions and the
    token run's checks), the size arithmetic (gr_cap2 / gr_sz: cap2 cap, 8 * cap2 cap, 56 * cap2 cap), and the frame
    (gr_frame: 96 bytes, ra s0 .. s9 at sp + 0x58 .. sp + 8). The NEW-frame shape is the image-A walk of the same C:
-   a working branch 728177ca53c lib/A/Prog/FSW_grow.v (a Theorem Labs lane's final; its stages equal 582c4d69613's and
-   the draft a working branch f9ccbd8f565's: grow_stageA / grow_stageB / grow_stageC, grow_FP, grow_post),
+   a working branch lib/A/Prog/FSW_grow.v (a Theorem Labs lane's final; its stages equal's and
+   the draft a working branch: grow_stageA / grow_stageB / grow_stageC, grow_FP, grow_post),
    copied here and re-measured for B's code. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/Prog/FSW_grow.v, with its module paths, module names, addresses and numbers changed; 480 of its 572 lines of code are new or changed and 551 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) walk of pj_set, the twin of lib/A/Prog/FSW_pj_set.v
-   (a working branch f9ccbd8f565 = a working branch 6fcf9aa5a9b, blob d5f54d63a6): stages
+   (a working branch = a working branch, blob d5f54d63a6): stages
    A, B, C, E and F are A's, relocated (B's code is A's + 0x1f4 up to stage C, and stages E / F are the same words at the
    same relocation); every address is READ from image B (fuzz_state.asan-ubsan, the unstripped twin's disassembly of
    [0x83adc, 0x83ca8)), never carried from A. Stage D is new: B's code there is not A's (ten UBSan checks to the trap
    `unimp` 0x83c84, the n store before the kids checks); its UBSan guard arguments are ported from
-   a working branch 955803f9b2e lib/B/Prog/pj_set_store.v (the same code under the old contract pj_set_c). *)
+   a working branch lib/B/Prog/pj_set_store.v (the same code under the old contract pj_set_c). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The ASan + UBSan walk of pj_set (fs.asan-ubsan 0x83adc, pf.c:373-391) against lib/B/FSH_Fn_reader.pj_set_spec: STAGES.
    rule 24: pj_set proved new on image B (a Theorem Labs lane's lookup, CONFIRM 05:5xZ: no released proof of pj_set on any ASan image;
    0x83adc is named by no file). The released PLAIN walk (lib/Prog/pj_set_c.v) is the control-flow template; the A walk
@@ -107,7 +108,7 @@ Ltac gw_val :=
 
 Section W. Context {fx : YK11.FPState} {rc : YM05.RunCeil} (SK : YI16.sink_head).
 Variable B : asyms.
-(* the shadow-base cells of B (FSH_Base.FsShadowSyms, S0 5478e5af284), the one named premise of fs's instrumented walks;
+(* the shadow-base cells of B (FSH_Base.FsShadowSyms, S0), the one named premise of fs's instrumented walks;
    TfibLib B (A/ACeg.v) discharges it once A/ACej.v builds *)
 Hypothesis HSS : FsShadowSyms B.
 

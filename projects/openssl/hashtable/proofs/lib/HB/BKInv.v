@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch variables' bound NX0). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool.
 From LinuxProcessSemantics.Riscv Require Import Instr.
@@ -17,7 +18,7 @@ Definition kinv (base : acs) (J : nat) (steps : list (nat * Z)) (hav : list nat)
       (a_maps base) (a_totsz base) (a_ylo base) (a_eager base) (a_vis base) (a_ghost base) (a_abytes base) (a_brk base) fd (a_tidset base).
 
 (* [comment removed for export] *)
-Definition kcompact (s : acs) : acs := match APC.node_compact 12 s with Some c => c | None => s end.
+Definition kcompact (s : acs) : acs := match APC.node_compact NX0 s with Some c => c | None => s end.
 Definition kn0 (s : acs) : nat := nxt s.
 Definition kvar_of (e : expr) : nat := match e with EMd M_MUL (ELit 4096) (EVar v) => v | _ => O end.
 Definition kvb (s : acs) : nat := match a_maps s with m :: _ => kvar_of (am_base m) | [] => O end.

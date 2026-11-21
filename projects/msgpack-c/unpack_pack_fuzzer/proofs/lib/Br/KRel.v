@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the frame lemma also carries the kernel build, which places the vdso/vvar pair; KREL_with_vdso: the relation carries over to the run's with_vdso start model). *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Specs Run.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Lib Require Import ITree Nodes NodesM Decode.
@@ -40,8 +41,19 @@ Proof.
   split; [| split; [exact Hnd | exact I]].
   exists L. split; [exact Hc|]. split; [| exact Hi].
   assert (Evm : m_vmmaps mo' = m_vmmaps mo) by (unfold m_vmmaps; rewrite Hvm; reflexivity).
-  eapply KL_vm_eq; [exact HK | | exact Hh | rewrite Evm; reflexivity ..].
+  eapply KL_vm_eq; [exact HK | | exact Hh | first [rewrite Evm; reflexivity | unfold m_kernel; rewrite Hvm; reflexivity] ..].
   pose proof (kl_minv _ _ _ HK) as Hmi. unfold minv, m_vm_lazy in *. rewrite Hvm. exact Hmi.
+Qed.
+
+(* LPS 727298f3: the run's start model is [init_model] with the launch's vDSO draw installed by [with_vdso],
+   which rebuilds only the vDSO run state; KL reads none of it, so KREL carries over (the method of
+   yajl-ruby/json_fuzzer's Agent/MallocKown.v KL_with_vdso / KOWN_with_vdso) *)
+Lemma KREL_with_vdso : forall s LB mo v, KREL s LB mo -> KREL s LB (with_vdso v mo).
+Proof.
+  intros s LB mo v [(L & Hc & HK & Hi) [Hnd _]].
+  split; [| split; [exact Hnd | exact I]].
+  exists L. split; [exact Hc|]. split; [| exact Hi].
+  eapply KL_vm_eq; [exact HK | exact (kl_minv _ _ _ HK) | exact (kl_halt _ _ _ HK) | reflexivity ..].
 Qed.
 
 Lemma KREL_perm : forall s LB LB' mo, Permutation LB LB' -> KREL s LB mo -> KREL s LB' mo.

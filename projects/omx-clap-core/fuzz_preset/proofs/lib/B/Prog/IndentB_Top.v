@@ -1,18 +1,19 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset image B' (asan-ubsan #102 pin d663f82d7f48, unstripped twin c90d4fa54d43), THE
    THEOREM of the walk of indent (lane IndentB, a Theorem Labs lane), against the kit's text tindent_specX of the batch kit's cut
-   7cdbb61b5fa0 (lib/A/PRH_FnWriter.v d89d3c67b78c :504-564), at the instance of record
+   (lib/A/PRH_FnWriter.v d89d3c67b78c :504-564), at the instance of record
    (the one lane PutB's put_holds_B is stated at): PA := PI_prog_B, L := B_prog_listing, PI := prh_img_B,
    B := YD2l.TfibB, ARx := ARcfx (ARcf /\ xs_placed_cf = YGcallcf.ARxs), cp := CfParams_preset, ci := CfImg_B,
    RL := prh_room_live_a8; fx, rc and SK stay generic (no premise fixes them).
    rule 24: proves function indent (fuzz_preset, image B'): the walk is IndentB.v, ported from
-   a working branch a8d2be84a39d lib/A/Prog/S7a_indent.v (the A' walk on the same cut; relocation by
+   a working branch lib/A/Prog/S7a_indent.v (the A' walk on the same cut; relocation by
    alreloc ced0368250cb, then hand fixes); its instance witnesses are IndentB_Wit.v.
    indent_holds_B IS THE TEXT ITSELF: its statement is tindent_specX at the instance, every implicit argument named.
    SECTION HYPOTHESIS of the instance theorem (a callee text, with its owner):
      H_put : tput_specX at the instance, for every CTX0 (the kit's text at the cut, PRH_FnWriter.v d89d3c67b78c :410-499;
-             owner lane PutB, a working branch f7d233bfa70: put_holds_B states exactly this).
+             owner lane PutB, a working branch: put_holds_B states exactly this).
    put is indent's only callee (bytecmp: the two `jal put` are its only calls). Every other premise of the walk is
    discharged here: LAWS by YGcallcf.AR_laws_x_xs over YG0lawscf.AR_laws_ok_cf; TL by PALibB.exvi_eh_palib; Hent, HLIT
    and HPSTRO by IndentB_Wit.v's s7w_ent_B, s7w_hlit_B and s7w_pstro_B (vm_compute at PI_prog_B).
@@ -61,7 +62,7 @@ Section inst. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_he
 #[local] Abbreviation ARcfx :=
   (fun ly S Hp (W : world SEGS) mem md => YG0ncf.ARcf (cp := CP) SEGS TB ly S Hp W mem md /\ YG0ncf.xs_placed_cf ly S).
 
-(* CALLEE TEXT, owner lane PutB (a working branch f7d233bfa70, put_holds_B): the kit's tput_specX at the cut
+(* CALLEE TEXT, owner lane PutB (a working branch, put_holds_B): the kit's tput_specX at the cut
    (PRH_FnWriter.v d89d3c67b78c :410-499) at the instance, for every universe closure CTX0 *)
 Hypothesis H_put : forall CTX0 : list (list Z),
   tput_specX (fx := fx) (rc := rc) (ci := CfImgB.CfImg_B) (cp := CP) (PI := prh_img_B)

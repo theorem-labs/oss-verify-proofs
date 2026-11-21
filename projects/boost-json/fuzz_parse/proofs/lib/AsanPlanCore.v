@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: statements written out as text, lemmas added for the revision. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -1305,8 +1306,16 @@ ltac2:(KReplay.run1 (kr_t_AsanPlanCore ()) ["WithSegs"] "h01kh12msp;1p;3p;5g00EV
 
 
 (* [comment removed for export] *)
+(* 75d69e00: the reserved ledger of the launch is [segments_reserved SEGS ++
+   vdso_reserved kb (vdso_top ...)] ([State.vm_reserved_init_model]), so the number
+   of entries the gap scan must step over is TWO more than [n_res A + length
+   (a_maps cs)] -- [vdso_reserved] emits either [] or exactly the vvar/vdso pair
+   (State.v, printed at a farm round).  [AsanNodesMmLib.gap_ok_sound]
+   needs [length (vm_reserved ++ vm_maps) <= cnt] and cannot close without the +2;
+   the band it guards is [CEIL - FLOOR = 0x5554d4d55000], so two extra entries cost
+   [2 * (nhi + 4095)] out of ~93 TB and flip no plan branch. *)
 Definition gap_ok (cs : acs) (nhi : Z) : bool :=
-  let cnt := Z.of_nat (n_res A + length (a_maps cs))%nat in
+  let cnt := Z.of_nat (n_res A + 2 + length (a_maps cs))%nat in
   Z.leb (FLOOR + nhi + a_totsz cs + cnt * (nhi + 4095)) CEIL.
 
 Definition budget_ok (cs : acs) (extra : Z) : bool :=
@@ -2308,20 +2317,61 @@ Definition V_L1 : nat := 7.     (* [comment removed for export] *)
 Definition V_UID : nat := 8.    (* [comment removed for export] *)
 Definition V_HW : nat := 9.     (* [comment removed for export] *)
 Definition V_S3 : nat := 10.    (* [comment removed for export] *)
+(** 75d69e00: two variables APPENDED after this tree's own last index, so no existing
+    index moves.  [StackLayout.block_items argv envp mod 2]: the 8-byte gap
+    [STACK_ROUND] clears below the AT_RANDOM block so that it lands 16-aligned. *)
+Definition V_G : nat := 11.
+(** CONFIG_RSEQ of the run's kernel build as 0/1 ([rseq_z (kb_rseq (in_kernel inp))]).
+    The auxv is 27 pairs (432 bytes) without it and 29 with (464)
+    ([StackLayout.auxv_count], 75d69e00:theories/LinuxProcessSem/StackLayout.v:276-277).
+    [Run.valid_input] leaves the kernel build free, so the flag is a plan VARIABLE and one
+    initial state covers both builds; it is never pinned. *)
+Definition V_R : nat := 12.
+(** The group id, AT_GID and AT_EGID (auxv pairs 21 and 22) at LPS 727298f3, appended after
+    [V_R] so no existing index moves.  musl's [__init_libc] compares the two words, so they
+    must be one expression; without a launch variable for them the start-up run stops at that
+    compare (the method of fuzz_bigint's [V_GID]; spirv-tools' probe of the same engine
+    read the stop at the [Branch BC_NE] on two fresh variables). *)
+Definition V_GID : nat := 13.
+
+(** the flag as a number *)
+Definition rseq_z (b : bool) : Z := if b then 1 else 0.
+
+(** The auxv's size in BYTES, the one place the plan names it: 432 + 32 * rseq.
+    Source: 75d69e00:theories/LinuxProcessSem/StackLayout.v:276-277
+    ([auxv_count rseq = if rseq then 29 else 27], [auxv_size rseq = 16 * auxv_count rseq]). *)
+Definition e_auxsz : expr := eaddz (escale 32 (EVar V_R)) 432.
+
+Lemma auxv_size_rseq : forall b, Z.of_nat (StackLayout.auxv_size b) = 432 + 32 * rseq_z b.
+Proof. intros [|]; vm_compute; reflexivity. Qed.
+
+Lemma rseq_z_range : forall b, 0 <= rseq_z b <= 1.
+Proof. intros [|]; cbn; lia. Qed.
 
 (* [comment removed for export] *)
-Definition e_pg : ltac2:(zQ "10!hta$0") := ltac2:(zQ "50!sk0!sh9!hhu1!hhu8!sj9@2$4@2$0+ogg0@1$1$2@2$0+hgg0@1$1$3").
-Definition e_sp0 : ltac2:(zQ "10!hta$0") := ltac2:(zQ "50!hhuf!hhv6!sj9!sk0!sh9@2$2$1@2$3+h0@1$4$0").
+Definition e_pg : expr := eadd (escale 32768 (EVar V_S1)) (escale 4096 (EVar V_S2)).
+Definition e_sp0 : expr := eadd e_pg (escale 16 (EVar V_S3)).
 (* [comment removed for export] *)
-Definition e_sp8 : ltac2:(zQ "10!hta$0") := ltac2:(zQ "60!sk0!sh9!sj9!hhu1!hhu8!hhuf@2$2@2$0+hgg0@1$1$3@2$2@2$0+ig0@1$1$4@2$0+2@1$1$5").
+Definition e_sp8 : expr := eadd (escale 4096 (EVar V_S1)) (eadd (escale 512 (EVar V_S2)) (escale 2 (EVar V_S3))).
 (* [comment removed for export] *)
-Definition e_envp : ltac2:(zQ "10!hta$0") := ltac2:(zQ "60!sj9!hhvd!hig6!sk0!iie!sh9@2$0$2@2$0@2$3+8@1$5$1@1$4+h0").
-Definition e_auxv : ltac2:(zQ "10!hta$0") := ltac2:(zQ "60!sj9!hige!hih7!sk0!iie!sh9@2$0$2@2$0@2$3+8@1$5$1@1$4+8").
-Definition e_str0 : ltac2:(zQ "10!hta$0") := ltac2:(zQ "20!hii0!tp7@2$1$0+q0").
-Definition e_str1 : ltac2:(zQ "10!hta$0") := ltac2:(zQ "50!hii9!hij0!sj9!tp7!sh9@2$2$1@2$3@1$4$0+1").
-Definition e_atrandom : ltac2:(zQ "10!hta$0") := ltac2:(zQ "50!hij9!hij0!sj9!sk0!sh9@2$2$1@2$3+8@1$4$0").
-(* [comment removed for export] *)
-Definition e_atr8 : ltac2:(zQ "10!hta$0") := ltac2:(zQ "60!sj9!sh9!hhvd!hige!hij9!hijf@2$0$5@2$0@1$1$2@2$0@1$1$3@1$1$4").
+Definition e_envp : expr := eadd e_sp0 (eadd (escale 8 (EVar V_ARGC)) (ELit 16)).
+Definition e_auxv : expr := eadd e_envp (eadd (escale 8 (EVar V_ENVC)) (ELit 8)).
+(** 75d69e00:StackLayout.v:450-506.  Linux's block, bottom to top: argc/argv/envp pointers,
+    the auxv, the 0-or-8 gap, the sixteen AT_RANDOM bytes, the [arch_align_stack] pad, THEN
+    the strings, then the slot [create_init_stack_vma] skipped.  So
+      atrandom = auxv + (432 + 32*rseq) + 8*g      str0 = atrandom + 16 + pad.
+    PRE-REVISION THIS READ [e_str0 := e_auxv + 160] and put the AT_RANDOM block at the TOP:
+    that constant is OBSOLETE, not stale — at this revision there is no constant offset from
+    the auxv base to the strings at all, because the pad ([StackLayout.block_pad_len], 0..4110)
+    lies between them.  Substituting 432 for the 160 would compile and be wrong.
+    [V_W] is repurposed from a string-word count to the pad IN BYTES. *)
+Definition e_atrandom : expr := eadd (eadd e_auxv e_auxsz) (escale 8 (EVar V_G)).
+Definition e_str0 : expr := eadd (eaddz e_atrandom 16) (EVar V_W).
+Definition e_str1 : expr := eadd e_str0 (eaddz (EVar V_L0) 1).
+(** (e_atrandom - 24 - 432) / 8 as a linear form: the eighth of [e_auxsz]'s variable part
+    is [escale 4 (EVar V_R)], which is what [u_e_atr8] states. *)
+Definition e_atr8 : expr :=
+  eadd e_sp8 (eadd (EVar V_ARGC) (eadd (EVar V_ENVC) (eadd (escale 4 (EVar V_R)) (EVar V_G)))).
 
 (* [comment removed for export] *)
 Definition e_argv1w : ltac2:(zQ "10!hta$0") := ltac2:(zQ "80!hik7!jm9!hhvd!hil3!hilc!iie!him4!sh9@3$6$1@3$4$0@1$5+1@1$7$2$3").
@@ -2789,23 +2839,138 @@ End WithSegs.
 
 (* [comment removed for export] *)
 Definition BRK_ASLR : Z := 0x80000000.
-Definition NX0 : nat := 11.   (* [comment removed for export] *)
+(** the initial valuation's width: 14, for [V_G], [V_R] and [V_GID] appended at indices 11,
+    12 and 13; no existing index moves. *)
+Definition NX0 : nat := 14.
 
 (* [comment removed for export] *)
 Definition e_auxb : ltac2:(zQ "30!kj1!h9!hta@2$0$2$1") := ltac2:(zQ "20!hmve!opc@1$1$0").
 Definition e_atrb : ltac2:(zQ "30!kj1!h9!hta@2$0$2$1") := ltac2:(zQ "20!hng7!opc@1$1$0").
 Definition auxw : ltac2:(zQ "40!h9!hg1!hta!ik0>1i$0>2ty$0>1v$2@1$1$3") := ltac2:(zQ "d0!h9!hta!hnh4!ik0!jv3!mo8!kj8!kje!rv2!rvb!qp5!ina!iie\1i$0\2ty$0\1v$1@3$5$3@3$8@2$9@3$6$1$0$2@2$4@3$7$1$0$2@2$a+h0^3N8@1$c^2@3$5$3@3$8@2$9@3$6$1$0$2@2$4@2$4@3$7$1$0$2@2$a+h0^3+8N8^1@1$b$3").
 
+(** The auxv pairs [init_kn_with] leaves unclaimed (the method of jsoncons/fuzz_bigint's
+    [auxv_rest]).  musl's [__init_libc] reads EVERY pair's type word up to AT_NULL and stores
+    the value of each type below AUX_CNT, so every type word is claimed, the values the launch
+    fixes are claimed (AT_CLKTCK 100, AT_BASE 0, AT_FLAGS 0, AT_ENTRY, and the CONFIG_RSEQ
+    pair when r = 1), AT_GID and AT_EGID are [EVar V_GID], the whole vector is readable
+    ([KUnk]), and the values no plan variable denotes (ARCH_DLINFO's ten, AT_EXECFN) stay
+    unknown.  Without the type words the start-up run stops at the first type-word load. *)
+Definition auxv_rest (r : Z) (A : atable) : list kentry :=
+  auxw 12 17 (ELit 100) ++ auxw 16 7 (ELit 0) ++ auxw 17 8 (ELit 0) ++ auxw 18 9 (ELit (a_entry A))
+  ++ auxw 21 13 (EVar V_GID) ++ auxw 22 14 (EVar V_GID)
+  ++ (if Z.eqb r 1 then auxw 26 27 (ELit 28) ++ auxw 27 28 (ELit 32) else [])
+  ++ [KUnk (SA (fst e_auxb) (snd e_auxb)) (ELit (432 + 32 * r));
+      KWord (SA (fst e_auxb) (snd e_auxb + 16 * 0)) 8 (ELit 33); KWord (SA (fst e_auxb) (snd e_auxb + 16 * 1)) 8 (ELit 40);
+      KWord (SA (fst e_auxb) (snd e_auxb + 16 * 2)) 8 (ELit 41); KWord (SA (fst e_auxb) (snd e_auxb + 16 * 3)) 8 (ELit 42);
+      KWord (SA (fst e_auxb) (snd e_auxb + 16 * 4)) 8 (ELit 43); KWord (SA (fst e_auxb) (snd e_auxb + 16 * 5)) 8 (ELit 44);
+      KWord (SA (fst e_auxb) (snd e_auxb + 16 * 6)) 8 (ELit 45); KWord (SA (fst e_auxb) (snd e_auxb + 16 * 7)) 8 (ELit 46);
+      KWord (SA (fst e_auxb) (snd e_auxb + 16 * 8)) 8 (ELit 47); KWord (SA (fst e_auxb) (snd e_auxb + 16 * 9)) 8 (ELit 51);
+      KWord (SA (fst e_auxb) (snd e_auxb + 16 * 25)) 8 (ELit 31)].
+
+(** The ranges of the two launch variables [V_G] (the STACK_ROUND gap, 0 or 1 words) and [V_R]
+    (CONFIG_RSEQ, 0 or 1).  argv[0]'s address [e_str0] reaches the start-up run as one flat
+    sum over the launch variables, so [__init_libc]'s `if (!pn)` decides only when every
+    variable in it has a range; [init_kn_with] gave a range to the sum [eaddz e_atrandom 16]
+    but not to these two summands.  Appended after the auxv rows, so no position of an
+    earlier fact moves. *)
+Definition vrows : list kentry := [KRange (EVar V_G) 0 1; KRange (EVar V_R) 0 1].
+
+(** LPS 727298f3: the 8-aligned shadow word of AT_RANDOM + 8.  [__init_ssp]'s copy of the
+    canary from AT_RANDOM + 8 is ASan-checked inline: the binary loads the shadow word at
+    ((atrandom + 8) / 8 + 0x7FFF8000) & -8 (0x90270 in the As image, 0x90210 in the Both
+    image).  Its index above the shadow offset is [e_atr8] + 58 rounded down to 8, i.e.
+    4096*s1 + 512*s2 + ((Xsh + 2) & -8) + 56 with [e_Xsh] the part of [e_atr8] below
+    [4096*s1 + 512*s2]; the launch's two new summands (8*V_G, 32*V_R) leave that rounding
+    undecided, so the run stops at the load unless the start state ranges the word.  The
+    farm round a farm round printed that load's base register.  Same fact as
+    openssl/hashtable's Common/AsanPlanCore.v [e_atr8m2], over this file's variables.
+    Appended after [vrows], so no position of an earlier fact moves. *)
+Definition e_Xsh : expr :=
+  eadd (EVar V_ARGC) (eadd (EVar V_ENVC) (eadd (escale 4 (EVar V_R)) (eadd (EVar V_G) (escale 2 (EVar V_S3))))).
+Definition e_Xm2 : expr := mkAlu ALU_AND (eaddz e_Xsh 2) (ELit (-8)).
+Definition e_atr8m2 : expr := eadd (eadd (escale 4096 (EVar V_S1)) (escale 512 (EVar V_S2))) e_Xm2.
+Definition atrm_rows : list kentry := [KRange e_atr8m2 0xFFFF0000000 0xFFFFFFFFFC0].
+
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Definition K_RND : nat := 25.
 
-Definition init_kn_with : ltac2:(zQ "30!ik0!hg1!hnhd>3atr$0>1A$2@1$1$0") := ltac2:(zQ "ic0!ik0!mo8!si1!sh9!ir6!hni6!iie!hnid!rvb!hnj5!os4!ina!hnjd!hnk6!hng7!rv2!ohc!qof!hnkd!hnl8!hnm0!hnm9!hnn0!hnn7!hnne!hno5!hnoc!hnhd!hnp2!hnpd!hnq6!hnqd!hnr5!hnre!osd!hns6!hnt1!hntd!hnu8!hnv3!hnvc!or0!hjj1!jv3\3atr$0\1A$hb@3$4$0@3$1$0@3$2@1$3$h7+vvvvggg0+vvvvvvvf@3$1$0@3$2@1$3$h8Z+7@3$1$0@3$2@1$3$h9Z+vf@3$1$0@3$2@2$i1$e+h0+nvvvogggggs0+ogggggggggg0@3$1$0@3$2$hd+vvvvgggggg1+vvvvvvvvvu7@3$1$0@3$2$7+nvvvogggggg0+nvvvvvvvvvk0@3$1$0@3$2$he+nvvvogggggg0+nvvvvvvvvgg0@3$1$0@3$2$hf+vvvvgggggg0+vvvvvvvvvu8@3$1$0@3$2@1$3$c+1+kg0@3$1$0@3$2@1$3$h4Z+hg0@3$1$0@3$2@1$3$h5Z+hvvvf@3$1$0@3$2@1$3$h6Z+hvvvf@3$1$0@3$2@1$3$9Z+vvvvvvve@3$1$0@3$2@1$3$d+hhid+ighhid@3$1$0@3$2@1$3$haZ+kkls0@3$1$0@3$2@1$3$h3@2$h1@1$a^1+hgg0@2$h1@2$ib@1$a^1$h2+hgg0@3$1$0@2$h0@2$8$7-ogggg0@1$6+ogggg0@3$1$0@2$ia@2$8$7-ogggg0@1$6+ogggg0@3$1$0@3$f@2$8$7ZN8@1$3$c@3$1$0@3$f@2$8$7+8N8$i0@3$1$0@1$i3$hc@1$b$0@3$4$0@3$5Z+3@1$6@1$i4^1@3$4$0@3$5+1+4@1$6@1$i5^1@3$4$0@3$5+2+5@1$6@1$i6^1@3$4$0@3$5+3+h0@1$3$d@3$4$0@3$5+4+6@1$6+hgg0@3$4$0@3$5+5+b@1$3$9@3$4$0@3$5+6+c@1$3$9@3$4$0@3$5+7+h7@1$6Z@3$4$0@3$5+8+h9$e@3$4$0@3$5+9Z@1$6Z@3$1$0^2@3$1$0@2$i9@1$i2^1@1$a^1@3$1$0@2$h0@2$8@1$6Z@1$i8^1@1$6@1$i7^1@1$b$0").
+(* 75d69e00, RULE 12h IN THE PLAN: the two stack-window rows claimed an EIGHT-MEGABYTE
+   zero window below sp and that is now FALSE.  [State.stack_max_size] is unchanged at
+   8388608 -- it is still what [TOP] is -- but the ZERO-FILLED window is now 6144513
+   ([StoreOk.stack_window_depth]), because the entry image itself runs to the stack VMA's
+   end and no longer leaves 8 MiB of zeroes beneath [sp].  [AsanInit.FULL0_below] proves
+   zeroes only to [usp - 6144513], so [KWr]/[KZero] over 8388608 cannot be discharged.
+   Exactly four numerals move, all four in those two rows: the two SA offsets and the two
+   ELit lengths.  CONTROL, before and after: `ogggg0` (= 8388608) occurred 4 times on this
+   line and occurs 0 times now; `ltsig1` (= 6144513) occurs 4 times.  The independent
+   check is the compiler -- AsanInit's [stack_window_ok] proves exactly these two rows at
+   6144513, and an [UNCLOSED-GOAL] probe named them as the only rows [init_kn_with_ok]
+   could not close at 8388608. *)
+(* RULE 12k, THE AUXV RETABLE.  The revision's auxv vector changed SHAPE, not just size:
+   ARCH_DLINFO now occupies pairs 0..9 (AT_SYSINFO_EHDR, then the eight cache words and
+   AT_MINSIGSTKSZ), so the ten-pair vector this plan sat on -- which began at AT_PHDR --
+   names the wrong slots from pair 0 on.  Confirmed five ways (the model print
+   a farm round, glaze's tables, json_cursor's plan, cgif's derivation from
+   75d69e00:StackLayout.v:229-266, G1's idtac) and a sixth here: an UNCLOSED-GOAL probe on
+   the farm printed boost-json's own [auxv_entries] row for row, and its pair 0 is
+   AT_SYSINFO_EHDR against this plan's claimed [Z_to_bv 64 3] (AT_PHDR)
+   (a farm round).
+   The rows keep their OWN literals and move only their indices:
+     AT_HWCAP 3 -> 10, AT_PAGESZ 4 -> 11, AT_PHDR 0 -> 13, AT_PHENT 1 -> 14,
+     AT_PHNUM 2 -> 15, AT_UID 5 -> 19, AT_EUID 6 -> 20, AT_SECURE 7 -> 23,
+     AT_RANDOM 8 -> 24.
+   The old `auxw 9 0 (ELit 0)` AT_NULL claim is RESTORED at the parametric index
+   `26 + 2 * r` rather than moved to a literal one -- see the note on that row below.
+   Pairs 0..25 sit at the same index under both kernel builds, so every other row here is
+   rseq-free.
+   This Definition was an encoded zQ term; it is written out because an encoded table is
+   exactly where a stale vector hides from every text sweep.  The row list below is the
+   unfolded goal the farm printed (a farm round), unchanged apart from the
+   nine indices and the terminator; the two stack-window rows were already at
+   6144513 ([StoreOk.stack_window_depth]) -- see the note above. *)
+Definition init_kn_with (r : Z) (atr : kentry) (A : atable) : list kentry :=
+  [KRange (EVar V_S1) 4294901760 4294967295; KRange (EVar V_S2) 0 7;
+   KRange (EVar V_S3) 0 255;
+   KRange (eaddz e_atrandom 16) 140735340871872 140737488355328;
+   KRange e_atr8 17591917608961 17592186044391;
+   KRange e_sp0 140735340871680 140737488355136;
+   KRange e_pg 140735340871680 140737488351232;
+   KRange e_sp8 17591917608960 17592186044392; KRange (EVar V_ARGC) 1 1024;
+   KRange (EVar V_ENVC) 0 256; KRange (EVar V_L0) 0 131071;
+   KRange (EVar V_L1) 0 131071; KRange (EVar V_UID) 0 4294967294;
+   KRange (EVar V_HW) 4397 2101549; KRange (EVar V_W) 0 280000;
+   KRange (EVar V_BRK) (img_hi A / 4096) ((img_hi A + BRK_ASLR) / 4096);
+   KWr (SA e_sp0 (-6144513)) (ELit 6144513);
+   KZero (SA e_sp0 (-6144513)) (ELit 6144513);
+   KWord (SA e_sp0 0) 8 (EVar V_ARGC);
+   KWord (SA e_sp0 8) 8 e_str0;
+   kw_argv1 e_argv1w]
+  ++ auxw 13 3 (ELit (ph_addr_z A)) ++ auxw 14 4 (ELit (ph_ent_z A)) ++ auxw 15 5 (ELit (ph_num_z A))
+  ++ auxw 10 16 (EVar V_HW) ++ auxw 11 6 (ELit 4096)
+  ++ auxw 19 11 (EVar V_UID) ++ auxw 20 12 (EVar V_UID)
+  ++ auxw 23 23 (ELit 0) ++ auxw 24 25 e_atrandom
+  (* THE TERMINATOR, RESTORED AND PARAMETRIC.  I first dropped this row, reasoning that a
+     pure claim table needs no AT_NULL.  Main corrected it and the correction is measured:
+     the start-up certificates run [check] from [init_acs_of]'s rows and THAT IS A WALK --
+     the binary walks the auxv until AT_NULL -- and pem saw A_C_000 stop at
+     `CErr 3 in PX XPnScan`, having walked past the last claimed pair with nothing to stop
+     it.  The index is PARAMETRIC in [r] and never the literal 26 or 28: a literal there
+     would pin [kb_rseq], which [Run.valid_input] leaves free.  [r] is a parameter of this
+     Definition only -- boost-json keeps [V_R] as a plan VARIABLE inside the expressions
+     ([e_atrandom], [e_str0], [e_argv1w] stay [expr]), unlike json_cursor's shape TWO,
+     which would change their types and break every consumer and every frozen state. *)
+  ++ auxw (26 + 2 * r) 0 (ELit 0)
+  ++ [atr; KImg (img_lo A) (img_hi A);
+      KWr (SA (ELit 0) (rw_lo A)) (ELit (rw_len A))]
+  ++ auxv_rest r A ++ vrows ++ atrm_rows.
 
 (* [comment removed for export] *)
 Definition atr_entry : ltac2:(zQ "10!ik0$0") := ltac2:(zQ "90!h9!hog4!hta!kj8!kje!hogd!iie!hhk5!rvb@3$7@2$8@3$3$2$0$1@3$4$2$0$1@1$6+h0$5").
 (* [comment removed for export] *)
-Definition init_kn : ltac2:(zQ "30!hg1!hnhd!ik0>1A$1@1$0$2") := ltac2:(zQ "30!hnhd!hoh5!hoi1\1A$0@2$2$1^1").
+(* [r] is threaded through exactly three definitions -- this one, [init_kn_with] and
+   [init_acs_of] -- and no further.  [atr_entry] and [init_acs_of_with] keep their shapes. *)
+Definition init_kn (r : Z) (A : atable) : list kentry := init_kn_with r atr_entry A.
 
 Definition init_regs : ltac2:(zQ "20!hg1!hta@1$0$1") := ltac2:(zQ "50!hoj0!hnid!iie!hta!iqc@3$4@3$0$3@1$2ZNi0N2$1").
 (* [comment removed for export] *)
@@ -2814,8 +2979,27 @@ Definition e_stklen : ltac2:(zQ "10!hta$0") := ltac2:(zQ "40!hnq6!hoja!iie!jv3@2
 Definition STKLEN_MAX : ltac2:(zQ "10!h9$0") := ltac2:(zQ "20!lf!loa@2$1+ogggggggggg0$0").
 Definition init_vis : ltac2:(zQ "40!hta!hg1!kj1!hnhd>1A$3@1$1@2$2$0$0") := ltac2:(zQ "c0!hta!kj1!mo8!kka!osd!iie!ina!hnhd!hok1!hok9!os4!loa\1A$7@3$2@2$1$0$0@4$3$0$0@1$5@1$4^1@1$5@2$b@1$a^1@1$4^1@3$2@2$1$0$0@4$3$0$0$8$9@1$6@2$1$0$0").
 
-Definition init_acs_of_with : ltac2:(zQ "40!hg1!hol4!hnhd!ik0>3kn0@1$0$3>1A$2$1") := ltac2:(zQ "ha0!ina!os4!osd!hola!hta!loa!hge!hg1!kj1!hom5!homb!hon3!honf!hoo5!hnl8!hop2!hopc!hnhd!hoq3!hoqc!hor8!hos3!hosb!sh9!ik0!jv3\3kn0@1$7$h8\1A$h1@c$9@4$h5@1$f^1$h3^2$c@1$0$h0@2$5@1$1^1@1$2^1$bZ@1$h4^1@1$0@2$8$4$4@2$h9@1$3@2$5@1$1^1@1$2^1@1$3$d@2$h2+hgg0@1$h7$e$a$6@1$0$h6").
-Definition init_acs_of : ltac2:(zQ "20!hol4!hnhd>1A$1$0") := ltac2:(zQ "30!hnhd!hot2!hou6\1A$0@2$1@1$2^1^1").        (* [comment removed for export] *)
+(* RULE 12h IN THE BUDGET.  [a_totsz] was `img_hi A - img_lo A`, which [if_sizes] makes
+   EXACTLY `sum_sizes (segments_reserved segs)`.  At 75d69e00 the launch's ledger is
+   `segments_reserved segs ++ vdso_reserved …` ([State.vm_reserved_init_model]), so
+   [co_totsz] -- `sum_sizes (vm_reserved ++ vm_maps) <= a_totsz` -- became FALSE at init by
+   exactly the vDSO pair's bytes.  Measured as the goal
+   `sum_sizes (segments_reserved segs ++ RESX) <= img_hi A - img_lo A`
+   (a farm round).
+   The budget below is the INSTANCE of [State.vdso_len_bounds]: it permits two intervals of
+   at most twenty pages, so the pair is at most `2 * 20 * 4096 = 163840` bytes.  That is an
+   UPPER BOUND true of every kernel build, so it pins no kernel field -- unlike coturn's
+   route, which adds [n_resx]/[p_resx] to the tree's own [atable] and touches every concrete
+   table (coturn's AsanInit.v:39-45).  Raising a budget is not a narrowing: [entails] only
+   ever asks `a_totsz cs <= a_totsz ch`.
+   Written out from the farm's own print of the initial state
+   (a farm round); every other field is unchanged. *)
+Definition init_acs_of_with (kn0 : list kentry) (A : atable) : acs :=
+  ACS (mk_ss (a_entry A) init_regs kn0 NX0) []
+      (img_hi A - img_lo A + 163840) MBASE_MIN 0 (init_vis A) []
+      (vis_cost (img_hi A - img_lo A) + vis_cost STKLEN_MAX)
+      (escale 4096 (EVar V_BRK)) FdStd false [].
+Definition init_acs_of (r : Z) (A : atable) : acs := init_acs_of_with (init_kn r A) A.
 
 (* [comment removed for export] *)
 Lemma e_pg_early_eq : ltac2:(zQ "40!ljb!hnq6!hov0!hta@3$0$3$2$1").

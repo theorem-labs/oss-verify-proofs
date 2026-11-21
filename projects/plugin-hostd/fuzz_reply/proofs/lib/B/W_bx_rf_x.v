@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: block `rf` of image B's SEG_EXIT (fuzz_reply.asan-ubsan) over the GENERIC allocator relation
    ARx: proves lib/B/W_bx_defs_x.v's lx_rf_site_S_x, the two relay_finish call sites `sd zero,-1892(s10); jal
    relay_finish` at 0x84f00 (AX_join, back at 0x84f08) and 0x84fe0 (AX_noord, back at 0x84fe8), relay_finish at
    0x82344.  The ARx conversion of lib/B/W_bx_rf.v (lx_rf_site, Qed; that file is NOT edited), following image A's
-   finished conversion of the same block, e60b29a425a
-   lib/A/W_LLVMFuzzerTestOneInput_exit_x.v lines 1282-2129 (lx_rf_post_site_x ..
-   lx_rf_site_x), with A's AR original b86949b953d lib/A/W_LLVMFuzzerTestOneInput_exit.v :1817-3015 as the diff that
+   finished conversion of the same block,
+   lib/A/W_LLVMFuzzerTestOneInput_exit_x.v lines 1283-2130 (lx_rf_post_site_x ..
+   lx_rf_site_x), with A's AR original lib/A/W_LLVMFuzzerTestOneInput_exit.v :1817-3015 as the diff that
    shows each step.
    - Cited from lib/B/W_bx_rf.v (their statements and Section arguments do not mention AR, the AR journal or an AR callee
      spec): the byte, footprint, block-list, register and model lemmas, through the abbreviations below where they take
@@ -55,7 +56,7 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import W_LLVMFuzzerT
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import W_bx_defs W_bx_defs_x.
 (* the AR file of this block, whose AR-free lemmas are cited *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import W_traps W_bx_rf.
-(* B's K0 tables (5128b798413, by path): rf_spec_x's caller-context table is K0's free table *)
+(* B's K0 tables (by path): rf_spec_x's caller-context table is K0's free table *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require YCk0.
 (* route R (Section wR at the end): SRrG (YA0nH), and relay_finish's contract at R (lib/B/W_contract_xR.v
    rf_spec_xR; W_contract_xR is Required without Import and cited qualified) *)
@@ -78,7 +79,7 @@ Local Notation A_LLVMF := YCfn.A_LLVMF.
 Local Notation RA_LLVMF := YCfn.RA_LLVMF.
 Local Notation LLVMF_STK := YCfn.LLVMF_STK.
 
-(* ---- cut_x's Section w header (lib/B/W_LLVMFuzzerTestOneInput_cut_x.v:199-244), verbatim ---- *)
+(* ---- cut_x's Section w header (lib/B/W_LLVMFuzzerTestOneInput_cut_x.v:200-245), verbatim ---- *)
 Variable B : asyms.
 Variable MT : ameter_ops.
 Variables XM_LIB XN_LIB : Z -> Z.
@@ -111,17 +112,17 @@ Local Notation LS := LSx.
 (* ---- the hypotheses this block uses: (a) lib/B/W_LLVMFuzzerTestOneInput_exit_x.v's Section lxx, verbatim (LS_rf_room
    names W_bx_defs.lx_rf_room in full: the header's lx_rf_room abbreviation already carries MMAX) ---- *)
 Hypothesis HG_SL : forall a, inG (G_SL B fr_RG) a -> inG G_fr a.
-(* ---- the room round (image A's exit_x at 5a9b16eac9e): the allocator rules' room record RP, whose room invariant is
+(* ---- the room round (image A's exit_x): the allocator rules' room record RP, whose room invariant is
    the cut's NP (cand13's kit, W_journal_x.v Record roomp) ---- *)
 Variable RP : roomp.
 Hypothesis RP_NP : forall S k, rp_RM RP S k <-> NP S.
-(* relay_finish: the kit's rf_spec_x at its own G = RF_G ++ G_SL, over K0's free table (lib/B/YCk0.v CTX_AFREE
-   at 5128b798413); the site discharges In [BASE + AF_fr_relay_finish + 200] = [0x8240c] *)
+(* relay_finish: the kit's rf_spec_x at its own G = RF_G ++ G_SL, over K0's free table (lib/B/YCk0.v CTX_AFREE);
+   the site discharges In [BASE + AF_fr_relay_finish + 200] = [0x8240c] *)
 Hypothesis RFg : rf_spec_x B PST ARx MT RP MMAX (RF_G fr_RG AG_LISTEN ++ G_SL B fr_RG) fr_RG AG_THREAD_UP AG_LISTEN
   YCk0.CTX_AFREE (BASE + AF_fr_relay_finish).
 Hypothesis XRF_ERRNO : rg_out fr_RG + 8 <= as_errno B /\ as_errno B + 4 <= 2 ^ 64.
 Hypothesis XRF_ROM_OUT : rom_out segs B G_fr.
-(* TX_LS_rf_room (image A's exit_x at 5a9b16eac9e): lregs_X's t bound after LSx *)
+(* TX_LS_rf_room (image A's exit_x): lregs_X's t bound after LSx *)
 Hypothesis LS_rf_room : forall cx t m ly S,
   LSx cx t m ly S -> 0 <= t <= OPS_MAX ->
   W_bx_defs.lx_rf_room MMAX (blocks_bytes S) (lm_c m) [] (lm_mx m) 0 (lm_cap m) (lm_es m).
@@ -142,7 +143,7 @@ Hypothesis XRF_Gcells : forall a,
 Hypothesis XRF_JTAB_ROM : forall a, fr_jtab <= a < fr_jtab + 36 -> in_rom segs a.
 Hypothesis XRF_END5 : forall (W : world segs) (mem : word -> option byte),
   rom_view segs W mem -> garr8 segs (arm W mem) (VAL A_lit_end5) (bzs END5).
-(* KF-COUNT F8 (A aacecd50fed's exit_keys_nonempty, the same proof): every relay entry's key texts are non-empty -
+(* KF-COUNT F8 (A's exit_keys_nonempty, the same proof): every relay entry's key texts are non-empty -
    amodel_at's arelay_at gives aentry_ok for each entry (W_rep.v), whose last conjunct puts every key text at 14 bytes
    or more *)
 Lemma exit_keys_nonempty : forall ly S (W : world segs) mem m, amodel_at B ly S W mem m ->
@@ -177,7 +178,7 @@ Local Notation xrf_L_pos := (W_bx_rf.xrf_L_pos B).
 Local Notation xrf_asrc_fp_in := (W_bx_rf.xrf_asrc_fp_in B).
 Local Notation xrf_Gnout := (W_bx_rf.xrf_Gnout B G_fr HG_SL).
 
-(* the image cover at image B's top, from the laws' image field (lib/B/W_img_x.v:30) *)
+(* the image cover at image B's top, from the laws' image field (lib/B/W_img_x.v:31) *)
 Lemma IMGC : forall ly S Hp (W : world segs) mem md, ARx ly S Hp W mem md ->
   fst (ly_img ly) <= 0x10000 /\ 0x5fc000 <= fst (ly_img ly) + snd (ly_img ly).
 Proof. exact (W_img_x.fr_img_cover_x B ARx LAWS). Qed.
@@ -1162,7 +1163,7 @@ Proof.
   pose proof HJi as (_ & Hly & _). destruct Hly as (_ & _ & _ & _ & _ & EF & _).
   unfold flag_addr. rewrite EF. reflexivity.
 Qed.
-(* :478 lx_afn_pre_at_x; the text and proof of lib/B/W_bx_reset_x.v:403 lx_afn_pre_at_xR (Section wR there) *)
+(* :478 lx_afn_pre_at_x; the text and proof of lib/B/W_bx_reset_x.v:404 lx_afn_pre_at_xR (Section wR there) *)
 Lemma lx_afn_pre_at_xR : forall cx ly3 S3 fpos k (W : world segs) mem md regs STK1,
   lf_base_x B MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G_fr ARx cx [] ->
   ajournal_gx_xR segs B PST ARx R G_fr 0 [] LLVMF_STK (spZ (c_regs cx)) (lf_FP fr_FP cx)

@@ -1,4 +1,4 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfGwrcT.v (a working branch 3e35620c52e); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 17 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMsnprintfGwrcT.table); zify flag override made Local; YImgTop zify_pre_hook added after the last Require. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfGwrcT.v (a working branch); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 17 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMsnprintfGwrcT.table); zify flag override made Local; YImgTop zify_pre_hook added after the last Require. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
@@ -10,6 +10,7 @@
    inverted (bltu a1, s1 to the slow path, falling into 0x45954 where 0x45a24's bgeu goes), so each path's first run
    (MEASURED: stops at the bltu, BC_LTU (~s2) s1) and its second run (MEASURED: from the not-taken side it reaches
    FMsnprintfGwrc's state r1_*_e1 / r2*_e1) are new and every later run is FMsnprintfGwrc's; theorem vsn_wr_check_srrUT. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_link.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

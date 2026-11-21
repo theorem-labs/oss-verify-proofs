@@ -4,8 +4,8 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AD2l.v, with its module paths changed and its addresses moved to libreac/fuzz_scene's ASan build. *)
 (* Modified by Theorem Labs, 2026-10-29: libreac/fuzz_scene's concrete start-up record B for the asan image, the
    instance of `TfibSyms` (lib/A/AF0m.v:906-930) that lib/A/SceneBCertB.v gives to the start-up certificate.
-   Its tables are a Theorem Labs lane's (lib/A/AF0l.v, lib/A/AF0m.v at a working branch a00b0ed6266) and its trace
-   universe is a Theorem Labs lane's measured one (lib/A/ACej.v at a working branch 1c79108a270). The five
+   Its tables are a Theorem Labs lane's (lib/A/AF0l.v, lib/A/AF0m.v at a working branch) and its trace
+   universe is a Theorem Labs lane's measured one (lib/A/ACej.v at a working branch). The five
    literals were measured on fuzz_scene.asan (unstripped sha256 6ed872f7cc8c1e42..., stripped 43654a025fd02e1f...,
    by an ELF symtab / .got / PT_LOAD read): each is scene's, none is cgif's.
      as_shadow_cell 0xa37f8 = st_value of __asan_shadow_memory_dynamic_address (.bss, 8 bytes) + 0;
@@ -18,8 +18,9 @@
    The two .bss cells hold SHADOW_OFF and 1 only after start-up; their values are the start-up certificate's
    cells Tfib_const_abs[49] and [50] (AF0m.v:83-84), not file bytes. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_scene/lib/A/AD2l.v (donor image sha256 43654a025fd0), with its module paths changed and its addresses moved to reac-pw/fuzz_role's ASan build. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/reac-pw/fuzz_role/lib/A/AD2l.v at 9f8c843f0e03 (image sha256 614cffc0864c), with its module paths changed and its addresses moved to reac-pw/fuzz_headamp's ASan build (image sha256 f3e0669d2819) by alreloc a5c53bb2bed4; comments kept as the source has them. *)
-(* ZERO-MARGIN facts of this record's Tfib_owned_static (AF0m.v:894-901), measured on fuzz_scene.asan, for whoever
+(* Modified by Theorem Labs, 2026-10: copied from proofs/reac-pw/fuzz_role/lib/A/AD2l.v (image sha256 614cffc0864c), with its module paths changed and its addresses moved to reac-pw/fuzz_headamp's ASan build (image sha256 f3e0669d2819) by alreloc a5c53bb2bed4; comments kept as the source has them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* ZERO-MARGIN facts of this record's Tfib_owned_static (AF0m.v:895-902), measured on fuzz_scene.asan, for whoever
    next edits these tables: each is a premise of the entry statement that holds with no byte to spare.
      - trailer window [0x20e00, 0x20e28): the owned row (0x20dd2, 0x2e) ends exactly at 0x20e00, and (0x20e2c, 0x14)
        starts right after the trailer bytes [0x20e20, 0x20e2c) (HRO_TT, proved in lib/A/SceneBCertB.v);
@@ -29,7 +30,7 @@
      - the .got word 0x9c388 that holds the placeholder's address (loaded by auipc 0x82bb0 + ld 0x82bb4): the next
        owned row (0x9c390, 0x10) starts exactly at its end.
    MEASURED (04:19Z): TFIB_TP 0x5d6798 is tp in all 50 hand-off states of libreac/fuzz_scene
-   lib/A/AB01.v at 48907dc7e8ca, builtin_tls + 0xc8; TFIB_ERRNO 0x5d66f4 = tp - 0xa4, from __errno_location
+   lib/A/AB01.v, builtin_tls + 0xc8; TFIB_ERRNO 0x5d66f4 = tp - 0xa4, from __errno_location
    (0x8af18): mv a0, tp; addi a0, a0, -0xa4; ret. *)
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
@@ -113,6 +114,6 @@ exact (In_of_existsb t Tfib_universe (proj1 (forallb_forall _ _) R t Ht)).
 -   intros h Hh. cbn [as_dhash TfibB]. destruct h as [|[|h]]; [vm_compute; reflexivity | vm_compute; reflexivity | lia].
 Qed.
 Definition TfibB_pair : asyms_ok TfibB /\ TfibSyms TfibB := conj TfibB_ok TfibB_syms.
-(* Stack-malloc class 8 has no entry in scene's Tfib_code (AF0l.v:12, the `else 0` branch). *)
+(* Stack-malloc class 8 has no entry in scene's Tfib_code (AF0l.v:13, the `else 0` branch). *)
 Example TfibB_class8 : pc_stack_malloc (as_code TfibB) 8 = 0.
 Proof. reflexivity. Qed.

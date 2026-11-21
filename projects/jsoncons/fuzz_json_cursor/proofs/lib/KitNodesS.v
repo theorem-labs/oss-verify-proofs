@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed grant_ok_na_pin_of_grant_ok; removed grant_ok_na_pin_eq. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -24,11 +25,15 @@ Definition grant_ok_na_pin (m : Model) (a : word) (n : Z) : bool :=
   && (bv_unsigned a + n <=? alloc_top (m_vmmaps m))%Z
   && region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 n).
 
-Lemma grant_ok_na_pin_eq : forall hint m a n, grant_ok_na_pin m a n = grant_ok_na hint m a n.
-Proof. reflexivity. Qed.
-
+(* 08b1429: [RefNodes.grant_ok_na] now leads with the placement test
+   ([Placement.linux_place_is]), so [grant_ok_na_pin] (admissibility only) is its tail,
+   not equal to it. *)
 Lemma grant_ok_na_pin_of_grant_ok : forall hint m a n, grant_ok hint m a n = true -> grant_ok_na_pin m a n = true.
-Proof. intros hint m a n H. rewrite (grant_ok_na_pin_eq hint). apply grant_ok_grant_ok_na. exact H. Qed.
+Proof.
+  intros hint m a n H. unfold grant_ok in H. unfold grant_ok_na_pin.
+  rewrite !andb_true_iff in H. destruct H as [[[[[_ H1] H2] H3] H4] _].
+  rewrite H1, H2, H3, H4. reflexivity.
+Qed.
 
 Lemma grant_na_pin_not_errno : forall m a n,
   (0 <= n)%Z -> grant_ok_na_pin m a n = true -> errno_ret_in mmap_errnos a = false.

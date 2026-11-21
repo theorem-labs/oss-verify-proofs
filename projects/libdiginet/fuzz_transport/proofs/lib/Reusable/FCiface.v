@@ -14,7 +14,8 @@
      proves fs_iface for ARcf the same way, from ARmcf.
    No address and no image numeral appears in this file. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/omx-clap-core/fuzz_preset/lib/Reusable/FCiface.v (sha256 72b16d2a0987aa9a1c38d37336da27698408f3ccb0cc1a72da073b2ab6835484) with only its module paths changed to plugin-hostd/fuzz_command's. *)
-(* Modified by Theorem Labs, 2026-10: copied from plugin-hostd/fuzz_command at 781f46bc05cd for libdiginet/fuzz_transport by this unit's provenance/evidence/class5/copy.sh (image-free: module paths only). *)
+(* Modified by Theorem Labs, 2026-10: copied from plugin-hostd/fuzz_command for libdiginet/fuzz_transport by this unit's provenance/evidence/class5/copy.sh (image-free: module paths only). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -34,7 +35,7 @@ Variable segs : list Segment.
 Variable B : asyms.
 Variable ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop.
 
-(* YG0d.v:278-284 *)
+(* YG0d.v:279-285 *)
 Definition ecall_pre_x (ly : alayout) (S : astate) (Hp : list Z) (W : world segs) (regs : bvmap 5 word)
 (mem : word -> option byte) (md : Model) : Prop :=
 ARx ly S Hp W mem md /\
@@ -43,7 +44,7 @@ spZ regs mod 16 = 0 /\ ly_stk_lo ly + ESTACK <= spZ regs /\ spZ regs <= ly_stk_h
 (forall a, spZ regs - ESTACK <= a < spZ regs -> apresent (w_H W) mem a) /\
 getr regs 3 = w64 (as_gp B) /\ getr regs 4 = w64 (as_tp B).
 
-(* YG0d.v:285-300 *)
+(* YG0d.v:286-301 *)
 Definition astack_malloc_realizes_x (cid : Z) : Prop :=
 forall ly S Hp W regs mem md pos S',
 ecall_pre_x ly S Hp W regs mem md ->
@@ -75,7 +76,7 @@ ARx ly S Hp W mem' md' /\ aregs_preserved regs regs' /\ same_but_materialized md
 (forall a, 0 <= a < 2 ^ 64 -> ~ (q <= a < q + n) -> aview segs (w_H W) mem' a = aview segs (w_H W) mem a) /\
 (forall a, spZ regs - ESTACK <= a < spZ regs -> apresent (w_H W) mem' a)).
 
-(* YG0t.v:577-589, the rebuild law of a malloc step; Hp unchanged. *)
+(* YG0t.v:578-590, the rebuild law of a malloc step; Hp unchanged. *)
 Definition astack_malloc_law_x : Prop := forall ly S Hp W mem md mem' md' cid pos hint',
 ARx ly S Hp W mem md -> 0 <= cid <= 10 ->
 fs_probe (Z.to_nat (fs_frames cid)) (fs_live (st_fs S)) cid (znth 0 cid (fs_hint (st_fs S))) = Some (pos, hint') ->
@@ -90,12 +91,12 @@ m_vmmaps md' = m_vmmaps md -> m_vm_lazy md' = m_vm_lazy md -> eager_used md' = e
 (forall a, in_band_rw a -> w_H W (w64 a) = true -> mem' (w64 a) = mem (w64 a)) ->
 ARx ly S' Hp W mem' md'.
 
-(* YG0d.v:468-470 *)
+(* YG0d.v:469-471 *)
 Definition AR_stack_law_x : Prop :=
 forall ly S Hp W mem md a,
 ARx ly S Hp W mem md -> ly_stk_lo ly <= a < ly_stk_hi ly -> ~ aowned B ly S a.
 
-(* YG0d.v:439-446; Hp unchanged. *)
+(* YG0d.v:440-447; Hp unchanged. *)
 Definition AR_frame_law_x : Prop :=
 forall ly S Hp W mem md mem' md',
 ARx ly S Hp W mem md ->
@@ -105,7 +106,7 @@ m_vmmaps md' = m_vmmaps md -> m_vm_lazy md' = m_vm_lazy md -> eager_used md' = e
 (forall a, in_band_rw a -> w_H W (w64 a) = true -> mem' (w64 a) = mem (w64 a)) ->
 ARx ly S Hp W mem' md'.
 
-(* YG0d.v:447-455 *)
+(* YG0d.v:448-456 *)
 Definition AR_frames_law_x : Prop :=
 forall ly S Hp W mem md cid pos,
 ARx ly S Hp W mem md -> In (cid, pos) (frames S) ->
@@ -119,7 +120,7 @@ apresent (w_H W) mem (shadow_addr (frame_addr ly cid pos) + i) /\
 (* What the walks read from AR. The comment on each field names the cgif AR piece it projects
    (YG0n.v:490 AR = ARm /\ ALedger /\ abudget_ok /\ amwf /\ ahs) and the donor line that reads it. *)
 Record fs_iface : Prop := {
-(* am_wf -> wf_fakestack -> wfs_hints (YG01.v:311); AF0s.v:57 *)
+(* am_wf -> wf_fakestack -> wfs_hints (YG01.v:312); AF0s.v:57 *)
 fi_hints : forall ly S Hp W mem md, ARx ly S Hp W mem md ->
 length (fs_hint (st_fs S)) = 11%nat /\ Forall (fun h => 0 <= h) (fs_hint (st_fs S));
 (* am_layout (YG0n.v:209); AF0s.v:61, :87-101 *)
@@ -143,24 +144,24 @@ range_vis B ly (aview segs (w_H W) mem) (AF 0, kFakeStackSize);
 (* am_areas item (ASh (AF kFakeFramesOff), ...) (YG0n.v:139, :220); AF0s.v:278-285 *)
 fi_area_Fsh : forall ly S Hp W mem md, ARx ly S Hp W mem md ->
 range_vis B ly (aview segs (w_H W) mem) (ASh (AF kFakeFramesOff), (kFakeStackSize - kFakeFramesOff) / 8);
-(* YF0v.own_free_frame from ARm (YF0v.v:37); AF0s.v:505 *)
+(* YF0v.own_free_frame from ARm (YF0v.v:38); AF0s.v:505 *)
 fi_own_free_frame : forall ly S Hp W mem md cid pos a, ARx ly S Hp W mem md -> 0 <= cid <= 10 -> 0 <= pos < fs_frames cid ->
 ~ In (cid, pos) (frames S) ->
 frame_addr ly cid pos <= a < frame_addr ly cid pos + fs_frame_bytes cid -> aowned B ly S a;
-(* YF0v.own_free_frame_shadow from ARm (YF0v.v:64); AF0s.v:503 *)
+(* YF0v.own_free_frame_shadow from ARm (YF0v.v:65); AF0s.v:503 *)
 fi_own_free_frame_shadow : forall ly S Hp W mem md cid pos a, ARx ly S Hp W mem md -> 0 <= cid <= 10 -> 0 <= pos < fs_frames cid ->
 ~ In (cid, pos) (frames S) ->
 shadow_addr (frame_addr ly cid pos) <= a < shadow_addr (frame_addr ly cid pos) + fs_frame_bytes cid / 8 -> aowned B ly S a;
-(* YG0q.own_F_low from ARm (YG0q.v:257); AF0s.v:507-508 *)
+(* YG0q.own_F_low from ARm (YG0q.v:258); AF0s.v:507-508 *)
 fi_own_F_low : forall ly S Hp W mem md a, ARx ly S Hp W mem md ->
 ly_F ly <= a < ly_F ly + kFakeFramesOff -> aowned B ly S a;
-(* YG0t.astack_malloc_law_ok (YG0t.v:662) over the whole AR; AF0s.v:467 *)
+(* YG0t.astack_malloc_law_ok (YG0t.v:663) over the whole AR; AF0s.v:467 *)
 fi_malloc_law : astack_malloc_law_x;
-(* AR_laws.al_stack (YG0d.v:504); AF0s.v:474 *)
+(* AR_laws.al_stack (YG0d.v:505); AF0s.v:474 *)
 fi_stack : AR_stack_law_x;
-(* AR_laws.al_frame (YG0d.v:500); cgif_rgb YF8u.v:157 *)
+(* AR_laws.al_frame (YG0d.v:501); cgif_rgb YF8u.v:157 *)
 fi_frame : AR_frame_law_x;
-(* AR_laws.al_frames (YG0d.v:501); cgif_rgb YF8u.v:73 *)
+(* AR_laws.al_frames (YG0d.v:502); cgif_rgb YF8u.v:73 *)
 fi_frames : AR_frames_law_x
 }.
 End b.

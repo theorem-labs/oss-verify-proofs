@@ -1,4 +1,4 @@
-(* Image B twin of lib/A/RT_IImgA_ok.v at d49bd1db505: module paths lib.A -> lib.B; 1 image numeral moved to fuzz_reply.asan-ubsan by symbol + offset, each checked against that image (CHAINB-numerals.tsv sha256 3cedf5e564f7; internal record). *) (* The image facts that lib/CJ/RL/GXA/G_vfprintf_snf_closed.v takes as Context (its lines 28-77), proved at
+(* Image B twin of lib/A/RT_IImgA_ok.v: module paths lib.A -> lib.B; 1 image numeral moved to fuzz_reply.asan-ubsan by symbol + offset, each checked against that image (CHAINB-numerals.tsv sha256 3cedf5e564f7; internal record). *) (* The image facts that lib/CJ/RL/GXA/G_vfprintf_snf_closed.v takes as Context (its lines 28-77), proved at
    RT_IImgA.v's instance A_img on the pinned fuzz_reply.asan-ubsan.  Each fact is a vm_compute check of code bytes
    (CodeAtT), of read-only bytes (RoB) or of the symbol map's relative layout (RelCode / RelSym / RelNear /
    ZFact), discharged by IInst.v's `inst` tactic exactly as the plain instance's facts are.  A wrong pairing in

@@ -1,7 +1,7 @@
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3): the IMAGE-FREE lemmas of segment B11a
    of reac_segconf_parse_file's walk (S_B11a of lib/B/Prog/pf_pieces.v: the model key, MODEL 0x886d4 -> MISS 0x88a50
    or LOWOUT 0x88c70). No machine state, no executor, no listing. The B11a segment lane of the image-B G3 walk owner, 2026-10-30.
-   ADAPTED from the image-A G3 walk owner's image-A file lib/A/Prog/pf_a11a_f.v (commit dffd9f5c1c42, an
+   ADAPTED from the image-A G3 walk owner's image-A file lib/A/Prog/pf_a11a_f.v (an
    image-A segment lane): the same lemmas with the prefix a11f_ renamed b11f_, Required over image B's kit copy lib/B/YG0f and
    the B contract bases lib/B/Prog/SegPgBase, SegABase; the C-level facts are image-independent (struct offsets of
    seg_spec, SegModel's r_key / r_low / by_token / r_upd), so no number changes.
@@ -13,8 +13,8 @@
         c->seg[gi] (model [0x24, +24), model_set [0x3c, +4), model_file [0x40, +96));
    - 8. the record update through the ASan reader: the bytes the two snprintf calls and the `sw` of model_set
         leave in the block c hold r_upd cf gi (rs_with_model m file) (b11f_rconf_model).
-   Sections 3, 4 and 5 are the plain walk's image-free helpers (lib/Prog/pf_p7_lemmas.v at commit
-   cfdd99183965, the plain parse_file piece lane) as the A file copies them. Lib.Mem's zxb is named by its full path. *)
+   Sections 3, 4 and 5 are the plain walk's image-free helpers (lib/Prog/pf_p7_lemmas.v,
+   the plain parse_file piece lane) as the A file copies them. Lib.Mem's zxb is named by its full path. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

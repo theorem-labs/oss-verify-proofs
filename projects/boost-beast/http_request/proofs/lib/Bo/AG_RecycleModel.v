@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 From OSSVerify.Proofs.boost_beast.http_request.lib.Common Require KReplay.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -176,7 +177,16 @@ Section Pop.
       split. { (* [comment removed for export] *)
         unfold carved_addr_list in W2 |- *. cbn [as_regions as_cache as_chunks as_space_beg as_tq as_gq set_gq qc_list] in *.
         rewrite app_nil_r in W2. rewrite !map_app in W2 |- *. fold gl in W2.
-        eapply Permutation_NoDup; [| exact W2]. rewrite <- !app_assoc. do 3 apply Permutation_app_head. exact PAD. }
+        (* LPS 727298f3 checker: the class part of the two lists is equal only up to
+           [set_gq] under [compact_to_addr]/[get_region]/[get_pc], and unifying the two
+           spellings unfolds the 32-class [flat_map].  So the step is proved over opaque
+           prefixes ([GEN]) and applied to W2, the goal matched by conversion. *)
+        cbn [get_region get_pc compact_to_addr region_beg as_regions as_cache as_space_beg set_gq] in W2 |- *.
+        assert (GEN : forall Fa Ma Ta : list Z, NoDup (Fa ++ Ma ++ Ta ++ map qb_addr gl) ->
+                  NoDup ((Fa ++ Ma ++ Ta ++ map qb_addr l2) ++ XB)).
+        { intros Fa Ma Ta HN. eapply Permutation_NoDup; [| exact HN]. rewrite <- !app_assoc.
+          do 3 apply Permutation_app_head. exact PAD. }
+        exact (GEN _ _ _ W2). }
       split; [exact W3|]. split; [exact W4|]. split; [exact W5|]. split; [exact W6|]. split; [exact W7|]. split; [exact W8|]. split; [exact W9|].
       split. { (* [comment removed for export] *)
         split; [| exact EB2]. cbn [as_gq set_gq qc_list]. intros b Hb. exact (proj1 (Forall_forall _ _) OK2 b Hb). }
@@ -340,9 +350,16 @@ Section DelPrim.
       cbn [as_space_beg as_regions as_cache as_chunks as_tq as_gq get_region get_pc compact_to_addr region_beg] in W2 |- *.
       change (map snd (PositiveMap.elements (remove_chunk (as_chunks st) (ch_user_beg ch)))) with (chunk_list st2).
       change (map snd (PositiveMap.elements (as_chunks st))) with (chunk_list st) in W2.
-      eapply Permutation_NoDup; [| exact W2]. rewrite <- !app_assoc. apply Permutation_app_head.
-      rewrite (Permutation_map ch_alloc_beg (Permutation_filter ch_primary _ _ PERM0)). cbn [filter]. rewrite PRIM. cbn [map]. fold p.
-      rewrite !app_assoc. apply Permutation_middle. }
+      (* LPS 727298f3 checker: as in [WFQ_pop], the class part of the two lists differs in
+         spelling ([st] / [st2]) and unifying them unfolds the 32-class [flat_map]; the step
+         is proved over an opaque class part and queue part and applied to W2. *)
+      assert (GEN : forall F Q : list Z,
+                NoDup ((F ++ map ch_alloc_beg (filter ch_primary (chunk_list st)) ++ Q) ++ XB) ->
+                NoDup ((F ++ map ch_alloc_beg (filter ch_primary (chunk_list st2)) ++ Q) ++ p :: XB)).
+      { intros F Q HN. eapply Permutation_NoDup; [| exact HN]. rewrite <- !app_assoc. apply Permutation_app_head.
+        rewrite (Permutation_map ch_alloc_beg (Permutation_filter ch_primary _ _ PERM0)). cbn [filter]. rewrite PRIM. cbn [map]. fold p.
+        rewrite !app_assoc. apply Permutation_middle. }
+      exact (GEN _ _ W2). }
     split. { intros y Hy. apply IN2 in Hy as [Hy _]. exact (W3 y Hy). }
     split. { intros a b Ha Hb. apply IN2 in Ha as [Ha _]. apply IN2 in Hb as [Hb _]. exact (W4 a b Ha Hb). }
     split. { rewrite <- W5. unfold zlen. erewrite (Permutation_length (Permutation_filter _ _ _ PERM0)). cbn [filter]. rewrite PRIM. reflexivity. }
@@ -445,10 +462,18 @@ Section Push.
       - intros x Hx Hne. unfold g, g'. assert (0 <= x) by (unfold L in Hx; apply in_map_iff in Hx as [y [<- _]]; lia). rewrite PCo by lia. reflexivity.
       - unfold g'. rewrite PCc. cbn [pc_chunks map]. rewrite CTA. reflexivity.
       - unfold g. reflexivity. }
-    eapply Permutation_NoDup; [| exact W2]. rewrite <- !app_assoc.
-    apply Permutation_trans with ((p :: flat_map g L) ++ IU ++ BQ ++ XB).
-    - symmetry. cbn [app]. rewrite !app_assoc. apply (Permutation_middle ((flat_map g L ++ IU) ++ BQ) XB p).
-    - rewrite PG. reflexivity.
+    (* LPS 727298f3 checker: the class part of W2 reaches this step with its 32-class [flat_map]
+       unfolded, and unifying it with [flat_map g L] fails; the step is proved over opaque class
+       parts ([GEN]), and W2 and the goal are put in that form by conversion. *)
+    assert (GEN : forall F F' : list Z, Permutation (p :: F) F' ->
+              NoDup ((F ++ IU ++ BQ) ++ p :: XB) -> NoDup ((F' ++ IU ++ BQ) ++ XB)).
+    { intros F F' PF HN. eapply Permutation_NoDup; [| exact HN]. rewrite <- !app_assoc.
+      apply Permutation_trans with ((p :: F) ++ IU ++ BQ ++ XB).
+      - symmetry. cbn [app]. rewrite !app_assoc. apply (Permutation_middle ((F ++ IU) ++ BQ) XB p).
+      - apply Permutation_app_tail. exact PF. }
+    change (NoDup ((flat_map g L ++ IU ++ BQ) ++ p :: XB)) in W2.
+    change (NoDup ((flat_map g' L ++ IU ++ BQ) ++ XB)).
+    exact (GEN _ _ PG W2).
   Qed.
 End Push.
 

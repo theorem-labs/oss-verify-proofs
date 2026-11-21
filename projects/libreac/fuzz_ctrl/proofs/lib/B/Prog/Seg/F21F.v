@@ -3,9 +3,9 @@
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
    source run: lib/B/Prog/Seg/F21.v lu_evt (:66) and seg_F21's own inline stretch 0x82728 -> 0x827f8 / 0x8283c
-     (:662-766) at a working branch 3803efccea0 (blob 20a1f323863a72a3bec516c73f1ef2b8e6eb3995);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+     (:662-766) at a working branch (blob 20a1f323863a72a3bec516c73f1ef2b8e6eb3995);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    compare: lu_evt is the UL bridge that carries the head-amp callee contract into seg_F21's UL run; an _F
      stretch never runs a callee, so the bridge has no footprint twin.  seg_F21_F re-runs F21.v:664-766 and
      STOPS at the call site 0x8283c on the arm that reaches it (F21.v:712-714 / 738-739); the call itself is

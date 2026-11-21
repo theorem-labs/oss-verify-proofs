@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the argument nodes take AsanInit's full launch and the image's table at the launch's own CONFIG_RSEQ layout (INFO_ASAN_at), and the strings sit below the stack top (ed_top) after the launch's pad (block_pad_len), ending eight below it, with names and proofs following projects/coturn/FuzzStunClient/proofs/lib/Asan/AsanNodesArgAsan.v. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -64,6 +65,10 @@ Definition idx1 (i : nat) : nat := match i with O => 0%nat | _ => 1%nat end.
 #[local] Ltac kept_in_list Hin :=
   cbn [In] in Hin;
   repeat (destruct Hin as [<-|Hin]; [in_list|]); destruct Hin.
+(* An AsanInit fact, whichever of AsanInit's Section variables its proof used: unification fixes
+   most of them from the goal, the launch hypotheses close by assumption, and the program-header
+   table is this binary's [APH]. *)
+#[local] Ltac init_fact L := unshelve (eapply L; try eassumption); try exact APH; try reflexivity.
 
 Section AsanInst.
   Variable sp : word.
@@ -76,24 +81,51 @@ Section AsanInst.
   Variables uid hw : word.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
   Variable FS0 : Fs.Fs.
+  Variable apc : N.
+  Variable mbase : word.
+  Variable fs : Fs.Fs.
+  Variable stdin : InputStream.
+  Variable gid : word.
+  Variable groups : list word.
+  Variable net : NetQueue.
+  Variable nofile : word.
+  Variable sigmask : word.
+  Variable urnd : InputStream.
+  Variable kern : KernelBuild.
+  Variable execfn : list byte.
+  Context {sigpipe_default : bool}.   (* AsanInit's: the launch's SIGPIPE disposition at entry *)
+  (** see [AsanInit.pinned_kernel]: [recorded_kernel]'s eight fields; CONFIG_RSEQ free *)
+  Hypothesis Hkernel : in_kernel (inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd kern execfn (sigpipe_default := sigpipe_default))
+    = pinned_kernel (in_kernel (inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd kern execfn (sigpipe_default := sigpipe_default))).
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) (inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd kern execfn (sigpipe_default := sigpipe_default)).
+  (* LPS 727298f3: the image's table at the launch's own CONFIG_RSEQ layout. *)
+  #[local] Notation IA := (INFO_ASAN_at (rseq_z (kb_rseq kern))) (only parsing).
 
-  Let bsb := build_stack_bytes APH sp argv envp uid hw rdraw.
+  (* LPS 727298f3: the strings sit below the stack top ([ed_top rdraw]), with [block_pad_len]
+     between the head block and the strings and the top's eight-byte slot above them; the
+     names and proofs below follow coturn/FuzzStunClient's lib/Asan/AsanNodesArgAsan.v. *)
+  Let INP := inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd kern execfn (sigpipe_default := sigpipe_default).
+  Let entryw : word := Z_to_bv 64 (Z.of_N apc).
+  Let rseq := kb_rseq kern.
+  Let top := ed_top rdraw.
+  Let bsb := entry_stack_image INP mbase APH entryw sp rdraw.
   Let usp := bv_unsigned sp.
   Let argc := Z.of_nat (length argv).
-  Let envc := Z.of_nat (length envp).
   Let argv0 := nth 0 argv [].
   Let argv1 := nth 1 argv [].
   Let L0 := Z.of_nat (length argv0).
   Let L1 := Z.of_nat (length argv1).
-  Let W := (Z.of_nat (length bsb) - 16 - (8 * argc + 8 * envc + 184)) / 8.
-  Let STR0 := usp + 8 * argc + 8 * envc + 184.
-  Let TOP := STR0 + 8 * W.
+  Let CHEAD := Z.of_nat (block_head_size rseq argv envp).
+  Let LSTR := Z.of_nat (launch_string_bytes argv envp execfn).
+  Let W := Z.of_nat (block_pad_len rseq sp top argv envp execfn).
+  Let STR0 := usp + CHEAD + W.
+  Let TOP := bv_unsigned top - 8.
 
   (* [comment removed for export] *)
   Definition SINV1 (E : env) (M : word -> option byte) : Prop :=
-    SINV0 APH sp rdraw brk0 argv envp uid hw E M /\ eb E 1%nat = argv0 /\ eb E 2%nat = argv1.
+    SINV0 APH apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd kern execfn (sigpipe_default := sigpipe_default) E M /\ eb E 1%nat = argv0 /\ eb E 2%nat = argv1.
 
-  Lemma SINV1_frame : forall E M M', (forall a, argH0 APH sp rdraw argv envp uid hw E a = true -> M' a = M a) -> SINV1 E M -> SINV1 E M'.
+  Lemma SINV1_frame : forall E M M', (forall a, argH0 sp rdraw argv envp kern execfn E a = true -> M' a = M a) -> SINV1 E M -> SINV1 E M'.
   Proof. intros E M M' Hf (H0 & H1 & H2). split; [|auto]. eapply SINV0_frame; eassumption. Qed.
 
   Lemma SINV1_agree : forall E E' M, env_agree NX0 E E' -> SINV1 E M -> SINV1 E' M.
@@ -104,9 +136,7 @@ Section AsanInst.
 
   (* [comment removed for export] *)
   Lemma len_av : 1 <= argc <= 1024. Proof. unfold argc. destruct Hva as [H _]. lia. Qed.
-  Lemma len_ev : 0 <= envc <= 256. Proof. unfold envc. destruct Hve as [H _]. lia. Qed.
   Lemma usp_lo : 0x7fff80000000 <= usp. Proof. unfold usp. destruct Hsp as [H _]. exact H. Qed.
-  Lemma usp_al : usp mod 16 = 0. Proof. unfold usp. destruct Hsp as (_ & _ & H). exact H. Qed.
   Lemma L0_le : L0 <= 131071.
   Proof. unfold L0, argv0. apply (valid_argv_str_len argv 0 Hva). destruct Hva as [H _]. lia. Qed.
   Lemma L1_le : L1 <= 131071.
@@ -116,24 +146,23 @@ Section AsanInst.
     - rewrite nth_overflow by lia. cbn. lia.
   Qed.
 
-  Lemma W_facts : 0 <= W /\ 8 * W = Z.of_nat (length bsb) - 16 - (8 * argc + 8 * envc + 184).
-  Proof. pose proof (W_range APH sp rdraw argv envp uid hw Hva Hve) as (W1 & W2 & W3). unfold W, bsb, argc, envc. split; [exact W1 | exact W2]. Qed.
+  Lemma W_facts : 0 <= W <= 4110.
+  Proof. unfold W, rseq, top. init_fact AsanInit.pad_range. Qed.
 
-  Lemma TOP_eq : TOP = usp + Z.of_nat (length bsb) - 16.
-  Proof. pose proof W_facts as [W1 W2]. unfold TOP, STR0. lia. Qed.
+  Lemma chead_facts : 480 <= CHEAD <= 10752.
+  Proof. unfold CHEAD, rseq. init_fact AsanInit.chead_range. Qed.
 
-  (* [comment removed for export] *)
-  Lemma strings_fit : Z.of_nat (total_arg_bytes_nat argv) <= 8 * W.
+  Lemma str0_hi : STR0 + LSTR + 8 = bv_unsigned top.
+  Proof. unfold STR0, usp, CHEAD, W, LSTR, rseq, top. init_fact AsanInit.str0_hi. Qed.
+
+  Lemma TOP_eq : TOP = usp + Z.of_nat (length bsb) - 8.
   Proof.
-    pose proof W_facts as [W1 W2]. rewrite W2.
-    pose proof (length_bsb_eq APH sp rdraw argv envp uid hw) as LB. fold bsb in LB. rewrite LB.
-    unfold stack_image_size, argc, envc. cbv zeta. rewrite !total_arg_bytes_Z.
-    pose proof (Z.mod_pos_bound (8 + (Z.of_nat (length argv) + 1) * 8 + (Z.of_nat (length envp) + 1) * 8 + 160
-                                  + Z.of_nat (total_arg_bytes_nat argv) + Z.of_nat (total_arg_bytes_nat envp)) 8 ltac:(lia)).
-    match goal with |- _ <= ?x => match x with context [((8 - ?l mod 8) mod 8)%Z] =>
-      pose proof (Z.mod_pos_bound (8 - l mod 8) 8 ltac:(lia)) end end.
-    lia.
+    unfold bsb. rewrite (length_entry_stack_image_launch Sv48 INP mbase APH entryw sp brk0 rdraw Hlau).
+    unfold TOP, usp, top. lia.
   Qed.
+
+  Lemma strings_fit : Z.of_nat (total_arg_bytes_nat argv) <= LSTR.
+  Proof. unfold LSTR, launch_string_bytes. rewrite !length_flatten_strings. lia. Qed.
 
   Lemma argv0_fit : L0 + 1 <= Z.of_nat (total_arg_bytes_nat argv).
   Proof.
@@ -147,15 +176,22 @@ Section AsanInst.
     rewrite !total_arg_bytes_cons. lia.
   Qed.
 
+  (* [TOP] is the strings' end, eight below the page-aligned stack top, which may itself be
+     [2 ^ 47] ([Run.valid_stack_top_va]); so the bound is [TOP + 8 <= 2 ^ 47]. *)
   Lemma Lay_asan : 0x7fff80000000 <= usp /\ usp + 192 <= STR0 /\ STR0 + L0 + 1 <= TOP
                    /\ (2 <= argc -> STR0 + L0 + 1 + L1 + 1 <= TOP)
-                   /\ TOP mod 8 = 0 /\ TOP + 16 <= 2 ^ 47 /\ L0 <= 131071 /\ L1 <= 131071 /\ 1 <= argc <= 1024.
-  Proof.
-    pose proof len_av. pose proof len_ev. pose proof usp_lo. pose proof usp_al. pose proof L0_le. pose proof L1_le.
-    pose proof W_facts as [W1 W2]. pose proof strings_fit. pose proof argv0_fit. pose proof TOP_eq.
-    pose proof (usp_fit APH sp rdraw argv envp uid hw Hfit) as UF. fold bsb in UF. fold usp in UF.
-    unfold TOP, STR0 in *.
-    repeat split; try lia.
+                   /\ TOP mod 8 = 0 /\ TOP + 8 <= 2 ^ 47 /\ L0 <= 131071 /\ L1 <= 131071 /\ 1 <= argc <= 1024.
+  Proof using All.
+    pose proof len_av. pose proof usp_lo. pose proof L0_le. pose proof L1_le.
+    pose proof W_facts. pose proof chead_facts. pose proof strings_fit. pose proof argv0_fit. pose proof str0_hi.
+    assert (HT : bv_unsigned top <= 2 ^ 47).
+    { pose proof (entry_page_top_within_window Sv48 INP mbase sp brk0 rdraw Hlau) as HT.
+      change (bv_unsigned top <= 2 ^ 47) in HT. exact HT. }
+    assert (HA : bv_unsigned top mod 4096 = 0).
+    { pose proof Hlau as HL. destruct HL as ((HA & _ & _) & _ & _).
+      change (bv_unsigned top mod 4096 = 0) in HA. exact HA. }
+    pose proof (Z.div_mod (bv_unsigned top) 4096 ltac:(lia)).
+    unfold TOP, STR0 in *. repeat split; try lia.
     intros Hargc2. pose proof (argv01_fit Hargc2). lia.
   Qed.
 
@@ -174,20 +210,23 @@ Section AsanInst.
   Qed.
 
   (* [comment removed for export] *)
-  Lemma argH0_high_asan : forall E (a : word), argH0 APH sp rdraw argv envp uid hw E a = true -> CEIL <= bv_unsigned a.
-  Proof. intros E a H. exact (argH0_high APH sp rdraw argv envp uid hw Hsp Hva E a H). Qed.
+  Lemma argH0_high_asan : forall E (a : word), argH0 sp rdraw argv envp kern execfn E a = true -> CEIL <= bv_unsigned a.
+  Proof using sp rdraw argv envp Hsp Hva kern execfn. intros E a H. (* the entry pc is not read: any value *) eapply (AsanInit.argH0_high 0%N); eassumption. Qed.
 
   Lemma vals_of_SINV1 : forall E M, SINV1 E M ->
-    uE E e_sp0 = usp /\ uE E e_str0 = STR0 /\ edenot E (EVar V_L0) = Z_to_bv 64 L0
+    uE E e_sp0 = usp /\ uE E (e_str0 IA) = STR0 /\ edenot E (EVar V_L0) = Z_to_bv 64 L0
     /\ edenot E (EVar V_ARGC) = Z_to_bv 64 argc /\ edenot E (EVar V_L1) = Z_to_bv 64 L1
     /\ eb E 1%nat = argv0 /\ eb E 2%nat = argv1.
-  Proof.
+  Proof using All.
     intros E M ((Hev & Hmem) & B1 & B2).
-    assert (AG : forall e, expr_vars_lt NX0 e = true -> noblob e = true -> edenot E e = edenot (E0 APH sp rdraw brk0 argv envp uid hw) e).
+    assert (AG : forall e, expr_vars_lt NX0 e = true -> noblob e = true -> edenot E e = edenot (E0 sp rdraw brk0 argv envp uid kern execfn) e).
     { intros e He Hb. apply (edenot_ev_only E _ NX0 e He Hb). exact Hev. }
-    pose proof (u_e_sp0 APH sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit) as U0.
-    pose proof (u_e_str0 APH sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit) as U1.
-    unfold uE in *. rewrite (AG e_sp0) by reflexivity. rewrite (AG e_str0) by reflexivity.
+    assert (U0 : uE (E0 sp rdraw brk0 argv envp uid kern execfn) e_sp0 = usp)
+      by (unfold usp; init_fact AsanInit.u_e_sp0).
+    assert (U1 : uE (E0 sp rdraw brk0 argv envp uid kern execfn) (e_str0 IA) = STR0)
+      by (unfold STR0, usp, CHEAD, W, rseq, top; init_fact AsanInit.u_e_str0).
+    unfold uE in *. rewrite (AG e_sp0) by reflexivity.
+    rewrite (AG (e_str0 IA)) by (unfold e_str0, e_atrandom; cbn [a_rseq INFO_ASAN_at]; destruct (kb_rseq kern); vm_compute; reflexivity).
     change (edenot E (EVar V_L0)) with (ev E 3%nat). change (edenot E (EVar V_ARGC)) with (ev E 1%nat).
     change (edenot E (EVar V_L1)) with (ev E 7%nat).
     rewrite (Hev 3%nat), (Hev 1%nat), (Hev 7%nat) by (unfold NX0; lia).
@@ -196,47 +235,52 @@ Section AsanInst.
 
   (* [comment removed for export] *)
   Lemma mem_str_block : forall E M (a : word), SINV1 E M -> STR0 <= bv_unsigned a < TOP ->
-    M a = stack_to_mem sp (entry_stack_image APH sp argv envp uid hw rdraw) a.
-  Proof.
-    intros E M a ((Hev & Hmem) & _ & _) Ha. pose proof W_facts as [W1 W2]. pose proof len_av. pose proof len_ev.
+    M a = stack_to_mem sp bsb a.
+  Proof using All.
+    intros E M a ((Hev & Hmem) & _ & _) Ha.
+    assert (HW : 0 <= W) by (unfold W; lia). assert (HC : 0 <= CHEAD) by (unfold CHEAD; lia).
     rewrite Hmem.
-    2:{ unfold argH0. apply orb_true_intro. right. apply andb_true_intro. fold usp argc envc bsb. fold W.
-        split; [apply Z.leb_le | apply Z.ltb_lt]; unfold STR0, TOP in Ha; lia. }
-    apply wrap_above_sp. fold usp. unfold STR0 in Ha. lia.
+    2:{ unfold argH0. cbv zeta. apply orb_true_intro. right. apply andb_true_intro.
+        unfold TOP, STR0, usp, CHEAD, W, rseq, top in Ha, HW, HC.
+        split; [apply Z.leb_le | apply Z.ltb_lt]; lia. }
+    apply wrap_above_sp. unfold STR0, usp in Ha. lia.
   Qed.
 
   (* [comment removed for export] *)
   Lemma rd_of_SINV1 : forall E M (a : word), SINV1 E M -> STR0 <= bv_unsigned a < TOP -> exists b, M a = Some b.
-  Proof.
-    intros E M a HS Ha. pose proof W_facts as [W1 W2]. pose proof TOP_eq as TE. pose proof len_av. pose proof len_ev.
-    rewrite (mem_str_block E M a HS Ha). unfold stack_to_mem, entry_stack_image. fold bsb. fold usp.
+  Proof using All.
+    intros E M a HS Ha. pose proof TOP_eq as TE. pose proof W_facts. pose proof chead_facts.
+    rewrite (mem_str_block E M a HS Ha). unfold stack_to_mem. fold usp.
     replace (usp <=? bv_unsigned a) with true by (symmetry; apply Z.leb_le; unfold STR0 in Ha; lia).
-    rewrite length_app.
-    replace (bv_unsigned a - usp <? Z.of_nat (length bsb + length (entry_slack sp bsb (ed_slack rdraw))))
-      with true by (symmetry; apply Z.ltb_lt; unfold STR0 in Ha; lia).
-    rewrite nth_error_app1 by (unfold STR0 in Ha; lia).
+    cbv zeta.
+    replace (bv_unsigned a - usp <? Z.of_nat (length bsb)) with true
+      by (symmetry; apply Z.ltb_lt; unfold STR0 in Ha; lia).
     destruct (nth_error bsb (Z.to_nat (bv_unsigned a - usp))) as [b|] eqn:Hn; [exists b; reflexivity|].
     apply nth_error_None in Hn. unfold STR0 in Ha. lia.
   Qed.
 
   (* [comment removed for export] *)
   Lemma cat_argv_ptr_STR : forall i, arg_ok argc i ->
-    cat_argv_ptr sp argv envp (idx1 i) = Z_to_bv 64 (STR STR0 argv0 i).
-  Proof.
-    intros i Hi. pose proof len_av as LA. pose proof len_ev as LE.
-    pose proof (usp_fit APH sp rdraw argv envp uid hw Hfit) as UF. fold bsb usp in UF.
+    cat_argv_ptr top argv envp execfn (idx1 i) = Z_to_bv 64 (STR STR0 argv0 i).
+  Proof using All.
+    intros i Hi. pose proof len_av as LA.
     assert (Hk : (idx1 i < length argv)%nat) by (destruct i; cbn [idx1 arg_ok] in *; unfold argc in *; lia).
-    rewrite (cat_argv_ptr_offset sp argv envp (idx1 i) Hk).
-    unfold cat_string_base. rewrite nat_to_word_add_merge, word_add_nat. fold usp. apply f_equal.
-    unfold cat_struct_size, auxv_size.
+    rewrite (cat_argv_ptr_offset top argv envp execfn (idx1 i) Hk).
+    pose proof (cat_string_base_offset Sv48 INP mbase sp brk0 rdraw Hlau) as CSB.
+    change (in_argv INP) with argv in CSB. change (in_envp INP) with envp in CSB.
+    change (in_execfn INP) with execfn in CSB. change (kb_rseq (in_kernel INP)) with rseq in CSB.
+    fold top in CSB. rewrite CSB. clear CSB.
+    rewrite nat_to_word_add_merge, word_add_nat. f_equal.
     destruct i as [|i]; cbn [idx1 STR].
-    - change (total_arg_bytes_nat (firstn 0 argv)) with 0%nat. unfold STR0, argc, envc. lia.
-    - rewrite total_firstn1 by lia. unfold STR0, argc, envc, argv0. lia.
+    - change (total_arg_bytes_nat (firstn 0 argv)) with 0%nat.
+      unfold STR0, usp, CHEAD, W, cat_string_off. lia.
+    - rewrite total_firstn1 by (unfold argc in LA; lia).
+      unfold STR0, usp, CHEAD, W, cat_string_off, argv0. lia.
   Qed.
 
   Lemma str_of_SINV1 : forall E M i j, SINV1 E M -> arg_ok argc i -> (j <= length (ARG argv0 argv1 i))%nat ->
     M (Z_to_bv 64 (STR STR0 argv0 i + Z.of_nat j)) = Some (byte_at (ARG argv0 argv1 i) j).
-  Proof.
+  Proof using All.
     intros E M i j HS Hi Hj.
     pose proof Lay_asan as LAY. pose proof (STR_range usp STR0 TOP argc argv0 argv1 LAY i Hi) as [R1 R2].
     pose proof (STR_bounds usp STR0 TOP argc argv0 argv1 LAY i) as SB.
@@ -244,13 +288,28 @@ Section AsanInst.
     unfold LEN in R2.
     assert (Hk : (idx1 i < length argv)%nat) by (pose proof len_av; destruct i; cbn [idx1 arg_ok] in *; unfold argc in *; lia).
     assert (Harg : nth (idx1 i) argv [] = ARG argv0 argv1 i) by (destruct i; reflexivity).
-    pose proof (read_argv_byte_k APH ASEGS sp argv envp (idx1 i) j uid hw rdraw Hk ltac:(rewrite Harg; exact Hj)
-                  (lay_bsb_nw APH sp rdraw argv envp uid hw Hva Hve ltac:(destruct Hsp as (_ & H & _); exact H))) as RD.
-    rewrite (cat_argv_ptr_STR i Hi), word_add_nat, u64_lit in RD by lia. rewrite Harg in RD. fold bsb in RD.
-    destruct (rd_of_SINV1 E M (Z_to_bv 64 (STR STR0 argv0 i + Z.of_nat j)) HS) as [b Hb]; [rewrite u64_lit; lia|].
-    rewrite Hb. f_equal.
-    rewrite (mem_str_block E M _ HS) in Hb by (rewrite u64_lit; lia).
-    cbn [rdn] in RD. rewrite Hb in RD. injection RD as RD'. unfold byte_at. exact RD'.
+    pose proof (read_argv_byte_k Sv48 ASEGS INP mbase APH entryw sp brk0 rdraw (idx1 i) j Hlau Hk
+                  ltac:(change (in_argv INP) with argv; rewrite Harg; exact Hj)) as RD.
+    change (in_argv INP) with argv in RD. change (in_envp INP) with envp in RD.
+    change (in_execfn INP) with execfn in RD. fold top in RD. fold bsb in RD.
+    rewrite (cat_argv_ptr_STR i Hi), word_add_nat, u64_lit in RD by lia. rewrite Harg in RD.
+    rewrite (mem_str_block E M _ HS) by (rewrite u64_lit; lia).
+    cbn [rdn] in RD.
+    (* [RD]'s memory is [bsb]'s body up to the Section's local names; take its own spelling
+       (coturn's AsanNodesArgAsan.str_of_SINV1 folds INP/entryw/bsb back for the same reason). *)
+    lazymatch type of RD with
+    | context [stack_to_mem ?s ?bs ?ad] =>
+        change (stack_to_mem sp bsb (Z_to_bv 64 (STR STR0 argv0 i + Z.of_nat j))) with (stack_to_mem s bs ad);
+        destruct (stack_to_mem s bs ad) as [b|] eqn:Hb
+    end.
+    - try rewrite Hb in RD. injection RD as RD'. unfold byte_at. rewrite RD'. reflexivity.
+    - (* [rdn] falls back to [seg_rom] on [None], so [RD] alone is no contradiction; the
+         string byte is mapped ([rd_of_SINV1]). *)
+      exfalso.
+      destruct (rd_of_SINV1 E M (Z_to_bv 64 (STR STR0 argv0 i + Z.of_nat j)) HS
+                  ltac:(rewrite u64_lit; lia)) as [b0 Hb0].
+      rewrite (mem_str_block E M _ HS) in Hb0 by (rewrite u64_lit; lia).
+      pose proof (eq_trans (eq_sym Hb0) Hb) as Hc. discriminate Hc.
   Qed.
 
   (* [comment removed for export] *)
@@ -259,8 +318,8 @@ Section AsanInst.
   Proof. repeat split; reflexivity. Qed.
 
   Local Ltac Lia.lia ::= Zify.zify; xlia zchecker.   (* [comment removed for export] *)
-  Lemma Gro_asan : img_lo INFO_ASAN <= g_ro_lo (argtab_of INFO_ASAN) /\ g_ro_hi (argtab_of INFO_ASAN) <= img_hi INFO_ASAN.
-  Proof. cbn. lia. Qed.
+  Lemma Gro_asan : img_lo IA <= g_ro_lo (argtab_of IA) /\ g_ro_hi (argtab_of IA) <= img_hi IA.
+  Proof using. clear. cbn. lia. Qed.
   Local Ltac Lia.lia ::= tryif el_goal_has_var then el_lia_core else first [ solve [clear; el_lia_core] | el_lia_core ].
 
   Section AnyFP.
@@ -274,16 +333,16 @@ Section AsanInst.
     0 <= K -> bv_unsigned (nth (Z.to_nat K) buf (Z_to_bv 8 0)) = 0 ->
     (forall j, (j < Z.to_nat K)%nat -> bv_unsigned (nth j buf (Z_to_bv 8 0)) <> 0) ->
     K + 8 <= n -> n < 2 ^ 64 ->
-    (forall i, g_ro_lo (argtab_of INFO_ASAN) <= i < g_ro_hi (argtab_of INFO_ASAN) -> mem (Z_to_bv 64 i) = None) ->
+    (forall i, g_ro_lo (argtab_of IA) <= i < g_ro_hi (argtab_of IA) -> mem (Z_to_bv 64 i) = None) ->
     ret_ok ret -> getr regs 1%bv = ret -> getr regs 10%bv = s -> getr regs 11%bv = Z_to_bv 64 0 -> getr regs 12%bv = Z_to_bv 64 n ->
     exists regs',
-      msteps ASEGS (mkst regs (Z_to_bv 64 (g_memchr (argtab_of INFO_ASAN))) mem rom) (mkst regs' ret mem rom)
+      msteps ASEGS (mkst regs (Z_to_bv 64 (g_memchr (argtab_of IA))) mem rom) (mkst regs' ret mem rom)
       /\ kept_ok regs regs' /\ getr regs' 10%bv = Z_to_bv 64 (bv_unsigned s + K).
   Proof.
     intros mem s buf K n rom regs ret Hbuf Hwin Hnw HK0 Hz Hnzj HKn Hn64 Hro Hret H1 H10 H11 H12.
     assert (HOK : mchrH mem s buf K n) by (constructor; try assumption; exact Hro).
     destruct (ref_memchr0 mem s buf K n rom regs ret HOK Hret H1 H10 H11 H12) as (regs' & Hms & Hkc & Ha0).
-    exists regs'. split; [replace (Z_to_bv 64 (g_memchr (argtab_of INFO_ASAN))) with (0x97d20%bv : word) by (apply bv_eq; reflexivity); exact Hms|].
+    exists regs'. split; [replace (Z_to_bv 64 (g_memchr (argtab_of IA))) with (0x97d20%bv : word) by (apply bv_eq; reflexivity); exact Hms|].
     split; [|exact Ha0]. apply kept_regs. intros k Hin. apply Hkc. unfold callee_saved. kept_in_list Hin.
   Qed.
 
@@ -297,7 +356,7 @@ Section AsanInst.
     ret_ok ret -> getr regs 1%bv = ret ->
     getr regs 10%bv = dst -> getr regs 11%bv = src -> getr regs 12%bv = Z_to_bv 64 n ->
     exists regs',
-      msteps ASEGS (mkst regs (Z_to_bv 64 (x_memcpy INFO_ASAN)) mem0 (seg_rom ASEGS))
+      msteps ASEGS (mkst regs (Z_to_bv 64 (x_memcpy IA)) mem0 (seg_rom ASEGS))
                   (mkst regs' ret (wbytes mem0 dst bs) (seg_rom ASEGS))
       /\ kept_ok regs regs' /\ getr regs' 10%bv = dst.
   Proof.
@@ -305,7 +364,7 @@ Section AsanInst.
     pose proof (u64_range dst) as Hdr.
     assert (HOK : mcH mem0 dst src n bs) by (constructor; try assumption; lia).
     destruct (AsanMemcpy.ref_memcpy mem0 dst src n bs (seg_rom ASEGS) HOK regs ret Hret R1 R10 R11 R12) as (regs' & Hms & Hk).
-    exists regs'. split; [replace (Z_to_bv 64 (x_memcpy INFO_ASAN)) with (0x97e1c%bv : word) by (apply bv_eq; reflexivity); exact Hms|].
+    exists regs'. split; [replace (Z_to_bv 64 (x_memcpy IA)) with (0x97e1c%bv : word) by (apply bv_eq; reflexivity); exact Hms|].
     split; [|rewrite <- R10; apply Hk; unfold callee_kept; in_list].
     apply kept_regs. intros k Hin. apply Hk. unfold callee_kept. kept_in_list Hin.
   Qed.
@@ -313,12 +372,12 @@ Section AsanInst.
   (* [comment removed for export] *)
   Variable SV : env -> (word -> option byte) -> Prop.
   Hypothesis SV_to1 : forall E M, SV E M -> SINV1 E M.
-  Hypothesis SV_frame : forall E M M', (forall a, argH0 APH sp rdraw argv envp uid hw E a = true -> M' a = M a) -> SV E M -> SV E M'.
+  Hypothesis SV_frame : forall E M M', (forall a, argH0 sp rdraw argv envp kern execfn E a = true -> M' a = M a) -> SV E M -> SV E M'.
   Hypothesis SV_agree : forall E E' M, env_agree NX0 E E' -> SV E M -> SV E' M.
-  #[local] Notation AH := (argH0 APH sp rdraw argv envp uid hw).
+  #[local] Notation AH := (argH0 sp rdraw argv envp kern execfn).
 
   Lemma vals_of_SV : forall E M, SV E M ->
-    uE E e_sp0 = usp /\ uE E e_str0 = STR0 /\ edenot E (EVar V_L0) = Z_to_bv 64 L0
+    uE E e_sp0 = usp /\ uE E (e_str0 IA) = STR0 /\ edenot E (EVar V_L0) = Z_to_bv 64 L0
     /\ edenot E (EVar V_ARGC) = Z_to_bv 64 argc /\ edenot E (EVar V_L1) = Z_to_bv 64 L1
     /\ eb E 1%nat = argv0 /\ eb E 2%nat = argv1.
   Proof. intros E M H. exact (vals_of_SINV1 E M (SV_to1 E M H)). Qed.
@@ -329,23 +388,23 @@ Section AsanInst.
   Proof. intros E M i j H. exact (str_of_SINV1 E M i j (SV_to1 E M H)). Qed.
 
   Theorem asan_ext_sound_fp : forall id args,
-    APSC.node1_stmt_fp ASEGS INFO_ASAN NX0 LIMIT SV AH FS0 FP always (xn ASEGS INFO_ASAN NX0 id args).
+    APSC.node1_stmt_fp ASEGS IA NX0 LIMIT SV AH FS0 FP always (xn ASEGS IA NX0 id args).
   Proof.
     intros id args.
     pose proof Lay_asan as LAY. pose proof istrlen_ecalls as EC.
     destruct id as [|[|[|[|[|[|[|[|[|[|id]]]]]]]]]]; cbn [xn].
-    - eapply (xn_sound_argstrlen ASEGS INFO_ASAN NX0 LIMIT SV AH FS0 asan_wx asan_in_hull SV_frame
+    - eapply (xn_sound_argstrlen ASEGS IA NX0 LIMIT SV AH FS0 asan_wx asan_in_hull SV_frame
                W_63514 W_63518 W_6351c W_63520 W_63524 W_63528 W_6352c);
         [cbn; lia | exact F_63514 | exact F_63518 | exact F_6351c | exact F_63520 | exact F_63524 | exact F_63528 | exact F_6352c
         | exact EC | exact D_63514 | exact D_63518 | exact D_6351c | exact D_63520 | exact D_63524 | exact D_63528 | exact D_6352c
         | exact LAY | exact Hnz_asan | exact vals_of_SV | exact str_of_SV ].
-    - eapply (xn_sound_argmemchr ASEGS INFO_ASAN NX0 LIMIT SV AH FS0 asan_wx asan_in_hull asan_hull_ok argH0_high_asan
-               (argH0_agree APH sp rdraw argv envp uid hw) SV_frame SV_agree NX0_sp0);
+    - eapply (xn_sound_argmemchr ASEGS IA NX0 LIMIT SV AH FS0 asan_wx asan_in_hull asan_hull_ok argH0_high_asan
+               (argH0_agree sp rdraw argv envp kern execfn) SV_frame SV_agree NX0_sp0);
         [exact LAY | exact Hnz_asan | exact vals_of_SV | exact rd_of_SV | exact str_of_SV | exact Gro_asan | exact memchr_asan].
-    - eapply (xn_sound_argnul ASEGS INFO_ASAN NX0 LIMIT SV AH FS0 asan_wx asan_in_hull SV_frame);
+    - eapply (xn_sound_argnul ASEGS IA NX0 LIMIT SV AH FS0 asan_wx asan_in_hull SV_frame);
         [exact LAY | exact vals_of_SV | exact str_of_SV].
-    - eapply (xn_sound_memcpyarg ASEGS INFO_ASAN NX0 LIMIT SV AH FS0 asan_wx asan_in_hull asan_hull_ok argH0_high_asan
-               (argH0_agree APH sp rdraw argv envp uid hw) SV_frame SV_agree NX0_sp0);
+    - eapply (xn_sound_memcpyarg ASEGS IA NX0 LIMIT SV AH FS0 asan_wx asan_in_hull asan_hull_ok argH0_high_asan
+               (argH0_agree sp rdraw argv envp kern execfn) SV_frame SV_agree NX0_sp0);
         [exact LAY | exact vals_of_SV | exact str_of_SV | exact memcpy_asan].
     - intros cs cs' E R FULL model T _ _ Hn _. discriminate Hn.
     - apply xn_sound_reldiff.
@@ -360,11 +419,11 @@ Section AsanInst.
   (* [comment removed for export] *)
   Theorem asan_ext_sound_cfg : forall (SV : env -> (word -> option byte) -> Prop) (FPS : PropExec.FPState -> Prop),
     (forall E M, SV E M -> SINV1 E M) ->
-    (forall E M M', (forall a, argH0 APH sp rdraw argv envp uid hw E a = true -> M' a = M a) -> SV E M -> SV E M') ->
+    (forall E M M', (forall a, argH0 sp rdraw argv envp kern execfn E a = true -> M' a = M a) -> SV E M -> SV E M') ->
     (forall E E' M, env_agree NX0 E E' -> SV E M -> SV E' M) ->
-    forall id args, APSC.node1_stmt_cfg ASEGS INFO_ASAN NX0 LIMIT SV (argH0 APH sp rdraw argv envp uid hw) FS0 FPS always
-                                       (xn ASEGS INFO_ASAN NX0 id args).
-  Proof.
+    forall id args, APSC.node1_stmt_cfg ASEGS IA NX0 LIMIT SV (argH0 sp rdraw argv envp kern execfn) FS0 FPS always
+                                       (xn ASEGS IA NX0 id args).
+  Proof using All.
     intros SV FPS H1 H2 H3 id args. apply APSC.node1_of_fp. intros FP _.
     exact (@asan_ext_sound_fp FP SV H1 H2 H3 id args).
   Qed.

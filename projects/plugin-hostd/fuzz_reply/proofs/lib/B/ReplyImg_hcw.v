@@ -1,20 +1,21 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, row img-hcw-B of a Theorem Labs lane's REPLY-IMG-ROWS.md (sha256 a33a582e3ffd; internal record), for the cf layer at
-   plugin-hostd/fuzz_reply). The B twin of a Theorem Labs lane's lib/A/ReplyImg_hcw.v hcw_A (row img-hcw-A, a working branch
-   cf407cb5886): same stem, same form.
+   plugin-hostd/fuzz_reply). The B twin of a Theorem Labs lane's lib/A/ReplyImg_hcw.v hcw_A (row img-hcw-A, a working branch):
+   same stem, same form.
    rule 24: no function proved (kind: image row; the constant cells against the hit walk's thread cells, at reply's
    image B, fuzz_reply.asan-ubsan).
 
-   The row is the cf layer's image hypothesis HCW (YGcfInstHit.v:160-162 at a working branch ee95275bccb): no byte
+   The row is the cf layer's image hypothesis HCW (YGcfInstHit.v:161-163 at a working branch): no byte
    of a constant cell is one of the thread-object cells the hit walk writes (ImgBaseAG.WINT).  cgif's discharge is
    YGcfInstHitcgif.v:95 HCW_cgif.  Reply does not carry YGcfInstHit.v yet, so [hcw_B] states the hypothesis's text at
-   reply B's instances (ImgBase.AImg at AImg_reply, B/AGif2reply.v:24; ImgBaseAG.WINT, B/ImgBaseAG.v:124), in the
+   reply B's instances (ImgBase.AImg at AImg_reply, B/AGif2reply.v:25; ImgBaseAG.WINT, B/ImgBaseAG.v:125), in the
    consumer form of B/ReplyImg_depkeep.v, and a consumer closes the layer's hypothesis by `exact` once the layer is on
    reply.
 
    The proof is HCW_cgif's at reply's image: the constant cells lie in reply B's constant-cell zone CZONE
-   (B/AGif0reply.v:64; ReplyImg_depkeep.const_cells_zone, the vm_compute check over reply B's tables B/YF0m.v), and
+   (B/AGif0reply.v:65; ReplyImg_depkeep.const_cells_zone, the vm_compute check over reply B's tables B/YF0m.v), and
    CZONE misses the WINT cells: the thread object (static extent 2) is in the application range (lo_app) and apart
    from the image window (extent 9), the context object (extent 6) and the D page (extent 7) (lo_disj); the image
    window covers the image and TFIB_TSD (img_cover); and every WINT cell lies in [T + 80, T + kThreadObjSize), past
@@ -40,7 +41,7 @@ Local Open Scope Z_scope.
 
 Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 
-(* HCW (YGcfInstHit.v:160-162; YGcfInstHitcgif.v:95 HCW_cgif's twin): the constant cells miss the thread cells the
+(* HCW (YGcfInstHit.v:161-163; YGcfInstHitcgif.v:95 HCW_cgif's twin): the constant cells miss the thread cells the
    hit walk writes. *)
 Theorem hcw_B : forall B, @im_syms AImg_reply B ->
 forall ly' c j cl', layout_ok ly' -> @im_img_cover AImg_reply ly' -> ly_tsd ly' = as_tsd B ->

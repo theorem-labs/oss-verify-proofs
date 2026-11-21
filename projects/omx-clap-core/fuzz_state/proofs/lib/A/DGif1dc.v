@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGif1dc.v (a working branch 84ee52cd012, file sha256 2e70960672ab) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; its 14 image addresses moved by code-verified function pairs (14 port_addr_check 16f8a030c869 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGif1dc.v (a working branch, file sha256 2e70960672ab) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; its 14 image addresses moved by code-verified function pairs (14 port_addr_check 16f8a030c869 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
 (* Modified by Theorem Labs, 2026-10: the transitions of cgif_file's released DoRecycle walk (AFhg.v: T_E, T_O, T_R,
    T_Q, RC_pre / RC_post, CD_pre / CD_post) restated over the states of DGif1da.v: each transition also carries the raw
    frame (from the segments' raw MEQ, or the callee's raw frame clause), and the recycle callees are entered and left
    in the types of DMiface.di_rchunk_t / di_cdealloc_t at the cgif instantiation (KSTACK_CF window, no model
    conjuncts; the recycle invariant in DRq's folded form). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia FunctionalExtensionality.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the three vDSO step arms and the m_channel_reader premise of the channel write). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -165,6 +166,18 @@ Proof.
       rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
       rewrite Hstep in H; discriminate end.
   - (* [comment removed for export] *)
+    match goal with H : mi_account_step segs ms model = MachineUnmodeled |- _ =>
+      rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
+      rewrite Hstep in H; discriminate end.
+  - (* sstep_vdso_call *)
+    match goal with H : mi_account_step segs ms model = MachineUnmodeled |- _ =>
+      rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
+      rewrite Hstep in H; discriminate end.
+  - (* sstep_vdso_materialization_fault *)
+    match goal with H : mi_account_step segs ms model = MachineUnmodeled |- _ =>
+      rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
+      rewrite Hstep in H; discriminate end.
+  - (* sstep_vdso_unmodeled *)
     match goal with H : mi_account_step segs ms model = MachineUnmodeled |- _ =>
       rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
       rewrite Hstep in H; discriminate end.
@@ -429,7 +442,8 @@ Qed.
 (* [comment removed for export] *)
 
 Definition fd1chan (model : Model) : Prop :=
-  fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)).
+  fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))
+  /\ m_channel_reader model = true.
 
 (* [comment removed for export] *)
 Definition buf_modeled (b : list byte) : Prop :=
@@ -511,6 +525,8 @@ Inductive to_wexit : machine_state -> list (list byte) -> word -> Prop :=
     bv_unsigned x8 = 64%Z ->
     ms_gpr ms 0 = Z_to_bv 64 1 ->
     ms_read_bytes ms (ms_gpr ms 1) (ms_gpr ms 2) = Some buf ->
+    (* the range [vfs_write]'s [access_ok] accepts; see [write1_check_n] *)
+    access_okb (ms_gpr ms 1) (bv_unsigned (ms_gpr ms 2)) = true ->
     (1 <= length buf)%nat ->
     (forall n, (1 <= n)%nat -> (n <= length buf)%nat ->
        to_wexit (advance_past_svc (set_gpr0 ms (len_word (firstn n buf)))) bufs code) ->
@@ -672,6 +688,7 @@ Inductive to_wexit_ch : machine_state -> list (list byte) -> word -> Prop :=
     bv_unsigned x8 = 64%Z ->
     ms_gpr ms 0 = fd ->
     ms_read_bytes ms (ms_gpr ms 1) (ms_gpr ms 2) = Some buf ->
+    access_okb (ms_gpr ms 1) (bv_unsigned (ms_gpr ms 2)) = true ->
     (1 <= length buf)%nat ->
     (forall n, (1 <= n)%nat -> (n <= length buf)%nat ->
        to_wexit_ch (advance_past_svc (set_gpr0 ms (len_word (firstn n buf)))) bufs code) ->

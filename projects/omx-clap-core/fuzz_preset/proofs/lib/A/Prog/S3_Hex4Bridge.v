@@ -1,13 +1,13 @@
-(* fuzz_preset image A' (#102 pin asan 1be0f53d, unstripped twin bff8519bbe3e; facts 8f3e7e1a07f1): the hex4 ACCEPTANCE
+(* fuzz_preset image A' (#102 pin asan 1be0f53d, unstripped twin bff8519bbe3e; facts): the hex4 ACCEPTANCE
    bridge on the #102 kit tip (owner 18:58Z: a relocation in its re-fit binds straight to
-   it; first re-fitted at decff67d721f), hex4 at K0's text from h-verbs-1's proved MEMNORM leaf walk.
+   it; first re-fitted), hex4 at K0's text from h-verbs-1's proved MEMNORM leaf walk.
    rule 24: no function proved
-   rule 24: proves no function (kind: merge). Relocation of the signed old-pin result origin/cold/h-rw-pre-5-hex4m
-   b371d41abbaa (this file blob 88c290b352c4) to A'; its rule-24 CONFIRM is in that lane's record. hex4 itself is
-   a Theorem Labs lane's walk (lib/A/Prog/hex4_mn.v hex4_x_holds_mnI, commit d83df2ff2fa4, relocated
+   rule 24: proves no function (kind: merge). Relocation of the signed old-pin result
+    (this file blob 88c290b352c4) to A'; its rule-24 CONFIRM is in that lane's record. hex4 itself is
+   a Theorem Labs lane's walk (lib/A/Prog/hex4_mn.v hex4_x_holds_mnI, relocated
    with this file); this file only maps the text's premises onto the leaf's and the leaf's post onto the text's fpostWm.
-   The TEXT: thex4_specX, lib/A/PRH_FnReader.v blob c30f1da6a2d1 at f97c8b2f046b (taken by path with f97c's other
-   PRH_* files; PRH_Base.v fdb45545469b, PRH_Img.v 934516a622e8). The text is the same as at decff67d721f (blob
+   The TEXT: thex4_specX, lib/A/PRH_FnReader.v blob c30f1da6a2d1 (taken by path with f97c's other
+   PRH_* files; PRH_Base.v fdb45545469b, PRH_Img.v 934516a622e8). The text is the same as (blob
    0af3032ed375), verbatim:
      Definition thex4_specX : Prop :=
        forall ly S Hp W regs mem md ch e p o (bs : list Z) Lam peak cnt fail ran most own,
@@ -46,7 +46,7 @@
    PALibCore from TL by vm_compute over named values. That listing has no A' twin; on A' the leaf runs over the #102
    listing of record PI_prog_A (Listing_prog 7ed1529926bd / PAImg_prog 505a51ff7d08), so hex4_tl is TL's PALibCore
    part (YC1fP.palib_core).
-   SET: every engine, listing and image file is int102's (origin/cold/h-rw-pre-4-int102 d1659777b723), the PRH_*
+   SET: every engine, listing and image file is int102, the PRH_*
    kit files are the #102 kit tip's (by path); this row's own files are this one, lib/A/Prog/hex4_mn.v, hex4_x.v,
    hex4_witness.v and lib/Prog/hex4_xs.v, hex4_xs_mn.v.
    SECTION HYPOTHESES (instance facts): LAWS (AR_laws_x, HL), TL : PALib at the program listing PI_prog_A, HW :
@@ -73,7 +73,7 @@ Local Set Warnings "-abstract-large-number".
 Open Scope Z_scope.
 
 (* the short image names this file uses (CrcBp's wrong-image trap, owner 19:2xZ). Locate in this file's context
-   (pins102 workspace of cf6f00470c9b): rsegs and Img0.rsegs resolve to lib.A.Img0.rsegs, PI_prog_A to
+   (pins102 workspace): rsegs and Img0.rsegs resolve to lib.A.Img0.rsegs, PI_prog_A to
    lib.A.PAImg_prog.PI_prog_A. The guard checks the short names against the full paths by reflexivity. *)
 Section g. Context {rc : YM05.RunCeil}.
 Lemma hex4A_bridge_names_guard :

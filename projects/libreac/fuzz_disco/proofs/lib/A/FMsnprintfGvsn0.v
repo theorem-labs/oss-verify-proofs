@@ -1,4 +1,4 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfGvsn0.v (a working branch 3e35620c52e); relocated to libreac/fuzz_disco.asan by reloc.py (target disco-A): module paths changed; 2 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table: this file's rows in provenance/evidence/g9-gxa/g9tool/g9-table-disco-A.tsv). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfGvsn0.v (a working branch); relocated to libreac/fuzz_disco.asan by reloc.py (target disco-A): module paths changed; 2 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table: this file's rows in provenance/evidence/g9-gxa/g9tool/g9-table-disco-A.tsv). *)
 (* musl vsnprintf's walk without any stack window (split out of FMsnprintfGvsn.v, which re-exports it): the GOT-slot
    and guard regions, the run abbreviations over tbl_g, the instruction of the D store, the FILE-field readers off a
    region's chunks and adding a chunk to the first region. Moved unchanged. New file. *)

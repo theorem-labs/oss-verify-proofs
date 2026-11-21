@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap's subtracted range, a fresh grant at Linux's placement and the place_declined_b premise on mmap_succ_ok and its callers). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -8,6 +9,8 @@ From Stdlib Require Import NArith ZArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence OmniEquivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run OmniRun.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs.
 From LinuxProcessSemantics.LinuxProcessSem.Checks.Sys Require Import Mm.Mmap.
 From OSSVerify.Proofs.zstd.simple_decompress.lib.AS Require Import SimInv ExitSim PropExec CatSim CatExec SeqExec StreamSim AllocSim.
 From OSSVerify.Proofs.zstd.simple_decompress.lib.Lib Require Import Cfg.
@@ -120,18 +123,60 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
+(* [comment removed for export] *)
 Definition munmap_model (addr n : word) (m : Model) : Model :=
-  with_mmap_destroyed addr n
-    (mkVmMapsFull (vm_reserved (m_vmmaps m))
-               (map_remove (vm_maps (m_vmmaps m)) addr)
-               (maps_subtract (vm_noaccess (m_vmmaps m))
-                  (bv_unsigned addr)
-                  (bv_unsigned addr + bv_unsigned n))
-               (vm_start_brk (m_vmmaps m))
-               (vm_brk (m_vmmaps m))
-               (vm_limit (m_vmmaps m))
-               (vm_mmap_base (m_vmmaps m))
-               (vm_init_sp (m_vmmaps m))) m.
+  with_mmap_destroyed addr n (mmap_fixed_destroyed_next (m_vmmaps m) addr n) m.
+
+(* [comment removed for export] *)
+Lemma iv_subtract_outside : forall (b s : word) lo hi,
+  (0 < bv_unsigned s)%Z -> (lo < hi)%Z ->
+  (bv_unsigned b + bv_unsigned s <= lo \/ hi <= bv_unsigned b)%Z ->
+  iv_subtract b s lo hi = [(b, s)].
+Proof.
+  intros b s lo hi Hs Hlh Hd. unfold iv_subtract. cbv zeta.
+  destruct Hd as [Hd|Hd].
+  - rewrite (proj2 (Z.ltb_lt (bv_unsigned b) lo)) by lia.
+    rewrite (proj2 (Z.ltb_ge hi (bv_unsigned b + bv_unsigned s))) by lia.
+    rewrite Z.min_l by lia. rewrite Z_to_bv_bv_unsigned. reflexivity.
+  - rewrite (proj2 (Z.ltb_ge (bv_unsigned b) lo)) by lia.
+    rewrite (proj2 (Z.ltb_lt hi (bv_unsigned b + bv_unsigned s))) by lia.
+    rewrite Z.max_l by lia.
+    replace (bv_unsigned b + bv_unsigned s - bv_unsigned b)%Z
+      with (bv_unsigned s) by lia.
+    rewrite !Z_to_bv_bv_unsigned. reflexivity.
+Qed.
+
+Lemma maps_subtract_exact : forall l (a n : word),
+  (0 < bv_unsigned n)%Z ->
+  (forall b s, In (b, s) l -> (0 < bv_unsigned s)%Z) ->
+  (forall b s, In (b, s) l -> b = a -> s = n) ->
+  (forall b s, In (b, s) l -> b <> a ->
+     (bv_unsigned b + bv_unsigned s <= bv_unsigned a
+      \/ bv_unsigned a + bv_unsigned n <= bv_unsigned b)%Z) ->
+  maps_subtract l (bv_unsigned a) (bv_unsigned a + bv_unsigned n)
+  = map_remove l a.
+Proof.
+  induction l as [|[b s] r IH]; intros a n Hn Hpos Hu Hd; [reflexivity|].
+  assert (IHr : maps_subtract r (bv_unsigned a) (bv_unsigned a + bv_unsigned n)
+                = map_remove r a).
+  { apply IH; [exact Hn
+              | intros b' s' H; apply (Hpos b' s'); right; exact H
+              | intros b' s' H; apply (Hu b' s'); right; exact H
+              | intros b' s' H; apply (Hd b' s'); right; exact H]. }
+  cbn [maps_subtract]. rewrite IHr.
+  unfold map_remove. cbn [List.filter fst]. fold (map_remove r a).
+  destruct (bv_eqb b a) eqn:E; cbn [negb].
+  - apply bv_eqb_eq in E. subst b.
+    rewrite (Hu a s (or_introl eq_refl) eq_refl).
+    unfold iv_subtract. cbv zeta.
+    rewrite (proj2 (Z.ltb_ge _ _) (Z.le_refl (bv_unsigned a))).
+    rewrite (proj2 (Z.ltb_ge _ _) (Z.le_refl (bv_unsigned a + bv_unsigned n))).
+    reflexivity.
+  - assert (Hne : b <> a) by (intros ->; rewrite bv_eqb_refl in E; discriminate).
+    rewrite (iv_subtract_outside b s); [reflexivity | | lia |].
+    + exact (Hpos b s (or_introl eq_refl)).
+    + exact (Hd b s (or_introl eq_refl) Hne).
+Qed.
 
 Definition mmap_model (a n : word) (m : Model) : Model :=
   with_vmmaps (mkVmMapsFull (vm_reserved (m_vmmaps m))
@@ -149,10 +194,27 @@ Definition page_round_up (len : word) : word :=
 
 (* [comment removed for export] *)
 Definition grant_ok (hint : word) (m : Model) (a : word) (n : Z) : bool :=
-  (bv_unsigned a mod page_size =? 0)%Z && (0 <? bv_unsigned a)%Z
+  linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint n a
+  && (bv_unsigned a mod page_size =? 0)%Z && (0 <? bv_unsigned a)%Z
   && (bv_unsigned a + n <=? alloc_top (m_vmmaps m))%Z
   && region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 n)
   && (vm_backing_used m + n <=? vm_limit (m_vmmaps m))%Z.
+
+(* [comment removed for export] *)
+Lemma grant_ok_intro : forall hint m a n,
+  (0 < n)%Z -> (n mod page_size = 0)%Z ->
+  linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint n a = true ->
+  (vm_backing_used m + n <= vm_limit (m_vmmaps m))%Z ->
+  grant_ok hint m a n = true.
+Proof.
+  intros hint m a n Hn Hnal Hpl Hbud.
+  destruct (linux_place_is_admissible _ _ _ _ _ Hn Hnal Hpl)
+    as (Hal & Hpos & Htop & Hfree).
+  unfold grant_ok. rewrite Hpl, Hfree.
+  rewrite (proj2 (Z.eqb_eq _ _) Hal), (proj2 (Z.ltb_lt _ _) Hpos),
+    (proj2 (Z.leb_le _ _) Htop), (proj2 (Z.leb_le _ _) Hbud).
+  reflexivity.
+Qed.
 
 Lemma munmap_model_halted : forall addr n m, m_halted (munmap_model addr n m) = m_halted m.
 Proof. reflexivity. Qed.
@@ -187,10 +249,19 @@ Lemma grant_ok_unpack : forall hint m a n,
 Proof.
   intros hint m a n H. unfold grant_ok in H.
   rewrite !andb_true_iff in H.
-  destruct H as [[[[H1 H2] H3] H4] H5].
+  destruct H as [[[[[_ H1] H2] H3] H4] H5].
   apply Z.eqb_eq in H1. apply Z.ltb_lt in H2. apply Z.leb_le in H3.
   apply Z.leb_le in H5.
   auto 7.
+Qed.
+
+(* [comment removed for export] *)
+Lemma grant_ok_place : forall hint m a n,
+  grant_ok hint m a n = true ->
+  linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint n a = true.
+Proof.
+  intros hint m a n H. unfold grant_ok in H.
+  rewrite !andb_true_iff in H. tauto.
 Qed.
 
 Lemma region_free_cons : forall (b s : word) r (lo n : word),
@@ -286,8 +357,13 @@ Lemma munmap_check_modeled : forall ms model eff,
   check_munmap (ms_gpr ms 0) (ms_gpr ms 1) eff model
   = match eff with
     | mkEffectU r [] [] us [] [] =>
-        if w_is0 r
-           && listNN_eqb us [(ms_gpr ms 0, page_round_up (ms_gpr ms 1))]
+        if errno_ret_in munmap_errnos r
+        then match us with
+             | [] => CheckOk model []
+             | _ => CheckReject
+             end
+        else if w_is0 r
+                && listNN_eqb us [(ms_gpr ms 0, page_round_up (ms_gpr ms 1))]
         then CheckOk (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) []
         else CheckReject
     | _ => CheckReject
@@ -312,17 +388,39 @@ Proof.
   intros segs ms x8 model Hno Ha.
   apply (proj2 (syscall_spec_munmap _ _ _ _ _ Hno)). apply check_munmap_sound_ok.
   rewrite (munmap_check_modeled ms model _ Ha).
-  unfold munmap_eff, w_is0. rewrite bv_eqb_refl.
+  unfold munmap_eff, w_is0.
+  replace (errno_ret_in munmap_errnos (Z_to_bv 64 0)) with false by reflexivity.
+  cbv beta iota. rewrite bv_eqb_refl.
   rewrite (proj2 (listNN_eqb_eq _ _) eq_refl). reflexivity.
 Qed.
 
+(* [comment removed for export] *)
+Lemma munmap_fail_ok : forall segs ms x8 model e,
+  bv_unsigned x8 = 215%Z ->
+  munmap_args_ok ms model ->
+  In e munmap_errnos ->
+  syscall_spec (sys_input segs ms x8) model
+    (Ok (mkEffect (errno_ret e) [] []) model []).
+Proof.
+  intros segs ms x8 model e Hno Ha HIn.
+  apply (proj2 (syscall_spec_munmap _ _ _ _ _ Hno)). apply check_munmap_sound_ok.
+  rewrite (munmap_check_modeled ms model _ Ha).
+  rewrite errno_ret_in_intro by assumption. reflexivity.
+Qed.
+
+Lemma ENOMEM_in_munmap_errnos : In ENOMEM munmap_errnos.
+Proof. left. reflexivity. Qed.
+
+(* [comment removed for export] *)
 Lemma munmap_ok_inv : forall segs ms x8 model eff model' evs,
   bv_unsigned x8 = 215%Z ->
   munmap_args_ok ms model ->
   syscall_spec (sys_input segs ms x8) model (Ok eff model' evs) ->
-  eff = munmap_eff ms /\
-  model' = munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model
-  /\ evs = [].
+  evs = [] /\
+  ((exists e, In e munmap_errnos /\
+     eff = mkEffect (errno_ret e) [] [] /\ model' = model)
+   \/ (eff = munmap_eff ms /\
+       model' = munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model)).
 Proof.
   intros segs ms x8 model eff model' evs Hno Ha Hspec.
   apply (proj1 (syscall_spec_munmap _ _ _ _ _ Hno)) in Hspec.
@@ -331,14 +429,19 @@ Proof.
   destruct eff as [r ws zs us cs copyins]; destruct ws as [|? ?];
     [destruct zs as [|? ?]|]; try discriminate.
   destruct cs as [|? ?]; [destruct copyins as [|? ?]|]; try discriminate.
-  destruct (w_is0 r
-            && listNN_eqb us [(ms_gpr ms 0, page_round_up (ms_gpr ms 1))])
-    eqn:HC; [|discriminate].
-  inversion Hspec; clear Hspec; subst.
-  apply andb_true_iff in HC as [Hr Hus].
-  unfold w_is0 in Hr. apply bv_eqb_eq in Hr; subst r.
-  apply listNN_eqb_eq in Hus; subst us.
-  unfold munmap_eff. auto.
+  destruct (errno_ret_in munmap_errnos r) eqn:He.
+  - destruct us as [|? ?]; [|discriminate].
+    inversion Hspec; clear Hspec; subst.
+    apply errno_ret_in_true in He. destruct He as (e & HIn & ->).
+    split; [reflexivity|]. left. exists e. auto.
+  - destruct (w_is0 r
+              && listNN_eqb us [(ms_gpr ms 0, page_round_up (ms_gpr ms 1))])
+      eqn:HC; [|discriminate].
+    inversion Hspec; clear Hspec; subst.
+    apply andb_true_iff in HC as [Hr Hus].
+    unfold w_is0 in Hr. apply bv_eqb_eq in Hr; subst r.
+    apply listNN_eqb_eq in Hus; subst us.
+    split; [reflexivity|]. right. unfold munmap_eff. auto.
 Qed.
 
 Lemma munmap_no_unmodeled : forall segs ms x8 model,
@@ -351,10 +454,74 @@ Proof.
   apply (check_munmap_complete_unmodeled _ _ _ _ (mkEffect (Z_to_bv 64 0) [] []))
     in Hspec.
   rewrite (munmap_check_modeled ms model _ Ha) in Hspec.
+  replace (errno_ret_in munmap_errnos (Z_to_bv 64 0)) with false in Hspec
+    by reflexivity.
+  cbv beta iota in Hspec.
   destruct (w_is0 (Z_to_bv 64 0)
             && listNN_eqb [] [(ms_gpr ms 0, page_round_up (ms_gpr ms 1))]);
     discriminate.
 Qed.
+
+(* munmap's one ACFG step: under ACFG (sc_alloc = false) the injected -ENOMEM of sysno 215 is a spurious
+   refusal, because the unmap itself succeeds (munmap_ok), so the filtered step relation takes only the
+   cut outcome.  The node form ShapeAlg.node_ok / SpinAlg's srealizes nodes consume. *)
+Lemma munmap_node_cfg : forall segs ms model x8,
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  ms_svc_pending ms = Some x8 ->
+  bv_unsigned x8 = 215%Z ->
+  munmap_args_ok ms model ->
+  (forall i : unit, sstep_cfg segs ACFG (mkCfg ms model) ((fun _ => []) i)
+       (SNext ((fun _ => mkCfg (advance_past_svc (apply_effect ms (munmap_eff ms)))
+                                (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model)) i)))
+  /\ (forall e st, sstep_cfg segs ACFG (mkCfg ms model) e st ->
+        exists i : unit, e = (fun _ => []) i
+          /\ st = SNext ((fun _ => mkCfg (advance_past_svc (apply_effect ms (munmap_eff ms)))
+                                  (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model)) i)).
+Proof.
+  intros segs ms model x8 Hh Hlazy Hsvc Hno Hargs.
+  assert (Hno' : bv_unsigned (in_sysno (sys_input segs ms x8)) = 215%Z) by exact Hno.
+  assert (Hchk : forall eff, check_syscall (sys_input segs ms x8) eff model
+                             = check_munmap (ms_gpr ms 0) (ms_gpr ms 1) eff model).
+  { intros eff. unfold check_syscall. rewrite in_sysno_sys_input, Hno. reflexivity. }
+  pose proof (fun eff => eq_trans (Hchk eff) (munmap_check_modeled ms model eff Hargs)) as Hck0.
+  clear Hchk.
+  assert (Hne : errno_ret_in munmap_errnos (Z_to_bv 64 0) = false) by reflexivity.
+  assert (HR : forall r, refusal_b (sys_input segs ms x8) model r = errno_ret_in munmap_errnos r)
+    by (intros r; unfold refusal_b; rewrite Hno'; reflexivity).
+  assert (Hoff : injected_family_off ACFG (sys_input segs ms x8) = true)
+    by (unfold injected_family_off; rewrite Hno'; reflexivity).
+  apply (node_chk_grant_cfg segs ms model x8 unit
+           (fun _ => munmap_eff ms)
+           (fun _ => munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model)
+           (fun _ => []) tt Hh Hsvc Hoff).
+  - intros []. rewrite Hck0. unfold munmap_eff. cbv beta iota. rewrite Hne. unfold w_is0. rewrite bv_eqb_refl.
+    rewrite (proj2 (listNN_eqb_eq _ _) eq_refl). reflexivity.
+  - intros []. rewrite HR. exact Hne.
+  - intros [r ws zs us cs ci] m' evs Hck Hr. rewrite HR in Hr. cbn [eff_ret] in Hr. rewrite Hck0 in Hck.
+    destruct ws; [|discriminate]. destruct zs; [|discriminate].
+    destruct cs; [|destruct us; discriminate]. destruct ci; [|destruct us; discriminate].
+    cbv beta iota in Hck. rewrite Hr in Hck. cbv beta iota in Hck.
+    destruct (w_is0 r) eqn:E0; [|discriminate].
+    destruct (listNN_eqb us [(ms_gpr ms 0, page_round_up (ms_gpr ms 1))]) eqn:Hl; [|discriminate].
+    apply listNN_eqb_eq in Hl. subst us. cbn [andb] in Hck.
+    injection Hck as <- <-.
+    unfold w_is0 in E0. apply bv_eqb_eq in E0. subst r.
+    exists tt. unfold munmap_eff. repeat split; reflexivity.
+  - intros [r ws zs us cs ci] m' evs Hck Hr. rewrite HR in Hr. cbn [eff_ret] in Hr. rewrite Hck0 in Hck.
+    destruct ws; [|discriminate]. destruct zs; [|discriminate].
+    destruct cs; [|destruct us; discriminate]. destruct ci; [|destruct us; discriminate].
+    cbv beta iota in Hck. rewrite Hr in Hck. cbv beta iota in Hck.
+    destruct us; [|discriminate]. injection Hck as <- _. exact Hh.
+  - intros [r ws zs us cs ci] Hck. rewrite Hck0 in Hck.
+    destruct ws; [|discriminate]. destruct zs; [|discriminate].
+    destruct cs; [|destruct us; discriminate]. destruct ci; [|destruct us; discriminate].
+    destruct (errno_ret_in munmap_errnos r); [destruct us; discriminate|].
+    destruct (w_is0 r && listNN_eqb us _)%bool; discriminate.
+  - intros []. cbv beta. rewrite munmap_model_halted. exact Hh.
+  - intros []; reflexivity.
+Qed.
+
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -381,7 +548,12 @@ Proof. intros e HIn. exact (errnos_ok_range mmap_errnos e eq_refl HIn). Qed.
 
 (* [comment removed for export] *)
 Definition mmap_refusable (ms : machine_state) (model : Model) : bool :=
-  mmap_grant_refusable (ms_gpr ms 3) model (page_round_up_Z (bv_unsigned (ms_gpr ms 1))).
+  let nZ := page_round_up_Z (bv_unsigned (ms_gpr ms 1)) in
+  negb (mmap_noreserve_backed_ok (ms_gpr ms 3) model nZ
+        && match linux_place_b (m_vmmaps model) (kb_thp (m_kernel model)) (ms_gpr ms 0) nZ with
+           | Some _ => true
+           | None => false
+           end).
 
 Lemma mmap_errnos_when_ok : forall b, errnos_ok (mmap_errnos_when b) = true.
 Proof. destruct b; reflexivity. Qed.
@@ -391,14 +563,17 @@ Proof. intros [|] e H; [exact H | destruct H]. Qed.
 
 Lemma mmap_fail_ok : forall segs ms x8 model e,
   bv_unsigned x8 = 222%Z -> mmap_args_ok ms -> In e (mmap_errnos_when (mmap_refusable ms model)) ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   syscall_spec (sys_input segs ms x8) model
     (Ok (mkEffect (errno_ret e) [] []) model []).
 Proof.
-  intros segs ms x8 model e Hno Ha HIn.
+  intros segs ms x8 model e Hno Ha HIn Hdecl.
   destruct (mmap_args_ok_gates ms Ha) as [Hoff [Hanon [Hl Hmb]]].
   apply (proj2 (syscall_spec_mmap _ _ _ _ _ Hno)). apply check_mmap_sound_ok.
   unfold check_mmap. cbv beta.
   rewrite Hoff, Hanon, Hl, Hmb. cbn [negb]. cbv beta iota zeta.
+  rewrite Hdecl.
   apply mmap_errnos_when_incl in HIn.
   rewrite errno_ret_in_intro by assumption. reflexivity.
 Qed.
@@ -421,28 +596,31 @@ Proof. intros hint model a n Hn Hg. exact (grant_not_errno true hint model a n H
 Lemma mmap_succ_ok : forall segs ms x8 model a,
   bv_unsigned x8 = 222%Z ->
   mmap_args_ok ms ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   grant_ok (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true ->
   syscall_spec (sys_input segs ms x8) model
     (Ok (mkEffect a [] [(a, page_round_up (ms_gpr ms 1))])
         (mmap_model a (page_round_up (ms_gpr ms 1)) model) []).
 Proof.
-  intros segs ms x8 model a Hno Ha Hg.
+  intros segs ms x8 model a Hno Ha Hdecl Hg.
   destruct (mmap_args_ok_gates ms Ha) as [Hoff [Hanon [Hl Hmb]]].
   destruct Ha as (_ & _ & Hflags & _ & _).
   apply (proj2 (syscall_spec_mmap _ _ _ _ _ Hno)). apply check_mmap_sound_ok.
   unfold check_mmap. cbv beta.
   rewrite Hoff, Hanon, Hl, Hmb. cbn [negb]. cbv beta iota zeta.
+  rewrite Hdecl.
   rewrite (grant_not_mmap_errno (ms_gpr ms 0) model a
              (page_round_up_Z (bv_unsigned (ms_gpr ms 1))));
     [ | apply page_round_up_Z_nonneg; pose proof (u64_range (ms_gpr ms 1)); lia
       | exact Hg ].
   unfold grant_ok in Hg. rewrite !andb_true_iff in Hg.
-  destruct Hg as [[[[H1 H2] H3] H4] H5].
+  destruct Hg as [[[[[Hp H1] H2] H3] H4] H5].
   rewrite Hflags.
   assert (Hnr : mmap_noreserve_b (Z_to_bv 64 34) = false)
     by (vm_compute; reflexivity).
   unfold mmap_noreserve_backed_ok, with_mmap_backing. rewrite Hnr.
-  rewrite H1, H2, H3, H4, H5.
+  rewrite Hp, H5.
   unfold page_round_up. cbn [listNN_eqb]. rewrite !bv_eqb_refl.
   reflexivity.
 Qed.
@@ -465,6 +643,9 @@ Proof.
   apply check_mmap_complete_ok in Hspec.
   unfold check_mmap in Hspec. cbv beta in Hspec.
   rewrite Hoff, Hanon, Hl, Hmb in Hspec. cbn [negb] in Hspec.
+  destruct (place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+              (page_round_up_Z (bv_unsigned (ms_gpr ms 1)))) eqn:Hdecl;
+    [discriminate|].
   rewrite Hflags in Hspec.
   assert (Hnr : mmap_noreserve_b (Z_to_bv 64 34) = false)
     by (vm_compute; reflexivity).
@@ -482,10 +663,8 @@ Proof.
     split; [reflexivity|]. left.
     apply errno_ret_in_true in Herr. destruct Herr as (e & HIn & ->).
     exists e. auto.
-  - destruct ((bv_unsigned r mod page_size =? 0)%Z && (0 <? bv_unsigned r)%Z
-              && (bv_unsigned r + page_round_up_Z (bv_unsigned (ms_gpr ms 1)) <=? alloc_top (m_vmmaps model))%Z
-              && region_free (vm_reserved (m_vmmaps model) ++ vm_maps (m_vmmaps model)) r
-                   (Z_to_bv 64 (page_round_up_Z (bv_unsigned (ms_gpr ms 1))))
+  - destruct (linux_place_is (m_vmmaps model) (kb_thp (m_kernel model))
+                (ms_gpr ms 0) (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) r
               && (vm_backing_used model
                   + page_round_up_Z (bv_unsigned (ms_gpr ms 1))
                   <=? vm_limit (m_vmmaps model))%Z) eqn:Hcond;
@@ -500,32 +679,74 @@ Proof.
     inversion Hspec; subst.
     split; [reflexivity|]. right.
     exists r. split; [|split].
-    + unfold grant_ok. exact Hcond.
+    + apply andb_true_iff in Hcond as [Hpl Hbud].
+      apply (grant_ok_intro _ _ _ _ (proj1 (mmap_grant_len_ok _ Hl))
+               (proj2 (mmap_grant_len_ok _ Hl)) Hpl).
+      now apply Z.leb_le.
     + unfold page_round_up. reflexivity.
     + reflexivity.
+Qed.
+
+(* An [Ok] answer is never a declined call: the decline answers [Unmodeled] ahead of the
+   arm's outcomes (727298f3:theories/LinuxProcessSem/Checks/Sys/Mm/Mmap.v:104-110), as in
+   the model's own [mmap_ok_inv_raw]. *)
+Lemma mmap_ok_not_declined : forall segs ms x8 model eff model' evs,
+  bv_unsigned x8 = 222%Z ->
+  mmap_args_ok ms ->
+  syscall_spec (sys_input segs ms x8) model (Ok eff model' evs) ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false.
+Proof.
+  intros segs ms x8 model eff model' evs Hno Ha Hspec.
+  destruct (mmap_args_ok_gates ms Ha) as [Hoff [Hanon [Hl Hmb]]].
+  apply (proj1 (syscall_spec_mmap _ _ _ _ _ Hno)) in Hspec.
+  apply check_mmap_complete_ok in Hspec.
+  unfold check_mmap in Hspec. cbv beta in Hspec.
+  rewrite Hoff, Hanon, Hl, Hmb in Hspec. cbn [negb] in Hspec.
+  destruct (place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+              (page_round_up_Z (bv_unsigned (ms_gpr ms 1)))) eqn:Hdecl;
+    [discriminate | reflexivity].
 Qed.
 
 Lemma mmap_refusal_forced : forall segs ms x8 model e,
   bv_unsigned x8 = 222%Z ->
   mmap_args_ok ms ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   In e mmap_errnos ->
   ~ spurious_refusal_cfg ACFG (sys_input segs ms x8) model (mkEffect (errno_ret e) [] []) ->
   mmap_refusable ms model = true.
 Proof.
-  intros segs ms x8 model e Hno Ha He Hns.
+  intros segs ms x8 model e Hno Ha Hdecl He Hns.
   destruct (mmap_refusable ms model) eqn:R; [reflexivity|]. exfalso. apply Hns.
-  unfold mmap_refusable in R.
-  destruct (not_refusable_grant_conj _ _ _ R) as (Hb & a & H1 & H2 & H3 & H4).
+  destruct (mmap_args_ok_gates ms Ha) as [_ [_ [Hl _]]].
+  destruct (mmap_grant_len_ok _ Hl) as [HnPos HnAl].
+  unfold mmap_refusable in R. cbv zeta in R.
+  apply negb_false_iff, andb_true_iff in R as [Hb Hpf].
+  destruct (linux_place_b (m_vmmaps model) (kb_thp (m_kernel model)) (ms_gpr ms 0)
+              (page_round_up_Z (bv_unsigned (ms_gpr ms 1)))) as [a0|] eqn:Hlp; [|discriminate Hpf].
+  destruct (linux_place_b_spec (m_vmmaps model) (kb_thp (m_kernel model)) (ms_gpr ms 0) _ HnPos HnAl)
+    as [Hsome _].
+  pose proof (proj1 (Hsome a0) Hlp) as Hpl.
+  destruct (linux_place_admissible _ _ _ _ _ HnPos HnAl Hpl) as (H1 & H2 & H3 & _).
+  pose proof (alloc_top_lt_two_pow_64 (m_vmmaps model)) as Hat.
+  set (a := Z_to_bv 64 a0).
+  assert (Hua : bv_unsigned a = a0).
+  { unfold a. rewrite Z_to_bv_unsigned. apply bv_wrap_small. unfold bv_modulus, two_pow_64 in *. lia. }
+  assert (Hpl' : linux_place_is (m_vmmaps model) (kb_thp (m_kernel model)) (ms_gpr ms 0)
+                   (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) a = true).
+  { apply (linux_place_is_iff _ _ _ _ _ HnPos HnAl). rewrite Hua. exact Hpl. }
   assert (Hg : grant_ok (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true).
-  { pose proof Ha as (_ & _ & Hflags & _ & _). rewrite Hflags in Hb.
+  { apply grant_ok_intro; [exact HnPos | exact HnAl | exact Hpl' |].
+    pose proof Ha as (_ & _ & Hflags & _ & _). rewrite Hflags in Hb.
     unfold mmap_noreserve_backed_ok in Hb.
     replace (mmap_noreserve_b (Z_to_bv 64 34)) with false in Hb by (vm_compute; reflexivity).
-    unfold grant_ok. rewrite (proj2 (Z.eqb_eq _ _) H1), (proj2 (Z.ltb_lt _ _) H2), (proj2 (Z.leb_le _ _) H3), H4, Hb.
-    reflexivity. }
+    cbv iota in Hb. apply Z.leb_le. exact Hb. }
+  assert (H1' : (bv_unsigned a mod page_size = 0)%Z) by (rewrite Hua; exact H1).
   refine (refusal_spurious_of_grant ACFG (sys_input segs ms x8) model (mkEffect (errno_ret e) [] []) _ _ _
-            (acfg_family_off_222 (sys_input segs ms x8) Hno) _ (mmap_succ_ok segs ms x8 model a Hno Ha Hg) _).
+            (acfg_family_off_222 (sys_input segs ms x8) Hno) _ (mmap_succ_ok segs ms x8 model a Hno Ha Hdecl Hg) _).
   - rewrite (refusal_b_222 (sys_input segs ms x8) model _ Hno). exact (ret_in_errnos_errno mmap_errnos e He).
-  - rewrite (refusal_b_222 (sys_input segs ms x8) model _ Hno). exact (ret_in_errnos_ENOMEM_aligned a H1).
+  - rewrite (refusal_b_222 (sys_input segs ms x8) model _ Hno). exact (ret_in_errnos_ENOMEM_aligned a H1').
 Qed.
 
 Lemma mmap_ok_inv : forall segs ms x8 model eff model' evs,
@@ -543,7 +764,10 @@ Proof.
   intros segs ms x8 model eff model' evs Hno Ha Hspec Hns.
   destruct (mmap_ok_inv_raw segs ms x8 model eff model' evs Hno Ha Hspec) as [Hevs [(e & He & Heff & Hm) | Hg]].
   - split; [exact Hevs|]. left. exists e. split; [|split; assumption].
-    subst eff. rewrite (mmap_refusal_forced segs ms x8 model e Hno Ha He Hns). exact He.
+    subst eff.
+    rewrite (mmap_refusal_forced segs ms x8 model e Hno Ha
+               (mmap_ok_not_declined segs ms x8 model _ _ _ Hno Ha Hspec) He Hns).
+    exact He.
   - split; [exact Hevs| right; exact Hg].
 Qed.
 
@@ -556,13 +780,16 @@ Proof.
   rewrite (refusal_b_222 (sys_input segs ms x8) model _ Hno).
   destruct (mmap_ok_inv_raw segs ms x8 model eff' m' evs' Hno Ha Hs) as [_ [(e & He & -> & _) | (a & Hg & -> & _)]].
   - exact (ret_in_errnos_errno mmap_errnos e He).
-  - exfalso. destruct (grant_ok_unpack _ _ _ _ Hg) as (H1 & H2 & H3 & H4 & H5).
-    unfold mmap_refusable in R.
+  - exfalso. pose proof Hg as Hg'. unfold grant_ok in Hg'. rewrite !andb_true_iff in Hg'.
+    destruct Hg' as [[[[[Hp _] _] _] _] H5].
+    unfold mmap_refusable in R. cbv zeta in R.
+    unfold linux_place_is in Hp.
+    destruct (linux_place_b (m_vmmaps model) (kb_thp (m_kernel model)) (ms_gpr ms 0)
+                (page_round_up_Z (bv_unsigned (ms_gpr ms 1)))); [|discriminate Hp].
     pose proof Ha as (_ & _ & Hflags & _ & _). rewrite Hflags in R.
-    rewrite (grant_conj_not_refusable _ _ _ a H1 H2 H3 H4) in R; [discriminate R|].
-    unfold mmap_noreserve_backed_ok.
-    replace (mmap_noreserve_b (Z_to_bv 64 34)) with false by (vm_compute; reflexivity).
-    apply Z.leb_le. exact H5.
+    unfold mmap_noreserve_backed_ok in R.
+    replace (mmap_noreserve_b (Z_to_bv 64 34)) with false in R by (vm_compute; reflexivity).
+    cbv iota in R. rewrite H5 in R. vm_compute in R. discriminate R.
 Qed.
 
 (* [comment removed for export] *)
@@ -586,15 +813,18 @@ Qed.
 Lemma mmap_no_unmodeled : forall segs ms x8 model,
   bv_unsigned x8 = 222%Z ->
   mmap_args_ok ms ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   ~ syscall_spec (sys_input segs ms x8) model Unmodeled.
 Proof.
-  intros segs ms x8 model Hno Ha Hspec.
+  intros segs ms x8 model Hno Ha Hdecl Hspec.
   destruct (mmap_args_ok_gates ms Ha) as [Hoff [Hanon [Hl Hmb]]].
   apply (proj1 (syscall_spec_mmap _ _ _ _ _ Hno)) in Hspec.
   apply (check_mmap_complete_unmodeled _ _ _ _ _ _ _ _ (mkEffect (Z_to_bv 64 0) [] []))
     in Hspec.
   unfold check_mmap in Hspec. cbv beta in Hspec.
   rewrite Hoff, Hanon, Hl, Hmb in Hspec. cbn [negb] in Hspec.
+  rewrite Hdecl in Hspec.
   cbv beta iota zeta in Hspec.
   match type of Hspec with
   | (if errno_ret_in ?es ?r then _ else _) = _ =>
@@ -706,6 +936,8 @@ Inductive twm : machine_state -> Model -> list (list byte) -> word -> Prop :=
     ms_svc_pending ms = Some x8 ->
     bv_unsigned x8 = 215%Z ->
     munmap_args_ok ms model ->
+    (forall e, In e munmap_errnos ->
+       twm (advance_past_svc (set_gpr0 ms (errno_ret e))) model bufs code) ->
     twm (advance_past_svc (apply_effect ms (munmap_eff ms)))
         (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) bufs code ->
     twm ms model bufs code
@@ -721,6 +953,8 @@ with twm_pend : machine_state -> Model -> list byte -> list (list byte) -> word 
     bv_unsigned x8 = 64%Z ->
     ms_gpr ms 0 = Z_to_bv 64 1 ->
     ms_read_bytes ms (ms_gpr ms 1) (ms_gpr ms 2) = Some rest ->
+    (* [comment removed for export] *)
+    access_okb (ms_gpr ms 1) (bv_unsigned (ms_gpr ms 2)) = true ->
     (1 <= length rest)%nat ->
     (forall n, (1 <= n)%nat -> (n <= length rest)%nat ->
        twm_tail (advance_past_svc (set_gpr0 ms (len_word (firstn n rest)))) model
@@ -772,6 +1006,7 @@ Lemma twm_write_ret : forall regs pc mem rom model buf bufs code,
                    ms_svc_pending := Some (getr regs 17); ms_resv := None; ms_fcsr := fp_csr;
                    ms_mem := mem; ms_rom := rom |}
     (reg_get regs 11) (reg_get regs 12) = Some buf ->
+  access_okb (reg_get regs 11) (bv_unsigned (reg_get regs 12)) = true ->
   (1 <= length buf)%nat ->
   (forall n, (1 <= n)%nat -> (n <= length buf)%nat ->
      twm_tail (mkst (regupd regs 10 (len_word (firstn n buf))) (v_addi pc 4) mem rom)
@@ -781,7 +1016,7 @@ Lemma twm_write_ret : forall regs pc mem rom model buf bufs code,
          ms_mem := mem; ms_rom := rom |}
       model (buf :: bufs) code.
 Proof.
-  intros regs pc mem rom model buf bufs code H17 H10 Hr Hnb Hcont.
+  intros regs pc mem rom model buf bufs code H17 H10 Hr Hok Hnb Hcont.
   assert (E10 : Z_to_bv 5 (10 + Z.of_nat 0) = (10 : reg)) by (apply bv_eq; reflexivity).
   assert (E11 : Z_to_bv 5 (10 + Z.of_nat 1) = (11 : reg)) by (apply bv_eq; reflexivity).
   assert (E12 : Z_to_bv 5 (10 + Z.of_nat 2) = (12 : reg)) by (apply bv_eq; reflexivity).
@@ -791,6 +1026,7 @@ Proof.
   - exact H17.
   - unfold ms_gpr. cbn [ms_regs]. rewrite E10. exact H10.
   - unfold ms_gpr. cbn [ms_regs]. rewrite E11, E12. exact Hr.
+  - unfold ms_gpr. cbn [ms_regs]. rewrite E11, E12. exact Hok.
   - exact Hnb.
   - intros n Hn1 Hn2. rewrite adv_set. exact (Hcont n Hn1 Hn2).
 Qed.
@@ -803,6 +1039,7 @@ Lemma twm_tail_write_rec : forall regs pc mem rom model rest bufs code,
                    ms_svc_pending := Some (getr regs 17); ms_resv := None; ms_fcsr := fp_csr;
                    ms_mem := mem; ms_rom := rom |}
     (reg_get regs 11) (reg_get regs 12) = Some rest ->
+  access_okb (reg_get regs 11) (bv_unsigned (reg_get regs 12)) = true ->
   (1 <= length rest)%nat ->
   (forall n, (1 <= n)%nat -> (n <= length rest)%nat ->
      twm_tail (mkst (regupd regs 10 (len_word (firstn n rest))) (v_addi pc 4) mem rom)
@@ -812,7 +1049,7 @@ Lemma twm_tail_write_rec : forall regs pc mem rom model rest bufs code,
               ms_mem := mem; ms_rom := rom |}
     model rest bufs code.
 Proof.
-  intros regs pc mem rom model rest bufs code H17 H10 Hr Hnb Hcont.
+  intros regs pc mem rom model rest bufs code H17 H10 Hr Hok Hnb Hcont.
   assert (E10 : Z_to_bv 5 (10 + Z.of_nat 0) = (10 : reg)) by (apply bv_eq; reflexivity).
   assert (E11 : Z_to_bv 5 (10 + Z.of_nat 1) = (11 : reg)) by (apply bv_eq; reflexivity).
   assert (E12 : Z_to_bv 5 (10 + Z.of_nat 2) = (12 : reg)) by (apply bv_eq; reflexivity).
@@ -822,6 +1059,7 @@ Proof.
   - exact H17.
   - unfold ms_gpr. cbn [ms_regs]. rewrite E10. exact H10.
   - unfold ms_gpr. cbn [ms_regs]. rewrite E11, E12. exact Hr.
+  - unfold ms_gpr. cbn [ms_regs]. rewrite E11, E12. exact Hok.
   - exact Hnb.
   - intros n Hn1 Hn2. rewrite adv_set. exact (Hcont n Hn1 Hn2).
 Qed.
@@ -835,6 +1073,9 @@ Lemma twm_munmap_rec : forall regs pc mem rom model bufs code (a nlen : word),
   nlen <> Z_to_bv 64 0 ->
   (bv_unsigned a + page_round_up_Z (bv_unsigned nlen) <= TASK_SIZE)%Z ->
   map_has (vm_maps (m_vmmaps model)) a (page_round_up nlen) = true ->
+  (forall e, In e munmap_errnos ->
+     twm (mkst (regupd regs 10 (errno_ret e)) (v_addi pc 4) mem rom)
+         model bufs code) ->
   twm (mkst (regupd regs 10 (Z_to_bv 64 0)) (v_addi pc 4)
             (unfill a (page_round_up nlen) mem) rom)
       (munmap_model a (page_round_up nlen) model) bufs code ->
@@ -843,7 +1084,7 @@ Lemma twm_munmap_rec : forall regs pc mem rom model bufs code (a nlen : word),
          ms_mem := mem; ms_rom := rom |}
       model bufs code.
 Proof.
-  intros regs pc mem rom model bufs code a nlen H17 Ha Hn Hal Hlen Hnw Hhas Hcont.
+  intros regs pc mem rom model bufs code a nlen H17 Ha Hn Hal Hlen Hnw Hhas Hfail Hcont.
   assert (E10 : Z_to_bv 5 (10 + Z.of_nat 0) = (10 : reg)) by (apply bv_eq; reflexivity).
   assert (E11 : Z_to_bv 5 (10 + Z.of_nat 1) = (11 : reg)) by (apply bv_eq; reflexivity).
   eapply twm_munmap.
@@ -851,6 +1092,7 @@ Proof.
   - exact H17.
   - unfold munmap_args_ok, ms_gpr. cbn [ms_regs].
     rewrite E10, E11, Ha, Hn. auto.
+  - intros e He. rewrite adv_set. exact (Hfail e He).
   - unfold munmap_eff, ms_gpr. cbn [ms_regs].
     rewrite E10, E11, Ha, Hn.
     rewrite adv_munmap. exact Hcont.
@@ -891,8 +1133,10 @@ Lemma sstep_munmap_inv : forall ms model x8 evs st,
   munmap_args_ok ms model ->
   sstep segs (mkCfg ms model) evs st ->
   evs = [] /\
-  st = SNext (mkCfg (advance_past_svc (apply_effect ms (munmap_eff ms)))
-                    (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model)).
+  ((exists e, In e munmap_errnos /\
+      st = SNext (mkCfg (advance_past_svc (set_gpr0 ms (errno_ret e))) model)) \/
+   st = SNext (mkCfg (advance_past_svc (apply_effect ms (munmap_eff ms)))
+                     (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model))).
 Proof.
   intros ms model x8 evs st Hh Hlazy Hsvc Hno Hargs Hss.
   inversion Hss; subst; try congruence.
@@ -901,17 +1145,29 @@ Proof.
     | H2 : ms_svc_pending ms = Some ?x,
       H3 : syscall_spec (sys_input segs ms ?x) model (Ok ?eff ?model' ?evs0) |- _ =>
       assert (Hx : x = x8) by congruence; subst x;
-      destruct (munmap_ok_inv segs ms x8 model eff model' evs0 Hno Hargs H3) as (Heff & Hm & Hevs);
-      subst eff model' evs0
+      destruct (munmap_ok_inv segs ms x8 model eff model' evs0 Hno Hargs H3)
+        as (Hevs & Hcase);
+      subst evs0
     end.
-    match goal with
-    | Hmat : materialize_model_accesses
-        (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) _ = Some _ |- _ =>
-      rewrite (materialize_model_accesses_no_lazy _ _
-        (munmap_model_no_lazy _ _ _ Hlazy)) in Hmat;
-      inversion Hmat; subst
-    end.
-    split; reflexivity.
+    split; [reflexivity|].
+    destruct Hcase as [(e & HIn & -> & ->) | (-> & ->)].
+    + left. exists e.
+      match goal with
+      | Hmat : materialize_model_accesses model _ = Some _ |- _ =>
+        rewrite (materialize_model_accesses_no_lazy _ _ Hlazy) in Hmat;
+        inversion Hmat; subst
+      end.
+      split; [assumption |].
+      rewrite apply_effect_no_write. reflexivity.
+    + right.
+      match goal with
+      | Hmat : materialize_model_accesses
+          (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) _ = Some _ |- _ =>
+        rewrite (materialize_model_accesses_no_lazy _ _
+          (munmap_model_no_lazy _ _ _ Hlazy)) in Hmat;
+        inversion Hmat; subst
+      end.
+      reflexivity.
   - (* [comment removed for export] *)
     exfalso.
     match goal with
@@ -919,9 +1175,11 @@ Proof.
       Hmat : materialize_model_accesses ?model' _ = None |- _ =>
       assert (Hx : x = x8) by congruence; subst x;
       destruct (munmap_ok_inv segs ms x8 model eff model' evs0 Hno Hargs H3)
-        as (Heff & Hm & Hevs); subst eff model' evs0;
-      rewrite (materialize_model_accesses_no_lazy _ _
-        (munmap_model_no_lazy _ _ _ Hlazy)) in Hmat;
+        as (_ & Hcase);
+      destruct Hcase as [(? & ? & -> & ->) | (-> & ->)];
+      [ rewrite (materialize_model_accesses_no_lazy _ _ Hlazy) in Hmat
+      | rewrite (materialize_model_accesses_no_lazy _ _
+          (munmap_model_no_lazy _ _ _ Hlazy)) in Hmat ];
       discriminate
     end.
   - (* [comment removed for export] *)
@@ -931,8 +1189,12 @@ Proof.
       H3 : syscall_spec (sys_input segs ms ?x) model (Ok ?eff ?model' ?evs0),
       H6 : m_halted ?model' = Some ?code |- _ =>
       assert (Hx : x = x8) by congruence; subst x;
-      destruct (munmap_ok_inv segs ms x8 model eff model' evs0 Hno Hargs H3) as (_ & Hm & _);
-      subst model'; rewrite munmap_model_halted, Hh in H6; discriminate
+      destruct (munmap_ok_inv segs ms x8 model eff model' evs0 Hno Hargs H3)
+        as (_ & Hcase);
+      destruct Hcase as [(? & ? & _ & ->) | (_ & ->)];
+      [ rewrite Hh in H6
+      | rewrite munmap_model_halted, Hh in H6 ];
+      discriminate
     end.
   - (* [comment removed for export] *)
     exfalso.
@@ -942,13 +1204,12 @@ Proof.
       H6 : m_killed ?model' = Some ?sig |- _ =>
       assert (Hx : x = x8) by congruence; subst x;
       destruct (munmap_ok_inv segs ms x8 model eff model' evs0 Hno Hargs H3)
-        as (_ & Hm & _);
-      subst model';
-      assert (Hhn : m_halted
-                      (munmap_model (ms_gpr ms 0)
-                         (page_round_up (ms_gpr ms 1)) model) = None)
-        by (rewrite munmap_model_halted; exact Hh);
-      rewrite (m_killed_of_m_halted_none _ Hhn) in H6; discriminate
+        as (_ & Hcase);
+      destruct Hcase as [(? & ? & _ & ->) | (_ & ->)];
+      [ rewrite (m_killed_of_m_halted_none _ Hh) in H6
+      | rewrite m_killed_of_m_halted_none in H6;
+        [| rewrite munmap_model_halted; exact Hh] ];
+      discriminate
     end.
   - (* [comment removed for export] *)
     exfalso.
@@ -1036,17 +1297,16 @@ Proof.
     intros tr o (Heq & Hx). split; [| exact Hx].
     rewrite Heq. cbn [wevents]. rewrite <- app_assoc. reflexivity.
   - (* [comment removed for export] *)
-    intros ms model x8 bufs code Hsvc Hno Hargs Hte IH Hbm Hh Hlazy Hfd.
+    intros ms model x8 bufs code Hsvc Hno Hargs Hfail IHfail Hcut IH Hbm Hh Hlazy Hfd.
     assert (Hh' : m_halted
                     (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) = None)
       by (rewrite munmap_model_halted; exact Hh).
     assert (Hfd' : fd1chan
                      (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model))
       by (apply munmap_model_fd1chan; exact Hfd).
-    apply (exec_step_only segs _ _ []
-             (mkCfg (advance_past_svc (apply_effect ms (munmap_eff ms)))
-                    (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model))).
-    + apply (sstep_syscall segs ms model x8 (munmap_eff ms)
+    apply exec_step; [exact Hh | | |].
+    + eexists; eexists.
+      apply (sstep_syscall segs ms model x8 (munmap_eff ms)
                (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model)
                (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) []).
       * exact Hh.
@@ -1055,12 +1315,19 @@ Proof.
       * exact Hh'.
       * apply materialize_model_accesses_no_lazy.
         exact (munmap_model_no_lazy _ _ _ Hlazy).
-    + intros evs st Hss.
-      exact (sstep_munmap_inv ms model x8 evs st Hh Hlazy Hsvc Hno Hargs Hss).
-    + eapply exec_conseq;
-        [exact (IH Hbm Hh' (munmap_model_no_lazy _ _ _ Hlazy) Hfd') |].
-      intros tr o (Heq & Hx). split; [| exact Hx].
-      cbn [app]. rewrite Heq, munmap_model_fs. reflexivity.
+    + intros evs Hss.
+      destruct (sstep_munmap_inv ms model x8 evs SError Hh Hlazy Hsvc Hno Hargs Hss)
+        as (_ & [(e & _ & Habs) | Habs]); discriminate Habs.
+    + intros evs c' Hss.
+      destruct (sstep_munmap_inv ms model x8 evs (SNext c') Hh Hlazy Hsvc Hno Hargs Hss)
+        as (-> & [(e & He & Hc) | Hc]); injection Hc as ->.
+      * eapply exec_conseq; [exact (IHfail e He Hbm Hh Hlazy Hfd) |].
+        intros tr o (Heq & Hx). split; [| exact Hx].
+        cbn [app]. exact Heq.
+      * eapply exec_conseq;
+          [exact (IH Hbm Hh' (munmap_model_no_lazy _ _ _ Hlazy) Hfd') |].
+        intros tr o (Heq & Hx). split; [| exact Hx].
+        cbn [app]. rewrite Heq, munmap_model_fs. reflexivity.
   - (* [comment removed for export] *)
     intros ms ms' model bufs code Hsvc Hstep Hte IH Hbm Hh Hlazy Hfd.
     apply (exec_step_only segs _ _ [] (mkCfg ms' model)).
@@ -1069,7 +1336,7 @@ Proof.
     + intros evs st Hss. exact (sstep_instr_inv segs ms model ms' evs st Hlazy Hsvc Hstep Hss).
     + eapply exec_conseq; [exact (IH Hbm Hh Hlazy Hfd) |]. intros tr o H. cbn [app]. exact H.
   - (* [comment removed for export] *)
-    intros ms model x8 rest bufs code Hsvc Hno Hg Hr Hnb Hcont IH Hbr Hbm Hh Hlazy Hfd.
+    intros ms model x8 rest bufs code Hsvc Hno Hg Hr Hok Hnb Hcont IH Hbr Hbm Hh Hlazy Hfd.
     apply exec_step; [exact Hh | | |].
     + eexists; eexists.
       apply (sstep_syscall segs ms model x8
@@ -1083,11 +1350,11 @@ Proof.
       * apply materialize_model_accesses_no_lazy. exact Hlazy.
     + intros evs Hss.
       destruct (sstep_write_inv segs ms model x8 rest evs SError
-                  Hh Hlazy Hfd Hsvc Hno Hg Hr Hbr Hnb Hss) as (n & _ & _ & _ & Habs).
+                  Hh Hlazy Hfd Hsvc Hno Hg Hr Hok Hbr Hnb Hss) as (n & _ & _ & _ & Habs).
       discriminate Habs.
     + intros evs c' Hss.
       destruct (sstep_write_inv segs ms model x8 rest evs (SNext c')
-                  Hh Hlazy Hfd Hsvc Hno Hg Hr Hbr Hnb Hss) as (n & Hn1 & Hn2 & -> & Hc').
+                  Hh Hlazy Hfd Hsvc Hno Hg Hr Hok Hbr Hnb Hss) as (n & Hn1 & Hn2 & -> & Hc').
       injection Hc' as ->.
       eapply exec_conseq;
         [exact (IH n Hn1 Hn2 (buf_modeled_skipn n rest Hbr) Hbm Hh Hlazy Hfd) |].
@@ -1154,6 +1421,8 @@ Lemma sstep_mmap_inv : forall ms model x8 evs st,
   ms_svc_pending ms = Some x8 ->
   bv_unsigned x8 = 222%Z ->
   mmap_args_ok ms ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   sstep_cfg segs ACFG (mkCfg ms model) evs st ->
   evs = [] /\
   ((exists e, In e (mmap_errnos_when (mmap_refusable ms model)) /\
@@ -1162,7 +1431,7 @@ Lemma sstep_mmap_inv : forall ms model x8 evs st,
       st = SNext (mkCfg (advance_past_svc (apply_effect ms (mkEffect a [] [(a, page_round_up (ms_gpr ms 1))])))
                         (mmap_model a (page_round_up (ms_gpr ms 1)) model)))).
 Proof.
-  intros ms model x8 evs st Hh Hlazy Hsvc Hno Hargs Hss.
+  intros ms model x8 evs st Hh Hlazy Hsvc Hno Hargs Hdecl Hss.
   inversion Hss; subst; try congruence.
   - (* [comment removed for export] *)
     match goal with
@@ -1237,7 +1506,7 @@ Proof.
     | H2 : ms_svc_pending ms = Some ?x,
       H3 : syscall_spec (sys_input segs ms ?x) model Unmodeled |- _ =>
       assert (Hx : x = x8) by congruence; subst x;
-      exact (mmap_no_unmodeled segs ms x8 model Hno Hargs H3)
+      exact (mmap_no_unmodeled segs ms x8 model Hno Hargs Hdecl H3)
     end.
 Qed.
 
@@ -1248,6 +1517,8 @@ Lemma sstep_mmap_inv_grant : forall ms model x8 evs st,
   ms_svc_pending ms = Some x8 ->
   bv_unsigned x8 = 222%Z ->
   mmap_args_ok ms ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   mmap_refusable ms model = false ->
   sstep_cfg segs ACFG (mkCfg ms model) evs st ->
   evs = [] /\
@@ -1255,8 +1526,8 @@ Lemma sstep_mmap_inv_grant : forall ms model x8 evs st,
       st = SNext (mkCfg (advance_past_svc (apply_effect ms (mkEffect a [] [(a, page_round_up (ms_gpr ms 1))])))
                         (mmap_model a (page_round_up (ms_gpr ms 1)) model)).
 Proof.
-  intros ms model x8 evs st Hh Hlazy Hsvc Hno Hargs Hnr Hss.
-  destruct (sstep_mmap_inv ms model x8 evs st Hh Hlazy Hsvc Hno Hargs Hss) as [-> [(e & He & _) | H]].
+  intros ms model x8 evs st Hh Hlazy Hsvc Hno Hargs Hdecl Hnr Hss.
+  destruct (sstep_mmap_inv ms model x8 evs st Hh Hlazy Hsvc Hno Hargs Hdecl Hss) as [-> [(e & He & _) | H]].
   - rewrite Hnr in He. destruct He.
   - split; [reflexivity | exact H].
 Qed.

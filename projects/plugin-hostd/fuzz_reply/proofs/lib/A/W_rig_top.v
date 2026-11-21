@@ -2,14 +2,14 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: segment TOP of the ASan walk of fuzz_reply's relay_instance_gone
    (fuzz_reply.asan 0x82d98 .. 0x82e50 / 0x82f44), against the frozen segment interface
-   lib/A/W_relay_instance_gone_cx.v (rig_top_stmt).  The Section-hypothesis block is that file's (commit
-   92dac370558), verbatim.
+   lib/A/W_relay_instance_gone_cx.v (rig_top_stmt).  The Section-hypothesis block is that file,
+   verbatim.
    Layout: the tracks' pure trace lemmas, then the generic Section: its hypotheses, the statements of the lemma
    tracks, and their proofs (drain's
    model and budget, drain's live bytes, the relay representation across drain, GLIVE, GIN / GOUT at the key loop's
    start, the snprintf / strlen calls), then the walk itself: top_p1 (0x82d98 -> drain -> 0x82dd0), top_p2
    (0x82dd0 -> snprintf, strlen, the nheld test -> RGI / RGE) and rig_top_proof.
-   C3 (475b8a2b569, the peak form): drain's room is the peak of its trace, a prefix of the remaining trace (top_room);
+   C3 (the peak form): drain's room is the peak of its trace, a prefix of the remaining trace (top_room);
    drain's live bytes are bounded in the NET form, blocks_bytes S' <= blocks_bytes S + tr_net (dr_tr ..) (dr_bytes:
    the potential td_pot now weighs the pending texts too, which drain frees as it reads them), and tb_core carries
    gbud's peak room across the drain step with tr_peak_app.
@@ -24,6 +24,7 @@
    (stmt_dr_cnt, RR's lib/A/W_rr_m_dcnt.v rmc_dr_cnt), which tr_peakP_app turns into gbud's count bound over the rest
    (tb_core).  The fake frame is only 32-aligned in a generic state (alx_frames): ts_ra, ts_hull and the shadow seat
    tp_seat2 read that alignment (F's shadow address is 4-aligned). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -1104,7 +1105,7 @@ aview SEGS (w_H W) mem a <> None.
 (* the runtime entries relay_instance_gone calls, at their SIGMA pcs, over ARx (W_sites_x.v / W_contract_x.v /
    W_journal_x.v Section hc; the free rule at the room record RP).  snprintf: a Theorem Labs lane's statement at fuzz_reply's
    addresses (W_sites.v asnprintf_realizes, its twin W_sites_x.v asnprintf_realizes_x), which the snprintf chain
-   (commit 9067b7156f9, lib/A/RT_pf_vf.v snprintf_chain_ok, through a Theorem Labs lane's evt -> SRr bridge) discharges. *)
+   (lib/A/RT_pf_vf.v snprintf_chain_ok, through a Theorem Labs lane's evt -> SRr bridge) discharges. *)
 Hypothesis ALOCK : alock_realizes_x B ARx (SIGMA WS_pthread_mutex_lock).
 Hypothesis AUNLOCK : aunlock_realizes_x B ARx (SIGMA WS_pthread_mutex_unlock).
 Hypothesis AFREE : afree_cf_rule_c_x SEGS B PST ARx MT RP CTX_AFREE.
@@ -1134,7 +1135,7 @@ Hypothesis HLIT21 : glit_at_x ARx 21 (RelayModel.K_GESTURE ++ [0]).
 (* the two literals lie in .rodata below the GOT word FR_GOT_GUARD = 0x9e658, |"%s %d "| + 1 = 7 and
    |"param_gesture"| + 1 + 8 = 22 bytes: the location premises M1 / M3 of the narrowed asnprintf_realizes_x
    (W_sites_x.v), which this abstract placement does not fix.  PB_fr decides it by vm_compute: SnpNarrowSites.v
-   HLITGOT_PB_fr, whose statement is this text at PI := PB_fr (commit 2f48fc47493's hypothesis, carried here). *)
+   HLITGOT_PB_fr, whose statement is this text at PI := PB_fr (a commit's hypothesis, carried here). *)
 Hypothesis HLITGOT : VAL (A_OBJ 20) + 7 <= FR_GOT_GUARD /\ VAL (A_OBJ 21) + 22 <= FR_GOT_GUARD.
 Hypothesis HLIT31 : glit_at_x ARx 31 ([32; 101; 110; 100] ++ [0]).
 (* The program statics PST hold no byte this walk carries through a journal's image clause, which exempts PST
@@ -3194,7 +3195,7 @@ Qed.
    id, lifted over the walk's journal by aj_gx_entry_at_x (its written bytes F + 32 .. F + 80 are bytes of the walk's
    own fake frame: awr_byte's in_frames clause).  The image facts snprintf reads come from HGOTG and HCANR
    (ts_guard) and from HLIT20 / HLIT21 (ts_lit); the narrowing's M1 / M3 from HLITGOT (SnpNarrowSites.v san_M1_pi /
-   san_M3_pi), M2 from san_M2_x_pi with the Section's IMGC (commit 2f48fc47493's snp_call, at ARx). *)
+   san_M3_pi), M2 from san_M2_x_pi with the Section's IMGC (a commit's snp_call, at ARx). *)
 Lemma snp_call : stmt_snp_call.
 Proof.
 unfold stmt_snp_call.
@@ -4571,7 +4572,7 @@ Hypothesis R_trans : forall W1 W2 W3, R W1 W2 -> R W2 W3 -> R W1 W3.
 Hypothesis WLE_R : forall W W', @wle SEGS W W' -> R W W'.
 (* drain's R spec (the cx file's Section wR DRAIN_R, its text) *)
 Hypothesis DRAIN_R : W_contract_xR.dr_spec_xR B PST ARx R MT RP MMAX RG (BASE + AF_fr_drain).
-(* W_rig_top.v:1300 stmt_top_rep_open at R *)
+(* W_rig_top.v:1301 stmt_top_rep_open at R *)
 Definition stmt_top_rep_open_xR : Prop :=
 forall cx i qd c2 O2 cap2 out2 spent ly1 S1 Hp1 W1 m1 md1 sp1 ly2 S2 Hp2 W2 m2 md2 k2,
 let e := gnth cx i in let h := fst (ghj cx i) in
@@ -4589,7 +4590,7 @@ let c1 := dr_ctl c2 h ev in
 let O1 := if live then O2 ++ LB else O2 in
 let cap1 := if live then drain_b_c.ds_ocap (dr_fin c2 (gxmx cx) no2 cap2 e h) else cap2 in
 GTOPM cx i qd c2 O2 cap2 e1 h1 ev LB c1 O1 cap1 out1 ly2 S2 W2 m2.
-(* W_rig_top.v:1373 stmt_live_kept at R *)
+(* W_rig_top.v:1374 stmt_live_kept at R *)
 Definition stmt_live_kept_xR : Prop :=
 forall cx fpos F FL ly1 S1 Hp1 W1 m1 md1 k1 Hp2 m2 md2 (P : Z -> Prop),
 GBASE B ARx MT RP MMAX RG cx ->
@@ -4604,7 +4605,7 @@ ajournal_gx_xR (SK := SK) SEGS B PST ARx R (G_RIG B RG) 0 [] RIG_STK_x (gsp0 cx)
 (forall a, 0 <= a < 2 ^ 64 -> ~ P a -> aview SEGS (w_H W1) m2 a = aview SEGS (w_H W1) m1 a) ->
 (forall a, apresent (w_H W1) m1 a -> apresent (w_H W1) m2 a) ->
 GLIVE_xR B PST ARx RG R cx F FL ly1 S1 W1 m2 md2 k1 /\ g_lslots RG cx F W1 m2.
-(* W_rig_top.v:1391 stmt_live_drain at R *)
+(* W_rig_top.v:1392 stmt_live_drain at R *)
 Definition stmt_live_drain_xR : Prop :=
 forall cx fpos F FL ly1 S1 Hp1 W1 m1 md1 k1 SA e h cap out ly2 S2 Hp2 W2 m2 md2 k2 Hp3 k3,
 GBASE B ARx MT RP MMAX RG cx ->
@@ -4619,7 +4620,7 @@ apres_kept B W1 m1 W2 m2 ->
 ajournal_gx_xR (SK := SK) SEGS B PST ARx R (G_RIG B RG) 0 [] RIG_STK_x (gsp0 cx) (gFP cx)
   (gxly cx) (gxS cx) (gxHp cx) (gxW cx) (gxmem cx) (gxmd cx) [(1, fpos)] ly2 S2 Hp3 W2 m2 md2 k3 ->
 GLIVE_xR B PST ARx RG R cx F FL ly2 S2 W2 m2 md2 k3 /\ g_lslots RG cx F W2 m2.
-(* W_rig_top.v:1430 stmt_snp_call at R *)
+(* W_rig_top.v:1431 stmt_snp_call at R *)
 Definition stmt_snp_call_xR : Prop :=
 forall W regsT memT sp0 FP ly S Hp W0 mem md fpos lyc Sc Hpc mdc k raw F id idv (Post : world SEGS -> config -> Prop),
 ajournal_gx_xR (SK := SK) SEGS B PST ARx R (G_RIG B RG) 0 [] RIG_STK_x sp0 FP ly S Hp W0 mem md [(1, fpos)] lyc Sc Hpc W memT mdc k ->
@@ -4640,7 +4641,7 @@ rom_view SEGS W memT ->
    (forall a, apresent (w_H W) memT a -> apresent (w_H W) mem2 a) ->
    YA0nH.SRrG SEGS R W (mkCfg (mkst regs2 raw mem2 (seg_rom SEGS)) md2) Post) ->
 YA0nH.SRrG SEGS R W (mkCfg (mkst regsT (Z_to_bv 64 (SIGMA WS_snprintf)) memT (seg_rom SEGS)) mdc) Post.
-(* W_rig_top.v:1452 stmt_strlen_call at R *)
+(* W_rig_top.v:1453 stmt_strlen_call at R *)
 Definition stmt_strlen_call_xR : Prop :=
 forall W regsT memT sp0 FP ly S Hp W0 mem md fpos lyc Sc Hpc mdc k raw F (pre : list Z) (Post : world SEGS -> config -> Prop),
 ajournal_gx_xR (SK := SK) SEGS B PST ARx R (G_RIG B RG) 0 [] RIG_STK_x sp0 FP ly S Hp W0 mem md [(1, fpos)] lyc Sc Hpc W memT mdc k ->
@@ -4657,7 +4658,7 @@ rom_view SEGS W memT ->
    (forall a, apresent (w_H W) memT a -> apresent (w_H W) mem2 a) ->
    YA0nH.SRrG SEGS R W (mkCfg (mkst regs2 raw mem2 (seg_rom SEGS)) md2) Post) ->
 YA0nH.SRrG SEGS R W (mkCfg (mkst regsT (Z_to_bv 64 (SIGMA WS_strlen)) memT (seg_rom SEGS)) mdc) Post.
-(* W_rig_top.v:1475 tp_ly_top at R *)
+(* W_rig_top.v:1476 tp_ly_top at R *)
 Lemma tp_ly_top_xR : forall G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k,
 ajournal_gx_xR (SK := SK) SEGS B PST ARx R G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k ->
 ly_top ly' = ly_top ly.
@@ -4665,7 +4666,7 @@ Proof.
 intros G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k (_ & _ & (memS & HJi & _) & _).
 pose proof HJi as (_ & Hly & _). destruct Hly as (_ & _ & _ & _ & _ & _ & _ & _ & ET & _). exact ET.
 Qed.
-(* W_rig_top.v:1483 tj_AR at R *)
+(* W_rig_top.v:1484 tj_AR at R *)
 Lemma tj_AR_xR : forall G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k,
 ajournal_gx_xR (SK := SK) SEGS B PST ARx R G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k ->
 ARx ly' S' Hp' W' mem' md'.
@@ -4673,7 +4674,7 @@ Proof.
 intros G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k HJ.
 exact (ajournal_gx_AR_xR SEGS B PST ARx _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HJ).
 Qed.
-(* W_rig_top.v:1491 tj_pres at R *)
+(* W_rig_top.v:1492 tj_pres at R *)
 Lemma tj_pres_xR : forall G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k,
 ajournal_gx_xR (SK := SK) SEGS B PST ARx R G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k ->
 forall a, sp0 - STK <= a < sp0 -> apresent (w_H W') mem' a.
@@ -4681,7 +4682,7 @@ Proof.
 intros G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k (HS0 & HX0 & (memS & HJi & _) & _) a Ha.
 pose proof HJi as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & Hpres & _). apply Hpres. lia.
 Qed.
-(* W_rig_top.v:1845 tc_wr_kept for an image byte, with no hsub: no world hides an image byte (W_journal.v
+(* W_rig_top.v:1846 tc_wr_kept for an image byte, with no hsub: no world hides an image byte (W_journal.v
    hidden_not_img), so a kept presence keeps writability across any world step *)
 Lemma tc_wr_img_xR : forall (W W' : world SEGS) (m m' : word -> option byte) a,
   in_img SEGS a -> (apresent (w_H W) m a -> apresent (w_H W') m' a) ->
@@ -4696,7 +4697,7 @@ destruct (m (Z_to_bv 64 a)) as [b|] eqn:Em; intros Hw.
 - destruct (Hp (conj E (ex_intro _ b Em))) as [_ [b2 Hb2]]. rewrite Hb2. discriminate.
 - destruct (m' (Z_to_bv 64 a)); [discriminate | exact Hw].
 Qed.
-(* W_rig_top.v:2236 Section tc_open at R *)
+(* W_rig_top.v:2237 Section tc_open at R *)
 Section tc_open_xR.
 Variables (cx : gcx) (i : nat) (qd : list (rentry * hsrc)) (c2 : ctl) (O2 : list byte) (cap2 out2 spent : Z)
   (ly1 : alayout) (S1 : astate) (Hp1 : list Z) (W1 : world SEGS) (m1 : word -> option byte) (md1 : Model) (sp1 : Z)
@@ -4995,7 +4996,7 @@ eapply Permutation_trans.
 rewrite ?map_app, ?concat_app. cbn [map concat]. tc_perm.
 Qed.
 End tc_open_xR.
-(* W_rig_top.v:2553 top_rep_open at R *)
+(* W_rig_top.v:2554 top_rep_open at R *)
 Lemma top_rep_open_xR : stmt_top_rep_open_xR.
 Proof.
 unfold stmt_top_rep_open_xR. cbv zeta.
@@ -5005,7 +5006,7 @@ destruct HD as (e' & h' & out' & ev' & LB & rest & D1 & _ & D3 & D4 & D5 & _ & D
 exists e', h', ev', LB, out'.
 eapply tc_o_gtopm_xR; eassumption.
 Qed.
-(* W_rig_top.v:2682 tl2_frm at R *)
+(* W_rig_top.v:2683 tl2_frm at R *)
 Lemma tl2_frm_xR : forall cx fpos ly1 S1 Hp1 W1 m1 md1 k1,
 ajournal_gx_xR (SK := SK) SEGS B PST ARx R (G_RIG B RG) 0 [] RIG_STK_x (gsp0 cx) (gFP cx)
   (gxly cx) (gxS cx) (gxHp cx) (gxW cx) (gxmem cx) (gxmd cx) [(1, fpos)] ly1 S1 Hp1 W1 m1 md1 k1 ->
@@ -5024,7 +5025,7 @@ split; [exact HAR|]. split; [exact Hfin|]. split; [exact H1|]. split; [exact H2|
 intros a Ha Hi. refine (proj2 (alx_client_img _ _ _ LAWS _ _ _ _ _ _ a HAR _) Hi). right. left.
 exists 1, fpos. split; [exact Hfin|]. change (fs_frame_bytes 1) with 128. exact Ha.
 Qed.
-(* W_rig_top.v:2702 live_kept at R *)
+(* W_rig_top.v:2703 live_kept at R *)
 Lemma live_kept_xR : stmt_live_kept_xR.
 Proof.
 unfold stmt_live_kept_xR.
@@ -5082,7 +5083,7 @@ split.
 - pose proof HLS as (L40 & L48 & L56 & L64 & L72).
   split; [|split; [|split; [|split]]]; (apply VK; [intros k Hk; cbn in Hk; split; [unfold gsp1, RIG_FRAME; lia | apply NPS; lia] | assumption]).
 Qed.
-(* W_rig_top.v:2762 live_drain at R *)
+(* W_rig_top.v:2763 live_drain at R *)
 Lemma live_drain_xR : stmt_live_drain_xR.
 Proof.
 unfold stmt_live_drain_xR.
@@ -5158,7 +5159,7 @@ split.
   split; [|split; [|split; [|split]]];
   (apply VKH; [unfold gsp1, RIG_FRAME; lia | cbn; unfold gsp1, RIG_FRAME; lia | assumption]).
 Qed.
-(* W_rig_top.v:3079 ts_jframe at R *)
+(* W_rig_top.v:3080 ts_jframe at R *)
 Lemma ts_jframe_xR : forall W memT sp0 FP ly S Hp W0 mem md fpos lyc Sc Hpc mdc k,
   ajournal_gx_xR (SK := SK) SEGS B PST ARx R (G_RIG B RG) 0 [] RIG_STK_x sp0 FP ly S Hp W0 mem md [(1, fpos)] lyc Sc Hpc W
     memT mdc k ->
@@ -5170,7 +5171,7 @@ destruct HJi as (HAR & _ & _ & _ & _ & Hfrs & _ & _ & _ & _ & _ & _ & _ & _ & Hs
 destruct Hstk as (_ & _ & Hceil & Hslo & _).
 split; [exact HAR|]. split; [rewrite Hfrs; apply in_or_app; left; apply in_eq | lia].
 Qed.
-(* W_rig_top.v:3195 snp_call at R; the snprintf contract stays strict (W_sites_x.v aj_gx_entry_at_xR), so its SRr_mono stays *)
+(* W_rig_top.v:3196 snp_call at R; the snprintf contract stays strict (W_sites_x.v aj_gx_entry_at_xR), so its SRr_mono stays *)
 Lemma snp_call_xR : stmt_snp_call_xR.
 Proof.
 unfold stmt_snp_call_xR.
@@ -5244,7 +5245,7 @@ apply (K regs2 mem2 md2 HJ2 HP2 R10').
 - intros a Ha H1 H2. apply Hfr; [exact Ha | cbv beta; lia | lia].
 - exact Hpres.
 Qed.
-(* W_rig_top.v:3274 strlen_call at R *)
+(* W_rig_top.v:3275 strlen_call at R *)
 Lemma strlen_call_xR : stmt_strlen_call_xR.
 Proof.
 unfold stmt_strlen_call_xR.
@@ -5281,7 +5282,7 @@ apply (K regs2 mem2 md2 HJ2 HP2 R10').
 - intros a Ha Hn. apply Hfr; [exact Ha | lia].
 - exact Hpres.
 Qed.
-(* W_rig_top.v:3611 PD at R *)
+(* W_rig_top.v:3612 PD at R *)
 Definition PD_xR (cx : gcx) (i : nat) (W1 : world SEGS) (c1 : config) : Prop :=
 exists regs1 ly1 S1 m1 md1 k1 F FL qd cB OB capB e1 h1 ev LB c1' O1 cap1 out1 spent,
 c1 = cfg_at SEGS (BASE + A_rig_pd) regs1 m1 md1 /\
@@ -5292,11 +5293,11 @@ val_mem SEGS (arm W1 m1) (gsp1 cx + 88) 8 (Z.of_nat i) /\
 GLIVE_xR B PST ARx RG R cx F FL ly1 S1 W1 m1 md1 k1 /\ g_lslots RG cx F W1 m1 /\
 GTOPM cx i qd cB OB capB e1 h1 ev LB c1' O1 cap1 out1 ly1 S1 W1 m1 /\
 gtop_bud cx e1 c1' O1 cap1 i ly1 S1 spent.
-(* W_rig_top.v:3623 the runners, on the G chain at R (W_journal_x.v Section g; W_kit.v paj_branch_xR) *)
+(* W_rig_top.v:3624 the runners, on the G chain at R (W_journal_x.v Section g; W_kit.v paj_branch_xR) *)
 Let RUN_R := paj_run_x_xG B PST ARx LAWS R (G_RIG B RG) HGRIG 0 [].
 Let RUNTO_R := paj_run_to_x_xG B PST ARx LAWS R (G_RIG B RG) HGRIG 0 [].
 Let BR_R := paj_branch_xR (PI := PI) (R := R).
-(* W_rig_top.v:3627 top_p1 at R *)
+(* W_rig_top.v:3628 top_p1 at R *)
 Lemma top_p1_xR :
 stmt_gout_kept -> stmt_top_rep_closed -> stmt_top_budget ->
 stmt_live_kept_xR ->
@@ -5648,7 +5649,7 @@ psrr_branch_tok RUN_R BR_R HS SHOK tp_Bspan.
   split; [exact V88'|].
   split; [exact HGL3|]. split; [exact HLS3|]. split; [exact HTM | exact HBU].
 Qed.
-(* W_rig_top.v:4125 top_p2 at R *)
+(* W_rig_top.v:4126 top_p2 at R *)
 Lemma top_p2_xR :
 stmt_gtopm_kept -> stmt_live_kept_xR -> stmt_gin_top -> stmt_gout_top ->
 stmt_snp_call_xR -> stmt_strlen_call_xR ->
@@ -6059,7 +6060,7 @@ eapply (LSC W1 (ms_regs ms1) (ms_mem ms1) (gsp0 cx) (gFP cx) (gxly cx) (gxS cx) 
         eapply (field_of_region _ _ 9 _ _ 32 40 32 40 32 8%N (SLit 3) 3 RG6); [reflexivity | left; reflexivity | reflexivity | cbn; lia | cbn; lia]. }
       split; [exact V88F|]. split; [exact HGL6|]. split; [exact HLS6 | exact HGIN].
 Qed.
-(* W_rig_top.v:4541 rig_top_of_cnt at R *)
+(* W_rig_top.v:4542 rig_top_of_cnt at R *)
 Lemma rig_top_of_cnt_xR : stmt_dr_cnt -> rig_top_stmt_xR B PST ARx MT RP MMAX RG R.
 Proof.
 intros LDC. unfold rig_top_stmt_xR. intros cx i W1 c1 HB HO KI KE.
@@ -6067,7 +6068,7 @@ exact (top_p1_xR gout_kept top_rep_closed top_budget live_kept_xR top_drain_pre 
   LDC live_drain_xR cx i W1 c1 HB HO
   (fun W2 c2 HPD => top_p2_xR gtopm_kept live_kept_xR gin_top gout_top snp_call_xR strlen_call_xR cx i W2 c2 HB HPD KI KE)).
 Qed.
-(* W_rig_top.v:4550 rig_top_proof at R: TOP concludes W_relay_instance_gone_cx.v rig_top_stmt_xR *)
+(* W_rig_top.v:4551 rig_top_proof at R: TOP concludes W_relay_instance_gone_cx.v rig_top_stmt_xR *)
 Theorem rig_top_proof_xR : rig_top_stmt_xR B PST ARx MT RP MMAX RG R.
 Proof. exact (rig_top_of_cnt_xR W_rr_m_dcnt.rmc_dr_cnt). Qed.
 End wR.

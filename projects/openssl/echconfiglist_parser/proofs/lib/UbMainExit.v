@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise ref_exit_Z gained is a section hypothesis). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -56,6 +57,8 @@ Proof. vm_compute. repeat split; reflexivity. Qed.
 
 Section MainExit.
   Variable model : Model.
+  (* 08b1429: ref_exit_Z gained the channel-reader premise; this section supplies it *)
+  Hypothesis Hrdr : m_channel_reader model = true.
 
   (* [comment removed for export] *)
   Record main_frame (mem : word -> option byte) (sp : word) (slots : list word) : Prop := MF {
@@ -154,6 +157,7 @@ Section MainExit.
     - regv HR (2 : reg). cbn [edenot ev ENV]. rewrite alu_add, vadd_wZ. reflexivity.
     - regv HR (4 : reg). cbn [edenot]. rewrite (x_ev_junk regs sp slots 13 HL) by lia. f_equal; apply bv_eq; reflexivity.
     - regv HR (10 : reg). cbn [edenot]. rewrite (x_ev_junk regs sp slots 17 HL) by lia. rewrite <- Hs0. f_equal; apply bv_eq; reflexivity.
+    - exact Hrdr.
   Qed.
 End MainExit.
 

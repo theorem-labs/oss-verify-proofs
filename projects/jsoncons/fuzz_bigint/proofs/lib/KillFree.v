@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the runs are over run_segments. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -79,7 +80,7 @@ Qed.
 
 (* [comment removed for export] *)
 Lemma srealizes_not_dies_by_signal : forall scfg segs pc ph sp brk0 mb rnd lim inp T,
-  srealizes segs scfg (init_config segs pc ph sp brk0 mb rnd lim inp) T ->
+  srealizes (run_segments segs inp sp mb) scfg(init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) T ->
   kill_free T ->
   ~ dies_by_signal (run_scfg scfg (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp).
 Proof.
@@ -90,7 +91,7 @@ Proof.
 Qed.
 
 Lemma srealizes_error_free_unkilled : forall scfg segs pc ph sp brk0 mb rnd lim inp T,
-  srealizes segs scfg (init_config segs pc ph sp brk0 mb rnd lim inp) T ->
+  srealizes (run_segments segs inp sp mb) scfg(init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) T ->
   kill_free T ->
   error_free_unkilled (run_scfg scfg (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp).
 Proof.

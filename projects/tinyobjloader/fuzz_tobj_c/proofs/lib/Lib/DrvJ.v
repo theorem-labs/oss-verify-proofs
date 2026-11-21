@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (MInvR, which gained the vDSO conjunct, taken apart by minvr_dest). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -193,7 +194,7 @@ Proof using ML TR_callP TR_facts TR_pre.
       { subst n. f_equal. symmetry. apply (proj1 Hag1). reflexivity. }
       assert (Hnrho : bv_unsigned (eval rho0 (wsub_get s 12)) = n) by (subst n; rewrite rw_call'; reflexivity).
       assert (HinNew : In (p, n) (ma_blocks A')) by (rewrite HbA'; left; reflexivity).
-      pose proof HM' as HMi'. unfold MInvR in HMi'.
+      pose proof HM' as HMi'. minvr_dest HMi'.
       pose proof (minv_block_geom C A' _ _ _ p n HMi' HinNew) as (G0 & _ & G2 & G3 & G4).
       unfold PGSZ, UNIT, IB in G2, G3. pose proof HTK' as TK. unfold top_kept in TK. pose proof (topL_val (ma_L A')) as TR3.
       assert (HsubA' : forall a, caddr segs C A0 None a -> caddr segs C A' None a).
@@ -301,7 +302,7 @@ Proof using ML TR_callP TR_ex TR_facts TR_pre.
       { subst n. f_equal. symmetry. apply (proj1 Hag1). reflexivity. }
       assert (Hnrho : bv_unsigned (eval rho (wsub_get s 12)) = n) by (subst n; rewrite rw_call'; reflexivity).
       assert (HinNew : In (p, n) (ma_blocks A')) by (rewrite HbA'; apply in_or_app; right; left; reflexivity).
-      pose proof HM' as HMi'. unfold MInvR in HMi'.
+      pose proof HM' as HMi'. minvr_dest HMi'.
       pose proof (minv_block_geom C A' _ _ _ p n HMi' HinNew) as (G0 & _ & G2 & G3 & G4).
       unfold PGSZ, UNIT, IB in G2, G3. pose proof HTK' as TK. unfold top_kept in TK. pose proof (topL_val (ma_L A')) as TR3.
       assert (NEWFREE : forall a, p <= a < p + n -> caddr segs C Ai None a -> False).

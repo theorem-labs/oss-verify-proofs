@@ -3,13 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: the walk of reac_box_catalogue on fuzz_segconf.asan-ubsan (image B, pin sha256
    c3796c0b38f3, twin 80e82127e8ca; entry 0x8a8a0, 84 bytes, 21 instructions, a 16-byte frame, no side-stack
    frame): reac_box_catalogue_contract of lib/B/Prog/reac_box_catalogue_c.v (image B's copy of the image-A owner's FINAL
-   text at 6f783602b5e3) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
+   text) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
    entry, SRr of apost_base at the return, over `Context {PI : PAImg seg_listing}` of image B's listing,
    lib/B/Prog/SegPa.v).
-   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane, commit
-   434ade288123, both arms): the same entry seeds, token runs and return steps over image B's listing modules and
+   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane,
+    both arms): the same entry seeds, token runs and return steps over image B's listing modules and
    B's kit copies. The UBSan alignment check is read from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_catalogue.v
-   at origin/ossv/recipes 3abc3740de97 (the same image-B code but 4 pc-relative words; caller-journal form, not
+   (the same image-B code but 4 pc-relative words; caller-journal form, not
    copied), whose token run decides it the same way.
    Image B's code differs from image A's by two instructions: `andi a1,a0,7` (0x8a8ac) and `bnez a1,0x8a8ec`
    (0x8a8b0) to `unimp` (0x8a8ec), the UBSan alignment check of the 8-byte store through c.
@@ -37,10 +37,11 @@
    definitions (SegInstA's names at image B): SegInstB.STK_reac_box_catalogue and SegInstB.catA, tied to this walk
    by the lemmas STK_reac_box_catalogue_B (the value 16) and catA_B (listing object 77 of B's seg_objs). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/reac_box_catalogue.v, with its module paths and module names changed; 118 of its 158 lines of code are new or changed and 413 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_segconf_parse_file (image B, 0x87e38), segment B10a: the fold's exit EXIT 0x888c0 -> INTENT 0x888e4
    (10 instructions 0x888c0-0x888e0 and the slow arm 0x88fc0-0x88fc8 / error call 0x89284), b10_exit_ok :
    H_INTENT n -> B10_EXIT_stmt n. The B10a segment lane of the image-B G3 walk owner, 2026-10-30; ADAPTED from the image-A G3 walk owner's image-A
-   kit lib/A/Prog/pf_a10a_k.v (a10_intent, commit 73bafa8e5cd9) and the image-B trim walk's
+   kit lib/A/Prog/pf_a10a_k.v (a10_intent) and the image-B trim walk's
    run form (lib/B/Prog/trim_f.v: one written byte, its check decided by a shadow entry).
      T20 0x888c4 `bltu a0,a3` (a0 = slot 0x30 = ~low, a3 = li): the trap is not taken, ~low >= 2 ^ 64 - 1 - 2 ^ 47
        > 63 >= li; the executor decides it from the seed's range facts on atoms 32 and 13 (b10_ss3).

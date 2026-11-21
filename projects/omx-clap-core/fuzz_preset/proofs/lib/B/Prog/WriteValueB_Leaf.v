@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset image B' (#102 asan-ubsan pin d663f82d): the
    LEAVES of the write_value walk: the three literals (null, false, true: cases 242 / 246 / 223, the tail `put` at
    slot 268), the string (case 182, the tail `put_string` at slot 207) and the number (case 226, `strlen` at slot 237,
@@ -8,8 +9,8 @@
    a0 = the entry a0 (= o), a1 = the literal (A_OBJ 2 + its addend), a2 = its length, ra / sp / s0 .. s11 back at
    their entry atoms; the string and number cases stop once, at `bnez` on the text pointer (slot 189 / 233), whose
    NULL arm the ledger refutes.
-   PORTED (not cited) from a Theorem Labs lane's image-A walk PRW_write_value.v (walk commit
-   7819c4b4583, :2443-3440): B's slots and frame (192), the #102 ledger cells, and two changes of substance:
+   PORTED (not cited) from a Theorem Labs lane's image-A walk PRW_write_value.v (walk,
+   :2443-3440): B's slots and frame (192), the #102 ledger cells, and two changes of substance:
    - the granule gap comes from AR_laws_x's field alx_blocks_ceil8 (a live block's `p + req_size n + 8 <=
      alloc_ceiling`; until the batch cut the walk's named premise SRC-CEIL), used once here (wv_blk_ceil7), not A's per-call
      wv_gap. Since that cut, cstr_ok asks only `p + len + 1 <= alloc_ceiling` and src_rd `p + len <= alloc_ceiling`, which

@@ -4,16 +4,17 @@
    fuzz_reply.asan-ubsan's strlen interceptor, entered at the trampoline __wrap_strlen 0x421e4. *)
 (* Modified by Theorem Labs, 2026-10-29: from lib/A/RT_strlen.v, as the module RT_strlen_x: cut to the proof of rt_strlen (the helper lemmas are used by Import) and restated over a generic allocator invariant ARx under lib/Rt/RTx.v's rt_laws (rt_strlen_x_walk, rt_strlen_x; the cell premise FrRtCells replaced by RT_kit_cells_x's FrWalkCells_x, which rt_strlen_x derives from rt_laws, FrShadowSyms and TfibSyms); the corollaries rt_strlen_of_x (rt_strlen's statement, unchanged) and rt_strlen_cf added. *)
 (* Modified by Theorem Labs, 2026-10-30: copied from lib/A/RT_strlen_x.v to image B (fuzz_reply.asan-ubsan): module paths lib.A -> lib.B with the image modules AB1v / AE2k / AF0m -> YB1v / YE2k / YF0m (alias AFM -> YFM), and the strlen trampoline 0x4218c -> 0x421e4; lemma names, statements and proofs otherwise unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Image B's (fuzz_reply.asan-ubsan) twin of lib/A/RT_strlen_x.v
-   (a working branch 6b4f6082575): lib/B/RT_strlen.v's runtime contract rt_strlen restated over a
+   (a working branch): lib/B/RT_strlen.v's runtime contract rt_strlen restated over a
    generic allocator invariant ARx (ghost head set Hp threaded) under the five-law record rt_laws of lib/Rt/RTx.v
    (rtl_frame, rtl_stack, rtl_const, rtl_layout, rtl_const_cells).  RT_strlen.v is not edited; its helper lemmas
-   (str_buf, bz_strlen) are used by Import.  The statement is lib/B/W_contract_x.v:174's astrlen_realizes_x; the
+   (str_buf, bz_strlen) are used by Import.  The statement is lib/B/W_contract_x.v:175's astrlen_realizes_x; the
    proof of rt_strlen_x_walk is RT_strlen.v's (:164-239) with AR -> ARx (am_layout of proj1 HAR -> rtl_layout,
    RT_post.aentry_post_of_walk -> its _x form RT_post.aentry_post_of_walk_x, aentry_post -> W_sites_x.aentry_post_x),
    at B's entry: the trampoline __wrap_strlen 0x421e4 (`j 0x42288`, ___interceptor_strlen).
-   The original's named premise FrRtCells (RT_kit.v:234) is not needed over ARx: the walk reads only conjuncts 1-10
-   of fr_rt_rest (through RT_kit.walk_cells, RT_kit.v:215), all rows of YF0m's Tfib_const.  So rt_strlen_x_walk
+   The original's named premise FrRtCells (RT_kit.v:235) is not needed over ARx: the walk reads only conjuncts 1-10
+   of fr_rt_rest (through RT_kit.walk_cells, RT_kit.v:216), all rows of YF0m's Tfib_const.  So rt_strlen_x_walk
    takes the walk's cells RT_kit_cells_x.FrWalkCells_x, and the twin rt_strlen_x derives them from rt_laws +
    FrShadowSyms + TfibSyms (RT_kit_cells_x.walk_cells_x_of_syms): no cell premise.
    At the end: rt_strlen_of_x, whose statement is byte for byte RT_strlen.v's rt_strlen, from rt_strlen_x_walk at

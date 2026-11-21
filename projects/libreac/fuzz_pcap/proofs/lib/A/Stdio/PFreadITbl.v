@@ -1,11 +1,12 @@
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Written by Theorem Labs, 2026-10 (a Theorem Labs lane), for libreac/fuzz_pcap's v1.9.0 ASan build.
 
    The code table and the three symbolic-run lemmas that the fread interceptor walk needs, in the form
    proofs/libreac/fuzz_pcap/lib/A/AE2y.v states them for `tbl_icpt` (itself a relocation of cgif's
-   proofs/cgif/cgif_file_fuzzer/lib/A/AE2y.v at origin/ossv/recipes c8557374ad2e).
+   proofs/cgif/cgif_file_fuzzer/lib/A/AE2y.v at theorem-labs/oss-verify-proofs@6b32741d849a).
 
    WHY THIS FILE EXISTS. AE34.v's `icpt_ranges` covers (0x43290, 156) and (0x43774, 157), i.e. it stops
    exactly at 0x43500 and resumes exactly at 0x43774. Those two bounds are the ends of
@@ -19,10 +20,10 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    fetches nothing, so it does not mention a code table. Only `icpt_phase`, `icpt_phase_to` and
    `icpt_ld8` name the table, and only those three are restated here, with the same proofs.
 
-   RULE 24. SEND BACK: hit is an archived Theorem Labs lane input, not a released proof at ossv/recipes 25e3d17bdb50 (2026-10-29); walk kept (route
+   RULE 24. SEND BACK: hit is an archived Theorem Labs lane input, not a released proof (2026-10-29); walk kept (route
    ruling 19:27Z). The lookup and both passes are recorded in
    pcapreadi-fread-icpt.txt (sha256 82d195c482ff; internal record). The hit is
-   a working branch f2159272960 (I_freadw.v (sha256 e2b8ec5651ce; internal record), fread_wrap.v (sha256 c77a1af38f33; internal record)
+   a working branch (I_freadw.v (sha256 e2b8ec5651ce; internal record), fread_wrap.v (sha256 c77a1af38f33; internal record)
    `fread_wrap_holds`), which walks the same path on the same image but states
    `fread_wrap_contract` in a Theorem Labs lane's SR / a_call_post / AsanAllocAPI vocabulary over a
    different Reusable tree, parameterised over five opaque predicates, and is unbuilt at v1.9.0. It

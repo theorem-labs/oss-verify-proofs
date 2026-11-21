@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_box_model_block.v; 1090 of its 1202 lines of code are new or changed and 1063 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P5.v, with its module paths, module names and addresses changed; 1348 of its 1450 lines of code are new or changed and 1100 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/A1.v; 179 of its 338 lines of code are new or changed and 1291 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/Prog/Seg/A1Fs.v -- NARROWED footprint (_Fs) forms of the prologue runs of Seg/A1F.v (0x80edc-0x80f50 of
    LLVMFuzzerTestOneInput, fuzz_ctrl image A, libreac v1.9.0), each with a proved PIN that re-derives a Theorem Labs lane's
    _F lemma from it, and the one composite run the stage glue lib/A/ACtlG/A1.v lifts.  Written by a Theorem Labs
@@ -12,16 +13,16 @@
    glue owner in its own new file, with a proved pin back to a Theorem Labs lane's lemma; relayed by a Theorem Labs lane, 2026-10-29).
    rule 24: no function proved (segment runs of a walk).
 
-   WHY NARROWED (measured on the glue base 46eb24cd4b3)
-   - a1_store_evt_F (A1F.v:68) states `stk rsegs mem (S - 1048576) S` and `rng RNG (S - 1048576) 1048576`: the
+   WHY NARROWED (measured on the glue base)
+   - a1_store_evt_F (A1F.v:69) states `stk rsegs mem (S - 1048576) S` and `rng RNG (S - 1048576) 1048576`: the
      source's slot stack window of 1 MiB.  The walk's journal gives presence and visibility only for the LLVMF
      window [c_sp - LLVMF_STK, c_sp), LLVMF_STK = 32768 (A/ACfn.v:25, YCbq.v ajournal), and the run writes only
      [S - 416, S).  a1_store_evt_Fs takes the window's low end lo as a binder (0 <= lo, lo + 416 <= S) and the
      footprint of the 14 stores, rng (S - 416) 416.  Its script is A1F.v's, unchanged.
-   - a1_tail_evt_F (A1F.v:148) states `S < APPMEM_END`; the core's pre gives only S <= APPMEM_END (afn_pre's
+   - a1_tail_evt_F (A1F.v:149) states `S < APPMEM_END`; the core's pre gives only S <= APPMEM_END (afn_pre's
      astk_ok, sp0 <= ly_stk_hi <= kHighMemEnd = APPMEM_END; a Theorem Labs lane's ruling, batch 4: PREFC / FRAC / FRAHC
      state c_sp <= APPMEM_END).  a1_tail_evt_Fs takes S <= APPMEM_END; its script is A1F.v's, unchanged.
-   - a1_req_evt_pre_F (A1F.v:255) is ONE jal and carries the source run's whole premise list (TLS cells, fake-stack
+   - a1_req_evt_pre_F (A1F.v:256) is ONE jal and carries the source run's whole premise list (TLS cells, fake-stack
      place, ...), none of which the jal reads.  a1_jal_Fs states the jal alone, for any sp and a0.
    PINS: a1_store_evt_F_of_Fs, a1_tail_evt_F_of_Fs, a1_req_evt_pre_F_of_Fs state A1F's three lemmas; the
    *_verbatim checks below assert by constr_eq that each pin's type IS the A1F lemma's type, term for term.
@@ -61,7 +62,7 @@ Module AC := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Contract.
 Section S.
 Context {fx : FPState}.
 
-(* A1F.v:51-63's stw, verbatim (an Ltac of A1F's Section S, which does not survive its End): one `sd` of the
+(* A1F.v:52-64's stw, verbatim (an Ltac of A1F's Section S, which does not survive its End): one `sd` of the
    prologue, whose store is inside the 416-byte window the carried wr_at covers. *)
 Ltac stw addr :=
   let HS := fresh "HS" in
@@ -78,7 +79,7 @@ Ltac stw addr :=
   end.
 
 (* ---- a1_store_evt (A1.v:97), narrowed: the slot window [lo, S) instead of [S - 1048576, S), the footprint of the
-   14 stores [S - 416, S) instead of the whole window, S <= APPMEM_END.  Script: A1F.v:91-142, with its stw. ---- *)
+   14 stores [S - 416, S) instead of the whole window, S <= APPMEM_END.  Script: A1F.v:92-143, with its stw. ---- *)
 Lemma a1_store_evt_Fs :
   forall (RNG : ExecF.footprint)
          (ra0 gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
@@ -156,7 +157,7 @@ Proof.
   ba_one.
 Qed.
 
-(* ---- a1_tail_evt (A1.v:197), narrowed: S <= APPMEM_END instead of S < APPMEM_END.  Script: A1F.v:169-190. ---- *)
+(* ---- a1_tail_evt (A1.v:197), narrowed: S <= APPMEM_END instead of S < APPMEM_END.  Script: A1F.v:170-191. ---- *)
 Lemma a1_tail_evt_Fs :
   forall (RNG : ExecF.footprint)
          (ra0 gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
@@ -200,7 +201,7 @@ Proof.
   apply ExecF.evtF_done. eexists. eexists. reflexivity.
 Qed.
 
-(* ---- the jal at 0x80f50 (A1F.v:255-296's one step), for any sp and a0: it reads no memory. ---- *)
+(* ---- the jal at 0x80f50 (A1F.v:256-297's one step), for any sp and a0: it reads no memory. ---- *)
 Lemma a1_jal_Fs :
   forall (RNG : ExecF.footprint)
          (ra0 sp gp tp0 t0 t1 t2 s0v s1v a0v a1v a2v a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7v s8v s9 s10v s11 t3 t4 t5 t6 : word)

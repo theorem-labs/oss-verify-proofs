@@ -2,9 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: segments FEED and FEEDS of the ASan walk of fuzz_reply's drain -
    reference_feed's byte loop (fuzz_reply.asan 0x8347c .. 0x83550, the call to list_push at 0x834f0) and
-   its composition.  The statements are W_drain_cx.v:805 dr_feed_stmt and :851 dr_feeds_stmt; the cut
-   predicates are W_drain_cx.v:601 DRB (the loop head, after k of the n bytes) and :619 DE (the loop left).
-   The Section header below is W_drain_top.v:44-102 verbatim, so that dr_feed_p / dr_feeds_p carry exactly
+   its composition.  The statements are W_drain_cx.v:806 dr_feed_stmt and :851 dr_feeds_stmt; the cut
+   predicates are W_drain_cx.v:602 DRB (the loop head, after k of the n bytes) and :619 DE (the loop left).
+   The Section header below is W_drain_top.v:45-103 verbatim, so that dr_feed_p / dr_feeds_p carry exactly
    the premises of that file's dr_feed / dr_feeds.
 
    THE LOOP, as the pinned listing holds it (W_listing.v; address a is entry (a - 0x822ec) / 4, line 41 +
@@ -75,6 +75,7 @@
    FEEDS is the composition: by induction on the bytes left, dnum s1 - k.  Each turn of the loop is one
    dr_feed_stmt, and the induction stops because DRB carries `Z.of_nat k < dnum s1`, so a DRB at S k with
    S k = dnum s1 is uninhabited. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -129,7 +130,7 @@ Hypothesis HG : gx_ok SEGS B (G_DR B RG).
 Hypothesis HGR : forall a, inG (G_DR B RG) a -> ~ in_rom SEGS a.
 (* a ROM byte survives a callee's journal (W_journal.v rom_out / ajournal_gx_rom_view): it is not a walk global,
    errno or the sink's overflow head, and if it is an allocator static it is pinned as an AR const cell
-   (rom_pinned; W1 45a3cc9bdd0).  The instance discharges it at the pinned placement by vm_compute. *)
+   (rom_pinned; W1).  The instance discharges it at the pinned placement by vm_compute. *)
 Hypothesis HROMO : rom_out SEGS B (G_DR B RG).
 (* aout_at's three read-only cells are program globals off the allocator's statics, so an allocator or program
    call keeps them (found by GsFree at free #2: they are not in G_DR; send_line's W_send_line_cx.v HGO) *)
@@ -177,7 +178,7 @@ Let RET := paj_ret_at (PL := PL_fr) (PI := PI).
 (* ---- helpers shared by the two segments (prefix df_) ---- *)
 
 (* The byte count DRB carries: a cut at k has k of the n bytes behind it and at least one still to feed.
-   DRB (W_drain_cx.v:601-646) has 20 existentials, then this is its 30th conjunct (:603).  The projection is
+   DRB (W_drain_cx.v:602-647) has 20 existentials, then this is its 30th conjunct (:603).  The projection is
    positional on purpose: a blanket `repeat destruct` unfolds DMEM / ajournal_gx up to conversion and does
    not finish. *)
 Lemma df_DRB_bytes : forall cx s1 D k W1 c1,
@@ -697,7 +698,7 @@ intros e H1 H2. unfold bzs, entry_bytes. rewrite length_map, !length_app, !Mem.l
 reflexivity.
 Qed.
 
-(* W_drain_gs.v:671 gs_aentry_okx_kept (the drain lane's GS segment), here for this segment. *)
+(* W_drain_gs.v:672 gs_aentry_okx_kept (the drain lane's GS segment), here for this segment. *)
 Lemma df_aentry_okx_kept : forall ly S W mem ly' S' W' mem' e,
 aentry_okx B ly S W mem e ->
 akept W mem W' mem' (aentry_fp e) ->
@@ -1853,7 +1854,7 @@ intros A l. induction l as [|y l IH]; intros n x Hn; [rewrite nth_error_nil in H
 destruct n as [|n]; cbn in Hn |- *; [injection Hn as ->; reflexivity | apply IH; exact Hn].
 Qed.
 
-(* the meter over a trace's parts (W_drain_gs.v:738-761) *)
+(* the meter over a trace's parts (W_drain_gs.v:739-762) *)
 Lemma df_pu_tr_cost_app : forall (t1 t2 : dtrace), tr_cost MT (t1 ++ t2) = tr_cost MT t1 + tr_cost MT t2.
 Proof.
 intros t1 t2. unfold tr_cost. induction t1 as [|ev t1 IH]; [cbn [app fold_right]; lia|].
@@ -3211,7 +3212,7 @@ destruct (al_client_img _ _ LAWS lyc Sc W memc mdc (p + i) HAR
 exact (Hni (proj1 (HG (p + i) (Hsub (p + i) Hc)))).
 Qed.
 
-(* the call, journal to journal (W_source_reset.v:442 aj_gx_call at G := G_DR) *)
+(* the call, journal to journal (W_source_reset.v:443 aj_gx_call at G := G_DR) *)
 Lemma df_gx_call : forall (G1 : list (Z * Z)) (W : world SEGS) regsT memT pc STK sp0 FP ly S W0 mem md lyc Sc mdc k
 STK1 FP1 (o : Z) raw ch1
 (K : alayout -> astate -> world SEGS -> bvmap 5 word -> (word -> option byte) -> Model -> Z -> Prop),
@@ -3985,7 +3986,7 @@ Qed.
 
 (* ---- FEED. ----
    The loop is a do-while: s9 = dnum s1 - k is decremented at 0x83544 and tested at 0x83550, so the head
-   0x8347c is re-entered only with k < dnum s1 (DRB's conjunct, W_drain_cx.v:629), and the exit to DE
+   0x8347c is re-entered only with k < dnum s1 (DRB's conjunct, W_drain_cx.v:630), and the exit to DE
    (0x835ac) is taken when k + 1 = dnum s1. *)
 
 (* The body for a byte that the round really has.  This is the walk. *)
@@ -4661,7 +4662,7 @@ Qed.
 
 
 
-(* the call, journal to journal (W_source_reset.v:442 aj_gx_call at G := G_DR; W_gesture_end.v gx_callS's _x form) *)
+(* the call, journal to journal (W_source_reset.v:443 aj_gx_call at G := G_DR; W_gesture_end.v gx_callS's _x form) *)
 Lemma df_gx_call_x : forall (G1 : list (Z * Z)) (W : world SEGS) regsT memT pc STK sp0 FP ly S Hp W0 mem md lyc Sc
 Hpc mdc k STK1 FP1 (o : Z) raw ch1
 (K : alayout -> astate -> list Z -> world SEGS -> bvmap 5 word -> (word -> option byte) -> Model -> Z -> Prop),

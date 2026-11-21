@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* [comment removed for export] *)
-(* Modified by Theorem Labs, 2026-10: relocated by R2Cmp (a Theorem Labs lane) onto plugin-hostd/fuzz_reply.asan from a working branch 840c4afa7e2 proofs/omx-clap-core/fuzz_state/lib/A/Bz/A/I_pck.v: module paths and the pcs of internal_strlen (0x64548 -> 0x65358) and internal_strchr (0x644a8 -> 0x652b8), nothing else. *)
+(* Modified by Theorem Labs, 2026-10: relocated by R2Cmp (a Theorem Labs lane) onto plugin-hostd/fuzz_reply.asan from a working branch proofs/omx-clap-core/fuzz_state/lib/A/Bz/A/I_pck.v: module paths and the pcs of internal_strlen (0x64548 -> 0x65358) and internal_strchr (0x644a8 -> 0x652b8), nothing else. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A.Bz Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)

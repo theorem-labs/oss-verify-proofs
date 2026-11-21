@@ -147,7 +147,7 @@ Qed.
 
 (* The two facts of the reader's and the writer's models that the walk needs (a full read of a text gives the reader's
    result and trace; the writer's growth calls are bounded by its length).  Their proofs are those of RttStgCmp.v:22-83
-   (round_trip_text's walk, base 9d764437e6be), stated here so that the check_round_trip walk depends on round_trip_text's
+   (round_trip_text's walk), stated here so that the check_round_trip walk depends on round_trip_text's
    CONTRACT only and not on its walk files. *)
 Lemma crt_rf_trace : forall x ok cnt fail res tr, jr_run jr_strtod x ok = (res, tr) ->
   oks ok cnt fail (calls tr) -> cnt + Z.of_nat (calls tr) <= fail ->

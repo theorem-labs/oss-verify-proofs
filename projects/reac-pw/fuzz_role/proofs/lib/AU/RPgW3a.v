@@ -1,25 +1,26 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Reusable/YCbq.v aj_intrin_at at 28fdc66416e (the call of
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Reusable/YCbq.v aj_intrin_at (the call of
    __asan_memcpy in the journal) restated as hd_memcpy with the wrapper's same_but_materialized kept in the post as
-   same_io, and proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v at 9e73ed57244 (m2_img_zone, m2_cstr_kept, the .rodata
+   same_io, and proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v (m2_img_zone, m2_cstr_kept, the .rodata
    zone of m2_szone) restated as hd_img_zone / hd_cstr_kept / hd_szone for the .rodata range only; the rest of the
    file is new. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_role/lib/A/RPgScanHead.v, with its module paths, module names and addresses changed; 1508 of its 1616 lines of code are new or changed and 906 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW3a.v at 71c60c229b8d, for the same unit's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW3a.v, for the same unit's
    image B (fuzz_rate.asan-ubsan): image B's pcs, registers and real-frame cells (the cursor is s2 = x18, the
    runtime's shadow offset s4 = x20, the bytes left s7 = x23, the property count cell R+0x118; the shape stays in a3
    and the third header byte is already spilled, so the head writes one cell instead of three); pp is not live in a
    register after the memset, so it is kept in R+0x168 and read back at the join; the object's header reads its
    values from R-relative cells; the five UBSan tests of the piece (two pointer-overflow guards of fuzz_u8, the
    `pp & 7` test of pod_put32 and its two bound tests) are new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgW3aB.v at df75d15c2f61, for reac-pw/fuzz_role's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgW3aB.v, for reac-pw/fuzz_role's
    image B (fuzz_role.asan-ubsan): module paths fuzz_rate -> fuzz_role, the segments lib/AU/Img0.v rsegs, the shared
    names of lib/AU/RPgSeg.v, RPgMem.v and RPgSteps.v; role B's pcs, registers and real-frame cells (the cursor s4 = x20,
    the runtime's shadow offset s11 = x27, the bytes left s6 = x22, in.n in t3, pp's cell R+0x140, the property count
    R+0x108, the shadow address of &pp->len R+0x148, -0x3ffd R+0xc0, ~pp R+0xf8); C1 carries one real-frame cell (the
    flags byte); the head reads pp back into a5 itself (0x802fc, 0x80334), so its state holds the cell R+0x140 and the
    join carries a5 = pp, which the tail's state seats as pp's extra atom; &pp->len stays in s6 and is not spilled. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_role image B (fuzz_role.asan-ubsan, pinned sha256
    b255d4935da5af137a3967dbe33380ea43be8e78bfe05d1e356e0a2be8a69ff0; every address measured on the unstripped twin
    dc791783f32962615e18a5f5cffae758ba56eb5dc87f70913c3579b101b4406a, same loaded bytes): the piece W3a of the walk

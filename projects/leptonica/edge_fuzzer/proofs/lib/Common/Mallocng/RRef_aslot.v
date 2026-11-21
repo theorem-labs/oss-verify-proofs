@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the THP flag). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import decidable.
@@ -45,9 +46,9 @@ Context {fx : FPState} {RL : Reloc} {RC : RelocCode RL} {RS : RelocSites RL}.
 Theorem alloc_slot_refines_at : forall fuel, aslot_at fuel.
 Proof.
   induction fuel as [|fuel IH].
-  - unfold aslot_at. intros md regs mm rom s sc req sp ret P L Hp Hvm Hag H2 Hal Hlo0 Hlo Hhi Hhi64 Hwt Hstk H1 Hret H4 H10 H11 HS HK.
+  - unfold aslot_at. intros md regs mm rom s sc req sp ret P L Hp Hvm Hthp Hvdo Hag H2 Hal Hlo0 Hlo Hhi Hhi64 Hwt Hstk H1 Hret H4 H10 H11 HS HK.
     exfalso. clear -HS. cbn [m_alloc_slot mcrash tsafe] in HS. exact HS.
-  - unfold aslot_at. intros md regs mm rom s sc req sp ret P L Hp Hvm Hag H2 Hal Hlo0 Hlo Hhi Hhi64 Hwt Hstk H1 Hret H4 H10 H11 HS HK.
+  - unfold aslot_at. intros md regs mm rom s sc req sp ret P L Hp Hvm Hthp Hvdo Hag H2 Hal Hlo0 Hlo Hhi Hhi64 Hwt Hstk H1 Hret H4 H10 H11 HS HK.
     rewrite alloc_slot_D_S in Hlo, Hstk, HK.
     pose proof (alloc_slot_D_ge fuel) as HDge.
     pose proof (minv_init s sp (alloc_slot_D fuel + 144) Hlo0 Hlo ltac:(lia) Hhi Hhi64 Hwt) as HI.

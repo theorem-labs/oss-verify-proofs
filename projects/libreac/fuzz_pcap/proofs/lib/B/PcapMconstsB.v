@@ -6,11 +6,12 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    PcapFuzzFopen.v:157-159) at the lib/B instance: PI := lib/B/Prog/PcapEntryTop.v PI_pcap, roimg := lib/Reusable/YE3i.v
    ro_img, mc_lo := 0x10350, mc_hi := 0x10370 (.rodata+0x70 .. .rodata+0x90, __strchrnul's two word constants), for
    every rc. The window lies inside YE3i.img_ro_chunks' chunk [0x10330, 0x10398) (YE3i.v:42).
-   The proof is the lib/A instance's (lib/A/Prog/PcapEntryInst.v inst_MCONSTS, commit 8994a315428): the second conjunct
-   of lib/Reusable/YE2j.v:106 strchr_lit_ro_of_img, which is lib/Reusable/YE39.v:29-30 mconsts_view W mem, whose window
+   The proof is the lib/A instance's (lib/A/Prog/PcapEntryInst.v inst_MCONSTS): the second conjunct
+   of lib/Reusable/YE2j.v:107 strchr_lit_ro_of_img, which is lib/Reusable/YE39.v:29-30 mconsts_view W mem, whose window
    [MC_LO, MC_HI) is [0x10350, 0x10370) (YE39.v:31 mc_bounds). Those lemmas are stated at segs := tfibsegs
-   (lib/Reusable/YB1v.v:14, = AsanUbsan.M.loaded_segments); pa_segs PI_pcap is AsanUbsan.M.loaded_segments
+   (lib/Reusable/YB1v.v:15, = AsanUbsan.M.loaded_segments); pa_segs PI_pcap is AsanUbsan.M.loaded_segments
    (PcapEntryTop.v:145, :164 pi_pcap_segs), so the two are convertible by delta and iota only. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -65,12 +66,12 @@ intros rc W mem HRO a Ha.
 pose proof RE39.mc_bounds as [MB1 MB2].
 assert (Ha' : RE39.MC_LO <= a < RE39.MC_HI) by (rewrite MB1, MB2; exact Ha).
 (* conversion: pa_segs (PI_pcap rc) and tfibsegs are both AsanUbsan.M.loaded_segments (PcapEntryTop.v:145,
-   YB1v.v:14); mconsts_view W mem (YE39.v:29-30) is the goal's form at tfibsegs. *)
+   YB1v.v:15); mconsts_view W mem (YE39.v:29-30) is the goal's form at tfibsegs. *)
 exact (proj2 (RE2j.strchr_lit_ro_of_img (W : world tfibsegs) mem HRO) a Ha').
 Qed.
 
 (* The lemma fills the slot MCONSTS of pb_libreac_fuzz_fopenX at the lib/B instance (the order of PcapFuzzFopen.v:565,
-   :568-571; the style of lib/A/Prog/PcapEntryFinal.v:640-641): SK := PcapSinkHeads.asan_ubsan_sink_head,
+   :568-571; the style of lib/A/Prog/PcapEntryFinal.v:641-642): SK := PcapSinkHeads.asan_ubsan_sink_head,
    PI := PI_pcap rc, B := YD2l.PcapB, K := PSourceK.pcap_KS, FM_RA := 0x8e7d8 (PcapEntryDefs PE_FMEMOPEN_MALLOC_RA),
    CTX := YCej.CTX_pcap_source_open, MT := YCbp.ameter_triv, roimg := YE3i.ro_img, mc_lo := 0x10350,
    mc_hi := 0x10370; the other arguments are the binders. *)

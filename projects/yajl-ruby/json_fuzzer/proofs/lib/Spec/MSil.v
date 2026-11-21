@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (tsil over nstep_cfg acfg). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
-From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Lib Require Import ITree Nodes.
+From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Lib Require Import ITree Nodes NodesCfg.
 From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Spec Require Import Monad MSafe.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
@@ -19,7 +20,10 @@ Fixpoint tsil {R : Type} (t : itree node R) (mo : Model) (P : R -> Model -> Prop
   | Ret r => P r mo
   | Vis n k => nsafe n mo
       /\ (forall code mo', ~ nexit n mo code mo')
-      /\ (forall rsp mo' evs, nstep n mo rsp mo' evs -> evs = [] /\ tsil (k rsp) mo' P)
+      (* LPS 75d69e00: over [nstep_cfg acfg], matching [twf] in MSafe.v.  a build
+         named :69 as the second consumer; moving [tsil] itself is what lets both
+         [kind_mm_evs] (plain, via [nstep_cfg_sub]) and [Hk] (cfg, direct) be fed. *)
+      /\ (forall rsp mo' evs, nstep_cfg acfg n mo rsp mo' evs -> evs = [] /\ tsil (k rsp) mo' P)
   end.
 
 Lemma tsil_mono : forall {R} (t : itree node R) mo (P P' : R -> Model -> Prop),
@@ -35,10 +39,11 @@ Qed.
 Lemma tsil_twf : forall {R} (t : itree node R) mo P, tsil t mo P -> twf t mo P.
 Proof.
   intros R t; induction t as [r | n k IH]; intros mo P H; cbn in *; [exact H|].
+  (* LPS 75d69e00: [tsil] is now stated over the same relation as [twf]
+     (Lib/NodesCfg.v:65), so [Hst] feeds [Hk] directly and no projection is needed. *)
   destruct H as (Hsafe & _ & Hk). split; [exact Hsafe|]. intros rsp mo' evs Hst. apply IH. exact (proj2 (Hk _ _ _ Hst)).
 Qed.
 
-(* [comment removed for export] *)
 Definition kind_mm (n : node) : Prop :=
   match n with
   | NBrk _ | NMmap _ _ _ _ | NMunmap _ _ | NMprotect _ _ _ | NMremap _ _ _ _ => True
@@ -63,7 +68,9 @@ Proof.
   intros R t; induction t as [r | n k IH]; intros mo P H Hm; cbn in *; [exact H|].
   destruct H as [Hsafe Hk]. destruct Hm as [Hn Hmk]. split; [exact Hsafe|]. split.
   - intros code mo'. apply kind_mm_noexit. exact Hn.
-  - intros rsp mo' evs Hst. split; [exact (kind_mm_evs _ _ _ _ _ Hn Hst)|]. apply IH; [exact (Hk _ _ _ Hst)| apply Hmk].
+  (* [tsil]'s Vis clause now delivers the stronger fact, so [Hk] takes it directly while
+     [kind_mm_evs], which still quantifies over plain [nstep], goes through [nstep_cfg_sub]. *)
+  - intros rsp mo' evs Hst. split; [exact (kind_mm_evs _ _ _ _ _ Hn (nstep_cfg_sub _ _ _ _ _ _ Hst))|]. apply IH; [exact (Hk _ _ _ Hst)| apply Hmk].
 Qed.
 
 Lemma tmm_bind : forall {A B} (t : itree node A) (f : A -> itree node B),

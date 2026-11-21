@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YFhmcf.v (commit f01d79f3fb5, cf refill round 3; file sha256 158cb41d86b3) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-(* Theorem Labs, 2026-10-30 (a Theorem Labs lane for a Theorem Labs lane, lane refill-b2, base a working branch d50ec3c8a93a): YFhmcf, the cf
-   twin of YFhm.v (this tree's copy, = c5 8d6c9f45705b).  The one change: it imports YFkpcf for YFkp; the text is
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YFhmcf.v (cf refill round 3; file sha256 158cb41d86b3) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10-30 (a Theorem Labs lane for a Theorem Labs lane, lane refill-b2, base a working branch): YFhmcf, the cf
+   twin of YFhm.v (this tree's copy, = c5).  The one change: it imports YFkpcf for YFkp; the text is
    otherwise YFhm.v verbatim (no line of YFhm reads the seed REG0R / FR, only the register names).
    EVENT-FREE: no st_nev, EV_A, EV_MAX, refill_reg, qloosem or non-cf abudget.  rule 24: no function proved (kind:
    re-base of the proved refill walk onto the cf instance). *)

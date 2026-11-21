@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YGcfRefillCells.v (commit f01d79f3fb5, cf refill round 3; file sha256 97ceb340de40) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-(* Theorem Labs, 2026-10-30 (a Theorem Labs lane for a Theorem Labs lane, lane refill-b2, layer c92d3ee56e6): the RESULT CELLS of a refill walk.
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YGcfRefillCells.v (cf refill round 3; file sha256 97ceb340de40) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10-30 (a Theorem Labs lane for a Theorem Labs lane, lane refill-b2, layer): the RESULT CELLS of a refill walk.
    refill_cells_keep_gen_cf (every refill arm but the report arm): the machine writes stay in refill_frame_cf (the stack
    window, the thread object, class c's region info, class c's user region [RB c, RB c + 2^32), the high shadow), the
    result world's hidden set agrees off that frame, the secondary table and every other class's exh flag are kept, and

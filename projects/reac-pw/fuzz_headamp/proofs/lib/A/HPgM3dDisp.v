@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: lib/A/RPgCheckStr.v at 77f59d02b01 (the engine run from a fresh entry state and
+(* Modified by Theorem Labs, 2026-10: lib/A/RPgCheckStr.v (the engine run from a fresh entry state and
    its re-seat at a fixed pc) for the value dispatch and the Int arm of reac-pw/fuzz_role's image-A segment M02
    (0x82318 .. 0x823e0). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02KeyI.v at 7e8cf15c304 (the run / branch
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02KeyI.v (the run / branch
    / exit pattern of a value dispatch, the entry state re-seated once the value entry's address is formed) and
-   proofs/reac-pw/fuzz_role/lib/A/RPgM02KeyBase.v at 7e8cf15c304 (m2k_ent_type_slice, m2k_ent_size_slice,
+   proofs/reac-pw/fuzz_role/lib/A/RPgM02KeyBase.v (m2k_ent_type_slice, m2k_ent_size_slice,
    m2k_ent_word_slice) for reac-pw/fuzz_headamp image A: the m2i_ / m2k_ prefixes are renamed hvd_, every address
    is headamp's own, role's two arms and its MAL exit are replaced by headamp's Bool and Int arms with their five
    exits, and the cuts are lib/A/HPgSegM.v's and lib/A/HPgM3dBase.v's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image A (fuzz_headamp.asan, pinned sha256
    f3e0669d2819724922df0556b11c2dcd22d1e16fe7e0fe1535ce784b34436c47; every address below is measured on the
    unstripped twin b5f352154c54a97c66fd92dfa228e8a854498f6cd313dba0107900546b043f9a, whose loaded sections are
@@ -16,7 +17,7 @@
    (0x80bc0): lib/A/HPgM3dBase.v's hv_piece_disp_stmt, the walk from VAL 0x83364 to the Float arm FA 0x83430, the
    Int and Float arms' meeting point TAIL 0x83534 and the three segment cuts CELL 0x83548, RFA 0x83454, RF 0x83460.
 
-   proves function LLVMFuzzerTestOneInput (reuse search: at ossv/recipes 2d2ff01bb6f2, read by the released-proof
+   proves function LLVMFuzzerTestOneInput (reuse search:, read by the released-proof
    index v5 built 2026-10-30T13:16:21Z, no released proof of these pieces; the lookup record is in the PR body).
 
    THE CODE.

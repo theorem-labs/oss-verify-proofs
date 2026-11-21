@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/leptonica/colorfill_fuzzer/lib/K5/Lib/Ceiling.v; 1 of its 51 lines of code is new or changed. *)
-(* Ported by a Theorem Labs lane from a working branch affce6489c8 proofs/omx-clap-core/fuzz_manifest/lib/A/Bz/Lib/Ceiling.v, unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Ported by a Theorem Labs lane from a working branch proofs/omx-clap-core/fuzz_manifest/lib/A/Bz/Lib/Ceiling.v, unchanged. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.A.Bz Require BvWfKernel.
 (* [comment removed for export] *)
 

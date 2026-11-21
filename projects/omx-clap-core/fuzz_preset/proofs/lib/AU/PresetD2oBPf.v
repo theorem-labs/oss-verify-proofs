@@ -9,6 +9,7 @@
    and tfib_lib_x_all_B_holds (lane CwCfiB, lib/AU/PresetCfiBPf.v). Nothing in this file is a proof of a function
    (rule 24: no function proved; this is the composition / driver layer of a port).
    The donor's tfib_srealizesX_top (YD2o.v:70-77) is the last step: the run ceiling at sp's window (YM05.RunCeilOf). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up certificate per CONFIG_RSEQ flag with states computed in the build); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -21,14 +22,14 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YK11
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YG00 YG0f YG0n YG0d YC5d YCbq.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YGcfNames YG0ncf YG0dcf YG0d2cf YGcfRoomKeep.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YP0b YPsym YC4aP YGcallMxmn YGcfMallocComposeKeep.
-From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YB1v YB01 YF0m YD2l YCeg YD1w YD1x YD1k.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YB1v YB01r YF0m YD2l YCeg YD1w YD1x YD1k.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.B Require Import Listing_prog PAImg_prog.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require Import CfParamsPreset.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU Require Import PresetCfnB PresetTFIBAU.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU Require Import PresetD1sitesB PresetD1preB PresetD1preBx.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU Require Import PresetD1qB PresetCfiB PresetCfiBPf PresetD1pB.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU Require Import PresetD2oB PresetDrvTopBStmt.
-(* the image's CfImg record (lib/AU/CfImgB.v, blob 4b8e1b9596a7; its one home a working branch 5023be8f2869) and the B NR
+(* the image's CfImg record (lib/AU/CfImgB.v, blob 4b8e1b9596a7; its one home a working branch) and the B NR
    form of the start-up + driver step *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU Require Import CfImgB PresetD1qNRB.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require PRH_Base.
@@ -43,8 +44,8 @@ Lemma valid_sp_window_D2B : forall sp, valid_sp sp -> (sp_window_lo <= bv_unsign
 Proof. intros sp (H1 & H2 & _). split; [exact H1 | exact H2]. Qed.
 
 (* The class (C) check of the CfImg record (owner order 06:00Z): CfImg_B's memcpy cells are the image's, the rows
-   lib/Reusable/YF0m.v:96 `z8 (ANum 0xa46c8) 0x9bb04` (cf_real_memcpy holds cf_pc_memcpy) and :180 `z8 (ANum 0xa2878)
-   0xa46c8` (cf_got_memcpy holds &real_memcpy), owned-static :1582 (a Theorem Labs lane, YF0m 82bd1cbdc76). *)
+   lib/Reusable/YF0m.v:97 `z8 (ANum 0xa46c8) 0x9bb04` (cf_real_memcpy holds cf_pc_memcpy) and :180 `z8 (ANum 0xa2878)
+   0xa46c8` (cf_got_memcpy holds &real_memcpy), owned-static :1582 (a Theorem Labs lane, YF0m). *)
 Lemma cfimg_B_memcpy_cells :
   @cf_real_memcpy CfImg_B = 0xa46c8 /\ @cf_got_memcpy CfImg_B = 0xa2878 /\ @cf_pc_memcpy CfImg_B = 0x9bb04.
 Proof. split; [reflexivity | split; reflexivity]. Qed.
@@ -58,7 +59,7 @@ Section parts.
 
 (* START-UP. Donor YD2o.v -> YD1q.v:88-89 tfib_startup_T1 (lib/Reusable/YB1n.v). Statement lib/AU/PresetD1qB.v (lane CwD1q,
    PROVISIONAL there); OWNER a Theorem Labs lane. HS_tfib: the core's hand-off table (lib/Reusable/YB01.v). *)
-Hypothesis H_tfib_startup_T1_B : tfib_startup_T1_B HS_tfib.
+Hypothesis H_tfib_startup_T1_B : tfib_startup_T1_B HS_tfib_r.
 
 (* THE DRIVER WALK. Donor YD1q.v:73-74 DRV_MAINX / YD1p.v:77 tfib_drv_main. OWNER CwD1pB (lib/AU/PresetD1pB.v). *)
 Hypothesis H_tfib_drv_main_B : tfib_drv_main_B.
@@ -100,13 +101,13 @@ Hypothesis H_tfib_fprintf_usage_site_cf_B : tfib_fprintf_usage_site_cf_B.
 Hypothesis H_tfib_printf_first_cf_B : tfib_printf_first_cf_B.
 Hypothesis H_tfib_printf_next_cf_B : tfib_printf_next_cf_B.
 Hypothesis H_tfib_exit_site_cf_B : tfib_exit_site_cf_B.
-(* #102 (no-DW interface, PresetCfnB.v, first at commit 8259b94c42ee): THE INSTANCE UNIVERSE'S CLOSURE at the slot's
+(* #102 (no-DW interface, PresetCfnB.v, first): THE INSTANCE UNIVERSE'S CLOSURE at the slot's
    context set (the slot pre's last conjunct, state-free). OWNER: the universe generator (two Theorem Labs lanes)
    with a Theorem Labs lane's per-run universe ruling; the driver passes it to every slot call. *)
 Hypothesis H_univ_closure_B : @PRH_Base.prh_univ_closure PresetCfnB.preset_prh_img TfibB CfImg_B PresetCfnB.iface_ctx0.
 
 (* THE RELRO RANGE IS READ-ONLY. Donor Let YD2o.v:42 RO_IN (`or_intror`). PROVED on a Theorem Labs lane's relocation
-   (a working branch 933892daaab group G2 and later): lib/Reusable/YCeg.v's in_ro_tfa has
+   (a working branch group G2 and later): lib/Reusable/YCeg.v's in_ro_tfa has
    TFIB_RELRO_LO / HI = 0xa2240 / 0xa4000 = the listing's relro range (lib/B/PAImg_prog.v B_prog_relro_lo / hi, the
    image's PT_GNU_RELRO), so the donor's `or_intror` carries over unchanged. Pending relocB: on the unrelocated YCeg
    (cgif's window) this proof does not type-check. *)
@@ -118,12 +119,12 @@ Proof. intros rc a H. right. exact H. Qed.
 Theorem TFIB_T_of_partsXF_B_holds : TFIB_T_of_partsXF_B.
 Proof.
 intros sm iface_room_np XM_LIB XN_LIB PAYLOAD_ROOM A_MOD_AT A_STAMP NPI NPS NPT HC HLX PROOM.
-intros sp brk mbase rnd inp en_p Hsp Hbrk Hmb Hfit Hinp HNR.
+intros sp brk mbase rnd inp en_p Hsp Hbrk Hmb Hfit Hinp Hlau HNR.
 pose (rc := YM05.RunCeilOf (bv_unsigned sp) (valid_sp_window_D2B sp Hsp)).
 pose proof (tfib_lib_x_all_B_holds rc CfImg_B B_prog_listing (PI_prog_B (rc := rc)) TfibB
   sm iface_room_np ameter_triv XM_LIB XN_LIB PAYLOAD_ROOM A_MOD_AT A_STAMP (HC rc) (HLX rc)) as LIBX.
-refine (tfib_srealizesX_B_holds rc HS_tfib H_tfib_startup_T1_B _ sp rnd brk mbase inp en_p
-  Hsp Hbrk Hmb Hfit Hinp HNR (YM05.ceil_of_top_run (valid_sp_window_D2B sp Hsp))).
+refine (tfib_srealizesX_B_holds rc HS_tfib_r H_tfib_startup_T1_B _ sp rnd brk mbase inp en_p
+  Hsp Hbrk Hmb Hfit Hinp Hlau HNR (YM05.ceil_of_top_run (valid_sp_window_D2B sp Hsp))).
 exact (H_tfib_drv_main_B rc B_prog_listing (PI_prog_B (rc := rc)) sm iface_room_np NPI NPS NPT
   TfibB TfibB_syms
   (H_amalloc_realizes_cf_B rc) (H_afree_realizes_cf_B rc) (H_aintrin_realizes_xm_cpy_B rc YK11.fx0) (H_aread_check_stmt_cf_B rc)
@@ -149,14 +150,14 @@ Qed.
 Theorem TFIB_T_room_all_B_holds : TFIB_T_room_all_B.
 Proof.
 intros sm iface_room_np XM_LIB XN_LIB PAYLOAD_ROOM A_MOD_AT A_STAMP NPI NPS NPT HC HLX.
-intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp HROOM.
+intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau HROOM.
 pose (rc := YM05.RunCeilOf (bv_unsigned sp) (valid_sp_window_D2B sp Hsp)).
 pose proof (tfib_lib_x_all_B_holds rc CfImg_B B_prog_listing (PI_prog_B (rc := rc)) TfibB
   sm iface_room_np ameter_triv XM_LIB XN_LIB PAYLOAD_ROOM A_MOD_AT A_STAMP (HC rc) (HLX rc)) as LIBX.
 pose (NR := fun (_ : ExecEntry) (i : ProcInput) => forall a0 p data : list byte,
   in_argv i = [a0; p] -> Fs.fs_lookup (in_fs i) p = Some data -> PAYLOAD_ROOM (payload data)).
-refine (tfib_srealizesX_NR_B_holds NR rc HS_tfib H_tfib_startup_T1_B _ sp rnd brk mbase inp (mkEntry sp brk mbase rnd)
-  Hsp Hbrk Hmb Hfit Hinp HROOM (YM05.ceil_of_top_run (valid_sp_window_D2B sp Hsp))).
+refine (tfib_srealizesX_NR_B_holds NR rc HS_tfib_r H_tfib_startup_T1_B _ sp rnd brk mbase inp (mkEntry sp brk mbase rnd)
+  Hsp Hbrk Hmb Hfit Hinp Hlau HROOM (YM05.ceil_of_top_run (valid_sp_window_D2B sp Hsp))).
 exact (H_tfib_drv_main_B rc B_prog_listing (PI_prog_B (rc := rc)) sm iface_room_np NPI NPS NPT
   TfibB TfibB_syms
   (H_amalloc_realizes_cf_B rc) (H_afree_realizes_cf_B rc) (H_aintrin_realizes_xm_cpy_B rc YK11.fx0) (H_aread_check_stmt_cf_B rc)
@@ -179,9 +180,9 @@ Qed.
 Theorem TFIB_T_room_B_holds : TFIB_T_room_B.
 Proof.
 intros sm iface_room_np XM_LIB XN_LIB PAYLOAD_ROOM A_MOD_AT A_STAMP NPI NPS NPT HC HLX.
-intros sp brk mbase rnd inp a0 p data Hsp Hbrk Hmb Hfit Hinp Hargv Hlook HPR.
+intros sp brk mbase rnd inp a0 p data Hsp Hbrk Hmb Hfit Hinp Hlau Hargv Hlook HPR.
 refine (TFIB_T_room_all_B_holds sm iface_room_np XM_LIB XN_LIB PAYLOAD_ROOM A_MOD_AT A_STAMP
-  NPI NPS NPT HC HLX sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp _).
+  NPI NPS NPT HC HLX sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau _).
 (* argv fixes p and the file system fixes data, so the one arm given is every arm *)
 intros a0' p' data' Hargv' Hlook'. rewrite Hargv in Hargv'. injection Hargv' as _ Hp. subst p'.
 rewrite Hlook in Hlook'. injection Hlook' as Hd. subst data'. exact HPR.
@@ -200,12 +201,12 @@ Theorem TFIB_T_room_all_B_of_slot : forall (iface_room_np : astate -> Prop),
   TFIB_T_room_all_concl_B PAYLOAD_ROOM.
 Proof.
 intros iface_room_np NPI NPS NPT sm XM_LIB XN_LIB PAYLOAD_ROOM SLOT.
-intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp HROOM.
+intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau HROOM.
 pose (rc := YM05.RunCeilOf (bv_unsigned sp) (valid_sp_window_D2B sp Hsp)).
 pose (NR := fun (_ : ExecEntry) (i : ProcInput) => forall a0 p data : list byte,
   in_argv i = [a0; p] -> Fs.fs_lookup (in_fs i) p = Some data -> PAYLOAD_ROOM (payload data)).
-refine (tfib_srealizesX_NR_B_holds NR rc HS_tfib H_tfib_startup_T1_B _ sp rnd brk mbase inp (mkEntry sp brk mbase rnd)
-  Hsp Hbrk Hmb Hfit Hinp HROOM (YM05.ceil_of_top_run (valid_sp_window_D2B sp Hsp))).
+refine (tfib_srealizesX_NR_B_holds NR rc HS_tfib_r H_tfib_startup_T1_B _ sp rnd brk mbase inp (mkEntry sp brk mbase rnd)
+  Hsp Hbrk Hmb Hfit Hinp Hlau HROOM (YM05.ceil_of_top_run (valid_sp_window_D2B sp Hsp))).
 exact (H_tfib_drv_main_B rc B_prog_listing (PI_prog_B (rc := rc)) sm iface_room_np NPI NPS NPT
   TfibB TfibB_syms
   (H_amalloc_realizes_cf_B rc) (H_afree_realizes_cf_B rc) (H_aintrin_realizes_xm_cpy_B rc YK11.fx0) (H_aread_check_stmt_cf_B rc)

@@ -2,14 +2,14 @@
    inlined from fuzz_state.c:296 - on the pinned fs.asan-ubsan (image tfibsegs, build B, sha256 5ac5ce0954f8...), head
    0x8210c, exit 0x82180 (crt_INV_81fb8 -> crt_INV_82028; the A names keep their A pcs, the content is B's).
 
-   The B twin of a working branch 2b7e9117c25 proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_loop7.v
+   The B twin of a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_loop7.v
    (A 0x81fb8 -> 0x82028): the same Definition / Lemma names and statement shapes, every pc, register and constant
    RE-MEASURED on B (capstone listing (internal path)), over lib/B/FSH_crt_base.v (B base
    v27, crt_stable7E, crt_STK) and lib/B/FSH_crt_site.v (crt_J, crt_F_facts). A new file: no licence lines.
-   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from 2b7e9117c25 lib/A/FSH_crt_loop7.v)
-   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from c6275044faa) - the STK value
+   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from lib/A/FSH_crt_loop7.v)
+   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED) - the STK value
    is read through the base's crt_STK_eq (A base v27's pattern), never a literal.
-   The A file's own port source carries over: d25a984c903 proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_loops.v
+   The A file's own port source carries over: proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_loops.v
    (cs_pre / cs_j / cs_facts :806-809, crt_canonical :1032, ws_bit :717; checker verdict a Theorem Labs lane on that hit), re-keyed
    to the lane boundaries, and what each became:
    - cs_pre / cs_j (:806-807)  -> l7_pre / l7_j: after i trips the output holds b64_strip of the first i text bytes,
@@ -227,7 +227,7 @@ Proof.
 Qed.
 
 (* ---- the three data branches of the body, as closed facts about the byte c under the cursor. Ported from the
-   bespoke ASan proof a working branch d25a984c903 lib/A/Prog/check_round_trip_loops.v:717 ws_bit (the same
+   bespoke ASan proof a working branch lib/A/Prog/check_round_trip_loops.v:717 ws_bit (the same
    constant 4294977024 and the same forallb / vm_compute check over 0 .. 32); restated here on the engine's branch
    condition, so no rewrite ever has to reach inside the run's hypothesis. ---- *)
 Lemma l7_bit_val : forall E c, ew E 33 = Z_to_bv 64 c -> 0 <= c < 256 ->

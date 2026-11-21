@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (stack_writableZ moved to sp0 - 6144512, the floor of the stack the launch maps (was sp0 - 8388608)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -33,7 +34,7 @@ Definition hdr_cfglen (content : list byte) : Z := hdr_cfg content mod 32768.
 Definition hdr_paylen (content : list byte) : Z := Z.of_nat (length content) - 6 - hdr_cfglen content.
 
 (* [comment removed for export] *)
-Definition stack_writableZ (M : word -> option byte) (sp0 : Z) : Prop := ltac2:(CDefT.buildp (gd_tbl_P_target_pre ()) "Pd,$0.Pm,$1.P,(2.=R2.)P,(2.(3.R3.(4.R2.))+800000.)(5.$6.(7.$8.O2.(9.&40.(3.(:.O1.+800000.)R4.))R3.)$;.)")
+Definition stack_writableZ (M : word -> option byte) (sp0 : Z) : Prop := ltac2:(CDefT.buildp (gd_tbl_P_target_pre ()) "Pd,$0.Pm,$1.P,(2.=R2.)P,(2.(3.R3.(4.R2.))+5=<200.)(5.$6.(7.$8.O2.(9.&40.(3.(:.O1.+5=<200.)R4.))R3.)$;.)")
 (* [comment removed for export] *).
 
 Record target_pre (sp0 gm area brkv mas tid : Z) (content : list byte)

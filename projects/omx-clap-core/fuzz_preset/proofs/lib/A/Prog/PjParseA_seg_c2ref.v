@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: segment C2ref of pj_parse's image-A' walk (fuzz_preset asan, #102 pin 1be0f53d96cb,
-   unstripped twin bff8519bbe3e, A' 0x85e20; the cuts of lib/A/Prog/PjParseA_defs.v, the batch kit's cut 7cdbb61b5fa0): from
+   unstripped twin bff8519bbe3e, A' 0x85e20; the cuts of lib/A/Prog/PjParseA_defs.v, the batch kit's cut): from
    PJP_C2REF (+0xc8 from pj_parse's entry) to PJP_C3 (+0xd4), the refusal path
      +0xc8  mv a0, s0        a0 := out
      +0xcc  jal pj_free      the batch kit's tpj_free_specX CTX0 DOC_D (pjp_texts' second conjunct) by YCbqGcallW.v aj_call_xW at

@@ -24,7 +24,7 @@
    (5) the symbol record is the core copy's TfibB (lib/Reusable/YD2l.v), as the donor's Section b fixes it, and the program listing
        of the interface's read-only premise is a Theorem Labs lane's B_prog_listing with its image class PI_prog_B (lib/B/PAImg_prog.v), passed
        explicitly;
-   (6) on the interface of IfacePort 3f83c075b61f: its frame names (ablocks_cf, afn_pre_cf, ajournal_cf, apost_base_cf)
+   (6) on the interface of IfacePort: its frame names (ablocks_cf, afn_pre_cf, ajournal_cf, apost_base_cf)
        are constants and fregs_kept_x is YCbqG's, so neither they nor links to them are premises (the driver walk
        uses the link proofs at the constants itself); the interface's Section v parameters sm (the harness model's)
        and iface_room_np (PROVISIONAL, the non-primary room) are universally quantified, and the three laws of
@@ -32,19 +32,20 @@
        a Theorem Labs lane, bodies from room_live_cf) are premises;
    (7) NO run-level room premise (resume brief 03:48Z, design change 1): the sum `4 * N_LLVMF + 24 <= K_INIT` is
        gone, since `ROOM_cf_k init_state (4 * N_LLVMF + 24)` is unsatisfiable (K_INIT 14,335 against >= 9,696 room per
-       call). The run's allocator room is a Theorem Labs lane's P8 (a working branch 4ec915e66b6,
+       call). The run's allocator room is a Theorem Labs lane's P8 (a working branch,
        lib/Spec/PresetP8.v preset_room), a state predicate whose three premises (live = the model's hlive plus at most
        three driver chunks; a8's quar_bytes_ok_cf; fifo_ok by a8's fifo_ok_of_frees_follow from the coupling
        cf_frees_follow, lib/Reusable/YGcfFrees.v) are the interface's iface_room_at, which the driver walk establishes
        at the loop entry and the slot's post carries across each call; none of them is a premise of this assembly;
    (8) the meter is the trivial one (lib/Reusable/YCbp.v ameter_triv) and the per-call meter allowances XM_LIB /
        XN_LIB are universally quantified (the trivial meter never reads them);
-   (9) #102 (no-DW interface, PresetCfnB.v, first at commit 8259b94c42ee; on the kit's batch):
+   (9) #102 (no-DW interface, PresetCfnB.v, first; on the kit's batch):
        the program part is the interface's callee record preset_callee_contracts and the harness walk
        preset_lib_x_stmt at check_round_trip's two addresses A_MOD_AT / A_STAMP, each at every run ceiling and float
        state, at the image's code record ci := CfImg_B. Gone with the old pins: the fourteen afn_spec_cf records
        F_<f> (their pj_parse / pj_get / pj_get_str are not callees of LLVMFuzzerTestOneInput on #102), the run's data
        words DW and npj, and their bound (the kit's batch: clause 4a / 4b). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises)). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -114,12 +115,13 @@ TFIB_T_AU.
 (* init_config reads the FP state at the start-up one, as PresetTFIBAU.v's TFIB_T_AU does *)
 #[local] Existing Instance YK11.fx0.
 (* the residual conclusions of the room forms, named so a closed export can state them; the all-arms one,
-   TFIB_T_room_all_concl_B, has its home in lib/AU/PresetDrvTopBStmt.v (the B' halts top's export, a working branch
-   bb703a14ca5b), cited here *)
+   TFIB_T_room_all_concl_B, has its home in lib/AU/PresetDrvTopBStmt.v (the B' halts top's export, a working branch),
+   cited here *)
 Definition TFIB_T_room_concl_B (PAYLOAD_ROOM : list byte -> Prop) : Prop :=
 forall sp brk mbase rnd inp (a0 p data : list byte),
 valid_sp sp -> valid_brk presetsegsAU brk -> valid_mmap_base mbase ->
 entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 in_argv inp = [a0; p] -> Fs.fs_lookup (in_fs inp) p = Some data -> PAYLOAD_ROOM (payload data) ->
 srealizes presetsegsAU
 (init_config presetsegsAU AsanUbsan.M.init_pc AsanUbsan.M.phdrs sp brk mbase rnd target_alloc_limit inp)

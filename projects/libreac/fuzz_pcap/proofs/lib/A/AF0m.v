@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* gated: a Theorem Labs lane PASS A+B at c061542723f / 731386609e0.  Nothing is filled.  Gates on this text (a Theorem Labs lane's pcmd tools, both images, all exit 0; gates3.md (sha256 73e84770b991; internal record)): cellcheck --target-only 308 facts, 153 OK, 155 STATE, 0 WRONG; shadowcheck 45/45 const-shadow cells, 6 zero ranges, 0 poisoned, 0 unparsed; ownedcheck 38 owned ranges, 308 const cells, UNOWNED 0, OVERCLAIM 0, UNPARSED 0. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* gated: a Theorem Labs lane PASS A+B.  Nothing is filled.  Gates on this text (a Theorem Labs lane's pcmd tools, both images, all exit 0; gates3.md (sha256 73e84770b991; internal record)): cellcheck --target-only 308 facts, 153 OK, 155 STATE, 0 WRONG; shadowcheck 45/45 const-shadow cells, 6 zero ranges, 0 poisoned, 0 unparsed; ownedcheck 38 owned ranges, 308 const cells, UNOWNED 0, OVERCLAIM 0, UNPARSED 0. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
@@ -295,7 +296,7 @@ z8 (ANum (symaddr Symbols.Asan.s__ZN14__interception13real_fmemopenE)) (symaddr 
    fmemopen 0x8e870 (nm; value read from the pin); needed by a Theorem Labs lane's fmemopen interceptor walk
    (22:54Z). asan-ubsan twin: 0x9b4b0 -> 0x8e73c. *) ;
 z8 (ANum (symaddr Symbols.Asan.s__ZN14__interception10real_freadE)) (symaddr Symbols.Asan.s_fread_unlocked)  (* M-IMG; pcap-only cell, no cgif twin: __interception::real_fread (nm) holding musl fread
-   0x8ee5c (value read from the pin); named by a pcap walk (a working branch a05f266b202, 23:26Z; porter's ruling:
+   0x8ee5c (value read from the pin); named by a pcap walk (a working branch, 23:26Z; porter's ruling:
    a cell is added only when a pcap walk or premise names it). asan-ubsan twin: 0x9b438 -> 0x8ed28. *)
 ].
 Definition Tfib_const_shadow : list acell :=

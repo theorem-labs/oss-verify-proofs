@@ -3,7 +3,11 @@ project: trafficserver
 harness: fuzz_rec_http
 rocq: OSSVerify.trafficserver.fuzz_rec_http
 origin: upstream
-summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
+summary: Copies the input (Size from 8 to 1024 bytes) into a string and, after ts_session_protocol_well_known_name_indices_init
+  registers the well-known protocol names, converts it, read as a comma-separated list of ALPN protocol
+  names, to ALPN wire format with convert_alpn_to_wire_format into a 30-byte (MAX_ALPN_STRING) buffer,
+  and drops the result and the buffer. Before those calls it installs a new Diags object with DiagsPtr::set,
+  and it deletes that object after. It returns -1 for an input with Size below 8 or above 1024.
 entry: LLVMFuzzerTestOneInput
 source:
   files:
@@ -12,7 +16,7 @@ source:
     repository: https://github.com/apache/trafficserver
     commit: 97d2831fbd38c8f43b39e3ed996d9bd6e3173384
     path: tests/fuzzing/fuzz_rec_http.cc
-  modified: false
+  modified: true
   licence: NOASSERTION
 library:
   repository: https://github.com/apache/trafficserver
@@ -24,11 +28,14 @@ modifications:
 - In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the program
   depends only on its input.
 - A small driver reads the input file, calls the harness one to four times and prints each return value.
+- 'The harness source is modified: source/fuzz_rec_http.cc is trafficserver 97d2831f''s tests/fuzzing/fuzz_rec_http.cc
+  with one Theorem Labs change: its length check returns -1, not 1, for an input outside its limits (libFuzzer
+  rejects the input; the driver exits 0, not 78).'
 builds:
   plain:
     file: fuzz_rec_http.plain
     bytes: 1697880
-    sha256: d46223cb601ff687039f0c994ad0db84266ca248b826d7adb1df13b3afecca90
+    sha256: 31ae7fde2400065ddc89ce32452f7f1151d42e30800eec4cadf7353e5679e2f9
     segments:
     - 1
     - 1
@@ -62,7 +69,7 @@ builds:
   ubsan:
     file: fuzz_rec_http.ubsan
     bytes: 1768832
-    sha256: 0db340977d1335dc8c2d90b4456309b8e594cf9b256501178117d85e1385d00c
+    sha256: a14661ef3b0dddcf348b7ce97639f7ba3d28df9d40a6c006b6c517e1e435efb8
     segments:
     - 1
     - 1
@@ -96,7 +103,7 @@ builds:
   asan:
     file: fuzz_rec_http.asan
     bytes: 3476568
-    sha256: ab8673337aceb2daec28df1eda8f0ac543bd10ccd1d4c3946365dbad16175235
+    sha256: f22a3c0a8091cc1f20448d377b558d30f8b3e03b3a854a320a3638c9c47ee29a
     segments:
     - 1
     - 1
@@ -133,7 +140,7 @@ builds:
   asan-ubsan:
     file: fuzz_rec_http.asan-ubsan
     bytes: 3525368
-    sha256: 820e09eb4a8c8650a9812590979f6a05512a591023669de7e90fa858433fe0d2
+    sha256: dd0b9874449033279205821d6b580120f33e972420f91b89c41e1069b9ec6e51
     segments:
     - 1
     - 1
@@ -169,6 +176,8 @@ builds:
       sha256: 80167e95a699a1a21d3933967631fe5484817812aeda2cb98a55b652d608f812
 licence: NOASSERTION
 checks: []
+model_gap:
+- process-control
 statements:
   asan_agrees:
     kind: agreement
@@ -178,7 +187,8 @@ statements:
     reading: alloc-forced-only
     budgets: asan
     abort: signal
-    status: open
+    status: model-gap
+    revision: 2
   ubsan_agrees:
     kind: agreement
     builds:
@@ -187,7 +197,8 @@ statements:
     reading: alloc-forced-only
     budgets: standard
     abort: signal
-    status: open
+    status: model-gap
+    revision: 2
   asan_ubsan_agrees:
     kind: agreement
     builds:
@@ -196,7 +207,8 @@ statements:
     reading: alloc-forced-only
     budgets: asan
     abort: signal
-    status: open
+    status: model-gap
+    revision: 2
   plain_halts:
     kind: halts
     builds:
@@ -206,7 +218,8 @@ statements:
     - 0
     - 2
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2
   asan_halts:
     kind: halts
     builds:
@@ -216,7 +229,8 @@ statements:
     - 0
     - 2
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2
   ubsan_halts:
     kind: halts
     builds:
@@ -226,7 +240,8 @@ statements:
     - 0
     - 2
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2
   asan_ubsan_halts:
     kind: halts
     builds:
@@ -236,4 +251,5 @@ statements:
     - 0
     - 2
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up invariant at the run's mmap base, and the launch conjunct passed to the argument lemmas). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -22,7 +23,7 @@ Proof. intros sp0 [V1 [V2 _]]. unfold sp_window_lo, sp_window_hi in V1, V2. lia.
 Definition main_ceil (sp0 : word) (V : valid_sp sp0) : HeapCeil := mkHeapCeil (bv_unsigned sp0 - 8388608) (main_ceil_range sp0 V).
 
 Record mctx : Type := MCTX {
-  k_sp0 : word; k_brk0 : word; k_rdraw : EntryDraw; k_inp : ProcInput;
+  k_sp0 : word; k_brk0 : word; k_mbase : word; k_rdraw : EntryDraw; k_inp : ProcInput;
   k_h : nat; k_ch : acs; k_E : env; k_R : bvmap 5 word; k_FULL : word -> option byte; k_model : Model;
   k_Vsp : valid_sp k_sp0;
   k_Vbrk : valid_brk ASEGS k_brk0;
@@ -31,8 +32,8 @@ Record mctx : Type := MCTX {
   k_Vfit : entry_stack_fits k_sp0 (in_argv k_inp) (in_envp k_inp);
   k_Hh : HSF_asan k_h = Some k_ch;
   k_HC : cs_ok ASEGS ASAN_H BothInit.LIMIT
-           (SINV0 APH k_sp0 k_rdraw k_brk0 (in_argv k_inp) (in_envp k_inp) (in_uid k_inp) (in_hwcap k_inp))
-           (argH0 APH k_sp0 k_rdraw (in_argv k_inp) (in_envp k_inp) (in_uid k_inp) (in_hwcap k_inp)) (in_fs k_inp) k_E k_ch k_R k_FULL k_model }.
+           (SINV0 APH AENTRY k_sp0 k_rdraw k_brk0 k_mbase k_inp)
+           (argH0 k_sp0 k_rdraw k_inp) (in_fs k_inp) k_E k_ch k_R k_FULL k_model }.
 
 Definition KX (k : mctx) : pm_syms := Xof (hole_granted (k_h k)) (k_E k).
 Definition KVM (k : mctx) : word -> option byte := pm_vmem (bv_unsigned (k_sp0 k)) (bv_unsigned (k_brk0 k)) (KX k) (k_FULL k).
@@ -60,11 +61,11 @@ Section Kit.
   Hypothesis K_al : forall k, AMAIN_COST (KH k) P <= as_AL (KH k) (KS0 k).
   Hypothesis K_tr : forall k, adrv_traces (KH k) P.
 
-  Theorem instance_of_kit : as_instance_stmt P_main P.
+  Theorem instance_of_kit : as_instance_stmt P_mainL P.
   Proof.
-    intros sp0 brk0 mbase rdraw inp c PM.
+    intros sp0 brk0 mbase rdraw inp c [PM Vlau].
     destruct (P_main_open sp0 brk0 mbase rdraw inp c PM) as (h & ch & E & R & FULL & model & Vsp & Vbrk & Vav & Vev & Vfit & Hh & HC & Hc & HF & PMx & SOK & LZ & PG & MC & VMEQ).
-    set (k := MCTX sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Vfit Hh HC).
+    set (k := MCTX sp0 brk0 mbase rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Vfit Hh HC).
     destruct (BsMainIfacePre.pre_can sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Hh HC) as [can Hcan].
     exists (KCEIL k), (KH k), (KS0 k), R, (KVM k), (KB k), (ps_tid (KX k)), can.
     split; [exact (K_rt k)|]. split; [exact (K_dl k)|]. split; [exact (K_own k)|]. split; [exact (K_td k)|]. split; [exact (K_live k)|].
@@ -88,7 +89,7 @@ Section Kit.
     -   apply (BsMainIfacePre.pre_sh0 sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Hh HC (KCEIL k) eq_refl).
       pose proof (BsMainIface.pd_facts sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Hh HC) as (PD1 & PD2 & PD3).
       unfold AMLO, ATR_STACK. lia.
-    -   exact (BsMainIfaceArgs.pre_args sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Vfit Hh HC).
+    -   exact (BsMainIfaceArgs.pre_args sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Vfit Hh HC Vlau).
     - exact (BsMainIfacePre.pre_inv sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Vfit Hh HC).
     - exact (BsMainIfacePre.pre_relro sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Vfit Hh HC).
     - exact (BsMainIfacePre.pre_glb sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Vfit Hh HC).
@@ -106,5 +107,6 @@ Section Kit.
     -   exact (K_tr k).
     -   exact (BsMainIfacePre.pre_fds sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Hh HC).
     -   exact (BsMainIfaceDStat.pre_dstat sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Vfit Hh HC).
+    -   exact (co_rdr _ _ _ _ _ _ _ _ _ _ _ HC).
   Qed.
 End Kit.

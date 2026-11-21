@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/CJ/RL/GXA/StrnlenCall.v at 2d2ff01bb6f2; module paths changed (the same text as proofs/plugin-hostd/fuzz_reply/lib/CJ/RL/GXA/StrnlenCall.v at 2d2ff01bb6f2, module paths aside). *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/CJ/RL/GXA/StrnlenCall.v; module paths changed (the same text as proofs/plugin-hostd/fuzz_reply/lib/CJ/RL/GXA/StrnlenCall.v, module paths aside). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.CJ.Lib Require Import PropExec MState Mem Exec Frame Cells Step.

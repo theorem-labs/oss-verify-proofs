@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the writable stack is the launch's 6144513 bytes below sp0). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -48,14 +49,16 @@ Definition tr_sr : list expr :=
 
 Definition tr_kn : list kentry :=
   [KAlign (EVar 0) 16; KRange (EVar 0) 0x7fff80000000 0x800000000000;
-   KWr (SA (EVar 0) (-8388608)) 8388608;
+   (* LPS 727298f3: the writable span the launch maps below sp0, 6144513 bytes
+      ([Drv/U1Cells.stack_writableZ]); the stack does not grow past it *)
+   KWr (SA (EVar 0) (-6144513)) 6144513;
    KImg 0x10000 0xef000; KImg 0x100249 0x1004f0;
    KWr (SA (ELit 0) 0xef000) 0x35000;
    KWord (SA (ELit 0) NEED_LOCKS) 1 (ELit 0); KImg 0x122460 0x122468; KImg AT_BUILTIN 0x122480;
    KWord (SA (ELit 0) AT_SLOT) 4 (ELit 1); KWord (SA (ELit 0) AT_HEAD) 8 (ELit AT_BUILTIN);
    KRange (EVar 2) 0 32767; KRange (EVar 4) 0 67108863;
    KWord (SA (EVar 1) 0) 1 (EVar 5); KRange (EVar 5) 0 255; KRange (EVar 1) 0x124000 0x7fffff800000;
-   KDisj (SA (EVar 1) 0) 1 (SA (EVar 0) (-8388608)) 8388608].
+   KDisj (SA (EVar 1) 0) 1 (SA (EVar 0) (-6144513)) 6144513].
 
 Definition runI := sym_exec RSEGS 3000 true tr_stops (SCR [] [] []) (SS TR_ENTRY tr_sr [] tr_kn 40) [].
 Definition ssI := Eval vm_compute in fst (fst runI).

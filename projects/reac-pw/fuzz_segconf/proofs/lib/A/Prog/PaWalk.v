@@ -2,7 +2,6 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/ACkc.v and lib/A/ACja.v, the
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/Prog/PaWalk.v (origin/ossv/recipes 501c0d516c69) for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths; csym -> ssym; the listing modules Cmd* -> Seg*. *)
    walk-tactic kit of cgif's ASan program walks, over fuzz_command's listing: module paths, csym; the image-class
    section is over any listing (PAImg L) instead of cgif's. One copy of each name ACkc.v and ACja.v both define;
    evalE is ACja.v's (ACj1.v's) final form. Also copied: boxed, box and unbox from lib/A/ACj1.v, relowF from
@@ -20,6 +19,8 @@
    upd_aboveW_init takes the segment list from the world's type, where ACja.v let typeclass search find pa_segs;
    add_atom's st_ok arm uses st_ok_havoc_hi (new here), where ACja.v used the st_ok_pi lemma, which does not apply
    to an st_ok hypothesis. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/Prog/PaWalk.v for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths; csym -> ssym; the listing modules Cmd* -> Seg*. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

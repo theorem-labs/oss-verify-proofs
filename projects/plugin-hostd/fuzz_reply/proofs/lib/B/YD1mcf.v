@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD1m.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-10: made from lib/B/YD1m.v (tfib_lib_site_x) for the cf driver of image B, as
-   lib/A/AD1mcf.v (a working branch 46f1762ad5a) was made from lib/A/AD1m.v; A's text with image B's modules
+   lib/A/AD1mcf.v (a working branch) was made from lib/A/AD1m.v; A's text with image B's modules
    and names (lib/B's W8 files, YCfn / YCfn_cf's _b names, YE01 / YE2k from lib/B, YCeg, YD2f, YD1ucf, YD1w_cf,
    ReplyGuardB).  The call site lib_site_cf is derived from the cf program interface fr_lib_contract_drv
    (B/YD1w_cf.v).  Changes against the donor: every allocator predicate is over ARcf at Hp = []; the event room is
@@ -15,7 +15,8 @@
    count's step NS S' <= NS S + XNMAX (NS_MO, XN_BND).  The room is asked for THIS call only (not `NS S <= NRUN`): at
    MT_sec, mo_ok MT S (XM_LIB n) is nsec S + XM_LIB n <= KMAX, so `NS S <= NRUN` would force NRUN + XM_LIB n <= KMAX
    on top of NS_START's NRUN >= 12 + 4 * XNMAX, i.e. 5 * SEC_CALL + 12 <= cf_kmax, false at reply's 2 ^ 23 (a Theorem Labs lane's
-   measurement; a Theorem Labs lane's ruling 2026-10-30 15:16Z; A's 1d79995f144). *)
+   measurement; a Theorem Labs lane's ruling 2026-10-30 15:16Z; A). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -55,7 +56,7 @@ Definition CF_LIB_FR : Z := 2 ^ 33.
 Definition LIBROOM_fr {cp : CfParams} (S : astate) : Prop := LIB_ROOM abudget_cf CF_LIB_FR S.
 
 (* preset's lib_room_of_wf (PresetCfnA.v): the room holds before every call from the state invariant and, since field
-   round 3, the call's hull admission cf_hull_ok (Reusable/YG08cf.v:312 abudget_room_cf). *)
+   round 3, the call's hull admission cf_hull_ok (Reusable/YG08cf.v:313 abudget_room_cf). *)
 Lemma lib_room_fr_of_wf : forall (cp : CfParams) U pp cc bb s, @WfP_cf cp U pp cc bb s -> qloose s ->
   @cf_hull_ok cp s -> @LIBROOM_fr cp s.
 Proof.

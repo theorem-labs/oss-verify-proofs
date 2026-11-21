@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -49,7 +50,7 @@ Notation g_FS G := (fs_size (g_ffk G)).
 
 Record gctx_ok (G : gctx) : Prop := mkGok {
   go_q : g_q G mod 32 = 0 /\ 0 <= g_fsz G /\ g_usp G + 16 <= USTACK_TOP /\ g_lo G + 12800 + RT_STACK <= g_q G;
-  go_lo : 0x7fff7f800000 <= g_lo G /\ g_sp0 G - STACK_WIN <= g_lo G;
+  go_lo : 0x7fff7f800000 <= g_lo G /\ g_sp0 G - STACK_SPAN <= g_lo G;
   go_sp0 : SEGTOP_A + STACK_WIN <= g_sp0 G <= USTACK_TOP /\ 0x7fff80000000 <= g_sp0 G;
   go_F : 0 < g_F G /\ g_F G mod 64 = 0 /\ SEGTOP_A <= g_F G /\ g_F G + 512 <= g_lo G /\ In (g_F G, 3%nat) (g_rfr G)
          /\ (g_F G + 512 <= shad (g_F G) \/ shad (g_F G) + 64 <= g_F G) /\ shad (g_F G) + 65 <= g_lo G
@@ -246,7 +247,7 @@ Lemma fs_size_nonneg : forall k, 0 <= fs_size k.
     destruct GOK as [(Q32 & FS0 & QT & LQ) (LO1 & LO2) (SP1 & SP2) (E0 & E64 & ESEG & ELO & EIN & ESH & ESHL & EHI) (F0 & F64 & FSEG & FLO & FSR & FHI & SHLO & SHAP) FFR FFL RFR LL].
     assert (AG : forall P : Z -> Prop, (forall x, P x -> ~ (g_lo G <= x < g_q G)) -> agree_on P m m').
     { intros P HP a Ha. apply MU. destruct (HW (bv_unsigned a)) as [X|X]; [exact X| exfalso; exact (HP _ Ha X)]. }
-    split. { apply (art_client_write RT AF Σ m m' (g_lo G) HA); [rewrite SP0; exact LO2| | exact WM].
+    split. { apply (art_client_write RT AF Σ m m' (g_lo G) HA); [rewrite SP0; clear - LO2; ul| | exact WM].
              intros a Ha. apply MU. destruct (HW (bv_unsigned a)) as [X|X]; [exact X|]. exfalso. apply Ha. left. clear - X QT FS0. ul. }
     split; [exact MI'|]. split; [exact FRS|]. split; [exact LV|]. split; [exact SP0|]. split; [exact CR|]. split; [exact ST'|].
     split. { exists fill. split; [| exact FOK]. apply (OSXW_agree m m' _ _ _ _ OX); [| exact WM]. apply AG. intros x Hx. clear - Hx ELO. lia. }
@@ -319,7 +320,7 @@ Lemma fs_size_nonneg : forall k, 0 <= fs_size k.
     pose proof GI as (HA & MI & FRS & LV & SP0 & CR & ST & _ & _ & _ & _ & _ & _ & _ & REL). pose proof GE as (OK & _ & _ & _ & _ & _ & INS & _).
     destruct GOK as [(Q32 & FS0 & QT & LQ) (LO1 & LO2) _ _ _ _ _ _ _].
     assert (HA' : ART RT Σ m').
-    { apply (art_client_write RT AF Σ m m' (g_lo G) HA); [rewrite SP0; exact LO2| | exact WM].
+    { apply (art_client_write RT AF Σ m m' (g_lo G) HA); [rewrite SP0; clear - LO2; ul| | exact WM].
       intros a Ha. apply MU. destruct (HW (bv_unsigned a)) as [X|[X|X]]; [exact X| |]; exfalso; apply Ha; rewrite FRS, LV.
       - apply (aclient_mono _ _ _ _ _ _ _ (own_aclient _ X)); [auto| auto| clear - LQ; ul].
       - left. clear - X QT FS0. ul. }
@@ -367,7 +368,7 @@ Lemma fs_size_nonneg : forall k, 0 <= fs_size k.
 
   Lemma GINVA_callctx : forall FL W FP fcs k Σ m, GINVA G FL W FP fcs k Σ m ->
     In (g_F G, 3%nat) (rt_frames RT Σ) /\ g_F G <= g_OS G /\ g_OS G + 288 <= g_F G + fs_size 3 - 8 /\ g_OS G mod 16 = 0
-    /\ os_hullA m (g_OS G) /\ rt_sp0 RT Σ - STACK_WIN <= g_lo G /\ g_q G + 16 <= USTACK_TOP /\ g_q G mod 16 = 0 /\ g_q G mod 32 = 0
+    /\ os_hullA m (g_OS G) /\ rt_sp0 RT Σ - STACK_SPAN <= g_lo G /\ g_q G + 16 <= USTACK_TOP /\ g_q G mod 16 = 0 /\ g_q G mod 32 = 0
     /\ Z.of_nat (length (rt_frames RT Σ)) = Z.of_nat (length (g_rfr G)) + 1.
   Proof using AF GOK.
     intros FL W FP fcs k Σ m (HA & MI & FRS & LV & SP0 & CR & ST & (fill & OX & FOK) & SHO & TPL & LB & (FR & FSZ) & WF1 & WF2 & REL).
@@ -559,7 +560,7 @@ Definition KLOOPA (D : dctx) (K : config -> Prop) (j c : Z) : Prop :=
 Lemma gctx_ok_intro : forall G Σ m,
   ART RT Σ m -> rt_frames RT Σ = g_fr G -> rt_live RT Σ = g_L G -> rt_sp0 RT Σ = g_sp0 G ->
   g_q G mod 32 = 0 -> 0 <= g_fsz G -> g_usp G + 16 <= USTACK_TOP -> g_lo G + 12800 + RT_STACK <= g_q G ->
-  0x7fff7f800000 <= g_lo G -> g_sp0 G - STACK_WIN <= g_lo G ->
+  0x7fff7f800000 <= g_lo G -> g_sp0 G - STACK_SPAN <= g_lo G ->
   In (g_F G, 3%nat) (g_rfr G) -> (g_ffk G = 0%nat \/ g_ffk G = 1%nat) ->
   gctx_ok G.
 Proof using AF.

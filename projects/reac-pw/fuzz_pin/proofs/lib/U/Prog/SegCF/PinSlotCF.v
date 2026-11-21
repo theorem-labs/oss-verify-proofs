@@ -1,6 +1,6 @@
 (* The cut-free (agreement) slot of reac-pw/fuzz_pin LLVMFuzzerTestOneInput (UBSan build): lib/U/Prog/PinSlot.v
    copied over U/Prog/SlotInvCF.v, as libreac/fuzz_ctrl's released U/Prog/SegCF/Slot.v copies its
-   U/Prog/Seg/Slot.v (origin/ossv/recipes 25e3d17bdb50): the same text with SlotInv -> SlotInvCF, Seg -> SegCF, the
+   U/Prog/Seg/Slot.v: the same text with SlotInv -> SlotInvCF, Seg -> SegCF, the
    segment statements from SegCF/StmtsCF.v, frame_facts_ubsan -> SlotInvCF.frame_facts_cf; slot_lib proves
    lib_contract_cg (crealizes B, by SR_realizes_ms) for lib_contract_g; Section Link (ubsan_halts) is dropped.
    - the n >= 2^26 run (early_evt): 0x12cbc `addi sp,sp,-80`, the seven saves ra, s0 .. s5 (0x12cc0 .. 0x12cd8),

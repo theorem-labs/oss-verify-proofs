@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the nodes check the read-only backing). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -13,7 +14,7 @@ From OSSVerify.Proofs.openssl.hashtable.lib Require Import
   SimInv ExitSim PropExec CatExec CatSim SeqExec StreamExec MmapSim AllocSim FileSim
   ShapeAlg SpinAlg Nodes StoreOk AgentLib AgentNodes RefNodesC
   AsanAcct AsanAcctShape AsanPlacement BackingAlgebra AsanNodesLibE.
-From OSSVerify.Proofs.openssl.hashtable.lib.Common.Cfg Require Import ShapeAlgBase ShapeCfg NodesCfg.
+From OSSVerify.Proofs.openssl.hashtable.lib.Common.Cfg Require Import ShapeAlgBase ShapeCfg NodesCfg RomBase.
 From OSSVerify.Proofs.openssl.hashtable.lib Require Import CxRel CxNodesLibE.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
@@ -114,6 +115,7 @@ Proof.
   - intros _. cbn [cfg_ms]. rewrite ms_gpr0_apply_effect, (refusal_b_enomem_arm _ _ _ Hsys). cbn [effs]. unfold fixedin_ok_eff.
     destruct (Z.eqb prot 0); cbn [eff_ret]; apply not_enomem_page_aligned; exact Hal.
   - intros [| |]; [right | left; exists tt; reflexivity | right]; cbn [cfg_ms]; rewrite ms_gpr0_apply_effect, (refusal_b_enomem_arm _ _ _ Hsys); cbn [effs eff_ret]; apply bv_eqb_refl.
+  - apply (sys_rob_memfree segs ms model (getr regs 17) eq_refl). rewrite Hno. exact memfree_222.
   - intros _. cbn [effs ms']. unfold ms, fixedin_ok_eff. destruct (Z.eqb prot 0).
     + rewrite adv_unmaps1_epend. exact HB.
     + rewrite adv_zeros1_epend. exact HB.

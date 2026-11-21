@@ -1,5 +1,5 @@
 (* fuzz_preset image B' (asan-ubsan, #102), parse_value 0x8637c (a Theorem Labs lane's walk): the ROOM part of the walk's cuts in the
-   post-implication form of the #102 reading texts (kit f97c8b2f046b: lib/A/PRH_FnParse.v tparse_value_specX,
+   post-implication form of the #102 reading texts (kit: lib/A/PRH_FnParse.v tparse_value_specX,
    PRH_FnReader.v tparse_string_specX, PRH_FnAlloc.v tfuzz_malloc_specX). A text's post states, over its own trace's
    model events evs, (1) the room's live list moves as the events say,
    `Permutation (rs_live (room_of_cf S')) (hlive_from (rs_live (room_of_cf S)) evs)`, and (2) the run position moves by

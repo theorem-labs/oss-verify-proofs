@@ -1,0 +1,3 @@
+claims: toy/exit0/plain_halts
+refused_at: wrapper
+because: while it is expected to have type

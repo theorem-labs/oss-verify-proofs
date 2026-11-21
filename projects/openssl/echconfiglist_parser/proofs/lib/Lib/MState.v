@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a failed load that meets the vvar page answers MachineUnmodeled, not MachineFault). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -44,7 +45,7 @@ Fixpoint interp_eff0 (t : eff) (m : word -> option byte)
   | ELoad n a k =>
       match ov_read_bytes segs m a (width_bytes n) with
       | Some bs => interp_eff0 (k (bv_extract 0 n (le_bytes_to_word bs))) m
-      | None => MachineFault
+      | None => if range_meets_vvar segs a (width_bytes n) then MachineUnmodeled else MachineFault
       end
   | EStore n a v k =>
       if store_ok segs m a (width_bytes n)
@@ -55,7 +56,7 @@ Fixpoint interp_eff0 (t : eff) (m : word -> option byte)
 Lemma interp_eff0_ok : forall t m, interp_eff segs t m = interp_eff0 t m.
 Proof.
   unfold interp_eff. induction t as [c|c|c|c|c|c|n a k IH|n a v k IH]; intros m; cbn; try reflexivity.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|reflexivity].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|destruct (range_meets_vvar segs a (width_bytes n)); reflexivity].
     rewrite <- IH. destruct (interp_eff_accesses segs _ m) as [[? ?]| |]; reflexivity.
   - destruct (store_ok segs m a (width_bytes n)); [|reflexivity].
     rewrite <- IH. destruct (interp_eff_accesses segs k _) as [[? ?]| |]; reflexivity.

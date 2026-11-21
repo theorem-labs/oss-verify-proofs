@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (KL_vm_same takes the vDSO unchanged, which RHKG_mo gets from nstep_vdso). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -141,10 +142,10 @@ Qed.
 
 (* [comment removed for export] *)
 Lemma KL_vm_same : forall L pbrk mo mo',
-  KL L pbrk mo -> minv mo' -> m_halted mo' = None -> m_vmmaps mo' = m_vmmaps mo ->
+  KL L pbrk mo -> minv mo' -> m_halted mo' = None -> m_vmmaps mo' = m_vmmaps mo -> vdso_of mo' = vdso_of mo ->
   (m_vm_materialized mo = [] -> m_vm_materialized mo' = []) -> KL L pbrk mo'.
 Proof.
-  intros L pbrk mo mo' H Hmi Hh E HM. destruct H. constructor; rewrite ?E; auto.
+  intros L pbrk mo mo' H Hmi Hh E Hvd HM. destruct H. constructor; rewrite ?Hvd, ?E; auto.
 Qed.
 
 Lemma RHKG_mo : forall s LB m mo n rsp mo' evs,
@@ -153,6 +154,7 @@ Lemma RHKG_mo : forall s LB m mo n rsp mo' evs,
 Proof.
   intros s LB m mo n rsp mo' evs (HR & [(L & HS & HKL) _] & HH) LF Hst VM HG. split; [exact HR|].
   destruct (minv_preserved n mo rsp mo' evs LF (kl_minv _ _ _ HKL) (kl_halt _ _ _ HKL) Hst) as [Hh' Hmi'].
+  pose proof (nstep_vdso _ _ _ _ _ Hst) as Hvd.
   split.
   - split; [| exact HG]. exists L. split; [exact HS|]. eapply KL_vm_same; eauto. exact (nstep_mat_shape _ _ _ _ _ Hst).
   - eapply HEADc_after_node; [exact HH | reflexivity | reflexivity | exact LF | exact Hst | exact VM].

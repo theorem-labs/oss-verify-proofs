@@ -4,7 +4,7 @@
    statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: made for reac-pw/fuzz_pin image A from
    proofs/libreac/fuzz_identity/lib/A/Rt/StrlenDef.v (astrlen_realizes, the premise and post shape) and
-   lib/Reusable/YG0d.v abcmp_realizes at origin/ossv/recipes 6ebe35ba632: the two wrappers reac_box_pin_parse
+   lib/Reusable/YG0d.v abcmp_realizes: the two wrappers reac_box_pin_parse
    calls, strcspn and strncmp, are STATED here in that shape so that the
    P4b wrapper provers prove exactly these texts. The result specifications are pin's own plain ones:
    cspn_len is restated from proofs/reac-pw/fuzz_pin/lib/Prog/strcspn_c.v:12-16 (that file Requires the plain
@@ -45,12 +45,13 @@
               0x99cd8 = 0x5f45d8, the flags pointer 0x99040 = 0x133128;
      image B: REAL(strcspn) 0x9ae90 = 0x91970, REAL(strncmp) 0x9ae80 = 0x91b8c, the stack-guard GOT cell
               0x99df8 = 0x5f46d8, the flags pointer 0x99160 = 0x133228. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_pin/lib/A/PPgWrap.v at 90722657971 (the same text at
-   ee62985a892, the one lib/A/HPgCSpec.v and lib/A/HPgCallsStr.v cite) for reac-pw/fuzz_headamp; module paths changed;
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_pin/lib/A/PPgWrap.v (the same text,
+   the one lib/A/HPgCSpec.v and lib/A/HPgCallsStr.v cite) for reac-pw/fuzz_headamp; module paths changed;
    only the strncmp half is kept (awrap_str, awrap_post, astrncmp_realizes, word for word): headamp calls no strcspn,
    so cspn_len and astrcspn_realizes are left out, and aro_unowned_of_arodataP is left out because this unit's
    lib/A/Rt/WrapRo.v states the same lemma (aro_unowned_of_arodata) over lib/A/HPgBase.v's arodata_okP; no numeral
    of the text moves (the comment above is pin's, verbatim, and names fuzz_pin's addresses). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp, both ASan images (fuzz_headamp.asan f3e0669d2819, fuzz_headamp.asan-ubsan 53edda9bdeeb;
    addresses measured on the unstripped twins b5f352154c54 / 1674e30a0698, whose loaded bytes are the pins'):
    __interceptor_trampoline_strncmp 0x41ba4 / 0x41c24 -> ___interceptor_strncmp 0x4268c / 0x4270c (4-byte `j`),

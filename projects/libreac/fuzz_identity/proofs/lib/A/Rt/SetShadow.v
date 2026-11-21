@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the shadow-fill entries __asan_set_shadow_00 (0x54718) and __asan_set_shadow_f5 (0x54820) of libreac/fuzz_identity, over the asan-state definitions and the musl memset walk of the cgif_file_fuzzer proof as libreac/fuzz_identity holds them; one image instead of the two-image selector; addresses; module names; tfxsegs and TfxSyms become tfibsegs and TfibSyms. *)
-(* Modified by Theorem Labs, 2026-10: moved from libreac/fuzz_grant (a Theorem Labs lane a1ee3c81405) to libreac/fuzz_identity: hex addresses for fuzz_identity.asan, record name TfibSyms (original; identity runs the release with no --rename, a Theorem Labs lane, 10-29), code table StackMallocTbl. *)
+(* Modified by Theorem Labs, 2026-10: moved from libreac/fuzz_grant (a Theorem Labs lane) to libreac/fuzz_identity: hex addresses for fuzz_identity.asan, record name TfibSyms (original; identity runs the release with no --rename, a Theorem Labs lane, 10-29), code table StackMallocTbl. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

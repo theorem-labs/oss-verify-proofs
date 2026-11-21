@@ -4,7 +4,8 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/ACfn.v, with its module paths changed, its addresses moved to libreac/fuzz_grant's ASan build and A_LLVMF set to fuzz_grant's LLVMFuzzerTestOneInput. *)
 (* Modified by Theorem Labs, 2026-10: added the slot with the float state at return left open (tfib_lib_contract_xP), cgif's exists-fx' form of it (tfib_lib_contract_xf, lib/YL0g.v:58-64) and the two lemmas that carry tfib_lib_contract_x and tfib_lib_contract_xf into it. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/ACfn.v (donor image sha256 c2c7559b29bd), with its module paths changed and its addresses moved to reac-pw/fuzz_role's ASan build. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/reac-pw/fuzz_role/lib/A/ACfn.v at 9f8c843f0e03 (image sha256 614cffc0864c), with its module paths changed and its addresses moved to reac-pw/fuzz_headamp's ASan build (image sha256 f3e0669d2819) by alreloc a5c53bb2bed4; comments kept as the source has them. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/reac-pw/fuzz_role/lib/A/ACfn.v (image sha256 614cffc0864c), with its module paths changed and its addresses moved to reac-pw/fuzz_headamp's ASan build (image sha256 f3e0669d2819) by alreloc a5c53bb2bed4; comments kept as the source has them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

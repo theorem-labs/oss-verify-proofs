@@ -2,11 +2,11 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD1o.v (origin/ossv/recipes c8557374ad2e), with its module paths changed, names TfibSyms -> PcapSyms and its addresses moved to libreac/fuzz_pcap's asan-ubsan build (pinned image fuzz_pcap.asan-ubsan sha256 9e66f771f22a, symbols from its unstripped twin fuzz_pcap.asan-ubsan sha256 c969d83cdd59). It is the asan-ubsan twin of a Theorem Labs lane's lib/A/AD1o.v (a working branch 9700d736a50; commit e67f93b9229), every hunk mirrored: relocation (__stdout_FILE 0x9ddc0, the stdout buffer buf + 8 = 0x5f4ea0 = __stdout_FILE's buf pointer), the image-end class (in_ro_tfa's read-only window branch unfolded; pcap_img_end), the dropped Require of cgif's YE2k, and a Theorem Labs lane's ONE ADAPTED STATEMENT, restated with the asan-ubsan values:
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD1o.v (theorem-labs/oss-verify-proofs@6b32741d849a), with its module paths changed, names TfibSyms -> PcapSyms and its addresses moved to libreac/fuzz_pcap's asan-ubsan build (pinned image fuzz_pcap.asan-ubsan sha256 9e66f771f22a, symbols from its unstripped twin fuzz_pcap.asan-ubsan sha256 c969d83cdd59). It is the asan-ubsan twin of a Theorem Labs lane's lib/A/AD1o.v (a working branch), every hunk mirrored: relocation (__stdout_FILE 0x9ddc0, the stdout buffer buf + 8 = 0x5f4ea0 = __stdout_FILE's buf pointer), the image-end class (in_ro_tfa's read-only window branch unfolded; pcap_img_end), the dropped Require of cgif's YE2k, and a Theorem Labs lane's ONE ADAPTED STATEMENT, restated with the asan-ubsan values:
    ADAPTED (the bss zero-shadow row, donor YD1o.v:81-102): cgif's .bss holds no instrumented global, so its whole
    bss -- from the end of asan_globals to the image end -- is ONE zero-shadow row, and bss_zero_shadow states it
    from there. fuzz_pcap's .bss holds two instrumented harness globals, g_file_len (0x5d3e40) and g_file
-   (0x5d3e60), each with a 0x18 redzone. So a Theorem Labs lane's generated Tfib_zero_shadow (Reusable/YF0m.v:347) splits that
+   (0x5d3e60), each with a 0x18 redzone. So a Theorem Labs lane's generated Tfib_zero_shadow (Reusable/YF0m.v:348) splits that
    range into (0x9e0d0, 0x5d3e48 - 0x9e0d0), (0x5d3e60, 8) and (0x5d3e80, IMG_TOP - 0x5d3e80); no row reaches
    from 0x9e0d0 to the image end. bss_zero_shadow / bss_shadow_facts are restated over the LAST row,
    [0x5d3e80, pcap_img_end), with the donor's 0x20 margin (p >= 0x5d3ea0). The proof is the donor's, with that
@@ -14,6 +14,7 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    763856, (6254592 - 6110848) / 8 = 17968. Their only use, printf_site's stdout-buffer goals, needs
    [STDOUT_BUFA, STDOUT_BUFA + 1024) = [0x5f4ea0, 0x5f52a0), which lies inside that row. (a Theorem Labs lane's asan row is
    [0x5d3f80, pcap_img_end).) *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel reader that fdchan asks for at LPS 727298f3 carried beside the descriptor fact, from cs_ok's co_rdr). *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -113,8 +114,15 @@ replace s with (shadow_of_addr SHADOW_OFF (symaddr Symbols.AsanUbsan.s__ZN9libun
 rewrite (HZ (s - shadow_of_addr SHADOW_OFF (symaddr Symbols.AsanUbsan.s__ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE))); [discriminate|].
 unfold shadow_of_addr, SHADOW_OFF, pcap_img_end, YImgTop.IMG_TOP in *. change ((symaddr Symbols.AsanUbsan.s__ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE) / 8) with (ltac:(let v := eval vm_compute in ((symaddr Symbols.AsanUbsan.s__ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE) / 8) in exact v)). change (((symaddr ImgPages.AsanUbsan.top) - (symaddr Symbols.AsanUbsan.s__ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE)) / 8) with (ltac:(let v := eval vm_compute in (((symaddr ImgPages.AsanUbsan.top) - (symaddr Symbols.AsanUbsan.s__ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE)) / 8) in exact v)). lia.
 Qed.
-Lemma fdchan_stdout : forall md, (forall k, fd_lookup (m_fds md) k = fd_lookup APSG.fds_std k) -> fdchan (Z_to_bv 64 1) ch_stdout md.
-Proof. intros md Hf. unfold fdchan. rewrite (Hf (Z_to_bv 64 1)). split; [vm_compute; reflexivity | reflexivity]. Qed.
+(* [fdchan] has three conjuncts at LPS 727298f3: the descriptor, the channel's [w_is0]
+   gate and the model's channel reader.  The fds premise cannot give the third, so the
+   lemma takes it; the driver discharges it from the hand-off ([cs_ok]'s [co_rdr]). *)
+Lemma fdchan_stdout : forall md, (forall k, fd_lookup (m_fds md) k = fd_lookup APSG.fds_std k) ->
+m_channel_reader md = true -> fdchan (Z_to_bv 64 1) ch_stdout md.
+Proof.
+intros md Hf Hcr. unfold fdchan. rewrite (Hf (Z_to_bv 64 1)).
+split; [vm_compute; reflexivity | split; [reflexivity | exact Hcr]].
+Qed.
 Lemma printf_pre_facts : forall ly S W regs mem md, printf_pre B ly S W regs mem md ->
 ecall_pre tfibsegs B ly S W regs mem md /\
 sp_window_lo - 2400 <= spZ regs /\ spZ regs + 32 <= 2 ^ 47 /\ ly_stk_lo ly + VPI_STK <= spZ regs /\ spZ regs mod 16 = 0 /\ YK0s.ret_ok (getr regs 1) /\
@@ -198,11 +206,12 @@ xst k' (w_H W) mem2 ->
 AI tfibsegs (w_H W) (w_A W) md2 ->
 srealizes tfibsegs (cfg_at tfibsegs (raZ regs1) regs2 mem2 md2) T) ->
 srealizes tfibsegs (cfg_at tfibsegs A_vfprintf regs1 mem1 md1) TT),
-printf_pre B ly S W regs mem md -> (forall k, fd_lookup (m_fds md) k = fd_lookup APSG.fds_std k) -> AI tfibsegs (w_H W) (w_A W) md ->
+printf_pre B ly S W regs mem md -> (forall k, fd_lookup (m_fds md) k = fd_lookup APSG.fds_std k) ->
+m_channel_reader md = true -> AI tfibsegs (w_H W) (w_A W) md ->
 printf_post B xst ly S W regs mem md k' T ->
 srealizes tfibsegs (cfg_at tfibsegs A_icpt_vprintf regs mem md) TT.
 Proof.
-intros ly S W regs mem md T k' TT REAL HPRE Hfds HAI HPOST.
+intros ly S W regs mem md T k' TT REAL HPRE Hfds Hcr HAI HPOST.
 pose proof (printf_pre_facts ly S W regs mem md HPRE) as (HEPRE & Hsp44 & Hsphi & Hstk & Hal & Hret & Hra & Hpres & HRO & G10 & G11 & Harg).
 pose proof (proj1 HEPRE) as HAR. pose proof asan_consts as (C1 & C2 & C3 & C4 & C5). unfold sp_window_lo in Hsp44.
 assert (HPF : PF_STK = 9216) by reflexivity. assert (HVP : VPI_STK = 9200) by reflexivity. assert (HVF : VF_STK = 9104) by reflexivity.
@@ -229,7 +238,7 @@ intros x Hx. apply MEQ1. unfold IMG_RO_LO, IMG_RO_HI, VP_WIN in *. lia.
 - exact (proj2 (bss_shadow_facts ly S W mem1 md1 STDOUT_BUFA STDOUT_BSZ HAR1 ltac:(lia) ltac:(unfold pcap_img_end, YImgTop.IMG_TOP; lia) ltac:(lia))).
 - exact (proj1 (rodata_shadow_facts B HB LAWS ly S W mem1 md1 FMT_d 4 HAR1 ltac:(unfold FMT_d; lia) ltac:(unfold FMT_d; lia) ltac:(lia))).
 - exact (proj2 (rodata_shadow_facts B HB LAWS ly S W mem1 md1 FMT_d 4 HAR1 ltac:(unfold FMT_d; lia) ltac:(unfold FMT_d; lia) ltac:(lia))).
-- eapply fdchan_sbm; [exact (fdchan_stdout md Hfds) | exact MF1].
+- eapply fdchan_sbm; [exact (fdchan_stdout md Hfds Hcr) | exact MF1].
 - exact HAI1.
 - exact AV1.
 -
@@ -258,11 +267,11 @@ apply (same_but_materialized_frame md2 _ Hsbm3).
 Qed.
 Theorem tfib_printf_first : printf_first_tfa B xst.
 Proof.
-intros ly S W regs mem md T HPRE Hnev Himg Hfds HAI HPOST.
+intros ly S W regs mem md T HPRE Hnev Himg Hfds Hcr HAI HPOST.
 assert (HFO : F_STDOUT = (symaddr Symbols.AsanUbsan.s___stdout_FILE)) by reflexivity. assert (HFS : FILE_SZ = 232) by reflexivity.
 assert (HBA : STDOUT_BUFA = (symaddr (Symbols.AsanUbsan.Sec.s_bss + 5598624)%Z)) by reflexivity. assert (HBS : STDOUT_BSZ = 1024) by reflexivity. assert (HVW : VP_WIN = 2432) by reflexivity.
 assert (LN : line0 = map (Z_to_bv 8) [48; 10]) by (vm_compute; reflexivity). rewrite LN.
-refine (printf_site ly S W regs mem md T 1%nat _ _ HPRE Hfds HAI HPOST).
+refine (printf_site ly S W regs mem md T 1%nat _ _ HPRE Hfds Hcr HAI HPOST).
 intros regs1 mem1 md1 HPRE1 R1sp Q10 Q11 Q12 Hband Harg Hown Hgot Hro Hra_b Hhull_b Hra_f Hhull_f Hch HAI1 AV1 HK.
 pose proof (printf_pre_facts ly S W regs mem md HPRE) as (_ & Hsp44 & Hsphi & Hstk & Hal & _).
 destruct (canary_readable (w_H W) mem1) as (cval & Hcan & Hcv).
@@ -294,10 +303,10 @@ replace (STDOUT_BUFA + 2 * (Z.of_nat 1 - 1)) with STDOUT_BUFA by lia. exact HMID
 Qed.
 Theorem tfib_printf_next : printf_next_tfa B xst.
 Proof.
-intros ly S W regs mem md T k HPRE Hnev (Hk1 & Hkb & HMID & HPEND) Hk Hfds HAI HPOST.
+intros ly S W regs mem md T k HPRE Hnev (Hk1 & Hkb & HMID & HPEND) Hk Hfds Hcr HAI HPOST.
 assert (HFO : F_STDOUT = (symaddr Symbols.AsanUbsan.s___stdout_FILE)) by reflexivity. assert (HFS : FILE_SZ = 232) by reflexivity.
 assert (HBA : STDOUT_BUFA = (symaddr (Symbols.AsanUbsan.Sec.s_bss + 5598624)%Z)) by reflexivity. assert (HBS : STDOUT_BSZ = 1024) by reflexivity. assert (HVW : VP_WIN = 2432) by reflexivity.
-refine (printf_site ly S W regs mem md T (Datatypes.S k) T _ HPRE Hfds HAI HPOST).
+refine (printf_site ly S W regs mem md T (Datatypes.S k) T _ HPRE Hfds Hcr HAI HPOST).
 intros regs1 mem1 md1 HPRE1 R1sp Q10 Q11 Q12 Hband Harg Hown Hgot Hro Hra_b Hhull_b Hra_f Hhull_f Hch HAI1 AV1 HK.
 pose proof (printf_pre_facts ly S W regs mem md HPRE) as (_ & Hsp44 & Hsphi & Hstk & Hal & _).
 destruct (canary_readable (w_H W) mem1) as (cval & Hcan & Hcv).

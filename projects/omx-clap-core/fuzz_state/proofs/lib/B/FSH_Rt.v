@@ -105,7 +105,7 @@ Definition cstr_kept (ly : alayout) (S : astate) (U : list (Z * Z)) (p : Z) (l :
    pc_wrap_free / pc_stack_malloc cid of as_code B. Their fields pin that pc to PC_* (first conjunct) beside the contract
    (second conjunct), so a walk at a measured `jal PC_*` rewrites its pc and applies the contract.
    lib/A/FSH_Fn_entry.v's FsEntryRt states the entry's OWN runtime use at the as_code B pcs, and fs_entry_goal takes
-   it instead of this whole record (a Theorem Labs lane 25c141b8cb6): fe_malloc, fe_free and fe_stack_malloc_0 are exactly the
+   it instead of this whole record (a Theorem Labs lane): fe_malloc, fe_free and fe_stack_malloc_0 are exactly the
    second conjuncts of fr_malloc, fr_free and fr_stack_malloc_0; fe_memchr is fr_memchr; fe_memcpy (at
    pc_asan_memcpy (as_code B)) is fr_memcpy once pc_asan_memcpy (as_code B) = PC_memcpy, which the final asyms of this
    build gives by computation. A callee's closing theorem adds its own runtime premise when it is composed in. *)

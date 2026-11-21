@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Theorem Labs, 2026-10: COPY of lib/A/Prog/PRW_HShadow.v at origin/cold/h-hpreset-7-walk-S7B 7819c4b4583 (blob
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10: COPY of lib/A/Prog/PRW_HShadow.v (blob
    2662d68ca36b), image-generic, with ONE removal for image B': its (2) ARx_img_shadow_vis, stated over YImgTop's image-A
    bounds, is dropped (the B' walk states the image-shadow fact over the instance's pa_lo / pa_hi, PutStringB_Base.v
    HIMGSH, whose discharge at ARx := ARcf is h-mani-a8's YGcfAmx2.img_shadow_vis_cf (ci := CfImgB.CfImg_B), the form
-   of FuzzStrdupB at origin/cold/c-omx-alloc-strdup102 e8c226ad89c3). The #102 base origin/cold/h-rw-pre-4-int102
+   of FuzzStrdupB). The #102 base origin/cold/h-rw-pre-4-int102
    lacks the file. *)
 (* fuzz_preset, program part: generic twins of a Theorem Labs lane's cf laws not yet in YCbqG / AR_laws_x; to be adopted by a Theorem Labs lane, then this
    file is deleted. GENERIC in the allocator relation ARx. Definitions only; no proof. The texts take ARx as a Section

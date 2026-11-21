@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: restates text of proofs/libreac/fuzz_identity/lib/A/Prog/LLVMFuzzerTestOneInput_Klib.v:146-200
-   (aj_strlen_at) at origin/ossv/recipes f26f9fbd8777 [Apache-2.0]; proofs/reac-pw/fuzz_pin/lib/Reusable/YCbq.v:2262-2310 (aj_bcmp_at)
+   (aj_strlen_at) [Apache-2.0]; proofs/reac-pw/fuzz_pin/lib/Reusable/YCbq.v:2262-2310 (aj_bcmp_at)
    [Apache-2.0 OR MIT]; proofs/reac-pw/fuzz_qdisc/lib/A/QPgSlots.v, QPgCheck.v, QPgRt.v [Apache-2.0] and QPgLoop0.v [Apache-2.0 OR MIT]
    at 160c9b4d5750 (walk tactics and plumbing lemmas); proofs/reac-pw/fuzz_pin/lib/A/ACep.v (reseat) [Apache-2.0]; for
    reac-pw/fuzz_pin's image A walk of fuzz_catalogue_row: the two call lemmas keep the wrappers' same_but_materialized
    clause, the copied tactics carry the rw_ prefix, and the walk, its loop and its call-site lemmas are new. The
    [Apache-2.0 OR MIT] text is used under Apache-2.0. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_pin/lib/A/PPgRow.v, with its module paths, module names and numbers changed; 539 of its 613 lines of code are new or changed and 843 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment S2 of the walk of reac-pw/fuzz_pin's LLVMFuzzerTestOneInput (0x806b4, fuzz_pin.asan sha256
    3e4859aed23f78a6eb028120d664abda29bcb8a3bfdea5d6ee5b32b646de9d16): from the cut ss_Q (0x8082c, malloc returned the
    block q) to ss_C (0x80868, the string is not empty) or ss_D (0x808bc, the empty string). rule 24 (reuse): no

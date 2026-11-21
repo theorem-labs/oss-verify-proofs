@@ -80,6 +80,36 @@ Proof.
     rewrite (refusal_b_226 i m _ H). exact Hr'.
 Qed.
 
+(* LPS 727298f3: munmap (215) is in the alloc family ([Run.alloc_mark_sysnos]); its one
+   refusal, -ENOMEM, is spurious under [alloc_only_cfg] when the cut is an answer. *)
+Lemma refusal_b_215 : forall i m r, bv_unsigned (in_sysno i) = 215%Z ->
+  refusal_b i m r = errno_ret_in munmap_errnos r.
+Proof. intros i m r H. unfold refusal_b. cbv zeta. rewrite H. reflexivity. Qed.
+
+Lemma family_off_215 : forall i, bv_unsigned (in_sysno i) = 215%Z ->
+  injected_family_off (alloc_only_cfg false) i = true.
+Proof. intros i H. unfold injected_family_off. rewrite H. reflexivity. Qed.
+
+Lemma ns_munmap_ret : forall i m eff, bv_unsigned (in_sysno i) = 215%Z ->
+  errno_ret_in munmap_errnos (eff_ret eff) = false ->
+  ~ spurious_refusal_cfg (alloc_only_cfg false) i m eff.
+Proof.
+  intros i m eff H Hr. apply spurious_refusal_not_refusal.
+  rewrite (refusal_b_215 i m _ H). exact Hr.
+Qed.
+
+Lemma sp_munmap_of_ok : forall i m eff eff' m' evs', bv_unsigned (in_sysno i) = 215%Z ->
+  errno_ret_in munmap_errnos (eff_ret eff) = true ->
+  check_syscall i eff' m = CheckOk m' evs' ->
+  errno_ret_in munmap_errnos (eff_ret eff') = false ->
+  spurious_refusal_cfg (alloc_only_cfg false) i m eff.
+Proof.
+  intros i m eff eff' m' evs' H Hr Hc Hr'. split; [exact (family_off_215 i H)|]. split.
+  - rewrite (refusal_b_215 i m _ H). exact Hr.
+  - exists eff', m', evs'. split; [apply check_syscall_ok_iff; exact Hc|].
+    rewrite (refusal_b_215 i m _ H). exact Hr'.
+Qed.
+
 Lemma mmap_errnos_below_top : forall (a : word) (h : VmMaps) (nZ : Z), (0 <= nZ)%Z ->
   (bv_unsigned a + nZ <= alloc_top h)%Z -> errno_ret_in mmap_errnos a = false.
 Proof.

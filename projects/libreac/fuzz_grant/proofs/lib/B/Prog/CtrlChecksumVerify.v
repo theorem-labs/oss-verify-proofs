@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the contract and walk of reac_ctrl_checksum_verify on fuzz_grant.asan, written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v, proofs/cgif/cgif_file_fuzzer/lib/A/AC8h.v. *)
 (* Modified by Theorem Labs, 2026-10: adapted to image B (fuzz_grant.asan-ubsan) at 0x8260c. Image B's code is not image A's: it is 20 bytes longer (34 slots against 29), with two trap guards image A has not got (beq a0,zero at +0x08 and the carry check bltu ~f,18+j at +0x30, both refuted in this walk); image B's shadow cell is object 35 (image A's is 32); the frame-versus-image bound is image B's own (frm_off_imgB). The contract is GrantBContracts.v's tb_reac_ctrl_checksum_verify_spec. *)
-(* Ported from proofs/libreac/fuzz_grant/lib/A/Prog/CtrlChecksumVerify.v at a working branch 5aae1e8a0ce301378b1e0d584090657a2ba15353. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Ported from proofs/libreac/fuzz_grant/lib/A/Prog/CtrlChecksumVerify.v at a working branch. *)
 (* Image B (fuzz_grant.asan-ubsan, bin sha256 fde52226dc48, symbols 5a5ee7c02b4e) walk of
    reac_ctrl_checksum_verify 0x8260c = BASE + AF_reac_ctrl_checksum_verify (0x80a3c + 0x1bd0), the
    34-slot function of lib/B/Prog/GrantList.v slots 1780..1813.  It is the image-B twin of

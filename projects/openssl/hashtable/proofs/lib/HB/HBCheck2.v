@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the state invariants take the launch record [LaunchX], and the argument area is read from it). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -27,29 +28,30 @@ Section HA2Check.
   Variable brk0 : word.
   Variables argv envp : list (list byte).
   Variables uid hw : word.
+  Context {L : LaunchX}.
   Variable fs : Fs.Fs.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
 
-  #[local] Notation argH := (argH0 HAPH sp rdraw argv envp uid hw).
+  #[local] Notation argH := (argH0 sp rdraw argv envp (lx_kb L) (lx_execfn L)).
   #[local] Notation ISP := (bv_unsigned sp).
   #[local] Notation LIM := AsanInit.LIMIT.
   (* [comment removed for export] *)
   Variable SV : env -> (word -> option byte) -> Prop.
-  Hypothesis SV_to1 : forall E M, SV E M -> HBArg.SINV1 sp brk0 argv envp rdraw hw uid E M.
+  Hypothesis SV_to1 : forall E M, SV E M -> HBArg.SINV1 (L:=L) sp brk0 argv envp rdraw hw uid E M.
   Hypothesis SV_frame : forall E M M', (forall a, argH E a = true -> M' a = M a) -> SV E M -> SV E M'.
   Hypothesis SV_agree : forall E E' M, env_agree NX0 E E' -> SV E M -> SV E' M.
-  Lemma SV_to0_2 : forall E M, SV E M -> SINV0 HAPH sp rdraw brk0 argv envp uid hw E M.
+  Lemma SV_to0_2 : forall E M, SV E M -> SINVL HAPH sp rdraw brk0 argv envp uid hw L E M.
   Proof. intros E M H. exact (proj1 (SV_to1 E M H)). Qed.
 
-  Let AH := argH0_high HAPH sp rdraw argv envp uid hw Hsp Hva.
-  Let AA := argH0_agree HAPH sp rdraw argv envp uid hw.
+  Let AH := argH0_high sp rdraw argv envp (lx_kb L) (lx_execfn L) Hsp Hva.
+  Let AA := argH0_agree sp rdraw argv envp (lx_kb L) (lx_execfn L).
   Let SF := SV_frame.
   Let SA := SV_agree.
   Lemma SP1_2 : forall E M, SV E M -> uE E e_pgsp = pgdown ISP.
-  Proof. intros E M H. exact (SINV0_pgsp HAPH sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit E M (SV_to0_2 E M H)). Qed.
+  Proof. intros E M H. exact (SINVL_pgsp HAPH sp rdraw brk0 argv envp uid hw L Hsp E M (SV_to0_2 E M H)). Qed.
   Let SP := SP1_2.
   Lemma NXS1_2 : CAP.expr_vars_lt NX0 e_spw = true. Proof. reflexivity. Qed.
   (* [comment removed for export] *)

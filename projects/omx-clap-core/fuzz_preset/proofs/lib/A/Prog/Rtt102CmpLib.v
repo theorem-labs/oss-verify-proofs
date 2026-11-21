@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/pj_set_trans.v, with its module paths and module names changed; 381 of its 472 lines of code are new or changed and 692 lines of the source are left out. *)
-(* UNFINISHED: first build (8e9d2ad2945) pending; the stretch's walk file Rtt102CmpA.v is not written yet *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* UNFINISHED: first build pending; the stretch's walk file Rtt102CmpA.v is not written yet *)
 (* fuzz_preset, program walk of round_trip_text ON THE #102 PINS, stretch CMP (lane RttCmp of WalkRtt102, the text owner):
    the IMAGE-GENERIC lemmas the stretch's walk (Rtt102CmpA.v) uses, none of them a run.
    rule 24: no function proved. rule 24: proves no function (kind: segment lemma support).

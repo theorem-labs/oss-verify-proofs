@@ -1,47 +1,48 @@
-(* CARRIED from commit 13dada94373d48ba230c171e98126b88ba98118e,
+(* CARRIED from
    proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfDmWit.v, sha256 c33c4141450ba0efd13a2ae9cf2e049755845c8838bc43063f82dbfccd1067b5 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change made here is the module
    prefix OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.
-   Plus, in wit_wf, the bullet for WfP_cf's last field wfc_qsize (the cf layer's model-pp, YG01cf.v:173): every
+   Plus, in wit_wf, the bullet for WfP_cf's last field wfc_qsize (the cf layer's model-pp, YG01cf.v:174): every
    quarantined witness item is a 1-byte request, req_size 1 <= kQuarantineMax. Proof lines only; no statement changes.
    One writer for fuzz_reply and fuzz_preset (a Theorem Labs lane / Main, 2026-10-30): fuzz_preset takes this blob by path. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by a Theorem Labs lane (DeallocNmaxA), 2026-10-30 (free_cf's size test, Quarantine::Put): comment only: item 3 (FREEG's enqueue disjunct and its recycle disjunct; 3(a) now derivable) and its line references. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the event-free second allocator instance (suffix cf), a NON-VACUITY WITNESS for the
    merge arm of h-verbs-5's drain contract (DMspec.v: drain_pre_cf, drain_body_cf, merge_split_cf). It shows a
    state that satisfies Wf_cf and every MODEL premise of drain_pre_cf, with more than 16,384 quarantine batches,
-   on which maybe_drain_cf (YG00cf.v:306-320) takes the drain arm, then the recycle branch, then MergeBatches.
+   on which maybe_drain_cf (YG00cf.v:307-321) takes the drain arm, then the recycle branch, then MergeBatches.
    No address, no event count.
 
-   PREMISE MAP. The drain's call site is free_cf's tail (YG00cf.v:350-351): the drain runs on the state X after the
+   PREMISE MAP. The drain's call site is free_cf's tail (YG00cf.v:351-352): the drain runs on the state X after the
    free's enqueue of the freed chunk k. The free's ENTRY state S carries acall_pre_cf (YG0dcf.v:45-68).
    1. ARX inst ly X W mem md, here ARcf at X (YG0ncf.v:610-612). NO lemma on this base supplies it.
       acall_pre_cf gives ARcf at the entry state S only (YG0dcf.v:233). The AR laws (YG0dcf.v:617-726) keep the
       state fixed (they change memory, world, layout or Hp), so none of them gives ARcf at the new state X.
       The Deallocate walk must re-establish it after the enqueue, as cgif's free walk does at its S'
       (YFfl.v, for example ALedger_S' at :931). Its MODEL part is on this base: Wf_cf at X is
-      YG03cf.v:2090-2093 (enqueue_okx_cf, then W5p : WfP_cf U 0 1 0 s5), weakened by WfP_cf_weaken
-      (YG01cf.v:300-317); ARcf carries Wf_cf as its field amc_wf (YG0ncf.v:214).
+      YG03cf.v:2091-2094 (enqueue_okx_cf, then W5p : WfP_cf U 0 1 0 s5), weakened by WfP_cf_weaken
+      (YG01cf.v:301-318); ARcf carries Wf_cf as its field amc_wf (YG0ncf.v:214).
    2. kQuarantineCacheMax < qc_bytes (st_qthread X): the drain's own branch condition. maybe_drain_cf tests
-      `qc_bytes (st_qthread s) <=? kQuarantineCacheMax` (YG00cf.v:308; split by name in YG03dcf.v:194-202) and
+      `qc_bytes (st_qthread s) <=? kQuarantineCacheMax` (YG00cf.v:309; split by name in YG03dcf.v:195-203) and
       the drain arm is the false branch; DMspec.v's maybe_drain_cf_drain is the bridge. No lemma is needed.
    3. qloose X (YG01.v:339-340). Its source is acall_pre_cf's qmeter_cf (YG0dcf.v:239), that is
       qtight S /\ mroom_cf S (YG0ncf.v:447; qtight YG01.v:337-338). X is reached through the enqueue only on free_cf's
       enqueue side (ck_n k <= kQuarantineMax; a larger chunk is recycled at once and the queues do not change, FREEG's
       third disjunct). Between S and X the free changes the queue only by the flip of k to CQuarantined and its enqueue
       (FREEG's enqueue disjunct, YGcfRoom.v; qc_push, YG00.v:438-445). So all three clauses are derivable:
-      (b) qc_bytes (st_qglobal X) <= 2 ^ 30: the global queue does not change (YGcfRoom.v:939) and qtight gives
+      (b) qc_bytes (st_qglobal X) <= 2 ^ 30: the global queue does not change (YGcfRoom.v:940) and qtight gives
           <= kQuarantineMax = 2 ^ 28.
-      (c) quar_n X <= queued_n X + 2 ^ 30: both sides grow by ck_n k (unq_flip_cf YG03cf.v:854, unq_push_cf
+      (c) quar_n X <= queued_n X + 2 ^ 30: both sides grow by ck_n k (unq_flip_cf YG03cf.v:855, unq_push_cf
           :857, used at :2094-2095) and qtight gives quar_n S <= queued_n S.
       (a) qc_bytes (st_qthread X) <= 2 ^ 29: qc_push adds ck_n k, plus kBatchBytes when it opens a batch, so the
           bound is kQuarantineCacheMax + kBatchBytes + ck_n k, and on the enqueue side ck_n k <= kQuarantineMax:
-          2 ^ 20 + 2 ^ 13 + 2 ^ 28 <= 2 ^ 29, as cgif derives the clause (YFfl.v:925-930) from MALLOC_MAX = 2 ^ 28.
+          2 ^ 20 + 2 ^ 13 + 2 ^ 28 <= 2 ^ 29, as cgif derives the clause (YFfl.v:926-931) from MALLOC_MAX = 2 ^ 28.
           The request bound is di_shape_cf's premise req_size n <= kQuarantineMax (YGcfDIface.v). (Before free_cf
           took the size test, the clause failed for a request in [535,814,145, 535,822,335] at the old
           cf_malloc_max = 2 ^ 29 - 2 ^ 20: such a request is now recycled at once.)
-   4. Z.of_nat (length (all_batches X)) <= L24MAX_cf: batches_bound_cf (YGcfBatch.v:26-38) applied to Wf_cf
+   4. Z.of_nat (length (all_batches X)) <= L24MAX_cf: batches_bound_cf (YGcfBatch.v:27-39) applied to Wf_cf
       at X (item 1). Supplied.
 
    THE WITNESS (dmw_state below). The quarantine holds T = 114 thread batches and G = 29,070 global batches,
@@ -64,8 +65,8 @@ Unset Lia Cache. Unset Nia Cache.
 Local Open Scope Z_scope.
 
 (* transfer_g, VERBATIM from YFeu.v:157-158 (the definition DMspec.v uses: cgif's YFeu.v:156-157): the global
-   list, then the thread list. YFeu.v is NOT imported: it needs YF0x.v, an UNRELOCATED cgif twin (commit
-   8053f85d818) that does not compile against preset's binary (YF0x.v:35, "Unable to unify None"). The two
+   list, then the thread list. YFeu.v is NOT imported: it needs YF0x.v, an UNRELOCATED cgif twin
+    that does not compile against preset's binary (YF0x.v:35, "Unable to unify None"). The two
    definitions are the same term, so they agree by reflexivity wherever both are in scope. *)
 Definition transfer_g (X : astate) : qcache :=
   mkQC (qc_list (st_qglobal X) ++ qc_list (st_qthread X)) (qc_bytes (st_qglobal X) + qc_bytes (st_qthread X)).

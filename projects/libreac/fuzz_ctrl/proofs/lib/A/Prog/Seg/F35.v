@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module names changed; 85 of its 151 lines of code are new or changed and 3787 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/reac_box_catalogue_match_lib.v, with its module paths and module names changed; 717 of its 758 lines of code are new or changed and 110 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F31.v, with its module names, addresses and numbers changed; 595 of its 836 lines of code are new or changed and 517 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment F35 of fuzz_ctrl LLVMFuzzerTestOneInput (asan, image A): 0x82888-0x82898, inside the row_of_block loop
    (plan-asan section 2 row F35, call BCMP@0x82898).
    v1.9.0: moved onto a Theorem Labs lane's v1.9 cut bundle (a working branch, 2026-10-28); the commit messages name the
@@ -59,8 +60,8 @@ Module BW := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog.bcmp_wrap_c.
 Module SF := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Spec.StrFun.
 Module LE := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.Exec.
 
-(* v1.9.0 values: bcmp_wrap_c.v / memcmp_c.v (a Theorem Labs lane 3eade53eef2) and AsanRT.v's RT_REALS / RT_GOT_CF / RT_CF
-   (a Theorem Labs lane 48004cf7bfc). *)
+(* v1.9.0 values: bcmp_wrap_c.v / memcmp_c.v (a Theorem Labs lane) and AsanRT.v's RT_REALS / RT_GOT_CF / RT_CF
+   (a Theorem Labs lane). *)
 Local Definition BCMP : Z := 0x97b0c.
 Local Definition REAL_BCMP : Z := 0xa17f0.
 Local Definition REAL_MEMCMP : Z := 0xa17e8.
@@ -216,7 +217,7 @@ Proof.
 Qed.
 
 (* ---------------- the official bundles across a run that misses the spill area and their bytes ----------------
-   (the re-cut bundle transports of F32, a working branch b8d1083b061, stated with f35_spill's spill base) *)
+   (the re-cut bundle transports of F32, a working branch, stated with f35_spill's spill base) *)
 
 Lemma f35_spill_mem : forall regs regs' m m' W off v A,
   rg regs 9 A -> 0 <= A -> A + 312 <= 2 ^ 64 -> 0 <= off <= 304 ->

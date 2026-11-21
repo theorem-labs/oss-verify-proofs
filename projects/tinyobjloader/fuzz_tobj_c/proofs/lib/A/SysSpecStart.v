@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the mmap check's new fixed-overflow test unfolded with it). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -133,7 +134,7 @@ S0S26S1fQ40Vn;A2S29Vlen;A1A3").
   Lemma mmap_fixed_none_fresh_reduce : ltac2:(tb__ "0|c|
 SfS0S21S46Vi;R1Vm;A3SfS21Leff;R1S1eQ40M0A1M1S5S6G1S5S1eQ8A1A1A2M2A1M3S5S6G1G1A2M4A1M5G5S5S10A1M6S5S6G1S9A2M7A1M8G3S21Leff_writes;R5G5S21Leff_zeros;R4G6S21Leff_copies;R2G8S21Leff_copyins;R1S3S21L_;M9S24S34S8A1R6A2G5S21Lus;R3S23Vm;S4S11A1MaA2G4G5S22Ll;Lp;MbX5x2G9ScS47G0R6Vaddr;A3S25R3SaG4SbG1G1Vaddr;Vn;A4S4G4A1A3A2A2S23S2aVflags;Vm;Vlen;Vaddr;A4GaA2S22X3x2X3x2G7G8S22Ll;Lp;X5x2S10G6S22Ll;Lm0;X5x2GbX5x2G2G3S22Ll;Lp;X5x2Leff_copyins;Leff_copies;Lus;Leff_zeros;Leff_writes;Lr;Xfx1A3Feff;").
   Proof using Halign Hceil Hfresh Hlen Hno Hnot_none Hnot_rw Hpos Hshape.
-    intros eff. rewrite (mmap_check i m Hno). unfold check_mmap.
+    intros eff. rewrite (mmap_check i m Hno). unfold check_mmap, check_mmap_fixed_overflow.
     destruct (mmap_fixed_noaccess_b_gates _ _ _ Hshape) as [G1 G2].
     rewrite G1, G2, (mmap_len_gate i Hlen), Hnot_rw, Hnot_none, Hshape.
     pose proof mmap_n_pos as Hnp.
@@ -212,7 +213,7 @@ S0S3S13SdS6S1eQ40A1M0G0A2S1aVh;A1S19Vh;A1A3Vaddr;Vn;A3S7A3").
   Lemma mmap_fixed_rw_fresh_reduce : ltac2:(tb__ "0|d|
 SfS0S21S46Vi;R1Vm;A3SfS21Leff;R1S1eQ40M0A1M1S5S6G1S5S1eQ8A1A1A2M2A1M3S5S6G1G1A2M4A1M5G5S5S10A1M6S5S6G1S9A2M7A1M8G3S21Leff_writes;R5G5S21Leff_unmaps;R3G6S21Leff_copies;R2G8S21Leff_copyins;R1S3S21L_;M9S24S34S38Vflags;Vm;S29Vlen;A1MaA3A1R6A2G5S21Lzs;R4S23Vm;S4S11A1MbA2G4G5S22Ll;Lp;McX5x2G9ScScS47G0R6Vaddr;A3S25R4SaG4SbG1G1Vaddr;Vn;A4S4G4A1A3A2A2S35Vflags;Vm;GaA3A2S23S2bVflags;Vm;Vlen;Vaddr;A4GbA2S22X3x2X3x2G7G8S22Ll;Lp;X5x2S10G6S22Ll;Lm0;X5x2GcX5x2G2G3S22Ll;Lp;X5x2Leff_copyins;Leff_copies;Leff_unmaps;Lzs;Leff_writes;Lr;Xfx1A3Feff;").
   Proof using Halign Hceil Hfresh Hlen Hno Hnot_fn Hnot_none Hnot_rw Hpos Hshape.
-    intros eff. rewrite (mmap_check i m Hno). unfold check_mmap.
+    intros eff. rewrite (mmap_check i m Hno). unfold check_mmap, check_mmap_fixed_overflow.
     destruct (mmap_fixed_rw_b_gates _ _ _ Hshape) as [G1 G2].
     rewrite G1, G2, (mmap_len_gate i Hlen), Hnot_rw, Hnot_none, Hnot_fn, Hshape.
     pose proof (mmap_n_pos i m Hlen Hceil) as Hnp.
@@ -312,7 +313,7 @@ S0S3S1bS19Vh;A1Vaddr;Vn;A3S7A3").
   Lemma mmap_fixed_rw_commit_reduce : ltac2:(tb__ "0|d|
 SfS0S21S46Vi;R1Vm;A3SfS21Leff;R1S1eQ40M0A1M1S5S6G1S5S1eQ8A1A1A2M2A1M3S5S6G1G1A2M4A1M5G5S5S10A1M6S5S6G1S9A2M7A1M8G3S21Leff_writes;R5G6S21Leff_copies;R2G8S21Leff_copyins;R1S3S21L_;M9ScScS24S34S3dVflags;Vm;Vaddr;Vn;A4A1R6A2S49G4R4A2MaA2S49G4R3A2A2S23Vm;S4S11A1MbA2G9ScScS24S3eR6A2GaA2S25R3SaG4SbG1G1Vaddr;Vn;A4S4G4A1A3McA2A2S23S2dVm;Vaddr;Vn;A3GbA2G5S21Lus;R3G9ScScS47G0R6Vaddr;A3S25R4GcA2A2S3bVflags;Vm;Vaddr;Vn;A4A2S23S48Vflags;Vm;Vaddr;Vn;A4GbA2S22X3x2G4G5S22Ll;Lp;X5x2X3x2X3x2G7G8S22Ll;Lp;X5x2S10G6S22Ll;Lm0;X5x2G2G3S22Ll;Lp;X5x2Leff_copyins;Leff_copies;Lus;Lzs;Leff_writes;Lr;Xfx1A3Feff;").
   Proof using Halign Hceil Hcont Hfree Hlen Hno Hnot_fn Hnot_none Hnot_rw Hpos Hshape.
-    intros eff. rewrite (mmap_check i m Hno). unfold check_mmap.
+    intros eff. rewrite (mmap_check i m Hno). unfold check_mmap, check_mmap_fixed_overflow.
     destruct (mmap_fixed_rw_b_gates _ _ _ Hshape) as [G1 G2].
     rewrite G1, G2, (mmap_len_gate i Hlen), Hnot_rw, Hnot_none, Hnot_fn, Hshape.
     pose proof (mmap_place_not_errno _ addr (mmap_nZ len) (mmap_nZ_nonneg len) Hceil) as Hna.
@@ -480,7 +481,7 @@ S0S3S13SdS6S1eQ40A1M0G0A2S1aVh;A1S19Vh;A1A3Vaddr;Vn;A3S7A3").
   Lemma mmap_noreplace_rw_fresh_reduce : ltac2:(tb__ "0|d|
 SfS0S21S46Vi;R1Vm;A3SfS21Leff;R1S1eQ40M0A1M1S5S6G1S5S1eQ8A1A1A2M2A1M3S5S6G1G1A2M4A1M5G5S5S10A1M6S5S6G1S9A2M7A1M8G3S21Leff_writes;R5G5S21Leff_unmaps;R3G6S21Leff_copies;R2G8S21Leff_copyins;R1S3S21L_;M9S24S34S38Vflags;Vm;S29Vlen;A1MaA3A1R6A2G5S21Lzs;R4S23Vm;S4S11A1MbA2G4G5S22Ll;Lp;McX5x2G9ScScS47G0R6Vaddr;A3S25R4SaG4SbG1G1Vaddr;Vn;A4S4G4A1A3A2A2S35Vflags;Vm;GaA3A2S23S2bVflags;Vm;Vlen;Vaddr;A4GbA2S22X3x2X3x2G7G8S22Ll;Lp;X5x2S10G6S22Ll;Lm0;X5x2GcX5x2G2G3S22Ll;Lp;X5x2Leff_copyins;Leff_copies;Leff_unmaps;Lzs;Leff_writes;Lr;Xfx1A3Feff;").
   Proof using Halign Hceil Hfresh Hlen Hno Hnot_fn Hnot_frw Hnot_none Hnot_nrn Hnot_rw Hpos Hshape.
-    intros eff. rewrite (mmap_check i m Hno). unfold check_mmap.
+    intros eff. rewrite (mmap_check i m Hno). unfold check_mmap, check_mmap_fixed_overflow.
     destruct (mmap_noreplace_rw_b_gates _ _ _ Hshape) as [G1 G2].
     rewrite G1, G2, (mmap_len_gate i Hlen), Hnot_rw, Hnot_none, Hnot_fn, Hnot_frw, Hnot_nrn, Hshape.
     unfold n, h, len, addr, flags, mmap_n, mmap_nZ, mmap_rw_model, mmap_rw_vm in *. cbv zeta.
@@ -573,7 +574,7 @@ S0S3S13SdS6S1eQ40A1M0G0A2S1aVh;A1S19Vh;A1A3Vaddr;Vn;A3S7A3").
   Lemma mmap_noreplace_none_fresh_reduce : ltac2:(tb__ "0|c|
 SfS0S21S46Vi;R1Vm;A3SfS21Leff;R1S1eQ40M0A1M1S5S6G1S5S1eQ8A1A1A2M2A1M3S5S6G1G1A2M4A1M5G5S5S10A1M6S5S6G1S9A2M7A1M8G3S21Leff_writes;R5G5S21Leff_zeros;R4G6S21Leff_copies;R2G8S21Leff_copyins;R1S3S21L_;M9S24S34S8A1R6A2G5S21Lus;R3S23Vm;S4S11A1MaA2G4G5S22Ll;Lp;MbX5x2G9ScS47G0R6Vaddr;A3S25R3SaG4SbG1G1Vaddr;Vn;A4S4G4A1A3A2A2S23S2aVflags;Vm;Vlen;Vaddr;A4GaA2S22X3x2X3x2G7G8S22Ll;Lp;X5x2S10G6S22Ll;Lm0;X5x2GbX5x2G2G3S22Ll;Lp;X5x2Leff_copyins;Leff_copies;Lus;Leff_zeros;Leff_writes;Lr;Xfx1A3Feff;").
   Proof using Halign Hceil Hfresh Hlen Hno Hnot_fn Hnot_frw Hnot_none Hnot_rw Hpos Hshape.
-    intros eff. rewrite (mmap_check i m Hno). unfold check_mmap.
+    intros eff. rewrite (mmap_check i m Hno). unfold check_mmap, check_mmap_fixed_overflow.
     destruct (mmap_noreplace_noaccess_b_gates _ _ _ Hshape) as [G1 G2].
     rewrite G1, G2, (mmap_len_gate i Hlen), Hnot_rw, Hnot_none, Hnot_fn, Hnot_frw, Hshape.
     unfold n, h, len, addr, flags, mmap_n, mmap_nZ, mmap_none_model, mmap_none_vm in *. cbv zeta.

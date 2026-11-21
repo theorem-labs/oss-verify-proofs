@@ -1,15 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30: taken back by path from commit 2d97a7029501,
+(* Modified by Theorem Labs, 2026-10-30: taken back by path from
    proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfInstReallocK.v (the P'' text), with this unit's module prefixes and
    two changes for this layer: (1) the FIT CHECK against YGcfInstAllocTop is kept, in its own file YGcfInstReallocKFit.v
    (so this file needs no YGcfInstAllocTop, and a unit that carries this file without lane M's top can still build it);
    (2) the two start-state lemmas of Section SAT take YGcfInstBase.ARXq_cf_nil_init's cells premise (exh_cell_cf /
    errb_cells_cf at init_state) and its lazy-in-maps premise (the lazy ranges are mapped at init), which this layer's
    call-site relation carries.  The preset text itself was taken from
-   this layer's commit bbe791f0bb0 with these changes:
+   this layer's with these changes:
    - U := admits: the trace premise of arealloc_realizes_cf_k / arealloc_null_realizes_cf_k is
-     admits (as_universe B) tr S (YG01.v:158), the form YGcfRealloc.v / YGcfReallocCompose.rentry_cf take on this base
+     admits (as_universe B) tr S (YG01.v:159), the form YGcfRealloc.v / YGcfReallocCompose.rentry_cf take on this base
      (a Theorem Labs lane 2026-10-29 22:05Z), in place of the source's In tr (as_universe B);
    - acall_prefix is not a named premise at the instance: YGcfInstRealloc.acall_prefix_cf_ok (acall_pre_cf's
      ACALL_PREFIX conjunct, YG0dcf.v:52);
@@ -39,7 +39,8 @@
    null rule RGtop.rg_apath_gflag). realloc(NULL, n) needs no new bridge: YGcfInstRealloc's
    arealloc_null_realizes_cf_inst (which does not use ARX_br) and the room of the null tree (rk_realloc_null_cf).
    No image constant; no function is proved here (rule 24). *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstReallocK.v at commit e8a7dd66acf2 (the cf layer of record, field round 3 part 3: MP), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstReallocK.v (the cf layer of record, field round 3 part 3: MP), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Bool Lia.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -169,7 +170,7 @@ exact (room_mid_cf S S1 S2 q n tr trc1 trc2
 Qed.
 
 Section R.
-(* YGcfReallocCompose's Section R variables, in its order (YGcfReallocCompose.v:186). *)
+(* YGcfReallocCompose's Section R variables, in its order (YGcfReallocCompose.v:187). *)
 Variables (nmax al atp acf atpD : Z).
 
 (* realloc(p, n) with headroom k, primed: YGcfReallocComposeRh.arealloc_realizes_cf_rp_rh_of_parts (the primed

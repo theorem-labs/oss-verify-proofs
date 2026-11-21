@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (stk_ok_init and wrap_mem_none_low restated over the launch input and its stack window; encoded (CDefT) statements written out in plain text, comments restored, #[using] attributes dropped). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -90,8 +91,8 @@ Proof.
   intros b E E' a Ha H. unfold adenot. rewrite (edenot_agree b E E' _ Ha H). reflexivity.
 Qed.
 
-Lemma regs_ok_agree : ltac2:(CDefT.buildp (gd_tbl_AxSymRun3 ()) "Pb,$0.PE,$1.PE',$1.Psr,(2.$3.)Pregs,(4.&5.(5.&40.))P,(6.R5.R4.R3.)P,(7.$8.(9.R6.R3.)$:.)P,(;.R6.R4.R3.)(;.R6.R5.R4.)")
-(* [comment removed for export] *).
+Lemma regs_ok_agree : forall b E E' sr regs,
+  env_agree b E E' -> sr_vars_lt b sr = true -> regs_ok E sr regs -> regs_ok E' sr regs.
 Proof.
   intros b E E' sr regs Ha Hsr HR r. rewrite (HR r).
   unfold sr_get. destruct (bv_eqb r 0); [reflexivity|].
@@ -103,8 +104,8 @@ Proof.
   apply (edenot_agree b); [exact Ha | apply Hnth].
 Qed.
 
-Lemma mem_denot_agree : ltac2:(CDefT.buildp (gd_tbl_AxSymRun3 ()) "Pb,$0.PE,$1.PE',$1.Pbase,P,(5.&40.)(<.(5.&8.))Plog,(2.$=.)P,(6.R5.R4.R3.)P,(7.$8.(>.R6.R2.)$:.)(7.P,(5.&40.)(<.(5.&8.))(?.R6.R4.R3.)(?.R5.R4.R3.))")
-(* [comment removed for export] *).
+Lemma mem_denot_agree : forall b E E' base log,
+  env_agree b E E' -> log_vars_lt b log = true -> mem_denot E base log = mem_denot E' base log.
 Proof.
   intros b E E' base log Ha. induction log as [|[a w v] r IH]; cbn [log_vars_lt mem_denot]; intros H.
   - reflexivity.
@@ -120,8 +121,8 @@ Proof.
   rewrite (edenot_agree b E E' (a_base a) Ha H). tauto.
 Qed.
 
-Lemma log_flat_agree : ltac2:(CDefT.buildp (gd_tbl_AxSymRun3 ()) "Pb,$0.PE,$1.PE',$1.Plog,(2.$=.)P,(6.R4.R3.R2.)P,(7.$8.(>.R5.R2.)$:.)P,(10.R5.R3.)(10.R5.R4.)")
-(* [comment removed for export] *).
+Lemma log_flat_agree : forall b E E' log,
+  env_agree b E E' -> log_vars_lt b log = true -> log_flat E log -> log_flat E' log.
 Proof.
   intros b E E' log Ha. induction log as [|[a w v] r IH]; cbn [log_vars_lt log_flat]; intros H Hl.
   - exact I.
@@ -131,8 +132,8 @@ Proof.
     + apply IH; assumption.
 Qed.
 
-Lemma know_ok_agree : ltac2:(CDefT.buildp (gd_tbl_AxSymRun3 ()) "Psegs,(2.$11.)Pb,$0.PE,$1.PE',$1.Pbase,P,(5.&40.)(<.(5.&8.))Pkn,(2.$12.)P,(6.R5.R4.R3.)P,(7.$8.(13.R6.R2.)$:.)P,(14.R8.R6.R4.R3.)(14.R9.R6.R5.R4.)")
-(* [comment removed for export] *).
+Lemma know_ok_agree : forall segs b E E' base kn,
+  env_agree b E E' -> kn_vars_lt b kn = true -> know_ok segs E base kn -> know_ok segs E' base kn.
 Proof.
   intros segs b E E' base kn Ha. induction kn as [|K r IH]; cbn [kn_vars_lt]; intros H Hk.
   - constructor.
@@ -162,55 +163,68 @@ Proof.
       destruct Hk1 as (A & B & C). split; [|split; [exact B | exact C]].
       unfold flat, estart in *. rewrite <- (edenot_agree b E E' (a_base a) (conj Hv Hb) H1). exact A.
     + exact Hk1.
-    + (* [comment removed for export] *)
+    + (* KFill: as KZero *)
       apply andb_prop in HK as [H1 H2]. unfold elenZ, estart in *.
       rewrite <- (edenot_agree b E E' n (conj Hv Hb) H2), <- (edenot_agree b E E' (a_base a) (conj Hv Hb) H1).
       destruct Hk1 as [A B]. split; [|exact B].
       unfold flat, estart in *. rewrite <- (edenot_agree b E E' (a_base a) (conj Hv Hb) H1). exact A.
-    + (* [comment removed for export] *)
+    + (* KUnk: as KZero *)
       apply andb_prop in HK as [H1 H2]. unfold elenZ, estart in *.
       rewrite <- (edenot_agree b E E' n (conj Hv Hb) H2), <- (edenot_agree b E E' (a_base a) (conj Hv Hb) H1).
       destruct Hk1 as [A B]. split; [|exact B].
       unfold flat, estart in *. rewrite <- (edenot_agree b E E' (a_base a) (conj Hv Hb) H1). exact A.
 Qed.
 
-(* [comment removed for export] *)
-Lemma vals_app_agree : ltac2:(CDefT.buildp (gd_tbl_AxSymRun3 ()) "Pvals,(2.(5.&40.))Pextra,(2.(5.&40.))Pebs,P,$0.(2.(5.&8.))(6.(15.(5.&40.)R3.)(16.(17.R3.)R1.)(16.(17.(18.(5.&40.)R3.R2.))R1.))")
-(* [comment removed for export] *).
+(** Appending to the value list agrees below its old length. *)
+Lemma vals_app_agree : forall vals extra ebs,
+  env_agree (length vals) (Env (vals_ev vals) ebs) (Env (vals_ev (vals ++ extra)) ebs).
 Proof.
   intros vals extra ebs. split; [|reflexivity]. intros n Hn. cbn [ev]. unfold vals_ev.
   rewrite app_nth1 by exact Hn. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ######################################################################### *)
+(** * 2. Running a block                                                      *)
+(* ######################################################################### *)
 
 Section Run.
 Variable segs : list Segment.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma st_ok_entry : ltac2:(CDefT.buildp (gd_tbl_AxSymRun3 ()) "PE,$1.Pbase,P,(5.&40.)(<.(5.&8.))Prom,P,(5.&40.)(<.(5.&8.))Ppc,$19.Psr,(2.$3.)Pkn,(2.$12.)Pnx,$0.Pregs,(4.&5.(5.&40.))P,(;.R8.R4.R1.)P,(14.Vsegs,R9.R8.R4.)(1:.Vsegs,R:.R9.R8.(1;.R7.R6.(1<.$=.)R5.R4.(1=.$1>.))(1?.$20.R3.(21.&40.R7.)R9.R8.))")
-(* [comment removed for export] *).
+(** Entry packaging: registers + knowledge about the entry memory give
+    [st_ok] for a state with an EMPTY store log. *)
+Lemma st_ok_entry : forall E base rom pc sr kn nx regs,
+  regs_ok E sr regs -> know_ok segs E base kn ->
+  st_ok segs E base rom (SS pc sr [] kn nx) (mkst regs (Z_to_bv 64 pc) base rom).
 Proof.
   intros E base rom pc sr kn nx regs HR HK. exists regs. cbn [s_pc s_log s_regs s_know mem_denot].
   split; [reflexivity|]. split; [exact HR|]. split; [exact I | exact HK].
 Qed.
 
-#[using="Type"] Theorem run_sound : ltac2:(CDefT.buildp (gd_tbl_AxSymRun3 ()) "Pfuel,$0.Pstops,(2.$19.)Pscr,$22.Ppc,$19.Psr,(2.$3.)Pkn,(2.$12.)Pnx,$0.Pss',$23.Pscs,(2.$24.)Pscr',$22.PE,$1.Pbase,P,(5.&40.)(<.(5.&8.))Prom,P,(5.&40.)(<.(5.&8.))Pregs,(4.&5.(5.&40.))P,(7.(25.(25.$23.(2.$24.))$22.)(26.Vsegs,R>.$:.R=.R<.(1;.R;.R:.(1<.$=.)R9.R8.(1=.$1>.))(1<.$24.))(27.(25.$23.(2.$24.))$22.(27.$23.(2.$24.)R7.R6.)R5.))P,(;.R5.R;.R2.)P,(14.Vsegs,R6.R5.R;.)P,(28.Vsegs,R6.R7.R9.)(29.(4.&5.(5.&40.))LR,(4.&5.(5.&40.))(2:.(;.R9.(2;.R<.)R1.)(2:.(10.R9.(2<.R<.))(2=.Vsegs,(1?.$20.R6.(21.&40.R10.)R8.R7.)(1?.$20.R1.(21.&40.(2>.R<.))(?.R9.R8.(2<.R<.))R7.)))))")
-(* [comment removed for export] *).
+Theorem run_sound : forall fuel stops scr pc sr kn nx ss' scs scr' E base rom regs,
+  sym_exec segs fuel true stops scr (SS pc sr [] kn nx) [] = (ss', scs, scr') ->
+  regs_ok E sr regs -> know_ok segs E base kn ->
+  scs_denot segs base E scs ->
+  exists R, regs_ok E (s_regs ss') R
+         /\ log_flat E (s_log ss')
+         /\ msteps segs (mkst regs (Z_to_bv 64 pc) base rom)
+                        (mkst R (Z_to_bv 64 (s_pc ss')) (mem_denot E base (s_log ss')) rom).
 Proof.
   intros fuel stops scr pc sr kn nx ss' scs scr' E base rom regs Hex HR HK Hsc.
   eapply sym_exec_ex; [exact Hex | exact Hsc | apply st_ok_entry; assumption].
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma eagree_env_agree : forall b E E', eagree b E E' <-> env_agree b E E'.
+(** EXTENSION MODE entry/exit.  [AX2S.eagree] and [env_agree]
+    are the same relation. *)
+Lemma eagree_env_agree : forall b E E', eagree b E E' <-> env_agree b E E'.
 Proof. intros b E E'. unfold eagree, env_agree. tauto. Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma st_okX_entry : ltac2:(CDefT.buildp (gd_tbl_AxSymRun3 ()) "PE,$1.Pbase,P,(5.&40.)(<.(5.&8.))Prom,P,(5.&40.)(<.(5.&8.))Ppc,$19.Psr,(2.$3.)Pkn,(2.$12.)Pnx,$0.Pregs,(4.&5.(5.&40.))P,(;.R8.R4.R1.)P,(14.Vsegs,R9.R8.R4.)P,(7.$8.(9.R4.R6.)$:.)P,(7.$8.(13.R5.R6.)$:.)PE',$1.P,(2?.R7.R=.R1.)(1:.Vsegs,R2.R=.R<.(1;.R;.R:.(1<.$=.)R9.R8.(1=.$1>.))(1?.$20.R7.(21.&40.R;.)R=.R<.))")
-(* [comment removed for export] *).
+(** A block-boundary state whose registers and knowledge mention only
+    variables below its counter [nx] relates to the machine under EVERY
+    valuation agreeing with [E] below [nx] — the premise of [sym_execTX_sound]. *)
+Lemma st_okX_entry : forall E base rom pc sr kn nx regs,
+  regs_ok E sr regs -> know_ok segs E base kn ->
+  sr_vars_lt nx sr = true -> kn_vars_lt nx kn = true ->
+  forall E', eagree nx E E' -> st_ok segs E' base rom (SS pc sr [] kn nx) (mkst regs (Z_to_bv 64 pc) base rom).
 Proof.
   intros E base rom pc sr kn nx regs HR HK Hsr Hkn E' Ha. apply eagree_env_agree in Ha.
   apply st_ok_entry.
@@ -218,9 +232,24 @@ Proof.
   - eapply know_ok_agree; [exact Ha | exact Hkn | exact HK].
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Theorem runTX_sound : ltac2:(CDefT.buildp (gd_tbl_AxSymRun3 ()) "Pt,$30.PK,$0.Pfuel,$0.Pstops,(2.$19.)Ppc,$19.Psr,(2.$3.)Pkn,(2.$12.)Pnx,$0.PE,$1.Pbase,P,(5.&40.)(<.(5.&8.))Prom,P,(5.&40.)(<.(5.&8.))Pregs,(4.&5.(5.&40.))P,(31.Vsegs,R<.)P,(;.R5.R8.R2.)P,(14.Vsegs,R6.R5.R8.)P,(7.$8.(9.R8.R:.)$:.)P,(7.$8.(13.R9.R:.)$:.)Zss',$23.(32.Vsegs,R11.R10.R?.$:.R>.(1;.R=.R<.(1<.$=.)R;.R:.(1=.$1>.)))(29.$1.LE',$1.(29.(4.&5.(5.&40.))LR,(4.&5.(5.&40.))(2:.(6.R=.R<.R2.)(2:.(33.R=.(34.R3.))(2:.(;.R2.(2;.R3.)R1.)(2:.(10.R2.(2<.R3.))(2:.(14.Vsegs,R2.R;.(35.R3.))(2:.(2=.Vsegs,(1?.$20.R9.(21.&40.R10.)R;.R:.)(1?.$20.R1.(21.&40.(2>.R3.))(?.R2.R;.(2<.R3.))R:.))PE'',$1.P,(6.(34.R4.)R3.R1.)(1:.Vsegs,R2.R=.R<.R5.(1?.$20.R3.(21.&40.(2>.R5.))(?.R4.R=.(2<.R5.))R<.))))))))))")
-(* [comment removed for export] *).
+(** One block in extension mode, from such a state: an extension [E'] of the
+    valuation (agreeing below [nx], hence below every earlier counter), the
+    machine run, registers / log / knowledge under [E'], and the same for
+    every further extension above the new counter. *)
+Theorem runTX_sound : forall t K fuel stops pc sr kn nx E base rom regs,
+  itab_sound segs t ->
+  regs_ok E sr regs -> know_ok segs E base kn ->
+  sr_vars_lt nx sr = true -> kn_vars_lt nx kn = true ->
+  let ss' := sym_execTX segs t K fuel true stops (SS pc sr [] kn nx) in
+  exists E' R, env_agree nx E E'
+    /\ (nx <= s_next ss')%nat
+    /\ regs_ok E' (s_regs ss') R
+    /\ log_flat E' (s_log ss')
+    /\ know_ok segs E' base (s_know ss')
+    /\ msteps segs (mkst regs (Z_to_bv 64 pc) base rom)
+                   (mkst R (Z_to_bv 64 (s_pc ss')) (mem_denot E' base (s_log ss')) rom)
+    /\ (forall E'', env_agree (s_next ss') E' E'' ->
+          st_ok segs E'' base rom ss' (mkst R (Z_to_bv 64 (s_pc ss')) (mem_denot E' base (s_log ss')) rom)).
 Proof.
   intros t K fuel stops pc sr kn nx E base rom regs Ht HR HK Hsr Hkn.
   destruct (sym_execTX_ex segs t K fuel true stops (SS pc sr [] kn nx) E base rom _ Ht
@@ -230,18 +259,22 @@ Proof.
   intros E'' Ha''. apply HALL. apply eagree_env_agree. exact Ha''.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Theorem carry_after : ltac2:(CDefT.buildp (gd_tbl_AxSymRun3 ()) "PE,$1.Pbase,P,(5.&40.)(<.(5.&8.))Plog,(2.$=.)Pkn,(2.$12.)Phints,(2.$8.)Pkn',(2.$12.)Pscs,(2.$24.)Phs',(2.$8.)P,(7.(25.(25.(2.$12.)(2.$24.))(2.$8.))(36.R6.R5.R4.)(27.(25.(2.$12.)(2.$24.))(2.$8.)(27.(2.$12.)(2.$24.)R3.R2.)R1.))P,(10.R9.R7.)P,(14.Vsegs,R:.R9.R7.)P,(28.Vsegs,R:.R;.R5.)(14.Vsegs,R<.(?.R<.R;.R:.)R7.)")
-(* [comment removed for export] *).
+(** The knowledge available after the block, for the next one (same E). *)
+Theorem carry_after : forall E base log kn hints kn' scs hs',
+  carry log kn hints = (kn', scs, hs') ->
+  log_flat E log -> know_ok segs E base kn -> scs_denot segs base E scs ->
+  know_ok segs E (mem_denot E base log) kn'.
 Proof. intros. eapply carry_sound; eauto. Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma reg_val : forall E sr R (r : reg), regs_ok E sr R -> getr R r = edenot E (sr_get sr r).
+(** Registers: read one back. *)
+Lemma reg_val : forall E sr R (r : reg), regs_ok E sr R -> getr R r = edenot E (sr_get sr r).
 Proof. intros E sr R r HR. apply HR. Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma regs_ok_set : ltac2:(CDefT.buildp (gd_tbl_AxSymRun3 ()) "PE,$1.Psr,(2.$3.)PR,(4.&5.(5.&40.))Prd,(5.&5.)Pv,(5.&40.)Pe,$3.P,(;.R6.R5.R4.)P,(37.(7.(5.&5.)R4.(38.&5.=$39.)))P,(7.(5.&40.)(3:.R8.R3.)R4.)(;.R9.(3;.R8.(3<.R6.)R4.)(3=.R7.R6.R5.))")
-(* [comment removed for export] *).
+(** Re-seed the symbolic register file after the caller changed one
+    register concretely (e.g. a syscall's return value in a0). *)
+Lemma regs_ok_set : forall E sr R (rd : reg) v e,
+  regs_ok E sr R -> rd <> 0%bv -> edenot E e = v ->
+  regs_ok E (sr_upd sr (ridx rd) e) (regupd R rd v).
 Proof.
   intros E sr R rd v e HR Hrd He.
   pose proof (regs_ok_upd E sr R rd v e HR He) as H.
@@ -252,16 +285,21 @@ Qed.
 
 End Run.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ######################################################################### *)
+(** * 3. Initial program state                                               *)
+(* ######################################################################### *)
 
-(* [comment removed for export] *)
-Definition sr_init : list expr := ltac2:(CDefT.buildp (gd_tbl_AxSymRun3 ()) "(3>.$3.(3?.=)(3>.$3.(3?.=)(3>.$3.(40.#0.)(3>.$3.(3?.=)(3>.$3.(3?.=)(3>.$3.(3?.=)(3>.$3.(3?.=)(3>.$3.(3?.=)(3>.$3.(3?.=)(3>.$3.(3?.=)(3>.$3.(3?.=)(3>.$3.(3?.=)(3>.$3.(3?.=)(3>.$3.(3?.=)(3>.$3.(3?.=)(3>.$3.(3?.=)(3>.$3.(3?.=)(3>.$3.(3?.=)(3>.$3.(3?.=)(3>.$3.(3?.=)(3>.$3.(3?.=)(3>.$3.(3?.=)(3>.$3.(3?.=)(3>.$3.(3?.=)(3>.$3.(3?.=)(3>.$3.(3?.=)(3>.$3.(3?.=)(3>.$3.(3?.=)(3>.$3.(3?.=)(3>.$3.(3?.=)(3>.$3.(3?.=)(3>.$3.(3?.=)(1<.$3.)))))))))))))))))))))))))))))))))")
-(* [comment removed for export] *).
+(** The entry register file of [init_machine_state]: x2 = sp, everything
+    else 0 (x10 is explicitly 0). *)
+Definition sr_init : list expr :=
+  [ELit 0; ELit 0; EVar 0; ELit 0; ELit 0; ELit 0; ELit 0; ELit 0;
+   ELit 0; ELit 0; ELit 0; ELit 0; ELit 0; ELit 0; ELit 0; ELit 0;
+   ELit 0; ELit 0; ELit 0; ELit 0; ELit 0; ELit 0; ELit 0; ELit 0;
+   ELit 0; ELit 0; ELit 0; ELit 0; ELit 0; ELit 0; ELit 0; ELit 0].
 
-Lemma regs_ok_init : ltac2:(CDefT.buildp (gd_tbl_AxSymRun3 ()) "Psp,(5.&40.)Prest,(2.(5.&40.))Pebs,P,$0.(2.(5.&8.))(;.(16.(17.(3>.(5.&40.)R3.R2.))R1.)$41.(3=.(3=.(42.&5.(5.&40.))(38.&5.+:.$39.)(21.&40.=))(38.&5.+2.$39.)R3.))")
-(* [comment removed for export] *).
+Lemma regs_ok_init : forall (sp : word) rest ebs,
+  regs_ok (Env (vals_ev (sp :: rest)) ebs) sr_init
+          (regupd (regupd bvmap_empty 10 (Z_to_bv 64 0)) 2 sp).
 Proof.
   intros sp rest ebs r.
   unfold sr_get. destruct (bv_eqb r 0) eqn:Hr0.
@@ -273,23 +311,30 @@ Proof.
     exfalso. lia.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ######################################################################### *)
+(** * 4. Writable windows (stack) and store_ok discharge                      *)
+(* ######################################################################### *)
 
-(* [comment removed for export] *)
-Definition stk_ok (segs : list Segment) (mem : word -> option byte) (sp : word) (K : Z) : Prop := ltac2:(CDefT.buildp (gd_tbl_AxSymRun3 ()) "Pa,(5.&40.)Pn,$0.P,(43.(44.(45.&40.O2.)O1.)(45.&40.R2.))P,(43.(46.(45.&40.R3.)(47.R2.))(45.&40.O2.))(7.$8.(48.O4.O3.R4.R3.)$:.)")
-(* [comment removed for export] *).
+(** "Every range inside [sp - K, sp) is writable in [mem]". *)
+Definition stk_ok (segs : list Segment) (mem : word -> option byte) (sp : word) (K : Z) : Prop :=
+  forall (a : word) (n : nat),
+    (bv_unsigned sp - K <= bv_unsigned a)%Z ->
+    (bv_unsigned a + Z.of_nat n <= bv_unsigned sp)%Z ->
+    store_ok segs mem a n = true.
 
-Lemma stk_ok_vaddi : ltac2:(CDefT.buildp (gd_tbl_AxSymRun3 ()) "Psegs,(2.$11.)Pmem,P,(5.&40.)(<.(5.&8.))Psp,(5.&40.)PK,$19.Poff,$19.Pn,$0.P,(49.R6.R5.R4.R3.)P,(43.R4.(45.&40.R5.))P,(43.(4:.R5.)R4.)P,(43.(46.R5.(47.R4.))=)(7.$8.(48.R:.R9.(4;.R8.R6.)R5.)$:.)")
-(* [comment removed for export] *).
+Lemma stk_ok_vaddi : forall segs mem sp K off n,
+  stk_ok segs mem sp K -> (K <= bv_unsigned sp)%Z ->
+  (- K <= off)%Z -> (off + Z.of_nat n <= 0)%Z ->
+  store_ok segs mem (v_addi sp off) n = true.
 Proof.
   intros segs mem sp K off n Hs HK H1 H2. pose proof (u64_range sp).
   apply Hs; unfold v_addi; rewrite u_small by lia; lia.
 Qed.
 
-Lemma stk_ok_lit : ltac2:(CDefT.buildp (gd_tbl_AxSymRun3 ()) "Psegs,(2.$11.)Pmem,P,(5.&40.)(<.(5.&8.))Psp,(5.&40.)PK,$19.Pz,$19.Pn,$0.P,(49.R6.R5.R4.R3.)P,(43.(44.(45.&40.R5.)R4.)R3.)P,(43.(46.R4.(47.R3.))(45.&40.R6.))P,(43.=R5.)(7.$8.(48.R:.R9.(21.&40.R6.)R5.)$:.)")
-(* [comment removed for export] *).
+Lemma stk_ok_lit : forall segs mem sp K z n,
+  stk_ok segs mem sp K ->
+  (bv_unsigned sp - K <= z)%Z -> (z + Z.of_nat n <= bv_unsigned sp)%Z -> (0 <= z)%Z ->
+  store_ok segs mem (Z_to_bv 64 z) n = true.
 Proof.
   intros segs mem sp K z n Hs H1 H2 H3. pose proof (u64_range sp).
   apply Hs; rewrite u_small by lia; lia.
@@ -305,70 +350,105 @@ Lemma stk_ok_mem_denot : forall segs E mem log sp K,
   stk_ok segs mem sp K -> stk_ok segs (mem_denot E mem log) sp K.
 Proof. intros. eapply stk_ok_grows; [eassumption | apply mem_denot_grows]. Qed.
 
-(* [comment removed for export] *)
-Lemma stk_ok_init : ltac2:(CDefT.buildp (gd_tbl_AxSymRun3 ()) "Psegs,(2.$11.)Pph,$4<.Psp,(5.&40.)Pargv,(2.(2.(5.&8.)))Penvp,(2.(2.(5.&8.)))Puid,(5.&40.)Phw,(5.&40.)Prdraw,$4=.(49.R8.(4>.R7.R6.R5.R4.R3.R2.R1.)R6.$4?.)")
-(* [comment removed for export] *).
+(** The initial memory: the stack window below sp is writable.  Its
+    depth is [StoreOk.stack_window_depth], not the whole 8 MiB: Linux
+    counts the entry image inside [RLIMIT_STACK]
+    ([Run.stack_window_lo]). *)
+Lemma stk_ok_init : forall segs inp mbase ph entry (sp brk0 : word)
+    (rdraw : EntryDraw),
+  valid_launch inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) inp ->
+  stk_ok segs (wrap_mem inp mbase ph entry sp rdraw) sp stack_window_depth.
 Proof.
-  intros segs ph sp argv envp uid hw rdraw a n H1 H2.
-  apply store_ok_wrap_window; assumption.
+  intros segs inp mbase ph entry sp brk0 rdraw Hvl Hlau a n H1 H2.
+  unfold stack_window_depth in H1.
+  apply (store_ok_wrap_window_valid segs inp mbase ph entry sp brk0 a n rdraw
+           Hvl Hlau); lia.
 Qed.
 
-Lemma kwr_of_stk_ok : ltac2:(CDefT.buildp (gd_tbl_AxSymRun3 ()) "Psegs,(2.$11.)PE,$1.Pmem,P,(5.&40.)(<.(5.&8.))Pe,$3.Psp,(5.&40.)PK,$19.P,(7.(5.&40.)(3:.R5.R3.)R2.)P,(49.R7.R5.R3.R2.)P,(2:.(43.=R3.)(43.R3.(45.&40.R4.)))(50.R9.R8.R7.(51.(52.R6.(4:.R4.))(3?.R4.)))")
-(* [comment removed for export] *).
+Lemma kwr_of_stk_ok : forall segs E mem (e : expr) (sp : word) K,
+  edenot E e = sp -> stk_ok segs mem sp K -> (0 <= K <= bv_unsigned sp)%Z ->
+  kentry_ok segs E mem (KWr (SA e (- K)) (ELit K)).
 Proof.
   intros segs E mem e sp K He Hs HK. cbn [kentry_ok]. unfold flat, estart, elenZ. cbn [a_base a_off edenot]. rewrite He.
   pose proof (u64_range sp). rewrite u_small by lia. split; [lia|].
   intros d m Hd Hm. apply Hs; rewrite u_small by lia; lia.
 Qed.
 
-(* [comment removed for export] *)
-Lemma kword_intro : ltac2:(CDefT.buildp (gd_tbl_AxSymRun3 ()) "Psegs,(2.$11.)PE,$1.Pmem,P,(5.&40.)(<.(5.&8.))Pe,$3.Pa,(5.&40.)Poff,$19.Pw,$0.Pv,$3.Px,(5.&40.)P,(7.(5.&40.)(3:.R8.R6.)R5.)P,(7.(5.&40.)(3:.R9.R3.)R2.)P,(33.#1.R5.)P,(33.R6.#8.)P,(43.=(46.(45.&40.R9.)R8.))P,(43.(46.(46.(45.&40.R:.)R9.)(47.R8.))(53.+2.+40.))P,(7.(<.(2.(5.&8.)))(54.R?.R=.(21.&40.(46.(45.&40.R;.)R:.))R9.)(55.(2.(5.&8.))(56.R9.R7.)))(50.R10.R?.R>.(57.(52.R=.R;.)R:.R9.))")
-(* [comment removed for export] *).
+(** Introduction lemmas for the other knowledge kinds. *)
+Lemma kword_intro : forall segs E mem (e : expr) (a : word) off w (v : expr) (x : word),
+  edenot E e = a -> edenot E v = x -> (1 <= w)%nat -> (w <= 8)%nat ->
+  (0 <= bv_unsigned a + off)%Z -> (bv_unsigned a + off + Z.of_nat w <= 2 ^ 64)%Z ->
+  rdn segs mem (Z_to_bv 64 (bv_unsigned a + off)) w = Some (word_to_le_bytes w x) ->
+  kentry_ok segs E mem (KWord (SA e off) w v).
 Proof.
   intros segs E mem e a off w v x He Hv Hw1 Hw H1 H2 Hr. cbn [kentry_ok]. unfold flat, estart, adenot, v_addi.
   cbn [a_base a_off]. rewrite He, Hv. split; [exact Hw|]. split; [lia | exact Hr].
 Qed.
 
-Lemma krange_intro : ltac2:(CDefT.buildp (gd_tbl_AxSymRun3 ()) "Psegs,(2.$11.)PE,$1.Pmem,P,(5.&40.)(<.(5.&8.))Pe,$3.Plo,$19.Phi,$19.P,(2:.(43.R2.(45.&40.(3:.R5.R3.)))(43.(45.&40.(3:.R5.R3.))R1.))(50.R7.R6.R5.(58.R4.R3.R2.))")
-(* [comment removed for export] *).
+Lemma krange_intro : forall segs E mem (e : expr) lo hi,
+  (lo <= bv_unsigned (edenot E e) <= hi)%Z -> kentry_ok segs E mem (KRange e lo hi).
 Proof. intros. cbn [kentry_ok]. lia. Qed.
 
-Lemma kalign_intro : ltac2:(CDefT.buildp (gd_tbl_AxSymRun3 ()) "Psegs,(2.$11.)PE,$1.Pmem,P,(5.&40.)(<.(5.&8.))Pe,$3.Pm,$19.P,(59.=R1.)P,(7.$19.(5:.(45.&40.(3:.R5.R3.))R2.)=)(50.R7.R6.R5.(5;.R4.R3.))")
-(* [comment removed for export] *).
+Lemma kalign_intro : forall segs E mem (e : expr) m,
+  (0 < m)%Z -> (bv_unsigned (edenot E e) mod m = 0)%Z -> kentry_ok segs E mem (KAlign e m).
 Proof. intros. cbn [kentry_ok]. auto. Qed.
 
-Lemma kimg_intro : ltac2:(CDefT.buildp (gd_tbl_AxSymRun3 ()) "Psegs,(2.$11.)PE,$1.Pmem,Px,(5.&40.)(<.(5.&8.))Plo,$19.Phi,$19.P,(43.=R2.)P,(43.R2.(53.+2.+40.))P,Pi,$19.P,(2:.(43.R5.R1.)(59.R1.R4.))(7.(<.(5.&8.))A1.R7.(21.&40.R2.)(1=.(5.&8.)))(50.R8.R7.R6.(5<.R5.R4.))")
-(* [comment removed for export] *).
+Lemma kimg_intro : forall segs E mem lo hi,
+  (0 <= lo)%Z -> (hi <= 2 ^ 64)%Z ->
+  (forall i, (lo <= i < hi)%Z -> mem (Z_to_bv 64 i) = None) ->
+  kentry_ok segs E mem (KImg lo hi).
 Proof. intros. cbn [kentry_ok]. auto. Qed.
 
-Lemma kzero_intro : ltac2:(CDefT.buildp (gd_tbl_AxSymRun3 ()) "Psegs,(2.$11.)PE,$1.Pmem,Px,(5.&40.)(<.(5.&8.))Pe,$3.Pa,(5.&40.)Poff,$19.Pn,$3.Plen,$19.P,(7.(5.&40.)(3:.R7.R5.)R4.)P,(7.$19.(45.&40.(3:.R8.R3.))R2.)P,(43.=(46.(45.&40.R6.)R5.))P,(59.=R4.)P,(43.(46.(46.(45.&40.R8.)R7.)R5.)(53.+2.+40.))P,Pi,$19.P,(2:.(43.=R1.)(59.R1.R7.))(7.(<.(5.&8.))A1.R=.(21.&40.(46.(46.(45.&40.R;.)R:.)R2.))(55.(5.&8.)(21.&8.=)))(50.R>.R=.R<.(5=.(52.R;.R9.)R8.))")
-(* [comment removed for export] *).
+Lemma kzero_intro : forall segs E mem (e : expr) (a : word) off (n : expr) len,
+  edenot E e = a -> bv_unsigned (edenot E n) = len ->
+  (0 <= bv_unsigned a + off)%Z -> (0 < len)%Z -> (bv_unsigned a + off + len <= 2 ^ 64)%Z ->
+  (forall i, (0 <= i < len)%Z -> mem (Z_to_bv 64 (bv_unsigned a + off + i)) = Some (Z_to_bv 8 0)) ->
+  kentry_ok segs E mem (KZero (SA e off) n).
 Proof.
   intros segs E mem e a off n len He Hn H1 H2 H3 Hz. cbn [kentry_ok]. unfold flat, elenZ, estart.
   cbn [a_base a_off]. rewrite He, Hn. split; [lia | exact Hz].
 Qed.
 
-Lemma kblob_intro : ltac2:(CDefT.buildp (gd_tbl_AxSymRun3 ()) "Psegs,(2.$11.)PE,$1.Pmem,Px,(5.&40.)(<.(5.&8.))Pe,$3.Pa,(5.&40.)Poff,$19.Pn,$3.Pk,$0.Pbs,(2.(5.&8.))P,(7.(5.&40.)(3:.R8.R6.)R5.)P,(7.(2.(5.&8.))(5>.R9.R3.)R2.)P,(7.$19.(45.&40.(3:.R:.R5.))(47.(15.(5.&8.)R3.)))P,(43.=(46.(45.&40.R8.)R7.))P,(59.(46.(45.&40.R9.)R8.)(53.+2.+40.))P,(43.(46.(46.(45.&40.R:.)R9.)(47.(15.(5.&8.)R6.)))(53.+2.+40.))P,Pi,$19.P,(2:.(43.=R1.)(59.R1.(47.(15.(5.&8.)R8.))))(7.(<.(5.&8.))A1.R?.(21.&40.(46.(46.(45.&40.R=.)R<.)R2.))(55.(5.&8.)(5?.(5.&8.)(60.R2.)R9.(21.&8.=))))(50.R10.R?.R>.(61.(52.R=.R;.)R:.R9.))")
-(* [comment removed for export] *).
+Lemma kblob_intro : forall segs E mem (e : expr) (a : word) off (n : expr) k bs,
+  edenot E e = a -> eb E k = bs -> bv_unsigned (edenot E n) = Z.of_nat (length bs) ->
+  (0 <= bv_unsigned a + off)%Z -> (bv_unsigned a + off < 2 ^ 64)%Z ->
+  (bv_unsigned a + off + Z.of_nat (length bs) <= 2 ^ 64)%Z ->
+  (forall i, (0 <= i < Z.of_nat (length bs))%Z ->
+     mem (Z_to_bv 64 (bv_unsigned a + off + i)) = Some (nth (Z.to_nat i) bs (Z_to_bv 8 0))) ->
+  kentry_ok segs E mem (KBlob (SA e off) n k).
 Proof.
   intros segs E mem e a off n k bs He Hb Hn H1 H1' H2 Hz. cbn [kentry_ok]. unfold flat, elenZ, estart.
   cbn [a_base a_off]. rewrite He, Hn, Hb. split; [lia|]. split; [reflexivity | exact Hz].
 Qed.
 
-(* [comment removed for export] *)
-Lemma wrap_mem_none_low : ltac2:(CDefT.buildp (gd_tbl_AxSymRun3 ()) "Pph,$4<.Psp,(5.&40.)Pargv,(2.(2.(5.&8.)))Penvp,(2.(2.(5.&8.)))Puid,(5.&40.)Phw,(5.&40.)Prdraw,$4=.Pi,$19.P,(43.=R1.)P,(59.R2.(44.(45.&40.R8.)$4?.))(7.(<.(5.&8.))(4>.R:.R9.R8.R7.R6.R5.R4.(21.&40.R3.))(1=.(5.&8.)))")
-(* [comment removed for export] *).
+(** The initial memory ([wrap_mem]) is [None] away from the stack block,
+    in particular on the whole image: use for [KImg].  The window's
+    floor counts RLIMIT_STACK from the stack VMA's end
+    ([Run.stack_window_lo]), so the launch conjunct is what puts it at
+    or above [sp - 8 MiB]. *)
+Lemma wrap_mem_none_low :
+  forall v inp mbase ph entry (sp brk0 : word) (rdraw : EntryDraw) (i : Z),
+  entry_launch_ok_va v (mkEntry sp brk0 mbase rdraw) inp ->
+  (0 <= i)%Z -> (i < bv_unsigned sp - stack_max_size)%Z ->
+  wrap_mem inp mbase ph entry sp rdraw (Z_to_bv 64 i) = None.
 Proof.
-  intros ph sp argv envp uid hw rdraw i H0 Hi. unfold wrap_mem.
+  intros v inp mbase ph entry sp brk0 rdraw i Hlau H0 Hi. unfold wrap_mem.
   pose proof (u64_range sp) as Hsp.
-  assert (Hu : bv_unsigned (Z_to_bv 64 i) = i) by (apply u_small; unfold stack_max_size in Hi; lia).
+  pose proof (launch_sp_le_ed_top v inp mbase sp brk0 rdraw Hlau) as Htop.
+  pose proof (Z.le_max_l (bv_unsigned (ed_top rdraw) - stack_max_size)
+                (bv_unsigned mbase + stack_guard_gap_bytes (in_kernel inp))) as Hmax.
+  assert (Hu : bv_unsigned (Z_to_bv 64 i) = i)
+    by (apply u_small; unfold stack_max_size in Hi; lia).
   unfold stack_to_mem. rewrite Hu.
-  replace (Z.leb (bv_unsigned sp) i) with false by (symmetry; apply Z.leb_gt; unfold stack_max_size in Hi; lia).
-  replace (Z.leb (bv_unsigned sp - stack_max_size) i) with false by (symmetry; apply Z.leb_gt; lia).
+  replace (Z.leb (bv_unsigned sp) i) with false
+    by (symmetry; apply Z.leb_gt; unfold stack_max_size in Hi; lia).
+  replace (Z.leb (stack_window_lo (in_kernel inp) mbase rdraw) i) with false
+    by (symmetry; apply Z.leb_gt; unfold stack_window_lo in *; lia).
   reflexivity.
 Qed.
 
-(* [comment removed for export] *)
+(** Narrow loads of small values are the identity. *)
 Lemma ext_val_zx_id : forall n (v : word),
   (bv_unsigned v < 2 ^ (8 * Z.of_nat n))%Z -> ext_val false 0 n v = v.
 Proof.
@@ -377,8 +457,8 @@ Proof.
   apply Z_to_bv_bv_unsigned.
 Qed.
 
-Lemma ext_val_sx_id : ltac2:(CDefT.buildp (gd_tbl_AxSymRun3 ()) "Pn,$0.Pv,(5.&40.)P,(33.#1.R2.)P,(59.(45.&40.R2.)(53.+2.(44.(62.+8.(47.R3.))+1.)))(7.(5.&40.)(63.$:.#0.R4.R3.)R3.)")
-(* [comment removed for export] *).
+Lemma ext_val_sx_id : forall n (v : word),
+  (1 <= n)%nat -> (bv_unsigned v < 2 ^ (8 * Z.of_nat n - 1))%Z -> ext_val true 0 n v = v.
 Proof.
   intros n v Hn Hv. unfold ext_val, ext_Z. pose proof (u64_range v).
   assert (Hp : (2 ^ (8 * Z.of_nat n - 1) * 2 = 2 ^ (8 * Z.of_nat n))%Z).
@@ -392,47 +472,53 @@ Proof.
   apply Z_to_bv_bv_unsigned.
 Qed.
 
-Lemma branch_eq_lit : ltac2:(CDefT.buildp (gd_tbl_AxSymRun3 ()) "Pv,(5.&40.)Pz,$19.P,(2:.(43.=R1.)(59.R1.(53.+2.+40.)))(7.$8.(64.$65.R3.(21.&40.R2.))(66.(45.&40.R3.)R2.))")
-(* [comment removed for export] *).
+Lemma branch_eq_lit : forall (v : word) z,
+  (0 <= z < 2 ^ 64)%Z ->
+  branch_taken BC_EQ v (Z_to_bv 64 z) = Z.eqb (bv_unsigned v) z.
 Proof.
   intros v z Hz. cbn [branch_taken]. unfold bv_eqb. rewrite u_small by lia. reflexivity.
 Qed.
 
-Lemma branch_ne_lit : ltac2:(CDefT.buildp (gd_tbl_AxSymRun3 ()) "Pv,(5.&40.)Pz,$19.P,(2:.(43.=R1.)(59.R1.(53.+2.+40.)))(7.$8.(64.$67.R3.(21.&40.R2.))(68.(66.(45.&40.R3.)R2.)))")
-(* [comment removed for export] *).
+Lemma branch_ne_lit : forall (v : word) z,
+  (0 <= z < 2 ^ 64)%Z ->
+  branch_taken BC_NE v (Z_to_bv 64 z) = negb (Z.eqb (bv_unsigned v) z).
 Proof.
   intros v z Hz. cbn [branch_taken]. unfold bv_eqb. rewrite u_small by lia. reflexivity.
 Qed.
 
-Lemma branch_ltu_lit_r : ltac2:(CDefT.buildp (gd_tbl_AxSymRun3 ()) "Pv,(5.&40.)Pz,$19.P,(2:.(43.=R1.)(59.R1.(53.+2.+40.)))(7.$8.(64.$69.R3.(21.&40.R2.))(6:.(45.&40.R3.)R2.))")
-(* [comment removed for export] *).
+Lemma branch_ltu_lit_r : forall (v : word) z,
+  (0 <= z < 2 ^ 64)%Z ->
+  branch_taken BC_LTU v (Z_to_bv 64 z) = Z.ltb (bv_unsigned v) z.
 Proof.
   intros v z Hz. cbn [branch_taken]. unfold bv_ltu. rewrite u_small by lia. reflexivity.
 Qed.
 
-Lemma branch_ltu_lit_l : ltac2:(CDefT.buildp (gd_tbl_AxSymRun3 ()) "Pv,(5.&40.)Pz,$19.P,(2:.(43.=R1.)(59.R1.(53.+2.+40.)))(7.$8.(64.$69.(21.&40.R2.)R3.)(6:.R2.(45.&40.R3.)))")
-(* [comment removed for export] *).
+Lemma branch_ltu_lit_l : forall (v : word) z,
+  (0 <= z < 2 ^ 64)%Z ->
+  branch_taken BC_LTU (Z_to_bv 64 z) v = Z.ltb z (bv_unsigned v).
 Proof.
   intros v z Hz. cbn [branch_taken]. unfold bv_ltu. rewrite u_small by lia. reflexivity.
 Qed.
 
-Lemma branch_geu_lit_r : ltac2:(CDefT.buildp (gd_tbl_AxSymRun3 ()) "Pv,(5.&40.)Pz,$19.P,(2:.(43.=R1.)(59.R1.(53.+2.+40.)))(7.$8.(64.$6;.R3.(21.&40.R2.))(68.(6:.(45.&40.R3.)R2.)))")
-(* [comment removed for export] *).
+Lemma branch_geu_lit_r : forall (v : word) z,
+  (0 <= z < 2 ^ 64)%Z ->
+  branch_taken BC_GEU v (Z_to_bv 64 z) = negb (Z.ltb (bv_unsigned v) z).
 Proof.
   intros v z Hz. cbn [branch_taken]. unfold bv_ltu. rewrite u_small by lia. reflexivity.
 Qed.
 
-Lemma branch_geu_lit_l : ltac2:(CDefT.buildp (gd_tbl_AxSymRun3 ()) "Pv,(5.&40.)Pz,$19.P,(2:.(43.=R1.)(59.R1.(53.+2.+40.)))(7.$8.(64.$6;.(21.&40.R2.)R3.)(68.(6:.R2.(45.&40.R3.))))")
-(* [comment removed for export] *).
+Lemma branch_geu_lit_l : forall (v : word) z,
+  (0 <= z < 2 ^ 64)%Z ->
+  branch_taken BC_GEU (Z_to_bv 64 z) v = negb (Z.ltb z (bv_unsigned v)).
 Proof.
   intros v z Hz. cbn [branch_taken]. unfold bv_ltu. rewrite u_small by lia. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ######################################################################### *)
+(** * 5. Tactics                                                             *)
+(* ######################################################################### *)
 
-(* [comment removed for export] *)
+(** Split [scs_denot segs base E [s1; ...; sn]] into n goals [sc_denot ... si]. *)
 Ltac split_scs :=
   lazymatch goal with
   | |- scs_denot _ _ _ [] => constructor
@@ -441,7 +527,7 @@ Ltac split_scs :=
   | |- Forall _ (_ :: _) => constructor; [| split_scs]
   end.
 
-(* [comment removed for export] *)
+(** Unfold one side condition to plain arithmetic where possible. *)
 Ltac ground_mod :=
   repeat match goal with
   | |- context [ (?a mod ?b)%Z ] =>
@@ -459,7 +545,9 @@ Ltac sc_unfold :=
   cbn [a_base a_off edenot ev eb vals_ev nth];
   rewrite ?Z_to_bv_unsigned, ?bv_wrap64_mod; ground_mod.
 
-(* [comment removed for export] *)
+(** Default discharger: arithmetic facts by [lia] after exposing
+    [bv_unsigned (Z_to_bv 64 k)] of small literals; the caller supplies a
+    tactic [extra] for store_ok / read-base goals (or [idtac]). *)
 Ltac lit_u :=
   repeat match goal with
   | |- context [bv_unsigned (Z_to_bv 64 ?z)] =>
@@ -469,7 +557,7 @@ Ltac lit_u :=
       end
   end.
 
-(* [comment removed for export] *)
+(** store_ok goals: try every [stk_ok] hypothesis in context. *)
 Ltac sc_store :=
   match goal with
   | Hs : stk_ok _ _ _ _ |- store_ok _ _ (v_addi _ _) _ = true =>
@@ -486,7 +574,8 @@ Ltac sc_auto extra :=
         | match goal with |- _ /\ _ => repeat split; first [lia | sc_store | extra] end
         | idtac ].
 
-(* [comment removed for export] *)
+(** [sym_run_tac]: HR : regs_ok E sr regs, HK : know_ok segs E base kn.
+    Leaves R' HR' Hlf Hms and the undischarged side conditions. *)
 Ltac sym_run_tac segs fuel stops scr nx HR HK R' HR' Hlf Hms extra :=
   lazymatch type of HR with
   | regs_ok ?E ?sr ?regs =>

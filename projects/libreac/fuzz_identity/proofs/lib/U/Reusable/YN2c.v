@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from projects/cgif/cgif_file_fuzzer/proofs/lib/YN2c.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed new_disjoint_img, ledger_ok_A2). *)
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -182,7 +183,7 @@ Qed.
 Lemma new_disjoint_img : forall x, in_img B x -> ~ (bv_unsigned a <= x < bv_unsigned a + len).
 Proof.
 intros x [_ (sg & Hsg & Hx)] Hin. pose proof grant_facts as (_ & _ & _ & RF & _).
-rewrite <- (lg_reserved _ _ _ _ G) in Hsg.
+apply (lg_in_reserved _ _ _ _ _ G) in Hsg.
 pose proof (region_free_In _ a (Z_to_bv 64 len) sg RF ltac:(apply in_app_iff; left; exact Hsg) ltac:(rewrite len_u; lia) ltac:(lia)) as D.
 rewrite len_u in D. unfold ranges_disjoint in D. cbn [fst snd] in D. lia.
 Qed.
@@ -281,6 +282,14 @@ split; [exact Hceil|]. intros x Hx Himg. exact (new_disjoint_img x Himg Hx).
 - rewrite live_bytes_A2. unfold md1. pose proof (vm_backing_used_mmap a (Z_to_bv 64 len) md). rewrite len_u in *.
 pose proof (lg_backing _ _ _ _ G). lia.
 -   exact (lg_ceil _ _ _ _ G).
+- exact (lg_vdso _ _ _ _ G).
+- intros k rg Hk Hl Hkind. rewrite region_of_A2 in Hk.
+destruct (Nat.ltb_spec k r0).
++ rewrite (L1_old k rg Hk). exact (lg_rfree _ _ _ _ G k rg Hk Hl Hkind).
++ destruct (Nat.eqb_spec k r0); [|discriminate]. injection Hk as <-. subst k.
+unfold w64. rewrite L1_new, Z_to_bv_bv_unsigned. unfold rgn. cbn [rg_len].
+exact (rfree_app_l _ _ _ _ RF).
+- exact (lg_brk_vdso _ _ _ _ G).
 Qed.
 Lemma ledger_x_A2 : ledger_x L1 A2 md1.
 Proof.

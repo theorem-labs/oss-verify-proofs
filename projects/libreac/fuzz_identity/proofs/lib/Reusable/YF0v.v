@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from projects/cgif/cgif_file_fuzzer/proofs/lib/YF0v.v, with its module paths changed to libreac/fuzz_identity and its Zify division flag set #[local]. *)
-(* Modified by Theorem Labs, 2026-10: libreac/fuzz_identity takes fuzz_disco's shared copy (a Theorem Labs lane fc90d9018eb, lib/Reusable/YF0v.v; its Zify override is #[local]) in place of its own lib/{A,B}/Rt/YF0v.v. *)
+(* Modified by Theorem Labs, 2026-10: libreac/fuzz_identity takes fuzz_disco's shared copy (a Theorem Labs lane, lib/Reusable/YF0v.v; its Zify override is #[local]) in place of its own lib/{A,B}/Rt/YF0v.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.

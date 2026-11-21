@@ -1,9 +1,10 @@
-(* CARRIED from a working branch 3dd49fa29fa14b99e3c465cacbfe79a09756bb26,
+(* CARRIED from a working branch,
    proofs/omx-clap-core/fuzz_preset/lib/Reusable/YG0lawscf.v, sha256 e3e4ee72f507d3d755c3cce4f9265978f3367b0b7c8ff5e3fb1839bc6346fc49.
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change
    made here is the module prefix OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the event-free second allocator instance (suffix cf). cgif's AR_laws_ok (YG0q.v),
    the assembly of the AR laws, over ARcf: AR_laws_ok_cf : AR_laws_cf segs B. Each field is the _cf law of the
    lane file that proves it: YG0scf.v (twelve laws), YG0sshcf.v (AR_shadow_law_ok_cf), YG0qcf.v

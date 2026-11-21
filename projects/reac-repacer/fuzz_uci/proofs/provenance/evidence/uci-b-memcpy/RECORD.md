@@ -1,18 +1,18 @@
 # UCI-B-MEMCPY: the image-B `__asan_memcpy` contract of reac-repacer/fuzz_uci
 
-Read-only record: no proof file is added or changed. Base `f47e2a8927b9` (the image-B core).
+Read-only record: no proof file is added or changed. Base (the image-B core).
 
 ## The theorem
 
 `lib/B/YE2q.v:146` `asan_memcpy_realizes` (already in the base; relocated with the image-B core from fuzz_grant's released
-`lib/B/YE2q.v`, recipes `4f87de75d67`). Entry `cfg_at tfibsegs 0x50674` = uci B `__asan_memcpy` (twin symtab: 0x50674,
+`lib/B/YE2q.v`, recipes). Entry `cfg_at tfibsegs 0x50674` = uci B `__asan_memcpy` (twin symtab: 0x50674,
 1180 bytes). The composition takes this statement verbatim as its Section hypothesis (no restatement, no bridge lemma).
 
 ## Build and assumptions
 
-`cb build` (cb `98f0481385b6`), FACTS `25e3d17bdb50`, targets `lib/B/YE2q.vo` and a scratch probe
+`cb build` (cb `98f0481385b6`), FACTS, targets `lib/B/YE2q.vo` and a scratch probe
 `lib/B/ZH10MemcpyAssm.v` (`Check` + `Print Assumptions`; not committed): rc=0, wall 207 s, 2 targets compiled, 0
-restored from the cache, 0 failed; 4 PINNED at facts 25e3d17bdb50 (0 MISMATCH, 0 MISSING, 0 UNPINNED, 0 ABSENT).
+restored from the cache, 0 failed; 4 PINNED at facts (0 MISMATCH, 0 MISSING, 0 UNPINNED, 0 ABSENT).
 Built files: `lib/B/YE2q.v` sha256 `4b02f237f14baa712b932cb39b811a1003cde902748804827ed3e8db78419eb5`, `lib/B/YE2q.vo`
 sha256 `28be5342f43ff49f659a4da4b64a9d7d03e7714170df66f017f8f0e996b96169`.
 `Print Assumptions YE2q.asan_memcpy_realizes`, every axiom name: `FunctionalExtensionality.functional_extensionality_dep`,
@@ -22,7 +22,7 @@ No `Admitted` / `admit.` / `Axiom` / `Parameter` in `lib/B/YE2q.v`.
 
 ## Donor byte compare (cmpkit 86da41d3ef68)
 
-Kit of record: cmpkit `86da41d3ef68` = `tools/cmpkit/86da41d3ef68/` at commit `98e50c029045` (`sha256sum -c SHA256SUMS`:
+Kit of record: cmpkit `86da41d3ef68` = `tools/cmpkit/86da41d3ef68/` (`sha256sum -c SHA256SUMS`:
 all 9 members OK; strictcmp3 `65688e94214a`, closure_strict3 `a98d2b3e8857`, jtcheck `8b0ea3862423`, drvcmp
 `4d70e90bc1fa`, repin_check `e6883477399d`, bytecmp `1480ca2faea0`, ambiscan `9f61b4cee422`). Every script here loads the
 kit from `KIT=<dir>`. It supersedes cmpkit 4bbd3a74be89, on which this record was first made (`REVIEW-4bbd.md`).
@@ -30,7 +30,7 @@ kit from `KIT=<dir>`. It supersedes cmpkit 4bbd3a74be89, on which this record wa
 uci B (pin `a1b86e424add`, unstripped twin `8d07ffcf5948`) against fuzz_grant B (pin `fde52226dc48`, unstripped twin
 `5a5ee7c02b4e`).
 
-0. **Exposure of the 4bbd record**: ambiscan on the 4bbd slice (commit `7d92e375ee4`): 0 AMBIG over 14 files
+0. **Exposure of the 4bbd record**: ambiscan on the 4bbd slice: 0 AMBIG over 14 files
    (`ambiscan-4bbd-record.out`). Rule 8 (lui-built
    values) exposed it: the re-run below has 74 `lui-in-section` targets that 4bbd compared raw.
 1. **Twins** (`drvcmp.py twins`, `twins.out`): each twin's PT_LOAD layout equals its pin's, and its loadable bytes differ

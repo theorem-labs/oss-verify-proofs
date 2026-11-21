@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (comments brought up to date with the port). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Run.
@@ -36,6 +37,9 @@ Qed.
 End WithCeiling0.
 
 Theorem impl_U_closed : (forall (CE__ : Ceiling) (RN__ : RunRnd), @rfuzz_one_stmt CE__ RN__) ->
+  (* [kernel_pinned ->] DELETED by name (superseded 2026-11-06, see TopLevel.v):
+     an unprovable premise, now derived inside [impl_U_from_main] from the
+     [valid_input_either] this statement already quantifies over. *)
   forall (en : ExecEntry) (inp : ProcInput),
     valid_entry (mkImage usegs Ubsan.M.init_pc Ubsan.M.phdrs) en inp ->
     valid_input_either inp ->

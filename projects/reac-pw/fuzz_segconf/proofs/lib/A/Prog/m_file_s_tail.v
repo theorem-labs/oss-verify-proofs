@@ -5,6 +5,7 @@
    for libreac/fuzz_identity's ASan build (lib/A). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_catalogue.v, with its module paths and numbers changed; 204 of its 254 lines of code are new or changed and 319 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/check_ignore.v, with its module paths and module names changed; 339 of its 373 lines of code are new or changed and 220 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* m_file on fuzz_segconf.asan (image A, 0x85ebc): the segments S_MF_TAIL (13 instructions from the cut TAIL
    0x86cf8) and S_MF_KDONE (10 instructions from the cut KDONE 0x86cd0) of its walk (the G2 walk owner's
    guide/MF-CUTS-A.md sections 2 and 4). The TAIL / EXIT segment lane of the G2 walk owner's G2. Neither segment calls anything.
@@ -22,7 +23,7 @@
 
    The seed is lib/A/Prog/m_file_sd.v's mf_seed (the m_file cut-statement lane); the spill slots' region is made read-only here
    (ast_ok_pi_set_region, as fuzz_command's check_reply_s7.v cr7_seed does with its frame header).
-   Closed against G2 FINAL at 6f783602b5e3 (the image-A owner's contracts, round 5). *)
+   Closed against G2 FINAL (the image-A owner's contracts, round 5). *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

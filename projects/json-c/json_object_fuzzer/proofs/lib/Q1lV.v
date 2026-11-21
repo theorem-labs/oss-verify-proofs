@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (`RomBase.sys_rob` at each node of `srealizes` and `slbody`, and `RomBase.sys_rob_instr` at the silent instruction step; the loop's walk as the read-only `QRjH.star_rob`). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -16,6 +17,9 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import QdTb. From OSSVerify.P
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import QHWH. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Qmth.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import Qmth.Mq0. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Qg31.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import Qg31.
+(* LPS 727298f3: the read-only backing of the walks, as [QRjH.realizes] (the ASan side of B2) *)
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QRjH.
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib.Cfg Require RomBase.
 Import ListNotations.
 Open Scope bv_scope.
 
@@ -26,6 +30,7 @@ Inductive srealizes : config -> TSet -> Prop :=
 | srz_node : forall c (I : Type) (evs : I -> list event) (nx : I -> config)
 (T : I -> TSet) (i0 : I),
 node_ok segs c I evs nx ->
+RomBase.sys_rob segs c ->
 (forall i, srealizes (nx i) (T i)) ->
 srealizes c (t_alt (fun i => t_emit (evs i) (T i)))
 | srz_halt : forall c,
@@ -41,7 +46,7 @@ srealizes c T -> t_eq T T' -> srealizes c T'
 | srz_loop : forall (V : config -> Prop) (T : TSet) (c c_e : config),
 V c ->
 (forall c', V c' -> slbody V T c') ->
-star_cfg segs (alloc_only_cfg false) c [] c_e ->
+QRjH.star_rob segs c c_e ->
 srealizes c_e T ->
 srealizes c T
 with slbody : (config -> Prop) -> TSet -> config -> Prop :=
@@ -50,6 +55,7 @@ srealizes c T -> slbody V T c
 | slb_node : forall (V : config -> Prop) (T : TSet) c (I : Type) (nx : I -> config)
 (k : I -> bool),
 node_ok segs c I (fun _ => []) nx ->
+RomBase.sys_rob segs c ->
 (forall i, k i = true -> slbody V T (nx i)) ->
 (forall i, k i = false -> V (nx i)) ->
 slbody V T c.
@@ -64,7 +70,7 @@ Proof. intros c [Hspin Hh]. exact (srz_spin c Hspin Hh). Qed.
 Lemma srealizes_nonempty : forall c T, srealizes c T -> T [].
 Proof.
 intros c T H;
-induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
+induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
 | c Hspin Hh | c T T' H IH Heq
 | V T c c_e HV Hbody Hw He IHe].
 - exists i0. left. apply is_prefix_nil.
@@ -78,7 +84,7 @@ Lemma srealizes_pclosed : forall c T, srealizes c T ->
 forall tr tr', T tr -> is_prefix tr' tr -> T tr'.
 Proof.
 intros c T H;
-induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
+induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
 | c Hspin Hh | c T T' H IH Heq
 | V T c c_e HV Hbody Hw He IHe];
 intros tr tr' HT Hp.
@@ -126,7 +132,7 @@ Lemma srealizes_slbody_sound :
 Proof.
 apply srealizes_slbody_mutind.
 -
-intros c I evs nx T i0 Hnode Hcont IH n tr c' Hstar.
+intros c I evs nx T i0 Hnode Hrob Hcont IH n tr c' Hstar.
 inversion Hstar as [|m c1 e c2 tr2 c3 Hss Hstar2]; subst.
 + exists i0. left. apply is_prefix_nil.
 + destruct Hnode as [_ Hsound].
@@ -155,7 +161,7 @@ intros c'' m tr2 c2 HV'' Hm Hs. exact (IHn m Hm c'' HV'' tr2 c2 Hs).
 -
 intros V T c H IH n _ _ m tr c' _ Hstar. eapply IH; exact Hstar.
 -
-intros V T c I nx k Hnode Hk IHk HV n HT0 Hlt m tr c' Hm Hstar.
+intros V T c I nx k Hnode Hrob Hk IHk HV n HT0 Hlt m tr c' Hm Hstar.
 inversion Hstar as [|m' c1 e c2 tr2 c3 Hss Hstar2]; subst.
 + exact HT0.
 + destruct Hnode as [_ Hsound].
@@ -177,7 +183,7 @@ Lemma srealizes_admits : forall c T, srealizes c T ->
 forall tr, T tr -> obs_trace_cfg segs (alloc_only_cfg false) c tr.
 Proof.
 intros c T H;
-induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
+induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
 | c Hspin Hh | c T T' H IH Heq
 | V T c c_e HV Hbody Hw He IHe];
 intros tr HT.
@@ -193,7 +199,7 @@ split; [eapply star_cfg_step; [apply Hcomp | exact Hstar]
 - apply IH. apply Heq. exact HT.
 - destruct (IHe tr HT) as (tr'' & c'' & Hstar & Hp).
 exists tr'', c''. split; [| exact Hp].
-change tr'' with ([] ++ tr''). eapply star_cfg_trans; [exact Hw | exact Hstar].
+change tr'' with ([] ++ tr''). eapply star_cfg_trans; [exact (QRjH.star_rob_star segs _ _ Hw) | exact Hstar].
 Qed.
 
 Theorem srealizes_obs_iff : forall c T, srealizes c T ->
@@ -217,7 +223,7 @@ Lemma srealizes_slbody_step :
 forall e c', sstep_cfg segs (alloc_only_cfg false) c e (SNext c') -> srz_path c').
 Proof.
 apply srealizes_slbody_mutind.
-- intros c I evs nx T i0 Hnode Hcont IH e c' Hss.
+- intros c I evs nx T i0 Hnode Hrob Hcont IH e c' Hss.
 destruct Hnode as [_ Hsound].
 destruct (Hsound e (SNext c') Hss) as (i & _ & Heq2).
 inversion Heq2; subst c'. left. exists (T i). apply Hcont.
@@ -232,7 +238,7 @@ left. exists t_nil. exact (srz_spinning _ Hsp').
 - intros V T c c_e HV Hbody IHbody Hw He IHe e c' Hss.
 eapply (IHbody c HV Hbody); exact Hss.
 - intros V T c H IH _ e c' Hss. eapply IH; exact Hss.
-- intros V T c I nx k Hnode Hk IHk HV Hbody e c' Hss.
+- intros V T c I nx k Hnode Hrob Hk IHk HV Hbody e c' Hss.
 destruct Hnode as [_ Hsound].
 destruct (Hsound e (SNext c') Hss) as (i & _ & Heq2).
 inversion Heq2; subst c'. right. exists V, T. split; [exact Hbody|].
@@ -246,7 +252,7 @@ Lemma srealizes_slbody_no_sserror :
 /\ (forall V T c, slbody V T c -> forall e, ~ sstep_cfg segs (alloc_only_cfg false) c e SError).
 Proof.
 apply srealizes_slbody_mutind.
-- intros c I evs nx T i0 Hnode Hcont IH e Hss.
+- intros c I evs nx T i0 Hnode Hrob Hcont IH e Hss.
 destruct Hnode as [_ Hsound].
 destruct (Hsound e SError Hss) as (i & _ & Hbad). discriminate.
 - intros c Hh e Hss. apply Hh. eapply sstep_halted_none; exact Hss.
@@ -256,7 +262,7 @@ exact (spin_no_sstep_error segs ms model Hspin Hh e (sstep_cfg_sub segs _ _ _ _ 
 - intros c T T' H IH Heq e Hss. eapply IH; exact Hss.
 - intros V T c c_e HV Hbody IHbody Hw He IHe e Hss. eapply (IHbody c HV); exact Hss.
 - intros V T c H IH e Hss. eapply IH; exact Hss.
-- intros V T c I nx k Hnode Hk IHk HV e Hss.
+- intros V T c I nx k Hnode Hrob Hk IHk HV e Hss.
 destruct Hnode as [_ Hsound].
 destruct (Hsound e SError Hss) as (i & _ & Hbad). discriminate.
 Qed.
@@ -285,12 +291,13 @@ Qed.
 
 Lemma srz_silent1 : forall c c' T,
 node_ok segs c unit (fun _ => []) (fun _ => c') ->
+RomBase.sys_rob segs c ->
 srealizes c' T ->
 srealizes c T.
 Proof.
-intros c c' T Hnode Hc.
+intros c c' T Hnode Hrob Hc.
 apply (srz_conseq c (t_alt (fun _ : unit => t_emit [] T))).
-- apply (srz_node c unit (fun _ => []) (fun _ => c') (fun _ => T) tt Hnode).
+- apply (srz_node c unit (fun _ => []) (fun _ => c') (fun _ => T) tt Hnode Hrob).
 intros []; exact Hc.
 - eapply t_eq_trans;
 [ apply (t_alt_unit (fun _ : unit => t_emit [] T))
@@ -306,7 +313,7 @@ srealizes (mkCfg ms' model) T ->
 srealizes (mkCfg ms model) T.
 Proof.
 intros ms model ms' T Hh Hlazy Hsvc Hstep Hc.
-eapply srz_silent1; [apply node_instr; eassumption | exact Hc].
+eapply srz_silent1; [apply node_instr; eassumption | apply RomBase.sys_rob_instr; exact Hsvc | exact Hc].
 Qed.
 
 Lemma srz_msteps : forall ms ms' model T,

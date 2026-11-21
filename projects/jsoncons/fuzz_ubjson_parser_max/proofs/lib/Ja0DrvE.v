@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: unwraps the encoded Section SE statements of relayE_regs, regions_pf1A, step_SA and stdout_agree into plain lemmas, with #[using] on three, and renames section variable p0 to auxvp in hdr_valsA uses; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/As0DrvE.v at theorem-labs/oss-verify-proofs@f92feaf8b7e6, lines 38, 62, 366. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -31,17 +32,11 @@ Lemma relayE_hi : forall vals R W i, (81 <= length vals)%nat -> vals_ev (relayE 
 Proof. intros. unfold relayE. apply vals_hiA. lia. Qed.
 Lemma relayE_agree : forall ebs vals R W, (81 <= length vals)%nat -> env_agree 81 (Env (vals_ev vals) ebs) (Env (vals_ev (relayE vals R W)) ebs).
 Proof. intros ebs vals R W HL. split; [|reflexivity]. intros n Hn. cbn [ev]. symmetry. apply relayE_lo; lia. Qed.
-Section SE.
-Local Abbreviation SEC_T_relayE_regs := (forall ebs vals sr R W, (81 <= length vals)%nat -> relay_ok_bE sr = true ->
+Lemma relayE_regs : forall ebs vals sr R W, (81 <= length vals)%nat -> relay_ok_bE sr = true ->
 regs_ok (Env (vals_ev vals) ebs) sr R ->
-regs_ok (Env (vals_ev (relayE vals R W)) ebs) srLHA R) (only parsing).
-Variable ebs : ltac:(sec_ty2 constr:(SEC_T_relayE_regs) 0%nat 0%nat).
-Variable vals : ltac:(sec_ty2 constr:(SEC_T_relayE_regs) 1%nat 0%nat).
-Variable sr : ltac:(sec_ty2 constr:(SEC_T_relayE_regs) 2%nat 0%nat).
-Variable R : ltac:(sec_ty2 constr:(SEC_T_relayE_regs) 3%nat 0%nat).
-Variable W : ltac:(sec_ty2 constr:(SEC_T_relayE_regs) 4%nat 0%nat).
-Lemma relayE_regs : ltac:(sec_stmt2 constr:(SEC_T_relayE_regs) 5%nat 0%nat).
+regs_ok (Env (vals_ev (relayE vals R W)) ebs) srLHA R.
 Proof.
+intros ebs vals sr R W.
 intros HL Hokb HR.
 unfold relay_ok_bE in Hokb. rewrite forallb_forall in Hokb.
 assert (SH : forall i, In i shared_posE -> getr R (Z_to_bv 5 (Z.of_nat i)) = edenot (Env (vals_ev (relayE vals R W)) ebs) (nth i srLHA (ELit 0))).
@@ -55,21 +50,15 @@ getr R (Z_to_bv 5 (Z.of_nat r)) = edenot (Env (vals_ev (relayE vals R W)) ebs) (
 { intros r k Hr Hk. rewrite Hr. cbn [edenot ev]. rewrite relayE_hi by lia. symmetry. exact Hk. }
 do 32 (destruct i as [|i]; [first [lia | apply SH; cbn; tauto | eapply JK; reflexivity] |]). lia.
 Qed.
-End SE.
 Section Pf1Keep.
 Variable sp0 : word.
 Hypothesis Hsp : 0x7fff80000000 <= bv_unsigned sp0 <= 2 ^ 47.
-Section SE.
-Local Abbreviation SEC_T_regions_pf1A := (forall vals ebs so bls, let E := Env (vals_ev vals) ebs in
+#[using="Hsp"] Lemma regions_pf1A : forall vals ebs so bls, let E := Env (vals_ev vals) ebs in
 vals_ev vals 0 = sp0 -> - 2 ^ 22 <= so <= 0 ->
 (forall i nb, find_nz i bls = Some nb -> hzA sp0 (bv_unsigned (vals_ev vals i)) nb) ->
-regions_ok ASEGS 0 so 3232 bls [] [] IMG_PF_A IMG_RW_A E (fun a => ~ Wpf1 (bv_unsigned sp0 + so) a) (fun a => bv_unsigned sp0 + so - 3232 <= a < bv_unsigned sp0 + so)) (only parsing).
-Variable vals : ltac:(sec_ty2 constr:(SEC_T_regions_pf1A) 0%nat 0%nat).
-Variable ebs : ltac:(sec_ty2 constr:(SEC_T_regions_pf1A) 1%nat 0%nat).
-Variable so : ltac:(sec_ty2 constr:(SEC_T_regions_pf1A) 2%nat 0%nat).
-Variable bls : ltac:(sec_ty2 constr:(SEC_T_regions_pf1A) 3%nat 0%nat).
-Lemma regions_pf1A : ltac:(sec_stmt2 constr:(SEC_T_regions_pf1A) 4%nat 0%nat).
-Proof using Hsp vals ebs so bls.
+regions_ok ASEGS 0 so 3232 bls [] [] IMG_PF_A IMG_RW_A E (fun a => ~ Wpf1 (bv_unsigned sp0 + so) a) (fun a => bv_unsigned sp0 + so - 3232 <= a < bv_unsigned sp0 + so).
+Proof.
+intros vals ebs so bls.
 intros E P0 Hso Hbl.
 pose proof Hsp as Hsp'.
 constructor; cbn [ev E]; rewrite ?P0.
@@ -87,7 +76,6 @@ intros Mx d m Hd Hm.
 apply (store_ok_window ASEGS Mx (Z_to_bv 64 0x65d350) (Z_to_bv 64 d) 65536%nat m 0x65d350 0x66d350);
 first [exact (wseg_stage) | reflexivity | lia | (rewrite u_small by lia; lia)].
 Qed.
-End SE.
 End Pf1Keep.
 Definition XKN : list kentry :=
 map (fun c : Z * nat * Z => KWord (SA (ELit 0) (fst (fst c))) (snd (fst c)) (ELit (snd c))) XC9_CELLS
@@ -112,7 +100,7 @@ Hypothesis Hal : bv_unsigned sp0 mod 16 = 0.
 Hypothesis DL : drv_layoutA L ar IL sp0.
 Variable fs0 : Fs.Fs.
 Variable fdata : list byte.
-Variables p0 p1 can : word.
+Variables auxvp p1 can : word.
 Variable M0 : word -> option byte.
 Hypothesis M0_def : defined M0 (bv_unsigned sp0) (ar_stack_top ar - bv_unsigned sp0).
 Variable A0 : list (Z * Z).
@@ -133,7 +121,7 @@ Let PL : Z := PLA fdata.
 #[local] Notation payloadA := (Ja0DrvD.payloadA fdata).
 #[local] Notation blk_factsA := (Ja0DrvD.blk_factsA L ar fdata CAP).
 Definition e_valsA (n : nat) (vals : list word) (A1 PTR OWN k : Z) : Prop :=
-length vals = n /\ hdr_valsA sp0 p0 p1 can vals
+length vals = n /\ hdr_valsA sp0 auxvp p1 can vals
 /\ vals_ev vals 48 = Z_to_bv 64 A1 /\ vals_ev vals 70 = Z_to_bv 64 LEN
 /\ vals_ev vals 73 = Z_to_bv 64 CFG /\ vals_ev vals 79 = Z_to_bv 64 PL
 /\ vals_ev vals 81 = Z_to_bv 64 k /\ vals_ev vals 82 = Z_to_bv 64 PTR /\ vals_ev vals 83 = Z_to_bv 64 OWN.
@@ -173,13 +161,9 @@ Proof.
 intros vals M k t P81 Hk Ht. cbn [sc_denot branch_taken]. rewrite (dec_valA vals k P81 Hk). cbn [edenot].
 unfold bv_eqb. rewrite !u_small by lia. exact Ht.
 Qed.
-Section SE.
-Local Abbreviation SEC_T_step_SA := (forall k j K, 2 <= k -> LH2PA (k - 1) j K -> SSPA k j K) (only parsing).
-Variable k : ltac:(sec_ty2 constr:(SEC_T_step_SA) 0%nat 0%nat).
-Variable j : ltac:(sec_ty2 constr:(SEC_T_step_SA) 1%nat 0%nat).
-Variable K : ltac:(sec_ty2 constr:(SEC_T_step_SA) 2%nat 0%nat).
-Lemma step_SA : ltac:(sec_stmt2 constr:(SEC_T_step_SA) 3%nat 0%nat).
-Proof using C IL HIok Hsp DL HCAP k j K.
+#[using="C IL HIok Hsp DL HCAP"] Lemma step_SA : forall k j K, 2 <= k -> LH2PA (k - 1) j K -> SSPA k j K.
+Proof.
+intros k j K.
 intros Hk2 HLH.
 unfold SSPA.
 intros fx' vals R M model A A1 PTR OWN LB LK cr g (HL & HV & P48 & P70 & P73 & P79 & P81 & P82 & P83) Hk Hj Hjk HR HK
@@ -209,7 +193,6 @@ repeat split; try tauto; try assumption.
 exact HK0.
 - unfold e_factsA. rewrite AH. exact (conj HBLK (conj HC (conj HPAY (conj DI0 (conj HINC (conj G1 (conj G2 (conj SO (conj SOX (conj HLS HROOM)))))))))).
 Qed.
-End SE.
 Definition EA (j : nat) : TSet := t_emit (W 1 (zero_lines j)) (t_exit (exit_code 0) fs0).
 #[using="sp0 Hsp CAP HCAP LEN CFG PL"] Lemma exitf_of_kn : forall vals (MV : word -> option byte) kn,
 know_ok ASEGS (ENVG vals) MV kn -> forallb (fun K => existsb (kentry_eqb K) kn) XKN = true ->
@@ -361,7 +344,7 @@ Qed.
 Proof. vm_compute. reflexivity. Qed.
 Section SE.
 Variables (fx' : PropExec.FPState).
-Lemma tail_FA : forall (j : nat) (ax : bool) vals R M (model : Model) A LK cr, length vals = 230%nat -> hdr_valsA sp0 p0 p1 can vals -> (j <= 3)%nat ->
+Lemma tail_FA : forall (j : nat) (ax : bool) vals R M (model : Model) A LK cr, length vals = 230%nat -> hdr_valsA sp0 auxvp p1 can vals -> (j <= 3)%nat ->
 regs_ok (ENVG vals) srF2A R -> know_ok ASEGS (ENVG vals) (mrestrict (ahid A model) M) knF2A ->
 dinvA [] LK cr A M model -> m_fds model = fds0 -> m_fs model = fs0 ->
 stdoutA (Z.of_nat j) (mrestrict (ahid A model) M) -> stdoutXA (mrestrict (ahid A model) M) -> atexit_cellsA M ax ->
@@ -430,15 +413,11 @@ Qed.
 End SE.
 #[using="Type"] Lemma wseg_sofile : wseg_ok ASEGS (Z_to_bv 64 1273648) 232 = true. Proof. vm_compute. reflexivity. Qed.
 #[using="Type"] Lemma wseg_sobuf : wseg_ok ASEGS (Z_to_bv 64 SOBUF) 1024 = true. Proof. vm_compute. reflexivity. Qed.
-Section SE.
-Local Abbreviation SEC_T_stdout_agree := (forall j (MV MV' : word -> option byte), stdoutA j MV -> stdoutXA MV -> 0 <= j <= 500 ->
+#[using="sp0 Hsp fdata LEN CFG PL"] Lemma stdout_agree : forall j (MV MV' : word -> option byte), stdoutA j MV -> stdoutXA MV -> 0 <= j <= 500 ->
 (forall a, 1273648 <= a < 1273648 + 232 \/ SOBUF <= a < SOBUF + 1024 -> MV' (Z_to_bv 64 a) = MV (Z_to_bv 64 a)) ->
-stdoutA j MV' /\ stdoutXA MV') (only parsing).
-Variable j : ltac:(sec_ty2 constr:(SEC_T_stdout_agree) 0%nat 0%nat).
-Variable MV : ltac:(sec_ty2 constr:(SEC_T_stdout_agree) 1%nat 0%nat).
-Variable MV' : ltac:(sec_ty2 constr:(SEC_T_stdout_agree) 2%nat 0%nat).
-Lemma stdout_agree : ltac:(sec_stmt2 constr:(SEC_T_stdout_agree) 3%nat 0%nat).
-Proof using sp0 Hsp fdata LEN CFG PL j MV MV'.
+stdoutA j MV' /\ stdoutXA MV'.
+Proof.
+intros j MV MV'.
 intros (F1 & F2 & F3 & F4 & F5 & F6 & F7 & FW & BW & BC) (X1 & X2 & X3 & X4 & X5) Hj AG.
 assert (TR : forall a (n : nat) bs, rdn ASEGS MV (Z_to_bv 64 a) n = Some bs -> 1273648 <= a -> a + Z.of_nat n <= 1273648 + 232 -> rdn ASEGS MV' (Z_to_bv 64 a) n = Some bs).
 { intros a n bs Hr H1 H2. apply (rdn_tr MV MV' a n bs Hr); [lia | lia|]. intros i Hi. apply AG. left. lia. }
@@ -454,7 +433,6 @@ first [exact wseg_sobuf | reflexivity | (unfold SOBUF in *; lia) | (rewrite u_sm
 + destruct (BC i H) as (_ & B2). apply TRB; [exact B2 | lia | cbn; lia].
 - unfold stdoutXA. repeat split; apply TR; first [assumption | cbn; lia].
 Qed.
-End SE.
 #[using="sp0 Hsp fdata LEN CFG PL"] Lemma stdout0_of_kn : forall E (MV : word -> option byte) kn, know_ok ASEGS E MV kn -> existsb (kentry_eqb (KImg 0x136f30 0x137018)) kn = true -> stdout0A MV.
 Proof.
 intros E MV kn HK Hb. pose proof (kimg_clear E MV kn 0x136f30 0x137018 HK Hb) as CL.
@@ -496,7 +474,7 @@ Definition stdout_lib := stdout_call_g IMG_LIB_A.
 #[using="sp0 Hsp CAP HCAP"] Lemma in_client_2x : exists w2, In (w2, 0x690238) IMG_CLIENT_A /\ w2 <= 0x68f5a0. Proof. exists 0x66edb0. split; [unfold IMG_CLIENT_A; cbn [In]; tauto | apply Z.leb_le; reflexivity]. Qed.
 #[using="sp0 Hsp CAP HCAP"] Lemma in_lib_2x : exists w2, In (w2, 0x690238) IMG_LIB_A /\ w2 <= 0x68f5a0. Proof. exists 0x68eff0. split; [unfold IMG_LIB_A; cbn [In]; tauto | apply Z.leb_le; reflexivity]. Qed.
 #[using="L C IL HIok ICok Hsp Hal DL M0_def HCAP ILY Hex LEN CFG PL"] Lemma tail_MA : forall (fx' : PropExec.FPState) (j : nat) (ax : bool) vals R M (model : Model) A (A1 : Z) LK cr,
-length vals = 198%nat -> hdr_valsA sp0 p0 p1 can vals -> vals_ev vals 48 = Z_to_bv 64 A1 -> (j <= 3)%nat ->
+length vals = 198%nat -> hdr_valsA sp0 auxvp p1 can vals -> vals_ev vals 48 = Z_to_bv 64 A1 -> (j <= 3)%nat ->
 regs_ok (ENVG vals) srF1A R -> know_ok ASEGS (ENVG vals) (mrestrict (ahid A model) M) knF1A ->
 dinvA [(A1, CAP)] LK cr A M model -> m_fds model = fds0 -> m_fs model = fs0 ->
 stdoutA (Z.of_nat j) (mrestrict (ahid A model) M) -> stdoutXA (mrestrict (ahid A model) M) -> atexit_cellsA M ax ->

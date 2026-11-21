@@ -14,17 +14,18 @@
    granule are visible): snp_call_tail takes it as the image fact ts_lit_tail (those bytes lie in the image: seg_rom
    has them), which glit_at_x's fourth conjunct gives (ts_lit_tail_of), and ts_tail_vis turns it into atail_vis in
    every state.
-   ROUTE (b), STEP 3 (the image-A twin: a Theorem Labs lane's RIG_x round of lib/A/W_rig_top.v, commit f4cd818e98d): over ARx
+   ROUTE (b), STEP 3 (the image-A twin: a Theorem Labs lane's RIG_x round of lib/A/W_rig_top.v): over ARx
    at W_relay_instance_gone_cx.v's generic Section (journals ajournal_gx_x at RIG_STK_x, the sites' _x liftings
    aj_gx_entry_at_x / aj_strlen_gx_at_x).  The fake frame is only 32-aligned in a generic state (alx_frames): ts_ra
    and ts_hull (the buffer's shadow hull, in place of the AR kit's shadow_hull_vis_of_frame) read that alignment.
-   THE SNPRINTF NARROWING (the window's 4d3f3ddb1df on the AR text, re-applied here over ARx): ASNPRINTF is the
+   THE SNPRINTF NARROWING (the window's on the AR text, re-applied here over ARx): ASNPRINTF is the
    narrowed asnprintf_realizes_x (W_sites_x.v: the format premise F and M1, M3, M2); snp_call_tail discharges F by
    eq_refl, M1 by SnpNarrowSites.san_M1_pi, M3 by san_M3_pi on the register equation E13, both from the Section
    hypothesis HLITGOT (the window's text, verbatim), and M2 by SnpNarrowSites.san_M2_x_pi: san_M2_AR_pi's fact over
    ARx (the frame above ly_img by the laws' alx_img, ly_img's top at least 0x5fc000 by IMGC; a Theorem Labs lane's ruling
    14:16Z put it in SnpNarrowSites.v).
    Proves no function (kind: segment lemma). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -486,7 +487,7 @@ Qed.
 (* ------------------------------------------------------------------ S2. strlen at 0x82ec0 *)
 (* ASTRLEN at x = F + 32, kk = |pre|, by aj_strlen_gx_at_x: the bytes and the NUL from the garr8 premise, the rest of
    the NUL's granule inside the fake frame (present), the shadow as for snprintf. *)
-(* the two tails from HLIT17 / HLIT18 (glit_at_x's fourth conjunct, added to the cx at 36f4712b8a5 on this finding) *)
+(* the two tails from HLIT17 / HLIT18 (glit_at_x's fourth conjunct, added to the cx on this finding) *)
 Lemma snp_call : stmt_snp_call B PST ARx RG.
 Proof.
 apply snp_call_tail.

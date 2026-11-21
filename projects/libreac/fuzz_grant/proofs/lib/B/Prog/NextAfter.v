@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: a segment of reac_headamp_tx_next on fuzz_grant.asan (NextAfter), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v, proofs/cgif/cgif_file_fuzzer/lib/A/AE3m.v. *)
-(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/NextAfter.v at a working branch af735a950e2 (blob 9eb63e2990f; the walk was ported from blob e91a36749de at a working branch afd75724b5b, which differs from it only by 4 added and 0 removed lines, the licence header), restated over image B's listing, addresses and walk layer (lib/B/Prog) against GrantBContracts.v; image B has two signed tests (0x86174 sets a4 = max(replay_idx, 3w), 0x8617c exits), so the exhausted-scan exit is proved twice; no I1 *)
+(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/NextAfter.v at a working branch (blob 9eb63e2990f; the walk was ported from blob e91a36749de at a working branch, which differs from it only by 4 added and 0 removed lines, the licence header), restated over image B's listing, addresses and walk layer (lib/B/Prog) against GrantBContracts.v; image B has two signed tests (0x86174 sets a4 = max(replay_idx, 3w), 0x8617c exits), so the exhausted-scan exit is proved twice; no I1 *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_headamp_tx_next (image B 0x85efc): the segment of its walk from AFTR (0x86100), where the
    edge scan over the 144 cells found none changed, to the next cut or to the return.
    C source src/reac_headamp_tx.c:137-146.

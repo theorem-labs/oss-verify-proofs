@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises); the model's channel reader that fdchan asks for beside the descriptor (cs_ok's co_rdr, proved at the launch)); internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: omx-clap-core/fuzz_preset (asan-ubsan image B), the PROOF of loop_L_x_B (lib/AU/PresetD1rB.v), the
    driver's per-call loop over preset's second allocator instance. Rule 24: no function is proved here (composition /
    driver layer of a port).
@@ -15,8 +16,8 @@
      (ledger_img, exempted through the journal's PST); the driver's kept image chunks avoid them (led_L, by
      vm_compute), and the stdout and read-only bytes avoid them too;
    - the donor's ofl_head special case (a sink-token exemption of its journal) is gone: preset's footprint is empty;
-   - after the payload free, the model fact comes from a8's ml_free_cf (lib/Reusable/YG03dcf.v:428) through
-     atok_cf_apath (YGcfTok.v:113), at the batch room ROOM_cf gives, in place of the donor's ml_free / atok_apath;
+   - after the payload free, the model fact comes from a8's ml_free_cf (lib/Reusable/YG03dcf.v:429) through
+     atok_cf_apath (YGcfTok.v:114), at the batch room ROOM_cf gives, in place of the donor's ml_free / atok_apath;
    - the float state: a harness call returns in a new float state fx' (the interface's continuation), so the loop
      is proved for every fx with frm_zero (fp_csr fx); after the call the machine state is carried over to fx' by
      st_ok_mkst_swap (st_ok's float conjuncts are the instance's own fields) and the old fx is cleared;
@@ -24,16 +25,16 @@
      and its post gives it back one model call later (os ++ [o], hist'), so the loop carries it with no counter;
      after the last call the two driver frees take their sites' NP S' and the payload free's model fact takes its
      batch room from ROOM_cf S', which the interface's iface_room_np_tail gives (ROOM_cf_k S' 2, a8's RK_room);
-   - memnorm (the interface's header item (8), a working branch 446222ec0601; PresetD1rB.v header item
+   - memnorm (the interface's header item (8), a working branch; PresetD1rB.v header item
      (10)): each harness call takes YAkMemnorm.memnorm tfibsegs over its FULL overlay, and its post keeps it. The
      first call takes it from the entry premise of loop_L_cf_B. Each later call gets it from the previous call's post
      (HMN'), then across the three runner segments vp_run / br_run / l2_run from the named premise H_memnorm_drv_B
      (the Section hypothesis HMND, a premise of the statement), and across the printf leaf (PF1 / PFN) from the keep
      `memnorm mem -> memnorm mem'`, the last premise of printf_post_cf's continuation (lane CwSites,
-     a working branch 9f95abaab5bd, lib/AU/PresetD1sitesB.v:178). The fq_run / free / xm_run / exit
+     a working branch, lib/AU/PresetD1sitesB.v:178). The fq_run / free / xm_run / exit
      path after the last call needs no memnorm.
-     The loop head is not reached from the composition directly: RUNQM (PresetD2eB.v:592; since the split
-     PresetD2eBPf.v:464) and run_Q (PresetD2runQBPf.v:122), and their A twins (PresetD2eA.v:590 / PresetD2eAPf.v:462,
+     The loop head is not reached from the composition directly: RUNQM (PresetD2eB.v:593; since the split
+     PresetD2eBPf.v:464) and run_Q (PresetD2runQBPf.v:122), and their A twins (PresetD2eA.v:591 / PresetD2eAPf.v:462,
      PresetD2runQAPf.v:117), apply LOOPL deep inside
      their proofs, after start-up segments and library calls (malloc / memcpy / read); so the at-main FULL seed
      reaches the loop head only if every prefix leaf takes memnorm at entry and keeps it across its own runner
@@ -53,11 +54,11 @@
    This file is port/a2b.py (sha256 f5113cbc90e503dac58f374f70d68ce794384564d76b0712ba6e401ca345c02f) of
    lib/A/PresetD1rAPf.v. Its code lines are a2b's output, except that PresetDrvAroB is required on the line of
    PresetD1rBlPf; this header is written for B (its line numbers and this provenance).
-   Other files it uses: lib/AU/PresetD1sitesB.v (CwSites 9f95abaab5bd: the free / printf / exit leaves over the
+   Other files it uses: lib/AU/PresetD1sitesB.v (CwSites: the free / printf / exit leaves over the
    non-primary room NP, the printf post with the memnorm keep), lib/AU/PresetD1rBx.v, PresetD1rBt.v, PresetD1rBso.v,
    PresetD1rBl.v and PresetD1rBlPf.v (lane CwLoopB: the driver-run frame lemmas over ARcf, tfib_main_tail_cf,
-   so_not_owned_cf and the three links at the interface's frame constants), lib/AU/PresetPinvBPf.v (CwPinvB
-   9c12c3d9bc4: finv_run_pinv_B_holds and finv_printf_pinv_B_holds over PINV). *)
+   so_not_owned_cf and the three links at the interface's frame constants), lib/AU/PresetPinvBPf.v (CwPinvB:
+   finv_run_pinv_B_holds and finv_printf_pinv_B_holds over PINV). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -88,7 +89,8 @@ Unset Lia Cache. Unset Nia Cache.
 Local Set Warnings "-abstract-large-number".
 Local Open Scope Z_scope.
 #[local] Existing Instance CfParamsPreset.CfParams_preset.
-#[local] Notation ELV sp a0 p inp xw xd := (YP08.E0 sp [a0; p] (in_envp inp) xw xd).
+#[local] Notation ELV sp rnd a0 p inp xw xd :=
+(YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd).
 
 (* ---------------------------------------------------------------------- *)
 (* 0. The ledger cells, as one interval list, and the checks that the driver's kept bytes avoid them. *)
@@ -199,16 +201,28 @@ Hypothesis HMND : H_memnorm_drv_B.
 #[local] Notation drv_after_call_cf := (PresetD1rBx.drv_after_call_cf B HB ARL) (only parsing).
 #[local] Notation so_not_owned_cf := (PresetD1rBso.so_not_owned_cf B HB ARL) (only parsing).
 #[local] Notation canary_got_kept_cf := (PresetD1rBx.canary_got_kept_cf B HB) (only parsing).
-Variables (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte).
+(* the entry draw and the launch premises, as the core's YD1r.v Section (727298f3) *)
+Variables (sp brk mbase : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte) (rnd : EntryDraw).
 Hypothesis Hargv : in_argv inp = [a0; p].
 Hypothesis Hsp : valid_sp sp.
-Hypothesis Hva : valid_argv [a0; p].
+Hypothesis Hva : valid_argv (in_argv inp).
 Hypothesis Hve : valid_envp (in_envp inp).
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp.
+Hypothesis Hvi : valid_input inp.
 Hypothesis Hvfs : valid_fs (in_fs inp).
 Hypothesis HNR : NR inp.
-#[local] Notation EL := (YP08.E0 sp [a0; p] (in_envp inp) xw xd).
+#[local] Notation EL := (YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd).
 #[local] Notation usp := (bv_unsigned sp).
-Let EL6' : usp <= bv_unsigned (ew EL 6) := EL6 sp inp xw xd a0 p Hsp Hva Hve.
+(* YD1r.v:196 EL6, restated over this Section's names *)
+Let EL6' : usp <= bv_unsigned (ew EL 6).
+Proof.
+change (ew EL 6) with (Z_to_bv 64 (z_rand usp (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp))).
+assert (Hz : z_rand usp (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp) + 16 < 2 ^ 63)
+by (eapply (YP08.z_rand_end TSEGS TPH inp mbase AsanUbsan.M.init_pc sp brk rnd Hsp Hva Hve Hvl Hlau)).
+rewrite Hargv in Hz. pose proof (u64_range sp).
+unfold z_rand in *. rewrite u64_lit by lia. lia.
+Qed.
 
 (* lib/AU/PresetD1rBl.v's ajournal_link_B over a world relation R: the journal at R gives the same seven facts (none is
    the world conjunct; ajournal_cfw is ajournal_cfwR at wle, with the same conjuncts) *)
@@ -415,13 +429,14 @@ so_state xst j (w_H W) (ms_mem ms) -> arodata_ok B (aview tfibsegs (w_H W) (ms_m
 PCB.PINV (aview tfibsegs (w_H W) (ms_mem ms)) cnt ran ->
 YAkMemnorm.memnorm tfibsegs (ms_mem ms) ->
 YGcallStackUp.astack_up_x tfibsegs ly W usp (ms_mem ms) ->
-((forall k, fd_lookup (m_fds md) k = fd_lookup APSG.fds_std k) /\ m_fs md = fs /\ Fs.fs_sorted fs = true) ->
+((forall k, fd_lookup (m_fds md) k = fd_lookup APSG.fds_std k) /\ m_fs md = fs /\ Fs.fs_sorted fs = true /\
+  m_channel_reader md = true) ->
 srealizes tfibsegs (mkCfg ms md) (loop_tgt (LS := LS) (payload data) N j r fs).
 Proof.
 induction r as [|r IH]; [intros; lia|].
 intros fx Hfz j E W ms md ly S data buf cap q fs N cnt ran Hlk Hok HEE HEd E41 E61 E62 E63 E65 HS _ HjrN HN4 HBL HPL Hfr HQT HNP HWR HRA HXS HAI HAR HTOP Hcnt Hcap HLc Hlen HSO HRO HPI HMN HUPs HMD.
 assert (Hjr : (j + Datatypes.S r <= 4)%nat) by lia.
-pose proof HMD as (Hfdl0 & Hmfs & Hsorted0).
+pose proof HMD as (Hfdl0 & Hmfs & Hsorted0 & Hcr0).
 pose proof Hsp as (Ulo & Uhi & U16). pose proof (u64_range sp) as Usp. pose proof (proj1 (@YM05.alloc_ceiling_value rc)) as CV.
 pose proof (top_ok_ceil _ _ HTOP) as HCT. pose proof (YM05.ceil_le_top _ HCT) as CLE. unfold stack_max_size in CLE.
 pose proof (config_len_bound data) as Hcl.
@@ -578,6 +593,12 @@ split; [rewrite HspV; intros a Ha; apply HwinV; unfold PF_STK in Ha; lia|].
 split; [rewrite (ts_gp B HB); exact RV3|]. split; [rewrite (ts_tp B HB); exact RV4|].
 split; [exact RV10|]. split; [rewrite RV11, HspV; unfold w64; f_equal; lia | exact HRD]. }
 assert (HfdlV : forall fd, fd_lookup (m_fds mdV) fd = fd_lookup APSG.fds_std fd) by (intros fd; subst mdV; rewrite wvb_fds', Hfdl; apply Hfdl0).
+(* The channel reader [fdchan] asks for at LPS 727298f3 crosses the library call as the descriptor does: the
+   journal's [aos_step] (Reusable/YCbqG.v, Reusable/YCbq.v) rebuilds [m_proc] with the same
+   [procst_channel_reader] (its [proc_but_pins] conjunct), and a backing ledger leaves it (as the core's AD1r.v). *)
+assert (HcrV : m_channel_reader mdV = true).
+{ pose proof HJ as HJo. unfold PCB.ajournal_cfwR in HJo. destruct HJo as (_ & _ & _ & _ & Hos & _).
+subst mdV. rewrite wvb_rdr'. pose proof Hos as (_ & _ & _ & _ & _ & Hpp & _). unfold m_channel_reader. rewrite Hpp. exact Hcr0. }
 assert (HPIV : PCB.PINV (aview tfibsegs (w_H W') memV) cnt' ran')
 by exact (HFRP (w_H W') E2 L_mem mem' memV usp cnt' ran' HFrV (proj2 (proj2 (proj2 L_mem_wf))) E2_0 Ulo HPI').
 assert (POST : printf_post_cf B xst ly' S' W' regsV memV mdV (Datatypes.S j) (lib_iter (payload data) r (run_tail (N - 1)) (ll_fs l))).
@@ -586,13 +607,13 @@ change (mkCfg (mkst regsV (Z_to_bv 64 A_icpt_vprintf) memV (seg_rom tfibsegs)) m
 destruct j as [|j'].
 -
 cbn [Kstep]. replace (N - 1)%nat with r in POST by lia.
-exact (PF1 fx' ly' S' W' regsV memV mdV _ PREV ltac:(destruct HSOV as [[_ X]|[X _]]; [exact X | exfalso; lia]) HfdlV HAI3 POST).
+exact (PF1 fx' ly' S' W' regsV memV mdV _ PREV ltac:(destruct HSOV as [[_ X]|[X _]]; [exact X | exfalso; lia]) HfdlV HcrV HAI3 POST).
 -
-cbn [Kstep]. exact (PFN fx' ly' S' W' regsV memV mdV _ (Datatypes.S j') PREV ltac:(destruct HSOV as [[X _]|[_ X]]; [exfalso; lia | exact X]) ltac:(lia) HfdlV HAI3 POST). }
-(* the printf leaf's continuation: its last premise is the memnorm keep (CwSites 9f95abaab5bd) *)
+cbn [Kstep]. exact (PFN fx' ly' S' W' regsV memV mdV _ (Datatypes.S j') PREV ltac:(destruct HSOV as [[X _]|[_ X]]; [exfalso; lia | exact X]) ltac:(lia) HfdlV HcrV HAI3 POST). }
+(* the printf leaf's continuation: its last premise is the memnorm keep (CwSites) *)
 intros regs4 mem4 md4 HAR4 HP4 Hs4 Ha04 HX4 Hfr4 Hpres4 HAI4 HMK4. unfold cfg_at. rewrite HraV. rewrite HspV in Hfr4.
 pose proof (HMK4 HMNV) as HMN4. clear HMK4.
-pose proof (same_but_materialized_frame _ _ Hs4) as (_ & _ & _ & _ & _ & _ & _ & _ & Hfds4 & _ & _ & Hfs4 & _).
+pose proof (same_but_materialized_frame _ _ Hs4) as (_ & _ & _ & _ & _ & Hpr4 & _ & _ & Hfds4 & _ & _ & Hfs4 & _).
 rewrite HshapeV, restrict_mkst_fx in HSV. fold regsV memV in HSV. rewrite PCV in HSV.
 pose proof (vp_reseat sp Hsp E2 W' regsV memV regs4 mem4 HSV E2_0 E2_6 HP4 Ha04 Hfr4 Hpres4) as HS5.
 set (E4 := havoc E2 K_VP (map (getr regs4) CLOB')) in HS5.
@@ -637,6 +658,8 @@ assert (HROB : arodata_ok B (aview tfibsegs (w_H W') (ms_mem msB))).
 { exact (arodata_frame B (w_H W') E4 (ss_mem S_VP) _ _ HFrB WOKV ltac:(rewrite E4_0; exact Ulo) HRO4). }
 assert (HfsB : m_fs mdB = ll_fs l) by (subst mdB; rewrite wvb_fs', Hfs4; subst mdV; rewrite wvb_fs'; exact Hmfs').
 assert (HfdB : m_fds mdB = m_fds md') by (subst mdB; rewrite wvb_fds', Hfds4; subst mdV; rewrite wvb_fds'; reflexivity).
+assert (HcrB : m_channel_reader mdB = true).
+{ subst mdB. rewrite wvb_rdr'. transitivity (m_channel_reader mdV); [unfold m_channel_reader; rewrite Hpr4; reflexivity | exact HcrV]. }
 assert (HPIB : PCB.PINV (aview tfibsegs (w_H W') (ms_mem msB)) cnt' ran').
 { assert (HPI4 : PCB.PINV (aview tfibsegs (w_H W') mem4) cnt' ran') by exact (HFPP (w_H W') memV mem4 usp (usp - 288) cnt' ran' Ulo ltac:(lia) Hfr4 HPIV).
 exact (HFRP (w_H W') E4 (ss_mem S_VP) mem4 (ms_mem msB) usp cnt' ran' HFrB WOKV E4_0 Ulo HPI4). }
@@ -831,7 +854,8 @@ assert (HL36 : (length (blocks S6) <= 3)%nat).
 { rewrite Hbl6. destruct Hcase as [[_ E12] | E12].
   - rewrite E12. exact HL3.
   - rewrite E12 in HL3. rewrite length_app in HL3 |- *. cbn [length] in HL3. lia. }
-apply (PresetD1rBt.tfib_main_tail_cf B iface_room_np HB ARL xst (FREE fx') (EXITL fx') XFR sp inp xw xd a0 p Hsp Hva Hve
+apply (PresetD1rBt.tfib_main_tail_cf B iface_room_np HB ARL xst (FREE fx') (EXITL fx') XFR sp brk mbase inp xw xd a0 p rnd
+Hargv Hsp Hva Hve Hvl Hlau
 E9 W4 msX mdX ly6 S6 data pb6 cap 0 (Datatypes.S j) (ll_fs l)).
 + intros i Hi. rewrite ECold by (unfold K_CM, K_M1 in *; lia). rewrite E8old by (unfold K_FQ, K_M1 in *; lia). rewrite E4old by (unfold K_VP, K_M1 in *; lia).
 rewrite E2old by (unfold K_LR, K_M1 in *; lia). apply HEE. exact Hi.
@@ -854,6 +878,9 @@ rewrite E2old by (unfold K_LR, K_M1 in *; lia). apply HEE. exact Hi.
   ltac:(vm_compute; reflexivity) HMX).
 + exact HSOX.
 + intros fd. subst mdX. rewrite wvb_fds', Efds6. subst mdF. rewrite wvb_fds', HfdB, Hfdl. apply Hfdl0.
+(* the channel reader beside it: [free]'s [same_io] pins [m_proc] (as the core's AD1r.v). *)
++ subst mdX. rewrite wvb_rdr'. transitivity (m_channel_reader mdF); [pose proof Hio6 as (_ & _ & _ & Hpr6); unfold m_channel_reader; rewrite Hpr6; reflexivity |].
+subst mdF. rewrite wvb_rdr'. exact HcrB.
 + subst mdX. rewrite wvb_fs', Efs6. subst mdF. rewrite wvb_fs'. exact HfsB.
 -
 assert (HSB' : st_ok tfibsegs E4 (add_cond S_BR cond_BRt) (restrict (w_H W') msB)).
@@ -923,7 +950,9 @@ exact (proj2 (alc_client_img _ _ ARL ly' S' [] W' mem' md' a HAR' (or_introl (ex
 + exact HMNL.
 + exact HUPL.
 + split; [intros fd; subst mdL; rewrite wvb_fds', HfdB, Hfdl; apply Hfdl0|].
-split; [subst mdL; rewrite wvb_fs'; exact HfsB | exact Hsorted].
+split; [subst mdL; rewrite wvb_fs'; exact HfsB |]. split; [exact Hsorted |].
+(* the MDI's last conjunct, the channel reader [fdchan] asks for at LPS 727298f3. *)
+subst mdL. rewrite wvb_rdr'. exact HcrB.
 Qed.
 
 (* lib/Reusable/YD1r.v:1012 tfib_loop_L_at over ARcf / PINV. *)
@@ -950,7 +979,8 @@ arodata_ok B (aview tfibsegs (w_H W) (ms_mem ms)) ->
 PCB.PINV (aview tfibsegs (w_H W) (ms_mem ms)) cnt ran ->
 YAkMemnorm.memnorm tfibsegs (ms_mem ms) ->
 YGcallStackUp.astack_up_x tfibsegs ly W usp (ms_mem ms) ->
-((forall k, fd_lookup (m_fds md) k = fd_lookup APSG.fds_std k) /\ m_fs md = fs /\ Fs.fs_sorted fs = true) ->
+((forall k, fd_lookup (m_fds md) k = fd_lookup APSG.fds_std k) /\ m_fs md = fs /\ Fs.fs_sorted fs = true /\
+  m_channel_reader md = true) ->
 srealizes tfibsegs (mkCfg ms md) (loop_tgt (LS := LS) (payload data) (calls data) j r fs).
 Proof.
 intros fx Hfz E W ms md ly S data pb pq cap q j r fs cnt ran Hlk Hok HEE HEd E41 E42 E60 E61 E62 E63 E65 HS Hr Hjr HBL HPL Hfr HQT HNP HWR HRA HXS HAI HAR HTOP Hcnt Hcap HLc HSO HRO HPI HMN HUP HMD.
@@ -990,7 +1020,8 @@ loop_L_x_B_at (rc := rc) (LS := LS) (L := L) (PA := PA)
 B xst NR sm iface_room_np MT XM_LIB XN_LIB PAYLOAD_ROOM.
 Proof.
 intros HB ARL MT_FREE RO_IN NRB LIBC UNIV HSIG PF1 PFN FREE FREEN EXITL XFR NPT HMND.
-intros fx Hfz sp inp xw xd E W ms md ly S a0 p data pb pq cap q j r fs cnt ran Hargv Hsp Hva Hve Hvfs HNR.
+intros fx Hfz sp brk mbase inp xw xd E W ms md ly S a0 p data pb pq cap q j r fs cnt ran rnd
+Hsp Hargv Hva Hve Hvl Hlau Hvi Hvfs HNR.
 eapply tfib_loop_L_at_cf; eassumption.
 Qed.
 End e.

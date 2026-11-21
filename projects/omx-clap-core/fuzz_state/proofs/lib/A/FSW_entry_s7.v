@@ -9,7 +9,7 @@
    is carried across each run by its frame and across each call by the callee's journal and AR at the return.
    rule 24: no function proved (fs's harness entry, in the donor cgif_file_fuzzer's form).
    Port-from: donor cgif_file_fuzzer lib/A/ACf5.v:73-84 (the segment form rt_from) and A/ACfk.v:220-245 (a program
-   call inside a segment); the string carry is FSW_strkit.v's (a working branch e6aba012046). *)
+   call inside a segment); the string carry is FSW_strkit.v's (a working branch). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

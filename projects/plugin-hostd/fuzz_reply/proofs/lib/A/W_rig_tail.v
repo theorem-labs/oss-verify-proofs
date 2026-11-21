@@ -21,6 +21,7 @@
    release keep; rig_post_x's room `rp_RM RP S' kr` is gbud's room at the empty remaining trace (grest at |es|),
    through the release by RPF_stack_free.  The AR-free helpers below (tinb .. tl_kept_trans) keep their statements;
    W_rig_top.v uses them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -266,7 +267,7 @@ aview SEGS (w_H W) mem a <> None.
 (* the runtime entries relay_instance_gone calls, at their SIGMA pcs, over ARx (W_sites_x.v / W_contract_x.v /
    W_journal_x.v Section hc; the free rule at the room record RP).  snprintf: a Theorem Labs lane's statement at fuzz_reply's
    addresses (W_sites.v asnprintf_realizes, its twin W_sites_x.v asnprintf_realizes_x), which the snprintf chain
-   (commit 9067b7156f9, lib/A/RT_pf_vf.v snprintf_chain_ok, through a Theorem Labs lane's evt -> SRr bridge) discharges. *)
+   (lib/A/RT_pf_vf.v snprintf_chain_ok, through a Theorem Labs lane's evt -> SRr bridge) discharges. *)
 Hypothesis ALOCK : alock_realizes_x B ARx (SIGMA WS_pthread_mutex_lock).
 Hypothesis AUNLOCK : aunlock_realizes_x B ARx (SIGMA WS_pthread_mutex_unlock).
 Hypothesis AFREE : afree_cf_rule_c_x SEGS B PST ARx MT RP CTX_AFREE.
@@ -296,7 +297,7 @@ Hypothesis HLIT21 : glit_at_x ARx 21 (RelayModel.K_GESTURE ++ [0]).
 (* the two literals lie in .rodata below the GOT word FR_GOT_GUARD = 0x9e658, |"%s %d "| + 1 = 7 and
    |"param_gesture"| + 1 + 8 = 22 bytes: the location premises M1 / M3 of the narrowed asnprintf_realizes_x
    (W_sites_x.v), which this abstract placement does not fix.  PB_fr decides it by vm_compute: SnpNarrowSites.v
-   HLITGOT_PB_fr, whose statement is this text at PI := PB_fr (commit 2f48fc47493's hypothesis, carried here). *)
+   HLITGOT_PB_fr, whose statement is this text at PI := PB_fr (a commit's hypothesis, carried here). *)
 Hypothesis HLITGOT : VAL (A_OBJ 20) + 7 <= FR_GOT_GUARD /\ VAL (A_OBJ 21) + 22 <= FR_GOT_GUARD.
 Hypothesis HLIT31 : glit_at_x ARx 31 ([32; 101; 110; 100] ++ [0]).
 (* The program statics PST hold no byte this walk carries through a journal's image clause, which exempts PST
@@ -912,7 +913,7 @@ Let RUNPR := SRrG_run_pi_AJ_xG (PL := PL_fr) B PST ARx LAWS (R := R).
 Let RUNCR := SRrG_run_pi_AJ_call_xG (PL := PL_fr) B PST ARx LAWS (R := R).
 Let RUNFR := aj_flag_store_pi_xG (PL := PL_fr) B PST ARx LAWS ASF FFL WFx WFL SFREE (R := R).
 
-(* W_rig_tail.v:497 rig_tail at R *)
+(* W_rig_tail.v:498 rig_tail at R *)
 Theorem rig_tail_xR : rig_tail_stmt_xR B PST ARx MT RP MMAX RG R.
 Proof.
 unfold rig_tail_stmt_xR. intros cx W1 c1 HB HU.

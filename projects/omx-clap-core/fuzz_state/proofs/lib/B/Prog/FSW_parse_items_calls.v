@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) call-step kit of parse_items.
    pic_after_callT is a B-local copy of the A-kit helper pig_after_callT of
-   a working branch 1925446802a proofs/omx-clap-core/fuzz_state/lib/A/FSW_parse_items_grow.v
+   a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSW_parse_items_grow.v
    (a Theorem Labs lane), with ONE change: the callee's journal is taken at the caller's RAISED window (STKc + (ot - spZ
    regsC), ot), which is the form every reader callee that writes the caller's struct pj_in has (skip_ws_spec,
    parse_string_spec, parse_value_spec); A's copy takes it at the callee's own sp, which is what its grow has.
@@ -10,6 +10,7 @@
    and the walk's extra regions rs with their atom facts gf - which is the state shape every stage of
    lib/B/Prog/FSW_parse_items.v consumes (pi_ssB0 = fss_retT 0x84f5c 144 pi_cs [pi_qR; pi_vR] pi_gfR).
    The five call steps themselves (skip_ws x4, grow x2, parse_string, __asan_memset, parse_value) are NOT here yet. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

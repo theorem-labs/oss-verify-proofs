@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise m_channel_reader is threaded through the tail statements, first_alloc, ARInv0, after_tr and open_fail; the long-path read gains a TASK_SIZE bound; the walks of Sections ATop and Main, and as_main_realizes, are over the run's segment list asegs ++ rt_tail from the configuration with that list's read-only backing, under the run's driver-law record, with the three tail statements kept over asegs and lifted whole at their call sites). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -20,6 +21,7 @@ From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.As Require Import ASegs A
   AsCall AsCallX RefExitBase AsPrintfFirst AsExitDefs AsHdrErr
   AsDrvHeap AsDrvRun AsDrvIO AsDrvOpen AsDrvRead AsDrvMem AsDrvDefs AsTRSegs AsTargetRun AsMainWalk_defs AsMainSegs AsMainPre
   AsMainOpen AsMainLoop AsMainRet AsMainExit N9_read AsDrvCells ECH_Iface.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require RomBase RunTail.
 Import ListNotations.
 Import SymExec2.SX2. Import SymExec2Sound.SX2S.
 Import OSSVerify.Proofs.openssl.echconfiglist_parser.lib.PropExec.
@@ -65,6 +67,8 @@ Section TailStmts.
       getr regs 10 = Z_to_bv 64 (Z.of_nat (length argv)) -> getr regs 11 = Z_to_bv 64 (bv_unsigned sp0 + 8) ->
       mstatics H L sp0 tid can mem0 mem ->
       m_fds mo = m_fds mo0 ->
+      (* 08b1429: the launch's channel reader, carried from the pre-state *)
+      m_channel_reader mo = m_channel_reader mo0 ->
       realizes asegs (mkCfg msF mo) (t_die (msg_usage (hd [] argv)) (m_fs mo)).
 
   (* [comment removed for export] *)
@@ -78,6 +82,7 @@ Section TailStmts.
       getr regs 2 = Z_to_bv 64 (bv_unsigned sp0 - 128) -> getr regs 4 = Z_to_bv 64 0xbae650 -> getr regs 18 = Z_to_bv 64 pp ->
       mstatics H L sp0 tid can mem0 mem ->
       fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+      m_channel_reader mo = true ->
       realizes asegs (mkCfg msF mo) (t_die (msg_cannot_open path) (m_fs mo)).
 
   (* [comment removed for export] *)
@@ -91,16 +96,21 @@ Section TailStmts.
       getr regs 2 = Z_to_bv 64 (bv_unsigned sp0 - 128) -> getr regs 4 = Z_to_bv 64 0xbae650 -> getr regs 18 = Z_to_bv 64 pp ->
       mstatics H L sp0 tid can mem0 mem ->
       fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+      m_channel_reader mo = true ->
       realizes asegs (mkCfg msF mo) (t_die (msg_read_error path) (m_fs mo)).
 End TailStmts.
 
 Section ATop.
   Context {HCEIL : HeapCeil}.
+  (* the run's tail ([RunTail.RunTail]): main reaches the target, which calls time(), so the
+     walks of this section are over the run's segment list asegs ++ rt_tail *)
+  Context {RT : RunTail.RunTail}.
   Variable H : asr.
   Variable L : alib.
   Hypothesis LOK : alib_ok L.
   Hypothesis HH : asan_rt_hyps H.
-  Hypothesis DL : asan_driver_laws H.
+  Context {vlo vb vhi : Z}.
+  Hypothesis DLR : asan_driver_laws_run RunTail.rt_tail vlo vb vhi H.
   Hypothesis TR : as_target_run_stmt H L.
   Hypothesis LIVE : ADRV_LIVE <= as_LIVE_MAX H /\ ADRV_CNT <= as_LIVE_CNT_MAX H.
   Hypothesis TUS : atail_usage_stmt H L.
@@ -133,7 +143,7 @@ Section ATop.
     lo <= a -> a + n <= bv_unsigned sp0 -> 0 <= n -> amframe sp0 M -> mstatics H L sp0 tid can mem0 M.
   Proof.
     intros M wa' wn FM Wlo Whi Wn FA. pose proof SPlo. pose proof SPhi. pose proof Elo. pose proof aceil_loT as HCL. acb.
-    destruct PRE as [_ _ _ _ _ _ _ _ _ STK SH0 _ INV RELRO GLB AC CELLS OUT TID ERR CAN RFS REG LIBP [OS1 OS2] RH AUX _ _ _ MUSL].
+    destruct PRE as [_ _ _ _ _ _ _ _ _ STK SH0 _ INV RELRO GLB AC CELLS OUT TID ERR CAN RFS REG LIBP [OS1 OS2] RH AUX _ _ _ _ MUSL].
     pose proof (frame_mod_munch _ _ _ FM) as MU. pose proof (aframe_mod_wmono _ _ _ FM) as WM.
     unfold ivls in MU. cbn [map fst snd] in MU. rewrite u_small in MU by lia.
     pose proof (ah_RFS_range H HH _ _ RFS) as [(F1 & F2 & F3 & F4) _]. unfold AIMG_TOP in F1.
@@ -223,15 +233,17 @@ Section ATop.
          (exists junk, rw_cells asegs mem' A [CB (Z.to_nat 65536) junk]) -> addressable mem' A 65536 ->
          mstatics H L sp0 tid can mem0 mem' -> aleft H L 0 <= as_AL H s ->
          m_fs mo' = m_fs mo -> m_fds mo' = m_fds mo ->
-         realizes asegs (mkCfg msF' mo') K) ->
-      realizes asegs (mkCfg msF mo) K.
+         (* the malloc and the two segments leave the channel reader *)
+         m_channel_reader mo' = m_channel_reader mo ->
+         arz (mkCfg msF' mo') K) ->
+      arz (mkCfg msF mo) K.
     Proof.
       intros R M msF mo K HV HA Q1 Q2 Q4 Q8 Q10 Q18 Q20 Q21 ST RH HAL HK.
       pose proof SPlo as Hlo. pose proof SPhi as Hhi. pose proof Elo. pose proof aceil_loT as HCL. acb.
       destruct (aerrno_rw_any M) as [errv ERR]. destruct (mst_aux H L sp0 tid can mem0 _ ST) as [B' [AUXB [HB' AUXVB]]].
       assert (STKlo : stk asegs M lo (bv_unsigned sp0 - 128)).
       { destruct (mst_stk H L sp0 tid can mem0 _ ST) as (S1 & S2 & S3). split; [exact S1|]. split; [lia|]. intros a Ha. apply S3. lia. }
-      eapply (amalloc_call H HH DL R M msF mo s0 [] 65536 lo B' errv 0x1f3e4c [] K HV HA Q1);
+      eapply (amalloc_call_rt H HH DLR R M msF mo s0 [] 65536 lo B' errv 0x1f3e4c [] K HV HA Q1);
         [ lia | reflexivity | exact Q4 | exact Q10 | lia | exact RH
         | apply (ah_alloc H HH s0 [] M 65536 RH); [lia | cbn [lb_bytes fold_right]; unfold ADRV_LIVE in LIVE; lia | cbn [length]; unfold ADRV_CNT in LIVE; lia]
         | apply Cm_main; exact HAL
@@ -243,7 +255,7 @@ Section ATop.
         | cbn [map]; destruct TRC as (T1 & _); exact T1 |].
       rewrite Q2, !u_small by lia.
       intros regsC memC msFC moC A p s1 errv1 junk HVC HAC MPC KEPTC R10 INVC STKC ERRC AUXC HPC BR RHC CBC ADC ACC HALC.
-      pose proof (mo_mp H DL _ _ MPC) as EQC.
+      destruct (adlr_mpres _ _ _ _ H DLR _ _ MPC) as (EQF & EQD & _). pose proof (conj EQF EQD) as EQC.
       assert (STC : mstatics H L sp0 tid can mem0 memC).
       { eapply (mstatics_apres H L LOK HH sp0 tid can mem0 Hvsp M memC); [exact ST | exact HPC | exact INVC | exact STKC | exact ACC | exact AUXC | exact HB' | eapply (aauxv_ok_apres H); [exact AUXVB | exact HPC | lia]]. }
       pose proof BR as (B1 & B2 & B3 & B4 & B5 & B6 & B7). unfold AIMG_TOP in B4.
@@ -254,7 +266,7 @@ Section ATop.
       assert (S18 : getr regsC 18 = ppw) by (kept KEPTC (18:reg)%bv Q18).
       assert (S20 : getr regsC 20 = Z_to_bv 64 3) by (kept KEPTC (20:reg)%bv Q20).
       assert (S21 : getr regsC 21 = Z_to_bv 64 0x10000) by (kept KEPTC (21:reg)%bv Q21).
-      eapply (aseg_E H DL sp0 Hvsp s1 msFC moC regsC memC ppw A K);
+      eapply (aseg_E H DLR sp0 Hvsp s1 msFC moC regsC memC ppw A K);
         [ split; [exact S2 | split; [exact S4 | split; [exact S8 | split; [exact S18 | exact S20]]]]
         | exact R10 | lia | exact S21
         | exact (mst_stk_ok H L sp0 tid can mem0 Hvsp _ STC) | exact (mst_ro H L sp0 tid can mem0 _ STC) | exact (mst_relro H L sp0 tid can mem0 _ STC) | | exact HVC | exact HAC ].
@@ -263,7 +275,7 @@ Section ATop.
       pose proof (rheap_frameL H HH sp0 Hvsp HCE _ _ _ _ RHC FMD) as RHD.
       destruct (blkR_frameL H sp0 Hvsp HCE A 65536 memC memD junk 0%nat [] BR FMD CBC ADC ltac:(reflexivity) ltac:(lia)) as (CBD & ADD & _).
       (* [comment removed for export] *)
-      eapply (aseg_N H DL sp0 Hvsp s1 msFD moD regsD memD ppw A 0 65536 K NRD); [lia | lia
+      eapply (aseg_N H DLR sp0 Hvsp s1 msFD moD regsD memD ppw A 0 65536 K NRD); [lia | lia
         | exact STKD | exact (mst_ro H L sp0 tid can mem0 _ STD) | exact (mst_relro H L sp0 tid can mem0 _ STD) | | exact HVD | exact HAD].
       intros regsE memE msFE moE HVE HAE SBE RCE FME STKE.
       pose proof (rheap_frameL H HH sp0 Hvsp HCE _ _ _ _ RHD FME) as RHE.
@@ -279,6 +291,7 @@ Section ATop.
       - apply (aleft0_of_main (as_AL H s0)); [exact HAL | exact HALC].
       - exact EFS.
       - exact EFDS.
+      - rewrite (same_but_materialized_reader _ _ SBE), (same_but_materialized_reader _ _ SBD). exact (adlr_rdr _ _ _ _ H DLR _ _ MPC).
     Qed.
 
     (* [comment removed for export] *)
@@ -288,9 +301,11 @@ Section ATop.
       (exists junk, rw_cells asegs mem' A [CB (Z.to_nat 65536) junk]) -> addressable mem' A 65536 ->
       mstatics H L sp0 tid can mem0 mem' -> aleft H L 0 <= as_AL H s ->
       m_fs mo' = m_fs mo -> m_fds mo' = m_fds mo ->
+      (* the launch's channel reader, for [ari_rdr] *)
+      m_channel_reader mo' = true ->
       ARInv H L sp0 pp tid can path data fs0 mem0 0 65536 A s p regs' mem' mo'.
     Proof.
-      intros data fs0 mo regs' mem' mo' A p s FS FDS RC RH HCB AD ST HAL FS' FDS'.
+      intros data fs0 mo regs' mem' mo' A p s FS FDS RC RH HCB AD ST HAL FS' FDS' RD'.
       pose proof (am_fds _ _ _ _ _ _ _ _ _ _ _ _ PRE) as FDS0.
       split; try assumption.
       - lia.
@@ -441,19 +456,21 @@ Section ATop.
       Lemma after_tr : forall A cap p s mo regs mem regs2 mem2 msF2 mo2 s2 k,
         mstatics H L sp0 tid can mem0 mem ->
         ATRpost H L (Z_to_bv 64 (bv_unsigned sp0 - 128)) A cap data p s [(p, A, cap)] mo regs mem regs2 mem2 msF2 mo2 s2 ->
+        (* the channel reader at the run's model, for [free_exit]'s flush *)
+        m_channel_reader mo = true ->
         getr regs 9 = Z_to_bv 64 A ->
         0 <= k <= 10 -> aleft H L k <= as_AL H s -> Z.of_nat (length data) < MAX_INPUT -> 6 + hdr_cfg data <= Z.of_nat (length data) ->
         0 <= cap <= 2 ^ 26 ->
-        realizes asegs (mkCfg msF2 mo2) (t_emit (W 1 (zero_lines (Nat.pred (hdr_calls data)))) (t_exit (exit_code 0) (m_fs mo))).
+        arz (mkCfg msF2 mo2) (t_emit (W 1 (zero_lines (Nat.pred (hdr_calls data)))) (t_exit (exit_code 0) (m_fs mo))).
       Proof.
-        intros A cap p s mo regs mem regs2 mem2 msF2 mo2 s2 k ST PO R9 Hk HAL HLT H6 Hcap.
+        intros A cap p s mo regs mem regs2 mem2 msF2 mo2 s2 k ST PO RDR R9 Hk HAL HLT H6 Hcap.
         pose proof SPlo as Hlo. pose proof SPhi as Hhi. pose proof (hdr_calls_range data) as HCR.
         pose proof (xstat_after_tr _ _ _ _ _ _ _ _ _ _ _ _ _ _ ST PO) as XS2.
         destruct PO as [HV2 HA2 MP2 Q2 Q4 Q10 QCS QAB QSTK QSTKC [LB' [RH' INCL]] QAL QAUX QDATA QADDR [junk QCB] QST QOUT QREG QDGC QFS QFD1 QFD2].
         destruct (amain_ret_0 regs2 mem2 (seg_rom asegs) Q10) as (regs3 & RUN & E8 & E10 & KEEP).
         lazymatch type of RUN with _ _ (mkst _ ?pc _ _) (mkst _ ?pc' _ _) =>
           replace (Z_to_bv 64 0x1f3f70) with pc in HV2 by (apply bv_eq; reflexivity) end.
-        eapply (drv_msteps H DL s2 msF2 regs2 _ mem2 regs3 _ mem2 mo2 _ HV2 HA2 RUN).
+        eapply (drv_msteps_rt H DLR s2 msF2 regs2 _ mem2 regs3 _ mem2 mo2 _ HV2 HA2 RUN).
         intros msF3 mo3 HV3 HA3 SB3.
         lazymatch type of HV3 with _ = mkst _ ?pc' _ _ => replace pc' with (Z_to_bv 64 0x1f3ff0) in HV3 by (apply bv_eq; reflexivity) end.
         assert (NE : forall r : reg, In r [2; 4; 9]%bv -> r <> 1%bv /\ r <> 8%bv /\ r <> 10%bv /\ r <> 11%bv).
@@ -465,13 +482,14 @@ Section ATop.
         assert (K9 : getr regs3 9 = Z_to_bv 64 A).
         { destruct (NE 9%bv ltac:(in_solve)) as (N1 & N2 & N3 & N4). rewrite (KEEP _ N1 N2 N3 N4), (QCS 9%bv ltac:(in_solve)). exact R9. }
         rewrite <- QFS, <- (same_but_materialized_fs _ _ SB3). rewrite <- (exit_code_and_255 0) by lia. unfold exit_code. rewrite <- E8.
-        eapply (free_exit H L HH DL sp0 Hvsp HCE TRC true s2 msF3 mo3 regs3 mem2 p A cap (getr regs3 8) _ junk LB' HV3 HA3 K2 K4 eq_refl K9);
+        eapply (free_exit H L HH DLR sp0 Hvsp HCE TRC true s2 msF3 mo3 regs3 mem2 p A cap (getr regs3 8) _ junk LB' HV3 HA3 K2 K4 eq_refl K9);
           [ rewrite E8, u_small by lia; lia | exact RH' | apply INCL; left; reflexivity | exact QCB | exact QADDR
           | destruct (TR_of_aleft k (as_AL H s) data Hk HAL HLT H6) as [_ X]; apply (X _ cap QAL); lia
           | exact XS2
           | right; exists (Nat.pred (hdr_calls data)); split; [lia|]; split; [exact QOUT | reflexivity]
           | exact QREG | exact QDGC | intros E; discriminate E
-          | rewrite (same_but_materialized_fds _ _ SB3); exact QFD1 ].
+          | rewrite (same_but_materialized_fds _ _ SB3); exact QFD1
+          | rewrite (same_but_materialized_reader _ _ SB3), (adlr_rdr _ _ _ _ H DLR _ _ MP2); exact RDR ].
       Qed.
 
       (* [comment removed for export] *)
@@ -497,9 +515,9 @@ Section ATop.
       Lemma x_header : forall s msF mo regs mem p A cap,
         as_VIS H s msF = mkst regs (Z_to_bv 64 0x5314b0) mem rom -> as_AKREL H s (mkCfg msF mo) ->
         AXInv H L sp0 pp tid can data (m_fs mo0) mem0 cap A s p regs mem mo ->
-        realizes asegs (mkCfg msF mo) (t_body data (m_fs mo0)).
+        arz (mkCfg msF mo) (t_body data (m_fs mo0)).
       Proof.
-        intros s msF mo regs mem p A cap HV HA [R1 R2 R4 R8 R9 R10 R17 R18 R19 R20 R21 R22 XCAP XLT [k (Hk & HPOW & HAL)] RH [junk HCB] AD XDATA ST XRA XFS XFD1 XFD2].
+        intros s msF mo regs mem p A cap HV HA [R1 R2 R4 R8 R9 R10 R17 R18 R19 R20 R21 R22 XCAP XLT [k (Hk & HPOW & HAL)] RH [junk HCB] AD XDATA ST XRA XFS XFD1 XFD2 XRD].
         pose proof SPlo as Hlo. pose proof SPhi as Hhi. pose proof SP16. pose proof Elo. pose proof aceil_loT as HCL. acb.
         pose proof (hdr_cfg_range data) as Hcr. pose proof (hdr_calls_range data) as HCR. unfold MAX_INPUT in XLT.
         pose proof (k_le_10 k cap Hk HPOW ltac:(lia)) as Hk10.
@@ -512,15 +530,16 @@ Section ATop.
         assert (BB : abuf_bytes mem A data) by (apply abuf_bytes_of_rdn; [exact XDATA | lia | lia]).
         destruct (Nat.ltb_spec (length data) 6) as [L6|L6].
         - (* [comment removed for export] *)
-          eapply (aseg_Hs H DL sp0 Hvsp s msF mo regs mem ppw A (Z.of_nat (length data)) cap _ RC ltac:(lia) STK0 RO (mst_relro H L sp0 tid can mem0 _ ST) XRA);
+          eapply (aseg_Hs H DLR sp0 Hvsp s msF mo regs mem ppw A (Z.of_nat (length data)) cap _ RC ltac:(lia) STK0 RO (mst_relro H L sp0 tid can mem0 _ ST) XRA);
             [| exact HV | exact HA].
           intros regs1 mem1 msF1 mo1 HV1 HA1 SB1 (Q2 & Q4 & Q8 & Q18 & Q20) Q9 FM1 STK1.
           pose proof (mstatics_frameL H L LOK HH sp0 tid can mem0 Hvsp HCE _ _ ST FM1) as ST1.
           pose proof (rheap_frameL H HH sp0 Hvsp HCE _ _ _ _ RH FM1) as RH1.
           destruct (blkR_frameL H sp0 Hvsp HCE A cap mem mem1 junk 0%nat [] BR FM1 HCB AD ltac:(reflexivity) ltac:(lia)) as (CB1 & AD1 & _).
           unfold t_die.
-          eapply (drv_hdr_short H DL s msF1 mo1 regs1 mem1 _ can (t_exit (exit_code 2) (m_fs mo0)) (hfH_of regs1 mem1 ST1 Q2) HV1 HA1);
-            [ rewrite (same_but_materialized_fds _ _ SB1); exact XFD2 | apply t_exit_has_nil |].
+          eapply (drv_hdr_short_rt H DLR s msF1 mo1 regs1 mem1 _ can (t_exit (exit_code 2) (m_fs mo0)) (hfH_of regs1 mem1 ST1 Q2) HV1 HA1);
+            [ rewrite (same_but_materialized_fds _ _ SB1); exact XFD2 | rewrite (same_but_materialized_reader _ _ SB1); exact XRD
+            | apply t_exit_has_nil |].
           intros regs2 mem2 msF2 mo2 PO HV2 HA2 SB2.
           destruct (hf_after _ _ _ _ s p A cap junk ST1 PO RH1 CB1 AD1) as (XS2 & OS2 & RH2 & CB2 & AD2 & (ATX2 & DGC2 & BI2)).
           pose proof PO as [P_sp _ P_cs _ _ _ _ _ _ _ _ _ _ _].
@@ -528,24 +547,26 @@ Section ATop.
           rewrite <- (exit_code_and_255 2) by lia.
           eapply rz_conseq; [| apply t_emit_W_nil; apply t_exit_has_nil].
           rewrite <- Q8, <- (P_cs 8%bv ltac:(in_solve)).
-          eapply (free_exit H L HH DL sp0 Hvsp HCE TRC false s msF2 mo2 regs2 mem2 p A cap (getr regs2 8) [] junk [(p, A, cap)] HV2 HA2 P_sp);
+          eapply (free_exit H L HH DLR sp0 Hvsp HCE TRC false s msF2 mo2 regs2 mem2 p A cap (getr regs2 8) [] junk [(p, A, cap)] HV2 HA2 P_sp);
             [ rewrite (P_cs 4%bv ltac:(in_solve)); exact Q4 | reflexivity | rewrite (P_cs 9%bv ltac:(in_solve)); exact Q9
             | rewrite (P_cs 8%bv ltac:(in_solve)), Q8, u_small by lia; lia
             | exact RH2 | left; reflexivity | exact CB2 | exact AD2
             | apply (Cf_of_aleft k (as_AL H s) cap); [lia | exact HAL | lia]
             | exact XS2 | exact OS2 | exact ATX2 | exact DGC2 | intros _; split; [exact BI2 | reflexivity]
-            | rewrite (same_but_materialized_fds _ _ SB2), (same_but_materialized_fds _ _ SB1); exact XFD1 ].
+            | rewrite (same_but_materialized_fds _ _ SB2), (same_but_materialized_fds _ _ SB1); exact XFD1
+            | rewrite (same_but_materialized_reader _ _ SB2), (same_but_materialized_reader _ _ SB1); exact XRD ].
         - destruct (Nat.ltb_spec (length data) (6 + Z.to_nat (hdr_cfg data))) as [LO|LO].
           + (* [comment removed for export] *)
-            eapply (aseg_Ho H DL sp0 Hvsp s msF mo regs mem ppw A cap data _ RC L6 ltac:(lia) ltac:(lia) ltac:(lia) ltac:(unfold MSTK; lia) BB STK0 RO (mst_relro H L sp0 tid can mem0 _ ST) XRA);
+            eapply (aseg_Ho H DLR sp0 Hvsp s msF mo regs mem ppw A cap data _ RC L6 ltac:(lia) ltac:(lia) ltac:(lia) ltac:(unfold MSTK; lia) BB STK0 RO (mst_relro H L sp0 tid can mem0 _ ST) XRA);
               [| exact HV | exact HA].
             intros regs1 mem1 msF1 mo1 HV1 HA1 SB1 Q2 Q4 Q8 Q20 Q9 FM1 STK1.
             pose proof (mstatics_frameL H L LOK HH sp0 tid can mem0 Hvsp HCE _ _ ST FM1) as ST1.
             pose proof (rheap_frameL H HH sp0 Hvsp HCE _ _ _ _ RH FM1) as RH1.
             destruct (blkR_frameL H sp0 Hvsp HCE A cap mem mem1 junk 0%nat [] BR FM1 HCB AD ltac:(reflexivity) ltac:(lia)) as (CB1 & AD1 & _).
             unfold t_die.
-            eapply (drv_hdr_overrun H DL s msF1 mo1 regs1 mem1 _ can (t_exit (exit_code 2) (m_fs mo0)) (hfH_of regs1 mem1 ST1 Q2) HV1 HA1);
-              [ rewrite (same_but_materialized_fds _ _ SB1); exact XFD2 | apply t_exit_has_nil |].
+            eapply (drv_hdr_overrun_rt H DLR s msF1 mo1 regs1 mem1 _ can (t_exit (exit_code 2) (m_fs mo0)) (hfH_of regs1 mem1 ST1 Q2) HV1 HA1);
+              [ rewrite (same_but_materialized_fds _ _ SB1); exact XFD2 | rewrite (same_but_materialized_reader _ _ SB1); exact XRD
+              | apply t_exit_has_nil |].
             intros regs2 mem2 msF2 mo2 PO HV2 HA2 SB2.
             destruct (hf_after _ _ _ _ s p A cap junk ST1 PO RH1 CB1 AD1) as (XS2 & OS2 & RH2 & CB2 & AD2 & (ATX2 & DGC2 & BI2)).
             pose proof PO as [P_sp _ P_cs _ _ _ _ _ _ _ _ _ _ _].
@@ -553,15 +574,16 @@ Section ATop.
             rewrite <- (exit_code_and_255 2) by lia.
             eapply rz_conseq; [| apply t_emit_W_nil; apply t_exit_has_nil].
             rewrite <- Q8, <- (P_cs 8%bv ltac:(in_solve)).
-            eapply (free_exit H L HH DL sp0 Hvsp HCE TRC false s msF2 mo2 regs2 mem2 p A cap (getr regs2 8) [] junk [(p, A, cap)] HV2 HA2 P_sp);
+            eapply (free_exit H L HH DLR sp0 Hvsp HCE TRC false s msF2 mo2 regs2 mem2 p A cap (getr regs2 8) [] junk [(p, A, cap)] HV2 HA2 P_sp);
               [ rewrite (P_cs 4%bv ltac:(in_solve)); exact Q4 | reflexivity | rewrite (P_cs 9%bv ltac:(in_solve)); exact Q9
               | rewrite (P_cs 8%bv ltac:(in_solve)), Q8, u_small by lia; lia
               | exact RH2 | left; reflexivity | exact CB2 | exact AD2
               | apply (Cf_of_aleft k (as_AL H s) cap); [lia | exact HAL | lia]
               | exact XS2 | exact OS2 | exact ATX2 | exact DGC2 | intros _; split; [exact BI2 | reflexivity]
-              | rewrite (same_but_materialized_fds _ _ SB2), (same_but_materialized_fds _ _ SB1); exact XFD1 ].
+              | rewrite (same_but_materialized_fds _ _ SB2), (same_but_materialized_fds _ _ SB1); exact XFD1
+              | rewrite (same_but_materialized_reader _ _ SB2), (same_but_materialized_reader _ _ SB1); exact XRD ].
           + (* [comment removed for export] *)
-            eapply (aseg_Hk H DL sp0 Hvsp s msF mo regs mem ppw A cap data _ RC ltac:(lia) ltac:(lia) ltac:(lia) BB STK0 RO (mst_relro H L sp0 tid can mem0 _ ST) XRA);
+            eapply (aseg_Hk H DLR sp0 Hvsp s msF mo regs mem ppw A cap data _ RC ltac:(lia) ltac:(lia) ltac:(lia) BB STK0 RO (mst_relro H L sp0 tid can mem0 _ ST) XRA);
               [| exact HV | exact HA].
             intros regs1 mem1 msF1 mo1 HV1 HA1 SB1 TC K22 FM1 STK1.
             pose proof (mstatics_frameL H L LOK HH sp0 tid can mem0 Hvsp HCE _ _ ST FM1) as ST1.
@@ -572,6 +594,8 @@ Section ATop.
             rewrite zero_lines_S. eapply rz_conseq; [| apply t_emit_W_app].
             pose proof TC as (T1 & T2 & T4 & T8 & T9 & T10 & T11 & T12 & T13 & T18 & T19 & T20 & T21).
             destruct (TR_of_aleft k (as_AL H s) data ltac:(lia) HAL ltac:(unfold MAX_INPUT; lia) ltac:(lia)) as [HALT _].
+            (* the channel reader at the run's model: [AXInv]'s, carried across [aseg_Hk] *)
+            assert (RD1 : m_channel_reader mo1 = true) by (rewrite (same_but_materialized_reader _ _ SB1); exact XRD).
             eapply (TR (Z_to_bv 64 (bv_unsigned sp0 - 128)) A cap data p s [(p, A, cap)] msF1 mo1 regs1 mem1).
             * destruct ST1 as [INV1 STK1' AC1 RELRO1 GLB1 CELLS1 OUT1 TID1 CAN1 RFS1 REG1 LIBP1 OSSL1 [shi [SH1 Hshi]] ABOVE1 FR1 [B1' [AUX1 [HB1 AUXV1]]] MUSL1].
               assert (ATS : atr_statics H (Z_to_bv 64 (bv_unsigned sp0 - 128)) mem1).
@@ -591,20 +615,21 @@ Section ATop.
                 | exists junk; exact CB1
                 | exact TRC | exact LIVE
                 | rewrite (same_but_materialized_fds _ _ SB1); assumption ].
+            * exact RD1.
             * apply t_emit_has_nil.
             * intros regs2 mem2 msF2 mo2 s2 PO. replace calls' with (Nat.pred (hdr_calls data)) by (rewrite EC; reflexivity).
               rewrite <- XFS, <- (same_but_materialized_fs _ _ SB1).
-              eapply (after_tr A cap p s mo1 regs1 mem1 regs2 mem2 msF2 mo2 s2 k ST1 PO T9 ltac:(lia) HAL ltac:(unfold MAX_INPUT; lia) ltac:(lia) ltac:(lia)).
+              eapply (after_tr A cap p s mo1 regs1 mem1 regs2 mem2 msF2 mo2 s2 k ST1 PO RD1 T9 ltac:(lia) HAL ltac:(unfold MAX_INPUT; lia) ltac:(lia) ltac:(lia)).
       Qed.
 
       (* [comment removed for export] *)
       Theorem as_file :
         (length path <= 4095)%nat -> path <> [] -> path_has_slash path = false -> path_is_dirref path = false ->
-        realizes asegs (mkCfg msF0 mo0) (t_alt2 (t_die (msg_cannot_open path) (m_fs mo0)) (t_opened data (m_fs mo0))).
+        arz (mkCfg msF0 mo0) (t_alt2 (t_die (msg_cannot_open path) (m_fs mo0)) (t_opened data (m_fs mo0))).
       Proof.
         intros Hlen Hne Hsl Hnd. pose proof SPlo as Hlo. pose proof SPhi as Hhi. pose proof Elo.
         pose proof (am_fds _ _ _ _ _ _ _ _ _ _ _ _ PRE) as FDS0.
-        apply (aseg_A H L DL sp0 argv s0 msF0 mo0 regs0 mem0 B tid can PRE a0s path Hargv p0 pp Hp0 Hpp).
+        apply (aseg_A H L DLR sp0 argv s0 msF0 mo0 regs0 mem0 B tid can PRE a0s path Hargv p0 pp Hp0 Hpp).
         intros R M msF mo HV HA SB HR HK FM FA.
         pose proof (amst_at_open M FM FA) as ST. pose proof (arh_at_open M FM) as RH.
         destruct (aopenat_regs sp0 regs0 tid can p0 pp R HR) as (H17 & H10 & H11 & Hfl).
@@ -612,15 +637,15 @@ Section ATop.
         destruct (mo_sb _ _ SB) as [EFS EFDS].
         assert (Hfree : fd_lookup (m_fds mo) (alloc_fd (m_fds mo)) = None) by (rewrite EFDS, FDS0; reflexivity).
         unfold t_opened. rewrite <- EFS.
-        eapply (drv_openat_file H DL s0 msF R (Z_to_bv 64 0x5314ac) M mo ECALLW AECALL2 is_ecall_ECALLW HV HA H17 H10 Hfl Hfree path data);
+        eapply (drv_openat_file_rt H DLR s0 msF R (Z_to_bv 64 0x5314ac) M mo ECALLW AECALL2 is_ecall_ECALLW HV HA H17 H10 Hfl Hfree path data);
           [ exact PA | exact Hne | exact Hsl | exact Hnd | rewrite EFS; exact Hdata | |].
         - (* [comment removed for export] *)
           intros e msF' mo' He HV' HA' SB'. rewrite AgentLib.v_addi_lit in HV' by lia. change (0x5314ac + 4)%Z with 0x5314b0%Z in HV'.
-          eapply (aseg_F H L DL sp0 argv s0 msF0 mo0 regs0 mem0 B tid can PRE p0 pp e R M msF' mo' _ HV' HA' (openat_errnos_range e He) (scF_openat e He) HR HK).
+          eapply (aseg_F H L DLR sp0 argv s0 msF0 mo0 regs0 mem0 B tid can PRE p0 pp e R M msF' mo' _ HV' HA' (openat_errnos_range e He) (scF_openat e He) HR HK).
           intros R' M' msF2 mo2 HV2 HA2 SB2 Q2 Q4 Q8 Q18 FM2.
           rewrite <- (same_but_materialized_fs _ _ SB'), <- (same_but_materialized_fs _ _ SB2).
-          eapply (TOP sp0 argv s0 msF0 mo0 regs0 mem0 B tid can a0s path pp s0 msF2 mo2 R' M' Hva PRE Hargv (proj1 Hpp) (proj2 Hpp) HV2 HA2 Q2 Q4 Q18).
-          + (* [comment removed for export] *)
+          assert (MST2 : mstatics H L sp0 tid can mem0 M').
+          { (* [comment removed for export] *)
             pose proof (frame_mod_munch _ _ _ FM2) as MU2. unfold aregF_w, ivls in MU2. cbn [map fst snd] in MU2. rewrite !u_small in MU2 by lia.
             eapply (mstatics_munch H L LOK HH sp0 tid can mem0 Hvsp HCE M M' _ [] ST MU2 (aframe_mod_wmono _ _ _ FM2)).
             * constructor; [left; cbn [fst snd]; lia | constructor; [right; left; reflexivity | constructor]].
@@ -628,17 +653,28 @@ Section ATop.
               unfold aregF_w. constructor; [| constructor; [|constructor]]; cbn [fst snd]; rewrite u_small by lia; lia.
             * apply (astk_grows M M'); [exact (mst_stk_spm H L sp0 tid can mem0 Hvsp _ ST) | lia | lia | exact (proj2 FM2)].
             * eapply ACONST_frame; [exact (mst_ac H L sp0 tid can mem0 _ ST) | exact MU2 | exact (aframe_mod_wmono _ _ _ FM2) |].
-              constructor; [apply aconst_ok_hi; cbn [fst]; unfold AHI_LO; lia | constructor; [exact aconst_ok_errno | constructor]].
-          + rewrite (same_but_materialized_fds _ _ SB2), (same_but_materialized_fds _ _ SB'), EFDS, FDS0. reflexivity.
+              constructor; [apply aconst_ok_hi; cbn [fst]; unfold AHI_LO; lia | constructor; [exact aconst_ok_errno | constructor]]. }
+          assert (FD2 : fd_lookup (m_fds mo2) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2))).
+          { rewrite (same_but_materialized_fds _ _ SB2), (same_but_materialized_fds _ _ SB'), EFDS, FDS0. reflexivity. }
+          (* the message and exit never call time(): [atail_open_stmt] is a walk over the binary's
+             segments, lifted whole to the run's list *)
+          apply (rz_lift_rt H DLR s0 msF2 mo2 R' _ M' _ HV2).
+          exact (TOP sp0 argv s0 msF0 mo0 regs0 mem0 B tid can a0s path pp s0 msF2 mo2 R' M' Hva PRE Hargv (proj1 Hpp) (proj2 Hpp) HV2 HA2 Q2 Q4 Q18 MST2 FD2
+                   ltac:(rewrite (same_but_materialized_reader _ _ SB2), (same_but_materialized_reader _ _ SB'), (same_but_materialized_reader _ _ SB);
+                         exact (am_rdr _ _ _ _ _ _ _ _ _ _ _ _ PRE))).
         - (* [comment removed for export] *)
           intros msF' mo' HV' HA' SB'. rewrite AgentLib.v_addi_lit in HV' by lia. change (0x5314ac + 4)%Z with 0x5314b0%Z in HV'.
           replace (alloc_fd (m_fds mo)) with (Z_to_bv 64 3) in HV', SB' by (rewrite EFDS, FDS0; reflexivity).
-          eapply (aseg_C H L DL sp0 argv s0 msF0 mo0 regs0 mem0 B tid can PRE p0 pp R M msF' mo' _ HV' HA' HR HK).
+          eapply (aseg_C H L DLR sp0 argv s0 msF0 mo0 regs0 mem0 B tid can PRE p0 pp R M msF' mo' _ HV' HA' HR HK).
           intros R' msF2 mo2 HV2 HA2 SB2 Q1 Q2 Q4 Q8 Q10 Q18 Q20 Q21.
           change (Z_to_bv 64 0x1c424c) with (Z_to_bv 64 AMALLOC_STUB) in HV2.
           eapply (first_alloc R' M msF2 mo2 _ HV2 HA2 Q1 Q2 Q4 Q8 Q10 Q18 Q20 Q21 ST RH (am_al _ _ _ _ _ _ _ _ _ _ _ _ PRE)).
-          intros regs3 mem3 msF3 mo3 A p s HV3 HA3 RC RH3 CB3 AD3 ST3 HAL3 FS3 FDS3.
-          eapply (loop_sound H L LOK HH DL sp0 pp tid can path data (m_fs mo) mem0 Hvsp HCE ltac:(rewrite EFS; exact Hdata) Htid TRC LIVE
+          intros regs3 mem3 msF3 mo3 A p s HV3 HA3 RC RH3 CB3 AD3 ST3 HAL3 FS3 FDS3 RD3.
+          (* the launch's channel reader at the loop's first model, for [ARInv0] below *)
+          assert (RDR3 : m_channel_reader mo3 = true).
+          { rewrite RD3, (same_but_materialized_reader _ _ SB2), (same_but_materialized_reader _ _ SB').
+            exact (eq_trans (same_but_materialized_reader _ _ SB) (am_rdr _ _ _ _ _ _ _ _ _ _ _ _ PRE)). }
+          eapply (loop_sound H L LOK HH DLR sp0 pp tid can path data (m_fs mo) mem0 Hvsp HCE ltac:(rewrite EFS; exact Hdata) Htid TRC LIVE
                     (length data) 0 65536 A s p regs3 mem3 msF3 mo3).
           + lia.
           + exact HV3.
@@ -647,11 +683,11 @@ Section ATop.
             * rewrite (same_but_materialized_fs _ _ SB2), (same_but_materialized_fs _ _ SB'). reflexivity.
             * rewrite (same_but_materialized_fds _ _ SB2), (same_but_materialized_fds _ _ SB'), with_fds_fds, EFDS. reflexivity.
           + intros cap' A' s' p' regs4 mem4 msF4 mo4 HV4 HA4 CI.
-            eapply (close_step H L DL sp0 pp tid can data (m_fs mo) mem0); [exact HV4 | exact HA4 | exact CI |].
+            eapply (close_step H L DLR sp0 pp tid can data (m_fs mo) mem0); [exact HV4 | exact HA4 | exact CI |].
             intros regs5 msF5 mo5 HV5 HA5 XI. rewrite EFS. eapply x_header; [exact HV5 | exact HA5 | rewrite <- EFS; exact XI].
           + intros Hbig A' s' p' regs4 mem4 msF4 mo4 HV4 HA4 RF.
             unfold t_body. replace (MAX_INPUT <=? Z.of_nat (length data))%Z with true by (symmetry; apply Z.leb_le; lia).
-            eapply (refuse_exit H L DL sp0 tid can Hvsp HCE Htid mem0 pp); [exact HV4 | exact HA4 | exact RF].
+            eapply (refuse_exit H L DLR sp0 tid can Hvsp HCE Htid mem0 pp); [exact HV4 | exact HA4 | exact RF].
       Qed.
     End File.
 
@@ -661,130 +697,144 @@ Section ATop.
       regs_ok E0 srA R -> know_ok RSEGS E0 M knA -> mstatics H L sp0 tid can mem0 M ->
       as_VIS H s0 msF' = mkst (regupd R 10 (errno_ret e)) (Z_to_bv 64 0x5314b0) M rom -> as_AKREL H s0 (mkCfg msF' mo') ->
       m_fds mo' = m_fds mo0 ->
-      realizes asegs (mkCfg msF' mo') (t_die (msg_cannot_open path) (m_fs mo')).
+      (* the launch's channel reader, for [atail_open_stmt] *)
+      m_channel_reader mo' = true ->
+      arz (mkCfg msF' mo') (t_die (msg_cannot_open path) (m_fs mo')).
     Proof.
-      intros e R M msF' mo' He HR HK ST HV' HA' EFDS. pose proof SPlo as Hlo. pose proof SPhi as Hhi. pose proof Elo. pose proof aceil_loT as HCL. acb.
+      intros e R M msF' mo' He HR HK ST HV' HA' EFDS RD'. pose proof SPlo as Hlo. pose proof SPhi as Hhi. pose proof Elo. pose proof aceil_loT as HCL. acb.
       pose proof (am_fds _ _ _ _ _ _ _ _ _ _ _ _ PRE) as FDS0.
       assert (HeR : 1 <= e <= 4095 /\ scF e).
       { destruct He as [He|[->| ->]]; [split; [apply openat_errnos_range | apply scF_openat]; exact He
           | split; [unfold ENAMETOOLONG; lia | exact scF_ENAMETOOLONG] | split; [unfold ENOENT; lia | exact scF_ENOENT]]. }
       destruct HeR as [HeR HSC].
-      eapply (aseg_F H L DL sp0 argv s0 msF0 mo0 regs0 mem0 B tid can PRE p0 pp e R M msF' mo' _ HV' HA' HeR HSC HR HK).
+      eapply (aseg_F H L DLR sp0 argv s0 msF0 mo0 regs0 mem0 B tid can PRE p0 pp e R M msF' mo' _ HV' HA' HeR HSC HR HK).
       intros R' M' msF2 mo2 HV2 HA2 SB2 Q2 Q4 Q8 Q18 FM2.
       rewrite <- (same_but_materialized_fs _ _ SB2).
-      eapply (TOP sp0 argv s0 msF0 mo0 regs0 mem0 B tid can a0s path pp s0 msF2 mo2 R' M' Hva PRE Hargv (proj1 Hpp) (proj2 Hpp) HV2 HA2 Q2 Q4 Q18).
-      - pose proof (frame_mod_munch _ _ _ FM2) as MU2. unfold aregF_w, ivls in MU2. cbn [map fst snd] in MU2. rewrite !u_small in MU2 by lia.
+      assert (MST2 : mstatics H L sp0 tid can mem0 M').
+      { pose proof (frame_mod_munch _ _ _ FM2) as MU2. unfold aregF_w, ivls in MU2. cbn [map fst snd] in MU2. rewrite !u_small in MU2 by lia.
         eapply (mstatics_munch H L LOK HH sp0 tid can mem0 Hvsp HCE M M' _ [] ST MU2 (aframe_mod_wmono _ _ _ FM2)).
         + constructor; [left; cbn [fst snd]; lia | constructor; [right; left; reflexivity | constructor]].
         + eapply amem_inv_frame; [exact (mst_inv H L sp0 tid can mem0 _ ST) | exact FM2 |].
           unfold aregF_w. constructor; [| constructor; [|constructor]]; cbn [fst snd]; rewrite u_small by lia; lia.
         + apply (astk_grows M M'); [exact (mst_stk_spm H L sp0 tid can mem0 Hvsp _ ST) | lia | lia | exact (proj2 FM2)].
         + eapply ACONST_frame; [exact (mst_ac H L sp0 tid can mem0 _ ST) | exact MU2 | exact (aframe_mod_wmono _ _ _ FM2) |].
-          constructor; [apply aconst_ok_hi; cbn [fst]; unfold AHI_LO; lia | constructor; [exact aconst_ok_errno | constructor]].
-      - rewrite (same_but_materialized_fds _ _ SB2), EFDS, FDS0. reflexivity.
+          constructor; [apply aconst_ok_hi; cbn [fst]; unfold AHI_LO; lia | constructor; [exact aconst_ok_errno | constructor]]. }
+      assert (FD2 : fd_lookup (m_fds mo2) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2))).
+      { rewrite (same_but_materialized_fds _ _ SB2), EFDS, FDS0. reflexivity. }
+      (* the message and exit never call time(): [atail_open_stmt] is a walk over the binary's
+         segments, lifted whole to the run's list *)
+      apply (rz_lift_rt H DLR s0 msF2 mo2 R' _ M' _ HV2).
+      exact (TOP sp0 argv s0 msF0 mo0 regs0 mem0 B tid can a0s path pp s0 msF2 mo2 R' M' Hva PRE Hargv (proj1 Hpp) (proj2 Hpp) HV2 HA2 Q2 Q4 Q18 MST2 FD2
+               ltac:(rewrite (same_but_materialized_reader _ _ SB2); exact RD')).
     Qed.
 
     (* [comment removed for export] *)
     Theorem as_open_fail_toolong :
       (4096 <= length path)%nat ->
-      realizes asegs (mkCfg msF0 mo0) (t_die (msg_cannot_open path) (m_fs mo0)).
+      arz (mkCfg msF0 mo0) (t_die (msg_cannot_open path) (m_fs mo0)).
     Proof.
       intros Hlong. pose proof SPlo as Hlo. pose proof SPhi as Hhi.
-      apply (aseg_A H L DL sp0 argv s0 msF0 mo0 regs0 mem0 B tid can PRE a0s path Hargv p0 pp Hp0 Hpp).
+      apply (aseg_A H L DLR sp0 argv s0 msF0 mo0 regs0 mem0 B tid can PRE a0s path Hargv p0 pp Hp0 Hpp).
       intros R M msF mo HV HA SB HR HK FM FA.
       pose proof (amst_at_open M FM FA) as ST. destruct (mo_sb _ _ SB) as [EFS EFDS].
       destruct (aopenat_regs sp0 regs0 tid can p0 pp R HR) as (H17 & H10 & H11 & Hfl).
       destruct Hpp as [_ (S1a & S1b & S1c & S1d & S1e)]. pose proof (u64_range (Z_to_bv 64 pp)).
-      eapply (drv_openat_toolong H DL s0 msF R (Z_to_bv 64 0x5314ac) M mo ECALLW AECALL2 is_ecall_ECALLW HV HA H17 H10 Hfl (firstn 4096 path)).
+      eapply (drv_openat_toolong_rt H DLR s0 msF R (Z_to_bv 64 0x5314ac) M mo ECALLW AECALL2 is_ecall_ECALLW HV HA H17 H10 Hfl (firstn 4096 path)).
       - rewrite H11.
         replace (firstn 4096 path) with (firstn 4096 (path ++ [Z_to_bv 8 0]))
           by (rewrite firstn_app; replace (4096 - length path)%nat with 0%nat by (first [clear - Hlong; lia | lia]); cbn [firstn]; apply app_nil_r).
         apply (rdn_firstn RSEGS M (length path + 1)); [| (first [clear - Hlong; lia | lia])].
         rewrite <- S1d. apply rdn_agree. intros j Hj. apply (above_A H L sp0 argv s0 msF0 mo0 regs0 mem0 B tid can PRE M FM). rewrite (u_small pp) by lia. rewrite u_small by lia. lia.
       - intros Hin. apply S1c. rewrite <- (firstn_skipn 4096 path). apply in_app_iff. left. exact Hin.
+      - (* the 4096-byte read ends below TASK_SIZE: [astr_at]'s bound with [4096 <= length path] *)
+        rewrite H11. rewrite (u_small pp) by lia. unfold TASK_SIZE. lia.
       - intros msF' mo' HV' HA' SB'. rewrite AgentLib.v_addi_lit in HV' by lia. change (0x5314ac + 4)%Z with 0x5314b0%Z in HV'.
         rewrite <- EFS, <- (same_but_materialized_fs _ _ SB').
-        apply (open_fail ENAMETOOLONG R M msF' mo' ltac:(right; left; reflexivity) HR HK ST HV' HA').
-        rewrite (same_but_materialized_fds _ _ SB'). exact EFDS.
+        apply (open_fail ENAMETOOLONG R M msF' mo' ltac:(right; left; reflexivity) HR HK ST HV' HA');
+          [ rewrite (same_but_materialized_fds _ _ SB'); exact EFDS
+          | rewrite (same_but_materialized_reader _ _ SB'), (same_but_materialized_reader _ _ SB); exact (am_rdr _ _ _ _ _ _ _ _ _ _ _ _ PRE) ].
     Qed.
 
     Theorem as_open_fail_empty :
       path = [] ->
-      realizes asegs (mkCfg msF0 mo0) (t_die (msg_cannot_open path) (m_fs mo0)).
+      arz (mkCfg msF0 mo0) (t_die (msg_cannot_open path) (m_fs mo0)).
     Proof.
       intros Hnil. pose proof SPlo as Hlo. pose proof SPhi as Hhi.
-      apply (aseg_A H L DL sp0 argv s0 msF0 mo0 regs0 mem0 B tid can PRE a0s path Hargv p0 pp Hp0 Hpp).
+      apply (aseg_A H L DLR sp0 argv s0 msF0 mo0 regs0 mem0 B tid can PRE a0s path Hargv p0 pp Hp0 Hpp).
       intros R M msF mo HV HA SB HR HK FM FA.
       pose proof (amst_at_open M FM FA) as ST. destruct (mo_sb _ _ SB) as [EFS EFDS].
       destruct (aopenat_regs sp0 regs0 tid can p0 pp R HR) as (H17 & H10 & H11 & Hfl).
       pose proof (apath_at_A H L sp0 argv s0 msF0 mo0 regs0 mem0 B tid can PRE path p0 pp Hpp M R FM HR ltac:(rewrite Hnil; cbn; lia)) as PA.
-      eapply (drv_openat_empty H DL s0 msF R (Z_to_bv 64 0x5314ac) M mo ECALLW AECALL2 is_ecall_ECALLW HV HA H17 H10 Hfl).
+      eapply (drv_openat_empty_rt H DLR s0 msF R (Z_to_bv 64 0x5314ac) M mo ECALLW AECALL2 is_ecall_ECALLW HV HA H17 H10 Hfl).
       - rewrite Hnil in PA. exact PA.
       - intros msF' mo' HV' HA' SB'. rewrite AgentLib.v_addi_lit in HV' by lia. change (0x5314ac + 4)%Z with 0x5314b0%Z in HV'.
         rewrite <- EFS, <- (same_but_materialized_fs _ _ SB').
-        apply (open_fail ENOENT R M msF' mo' ltac:(right; right; reflexivity) HR HK ST HV' HA').
-        rewrite (same_but_materialized_fds _ _ SB'). exact EFDS.
+        apply (open_fail ENOENT R M msF' mo' ltac:(right; right; reflexivity) HR HK ST HV' HA');
+          [ rewrite (same_but_materialized_fds _ _ SB'); exact EFDS
+          | rewrite (same_but_materialized_reader _ _ SB'), (same_but_materialized_reader _ _ SB); exact (am_rdr _ _ _ _ _ _ _ _ _ _ _ _ PRE) ].
     Qed.
 
     Theorem as_open_fail_absent :
       (length path <= 4095)%nat -> path <> [] -> path_has_slash path = false -> path_is_dirref path = false ->
       fs_lookup (m_fs mo0) path = None ->
-      realizes asegs (mkCfg msF0 mo0) (t_die (msg_cannot_open path) (m_fs mo0)).
+      arz (mkCfg msF0 mo0) (t_die (msg_cannot_open path) (m_fs mo0)).
     Proof.
       intros Hlen Hne Hsl Hnd Hfs. pose proof SPlo as Hlo. pose proof SPhi as Hhi.
-      apply (aseg_A H L DL sp0 argv s0 msF0 mo0 regs0 mem0 B tid can PRE a0s path Hargv p0 pp Hp0 Hpp).
+      apply (aseg_A H L DLR sp0 argv s0 msF0 mo0 regs0 mem0 B tid can PRE a0s path Hargv p0 pp Hp0 Hpp).
       intros R M msF mo HV HA SB HR HK FM FA.
       pose proof (amst_at_open M FM FA) as ST. destruct (mo_sb _ _ SB) as [EFS EFDS].
       destruct (aopenat_regs sp0 regs0 tid can p0 pp R HR) as (H17 & H10 & H11 & Hfl).
       pose proof (apath_at_A H L sp0 argv s0 msF0 mo0 regs0 mem0 B tid can PRE path p0 pp Hpp M R FM HR Hlen) as PA.
-      eapply (drv_openat_absent H DL s0 msF R (Z_to_bv 64 0x5314ac) M mo ECALLW AECALL2 is_ecall_ECALLW HV HA H17 H10 Hfl path);
+      eapply (drv_openat_absent_rt H DLR s0 msF R (Z_to_bv 64 0x5314ac) M mo ECALLW AECALL2 is_ecall_ECALLW HV HA H17 H10 Hfl path);
         [exact PA | exact Hne | exact Hsl | exact Hnd | rewrite EFS; exact Hfs |].
       intros msF' mo' HV' HA' SB'. rewrite AgentLib.v_addi_lit in HV' by lia. change (0x5314ac + 4)%Z with 0x5314b0%Z in HV'.
       rewrite <- EFS, <- (same_but_materialized_fs _ _ SB').
-      apply (open_fail ENOENT R M msF' mo' ltac:(right; right; reflexivity) HR HK ST HV' HA').
-      rewrite (same_but_materialized_fds _ _ SB'). exact EFDS.
+      apply (open_fail ENOENT R M msF' mo' ltac:(right; right; reflexivity) HR HK ST HV' HA');
+        [ rewrite (same_but_materialized_fds _ _ SB'); exact EFDS
+        | rewrite (same_but_materialized_reader _ _ SB'), (same_but_materialized_reader _ _ SB); exact (am_rdr _ _ _ _ _ _ _ _ _ _ _ _ PRE) ].
     Qed.
 
     (* [comment removed for export] *)
     Theorem as_dir :
       path = dot_path ->
-      realizes asegs (mkCfg msF0 mo0) (t_alt2 (t_die (msg_cannot_open path) (m_fs mo0)) (t_opened_dir path (m_fs mo0))).
+      arz (mkCfg msF0 mo0) (t_alt2 (t_die (msg_cannot_open path) (m_fs mo0)) (t_opened_dir path (m_fs mo0))).
     Proof.
       intros Hdot. pose proof SPlo as Hlo. pose proof SPhi as Hhi. pose proof Elo. pose proof aceil_loT as HCL. acb.
       pose proof (am_fds _ _ _ _ _ _ _ _ _ _ _ _ PRE) as FDS0.
       assert (Hlen : (length path <= 4095)%nat) by (rewrite Hdot; cbn; lia).
-      apply (aseg_A H L DL sp0 argv s0 msF0 mo0 regs0 mem0 B tid can PRE a0s path Hargv p0 pp Hp0 Hpp).
+      apply (aseg_A H L DLR sp0 argv s0 msF0 mo0 regs0 mem0 B tid can PRE a0s path Hargv p0 pp Hp0 Hpp).
       intros R M msF mo HV HA SB HR HK FM FA.
       pose proof (amst_at_open M FM FA) as ST. pose proof (arh_at_open M FM) as RH. destruct (mo_sb _ _ SB) as [EFS EFDS].
       destruct (aopenat_regs sp0 regs0 tid can p0 pp R HR) as (H17 & H10 & H11 & Hfl).
       pose proof (apath_at_A H L sp0 argv s0 msF0 mo0 regs0 mem0 B tid can PRE path p0 pp Hpp M R FM HR Hlen) as PA.
       assert (Hfree : fd_lookup (m_fds mo) (alloc_fd (m_fds mo)) = None) by (rewrite EFDS, FDS0; reflexivity).
       unfold t_opened_dir. rewrite <- EFS.
-      eapply (drv_openat_dot H DL s0 msF R (Z_to_bv 64 0x5314ac) M mo ECALLW AECALL2 is_ecall_ECALLW HV HA H17 H10 Hfl Hfree path);
+      eapply (drv_openat_dot_rt H DLR s0 msF R (Z_to_bv 64 0x5314ac) M mo ECALLW AECALL2 is_ecall_ECALLW HV HA H17 H10 Hfl Hfree path);
         [ exact PA | rewrite Hdot; reflexivity | |].
       - intros e msF' mo' He HV' HA' SB'. rewrite AgentLib.v_addi_lit in HV' by lia. change (0x5314ac + 4)%Z with 0x5314b0%Z in HV'.
         rewrite <- (same_but_materialized_fs _ _ SB').
-        apply (open_fail e R M msF' mo' ltac:(left; exact He) HR HK ST HV' HA').
-        rewrite (same_but_materialized_fds _ _ SB'). exact EFDS.
+        apply (open_fail e R M msF' mo' ltac:(left; exact He) HR HK ST HV' HA');
+          [ rewrite (same_but_materialized_fds _ _ SB'); exact EFDS
+          | rewrite (same_but_materialized_reader _ _ SB'), (same_but_materialized_reader _ _ SB); exact (am_rdr _ _ _ _ _ _ _ _ _ _ _ _ PRE) ].
       - intros msF' mo' HV' HA' SB'. rewrite AgentLib.v_addi_lit in HV' by lia. change (0x5314ac + 4)%Z with 0x5314b0%Z in HV'.
         replace (alloc_fd (m_fds mo)) with (Z_to_bv 64 3) in HV', SB' by (rewrite EFDS, FDS0; reflexivity).
-        eapply (aseg_C H L DL sp0 argv s0 msF0 mo0 regs0 mem0 B tid can PRE p0 pp R M msF' mo' _ HV' HA' HR HK).
+        eapply (aseg_C H L DLR sp0 argv s0 msF0 mo0 regs0 mem0 B tid can PRE p0 pp R M msF' mo' _ HV' HA' HR HK).
         intros R' msF2 mo2 HV2 HA2 SB2 Q1 Q2 Q4 Q8 Q10 Q18 Q20 Q21.
         change (Z_to_bv 64 0x1c424c) with (Z_to_bv 64 AMALLOC_STUB) in HV2.
         eapply (first_alloc R' M msF2 mo2 _ HV2 HA2 Q1 Q2 Q4 Q8 Q10 Q18 Q20 Q21 ST RH (am_al _ _ _ _ _ _ _ _ _ _ _ _ PRE)).
-        intros regs3 mem3 msF3 mo3 A p s HV3 HA3 RC RH3 [junk CB3] AD3 ST3 HAL3 FS3 FDS3.
+        intros regs3 mem3 msF3 mo3 A p s HV3 HA3 RC RH3 [junk CB3] AD3 ST3 HAL3 FS3 FDS3 RD3.
         destruct RC as (R1 & R2 & R4 & R8 & R9 & R10 & R11 & R12 & R18 & R19 & R20 & R21 & R22).
         pose proof (ah_blocks H HH _ _ _ (p, A, 65536) RH3 ltac:(left; reflexivity)) as BR. pose proof BR as (B1 & B2 & B3 & B4 & B5 & B6 & B7).
         cbn [blk_addr blk_size fst snd] in *. unfold AIMG_TOP in B4.
         destruct (aerrno_rw_any mem3) as [errv ERR].
         (* [comment removed for export] *)
-        eapply (aread_stage_dir H HH DL s msF3 mo3 regs3 mem3 3 65536 lo errv 0x1f3ee0 _ HV3 HA3 R1);
+        eapply (aread_stage_dir_rt H HH DLR s msF3 mo3 regs3 mem3 3 65536 lo errv 0x1f3ee0 _ HV3 HA3 R1);
           [ lia | reflexivity | exact R4 | exact R10 | exact R11 | exact R12 | lia | lia
           | rewrite R2, u_small by lia; exact (mst_stk_spm H L sp0 tid can mem0 Hvsp _ ST3) | lia | rewrite R2, u_small by lia; unfold AREAD_STACK; (first [clear - Elo; lia | lia])
           | exact (mst_inv H L sp0 tid can mem0 _ ST3) | exact (mst_ac H L sp0 tid can mem0 _ ST3) | exact ERR
           | rewrite FDS3, (same_but_materialized_fds _ _ SB2), (same_but_materialized_fds _ _ SB'), with_fds_fds; apply fd_lookup_insert_eq |].
         rewrite R2, !u_small by lia.
-        intros regs4 mem4 msF4 mo4 HV4 HA4 KEPT4 U10 MU4 WM4 INV4 STK4 AC4 ERR4 FS4 FDS4.
+        intros regs4 mem4 msF4 mo4 HV4 HA4 KEPT4 U10 MU4 WM4 INV4 STK4 AC4 ERR4 FS4 FDS4 RD4.
         assert (ST4 : mstatics H L sp0 tid can mem0 mem4).
         { eapply (mstatics_munch H L LOK HH sp0 tid can mem0 Hvsp HCE mem3 mem4 _ [] ST3 MU4 WM4); [| exact INV4 | exact STK4 | exact AC4].
           constructor; [right; left; reflexivity | constructor; [left; cbn [fst snd]; unfold AREAD_STACK; lia | constructor]]. }
@@ -794,15 +844,22 @@ Section ATop.
                               | kept KEPT4 (18:reg)%bv R18 | kept KEPT4 (20:reg)%bv R20 | kept KEPT4 (22:reg)%bv R22
                               | kept KEPT4 (9:reg)%bv R9 | kept KEPT4 (19:reg)%bv R19 | kept KEPT4 (21:reg)%bv R21
                               | apply bv_eq; rewrite U10, u_small by lia; reflexivity ]. }
-        eapply (aseg_L5c H DL sp0 Hvsp s msF4 mo4 regs4 mem4 ppw A 0 65536 _ RR4 (mst_stk_ok H L sp0 tid can mem0 Hvsp _ ST4)
+        eapply (aseg_L5c H DLR sp0 Hvsp s msF4 mo4 regs4 mem4 ppw A 0 65536 _ RR4 (mst_stk_ok H L sp0 tid can mem0 Hvsp _ ST4)
                   (mst_ro H L sp0 tid can mem0 _ ST4) (mst_relro H L sp0 tid can mem0 _ ST4)); [| exact HV4 | exact HA4].
         intros regs5 mem5 msF5 mo5 HV5 HA5 SB5 (T2 & T4 & T8 & T18 & T20) T9 FM5 STK5.
         replace (m_fs mo) with (m_fs mo5) by
           (rewrite (same_but_materialized_fs _ _ SB5), FS4, FS3, (same_but_materialized_fs _ _ SB2), (same_but_materialized_fs _ _ SB'), with_fds_fs; reflexivity).
+        (* the read-error message and exit never call time(): [atail_rderr_stmt] is a walk over the
+           binary's segments, lifted whole to the run's list *)
+        apply (rz_lift_rt H DLR s msF5 mo5 regs5 _ mem5 _ HV5).
         eapply (TRD sp0 argv s0 msF0 mo0 regs0 mem0 B tid can a0s path pp s msF5 mo5 regs5 mem5 Hva PRE Hargv (proj1 Hpp) (proj2 Hpp) HV5 HA5 T2 T4 T18).
         + eapply (mstatics_frameL H L LOK HH sp0 tid can mem0 Hvsp HCE); [exact ST4 | exact FM5].
         + rewrite (same_but_materialized_fds _ _ SB5), FDS4, FDS3, (same_but_materialized_fds _ _ SB2), (same_but_materialized_fds _ _ SB'), with_fds_fds,
             fd_lookup_insert_neq, EFDS, FDS0; [reflexivity | intros E; apply (f_equal bv_unsigned) in E; discriminate].
+        + (* 08b1429: the launch's channel reader, carried along the same chain as the fds *)
+          rewrite (same_but_materialized_reader _ _ SB5), RD4, RD3, (same_but_materialized_reader _ _ SB2),
+            (same_but_materialized_reader _ _ SB').
+          exact (eq_trans (same_but_materialized_reader _ _ SB) (am_rdr _ _ _ _ _ _ _ _ _ _ _ _ PRE)).
     Qed.
   End TwoArgs.
 
@@ -812,14 +869,19 @@ Section ATop.
   Section Usage.
     Hypothesis Hargc : length argv <> 2%nat.
 
-    Theorem as_usage : realizes asegs (mkCfg msF0 mo0) (t_die (msg_usage (hd [] argv)) (m_fs mo0)).
+    Theorem as_usage : arz (mkCfg msF0 mo0) (t_die (msg_usage (hd [] argv)) (m_fs mo0)).
     Proof.
       pose proof SPlo. pose proof SPhi. pose proof Elo.
-      apply (aseg_U H L DL sp0 argv s0 msF0 mo0 regs0 mem0 B tid can Hva PRE Hargc). intros R M msF mo HV HA SB Q2 Q4 Q8 Q10 Q11 FM FA.
+      apply (aseg_U H L DLR sp0 argv s0 msF0 mo0 regs0 mem0 B tid can Hva PRE Hargc). intros R M msF mo HV HA SB Q2 Q4 Q8 Q10 Q11 FM FA.
       rewrite <- (same_but_materialized_fs _ _ SB).
+      (* the usage message and exit never call time(): [atail_usage_stmt] is a walk over the
+         binary's segments, lifted whole to the run's list *)
+      apply (rz_lift_rt H DLR s0 msF mo R _ M _ HV).
       eapply (TUS sp0 argv s0 msF0 mo0 regs0 mem0 B tid can s0 msF mo R M Hva PRE Hargc HV HA Q2 Q4 Q8 Q10 Q11).
       - unfold regU_w in FM. eapply (amst_at_win M _ _ FM); [lia | lia | lia | exact FA].
       - exact (same_but_materialized_fds _ _ SB).
+      - (* 08b1429: the launch's channel reader *)
+        exact (same_but_materialized_reader _ _ SB).
     Qed.
   End Usage.
 End ATop.
@@ -838,11 +900,15 @@ Qed.
 
 Section Main.
   Context {HCEIL : HeapCeil}.
+  (* the run's tail ([RunTail.RunTail]): the statement [as_main_realizes_stmt] is over the run's
+     segment list asegs ++ rt_tail *)
+  Context {RT : RunTail.RunTail}.
   Variable H : asr.
   Variable L : alib.
   Hypothesis LOK : alib_ok L.
   Hypothesis HH : asan_rt_hyps H.
-  Hypothesis DL : asan_driver_laws H.
+  Context {vlo vb vhi : Z}.
+  Hypothesis DLR : asan_driver_laws_run RunTail.rt_tail vlo vb vhi H.
   Hypothesis TR : as_target_run_stmt H L.
   Hypothesis LIVE : ADRV_LIVE <= as_LIVE_MAX H /\ ADRV_CNT <= as_LIVE_CNT_MAX H.
   Hypothesis TUS : atail_usage_stmt H L.
@@ -853,8 +919,8 @@ Section Main.
   Proof.
     intros sp0 argv s0 msF mo regs mem B tid can Hva Hvfs PRE.
     destruct argv as [|a0s [|path [|x l]]].
-    - exact (as_usage H L LOK HH DL TUS sp0 [] s0 msF mo regs mem B tid can Hva PRE ltac:(cbn; lia)).
-    - exact (as_usage H L LOK HH DL TUS sp0 [a0s] s0 msF mo regs mem B tid can Hva PRE ltac:(cbn; lia)).
+    - exact (as_usage H L LOK HH DLR TUS sp0 [] s0 msF mo regs mem B tid can Hva PRE ltac:(cbn; lia)).
+    - exact (as_usage H L LOK HH DLR TUS sp0 [a0s] s0 msF mo regs mem B tid can Hva PRE ltac:(cbn; lia)).
     - cbn [spec].
       pose proof Hva as (_ & _ & _ & _ & Htl). cbn [tl] in Htl. inversion Htl as [|x l [Hsl Hdd] _]; subst.
       destruct (am_args _ _ _ _ _ _ _ _ _ _ _ _ PRE 0%nat a0s ltac:(lia) eq_refl) as [p0 Hp0].
@@ -863,22 +929,22 @@ Section Main.
       replace (bv_unsigned sp0 + 8 + 0) with (bv_unsigned sp0 + 8) in Hp0 by lia.
       replace (bv_unsigned sp0 + 8 + 8) with (bv_unsigned sp0 + 16) in Hpp by lia.
       destruct (Nat.leb_spec0 4096 (length path)) as [Hlong|Hshort].
-      + exact (as_open_fail_toolong H L LOK HH DL TOP sp0 [a0s; path] s0 msF mo regs mem B tid can Hva PRE a0s path eq_refl p0 pp Hp0 Hpp Hlong).
+      + exact (as_open_fail_toolong H L LOK HH DLR TOP sp0 [a0s; path] s0 msF mo regs mem B tid can Hva PRE a0s path eq_refl p0 pp Hp0 Hpp Hlong).
       + destruct (list_byte_eqb path []) eqn:Hemp.
         * apply list_byte_eqb_eq in Hemp.
-          exact (as_open_fail_empty H L LOK HH DL TOP sp0 [a0s; path] s0 msF mo regs mem B tid can Hva PRE a0s path eq_refl p0 pp Hp0 Hpp Hemp).
+          exact (as_open_fail_empty H L LOK HH DLR TOP sp0 [a0s; path] s0 msF mo regs mem B tid can Hva PRE a0s path eq_refl p0 pp Hp0 Hpp Hemp).
         * assert (Hne : path <> []) by (intros E; apply list_byte_eqb_eq in E; rewrite E in Hemp; discriminate).
           destruct (list_byte_eqb path dot_path) eqn:Hdot.
           -- apply list_byte_eqb_eq in Hdot.
-             exact (as_dir H L LOK HH DL LIVE TOP TRD sp0 [a0s; path] s0 msF mo regs mem B tid can Hva PRE a0s path eq_refl p0 pp Hp0 Hpp Hdot).
+             exact (as_dir H L LOK HH DLR LIVE TOP TRD sp0 [a0s; path] s0 msF mo regs mem B tid can Hva PRE a0s path eq_refl p0 pp Hp0 Hpp Hdot).
           -- assert (Hnd : path <> dot_path) by (intros E; apply list_byte_eqb_eq in E; rewrite E in Hdot; discriminate).
              assert (Hdr : path_is_dirref path = false).
              { unfold path_is_dirref. rewrite (path_eqb_neq _ _ Hnd), Hdd. reflexivity. }
              destruct (fs_lookup (m_fs mo) path) as [data|] eqn:Hlk.
-             ++ exact (as_file H L LOK HH DL TR LIVE TOP sp0 [a0s; path] s0 msF mo regs mem B tid can Hva PRE a0s path eq_refl p0 pp Hp0 Hpp data Hlk
+             ++ exact (as_file H L LOK HH DLR TR LIVE TOP sp0 [a0s; path] s0 msF mo regs mem B tid can Hva PRE a0s path eq_refl p0 pp Hp0 Hpp data Hlk
                         ltac:(lia) Hne Hsl Hdr).
-             ++ exact (as_open_fail_absent H L LOK HH DL TOP sp0 [a0s; path] s0 msF mo regs mem B tid can Hva PRE a0s path eq_refl p0 pp Hp0 Hpp
+             ++ exact (as_open_fail_absent H L LOK HH DLR TOP sp0 [a0s; path] s0 msF mo regs mem B tid can Hva PRE a0s path eq_refl p0 pp Hp0 Hpp
                         ltac:(lia) Hne Hsl Hdr Hlk).
-    - exact (as_usage H L LOK HH DL TUS sp0 (a0s :: path :: x :: l) s0 msF mo regs mem B tid can Hva PRE ltac:(cbn; lia)).
+    - exact (as_usage H L LOK HH DLR TUS sp0 (a0s :: path :: x :: l) s0 msF mo regs mem B tid can Hva PRE ltac:(cbn; lia)).
   Qed.
 End Main.

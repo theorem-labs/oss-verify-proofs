@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Does not rest on tex_word_specX; memnorm only through EXB's exv_rm keep and EXV_PRE's entry memnorm (kit 4f18c75d4900). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Does not rest on tex_word_specX; memnorm only through EXB's exv_rm keep and EXV_PRE's entry memnorm (kit). *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B (asan-ubsan, rebuilt pin f8f98a95bc52, unstripped twin 3b5e1a099b53),
    ex_value's NUMBER SEGMENT (the cut CN of lib/B/Prog/ExvB_Stmt.v, B 0x837a4 = exv_pc 0x278): the segment's own
    INTERNAL cuts and the statement of each sub-piece. Statements only; this file proves nothing about the program.
@@ -242,7 +243,7 @@ Definition EXN_keepM : Prop := forall fxc lyc Sc Hpc Wc regs memc mdc k regs' me
   (forall z, 0 <= z < 2 ^ 64 -> ~ EXN_wz lyc z -> aview rsegs (w_H Wc) memc' z = aview rsegs (w_H Wc) memc z) ->
   (forall a, apresent (w_H Wc) memc a -> apresent (w_H Wc) memc' a) ->
   (* the step's own memnorm keep (an engine run's _inv twin, a callee's m-form keep): EXB's exv_rm carries
-     `memnorm (e_mem E) -> memnorm memc`, which a view-level agreement cannot move (kit 4f18c75d4900, YSRrMemnorm.v) *)
+     `memnorm (e_mem E) -> memnorm memc`, which a view-level agreement cannot move (kit, YSRrMemnorm.v) *)
   (YAkMemnorm.memnorm rsegs memc -> YAkMemnorm.memnorm rsegs memc') ->
   EXN_regs_kept regs regs' ->
   EXB (fx := fxc) B ARx SK E lyc Sc Hpc Wc regs' memc' mdc' k' pos.

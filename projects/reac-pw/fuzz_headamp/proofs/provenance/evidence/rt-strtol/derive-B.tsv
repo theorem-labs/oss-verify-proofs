@@ -1,4 +1,4 @@
-# derive_y.py b7b132fb12a7 over lib/A at edf6010b0aae (fuzz_headamp.asan b5f352154c54 / pin f3e0669d2819) -> lib/AU (fuzz_headamp.asan-ubsan 1674e30a0698 / pin 53edda9bdeeb); independent check: alreloc a5c53bb2bed4 --from-build asan --build asan-ubsan --dry at 8017a2d315a5 (same numerals) and a symbol+offset / GOT-target check of every image-range numeral against both unstripped twins
+# derive_y.py b7b132fb12a7 over lib/A (fuzz_headamp.asan b5f352154c54 / pin f3e0669d2819) -> lib/AU (fuzz_headamp.asan-ubsan 1674e30a0698 / pin 53edda9bdeeb); independent check: alreloc a5c53bb2bed4 --from-build asan --build asan-ubsan --dry (same numerals) and a symbol+offset / GOT-target check of every image-range numeral against both unstripped twins
 file	line	column	A	derive_y	final	class	derive_y status	independent check	decision
 I_consts.v	19	40	0x54888	0x54908	0x54908	code	ok	A __asan_region_is_poisoned+0x0 | B __asan_region_is_poisoned+0x0 | same	derive_y = alreloc
 I_ikit.v	20	34	0x59d1c	0x59d9c	0x59d9c	code	ok	A _ZN6__asan18TryAsanInitFromRtlEv+0x0 | B _ZN6__asan18TryAsanInitFromRtlEv+0x0 | same	derive_y = alreloc

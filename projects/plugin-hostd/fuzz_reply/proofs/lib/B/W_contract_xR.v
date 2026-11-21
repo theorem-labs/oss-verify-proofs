@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/W_contract_x.v; 329 of its 634 lines of code are new or changed and 1707 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Contract texts of lib/B/W_contract_x.v at a world relation R: relay_event (re_post_x :796, re_spec_x :811),
    list_push (lp_post_x :350, lp_spec_x :368, lp_spec_g_x :479), drain (dr_post_x :715, dr_spec_x :756), gesture_end
    (ge_post_x :1017, ge_spec_x :1031), gestures_end (gse_post_x :1047, gse_spec_x :1062) and relay_finish (rf_post_x
@@ -77,7 +78,7 @@ Variable RP : roomp.
 Variable MMAX : Z.
 Variable G : list (Z * Z).
 Variable RG : rep_globals.
-(* W_contract_x.v:796 re_post_x at R: the journal conjunct ajournal_gx_x -> ajournal_gx_xR R; every other conjunct verbatim *)
+(* W_contract_x.v:797 re_post_x at R: the journal conjunct ajournal_gx_x -> ajournal_gx_xR R; every other conjunct verbatim *)
 Definition re_post_xR (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
 (c : ctl) (O : list byte) (mx no cap out : Z) (e : list byte) (kr : nat) : world SEGS -> config -> Prop :=
 fun W' c' => exists ly' S' Hp' regs' mem' md' k out',
@@ -92,7 +93,7 @@ rp_RM RP S' kr /\
 aout_at B RG ly' S' W' mem' (sl_ctl c (re_len e)) (sl_O c O (e ++ [Z_to_bv 8 0])) mx
   (sl_no c no (re_len e)) (sl_cap c mx no cap (re_len e)) out' /\
 alock_at RG W' mem' false.
-(* W_contract_x.v:811 re_spec_x at R: SRr SEGS -> SRrG SEGS R and the post re_post_xR; every premise verbatim *)
+(* W_contract_x.v:812 re_spec_x at R: SRr SEGS -> SRrG SEGS R and the post re_post_xR; every premise verbatim *)
 Definition re_spec_xR (pc : Z) : Prop :=
 forall W ly S Hp regs mem md ch c O mx no cap out line (e : list byte) q m,
 afn_pre_x SEGS B ARx RE_STK ly S Hp W regs mem md ch ->
@@ -181,7 +182,7 @@ Variable MT : ameter_ops.
 Variable RP : roomp.
 Variable G : list (Z * Z).
 Variable MMAX : Z.
-(* W_contract_x.v:350 lp_post_x at R *)
+(* W_contract_x.v:351 lp_post_x at R *)
 Definition lp_post_xR (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
 (LA : Z) (l : hlist) (lines : bool) (x : list byte) (kr : nat) : world SEGS -> config -> Prop :=
 fun W' c' => exists ly' S' Hp' regs' mem' md' kk (l' : hlist) (d : Z),
@@ -199,7 +200,7 @@ apres_kept B W mem W' mem' /\
 (forall i, 0 <= i < 4 -> aview SEGS (w_H W') mem' (as_errno B + i) = aview SEGS (w_H W) mem (as_errno B + i)) /\
 frames S' = frames S /\
 mo_le MT S S' (lp_cost MT l (Z.of_nat (length x))) /\ rp_RM RP S' kr.
-(* W_contract_x.v:368 lp_spec_x at R *)
+(* W_contract_x.v:369 lp_spec_x at R *)
 Definition lp_spec_xR (pc : Z) : Prop :=
 forall W ly S Hp regs mem md ch LA SRC (l : hlist) (lines : bool) (x : list byte) q k,
 afn_pre_x SEGS B ARx LP_STK ly S Hp W regs mem md ch ->
@@ -234,7 +235,7 @@ Hypothesis WLE_R : forall W W', wle W W' -> R W W'.
 Variable MT : ameter_ops.
 Variable RP : roomp.
 Variable MMAX : Z.
-(* W_contract_x.v:479 lp_spec_g_x at R *)
+(* W_contract_x.v:480 lp_spec_g_x at R *)
 Definition lp_spec_g_xR (pc : Z) : Prop := forall G, gx_ok SEGS B G -> gx_rt B G -> lp_spec_xR B PST ARx R MT RP G MMAX pc.
 End w2gR.
 
@@ -255,7 +256,7 @@ Variable MT : ameter_ops.
 Variable RP : roomp.
 Variable MMAX : Z.
 Variable RG : rep_globals.
-(* W_contract_x.v:715 dr_post_x at R *)
+(* W_contract_x.v:716 dr_post_x at R *)
 Definition dr_post_xR (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
 (SA HA : Z) (e : rentry) (h : hsrc) (c : ctl) (O : list byte) (mx no cap out : Z) (kr : nat) : world SEGS -> config -> Prop :=
 fun W' c' => exists ly' S' Hp' regs' mem' md' k (e' : rentry) (h' : hsrc) (out' ev' : Z) (LB : list byte) rest,
@@ -293,7 +294,7 @@ hs_held h' = hs_held h /\
 re_skip e' = hs_overlong h' /\ (re_skip e' = 0 -> bzs (re_U e') = bzs (hs_W h')) /\
 bzs LB = with_nul (dr_lines h) /\
 aout_at B RG ly' S' W' mem' (dr_ctl c h ev') (if live then O ++ LB else O) mx (if live then no + dr_tot h else no) cap' out'.
-(* W_contract_x.v:756 dr_spec_x at R *)
+(* W_contract_x.v:757 dr_spec_x at R *)
 Definition dr_spec_xR (pc : Z) : Prop :=
 forall W ly S Hp regs mem md ch (G SA : Z) (e : rentry) (j : nat) (h : hsrc) (c : ctl) (O : list byte) (mx no cap out : Z),
 let HA := rg_s RG + ASRC * Z.of_nat j in
@@ -336,7 +337,7 @@ Variable MT : ameter_ops.
 Variable RP : roomp.
 Variable MMAX : Z.
 Variable RG : rep_globals.
-(* W_contract_x.v:1017 ge_post_x at R *)
+(* W_contract_x.v:1018 ge_post_x at R *)
 Definition ge_post_xR (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
 (c : ctl) (O : list byte) (mx no cap out : Z) (x : list byte) (kr : nat) : world SEGS -> config -> Prop :=
 fun W' c' => exists ly' S' Hp' regs' mem' md' k out',
@@ -350,7 +351,7 @@ rp_RM RP S' kr /\
  Permutation (ablocks B ly' S') (aout_blks (ge_cap c mx no cap (Z.of_nat (length x))) out' ++ rest)) /\
 aout_at B RG ly' S' W' mem' (ge_ctl c (Z.of_nat (length x))) (ge_O c O x) mx
   (ge_no c no (Z.of_nat (length x))) (ge_cap c mx no cap (Z.of_nat (length x))) out'.
-(* W_contract_x.v:1031 ge_spec_x at R *)
+(* W_contract_x.v:1032 ge_spec_x at R *)
 Definition ge_spec_xR (pc : Z) : Prop :=
 forall W ly S Hp regs mem md ch c O mx no cap out Hk (x : list byte) q m,
 afn_pre_x SEGS B ARx GE_STK ly S Hp W regs mem md ch ->
@@ -366,7 +367,7 @@ forall kr : nat,
 rp_RM RP S (Z.to_nat (ge_cost MT_rk c mx no cap (Z.of_nat (length x))) + kr) ->
 cnt_ok_pk RP ge_pk (ablocks B ly S) ->
 SRrG SEGS R W (cfg_at SEGS pc regs mem md) (ge_post_xR regs ly S Hp W mem md c O mx no cap out x kr).
-(* W_contract_x.v:1047 gse_post_x at R *)
+(* W_contract_x.v:1048 gse_post_x at R *)
 Definition gse_post_xR (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
 (SA TB : Z) (e : rentry) (c : ctl) (O : list byte) (mx no cap out : Z) (rest : list (Z * Z)) (kr : nat) : world SEGS -> config -> Prop :=
 fun W' c' => exists ly' S' Hp' regs' mem' md' k out',
@@ -381,7 +382,7 @@ Permutation (ablocks B ly' S') ((TB, ATABLE) :: aout_blks (gse_cap (gse_run c O 
 aout_at B RG ly' S' W' mem' (gse_c (gse_run c O mx no cap (gse_keys e))) (gse_O (gse_run c O mx no cap (gse_keys e))) mx
   (gse_no (gse_run c O mx no cap (gse_keys e))) (gse_cap (gse_run c O mx no cap (gse_keys e))) out' /\
 garr8 SEGS (arm W' mem') SA (bzs (entry_bytes (entry_cleared e))) /\ awr W' mem' SA AENT.
-(* W_contract_x.v:1062 gse_spec_x at R *)
+(* W_contract_x.v:1063 gse_spec_x at R *)
 Definition gse_spec_xR (pc : Z) : Prop :=
 forall W ly S Hp regs mem md ch SA TB e c O mx no cap out rest,
 afn_pre_x SEGS B ARx GSE_STK ly S Hp W regs mem md ch ->
@@ -420,7 +421,7 @@ Variable G : list (Z * Z).
 Variable RG : rep_globals.
 Variable GTU GL : Z.
 Variable CTX : list (list Z).
-(* W_contract_x.v:1151 rf_post_x at R *)
+(* W_contract_x.v:1152 rf_post_x at R *)
 Definition rf_post_xR (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
 (T : Z) (es : list rentry) (c : ctl) (O : list byte) (mx no cap out : Z) (rest : list (Z * Z)) (kr : nat) : world SEGS -> config -> Prop :=
 fun W' c' => exists ly' S' Hp' regs' mem' md' k out',
@@ -437,7 +438,7 @@ aout_at B RG ly' S' W' mem' (rf_ctl (gse_c (rf_run c O mx no cap es))) (gse_O (r
 alock_at RG W' mem' false /\
 ra_rel B RG ly' S' W' mem' T [] /\
 val_mem SEGS (arm W' mem') GL 4 (2 ^ 32 - 1) /\ awr W' mem' GL 4.
-(* W_contract_x.v:1168 rf_spec_x at R *)
+(* W_contract_x.v:1169 rf_spec_x at R *)
 Definition rf_spec_xR (pc : Z) : Prop :=
 forall W ly S Hp regs mem md ch T es c O mx no cap out rest,
 afn_pre_x SEGS B ARx RF_STK ly S Hp W regs mem md ch -> spZ regs mod 32 = 0 ->

@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs: Section h of proofs/libreac/fuzz_decode/lib/A/Prog/LLVMFuzzerTestOneInput_cg.v (origin/ossv/recipes 88154566652a; cgif_file_fuzzer lib/A/ACfn.v / lib/A/ACfj.v) for reac-repacer/fuzz_uci's image A: the slot is the relocated core's lib/A/ACfn.v tfib_lib_contract_x_all (so decode's own slot, Section a, is not copied) at the core's lib_shape checksum_shape, the core's sink names in place of Section Variables, and fuzz_uci's three callees; module paths changed. *)
+(* Modified by Theorem Labs: Section h of proofs/libreac/fuzz_decode/lib/A/Prog/LLVMFuzzerTestOneInput_cg.v (cgif_file_fuzzer lib/A/ACfn.v / lib/A/ACfj.v) for reac-repacer/fuzz_uci's image A: the slot is the relocated core's lib/A/ACfn.v tfib_lib_contract_x_all (so decode's own slot, Section a, is not copied) at the core's lib_shape checksum_shape, the core's sink names in place of Section Variables, and fuzz_uci's three callees; module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/A/Prog/LLVMFuzzerTestOneInput_cg.v, with its module paths and module names changed; 122 of its 153 lines of code are new or changed and 32 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* LLVMFuzzerTestOneInput_cg: image B's statement of the walk of fuzz_transport.asan-ubsan's (41113a03c82f)
    LLVMFuzzerTestOneInput (fuzz/fuzz_transport.c:1124-1218, with op_frame (:1035-1050), op_announce (:1052-1066),
    op_submit (:1068-1122), op_begin, m_close, coalescable, spec_system_at and fuzz.h's cursor inlined; model

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed ME, hiv_facts'; added entry, inp, mbase; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/Pm10DrvB.v, lines 74, 96-98, 132-145. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -80,7 +81,7 @@ Proof.
 Qed.
 
 Section DrvB.
-  Context {RE : RunEnv}.
+  Context {RE : RunEnv}. Context {RO : ReaderOn}.
   Variable L : heap_layout.
   Variable HI : heap_iface.
   Hypothesis HIok : heap_iface_ok L scfg HI.
@@ -102,7 +103,9 @@ Section DrvB.
   Hypothesis Hve : valid_envp envv.
   Hypothesis Hvsp : valid_sp sp0.
   Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-  Hypothesis ME : main_entry sp0 [a0s; path] envv uid hw rdraw tid regs0 mem0.
+  Variable inp : ProcInput.
+  Variable mbase entry : word.
+  Hypothesis ME : main_entry inp mbase entry sp0 [a0s; path] envv uid hw rdraw tid regs0 mem0.
   Hypothesis Hfile : fs_lookup fs0 path = Some fdata.
   Hypothesis Hpne : path <> [].
   Hypothesis Hplen : (length path <= 4095)%nat.
@@ -137,11 +140,22 @@ Section DrvB.
   Proof. intros. reflexivity. Qed.
 
   Lemma hiv_facts' : forall vals,
-    vals_ev vals 3 = auxvp sp0 a0s path envv -> vals_ev vals 4 = rnd sp0 a0s path envv ->
+    vals_ev vals 3 = auxvp sp0 a0s path envv -> vals_ev vals 4 = rnd sp0 a0s path envv inp ->
     forall i, In i [3%nat; 4%nat] -> (bv_unsigned sp0 <= bv_unsigned (vals_ev vals i))%Z /\ (bv_unsigned (vals_ev vals i) + 2 ^ 20 <= 2 ^ 64)%Z.
-  Proof. intros vals P3 P4 i Hi. exact (hiv_facts sp0 a0s path envv uid hw rdraw Hva Hve Hvsp Hplen vals P3 P4 i Hi). Qed.
+  (* [hiv_facts] (Pm6DrvA.v:147) goes through [auxvp_u] and [rnd_u], and [rnd] now reads
+     [kb_rseq (in_kernel inp)], so Pm6DrvA's section discharges
+     [sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME]
+     ahead of [vals].  The old call stopped at [rdraw] and then put [Hva] where [tid] goes -
+     "The term "Hva" has type "valid_argv [a0s; path]" while it is expected to have type
+     "word"" - and carried [Hplen], which this lemma does not use. *)
+  Proof.
+    intros vals P3 P4 i Hi.
+    (* the kernel then named the next slot: after [ME] comes [Hplen] -
+       "The term "vals" has type "list word" while it is expected to have type
+       "(length path <= 4095)%nat"" *)
+    exact (hiv_facts sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME Hplen vals P3 P4 i Hi).
+  Qed.
 
-  (* [comment removed for export] *)
   Lemma content_block' : forall vals M log (A : Z) (data : list byte),
     vals_ev vals 0 = sp0 -> log_in_b 0 (2 ^ 40) (2 ^ 40) [] [] IMG_W log = true ->
     hz sp0 A (Z.of_nat (length data)) ->

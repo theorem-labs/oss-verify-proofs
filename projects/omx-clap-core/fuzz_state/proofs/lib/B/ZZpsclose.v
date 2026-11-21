@@ -5,7 +5,7 @@
    sources, every pc walked and every report site). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/Prog/FSW_parse_value.v, with its module names and numbers changed; 1163 of its 1272 lines of code are new or changed and 1247 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan, image B) twin of lib/A/FSW_put_string.v at
-   a working branch ca67007c8c2 (a Theorem Labs lane), and another Theorem Labs lane: same lemma names and statement shapes;
+   a working branch (a Theorem Labs lane), and another Theorem Labs lane: same lemma names and statement shapes;
    imports point at lib/B's image files and walk kit (YB1v, YB1w, FSH_Base, FSH_Rt, FSPstat, FSH_Fn_writer,
    FSW_K, FSW_K3, FSW_ret, FSW_frame, FSW_frame3, FSW_rd, FSW_strkit and lib/B's put_string files); the
    image-agnostic FSupoison, FSupoisonU, FSupoisonStack, FSH_YC20, FSH_Gen and FSW_writer_model stay lib/A's.
@@ -14,13 +14,14 @@
    rule 24: proves no function (kind: segment lemma). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/FSW_put_string.v; 164 of its 196 lines of code are new or changed and 1240 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan, image B) twin of lib/A/ZZpsclose.v at
-   a working branch ca67007c8c2 (a Theorem Labs lane), and another Theorem Labs lane: same lemma names and statement shapes;
+   a working branch (a Theorem Labs lane), and another Theorem Labs lane: same lemma names and statement shapes;
    imports point at lib/B's image files and walk kit (YB1v, YB1w, FSH_Base, FSH_Rt, FSPstat, FSH_Fn_writer,
    FSW_K, FSW_K3, FSW_ret, FSW_frame, FSW_frame3, FSW_rd, FSW_strkit and lib/B's put_string files); the
    image-agnostic FSupoison, FSupoisonU, FSupoisonStack, FSH_YC20, FSH_Gen and FSW_writer_model stay lib/A's.
    Every address, cut, branch, offset and register of put_string's own code is RE-MEASURED on image B
    (A_put_string 0x85fc8, 928 bytes; the neutral excerpt put_string.fuzz_state.asan-ubsan.s), never copied.
    rule 24: proves no function (kind: segment lemma). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* put_string's CLOSING THEOREM on image B, as four segments and their glue (image A: lib/A/ZZpsclose.v).
    `ps_pre` bundles put_string_spec's premises; `ps_inv` is the bundle the walk carries at each put call's RETURN
    (PS_OPEN_RET 0x860dc, PS_END_RET 0x862a0, PS_CLOSE_RET 0x862b4). The four segment statements are the explicit

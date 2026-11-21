@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput: both sections and handoff_rest_jo take its fields with QpvH.launch_ok in place of entry_stack_fits; the stack window from the model's stack_window_depth in place of the 8 MiB bound in HLO1; the heap interface's stack-bottom premise: the sections take the floor fact r8 (BOTJ <= QcGV.stk_floor <= TOPJ) for QrOY's hiA_jo and Q8dS.hiA_jo_at_main; HBOT is QcGV.stk_floor <= LO, and the band's bound is proj1 r8). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
-From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Q6q3 QCcH Q0Ek Q7UD Qwm6 QZsi Qhd4 QYZ0 QgHv Qiu2 Q9O6 QlKV Q3k2 QRcT QiVi QJZd QOmG QQIi Qsn5 QBrp QlES Q6sh QgTJ QCrt QU91 QrOY QXE1 QJny Qv81.
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Q6q3 QCcH Q0Ek Q7UD Qwm6 QZsi Qhd4 QYZ0 QgHv Qiu2 Q9O6 QlKV Q3k2 QRcT QiVi QJZd QOmG QQIi Qsn5 QBrp QlES Q6sh QgTJ QCrt QU91 QrOY QXE1 QJny Qv81 QcGV.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 Module Mq0.
@@ -37,10 +38,12 @@ Variable r4 : Q6q3.alloc_ceiling <= BOTJ /\ BOTJ mod 8 = 0 /\ BOTJ <= TOPJ.
 Variable r5 : Q6q3.alloc_ceiling < TOPJ /\ TOPJ <= 2^47.
 Variable r6 : TOPJ + 64 <= BAUX.
 Variable r7 : TOPJ + 64 <= QCrt.ae_stack_top RE + 4096.
+(* the interface's stack bottom: the window floor, at or above ASan's stack bottom BOTJ *)
+Variable r8 : BOTJ <= QcGV.stk_floor /\ QcGV.stk_floor <= TOPJ.
 Hypothesis BOT_cap : BOTJ <= 0x7fffff800000.
 Hypothesis BOT_near : BOTJ <= Q6q3.alloc_ceiling + 4096.
 
-Definition H6_gs : QZsi.heap_iface_A Qwm6.Mq0.A4L := QrOY.Mq0.hiA_jo LA LV PERM0 TMAX NMAX RE FR0 BAUX BOTJ TOPJ HS r1 r2 r3 r4 r5 r6 r7.
+Definition H6_gs : QZsi.heap_iface_A Qwm6.Mq0.A4L := QrOY.Mq0.hiA_jo LA LV PERM0 TMAX NMAX RE FR0 BAUX BOTJ TOPJ HS r1 r2 r3 r4 r5 r6 r7 r8.
 #[local] Notation HIx := (Qhd4.hi5_of_v6 Qwm6.Mq0.A4L H6_gs).
 #[local] Notation BANDP := (QJny.Mq0.BANDP BOTJ (proj1 r4) BOT_cap).
 
@@ -84,18 +87,32 @@ Variable brk0 : word.
 Variable argv envp : list (list byte).
 Variable fs : Fs.Fs.
 Variables uid hw : word.
+Variable apc : N.
+Variable mbase : word.
+Variable ifs : Fs.Fs.
+Variable stdin : InputStream.
+Variable gid : word.
+Variable groups : list word.
+Variable net : NetQueue.
+Variables nofile sigmask : word.
+Variable abort_terminal : bool.
+Variable urnd : InputStream.
+Variable tmp : Fs.Fs.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variables rdr sgd sgt : bool.
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hfit : QpvH.launch_ok sp brk0 mbase rdraw (QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt).
 Variables (E : Qt8n.AX2.env) (R : bvmap 5 word) (FULL : word -> option byte) (mo : Model).
 Variable w : bool.
 Variable ch : QOTP.AP.acs.
 Hypothesis HCL : Q45h.HSCLASS_S w ch.
 Hypothesis CS : Q1LT.APS.cs_ok QXVi.JOB6SEGS QyaF.BJO6
-QVWI.Mq0.LIMIT (bv_unsigned sp) (QpvH.SINV0 QXVi.JOB6PH sp rdraw brk0 argv envp uid hw)
-(QpvH.argH0 QXVi.JOB6PH sp rdraw argv envp uid hw) fs E ch R FULL mo.
-Let RCJ : Q6q3.RunConsts := QoL1.Mq0.RCJ sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS.
+QVWI.Mq0.LIMIT (bv_unsigned sp) (QpvH.SINV0 QXVi.JOB6PH apc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt)
+(QpvH.argH0 sp rdraw argv envp kb execfn) fs E ch R FULL mo.
+Let RCJ : Q6q3.RunConsts := QoL1.Mq0.RCJ sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS.
 #[local] Existing Instance RCJ.
 #[local] Notation LV := (Q25t.LV_J E).
 #[local] Notation usp := (bv_unsigned sp).
@@ -115,8 +132,10 @@ Variable r4 : Q6q3.alloc_ceiling <= BOTJ /\ BOTJ mod 8 = 0 /\ BOTJ <= TOPJ.
 Variable r5 : Q6q3.alloc_ceiling < TOPJ /\ TOPJ <= 2^47.
 Variable r6 : TOPJ + 64 <= BAUX.
 Variable r7 : TOPJ + 64 <= QCrt.ae_stack_top RE + 4096.
+(* the interface's stack bottom: the window floor, at or above ASan's stack bottom BOTJ *)
+Variable r8 : BOTJ <= QcGV.stk_floor /\ QcGV.stk_floor <= TOPJ.
 
-Definition H6_jo : QZsi.heap_iface_A Qwm6.Mq4.A4L := QrOY.hiA_jo LA LV PERM0 TMAX NMAX RE FR0 BAUX BOTJ TOPJ HS r1 r2 r3 r4 r5 r6 r7.
+Definition H6_jo : QZsi.heap_iface_A Qwm6.Mq4.A4L := QrOY.hiA_jo LA LV PERM0 TMAX NMAX RE FR0 BAUX BOTJ TOPJ HS r1 r2 r3 r4 r5 r6 r7 r8.
 #[local] Notation HIx := (Qhd4.hi5_of_v6 Qwm6.Mq4.A4L H6_jo).
 
 Variable GA : (word -> option byte) -> Prop.
@@ -148,20 +167,20 @@ Hypothesis HTB : 0 <= TGT_BB_A.
 Hypothesis HTB6 : 1536 + 4 * TGT_BB_A <= 2^30.
 Hypothesis HTD : 0 <= TGT_BD_A.
 Hypothesis HTOP : usp <= TOPJ + 160.
-Hypothesis HBOT : BOTJ <= LO.
-Hypothesis HLO1 : usp - 8388608 <= LO.
+Hypothesis HBOT : QcGV.stk_floor <= LO.
+Hypothesis HLO1 : usp - 6144513 <= LO.
 Hypothesis HLO2 : LO + 2^22 <= usp - 48.
 
-Theorem handoff_rest_jo : QoL1.Mq0.handoff_rest sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS.
+Theorem handoff_rest_jo : QoL1.Mq0.handoff_rest sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS.
 Proof.
-refine (QoL1.Mq0.HandoffRest sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS
+refine (QoL1.Mq0.HandoffRest sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS
 (proj1 (proj2 HS)) (proj1 (proj2 (proj2 HS))) (proj1 (proj2 (proj2 (proj2 HS)))) (proj1 (proj2 (proj2 (proj2 (proj2 HS)))))
 (proj1 (proj2 (proj2 (proj2 (proj2 (proj2 HS))))))
-H6_jo eq_refl GA TGT_STACK_A TGT_BB_A TGT_BD_A TGT OBL_GA_of (QJny.BANDP BOTJ (proj1 r4) BOT_cap) _ (Z.le_refl BOTJ) tt LM0 B0 LO _ HLMS HBQ HBB HBN HBD HBM HTS HTB HTB6 HTD HTOP HBOT HLO1 HLO2).
+H6_jo eq_refl GA TGT_STACK_A TGT_BB_A TGT_BD_A TGT OBL_GA_of (QJny.BANDP BOTJ (proj1 r4) BOT_cap) _ (proj1 r8) tt LM0 B0 LO _ HLMS HBQ HBB HBN HBD HBM HTS HTB HTB6 HTD HTOP HBOT HLO1 HLO2).
 - intros A LB LM FR B m md (B6 & HP6 & _).
 exact (QJny.ish_of_heapA63 LA LV PERM0 TMAX NMAX RE FR0 BAUX BOTJ TOPJ HS (proj1 r4) BOT_cap A LB LM FR B6 m md HP6).
 - intros ms Hms.
-exact (Q8dS.hiA_jo_at_main LA LV PERM0 TMAX NMAX RE FR0 BAUX BOTJ TOPJ HS r1 r2 r3 r4 r5 r6 r7 LM0 B0 mo FULL ms0 Hms0 HH HLM40 HBB39 HBQ0 ms Hms).
+exact (Q8dS.hiA_jo_at_main LA LV PERM0 TMAX NMAX RE FR0 BAUX BOTJ TOPJ HS r1 r2 r3 r4 r5 r6 r7 r8 LM0 B0 mo FULL ms0 Hms0 HH HLM40 HBB39 HBQ0 ms Hms).
 Qed.
 End PerState.
 End Mq1.
@@ -194,18 +213,32 @@ Variable brk0 : word.
 Variable argv envp : list (list byte).
 Variable fs : Fs.Fs.
 Variables uid hw : word.
+Variable apc : N.
+Variable mbase : word.
+Variable ifs : Fs.Fs.
+Variable stdin : InputStream.
+Variable gid : word.
+Variable groups : list word.
+Variable net : NetQueue.
+Variables nofile sigmask : word.
+Variable abort_terminal : bool.
+Variable urnd : InputStream.
+Variable tmp : Fs.Fs.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variables rdr sgd sgt : bool.
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hfit : QpvH.launch_ok sp brk0 mbase rdraw (QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt).
 Variables (E : Qt8n.AX2.env) (R : bvmap 5 word) (FULL : word -> option byte) (mo : Model).
 Variable w : bool.
 Variable ch : QOTP.AP.acs.
 Hypothesis HCL : QrQA.HSCLASS_S w ch.
 Hypothesis CS : Q1LT.APS.cs_ok QLPb.JO6SEGS QCoy.AJO6
-QVWI.Mq0.LIMIT (bv_unsigned sp) (QpvH.SINV0 QLPb.JO6PH sp rdraw brk0 argv envp uid hw)
-(QpvH.argH0 QLPb.JO6PH sp rdraw argv envp uid hw) fs E ch R FULL mo.
-Let RCJ : Q6q3.RunConsts := QoL1.RCJ sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS.
+QVWI.Mq0.LIMIT (bv_unsigned sp) (QpvH.SINV0 QLPb.JO6PH apc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt)
+(QpvH.argH0 sp rdraw argv envp kb execfn) fs E ch R FULL mo.
+Let RCJ : Q6q3.RunConsts := QoL1.RCJ sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS.
 #[local] Existing Instance RCJ.
 #[local] Notation LV := (QFop.LV_J E).
 #[local] Notation usp := (bv_unsigned sp).
@@ -225,8 +258,10 @@ Variable r4 : Q6q3.alloc_ceiling <= BOTJ /\ BOTJ mod 8 = 0 /\ BOTJ <= TOPJ.
 Variable r5 : Q6q3.alloc_ceiling < TOPJ /\ TOPJ <= 2^47.
 Variable r6 : TOPJ + 64 <= BAUX.
 Variable r7 : TOPJ + 64 <= QCrt.ae_stack_top RE + 4096.
+(* the interface's stack bottom: the window floor, at or above ASan's stack bottom BOTJ *)
+Variable r8 : BOTJ <= QcGV.stk_floor /\ QcGV.stk_floor <= TOPJ.
 
-Definition H6_jo : QZsi.heap_iface_A Qwm6.Mq0.A4L := QrOY.Mq0.hiA_jo LA LV PERM0 TMAX NMAX RE FR0 BAUX BOTJ TOPJ HS r1 r2 r3 r4 r5 r6 r7.
+Definition H6_jo : QZsi.heap_iface_A Qwm6.Mq0.A4L := QrOY.Mq0.hiA_jo LA LV PERM0 TMAX NMAX RE FR0 BAUX BOTJ TOPJ HS r1 r2 r3 r4 r5 r6 r7 r8.
 #[local] Notation HIx := (Qhd4.hi5_of_v6 Qwm6.Mq0.A4L H6_jo).
 
 Variable GA : (word -> option byte) -> Prop.
@@ -258,19 +293,19 @@ Hypothesis HTB : 0 <= TGT_BB_A.
 Hypothesis HTB6 : 1536 + 4 * TGT_BB_A <= 2^30.
 Hypothesis HTD : 0 <= TGT_BD_A.
 Hypothesis HTOP : usp <= TOPJ + 160.
-Hypothesis HBOT : BOTJ <= LO.
-Hypothesis HLO1 : usp - 8388608 <= LO.
+Hypothesis HBOT : QcGV.stk_floor <= LO.
+Hypothesis HLO1 : usp - 6144513 <= LO.
 Hypothesis HLO2 : LO + 2^22 <= usp - 48.
 
-Theorem handoff_rest_jo : QoL1.handoff_rest sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS.
+Theorem handoff_rest_jo : QoL1.handoff_rest sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS.
 Proof.
-refine (QoL1.HandoffRest sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS
+refine (QoL1.HandoffRest sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS
 (proj1 (proj2 HS)) (proj1 (proj2 (proj2 HS))) (proj1 (proj2 (proj2 (proj2 HS)))) (proj1 (proj2 (proj2 (proj2 (proj2 HS)))))
 (proj1 (proj2 (proj2 (proj2 (proj2 (proj2 HS))))))
-H6_jo eq_refl GA TGT_STACK_A TGT_BB_A TGT_BD_A TGT OBL_GA_of (QJny.Mq0.BANDP BOTJ (proj1 r4) BOT_cap) _ (Z.le_refl BOTJ) tt LM0 B0 LO _ HLMS HBQ HBB HBN HBD HBM HTS HTB HTB6 HTD HTOP HBOT HLO1 HLO2).
+H6_jo eq_refl GA TGT_STACK_A TGT_BB_A TGT_BD_A TGT OBL_GA_of (QJny.Mq0.BANDP BOTJ (proj1 r4) BOT_cap) _ (proj1 r8) tt LM0 B0 LO _ HLMS HBQ HBB HBN HBD HBM HTS HTB HTB6 HTD HTOP HBOT HLO1 HLO2).
 - intros A LB LM FR B m md (B6 & HP6 & _).
 exact (QJny.Mq0.ish_of_heapA63 LA LV PERM0 TMAX NMAX RE FR0 BAUX BOTJ TOPJ HS (proj1 r4) BOT_cap A LB LM FR B6 m md HP6).
 - intros ms Hms.
-exact (Q8dS.Mq0.hiA_jo_at_main LA LV PERM0 TMAX NMAX RE FR0 BAUX BOTJ TOPJ HS r1 r2 r3 r4 r5 r6 r7 LM0 B0 mo FULL ms0 Hms0 HH HLM40 HBB39 HBQ0 ms Hms).
+exact (Q8dS.Mq0.hiA_jo_at_main LA LV PERM0 TMAX NMAX RE FR0 BAUX BOTJ TOPJ HS r1 r2 r3 r4 r5 r6 r7 r8 LM0 B0 mo FULL ms0 Hms0 HH HLM40 HBB39 HBQ0 ms Hms).
 Qed.
 End PerState.

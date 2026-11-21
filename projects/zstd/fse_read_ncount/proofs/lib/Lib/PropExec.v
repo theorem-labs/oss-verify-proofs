@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (wrap_mem and init_mkst take the launch's ProcInput, mmap base and entry for the new entry stack image, wrap_mem's zero window starting at stack_window_lo, not sp - stack_max_size; adds entry_stack_image_block, la_rseq_launch_auxv, length_entry_stack_image_launch (sp to ed_top) and entry_stack_image_no_wrap; launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef)). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run.
@@ -720,19 +721,68 @@ Qed.
 End WithFP2.
 Section WithFP3.
 Context {fx : FPState}.
-Definition wrap_mem (ph : PhdrInfo) (sp : word) (argv envp : list (list byte))
-(uid : word) (hw : word) (rnd : EntryDraw) : word -> option byte :=
-fun addr =>
-match stack_to_mem sp (entry_stack_image ph sp argv envp uid hw rnd) addr with
-| Some b => Some b
-| None =>
-if andb (Z.leb (bv_unsigned sp - stack_max_size) (bv_unsigned addr))
-(Z.ltb (bv_unsigned addr) (bv_unsigned sp))
-then Some (Z_to_bv 8 0) else None
-end.
-#[using="Type"] Lemma init_mkst : forall segs (pc : N) ph (sp : word) argv envp uid hw rnd,
-init_machine_state segs pc ph sp rnd argv envp uid hw =
+Lemma entry_stack_image_block : forall inp mbase ph entry (sp : word) draw,
+  entry_stack_image inp mbase ph entry sp draw
+  = build_stack_bytes (launch_auxv inp sp mbase) ph entry sp (ed_top draw)
+      (in_argv inp) (in_envp inp) (in_execfn inp)
+      (in_uid inp) (in_gid inp) (in_hwcap inp) draw.
+Proof. reflexivity. Qed.
+
+Lemma la_rseq_launch_auxv : forall inp sp mbase,
+  la_rseq (launch_auxv inp sp mbase) = kb_rseq (in_kernel inp).
+Proof. reflexivity. Qed.
+
+Lemma length_entry_stack_image_launch :
+  forall v inp mbase ph entry (sp brk : word) draw,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw))
+  = (bv_unsigned (ed_top draw) - bv_unsigned sp)%Z.
+Proof.
+  intros v inp mbase ph entry sp brk draw Hok.
+  cbn [entry_launch_ok_va] in Hok.
+  destruct Hok as (_ & (_ & _ & Hhi) & _).
+  unfold entry_stack_image.
+  rewrite length_build_stack_bytes, la_rseq_launch_auxv.
+  unfold launch_sp_hi, align_down16 in Hhi.
+  pose proof (Z.mod_pos_bound
+    (bv_unsigned (ed_top draw) - 8
+     - Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp)
+                                     (in_execfn inp)))
+    16 ltac:(lia)) as Hm.
+  unfold block_pad_len.
+  rewrite !Nat2Z.inj_add.
+  rewrite Z2Nat.id by lia.
+  lia.
+Qed.
+
+Lemma entry_stack_image_no_wrap :
+  forall v inp mbase ph entry (sp brk : word) draw,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  (bv_unsigned sp
+   + Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw))
+     < 2 ^ 64)%Z.
+Proof.
+  intros v inp mbase ph entry sp brk draw Hok.
+  rewrite (length_entry_stack_image_launch v inp mbase ph entry sp brk draw Hok).
+  pose proof (u64_range (ed_top draw)) as Hr. lia.
+Qed.
+
+Definition wrap_mem (inp : ProcInput) (mbase : word) (ph : PhdrInfo)
+    (entry sp : word) (draw : EntryDraw) : word -> option byte :=
+  fun addr =>
+    match stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw) addr with
+    | Some b => Some b
+    | None =>
+      if andb (Z.leb (stack_window_lo (in_kernel inp) mbase draw)
+                     (bv_unsigned addr))
+              (Z.ltb (bv_unsigned addr) (bv_unsigned sp))
+      then Some (Z_to_bv 8 0) else None
+    end.
+#[using="Type"] Lemma init_mkst : forall segs (pc : N) ph (sp mbase : word) draw inp,
+init_machine_state segs pc ph sp mbase draw inp =
 @mkst fx0 (regupd (regupd bvmap_empty 10 (Z_to_bv 64 0)) 2 sp)
-(Z_to_bv 64 (Z.of_N pc)) (wrap_mem ph sp argv envp uid hw rnd) (seg_rom segs).
+(Z_to_bv 64 (Z.of_N pc))
+(wrap_mem inp mbase ph (Z_to_bv 64 (Z.of_N pc)) sp draw)
+(seg_rom segs).
 Proof. intros. reflexivity. Qed.
 End WithFP3.

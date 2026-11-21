@@ -7,13 +7,14 @@
    W_sites_x.v's alock_realizes_x; the proof of rt_pthread_mutex_lock_x is RT_pthread_mutex_lock.v's with AR -> ARx
    (am_layout of proj1 HAR -> rtl_layout, al_frame / al_stack -> rtl_frame / rtl_stack, RT_kit / RT_post's AR lemmas
    -> their _x forms there).
-   Measured (lines at commit 9b1367c7fe1): the original reads AR through
-   al_frame (RT_pthread_mutex_lock.v:424) only; no ARm field; the three-law note (RESUME.md:116-122 sha256 704eb9d3afa6; internal record) did not
+   Measured (lines): the original reads AR through
+   al_frame (RT_pthread_mutex_lock.v:425) only; no ARm field; the three-law note (RESUME.md:116-122 sha256 704eb9d3afa6; internal record) did not
    count the ARm fields, hence the record's rtl_layout and rtl_const_cells.
    At the end (until QMm W1 removed it, see there): rt_pthread_mutex_lock_of_x, whose statement is byte for byte RT_pthread_mutex_lock.v's
    rt_pthread_mutex_lock, from the twin at cgif's AR (ARx := FCiface.AR_nohp, laws RTx.rt_laws_AR); and
    rt_pthread_mutex_lock_cf, the twin at ARx := ARcf with the laws from AR_laws_cf (RTx.rt_laws_cf). *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/RT_pthread_mutex_lock_x.v at commit f1fb3bc1169, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (1 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/RT_pthread_mutex_lock_x.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (1 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

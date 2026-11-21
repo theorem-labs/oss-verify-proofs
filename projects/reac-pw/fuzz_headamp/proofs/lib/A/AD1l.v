@@ -4,7 +4,8 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AD1l.v, with its module paths changed, names kept (TfibSyms) and its addresses moved to libreac/fuzz_scene's ASan build. *)
 (* Modified by Theorem Labs, 2026-10: by a Theorem Labs lane, file_is_img's R_A3 window is scene's [654472, 655312) (R_A3 of the generated AD2j / YD2j, 840 bytes), not cgif's upper bound 665712 (cgif's .data end / old_tz_size). *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_scene/lib/A/AD1l.v (donor image sha256 43654a025fd0), with its module paths changed and its addresses moved to reac-pw/fuzz_role's ASan build. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/reac-pw/fuzz_role/lib/A/AD1l.v at 9f8c843f0e03 (image sha256 614cffc0864c), with its module paths changed and its addresses moved to reac-pw/fuzz_headamp's ASan build (image sha256 f3e0669d2819) by alreloc a5c53bb2bed4; comments kept as the source has them. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/reac-pw/fuzz_role/lib/A/AD1l.v (image sha256 614cffc0864c), with its module paths changed and its addresses moved to reac-pw/fuzz_headamp's ASan build (image sha256 f3e0669d2819) by alreloc a5c53bb2bed4; comments kept as the source has them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (fdchan's third conjunct, the channel-reader flag, carried in cs_ok (co_rdr) and threaded to the fd sites); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -138,7 +139,7 @@ apply (tfib_not_owned_static B F_STDERR (F_STDERR + FILE_SZ) a HB); [vm_compute;
 | exact (u64_range (sv_denot E (SOff 41 0)))
 | exact (ro_img_of_IMG E _ HIMG)
 | apply (rodata_hull_zero B HB LAWS ly S W mem md); [exact HAR | unfold FMT_open, FMT_rderr, FMT_usage; lia | unfold FMT_open, FMT_rderr, FMT_usage; lia | lia]
-| split; [exact Hfd | reflexivity]
+| exact Hfd
 | exact HAI
 | intros regs' mem' md' HAR' HP' Hsbm' Ha0' HFW' Hfr' Hpr' HAI';
 apply (HPOST regs' mem' md' HAR' HP' Hsbm');

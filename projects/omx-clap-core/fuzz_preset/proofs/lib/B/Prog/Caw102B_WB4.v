@@ -14,6 +14,7 @@
    head carries lies below alloc_ceiling + 8 (a live block, the image band) and moves across the stores. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_drain_pro.v, with its module paths, module names and numbers changed; 1682 of its 1766 lines of code are new or changed and 1187 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/PjGetB.v, with its module paths and module names changed; 489 of its 544 lines of code are new or changed and 1711 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image B' (#102): check_as_written's out-of-memory segments WB4a and WB4 (Caw102B.v), lane CawA102R
    (for B'; first walked by lane CawB102; re-fitted to the batch-prep base by CawA102R.KWB34; now INT102-READY).
    rule 24: no function proved. rule 24: proves no function (kind: segment lemma).
@@ -31,7 +32,7 @@
    WHAT CHANGED ON THIS BASE AND WHY (the previous fit: this file cb479ef56a05 on the P'' journal,
    in the P'' trial):
    - caw_pre IS READ BY NAME: caw_pre is now the text's 27 premises (the batch's two room counts after room_live_cf,
-     :862-863, then the hull budget and HPOS, Caw102B.v:139-165), so WB4's positional destruct of caw_pre is gone; it takes fpre, rc's range and c_ran C = 0 by the
+     :862-863, then the hull budget and HPOS, Caw102B.v:140-166), so WB4's positional destruct of caw_pre is gone; it takes fpre, rc's range and c_ran C = 0 by the
      base's projections caw_pre_fpre / caw_pre_rc / caw_pre_ran.
    - THE OUTCOME: cut_end's r = 1 arm carries caw_dead C now; WB4's two arms to cut_end stay REFUTED (no arm builds
      cut_end), so KEND stays the statement's continuation argument and nothing more is owed there.
@@ -61,7 +62,7 @@
    (alx_img, alx_layout_ok's lo_img: every segment starts at or above kImgLo). The empty chain: s0 = rc (an int,
    sign-extended) is below YM05.alloc_ceiling or above ly_top - 16.
    SECTION HYPOTHESES (owners): TRO : fuzz_alloc_ran_out's text tfuzz_alloc_ran_out_specX, float-generic [a Theorem Labs lane,
-   discharged by the walk of fuzz_alloc_ran_out]; Hown_obj : 13 = g_own_ran_out in listing d42e123915ae (the static is
+   discharged by the walk of fuzz_alloc_ran_out]; Hown_obj : 13 = g_own_ran_out in listing (the static is
    1 byte, pi_gz_own_ran_out) [image fact, discharged at PI_prog_B by the instantiation]; Hpst_rw : the alloc.c statics
    are not read-only image bytes [image fact, a Theorem Labs lane's cwi_pst_rw, discharged at PI_prog_B by the instantiation].
    No new Section hypothesis in this re-fit (nor since the caw_pst base). The lemmas' P / PLAW / PCALL are the top's
@@ -339,7 +340,7 @@ Qed.
 
 (* the call's image facts and callee text (discharged at PI_prog_B / by the walk of fuzz_alloc_ran_out) *)
 Hypothesis TRO : forall fz, tfuzz_alloc_ran_out_specX (fx := fz) B ARcfx SK.
-(* 13 = g_own_ran_out in listing d42e123915ae (the static is 1 byte, pi_gz_own_ran_out) *)
+(* 13 = g_own_ran_out in listing (the static is 1 byte, pi_gz_own_ran_out) *)
 Hypothesis Hown_obj : VAL (A_OBJ 13) = pi_g_own_ran_out.
 (* the alloc.c statics are not read-only image bytes (CawA102's cwi_pst_rw): what carries arodata_okP across the
    calls by the journal *)

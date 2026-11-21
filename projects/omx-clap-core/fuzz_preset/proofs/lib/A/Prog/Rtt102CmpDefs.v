@@ -11,7 +11,7 @@
    THE INNER CUTS: cmp_at_len at +772 (strlen returned: rtt_at_cmp's state, a0 = the text's length, s7 = back);
    cmp_at_pn at +788 (parse_noting returned: s8 not yet set, a0 = rc; the read-back's outcome cmp_out with the two
    blocks still to free, X, and the ledger entries still to drop, Y).
-   ON THE BATCH KIT'S CUT 7cdbb61b5fa0 (GRANTED path only) this file states NO premise: parse_noting's own text gives the exact
+   ON THE BATCH KIT'S CUT (GRANTED path only) this file states NO premise: parse_noting's own text gives the exact
    advance and, in its OUTCOME clause, the granted reading at the cut's position and prh_cons_from share (so its
    ran-out outcome is refuted at the call), the read-back tree's blocks over the reader's own list, its free order over
    pj_frees at every depth bound (at DOC_D a Theorem Labs lane's PresetFreeFo.pj_frees_wdoc_t turns it into fo t) and
@@ -73,7 +73,7 @@ Definition cmp_at_len (D : rtt_in) (fxc : YK11.FPState) (ly : alayout) (S : asta
   getr regs 10 = w64 (Z.of_nat (length (ri_tb D))) /\
   getr regs 23 = w64 (frame_addr ly RT_CID pos + RT_BACK).
 
-(* ---- the read-back's outcome, GRANTED ONLY (the cut 6e2b5d75a77 has no refusal arm: parse_noting's ran-out outcome is
+(* ---- the read-back's outcome, GRANTED ONLY (the cut has no refusal arm: parse_noting's ran-out outcome is
    refuted at the call by the text's own OUTCOME clause from the call's position and its share of rtt_pre's
    prh_cons_from), with X the allocator blocks still to free (want's, the text's) and Y the ledger entries still to
    drop (the text's): rc = 0, the reading's calls exactly, its new blocks Db, back holds t over them; the block

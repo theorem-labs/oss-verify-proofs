@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the SEGMENT INTERFACE of the IMAGE-B walk of fuzz_reply's relay_instance_gone
    (fuzz_reply.asan-ubsan 0x82ca0 .. 0x83278, 374 instructions), the twin of lib/A/W_relay_instance_gone_cx.v (lib/A
-   input: a working branch b38ac8437a7).  Hand-written: image B's relay_instance_gone is a different function (UBSan
+   input: a working branch).  Hand-written: image B's relay_instance_gone is a different function (UBSan
    trap mode), so only the FORM carries over: the same cuts (outer head, inner head, entry done, unlock tail), the same
    invariants GOUT / GIN and budget gbud, the same segment statements.  Nothing is proved here.
 
@@ -33,9 +33,9 @@
      KEYS   the inner loop by induction    STEP   RGE i -> RGO (S i) | RGU       OUTER  the outer loop by induction
      TAIL   RGU -> rig_post (unlock, the frame's release 0x83138-0x831dc, the epilogue)
 
-   STATEMENT TEXT: GBASE is exactly the kit's rig_spec premise list (lib/B/W_contract.v at bkit 5bf9ced2993: rg_place
+   STATEMENT TEXT: GBASE is exactly the kit's rig_spec premise list (lib/B/W_contract.v at bkit: rg_place
    and the capacity conjuncts; no canary premise since a Theorem Labs lane's HCANR ruling; B's FR_GUARD = 0x5f9a30, its GOT word
-   FR_GOT_GUARD = 0x9ebd8).  C3 (the peak form, the image-A twin's 475b8a2b569) REMOVED both capacity conjuncts
+   FR_GOT_GUARD = 0x9ebd8).  C3 (the peak form, the image-A twin) REMOVED both capacity conjuncts
    (`gxcap cx < MMAX` and `blocks_bytes + tr_alloc + 4 * max cap tr_max <= LIVE_MAX`): ge_room is stated over
    gesture_end's own trace, so rig_spec and GBASE take blocks_bytes + tr_peak tr <= LIVE_MAX (tr_max tr < MMAX and
    the meter unchanged), and gbud's room over the remaining trace tl is blocks_bytes S1 + tr_peak tl <= LIVE_MAX
@@ -44,8 +44,8 @@
    tr_peak tr <= LIVE_MAX` (was `+ tr_alloc tr`), with tr = rig_tr c mx |O| cap ID es hs; the two premises `cap <
    MMAX` and `blocks_bytes S + tr_alloc tr + 4 * Z.max cap (tr_max tr) <= LIVE_MAX` are gone.
 
-   ROUTE (b), STEP 3 (CONVERSION.md (sha256 1015972e02a9; internal record); the image-A twin is the RIG_x round, commit
-   f4cd818e98d): converted IN PLACE to any allocator relation ARx with its laws and the room record RP (W_journal_x.v
+   ROUTE (b), STEP 3 (CONVERSION.md (sha256 1015972e02a9; internal record); the image-A twin is the RIG_x round):
+   converted IN PLACE to any allocator relation ARx with its laws and the room record RP (W_journal_x.v
    Record roomp); the AR statement is dropped (a Theorem Labs lane's ruling 10:34Z: no consumer).  Section c takes PST / ARx /
    hl / LAWS (AR_laws_x), HP0 (a Theorem Labs lane's ruling: no hidden head in any ARx state), the frame twins' hypotheses of
    W_frame_x.v in place of ML / SMP (IMGC, BLKN, OWNLOW, WFx, WFL, SFREE, SMALLOC) with ASMP / ASF / FFL in their _x
@@ -59,6 +59,7 @@
    owed need on top of gxkr (rp_RM RP S1 (Z.to_nat (tr_cost MT_rk tl) + gxkr cx)) and the live counts plus rig_pk's
    shape over those requests (cnt_ok_pk RP (fun P => Z.to_nat (tr_peakP P tl) + 3) (ablocks B ly1 S1)); at the entry
    (tl = gtr cx) both are GBASE's, by conversion.  rig_all_stmt concludes rig_spec_x. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -611,21 +612,21 @@ Hypothesis RO_ARx : forall ly S Hp (W : world SEGS) mem md, ARx ly S Hp W mem md
 Hypothesis AFREE_R : afree_cf_rule_c_xR SEGS B PST ARx MT RP RO CTX_AFREE R.
 Hypothesis DRAIN_R : dr_spec_xR B PST ARx R MT RP MMAX RG (BASE + AF_fr_drain).
 Hypothesis GE_R : ge_spec_xR B PST ARx R MT RP MMAX RG (BASE + AF_fr_gesture_end).
-(* W_relay_instance_gone_cx.v:262 rig_lift_DR at R *)
+(* W_relay_instance_gone_cx.v:263 rig_lift_DR at R *)
 Lemma rig_lift_DR_xR : forall XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k,
 ajournal_gx_xR (SK := SK) SEGS B PST ARx R (G_DR B RG) XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k ->
 ajournal_gx_xR (SK := SK) SEGS B PST ARx R (G_RIG B RG) XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k.
 Proof. intros. eapply ajournal_gx_G_mono_xR; [exact rig_G_DR_RIG | eassumption]. Qed.
-(* W_relay_instance_gone_cx.v:266 rig_lift_SL at R *)
+(* W_relay_instance_gone_cx.v:267 rig_lift_SL at R *)
 Lemma rig_lift_SL_xR : forall XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k,
 ajournal_gx_xR (SK := SK) SEGS B PST ARx R (G_SL B RG) XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k ->
 ajournal_gx_xR (SK := SK) SEGS B PST ARx R (G_RIG B RG) XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k.
 Proof. intros. eapply ajournal_gx_G_mono_xR; [exact rig_G_SL_RIG | eassumption]. Qed.
-(* W_relay_instance_gone_cx.v:300 gPOST at R *)
+(* W_relay_instance_gone_cx.v:301 gPOST at R *)
 Definition gPOST_xR (cx : gcx) : world SEGS -> config -> Prop :=
 rig_post_xR B PST ARx R MT RP RG (gxregs cx) (gxly cx) (gxS cx) (gxHp cx) (gxW cx) (gxmem cx) (gxmd cx)
   (gxG0 cx) (gxID cx) (gxes cx) (gxhs cx) (gxc cx) (gxO cx) (gxmx cx) (gxcap cx) (gxout cx) (gxkr cx).
-(* W_relay_instance_gone_cx.v:372 GLIVE at R *)
+(* W_relay_instance_gone_cx.v:373 GLIVE at R *)
 Definition GLIVE_xR (cx : gcx) (F FL : Z) (ly1 : alayout) (S1 : astate) (W1 : world SEGS) (m1 : word -> option byte)
 (md1 : Model) (k1 : Z) : Prop :=
 exists fpos Hp1,
@@ -634,7 +635,7 @@ ajournal_gx_xR (SK := SK) SEGS B PST ARx R (G_RIG B RG) 0 [] RIG_STK_x (gsp0 cx)
 rom_view SEGS W1 m1 /\ apres_kept B (gxW cx) (gxmem cx) W1 m1 /\
 g_frame cx fpos F FL ly1 W1 m1 /\
 alock_at RG W1 m1 true.
-(* W_relay_instance_gone_cx.v:472 RGO at R *)
+(* W_relay_instance_gone_cx.v:473 RGO at R *)
 Definition RGO_xR (cx : gcx) (i : nat) (W1 : world SEGS) (c1 : config) : Prop :=
 exists regs1 ly1 S1 m1 md1 k1 F FL qd c2 O2 cap2 out2 spent,
 c1 = cfg_at SEGS (BASE + A_rig_outer) regs1 m1 md1 /\
@@ -644,7 +645,7 @@ getr regs1 23 = w64 (rg_src RG + RIG_HI_SRC) /\
 (i < length (gxes cx))%nat /\
 GLIVE_xR cx F FL ly1 S1 W1 m1 md1 k1 /\ g_lslots cx F W1 m1 /\
 GOUT cx i qd c2 O2 cap2 out2 spent ly1 S1 W1 m1.
-(* W_relay_instance_gone_cx.v:485 RGI at R *)
+(* W_relay_instance_gone_cx.v:486 RGI at R *)
 Definition RGI_xR (cx : gcx) (i n r : nat) (W1 : world SEGS) (c1 : config) : Prop :=
 exists regs1 ly1 S1 m1 md1 k1 F FL qd cB OB capB e1 h1 ev LB c2' O1 cap1 ks Ed f c2 O2 cap2 out2 spent,
 c1 = cfg_at SEGS (BASE + A_rig_inner) regs1 m1 md1 /\
@@ -656,7 +657,7 @@ getr regs1 25 = w64 (gSA cx i + 40) /\ getr regs1 18 = w64 (SHADOW_OFF + (gSA cx
 val_mem SEGS (arm W1 m1) (gsp1 cx + 80) 8 (Z.of_nat i) /\
 GLIVE_xR cx F FL ly1 S1 W1 m1 md1 k1 /\ g_lslots cx F W1 m1 /\
 GIN cx i n r F qd cB OB capB e1 h1 ev LB c2' O1 cap1 ks Ed f c2 O2 cap2 out2 spent ly1 S1 W1 m1.
-(* W_relay_instance_gone_cx.v:498 RGE at R *)
+(* W_relay_instance_gone_cx.v:499 RGE at R *)
 Definition RGE_xR (cx : gcx) (i : nat) (W1 : world SEGS) (c1 : config) : Prop :=
 exists regs1 ly1 S1 m1 md1 k1 F FL qd c2 O2 cap2 out2 spent,
 c1 = cfg_at SEGS (BASE + A_rig_step) regs1 m1 md1 /\
@@ -665,28 +666,28 @@ val_mem SEGS (arm W1 m1) (gsp1 cx + 80) 8 (Z.of_nat i) /\
 (i < length (gxes cx))%nat /\
 GLIVE_xR cx F FL ly1 S1 W1 m1 md1 k1 /\ g_lslots cx F W1 m1 /\
 GOUT cx (S i) qd c2 O2 cap2 out2 spent ly1 S1 W1 m1.
-(* W_relay_instance_gone_cx.v:508 RGU at R *)
+(* W_relay_instance_gone_cx.v:509 RGU at R *)
 Definition RGU_xR (cx : gcx) (W1 : world SEGS) (c1 : config) : Prop :=
 exists regs1 ly1 S1 m1 md1 k1 F FL qd c2 O2 cap2 out2 spent,
 c1 = cfg_at SEGS (BASE + A_rig_unlock) regs1 m1 md1 /\
 gregs_base cx regs1 /\ getr regs1 20 = w64 (shadow_addr F) /\
 GLIVE_xR cx F FL ly1 S1 W1 m1 md1 k1 /\
 GOUT cx (length (gxes cx)) qd c2 O2 cap2 out2 spent ly1 S1 W1 m1.
-(* W_relay_instance_gone_cx.v:520 rig_pro_stmt at R *)
+(* W_relay_instance_gone_cx.v:521 rig_pro_stmt at R *)
 Definition rig_pro_stmt_xR : Prop :=
 forall cx,
 GBASE cx ->
 (forall W2 c2, RGO_xR cx 0 W2 c2 -> SRrG SEGS R W2 c2 (gPOST_xR cx)) ->
 (forall W2 c2, RGU_xR cx W2 c2 -> SRrG SEGS R W2 c2 (gPOST_xR cx)) ->
 SRrG SEGS R (gxW cx) (cfg_at SEGS A_rig_entryP (gxregs cx) (gxmem cx) (gxmd cx)) (gPOST_xR cx).
-(* W_relay_instance_gone_cx.v:533 rig_top_stmt at R *)
+(* W_relay_instance_gone_cx.v:534 rig_top_stmt at R *)
 Definition rig_top_stmt_xR : Prop :=
 forall cx i W1 c1,
 GBASE cx -> RGO_xR cx i W1 c1 ->
 (forall r W2 c2, RGI_xR cx i 0 r W2 c2 -> SRrG SEGS R W2 c2 (gPOST_xR cx)) ->
 (forall W2 c2, RGE_xR cx i W2 c2 -> SRrG SEGS R W2 c2 (gPOST_xR cx)) ->
 SRrG SEGS R W1 c1 (gPOST_xR cx).
-(* W_relay_instance_gone_cx.v:549 rig_key_stmt at R *)
+(* W_relay_instance_gone_cx.v:550 rig_key_stmt at R *)
 Definition rig_key_stmt_xR : Prop :=
 forall cx i n r W1 c1,
 GBASE cx -> GCTX cx -> RGI_xR cx i n r W1 c1 ->
@@ -694,33 +695,33 @@ GBASE cx -> GCTX cx -> RGI_xR cx i n r W1 c1 ->
 (forall r' W2 c2, r = S r' -> RGI_xR cx i n r' W2 c2 -> SRrG SEGS R W2 c2 (gPOST_xR cx)) ->
 (forall W2 c2, RGE_xR cx i W2 c2 -> SRrG SEGS R W2 c2 (gPOST_xR cx)) ->
 SRrG SEGS R W1 c1 (gPOST_xR cx).
-(* W_relay_instance_gone_cx.v:558 rig_keys_stmt at R *)
+(* W_relay_instance_gone_cx.v:559 rig_keys_stmt at R *)
 Definition rig_keys_stmt_xR : Prop :=
 rig_key_stmt_xR ->
 forall cx i n r W1 c1,
 GBASE cx -> GCTX cx -> RGI_xR cx i n r W1 c1 ->
 (forall W2 c2, RGE_xR cx i W2 c2 -> SRrG SEGS R W2 c2 (gPOST_xR cx)) ->
 SRrG SEGS R W1 c1 (gPOST_xR cx).
-(* W_relay_instance_gone_cx.v:567 rig_step_stmt at R *)
+(* W_relay_instance_gone_cx.v:568 rig_step_stmt at R *)
 Definition rig_step_stmt_xR : Prop :=
 forall cx i W1 c1,
 GBASE cx -> RGE_xR cx i W1 c1 ->
 (forall W2 c2, RGO_xR cx (S i) W2 c2 -> SRrG SEGS R W2 c2 (gPOST_xR cx)) ->
 (forall W2 c2, RGU_xR cx W2 c2 -> SRrG SEGS R W2 c2 (gPOST_xR cx)) ->
 SRrG SEGS R W1 c1 (gPOST_xR cx).
-(* W_relay_instance_gone_cx.v:575 rig_outer_stmt at R *)
+(* W_relay_instance_gone_cx.v:576 rig_outer_stmt at R *)
 Definition rig_outer_stmt_xR : Prop :=
 rig_top_stmt_xR -> rig_key_stmt_xR -> rig_keys_stmt_xR -> rig_step_stmt_xR ->
 forall cx i W1 c1,
 GBASE cx -> GCTX cx -> RGO_xR cx i W1 c1 ->
 (forall W2 c2, RGU_xR cx W2 c2 -> SRrG SEGS R W2 c2 (gPOST_xR cx)) ->
 SRrG SEGS R W1 c1 (gPOST_xR cx).
-(* W_relay_instance_gone_cx.v:584 rig_tail_stmt at R *)
+(* W_relay_instance_gone_cx.v:585 rig_tail_stmt at R *)
 Definition rig_tail_stmt_xR : Prop :=
 forall cx W1 c1,
 GBASE cx -> RGU_xR cx W1 c1 ->
 SRrG SEGS R W1 c1 (gPOST_xR cx).
-(* W_relay_instance_gone_cx.v:592 rig_all_stmt at R *)
+(* W_relay_instance_gone_cx.v:593 rig_all_stmt at R *)
 Definition rig_all_stmt_xR : Prop :=
 rig_pro_stmt_xR -> rig_top_stmt_xR -> rig_key_stmt_xR -> rig_step_stmt_xR -> rig_keys_stmt_xR -> rig_outer_stmt_xR -> rig_tail_stmt_xR ->
 rig_spec_xR B PST ARx R MT RP MMAX RG CTX_AFREE A_rig_entryP.

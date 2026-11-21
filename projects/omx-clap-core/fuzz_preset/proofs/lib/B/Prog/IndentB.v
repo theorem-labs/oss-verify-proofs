@@ -1,19 +1,20 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset image B' (the asan-ubsan #102 pin d663f82d7f48, unstripped twin c90d4fa54d43),
    lane IndentB (a Theorem Labs lane): the program walk of indent (B' 0x88f30, slot 7705, 28 instructions) over the ONE image-B
    program listing (lib/B/Listing_prog.v), generic in the image facts (Context PAImg B_prog_listing) and in the
    allocator relation ARx (LAWS : AR_laws_x), concluding the kit's text tindent_specX of the batch kit's cut
-   7cdbb61b5fa0 (lib/A/PRH_FnWriter.v d89d3c67b78c :504-564). Every file but the
+   (lib/A/PRH_FnWriter.v d89d3c67b78c :504-564). Every file but the
    lane's is the cut's.
-   PORTED from a working branch a8d2be84a39d lib/A/Prog/S7a_indent.v (blob 82bfabbac46d: the walk of
+   PORTED from a working branch lib/A/Prog/S7a_indent.v (blob 82bfabbac46d: the walk of
    indent at image A', the asan #102 pin 1be0f53d, on the same cut). Relocation: alreloc ced0368250cb (same unit,
    --from-build asan --build asan-ubsan) moved indent's entry address in two comments to B' 0x88f30 (no numeral of
    the proof is an address) and renamed the image bindings to their B' twins (B_prog_listing / B_prog_slot /
    PL_prog_B / prh_img_B); by hand: the Require lines (lib/B PRH_ImgB for the image-A table of the donor
    PRH_Img), the comments that named image A, and the Remove Hints of PI_prog_B below. No proof step changed. The
    writer-run helpers are a Theorem Labs lane's image-free shared lib/A/Prog/S7a_WriterRet.v / S7a_WriterLive.v (one home).
-   INSTRUCTION COMPARE (bytecmp d7efcb08d3a4 of the tool registry 598fd9a2b8d; repin_check 768e33f1f425): indent is 112
+   INSTRUCTION COMPARE (bytecmp d7efcb08d3a4 of the tool registry; repin_check 768e33f1f425): indent is 112
    bytes at both images and EQUAL-mod-pcrel: 6 words differ, all pc-relative (pcrel 6, real 0, unmeasured 0), and
    repin_check's target compare finds differ 0. The 6 words are the auipc / addi pairs of the two literals (slots
    8-9 and 14-15; at B' they form 0x21440 "\n" and 0x21680 "  ", the same bytes at the same addresses as at A') and
@@ -30,7 +31,7 @@
    SEGS P -> ...` (and `srr_inv_call SEGS P ->` where it crosses put's text) with P on its start and end memory, because
    an SRr post is OPAQUE once Qed, so an end-state invariant must be in the segment's statement; indent_holds
    instantiates P once (srr_inv_laws_imp / srr_inv_call_imp, memnorm over YAkMemnorm). ind_latch and ind_k13 are
-   their P := fun _ => True corollaries, byte-identical to 6492e80df47.
+   their P := fun _ => True corollaries, byte-identical to.
    THE MODEL-RUN POSITION (tindent_specX and tput_specX, the batch kit's PRH_FnWriter.v): indent takes the run's next events as its
    ENTRY premise, `prh_run_at .. rp_i (prhWriter_evs [] st (wind ..))`, and posts the EXACT advance under the
    outcomes ok of its prhWriter_ret_ok. Each put call gets its event premise (tput_specX :464-465) from that list by
@@ -80,7 +81,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YA0n
 (* the caller-window call kit over a world relation (aj_call_xWR, ajournal_x_init_WR), cited by qualified name *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YCbqGcallW.
 (* image-free lib/A files: the engine's call steps, and a Theorem Labs lane's ONE shared copy of the writer-run composition
-   (S7a_WriterRet.v ca57c34162ee, S7a_WriterLive.v f2d4ca143fe3, a working branch f75b9f6e6fa6); each
+   (S7a_WriterRet.v ca57c34162ee, S7a_WriterLive.v f2d4ca143fe3, a working branch); each
    Requires only Reusable, the kit (PRH_Base / PRH_Reader / PRH_FnWriter) and the pure models *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A.Prog Require Import PRW_CallerJ PRW_StepKit.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A.Prog Require Import S7a_WriterRet S7a_WriterLive.
@@ -176,8 +177,8 @@ Variable rp_os : list (option nat * option nat * option nat).
    each put call *)
 Hypothesis HOS4 : (length rp_os <= 4)%nat.
 Variable rp_H0 : list Z.
-(* the #102 ledger's two cells g_most / g_own_ran_out (PRH_Base.v prh_ledger's `most own`, kit walkkit-next
-   decff67d721f), named rmost / rown here (`own` is the journals' ownership argument): indent writes neither, so they
+(* the #102 ledger's two cells g_most / g_own_ran_out (PRH_Base.v prh_ledger's `most own`, kit walkkit-next),
+   named rmost / rown here (`own` is the journals' ownership argument): indent writes neither, so they
    are fixed across indent's run, as the texts state them *)
 Variable rmost rown : Z.
 (* The kit's text of the callee (lib/A/PRH_FnWriter.v d89d3c67b78c, the cut's): lane PutB proves it at B' (put_holds_B) *)
@@ -542,7 +543,7 @@ apply (prhWriter_ret_pos_nil B rp_sm rp_x rp_os rp_H0 rp_i rp_hist).
 - exact HPOS.
 Qed.
 
-(* the P := fun _ => True corollary of ind_pretty0_P; its post moved for the TEXT (kit-oldpin b501d43ce5af's exact
+(* the P := fun _ => True corollary of ind_pretty0_P; its post moved for the TEXT (kit-oldpin's exact
    advance, tindent_specX :455-461) *)
 Lemma ind_pretty0 : forall ly S Hp W regs mem md ch o depth d buf (st : WriterApp.wst) Lam peak ran
     (rp_i : nat) (rp_hist : list YG00.chunk),
@@ -1005,7 +1006,7 @@ destruct (ind_seat IND_K20 W1 regs regs1 mem1) as (HS & SHOK).
     match goal with |- ew _ ?n = getr _ ?rg => exact (ew_Ereg_nat regs1 _ n rg eq_refl) end.
 Qed.
 
-(* the old statement, the P := fun _ => True corollary of ind_latch_P (byte-identical to 6492e80df47) *)
+(* the old statement, the P := fun _ => True corollary of ind_latch_P (byte-identical to) *)
 Lemma ind_latch : forall ly S Hp W mem md ly1 S1 Hp1 W1 (regs regs1 : bvmap 5 word) mem1 md1 k1 FP sp d cnt
     (Q : world SEGS -> config -> Prop),
   ajournal_xR (SK := SK) SEGS B (@prh_pst prh_img_B) ARx (wle' SEGS RZ_cf) (STK_indent + d) (sp + d) FP ly S Hp W mem md []
@@ -1163,7 +1164,7 @@ destruct (ind_seat IND_K22 W1 regs regs1 mem1) as (HS & SHOK).
   + apply (ind_ledger_kept ly1 S1 Hp1 W1 mem1 (ms_mem ms) md1); [exact HAR1 | exact HLOW | exact HLED1].
 Qed.
 
-(* the P := fun _ => True corollary of ind_epi_P; its premise and post moved for the TEXT (kit-oldpin b501d43ce5af's
+(* the P := fun _ => True corollary of ind_epi_P; its premise and post moved for the TEXT (kit-oldpin
    exact advance, tindent_specX :455-461) *)
 Lemma ind_epi : forall ly S Hp W (regs : bvmap 5 word) mem md ly1 S1 Hp1 W1 (regs1 : bvmap 5 word) mem1 md1 k1 d
     o buf (st : WriterApp.wst) Lam peak ran P (rp_i : nat),
@@ -1714,7 +1715,7 @@ destruct (ind_seat (AF_indent + 4 * 13) W1 regs regs1 mem1) as (HS & SHOK).
   reflexivity.
 Qed.
 
-(* the old statement, the P := fun _ => True corollary of ind_k13_P (byte-identical to 6492e80df47) *)
+(* the old statement, the P := fun _ => True corollary of ind_k13_P (byte-identical to) *)
 Lemma ind_k13 : forall ly S Hp W mem md ly1 S1 Hp1 W1 (regs regs1 : bvmap 5 word) mem1 md1 k1 FP sp d depth
     (Q : world SEGS -> config -> Prop),
   ajournal_xR (SK := SK) SEGS B (@prh_pst prh_img_B) ARx (wle' SEGS RZ_cf) (STK_indent + d) (sp + d) FP ly S Hp W mem md []

@@ -9,7 +9,7 @@ of its own file, so the file's own proofs see the same tactic; only importers st
 both images is the check that none relied on it.
 
 CHECK (exit 1 on failure): each file's code (comments removed, module prefix and Require sentences normalised) equals
-the RELEASED lib/B copy (GRANTLIB = fuzz_grant's released lib, recipes 4f87de75d67) once every such redefinition in
+the RELEASED lib/B copy (GRANTLIB = fuzz_grant's released lib, recipes) once every such redefinition in
 both is written `Local`: the only change against released text is that word."""
 import re, sys
 

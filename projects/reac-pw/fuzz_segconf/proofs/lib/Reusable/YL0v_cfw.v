@@ -4,6 +4,7 @@
 (* Modified by Rares Buhai, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/YL0v.v, with its module paths, addresses and numbers changed; 9 of its 714 lines of code are new or changed and 9 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/reac-pw/fuzz_rate/lib/Reusable/YL0v.v; 96 of its 347 lines of code are new or changed and 467 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/reac-pw/fuzz_rate/lib/Reusable/YL0v_cfw.v, with its module paths, addresses and numbers changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (proof steps adapted to the changed model definitions and lemma arguments). *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -173,7 +174,7 @@ assert (Hover : forall x,
 bv_unsigned (ew E n) + Z.of_nat (length s) < x <
 bv_unsigned (ew E n) + Z.of_nat (length s) - (bv_unsigned (ew E n) + Z.of_nat (length s)) mod 8 + 8 ->
 rdn src0segs (ms_mem ms) (Z_to_bv 64 x) 1 <> None)
-by (rewrite Hp; refine (bsb_over_read _ _ _ _ (ms_mem ms) a (Z.of_nat (length s)) _ HBb _ _); [assumption| lia| lia]);
+by (rewrite Hp; refine (bsb_over_read _ _ _ _ (ms_mem ms) a (Z.of_nat (length s)) HBb _ _ _); [assumption| lia| lia]);
 pose proof (rom_reads _ _ _ HS ltac:(vm_compute; reflexivity)) as Hrom;
 let Hnul := lazymatch goal with H : ~ In _ s |- _ => H end in
 let Hrd := constr:(fun j (Hj : (j <= length s)%nat) =>
@@ -339,7 +340,7 @@ apply (bytes_at_wbytes_out m (zsp + woff + Z.of_nat (length s)) bs) in HKb;
 [| lia | rewrite Hlen; lia | lia | lia | left; lia ];
 replace d2 with (Z_to_bv 64 (zsp + woff + Z.of_nat (length s))) in * by (f_equal; evalE; lia);
 let HK' := fresh "HK'" in
-pose proof (bytes_at_app _ _ _ _ HKb (bytes_at_wbytes_same m (zsp + woff + Z.of_nat (length s)) bs
+pose proof (YN3v.bytes_at_app _ _ _ _ HKb (bytes_at_wbytes_same m (zsp + woff + Z.of_nat (length s)) bs
 ltac:(lia) ltac:(rewrite Hlen; lia))) as HK';
 clear HKb;
 assert (HK : runs_ok E' (wbytes m (Z_to_bv 64 (zsp + woff + Z.of_nat (length s))) bs)

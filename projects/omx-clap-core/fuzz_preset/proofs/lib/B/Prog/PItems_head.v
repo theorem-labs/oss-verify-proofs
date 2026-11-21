@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: segment HEAD + CLOSE of parse_items' image-B walk:
    back from the first skip_ws, the empty-container test, and the closer in its two copies.
-   THE TEXT is the kit's lib/A/PRH_FnParse.v tparse_items_specX (record walk-S5b 4e6e65af6e1: room_live_cf invariant,
+   THE TEXT is the kit's lib/A/PRH_FnParse.v tparse_items_specX (record walk-S5b: room_live_cf invariant,
    rd_blocks_move and the blocks_bytes bound in the post); the segment statements are the
    lib/B/Prog/PItems_pres.v specs pi_head_spec / pi_close_spec / pi_close2_spec, proved here at image B's listing
    (B_prog_listing / PL_prog_B / PI_prog_B) and image B's PrhImg (prh_img_B), all passed explicitly. The shared layer
@@ -16,7 +17,7 @@
    pi_posb / pi_live, the post-implication form of the kit) move only by pi_posb_eq / pi_live_eq (Sc unchanged, no
    event): the head hands them on over the empty prefix trace, the closer gives the post's position transfer
    (pi_posb_post) and live-request permutation from them over its own trace.
-   The batch kit (240b06ed4fd4; lane PItemsB.K1Head): every segment spec takes the cursor set CW and the budget
+   The batch kit (lane PItemsB.K1Head): every segment spec takes the cursor set CW and the budget
    the cursor set CW and the budget WS0 (pi_aj .. WS0 -> wbudget CW 0 WS0 -> pre -> pi_goal .. CW). Each run here takes the
    EMPTY-budget journal (YCbqGwild.ajournal_xw_rebase at the block's depot) and hands the epilogue / the next segment the
    budgeted one back (ajournal_xw_unbase0): the blocks make no allocator call, so WS0 is unchanged. The head enters the

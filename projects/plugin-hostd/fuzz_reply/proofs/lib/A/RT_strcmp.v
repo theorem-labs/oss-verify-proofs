@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the runtime site contract astrcmp_realizes (lib/A/W_sites.v) proved for
    fuzz_reply.asan's strcmp interceptor, entered at the trampoline __wrap_strcmp 0x42198. *)
-(* Ported from: a working branch 3210d71ee38 proofs/omx-clap-core/fuzz_state/lib/A/FSstrcmp.v (the stop
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Ported from: a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSstrcmp.v (the stop
    index strcmp_k and strcmp_facts from a Theorem Labs lane's lib/A/Prog/strcmp_wrap{,_c}.v, bz_strcmp, fs_strcmp_realizesU).
    Changes (R1Str, 2026-10-29): fuzz_reply.asan's addresses (trampoline 0x42198, ___interceptor_strcmp 0x42a6c, the
    weak hook 0x42a68 a `ret` inside the walk, intercept_strcmp at common_flags + 0xfa = 0x137ce2); the premises are
@@ -78,7 +79,7 @@ Proof.
   split; [vm_compute; reflexivity|]. split; vm_compute; reflexivity.
 Qed.
 
-(* ---- the stop index (a Theorem Labs lane 840c4afa7e2 lib/A/Prog/strcmp_wrap_c.v strcmp_k, strcmp_wrap.v:20-84) ---- *)
+(* ---- the stop index (a Theorem Labs lane lib/A/Prog/strcmp_wrap_c.v strcmp_k, strcmp_wrap.v:20-84) ---- *)
 Fixpoint strcmp_k (x y : list byte) : nat :=
   match x, y with
   | a :: x', b :: y' => if bv_unsigned a =? bv_unsigned b then S (strcmp_k x' y') else O

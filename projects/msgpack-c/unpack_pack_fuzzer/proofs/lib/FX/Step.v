@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a failing store-conditional stops the engine, XStop KSc, where it wrote 1 to rd: the model's failing sc now loads and stores back its bytes, a path the engine does not model). *)
 From Stdlib Require Import ZArith Bool List.
 From Stdlib Require Import PrimInt63 Uint63.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem Fpu.
@@ -1445,7 +1446,9 @@ Definition exec (fi : finstr) (st : sstate) : xres :=
       let a := getr st rs1 in
       if aligned fs a (awidth_log wd) then
         match s_resv st with
-        | RNone => XOk (setpc (setresv (setr st rd (VL wone)) RNone) (pc4 st))
+        (* LPS 08b1429: a failing sc loads and stores back its bytes (Sem.v exec Sc,
+           the store permission check); the engine does not model that path. *)
+        | RNone => XStop KSc
         | RUnk => XStop KSc
         | RAddr a' =>
             match decide_eq fs a' a with
@@ -1454,7 +1457,7 @@ Definition exec (fi : finstr) (st : sstate) : xres :=
                 | inl st' => XOk (setpc (setresv (setr st' rd (VL wzero)) RNone) (pc4 st))
                 | inr k => XStop k
                 end
-            | Some false => XOk (setpc (setresv (setr st rd (VL wone)) RNone) (pc4 st))
+            | Some false => XStop KSc
             | None => XStop KSc
             end
         end
@@ -1685,7 +1688,7 @@ Definition exec_r (fi : finstr) (st : sstate) : xres :=
       let a := getr st rs1 in
       if aligned fs a (awidth_log wd) then
         match s_resv st with
-        | RNone => XOk (setpc (setresv (setr st rd (VL wone)) RNone) (pc4 st))
+        | RNone => XStop KSc
         | RUnk => XStop KSc
         | RAddr a' =>
             match decide_eq fs a' a with
@@ -1694,7 +1697,7 @@ Definition exec_r (fi : finstr) (st : sstate) : xres :=
                 | inl st' => XOk (setpc (setresv (setr st' rd (VL wzero)) RNone) (pc4 st))
                 | inr k => XStop k
                 end
-            | Some false => XOk (setpc (setresv (setr st rd (VL wone)) RNone) (pc4 st))
+            | Some false => XStop KSc
             | None => XStop KSc
             end
         end

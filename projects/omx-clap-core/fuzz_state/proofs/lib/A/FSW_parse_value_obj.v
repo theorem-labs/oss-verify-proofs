@@ -1,8 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the IMAGE B (fs.asan-ubsan, UBSan trap mode) walk of parse_value against
-   lib/B/FSH_Fn_reader.v parse_value_spec (CTX-free; the text of a working branch 035561e0fd4 = a working branch
-   311139dc663: skip_ws_spec's post keeps [sp, ot) but [q, q + 8), parse_value_spec's k = 0 arm
+   lib/B/FSH_Fn_reader.v parse_value_spec (CTX-free; the text of a working branch = a working branch:
+   skip_ws_spec's post keeps [sp, ot) but [q, q + 8), parse_value_spec's k = 0 arm
    `q = spZ regs + 8 /\ raZ regs <= q`; both rulings a Theorem Labs lane and after the k = 0 gap report): the
    COMPOSITION, parse_value_holds : parse_value_spec tfibsegs B k (stages: FSW_parse_value.v; decode table:
    FSW_parse_value_tbl.v).
@@ -16,14 +16,15 @@
        working heads
      proof-index: 0x82fcc: 0 named, 0 by address, 0 related, 0 released lemma(s), 0 by file name, an earlier delivery 0 named and
        0 name(s) holding it, 0 UNRELEASED working-branch file(s) in the lemma index, 105 UNRELEASED hit(s) on live working heads
-   Port source (Lookup result): ported from a working branch 75e39a1f41d:proofs/omx-clap-core/fuzz_state/lib/
+   Port source (Lookup result): ported from a working branch:proofs/omx-clap-core/fuzz_state/lib/
    B/Prog/{parse_value_disp,PvStr,PvItems,PvJoin,PvStep,PvHolds,ParseUnit}.v (COMPLETE old-form image-B walk of
    parse_value: entry/fake frame/skip_ws call pv_pro + pv_disp, parse_string arm pv_str_ok, parse_items arm pv_items_ok,
    epilogue pv_join + pvs_none, composition parse_value_step / parse_value_holds_b; all Qed, no admit), restated against
    parse_value_spec's frame lemma by lemma, NOT Required, NOT bridged; new-frame shape from image A's walk
-   a working branch (ebb53c68f7d .. 00c6d1886e6: lib/A/FSH_parse_value.v pv_grant / pv_resume_sm /
+   a working branch (..: lib/A/FSH_parse_value.v pv_grant / pv_resume_sm /
    pv_seg0 / pv_sm / pv_epi / pv_strcall, lib/A/FSW_parse_value_calls.v pvc_objcall), copied and re-measured for B. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/Prog/FSW_parse_value_holds.v, with its module paths, module names and addresses changed; 579 of its 702 lines of code are new or changed and 2034 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* parse_value's OBJECT ARM as one segment (fs.asan, pf.c:283-298): from pv_front's object-arm hand-over at 0x831a0
    (the dispatch byte 123) to parse_value's return, into fpostU with parse_value_spec k's post for u = JObj ms.
    The chain: FSW_parse_value_calls.pvc_obj0 (0x831a0 -> A_parse_items), the parse_items call (pvc_objcall', below),

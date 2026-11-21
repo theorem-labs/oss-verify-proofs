@@ -24,11 +24,12 @@
    (pass 5b) the stack from len - 16 present, from the statement's astack_pres kept by astack_pres_journal. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 285 of its 337 lines of code are new or changed and 5001 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/pf_a11b_m.v; 725 of its 795 lines of code are new or changed and 267 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image A (fuzz_segconf.asan): the piece A7_S_CLOSE of segment A7 of
    reac_segconf_parse_file's walk -- from the internal cut CLOSE 0x880ac to KWOK 0x882f0 or UNK 0x880e4
    (segment A7's proof, 2026-10-30).
 
-   The code (the unit's internal record, commit dfb49d6ad789, path records/segp/dis/
+   The code (the unit's internal record, path records/segp/dis/
    reac_segconf_parse_file.fuzz_segconf.asan.s; 14 instructions, 0x880ac .. 0x880e0, plus the inline
    check's slow block, which this piece shows is not reached):
      0x880ac srli a1,a0,3 / 0x880b0 add a1,a1,s6 / 0x880b4 lb a1,0(a1) / 0x880b8 bnez a1,0x88a4c

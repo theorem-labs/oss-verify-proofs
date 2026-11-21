@@ -2,15 +2,16 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: IMAGE-B segment KEY of fuzz_reply's relay_instance_gone: the keep lemmas (prefix rkk_: the cut predicates'
    memory facts survive a change of memory in the scratch window only), ported from k3's image-A lib/A/W_rig_key.v
-   (a working branch 8cfff43c147) to B's frame slots.  Proves no function (kind: segment lemma). *)
+   (a working branch) to B's frame slots.  Proves no function (kind: segment lemma). *)
 (* Modified by Theorem Labs, 2026-10: ROUTE (b), STEP 3 (CONVERSION.md (sha256 1015972e02a9; internal record); the image-A twin is
-   a Theorem Labs lane's RIG_x round, commit f4cd818e98d, lib/A/W_rig_key.v's keep block): the keep lemmas over any allocator
+   a Theorem Labs lane's RIG_x round, lib/A/W_rig_key.v's keep block): the keep lemmas over any allocator
    relation ARx, against the cx file's generic Section (copied below).  Every ARx state is read at the empty head set
    (HP0: ARh below, the image-A twin's technique, with Local helpers), so the journal rkk_jar / rkk_gin / rkk_live read
    runs from [] to [] at the kit's RIG_STK_x (= RIG_STK + 128, rig_spec_x's budget); the scratch window is
    [gsp1 cx - DRAIN_STK_x, gsp1 cx) (DRAIN_STK_x = DRAIN_STK + 128, RIG_STK_x = RIG_FRAME + DRAIN_STK_x; the image-A
-   twin's bcc0646e8ae), still above GBASE's ly_stk_lo >= alloc_ceiling; GBASE, GIN and GLIVE take the generic
+   twin), still above GBASE's ly_stk_lo >= alloc_ceiling; GBASE, GIN and GLIVE take the generic
    arguments, and GLIVE's two head sets (gxHp, Hp1) are both [] (rk_gxHp). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -178,7 +179,7 @@ Hypothesis PSTG : forall a,
 
 #[local] Set Default Proof Using "All".
 
-(* ==== the generic relation at the empty head set (the image-A twin's lib/A/W_rig_key.v:236-280; Local here, as every
+(* ==== the generic relation at the empty head set (the image-A twin's lib/A/W_rig_key.v:237-281; Local here, as every
    key file that needs them defines its own) ==== *)
 (* HP0: every ARx state the keep lemmas read has the head set [], so they state their facts at ARh (= ARx at []) and the
    walk's journal from [] to [].  rk_alb is AR_blocks_law's seven conjuncts (alx_blocks' six and BLKN), in the AR
@@ -698,7 +699,7 @@ Hypothesis GE_R : ge_spec_xR B PST ARx R MT RP MMAX RG (BASE + AF_fr_gesture_end
 (* every lemma below takes the Section's hypotheses except the strict AFREE / DRAIN / GE / ALLOC_TAIL and R_refl /
    DRAIN_R (KEY needs none of them), so no route-R statement here carries a strict allocator rule *)
 #[local] Set Default Proof Using "-(AFREE DRAIN GE ALLOC_TAIL R_refl DRAIN_R)".
-(* ==== the generic relation at the empty head set (the image-A twin's lib/A/W_rig_key.v:236-280; Local here, as every
+(* ==== the generic relation at the empty head set (the image-A twin's lib/A/W_rig_key.v:237-281; Local here, as every
    key file that needs them defines its own) ==== *)
 (* HP0: every ARx state the keep lemmas read has the head set [], so they state their facts at ARh (= ARx at []) and the
    walk's journal from [] to [].  rk_alb_xR is AR_blocks_law's seven conjuncts (alx_blocks' six and BLKN), in the AR

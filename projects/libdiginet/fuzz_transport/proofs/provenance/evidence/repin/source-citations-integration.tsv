@@ -3,7 +3,7 @@
 # (the TSim files Sim*, the new files InitOk.v, LoopOk.v, TopOk.v, Wake*.v, and the slot / build_and_receive headers).
 # Map (source-citations.tsv line 5): old 1-917 stay; old 918-999 +9; old 1000-1007 become new 1009-1010; old >= 1008 +3.
 # old source: projects/libdiginet/fuzz_transport/source/fuzz_transport.c before the re-pin,
-#   sha256 044738ce0df1780d88ca48c2d17992c68bc339a8e3655b01779a289ffcfb6a06 (1215 lines), at 2ec5aadc14ee.
+#   sha256 044738ce0df1780d88ca48c2d17992c68bc339a8e3655b01779a289ffcfb6a06 (1215 lines).
 # patched source: the same path in this tree, sha256 ae837185e62539c8a8fb9deb8f3aa2fbde60b2fe2f7f81110cd06e281761b6e7
 #   (1218 lines).
 # check: each new endpoint was read from the patched source; the column new_source_line is what it names.

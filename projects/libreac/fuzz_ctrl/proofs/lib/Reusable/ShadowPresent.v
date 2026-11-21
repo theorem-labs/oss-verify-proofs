@@ -11,7 +11,7 @@
    Every lemma is over an arbitrary address set P (for ProgWorld: in_shadow a /\ in_vis0 ly a), so nothing here depends
    on an image.
 
-   Which contract posts preserve presence (measured on a working branch 7c7900ae455):
+   Which contract posts preserve presence (measured on a working branch):
    - Machine runs: YI04.msteps (shadow_present_steps) and YK04R.fsteps (shadow_present_fsteps): memory only grows.
    - Posts with the presence-monotone clause `forall a, apresent (w_H W) mem a -> apresent (w_H W) mem' a`, all with
      W' = W: aintrin_realizes OCpy / OSet (YG0d.v:336), amemcmp_realizes (:352), abcmp_realizes (:372),

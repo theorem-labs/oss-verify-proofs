@@ -1,9 +1,9 @@
 # provenance/evidence/depot-B: the consumer side of the empty-depot form, fuzz_wire image B
 
 rule 24: no function proved. The lib/B files this record makes are libreac/fuzz_knock's RELEASED image-B text
-(origin/ossv/recipes 88154566652a, proofs/libreac/fuzz_knock/lib/AU) relocated onto fuzz_wire.asan-ubsan by port_core
+(proofs/libreac/fuzz_knock/lib/AU) relocated onto fuzz_wire.asan-ubsan by port_core
 7a74e72920e6 and taken into the unit's grant-lineage lib/B text hunk by hunk, by the method of record of the unit's
-image-A core (its step 2: proofs/reac-repacer/fuzz_wire/provenance/evidence/depot at 4483a8de6e6f, build round 31),
+image-A core (its step 2: proofs/reac-repacer/fuzz_wire/provenance/evidence/depot, build round 31),
 carried to image B.
 
 Files made: the lib/B consumers (the Y twins of the image-A core's knock-files.txt that the unit's lib/B holds, without YB1w.v:
@@ -27,16 +27,16 @@ out dir.
 
 ## Commands (fuzz_wire, this record)
 
-    UNIT=fuzz_wire HUB=<clone> TREE=b55ba5ae509 A_CORE=4483a8de6e6f REL=<7a74e72920e6> P=<libreac> R=<reac-repacer> \
+    UNIT=fuzz_wire HUB=<clone> TREE= A_CORE= REL=<7a74e72920e6> P=<libreac> R=<reac-repacer> \
       bash step1.sh $S1
     bash compare-step1.sh $S1/work <the image-B core's step-1 work dir> > step1-compare.txt
-    UNIT=fuzz_wire HUB=<clone> TREE=b55ba5ae509 A_CORE=4483a8de6e6f A_GRANT=<A grant> A_KNOCK=<A knock> S1=$S1 \
+    UNIT=fuzz_wire HUB=<clone> TREE= A_CORE= A_GRANT=<A grant> A_KNOCK=<A knock> S1=$S1 \
       REL=... P=... R=... TWIN=51eb4bef24252e4df6e11baa89f653d20d74e38ae684f61bc94f4fb339ac97c3 CZONE=0x80050000 \
       bash step2.sh $OUT [<unit lib>]
     bash record.sh $OUT run
 
-step1.sh ran with A_CORE=cc592f53d4ff for this record; the two commits hold the same lib/Reusable (the image-A core left it
-unchanged since a0f3b92af52c).
+step1.sh ran with A_CORE= for this record; the two commits hold the same lib/Reusable (the image-A core left it
+unchanged).
 
 ## Files
 
@@ -63,7 +63,7 @@ unchanged since a0f3b92af52c).
 | tail_generalize.py, d1w_close.py | (d) the E5 tail_ext_ok rule (YFjm YFis YFj6); the A core's D1W_ok closing rule (YFj1 YFjf) |
 | zify_flag_sets.py, zify_flag.py | glue E6 / E7 of the image-A method (the Zify division flag set to false / to true): the files, from the A core's two flag tables; the one Local Zify flag line. The scripts are the A core's e6e7_sets.py and e6_flag.py renamed, byte for byte but their usage line, so their logs still print `e6_flag:` |
 | leak_gate.py, leak-gate-exceptions.tsv | the image-A core's leak-watch gate over the applied consumers. Its rule: PASS (exit 0) iff every LINEAGE token of an applied piece is cleared by a row of leak-gate-exceptions.tsv (file, applied line, token, a needle the piece contains, reason) and every row clears a hit; step2.sh stops when it fails. The table has 2 rows: the k argument 8192 of FPP_site at YFk0.v:1529 and :1617, depot-zone arithmetic carried with knock's text, whose A twins the image-A core's record classes as knock-unmoved proof numerals |
-| record.sh, run/ | the outputs of step 2 of this record. The relocation's own diff does not ship (its added lines copy .v comments of the image-A text that name lanes: inherited inside a .v file, new inside a patch). It is in the unit's internal record, commit 637e502429b1:depot-B/depot-B.patch, sha256 abad22c74edc6ac5f5373107d2dd5e05a32d18cdd1de5c8a194d934534a26407 (18202 lines), and record.sh writes it only where `PATCH_OUT` names. The scripts of this directory reproduce it from the image-A core at 4483a8de6e6f |
+| record.sh, run/ | the outputs of step 2 of this record. The relocation's own diff does not ship (its added lines copy .v comments of the image-A text that name lanes: inherited inside a .v file, new inside a patch). It is in the unit's internal record:depot-B/depot-B.patch, sha256 abad22c74edc6ac5f5373107d2dd5e05a32d18cdd1de5c8a194d934534a26407 (18202 lines), and record.sh writes it only where `PATCH_OUT` names. The scripts of this directory reproduce it from the image-A core |
 | controls.txt | each adapted script in image-A mode on the image-A core's inputs reproduces that core's output |
 | adaptations/*.diff | each adapted script against the image-A core's text |
 
@@ -83,12 +83,13 @@ three comment phrases that state the window (lines 57, 58, 436, after the notice
 11 Require lines; notice_split 3 files. ad1g_guard: dead arm removed (6184960 is not 1507 * 4096). (d) tail_generalize 3 sites, d1w_close 2
 sites. E6 18 files, E7 13 files. leak gate: PASS, LINEAGE hits 0 after the 2 exception rows (both used; without them
 the 2 hits fail it, as they did before the table existed). port_core_refused markers left: 0. lib/B files: 136.
-Build (cb a2bb66b099ce, dune, a build VM, a workspace made fresh from the unit's base 25e3d17bdb50, all 403 lib/B
+Build (cb a2bb66b099ce, dune, a build VM, a workspace made fresh from the unit's base, all 403 lib/B
 targets, 2026-10-31T06:54Z): rc 0, 390 compiled, 13 restored from the cache, 0 failed; its vo check: `660 .vo read,
 18868 Require digests compared with this build's .vo, 5445 with the checker image's .vo (41 of its libraries read under
 <COQLIB>), 0 .vo failed (0 inconsistent, 0 missing a library, 0 unreadable)` (<COQLIB>: the checker image's Coq library
-directory). The tree is the unit tree of 82a38b87d9ed: lib/B as the image-B core holds it at 2b7e14aaecf (this
+directory). The tree is the unit tree: lib/B as the image-B core holds it (this
 record's 136 lib/B files, byte-identical to run/'s output; that owner's kernel-depot-B.py hunks of YC5d YCbp YCbq YCe5,
-A_BEFORE 655d9c3e47c, A_AFTER cc592f53d4ff; its YB1w.v with the yb1w-rows.py rows StackStore_Store,
-StackStore_BlockInfo_Create, TwoLevelMap_Create_71714) and lib/Reusable byte-identical to the image-A core's at
-4483a8de6e6f.
+A_BEFORE, A_AFTER; its YB1w.v with the yb1w-rows.py rows StackStore_Store,
+StackStore_BlockInfo_Create, TwoLevelMap_Create_71714) and lib/Reusable byte-identical to the image-A core.
+
+The internal commit ids in these files were replaced by public commits or removed, so the output of `run.sh` differs from the shipped tables in those columns only.

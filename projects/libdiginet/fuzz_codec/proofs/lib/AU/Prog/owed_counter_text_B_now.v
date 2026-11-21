@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the proof of cpg_stack_malloc_keep_io is the text of lib/Reusable/YC85.v's
-   aj_stack_malloc_atS (copied there from proofs/libreac/fuzz_knock/lib/Reusable/YC85.v, origin/ossv/recipes
-   4b6f0df50aa7), with the runtime contract's kept-memory clause and the model clause carried to the post, for
+   aj_stack_malloc_atS (copied there from proofs/libreac/fuzz_knock/lib/Reusable/YC85.v),
+   with the runtime contract's kept-memory clause and the model clause carried to the post, for
    libdiginet/fuzz_codec's ASan build (image A); the rest of the file is new. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_codec/lib/A/Prog/CPgWalkFrame.v, with its module paths and module names changed; 176 of its 217 lines of code are new or changed and 447 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* owed_counter_text's oc_now (owed_counter_text_B_inv.v) from facts at the call's entry: an object that lies in a
    heap block or in a frame of the entry state (tdst_ok) keeps, at every state the walk reaches, the value of each byte
    outside the write set (tcj_kept clauses 2 and 4) and the usable marks of its range (a block's shadow from AR's

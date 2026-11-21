@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B' (asan-ubsan #102 pin d663f82d7f48, unstripped twin c90d4fa54d43),
    parse_value walk: the DISCHARGE of segment D's one marked closed image fact LITCS (PvB_D.v LITCS =
    PvB_D_CLit.v LITCS) at the instance. Proves nothing about the program (no function walked).
@@ -18,21 +19,21 @@
      disjoint from as_owned_static (pvi_disj_b, vm_compute) and below errno, and the rom bytes themselves by
      vm_compute of the closed boolean pvi_romb (no goal with an evar is computed);
    - the slack (the bytes after the NUL up to the granule end): they ARE owned statics (the asan redzones
-     (0x21465, 0x1b), (0x21486, 0x1a), (0x214a5, 0x1b) of B' Tfib_owned_static, YF0m.v:1786), so arodata_okP says
+     (0x21465, 0x1b), (0x21486, 0x1a), (0x214a5, 0x1b) of B' Tfib_owned_static, YF0m.v:1787), so arodata_okP says
      nothing of them; they are visible because the reader falls back to the rom (YP09.v mbyte: a byte the memory does
      not hold reads as seg_rom), and the rom holds every byte of the band (pvi_vis_b, vm_compute);
    - range_addressable / shadow_hull_vis: alx_const_cells (YCbqG.v) of the ARcf laws (as PALibB.exvi_eh_laws) on the
-     B' const shadow cells Tfib_const_shadow 129-144 (YF0m.v:1205-1220);
+     B' const shadow cells Tfib_const_shadow 129-144 (YF0m.v:1206-1221);
    - 4096 <= w, the alloc_ceiling bound (YM05.alloc_ceiling_value), the 2 ^ 32 bound, YGcfStr.amem_range8 (low arm):
      arithmetic on the closed addresses.
    Numerals: 0x10000 (ADDRESS: B_prog_val (A_OBJ 2), PAImg_prog.v, re-derived by vm_compute); 70752 / 70784 / 70816
    (DERIVED: pvd_word_off, PvB_D_Call.v:39; 0x10000 + them = 0x21460 / 0x21480 / 0x214a0, the words' addresses);
    0x21460 / 0x214a8 = 0x21460 + 0x48 (ADDRESS: the band from the first word to the last word's granule end);
-   0x21465 / 0x21486 / 0x214a5 (ADDRESS: the redzones' starts, YF0m.v:1786, comment only); 0x428c / 0x4290 / 0x4294
+   0x21465 / 0x21486 / 0x214a5 (ADDRESS: the redzones' starts, YF0m.v:1787, comment only); 0x428c / 0x4290 / 0x4294
    (DERIVED: the words' granule numbers, 0x21460 / 8 etc.); 0x7fffc288-0x7fffc297 and 2 / 5 / 6 / 5 / 0xf9 (ADDRESS
-   and WORD: the B' shadow of the three words, the generated cells of Tfib_const_shadow, YF0m.v:1205-1220); 129-144
-   (indices of those cells in Tfib_const_shadow, which opens at YF0m.v:1075: line 1076 + index, checked by eq_refl);
-   0x5de68c (ADDRESS: TFIB_ERRNO, YF0m.v:20, by reflexivity); 116 / 102 / 110 (WORD: the dispatch bytes); 8 (LENGTH:
+   and WORD: the B' shadow of the three words, the generated cells of Tfib_const_shadow, YF0m.v:1206-1221); 129-144
+   (indices of those cells in Tfib_const_shadow, which opens at YF0m.v:1076: line 1076 + index, checked by eq_refl);
+   0x5de68c (ADDRESS: TFIB_ERRNO, YF0m.v:21, by reflexivity); 116 / 102 / 110 (WORD: the dispatch bytes); 8 (LENGTH:
    granule), 4096 (page), 256 (byte range). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

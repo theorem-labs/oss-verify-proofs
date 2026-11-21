@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (path_at's bound below TASK_SIZE). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Bs0Gc.
@@ -203,8 +204,9 @@ Section AOpen.
       intros M R FM HR Hlen. pose proof SPlo as Hlo. pose proof SPhi as Hhi.
       destruct Hpp as [_ (S1a & S1b & S1c & S1d & S1e)].
       destruct (aopenat_regs R HR) as (_ & _ & H11 & _).
-      split; [exact Hlen|]. split; [exact S1c|]. rewrite H11.
-      rewrite <- S1d. apply rdn_agree. intros j Hj. apply (above_A M FM). unorm. lia.
+      split; [exact Hlen|]. split; [exact S1c|]. rewrite H11. split.
+      - rewrite <- S1d. apply rdn_agree. intros j Hj. apply (above_A M FM). unorm. lia.
+      - unfold TASK_SIZE. unorm. lia.
     Qed.
 
     Lemma aseg_C : forall R M msF mo T,

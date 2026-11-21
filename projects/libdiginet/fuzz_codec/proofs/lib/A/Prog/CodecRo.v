@@ -1,14 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: the part of proofs/cgif/cgif_file_fuzzer/lib/YC20.v that carries no cgif name, as fuzz_grant's lib/A/Prog/GrantBase.v (origin/cold/pg-prog 4a980cd5011) and fuzz_identity's lib/A/Prog/IdentBase.v (origin/cold/port-libreac-identity ea5560a967b) carry it, with only the unit's module prefix changed, for libreac/fuzz_boxreg: the read-only range, the frame object and the shape of a call's post-condition. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_boxreg/lib/A/Prog/BoxBase.v at origin/ossv/recipes ee71d1fd3fc
+(* Modified by Theorem Labs, 2026-10: the part of proofs/cgif/cgif_file_fuzzer/lib/YC20.v that carries no cgif name, as fuzz_grant's lib/A/Prog/GrantBase.v and fuzz_identity's lib/A/Prog/IdentBase.v carry it, with only the unit's module prefix changed, for libreac/fuzz_boxreg: the read-only range, the frame object and the shape of a call's post-condition. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_boxreg/lib/A/Prog/BoxBase.v
    for reac-pw/fuzz_role (image A and image B): module paths changed; its lines 17-45 (in_roP, arodata_okP,
    ro_below_ofl, ro_spares, arodata_ok_journalP) are taken as they stand; its lines 46-107 (afobj, apost_base,
    apost_baseF, fxr, apost_baseF_continue) are left out and replaced by the role definitions below (rl_fxk in place of
    fxr, for role's float registers; rl_wcell in place of afobj, for a cell that lies on the stack or in a side-stack
    frame); the role constants, the string predicate rl_cstr and the read-only cell predicate rl_ro_cells are new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgBase.v at 0de5d668c87e for reac-pw/fuzz_rate
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgBase.v for reac-pw/fuzz_rate
    (image A and image B): module paths changed; in_roP .. arodata_ok_journalP taken as they stand; the prefix rl_
    becomes rt_ (rl_fxk, rl_cstr, rl_ro_cells, rl_wcell, rl_fresh_awr(_n), rl_x, rl_xv, rl_loc, rl_at, rl_cut, rl_fsh,
    rl_inw); the role constants are replaced by rate's (rt_len, rt_bl and the texts the checks compare, from the shared
@@ -17,20 +17,21 @@
    (the read-only image as every call keeps it: the released fuzz_boxreg lib/A/Rt/SnprintfDef.v asn_rom_kept) with
    its two sources are new. *)
 (* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/Prog/DiscoRo.v and
-   proofs/libreac/fuzz_boxreg/lib/A/Prog/BoxRo.v at origin/ossv/recipes 09c6822d886 (img_shadow_vis, globs_marked,
+   proofs/libreac/fuzz_boxreg/lib/A/Prog/BoxRo.v (img_shadow_vis, globs_marked,
    ro_unowned, ro_usable_glob, ro_hull, ro_read_ok_glob) become rt_img_shadow_vis, rt_globs_marked, rt_ro_unowned,
    rt_glob_usable, rt_img_hull and rt_glob_read_ok, with the image's range as parameters in place of IMG_LO / IMG_TOP;
    rt_img_unowned, rt_aview_mbyte, rt_cstr_at, rt_i32tab_at, rt_u64tab_at, rt_img_bytes, rt_img_val, rt_ro_mbyte,
    rt_val_of_ro, rt_bytes_of_ro, rt_rom_pinned, rt_rom_view_of and rt_glob_of_b are new. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_rate/lib/A/RtPgBase.v, with its module paths and module names changed; 68 of its 106 lines of code are new or changed and 299 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/Prog/GrantRo.v (85e206d1c4c) for libreac/fuzz_identity: module paths changed; IMG_LO / IMG_HI and the registered globals named below are fuzz_identity.asan's; YI0f (cgif's frame-flush model, which this file does not use and fuzz_identity's lib does not have) is not required. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_identity/lib/A/Prog/IdentRo.v (origin/ossv/recipes 4b6f0df50aa7) for libdiginet/fuzz_codec's ASan build (image A, fuzz_codec.asan sha256 7d470194ffdb...): module paths changed; IMG_LO / IMG_HI are fuzz_codec.asan's (lib/Reusable/YImgTop.v), the registered globals named below are its 40; every definition and proof is the donor's text. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/Prog/GrantRo.v for libreac/fuzz_identity: module paths changed; IMG_LO / IMG_HI and the registered globals named below are fuzz_identity.asan's; YI0f (cgif's frame-flush model, which this file does not use and fuzz_identity's lib does not have) is not required. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_identity/lib/A/Prog/IdentRo.v for libdiginet/fuzz_codec's ASan build (image A, fuzz_codec.asan sha256 7d470194ffdb...): module paths changed; IMG_LO / IMG_HI are fuzz_codec.asan's (lib/Reusable/YImgTop.v), the registered globals named below are its 40; every definition and proof is the donor's text. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The image's read-only data is marked usable, in every state.
 
    The memory-checking runtime registers the program's globals at start-up and
    marks the bytes of each one usable, with unusable guard bytes around it; the
    ranges it leaves usable are `as_zero_shadow B`, whose shadow bytes `AR` keeps
-   zero in every state (lib/Reusable/YG0n.v:188-191, the law at YG0d.v:435-438).
+   zero in every state (lib/Reusable/YG0n.v:188-191, the law at YG0d.v:436-439).
    Every walk that reads a table of the image needs the same two facts:
      - `ro_usable`: the shadow says those bytes are accessible, which is what an
        instrumented load and the wrappers check;

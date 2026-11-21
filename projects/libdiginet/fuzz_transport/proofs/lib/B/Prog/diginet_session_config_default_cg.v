@@ -52,8 +52,8 @@
      0x86778, 0x86788, 0x86798, 0x867a8, 0x867b8, 0x867c8, 0x867d8, 0x867e8, 0x867f8, 0x86808 (the stores at c + 16,
      c + 24, ..., c + 56 in that order). trans_scfg_cells B (a fact of the record, decided by the closing file): the
      shadow bytes of g_cfg's 7 whole granules [0x5ded00, 0x5ded38) are 0 (a range of as_zero_shadow B; the record's
-     Tfib_zero_shadow row (0xa8fc0, 0x5ded38 - 0xa8fc0), lib/B/YF0m.v:3112) and the shadow byte 0x800b3da7 of its last
-     granule (4 payload bytes of 8) is 4 (a constant cell of the record; Tfib_const_shadow, lib/B/YF0m.v:1023). AR
+     Tfib_zero_shadow row (0xa8fc0, 0x5ded38 - 0xa8fc0), lib/B/YF0m.v:3113) and the shadow byte 0x800b3da7 of its last
+     granule (4 payload bytes of 8) is 4 (a constant cell of the record; Tfib_const_shadow, lib/B/YF0m.v:1024). AR
      re-reads both at every state (YG0n.v ARm am_zshadow, am_const). The stores at c + 16 .. c + 52 lie in granules
      2 .. 6 (k = 0); the store at c + 56 lies in granule 7, where (c + 56) & 7 = 0 and 0 + 3 < 4. The memset's own
      check of [c, c + 60) (granules 0 .. 7) needs the same rows (range_addressable, shadow_hull_vis of

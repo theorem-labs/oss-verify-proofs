@@ -211,7 +211,7 @@ Proof.
 Qed.
 
 (* ---- Route (C) (a Theorem Labs lane 09:20Z, form of a Theorem Labs lane 09:38Z; lib/B/ShadowRwOn.v): the image-B twin of a Theorem Labs lane's A text
-   (lib/A/Prog/reac_box_catalogue_match_c.v (at head lib/A/Prog/reac_box_catalogue_match_c.v:232-405; written on a working branch f07a91c47f01)). The two contracts
+   (lib/A/Prog/reac_box_catalogue_match_c.v (at head lib/A/Prog/reac_box_catalogue_match_c.v:232-405; written on a working branch)). The two contracts
    above with the universal premise `shadow_rw m` narrowed to `shadow_rw_on (reac_box_catalogue_match_shadow_R f len S
    FS) m` and the post's `shadow_rw m'` widened to `forall P, shadow_rw_on P m -> shadow_rw_on P m'`; nothing else
    changes. The region is a Theorem Labs lane's text character for character (a Theorem Labs lane's derivation); its constants are this file's

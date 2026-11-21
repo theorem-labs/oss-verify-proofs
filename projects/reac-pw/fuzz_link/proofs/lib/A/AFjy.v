@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFjy.v, with its module paths changed, names TfibSyms -> PcapSyms and its addresses moved to libreac/fuzz_pcap's ASan build. *)
-(* Modified by Theorem Labs, 2026-10: the case split over Tfib_zero_shadow is a Theorem Labs lane's arity-free form (omx-clap-core/fuzz_manifest 2c257ca7d7a); fuzz_pcap's Tfib_zero_shadow has six rows, the donor's five. *)
+(* Modified by Theorem Labs, 2026-10: the case split over Tfib_zero_shadow is a Theorem Labs lane's arity-free form (omx-clap-core/fuzz_manifest); fuzz_pcap's Tfib_zero_shadow has six rows, the donor's five. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_link.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

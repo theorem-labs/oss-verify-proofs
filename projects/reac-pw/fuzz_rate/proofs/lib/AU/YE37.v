@@ -4,7 +4,8 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AE37.v (donor image sha256 7093581aab04), with its module paths changed and its addresses moved to libreac/fuzz_identity's ASan build. *)
 (* Modified by Theorem Labs, 2026-10: the walk's globals array is fuzz_identity.asan's 50 descriptors at 0xa0c60, its shadow windows are the 50 globals' and that array's, regenerated from the image by a script; shw_ok takes each window byte from a constant shadow cell or a zero-shadow range, as proofs/libreac/fuzz_grant/lib/A/AE37.v does. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_identity/lib/A/AE37.v (donor image sha256 c954b804786c), with its module paths changed and its addresses moved to reac-pw/fuzz_rate's ASan build. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/AE37.v at f1231675c3dd, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/AE37.v was made and quote that file's image-A values; the code below carries image B's values. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/AE37.v, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/AE37.v was made and quote that file's image-A values; the code below carries image B's values. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

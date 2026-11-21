@@ -4,6 +4,7 @@
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YL0l.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/reac-pw/fuzz_qdisc/lib/Reusable/YL0l.v; 80 of its 598 lines of code are new or changed and 365 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/reac-pw/fuzz_qdisc/lib/Reusable/YL0l_mf.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput and its premises; the channel-reader premise of fdchan). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -29,36 +30,82 @@ Hypothesis AX : AllocExtra src0_msyms (aa_MR API).
 Hypothesis HAM : amf = true.
 Hypothesis Hmal : forall fx' : FPState, malloc_realizes (fx:=fx') (AM:=AM) src0_msyms (aa_MR API).
 Hypothesis Hfre : forall fx' : FPState, free_realizes (fx:=fx') (AM:=AM) src0_msyms (aa_MR API).
-Variables (sp tid : word) (a0 path : list byte) (inp : ProcInput) (data : list byte) (rnd : EntryDraw).
+Variables (sp tid : word) (path : list byte) (inp : ProcInput) (data : list byte) (rnd : EntryDraw).
 Hypothesis Hlk : fs_lookup (in_fs inp) path = Some data.
-Hypothesis HSA0 : forall G, anchored_atoms G = anchored_atoms RD_facts -> stack_anchored (E_main sp [a0; path] (in_envp inp) tid rnd) G.
+Hypothesis HSA0 : forall G, anchored_atoms G = anchored_atoms RD_facts -> stack_anchored (E_main sp inp tid rnd) G.
 Variable PRES : dleaf * astate -> Prop.
 Local Abbreviation L := (Z.of_nat (length data)).
-Local Abbreviation E_lp := (YL0l.E_lp sp tid a0 path inp data rnd).
-Local Abbreviation ew_lp := (YL0l.ew_lp sp tid a0 path inp data rnd).
+Local Abbreviation E_lp := (YL0l.E_lp sp tid inp data rnd).
+Local Abbreviation ew_lp := (YL0l.ew_lp sp tid inp data rnd).
 Local Abbreviation md_loop := (YL0l.md_loop path inp).
 Local Abbreviation md_post := (YL0l.md_post inp).
 Local Abbreviation md_loop_vm := (YL0l.md_loop_vm path inp).
 Local Abbreviation md_loop_read := (YL0l.md_loop_read path inp).
 Local Abbreviation md_loop_close := (YL0l.md_loop_close path inp).
-Local Abbreviation MR_win := (YL0l.MR_win API AX data).
-Local Abbreviation blk_data_win := (YL0l.blk_data_win API AX data).
 Local Abbreviation cap_range := (YL0l.cap_range data).
 Local Abbreviation bv_off_add := (YL0l.bv_off_add data).
 Local Abbreviation ext29_ewset := (YL0l.ext29_ewset data).
 Local Abbreviation ext29_havoc := (YL0l.ext29_havoc data).
 Local Abbreviation ext29_post := (YL0l.ext29_post data).
-Local Abbreviation Ec14 := (YL0l.Ec14 sp tid a0 path inp data rnd).
-Local Abbreviation Ec28 := (YL0l.Ec28 sp tid a0 path inp data rnd).
-Local Abbreviation U_want := (YL0l.U_want sp tid a0 path inp data rnd).
-Local Abbreviation U_dst := (YL0l.U_dst sp tid a0 path inp data rnd).
-Local Abbreviation U_len1 := (YL0l.U_len1 sp tid a0 path inp data rnd).
-Local Abbreviation U_big := (YL0l.U_big sp tid a0 path inp data rnd).
-Local Abbreviation U_dbl := (YL0l.U_dbl sp tid a0 path inp data rnd).
-Local Abbreviation agree_to_lp := (YL0l.agree_to_lp sp tid a0 path inp data rnd).
-Local Abbreviation lp_junk := (YL0l.lp_junk sp tid a0 path inp data rnd).
+Local Abbreviation Ec14 := (YL0l.Ec14 sp tid inp data rnd).
+Local Abbreviation Ec28 := (YL0l.Ec28 sp tid inp data rnd).
+Local Abbreviation U_want := (YL0l.U_want sp tid inp data rnd).
+Local Abbreviation U_dst := (YL0l.U_dst sp tid inp data rnd).
+Local Abbreviation U_len1 := (YL0l.U_len1 sp tid inp data rnd).
+Local Abbreviation U_big := (YL0l.U_big sp tid inp data rnd).
+Local Abbreviation U_dbl := (YL0l.U_dbl sp tid inp data rnd).
+Local Abbreviation agree_to_lp := (YL0l.agree_to_lp sp tid inp data rnd).
+Local Abbreviation lp_junk := (YL0l.lp_junk sp tid inp data rnd).
 Local Abbreviation TREE := (YL0l.TREE data).
-Ltac drv_anch ::= first [ assumption | eapply (YL0l.anch_lp sp tid a0 path inp data rnd HSA0); [ eassumption | vm_compute; reflexivity ] ].
+Ltac drv_anch ::= first [ assumption | eapply (YL0l.anch_lp sp tid inp data rnd HSA0); [ eassumption | vm_compute; reflexivity ] ].
+(* 727298f3: the allocator record carries its mode, so the window lemmas of YL0l (stated at AcfgMode)
+   are restated here over this section's record; the statements and proofs are YL0l's. *)
+Lemma win_not_owned_mf : forall Lc A m md x, aa_MR API Lc A m md -> RS_LO <= x < RS_LO + 65536 -> ~ owned src0_msyms Lc A x.
+Proof.
+intros Lc A m md x HMR Hx [Ho|Ho].
+- pose proof (read_stage_img (x - RS_LO) ltac:(lia)) as Himg. replace (RS_LO + (x - RS_LO)) with x in Himg by lia.
+pose proof (ax_img AX Lc A m md x HMR Himg Ho) as Hc.
+pose proof (proj2 win_not_static) as W. apply orb_prop in W as [W|W]; apply Z.leb_le in W; lia.
+- destruct (static_owned_ranges src0_msyms x Ho) as (r & Hr & Hxr).
+pose proof (forallb_In _ _ r (proj1 win_not_static) Hr) as W. cbn beta in W. apply orb_prop in W as [W|W]; apply Z.leb_le in W; lia.
+Qed.
+Lemma MR_win : forall Lc A (m m' : word -> option byte) md a (bs : list byte),
+aa_MR API Lc A m md -> RS_LO <= a -> a + Z.of_nat (length bs) <= RS_LO + 65536 ->
+(forall x : word, bv_unsigned x < a \/ a + Z.of_nat (length bs) <= bv_unsigned x -> m' x = m x) ->
+m' = wbytes m (Z_to_bv 64 a) bs ->
+aa_MR API Lc A m' md.
+Proof.
+intros Lc A m m' md a bs HMR Ha1 Ha2 Hfr ->.
+destruct (mr_model _ _ (aa_laws API) _ _ _ _ HMR) as (Hh & Hlz & Hmat).
+assert (Hrs : 0 <= RS_LO) by (unfold RS_LO, src0_D_read_stage; lia). pose proof YM05.alloc_ceiling_val as Hcv.
+eapply (mr_frame _ _ (aa_laws API)); [exact HMR | | | | reflexivity | exact Hh | exact Hlz | exact Hmat].
+- intros x Ho. pose proof (mr_owned_low _ _ (aa_laws API) _ _ _ _ x HMR Ho) as Hxl.
+unfold mbyte. rewrite Hfr; [reflexivity|]. rewrite u64_of_Z by lia.
+destruct (Z_lt_dec x a) as [|Hge]; [lia|]. destruct (Z_lt_dec x (a + Z.of_nat (length bs))) as [Hlt|]; [|lia].
+exfalso. exact (win_not_owned_mf Lc A m md x HMR ltac:(lia) Ho).
+- intros x Ho [b Hb]. pose proof (mr_owned_low _ _ (aa_laws API) _ _ _ _ x HMR Ho) as Hxl. exists b. rewrite Hfr; [exact Hb|]. rewrite u64_of_Z by lia.
+destruct (Z_lt_dec x a) as [|Hge]; [lia|]. destruct (Z_lt_dec x (a + Z.of_nat (length bs))) as [Hlt|]; [|lia].
+exfalso. exact (win_not_owned_mf Lc A m md x HMR ltac:(lia) Ho).
+- intros p n i Hp Hi. destruct (mr_blocks _ _ (aa_laws API) Lc A m md p n i HMR Hp Hi) as ([b Hb] & Hplo & Hphi & _).
+exists b. rewrite Hfr; [exact Hb|]. rewrite u64_of_Z by lia.
+destruct (Z_lt_dec (ptr_addr Lc p + i) a) as [|Hge]; [lia|]. destruct (Z_lt_dec (ptr_addr Lc p + i) (a + Z.of_nat (length bs))) as [Hlt|]; [|lia].
+exfalso. apply (ax_blocks_img AX Lc A m md p n i HMR Hp Hi). replace (ptr_addr Lc p + i) with (RS_LO + (ptr_addr Lc p + i - RS_LO)) by lia.
+apply read_stage_img. lia.
+Qed.
+Lemma blk_data_win : forall Lc A (m m' : word -> option byte) md p sz a (bs : list byte) c bs0,
+aa_MR API Lc A m md -> In (p, sz) (user_blocks A) -> ptr_addr Lc p <= c -> c + Z.of_nat (length bs0) <= ptr_addr Lc p + sz ->
+RS_LO <= a -> a + Z.of_nat (length bs) <= RS_LO + 65536 ->
+(forall x : word, bv_unsigned x < a \/ a + Z.of_nat (length bs) <= bv_unsigned x -> m' x = m x) ->
+blk_data src0_msyms m c bs0 -> blk_data src0_msyms m' c bs0.
+Proof.
+intros Lc A m m' md p sz a bs c bs0 HMR Hp Hc1 Hc2 Ha1 Ha2 Hfr HD i Hi. rewrite <- (HD i Hi).
+destruct (mr_blocks _ _ (aa_laws API) Lc A m md p sz (c + i - ptr_addr Lc p) HMR Hp ltac:(lia)) as (_ & Hplo & Hphi & _).
+pose proof YM05.alloc_ceiling_val as Hcv.
+unfold mbyte. rewrite Hfr; [reflexivity|]. rewrite u64_of_Z by lia.
+destruct (Z_lt_dec (c + i) a) as [|Hge]; [lia|]. destruct (Z_lt_dec (c + i) (a + Z.of_nat (length bs))) as [Hlt|]; [|lia].
+exfalso. apply (ax_blocks_img AX Lc A m md p sz (c + i - ptr_addr Lc p) HMR Hp ltac:(lia)).
+replace (ptr_addr Lc p + (c + i - ptr_addr Lc p)) with (RS_LO + (c + i - RS_LO)) by lia. apply read_stage_img. lia.
+Qed.
 Definition POST_mf (K : dleaf * astate -> TSet) : Prop :=
 forall cap' bufp' A' Lc' J' g' len0 w ms' md',
 L < cap' -> 65536 <= cap' <= MAX_INPUT -> 0 <= len0 <= L ->
@@ -520,27 +567,29 @@ lazymatch type of HS' with st_ok _ _ _ ?msx =>
 apply (IHN fuel cap bufp (len + n) A Lc J' g msx _ K ltac:(lia) Hcap Hfuel ltac:(lia) ltac:(lia) Hub HW HB Hid HS' HMR Hmd1 HD HLt HK HPOST) end.
 Qed.
 Theorem src0_read_loop_mf : forall (brk mbase : word) (lim : Z) regs' g ms md Lc A bufp vm (K : dleaf * astate -> TSet),
-st_ok src0segs (E_m1 sp tid [a0; path] (in_envp inp) rnd regs' g) ss_m1_post ms ->
+st_ok src0segs (E_m1 sp tid inp rnd regs' g) ss_m1_post ms ->
 getr regs' 10%bv = Z_to_bv 64 (ptr_addr Lc bufp) ->
 aa_MR API Lc A (ms_mem ms) md -> WF A -> bounded A -> st_init_done A = true ->
 user_blocks A = [(bufp, CAP0)] ->
-md = with_vmmaps vm (MD_file path tid brk mbase sp lim inp) ->
+md = with_vmmaps vm (MD_file path tid brk mbase sp lim inp rnd) ->
+(* [fdchan]'s third conjunct needs the launch's reader fact, as [YL0l.src0_read_loop]. *)
+in_channel_reader inp = true ->
 leaves PRES (TREE READ_FUEL CAP0 bufp A) ->
 (forall r, t_eq (K r) (leaf_shapeX data (in_fs inp) r)) ->
 POST_mf K ->
 realizes src0segs (mkCfg ms md) (tset_mf (TREE READ_FUEL CAP0 bufp A) K).
 Proof using AX HAM Hmal Hfre Hlk HSA0.
-intros brk mbase lim regs' g ms md Lc A bufp vm K HS Ha0 HMR HW HB Hid Hub Hmd HL HK HPOST.
+intros brk mbase lim regs' g ms md Lc A bufp vm K HS Ha0 HMR HW HB Hid Hub Hmd Hcr HL HK HPOST.
 destruct (mr_model _ _ (aa_laws API) _ _ _ _ HMR) as (Hh & Hlz & _).
 assert (Hin : In (bufp, CAP0) (user_blocks A)) by (rewrite Hub; left; reflexivity).
 pose proof (mr_blocks _ _ (aa_laws API) Lc A (ms_mem ms) md bufp CAP0 0 HMR Hin ltac:(unfold CAP0; lia)) as (_ & Hq1 & Hq2 & _).
 pose proof (mr_blocks_aligned _ _ (aa_laws API) Lc A (ms_mem ms) md bufp CAP0 HMR Hin) as Hqal.
 unfold CAP0 in Hq2. assert (Hac : alloc_ceiling < 2 ^ 47) by (pose proof YM05.alloc_ceiling_val; lia).
-set (E0 := E_m1 sp tid [a0; path] (in_envp inp) rnd regs' g) in HS.
+set (E0 := E_m1 sp tid inp rnd regs' g) in HS.
 assert (E14 : ew E0 14 = Z_to_bv 64 (ptr_addr Lc bufp)).
 { unfold E0, E_m1. change 14%nat with (K_M1 + 4)%nat. rewrite post_env_a0. exact Ha0. }
 assert (HSAE0 : forall G, anchored_atoms G = anchored_atoms RD_facts -> stack_anchored E0 G).
-{ intros G HGa. apply (stack_anchored_ext (E_main sp [a0; path] (in_envp inp) tid rnd) E0 RD_facts G (HSA0 RD_facts eq_refl) HGa).
+{ intros G HGa. apply (stack_anchored_ext (E_main sp inp tid rnd) E0 RD_facts G (HSA0 RD_facts eq_refl) HGa).
 intros [n K0] Hn. cbn [fst].
 match type of Hn with In _ ?l => let v := eval vm_compute in l in change l with v in Hn end.
 assert (Hn10 : (n < 10)%nat).
@@ -594,7 +643,7 @@ apply (loop_rd_mf (S (Z.to_nat (2 ^ 28))) READ_FUEL CAP0 bufp 0 A Lc J g msx md 
 ltac:(unfold CAP0; lia) ltac:(lia) Hub HW HB Hid HS' HMR) end.
 + subst md. unfold YL0l.md_loop, MD_file, fdchan. autorewrite with model. rewrite MD0_fds, MD0_fs.
 rewrite fd_lookup_insert_eq, !fd_lookup_insert_neq by (intros H'; apply (f_equal bv_unsigned) in H'; discriminate).
-repeat split; first [apply fd_insert_std3 | reflexivity].
+repeat split; first [apply fd_insert_std3 | reflexivity | (rewrite ?MD0_channel_reader; exact Hcr)].
 + cbn. apply (blk_data_nil src0_msyms).
 + exact HL.
 + exact HK.

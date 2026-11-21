@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel reader carried by the target-loop invariants to printf, the header message and STDOUT's pending case; realizes_canon's equality argument; the stack top's TASK_SIZE bound for S4_heap, usp0_le_task). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -76,17 +77,17 @@ Let sp0w : word := Z_to_bv 64 usp0.
 
 #[using="sp0w"] Theorem hdr_leaf_ok : hdr_leaf_stmt usp0 tid ppw path.
 Proof.
-unfold hdr_leaf_stmt. intros until fc. intros Hpc HK D HP (errv & ERR) Hgp Htp FD2 CONT. subst gp tp.
+unfold hdr_leaf_stmt. intros until fc. intros Hpc HK D HP (errv & ERR) Hgp Htp FD2 RDR CONT. subst gp tp. pose proof QRjH.Mq3.stack_window_depth_val as SWD.
 destruct (leaf_facts usp0 pp tid path m A [(buf, cap)] md D HP) as (VSP & U & STW & IMG & CT & HT & CS & CC & CPG).
 pose proof (heapc_model_ok usp0 _ _ _ _ HP) as [Hh Hl].
 pose proof (f_sp _ _ _ _ _ D) as SPB.
 match goal with |- realizes _ (mkCfg (QEpW.MS ?R0 F ?pcw fc None m ?ro) _) _ =>
 change (QEpW.MS R0 F pcw fc None m ro) with (@mkst F fc R0 pcw m ro); set (R := R0) end.
-eapply (ref_hdr_msg (fF:=F) (fC:=fc) sp0w [] md VSP Hh Hl FD2 tid (bv_unsigned rc_canary) R m); try assumption;
+eapply (ref_hdr_msg (fF:=F) (fC:=fc) sp0w [] md VSP Hh Hl FD2 RDR tid (bv_unsigned rc_canary) R m); try assumption;
 try (subst R; cbn [getr]; rewrite ?U; reflexivity).
 intros R' M' G10 G1 G2 G3 G4 G8 G9 G18 G19 G20 G21 G22 G23 G24 G25 G26 G27 [PA PG PW1 PW2 PW3 PR1 PR2].
 change (mkst R' (Z_to_bv 64 0x5032c) M' (seg_rom RSEGS)) with (QEpW.MS R' F (Z_to_bv 64 0x5032c) fc None M' (seg_rom RSEGS)).
-apply (realizes_canon RSEGS). rewrite canonR_getr.
+apply (realizes_canon RSEGS eq_refl). rewrite canonR_getr.
 rewrite G10, G1, G2, G3, G4, G8, G9, G18, G19, G20, G21, G22, G23, G24, G25, G26, G27, U.
 subst R. rewrite ?getr_mk1, ?getr_mk2, ?getr_mk3, ?getr_mk4, ?getr_mk5, ?getr_mk6, ?getr_mk7, ?getr_mk8, ?getr_mk9, ?getr_mk10, ?getr_mk11, ?getr_mk12, ?getr_mk13, ?getr_mk14, ?getr_mk15, ?getr_mk16, ?getr_mk17, ?getr_mk18, ?getr_mk19, ?getr_mk20, ?getr_mk21, ?getr_mk22, ?getr_mk23, ?getr_mk24, ?getr_mk25, ?getr_mk26, ?getr_mk27, ?getr_mk28, ?getr_mk29, ?getr_mk30, ?getr_mk31.
 pose proof (heapc_mem_inv usp0 _ _ _ _ HP) as MI.
@@ -258,6 +259,7 @@ forall (gp tp t0 t1 t2 s0 s1 a0 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s1
 (F : bvmap 5 word) (fc : bv 32) (m : mem) (md : Model) (K : TSet),
 let sp := usp0 - 208 in
 model_ok md -> fd_lookup (m_fds md) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)) ->
+m_channel_reader md = true ->
 (forall a, 0x650a0 <= a < 0x65188 -> m (wa a) = None) -> PFIMG m ->
 stk rsegs m (sp - 1536) sp -> mem_inv rsegs m ->
 0x7fff80000000 <= usp0 <= 0x800000000000 -> usp0 mod 16 = 0 ->
@@ -347,11 +349,11 @@ DFX usp0 pp tid path m ->
 munch [(FLAG, FLAG + 1)] m m1 -> wmono rsegs m m1 ->
 presx LB (usp0 - 208) m1 m' ->
 munch [(FLAG, FLAG + 1)] m' m2 -> wmono rsegs m' m2 -> mem_inv rsegs m2 ->
-stk rsegs m2 (usp0 - 8388608) (usp0 - 208) -> bytes_at rsegs m2 0x75e40 (le8 (wz 0x96138)) ->
+stk rsegs m2 (usp0 - QRjH.Mq3.stack_window_depth) (usp0 - 208) -> bytes_at rsegs m2 0x75e40 (le8 (wz 0x96138)) ->
 QsRG.Mq0.rdn rsegs m2 (Z_to_bv 64 FLAG) 1%nat = Some [Z_to_bv 8 0] ->
 DFX usp0 pp tid path m2.
 Proof.
-intros usp0 pp tid path LB m m1 m' m2 [SPB STK FRM TID SELF PRS STG PTH PTH8 LOC CEIL ATX] MU1 WM1 HP MU2 WM2 MI2 ST2 LOC2 FL.
+intros usp0 pp tid path LB m m1 m' m2 [SPB STK FRM TID SELF PRS STG PTH PTH8 LOC CEIL ATX] MU1 WM1 HP MU2 WM2 MI2 ST2 LOC2 FL. pose proof QRjH.Mq3.stack_window_depth_val as SWD.
 unfold FLAG in *.
 assert (O1 : forall x, x <> 0x751f4 -> outside [(0x751f4, 0x751f4 + 1)] x) by (intros x Hx; cbn; lia).
 assert (E1 : forall x, x <> 0x751f4 -> 0 <= x < 2^64 -> m1 (wa x) = m (wa x)).
@@ -414,11 +416,11 @@ Qed.
 Definition ARMW (usp0 : Z) : list ivl :=
 [(usp0 - 256, usp0 - 128); (0x751f0, 0x751f1); (0x95ec0, 0x95ec4); (0x95ec8, 0x95ed0); (0x95ed8, 0x95ee0); (0x95fd8, 0x95fe0)].
 #[using="Type"] Lemma DFX_arm : forall usp0 pp tid path m m',
-DFX usp0 pp tid path m -> munch (ARMW usp0) m m' -> wmono rsegs m m' -> stk rsegs m' (usp0 - 8388608) (usp0 - 128) ->
+DFX usp0 pp tid path m -> munch (ARMW usp0) m m' -> wmono rsegs m m' -> stk rsegs m' (usp0 - QRjH.Mq3.stack_window_depth) (usp0 - 128) ->
 QFeQ.Mq0.atx_state true m' ->
 DFX usp0 pp tid path m'.
 Proof.
-intros usp0 pp tid path m m' D MU WM ST' AT. destruct D as [SPB STK FRM TID SELF PRS STG PTH PTH8 LOC CEIL _].
+intros usp0 pp tid path m m' D MU WM ST' AT. pose proof QRjH.Mq3.stack_window_depth_val as SWD. destruct D as [SPB STK FRM TID SELF PRS STG PTH PTH8 LOC CEIL _].
 assert (OUT : forall x, (usp0 - 128 <= x \/ (0x10000 <= x < 0x97000 /\ x <> 0x751f0 /\ ~ (0x95ec0 <= x < 0x95ec4) /\ ~ (0x95ec8 <= x < 0x95ed0)
 /\ ~ (0x95ed8 <= x < 0x95ee0) /\ ~ (0x95fd8 <= x < 0x95fe0))) -> outside (ARMW usp0) x).
 { intros x Hx. cbn. lia. }
@@ -428,8 +430,8 @@ assert (EQ : forall x, (usp0 - 128 <= x \/ (0x10000 <= x < 0x97000 /\ x <> 0x751
 destruct PTH as (P1 & P2 & P3). destruct TID as [T1 T2].
 constructor.
 - exact SPB.
-- destruct (stk_split rsegs m (usp0 - 8388608) (usp0 - 128) usp0 STK ltac:(lia)) as [_ S2].
-apply (stk_merge rsegs m' (usp0 - 8388608) (usp0 - 128) usp0 ST'); [| lia].
+- destruct (stk_split rsegs m (usp0 - QRjH.Mq3.stack_window_depth) (usp0 - 128) usp0 STK ltac:(lia)) as [_ S2].
+apply (stk_merge rsegs m' (usp0 - QRjH.Mq3.stack_window_depth) (usp0 - 128) usp0 ST'); [| lia].
 eapply stk_transport; [exact S2| exact MU| exact WM|]. intros x Hx. left. apply OUT. lia.
 - destruct FRM as [[WF BA] WR]. split; [split; [exact WF|]|].
 + eapply bytes_at_agree; [exact BA|]. intros x Hx. apply EQ; [left; lia|]. rewrite cells_bytes_length in Hx by exact WF. cbn in Hx. lia.
@@ -481,15 +483,16 @@ Proof. induction k as [|k IH]; [reflexivity|]. cbn [zero_lines length]. rewrite 
 
 #[using="Type"] Lemma STDOUT_of_W : forall B A LB m md k, (k <= 3)%nat -> STDOUTW m k -> HEAPc B A LB m md ->
 fd_lookup (m_fds md) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)) ->
+m_channel_reader md = true ->
 STDOUT m md (zero_lines k).
 Proof.
-intros B A LB m md k Hk SW HP FD1. pose proof (heapc_guard_cells B _ _ _ _ HP) as [[[_ G1] _] [[_ G2] _]].
+intros B A LB m md k Hk SW HP FD1 RDR1. pose proof (heapc_guard_cells B _ _ _ _ HP) as [[[_ G1] _] [[_ G2] _]].
 cbn [cells_bytes cbytes app] in G1, G2. rewrite app_nil_r in G1, G2.
 destruct SW as [F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12 F13]. unfold Qm90.Mq0.cell in *.
 destruct k as [|k].
 - left. split; [reflexivity|]. exists (Z_to_bv 64 0x965c0), (Z_to_bv 64 0). unfold QFeQ.Mq0.file_clean.
 rewrite Z.add_0_r in F5. cbn [Z.of_nat Z.mul Z.add] in F5. repeat split; assumption.
-- right. exists (0x965c0 + 2 * Z.of_nat (S k)), (Z_to_bv 64 0), rc_canary. split; [| split; [lia| exact FD1]].
+- right. exists (0x965c0 + 2 * Z.of_nat (S k)), (Z_to_bv 64 0), rc_canary. split; [| split; [lia| split; [exact FD1| exact RDR1]]].
 constructor; try assumption.
 + cbn. lia.
 + rewrite zero_lines_length. lia.
@@ -535,10 +538,14 @@ Variables (fds0 : list (word * FdEntry)).
 Hypothesis FD1 : fd_lookup fds0 (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)).
 Hypothesis FD2 : fd_lookup fds0 (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
 Notation B := usp0.
-Notation LO := (usp0 - 8388608).
+Notation LO := (usp0 - QRjH.Mq3.stack_window_depth).
 Hypothesis HBlt : alloc_ceiling < usp0.
 Hypothesis HCEIL : alloc_ceiling = usp0 - 8388608.
-Let HIx : heap_iface S4L := S4_heap B HBlt.
+(* LPS 727298f3: heap_iface's [hi_top_task]; [usp0] is the launch's sp ([HCEIL] against
+   [amb_rc]), which [a_sp_hi] (the launch's [valid_sp]) bounds *)
+#[using="HCEIL"] Lemma usp0_le_task : (usp0 <= TASK_SIZE)%Z.
+Proof. pose proof QJyS.alloc_ceiling_amb. pose proof QJyS.a_sp_hi. unfold TASK_SIZE. lia. Qed.
+Let HIx : heap_iface S4L := S4_heap B HBlt usp0_le_task.
 #[using="Type"] Lemma hexgot_of : forall A LB m md, HEAPc B A LB m md -> bytes_at rsegs m 0x63d90 (le8 (Z_to_bv 64 0x64ee8)).
 Proof. intros A LB m md HP. exact (proj1 (heapc_consts B _ _ _ _ HP)). Qed.
 
@@ -587,7 +594,9 @@ ti_fds  : CFDS fds0 (m_fds md);
 ti_fs   : m_fs md = fs;
 ti_stk  : stk rsegs m LO (usp0 - 208);
 ti_frame: exists j0, rw_cells rsegs m (usp0 - 208) (trun_frame j0 x7 x6 x5 buf);
-ti_glob : hglob_P m }.
+ti_glob : hglob_P m;
+(* LPS 727298f3: the far end of the standard channels has a reader ([State.m_channel_reader]) *)
+ti_rdr  : m_channel_reader md = true }.
 
 Definition tloop_stmt (i j : nat) : Prop :=
 forall (al ow : Z) (LK : list (Z * Z)) (m : mem) (md : Model) (A : hstate)
@@ -603,6 +612,9 @@ F (Z_to_bv 64 TLOOP) fc None m (seg_rom rsegs)) md)
 Proof. intros md md' (H & _). unfold m_fds. rewrite H. reflexivity. Qed.
 #[using="Type"] Lemma model_vm_only_fs : forall md md', model_vm_only md md' -> m_fs md' = m_fs md.
 Proof. intros md md' (_ & _ & H & _). unfold m_fs. rewrite H. reflexivity. Qed.
+(* LPS 727298f3: a vm-only step keeps m_proc, so it keeps [State.m_channel_reader] *)
+#[using="Type"] Lemma model_vm_only_rdr : forall md md', model_vm_only md md' -> m_channel_reader md' = m_channel_reader md.
+Proof. intros md md' (_ & _ & _ & H & _). unfold m_channel_reader. rewrite H. reflexivity. Qed.
 #[using="AMB data"] Lemma neq13 : Z_to_bv 64 1 <> Z_to_bv 64 3.
 Proof. intros E. assert (X : bv_unsigned (Z_to_bv 64 1) = bv_unsigned (Z_to_bv 64 3)) by (rewrite E; reflexivity). rewrite !unsigned_lit in X by lia. lia. Qed.
 #[using="AMB data FD1"] Lemma CFDS_1 : forall fds, CFDS fds0 fds -> fd_lookup fds (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)).
@@ -618,8 +630,8 @@ realizes rsegs (mkCfg (MS (mkR ra (Z_to_bv 64 (usp0 - 208)) gp (Z_to_bv 64 0x75e
 (Z_to_bv 64 ow) (Z_to_bv 64 0) (Z_to_bv 64 0x751f0) (Z_to_bv 64 (Z.of_nat j)) (Z_to_bv 64 0) (Z_to_bv 64 18446744073709551614) x8 x9 x10 x11 t3 t4 t5 t6)
 F (Z_to_bv 64 PRINTF_RET) fc None m (seg_rom rsegs)) md) Tok.
 Proof.
-intros i j Hj Hij IH. intros until fc. intros TIH FRM.
-pose proof TIH as [D HP (errv & ERR) LOCC LOCK FL PAY AL OUT ERRP Hfds Hfs ST (j0 & FRt) GL].
+intros i j Hj Hij IH. intros until fc. intros TIH FRM. pose proof QRjH.Mq3.stack_window_depth_val as SWD.
+pose proof TIH as [D HP (errv & ERR) LOCC LOCK FL PAY AL OUT ERRP Hfds Hfs ST (j0 & FRt) GL Hrdr].
 pose proof (x_sp _ _ _ _ _ D) as SPB.
 pose proof (heapc_model_ok B _ _ _ _ HP) as MOK. pose proof (heapc_mem_inv B _ _ _ _ HP) as MI.
 assert (CALLS4 : (calls_of data <= 4)%nat).
@@ -640,13 +652,13 @@ assert (Hi3 : (i <= 3)%nat) by lia.
 
 assert (EPI : forall (m' : mem) (md' : Model) (A' : hstate) (q0 q1 q2 r w1 w2 w3 w4 w5 w6 w7 q3 q4 q5 q6 : word),
 DFX usp0 pp tid path m' -> HEAPc B A' ((buf, cap) :: LK) m' md' -> (exists e, rw_cells rsegs m' (RATP - 164) [C4 e]) ->
-STDOUTW m' i -> clearr m' 0x64fb0 0x65098 -> CFDS fds0 (m_fds md') -> m_fs md' = fs ->
+STDOUTW m' i -> clearr m' 0x64fb0 0x65098 -> CFDS fds0 (m_fds md') -> m_fs md' = fs -> m_channel_reader md' = true ->
 rw_cells rsegs m' (usp0 - 208) (trun_frame j0 x7 x6 x5 buf) ->
 realizes rsegs (mkCfg (MS (mkR (Z_to_bv 64 0x20d88) (Z_to_bv 64 (usp0 - 208)) gp (Z_to_bv 64 0x75e70) q0 q1 q2
 (Z_to_bv 64 pl) (Z_to_bv 64 al) r w1 w2 w3 w4 w5 w6 w7
 (Z_to_bv 64 ow) (Z_to_bv 64 (-1)) (Z_to_bv 64 0x751f0) (Z_to_bv 64 (Z.of_nat 1 + -1)) (Z_to_bv 64 0) (Z_to_bv 64 18446744073709551614) x8 x9 x10 x11 q3 q4 q5 q6)
 F (ret_pc (Z_to_bv 64 0x20d88)) fc None m' (seg_rom rsegs)) md') Tok).
-{ intros m' md' A' q0 q1 q2 r w1 w2 w3 w4 w5 w6 w7 q3 q4 q5 q6 D' HP' ERR' SW' ERRP' Hfds' Hfs' FRt'.
+{ intros m' md' A' q0 q1 q2 r w1 w2 w3 w4 w5 w6 w7 q3 q4 q5 q6 D' HP' ERR' SW' ERRP' Hfds' Hfs' Hrdr' FRt'.
 pose proof (x_sp _ _ _ _ _ D') as SPB'. pose proof (heapc_model_ok B _ _ _ _ HP') as MOK'.
 unfold trun_frame in FRt'.
 reenter MOK'. do 3 step. do 9 step. step. step.
@@ -658,12 +670,12 @@ apply (KOK m' md' A' LK). rewrite <- Hi. constructor.
 - exact HP'.
 - unfold RERRNO, RATP in *. exact ERR'.
 - exact Hfs'.
-- eapply (STDOUT_of_W B); [exact Hi3| exact SW'| exact HP'| exact (CFDS_1 _ Hfds')].
+- eapply (STDOUT_of_W B); [exact Hi3| exact SW'| exact HP'| exact (CFDS_1 _ Hfds')| exact Hrdr'].
 - left. exact ERRP'. }
 destruct AL as [(A1 & A2 & A3)|(A1 & A2 & RB)].
 -
 subst ow. apply (heapc_free_null RFREE_SYM rfree_null_at_sym); [exact MOK| reflexivity|].
-apply (EPI m md A); [exact D| | exists errv; unfold RATP; exact ERR| exact OUT| exact ERRP| exact Hfds| exact Hfs| unfold trun_frame; exact FRt].
+apply (EPI m md A); [exact D| | exists errv; unfold RATP; exact ERR| exact OUT| exact ERRP| exact Hfds| exact Hfs| exact Hrdr| unfold trun_frame; exact FRt].
 unfold OWN in HP. replace (pl =? 0) with true in HP by (symmetry; apply Z.eqb_eq; lia). exact HP.
 -
 subst ow. unfold OWN in HP. replace (pl =? 0) with false in HP by (symmetry; apply Z.eqb_neq; lia). cbn [app] in HP.
@@ -688,6 +700,7 @@ apply (EPI m' md' A').
 + eapply clearr_img_agree; [exact ERRP| exact IA| lia| lia| unfold RCTX; lia| unfold RERRNO, RATP; lia].
 + rewrite (vm_only_fds md md' VM). exact Hfds.
 + rewrite (vm_only_fs md md' VM). exact Hfs.
++ rewrite (vm_only_rdr md md' VM). exact Hrdr.
 + unfold trun_frame. eapply rheap_pres_rw_cells; [exact PRES| exact FRt| left; lia].
 Qed.
 
@@ -695,8 +708,8 @@ Qed.
 ((2 <= j)%nat -> tloop_stmt (S i) (j - 1)) ->
 tloop_stmt i j.
 Proof.
-intros i j Hj Hij IH. unfold tloop_stmt. intros until fc. intros TIH FRM.
-destruct TIH as [D HP (errv & ERR) LOCC LOCK FL PAY AL OUT ERRP Hfds Hfs ST (j0 & FRt) GL].
+intros i j Hj Hij IH. unfold tloop_stmt. intros until fc. intros TIH FRM. pose proof QRjH.Mq3.stack_window_depth_val as SWD.
+destruct TIH as [D HP (errv & ERR) LOCC LOCK FL PAY AL OUT ERRP Hfds Hfs ST (j0 & FRt) GL Hrdr].
 pose proof (x_sp _ _ _ _ _ D) as SPB.
 pose proof (heapc_model_ok B _ _ _ _ HP) as MOK. pose proof (heapc_mem_inv B _ _ _ _ HP) as MI.
 pose proof (heapc_blk B _ _ _ _ buf cap HP ltac:(apply in_or_app; right; left; reflexivity)) as (_ & _ & Bpos & Bhi & _ & Bimg).
@@ -750,7 +763,7 @@ change (AS S4L HIx) with hstate in A'. change (HEAP S4L HIx) with (HEAPc B) in H
 rewrite <- app_assoc in HP'. cbn [app] in HP'.
 pose proof (heapc_model_ok B _ _ _ _ HP') as MOK'. pose proof (heapc_mem_inv B _ _ _ _ HP') as MI'.
 rewrite unsigned_lit in ST', PRESX by lia.
-pose proof (model_vm_only_fds _ _ VM) as FDS'. pose proof (model_vm_only_fs _ _ VM) as FS'.
+pose proof (model_vm_only_fds _ _ VM) as FDS'. pose proof (model_vm_only_fs _ _ VM) as FS'. pose proof (model_vm_only_rdr _ _ VM) as RDRS'.
 assert (FL' : rw_cells rsegs m' 0x751f0 (FLAGC 1 1)).
 { unfold FLAGC. eapply (heap_presx_rw_cells S4L); [exact PRESX| exact FL|]. right; left. intros a Ha. cbn in Ha. split; [cbn; unfold s4_client_static; lia| unfold xtgt, T_LOCCELL; cbn; unfold s4_volatile; lia]. }
 assert (PAY' : bytes_at rsegs m' al payload).
@@ -830,10 +843,11 @@ unfold PFW. cbn [outside]. repeat split; intros [X1 X2]; apply NCW.
 - apply (stk_merge rsegs m2 LO (usp0 - 208 - 1536) (usp0 - 208)); [| exact ST2| lia].
 eapply stk_transport_disjoint; [exact STlo| exact MU2| exact WM2| cbn; repeat split; lia].
 - exists j0. exact FRt2.
-- eapply hglob_P_munch; [exact GL''| exact MU2| exact WM2|]. unfold PFW. ivs_lia. }
+- eapply hglob_P_munch; [exact GL''| exact MU2| exact WM2|]. unfold PFW. ivs_lia.
+- rewrite RDRS'. exact Hrdr. }
 destruct i as [|i'].
 -
-eapply (PF1 gp' (Z_to_bv 64 0x75e70)); [exact MOK'| rewrite FDS'; exact (CFDS_1 _ Hfds)| | exact IMG'| exact STpf| exact MI'| lia| lia| reflexivity| exact TOKN|].
+eapply (PF1 gp' (Z_to_bv 64 0x75e70)); [exact MOK'| rewrite FDS'; exact (CFDS_1 _ Hfds)| rewrite RDRS'; exact Hrdr| | exact IMG'| exact STpf| exact MI'| lia| lia| reflexivity| exact TOKN|].
 { eapply clearr_munch; [eapply clearr_presx; [exact OUT1| exact PRESX| lia| lia| intros; lia]| exact MUg| constructor; [cbn [fst snd]; lia| constructor]| lia| lia]. }
 intros m2 F2 ra' q0 q1 q2 r0 r1 r2 r3 r4 r5 r6 r7 q3 q4 q5 q6 MU2 WM2 MI2 ST2 SW2.
 exact (AFTER m2 F2 ra' q0 q1 q2 r0 r1 r2 r3 r4 r5 r6 r7 q3 q4 q5 q6 MU2 WM2 MI2 ST2 SW2).
@@ -866,7 +880,9 @@ p_fds  : CFDS fds0 (m_fds md);
 p_fs   : m_fs md = fs;
 p_stk  : stk rsegs m1 LO (usp0 - 208);
 p_frame: exists j0, rw_cells rsegs m1 (usp0 - 208) (trun_frame j0 x7 x6 x5 buf);
-p_glob : hglob_P m1 }.
+p_glob : hglob_P m1;
+(* LPS 727298f3: the far end of the standard channels has a reader ([State.m_channel_reader]) *)
+p_rdr  : m_channel_reader md = true }.
 
 #[using="FD1 HBlt HCEIL HIx TGT PF1 PFK TOKN Hcap Hlen FIT KOK"] Lemma seg_empty : forall (m1 : mem) (md : Model) (A : hstate)
 (ra gp t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 s1 s2 s3 t3 t4 t5 t6 : word) (F : bvmap 5 word) (fc : bv 32),
@@ -877,13 +893,13 @@ s2 s3 (Z_to_bv 64 0x751f0) (Z_to_bv 64 (Z.of_nat (calls_of data))) x6 x7 x8 x9 x
 F (Z_to_bv 64 0x20d38) fc None m1 (seg_rom rsegs)) md)
 (t_emit (W 1 (zero_lines 1)) Tok).
 Proof.
-intros until fc. intros P FRM PL0. destruct P as [D HP DSH SH HBUD (errv & ERR) LOCC LOCK FL (junk & BLK) OUT ERRP Hfds Hfs ST (j0 & FRt) GL].
+intros until fc. intros P FRM PL0. destruct P as [D HP DSH SH HBUD (errv & ERR) LOCC LOCK FL (junk & BLK) OUT ERRP Hfds Hfs ST (j0 & FRt) GL Hrdr].
 pose proof (heapc_model_ok B _ _ _ _ HP) as MOK.
 assert (CALLS1 : (1 <= calls_of data)%nat) by (unfold calls_of; destruct (Z.to_nat (cfglen_of data)); lia).
 apply rz_evt; [exact MOK|]. step. step. step. step. apply evt_RZ_done.
 replace (Z_to_bv 64 (-2)) with (Z_to_bv 64 18446744073709551614 : word) by (apply bv_eq; reflexivity).
 apply (tloop_all (calls_of data) 0 CALLS1 eq_refl 0x75200 0 [] m1 md A); [| exact FRM].
-constructor; [exact D| | exists errv; exact ERR| exact LOCC| exact LOCK| exact FL| | left; lia| exact OUT| exact ERRP| exact Hfds| exact Hfs| exact ST| exists j0; exact FRt| exact GL].
+constructor; [exact D| | exists errv; exact ERR| exact LOCC| exact LOCK| exact FL| | left; lia| exact OUT| exact ERRP| exact Hfds| exact Hfs| exact ST| exists j0; exact FRt| exact GL| exact Hrdr].
 - unfold OWN. rewrite PL0. cbn [Z.eqb app]. exact HP.
 - replace payload with (@nil byte) by (symmetry; apply skipn_all2; lia). split; [lia|]. split; [cbn; lia|]. intros k Hk. cbn in Hk. lia.
 Qed.
@@ -905,7 +921,7 @@ s2 s3 (Z_to_bv 64 0x751f0) (Z_to_bv 64 (Z.of_nat (calls_of data))) x6 x7 x8 x9 x
 F (Z_to_bv 64 0x20cec) fc None m1 (seg_rom rsegs)) md)
 ((t_emit (W 1 (zero_lines 1)) Tok)   ).
 Proof.
-intros until fc. intros P FRM PLP KFAIL. destruct P as [D HP DSH SH HBUD (errv & ERR) LOCC LOCK FL (junk & BLK) OUT ERRP Hfds Hfs ST (j0 & FRt) GL].
+intros until fc. intros P FRM PLP KFAIL. pose proof QRjH.Mq3.stack_window_depth_val as SWD. destruct P as [D HP DSH SH HBUD (errv & ERR) LOCC LOCK FL (junk & BLK) OUT ERRP Hfds Hfs ST (j0 & FRt) GL Hrdr].
 pose proof (x_sp _ _ _ _ _ D) as SPB.
 pose proof (heapc_model_ok B _ _ _ _ HP) as MOK. pose proof (heapc_mem_inv B _ _ _ _ HP) as MI.
 pose proof (heapc_blk B _ _ _ _ buf cap HP ltac:(left; reflexivity)) as (_ & _ & Bpos & Bhi & _ & Bimg).
@@ -1000,13 +1016,14 @@ eapply clearr_img_agree; [exact ERRP| exact IA| lia| lia| unfold RCTX; lia| unfo
 + exists j0. exact FRt2.
 + eapply hglob_P_munch; [eapply hglob_P_rpres; [exact PRES| exact GL]| exact MU2| exact WM2|].
 constructor; [cbn [fst snd]; lia| constructor].
++ rewrite (vm_only_rdr md md' VM). exact Hrdr.
 Qed.
 End Loop.
 
 #[using="FD1 HBlt HCEIL HIx TGT PF1 PFK"] Theorem trun_ok : trun_stmt usp0 tid ppw path data fs fds0.
 Proof.
-unfold trun_stmt. intros until fc. intros HI FIT Hgp Htp FRM TOKN KOK KFAIL. subst gp tp.
-destruct HI as [D HP DSH SH Hcap Hlen (junk & BLK) (errv & ERR) Hfds Hfs HBUD].
+unfold trun_stmt. intros until fc. intros HI FIT Hgp Htp FRM TOKN KOK KFAIL. subst gp tp. pose proof QRjH.Mq3.stack_window_depth_val as SWD.
+destruct HI as [D HP DSH SH Hcap Hlen (junk & BLK) (errv & ERR) Hfds Hfs HBUD Hrdr].
 pose proof (f_sp _ _ _ _ _ D) as SPB. pose proof (f_ceil _ _ _ _ _ D) as CEIL.
 pose proof (heapc_model_ok B _ _ _ _ HP) as MOK. pose proof (heapc_mem_inv B _ _ _ _ HP) as MI.
 pose proof (heapc_blk B _ _ _ _ buf cap HP ltac:(left; reflexivity)) as (_ & _ & Bpos & Bhi & _ & Bimg).
@@ -1119,7 +1136,8 @@ intros a Ha NCW. apply MU. unfold wa. rewrite unsigned_lit by lia. cbn. repeat s
 - exact Hfs.
 - exact SK1.
 - eexists. unfold trun_frame. replace (usp0 - 208) with (usp0 + -208) by lia. exact FR.
-- eapply hglob_P_munch; [exact GL| exact MU| exact WM| ivs_lia]. }
+- eapply hglob_P_munch; [exact GL| exact MU| exact WM| ivs_lia].
+- exact Hrdr. }
 
 pose proof BLK as [[[WFb _] BAb] _]. cbn [cells_bytes cbytes app] in BAb. apply bytes_at_app in BAb as [BAb _].
 pose proof (bytes_at_read rsegs _ buf data 2 1 BAb ltac:(lia) ltac:(lia)) as HR2.

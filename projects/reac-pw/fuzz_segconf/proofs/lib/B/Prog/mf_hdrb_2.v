@@ -4,11 +4,12 @@
 (* Modified by Theorem Labs, 2026-10: the boundary states and segment statements of LLVMFuzzerTestOneInput's ASan+UBSan walk (plugin-hostd/fuzz_command image B, 0x86530), the B twin of lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh6.v (the CL_*_stmtX statements: from a point of the function to its return, under the entry's context) and A/ACf5.v (rtcx, rt_base: the entry's facts bundled once). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths, module names, addresses and numbers changed; 469 of its 518 lines of code are new or changed and 289 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths and module names changed; 147 of its 168 lines of code are new or changed and 497 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* m_file on fuzz_segconf.asan-ubsan (image B, pin c3796c0b38f3; 0x86140), the segment S_MF_HDRB (HFIND 0x865c0 ->
    TAIL 0x86820, 113 owned instructions, 7 instrumented checks, 4 UBSan trap branches, 4 calls; the image-B m_file cut map section 4 and the image-B m_file segment table section 5): the points INSIDE the segment where the walk is
    cut, and the statement at each. Statement text only: no instruction is executed here. A walk lane of
-   the image-B m_file-family owner's G2B. ADAPTED from image A's lib/A/Prog/m_file_s_hdrb_2.v (the image-A m_file-family lane,
-   commit d8beabc2758c): the same cut kinds (the returns of the calls, the not-found arm, the
+   the image-B m_file-family owner's G2B. ADAPTED from image A's lib/A/Prog/m_file_s_hdrb_2.v (the image-A m_file-family lane):
+   the same cut kinds (the returns of the calls, the not-found arm, the
    new entry, the join) at image B's pcs, registers and frame cells (the image-B m_file cut map table C.1).
    The files of the segment:
      mf_hdrb_1.v  the model, byte-encoding, reader and footprint facts (image A's m_file_s_hdrb_1.v)

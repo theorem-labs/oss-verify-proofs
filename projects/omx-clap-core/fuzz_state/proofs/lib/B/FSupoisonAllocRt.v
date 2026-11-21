@@ -6,7 +6,8 @@
 (* Threads UP through the donor refill tops: lib/A/AFku.v (refill_inited), AFkt.v (refill_B2), AFkv.v (refill_uninit, tfib_refill_ok), AFhn.v (AR_init), AFkz.v (LEAF_B2), with the seed region lemmas of AFkk.v / AFkx.v. *)
 (* Shared any-U allocator, within-budget units (cgif's EV_MAX 11,776, < 2 GiB per class); the cf form (fuzz_preset / fuzz_reply, YG0dcf.v) bridges to this. *)
 (* Modified by Theorem Labs, 2026-10: the R3 region lemmas clear the R3-only hypotheses first (lia saw their divisions and products, ~2000 s each); refill top tfib_refill_okU over FSupoison.ARU. *)
-(* Modified by Theorem Labs, 2026-10: the image-B port (fuzz_state.asan-ubsan) of lib/A/FSupoisonAllocRt.v at c78cdbc32e3: each lib/A donor is its lib/B twin (AFxx -> YFxx, ABxx -> YBxx, AExx -> YExx), every statement is over B's tfibsegs (lib/B/YB1v.v); the refill entry pc is A_Refill (lib/B/YFl1.v) by name. *)
+(* Modified by Theorem Labs, 2026-10: the image-B port (fuzz_state.asan-ubsan) of lib/A/FSupoisonAllocRt.v: each lib/A donor is its lib/B twin (AFxx -> YFxx, ABxx -> YBxx, AExx -> YExx), every statement is over B's tfibsegs (lib/B/YB1v.v); the refill entry pc is A_Refill (lib/B/YFl1.v) by name. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -493,7 +494,7 @@ apply (FAR.offU_app B ly S UP W mem0 md0 a HARU); clear - F1 F2 Ha; unfold zone3
 Qed.
 Lemma high_offU : forall a, kHighMemBeg <= a < 2 ^ 64 -> FAR.offU UP a.
 Proof. intros a Ha. exact (FAR.offU_high B ly S UP W mem0 md0 a HARU Ha). Qed.
-(* LEAF_B2 (lib/B/YFkz.v:987) over ARU: AR_transport at the unpoisoned memories, the frame / presence on the real
+(* LEAF_B2 (lib/B/YFkz.v:988) over ARU: AR_transport at the unpoisoned memories, the frame / presence on the real
    ones; the refill B2 writes only the class cache, the slots and the region info (application memory). *)
 Lemma LEAF_B2U : n <= nf -> forall tops rest W' c',
 Wf (as_universe B) (SRf tops rest) ->
@@ -596,7 +597,7 @@ pose proof (YFhn.T_facts B ly S W (FSP.unpoison U mem) md HAR (img_cover_of_ledg
 exact (FAR.offU_zone3 B ly S U W mem md (ly_T ly) kThreadObjSize a H ZT Ha).
 Qed.
 
-(* AR_init (lib/B/YFhn.v:445) over ARU: the cache tables are written in the thread object, off U; U's bytes keep. *)
+(* AR_init (lib/B/YFhn.v:446) over ARU: the cache tables are written in the thread object, off U; U's bytes keep. *)
 Lemma ARU_init : forall ly S U W mem0 mR md, FSP.ARU tfibsegs B ly S U W mem0 md -> st_cache_inited S = false ->
   (forall x : word, ~ TABW (ly_T ly) (bv_unsigned x) -> mR x = mem0 x) ->
   (forall i, 1 <= i <= 31 -> tbl_facts (mrestrict (w_H W) mR) (ly_T ly) i) ->
@@ -623,7 +624,7 @@ split; [|split].
   intros Ht. pose proof (TO s Ht) as O. unfold FAR.offU in O. rewrite Z.mod_small in O by exact Rs. congruence.
 Qed.
 
-(* refill_leaf_init (lib/B/YFhn.v:488) over ARU. *)
+(* refill_leaf_init (lib/B/YFhn.v:489) over ARU. *)
 Lemma refill_leaf_initU : forall ly S U W mem0 mR md, FSP.ARU tfibsegs B ly S U W mem0 md ->
   (forall x : word, ~ TABW (ly_T ly) (bv_unsigned x) -> mR x = mem0 x) ->
   forall regs c r W' c', FAR.refill_leafU B ly (YFhn.S1 S) U W regs mR md c r W' c' -> FAR.refill_leafU B ly S U W regs mem0 md c r W' c'.

@@ -1,0 +1,252 @@
+schema: oss-verify-proofs build record v1
+entry_point:
+  project: libtasn1
+  harness: asn1_get_length_der_fuzzer
+  function: LLVMFuzzerTestOneInput
+  records:
+  - projects/libtasn1/project.yaml
+  - projects/libtasn1/asn1_get_length_der_fuzzer/harness.yaml
+release:
+  repository: https://github.com/theorem-labs/oss-verify-proofs
+  binaries_release: v2026.10.0
+  sources_release: v2026.10.0-src
+upstream:
+  name: libtasn1
+  repository: https://gitlab.com/gnutls/libtasn1
+  commit: 2b2065b2383aebe138c7d0f7b5646369e5f56ec3
+  licence: LGPL-2.1-or-later
+  licence_evidence: 'the library''s own sources say so: lib/decoding.c:1-19 of gitlab.com/gnutls/libtasn1
+    at 2b2065b2 ("The LIBTASN1 library is free software; you can redistribute it and/or modify it under
+    the terms of the GNU Lesser General Public License ... either version 2.1 of the License, or (at your
+    option) any later version"), and the repository ships that text as COPYING.LESSERv2, kept here as
+    LICENSES/libtasn1-COPYING.LESSERv2 and read out of libtasn1-src.tar.zst, the source archive projects/libtasn1/project.yaml
+    pins. The package''s COPYING is the GPLv3 text, which covers the command-line tools and not lib/.
+    The fuzz harness fuzz/asn1_get_length_der_fuzzer.c:1-21 names the GNU Lesser General Public License
+    version 3 or later instead; the libtasn1 repository carries no LGPLv3 text at this commit, and the
+    pinned source archive carries one, gnulib''s doc/COPYING.LESSERv3 at gnulib 491f1bb7d304, kept here
+    as LICENSES/gnulib-COPYING.LESSERv3 with COPYING, the GPLv3 text it builds on'
+oss_fuzz:
+  repository: https://github.com/google/oss-fuzz
+  commit: bd2ce21991a94a362b92fb1bf25f86d5a1a60842
+  path: projects/libtasn1
+harness:
+  origin: upstream
+  source:
+    files:
+    - source/asn1_get_length_der_fuzzer.c
+    from:
+      repository: https://gitlab.com/gnutls/libtasn1
+      commit: 2b2065b2383aebe138c7d0f7b5646369e5f56ec3
+      path: fuzz/asn1_get_length_der_fuzzer.c
+    modified: false
+    licence: LGPL-3.0-or-later
+  modifications:
+  - Linked against libtasn1 at commit 2b2065b2.
+  - In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the
+    program depends only on its input.
+  - A small driver reads the input file, calls the harness one to four times and prints each return value.
+recipe:
+  asset:
+    release: v2026.10.0-src
+    file: recipe.tar.zst
+    bytes: 938459
+    sha256: 0339bf3221b15cd39513d46abe99062bac9cce874ed7ba5947753f75b6219ae5
+  target: libtasn1-asn1_get_length_der_fuzzer
+  overlay: null
+  files: 'recipe/ (recipe/MANIFEST.tsv: every file with its sha256 in recipe.tar.zst; rows of kind upstream
+    are laid down from the -src asset; recipe/UPSTREAM-CARRIED.tsv gives the origin and licence of upstream
+    text in files of kind ours+upstream)'
+  patches: []
+  build_system: autotools
+  how_to_rebuild: 'as docs/reproducing.md: with recipe/ as /work, unpack the project''s -src asset where
+    its MANIFEST says, apply recipe/series.tsv in order, and run recipe/tools/build-body.sh in the builder
+    image, with the environment of recipe/tools/build-env.tsv and the network off'
+toolchain:
+  clang: 20.1.8
+  builder_image: ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
+  images:
+  - ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
+  - ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:c7c5abdc2676e121ca7532b553a83148b384001a553b6ffea63b1911848fd711
+  static_asan:
+    repository: https://github.com/theorem-labs/static-asan
+    commit: b05061352064fa2be1813ac5429149f3de5f057d
+    note: 'the published source of the compiler image''s static AddressSanitizer: its toolchain/ and patches/
+      are those the image was built from, with comments and patch descriptions edited for publication
+      (toolchain-src.tar.zst holds this commit). Building it gives the image''s libclang_rt.builtins.a
+      and musl libc.a byte for byte; its libclang_rt.asan.a and asan_cxx.a differ from the image''s only
+      in DWARF line tables, which --strip-all removes from the binaries'
+    image_runtime_md5:
+      libclang_rt.asan.a: 91ba024da5ddacd96dc1c7588e5763b3
+      libclang_rt.asan_cxx.a: 2c6e776abd494934481b3f47ff030052
+      libclang_rt.builtins.a: 1f3d379aa7d4de2dcf11254b8f493a29
+      libc.a: 485eb64c0b7397bfea554a9cdf8e352c
+binaries:
+- build: plain
+  file: asn1_get_length_der_fuzzer.plain
+  bytes: 42416
+  sha256: 5a420c573d5856a8cfa7ec73e6ae27bf141a45d3f0268119b7602b645d2acf89
+  uninstrumented_inputs:
+  - clang_rt.crtbegin.o
+  - libclang_rt.builtins.a
+  - crt1.o
+  - libc.a
+- build: asan
+  file: asn1_get_length_der_fuzzer.asan
+  bytes: 556560
+  sha256: 571aa1933f035698ec355b6801f6bf4b54bf066c02e99b110823ad5858746e3f
+  uninstrumented_inputs:
+  - clang_rt.crtbegin.o
+  - libclang_rt.asan.a
+  - libclang_rt.builtins.a
+  - crt1.o
+  - libc.a
+  - libunwind.a
+- build: ubsan
+  file: asn1_get_length_der_fuzzer.ubsan
+  bytes: 42464
+  sha256: e74965fefd8938b1e5acb4994c192560e9a5a3c7d95a4d0e77f4c281f290ae20
+  uninstrumented_inputs:
+  - clang_rt.crtbegin.o
+  - libclang_rt.builtins.a
+  - crt1.o
+  - libc.a
+- build: asan-ubsan
+  file: asn1_get_length_der_fuzzer.asan-ubsan
+  bytes: 556600
+  sha256: 97e07223fa9cd1b2697d26859503480c944fdf689423a018a4f2c132bfb9f3c7
+  uninstrumented_inputs:
+  - clang_rt.crtbegin.o
+  - libclang_rt.asan.a
+  - libclang_rt.builtins.a
+  - crt1.o
+  - libc.a
+  - libunwind.a
+binary_asset:
+  release: v2026.10.0
+  file: libtasn1-bin.tar.zst
+  bytes: 1042298
+  sha256: 356a1b74be832e4d51d1858659ca72e8f8d0cf3052a27eaeedb8e9968f784d90
+source_asset:
+  src:
+    release: v2026.10.0-src
+    file: libtasn1-src.tar.zst
+    bytes: 6594907
+    sha256: cee233e4150e7e39bd276eec9f77b459def66ec2fd6d8fd7f718b24b06d5484c
+  src_manifest:
+    release: v2026.10.0-src
+    file: libtasn1-src.MANIFEST.tsv
+    bytes: 3813
+    sha256: 80a5d960c901701acc6cd89553b8a53885e73fbf4482bfb55c94aed68cf6cb91
+rebuild:
+- the four binaries are the ones release v2026.10.0 published, as projects/libtasn1/asn1_get_length_der_fuzzer/harness.yaml
+  pins them by sha256 and bytes, and this record's binaries block repeats those pins; this record was
+  written without a rebuild of them
+proofs:
+  origin: 'contributed by Trevor Hansen in https://github.com/theorem-labs/oss-verify-proofs/pull/19 (head
+    289763e0107c895179efa27aa9710652a520f5e7); every one of the 393 of its 403 Rocq files that carry Anthropic''s
+    copyright line and the tag Apache-2.0 OR MIT carries a `Modified by Trevor Hansen, 2026-11` line as
+    well, and 10 files carry no licence lines. The pull request''s section "Files and where they came
+    from" gives the mapping, and proofs.sources below repeats it. The proofs come from two fuzz targets
+    of this repository, cgif/cgif_rgb_fuzzer and cjson/cjson_read_fuzzer, and through them from final-anthropic-opensource-formal-verification-proofs-package-2026-10-21
+    (sha256 4c6c152f61ce538e439b9d2adef439f4dbe1a2d446767d84ac7c3946d7c6687a), which both of those fuzz
+    targets'' build records name as where their own Anthropic-headered files came from. The copies can
+    be checked against the tree: 386 of the 400 files of lib/ match a file of the same name in this repository
+    in 90% of their lines or more, once licence lines, module paths and numbers are set aside'
+  sources:
+  - 'lib/C/<name>.v (359 files): projects/cgif/cgif_rgb_fuzzer/proofs/lib/<name>.v, 281 of them changed
+    in module names only and 78 also in addresses and numbers, each one''s Modified by line saying how
+    (the pull request lists the 78 by name); the two changes that go beyond restating values are malloc''s
+    read-only tables as two image chunks (R_tabs, TABS_LEN in xO1v, xO1h and xO1i), because libtasn1''s
+    link pads one byte between the de Bruijn table and size_classes, and two fetch facts for the jal words
+    that differ in libtasn1''s binaries (xO3q)'
+  - 'lib/J/<path>.v (29 files): projects/cjson/cjson_read_fuzzer/proofs/lib/<path>.v, changed in module
+    names only'
+  - 'lib/B/TopP.v, lib/B/TopU.v and lib/B/TopZZ.v: cgif_rgb_fuzzer''s YZ02.v, UZ02.v and UZZ0.v, with
+    this harness''s contract in place of cgif''s library'
+  - 'lib/B/LibP.v and lib/B/LibU.v: one lemma each (plain_find_high, ubsan_find_high) made from rn_find_segment_high
+    of cgif_rgb_fuzzer''s UI39.v; the rest of each file is new'
+  - 'lib/B/ConstAccept.v: cgif_rgb_fuzzer''s ConstAccept.v, with its two ASan corollaries replaced by
+    UBSan ones built from lib/B/TopZZ.v'
+  - 'lib/B/RegsExt.v, lib/B/Runs.v, lib/H/*.v and each statement''s Proof.v: written for this fuzz target'
+  licence: Apache-2.0 OR MIT for the 393 files that carry Anthropic's copyright line and that tag. Of
+    the 10 files with no licence lines, lib/B/ConstAccept.v is cgif_rgb_fuzzer's ConstAccept.v, which
+    carries none either; that file was written in this repository, so both are MIT,
+    this repository's LICENSE; lib/H/GldHarness.v, lib/H/GldPlainProof.v and lib/H/GldProof.v restate
+    instruction words of the program and so begin with the one-line comment of that kind and carry no
+    licence lines of their own (requirement 7, case 1); the other 6 (lib/B/RegsExt.v, lib/B/Runs.v, lib/H/GldUbsan.v
+    and the three statements' Proof.v files) were written by the contributor, under MIT, this repository's
+    licence (LICENSE)
+  texts:
+  - LICENSES/anthropic-proofs-LICENSE
+  - LICENSES/anthropic-proofs-LICENSE-MIT
+  - LICENSES/anthropic-proofs-NOTICE
+  texts_location: the repository's top directory
+  modified: each changed file that has licence lines carries one line under them saying so; lib/B/ConstAccept.v,
+    which has none, carries no such line, and what was changed in it is in proofs.sources above
+licence:
+  components:
+  - component: libtasn1 library (lib/)
+    files: the libtasn1 code linked into the four binaries
+    licence: LGPL-2.1-or-later
+    evidence: lib/decoding.c:1-19 and the other lib/ sources of gitlab.com/gnutls/libtasn1 at 2b2065b2
+      name the GNU Lesser General Public License version 2.1 or later; the repository's own text of it
+      is COPYING.LESSERv2
+    texts:
+    - LICENSES/libtasn1-COPYING.LESSERv2
+  - component: libtasn1 fuzz harness (fuzz/asn1_get_length_der_fuzzer.c)
+    files: source/asn1_get_length_der_fuzzer.c
+    licence: LGPL-3.0-or-later
+    evidence: fuzz/asn1_get_length_der_fuzzer.c:1-21 at 2b2065b2 (Copyright(c) 2020 Free Software Foundation,
+      Inc.) names the GNU Lesser General Public License version 3 or later, which is the LGPLv3 additional
+      permissions over the GPLv3 text. The libtasn1 repository carries no LGPLv3 text at this commit,
+      only COPYING, the GPLv3; the pinned libtasn1-src.tar.zst carries one in the gnulib tree it ships,
+      git/gnulib-491f1bb7d304/doc/COPYING.LESSERv3 (sha256 e3a994d82e644b03a792a930f574002658412f62407f5fee083f2555c5f23118),
+      and it is kept here byte for byte as LICENSES/gnulib-COPYING.LESSERv3 beside LICENSES/libtasn1-COPYING
+    texts:
+    - LICENSES/libtasn1-COPYING
+    - LICENSES/gnulib-COPYING.LESSERv3
+  - component: gnulib modules in lib/gl
+    files: '-'
+    licence: LGPL-2.1-or-later
+    evidence: libtasn1's bootstrap.conf:26 imports gnulib with gnulib_tool_option_extras "--lgpl=2 --without-tests
+      --no-vc-files", so the modules of that import, which land in lib/gl and are linked into the library,
+      are under the LGPL version 2.1 or later; the second import at bootstrap.conf:77 fills src/gl, the
+      command-line tool's, which is not linked into this fuzz target. libtasn1-src.tar.zst carries gnulib
+      at 491f1bb7d304, whose doc/COPYING.LESSERv2 is byte for byte libtasn1's COPYING.LESSERv2 kept here
+    texts:
+    - LICENSES/libtasn1-COPYING.LESSERv2
+  - component: musl libc (static)
+    files: '-'
+    licence: MIT
+    evidence: musl COPYRIGHT; linked in every build
+    texts:
+    - LICENSES/musl-COPYRIGHT
+  - component: 'LLVM runtimes: compiler-rt builtins; in ASan builds the sanitizer runtime and libunwind'
+    files: '-'
+    licence: Apache-2.0 WITH LLVM-exception
+    evidence: LICENSE.TXT of compiler-rt and libunwind at llvmorg-20.1.8 (87f0227c); the four builds'
+      uninstrumented lists in harness.yaml name clang_rt.crtbegin.o and libclang_rt.builtins.a in every
+      build, and libclang_rt.asan.a and libunwind.a in the two ASan builds, and no libc++
+    texts:
+    - LICENSES/llvm-compiler-rt-LICENSE.TXT
+    - LICENSES/llvm-libunwind-LICENSE.TXT
+  - component: static-asan patches compiled into the ASan runtime and musl
+    files: '-'
+    licence: MIT
+    evidence: LICENSE of theorem-labs/static-asan at b0506135 (MIT for Theorem Labs work; the LLVM and
+      musl code it patches keeps its own licence)
+    texts:
+    - LICENSES/static-asan-LICENSE
+  - component: Theorem Labs file-input driver and build recipe (recipe/src/, recipe/targets/*/plugin.c)
+    files: '-'
+    licence: MIT
+    evidence: LICENSE of this repository (MIT, Theorem Labs, PBC)
+    texts:
+    - LICENSES/oss-fuzz-theorems-LICENSE
+  source_bundle:
+  - file: libtasn1-src.tar.zst
+    sha256: cee233e4150e7e39bd276eec9f77b459def66ec2fd6d8fd7f718b24b06d5484c
+  - file: libtasn1-src.MANIFEST.tsv
+    sha256: 80a5d960c901701acc6cd89553b8a53885e73fbf4482bfb55c94aed68cf6cb91
+  - file: recipe.tar.zst
+    sha256: 0339bf3221b15cd39513d46abe99062bac9cce874ed7ba5947753f75b6219ae5

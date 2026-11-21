@@ -2,11 +2,13 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YO0d.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3, with libreac/fuzz_boxreg's port of its copy of this file (changed in_img, auxv_pre, auxv_pre_mono, rz_split, mreal_tset, heap_pristine; added auxv_types, AUXV_RAND_K, auxv_types_rand, length_auxv_types, auxv_types_len_ge; removed AUXV_TYPES). *)
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require Import YK11 YK0s YK0i YK15 YM06 YM02 YP09.
+From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require Import RomBase.
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require Import YO0i YO0f YO0x.
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require Import YM05.
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require Export YM0b.
@@ -66,19 +68,34 @@ Definition word_mem (segs : list Segment) (mem : word -> option byte) (a v : Z) 
 forall k, (k < 8)%nat -> mbyte segs mem (a + Z.of_nat k) = Some (Z_to_bv 8 (le_byte v 8 k)).
 Definition in_img (B : malloc_syms) (a : Z) : Prop := ms_segs B <> [] /\ exists s, In s (segments_reserved (ms_segs B)) /\
 bv_unsigned (fst s) <= a < bv_unsigned (fst s) + bv_unsigned (snd s).
-Definition AUXV_TYPES : list Z := [3; 4; 5; 16; 6; 11; 12; 23; 25; 0].
+(** The auxv type words at 08b1429 ([StackLayout.auxv_entries]): the 26 pairs every launch carries
+    (AT_SYSINFO_EHDR, the eight cache words, AT_MINSIGSTKSZ, AT_HWCAP, AT_PAGESZ, AT_CLKTCK, AT_PHDR,
+    AT_PHENT, AT_PHNUM, AT_BASE, AT_FLAGS, AT_ENTRY, AT_UID, AT_EUID, AT_GID, AT_EGID, AT_SECURE,
+    AT_RANDOM, AT_EXECFN), then the two AT_RSEQ pairs only under CONFIG_RSEQ ([rs]), then AT_NULL.
+    mallocng's secret read walks them to AT_NULL, so [auxv_pre] holds for one of the two layouts. *)
+Definition auxv_types (rs : bool) : list Z :=
+[33; 40; 41; 42; 43; 44; 45; 46; 47; 51; 16; 6; 17; 3; 4; 5; 7; 8; 9; 11; 12; 13; 14; 23; 25; 31]
+++ (if rs then [27; 28] else []) ++ [0].
+(** The pair index of AT_RANDOM, which [auxv_types_rand] checks for both layouts. *)
+Definition AUXV_RAND_K : nat := 24.
+Lemma auxv_types_rand : forall rs, nth AUXV_RAND_K (auxv_types rs) 0 = 25.
+Proof. intros [|]; reflexivity. Qed.
+Lemma length_auxv_types : forall rs, Z.of_nat (length (auxv_types rs)) = 27 + 2 * (if rs then 1 else 0).
+Proof. intros [|]; reflexivity. Qed.
+Lemma auxv_types_len_ge : forall rs, 27 <= Z.of_nat (length (auxv_types rs)).
+Proof. intros [|]; cbn; lia. Qed.
 Definition auxv_pre (B : malloc_syms) (sec : Z) (lo : Z) (mem : word -> option byte) : Prop :=
-exists av ar,
+exists (rs : bool) av ar,
 word_mem (ms_segs B) mem (ms_libc B + 8) av /\
-(forall k, (k < 10)%nat -> word_mem (ms_segs B) mem (av + 16 * Z.of_nat k) (nth k AUXV_TYPES 0)) /\
-word_mem (ms_segs B) mem (av + 16 * 8 + 8) ar /\
+(forall k, (k < length (auxv_types rs))%nat -> word_mem (ms_segs B) mem (av + 16 * Z.of_nat k) (nth k (auxv_types rs) 0)) /\
+word_mem (ms_segs B) mem (av + 16 * Z.of_nat AUXV_RAND_K + 8) ar /\
 word_mem (ms_segs B) mem (ar + 8) sec /\
-4096 <= av /\ av + 160 <= 2 ^ 63 /\ 4096 <= ar /\ ar + 16 <= 2 ^ 63 /\
+4096 <= av /\ av + 16 * Z.of_nat (length (auxv_types rs)) <= 2 ^ 63 /\ 4096 <= ar /\ ar + 16 <= 2 ^ 63 /\
 lo <= av /\ lo <= ar.
 Lemma auxv_pre_mono : forall B sec lo lo' mem, lo' <= lo -> auxv_pre B sec lo mem -> auxv_pre B sec lo' mem.
 Proof.
-intros B sec lo lo' mem Hle (av & ar & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10).
-exists av, ar. repeat (split; [assumption|]). split; lia.
+intros B sec lo lo' mem Hle (rs & av & ar & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10).
+exists rs, av, ar. repeat (split; [assumption|]). split; lia.
 Qed.
 Definition vml_lo (B : malloc_syms) : Z := match ms_vmlock B with Some v => v | None => 0 end.
 Definition vml_len (B : malloc_syms) : Z := match ms_vmlock B with Some _ => 4 | None => 0 end.
@@ -251,11 +268,11 @@ node_ok segs c I (fun _ => []) nx ->
 (forall i, bit i = 1 -> realizes segs (nx i) TB) ->
 realizes segs c (t_alt2 TA TB).
 Proof.
-intros c I nx bit TA TB [Hsnd Hcmp] Hbits [ia Hia] [ib Hib] HA HB.
+intros c I nx bit TA TB [Hsnd [Hcmp Hrob]] Hbits [ia Hia] [ib Hib] HA HB.
 set (IA := {i : I | bit i = 0}). set (IB := {i : I | bit i = 1}).
 set (nx' := fun j : IA + IB => match j with inl (exist _ i _) => nx i | inr (exist _ i _) => nx i end).
 apply (rz_alt2 segs c IA IB nx' TA TB (exist _ ia Hia) (exist _ ib Hib)).
-- split.
+- split; [| split; [| exact Hrob]].
 + intros [[i Hi]|[i Hi]]; cbn; apply Hsnd.
 + intros e st Hst. destruct (Hcmp e st Hst) as (i & -> & ->).
 destruct (Hbits i) as [Hi|Hi].
@@ -279,22 +296,22 @@ destruct q as [|np| |ln|ln|pg|rr ln|mr mol mnl|p]; cbn in Hk, Hj, Hg, HKz |- *.
 apply (rz_silent_all c1 J nx i0); [exact Hn|]. intros i.
 eapply IH; [rewrite <- (Hb i); apply Hc | apply Hs; exact I | exact Hj | exact Hg | apply HKz; reflexivity].
 +   destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hbits & H1).
-destruct Hj as [Hj0 Hj1]. destruct Hg as (G & Hg0 & Hg1). destruct (H1 G) as [Hall | Hcut]; [| apply rz_cut; exact Hcut].
+destruct Hj as [Hj0 Hj1]. destruct Hg as (G & Hg0 & Hg1). destruct (H1 G) as [Hall | Hcut]; [| apply rz_cut; [exact Hcut | exact (proj2 (proj2 Hn))]].
 apply (rz_silent_all c1 J nx i0); [exact Hn|]. intros i.
 eapply IH; [rewrite <- (Hall i); apply Hc | apply Hs; exact I | exact Hj1 | exact Hg1 | apply HKz; auto].
 +   destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hb).
 apply (rz_silent_all c1 J nx i0); [exact Hn|]. intros i.
 eapply IH; [rewrite <- (Hb i); apply Hc | apply Hs; exact I | exact Hj | exact Hg | apply HKz; reflexivity].
 +   destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hbits & H1).
-destruct Hj as [Hj0 Hj1]. destruct Hg as (G & Hg0 & Hg1). destruct (H1 G) as [Hall | Hcut]; [| apply rz_cut; exact Hcut].
+destruct Hj as [Hj0 Hj1]. destruct Hg as (G & Hg0 & Hg1). destruct (H1 G) as [Hall | Hcut]; [| apply rz_cut; [exact Hcut | exact (proj2 (proj2 Hn))]].
 apply (rz_silent_all c1 J nx i0); [exact Hn|]. intros i.
 eapply IH; [rewrite <- (Hall i); apply Hc | apply Hs; exact I | exact Hj1 | exact Hg1 | apply HKz; auto].
 +   destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hbits & H1).
-destruct Hj as [Hj0 Hj1]. destruct Hg as (G & Hg0 & Hg1). destruct (H1 G) as [Hall | Hcut]; [| apply rz_cut; exact Hcut].
+destruct Hj as [Hj0 Hj1]. destruct Hg as (G & Hg0 & Hg1). destruct (H1 G) as [Hall | Hcut]; [| apply rz_cut; [exact Hcut | exact (proj2 (proj2 Hn))]].
 apply (rz_silent_all c1 J nx i0); [exact Hn|]. intros i.
 eapply IH; [rewrite <- (Hall i); apply Hc | apply Hs; exact I | exact Hj1 | exact Hg1 | apply HKz; auto].
 +   destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hbits & H1).
-destruct Hj as [Hj0 Hj1]. destruct Hg as (G & Hg0 & Hg1). destruct (H1 G) as [Hall | Hcut]; [| apply rz_cut; exact Hcut].
+destruct Hj as [Hj0 Hj1]. destruct Hg as (G & Hg0 & Hg1). destruct (H1 G) as [Hall | Hcut]; [| apply rz_cut; [exact Hcut | exact (proj2 (proj2 Hn))]].
 apply (rz_silent_all c1 J nx i0); [exact Hn|]. intros i.
 eapply IH; [rewrite <- (Hall i); apply Hc | apply Hs; exact I | exact Hj1 | exact Hg1 | apply HKz; auto].
 +   destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hb).
@@ -551,12 +568,44 @@ hp_vm    : vm_maps (m_vmmaps md) = [] /\ vm_noaccess (m_vmmaps md) = [] /\
 vm_brk (m_vmmaps md) = vm_start_brk (m_vmmaps md) /\
 valid_brk segs (vm_brk (m_vmmaps md)) /\
 bv_unsigned (vm_brk (m_vmmaps md)) + 2 * 4096 <= alloc_ceiling /\
-vm_reserved (m_vmmaps md) = segments_reserved segs /\
+(* 08b1429: [init_model] installs the vvar/vDSO pair above the image, so the initial
+   ledger is [init_reserved], not [segments_reserved] alone.  Stated with the pair
+   written out rather than as [init_reserved] so that this record names no launch
+   argument ([mbase], [sp]) it does not otherwise mention; [vm_reserved_init_model]
+   is the model's own proof that the two forms agree. *)
+vm_reserved (m_vmmaps md)
+  = segments_reserved segs ++ vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md)) /\
 SRC_LIM_MIN <= vm_limit (m_vmmaps md) /\
 vm_backing_used md <= 0;
 hp_model : m_halted md = None /\ m_vm_lazy md = [] /\ m_vm_materialized md = [];
 hp_ceil : YM05.ceil_of_top (alloc_top (m_vmmaps md));
-hp_vmlock : forall i, 0 <= i < vml_len B -> mbyte segs mem (vml_lo B + i) = Some (Z_to_bv 8 0)
+hp_vmlock : forall i, 0 <= i < vml_len B -> mbyte segs mem (vml_lo B + i) = Some (Z_to_bv 8 0);
+(* The vDSO entries are among the reservations.  LAST in the record, so every existing
+   construction keeps its bullet order and gains one at the end.  It is a CONSEQUENCE of
+   the equation in [hp_vm] above ([incl_appr ... (incl_refl _)]) and not an extra
+   assumption; it is a field because [ledger_ok.lg_vdso] consumes it by name. *)
+hp_vdso : incl (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) (vm_reserved (m_vmmaps md));
+(* WHERE THE vvar/vDSO PAIR SITS, as a FLOOR and never an assumption.
+
+   The pair is INSIDE the allocator's range: [vdso_top] is
+   [page_round_down_Z (min mbase (page_round_down_Z (alloc_top)))] and [ceil_of_top] makes
+   [alloc_ceiling = page_floor (alloc_top)], so [vdso_top <= alloc_ceiling] always, and when
+   [mbase >= alloc_ceiling] the pair ends exactly AT the ceiling.  Nothing else in this record
+   says where it is, so a consumer that needs a brk or a grant to miss it has no fact to use.
+
+   This is that fact, and it is DERIVED rather than assumed: at a launch
+   [State.v:7821 vdso_top_init_model] gives [vdso_top] as
+   [page_round_down_Z (Z.min (bv_unsigned mbase) (bv_unsigned sp - stack_max_size))], the
+   launch's own [Run.v:4054 entry_launch_ok_va_base] puts [State.v:321 mmap_base_min] under
+   [mbase], and [Run.v]'s [valid_sp] puts [sp_window_lo] under [sp] -- and
+   [sp_window_lo - stack_max_size] is 140735332483072, far above [mmap_base_min].  So it is
+   true of EVERY valid launch and narrows nothing.  [YL08.heap_pristine_intro] discharges it
+   there; no intermediate step may re-assume it. *)
+hp_vdso_lo : (mmap_base_min <= vdso_top (m_vmmaps md))%Z;
+(* The brk start lies at least 23 pages below the vDSO pair, so the first brk grow misses it
+   ([ledger_ok.lg_brk_vdso]).  DERIVED at the launch like [hp_vdso_lo]: [Run.valid_brk] puts
+   the brk within [brk_aslr_max] of the image's reservations, far below [mmap_base_min]. *)
+hp_brk_vdso : (bv_unsigned (vm_brk (m_vmmaps md)) + 23 * 4096 <= vdso_top (m_vmmaps md))%Z
 }.
 End y.
 End d.

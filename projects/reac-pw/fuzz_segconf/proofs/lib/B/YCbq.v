@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YCbq.v, with its module paths changed and off_img at fuzz_command's ASan image end 0x606000; ajournal no longer keeps footprint (FP) bytes in the image or at or above alloc_ceiling (fp_spares FP a also requires ~ inFP FP a, and the clause for bytes at or above alloc_ceiling outside [sp0 - STK, sp0) requires ~ inFP FP a), awr_byte (and awr_ok) take the start state's side-stack frames as a new parameter and also admit footprint writes to the program's statics as_prog_static in the image, to the caller's stack above sp0 and to those caller frames (awr_prog_or_caller), acall_kept_of_journal, region_kept_stack_sub, awr_byte_present and aj_intrin_at take the matching premises, ajournal_sub_wide composes a callee whose footprint lies in what the caller may write, awr_byte_present_prog and aj_intrin_at_prog take prog_rw for stores to the statics, AR_errno_present gives the errno cell's value from errno_rom, and astack_rd/astack_pres (stack bytes readable/present from sp to the stack top) give a frame chain for any s0 but an aligned sp + 8 (chain_pre_any, achain_any) and carry across an ajournal (astack_rd_journal, astack_pres_journal). *)
 (* Modified by Theorem Labs, 2026-10: the malloc/free journal lemmas (aj_free_at, aj_free_at_io, aj_free_null_at, aj_free_null_at_io, aj_malloc_at, aj_malloc_at_io, aj_malloc_at04, aj_malloc_at04_io, aj_malloc, aj_free) no longer take In (call_trace0 ...) (as_universe B); the model laws get the trace length (call_trace_len) and the contracts the event bound. *)
 (* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/Reusable/YCbq.v, derived mechanically (bkit derive_b.py): its Require lines name the lib/B copies and the numeral 0x601000 of that file's line 1085 is 0x602000 here (image B's page-rounded hull end; image A's is 0x601000); nothing else differs. The comments are the A file's. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader conjunct of fdchan; the four new process-state fields). *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From Stdlib Require Import FunctionalExtensionality.
@@ -35,7 +36,9 @@ Ltac zlia := appn; lia.
 Definition proc_but_pins (md md' : Model) : Prop :=
 m_proc md' = mkProcState (procst_halted (m_proc md)) (procst_tid (m_proc md)) (procst_creds (m_proc md)) (procst_setsid_succeeded (m_proc md))
 (procst_sigmask (m_proc md)) (procst_children (m_proc md)) (procst_utsname (m_proc md)) (procst_sigaltstack_installed (m_proc md))
-(procst_killed (m_proc md)) (procst_sigabrt_pending (m_proc md)) (procst_abort_terminal (m_proc md)) (m_statpins md').
+(procst_killed (m_proc md)) (procst_sigabrt_pending (m_proc md)) (procst_abort_terminal (m_proc md)) (m_statpins md')
+(procst_sigpipe_pending (m_proc md)) (procst_channel_reader (m_proc md))
+(procst_sigpipe_action (m_proc md)) (procst_sigpipe_terminal (m_proc md)).
 Definition aos_step (FP : list (Z * Z)) (md md' : Model) : Prop :=
 m_io md' = m_io md /\ m_pipes md' = m_pipes md /\
 YI16.fds_rel (m_fds md) (m_fds md') /\ YI16.fs_rel (m_fs md) (m_fs md') /\
@@ -43,11 +46,19 @@ YI16.fds_rel (m_fds md) (m_fds md') /\ YI16.fs_rel (m_fs md) (m_fs md') /\
 proc_but_pins md md' /\
 (~ YI16.sink_open_fp FP -> m_fd md' = m_fd md /\ m_fsys md' = m_fsys md /\ m_proc md' = m_proc md).
 Lemma proc_but_pins_refl : forall md, proc_but_pins md md.
-Proof. intros [fd vm io fs [h ti c ss sm ch u sa k sp at_ pins] li tm]. reflexivity. Qed.
+Proof. intros [fd vm io fs [h ti c ss sm ch u sa k sp at_ pins spp cr spa spt] li tm]. reflexivity. Qed.
 Lemma proc_but_pins_trans : forall m1 m2 m3, proc_but_pins m1 m2 -> proc_but_pins m2 m3 -> proc_but_pins m1 m3.
 Proof.
 intros m1 m2 m3 H12 H23. unfold proc_but_pins, m_statpins in *. rewrite H23. rewrite H12. reflexivity.
 Qed.
+(* LPS 727298f3: [proc_but_pins] rebuilds the process record with the SAME
+   [procst_channel_reader], so the flag [fdchan] asks for travels over a
+   library call as the fd table does (the same two lemmas as Reusable/YCbq.v, for a
+   B-lane file that resolves [YCbq] to this copy). *)
+Lemma proc_but_pins_channel_reader : forall md md', proc_but_pins md md' -> m_channel_reader md' = m_channel_reader md.
+Proof. intros md md' H. unfold m_channel_reader. rewrite H. reflexivity. Qed.
+Lemma aos_step_channel_reader : forall FP md md', aos_step FP md md' -> m_channel_reader md' = m_channel_reader md.
+Proof. intros FP md md' (_ & _ & _ & _ & _ & H & _). exact (proc_but_pins_channel_reader md md' H). Qed.
 Lemma aos_step_refl : forall FP md, aos_step FP md md.
 Proof.
 intros FP md. split; [reflexivity|]. split; [reflexivity|]. split; [apply YI16.fds_rel_refl|]. split; [apply YI16.fs_rel_refl|].

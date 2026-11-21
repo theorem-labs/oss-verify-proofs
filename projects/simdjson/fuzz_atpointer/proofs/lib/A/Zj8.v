@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor raised to the 0x5D0000 bytes below sp that the launch guarantees ([STACK_GAP])). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -248,7 +249,7 @@ Qed.
 Lemma shadow_rep_nw : forall W L (m m' : mem), shadow_rep L m -> munch W m m' -> shadow_avoid W L ->
   disjoint_from W (shad (l_ACEIL L)) (shad (2 ^ 47) - shad (l_ACEIL L)) ->
   disjoint_from W (pg_dn (shad 0x10000)) (shad SEGTOP_A - pg_dn (shad 0x10000)) ->
-  stk asegs m' (l_ACEIL L) (l_top L) ->
+  stk asegs m' (l_ACEIL L + STACK_GAP) (l_top L) ->
   shadow_rep L m'.
 Proof.
   intros W L m m' (B & S1 & S2 & SA & _) MU (A & AS) D1 D2 SW'.

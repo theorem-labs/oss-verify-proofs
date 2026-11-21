@@ -3,13 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: the walk of reac_box_catalogue on fuzz_segconf.asan-ubsan (image B, pin sha256
    c3796c0b38f3, twin 80e82127e8ca; entry 0x8a8a0, 84 bytes, 21 instructions, a 16-byte frame, no side-stack
    frame): reac_box_catalogue_contract of lib/B/Prog/reac_box_catalogue_c.v (image B's copy of the image-A owner's FINAL
-   text at 6f783602b5e3) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
+   text) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
    entry, SRr of apost_base at the return, over `Context {PI : PAImg seg_listing}` of image B's listing,
    lib/B/Prog/SegPa.v).
-   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane, commit
-   434ade288123, both arms): the same entry seeds, token runs and return steps over image B's listing modules and
+   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane,
+    both arms): the same entry seeds, token runs and return steps over image B's listing modules and
    B's kit copies. The UBSan alignment check is read from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_catalogue.v
-   at origin/ossv/recipes 3abc3740de97 (the same image-B code but 4 pc-relative words; caller-journal form, not
+   (the same image-B code but 4 pc-relative words; caller-journal form, not
    copied), whose token run decides it the same way.
    Image B's code differs from image A's by two instructions: `andi a1,a0,7` (0x8a8ac) and `bnez a1,0x8a8ec`
    (0x8a8b0) to `unimp` (0x8a8ec), the UBSan alignment check of the 8-byte store through c.
@@ -40,8 +40,8 @@
 (* Modified by Theorem Labs, 2026-10: the walk of m_refuse on fuzz_segconf.asan (image A, entry 0x877d0, 308 bytes,
    77 instructions, a 48-byte frame, no side-stack frame): m_refuse_contract of lib/A/Prog/m_refuse_c.v at image A's
    numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the entry, SRr of apost_baseF at the return,
-   over `Context {PI : PAImg seg_listing}`). New text; the patterns are the released walks' (origin/ossv/recipes
-   501c0d516c69: fuzz_command lib/A/Prog/xstrdup.v and rec_code_declared.v for the seed and the runs,
+   over `Context {PI : PAImg seg_listing}`). New text; the patterns are the released walks' (
+   fuzz_command lib/A/Prog/xstrdup.v and rec_code_declared.v for the seed and the runs,
    sup_chain_s5.v and check_reply_s4.v for the step through the snprintf wrapper) and the pilot
    lib/A/Prog/reac_box_catalogueA.v.
    The statement's image numbers: the entry BASE + AF_m_refuse and the snprintf trampoline
@@ -61,6 +61,7 @@
    - 0x87874 to the ret: the instrumented check of n_kept again, n_kept + 1, then refused + 1 as above.
    The block after the call: m_refuseA_enc.v (mr_enc_lt8 / mr_enc_ge8, the text bridge mr_pf_line / mr_pf_noline /
    mr_sn_text). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

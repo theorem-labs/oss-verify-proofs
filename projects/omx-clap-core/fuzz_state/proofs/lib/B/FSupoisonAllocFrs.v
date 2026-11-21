@@ -4,7 +4,8 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_disco/lib/Reusable/YFf7.v, with its module paths changed; 372 of its 459 lines of code are new or changed and 44 lines of the source are left out. *)
 (* Free's recycle_chunk of a secondary chunk (lib/A/AFg9.v, over lib/A/AFg8.v, AFf6.v, AFf7.v) for any U, lane rs: tfib_rchunk_secU, the U form of lib/A/AFfs.v tfib_rchunk_sec_spec. The runs are the donor's, on the real memory; the facts, seeds and the leaf are the donor's, on FSupoison.unpoison UP mem. *)
 (* Shared any-U allocator, within-budget units (cgif's EV_MAX 11,776, < 2 GiB per class); the cf form (fuzz_preset / fuzz_reply, YG0dcf.v) bridges to this. *)
-(* Modified by Theorem Labs, 2026-10: the image-B port (fuzz_state.asan-ubsan) of lib/A/FSupoisonAllocFrs.v at 5cc58921ee2: each lib/A donor is its lib/B twin (AFxx -> YFxx, ABxx -> YBxx, AExx -> YExx), every statement is over B's tfibsegs (lib/B/YB1v.v), the kit is lib/B/FSupoisonAllocR / Rf / Rt; the pcs are by name: PC_GBB_L0, PC_MUNMAP_ECALL, PC_MUNMAP_RET. *)
+(* Modified by Theorem Labs, 2026-10: the image-B port (fuzz_state.asan-ubsan) of lib/A/FSupoisonAllocFrs.v: each lib/A donor is its lib/B twin (AFxx -> YFxx, ABxx -> YBxx, AExx -> YExx), every statement is over B's tfibsegs (lib/B/YB1v.v), the kit is lib/B/FSupoisonAllocR / Rf / Rt; the pcs are by name: PC_GBB_L0, PC_MUNMAP_ECALL, PC_MUNMAP_RET. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import Logic.FunctionalExtensionality.

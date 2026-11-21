@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk (image B, fuzz_reply.asan-ubsan) of fuzz_reply's check_shape_event,
    a NEW walk over lib/B/W_listing.v (B's body is not A's up to relocation: VERDICT.md (sha256 810ca1df9ca9; internal record)), after
-   lib/A/W_check_shape_event.v (a working branch 3ed7f2a7227), in the form of the cgif walks of
+   lib/A/W_check_shape_event.v (a working branch), in the form of the cgif walks of
    proofs/cgif/cgif_file_fuzzer/lib/A/AC8h.v (call sites), lib/A/ACh2.v (internal call) and lib/A/ACbk.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_shape_event(event) at 0x8657c (image B; 0x85fa0 in A; 39 instructions, A has 32) reads g_gone.  When it is
    set, it tail-calls check_shape_done(0).  Otherwise it takes the stream's first line with next_line (an internal
    call; cells &line, &len, &at in its own 48-byte frame), checks its length against strlen(event) and its bytes with
@@ -57,8 +58,8 @@ Context {PI : PAImg fr_prog_listing}.
 #[local] Notation SIGMA := (@pa_sigma _ fr_prog_listing PI).
 #[local] Notation BASE := (@pa_val _ fr_prog_listing PI A_TEXT).
 (* The contract cse_spec / CSE_STK / CSE_FRAME is the kit's: lib/B/W_contract.v Section w3, generated from the
-   integrated lib/A input a working branch d6225197406 (W3's text of a working branch 3ed7f2a7227, with
-   fe77cb0fea2's stream presence premise `OUT <= a < OUT + O`). *)
+   integrated lib/A input a working branch (W3's text of a working branch, with
+   a commit's stream presence premise `OUT <= a < OUT + O`). *)
 Definition A_check_shape_event : Z := AF_fr_check_shape_event.
 Definition A_check_shape_eventP : Z := BASE + A_check_shape_event.
 (* return addresses in check_shape_event: after next_line (0x865c8), strlen (0x865d8), bcmp (0x865ec) and

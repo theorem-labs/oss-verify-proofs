@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them.; the provider lemmas the j family calls are pinned to their base closures by `Proof using <list>. clear - <list>.` (rules; the list also names the section Lets whose bodies use only listed names) *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFjs.v, with its module paths changed and its addresses moved to libreac/fuzz_knock's ASan build; AB1v's tfibsegs is A/AWalkFw0.v's; for knock's depot kernel (no trace before main), Hmap_apart states the NB / SB blocks with KnBlockExt.nb_ext / sb_ext, as YFjm's does; DPOST takes the layout, world and model after the StackDepot Put, as YFjm's does (DPOST text v4.1). *)
 (* Modified by Theorem Labs, 2026-10: derived from lib/A/AFjs.v of this library by derive_y.py: module names A.Axyz -> AU.Yxyz, addresses moved from libreac/fuzz_knock's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/AFjs.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed nodeS). *)
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YImgTop.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -523,7 +524,7 @@ ALedger tfibsegs ly S (cfg_model c1) -> amwf (cfg_model c1) -> same_io md0 (cfg_
 amreal tfibsegs (K 0) W c' Q) ->
 (forall (a : word) (W3 : world tfibsegs) (ms : machine_state) (E' : env),
 let A := bv_unsigned a in let md2 := mmap_model a (w64 MSv) (cfg_model c1) in
-grant_ok_na_pin (cfg_model c1) a MSv = true ->
+grant_ok_na_pin (Z_to_bv 64 0) (cfg_model c1) a MSv = true ->
 ALedger tfibsegs ly S (cfg_model c1) -> amwf (cfg_model c1) ->
 wle W W3 -> hsub (w_H W3) (w_H W) -> (forall x : word, w_H W x = false -> w_H W3 x = false) ->
 w_A W3 = (SHLO A, SHHI A) :: (A, A + MSv) :: w_A W ->
@@ -568,15 +569,16 @@ assert (R13 : getr regs 13 = Z_to_bv 64 34) by (rewrite (Hregs 13%bv), H13; refl
 assert (R14 : getr regs 14 = Z_to_bv 64 (-1)) by (rewrite (Hregs 14%bv), H14; cbn [sv_denot]; apply lit_m1).
 assert (R15 : getr regs 15 = Z_to_bv 64 0) by (rewrite (Hregs 15%bv), H15; reflexivity).
 assert (MSB : 0 < MSv <= MALLOC_MAX + 4 * 4096) by (clear - Z8 Z1 Z2 Z3; unfold MALLOC_MAX in *; zlia).
-destruct (sec_grant_exists_AR B ly S _ mdN MSv HARm LN MWN ltac:(clear - MSB; unfold YF06.NOB, MALLOC_MAX in *; zlia)) as [a0 Ha0].
+destruct (sec_grant_exists_AR B ly S _ mdN MSv HARm LN MWN ltac:(clear - MSB; unfold YF06.NOB, MALLOC_MAX in *; zlia)
+  ltac:(rewrite <- pru_MS; unfold page_round_up_Z, page_size; apply Z_mod_mult)) as [a0 Ha0].
 assert (SL0 : eager_used mdN + A_bytes (w_A W) + 2 ^ 30 <= vm_limit (m_vmmaps mdN)).
 { apply (slackS mdN W 0 HAR Hev L0); [unfold mdN; rewrite m_vmmaps_wvb; reflexivity | unfold mdN; rewrite eager_used_wvb; clear; zlia | clear; zlia | clear; zlia | clear; zlia]. }
-assert (PER : forall a : word, grant_ok_na_pin mdN a MSv = true ->
+assert (PER : forall a : word, grant_ok_na_pin (Z_to_bv 64 0) mdN a MSv = true ->
 (AI tfibsegs (w_H W) (w_A W) (grant_md true (Z_to_bv 64 34) a (w64 MSv) mdN) /\ MWF (grant_md true (Z_to_bv 64 34) a (w64 MSv) mdN)) /\
 mmap_noreserve_backed_ok (Z_to_bv 64 34) mdN MSv = true /\
 eager_used (grant_md true (Z_to_bv 64 34) a (w64 MSv) mdN) <= eager_used mdN + MSv /\
 maps_nonempty (grant_md true (Z_to_bv 64 34) a (w64 MSv) mdN)).
-{ intros a Ha. pose proof (YFia.grant_parts mdN a MSv Ha) as (Pal & Ppos & Pce & Prf & Ppl).
+{ intros a Ha. pose proof (YFia.grant_parts mdN a MSv MSB Z9 Ha) as (Pal & Ppos & Pce & Prf & Ppl).
 assert (CE : bv_unsigned a + page_round_up_Z MSv <= alloc_top (m_vmmaps mdN)) by (rewrite pru_MS; exact Pce).
 assert (PL' : region_free (vm_reserved (m_vmmaps mdN) ++ vm_maps (m_vmmaps mdN)) a (Z_to_bv 64 (page_round_up_Z MSv)) = true) by (rewrite pru_MS; exact Prf).
 assert (SL1 : eager_used mdN + A_bytes (w_A W) + page_round_up_Z MSv <= vm_limit (m_vmmaps mdN)) by (rewrite pru_MS; clear - SL0 MSB; unfold MALLOC_MAX in MSB; zlia).
@@ -603,7 +605,7 @@ set (a := ga i) in *. set (A := bv_unsigned a) in *.
 destruct (PER a Hg) as ([AIg MWFg] & _ & EG & NZg).
 pose proof (grant_anon_shape a (w64 MSv) mdN) as (SH1 & SH2 & SH3 & SH4 & SH5).
 set (md2 := grant_md true (Z_to_bv 64 34) a (w64 MSv) mdN) in *.
-pose proof (YFia.grant_parts mdN a MSv Hg) as (Pal & Ppos & Pce & Prf & Ppl).
+pose proof (YFia.grant_parts mdN a MSv MSB Z9 Hg) as (Pal & Ppos & Pce & Prf & Ppl).
 fold A in Pal, Ppos, Pce.
 pose proof (SH_hull A) as (U1' & U2 & U3 & U4 & U5 & U6).
 assert (AL1 : A <= A + MSv) by (clear - MSB; zlia).

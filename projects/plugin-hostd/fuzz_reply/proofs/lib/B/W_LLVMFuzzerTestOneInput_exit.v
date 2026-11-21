@@ -2,15 +2,15 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: SEG_EXIT of the ASan+UBSan walk of fuzz_reply's LLVMFuzzerTestOneInput
    (image B, fuzz_reply.asan-ubsan 0x84e64-0x850f8), the image-B twin of lib/A/W_LLVMFuzzerTestOneInput_exit.v.
-   DONOR: the PROVED image-A file is the one at b86949b953d (sha256 c6cb29e74dbc; internal record, 8158 lines,
+   DONOR: the PROVED image-A file is the one (sha256 c6cb29e74dbc; internal record, 8158 lines,
    0 Admitted, lf_seg_exit Qed; Print Assumptions 13 primitives + functional_extensionality_dep).  The 1254-line A file
-   at 488bc984838 is the earlier skeleton of the same lane (its five block lemmas Admitted), not the donor.
-   CONSUMER: lib/B/W_LLVMFuzzerTestOneInput_cut.v:972 `Hypothesis SEG_EXIT : forall cx W c, lf_base cx -> INV_X cx W c ->
-   SRr segs W c (lf_post cx)` (the B cut e879350a388: the cut 61da015af91 /
-   a38906f5dd8, the kit cand12 3fb3a60177f, and the harness-block clause HB LAST in fr_lib_pre_cf / fr_lib_post_cf);
+   is the earlier skeleton of the same lane (its five block lemmas Admitted), not the donor.
+   CONSUMER: lib/B/W_LLVMFuzzerTestOneInput_cut.v:973 `Hypothesis SEG_EXIT : forall cx W c, lf_base cx -> INV_X cx W c ->
+   SRr segs W c (lf_post cx)` (the B cut: the cut /,
+   the kit cand12, and the harness-block clause HB LAST in fr_lib_pre_cf / fr_lib_post_cf);
    lf_seg_exit_stmt below is that hypothesis's text over the cut's Section w, the form the A donor proves.  The
-   ARx-generic form (cut_x.v:422, top_x.v) is this lane's lib/B/W_LLVMFuzzerTestOneInput_exit_x.v (first at
-   f3de773943b).
+   ARx-generic form (cut_x.v:422, top_x.v) is this lane's lib/B/W_LLVMFuzzerTestOneInput_exit_x.v (first).
+   
    B addresses, read from the objdump of fuzz_reply.asan-ubsan (sha256
    10ffb5f9202ae2bdb01b7a49df9866843a6a6a0e0c50bc67cdba6ce2f6d3cf2c), as offsets from AF_fr_LLVMFuzzerTestOneInput
    (0x20c4 from fr_B0 0x82344; the function at 0x84408): X 0xa5c (0x84e64, = AF_LLVM_exit); AX_order 0xaa4 (0x84eac,
@@ -30,12 +30,13 @@
    Objects (lib/B/W_place.v fr_obj): g_s A_OBJ 19 (0x5d8e60), g_nout A_OBJ 12, g_gone A_OBJ 27, g_out A_OBJ 29,
    .str.3 "" A_OBJ 25 (0x20ee0, the prefix check_shape_ends is called with), " end" A_OBJ 28 (0x20f00).
    check_shape_ends' spec: the kit at this base has none; B's own text (W3's w3e twinned by mkbkit, CSHE_FRAME 112,
-   CSHE_STK = 112 + LDROP_STK, the errno-view conjunct, the two homes of the prefix) is at
-   e6c15ce5205 lib/B/W_contract.v:1755-1863 (proved there: lib/B/W_check_shape_ends.v:141 pb_check_shape_ends), copied
+   CSHE_STK = 112 + LDROP_STK, the errno-view conjunct, the two homes of the prefix) is
+    lib/B/W_contract.v:1756-1864 (proved there: lib/B/W_check_shape_ends.v:142 pb_check_shape_ends), copied
    verbatim, G-generic, as lx_cshe_spec (lib/B/W_bx_defs.v; the A donor's convention for the same callee).
    LAYOUT: lib/B/W_bx_defs.v holds the constants, bx_frame, the model and the five block statements; each block is
    proved in its own file (W_bx_order / _rf / _ends / _reset / _ffexit); this file states the segment and chains
    them (the donor's spine, :7647-8157). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -125,11 +126,11 @@ Hypothesis AZS_s : azs B (rg_s fr_RG) (4 * ASRC).
 Hypothesis CSD : csd_spec B (BASE + AF_fr_check_shape_done).
 (* W2, lib/B/W_contract.v Section w2g (PROVED: lib/B/W_source_reset.v pb_source_reset_g) *)
 Hypothesis SR : sr_spec_g B MT (BASE + AF_fr_source_reset).
-(* check_shape_ends: B's text, lib/B/W_bx_defs.v lx_cshe_spec (from e6c15ce5205
-   W_contract.v:1755-1863, a verbatim copy; proved there as pb_check_shape_ends) *)
+(* check_shape_ends: B's text, lib/B/W_bx_defs.v lx_cshe_spec (from
+   W_contract.v:1756-1864, a verbatim copy; proved there as pb_check_shape_ends) *)
 Hypothesis CSHE : lx_cshe_spec B MT (BASE + AF_fr_check_shape_ends).
 (* relay_finish: W5's published rf_spec at its own G = RF_G ++ G_SL, with the kit's caller-context argument at K0's
-   free table (lib/B/YCk0.v CTX_AFREE at 5128b798413; the site discharges In [0x8240c]) *)
+   free table (lib/B/YCk0.v CTX_AFREE; the site discharges In [0x8240c]) *)
 Hypothesis RFg : rf_spec B MT MMAX (RF_G fr_RG AG_LISTEN ++ G_SL B fr_RG) fr_RG AG_THREAD_UP AG_LISTEN
   YCk0.CTX_AFREE (BASE + AF_fr_relay_finish).
 (* errno lies above every global the block names (B: errno = tp - 164 = 0x5d994c; the globals end at g_out + 8 =
@@ -156,9 +157,9 @@ Hypothesis XE_LIT_S : ashp B (VAL AX_lit_empty) 1.
 Hypothesis RI_exit_slots : forall cx t m, RINV cx t m ->
   forall j, (j < 4)%nat -> lx_ends_slot_ok (nth j (lm_hs m) None).
 (* the shutdown check passes over relay_finish's output and consumes all of it (check_shape_done's at = g_nout).
-   Its last two premises are amodel_at's (W_LLVMFuzzerTestOneInput_cut.v:492), which the arm holds at X: g_gone is
+   Its last two premises are amodel_at's (W_LLVMFuzzerTestOneInput_cut.v:493), which the arm holds at X: g_gone is
    0 or 1 (agone_at, W_rep.v:195) and no held text has a NUL byte (asrc_at's held list, alist_at at lines = true,
-   W_rep.v:92); image A's restated text (3f40808c334) *)
+   W_rep.v:92); image A's restated text *)
 Hypothesis RI_exit_ends : forall cx t m, RINV cx t m -> (0 < length (lm_es m))%nat ->
   0 <= lm_gn m <= 1 ->
   (forall i h, nth i (lm_hs m) None = Some h -> Forall (fun r => ~ In (Z_to_bv 8 0) (snd r)) (hl_recs (hs_held h))) ->
@@ -167,7 +168,7 @@ Hypothesis RI_exit_ends : forall cx t m, RINV cx t m -> (0 < length (lm_es m))%n
    (same `rest`), the meter spent at most lx_exit_cost since X, the fake frame released.  k' is the journal's counter
    at the return, so it carries `0 <= k'` (every ajournal states it, Reusable/YCbq.v ajournal's 8th conjunct; the
    spine supplies it from the journal).  Without that premise the hypothesis was unsatisfiable at image B's instance,
-   whose fr_live_post bounds k by `0 <= k` (430b6b00098 lib/B/YCfn_cf.v fr_live_post_b; the A donor flagged the
+   whose fr_live_post bounds k by `0 <= k` (lib/B/YCfn_cf.v fr_live_post_b; the A donor flagged the
    same text as G7 "satisfiable only if fr_live_post does not bound k") - found by the fresh hypothesis review of
    2026-10-29. *)
 Hypothesis LS_exit_end : forall cx t m ly3 S3 rest ly' S' fpos k' C cap out,
@@ -179,7 +180,7 @@ Hypothesis LS_exit_end : forall cx t m ly3 S3 rest ly' S' fpos k' C cap out,
   fr_surv (c_ly cx) (c_S cx) ly' (stack_free_state 1 fpos S') /\
   mo_le MT (c_S cx) (stack_free_state 1 fpos S') (XN_LIB (c_n cx)).
 (* the room round's two exit rules for the post's XCNT and CAPOUT conjuncts (fr_lib_post_cf's last two; image A's
-   _exit.v text at 5a9b16eac9e, at B's names): LS facts at X, so LS rules.  LS_exit_cnt: the return's blocks other
+   _exit.v text, at B's names): LS facts at X, so LS rules.  LS_exit_cnt: the return's blocks other
    than the input, the kept table and g_out are the LS state's rest, whose counts the LS state bounds: the cut's own
    count (ReplyCnt.xcnt_ok, _cut.v's XCNT text).  LS_exit_cap: relay_finish's final capacity, which is g_capout at the
    return, stays under CAPOUT_MAX (fr_OUT's bound at X with send_line's growth). *)
@@ -200,7 +201,7 @@ Hypothesis HG_K : forall a, aenv_addr tfib_K a \/ ak_meta_ptr tfib_K <= a < ak_m
   ak_meta_mem tfib_K <= a < ak_meta_mem tfib_K + 8 -> 0 <= a < 2 ^ 64 /\ ~ inG G_fr a.
 
 (* ------------------------------------------------------------------ THE STATEMENT
-   the cut's SEG_EXIT (W_LLVMFuzzerTestOneInput_cut.v:972), over the cut's Section w and the hypotheses above *)
+   the cut's SEG_EXIT (W_LLVMFuzzerTestOneInput_cut.v:973), over the cut's Section w and the hypotheses above *)
 Definition lf_seg_exit_stmt : Prop :=
   forall cx W c,
     lf_base B MT XM_LIB RLO RHI fr_live_pre G_fr cx ->
@@ -316,10 +317,10 @@ Proof.
 Qed.
 
 (* ================================================================== the cut's harness-block post clause (HB)
-   e879350a388 adds, LAST in fr_lib_pre_cf and LAST in fr_lib_post_cf (W_LLVMFuzzerTestOneInput_cut.v:282 / :296),
+   adds, LAST in fr_lib_pre_cf and LAST in fr_lib_post_cf (W_LLVMFuzzerTestOneInput_cut.v:283 / :297),
      pre:  NoDup ((if n =? 0 then [] else [(p, n)]) ++ fr_hblks W mem) /\ incl (fr_hblks W mem) (ablocks B ly S)
      post: NoDup (fr_hblks W' mem') /\ incl (fr_hblks W' mem') (ablocks B ly' S')
-   where fr_hblks (W_LLVMFuzzerTestOneInput_cut.v:254, the one definition on image B) reads g_src's table and g_out's
+   where fr_hblks (W_LLVMFuzzerTestOneInput_cut.v:255, the one definition on image B) reads g_src's table and g_out's
    buffer out of memory.  SEG_EXIT owes the POST half.  It needs NO new premise: the table and the buffer are the
    model's blocks (amodel_at's arelay_at / aout_at carry both their addresses and `In ... (ablocks ...)`), and
    ablocks_sep's Permutation together with ablocks' NoDup gives the distinctness.  bx_post_hblks proves the clause

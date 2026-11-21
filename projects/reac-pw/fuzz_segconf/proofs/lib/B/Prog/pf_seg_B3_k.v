@@ -24,10 +24,11 @@
    (pass 5b) the stack from len - 16 present, from the statement's astack_pres kept by astack_pres_journal. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths, module names and numbers changed; 536 of its 623 lines of code are new or changed and 4966 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/pf_seg_B4.v, with its module paths and module names changed; 381 of its 460 lines of code are new or changed and 544 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3): segment B3 of reac_segconf_parse_file's
    walk (lib/B/Prog/pf_seg_B3.v, FRAME 0x88074 -> DONE 0x89114 / HEAD 0x881f8), its geometry, its write set, what it
    keeps, and the two mid-segment states. The B3 segment lane of the image-B G3 walk owner, 2026-10-30. ADAPTED from the image-A G3 walk owner's image-A
-   kit of segment A2 (lib/A/Prog/pf_a2_g.v, commit 3f59c8d75ed4: pa2_geo, pa2_out, pa2_k_str and the
+   kit of segment A2 (lib/A/Prog/pf_a2_g.v: pa2_geo, pa2_out, pa2_k_str and the
    other pa2_k lemmas, pa2_keep_obj) and segment A5 (pf_a5_k.v: a5_G, a5_heap_out, a5_img_out), re-derived for B3's writes on image B:
    - pb3_G / pb3_geo: the numbers at FRAME. B's prologue `addi sp,sp,-352; andi sp,sp,-32` (0x87e38, 0x87e78):
      sp0 - 384 <= s1 <= sp0 - 352; STK 12832; the class-5 frame F (2048 bytes, 32-aligned, in the application
@@ -35,7 +36,7 @@
    - label_amem8_of_place: a C string of n bytes and its NUL in a live heap block, a live side-stack frame or the
      image has 8 bytes of application memory past its NUL: in_app's low arm ends at kLowShadowBeg = 0x7fff7000,
      4095 bytes below amem_range's kLowMemEnd - 1; its high arm at ASAN_CEIL < kHighMemEnd - 8. This is
-     cmd_args_amem's premise of the snprintf at 0x880cc (RtPFCmd.v:86-91), derived from the contract's three places
+     cmd_args_amem's premise of the snprintf at 0x880cc (RtPFCmd.v:87-92), derived from the contract's three places
      of the label (reac_segconf_parse_file_c.v:180-182): no new premise.
    - pb3_Wr: every byte B3 writes - parse_file's stack window below s1 + 0xd8 (the slots and the snprintf / memset
      windows), c->reading .. c->gen (snprintf 0x880cc, `sw` 0x880fc), cur_name (memset 0x88130) and its two shadow

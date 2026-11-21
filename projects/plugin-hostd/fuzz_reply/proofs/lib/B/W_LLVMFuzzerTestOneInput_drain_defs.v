@@ -50,14 +50,15 @@
    hypotheses, in dr_env below; the closing file declares them by name)
      RSRC            - the cut's own Section hypothesis (_cut.v:691), a Theorem Labs lane's agreed relay_source text;
      TL              - PALib B, the allocator instance (lib/B/W_kit.v);
-     DRAIN           - the kit's dr_spec B MT MMAX fr_RG (BASE + AF_fr_drain) (lib/B/W_contract.v:1027);
+     DRAIN           - the kit's dr_spec B MT MMAX fr_RG (BASE + AF_fr_drain) (lib/B/W_contract.v:1028);
      ALOCK / AUNLOCK - the kit's alock_realizes / aunlock_realizes at SIGMA WS_pthread_mutex_lock / _unlock
-                       (lib/B/W_sites.v:90 / :105);
-     CNLR            - the kit's cnlr_spec at BASE + AF_fr_check_no_loss_read (lib/B/W_contract.v:484);
-     CSD             - the kit's csd_spec at BASE + AF_fr_check_shape_done (lib/B/W_contract.v:157);
-     CNL             - the kit's cnl_spec, lib/B/W_contract.v:2054 (cnl_post :1967, CNL_STK :1966, Section w3n),
+                       (lib/B/W_sites.v:91 / :106);
+     CNLR            - the kit's cnlr_spec at BASE + AF_fr_check_no_loss_read (lib/B/W_contract.v:485);
+     CSD             - the kit's csd_spec at BASE + AF_fr_check_shape_done (lib/B/W_contract.v:158);
+     CNL             - the kit's cnl_spec, lib/B/W_contract.v:2055 (cnl_post :1967, CNL_STK :1966, Section w3n),
                        at the G the call site needs;
      the G-coverage facts, the instance facts, and the RINV / LS rule families, as on image A. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -98,7 +99,7 @@ Local Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(fa
 Open Scope bv_scope.
 Open Scope Z_scope.
 
-(* the cut's own Local Notations, which do not leave its file (lib/B/W_LLVMFuzzerTestOneInput_cut.v:158-161) *)
+(* the cut's own Local Notations, which do not leave its file (lib/B/W_LLVMFuzzerTestOneInput_cut.v:159-162) *)
 Local Notation A_LLVMF := YCfn.A_LLVMF.
 Local Notation RA_LLVMF := YCfn.RA_LLVMF.
 Local Notation LLVMF_STK := YCfn.LLVMF_STK.
@@ -259,7 +260,7 @@ Record dr_env : Prop := mk_dr_env {
   dre_AUNLOCK : aunlock_realizes (PI := PB_fr) B (SIGMA WS_pthread_mutex_unlock);
   dre_CNLR : cnlr_spec (PI := PB_fr) B (BASE + AF_fr_check_no_loss_read);
   dre_CSD : csd_spec (PI := PB_fr) B (BASE + AF_fr_check_shape_done);
-  (* the kit's check_no_loss (lib/B/W_contract.v:2054, Section w3n), at the G the call site takes: the slot's two
+  (* the kit's check_no_loss (lib/B/W_contract.v:2055, Section w3n), at the G the call site takes: the slot's two
      list headers.  Its proof pb_check_no_loss takes gx_ok and (through its callees) rom_out at its own G. *)
   dre_CNL : forall G, gx_ok segs B G -> gx_rt (PI := PB_fr) B G -> rom_out segs B G ->
     cnl_spec (PI := PB_fr) B MT G MMAX (BASE + AF_fr_check_no_loss);
@@ -316,9 +317,9 @@ Record dr_env : Prop := mk_dr_env {
     (lm_gn m = 1 -> ct_cl (lm_c m) = -1 \/ ct_br (lm_c m) = 1 \/ ct_dd (lm_c m) = 1);
   (* ---- the allocator-state facts the two calls take, read off LS ---- *)
   (* the peak form (a Theorem Labs lane's ROOM-ROUND row #19; dr_spec's byte premise is the drain trace's byte PEAK, C3), image A's
-     text (W8's drain arm b5892edd1cb lib/A/W_LLVMFuzzerTestOneInput_drain.v): conjunct 5 is s5-r1d's
+     text (W8's drain arm lib/A/W_LLVMFuzzerTestOneInput_drain.v): conjunct 5 is s5-r1d's
      fr_LS_drain_pre_c5p (lib/A/ReplyTrPeak.v:942 on image A), and the three premises after re_eof are the ones its
-     rows take (fr_LS3_drain_pre_c4 lib/A/ReplyLS3Arms.v:790, fr_LS_drain_pre_c5p): dc_regs' Ht, aentry_ok's |re_U|
+     rows take (fr_LS3_drain_pre_c4 lib/A/ReplyLS3Arms.v:791, fr_LS_drain_pre_c5p): dc_regs' Ht, aentry_ok's |re_U|
      bound and the drained blocks' sizes (dc_stB's HXP).  The sum form (tr_alloc) was FALSE at reachable states. *)
   dre_LS_drain_pre : forall cx t m ly S si h j,
     LS cx t m ly S -> RINV cx t m -> dr_at_op cx m -> dr_pick cx m si h ->

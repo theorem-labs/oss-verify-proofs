@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Rebound 2026-10-29 onto the old-pin kit of record (4f18c75d4900; base 2d66a982044b): fpre's new last
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Rebound 2026-10-29 onto the old-pin kit of record (base): fpre's new last
    conjunct raZ regs < alloc_ceiling; ex_ws_x is no longer Required (two of its journal-free helpers restated below, the
    other two are ExvB_Open_kt.v's exk_val_kept / exk_garr8_kept, cited). *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B (asan-ubsan, rebuilt pin f8f98a95bc52, unstripped twin 3b5e1a099b53),

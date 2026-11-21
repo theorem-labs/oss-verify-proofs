@@ -1,13 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: lib/A/RPgCheck.v (ck_entry, the code table ck_tbl / ck_wx / ck_segs_low) and
-   lib/A/RPgCheckStr.v (rl_cstr_kept) at 77f59d02b01 for the MATCH HALF of reac-pw/fuzz_role's image-A segment M02:
+   lib/A/RPgCheckStr.v (rl_cstr_kept) for the MATCH HALF of reac-pw/fuzz_role's image-A segment M02:
    the half's code table, the entry state of a run that starts at one of its cuts (the registers, the real frame at
    s1 and the role cell as regions), the stack facts of lib/A/RPgSeg.v's rs_pre, the seam between RPgSeg's rs_core and
    lib/A/RPgCSpec.v's callee contracts (rl_pre before a call, rl_post after it), and the strings and cells the callees
    read, carried from the segment's start to a cut (rl_cstr_kept with two worlds and the half's write set). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v at 887bee7c56d and
-   proofs/reac-pw/fuzz_rate/lib/AU/RtPgM02BaseB.v at f07713e8e823 for image B (fuzz_role.asan-ubsan): image B's pcs,
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v and
+   proofs/reac-pw/fuzz_rate/lib/AU/RtPgM02BaseB.v for image B (fuzz_role.asan-ubsan): image B's pcs,
    callees and literals; the code table covers the key compare to the malformed check (0x82370 .. 0x82500) and the
    three runs of slow blocks of its five instrumented checks; the shadow base is s11 (atom 27); the role cell is at
    F+0x2a0 held in s4 (atom 20); the real frame's size is 0x200; the frame for locals is a side-stack frame of class
@@ -15,6 +15,7 @@
    and the start of its relro segment; and image B's extras of fuzz_rate's image-B file (the first block's bounds
    m2_pp, the image bytes kept m2_keep_img, rom_view at a cut m2_rom_at, the harness's key m2_key_at, the write-range
    and I/O tactics m2_kwr / m2_io and the register lemmas) are added under role's m2_ names. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_role, image B (fuzz_role.asan-ubsan, pinned sha256
    b255d4935da5af137a3967dbe33380ea43be8e78bfe05d1e356e0a2be8a69ff0; every address measured on the unstripped twin
    dc791783f32962615e18a5f5cffae758ba56eb5dc87f70913c3579b101b4406a, the same loaded bytes): the vocabulary the

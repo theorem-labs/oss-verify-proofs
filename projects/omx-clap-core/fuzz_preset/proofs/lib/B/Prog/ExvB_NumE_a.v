@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Does not rest on tex_word_specX; memnorm only as EXN_keepM(_cur)'s keep: runs' frames, m-form call keeps (kit 4f18c75d4900). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Does not rest on tex_word_specX; memnorm only as EXN_keepM(_cur)'s keep: runs' frames, m-form call keeps (kit). *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B (asan-ubsan, rebuilt pin f8f98a95bc52, unstripped twin 3b5e1a099b53),
    ex_value's NUMBER SEGMENT, sub-piece Ec (lib/B/Prog/ExvB_NumCut.v EXN_Ec), PART a: the symbolic states, their
    seats from the machine facts, the cut facts (geometry, the node header, the tree root), the close to CD and the
@@ -8,7 +9,7 @@
    in->differs store whose ASan guard 0x83ec8 -> errpath_store4 0x84180 the run shows not taken from q's shadow
    entry). ExvB_NumE.v proves EXN_Ec from them. Proves no function (kind: segment lemma). Code: the neutral listing
    the internal file ex_value.fuzz_preset.asan-ubsan.s (a Theorem Labs lane's listing of the B' pin), lines 582-619 (ExvB_NumE.v's header).
-   Old-pin kit 4f18c75d4900 (rebind base a9d3e245c2b): the engine tactics are ExvB_Num_eng.v's (ex_ws_x.v's, restated);
+   Old-pin kit (rebind base): the engine tactics are ExvB_Num_eng.v's (ex_ws_x.v's, restated);
    exe_mn_run / exe_mn_of give the memnorm keep EXN_keepM_cur asks across each engine run from the run's frame on the
    whole overlay; exe_v_rng / exe_first_byte_nz / exe_blk_op restate ExvB_Disp_str_k.v's exvs_v_rng /
    exvs_first_byte / exvs_blk_op (that file does not compile on the kit yet).
@@ -705,7 +706,7 @@ split; [exact (proj1 HVR)|]. split; [exact (proj2 HVR)|]. split; [exact Hal | ex
 Qed.
 
 (* ---- ExvB_Disp_str_k.v's exvs_v_rng / exvs_first_byte / exvs_blk_op, restated here: that file (ExvDisp's) does not
-   compile on the old-pin kit 4f18c75d4900 yet (its exvs_geom reads a stack-layout conjunct the kit no longer has),
+   compile on the old-pin kit yet (its exvs_geom reads a stack-layout conjunct the kit no longer has),
    so this piece no longer Requires it ---- *)
 Local Ltac exe_zl := Zify.zify; xlia zchecker.
 
@@ -865,7 +866,7 @@ Ltac exe_awr_ro :=
     let rs' := eval vm_compute in rs in change rs with rs' end;
   repeat (apply awr_ok_cons_ro; [cbn; lia|]); apply awr_ok_nil.
 
-(* the memnorm keep across an engine run (EXN_keepM / EXN_keepM_cur's premise, kit 4f18c75d4900): the run's frame on
+(* the memnorm keep across an engine run (EXN_keepM / EXN_keepM_cur's premise, kit): the run's frame on
    the whole overlay changes only bytes of its write windows; they lie in [2 ^ 31, 2 ^ 47) (the real stack), above
    every image segment (B_prog_segs_low) and below TASK_SIZE, so YAkMemnorm.memnorm_frame_off_segs applies *)
 Lemma exe_mn_run : forall E rs (m m' : word -> option byte) (Zs : Z -> Prop),

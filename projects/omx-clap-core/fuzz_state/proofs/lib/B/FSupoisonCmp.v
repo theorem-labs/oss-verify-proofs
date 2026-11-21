@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AE32.v, with its module paths changed and its addresses moved to libreac/fuzz_disco's ASan build. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_disco/lib/A/AE32.v, with its module paths changed; 10 of its 25 lines of code are new or changed and 569 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSupoisonCmp.v, with its module paths and module names changed; 8 of its 33 lines of code are new or changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_state image B (fs.asan-ubsan, sha256 5ac5ce0954f8): the bcmp interceptor contract with its nested memcmp
    discharged, ARU (any-user-poison) form. Rule 24: no function proved here; this file only composes two proved
    theorems:
@@ -15,7 +16,7 @@
    (lib/B/FSH_Rt.v: FSupoisonU.abcmp_realizesU segs B PC_bcmp at segs := tfibsegs): pc_wrap_bcmp (as_code B) is
    lib/B/FSH_Base.v's PC_bcmp 0x426d8 (sym __wrap_bcmp) by computation, through TfibSyms' ts_code and YF0l.v's
    pc_wrap_bcmp := 0x426d8.
-   PORTED FROM: lib/A/FSupoisonCmp.v of a working branch cd7610bc4ed (a Theorem Labs lane), text kept; imports
+   PORTED FROM: lib/A/FSupoisonCmp.v of a working branch (a Theorem Labs lane), text kept; imports
    switched to the image-B files (lib/B twins of the image-A modules, the B ports of FSupoisonBcmp / FSupoisonMemcmp);
    the PC_bcmp bridge and its corollary are new here. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.

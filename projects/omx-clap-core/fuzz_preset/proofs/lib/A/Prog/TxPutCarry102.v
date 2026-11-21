@@ -1,7 +1,7 @@
 (* fuzz_preset, harness fix #102: the CARRY of the tx_put walks across a stretch that writes only tx_put's own frame
    and the record's 28 bytes (the S0 row of both images: the prologue, the checks and the branches before any call;
    A' and B' alike). Image-free: over any {PA : PAImg L}, any allocator relation ARx with its laws, PRH_Base's fpre
-   and K0's PRH_FnTx.v predicates (blob b6f264e13647, cold/h-hpreset-7-walkkit-next eee71ebe8d49).
+   and K0's PRH_FnTx.v predicates (blob b6f264e13647).
    Owner: TxPutB102 (h-rw-pre-7's #102 lanes); the A' S0 row (h-rw-dis-3) takes it by path.
    rule 24: proves no function (kind: shared lemmas)
    txc_carry: from the entry's fpre / fwin / prhtx_place and a word-level keep of every byte outside
@@ -111,7 +111,7 @@ split; [intros own H; exact (keep_prh_own W W mem mem3 own H KA HPST)|].
 intros s src H. pose proof (keep_src_rd W W mem mem3 s src H KA) as H3. split; [exact H3 | exact (proj1 H3)].
 Qed.
 
-(* g_most (prh_most of d7c502629be9) across the same frame-plus-record-only write *)
+(* g_most (prh_most) across the same frame-plus-record-only write *)
 Lemma txc_most_keep : forall (F : Z) ly S Hp (W : world segs) regs mem md ch mem3 t,
   fpre B ARx STK_tx_put ly S Hp W regs mem md ch ->
   0 <= F -> F + 8 <= STK_tx_put -> spZ regs + 16 <= t ->

@@ -12,7 +12,7 @@ Result: no FINDING. Nothing goes to the code list or to the measured-rows TSV.
 ## Inputs
 
 - Unit tree: plugin-hostd/fuzz_command at the series head plugin-hostd/fuzz_command tree (git tree 86ee7833f146; internal record) (`lib/`).
-- Donor tree: cgif/cgif_file_fuzzer at c8557374ad2e (`lib/A` = image A, root `Y*.v` = image B).
+- Donor tree: cgif/cgif_file_fuzzer (`lib/A` = image A, root `Y*.v` = image B).
 - Images (by role, sha256 first 12):
   - fuzz_command.asan c0661b96b5bd and its twin 68db792d5fa7
   - fuzz_command.asan-ubsan bbe55d24d096 and its twin 658cefbe806b

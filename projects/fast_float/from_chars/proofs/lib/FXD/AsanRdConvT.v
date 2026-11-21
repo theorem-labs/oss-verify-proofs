@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up stack layout (the strings above the random bytes, up to ed_top); the channel-reader conjunct of FxChMain.INV). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -40,7 +41,7 @@ Lemma R0_base : rg_base R0 = laddc RANDP16 (-16). Proof. vm_compute. reflexivity
 Lemma R0_size : rg_size R0 = lconst 16. Proof. vm_compute. reflexivity. Qed.
 Definition FRZ : lin * lin := Eval vm_compute in List.nth 1 (sm_frz M1) (lconst 0, lconst 0).
 Lemma FRZ_in : In FRZ (sm_frz M1). Proof. vm_compute. right. left. reflexivity. Qed.
-Lemma FRZ_size : lin_eqb (snd FRZ) (lsub (laddc RANDP16 (-16)) (fst FRZ)) = true. Proof. vm_compute. reflexivity. Qed.
+Lemma FRZ_size : lin_eqb (snd FRZ) (lsub TOPS (fst FRZ)) = true. Proof. vm_compute. reflexivity. Qed.
 Lemma own_M1 : sm_own M1 = []. Proof. vm_compute. reflexivity. Qed.
 Lemma FSR_wf : forallb (fwf (s_next S1)) FSR = true. Proof. vm_compute. reflexivity. Qed.
 Lemma PV_wf : lwf (s_next S1) PV = true. Proof. vm_compute. reflexivity. Qed.
@@ -76,11 +77,13 @@ Variables (model0 : Model) (mem0 : word -> option byte) (E : valu) (ms : machine
 Hypothesis Hd : DEN ASEGS LIM model0 mem0 E S1 M1 ms model.
 Hypothesis HF : Forall (fact_ok E) FSR.
 Hypothesis HP0 : uE E (fst FRZ) <= uE E PV.
-Hypothesis HM : forall w, uE E PV <= w < uE E PV + uE E SZR - 16 -> mem0 (Z_to_bv 64 w) <> None.
+Hypothesis HM : forall w, uE E PV <= w < uE E PV + uE E SZR -> mem0 (Z_to_bv 64 w) <> None.
 Hypothesis HB : mem0 (Z_to_bv 64 (uE E PV)) = Some (Z_to_bv 8 46) /\ mem0 (Z_to_bv 64 (uE E PV + 1)) = Some (Z_to_bv 8 0).
+(* 75d69e00: the random block no longer adjoins the strings, so its place above the shadow is a premise *)
+Hypothesis HR0 : SH_HI <= uE E (rg_base R0).
 
-#[using="Hd HF HP0 HM HB"] Theorem den_conv_rd : DEN ASEGS LIM model0 mem0 E SR0 MR0 ms model.
-Proof. LiaFast.lf_pins (fun (Hd HF HP0 HM HB : LiaFast.U) => LiaFast.u0).
+#[using="Hd HF HP0 HM HB HR0"] Theorem den_conv_rd : DEN ASEGS LIM model0 mem0 E SR0 MR0 ms model.
+Proof. LiaFast.lf_pins (fun (Hd HF HP0 HM HB HR0 : LiaFast.U) => LiaFast.u0).
   pose proof HF as HF0. inversion HF0 as [|? ? HARGC HF1]; subst. inversion HF1 as [|? ? HV8 HF2]; subst.
   inversion HF2 as [|? ? HV8SP HF3]; subst. inversion HF3 as [|? ? HRND _]; subst.
   unfold FARGC, FV8, FV8SP, FRND in *. cbn [fact_ok] in HARGC, HV8, HV8SP, HRND. fold (uE E PV) in HV8.
@@ -89,24 +92,24 @@ Proof. LiaFast.lf_pins (fun (Hd HF HP0 HM HB : LiaFast.U) => LiaFast.u0).
   rewrite HspE in Hsphi. fold (uE E (sm_sp M1)) in Hsphi. unfold sp_window_hi in Hsphi.
   assert (Hsp : uE E PV = uE E (sm_sp M1) + bv_unsigned (lden E (lsub PV (sm_sp M1)))) by (apply u_lsub_eq; unfold two64; lia).
   fold (uE E SZR) in HRND.
-  assert (Hrp : uE E RANDP16 = uE E PV + uE E SZR).
-  { pose proof (u_lsub_eq E RANDP16 PV) as H1. change (lsub RANDP16 PV) with SZR in H1. fold (uE E SZR) in H1. apply H1. unfold two64. lia. }
-  assert (Hb0 : uE E (rg_base R0) = uE E RANDP16 - 16) by (rewrite R0_base; apply (u_laddc_neg E RANDP16 16); lia).
+  (* the strings run from PV up to the stack top, all of it frozen *)
+  assert (Hrp : uE E TOPS = uE E PV + uE E SZR).
+  { pose proof (u_lsub_eq E TOPS PV) as H1. change (lsub TOPS PV) with SZR in H1. fold (uE E SZR) in H1. apply H1. unfold two64. lia. }
   assert (Hs0 : rsz E R0 = 16) by (unfold rsz; rewrite R0_size; fold (uE E (lconst 16)); apply u_lconst_small; unfold two64; lia).
-  assert (Hfz : uE E (snd FRZ) = uE E (rg_base R0) - uE E (fst FRZ)).
-  { rewrite (lin_eqb_eq _ _ FRZ_size). rewrite <- R0_base.
-    assert (Rb : uE E (rg_base R0) < two64).
-    { unfold uE. pose proof (bv_unsigned_in_range _ (lden E (rg_base R0))) as R. unfold bv_modulus in R. change (2 ^ Z.of_N 64) with two64 in R. lia. }
+  assert (Hfz : uE E (snd FRZ) = uE E TOPS - uE E (fst FRZ)).
+  { rewrite (lin_eqb_eq _ _ FRZ_size).
+    assert (Rb : uE E TOPS < two64).
+    { unfold uE. pose proof (bv_unsigned_in_range _ (lden E TOPS)) as R. unfold bv_modulus in R. change (2 ^ Z.of_N 64) with two64 in R. lia. }
     assert (Rf : 0 <= uE E (fst FRZ)) by (unfold uE; pose proof (bv_unsigned_in_range _ (lden E (fst FRZ))) as R; lia).
     unfold uE at 1. rewrite lden_lsub, bv_sub_unsigned. unfold bv_wrap, bv_modulus. change (2 ^ Z.of_N 64) with two64.
-    fold (uE E (rg_base R0)). fold (uE E (fst FRZ)). apply Z.mod_small. lia. }
+    fold (uE E TOPS). fold (uE E (fst FRZ)). apply Z.mod_small. lia. }
   unfold SR0, MR0.
   apply (den_conv_rt ASEGS LIM model0 mem0 E S1 M1 ms model drop_rand R0 FSR PV SZR [46; 0] Hd own_M1).
   - assert (H : In R0 (List.filter drop_rand (s_rgs S1))) by (rewrite R0_only; left; reflexivity). apply filter_In in H. exact (proj1 H).
   - vm_compute. reflexivity.
   - intros R HR Hf w Hw.
     assert (H : In R (List.filter drop_rand (s_rgs S1))) by (apply filter_In; split; assumption). rewrite R0_only in H.
-    destruct H as [<-|[]]. unfold in_shadow, SH_LO, SH_HI. apply andb_false_iff. right. apply Z.ltb_ge. lia.
+    destruct H as [<-|[]]. unfold in_shadow. apply andb_false_iff. right. apply Z.ltb_ge. lia.
   - pose proof FSR_wf as Hw. rewrite forallb_forall in Hw. apply Forall_forall. intros g Hg. split; [exact (Hw g Hg)|].
     rewrite Forall_forall in HF. exact (HF g Hg).
   - exact PV_wf.
@@ -115,9 +118,7 @@ Proof. LiaFast.lf_pins (fun (Hd HF HP0 HM HB : LiaFast.U) => LiaFast.u0).
   - cbn [length]. lia.
   - repeat constructor; lia.
   - lia.
-  - intros w Hw. destruct (Z_lt_le_dec w (uE E (rg_base R0))) as [Hlt|Hge].
-    + left. exists FRZ. split; [exact FRZ_in|]. split; [lia|]. apply HM. lia.
-    + right. lia.
+  - intros w Hw. left. exists FRZ. split; [exact FRZ_in|]. split; [lia|]. apply HM. lia.
   - intros k Hk. cbn [length] in Hk. split.
     + exists FRZ. split; [exact FRZ_in|]. lia.
     + destruct k as [|[|k]]; [| |lia].
@@ -131,11 +132,11 @@ Lemma INV_conv_rd : forall path0 fs0 mem0 E S S' M M' FS model0, s_next S' = s_n
   INV PV path0 [] fs0 true None mem0 E S M FS model0 -> INV PV path0 [] fs0 true None mem0 E S' M' FS model0.
 Proof.
   intros path0 fs0 mem0 E S S' M M' FS model0 Hn Hi.
-  destruct Hi as (H1 & H2 & _ & _ & H5 & _ & H7 & H8 & H9 & H10 & _).
+  destruct Hi as (H1 & H2 & _ & _ & H5 & _ & H7 & H8 & H9 & H10 & _ & H12).
   unfold INV. rewrite Hn. split; [exact H1|]. split; [exact H2|].
   split; [intros Hc; discriminate Hc|]. split; [split; intros Hc; discriminate Hc|]. split; [exact H5|].      (* [comment removed for export] *)
   split; [intros Hc; discriminate Hc|]. split; [exact H7|]. split; [exact H8|]. split; [exact H9|]. split; [exact H10|].
-  unfold hv_inv. exact I.
+  split; [unfold hv_inv; exact I | exact H12].
 Qed.
 End AsanRdConv.
 
@@ -152,7 +153,7 @@ Lemma R0_baseT : rg_base R0T = laddc RANDP16 (-16). Proof. vm_compute. reflexivi
 Lemma R0_sizeT : rg_size R0T = lconst 16. Proof. vm_compute. reflexivity. Qed.
 Definition FRZT : lin * lin := Eval vm_compute in List.nth 1 (sm_frz MMAIN) (lconst 0, lconst 0).
 Lemma FRZ_inT : In FRZT (sm_frz MMAIN). Proof. vm_compute. right. left. reflexivity. Qed.
-Lemma FRZ_sizeT : lin_eqb (snd FRZT) (lsub (laddc RANDP16 (-16)) (fst FRZT)) = true. Proof. vm_compute. reflexivity. Qed.
+Lemma FRZ_sizeT : lin_eqb (snd FRZT) (lsub TOPS (fst FRZT)) = true. Proof. vm_compute. reflexivity. Qed.
 Lemma drop_chkT : drop_own_ok TMAIN MMAIN drop_rand = true. Proof. vm_compute. reflexivity. Qed.
 Lemma FSR_wfT : forallb (fwf (s_next TMAIN)) FSRT = true. Proof. vm_compute. reflexivity. Qed.
 Lemma PV_wfT : lwf (s_next TMAIN) PV = true. Proof. vm_compute. reflexivity. Qed.
@@ -165,11 +166,13 @@ Variables (model0 : Model) (mem0 : word -> option byte) (E : valu) (ms : machine
 Hypothesis Hd : DEN ASEGS LIM model0 mem0 E TMAIN MMAIN ms model.
 Hypothesis HF : Forall (fact_ok E) FSRT.
 Hypothesis HP0 : uE E (fst FRZT) <= uE E PV.
-Hypothesis HM : forall w, uE E PV <= w < uE E PV + uE E SZR - 16 -> mem0 (Z_to_bv 64 w) <> None.
+Hypothesis HM : forall w, uE E PV <= w < uE E PV + uE E SZR -> mem0 (Z_to_bv 64 w) <> None.
 Hypothesis HB : mem0 (Z_to_bv 64 (uE E PV)) = Some (Z_to_bv 8 46) /\ mem0 (Z_to_bv 64 (uE E PV + 1)) = Some (Z_to_bv 8 0).
+(* 75d69e00: the random block no longer adjoins the strings, so its place above the shadow is a premise *)
+Hypothesis HR0 : SH_HI <= uE E (rg_base R0T).
 
-#[using="Hd HF HP0 HM HB"] Theorem den_conv_rdT : DEN ASEGS LIM model0 mem0 E SRT MRT ms model.
-Proof. LiaFast.lf_pins (fun (Hd HF HP0 HM HB : LiaFast.U) => LiaFast.u0).
+#[using="Hd HF HP0 HM HB HR0"] Theorem den_conv_rdT : DEN ASEGS LIM model0 mem0 E SRT MRT ms model.
+Proof. LiaFast.lf_pins (fun (Hd HF HP0 HM HB HR0 : LiaFast.U) => LiaFast.u0).
   pose proof HF as HF0. inversion HF0 as [|? ? HARGC HF1]; subst. inversion HF1 as [|? ? HV8 HF2]; subst.
   inversion HF2 as [|? ? HV8SP HF3]; subst. inversion HF3 as [|? ? HRND _]; subst.
   unfold FARGC, FV8, FV8SPT, FRND in *. cbn [fact_ok] in HARGC, HV8, HV8SP, HRND. fold (uE E PV) in HV8.
@@ -178,24 +181,24 @@ Proof. LiaFast.lf_pins (fun (Hd HF HP0 HM HB : LiaFast.U) => LiaFast.u0).
   rewrite HspE in Hsphi. fold (uE E (sm_sp MMAIN)) in Hsphi. unfold sp_window_hi in Hsphi.
   assert (Hsp : uE E PV = uE E (sm_sp MMAIN) + bv_unsigned (lden E (lsub PV (sm_sp MMAIN)))) by (apply u_lsub_eq; unfold two64; lia).
   fold (uE E SZR) in HRND.
-  assert (Hrp : uE E RANDP16 = uE E PV + uE E SZR).
-  { pose proof (u_lsub_eq E RANDP16 PV) as H1. change (lsub RANDP16 PV) with SZR in H1. fold (uE E SZR) in H1. apply H1. unfold two64. lia. }
-  assert (Hb0 : uE E (rg_base R0T) = uE E RANDP16 - 16) by (rewrite R0_baseT; apply (u_laddc_neg E RANDP16 16); lia).
+  (* the strings run from PV up to the stack top, all of it frozen *)
+  assert (Hrp : uE E TOPS = uE E PV + uE E SZR).
+  { pose proof (u_lsub_eq E TOPS PV) as H1. change (lsub TOPS PV) with SZR in H1. fold (uE E SZR) in H1. apply H1. unfold two64. lia. }
   assert (Hs0 : rsz E R0T = 16) by (unfold rsz; rewrite R0_sizeT; fold (uE E (lconst 16)); apply u_lconst_small; unfold two64; lia).
-  assert (Hfz : uE E (snd FRZT) = uE E (rg_base R0T) - uE E (fst FRZT)).
-  { rewrite (lin_eqb_eq _ _ FRZ_sizeT). rewrite <- R0_baseT.
-    assert (Rb : uE E (rg_base R0T) < two64).
-    { unfold uE. pose proof (bv_unsigned_in_range _ (lden E (rg_base R0T))) as R. unfold bv_modulus in R. change (2 ^ Z.of_N 64) with two64 in R. lia. }
+  assert (Hfz : uE E (snd FRZT) = uE E TOPS - uE E (fst FRZT)).
+  { rewrite (lin_eqb_eq _ _ FRZ_sizeT).
+    assert (Rb : uE E TOPS < two64).
+    { unfold uE. pose proof (bv_unsigned_in_range _ (lden E TOPS)) as R. unfold bv_modulus in R. change (2 ^ Z.of_N 64) with two64 in R. lia. }
     assert (Rf : 0 <= uE E (fst FRZT)) by (unfold uE; pose proof (bv_unsigned_in_range _ (lden E (fst FRZT))) as R; lia).
     unfold uE at 1. rewrite lden_lsub, bv_sub_unsigned. unfold bv_wrap, bv_modulus. change (2 ^ Z.of_N 64) with two64.
-    fold (uE E (rg_base R0T)). fold (uE E (fst FRZT)). apply Z.mod_small. lia. }
+    fold (uE E TOPS). fold (uE E (fst FRZT)). apply Z.mod_small. lia. }
   unfold SRT, MRT.
   apply (den_conv_rt_own ASEGS LIM model0 mem0 E TMAIN MMAIN ms model drop_rand R0T FSRT PV SZR [46; 0] Hd drop_chkT).
   - assert (H : In R0T (List.filter drop_rand (s_rgs TMAIN))) by (rewrite R0_onlyT; left; reflexivity). apply filter_In in H. exact (proj1 H).
   - vm_compute. reflexivity.
   - intros R HR Hf w Hw.
     assert (H : In R (List.filter drop_rand (s_rgs TMAIN))) by (apply filter_In; split; assumption). rewrite R0_onlyT in H.
-    destruct H as [<-|[]]. unfold in_shadow, SH_LO, SH_HI. apply andb_false_iff. right. apply Z.ltb_ge. lia.
+    destruct H as [<-|[]]. unfold in_shadow. apply andb_false_iff. right. apply Z.ltb_ge. lia.
   - pose proof FSR_wfT as Hw. rewrite forallb_forall in Hw. apply Forall_forall. intros g Hg. split; [exact (Hw g Hg)|].
     rewrite Forall_forall in HF. exact (HF g Hg).
   - exact PV_wfT.
@@ -204,9 +207,7 @@ Proof. LiaFast.lf_pins (fun (Hd HF HP0 HM HB : LiaFast.U) => LiaFast.u0).
   - cbn [length]. lia.
   - repeat constructor; lia.
   - lia.
-  - intros w Hw. destruct (Z_lt_le_dec w (uE E (rg_base R0T))) as [Hlt|Hge].
-    + left. exists FRZT. split; [exact FRZ_inT|]. split; [lia|]. apply HM. lia.
-    + right. lia.
+  - intros w Hw. left. exists FRZT. split; [exact FRZ_inT|]. split; [lia|]. apply HM. lia.
   - intros k Hk. cbn [length] in Hk. split.
     + exists FRZT. split; [exact FRZ_inT|]. lia.
     + destruct k as [|[|k]]; [| |lia].

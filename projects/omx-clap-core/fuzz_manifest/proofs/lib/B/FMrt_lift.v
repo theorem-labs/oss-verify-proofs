@@ -7,7 +7,8 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/U/Prog/WriterRet.v, with its module paths and module names changed; 702 of its 749 lines of code are new or changed and 692 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/Prog/pj_write.v, with its module paths and module names changed; 496 of its 536 lines of code are new or changed and 709 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/ReaderKB.v, with its module paths and module names changed; 203 of its 227 lines of code are new or changed and 512 lines of the source are left out. *)
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMrt_lift.v at a working branch 5d8d8a15571, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMrt_lift.v at a working branch, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
 (* fm's runtime contracts in the donor's form, the generic half (a Theorem Labs lane).
    - A walk proved over the machine state alone (lib/Lib `evt`, its registers written `mkR ...`) is
      read at a donor call site (`SRr` from `cfg_at`, YG0d.v:213): the register map is moved with

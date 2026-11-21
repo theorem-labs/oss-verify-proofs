@@ -8,9 +8,10 @@
    or the return of "resp 0" after the last (R2 -> HEAD / return). One lemma per segment, for each of the 28
    rows. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/rec_shape_of_s.v, with its module paths and module names changed; 1230 of its 1273 lines of code are new or changed and 409 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_words_add's walk on the ASan+UBSan build of plugin-hostd/fuzz_command, part 4: the head 0x88eac .. 0x88f64
-   (listing offsets 0x297c .. 0x2a34). The B twin of lib/A/Prog/check_words_add_s4.v (a working branch
-   1aea12cabb8).
+   (listing offsets 0x297c .. 0x2a34). The B twin of lib/A/Prog/check_words_add_s4.v (a working branch).
+   
 
    The prologue (frame 64, ra and s0..s5 saved), the shadow base read through the GOT word 0xa5f50 and the
    cell 0xb0c38, the branch on `read < 4`, the trap sites of w + 24 (0x88ef4 w null, 0x88efc w past 2^64 - 24,

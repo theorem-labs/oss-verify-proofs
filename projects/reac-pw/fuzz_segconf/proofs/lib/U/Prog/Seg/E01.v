@@ -3,6 +3,7 @@
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/Prog/LLVMFuzzerTestOneInput_fr.v, with its module paths and module names changed; 456 of its 574 lines of code are new or changed and 409 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/U/Prog/Seg/Tac_slot.v, with its module paths and module names changed; 388 of its 440 lines of code are new or changed and 522 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment E01 of reac-pw/fuzz_segconf LLVMFuzzerTestOneInput (UBSan, ELF afc060e3cc9c): [0x13888, 0x13980],
    ENTRY -> K13984 (U/Prog/LLVMFuzzerTestOneInput_c.v's S_E01), proved at the cut record CPseg.
    The plain segment (lib/Prog/Seg/E01.v) with the UBSan numbers and the three UBSan checks of this stretch: the
@@ -20,7 +21,7 @@
    Inv_K13984 with seg_cuts.P_K13984: a0 = m, s0 = c, s2 = seg_cap, s5 = seg_flags, s6 = seg_nfiles, s3 / s1 the
    cursor after the header, s11 = MC_N, c's 16616 bytes as cells over the cut memory, m's 9236 zero bytes, both blocks
    16-aligned and outside the reserved pages.
-   Adapted from reac-pw/fuzz_role's U/Prog/Seg/E01.v (commit cb8205fb6109).
+   Adapted from reac-pw/fuzz_role's U/Prog/Seg/E01.v.
    Part of the proof of LLVMFuzzerTestOneInput (its segment E01); no released proof of fuzz_segconf's
    LLVMFuzzerTestOneInput exists; written new. *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB, and the allocator-ceiling premise of the client-write lemma is derived from the floor by lia. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -94,7 +95,7 @@ Notation g_lo G := (ae_lo (g_E G)).
 
 Record pctx_ok (G : pctx) : Prop := mkGok {
   go_q : g_q G mod 32 = 0 /\ g_q G + 16 <= USTACK_TOP /\ g_lo G + pj_needA (g_d G) <= g_q G;
-  go_lo : 0x7fff7f800000 <= g_lo G /\ g_sp0 G - STACK_WIN <= g_lo G;
+  go_lo : 0x7fff7f800000 <= g_lo G /\ g_sp0 G - STACK_SPAN <= g_lo G;
   go_sp0 : SEGTOP_A + STACK_WIN <= g_sp0 G <= USTACK_TOP /\ 0x7fff80000000 <= g_sp0 G;
   go_E : aenvA_ok (g_E G) /\ In (ae_TAPE (g_E G), ae_NT (g_E G)) (g_L G) /\ In (ae_SBUF (g_E G), ae_NS (g_E G)) (g_L G)
          /\ (ae_p1 (g_E G) = [] \/ In (ae_PB (g_E G), ae_NPB (g_E G)) (g_L G)) /\ In (ae_fD (g_E G), ae_kD (g_E G)) (g_rfr G);
@@ -278,7 +279,7 @@ Section G.
       destruct GOK as [_ _ _ _ (EIN & ELO & EHI & E16 & _) _ _ _ _ _ _ _]. pose proof (RFR _ _ EIN) as (B1 & B2 & B3 & B4 & B5 & _).
       assert (XS : g_OS G / 8 + 36 <= (g_fO G + fs_size (g_kO G)) / 8) by (clear - EHI E16; Z.div_mod_to_equations; lia).
       unfold shad in *. clear - Ha O B3 B5 ELO EHI LO1 XS. ul. }
-    split. { apply (art_client_write RT AF Σ m m' (g_lo G) HA); [rewrite SP0; exact LO2| | exact WM].
+    split. { apply (art_client_write RT AF Σ m m' (g_lo G) HA); [rewrite SP0; clear - LO2; lia| | exact WM].
              intros a Ha. apply MU. destruct (HW (bv_unsigned a)) as [X|X]; [exact X|]. exfalso. apply Ha. rewrite FRS, LV. exact (ownB_aclient _ X). }
     split; [exact MI'|]. split; [exact FRS|]. split; [exact LV|]. split; [exact SP0|]. split; [exact CR|].
     split; [exact ST'|].
@@ -410,7 +411,7 @@ Section G.
     intros fcs k Σ m AI0 GI W0 m' MU WM HW.
     pose proof GI as (HA & MI & FRS & LV & SP0 & CR & ST & _ & _ & _ & _ & _ & _ & _ & REL). destruct GOK as [(Q32 & QT & LQ) (LO1 & LO2) _ (OK & INT & INS & _) _ _ _ _ _ _ _ _].
     assert (HA' : ART RT Σ m').
-    { apply (art_client_write RT AF Σ m m' (g_lo G) HA); [rewrite SP0; exact LO2| | exact WM].
+    { apply (art_client_write RT AF Σ m m' (g_lo G) HA); [rewrite SP0; clear - LO2; lia| | exact WM].
       intros a Ha. apply MU. destruct (HW (bv_unsigned a)) as [X|X]; [exact X|]. exfalso. apply Ha. rewrite FRS, LV. exact (ownB_aclient _ X). }
     assert (AI' : AINV_A (g_E G) m').
     { apply (AINV_A_agree (g_E G) m m' (PINVA_ainv _ _ _ _ AI0 GI)). intros a Ha. apply MU.
@@ -453,7 +454,7 @@ Section G.
 
   Lemma PINVA_callctx : forall fcs k Σ m, PINVA G fcs k Σ m ->
     In (g_fO G, g_kO G) (rt_frames RT Σ) /\ g_fO G <= g_OS G /\ g_OS G + 288 <= g_fO G + fs_size (g_kO G) - 8 /\ g_OS G mod 16 = 0
-    /\ os_hullA m (g_OS G) /\ rt_sp0 RT Σ - STACK_WIN <= g_lo G /\ g_S1 G + 16 <= USTACK_TOP /\ g_S1 G mod 16 = 0 /\ g_S1 G mod 32 = 0
+    /\ os_hullA m (g_OS G) /\ rt_sp0 RT Σ - STACK_SPAN <= g_lo G /\ g_S1 G + 16 <= USTACK_TOP /\ g_S1 G mod 16 = 0 /\ g_S1 G mod 32 = 0
     /\ Z.of_nat (length (rt_frames RT Σ)) = Z.of_nat (length (g_rfr G)) + 1
     /\ g_lo G + DMP_PJ_LEAF_A + 256 <= g_q G /\ Z.of_nat (length (g_rfr G)) + 3 <= FRAMES_TOT.
   Proof using AF GOK.
@@ -716,7 +717,7 @@ Lemma pctx_ok_intro : forall G Σ m,
   ART RT Σ m -> rt_frames RT Σ = g_fr G -> rt_live RT Σ = g_L G -> rt_sp0 RT Σ = g_sp0 G ->
   g_q G mod 32 = 0 -> g_q G + 16 <= USTACK_TOP -> g_lo G + pj_needA (g_d G) <= g_q G ->
   aenvA_ok (g_E G) -> In (ae_TAPE (g_E G), ae_NT (g_E G)) (g_L G) -> In (ae_SBUF (g_E G), ae_NS (g_E G)) (g_L G) ->
-  (ae_p1 (g_E G) = [] \/ In (ae_PB (g_E G), ae_NPB (g_E G)) (g_L G)) -> In (ae_fD (g_E G), ae_kD (g_E G)) (g_rfr G) -> g_sp0 G - STACK_WIN <= g_lo G ->
+  (ae_p1 (g_E G) = [] \/ In (ae_PB (g_E G), ae_NPB (g_E G)) (g_L G)) -> In (ae_fD (g_E G), ae_kD (g_E G)) (g_rfr G) -> g_sp0 G - STACK_SPAN <= g_lo G ->
   In (g_fO G, g_kO G) (g_rfr G) -> g_fO G <= g_OS G -> g_OS G + 288 <= g_fO G + fs_size (g_kO G) - 8 -> g_OS G mod 16 = 0 ->
   (ae_DOC (g_E G) + 16 <= g_OS G \/ g_OS G + 288 <= ae_DOC (g_E G)) ->
   Z.of_nat (length (g_rfr G)) + Z.of_nat (g_d G) + 3 <= FRAMES_TOT ->

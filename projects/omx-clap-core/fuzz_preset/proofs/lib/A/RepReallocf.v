@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepReallocf.v (commit 3cae605a900a, blob c0799ff25ac8) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; pin 1be0f53d96cb), from cgif_file_fuzzer asan-ubsan ce511d541cda (pin 1c29845fe605), the cf layer at part 3c; module paths changed; 4 image numerals moved by port_addr_check 3d2eee813cce MAPS predictions and the twins' symbol + offset map (0 model labels and sizes kept); no other numeral changed; comments removed (the source file keeps them). *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepReallocf.v (blob c0799ff25ac8) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; pin 1be0f53d96cb), from cgif_file_fuzzer asan-ubsan ce511d541cda (pin 1c29845fe605), the cf layer at part 3c; module paths changed; 4 image numerals moved by port_addr_check 3d2eee813cce MAPS predictions and the twins' symbol + offset map (0 model labels and sizes kept); no other numeral changed; comments removed (the source file keeps them). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -227,14 +228,14 @@ apply HM; clear HM.
 - intros a regs1 mem1 mat1. cbv zeta. intros Ha64 HG HP1 R1_10 FR1 ZR1 PR1 IO1.
 rewrite wvb_collapse in HG, IO1 |- *.
 assert (UA : bv_unsigned (w64 a) = a) by (unfold w64; apply unsigned_lit_small; lia).
-assert (HGmd : grant_ok_na_pin md (w64 a) ncap = true) by exact HG.
-destruct (RepMmapcf.grant_pin_parts md (w64 a) ncap HGmd) as (Gal & Gpos & Gtop & Grf). rewrite UA in Gal, Gpos, Gtop.
+assert (HGmd : grant_ok_na_pin (Z_to_bv 64 0) md (w64 a) ncap = true) by exact HG.
+destruct (RepMmapcf.grant_pin_parts md (w64 a) ncap HGmd ltac:(lia) NCm) as (Gal & Gpos & Gtop & Grf). rewrite UA in Gal, Gpos, Gtop.
 pose proof (RepMmapcf.alloc_top_lt (m_vmmaps md)) as ATL.
 destruct (GAP (w64 a) HGmd) as (Ga1 & Ga2 & Ga3). rewrite UA in Ga1, Ga2, Ga3.
 assert (UAn : bv_unsigned (w64 ncap) = ncap) by (unfold w64; apply unsigned_lit_small; lia).
 assert (OLDAP : cap = 0 \/ d + cap <= a \/ a + ncap <= d).
 { destruct OLD as [Hc0|(_ & _ & _ & _ & OIn)]; [left; exact Hc0|].
-  right. destruct (grant_apart_map md a ncap d cap HGmd ltac:(lia) ltac:(lia) OIn ltac:(lia) ltac:(lia)); lia. }
+  right. destruct (grant_apart_map md a ncap d cap HGmd ltac:(lia) NCm ltac:(lia) ltac:(lia) OIn ltac:(lia) ltac:(lia)); lia. }
 assert (MWFN : MWF (with_vm_backing (m_vm_lazy md) mat1 md)) by (exact (MWF_same_but_materialized md _ MWF0 (with_vm_backing_same md mat1))).
 apply amreal_use_AI. intros HAI1. cbn [cfg_model] in HAI1.
 assert (HAIN : AI tfibsegs (w_H W) (w_A W) (with_vm_backing (m_vm_lazy md) mat1 md)).

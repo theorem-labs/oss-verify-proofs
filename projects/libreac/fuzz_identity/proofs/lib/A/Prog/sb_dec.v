@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: restates text of projects/cgif/cgif_file_fuzzer/proofs/lib/A/AC95.v:145-147
    [Apache-2.0]; projects/cgif/cgif_rgb_fuzzer/proofs/lib/YC59.v:27-30 [Apache-2.0 OR MIT], for libreac/fuzz_identity's ASan
    build (lib/A). The [Apache-2.0 OR MIT] text is used under Apache-2.0. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* sb_dec (fuzz_identity.asan 0x83494, 0x31c bytes, listing offset AF_sb_dec = 0x2d88): its ASan-build
    contract tsb_dec_spec, in cgif's caller-journal form (CONVENTIONS.md §2; cgif lib/YC20.v:311-365,
    tlzw_kept / tlzw_post / tlzw_spec): sb_dec writes its caller's struct sb (on the caller's machine
@@ -33,7 +34,7 @@ PaRun PaShadow PaJournal IdentSyms IdentList IdentPa IdentPaLib IdentBase.
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.A.Prog Require Import IdentFrame YC85 YC81 YC4b YC45 YC1g YC1h.
 (* The shared caller-journal shapes tcj_kept / twr_ok / tdst_ok: lib/A/Prog/IdentCJ.v. *)
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.A.Prog Require Import IdentCJ.
-(* The plain model of sb_dec (released, origin/ossv/recipes c8557374ad2e), used as it is. *)
+(* The plain model of sb_dec (released), used as it is. *)
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Prog Require sb_dec_c.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
@@ -150,7 +151,7 @@ Definition tsb_dec_spec : Prop :=
   SRr SEGS W (cfg_at SEGS A_sb_dec regs memc mdc)
     (tsb_dec_post STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc k regs b v md p cap n ov).
 (* The walk's Section hypotheses (CONVENTIONS.md §4; cgif lib/A/AChf.v:47-76 for a function with a
-   side-stack frame). pb_sb_dec : tsb_dec_spec is proved under them in lib/A/Prog/sb_decWalk.v:52. *)
+   side-stack frame). pb_sb_dec : tsb_dec_spec is proved under them in lib/A/Prog/sb_decWalk.v:53. *)
 Section walk.
 Hypothesis TL : PALib B.
 Hypothesis LAWS : AR_laws SEGS B.
@@ -369,7 +370,7 @@ split.
     * intros a Ha. cbn [Z.min Z.max] in Ha. rewrite Z.min_l, Z.max_r in Ha by lia.
       exact (proj2 (Q3 a ltac:(lia))).
 Qed.
-(* Theorem pb_sb_dec : tsb_dec_spec is proved in lib/A/Prog/sb_decWalk.v:52. *)
+(* Theorem pb_sb_dec : tsb_dec_spec is proved in lib/A/Prog/sb_decWalk.v:53. *)
 End walk.
 End h.
 End f.

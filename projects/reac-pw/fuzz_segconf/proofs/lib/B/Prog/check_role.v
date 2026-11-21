@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the walk of rec_code_declared on fuzz_command.asan, in the shape of proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v (cmpPixel's leaf walk): a seed lemma at the entry, then the executor's run/branch loop to every return. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/rec_code_declared.v, with its module paths, module names and numbers changed; 242 of its 328 lines of code are new or changed and 226 lines of the source are left out. *)
-(* the image-B port of lib/A/Prog/check_role.v (commit e79686f8d801): the walk of check_role on
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* the image-B port of lib/A/Prog/check_role.v: the walk of check_role on
    fuzz_segconf.asan-ubsan (image B, 0x870f8 = BASE + AF_check_role, 148 bytes, 37 instructions), against
-   lib/B/Prog/check_role_c.v's check_role_contract (image B's copy of lib/A/Prog/check_role_c.v, FINAL 6f783602b5e3).
+   lib/B/Prog/check_role_c.v's check_role_contract (image B's copy of lib/A/Prog/check_role_c.v, FINAL).
    ADAPTED: image B's code is image A's 34 instructions in order (other addresses: the GOT word 0xa3210, the abort arm
    0x8715c, the error paths) plus UBSan's alignment test at the entry, `andi a3,a2,3; bnez a3` (0x87100, 0x87104) to
    the trap `unimp` 0x87164. The run: the 16-byte frame (`addi sp,sp,-16; sd ra,8(sp)`), the alignment test (not

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: MInv_munmap_refund's new length premise. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -244,7 +245,7 @@ Context {Clg : Ceiling}.
   Proof.
     intros E mdx HI HAS EM. pose proof GEO as (HLO & HAL & MSZ & MSZAL & HHI & PH & PIN & N6 & NR & H5 & PM). pose proof alloc_ceiling_val as CE.
     assert (R1 : bv_unsigned (wz h) = h) by (apply unsigned_lit; lia). assert (R2 : bv_unsigned (wz msz) = msz) by (apply unsigned_lit; lia).
-    pose proof (MInv_munmap_refund H1 L1 E (wz h) (wz msz) mdx HI HAS EM) as HI'. rewrite R2 in HI'.
+    pose proof (MInv_munmap_refund H1 L1 E (wz h) (wz msz) mdx HI HAS ltac:(rewrite R2; lia) EM) as HI'. rewrite R2 in HI'.
     change H2 with ([] ++ e1 :: e2 :: REST). exact (MInv_hull_remove_all [] [(h, h + msz)] (e1 :: e2 :: REST) L1 (E - msz) _ HI').
   Qed.
 

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (brk's page-rounded grants and growth limit). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -690,7 +691,9 @@ Qed.
 Lemma brk_grants_grow : forall req r old,
   req <> Z_to_bv 64 0 ->
   (0 < bv_unsigned old)%Z -> (bv_unsigned old < bv_unsigned r)%Z ->
-  brk_grants req r old = [(old, r - old)].
+  brk_grants req r old =
+    brk_page_range (page_round_up_Z (bv_unsigned old))
+                   (page_round_up_Z (bv_unsigned r)).
 Proof.
   intros req r old Hreq Hold Hlt. unfold brk_grants, brk_is_grow.
   assert (E1 : w_is0 req = false)
@@ -807,7 +810,8 @@ Definition growable (reserved : list (word * word)) (lim top : Z) (t r : word)
                                (bv_unsigned r + bv_unsigned t)
                               + page_size - page_round_up_Z (bv_unsigned r)))
       else true)
-     && (bv_unsigned t <=? lim)%Z)%bool = true)).
+     && (Z.max 0 (page_round_up_Z (bv_unsigned r + bv_unsigned t)
+                  - page_round_up_Z (bv_unsigned r)) <=? lim)%Z)%bool = true)).
 
 (* [comment removed for export] *)
 Definition T1 (reserved : list (word * word)) (lim top : Z) (t : word)

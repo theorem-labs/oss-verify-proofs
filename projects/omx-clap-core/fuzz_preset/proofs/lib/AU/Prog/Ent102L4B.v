@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image B' (asan-ubsan, harness fix #102, pin sha256
    d663f82d7f488d30f8e8d7496cb814e595a2f3cbbf16bde81a65cb3ea9af0994, unstripped twin c90d4fa54d43160b):
    SEGMENT L4 of LLVMFuzzerTestOneInput (entry 0x816cc), listing +0x1b8 .. +0x2f8 (0x81884 .. 0x819c4), proved against
@@ -18,15 +19,15 @@
                                     ec_supply_run, ec_call_evs_ranout_false and call_tail's None arm - through the
                                     BRIDGE l4_rej_bridge: that list is ec_rej E when e_sm E = jr_strtod)
      +0x2f4  the return site = EC_AR_CRS0 = cut_crs0, at cut_caw's index + |ec_rej E| (l4_idx_crs0).
-   THE B' TWIN of lib/A/Prog/Ent102L4A.v (seg_L4_A, L4Lane's re-fit to the wild budget, commit
-   1c9e4170e60, blob 9df49deace7c, on b1ed4e6c944d), ported by port/a2b.py (sha256 f5113cbc90e503da) and then by hand: L := B_prog_listing, PL :=
+   THE B' TWIN of lib/A/Prog/Ent102L4A.v (seg_L4_A, L4Lane's re-fit to the wild budget,
+    blob 9df49deace7c), ported by port/a2b.py (sha256 f5113cbc90e503da) and then by hand: L := B_prog_listing, PL :=
    PL_102_B, e_A / ec_A -> the B' cut file's e_B / ec_B, the B' twins Ent102L6BfLem.v / Ent102CallB.v /
    Ent102L4BDefs.v and the record's lib/AU/Ent102PosB.v. The B' slots 110 .. 190 (+0x1b8 .. +0x2f8) are A''s word for
    word (lib/B/Listing_prog.v vs lib/A/Listing_prog.v; the body's only B'-vs-A' slot differences are slots 48 (+0xc0),
    74 (+0x128) and 100 (+0x190), all outside this range and none read here), and this lane reads no ei_own, so every
    step is A''s text; ei_empty is read over B''s own bounds IMG_LO_B / IMG_TOP_B.
-   STATEMENT: lib/AU/Ent102CutsB.v, read at blob a74a7497b9d0 (commit
-   b1ed4e6c944d with a Theorem Labs lane's CallA / CallB re-fit 3ea93d01b97c; the exact room position, cut_caw at r = 0 only, cut_crs0 at ran = 0 with `e_n E <= EC_NMAX /\ fst
+   STATEMENT: lib/AU/Ent102CutsB.v, read at blob a74a7497b9d0 (
+    with a Theorem Labs lane's CallA / CallB re-fit; the exact room position, cut_caw at r = 0 only, cut_crs0 at ran = 0 with `e_n E <= EC_NMAX /\ fst
    (jr_run (e_sm E) (e_x E) []) = None`, ech_noref, the ledger's `.. ran most own`, ei_empty over IMG_LO_B / IMG_TOP_B,
    the segments over ec_hyps (no DW), the wild budget ec_wk_caw / ec_wk_crs0, ei_most_w); lib/AU/Ent102PosB.v (ec_supply_run, ec_run_split,
    ec_call_evs_ranout_false, ec_rd_ck_read).
@@ -34,7 +35,7 @@
    entry), with the PAListing PL_102_B of lib/B/Ent102PLB.v (blob e0348e1212c9); the image half stays generic
    ({PA : PAImg B_prog_listing}; lib/B/PAImg_prog.v, PresetCfnA.v, PresetCfnB.v are not loaded, no vm_compute on
    pa_val / pa_sigma).
-   The kit TEXTS (the kit of record f97c8b2f046b by path on the record): lib/A/PRH_Base.v fdb45545469b (fpre with its last
+   The kit TEXTS (the kit of record by path on the record): lib/A/PRH_Base.v fdb45545469b (fpre with its last
    conjunct frm_zero, FRM0-ENTRY: each call's fy from ec_at; fpostm, fpostFm, src_rd, kept_at, kept_img, prh_run_at,
    prh_ledger's named projections), lib/A/PRH_FnCheck.v 9ecd8eb167c6 (tcheck_reject_clean_specX, ck_crcs_evs,
    ck_crcs_max, LIVE_check_reject_clean_starved, RQ_crcs), lib/A/PRH_FnPj.v 908f34f0beaa (RQ_pj_parse): generic over
@@ -45,7 +46,7 @@
    `proof-index seg_L4_B seg_L4_A 0x81884 0x819c0 0x819c4`, index v5 built 2026-10-29T16:10:25Z,
    a Theorem Labs lane's internal file rule24-LL4B.txt: seg_L4_B 0 hits; seg_L4_A only on L4Lane's unreleased
    internal branch, the port source; the family lead's census-1 internal-branch sweep 16:03-16:07Z found no other #102 walk).
-   PORTED from L4Lane's A' lib/A/Prog/Ent102L4A.v (blob 319e64d518c, commit e050be851a5, on the kit's pre-landing no-DW batch).
+   PORTED from L4Lane's A' lib/A/Prog/Ent102L4A.v (blob 319e64d518c, on the kit's pre-landing no-DW batch).
    NO SECTION HYPOTHESIS (decision (A), owner 22:35Z, on the batch kit's pre-landing batch): the call cites ec_texts'
    et_check_reject_clean_starved = the batch kit's entry-keyed tcheck_reject_clean_starved_specX, which states the refusal arm
    DEAD (ran' = ran) under its consumer window `prh_cons_from .. rp_i (length (ck_crcs_evs ..))` and the two room-count
@@ -69,7 +70,7 @@
    lib/AU/Prog/Ent102L6BfLem.v (the addi / jal steps, the frame geometry, the byte and register keeps).
    TEMPLATES TAKEN (by path): the call and its post follow lib/A/Prog/Ent102L6Af.v of a working branch
    (seg_L6f_A: the registers, the window and the exit assembly from the two journals); the arm structure follows
-   lib/B/Prog/EntS3B.v of a working branch 9a84f11012ba (es3_pay, es3_doc_src; old pin, its image facts
+   lib/B/Prog/EntS3B.v of a working branch (es3_pay, es3_doc_src; old pin, its image facts
    not cited). The sub step, the concrete call rules, the doc's window and the refused tail's run supply are
    lib/AU/Prog/Ent102L4BDefs.v's.
    NUMERALS: 0x1b8 / 0x1bc / 0x2c8 / 0x2cc / 0x2d0 .. 0x2f4 / 0x2f8 are this lane's slot offsets (DERIVED from the cut

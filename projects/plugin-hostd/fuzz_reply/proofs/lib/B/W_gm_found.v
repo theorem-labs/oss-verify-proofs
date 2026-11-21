@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30: the ROOM round (an internal work row), A's re-fit git diff f6bfd4d6ab5 f6038f3d481
-   of lib/A/W_gm_found.v applied by three-way merge onto lane W4's ARx text (a working branch 0d0105eaf4d) at
+(* Modified by Theorem Labs, 2026-10-30: the ROOM round (an internal work row), A's re-fit git diff
+   of lib/A/W_gm_found.v applied by three-way merge onto lane W4's ARx text (a working branch) at
    B's names: pb_gm_found_x takes RP and the room premises; every arm ends with rp_RM at the post's kr (gf_ret_tail's
    HRM), the list_push / list_drop tails pass kr with gm_cnt_push / gm_cnt_drop, and list_push's room is the peak of
    its trace (lib/B/W_tr_peak.v, cand13's twin). The AR statements (Section r) are W4's, unchanged. *)
@@ -27,8 +27,9 @@
    ARx) with Section hypotheses LAWS HP0 TL HG MTL ABCMP LFIND LPUSH LDROP HLITG HLITB HLITE, the callees at their _x
    specs; Section r re-derives pb_gm_found, statement unchanged, at ARx := W_journal_x.ARi0. *)
 (* Modified by Theorem Labs, 2026-10-30: the meter at the KF-COUNT kit's gm_cost H ln (the trace's charge), lib/A's
-   re-fit (git diff 174e035443a c02c5d20acb of lib/A/W_gm_found.v) at B's names: each arm proves its own case (the
+   re-fit (git diff of lib/A/W_gm_found.v) at B's names: each arm proves its own case (the
    gf_cost_ lemmas), the room lemmas gm_rm_push / gm_rm_drop are those cases at MT_rk *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

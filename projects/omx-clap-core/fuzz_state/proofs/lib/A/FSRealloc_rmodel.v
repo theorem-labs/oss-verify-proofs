@@ -1,11 +1,11 @@
 (* fuzz_state realloc thin: the IMAGE-FREE part of the instance of a Theorem Labs lane's realloc composition (lib/Reusable/RGtop.v,
-   c5: a working branch 2bd8ae006ef): the universe [FS_Un], the trace premises [FS_U] (Allocate's / Deallocate's)
+   c5: a working branch): the universe [FS_Un], the trace premises [FS_U] (Allocate's / Deallocate's)
    and [FS_rU] (realloc's entry), the premises [FS_rpre] / [FS_rpreA] / [FS_rpreD], and the model obligation
    [fs_rmodel_ok] (cgif_rgb YG0f.v:23-28, 113-140 ported to fs's kit).  Moved out of lib/A/FSRealloc_inst.v (a Theorem Labs lane
    L13-RtB, 2026-10-29) so that image B's instance lib/B/FSRealloc_inst.v and image A's lib/A/FSRealloc_inst.v share one
    text.
 
-   The trace premises (a Theorem Labs lane decision (B), 2026-10-29; FSupoisonRealloc.v @ fda61055856):
+   The trace premises (a Theorem Labs lane decision (B), 2026-10-29; FSupoisonRealloc.v):
    - [FS_U tr S] = `In tr Un \/ st_nev S < EV_MAX`, fs's standard C5 form (YG0d.amalloc_realizes, FSupoisonU's
      amalloc_realizesU / afree_realizesU), taken by the Allocate call at S1 (one event after realloc's entry) and the
      Deallocate call at S2 (two events after it);

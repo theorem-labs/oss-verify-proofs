@@ -1,4 +1,4 @@
-(* The reply B twin of the cf layer's DGmpcf.v (field round 3 part 3; a working branch f02099425ace,
+(* The reply B twin of the cf layer's DGmpcf.v (field round 3 part 3; a working branch,
    proofs/cgif/cgif_file_fuzzer/lib/DGmpcf.v). rule 24: no function proved (kind: frame corollaries over the Deallocate
    walks' dmem_m frame).
 

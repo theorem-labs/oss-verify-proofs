@@ -3,7 +3,7 @@
 The record of five files relocated from fuzz_grant's released image-B lib to fuzz_wire's image B (fuzz_wire.asan-ubsan,
 pin af4534831a45 = harness.yaml, unstripped twin 51eb4bef2425): two contracts of the ASan runtime, no new proof.
 
-| file (lib/) | donor (fuzz_grant's released lib; the same blob at origin/ossv/recipes 283c35cdd4dc `projects/libreac/fuzz_grant/proofs/lib/...` and at recipes 4f87de75d67 `proofs/libreac/fuzz_grant/lib/...`) | contract |
+| file (lib/) | donor (fuzz_grant's released lib; the same blob `projects/libreac/fuzz_grant/proofs/lib/...` and at recipes `proofs/libreac/fuzz_grant/lib/...`) | contract |
 |---|---|---|
 | B/Rt/StackMalloc0.v | lib/B/Rt/StackMalloc0.v, blob 5fa59c37a532 | B/Rt/StackMalloc0.v:515 `Corollary stack_malloc0_contract : forall B, AR_laws tfibsegs B -> WireSyms B -> astack_malloc_realizes tfibsegs B 0.` |
 | B/Rt/StackMalloc0Tbl.v | lib/B/Rt/StackMalloc0Tbl.v, blob edb042b027b7 | (the class-0 constants, probe points and cells) |
@@ -17,9 +17,9 @@ donor's and the tool's (applied.txt counts them); every other byte is the run's 
 
 ## Route
 
-1. Tool: port_core 0e4e065eab9f (port_core.py sha256 0e4e065eab9f9a67; `git archive 7f0e4b05267
+1. Tool: port_core 0e4e065eab9f (port_core.py sha256 0e4e065eab9f9a67; `git archive
    tools/pg-reloc/0e4e065eab9f`, as the tools registry row names it) with the flags of the unit's image-B core run of record
-   (../core-B/run.sh): the same donor normalisation (../core-B/mkdon.sh 4f87de75d67 fuzz_grant B), --old-syms
+   (../core-B/run.sh): the same donor normalisation (../core-B/mkdon.sh fuzz_grant B), --old-syms
    (../core-B/fuzz_grant.asan-ubsan.syms.txt), --old-prog, --no-stage list, image-B mode, kernel / known images and the
    rename set GrantB / GrantSyms / GrantB_syms / GrantB_ok -> WireB / WireSyms / WireB_syms / WireB_ok; --files
    files-smB.txt. Module paths change only by --src-mod -> --target-mod.
@@ -34,7 +34,7 @@ donor's and the tool's (applied.txt counts them); every other byte is the run's 
      (ly_SB ly =? 0);` before `cbn [snd]`. The unit's kernel is the empty-depot one (lib/Reusable/DepotCfg.v
      depot_has_trace = false), whose owned_extents (lib/Reusable/YG0f.v) has `if (ly_NB ly =? 0) ...` entries; the
      donor text leaves `0 <= snd (if ...)`, which lia does not prove (the first build: `No applicable tactic`). The
-     added text is the released empty-depot form of fuzz_knock's image-B file (commit 48907dc7e8ca,
+     added text is the released empty-depot form of fuzz_knock's image-B file (
      projects/libreac/fuzz_knock/proofs/lib/AU/YF0s.v:75), byte for byte. No statement changes.
 4. Apply: apply-smB.sh copies the stage-out by --apply's rule (nothing overwritten), because of core-B's known FAIL row
    `rename-new-undeclared WireSyms` (the Record is declared in the start-up file lib/B/YF0m.v, never staged).

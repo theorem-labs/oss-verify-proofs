@@ -30,7 +30,7 @@
        the call state, the frame condition and the two presence clauses) and, for [sp - 4272, A - 4096), the
        journal at m1 (mbB_to_E0's continuation).
    The spec's premises are taken in the form of treac_box_model_block_spec (lib/B/Prog/C_reac_box_model_block.v,
-   5487787da37, image A's form of record) with its definitions unfolded (bmb_z, tbmb_o_home, CtrlCallerJ.twr_ok /
+    image A's form of record) with its definitions unfolded (bmb_z, tbmb_o_home, CtrlCallerJ.twr_ok /
    tsrc_ok at PI_ctrl_B, whose pa_segs is rsegs), so the composer passes them by conversion.
 
    rule 24: no function proved (glue of the proved run reac_box_model_block_holds_F). *)
@@ -338,7 +338,7 @@ Hypothesis LAWS : lib.Reusable.YG0d.AR_laws rsegs B.
 Hypothesis TSY : lib.Reusable.YF0m.CtrlTSyms B.
 (* the spec's Section hypothesis (cgif lib/YC20.v:56) *)
 Hypothesis RELRO_IMG : forall a, RLO <= a < RHI -> lib.Reusable.YG0d.in_img rsegs a.
-(* B ProgWorld statements, PROVED on image B and cited (L3 rule, two Theorem Labs lanes 13:12Z; a Theorem Labs lane's db8a86df2da) *)
+(* B ProgWorld statements, PROVED on image B and cited (L3 rule, two Theorem Labs lanes 13:12Z; a Theorem Labs lane) *)
 Let ctl_fp_of_AR : B.ProgWorld.ctl_fp_of_AR_stmt B := lib.B.ProgWorld_Fs.ctl_fp_of_AR B.
 Let fp_tls_apart : B.ProgWorld.fp_tls_apart_stmt B := lib.B.ProgWorldTlsApart.fp_tls_apart B.
 Let ctl_fs_of_AR : B.ProgWorld.ctl_fs_of_AR_stmt B := lib.B.ProgWorld_Fs.ctl_fs_of_AR B.
@@ -408,7 +408,7 @@ Lemma mbB_mid :
     mb_pre_facts ra sp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 (B.MemNorm.normalize rsegs memc) mc ->
     B.MemNorm.mem_rel rsegs m1 mc -> B.MemNorm.ro_same rsegs memc m1 ->
     lib.Reusable.YCbq.ajournal rsegs B STK sp0 FP ly S0 W0 mem0 md0 own lyc Sc W m1 mdc1 k ->
-    (* ---- E0 (mbB_E0's continuation, 8d5b2e35119) ---- *)
+    (* ---- E0 (mbB_E0's continuation) ---- *)
     lib.Reusable.YCbq.ajournal rsegs B STK sp0 FP ly S0 W0 mem0 md0 ((0, pos) :: own) lyc S2 W mem2 md2 k ->
     lib.Reusable.YK11.getr regs2 10 = lib.Reusable.YG0d.w64 (lib.Reusable.YG0f.frame_addr lyc 0 pos) ->
     lib.Reusable.YG01.frames S2 = (0, pos) :: lib.Reusable.YG01.frames Sc ->

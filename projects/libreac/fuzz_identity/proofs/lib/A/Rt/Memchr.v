@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: relocated from libreac/fuzz_disco (a working branch 91c9538449b, proofs/libreac/fuzz_disco/lib/A/Rt/Memchr.v) to fuzz_identity.asan by an address map recorded by the porting lane; module paths, the record class TfibSyms (unchanged). *)
+(* Modified by Theorem Labs, 2026-10: relocated from libreac/fuzz_disco (a working branch, proofs/libreac/fuzz_disco/lib/A/Rt/Memchr.v) to fuzz_identity.asan by an address map recorded by the porting lane; module paths, the record class TfibSyms (unchanged). *)
 (* Modified by Theorem Labs, 2026-10: bridged to identity's contract: Section h takes aro_unowned over the view of memory in place of consts_view and gets the walk's mconsts_view from WrapRoM.mconsts_of_aro; disco's memchr_icpt_realizesM and memchr_icpt_realizes are replaced by memchr_icpt_contract for amemchr_realizes (lib/A/Rt/MemchrDef.v). *)
 (* Modified by Theorem Labs, 2026-10: cgif_file_fuzzer lib/A/AE6x.v's walk of the memchr wrapper, generalised to any byte c in a1 and to a window that may hold no c: the musl call is MemchrMusl's walk, and after it the found case keeps AE6x's check (AE6y, count a0 - s2 + 1) while the not-found case takes the twin check of MemchrChk (count s1). *)
 (* Modified by Theorem Labs, 2026-10-29: for a Theorem Labs lane's acceptance (a working branch), the record class is TfibSyms, not IdentTfibSyms, and the core modules are Required by full path at the applied A core's names (lib/A/A*.v, lib/Reusable/YA0m, YE08, YE21). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

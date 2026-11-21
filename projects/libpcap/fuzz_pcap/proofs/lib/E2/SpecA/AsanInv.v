@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the reserved ledger holds the launch's vDSO pair near the stack, so AMI carries no bound on its entries but that every mapping misses it (as zstd_frame_info's lib/Spec/AsanInv.v does), and AMI_grant and AMI_munmap keep that conjunct. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
@@ -173,7 +174,8 @@ Definition START (RESV : list (Z * Z)) (ATOP : Z) (L0 R : list (word * word)) (s
 Definition AMI (RESV : list (Z * Z)) (ATOP : Z) (ch : list (Z * Z)) (st : astate) (mo : Model) : Prop :=
   m_vm_materialized mo = []
   /\ vm_limit (m_vmmaps mo) = LIMIT
-  /\ Forall (fun e => bv_unsigned (fst e) + bv_unsigned (snd e) <= RES_HI) (vm_reserved (m_vmmaps mo))
+  (* LPS 727298f3: the mappings miss the reserved ledger (it holds the vDSO pair near the stack, so no bound on its entries) *)
+  /\ (forall e, In e (vm_maps (m_vmmaps mo)) -> region_free (vm_reserved (m_vmmaps mo)) (fst e) (snd e) = true)
   /\ zlen (vm_reserved (m_vmmaps mo)) <= LEN0 /\ live_bytes (vm_reserved (m_vmmaps mo)) <= RTOT0
   /\ Forall (entry_ok ATOP) (vm_maps (m_vmmaps mo))
   /\ ivs_wf (vm_noaccess (m_vmmaps mo))
@@ -496,6 +498,8 @@ Proof.
   pose proof MT as [[T1 T2] T3]. unfold ACEIL, ATOP_MAX in T1, T2.
   unfold AMI, grant_model. cbn -[Z.add Z.mul Z.pow Z_to_bv bv_unsigned sum_count Pm live_bytes zlen].
   repeat match goal with |- _ /\ _ => split end; try assumption.
+  - intros e He. destruct He as [He|He]; [subst e| exact (M3 e He)].
+    rewrite region_free_app in Hrf. apply andb_true_iff in Hrf as [Hrf _]. exact Hrf.
   - constructor; [|exact M6]. unfold entry_ok. cbn [fst snd]. rewrite !unsigned_lit by lia. repeat split; lia.
   - constructor; [|exact M9]. rewrite region_free_app in Hrf. apply andb_true_iff in Hrf as [_ Hrf].
     apply (region_free_wsep (vm_maps (m_vmmaps mo)) (Z_to_bv 64 z) (Z_to_bv 64 nZ)). exact Hrf.
@@ -612,6 +616,7 @@ Proof.
   all: try exact (proj1 MT).
   all: try (unfold alloc_top in *; cbn [vm_init_sp] in *; lia).
   - reflexivity.
+  - unfold map_remove. intros e He. apply M3. exact (incl_filter _ _ _ He).
   - unfold map_remove. rewrite Forall_forall in *. intros e He. apply M6. apply (incl_filter _ _ _ He).
   - apply maps_subtract_wf; [exact Wn| lia].
   - apply maps_subtract_wf; [exact Wl| lia].

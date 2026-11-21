@@ -1,16 +1,17 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/PSstrlen.v, with its module paths changed; 142 of its 194 lines of code are new or changed and 691 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: copied from plugin-hostd/fuzz_reply (a working branch 86b50358d34) to libreac/fuzz_boxreg: module paths changed, no other change. *)
+(* Modified by Theorem Labs, 2026-10: copied from plugin-hostd/fuzz_reply (a working branch) to libreac/fuzz_boxreg: module paths changed, no other change. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/A/RT_mem_bz.v, with its module paths changed; 18 of its 45 lines of code are new or changed and 167 lines of the source are left out. *)
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMmch.v (a working branch 3e35620c52e); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMmch.table). *)
-(* Ported from: a working branch 3210d71ee38 proofs/omx-clap-core/fuzz_state/lib/A/FSsl.v.
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMmch.v (a working branch); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMmch.table). *)
+(* Ported from: a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSsl.v.
    Changes (a Theorem Labs lane, 2026-10-29): module path fuzz_state -> fuzz_reply; 4 fuzz_state.asan address numerals moved to fuzz_reply.asan, each paired by code (instruction by instruction, relocation fields masked) or, for a data cell, by the instruction that loads it (table: lib/A/RT_kit.v); renamed from FSsl.v. *)
-(* Ported from: a working branch 840c4afa7e2 proofs/omx-clap-core/fuzz_state/lib/A/Prog/wrap_kit.v:39-68
+(* Ported from: a working branch proofs/omx-clap-core/fuzz_state/lib/A/Prog/wrap_kit.v:39-68
    (bz_mem_inv_same, sl_proof, mch_proof) and lib/A/Prog/asan_memcpy.v:35-48 (msteps_to_bz, evt_to_bz, mem_inv_of_bz).
    Changes (a Theorem Labs lane, 2026-10-28): restated without a Theorem Labs lane / AsanRTFacts / BzBridge; the module aliases BzE / BzM / BzI
    (a Theorem Labs lane's BzBridge.v:15-17) and BzU / SLc / SLp / MHc / MHp (wrap_kit.v:22-27) are local; proofs unchanged. *)
-(* Modified by Theorem Labs, 2026-10: relocated to omx-clap-core fuzz_manifest.asan; from a working branch 5247aa4d0b9 proofs/plugin-hostd/fuzz_reply/lib/A/FRsl.v, module path fuzz_reply -> fuzz_manifest, renamed FRsl.v -> FMmch.v, the strlen half (sl_proof, Prog/strlen_c, Prog/strlen) dropped, no address numerals (the musl memchr walk it wraps is fm's lib/A/Prog/memchr.v, MEMCHR 0x924a8, taken by path from a working branch 445e498a469). *)
+(* Modified by Theorem Labs, 2026-10: relocated to omx-clap-core fuzz_manifest.asan; from a working branch proofs/plugin-hostd/fuzz_reply/lib/A/FRsl.v, module path fuzz_reply -> fuzz_manifest, renamed FRsl.v -> FMmch.v, the strlen half (sl_proof, Prog/strlen_c, Prog/strlen) dropped, no address numerals (the musl memchr walk it wraps is fm's lib/A/Prog/memchr.v, MEMCHR 0x924a8, taken by path from a working branch). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* What it gives: musl memchr at 0x9aaa8 (fuzz_manifest.asan), the REAL(memchr) of the memchr interceptor, in the words
    of the Bz tree (I_musl.v memchr_stmt), which the interceptor walk takes as its section hypothesis MCH
    (Bz/A/I_memchrw.v) and the strnlen interceptor walk passes on (Bz/A/I_strnlen.v). *)

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a syscall return clears the load reservation). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -61,7 +62,8 @@ Section CjMadvise.
     (forall msF' : machine_state,
        let mo' := madvise_dontneed_next mo addr n in
        lzok asegs L S Zr (mkCfg msF' mo') ->
-       restrict L S msF' = MS (Ra (Z_to_bv 64 0)) F (Z_to_bv 64 (pc + 4)) fc rv (mzero L S (addr, n) m) (seg_rom asegs) ->
+       (* post-syscall: [sysret] clears [ms_resv] (bpA/HF/LazyNodes.v:271-276) *)
+       restrict L S msF' = MS (Ra (Z_to_bv 64 0)) F (Z_to_bv 64 (pc + 4)) fc None (mzero L S (addr, n) m) (seg_rom asegs) ->
        hid_same L S msF msF' ->
        same_but_materialized mo mo' ->
        sreach asegs Q (mkCfg msF' mo')) ->

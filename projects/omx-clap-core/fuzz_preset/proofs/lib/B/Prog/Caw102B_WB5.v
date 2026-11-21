@@ -14,6 +14,7 @@
    head carries lies below alloc_ceiling + 8 (a live block, the image band) and moves across the stores. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_drain_pro.v, with its module paths, module names and numbers changed; 1682 of its 1766 lines of code are new or changed and 1187 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/PjGetB.v, with its module paths and module names changed; 213 of its 253 lines of code are new or changed and 1726 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* fuzz_preset, image B' (#102): check_as_written's Checks segment WB5 (B' 0x82038 -> 0x82058: `seqz a0, s0`,
    `slti a1, s2, 0`, `xori a1, a1, 1`, `bne a0, a1` to the abort tail, `snez a1, s2`, `and a0, a0, a1`, `bnez a0` to the
    abort tail, `mv s1, zero`) from cut_ck to cut_end with r = 0 and own = 0 (Caw102B.v); re-proved by
@@ -26,7 +27,7 @@
    the P'' journal of lib/Reusable/YCbqG.v 219748197d6b (carried here as it is, never destructed).
    WHAT CHANGED (on that batch base) and WHY: the batch text has no run-word list DW (the base dropped
    cawB's c_DW; never read here) and takes the ROOM COUNTS as entry premises after room_live_cf (:862-863), so
-   caw_pre now has 27 conjuncts (with the hull budget and HPOS that follow them, Caw102B.v:139-165) and is read BY NAME: the rc range is the base's projection caw_pre_rc (formerly a
+   caw_pre now has 27 conjuncts (with the hull budget and HPOS that follow them, Caw102B.v:140-166) and is read BY NAME: the rc range is the base's projection caw_pre_rc (formerly a
    positional destruct). cut_end's r = 1 arm gains the text's OUTCOME exclusion caw_dead C; this segment builds only
    the r = 0 arm, which is unchanged. caw_WB5's statement is unchanged.
    EARLIER (base Caw102B.v blob d5668ec173d5, kit text preset-tree-at-2026-10-29T18-51-23Z.tsv (sha256 c6f0aa3569e3; internal record)): that text's tcheck_as_written_specX binds no run position at entry (the

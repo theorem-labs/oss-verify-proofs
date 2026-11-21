@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the auxv claim is destructured in its Lib/AuxvTable.v form and bounded by auxv_vec_bytes_range). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -146,7 +147,7 @@ Lemma rauxv_ok_malloc_fp_ER stE mE lo sp m1 m' B :
 Proof. try hcb. try hsb.
   intros MRE AUX PE CLO SB. eapply rauxv_ok_pres; [exact AUX| exact PE| |].
   - intros a Ha Hfp. destruct (rmalloc_fp_cases_ER stE mE lo sp a MRE Hfp); [lia|].
-    destruct AUX as (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & _ & _ & _ & HH). hcb; unfold Malloc.alloc_ceiling, Decode.alloc_ceiling in *. lia.
+    destruct AUX as (av & v0 & rnd0 & execfn0 & r0 & _ & _ & _ & HH). pose proof (auxv_vec_bytes_range r0). hcb; unfold Malloc.alloc_ceiling, Decode.alloc_ceiling in *. lia.
   - intros a Ha Hfp. unfold RAUXV_CELL in Ha.
     destruct (rmalloc_fp_image_ER stE mE lo sp a MRE Hfp CLO ltac:(lia)) as [X|X]; unfold RCTX in X; lia.
 Qed.

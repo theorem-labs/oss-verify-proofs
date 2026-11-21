@@ -39,4 +39,4 @@ class  free entry    called from (link's code)
 classes that reach __asan_stack_free_N: [8, 9] -> OK (8 and 9 only)
 RESULT FAIL
 rc=1
-(control: the table of 44796078d99, classes 8 and 9 mapped; their entries mark only the asked bytes, so the expected value is 0: MISMATCH, RESULT FAIL, as expected)
+(control: the table, classes 8 and 9 mapped; their entries mark only the asked bytes, so the expected value is 0: MISMATCH, RESULT FAIL, as expected)

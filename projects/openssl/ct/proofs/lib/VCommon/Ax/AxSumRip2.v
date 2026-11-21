@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up over the run's entry stack; the VCommon proof library over the revised model); internal commit ids in comments replaced by public commits or removed. *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
 From Stdlib Require Import Uint63.
@@ -11,7 +11,16 @@ From OSSVerify.Proofs.openssl.ct.lib.VCommon.Ax Require Import AxAcct.
 From OSSVerify.Proofs.openssl.ct.lib.VCommon Require Import PropExec FastWord FastWordSem ShapeAlg ShapeAlgCfg StoreOk.
 From OSSVerify.Proofs.openssl.ct.lib.VCommon.BootWitness Require Import BootDefs BootStep.
 From OSSVerify.Proofs.openssl.ct.lib.VCommon.Ax Require Import ExTrie.
-From OSSVerify.Proofs.openssl.ct.lib.VCommon.Ax Require Import AxLazy AxLin AxRel AxVal AxBytes AxMem AxZZ AxBg AxState AxStep AxSys AxJoinSound AxEntryRel AxEntryAg AsanWLazy AsanWBase AsanSBase AsanWEntry AxSum AsanSWord AsanSMiz AsanSRipA AsanSMat AsanSRipC AxTabs.
+(* `AsanWEb AsanWEbLoad` ADDED here, in AxSumChr's and AxSumStr's position after
+   AsanWEntry.  This file never named AUX_OFF before, because its reg-10 path goes
+   through xaddr rather than str_k, so it never needed AsanWEbLoad's closure; the
+   HA0/Hg0 block below is the first use and it failed with "The variable AUX_OFF was
+   not found in the current environment" at :215 chars 21-28
+   (measured on the farm).  The modules were already LOADED transitively via
+   AxSumStr on the next line, so this widens the IMPORT closure only, adds no new
+   dependency edge and cannot create a cycle.  facts_g and facts_par come from
+   AsanWEb, AUX_OFF and AUX_OFF_rng from AsanWEbLoad, so both are needed. *)
+From OSSVerify.Proofs.openssl.ct.lib.VCommon.Ax Require Import AxLazy AxLin AxRel AxVal AxBytes AxMem AxZZ AxBg AxState AxStep AxSys AxJoinSound AxEntryRel AxEntryAg AsanWLazy AsanWBase AsanSBase AsanWEntry AsanWEb AsanWEbLoad AxSum AsanSWord AsanSMiz AsanSRipA AsanSMat AsanSRipC AxTabs.
 From OSSVerify.Proofs.openssl.ct.lib.VCommon.Ax Require Import AxModelRel AxSumLibc AxSumStr.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -20,13 +29,8 @@ Local Open Scope Z_scope.
 #[local] Arguments Uint63Axioms.to_Z : simpl never.
 #[local] Arguments Uint63Axioms.of_Z : simpl never.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
 Definition xb_is_zero (x : xb) : bool := match x with BL c => (c =? 0)%uint63 | _ => false end.
 
-(* [comment removed for export] *)
 Definition mk_addr (ts : terms) (w : w64) : xv := match ts with [] => XL w | _ => XS ts w end.
 
 Lemma mk_addr_val (ρ : valuation) (ts : terms) (w : w64) (a : bv 64) : bv_unsigned a = smod ρ ts w -> xv_val ρ (mk_addr ts w) a.
@@ -89,24 +93,32 @@ Proof.
   unfold xb_bv, xb_z in Hnth. apply bv_eq. rewrite Hnth. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
 Definition sum_rip2_g (ckR : (list Segment -> Z -> Z -> Z -> Z -> Z -> Z -> bool)) (T : img_tabs) (segs : list Segment) (LIM : Z) (A : AST) : option (list AST) :=
   let b := wZ (a_pc A) in
   let s := a_facts A in
   match rip_params T b, xaddr (aget (a_regs A) 10%uint63), xlit (aget (a_regs A) 11%uint63), aget (a_regs A) 1%uint63,
         aget (a_regs A) 2%uint63, find_entry (a_mem A) with
-  | Some (mz, gK, gMB, gME, gHE, aK, aMB, aME, aHE), Some (tb, ob), Some n, XL r, XS ts o, Some ph =>
+(* `XL r, ..., Some (r, ph)` WAS the pattern: `XL r` binds the return address and
+   `Some (r, ph)` binds find_entry's new rseq flag (AxZZ.v:36), so `r` is bound twice
+   and the PARSER says so outright -- "The variable r is bound several times in
+   pattern", :91 chars 4-103, each tree's sole error
+   (a bignum round and its ct/bndiv twins).  At the
+   pattern ended `Some ph` and `r` was the return address throughout.  Unlike
+   sum_strlen, sum_rip_g and sum_memchr, this Definition needs NO restructure: no
+   scrutinee here takes the flag (reg 10 goes through xaddr, not str_k) and the branch
+   body never mentions it, so renaming the return address to `ra` is the whole change
+   and the match keeps its six scrutinees.  That is what leaves sum_rip2_g_ck's proof
+   below untouched, and with it AxSumCk.v:39,97-100 and AxSumD.v:25,56, which are the
+   only users of sum_rip2_g/sum_rip2 and reach them abstractly. *)
+  | Some (mz, gK, gMB, gME, gHE, aK, aMB, aME, aHE), Some (tb, ob), Some n, XL ra, XS ts o, Some (r, ph) =>
       if (1 <=? n) &&& (n <? 7000) &&& teqb ts sp_terms &&& (- 8388608 + 72 <=? wS o) &&& (wS o <=? 0)
-         &&& pc_ok r &&& atop_is_sp (a_model A) &&& (a_budget A + 4096 * rpg n <=? LIM)
+         &&& pc_ok ra &&& atop_is_sp (a_model A) &&& (a_budget A + 4096 * rpg n <=? LIM)
          &&& in_app_mem s (wS ob, tb) n
          &&& ckR segs b mz gK gMB gME gHE &&& globals_ok segs (a_mem A) gK gMB gME gHE aK aMB aME aHE
          &&& sh_zero segs s (a_mem A) tb (wS ob) n then
         match a_store segs (a_mem A) (XS sp_terms (wofZ (wS o - 72))) (repeat BT 72) with
         | Some mem' =>
-            Some [AS r (rip_regs (a_regs A)) (resv_drop (a_resv A)) mem' s (a_model A) (a_budget A + 4096 * rpg n) (a_steps A + 1)]
+            Some [AS ra (rip_regs (a_regs A)) (resv_drop (a_resv A)) mem' s (a_model A) (a_budget A + 4096 * rpg n) (a_steps A + 1)]
         | None => None
         end
       else None
@@ -134,6 +146,10 @@ Variable LIM : Z.
 Variable fs0 : Fs.Fs.
 Variable KT : valuation -> list byte -> TSet.
 Hypothesis Hlow : segs_low segs.
+(* NEW, as in AxDisp's Main section: no_lazy_img gained this discriminant
+   (AxSum.v:216) when segments_reserved began filtering seg_kernel_map
+   (LPS@75d69e00 Run.v:253-254). *)
+Hypothesis Hnk : forallb (fun s => negb (seg_kernel_map s)) segs = true.
 
 Notation Snd := (Sound segs cfg LIM (MR segs fs0) KT).
 
@@ -143,16 +159,16 @@ Proof.
   destruct (rip_params T (wZ (a_pc A))) as [[[[[[[[[mz gK] gMB] gME] gHE] aK] aMB] aME] aHE]|] eqn:Ep; [|discriminate].
   destruct (xaddr (aget (a_regs A) 10%uint63)) as [[tb ob]|] eqn:Eb10; [|discriminate].
   destruct (xlit (aget (a_regs A) 11%uint63)) as [n|] eqn:E11; [|discriminate].
-  destruct (aget (a_regs A) 1%uint63) as [r| | | | |] eqn:E1; try discriminate.
+  destruct (aget (a_regs A) 1%uint63) as [ra| | | | |] eqn:E1; try discriminate.
   destruct (aget (a_regs A) 2%uint63) as [| ts o | | | |] eqn:E2; try discriminate.
-  destruct (find_entry (a_mem A)) as [ph|] eqn:Efe; [|discriminate].
+  destruct (find_entry (a_mem A)) as [[r ph]|] eqn:Efe; [|discriminate].
   cbv zeta in Hs.
   destruct (1 <=? n) eqn:En1; [|discriminate]. apply Z.leb_le in En1.
   destruct (n <? 7000) eqn:En2; [|discriminate]. apply Z.ltb_lt in En2.
   destruct (teqb ts sp_terms) eqn:Ets; [|discriminate]. apply teqb_eq in Ets. subst ts.
   destruct (- 8388608 + 72 <=? wS o) eqn:Eo1; [|discriminate]. apply Z.leb_le in Eo1.
   destruct (wS o <=? 0) eqn:Eo2; [|discriminate]. apply Z.leb_le in Eo2.
-  destruct (pc_ok r) eqn:Epc; [|discriminate].
+  destruct (pc_ok ra) eqn:Epc; [|discriminate].
   destruct (atop_is_sp (a_model A)) eqn:Eat; [|discriminate].
   destruct (a_budget A + 4096 * rpg n <=? LIM) eqn:Hbud; [|discriminate]. apply Z.leb_le in Hbud.
   destruct (in_app_mem (a_facts A) (wS ob, tb) n) eqn:Ern;
@@ -177,7 +193,6 @@ Proof.
   pose proof HR as [Hpc Hal0 Hsvc Hregs Hres Hrom Hmem Hmod Hh Hb Hsat Hhs Hcov Hcomp Hnaok]. cbn [cfg_ms cfg_model] in *.
   set (b := wZ (a_pc A)) in *.
   set (beg := rg ms 10%bv).
-  (* [comment removed for export] *)
   assert (Hbv : bv_unsigned beg = smod ρ tb ob).
   { apply (xaddr_val ρ (aget (a_regs A) 10%uint63) beg tb ob); [|exact Eb10]. exact (Hregs 10%bv). }
   set (F := leval ρ (wS ob, tb)) in *.
@@ -189,12 +204,28 @@ Proof.
     apply Z.mod_small. unfold two64. lia. }
   assert (H11 : rg ms 11%bv = Z_to_bv 64 n).
   { apply word_lit_w. exact (reg_lit ρ (a_regs A) ms 11%bv 11%uint63 n Hregs eq_refl E11). }
-  assert (Hra : bv_unsigned (rg ms 1%bv) = wZ r) by (specialize (Hregs 1%bv); change (ri 1%bv) with 1%uint63 in Hregs; rewrite E1 in Hregs; exact Hregs).
-  destruct (pc_ok_spec r Epc) as [Hr4 Hr26].
-  (* [comment removed for export] *)
-  destruct (eb_of_R segs ρ (a_mem A) (ms_mem ms) ph Hmem Efe) as [nR Heb].
-  pose proof (eb_rel_facts ph ρ _ _ _ Heb) as HFE.
-  pose proof (eb_layout ρ HFE) as (Hs1 & Hargc & Henvc & Hl0 & Hq0 & Hq1 & Hs2). unfold sp_window_lo, sp_window_hi in *.
+  assert (Hra : bv_unsigned (rg ms 1%bv) = wZ ra) by (specialize (Hregs 1%bv); change (ri 1%bv) with 1%uint63 in Hregs; rewrite E1 in Hregs; exact Hregs).
+  destruct (pc_ok_spec ra Epc) as [Hr4 Hr26].
+
+  destruct (eb_of_R segs ρ (a_mem A) (ms_mem ms) r ph Hmem Efe) as [nR Heb].
+  pose proof (eb_rel_facts r ph ρ _ _ _ Heb) as HFE.
+  pose proof (eb_layout r ρ HFE) as (Hs1 & Hargc & Henvc & Hl0 & Hq0 & Hq1 & Hs2). unfold sp_window_lo, sp_window_hi in *.
+  (* Hs2 is this proof's ONLY upper bound on sp_val, and it reads
+     `sp_val + AUX_OFF r + 8*argc + 8*envc + g + ta + 9 <= sp_window_hi`, so every
+     `< two64` closer below goes through it and needs the signs of the two summands
+     eb_layout does not give: AUX_OFF, a Definition and therefore an atom
+     (AsanWEbLoad.v:33), and v_g.  Without them the HSP closer fails -- "Tactic
+     failure: Cannot find witness", :205 chars 132-135, this round's sole error here
+     (with the bignum and bndiv twins at the same line
+     and column).  This is the ATOM-SIGN case, not the unfold case: AUX_OFF occurs
+     only inside Hs2 and never in a term a later rewrite must match, so unfolding it
+     would buy nothing and cost the folded spelling.  ta >= 1 comes from Hq0 with
+     Hl0.  Derived as AxSumLibc.v:366-369 derives them.  Hv72 just below and the
+     SP - 72 bounds after it are the siblings this one block also covers. *)
+  assert (HA0 : 0 <= AUX_OFF r) by (unfold AUX_OFF; lia).
+  assert (Hg0 : 0 <= ρ v_g).
+  { pose proof (facts_g r ph ρ HFE). pose proof (facts_par r ph ρ HFE).
+    pose proof (Z.mod_pos_bound (ρ v_argc + ρ v_envc + 1) 2 ltac:(lia)). lia. }
   assert (HSP : bv_unsigned (rg ms 2%bv) = sp_val ρ + wS o).
   { change 2%uint63 with (ri 2%bv) in E2. rewrite (reg_form ρ _ ms 2%bv _ _ Hregs E2). unfold smod.
     change (teval ρ sp_terms) with (sp_val ρ). rewrite <- (wS_mod o). rewrite Zplus_mod_idemp_r. apply Z.mod_small. unfold two64. lia. }
@@ -225,7 +256,7 @@ Proof.
     { intros a v Hin Hcl. destruct (Hgl a Hin). apply (cell_lit_sound segs ρ (a_mem A) (ms_mem ms) a v (conj Hok HRR)); [unfold ls_beg in *; lia | exact Hcl]. }
     unfold globals. repeat split; apply Hc; first [assumption | cbn; tauto].
   - assert (Hn : forall a, In a [gK; aK; gMB; aMB; gME; aME; gHE; aHE] -> no_lazy model a (a + 8))
-      by (intros a Hin; exact (no_lazy_img segs Hlow model a 8 (mr_res segs fs0 ρ _ _ Hmod) (mr_lazy_res segs fs0 ρ _ _ Hmod) (Hins a Hin))).
+      by (intros a Hin; exact (no_lazy_img segs Hlow Hnk model a 8 (mr_res segs fs0 ρ _ _ Hmod) (mr_lazy_res segs fs0 ρ _ _ Hmod) (Hins a Hin))).
     unfold globals_nl. repeat split; apply Hn; cbn; tauto.
   - intros q Hq. rewrite Hbeg, HFe in Hq.
     exact (sh_zero_sound segs ρ (a_facts A) (a_mem A) (ms_mem ms) tb (wS ob) n Hlow Hsat Hmem Hhs Hsh ltac:(lia) ltac:(lia) En1 q Hq).
@@ -235,7 +266,7 @@ Proof.
   - apply (no_lazy_above segs fs0 ρ (a_model A) model _ _ Hmod). rewrite Hatop. lia.
   - right. unfold hs_hi in Hd8. lia.
   - intros a Hin. left. destruct (Hgl a Hin). unfold ls_beg in *. lia.
-  - rewrite Hra. rewrite (Z.div_mod (wZ r) 4) by lia. rewrite Hr4, Z.add_0_r. replace (4 * (wZ r / 4)) with ((wZ r / 4 * 2) * 2) by ring.
+  - rewrite Hra. rewrite (Z.div_mod (wZ ra) 4) by lia. rewrite Hr4, Z.add_0_r. replace (4 * (wZ ra / 4)) with ((wZ ra / 4 * 2) * 2) by ring.
     apply Z.mod_mul. lia.
   - (* [comment removed for export] *)
     intros ms' model' HRP Hpc' H10' Hmat.

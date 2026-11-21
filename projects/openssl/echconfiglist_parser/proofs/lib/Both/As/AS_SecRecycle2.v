@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (ps0_model's ledger after the free is the maps_subtract cut of the freed range; the munmap rewrites use munmap_model_eqD and munmap_modelD_vmmaps). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -44,7 +45,7 @@ Definition ps0_model (mo : Model) (a msz : Z) (mo' : Model) : Prop :=
 Definition rs_model (mo : Model) (a msz : Z) (mo' : Model) : Prop :=
   let h := m_vmmaps mo in let h' := m_vmmaps mo' in
      nonvm_same mo mo'
-  /\ vm_maps h' = map_remove (vm_maps h) (wz a)
+  /\ vm_maps h' = maps_subtract (vm_maps h) a (a + msz)
   /\ vm_reserved h' = vm_reserved h /\ vm_limit h' = vm_limit h /\ vm_mmap_base h' = vm_mmap_base h
   /\ vm_brk h' = vm_brk h /\ vm_start_brk h' = vm_start_brk h
   /\ vm_noaccess h' = maps_subtract (vm_noaccess h) a (a + msz)
@@ -384,12 +385,12 @@ Section SecRecycle2.
     split.
     { (* [comment removed for export] *)
       apply (rs_model_mat _ _ _ mo7); [| exact SBM8]. subst mo7. unfold rs_model.
-      rewrite munmap_model_eqL, munmap_modelL_vmmaps. unfold munmap_vmmaps. cbn [vm_maps vm_reserved vm_limit vm_mmap_base vm_brk vm_start_brk vm_noaccess].
+      rewrite munmap_model_eqD, munmap_modelD_vmmaps. unfold munmap_vmmapsD. cbn [vm_maps vm_reserved vm_limit vm_mmap_base vm_brk vm_start_brk vm_noaccess].
       rewrite (same_but_materialized_vmmaps _ _ SBM5), VM4, VR4, VL4, VB4, VK4, VS4, VA4.
       unfold wz. rewrite !unsigned_lit by tlia.
-      split. { eapply nonvm_same_trans; [exact NV4|]. eapply nonvm_same_trans; [apply nonvm_same_mat; exact SBM5|]. rewrite <- munmap_model_eqL. apply nonvm_same_munmap. }
+      split. { eapply nonvm_same_trans; [exact NV4|]. eapply nonvm_same_trans; [apply nonvm_same_mat; exact SBM5|]. rewrite <- munmap_model_eqD. apply nonvm_same_munmap. }
       repeat match goal with |- _ /\ _ => split end; try reflexivity.
-      rewrite <- munmap_model_eqL. pose proof (same_but_materialized_eager _ _ SBM5) as E5. unfold wz in EAG7, REM. rewrite REM in EAG7. clear - EAG7 E5 EAG4; try acb. tlia. }
+      rewrite <- ?munmap_model_eqD. pose proof (same_but_materialized_eager _ _ SBM5) as E5. unfold wz in EAG7, REM. rewrite REM in EAG7. clear - EAG7 E5 EAG4; try acb. tlia. }
     split; [exact MUA|]. split; [exact WMO8|]. split; [exact MI8|].
     repeat match goal with |- _ /\ _ => split end; try assumption.
   Qed.

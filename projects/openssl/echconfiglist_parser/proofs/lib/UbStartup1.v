@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (Section P1 is stated over the run's input, mbase, entry and brk under the launch facts, with the argv pointers read from the stack top). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -30,26 +31,32 @@ Definition regs_init (sp0 : word) : bvmap 5 word :=
 
 Section P1.
   Variable sp0 : word.
-  Variables av ev : list (list byte).
-  Variable uid : word.
-  Variable hw : word.
+  Variable v : VaSize.
+  Variable inp : ProcInput.
+  Variable mbase : word.
+  Variable entry : word.
+  Variable brk : word.
   Variable rnd : EntryDraw.
-  Hypothesis Hva : valid_argv av.
-  Hypothesis Hve : valid_envp ev.
+  Local Notation av := (in_argv inp) (only parsing).
+  Local Notation ev := (in_envp inp) (only parsing).
+  Hypothesis Hva : valid_argv (in_argv inp).
+  Hypothesis Hve : valid_envp (in_envp inp).
+  Hypothesis Hvl : valid_launch inp.
+  Hypothesis Hlau : entry_launch_ok_va v (mkEntry sp0 brk mbase rnd) inp.
   Hypothesis Hlo : (0x7fff80000000 <= bv_unsigned sp0)%Z.
   Hypothesis Hhi : (bv_unsigned sp0 <= 0x800000000000)%Z.
   Hypothesis Hal : (bv_unsigned sp0 mod 16 = 0)%Z.
 
-  Local Notation mem0 := (wrap_mem RPH sp0 av ev uid hw rnd) (only parsing).
-  Local Notation CM := (cmem sp0 (wrap_mem RPH sp0 av ev uid hw rnd)) (only parsing).
+  Local Notation mem0 := (wrap_mem inp mbase RPH entry sp0 rnd) (only parsing).
+  Local Notation CM := (cmem sp0 (wrap_mem inp mbase RPH entry sp0 rnd)) (only parsing).
 
-  Let argc : word := argcN av.
+  Let argc : word := argcN inp.
   Local Notation argvp := (Z_to_bv 64 (bv_unsigned sp0 + 8)) (only parsing).
-  Let envp : word := envp_ptr sp0 av.
-  Let pn : word := cat_argv_ptr sp0 av ev 0.
+  Let envp : word := envp_ptr inp sp0.
+  Let pn : word := cat_argv_ptr (ed_top rnd) (in_argv inp) (in_envp inp) (in_execfn inp) 0.
 
   Lemma u_argc : bv_unsigned argc = Z.of_nat (length av).
-  Proof. exact (u_argcN av Hva). Qed.
+  Proof. exact (u_argcN inp Hva). Qed.
 
   Lemma len_av : (1 <= Z.of_nat (length av) <= 1024)%Z.
   Proof. destruct Hva as [[H1 H2] _]. lia. Qed.
@@ -101,7 +108,8 @@ Section P1.
         [ exact F_e2168 | reflexivity | exact D_e2168
         | addr_norm; rewrite rdn_cmem_above by region_side;
           apply (rdn_low_bytes SEGS mem0 sp0 argc 4); [lia|];
-          exact (read_argc_w SEGS RPH sp0 av ev uid hw rnd Hva Hve Hhi)
+          (* as RefStartup1.v: ArgvEnv.v's v and brk appear only in Hlau. *)
+          ltac:(apply read_argc_w with (v := v) (brk := brk); assumption)
         | apply bytes_le_to_Z_4_small; rewrite Hargc; lia ]
         | step_simpl]; vnorm.
       rewrite (v_lw_small argc) by (rewrite Hargc; lia).
@@ -135,7 +143,8 @@ Section P1.
         | addr_norm; rewrite rdn_cmem_above by region_side;
           replace (Z_to_bv 64 (bv_unsigned sp0 + 8)) with (sp0 + nat_to_word (8 + 8 * 0))
             by (rewrite word_add_nat; f_equal; lia);
-          exact (read_argv_ptr_w SEGS RPH sp0 av ev uid hw rnd Hva Hve Hlo Hhi 0 ltac:(lia))
+          (* third site of the v/brk cause, as RefStartup1.v:158 *)
+          ltac:(apply read_argv_ptr_w with (v := v) (brk := brk); [assumption .. | lia])
         | apply bytes_le_to_Z_8 ]
         | step_simpl]; vnorm.
       stepiv F_2b555c D_2b555c (Z_to_bv 64 (8 * Z.of_nat (length av)))

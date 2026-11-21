@@ -1,4 +1,5 @@
 (* This file states or restates instruction words of the task's compiled program (third-party object code: the upstream library at its pinned commit, the C library, the sanitizer runtime and the task authors' wrapper) for use in the proofs - see NOTICE. No Anthropic licence header is applied to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the run's CONFIG_RSEQ flag is threaded through the start node statements and the plan check, the start-up invariant, its hidden ranges and the initial plan state take the kernel build and the exec file name, the initial valuation takes the GID, the start-up theorem takes the launch's mmap-base and launch facts, and the environment and program-name scans read the stack through the stack's view of the input. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -6611,6 +6612,9 @@ Proof. exact both_popfree_spec. Qed.
 Section AsanNodes.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+(* LPS 727298f3: the run's CONFIG_RSEQ flag (0 or 1), after [LIMIT] as in [APSX]'s
+   [Section Sound] and [APS.x_stmt]. *)
+Variable rz : Z.
 Variable SINV : AX2.env -> (word -> option byte) -> Prop.
 Variable argH : AX2.env -> word -> bool.
 Hypothesis argH_high : forall E (a : word), argH E a = true -> APC.CEIL <= bv_unsigned a.
@@ -6620,7 +6624,7 @@ Hypothesis SINV_agree : forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E'
 Hypothesis NX0_ok : APS.nx0_ok nx0.   (* [comment removed for export] *)
 Variable FS0 : Fs.Fs.
 
-#[local] Notation XSTMT := (APS.x_stmt BSEGS BOTH nx0 LIMIT SINV argH FS0).
+#[local] Notation XSTMT := (APS.x_stmt BSEGS BOTH nx0 LIMIT rz SINV argH FS0).
 
 #[local] Ltac close_with NODE SPEC :=
   eapply NODE; try eassumption;
@@ -6795,12 +6799,24 @@ Section AsanInstance.
   Variable uid : word.
   Variable hw : word.
   Hypothesis Hfit : entry_stack_fits sp argv envp.   (* [comment removed for export] *)
+  (* LPS 727298f3: AsanInit's [SINV0]/[argH0] read AT_GID, the kernel build and the exec
+     file name; Asanj99's [Section NodesD] reads the stack through a [ProcInput] and takes
+     the launch facts over it.  They are stated over the stack's view of the input
+     ([AsanInit.stk_inp]), the same propositions as over the full input by conversion. *)
+  Variable gid : word.
+  Variable kb : KernelBuild.
+  Variable execfn : list byte.
+  Hypothesis Hlaunch : valid_launch (AsanInit.stk_inp argv envp uid gid hw kb execfn).
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) (AsanInit.stk_inp argv envp uid gid hw kb execfn).
   Variable nx0 : nat.
   Hypothesis Hnx0 : (NX0 <= nx0)%nat.
 
   Context {BL : AsanInit.BootLim}.   (* [comment removed for export] *)
-  #[local] Notation SINV0i := (SINV0 BPH sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH0i := (argH0 BPH sp rdraw argv envp uid hw).
+  #[local] Notation SINV0i := (SINV0 BOTH BPH sp rdraw brk0 mbase argv envp uid gid hw kb execfn).
+  #[local] Notation argH0i := (argH0 sp rdraw argv envp kb execfn).
+  #[local] Notation RZ := (rseq_z (kb_rseq kb)).
+  #[local] Notation SINP := (AsanInit.stk_inp argv envp uid gid hw kb execfn).
+  #[local] Notation ENTRY := (Z_to_bv 64 (a_entry BOTH)).
 
   Lemma sp_lo' : sp_window_lo <= bv_unsigned sp.
   Proof. destruct Hsp as [H _]. exact H. Qed.
@@ -6818,34 +6834,42 @@ Section AsanInstance.
     Hypothesis SINV_frame : forall E M M', (forall a, argH0i E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
     Hypothesis SINV_agree : forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E' M.
 
-    Theorem node_x_sound_XEnvScan_asan_gen : x_stmt BSEGS BOTH nx0 (@AsanInit.blim BL) SINV argH0i FS0 XEnvScan.
+    (* [Section NodesD] is instantiated at the stack's view of the input and the image's
+       entry, the two [SINV0]'s memory conjunct reads; its launch premises and the
+       [SINV]-facts are discharged by name, so the script does not depend on which of
+       them each theorem's proof happens to use. *)
+    Theorem node_x_sound_XEnvScan_asan_gen : x_stmt BSEGS BOTH nx0 (@AsanInit.blim BL) RZ SINV argH0i FS0 XEnvScan.
     Proof.
-      exact (x_sound_envscan BSEGS BOTH nx0 (@AsanInit.blim BL) SINV argH0i FS0 both_wx both_in_hull both_hull_ok SINV_frame
+      eapply (x_sound_envscan BSEGS BOTH nx0 (@AsanInit.blim BL) SINV argH0i FS0 both_wx both_in_hull both_hull_ok SINV_frame
                 W_97990 W_97994 W_97998
                 ltac:(cbn [x_envscan x_envscan_k BOTH]; lia)
                 (fetch_lit _ _ _ _ eq_refl F_97990) (fetch_lit _ _ _ _ eq_refl F_97994) (fetch_lit _ _ _ _ eq_refl F_97998)
                 ltac:(repeat split; reflexivity)
                 D_97990 D_97994 D_97998
-                BPH sp rdraw argv envp uid hw Hva Hve sp_lo' sp_hi'
-                (SINV0_vals BPH sp rdraw brk0 argv envp Hsp Hva Hve uid hw Hfit SINV SINV_SINV0)
-                (SINV0_sp BPH sp rdraw brk0 argv envp Hsp Hva Hve uid hw Hfit SINV SINV_SINV0)
-                (SINV0_envp BPH sp rdraw brk0 argv envp uid hw SINV SINV_SINV0)).
+                BPH SINP mbase ENTRY sp brk0 rdraw);
+        first [ exact Hva | exact Hve | exact Hlaunch | exact Hlau | exact sp_lo' | exact sp_hi'
+              | exact (SINV0_vals BOTH BPH sp rdraw brk0 mbase argv envp Hsp Hva Hve uid hw Hfit gid kb execfn SINV SINV_SINV0)
+              | exact (SINV0_sp BOTH BPH sp rdraw brk0 mbase argv envp Hsp Hva Hve uid hw Hfit gid kb execfn SINV SINV_SINV0)
+              | exact (SINV0_envp BOTH BPH sp rdraw brk0 mbase argv envp uid hw gid kb execfn SINV SINV_SINV0)
+              | exact (SINV0_str0 BOTH BPH sp rdraw brk0 mbase argv envp Hva uid hw gid kb execfn Hlau SINV SINV_SINV0) ].
     Qed.
 
-    Theorem node_x_sound_XPnScan_asan_gen : x_stmt BSEGS BOTH nx0 (@AsanInit.blim BL) SINV argH0i FS0 XPnScan.
+    Theorem node_x_sound_XPnScan_asan_gen : x_stmt BSEGS BOTH nx0 (@AsanInit.blim BL) RZ SINV argH0i FS0 XPnScan.
     Proof.
-      exact (x_sound_pnscan BSEGS BOTH nx0 (@AsanInit.blim BL) SINV argH0i FS0 both_wx both_in_hull both_hull_ok
-                (argH0_high BPH sp rdraw argv envp uid hw Hsp Hva) argH0_agree_n SINV_frame SINV_agree nx0_ok_n
+      eapply (x_sound_pnscan BSEGS BOTH nx0 (@AsanInit.blim BL) SINV argH0i FS0 both_wx both_in_hull both_hull_ok
+                (argH0_high sp rdraw argv envp kb execfn Hsp Hva) argH0_agree_n SINV_frame SINV_agree nx0_ok_n
                 W_97a4c W_97a50 W_97a54 W_97a58 W_97a5c
                 ltac:(cbn [x_pnscan x_pnscan_k BOTH]; lia)
                 (fetch_lit _ _ _ _ eq_refl F_97a4c) (fetch_lit _ _ _ _ eq_refl F_97a50) (fetch_lit _ _ _ _ eq_refl F_97a54)
                 (fetch_lit _ _ _ _ eq_refl F_97a58) (fetch_lit _ _ _ _ eq_refl F_97a5c)
                 ltac:(repeat split; reflexivity)
                 D_97a4c D_97a50 D_97a54 D_97a58 D_97a5c
-                BPH sp rdraw argv envp uid hw Hva Hve sp_lo' sp_hi'
-                (SINV0_vals BPH sp rdraw brk0 argv envp Hsp Hva Hve uid hw Hfit SINV SINV_SINV0)
-                (SINV0_sp BPH sp rdraw brk0 argv envp Hsp Hva Hve uid hw Hfit SINV SINV_SINV0)
-                (SINV0_str0 BPH sp rdraw brk0 argv envp Hva Hve uid hw Hfit SINV SINV_SINV0 SINV_frame)).
+                BPH SINP mbase ENTRY sp brk0 rdraw);
+        first [ exact Hva | exact Hve | exact Hlaunch | exact Hlau | exact sp_lo' | exact sp_hi'
+              | exact (SINV0_vals BOTH BPH sp rdraw brk0 mbase argv envp Hsp Hva Hve uid hw Hfit gid kb execfn SINV SINV_SINV0)
+              | exact (SINV0_sp BOTH BPH sp rdraw brk0 mbase argv envp Hsp Hva Hve uid hw Hfit gid kb execfn SINV SINV_SINV0)
+              | exact (SINV0_envp BOTH BPH sp rdraw brk0 mbase argv envp uid hw gid kb execfn SINV SINV_SINV0)
+              | exact (SINV0_str0 BOTH BPH sp rdraw brk0 mbase argv envp Hva uid hw gid kb execfn Hlau SINV SINV_SINV0) ].
     Qed.
 
     (* [comment removed for export] *)
@@ -6853,15 +6877,15 @@ Section AsanInstance.
 
   (* [comment removed for export] *)
   Lemma SINV0_agree_n : forall E E' M, env_agree nx0 E E' -> SINV0i E M -> SINV0i E' M.
-  Proof. intros E E' M H HS. exact (SINV0_agree BPH sp rdraw brk0 argv envp uid hw E E' M (env_agree_le NX0 nx0 E E' H Hnx0) HS). Qed.
+  Proof. intros E E' M H HS. exact (SINV0_agree BOTH BPH sp rdraw brk0 mbase argv envp uid gid hw kb execfn E E' M (env_agree_le NX0 nx0 E E' H Hnx0) HS). Qed.
 
-  Theorem node_x_sound_XEnvScan_asan : x_stmt BSEGS BOTH nx0 (@AsanInit.blim BL) SINV0i argH0i FS0 XEnvScan.
+  Theorem node_x_sound_XEnvScan_asan : x_stmt BSEGS BOTH nx0 (@AsanInit.blim BL) RZ SINV0i argH0i FS0 XEnvScan.
   Proof. apply node_x_sound_XEnvScan_asan_gen; [auto | apply SINV0_frame]. Qed.
 
-  Theorem node_x_sound_XPnScan_asan : x_stmt BSEGS BOTH nx0 (@AsanInit.blim BL) SINV0i argH0i FS0 XPnScan.
+  Theorem node_x_sound_XPnScan_asan : x_stmt BSEGS BOTH nx0 (@AsanInit.blim BL) RZ SINV0i argH0i FS0 XPnScan.
   Proof. apply node_x_sound_XPnScan_asan_gen; [auto | apply SINV0_frame | apply SINV0_agree_n]. Qed.
 
-  Theorem node_x_sound_XLayout_asan : x_stmt BSEGS BOTH nx0 (@AsanInit.blim BL) SINV0i argH0i FS0 XLayout.
+  Theorem node_x_sound_XLayout_asan : x_stmt BSEGS BOTH nx0 (@AsanInit.blim BL) RZ SINV0i argH0i FS0 XLayout.
   Proof. apply x_sound_layout. Qed.
 End AsanInstance.
 End Asanc52.
@@ -7192,9 +7216,9 @@ Lemma XB0_sound : forall SEGS A nx0 LIMIT SINV argH FS0, ext2_stmt SEGS A nx0 LI
 Proof. intros ? ? ? ? ? ? ?. intros id args cs csa csb E R FULL model TA TB _ H. discriminate H. Qed.
 
 (* [comment removed for export] *)
-Lemma XSniff_vacuous : forall (nx0 : nat) (LIMIT : Z) (SINV : env -> (word -> option byte) -> Prop) (argH : env -> word -> bool) (FS0 : Fs.Fs),
-    x_stmt BSEGS BOTH nx0 LIMIT SINV argH FS0 XSniff.
-Proof. intros ? ? ? ? ?. intros args cs cs' E R FULL model T _ _ H. discriminate H. Qed.
+Lemma XSniff_vacuous : forall (nx0 : nat) (LIMIT : Z) (rz : Z) (SINV : env -> (word -> option byte) -> Prop) (argH : env -> word -> bool) (FS0 : Fs.Fs),
+    x_stmt BSEGS BOTH nx0 LIMIT rz SINV argH FS0 XSniff.
+Proof. intros ? ? ? ? ? ?. intros args cs cs' E R FULL model T _ _ H. discriminate H. Qed.
 
 Section Run.
   (* [comment removed for export] *)
@@ -7208,6 +7232,11 @@ Section Run.
   Variable groups : list word.
   Variable net : NetQueue.
   Variable urandom : InputStream.   (* [comment removed for export] *)
+  (* LPS 727298f3: the input's kernel build, exec file name and SIGPIPE disposition
+     ([AsanInit.inp]'s three new fields) *)
+  Variable kb : KernelBuild.
+  Variable execfn : list byte.
+  Variable sigdfl : bool.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hbrk : valid_brk BSEGS brk0.
   Hypothesis Hva : valid_argv argv.
@@ -7215,42 +7244,56 @@ Section Run.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
   Hypothesis Huid : valid_id uid.
   Hypothesis Hhw : valid_hwcap hw.
+  (* LPS 727298f3: the launch facts [AsanInit.init_cs_ok] reads (valid_entry's mmap-base and
+     launch conjuncts, valid_input's [valid_launch]) *)
+  Hypothesis Hmb : valid_mmap_base mbase.
+  Hypothesis Hlaunch : valid_launch (AsanInit.inp argv envp fs stdin uid gid nofile sigmask hw groups net urandom kb execfn sigdfl).
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw)
+                      (AsanInit.inp argv envp fs stdin uid gid nofile sigmask hw groups net urandom kb execfn sigdfl).
 
-  #[local] Notation SINV := (SINV0 BPH sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 BPH sp rdraw argv envp uid hw).
-  #[local] Notation E0a := (E0 BPH sp rdraw brk0 argv envp uid hw).
+  #[local] Notation SINV := (SINV0 BOTH BPH sp rdraw brk0 mbase argv envp uid gid hw kb execfn).
+  #[local] Notation argH := (argH0 sp rdraw argv envp kb execfn).
+  #[local] Notation E0a := (E0 sp rdraw brk0 argv envp uid gid hw kb execfn).
+  #[local] Notation RZ := (rseq_z (kb_rseq kb)).
+  #[local] Notation SINP := (AsanInit.stk_inp argv envp uid gid hw kb execfn).
   Context {BL : AsanInit.BootLim}.   (* [comment removed for export] *)
   #[local] Notation LIM := (@AsanInit.blim BL).
 
   (* [comment removed for export] *)
-  Let AH : forall E (a : word), argH E a = true -> CEIL <= bv_unsigned a := argH0_high BPH sp rdraw argv envp uid hw Hsp Hva.
-  Let SF : forall E M M', (forall a, argH E a = true -> M' a = M a) -> SINV E M -> SINV E M' := SINV0_frame BPH sp rdraw brk0 argv envp uid hw.
+  Let AH : forall E (a : word), argH E a = true -> CEIL <= bv_unsigned a := argH0_high sp rdraw argv envp kb execfn Hsp Hva.
+  Let SF : forall E M M', (forall a, argH E a = true -> M' a = M a) -> SINV E M -> SINV E M' :=
+    SINV0_frame BOTH BPH sp rdraw brk0 mbase argv envp uid gid hw kb execfn.
   Let AT : forall E M (a : word), SINV E M -> argH E a = true -> uE E e_sp0 <= bv_unsigned a :=
-    argH0_top BPH sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit.
+    argH0_top BOTH BPH sp rdraw brk0 mbase argv envp uid gid hw kb execfn Hsp Hva Hve Hfit.
 
   Section AnyNx0.
     (* [comment removed for export] *)
     Variable nx0 : nat.
     Hypothesis Hnx0 : (NX0 <= nx0)%nat.
+    (* the launch facts the start nodes read, over the stack's view of the input, so the
+       theorems below do not depend on the input's other fields *)
+    Hypothesis HlaunchS : valid_launch SINP.
+    Hypothesis HlauS : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) SINP.
 
     Let NXok : nx0_ok nx0 := nx0_ok_n nx0 Hnx0.
-    Let AA : forall E E' (a : word), env_agree nx0 E E' -> argH E a = argH E' a := argH0_agree_n sp rdraw argv envp uid hw nx0.
-    Let SA : forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E' M := SINV0_agree_n sp rdraw brk0 argv envp uid hw nx0 Hnx0.
+    Let AA : forall E E' (a : word), env_agree nx0 E E' -> argH E a = argH E' a := argH0_agree_n sp rdraw argv envp kb execfn nx0.
+    Let SA : forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E' M :=
+      SINV0_agree_n sp rdraw brk0 mbase argv envp uid hw gid kb execfn nx0 Hnx0.
 
     (* [comment removed for export] *)
-    Theorem both_node_x_sound_all : forall x, x_stmt BSEGS BOTH nx0 LIM SINV argH fs x.
+    Theorem both_node_x_sound_all : forall x, x_stmt BSEGS BOTH nx0 LIM RZ SINV argH fs x.
     Proof.
       intros [ | | | | | | | | | | ].
-      - apply (both_node_x_sound_XIMemset nx0 LIM SINV _ AH AA SF SA NXok fs).
-      - apply (both_node_x_sound_XIMemcpy nx0 LIM SINV _ AH AA SF SA NXok fs).
-      - apply (both_node_x_sound_XMemset nx0 LIM SINV _ AH AA SF SA NXok fs).
-      - apply (both_node_x_sound_XMemcpy nx0 LIM SINV _ AH AA SF SA NXok fs).
-      - apply (both_node_x_sound_XMemIsZero nx0 LIM SINV _ AH AA SF SA NXok fs).
-      - apply (node_x_sound_XEnvScan_asan sp rdraw brk0 argv envp fs Hsp Hva Hve uid hw Hfit nx0 Hnx0).
-      - apply (node_x_sound_XPnScan_asan sp rdraw brk0 argv envp fs Hsp Hva Hve uid hw Hfit nx0 Hnx0).
-      - apply (node_x_sound_XLayout_asan sp rdraw brk0 argv envp fs uid hw nx0).
-      - apply (both_node_x_sound_XIStrncpy nx0 LIM SINV _ AH AA SF SA NXok fs).
-      - apply (both_node_x_sound_XPopFree nx0 LIM SINV _ AH AA SF SA NXok fs).
+      - apply (both_node_x_sound_XIMemset nx0 LIM RZ SINV _ AH AA SF SA NXok fs).
+      - apply (both_node_x_sound_XIMemcpy nx0 LIM RZ SINV _ AH AA SF SA NXok fs).
+      - apply (both_node_x_sound_XMemset nx0 LIM RZ SINV _ AH AA SF SA NXok fs).
+      - apply (both_node_x_sound_XMemcpy nx0 LIM RZ SINV _ AH AA SF SA NXok fs).
+      - apply (both_node_x_sound_XMemIsZero nx0 LIM RZ SINV _ AH AA SF SA NXok fs).
+      - eapply node_x_sound_XEnvScan_asan; first [ exact HlaunchS | exact HlauS | eassumption ].
+      - eapply node_x_sound_XPnScan_asan; first [ exact HlaunchS | exact HlauS | eassumption ].
+      - apply node_x_sound_XLayout_asan.
+      - apply (both_node_x_sound_XIStrncpy nx0 LIM RZ SINV _ AH AA SF SA NXok fs).
+      - apply (both_node_x_sound_XPopFree nx0 LIM RZ SINV _ AH AA SF SA NXok fs).
       - apply XSniff_vacuous.
     Qed.
 
@@ -7270,13 +7313,13 @@ Section Run.
              (HOLES_nil : forall h E fs', HOLES h E fs' [])
              (HOLES_sound : holes_stmt BSEGS BOTH LIM HS SINV argH HOLES fs)
              (KC BFUEL FUEL : nat) (p : plan) (cs : acs) (s : shape),
-        check BSEGS IT BOTH nx0 LIM (XNb2 nx0) XE0 XB0 HS KC BFUEL FUEL None cs p = COk s ->
+        check BSEGS IT BOTH nx0 LIM RZ (XNb2 nx0) XE0 XB0 HS KC BFUEL FUEL None cs p = COk s ->
         forall E R FULL model,
           cs_ok BSEGS BOTH LIM SINV argH fs E cs R FULL model ->
           srealizes BSEGS (cfg_of BSEGS R (pc cs) FULL model) (sd HOLES t_nil E (m_fs model) s).
-    Proof.
+    Proof using Hsp Hva Hve Hfit Hnx0 HlaunchS HlauS.
       intros IT IT_ok HS HOLES HOLES_agree HOLES_nil HOLES_sound KC BFUEL FUEL p cs s Hc E R FULL model HC.
-      exact (check_sound BSEGS IT IT_ok BOTH nx0 LIM HS (XNb2 nx0) XE0 XB0
+      exact (check_sound BSEGS IT IT_ok BOTH nx0 LIM RZ HS (XNb2 nx0) XE0 XB0
                both_wx both_in_hull both_hull_ok both_shadow_ok NXok SINV argH AH AA SF SA
                HOLES HOLES_agree HOLES_nil fs KC
                (OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asang2p.Asanku0.node_sys_sound BSEGS BOTH nx0 LIM SINV argH fs both_res_len both_hull_ok both_shadow_ok AA SF SA NXok AT)
@@ -7305,17 +7348,21 @@ Section Run.
            (HOLES_nil : forall h E fs', HOLES h E fs' [])
            (HOLES_sound : holes_stmt BSEGS BOTH LIM HS SINV argH HOLES fs)
            (KC BFUEL FUEL : nat) (p : plan) (s : shape),
-      check BSEGS IT BOTH NX0 LIM (XNb2 NX0) XE0 XB0 HS KC BFUEL FUEL None both_init p = COk s ->
+      check BSEGS IT BOTH NX0 LIM RZ (XNb2 NX0) XE0 XB0 HS KC BFUEL FUEL None (both_init RZ) p = COk s ->
       forall apc : N, Z.of_N apc = a_entry BOTH ->
-      srealizes BSEGS (init_config BSEGS apc BPH sp brk0 mbase rdraw LIM (AsanInit.inp argv envp fs stdin uid gid nofile sigmask hw groups net urandom))
+      srealizes BSEGS (init_config BSEGS apc BPH sp brk0 mbase rdraw LIM
+                         (AsanInit.inp argv envp fs stdin uid gid nofile sigmask hw groups net urandom kb execfn sigdfl))
                 (sd HOLES t_nil E0a fs s).
   Proof.
     intros IT IT_ok HS HOLES HOLES_agree HOLES_nil HOLES_sound KC BFUEL FUEL p s Hc apc Hapc.
-    rewrite (init_cfg_eq BSEGS BOTH BPH sp rdraw brk0 mbase argv envp fs stdin uid gid nofile sigmask hw groups net urandom apc Hapc).
-    pose proof (init_cs_ok BSEGS BOTH BPH sp rdraw brk0 mbase argv envp fs stdin uid gid nofile sigmask hw groups net urandom
-                  both_img_facts Hsp Hbrk Hva Hve Hfit Huid Hhw) as HC.
-    pose proof (both_check_sound NX0 (le_n NX0) IT IT_ok HS HOLES HOLES_agree HOLES_nil HOLES_sound KC BFUEL FUEL p both_init s Hc
-                  _ _ _ _ HC) as RZ.
-    exact RZ.
+    rewrite (init_cfg_eq BSEGS BOTH BPH sp rdraw brk0 mbase argv envp fs stdin uid gid nofile sigmask hw groups net urandom kb execfn sigdfl apc Hapc).
+    pose proof (init_cs_ok BSEGS BOTH BPH sp rdraw brk0 mbase argv envp fs stdin uid gid nofile sigmask hw groups net urandom kb execfn sigdfl
+                  both_img_facts Hsp Hbrk Hmb Hva Hve Hfit Huid Hhw Hlaunch Hlau) as HC.
+    (* [Hlaunch]/[Hlau] are over the full input; [both_check_sound] takes them over the
+       stack's view of it, the same propositions by conversion (they read only argv, envp,
+       the exec file name and the kernel build). *)
+    pose proof (both_check_sound NX0 (le_n NX0) Hlaunch Hlau IT IT_ok HS HOLES HOLES_agree HOLES_nil HOLES_sound KC BFUEL FUEL p (both_init RZ) s Hc
+                  _ _ _ _ HC) as Hres.
+    exact Hres.
   Qed.
 End Run.

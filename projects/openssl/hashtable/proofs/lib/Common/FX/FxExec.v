@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the pure register write of the new step relation). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
@@ -514,7 +515,11 @@ Definition fx_step (s : fstate) : fres :=
             | Some M' => let s' := rset s rd (FV 0 w_zero) npc in FNext (FS npc (f_regs s') M' None)
             | None => FStuck 13
             end
-        | Some false => let s' := rset s rd (FV 0 w_one) npc in FNext (FS npc (f_regs s') M None)
+        (* a FAILING sc is no longer a pure register write: at this revision
+           [Sem.exec] reads the word and writes it straight back, so it makes
+           two memory accesses that this abstract step does not model.  The
+           interpreter declines the case rather than claim an unchecked step. *)
+        | Some false => FStuck 13
         | None => FStuck 13
         end
     | FAmo op wd rd rs1 rs2 =>

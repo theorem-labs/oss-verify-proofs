@@ -1,6 +1,6 @@
-(* Image B twin of lib/A/RT_gxa_inst.v at d49bd1db505: module paths lib.A -> lib.B; 7 image numerals moved to fuzz_reply.asan-ubsan by symbol + offset, each checked against that image (CHAINB-numerals.tsv sha256 3cedf5e564f7; internal record). *) (* GXA's closed ASan printf-core theorems INSTANTIATED on the pinned fuzz_reply.asan-ubsan.  An earlier lane wrote this file and
+(* Image B twin of lib/A/RT_gxa_inst.v: module paths lib.A -> lib.B; 7 image numerals moved to fuzz_reply.asan-ubsan by symbol + offset, each checked against that image (CHAINB-numerals.tsv sha256 3cedf5e564f7; internal record). *) (* GXA's closed ASan printf-core theorems INSTANTIATED on the pinned fuzz_reply.asan-ubsan.  An earlier lane wrote this file and
    it was still compiling when the lane stopped; finished here in the shape a Theorem Labs lane's Gxa prover settled on
-   (a working branch efa2842e125, fm's RT_gxa_inst.v fm_vsnprintf_x_proof), with the image facts given as
+   (a working branch, fm's RT_gxa_inst.v fm_vsnprintf_x_proof), with the image facts given as
    EXPLICIT arguments in the declaration order rather than searched for by `first [...]` - the search is what did
    not finish (each candidate is tried against a goal whose type needs the symbol map evaluated).
 
@@ -13,7 +13,7 @@
      VF : musl vsnprintf's call into the vfprintf INTERCEPTOR (trampoline 0x42228), which runs printf_common and
        then REAL(vfprintf) = musl vfprintf 0x93288.  Closed by RT_pf_vf.v vf_icpt_ok from fr_vfprintf_guarded here.
    The second instance A_img_vsn is where musl vsnprintf is read, because its vfprintf call target is the
-   interceptor trampoline and not musl vfprintf's body (RT_IImgA.v:98-107). *)
+   interceptor trampoline and not musl vfprintf's body (RT_IImgA.v:99-108). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
@@ -64,7 +64,7 @@ Definition fr_vfprintf_guarded :=
 End S.
 
 (* GXA's UNGUARDED closed musl vfprintf at A_img, under a Theorem Labs lane's name and parameter order (fm's RT_gxa_inst.v:57
-   fm_vfprintf_snf_a_closed, a working branch 3242941dc96), so the relocated seam file
+   fm_vfprintf_snf_a_closed, a working branch), so the relocated seam file
    FMgxaSeamCall.v (seam_vfprintf_a) resolves it by path.  The image facts are fr_vfprintf_guarded's, given
    explicitly in the same order; G_vfprintf_snf_closed.v:108 and :117 close one Section Img and run the same
    tactic. *)

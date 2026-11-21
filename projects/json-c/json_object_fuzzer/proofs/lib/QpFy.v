@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo, which jo_preA now carries after alloc_ceiling <= lo: set_callA's jo_set_scalar call discharges it from HBOT). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -192,7 +193,7 @@ pose proof (bv_unsigned_in_range 64 sp0) as SP0R. change (bv_modulus 64) with (2
 unfold sstateB.
 eapply ST_ with (A := A) (BS := BS) (LB := LK ++ LB0) (r := r) (lo := lo) (errv := errv);
 [ split; [exact HP|]; rewrite unsigned_lit by lia;
-split; [exact ST|]; split; [exact LO|]; split; [lia|]; split; [exact SP16|]; split; [lia|];
+split; [exact ST|]; split; [exact LO|]; split; [first [assumption | lia]|]; split; [lia|]; split; [exact SP16|]; split; [lia|];
 split; [exact ERR|]; split; [reflexivity | rewrite unsigned_lit by lia; exact Hret2]
 | exact RR | reflexivity |].
 intros ms' md' m' rv (RS & VM' & ST' & HPR' & [errv' ERR']) ERRx RR' HP'.

@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6bBase.v at d1ed1a6d9011 for reac-pw/fuzz_rate's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6bBase.v for reac-pw/fuzz_rate's
    image A: module paths changed; the pcs, registers, real-frame cells, write set and image addresses are rate's
    (measured on fuzz_rate.asan); the block context, the input premise and the code table are lib/A/RtPgW6aBase.v's
    (w6_ctx, w6_in, w6_tbl), and the case entry adds the input's shadow hull and its distance from the frame's

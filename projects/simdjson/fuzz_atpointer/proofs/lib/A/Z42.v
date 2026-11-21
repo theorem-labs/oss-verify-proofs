@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor raised to the 0x5D0000 bytes below sp that the launch guarantees ([STACK_GAP])). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -39,7 +40,7 @@ Definition create_cps : Prop :=
   Z.of_nat (length (rt_live RT Σ)) + 4 <= LIVE_MAX ->
   mcost 96 + mcost (sc_idx cap) + mcost (8 * md) + mcost md <= rt_credit RT Σ ->
   ART RT Σ m -> mem_inv asegs m ->
-  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + CREATE_STACK <= bv_unsigned sp ->
+  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= lo -> lo + CREATE_STACK <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 -> frm0 fc ->
   cps_f (ASTA RT Σ PMc (eq (entry_st ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11
                                        t3 t4 t5 t6 F fc e_create m)))
@@ -106,7 +107,7 @@ Proof using AF NEW1 MSET SETCAP SETMD AFC AFV.
     assert (INP1 : In (p, 96) (rt_live RT Σ1)) by (rewrite LV1; left; reflexivity).
     assert (P8 : p mod 8 = 0) by (clear - P16; Z.div_mod_to_equations; lia).
     pose proof (af_live_range RT AF Σ1 m2 p _ ART2 INP1) as (_ & PR1 & PSEG). rewrite SP1 in PR1.
-    assert (LOW1 : rt_sp0 RT Σ1 - STACK_WIN <= lo) by (rewrite SP1; exact LOW).
+    assert (LOW1 : rt_sp0 RT Σ1 - STACK_WIN + STACK_GAP <= lo) by (rewrite SP1; exact LOW).
     assert (INF1 : In (f, k) (rt_frames RT Σ1)) by (rewrite FRS1; exact INF).
     assert (FR2 : rw_cells asegs m2 (usp + -64) (cr_frame ra s0 s1 s2 s3 s4 s5 j)).
     { apply (rw_cells_agree asegs m1 m2 _ _ FR1); [| exact WM2]. apply (agree_of_pres _ _ _ _ _ _ PRES2). unfold cr_frame. pres_tac. }
@@ -264,7 +265,7 @@ Proof using AF NEW1 MSET SETCAP SETMD AFC AFV.
            cbn [ms_fcsr] in FRM8. rewrite EU2 in ST8, PRES8. rewrite (ret_pc_even 0x9b01c) in Hc8' by lia.
            assert (INP2 : In (p, 96) (rt_live RT Σ2)) by (rewrite LV2; right; exact INP1).
            assert (INX2 : In (idx, sc_idx cap) (rt_live RT Σ2)) by (rewrite LV2; left; reflexivity).
-           assert (LOW2 : rt_sp0 RT Σ2 - STACK_WIN <= lo) by (rewrite SP2; exact LOW1).
+           assert (LOW2 : rt_sp0 RT Σ2 - STACK_WIN + STACK_GAP <= lo) by (rewrite SP2; exact LOW1).
            assert (FRS2' : rt_frames RT Σ2 = rt_frames RT Σ) by (rewrite FRS2; exact FRS1).
            assert (FR8 : rw_cells asegs m8 (usp + -64) (cr_frame ra s0 s1 s2 s3 s4 s5 j)).
            { apply (rw_cells_agree_nw asegs m7 m8 _ _ FR7). apply (agree_of_pres_fp _ _ _ _ _ _ _ PRES8). intros x Hx. unfold cr_frame in Hx.

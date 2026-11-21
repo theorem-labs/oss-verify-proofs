@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (main's context over the process input and the mmap base; the stack floor is 6144512 bytes below sp). *)
 From Stdlib Require Import ZArith List Lia Bool Permutation Strings.String.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run.
@@ -42,12 +43,12 @@ Qed.
 
 Section D.
 Context {RCEIL : RunCeiling}.
-Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw) (arg0 arg1 : list byte) (TID : Z) (S4 S5 S6 S7 S8 S9 S10 S11 : word).
+Variables (sp0 mbase : word) (rnd : EntryDraw) (inp : ProcInput) (arg0 arg1 : list byte) (TID : Z) (S4 S5 S6 S7 S8 S9 S10 S11 : word).
 Hypothesis VSP : valid_sp sp0.
-Hypothesis HCEIL : alloc_ceiling = LO sp0.
-Hypothesis VARGV : valid_argv argv.
-Hypothesis VENVP : valid_envp envp.
-Hypothesis EARGV : argv = [arg0; arg1].
+Hypothesis HCEIL : alloc_ceiling = bv_unsigned sp0 - 8388608.
+Hypothesis VARGV : valid_argv (in_argv inp).
+Hypothesis VENVP : valid_envp (in_envp inp).
+Hypothesis EARGV : in_argv inp = [arg0; arg1].
 Hypothesis HT : 0 < TID < 4194304.
 Hypothesis RHF : rheap_frame_stmt.
 Hypothesis RND : rheap_blocks_nodup_stmt.
@@ -66,11 +67,12 @@ Hypothesis TRUN : rtarget_run_stmt.
 Notation usp0 := (bv_unsigned sp0).
 Notation gpv := (Z_to_bv 64 0x10800).
 Notation tpv := (Z_to_bv 64 RATP).
-Notation IMGB := (build_stack_bytes rph sp0 argv envp uid hw rnd).
+Notation argv := (in_argv inp).
+Notation IMGB := (entry_stack_image inp mbase rph (Z_to_bv 64 (Z.of_N Ubsan.M.init_pc)) sp0 rnd).
 Notation LO' := (LO sp0).
-Notation BASE' := (BASE sp0 argv envp uid hw rnd TID).
-Notation FRAME' mm := (exists pad, MFRAME sp0 argv mm pad S7 S6 S5 S4).
-Notation RUN0' := (RUN0 sp0 argv envp uid hw rnd TID S4 S5 S6 S7 S8 S9 S10 S11).
+Notation BASE' := (BASE sp0 mbase rnd inp TID).
+Notation FRAME' mm := (exists pad, MFRAME sp0 inp mm pad S7 S6 S5 S4).
+Notation RUN0' := (RUN0 sp0 mbase rnd inp TID S4 S5 S6 S7 S8 S9 S10 S11).
 
 Notation GST pc x1 t0 t1 t2 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 t3 t4 t5 t6 F fc mm :=
 (MS (mkR x1 (Z_to_bv 64 (usp0 + -128)) gpv tpv t0 t1 t2 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 S8 S9 S10 S11 t3 t4 t5 t6)
@@ -93,7 +95,7 @@ unfold implM. iprefix. zstep. zstep. apply evt_done.
 lazymatch goal with |- impl _ _ (?tm _) _ ?msx => change (implM rsegs tm s RQEXIT msx) end.
 eapply implM_bind.
 { unfold rfree_stmt in FREE.
-eapply FREE with (lo := usp0 - 8388608) (B := usp0) (p := bufp) (A := A) (n := cap); try reflexivity; unfold RATP;
+eapply FREE with (lo := usp0 - 6144512) (B := usp0) (p := bufp) (A := A) (n := cap); try reflexivity; unfold RATP;
 rewrite ?(unsigned_lit 316496) by lia; rewrite ?(unsigned_lit (usp0 + -128)) by lia;
 first [ exact P0 | left; reflexivity | exact AUX | exact ST | exact MI | exact ERR | unfold RFREE_STACK; lia | lia ]. }
 cbv beta. intros [] s2 ms2 PO.
@@ -102,9 +104,9 @@ rewrite ?(unsigned_lit (usp0 + -128)) in ST3 by lia. rewrite ?(unsigned_lit (usp
 replace (ret_pc (Z_to_bv 64 0x1be84)) with (Z_to_bv 64 0x1be84) by (symmetry; rpc).
 cbn [lb_remove filter bptr_eqb fst snd] in HEAP3, HPR3.
 apply implM_ret. change (RQEXIT code s2) with (rat_exit code s2).
-eapply (main_return sp0 argv TID VSP HCEIL HT code s2).
+eapply (main_return sp0 inp TID VSP HCEIL HT code s2).
 - unfold MFRAME. eapply rheap_pres_rw_cells; [exact HPR3| exact FR| left; cbn; lia].
-- unfold LO. first [exact ST3| replace (usp0 - 8388608) with (usp0 + -8388608) by lia; exact ST3].
+- unfold LO. first [exact ST3| replace (usp0 - 6144512) with (usp0 + -6144512) by lia; exact ST3].
 - eapply RSTAT_heap_pres; [exact HPR3| exact RS].
 - rewrite bptr_eqb_refl in HEAP3 || idtac. exact HEAP3.
 - rewrite SOE3. eapply stdout_file_heap_pres; [exact HPR3| exact SOF].
@@ -128,7 +130,7 @@ unfold main_tail. rewrite ECFG.
 unfold implM. iprefix. zstep. zstep. zstep. zstep. zstep. apply evt_done.
 lazymatch goal with |- impl _ _ (?tm _) _ ?msx => change (implM rsegs tm s RQEXIT msx) end.
 eapply implM_bind.
-{ eapply TRUN with (lo := usp0 - 8388608) (AB := usp0) (p := bufp) (cap := cap);
+{ eapply TRUN with (lo := usp0 - 6144512) (AB := usp0) (p := bufp) (cap := cap);
 rewrite ?(unsigned_lit (usp0 + -128)) by lia.
 - exact PST0.
 - left; reflexivity.

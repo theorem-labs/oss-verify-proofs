@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported from proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v (the walk through a
-   runtime entry, cmp_tail) at c8557374ad2e, with the runtime step aj_art_at of lib/A/Prog/PaArt.v: the walk of
+   runtime entry, cmp_tail), with the runtime step aj_art_at of lib/A/Prog/PaArt.v: the walk of
    syntax_reply_matches on fuzz_command.asan, the strcspn wrapper's call (CALL1, 0x88694) that measures the next word
    of the reply, and its result (RET1, 0x886a0). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made from G_HARNESS_U of proofs/libreac/fuzz_pcap/lib/B/Prog/PcapEntry.v:52
-   (origin/ossv/recipes 198234fa4d3) for libdiginet/fuzz_transport's ASan+UBSan image: the harness's own globals. *)
+   for libdiginet/fuzz_transport's ASan+UBSan image: the harness's own globals. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_transport/lib/B/TransportGB.v, with its addresses changed; 6 of its 31 lines of code are new or changed and 7 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* G_HARNESS: the (start, length) ranges of fuzz_transport's writable harness globals in the ASan image
    (fuzz_transport.asan e89be137db17), the bytes a program call may change outside its own frame and the allocator's
    statics (the G form of lib/A/W_journalG.v, ajournal_gx). Each range is one global's PAYLOAD (beg, size) as the

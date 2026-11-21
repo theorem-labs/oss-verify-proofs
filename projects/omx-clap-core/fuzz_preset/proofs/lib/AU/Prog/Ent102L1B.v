@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image B' (asan-ubsan, harness fix #102, pin sha256
    d663f82d7f488d30f8e8d7496cb814e595a2f3cbbf16bde81a65cb3ea9af0994, unstripped twin c90d4fa54d43160b):
    SEGMENT L1 of LLVMFuzzerTestOneInput (entry 0x816cc): listing slots 73 .. 82 (+0x124 .. the return of the
    `jal check_no_overread` at +0x14c; B' 0x817f0 -> 0x81818), proved against lib/AU/Ent102CutsB.v's `seg_L1_stmt`
    (cut_s1 E fk -> cut_cno E fk).
-   THE B' TWIN of lib/A/Prog/Ent102L1A.v (seg_L1_A as of its Qed at commit 90bcaf49278f
-   on b1ed4e6c944d), ported by port/a2b.py (sha256 f5113cbc90e503da) and then by hand: L := B_prog_listing,
+   THE B' TWIN of lib/A/Prog/Ent102L1A.v (seg_L1_A as of its Qed),
+   ported by port/a2b.py (sha256 f5113cbc90e503da) and then by hand: L := B_prog_listing,
    PL := PL_102_B (lib/B/Ent102PLB.v), e_A -> e_B, ec_A -> ec_B, the B' twins lib/AU/Prog/Ent102L6BfLem.v /
    Ent102CallB.v of the shared A' files and the record's lib/AU/Ent102PosB.v; lib/A/Prog/Ent102GrantA.v,
    lib/A/Ent102ReqA.v and lib/A/Prog/S1Ledger.v are shared by both images. The B' body is A''s up to pc-relative
@@ -31,7 +32,7 @@
    The store and the first call are ONE run of YC80x.v's runner in its PST-write, memory-invariant form
    (YC1fPx.v paj_run_x_m_inv at P := YSRrMemnorm.v's memnorm instance): the write premise is the PST disjunct, the
    one written byte is the image's g_own_ran_out (ei_own), writable by ei_pst_w.
-   STATEMENT: lib/AU/Ent102CutsB.v, read at commit b1ed4e6c944d
+   STATEMENT: lib/AU/Ent102CutsB.v, read
    (blob a74a7497b9d0, the batch kit's texts at the seam, the wild budget through the walk: seg_L1_stmt over ec_hyps, cut_s1 at
    spent budget 0, cut_cno at ec_wk_cno, with the exact room position and the return tie, ec_img, ec_pay),
    lib/AU/Ent102PosB.v (ec_supply_run). NO provisional argument: the granted form of check_no_overread

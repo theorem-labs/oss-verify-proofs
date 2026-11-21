@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: Qamb_fds also asks the kernel state unchanged. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -87,8 +88,8 @@ Definition QambC (c : option bptr) (X : list (bptr * Z)) : assn PState := fun s 
 Definition Qamb (X : list (bptr * Z)) : assn PState := fun s mo => exists c, QambC c X s mo.
 
 Lemma Qamb_minv X s mo : Qamb X s mo -> minv mo /\ m_halted mo = None. Proof. intros (c & H & _). eapply QI_minv; exact H. Qed.
-Lemma Qamb_fds X s mo mo' : Qamb X s mo -> m_vmmaps mo' = m_vmmaps mo -> minv mo' -> m_halted mo' = None -> Qamb X s mo'.
-Proof. intros (c & H & E) A B C. exists c. split; [eapply QI_fds; eauto| exact E]. Qed.
+Lemma Qamb_fds X s mo mo' : Qamb X s mo -> m_vmmaps mo' = m_vmmaps mo -> m_kernel mo' = m_kernel mo -> minv mo' -> m_halted mo' = None -> Qamb X s mo'.
+Proof. intros (c & H & E) A K B C. exists c. split; [eapply QI_fds; eauto| exact E]. Qed.
 Lemma Qamb_live X s mo : Qamb X s mo -> live mo <= LBUDGET. Proof. intros (c & H & _). eapply QI_live; exact H. Qed.
 Lemma Qamb_so X s mo v : Qamb X s mo -> Qamb X (set_so_ps v s) mo.
 Proof. intros (c & H & E). exists c. split; [apply QI_set_so; exact H| exact E]. Qed.

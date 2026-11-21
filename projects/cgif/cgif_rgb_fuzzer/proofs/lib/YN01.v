@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the safety proof covers the new vDSO-bump step and skips node_ok's third part, and the initial model's not-halted fact is proved by computation where m_halted_init_model does not apply). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import MustExit HaltsAllowed.
@@ -84,6 +85,13 @@ match goal with
 | [ Hm : materialize_model_accesses ?m1 _ = Some ?m2 |- _ ] =>
 destruct (materialize_model_accesses_frame _ _ _ Hm) as (_&_&_&_&_&Hp&_)
 end.
+assert (Hh : m_halted (with_vdso_bump model'') = None) by (unfold with_vdso_bump, with_vdso, m_halted in *; cbn in *; rewrite Hp; assumption).
+split; [apply m_killed_of_m_halted_none; exact Hh | intros code Hc; congruence].
+-
+match goal with
+| [ Hm : materialize_model_accesses ?m1 _ = Some ?m2 |- _ ] =>
+destruct (materialize_model_accesses_frame _ _ _ Hm) as (_&_&_&_&_&Hp&_)
+end.
 assert (Hh : m_halted model'' = None) by (unfold m_halted in *; rewrite Hp; assumption).
 split; [apply m_killed_of_m_halted_none; exact Hh | intros code Hc; congruence].
 -
@@ -103,7 +111,7 @@ must_exit_in_at_cfg may_fail_cfg segs S c.
 Proof.
 intros S c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
 intros Hsafe Hk Hcode.
-- destruct Hnode as [Hcomp Hsound].
+- destruct Hnode as [Hcomp [Hsound _]].
 assert (HsafeI : forall i, tsafe S (T i)).
 { intros i tr Htr.
 assert (Hall : Forall (ev_ok S) (evs i ++ tr)).
@@ -134,7 +142,7 @@ must_exit_in_at_cfg may_fail_cfg segs S (init_config segs pc ph sp brk0 mbase rn
 Proof.
 intros S pc ph sp brk0 mbase rnd lim inp T Hr Hs.
 assert (Hh : m_halted (cfg_model (init_config segs pc ph sp brk0 mbase rnd lim inp)) = None).
-{ unfold init_config. cbn [cfg_model]. apply m_halted_init_model. }
+{ unfold init_config. cbn [cfg_model]. first [apply m_halted_init_model | reflexivity]. }
 eapply must_exit_of_realizes; [exact Hr | exact Hs | apply m_killed_of_m_halted_none; exact Hh |].
 intros code Hc. congruence.
 Qed.

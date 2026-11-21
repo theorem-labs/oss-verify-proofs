@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset image B' (#102 asan-ubsan pin d663f82d): the
    CONTAINER PREFIX of the write_value walk (B' 0x87348): from write_value's entry with an array or an object to the
    two join states WriteValueB_Defs fixes - the ITEM LOOP HEAD (write_value + 4 * 90, Defs' wv_headR) for a non-empty
@@ -16,8 +17,8 @@
    shadow byte as 0 from the node's shadow entry, rebuilt after the call from v's 56 bytes addressable at the current
    memory, Base's wv_ra_curR) and stops at `beqz n` (slot 65); n = 0 runs to slot 173 (the close), n <> 0 runs the
    loop init (slots 66-89) to slot 90 (the head), no obligation left on any path.
-   TEMPLATE (ported, not cited): the kit owner's image-A walk lib/A/Prog/PRW_write_value.v (a working branch
-   7819c4b4583, blob 051bfb4b3368), its wv_cont and the helpers wvp_*: B's frame is 192, the pretty branch comes
+   TEMPLATE (ported, not cited): the kit owner's image-A walk lib/A/Prog/PRW_write_value.v (a working branch,
+   blob 051bfb4b3368), its wv_cont and the helpers wvp_*: B's frame is 192, the pretty branch comes
    before the n branch, the empty container joins the shared close at slot 173, s6 = addiw dep 1 and s10 =
    slt s6 dep (= 0), frame words 8 = 3 / 16 = 0, the shadow offset at frame word 72.
    Numerals: 4 (LENGTH: instruction bytes), 192 (LENGTH: write_value's own frame), 8 .. 184 (LENGTH: frame offsets),

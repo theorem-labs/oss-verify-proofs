@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: for omx-clap-core/fuzz_preset, the CALLER-WINDOW call kit over YCbqG.v's journal
    ajournal_x (allocator invariant a parameter ARx, ghost head set Hp after S, program statics PST), generic: no image
-   class, no address, no ledger. Credit: WalkS4, lib/A/Prog/PRW_CallerJ.v at 85a188622c5 (statements and proofs taken
+   class, no address, no ledger. Credit: WalkS4, lib/A/Prog/PRW_CallerJ.v (statements and proofs taken
    from there; changes below). Donors there: cj_kept from cgif_file_fuzzer lib/YC20.v:311-325 tlzw_kept and
    lib/YC8n.v:272-287 tlzw_kept_of_journal (origin/release/pau-projects-recipes), generalised to ajournal_x's keep
    clauses; aj_call_xW from YCbqGcall.v aj_call_x (cgif YCbq.v:1845-1883 aj_call, origin/ossv/recipes).
@@ -14,10 +14,10 @@
    - START: ajournal_x_init_W, the widened journal (STK + e) (sp + e) at the entry state.
    - CALL of a caller-window callee: aj_call_xW / aj_call_xWF (callee state in mkst form), aj_call_xW_sp /
      aj_call_xWF_sp (the entry form of YCbqGcall.v's aj_call_x_sp: st_ok, ss_resv, the machine state ms).
-     The footprint side condition is YCbqG.v's own fp_sub_x (h-hpreset-7 9052c7a7d74 :688-691), whose fourth
+     The footprint side condition is YCbqG.v's own fp_sub_x (h-hpreset-7 :688-691), whose fourth
      disjunct `sp0 - STK <= a < sp0` is the caller's window: WalkS4's fp_sub_xW is that predicate, so this file
      no longer states one and ajournal_x_sub_W (the name WalkS4's callers use) is YCbqG's ajournal_x_sub.
-   - vrd_call_W: h-verbs-3's lib/A/VrdArm.v call rule (6d4cddbdff5), premise shape kept, as a corollary of
+   - vrd_call_W: h-verbs-3's lib/A/VrdArm.v call rule, premise shape kept, as a corollary of
      aj_call_xW_sp at e1 := - o.
    - aj_call_xWF_d: WalkH6's caller-window float call rule (h-walk-identity's S8aCallW.v aj_call_xWF), verbatim: no
      fwin_x for the callee and no window-kept clause on either side.
@@ -39,6 +39,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YCbqGcallW.v, with its module names changed; 482 of its 526 lines of code are new or changed and 767 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S4_PsFree.v, with its module paths and module names changed; 466 of its 520 lines of code are new or changed and 472 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/Caw102A_WA4.v; 196 of its 279 lines of code are new or changed and 437 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset lib/A, the #102 re-walk of check_as_written on image A' (ASan build, pin sha256 1be0f53d96cb9d6c),
    part of the re-walk (re-fitted to the re-keyed base and then to the batch base, in two
    steps): segment WA1. On the kit's cut of the #102 batch, preset-tree-at-2026-10-30T04-57-22Z.tsv (sha256 652fe98064b9; internal record).
@@ -55,7 +56,7 @@
    - the run-word list DW is gone from the text (its binder and prh_univ_closure's argument): the base drops its
      Section variable DW, so this file drops its own `Variable DW` and the statement reads
      caw_seg_WA1 (fx := fx) B SK CTX0 P. No other statement change.
-   - caw_pre now has 27 conjuncts (Caw102A_Base.v:229-256; the room counts, hull budget and HPOS follow room_live_cf, so ck_frm0
+   - caw_pre now has 27 conjuncts (Caw102A_Base.v:230-257; the room counts, hull budget and HPOS follow room_live_cf, so ck_frm0
      moved by four): it is read BY NAME, caw_pre_fpre (the only part this segment reads), never by a positional pattern.
    - THE OUTCOME (the text's :879-888): caw_at_null carries caw_dead D (third, after caw_prog D [] S3), proved at
      WA0's NULL arm; the End cut's r = 1 arm asks it, state-free (it names only the entry state), so this segment

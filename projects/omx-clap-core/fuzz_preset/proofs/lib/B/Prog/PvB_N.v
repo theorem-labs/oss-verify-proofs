@@ -1,14 +1,14 @@
 (* fuzz_preset image B' (asan-ubsan pin d663f82d7f48, #102), parse_value SEGMENT N (the number arm, B 0x86598 -> exit
    0x8664c): SEG_N's statement (PvB_Top.v's SEG_N) PROVED, from the eight segment lemmas (PvB_NA pnA, PvB_NB pnB, PvB_NC
    pnC_holds, PvB_ND pnD_holds, PvB_NE pnE, PvB_NF pnF, PvB_NTX pvn_TX, PvB_NQ pnQ) composed by PvB_NWalk.pvN_of_pieces,
-   over the batch kit a working branch 240b06ed4fd4 (the CW / wild-room form of the cut, the
+   over the batch kit a working branch (the CW / wild-room form of the cut, the
    budgeted exit body pv_body_x, the batch kit's post: the outcome pv_outc over the grant-all run, rd_ledger_move with g_most /
    run, rd_ledger_move with g_most / the grant-all trace / the refused peak, the free-order tie pv_ftie, pj_ncapR).
    rule 24: no function proved
    rule 24: proves no function (kind: composition of proved segment lemmas).
    The Section hypotheses are ARGUMENTS, each an instance, kit, call-row or image fact with a named source:
      LAWS        AR_laws_x at the instance (hl the head length)
-     FMALLOC     the kit's fuzz_malloc call text tfuzz_malloc_specX at the batch kit's tip (lib/A/PRH_FnAlloc.v 240b06ed4fd4):
+     FMALLOC     the kit's fuzz_malloc call text tfuzz_malloc_specX at the batch kit's tip (lib/A/PRH_FnAlloc.v):
                  post-implication form, no position at entry, per-call byte premise guarded `cnt <> fail -> ..`; its
                  premises sec_cnt / ccnt24 at the call come from pv_pre's two live-count premises (PvB_NC.v), its post
                  gives the two position implications and the OUTCOME clause (a consumed granted request with no

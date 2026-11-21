@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-11: copied from projects/openssl/bndiv/proofs/lib/Lib/LimBase.v at commit c395a1e0dfa, whole, with the module path OSSVerify.Proofs.openssl.bndiv.lib.Lib changed to OSSVerify.Proofs.skcms.iccprofile_info.lib.Halts.Lim and nothing else. *)
+(* Modified by Theorem Labs, 2026-11: copied from projects/openssl/bndiv/proofs/lib/Lib/LimBase.v at commit theorem-labs/oss-verify-proofs@c5665593c2d8, whole, with the module path OSSVerify.Proofs.openssl.bndiv.lib.Lib changed to OSSVerify.Proofs.skcms.iccprofile_info.lib.Halts.Lim and nothing else. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, lim_step unfolds an optional post-state producer (write_file_tail's) before it destructs it, with a comment of this file's own on that in lim_step, and the cited source commit is named by its public id. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs.
@@ -139,6 +140,14 @@ Ltac lim_step :=
   | |- lim_blind (alt _ _) => apply lim_blind_alt
   | |- lim_blind get_fds => apply lim_blind_get_fds
   | |- lim_blind (modify _) => lim_modify
+  | |- lim_blind (match ?e with Some _ => _ | None => _ end) =>
+      (* 08b1429: write_file_tail takes its fault and place post-states as
+         [option (Sys _ -> Sys _)]; unfold the producer rather than destruct
+         the option into an opaque continuation. *)
+      first [ lazymatch type of e with
+              | option (_ -> _) => let h := head_of e in progress (unfold h; cbv beta iota zeta)
+              end
+            | deep_destruct e ]
   | |- lim_blind (match ?s with _ => _ end) => deep_destruct s
   | |- lim_blind (if ?s then _ else _) => deep_destruct s
   | |- lim_blind (fun i => ?c) => idtac

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the SIGPIPE disposition left free, the rseq-dependent auxv, the launch input's kernel build): changed AA, AH, E0a and 26 more; added Hapc, Hlau, Hlaunch and 9 more; internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -62,23 +63,35 @@ Section Hooks.
   Qed.
 End Hooks.
 
+(* THE STAGE AND STARTUP SECTIONS' PARAMETERS, old beside new.
+     OLD  sp brk0 rdraw argv envp uid hw fs, with Hsp Hva (and, in Startup, the
+          input's remaining fields and Hbrk Hmb Hve Hfit Huid Hhw);
+          SINV0 APH0 sp rdraw brk0 argv envp uid hw, argH0 APH0 sp rdraw argv envp uid hw.
+     NEW  the launch's whole input in [HandoffBridgeK]'s Section Image order ([ifs] the
+          input's filesystem, [fs] the plan's FS0), so [SINV0]/[argH0] are instantiated at
+          every place [AsanInitK] abstracts them over.  The plan checker and [x_stmt] take
+          the run's CONFIG_RSEQ flag after [LIMIT] (AsanPlanK / AsanPlanSoundK):
+          [Stage] is generic in it ([rz]); [Startup] fixes it to the
+          launch's own [RZ], the flag [AsanInitK.init_cs_ok]'s initial state is built at. *)
 Section Stage.
 
-  Variable sp brk0 : word.
-  Variable rdraw : EntryDraw.
-  Variable argv envp : list (list byte).
-  Variables uid hw : word.
-  Variable fs : Fs.Fs.
+  Variables (sp : word) (rdraw : EntryDraw) (brk0 mbase : word) (argv envp : list (list byte)).
+  Variables (ifs : Fs.Fs) (stdin : InputStream) (uid gid hw : word) (groups : list word) (net : NetQueue).
+  Variables (nofile sigmask : word) (abrt : bool) (urnd : InputStream) (tmp0 : Fs.Fs).
+  Variables (kb : KernelBuild) (execfn : list byte) (sdf : bool) (apc : N) (fs : Fs.Fs).
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
 
-  #[local] Notation SINV := (SINV0 APH0 sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 APH0 sp rdraw argv envp uid hw).
+  #[local] Notation SINV := (SINV0 APH0 sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf apc).
+  #[local] Notation argH := (argH0 sp rdraw argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf).
   #[local] Notation LIM := AsanInitK.LIMIT.
-  Let AH := argH0_high APH0 sp rdraw argv envp uid hw Hsp Hva.
-  Let AA := argH0_agree APH0 sp rdraw argv envp uid hw.
-  Let SF := SINV0_frame APH0 sp rdraw brk0 argv envp uid hw.
-  Let SA := SINV0_agree APH0 sp rdraw brk0 argv envp uid hw.
+  Let AH := argH0_high sp rdraw argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf apc Hsp Hva.
+  Let AA := argH0_agree sp rdraw argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf.
+  Let SF := SINV0_frame APH0 sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf apc.
+  Let SA := SINV0_agree APH0 sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf apc.
+
+  (* the run's CONFIG_RSEQ flag, as the plan's 0 or 1 *)
+  Variable rz : Z.
 
   Variable IT0 : itab.
   Hypothesis IT0_ok : itab_sound ASEGS0 IT0.
@@ -95,22 +108,22 @@ Section Stage.
   Proof. reflexivity. Qed.
   Hypothesis HS_sound : holes_stmt ASEGS0 scfg ASAN0 LIM HS SINV argH HOLES fs.
 
-  Hypothesis X_ALL : forall x, x_stmt ASEGS0 scfg ASAN0 NX0 LIM SINV argH fs x.
+  Hypothesis X_ALL : forall x, x_stmt ASEGS0 scfg ASAN0 NX0 LIM rz SINV argH fs x.
 
   Variables KC0 BFUEL FUEL : nat.
 
   Theorem stage_sound : forall p cs0 s,
-    check ASEGS0 IT0 ASAN0 NX0 LIM XN0 XE0 XB0 HS KC0 BFUEL FUEL None cs0 p = COk s ->
+    check ASEGS0 IT0 ASAN0 NX0 LIM rz XN0 XE0 XB0 HS KC0 BFUEL FUEL None cs0 p = COk s ->
     forall E R FULL model, cs_ok ASEGS0 ASAN0 LIM SINV argH fs E cs0 R FULL model ->
       srealizes ASEGS0 scfg (cfg_of ASEGS0 R (pc cs0) FULL model) (sd HOLES t_nil E (m_fs model) s).
   Proof.
     intros p cs0 s Hcert E R FULL model HC.
-    exact (check_sound ASEGS0 scfg IT0 IT0_ok ASAN0 NX0 LIM HS XN0 XE0 XB0
+    exact (check_sound ASEGS0 scfg IT0 IT0_ok ASAN0 NX0 LIM rz HS XN0 XE0 XB0
              Asan0_wx_nowrap asan0_in_hull asan0_hull_ok asan0_shadow_ok SINV argH AH e_sp0_init AA SF SA
              HOLES HOLES_agree HOLES_nil HOLES_flat fs KC0
              (AsanNodesMmBK.node_sys_sound ASEGS0 scfg Halloc ASAN0 NX0 LIM SINV argH fs asan0_res_len asan0_res_hull asan0_hull_ok asan0_shadow_ok AH e_sp0_init AA SF SA)
              (AsanNodesMmBK.node_brk2_sound ASEGS0 scfg Halloc ASAN0 NX0 LIM SINV argH fs asan0_in_hull asan0_res_len asan0_res_hull asan0_hull_ok asan0_shadow_ok AH SF)
-             (node_mmap2_sound_OBL ASEGS0 scfg ASAN0 NX0 LIM SINV argH fs Halloc Asan0_wx_nowrap asan0_in_hull asan0_res_len asan0_res_hull asan0_hull_ok asan0_shadow_ok AH e_sp0_init AA SF SA asan0_hull_tiled asan0_hull_lt)
+             (node_mmap2_sound_OBL ASEGS0 scfg ASAN0 NX0 LIM rz SINV argH fs Halloc Asan0_wx_nowrap asan0_in_hull asan0_res_len asan0_res_hull asan0_hull_ok asan0_shadow_ok AH e_sp0_init AA SF SA asan0_hull_tiled asan0_hull_lt)
              (node_mmapin_sound_OBL ASEGS0 scfg ASAN0 NX0 LIM SINV argH fs Halloc Asan0_wx_nowrap asan0_in_hull asan0_res_len asan0_res_hull asan0_hull_ok asan0_shadow_ok AH e_sp0_init AA SF SA asan0_hull_tiled asan0_hull_lt)
              (node_mprotect2_sound_OBL ASEGS0 scfg ASAN0 NX0 LIM SINV argH fs Halloc Asan0_wx_nowrap asan0_in_hull asan0_res_len asan0_res_hull asan0_hull_ok asan0_shadow_ok AH e_sp0_init AA SF SA asan0_hull_tiled asan0_hull_lt)
              (AsanNodesMmBK.node_exit_sound ASEGS0 scfg ASAN0 LIM SINV argH fs)
@@ -122,7 +135,7 @@ Section Stage.
   Qed.
 
   Corollary stage_hole : forall p cs0 s,
-    check ASEGS0 IT0 ASAN0 NX0 LIM XN0 XE0 XB0 HS KC0 BFUEL FUEL None cs0 p = COk s -> hole_only s = true ->
+    check ASEGS0 IT0 ASAN0 NX0 LIM rz XN0 XE0 XB0 HS KC0 BFUEL FUEL None cs0 p = COk s -> hole_only s = true ->
     forall E R FULL model, cs_ok ASEGS0 ASAN0 LIM SINV argH fs E cs0 R FULL model ->
       srealizes ASEGS0 scfg (cfg_of ASEGS0 R (pc cs0) FULL model) (T (m_fs model)).
   Proof.
@@ -146,18 +159,10 @@ End Stage.
 
 Section Startup.
 
-  Variable sp brk0 mbase : word.
-  Variable rdraw : EntryDraw.
-  Variable argv envp : list (list byte).
-  Variable fs : Fs.Fs.
-  Variable stdin : InputStream.
-  Variables uid gid hw : word.
-  Variable groups : list word.
-  Variable net : NetQueue.
-  Variables nofile sigmask : word.
-  Variable abrt : bool.
-
-  Variable ifs : Fs.Fs. Variable urnd : InputStream. Variable tmp0 : Fs.Fs.
+  Variables (sp : word) (rdraw : EntryDraw) (brk0 mbase : word) (argv envp : list (list byte)).
+  Variables (ifs : Fs.Fs) (stdin : InputStream) (uid gid hw : word) (groups : list word) (net : NetQueue).
+  Variables (nofile sigmask : word) (abrt : bool) (urnd : InputStream) (tmp0 : Fs.Fs).
+  Variables (kb : KernelBuild) (execfn : list byte) (sdf : bool) (apc : N) (fs : Fs.Fs).
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hbrk : valid_brk ASEGS0 brk0.
   Hypothesis Hmb : valid_mmap_base mbase.
@@ -166,12 +171,22 @@ Section Startup.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
   Hypothesis Huid : valid_id uid.
   Hypothesis Hhw : valid_hwcap hw.
+  Hypothesis Hapc : Z.of_N apc = a_entry ASAN0.
+  #[local] Notation INP := (AsanInitK.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf).
+  Hypothesis Hlaunch : valid_launch INP.
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) INP.
+  (* the plan's filesystem is the input's, seeded with the temp tree *)
   Hypothesis Hseed : fs_seed_tmp ifs tmp0 = fs.
 
-  #[local] Notation SINV := (SINV0 APH0 sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 APH0 sp rdraw argv envp uid hw).
-  #[local] Notation E0a := (E0 APH0 sp rdraw brk0 argv envp uid hw).
+  #[local] Notation SINV := (SINV0 APH0 sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf apc).
+  #[local] Notation argH := (argH0 sp rdraw argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf).
+  (* [AsanInitK.E0]'s closure.  An earlier port's V_EHDR/V_GID/V_EXECFN
+     change adds [mbase] after [brk0] here (vals0 slot 12 is the vDSO base); this
+     notation is the one line that moves with it. *)
+  #[local] Notation E0a := (E0 sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf).
   #[local] Notation LIM := AsanInitK.LIMIT.
+  (* the launch's CONFIG_RSEQ flag, the one [init_cs_ok]'s initial state is built at *)
+  #[local] Notation RZ := (rseq_z (kb_rseq (in_kernel INP))).
 
   Variable IT0 : itab.
   Hypothesis IT0_ok : itab_sound ASEGS0 IT0.
@@ -179,37 +194,48 @@ Section Startup.
   Variable T : Fs.Fs -> TSet.
   Hypothesis T_nil : forall fs', T fs' [].
   Hypothesis HS_sound : holes_stmt ASEGS0 scfg ASAN0 LIM HS SINV argH (HOLES T) fs.
-  Hypothesis X_ALL : forall x, x_stmt ASEGS0 scfg ASAN0 NX0 LIM SINV argH fs x.
+  Hypothesis X_ALL : forall x, x_stmt ASEGS0 scfg ASAN0 NX0 LIM RZ SINV argH fs x.
   Variables KC0 BFUEL FUEL : nat.
   Variable startup_plan : plan.
   Variable startup_shape : shape.
+  (* STATEMENT CHANGED, old beside new:
+       OLD  check ... LIM XN0 XE0 XB0 HS KC0 BFUEL FUEL None asan0_init startup_plan = COk startup_shape
+       NEW  check ... LIM RZ XN0 XE0 XB0 HS KC0 BFUEL FUEL None (asan0_init RZ) startup_plan = COk startup_shape
+     The initial state is built at the run's flag (Pm9DefsK.asan0_init rz, staged by
+     an earlier port), and the checker reads the same flag. *)
   Hypothesis startup_cert :
-    check ASEGS0 IT0 ASAN0 NX0 LIM XN0 XE0 XB0 HS KC0 BFUEL FUEL None asan0_init startup_plan = COk startup_shape.
+    check ASEGS0 IT0 ASAN0 NX0 LIM RZ XN0 XE0 XB0 HS KC0 BFUEL FUEL None (asan0_init RZ) startup_plan = COk startup_shape.
 
+  (* STATEMENT CHANGED, old beside new:
+       OLD  init_config ASEGS0 AsanUbsan.M.init_pc APH0 sp brk0 mbase rdraw LIM (inp ... tmp0)
+       NEW  init_config ASEGS0 apc APH0 sp brk0 mbase rdraw LIM INP, over the Section's
+            [apc] and [Hapc] -- [AsanInitK.init_cfg_eq]'s own form; a
+            consumer passes [AsanUbsan.M.init_pc] and [eq_refl] for them. *)
   Theorem as0_startup :
-    srealizes ASEGS0 scfg (init_config ASEGS0 AsanUbsan.M.init_pc APH0 sp brk0 mbase rdraw LIM
-                                 (AsanInitK.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0))
+    srealizes ASEGS0 scfg (init_config ASEGS0 apc APH0 sp brk0 mbase rdraw LIM INP)
               (sd (HOLES T) t_nil E0a fs startup_shape).
   Proof.
     pose proof asan0_img_facts as IMG.
-    rewrite (init_cfg_eq ASEGS0 ASAN0 APH0 sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 AsanUbsan.M.init_pc eq_refl).
-    pose proof (init_cs_ok ASEGS0 ASAN0 APH0 sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 IMG Hsp Hbrk Hva Hve Hfit Huid Hhw) as HC.
+    erewrite init_cfg_eq by eassumption.
+    pose proof (init_cs_ok ASEGS0 ASAN0 APH0 sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf apc
+                  IMG Hsp Hbrk Hmb Hva Hve Hfit Huid Hhw Hapc Hlaunch Hlau) as HC.
     rewrite Hseed in HC. rewrite <- Hseed.
-    exact (stage_sound sp brk0 rdraw argv envp uid hw fs Hsp Hva IT0 IT0_ok HS T T_nil HS_sound X_ALL KC0 BFUEL FUEL
-             startup_plan asan0_init startup_shape startup_cert _ _ _ _ HC).
+    exact (stage_sound sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf apc fs Hsp Hva
+             RZ IT0 IT0_ok HS T T_nil HS_sound X_ALL KC0 BFUEL FUEL
+             startup_plan (asan0_init RZ) startup_shape startup_cert _ _ _ _ HC).
   Qed.
 
   Corollary as0_startup_hole : hole_only startup_shape = true ->
-    srealizes ASEGS0 scfg (init_config ASEGS0 AsanUbsan.M.init_pc APH0 sp brk0 mbase rdraw LIM
-                                 (AsanInitK.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0))
-              (T fs).
+    srealizes ASEGS0 scfg (init_config ASEGS0 apc APH0 sp brk0 mbase rdraw LIM INP) (T fs).
   Proof.
     intros Hho. pose proof asan0_img_facts as IMG.
-    rewrite (init_cfg_eq ASEGS0 ASAN0 APH0 sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 AsanUbsan.M.init_pc eq_refl).
-    pose proof (init_cs_ok ASEGS0 ASAN0 APH0 sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 IMG Hsp Hbrk Hva Hve Hfit Huid Hhw) as HC.
+    erewrite init_cfg_eq by eassumption.
+    pose proof (init_cs_ok ASEGS0 ASAN0 APH0 sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf apc
+                  IMG Hsp Hbrk Hmb Hva Hve Hfit Huid Hhw Hapc Hlaunch Hlau) as HC.
     rewrite Hseed in HC. rewrite <- Hseed.
-    exact (stage_hole sp brk0 rdraw argv envp uid hw fs Hsp Hva IT0 IT0_ok HS T T_nil HS_sound X_ALL KC0 BFUEL FUEL
-             startup_plan asan0_init startup_shape startup_cert Hho _ _ _ _ HC).
+    exact (stage_hole sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf apc fs Hsp Hva
+             RZ IT0 IT0_ok HS T T_nil HS_sound X_ALL KC0 BFUEL FUEL
+             startup_plan (asan0_init RZ) startup_shape startup_cert Hho _ _ _ _ HC).
   Qed.
 End Startup.
 End As0.

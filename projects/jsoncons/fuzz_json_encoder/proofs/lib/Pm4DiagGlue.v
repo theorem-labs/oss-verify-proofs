@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the nine-byte string read-ahead): changed chk_pre_intro; added vmc_refl; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/Pm8DiagGlue.v, lines 15, 38-40. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -15,6 +16,7 @@ Import ListNotations.
 Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Require OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib.L5FastLia. Local Ltac lia := L5FastLia.plia.
+Local Ltac vmc_refl := first [ lazymatch goal with |- _ = ?b => vm_cast_no_check (@eq_refl _ b) end | vm_compute; reflexivity ].
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
 Module DG.
@@ -38,7 +40,9 @@ Proof.
   intros [A _ _]. rewrite (SeqExec.rdn_firstn RSEGS M _ _ _ (length bs + 1) A) by lia. f_equal.
   rewrite firstn_app. rewrite firstn_all2 by lia. replace (length bs + 1 - length bs)%nat with 1%nat by lia. reflexivity.
 Qed.
-Lemma chk_pre_intro (M : word -> option byte) p n s : 0 <= n <= 131071 -> 140735332552704 <= p -> p + n + 1 + 16 <= 2 ^ 47 ->
+(* SLACK 16 -> 9, old beside new: the third premise was [p + n + 1 + 16 <= 2 ^ 47]; it is used
+   only to bound [(p + n) / 8 <= 2 ^ 44].  See Pm4DrvEntryK.ent_str_hi. *)
+Lemma chk_pre_intro (M : word -> option byte) p n s : 0 <= n <= 131071 -> 140735332552704 <= p -> p + n + 1 + 9 <= 2 ^ 47 ->
   140735332552704 <= s - 72 -> s <= 2 ^ 47 -> L5.writable RSEGS M (s - 72) 72 -> rt_layout_globs M ->
   (forall x : word, SB + p / 8 - 7 <= bv_unsigned x < Z.min (SB + (p + n) / 8 + 8) (SB + 2 ^ 44) -> M x = Some (Z_to_bv 8 0)) -> chk_pre M p (n + 1) s.
 Proof.
@@ -47,7 +51,7 @@ Proof.
   split; [lia|]. split; [right; unfold HIGHBEG, HIGHEND; lia|]. split; [lia|]. split; [lia|]. split; [lia|].
   split; [apply (store_ok_of_writable M (s - 72) 72); [exact W | reflexivity]|]. split; [exact G | exact Z0].
 Qed.
-(* [comment removed for export] *)
+
 Ltac rkb K :=
   lazymatch goal with |- getr _ (Z_to_bv 5 (Z.of_nat ?k)) = _ =>
     let z := eval vm_compute in (Z.of_nat k) in

@@ -127,7 +127,7 @@ Definition p5v_ctx {rc : RunCeil} (Bm : malloc_syms) (API : AllocAPI Bm) (L : la
      hs_partial (nth i hs' (fst (nth i hj no_hj))) = hs_partial (fst (nth i hj no_hj))).
 
 Definition p5v_cnt_S : Prop :=
-  forall (rc : RunCeil) (Bm : malloc_syms) (API : @AllocAPI rc Bm) (L : layout) (A : astate)
+  forall (rc : RunCeil) (Bm : malloc_syms) (API : AllocAPI (rc:=rc) Bm) (L : layout) (A : astate)
          (regs : bvmap 5 word) (mem : word -> option byte) (md : Model) (t k G : Z) (es : list rentry)
          (hj : list (hsrc * nat)) (cl br dd : Z) (mx nout cap out : word) (pre : list Z)
          (L' : layout) (A' : astate) (regs' : bvmap 5 word) (mem' : word -> option byte) (md' : Model)
@@ -143,7 +143,7 @@ Definition p5v_cnt_S : Prop :=
         (nm (bv_unsigned out)) c <= nc_cnt V' L' A' c.
 
 Definition p5v_ncs_S : Prop :=
-  forall (rc : RunCeil) (Bm : malloc_syms) (API : @AllocAPI rc Bm) (L : layout) (A : astate)
+  forall (rc : RunCeil) (Bm : malloc_syms) (API : AllocAPI (rc:=rc) Bm) (L : layout) (A : astate)
          (regs : bvmap 5 word) (mem : word -> option byte) (md : Model) (t k G : Z) (es : list rentry)
          (hj : list (hsrc * nat)) (cl br dd : Z) (mx nout cap out : word) (pre : list Z)
          (L' : layout) (A' : astate) (regs' : bvmap 5 word) (mem' : word -> option byte) (md' : Model)
@@ -158,7 +158,7 @@ Definition p5v_ncs_S : Prop :=
       ncs V' L' A'.
 
 Definition p5v_wt_S : Prop :=
-  forall (rc : RunCeil) (Bm : malloc_syms) (API : @AllocAPI rc Bm) (L : layout) (A : astate)
+  forall (rc : RunCeil) (Bm : malloc_syms) (API : AllocAPI (rc:=rc) Bm) (L : layout) (A : astate)
          (regs : bvmap 5 word) (mem : word -> option byte) (md : Model) (t k G : Z) (es : list rentry)
          (hj : list (hsrc * nat)) (cl br dd : Z) (mx nout cap out : word) (pre : list Z)
          (L' : layout) (A' : astate) (regs' : bvmap 5 word) (mem' : word -> option byte) (md' : Model)
@@ -173,7 +173,7 @@ Definition p5v_wt_S : Prop :=
       gone_wd (combine es hj) (gone_states lv (bv_unsigned mx) (bv_unsigned nout) (bv_unsigned cap) pre es hj).
 
 Definition p5v_ekc_S : Prop :=
-  forall (rc : RunCeil) (Bm : malloc_syms) (API : @AllocAPI rc Bm) (L : layout) (A : astate)
+  forall (rc : RunCeil) (Bm : malloc_syms) (API : AllocAPI (rc:=rc) Bm) (L : layout) (A : astate)
          (regs : bvmap 5 word) (mem : word -> option byte) (md : Model) (t k G : Z) (es : list rentry)
          (hj : list (hsrc * nat)) (cl br dd : Z) (mx nout cap out : word) (pre : list Z)
          (L' : layout) (A' : astate) (regs' : bvmap 5 word) (mem' : word -> option byte) (md' : Model)
@@ -187,7 +187,7 @@ Definition p5v_ekc_S : Prop :=
     forall c, 0 <= c < 49 -> ek_c V' c = ek_c V c + bcnt c (gone_ek (combine es hj)).
 
 Definition p5v_ekb_S : Prop :=
-  forall (rc : RunCeil) (Bm : malloc_syms) (API : @AllocAPI rc Bm) (L : layout) (A : astate)
+  forall (rc : RunCeil) (Bm : malloc_syms) (API : AllocAPI (rc:=rc) Bm) (L : layout) (A : astate)
          (regs : bvmap 5 word) (mem : word -> option byte) (md : Model) (t k G : Z) (es : list rentry)
          (hj : list (hsrc * nat)) (cl br dd : Z) (mx nout cap out : word) (pre : list Z)
          (L' : layout) (A' : astate) (regs' : bvmap 5 word) (mem' : word -> option byte) (md' : Model)
@@ -201,7 +201,7 @@ Definition p5v_ekb_S : Prop :=
     ek_b V' = ek_b V + zsum (fun n => n) (gone_ek (combine es hj)).
 
 Definition p5v_old_S : Prop :=
-  forall (rc : RunCeil) (Bm : malloc_syms) (API : @AllocAPI rc Bm) (L : layout) (A : astate)
+  forall (rc : RunCeil) (Bm : malloc_syms) (API : AllocAPI (rc:=rc) Bm) (L : layout) (A : astate)
          (regs : bvmap 5 word) (mem : word -> option byte) (md : Model) (t k G : Z) (es : list rentry)
          (hj : list (hsrc * nat)) (cl br dd : Z) (mx nout cap out : word) (pre : list Z)
          (L' : layout) (A' : astate) (regs' : bvmap 5 word) (mem' : word -> option byte) (md' : Model)
@@ -216,7 +216,7 @@ Definition p5v_old_S : Prop :=
       ~ In (ptr_addr L p) (gone_tch (bv_unsigned out) (bv_unsigned cap) es hj) -> In (ptr_addr L' p) (rv_nc V').
 
 Definition p5v_out_S : Prop :=
-  forall (rc : RunCeil) (Bm : malloc_syms) (API : @AllocAPI rc Bm) (L : layout) (A : astate)
+  forall (rc : RunCeil) (Bm : malloc_syms) (API : AllocAPI (rc:=rc) Bm) (L : layout) (A : astate)
          (regs : bvmap 5 word) (mem : word -> option byte) (md : Model) (t k G : Z) (es : list rentry)
          (hj : list (hsrc * nat)) (cl br dd : Z) (mx nout cap out : word) (pre : list Z)
          (L' : layout) (A' : astate) (regs' : bvmap 5 word) (mem' : word -> option byte) (md' : Model)
@@ -232,7 +232,7 @@ Definition p5v_out_S : Prop :=
         (nm (bv_unsigned out))))) (rv_nc V').
 
 Definition p5v_chain_S : Prop :=
-  forall (rc : RunCeil) (Bm : malloc_syms) (API : @AllocAPI rc Bm) (L : layout) (A : astate)
+  forall (rc : RunCeil) (Bm : malloc_syms) (API : AllocAPI (rc:=rc) Bm) (L : layout) (A : astate)
          (regs : bvmap 5 word) (mem : word -> option byte) (md : Model) (t k G : Z) (es : list rentry)
          (hj : list (hsrc * nat)) (cl br dd : Z) (mx nout cap out : word) (pre : list Z)
          (L' : layout) (A' : astate) (regs' : bvmap 5 word) (mem' : word -> option byte) (md' : Model)
@@ -253,7 +253,7 @@ Definition p5v_chain_S : Prop :=
       (ds_ecap s <> 0 -> In (ptr_addr L' (resolveF qs (da_ev a))) (rv_nc V')).
 
 Definition p5v_pend_S : Prop :=
-  forall (rc : RunCeil) (Bm : malloc_syms) (API : @AllocAPI rc Bm) (L : layout) (A : astate)
+  forall (rc : RunCeil) (Bm : malloc_syms) (API : AllocAPI (rc:=rc) Bm) (L : layout) (A : astate)
          (regs : bvmap 5 word) (mem : word -> option byte) (md : Model) (t k G : Z) (es : list rentry)
          (hj : list (hsrc * nat)) (cl br dd : Z) (mx nout cap out : word) (pre : list Z)
          (L' : layout) (A' : astate) (regs' : bvmap 5 word) (mem' : word -> option byte) (md' : Model)

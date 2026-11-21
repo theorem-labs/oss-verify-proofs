@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the new auxv layout). *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.openssl.bignum.lib.BgLib Require Import ImageBg.
 
@@ -130,7 +131,7 @@ Lemma rauxv_ok_malloc_fp st st2 lo sp m0 m2 m m' B :
 Proof. try (pose proof ceil_window_holds as CEIL_RANGE__).
   intros MR0 MR2 AUX PE CLO SB. eapply rauxv_ok_pres; [exact AUX| exact PE| |].
   - intros a Ha Hfp. destruct (rmalloc_fp_cases st st2 lo sp m0 m2 a MR0 MR2 Hfp); [lia|].
-    destruct AUX as (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & _ & _ & _ & HH). unfold OSSVerify.Proofs.openssl.bignum.lib.Spec.Malloc.MCEIL in *; try (pose proof ceil_window_holds as CEIL_RANGE__); unfold ceil_window in *. lia.
+    destruct AUX as (av & axv & rnd & execfn & r & _ & _ & _ & HH). unfold OSSVerify.Proofs.openssl.bignum.lib.Spec.Malloc.MCEIL in *; try (pose proof ceil_window_holds as CEIL_RANGE__); unfold ceil_window in *. lia.
   - intros a Ha Hfp. unfold RAUXV_CELL, RLIBC in Ha.
     destruct (rmalloc_fp_image st st2 lo sp m0 m2 a MR0 MR2 Hfp CLO ltac:(lia)) as [X|X]; unfold RCTX in X; lia.
 Qed.

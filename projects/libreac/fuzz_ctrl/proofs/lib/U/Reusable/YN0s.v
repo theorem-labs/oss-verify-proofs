@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN0s.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (proof steps and imports changed). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -14,7 +15,10 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.U.Reusable Require Import YM05.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Local Open Scope Z_scope.
+From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.U.Reusable.R Require Import Cfg.
 Section b. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+(* The allocation mode: these facts hold for the ledger of either mode. *)
+Context {AM : AllocMode}.
 Definition mi_base (L : layout) (mi : option (nat * Z)) : Z := match mi with Some (k, _) => ly_reg L k | None => 0 end.
 Definition mi_len (mi : option (nat * Z)) : Z := match mi with Some (_, len) => len | None => 0 end.
 Record ntmidF (e : fentry) (Xz : list sptr) (fuel : nat) (L : layout) (A0 s : astate) (g : sptr) (mi : option (nat * Z))

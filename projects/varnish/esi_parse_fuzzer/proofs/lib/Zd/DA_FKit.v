@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the file view carries the channel-reader premise and takes the launch's argument layout. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -31,7 +32,7 @@ Local Open Scope Z_scope.
 Notation wz z := (Z_to_bv 64 z) (only parsing).
 
 Section FK.
-  Context {Clg : Ceiling} {AI : AsanAlloc LPA}.   (* [comment removed for export] *)
+  Context {Clg : Ceiling} {AI : AsanAlloc LPA} {LAY : ArgLayout}.   (* [comment removed for export] *)
   Variable usp : Z.
   Hypothesis HCEIL : alloc_ceiling = usp - 0x800000.   (* [comment removed for export] *)
   Variables argv envp : list (list byte).
@@ -51,7 +52,8 @@ Section FK.
     fv_args : args_at usp argv envp (aview A m);
     fv_sh   : forall a, in_stksh a -> aview A m (wz a) = Some (Z_to_bv 8 0);
     fv_stk  : stk rsegs (aview A m) (STK_LO usp) (SPF usp);
-    fv_fr   : rw_cells rsegs (aview A m) (SPF usp) MFR
+    fv_fr   : rw_cells rsegs (aview A m) (SPF usp) MFR;
+    fv_rdr  : m_channel_reader md = true   (* LPS 727298f3: channel-reader-premise, from cs_ok's co_rdr through dinv *)
   }.
 
   (* [comment removed for export] *)
@@ -83,14 +85,16 @@ Section FK.
   Lemma fview_stack : forall A m md fds sof ini tid m' md' fds' W,
     fview A m md fds sof ini tid ->
     ainv A m' md' -> mem_inv rsegs (aview A m') -> m_fs md' = fs -> m_fds md' = fds' ->
+    m_channel_reader md' = m_channel_reader md ->   (* LPS 727298f3: channel-reader-premise *)
     munch W (aview A m) (aview A m') -> wmono rsegs (aview A m) (aview A m') ->
     stack_only usp W -> disjoint_from W (SPF usp) 80 ->
     stk rsegs (aview A m') (STK_LO usp) (SPF usp) ->
     fview A m' md' fds' sof ini tid.
   Proof.
-    intros A m md fds sof ini tid m' md' fds' W FV AINV' MI' FS' FDS' MU WM SO DJ ST'.
+    intros A m md fds sof ini tid m' md' fds' W FV AINV' MI' FS' FDS' RDR' MU WM SO DJ ST'.
     (first [ pose proof ((fv_usp _ _ _ _ _ _ _ FV)) as dR_1; dand4 dR_1 as U1 U2 U3 U4 | pose proof (fv_usp _ _ _ _ _ _ _ FV) as (U1 & U2 & U3 & U4) ]).
-    destruct FV as [AINV MI FS FDS CC AR SH ST FR].
+    destruct FV as [AINV MI FS FDS CC AR SH ST FR RDR].
+    assert (RDRq : m_channel_reader md' = true) by (rewrite RDR'; exact RDR).   (* LPS 727298f3: channel-reader-premise *)
     (first [ pose proof ((bundle_stack usp argv envp HCEIL W _ _ tid sof ini MU SO U1 U2 CC AR SH)) as dR_2; dand4 dR_2 as CC' AR' SH' _ | destruct (bundle_stack usp argv envp HCEIL W _ _ tid sof ini MU SO U1 U2 CC AR SH) as (CC' & AR' & SH' & _) ]).
     constructor; try assumption.
     eapply (rw_cells_transport rsegs); [exact FR| exact MU| exact WM| exact DJ].
@@ -100,14 +104,16 @@ Section FK.
   Lemma fview_cframe : forall A A' m md m' md' fds fds' sof ini tid (sp win : Z) (V N : Z -> Prop),
     fview A m md fds sof ini tid ->
     ainv A' m' md' -> mem_inv rsegs (aview A' m') -> m_fs md' = fs -> m_fds md' = fds' ->
+    m_channel_reader md' = m_channel_reader md ->   (* LPS 727298f3: channel-reader-premise *)
     cframe LPA (owned A) (owned A') sp win V N (aview A m) (aview A' m') -> heapish V ->
     alloc_ceiling <= sp - win -> STK_LO usp <= sp - win -> sp <= SPF usp ->
     stk rsegs (aview A' m') (STK_LO usp) (SPF usp) ->
     fview A' m' md' fds' sof ini tid.
   Proof.
-    intros A A' m md m' md' fds fds' sof ini tid sp win V N FV AINV' MI' FS' FDS' CF HV CE WLO SPU ST'.
+    intros A A' m md m' md' fds fds' sof ini tid sp win V N FV AINV' MI' FS' FDS' RDR' CF HV CE WLO SPU ST'.
     (first [ pose proof ((fv_usp _ _ _ _ _ _ _ FV)) as dR_3; dand4 dR_3 as U1 U2 U3 U4 | pose proof (fv_usp _ _ _ _ _ _ _ FV) as (U1 & U2 & U3 & U4) ]). pose proof U1 as U1'. unfold sp_window_lo in U1'.
-    destruct FV as [AINV MI FS FDS CC AR SH ST FR].
+    destruct FV as [AINV MI FS FDS CC AR SH ST FR RDR].
+    assert (RDRq : m_channel_reader md' = true) by (rewrite RDR'; exact RDR).   (* LPS 727298f3: channel-reader-premise *)
     (first [ pose proof ((bundle_cframe usp argv envp HCEIL A A' m md (aview A' m') sp win V N tid sof ini AINV CF CE ltac:(unfold SPF in SPU; lia) HV CC AR SH)) as dR_4; dand4 dR_4 as CC' AR' SH' _ | destruct (bundle_cframe usp argv envp HCEIL A A' m md (aview A' m') sp win V N tid sof ini AINV CF CE ltac:(unfold SPF in SPU; lia) HV CC AR SH)
       as (CC' & AR' & SH' & _) ]).
     constructor; try assumption.
@@ -120,11 +126,12 @@ Section FK.
   Lemma fview_ccall : forall A A' m md m' md' fds fds' sof ini tid (sp win : Z) (V N : Z -> Prop),
     fview A m md fds sof ini tid ->
     ainv A' m' md' -> mem_inv rsegs (aview A' m') -> m_fs md' = fs -> m_fds md' = fds' ->
+    m_channel_reader md' = m_channel_reader md ->   (* LPS 727298f3: channel-reader-premise *)
     cframe LPA (owned A) (owned A') sp win V N (aview A m) (aview A' m') -> heapish V ->
     STK_LO usp <= sp - win -> sp <= SPF usp ->
     fview A' m' md' fds' sof ini tid.
   Proof.
-    intros A A' m md m' md' fds fds' sof ini tid sp win V N FV AINV' MI' FS' FDS' CF HV WLO SPU.
+    intros A A' m md m' md' fds fds' sof ini tid sp win V N FV AINV' MI' FS' FDS' RDR' CF HV WLO SPU.
     pose proof (fv_ceil _ _ _ _ _ _ _ FV) as CE.
     eapply fview_cframe; try eassumption; [lia|].
     eapply (stk_ccall LPA A A' m md); [exact (fv_ainv _ _ _ _ _ _ _ FV)| exact CF| exact (fv_stk _ _ _ _ _ _ _ FV)| exact CE| lia| exact SPU|].
@@ -164,15 +171,17 @@ Section FK.
   Lemma fview_after_fwrite : forall A m md m' md' fds fds' ini tid (w : Z) fe',
     fview A m md fds SO_pristine ini tid ->
     ainv A m' md' -> mem_inv rsegs (aview A m') -> m_fs md' = fs -> m_fds md' = fds' ->
+    m_channel_reader md' = m_channel_reader md ->   (* LPS 727298f3: channel-reader-premise *)
     munch [(SPF usp - w, SPF usp); (STDERR_F, STDERR_F + 152)] (aview A m) (aview A m') ->
     wmono rsegs (aview A m) (aview A m') -> 0 <= w -> STK_LO usp <= SPF usp - w ->
     stderr_ok fe' -> file_at (aview A m') STDERR_F fe' ->
     stk rsegs (aview A m') (STK_LO usp) (SPF usp) ->
     fview A m' md' fds' SO_pristine ini tid.
   Proof.
-    intros A m md m' md' fds fds' ini tid w fe' FV AINV' MI' FS' FDS' MU WM W0 WLO FOK FE ST'.
+    intros A m md m' md' fds fds' ini tid w fe' FV AINV' MI' FS' FDS' RDR' MU WM W0 WLO FOK FE ST'.
     (first [ pose proof ((fv_usp _ _ _ _ _ _ _ FV)) as dR_5; dand4 dR_5 as U1 U2 U3 U4 | pose proof (fv_usp _ _ _ _ _ _ _ FV) as (U1 & U2 & U3 & U4) ]). pose proof U1 as U1'. unfold sp_window_lo in U1'.
-    destruct FV as [AINV MI FS FDS CC AR SH ST FR].
+    destruct FV as [AINV MI FS FDS CC AR SH ST FR RDR].
+    assert (RDRq : m_channel_reader md' = true) by (rewrite RDR'; exact RDR).   (* LPS 727298f3: channel-reader-premise *)
     pose proof (aa_b0 _ _ _ _ AR) as B0. pose proof (aa_b1 _ _ _ _ AR) as B1.
     constructor; try assumption.
     - eapply (ccells_after_fwrite (aview A m)); [exact CC| | exact MU| exact FOK| exact FE]. unfold STK_LO, SPF in *. lia.

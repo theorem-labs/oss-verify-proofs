@@ -22,9 +22,12 @@
     wget_base64_decode_alloc(raw input) and
     wget_base64_encode_printf_alloc(input) are called independently; the decoded
     and encoded results are freed without comparison (no encode->decode round
-    trip).  The harness makes no check of its own beyond not crashing, so a
-    statement about it says only that the code it calls never crashes, hangs or
-    trips a sanitizer.
+    trip).  The harness makes no check of its own beyond not crashing.  Its
+    halts statements say only that the code it calls never crashes, hangs or
+    trips a sanitizer.  Its agreement statements say only that the code never
+    crashes or trips a sanitizer, and allow a run that never ends.  Its bound
+    statements say only how often its builds may disagree.  Its decidability
+    statements say only that some program decides where its builds agree.
 
     Whether each statement is open, proved or known false is recorded in the
     harness README, not here: this file changes only when a statement does. *)

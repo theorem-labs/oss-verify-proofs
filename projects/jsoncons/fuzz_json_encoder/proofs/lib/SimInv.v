@@ -1,7 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* [comment removed for export] *)
-
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (walks lifted to the run's segments): changed no_error_run_corun, no_error_run_modeled. *)
 From Stdlib Require Import List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run OmniRun.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence OmniEquivalence.
@@ -9,9 +8,6 @@ From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence Omni
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Ltac norm_fd32 :=
   repeat match goal with
          | |- context [fd32 AT_FDCWD] =>
@@ -22,7 +18,6 @@ Ltac norm_fd32 :=
          | H : context [fd32 ?x] |- _ => change (fd32 x) with x in H
          end.
 
-(* [comment removed for export] *)
 Ltac fd32_ok :=
   solve [ reflexivity
         | assumption
@@ -31,7 +26,6 @@ Ltac fd32_ok :=
         | apply fd32_lt31; lia
         | apply fd32_id; lia ].
 
-(* [comment removed for export] *)
 Lemma star_inv (segs : list Segment) (Inv : config -> Prop)
   (Hstep : forall c evs c', Inv c -> sstep segs c evs (SNext c') -> Inv c') :
   forall c tr c', Inv c -> star segs c tr c' -> Inv c'.
@@ -40,7 +34,6 @@ Proof.
   apply IHHstar. eapply Hstep; eauto.
 Qed.
 
-(* [comment removed for export] *)
 Lemma inv_no_reaches_error (segs : list Segment) (Inv : config -> Prop)
   (Hstep : forall c evs c', Inv c -> sstep segs c evs (SNext c') -> Inv c')
   (Hnoerr : forall c evs, Inv c -> ~ sstep segs c evs SError) :
@@ -51,7 +44,6 @@ Proof.
   eapply star_inv; eauto.
 Qed.
 
-(* [comment removed for export] *)
 Lemma inv_coexec (segs : list Segment) (Inv : config -> Prop)
   (Hstep : forall c evs c', Inv c -> sstep segs c evs (SNext c') -> Inv c')
   (Hnoerr : forall c evs, Inv c -> ~ sstep segs c evs SError) :
@@ -65,27 +57,26 @@ Proof.
     + intros evs c' Hss. exact (CH c' (Hstep c evs c' HInv Hss)).
 Qed.
 
-(* [comment removed for export] *)
 Lemma no_error_run_corun :
   forall (segs : list Segment) (pc : N) (ph : PhdrInfo) (sp brk0 mb : word) (rnd : EntryDraw)
          (lim : Z) (inp : ProcInput),
-  ~ reaches_error segs (init_config segs pc ph sp brk0 mb rnd lim inp) ->
+  ~ reaches_error (run_segments segs inp sp mb)
+      (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) ->
   omni_corun (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp never_errors.
 Proof.
   intros segs pc ph sp brk0 mb rnd lim inp H. cbn [omni_corun].
   apply no_error_coexec, H.
 Qed.
 
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Lemma no_error_run_modeled :
   forall (segs : list Segment) (pc : N) (ph : PhdrInfo) (sp brk0 mb : word) (rnd : EntryDraw)
          (lim : Z) (inp : ProcInput),
-  ~ reaches_error segs (init_config segs pc ph sp brk0 mb rnd lim inp) ->
+  ~ reaches_error (run_segments segs inp sp mb)
+      (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) ->
   Equivalence.modeled (run (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp).
 Proof.
   intros segs pc ph sp brk0 mb rnd lim inp H.
-  apply modeled_iff. cbn [img_segments].
+  apply modeled_iff.
+  cbn [image_run_segments img_segments en_sp en_mmap_base].
   eapply coexec_conseq; [apply no_error_run_corun, H | apply never_errors_covered].
 Qed.

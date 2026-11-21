@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the place_declined_b premise of mmap). *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.openssl.bignum.lib.BgLib Require Import ImageBgA.
 
@@ -64,7 +65,11 @@ Definition grant_node : Prop :=
   0 < len -> len mod 4096 = 0 -> len <= 2 ^ 32 -> rt_eager Σ + len <= 2 ^ 38 ->
   (forall P, lay (Σ' P) = lay Σ /\ aw (Σ' P) = aw Σ /\ Permutation (rt_maps (Σ' P)) ((Z_to_bv 64 P, Z_to_bv 64 len) :: rt_maps Σ)
      /\ rt_eager Σ + len <= rt_eager (Σ' P) /\ rt_eager (Σ' P) <= 2 ^ 38) ->
-  (forall ms, Pm ms -> ms_svc_pending ms = Some (Z_to_bv 64 222) /\ areg ms 11 = Z_to_bv 64 len
+  (* 727298f3 (#146): a0 pinned to NULL, as the MAP_FIXED node above already pins it to
+     its [addr].  [Mmap.place_declined_b] declines a hinted call whose range ends in the
+     stack's guard band even where the placement holds. *)
+  (forall ms, Pm ms -> ms_svc_pending ms = Some (Z_to_bv 64 222) /\ areg ms 10 = Z_to_bv 64 0
+      /\ areg ms 11 = Z_to_bv 64 len
       /\ areg ms 12 = Z_to_bv 64 3 /\ areg ms 13 = Z_to_bv 64 34 /\ areg ms 15 = Z_to_bv 64 0
       /\ forall P, sgrant_ok Σ P len -> K P (nretA ms (mkEffect (Z_to_bv 64 P) [] [(Z_to_bv 64 P, Z_to_bv 64 len)]))) ->
   cps bgbsegs (ASTA RTA Σ PMc Pm) (fun c => exists P, sgrant_ok Σ P len /\ ASTA RTA (Σ' P) PMc (K P) c).

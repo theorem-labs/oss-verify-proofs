@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -80,7 +81,8 @@ Proof. reflexivity. Qed.
 (* [comment removed for export] *)
 
 Definition fd1chan (model : Model) : Prop :=
-  fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)).
+  fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))
+  /\ m_channel_reader model = true.
 
 (* [comment removed for export] *)
 Definition buf_modeled (b : list byte) : Prop :=
@@ -171,6 +173,8 @@ Inductive to_wexit : machine_state -> list (list byte) -> word -> Prop :=
     bv_unsigned x8 = 64%Z ->
     ms_gpr ms 0 = Z_to_bv 64 1 ->
     ms_read_bytes ms (ms_gpr ms 1) (ms_gpr ms 2) = Some buf ->
+    (* the range [vfs_write]'s [access_ok] accepts; see [write1_check_n] *)
+    access_okb (ms_gpr ms 1) (bv_unsigned (ms_gpr ms 2)) = true ->
     (1 <= length buf)%nat ->
     (forall n, (1 <= n)%nat -> (n <= length buf)%nat ->
        to_wexit (advance_past_svc (set_gpr0 ms (len_word (firstn n buf)))) bufs code) ->
@@ -227,7 +231,7 @@ Proof.
   intros ms bufs code H;
     induction H as
       [ms x8 Hsvc Hx8
-      | ms x8 buf bufs code Hsvc Hno Hg Hr Hnb Hcont IH
+      | ms x8 buf bufs code Hsvc Hno Hg Hr Hok Hnb Hcont IH
       | ms ms' bufs code Hsvc Hstep Hte IH].
   - constructor.
   - constructor; [exact Hnb | apply (IH (length buf)); lia].
@@ -271,8 +275,9 @@ End WithSegs.
 (* [comment removed for export] *)
 
 Lemma init_model_fd1chan : forall reserved brk0 mb sp lim inp,
+  in_channel_reader inp = true ->
   fd1chan (init_model reserved brk0 mb sp lim inp).
-Proof. reflexivity. Qed.
+Proof. intros reserved brk0 mb sp lim inp Hr. split; [reflexivity | exact Hr]. Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -299,17 +304,22 @@ Proof. reflexivity. Qed.
 
 (* [comment removed for export] *)
 Definition fdchan (fd ch : word) (model : Model) : Prop :=
-  fd_lookup (m_fds model) fd = Some (FdChannel ch) /\ w_is0 ch = false.
+  fd_lookup (m_fds model) fd = Some (FdChannel ch) /\ w_is0 ch = false
+  /\ m_channel_reader model = true.
 
 Lemma fd1chan_fdchan : forall model,
   fd1chan model -> fdchan (Z_to_bv 64 1) (Z_to_bv 64 1) model.
 Proof.
-  intros model H. split; [exact H | reflexivity].
+  intros model [H Hr]. split; [exact H | split; [reflexivity | exact Hr]].
 Qed.
 
 Lemma init_model_fdchan2 : forall reserved brk0 mb sp lim inp,
+  in_channel_reader inp = true ->
   fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) (init_model reserved brk0 mb sp lim inp).
-Proof. intros. split; reflexivity. Qed.
+Proof.
+  intros reserved brk0 mb sp lim inp Hr.
+  split; [reflexivity | split; [reflexivity | exact Hr]].
+Qed.
 
 
 Section WithSegsCh.
@@ -327,6 +337,7 @@ Inductive to_wexit_ch : machine_state -> list (list byte) -> word -> Prop :=
     bv_unsigned x8 = 64%Z ->
     ms_gpr ms 0 = fd ->
     ms_read_bytes ms (ms_gpr ms 1) (ms_gpr ms 2) = Some buf ->
+    access_okb (ms_gpr ms 1) (bv_unsigned (ms_gpr ms 2)) = true ->
     (1 <= length buf)%nat ->
     (forall n, (1 <= n)%nat -> (n <= length buf)%nat ->
        to_wexit_ch (advance_past_svc (set_gpr0 ms (len_word (firstn n buf)))) bufs code) ->

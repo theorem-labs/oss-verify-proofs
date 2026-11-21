@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the 6144513-byte zero-filled stack window): changed knRE0; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/Pm10ReadErr_defs.v, lines 40-46. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -48,7 +49,13 @@ Definition srRE0 : list expr := Eval vm_compute in sr_after_call_j srRE_base KEP
 (* [comment removed for export] *)
 Definition knRE0 : list kentry :=
   [KAlign (EVar 0) 16; KRange (EVar 0) 0x7fff80000000 0x800000000000;
-   KWr (SA (EVar 0) (-8388608)) 8388608;
+   (* THE ZERO-FILLED WINDOW, old beside new: [KWr (SA (EVar 0) (-8388608)) 8388608] ->
+      [KWr (SA (EVar 0) (- DRV_ZWIN)) DRV_ZWIN], DRV_ZWIN = 6144513 = StoreOk.stack_window_depth
+      (Pm6MainEntry).  The 8 MiB row is FALSE at LPS 75d69e00 (wrap_mem zero-fills only to
+      MemSplit.wok_lo sp0 = sp0 - 6144513).  Discharged by [Pm6ReadErr.know_okRE] from
+      [stack_writable], which Pm6DrvH proves off [Pm6MainEntry.kn_stack]'s narrow row.
+      This run's own stack reach is a few hundred bytes under sp0 ([BUF_LO] = -560). *)
+   KWr (SA (EVar 0) (- DRV_ZWIN)) DRV_ZWIN;
    KRange (EVar 2) 0x7fff80000000 0x800000400000;
    KWr (SA (ELit 0) 0xc7000) 0x34000;
    KImg 0x10000 0xc7b48; KImg 0xc7b51 0xc7b99; KImg 0xd7b99 0xd9550; KImg 0xf9628 0xf9648;
@@ -60,10 +67,9 @@ Definition knRE0 : list kentry :=
    KImg 0xf9898 0xf98a0; KImg 0xf98b1 0xf98b8; KImg 0xf98c0 0xf98c8; KImg 0xf98d8 0xf98e0;
    KWord (SA (ELit 0) 0xf98e0) 8 (ELit 4096);
    KImg 0xf98e8 0xf9918;
-   KImg 0xf9de8 0xfb000;   (* [comment removed for export] *)
+   KImg 0xf9de8 0xfb000;
    KRange (EVar 5) 1 4194303].
 
-(* [comment removed for export] *)
 Definition ssB0 : sym_state := SS 0x39b1c srRE0 [] knRE0 39.
 Definition rB := Eval vm_compute in run scr0 ssB0.
 Definition srB : list expr := Eval vm_compute in s_regs (fst (fst rB)).

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_pcap/lib/A/Stdio/PFreadM.v, with its module paths and module names changed; 272 of its 298 lines of code are new or changed and 163 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* pcap_source_next on the ASan builds of libreac v1.9.0: the IMAGE-FREE part of the statement
    and of the phase data, shared by the asan build (lib/A) and the asan-ubsan build (lib/B).
 
@@ -251,7 +252,7 @@ Context {SK : YI16.sink_head}.
 (* The contract, over the image's data as parameters (shared with the asan-ubsan build)             *)
 (* ---------------------------------------------------------------------------------------------- *)
 
-(* SHARED STATEMENT (porter ruling 22:23Z; a Theorem Labs lane's PcapSourceClose.v e49c6125747 is the model).
+(* SHARED STATEMENT (porter ruling 22:23Z; a Theorem Labs lane's PcapSourceClose.v is the model).
    Everything from here to `End s` is stated over the image's data as parameters, so that the
    asan-ubsan build states the SAME contract over its own image:
      segs     the image's segments;
@@ -427,7 +428,7 @@ range_addressable (aview segs (w_H W) memc) SHADOW_OFF ps PS_LEN ->
    (ps + PS_LEN <= b \/ b + Z.of_nat (length C) <= ps) /\
    (ts <> 0 -> (ts + 8 <= h \/ h + SRC_FILE_BLOCK <= ts) /\ (ts + 8 <= b \/ b + Z.of_nat (length C) <= ts)) /\
    (* the caller's right to let the fread wrapper change the stream's FILE block and the sink
-      token (asource_fp, PSource.v:286): the same premise as PcapSourceClose's, so a caller supplies
+      token (asource_fp, PSource.v:287): the same premise as PcapSourceClose's, so a caller supplies
       both from one fact *)
    (forall x, inFP (asource_fp h) x -> inFP FP x \/ in_tmp_block (ablocks B ly S) (ablocks B lyc Sc) x)) ->
 (* the open reader's meta region (the interceptor's AddrHashMap; porter 22:40Z, as PcapSourceClose).

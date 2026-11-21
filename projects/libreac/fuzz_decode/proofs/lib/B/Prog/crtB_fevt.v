@@ -3,7 +3,7 @@
    check_round_trip walk (lib/B/Prog/crtB_walk.v) takes no kit hypothesis.
    The proof is the image-neutral kit lib/Lib/CrtFevt.v (crt_fevt_SRr_mstepsF; that file is this file's own generic
    half, which image A's lane renamed and made neutral: taken by path from
-   a working branch 2f75616c444), at decodesegsB0; only the wx_segs_nowrap fact of the
+   a working branch), at decodesegsB0; only the wx_segs_nowrap fact of the
    image (crtB_wx) is image-specific.  Twin of lib/A/Prog/crtA_fevt.v. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

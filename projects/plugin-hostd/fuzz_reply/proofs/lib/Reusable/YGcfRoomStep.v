@@ -1,13 +1,14 @@
-(* CARRIED from commit ae2fa80b0325f09472155bcfce1c36e649d6ff60,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YGcfRoomStep.v, sha256 b627ac85e90f1503c6fd1cee4209b63725e41b92b2d371883cc11c0cfc7bd2d5 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change made here is the module
    prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
    (lib.Spec -> fuzz_reply.lib.Spec). *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Taken by path from a working branch a0fed4266a1b, provisional. *)
+(* Taken by path from a working branch, provisional. *)
 (* Modified by a Theorem Labs lane, 2026-10-30: rk_free_inner's restated tree takes free_cf's size test; its recycle side from rk_rchunk_fr; statement of rk_free unchanged. A change request to a Theorem Labs lane. *)
 (* Modified by Theorem Labs, 2026-10: module paths changed from fuzz_preset lib.Reusable to cgif_file_fuzzer lib; the text is otherwise unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the event-free second allocator instance (suffix cf), the ROOM STEPS over
    YGcfRoomKeep.v's ROOM_cf_k S k (STATE FIRST, then the headroom k).
    One malloc_cf adds at most one live secondary (none for a primary request), at most one class-full

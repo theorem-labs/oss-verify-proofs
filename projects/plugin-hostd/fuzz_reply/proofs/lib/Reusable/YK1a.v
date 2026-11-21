@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YK1a.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises); the input-owned, top-anchored launch stack). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -674,14 +675,60 @@ intro d. unfold v_addi. apply bv_eq.
 rewrite !Z_to_bv_unsigned, !bv_wrap64_mod.
 rewrite Zplus_mod_idemp_l. f_equal. lia.
 Qed.
-Lemma bsb_bound : forall ph (sp : word) (a e : list (list byte)) uid hw rnd,
-valid_argv a -> valid_envp e ->
-(Z.of_nat (length (build_stack_bytes ph sp a e uid hw rnd)) <= 2240000)%Z.
+Lemma block_head_size_le : forall rseq argv envp,
+(Z.of_nat (block_head_size rseq argv envp)
+<= 8 * Z.of_nat (length argv) + 8 * Z.of_nat (length envp) + 512)%Z.
 Proof.
-intros ph sp a e uid hw rnd Hva Hve.
-pose proof (build_stack_bytes_within_span ph sp a e uid hw rnd).
-pose proof (entry_stack_span_bound a e Hva Hve).
-unfold entry_stack_span_max in *. lia.
+intros rseq argv envp.
+unfold block_head_size, block_items, auxv_size, auxv_count.
+pose proof (Nat.mod_upper_bound
+(length argv + length envp + 3) 2 ltac:(lia)).
+destruct rseq; lia.
+Qed.
+Lemma launch_sp_le_top : forall inp (top sp : word),
+valid_launch_sp top inp sp ->
+(bv_unsigned sp <= bv_unsigned top)%Z.
+Proof.
+intros inp top sp [_ [_ Hhi]].
+unfold launch_sp_hi, align_down16 in Hhi.
+pose proof (Nat2Z.is_nonneg
+(launch_string_bytes (in_argv inp) (in_envp inp) (in_execfn inp))).
+pose proof (Nat2Z.is_nonneg
+(block_head_size (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp))).
+pose proof (Z.mod_pos_bound
+(bv_unsigned top - 8
+- Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp)
+(in_execfn inp))) 16 ltac:(lia)).
+lia.
+Qed.
+Lemma launch_top_minus_sp : forall inp (top sp : word),
+valid_launch inp ->
+valid_launch_sp top inp sp ->
+(bv_unsigned top - bv_unsigned sp <= 2101782)%Z.
+Proof.
+intros inp top sp [_ Hb] [_ [Hlo _]].
+unfold launch_bytes, e2big_limit in Hb.
+unfold launch_sp_lo, align_down16 in Hlo.
+pose proof (block_head_size_le (kb_rseq (in_kernel inp))
+(in_argv inp) (in_envp inp)).
+pose proof (Z.mod_pos_bound
+(bv_unsigned top - 8
+- Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp)
+(in_execfn inp))
+- 4095) 16 ltac:(lia)).
+lia.
+Qed.
+Lemma bsb_bound : forall v inp mbase ph entry (sp brk : word) draw,
+valid_launch inp ->
+entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+(Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw))
+<= 2101782)%Z.
+Proof.
+intros v inp mbase ph entry sp brk draw Hvl Hlau.
+rewrite (length_entry_stack_image_launch v inp mbase ph entry sp brk draw
+Hlau).
+destruct Hlau as (_ & Hsp & _).
+exact (launch_top_minus_sp inp (ed_top draw) sp Hvl Hsp).
 Qed.
 Lemma range_avoids_two : forall (s0 s1 : Segment) (a n : Z),
 Z.ltb a (Z.of_N (seg_base s0) + Z.of_N (seg_size s0)) = false ->

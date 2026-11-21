@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: resv_below_floor becomes resv_band_small (the reserved entries add at most 20 pages and two entries to the band), so band_bytes_bound, band_count_bound and the fit premise of gap_available and mmap_not_refusable carry that slack; band_count_le_length is added. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State.
@@ -80,6 +81,9 @@ Qed.
   (forall e, In e l -> ehiZ e <= B0) -> band_bytes l = 0 /\ band_count l = 0.
 Proof. intros l B0 HB H. apply band_below. intros e He. specialize (H e He). lia. Qed.
 
+#[using="Type"] Lemma band_count_le_length : forall l, band_count l <= Z.of_nat (length l).
+Proof. induction l as [|e l IH]; cbn [band_count length]; [lia|]. destruct (inband e); lia. Qed.
+
 Section Census.
 Variables (L : mled) (pbrk : Z) (mo : Model) (B : Z).
 Hypothesis HK : KL L pbrk mo.
@@ -120,39 +124,49 @@ Proof.
   pose proof (kl_brk_hi _ _ _ HK) as H1. pose proof BB_ge_brkreg as [H2 H3]. pose proof gm_nonneg. pose proof HB0. subst h. lia.
 Qed.
 
-#[using="CE L pbrk B HK HB Hfloor"] Lemma resv_below_floor : forall e, In e (vm_reserved h) -> ehiZ e <= bottomup_floor.
+(* At LPS 727298f3 the reserved ledger is the image's segments (below the break) followed by the
+   vDSO/vvar pair ([kl_resv_top]: at most two entries of at most 20 pages), so the reserved
+   entries weigh at most 20 pages and two entries in the band. *)
+#[using="CE L pbrk B HK HB Hfloor"] Lemma resv_band_small :
+  band_bytes (vm_reserved h) <= 20 * 4096 /\ band_count (vm_reserved h) <= 2.
 Proof.
-  intros e He. pose proof (kl_resv_top _ _ _ HK e He) as H1. pose proof (kl_start _ _ _ HK) as (_ & _ & S3 & _).
-  pose proof BB_ge_brkreg as [_ H3]. pose proof gm_nonneg. pose proof HB0. unfold ehiZ, eloZ, szZ. unfold ehi in H1. subst h. unfold PGSZ in *. lia.
+  destruct (kl_resv_top _ _ _ HK) as (R0 & V & E & HVl & HVb & HR0).
+  assert (H0 : forall e, In e R0 -> ehiZ e <= bottomup_floor).
+  { intros e He. pose proof (HR0 e He) as H1. pose proof (kl_start _ _ _ HK) as (_ & _ & S3 & _).
+    pose proof BB_ge_brkreg as [_ H3]. pose proof gm_nonneg. pose proof HB0. unfold ehiZ, eloZ, szZ. unfold ehi in H1. unfold PGSZ in *. lia. }
+  subst h. rewrite E, band_bytes_app, band_count_app.
+  destruct (band_zero_below R0 bottomup_floor ltac:(lia) H0) as [-> ->].
+  pose proof (band_bytes_le_live V). pose proof (band_count_le_length V). lia.
 Qed.
 
-#[using="CE L pbrk HK HLI HB Hfloor"] Lemma band_bytes_bound : band_bytes (vm_reserved h ++ vm_maps h) <= B.
+#[using="CE L pbrk HK HLI HB Hfloor"] Lemma band_bytes_bound : band_bytes (vm_reserved h ++ vm_maps h) <= B + 20 * 4096.
 Proof.
-  rewrite band_bytes_app. destruct (band_zero_below (vm_reserved h) bottomup_floor ltac:(lia) resv_below_floor) as [-> _].
+  rewrite band_bytes_app. destruct resv_band_small as [R1 _].
   pose proof (band_bytes_le_live (vm_maps h)). pose proof live_le_B. unfold vm_live_bytes in *. lia.
 Qed.
 
-#[using="CE L pbrk HK HLI HB Hfloor"] Lemma band_count_bound : page_size * band_count (vm_reserved h ++ vm_maps h) <= B.
+#[using="CE L pbrk HK HLI HB Hfloor"] Lemma band_count_bound : page_size * band_count (vm_reserved h ++ vm_maps h) <= B + 2 * page_size.
 Proof.
-  rewrite band_count_app. destruct (band_zero_below (vm_reserved h) bottomup_floor ltac:(lia) resv_below_floor) as [_ ->].
+  rewrite band_count_app. destruct resv_band_small as [_ R2].
   pose proof (band_count_gran (vm_maps h)) as G.
   assert (Hg : forall e, In e (vm_maps h) -> ehiZ e <= bottomup_floor \/ page_size <= szZ e).
   { intros e He. destruct (kl_gran _ _ _ HK e He) as [Hb|(S1 & S2 & _)].
     - left. pose proof brk_below_floor. unfold ehiZ, eloZ, szZ. unfold ehi in Hb. subst h. lia.
     - right. unfold szZ. rewrite page_size_eq. unfold PGSZ in S2. pose proof (Z_div_mod_eq_full (bv_unsigned (snd e)) 4096). nia. }
-  specialize (G Hg). pose proof (band_bytes_le_live (vm_maps h)). pose proof live_le_B. unfold vm_live_bytes in *. lia.
+  specialize (G Hg). pose proof (band_bytes_le_live (vm_maps h)). pose proof live_le_B. unfold vm_live_bytes in *. rewrite page_size_eq in *. lia.
 Qed.
 
 (* [comment removed for export] *)
 #[using="CE L pbrk HK HLI HB Hfloor"] Theorem gap_available : forall nZ, 0 < nZ ->
-  nZ + B + (B / page_size) * (page_size + nZ) <= band_ceiling - bottomup_floor ->
+  nZ + B + (B / page_size) * (page_size + nZ) + (20 * 4096 + 2 * (page_size + nZ)) <= band_ceiling - bottomup_floor ->
   vm_gap_available h nZ = true.
 Proof.
-  intros nZ Hn Hfit. apply (vm_gap_available_of_bound h nZ (B / page_size) B Hn).
+  intros nZ Hn Hfit. apply (vm_gap_available_of_bound h nZ (B / page_size + 2) (B + 20 * 4096) Hn).
   - pose proof band_count_bound as C. pose proof (band_count_nonneg (vm_reserved h ++ vm_maps h)).
-    rewrite page_size_eq in *. apply Z.div_le_lower_bound; [lia|]. lia.
+    rewrite page_size_eq in *.
+    assert (band_count (vm_reserved h ++ vm_maps h) - 2 <= B / 4096) by (apply Z.div_le_lower_bound; lia). lia.
   - exact band_bytes_bound.
-  - exact Hfit.
+  - lia.
 Qed.
 
 (* [comment removed for export] *)
@@ -162,7 +176,7 @@ Proof. pose proof (vm_backing_used_le_live mo (minv_lazyfree _ (kl_minv _ _ _ HK
 (* [comment removed for export] *)
 #[using="CE L pbrk HK HLI HB Hfloor"] Theorem mmap_not_refusable : forall flags nZ, 0 < nZ ->
   B + nZ <= vm_limit h ->
-  nZ + B + (B / page_size) * (page_size + nZ) <= band_ceiling - bottomup_floor ->
+  nZ + B + (B / page_size) * (page_size + nZ) + (20 * 4096 + 2 * (page_size + nZ)) <= band_ceiling - bottomup_floor ->
   mmap_grant_refusable flags mo nZ = false /\ mmap_reserve_refusable mo nZ = false.
 Proof.
   intros flags nZ Hn Hbud Hfit. pose proof (gap_available nZ Hn Hfit) as G. pose proof backing_le_B as BB0.

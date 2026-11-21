@@ -4,10 +4,11 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 1137 of its 1175 lines of code are new or changed and 210 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_box_model_block.v; 1090 of its 1202 lines of code are new or changed and 1063 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P5.v, with its module paths, module names, addresses and numbers changed; 877 of its 1007 lines of code are new or changed and 1072 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment R3 of fuzz_ctrl LLVMFuzzerTestOneInput (asan-ubsan, image B, libreac v1.9.0): [0x81640, 0x81688],
    19 instructions, cut Inv_B81640 (v1.9 pc 0x81640) -> cut Inv_B8168c (v1.9 pc 0x8168c) (plan-asan-ubsan.md
    section 2, row R3; section 4, INIT = reac_identity_init, 0x87de8).  Re-fit of the v1.8 proof
-   (a working branch c439fa41c5b) onto the v1.9.0 bytes and a Theorem Labs lane's v1.9 cut bundle (the identity-buffer spill
+   (a working branch) onto the v1.9.0 bytes and a Theorem Labs lane's v1.9 cut bundle (the identity-buffer spill
    [A+136] -> [A+144]; the cut names are still the v1.8 names).
    rule 24: no function proved (a slot segment).  With s3 = S(fr) the code marks round-trip frame variables usable
    in the frame shadow (plan-asan FP.4): out[]'s last granule (S(fr) + 254 = 04, 0x81658), id at fr + 2176
@@ -21,7 +22,7 @@
    segment is the 37 frame-shadow bytes [S(fr) + 254, S(fr) + 291), the callee's stack window [sp - 2224, sp) and
    the id bytes.
    The cuts are SlotInv.v's official Inv_B81640 / Inv_B8168c (a Theorem Labs lane's v1.9 bundle; adopted from this
-   segment's local cuts in deafd437a0): entry with CUR g 7 regs (s7 / s8, set in R1, not written here) and the spill
+   segment's local cuts): entry with CUR g 7 regs (s7 / s8, set in R1, not written here) and the spill
    [A + 112] = fr + 2256 (0x814c0, read by R4 at 0x81690); exit without FGBr g fr (RFG (g_in g) 0) (the 72 zero
    bytes at fr + 2256 are written only by R4's checked_memset at 0x81698, after this exit) but with
    addressable m (fr + 2256) 72 (R4's memset premise, made true here by S(fr) + 282 .. 290 = 0).  The exit also

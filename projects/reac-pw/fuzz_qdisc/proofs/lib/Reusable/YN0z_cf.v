@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN0z.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the allocation mode the allocator record carries (a refused munmap leaves a leaked map)). *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -32,6 +33,7 @@ Ltac lits := unfold LOCK, CTX, LIBC, ERRNO, TP, GOT, GUARD, SCT, SCNT, MCNT, ASF
 src0_D_got_stack_chk_guard, src0_D_stack_chk_guard, src0_D_size_classes, src0_D_small_cnt_tab, src0_D_med_cnt_tab in *.
 Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Context {AM : AllocMode}.
+Context {AMF : Forced AM}.
 Lemma hwe_stop_ge : forall f c u, 4 * c <= u -> halve_while_even (S f) c u = c.
 Proof. intros f c u H. cbn [halve_while_even]. replace (u <? 4 * c) with false by (symmetry; apply Z.ltb_ge; lia). rewrite andb_false_r. reflexivity. Qed.
 Lemma hwe_stop_odd : forall f c u, Z.even c = false -> halve_while_even f c u = c.

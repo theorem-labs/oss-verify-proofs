@@ -1,10 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: decodes 33 encoded statements into plain Rocq and adds vdso_inc with vdso_inc_keep, vdso_init_facts and vdso_reserved_kb_indep, threading vdso_inc and page-alignment premises through RI_grant_rw, RI_grant_na, step_mprotect and munmap proofs, as in fuzz_bigint's copy; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/CJ/Bridge/Embed.v, 200 lines within its lines 9-982. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap.
+From LinuxProcessSemantics.LinuxProcessSem Require Vdso.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require Import PropExec CatSim MmapSim AllocSim Scfg ShapeAlg SpinAlg AgentLib RefNodes.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.CJ.Lib Require Import MState Mem Exec ITree Nodes Decode.
@@ -23,11 +25,12 @@ Context {RUNp : RunP}.
 Definition NMAX : Z := 2^27 + 2^16.
 Definition CAPKMAX : Z := 8200.
 Definition CAPBMAX : Z := 2^33.
-Lemma NMAX_facts : ltac2:(TCodec.tc2 tcn__CJ_Bridge_Embed "C'B&T8z&QK%3221'C'H&T9&Q;%2261%53418&T7&T:+2&S;%3221%521=%A271%B2>1").
+Lemma NMAX_facts : 0 < NMAX /\ NMAX mod page_size = 0 /\ 2 * PGSZ <= NMAX.
 Proof. unfold NMAX, PGSZ, page_size. split; [lia|]. split; [reflexivity| lia]. Qed.
-Lemma NMAX_le_30 : ltac2:(TCodec.tc2 tcn__CJ_Bridge_Embed "7&T7&QK&T;+2+N%3221%6251"). Proof. unfold NMAX. lia. Qed.
-Lemma CAPKMAX_le : ltac2:(TCodec.tc2 tcn__CJ_Bridge_Embed "4&T7&QI+QWR0%3221"). Proof. unfold CAPKMAX. lia. Qed.
-Lemma Forall_size_30 : ltac2:(TCodec.tc2 tcn__CJ_Bridge_Embed "L'9'>'UFyR0%211%4211%611'G&T7&UG&?r1%23881%42:1&QK%7221qZH;1%:3<16&T;+2+N%3221%>291qZHB1r2%B3D21p091pYNE1").
+Lemma NMAX_le_30 : NMAX <= 2 ^ 30. Proof. unfold NMAX. lia. Qed.
+Lemma CAPKMAX_le : CAPKMAX <= 40000. Proof. unfold CAPKMAX. lia. Qed.
+Lemma Forall_size_30 : forall l, Forall (fun p : word * word => bv_unsigned (snd p) <= NMAX) l ->
+Forall (fun p : word * word => bv_unsigned (snd p) <= 2 ^ 30) l.
 Proof. intros l H. eapply Forall_impl; [|exact H]. intros p Hp. cbn in Hp |- *. pose proof NMAX_le_30. lia. Qed.
 Section IMPL.
 Variable segs : list Segment.
@@ -63,11 +66,11 @@ Proof. reflexivity. Qed.
 Lemma mbind_mret_l : forall {A B} (a : A) (f : A -> Monad.M St B) s, mbind (mret a) f s = f a s.
 Proof. reflexivity. Qed.
 End IMPL.
-Lemma with_vmmaps_twice : ltac2:(TCodec.tc2 tcn__CJ_Bridge_Embed ">'Q0'N'C&QEr2r3r1%4221%5241%6253%83921pZ4:1pYH<1pYF=1").
+Lemma with_vmmaps_twice : forall h1 h2 m, with_vmmaps h2 (with_vmmaps h1 m) = with_vmmaps h2 m.
 Proof. intros h1 h2 m. reflexivity. Qed.
-Lemma with_vmmaps_mat : ltac2:(TCodec.tc2 tcn__CJ_Bridge_Embed "B'Q0'N'C'9'UFyR0%211%411&Q5&QEr2r1%3221%511%613%=3821pZ4?1pY@A1").
+Lemma with_vmmaps_mat : forall h m, m_vm_materialized (with_vmmaps h m) = m_vm_materialized m.
 Proof. reflexivity. Qed.
-Lemma live_bytes_cons' : ltac2:(TCodec.tc2 tcn__CJ_Bridge_Embed "I'>'UFyR0%211%4211'9%112'C'H&Q2(7r2r1%33921%511&T4&UG&?%13??7%32A1%;18%6221%?3>81pYNA1pY>D1").
+Lemma live_bytes_cons' : forall e l, live_bytes (e :: l) = bv_unsigned (snd e) + live_bytes l.
 Proof. intros [a n] l. reflexivity. Qed.
 Lemma Forall_app_cons_mid : forall {A} (P : A -> Prop) l1 x l2,
 Forall P (l1 ++ l2) -> P x -> Forall P (l1 ++ x :: l2).
@@ -80,6 +83,45 @@ Lemma Forall_filter : forall {A} (P : A -> Prop) f l, Forall P l -> Forall P (Li
 Proof. intros A P f l H. induction H; cbn; [constructor|]. destruct (f x); [constructor|]; auto. Qed.
 Lemma length_filter_le : forall {A} f (l : list A), (length (List.filter f l) <= length l)%nat.
 Proof. intros. apply List.filter_length_le. Qed.
+Definition vdso_inc (kb : KernelBuild) (h : VmMaps) : Prop :=
+incl (vdso_reserved kb (vdso_top h)) (vm_reserved h).
+Lemma vdso_inc_keep : forall kb h h',
+vdso_inc kb h -> vm_reserved h' = vm_reserved h ->
+vm_mmap_base h' = vm_mmap_base h -> vm_init_sp h' = vm_init_sp h -> vdso_inc kb h'.
+Proof.
+intros kb h h' H E1 E2 E3. unfold vdso_inc in *. rewrite E1.
+replace (vdso_top h') with (vdso_top h) by (unfold vdso_top, mmap_top, alloc_top; rewrite E2, E3; reflexivity).
+exact H.
+Qed.
+Ltac vdso_keep_tac :=
+rewrite ?with_vmmaps_vm;
+match goal with H : vdso_inc ?kb _ |- vdso_inc ?kb _ => apply (vdso_inc_keep _ _ _ H); reflexivity end.
+Lemma vdso_init_facts : forall kb (x : Z), 0 <= x < 2 ^ 64 ->
+(length (vdso_reserved kb (page_round_down_Z x)) <= 2)%nat
+/\ Forall (fun p => bv_unsigned (snd p) <= 20 * 4096) (vdso_reserved kb (page_round_down_Z x))
+/\ (forall e, In e (vdso_reserved kb (page_round_down_Z x)) -> x - 4095 - 20 * 4096 <= bv_unsigned (fst e)).
+Proof.
+intros kb x Hx.
+assert (T1 : page_round_down_Z x <= x) by apply page_round_down_Z_le.
+assert (T0 : x - 4095 <= page_round_down_Z x).
+{ unfold page_round_down_Z, page_size. pose proof (Z_div_mod_eq_full x 4096). pose proof (Z.mod_pos_bound x 4096 ltac:(lia)). lia. }
+assert (Ttop : page_round_down_Z x < two_pow_64) by (unfold two_pow_64; lia).
+pose proof (vdso_len_bounds kb) as VL. unfold page_size in VL.
+split; [unfold vdso_reserved; destruct (_ <? _)%Z; cbn [length]; lia|].
+split.
+- apply Forall_forall. intros [a n] Hin. destruct (vdso_reserved_above kb _ a n Ttop Hin) as [A1 A2].
+cbn [snd]. pose proof (bv_unsigned_in_range 64 a). lia.
+- intros [a n] Hin. destruct (vdso_reserved_above kb _ a n Ttop Hin) as [A1 A2]. cbn [fst]. lia.
+Qed.
+Lemma vdso_reserved_kb_indep : forall kb kb' top,
+vdso_reserved kb top = vdso_reserved kb' top.
+Proof.
+intros kb kb' top.
+assert (E : forall k, vdso_text_pages k = vdso_text_pages kb').
+{ intros k. unfold vdso_text_pages, vdso_image_of.
+change (length Vdso.vdso_images) with 1%nat. rewrite !Nat.mod_1_r. reflexivity. }
+unfold vdso_reserved, vdso_len. rewrite (E kb). reflexivity.
+Qed.
 Definition RI (CAPK CAPB : Z) (ne : nat) (bb : Z) (h : VmMaps) : Prop :=
 Z.of_nat (length (vm_reserved h ++ vm_maps h)) + Z.of_nat ne <= CAPK
 /\ Forall (fun p => bv_unsigned (snd p) <= NMAX) (vm_reserved h ++ vm_maps h)
@@ -87,21 +129,29 @@ Z.of_nat (length (vm_reserved h ++ vm_maps h)) + Z.of_nat ne <= CAPK
 /\ 0 <= bb
 /\ CAPBMAX <= vm_limit h
 /\ sp_window_lo <= bv_unsigned (vm_init_sp h).
-Lemma RI_weaken : ltac2:(TCodec.tc2 tcn__CJ_Bridge_Embed "Q0'H':'Q0&QLr7r6r5r3r1%6554321'F%1256'B&T7zr4%3221%422;%6221r:r9%B521A?6p041p0<1p0?1pY@G1pY6J1pY4K1pZDK1pZBL1p2N1p4O1").
+Lemma RI_weaken : forall CAPK CAPB ne ne' bb bb' h,
+RI CAPK CAPB ne bb h -> (ne' <= ne)%nat -> 0 <= bb' <= bb -> RI CAPK CAPB ne' bb' h.
 Proof. intros CAPK CAPB ne ne' bb bb' h (R1 & R2 & R3 & R4 & R5 & R6) Hne Hbb. unfold RI. splits; auto; lia. Qed.
-Lemma RI_add : ltac2:(TCodec.tc2 tcn__CJ_Bridge_Embed "R8'H':'Q0'UFyR0%211'9'>%1233%311&QLr:r9(3r8%211r7r6%8576321'B&T7zr5%3221&QK%5231%7231%72:?'C&UG&UE%12K?%32L1%53Q11Ar>r=r<&T<r;%221I(Q:&QC%11O(7(=%?2Q9O%24Q9Q9Q21&Q@%11Q5%63Q931&Q?%11Q8&QA%11Q:&Q>%11Q<%@8>7Q8Q7Q2531%Q?5GFEB1p0I1p0Q01p0Q21p0Q;1pY8QI1p[6QJ1pZ@QG1pZ>R11pXLQM1pY@R11pY4R41pZBR41p2R61p4R71").
+Lemma RI_add : forall CAPK CAPB ne bb h (a : word) (n : Z) na sb br,
+RI CAPK CAPB (S ne) bb h -> 0 <= n <= NMAX -> n <= bb -> bv_unsigned (Z_to_bv 64 n) = n ->
+RI CAPK CAPB ne (bb - n)
+(mkVmMapsFull (vm_reserved h) ((a, Z_to_bv 64 n) :: vm_maps h) na sb br (vm_limit h) (vm_mmap_base h) (vm_init_sp h)).
 Proof.
 intros CAPK CAPB ne bb h a n na sb br (R1 & R2 & R3 & R4 & R5 & R6) Hn Hnb Hu. unfold RI.
 cbn [vm_reserved vm_maps vm_limit vm_mmap_base vm_init_sp].
 rewrite length_app_cons_mid, live_bytes_cons'. cbn [snd]. rewrite Hu. splits; auto; try lia.
 apply Forall_app_cons_mid; [exact R2| cbn [snd]; rewrite Hu; lia].
 Qed.
-Lemma RI_tick : ltac2:(TCodec.tc2 tcn__CJ_Bridge_Embed "QE'H':'Q0'9'>'UFyR0%211%4211%611&QLr9r8(3r7%211r6r4%8576321'B&T7z%2216%3279%5221r;r:(Q:&QC%11=&Q@%11?r5r3&Q?%11C&QA%11E&Q>%11G%=8;98G7531%O5@?NK1p0B1p0I1pY8Q51p[6Q61pZ@Q51pY@Q=1pY6Q@1pY4QA1pZBQA1p2QC1p4QD1").
+Lemma RI_tick : forall CAPK CAPB ne bb bb' h na sb br,
+RI CAPK CAPB (S ne) bb h -> 0 <= bb' <= bb ->
+RI CAPK CAPB ne bb' (mkVmMapsFull (vm_reserved h) (vm_maps h) na sb br (vm_limit h) (vm_mmap_base h) (vm_init_sp h)).
 Proof.
 intros CAPK CAPB ne bb bb' h na sb br (R1 & R2 & R3 & R4 & R5 & R6) Hbb. unfold RI.
 cbn [vm_reserved vm_maps vm_limit vm_mmap_base vm_init_sp]. splits; auto; lia.
 Qed.
-Lemma RI_remove : ltac2:(TCodec.tc2 tcn__CJ_Bridge_Embed "QI'H':'Q0'UFyR0%211'9'>%1233%311&QLr:r9(3r8%211r7r5%8576321'B&T7z%2216%3279%5221r<r;(Q:&QC%11=&Q7&Q@%11@r6%4221r4r3&Q?%11F&QA%11H&Q>%11J%@8>9J87531%Q25CBQ1N1p0E1p0L1pY8Q:1p[6Q;1pZ@Q81pY0Q=1pY@QA1pY6QD1pY4QE1pZBQE1p2QG1p4QH1").
+Lemma RI_remove : forall CAPK CAPB ne bb bb' h (aw : word) na sb br,
+RI CAPK CAPB (S ne) bb h -> 0 <= bb' <= bb ->
+RI CAPK CAPB ne bb' (mkVmMapsFull (vm_reserved h) (map_remove (vm_maps h) aw) na sb br (vm_limit h) (vm_mmap_base h) (vm_init_sp h)).
 Proof.
 intros CAPK CAPB ne bb bb' h aw na sb br (R1 & R2 & R3 & R4 & R5 & R6) Hbb. unfold RI.
 cbn [vm_reserved vm_maps vm_limit vm_mmap_base vm_init_sp].
@@ -110,20 +160,27 @@ unfold map_remove in *. pose proof (length_filter_le (fun p : word * word => neg
 rewrite length_app in R1 |- *. splits; auto; try lia.
 apply Forall_app in R2 as [R2a R2b]. apply Forall_app. split; [exact R2a| apply Forall_filter; exact R2b].
 Qed.
-Lemma RI_grant_rw : ltac2:(TCodec.tc2 tcn__CJ_Bridge_Embed "R5'H':'N&QLr6r5r4r3&Q6r2%211%8576541&T7r7&QI%3221&QH%5241'C'9'>'UFyR0%211%4211%611&Q4%11F(;%115%<3531%<18&Q5%11M%61;%A3421'Bz%J21Q2&QK%L2Q41%5231r9%O2N1'D'6&SO&UE%12J;r:r1%543219(@%Q33821qXLO1%;2Q01p0=1p0@1p0G1p0M1p0Q;1p0Q>1p0QC1pZ>QO1pZ6QN1pY4R11pZBR11p2R31p4R41").
+Lemma RI_grant_rw : forall CAPK CAPB ne bb (mo : Model) (n : Z),
+RI CAPK CAPB ne bb (m_vmmaps mo) -> CAPK <= CAPKMAX -> CAPB <= CAPBMAX ->
+m_vm_lazy mo = [] -> m_vm_materialized mo = [] ->
+0 < n <= NMAX -> n mod page_size = 0 -> n <= bb ->
+exists a, grant_ok (Z_to_bv 64 0) mo a n = true.
 Proof.
-intros CAPK CAPB ne bb mo n (R1 & R2 & R3 & R4 & R5 & R6) HK HB' Hl Hm Hn Hnb.
+intros CAPK CAPB ne bb mo n (R1 & R2 & R3 & R4 & R5 & R6) HK HB' Hl Hm Hn Hnal Hnb.
 pose proof NMAX_le_30. pose proof CAPKMAX_le.
-apply (grant_exists (Z_to_bv 64 0) mo n R6); [lia| apply Forall_size_30; exact R2| lia|].
+apply (grant_exists (Z_to_bv 64 0) mo n R6); [lia| exact Hnal| apply Forall_size_30; exact R2| lia|].
 apply RefNodes.grant_budget_intro; [exact Hl| exact Hm|]. unfold vm_live_bytes. lia.
 Qed.
-Lemma RI_grant_na : ltac2:(TCodec.tc2 tcn__CJ_Bridge_Embed "Q>'H':'N&QLr6r5r4r3&Q6r2%211%8576541&T7r7&QI%3221'Bz%621;&QK%82=1%5231'D'UFyR0%211'C'6&T0&UE%126=r1%442L1K(@%83721qXL:1%>2;1p0@1p0G1p0L1pZ>Q81pZ6Q71pY4Q:1pZBQ:1p2Q<1p4Q=1").
+Lemma RI_grant_na : forall CAPK CAPB ne bb (mo : Model) (n : Z),
+RI CAPK CAPB ne bb (m_vmmaps mo) -> CAPK <= CAPKMAX ->
+0 < n <= NMAX -> n mod page_size = 0 ->
+exists a, grant_ok_na (Z_to_bv 64 0) mo a n = true.
 Proof.
-intros CAPK CAPB ne bb mo n (R1 & R2 & R3 & R4 & R5 & R6) HK Hn.
+intros CAPK CAPB ne bb mo n (R1 & R2 & R3 & R4 & R5 & R6) HK Hn Hnal.
 pose proof NMAX_le_30. pose proof CAPKMAX_le.
-apply (grant_exists_na (Z_to_bv 64 0) mo n R6); [lia| apply Forall_size_30; exact R2| lia].
+apply (grant_exists_na (Z_to_bv 64 0) mo n R6); [lia| exact Hnal| apply Forall_size_30; exact R2| lia].
 Qed.
-Lemma RI_live_limit : ltac2:(TCodec.tc2 tcn__CJ_Bridge_Embed "M'H':'Q0&QLr5r4r3r2r1%6554321&T7&QH%2281&T4&Q2&Q@%11:%311%521=&Q?%11>%;231p0:1p0>1pY@F1pY4I1pZBI1p2K1p4L1").
+Lemma RI_live_limit : forall CAPK CAPB ne bb h, RI CAPK CAPB ne bb h -> CAPB <= CAPBMAX -> live_bytes (vm_maps h) + bb <= vm_limit h.
 Proof. intros CAPK CAPB ne bb h (R1 & R2 & R3 & R4 & R5 & R6) HB. lia. Qed.
 Section SE.
 Variables (m : Model).
@@ -161,16 +218,29 @@ Variable CAPK CAPB : Z.
 Hypothesis HCAPK : CAPK <= CAPKMAX.
 Hypothesis HCAPB : CAPB <= CAPBMAX.
 Local Notation KL := (KL2 resv_img img_hi).
-Lemma step_brk0 : ltac2:(TCodec.tc2 tcn__CJ_Bridge_Embed "SF'S2'H'K'N&T1'QMvQGvU@vTLr5r4&Q6r2%211%96876541'C'RK&RNr6%211(RF%63521'<'UFyR0%211%411&Q3%11B(2%115%@3531'9'>%1299%311&Q4%11L(;%115%I3531&RBvUD(R>z%211r7%63521&UG&Q=%Q714%211%42L1'O(Q9r8%Q=11%811y8%Q411%L11%L2Q41%H11'M%J11':%Q12Q91%M11%>6;6MM41%Q?1R4&R4r1%211(4%12R9QN%QL3631'6&S>r3%211(@%R23521&S3(RE%11R:r>%4221r;%R=11%RD6RCRBRA3R?1'T2vUC(L&R=r=%221REr<%5221%84QH71;p0:1p0C1p0J1t[4QAQ21tZNS6QC1r9%=21QB%@4R0?1QLp041p0QM1p0R51p0R?1p0RJ1p0S21pQDS=1pZ6S?1pZ:SA1pZJSC1pQFSE1").
+Lemma step_brk0 : forall L pbrk ms mo K,
+KL L pbrk (m_vmmaps mo) -> ld_brk L = BPUntried ->
+m_halted mo = None -> m_vm_lazy mo = [] ->
+Nodes.at_node segs (NBrk 0) ms ->
+(let r := bv_unsigned (vm_brk (m_vmmaps mo)) in
+let rsp := mkEffectU (vm_brk (m_vmmaps mo)) [] [] [] [] [] in
+dec_brk0 rsp = Some r ->
+brk0_answer_ok r = true ->
+KL (set_brkph (BPQueried r) L) r (m_vmmaps mo) ->
+srealizes segs scfg (mkCfg (nret ms rsp) mo) K) ->
+srealizes segs scfg (mkCfg ms mo) K.
 Proof.
 intros L pbrk ms mo K HK Hph Hh Hl Hat HC.
 destruct (KL2_brk0 resv_img img_hi L pbrk (m_vmmaps mo) HK Hph) as [Hans HK'].
 eapply (bn_brk_query segs scfg); [exact Hh| exact Hl| exact Hat|].
 apply HC; [reflexivity| exact Hans| exact HK'].
 Qed.
-Lemma dec_brk_same : ltac2:(TCodec.tc2 tcn__CJ_Bridge_Embed "Q:'H'UFyR0%211'C&UGr1%2251r3%53921'<'R2%211&R3r4(Q9r2(;'>'9y8%D11%311%52D1%711%72FF%911'M%;11':%<2K1%>11%A6@86641%D3CI1(4(QO%22I1%Q13I41p0M1pY2Q41p[0Q81pY:Q91").
+Lemma dec_brk_same : forall cur req (b : word), bv_unsigned b = cur ->
+dec_brk cur req (mkEffectU b [] [] [] [] []) = Some BrkSame.
 Proof. intros cur req b Hb. unfold dec_brk. rewrite Hb, Z.eqb_refl. reflexivity. Qed.
-Lemma dec_brk_grown : ltac2:(TCodec.tc2 tcn__CJ_Bridge_Embed "R:'H'UFyR0%211'C&UGr1%2251r3%53921&T9r4&Q;%3221z%;3?21&T8r5%2241&T7r7%2271&T4r8%2214&T;+2+R0%3221%=251'<'R2%211&R3r9%=21<(Q9&UE%12Q43(;'>'9y8%Q:11%311%52Q:1%711(7%82Q=Q=(=%=2Q@K%24Q@Q@O1%=14%63521'M%@11':%A2QF1%C11%G6E=6741%K3JI1(4(QN%22Q01%QL3Q041p0Q41p0Q=1p0QA1p0QE1p0QF1p0QM1pY2R41pY<R81pY:R91").
+Lemma dec_brk_grown : forall cur d (b : word), bv_unsigned b = cur ->
+cur mod page_size = 0 -> d mod page_size = 0 -> 0 < d -> 0 <= cur -> cur + d < 2 ^ 64 ->
+dec_brk cur (cur + d) (mkEffectU (Z_to_bv 64 (cur + d)) [] [(b, Z_to_bv 64 d)] [] [] []) = Some BrkGrown.
 Proof.
 intros cur d b Hb Hcal Hdal Hd Hc Hnw. unfold dec_brk.
 rewrite u64_lit by lia. replace (cur + d =? cur) with false by (symmetry; apply Z.eqb_neq; lia). cbn [andb].
@@ -199,24 +269,33 @@ apply HGRANT; [| exact HansG| exact HKG|].
 + rewrite Hpb. apply dec_brk_grown; first [reflexivity| assumption| lia].
 + apply RI_add; [exact HRI| lia| exact Hdb| apply u64_lit; lia].
 Qed.
-Lemma land_MAPF : ltac2:(TCodec.tc2 tcn__CJ_Bridge_Embed ";'C'6&T5&T6&RH&S:%3221z%6221(@%:3921").
+Lemma land_MAPF : (Z.land MAPF MAP_FIXED =? 0) = true.
 Proof. reflexivity. Qed.
-Lemma answer_ok_mmap : ltac2:(TCodec.tc2 tcn__CJ_Bridge_Embed "I'S2'H'C'6&RJvQGr5(S7r4r3r2&RH%544321r1%:49821&SA&S1%11;%34=195%A3@51p[BC1pZLD1pZ2E1pXLF1pQFH1").
+Lemma answer_ok_mmap : forall L a len prot z,
+answer_ok L (EMmap a len prot MAPF) z = mmap_answer_ok (lranges L) len z.
 Proof. intros. unfold answer_ok. rewrite land_MAPF. reflexivity. Qed.
-Lemma event_post_mmap_rw : ltac2:(TCodec.tc2 tcn__CJ_Bridge_Embed "Q2'S2'H'C'6&S@r1%211(8%63521&RMr4(S7zr3&S=&RH%544321r2%93821&S4(7'>%12EE(=%14GG7;&RO%11@%73531%921B%K3M;1p0F1p[BN1pZ2O1pQFQ11").
+Lemma event_post_mmap_rw : forall L len z, is_err z = false ->
+event_post L (EMmap 0 len PROT_RW MAPF) z = set_groups ((z, len) :: ld_groups L) L.
 Proof. intros L len z Hz. unfold event_post. rewrite land_MAPF, Hz. reflexivity. Qed.
-Lemma event_post_mmap_none : ltac2:(TCodec.tc2 tcn__CJ_Bridge_Embed "Q4'S2'H'C'6&S@r1%211(8%63521&RMr4(S7zr3&S<&RH%544321r2%93821&S5(7'>%12EE%221F(=%14HH8<%244I1>&S0%11B%93631%;21D%M3O=1p0H1p[BQ01pZ2Q11pQFQ31").
+Lemma event_post_mmap_none : forall L len z, is_err z = false ->
+event_post L (EMmap 0 len PROT_NONE MAPF) z = set_metas ((z, len, 0) :: ld_metas L) L.
 Proof. intros L len z Hz. unfold event_post. rewrite land_MAPF, Hz. reflexivity. Qed.
-Lemma mmap_addr_ok_nil : ltac2:(TCodec.tc2 tcn__CJ_Bridge_Embed "Q='H'UFyR0%211'C&T9&UGr1%2261&Q;%5221z%83<21&T8r2%92=1%3251&T7&T4r3%>2B1&R:r4%211%6241&RCvQG%211%;241'6&R8r5(;'>%12Q2Q2%311%N2Q2>%74;621(@%Q33:21p0<1p0I1p0N1pXLQ81pZ2Q<1").
+Lemma mmap_addr_ok_nil : forall len (a : word),
+bv_unsigned a mod page_size = 0 -> 0 < bv_unsigned a -> bv_unsigned a + mmap_len len <= alloc_ceiling ->
+mmap_addr_ok len [] (bv_unsigned a) = true.
 Proof.
 intros len a H1 H2 H3. unfold mmap_addr_ok. rewrite H1, Z.eqb_refl. rewrite (proj2 (Z.ltb_lt _ _) H2).
 rewrite (proj2 (Z.leb_le _ _) H3). reflexivity.
 Qed.
-Lemma dec_mmap_ok : ltac2:(TCodec.tc2 tcn__CJ_Bridge_Embed "R8'H'UFyR0%211'C&T9&UGr1%2261&Q;%5221z%83<21&T8r2%92=1%3251&T7&T4r3%>2B1&R:r4%211%6241&RCvQG%211%;241'<'R9%211&R5r5(;'>%12Q4Q4%311(Q9'9y8%Q811%311%82Q81%:11(7%;2Q;Q;(=&UE%L1@%22Q@1%44Q@Q@M1%B16%83721'M%E11':%F2QF1%H11%E6Q5?6741%L4Q2KG1(4(R0%QI2QMQ9%211%42Q31%QN3Q361p0Q71p0QD1p0QI1pXLR31pZ2R71").
+Lemma dec_mmap_ok : forall len (a : word),
+bv_unsigned a mod page_size = 0 -> 0 < bv_unsigned a -> bv_unsigned a + mmap_len len <= alloc_ceiling ->
+dec_mmap len [] (mkEffectU a [] [(a, Z_to_bv 64 (mmap_len len))] [] [] []) = Some (MmOk (bv_unsigned a)).
 Proof.
 intros len a H1 H2 H3. unfold dec_mmap. rewrite !bv_eqb_refl, (mmap_addr_ok_nil len a H1 H2 H3). reflexivity.
 Qed.
-Lemma dec_mmap_none_ok : ltac2:(TCodec.tc2 tcn__CJ_Bridge_Embed "R8'H'UFyR0%211'C&T9&UGr1%2261&Q;%5221z%83<21&T8r2%92=1%3251&T7&T4r3%>2B1&R:r4%211%6241&RCvQG%211%;241'<'R9%211&R6r5(;'>%12Q4Q4%311(Q9'9y8%Q811%311%82Q81%:11%:2Q:Q:%<11(7(=&UE%M1A%22QA1%44QAQAN1%63817'M%E11':%F2QF1%H11%E6Q5?=641%L4Q2KG1(4(R0%QI2QMQ9%211%42Q31%QN3Q361p0Q71p0QD1p0QI1pXLR31pZ2R71").
+Lemma dec_mmap_none_ok : forall len (a : word),
+bv_unsigned a mod page_size = 0 -> 0 < bv_unsigned a -> bv_unsigned a + mmap_len len <= alloc_ceiling ->
+dec_mmap_none len [] (mkEffectU a [] [] [(a, Z_to_bv 64 (mmap_len len))] [] []) = Some (MmOk (bv_unsigned a)).
 Proof.
 intros len a H1 H2 H3. unfold dec_mmap_none. rewrite !bv_eqb_refl, (mmap_addr_ok_nil len a H1 H2 H3). reflexivity.
 Qed.
@@ -227,7 +306,7 @@ pose proof (mmap_len_ge len ltac:(lia)) as Hn1. fold n in Hn1.
 assert (HnA : n mod page_size = 0) by (unfold n; apply mmap_len_aligned).
 assert (Hun : bv_unsigned (Z_to_bv 64 n) = n) by (apply u64_lit; unfold NMAX in HnN; lia).
 eapply (bn_mmap_rw segs scfg Halloc ms mo len K Hh Hl Hat); [unfold LEN_MAX in Hlen; lia| |].
-- change (page_round_up_Z len) with n. eapply (RI_grant_rw CAPK CAPB (S ne) bb mo n HRI HCAPK HCAPB Hl Hm); lia.
+- change (page_round_up_Z len) with n. eapply (RI_grant_rw CAPK CAPB (S ne) bb mo n HRI HCAPK HCAPB Hl Hm); first [exact HnA | lia].
 - intros a Hg. change (page_round_up_Z len) with n in Hg |- *.
 destruct (grant_ok_unpack _ _ _ _ Hg) as (G1 & G2 & G3 & G4 & G5).
 fold h in G3. rewrite (KL2_alloc_top _ _ _ _ _ HK) in G3.
@@ -247,7 +326,7 @@ pose proof (mmap_len_ge len ltac:(lia)) as Hn1. fold n in Hn1.
 assert (HnA : n mod page_size = 0) by (unfold n; apply mmap_len_aligned).
 assert (Hun : bv_unsigned (Z_to_bv 64 n) = n) by (apply u64_lit; unfold NMAX in HnN; lia).
 eapply (bn_mmap_none segs scfg Halloc ms mo len K Hh Hl Hat); [unfold LEN_MAX in Hlen; lia| |].
-- change (page_round_up_Z len) with n. eapply (RI_grant_na CAPK CAPB (S ne) bb mo n HRI HCAPK); lia.
+- change (page_round_up_Z len) with n. eapply (RI_grant_na CAPK CAPB (S ne) bb mo n HRI HCAPK); first [exact HnA | lia].
 - intros a Hg. change (page_round_up_Z len) with n in Hg |- *.
 destruct (grant_ok_na_unpack _ _ _ _ Hg) as (G1 & G2 & G3 & G4).
 fold h in G3. rewrite (KL2_alloc_top _ _ _ _ _ HK) in G3.
@@ -260,13 +339,31 @@ unfold noaccess_model. fold h. apply HC.
 + rewrite (event_post_mmap_none L len _ Herr). exact HK'.
 + apply RI_add; [exact HRI| lia| exact Hnb| exact Hun].
 Qed.
-Lemma dec_mmap_fixed_ok : ltac2:(TCodec.tc2 tcn__CJ_Bridge_Embed "QM'H'UFyR0%211'Cr1&UEr2%2261%53641'B&T7zr3%3221&T<&T;+2+R0%3221+TP0%6221%;291%=291'<'SM%211&SJr4&S;(Q9(;'>'9y8%Q211%311%52Q21%711%72Q4Q4%911(7(=%Q52Q9>%24Q9Q9O1%43615'M%@11':%A2Q>1%C11%E6Q6=;641%I3HG1(4(SH%22N1%QD3N41p0Q21p0QA1pY0QH1pXNQL1").
+Lemma dec_mmap_fixed_ok : forall addr (aw : word), aw = Z_to_bv 64 addr -> 0 <= addr <= 2^64 - 4096 ->
+dec_mmap_fixed addr PGSZ (mkEffectU aw [] [] [(aw, Z_to_bv 64 PGSZ)] [] []) = Some FxDone.
 Proof.
 intros addr aw -> Ha. unfold dec_mmap_fixed.
 rewrite (mmap_len_of_aligned PGSZ) by (unfold PGSZ; first [lia| reflexivity]).
 rewrite !bv_eqb_refl. cbn [andb]. rewrite errno_of_lit by lia. reflexivity.
 Qed.
-Lemma step_mmap_fixed : ltac2:(TCodec.tc2 tcn__CJ_Bridge_Embed "UG'S2'H'K'N':&T1'Q0&Q6r5%211&SB%113'S?(S7r1&S;&S<&RI%544321'UFyR0%211&UEr2%2241%325:'QMvQGvU@vTLr=r<%6654321H'C'RK&RNr>%211(RDr:%211%83741'<%11F&Q3%11>(2%11J%?3531'9'>%12NN%311&Q4%11H(;%115%H3531%91Q5&Q5%11H%61Q8%M3421&QLv1v0(3%11Q5%55431Q5M&RBvUD(R?z+QB%34Q3QK21rA%73621'O(Q9r9y8%QN11%Q111%Q12QN1%M11(7(=r8%24R3R391%43Q61Q1'M%Q411%Q:2R7RH%Q611%@6?:Q6531(Q:&QC%11R3&Q@%11R5%>4R?R?QME&Q8&QB%11R9&T4%12R:RJ%533R;1%F3QH71&QD%11R?&Q=%11RA&Q?%11RC&QA%11RE&Q>%11RG%G8EC;97531'SM%R>11&SJ%13RLS;S3(4(SH%2261%RM3641'6&RJrG%24S71S4RN(@%S33521&RMrHr?%332S41r3%S@6S?S>S=291rDrCr4%R?5R>R=321'T2vUC(L&R=r6%22>1&QE%12T>E%6231%94RB81<p0;1p0@1p0G1p0N1tYBTGQ71t[4RAR01rB%?2D1%B4RKA1SMp041p0RG1p0S01p0S71p0S=1p0SG1p0SO1p0T91tZFTETA1tY0TFTC1tY>U0TJ1tXLU<U21tY@U8U51pQDU:1pY4U?1pZBU=1pY:UA1pZ6U@1pZ:UB1pZJUD1pQFUF1").
+Lemma step_mmap_fixed : forall L pbrk ms mo cur ne bb K,
+let h := m_vmmaps mo in
+let a := round_up_pg cur in
+let e := EMmap a PGSZ PROT_NONE MAPFX in
+let aw := Z_to_bv 64 a in let nw := Z_to_bv 64 PGSZ in
+KL L pbrk h -> ld_brk L = BPGuard cur ->
+m_halted mo = None -> m_vm_lazy mo = [] -> m_vm_materialized mo = [] ->
+RI CAPK CAPB (S ne) bb h ->
+Nodes.at_node segs (NMmap a PGSZ 0 50) ms ->
+(let rsp := mkEffectU aw [] [] [(aw, nw)] [] [] in
+let h' := mkVmMapsFull (vm_reserved h) (vm_maps h) ((aw, nw) :: maps_subtract (vm_noaccess h) a (a + PGSZ))
+(vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h) in
+dec_mmap_fixed a PGSZ rsp = Some FxDone ->
+answer_ok L e a = true ->
+KL (event_post L e a) pbrk h' ->
+RI CAPK CAPB ne bb h' ->
+srealizes segs scfg (mkCfg (nret ms rsp) (with_vmmaps h' mo)) K) ->
+srealizes segs scfg (mkCfg ms mo) K.
 Proof.
 intros L pbrk ms mo cur ne bb K h a e aw nw HK Hph Hh Hl Hm HRI Hat HC. subst e aw nw. subst a.
 pose proof alloc_ceiling_lt as Hcl.
@@ -291,7 +388,8 @@ rewrite Ua, Un. apply HC.
 + exact HK'.
 + eapply RI_tick; [exact HRI| pose proof HRI as (_ & _ & _ & R4 & _); lia].
 Qed.
-Lemma dec_munmap_ok : ltac2:(TCodec.tc2 tcn__CJ_Bridge_Embed "QI'H'UFyR0%211'Cr2&UEr4%2261%53641&R:%114%62:1%93:81'<'R;%211&R7r6r5(Q9z%@2D1(;'>'9y8%J11%311%52J1%711%72LL%911(7(=r3%24Q1Q1M1%43615'M%@11':%A2Q61%C11%G6E=;641%K3JI1(4(R1(@%211%42Q21%Q>3Q261p0Q61p0Q;1pZFQB1pY0QC1pZ2QG1pXLQH1").
+Lemma dec_munmap_ok : forall a len (aw nw : word), aw = Z_to_bv 64 a -> nw = Z_to_bv 64 (mmap_len len) ->
+dec_munmap a len (mkEffectU (Z_to_bv 64 0) [] [] [(aw, nw)] [] []) = Some (RgDone true).
 Proof. intros a len aw nw -> ->. unfold dec_munmap. rewrite !bv_eqb_refl. reflexivity. Qed.
 Lemma step_munmap : ltac2:(TCodec.tc2 tcn__CJ_Bridge_Embed "V6'S2'H'K'N':&T1'S?(S9r6r4%3221'Q0&Q6r8%211&R:r7%211'UFyR0%211&UEr9%2241r2%4261'QMvQGvU@vTLr?r>%6654321G&RLr@%211&T3'>%12Q5Q5(=r=r<%34Q9Q921&ROrA%211%:3841'E'C%13Q@89&SB%11;%43QC;1%6241'<%11Q3&Q3%11G(2%11Q7%<3531'9%I2Q:Q:%211&Q4%11E(;%115%D3531%81QA&Q5rB%211%71QE%J3521&QLv1v0(3%11QAr;%65542QB1&RBvUD(RArC%221Q:rE%63521'O(Q9z%R72R91y8%R<11%Q211%QK2R<1%O11(7r:%QM4R@R@D1%33Q71Q2'M%Q511%R32RDS4%Q711%@6>9Q7531(Q:&QC%11R>&Q7&Q@%11RA%321R8&Q8&QB%11RE&T4%12OR>%533Q01&QD%11RJ&Q=%11RL&Q?%11RN&QA%11S0&Q>%11S2%G8EA;97531'R;%R>11&R7rFrD%3321S@(4(R1(@%211%42:1%RN3:61'6&RJrK%24SG1S6QG%S33418&RMrL%231R?QKr3%SN6SMSLSK271%R>5R=R<CR2T@'T2vUC(L&R=%129TF&QEr5%221@%6241%94R@81R<p0;1p0=1p0C1p0I1tYBTMQ61t[4R@QO1rG%?21Q5%B4RIA1T:p041p0RF1p0RN1p0S61p0S=1p0SF1p0SN1p0T61p0TB1p0TF1tZFU3TN1tY0U4U11tZ>UHU81tY@U?U<1tY>UEUA1pQDUG1pY4UL1pZBUJ1pZ2UN1pZ0UO1pXLV01pZ6UO1pZ:V11pZJV31pQFV51").
 Proof.
@@ -301,13 +399,15 @@ destruct (KL2_munmap resv_img img_hi L pbrk h a l0 len HK Hq Hin Hlen)
 as (Hlen1 & Hlen2 & Hal & Ha0 & Hn0 & Hce & Hhas & Hans & HK' & Hcnt & Hlb).
 fold n aw nw in Hhas, HK', Hcnt, Hlb, Hlen2, Hn0, Hce.
 assert (Hpr : page_round_up_Z len = n) by (rewrite <- Hlen2; reflexivity).
-eapply (bn_munmap segs scfg ms mo a len K Hh Hl Hat).
+eapply (bn_munmap segs scfg Halloc ms mo a len K Hh Hl Hat).
 - unfold page_size. unfold PGSZ in Hal. exact Hal.
 - lia.
 - lia.
 - rewrite Hpr. unfold TASK_SIZE. pose_ceil. lia.
 - rewrite Hpr. exact Hhas.
 - rewrite Hpr. fold aw nw. rewrite (munmap_model_simple aw nw mo Hl Hm). fold h.
+unfold mmap_fixed_destroyed_next.
+rewrite (maps_subtract_has (vm_maps h) aw nw (k2_wf _ _ _ _ _ HK) Hhas).
 assert (Ua : bv_unsigned aw = a) by (subst aw; apply u64_lit; lia).
 assert (Un : bv_unsigned nw = n) by (subst nw; apply u64_lit; lia).
 rewrite Ua, Un. apply HC.
@@ -316,11 +416,30 @@ rewrite Ua, Un. apply HC.
 + exact HK'.
 + eapply RI_remove; [exact HRI| pose proof HRI as (_ & _ & _ & R4 & _); lia].
 Qed.
-Lemma dec_mprotect_rw_ok : ltac2:(TCodec.tc2 tcn__CJ_Bridge_Embed "QH'H'UFyR0%211'Cr2&UEr3%2261%53641&R:&S;%211%72;1%:3;91'<'R;%211&SKr5(Q9z%@2D1(;'>'9y8%J11%311%52J1%711(7%82MM(=r4%24Q0Q01L%=14%63521'M%@11':%A2Q61%C11%G6E=6741%J3IQ11(4(R1(@%211%42Q11%Q>3Q161p0Q51p0Q;1pZFQB1pY0QC1pXLQG1").
+Lemma dec_mprotect_rw_ok : forall a (aw nw : word), aw = Z_to_bv 64 a -> nw = Z_to_bv 64 (mmap_len PGSZ) ->
+dec_mprotect_rw a PGSZ (mkEffectU (Z_to_bv 64 0) [] [(aw, nw)] [] [] []) = Some (RgDone true).
 Proof. intros a aw nw -> ->. unfold dec_mprotect_rw, dec_mprotect. rewrite !bv_eqb_refl. reflexivity. Qed.
-Lemma step_mprotect : ltac2:(TCodec.tc2 tcn__CJ_Bridge_Embed "V:'S2'H'K'N':&T1'Q0&Q6r7%211&T4&T:+1r5%4221&S;%5221%7291'S?(S8r1&S=%33271'UFyR0%211&UEr2%2241%325>'QMvQGvU@vTLr?r>%6654321G&RLr@%211&T3'>%12Q9Q9%221Q:(=r=r<%34Q>Q>21r;%547Q@21&S0rA%211%=3:41&T7+2%Q>21:%Q>21Q:&SB%11>%6231'C'<%11Q6&Q3%11K(2%11Q:%73531'9%M2Q=Q=%211&Q4%11F(;%115%?3531%81QD&Q5rB%211%71QH%E3521&QLv1v0(3%11QE%55431QEQ:&RBvUD(R@+3%23Q?R>1rE%63521'O(Q9z%R92R;1y8%R>11%Q111%QN2R>1%N11(7r:%QO4RBRBQK1%33Q61Q1'M%Q411%R62RFS;%Q611%@6>95Q631(Q:&QC%11RB&Q@%11RD&Q8&QB%11RG%S@2RGS;%432RH1&QD%11RK&Q=%11RM&Q?%11RO&QA%11S1&Q>%11S3%D8B@;97531'R;%R:11&SK%13S8SKS?(4(R1(@%211%4281%RC3861'6&RJrK%24SE1SBQB%RH3418&RMrL%231SBQFr3%SL6SKSJSI271rFr4%R:5R9R82QO1'T2vUC(L&R=r6%22<1&QE%12THB%6231%94R=81R9p0;1p0?1p0E1p0K1tYBU6Q61t[4R=QL1rG%?21D%B4RFA1T:p041p0RC1p0RK1p0S21p0S91p0SB1p0SK1p0T31p0TB1p0TF1tZFU2TN1tY0U3U01tY>U;U71tXLUMU=1tY@UIUF1pQDUK1pY4V01pZBUN1pYLV21pYNV31pY2V41pZ6V31pZ:V51pZJV71pQFV91").
+Lemma step_mprotect : forall L pbrk ms mo b l k ne bb K,
+let h := m_vmmaps mo in
+let a := b + (1 + k) * PGSZ in
+let e := EMprotect a PGSZ PROT_RW in
+let aw := Z_to_bv 64 a in let nw := Z_to_bv 64 PGSZ in
+KL L pbrk h -> brk_quiet L -> In (b, l, k) (ld_metas L) -> (2 + k) * PGSZ <= round_up_pg l ->
+m_halted mo = None -> m_vm_lazy mo = [] -> m_vm_materialized mo = [] ->
+RI CAPK CAPB (S ne) bb h ->
+vdso_inc (m_kernel mo) h ->
+Nodes.at_node segs (NMprotect a PGSZ 3) ms ->
+(let rsp := mkEffectU (Z_to_bv 64 0) [] [(aw, nw)] [] [] [] in
+let h' := mkVmMapsFull (vm_reserved h) (vm_maps h) (maps_subtract (vm_noaccess h) a (a + PGSZ))
+(vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h) in
+dec_mprotect_rw a PGSZ rsp = Some (RgDone true) ->
+answer_ok L e 0 = true ->
+KL (event_post L e 0) pbrk h' ->
+RI CAPK CAPB ne bb h' ->
+srealizes segs scfg (mkCfg (nret ms rsp) (with_vmmaps h' mo)) K) ->
+srealizes segs scfg (mkCfg ms mo) K.
 Proof.
-intros L pbrk ms mo b l k ne bb K h a e aw nw HK Hq Hin Hk Hh Hl Hm HRI Hat HC. subst e.
+intros L pbrk ms mo b l k ne bb K h a e aw nw HK Hq Hin Hk Hh Hl Hm HRI Hvd Hat HC. subst e.
 pose proof alloc_ceiling_lt as Hcl.
 destruct (KL2_mprotect resv_img img_hi L pbrk h b l k HK Hq Hin Hk) as (Hal & Ha0 & Hce & Hcn & Hcm & Hans & HK').
 fold a in Hal, Ha0, Hce, Hcn, Hcm, HK', Hans |- *. fold aw nw in Hcn, Hcm, HK'.
@@ -330,6 +449,7 @@ eapply (bn_mprotect segs scfg Halloc ms mo a PGSZ K Hh Hl Hat).
 - unfold PGSZ; lia.
 - lia.
 - rewrite HprP. unfold two_pow_64. lia.
+- rewrite HprP. exact (KL2_meta_page_free resv_img img_hi L pbrk h b l k _ HK Hin Hk Hvd).
 - rewrite HprP. exact Hcn.
 - rewrite HprP. exact Hcm.
 - rewrite HprP. fold nw. apply RefNodes.mprotect_budget_ok_intro; [exact Hl| exact Hm|].
@@ -343,7 +463,7 @@ rewrite Ua, Un. apply HC.
 + exact HK'.
 + eapply RI_tick; [exact HRI| pose proof HRI as (_ & _ & _ & R4 & _); lia].
 Qed.
-Lemma ev_step_brk0 : ltac2:(TCodec.tc2 tcn__CJ_Bridge_Embed "O'C&SC'SI'H%3221&SLvQG(S6z%211%5241&SD&SF(R>%116&R4%44>=21'A&SG&SNr1%211%42D1&SEr2%23GF1q091%@5I:H51qZNI1%B5KJJ=1%N3JD1").
+Lemma ev_step_brk0 : ev_step (EBrk 0) = (mbind (msys (NBrk 0) dec_brk0) (fun r => mbind (mupd (set_brk_ps r)) (fun _ => mret r))).
 Proof. reflexivity. Qed.
 Lemma ev_step_brk : forall req, req <> 0 ->
 ev_step (EBrk req) =
@@ -380,7 +500,9 @@ intros A B n dec f s Qm ms H. apply implM_bind_inv, implM_msys_inv in H.
 destruct H as (ms1 & Hms & Hat & Hk). exists ms1. split; [exact Hms|]. split; [exact Hat|].
 intros rsp a E. destruct (Hk rsp a E) as (ms2 & Hms2 & H2). exists ms2. auto.
 Qed.
-Lemma srz_cj_msteps : ltac2:(TCodec.tc2 tcn__CJ_Bridge_Embed "QH'K'N&T1'Cr3&QE&Q6%113r2%4221%73961'<'UFyR0%211%411&Q3%11=(2%115%A3531'9'>%1299%311&Q4r4%211(;%116%K3631'R<vUDr8r7%43321'T2vUC(L%1265r5%549421r:%521:r6%94=821p051p0<1p0B1p0M1p0Q81pQDQA1pZ8QC1pZ6QD1pZ<QF1pZ:QG1").
+Lemma srz_cj_msteps : forall ms ms' mo mo0 K,
+mo = with_vmmaps (m_vmmaps mo) mo0 -> m_halted mo0 = None -> m_vm_lazy mo0 = [] ->
+Exec.msteps segs ms ms' -> srealizes segs scfg (mkCfg ms' mo) K -> srealizes segs scfg (mkCfg ms mo) K.
 Proof.
 intros ms ms' mo mo0 K Emo Hh Hl Hms Hc.
 eapply srz_msteps; [rewrite Emo, with_vmmaps_halted; exact Hh| rewrite Emo, with_vmmaps_lazy'; exact Hl| apply cj_msteps_cat; exact Hms| exact Hc].
@@ -395,22 +517,25 @@ KL L (ps_brk s) (m_vmmaps mo) ->
 mo = with_vmmaps (m_vmmaps mo) mo0 ->
 m_halted mo0 = None -> m_vm_lazy mo0 = [] -> m_vm_materialized mo0 = [] ->
 RI CAPK CAPB ne bb (m_vmmaps mo) ->
+vdso_inc (m_kernel mo0) (m_vmmaps mo) ->
 (forall r s' ms' mo' L',
 Qm r s' ms' -> cpath L t L' r -> Post L' r -> Q r ->
 KL L' (ps_brk s') (m_vmmaps mo') ->
 mo' = with_vmmaps (m_vmmaps mo') mo0 ->
 RI CAPK CAPB 0 0 (m_vmmaps mo') ->
+vdso_inc (m_kernel mo0) (m_vmmaps mo') ->
 ps_m s' = ps_m s -> ps_fa s' = ps_fa s -> ps_so s' = ps_so s ->
 srealizes segs scfg (mkCfg ms' mo') K) ->
 srealizes segs scfg (mkCfg ms mo) K.
 Proof.
-intros R t. induction t as [r|e k IH]; intros L Post E ne bb Q s Qm ms mo mo0 K Hct Hgt HE Himpl HK Emo Hh Hl Hm HRI CONT.
+intros R t. induction t as [r|e k IH]; intros L Post E ne bb Q s Qm ms mo mo0 K Hct Hgt HE Himpl HK Emo Hh Hl Hm HRI Hvd CONT.
 -
 cbn [membed] in Himpl. apply implM_ret_inv in Himpl. destruct Himpl as (ms' & Hms & HQ).
 eapply srz_cj_msteps; [exact Emo| exact Hh| exact Hl| exact Hms|].
 cbn [ctree_ok] in Hct. cbn [gtree] in Hgt.
 eapply (CONT r s ms' mo L HQ (cpath_ret L r) Hct Hgt HK Emo); try reflexivity.
 eapply RI_weaken; [exact HRI| lia| pose proof HRI as (_ & _ & _ & R4 & _); lia].
+exact Hvd.
 -
 cbn [ctree_ok] in Hct. destruct Hct as [Hpre Hk].
 assert (Hne : match e with EUndef _ => False | _ => True end) by (destruct e; cbn in Hpre; auto).
@@ -420,6 +545,7 @@ assert (Hh' : m_halted mo = None) by (rewrite Emo, with_vmmaps_halted; exact Hh)
 assert (Hl' : m_vm_lazy mo = []) by (rewrite Emo, with_vmmaps_lazy'; exact Hl).
 assert (Hm' : m_vm_materialized mo = []) by (rewrite Emo, with_vmmaps_mat; exact Hm).
 pose proof HRI as (_ & _ & _ & Hbb0 & _).
+assert (Hvdm : vdso_inc (m_kernel mo) (m_vmmaps mo)) by (rewrite Emo at 1; exact Hvd).
 assert (KONT : forall z (s1 : PState) ms2 (mo1 : Model) (bb1 : Z),
 answer_ok L e z = true -> good e z ->
 implM segs (membed (k z)) s1 Qm ms2 ->
@@ -427,12 +553,14 @@ KL (event_post L e z) (ps_brk s1) (m_vmmaps mo1) ->
 mo1 = with_vmmaps (m_vmmaps mo1) mo0 ->
 RI CAPK CAPB ne' bb1 (m_vmmaps mo1) -> 0 <= bb - ecost e <= bb1 ->
 ps_m s1 = ps_m s -> ps_fa s1 = ps_fa s -> ps_so s1 = ps_so s ->
+vdso_inc (m_kernel mo0) (m_vmmaps mo1) ->
 srealizes segs scfg (mkCfg ms2 mo1) K).
-{ intros z s1 ms2 mo1 bb1 Hans Hgood Hi1 HK1 Emo1 HRI1 Hbb1 E1 E2 E3.
+{ intros z s1 ms2 mo1 bb1 Hans Hgood Hi1 HK1 Emo1 HRI1 Hbb1 E1 E2 E3 Hvd1.
 eapply (IH z (event_post L e z) Post E ne' (bb - ecost e) Q s1 Qm ms2 mo1 mo0 K (Hk z Hans) (Hg z Hgood) HE Hi1 HK1 Emo1 Hh Hl Hm).
 - eapply RI_weaken; [exact HRI1| lia| lia].
-- intros r s' ms' mo' L' HQ' Hcp HP HQr HK' Emo' HRI' E1' E2' E3'.
-eapply (CONT r s' ms' mo' L' HQ'); [eapply cpath_vis; [exact Hans| exact Hcp]| exact HP| exact HQr| exact HK'| exact Emo'| exact HRI'| congruence| congruence| congruence]. }
+- exact Hvd1.
+- intros r s' ms' mo' L' HQ' Hcp HP HQr HK' Emo' HRI' Hvd' E1' E2' E3'.
+eapply (CONT r s' ms' mo' L' HQ'); [eapply cpath_vis; [exact Hans| exact Hcp]| exact HP| exact HQr| exact HK'| exact Emo'| exact HRI'| exact Hvd'| congruence| congruence| congruence]. }
 clear IH CONT Hk Hg.
 destruct e as [req|a len prot flags|a len|a len prot|p c hh|u]; cbn [event_pre] in Hpre; try contradiction.
 +
@@ -447,7 +575,7 @@ destruct Hi2 as (ms3 & Hms3 & Hi3).
 eapply srz_cj_msteps; [exact Emo| exact Hh| exact Hl| eapply Exec.msteps_trans; [exact Hms2| exact Hms3]|].
 eapply (KONT r0 (set_brk_ps r0 s) ms3 mo bb);
 [exact Hans| exact I| exact Hi3| exact HK'| exact Emo| eapply RI_weaken; [exact HRI| lia| lia]| cbn [ecost Z.eqb]; lia
-| reflexivity| reflexivity| reflexivity].
+| reflexivity| reflexivity| reflexivity| exact Hvd].
 *
 destruct (KL2_brk_grow1 resv_img img_hi L (ps_brk s) (m_vmmaps mo) cur HK Hph)
 as (Ecur & Epbrk & Ereq & Hbal & Hb0 & Hnw & Hsb & Hne0 & HREF & HGR).
@@ -467,7 +595,7 @@ destruct (Hk1 _ _ Hdec) as (ms2 & Hms2 & Hi2). apply implM_ret_inv in Hi2. destr
 eapply srz_cj_msteps; [exact Emo| exact Hh| exact Hl| eapply Exec.msteps_trans; [exact Hms2| exact Hms3]|].
 eapply (KONT (ps_brk s) s ms3 mo bb);
 [exact Hans| exact I| exact Hi3| exact HK'| exact Emo| exact HRI'| lia
-| reflexivity| reflexivity| reflexivity].
+| reflexivity| reflexivity| reflexivity| exact Hvd].
 --
 intros rsp h' Hdec Hans HK' HRI'.
 destruct (Hk1 _ _ Hdec) as (ms2 & Hms2 & Hi2). apply implM_mupd_inv, implM_ret_inv in Hi2.
@@ -476,7 +604,7 @@ eapply (srz_cj_msteps _ ms3 _ mo0); [rewrite Emo, with_vmmaps_twice; reflexivity
 eapply (KONT _ (set_brk_ps _ s) ms3 _ (bb - 2 * PGSZ));
 [exact Hans| exact I| exact Hi3| cbn [ps_brk set_brk_ps]; rewrite with_vmmaps_vm; exact HK'
 | rewrite Emo, with_vmmaps_twice, with_vmmaps_vm; reflexivity| rewrite with_vmmaps_vm; exact HRI'| lia
-| reflexivity| reflexivity| reflexivity].
+| reflexivity| reflexivity| reflexivity| vdso_keep_tac].
 *
 destruct (KL2_brk_grow2 resv_img img_hi L (ps_brk s) (m_vmmaps mo) b l HK Hph Hreg)
 as (Epbrk & Ebrk & Ereq & Hbal & Hb0 & Hnw & Hsb & Hne0 & HREF & HGR).
@@ -497,7 +625,7 @@ destruct (Hk1 _ _ Hdec) as (ms2 & Hms2 & Hi2). apply implM_ret_inv in Hi2. destr
 eapply srz_cj_msteps; [exact Emo| exact Hh| exact Hl| eapply Exec.msteps_trans; [exact Hms2| exact Hms3]|].
 eapply (KONT (ps_brk s) s ms3 mo bb);
 [exact Hans| exact I| exact Hi3| exact HK'| exact Emo| exact HRI'| unfold PGSZ in *; lia
-| reflexivity| reflexivity| reflexivity].
+| reflexivity| reflexivity| reflexivity| exact Hvd].
 --
 intros rsp h' Hdec Hans HK' HRI'.
 destruct (Hk1 _ _ Hdec) as (ms2 & Hms2 & Hi2). apply implM_mupd_inv, implM_ret_inv in Hi2.
@@ -506,7 +634,7 @@ eapply (srz_cj_msteps _ ms3 _ mo0); [rewrite Emo, with_vmmaps_twice; reflexivity
 eapply (KONT _ (set_brk_ps _ s) ms3 _ (bb - PGSZ));
 [exact Hans| exact I| exact Hi3| cbn [ps_brk set_brk_ps]; rewrite with_vmmaps_vm; exact HK'
 | rewrite Emo, with_vmmaps_twice, with_vmmaps_vm; reflexivity| rewrite with_vmmaps_vm; exact HRI'| unfold PGSZ in *; lia
-| reflexivity| reflexivity| reflexivity].
+| reflexivity| reflexivity| reflexivity| vdso_keep_tac].
 +
 destruct Hpre as [(Hq & -> & -> & Hprot & Hlen)|(cur & Hph & -> & -> & -> & ->)].
 *
@@ -523,7 +651,7 @@ eapply (srz_cj_msteps _ ms3 _ mo0); [rewrite Emo, with_vmmaps_twice; reflexivity
 eapply (KONT z s ms3 _ (bb - mmap_len len));
 [exact Hans| cbn [good]; right; exact Herr| exact Hi3| rewrite with_vmmaps_vm; exact HK'
 | rewrite Emo, with_vmmaps_twice, with_vmmaps_vm; reflexivity| rewrite with_vmmaps_vm; exact HRI'| lia
-| reflexivity| reflexivity| reflexivity].
+| reflexivity| reflexivity| reflexivity| vdso_keep_tac].
 --
 rewrite ev_step_mmap_rw in Himpl. destruct (machine_event _ _ _ _ _ _ Himpl) as (ms1 & Hms & Hat & Hk1).
 eapply srz_cj_msteps; [exact Emo| exact Hh| exact Hl| exact Hms|].
@@ -534,7 +662,7 @@ eapply (srz_cj_msteps _ ms3 _ mo0); [rewrite Emo, with_vmmaps_twice; reflexivity
 eapply (KONT z s ms3 _ (bb - mmap_len len));
 [exact Hans| cbn [good]; right; exact Herr| exact Hi3| rewrite with_vmmaps_vm; exact HK'
 | rewrite Emo, with_vmmaps_twice, with_vmmaps_vm; reflexivity| rewrite with_vmmaps_vm; exact HRI'| lia
-| reflexivity| reflexivity| reflexivity].
+| reflexivity| reflexivity| reflexivity| vdso_keep_tac].
 *
 assert (Hc2 : ecost (EMmap (round_up_pg cur) PGSZ PROT_NONE MAPFX) = 0) by reflexivity. rewrite Hc2 in *.
 rewrite ev_step_mmap_fixed in Himpl. destruct (machine_event _ _ _ _ _ _ Himpl) as (ms1 & Hms & Hat & Hk1).
@@ -546,7 +674,7 @@ eapply (srz_cj_msteps _ ms3 _ mo0); [rewrite Emo, with_vmmaps_twice; reflexivity
 eapply (KONT (round_up_pg cur) s ms3 _ bb);
 [exact Hans| cbn [good]; left; reflexivity| exact Hi3| rewrite with_vmmaps_vm; exact HK'
 | rewrite Emo, with_vmmaps_twice, with_vmmaps_vm; reflexivity| rewrite with_vmmaps_vm; exact HRI'| lia
-| reflexivity| reflexivity| reflexivity].
+| reflexivity| reflexivity| reflexivity| vdso_keep_tac].
 +
 destruct Hpre as (Hq & l0 & Hin & Hlen).
 assert (Hc2 : ecost (EMunmap a len) = 0) by reflexivity. rewrite Hc2 in *.
@@ -559,20 +687,20 @@ eapply (srz_cj_msteps _ ms3 _ mo0); [rewrite Emo, with_vmmaps_twice; reflexivity
 eapply (KONT 0 s ms3 _ bb);
 [exact Hans| reflexivity| exact Hi3| rewrite with_vmmaps_vm; exact HK'
 | rewrite Emo, with_vmmaps_twice, with_vmmaps_vm; reflexivity| rewrite with_vmmaps_vm; exact HRI'| lia
-| reflexivity| reflexivity| reflexivity].
+| reflexivity| reflexivity| reflexivity| vdso_keep_tac].
 +
 destruct Hpre as (Hq & -> & -> & b & l & kk & Hin & -> & Hk2).
 assert (Hc2 : ecost (EMprotect (b + (1 + kk) * PGSZ) PGSZ PROT_RW) = 0) by reflexivity. rewrite Hc2 in *.
 rewrite ev_step_mprotect in Himpl. destruct (machine_event _ _ _ _ _ _ Himpl) as (ms1 & Hms & Hat & Hk1).
 eapply srz_cj_msteps; [exact Emo| exact Hh| exact Hl| exact Hms|].
-eapply (step_mprotect L (ps_brk s) ms1 mo b l kk ne' bb K HK Hq Hin Hk2 Hh' Hl' Hm' HRI Hat).
+eapply (step_mprotect L (ps_brk s) ms1 mo b l kk ne' bb K HK Hq Hin Hk2 Hh' Hl' Hm' HRI Hvdm Hat).
 intros rsp h' Hdec Hans HK' HRI'.
 destruct (Hk1 _ _ Hdec) as (ms2 & Hms2 & Hi2). apply implM_ret_inv in Hi2. destruct Hi2 as (ms3 & Hms3 & Hi3).
 eapply (srz_cj_msteps _ ms3 _ mo0); [rewrite Emo, with_vmmaps_twice; reflexivity| exact Hh| exact Hl| eapply Exec.msteps_trans; [exact Hms2| exact Hms3]|].
 eapply (KONT 0 s ms3 _ bb);
 [exact Hans| reflexivity| exact Hi3| rewrite with_vmmaps_vm; exact HK'
 | rewrite Emo, with_vmmaps_twice, with_vmmaps_vm; reflexivity| rewrite with_vmmaps_vm; exact HRI'| lia
-| reflexivity| reflexivity| reflexivity].
+| reflexivity| reflexivity| reflexivity| vdso_keep_tac].
 Qed.
 Definition vm_shrunk (h0 h : VmMaps) : Prop :=
 vm_reserved h = vm_reserved h0
@@ -580,9 +708,11 @@ vm_reserved h = vm_reserved h0
 /\ live_bytes (vm_maps h) <= live_bytes (vm_maps h0)
 /\ (Forall (fun p => bv_unsigned (snd p) <= NMAX) (vm_maps h0) -> Forall (fun p => bv_unsigned (snd p) <= NMAX) (vm_maps h))
 /\ vm_limit h = vm_limit h0 /\ vm_mmap_base h = vm_mmap_base h0.
-Lemma vm_shrunk_refl : ltac2:(TCodec.tc2 tcn__CJ_Bridge_Embed "5'Q0&QJr1%2211pY@41").
+Lemma vm_shrunk_refl : forall h, vm_shrunk h h.
 Proof. intros h. unfold vm_shrunk. repeat split; auto; lia. Qed.
-Lemma vm_shrunk_remove : ltac2:(TCodec.tc2 tcn__CJ_Bridge_Embed "Q6'Q0'UFyR0%211'9'>%1233%311&QJr6r5%3221r7(Q:&QC%116&Q7&Q@%119%3219r4r3r2&Q?%11?&QA%11A&Q>%11C%@8>:987531%F2B1p0D1pY8M1p[6N1pZ@K1pY0Q01pY@Q41pYDQ51").
+Lemma vm_shrunk_remove : forall h0 h aw na sb br,
+vm_shrunk h0 h ->
+vm_shrunk h0 (mkVmMapsFull (vm_reserved h) (map_remove (vm_maps h) aw) na sb br (vm_limit h) (vm_mmap_base h) (vm_init_sp h)).
 Proof.
 intros h0 h aw na sb br (S1 & S2 & S3 & S4 & S5 & S6). unfold vm_shrunk. cbn [vm_reserved vm_maps vm_limit vm_mmap_base vm_init_sp].
 pose proof (RefNodes.live_bytes_map_remove_le (vm_maps h) aw) as Hlb.
@@ -597,13 +727,15 @@ destruct (KL2_munmap resv_img img_hi L pbrk h a l0 len HK Hq Hin Hlen)
 as (Hlen1 & Hlen2 & Hal & Ha0 & Hn0 & Hce & Hhas & Hans & HK' & Hcnt & Hlb).
 fold n aw nw in Hhas, HK', Hcnt, Hlb, Hlen2, Hn0, Hce.
 assert (Hpr : page_round_up_Z len = n) by (rewrite <- Hlen2; reflexivity).
-eapply (bn_munmap segs scfg ms mo a len K Hh Hl Hat).
+eapply (bn_munmap segs scfg Halloc ms mo a len K Hh Hl Hat).
 - unfold page_size. unfold PGSZ in Hal. exact Hal.
 - lia.
 - lia.
 - rewrite Hpr. unfold TASK_SIZE. pose_ceil. lia.
 - rewrite Hpr. exact Hhas.
 - rewrite Hpr. fold aw nw. rewrite (munmap_model_simple aw nw mo Hl Hm). fold h.
+unfold mmap_fixed_destroyed_next.
+rewrite (maps_subtract_has (vm_maps h) aw nw (k2_wf _ _ _ _ _ HK) Hhas).
 assert (Ua : bv_unsigned aw = a) by (subst aw; apply u64_lit; lia).
 assert (Un : bv_unsigned nw = n) by (subst nw; apply u64_lit; lia).
 rewrite Ua, Un. apply HC.

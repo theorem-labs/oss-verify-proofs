@@ -1,11 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (writev_outcome takes the far-end reader premise; read_cstr_aux_ok and read_cstr_aux_toolong take the path's below-TASK_SIZE premises and cstr_access_len_le covers the walk's stop at TASK_SIZE; iovec_entry_accesses_in added and copy_iovecs_accesses_in, import_iovecs_accesses_in, wv_cps_in and wv_eff0_in restated for a descriptor's partial copy-in record; openat_rob and writev_rob give RomBase.sys_rob at the openat and writev nodes, through the memory-view lemmas read_u64_ext, read_iovec_entry_at, iovec_entry_accesses_ext, copy_iovecs_accesses_ext, import_iovecs_accesses_ext, iov_at_ext, read_bytes_map_Forall2_ext and CP_ext; imports RomBase). *)
 From Stdlib Require Import ZArith Bool List Lia.
 From LinuxProcessSemantics.Riscv Require Import Prelude.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType RiscvSemantics Fs State Monad Specs Run.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Common Require Import ShapeAlg.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Scfg Require Import Fcfg.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.AS Require RomBase.
 Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope Z_scope.
@@ -462,6 +464,7 @@ Definition wv_eff0 (i : SyscallInput) : SyscallEffect :=
 Lemma writev_outcome : forall i m o ch (iovs : list (word * word)) (bss : list (list byte)),
   bv_unsigned (in_sysno i) = 66 ->
   fd_lookup (m_fds m) (fd32 (in_arg i 0)) = Some (FdChannel ch) -> w_is0 ch = false ->
+  m_channel_reader m = true ->
   (length iovs = 1%nat \/ length iovs = 2%nat) ->
   iovcnt32 (in_arg i 2) = Z_to_bv 64 (Z.of_nat (length iovs)) ->
   access_okb (in_arg i 1) (16 * Z.of_nat (length iovs)) = true ->
@@ -474,7 +477,7 @@ Lemma writev_outcome : forall i m o ch (iovs : list (word * word)) (bss : list (
      (bs = [] /\ o = Ok (wv_eff0 i) m []) \/
      (exists k, (1 <= k)%nat /\ (k <= length bs)%nat /\ o = Ok (wv_eff i iovs k) m (map (WriteEv ch) (firstn k bs)))).
 Proof.
-  intros i m o ch iovs bss Hno Hfd Hch Hlen Hcnt Hacc Hat Haccs Hrd Htot bs.
+  intros i m o ch iovs bss Hno Hfd Hch Hrdr Hlen Hcnt Hacc Hat Haccs Hrd Htot bs.
   destruct (gather_prefix_all _ _ _ Hrd) as [Hg HL]. fold bs in Hg, HL.
   rewrite (sys66 i m o Hno). unfold writev_spec. rewrite bind_input, bind_get_model, Hfd, Hch. cbv iota.
   assert (Himp : import_iovecs (in_mem i) (in_arg i 1) (iovcnt32 (in_arg i 2)) = ImpOk iovs).
@@ -511,6 +514,8 @@ Proof.
     + intros [E | (eff & m1 & e1 & E1 & E2)]; discriminate.
     + intros [[_ E] | (k & _ & _ & E)]; discriminate E.
   - assert (Hbs : bs <> []) by (intros E; rewrite E in HL; cbn in HL; lia).
+    (* LPS 08b1429: a writev to a channel with no reader raises SIGPIPE; the model invariant pins a reader *)
+    rewrite Hrdr. cbn [negb].
     replace (length bs =? 0)%nat with false by (symmetry; apply Nat.eqb_neq; destruct bs; [congruence | cbn; lia]).
     assert (Hne : forall ds : list byte, Z.of_nat (length ds) <= Z.of_nat (length bs) -> addr_is_error_b (len_word ds) = false).
     { intros ds Hds. unfold addr_is_error_b, two_pow_64, len_word. apply Z.ltb_ge. rewrite Z_to_bv_unsigned, bv_wrap_small; [lia|]. unfold bv_modulus. lia. }
@@ -551,16 +556,26 @@ Proof.
   rewrite bv_wrap_add_idemp_l. reflexivity.
 Qed.
 
+(* LPS 08b1429: [read_cstr_aux] tests [access_okb] at every byte, so the NUL lies below TASK_SIZE. *)
 Lemma read_cstr_aux_ok : forall mp (p : list byte) (A : Z) k,
   ~ In (Z_to_bv 8 0) p -> (length p < k)%nat ->
+  0 <= A -> A + Z.of_nat (length p) < TASK_SIZE ->
   (forall j, (j <= length p)%nat -> mp (Z_to_bv 64 (A + Z.of_nat j)) = Some (nth j (p ++ [Z_to_bv 8 0]) (Z_to_bv 8 0))) ->
   read_cstr_aux mp (Z_to_bv 64 A) k = CstrOk p.
 Proof.
-  intros mp p. induction p as [|b p IH]; intros A k Hnz Hk Hmem.
+  intros mp p. induction p as [|b p IH]; intros A k Hnz Hk HA Htop Hmem.
   - destruct k as [|k]; [cbn in Hk; lia|]. cbn [read_cstr_aux].
+    replace (access_okb (Z_to_bv 64 A) 1) with true.
+    2:{ symmetry. unfold access_okb. rewrite Z_to_bv_unsigned, bv_wrap_small by (unfold bv_modulus, TASK_SIZE in *; cbn [length Z.of_nat] in Htop; lia).
+        apply andb_true_intro; split; apply Z.leb_le; unfold TASK_SIZE in *; cbn [length Z.of_nat] in Htop; lia. }
+    cbn [negb].
     specialize (Hmem 0%nat ltac:(cbn; lia)). rewrite Z.add_0_r in Hmem. rewrite Hmem. cbn [nth app].
     unfold bv_eqb. rewrite Z.eqb_refl. reflexivity.
   - destruct k as [|k]; [cbn in Hk; lia|]. cbn [read_cstr_aux].
+    replace (access_okb (Z_to_bv 64 A) 1) with true.
+    2:{ symmetry. cbn [length] in Htop. unfold access_okb. rewrite Z_to_bv_unsigned, bv_wrap_small by (unfold bv_modulus, TASK_SIZE in *; lia).
+        apply andb_true_intro; split; apply Z.leb_le; unfold TASK_SIZE in *; lia. }
+    cbn [negb].
     pose proof (Hmem 0%nat ltac:(cbn; lia)) as H0. rewrite Z.add_0_r in H0. rewrite H0. cbn [nth app].
     destruct (bv_eqb b (Z_to_bv 8 0)) eqn:Hb.
     { exfalso. apply Hnz. left. unfold bv_eqb in Hb. apply Z.eqb_eq in Hb. apply bv_eq. exact Hb. }
@@ -568,18 +583,31 @@ Proof.
     + reflexivity.
     + intros Hin. apply Hnz. right. exact Hin.
     + cbn in Hk. lia.
+    + lia.
+    + cbn [length] in Htop. lia.
     + intros j Hj. replace (A + 1 + Z.of_nat j) with (A + Z.of_nat (S j)) by lia. rewrite (Hmem (S j)) by (cbn; lia). reflexivity.
 Qed.
 
+(* LPS 08b1429: [read_cstr_aux] tests [access_okb] at every byte, so the [k]
+   non-NUL bytes the fuel counts out lie below TASK_SIZE.  Premise shape taken
+   from the model's own [Common.FileSim.read_cstr_aux_toolong_of_rdn]: it is
+   stated for [k <> 0] because at [k = 0] the walk steps no byte and the
+   lemma holds wherever [A] is. *)
 Lemma read_cstr_aux_toolong : forall mp (A : Z) k (f : nat -> byte),
+  0 <= A -> (k <> 0%nat -> A + Z.of_nat k <= TASK_SIZE) ->
   (forall j, (j < k)%nat -> mp (Z_to_bv 64 (A + Z.of_nat j)) = Some (f j) /\ f j <> Z_to_bv 8 0) ->
   read_cstr_aux mp (Z_to_bv 64 A) k = CstrTooLong.
 Proof.
-  intros mp A k. revert A. induction k as [|k IH]; intros A f Hmem; [reflexivity|].
-  cbn [read_cstr_aux]. destruct (Hmem 0%nat ltac:(lia)) as [H0 Hnz]. rewrite Z.add_0_r in H0. rewrite H0.
+  intros mp A k. revert A. induction k as [|k IH]; intros A f HA Htop Hmem; [reflexivity|].
+  specialize (Htop ltac:(discriminate)). cbn [read_cstr_aux].
+  replace (access_okb (Z_to_bv 64 A) 1) with true.
+  2:{ symmetry. unfold access_okb. rewrite Z_to_bv_unsigned, bv_wrap_small by (unfold bv_modulus, TASK_SIZE in *; lia).
+      apply andb_true_intro; split; apply Z.leb_le; unfold TASK_SIZE in *; lia. }
+  cbn [negb].
+  destruct (Hmem 0%nat ltac:(lia)) as [H0 Hnz]. rewrite Z.add_0_r in H0. rewrite H0.
   destruct (bv_eqb (f 0%nat) (Z_to_bv 8 0)) eqn:Hb.
   { exfalso. apply Hnz. unfold bv_eqb in Hb. apply Z.eqb_eq in Hb. apply bv_eq. exact Hb. }
-  rewrite Z_to_bv_add1. rewrite (IH (A + 1) (fun j => f (S j))); [reflexivity|].
+  rewrite Z_to_bv_add1. rewrite (IH (A + 1) (fun j => f (S j))); [reflexivity | lia | intros _; lia |].
   intros j Hj. replace (A + 1 + Z.of_nat j) with (A + Z.of_nat (S j)) by lia. apply Hmem. lia.
 Qed.
 
@@ -590,9 +618,12 @@ Lemma cstr_access_len_le : forall mp (p : list byte) (A : Z) k,
 Proof.
   intros mp p. induction p as [|b p IH]; intros A k Hnz Hmem.
   - destruct k as [|k]; [cbn; lia|]. cbn [cstr_access_len_aux].
+    (* LPS 08b1429: the walk stops without counting at or above TASK_SIZE. *)
+    destruct (access_okb (Z_to_bv 64 A) 1) eqn:Hacc; cbn [negb]; [|lia].
     specialize (Hmem 0%nat ltac:(cbn; lia)). rewrite Z.add_0_r in Hmem. rewrite Hmem. cbn [nth app].
     unfold bv_eqb. rewrite Z.eqb_refl. cbn. lia.
   - destruct k as [|k]; [cbn; lia|]. cbn [cstr_access_len_aux].
+    destruct (access_okb (Z_to_bv 64 A) 1) eqn:Hacc; cbn [negb]; [|lia].
     pose proof (Hmem 0%nat ltac:(cbn; lia)) as H0. rewrite Z.add_0_r in H0. rewrite H0. cbn [nth app].
     destruct (bv_eqb b (Z_to_bv 8 0)) eqn:Hb; [cbn [length]; lia|].
     rewrite Z_to_bv_add1. cbn [length].
@@ -624,31 +655,59 @@ Proof. intros ms r ws cps. reflexivity. Qed.
 Lemma apply_effect_nowrite : forall ms r cps, apply_effect ms (mkEffectU r [] [] [] [] cps) = set_gpr0 ms r.
 Proof. intros. reflexivity. Qed.
 
+(* 75d69e00 State.v:1713-1737.  [copy_iovecs_accesses] records
+   [iovec_entry_accesses] per descriptor, and that is no longer always the whole
+   16 bytes: [iov_len], at [a + 8], is read FIRST, so a descriptor whose
+   [iov_len] reads and whose [iov_base] faults records the 8 bytes at [a + 8]
+   alone, and one whose [iov_len] faults records nothing.  The old conclusion
+   [n = 16] is FALSE at the revision.  The true one -- every recorded access
+   lies inside the descriptor's own 16 bytes -- is exactly what the only
+   consumer needs: Glue/StdioWrite.v's [DESC] covers [16 * i, 16 * i + 16). *)
+Lemma iovec_entry_accesses_in : forall mp a x n, In (x, n) (iovec_entry_accesses mp a) ->
+  exists d, 0 <= d /\ d + Z.of_nat n <= 16 /\ bv_unsigned x = bv_wrap 64 (bv_unsigned a + d).
+Proof.
+  intros mp a x n H. unfold iovec_entry_accesses in H.
+  destruct (read_u64 mp (a + 8)) as [v8|]; [|destruct H].
+  destruct (read_u64 mp a) as [v0|].
+  - destruct H as [H|[]]. injection H as <- <-. exists 0. split; [lia|]. split; [lia|].
+    rewrite Z.add_0_r. symmetry. apply bv_wrap_small. apply bv_unsigned_in_range.
+  - destruct H as [H|[]]. injection H as <- <-. exists 8. split; [lia|]. split; [lia|].
+    rewrite bv_add_unsigned. change (bv_unsigned (8%bv : bv 64)) with 8. reflexivity.
+Qed.
+
 Lemma copy_iovecs_accesses_in : forall mp k a x n, In (x, n) (copy_iovecs_accesses mp a k) ->
-  n = 16%nat /\ exists i, (i < k)%nat /\ bv_unsigned x = bv_wrap 64 (bv_unsigned a + 16 * Z.of_nat i).
+  exists i d, (i < k)%nat /\ 0 <= d /\ d + Z.of_nat n <= 16 /\
+    bv_unsigned x = bv_wrap 64 (bv_unsigned a + 16 * Z.of_nat i + d).
 Proof.
   intros mp. induction k as [|k IH]; intros a x n H; cbn [copy_iovecs_accesses] in H; [destruct H|].
-  destruct H as [H|H].
-  - injection H as <- <-. split; [reflexivity|]. exists 0%nat. split; [lia|]. rewrite Z.mul_0_r, Z.add_0_r.
-    symmetry. apply bv_wrap_small. apply bv_unsigned_in_range.
+  apply in_app_or in H as [H|H].
+  - destruct (iovec_entry_accesses_in mp a x n H) as (d & Hd0 & Hd1 & Hx).
+    exists 0%nat, d. split; [lia|]. split; [exact Hd0|]. split; [exact Hd1|].
+    rewrite Hx. f_equal. lia.
   - destruct (read_iovec_entry mp a); try (destruct H; fail).
-    destruct (IH _ _ _ H) as [-> (i & Hi & Hx)]. split; [reflexivity|]. exists (S i). split; [lia|].
-    rewrite Hx, bv_add_unsigned. change (bv_unsigned (16%bv : bv 64)) with 16. rewrite bv_wrap_add_idemp_l. f_equal. lia.
+    destruct (IH _ _ _ H) as (i & d & Hi & Hd0 & Hd1 & Hx).
+    exists (S i), d. split; [lia|]. split; [exact Hd0|]. split; [exact Hd1|].
+    rewrite Hx, bv_add_unsigned. change (bv_unsigned (16%bv : bv 64)) with 16.
+    rewrite <- !Z.add_assoc, bv_wrap_add_idemp_l. f_equal. lia.
 Qed.
 
 Lemma import_iovecs_accesses_in : forall mp a (c : nat) x n, (c = 1 \/ c = 2)%nat ->
   In (x, n) (import_iovecs_accesses mp a (Z_to_bv 64 (Z.of_nat c))) ->
-  n = 16%nat /\ exists i, (i < c)%nat /\ bv_unsigned x = bv_wrap 64 (bv_unsigned a + 16 * Z.of_nat i).
+  exists i d, (i < c)%nat /\ 0 <= d /\ d + Z.of_nat n <= 16 /\
+    bv_unsigned x = bv_wrap 64 (bv_unsigned a + 16 * Z.of_nat i + d).
 Proof.
   intros mp a c x n Hc H. unfold import_iovecs_accesses in H. destruct Hc as [-> | ->].
   - change (bv_eqb (Z_to_bv 64 (Z.of_nat 1)) (Z_to_bv 64 1)) with true in H. cbv iota in H.
-    destruct (negb (access_okb a 16)); [destruct H|]. destruct H as [H|[]]. injection H as <- <-.
-    split; [reflexivity|]. exists 0%nat. split; [lia|]. rewrite Z.mul_0_r, Z.add_0_r. symmetry. apply bv_wrap_small. apply bv_unsigned_in_range.
+    destruct (negb (access_okb a 16)); [destruct H|].
+    destruct (iovec_entry_accesses_in mp a x n H) as (d & Hd0 & Hd1 & Hx).
+    exists 0%nat, d. split; [lia|]. split; [exact Hd0|]. split; [exact Hd1|].
+    rewrite Hx. f_equal. lia.
   - change (bv_eqb (Z_to_bv 64 (Z.of_nat 2)) (Z_to_bv 64 1)) with false in H.
     change (bv_eqb (Z_to_bv 64 (Z.of_nat 2)) (Z_to_bv 64 0)) with false in H. cbv iota in H.
     destruct (IOV_MAX <? bv_unsigned (Z_to_bv 64 (Z.of_nat 2)))%Z; [destruct H|].
     destruct (negb (access_okb a (16 * bv_unsigned (Z_to_bv 64 (Z.of_nat 2))))); [destruct H|].
-    change (word_to_nat (Z_to_bv 64 (Z.of_nat 2))) with 2%nat in H. exact (copy_iovecs_accesses_in mp 2 a x n H).
+    change (word_to_nat (Z_to_bv 64 (Z.of_nat 2))) with 2%nat in H.
+    exact (copy_iovecs_accesses_in mp 2 a x n H).
 Qed.
 
 Lemma iov_prefix_accesses_in : forall iovs left x n, In (x, n) (iov_prefix_accesses iovs left) ->
@@ -667,7 +726,8 @@ Lemma wv_cps_in : forall i iovs k x n,
   (length iovs = 1 \/ length iovs = 2)%nat ->
   iovcnt32 (in_arg i 2) = Z_to_bv 64 (Z.of_nat (length iovs)) ->
   In (x, n) (wv_cps i iovs k) ->
-  (n = 16%nat /\ exists j, (j < length iovs)%nat /\ bv_unsigned x = bv_wrap 64 (bv_unsigned (in_arg i 1) + 16 * Z.of_nat j)) \/
+  (exists j d, (j < length iovs)%nat /\ 0 <= d /\ d + Z.of_nat n <= 16 /\
+     bv_unsigned x = bv_wrap 64 (bv_unsigned (in_arg i 1) + 16 * Z.of_nat j + d)) \/
   (exists len, In (x, len) iovs /\ Z.of_nat n <= bv_unsigned len).
 Proof.
   intros i iovs k x n Hl Hc H. unfold wv_cps in H. rewrite app_nil_r, Hc in H. apply in_app_or in H as [H|H].
@@ -678,7 +738,8 @@ Qed.
 Lemma wv_eff0_in : forall i (c : nat) x n, (c = 1 \/ c = 2)%nat ->
   iovcnt32 (in_arg i 2) = Z_to_bv 64 (Z.of_nat c) ->
   In (x, n) (syscall_effect_accesses (wv_eff0 i)) ->
-  n = 16%nat /\ exists j, (j < c)%nat /\ bv_unsigned x = bv_wrap 64 (bv_unsigned (in_arg i 1) + 16 * Z.of_nat j).
+  exists j d, (j < c)%nat /\ 0 <= d /\ d + Z.of_nat n <= 16 /\
+    bv_unsigned x = bv_wrap 64 (bv_unsigned (in_arg i 1) + 16 * Z.of_nat j + d).
 Proof.
   intros i c x n Hl Hc H. unfold syscall_effect_accesses, wv_eff0 in H. cbn [eff_copyins eff_writes write_accesses] in H.
   rewrite !app_nil_r, Hc in H. exact (import_iovecs_accesses_in _ _ _ x n Hl H).
@@ -686,5 +747,151 @@ Qed.
 
 Lemma wv_eff_accesses : forall i iovs k, syscall_effect_accesses (wv_eff i iovs k) = wv_cps i iovs k.
 Proof. intros. unfold syscall_effect_accesses, wv_eff. cbn [eff_copyins eff_writes write_accesses]. apply app_nil_r. Qed.
+
+(** ** LPS 727298f3: the same answers over a larger read-only backing
+
+    [ShapeAlg.rz_node] asks [RomBase.sys_rob] at each node.  openat (56) and writev (66) read
+    [in_mem].  At the input of a larger backing ([RomBase.wrom]) the view extends the
+    original ([RomBase.mem_ext]); every read these calls make here succeeds there the same way,
+    so their outcome lemmas hold there with the same right side. *)
+Lemma read_u64_ext : forall mp mp' a w, RomBase.mem_ext mp mp' ->
+  read_u64 mp a = Some w -> read_u64 mp' a = Some w.
+Proof.
+  intros mp mp' a w Hx H. unfold read_u64 in *.
+  destruct (read_bytes_map mp a (Z_to_bv 64 8)) as [bs|] eqn:E; [|discriminate H].
+  rewrite (RomBase.read_bytes_map_ext mp mp' a _ bs Hx E). exact H.
+Qed.
+
+Lemma read_iovec_entry_at : forall mp a b l,
+  read_u64 mp a = Some b -> read_u64 mp (a + Z_to_bv 64 8)%bv = Some l -> bv_unsigned l < 2 ^ 62 ->
+  read_iovec_entry mp a = IovEntry b l.
+Proof.
+  intros mp a b l Hb Hl Hlt. unfold read_iovec_entry. change (a + 8)%bv with (a + Z_to_bv 64 8)%bv. rewrite Hb, Hl.
+  replace (2 ^ 63 <=? bv_unsigned l) with false by (symmetry; apply Z.leb_gt; lia). reflexivity.
+Qed.
+
+Lemma iovec_entry_accesses_ext : forall mp mp' a b l, RomBase.mem_ext mp mp' ->
+  read_u64 mp a = Some b -> read_u64 mp (a + Z_to_bv 64 8)%bv = Some l ->
+  iovec_entry_accesses mp' a = iovec_entry_accesses mp a.
+Proof.
+  intros mp mp' a b l Hx Hb Hl. unfold iovec_entry_accesses. change (a + 8)%bv with (a + Z_to_bv 64 8)%bv.
+  rewrite (read_u64_ext mp mp' _ _ Hx Hl), (read_u64_ext mp mp' _ _ Hx Hb), Hl, Hb. reflexivity.
+Qed.
+
+Lemma copy_iovecs_accesses_ext : forall iovs mp mp' a, RomBase.mem_ext mp mp' -> iov_at mp a iovs ->
+  copy_iovecs_accesses mp' a (length iovs) = copy_iovecs_accesses mp a (length iovs).
+Proof.
+  induction iovs as [|[b l] r IH]; intros mp mp' a Hx H; [reflexivity|].
+  cbn [length copy_iovecs_accesses]. cbn [iov_at] in H. destruct H as (Hb & Hl & Hlt & Hr).
+  rewrite (iovec_entry_accesses_ext mp mp' a b l Hx Hb Hl).
+  rewrite (read_iovec_entry_at mp' a b l (read_u64_ext mp mp' _ _ Hx Hb) (read_u64_ext mp mp' _ _ Hx Hl) Hlt).
+  rewrite (read_iovec_entry_at mp a b l Hb Hl Hlt).
+  change (a + 16)%bv with (a + Z_to_bv 64 16)%bv. rewrite (IH mp mp' _ Hx Hr). reflexivity.
+Qed.
+
+Lemma import_iovecs_accesses_ext : forall mp mp' a iovs, RomBase.mem_ext mp mp' -> iov_at mp a iovs ->
+  (length iovs = 1 \/ length iovs = 2)%nat ->
+  import_iovecs_accesses mp' a (Z_to_bv 64 (Z.of_nat (length iovs)))
+  = import_iovecs_accesses mp a (Z_to_bv 64 (Z.of_nat (length iovs))).
+Proof.
+  intros mp mp' a iovs Hx Hat Hlen.
+  assert (Hn : word_to_nat (Z_to_bv 64 (Z.of_nat (length iovs))) = length iovs).
+  { unfold word_to_nat. rewrite Z_to_bv_unsigned, bv_wrap_small by (unfold bv_modulus; destruct Hlen; lia).
+    apply Nat2Z.id. }
+  unfold import_iovecs_accesses. rewrite Hn, (copy_iovecs_accesses_ext iovs mp mp' a Hx Hat).
+  destruct iovs as [|[b l] r]; [destruct Hlen as [H|H]; discriminate H|].
+  cbn [iov_at] in Hat. destruct Hat as (Hb & Hl & _ & _). rewrite (iovec_entry_accesses_ext mp mp' a b l Hx Hb Hl). reflexivity.
+Qed.
+
+Lemma iov_at_ext : forall iovs mp mp' a, RomBase.mem_ext mp mp' -> iov_at mp a iovs -> iov_at mp' a iovs.
+Proof.
+  induction iovs as [|[b l] r IH]; intros mp mp' a Hx H; [exact I|].
+  cbn [iov_at] in H |- *. destruct H as (Hb & Hl & Hlt & Hr).
+  split; [exact (read_u64_ext mp mp' _ _ Hx Hb)|]. split; [exact (read_u64_ext mp mp' _ _ Hx Hl)|].
+  split; [exact Hlt | exact (IH mp mp' _ Hx Hr)].
+Qed.
+
+Lemma read_bytes_map_Forall2_ext : forall mp mp' (iovs : list (word * word)) bss, RomBase.mem_ext mp mp' ->
+  Forall2 (fun bl bs => read_bytes_map mp (fst bl) (snd bl) = Some bs) iovs bss ->
+  Forall2 (fun bl bs => read_bytes_map mp' (fst bl) (snd bl) = Some bs) iovs bss.
+Proof.
+  intros mp mp' iovs bss Hx H. induction H as [|bl bs iovs bss Hr H IH]; [constructor|].
+  constructor; [exact (RomBase.read_bytes_map_ext mp mp' (fst bl) (snd bl) bs Hx Hr) | exact IH].
+Qed.
+
+(** openat's copy-in record: the path's bytes, counted the same over a larger view when the
+    path read does not fault. *)
+Lemma CP_ext : forall i i', in_arg i' 1 = in_arg i 1 -> RomBase.mem_ext (in_mem i) (in_mem i') ->
+  read_cstr (in_mem i) (in_arg i 1) <> CstrFault -> CP i' = CP i.
+Proof.
+  intros i i' Ha Hx Hnf. unfold CP. rewrite Ha.
+  rewrite (RomBase.cstr_access_len_aux_ext path_max (in_mem i) (in_mem i') (in_arg i 1) Hx Hnf). reflexivity.
+Qed.
+
+(** An openat whose path read does not fault: its outcomes, given at each larger backing's
+    input as [Q] of that input's copy-in record, are the same there ([CP_ext]). *)
+Lemma openat_rob : forall segs ms m x8 (Q : list (word * nat) -> outcome SyscallEffect -> Prop),
+  ms_svc_pending ms = Some x8 ->
+  read_cstr (in_mem (sys_input segs ms x8)) (in_arg (sys_input segs ms x8) 1) <> CstrFault ->
+  (forall r, RomBase.rom_ext (ms_rom ms) r ->
+     read_cstr (in_mem (sys_input segs (RomBase.wrom ms r) x8)) (in_arg (sys_input segs (RomBase.wrom ms r) x8) 1)
+       = read_cstr (in_mem (sys_input segs ms x8)) (in_arg (sys_input segs ms x8) 1) ->
+     forall o, syscall_spec (sys_input segs (RomBase.wrom ms r) x8) m o <->
+               Q (CP (sys_input segs (RomBase.wrom ms r) x8)) o) ->
+  RomBase.sys_rob segs (mkCfg ms m).
+Proof.
+  intros segs ms m x8 Q Hsvc Hnf HQ.
+  apply (RomBase.sys_rob_of_char segs ms m x8 (Q (CP (sys_input segs ms x8))) Hsvc).
+  intros r Hr o.
+  pose proof (RomBase.mem_ext_read_byte_wrom ms r Hr) as Hx.
+  eapply iff_trans;
+    [exact (HQ r Hr (RomBase.read_cstr_ext (in_mem (sys_input segs ms x8)) (in_mem (sys_input segs (RomBase.wrom ms r) x8))
+                       (in_arg (sys_input segs ms x8) 1) Hx Hnf) o) |].
+  rewrite (CP_ext (sys_input segs ms x8) (sys_input segs (RomBase.wrom ms r) x8) eq_refl Hx Hnf).
+  apply iff_refl.
+Qed.
+
+(** A writev under [writev_outcome]'s premises at the configuration's own input: the same
+    answers at every larger backing ([import_iovecs_accesses_ext] for the copy-in record). *)
+Lemma writev_rob : forall segs ms m x8 ch (iovs : list (word * word)) (bss : list (list byte)),
+  ms_svc_pending ms = Some x8 ->
+  bv_unsigned (in_sysno (sys_input segs ms x8)) = 66 ->
+  fd_lookup (m_fds m) (fd32 (in_arg (sys_input segs ms x8) 0)) = Some (FdChannel ch) -> w_is0 ch = false ->
+  m_channel_reader m = true ->
+  (length iovs = 1%nat \/ length iovs = 2%nat) ->
+  iovcnt32 (in_arg (sys_input segs ms x8) 2) = Z_to_bv 64 (Z.of_nat (length iovs)) ->
+  access_okb (in_arg (sys_input segs ms x8) 1) (16 * Z.of_nat (length iovs)) = true ->
+  iov_at (in_mem (sys_input segs ms x8)) (in_arg (sys_input segs ms x8) 1) iovs ->
+  Forall (fun bl => access_okb (fst bl) (bv_unsigned (snd bl)) = true) iovs ->
+  Forall2 (fun bl bs => read_bytes_map (in_mem (sys_input segs ms x8)) (fst bl) (snd bl) = Some bs) iovs bss ->
+  iovs_total iovs <= 2 ^ 30 ->
+  RomBase.sys_rob segs (mkCfg ms m).
+Proof.
+  intros segs ms m x8 ch iovs bss Hsvc Hno Hfd Hch Hrdr Hlen Hcnt Hacc Hat Haccs Hrd Htot.
+  set (i := sys_input segs ms x8) in *.
+  apply (RomBase.sys_rob_of_char segs ms m x8
+           (fun o => (concat bss = [] /\ o = Ok (wv_eff0 i) m []) \/
+                     (exists k, (1 <= k)%nat /\ (k <= length (concat bss))%nat /\
+                                o = Ok (wv_eff i iovs k) m (map (WriteEv ch) (firstn k (concat bss))))) Hsvc).
+  intros r Hr o. cbv beta.
+  set (i' := sys_input segs (RomBase.wrom ms r) x8).
+  assert (Hx : RomBase.mem_ext (in_mem i) (in_mem i')) by exact (RomBase.mem_ext_read_byte_wrom ms r Hr).
+  assert (EQI : import_iovecs_accesses (in_mem i') (in_arg i' 1) (iovcnt32 (in_arg i' 2))
+              = import_iovecs_accesses (in_mem i) (in_arg i 1) (iovcnt32 (in_arg i 2))).
+  { change (in_arg i' 1) with (in_arg i 1). change (in_arg i' 2) with (in_arg i 2). rewrite Hcnt.
+    exact (import_iovecs_accesses_ext (in_mem i) (in_mem i') (in_arg i 1) iovs Hx Hat Hlen). }
+  assert (EQ0 : wv_eff0 i' = wv_eff0 i) by (unfold wv_eff0; rewrite EQI; reflexivity).
+  assert (EQK : forall k, wv_eff i' iovs k = wv_eff i iovs k) by (intros k; unfold wv_eff, wv_cps; rewrite EQI; reflexivity).
+  destruct (writev_outcome i' m o ch iovs bss Hno Hfd Hch Hrdr Hlen Hcnt Hacc
+              (iov_at_ext iovs (in_mem i) (in_mem i') (in_arg i 1) Hx Hat) Haccs
+              (read_bytes_map_Forall2_ext (in_mem i) (in_mem i') iovs bss Hx Hrd) Htot) as [W1 W2].
+  split.
+  - intros Hs. destruct (W1 Hs) as [H|(k & H1 & H2 & H3)].
+    + left. rewrite <- EQ0. exact H.
+    + right. exists k. rewrite <- EQK. repeat split; assumption.
+  - intros Ho. apply W2. destruct Ho as [H|(k & H1 & H2 & H3)].
+    + left. rewrite EQ0. exact H.
+    + right. exists k. rewrite EQK. repeat split; assumption.
+Qed.
 
 End SysSpec.

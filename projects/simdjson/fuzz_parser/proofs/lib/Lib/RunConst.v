@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: adds the run's launch class runLaunchT (the auxv launch fields, the stack top, the exec name and the gid) and run_launch_of. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State Run StackLayout.
@@ -44,3 +45,17 @@ Lemma run_consts_of_SECRET : forall en c V, @SECRET (run_consts_of en c V) = ent
 Proof. reflexivity. Qed.
 Lemma run_consts_of_CAN : forall en c V, @CAN (run_consts_of en c V) = c.
 Proof. reflexivity. Qed.
+
+(* The launch's facts the entry block is a function of, beside argv, envp,
+   uid and hwcap: the auxv's launch fields ([Run.launch_auxv inp mbase]), the
+   stack VMA's end ([ed_top] of the draw), the exec name and the gid.  The
+   start-up and the drivers read the block through these. *)
+Class runLaunchT : Type := RunLaunch {
+  RL_la : LaunchAuxv;
+  RL_top : word;
+  RL_execfn : list byte;
+  RL_gid : word
+}.
+
+Definition run_launch_of (inp : ProcInput) (sp : word) (mbase : word) (draw : EntryDraw) : runLaunchT :=
+  {| RL_la := launch_auxv inp sp mbase; RL_top := ed_top draw; RL_execfn := in_execfn inp; RL_gid := in_gid inp |}.

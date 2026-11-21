@@ -1,16 +1,16 @@
-(* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/ProgWorldAstack.v (a working branch fec8db0a380 =
-   a working branch 105f641f97d with A's Require forms of a working branch 80c027c9338):
-   lib.A.ProgWorld -> lib.B.ProgWorld (the twin of a Theorem Labs lane's lib/A/ProgWorld.v at 1d23ced37fd, whose Section
+(* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/ProgWorldAstack.v (a working branch =
+   a working branch with A's Require forms of a working branch):
+   lib.A.ProgWorld -> lib.B.ProgWorld (the twin of a Theorem Labs lane's lib/A/ProgWorld.v, whose Section
    FsOfAstack has {SK : lib.Reusable.YI16.sink_head} in its Context, as B's does);
    lib.A.Prog.asan_stack_malloc_c / AsanRT / Img0 / ProgBridge -> lib.B.*;
    lib.A.AB1v -> lib.Reusable.YB1v.  One image constant differs: pwfs_F_above names image B's last
    segment span (0xa2000, 0x55c000) from B.ProgBridge.rsegs_spans in place of A's (659456, 5623808); its end is
-   0x5fe000 = B ASAN_GT, as in A.  Every proof step is A's.  Require forms: A's of fec8db0a380: YK11 YM05 YK1b YI16
+   0x5fe000 = B ASAN_GT, as in A.  Every proof step is A's.  Require forms: A: YK11 YM05 YK1b YI16
    and YG0v YP09 YO0f from lib.Reusable, Mem Frame from lib.Lib
    (also in lib/B/Reusable resp. lib/B/Bz/Lib), uses named lib.Reusable.X / lib.Lib.X; and Z_to_bv_bv_unsigned (2
    uses) written stdpp.bitvector.definitions.Z_to_bv_bv_unsigned, as A -- the constant `About` names at each use in
    this file (Locate / About probe, a Theorem Labs lane).
-   STATEMENT CHANGE, as A's (a Theorem Labs lane 105f641f97d, mirrored by a Theorem Labs lane): Section Fs is generic in the
+   STATEMENT CHANGE, as A's (a Theorem Labs lane, mirrored by a Theorem Labs lane): Section Fs is generic in the
    sink_head SK:
      Context {fx : lib.Reusable.YK11.FPState} {rc : lib.Reusable.YM05.RunCeil} {SK : lib.Reusable.YI16.sink_head}.
    ctl_release_of_free_law states B.ProgWorld.ctl_release_of_free_law_stmt (SK := SK) B cid and passes SK to

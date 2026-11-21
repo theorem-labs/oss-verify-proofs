@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the event-free second allocator instance (suffix cf), the walk-side facts for
    c-omx-alloc's generic kit:
    - universe_ok_of_ARcf: ARcf's universe field, by name;
    - img_shadow_vis_cf: the image's shadow is present in the view. Like the donor (img_shadow_vis,
-     proofs/libreac/fuzz_grant/lib/A/Prog/GrantRo.v at a970a282587) it is a DEFINITION, a fact of the runtime's
+     proofs/libreac/fuzz_grant/lib/A/Prog/GrantRo.v) it is a DEFINITION, a fact of the runtime's
      symbols that the unit supplies, NOT a theorem. The image bounds are the unit's own, the CfImg fields
      cf_img_lo / cf_img_top (generated from the pinned image), never the donor's literals and never one unit's YImgTop.v;
    - amx_realloc_cf_room: realloc's model law over ReallocP.v's realloc_tree_with malloc_cf free_cf, from

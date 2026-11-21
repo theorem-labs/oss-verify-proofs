@@ -1,9 +1,9 @@
 # command: EV/checks/v10-gate.py WORK LIB OUT/v10 (GS=OUT/tools/global_settings/439f8e3bd463 DONWT=OUT/v10/work/v10/donwt DON=DON)
 # global_settings v10 (sha256 439f8e3bd4637640d6d40fb668716c081c3ba202aa831f31f0120de0b4e39242), checks/v10_table.py 2413f44cfc59; SHA256SUMS e0d40ab468e9: 22 of 22 files OK (its own line excluded)
-# inputs: the 492 staged files (sha256 of their sorted `sha256  path` list) 00c62e8a18a3; LIB/Reusable/YImgTop.v e4d179ca9a5a; donor tree fuzz_grant lib at 25e3d17bdb50 (git archive of the hub), the 493 donor files acd7be36b8de
+# inputs: the 492 staged files (sha256 of their sorted `sha256  path` list) 00c62e8a18a3; LIB/Reusable/YImgTop.v e4d179ca9a5a; donor tree fuzz_grant lib (git archive of the hub), the 493 donor files acd7be36b8de
 # this core: the 492 files of the run's stage-out (A/ 370, Reusable/ 122) + lib/Reusable/YImgTop.v (taken by path); kept by lib (not added): 0
 SUMMARY: 493 files read of 493 given; ESCAPES 234; PLAIN 1240; UNMEASURED 1; KERNEL 0; levels TACTIC 1166, OPTION 309; HINTS 102 (report only, tactic-level) rc 0
-# fuzz_grant's released counterparts of the same 493 (released at 25e3d17bdb50, lib/A/X.v and lib/Reusable/X.v)
+# fuzz_grant's released counterparts of the same 493 (released at lib/A/X.v and lib/Reusable/X.v)
 SUMMARY: 493 files read of 493 given; ESCAPES 359; PLAIN 1240; UNMEASURED 1; KERNEL 0; levels TACTIC 1291, OPTION 309; HINTS 102 (report only, tactic-level) rc 0
 # every one of the 1475 target rows is paired with the identical setting of its donor file (v10-donor-lines.tsv); 0 unpaired; the whole source line equals the donor file's line in 1475 of 1475 paired rows
 # the difference is reusable-local.py on the two SHARED files lib/Reusable/YA09.v and YA0e.v:

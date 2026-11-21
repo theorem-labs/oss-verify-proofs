@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (law_res_c states the reserved ledger as the image's entries followed by the vDSO/vvar pair, written as plain text). *)
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
 #[local] Ltac2 tbs__ () := ["@Corelib.Init.Logic"; "eq"; "False"; "not"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymState"; "sv"; "sprop"; "SVar"; "swf"; "valuation"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocA.Iface"; "Wcan"; "UStopLe"; "UStopLeOrPc"; "AE_A"; "L_calloc_null"; "L_calloc_ok"; "calloc_contractA"; "calloc_contractA_ex"; "@Corelib.Init.Datatypes"; "bool"; "list"; "true"; "prod"; "cons"; "nil"; "pair"; "Some"; "option"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocA.RtCells"; "in_rangesZ"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.StepA"; "entailsA"; "ax_S"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocA.ai.CallocPosts"; "Lconv_S"; "s_fin"; "F_topr"; "Lc_null"; "Lc_ok"; "Lconv"; "PRODs"; "@Corelib.Numbers.BinNums"; "Z"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocA.a0.CertStackFree"; "segsA"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.Glue3"; "state_diff"; "@LinuxProcessSemantics.LinuxProcessSem.Run"; "segments_reserved"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "Model"; "m_vmmaps"; "vm_reserved"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocA.Model"; "AA"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocA.RebuildM"; "IMG_M"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocA.SegD_wf"; "dfp_static"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocA.SpineMallocSec2"; "IMG_S"; "@stdpp.bitvector.definitions"; "bv"].
@@ -71,8 +72,11 @@ Hypothesis HCSTD : ltac2:(tb__ "0|0|
 S23S19VCST;R1A2S2S2cR2A1A1F_;Fa;").
 Let AInv : AA -> valuation -> list word -> Model -> Prop := AInvA segsA.
 
-Lemma law_res_c : ltac2:(tb__ "0|1|
-S2aS7S11S2eQ40A1M0A1S27VAInv;R4R3R2R1A4S0S11S13G0G0A2A1S29S28R2A1A1S26S24A1A3F_;Fmd;Ftp;Frho;FA;").
+(* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v [vdso_pair_ok]).
+   Statement written as plain text. *)
+Lemma law_res_c : forall A rho tp md, AInv A rho tp md ->
+  exists V, vm_reserved (m_vmmaps md) = segments_reserved OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocA.a0.CertStackFree.segsA ++ V
+            /\ OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysSpec.vdso_pair_ok V.
 Proof. intros A rho tp md (_ & _ & _ & _ & HM & _). destruct HM as (_ & _ & _ & _ & _ & _ & _ & HL). exact (proj1 HL). Qed.
 
 Theorem calloc_contract_A : ltac2:(tb__ "0|0|

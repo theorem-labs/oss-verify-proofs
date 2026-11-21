@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YA0j.v, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YA0j.v at origin/ossv/recipes 6ebe35ba632 (fuzz_knock's released ASan tree); module paths changed to reac-pw/fuzz_headamp. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YA0j.v (fuzz_knock's released ASan tree); module paths changed to reac-pw/fuzz_headamp. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reservation ledger's vvar/vDSO tail, with its bounds and the maps kept clear of it, as ho_res gives them); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -146,8 +147,22 @@ Lemma ho_fds_std : a_fd ch = FdStd -> m_fds model = fds_std.
 Proof. intros H. pose proof (co_fds _ _ _ _ _ _ _ _ _ _ _ _ HC) as X. rewrite H in X. exact X. Qed.
 Lemma ho_tid : a_tidset ch = false -> m_tid model = None.
 Proof. exact (co_tid _ _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
-Lemma ho_res : vm_reserved (m_vmmaps model) = segments_reserved SEGS.
-Proof. exact (co_res _ _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
+(** #38: [cs_ok]'s reservation tail with the bounds its consumer ([YG0n.ALedger.al_reserved])
+    reads: at most two entries, each in high memory and at most twenty pages long, and every
+    mapping clear of every reservation ([co_mres]). *)
+Lemma ho_res : exists rx : list (word * word),
+vm_reserved (m_vmmaps model) = segments_reserved SEGS ++ rx /\ (length rx <= 2)%nat /\
+Forall (fun iv => KHI <= bv_unsigned (fst iv) /\ bv_unsigned (snd iv) <= 20 * 4096) rx /\
+Forall (fun iv => region_free (vm_reserved (m_vmmaps model)) (fst iv) (snd iv) = true) (vm_maps (m_vmmaps model)).
+Proof.
+destruct (co_res _ _ _ _ _ _ _ _ _ _ _ _ HC) as (rx & H & HL & HS & HK).
+exists rx. split; [exact H|]. split; [exact HL|]. split; [|exact (co_mres _ _ _ _ _ _ _ _ _ _ _ _ HC)].
+assert (N : forall l : list (word * word), 0 <= sum_sizes l).
+{ induction l as [|x l IHl]; cbn [sum_sizes]; [lia|]. pose proof (bv_unsigned_in_range _ (snd x)). lia. }
+clear - HS HK N. revert HS. induction HK as [|iv l K1 K2 IH]; intros HS; constructor.
+- cbn [sum_sizes] in HS. pose proof (N l). split; [exact K1 | lia].
+- apply IH. cbn [sum_sizes] in HS. pose proof (bv_unsigned_in_range _ (snd iv)). lia.
+Qed.
 Lemma ho_limit : vm_limit (m_vmmaps model) = LIMIT.
 Proof. exact (co_limit _ _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
 Lemma ho_brk : vm_brk (m_vmmaps model) = edenot E (a_brk ch).
@@ -188,7 +203,9 @@ forall a : word, bv_unsigned (edenot E (am_base m)) <= bv_unsigned a < bv_unsign
 in_ivs (bv_unsigned a) (vm_noaccess (m_vmmaps model)) = false
 /\ page_in_ranges (page_base a) (m_vm_lazy model) = true) (a_maps ch).
 Proof. exact (co_kinds _ _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
-Lemma ho_totsz : sum_sizes (vm_reserved (m_vmmaps model) ++ vm_maps (m_vmmaps model)) <= a_totsz ch.
+(* 75d69e00: co_totsz counts the IMAGE's reservations, not the whole ledger -- the
+   vDSO pair is the kernel's and is not charged to the plan's budget. *)
+Lemma ho_totsz : sum_sizes (segments_reserved SEGS ++ vm_maps (m_vmmaps model)) <= a_totsz ch.
 Proof. exact (co_totsz _ _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
 Lemma ho_zero : forall a : word, HID a = true ->
 in_ivs (bv_unsigned a) (vm_maps (m_vmmaps model)) = true ->

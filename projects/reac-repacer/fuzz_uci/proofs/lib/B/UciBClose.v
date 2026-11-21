@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch premises valid_launch and entry_launch_ok_va); internal commit ids in comments replaced by public commits or removed. *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/YD1q.v (tfib_srealizesX),
    lib/YB1n.v (tfib_startup_T1, HS_ok) and lib/YD2o.v (TFIB_TB_of_partsXF), in the form of fuzz_pcap's closing side
-   (proofs/libreac/fuzz_pcap/lib/A/PcapClose.v, origin/cold/port-pcap-comp 86b0e893fe8), for libreac/fuzz_decode's
+   (proofs/libreac/fuzz_pcap/lib/A/PcapClose.v), for libreac/fuzz_decode's
    ASan+UBSan image: one named Section hypothesis per remaining part, module paths and names changed. *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/A/AZ03.v and lib/Halts_tfib.v for fuzz_decode, by way of fuzz_grant's lib/A/AsanTop.v: the plain side is fuzz_decode's proved realization (built as its lib/AgreeFrame.v builds it for the ubsan agreement, with the plain slot contract of lib/Prog/LLVMFuzzerTestOneInput_gfr.v, at decode_shape), the halting corollary takes srealizes, module paths changed. *)
 (* Modified by Theorem Labs, 2026-10: adapted from lib/A/GrantTop.v for image B (fuzz_grant.asan-ubsan). *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/libreac/fuzz_decode/lib/B/DecodeBClose.v and lib/A/AsanTop.v
-   (Section b) at recipes commit 88154566652a and proofs/libreac/fuzz_grant/lib/B/GrantBTop.v at recipes commit
-   4f87de75d67, for reac-repacer/fuzz_uci's ASan+UBSan image (fuzz_uci.asan-ubsan): the image-B core's closed walk
+   (Section b) at recipes and proofs/libreac/fuzz_grant/lib/B/GrantBTop.v at recipes,
+   for reac-repacer/fuzz_uci's ASan+UBSan image (fuzz_uci.asan-ubsan): the image-B core's closed walk
    lib/B/YD1q.v tfib_srealizesX takes the place of the donor's H_STARTUP / H_DRIVER pair; its slot lib/B/YCfn.v:140 is
    LIB_CONTRACT, composed from the six program walk statements of lib/B/Prog and their callees' contracts; one named
    Section hypothesis per program walk; the runtime, kit and computed rows are Lemmas citing lib/B/Rt, lib/B/Prog/
@@ -124,12 +125,12 @@ Proof.
   destruct en_s as [sp brk mb rnd].
   pose proof (valid_input_va_size _ Hinp) as Hsv48.
   unfold UIm.asan_ubsan in Hent.
-  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent. destruct Hent as [Hsp' [Hbrk' [Hmb' Hfit']]].
+  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent. destruct Hent as [Hsp' [Hbrk' [Hmb' [Hfit' Hlau']]]].
   exact (shape_strong_equiv_efs_relim SanitizerBudgets.lim_source ShippedBudgets.lim_source SanitizerBudgets.lim_target
     UPl.M.loaded_segments UPl.M.init_pc UPl.M.phdrs sp brk mb rnd
     UBT.ucisegsB0 AsanUbsan.M.init_pc AsanUbsan.M.phdrs sp' brk' mb' rnd'
     (SPECX (LS:=checksum_shape) inp) (SPECX (LS:=checksum_shape) inp) inp
-    asan_lim_source_le SWB HP (TFIBB sp' brk' mb' rnd' inp Hsp' Hbrk' Hmb' Hfit' Hinp) (t_eq_refl _)).
+    asan_lim_source_le SWB HP (TFIBB sp' brk' mb' rnd' inp Hsp' Hbrk' Hmb' Hfit' Hinp Hlau') (t_eq_refl _)).
 Qed.
 
 Theorem uci_asan_ubsan_halts_of_tfib : USt.asan_ubsan_halts.
@@ -141,8 +142,8 @@ Proof.
     AsanUbsan.M.phdrs target_alloc_limit ShippedBudgets.lim_source lim_source_le_target (forced_only_cfg_least _)).
   intros sp brk mb rnd inp Hen Hinp. exists (SPECX (LS:=checksum_shape) inp). split.
   - pose proof (valid_input_va_size _ Hinp) as Hsv48.
-    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb Hfit]]].
-    exact (TFIBB sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hinp).
+    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb [Hfit Hlau]]]].
+    exact (TFIBB sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau).
   - exact (UHS.SPECX_shape_ok inp).
 Qed.
 End b.
@@ -153,7 +154,7 @@ Proof. intros sp (H1 & H2 & _). split; [exact H1 | exact H2]. Qed.
 From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.B.Prog Require rp_hot_clamp_FW.
 Module RHCW := OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.B.Prog.rp_hot_clamp_FW.
 (* The values the core's closed walk and the rows are stated at; no Section Variable. segs =
-   AsanUbsan.M.loaded_segments (= lib/B/YB1v.v:13 tfibsegs); B = lib/B/YD2l.v:17 UciB (UciB_syms :75); MT = the B
+   AsanUbsan.M.loaded_segments (= lib/B/YB1v.v:14 tfibsegs); B = lib/B/YD2l.v:17 UciB (UciB_syms :75); MT = the B
    core's own lib/B/YCbp.v:18 ameter_triv; XL = lib/B/UciBFacts.v uci_XL0 (fun _ => 0); RLO = 0x96bc8
    (lib/B/YB1w.v:17, the second disjunct of lib/B/YCeg.v:50-52 in_ro_tfa); RHI = 0x97e20 (lib/B/YB1w.v:18); SK / KS =
    the B core's sink head and record lib/B/YE2k.v tfib_sink_head / tfib_K. *)
@@ -176,41 +177,41 @@ Section asan_ubsan.
 (* The 18 rows of the block, in image A's order.                                                          *)
 (* ===================================================================================================== *)
 
-(* The walk of LLVMFuzzerTestOneInput (0x7f2e8): lib/B/Prog/LLVMFuzzerTestOneInput_cgW.v uci_llvmf_holds (824090cba246). *)
+(* The walk of LLVMFuzzerTestOneInput (0x7f2e8): lib/B/Prog/LLVMFuzzerTestOneInput_cgW.v uci_llvmf_holds. *)
 Definition H_PROG_LLVMF : forall (rc : YM05.RunCeil), @PL.uci_llvmf_holds_stmt rc B MT XL RLO RHI := fun rc => @LLVMFW.uci_llvmf_holds rc B MT XL RLO RHI.
 (* The walk of check_no_overread (0x7f56c), caller-journal form, at the caller's context: lib/B/Prog/
-   check_no_overread_cgW.v uci_check_no_overread_cg_holds (e61d8b88c3d0) at UciB, ameter_triv and that context. *)
+   check_no_overread_cgW.v uci_check_no_overread_cg_holds at UciB, ameter_triv and that context. *)
 Definition H_PROG_CNO : forall (fx : YK11.FPState) (rc : YM05.RunCeil), @PN.uci_check_no_overread_cg_holds_stmt fx rc
   B MT PL.CTX_check_no_overread := fun fx rc => @CNOW.uci_check_no_overread_cg_holds fx rc B MT PL.CTX_check_no_overread.
-(* The walk of check_value (0x7f6b0), caller-journal form: lib/B/Prog/check_value_cgW.v uci_check_value_cg_holds (faf4885cf4dd). *)
+(* The walk of check_value (0x7f6b0), caller-journal form: lib/B/Prog/check_value_cgW.v uci_check_value_cg_holds. *)
 Definition H_PROG_CV : forall (fx : YK11.FPState) (rc : YM05.RunCeil), @PV.uci_check_value_cg_holds_stmt fx rc B MT := fun fx rc => @CVW.uci_check_value_cg_holds fx rc B MT.
-(* The walk of check_clamp (0x7f950), caller-journal form: lib/B/Prog/check_clamp_cgW.v uci_check_clamp_cg_holds (e5e90545d4c8). *)
+(* The walk of check_clamp (0x7f950), caller-journal form: lib/B/Prog/check_clamp_cgW.v uci_check_clamp_cg_holds. *)
 Definition H_PROG_CC : forall (fx : YK11.FPState) (rc : YM05.RunCeil), @PK.uci_check_clamp_cg_holds_stmt fx rc B MT := fun fx rc => @OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.B.Prog.check_clamp_cgW.uci_check_clamp_cg_holds fx rc B MT.
-(* The walk of rp_uci_int (0x7ffd4), realizes form: lib/B/Prog/rp_uci_int_cgW.v uci_rp_uci_int_holds (d3f024dc2e5). *)
+(* The walk of rp_uci_int (0x7ffd4), realizes form: lib/B/Prog/rp_uci_int_cgW.v uci_rp_uci_int_holds. *)
 Definition H_PROG_RUI : forall (fx : YK11.FPState) (rc : YM05.RunCeil), @PR.uci_rp_uci_int_holds_stmt fx rc B := fun fx rc => @RUIW.uci_rp_uci_int_holds fx rc B.
-(* The footprint walk of the leaf rp_hot_clamp (0x7fd38): lib/B/Prog/rp_hot_clamp_FW.v rp_hot_clamp_holds_F
-   (783ed4e623d); its translation to the leaf form is lib/B/Prog/rp_hot_clamp_cg.v uci_rp_hot_clamp_cg_of_F. *)
+(* The footprint walk of the leaf rp_hot_clamp (0x7fd38): lib/B/Prog/rp_hot_clamp_FW.v rp_hot_clamp_holds_F;
+   its translation to the leaf form is lib/B/Prog/rp_hot_clamp_cg.v uci_rp_hot_clamp_cg_of_F. *)
 Definition H_PROG_RHC_F : PH.rp_hot_clamp_contract_F := RHCW.rp_hot_clamp_holds_F.
 
 (* The class-1 fake stack (check_clamp's one call, 0x7f9b4 -> 0x3c1b8); the predicate is
    lib/Reusable/YG0d.v:286 at cid 1, of which the core proves no instance (it is only a premise at lib/B/YCbq.v:1749 and
-   a record field at lib/Reusable/YG0d.v:537). lib/B/Rt/YF0s.v:516 stack_malloc1_contract (forall B, AR_laws tfibsegs B
-   -> UciSyms B -> astack_malloc_realizes tfibsegs B 1; gate record provenance/evidence/stackmalloc1-B, commit
-   51cfb939a547) applied at UciB with lib/Reusable/YG0q.v:805 AR_laws_ok and
+   a record field at lib/Reusable/YG0d.v:537). lib/B/Rt/YF0s.v:517 stack_malloc1_contract (forall B, AR_laws tfibsegs B
+   -> UciSyms B -> astack_malloc_realizes tfibsegs B 1; gate record provenance/evidence/stackmalloc1-B)
+   applied at UciB with lib/Reusable/YG0q.v:805 AR_laws_ok and
    lib/B/YD2l.v:75 UciB_syms: stack_malloc reads no trace or .got field beyond UciSyms, so YF0s's abstract form
    applied at UciB suffices. *)
 Lemma H_RT_STACK_MALLOC1 : forall (rc : YM05.RunCeil) (fx : YK11.FPState), @astack_malloc_realizes fx rc segs B 1.
 Proof. intros rc fx. exact (@BF0s.stack_malloc1_contract fx rc B (AR_laws_ok tfibsegs B) BD2l.UciB_syms). Qed.
 (* The memchr interceptor with c = '\n' (rp_uci_int's call, 0x80020 -> the trampoline 0x4107c):
    lib/B/Rt/Memchr.v memchr_icpt_contract (forall B, AR_laws tfibsegs B -> UciSyms B -> amemchr_realizesM tfibsegs B
-   0x10350 0x10370 0x4107c; commit 43a6893892d7, records provenance/evidence/memchr-B) applied at UciB; the trampoline is
+   0x10350 0x10370 0x4107c;, records provenance/evidence/memchr-B) applied at UciB; the trampoline is
    UAddr.uci_sigma US___interceptor_trampoline_memchr = 0x4107c by computation. *)
 Lemma H_RT_MEMCHR : forall (rc : YM05.RunCeil) (fx : YK11.FPState),
   @MD.amemchr_realizesM fx rc segs B 0x10350 0x10370 (UAddr.uci_sigma US___interceptor_trampoline_memchr).
 Proof. intros rc fx. exact (@BMc.memchr_icpt_contract fx rc B (AR_laws_ok tfibsegs B) BD2l.UciB_syms). Qed.
 
-(* The kit rows: lib/B/Prog/LeafCgClose.v (LeafCgFacts.v / LeafCgGlue.v, from fuzz_decode's released lib/B at
-   88154566652a). *)
+(* The kit rows: lib/B/Prog/LeafCgClose.v (LeafCgFacts.v / LeafCgGlue.v, from fuzz_decode's released lib/B).
+   *)
 Lemma H_KIT_AVIEW_EXT : @LK.aview_ext_stmt (aview segs).
 Proof. exact BLC.H_KIT_AVIEW_EXT. Qed.
 Lemma H_KIT_AVIEW_SOME : @LK.aview_some_stmt (aview segs).
@@ -240,10 +241,10 @@ Proof. exact BF.HB_COST. Qed.
 (* CORE lemmas, each one `exact` (or a short proof) of a landed core lemma at UciB.                       *)
 (* ===================================================================================================== *)
 (* H_RT_MALLOC / H_RT_FREE: lib/B/UciBRtAlloc.v:18 uciB_MALLOC / :21 uciB_FREE (lib/B/YF0w.v:45 / lib/B/YF0q.v:11 at
-   UciB; record provenance/evidence/uci-b-alloc, commit 81e5b92bbab3). H_RT_MEMCPY_WRAP: lib/B/YD2m.v:17 tfib_AICPY.
+   UciB; record provenance/evidence/uci-b-alloc). H_RT_MEMCPY_WRAP: lib/B/YD2m.v:17 tfib_AICPY.
    H_RT_ASAN_MEMCPY: lib/B/YE2q.v:146 asan_memcpy_realizes at __asan_memcpy 0x50674, one site-agnostic contract for the
-   four harness sites 0x7f5d8, 0x7f5e8, 0x7f708, 0x7fa64 (record provenance/evidence/uci-b-memcpy, commit
-   7af39d3f61cc). *)
+   four harness sites 0x7f5d8, 0x7f5e8, 0x7f708, 0x7fa64 (record provenance/evidence/uci-b-memcpy).
+   *)
 Lemma H_RT_MALLOC : forall (rc : YM05.RunCeil) (fx : YK11.FPState), @amalloc_realizes fx rc segs B.
 Proof. intros rc fx. exact (BAl.uciB_MALLOC fx rc). Qed.
 Lemma H_RT_FREE : forall (rc : YM05.RunCeil) (fx : YK11.FPState), @afree_realizes fx rc segs B.
@@ -262,7 +263,7 @@ Lemma HB_PC_WRAP_FREE : pc_wrap_free (as_code B) = UAddr.uci_sigma US___intercep
 Proof. reflexivity. Qed.
 Lemma HB_PC_STACK_MALLOC1 : pc_stack_malloc (as_code B) 1 = UAddr.uci_sigma US___asan_stack_malloc_1.
 Proof. reflexivity. Qed.
-(* HB_UNIVERSE_OK: lib/B/YF0m.v:309 ts_universe at UciB_syms. HB_MODEL_LAWS: lib/Reusable/YG05.v:140 model_laws_ok. *)
+(* HB_UNIVERSE_OK: lib/B/YF0m.v:310 ts_universe at UciB_syms. HB_MODEL_LAWS: lib/Reusable/YG05.v:140 model_laws_ok. *)
 Lemma HB_UNIVERSE_OK : universe_ok (as_universe B).
 Proof. exact (ts_universe B BD2l.UciB_syms). Qed.
 Lemma HB_MODEL_LAWS : model_laws (as_universe B).
@@ -437,6 +438,7 @@ Qed.
 Lemma uci_srealizesX_rc : forall (sp : word) (rdraw : EntryDraw) (brk mb : word) (inp : ProcInput),
   valid_sp sp -> valid_brk segs brk -> valid_mmap_base mb ->
   entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
   @YM05.ceil_of_top rc (bv_unsigned sp - stack_max_size) ->
   srealizes segs (init_config segs AsanUbsan.M.init_pc AsanUbsan.M.phdrs sp brk mb rdraw target_alloc_limit inp)
     (SPECX (LS:=checksum_shape) inp).
@@ -460,9 +462,9 @@ End RC.
 
 Theorem uci_B_TFIB_T_of_parts : UBT.TFIB_T.
 Proof.
-  intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp.
-  exact (@uci_srealizesX_rc (YM05.RunCeilOf (bv_unsigned sp) (valid_sp_windowU sp Hsp)) sp rnd brk mbase inp
-    Hsp Hbrk Hmb Hfit Hinp (YM05.ceil_of_top_run _)).
+  intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau.
+  exact (@uci_srealizesX_rc (YM05.RunCeilOf (bv_unsigned sp) (valid_sp_windowU sp Hsp) target_alloc_limit) sp rnd brk mbase inp
+    Hsp Hbrk Hmb Hfit Hinp Hlau (YM05.ceil_of_top_run _)).
 Qed.
 
 (* The two ASan+UBSan statements of record, given only the named parts above. *)

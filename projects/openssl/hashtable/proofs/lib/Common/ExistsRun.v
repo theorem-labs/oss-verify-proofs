@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the image's run segments replace its segments). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -88,9 +89,12 @@ End WithSegs.
 
 (* [comment removed for export] *)
 Lemma bh_errors_run_of_reaches_error : forall segs pc ph lim sp brk0 mbase rnd inp,
-  reaches_error segs (init_config segs pc ph sp brk0 mbase rnd lim inp) ->
+  reaches_error (run_segments segs inp sp mbase)
+    (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp) ->
   bh_errors (run (mkImage segs pc ph) lim (mkEntry sp brk0 mbase rnd) inp).
-Proof. intros. cbn [run bh_errors]. exact H. Qed.
+Proof.
+  intros. cbn [run bh_errors image_run_segments img_segments en_sp en_mmap_base]. exact H.
+Qed.
 
 Lemma bh_errors_scfg_may_fail : forall img lim en inp,
   bh_errors (run img lim en inp) -> bh_errors (run_scfg may_fail_cfg img lim en inp).

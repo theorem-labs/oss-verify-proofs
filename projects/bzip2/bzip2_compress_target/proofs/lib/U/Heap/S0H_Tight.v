@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the hint argument of mmap_grant_refusable). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From stdpp Require Import gmap.
@@ -125,7 +126,7 @@ Proof.
   { eapply Forall_impl; [| exact SZ]. cbn. intros e [H _]. lia. }
   pose proof (VMT_budget (length LB) MD LEN (conj LIM (conj MAT (conj SZ LENM))) Hl) as BUD.
   assert (ATOP : atop_ok (m_vmmaps MD)) by (destruct HO as [(L & _ & HK & _) _]; exact (kl_atop _ _ _ HK)).
-  assert (NFORCED : forall len, 0 < len <= 2^30 -> AllocRefusal.mmap_grant_refusable (Z_to_bv 64 MAPF) MD (mmap_len len) = false).
+  assert (NFORCED : forall len, 0 < len <= 2^30 -> AllocRefusal.mmap_grant_refusable (Z_to_bv 64 0) (Z_to_bv 64 MAPF) MD (mmap_len len) = false).
   { intros len Hlen. pose proof (mmap_len_bound len ltac:(lia)) as MLB.
     apply (mmap_not_forced_big len MD ltac:(lia) ltac:(lia) ATOP SZ' ltac:(lia) ltac:(lia)). }
   intros tr s' MD' Hp.

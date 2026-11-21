@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YK02.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vvar/vDSO pair in the initial model and its reservations; the launch's ProcInput, mmap base and entry draw; the run's segment list with the vDSO pair and the system-call nodes' robustness facts; the mprotect gate over the reservations; brk's growth charged over page-rounded breaks). *)
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -290,17 +291,22 @@ assert (E3 : (bv_unsigned old <? bv_unsigned r)%Z = true) by (apply Z.ltb_lt; li
 rewrite E1, E2, E3. reflexivity.
 Qed.
 Lemma brk_grants_grow : forall req r old,
-req <> Z_to_bv 64 0 ->
-(0 < bv_unsigned old)%Z -> (bv_unsigned old < bv_unsigned r)%Z ->
-brk_grants req r old = [(old, r - old)].
+  req <> Z_to_bv 64 0 ->
+  (0 < bv_unsigned old)%Z -> (bv_unsigned old < bv_unsigned r)%Z ->
+  brk_grants req r old =
+    brk_page_range (page_round_up_Z (bv_unsigned old))
+                   (page_round_up_Z (bv_unsigned r)).
 Proof.
-intros req r old Hreq Hold Hlt. unfold brk_grants, brk_is_grow.
-assert (E1 : w_is0 req = false)
-by (unfold w_is0; apply bv_eqb_neq; exact Hreq).
-assert (E2 : (0 <? bv_unsigned old)%Z = true) by (apply Z.ltb_lt; lia).
-assert (E3 : (bv_unsigned old <? bv_unsigned r)%Z = true) by (apply Z.ltb_lt; lia).
-rewrite E1, E2, E3. reflexivity.
+  intros req r old Hreq Hold Hlt. unfold brk_grants, brk_is_grow.
+  assert (E1 : w_is0 req = false)
+    by (unfold w_is0; apply bv_eqb_neq; exact Hreq).
+  assert (E2 : (0 <? bv_unsigned old)%Z = true) by (apply Z.ltb_lt; lia).
+  assert (E3 : (bv_unsigned old <? bv_unsigned r)%Z = true) by (apply Z.ltb_lt; lia).
+  rewrite E1, E2, E3. reflexivity.
 Qed.
+Lemma brk_grants_is_brk_zeros : forall req r old,
+  brk_grants req r old = brk_zeros req r old.
+Proof. reflexivity. Qed.
 Lemma brk_zeros_query : forall r old, brk_zeros (Z_to_bv 64 0) r old = [].
 Proof.
 intros r old. unfold brk_zeros, brk_is_grow, w_is0.
@@ -341,34 +347,34 @@ by (apply Z.ltb_ge, page_round_up_Z_mono, H).
 unfold brk_page_range. rewrite E. reflexivity.
 Qed.
 Lemma brk_grow_ok_grow : forall h req r,
-req <> Z_to_bv 64 0 ->
-(0 < bv_unsigned (vm_brk h))%Z -> (bv_unsigned (vm_brk h) < bv_unsigned r)%Z ->
-brk_grow_ok h req r
-= ((if (page_round_up_Z (bv_unsigned (vm_brk h))
-<? page_round_up_Z (bv_unsigned r))%Z
-then (page_round_up_Z (bv_unsigned r) <=? alloc_top h)%Z
-&& region_free (vm_reserved h ++ vm_maps h)
-(Z_to_bv 64 (page_round_up_Z (bv_unsigned (vm_brk h))))
-(Z_to_bv 64 (page_round_up_Z (bv_unsigned r) + page_size
-- page_round_up_Z (bv_unsigned (vm_brk h))))
-else true)
-&& (vm_backed_bytes h + bv_unsigned (r - vm_brk h) <=? vm_limit h)%Z)%bool.
+  req <> Z_to_bv 64 0 ->
+  (0 < bv_unsigned (vm_brk h))%Z -> (bv_unsigned (vm_brk h) < bv_unsigned r)%Z ->
+  brk_grow_ok h req r
+  = ((if (page_round_up_Z (bv_unsigned (vm_brk h))
+          <? page_round_up_Z (bv_unsigned r))%Z
+      then (page_round_up_Z (bv_unsigned r) <=? alloc_top h)%Z
+           && region_free (vm_reserved h ++ vm_maps h)
+                (Z_to_bv 64 (page_round_up_Z (bv_unsigned (vm_brk h))))
+                (Z_to_bv 64 (page_round_up_Z (bv_unsigned r) + page_size
+                             - page_round_up_Z (bv_unsigned (vm_brk h))))
+      else true)
+     && (vm_backed_bytes h + brk_grow_bytes h r <=? vm_limit h)%Z)%bool.
 Proof.
-intros h req r Hreq H0 Hlt.
-assert (Hmaps : m_vmmaps (vm_model h) = h) by reflexivity.
-assert (Hbacked : vm_backing_used (vm_model h) = vm_backed_bytes h).
-{ unfold vm_backing_used, vm_model.
-cbv [mkModel m_vmmaps m_vm m_vm_lazy m_vm_materialized
-vmst_lazy vmst_materialized].
-change ((live_bytes (vm_backed_maps h) + 0)%Z =
-live_bytes (vm_backed_maps h)).
-apply Z.add_0_r. }
-unfold brk_grow_ok, Mmap.brk_grow_ok, Mmap.brk_budget_ok.
-rewrite Hmaps, Hbacked.
-assert (E2 : (0 <? bv_unsigned (vm_brk h))%Z = true) by (apply Z.ltb_lt; lia).
-assert (E3 : (bv_unsigned (vm_brk h) <? bv_unsigned r)%Z = true)
-by (apply Z.ltb_lt; lia).
-rewrite E2, E3. reflexivity.
+  intros h req r Hreq H0 Hlt.
+  assert (Hmaps : m_vmmaps (vm_model h) = h) by reflexivity.
+  assert (Hbacked : vm_backing_used (vm_model h) = vm_backed_bytes h).
+  { unfold vm_backing_used, vm_model.
+    cbv [mkModel m_vmmaps m_vm m_vm_lazy m_vm_materialized
+         vmst_lazy vmst_materialized].
+    change ((live_bytes (vm_backed_maps h) + 0)%Z =
+            live_bytes (vm_backed_maps h)).
+    apply Z.add_0_r. }
+  unfold brk_grow_ok, Mmap.brk_grow_ok, Mmap.brk_budget_ok.
+  rewrite Hmaps, Hbacked.
+  assert (E2 : (0 <? bv_unsigned (vm_brk h))%Z = true) by (apply Z.ltb_lt; lia).
+  assert (E3 : (bv_unsigned (vm_brk h) <? bv_unsigned r)%Z = true)
+    by (apply Z.ltb_lt; lia).
+  rewrite E2, E3. reflexivity.
 Qed.
 Lemma brk_grow_ok_keep : forall h req,
 brk_grow_ok h req (vm_brk h) = true.
@@ -447,27 +453,27 @@ destruct Hhead as [Hhead|Hhead]; [left|right];
 apply Z.ltb_ge in Hhead; apply Z.ltb_ge; lia.
 Qed.
 Lemma brk_grow_ok_aligned_grow : forall h req r,
-req <> Z_to_bv 64 0 ->
-(0 < bv_unsigned (vm_brk h))%Z ->
-(bv_unsigned (vm_brk h) < bv_unsigned r)%Z ->
-(bv_unsigned (vm_brk h) mod page_size = 0)%Z ->
-brk_grow_ok h req r
-= (((page_round_up_Z (bv_unsigned r) <=? alloc_top h)%Z
-&& region_free (vm_reserved h ++ vm_maps h) (vm_brk h)
-(Z_to_bv 64 (page_round_up_Z (bv_unsigned r) + page_size
-- bv_unsigned (vm_brk h))))
-&& (vm_backed_bytes h + bv_unsigned (r - vm_brk h) <=? vm_limit h)%Z)%bool.
+  req <> Z_to_bv 64 0 ->
+  (0 < bv_unsigned (vm_brk h))%Z ->
+  (bv_unsigned (vm_brk h) < bv_unsigned r)%Z ->
+  (bv_unsigned (vm_brk h) mod page_size = 0)%Z ->
+  brk_grow_ok h req r
+  = (((page_round_up_Z (bv_unsigned r) <=? alloc_top h)%Z
+      && region_free (vm_reserved h ++ vm_maps h) (vm_brk h)
+           (Z_to_bv 64 (page_round_up_Z (bv_unsigned r) + page_size
+                        - bv_unsigned (vm_brk h))))
+     && (vm_backed_bytes h + brk_grow_bytes h r <=? vm_limit h)%Z)%bool.
 Proof.
-intros h req r Hreq Hpos Hlt Halign.
-rewrite brk_grow_ok_grow by assumption.
-rewrite (page_round_up_Z_aligned (bv_unsigned (vm_brk h))) by lia.
-assert (Hround : (bv_unsigned (vm_brk h)
-< page_round_up_Z (bv_unsigned r))%Z).
-{ pose proof (page_round_up_Z_bounds (bv_unsigned r) ltac:(lia)). lia. }
-rewrite (proj2 (Z.ltb_lt _ _) Hround).
-replace (Z_to_bv 64 (bv_unsigned (vm_brk h))) with (vm_brk h).
-- reflexivity.
-- symmetry. apply Z_to_bv_bv_unsigned.
+  intros h req r Hreq Hpos Hlt Halign.
+  rewrite brk_grow_ok_grow by assumption.
+  rewrite (page_round_up_Z_aligned (bv_unsigned (vm_brk h))) by lia.
+  assert (Hround : (bv_unsigned (vm_brk h)
+                    < page_round_up_Z (bv_unsigned r))%Z).
+  { pose proof (page_round_up_Z_bounds (bv_unsigned r) ltac:(lia)). lia. }
+  rewrite (proj2 (Z.ltb_lt _ _) Hround).
+  replace (Z_to_bv 64 (bv_unsigned (vm_brk h))) with (vm_brk h).
+  - reflexivity.
+  - symmetry. apply Z_to_bv_bv_unsigned.
 Qed.
 Lemma brk_zeros_aligned_grow : forall req r old,
 req <> Z_to_bv 64 0 ->
@@ -526,20 +532,22 @@ repeat split; rewrite ?HgU; try lia.
 [rewrite HgU, Hu by lia; lia | exact Hfree].
 Qed.
 Definition growable (reserved : list (word * word)) (lim top : Z) (t r : word)
-: Prop :=
-r <> Z_to_bv 64 0 /\ (bv_unsigned r + bv_unsigned t < 2 ^ 64)%Z /\
-(t = Z_to_bv 64 0 \/
-(((if (page_round_up_Z (bv_unsigned r)
-<? page_round_up_Z (bv_unsigned r + bv_unsigned t))%Z
-then (page_round_up_Z (bv_unsigned r + bv_unsigned t)
-<=? top)%Z
-&& region_free reserved
-(Z_to_bv 64 (page_round_up_Z (bv_unsigned r)))
-(Z_to_bv 64 (page_round_up_Z
-(bv_unsigned r + bv_unsigned t)
-+ page_size - page_round_up_Z (bv_unsigned r)))
-else true)
-&& (bv_unsigned t <=? lim)%Z)%bool = true)).
+    : Prop :=
+  r <> Z_to_bv 64 0 /\ (bv_unsigned r + bv_unsigned t < 2 ^ 64)%Z /\
+  (t = Z_to_bv 64 0 \/
+   (((if (page_round_up_Z (bv_unsigned r)
+          <? page_round_up_Z (bv_unsigned r + bv_unsigned t))%Z
+      then (page_round_up_Z (bv_unsigned r + bv_unsigned t)
+            <=? top)%Z
+           && region_free reserved
+                (Z_to_bv 64 (page_round_up_Z (bv_unsigned r)))
+                (Z_to_bv 64 (page_round_up_Z
+                               (bv_unsigned r + bv_unsigned t)
+                              + page_size - page_round_up_Z (bv_unsigned r)))
+      else true)
+     && (Z.max 0 (page_round_up_Z (bv_unsigned r + bv_unsigned t)
+                  - page_round_up_Z (bv_unsigned r)) <=? lim)%Z)%bool = true)).
+
 Definition T1 (reserved : list (word * word)) (lim top : Z) (t : word)
 (bufs : list (list byte))
 (r : word) : (list (list byte) * word) -> Prop :=
@@ -686,75 +694,77 @@ rewrite (proj2 (Z.ltb_ge (bv_unsigned req) (bv_unsigned r)) ltac:(lia)).
 rewrite andb_true_iff, orb_true_iff, !bv_eqb_eq. tauto.
 Qed.
 Lemma T1_iff_T2 : forall reserved lim s (mb sp : word) t bufs r,
-r <> Z_to_bv 64 0 -> (bv_unsigned s <= bv_unsigned r)%Z ->
-(bv_unsigned r + bv_unsigned t < 2 ^ 64)%Z ->
-forall o, T1 reserved lim (bv_unsigned sp - stack_max_size) t bufs r o <->
-(exists r2, brk_r_ok (mkVmMapsFull reserved [] [] s r lim mb sp) (r + t) r2
-/\ T2 (r + t) bufs r2 o).
+  r <> Z_to_bv 64 0 -> (bv_unsigned s <= bv_unsigned r)%Z ->
+  (bv_unsigned r + bv_unsigned t < 2 ^ 64)%Z ->
+  forall o, T1 reserved lim (bv_unsigned sp - stack_max_size) t bufs r o <->
+    (exists r2, brk_r_ok (mkVmMapsFull reserved [] [] s r lim mb sp) (r + t) r2
+                /\ T2 (r + t) bufs r2 o).
 Proof.
-intros reserved lim s mb sp t bufs r Hr0 Hs Hnw o.
-pose proof (u64_range r) as Hur. pose proof (u64_range t) as Hut.
-pose proof (word_neq0_unsigned r Hr0) as Hur0.
-assert (Huadd : bv_unsigned (r + t) = (bv_unsigned r + bv_unsigned t)%Z)
-by (apply u_add_small; exact Hnw).
-assert (Hwant0 : r + t <> Z_to_bv 64 0).
-{ intro He. apply (f_equal bv_unsigned) in He.
-rewrite Huadd in He.
-change (bv_unsigned (Z_to_bv 64 0)) with 0%Z in He. lia. }
-assert (Bridge : forall r2,
-brk_r_ok (mkVmMapsFull reserved [] [] s r lim mb sp) (r + t) r2 <->
-(r2 = r + t \/ r2 = r)
-/\ brk_grow_ok (mkVmMapsFull reserved [] [] s r lim mb sp) (r + t) r2
-= true)
-by (intro r2; apply brk_r_ok_grow_iff with (maps := []) (noaccess := []); lia).
-split.
-- intros [[-> Hcase] | [Hg ->]].
-+
-assert (Ht0 : t <> Z_to_bv 64 0)
-by (destruct Hcase as [Hc | [Hc | Hc]]; [congruence | lia | exact Hc]).
-pose proof (word_neq0_unsigned t Ht0) as Hut0.
-exists r. split.
-* apply Bridge. split; [right; reflexivity|].
-exact (brk_grow_ok_keep (mkVmMapsFull reserved [] [] s r lim mb sp) (r + t)).
-* right. split; [| reflexivity].
-intro He. apply (f_equal bv_unsigned) in He.
-rewrite Huadd in He. lia.
-+
-destruct Hg as (_ & _ & Hb).
-exists (r + t). split.
-* apply Bridge. split; [left; reflexivity|].
-destruct (Z.eq_dec (bv_unsigned t) 0) as [Hz | Hz].
-{ assert (Ht0 : t = Z_to_bv 64 0)
-by (apply bv_eq; rewrite Hz; reflexivity).
-rewrite Ht0, word_add_0_r.
-exact (brk_grow_ok_keep (mkVmMapsFull reserved [] [] s r lim mb sp) r). }
-destruct Hb as [Hb | Hb];
-[exfalso; apply Hz; rewrite Hb; reflexivity |].
-rewrite brk_grow_ok_grow;
-cbn [vm_brk vm_reserved vm_maps vm_limit vm_live_bytes live_bytes];
-[| exact Hwant0 | lia | lia].
-rewrite app_nil_r, word_add_sub_cancel, Huadd, Z.add_0_l.
-exact Hb.
-* left. split; reflexivity.
-- intros (r2 & Hrok & Hb).
-apply Bridge in Hrok. destruct Hrok as (Hcase & Hgrow).
-destruct Hb as [[-> ->] | [Hne ->]].
-+
-right. split; [| reflexivity].
-split; [exact Hr0 | split; [exact Hnw |]].
-destruct (Z.eq_dec (bv_unsigned t) 0) as [Hz | Hz];
-[left; apply bv_eq; rewrite Hz; reflexivity | right].
-rewrite brk_grow_ok_grow in Hgrow;
-cbn [vm_brk vm_reserved vm_maps vm_limit vm_live_bytes live_bytes] in *;
-[| exact Hwant0 | lia | lia].
-rewrite app_nil_r, word_add_sub_cancel, Huadd, Z.add_0_l in Hgrow.
-exact Hgrow.
-+
-left. split; [reflexivity |].
-right. right.
-intro Ht0. subst t.
-rewrite word_add_0_r in Hne, Hcase.
-destruct Hcase as [Hc | Hc]; exact (Hne Hc).
+  intros reserved lim s mb sp t bufs r Hr0 Hs Hnw o.
+  pose proof (u64_range r) as Hur. pose proof (u64_range t) as Hut.
+  pose proof (word_neq0_unsigned r Hr0) as Hur0.
+  assert (Huadd : bv_unsigned (r + t) = (bv_unsigned r + bv_unsigned t)%Z)
+    by (apply u_add_small; exact Hnw).
+  assert (Hwant0 : r + t <> Z_to_bv 64 0).
+  { intro He. apply (f_equal bv_unsigned) in He.
+    rewrite Huadd in He.
+    change (bv_unsigned (Z_to_bv 64 0)) with 0%Z in He. lia. }
+  assert (Bridge : forall r2,
+             brk_r_ok (mkVmMapsFull reserved [] [] s r lim mb sp) (r + t) r2 <->
+             (r2 = r + t \/ r2 = r)
+             /\ brk_grow_ok (mkVmMapsFull reserved [] [] s r lim mb sp) (r + t) r2
+                = true)
+    by (intro r2; apply brk_r_ok_grow_iff with (maps := []) (noaccess := []); lia).
+  split.
+  - intros [[-> Hcase] | [Hg ->]].
+    + (* exit 4: failure resolution r2 = r, which exists iff t <> 0 *)
+      assert (Ht0 : t <> Z_to_bv 64 0)
+        by (destruct Hcase as [Hc | [Hc | Hc]]; [congruence | lia | exact Hc]).
+      pose proof (word_neq0_unsigned t Ht0) as Hut0.
+      exists r. split.
+      * apply Bridge. split; [right; reflexivity|].
+        exact (brk_grow_ok_keep (mkVmMapsFull reserved [] [] s r lim mb sp) (r + t)).
+      * right. split; [| reflexivity].
+        intro He. apply (f_equal bv_unsigned) in He.
+        rewrite Huadd in He. lia.
+    + (* success: r2 = want *)
+      destruct Hg as (_ & _ & Hb).
+      exists (r + t). split.
+      * apply Bridge. split; [left; reflexivity|].
+        destruct (Z.eq_dec (bv_unsigned t) 0) as [Hz | Hz].
+        { assert (Ht0 : t = Z_to_bv 64 0)
+            by (apply bv_eq; rewrite Hz; reflexivity).
+          rewrite Ht0, word_add_0_r.
+          exact (brk_grow_ok_keep (mkVmMapsFull reserved [] [] s r lim mb sp) r). }
+        destruct Hb as [Hb | Hb];
+          [exfalso; apply Hz; rewrite Hb; reflexivity |].
+        rewrite brk_grow_ok_grow;
+          cbn [vm_brk vm_reserved vm_maps vm_limit vm_live_bytes live_bytes];
+          [| exact Hwant0 | lia | lia].
+        unfold brk_grow_bytes. cbn [vm_brk].
+        rewrite app_nil_r, Huadd, Z.add_0_l.
+        exact Hb.
+      * left. split; reflexivity.
+  - intros (r2 & Hrok & Hb).
+    apply Bridge in Hrok. destruct Hrok as (Hcase & Hgrow).
+    destruct Hb as [[-> ->] | [Hne ->]].
+    + (* success resolution *)
+      right. split; [| reflexivity].
+      split; [exact Hr0 | split; [exact Hnw |]].
+      destruct (Z.eq_dec (bv_unsigned t) 0) as [Hz | Hz];
+        [left; apply bv_eq; rewrite Hz; reflexivity | right].
+      rewrite brk_grow_ok_grow in Hgrow;
+        cbn [vm_brk vm_reserved vm_maps vm_limit vm_live_bytes live_bytes] in *;
+        [| exact Hwant0 | lia | lia].
+      unfold brk_grow_bytes in Hgrow. cbn [vm_brk] in Hgrow.
+      rewrite app_nil_r, Huadd, Z.add_0_l in Hgrow.
+      exact Hgrow.
+    + (* failure resolution: r2 = r, and t <> 0 or r2 = want *)
+      left. split; [reflexivity |].
+      right. right.
+      intro Ht0. subst t.
+      rewrite word_add_0_r in Hne, Hcase.
+      destruct Hcase as [Hc | Hc]; exact (Hne Hc).
 Qed.
 Lemma T2_fail_iff : forall want bufs r2,
 r2 <> want -> forall o, T2 want bufs r2 o <-> o = ([], Z_to_bv 64 4).
@@ -1111,100 +1121,111 @@ intro o. rewrite (HV o). apply HU.
 Qed.
 End e.
 Lemma alloc_omni_run : forall segs pc ph sp brk0 mb rnd lim inp U,
-to_outcomes segs (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-(init_model (segments_reserved segs) brk0 mb sp lim inp) U ->
-omni_run (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp (outcomes_post (in_fs inp) U).
+  to_outcomes (run_segments segs inp sp mb)
+              (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp)
+              (with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+                 (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp)) U ->
+  omni_run (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp (outcomes_post (in_fs inp) U).
 Proof.
-intros segs pc ph sp brk0 mb rnd lim inp U Hto.
-cbn [omni_run]. unfold init_config.
-exact (to_outcomes_exec segs _ _ U Hto eq_refl eq_refl).
+  intros segs pc ph sp brk0 mb rnd lim inp U Hto.
+  cbn [omni_run]. unfold init_config.
+  exact (to_outcomes_exec (run_segments segs inp sp mb) _ _ U Hto eq_refl eq_refl).
 Qed.
 Lemma alloc_obs_iff : forall segs pc ph sp brk0 mb rnd lim inp U,
-to_outcomes segs (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-(init_model (segments_reserved segs) brk0 mb sp lim inp) U ->
-forall tr, obs_trace segs (init_config segs pc ph sp brk0 mb rnd lim inp) tr
-<-> exists o, U o /\ is_prefix tr (outcome_trace (in_fs inp) o).
+  to_outcomes (run_segments segs inp sp mb)
+              (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp)
+              (with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+                 (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp)) U ->
+  forall tr, obs_trace (run_segments segs inp sp mb)
+               (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) tr
+    <-> exists o, U o /\ is_prefix tr (outcome_trace (in_fs inp) o).
 Proof.
-intros segs pc ph sp brk0 mb rnd lim inp U Hto tr.
-unfold init_config.
-set (ms := init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) in *.
-assert (Hh : m_halted (init_model (segments_reserved segs) brk0 mb sp lim inp) = None)
-by reflexivity.
-assert (Hlazy : m_vm_lazy
-(init_model (segments_reserved segs) brk0 mb sp lim inp) = []) by reflexivity.
-assert (Hfs : m_fs (init_model (segments_reserved segs) brk0 mb sp lim inp) = in_fs inp)
-by reflexivity.
-split.
-- intros (tr' & c & Hstar & Hp).
-destruct (to_outcomes_star_only segs ms _ U Hto Hh Hlazy tr' c Hstar)
-as (o & Ho & Hp').
-exists o. split; [exact Ho|].
-rewrite Hfs in Hp'. eapply is_prefix_trans; eauto.
-- intros (o & Ho & Hp).
-destruct (to_outcomes_star_admits segs ms _ U Hto Hh Hlazy o Ho) as [c Hstar].
-rewrite Hfs in Hstar.
-exists (outcome_trace (in_fs inp) o), c. split; assumption.
+  intros segs pc ph sp brk0 mb rnd lim inp U Hto tr.
+  unfold init_config.
+  set (ms := init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp) in *.
+  set (m0 := with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+               (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp)) in *.
+  assert (Hh : m_halted m0 = None) by reflexivity.
+  assert (Hlazy : m_vm_lazy m0 = []) by reflexivity.
+  assert (Hfs : m_fs m0 = in_fs inp) by reflexivity.
+  split.
+  - intros (tr' & c & Hstar & Hp).
+    destruct (to_outcomes_star_only (run_segments segs inp sp mb) ms _ U Hto Hh Hlazy tr' c Hstar)
+      as (o & Ho & Hp').
+    exists o. split; [exact Ho|].
+    rewrite Hfs in Hp'. eapply is_prefix_trans; eauto.
+  - intros (o & Ho & Hp).
+    destruct (to_outcomes_star_admits (run_segments segs inp sp mb) ms _ U Hto Hh Hlazy o Ho) as [c Hstar].
+    rewrite Hfs in Hstar.
+    exists (outcome_trace (in_fs inp) o), c. split; assumption.
 Qed.
 Lemma alloc_no_error_run : forall segs pc ph sp brk0 mb rnd lim inp U,
-to_outcomes segs (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-(init_model (segments_reserved segs) brk0 mb sp lim inp) U ->
-~ reaches_error segs (init_config segs pc ph sp brk0 mb rnd lim inp).
+  to_outcomes (run_segments segs inp sp mb)
+              (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp)
+              (with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+                 (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp)) U ->
+  ~ reaches_error (run_segments segs inp sp mb)
+      (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp).
 Proof.
-intros segs pc ph sp brk0 mb rnd lim inp U Hto. apply exec_no_error.
-eapply exec_conseq; [exact (alloc_omni_run segs pc ph sp brk0 mb rnd lim inp U Hto) |].
-intros tr o (out & _ & _ & Hx). exact (exits_with_never_errors _ _ _ Hx).
+  intros segs pc ph sp brk0 mb rnd lim inp U Hto. apply exec_no_error.
+  eapply exec_conseq; [exact (alloc_omni_run segs pc ph sp brk0 mb rnd lim inp U Hto) |].
+  intros tr o (out & _ & _ & Hx). exact (exits_with_never_errors _ _ _ Hx).
 Qed.
 Lemma alloc_omni_strong_equiv :
-forall source_segs rpc rph rsp rbrk rmb rrnd target_segs apc aph asp abrk amb arnd U inp,
-to_outcomes source_segs
-(init_machine_state source_segs rpc rph rsp rrnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-(init_model (segments_reserved source_segs) rbrk rmb rsp source_alloc_limit inp) U ->
-to_outcomes target_segs
-(init_machine_state target_segs apc aph asp arnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-(init_model (segments_reserved target_segs) abrk amb asp target_alloc_limit inp) U ->
-omni_strong_equiv (mkImage source_segs rpc rph) (mkImage target_segs apc aph)
-(mkEntry rsp rbrk rmb rrnd) (mkEntry asp abrk amb arnd) inp.
+  forall source_segs rpc rph rsp rbrk rmb rrnd target_segs apc aph asp abrk amb arnd U inp,
+  to_outcomes (run_segments source_segs inp rsp rmb)
+    (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp)
+    (with_vdso (Vdso.vdso_run_init (ed_vdso rrnd))
+       (init_model (segments_reserved (run_segments source_segs inp rsp rmb)) rbrk rmb rsp source_alloc_limit inp)) U ->
+  to_outcomes (run_segments target_segs inp asp amb)
+    (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp)
+    (with_vdso (Vdso.vdso_run_init (ed_vdso arnd))
+       (init_model (segments_reserved (run_segments target_segs inp asp amb)) abrk amb asp target_alloc_limit inp)) U ->
+  omni_strong_equiv (mkImage source_segs rpc rph) (mkImage target_segs apc aph)
+                    (mkEntry rsp rbrk rmb rrnd) (mkEntry asp abrk amb arnd) inp.
 Proof.
-intros source_segs rpc rph rsp rbrk rmb rrnd target_segs apc aph asp abrk amb arnd U inp
-Hsource Htarget.
-split.
-{ cbn [img_segments].
-eapply coexec_conseq;
-[apply exec_coexec;
-exact (alloc_omni_run source_segs rpc rph rsp rbrk rmb rrnd source_alloc_limit inp U Hsource) |].
-intros tr o (out & _ & _ & Hx).
-exact (never_errors_covered _ _ _ (exits_with_never_errors _ _ _ Hx)). }
-right. split.
-- apply trace_equiv_iff_omni. intro tr. cbn.
-rewrite (alloc_obs_iff source_segs rpc rph rsp rbrk rmb rrnd source_alloc_limit inp U Hsource tr).
-rewrite (alloc_obs_iff target_segs apc aph asp abrk amb arnd target_alloc_limit inp U Htarget tr).
-reflexivity.
-- apply bh_errors_iff. cbn.
-apply (alloc_no_error_run target_segs apc aph asp abrk amb arnd target_alloc_limit inp U Htarget).
+  intros source_segs rpc rph rsp rbrk rmb rrnd target_segs apc aph asp abrk amb arnd U inp
+    Hsource Htarget.
+  split.
+  { cbn [img_segments].
+    eapply coexec_conseq;
+      [apply exec_coexec;
+       exact (alloc_omni_run source_segs rpc rph rsp rbrk rmb rrnd source_alloc_limit inp U Hsource) |].
+    intros tr o (out & _ & _ & Hx).
+    exact (never_errors_covered _ _ _ (exits_with_never_errors _ _ _ Hx)). }
+  right. split.
+  - apply trace_equiv_iff_omni. intro tr. cbn.
+    rewrite (alloc_obs_iff source_segs rpc rph rsp rbrk rmb rrnd source_alloc_limit inp U Hsource tr).
+    rewrite (alloc_obs_iff target_segs apc aph asp abrk amb arnd target_alloc_limit inp U Htarget tr).
+    reflexivity.
+  - apply bh_errors_iff. cbn.
+    apply (alloc_no_error_run target_segs apc aph asp abrk amb arnd target_alloc_limit inp U Htarget).
 Qed.
 Lemma alloc_strong_equiv :
-forall source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim
-U inp,
-to_outcomes source_segs
-(init_machine_state source_segs rpc rph rsp rrnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-(init_model (segments_reserved source_segs) rbrk rmb rsp rlim inp) U ->
-to_outcomes target_segs
-(init_machine_state target_segs apc aph asp arnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-(init_model (segments_reserved target_segs) abrk amb asp alim inp) U ->
-Equivalence.modeled (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
-/\ Equivalence.equiv (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
-(run (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp).
+  forall source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim
+         U inp,
+  to_outcomes (run_segments source_segs inp rsp rmb)
+    (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp)
+    (with_vdso (Vdso.vdso_run_init (ed_vdso rrnd))
+       (init_model (segments_reserved (run_segments source_segs inp rsp rmb)) rbrk rmb rsp rlim inp)) U ->
+  to_outcomes (run_segments target_segs inp asp amb)
+    (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp)
+    (with_vdso (Vdso.vdso_run_init (ed_vdso arnd))
+       (init_model (segments_reserved (run_segments target_segs inp asp amb)) abrk amb asp alim inp)) U ->
+  Equivalence.modeled (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
+  /\ Equivalence.equiv (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
+                       (run (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp).
 Proof.
-intros source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim
-U inp Hsource Htarget.
-split.
-{ apply no_error_run_modeled.
-apply (alloc_no_error_run source_segs rpc rph rsp rbrk rmb rrnd rlim inp U Hsource). }
-right. split.
-- intro tr. cbn.
-rewrite (alloc_obs_iff source_segs rpc rph rsp rbrk rmb rrnd rlim inp U Hsource tr).
-rewrite (alloc_obs_iff target_segs apc aph asp abrk amb arnd alim inp U Htarget tr).
-reflexivity.
-- cbn. apply (alloc_no_error_run target_segs apc aph asp abrk amb arnd alim inp U Htarget).
+  intros source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim
+    U inp Hsource Htarget.
+  split.
+  { apply no_error_run_modeled.
+    apply (alloc_no_error_run source_segs rpc rph rsp rbrk rmb rrnd rlim inp U Hsource). }
+  right. split.
+  - intro tr. cbn.
+    rewrite (alloc_obs_iff source_segs rpc rph rsp rbrk rmb rrnd rlim inp U Hsource tr).
+    rewrite (alloc_obs_iff target_segs apc aph asp abrk amb arnd alim inp U Htarget tr).
+    reflexivity.
+  - cbn. apply (alloc_no_error_run target_segs apc aph asp abrk amb arnd alim inp U Htarget).
 Qed.
 End d.

@@ -1,7 +1,7 @@
 (* rp_slot_read walk, fuzz_wire plain c8763dfc4e81 0x13790..0x1385c (repace_wire.c:111-124); new.
    rp_slot_width is the named Section hypothesis HSW (its contract, rp_slot_width_c.v). The inlined reac_braid_pos is
    proved against braid_pos (rp_slot_read_c.v) through braid_pos_lin, copied from libreac/fuzz_decode's released
-   lib/Prog/reac_decode.v:17 (recipes 25e3d17bdb5, blob d70727b17a36). *)
+   lib/Prog/reac_decode.v:17 (recipes, blob d70727b17a36). *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Lib Require Import Tac Bytes ZBridge.

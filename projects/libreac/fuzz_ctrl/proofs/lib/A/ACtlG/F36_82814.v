@@ -4,7 +4,7 @@
    stages of segment F36 (this file, F36_828b8.v, F36_827f4.v).  Written by a Theorem Labs lane (under
    a Theorem Labs lane), one writer.  Pattern: glue-pattern.md (a working note, not in this delivery) (G1-G5, section 4
    for a run that writes memory); worked example lib/A/ACtlG/A5.v; the keep layer follows the steps of
-   lib/A/ACtlG/F29.v (a working branch 651b3583ed1), restated for F36's write window.  rule 24: no
+   lib/A/ACtlG/F29.v (a working branch), restated for F36's write window.  rule 24: no
    function proved (stage glue of a walk).
 
    WHAT IT PROVES
@@ -16,7 +16,7 @@
    text as C_A828c0_at), which the dependency glue_seg_F36_82820 (lane CALL, F36_82820.v) turns into the EXIT
    C_A828d8_at.
 
-   THE RUN: A.Prog.Seg.F36F.f36_evt_82814_F (Seg/F36F.v:377-408), lifted at RNG := ProgBridge.RNG_W (w_H W3).
+   THE RUN: A.Prog.Seg.F36F.f36_evt_82814_F (Seg/F36F.v:378-409), lifted at RNG := ProgBridge.RNG_W (w_H W3).
 
    THE PROOF (glue-pattern.md G1-G5)
    G1  the entry cut at index [Z.of_nat j]: ix_cut's index equation, then C_A828c0_at's body (Permutation, FRAC,
@@ -34,7 +34,7 @@
        and the written cell; ro_agree: every read-only byte is below 0x5fe000); then lane CALL's glue_seg_F36_82820
        (F36_82820.v, Required).
 
-   ROUTE (C) (L3; ACtlCut.v (at head lib/A/ACtlCut.v:243); the walk shell from a working branch 8ce82d7e310): ctl_from's runtime premise is
+   ROUTE (C) (L3; ACtlCut.v (at head lib/A/ACtlCut.v:243); the walk shell from a working branch): ctl_from's runtime premise is
    A.ACtlRtC.ctl_rt_C B ly3 S3 mem3 (was ACtlCut.ctl_rt mem3), and f36g_stage takes and gives it at ly3 S3 (the
    store keeps the journal's state).  Its one consumption, the window's wr_at, reads the (F) disjunct of
    A.ACtlRtC.cut_shadow (frames S3 holds (6, c_fpos cx), frame_addr ly3 6 (c_fpos cx) = fr); the post's two
@@ -70,7 +70,7 @@
    A.Prog.SlotModel.OUR_length / fr50_length; the kit's kit_wx / kit_segs_low.
 
    FRAC IS RESTATED BY POSITION in ONE place, f36g_kt_frac (section 3), which rebuilds FRAC conjunct by conjunct;
-   Batch3 (d36efc6152d) appended FRAC's fake-frame trailer conjunct q64 m (fr + 4088) (flag_addr ..), and
+   Batch3 appended FRAC's fake-frame trailer conjunct q64 m (fr + 4088) (flag_addr ..), and
    f36g_kt_frac proves it with one more `apply TB` line (left disjunct: frame bytes).  f36g_stage reads FRAC by name
    (decompose + assumption).  No run here writes [fr + 4088, fr + 4096): the only bytes written are frame-SHADOW
    bytes (S(fr) + 4, S(fr) + 8 .. + 11), and fr + 4088 is an application byte of the frame; f36g_stage proves every
@@ -83,7 +83,7 @@
    closure (Locate lists lib.A.Bz.Lib.Mem first), which made an earlier partial-name draft of this file fail.  No
    Import / Export of a project module; no STATEMENT names a frame-route identifier.
 
-   BUILD STATE: type-check on 5da74c9c931, closure reaches no stand-in (glue base 121bf608343: AE2k / AF0m /
+   BUILD STATE: type-check, closure reaches no stand-in (glue base: AE2k / AF0m /
    AF0l / ACej / ACeh compiled from their own text, no port_core_refused substitution); reac_box_catalogue_match_c.v
    is the base's own ccd3e1f3c75.  No Axiom, no Parameter, no Admitted, no admit. *)
 
@@ -381,7 +381,7 @@ Qed.
 
 (* FRAC at the new map and memory, its spill base being Ab; the 392 frame-shadow bytes re-read at m'.  FRAC is
    destructed BY POSITION here, so Batch3's appended conjunct (the fake-frame trailer word q64 m (fr + 4088)
-   (flag_addr ..), d36efc6152d) is one more `apply TB` line: its 8 bytes [fr + 4088, fr + 4096) are frame bytes. *)
+   (flag_addr ..)) is one more `apply TB` line: its 8 bytes [fr + 4088, fr + 4096) are frame bytes. *)
 Lemma f36g_kt_frac : forall B sel,
   ACtlCut.rgv regs 9 Ab -> 0 <= Ab < 2 ^ 64 ->
   getrC regs' 2 = getrC regs 2 -> getrC regs' 3 = getrC regs 3 -> getrC regs' 4 = getrC regs 4 ->

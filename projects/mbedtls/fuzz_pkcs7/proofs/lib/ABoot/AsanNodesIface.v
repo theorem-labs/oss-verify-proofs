@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (new obligation OBL_munmap2 for the two-child munmap node). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -35,6 +36,11 @@ Variable FS0 : Fs.Fs.
 Definition OBL_mmap2 : Prop := mm2_stmt SEGS A nx0 LIMIT SP0 SINV argH FS0 (node_mmap2 A nx0 LIMIT).
 Definition OBL_mmapin : Prop := mm3_stmt SEGS A nx0 LIMIT SP0 SINV argH FS0 (node_mmapin A LIMIT false).   (* [comment removed for export] *)
 Definition OBL_mprotect2 : Prop := mm2_stmt SEGS A nx0 LIMIT SP0 SINV argH FS0 (node_mprotect2 A LIMIT).
+(** #38 (LPS 75d69e00): the two-child munmap node.  [node_munmap2] takes [A] ONLY - it does
+    NOT carry [LIMIT] the way [node_mprotect2] does (AsanPlanCore.v:2474), so this line is one
+    argument shorter than the [OBL_mprotect2] above it.  Counted against the definition, not
+    against the template. *)
+Definition OBL_munmap2 : Prop := mm2_stmt SEGS A nx0 LIMIT SP0 SINV argH FS0 (node_munmap2 A).
 Definition OBL_brk2 : Prop := brk2_stmt SEGS A nx0 LIMIT SP0 SINV argH FS0.
 Definition OBL_sys : Prop := forall y : snode, sys_stmt SEGS A nx0 LIMIT SP0 SINV argH FS0 y.
 Definition OBL_exit : Prop := exit_stmt SEGS A LIMIT SP0 SINV argH FS0.

@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: generated for libreac/fuzz_scene by a Theorem Labs lane's start-up collector (tools/startup, ColA of 2026-10-28) from scene's pinned image; by a Theorem Labs lane. *)
-(* Modified by Theorem Labs, 2026-10: TFIB_TEXT_N re-emitted by a Theorem Labs lane's frozen atable.py (sha256 b9aa677211b7968b, a working branch 74f10defbdd): the donor's .text end relocated by the code before it; donor control byte-equal on cgif's released A/AB12.v and YB12.v. *)
+(* Modified by Theorem Labs, 2026-10: TFIB_TEXT_N re-emitted by a Theorem Labs lane's frozen atable.py (sha256 b9aa677211b7968b, a working branch): the donor's .text end relocated by the code before it; donor control byte-equal on cgif's released A/AB12.v and YB12.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require Import YK09.

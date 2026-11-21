@@ -1,8 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: the Mmap and Placement modules imported, and runs of blank lines removed. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State.
 Unset Lia Cache. Unset Nia Cache.
+From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement.
 Import ListNotations.
 Open Scope bv_scope.
 Definition no_higher_fit (maps : list (word * word)) (aZ nZ baseZ : Z)
@@ -34,14 +37,6 @@ pose proof (Z.div_mod (z + 4096 - 1) 4096 ltac:(lia)) as H.
 pose proof (Z.mod_pos_bound (z + 4096 - 1) 4096 ltac:(lia)).
 lia.
 Qed.
-
-
-
-
-
-
-
-
 Definition search_candidates (maps : list (word * word)) (loZ : Z)
 : list Z :=
 loZ :: map (fun p => page_round_up_Z (bv_unsigned (fst p)
@@ -54,17 +49,11 @@ Definition place_fits (maps : list (word * word)) (loZ hiZ nZ : Z) (g : Z)
 Definition place (maps : list (word * word)) (loZ hiZ nZ : Z)
 : option Z :=
 find (place_fits maps loZ hiZ nZ) (search_candidates maps loZ).
-
-
-
-
 Definition place_in_model (h : VmMaps) (nZ : Z) : option Z :=
 place (vm_reserved h ++ vm_maps h) page_size (alloc_top h) nZ.
-
 Example place_accepts_a_negative_length :
 place_in_model (mkVmMaps [] [] 0 0 0) (-4096) = Some 4096%Z.
 Proof. vm_compute. reflexivity. Qed.
-
 Definition witness_ledger : list (word * word) :=
 [(Z_to_bv 64 4096, Z_to_bv 64 8192)].
 Definition demo_top : Z := alloc_top (mkVmMaps [] [] 0 0 0).

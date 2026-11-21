@@ -1,23 +1,24 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/Bz/A/I_pcxgram.v (cold/port-fm-rtprintf-param 3e35620c52e); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/Bz/A/I_pcxgram.table). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/Bz/A/I_pcxgram.v; relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/Bz/A/I_pcxgram.table). *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: relocated onto omx-clap-core/fuzz_manifest.asan from origin/cold/c-asan-rt-stateio-n 840c4afa7e2 proofs/omx-clap-core/fuzz_state/lib/A/Bz/A/I_pcxgram.v: module paths and 0 address numerals by alreloc 7a60a01f65f446d8, each paired by object; the decided numerals are listed in the commit body. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/Bz/A/I_pcxgram.v at 2d2ff01bb6f2 relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
+(* Modified by Theorem Labs, 2026-10: relocated onto omx-clap-core/fuzz_manifest.asan from proofs/omx-clap-core/fuzz_state/lib/A/Bz/A/I_pcxgram.v: module paths and 0 address numerals by alreloc 7a60a01f65f446d8, each paired by object; the decided numerals are listed in the commit body. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/Bz/A/I_pcxgram.v relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/Bz/A/I_pcxgram.v at 71994ff034c7, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/Bz/A/I_pcxgram.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/Bz/A/I_pcxgram.v keeps its donor's comment text) is kept as lib/A/Bz/A/I_pcxgram.v writes it. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/Bz/A/I_pcxgram.v, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/Bz/A/I_pcxgram.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/Bz/A/I_pcxgram.v keeps its donor's comment text) is kept as lib/A/Bz/A/I_pcxgram.v writes it. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.AU.Bz Require BvWfKernel.
 From Stdlib Require Import ZArith List Bool.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope Z_scope.
 
-(* parg: the printf argument kinds, from openssl/ct lib/Spec/PrintfModel.v:37 (hub 60b8c89d30), unchanged. *)
+(* parg: the printf argument kinds, from openssl/ct lib/Spec/PrintfModel.v:37 (hub theorem-labs/oss-verify-proofs@6b32741d849a), unchanged. *)
 Inductive parg : Type := PA_s (s : list Z) | PA_sn | PA_i (i : Z) | PA_u (u : Z) | PA_z (u : Z) | PA_g (d : Z).
 
 (* The pcx grammar of printf_common's list walk (I_pcxlist.v): from openssl/ct lib/CtB/I_vsnstmt.v:24-147
-   (hub 60b8c89d30), unchanged; the vsnprintf statements of that file and their imports are not ported. *)
+   (hub theorem-labs/oss-verify-proofs@6b32741d849a), unchanged; the vsnprintf statements of that file and their imports are not ported. *)
 Inductive pcx_kind : Type := PK_int | PK_long | PK_char | PK_str.
 Inductive pcx_prec : Type := PP_none | PP_num | PP_star.
 

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (2 recorded proofs replaced by written proofs (meta_word_upd_af, decay_bounces_eq)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -26,14 +27,12 @@ Ltac shw := match goal with |- evt _ _ (MS ?R _ ?pc _ _ _ _) => idtac "PC" pc; i
 
 Section CANSEC1. Context {rc : runConstT}.
 Lemma meta_word_upd_af mr a f' : meta_word (m_set_avail a (m_set_freed f' mr)) = meta_word mr.
-Proof.
-ltac2:(KReplay.run1 (kr_t_ASlot_W3 ()) ["CANSEC1"] "h01ah12f'h22mrp;1p;2p10000p4p70R0p1000eR1p4p710p8P0p1001>R0p4p710p8p1001Rp4p70R2P1p4p741110p8P2P0p4p7210p8P2P0p4p73110p8g002Gj11Tg003Fj20Tg003`R0g004WR2f2R1#1,02X12X02X20P1f1f0O3X12W0W2o"). Qed.
+Proof. reflexivity. Qed.
 
 Lemma decay_bounces_eq sc st :
   decay_bounces sc st =
   if ((7 <=? sc) && (sc <? 39)) && negb (bounces st (sc - 7) =? 0) then set_bounce (sc - 7) (bounces st (sc - 7) - 1) st else st.
-Proof.
-ltac2:(KReplay.run1 (kr_t_ASlot_W3 ()) ["CANSEC1"] "h02sch12stp;1p;2p;3g0055j10Tg005Zj11Tg0068j2:Tg006Uj13Tg007:j2;Tg007Wj24Tg0085j22Tg008Rj29Tg009Jj27Tg009gj16Tg00:Ej35Tg003Fj28Tg004WR0g00;@R1g00<9P1g00<YR2#0#0#1R3f1R4':%32#3#0#0#0#1,;4'4f0R51243R3'9R6g00=>'7#6'4%12,26=535P5n0100000020000,81X11X00P4P5O2W1W0o"). Qed.
+Proof. reflexivity. Qed.
 
 Section AVZ.
 Variables (st : mstate) (m : mem) (g b : aptr) (gh : ghdr).

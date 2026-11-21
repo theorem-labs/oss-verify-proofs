@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs: generated for reac-pw/fuzz_pin image B by gen_ad1k.py a93a5ff60645 (the start-up tool set at tools commit 96d2c32e287) from this image's lib/AU/YD2j.v and lib/AU/YF0m.v, template proofs/cgif/cgif_file_fuzzer/lib/YD1k.v at c8557374ad2e, module paths changed (Requires placed in lib/Reusable / lib/AU) and only its image literals regenerated *)
+(* Modified by Theorem Labs: generated for reac-pw/fuzz_pin image B by gen_ad1k.py a93a5ff60645 (the start-up tool set at tools) from this image's lib/AU/YD2j.v and lib/AU/YF0m.v, template proofs/cgif/cgif_file_fuzzer/lib/YD1k.v at theorem-labs/oss-verify-proofs@6b32741d849a, module paths changed (Requires placed in lib/Reusable / lib/AU) and only its image literals regenerated *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (fdchan's third conjunct, the channel-reader flag, carried in cs_ok (co_rdr) and threaded to the fd sites); internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_pin.asan-ubsan (reac-pw/fuzz_pin asan-ubsan) sha256 d6f83d30152279dadae39fc626707a0037090a8909a186dac3c362b12088201f; unstripped twin sha256 635d02c7e8fa2e1653012207b6ddd2f2c5dd3b8e578ee9607cdc35b94e5260bb *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -328,7 +329,7 @@ apply (tfib_not_owned_static B F_STDERR (F_STDERR + FILE_SZ) a HB); [vm_compute;
 - left. unfold kLowMemEnd. lia.
 - exact (proj1 (rodata_shadow_facts ly S W mem md p len HAR Hp1 ltac:(lia) ltac:(lia))).
 - exact (proj2 (rodata_shadow_facts ly S W mem md p len HAR Hp1 ltac:(lia) ltac:(lia))).
-- split; [exact Hfd | reflexivity].
+- exact Hfd.
 - exact HAI.
 - intros regs' mem' md' HAR' HP' Hsbm' Ha0' HFW' Hfr' Hpr' HAI'.
 apply (HPOST regs' mem' md' HAR' HP' Hsbm' Ha0').
@@ -361,7 +362,7 @@ apply (tfib_not_owned_static B F_STDERR (F_STDERR + FILE_SZ) a HB); [vm_compute;
 - exact (u64_range (sv_denot E (SOff 41 0))).
 - exact (ro_img_of_IMG E _ HIMG).
 - apply (rodata_hull_zero ly S W mem md); [exact HAR | unfold FMT_refused; lia | unfold FMT_refused; lia | lia].
-- split; [exact Hfd | reflexivity].
+- exact Hfd.
 - exact HAI.
 - intros regs' mem' md' HAR' HP' Hsbm' Ha0' HFW' Hfr' Hpr' HAI'.
 apply (HPOST regs' mem' md' HAR' HP' Hsbm').

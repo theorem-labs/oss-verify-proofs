@@ -5,7 +5,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntryLeave), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/ACez.v, proofs/cgif/cgif_file_fuzzer/lib/A/ACfh.v, proofs/cgif/cgif_file_fuzzer/lib/YCbo.v, proofs/cgif/cgif_file_fuzzer/lib/YCbq.v. *)
 (* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/Prog/GrantEntryEndFree.v and lib/A/Prog/GrantEntryLeave.v. *)
-(* Ported from a working branch 552860c6366 (lib/A/Prog/GrantEntryEndFree.v, ge_end_free) and a working branch 7c8c67da870 (lib/A/Prog/GrantEntryLeave.v, ge_leave); neither image-A file carries licence lines. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Ported from a working branch (lib/A/Prog/GrantEntryEndFree.v, ge_end_free) and a working branch (lib/A/Prog/GrantEntryLeave.v, ge_leave); neither image-A file carries licence lines. *)
 (* The end of the walk of fuzz_grant's entry function LLVMFuzzerTestOneInput on image B
    (fuzz_grant.asan-ubsan, 0x80a3c): the phase END (0x81da4 .. 0x81e94, from the cut
    `GI_freeT` to the cut `GI_leave`) and the phase LEAVE (0x80cd8 .. 0x80d94, from the cut

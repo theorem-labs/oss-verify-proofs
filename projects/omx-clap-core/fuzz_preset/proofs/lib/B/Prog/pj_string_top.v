@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: pj_string of fuzz_preset's asan-ubsan image (B 0x87208, 49 instructions; preset_file.c
    :406-411): the kit's text tpj_string_specX
    (lib/A/PRH_FnPj.v: ENTRY-keyed, no DW, the run keyed on ReaderRes.jr_strtod, the entry premise
@@ -18,7 +19,7 @@
    live-set premises (pjs_cnt) from the text's model-run position by counts_of_room_pos_rl (lib/Spec/PresetRoomCounts.v);
    tpj_string_B_holds chains pj_string_seg_ent.v, pj_string_seg_call.v and pj_string_seg_ep.v. Supply of the run
    premise at check_round_trip's entry: pj_string_evs_supply_rt (over the kit's prhPj_string_evs_supply).
-   THE cf_head = 0 HOLE (this walk's finding against a3bdeca3920, now in the text as prh_head_wide): with cf_head < 8 -
+   THE cf_head = 0 HOLE (this walk's finding, now in the text as prh_head_wide): with cf_head < 8 -
    in particular cf_head = 0, which CfParams admits for a harness that hides no head - v may start a live harness block
    (prhPj_slot's first case with v = a), and pj_string's 56-byte memset of the node zeroes the block's head word, which
    prh_ledger reads (prh_hblock's `val_mem .. (a - cf_head) 8 k`): the post's ledger is then false. The same finding
@@ -28,7 +29,7 @@
    Theorems and their Section hypotheses (callee texts in the kit's forms, or named stand-ins; none proved here):
      tpj_string_B_holds (generic B, ARx, CfParams):
        MEMSET   YGcallMxmn.aintrin_realizes_xm SEGS B ARx OSet (pa_sigma AS___asan_memset) (the m-form intrinsic text);
-       STRDUP   tfuzz_strdup_specX B ARx SK (the text, lib/A/PRH_FnAlloc.v:517-558 at d607d12e4b0f; never unfolded,
+       STRDUP   tfuzz_strdup_specX B ARx SK (the text, lib/A/PRH_FnAlloc.v:517-558; never unfolded,
                 its post read by name);
        LAWS     AR_laws_x SEGS B ARx cf_head (the kit's allocator laws);
        PAL      PALib B (the unit's image binding of B; stand-in as in FuzzFreeB.v, owner a Theorem Labs lane);
@@ -39,7 +40,7 @@
                 premise from the text's position; at preset's instance pjs_hull_preset, from lib/A/PresetHullPay.v
                 hull_budget_of_room_pos).
      tpj_string_B_holds_kit: GLIT from TS : YF0m.TfibSyms B (the kit's binding record as the lib/AU consumers take
-       it, lib/AU/AGic.v:35) by pjs_g_lit_of_tfib (image B's generated Tfib_owned_static / TFIB_ERRNO /
+       it, lib/AU/AGic.v:36) by pjs_g_lit_of_tfib (image B's generated Tfib_owned_static / TFIB_ERRNO /
        Tfib_const_shadow, lib/Reusable/YF0m.v blob 04da606c5ad9, by computation); GSH is img_shadow_vis_cf
        (the Definition at lib/Reusable/YGcfAmx2.v, in this ARx form).
      tpj_string_B_preset: at preset's instance - CfParams_preset (cf_head = 16), B := YD2l.TfibB, ARx :=
@@ -183,7 +184,7 @@ Qed.
 End c.
 
 (* ---- THE OLD LITERAL PREMISE AND ITS REFUTATION AT THE REAL INSTANCE (kind-A vacuity; the image-A twin is
-   S6PalLitRefute.v, blob eceb508ec279). pjs_g_lit_old_txt is pj_string_defs.v's pjs_g_lit at 39b77f9f3eda, verbatim over its Section's B and
+   S6PalLitRefute.v, blob eceb508ec279). pjs_g_lit_old_txt is pj_string_defs.v's pjs_g_lit, verbatim over its Section's B and
    ARx. At YD2l.TfibB: PJS_LIT = 0x21420 (pjs_lit_B), and PJS_LIT + 1 lies in an owned-static range, ASan's redzone after
    the 1-byte global (pjs_lit_owned_B), so the old text is FALSE for every allocator relation (pjs_g_lit_unsat_B), and
    every theorem that took it was VACUOUS at the instance. The facts are closed goals decided by vm_compute; this
@@ -224,7 +225,7 @@ Lemma pjs_lit_B : PJS_LIT = 0x21420.
 Proof. vm_compute. reflexivity. Qed.
 
 (* (b) the literal's second byte is owned-static at the instance: the row (0x21421, 31) of image B's generated
-   Tfib_owned_static (lib/Reusable/YF0m.v, TfibB's as_owned_static, YD2l.v:34) *)
+   Tfib_owned_static (lib/Reusable/YF0m.v, TfibB's as_owned_static, YD2l.v:35) *)
 Lemma pjs_lit_owned_B : In (0x21421, 31) YF0m.Tfib_owned_static /\
   Exists (in_zr (PJS_LIT + 1)) (as_owned_static YD2l.TfibB).
 Proof.
@@ -301,7 +302,7 @@ Hypothesis PAL : PALib (L := B_prog_listing) (PI := PI_prog_B) B.
    instance it is pjs_g_lit_sh_B *)
 Hypothesis img_shadow_vis_cf : forall ly S Hp W mem md a, ARx ly S Hp W mem md -> IMG_LO_B <= a < IMG_TOP_B ->
   aview SEGS (w_H W) mem (shadow_addr a) <> None.
-(* the kit's binding of B to image B's generated tables, as the lib/AU consumers take it (AU/AGic.v:35) *)
+(* the kit's binding of B to image B's generated tables, as the lib/AU consumers take it (AU/AGic.v:36) *)
 Hypothesis TS : YF0m.TfibSyms B.
 Hypothesis HULL : @pjs_g_hull cp.
 
@@ -356,7 +357,7 @@ End p.
 (* ---- THE SUPPLY at check_round_trip's entry (anti-vacuity): the run premise of tpj_string_specX holds of the model
    run at the rewrite's pj_string, from check_round_trip's own run premise over PresetReqAt.round_trip (JObj ms): the
    rewrite's events come after the two round_trip_text runs and pj_free (&doc) (split by PRH_Base.prh_run_at_app_iff),
-   and their head is pj_string's (the prhPj_string_evs_supply, PRH_FnPj.v:296 at f97c8b2f046b; the chosen failure
+   and their head is pj_string's (the prhPj_string_evs_supply, PRH_FnPj.v:296; the chosen failure
    needs nothing: prhPj_string_evs is [] there). The head width cf_head = HEAD is 16 = 16 at CfParams_preset
    (pjs_head_preset). ---- *)
 Section s. Context {cp : CfParams}.

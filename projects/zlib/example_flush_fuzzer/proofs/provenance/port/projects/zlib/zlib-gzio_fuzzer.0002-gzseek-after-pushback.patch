@@ -1,0 +1,58 @@
+diff --git a/gzlib.c b/gzlib.c
+index c3b3efc27..04220039c 100644
+--- a/gzlib.c
++++ b/gzlib.c
+@@ -392,12 +392,16 @@ z_off64_t ZEXPORT gzseek64(gzFile file, z_off64_t offset, int whence) {
+     /* compute the absolute position */
+     pos = whence == SEEK_SET ? 0 :
+           state->x.pos + (state->past ? 0 : state->skip);
+-    if (offset > GZ_OFF_MAX - pos)
++    if (pos > 0 && offset > GZ_OFF_MAX - pos)
+         return -1;                          /* would overflow z_off64_t */
+     if (offset < -pos)
+         return -1;                          /* before start of file */
+     pos += offset;
+ 
++    /* the displacement from a negative position must fit in z_off64_t */
++    if (state->x.pos < 0 && pos > GZ_OFF_MAX + state->x.pos)
++        return -1;
++
+     /* if within raw area while reading, just go there */
+     if (state->mode == GZ_READ && state->how == COPY) {
+         ret = LSEEK(state->fd, pos - state->x.pos - (z_off64_t)state->x.have,
+diff --git a/test/example.c b/test/example.c
+index 9cc5f763b..9d37b0d76 100644
+--- a/test/example.c
++++ b/test/example.c
+@@ -11,6 +11,7 @@
+ 
+ #include "zlib.h"
+ #include <stdio.h>
++#include <limits.h>
+ 
+ #ifdef STDC
+ #  include <string.h>
+@@ -120,6 +121,23 @@ static void test_gzio(const char *fname, Byte *uncompr, uLong uncomprLen) {
+     }
+     strcpy((char*)uncompr, "garbage");
+ 
++    if (gzungetc('x', file) != 'x') {
++        fprintf(stderr, "gzseek after initial gzungetc error\n");
++        exit(1);
++    }
++    if (sizeof(z_off_t) == sizeof(z_off64_t)) {
++        z_off_t limit = (z_off_t)1 << (sizeof(z_off_t) * CHAR_BIT - 2);
++        limit += limit - 1;
++        if (gzseek(file, limit, SEEK_SET) != -1) {
++            fprintf(stderr, "gzseek at offset limit after gzungetc error\n");
++            exit(1);
++        }
++    }
++    if (gzseek(file, 1L, SEEK_CUR) != 0) {
++        fprintf(stderr, "gzseek after initial gzungetc error\n");
++        exit(1);
++    }
++
+     if (gzread(file, uncompr, (unsigned)uncomprLen) != len) {
+         fprintf(stderr, "gzread err: %s\n", gzerror(file, &err));
+         exit(1);

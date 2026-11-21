@@ -2,8 +2,8 @@
    (AgreePin.v). Prog/PinSlot.v proves the slot obligation under FrameAPI.frame_facts_plain, whose room
    conjunct is the halts frame's (lib_room -> sb_cap = CAPMAX); the agreement frame's shape AgreeShape.ag_shape has
    sb_cap = CAP_AG (1024), so frame_facts_plain does not hold at it. libreac/fuzz_ctrl's released plain slot carried
-   the weaker room 128 <= sb_cap <= CAPMAX in its own frame_facts for this reason (Prog/SlotInv.v:71 at
-   origin/ossv/recipes 25e3d17bdb50); pin's Prog/SlotInv.slot_room is that bound. Neither the segment statements
+   the weaker room 128 <= sb_cap <= CAPMAX in its own frame_facts for this reason (Prog/SlotInv.v:71);
+   pin's Prog/SlotInv.slot_room is that bound. Neither the segment statements
    (LLVMFuzzerTestOneInput_c.seg_lemmas) nor PinSlot.slot_early mention the shape, so both are taken at a halts
    shape LSh (any shape with frame_facts_plain), and PinSlot's Section Bridge (slot_post_g, slot_lib) is restated
    here, word for word, at a shape LS with frame_facts_plain's LIBK and lib_delta conjuncts and

@@ -40,7 +40,7 @@
    pb_ctrl_emit_as_stmt take {SK}, and a caller passes SK the same way. CtrlCallerJ's shapes and PALib take the PA
    instance by name, (PI := PI_ctrl).
 
-   Requires. C_ctrl_lay_block (a working branch b3f8a5cf908: tctrl_lay_block_spec,
+   Requires. C_ctrl_lay_block (a working branch: tctrl_lay_block_spec,
    TLAY_STK, EV_LAY, tfr_hull, A_FRAMES, A_CAT, ROW_BYTES, CAT_BYTES). Through it, C_reac_box_model_block, which is a
    statement-only contract (lib/A/Prog/C_reac_box_model_block.v, pb_reac_box_model_block_stmt): a Theorem Labs lane's file, landed, no longer a stand-in of a Theorem Labs lane's 4 Definitions.
 

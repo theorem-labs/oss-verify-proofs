@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the m_channel_reader premise; the reservation the system-call return clears). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -25,7 +26,7 @@ Import ListNotations.
 Open Scope Z_scope.
 
 Lemma nretA_MSsvc : forall R F pc x8 fc rv m ro r,
-  nretA (MSsvc R F pc x8 fc rv m ro) (mkEffect r [] []) = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4)%bv fc rv m ro.
+  nretA (MSsvc R F pc x8 fc rv m ro) (mkEffect r [] []) = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4)%bv fc None m ro.
 Proof. reflexivity. Qed.
 
 Lemma pc_93368 : (Z_to_bv 64 0xe2900 + Z_to_bv 64 4)%bv = Z_to_bv 64 0xe2904.
@@ -82,9 +83,9 @@ Proof using AF.
     split; [exact HDD|]. split; [reflexivity|].
     change (areg msA 11) with (Z_to_bv 64 path). pose proof (bytes_at_bound asegs m1 path _ HB1) as BB.
     rewrite unsigned_lit by (rewrite length_app in BB; cbn [length] in BB; lia). exact HB1.
-  - intros mo (HAR & HF & HFS). split; [exact HFS|]. split; [split; [exact HAR| split; assumption]|].
+  - intros mo (HAR & HF & HFS & HRD). split; [exact HFS|]. split; [split; [exact HAR| exact (conj HF (conj HFS HRD))]|].
     rewrite HF. split; [exact HFREE|]. split; [reflexivity|].
-    split; [apply (af_with_fds RT AF); exact HAR| split; [reflexivity| exact HFS]].
+    split; [apply (af_with_fds RT AF); exact HAR| split; [reflexivity| split; [exact HFS| exact HRD]]].
   - (* [comment removed for export] *)
     intros c2 (e & He & Hc2). pose proof (openat_errnos_range e He) as HeR.
     assert (EQ : nretA msA (efferr e) = MS (mkR (Z_to_bv 64 0xd5db8) (Z_to_bv 64 (usp + -96)) gp (Z_to_bv 64 0x62a808) (Z_to_bv 64 path)
@@ -198,7 +199,7 @@ Proof using AF.
     split; [exact HDD|]. split; [reflexivity|].
     change (areg msA 11) with (Z_to_bv 64 path). pose proof (bytes_at_bound asegs m1 path _ HB1) as BB.
     rewrite unsigned_lit by (rewrite length_app in BB; cbn [length] in BB; lia). exact HB1.
-  - intros mo (HAR & HF & HFS). split; [exact HFS| split; [exact HAR| split; assumption]].
+  - intros mo (HAR & HF & HFS & HRD). split; [exact HFS| split; [exact HAR| exact (conj HF (conj HFS HRD))]].
   - intros c2 (e & HeR & Hc2).
     assert (EQ : nretA msA (efferr e) = MS (mkR (Z_to_bv 64 0xd5db8) (Z_to_bv 64 (usp + -96)) gp (Z_to_bv 64 0x62a808) (Z_to_bv 64 path)
                    t1 t2 (Z_to_bv 64 0) (Z_to_bv 64 SSP_GUARD) (Z_to_bv 64 (- e)) (Z_to_bv 64 path) (Z_to_bv 64 0x8000) (Z_to_bv 64 0)

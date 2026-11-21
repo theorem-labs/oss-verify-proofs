@@ -8,7 +8,7 @@
    registers, the premises of ctrl_lay_block_cutsF.ly_store_tail read at the real memory (R4 moves them to
    MemNorm.normalize rsegs mem3), the output block, and what the call kept so far (acall_kept from the entry memory).
 
-   The store state (ctrl_lay_block_cutsF.ly_store_tail, cut file ad0627f1a39) is
+   The store state (ctrl_lay_block_cutsF.ly_store_tail, cut file) is
      mkR xra spc gp tp x5 x6 x7 sp SP2 (fs_flag FS 1 j) x11 .. x17 sfr x19 .. x23 (shadow_addr frb) frb ASAN_K s11
          x28 .. x31
    with Section CUTS's ra sp gp tp s0 .. s11 := the entry registers of the call (regs 1, 2, 3, 4, 8, 9, 18 .. 27),

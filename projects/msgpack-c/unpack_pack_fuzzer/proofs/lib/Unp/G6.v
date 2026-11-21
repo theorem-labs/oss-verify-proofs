@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the destruct of plain_mf takes the model facts' new third field, mf_reader, the channel reader). *)
 From Stdlib Require Import ZArith Bool List Lia.
 From Stdlib Require Import PrimInt63 Uint63.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
@@ -608,7 +609,7 @@ Proof.
   assert (SEP : Bz + L <= Nz \/ Nz + L <= Bz).
   { apply (iv_sep Nz Bz (2 * L) (v_bytes V) L); [| alia| alia| rewrite VBY; alia].
     intros a Ha Hb. apply (DISJN _ VOWN a Ha). unfold in_iv. cbn [fst snd]. rewrite LVB. exact Hb. }
-  pose proof (plain_mf _ _ OPS_plain Pmf0) as [MH ML].
+  pose proof (plain_mf _ _ OPS_plain Pmf0) as [MH ML _].
   rewrite MSE.
   apply (MEMCPY R FR fc m model Nz Bz L srcb junk K R10 R11 R12 ltac:(alia) ltac:(alia) ltac:(unfold two40Z in L40; alia) RETPC SRC
            ltac:(rewrite SLEN; reflexivity) DST SEP (MemFX.mem_inv_of_st_ok segs OPS E st ms model HS0) MH ML).

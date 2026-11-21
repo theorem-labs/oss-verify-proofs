@@ -7,13 +7,14 @@
    the store of g_rec.state (0x8aba8), the UBSan trap test of the shape pointer (0x8abac `beqz s3`, to the `unimp` at
    0x8ad30; refuted: an_pre's shape premise astr_argA gives sh <> 0), and the setup of syntax_instantiate's loop
    (0x8abb0 .. 0x8abc8), up to the cut point HEAD of lib/B/Prog/answer_s1.v (0x8abcc) with j = d = 0 and out = [].
-   The B twin of the mix_call arm and the loop setup of lib/A/Prog/answer_br.v (a working branch d28426fbb96,
+   The B twin of the mix_call arm and the loop setup of lib/A/Prog/answer_br.v (a working branch,
    A 0x8a648 .. 0x8a670); the helper lemmas are A's with a bm_ prefix. Changes from A: the walk starts at 0x8ab98
    with s11 = g_rec in a register (A's walk starts at 0x8a61c and computes s11 by auipc), so the seed's g_rec region
    is based at s11's atom; B's code has the UBSan test 0x8abac and B's loop registers (AN_HEAD_stmt's); the callee
    contract is taken at every FP state and used at the ambient one; the record facts are a Theorem Labs lane's CmdRecFacts lemmas
    over cmd_img_facts_tfib's statement at this walk's segments, the program statics' record fact CmdRecAns.v's
    rca_HPROG, and the seed environment and the realignment's arithmetic CmdSnText.v's snt_E / snt_sp1_facts. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

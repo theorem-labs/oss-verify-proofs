@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFg0.v, with its module paths changed and its addresses moved to omx-clap-core/fuzz_state's ASan build. *)
-(* Modified by Theorem Labs, 2026-10: EV_MAX raised to 11776 for fuzz_state (5e580eb5ab5); AFez.user_vs_D now takes the region bound kFreeArrayOffset instead of 2 ^ 31. *)
+(* Modified by Theorem Labs, 2026-10: EV_MAX raised to 11776 for fuzz_state; AFez.user_vs_D now takes the region bound kFreeArrayOffset instead of 2 ^ 31. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

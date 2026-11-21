@@ -6,16 +6,17 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v; 176 of its 211 lines of code are new or changed and 361 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/Tac_b5.v, with its module paths and module names changed; 1788 of its 1832 lines of code are new or changed and 167 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F17.v, with its module names changed; 134 of its 217 lines of code are new or changed and 1749 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/F17.v blob f83ca6832224 at d65d18383b1 (merged into this
-   branch at fb15888292d; Seg/Tac_f17b.v blob 8a2efdcdf106 (the blob this tree had at release c5e779efe8c)).
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   FACTS, PAU pau-libreac-v190. Source: Seg/F17.v blob f83ca6832224 (merged into this
+   branch; Seg/Tac_f17b.v blob 8a2efdcdf106 (the blob this tree had at release)).
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: f17_tail_of_pre_post re-derives F17.f17_tail from the two stretches at ExecF.RNG_all and the PLAIN
    callee contract; f17_tail_of_pre_post_verbatim checks by constr_eq that its type is the type of F17.f17_tail
-   after F17's own first premise (Hypothesis HMC : asan_memcpy_c.asan_memcpy_contract, F17.v:486).
+   after F17's own first premise (Hypothesis HMC : asan_memcpy_c.asan_memcpy_contract, F17.v:487).
    Mechanical re-run, route (a) (lead 22:15Z), SPLIT STRETCHES (a Theorem Labs lane 00:45Z); input to the ported walk only. *)
 (* SPLIT at the call __asan_memcpy (0x823d4, return 0x823d8): the callee had no _F of record on this tree then
    (asan_memcpy_contract_F was only a restated Section hypothesis in lib/A/Prog/declaration_ofF.v, reac_ctrl_parseF.v,
@@ -197,7 +198,7 @@ End PF.
 
 Section F17F.
 Context {fx : YK11.FPState} {LS : lib_shape} {rc : RunCeil}.
-(* The plain callee contract, as F17.v:486 takes it. *)
+(* The plain callee contract, as F17.v:487 takes it. *)
 Hypothesis HMC : ACPY.asan_memcpy_contract.
 
 (* ---- The two stretches at RNG_all, with the plain contract between them, re-derive F17.f17_tail. ---- *)
@@ -278,7 +279,7 @@ Qed.
 (* The pin, inside the section so that both types are read against the same {fx} / {LS} / {rc} and against the
    same plain-contract premise (HMC is still a hypothesis here, so f17_tail_of_pre_post's type is the statement
    itself): f17_tail_of_pre_post states F17.f17_tail's text after F17's own first premise, the plain memcpy
-   contract (F17.v:486, Hypothesis HMC), term for term (constr_eq: syntactic, not up to conversion). *)
+   contract (F17.v:487, Hypothesis HMC), term for term (constr_eq: syntactic, not up to conversion). *)
 Example f17_tail_of_pre_post_verbatim : True.
 Proof.
   lazymatch type of F17.f17_tail with ?P -> ?A =>

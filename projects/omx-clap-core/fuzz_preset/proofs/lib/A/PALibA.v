@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Theorem Labs, 2026-10: fuzz_preset, image A' (#102 pin asan 1be0f53d96cb, unstripped twin bff8519bbe3e; facts 8f3e7e1a07f1):
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10: fuzz_preset, image A' (#102 pin asan 1be0f53d96cb, unstripped twin bff8519bbe3e; facts):
    the A' twin of the old-pin PALibA (9191751aea39, pin d83eb25dbf0d), the same proof text, built against the A' record files
    (AD2l eb321db7a357, AF0m 97f423adf6eb, listing 7ed1529926bd / PAImg_prog 505a51ff7d08, YImgTop d2a97d3111ce): the
    image-A twin of lib/B/PALibB.v, the ONE HOME of the image-instance facts every image-A program walk takes as Section
    stand-ins: YC1fP.PALib at the whole-program listing PI_prog_A and B := TfibB of lib/A/AD2l.v (image A's generated
    record), the head length and the laws of h-mani-a8's second allocator instance ARcf rsegs TfibB at CfParams_preset.
    Proves nothing about the program. Shaped on h-rw-pre-7's image-B proof (lib/B/Prog/ExvB_ImgFacts.v :186 / :196 /
-   :211 / :214 at origin/cold/h-rw-pre-7-b-ex_value 96eea692f6cd, moved to lib/B/PALibB.v): same tactics, image A's
+   :211 / :214, moved to lib/B/PALibB.v): same tactics, image A's
    record, listing and image. Closed facts by vm_compute on closed terms only.
    Numerals: none typed except 4 (LENGTH: errno) and the errno address, which is read from the record (as_errno TfibB =
    AD2l's TFIB_ERRNO) and checked against kLowMemEnd by computation. *)

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/AllocGtopPresetM.v, with its module paths and numbers changed; 170 of its 263 lines of code are new or changed and 43 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10-30: fuzz_preset (a Theorem Labs lane memnorm102, row A11): preset's Allocate tops at A' (#102 pin
    fuzz_preset.asan 1be0f53d96cb) from the relocated memnorm walk, at the cf instance's arguments.
    rule 24: no function proved (kind: top-level composition over the relocated walk tops).
@@ -35,7 +36,7 @@
    - IOK_inst : IOK_ok B IOK    the instance-object choice; trivial at IOK := (eq (as_inst B)) (caller's choice).
    - HDH                        the record's depot hash; at B := TfibB it is CfInstHitImgA.dhash_TfibB_A.
    - (closed since 2026-10-31) HRW : refill_walk_cf B IOK, the A' refill RUN: a Theorem Labs lane's
-                                lib/A/YGcfRefillToppreset.v:51 refill_walk_cf_preset_closed (a working branch).
+                                lib/A/YGcfRefillToppreset.v:52 refill_walk_cf_preset_closed (a working branch).
    - IFSc / IFSEc               the secondary interfaces at the cf instance: a Theorem Labs lane S (AIfaceSw, AIfaceSE).
    At preset's record all of them close: [aalloc_realizes_cf_em_m_TfibB_A] (TS, IOK_inst, HDH) and
    [aalloc_realizes_cf_em_m_TfibB_closed_A] (IFSc / IFSEc by a Theorem Labs lane's lib/A/YGcfInstSecA.v), which has no premise.
@@ -190,7 +191,7 @@ Hypothesis TS : im_syms B.
 Hypothesis IOK_inst : IOK_ok B IOK.
 Hypothesis HDH : forall t, as_dhash B t = YF0p.tfib_dhash t.
 
-(* MissW's HRW at A': the closed refill walk (lib/A/YGcfRefillToppreset.v:51, this tree's file),
+(* MissW's HRW at A': the closed refill walk (lib/A/YGcfRefillToppreset.v:52, this tree's file),
    stated at AGImgA.AGImg_A since a rename dedupe (A/AGif0preset.v deleted). *)
 Lemma HRW_A : refill_walk_cf B IOK.
 Proof.
@@ -242,7 +243,7 @@ Proof. exact (CfInstImgA.oom_errb_apart_A B TS). Qed.
 (* field round 3: the printf cells' row and the relro segment, at A' (round 6g's CfIalApartPreset / CfAroPresetA) *)
 Lemma HPFA_A : YG0ncf.pf_cells_apart_t B. Proof. exact (CfIalApartPreset.pf_cells_apart_A B TS). Qed.
 Lemma HRS_A : YG0ncf.relro_seg_t im_segs. Proof. exact CfAroPresetA.relro_seg_preset_A. Qed.
-(* MissW's HDEP at A': YGcfInstF1WA's depot field at image A (U_cf B is cf_tr_ok B by definition, YGcfInstBase.v:597),
+(* MissW's HDEP at A': YGcfInstF1WA's depot field at image A (U_cf B is cf_tr_ok B by definition, YGcfInstBase.v:598),
    at the walk relation ARXq_cf B IOK Hp, whose ARcf conjunct gives F1WA's HAR. *)
 Lemma HDEP_A : forall Hp, CLdepot.depot_field im_segs ag_depot_put im_tp B (ARXq_cf B IOK Hp) (U_cf B) ag_dzone
   (fun ly a => ag_dzone ly a \/ ag_czone ly a).
@@ -252,7 +253,7 @@ exact (YGcfInstF1WA.if_depot_cf_at_A B TB Hp (ARXq_cf B IOK Hp)
   (fun inst ly S W mem md H => proj1 (proj2 (proj1 H))) HDH).
 Qed.
 (* field round 3: the depot's write zone misses the two printf cells, at A'.  The script
-   of cgif's YGcfInstHitcgif.PF_AG_cgif (a working branch): A''s zone AGis.DZONE (A/AGis.v:231) is the static part
+   of cgif's YGcfInstHitcgif.PF_AG_cgif (a working branch): A''s zone AGis.DZONE (A/AGis.v:232) is the static part
    [0x17cd88, 0x5cd510) or the NB / SB blocks.  The cells lie below the store (pf_cells_apart_t, [HPFA_A]), so not in
    the static part, and inside the image, which the NB / SB blocks miss (static extents 4 and 5 against 9). *)
 Lemma PF_AG_A : forall ly' a, layout_ok ly' -> im_img_cover ly' -> ly_tsd ly' = as_tsd B -> ag_dzone ly' a ->
@@ -282,8 +283,8 @@ Local Ltac img_rows :=
   pose proof oom_const_A as oom_const_img; pose proof HPFA_A as HPFA; pose proof HRS_A as HRS;
   pose proof HDEP_A as HDEP; pose proof PF_AG_A as PF_AG; pose proof HRW_A as HRW.
 
-(* ---- the k interface at the cf instance: lane H's ifaceK_cf (YGcfInstHit.v:589; AOX_cf B / rpre_cf B are AOXm_cf B /
-   rpre_cfr B by definition, YGcfInstBase.v:598-599), over the rows above. ---- *)
+(* ---- the k interface at the cf instance: lane H's ifaceK_cf (YGcfInstHit.v:590; AOX_cf B / rpre_cf B are AOXm_cf B /
+   rpre_cfr B by definition, YGcfInstBase.v:599-600), over the rows above. ---- *)
 Lemma IFKc_A : forall Hp,
   AIfaceK B (U_cf B) malloc_cf (ARXq_cf B IOK Hp) (AOXm_cf B) (YGcfRmodel.rpre_cfr B) cf_malloc_max LIVE_MAX qtight
     (dpost_cf B) cf_pc_malloc_max cf_pc_spin_shadow.

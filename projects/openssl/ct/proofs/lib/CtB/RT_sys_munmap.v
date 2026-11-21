@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the munmap changes of the model; the vDSO pair in the reserved ledger; the writev channel-reader flag). *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.openssl.ct.lib.CtLib Require Import ImageCtA.
 (* [comment removed for export] *)
@@ -49,6 +50,25 @@ Lemma zbound_map_remove : forall (l : list (word * word)) (a : word),
   Z.of_nat (length l) <= Z.of_nat (length (List.filter vpos l)) + 1 ->
   Z.of_nat (length (map_remove l a)) <= Z.of_nat (length (List.filter vpos (map_remove l a))) + 1.
 Proof. intros l a H. pose proof (zcount_map_remove l a) as C. lia. Qed.
+
+(* 08b1429: the munmap successor's maps are [map_remove] less the zero-size entries at a + n
+   ([NodesA_mm.mdl_munmap], [nz_at]); [vpos] drops those anyway. *)
+Lemma filter_vpos_nz : forall z (l : list (word * word)),
+  List.filter vpos (List.filter (nz_at z) l) = List.filter vpos l.
+Proof.
+  intros z l. induction l as [|e l IH]; [reflexivity|]. cbn [List.filter].
+  destruct (nz_at z e) eqn:En; cbn [List.filter]; rewrite ?IH; [reflexivity|].
+  destruct (vpos e) eqn:Ev; [|reflexivity]. exfalso. unfold nz_at, vpos in *.
+  apply Z.ltb_lt in Ev. apply negb_false_iff in En. apply andb_prop in En as [E _]. apply Z.eqb_eq in E. lia.
+Qed.
+
+Lemma length_filter_le' : forall {T} (f : T -> bool) (l : list T), (length (List.filter f l) <= length l)%nat.
+Proof. intros T f l. induction l as [|x l IH]; cbn [List.filter length]; [lia|]. destruct (f x); cbn [length]; lia. Qed.
+
+Lemma zbound_nz : forall z (l : list (word * word)),
+  Z.of_nat (length l) <= Z.of_nat (length (List.filter vpos l)) + 1 ->
+  Z.of_nat (length (List.filter (nz_at z) l)) <= Z.of_nat (length (List.filter vpos (List.filter (nz_at z) l))) + 1.
+Proof. intros z l H. rewrite filter_vpos_nz. pose proof (length_filter_le' (nz_at z) l). lia. Qed.
 
 Lemma FOP_perm : forall {X} (R : X -> X -> Prop), (forall x y, R x y -> R y x) ->
   forall l l', Permutation l l' -> ForallOrdPairs R l -> ForallOrdPairs R l'.
@@ -121,12 +141,14 @@ Proof.
   intros mo a n Hwf Hsep Hin Hpos Hnc. pose proof Hwf as (Wm & Wn & Wl & _). pose proof (u64_range n) as Rn.
   remember (bv_unsigned a) as lo eqn:Elo. remember (lo + bv_unsigned n) as hi eqn:Ehi.
   assert (Hlh : lo <= hi) by lia.
-  assert (Wr : ivs_wf (map_remove (vm_maps (m_vmmaps mo)) a)) by (apply ivs_wf_filter; exact Wm).
+  assert (Wr : ivs_wf (List.filter (nz_at (bv_unsigned a + bv_unsigned n)) (map_remove (vm_maps (m_vmmaps mo)) a)))
+    by (apply ivs_wf_filter; apply ivs_wf_filter; exact Wm).
   assert (Wm' : ivs_wf (vm_maps (m_vmmaps (mdl_munmap mo a n)))) by (rewrite mdl_munmap_vmmaps; exact Wr).
   rewrite (eager_used_sem' _ Wm'), (eager_used_sem' _ Wm). rewrite mdl_munmap_vmmaps, mdl_munmap_lazy.
   cbn [vm_maps vm_noaccess]. rewrite <- Elo, <- Ehi.
   set (l := vm_maps (m_vmmaps mo)) in *.
   set (Q := fun x => negb (covered (vm_noaccess (m_vmmaps mo) ++ m_vm_lazy mo) x)).
+  eapply Z.le_trans; [apply Z.add_le_mono_r; apply sum_count_filter_le'|].
   (* [comment removed for export] *)
   assert (E1 : sum_count (fun x => negb (covered (maps_subtract (vm_noaccess (m_vmmaps mo)) lo hi
                                                    ++ maps_subtract (m_vm_lazy mo) lo hi) x)) (map_remove l a)
@@ -159,6 +181,7 @@ Proof.
   intros mo a n (_ & _ & Wl & _) H Hsep Hin Hpos iv Hiv Hsz. rewrite mdl_munmap_lazy in Hiv. rewrite mdl_munmap_vmmaps. cbn [vm_maps].
   destruct (maps_subtract_pieces' _ _ _ iv Wl Hiv) as (r & Hr & P1 & P2 & P3).
   destruct (H r Hr ltac:(lia)) as (e & He & E1 & E2). exists e. split; [|lia].
+  apply filter_In. split; [|unfold nz_at; rewrite (proj2 (Z.eqb_neq (bv_unsigned (snd e)) 0)) by lia; reflexivity].
   unfold map_remove. apply filter_In. split; [exact He|].
   destruct (bv_eqb (fst e) a) eqn:Eb; [|reflexivity]. exfalso. apply bv_eqb_eq in Eb.
   destruct (FOP_In_apart _ _ _ _ Hsep He Hin) as [D|D].
@@ -206,6 +229,7 @@ Proof.
     split.
     { unfold map_has. apply existsb_exists. exists (Z_to_bv 64 mb, Z_to_bv 64 len). split; [exact Hin|].
       cbn [fst snd]. rewrite !bv_eqb_refl. reflexivity. }
+    split; [exact Hsep|].
     split.
     { rewrite overlap_sum_zero; [rewrite Elim; unfold E0_MAX, VMLIMIT in *; lia|].
       apply Forall_forall. intros q Hq. apply filter_In in Hq as [Hq Hb]. apply negb_true_iff in Hb.
@@ -215,16 +239,22 @@ Proof.
     split.
     + (* [comment removed for export] *)
       split.
-      { rewrite mdl_munmap_vmmaps. cbn [vm_maps]. rewrite filter_map_remove.
+      { rewrite mdl_munmap_vmmaps. cbn [vm_maps]. rewrite filter_vpos_nz, filter_map_remove.
         exact (Permutation_trans (Permutation_map_remove _ _ _ Hperm) (Permutation_sym Hperm')). }
-      split; [rewrite mdl_munmap_vmmaps; cbn [vm_reserved]; exact Eres|].
+      (* the unmap leaves [vm_reserved] alone and its new [vm_maps] is a sublist of the old
+         one ([NodesA_mm.mdl_munmap_vmmaps]: List.filter of map_remove, itself a
+         List.filter), so every surviving entry inherits its apartness from the vDSO tail. *)
+      split; [rewrite mdl_munmap_vmmaps; cbn [vm_reserved vm_maps];
+              apply (artm_res_incl _ (vm_maps (m_vmmaps mo)) _ Eres);
+              intros q Hq; apply filter_In in Hq as [Hq _];
+              unfold map_remove in Hq; apply filter_In in Hq as [Hq _]; exact Hq|].
       split; [rewrite mdl_munmap_vmmaps; cbn [vm_limit]; exact Elim|].
       split.
       { pose proof (eager_munmap_exact mo _ _ Hwf Hsep Hin ltac:(rewrite Eul; lia) Hnc) as Hle. rewrite Eul in Hle. lia. }
       pose proof Hwf as (Wm & Wn & Wl & _).
       split; [apply model_ivs_wf_munmap; exact Hwf|].
       split; [exact (lazy_in_maps_munmap' mo _ _ Hwf Hlz Hsep Hin ltac:(rewrite Eul; lia))|].
-      split; [rewrite mdl_munmap_vmmaps; cbn [vm_maps]; apply FOP_filter; exact Hsep|].
+      split; [rewrite mdl_munmap_vmmaps; cbn [vm_maps]; apply FOP_filter; apply FOP_filter; exact Hsep|].
       split; [rewrite mdl_munmap_vmmaps; cbn [vm_init_sp]; rewrite EL; exact Hisp|].
       split.
       { intros z Hz. rewrite EL. apply Hcf. rewrite mdl_munmap_vmmaps, mdl_munmap_lazy in Hz.
@@ -238,8 +268,8 @@ Proof.
         - intros x Hx. pose proof (Hnc x ltac:(rewrite Eua, Eul; lia)) as C. rewrite covered_app in C.
           apply orb_false_iff in C as [_ C]. exact C. }
       (* [comment removed for export] *)
-      split; [unfold maps_zbound; rewrite mdl_munmap_vmmaps; cbn [vm_maps]; exact (zbound_map_remove _ _ Hzb)|].
+      split; [unfold maps_zbound; rewrite mdl_munmap_vmmaps; cbn [vm_maps]; exact (zbound_nz _ _ (zbound_map_remove _ _ Hzb))|].
       (* [comment removed for export] *)
       apply NodesA_madv.noaccess_pos_munmap; [exact Hwf| exact Hnp].
-    + apply (HPMc mo); [apply mdl_munmap_fds| apply mdl_munmap_fs| exact HPc].
+    + apply (HPMc mo); [apply mdl_munmap_fds| apply mdl_munmap_fs| apply mdl_munmap_reader| exact HPc].
 Qed.

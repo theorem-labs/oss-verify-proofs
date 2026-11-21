@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -349,7 +350,7 @@ Definition push_backA_cps : Prop :=
   forall (Σ : rts RT) (K : config -> Prop) (L : list (Z * Z)) (st : ossA) (len lo O q fO : Z) (kO : nat)
          (ra gp t0 t1 t2 s0 s1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word) (F : bvmap 5 word) (fc : bv 32) (m : mem),
   fdfs_only PMc -> mat_stable PMc ->
-  rt_live RT Σ = oachunk st ++ L -> (forall p n, In (p, n) L -> 0 < n) -> In (fO, kO) (rt_frames RT Σ) -> oss_inA fO kO O -> rt_sp0 RT Σ - STACK_WIN <= lo -> 0x7fff7f800000 <= lo ->
+  rt_live RT Σ = oachunk st ++ L -> (forall p n, In (p, n) L -> 0 < n) -> In (fO, kO) (rt_frames RT Σ) -> oss_inA fO kO O -> rt_sp0 RT Σ - STACK_SPAN <= lo -> 0x7fff7f800000 <= lo ->
   STRREPA m O st -> OSNUMA len st -> OSHADOWA m O -> oa_w st = oa_lim st -> 0 <= len <= SJ_PADMAX -> 2 * oa_cap st <= PJ_CAPMAX len ->
   ART RT Σ m -> mem_inv bsegs m -> stk bsegs m lo q -> lo + OSS_PB_STACK_A <= q -> q + 16 <= USTACK_TOP -> q mod 16 = 0 ->
   Z.of_nat (length (rt_live RT Σ)) + 1 <= LIVE_MAX -> mcost (2 * oa_cap st) <= rt_credit RT Σ ->
@@ -370,7 +371,7 @@ Definition overflowA_cps : Prop :=
   forall (Σ : rts RT) (K : config -> Prop) (L : list (Z * Z)) (st : ossA) (len lo O q c fO : Z) (kO : nat)
          (ra gp t0 t1 t2 s0 s1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word) (F : bvmap 5 word) (fc : bv 32) (m : mem),
   fdfs_only PMc -> mat_stable PMc ->
-  rt_live RT Σ = oachunk st ++ L -> (forall p n, In (p, n) L -> 0 < n) -> In (fO, kO) (rt_frames RT Σ) -> oss_inA fO kO O -> rt_sp0 RT Σ - STACK_WIN <= lo -> 0x7fff7f800000 <= lo ->
+  rt_live RT Σ = oachunk st ++ L -> (forall p n, In (p, n) L -> 0 < n) -> In (fO, kO) (rt_frames RT Σ) -> oss_inA fO kO O -> rt_sp0 RT Σ - STACK_SPAN <= lo -> 0x7fff7f800000 <= lo ->
   SBINVA' m O len st -> OSHADOWA m O -> oa_w st = oa_lim st -> 0 <= len <= SJ_PADMAX -> 2 * oa_cap st <= PJ_CAPMAX len -> 0 <= c < 256 ->
   ART RT Σ m -> mem_inv bsegs m -> stk bsegs m lo q -> lo + OSS_OV_STACK_A <= q -> q + 16 <= USTACK_TOP -> q mod 16 = 0 ->
   Z.of_nat (length (rt_live RT Σ)) + 1 <= LIVE_MAX -> mcost (2 * oa_cap st) <= rt_credit RT Σ ->
@@ -389,7 +390,7 @@ Definition xsputnA_cps : Prop :=
   forall (Σ : rts RT) (K : config -> Prop) (L : list (Z * Z)) (st : ossA) (len lo O q S N CAP fO : Z) (kO : nat) (bs : list byte)
          (ra gp t0 t1 t2 s0 s1 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word) (F : bvmap 5 word) (fc : bv 32) (m : mem),
   fdfs_only PMc -> mat_stable PMc ->
-  rt_live RT Σ = oachunk st ++ L -> (forall p n, In (p, n) L -> 0 < n) -> In (fO, kO) (rt_frames RT Σ) -> oss_inA fO kO O -> rt_sp0 RT Σ - STACK_WIN <= lo -> 0x7fff7f800000 <= lo ->
+  rt_live RT Σ = oachunk st ++ L -> (forall p n, In (p, n) L -> 0 < n) -> In (fO, kO) (rt_frames RT Σ) -> oss_inA fO kO O -> rt_sp0 RT Σ - STACK_SPAN <= lo -> 0x7fff7f800000 <= lo ->
   SBINVA' m O len st -> OSHADOWA m O -> 0 <= len <= SJ_PADMAX ->
   rw_cells bsegs m S [CB (Z.to_nat CAP) bs] -> 1 <= N <= CAP -> 0 < S -> S + CAP <= lo -> acc bsegs m S N ->
   ((exists p k, In (p, k) L /\ p <= S /\ S + CAP <= p + k) \/ (fO <= S /\ S + CAP <= fO + fs_size kO - 8)) -> (S + CAP <= O \/ O + 264 <= S) ->
@@ -411,7 +412,7 @@ Definition putA_cps : Prop :=
   forall (Σ : rts RT) (K : config -> Prop) (L : list (Z * Z)) (st : ossA) (len lo O q BUF N CAP fO : Z) (kO : nat) (bs : list byte)
          (ra gp t0 t1 t2 s0 s1 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word) (F : bvmap 5 word) (fc : bv 32) (m : mem),
   fdfs_only PMc -> mat_stable PMc ->
-  rt_live RT Σ = oachunk st ++ L -> (forall p n, In (p, n) L -> 0 < n) -> In (fO, kO) (rt_frames RT Σ) -> oss_inA fO kO O -> rt_sp0 RT Σ - STACK_WIN <= lo -> 0x7fff7f800000 <= lo ->
+  rt_live RT Σ = oachunk st ++ L -> (forall p n, In (p, n) L -> 0 < n) -> In (fO, kO) (rt_frames RT Σ) -> oss_inA fO kO O -> rt_sp0 RT Σ - STACK_SPAN <= lo -> 0x7fff7f800000 <= lo ->
   OSSINVA m O len st 0xFFFFFFFF -> OSHADOWA m O -> LOCBA m -> 0 <= len <= SJ_PADMAX ->
   rw_cells bsegs m BUF [CB (Z.to_nat CAP) bs] -> 0 <= N <= CAP -> 0 < BUF -> BUF + CAP <= lo -> acc bsegs m BUF N ->
   ((exists p k, In (p, k) L /\ p <= BUF /\ BUF + CAP <= p + k) \/ (fO <= BUF /\ BUF + CAP <= fO + fs_size kO - 8)) -> (BUF + CAP <= O \/ O + 264 <= BUF) ->
@@ -434,7 +435,7 @@ Definition oss_ctorA_cps : Prop :=
   forall (Σ : rts RT) (K : config -> Prop) (len lo O q fO : Z) (kO : nat) (junk : list byte)
          (ra gp t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word) (F : bvmap 5 word) (fc : bv 32) (m : mem),
   fdfs_only PMc -> mat_stable PMc ->
-  In (fO, kO) (rt_frames RT Σ) -> oss_inA fO kO O -> rt_sp0 RT Σ - STACK_WIN <= lo -> 0x7fff7f800000 <= lo ->
+  In (fO, kO) (rt_frames RT Σ) -> oss_inA fO kO O -> rt_sp0 RT Σ - STACK_SPAN <= lo -> 0x7fff7f800000 <= lo ->
   rw_cells bsegs m O [CB 264 junk] -> OSHADOWA m O -> LOCBA m -> 0 <= len <= SJ_PADMAX ->
   ART RT Σ m -> mem_inv bsegs m -> stk bsegs m lo q -> lo + OSS_CTOR_STACK_A <= q -> q + 16 <= USTACK_TOP -> q mod 16 = 0 ->
   (forall t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F' m',
@@ -450,7 +451,7 @@ Definition strA_cps : Prop :=
   forall (Σ : rts RT) (K : config -> Prop) (L : list (Z * Z)) (st : ossA) (len lo O q R fO : Z) (kO : nat) (junk : list byte)
          (ra gp t0 t1 t2 s0 s1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word) (F : bvmap 5 word) (fc : bv 32) (m : mem),
   fdfs_only PMc -> mat_stable PMc ->
-  rt_live RT Σ = oachunk st ++ L -> (forall p n, In (p, n) L -> 0 < n) -> In (fO, kO) (rt_frames RT Σ) -> oss_inA fO kO O -> rt_sp0 RT Σ - STACK_WIN <= lo -> 0x7fff7f800000 <= lo ->
+  rt_live RT Σ = oachunk st ++ L -> (forall p n, In (p, n) L -> 0 < n) -> In (fO, kO) (rt_frames RT Σ) -> oss_inA fO kO O -> rt_sp0 RT Σ - STACK_SPAN <= lo -> 0x7fff7f800000 <= lo ->
   SBINVA' m O len st -> OSHADOWA m O -> 0 <= len <= SJ_PADMAX -> oa_w st <= PJ_OUTMAX len ->
   fO <= R -> R + 24 <= fO + fs_size kO - 8 -> R mod 8 = 0 -> (R + 24 <= O \/ O + 264 <= R) ->
   rw_cells bsegs m R [CB 24 junk] -> bytes_at bsegs m (shad R) [z8; z8; z8] ->
@@ -472,7 +473,7 @@ Definition ios_dtorA_cps : Prop :=
   forall (Σ : rts RT) (K : config -> Prop) (lo O q fO fill : Z) (kO : nat) (j124 j260 : list byte)
          (ra gp t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word) (F : bvmap 5 word) (fc : bv 32) (m : mem),
   fdfs_only PMc -> mat_stable PMc ->
-  In (fO, kO) (rt_frames RT Σ) -> oss_inA fO kO O -> rt_sp0 RT Σ - STACK_WIN <= lo -> 0x7fff7f800000 <= lo ->
+  In (fO, kO) (rt_frames RT Σ) -> oss_inA fO kO O -> rt_sp0 RT Σ - STACK_SPAN <= lo -> 0x7fff7f800000 <= lo ->
   rw_cells bsegs m (O + 112) (ios_cellsI O fill j124 j260) -> OSHADOWA m O -> LOCBA m -> unwind_ok ra s0 (wz q) ->
   ART RT Σ m -> mem_inv bsegs m -> stk bsegs m lo q -> lo + OSS_IOS_DTOR_STACK_A <= q -> q + 16 <= USTACK_TOP -> q mod 16 = 0 ->
   (forall t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F' m',

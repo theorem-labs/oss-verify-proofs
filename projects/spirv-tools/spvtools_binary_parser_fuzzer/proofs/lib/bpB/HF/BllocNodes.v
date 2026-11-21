@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap's injected -ENOMEM, a spurious refusal under the forced-only allocation configuration). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -59,6 +60,28 @@ Section ModelLevel.
     intros i m eff eff' m' evs' Hoff Hr Hspec Hnr. split; [exact Hoff|]. split; [exact Hr|].
     exists eff', m', evs'. auto.
   Qed.
+  (* munmap's -ENOMEM is a refusal of the forced-only allocation family,
+     and the cut is an admissible non-refusal answer at the same input,
+     so under [AllocForced] the refusal is spurious and no [sstep_cfg]
+     takes it ([Run.spurious_refusal_cfg]). *)
+  Lemma zero_not_refusal_munmap : forall i m,
+    bv_unsigned (in_sysno i) = 215%Z ->
+    refusal_b i m (Z_to_bv 64 0) = false.
+  Proof.
+    intros i m Hno. rewrite (refusal_b_munmap i m _ Hno). apply bv_eqb_neq.
+    intros E. apply (f_equal bv_unsigned) in E.
+    rewrite (errno_ret_unsigned ENOMEM) in E by (unfold ENOMEM; lia).
+    change (bv_unsigned (Z_to_bv 64 0)) with 0%Z in E. unfold ENOMEM, two_pow_64 in E. lia.
+  Qed.
+
+  Lemma errno_is_refusal_munmap : forall i m e,
+    bv_unsigned (in_sysno i) = 215%Z -> In e munmap_errnos ->
+    refusal_b i m (errno_ret e) = true.
+  Proof.
+    intros i m e Hno HIn. destruct HIn as [<- | []].
+    rewrite (refusal_b_munmap i m _ Hno). apply bv_eqb_refl.
+  Qed.
+
 End ModelLevel.
 
 Section WithSegs.
@@ -71,6 +94,9 @@ Lemma mprotect_outcome_si : forall ms x8 model (addr : word) (len : Z),
   (0 < len)%Z -> (bv_unsigned addr + page_round_up_Z len < 2 ^ 64)%Z ->
   (bv_unsigned addr mod page_size = 0)%Z ->
   let n := Z_to_bv 64 (page_round_up_Z len) in
+  (* the revision's vDSO/vvar gate ([Mprotect.mprotect_spec]); the model's
+     own [Common/RefNodes.mprotect_check] takes the same premise *)
+  region_free (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) addr n = true ->
   map_contains (vm_noaccess (m_vmmaps model)) addr n = true ->
   map_contains (vm_maps (m_vmmaps model)) addr n = true ->
   forall o, syscall_spec (sys_input segs ms x8) model o <->
@@ -78,7 +104,7 @@ Lemma mprotect_outcome_si : forall ms x8 model (addr : word) (len : Z),
     \/ (mprotect_budget_ok model addr n = true
         /\ o = Ok (mkEffect (Z_to_bv 64 0) [] [(addr, n)]) (mprotect_model addr n model) []).
 Proof.
-  intros ms x8 model addr len Hno H0 H1 H2 Hlen Hnw Hal n Hna Hma o.
+  intros ms x8 model addr len Hno H0 H1 H2 Hlen Hnw Hal n Hvd Hna Hma o.
   pose proof (u64_range addr). pose proof (page_round_up_Z_bounds len ltac:(lia)).
   assert (Hu1 : bv_unsigned (ms_gpr ms 1) = len) by (rewrite H1; apply u64_lit; lia).
   rewrite (syscall_spec_226 _ model o) by (rewrite in_sysno_sys_input; exact Hno).
@@ -87,7 +113,7 @@ Proof.
   rewrite (mprotect_expose_outcome addr (ms_gpr ms 1) (Z_to_bv 64 3) _ model o); rewrite ?Hu1;
     [reflexivity | vm_compute; reflexivity | exact Hal | unfold w_is0; apply bv_eqb_neq; intros E;
      apply (f_equal bv_unsigned) in E; rewrite Hu1 in E; change (bv_unsigned (Z_to_bv 64 0)) with 0%Z in E; lia
-    | unfold two_pow_64; lia | vm_compute; reflexivity | exact Hna | exact Hma].
+    | unfold two_pow_64; lia | vm_compute; reflexivity | exact Hvd | exact Hna | exact Hma].
 Qed.
 
 End WithSegs.

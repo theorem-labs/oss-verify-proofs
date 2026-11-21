@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/AU/Prog/Ent102L3B.v, with its module paths and module names changed; 94 of its 120 lines of code are new or changed and 531 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, walk of check_round_trip on the #102 pins, IMAGE B' (asan-ubsan
    d663f82d7f488d30, unstripped twin c90d4fa54d43160b), FREE-PIECES-102 Part 7a row T7 = CRT-B-CEXIT: the row's LAST
    stretch, E (+0x808, pj_free (&back)'s return) .. X (+0x30c): `mv s5, zero` (+0x808, the return flag r = 0) and
@@ -17,10 +18,10 @@
    NAMED SECTION HYPOTHESES:
    - LAWS : AR_laws_x SEGS B ARx cf_head (the allocator relation's laws; owner the engine, discharged at
      the instance ARcfx by lib/Reusable/YGcallcf.v AR_laws_x_xs);
-   - HRAN : ran = 0 (tcheck_round_trip_specX's entry premise, PRH_FnCheck.v :1260 at the kit tip 3ac20a5c9e30).
+   - HRAN : ran = 0 (tcheck_round_trip_specX's entry premise, PRH_FnCheck.v :1260 at the kit tip).
 
-   INPUTS OF RECORD: base commit cbe6d10993c2 (Crt102Glue.v crt_at_X_B /
-   crt_at_J_B with its `r = 0 /\`, and at 275deb46b92d copy's free-order conjunct, which t7_at_E carries in as
+   INPUTS OF RECORD: base (Crt102Glue.v crt_at_X_B /
+   crt_at_J_B with its `r = 0 /\`, and copy's free-order conjunct, which t7_at_E carries in as
    t7_copy_tie; Crt102Img.v); lib/B/Prog/Crt102B_T7_bd.v (this row). Model read, not cited:
    Crt102B_T4.v crtB_T4_X (a B' run into a boundary premise). Engine: YC1fPx.v paj_run_to_x /
    paj_run_to_tok_x.

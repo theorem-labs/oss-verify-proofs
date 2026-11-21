@@ -1,12 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (one start-up certificate per CONFIG_RSEQ value, over the start-up tables computed in the build). *)
+(* LPS 75d69e00: ONE CERTIFICATE PER CONFIG_RSEQ VALUE.  [kb_rseq]
+   is free under [Run.valid_input], so the start-up is checked from [asan_a_init 0] and from
+   [asan_a_init 1], each over the join and hole tables computed from that state ([StartupHSAsan],
+   from [StartupGenAsan0] / [StartupGenAsan1]).  [b] below is the run's flag; [rseq_z b] its 0/1. *)
 From Stdlib Require Import ZArith List Bool.
-From OSSVerify.Proofs.leptonica.grayquant_fuzzer.lib.K5.AS Require Import AxSymExec3 AsanPlanCore AsanPlan AsanPlanSound.
+From OSSVerify.Proofs.leptonica.grayquant_fuzzer.lib.K5.AS Require Import AxSymExec3 AsanPlanCore AsanPlan AsanPlanSound StartupCoGen.
 From OSSVerify.Proofs.leptonica.grayquant_fuzzer.lib.K5.ASB15 Require Import AsanTablesA AsanPlanImages.
 From OSSVerify.Proofs.leptonica.grayquant_fuzzer.lib.K5.AS Require Import AsanInit.
-From OSSVerify.Proofs.leptonica.grayquant_fuzzer.lib.K5.ASB15 Require Import AsanStartup StartupPlanAsan StartupHSAsan.
+From OSSVerify.Proofs.leptonica.grayquant_fuzzer.lib.K5.ASB15 Require Import AsanStartup StartupGenAsan StartupHSAsan.
 Import ListNotations. Import AX2. Import AP.
 Open Scope Z_scope.
 From Ltac2 Require Import Ltac2 Constr Std Control.
@@ -16,15 +20,18 @@ Ltac2 cert_refl (rhs : constr) :=
   let r := constr:(@eq_refl cres $rhs) in
   Std.exact_no_check (Constr.Unsafe.make (Constr.Unsafe.Cast r Constr.Cast.vm g)).
 
-Definition BFUEL : nat := 400000.
-Definition KC0 : nat := 0.
-Definition FUEL : nat := 3000.
-Definition IT0 : itab := mk_itab_ranges ASEGS startup_plan_ranges.
-Lemma IT0_ok : itab_sound ASEGS IT0.
-Proof. apply APS.mk_itab_ranges_sound. Qed.
+Lemma startup_cert_1 :
+  check ASEGS IT0 ASAN_A NX0 AsanInit.LIMIT XN0 XE0 XB0 (HS_asan true) KC0 BFUEL FUEL None (asan_a_init 1) (startup_plan_r true)
+  = COk (startup_shape true).
+Proof. cert_refl constr:(COk (startup_shape true)). Qed.
 
-Definition startup_shape : shape := (SHole 0).
+Lemma startup_cert_0 :
+  check ASEGS IT0 ASAN_A NX0 AsanInit.LIMIT XN0 XE0 XB0 (HS_asan false) KC0 BFUEL FUEL None (asan_a_init 0) (startup_plan_r false)
+  = COk (startup_shape false).
+Proof. cert_refl constr:(COk (startup_shape false)). Qed.
 
-Lemma startup_cert :
-  check ASEGS IT0 ASAN_A NX0 AsanInit.LIMIT XN0 XE0 XB0 HS_asan KC0 BFUEL FUEL None asan_a_init startup_plan = COk startup_shape.
-Proof. cert_refl constr:(COk startup_shape). Qed.
+Lemma startup_cert : forall b : bool,
+  check ASEGS IT0 ASAN_A NX0 AsanInit.LIMIT XN0 XE0 XB0 (HS_asan b) KC0 BFUEL FUEL None (asan_a_init (rseq_z b)) (startup_plan_r b)
+  = COk (startup_shape b).
+(* the file is in Ltac2 mode ([From Ltac2 Require Import Ltac2] above), so the case split is Ltac1 quoted *)
+Proof. ltac1:(intros [|]; [exact startup_cert_1 | exact startup_cert_0]). Qed.

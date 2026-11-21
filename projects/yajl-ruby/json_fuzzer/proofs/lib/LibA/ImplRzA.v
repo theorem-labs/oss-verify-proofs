@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mequiv_intro dropped, the channel reader in minvA, at_node_rob in the walk, and the FdStream, FdEventfd, FdDgram and FdAnon descriptor kinds). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -43,16 +44,6 @@ Lemma mequiv_frame : forall mo1 mo2, mequiv mo1 mo2 ->
 Proof.
   intros [fd1 [maps1 lazy1 mat1] io1 fs1 proc1 lim1 tm1] [fd2 [maps2 lazy2 mat2] io2 fs2 proc2 lim2 tm2] H.
   unfold mequiv, merase in H. cbn in H. inversion H; subst. repeat split; reflexivity.
-Qed.
-
-Lemma mequiv_intro : forall mo1 mo2,
-  m_fd mo2 = m_fd mo1 -> m_vmmaps mo2 = m_vmmaps mo1 -> m_vm_lazy mo2 = m_vm_lazy mo1 ->
-  m_io mo2 = m_io mo1 -> m_fsys mo2 = m_fsys mo1 -> m_proc mo2 = m_proc mo1 -> m_lim mo2 = m_lim mo1 ->
-  m_time mo2 = m_time mo1 -> mequiv mo1 mo2.
-Proof.
-  intros [fd1 [maps1 lazy1 mat1] io1 fs1 proc1 lim1 tm1] [fd2 [maps2 lazy2 mat2] io2 fs2 proc2 lim2 tm2].
-  unfold mequiv, merase, with_vm_backing, m_vmmaps, m_vm_lazy, m_fd, m_io, m_fsys, m_proc, m_lim, m_time. cbn.
-  intros; subst. reflexivity.
 Qed.
 
 End RC__1.
@@ -111,7 +102,7 @@ Proof.
         split; [split; [reflexivity| right; auto]| rewrite Ef; apply mequiv_with_fds; exact Heq].
     + destruct H as [-> ->]. exists mo2. split; [split; [reflexivity| auto]| exact Heq].
   - (* [comment removed for export] *) destruct H as [-> H]. rewrite <- Ef, <- Es in H.
-    destruct (fd_lookup (m_fds mo2) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|id w|drd dwr| ]|] eqn:Hlk; try contradiction.
+    destruct (fd_lookup (m_fds mo2) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|id w|drd dwr| |sid sside sst|ectx|dfam|aid aaf]|] eqn:Hlk; try contradiction.
     + destruct (fs_lookup (m_fs mo2) p) eqn:Hfs; [|contradiction]. destruct H as [-> ->].
       eexists. split.
       * split; [reflexivity|]. cbn [nstep]. rewrite ?Hlk, ?Hfs. split; reflexivity.
@@ -142,8 +133,9 @@ Qed.
 
 Lemma KIA_mequiv_minvA : forall mo1 mo2, mequiv mo1 mo2 -> minvA mo1 -> minvA mo2.
 Proof.
-  intros mo1 mo2 Heq H. pose proof (mequiv_frame _ _ Heq) as F. eapply minvA_by_fields; [| | | |exact H]; try tauto.
-  destruct F as (_ & _ & -> & _). reflexivity.
+  intros mo1 mo2 Heq H. pose proof (mequiv_frame _ _ Heq) as F. eapply minvA_by_fields; [| | | | |exact H]; try tauto.
+  - destruct F as (_ & _ & -> & _). reflexivity.
+  - unfold m_channel_reader. destruct F as (_ & _ & _ & _ & _ & _ & -> & _). reflexivity.
 Qed.
 
 (* [comment removed for export] *)
@@ -447,7 +439,10 @@ Proof.
     destruct (node_okA n ms1 mo moa1 Htn Hat Heq1 HKP1) as (Hnode & [j0] & Hcov).
     eapply rz_conseq_cfg.
     + apply (rz_node_cfg acfg segs (mkCfg ms1 moa1) _ (succ_evs n ms1 mo moa1) (succ_cfg n ms1 mo moa1)
-               (succ_T n ms1 mo moa1 TT) j0 (node_okA_cfg n ms1 mo moa1 Htn Hat Hnode)).
+               (succ_T n ms1 mo moa1 TT) j0 (node_okA_cfg n ms1 mo moa1 Htn Hat Hnode)
+               (* LPS 08b1429: [Nodes.at_node_rob] *)
+               (at_node_rob segs n ms1 moa1 (at_nodeA_at_node segs _ n ms1 Hat)
+                  (minvA_io moa1 (proj1 (proj2 (proj1 HKP1)))))).
       intros [s|x]; cbn.
       * destruct (su_ok s) as (moa' & Hn & Heq' & Hag' & HKP'' & _).
         apply (IH (su_rsp s) (su_mot' s) (su_evs s) (su_nstep_t s) (nret ms1 (su_rsp s)) (su_moa'' s) (Hcont _)).

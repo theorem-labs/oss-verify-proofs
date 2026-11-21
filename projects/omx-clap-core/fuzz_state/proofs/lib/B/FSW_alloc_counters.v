@@ -2,7 +2,7 @@
    tfibsegs = lib/B/YB1v.v's AsanUbsan.M.loaded_segments), proving lib/B/FSH_Fn_alloc.v's fuzz_alloc_live_spec,
    fuzz_alloc_peak_spec, fuzz_alloc_peak_reset_spec and fuzz_alloc_fail_spec. None has a frame, a call or an event;
    U, the blocks and the frames pass through.
-   rule 24: proves function fuzz_alloc_live (B 0x82eec), fuzz_alloc_peak (B 0x82ef8), fuzz_alloc_peak_reset (B 0x82f04), fuzz_alloc_fail (B 0x82f18) (reuse search: proof-index on main@c4c03c57ba1 / ossv/recipes@e5e7eba2cc0 / ossv/candidates@ee89628c997 / release/pau-projects-recipes@b6a0088adcb + lemma index over 11131 working branches + live working heads; by address on the four release refs / `proof-index fuzz_strdup fuzz_alloc_live fuzz_alloc_peak fuzz_alloc_peak_reset fuzz_alloc_fail own`, `git grep -l -i -e <addr> <ref> -- proofs/omx-clap-core/fuzz_state`). Result: none; written new for image B, porting ALLOC's A proofs.
+   rule 24: proves function fuzz_alloc_live (B 0x82eec), fuzz_alloc_peak (B 0x82ef8), fuzz_alloc_peak_reset (B 0x82f04), fuzz_alloc_fail (B 0x82f18) (reuse search: proof-index on main / ossv/recipes / ossv/candidates / release/pau-projects-recipes + lemma index over 11131 working branches + live working heads; by address on the four release refs / `proof-index fuzz_strdup fuzz_alloc_live fuzz_alloc_peak fuzz_alloc_peak_reset fuzz_alloc_fail own`, `git grep -l -i -e <addr> <ref> -- proofs/omx-clap-core/fuzz_state`). Result: none; written new for image B, porting ALLOC's A proofs.
    Measured code (capstone 5.0.7 on the pinned fuzz_state.asan-ubsan, sha256 5ac5ce09...; 20 words, no RVC; each word is
    re-fetched from tfibsegs by vm_compute below, the F_<addr> lemmas), the same instructions as build A with B's displacements:
    - fuzz_alloc_live (0x82eec) / fuzz_alloc_peak (0x82ef8): `auipc a0, 0x558; ld a0, lo(a0); ret`, lo = -0x42c
@@ -19,7 +19,7 @@
    Cells read: only the four alloc.c statics g_live / g_peak / g_count / g_fail_at (lib/B/FSH_Base.v G_*, each re-checked
    against the code: the auipc + ld / sd targets are computed by vm_compute from fs.asan-ubsan's own bytes) and the
    instruction words. No GOT shadow, uar flag, A_EMPTY or rodata shadow cell is read.
-   ported from: lib/A/FSW_alloc_counters.v (a working branch a402e796fc1 = another working branch's bc4cbdce0f5
+   ported from: lib/A/FSW_alloc_counters.v (a working branch = another working branch
    + the SINK GUARD), proofs unchanged. Changed in ONE simultaneous pass (regex alternation over the address map, then
    each displacement by hand): the 20 instruction addresses (A 0x82e5c..0x82ea8 -> B 0x82eec..0x82f38, also in the
    F_<addr> lemma names), the five words that carry a displacement (auipc imm 0x557 -> 0x558; ld / sd imm12 0x764 ->

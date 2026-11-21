@@ -35,9 +35,10 @@
    The model step is drain_b_c.seen_tr's GEnd/Some branch (lib/B/W_drain_gs_model.v gs_seen_end_old): the request
    RFree (|key| + 1), the held keys swap_remove'd at n.
    TEMPLATE (structure only; every pc, register, frame slot and constant here is image B's): image A's
-   working branch 0c06ccc287f lib/A/W_gsfree_scratch.v (gs_free :1687).  Same-image geometry donor
-   (old framework, not transported): a working branch 89040c52421 lib/B/Prog/drain_p_seen_drop.v.
+   working branch lib/A/W_gsfree_scratch.v (gs_free :1687).  Same-image geometry donor
+   (old framework, not transported): a working branch lib/B/Prog/drain_p_seen_drop.v.
    The shared machine-state and trace helpers are lib/B/W_drain_gs_aux.v's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -2475,7 +2476,7 @@ End a.
 
 (* ============================================================================================================
    THE ARx-GENERIC TWIN of this file (image B's DR_x slice D, 2026-10-30; the B twin of lib/A/W_gsfree_scratch.v's
-   Section cx at a working branch 50623273289): the GS-FREE arm over lib/B/W_drain_cx_x.v's Section
+   Section cx at a working branch): the GS-FREE arm over lib/B/W_drain_cx_x.v's Section
    variables (B PST ARx MT RP MMAX RG), proving lib/B/W_drain_gs.v's twin gs_free_stmt_x as pb_gs_free_x, with the
    entry's ghost list Hp and budget kr after cx and the cut's own ghost list Hp1 after S1, as W_drain_cx_x.v threads
    them.  Everything above this line is unchanged, so pb_gs_free, gfr_post, gf_awr_of and every other AR statement

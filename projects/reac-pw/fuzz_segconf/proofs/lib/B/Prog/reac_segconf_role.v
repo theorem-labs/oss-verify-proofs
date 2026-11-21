@@ -3,8 +3,9 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the walk of check_groupa on fuzz_grant.asan, written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8h.v, proofs/cgif/cgif_file_fuzzer/lib/A/ACa2.v, proofs/cgif/cgif_file_fuzzer/lib/A/ACam.v, proofs/cgif/cgif_file_fuzzer/lib/A/ACb8.v, proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v, proofs/cgif/cgif_file_fuzzer/lib/A/AChf.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_grant/lib/A/Prog/CheckGroupaWalk.v, with its module paths, module names and numbers changed; 722 of its 780 lines of code are new or changed and 1129 lines of the source are left out. *)
-(* the image-B port of lib/A/Prog/reac_segconf_role.v (commit 3e8a17ad1bc0; Qed there at
-   3f948d4966a5), ADAPTED: image A's walk over image B's listing (lib/B/Prog, image B's kit and contract copies),
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* the image-B port of lib/A/Prog/reac_segconf_role.v (Qed there),
+   ADAPTED: image A's walk over image B's listing (lib/B/Prog, image B's kit and contract copies),
    plus image B's two UBSan alignment traps.
    reac_segconf_role on fuzz_segconf image B (fuzz_segconf.asan-ubsan, entry 0x89be0 = BASE + AF_reac_segconf_role,
    BASE = 0x84dc0, 55 instructions, 32-byte frame, no side-stack frame): the walk that proves its contract

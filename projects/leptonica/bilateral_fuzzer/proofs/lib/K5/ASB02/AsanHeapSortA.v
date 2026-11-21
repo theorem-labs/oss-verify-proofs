@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (proofs and definitions restated for the model's changed definitions). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -6,7 +7,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics 
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC.
 From OSSVerify.leptonica.bilateral_fuzzer.images Require Import AsanUbsan.
 From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib.K5.AS Require Import PropExec StoreOk Hoare AgentLib.
-Local Instance asanreflect_fx : PropExec.FPState := PropExec.fx0.
+Local Instance asanreflect_fx : K5.AS.PropExec.FPState := K5.AS.PropExec.fx0.
 From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib.K5.AS Require Import AxSymExec3 AxSymExec3Sound AxSymRun3 AsanPlanCore AsanPlan AsanPlanSound.
 From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib.K5.ASB02 Require Import AsanTablesA.
 From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib.K5.AS Require Import AsanPlanSoundSums.

@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: chain_words' walk on the ASan+UBSan build of plugin-hostd/fuzz_command
    (fuzz_command.asan-ubsan), segment S1 (chain_words_d.v cw_S1P): from the entry (0x8da84) through
    __asan_stack_malloc_3 (0x8daf4) to the refusal cut KR1 (0x8dd5c) or the first-check cut KC (0x8dca0). The B twin of
-   lib/A/Prog/chain_words_s1.v (a working branch 5e2cdad423e), in the form of
+   lib/A/Prog/chain_words_s1.v (a working branch), in the form of
    proofs/cgif/cgif_file_fuzzer/lib/A/ACa2.v (entry, aj_stack_malloc_atS, re-seat): a run to the call, the call, a
    re-seat that keeps the three stack regions and adds the frame (the call's a0) and its shadow (the alias of
    (s6 >> 3) + s8), a plain run through the 88 shadow stores, `ld a2,24(s1)` and the branch on ntok < 3, and the cut
@@ -13,6 +13,7 @@
    (0x8db28). The stack regions are the zero word [sp0 - 160, sp0 - 152), the saved registers [sp0 - 104, sp0) and
    the realigned slots [s1 + 24, s1 + 48): pairwise disjoint in both realignment cases. __asan_stack_malloc_3's
    contract (YG0d.v astack_malloc_realizes) takes ecall_pre, which has no frame chain, so this segment builds none. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

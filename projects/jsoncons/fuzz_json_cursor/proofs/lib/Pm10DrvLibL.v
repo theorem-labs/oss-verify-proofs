@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the zero-filled stack window): changed lib_site. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -10,7 +11,12 @@ From OSSVerify.jsoncons.fuzz_json_cursor.images Require Import Plain.
 From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib Require Import RunEnv
   PropExec CatExec CatSim SeqExec StoreOk ShapeAlg ShapeLaws SpinAlg SpinAlgX
   SymExec SymExec2 SymExec2Sound SymRun SymDrive SymDriveX RefMemcpyLib Hoare AsanAcct
-  HeapIface LibIface LibIfaceFp DrvKit Pm10Drv_defs Pm10DrvLib Pm10DrvD_defs Pm10ExitAx.
+  (* Pm10MainEntry for the [DRV_ZWIN] notation: Require is transitive for LOADING but Import
+     is NOT for VISIBILITY, so reaching Pm10MainEntry through Pm10DrvLib is not enough
+     ("The variable DRV_ZWIN was not found in the current environment", :223).  It goes
+     BEFORE the Pm10Drv* modules, not after, so that every spelling those export keeps
+     resolving exactly as it did: the later import wins. *)
+  HeapIface LibIface LibIfaceFp DrvKit Pm10MainEntry Pm10Drv_defs Pm10DrvLib Pm10DrvD_defs Pm10ExitAx.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope Z_scope.
@@ -219,11 +225,13 @@ Section DrvLibLayout.
         destruct (has_window_nth kn Hiw) as [i Hn].
         split; [rewrite Z.add_mod, Hal, Hsoal by lia; reflexivity|]. split; [lia|]. split; [lia|]. split; [lia|]. split.
         * intros d m Hd Hm.
-          pose proof (kwr_store_ok RSEGS E M kn i (EVar 0) (-8388608) 8388608 (so - 65536 + d) m HK Hn ltac:(lia) ltac:(lia)) as W.
+          (* old: [... (EVar 0) (-8388608) 8388608 ...]; [so - 65536 + d >= - 2 ^ 22 - 65536 = -4259840 >= - DRV_ZWIN] *)
+          pose proof (kwr_store_ok RSEGS E M kn i (EVar 0) (- DRV_ZWIN) DRV_ZWIN (so - 65536 + d) m HK Hn ltac:(lia) ltac:(lia)) as W.
           unfold adenot in W. cbn [a_base a_off edenot ev E] in W. rewrite P0 in W. unfold v_addi in W.
           replace (bv_unsigned sp0 + so - 65536 + d) with (bv_unsigned sp0 + (so - 65536 + d)) by lia. exact W.
         * intros a Ha.
-          pose proof (kwr_store_ok RSEGS E M kn i (EVar 0) (-8388608) 8388608 (a - bv_unsigned sp0) 1%nat HK Hn ltac:(lia) ltac:(cbn; lia)) as W.
+          (* old: [... (EVar 0) (-8388608) 8388608 ...]; [a >= bv_unsigned sp0 + so - 65536 >= bv_unsigned sp0 - DRV_ZWIN] *)
+          pose proof (kwr_store_ok RSEGS E M kn i (EVar 0) (- DRV_ZWIN) DRV_ZWIN (a - bv_unsigned sp0) 1%nat HK Hn ltac:(lia) ltac:(cbn; lia)) as W.
           unfold adenot in W. cbn [a_base a_off edenot ev E] in W. rewrite P0 in W. unfold v_addi in W.
           replace (bv_unsigned sp0 + (a - bv_unsigned sp0)) with a in W by lia.
           apply (window_defined M a); [lia | lia | exact W].

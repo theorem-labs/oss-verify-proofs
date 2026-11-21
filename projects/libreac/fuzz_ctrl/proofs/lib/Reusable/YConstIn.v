@@ -2,13 +2,14 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/AF0x.v, with its module paths and module names changed; 39 of its 62 lines of code are new or changed and 549 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: index-free membership in the start-up constant tables (Tfib_const_abs and Tfib_const_sym of
    either image, or any closed list of acell). A positional proof `nth_error_In T k` breaks each time the table is
    regenerated, so a reader names the row only: `in_const_tbl` proves `In row T` from
    `existsb (row_eqb row) T = true`, which vm_compute decides on a closed goal (the tactic clears the context and
    refuses a goal that still names a hypothesis, a section variable or an evar), and existsb_row_In turns the boolean
    into `In`. Image-generic: it depends on YG0f's acell only, and the table is the goal's own argument. *)
-(* Alternative measured: a Theorem Labs lane's index-search tactic in_const_abs (a working branch 8d49db69171,
+(* Alternative measured: a Theorem Labs lane's index-search tactic in_const_abs (a working branch,
    proofs/libreac/fuzz_disco/lib/Reusable/YD2l.v:48). On ctrl's 2135-row tables it takes 0.522 s (A) / 0.373 s (B) per
    use at row 625 and 4.093 s at row 2134; in_const_tbl takes 0.001 s at each row. Timing file:
    TimeCI.out. *)

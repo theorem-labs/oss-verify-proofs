@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (aopen_rz also closes open_spec's new premise that the path ends below TASK_SIZE). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -216,7 +217,8 @@ Proof. aceil.
     - exact NUL.
     - exact PSL.
     - lia. - lia. - lia. - lia. - lia. - lia. - lia.
-    - rewrite HTP. cbn [c_tp ACONSTS]. rewrite unsigned_lit by lia. lia. }
+    - rewrite HTP. cbn [c_tp ACONSTS]. rewrite unsigned_lit by lia. lia.
+    - (* LPS 08b1429: the path ends below the stack top, below TASK_SIZE *) unfold TASK_SIZE. lia. }
   (* [comment removed for export] *)
   assert (FAILK : forall e ms' mo1 moa,
     (open_classify path mo = OcErrno e \/ (exists ent, open_classify path mo = OcMay ent /\ In e openat_errnos)) ->

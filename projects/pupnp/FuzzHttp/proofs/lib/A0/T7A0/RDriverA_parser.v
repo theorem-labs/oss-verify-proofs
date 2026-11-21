@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack window below sp; the launch's input, mmap base and entry draw). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation Strings.String.
 From stdpp Require Import gmap.
@@ -31,22 +32,22 @@ Section PARSER.
   Hypothesis AMS : forall lo hi, a0_static lo hi -> am_static FI AI lo hi.
   Variable PZ : mem -> Prop.
   Hypothesis PZ_agree : forall (P : Z -> Prop) m m', gagree_on P m m' -> (forall a, pz_band a -> P a) -> PZ m -> PZ m'.
-  Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw) (TID : Z) (S4 S5 S6 S7 S8 S9 S10 S11 : word).
+  Variables (sp0 : word) (argv envp : list (list byte)) (inp : ProcInput) (mbase : word) (rnd : EntryDraw) (TID : Z) (S4 S5 S6 S7 S8 S9 S10 S11 : word).
   Hypothesis VSP : valid_sp sp0.
-  Hypothesis CEIL : alloc_ceiling = LO sp0.
-  Hypothesis ESF : entry_stack_fits sp0 argv envp.
+  Hypothesis CEIL : alloc_ceiling = bv_unsigned sp0 - 8388608.
+  Hypothesis ESF : img_fits sp0 argv envp inp mbase rnd.
   Hypothesis HT : 0 < TID < 2^31.
   Hypothesis AC : am_contracts FI AI (JA FI AI).
   Hypothesis FZ : fuzz_one_stmtA FI AI (JA FI AI) PZ.
   Local Notation K := (am_K FI AI).
   Local Notation BL := (list (AllocIF.block K)).
   Notation usp0 := (bv_unsigned sp0).
-  Notation rat_callA' := (rat_callA FI AI PZ sp0 argv envp uid hw rnd TID S4 S5 S6 S7 S8 S9 S10 S11).
-  Notation rat_retA' := (rat_retA FI AI PZ sp0 argv envp uid hw rnd TID S4 S5 S6 S7 S8 S9 S10 S11).
-  Notation rat_free_ownedA' := (rat_free_ownedA FI AI PZ sp0 argv envp uid hw rnd TID S4 S5 S6 S7 S8 S9 S10 S11).
-  Notation rat_owned_retA' := (rat_owned_retA FI AI PZ sp0 argv envp uid hw rnd TID S4 S5 S6 S7 S8 S9 S10 S11).
-  Notation rat_free_bufA' := (rat_free_bufA FI AI PZ sp0 argv envp uid hw rnd TID S4 S5 S6 S7 S8 S9 S10 S11).
-  Notation rat_main_retA' := (rat_main_retA FI AI PZ sp0 argv envp uid hw rnd TID S4 S5 S6 S7 S8 S9 S10 S11).
+  Notation rat_callA' := (rat_callA FI AI PZ sp0 argv envp inp mbase rnd TID S4 S5 S6 S7 S8 S9 S10 S11).
+  Notation rat_retA' := (rat_retA FI AI PZ sp0 argv envp inp mbase rnd TID S4 S5 S6 S7 S8 S9 S10 S11).
+  Notation rat_free_ownedA' := (rat_free_ownedA FI AI PZ sp0 argv envp inp mbase rnd TID S4 S5 S6 S7 S8 S9 S10 S11).
+  Notation rat_owned_retA' := (rat_owned_retA FI AI PZ sp0 argv envp inp mbase rnd TID S4 S5 S6 S7 S8 S9 S10 S11).
+  Notation rat_free_bufA' := (rat_free_bufA FI AI PZ sp0 argv envp inp mbase rnd TID S4 S5 S6 S7 S8 S9 S10 S11).
+  Notation rat_main_retA' := (rat_main_retA FI AI PZ sp0 argv envp inp mbase rnd TID S4 S5 S6 S7 S8 S9 S10 S11).
 
   #[using="Type"] Lemma in_lb_removeA : forall (p : K) (b : AllocIF.block K) (LB : BL),
     In b LB -> blk_id b <> p -> In b (lb_remove (am_K_eqb FI AI) p LB).
@@ -78,20 +79,20 @@ Section PARSER.
   Qed.
 
   #[using="PZ_agree VSP CEIL ESF HT"] Lemma DMEM_below : forall ap d so m m',
-    DMEM FI AI PZ sp0 argv envp uid hw rnd TID S4 S5 S6 S7 false ap d so m -> munch [(usp0 - 8388608, usp0 + -208)] m m' -> wmono asegs m m' ->
-    mem_inv asegs m' -> stk asegs m' (usp0 - 8388608) (usp0 + -208) -> asan_env asegs m' ->
-    DMEM FI AI PZ sp0 argv envp uid hw rnd TID S4 S5 S6 S7 false ap d so m'.
+    DMEM FI AI PZ sp0 argv envp inp mbase rnd TID S4 S5 S6 S7 false ap d so m -> munch [(usp0 - 6144512, usp0 + -208)] m m' -> wmono asegs m m' ->
+    mem_inv asegs m' -> stk asegs m' (usp0 - 6144512) (usp0 + -208) -> asan_env asegs m' ->
+    DMEM FI AI PZ sp0 argv envp inp mbase rnd TID S4 S5 S6 S7 false ap d so m'.
   Proof.
     intros ap d so m m' (TF & FR & BA & CJ) MU WM MI' ST' ENV'. pose proof (valid_sp_facts sp0 VSP) as SF. pose proof (sp_facts sp0 VSP CEIL) as SF'.
     split. { unfold TRFRAME in *. eapply rw_cells_transport; [exact TF| exact MU| exact WM| cbn [disjoint_from]; simpl_sizes; lia]. }
     split. { unfold MFRAME in *. eapply rw_cells_transport; [exact FR| exact MU| exact WM| cbn [disjoint_from]; simpl_sizes; lia]. }
     split.
-    { assert (STF : stk asegs m' (usp0 - 8388608) (usp0 + -128)).
-      { destruct BA as (ST & _). unfold LO in ST. assert (HQ' : usp0 - 8388608 <= usp0 + -208 <= usp0 + -128) by lia.
+    { assert (STF : stk asegs m' (usp0 - 6144512) (usp0 + -128)).
+      { destruct BA as (ST & _). unfold LO in ST. assert (HQ' : usp0 - 6144512 <= usp0 + -208 <= usp0 + -128) by lia.
         destruct (stk_split asegs m _ (usp0 + -208) _ ST HQ') as [_ SThi].
         eapply stk_merge; [exact ST'| | lia]. eapply stk_transport_disjoint; [exact SThi| exact MU| exact WM| cbn [disjoint_from]; lia]. }
       apply BASE_cb_A2. apply BASE_cb_A2 in BA.
-      eapply (BASE_A2_munch PZ PZ_agree sp0 argv envp uid hw rnd TID VSP CEIL ESF HT so); [exact BA| | exact MU| exact WM| exact MI'| unfold LO; exact STF| exact ENV'].
+      eapply (BASE_A2_munch PZ PZ_agree sp0 argv envp inp mbase rnd TID VSP CEIL ESF HT so); [exact BA| | exact MU| exact WM| exact MI'| unfold LO; exact STF| exact ENV'].
       unfold WOKA. constructor; [left; cbn [fst snd]; unfold LO; lia| constructor]. }
     destruct CJ as [X1 X2]. split; (eapply rw_cells_transport; [eassumption| exact MU| exact WM| cbn [disjoint_from]; simpl_sizes; lia]).
   Qed.
@@ -100,7 +101,7 @@ Section PARSER.
     rat_callA' k fl ap d so ms g -> SEAMr (fun ms' g' => rat_retA' k 0 fl ap d so ms' g') ms g.
   Proof.
     intros k fl ap d so ms g (t0 & t1 & t2 & a2 & a3 & a4 & a5 & a6 & a7 & x19 & t3 & t4 & t5 & t6 & F & fc & m & s & st & LB & -> & FRM & -> & HK & SM).
-    pose proof (valid_sp_facts sp0 VSP) as SF. pose proof (sp_facts sp0 VSP CEIL) as SF'. pose proof (IMGB_len47 sp0 argv envp uid hw rnd ESF) as IL47. pose proof alloc_ceiling_bounds as CB'.
+    pose proof (valid_sp_facts sp0 VSP) as SF. pose proof (sp_facts sp0 VSP CEIL) as SF'. pose proof (IMGB_len47 sp0 argv envp inp mbase rnd ESF) as IL47. pose proof alloc_ceiling_bounds as CB'.
     pose proof (am_stack_ok FI AI) as SOK.
     destruct SM as ((OK & DM & DB & DBL & HP & RF & [errv ERR] & ST) & (BUD1 & BUD2 & FSL & NSR)).
     pose proof DM as (TF & FR & BA & CJ).
@@ -119,14 +120,14 @@ Section PARSER.
     destruct INP as (data & DAT & DLEN & DWHERE).
     destruct SZ as (SZ1 & SZ2 & SZ3 & [Z4 R4]).
     eapply SEAMr_mono.
-    { eapply (FZ) with (lo := usp0 - 8388608) (data := data); rewrite ?unsigned_lit by lia;
+    { eapply (FZ) with (lo := usp0 - 6144512) (data := data); rewrite ?unsigned_lit by lia;
         first [ exact DAT | exact DLEN | exact DWHERE | exact HP | exact RF | exact ENV | exact BUD1 | exact BUD2 | exact ST | exact ERR | exact MI | exact HPZ | exact GG | exact GU | exact FRM
               | (split; [unfold RATPA; rewrite unsigned_lit by lia; reflexivity| rewrite FSL; cbn [length]; unfold A0_FS_DEPTH; lia])
               | (unfold FZ_NSEC in *; lia)
               | reflexivity | lia | unfold PARSER_STACK_A; lia
               | clear -SF; Z.div_mod_to_equations; lia
-              | apply (SHZ_cli sp0 argv envp uid hw rnd); [split; [exact SZ1| split; [exact SZ2| split; [exact SZ3| split; [exact Z4| exact R4]]]] | lia | lia | lia]
-              | apply (SHZ_ro sp0 argv envp uid hw rnd); split; [exact SZ1| split; [exact SZ2| split; [exact SZ3| split; [exact Z4| exact R4]]]]
+              | apply (SHZ_cli sp0 argv envp inp mbase rnd); [split; [exact SZ1| split; [exact SZ2| split; [exact SZ3| split; [exact Z4| exact R4]]]] | lia | lia | lia]
+              | apply (SHZ_ro sp0 argv envp inp mbase rnd); split; [exact SZ1| split; [exact SZ2| split; [exact SZ3| split; [exact Z4| exact R4]]]]
               | idtac ].
       - unfold ap_payload_len, HDR_MIN, zlength. rewrite HC0, HL, length_map. lia.
       - eapply shz_sub; [exact Z4| unfold sh, SHADOW_OFF; Z.div_mod_to_equations; lia| unfold sh, SHADOW_OFF, SH_HI; Z.div_mod_to_equations; lia].
@@ -142,7 +143,7 @@ Section PARSER.
       unfold DBUD; split; [rewrite <- (Permutation_length PERM); exact BUD1|]; split; [rewrite <- (lb_bytes_perm FI AI _ _ PERM); exact BUD2|];
       split; [rewrite LIVE; exact FSL| unfold FZ_NSEC in *; lia] ].
     split; [exact OK|].
-    split; [eapply (DMEM_pkeep FI AI AMS PZ PZ_agree sp0 argv envp uid hw rnd TID S4 S5 S6 S7 VSP CEIL ESF HT); [exact DM| exact PK| exact MI'| unfold LO; exact ST'| exact ENV']|].
+    split; [eapply (DMEM_pkeep FI AI AMS PZ PZ_agree sp0 argv envp inp mbase rnd TID S4 S5 S6 S7 VSP CEIL ESF HT); [exact DM| exact PK| exact MI'| unfold LO; exact ST'| exact ENV']|].
     split; [eapply (DBYTES_pkeep FI AI); [exact OK| exact DBL| exact DB| exact PK]|].
     split; [eapply DBLOCKS_mono; [exact DBL| exact KEEP]|].
     split; [exact HP'|]. split; [exact RF'|].
@@ -165,7 +166,7 @@ Section PARSER.
     -
       destruct OWN as (PL & EOW & BR2 & NE).
       eapply SEAMr_mono.
-      { eapply ((ac_free FI AI (JA FI AI) AC)) with (lo := usp0 - 8388608) (k := d_kp d) (A := d_AL d) (n := ap_payload_len ap) (ras := []);
+      { eapply ((ac_free FI AI (JA FI AI) AC)) with (lo := usp0 - 6144512) (k := d_kp d) (A := d_AL d) (n := ap_payload_len ap) (ras := []);
           rewrite ?unsigned_lit by lia;
           first [ exact HP | exact BL2 | exact ENV | exact RF | exact ST | exact MI | reflexivity | rewrite EOW; reflexivity | lia | unfold A0_RT_STACK; lia
                 | cbn [fpchain]; unfold valid_frame; lia
@@ -181,7 +182,7 @@ Section PARSER.
       assert (DBL' : DBLOCKS FI AI false ap d (lb_remove (am_K_eqb FI AI) (d_kp d) LB)).
       { split; [| intros X; discriminate X]. apply in_lb_removeA; [exact BL1| cbn; intros E; apply NE; symmetry; exact E]. }
       split; [exact OK|].
-      split; [eapply (DMEM_alloc FI AI AMS PZ PZ_agree sp0 argv envp uid hw rnd TID S4 S5 S6 S7 VSP CEIL ESF HT); [exact DM| unfold LO; exact AFR]|].
+      split; [eapply (DMEM_alloc FI AI AMS PZ PZ_agree sp0 argv envp inp mbase rnd TID S4 S5 S6 S7 VSP CEIL ESF HT); [exact DM| unfold LO; exact AFR]|].
       split; [eapply (DBYTES_alloc FI AI); [exact OK| exact DBL'| apply DBYTES_drop; exact DB| unfold LO; exact AFR]|].
       split; [exact DBL'|].
       split; [exact HP'|]. split; [exact RF'|].
@@ -190,7 +191,7 @@ Section PARSER.
     -
       destruct OWN as (PL & EAL & EOW).
       eapply SEAMr_evt.
-      { eapply ((ac_free_null FI AI (JA FI AI) AC)) with (lo := usp0 - 8388608) (ras := []); rewrite ?unsigned_lit by lia;
+      { eapply ((ac_free_null FI AI (JA FI AI) AC)) with (lo := usp0 - 6144512) (ras := []); rewrite ?unsigned_lit by lia;
           first [ exact HP | exact ENV | exact RF | exact ST | exact MI | rewrite EOW; reflexivity | reflexivity | lia | unfold A0_RT_STACK; lia
                 | cbn [fpchain]; unfold valid_frame; lia
                 | cbn; tauto
@@ -203,7 +204,7 @@ Section PARSER.
       split; [exact FRM|]. split; [reflexivity|].
       assert (DBL' : DBLOCKS FI AI false ap d LB) by (split; [exact BL1| intros X; discriminate X]).
       split; [exact OK|].
-      split; [eapply (DMEM_alloc FI AI AMS PZ PZ_agree sp0 argv envp uid hw rnd TID S4 S5 S6 S7 VSP CEIL ESF HT); [exact DM| unfold LO; exact AFR]|].
+      split; [eapply (DMEM_alloc FI AI AMS PZ PZ_agree sp0 argv envp inp mbase rnd TID S4 S5 S6 S7 VSP CEIL ESF HT); [exact DM| unfold LO; exact AFR]|].
       split; [eapply (DBYTES_alloc FI AI); [exact OK| exact DBL'| apply DBYTES_drop; exact DB| unfold LO; exact AFR]|].
       split; [exact DBL'|].
       split; [exact HP'|]. split; [exact RF'|].
@@ -221,7 +222,7 @@ Section PARSER.
     pose proof BA as (STm & MI & EX & MC & IMG & SE & SOF & RSS & SI & SZ & ENV & GSH & HPZ & CRT).
     destruct DBL as [BL1 _].
     eapply SEAMr_mono.
-    { eapply ((ac_free_any FI AI (JA FI AI) AC)) with (lo := usp0 - 8388608) (k := d_kb d) (A := d_A d) (n := d_cap d);
+    { eapply ((ac_free_any FI AI (JA FI AI) AC)) with (lo := usp0 - 6144512) (k := d_kb d) (A := d_A d) (n := d_cap d);
         rewrite ?unsigned_lit by lia;
         first [ exact HP | exact BL1 | exact ENV | exact RF | exact ST | exact MI | reflexivity | lia | unfold A0_RT_STACK; lia
               | cbn [fpchain]; unfold valid_frame; lia
@@ -235,7 +236,7 @@ Section PARSER.
     unfold rat_main_retA. do 23 eexists. exists m', (d_mpad d), s', st, (lb_remove (am_K_eqb FI AI) (d_kb d) LB). split; [reflexivity|].
     split; [reflexivity|]. split; [exact HST|].
     split; [unfold MFRAME in *; eapply (apres_rw_cells FI AI); [exact AP| exact FR| apply aclient_range_above; lia]|].
-    split; [eapply (BASE_A2_alloc FI AI AMS PZ PZ_agree sp0 argv envp uid hw rnd TID VSP CEIL ESF HT so); [exact BA| unfold LO; exact AFR]|].
+    split; [eapply (BASE_A2_alloc FI AI AMS PZ PZ_agree sp0 argv envp inp mbase rnd TID VSP CEIL ESF HT so); [exact BA| unfold LO; exact AFR]|].
     split; [exact HP'|]. split; [exact RF'|]. exact ST'.
   Qed.
 End PARSER.

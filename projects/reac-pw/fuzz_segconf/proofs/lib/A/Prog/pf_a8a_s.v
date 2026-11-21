@@ -9,14 +9,15 @@
    window, so the memory below the frame stays the entry's (kept_out) and the read-only bytes strcmp reads
    (rt_rom_view) follow from the statement's arodata_okP. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/rec_calls_equal.v, with its module paths and module names changed; 517 of its 584 lines of code are new or changed and 1424 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image A (fuzz_segconf.asan): segment A8a of reac_segconf_parse_file's walk, the theorem
    pf_a8a_holds : S_A8a B of lib/A/Prog/pf_pieces.v (SEG 0x887a4 -> NEW 0x8890c, FOUND 0x88964 or CLR 0x880fc;
    49 instructions: 0x887a4-0x8883c, the check stubs 0x88b20-0x88b34 and 0x88ba8-0x88bb8, the error calls
    0x88d70-0x88d78). Segment A8a's proof, by the G3 walk owner, 2026-10-30. The functional template is the
-   plain-build walk owner's plain piece lib/Prog/pf_p4.v at 16c6d72c0344 (w_segget / w_loop / w_notfound), the
+   plain-build walk owner's plain piece lib/Prog/pf_p4.v (w_segget / w_loop / w_notfound), the
    call steps those of the listing layer's owner's check_segments.v (strcmp through PaArt.aj_art_at) and of
    lib/A/Prog/reac_segconf_parse.v (a program callee through PaFx.cl_callSF, lifted by srr_apost_baseF_lift).
-   The code (the unit's internal record, commit dfb49d6ad789, path records/segp/dis/
+   The code (the unit's internal record, path records/segp/dis/
    reac_segconf_parse_file.fuzz_segconf.asan.s lines 845-883, 1068-1072, 1102-1105, 1216-1217):
      0x887a4 ld s4,0x60(s1); add s4,s4,s6; sd s4,0xb0(s1)     s4 = sh(&c->n) (slot 0x60 holds (c + RC_N) / 8)
      0x887b0 lb a0,0(s4); bnez a0,0x88b20                     check #29 (load4 of c->n), stub 0x88b20, error 0x88d70

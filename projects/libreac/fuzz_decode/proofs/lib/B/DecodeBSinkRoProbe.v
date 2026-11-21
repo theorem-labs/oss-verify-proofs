@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: written for libreac/fuzz_decode's ASan+UBSan build (image B): the kernel
    refutation of the Section hypothesis HB_SINK_KEPT of lib/B/DecodeBClose.v as typed there (:328-331, the HSINK_KEPT
-   premise of the frozen dec_llvmf_holds_stmt, lib/B/Prog/LLVMFuzzerTestOneInput_cg.v:233-235). The A twin is
+   premise of the frozen dec_llvmf_holds_stmt, lib/B/Prog/LLVMFuzzerTestOneInput_cg.v:234-236). The A twin is
    lib/A/DecodeASinkRoProbe.v.
 
    HB_SINK_KEPT quantifies over every journal footprint FP. A journal whose FP holds the sink token (0, 1) lets the
@@ -12,14 +12,15 @@
    and the free fd alloc_fd are conjuncts of LLVMFuzzerTestOneInput's precondition dec_lib_pre_x,
    LLVMFuzzerTestOneInput_cg.v:109, :117, :118) there is a journal step with FP = [YI16.sink_token], no memory change
    and that fd added, after which an fd names the sink path; a Theorem Labs lane's asink_none rules that out (its third conjunct
-   `Namei.fd_names_path (m_fds md) sink_path = false`, lib/Reusable/YE00.v:126-128 on -core e2ad4d7aa34). A Theorem Labs lane's
-   own asink_none_kept (lib/B/YE01.v:85-88 on -coreB) has the premise `~ YI16.sink_open_fp FP`, which HB_SINK_KEPT
+   `Namei.fd_names_path (m_fds md) sink_path = false`, lib/Reusable/YE00.v:126-128 on -core). A Theorem Labs lane's
+   own asink_none_kept (lib/B/YE01.v:86-89 on -coreB) has the premise `~ YI16.sink_open_fp FP`, which HB_SINK_KEPT
    lacks.
 
    The statement is stated for every symbol record B, sink record KS and sink predicate asink_none that rules out an
    fd on the sink path, so that it compiles on the closing tree before image B's core (TfibB, tfib_K, YE00) is merged;
    decode B's instance is B := TfibB, KS := tfib_K, asink_none := YE00.asink_none, whose side condition is
    `fun _ _ _ _ H => proj2 (proj2 H)`. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed dec_B_with_fds_kept). *)
 From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -51,7 +52,7 @@ Lemma dec_B_with_fds_kept : forall (fds : list (word * FdEntry)) (md : Model),
   m_vmmaps (with_fds fds md) = m_vmmaps md /\ m_vm_lazy (with_fds fds md) = m_vm_lazy md /\
   eager_used (with_fds fds md) = eager_used md /\ proc_but_pins md (with_fds fds md).
 Proof.
-intros fds [fd vm io fs [h ti c ss sm ch u sa k sp at_ pins] li tm].
+intros fds [fd vm io fs [h ti c ss sm ch u sa k sp at_ pins spp cr spa spt] li tm].
 split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].
 split; [reflexivity|]. split; [reflexivity|]. split; reflexivity.
 Qed.

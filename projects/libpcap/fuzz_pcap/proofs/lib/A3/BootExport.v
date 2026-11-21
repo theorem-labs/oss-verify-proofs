@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the ledger and EVar literals of L_MAIN, L_MAIN_maps and the exported boot facts move by +16, EB takes mbase, the exported reserved list is init_reserved with the launch's vDSO pair, and the shadow maps' freedom from it comes from mf_resx, in both copies. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -31,7 +32,7 @@ Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
 
 (* [comment removed for export] *)
-Definition L_MAIN (lb : Z) : ledger := lgrant (lgrant (lgrant_nr (lgrant (L_T0 lb) 104 1048576) 105 8388608) 106 4096) 107 4096.
+Definition L_MAIN (lb : Z) : ledger := lgrant (lgrant (lgrant_nr (lgrant (L_T0 lb) 120 1048576) 121 8388608) 122 4096) 123 4096.
 Definition LZ_MAIN (sp p8 sb p10 p15 p24 : word) : list (word * word) := (p24, Z_to_bv 64 8388608) :: LZ30 sp p8 sb p10 p15.
 (* [comment removed for export] *)
 Definition A_MAIN (sp sb p12 a : word) (W : Z) (p24 : word) : list (Z * Z) :=
@@ -41,9 +42,9 @@ Definition H_MAIN (sp p8 sb p10 p12 a : word) (W : Z) (p24 : word) : word -> boo
 Definition HC_MAIN (p8 p10 p24 : word) : hfacts := (bv_unsigned p24, bv_unsigned p24 + 8388608, Some (Z_to_bv 8 0)) :: hc6 p8 p10.
 
 Lemma L_MAIN_maps : forall lb, l_maps (L_MAIN lb) =
-  [(EVar 107, 4096); (EVar 106, 4096); (EVar 105, 8388608); (EVar 104, 1048576); (EVar 103, 4096); (EVar 102, 8192);
-   (EVar 83, 11571200); (EVar 60, 4096); (EVar 46, 4096); (EVar 38, 65536); (EVar 37, 4096); (EVar 36, 8388608);
-   (EVar 28, 137439023104); (EVar 27, 3727360); (EVar 26, 65536); (ELit 2201439137792, 15392894357504); (ELit 2415882240, 2199023255552);
+  [(EVar 123, 4096); (EVar 122, 4096); (EVar 121, 8388608); (EVar 120, 1048576); (EVar 119, 4096); (EVar 118, 8192);
+   (EVar 99, 11571200); (EVar 76, 4096); (EVar 62, 4096); (EVar 54, 65536); (EVar 53, 4096); (EVar 52, 8388608);
+   (EVar 44, 137439023104); (EVar 43, 3727360); (EVar 42, 65536); (ELit 2201439137792, 15392894357504); (ELit 2415882240, 2199023255552);
    (ELit 2147446784, 268435456)].
 Proof. reflexivity. Qed.
 Lemma L_MAIN_eager : forall lb, l_eager (L_MAIN lb) = 16519168. Proof. reflexivity. Qed.
@@ -54,7 +55,7 @@ Section Export.
   Hypothesis VI : valid_input inp.
   Hypothesis VE : valid_entry IMG (mkEntry sp brk mbase draw) inp.
   #[local] Notation bootS' := (bootS sp brk mbase draw lim inp).
-  #[local] Notation EB' := (EB sp draw inp).
+  #[local] Notation EB' := (EB sp mbase draw inp).
 
   (* [comment removed for export] *)
   Definition world1 : Prop := STv sp <= bv_unsigned sp - 96.
@@ -67,12 +68,12 @@ Section Export.
            (L_MAIN lb) (HC_MAIN p8 p10 p24) (LZ_MAIN sp p8 sb p10 p15 p24) R M mdl
     /\ (if w1 then world1 else ~ world1) /\ (lb = 0 \/ lb = 8192)
     /\ bv_unsigned sb = SBV p8
-    /\ ev (EB' a tid c pl js) 28 = p8 /\ ev (EB' a tid c pl js) 29 = sb /\ ev (EB' a tid c pl js) 36 = p10 /\ ev (EB' a tid c pl js) 38 = p12
+    /\ ev (EB' a tid c pl js) 44 = p8 /\ ev (EB' a tid c pl js) 45 = sb /\ ev (EB' a tid c pl js) 52 = p10 /\ ev (EB' a tid c pl js) 54 = p12
     /\ (bv_unsigned p15 + 4096 <= 0x2008fff7000 \/ SHB_HI <= bv_unsigned p15)
-    /\ ev (EB' a tid c pl js) 62 = Z_to_bv 64 (STv sp) /\ ev (EB' a tid c pl js) 63 = Z_to_bv 64 (XQv sp) /\ ev (EB' a tid c pl js) 64 = Z_to_bv 64 (PBv sp)
-    /\ ev (EB' a tid c pl js) 84 = Z_to_bv 64 W /\ ev (EB' a tid c pl js) 85 = Z_to_bv 64 (Wdst sp) /\ bv_unsigned sp / 8 + CSH <= W /\ W + 8 <= SHB_HI
-    /\ ev (EB' a tid c pl js) 101 = brk
-    /\ ev (EB' a tid c pl js) 105 = p24 /\ (bv_unsigned p24 + 8388608 <= SHB_LO \/ SHB_HI <= bv_unsigned p24).
+    /\ ev (EB' a tid c pl js) 78 = Z_to_bv 64 (STv sp) /\ ev (EB' a tid c pl js) 79 = Z_to_bv 64 (XQv sp) /\ ev (EB' a tid c pl js) 80 = Z_to_bv 64 (PBv sp)
+    /\ ev (EB' a tid c pl js) 100 = Z_to_bv 64 W /\ ev (EB' a tid c pl js) 101 = Z_to_bv 64 (Wdst sp) /\ bv_unsigned sp / 8 + CSH <= W /\ W + 8 <= SHB_HI
+    /\ ev (EB' a tid c pl js) 117 = brk
+    /\ ev (EB' a tid c pl js) 121 = p24 /\ (bv_unsigned p24 + 8388608 <= SHB_LO \/ SHB_HI <= bv_unsigned p24).
 
   #[using="Type"] Lemma at_mainW_1 : forall a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
     BootS11w1.at_main sp brk mbase draw lim inp a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
@@ -112,7 +113,7 @@ Section Export.
     m_halted mdl = None
     /\ m_fds mdl = FDS0 /\ m_fs mdl = in_fs inp
     /\ (exists tid, m_tid mdl = Some tid /\ 0 < bv_unsigned tid < 4194304)
-    /\ vm_reserved (m_vmmaps mdl) = segments_reserved SEGS
+    /\ vm_reserved (m_vmmaps mdl) = init_reserved (segments_reserved SEGS) mbase sp (in_kernel inp)
     /\ vm_init_sp (m_vmmaps mdl) = sp /\ vm_limit (m_vmmaps mdl) = lim /\ vm_start_brk (m_vmmaps mdl) = brk /\ vm_mmap_base (m_vmmaps mdl) = mbase
     /\ (vm_brk (m_vmmaps mdl) = brk \/ vm_brk (m_vmmaps mdl) = Z_to_bv 64 (bv_unsigned brk + 8192))
     /\ model_ivs_wf mdl
@@ -139,10 +140,14 @@ Section Export.
     { rewrite (mf_brk _ _ _ _ _ _ _ _ _ F), L_MAIN_brk. destruct Hlb as [-> | ->]; [left; rewrite Z.add_0_r; apply Z_to_bv_bv_unsigned | right; reflexivity]. }
     split; [exact (mf_wf _ _ _ _ _ _ _ _ _ F)|].
     split; [pose proof (mf_eager _ _ _ _ _ _ _ _ _ F) as EG; rewrite L_MAIN_eager in EG; exact EG|].
-    split; [rewrite (mf_maps _ _ _ _ _ _ _ _ _ F), L_MAIN_maps; cbn [dl List.map fst snd]; do 17 right; left; reflexivity|].
-    split; [rewrite (mf_maps _ _ _ _ _ _ _ _ _ F), L_MAIN_maps; cbn [dl List.map fst snd]; do 15 right; left; reflexivity|].
+    assert (IN1 : In (Z_to_bv 64 0x7fff7000, Z_to_bv 64 0x10000000) (vm_maps (m_vmmaps mdl)))
+      by (rewrite (mf_maps _ _ _ _ _ _ _ _ _ F), L_MAIN_maps; cbn [dl List.map fst snd]; do 17 right; left; reflexivity).
+    assert (IN2 : In (Z_to_bv 64 0x2008fff7000, Z_to_bv 64 0xdfff0001000) (vm_maps (m_vmmaps mdl)))
+      by (rewrite (mf_maps _ _ _ _ _ _ _ _ _ F), L_MAIN_maps; cbn [dl List.map fst snd]; do 15 right; left; reflexivity).
+    split; [exact IN1|]. split; [exact IN2|].
     split; [exact NA1|]. split; [exact NA2|].
-    rewrite (mf_res _ _ _ _ _ _ _ _ _ F). split; vm_compute; reflexivity.
+    (* both shadow maps miss every reserved entry, the launch's vDSO pair included ([mf_resx]) *)
+    split; [exact (mf_resx _ _ _ _ _ _ _ _ _ F _ IN1) | exact (mf_resx _ _ _ _ _ _ _ _ _ F _ IN2)].
   Qed.
 End Export.
 
@@ -179,7 +184,7 @@ Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
 
 (* [comment removed for export] *)
-Definition L_MAIN (lb : Z) : ledger := lgrant (lgrant (lgrant_nr (lgrant (L_T0 lb) 104 1048576) 105 8388608) 106 4096) 107 4096.
+Definition L_MAIN (lb : Z) : ledger := lgrant (lgrant (lgrant_nr (lgrant (L_T0 lb) 120 1048576) 121 8388608) 122 4096) 123 4096.
 Definition LZ_MAIN (sp p8 sb p10 p15 p24 : word) : list (word * word) := (p24, Z_to_bv 64 8388608) :: LZ30 sp p8 sb p10 p15.
 (* [comment removed for export] *)
 Definition A_MAIN (sp sb p12 a : word) (W : Z) (p24 : word) : list (Z * Z) :=
@@ -189,9 +194,9 @@ Definition H_MAIN (sp p8 sb p10 p12 a : word) (W : Z) (p24 : word) : word -> boo
 Definition HC_MAIN (p8 p10 p24 : word) : hfacts := (bv_unsigned p24, bv_unsigned p24 + 8388608, Some (Z_to_bv 8 0)) :: hc6 p8 p10.
 
 Lemma L_MAIN_maps : forall lb, l_maps (L_MAIN lb) =
-  [(EVar 107, 4096); (EVar 106, 4096); (EVar 105, 8388608); (EVar 104, 1048576); (EVar 103, 4096); (EVar 102, 8192);
-   (EVar 83, 11571200); (EVar 60, 4096); (EVar 46, 4096); (EVar 38, 65536); (EVar 37, 4096); (EVar 36, 8388608);
-   (EVar 28, 137439023104); (EVar 27, 3727360); (EVar 26, 65536); (ELit 2201439137792, 15392894357504); (ELit 2415882240, 2199023255552);
+  [(EVar 123, 4096); (EVar 122, 4096); (EVar 121, 8388608); (EVar 120, 1048576); (EVar 119, 4096); (EVar 118, 8192);
+   (EVar 99, 11571200); (EVar 76, 4096); (EVar 62, 4096); (EVar 54, 65536); (EVar 53, 4096); (EVar 52, 8388608);
+   (EVar 44, 137439023104); (EVar 43, 3727360); (EVar 42, 65536); (ELit 2201439137792, 15392894357504); (ELit 2415882240, 2199023255552);
    (ELit 2147446784, 268435456)].
 Proof. reflexivity. Qed.
 Lemma L_MAIN_eager : forall lb, l_eager (L_MAIN lb) = 16519168. Proof. reflexivity. Qed.
@@ -202,7 +207,7 @@ Section Export.
   Hypothesis VI : valid_input inp.
   Hypothesis VE : valid_entry IMG (mkEntry sp brk mbase draw) inp.
   #[local] Notation bootS' := (bootS sp brk mbase draw lim inp).
-  #[local] Notation EB' := (EB sp draw inp).
+  #[local] Notation EB' := (EB sp mbase draw inp).
 
   (* [comment removed for export] *)
   Definition world1 : Prop := STv sp <= bv_unsigned sp - 96.
@@ -215,12 +220,12 @@ Section Export.
            (L_MAIN lb) (HC_MAIN p8 p10 p24) (LZ_MAIN sp p8 sb p10 p15 p24) R M mdl
     /\ (if w1 then world1 else ~ world1) /\ (lb = 0 \/ lb = 8192)
     /\ bv_unsigned sb = SBV p8
-    /\ ev (EB' a tid c pl js) 28 = p8 /\ ev (EB' a tid c pl js) 29 = sb /\ ev (EB' a tid c pl js) 36 = p10 /\ ev (EB' a tid c pl js) 38 = p12
+    /\ ev (EB' a tid c pl js) 44 = p8 /\ ev (EB' a tid c pl js) 45 = sb /\ ev (EB' a tid c pl js) 52 = p10 /\ ev (EB' a tid c pl js) 54 = p12
     /\ (bv_unsigned p15 + 4096 <= 0x2008fff7000 \/ SHB_HI <= bv_unsigned p15)
-    /\ ev (EB' a tid c pl js) 62 = Z_to_bv 64 (STv sp) /\ ev (EB' a tid c pl js) 63 = Z_to_bv 64 (XQv sp) /\ ev (EB' a tid c pl js) 64 = Z_to_bv 64 (PBv sp)
-    /\ ev (EB' a tid c pl js) 84 = Z_to_bv 64 W /\ ev (EB' a tid c pl js) 85 = Z_to_bv 64 (Wdst sp) /\ bv_unsigned sp / 8 + CSH <= W /\ W + 8 <= SHB_HI
-    /\ ev (EB' a tid c pl js) 101 = brk
-    /\ ev (EB' a tid c pl js) 105 = p24 /\ (bv_unsigned p24 + 8388608 <= SHB_LO \/ SHB_HI <= bv_unsigned p24).
+    /\ ev (EB' a tid c pl js) 78 = Z_to_bv 64 (STv sp) /\ ev (EB' a tid c pl js) 79 = Z_to_bv 64 (XQv sp) /\ ev (EB' a tid c pl js) 80 = Z_to_bv 64 (PBv sp)
+    /\ ev (EB' a tid c pl js) 100 = Z_to_bv 64 W /\ ev (EB' a tid c pl js) 101 = Z_to_bv 64 (Wdst sp) /\ bv_unsigned sp / 8 + CSH <= W /\ W + 8 <= SHB_HI
+    /\ ev (EB' a tid c pl js) 117 = brk
+    /\ ev (EB' a tid c pl js) 121 = p24 /\ (bv_unsigned p24 + 8388608 <= SHB_LO \/ SHB_HI <= bv_unsigned p24).
 
   #[using="Type"] Lemma at_mainW_1 : forall a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl,
     A3.BootS11w1.TwB.at_main sp brk mbase draw lim inp a tid c pl p8 sb p10 p12 p15 p24 W lb js R M mdl ->
@@ -260,7 +265,7 @@ Section Export.
     m_halted mdl = None
     /\ m_fds mdl = FDS0 /\ m_fs mdl = in_fs inp
     /\ (exists tid, m_tid mdl = Some tid /\ 0 < bv_unsigned tid < 4194304)
-    /\ vm_reserved (m_vmmaps mdl) = segments_reserved SEGS
+    /\ vm_reserved (m_vmmaps mdl) = init_reserved (segments_reserved SEGS) mbase sp (in_kernel inp)
     /\ vm_init_sp (m_vmmaps mdl) = sp /\ vm_limit (m_vmmaps mdl) = lim /\ vm_start_brk (m_vmmaps mdl) = brk /\ vm_mmap_base (m_vmmaps mdl) = mbase
     /\ (vm_brk (m_vmmaps mdl) = brk \/ vm_brk (m_vmmaps mdl) = Z_to_bv 64 (bv_unsigned brk + 8192))
     /\ model_ivs_wf mdl
@@ -287,10 +292,13 @@ Section Export.
     { rewrite (mf_brk _ _ _ _ _ _ _ _ _ F), L_MAIN_brk. destruct Hlb as [-> | ->]; [left; rewrite Z.add_0_r; apply Z_to_bv_bv_unsigned | right; reflexivity]. }
     split; [exact (mf_wf _ _ _ _ _ _ _ _ _ F)|].
     split; [pose proof (mf_eager _ _ _ _ _ _ _ _ _ F) as EG; rewrite L_MAIN_eager in EG; exact EG|].
-    split; [rewrite (mf_maps _ _ _ _ _ _ _ _ _ F), L_MAIN_maps; cbn [dl List.map fst snd]; do 17 right; left; reflexivity|].
-    split; [rewrite (mf_maps _ _ _ _ _ _ _ _ _ F), L_MAIN_maps; cbn [dl List.map fst snd]; do 15 right; left; reflexivity|].
+    assert (IN1 : In (Z_to_bv 64 0x7fff7000, Z_to_bv 64 0x10000000) (vm_maps (m_vmmaps mdl)))
+      by (rewrite (mf_maps _ _ _ _ _ _ _ _ _ F), L_MAIN_maps; cbn [dl List.map fst snd]; do 17 right; left; reflexivity).
+    assert (IN2 : In (Z_to_bv 64 0x2008fff7000, Z_to_bv 64 0xdfff0001000) (vm_maps (m_vmmaps mdl)))
+      by (rewrite (mf_maps _ _ _ _ _ _ _ _ _ F), L_MAIN_maps; cbn [dl List.map fst snd]; do 15 right; left; reflexivity).
+    split; [exact IN1|]. split; [exact IN2|].
     split; [exact NA1|]. split; [exact NA2|].
-    rewrite (mf_res _ _ _ _ _ _ _ _ _ F). split; vm_compute; reflexivity.
+    split; [exact (mf_resx _ _ _ _ _ _ _ _ _ F _ IN1) | exact (mf_resx _ _ _ _ _ _ _ _ _ F _ IN2)].
   Qed.
 End Export.
 End TwB.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (main_entry over the launch's ProcInput and entry point, the argv string bounds from main_strN; the channel-reader premise on the header-message and usage writes and the cannot-open branch; valsN_length applied at its section's full argument list; a0s_fits declares Hargc and Hfit, which its case split on av generalizes). *)
 
 From Stdlib Require ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.EquivalenceDefinition Require Equivalence.
@@ -76,6 +77,8 @@ Hypothesis Hvsp : valid_sp sp0.
 Hypothesis Hh : m_halted model = None.
 Hypothesis Hlazy : m_vm_lazy model = [].
 Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+(* LPS 727298f3: writev to fd 2 needs a reader at the far end ([State.m_channel_reader]) *)
+Hypothesis Hrdr : m_channel_reader model = true.
 
 Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
 Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
@@ -96,7 +99,7 @@ hp_wbase : cell M' (0x66d38 + 56) 8 0x98348;
 hp_rpos  : cell M' (0x66d38 + 8) 8 0;
 hp_rend  : cell M' (0x66d38 + 16) 8 0 }.
 
-#[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma hdr_sym : forall (pc : Z) (msg : list byte) vals R M K,
+#[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma hdr_sym : forall (pc : Z) (msg : list byte) vals R M K,
 ((pc = 0x20d3c /\ msg = msg_short) \/ (pc = 0x20d58 /\ msg = msg_overrun))%Z ->
 length vals = 39%nat -> vals_ev vals 0 = sp0 ->
 regs_ok (ENV BL vals) srOOM0 R -> know_ok RSEGS (ENV BL vals) M knRE0 ->
@@ -160,6 +163,7 @@ rewrite (kimg_rdn RSEGS (ENV BL vals) M1 hknA ltac:(let i := kidx hknA (is_kimg_
 _ _ s_lit 31 HK1 eq_refl) by lia.
 exact Rimg.
 - exact Hfd2.
+- exact Hrdr.
 - exact Hh.
 - exact Hlazy.
 - exact HKnil.
@@ -235,7 +239,7 @@ Hypothesis Mself : cell M 0x77b38 8 0x77b38.
 Hypothesis Mcanary : cell M 0x97e70 8 c.
 Hypothesis Mpagesz : cell M 0x97ec0 8 4096.
 
-#[using="BL Hvsp Hh Hlazy Hfd2 SPlo SPhi tid c Rsp Rgp Rtp Mstack Mimg Mtid Htid Mself Mcanary Mpagesz"] Theorem ref_hdr_msg : forall (pc : Z) (msg : list byte) K,
+#[using="BL Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi tid c Rsp Rgp Rtp Mstack Mimg Mtid Htid Mself Mcanary Mpagesz"] Theorem ref_hdr_msg : forall (pc : Z) (msg : list byte) K,
 ((pc = 0x20d3c /\ msg = msg_short) \/ (pc = 0x20d58 /\ msg = msg_overrun))%Z ->
 K [] ->
 (forall R' M',
@@ -305,14 +309,20 @@ Hypothesis Hva : valid_argv [a0s; path].
 Hypothesis Hve : valid_envp envv.
 Hypothesis Hvsp : valid_sp sp0.
 Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-Hypothesis ME : main_entry sp0 [a0s; path] envv tid regs0 mem0.
+(* LPS 727298f3: [main_entry] takes the launch's input, the mmap base and the entry point. *)
+Variable inp : ProcInput.
+Variable entry : word.
+Hypothesis ME : main_entry inp mbase entry sp0 [a0s; path] envv tid regs0 mem0.
 Hypothesis Hfit : entry_stack_fits sp0 [a0s; path] envv.
+(* LPS 727298f3: the far end of fd 2 has a reader; the launch seeds [State.m_channel_reader] from
+   [in_channel_reader], which [Run.valid_input] pins to true *)
+Hypothesis Hrdr : a_channel_reader = true.
 
-#[using="regs0 Hva Hve Hvsp ME Hfit"] Theorem open_err_branch_cannot_open :
-U1zM.open_err_branch sp0 a0s path envv tid mem0 brk mbase fs0 stdin0 (t_die (msg_cannot_open path) fs0).
+#[using="regs0 Hva Hve Hvsp Htid ME Hfit Hrdr"] Theorem open_err_branch_cannot_open :
+U1zM.open_err_branch sp0 a0s path envv tid mem0 brk mbase fs0 stdin0 inp (t_die (msg_cannot_open path) fs0).
 Proof.
 intros e vals R M He HL P0 P38 P1 P2 P5 HR HK Habove.
-apply (UleT.ref_open_fail_errno sp0 a0s path envv tid regs0 mem0 brk mbase fs0 stdin0 LIM Hva Hve Hvsp ME Hfit
+apply (UleT.ref_open_fail_errno sp0 a0s path envv tid regs0 mem0 brk mbase fs0 stdin0 LIM Hva Hve Hvsp Htid inp entry ME Hfit Hrdr
 e vals R M (openat_errnos_range e He) HL P0 P38 P2 HR HK Habove).
 Qed.
 End Branch.
@@ -403,10 +413,16 @@ Hypothesis Hva : valid_argv av.
 Hypothesis Hve : valid_envp envv.
 Hypothesis Hvsp : valid_sp sp0.
 Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-Hypothesis ME : main_entry sp0 av envv tid regs0 mem0.
+(* LPS 727298f3: [main_entry] takes the launch's input, the mmap base and the entry point. *)
+Variable inp : ProcInput.
+Variable entry : word.
+Hypothesis ME : main_entry inp mbase entry sp0 av envv tid regs0 mem0.
 Hypothesis Hargc : length av <> 2%nat.
 
 Hypothesis Hfit : entry_stack_fits sp0 av envv.
+(* LPS 727298f3: the far end of fd 2 has a reader; the launch seeds [State.m_channel_reader] from
+   [in_channel_reader], which [Run.valid_input] pins to true *)
+Hypothesis Hrdr : a_channel_reader = true.
 
 Definition model0 : Model :=
 with_tid tid (init_model (segments_reserved RSEGS) brk mbase sp0 lim (mkProcInputC av envv fs0 stdin0)).
@@ -417,6 +433,7 @@ Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
 #[using="Type"] Lemma model0_halted : m_halted model0 = None. Proof. reflexivity. Qed.
 #[using="Type"] Lemma model0_lazy : m_vm_lazy model0 = []. Proof. reflexivity. Qed.
 #[using="Type"] Lemma model0_fd2 : fd_lookup (m_fds model0) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)). Proof. reflexivity. Qed.
+#[using="Hrdr"] Lemma model0_rdr : m_channel_reader model0 = true. Proof. exact Hrdr. Qed.
 #[using="Type"] Lemma model0_fs : m_fs model0 = fs0. Proof. reflexivity. Qed.
 
 #[using="AMB sp0 envv tid regs0 mem0 Hva ME Hargc Hfit"] Lemma a0s_nonul : ~ In (Z_to_bv 8 0) (hd [] av).
@@ -425,18 +442,14 @@ destruct Hva as ([H1 _] & _ & _ & Hn & _). destruct av as [|a0s rest]; [cbn in H
 inversion Hn; subst. assumption.
 Qed.
 
-#[using="AMB tid regs0 mem0 Hva Hve Hvsp ME Hargc Hfit SPlo SPhi"] Lemma a0s_fits : (bv_unsigned (p0N sp0 av envv) + Z.of_nat (length (hd [] av)) + 1 <= 0x800000000000)%Z.
+#[using="Hva Hve Hvsp Htid ME Hargc Hfit"] Lemma a0s_fits : (bv_unsigned (p0N av envv inp) + Z.of_nat (length (hd [] av)) + 1 <= 0x800000000000)%Z.
 Proof.
-pose proof SPlo as Hlo. pose proof SPhi as Hhi.
 assert (Hlen : (1 <= length av)%nat) by (destruct Hva as [[H1 _] _]; lia).
-unfold p0N. rewrite (u_cat_argv_ptr sp0 av envv Hva Hve ltac:(unfold sp_window_lo; lia) ltac:(unfold sp_window_hi; lia) 0%nat ltac:(lia)).
-pose proof Hfit as HF. unfold entry_stack_fits, entry_stack_span, sp_window_hi in HF.
-pose proof (total_arg_bytes_nonneg envv) as He.
+(* LPS 727298f3: the string end bound of [U1oC.Mq1.main_strN] (the strings end below the Sv48 stack top) *)
+destruct (main_strN sp0 av envv tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME 0%nat ltac:(lia))
+as (_ & _ & _ & _ & _ & Send).
 destruct av as [|a0 rest]; [cbn in Hlen; lia|].
-pose proof (total_arg_bytes_nonneg rest) as Hr.
-cbn [firstn hd]. change (total_arg_bytes_nat []) with 0%nat.
-unfold cat_struct_size, auxv_size. cbn [length total_arg_bytes fold_right] in HF. unfold auxv_size in HF.
-fold (total_arg_bytes rest) in HF. cbn [length]. lia.
+cbn [hd nth] in *. unfold p0N. change (2 ^ 47)%Z with 0x800000000000%Z in Send. lia.
 Qed.
 
 #[using="AMB sp0 envv tid regs0 mem0 Hva ME Hargc Hfit"] Lemma hd_nth : hd [] av = nth 0 av [].
@@ -451,32 +464,35 @@ unfold adenot, v_addi. cbn [a_base a_off edenot ev ENV]. rewrite P0.
 f_equal; f_equal; lia.
 Qed.
 
-#[using="Hva Hve Hvsp Htid ME Hargc Hfit SPlo SPhi"] Theorem ref_usage :
+#[using="Hva Hve Hvsp Htid ME Hargc Hfit Hrdr SPlo SPhi"] Theorem ref_usage :
 realizes RSEGS (mkCfg (mkst regs0 (Z_to_bv 64 0x20b84) mem0 (seg_rom RSEGS)) model0)
 (t_die (msg_usage (hd [] av)) fs0).
 Proof.
 pose proof SPlo as Hlo. pose proof SPhi as Hhi.
 assert (Hlen : (1 <= length av <= 1024)%nat) by (destruct Hva as [[H1 H2] _]; lia).
-assert (HR : regs_ok (EN sp0 av envv tid regs0) sr_mainN regs0) by (eapply main_regs_okN; eassumption).
-assert (HK : know_ok RSEGS (EN sp0 av envv tid regs0) mem0 kn_mainN) by (eapply main_know_okN; eassumption).
-assert (Hac : ev (EN sp0 av envv tid regs0) 16 = argcN av) by (eapply evN_argc; eassumption).
-change (EN sp0 av envv tid regs0) with (ENV (valsN sp0 av envv tid regs0)) in HR, HK, Hac.
-set (vals := valsN sp0 av envv tid regs0) in *.
-assert (HL : length vals = 39%nat) by (subst vals; apply valsN_length).
+assert (HR : regs_ok (EN sp0 av envv tid regs0 inp) sr_mainN regs0)
+by exact (main_regs_okN sp0 av envv tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME).
+assert (HK : know_ok RSEGS (EN sp0 av envv tid regs0 inp) mem0 kn_mainN)
+by exact (main_know_okN sp0 av envv tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME).
+assert (Hac : ev (EN sp0 av envv tid regs0 inp) 16 = len_word av)
+by exact (evN_argc sp0 av envv tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME).
+change (EN sp0 av envv tid regs0 inp) with (ENV (valsN sp0 av envv tid regs0 inp)) in HR, HK, Hac.
+set (vals := valsN sp0 av envv tid regs0 inp) in *.
+assert (HL : length vals = 39%nat)
+by (subst vals; first [ exact (valsN_length sp0 av envv tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME) | apply valsN_length ]).
 assert (P0 : vals_ev vals 0 = sp0) by reflexivity.
-assert (P1 : vals_ev vals 1 = p0N sp0 av envv) by reflexivity.
+assert (P1 : vals_ev vals 1 = p0N av envv inp) by reflexivity.
 cbn [ev ENV] in Hac.
-assert (STR := fun k Hk => main_strN sp0 av envv tid regs0 mem0 Hva Hve Hvsp ME k Hk) || idtac.
-edestruct (main_strN sp0 av envv tid regs0 mem0) as (Sr & Slo & Shi & Slen & t8 & Ht8); try eassumption.
-1:{ instantiate (1 := 0%nat). lia. }
+destruct (main_strN sp0 av envv tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME 0%nat ltac:(lia))
+as (Sr & Slo & Shi & Slen & (t8 & Ht8) & _).
 rewrite <- hd_nth in Sr, Slen, Ht8. set (a0s := hd [] av) in *.
-pose proof (u64_range (cat_argv_ptr sp0 av envv 0)) as Hppr.
+pose proof (u64_range (cat_argv_ptr (ed_top a_rnd) av envv (in_execfn inp) 0)) as Hppr.
 clearbody vals.
 pose proof model0_halted as Hh.
 
 run_blk_keep u_scrA 39%nat.
 { unfold sc_denot. cbn [branch_taken edenot ev ENV]. rewrite Hac.
-unfold bv_eqb. rewrite (u_argcN av Hva). change (bv_unsigned (Z_to_bv 64 2)) with 2%Z.
+unfold bv_eqb, len_word. rewrite u_small by lia. change (bv_unsigned (Z_to_bv 64 2)) with 2%Z.
 apply Bool.negb_true_iff. apply Z.eqb_neq. lia. }
 assert (Habove : forall x : word, (bv_unsigned sp0 <= bv_unsigned x)%Z -> M x = mem0 x).
 { intros x Hx. rewrite EQM. apply (mem_denot_above (ENV vals) mem0 _ 0%nat 0x99000);
@@ -526,11 +542,11 @@ clear HK2.
 set (vals1 := vals ++ junk_vals R2) in *.
 assert (HL1 : length vals1 = 71%nat) by (subst vals1; rewrite length_app, junk_vals_length, HL; reflexivity).
 assert (Q0 : vals_ev vals1 0 = sp0) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P0).
-assert (Q1 : vals_ev vals1 1 = p0N sp0 av envv) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P1).
+assert (Q1 : vals_ev vals1 1 = p0N av envv inp) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P1).
 clearbody vals1.
 change (Env (vals_ev vals1) (blobs_ev [])) with (ENV vals1) in HR, HK.
 rewrite <- model0_fs.
-eapply (us_tail sp0 model0 Hvsp model0_halted model0_lazy model0_fd2 a0s (p0N sp0 av envv) t8 vals1); try eassumption.
+eapply (us_tail sp0 model0 Hvsp model0_halted model0_lazy model0_fd2 model0_rdr a0s (p0N av envv inp) t8 vals1); try eassumption.
 - apply a0s_nonul.
 - unfold p0N. lia.
 - pose proof a0s_fits as HFp. fold a0s in HFp. unfold p0N in HFp |- *. clearbody a0s. lia.
@@ -540,7 +556,7 @@ rewrite <- Sr. apply rdn_agree. intros j Hj. apply Habove. rewrite u_small by li
 rewrite <- Ht8. apply rdn_agree. intros j Hj. apply Habove. unorm. lia.
 Qed.
 
-#[using="Hva Hve Hvsp Htid ME Hargc Hfit SPlo SPhi"] Corollary ref_usage_w :
+#[using="Hva Hve Hvsp Htid ME Hargc Hfit Hrdr SPlo SPhi"] Corollary ref_usage_w :
 realizes RSEGS (mkCfg (mkst regs0 (0x20b84 : word) mem0 (seg_rom RSEGS)) model0)
 (t_die (msg_usage (hd [] av)) fs0).
 Proof.

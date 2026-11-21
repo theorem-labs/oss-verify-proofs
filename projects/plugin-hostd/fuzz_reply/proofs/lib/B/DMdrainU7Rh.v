@@ -1,18 +1,19 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainU7.v (commit 67fc7ef5787c2195464dbe4d4f7905278328dc0c, drain recycle tail and top; file sha256 0e254743c581) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 1 image addresses moved by code-verified function pairs (1 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainU7.v (drain recycle tail and top; file sha256 0e254743c581) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 1 image addresses moved by code-verified function pairs (1 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainU7.v, with its module paths, module names and addresses changed; 12 of its 82 lines of code are new or changed and 10 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainU7Rh.v at commit b93d7a87dae, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (3 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainU7Rh.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (3 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, WalkB1): DoRecycle's walk at the drain's recycle cut, at the RE-HIDE twins - the
-   primed counterpart of DMdrainU7.dorecycle_at_cut (cgif proofs/cgif/cgif_file_fuzzer/lib/DMdrainU7.v at commit
-   67fc7ef5787c).  Recycle's secondary arm hides the dead shadow hull's interior at its return
+   primed counterpart of DMdrainU7.dorecycle_at_cut (cgif proofs/cgif/cgif_file_fuzzer/lib/DMdrainU7.v).
+   Recycle's secondary arm hides the dead shadow hull's interior at its return
    (YA0nR.SRr'_rehide_ret), so DoRecycle is stated over YG0dH.amreal' at YGcfRehidePost.RZ_cf with the leaf
    DMwalkIFRh.dr_leaf_rh (F1 priming row R3).  This file discharges DoRecycle's call premise at the cut
    (DMdrainC.dr_pre_at_call) exactly as DMdrainU7 does, and runs the primed DoRecycle contract
    DMwalkIFRh.dorecycle_ok_rh_t, an explicit premise of [dorecycle_at_cut_rh_of]: its proof is the primed DoRecycle
    chain (a Theorem Labs lane's dorecycle_ok_rh), so this file needs no DMrec* file.
    Reply's literal: Recycle's return address after its call of DoRecycle is 0x33b58 (cgif 0x3326c, Recycle+0x170,
-   FN-SAME-CODE), the value reply's relocated DMdrainC.dr_pre_at_call takes (lib/B/DMdrainC.v:69 at image B).
+   FN-SAME-CODE), the value reply's relocated DMdrainC.dr_pre_at_call takes (lib/B/DMdrainC.v:70 at image B).
    rule 24: proves function __sanitizer::QuarantineCache::DoRecycle at the drain's recycle cut at the re-hide twins
    (the walk is DMwalkIFRh.dorecycle_ok_rh_t; this file supplies its premise at the cut).  The lane's reuse search is
    LOOKUP-B1-drain.txt (sha256 c6e48b676fd5; internal record), `proof-index MergeBatches Recycle QuarantineCallback_Recycle Drain`

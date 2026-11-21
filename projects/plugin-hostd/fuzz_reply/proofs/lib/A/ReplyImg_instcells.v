@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30: pool 14 row img-instcells-A (REPLY-IMG-ROWS.md (sha256 a33a582e3ffd; internal record); CF-UNIT-HYPS.md (sha256 77b3f94c95d2; internal record) line 50).
    Proves no function (kind: statement text; an IMAGE fact, a lookup in the unit's const-cell table).
-   The cf layer's INST_CELLS_t (cgif YGcfInstSec.v:336-345 @ b81e8b96881, the instance object's constant cells that
+   The cf layer's INST_CELLS_t (cgif YGcfInstSec.v:335-344, the instance object's constant cells that
    AGif2.sview reads) at fuzz_reply image A, over the unit's TfibSyms tables (lib/A/AF0m.v: TFIB_INST = 0xa2a58,
    Tfib_const). The reply tree does not carry YGcfInstSec.v yet, so inst_cells_A states INST_CELLS_t's text UNFOLDED at
-   reply's image class instance AImg_reply (A/AGif2reply.v:23: im_segs := tfibsegs), over the symbol facts TfibSyms B;
+   reply's image class instance AImg_reply (A/AGif2reply.v:24: im_segs := tfibsegs), over the symbol facts TfibSyms B;
    a consumer closes INST_CELLS_t B with (inst_cells_A B TS). Name and form match the B twin (a Theorem Labs lane, a Theorem Labs lane 05:02Z).
    Proof pattern: cgif's AGif5.view_AR (AGif5.v:248-257), tfib_const_lookup / tfib_const_lookup_sym over the const
    cells, here from the Forall over as_const B ly that INST_CELLS_t takes as its premise (no ARm needed). The table

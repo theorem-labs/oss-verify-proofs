@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/AC9s.v, with its module paths and module names changed; 16 of its 35 lines of code are new or changed and 250 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_role image A (fuzz_role.asan, pinned sha256
    614cffc0864cc31d9d1ced61322c4efd567b64bc89fe09a227a05b5126e0debb): the piece lemma of ent_build's case 0 up to
    the parts loop, RPgSeg.rs_piece_W7a_stmt, from the three block lemmas of the piece.
@@ -13,8 +14,8 @@
    two inner cuts are lib/A/RPgEnt0Def.v. Nothing is restated here: the piece is the three in a row.
 
    The two hypotheses are the runtime contracts the table arm calls: the strlen wrapper's (its text
-   lib/A/Rt/StrlenDef.v:37; its proof lib/A/Rt/Strlen.v:27 strlen_icpt_contract needs the relocated frame) and
-   __asan_memcpy's (the kernel's aintrin_realizes, lib/Reusable/YG0d.v:328). The allocator invariant's laws are the
+   lib/A/Rt/StrlenDef.v:38; its proof lib/A/Rt/Strlen.v:28 strlen_icpt_contract needs the relocated frame) and
+   __asan_memcpy's (the kernel's aintrin_realizes, lib/Reusable/YG0d.v:329). The allocator invariant's laws are the
    kernel theorem AR_laws_ok, not a hypothesis. *)
 From OSSVerify.Proofs.reac_pw.fuzz_role.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

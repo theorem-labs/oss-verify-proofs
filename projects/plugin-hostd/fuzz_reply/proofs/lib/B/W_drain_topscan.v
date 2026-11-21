@@ -15,7 +15,8 @@
                     so the body reaches 0x83524.  The not-found exit 0x834d0 is refuted (i <= j < 4).
    The walk is the engine's (W_kit paj_run_tok / paj_run_to_tok / psrr_branch_tok), in the form of
    dt_nogrow (W_drain_tophead.v); its structure follows lib/A/W_drain_top.v's dt_scan / dt_scan_step
-   (a working branch 752503c26ca), re-derived for B's code and registers. *)
+   (a working branch), re-derived for B's code and registers. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -1432,7 +1433,7 @@ End b.
 End a.
 
 (* ---- THE GENERIC WALK (an internal work row, the ARx drain walk DR_x; the image-B twin of the dt_scan / dt_scan_step part of
-   lib/A/W_drain_top.v's generic Section c, a working branch d80aca9181b).  Section cxs proves the two scan
+   lib/A/W_drain_top.v's generic Section c, a working branch).  Section cxs proves the two scan
    statements of W_drain_tophead.v's Section cxd, dt_scan_entry_stmt_x and dt_scan_step_stmt_x, over any allocator
    relation ARx, by the walk of Section c above: the scan makes no call, so each cut's DMEM_x journal, its ghost list
    Hp1 and its dbud_x pass through unchanged.  The lemmas of Section c that read AR have their twins here (ts_shent_sub_x
@@ -2714,7 +2715,7 @@ End cxs.
 End b.
 End a.
 
-(* ---- TOP over ARx (an internal work row; the image-B twin of A's dr_top_x, a working branch af2f55b6679):
+(* ---- TOP over ARx (an internal work row; the image-B twin of A's dr_top_x, a working branch):
    dr_top_x : W_drain_cx_x.v dr_top_stmt_x, from the head's leaves (W_drain_tophead.v dt_nogrow_x / dt_grow_x, this
    file's dt_scan_entry_x / dt_scan_step_x), composed as B composes the AR TOP (W_drain_tophead.v dr_tophead_of_x,
    dt_scan_of_x, dr_top_of_x), with the tail W_drain_topb_cx.v dr_toptail_stmt_x as the Section premise dt_tail_x

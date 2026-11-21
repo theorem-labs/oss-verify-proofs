@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the TASK_SIZE carriers SPTOPc_task and M0c_task, with the stack-window image fact, threaded through the openat nodes' soundness and the tail lemmas). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -52,6 +53,9 @@ Hypothesis M2S_H : forall L LF B C K M mdl, AINVH L LF B C K M mdl ->
 Hypothesis NONUL12 : forall E, UINV E -> forall j, (j = 1 \/ j = 2)%nat -> ~ In (Z_to_bv 8 0) (eb E j).
 Hypothesis ABSENT2 : forall E, UINV E -> bv_unsigned (ev E 4%nat) = DNA.CLS_ABSENT ->
   eb E 2%nat <> [] -> openat_plain_name (eb E 2%nat) = true /\ fs_lookup FS0 (eb E 2%nat) = None.
+(* The TASK_SIZE carrier the openat nodes take (BoDrvNodesSoundA5.v, [SPTOPc_task]/[M0c_task]). *)
+Hypothesis SPTOPc_task : SPTOPc <= TASK_SIZE.
+Hypothesis M0c_task : forall a : word, TASK_SIZE <= bv_unsigned a -> M0c a = None.
 
 (* [comment removed for export] *)
 Lemma XNc_core_sound : forall id args, id <> 20%nat -> N1 (XNc BSEGS ITA ABOTH NXD GBOTH BCAP CCAP CT0 id args).
@@ -225,9 +229,11 @@ Hypothesis DTOR_FRAME : forall L LF B C K M M' mdl, AINVH L LF B C K M mdl ->
   (forall a : word, M' a <> M a -> (in_lsb (bv_unsigned a) = true \/ in_mub (bv_unsigned a) = true) /\ M' a <> None) ->
   rdn BSEGS M' (Z_to_bv 64 DNA.DTOR_MU) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 0)) ->
   AINVH L LF B C K M' mdl.
+Hypothesis SPTOPc_task : SPTOPc <= TASK_SIZE.
+Hypothesis M0c_task : forall a : word, TASK_SIZE <= bv_unsigned a -> M0c a = None.
 
 #[local] Notation ARGS thm := (thm RC SFL SHC KCAP AINVH SWIN HP SWIN_img SPTOPc HIDc HIDFc M0c B0c C0c B0c_nonneg C0c_nonneg bcap_ok ccap_ok FTOPc FTOPc_ok
-                                   a0 p fs data GC_all FZN_contract FZE_contract M2S_H DTOR_H DTOR_FRAME).
+                                   a0 p fs data GC_all FZN_contract FZE_contract M2S_H DTOR_H DTOR_FRAME SPTOPc_task M0c_task).
 
 (* [comment removed for export] *)
 Lemma to_die : forall (cs : acs) (sh : shape) (msg : env -> list byte) (m : list byte),
@@ -315,36 +321,46 @@ Hypothesis DTOR_FRAME : forall L LF B C K M M' mdl, AINVH L LF B C K M mdl ->
   (forall a : word, M' a <> M a -> (in_lsb (bv_unsigned a) = true \/ in_mub (bv_unsigned a) = true) /\ M' a <> None) ->
   rdn BSEGS M' (Z_to_bv 64 DNA.DTOR_MU) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 0)) ->
   AINVH L LF B C K M' mdl.
+(* The TASK_SIZE carrier for the start frame; every callee frame's is proved, not assumed
+   ([BoDrvNodesSoundA11.dtor_core]). *)
+Hypothesis SPTOPc_task : SPTOPc <= TASK_SIZE.
+Hypothesis M0c_task : forall a : word, TASK_SIZE <= bv_unsigned a -> M0c a = None.
 
 Lemma UXa : forall E E', env_agree NXD E E' -> UINVd E -> UINVd E'.
 Proof. exact (UINVd_agree a0 p fs data UX UX_agree). Qed.
 
-Lemma XNz_at : forall M0, GPS.ext_stmt BSEGS NXD XNz PERMc SPTOPc fs SHC VSHc (AINVat M0) KCAP FTOPc fx_ok UINVd RZ.
+Lemma XNz_at : forall M0, (forall a : word, TASK_SIZE <= bv_unsigned a -> M0 a = None) ->
+  GPS.ext_stmt BSEGS NXD XNz PERMc SPTOPc fs SHC VSHc (AINVat M0) KCAP FTOPc fx_ok UINVd RZ.
 Proof.
-  intros M0.
-  apply (XNz_sound_all SHC KCAP AINVH SWIN HP PERMc SPTOPc fs HIDc HIDFc M0 B0c C0c FTOPc UINVd UXa (GCC_all M0) M2S_H).
+  intros M0 HM0.
+  apply (XNz_sound_all SHC KCAP AINVH SWIN HP SWIN_img PERMc SPTOPc fs HIDc HIDFc M0 B0c C0c FTOPc UINVd UXa (GCC_all M0) M2S_H).
   - intros E [HU _]. exact (U_drv_NONUL12 a0 p fs data E HU).
   - intros E [HU _]. exact (U_drv_ABSENT2 a0 p fs data E HU).
+  - exact SPTOPc_task.
+  - exact HM0.
 Qed.
 Lemma XEz_at : forall M0, GPS.emit_stmt BSEGS NXD XEa PERMc SPTOPc fs SHC VSHc (AINVat M0) KCAP FTOPc fx_ok UINVd RZ.
 Proof.
   intros M0. apply (XEa_sound_all SHC KCAP AINVH SWIN HP PERMc SPTOPc fs HIDc HIDFc M0 B0c C0c FTOPc UINVd UXa).
   intros a Ha. rewrite <- (PERM_A_den (Env (fun _ => Z_to_bv 64 0) (fun _ => []))). exact (PERM_files_A _ a Ha).
 Qed.
-Lemma XAz_at : forall M0, GPS.alt2_stmt BSEGS NXD XAa PERMc SPTOPc fs SHC VSHc (AINVat M0) KCAP FTOPc fx_ok UINVd RZ.
+Lemma XAz_at : forall M0, (forall a : word, TASK_SIZE <= bv_unsigned a -> M0 a = None) ->
+  GPS.alt2_stmt BSEGS NXD XAa PERMc SPTOPc fs SHC VSHc (AINVat M0) KCAP FTOPc fx_ok UINVd RZ.
 Proof.
-  intros M0.
-  exact (XAa_sound_all SHC KCAP AINVH SWIN HP PERMc SPTOPc fs HIDc HIDFc M0 B0c C0c FTOPc UINVd UXa
+  intros M0 HM0.
+  exact (XAa_sound_all SHC KCAP AINVH SWIN HP SWIN_img PERMc SPTOPc fs HIDc HIDFc M0 B0c C0c FTOPc UINVd UXa
            (fun E HU => U_drv_NONUL12 a0 p fs data E (proj1 HU)) data
-           (fun E HU => U_drv_FILE2 a0 p fs data E (proj1 HU)) (fun E HU => U_drv_DIR2 a0 p fs data E (proj1 HU))).
+           (fun E HU => U_drv_FILE2 a0 p fs data E (proj1 HU)) (fun E HU => U_drv_DIR2 a0 p fs data E (proj1 HU))
+           SPTOPc_task HM0).
 Qed.
 
-Lemma tail_sound_z : forall (M0' : word -> option byte) pl cs s,
+Lemma tail_sound_z : forall (M0' : word -> option byte), (forall a : word, TASK_SIZE <= bv_unsigned a -> M0' a = None) ->
+  forall pl cs s,
   gplan_ok pl = true -> CHK0z cs pl = COk s ->
   forall E fx R M model, cs_okat M0' E cs fx R M model ->
   RZ (cfgF BSEGS fx R (pc cs) M model) (GPS.sd (fun _ _ _ => t_nil) t_nil E (m_fs model) s).
 Proof.
-  intros M0' pl cs s Hgp Hc E fx R M model HC.
+  intros M0' HM0' pl cs s Hgp Hc E fx R M model HC.
   rewrite CHK0z_eq in Hc.
   exact (GPS.check_soundA BSEGS ITA ITA_ok ABOTH NXD LIMIT (fun _ => None) XNz XEa XB0 XAa AP.XT0 0%nat SWIN PERMc SPTOPc fs SHC VSHc (AINVat M0') KCAP FTOPc
            (AINV_f_frame SWIN GBOTH SHC AINVH HP both_G_ro_img2 drvA_G_img_al drvA_G_img_shlo PERMc SPTOPc HIDc HIDFc M0' B0c C0c)
@@ -352,9 +368,9 @@ Proof.
            ltac:(intros; rewrite both_A_img_hi, both_A_img_lo; eapply (AINV_f_facts SWIN GBOTH SHC AINVH HP); eassumption)
            fx_ok UINVd UXa (fun _ _ _ => t_nil) (fun _ _ _ _ _ => eq_refl) (fun _ _ _ => eq_refl) (fun _ _ _ => eq_refl)
            RZ RZ_silent1_rz RZ_exit_rz RZ_conseq_rz (RUN_sound_fx BSEGS) both_in_hull both_hull_ok both_segs_wx
-           (XNz_at M0') (XEz_at M0')
+           (XNz_at M0' HM0') (XEz_at M0')
            (fun id args cs0 csa csb E0 fx0 R0 Mx mdl T _ Hn => ltac:(discriminate Hn))
-           (XAz_at M0')
+           (XAz_at M0' HM0')
            (fun id args cs0 fd ps code E0 fx0 R0 Mx mdl _ Hn => ltac:(discriminate Hn))
            (fun h ch Hh => ltac:(discriminate Hh)) FUEL0 BF0 None pl cs s Hgp Hc E fx R M model t_nil HC
            ltac:(exact I) eq_refl).
@@ -363,7 +379,7 @@ Qed.
 Theorem XTz_sound : GPS.term_stmt BSEGS XTz PERMc SPTOPc fs SHC VSHc AINVc KCAP FTOPc fx_ok UINVd RZ.
 Proof.
   exact (XT70_sound RZ RZ_silent1_rz SHC KCAP AINVH SWIN HP PERMc SPTOPc fs HIDc HIDFc M0c B0c C0c FTOPc UINVd UXa
-           M2S_H DTOR_H DTOR_FRAME PERM_flag_A CHK0z tail_sound_z RZ_conseq_rz).
+           M2S_H DTOR_H DTOR_FRAME PERM_flag_A SWIN_img SPTOPc_task M0c_task CHK0z tail_sound_z RZ_conseq_rz).
 Qed.
 
 
@@ -386,9 +402,9 @@ Proof.
            ltac:(intros; rewrite both_A_img_hi, both_A_img_lo; eapply (AINV_f_facts SWIN GBOTH SHC AINVH HP); eassumption)
            fx_ok UINVd UXa HOLES (fun _ E1 E2 fs' Hag => D_agree E1 E2 fs' Hag) (fun _ => D_nil) (fun _ _ _ => eq_refl)
            RZ RZ_silent1_rz RZ_exit_rz RZ_conseq_rz (RUN_sound_fx BSEGS) both_in_hull both_hull_ok both_segs_wx
-           (XNz_at M0c) (XEz_at M0c)
+           (XNz_at M0c M0c_task) (XEz_at M0c)
            (fun id args cs0 csa csb E0 fx0 R0 Mx mdl T _ Hn => ltac:(discriminate Hn))
-           (XAz_at M0c) XTz_sound
+           (XAz_at M0c M0c_task) XTz_sound
            HSs fuel bf None pl cs s Hgp Hc E fx R M model (D E (m_fs model)) HC
            ltac:(exact I) (D_nil E (m_fs model))).
 Qed.

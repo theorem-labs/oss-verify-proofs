@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the new auxv table); internal commit ids in comments replaced by public commits or removed. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.openssl.ct.lib.CtLib Require Import ImageCt.
 (* [comment removed for export] *)
@@ -72,11 +73,14 @@ Notation ctusegs := ImageCt.ctusegs.
 Section InitLibc.
   Variables (ra sp gp t0 t1 t2 s0 s1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
             (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (lo : Z)
-            (E : Z) (eps : list word) (R : Z) (g : word) (uid hw : word) (P : Z) (s : list byte)
+            (E : Z) (eps : list word) (R : Z) (g : word) (uid hw : word)
+            (rseq : bool) (ehdr l1is l1ig l1ds l1dg l2s l2g l3s l3g msz entry gid efn : word)
+            (P : Z) (s : list byte)
             (pn0 pnf0 hw0 env0 : word) (gjunk : list byte).
   Notation W := [(bv_unsigned sp - 448, bv_unsigned sp); (RENVIRON, 0x333160); (0x333160, 0x353268);
                  (RGUARD, 0x353270); (RPROGNAME, 0x3534b8); (RLIBC, 0x353528)]%Z.
   Notation AUXV := (E + 8 * (Z.of_nat (length eps) + 1))%Z.
+  Notation AUXW := (auxvP rseq ehdr l1is l1ig l1ds l1dg l2s l2g l3s l3g msz hw entry uid gid (Z_to_bv 64 R) efn).
 
   Definition init_libc_post : Z -> machine_state -> Prop :=
     fun tid ms' =>
@@ -101,7 +105,7 @@ Section InitLibc.
         /\ rw_cells ctusegs m' RGOT3 [C8 (Z_to_bv 64 RENVIRON); C8 (Z_to_bv 64 0x3534b0); C8 (Z_to_bv 64 RPROGNAME)]
         /\ rw_cells ctusegs m' RGOT_SSP [C8 (Z_to_bv 64 RGUARD)]
         /\ rw_cells ctusegs m' RGOT_DYNAMIC [C8 z64]
-        /\ bytes_at ctusegs m' E (u64s eps ++ le8 z64 ++ u64s (auxv20 (Z_to_bv 64 R) uid hw))
+        /\ bytes_at ctusegs m' E (u64s eps ++ le8 z64 ++ u64s (AUXW))
         /\ bytes_at ctusegs m' P (s ++ [Z_to_bv 8 0])
         /\ bytes_at ctusegs m' R (le8 g)
         /\ (0 < tid < 4194304)%Z.
@@ -181,10 +185,27 @@ Section InitLibc.
       replace (Z_to_bv 64 (c + (bv_unsigned spv + -336))) with (Z_to_bv 64 (bv_unsigned spv + off)) by (f_equal; lia)
     end);
     lstep; lstep; ldaux AUXB ki; lstep; astep.
+  (* An auxv type at or above AUX_CNT (38) is SKIPPED by the binary: the bltu at
+     0x2b2608 branches back to the next load instead of falling through to the
+     compare-and-store path.  ct's table puts NINE such types -- 40..47 and 51, the
+     cache descriptors and AT_MINSIGSTKSZ -- at word indices 2..18, which is why a
+     uniform [scan_it] walk dies at its SECOND iteration however long it is.
+     Donor: openssl/bndiv P/Startup_C.v:173-175, whose own back-edge is 0x26b014.
+     THIS IS THE U IMAGE AND ITS BACK-EDGE IS NOT CtP's. put CtP's
+     0x26caac here, which is exactly why CtP/Startup_C went GREEN on
+     a farm round and this twin did not: a twin in TEXT is not a twin
+     in ADDRESSES -- P and U are separate binaries.  0x2b2608 is measured the same way
+     CtP's was, from the constant offset between the two images' own files:
+     Startup_C  0x26ca38/0x26ca64/0x26caf4/0x26cb34/0x26cb40
+            ->  0x2b2594/0x2b25c0/0x2b2650/0x2b2690/0x2b269c
+     Startup_B  0x26ca70/0x26ca7c/0x26d0e0 -> 0x2b25cc/0x2b25d8/0x2b2c3c
+     EIGHT pairs, ONE delta 0x45b5c, no exceptions; 0x26caac + 0x45b5c = 0x2b2608. *)
+  Ltac scan_skip AUXB ki :=
+    lstep; if_true; ldaux AUXB ki; steps_to 0x2b2608%Z.
 
   Lemma init_libc_spec : forall tp a0 a1,
     stk ctusegs m lo (bv_unsigned sp) ->
-    bytes_at ctusegs m E (u64s eps ++ le8 z64 ++ u64s (auxv20 (Z_to_bv 64 R) uid hw)) ->
+    bytes_at ctusegs m E (u64s eps ++ le8 z64 ++ u64s (AUXW)) ->
     bytes_at ctusegs m P (s ++ [Z_to_bv 8 0]) ->
     bytes_at ctusegs m R (le8 g) ->
     rw_cells ctusegs m RPROGNAME [C8 pn0; C8 pnf0] ->
@@ -207,83 +228,191 @@ Section InitLibc.
   Proof.
     intros tp a0 a1 STK ENVB PNB RNDB PNC HWC ENVC SYSC LIBC TDC TLLC DSTK GRDC GOT3C GSSPC GDYNC MINV ARG0 ARG1.
     subst a0 a1.
-    unfold libc_cells, td_cells in *.
-    pose proof (munch_refl W m) as FOOT.
-    pose proof (wmono_refl ctusegs m) as GROW.
-    pose proof (bv_unsigned_in_range 64 sp) as SPRNG. unfold bv_modulus in SPRNG. cbn in SPRNG.
-    pose proof (bytes_at_bound _ _ _ _ ENVB) as ENVRNG.
-    pose proof (bytes_at_bound _ _ _ _ PNB) as PNRNG.
-    pose proof (bytes_at_bound _ _ _ _ RNDB) as RNDRNG.
-    rewrite !length_app, u64s_length, length_le8 in ENVRNG.
-    rewrite length_app in PNRNG. rewrite length_le8 in RNDRNG. cbn [length] in PNRNG.
-    iprefix.
-    carve_frame 384%nat STK.
-    do 11 lstep.
-    lazymatch type of FR with rw_cells ?sg ?mc ?A ?cs => split_for_access FR sg mc A cs 48%nat 304%nat end.
-    apply (proj1 (rw_cells_app _ _ _ [_] _)) in FR. destruct FR as [FRLO FR].
-    apply (proj1 (rw_cells_app _ _ _ [_] _)) in FR. destruct FR as [AUXA FRHI].
-    literal_cell_sizes_in AUXA. literal_cell_sizes_in FRHI.
-    replace (bv_unsigned sp + -384 + Z.of_nat 48)%Z with (bv_unsigned sp + -336)%Z in AUXA, FRHI by lia.
-    replace (bv_unsigned sp + -336 + Z.of_nat 304)%Z with (bv_unsigned sp + -32)%Z in FRHI by lia.
-    call (memset_specZ (bv_unsigned sp + -336) 304 0);
-      [exact AUXA | exact MINV | reflexivity | reflexivity | reflexivity | lia | lia | lia | ].
-    rename POST into AUXA. change (Z.to_nat 304) with 304%nat in AUXA.
-    do 3 lstep.
-    eapply (envp_count_loop eps); [exact EPS | exact ENVB | ].
-    pose proof (proj2 (proj1 (bytes_at_app _ _ _ _ _) ENVB)) as AUXB.
-    apply (proj1 (bytes_at_app _ _ _ _ _)) in AUXB. destruct AUXB as [_ AUXB].
-    rewrite u64s_length, length_le8 in AUXB.
-    replace (E + Z.of_nat (8 * length eps) + Z.of_nat 8)%Z with AUXV in AUXB by lia.
-    do 3 lstep. ldaux AUXB 0%nat. astep. do 4 lstep.
-    scan_it AUXB 1%nat 2%nat. scan_it AUXB 3%nat 4%nat. scan_it AUXB 5%nat 6%nat.
-    scan_it AUXB 7%nat 8%nat. scan_it AUXB 9%nat 10%nat. scan_it AUXB 11%nat 12%nat.
-    scan_it AUXB 13%nat 14%nat. scan_it AUXB 15%nat 16%nat. scan_it AUXB 17%nat 18%nat.
-    assert (PNZ : negb (bv_eqb (Z_to_bv 64 P) z64) = true).
-    { unfold bv_eqb. rewrite !unsigned_lit by lia. apply negb_true_iff, Z.eqb_neq. lia. }
-    steps_to 0x2b2650%Z. lstep. rewrite PNZ; cbv iota. lstep. rewrite PNZ; cbv iota.
-    steps_to 0x2b2690%Z.
-    lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mc _) =>
-      call (pn_loop (length s) 1%Z mc mc);
-        [lia | lia | apply munch_refl | apply wmono_refl | exact MI | exact PNB | exact PNC | ] end.
-    rename POST into PNC.
-    do 2 lstep.
-    pose proof (proj2 (proj1 (rw_cells_app _ _ _ [_] _) AUXA)) as AUX3.
-    apply (proj1 (rw_cells_app _ _ _ [_; _; _] _)) in AUX3. destruct AUX3 as [AUX3 _].
-    literal_cell_sizes_in AUX3.
-    replace (bv_unsigned sp + -336 + Z.of_nat 24)%Z with (bv_unsigned sp + -312)%Z in AUX3 by lia.
-    name_sp sp (-384)%Z.
-    icallk (init_tls_spec _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-              lo z64 (Z_to_bv 64 4096) (Z_to_bv 64 AUXV)).
-    all: lazymatch goal with
-         | |- forall _, _ => idtac
-         | |- stk _ _ _ _ => rewrite Hsp; exact STK
-         | |- rw_cells _ _ (bv_unsigned ?a0v + 24) _ =>
-             replace (bv_unsigned a0v + 24)%Z with (bv_unsigned sp + -312)%Z; [exact AUX3 | rewrite unsigned_lit by lia; lia]
-         | |- rw_cells _ _ _ _ => hyp_by_addr
-         | |- mem_inv _ _ => exact MI0
-         | |- _ => rewrite ?Hsp, ?unsigned_lit by lia; lia
-         end.
-    ipost ctusegs. unname_sp. unfold libc_cells in *.
-    do 2 lstep.
-    name_sp sp (-384)%Z.
-    call (init_ssp_spec _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ lo R g).
-    all: lazymatch goal with
-         | |- evt _ _ _ => idtac
-         | |- stk _ _ _ _ => rewrite Hsp; match goal with ST : stk _ _ _ _ |- _ => exact ST end
-         | |- rw_cells _ _ _ _ => hyp_by_addr
-         | |- bytes_at _ _ _ _ => hyp_by_addr
-         | |- mem_inv _ _ => hyp_by_addr
-         | |- _ = _ => reflexivity
-         | |- _ => rewrite ?Hsp; lia
-         end.
-    unname_sp.
-    steps_to 0x2b27a8%Z.
-    do 6 lstep.
-    match goal with ST0 : stk _ _ _ _ |- _ => rename ST0 into STK end.
-    release_frame FRLO STK (bv_unsigned sp + -336)%Z.
-    release_frame AUXA STK (bv_unsigned sp + -32)%Z.
-    release_frame FRHI STK (bv_unsigned sp).
-    sys_finish.
-    all: hyp_by_addr.
+    unfold init_libc_post. destruct rseq; cbn [auxvP app] in ENVB |- *.
+    - unfold libc_cells, td_cells in *.
+      pose proof (munch_refl W m) as FOOT.
+      pose proof (wmono_refl ctusegs m) as GROW.
+      pose proof (bv_unsigned_in_range 64 sp) as SPRNG. unfold bv_modulus in SPRNG. cbn in SPRNG.
+      pose proof (bytes_at_bound _ _ _ _ ENVB) as ENVRNG.
+      pose proof (bytes_at_bound _ _ _ _ PNB) as PNRNG.
+      pose proof (bytes_at_bound _ _ _ _ RNDB) as RNDRNG.
+      rewrite !length_app, u64s_length, length_le8 in ENVRNG.
+      rewrite length_app in PNRNG. rewrite length_le8 in RNDRNG. cbn [length] in PNRNG.
+      iprefix.
+      carve_frame 384%nat STK.
+      do 11 lstep.
+      lazymatch type of FR with rw_cells ?sg ?mc ?A ?cs => split_for_access FR sg mc A cs 48%nat 304%nat end.
+      apply (proj1 (rw_cells_app _ _ _ [_] _)) in FR. destruct FR as [FRLO FR].
+      apply (proj1 (rw_cells_app _ _ _ [_] _)) in FR. destruct FR as [AUXA FRHI].
+      literal_cell_sizes_in AUXA. literal_cell_sizes_in FRHI.
+      replace (bv_unsigned sp + -384 + Z.of_nat 48)%Z with (bv_unsigned sp + -336)%Z in AUXA, FRHI by lia.
+      replace (bv_unsigned sp + -336 + Z.of_nat 304)%Z with (bv_unsigned sp + -32)%Z in FRHI by lia.
+      call (memset_specZ (bv_unsigned sp + -336) 304 0);
+        [exact AUXA | exact MINV | reflexivity | reflexivity | reflexivity | lia | lia | lia | ].
+      rename POST into AUXA. change (Z.to_nat 304) with 304%nat in AUXA.
+      do 3 lstep.
+      eapply (envp_count_loop eps); [exact EPS | exact ENVB | ].
+      pose proof (proj2 (proj1 (bytes_at_app _ _ _ _ _) ENVB)) as AUXB.
+      apply (proj1 (bytes_at_app _ _ _ _ _)) in AUXB. destruct AUXB as [_ AUXB].
+      rewrite u64s_length, length_le8 in AUXB.
+      replace (E + Z.of_nat (8 * length eps) + Z.of_nat 8)%Z with AUXV in AUXB by lia.
+      do 3 lstep. ldaux AUXB 0%nat. astep. do 4 lstep.
+      (* THE WALK, in the binary's own three phases.  auxvP (CtP/Startup_B.v:155) lays
+         24 fixed-key pairs at even words 0..46, then AT_RANDOM (25) at 48, AT_EXECFN
+         (31) at 50, then the two rseq pairs WHEN kb_rseq is set, then AT_NULL -- so the
+         terminator's KEY is word 56 and the walk is 28 pairs.  Keys 40..47 and 51 are
+         at or above AUX_CNT and take the skip path, so phase 2 is [scan_skip], not
+         [scan_it]; a uniform [scan_it] walk of the right LENGTH still dies at its
+         second iteration, which is what a farm round measured at
+         :243 chars 32-56 with the corrected length already in the source.
+         Shape ported per hunk from openssl/bndiv P/Startup_C.v:235-242 (floor to that
+         file is 119 lines, so hunks and not a file port). *)
+      scan_it AUXB 1%nat 2%nat.
+      scan_skip AUXB 4%nat. scan_skip AUXB 6%nat. scan_skip AUXB 8%nat. scan_skip AUXB 10%nat. scan_skip AUXB 12%nat.
+      scan_skip AUXB 14%nat. scan_skip AUXB 16%nat. scan_skip AUXB 18%nat. scan_skip AUXB 20%nat.
+      scan_it AUXB 21%nat 22%nat. scan_it AUXB 23%nat 24%nat. scan_it AUXB 25%nat 26%nat. scan_it AUXB 27%nat 28%nat.
+      scan_it AUXB 29%nat 30%nat. scan_it AUXB 31%nat 32%nat. scan_it AUXB 33%nat 34%nat. scan_it AUXB 35%nat 36%nat.
+      scan_it AUXB 37%nat 38%nat. scan_it AUXB 39%nat 40%nat. scan_it AUXB 41%nat 42%nat. scan_it AUXB 43%nat 44%nat.
+      scan_it AUXB 45%nat 46%nat. scan_it AUXB 47%nat 48%nat. scan_it AUXB 49%nat 50%nat. scan_it AUXB 51%nat 52%nat.
+      scan_it AUXB 53%nat 54%nat. scan_it AUXB 55%nat 56%nat.
+      assert (PNZ : negb (bv_eqb (Z_to_bv 64 P) z64) = true).
+      { unfold bv_eqb. rewrite !unsigned_lit by lia. apply negb_true_iff, Z.eqb_neq. lia. }
+      steps_to 0x2b2650%Z. lstep. rewrite PNZ; cbv iota. lstep. rewrite PNZ; cbv iota.
+      steps_to 0x2b2690%Z.
+      lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mc _) =>
+        call (pn_loop (length s) 1%Z mc mc);
+          [lia | lia | apply munch_refl | apply wmono_refl | exact MI | exact PNB | exact PNC | ] end.
+      rename POST into PNC.
+      do 2 lstep.
+      pose proof (proj2 (proj1 (rw_cells_app _ _ _ [_] _) AUXA)) as AUX3.
+      apply (proj1 (rw_cells_app _ _ _ [_; _; _] _)) in AUX3. destruct AUX3 as [AUX3 _].
+      literal_cell_sizes_in AUX3.
+      replace (bv_unsigned sp + -336 + Z.of_nat 24)%Z with (bv_unsigned sp + -312)%Z in AUX3 by lia.
+      name_sp sp (-384)%Z.
+      icallk (init_tls_spec _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+                lo z64 (Z_to_bv 64 4096) (Z_to_bv 64 AUXV)).
+      all: lazymatch goal with
+           | |- forall _, _ => idtac
+           | |- stk _ _ _ _ => rewrite Hsp; exact STK
+           | |- rw_cells _ _ (bv_unsigned ?a0v + 24) _ =>
+               replace (bv_unsigned a0v + 24)%Z with (bv_unsigned sp + -312)%Z; [exact AUX3 | rewrite unsigned_lit by lia; lia]
+           | |- rw_cells _ _ _ _ => hyp_by_addr
+           | |- mem_inv _ _ => exact MI0
+           | |- _ => rewrite ?Hsp, ?unsigned_lit by lia; lia
+           end.
+      ipost ctusegs. unname_sp. unfold libc_cells in *.
+      do 2 lstep.
+      name_sp sp (-384)%Z.
+      call (init_ssp_spec _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ lo R g).
+      all: lazymatch goal with
+           | |- evt _ _ _ => idtac
+           | |- stk _ _ _ _ => rewrite Hsp; match goal with ST : stk _ _ _ _ |- _ => exact ST end
+           | |- rw_cells _ _ _ _ => hyp_by_addr
+           | |- bytes_at _ _ _ _ => hyp_by_addr
+           | |- mem_inv _ _ => hyp_by_addr
+           | |- _ = _ => reflexivity
+           | |- _ => rewrite ?Hsp; lia
+           end.
+      unname_sp.
+      steps_to 0x2b27a8%Z.
+      do 6 lstep.
+      match goal with ST0 : stk _ _ _ _ |- _ => rename ST0 into STK end.
+      release_frame FRLO STK (bv_unsigned sp + -336)%Z.
+      release_frame AUXA STK (bv_unsigned sp + -32)%Z.
+      release_frame FRHI STK (bv_unsigned sp).
+      sys_finish.
+      all: hyp_by_addr.
+    - unfold libc_cells, td_cells in *.
+      pose proof (munch_refl W m) as FOOT.
+      pose proof (wmono_refl ctusegs m) as GROW.
+      pose proof (bv_unsigned_in_range 64 sp) as SPRNG. unfold bv_modulus in SPRNG. cbn in SPRNG.
+      pose proof (bytes_at_bound _ _ _ _ ENVB) as ENVRNG.
+      pose proof (bytes_at_bound _ _ _ _ PNB) as PNRNG.
+      pose proof (bytes_at_bound _ _ _ _ RNDB) as RNDRNG.
+      rewrite !length_app, u64s_length, length_le8 in ENVRNG.
+      rewrite length_app in PNRNG. rewrite length_le8 in RNDRNG. cbn [length] in PNRNG.
+      iprefix.
+      carve_frame 384%nat STK.
+      do 11 lstep.
+      lazymatch type of FR with rw_cells ?sg ?mc ?A ?cs => split_for_access FR sg mc A cs 48%nat 304%nat end.
+      apply (proj1 (rw_cells_app _ _ _ [_] _)) in FR. destruct FR as [FRLO FR].
+      apply (proj1 (rw_cells_app _ _ _ [_] _)) in FR. destruct FR as [AUXA FRHI].
+      literal_cell_sizes_in AUXA. literal_cell_sizes_in FRHI.
+      replace (bv_unsigned sp + -384 + Z.of_nat 48)%Z with (bv_unsigned sp + -336)%Z in AUXA, FRHI by lia.
+      replace (bv_unsigned sp + -336 + Z.of_nat 304)%Z with (bv_unsigned sp + -32)%Z in FRHI by lia.
+      call (memset_specZ (bv_unsigned sp + -336) 304 0);
+        [exact AUXA | exact MINV | reflexivity | reflexivity | reflexivity | lia | lia | lia | ].
+      rename POST into AUXA. change (Z.to_nat 304) with 304%nat in AUXA.
+      do 3 lstep.
+      eapply (envp_count_loop eps); [exact EPS | exact ENVB | ].
+      pose proof (proj2 (proj1 (bytes_at_app _ _ _ _ _) ENVB)) as AUXB.
+      apply (proj1 (bytes_at_app _ _ _ _ _)) in AUXB. destruct AUXB as [_ AUXB].
+      rewrite u64s_length, length_le8 in AUXB.
+      replace (E + Z.of_nat (8 * length eps) + Z.of_nat 8)%Z with AUXV in AUXB by lia.
+      do 3 lstep. ldaux AUXB 0%nat. astep. do 4 lstep.
+      (* THE WALK, in the binary's own three phases.  auxvP (CtP/Startup_B.v:155) lays
+         24 fixed-key pairs at even words 0..46, then AT_RANDOM (25) at 48, AT_EXECFN
+         (31) at 50, then the two rseq pairs WHEN kb_rseq is set, then AT_NULL -- so the
+         terminator's KEY is word 52 and the walk is 26 pairs.  Keys 40..47 and 51 are
+         at or above AUX_CNT and take the skip path, so phase 2 is [scan_skip], not
+         [scan_it]; a uniform [scan_it] walk of the right LENGTH still dies at its
+         second iteration, which is what a farm round measured at
+         :243 chars 32-56 with the corrected length already in the source.
+         Shape ported per hunk from openssl/bndiv P/Startup_C.v:235-242 (floor to that
+         file is 119 lines, so hunks and not a file port). *)
+      scan_it AUXB 1%nat 2%nat.
+      scan_skip AUXB 4%nat. scan_skip AUXB 6%nat. scan_skip AUXB 8%nat. scan_skip AUXB 10%nat. scan_skip AUXB 12%nat.
+      scan_skip AUXB 14%nat. scan_skip AUXB 16%nat. scan_skip AUXB 18%nat. scan_skip AUXB 20%nat.
+      scan_it AUXB 21%nat 22%nat. scan_it AUXB 23%nat 24%nat. scan_it AUXB 25%nat 26%nat. scan_it AUXB 27%nat 28%nat.
+      scan_it AUXB 29%nat 30%nat. scan_it AUXB 31%nat 32%nat. scan_it AUXB 33%nat 34%nat. scan_it AUXB 35%nat 36%nat.
+      scan_it AUXB 37%nat 38%nat. scan_it AUXB 39%nat 40%nat. scan_it AUXB 41%nat 42%nat. scan_it AUXB 43%nat 44%nat.
+      scan_it AUXB 45%nat 46%nat. scan_it AUXB 47%nat 48%nat. scan_it AUXB 49%nat 50%nat. scan_it AUXB 51%nat 52%nat.
+      assert (PNZ : negb (bv_eqb (Z_to_bv 64 P) z64) = true).
+      { unfold bv_eqb. rewrite !unsigned_lit by lia. apply negb_true_iff, Z.eqb_neq. lia. }
+      steps_to 0x2b2650%Z. lstep. rewrite PNZ; cbv iota. lstep. rewrite PNZ; cbv iota.
+      steps_to 0x2b2690%Z.
+      lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mc _) =>
+        call (pn_loop (length s) 1%Z mc mc);
+          [lia | lia | apply munch_refl | apply wmono_refl | exact MI | exact PNB | exact PNC | ] end.
+      rename POST into PNC.
+      do 2 lstep.
+      pose proof (proj2 (proj1 (rw_cells_app _ _ _ [_] _) AUXA)) as AUX3.
+      apply (proj1 (rw_cells_app _ _ _ [_; _; _] _)) in AUX3. destruct AUX3 as [AUX3 _].
+      literal_cell_sizes_in AUX3.
+      replace (bv_unsigned sp + -336 + Z.of_nat 24)%Z with (bv_unsigned sp + -312)%Z in AUX3 by lia.
+      name_sp sp (-384)%Z.
+      icallk (init_tls_spec _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+                lo z64 (Z_to_bv 64 4096) (Z_to_bv 64 AUXV)).
+      all: lazymatch goal with
+           | |- forall _, _ => idtac
+           | |- stk _ _ _ _ => rewrite Hsp; exact STK
+           | |- rw_cells _ _ (bv_unsigned ?a0v + 24) _ =>
+               replace (bv_unsigned a0v + 24)%Z with (bv_unsigned sp + -312)%Z; [exact AUX3 | rewrite unsigned_lit by lia; lia]
+           | |- rw_cells _ _ _ _ => hyp_by_addr
+           | |- mem_inv _ _ => exact MI0
+           | |- _ => rewrite ?Hsp, ?unsigned_lit by lia; lia
+           end.
+      ipost ctusegs. unname_sp. unfold libc_cells in *.
+      do 2 lstep.
+      name_sp sp (-384)%Z.
+      call (init_ssp_spec _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ lo R g).
+      all: lazymatch goal with
+           | |- evt _ _ _ => idtac
+           | |- stk _ _ _ _ => rewrite Hsp; match goal with ST : stk _ _ _ _ |- _ => exact ST end
+           | |- rw_cells _ _ _ _ => hyp_by_addr
+           | |- bytes_at _ _ _ _ => hyp_by_addr
+           | |- mem_inv _ _ => hyp_by_addr
+           | |- _ = _ => reflexivity
+           | |- _ => rewrite ?Hsp; lia
+           end.
+      unname_sp.
+      steps_to 0x2b27a8%Z.
+      do 6 lstep.
+      match goal with ST0 : stk _ _ _ _ |- _ => rename ST0 into STK end.
+      release_frame FRLO STK (bv_unsigned sp + -336)%Z.
+      release_frame AUXA STK (bv_unsigned sp + -32)%Z.
+      release_frame FRHI STK (bv_unsigned sp).
+      sys_finish.
+      all: hyp_by_addr.
   Qed.
 End InitLibc.

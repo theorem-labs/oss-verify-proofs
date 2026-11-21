@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Trevor Hansen, 2026-11: module names. *)
+(* Modified by Theorem Labs, 2026-11: ported toward LPS 727298f3 by the change of the same file of cgif/cgif_rgb_fuzzer, its addresses relocated to this unit's binaries. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -90,8 +91,42 @@ st_got : word_mem segs mem (ms_got_guard B) (ms_guard B);
 st_guard : exists g, word_mem segs mem (ms_guard B) g;
 st_tables : forall a, table_addr a -> mbyte segs mem a = seg_rom segs (w64 a)
 }.
+Lemma lgr_app_l : forall l1 l2 (lo n : word), region_free (l1 ++ l2) lo n = true -> region_free l1 lo n = true.
+Proof.
+induction l1 as [|[a s] t IH]; intros l2 lo n H; [reflexivity|]. cbn [app region_free] in *.
+apply andb_prop in H as [H1 H2]. apply andb_true_intro. split; [exact H1 | exact (IH l2 lo n H2)].
+Qed.
+Lemma lgr_above : forall l (lo n : word), Forall (fun e => bv_unsigned lo + bv_unsigned n <= bv_unsigned (fst e)) l ->
+region_free l lo n = true.
+Proof.
+induction l as [|[a s] t IH]; intros lo n H; [reflexivity|]. inversion H as [|x y Hx Ht]; subst. cbn [region_free fst] in *.
+apply andb_true_intro. split; [| exact (IH lo n Ht)]. unfold iv_overlap. apply negb_true_iff. apply andb_false_iff. right.
+apply Z.ltb_ge. exact Hx.
+Qed.
+Lemma lgr_In : forall l (lo n b s : word), region_free l lo n = true -> In (b, s) l ->
+bv_unsigned lo + bv_unsigned n <= bv_unsigned b \/ bv_unsigned b + bv_unsigned s <= bv_unsigned lo.
+Proof.
+induction l as [|[a s0] t IH]; intros lo n b s H Hin; [destruct Hin|]. cbn [region_free fst snd] in H.
+apply andb_prop in H as [H1 H2]. destruct Hin as [E|Hin].
+- injection E as <- <-. unfold iv_overlap in H1. apply negb_true_iff in H1. apply andb_false_iff in H1.
+  destruct H1 as [H1|H1]; apply Z.ltb_ge in H1; lia.
+- exact (IH lo n b s H2 Hin).
+Qed.
+Lemma lgr_intro : forall l (lo n : word), (forall b s, In (b, s) l ->
+bv_unsigned lo + bv_unsigned n <= bv_unsigned b \/ bv_unsigned b + bv_unsigned s <= bv_unsigned lo) ->
+region_free l lo n = true.
+Proof.
+induction l as [|[a s0] t IH]; intros lo n H; [reflexivity|]. cbn [region_free fst snd].
+apply andb_true_intro. split.
+- unfold iv_overlap. apply negb_true_iff. apply andb_false_iff.
+  destruct (H a s0 (or_introl eq_refl)) as [D|D]; [right | left]; apply Z.ltb_ge; lia.
+- apply IH. intros b s Hin. apply H. right. exact Hin.
+Qed.
 Record ledger_ok (L : layout) (A : astate) (md : Model) : Prop := {
-lg_reserved : vm_reserved (m_vmmaps md) = segments_reserved segs;
+(* 08b1429: the image's reservations followed by the vDSO pair (State.init_reserved); no syscall edits it *)
+lg_reserved : (exists rx : list (word * word), vm_reserved (m_vmmaps md) = segments_reserved segs ++ rx
+/\ Forall (fun e => ly_brk0 L + 3 * PGSZ <= bv_unsigned (fst e) /\ 0 < bv_unsigned (snd e) <= 0x14000) rx
+/\ (length rx <= 2)%nat);
 lg_limit : SRC_LIM_MIN <= vm_limit (m_vmmaps md);
 lg_maps : forall r rg, region_of A r = Some rg -> rg_live rg = true -> rg_kind rg <> RkBrk ->
 In (w64 (ly_reg L r), w64 (rg_len rg)) (vm_maps (m_vmmaps md));
@@ -113,8 +148,31 @@ ly_reg L r mod PGSZ = 0 /\ 4096 <= ly_reg L r /\ ly_reg L r + rg_len rg <= alloc
 lg_count : Z.of_nat (length (vm_maps (m_vmmaps md))) <= nslots A;
 lg_sizes : Forall (fun p => bv_unsigned (snd p) <= live_bytes A) (vm_maps (m_vmmaps md));
 lg_backing : vm_backing_used md <= live_bytes A;
-lg_ceil : YN05.ceil_of_top (alloc_top (m_vmmaps md))
+lg_ceil : YN05.ceil_of_top (alloc_top (m_vmmaps md));
+(* no tracked map meets the reserved ledger (mmap places only in free ranges, State.region_free) *)
+lg_mres : forall e, In e (vm_maps (m_vmmaps md)) -> region_free (vm_reserved (m_vmmaps md)) (fst e) (snd e) = true;
+(* 08b1429: the launch's vDSO pair is in the reserved ledger (State.vm_reserved_init_model); no step moves the kernel,
+   the mmap base, the initial sp or the ledger. mprotect's vDSO gate (Checks/Sys/Mm/Mprotect.v:35) reads it. *)
+lg_vin : incl (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) (vm_reserved (m_vmmaps md))
 }.
+(* mprotect's vDSO gate: a range inside a tracked map misses the vDSO pair (lg_vin puts the pair in the
+   reserved ledger, lg_mres keeps every map off that ledger) *)
+Lemma lg_vdso_free : forall L A md e (lo n : word), ledger_ok L A md -> In e (vm_maps (m_vmmaps md)) ->
+bv_unsigned (fst e) <= bv_unsigned lo -> bv_unsigned lo + bv_unsigned n <= bv_unsigned (fst e) + bv_unsigned (snd e) ->
+region_free (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) lo n = true.
+Proof.
+intros L A md e lo n G He H1 H2. apply lgr_intro. intros b s Hin.
+pose proof (lg_vin _ _ _ G (b, s) Hin) as Hr.
+pose proof (lgr_In _ _ _ b s (lg_mres _ _ _ G e He) Hr) as D. lia.
+Qed.
+Lemma lg_vdso_free_mc : forall L A md (lo n : word), ledger_ok L A md ->
+map_contains (vm_maps (m_vmmaps md)) lo n = true ->
+region_free (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) lo n = true.
+Proof.
+intros L A md lo n G H. unfold map_contains in H. apply existsb_exists in H as (e & He & Hc).
+apply andb_prop in Hc as [H1 H2]. apply Z.leb_le in H1. apply Z.leb_le in H2.
+exact (lg_vdso_free L A md e lo n G He H1 H2).
+Qed.
 Record MRc (L : layout) (A : astate) (mem : word -> option byte) (md : Model) : Prop := {
 mc_syms : syms_ok B;
 mc_wf : WF A;
@@ -374,6 +432,8 @@ intros k Hk. rewrite le_byte_0. rewrite <- Z.add_assoc. apply (hp_ctx _ _ _ HP).
 + rewrite Hmaps. constructor.
 + cbn. lia.
 +   exact (hp_ceil _ _ _ HP).
++   intros e He. rewrite Hmaps in He. destruct He.
++   exact (hp_vin _ _ _ HP).
 - exact (hp_model _ _ _ HP).
 Qed.
 

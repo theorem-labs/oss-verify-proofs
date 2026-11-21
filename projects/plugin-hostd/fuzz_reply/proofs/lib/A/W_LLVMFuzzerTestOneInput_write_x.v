@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx-GENERIC twin of ARM_write (lib/A/W_LLVMFuzzerTestOneInput_write.v lf_arm_write), the
    jump table's arm 1 of the ASan walk of fuzz_reply's LLVMFuzzerTestOneInput, from the arm's entry 0x843bc to the latch
    0x84490 (a Theorem Labs lane's route (b), step 7). The AR file is NOT edited; this file Requires it and cites its AR-free
@@ -7,7 +8,7 @@
    frame-byte, coverage, permutation and keep lemmas); every lemma of it that names AR, AR_laws, ajournal_gx, lcut or an
    INV_* is restated here over ARx, with its proof converted (al_X -> alx_X, the journal lemmas -> W_journal_x's _x, the
    run tactics -> paj_run_tok_x / paj_run_to_tok_x, Hp after S, Hp3 after S3, Hp' after S').
-   - The Section header is cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:191-235), so lf_arm_write_x's
+   - The Section header is cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:192-236), so lf_arm_write_x's
      statement is cut_x's ARM_write hypothesis (cut_x.v:303) at that Section's variables (checked at the end).
    - list_push is taken as its _x callee spec, lp_spec_g_x B PST ARx MT WR_MMAX (BASE + AF_fr_list_push) (W_contract_x.v
      Section w2g; W2 proves it as pb_list_push_g_x), at its own G (wr_G1 si), lifted with ajournal_gx_G_mono_x and composed
@@ -79,7 +80,7 @@ Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 #[local] Notation VAL := (@pa_val _ fr_prog_listing PB_fr).
 #[local] Notation SIGMA := (@pa_sigma _ fr_prog_listing PB_fr).
 #[local] Notation BASE := (@pa_val _ fr_prog_listing PB_fr A_TEXT).
-(* ---- cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:194-235), verbatim ---- *)
+(* ---- cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:195-236), verbatim ---- *)
 Variable B : asyms.
 Variable MT : ameter_ops.
 Variables XM_LIB XN_LIB : Z -> Z.
@@ -104,10 +105,10 @@ Variable RINV : lfcx -> Z -> lmod -> Prop.
 Variable RP : roomp.
 Hypothesis RP_NP : forall S k, rp_RM RP S k <-> NP S.
 
-(* ---- the AR file's Section hypotheses (W_LLVMFuzzerTestOneInput_write.v:146-174), over ARx where they name AR ---- *)
+(* ---- the AR file's Section hypotheses (W_LLVMFuzzerTestOneInput_write.v:147-175), over ARx where they name AR ---- *)
 (* the allocator instance: errno's place (pal_env) *)
 Hypothesis TL : PALib B.
-(* list_push's contract at its own G, over ARx (W_contract_x.v:395; W2's pb_list_push_g_x); it replaces the AR walk's
+(* list_push's contract at its own G, over ARx (W_contract_x.v:396; W2's pb_list_push_g_x); it replaces the AR walk's
    pb_list_push_g B LAWS TL MT MLAW WR_MMAX wr_HMMAX ARE AMA AMEMCPY; at the room record RP *)
 Hypothesis LP : lp_spec_g_x (PI := PB_fr) B PST ARx MT RP WR_MMAX (BASE + AF_fr_list_push).
 Hypothesis GWR : glob_wr_law G_fr.
@@ -123,13 +124,13 @@ Hypothesis ROM_PIN : forall a, in_rom segs a -> Exists (in_zr a) (as_owned_stati
 (* OWED: kit _x twin of al_blocks' last conjunct (AR's 0 <= n < MALLOC_MAX, YG0d.v:441; ARx_blocks_law has no size
    conjunct). The text is W_kit_x.v:45's BLKN (and W1Verify's W_check_bounded.v BLKN). *)
 Hypothesis BLKN : forall ly S Hp W mem md p n, ARx ly S Hp W mem md -> In (p, n) (ablocks B ly S) -> 0 <= n.
-(* the ROM bytes lie outside PST: ajournal_gx_rom_view_x's premise (W_journal_x.v:329) *)
+(* the ROM bytes lie outside PST: ajournal_gx_rom_view_x's premise (W_journal_x.v:330) *)
 Hypothesis PST_ROM : forall a, in_rom segs a -> ~ Exists (in_zr a) PST.
 (* G_fr's bytes lie outside PST: the generic journal's image clause (YCbqG.v:254-256) keeps only bytes outside PST, and
    list_push's journal must keep the model's globals (all in G_fr: HGW / HGs) *)
 Hypothesis PST_GFR : forall a, inG G_fr a -> ~ Exists (in_zr a) PST.
 
-(* ---- the arm's open model obligations (W_LLVMFuzzerTestOneInput_write.v:230-264), verbatim (LS is cut_x's LSx) ---- *)
+(* ---- the arm's open model obligations (W_LLVMFuzzerTestOneInput_write.v:231-265), verbatim (LS is cut_x's LSx) ---- *)
 Hypothesis RI_write_skip : forall cx t m,
   RINV cx t m -> 0 <= lm_k m < c_n cx -> in_byte cx (lm_k m) mod 10 = 1 ->
   (pick (lm_hs m) (wr_kb cx m) = None \/ wr_n cx m = 0) ->
@@ -164,8 +165,8 @@ Hypothesis LS_write_push : forall cx t m si h (l' : hlist) d ev ly S ly' S',
   mo_le MT S S' (lp_cost MT (hs_pending h) (wr_n cx m)) ->
   0 <= t < OPS_MAX ->
   LSx cx (t + 1) (wr_push m (wr_k2 cx m) si (set_pending h l') ev) ly' S'.
-(* the room round's count row (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) (c); lib/A/ReplyLScnt.v fr_LS3cp_cnt_write at
-   commit ba8e99b5bd2): at the cut, the live counts plus list_push's premise peak lp_peak stay under RP's bounds.  The
+(* the room round's count row (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) (c); lib/A/ReplyLScnt.v fr_LS3cp_cnt_write):
+   at the cut, the live counts plus list_push's premise peak lp_peak stay under RP's bounds.  The
    guards are the walk's facts at the cut (the model's sizes come from amodel_at) *)
 Hypothesis LS_cnt : forall cx t m si h ly S (W : world segs) mem,
   LSx cx t m ly S -> RINV cx t m -> wr_pick cx m si h -> 0 < wr_n cx m -> amodel_at B ly S W mem m -> 0 <= t < OPS_MAX ->
@@ -177,7 +178,7 @@ Let RUNTO := paj_run_to_x_x (PL := PL_fr) (PI := PB_fr) B PST ARx LAWS G_fr HG 0
 Let BR := paj_branch (PI := PB_fr).
 
 (* ------------------------------------------------------------------ the latch's AR helpers, over ARx
-   (W_LLVMFuzzerTestOneInput_latch.v:60-243, :329-384, :445-457, :632-705; AR -> ARx, Hp after S; lt_blk's size conjunct
+   (W_LLVMFuzzerTestOneInput_latch.v:61-244, :330-385, :446-458, :633-706; AR -> ARx, Hp after S; lt_blk's size conjunct
    from BLKN; lt_afn_pre_at over YCbqG's afn_pre_x_at and W_frame_x's aview_above_of_journal_x) *)
 Ltac wrx_low :=
   cbn [fst snd gfp]; unfold CEIL8 in *;
@@ -473,7 +474,7 @@ Proof.
     rewrite Hs0Z. left. split; [right; left; rewrite HTOPeq; exact Hge | reflexivity].
 Qed.
 
-(* the write file's proofs ran with the flag false (W_LLVMFuzzerTestOneInput_write.v:66) *)
+(* the write file's proofs ran with the flag false (W_LLVMFuzzerTestOneInput_write.v:67) *)
 #[local] Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 (* ------------------------------------------------------------------ the arm's entry states, over ARx (the AR file's
    :298-528; al_blocks / al_shadow -> alx_blocks / alx_shadow, the latter's no-hidden-head premise from HP0) *)
@@ -2035,7 +2036,7 @@ Variable R : world segs -> world segs -> Prop.
 Hypothesis R_refl : forall W, R W W.
 Hypothesis R_trans : forall W1 W2 W3, R W1 W2 -> R W2 W3 -> R W1 W3.
 Hypothesis WLE_R : forall W W', wle W W' -> R W W'.
-(* list_push's contract at its own G, at R (W_contract_xR.v:235; a Theorem Labs lane's pb_list_push_g_xR proves it): list_push
+(* list_push's contract at its own G, at R (W_contract_xR.v:236; a Theorem Labs lane's pb_list_push_g_xR proves it): list_push
    reallocs its vector, and a realloc that frees re-hides the dead shadow.  It replaces LP *)
 Hypothesis LP_R : lp_spec_g_xR (PI := PB_fr) B PST ARx R MT RP WR_MMAX (BASE + AF_fr_list_push).
 Local Notation AJGR := (ajournal_gx_xR segs B PST ARx R G_fr 0 []).
@@ -3276,8 +3277,8 @@ Hypothesis LS_write_push : forall cx t m si h (l' : hlist) d ev ly S ly' S',
   mo_le MT S S' (lp_cost MT (hs_pending h) (wr_n cx m)) ->
   0 <= t < OPS_MAX ->
   LSx cx (t + 1) (wr_push m (wr_k2 cx m) si (set_pending h l') ev) ly' S'.
-(* the room round's count row (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) (c); lib/A/ReplyLScnt.v fr_LS3cp_cnt_write at
-   commit ba8e99b5bd2): at the cut, the live counts plus list_push's premise peak lp_peak stay under RP's bounds.  The
+(* the room round's count row (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) (c); lib/A/ReplyLScnt.v fr_LS3cp_cnt_write):
+   at the cut, the live counts plus list_push's premise peak lp_peak stay under RP's bounds.  The
    guards are the walk's facts at the cut (the model's sizes come from amodel_at) *)
 Hypothesis LS_cnt : forall cx t m si h ly S (W : world segs) mem,
   LSx cx t m ly S -> RINV cx t m -> wr_pick cx m si h -> 0 < wr_n cx m -> amodel_at B ly S W mem m -> 0 <= t < OPS_MAX ->

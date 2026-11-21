@@ -28,9 +28,9 @@
      the runtime does not own; the plain contract read it at seg_spec.STR_TNP through mem_inv.
    - got's tail: got is stated with sa_str (sa_strz plus sa_tail), as the plain contract's cstr_at had its slack
      for musl's strstr (plain head :17-19: the haystack's slack); row 8's text, RtSeg.astrstr_realizes (pc gotw
-     guard) at commit 80d098bd1905 (lib/A/Rt/RtSeg.v:117), asks atail_vis of both strings.
+     guard) (lib/A/Rt/RtSeg.v:118), asks atail_vis of both strings.
    - length gs + 1 < 2 ^ 32: the RtString-form rows' range check, aread_ok, asks it (fuzz_command
-     lib/A/Rt/RtDefs.v:35-36 at 501c0d516c69; row 8 is in that form); sa_addr bounds it only by 2 ^ 63.
+     lib/A/Rt/RtDefs.v:35-36; row 8 is in that form); sa_addr bounds it only by 2 ^ 63.
      got = c->refusal[i] is char[200].
    - sa_ssp rd gotw guard, gotw guard parameters (image A: gotw = 0xa36d8, the GOT word twoway_strstr loads at
      0x9b238; guard = __stack_chk_guard 0x5ff078, nm): musl's twoway_strstr (0x9b1f0) loads the guard word
@@ -56,12 +56,13 @@
    16 + 2 * ESTACK = 8,208, the 16-byte frame and the window row 8 asks, per the interceptor lane's review, O2).
    Call site: LLVMFuzzerTestOneInput 0x85668 (segA/evidence/callsites.asan.tsv).
    The WALK takes these runtime entries as Section hypotheses (the interceptor lane's interface
-   provenance/evidence/interceptors/INTERFACE-A-interceptors.md (commit 7068323e2626); the row text below is the
-   accepted v1, 5e0b8a44fdc):
-     RtSeg.astrstr_realizes (pc gotw guard) (row 8, accepted at commit 80d098bd1905,
+   provenance/evidence/interceptors/INTERFACE-A-interceptors.md; the row text below is the
+   accepted v1):
+     RtSeg.astrstr_realizes (pc gotw guard) (row 8, accepted at
        lib/A/Rt/RtSeg.v:117) at the strstr trampoline (image A 0x43a24), with this contract's gotw guard.
    It is NOT a premise of this contract: the statement does not mention it. *)
 (* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/A/Prog/check_knock_refused_c.v, derived mechanically (bkit derive_b.py): its Require lines name the lib/B copies; nothing else differs. The comments are the A file's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

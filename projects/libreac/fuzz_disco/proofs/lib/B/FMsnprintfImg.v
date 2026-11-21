@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/ACf0.v, with its module paths changed; 45 of its 65 lines of code are new or changed and 59 lines of the source are left out. *)
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfImg.v (a working branch 3e35620c52e) *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfImg.v (a working branch) *)
 (* Modified by Theorem Labs, 2026-10: relocated to fuzz_disco.asan-ubsan (image Y): module prefix fuzz_manifest -> fuzz_disco,
    AB1v -> Reusable/YB1v (the Y core), FMupoison -> lib/Rt/SnUpoison (landed rename); the 31 address numerals by symbol + offset on
    fuzz_disco.asan-ubsan (provenance/evidence/g9-gxa/g9tool/p0-numerals.tsv disco Y column; each checked against the image's nm, SLOT_CFLAGS against its objdump);
    the 9 small decimals unchanged (image-independent). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fm.asan's snprintf chain, image constants without any stack window: the code and return addresses the walks name,
    and the memcpy / memset interceptor contract aintrin_realizesU. Split out of FMsnprintfI.v and FMsnprintfGI.v (which
    re-export this file) so that the shared-contract chain does not reach their stack bands. New file. *)

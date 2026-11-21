@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the contract and walk of reac_headamp_tx_arm_scene on fuzz_grant.asan, written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v, proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_grant/lib/A/Prog/HeadampTxArmScene.v, with its module paths and numbers changed; 671 of its 725 lines of code are new or changed and 605 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_ctrl_scene_build (fuzz_scene.asan 0x83c24, 109 instructions): the contract of the
    ASan build's code and its walk.
 
@@ -13,7 +14,7 @@
    body + 892 (each tag after two inline checks of the metadata of its first and last byte),
    copies the 6 bytes at mac to body + 832 through __asan_memcpy and returns 0.
 
-   Numerals and where they come from (fuzz_scene.asan, pinned FACTS f0e6eb38667:
+   Numerals and where they come from (fuzz_scene.asan, pinned FACTS:
    pau-pipeline/libreac/{bin,unstripped}/fuzz_scene/fuzz_scene.asan,
    bin sha256 43654a025fd02e1f..., the listing SceneList.v reads the same words):
    - 0x83c24, 436 bytes = 109 instructions: .symtab reac_ctrl_scene_build (unstripped);

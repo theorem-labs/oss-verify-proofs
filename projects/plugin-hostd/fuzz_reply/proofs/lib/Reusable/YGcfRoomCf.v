@@ -1,4 +1,4 @@
-(* CARRIED from commit 0deb5310273b0d538ec2a1697f391a1c8ad21c34,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YGcfRoomCf.v, sha256 9ae89f7e7151f4ac184bec84d38c918778df211b72ebdbec284efa28ce75d450 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the Require lines only:
    the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
@@ -6,6 +6,7 @@
 *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (backed_ok_room_cf, grant_not_refusable_room_cf and call_grant_not_refusable_cf over the revision's placement check for the NULL hint); internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30: the cf room (the room half of the abudget restatement, Main's decisions of record
    2026-10-30, room choice (a), and the kit form of the allowance, Main 05:0xZ from a Theorem Labs lane's measurement). The
    definitions it reads are YG0ncf.v's (eager_cf, abudget_cf, ALedger_cf) and YGcfAbudget.v's (CF_HEAD); the hull term
@@ -16,7 +17,7 @@
    It bounds the REAL backing (Main 04:3xZ): vm_backing_used md is eager_used md plus the materialized lazy pages
    (YK04.vm_backing_used_split), eager_used md is bounded by the ledger's alc_eager_x, and the materialized pages are
    bounded by the CANONICAL lazy allowance C (the kit's a_backing_inv_k / a_lazy_canon_k, with RESMAX_k,
-   a working branch 7bb12afd3646 A/AgreeBackingS.v:105 / :114, A/LazyResid.v:70), never by the world's raw
+   a working branch A/AgreeBackingS.v:105 / :114, A/LazyResid.v:70), never by the world's raw
    A_bytes: the world keeps every dead secondary's hull, so raw A_bytes grows by one hull per recycle. C is a parameter
    here with the premise C <= abudget_kit_cf S, so these lemmas do not depend on how ledger_cf is finally stated.
    Contents: 1. the room and its kernel consequence (vm_backing_used md + G <= vm_limit for G <= CF_HEAD, hence
@@ -49,7 +50,7 @@ Local Open Scope Z_scope.
 (*    covers two sites, MmapOrDie and MmapOrDieOnFatalError):                      *)
 (*    - the errbuf remap (errb_map_cf, KMmapSec): the new buffer is mapped before  *)
 (*      the old one is unmapped (form (A)), at most 2 * cf_nob together;           *)
-(*    - the class's user map (map_more_user_cf, KMapUser, YG00cf.v:159-168): its  *)
+(*    - the class's user map (map_more_user_cf, KMapUser, YG00cf.v:160-169): its  *)
 (*      size round_up (total - mapped) kUserMapSize is NOT one kUserMapSize, but   *)
 (*      the arm maps only when mapped + size <= kFreeArrayOffset, so it is at most *)
 (*      kFreeArrayOffset, plus its shadow kFreeArrayOffset / 8;                    *)
@@ -198,12 +199,12 @@ pose proof (backing_room_cf segs ly S md C G L MC LC R HG) as B.
 unfold mmap_noreserve_backed_ok. destruct (mmap_noreserve_b flags); [reflexivity|]. apply Z.leb_le. exact B.
 Qed.
 
-(* ... and, with a gap of its size (vm_gap_available, which grant_ok_na_pin gives: YK13.grant_na_pin_gap), no such
-   map is refusable (the room's form of YK13.grant_na_pin_not_grant_refusable). *)
+(* ... and, with a place of its size for the NULL hint (vm_place_available, which [grant_ok_na_pin] gives:
+   YK13.grant_na_pin_gap), no such map is refusable (the room's form of YK13.grant_na_pin_not_grant_refusable). *)
 Lemma grant_not_refusable_room_cf : forall segs ly S md C flags G,
 ALedger_cf segs ly S md -> mat_canon_cf C md -> C <= abudget_kit_cf S -> room_rec_cf ly S md -> G <= CF_HEAD ->
-Z.Placement.vm_gap_available (m_vmmaps md) G = true ->
-Z.Placement.mmap_grant_refusable flags md G = false.
+Z.Placement.vm_place_available (m_vmmaps md) (kb_thp (m_kernel md)) (Z_to_bv 64 0) G = true ->
+Z.Placement.mmap_grant_refusable flags (Z_to_bv 64 0) md G = false.
 Proof.
 intros segs ly S md C flags G L MC LC R HG GAP.
 unfold Z.Placement.mmap_grant_refusable.
@@ -240,15 +241,15 @@ Qed.
 Lemma call_grant_not_refusable_cf : forall segs ly S md md' C u flags n,
 ALedger_cf segs ly S md -> mat_canon_cf C md -> C <= abudget_kit_cf S -> room_rec_cf ly S md ->
 vm_backing_used md' <= vm_backing_used md + u -> vm_limit (m_vmmaps md') = vm_limit (m_vmmaps md) ->
-u + n <= CALL_GRANT_MAX -> Z.Placement.vm_gap_available (m_vmmaps md') n = true ->
-Z.Placement.mmap_grant_refusable flags md' n = false.
+u + n <= CALL_GRANT_MAX -> Z.Placement.vm_place_available (m_vmmaps md') (kb_thp (m_kernel md')) (Z_to_bv 64 0) n = true ->
+Z.Placement.mmap_grant_refusable flags (Z_to_bv 64 0) md' n = false.
 Proof.
 intros segs ly S md md' C u flags n L MC LC R BU EL UN GAP.
 unfold Z.Placement.mmap_grant_refusable.
 rewrite (call_backed_ok_cf segs ly S md md' C u flags n L MC LC R BU EL UN), GAP. reflexivity.
 Qed.
 
-(* The six sites' own sizes are within their maxima. The errbuf map: n <= cf_nob (ERRB_ROOM, YG00cf.v:107) and the
+(* The six sites' own sizes are within their maxima. The errbuf map: n <= cf_nob (ERRB_ROOM, YG00cf.v:108) and the
    old buffer at most cf_nob more (errb_cap_cf <= cf_nob). The secondary map: sec_map_size n <= cf_nob for every
    request below cf_malloc_max (cf_sizes_ok). *)
 Lemma errb_map_fits_cf : forall n old, 0 <= n <= cf_nob -> 0 <= old <= cf_nob -> old + n <= G_ERRB_MAX.
@@ -262,7 +263,7 @@ assert (D : sec_map_size n / 8 <= NOB_CF_MAX / 8) by (apply Z.div_le_mono; unfol
 unfold G_SEC_MAX, NOB_CF_MAX in *. lia.
 Qed.
 
-(* The user map: the arm maps only when mapped + map_size <= kFreeArrayOffset (YG00cf.v:167). *)
+(* The user map: the arm maps only when mapped + map_size <= kFreeArrayOffset (YG00cf.v:168). *)
 Lemma user_map_fits_cf : forall mapped map_size, 0 <= mapped -> 0 <= map_size ->
 mapped + map_size <= kFreeArrayOffset -> map_size + map_size / 8 <= G_USER_MAX.
 Proof.
@@ -569,7 +570,7 @@ assert (D : (m + 4 * 4096) / 8 <= 134217728) by (change 134217728 with (10737418
 unfold CF_HEAD. change (2 ^ 33) with 8589934592. change (2 ^ 19) with 524288. lia.
 Qed.
 
-(* YGcfNilInit's band premise (cls1_band_expose_cf's, YGcfNilInit.v:63, and ARcf_nil_init's ROOM, :92) from the same
+(* YGcfNilInit's band premise (cls1_band_expose_cf's, YGcfNilInit.v:64, and ARcf_nil_init's ROOM, :92) from the same
    room: at init the room holds (room_rec_cf_init), the band is 469,766,144 bytes <= CF_HEAD, and the allowance is at
    most abudget_kit_cf init_state. *)
 Lemma room_init_band_cf : forall segs ly md A,

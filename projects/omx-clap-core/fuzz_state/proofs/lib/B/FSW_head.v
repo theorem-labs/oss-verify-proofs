@@ -4,7 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACf1.v, with its module paths and module names changed; 639 of its 687 lines of code are new or changed and 451 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_fuzz_free.v; 104 of its 139 lines of code are new or changed and 652 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_head.v from
-   a working branch 76d55f141ac, same lemma names and statement shapes; imports point at lib/B's image files
+   a working branch, same lemma names and statement shapes; imports point at lib/B's image files
    (YB1v, FSH_Base, FSW_K); the image-agnostic FSupoison, FSupoisonU, FSH_Gen stay lib/A's. No address in this file:
    every lemma is generic in the head h, its block and the token run's base Bx. What B's code does with the head
    (capstone on the unstripped twin of the pinned fs.asan-ubsan): own() is OUT OF LINE in B (sym own 0x82acc,
@@ -16,6 +16,7 @@
    fuzz_realloc (sym 0x82bc4: h = s1, base s2, unpoison call 0x82c54, checks at 0x82c60 / 0x82c74, eight `lbu`
    0x82c7c..0x82cac). The head is 16 bytes (a1 = 0x10 at each call), as on A.
    rule 24: proves no function (kind: segment lemma). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The 16-byte head of a block (fuzz/alloc.c own / disown; in B own is out of line, disown inline in fuzz_free and
    fuzz_realloc): what a walk needs for own's store of n into the head's first 8 bytes and disown's load of them, each
    guarded by two inline ASan checks `lb shadow(h); bnez` / `lb shadow(h + 7); bnez`.
@@ -31,7 +32,7 @@
    - fs_head_apart_rest: a head removed from a pairwise-disjoint U is apart from the rest (disown's premise).
    ONE COPY (ruling 23:1xZ): single writer a Theorem Labs lane; another imports it. Rule 24: grep of FSW_K, FSW_ret,
    FSW_rres, FSW_K3 and a Theorem Labs lane's kit branches (all working branches) for a block-shadow / shent setup found only
-   FSW_K.v's note on fs_Bx / fs_Bspan (lib/B/FSW_K.v:283-288, "one shent per object", the donor's A/ACes.v:28-29); no
+   FSW_K.v's note on fs_Bx / fs_Bspan (lib/B/FSW_K.v:284-289, "one shent per object", the donor's A/ACes.v:28-29); no
    lemma.
    Ported from: FSupoison.v's block_granule0 / ush16_out (a Theorem Labs lane's FMupoison), YG0v's block_shadow; the region_ok form of
    FSW_statics.v's fs_pstat_region. No rename. *)

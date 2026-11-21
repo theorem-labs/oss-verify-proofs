@@ -3,12 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AE31.v, with its module paths changed and its addresses moved to libreac/fuzz_disco's ASan build. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_disco/lib/A/AE31.v, with its module paths changed; 8 of its 32 lines of code are new or changed and 136 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_state image A: FSupoisonU.amemcmp_realizesU at fs's memcmp entry, i.e. the donor's memcmp interceptor contract
    over ARU for ANY set U of user-poisoned ranges (POISON-U lane, a Theorem Labs lane). ARU (any-user-poison) form,
    published as the shared one; two Theorem Labs lanes hold the U = [] form at their own addresses.
    Rule 24: no function proved from scratch; the walk is cgif_file_fuzzer's released A/AE2z.v, ported over ARU in
    lib/A/FSupoisonMemcmpW.v (over RELOC's relocations lib/A/AE2z.v / lib/A/AE3b.v, a working branch,
-   685a0e62747, for the AR-free half and the musl memcmp leaf, and the bcmp lane's FSupoisonMcmpChkX.v /
+    for the AR-free half and the musl memcmp leaf, and the bcmp lane's FSupoisonMcmpChkX.v /
    FSupoisonMcmpChkY.v for the two range checks).
    Port-from of this file's proofs: cgif A/AE2z.v:710 memcmp_icpt_contract and A/ACed.v:156 tfibX_AMEMCMP, with U
    threaded; pc_wrap_memcmp (as_code B) = AF0l's 0x42664 (`j 0x43cb8`, __wrap_memcmp -> ___interceptor_memcmp, checked

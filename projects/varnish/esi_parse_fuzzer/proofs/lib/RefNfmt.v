@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (RomBase.sys_rob at the read (63) node). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -21,6 +22,7 @@ From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib Require MmapSim.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib Require ShapeAlg Nodes StoreOk AgentLib Agenxn8 RefNodes.
 Import OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.RelSpec OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.SimInv OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.CatSim.ExitSim OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.PropExec OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.WallSim.CatExec OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.CatSim OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.WallSim.SeqExec OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.WallSim.Stredvh OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.MmapSim OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.AllocSim OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.MmapSim.FileSim OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.ShapeAlg OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Nodes OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.StoreOk OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.AgentLib OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Agenxn8 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.RefNodes.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib Require Import BWorld.
+From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib Require RomBase.
 Import ListNotations.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -49,7 +51,10 @@ Lemma rz_read_dir_mapped : forall regs (pc : word) mem model w fd (cnt : Z) K,
 Proof.
   intros regs pc mem model w fd cnt K HF HE Hh Hlazy H17 Hfd Hfd32 Hlk H12 Hc1 H64 Hover Hok Hc.
   eapply rz_sys; [exact Hh | exact Hlazy | exact HF | exact HE |].
-  eapply rz_ret_only_silent; [exact Hh | reflexivity | | exact Hh | exact Hlazy | rewrite adv_set_epend; exact Hc].
+  eapply rz_ret_only_silent; [exact Hh | reflexivity | | exact Hh | exact Hlazy
+                             | eapply RomBase.sys_rob_memfree;
+                                 [reflexivity | rewrite H17, u64_lit by lia; exact RomBase.memfree_63]
+                             | rewrite adv_set_epend; exact Hc].
   intros o. rewrite (syscall_spec_63 _ model o) by (rewrite in_sysno_si, H17; apply u64_lit; lia).
   rewrite in_arg0_si, in_arg1_si, in_arg2_si, ms_gpr_epend0, ms_gpr_epend1, ms_gpr_epend2, Hfd, (fd32_id fd Hfd32).
   apply (read_dir_outcome fd _ _ _ model o Hlk).

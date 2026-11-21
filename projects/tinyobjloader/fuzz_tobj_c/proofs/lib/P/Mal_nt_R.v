@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (nt's contract takes only the frame condition of its world predicate, the one part its proof used). *)
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
 #[local] Ltac2 tbs__ () := ["@Corelib.Init.Logic"; "and"; "eq"; "ex"; "not"; "or"; "@Corelib.Numbers.BinNums"; "Z"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocIface"; "ma_s"; "MA"; "ma_L"; "mkMA"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocLayout"; "C_P"; "addr_of"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocModel"; "sptr"; "astate"; "region"; "ameta"; "IRet"; "RkMap"; "am_maplen"; "am_mem"; "am_sc"; "itree"; "nontrivial_free"; "page_round"; "prid"; "rg_kind"; "rg_len"; "rg_live"; "rkind"; "st_init_done"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Init"; "segsP"; "@Corelib.Init.Datatypes"; "nat"; "prod"; "Some"; "pair"; "option"; "None"; "bool"; "true"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymState"; "rw"; "rm"; "@stdpp.bitvector.definitions"; "bv_unsigned"; "bv"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ContractNT"; "xzomb"; "JL_nt"; "nt_stack"; "J_nt_pre"; "V_RES1"; "magree"; "zv"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocIfaceI"; "MInvI"; "@Corelib.Init.Peano"; "le"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocInv"; "usedX"; "layout"; "ly_reg"; "region_of"; "@Stdlib.ZArith.BinInt.Z"; "lt"; "le"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "m_vmmaps"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract"; "V_RES"; "mem_kept_owned"; "rd_of"; "wok_of"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocWfFrame"; "ub_same"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocWfFree"; "corr"; "fneed"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.NestTier"; "reach_ok"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Zomb"; "zomb"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_fslow__G3.Mal_fslow"; "JL_ntR"; "J_nt_preR"].
@@ -86,7 +87,7 @@ Qed.
 
 Theorem nt_contractR_P_ok : nt_contractR_P.
 Proof.
-  intros ok X U A Kc rho (HokF & _ & _) n Hg w [Hsm HJ].
+  intros ok X U A Kc rho HokF n Hg w [Hsm HJ].
   pose proof HJ as (g & am & mv & _ & HMI & _ & HXz & _).
   apply (nt_sumI_frame ok X U A Kc rho HokF n); [|split; [exact Hsm | exact (J_nt_preR_pre _ _ _ _ _ _ _ HJ)]].
   intros w' (Lx & JLx & rho' & Hin & Hag & Hsm' & HJL). apply Hg.
@@ -97,7 +98,7 @@ Qed.
 
 Theorem nt_contractR_ex_P_ok : nt_contractR_ex_P.
 Proof.
-  intros X U A Kc rho _ w [Hsm HJ].
+  intros X U A Kc rho w [Hsm HJ].
   pose proof HJ as (g & am & mv & _ & HMI & _ & HXz & _).
   destruct (nt_sumI_eframe X U A Kc rho w (conj Hsm (J_nt_preR_pre _ _ _ _ _ _ _ HJ))) as (w' & Hs & (Lx & JLx & rho' & Hin & Hag & Hsm' & HJL)).
   exists w'. split; [exact Hs|]. destruct Hin as [E|[]]. injection E as <- <-.

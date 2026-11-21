@@ -7,9 +7,10 @@
    build (lib/A). The [Apache-2.0 OR MIT] text is used under Apache-2.0. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_name_seg10.v, with its module paths and module names changed; 2634 of its 2686 lines of code are new or changed and 608 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_parse_value.v, with its module paths and module names changed; 1342 of its 1436 lines of code are new or changed and 2592 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* pj_set_holds : FSH_Fn_reader.pj_set_spec for fs.asan's pj_set (0x838e8, pf.c:373-391), the success form with the
    key absent. rule 24: pj_set proved new (a Theorem Labs lane's lookup 03:15Z, CONFIRM a Theorem Labs lane 04:16Z; bump's
-   lib/A/Prog/pj_set.v on a working branch 955803f9b2e read as template only). The chain: stage A ->
+   lib/A/Prog/pj_set.v on a working branch read as template only). The chain: stage A ->
    pj_get (pj_set_get_call) -> stage B -> grow (pj_set_grow_call) -> stage C -> fuzz_strdup (pj_set_sd_call) -> stage D,
    __asan_memcpy, stage E, __asan_memset, stage F, ret (FSW_pj_set_tail.pS_tail), closed by the data post
    (FSW_pj_set_fn.pSf_post). The composed journal count is pj_get 0 + grow's rd_ev (grow_tr 6 n cap) + fuzz_strdup 1,
@@ -229,7 +230,7 @@ destruct Hr as [<-|[<-|[<-|[<-|[]]]]]; cbn [fst snd] in Ha; apply pS_img; lia.
 Qed.
 (* fs's four alloc.c statics are not read-only (a writable segment, outside [FS_RLO, FS_RHI)), and their footprint
    holds the sink closed. Same statements and proofs as the writer lane's decK_ro_not_pstat / decK_pstat_closed
-   (a working branch 1539d84e32c lib/A/FSW_dec_E.v:719, :746), restated: that file is another lane's. *)
+   (a working branch lib/A/FSW_dec_E.v:719, :746), restated: that file is another lane's. *)
 Lemma pS_ro_not_pstat : forall a, in_roP tfibsegs FS_RLO FS_RHI a -> ~ inFP FS_PSTAT_FP a.
 Proof.
 intros a Hro (r & Hr & Ha).
@@ -253,7 +254,7 @@ Proof. apply sink_closed_pos. unfold FS_PSTAT_FP. repeat (apply Forall_cons; [cb
    Stage B leaves the walk at the call with a0 = obj; grow_spec answers 0 (every allocation granted, under `quiet`),
    and FSW_K3's fsw_after_callFPU_args composes the journals and builds ss_pC0. The resume env's extras are pj_xs at
    the POST-grow header fields (6, k', y', n, cap'), which is what stage D's object region pD_obj reads.
-   Written against the CTX-FREE reader specs (a working branch faa7e2570e5): grow_spec takes no CTX. *)
+   Written against the CTX-FREE reader specs (a working branch): grow_spec takes no CTX. *)
 Section G. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 Variable B : asyms.
 Hypothesis HSS : FsShadowSyms B.
@@ -1593,7 +1594,7 @@ Qed.
 
 End MAIN.
 
-(* ---- grow discharged by S0's FSW_grow_holds.grow_holds (a Theorem Labs lane's proof, in S0 since 30057674945) ---- *)
+(* ---- grow discharged by S0's FSW_grow_holds.grow_holds (a Theorem Labs lane's proof, in S0) ---- *)
 Section CL. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 Theorem pj_set_holds_s0 : forall B, FsShadowSyms B -> fs_img_facts tfibsegs B -> pj_get_spec tfibsegs B ->
   fuzz_realloc_spec tfibsegs B -> fuzz_strdup_spec tfibsegs B ->

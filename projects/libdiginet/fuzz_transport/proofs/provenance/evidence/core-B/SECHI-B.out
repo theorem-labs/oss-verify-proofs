@@ -20,9 +20,9 @@ COMMENTS: cell/pair comments checked 10; naming another image 3; wrong numbers 0
   B/YB1w.v:3-3 file notice              covers -; image: none named; numbers: n/a (no address in it); kept
   B/YB1w.v:4-4 file notice              covers -; image: ANOTHER: cgif, cgif_file_fuzzer, libreac/fuzz_decode, sha256 1c29845fe605; numbers: n/a (no address in it); kept
   B/YB1w.v:5-5 file notice              covers -; image: ANOTHER: cgif, fuzz_decode.asan-ubsan; numbers: n/a (no address in it); kept
-  B/YB1w.v:6-6 cell/pair comment (Modified-by notice line) covers tfib_img_hi, tfib_img_lo; image: none named; numbers: n/a (no address in it); PROPOSED (this image, registered form; ok: 0x10000=cell value/PT_LOAD[0] p_vaddr, 0x616000=cell value/last PT_LOAD end page-rounded (IMG_TOP)) -- NOT PATCHED (a Modified-by notice line: the licence-lines tool owns it; Main 2026-10-31). Finding: names the donor's file Reusable/YImgTop.v; YB1w.v reads lib.B YImgTop (B/YImgTop.v: Notation IMG_LO 0x10000, IMG_TOP 0x616000; twin: PT_LOAD[0] p_vaddr 0x10000, last PT_LOAD end 0x615050 page-rounded 0x616000: EQUAL); the donor read lib.Reusable YImgTop; donor text, byte-equal in 88154566652a:proofs/libreac/fuzz_decode/lib/B/YB1w.v
+  B/YB1w.v:6-6 cell/pair comment (Modified-by notice line) covers tfib_img_hi, tfib_img_lo; image: none named; numbers: n/a (no address in it); PROPOSED (this image, registered form; ok: 0x10000=cell value/PT_LOAD[0] p_vaddr, 0x616000=cell value/last PT_LOAD end page-rounded (IMG_TOP)) -- NOT PATCHED (a Modified-by notice line: the licence-lines tool owns it; Main 2026-10-31). Finding: names the donor's file Reusable/YImgTop.v; YB1w.v reads lib.B YImgTop (B/YImgTop.v: Notation IMG_LO 0x10000, IMG_TOP 0x616000; twin: PT_LOAD[0] p_vaddr 0x10000, last PT_LOAD end 0x615050 page-rounded 0x616000: EQUAL); the donor read lib.Reusable YImgTop; donor text, byte-equal:proofs/libreac/fuzz_decode/lib/B/YB1w.v
   B/YB1w.v:7-7 file notice              covers -; image: this image by name, no sha256; ANOTHER: libreac/fuzz_decode; numbers: n/a (no address in it); kept
-  B/YB1w.v:23-24 cell/pair comment        covers tfib_img_hi, tfib_img_lo; image: ANOTHER: 'decode:' tag (libreac/fuzz_decode's own note); numbers: n/a (no address in it); PROPOSED (this image, registered form; ok: 0x10000=cell value/PT_LOAD[0] p_vaddr, 0x616000=cell value/last PT_LOAD end page-rounded (IMG_TOP), 0xa8fc0=.bss sh_addr, 0x56c090=.bss sh_size, 0x615050=.bss end/last PT_LOAD end) -- 'decode:' is libreac/fuzz_decode's note; 'YImgTop COMPUTES' is false here (B/YImgTop.v states numerals); YB1w.v reads lib.B YImgTop (B/YImgTop.v: Notation IMG_LO 0x10000, IMG_TOP 0x616000; twin: PT_LOAD[0] p_vaddr 0x10000, last PT_LOAD end 0x615050 page-rounded 0x616000: EQUAL); the donor read lib.Reusable YImgTop; donor text, byte-equal in 88154566652a:proofs/libreac/fuzz_decode/lib/B/YB1w.v
+  B/YB1w.v:23-24 cell/pair comment        covers tfib_img_hi, tfib_img_lo; image: ANOTHER: 'decode:' tag (libreac/fuzz_decode's own note); numbers: n/a (no address in it); PROPOSED (this image, registered form; ok: 0x10000=cell value/PT_LOAD[0] p_vaddr, 0x616000=cell value/last PT_LOAD end page-rounded (IMG_TOP), 0xa8fc0=.bss sh_addr, 0x56c090=.bss sh_size, 0x615050=.bss end/last PT_LOAD end) -- 'decode:' is libreac/fuzz_decode's note; 'YImgTop COMPUTES' is false here (B/YImgTop.v states numerals); YB1w.v reads lib.B YImgTop (B/YImgTop.v: Notation IMG_LO 0x10000, IMG_TOP 0x616000; twin: PT_LOAD[0] p_vaddr 0x10000, last PT_LOAD end 0x615050 page-rounded 0x616000: EQUAL); the donor read lib.Reusable YImgTop; donor text, byte-equal:proofs/libreac/fuzz_decode/lib/B/YB1w.v
   B/YB12.v:1-1 file header of the cell  covers TFIB_TEXT_LO; image: this image by name, no sha256; ANOTHER: cgif_file_fuzzer; numbers: n/a (no address in it); kept
   B/YB12.v:2-2 file header of the cell  covers TFIB_TEXT_LO; image: this image (sha256 41113a03c82f/e217cb0a84f1); numbers: n/a (no address in it); kept
   B/Prog/DgnTransportBAddr.v:1-1 file notice              covers -; image: none named; numbers: n/a (no address in it); kept
@@ -32,14 +32,14 @@ COMMENTS: cell/pair comments checked 10; naming another image 3; wrong numbers 0
   B/Prog/DgnTransportBCg.v:144-145 cell/pair comment        covers TRANS_RHI, TRANS_RLO; image: none named; numbers: n/a (no address in it); kept
   B/Prog/DgnTransportBCg.v:150-151 cell/pair comment        covers TRANS_RHI, TRANS_RLO; image: none named; numbers: n/a (no address in it); kept
   B/Prog/DgnTransportBCg.v:197-199 cell/pair comment        covers TRANS_RHI, TRANS_RLO; image: none named; numbers: n/a (no address in it); kept
-scope: 2d48500794db lib/B/; 2d48500794db lib/Reusable/; a83315552115 lib/B/Prog/
+scope: lib/B/; lib/Reusable/; lib/B/Prog/
 ENUMERATED 78 (_hi/_lo Z cells)  SECTION 25 (hi 12, lo 13)  NO-SECTION 53  EXCLUDED 44 (not Z cells)
 CHECKED 25  FALSE 0 (hi 0)  MATCH-ABUTS 14 (hi 8)  MATCH-PADDED 11 (hi 4)  UNEVALUATED 0  TO-DELETE 0  valid=True
-merge drift (a83315552115 lib/B, lib/Reusable vs 2d48500794db): none
-  MATCH-ABUTS  TRANS_RLO                lib/B/Prog/DgnTransportBCg.v:141 = 0xa35e0; .data.rel.ro sh_addr = 0xa35e0; prev .preinit_array 0xa35e0; .preinit_array ends at it: abuts, unproven by value; readers 4 (a833 4); not relocated (no donor file (lib/B/Prog kit); git log -1 856d47a0aad 2026-10-31 proofs: libdiginet fuzz_transport kit: empty-range carries 
-  MATCH-ABUTS  TRANS_RHI                lib/B/Prog/DgnTransportBCg.v:142 = 0xa49e8; .got end = 0xa49e8; next .relro_padding 0xa49e8; .relro_padding starts at it: abuts, unproven by value; readers 4 (a833 4); not relocated (no donor file (lib/B/Prog kit); git log -1 856d47a0aad 2026-10-31 proofs: libdiginet fuzz_transport kit: empty-range carries 
+merge drift (lib/B, lib/Reusable vs): none
+  MATCH-ABUTS  TRANS_RLO                lib/B/Prog/DgnTransportBCg.v:141 = 0xa35e0; .data.rel.ro sh_addr = 0xa35e0; prev .preinit_array 0xa35e0; .preinit_array ends at it: abuts, unproven by value; readers 4 (a833 4); not relocated (no donor file (lib/B/Prog kit); git log -1 2026-10-31 proofs: libdiginet fuzz_transport kit: empty-range carries 
+  MATCH-ABUTS  TRANS_RHI                lib/B/Prog/DgnTransportBCg.v:142 = 0xa49e8; .got end = 0xa49e8; next .relro_padding 0xa49e8; .relro_padding starts at it: abuts, unproven by value; readers 4 (a833 4); not relocated (no donor file (lib/B/Prog kit); git log -1 2026-10-31 proofs: libdiginet fuzz_transport kit: empty-range carries 
   MATCH-PADDED TFIB_TEXT_LO             lib/B/YB12.v:18 = 0x3112c; .text sh_addr = 0x3112c; prev .eh_frame 0x3012c; no section ends at it; readers 0 (a833 0); not relocated (donor value 0x30054; (* Generated for libdiginet/fuzz_transport's asan-ubsan image by atable.py (frozen e88affcf0526, start-u
-  MATCH-PADDED tfib_rodata_lo           lib/B/YB1w.v:12 = 0x102e0; .rodata sh_addr = 0x102e0; prev .note.gnu.build-id 0x102cc; no section ends at it; readers 0 (a833 0); donor text (byte-equal 88154566652a:proofs/libreac/fuzz_decode/lib/B/YB1w.v:11)
+  MATCH-PADDED tfib_rodata_lo           lib/B/YB1w.v:12 = 0x102e0; .rodata sh_addr = 0x102e0; prev .note.gnu.build-id 0x102cc; no section ends at it; readers 0 (a833 0); donor text (byte-equal:proofs/libreac/fuzz_decode/lib/B/YB1w.v:11)
   MATCH-ABUTS  tfib_rodata_hi           lib/B/YB1w.v:12 = 0x22aec; .rodata end = 0x22aec; next .eh_frame_hdr 0x22aec; .eh_frame_hdr starts at it: abuts, unproven by value; readers 0 (a833 0); port_core alreloc (run-r14/fixed.tsv B/YB1w.v:11 donor 0x226cc remap 0x226cc new 0x22aec new_sym 0x22aec; check.tsv says "bound sec:.rodata.
   MATCH-PADDED tfib_text_lo             lib/B/YB1w.v:13 = 0x3112c; .text sh_addr = 0x3112c; prev .eh_frame 0x3012c; no section ends at it; readers 0 (a833 0); port_core remap (run-r14/check.tsv B/YB1w.v:12 0x30054 -> 0x3112c "bound sec:.text.lo" class geometry; no fixed.tsv row)
   MATCH-PADDED tfib_text_hi             lib/B/YB1w.v:13 = 0xa25a4; .text end = 0xa25a4; next .tbss 0xa25a8; no section starts at it; readers 0 (a833 0); port_core alreloc (run-r14/fixed.tsv B/YB1w.v:12 donor 0x97d50 remap 0x97d50 new 0xa25a4 new_sym -; check.tsv says "bound sec:.text.hi" clas
@@ -116,60 +116,60 @@ NO-SECTION cells:
   pa_relro_lo            lib/B/Prog/DgnTransportBImg.v:126 = 0x0  (field)
   pa_relro_hi            lib/B/Prog/DgnTransportBImg.v:127 = 0x0  (field)
 EXCLUDED (not parameterless Z cells):
-  2d48500794db lib/B/YFga.v:113 kept_of_frame_hi  untyped non-numeral (Notation alias)
-  2d48500794db lib/B/YFgb.v:101 kept_of_frame_hi  untyped non-numeral (Notation alias)
-  2d48500794db lib/B/YFgc.v:113 kept_of_frame_hi  untyped non-numeral (Notation alias)
-  2d48500794db lib/B/YFgd.v:101 kept_of_frame_hi  untyped non-numeral (Notation alias)
-  2d48500794db lib/B/YFge.v:113 kept_of_frame_hi  untyped non-numeral (Notation alias)
-  2d48500794db lib/B/YFgf.v:101 kept_of_frame_hi  untyped non-numeral (Notation alias)
-  2d48500794db lib/B/YFgk.v:103 R_STK_HI  type YP09.region
-  2d48500794db lib/B/YFgk.v:104 R_STK_LO  type YP09.region
-  2d48500794db lib/B/YFgy.v:99 R_STK_HI  untyped non-numeral (Notation alias)
-  2d48500794db lib/B/YFgy.v:100 R_STK_LO  untyped non-numeral (Notation alias)
-  2d48500794db lib/B/YFgz.v:99 R_STK_HI  untyped non-numeral (Notation alias)
-  2d48500794db lib/B/YFgz.v:100 R_STK_LO  untyped non-numeral (Notation alias)
-  2d48500794db lib/B/YFh1.v:78 kept_of_frame_hi  untyped non-numeral (Notation alias)
-  2d48500794db lib/B/YFho.v:12 nd_lo  parameterised: (k
-  2d48500794db lib/B/YFho.v:13 nd_hi  parameterised: (k
-  2d48500794db lib/B/YFhy.v:45 rz_lo  parameterised: (k
-  2d48500794db lib/B/YFhy.v:46 rz_hi  parameterised: (k
-  2d48500794db lib/B/YFhz.v:60 CL_lo  type sv
-  2d48500794db lib/B/YFhz.v:61 CL_hi  type sv
-  2d48500794db lib/B/YFi0.v:67 CL2_lo  type sv
-  2d48500794db lib/B/YFi0.v:68 CL2_hi  type sv
-  2d48500794db lib/Reusable/YA0e.v:125 sh_lo  parameterised: (E
-  2d48500794db lib/Reusable/YA0e.v:126 sh_hi  parameterised: (E
-  2d48500794db lib/Reusable/YI04.v:1029 trim_lo  parameterised: (r
-  2d48500794db lib/Reusable/YImgTop.v:18 seg_lo  parameterised: (s
-  2d48500794db lib/Reusable/YImgTop.v:19 seg_hi  parameterised: (s
-  2d48500794db lib/Reusable/YK0c.v:1096 end_hi  parameterised: (kn
-  2d48500794db lib/Reusable/YK0u.v:102 win_lo  parameterised: (sp0
-  2d48500794db lib/Reusable/YL07.v:300 anch_lo  parameterised: (G
-  2d48500794db lib/Reusable/YN2b.v:18 reg_lo  parameterised: (rg
-  2d48500794db lib/Reusable/YN2b.v:20 iv_lo  parameterised: (e
-  2d48500794db lib/Reusable/YO0d.v:84 vml_lo  parameterised: (B
-  2d48500794db lib/Reusable/YP05.v:220 zone_lo  parameterised: (E
-  2d48500794db lib/Reusable/YP05.v:221 zone_hi  parameterised: (E
-  2d48500794db lib/Reusable/YP0e.v:32 itv_meet_hi  parameterised: (a
-  2d48500794db lib/Reusable/YP0f.v:25 itv_lo  parameterised: (i
-  2d48500794db lib/Reusable/YP0f.v:26 itv_hi  parameterised: (i
-  a83315552115 lib/B/Prog/DgnTransportBAddr.v:212 transportb_hi  parameterised: (j
-  a83315552115 lib/B/Prog/YC1g.v:38 cval_atom_bound_lo  parameterised: (lim
-  a83315552115 lib/B/Prog/YC1g.v:39 atom_lo  parameterised: (lim n
-  a83315552115 lib/B/Prog/YC1g.v:40 region_atom_bound_lo  parameterised: (lim
-  a83315552115 lib/B/Prog/YC1g.v:43 facts_atom_bound_lo  parameterised: (lim
-  a83315552115 lib/B/Prog/YC1g.v:47 ss_atom_bound_lo  parameterised: (lim
-  a83315552115 lib/B/Prog/YC1g.v:52 run_K_lo  parameterised: (floor
+   lib/B/YFga.v:113 kept_of_frame_hi  untyped non-numeral (Notation alias)
+   lib/B/YFgb.v:101 kept_of_frame_hi  untyped non-numeral (Notation alias)
+   lib/B/YFgc.v:113 kept_of_frame_hi  untyped non-numeral (Notation alias)
+   lib/B/YFgd.v:101 kept_of_frame_hi  untyped non-numeral (Notation alias)
+   lib/B/YFge.v:113 kept_of_frame_hi  untyped non-numeral (Notation alias)
+   lib/B/YFgf.v:101 kept_of_frame_hi  untyped non-numeral (Notation alias)
+   lib/B/YFgk.v:103 R_STK_HI  type YP09.region
+   lib/B/YFgk.v:104 R_STK_LO  type YP09.region
+   lib/B/YFgy.v:99 R_STK_HI  untyped non-numeral (Notation alias)
+   lib/B/YFgy.v:100 R_STK_LO  untyped non-numeral (Notation alias)
+   lib/B/YFgz.v:99 R_STK_HI  untyped non-numeral (Notation alias)
+   lib/B/YFgz.v:100 R_STK_LO  untyped non-numeral (Notation alias)
+   lib/B/YFh1.v:78 kept_of_frame_hi  untyped non-numeral (Notation alias)
+   lib/B/YFho.v:12 nd_lo  parameterised: (k
+   lib/B/YFho.v:13 nd_hi  parameterised: (k
+   lib/B/YFhy.v:45 rz_lo  parameterised: (k
+   lib/B/YFhy.v:46 rz_hi  parameterised: (k
+   lib/B/YFhz.v:60 CL_lo  type sv
+   lib/B/YFhz.v:61 CL_hi  type sv
+   lib/B/YFi0.v:67 CL2_lo  type sv
+   lib/B/YFi0.v:68 CL2_hi  type sv
+   lib/Reusable/YA0e.v:125 sh_lo  parameterised: (E
+   lib/Reusable/YA0e.v:126 sh_hi  parameterised: (E
+   lib/Reusable/YI04.v:1029 trim_lo  parameterised: (r
+   lib/Reusable/YImgTop.v:18 seg_lo  parameterised: (s
+   lib/Reusable/YImgTop.v:19 seg_hi  parameterised: (s
+   lib/Reusable/YK0c.v:1096 end_hi  parameterised: (kn
+   lib/Reusable/YK0u.v:102 win_lo  parameterised: (sp0
+   lib/Reusable/YL07.v:300 anch_lo  parameterised: (G
+   lib/Reusable/YN2b.v:18 reg_lo  parameterised: (rg
+   lib/Reusable/YN2b.v:20 iv_lo  parameterised: (e
+   lib/Reusable/YO0d.v:84 vml_lo  parameterised: (B
+   lib/Reusable/YP05.v:220 zone_lo  parameterised: (E
+   lib/Reusable/YP05.v:221 zone_hi  parameterised: (E
+   lib/Reusable/YP0e.v:32 itv_meet_hi  parameterised: (a
+   lib/Reusable/YP0f.v:25 itv_lo  parameterised: (i
+   lib/Reusable/YP0f.v:26 itv_hi  parameterised: (i
+   lib/B/Prog/DgnTransportBAddr.v:212 transportb_hi  parameterised: (j
+   lib/B/Prog/YC1g.v:38 cval_atom_bound_lo  parameterised: (lim
+   lib/B/Prog/YC1g.v:39 atom_lo  parameterised: (lim n
+   lib/B/Prog/YC1g.v:40 region_atom_bound_lo  parameterised: (lim
+   lib/B/Prog/YC1g.v:43 facts_atom_bound_lo  parameterised: (lim
+   lib/B/Prog/YC1g.v:47 ss_atom_bound_lo  parameterised: (lim
+   lib/B/Prog/YC1g.v:52 run_K_lo  parameterised: (floor
 OTHER CELLS WHOSE VALUE IS A SECTION BOUND (not named _hi/_lo; 10; symbols at the value from the twin):
-  2d48500794db lib/B/YB01.v:21 a_off = 0xa5000  (.relro_padding end; symbols: -)
-  2d48500794db lib/B/YB01.v:21 a_off = 0xa8fc0  (.bss sh_addr; symbols: ___asan_globals_registered)
-  2d48500794db lib/B/YB03.v:17 a_off = 0xa5000  (.relro_padding end; symbols: -)
-  2d48500794db lib/B/YB12.v:11 a_entry = 0x3112c  (.text sh_addr; symbols: $x, _start)
-  2d48500794db lib/B/YB1w.v:26 tfib_entry = 0x3112c  (.text sh_addr; symbols: $x, _start)
-  2d48500794db lib/B/YB1w.v:27 tfib_A_start = 0x3112c  (.text sh_addr; symbols: $x, _start)
-  2d48500794db lib/B/YB1w.v:491 tfib_E_musl_read = 0xa25a4  (.text end; symbols: -)
-  2d48500794db lib/B/YB1w.v:494 tfib_D_init_array_0_3 = 0xa35a8  (.init_array sh_addr; symbols: $d, __init_array_start)
-  2d48500794db lib/B/YB1w.v:495 tfib_D_fini_array_0_1 = 0xa35c8  (.fini_array sh_addr .init_array end; symbols: $d, __fini_array_start, __init_array_end)
-  2d48500794db lib/B/YB1w.v:522 tfib_at_a_entry = 0x3112c  (.text sh_addr; symbols: $x, _start)
+   lib/B/YB01.v:21 a_off = 0xa5000  (.relro_padding end; symbols: -)
+   lib/B/YB01.v:21 a_off = 0xa8fc0  (.bss sh_addr; symbols: ___asan_globals_registered)
+   lib/B/YB03.v:17 a_off = 0xa5000  (.relro_padding end; symbols: -)
+   lib/B/YB12.v:11 a_entry = 0x3112c  (.text sh_addr; symbols: $x, _start)
+   lib/B/YB1w.v:26 tfib_entry = 0x3112c  (.text sh_addr; symbols: $x, _start)
+   lib/B/YB1w.v:27 tfib_A_start = 0x3112c  (.text sh_addr; symbols: $x, _start)
+   lib/B/YB1w.v:491 tfib_E_musl_read = 0xa25a4  (.text end; symbols: -)
+   lib/B/YB1w.v:494 tfib_D_init_array_0_3 = 0xa35a8  (.init_array sh_addr; symbols: $d, __init_array_start)
+   lib/B/YB1w.v:495 tfib_D_fini_array_0_1 = 0xa35c8  (.fini_array sh_addr .init_array end; symbols: $d, __fini_array_start, __init_array_end)
+   lib/B/YB1w.v:522 tfib_at_a_entry = 0x3112c  (.text sh_addr; symbols: $x, _start)
 ADDRESS FILE: DgnTransportBAddr.v defines no _hi/_lo cell (transportb_hi is the auipc table, a function of j); transportb_text = 0x812a0: symbols $x, LLVMFuzzerTestOneInput; section bound: none
 YB12.v TFIB_TEXT_LO + 4 * TFIB_TEXT_N = 0xa25a4; .text end 0xa25a4: EQUAL

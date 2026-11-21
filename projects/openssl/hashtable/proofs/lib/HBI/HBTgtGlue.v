@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the state invariants take the launch record [LaunchX], and the argument area is read from it). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -68,8 +69,9 @@ Qed.
 Section Glue.
   Variable ph : PhdrInfo.
   Variable sp : word. Variable rdraw : EntryDraw. Variable brk0 : word. Variables argv envp : list (list byte). Variables uid hw : word.
+  Context {L : LaunchX}.
   Variable c : list byte.
-  #[local] Notation SV := (SINVm ph sp rdraw brk0 argv envp uid hw c).
+  #[local] Notation SV := (SINVm ph sp rdraw brk0 argv envp uid hw L c).
 
   Theorem tt0_target : forall E M fs', SV E M -> 6 <= flen c <= 65535 -> 0 <= ION.room c -> t_eq (TT0 E fs') (t_target_ht c fs').
   Proof.

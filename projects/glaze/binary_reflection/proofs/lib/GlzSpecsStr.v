@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel reader and the vDSO reservation inclusion in the alloc, free and resize specs). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -335,7 +336,8 @@ Definition alloc_pre (stk bc cc : Z) (fx : FX) (R : bvmap 5 word) (M : word -> o
   bv_unsigned (getr R (Z_to_bv 5 2)) = sp /\ sp mod 16 = 0 /\ CEIL_run + stk <= sp /\
   getr R (Z_to_bv 5 4) = Z_to_bv 64 (g_tp G) /\
   (forall a : word, sp - stk <= bv_unsigned a < sp -> RiscvSemantics.store_ok SEGS M a 1 = true) /\
-  B + mcost n <= bc /\ C + MCNT <= cc.
+  B + mcost n <= bc /\ C + MCNT <= cc /\
+  incl (vdso_reserved (m_kernel mdl) (vdso_top (m_vmmaps mdl))) (vm_reserved (m_vmmaps mdl)).
 
 (* [comment removed for export] *)
 Definition alloc_post_ok (stk : Z) (fx : FX) (R : bvmap 5 word) (M : word -> option byte) (mdl : Model)
@@ -350,7 +352,10 @@ Definition alloc_post_ok (stk : Z) (fx : FX) (R : bvmap 5 word) (M : word -> opt
   (forall a : word, M' a <> M a -> alloc_changed stk Lc sp a) /\
   (forall a : word, sp - stk <= bv_unsigned a < sp -> RiscvSemantics.store_ok SEGS M' a 1 = true) /\
   AINV ((bv_unsigned p, n) :: Lc) (B + mcost n) (C + MCNT) M' mdl' /\
-  m_halted mdl' = None /\ m_vm_lazy mdl' = [] /\ m_vm_materialized mdl' = [] /\ m_fs mdl' = m_fs mdl /\ m_fds mdl' = m_fds mdl.
+  m_halted mdl' = None /\ m_vm_lazy mdl' = [] /\ m_vm_materialized mdl' = [] /\ m_fs mdl' = m_fs mdl /\ m_fds mdl' = m_fds mdl /\
+  (* Reader and vDSO facts are preserved with the model metadata. *)
+  m_channel_reader mdl' = m_channel_reader mdl /\
+  incl (vdso_reserved (m_kernel mdl') (vdso_top (m_vmmaps mdl'))) (vm_reserved (m_vmmaps mdl')).
 
 (* [comment removed for export] *)
 Definition alloc_post_null (stk : Z) (fx : FX) (R : bvmap 5 word) (M : word -> option byte) (mdl : Model)
@@ -362,7 +367,9 @@ Definition alloc_post_null (stk : Z) (fx : FX) (R : bvmap 5 word) (M : word -> o
   (forall a : word, M' a <> M a -> alloc_changed stk Lc sp a) /\
   (forall a : word, sp - stk <= bv_unsigned a < sp -> RiscvSemantics.store_ok SEGS M' a 1 = true) /\
   AINV Lc B C M' mdl' /\
-  m_halted mdl' = None /\ m_vm_lazy mdl' = [] /\ m_vm_materialized mdl' = [] /\ m_fs mdl' = m_fs mdl /\ m_fds mdl' = m_fds mdl.
+  m_halted mdl' = None /\ m_vm_lazy mdl' = [] /\ m_vm_materialized mdl' = [] /\ m_fs mdl' = m_fs mdl /\ m_fds mdl' = m_fds mdl /\
+  m_channel_reader mdl' = m_channel_reader mdl /\
+  incl (vdso_reserved (m_kernel mdl') (vdso_top (m_vmmaps mdl'))) (vm_reserved (m_vmmaps mdl')).
 
 (* [comment removed for export] *)
 Definition malloc_mspecR (stk bc cc : Z) (entry : Z) : Prop :=
@@ -410,6 +417,7 @@ Definition free_mspecR (stk : Z) (entry : Z) : Prop :=
     bv_unsigned (getr R (Z_to_bv 5 2)) = sp -> sp mod 16 = 0 -> CEIL_run + stk <= sp ->
     getr R (Z_to_bv 5 4) = Z_to_bv 64 (g_tp G) ->
     (forall a : word, sp - stk <= bv_unsigned a < sp -> RiscvSemantics.store_ok SEGS M a 1 = true) ->
+    incl (vdso_reserved (m_kernel mdl) (vdso_top (m_vmmaps mdl))) (vm_reserved (m_vmmaps mdl)) ->
     (forall fx' R' M' mdl',
         FXOK fx' ->
         (forall r, In r callee_saved_regs -> getr R' (Z_to_bv 5 r) = getr R (Z_to_bv 5 r)) ->
@@ -417,6 +425,8 @@ Definition free_mspecR (stk : Z) (entry : Z) : Prop :=
         (forall a : word, sp - stk <= bv_unsigned a < sp -> RiscvSemantics.store_ok SEGS M' a 1 = true) ->
         AINV Lc' B' C' M' mdl' ->
         m_halted mdl' = None -> m_vm_lazy mdl' = [] -> m_vm_materialized mdl' = [] -> m_fs mdl' = m_fs mdl -> m_fds mdl' = m_fds mdl ->
+        m_channel_reader mdl' = m_channel_reader mdl ->
+        incl (vdso_reserved (m_kernel mdl') (vdso_top (m_vmmaps mdl'))) (vm_reserved (m_vmmaps mdl')) ->
         RZ (mkCfg (mkstF fx' R' (Z_to_bv 64 ret) M' (seg_rom SEGS)) mdl') T) ->
     RZ (mkCfg (mkstF fx R (Z_to_bv 64 entry) M (seg_rom SEGS)) mdl) T.
 
@@ -445,7 +455,11 @@ Definition nalloc_post_ok (fx : FX) (R : bvmap 5 word) (M : word -> option byte)
   (forall a : word, frame_kept Lc sp a -> M' a = M a) /\
   (forall a : word, sp - MSTK <= bv_unsigned a < sp -> M' a <> None /\ RiscvSemantics.store_ok SEGS M' a 1 = true) /\
   AINV ((bv_unsigned p, n) :: Lc) (B + mcost n) (C + MCNT) M' mdl' /\
-  m_halted mdl' = None /\ m_vm_lazy mdl' = [] /\ m_vm_materialized mdl' = [] /\ m_fs mdl' = m_fs mdl /\ m_fds mdl' = m_fds mdl.
+  m_halted mdl' = None /\ m_vm_lazy mdl' = [] /\ m_vm_materialized mdl' = [] /\ m_fs mdl' = m_fs mdl /\ m_fds mdl' = m_fds mdl /\
+  (* [m_channel_reader] rides with the group above: this is the fact GPS.cs_ok's co_rdr
+     field is re-established from after a node-level allocation. *)
+  m_channel_reader mdl' = m_channel_reader mdl /\
+  incl (vdso_reserved (m_kernel mdl') (vdso_top (m_vmmaps mdl'))) (vm_reserved (m_vmmaps mdl')).
 
 Definition nalloc_pre (fx : FX) (R : bvmap 5 word) (M : word -> option byte) (mdl : Model)
            (Lc : list (Z * Z)) (B C ret n sp : Z) : Prop :=
@@ -456,7 +470,8 @@ Definition nalloc_pre (fx : FX) (R : bvmap 5 word) (M : word -> option byte) (md
   bv_unsigned (getr R (Z_to_bv 5 2)) = sp /\ sp mod 16 = 0 /\ CEIL_run + MSTK <= sp /\ sp <= SPTOPc /\
   getr R (Z_to_bv 5 4) = Z_to_bv 64 (g_tp G) /\
   (forall a : word, sp - MSTK <= bv_unsigned a < sp -> RiscvSemantics.store_ok SEGS M a 1 = true) /\
-  B + mcost n <= bcap /\ C + MCNT <= ccap.
+  B + mcost n <= bcap /\ C + MCNT <= ccap /\
+  incl (vdso_reserved (m_kernel mdl) (vdso_top (m_vmmaps mdl))) (vm_reserved (m_vmmaps mdl)).
 
 
 
@@ -490,6 +505,7 @@ Definition free_nspec (entry : Z) : Prop :=
     bv_unsigned (getr R (Z_to_bv 5 2)) = sp -> sp mod 16 = 0 -> CEIL_run + MSTK <= sp -> sp <= SPTOPc ->
     getr R (Z_to_bv 5 4) = Z_to_bv 64 (g_tp G) ->
     (forall a : word, sp - MSTK <= bv_unsigned a < sp -> RiscvSemantics.store_ok SEGS M a 1 = true) ->
+    incl (vdso_reserved (m_kernel mdl) (vdso_top (m_vmmaps mdl))) (vm_reserved (m_vmmaps mdl)) ->
     (forall fx' R' M' mdl',
         FXOK fx' ->
         (forall r, In r callee_saved_regs -> getr R' (Z_to_bv 5 r) = getr R (Z_to_bv 5 r)) ->
@@ -497,6 +513,8 @@ Definition free_nspec (entry : Z) : Prop :=
         (forall a : word, sp - MSTK <= bv_unsigned a < sp -> M' a <> None /\ RiscvSemantics.store_ok SEGS M' a 1 = true) ->
         AINV Lc' B' C' M' mdl' ->
         m_halted mdl' = None -> m_vm_lazy mdl' = [] -> m_vm_materialized mdl' = [] -> m_fs mdl' = m_fs mdl -> m_fds mdl' = m_fds mdl ->
+        m_channel_reader mdl' = m_channel_reader mdl ->
+        incl (vdso_reserved (m_kernel mdl') (vdso_top (m_vmmaps mdl'))) (vm_reserved (m_vmmaps mdl')) ->
         RZ (mkCfg (mkstF fx' R' (Z_to_bv 64 ret) M' (seg_rom SEGS)) mdl') T) ->
     RZ (mkCfg (mkstF fx R (Z_to_bv 64 entry) M (seg_rom SEGS)) mdl) T.
 
@@ -3778,6 +3796,7 @@ Definition resize_growS_mspec (stk bc cc : Z) (entry : Z) : Prop :=
     rdn SEGS M obj 8 = Some (W8 w0) -> bv_unsigned w0 mod 256 = 2 * s ->
     0 <= s <= 22 -> 22 < n -> 4 * n <= NMAX ->
     B + mcost (galloc n 22) <= bc -> C + MCNT <= cc ->
+    incl (vdso_reserved (m_kernel mdl) (vdso_top (m_vmmaps mdl))) (vm_reserved (m_vmmaps mdl)) ->
     (forall fx' R' M' mdl' (p : word),
         FXOK fx' ->
         (forall r, In r callee_saved_regs -> getr R' (Z_to_bv 5 r) = getr R (Z_to_bv 5 r)) ->
@@ -3795,6 +3814,8 @@ Definition resize_growS_mspec (stk bc cc : Z) (entry : Z) : Prop :=
         (forall a : word, bv_unsigned obj <= bv_unsigned a < bv_unsigned obj + 24 -> M' a <> None) ->
         AINV ((bv_unsigned p, galloc n 22) :: Lc) (B + mcost (galloc n 22)) (C + MCNT) M' mdl' ->
         m_halted mdl' = None -> m_vm_lazy mdl' = [] -> m_vm_materialized mdl' = [] -> m_fs mdl' = m_fs mdl -> m_fds mdl' = m_fds mdl ->
+        m_channel_reader mdl' = m_channel_reader mdl ->
+        incl (vdso_reserved (m_kernel mdl') (vdso_top (m_vmmaps mdl'))) (vm_reserved (m_vmmaps mdl')) ->
         RZ (mkCfg (mkstF fx' R' (Z_to_bv 64 ret) M' (seg_rom SEGS)) mdl') T) ->
     RZ (mkCfg (mkstF fx R (Z_to_bv 64 entry) M (seg_rom SEGS)) mdl) T.
 
@@ -3817,6 +3838,7 @@ Definition resize_growL_mspec (stk bc cc : Z) (entry : Z) : Prop :=
     blk_ok G (bv_unsigned d) (cap + 1) ->
     (forall a : word, bv_unsigned d <= bv_unsigned a < bv_unsigned d + cap + 1 -> M a <> None /\ store_ok SEGS M a 1 = true) ->
     B + mcost (galloc n cap) <= bc -> C + MCNT <= cc ->
+    incl (vdso_reserved (m_kernel mdl) (vdso_top (m_vmmaps mdl))) (vm_reserved (m_vmmaps mdl)) ->
     (forall fx' R' M' mdl' (p : word),
         FXOK fx' ->
         (forall r, In r callee_saved_regs -> getr R' (Z_to_bv 5 r) = getr R (Z_to_bv 5 r)) ->
@@ -3835,6 +3857,8 @@ Definition resize_growL_mspec (stk bc cc : Z) (entry : Z) : Prop :=
         AINV ((bv_unsigned p, galloc n cap) :: L1 ++ L2)
              (Z.max 0 (B + mcost (galloc n cap) - mcost (cap + 1))) (Z.max 0 (C + MCNT - MCNT)) M' mdl' ->
         m_halted mdl' = None -> m_vm_lazy mdl' = [] -> m_vm_materialized mdl' = [] -> m_fs mdl' = m_fs mdl -> m_fds mdl' = m_fds mdl ->
+        m_channel_reader mdl' = m_channel_reader mdl ->
+        incl (vdso_reserved (m_kernel mdl') (vdso_top (m_vmmaps mdl'))) (vm_reserved (m_vmmaps mdl')) ->
         RZ (mkCfg (mkstF fx' R' (Z_to_bv 64 ret) M' (seg_rom SEGS)) mdl') T) ->
     RZ (mkCfg (mkstF fx R (Z_to_bv 64 entry) M (seg_rom SEGS)) mdl) T.
 End Machine.
@@ -3876,6 +3900,7 @@ Definition resize_growS_nspec (entry : Z) : Prop :=
     rdn SEGS M obj 8 = Some (W8 w0) -> bv_unsigned w0 mod 256 = 2 * s ->
     0 <= s <= 22 -> 22 < n -> 4 * n <= NMAX ->
     B + mcost (galloc n 22) <= bcap -> C + MCNT <= ccap ->
+    incl (vdso_reserved (m_kernel mdl) (vdso_top (m_vmmaps mdl))) (vm_reserved (m_vmmaps mdl)) ->
     (forall fx' R' M' mdl' (p : word),
         FXOK fx' ->
         (forall r, In r callee_saved_regs -> getr R' (Z_to_bv 5 r) = getr R (Z_to_bv 5 r)) ->
@@ -3893,6 +3918,8 @@ Definition resize_growS_nspec (entry : Z) : Prop :=
         (forall a : word, bv_unsigned obj <= bv_unsigned a < bv_unsigned obj + 24 -> M' a <> None /\ store_ok SEGS M' a 1 = true) ->
         AINV ((bv_unsigned p, galloc n 22) :: Lc) (B + mcost (galloc n 22)) (C + MCNT) M' mdl' ->
         m_halted mdl' = None -> m_vm_lazy mdl' = [] -> m_vm_materialized mdl' = [] -> m_fs mdl' = m_fs mdl -> m_fds mdl' = m_fds mdl ->
+        m_channel_reader mdl' = m_channel_reader mdl ->
+        incl (vdso_reserved (m_kernel mdl') (vdso_top (m_vmmaps mdl'))) (vm_reserved (m_vmmaps mdl')) ->
         RZ (mkCfg (mkstF fx' R' (Z_to_bv 64 ret) M' (seg_rom SEGS)) mdl') T) ->
     RZ (mkCfg (mkstF fx R (Z_to_bv 64 entry) M (seg_rom SEGS)) mdl) T.
 
@@ -3914,6 +3941,7 @@ Definition resize_growL_nspec (entry : Z) : Prop :=
     (bv_unsigned d + cap + 1 <= bv_unsigned obj \/ bv_unsigned obj + 24 <= bv_unsigned d) ->
     (forall a : word, bv_unsigned d <= bv_unsigned a < bv_unsigned d + cap + 1 -> store_ok SEGS M a 1 = true) ->
     B + mcost (galloc n cap) <= bcap -> C + MCNT <= ccap ->
+    incl (vdso_reserved (m_kernel mdl) (vdso_top (m_vmmaps mdl))) (vm_reserved (m_vmmaps mdl)) ->
     (forall fx' R' M' mdl' (p : word),
         FXOK fx' ->
         (forall r, In r callee_saved_regs -> getr R' (Z_to_bv 5 r) = getr R (Z_to_bv 5 r)) ->
@@ -3932,6 +3960,8 @@ Definition resize_growL_nspec (entry : Z) : Prop :=
         AINV ((bv_unsigned p, galloc n cap) :: L1 ++ L2)
              (Z.max 0 (B + mcost (galloc n cap) - mcost (cap + 1))) (Z.max 0 (C + MCNT - MCNT)) M' mdl' ->
         m_halted mdl' = None -> m_vm_lazy mdl' = [] -> m_vm_materialized mdl' = [] -> m_fs mdl' = m_fs mdl -> m_fds mdl' = m_fds mdl ->
+        m_channel_reader mdl' = m_channel_reader mdl ->
+        incl (vdso_reserved (m_kernel mdl') (vdso_top (m_vmmaps mdl'))) (vm_reserved (m_vmmaps mdl')) ->
         RZ (mkCfg (mkstF fx' R' (Z_to_bv 64 ret) M' (seg_rom SEGS)) mdl') T) ->
     RZ (mkCfg (mkstF fx R (Z_to_bv 64 entry) M (seg_rom SEGS)) mdl) T.
 
@@ -3985,10 +4015,10 @@ Proof. intros M M' a E. cbn [RiscvSemantics.store_ok]. unfold wview. rewrite E. 
 Lemma free_mspecR_mono : forall stk stk' entry,
   0 <= stk <= stk' -> free_mspecR stk entry -> free_mspecR stk' entry.
 Proof.
-  intros stk stk' entry Hstk FRE fx R M mdl Lc Lc' B C B' C' ret sp p T Hh Hlz Hmat HFX HA R1 Rr Re R10 Hcase R2 Hal Hsp R4 Hscr K.
+  intros stk stk' entry Hstk FRE fx R M mdl Lc Lc' B C B' C' ret sp p T Hh Hlz Hmat HFX HA R1 Rr Re R10 Hcase R2 Hal Hsp R4 Hscr HVDSO K.
   apply (FRE fx R M mdl Lc Lc' B C B' C' ret sp p T Hh Hlz Hmat HFX HA R1 Rr Re R10 Hcase R2 Hal ltac:(lia) R4
-           ltac:(intros a Ha; apply Hscr; lia)).
-  intros fx' R' M' mdl' HFX' Hkept Hch Hscr' HA' Hh' Hlz' Hmat' Hfs' Hfds'.
+           ltac:(intros a Ha; apply Hscr; lia) HVDSO).
+  intros fx' R' M' mdl' HFX' Hkept Hch Hscr' HA' Hh' Hlz' Hmat' Hfs' Hfds' Hrdr' Hvdso'.
   apply (K fx' R' M' mdl' HFX' Hkept); try assumption.
   - intros a Ha. eapply alloc_changed_mono; [|exact (Hch a Ha)]. lia.
   - intros a Ha. destruct (Z.lt_ge_cases (bv_unsigned a) (sp - stk)) as [Hlt|Hge].

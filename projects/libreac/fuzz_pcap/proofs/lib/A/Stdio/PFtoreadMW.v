@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the walk of musl's __toread inside libreac/fuzz_pcap (libreac v1.9.0, ASan
-   build), proving PFreadM.v's rtoread_contract (a working branch beb05bac2a3) in
+   build), proving PFreadM.v's rtoread_contract (a working branch) in
    cgif_file_fuzzer's per-function form (the donor's walk / spec of lib/A/AE26.v + AE27.v: one SRr
    theorem over cfg_at, its post apost_base). Theorem: rtoread_contract_proof (any image holding
    the code). The image instances are in their own files: rtoread_contract_asan (PTOREAD) in
@@ -39,8 +40,8 @@
    f+8 .. f+24, f+32 .. f+48, f+56 .. f+64, f+136 .. f+140 (inside the FILE block, the pre's
    `In (f, SRC_FILE_BLOCK) (ablocks B ly S)`, and inside the footprint rtoread_fp f). The journal is
    ajournal_exec from ajournal_init over exactly these bytes, so it holds for the token-free
-   footprint. The data buffer b is a live block (the pre's `In (b, |C|) (ablocks B ly S)`, added in
-   9b4de8c19fc after this lane's gap report: without it b = sp-16 makes the post false), hence below
+   footprint. The data buffer b is a live block (the pre's `In (b, |C|) (ablocks B ly S)`, added
+    after this lane's gap report: without it b = sp-16 makes the post false), hence below
    alloc_ceiling and off the stack window.
 
    rule 24: __toread is the function this lane was assigned (a Theorem Labs lane). proof-index

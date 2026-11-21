@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the NULL hint argument of the mmap refusal criteria; the new kinds of fd-table entry; munmap's grant and next state in the no-materialization walk). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import bitvector.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run Monad.
@@ -52,7 +53,7 @@ Qed.
 Lemma nroom_grant_not_refusable : forall B len mo,
 mem_quiet mo -> B <= vm_limit (m_vmmaps mo) ->
 nroom B (NMmap 0 len (PROT_READ + PROT_WRITE) (MAP_PRIVATE + MAP_ANONYMOUS)) mo ->
-mmap_grant_refusable (Z_to_bv 64 (MAP_PRIVATE + MAP_ANONYMOUS)) mo (mmap_len len) = false.
+mmap_grant_refusable (Z_to_bv 64 0) (Z_to_bv 64 (MAP_PRIVATE + MAP_ANONYMOUS)) mo (mmap_len len) = false.
 Proof.
 intros B len mo Hq HB Hr. destruct (Hr eq_refl eq_refl) as [Hfit Hgap].
 unfold mmap_grant_refusable. rewrite Hgap. cbn [negb orb]. rewrite orb_false_r. apply negb_false_iff.
@@ -76,7 +77,7 @@ Qed.
 
 Lemma nroom_reserve_not_refusable : forall B len mo,
 nroom B (NMmap 0 len PROT_NONE (MAP_PRIVATE + MAP_ANONYMOUS)) mo ->
-mmap_reserve_refusable mo (mmap_len len) = false.
+mmap_reserve_refusable (Z_to_bv 64 0) mo (mmap_len len) = false.
 Proof.
 intros B len mo Hr. destruct (Hr eq_refl eq_refl) as [_ Hgap].
 unfold mmap_reserve_refusable. rewrite Hgap. reflexivity.
@@ -180,7 +181,7 @@ destruct path as [|c p]; [destruct Hst as [_ ->]; auto|].
 destruct (path_eqb (c :: p) dot_path); [eapply Hor; exact Hst|].
 destruct (fs_lookup (m_fs mo) (c :: p)); [eapply Hor; exact Hst| destruct Hst as [_ ->]; auto].
 - cbn [nstep] in Hst. destruct Hst as [-> Hst].
-destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[c|p o|p o|p o|p o| |s0|pp w|nrd nwr| ]|]; try (destruct Hst as [_ ->]; auto; fail); try contradiction.
+destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[c|p o|p o|p o|p o| |s0|pp w|nrd nwr| |sq sw sv|ex|dgf|ani anf]|]; try (destruct Hst as [_ ->]; auto; fail); try contradiction.
 destruct (fs_lookup (m_fs mo) p); [|contradiction]. destruct Hst as [_ ->]. apply nomat_with_fds.
 - cbn [nstep] in Hst. destruct Hst as (-> & _ & Hst). destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)); destruct Hst as [_ ->]; [apply nomat_with_fds| auto].
 - destruct Hst as (-> & _ & ->). auto.
@@ -188,7 +189,7 @@ destruct (fs_lookup (m_fs mo) p); [|contradiction]. destruct Hst as [_ ->]. appl
 - destruct Hst.
 - apply nstep_brk_iff in Hst as (-> & r & _ & _ & -> & ->). apply nomat_with_brk_next.
 - apply nstep_mmap_spec in Hst as [-> Hst]. intros Q. eapply mmap_spec_nomat; [exact (proj1 Hst)| exact Q].
-- apply nstep_munmap_iff in Hst as [-> Hst]. unfold munmap_out in Hst. cbv zeta in Hst.
+- apply nstep_munmap_iff in Hst as [-> Hst]. unfold munmap_out, munmap_grant, munmap_next in Hst. cbv zeta in Hst.
 repeat match type of Hst with (if ?c then _ else _) => destruct c end;
 first [apply Ok_inj in Hst as (-> & -> & _) | exfalso; exact (Unmodeled_Ok _ _ _ (eq_sym Hst))]; auto; apply nomat_with_mmap_destroyed.
 - apply nstep_mprotect_spec in Hst as [-> Hst]. apply mprotect_outcome in Hst. unfold mprotect_out in Hst. cbv zeta in Hst.

@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_disco lib/A/Rt/StackFree6.v (itself ported from proofs/cgif/cgif_rgb_fuzzer/lib/YF3h.v and YF9b.v) and restated onto lib/Reusable/StackFreeDef.v's astack_free_realizes; the fill pattern at 0x10350 is read through the AR constant cell that lib/A/Rt/StackFree6Tbl.v's sf_rodata row checks, as cgif_rgb_fuzzer YF3h.v's sf_rodata rows are; every address and class constant is cited from StackFree6Tbl.v; module names. *)
 (* Modified by Theorem Labs, 2026-10: the asan-ubsan twin of lib/A/Rt/StackFree6S.v, relocated to libreac/fuzz_disco's asan-ubsan build: the same text over that image's addresses and the asan-ubsan core's module names. *)
-(* Modified by Theorem Labs, 2026-10: relocated from a working branch cb2a0ebe89b proofs/libreac/fuzz_disco/lib/Y/Rt/StackFree6S.v to libreac/fuzz_grant image B (asan-ubsan): module paths only; this file holds no image number, every address and class constant comes from StackFree6Tbl.v. *)
+(* Modified by Theorem Labs, 2026-10: relocated from a working branch proofs/libreac/fuzz_disco/lib/Y/Rt/StackFree6S.v to libreac/fuzz_grant image B (asan-ubsan): module paths only; this file holds no image number, every address and class constant comes from StackFree6Tbl.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/tx_put.v, with its module paths and module names changed; 3018 of its 3112 lines of code are new or changed and 934 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW4e1.v, with its module paths and module names changed; 507 of its 559 lines of code are new or changed and 3060 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtl.v, with its module names, addresses and numbers changed; 633 of its 661 lines of code are new or changed and 531 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/F37.v -- GLUE for stage seg_F37 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput (lib/A/ACtl.v,
    piece W4f).  Written by a Theorem Labs lane (glue owner of the B8 stretch); single writer.  rule 24: no
    function proved (stage glue of a walk: an already-proved segment run, through an already-proved bridge, to a fixed
@@ -16,7 +17,7 @@
    with ACtl.v's own CF notation (SK := A.AE2k.tfib_sink_head, FP := []), i.e. exactly ACtl.v's Section hypothesis
    seg_F37.  The ENTRY is C_A828d8_at [j] (pc 0x828d8, own6, k <= 14+2j+1, live list entry ++ [(phi, flen cx j)]),
    the EXIT is C_A82940_at [j] (pc 0x82940 = the free's return address, own6, k <= 14+2j+2, live list = entry).
-   Segment F37 (Seg/F37.v seg_F37 :787 at U 6a74d5929d2): 0x828d8 `bne a0,s4,82bf4` (not taken: t_want j =
+   Segment F37 (Seg/F37.v seg_F37 :787 at U): 0x828d8 `bne a0,s4,82bf4` (not taken: t_want j =
    t_want_m j, F37.f37_want_eq), the 23 frame-shadow stores `sb s11,o(s3)` at S(fr)+22 .. S(fr)+66, `mv a0,s7`,
    `jal 0x53378` = free(phi) (the free wrapper, pc_wrap_free of the core's code, ra = 0x82940).
 
@@ -58,7 +59,7 @@
    body has NO HB conjunct (the block is freed), so plan Appendix B OPEN item 1 (a_size 0 = 1) does not arise at this
    site.
 
-   THE FAKE-FRAME TRAILER WORD (Batch3, a Theorem Labs lane's glue base d36efc6152d; FRAC's last conjunct, ACtlCutP.v:997,
+   THE FAKE-FRAME TRAILER WORD (Batch3, a Theorem Labs lane's glue base; FRAC's last conjunct, ACtlCutP.v:997,
    `q64 m (fr + 4088) (Reusable.YG0f.flag_addr (c_ly cx) 6 (c_fpos cx))`).  The entry body's FRAC is destructed
    with it named (Htrail), and the exit FRAC (HFRAC2, at the free's post memory mem2, then kit_frac_move to regs2)
    PRODUCES it: [fr + 4088, fr + 4096) is outside the run's write set [S(fr) + 22, S(fr) + 67) (KR), and the free
@@ -71,7 +72,7 @@
    - LAWS, TFIB_LIB, CHAIN_OF_CUT: ACtl.v's own Section hypotheses (ACtl.v Section Ctl, :210 / :226 / :478 at blob
      a3c6b7b35017), same text; ACtl.v passes its own.
    - AFREE4 : the core's free rule, Reusable.YC5d.afree04_rule segs B MT, as the donor's walk states it
-     (proofs/cgif/cgif_file_fuzzer/lib/A/ACfj.v:110 at origin/ossv/recipes c8557374ad2e, `Hypothesis AFREE4 :
+     (proofs/cgif/cgif_file_fuzzer/lib/A/ACfj.v:110 at theorem-labs/oss-verify-proofs@6b32741d849a, `Hypothesis AFREE4 :
      afree04_rule tfibsegs B MT`); glue-pattern.md section 9: the rules are Section hypotheses of the walk.  NEW for
      ACtl.v (discharged at its section 9 by Reusable.YCbp.afree04_rule_triv and the core's afree_realizes).
    - MT_FREE : the trivial meter, the core's own hypothesis text (lib/A/AD1m.v:29 `Hypothesis MT_FREE : forall S m,
@@ -94,7 +95,7 @@
 
    CLOSURE (the glue closure rule, measured with closure_scan.py sha256
    039e7d56edc33b08e7d2b05bc9c3d98593c711ff8ef313a5f33ca4d1f7592c8f, which self-tests 16 rule-3 cases on every
-   run, from this file's own Requires on a Theorem Labs lane's stand-in-free glue base 29ddfc3ea99 merged: 551 unit files):
+   run, from this file's own Requires on a Theorem Labs lane's stand-in-free glue base merged: 551 unit files):
    every Require is qualified; no statement names a frame-route identifier.  The frame route IS in the closure,
    through the `_F` file (Seg/F37F.v Requires Seg/F37.v, which Requires SlotInv / AsanRTInv / Contract / FrameAPI /
    MemNorm), which closure rule 1 allows.  Rule 3 holds, measured: `closure-rule-3 files: NONE` -- no SegCF path,
@@ -107,7 +108,7 @@
    aliases CK11 / CM05 / CO09 / CI16 / CP09 / CK0s (porter 04:24Z and 04:33Z).  lib/Lib is doubled the same way
    (lib/A/Bz/Lib, lib/A/Tk/UL, lib/AZ/Lib), so every lib/Lib name below is written by its FULL path
    OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.<X>.<n> -- the copy the cut records use (ACtlCutP.v's MEM / CEL /
-   STP / FRM aliases, ACtl.v's CHAIN_OF_CUT).  MEASURED (refit-f3738, 8ee48574229): in this file's closure WITHOUT an
+   STP / FRM aliases, ACtl.v's CHAIN_OF_CUT).  MEASURED (refit-f3738): in this file's closure WITHOUT an
    alias the partial `Lib.Mem.n` / `Lib.Cells.n` / `Lib.Step.rw_cells` / `Lib.MState.MS` expand to the lib/A/Bz/Lib
    copy (`Lib.Cells.CB` to lib.A.Bz.Lib.Cells.CB, a different `cell`); the local nested `Module Lib` alias block this
    file carried until then bound all of them to lib/Lib (About: `alias of lib.Lib.X.n`), but the module gate cannot
@@ -123,9 +124,9 @@
      exact (glue_seg_F37 B MT XM_LIB RLO RHI LAWS TFIB_SYMS TFIB_LIB CHAIN_OF_CUT AFREE4 MT_FREE)
    (fx / rc stay implicit, resolved by ACtl.v's own Context instances.)
 
-   BUILD STATE: TYPE-CHECK ON INTERIM 5da74c9c931, CLOSURE REACHES NO STAND-IN.  rc=0 by cb
-   on a build machine (a fresh worktree; workspace from the packed base 23b918fe0c2e) with NO port_core_refused
-   substitution: on the stand-in-free glue base 29ddfc3ea99 the five planning-core files the type-check workspaces
+   BUILD STATE: TYPE-CHECK ON INTERIM, CLOSURE REACHES NO STAND-IN.  rc=0 by cb
+   on a build machine (a fresh worktree; workspace from the packed base) with NO port_core_refused
+   substitution: on the stand-in-free glue base the five planning-core files the type-check workspaces
    used to substitute (lib/A/AE2k.v, AF0m.v, AF0l.v, ACej.v, ACeh.v; this file's closure reaches all five, through
    A.ProgWorld's A.AF0m among others) carry no port_core_refused_ name and compile from their own text.  No Axiom, no
    Parameter, no Admitted, no admit.  `Print Assumptions glue_seg_F37`: Rocq primitives (PrimInt63 / PrimString /

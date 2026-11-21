@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the section takes the stderr write's channel reader and the launch's kernel build (Amb), and the error tails cover the refused munmap. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -164,6 +165,9 @@ Section Header.
   Variables (R0 : bvmap 5 word) (M0 : word -> option byte).
   Hypothesis HP : header_pre sp0 p1 gm tid area can sec content R0 M0.
   Hypothesis Hmap : map_has (vm_maps VM) gm (Z_to_bv 64 69632) = true.
+  (* LPS 08b1429/75d69e00: the stderr write needs the launch's channel reader; [modelh]'s is the
+     Amb's (WITNESSED at the top: Amb.v:49, Run.valid_input_channel_reader, [c0dd863a:theories/LinuxProcessSem/Run.v:5018]). *)
+  Hypothesis Hrdr0 : a_channel_reader = true.
 
   Let L : Z := Z.of_nat (length content).
   Definition modelh : Model := model_post VM stdin0 fs0 tid.
@@ -259,7 +263,7 @@ Section Header.
       all: try (lazymatch goal with
                 | |- _ /\ (forall d m, _ -> _ -> store_ok _ _ (Z_to_bv 64 (?B + d)) m = true) =>
                     split; [lia|]; intros d m Hd Hm;
-                    first [ replace (B + d)%Z with (bv_unsigned sp0 - 8388608 + d)%Z by lia; apply Hst; lia
+                    first [ replace (B + d)%Z with (bv_unsigned sp0 - 6144513 + d)%Z by lia; apply (stack_writable_lit _ _ Hst); lia
                           | replace (B + d)%Z with (bv_unsigned gm + d)%Z by lia; apply Hgr; lia
                           | apply Hma; lia
                           | replace (B + d)%Z with (0x26000 + d)%Z by lia; apply data_store_ok; lia ]
@@ -382,9 +386,8 @@ Section Header.
     | lia
     | change (page_round_up_Z 69632) with 69632%Z; unfold TASK_SIZE; lia
     | change (page_round_up_Z 69632) with 69632%Z; cbv [m_vmmaps modelh model_post mkModelC m_vm vmst_maps]; exact Hmap
-    | ];
-    rewrite v_addi_pc4 by lia; change (0x1d798 + 4)%Z with 0x1d79c%Z;
-    change (page_round_up_Z 69632) with 69632%Z.
+    | (* the refused branch (08b1429: -ENOMEM, [munmap_errnos]), closed by [err_tail_tac] *)
+    | ].
 
   Ltac err_tail_2 HL P0 P3 P4 HR HK :=
     let HK2 := fresh "HK2" in let HR2 := fresh "HR2" in
@@ -404,14 +407,8 @@ Section Header.
     (* [comment removed for export] *)
     run_block scr0 75%nat.
 
-  Ltac err_tail_3 HL P0 P3 P4 HR HK :=
+  Ltac err_tail_3_core HL P0 P3 P4 HR HK :=
     let Hst := fresh "Hst" in let Ktid := fresh "Ktid" in
-    (* [comment removed for export] *)
-    apply (rz_conseq RSEGS _ (t_emit (W 1 []) (t_exit (bv_and (Z_to_bv 64 2) (Z_to_bv 64 255))
-                                                  (m_fs (munmap_model gm (Z_to_bv 64 69632) modelh)))));
-    [ | replace (m_fs (munmap_model gm (Z_to_bv 64 69632) modelh)) with fs0 by reflexivity;
-        replace (bv_and (Z_to_bv 64 2) (Z_to_bv 64 255)) with (exit_code 2) by (apply bv_eq; reflexivity);
-        apply t_eq_sym; apply t_emit_nil_exit ];
     apply ref_exit_Z;
     lazymatch type of HK with know_ok _ _ _ ?kn =>
       pose proof (know_nth RSEGS _ _ kn ltac:(let i := kidx kn (is_krange (EVar 4)) in exact i) _ HK eq_refl)
@@ -445,11 +442,44 @@ Section Header.
       | repeat split; krd_solve HK ]
     | left; split; [reflexivity|]; exists (Z_to_bv 64 0), (Z_to_bv 64 0); repeat split; krd_solve HK ].
 
+  Ltac err_tail_3 HL P0 P3 P4 HR HK :=
+    (* [comment removed for export] *)
+    apply (rz_conseq RSEGS _ (t_emit (W 1 []) (t_exit (bv_and (Z_to_bv 64 2) (Z_to_bv 64 255))
+                                                  (m_fs (munmap_model gm (Z_to_bv 64 69632) modelh)))));
+    [ | replace (m_fs (munmap_model gm (Z_to_bv 64 69632) modelh)) with fs0 by reflexivity;
+        replace (bv_and (Z_to_bv 64 2) (Z_to_bv 64 255)) with (exit_code 2) by (apply bv_eq; reflexivity);
+        apply t_eq_sym; apply t_emit_nil_exit ];
+    err_tail_3_core HL P0 P3 P4 HR HK.
+
+  (* the refused munmap: a0 := -ENOMEM, the 69632-byte region stays mapped (and known); the rest of the tail is the
+     same code, so it reaches the same exit, with the model unchanged *)
+  Ltac err_tail_2r HL P0 P3 P4 HR HK :=
+    let HR2 := fresh "HR2" in
+    lazymatch type of HR with regs_ok ?E ?sr ?Rc =>
+      pose proof (regs_set_a0 E sr Rc (errno_ret ENOMEM) (ELit 18446744073709551604) HR
+                    ltac:(apply bv_eq; reflexivity)) as HR2 end;
+    clear HR; rename HR2 into HR;
+    run_block scr0 75%nat.
+
+  Ltac err_tail_3r HL P0 P3 P4 HR HK :=
+    let Hst := fresh "Hst" in let Ktid := fresh "Ktid" in
+    apply (rz_conseq RSEGS _ (t_emit (W 1 []) (t_exit (bv_and (Z_to_bv 64 2) (Z_to_bv 64 255)) (m_fs modelh))));
+    [ | replace (m_fs modelh) with fs0 by reflexivity;
+        replace (bv_and (Z_to_bv 64 2) (Z_to_bv 64 255)) with (exit_code 2) by (apply bv_eq; reflexivity);
+        apply t_eq_sym; apply t_emit_nil_exit ];
+    err_tail_3_core HL P0 P3 P4 HR HK.
+
   Ltac err_tail_tac :=
     intros vals R M HL P0 P3 P4 HR HK;
     err_tail_1 HL P0 P3 P4 HR HK;
-    match goal with HR' : regs_ok _ _ _, HK' : know_ok _ _ _ _ |- _ => err_tail_2 HL P0 P3 P4 HR' HK' end;
-    match goal with HR' : regs_ok _ _ _, HK' : know_ok _ _ _ _ |- _ => err_tail_3 HL P0 P3 P4 HR' HK' end.
+    [ intros e He; destruct He as [<-|[]];
+      rewrite v_addi_pc4 by lia; change (0x1d798 + 4)%Z with 0x1d79c%Z;
+      match goal with HR' : regs_ok _ _ _, HK' : know_ok _ _ _ _ |- _ => err_tail_2r HL P0 P3 P4 HR' HK' end;
+      match goal with HR' : regs_ok _ _ _, HK' : know_ok _ _ _ _ |- _ => err_tail_3r HL P0 P3 P4 HR' HK' end
+    | rewrite v_addi_pc4 by lia; change (0x1d798 + 4)%Z with 0x1d79c%Z;
+      change (page_round_up_Z 69632) with 69632%Z;
+      match goal with HR' : regs_ok _ _ _, HK' : know_ok _ _ _ _ |- _ => err_tail_2 HL P0 P3 P4 HR' HK' end;
+      match goal with HR' : regs_ok _ _ _, HK' : know_ok _ _ _ _ |- _ => err_tail_3 HL P0 P3 P4 HR' HK' end ].
 
   Lemma err_tail_short : err_tail_stmt srSB0 knSB0.
   Proof. err_tail_tac. Qed.
@@ -486,6 +516,7 @@ Section Header.
                  _ _ msg_addr 31 HK eq_refl) by (cbn; lia);
       apply msg_img
     | apply fds_std_2
+    | exact Hrdr0
     | reflexivity
     | reflexivity
     | apply t_exit_has_nil
@@ -725,6 +756,7 @@ Proof.
 Qed.
 
 Section Intro.
+  Context {AMB : Amb}.   (* LPS 08b1429: target_vm reads the launch's kernel build (init_reserved) *)
   Variables (sp0 p1 gm tid : word) (area brkv mas : Z) (content : list byte) (VM : VmMaps).
   Variables (Rr : bvmap 5 word) (Mr : word -> option byte) (R : bvmap 5 word) (M : word -> option byte).
   Hypothesis Hvsp : valid_sp sp0.
@@ -820,6 +852,7 @@ Theorem header_phase {AMB : Amb} : forall (sp0 p1 gm tid : word) (area brkv mas 
     (VM : VmMaps) (stdin0 : InputStream) (fs0 : Fs)
     (Rr : bvmap 5 word) (Mr : word -> option byte) (R : bvmap 5 word) (M : word -> option byte),
   valid_sp sp0 ->
+  a_channel_reader = true ->   (* LPS 08b1429: the header-error writes' channel reader *)
   read_post0 sp0 p1 gm content Rr Mr R M ->
   world0 area (bv_unsigned gm) brkv mas (bv_unsigned tid) M ->
   main_frame (bv_unsigned sp0) M ->
@@ -831,19 +864,19 @@ Theorem header_phase {AMB : Amb} : forall (sp0 p1 gm tid : word) (area brkv mas 
   realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x13adc) M (seg_rom RSEGS)) (model_post VM stdin0 fs0 tid))
              (t_body content fs0).
 Proof.
-  intros sp0 p1 gm tid area brkv mas content VM stdin0 fs0 Rr Mr R M Hvsp RP W0 MF HL TV HT.
+  intros sp0 p1 gm tid area brkv mas content VM stdin0 fs0 Rr Mr R M Hvsp Hrdr0 RP W0 MF HL TV HT.
   destruct (header_pre_intro sp0 p1 gm tid area brkv mas content VM Rr Mr R M Hvsp RP W0 MF HL TV) as (can & sec & HP).
   pose proof (map_has_In _ _ _ (tv_has _ _ _ _ TV)) as Hmap. rewrite Z_to_bv_bv_unsigned in Hmap.
   pose proof (Z.mod_pos_bound (hdr_cfg content) 32768 ltac:(lia)) as CR.
   unfold t_body.
   destruct (MAX_INPUT <=? Z.of_nat (length content))%Z eqn:E1; [apply Z.leb_le in E1; unfold MAX_INPUT in E1; lia|].
   destruct (length content <? 6)%nat eqn:E2.
-  - apply Nat.ltb_lt in E2. apply (header_short sp0 p1 gm tid area can sec content VM stdin0 fs0 R M HP Hmap E2).
+  - apply Nat.ltb_lt in E2. apply (header_short sp0 p1 gm tid area can sec content VM stdin0 fs0 R M HP Hmap Hrdr0 E2).
   - apply Nat.ltb_ge in E2.
     destruct (length content <? 6 + Z.to_nat ((bv_unsigned (nth 0 content (Z_to_bv 8 0)) +
                256 * bv_unsigned (nth 1 content (Z_to_bv 8 0))) mod 32768))%nat eqn:E3.
     + apply Nat.ltb_lt in E3.
-      apply (header_overrun sp0 p1 gm tid area can sec content VM stdin0 fs0 R M HP Hmap E2).
+      apply (header_overrun sp0 p1 gm tid area can sec content VM stdin0 fs0 R M HP Hmap Hrdr0 E2).
       unfold hdr_cfglen, hdr_cfg, hdr_b0, hdr_b1 in *. lia.
     + apply Nat.ltb_ge in E3.
       pose proof (t_body_target content fs0 ltac:(unfold MAX_INPUT; lia) ltac:(unfold hdr_cfg, hdr_b0, hdr_b1; lia)) as TB.

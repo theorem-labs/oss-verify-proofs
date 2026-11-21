@@ -3,9 +3,11 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YM01.v, with its module paths changed. *)
 (* Modified by Trevor Hansen, 2026-11: copied from projects/zlib/checksum_fuzzer/proofs/lib/Reusable/YM01.v for ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (region_free_exists28_fallback_std: a free slot above Linux's fallback floor). *)
 From OSSVerify.Proofs.ffmpeg.ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.
-From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State Run.
+From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap.
 From OSSVerify.Proofs.ffmpeg.ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.lib.Reusable Require Import YM05 YM00.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
@@ -161,4 +163,37 @@ intros ivs nZ HnZ Hc Hb. apply region_free_exists28; [exact HnZ|].
 assert (ivs_bytes ivs / slot28 <= 2 ^ 8).
 { apply Z.div_le_upper_bound; [unfold slot28; lia|]. unfold slot28. lia. }
 unfold JMAX. lia.
+Qed.
+
+(* Exclude Linux's fallback floor before choosing a free slot.  A free
+   allocator slot alone need not belong to either Linux search window. *)
+Corollary region_free_exists28_fallback_std {rc : RunCeil} : forall (ivs : list (word * word)) (nZ : Z),
+0 < nZ <= 2 ^ 28 ->
+Z.of_nat (length ivs) <= 2 ^ 16 ->
+ivs_bytes ivs <= 2 ^ 36 ->
+exists a : word,
+bv_unsigned a mod page_size = 0 /\ 0 < bv_unsigned a /\
+bv_unsigned a + nZ <= alloc_ceiling /\
+region_free ivs a (Z_to_bv 64 nZ) = true /\
+task_unmapped_base <= bv_unsigned a.
+Proof.
+intros ivs nZ HnZ Hc Hb.
+set (floor := (Z_to_bv 64 0, Z_to_bv 64 task_unmapped_base)).
+assert (Hfloor : bv_unsigned (snd floor) = task_unmapped_base).
+{ unfold floor. cbn [snd]. rewrite Z_to_bv64_small; [reflexivity|].
+  unfold task_unmapped_base. lia. }
+destruct (region_free_exists28 (floor :: ivs) nZ HnZ) as (a & Hal & Hpos & Hhi & Hfree).
+- assert (Hbytes : ivs_bytes (floor :: ivs) <= 2 ^ 38 + 2 ^ 36).
+  { cbn [ivs_bytes]. rewrite Hfloor. unfold task_unmapped_base. lia. }
+  assert (Hdiv : ivs_bytes (floor :: ivs) / slot28 <= 1280).
+  { apply Z.div_le_upper_bound; unfold slot28; lia. }
+  cbn [length]. rewrite Nat2Z.inj_succ. unfold JMAX. lia.
+- cbn [region_free] in Hfree. apply andb_prop in Hfree as [Hfloorfree Hfree].
+  exists a. repeat (split; [assumption|]).
+  apply negb_true_iff in Hfloorfree.
+  unfold iv_overlap, floor in Hfloorfree. cbn [fst snd] in Hfloorfree.
+  rewrite Z_to_bv64_small in Hfloorfree by lia.
+  rewrite Z_to_bv64_small in Hfloorfree by (unfold task_unmapped_base; lia).
+  rewrite Z_to_bv64_small in Hfloorfree by lia.
+  apply andb_false_iff in Hfloorfree. destruct Hfloorfree as [H|H]; apply Z.ltb_ge in H; lia.
 Qed.

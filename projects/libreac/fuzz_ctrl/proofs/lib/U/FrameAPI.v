@@ -2,6 +2,7 @@ From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.U.Reusable Require Import YK11 YM05 YO0f YO0d YO09 YL0g YL0i YI14 YI16 YL01.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.U Require Import Contract.
+From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.U.Reusable.R Require Import Cfg.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Mem.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.U Require Import Img0.
 From OSSVerify.libreac.fuzz_ctrl Require Statements.
@@ -53,7 +54,7 @@ Definition frame_ubsan : Prop :=
        G_local_c B G GI ->
        (forall mem, G_img_c B G mem -> GI 0%nat mem) ->
        (forall (rc : RunCeil) (fx : FPState) (j : nat), (j < 4)%nat ->
-          @lib_contract_g fx rc LS B (API rc) SH SK G frame_RELRO GI j ENTRY ra empty SLOT_STACK) ->
+          @lib_contract_g fx rc LS B _ (API rc) SH SK G frame_RELRO GI j ENTRY ra empty SLOT_STACK) ->
        Statements.ubsan_halts).
 
 Definition frame_facts_ubsan (B : malloc_syms) (API : forall rc : RunCeil, AllocAPI B)
@@ -87,7 +88,7 @@ Lemma frame_ubsan_split : frame_ubsan ->
        G_local_c B G GI ->
        (forall mem, G_img_c B G mem -> GI 0%nat mem) ->
        (forall (rc : RunCeil) (fx : FPState) (j : nat), (j < 4)%nat ->
-          @lib_contract_g fx rc LS B (API rc) SH SK G frame_RELRO GI j ENTRY ra empty SLOT_STACK) ->
+          @lib_contract_g fx rc LS B _ (API rc) SH SK G frame_RELRO GI j ENTRY ra empty SLOT_STACK) ->
        Statements.ubsan_halts).
 Proof.
   intros (B & API & LS & SH & SK & ra & empty & H). exists B, API, LS, SH, SK, ra, empty.

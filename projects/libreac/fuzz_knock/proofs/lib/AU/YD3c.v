@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: new file, written by a Theorem Labs lane: the asan-ubsan twin of libreac/fuzz_knock lib/A/AD3c.v
-   at 48907dc7e8ca (by a Theorem Labs lane, the S3 prover, with amendment 11 to the statement's approval), the statement of
+   (by a Theorem Labs lane, the S3 prover, with amendment 11 to the statement's approval), the statement of
    __sanitizer::StackStore::BlockInfo::Create (0x6f400-0x6f4b4, 45 insns, YB1w.v tfib_A_StackStore_BlockInfo_Create,
    fuzz_knock.asan-ubsan sha256 f834165f5002...) on knock's first-use path, block 0 (the store block not yet mapped), and
    its proof.
@@ -32,6 +32,7 @@
      (YD3d.v:97).
    lib/AU/YF0m.v (TfibSyms, TFIB_STORE) was not on the base this file was written on: it built from
    YF0m.v (sha256 77ff7f6e6d76; internal record), a build-only input. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YImgTop.
 From Stdlib Require Import ZArith NArith List Lia Bool.

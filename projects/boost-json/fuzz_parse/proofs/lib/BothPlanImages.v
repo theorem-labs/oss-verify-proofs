@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: lemmas added for the revision. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -16,6 +17,8 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Section FPX1. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
 Definition ASEGS : ltac2:(zQ "20!h8!l3@1$0$1") := ltac2:(zQ "10!p7$0").
 Definition APH : ltac2:(zQ "10!q9$0") := ltac2:(zQ "10!r4$0").
+(* Twin of AsPlanImages.A_PC: the image's ELF entry, for [AsanInit]'s [apc]. *)
+Definition A_PC : N := AsanUbsan.M.init_pc.
 
 Lemma asan_wx : ltac2:(zQ "20!v7!hke@1$0$1").
 Proof. apply wx_segs_nowrap_of_b. vm_compute. reflexivity. Qed.

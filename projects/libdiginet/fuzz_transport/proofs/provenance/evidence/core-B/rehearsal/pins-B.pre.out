@@ -1,8 +1,8 @@
 == 1. pins
   libdiginet fuzz_transport.asan-ubsan sha256 41113a03c82f; harness.yaml asan-ubsan pin at refs/remotes/origin/ossv/recipes: 04463dc8ecfe: DIFFERS
-  libreac fuzz_decode.asan-ubsan sha256 5d05689fd5b1; harness.yaml asan-ubsan pin at 88154566652a: 5d05689fd5b1: EQUAL
+  libreac fuzz_decode.asan-ubsan sha256 5d05689fd5b1; harness.yaml asan-ubsan pin: 5d05689fd5b1: EQUAL
   libdiginet fuzz_transport.asan (--known-elf / --kernel-image) sha256 e89be137db17; harness.yaml asan pin at refs/remotes/origin/ossv/recipes: 29ec57e03c5d: DIFFERS
-  libreac fuzz_decode.asan (--known-elf / --kernel-image) sha256 5973b76807d8; harness.yaml asan pin at 88154566652a: 5973b76807d8: EQUAL
+  libreac fuzz_decode.asan (--known-elf / --kernel-image) sha256 5973b76807d8; harness.yaml asan pin: 5973b76807d8: EQUAL
 == 2. unstripped twin against the pin (PT_LOAD)
   libdiginet fuzz_transport: pin 41113a03c82f twin e217cb0a84f1: 4 PT_LOAD, headers equal True; 25 bytes differ, all in e_shoff / e_shnum / e_shstrndx / build-id: True
   libreac fuzz_decode: pin 5d05689fd5b1 twin 6744989bb2e6: 4 PT_LOAD, headers equal True; 25 bytes differ, all in e_shoff / e_shnum / e_shstrndx / build-id: True

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the mmap decline premise place_declined_b): changed malloc_direct_mreal. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -796,6 +797,11 @@ eapply (knode_mmap_rw ubs0segs regs2 _ mem2 (seg_rom ubs0segs) md A (n + IB + UN
 - rewrite (Hregs2 13%bv). vm_compute. reflexivity.
 - rewrite (Hregs2 14%bv). eval_sr_get. cbn [sv_denot]. apply bv_eq. vm_compute. reflexivity.
 - rewrite (Hregs2 15%bv). vm_compute. reflexivity.
+- (* 727298f3 (#146): the knode now carries the place_declined_b premise. The hint
+     register is pinned by this walk; a NULL hint is never declined. *)
+  apply YK0v.place_declined_b_of_zero.
+  rewrite (Hregs2 10%bv). vm_compute. reflexivity.
+
 -
 intros e He. destruct He as [<- | []].
 match goal with |- mreal _ _ ?t _ => change t with (@IRet astate (option sptr * astate) (None, A)) end.

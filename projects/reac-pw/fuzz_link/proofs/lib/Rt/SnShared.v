@@ -4,9 +4,10 @@
    journal at a reflexive and transitive world relation R (binders first; the call keeps the world, so no law of R is
    read); aj_snprintf_at_xrom keeps its statement and is the instance at wle. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcallSnp.v, with its module paths and module names changed; 375 of its 445 lines of code are new or changed and 192 lines of the source are left out. *)
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfShared.v (a working branch 3e35620c52e), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfShared.v (a working branch), with its module paths changed. *)
 (* The snprintf contracts every Pau target shares (statements): a Theorem Labs lane's lib/Rt/SnprintfDef.v and VsnprintfDef.v
-   (a working branch 4a8b5df89c3) restated over fm's library, with pieces, parser and renderer in
+   (a working branch) restated over fm's library, with pieces, parser and renderer in
    FMsnprintfPf.v. Kept as there: the arguments (va_words: a3..a7 then the caller's stack slots at sp; words_at ap for
    the v* entries), the read-only constants a run reads (consts_view cr), the stack-protector cells gc -> gv -> cval,
    the disjointness lists (no alloc_ceiling: the destination and the strings may lie on the machine stack outside the

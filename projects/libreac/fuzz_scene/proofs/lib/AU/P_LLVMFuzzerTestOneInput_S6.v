@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* SEGMENT S6 of the asan-ubsan walk of libreac/fuzz_scene's LLVMFuzzerTestOneInput.  Proves
    `seg_S6_stmt SEGS B ameter_triv WK scene_geom_asan_ubsan` (lib/AU/P_LLVMFuzzerTestOneInput_seg.v): from cut C6
    (0x83158) to the `ret` (0x831fc), the walk realizes the entry contract's post, `sc_ret`.
 
-   This is the port of the asan proof, lib/A/P_LLVMFuzzerTestOneInput_S6.v (a Theorem Labs lane, at
-   916e1f35ef3), onto the asan-ubsan cut, with the asan-ubsan kit (lib.AU.Prog; YCbq, YC5d, YE01, YCbp and
+   This is the port of the asan proof, lib/A/P_LLVMFuzzerTestOneInput_S6.v (a Theorem Labs lane),
+   onto the asan-ubsan cut, with the asan-ubsan kit (lib.AU.Prog; YCbq, YC5d, YE01, YCbp and
    StackFreeJournal from lib.AU, gate 6o).  The proof has the same four runs and the same closing.
 
    Image: fuzz_scene.asan-ubsan, sha256 e98b1ed286c1aa5c3d558cb2069011d2413d58b2122f741531364382a528833f.  The four
@@ -22,7 +23,7 @@
                              `__asan_stack_free_8(F, 9408)` at 0x831a8 through lib/AU/StackFreeJournal.v
                              aj_stack_free_at with ASF8 (StackFreeDef's astack_free_realizes at class 8).
      run 4  0x831ac-0x831fc  `j` over the dead arm, `a0 = 0`, `addi sp,s0,-0xe0`, the 13 epilogue loads of the
-                             caller's saved words and `ret`, closed with paj_ret_at (AU/Prog/ScenePaLib.v:59).
+                             caller's saved words and `ret`, closed with paj_ret_at (AU/Prog/ScenePaLib.v:60).
    What differs from asan: the registers at C6 (before in s6, body in s4, F only in the spill slots [s1+0x18] and
    [s1+0x28]), so run 3 takes F as an extra atom (32) of its environment, and the two spill slots as chunks of one
    read-only region at s1; the pcs and the trace sites.  No UBSan guard lies in this range (a Theorem Labs lane's TWINMAP.md 4.2),
@@ -105,7 +106,7 @@ destruct (Z.ltb_spec (spZ regs + 16) (ly_top ly)) as [Hlt | Hge].
   [exact H8 | exact H16 | exact Hra | exact Hceil | exact Hal | lia | exact Hsp'].
 - left. split; [right; left; lia | reflexivity].
 Qed.
-(* A Theorem Labs lane's P_check_step_S3.v:131 s3_kept_run *)
+(* A Theorem Labs lane's P_check_step_S3.v:132 s3_kept_run *)
 Lemma s6_kept_run : forall E rs (H : word -> bool) (mA mB : word -> option byte) a,
 frame_of E rs (mrestrict H mA) (mrestrict H mB) -> 0 <= a < 2 ^ 64 -> ~ in_wrange E rs a ->
 aview SEGS H mB a = aview SEGS H mA a.

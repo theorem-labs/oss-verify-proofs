@@ -2,7 +2,7 @@
    statement crtB_tail_stmt of lib/B/Prog/crtB_cuts.v: from the cut CRT_RET_BCMP (bcmp has answered 0) to the
    statement's post dec_crt_post (lib/B/Prog/check_round_trip_cg.v:133).
 
-   The run (offsets from the entry, crtB_iface.v names; in the donor record on a working branch at dc455613c81,
+   The run (offsets from the entry, crtB_iface.v names; in the donor record on a working branch at
    lib/B/Prog/crt_glue.v and crt_segs_F.v walk the same code at the same addresses in the old form):
      CRT_RET_BCMP  (+0x298)  `bnez a0` not taken, a0 = s0 = R, `jal free`   crtB_segs.v crt_seg7_F
      free(R)                 afree04_rule, return to CRT_RET_FREE1

@@ -1,16 +1,17 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseL.v at afaa3cb55c1 (the engine plumbing
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseL.v (the engine plumbing
    of a segment of a parse walk and its arithmetic lemmas U_subba, U_sext32, U_sext32_eqb, U_next, U_and3, U_off_of,
    U_s8), for reac_headamp_prop_parse_result's pair loop on reac-pw/fuzz_headamp's ASan + UBSan image B, its two
    segments WALK and ADV of lib/AU/HPgParseCut.v; the entry states, exits, the strncmp call inside the frame hole and
    the walks below are new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/AU/HPgParseW.v at f7ae59d74add (pbW_rgood,
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/AU/HPgParseW.v (pbW_rgood,
    pbW_wr, pbW_awr, pbW_keep, pbW_fixed, pbW_pres, pbW_reg_kept, pbW_reg_U, pbW_temps_val, pbW_stop, pbW_entry,
    pbW_cfg_stop, pbW_U_reg0, pbW_inside_A, pbW_out_B, pbW_ko_none, pbW_keyv_lb and the run tactics pbW_post ..
    pbW_ukept) stated over segs with the prefix hgr_, the entry state's regions after the temporaries left to the
    caller (no saves region forced), the run tactics taking the code table's table_ok lemma; the bound on the keys
    counted (hgr_keys_bound, hgr_walk_keys) and hgr_kept_val are new. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp: the IMAGE-INDEPENDENT plumbing of the symbolic runs of the walks of
    reac_headamp_prop_parse_result in both ASan images (image A lib/A/HPgParseWalk.v, image B lib/AU/HPgParseW.v):
    the entry state at a cut (the temporaries region at sp = spa with the frame cells a segment reads, and the

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the auxv lies at least 16 bytes above the stack top (ar_sptop ar + 16 <= av), the auxv fact is the launch's vector (L5USA.auxv_okA) in place of the ten-pair auxv20A, and it is read through the visible memory (auxv_vis) and passed with the CONFIG_RSEQ flag to the leaf lemmas. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp.bitvector Require Import definitions.
@@ -116,7 +117,7 @@ Lemma e2_s3 :
     forall (RNDR : 0 <= rnd < 2 ^ 64),
     forall (CANR : 0 <= canary < 2 ^ 64),
     forall (HWR : 0 <= hw < 2 ^ 64),
-    forall (AVS : ar_sptop ar <= av),
+    forall (AVS : ar_sptop ar + 16 <= av),
     forall (HH : ri_inv HI LB (L5DSA.ff_e2 FF Sp F1 F3) LKt cr A M (vml_of model)),
     forall (AM : amodel_ok A model),
     forall (HK : K []),
@@ -253,7 +254,7 @@ Lemma e2_s3 :
     forall (FL1 : fl = true -> L5.u8_at RSEGS M14 6360114 0),
     forall (FL3 : fl = true -> L5.u8_at RSEGS M14 6360116 0),
     forall (FL5 : fl = true -> L5.u8_at RSEGS M14 6360118 0),
-    forall (AUXV : forall j : nat, (j < 20)%nat -> L5.u64_at RSEGS M14 (av + 8 * Z.of_nat j) (nth j (L5USA.auxv20A uid rnd hw) 0)),
+    forall (AUXV : L5USA.auxv_okA M14 av uid rnd hw),
     forall (FRD : forall j : nat, (j < 13)%nat -> L5.u64_at RSEGS M14 (Sp - 200 + 8 * Z.of_nat j) (nth j [L5DSA.U R0 27; L5DSA.U R0 26; L5DSA.U R0 25; L5DSA.RETIRE_MAGIC; F1; F1 / 8 + SB; F1 + 32; nz bo; nz xo; F1; Sp - 96; Sp; L5DSA.DIV_RET_O] 0)),
     forall (FRO : forall j : nat, (j < 11)%nat -> L5.u64_at RSEGS M14 (Sp - 88 + 8 * Z.of_nat j) (nth j [F1; L5DSA.U R0 24; L5DSA.U R0 23; L5DSA.U R0 22; L5DSA.U R0 21; L5DSA.U R0 20; L5DSA.U R0 19; L5DSA.U R0 18; Sp; L5DSA.U R0 8; 581760] 0)),
     forall (IC1 : L5.img_clear M14 65536 880640),
@@ -279,7 +280,7 @@ Proof.
   clear NUM. rename NUM4 into NUM. clear TLSR.
   assert (AV8' : av mod 8 = 0) by exact AV8.
   (* [comment removed for export] *)
-  expand_arr AUXV 20%nat. expand_arr FRD 13%nat. expand_arr FRO 11%nat.
+  auxv_vis CI14 AUXV rx. expand_arr FRD 13%nat. expand_arr FRO 11%nat.
   (* [comment removed for export] *)
   remember {| L5USA.xs_gd := gd; L5USA.xs_fl := fl; L5USA.xs_av := av; L5USA.xs_uid := uid; L5USA.xs_rnd := rnd; L5USA.xs_canary := canary; L5USA.xs_hw := hw |} as st eqn:Est in KONT.
   assert (STE : L5USA.xs_gd st = gd /\ L5USA.xs_av st = av /\ L5USA.xs_uid st = uid /\ L5USA.xs_rnd st = rnd /\ L5USA.xs_canary st = canary /\ L5USA.xs_hw st = hw) by (rewrite Est; repeat split; reflexivity).
@@ -287,7 +288,7 @@ Proof.
   destruct fl; cbv iota in FL0, FL2, FL4.
   - (* [comment removed for export] *)
     specialize (FL1 eq_refl). specialize (FL3 eq_refl). specialize (FL5 eq_refl).
-    pose proof (ue2t2_v1_conc HFILL HCOPY HTLS fx14 R14 (mrestrict (ahid A7 model14) M14)
+    pose proof (ue2t2_v1_conc HFILL HCOPY HTLS rx fx14 R14 (mrestrict (ahid A7 model14) M14)
                   (fun j => match j with 2%nat => Sp - 448 | 10%nat => obj | 32%nat => av | 33%nat => canary | 34%nat => uid | 36%nat => rnd | 39%nat => hw | 40%nat => U R14 10
                                     | 41%nat => ctx | 42%nat => th | 43%nat => blk | 44%nat => tbv | 45%nat => tev | 46%nat => 873616 | 47%nat => F3 / 8 + SB
                                     | 48%nat => F1 | 49%nat => nz xo | 50%nat => nz bo | 51%nat => F1 + 32 | 52%nat => F1 / 8 + SB | 53%nat => F1 | 54%nat => L5DSA.RETIRE_MAGIC
@@ -309,7 +310,7 @@ Proof.
     apply (L5AE2S4.e2_s4 L ar C IL HI LY ILY HIok ICok HFILL HCOPY HTLS UNWL R0 M0 R M model K LB FF LK LKt cr A Sp SCR xo bo F1 fl1 F3 fl3 gd av uid rnd canary hw fden v16 v24 errv R1 R2 A2 u obj R3 R4 R5 R6 R7 A7 ref R8 R9 R10 R11 R12 R13 R14 M15 st fx15 R15 model15); assumption.
   - (* [comment removed for export] *)
     clear FL1 FL3 FL5.
-    pose proof (ue2t2_v0_conc HFILL HCOPY HTLS fx14 R14 (mrestrict (ahid A7 model14) M14)
+    pose proof (ue2t2_v0_conc HFILL HCOPY HTLS rx fx14 R14 (mrestrict (ahid A7 model14) M14)
                   (fun j => match j with 2%nat => Sp - 448 | 10%nat => obj | 32%nat => av | 33%nat => canary | 34%nat => uid | 36%nat => rnd | 39%nat => hw | 40%nat => U R14 10
                                     | 41%nat => ctx | 42%nat => th | 43%nat => blk | 44%nat => tbv | 45%nat => tev | 46%nat => 873616 | 47%nat => F3 / 8 + SB
                                     | 48%nat => F1 | 49%nat => nz xo | 50%nat => nz bo | 51%nat => F1 + 32 | 52%nat => F1 / 8 + SB | 53%nat => F1 | 54%nat => L5DSA.RETIRE_MAGIC

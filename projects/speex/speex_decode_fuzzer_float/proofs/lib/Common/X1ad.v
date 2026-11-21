@@ -1,8 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (Linux's placement answer, vm_place_available, from the gap sweep above task_unmapped_base; the gap and placement sweeps take a named list of reserved entries the floor does not clear, which at the revision is the launch's vDSO/vvar pair). *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State Specs.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement.
 From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.Common Require Import AllocRefusal.
 Import ListNotations.
 Open Scope Z_scope.
@@ -210,6 +212,100 @@ apply andb_false_iff. left. apply Z.ltb_ge. lia.
 - specialize (A4 (b, s) Hin). unfold zover, elo, esz in A4. cbn [fst snd] in A4. exact A4.
 Qed.
 
+(* The same sweep when a reserved entry may sit OUTSIDE the band below [a0] -- at
+   the revision the launch's vDSO/vvar pair does ([State.init_reserved]): the named
+   list [R] holds those entries and joins the sweep. *)
+Theorem vm_gap_available_of_sum_from_r : forall h nZ a0 R,
+0 <= nZ -> 4096 <= a0 -> a0 mod 4096 = 0 ->
+(forall e, In e (vm_reserved h) -> elo e + esz e <= a0 \/ In e R) ->
+a0 + zsumf (jcost nZ) (R ++ vm_maps h) + nZ <= alloc_top h ->
+vm_gap_available h nZ = true.
+Proof.
+intros h nZ a0 R HnZ Ha0 Hal0 Hres Hroom. pose proof (alloc_top_lt h) as Hc64.
+destruct (sweep nZ HnZ (R ++ vm_maps h) a0 Hal0) as (a' & A1 & A2 & A3 & A4).
+assert (HaW : bv_unsigned (Z_to_bv 64 a') = a')
+by (rewrite Z_to_bv_unsigned; apply bv_wrap_small; change (bv_modulus 64) with (2 ^ 64); lia).
+assert (HnW : bv_unsigned (Z_to_bv 64 nZ) = nZ)
+by (rewrite Z_to_bv_unsigned; apply bv_wrap_small; change (bv_modulus 64) with (2 ^ 64); lia).
+apply (vm_gap_available_complete h nZ (Z_to_bv 64 a')); rewrite ?HaW; change page_size with 4096; try lia; try exact A2.
+apply region_free_intro. intros b s Hin. unfold iv_overlap. rewrite HaW, HnW. apply in_app_or in Hin as [Hin|Hin].
+- destruct (Hres (b, s) Hin) as [Hle|HinR].
++ unfold elo, esz in Hle. cbn [fst snd] in Hle. apply andb_false_iff. left. apply Z.ltb_ge. lia.
++ specialize (A4 (b, s) (in_or_app _ _ _ (or_introl HinR))). unfold zover, elo, esz in A4. cbn [fst snd] in A4. exact A4.
+- specialize (A4 (b, s) (in_or_app _ _ _ (or_intror Hin))). unfold zover, elo, esz in A4. cbn [fst snd] in A4. exact A4.
+Qed.
+
+Theorem vm_place_available_of_sum_tub : forall h thp hint nZ,
+0 < nZ -> nZ mod page_size = 0 ->
+task_unmapped_base + zsumf (jcost nZ) (vm_reserved h ++ vm_maps h) + nZ <= alloc_top h ->
+vm_place_available h thp hint nZ = true.
+Proof.
+intros h thp hint nZ HnZ Hnal Hroom. pose proof (alloc_top_lt h) as Hc64.
+assert (Htub : task_unmapped_base mod 4096 = 0) by reflexivity.
+destruct (sweep nZ ltac:(lia) (vm_reserved h ++ vm_maps h) task_unmapped_base Htub) as (a' & A1 & A2 & A3 & A4).
+assert (Hcost : 0 <= zsumf (jcost nZ) (vm_reserved h ++ vm_maps h)).
+{ apply zsumf_nonneg. intros e _. unfold jcost, esz. pose proof (bv_unsigned_in_range 64 (snd e)). lia. }
+assert (HaW : bv_unsigned (Z_to_bv 64 a') = a')
+by (rewrite Z_to_bv_unsigned; apply bv_wrap_small; change (bv_modulus 64) with (2 ^ 64); unfold task_unmapped_base in *; lia).
+assert (HnW : bv_unsigned (Z_to_bv 64 nZ) = nZ)
+by (rewrite Z_to_bv_unsigned; apply bv_wrap_small; change (bv_modulus 64) with (2 ^ 64); unfold task_unmapped_base in *; lia).
+apply (vm_place_available_of_gap h thp hint nZ a' HnZ Hnal).
+unfold gap_fits. split; [change page_size with 4096; exact A2|]. split; [exact A1|]. split; [lia|].
+apply region_free_intro. intros b s Hin. specialize (A4 (b, s) Hin). unfold zover, elo, esz in A4. cbn [fst snd] in A4.
+unfold iv_overlap. rewrite HaW, HnW. exact A4.
+Qed.
+
+(* The same placement from any page-aligned floor [a0] at or above [task_unmapped_base] that every
+   reserved entry ends below: the sweep then runs over [vm_maps] only. *)
+Theorem vm_place_available_of_sum_from : forall h thp hint nZ a0,
+0 < nZ -> nZ mod page_size = 0 -> task_unmapped_base <= a0 -> a0 mod 4096 = 0 ->
+(forall e, In e (vm_reserved h) -> elo e + esz e <= a0) ->
+a0 + zsumf (jcost nZ) (vm_maps h) + nZ <= alloc_top h ->
+vm_place_available h thp hint nZ = true.
+Proof.
+intros h thp hint nZ a0 HnZ Hnal Htub Hal0 Hres Hroom. pose proof (alloc_top_lt h) as Hc64.
+assert (Ht0 : 0 <= task_unmapped_base) by (cbv; intros Hc; discriminate Hc).
+destruct (sweep nZ ltac:(lia) (vm_maps h) a0 Hal0) as (a' & A1 & A2 & A3 & A4).
+assert (Hcost : 0 <= zsumf (jcost nZ) (vm_maps h)).
+{ apply zsumf_nonneg. intros e _. unfold jcost, esz. pose proof (bv_unsigned_in_range 64 (snd e)). lia. }
+assert (HaW : bv_unsigned (Z_to_bv 64 a') = a')
+by (rewrite Z_to_bv_unsigned; apply bv_wrap_small; change (bv_modulus 64) with (2 ^ 64); lia).
+assert (HnW : bv_unsigned (Z_to_bv 64 nZ) = nZ)
+by (rewrite Z_to_bv_unsigned; apply bv_wrap_small; change (bv_modulus 64) with (2 ^ 64); lia).
+apply (vm_place_available_of_gap h thp hint nZ a' HnZ Hnal).
+unfold gap_fits. split; [change page_size with 4096; exact A2|]. split; [lia|]. split; [lia|].
+apply region_free_intro. intros b s Hin. unfold iv_overlap. rewrite HaW, HnW. apply in_app_or in Hin as [Hin|Hin].
+- specialize (Hres (b, s) Hin). unfold elo, esz in Hres. cbn [fst snd] in Hres.
+apply andb_false_iff. left. apply Z.ltb_ge. lia.
+- specialize (A4 (b, s) Hin). unfold zover, elo, esz in A4. cbn [fst snd] in A4. exact A4.
+Qed.
+
+(* [vm_place_available_of_sum_from] with the same named list of reserved entries
+   that the floor does not already clear. *)
+Theorem vm_place_available_of_sum_from_r : forall h thp hint nZ a0 R,
+0 < nZ -> nZ mod page_size = 0 -> task_unmapped_base <= a0 -> a0 mod 4096 = 0 ->
+(forall e, In e (vm_reserved h) -> elo e + esz e <= a0 \/ In e R) ->
+a0 + zsumf (jcost nZ) (R ++ vm_maps h) + nZ <= alloc_top h ->
+vm_place_available h thp hint nZ = true.
+Proof.
+intros h thp hint nZ a0 R HnZ Hnal Htub Hal0 Hres Hroom. pose proof (alloc_top_lt h) as Hc64.
+assert (Ht0 : 0 <= task_unmapped_base) by (cbv; intros Hc; discriminate Hc).
+destruct (sweep nZ ltac:(lia) (R ++ vm_maps h) a0 Hal0) as (a' & A1 & A2 & A3 & A4).
+assert (Hcost : 0 <= zsumf (jcost nZ) (R ++ vm_maps h)).
+{ apply zsumf_nonneg. intros e _. unfold jcost, esz. pose proof (bv_unsigned_in_range 64 (snd e)). lia. }
+assert (HaW : bv_unsigned (Z_to_bv 64 a') = a')
+by (rewrite Z_to_bv_unsigned; apply bv_wrap_small; change (bv_modulus 64) with (2 ^ 64); unfold task_unmapped_base in *; lia).
+assert (HnW : bv_unsigned (Z_to_bv 64 nZ) = nZ)
+by (rewrite Z_to_bv_unsigned; apply bv_wrap_small; change (bv_modulus 64) with (2 ^ 64); unfold task_unmapped_base in *; lia).
+apply (vm_place_available_of_gap h thp hint nZ a' HnZ Hnal).
+unfold gap_fits. split; [change page_size with 4096; exact A2|]. split; [lia|]. split; [lia|].
+apply region_free_intro. intros b s Hin. unfold iv_overlap. rewrite HaW, HnW. apply in_app_or in Hin as [Hin|Hin].
+- destruct (Hres (b, s) Hin) as [Hle|HinR].
++ unfold elo, esz in Hle. cbn [fst snd] in Hle. apply andb_false_iff. left. apply Z.ltb_ge. lia.
++ specialize (A4 (b, s) (in_or_app _ _ _ (or_introl HinR))). unfold zover, elo, esz in A4. cbn [fst snd] in A4. exact A4.
+- specialize (A4 (b, s) (in_or_app _ _ _ (or_intror Hin))). unfold zover, elo, esz in A4. cbn [fst snd] in A4. exact A4.
+Qed.
+
 Lemma zsumf_jcost : forall nZ l, zsumf (jcost nZ) l = zsumf esz l + Z.of_nat (length l) * (nZ + 4095).
 Proof. intros nZ l. induction l as [|e l IH]; cbn [zsumf fold_right length]; [lia|]. fold (zsumf (jcost nZ) l) (zsumf esz l) in *. rewrite IH. unfold jcost. lia. Qed.
 
@@ -233,19 +329,22 @@ Qed.
 Lemma zsumf_esz_live : forall l, zsumf esz l = live_bytes l.
 Proof. induction l as [|[a n] l IH]; cbn; [reflexivity|]. fold (zsumf esz l). rewrite IH. reflexivity. Qed.
 
-Lemma mmap_grant_not_refusable : forall flags m nZ,
-vm_gap_available (m_vmmaps m) nZ = true ->
+(* LPS 08b1429 and after: the grant and reserve refusal criteria read Linux's placement
+   ([AllocRefusal.vm_place_available] at the caller's hint), not any free gap. *)
+Lemma mmap_grant_not_refusable : forall hint flags m nZ,
+vm_place_available (m_vmmaps m) (kb_thp (m_kernel m)) hint nZ = true ->
 vm_backing_used m + nZ <= vm_limit (m_vmmaps m) ->
-mmap_grant_refusable flags m nZ = false.
+mmap_grant_refusable hint flags m nZ = false.
 Proof.
-intros flags m nZ Hg Hb. unfold mmap_grant_refusable. rewrite Hg.
+intros hint flags m nZ Hg Hb. unfold mmap_grant_refusable. rewrite Hg.
 unfold mmap_noreserve_backed_ok. destruct (mmap_noreserve_b flags); [reflexivity|].
 rewrite (proj2 (Z.leb_le _ _) Hb). reflexivity.
 Qed.
 
-Lemma mmap_reserve_not_refusable : forall m nZ,
-vm_gap_available (m_vmmaps m) nZ = true -> mmap_reserve_refusable m nZ = false.
-Proof. intros m nZ Hg. unfold mmap_reserve_refusable. rewrite Hg. reflexivity. Qed.
+Lemma mmap_reserve_not_refusable : forall hint m nZ,
+vm_place_available (m_vmmaps m) (kb_thp (m_kernel m)) hint nZ = true ->
+mmap_reserve_refusable hint m nZ = false.
+Proof. intros hint m nZ Hg. unfold mmap_reserve_refusable. rewrite Hg. reflexivity. Qed.
 
 Lemma mprotect_not_refusable : forall m addr n,
 mprotect_budget_ok m addr n = true -> mprotect_refusable m addr n = false.
@@ -262,27 +361,34 @@ intros h nZ K S HnZ HK HS Hroom. apply (vm_gap_available_of_bounds h nZ K S HnZ 
 change page_size with 4096 in Hroom. lia.
 Qed.
 
-Corollary mmap_reserve_not_refusable_of_base : forall m nZ (a : word),
-0 <= nZ ->
-bv_unsigned a mod page_size = 0 -> 0 < bv_unsigned a ->
+(* A free range in Linux's bottom-up window [[task_unmapped_base, alloc_top)] makes the
+   placement answer ([Placement.linux_place_exists], through
+   [AllocRefusal.vm_place_available_of_gap]). *)
+Corollary mmap_reserve_not_refusable_of_base : forall hint m nZ (a : word),
+0 < nZ -> nZ mod page_size = 0 ->
+bv_unsigned a mod page_size = 0 -> task_unmapped_base <= bv_unsigned a ->
 bv_unsigned a + nZ <= alloc_top (m_vmmaps m) ->
 region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 nZ) = true ->
-mmap_reserve_refusable m nZ = false.
+mmap_reserve_refusable hint m nZ = false.
 Proof.
-intros m nZ a HnZ Hal Hpos Htop Hfree. apply mmap_reserve_not_refusable.
-exact (vm_gap_available_complete (m_vmmaps m) nZ a HnZ Hal Hpos Htop Hfree).
+intros hint m nZ a HnZ HnAl Hal Hlo Htop Hfree. apply mmap_reserve_not_refusable.
+apply (vm_place_available_of_gap _ _ hint nZ (bv_unsigned a) HnZ HnAl).
+unfold gap_fits. rewrite Z_to_bv_bv_unsigned. exact (conj Hal (conj Hlo (conj Htop Hfree))).
 Qed.
 
-Corollary mmap_grant_not_refusable_of_base : forall flags m nZ (a : word),
-0 <= nZ ->
-bv_unsigned a mod page_size = 0 -> 0 < bv_unsigned a ->
+Corollary mmap_grant_not_refusable_of_base : forall hint flags m nZ (a : word),
+0 < nZ -> nZ mod page_size = 0 ->
+bv_unsigned a mod page_size = 0 -> task_unmapped_base <= bv_unsigned a ->
 bv_unsigned a + nZ <= alloc_top (m_vmmaps m) ->
 region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 nZ) = true ->
 mmap_noreserve_backed_ok flags m nZ = true ->
-mmap_grant_refusable flags m nZ = false.
+mmap_grant_refusable hint flags m nZ = false.
 Proof.
-intros flags m nZ a HnZ Hal Hpos Htop Hfree Hbk. unfold mmap_grant_refusable.
-rewrite (vm_gap_available_complete (m_vmmaps m) nZ a HnZ Hal Hpos Htop Hfree), Hbk. reflexivity.
+intros hint flags m nZ a HnZ HnAl Hal Hlo Htop Hfree Hbk. unfold mmap_grant_refusable.
+rewrite Hbk.
+rewrite (vm_place_available_of_gap _ _ hint nZ (bv_unsigned a) HnZ HnAl);
+  [reflexivity|].
+unfold gap_fits. rewrite Z_to_bv_bv_unsigned. exact (conj Hal (conj Hlo (conj Htop Hfree))).
 Qed.
 
 Lemma mmap_fixed_fresh_not_refusable : forall flags m nZ,

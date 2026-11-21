@@ -13,6 +13,7 @@
    stepped.  On the accepting arm (a0 = 0) `beqz a0` 0x82d30 goes to check_step(blk, body, step) 0x82d6c (a Theorem Labs lane's
    tcheck_step_specX through cl_callS) and 0x82d70 reloads the flags.  Both arms meet C3 through one lemma, JOIN.
    No __asan_report_* branch lies in 0x82ca8..0x82d74. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -39,7 +40,7 @@ From OSSVerify.Proofs.libreac.fuzz_scene.lib.A Require Import P_LLVMFuzzerTestOn
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.A Require Import P_LLVMFuzzerTestOneInput_seg.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.A Require Import P_reac_ctrl_build_scene_step.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.A Require Import P_check_step_frame P_check_step_cut P_check_step.
-(* lib/A/S2AluLemmas.v (at a28950bc27b): s2a_snez_xor, s2a_slt_sext16, image-free. *)
+(* lib/A/S2AluLemmas.v: s2a_snez_xor, s2a_slt_sext16, image-free. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.A Require Import S2AluLemmas.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
@@ -53,7 +54,7 @@ Context (SK : OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable.YI16.sink_head). 
 #[local] Notation VAL := (@pa_val _ scene_listing PI_scene).
 #[local] Notation SIGMA := (@pa_sigma _ scene_listing PI_scene).
 #[local] Notation BASE := (@pa_val _ scene_listing PI_scene A_TEXT).
-(* ---- small image-free helpers; the same four that lib/A/P_check_step_S3.v:92-128 uses, under this
+(* ---- small image-free helpers; the same four that lib/A/P_check_step_S3.v:93-129 uses, under this
    lane's names (shadow arithmetic, a shadow cell read out of a symbolic region, and what a run keeps). ---- *)
 Lemma s2_div8_add : forall x c, x mod 8 = 0 -> (x + 8 * c) / 8 = x / 8 + c.
 Proof.
@@ -109,7 +110,7 @@ Hypothesis HB_Z_TT : in_zs B (0x20e20 - 0x20) (0x20 + (12 - 12 mod 8)).
 Hypothesis HB_C_TT : forall ly, Forall (fun c => In c (as_const B ly))
   (z1 (ANum (shadow_addr (0x20e20 + 8))) (12 mod 8)
    :: map (fun k => z1 (ANum (shadow_addr (0x20e20 + 8) + 1 + Z.of_nat k)) 0xf9) (seq 0 2)).
-(* -- its BYTES: the entry statement's HRO_TT (at 0c703db40b0, a Theorem Labs lane's ruling of
+(* -- its BYTES: the entry statement's HRO_TT (a Theorem Labs lane's ruling of
    03:48Z), verbatim: [0x20e20, +12) is no owned static of B and not the errno cell.  With arodata_okS that gives
    the bytes; the image half (read-only segment, ROM bytes = scene_trailer) is s2_tt_img below. -- *)
 Hypothesis HRO_TT : forall i, 0 <= i < 12 ->

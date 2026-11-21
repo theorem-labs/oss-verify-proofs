@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the image-B (asan-ubsan) walk of plugin-hostd's relay_event, ported from
-   lib/A/W_relay_event.v (a working branch 26a1ccdf1c1), in the form of the cgif walks of
+   lib/A/W_relay_event.v (a working branch), in the form of the cgif walks of
    proofs/cgif/cgif_file_fuzzer/lib/A/AC8h.v (runtime call sites) and lib/A/ACh2.v with lib/YC85.v cl_callS (the
    internal call), over lib/B/W_journal.v's ajournal_gx. *)
 (* Modified by Theorem Labs, 2026-10-30 (a Theorem Labs lane, the B room re-fit onto kit candidate 13): the walk is
    lib/B/W_relay_event_x.v's pb_relay_event_x (G-BRE: relay_event over any allocator relation ARx at the room texts,
-   lib/A/W_relay_event.v fc38e83bfbf / 922a710cda0 / 88557c15170 / 9f5567c9e80 on image B), the one generic walk;
+   lib/A/W_relay_event.v on image B), the one generic walk;
    this file's own copy of it is removed.  What stays is the AR statement: pb_relay_event, re_spec's text
    (lib/B/W_contract.v), as that walk's corollary at ARx := ARi0, PST := [], RP := RP_AR (Section cAR). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -52,7 +53,7 @@ Context {PI : PAImg fr_prog_listing}.
    (YCbqG.AR_laws_x_of_AR ..).  Bridges: W_contract_x re_spec_x_AR0 (the conclusion; it discharges the room premises at
    RP_AR), sl_spec_x_of_AR0 / astrlen_realizes_x_of_AR0 and W_sites_x alock_realizes_x_of_AR0 /
    aunlock_realizes_x_of_AR0 (the callees); HP0 at ARi0 is ARi0_hp0; the walk's BLKM is AR_blkm below and its HLPST
-   holds at PST = [].  (lib/A's Section cAR, fc38e83bfbf / 9f5567c9e80, on image B.) ---- *)
+   holds at PST = [].  (lib/A's Section cAR, on image B.) ---- *)
 Section cAR.
 Variable B : asyms.
 Variable MT : ameter_ops.

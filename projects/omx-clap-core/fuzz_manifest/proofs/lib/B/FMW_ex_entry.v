@@ -6,6 +6,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_strkit.v, with its module paths and module names changed; 240 of its 267 lines of code are new or changed and 303 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_ex_head.v, with its module paths and module names changed; 926 of its 974 lines of code are new or changed and 219 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/B/FMW_plain.v; 291 of its 389 lines of code are new or changed and 876 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* G4.ExEntry, IMAGE B (fm.asan-ubsan, pin ca61e5c9eabc0050): ex_seg_entry (lib/B/FMW_ex_base.v:178). expected 0x81274
    from its entry: prologue (sp -= 240, ra/s0..s11 saved at F+232..F+136), s5 = uri, s9 = the shadow base (GOT 0x99c98
    -> 0xa2078), s0 = text, strlen (uri) at 0x812c4; n = 0 (EX_C1 0x812c8) goes to EX_A0 0x81900 (s7 = 0), 0x81904
@@ -14,7 +15,7 @@
    s2 = '>', passes the UBSan guard 0x812f4 (K1 beq s3, s1: text + j <> 2^64 - 1) and enters ex_whole's loop at EX_WL
    0x812f8 (FMW_ex_entry_wl.v, _b.v, _s.v, by strong induction on |text| - j; answer 1 at EX_A1 0x81944); the setup
    reaches EX_L 0x813c0 with i = d = 0 (FMW_ex_entry_ms.v) and the continuation of ex_seg_entry. B twin of
-   lib/A/FMW_ex_entry.v (06d82004dc3): the shape is A's, every pc, register, slot and frame offset is B's. The frame
+   lib/A/FMW_ex_entry.v: the shape is A's, every pc, register, slot and frame offset is B's. The frame
    region is kept across strlen (B stores F+0x78 between strlen and strchr); the saved registers and F+0x78 are read
    off that region before strchr (and at EX_R on the n = 0 path). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require YZ00.

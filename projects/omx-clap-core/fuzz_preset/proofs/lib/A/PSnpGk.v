@@ -1,7 +1,7 @@
 (* fm's snprintf glue, kit: the code table of the walks above printf_core, their run and return steps, dropping and
    adding a region of a symbolic state, and the frame bookkeeping of FMsnprintfI's snk_frame across runs and calls.
    New file. *)
-(* Modified by Theorem Labs, 2026-10: the image-bearing half of origin/cold/port-fm-rtprintf-param 7e395de08f5
+(* Modified by Theorem Labs, 2026-10: the image-bearing half of
    proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfGk.v (:25-71: g_ranges, tbl_g, tbl_g_eq, tbl_g_ok, g_phase,
    g_phase_to, g_ret) for the snprintf chain restated over ARx (route (a), c-omx-hpreset 10:51Z), re-pinned at preset
    image A (fuzz_preset.asan d83eb25d; symbols from its unstripped twin f0d2e8d4). The image-free half (register /
@@ -16,7 +16,7 @@
      ___interceptor_vsnprintf + 0                 0x458a0, 198       0x46188, 198
      ___interceptor_snprintf + 0                  0x45c90, 28        0x46578, 28
      __asan::TryAsanInitFromRtl + 0               0x59a78, 40        0x5a6a8, 40 *)
-(* Modified by Theorem Labs, 2026-10: moved to the #102 pins, image A' (fuzz_preset.asan 1be0f53d, unstripped bff8519b), from the old-pin donor origin/cold/c-libc-stdio-presetsnp-vfp ac1750cac8be: every code numeral by symbol + offset by c-asan's alreloc of record (frame/alreloc.py.frozen-c4338d099cfb8025, --src omx-clap-core/fuzz_preset --src-pin d83eb25d --assume-source; the chain's code is equal old -> #102); kept as written: the IImg record keys (fm addresses), the instruction words and the segment sizes; audited by port_addr_check 0767e70e074a (only the record keys flag). Per-numeral table: c-libc-stdio scratch/p102/reloc/A/PSnpGk.v.reloc.tsv. Comment numerals are as written (sentences above that name preset A's addresses describe the old pin). *)
+(* Modified by Theorem Labs, 2026-10: moved to the #102 pins, image A' (fuzz_preset.asan 1be0f53d, unstripped bff8519b), from the old-pin donor: every code numeral by symbol + offset by c-asan's alreloc of record (frame/alreloc.py.frozen-c4338d099cfb8025, --src omx-clap-core/fuzz_preset --src-pin d83eb25d --assume-source; the chain's code is equal old -> #102); kept as written: the IImg record keys (fm addresses), the instruction words and the segment sizes; audited by port_addr_check 0767e70e074a (only the record keys flag). Per-numeral table: c-libc-stdio scratch/p102/reloc/A/PSnpGk.v.reloc.tsv. Comment numerals are as written (sentences above that name preset A's addresses describe the old pin). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

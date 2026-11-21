@@ -1,6 +1,6 @@
-(* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/ProgWorld_Fs.v (a working branch
-   26edf006f53, re-synced to a working branch 1d23ced37fd: A's core Requires name lib.Reusable (a48c4068c6e),
-   and A adds the proof of ProgWorld's premise-free ctl_frame_above_img_stmt from pw_F_above (1d23ced37fd); B takes
+(* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/ProgWorld_Fs.v (a working branch,
+   re-synced to a working branch: A's core Requires name lib.Reusable,
+   and A adds the proof of ProgWorld's premise-free ctl_frame_above_img_stmt from pw_F_above; B takes
    both, with B.Prog.asan_stack_malloc_c.ASAN_GT = 0x5fe000, the same value as A's): same lemma names and the same
    proofs, with image A's modules replaced by image B's
    (A.ProgWorld -> B.ProgWorld, A.Prog.asan_stack_malloc_c / A.Prog.RcAsanFP -> B.Prog.*, A.AsanRT -> B.AsanRT,
@@ -9,14 +9,14 @@
    B module that defines it by name, never copied from image A:
      - Section Fs, pw_F_above: the last segment of B/Img0 rsegs is (0xa2000, 0x55c000) = (663552, 5619712)
        (B/ProgBridge.rsegs_spans; image A's is (0xa1000, 0x55d000)).  Both images end at ASAN_GT = 0x5fe000.
-     - ctl_fp_of_AR, Etp: as_tp B = TFIB_TP = 0x5dc650 (Reusable/YF0m.v:12 of record; = B/AsanRT.v RT_TP =
+     - ctl_fp_of_AR, Etp: as_tp B = TFIB_TP = 0x5dc650 (Reusable/YF0m.v:13 of record; = B/AsanRT.v RT_TP =
        builtin_tls 0x5dc588 + 0xc8 in the asan-ubsan unstripped twin.  Image A's is 0x5db810).
      - ctl_fp_of_AR, the const rows: every address and value is the image-B row of Reusable/YF0m.v's Tfib_const_abs /
        Tfib_const_sym named in the comment beside it.
    Image-INDEPENDENT numerals kept from image A (same in both images, each from a module that states it):
      kFakeStackSize = FS_SIZE = 0xb09000, kImgLo = 0x10000 = 65536, the allocation ceiling bound 0x7fffff800000
      (YG0f.ASAN_CEIL_range), the 11 fake-stack classes, and 0xfffffffffffff800 = (-2048) mod 2 ^ 64.
-   Then to a working branch fec8db0a380: pw_sym / pw_abs decide const-table membership by
+   Then to a working branch: pw_sym / pw_abs decide const-table membership by
    lib/Reusable/YConstIn.v's in_const_tbl (Required as A does), and Z_to_bv_bv_unsigned (2 uses) is written
    stdpp.bitvector.definitions.Z_to_bv_bv_unsigned, the constant `About` names at each use in this file (Locate /
    About probe, a Theorem Labs lane); B takes both, as A.
@@ -27,7 +27,7 @@
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require B.ProgWorld.
-(* The core modules are Required by the path of the CORE directory, as A's a48c4068c6e text writes them
+(* The core modules are Required by the path of the CORE directory, as A's text writes them
    (`From ...fuzz_ctrl.lib.Reusable Require X`): six of them (YI04, YI16, YK11, YK1b, YM05, YO09) and YO0f / YP09
    also exist as ctrl's lib.B.Reusable.X, which a partial `Reusable.X` can bind (porter a Theorem Labs lane 04:33Z).
    Image-B difference: lib/Lib's Mem and Frame also exist as lib/B/Bz/Lib/X, so they are Required as
@@ -411,7 +411,7 @@ Qed.
 (* (2) ctl_fp_of_AR.  Proved from AR directly (no ctl_tls_of_AR hypothesis): asan_tls_cells at DT = TP+32,
    TS = ly_tsd, C = ly_C, T = ly_T, DB = ly_D, k = 0 from the const rows; the TP word from `c8 (ATp 0) (AF 0)`;
    fs_place and fp_cls from ctl_fs_of_AR; FS+88 / FS+96 from fs_cells (YG0n.v:100-101).  Every row named below is
-   image B's own, from Reusable/YF0m.v (record, a working branch 8db247c6f3e). *)
+   image B's own, from Reusable/YF0m.v (record, a working branch). *)
 Lemma ctl_fp_of_AR : B.ProgWorld.ctl_fp_of_AR_stmt B.
 Proof.
   intros TS LAWS ly S W m md cs lo hi Wr D HAR Hcs Hlo Happ HdW HdD.

@@ -2,7 +2,7 @@
    (A 0x86c10, 31 instructions) over the ONE image-A program listing (lib/A/Listing_prog.v, a Theorem Labs lane), generic in
    the image facts (Context PAImg) and in the allocator relation ARx (LAWS : AR_laws_x), concluding the batch kit's text
    tpj_write_specX for every depth n.
-   KIT: the kit's cut 7cdbb61b5fa0 (re-fitted on the batch kit's tip 44123abafeb7, merged forward onto the cut
+   KIT: the kit's cut (re-fitted on the batch kit's tip, merged forward onto the cut
    unchanged; the cut's blobs: PRH_Base, PRH_FnWriter
    d89d3c67b78c, PRH_FnAlloc 4d8aeba047e5): tpj_write_specX keys the run's strtod model (ReaderRes.jr_strtod), takes
    the closure without DW (prh_univ_closure B CTX0), the CONSUMER WINDOW prh_cons_from over its own events, its run
@@ -18,7 +18,7 @@
    YG01.admits_fix: no gap) and posts the BUDGETED fpostbm (PRH_Base.fpost_of_fpostb_fix reads it back); its arms
    transfer a position at E = [] (p = 0) or [HFr (n + cf_head)] (p <> 0). The put family's case 1 is the kit's form (a),
    which this walk does not use - both its calls are case 2.
-   ENGINE: the cut's (int102 f44822dff082's engine with the P'' set of the engine's univ-widening; YCbqG),
+   ENGINE: the cut's (int102's engine with the P'' set of the engine's univ-widening; YCbqG),
    listing of
    record: the cut's lib/A/Listing_prog.v 7ed1529926bd / PAImg_prog.v 505a51ff7d08.
    THE FLOAT STATE: the walk runs at the Section's fx (the ENTRY float state) up to write_value's return, which is at
@@ -66,7 +66,7 @@
    (LENGTH: the stack atom's range), 2 ^ 44 (LENGTH: the shadow span), 9 / 14 / 15 / 18 / 20 / 21 / 24 / 25
    (DERIVED: pj_write's own slots, counted from its entry), 65 / 80 / 81 / 82 / 83 (DERIVED: free atom bands of the
    symbolic environment). No ADDRESS.
-   Structural reference only (read, never Required or cited): a working branch e09c6006f5b
+   Structural reference only (read, never Required or cited): a working branch
    lib/A/Prog/pj_write.v (the old-framework walk of the ORIGINAL image). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -206,7 +206,7 @@ Hypothesis Hent : SIGMA AS_pj_write = BASE + AF_pj_write.
 (* R2's memset text at its entry, the memnorm row (YGcallMxmn.v blob b47cf7942c3d: YGcallMx.v's aintrin_realizes_x
    with the YAkMemnorm keep as its last post conjunct) *)
 Hypothesis AMS : YGcallMxmn.aintrin_realizes_xm SEGS B ARx OSet (SIGMA AS___asan_memset).
-(* the universe closure's parameter, as the cut's texts take it (cut 7cdbb61b5fa0: no DW) *)
+(* the universe closure's parameter, as the cut's texts take it (cut: no DW) *)
 Variable CTX0 : list (list Z).
 (* The batch kit's callee texts (lib/A/PRH_FnWriter.v blob d89d3c67b78c, lib/A/PRH_FnAlloc.v blob 4d8aeba047e5):
    S7bWriteValue's walk, WalkS7a's put walk, and the allocator lane's fuzz_free walk prove them. write_value is
@@ -1326,7 +1326,7 @@ destruct (prhWriter_grows st1 b) eqn:Hg.
   rewrite Ef, Ec in LJ. cbn [andb]. lia.
 Qed.
 
-(* the cut's post of tpj_write_specX (lib/A/PRH_FnWriter.v blob d89d3c67b78c at the cut 7cdbb61b5fa0,
+(* the cut's post of tpj_write_specX (lib/A/PRH_FnWriter.v blob d89d3c67b78c at the cut,
    :812-850, its `fun ly' S' Hp' W' regs' mem' md' =>` body), VERBATIM and named ONCE: pjw_walk carries it under the
    memory invariant, and pjw_holds_lc checks it against the cut's text by conversion *)
 Definition pjw_Q (rp_sm : list Z -> Z * Z) (rp_x : list Z) (rp_os : list (option nat * option nat * option nat))
@@ -2652,7 +2652,7 @@ psrr_branch_tok RUNI3 BR3 HS SHOK2 PJW_Bspan.
 Qed.
 End p.
 
-(* ---- THE CONTRACT: the cut's tpj_write_specX (lib/A/PRH_FnWriter.v blob d89d3c67b78c, cut 7cdbb61b5fa0,
+(* ---- THE CONTRACT: the cut's tpj_write_specX (lib/A/PRH_FnWriter.v blob d89d3c67b78c, cut,
    :773-850) with the ONE ruled ARGUMENT of pj_write's single fuzz_free call site (a Theorem Labs lane 08:06Z):
    tfuzz_free_specX (PRH_FnAlloc.v blob 4d8aeba047e5, :329) asks `p <> 0 -> YGcfRoomLive.ccnt24 S <=
    PresetLiveBounds.L24 + PresetLiveBounds.DRV` at its entry and nothing in pj_write's own text bounds it;

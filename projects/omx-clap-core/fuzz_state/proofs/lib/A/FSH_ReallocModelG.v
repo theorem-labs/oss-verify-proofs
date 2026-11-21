@@ -13,7 +13,7 @@
    (cgif_file's, no realloc), so the realloc-specific part is relocated here instead of overwriting it
    (a Theorem Labs lane's "second instance beside the model" ruling, via a Theorem Labs lane 20:19Z).
 
-   port-from: proofs/cgif/cgif_rgb_fuzzer/lib/YG0f.v @ c8557374ad2e -- astage, realloc_tree, realloc_s1,
+   port-from: proofs/cgif/cgif_rgb_fuzzer/lib/YG0f.v @ theorem-labs/oss-verify-proofs@6b32741d849a -- astage, realloc_tree, realloc_s1,
    realloc_mpost, realloc_fpost, aregime3, realloc_leaf (:28-34, :106-111, :221-230 and the astage / leaf
    definitions above them). Module path and the renames below are the only changes.
 
@@ -25,7 +25,7 @@
      A/ACej.v `Tfib_universe`, whose numerals are still cgif_file's until the RELOC lane re-points them, so
      this file names no trace numeral.
 
-   Everything this file rests on already exists in fs's tree, unchanged (measured, c8557374ad2e):
+   Everything this file rests on already exists in fs's tree, unchanged (measured):
      Reusable/YG00.v  malloc :410, free :539, bind/ret/tick/set_nev/set_internal_inited, sptr/PNull :75-79,
                       req_size, EV_MAX :37, MALLOC_MAX :38
      Reusable/YG01.v  malloc_post, free_post, BigInv, qtight, Wf, mgrow, fgrow, blocks, blocks_bytes,

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Trevor Hansen, 2026-11: made from UZ02: libtasn1's harness contract (B.LibU) in place of cgif_rgb_fuzzer's GIF library, theorem names and module names. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the entry's launch premise in place of entry_stack_fits. *)
 (* libtasn1's UBSan build realizes the driver's shape SPEC: cgif_rgb_fuzzer's UZ02 with libtasn1's
    harness contract (OSSVerify.Proofs.libtasn1.asn1_get_length_der_fuzzer.lib.B.LibU) in place of cgif's GIF library. *)
 From Stdlib Require Import NArith ZArith List Lia Bool.
@@ -25,24 +26,24 @@ Let API1 : AllocAPI ubs2_msyms := ubs2_API AMH1 MSH1 NTF1.
 Let LIB1 : lib_contract_all ubs2_msyms API1 UL0o.LIBPC UL0o.RA_LIB UL0o.EMPTY LIB_STACK_RGB := tasn1_lib_ubsan API1.
 Lemma tasn1_ubsan_realizes_rc : forall sp brk mbase rnd lim inp,
 valid_sp sp -> valid_brk ubs2segs brk -> valid_mmap_base mbase ->
-entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp -> valid_input inp ->
 (SRC_LIM_MIN <= lim)%Z ->
 YN05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
 realizes ubs2segs (init_config ubs2segs Ubsan.M.init_pc Ubsan.M.phdrs sp brk mbase rnd lim inp) (SPEC inp).
 Proof.
-intros sp brk mbase rnd lim inp Hsp Hbrk Hmb Hfits Hinp Hlim Hceil.
-exact (ubs2_realizes_spec API1 (MRx_AllocExtra ubs2_msyms) LIB1 driver_obligations_proved sp brk mbase rnd lim inp Hsp Hbrk Hmb Hfits Hinp Hlim Hceil).
+intros sp brk mbase rnd lim inp Hsp Hbrk Hmb Hlau Hinp Hlim Hceil.
+exact (ubs2_realizes_spec API1 (MRx_AllocExtra ubs2_msyms) LIB1 driver_obligations_proved sp brk mbase rnd lim inp Hsp Hbrk Hmb Hlau Hinp Hlim Hceil).
 Qed.
 End a.
 Lemma valid_sp_window36 : forall sp, valid_sp sp -> (sp_window_lo <= bv_unsigned sp <= sp_window_hi)%Z.
 Proof. intros sp (H1 & H2 & _). split; assumption. Qed.
 Theorem tasn1_ubsan_realizes : forall sp brk mbase rnd lim inp,
 valid_sp sp -> valid_brk ubs2segs brk -> valid_mmap_base mbase ->
-entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp -> valid_input inp ->
 (SRC_LIM_MIN <= lim)%Z ->
 realizes ubs2segs (init_config ubs2segs Ubsan.M.init_pc Ubsan.M.phdrs sp brk mbase rnd lim inp) (SPEC inp).
 Proof.
-intros sp brk mbase rnd lim inp Hsp Hbrk Hmb Hfits Hinp Hlim.
+intros sp brk mbase rnd lim inp Hsp Hbrk Hmb Hlau Hinp Hlim.
 exact (@tasn1_ubsan_realizes_rc (YN05.RunCeilOf (bv_unsigned sp) (valid_sp_window36 sp Hsp))
-sp brk mbase rnd lim inp Hsp Hbrk Hmb Hfits Hinp Hlim (YN05.ceil_of_top_run _)).
+sp brk mbase rnd lim inp Hsp Hbrk Hmb Hlau Hinp Hlim (YN05.ceil_of_top_run _)).
 Qed.

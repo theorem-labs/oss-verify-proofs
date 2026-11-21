@@ -4,13 +4,14 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names and numbers changed; 1539 of its 1674 lines of code are new or changed and 876 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/R14.v; 75 of its 176 lines of code are new or changed and 1573 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Provenance (route (a) bridge input, lead 22:18Z; auditor a Theorem Labs lane):
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
    source runs: lib/B/Prog/Seg/R14.v r14_loop :621 and r14_evt :703 at
-     a working branch 3803efccea0 (blob 144a433a8bfcc24fbf9f6d273a2037d6e2ac66a5);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+     a working branch (blob 144a433a8bfcc24fbf9f6d273a2037d6e2ac66a5);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    compare: r14_evt calls reac_box_catalogue_match, so it is split and there is no r14_evt_of_F.
      r14_loop_F re-runs R14.v:626-678 (the 32-turn block-sum loop) under an evtF EXIT hypothesis; the source
      r14_loop cannot be re-derived from it (its EXIT is an evt, which no evtF follows from), so it has no

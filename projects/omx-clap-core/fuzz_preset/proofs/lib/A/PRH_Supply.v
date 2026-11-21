@@ -13,8 +13,8 @@
    pin-dependent engine files (YF0x, YCeh) that fail on pins102, so citing it made this file unbuildable in every
    #102 closure (the kit owner's round-trip sub-walks, 2026-10-29). Same for YG06bcf.last_in_ne, replaced by
    YO0h.In_last (the same statement). tv_calls_tx_val and the size lemmas it uses
-   (plen_cons, plen_wcomma, plen_wind, plen_spcs, plen_spcs_all, plen_strp) are TAKEN BY PATH from commit
-   07b99cd9a99 lib/A/Prog/PReachEvs.v:679-716, each with its statement unchanged; this file
+   (plen_cons, plen_wcomma, plen_wind, plen_spcs, plen_spcs_all, plen_strp) are TAKEN BY PATH from
+   lib/A/Prog/PReachEvs.v:679-716, each with its statement unchanged; this file
    is their one home in the kit.
    - (a) pj_write against the model. prhWriter_pjw_evs [] cnt fail (wdpieces t p) is PresetReqAt.w_evs t p when no
      call of the run is the chosen failure (prhWriter_pjw_evs_w_evs), and PresetReqAt.w_starved t p k when call k (from
@@ -382,7 +382,7 @@ Proof.
     rewrite IH, !Z.add_0_r. replace (2 * (len + k + 1)) with ((len + k + 1) * 2) by lia. reflexivity.
 Qed.
 
-(* plen_cons .. plen_strp and tv_calls_tx_val: taken by path from commit 07b99cd9a99
+(* plen_cons .. plen_strp and tv_calls_tx_val: taken by path from
    lib/A/Prog/PReachEvs.v:679-716 (statements unchanged; TM = TxModel, WV = WriterValue, RA = PresetReqAt) *)
 Lemma plen_cons : forall a P, TxModel.plen (a :: P) = Z.of_nat (length a) :: TxModel.plen P.
 Proof. reflexivity. Qed.

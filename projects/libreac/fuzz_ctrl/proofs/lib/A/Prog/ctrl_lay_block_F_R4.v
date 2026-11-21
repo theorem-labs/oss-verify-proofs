@@ -3,13 +3,14 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 3817 of its 3853 lines of code are new or changed and 212 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its addresses and numbers changed; 20 of its 55 lines of code are new or changed and 3818 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* ctrl_lay_block, image A (asan, entry 0x855f4): RE-BASED copy of stretch k = 8 for region R4 of the cgif glue
    (0x858f4, after the class-1 flag release, -> ret).  A Theorem Labs lane.  Re-base plan
    R4 (ctrl_lay_block-rebase.md section 3 and section 5 (a working note, not in this delivery)).
 
    WHY A COPY.  lay_tail_F (ctrl_lay_block_F_8.v:91-119) is applied by the glue with Section L's memory
    m := normalize m3 (the memory after the release); its premises at that base come from AR (plan, R4 table).  Its
-   post Q (ctrl_lay_block.v:480-494) hides the final memory behind an existential with LC's coarse munch set, which
+   post Q (ctrl_lay_block.v:481-495) hides the final memory behind an existential with LC's coarse munch set, which
    contains bytes that are not awr (plan section 4).  The run only loads (the twelve restores) and jumps, so the final
    memory IS m'.  This copy states that, so the glue's journal step (ProgWorld.v ajournal_of_fsteps :963) takes the
    empty write set.
@@ -25,7 +26,7 @@
       no new proof obligation.
    2. The _F output feeds ONLY the ported cgif-form walk.  No W_cutfree_ok, no cut-free twin, no LSCPS join, no
       top-level claim.
-   3. The source runs are on ctrl's v1.9 record (FACTS ed6b6b7b0ab), with no stale AsanRT / off_img literal /
+   3. The source runs are on ctrl's v1.9 record (FACTS), with no stale AsanRT / off_img literal /
       wrong-image cell.  The re-run's const cells are checked against fuzz_ctrl's v1.9.0 image bytes.
    4. Every _F carries provenance in its header and goes to the auditor a Theorem Labs lane
       who signs it against its proved run before it counts.
@@ -37,9 +38,9 @@
      -> (internal path)
    - ELF sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd
    - compare: fuzz_ctrl.objdump.txt (a working note, not in this delivery), ctrl_lay_block 0x855f4 .. 0x85988
-   - FACTS of record ed6b6b7b0ab (origin/regen/libreac-v190-on-338), PAU (internal path)
-   - copied from ctrl_lay_block_F_8.v (not in this delivery) (a working branch ac3e4b54a3a, merged 9d33dba1444), itself
-     lay_tail (ctrl_lay_block.v (at head lib/A/Prog/ctrl_lay_block.v:905-936; from a working branch d69f7c708f6)) moved back one instruction. *)
+   - FACTS of record (origin/regen/libreac-v190-on-338), PAU (internal path)
+   - copied from ctrl_lay_block_F_8.v (not in this delivery) (a working branch, merged), itself
+     lay_tail (ctrl_lay_block.v (at head lib/A/Prog/ctrl_lay_block.v:906-937; from a working branch)) moved back one instruction. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import ctrl_lay_block_F_common.
 (* The skeleton's Require list, repeated in its order (Import is not transitive; lib.Lib ExecF StepF LAST, so StepF's
    step / if_false / finish / store_done shadow the evt engine's). *)

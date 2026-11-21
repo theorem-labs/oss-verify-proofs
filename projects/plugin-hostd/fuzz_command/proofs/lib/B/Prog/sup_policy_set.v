@@ -3,9 +3,9 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk of sup_policy_set (plugin-hostd/fuzz_command, B entry
    0x8be08, 28 instructions, a 32-byte real frame, no side-stack frame): the statement of lib/B/Prog/sup_policy_set_c.v
-   on a Theorem Labs lane fc8bcbd8b42 (a Theorem Labs lane; the statement text is as at f490061c104) over the B core a working branch
-   c022a2f6a88. The B re-walk of lib/A/Prog/sup_policy_set.v with its segments _s1/_s2/_s3
-   (a working branch 02d1c730d1b), whose A code inlines record() and calls xstrdup;
+   on a Theorem Labs lane (a Theorem Labs lane; the statement text is as) over the B core a working branch.
+   The B re-walk of lib/A/Prog/sup_policy_set.v with its segments _s1/_s2/_s3
+   (a working branch), whose A code inlines record() and calls xstrdup;
    B calls record() and arg_s() instead, so the walk is five straight-line runs (lib/B/Prog/sup_policy_set_aux.v)
    and four program calls: record(12) at 0x8be28, arg_s(slot, format) at 0x8be34, arg_s(slot, place) at 0x8be40,
    rec_shape_of("policy_set", 10) at 0x8be50, and the tail jump into answer at 0x8be74, which runs answer at this
@@ -15,7 +15,7 @@
    entry s0, restored by the epilogue (class A, afn_pre's chain kept by spsw_achain_kept).
    The program-static facts are the kit's lib/B/Prog/RecBLemmas.v (recb_prog_unowned_m, recb_pair_dec), used
    qualified; the block-membership facts are lib/B/Prog/CmdRecAns.v's (rca_in_answer, rca_call_blocks,
-   rca_rep_blocks). The other representation and footprint lemmas are lib/B/Prog/sup_reset.v's (a working branch c79a9f2daf7,
+   rca_rep_blocks). The other representation and footprint lemmas are lib/B/Prog/sup_reset.v's (a working branch,
    the Qed'd sibling of the same recorder shape), under this walk's names.
    REPORT / TRAP EDGES: the B function body has NONE. No `jal __asan_report_*`, no UBSan trap site and no
    conditional branch at all (gen/funcs.tsv 0 reports, gen/traps.B.summary 0 traps; measured again with capstone on
@@ -30,6 +30,7 @@
    cmd_ro_prog_apart, cmd_prog_img, cmd_atail_kept, cmd_rodata_kept); a closing file at the pinned image
    (lib/B/Prog/SupPolicySetClosed.v, PI := PB_cmd) discharges cmd_img_facts_tfib and cmd_sig_prog_PB by a Theorem Labs lane's
    lemmas of those names. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -63,7 +64,7 @@ Local Set Warnings "-abstract-large-number".
 Open Scope bv_scope.
 Open Scope Z_scope.
 
-(* ---------- the representation's readers (lib/B/Prog/sup_reset.v:66-155, after lib/A/Prog/sup_reset.v:39-136, the same CmdRep forms) ---------- *)
+(* ---------- the representation's readers (lib/B/Prog/sup_reset.v:67-156, after lib/A/Prog/sup_reset.v:39-136, the same CmdRep forms) ---------- *)
 
 Lemma spsw_aval_keep : forall rd rd' a n v, aval_mem rd a n v ->
   (forall x, a <= x < a + Z.of_nat n -> rd' x = rd x) -> aval_mem rd' a n v.
@@ -273,7 +274,7 @@ Hypothesis VOBJS : cmd_val_objs.
 Hypothesis HB : CmdBSyms B.
 Hypothesis MTL : ameter_laws MT.
 Hypothesis cmd_sig_prog_PB : cmd_sig_prog.
-(* the per-binary image facts (a Theorem Labs lane's lib/B/Prog/CmdRecBase.v cmd_img_facts, a working branch 6830f0bf032): a Theorem Labs lane proves
+(* the per-binary image facts (a Theorem Labs lane's lib/B/Prog/CmdRecBase.v cmd_img_facts, a working branch): a Theorem Labs lane proves
    them at the pinned image (CmdRecImg.v cmd_img_facts_tfib, at tfibsegs); this walk is over an abstract PAImg, so it
    takes that lemma's statement at its own segments, under the lemma's name, and each per-binary fact the walk uses
    is a Theorem Labs lane's lemma over them, by exact: CmdRecRo.v CMD_RO_IN and cmd_ro_ok_of_aro, CmdRecRest.v cmd_ro_prog_apart,

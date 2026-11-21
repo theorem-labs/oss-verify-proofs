@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: W_shadow_pin.v's shp_ashp and W_shadow_pin_fr.v's ashp_str2_1_fr over a generic ARx
    (W_contract_x.v ashp_x).  The AR proof reads two conjuncts of AR's invariant: am_const (every const cell of
    as_const B ly holds its value) and am_zshadow (every range of zero_shadow_ranges B ly reads 0).  Over ARx they are
@@ -91,7 +92,7 @@ Variable ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte
 Context {hl : Z}.
 Hypothesis LAWS : AR_laws_x segs B ARx hl.
 
-(* W_shadow_pin_fr.v:34 tfib_shp, over ARx *)
+(* W_shadow_pin_fr.v:35 tfib_shp, over ARx *)
 Lemma tfib_shp_x : forall a n, shp_check AF0m.Tfib_const_shadow AF0m.Tfib_zero_shadow a n = true -> ashp_x ARx a n.
 Proof.
 intros a n H. apply (shp_ashp_x B ARx LAWS AF0m.Tfib_const_shadow AF0m.Tfib_zero_shadow); [| | exact H].
@@ -100,11 +101,11 @@ intros a n H. apply (shp_ashp_x B ARx LAWS AF0m.Tfib_const_shadow AF0m.Tfib_zero
 - intros r Hr. rewrite (AF0m.ts_zsh _ HT). exact Hr.
 Qed.
 
-(* W_shadow_pin_fr.v:44 ashp_str2_1_fr, over ARx: .str.2 "" (check_shape_ends' prefix, PF), 0x20ee0, 1 byte;
+(* W_shadow_pin_fr.v:45 ashp_str2_1_fr, over ARx: .str.2 "" (check_shape_ends' prefix, PF), 0x20ee0, 1 byte;
    0x7fffc1dc = 1 *)
 Lemma ashp_str2_1_fr_x : ashp_x ARx (VAL (A_OBJ 28)) 1.
 Proof. apply tfib_shp_x. vm_compute. reflexivity. Qed.
-(* W_shadow_pin_fr.v:47-69, the other literals, over ARx (the same decision by vm_compute over the start-up tables) *)
+(* W_shadow_pin_fr.v:48-70, the other literals, over ARx (the same decision by vm_compute over the start-up tables) *)
 (* .str.4 " end" (check_shape_ends' loop 3 bcmp operand), 0x20f00, 4 bytes; 0x7fffc1e0 = 5 *)
 Lemma ashp_end5_4_fr_x : ashp_x ARx (VAL A_lit_end5) 4.
 Proof. apply tfib_shp_x. vm_compute. reflexivity. Qed.

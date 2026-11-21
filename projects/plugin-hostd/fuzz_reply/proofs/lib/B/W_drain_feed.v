@@ -2,11 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: segment FEED of the ASan+UBSan walk (image B, fuzz_reply.asan-ubsan) of
    fuzz_reply's drain - reference_feed's byte loop, from its head 0x836fc to the back edge 0x83844 or the exit
-   0x838a0, with the call to list_push at 0x837a4.  The statement is lib/B/W_drain_cx.v:870 dr_feed_stmt and the
+   0x838a0, with the call to list_push at 0x837a4.  The statement is lib/B/W_drain_cx.v:871 dr_feed_stmt and the
    cut predicates are that file's DRB (:697, the loop head after k of the n bytes) and DE (:738, the loop left).
-   The Section header below is lib/B/W_drain_cx.v:300-353 verbatim, so dr_feed carries exactly the interface's
+   The Section header below is lib/B/W_drain_cx.v:301-354 verbatim, so dr_feed carries exactly the interface's
    premises.
-   PORTED from lib/A/W_drain_feed.v (a working branch 92eb791e40e: df_push_pre Qed, df_feed_step
+   PORTED from lib/A/W_drain_feed.v (a working branch: df_push_pre Qed, df_feed_step
    and dr_feed_p closed).  A's model layer (df_feed_snoc / df_lines_snoc and the four arms of `step`), its memory
    layer (df_dmem_rebuild / df_close_local / df_close_push / df_asrc_upd) and its list_push call (df_push_pre /
    df_lp_call) are image-free and are taken over; the registers, the frame slots, the symbolic state, the shadow
@@ -107,6 +107,7 @@
    trap_ptr_wrap_atom.  The folded null-consistency check 0x83708 is left as a branch and closed by
    trap_null_xor_folded (s4 = 1 at the cut: W_drain_cx.v's `getr regs1 20 = w64 1`).  No other trap lemma is
    cited and the kit misses no shape of this segment. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -219,7 +220,7 @@ Let RET := paj_ret_at (PL := PL_fr) (PI := PI).
 (* ---- helpers shared by the two segments (prefix df_) ---- *)
 
 (* The byte count DRB carries: a cut at k has k of the n bytes behind it and at least one still to feed.
-   DRB (W_drain_cx.v:575-620) has 20 existentials, then this is its 30th conjunct (:603).  The projection is
+   DRB (W_drain_cx.v:576-621) has 20 existentials, then this is its 30th conjunct (:603).  The projection is
    positional on purpose: a blanket `repeat destruct` unfolds DMEM / ajournal_gx up to conversion and does
    not finish. *)
 Lemma df_DRB_bytes : forall cx s1 D k W1 c1,
@@ -485,7 +486,7 @@ end.
 (* The entry state at the loop head.  Every hypothesis is a conjunct of DRB, of DMEM's asrc_at, or a
    consequence of the placement (df_entry_full discharges them from the cut). *)
 Lemma df_feed_entry : forall (W : world SEGS) regs mem HAv pk p0 v0 part np ovl b nn kk,
-(* The frame is above the allocator ceiling (afn_pre's stack facts, as W_drain_epi.v:233 uses them), and a
+(* The frame is above the allocator ceiling (afn_pre's stack facts, as W_drain_epi.v:234 uses them), and a
    live block ends below it: the source byte is told apart from a frame slot. *)
 alloc_ceiling <= spZ regs <= 2 ^ 47 -> spZ regs mod 16 = 0 ->
 getr regs 23 = w64 HAv -> getr regs 8 = w64 (rg_s RG) ->
@@ -804,7 +805,7 @@ intros e H1 H2. unfold bzs, entry_bytes. rewrite length_map, !length_app, !Mem.l
 reflexivity.
 Qed.
 
-(* W_drain_gs.v:671 gs_aentry_okx_kept (the drain lane's GS segment), here for this segment. *)
+(* W_drain_gs.v:672 gs_aentry_okx_kept (the drain lane's GS segment), here for this segment. *)
 Lemma df_aentry_okx_kept : forall ly S W mem ly' S' W' mem' e,
 aentry_okx B ly S W mem e ->
 akept W mem W' mem' (aentry_fp e) ->
@@ -2006,7 +2007,7 @@ intros A l. induction l as [|y l IH]; intros n x Hn; [rewrite nth_error_nil in H
 destruct n as [|n]; cbn in Hn |- *; [injection Hn as ->; reflexivity | apply IH; exact Hn].
 Qed.
 
-(* the meter over a trace's parts (W_drain_gs.v:738-761) *)
+(* the meter over a trace's parts (W_drain_gs.v:739-762) *)
 Lemma df_pu_tr_cost_app : forall (t1 t2 : dtrace), tr_cost MT (t1 ++ t2) = tr_cost MT t1 + tr_cost MT t2.
 Proof.
 intros t1 t2. unfold tr_cost. induction t1 as [|ev t1 IH]; [cbn [app fold_right]; lia|].
@@ -3369,7 +3370,7 @@ destruct (al_client_img _ _ LAWS lyc Sc W memc mdc (p + i) HAR
 exact (Hni (proj1 (HG (p + i) (Hsub (p + i) Hc)))).
 Qed.
 
-(* the call, journal to journal (W_source_reset.v:442 aj_gx_call at G := G_DR) *)
+(* the call, journal to journal (W_source_reset.v:443 aj_gx_call at G := G_DR) *)
 Lemma df_gx_call : forall (G1 : list (Z * Z)) (W : world SEGS) regsT memT pc STK sp0 FP ly S W0 mem md lyc Sc mdc k
 STK1 FP1 (o : Z) raw ch1
 (K : alayout -> astate -> world SEGS -> bvmap 5 word -> (word -> option byte) -> Model -> Z -> Prop),
@@ -3561,7 +3562,7 @@ assert (C16 : (- DRAIN_FRAME) mod 16 = 0) by reflexivity.
 assert (Cneg : - DRAIN_FRAME <= 0) by (apply Z.leb_le; reflexivity).
 assert (CLP : 0 <= LP_STK) by (apply Z.leb_le; reflexivity).
 assert (CBUD : LP_STK - - DRAIN_FRAME <= DRAIN_STK) by (apply Z.leb_le; reflexivity).
-(* B's lp_spec (lib/B/W_contract.v:394) asks for LA mod 8 = 0, which A's does not: LA = &h->expected is
+(* B's lp_spec (lib/B/W_contract.v:395) asks for LA mod 8 = 0, which A's does not: LA = &h->expected is
    g_s + 96 j + 64 and HGSB gives rg_s RG mod 8 = 0 *)
 assert (HLA8 : (dHA RG cx + 64) mod 8 = 0).
 { pose proof HGSB as (_ & _ & HA8). unfold dHA, ASRC.
@@ -4217,7 +4218,7 @@ Qed.
 
 (* ---- FEED. ----
    The loop is a do-while: s9 = dnum s1 - k is decremented at 0x83544 and tested at 0x83550, so the head
-   0x8347c is re-entered only with k < dnum s1 (DRB's conjunct, W_drain_cx.v:603), and the exit to DE
+   0x8347c is re-entered only with k < dnum s1 (DRB's conjunct, W_drain_cx.v:604), and the exit to DE
    (0x835ac) is taken when k + 1 = dnum s1. *)
 
 (* The body for a byte that the round really has.  This is the walk. *)
@@ -4309,14 +4310,14 @@ Hypothesis BLKN : forall ly S Hp W mem md p n, ARx ly S Hp W mem md -> In (p, n)
 Hypothesis PSTR : forall a, in_rom SEGS a -> ~ Exists (in_zr a) PST.
 Hypothesis PSTG : forall a, rg_s RG <= a < rg_s RG + 4 * ASRC -> ~ Exists (in_zr a) PST.
 Hypothesis PSTO : forall a, inG (G_SL B RG) a \/ inG [(rg_client RG, 4); (rg_send_dead RG, 1); (rg_send_max RG, 8)] a -> ~ Exists (in_zr a) PST.
-(* W_drain_cx.v:305-310, AR-free *)
+(* W_drain_cx.v:306-311, AR-free *)
 Hypothesis HG : gx_ok SEGS B (G_DR B RG).
 Hypothesis HGR : forall a, inG (G_DR B RG) a -> ~ in_rom SEGS a.
 Hypothesis HROMO : rom_out SEGS B (G_DR B RG).
 Hypothesis HGO : gx_ok SEGS B [(rg_client RG, 4); (rg_send_dead RG, 1); (rg_send_max RG, 8)].
 Hypothesis MTL : ameter_laws MT.
 Hypothesis TL : PALib B.
-(* W_drain_cx.v:311-319, the runtime entries over ARx (W_sites_x.v's sites and its two runtime contracts,
+(* W_drain_cx.v:312-320, the runtime entries over ARx (W_sites_x.v's sites and its two runtime contracts,
    W_contract_x.v's astrlen_realizes_x) *)
 Hypothesis AERRNO : aerrno_realizes_x B ARx (SIGMA WS_errno_location).
 Hypothesis AMEMCPY : aintrin_realizes_x SEGS B ARx OCpy (SIGMA WS_asan_memcpy).
@@ -4327,21 +4328,21 @@ Hypothesis ASTRRCHR : astrrchr_realizes_x B ARx (SIGMA WS_strrchr).
 Hypothesis ASTRNCMP : astrncmp_realizes_x B ARx (SIGMA WS_strncmp).
 Hypothesis ASTRCMP : astrcmp_realizes_x B ARx (SIGMA WS_strcmp).
 Hypothesis ASTRLEN : astrlen_realizes_x B ARx (SIGMA WS_strlen).
-(* W_drain_cx.v:324-325, the callees' specs over ARx (W_contract_x.v), at RP *)
+(* W_drain_cx.v:325-326, the callees' specs over ARx (W_contract_x.v), at RP *)
 Hypothesis SLSPEC : sl_spec_x B PST ARx MT RP MMAX RG (BASE + AF_fr_send_line).
 Hypothesis LPSPEC : lp_spec_g_x B PST ARx MT RP MMAX (BASE + AF_fr_list_push).
-(* W_drain_cx.v:326-331, AR-free *)
+(* W_drain_cx.v:327-332, AR-free *)
 Hypothesis HERRNO : as_errno B = as_tp B - 164.
 Hypothesis HERRZ : azs B (as_errno B) 4.
 Hypothesis HERRW : forall i, 0 <= i < 4 -> writable_at SEGS (fun _ => None) (as_errno B + i).
 Hypothesis HERRAL : as_errno B mod 4 = 0.
 Hypothesis HGSZ : azs B (rg_s RG) (4 * ASRC).
 Hypothesis HVS : VAL (A_OBJ 19) = rg_s RG.
-(* W_drain_cx.v:337-339, image B's literal objects A_OBJ 18 / 20 / 21, over W_drain_cx_x.v's dlit_at_x *)
+(* W_drain_cx.v:338-340, image B's literal objects A_OBJ 18 / 20 / 21, over W_drain_cx_x.v's dlit_at_x *)
 Hypothesis HLIT5 : dlit_at_x ARx 18 (K_GESTURE ++ [0]).
 Hypothesis HLIT6 : dlit_at_x ARx 20 (W_BEGIN ++ [0]).
 Hypothesis HLIT7 : dlit_at_x ARx 21 (W_END ++ [0]).
-(* W_drain_cx.v:340-353, AR-free *)
+(* W_drain_cx.v:341-354, AR-free *)
 Hypothesis HRGD : zpairwise_disjoint
 [(VAL (A_OBJ 0), VAL (A_OBJ 0) + 8); (VAL (A_OBJ 30), VAL (A_OBJ 30) + 8);
  (rg_s RG, rg_s RG + 4 * ASRC);
@@ -4356,7 +4357,7 @@ Hypothesis HMMAX : 0 < MMAX <= 2 ^ 30.
 Hypothesis HV9 : VAL (A_OBJ 9) = rg_client RG.
 Hypothesis HSD : 0x10000 <= rg_send_dead RG /\ rg_send_dead RG + 1 <= IMG_TOP.
 Hypothesis HSM : 0x10000 <= rg_send_max RG /\ rg_send_max RG + 8 <= IMG_TOP.
-(* W_drain_cx.v:354-362, the allocator's site rules over the generic journal (W_journal_x.v Section hc, the _c twins
+(* W_drain_cx.v:355-363, the allocator's site rules over the generic journal (W_journal_x.v Section hc, the _c twins
    with the caller-context tables), at RP *)
 Variables CTX_R CTX_F CTX_S : list (list Z).
 Hypothesis AREALLOC : arealloc_cf_rule_c_x SEGS B PST ARx MT MMAX RP CTX_R (SIGMA WS_realloc).
@@ -4930,7 +4931,7 @@ apply (df_lp_rq_out_x ly S Hp W m md p n (hl_v l) (AREC * hl_cap l) (p + i) HAR 
 clear - Hr Rn. lia.
 Qed.
 
-(* the call, journal to journal (W_source_reset.v:442 aj_gx_call at G := G_DR; W_gesture_end.v gx_callS's _x form) *)
+(* the call, journal to journal (W_source_reset.v:443 aj_gx_call at G := G_DR; W_gesture_end.v gx_callS's _x form) *)
 
 Lemma df_gx_call_xR {R : world SEGS -> world SEGS -> Prop} (R_trans : forall W1 W2 W3, R W1 W2 -> R W2 W3 -> R W1 W3) :
 forall (G1 : list (Z * Z)) (W : world SEGS) regsT memT pc STK sp0 FP ly S Hp W0 mem md lyc Sc

@@ -2,21 +2,21 @@
    from the relocated core's driver.  Rule 24: no function is proved here; this file composes proved core lemmas.
 
    H_DRIVER asks, at a hand-off state c of the start-up certificate (HS_ok), that c realizes SPECX, given the runtime
-   walks and the FROZEN library slot PL.dec_lib_contract_x_all (lib/A/Prog/LLVMFuzzerTestOneInput_cg.v:154).  The core
+   walks and the FROZEN library slot PL.dec_lib_contract_x_all (lib/A/Prog/LLVMFuzzerTestOneInput_cg.v:155).  The core
    proves exactly that from its own slot: lib/A/AD1p.v:94 tfib_drv_main (drv_mainX_stmt, lib/A/AD1q.v:33) at the
    exists-fx' slot's float invariant (as AD1q.v tfib_srealizesXF instantiates it), with lib/A/AB1n.v HS_ok_open and
    Reusable/YO01.v:159 specx_closedx_eq (the two steps of AD1q.v:88-89); the driver's sites are the core's proved lemmas
    (AD1j / AD1k / AD1l / AD1o, AD2m tfib_ARDCHK), as cgif's lib/A/AD2o.v applies them.
 
    The one difference between the two slots: the frozen pre dec_lib_pre_x has the conjunct rom_view segs W mem
-   (Prog/LLVMFuzzerTestOneInput_cg.v:114) after arodata_okS; the core's tfib_lib_pre_xf (A/ACfn.v) has not.  A contract
+   (Prog/LLVMFuzzerTestOneInput_cg.v:115) after arodata_okS; the core's tfib_lib_pre_xf (A/ACfn.v) has not.  A contract
    asking more of its caller is weaker, so the frozen slot gives the core's slot once rom_view is shown from the core's
    pre.  rom_view is a fact of the state, not of a walk: for an in-rom byte a,
    - a not owned and not errno: arodata_okS, a conjunct of the core's pre (Reusable/YE01.v:191, its first disjunct is
      in_rom word for word);
    - a owned: AR's am_const at the record fact ro_owned_pinned B (every owned in-rom byte lies in a const cell whose value
-     is the image word), ported from fuzz_boxreg's lib/A/Rt/StrncmpView.v (a working branch
-     3d507d0a807, :36-100, image-generic) as ro_img_word / ro_img_word_byte / rom_owned_of_AR below;
+     is the image word), ported from fuzz_boxreg's lib/A/Rt/StrncmpView.v (a working branch,
+     :36-100, image-generic) as ro_img_word / ro_img_word_byte / rom_owned_of_AR below;
    - a errno: impossible, by dec_rom_no_errno B (lib/A/Prog/check_round_trip_cg.v:151, DecodeClose.v HB_ROM_NO_ERRNO).
    (a Theorem Labs lane approved this route 15:19Z; decode's own check C6 finds ro_owned_pinned true of the generated record.)
 
@@ -56,7 +56,7 @@ Module PL := OSSVerify.Proofs.libreac.fuzz_decode.lib.A.Prog.LLVMFuzzerTestOneIn
 Module PC := OSSVerify.Proofs.libreac.fuzz_decode.lib.A.Prog.check_round_trip_cg.
 
 (* ---- rom_view from a state's facts (fuzz_boxreg lib/A/Rt/StrncmpView.v, ported by path) ----
-   ro_img_word / ro_owned_pinned are lib/A/DecodeROPinned.v's (a working branch 2f6c3143ebd, the
+   ro_img_word / ro_owned_pinned are lib/A/DecodeROPinned.v's (a working branch, the
    one copy of StrncmpView.v:33-49 on this unit); the two lemmas over them are StrncmpView.v's. *)
 Section rv. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Variable segs : list Segment.
@@ -159,23 +159,17 @@ exact (DEC ly S W regs mem md p n pl M K HAI
   CONT).
 Qed.
 
-(* H_DRIVER (DecodeClose.v:180) at the core's instances, from the core's driver. *)
+(* H_DRIVER (DecodeClose.v) at the core's instances, from the core's driver.  At LPS 727298f3 it is lib/A/AD1q.v
+   drv_mainX_stmt, which lib/A/AD1p.v tfib_drv_main proves at the float-state invariant of a zero rounding mode. *)
 Theorem dec_H_DRIVER_A :
   (forall fx : YK11.FPState, @amalloc_realizes fx rc decodesegs0 B) ->
   (forall fx : YK11.FPState, @afree_realizes fx rc decodesegs0 B) ->
   (forall fx : YK11.FPState, @aintrin_realizes fx rc decodesegs0 B OCpy (pc_wrap_memcpy (as_code B))) ->
   @PL.dec_lib_contract_x_all rc decode_shape asink_syms tfib_K asink_none ameta_inv arodata_okS
     ACfn.RA_LLVMF ACfn.A_EMPTY B MT XL XL RLO RHI ->
-  forall (sp : word) (rdraw : EntryDraw) (brk : word) (inp : ProcInput) (h : nat) (c : config),
-  valid_sp sp -> valid_brk decodesegs0 brk -> entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
-  @YM05.ceil_of_top rc (bv_unsigned sp - stack_max_size) ->
-  HS_ok h sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (in_fs inp) c ->
-  srealizes decodesegs0 c (SPECX (LS:=decode_shape) inp).
+  @drv_mainX_stmt rc.
 Proof.
-intros AM AF AI LIB sp rdraw brk inp h c Hsp Hbrk Hfit Hinp Hceil Hok.
-destruct (HS_ok_open h sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (in_fs inp) c Hok)
-  as (ch & E & R & FULL & model & Hch & -> & HC & HE & HM & _).
-apply (srz_conseq TSEGS _ (CLOSEDX inp)); [| apply t_eq_sym; apply specx_closedx_eq].
+intros AM AF AI LIB.
 set (P := fun fx : YK11.FPState => frm_zero (@fp_csr fx)).
 assert (LIBC : forall fx : YK11.FPState, P fx -> tfib_lib_contract_xP (fx := fx) B MT XL XL RLO RHI P).
 { intros fx Hz. exact (tfib_lib_contract_xP_of_xf (fx := fx) B MT XL XL RLO RHI Hz (dec_contract_xf_of_x fx (LIB fx))). }
@@ -190,8 +184,7 @@ exact (tfib_drv_main P fp_frm_zero_fx0 B HA_TFIBSYMS (AM YK11.fx0) (fun fx _ => 
   (tfib_fprintf_open_site B HA_TFIBSYMS (AR_laws_ok tfibsegs B) HA_TFIBSYMS)
   (tfib_fprintf_rderr_site B HA_TFIBSYMS (AR_laws_ok tfibsegs B) HA_TFIBSYMS)
   (tfib_fprintf_usage_site B HA_TFIBSYMS (AR_laws_ok tfibsegs B) HA_TFIBSYMS)
-  (fun fx _ => tfib_exit_site (fx := fx) B HA_TFIBSYMS (AR_laws_ok tfibsegs B))
-  sp rdraw brk inp h ch E R FULL model Hsp Hbrk Hfit Hinp Hceil Hch HC HE HM).
+  (fun fx _ => tfib_exit_site (fx := fx) B HA_TFIBSYMS (AR_laws_ok tfibsegs B))).
 Qed.
 End RC.
 End a.
@@ -209,11 +202,7 @@ Theorem dec_H_DRIVER_GrantB : forall (MT : ameter_ops) (XL : Z -> Z) (RLO RHI : 
      @aintrin_realizes fx rc decodesegs0 AD2l.GrantB OCpy (pc_wrap_memcpy (as_code AD2l.GrantB))) ->
   @PL.dec_lib_contract_x_all rc decode_shape asink_syms tfib_K asink_none ameta_inv arodata_okS
     ACfn.RA_LLVMF ACfn.A_EMPTY AD2l.GrantB MT XL XL RLO RHI ->
-  forall (sp : word) (rdraw : EntryDraw) (brk : word) (inp : ProcInput) (h : nat) (c : config),
-  valid_sp sp -> valid_brk decodesegs0 brk -> entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
-  @YM05.ceil_of_top rc (bv_unsigned sp - stack_max_size) ->
-  HS_ok h sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (in_fs inp) c ->
-  srealizes decodesegs0 c (SPECX (LS:=decode_shape) inp).
+  @drv_mainX_stmt rc.
 Proof.
 intros MT XL RLO RHI rc HNOE MTF ROI.
 exact (@dec_H_DRIVER_A AD2l.GrantB AD2l.GrantB_syms HNOE DecodeROPinned.dec_ro_owned_pinned MT MTF XL RLO RHI ROI rc).

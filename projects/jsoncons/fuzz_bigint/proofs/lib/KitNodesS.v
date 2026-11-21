@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, grant_ok_na_pin is unpacked by grant_ok_na_pin_unpack, grant_ok_na_pin_of_grant_ok reads the pin's four conjuncts off grant_ok, and grant_na_pin_not_errno takes a positive page-multiple length. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -22,22 +23,50 @@ Definition alloc_enomem_sysno_b (n : Z) : bool :=
 Definition alloc_mm_sysno_b (n : Z) : bool := (n =? 222)%Z || (n =? 226)%Z.
 
 (* [comment removed for export] *)
+(* [grant_ok_na_pin] is the four non-placement conjuncts of a grant: page
+   alignment, a positive address, the [alloc_top] bound and freedom from the
+   reserved ledger and the mappings.  It needs no [hint] because none of the
+   four conjuncts mentions placement; [RefNodes.grant_ok_na] puts the placement
+   test [linux_place_is] in front of the same four, so the two are not equal. *)
 Definition grant_ok_na_pin (m : Model) (a : word) (n : Z) : bool :=
   (bv_unsigned a mod page_size =? 0)%Z && (0 <? bv_unsigned a)%Z
   && (bv_unsigned a + n <=? alloc_top (m_vmmaps m))%Z
   && region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 n).
 
-Lemma grant_ok_na_pin_eq : forall hint m a n, grant_ok_na_pin m a n = grant_ok_na hint m a n.
-Proof. reflexivity. Qed.
+(* Proved from the conjuncts directly rather than through
+   [linux_place_is_admissible], which is about the placement test this
+   definition does not carry. *)
+Lemma grant_ok_na_pin_unpack : forall m a n,
+  (0 < n)%Z -> (n mod page_size = 0)%Z ->
+  grant_ok_na_pin m a n = true ->
+  (bv_unsigned a mod page_size = 0)%Z /\ (0 < bv_unsigned a)%Z
+  /\ (bv_unsigned a + n <= alloc_top (m_vmmaps m))%Z
+  /\ region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 n) = true.
+Proof.
+  intros m a n Hn Hnal H. unfold grant_ok_na_pin in H.
+  apply andb_true_iff in H as [H Hrf].
+  apply andb_true_iff in H as [H Htop].
+  apply andb_true_iff in H as [Hal Hpos].
+  apply Z.eqb_eq in Hal. apply Z.ltb_lt in Hpos. apply Z.leb_le in Htop.
+  repeat split; assumption.
+Qed.
 
 Lemma grant_ok_na_pin_of_grant_ok : forall hint m a n, grant_ok hint m a n = true -> grant_ok_na_pin m a n = true.
-Proof. intros hint m a n H. rewrite (grant_ok_na_pin_eq hint). apply grant_ok_grant_ok_na. exact H. Qed.
-
-Lemma grant_na_pin_not_errno : forall m a n,
-  (0 <= n)%Z -> grant_ok_na_pin m a n = true -> errno_ret_in mmap_errnos a = false.
 Proof.
-  intros m a n Hn Hg. unfold grant_ok_na_pin in Hg.
-  apply andb_true_iff in Hg as [Hg _]. apply andb_true_iff in Hg as [Hg Htop]. apply Z.leb_le in Htop.
+  (* [grant_ok] holds the pin's four conjuncts after [linux_place_is] and before the
+     budget, so the pin is read off it directly. *)
+  intros hint m a n H. unfold grant_ok, grant_ok_na_pin in *. rewrite !andb_true_iff in H.
+  destruct H as [[[[[_ Hal] Hpos] Htop] Hrf] _]. rewrite Hal, Hpos, Htop, Hrf. reflexivity.
+Qed.
+
+(* Three arguments, matching the 6 call sites in AsanNodesMmLibK.v, which pass
+   `model a nZ`.  The two numeric premises are [grant_ok_na_pin_unpack]'s. *)
+Lemma grant_na_pin_not_errno : forall m a n,
+  (0 < n)%Z -> (n mod page_size = 0)%Z -> grant_ok_na_pin m a n = true ->
+  errno_ret_in mmap_errnos a = false.
+Proof.
+  intros m a n Hn Hnal Hg.
+  destruct (grant_ok_na_pin_unpack _ _ _ Hn Hnal Hg) as (_ & _ & Htop & _).
   apply errno_ret_in_below; [reflexivity|]. alloc_top_bounds. unfold two_pow_64 in *. lia.
 Qed.
 

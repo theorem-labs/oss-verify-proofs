@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reader fact of the output channels). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -407,6 +408,7 @@ Proof.
     subst M1. unfold free_mem1.
     repeat (rewrite MemSplit.wbytes_outside; [| rewrite length_N_to_le_bytes, u64_lit by lia; lia | rewrite length_N_to_le_bytes, !u64_lit by lia; lia]).
     reflexivity.
+  - match goal with H : m_channel_reader _ = true |- _ => exact H end.   (* LPS 727298f3: [co_rdr] *)
 Qed.
 
 #[using="Type"] Theorem call_freepro_ok_fx : forall cs cs' E R M model T,

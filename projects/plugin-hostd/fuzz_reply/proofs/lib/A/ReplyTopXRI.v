@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the RI plug of the image-A top (lib/A/W_LLVMFuzzerTestOneInput_top_x.v).  top_x keeps
    RINV as a Section Variable; the instance file sets RINV := @ReplyRINV.fr_RINV rc and discharges top_x's RI_*
    hypotheses by the lemmas here, over lib/A/ReplyRINV.v.
@@ -18,17 +19,17 @@
      RI_pro_obl takes the AR lf_base.  RI_pro_holds reads only lf_base's input-length range (the sixth conjunct,
      ReplyRINV.v RI_pro_core), which lf_base_x has at the same place, so the adapter takes it there and applies
      RI_pro_core.
-   - 9 plain plugs by exact: lib/A/ReplyRINV_a3.v (commit a36da6bbe94) RI_write_skip, RI_write_push, RI_drain_skip,
+   - 9 plain plugs by exact: lib/A/ReplyRINV_a3.v RI_write_skip, RI_write_push, RI_drain_skip,
      RI_pair, and RI_event_step through its RI_event_step_x (top_x's text, which names _event.v's ev_evt / ev_step);
-     lib/A/ReplyRINV_a12.v (commit b81543f5533) RI_exit_slots, RI_rm_rr_pair; lib/A/ReplyRINV_gone.v (commit
-     ea932c57613, its _plug lemmas) RI_gone_pairs, RI_gone_read.
-   - 4 plain plugs by exact, at commit 3f40808c334's restated texts (the arm's premise added after
+     lib/A/ReplyRINV_a12.v RI_exit_slots, RI_rm_rr_pair; lib/A/ReplyRINV_gone.v (
+     its _plug lemmas) RI_gone_pairs, RI_gone_read.
+   - 4 plain plugs by exact, at a commit's restated texts (the arm's premise added after
      ReplyRINV_a12.v's *_obl_false showed the old texts false): RI_exit_ends, RI_rm_cnl_pre, RI_rm_cshe_pre,
-     RI_rm_csd, by ReplyRINV_a12.v's RI_*_holds (commit b962c9489d0).
-   - 1 plain plug by exact: RI_rm_src (commit 250502f7048's row), by ReplyRINV.v's RI_rm_src_holds.
+     RI_rm_csd, by ReplyRINV_a12.v's RI_*_holds.
+   - 1 plain plug by exact: RI_rm_src (a commit's row), by ReplyRINV.v's RI_rm_src_holds.
    - 2 plain plugs at a check instance of the meter and LS (Sections topxri_gone / topxri_gone_c: MT :=
      YCbp.ameter_triv, LSx := ReplyLS3.fr_LS3 TfibB / ReplyLS3c.fr_LS3c TfibB): RI_gone_step and RI_gone_end, by
-     ReplyRINV_gone.v's RI_gone_step_plug(_c) / RI_gone_end_plug(_c) (commit 8473fd78f18; REQ5 inside).  These are
+     ReplyRINV_gone.v's RI_gone_step_plug(_c) / RI_gone_end_plug(_c) (REQ5 inside).  These are
      NOT the top's plugs: the top's LS is fr_LS3cp B /\ fr_OUT OM /\ fr_ENT B, closed in the top step.
    This file goes in with ReplyATop.v's LS3 switch, not before. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
@@ -113,7 +114,7 @@ W_LLVMFuzzerTestOneInput_remove W_LLVMFuzzerTestOneInput_remove_x W_shadow_pin_x
    without Import, as SEG_EXIT's *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require
 W_sites W_LLVMFuzzerTestOneInput_gone_base W_LLVMFuzzerTestOneInput_gone W_LLVMFuzzerTestOneInput_gone_x.
-(* C1 (a Theorem Labs lane's 922a710cda0; relay_event re-proved by AddX's C3 88557c15170): relay_add's, relay_event's and
+(* C1 (a Theorem Labs lane; relay_event re-proved by AddX's C3): relay_add's, relay_event's and
    relay_finish's _x proofs, which build RA_x / RE_x / RF_x below; Require without Import *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require W_relay_add W_relay_event W_relay_finish_h.
 (* W3's check_shape_done and check_no_loss_read _x walks, which build CSD_x / CNLR_x below; Require without Import *)
@@ -308,7 +309,7 @@ Proof. exact ReplyRINV_gone.RI_gone_pairs_plug. Qed.
 (* top_x.v:818 RI_gone_read: plain plug, ReplyRINV_gone.RI_gone_read_plug *)
 Lemma topx_RI_gone_read : W_LLVMFuzzerTestOneInput_gone_base.GN_RI_read RINV.
 Proof. exact ReplyRINV_gone.RI_gone_read_plug. Qed.
-(* top_x.v:640 RI_exit_ends (commit 3f40808c334's restated text): plain plug, ReplyRINV_a12.RI_exit_ends_holds *)
+(* top_x.v:640 RI_exit_ends (a commit's restated text): plain plug, ReplyRINV_a12.RI_exit_ends_holds *)
 Lemma topx_RI_exit_ends : forall cx t m, RINV cx t m -> (0 < length (lm_es m))%nat ->
   0 <= lm_gn m <= 1 ->
   (forall i h, nth i (lm_hs m) None = Some h -> Forall (fun r => ~ In (Z_to_bv 8 0) (snd r)) (hl_recs (hs_held h))) ->
@@ -316,7 +317,7 @@ Lemma topx_RI_exit_ends : forall cx t m, RINV cx t m -> (0 < length (lm_es m))%n
     (W_LLVMFuzzerTestOneInput_exit.lx_norder m) (W_LLVMFuzzerTestOneInput_exit.lx_ord m) (lm_hs m) 0 =
   Some (Z.of_nat (length (W_LLVMFuzzerTestOneInput_exit.lx_rf_O m))).
 Proof. exact ReplyRINV_a12.RI_exit_ends_holds. Qed.
-(* top_x.v:716 RI_rm_cnl_pre (commit 3f40808c334's restated text): plain plug, ReplyRINV_a12.RI_rm_cnl_pre_holds *)
+(* top_x.v:716 RI_rm_cnl_pre (a commit's restated text): plain plug, ReplyRINV_a12.RI_rm_cnl_pre_holds *)
 Lemma topx_RI_rm_cnl_pre : forall cx t m si h j0 e1 h1 ev LB c2 O2 cap2,
   RINV cx t m -> W_LLVMFuzzerTestOneInput_remove.rm_at cx m si h j0 -> W_LLVMFuzzerTestOneInput_remove.rm_rr_ok m h j0 e1 h1 ev LB c2 O2 cap2 ->
   Forall (fun e => Forall (fun k => 14 <= Z.of_nat (length (gestures_end_b_c.key_text k))) (re_keys e)) (lm_es m) ->
@@ -325,7 +326,7 @@ Lemma topx_RI_rm_cnl_pre : forall cx t m si h j0 e1 h1 ev LB c2 O2 cap2,
   AREC * capb (hs_held h1) (hs_expected h1) < 2 ^ 32 /\ Z.of_nat (length O2) < 2 ^ 32 /\
   (lm_gn m = 0 -> exists rest, O2 = bstream (hs_expected h1) ++ rest).
 Proof. exact ReplyRINV_a12.RI_rm_cnl_pre_holds. Qed.
-(* top_x.v:736 RI_rm_cshe_pre (commit 3f40808c334's restated text): plain plug, ReplyRINV_a12.RI_rm_cshe_pre_holds *)
+(* top_x.v:736 RI_rm_cshe_pre (a commit's restated text): plain plug, ReplyRINV_a12.RI_rm_cshe_pre_holds *)
 Lemma topx_RI_rm_cshe_pre : forall cx t m si h j0 e1 h1 ev LB c2 O2 cap2 E' H',
   RINV cx t m -> W_LLVMFuzzerTestOneInput_remove.rm_at cx m si h j0 -> W_LLVMFuzzerTestOneInput_remove.rm_rr_ok m h j0 e1 h1 ev LB c2 O2 cap2 -> W_LLVMFuzzerTestOneInput_remove.rm_cnl_ok h1 E' H' ->
   lm_gn m = 0 ->
@@ -333,21 +334,21 @@ Lemma topx_RI_rm_cshe_pre : forall cx t m si h j0 e1 h1 ev LB c2 O2 cap2 E' H',
   W_LLVMFuzzerTestOneInput_remove.rm_A1 m h1 <= Z.of_nat (length O2) /\
   ends_run [] (hl_recs H') (skipn (Z.to_nat (W_LLVMFuzzerTestOneInput_remove.rm_A1 m h1)) O2) (want_of [] (hl_recs H')) <> None.
 Proof. exact ReplyRINV_a12.RI_rm_cshe_pre_holds. Qed.
-(* top_x.v:747 RI_rm_csd (commit 3f40808c334's restated text): plain plug, ReplyRINV_a12.RI_rm_csd_holds *)
+(* top_x.v:747 RI_rm_csd (a commit's restated text): plain plug, ReplyRINV_a12.RI_rm_csd_holds *)
 Lemma topx_RI_rm_csd : forall cx t m si h j0 e1 h1 ev LB c2 O2 cap2 E' H' H'' ds cc,
   RINV cx t m -> W_LLVMFuzzerTestOneInput_remove.rm_at cx m si h j0 -> W_LLVMFuzzerTestOneInput_remove.rm_rr_ok m h j0 e1 h1 ev LB c2 O2 cap2 -> W_LLVMFuzzerTestOneInput_remove.rm_cnl_ok h1 E' H' ->
   W_LLVMFuzzerTestOneInput_remove.rm_cshe_ok m (set_exp_held h1 E' H') O2 (W_LLVMFuzzerTestOneInput_remove.rm_A1 m h1) H'' ds cc ->
   0 <= lm_gn m <= 1 ->
   W_LLVMFuzzerTestOneInput_remove.rm_A1 m h1 + cc = Z.of_nat (length O2).
 Proof. exact ReplyRINV_a12.RI_rm_csd_holds. Qed.
-(* top_x.v:697 RI_rm_src (commit 250502f7048's row): plain plug, ReplyRINV.RI_rm_src_holds *)
+(* top_x.v:697 RI_rm_src (a commit's row): plain plug, ReplyRINV.RI_rm_src_holds *)
 Lemma topx_RI_rm_src : forall cx t m si h j0,
   RINV cx t m -> W_LLVMFuzzerTestOneInput_remove.rm_at cx m si h j0 -> hl_recs (hs_expected h) = [].
 Proof. exact ReplyRINV.RI_rm_src_holds. Qed.
 End topxri.
 
-(* lib/A/W_LLVMFuzzerTestOneInput_top_x.v:836 RI_gone_step at MT := YCbp.ameter_triv and LSx := ReplyLS3.fr_LS3 TfibB (this check's LS instance, not
-   the top's): plain plug, ReplyRINV_gone.RI_gone_step_plug (commit 8473fd78f18) *)
+(* lib/A/W_LLVMFuzzerTestOneInput_top_x.v:837 RI_gone_step at MT := YCbp.ameter_triv and LSx := ReplyLS3.fr_LS3 TfibB (this check's LS instance, not
+   the top's): plain plug, ReplyRINV_gone.RI_gone_step_plug *)
 Section topxri_gone.
 Context (fx : YK11.FPState) (rc : YM05.RunCeil).
 Local Notation RINV := (@ReplyRINV.fr_RINV rc).
@@ -356,13 +357,13 @@ Local Notation LSx := (ReplyLS3.fr_LS3 TfibB).
 Lemma topx_RI_gone_step : W_LLVMFuzzerTestOneInput_gone_base.GN_RI_step TfibB MT LSx RINV CfParamsReply.fr_MMAX.
 Proof. exact (ReplyRINV_gone.RI_gone_step_plug TfibB). Qed.
 (* top_x.v:837 RI_gone_end at the same MT / LSx: plain plug, ReplyRINV_gone.RI_gone_end_plug
-   (commit 8473fd78f18; REQ5 is derived inside it) *)
+   (REQ5 is derived inside it) *)
 Lemma topx_RI_gone_end : W_LLVMFuzzerTestOneInput_gone_base.GN_RI_end TfibB MT LSx RINV.
 Proof. exact (ReplyRINV_gone.RI_gone_end_plug TfibB). Qed.
 End topxri_gone.
 
-(* lib/A/W_LLVMFuzzerTestOneInput_top_x.v:836 RI_gone_step at MT := YCbp.ameter_triv and LSx := ReplyLS3c.fr_LS3c TfibB (this check's LS instance, not
-   the top's): plain plug, ReplyRINV_gone.RI_gone_step_plug_c (commit 8473fd78f18) *)
+(* lib/A/W_LLVMFuzzerTestOneInput_top_x.v:837 RI_gone_step at MT := YCbp.ameter_triv and LSx := ReplyLS3c.fr_LS3c TfibB (this check's LS instance, not
+   the top's): plain plug, ReplyRINV_gone.RI_gone_step_plug_c *)
 Section topxri_gone_c.
 Context (fx : YK11.FPState) (rc : YM05.RunCeil).
 Local Notation RINV := (@ReplyRINV.fr_RINV rc).
@@ -371,7 +372,7 @@ Local Notation LSx := (ReplyLS3c.fr_LS3c TfibB).
 Lemma topx_RI_gone_step_c : W_LLVMFuzzerTestOneInput_gone_base.GN_RI_step TfibB MT LSx RINV CfParamsReply.fr_MMAX.
 Proof. exact (ReplyRINV_gone.RI_gone_step_plug_c TfibB). Qed.
 (* top_x.v:837 RI_gone_end at the same MT / LSx: plain plug, ReplyRINV_gone.RI_gone_end_plug_c
-   (commit 8473fd78f18; REQ5 is derived inside it) *)
+   (REQ5 is derived inside it) *)
 Lemma topx_RI_gone_end_c : W_LLVMFuzzerTestOneInput_gone_base.GN_RI_end TfibB MT LSx RINV.
 Proof. exact (ReplyRINV_gone.RI_gone_end_plug_c TfibB). Qed.
 End topxri_gone_c.

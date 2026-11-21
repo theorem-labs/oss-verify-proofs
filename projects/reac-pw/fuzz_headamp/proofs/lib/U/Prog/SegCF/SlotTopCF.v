@@ -2,7 +2,7 @@
    cut-free copy of the slot proof (U/Prog/SlotInvCF.v, SegCF/*.v) under the agreement frame's facts
    (SlotInvCF.frame_facts_cf: U/FrameAPI.frame_facts_ubsan with the cut-free allocator and the agreement room
    128 <= sb_cap <= CAP_AG). Model: reac-pw/fuzz_role's U/Prog/SegCF/SlotTopCF.v (itself reac-pw/fuzz_pin's and libreac/fuzz_ctrl's released U/Prog/SegCF/SlotTopCF.v with its
-   SegCF/Segs.v, origin/ossv/recipes 25e3d17bdb50), for headamp's six segments:
+   SegCF/Segs.v), for headamp's six segments:
    - segs_cf_of_evts: the cut-free segment lemmas (StmtsCF.seg_lemmas) for every instance with frame_facts_cf, from
      SegCF/E01.v (malloc inside frame_facts_cf), SegCF/M01.v (headamp_build_contract), SegCF/M02.v
      (headamp_dup_pod_contract), SegCF/M03.v (headamp_check_contract), SegCF/M04.v (headamp_dup_first_contract,

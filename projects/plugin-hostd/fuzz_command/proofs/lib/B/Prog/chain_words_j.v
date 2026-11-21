@@ -2,13 +2,14 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the transport of the caller's objects in the walk of chain_words (0x8da84) on
    the ASan+UBSan build of plugin-hostd/fuzz_command (cw_transportP of lib/B/Prog/chain_words_d.v), the B twin of
-   lib/A/Prog/chain_words_j.v (A walk a working branch 5e2cdad423e): from the entry facts (cw_pre),
+   lib/A/Prog/chain_words_j.v (A walk a working branch): from the entry facts (cw_pre),
    the frame part of a cut (cw_fi: its journal gives AR at the cut state, the layout and the frames) and its
    untouched part (cw_un: the bytes the caller can see and the block list), every object the callee statements ask
-   for at a cut before a call (cw_caller) still holds. Statement pass 5 (a working branch f490061c104) removed
+   for at a cut before a call (cw_caller) still holds. Statement pass 5 (a working branch) removed
    astack_pres from every statement, so the A file's last block (the stack bytes up to ly_top, through
    astack_pres_journal) is gone with it; the rest is A's, with B's module paths and the statement's fixed
    CMD_RLO / CMD_RHI in place of A's RLO / RHI variables. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00 YG0q.
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,6 +1,6 @@
-(* Image B twin of lib/A/RT_pf_chain_k.v at 2c1f180a413 (sha256 f51644ef6751; internal record): module paths lib.A -> lib.B; no image numeral (CHAINKB-numerals.tsv sha256 86a76b0550d0; internal record). *) (* The evt-level snprintf chain at fuzz_reply.asan-ubsan, KEEP-FX: RT_pf_stmt_k.v snprintf_icpt_stmt_k (no frm0 premise;
+(* Image B twin of lib/A/RT_pf_chain_k.v (sha256 f51644ef6751; internal record): module paths lib.A -> lib.B; no image numeral (CHAINKB-numerals.tsv sha256 86a76b0550d0; internal record). *) (* The evt-level snprintf chain at fuzz_reply.asan-ubsan, KEEP-FX: RT_pf_stmt_k.v snprintf_icpt_stmt_k (no frm0 premise;
    the post returns at the caller's F and fc) with every Section hypothesis of its pieces discharged.
-   Copy of lib/A/RT_pf_chain.v:9-48 at d49bd1db505 (sha256 959fbd3afd54; internal record), retargeted to GXAK:
+   Copy of lib/A/RT_pf_chain.v:9-48 (sha256 959fbd3afd54; internal record), retargeted to GXAK:
      RT_pf_snf_k.v snprintf_icpt_ok_k  <- RT_pf_vsn_body_k.v vsnprintf_icpt_ok_body_k  <- RT_pf_vsn_k.v vsnprintf_icpt_ok_k
        <- RT_gxa_inst_k.v fr_vsnprintf_x_k (the keep-FP twin's musl vsnprintf at A_img_vsn, GXAK/G_vsnprintf.v
           vsnprintf_x_proof; memset at RT_gxa_calls_mem.v)
@@ -10,8 +10,8 @@
    The only variable left is the store invariant INV, which the evt -> SRr bridge chooses.
 
    THE GUARD is written over the RELEASED names (GXA/G_vfprintf_snf.v vf_ready_a, GXA/G_printf_snfsink.v
-   snf_out_ready), the form the SRr bridge states (RT_pf_snp_srr.v VFB_GUARD on a working branch
-   95c831b7e5e); the twin's closed body carries the twin's copies, and RT_gxak_eq.v vf_ready_a_eq /
+   snf_out_ready), the form the SRr bridge states (RT_pf_snp_srr.v VFB_GUARD on a working branch);
+   the twin's closed body carries the twin's copies, and RT_gxak_eq.v vf_ready_a_eq /
    snf_out_ready_eq rewrite one into the other.  snprintf_chain_closed_k_seam is the theorem at the bridge's
    invariant FMgxaSeamCall.SEAM_INV, in the bridge's text. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.

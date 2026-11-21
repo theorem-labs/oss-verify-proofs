@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* omx-clap-core/fuzz_preset, image B' (asan-ubsan, harness fix #102 pin sha256
    d663f82d7f488d30f8e8d7496cb814e595a2f3cbbf16bde81a65cb3ea9af0994, unstripped twin c90d4fa54d43160b): THE COMPOSED
    TOP of the B' driver with the walk of LLVMFuzzerTestOneInput. The driver of record's TFIB_T_closed_B_holds
@@ -9,7 +10,7 @@
      H_preset_lib_x_stmt_B  by lib/AU/Prog/Ent102SeamB.v preset_lib_x_stmt_B_holds (the seam; the walk's composed top
                             Ent102TopB.entry_B_walk);
      H_payload_room_B       by I: at PAYLOAD_ROOM := (fun _ => True) the bridge's conclusion is True (the walk's ec_pre
-                            does not read PAYLOAD_ROOM, lib/AU/Ent102CutsB.v:257-293).
+                            does not read PAYLOAD_ROOM, lib/AU/Ent102CutsB.v:258-294).
    This Section's hypotheses are exactly the driver's others, by the driver's names and statements (copied verbatim
    under the driver's two local instances, check_round_trip's text at the values above): the allocator rows, the read
    check, the six kit callee texts H_txt_* the driver still names; and the Section

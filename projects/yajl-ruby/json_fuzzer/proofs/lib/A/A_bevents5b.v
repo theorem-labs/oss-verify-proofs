@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the RES0_low hypothesis states the reserved ledger by res0_ok, which also admits the launch's vDSO/vvar pair above the high shadow; anon_match_ok's length and alignment premises supplied at its use). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -45,7 +46,7 @@ Hypothesis ENV0 : env0_ok5 E0.
 Hypothesis LS_L0 : In (Z_to_bv 64 0x7fff7000, Z_to_bv 64 (2^28)) L0.
 Hypothesis GS_L0 : In (Z_to_bv 64 0x8fff7000, Z_to_bv 64 (2^41)) L0.
 Hypothesis HS_L0 : In (Z_to_bv 64 0x2008fff7000, Z_to_bv 64 0xdfff0001000) L0.
-Hypothesis RES0_low : Forall (fun e => 0x10000 <= elo e /\ ehi e <= 0x603000) RES0.
+Hypothesis RES0_low : Forall (res0_ok E0) RES0.
 Hypothesis RES0_cover : forall x, 0x10000 <= x < 0x603000 -> exists e, In e RES0 /\ elo e <= x < ehi e.
 Hypothesis RSVD : forall rr x, In rr (ae_reserved E0) -> fst rr <= x < fst rr + snd rr ->
   (exists e, In e (RES0 ++ L0) /\ elo e <= x < ehi e) \/ alloc_ceiling <= x.
@@ -92,7 +93,7 @@ Proof.
   - pose proof (mmap_grant_null_rw_lazy L mo1 ltac:(lia)) as G. cbv zeta in G. rewrite PR in G.
     exact (G ltac:(rewrite TOP; lia) WIN).
   - intros eff mo' HC NR. pose proof HC as HC0. rewrite RED in HC. rewrite refusal_errno in NR.
-    apply (anon_match_ok L mo1) in HC as (_ & r & -> & RA & R0 & RC & RF & NB & C4); [| exact NR].
+    apply (anon_match_ok L mo1) in HC as (_ & r & -> & RA & R0 & RC & RF & NB & C4); [| first [exact NR | assumption | lia] ..].
     pose proof (check_mmap_only _ _ _ _ _ _ _ _ _ _ HC0) as MMA. split; [exact MMA|]. exists r. split; [reflexivity|].
     pose proof (bv_unsigned_in_range 64 r) as Rr. unfold bv_modulus in Rr.
     pose proof (grant_placed L0 RES0 LS_L0 GS_L0 HS_L0 RES0_cover mo1 a r L KVM1 ltac:(lia) R0 RC RF) as PL.

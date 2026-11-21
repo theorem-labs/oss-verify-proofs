@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor raised to the 0x5D0000 bytes below sp that the launch guarantees ([STACK_GAP])). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Monad Specs Run Fs.
@@ -67,7 +68,7 @@ Proof.
     replace (sp0 + - USP_OFF) with (sp0 - USP_OFF) by lia. reflexivity.
 Qed.
 
-Lemma hi_usp : (sp0 - USP_OFF) mod 16 = 0 /\ sp0 - USP_OFF < sp0 + 8 /\ sp0 - STACK_WIN + 0x100000 <= sp0 - USP_OFF
+Lemma hi_usp : (sp0 - USP_OFF) mod 16 = 0 /\ sp0 - USP_OFF < sp0 + 8 /\ sp0 - STACK_WIN + STACK_GAP + 0x100000 <= sp0 - USP_OFF
                /\ sp0 - USP_OFF <= sp0 /\ 0x7fff80000000 <= sp0.
 Proof.
   destruct hi_sp0 as [Hsp [Hlo Hhi]]. unfold sp_window_lo, sp_window_hi in *.
@@ -217,7 +218,9 @@ Proof.
   - exact (IH k b (o + nn) hi H i ltac:(lia)).
 Qed.
 
-Definition hs_stk_ok (ch : acs) : bool := kwr_cover (kn ch) e_sp0 (-8388608) (- USP_OFF) (S (length (kn ch))).
+(* LPS 727298f3: the launch guarantees [StoreOk.stack_window_depth] = 6144513 bytes below sp,
+   not 8 MiB; the check covers the [STACK_SPAN] = [STACK_WIN - STACK_GAP] bytes below sp. *)
+Definition hs_stk_ok (ch : acs) : bool := kwr_cover (kn ch) e_sp0 (- STACK_WIN + STACK_GAP) (- USP_OFF) (S (length (kn ch))).
 
 Lemma rdn1_mrd : forall segs m a b, L_rdn segs m a 1 = Some [b] -> mrd segs m a = Some b.
 Proof.
@@ -256,12 +259,13 @@ Proof.
   change (Z.of_nat 0) with 0 in W. rewrite Z.add_0_r in W. exact W.
 Qed.
 
-Theorem hi_stk : hs_stk_ok ch = true -> stk SEGS (mH FULL model A') (sp0 - 8388608) (sp0 - USP_OFF).
+Theorem hi_stk : hs_stk_ok ch = true -> stk SEGS (mH FULL model A') (sp0 - STACK_WIN + STACK_GAP) (sp0 - USP_OFF).
 Proof.
   intros H. destruct (APS.cs_isp SEGS A nx0 LIMIT SINV argH FS0 E ch R FULL model HC) as [Hsp [Hlo Hhi]].
   pose proof HULL_ok as (H0 & H1 & H2 & H3). unfold KHI in H3. unfold sp_window_lo, sp_window_hi in *. unfold USP_OFF.
-  split; [lia|]. split; [lia|]. intros a Ha.
+  split; [unfold STACK_WIN; lia|]. split; [unfold STACK_WIN; lia|]. intros a Ha.
   destruct (kwr_cover_sound _ _ _ _ _ H (a - sp0) ltac:(unfold USP_OFF; lia)) as (o & n & Hin & Hn & Hi).
+  unfold STACK_WIN in Ha.
   destruct (hi_wr_byte e_sp0 o n (a - sp0) Hin Hn Hi) as [W Hr].
   unfold APS.uE in Hsp. unfold AX2S.uE in W, Hr. rewrite <- Hsp in W, Hr. replace (sp0 + (a - sp0)) with a in W by lia.
   assert (Hnh : APS.in_hull A (bv_unsigned (wa a)) = false).

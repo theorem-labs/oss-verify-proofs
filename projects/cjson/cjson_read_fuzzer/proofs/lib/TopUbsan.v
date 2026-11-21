@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: p_main_stmt and u_main_stmt take entry_launch_ok_va and the whole ProcInput and start from the model with the entry's vDSO run; the top proof passes the launch facts and lifts each walk to the run with RomStable.run_init; imports Vdso and RomStable. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import NArith List ZArith Lia Bool.
@@ -8,10 +9,16 @@ Require OSSVerify.cjson.cjson_read_fuzzer.images.Plain.
 Require OSSVerify.cjson.cjson_read_fuzzer.images.Ubsan.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
-  BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+(* Vdso: this file's p_main_stmt/u_main_stmt name vdso_run_init, which the model
+   declares in LinuxProcessSem/Vdso.v:254; none of the modules listed here
+   re-exports it, so the reference did not resolve
+   (TopUbsan.v:45).  lib/Amb.v in this tree already
+   requires Vdso for the same reason. *)
+  BvBase RiscvSemantics MemImageType StackLayout Fs Vdso State Monad Specs Run.
 From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib Require Import Amb ShapeAlg ShapeEF ShapeSpec
   PStartup PStartupRT UStartup UStartupRT RealizesEqv.
 From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.Lib Require MState PropExec Frame.
+From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib Require RomStable.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 Import ListNotations.
@@ -36,11 +43,12 @@ Definition p_main_stmt : Prop :=
     valid_sp sp -> valid_brk psegs brk -> valid_mmap_base mbase -> valid_input inp ->
     entry_stack_fits sp (in_argv inp) (in_envp inp) ->
     (0 < bv_unsigned tid < 2^22)%Z ->
-    @p_main_entry (amb_of inp) sp rnd (in_argv inp) (in_envp inp) tid regs mem ->
+    entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
+    p_main_entry sp inp mbase rnd tid regs mem ->
     realizes psegs
       (mkCfg (OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.Lib.MState.MS (mkR_of regs) bvmap_empty (Z_to_bv 64 0x1214c)
                 (Z_to_bv 32 0) None mem (OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.Lib.PropExec.seg_rom psegs))
-             (with_tid tid (init_model (segments_reserved psegs) brk mbase sp source_alloc_limit inp)))
+             (with_tid tid (with_vdso (vdso_run_init (ed_vdso rnd)) (init_model (segments_reserved psegs) brk mbase sp source_alloc_limit inp))))
       (spec (in_argv inp) (in_fs inp)).
 
 Definition u_main_stmt : Prop :=
@@ -48,11 +56,12 @@ Definition u_main_stmt : Prop :=
     valid_sp sp -> valid_brk usegs brk -> valid_mmap_base mbase -> valid_input inp ->
     entry_stack_fits sp (in_argv inp) (in_envp inp) ->
     (0 < bv_unsigned tid < 2^22)%Z ->
-    @u_main_entry (amb_of inp) sp rnd (in_argv inp) (in_envp inp) tid regs mem ->
+    entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
+    u_main_entry sp inp mbase rnd tid regs mem ->
     realizes usegs
       (mkCfg (OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.Lib.MState.MS (mkR_of regs) bvmap_empty (Z_to_bv 64 0x1316c)
                 (Z_to_bv 32 0) None mem (OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.Lib.PropExec.seg_rom usegs))
-             (with_tid tid (init_model (segments_reserved usegs) brk mbase sp target_alloc_limit inp)))
+             (with_tid tid (with_vdso (vdso_run_init (ed_vdso rnd)) (init_model (segments_reserved usegs) brk mbase sp target_alloc_limit inp))))
       (spec (in_argv inp) (in_fs inp)).
 
 Theorem ubsan_base_of : p_main_stmt -> u_main_stmt -> strong_universal_error_free_T_scfg (alloc_only_cfg false) SRC0 UBSAN.
@@ -62,15 +71,18 @@ Proof.
   pose proof (valid_input_va_size _ Hinp) as Hsv48.
   rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hens.
   rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent.
-  destruct Hens as [Hrsp [Hrbrk [Hrmb Hrfit]]]. destruct Hent as [Hasp [Habrk [Hamb Hafit]]].
+  destruct Hens as [Hrsp [Hrbrk [Hrmb [Hrfit Hrlau]]]]. destruct Hent as [Hasp [Habrk [Hamb [Hafit Halau]]]].
   pose proof Hinp as Hinp'. destruct Hinp as [Hargv [Henvp _]].
   apply (shape_strong_equiv_ef _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (spec (in_argv inp) (in_fs inp))).
-  - apply (p_startup_rt rsp rbrk rmb rrnd source_alloc_limit inp _ Hrsp Hrbrk Hargv Henvp).
+  - (* LPS 08b1429: the run starts over run_segments; the walk is over the binary's own segments *)
+    apply RomStable.run_init; [reflexivity |].
+    apply (p_startup_rt rsp rbrk rmb rrnd source_alloc_limit inp _ Hrsp Hrbrk Hargv Henvp (valid_input_launch _ Hinp') Hrlau).
     intros tid regs mem Htid ME.
     assert (E : (0x1214c : word) = Z_to_bv 64 0x1214c) by (apply bv_eq; reflexivity).
-    rewrite E. exact (HP rsp rbrk rmb rrnd inp tid regs mem Hrsp Hrbrk Hrmb Hinp' Hrfit Htid ME).
-  - apply (u_startup_rt asp abrk amb arnd target_alloc_limit inp _ Hasp Habrk Hargv Henvp).
+    rewrite E. exact (HP rsp rbrk rmb rrnd inp tid regs mem Hrsp Hrbrk Hrmb Hinp' Hrfit Htid Hrlau ME).
+  - apply RomStable.run_init; [reflexivity |].
+    apply (u_startup_rt asp abrk amb arnd target_alloc_limit inp _ Hasp Habrk Hargv Henvp (valid_input_launch _ Hinp') Halau).
     intros tid regs mem Htid ME.
     assert (E : (0x1316c : word) = Z_to_bv 64 0x1316c) by (apply bv_eq; reflexivity).
-    rewrite E. exact (HU asp abrk amb arnd inp tid regs mem Hasp Habrk Hamb Hinp' Hafit Htid ME).
+    rewrite E. exact (HU asp abrk amb arnd inp tid regs mem Hasp Habrk Hamb Hinp' Hafit Htid Halau ME).
 Qed.

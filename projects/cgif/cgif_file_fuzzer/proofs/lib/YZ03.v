@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch premises entry_launch_ok_va and valid_input; the read-only-backing robustness of system-call nodes): changed TFIB_T, cgif_file_fuzzer_both_equiv_of_tfib. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import NArith ZArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -17,10 +18,13 @@ Unset Lia Cache. Unset Nia Cache.
 #[local] Existing Instance YK11.fx0.
 Open Scope Z_scope.
 Definition tfibsegs0 : list Segment := AsanUbsan.M.loaded_segments.
+(* LPS 727298f3: the launch's fifth [valid_entry] conjunct [entry_launch_ok_va] (the entry's
+   stack and mappings as the launch places them) is given to the ASan side too. *)
 Definition TFIB_T : Prop :=
 forall sp brk mbase rnd inp,
 valid_sp sp -> valid_brk tfibsegs0 brk -> valid_mmap_base mbase ->
 entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 srealizes tfibsegs0
 (init_config tfibsegs0 AsanUbsan.M.init_pc AsanUbsan.M.phdrs sp brk mbase rnd target_alloc_limit inp)
 (SPECX (LS:=ff_lib_shape) inp).
@@ -36,7 +40,12 @@ Proof.
 intros [sp brk mb rnd] [sp' brk' mb' rnd'] inp Hens Hent Hinp SWB.
 pose proof (valid_input_va_size _ Hinp) as Hsv48.
 rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hens. rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent.
-destruct Hens as [Hsp [Hbrk [Hmb Hfit]]]. destruct Hent as [Hsp' [Hbrk' [Hmb' Hfit']]].
+(* 75d69e00 Run.v:3747-3755: [valid_entry_sv48] is FIVE conjuncts now, with
+   [entry_launch_ok_va Sv48 en inp] appended last; f1006fe8's was four and had
+   no launch conjunct.  A four-name pattern leaves the launch fact buried
+   inside [Hfit], where the [try assumption] below cannot see it. *)
+destruct Hens as [Hsp [Hbrk [Hmb [Hfit Hlau]]]].
+destruct Hent as [Hsp' [Hbrk' [Hmb' [Hfit' Hlau']]]].
 eapply (shape_strong_equiv_efs_relim SanitizerBudgets.lim_source SRC_LIM_MIN SanitizerBudgets.lim_target
 src0segs _ _ sp brk mb rnd tfibsegs0 _ _ sp' brk' mb' rnd' (SPECX (LS:=ff_lib_shape) inp) (SPECX (LS:=ff_lib_shape) inp) inp).
 - exact lim_source_le_SRC_LIM_MIN.
@@ -44,6 +53,8 @@ src0segs _ _ sp brk mb rnd tfibsegs0 _ _ sp' brk' mb' rnd' (SPECX (LS:=ff_lib_sh
 - apply src0_realizesX; try assumption. apply Z.le_refl.
 - apply TFIB; assumption.
 - apply t_eq_refl.
+- RomStable.vdso_none.
+- RomStable.vdso_none.
 Qed.
 End a.
 Theorem strong_universal_error_free_cgif_file_fuzzer_both_of_tfib : TFIB_T ->

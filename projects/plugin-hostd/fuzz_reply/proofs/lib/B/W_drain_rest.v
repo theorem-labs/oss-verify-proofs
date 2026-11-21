@@ -14,12 +14,13 @@
    No UBSan trap (W_drain_cx.v:182: "REST (0x83e34 .. 0x83e90) has no trap").  Both exits are DI 0x833c0 at the
    round state dnext (dlive cx) (dxmx cx) s1 and D ++ ddata s1: the model's chunk of the round leaves the rest
    skipn p (dW s1) when it is at most LINE_LIMIT bytes and drops it (skip set) otherwise (dr_chunk_rest below).
-   STRUCTURE PORTED FROM a working branch 1c09e330abe lib/B/Prog/drain_p_rest_step.v (the two
+   STRUCTURE PORTED FROM a working branch lib/B/Prog/drain_p_rest_step.v (the two
    exits and their model) and lib/B/Prog/drain_p_rest_mm.v (the memmove of the rest); nothing is copied, the
    vocabulary (SRr over AR, journal ajournal_gx, symbolic seats) is this framework's.
    ARx form (an internal work row, the image-B twin of lib/A/W_drain_rest.v's Section cx): Section cx proves dr_rest_x,
    lib/B/W_drain_cx_x.v's dr_rest_stmt_x at the room texts, over any allocator relation ARx, its journal at
    W_contract_x.v's DRAIN_STK_x; the AR walk dr_rest (Section c) is unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -465,7 +466,7 @@ Definition drr_eblks_rest (e : rentry) : list (Z * Z) :=
 (if re_hp e =? 0 then [] else [(re_hp e, re_kh e)]) ++
 map (fun k => (key_addr k, Z.of_nat (length (key_text k)) + 1)) (re_keys e).
 
-(* lib/B/W_drain_topb_bk.v:641-689 dtk_aentry_junk (a working branch c0a3958f203),
+(* lib/B/W_drain_topb_bk.v:641-689 dtk_aentry_junk (a working branch),
    with the used bytes, the skip flag and the junk all replaced and the held keys' bytes kept *)
 Lemma drr_aentry_move : forall ly S (W : world SEGS) m m' e sk u U J,
 aentry_okx B ly S W m e -> 0 < re_cap e ->

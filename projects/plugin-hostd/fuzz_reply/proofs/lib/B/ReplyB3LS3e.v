@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyLS.v, with its module paths and module names changed; 340 of its 445 lines of code are new or changed and 489 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* proves no function (kind: model and invariant lemmas): fr_ENT, the entry half of LS v3 at image B, its twin of
    every rule, and the exit's LS_exit_end CONCLUDING fr_surv *)
 (* Theorem Labs, 2026-10: the image-B (fuzz_reply.asan-ubsan) port of lib/A/ReplyLS3e.v (sha256
-   e92ab3744c8b; internal record) at d9e8f914caa (row G-BLS3-port).  Every definition
+   e92ab3744c8b; internal record) (row G-BLS3-port).  Every definition
    is A's text and every lemma keeps A's name and statement but for the swaps below; each piece cites its A line
    (A = lib/A/ReplyLS3e.v).
    A -> B SWAPS (as lib/B/ReplyB3LS3.v and ReplyB3LS3Arms.v make them):
@@ -39,7 +40,7 @@
 (* The entry half of LS v3: fr_ENT, the conjunct that keeps the call's REST the entry's rest, its twin of every
    rule, and the exit's LS_exit_end CONCLUDING fr_surv.  proves no function (kind: invariant lemma).
 
-   WHY.  a8's fr_surv (ACfn_cf.v at a389032ec36 :94-98) relates the entry's live blocks to the return's.  Row B1c's
+   WHY.  a8's fr_surv (ACfn_cf.v :94-98) relates the entry's live blocks to the return's.  Row B1c's
    LS_exit_end could not conclude it, because fr_LS3's block relation is `exists rest` and every cut forgets which
    rest it was (the finding of 2026-10-30 03:0xZ).  fr_ENT carries it:
 
@@ -394,7 +395,7 @@ Proof.
 Qed.
 
 (* ================================================================== the gone arm's end (A :355-385) *)
-(* 6a2e02357a4 GN_RI_end's premises, in gx6_end_LS3c's order (lib/A/ReplyLS3cTopxGoneF.v:140-163), over B's gone
+(* GN_RI_end's premises, in gx6_end_LS3c's order (lib/A/ReplyLS3cTopxGoneF.v:141-164), over B's gone
    arm's model (lib/B/W_LLVMFuzzerTestOneInput_gone_base.v); fr_ENT needs only the block relation and fr_LS3's rest, so
    RINV, gn_op, the per-entry premise, REQ1-REQ3, gn_pairs, gn_after_rig, gn_rig_ok, gn_run, mo_le and REQ5 are taken
    and not read. *)
@@ -454,7 +455,7 @@ Variable ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte
 Variable G_fr : list (Z * Z).
 Variable fr_FP : bvmap 5 word -> alayout -> astate -> world segs -> (word -> option byte) -> list (Z * Z).
 
-(* copied from a8's working branch a389032ec36 lib/A/ACfn_cf.v:94-98 (its fr_hblks is the cut's, the
+(* copied from a8's working branch lib/A/ACfn_cf.v:94-98 (its fr_hblks is the cut's, the
    one read above) (A :399-405) *)
 Definition fr_surv_e (ly : alayout) (S : astate) (W : world segs) (mem : word -> option byte)
   (ly' : alayout) (S' : astate) (W' : world segs) (mem' : word -> option byte) : Prop :=
@@ -505,7 +506,7 @@ Qed.
        at :4811-4812.
      HND - the return's blocks without duplicates.  The walk has ARx there (HAR2 at :4803, from
        ajournal_gx_AR_x on the journal premise), and NoDup (ablocks B ly S) is AR's standard law
-       (W_LLVMFuzzerTestOneInput_add.v:276 ad_nodup); HHB2 at :4802-4805 is proved from exactly that and BLKN,
+       (W_LLVMFuzzerTestOneInput_add.v:277 ad_nodup); HHB2 at :4802-4805 is proved from exactly that and BLKN,
        and EB at :4810 carries it across stack_free_state. *)
 Lemma LS_exit_end3e : forall cx t m ly3 S3 rest ly' S' (W' : world segs) mem' md' fpos k' C cap out,
   fr_LS3c B CALL_ROOM_B cx t m ly3 S3 -> fr_OUT OM cx t m ly3 S3 -> fr_ENT cx m ly3 S3 ->

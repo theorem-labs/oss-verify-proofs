@@ -2,11 +2,11 @@
    pin c3796c0b38f3, twin 80e82127e8ca; 0x87e38, 5312 bytes, 1328 instructions, 41 inline checks, 34 UBSan trap
    branches to the `unimp` at 0x891c8, 53 calls, a 352-byte real frame and a class-5 side-stack frame of 1152 bytes):
    the walk proving reac_segconf_parse_file_contract (lib/B/Prog/reac_segconf_parse_file_c.v, the B-kit copy lane's B copy of
-   the image-A owner's image-independent text, closed against G3 FINAL at 6f783602b5e3) at image B's numbers. The
+   the image-A owner's image-independent text, closed against G3 FINAL) at image B's numbers. The
    image-B composition and assembly lanes of the image-B G3 walk owner, 2026-10-30.
     ADAPTED from the image-A G3 walk owner's image-A split (lib/A/Prog/pf_pieces.v and pf_compose.v on working
     branches) and the unit owner's UBSan piece walks (lib/U/Prog/pf_*.v on working branches),
-   re-derived on image B's code as 16 segments (lib/B/Prog/pf_pieces.v, the image-B piece statements at 80a6c9c97a8b: its head comment
+   re-derived on image B's code as 16 segments (lib/B/Prog/pf_pieces.v, the image-B piece statements: its head comment
    holds the B cut table, the trap facts and the positional names checked) and one composition (lib/B/Prog/pf_comp.v,
    pf_pieces_give_contract_holds).
    The theorem is the composition applied to the 16 segment statements S_B1 .. S_B12 (with S_B5 = S_B5h /\ S_B5t),
@@ -66,7 +66,7 @@
                    B5, B6, B7, B8b, B9, B10b, B11a, B11b, B11c
      SSPX        the stack-protector cells at every AR state                       B1, B6, B7, B8b, B9, B10b, B11c
    SSPX stays a hypothesis here; SegRecCells.seg_rec_cells discharges it at the close.
-   IMAGE B'S PARAMETER VALUES (lib/B/Prog/SegInstB.v, the image-B harness owner 1f771e2f2066; pf_pieces.pf_B_values checks them by
+   IMAGE B'S PARAMETER VALUES (lib/B/Prog/SegInstB.v, the image-B harness owner; pf_pieces.pf_B_values checks them by
    computation): the entry BASE + AF_reac_segconf_parse_file (= seg_text + 0x3078 = 0x87e38, B's SegList.v);
    STK_reac_segconf_parse_file = 12832; RLO_A = 0xa1c60, RHI_A = 0xa3f08 (.data.rel.ro start .. .got end of the
    twin); catA = 0xa20a0 (fuzz_catalogue); gotwA = 0xa3e98 (the GOT word of the stack-protector guard), guardA =

@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumD.v, with its module paths and module names changed; 1378 of its 1493 lines of code are new or changed and 601 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/VrdNumEnd.v, with its module paths and module names changed; 40 of its 73 lines of code are new or changed and 1460 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, slice S5b, lanes VnumG / A2NumP (worker a Theorem Labs lane): parse_value's NUMBER ARM in image A, assembled.
    rule 24: no function proved. rule 24: proves no function (kind: segment lemma).
    vrd_num_a_P is VrdNum.vrd_num_a_stmt_P: the arm with the GENERIC MEMORY INVARIANT P and its three laws
@@ -10,7 +11,7 @@
    must be in the segment's STATEMENT; the generic SRr_memnorm was measured NOT provable (a Theorem Labs lane), so it cannot be
    added afterwards. Its proof is VnumD's assembly VrdNumScan.vrd_num_a_from_tail_P at P with its two premises
    discharged and nothing more: the statics' image fact (PST_IMG) and the tail VrdNumTail.vrd_num_tail_P at P, whose
-   one end-segment hypothesis is A'End's VrdNumEnd.vrd_num_end (a working branch, code commit c656828872da,
+   one end-segment hypothesis is A'End's VrdNumEnd.vrd_num_end (a working branch, code,
    lib/A/VrdNumEnd.v blob bee19f17edc7), on the kit's post-implication reader text.
    THE OLD THEOREM vrd_num_a (vrd_num_a_stmt, no P) IS GONE: its tail needed a Section hypothesis that claimed memnorm
    at every allocator state (unprovable; deleted), and it is not the instance at P := fun _ => True, because

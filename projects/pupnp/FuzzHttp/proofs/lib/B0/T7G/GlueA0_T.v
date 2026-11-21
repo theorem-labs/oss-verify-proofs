@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the 27- or 29-pair auxv; the launch's input, mmap base and entry draw); and launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run.
@@ -128,14 +129,14 @@ Proof. intros V m l fuel lo hi HF C a Ha. exact (proj1 (cover_sound V m false l 
 
 Section SHZ_init.
   Context {HC : HasCeiling} {HG : HasGuard}.
-  Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw).
+  Variables (sp0 : word) (argv envp : list (list byte)) (inp : ProcInput) (mbase : word) (rnd : EntryDraw).
   Notation usp0 := (bv_unsigned sp0).
-  Notation IMGB := (build_stack_bytes rph sp0 argv envp uid hw rnd).
+  Notation IMGB := (build_stack_bytes (launch_auxv inp sp0 mbase) rph AENTRY sp0 (ed_top rnd) argv envp (in_execfn inp) (in_uid inp) (in_gid inp) (in_hwcap inp) rnd).
 
   #[using="Type"] Lemma shz_init : forall V (m : mem), Forall (mfact_ok asegs V m) both_mem_facts ->
     32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat = usp0 -> 0 <= V 6%nat < 256 -> 0 <= V 10%nat < 8 ->
     alloc_ceiling = usp0 - 8388608 -> 0x7fff80000000 <= usp0 ->
-    SHZ sp0 argv envp uid hw rnd m.
+    SHZ sp0 argv envp inp mbase rnd m.
   Proof.
     intros V m HM PSP R6 R10 CEIL SPLO. unfold SHZ.
     split. { split; [eapply (shz_of_cover V m _ 1200%nat); [exact HM| vm_compute; reflexivity]
@@ -185,67 +186,71 @@ Proof.
   cbn [cells_size csize]. rewrite Nat.add_0_r. eapply wr_at_sub0; [exact W| | |]; unfold sh, SHADOW_OFF; Z.div_mod_to_equations; lia.
 Qed.
 
-Section IMGK_init.
-  Variables (sp : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw).
-  Notation usp := (bv_unsigned sp).
-  Notation IMGB := (build_stack_bytes rph sp argv envp uid hw rnd).
-  Hypothesis FIT : usp + Z.of_nat (length IMGB) <= 2^64.
-  Hypothesis ARGC : 1 <= Z.of_nat (length argv) <= 1024.
-  Hypothesis L0R : Z.of_nat (length (nth 0 argv [])) <= 131071.
+Lemma stack_to_mem_in : forall (base : word) (bytes : list byte) (a : word),
+  bv_unsigned base <= bv_unsigned a < bv_unsigned base + Z.of_nat (length bytes) ->
+  stack_to_mem base bytes a = nth_error bytes (Z.to_nat (bv_unsigned a - bv_unsigned base)).
+Proof.
+  intros base bytes a H. unfold stack_to_mem. cbv beta zeta.
+  replace (Z.leb (bv_unsigned base) (bv_unsigned a)) with true by (symmetry; apply Z.leb_le; lia).
+  replace (Z.ltb (bv_unsigned a - bv_unsigned base) (Z.of_nat (length bytes))) with true by (symmetry; apply Z.ltb_lt; lia).
+  reflexivity.
+Qed.
 
-  #[using="uid hw rnd FIT ARGC L0R"] Lemma argv_first2 : firstn 2 (argv_ptrs sp argv envp ++ [Z_to_bv 64 0]) =
-    [Z_to_bv 64 (usp + 8 * argc argv + 8 * envc envp + 184);
-     Z_to_bv 64 (Z.b2z (1 <? argc argv) * (usp + 8 * argc argv + 8 * envc envp + Z.of_nat (length (nth 0 argv [])) + 185))].
+(* The block the program reads at main, from the launch: the first two argv pointers (the start-up chain's
+   cells) and the string area from argv[0] to the stack top, which nothing writes before main. *)
+Section IMGK_init.
+  Variables (sp : word) (inp : ProcInput) (mbase : word) (rnd : EntryDraw).
+  Notation usp := (bv_unsigned sp).
+  Notation AV := (in_argv inp).
+  Notation EV := (in_envp inp).
+  Notation EFN := (in_execfn inp).
+  Notation TOP := (ed_top rnd).
+  Notation IMGB := (build_stack_bytes (launch_auxv inp sp mbase) rph AENTRY sp (ed_top rnd) AV EV (in_execfn inp) (in_uid inp) (in_gid inp) (in_hwcap inp) rnd).
+  Hypothesis FIT : img_fits sp AV EV inp mbase rnd.
+  Hypothesis ARGC : 1 <= Z.of_nat (length AV).
+
+  #[using="ARGC"] Lemma argv_first2 : firstn 2 (argv_ptrs TOP AV EV EFN ++ [Z_to_bv 64 0]) =
+    [Z_to_bv 64 (str_base TOP AV EV EFN);
+     Z_to_bv 64 (Z.b2z (1 <? argc AV) * (str_base TOP AV EV EFN + Z.of_nat (length (nth 0 AV [])) + 1))].
   Proof.
-    unfold argv_ptrs, str_base, struct_size. destruct argv as [|a0 [|a1 r]]; [cbn in ARGC; lia| |].
-    - cbn [str_ptrs map app firstn nth length]. unfold argc. cbn [length Z.of_nat Pos.of_succ_nat]. cbn [Z.ltb Z.compare Pos.compare Pos.compare_cont Z.b2z Z.mul].
-      do 2 f_equal. lia.
+    unfold argv_ptrs. clear FIT. destruct (in_argv inp) as [|a0 [|a1 r]] eqn:EA; [pose proof ARGC as A'; try rewrite EA in A'; cbn in A'; lia| |].
+    - cbn [str_ptrs map app firstn nth]. replace (1 <? argc [a0]) with false by reflexivity. reflexivity.
     - cbn [str_ptrs map app firstn nth]. replace (1 <? argc (a0 :: a1 :: r)) with true by (symmetry; apply Z.ltb_lt; unfold argc; cbn [length]; lia).
-      cbn [Z.b2z]. f_equal; [f_equal; lia|]. f_equal. f_equal. lia.
+      cbn [Z.b2z]. rewrite Z.mul_1_l. reflexivity.
   Qed.
 
-  #[using="FIT ARGC L0R"] Lemma imgk_init : forall V (m : mem), Forall (mfact_ok asegs V m) both_mem_facts ->
-    32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat = usp ->
-    V 1%nat = argc argv -> V 2%nat = envc envp -> V 3%nat = Z.of_nat (length (nth 0 argv [])) ->
-    (forall a, usp + struct_size argv envp <= a < usp + Z.of_nat (length IMGB) - 16 ->
-       m (wa a) = wrap_mem rph sp argv envp uid hw rnd (wa a)) ->
-    IMGK sp argv envp uid hw rnd m.
+  #[using="FIT ARGC"] Lemma imgk_init : forall (m : mem),
+    bytes_at asegs m (usp + 8) (le8 (Z_to_bv 64 (str_base TOP AV EV EFN))) ->
+    bytes_at asegs m (usp + 16) (le8 (Z_to_bv 64 (Z.b2z (1 <? argc AV) * (str_base TOP AV EV EFN + Z.of_nat (length (nth 0 AV [])) + 1)))) ->
+    (forall a, str_base TOP AV EV EFN <= a < bv_unsigned TOP -> m (wa a) = wrap_mem inp mbase rph AENTRY sp rnd (wa a)) ->
+    IMGK sp AV EV inp mbase rnd m.
   Proof.
-    intros V m HM PSP P1 P2 P3 HID.
+    intros m C1 C2 HID.
+    pose proof (fits_facts sp AV EV inp mbase rnd FIT) as (L & S & X1 & X2 & T1 & T2 & T3).
+    assert (0 <= argc AV /\ 0 <= envc EV) by (unfold argc, envc; lia).
     pose proof (bv_unsigned_in_range 64 sp) as RSP. unfold bv_modulus in RSP. cbn in RSP.
-    split; [lia|]. split; [exact FIT|]. intros i [Hi|Hi].
-    -
-      mf V m HM (MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit 8)) 8 (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 184))) F1.
-      mf V m HM (MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit 16)) 8 (ZMul (ZLtu (ZLit 1) (ZV 1)) (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZV 3) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10))))))) (ZLit 185)))) F2.
-      rewrite P1, P2 in F1. rewrite P1, P2, P3 in F2.
-      replace (32768 * V 0%nat + (16 * V 6%nat + 4096 * V 10%nat) + 8) with (usp + 8) in F1 by lia.
-      replace (32768 * V 0%nat + (16 * V 6%nat + 4096 * V 10%nat) + 16) with (usp + 8 + Z.of_nat (length (le8 (Z_to_bv 64 (usp + 8 * argc argv + 8 * envc envp + 184))))) in F2 by (rewrite length_le8; lia).
-      replace (32768 * V 0%nat + (8 * argc argv + (8 * envc envp + (16 * V 6%nat + 4096 * V 10%nat))) + 184) with (usp + 8 * argc argv + 8 * envc envp + 184) in F1 by lia.
-      replace (1 mod two64 <? argc argv mod two64) with (1 <? argc argv) in F2
-        by (unfold two64; rewrite !Z.mod_small by (unfold argc; lia); reflexivity).
-      replace (32768 * V 0%nat + (8 * argc argv + (8 * envc envp + (Z.of_nat (length (nth 0 argv [])) + (16 * V 6%nat + 4096 * V 10%nat)))) + 185)
-        with (usp + 8 * argc argv + 8 * envc envp + Z.of_nat (length (nth 0 argv [])) + 185) in F2 by lia.
-      pose proof (proj2 (bytes_at_app asegs m (usp + 8) _ _) (conj F1 F2)) as F12.
+    assert (FIT64 : usp + Z.of_nat (length IMGB) <= 2^64) by lia.
+    split; [exact FIT|]. split; [lia|]. split; [exact FIT64|]. intros i [Hi|Hi].
+    - replace (usp + 16) with (usp + 8 + Z.of_nat (length (le8 (Z_to_bv 64 (str_base TOP AV EV EFN))))) in C2 by (rewrite length_le8; lia).
+      pose proof (proj2 (bytes_at_app asegs m (usp + 8) _ _) (conj C1 C2)) as F12.
       destruct F12 as (_ & _ & FB).
-
-      pose proof (stack_argv2 sp argv envp uid hw rnd _ (IMGK_of_bytes_at sp argv envp uid hw rnd _ (mcan_img sp argv envp uid hw rnd FIT)) ltac:(lia)) as S.
-      rewrite argv_first2 in S. cbn [u64s] in S. rewrite app_nil_r in S. destruct S as (_ & _ & SB).
-      destruct (mcan_img sp argv envp uid hw rnd FIT) as (_ & _ & MB).
-      assert (L16 : length (le8 (Z_to_bv 64 (usp + 8 * argc argv + 8 * envc envp + 184)) ++
-                            le8 (Z_to_bv 64 (Z.b2z (1 <? argc argv) * (usp + 8 * argc argv + 8 * envc envp + Z.of_nat (length (nth 0 argv [])) + 185)))) = 16%nat)
+      pose proof (stack_argv2 sp AV EV inp mbase rnd _ (IMGK_of_bytes_at sp AV EV inp mbase rnd _ FIT (mcan_img sp AV EV inp mbase rnd FIT64)) ltac:(lia)) as SA.
+      rewrite argv_first2 in SA. cbn [u64s] in SA. rewrite app_nil_r in SA. destruct SA as (_ & _ & SB).
+      destruct (mcan_img sp AV EV inp mbase rnd FIT64) as (_ & _ & MB).
+      assert (L16 : length (le8 (Z_to_bv 64 (str_base TOP AV EV EFN)) ++
+                            le8 (Z_to_bv 64 (Z.b2z (1 <? argc AV) * (str_base TOP AV EV EFN + Z.of_nat (length (nth 0 AV [])) + 1)))) = 16%nat)
         by (rewrite length_app, !length_le8; reflexivity).
-      specialize (FB (i - 8)%nat ltac:(unfold word_to_le_bytes in *; rewrite L16; lia)).
+      specialize (FB (i - 8)%nat ltac:(rewrite L16; lia)).
       specialize (SB (i - 8)%nat ltac:(rewrite L16; lia)).
-      pose proof (build_stack_bytes_length rph sp argv envp uid hw rnd) as BL.
-      pose proof (raw_len_nonneg rph sp argv envp uid hw rnd) as RN.
-      specialize (MB i ltac:(unfold raw_len, struct_size, argc, envc in *; lia)).
+      specialize (MB i ltac:(lia)).
       replace (usp + 8 + Z.of_nat (i - 8)) with (usp + Z.of_nat i) in FB, SB by lia.
       rewrite FB. rewrite <- MB. rewrite SB. reflexivity.
-    -
-      pose proof (HID (usp + Z.of_nat i) ltac:(lia)) as E.
-      rewrite (init_at_block rph sp argv envp uid hw rnd) in E by (rewrite wa_unsigned by lia; lia).
+    - pose proof (HID (usp + Z.of_nat i) ltac:(lia)) as E.
+      rewrite wrap_above_sp in E by (rewrite wa_unsigned by lia; lia).
+      rewrite stack_to_mem_in in E by (rewrite wa_unsigned by lia; unfold entry_stack_image; lia).
       rewrite wa_unsigned in E by lia. replace (Z.to_nat (usp + Z.of_nat i - usp)) with i in E by lia.
-      unfold mrd. rewrite E. destruct (nth_error IMGB i) as [b|] eqn:N; [reflexivity|]. apply nth_error_None in N. lia.
+      unfold mrd. rewrite E. unfold entry_stack_image.
+      destruct (nth_error IMGB i) as [b|] eqn:N; [reflexivity|]. apply nth_error_None in N. lia.
   Qed.
 End IMGK_init.
 
@@ -280,6 +285,13 @@ Lemma stk_mrestrict : forall H (m : mem) lo hi, stk asegs m lo hi -> (forall a, 
 Proof.
   intros H m lo hi (S0 & S1 & S) HF. split; [exact S0|]. split; [exact S1|]. intros a Ha.
   destruct (S a Ha) as [W R]. unfold wview, mrd, mrestrict in *. rewrite (HF a Ha). split; [exact W| exact R].
+Qed.
+
+Lemma bytes_at_mrestrict : forall H (m : mem) A bs, bytes_at asegs m A bs ->
+  (forall i, (i < length bs)%nat -> H (wa (A + Z.of_nat i)) = false) -> bytes_at asegs (mrestrict H m) A bs.
+Proof.
+  intros H m A bs (B0 & B1 & B) HF. split; [exact B0|]. split; [exact B1|]. intros i Hi.
+  pose proof (B i Hi) as Bi. unfold mrd, mrestrict in *. rewrite (HF i Hi). exact Bi.
 Qed.
 
 Lemma bytes_at_le8_inj : forall (m : mem) A (x y : word), bytes_at asegs m A (le8 x) -> bytes_at asegs m A (le8 y) -> x = y.

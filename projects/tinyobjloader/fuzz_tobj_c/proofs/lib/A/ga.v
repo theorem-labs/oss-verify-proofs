@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the room after the printed string weakened from its length plus 17 bytes to its length plus 10, what the launch's image holds after the exec file name at LPS 727298f3: HP0str, HLN, P0Us, C_P0str, D_P0str and U_P0str; sfl's last fact from plus 16 to plus 10, with sfl_holds and the Sslk1 steps of fps_tail_safe and fps_tail_ex to match; argv[0] taken at any alignment, as the launch's image gives it at LPS 727298f3: FpsU's certificates, okBR_6 here and okA_U, okA_U64, okR_U and okBR_U, at every residue 0 to 3 of the string's address mod 4 as FpsC's, the hypothesis Hal dropped, U_sum and U_sumx with a True alignment premise, the usage site's alignment test U_al4 and U_PX removed from SiteU's checks and the site, as at the C and D sites). *)
 (* [comment removed for export] *)
 Local Set Warnings "-require-in-module".
 (* [comment removed for export] *)
@@ -31,7 +32,7 @@ Import ListNotations.
 Open Scope Z_scope.
 
 Lemma okBR_6 : ltac2:(tb__ "0|0|
-S4S1SdS0S0SbS8S9R1Z0SaScS7A7Ln;S5S2S0SeS6U43U7A2A4A3S3A3").
+S4S1SdS0S0SdS0S0SbS8S9R2R1SaScS7A7Lr;S5S2S0SeS6U0U4A2A4A3Ln;S5S2S0SeS6U43U7A2A4A3S3A3").
 Proof. vm_cast_no_check (@eq_refl bool true). Qed.
 End FpsU_a6.
 
@@ -324,31 +325,31 @@ Lemma okA_pickn : ltac2:(tb__ "0|0|
 S1SeF_;S12S1A1S1S16SeS36S1R3R2A3S10A3S35S1R2R3A3S16SeR5R3A1S10A3F_;F_;Fn;Fns;Fg;").
 Proof. intros g ns n H Hn. exact (proj1 (forallb_forall _ _) H n Hn). Qed.
 
-Lemma okA_U : ltac2:(tb__ "0|2|
-S1S17S8Z0M0R1A2S8R1Z3fA2A2S16SeS7S5R2G0S25A3S2S3R2SaSaS9SdS1S2A2A1M1R2A2S9SdS1S3A2A1A2S6G1R2G0S2cS25A5A6S10A3F_;Fn;").
+Lemma okA_U : ltac2:(tb__ "0|0|
+S1S1S17S8Z0R2A2S8R2Z3fA2A2S17S8Z0R2A2S8R2Z3A2A2S16SeS7S5R4R3S25A3S2S3R4SaSaS9SdS1S2A2A1R4A2S9SdS1S3A2A1A2S6S9SdS1S2A2A1R4R3S2cS25A5A6S10A3F_;F_;Fr;Fn;").
 Proof.
-  intros n Hn. change (Z.of_nat (length PRE_U)) with 7. change (Z.of_nat (length SUF_U)) with 7. replace (7 + n + 7) with (14 + n) by lia.
+  intros n r Hn Hr. change (Z.of_nat (length PRE_U)) with 7. change (Z.of_nat (length SUF_U)) with 7. replace (7 + n + 7) with (14 + n) by lia.
   change FpsU_cert.T7s with OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7s.
-  assert (HR : In 0 [0]) by (left; reflexivity).
-  set (g := fun n => tailA_n (FPA n OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7s) (fun r => FQA n r OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7s) PRE_U SUF_U n (14 + n) (fun r => T8 7 n r factsS OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7s) [0]).
+  assert (HR : In r [0; 1; 2; 3]) by (cbn; lia).
+  set (g := fun n => tailA_n (FPA n OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7s) (fun r => FQA n r OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7s) PRE_U SUF_U n (14 + n) (fun r => T8 7 n r factsS OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7s) [0; 1; 2; 3]).
   assert (Hg : g n = true).
   { destruct (Z_lt_le_dec n 16); [apply (okA_pickn g _ n okA_0); apply In_seqZ; cbn; lia|].
     destruct (Z_lt_le_dec n 32); [apply (okA_pickn g _ n okA_1); apply In_seqZ; cbn; lia|].
     destruct (Z_lt_le_dec n 48); [apply (okA_pickn g _ n okA_2); apply In_seqZ; cbn; lia|].
     apply (okA_pickn g _ n okA_3); apply In_seqZ; cbn; lia. }
-  exact (tailA_n_sound (FPA n OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7s) (fun r => FQA n r OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7s) PRE_U SUF_U n (14 + n) 7 factsS OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7s [0] 0
+  exact (tailA_n_sound (FPA n OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7s) (fun r => FQA n r OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7s) PRE_U SUF_U n (14 + n) 7 factsS OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7s [0; 1; 2; 3] r
            ltac:(unfold FPA; discriminate) Hg HR).
 Qed.
 
-Lemma okA_U64 : ltac2:(tb__ "0|2|
-S1S16S1R1Z40A3S16SeS7S5R2Z0M0S24A3S2S3R2SaSaS9SdS1S2A2A1M1R2A2S9SdS1S3A2A1A2S6G1R2G0S2bS24A5A6S10A3F_;Fn;").
+Lemma okA_U64 : ltac2:(tb__ "0|0|
+S1S1S16S1R2Z40A3S17S8Z0R2A2S8R2Z3A2A2S16SeS7S5R4R3S24A3S2S3R4SaSaS9SdS1S2A2A1R4A2S9SdS1S3A2A1A2S6S9SdS1S2A2A1R4R3S2bS24A5A6S10A3F_;F_;Fr;Fn;").
 Proof.
-  intros n ->. change (Z.of_nat (length PRE_U)) with 7. change (Z.of_nat (length SUF_U)) with 7. change (7 + 64 + 7) with (14 + 64).
+  intros n r -> Hr. change (Z.of_nat (length PRE_U)) with 7. change (Z.of_nat (length SUF_U)) with 7. change (7 + 64 + 7) with (14 + 64).
   change FpsU_cert.T7b with OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7b.
-  assert (HR : In 0 [0]) by (left; reflexivity).
-  set (g := fun n => tailA_n (FPA n OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7b) (fun r => FQA n r OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7b) PRE_U SUF_U n (14 + n) (fun r => T8 7 n r factsB OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7b) [0]).
+  assert (HR : In r [0; 1; 2; 3]) by (cbn; lia).
+  set (g := fun n => tailA_n (FPA n OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7b) (fun r => FQA n r OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7b) PRE_U SUF_U n (14 + n) (fun r => T8 7 n r factsB OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7b) [0; 1; 2; 3]).
   assert (Hg : g 64 = true) by (apply (okA_pickn g _ 64 okA_4); left; reflexivity).
-  exact (tailA_n_sound (FPA 64 OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7b) (fun r => FQA 64 r OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7b) PRE_U SUF_U 64 (14 + 64) 7 factsB OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7b [0] 0
+  exact (tailA_n_sound (FPA 64 OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7b) (fun r => FQA 64 r OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7b) PRE_U SUF_U 64 (14 + 64) 7 factsB OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7b [0; 1; 2; 3] r
            ltac:(unfold FPA; discriminate) Hg HR).
 Qed.
 
@@ -366,8 +367,6 @@ Let str : list byte := firstn (Z.to_nat n) (rl rho 3).
 Let Kwr : ltac2:(tb__ "0|0|
 SfS1fFk;") := ltac2:(tb__ "0|0|
 S1cVJ0;S2S3Vstr;A4").
-Hypothesis Hal : ltac2:(tb__ "0|0|
-S16S1ScS15Q40S3cVrho;S2dA2A2Z4A2Z0A3").
 Hypothesis HokK : ltac2:(tb__ "0|0|
 SfS20S0Vok;VKwr;R1A1A3Fk;").
 Hypothesis HokP : ltac2:(tb__ "0|0|
@@ -378,16 +377,16 @@ Theorem fpsU_small : ltac2:(tb__ "0|0|
 S8Vn;Z3fA2S23S0Vok;S1eS0VJ0;S19Vrho;Vtp;A5S1dS0VKwr;SdS14Q8A1S1bS2S3Vstr;A3A2A1S21Vrho;Vtp;S4A6A4F_;").
 Proof.
   intros Hn. pose proof (urange (rw rho 16)) as R16.
-  apply (FpsU_sum.fpsA_sound_S ok J0 PRE_U SUF_U preU1 Hst0 Hfd2 rho tp HFN HokK HokP (FTA n 0 FpsU_cert.T7s)); [unfold n in *; lia | cbn [length PRE_U SUF_U Z.of_nat Pos.of_succ_nat Pos.succ]; unfold n in *; lia |].
-  rewrite Hal. apply okA_U. unfold n in *; lia.
+  apply (FpsU_sum.fpsA_sound_S ok J0 PRE_U SUF_U preU1 Hst0 Hfd2 rho tp HFN HokK HokP (FTA n (bv_unsigned (eval rho sX) mod 4) FpsU_cert.T7s)); [unfold n in *; lia | cbn [length PRE_U SUF_U Z.of_nat Pos.of_succ_nat Pos.succ]; unfold n in *; lia |].
+  apply okA_U; [unfold n in *; lia | pose proof (Z.mod_pos_bound (bv_unsigned (eval rho sX)) 4 ltac:(lia)); lia].
 Qed.
 
 Theorem fpsU_small_ex : ltac2:(tb__ "0|0|
 S8Vn;Z3fA2S22S0S1eS0VJ0;S19Vrho;Vtp;A5S1dS0VKwr;SdS14Q8A1S1bS2S3Vstr;A3A2A1S21Vrho;Vtp;S4A6A3F_;").
 Proof.
   intros Hn. pose proof (urange (rw rho 16)) as R16.
-  apply (FpsU_sum.fpsA_sound_S_ex J0 PRE_U SUF_U preU1 Hst0 Hfd2 rho tp HFN (FTA n 0 FpsU_cert.T7s)); [unfold n in *; lia | cbn [length PRE_U SUF_U Z.of_nat Pos.of_succ_nat Pos.succ]; unfold n in *; lia |].
-  rewrite Hal. apply okA_U. unfold n in *; lia.
+  apply (FpsU_sum.fpsA_sound_S_ex J0 PRE_U SUF_U preU1 Hst0 Hfd2 rho tp HFN (FTA n (bv_unsigned (eval rho sX) mod 4) FpsU_cert.T7s)); [unfold n in *; lia | cbn [length PRE_U SUF_U Z.of_nat Pos.of_succ_nat Pos.succ]; unfold n in *; lia |].
+  apply okA_U; [unfold n in *; lia | pose proof (Z.mod_pos_bound (bv_unsigned (eval rho sX)) 4 ltac:(lia)); lia].
 Qed.
 
 Lemma okC_U : ltac2:(tb__ "0|1|
@@ -414,32 +413,35 @@ Theorem fpsU_64 : ltac2:(tb__ "0|0|
 S16S1Vn;Z40A3S23S0Vok;S1eS0VJ0;S19Vrho;Vtp;A5S1dS0VKwr;SdS14Q8A1S1bS2S3Vstr;A3A2A1S21Vrho;Vtp;S4A6A4F_;").
 Proof.
   intros Hn.
-  apply (FpsU_sum.fpsA_sound_B ok J0 PRE_U SUF_U preU1 Hst0 Hfd2 rho tp HFN HokK HokP (FTA n 0 FpsU_cert.T7b)); [unfold n in *; lia | cbn [length PRE_U SUF_U Z.of_nat Pos.of_succ_nat Pos.succ]; unfold n in *; lia |].
-  rewrite Hal. apply okA_U64. exact Hn.
+  apply (FpsU_sum.fpsA_sound_B ok J0 PRE_U SUF_U preU1 Hst0 Hfd2 rho tp HFN HokK HokP (FTA n (bv_unsigned (eval rho sX) mod 4) FpsU_cert.T7b)); [unfold n in *; lia | cbn [length PRE_U SUF_U Z.of_nat Pos.of_succ_nat Pos.succ]; unfold n in *; lia |].
+  apply okA_U64; [exact Hn | pose proof (Z.mod_pos_bound (bv_unsigned (eval rho sX)) 4 ltac:(lia)); lia].
 Qed.
 Theorem fpsU_64_ex : ltac2:(tb__ "0|0|
 S16S1Vn;Z40A3S22S0S1eS0VJ0;S19Vrho;Vtp;A5S1dS0VKwr;SdS14Q8A1S1bS2S3Vstr;A3A2A1S21Vrho;Vtp;S4A6A3F_;").
 Proof.
   intros Hn.
-  apply (FpsU_sum.fpsA_sound_B_ex J0 PRE_U SUF_U preU1 Hst0 Hfd2 rho tp HFN (FTA n 0 FpsU_cert.T7b)); [unfold n in *; lia | cbn [length PRE_U SUF_U Z.of_nat Pos.of_succ_nat Pos.succ]; unfold n in *; lia |].
-  rewrite Hal. apply okA_U64. exact Hn.
+  apply (FpsU_sum.fpsA_sound_B_ex J0 PRE_U SUF_U preU1 Hst0 Hfd2 rho tp HFN (FTA n (bv_unsigned (eval rho sX) mod 4) FpsU_cert.T7b)); [unfold n in *; lia | cbn [length PRE_U SUF_U Z.of_nat Pos.of_succ_nat Pos.succ]; unfold n in *; lia |].
+  apply okA_U64; [exact Hn | pose proof (Z.mod_pos_bound (bv_unsigned (eval rho sX)) 4 ltac:(lia)); lia].
 Qed.
 
 Lemma okR_U : ltac2:(tb__ "0|0|
-S1S17S8Z41R1A2S8R1Z42A2A2S18S29S29S16S13S29A1S2aS2S3Z7R3Z0S2bS1aA7S11S29R1A2A3Lo;A2F_;Fm;").
+S1S1S17S8Z41R2A2S8R2Z42A2A2S17S8Z0R2A2S8R2Z3A2A2S18S29S29S16S13S29A1S2aS2S3Z7R5R4S2bS1aA7S11S29R1A2A3Lo;A2F_;F_;Fr;Fm;").
 Proof.
-  intros m Hm.
-  assert (Hg : tailAR_ok PRE_U SUF_U 7 m 0 factsB OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7b = true).
-  { apply (okA_pickn (fun m => tailAR_ok PRE_U SUF_U 7 m 0 factsB OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7b) [65; 66] m okR_5).
-    destruct (Z.eq_dec m 65) as [->|]; [left; reflexivity | right; left; lia]. }
-  unfold tailAR_ok in Hg. destruct (tailAR PRE_U SUF_U 7 m 0 factsB OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7b) as [o|]; [exists o; reflexivity | discriminate].
+  intros m r Hm Hr.
+  assert (Hg : tailAR_ok PRE_U SUF_U 7 m r factsB OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7b = true).
+  { apply (okA_pickn (fun r => tailAR_ok PRE_U SUF_U 7 m r factsB OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7b) [0; 1; 2; 3] r).
+    - apply (okA_pickn (fun m => forallb (fun r => tailAR_ok PRE_U SUF_U 7 m r factsB OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7b) [0; 1; 2; 3]) [65; 66] m okR_5).
+      destruct (Z.eq_dec m 65) as [->|]; [left; reflexivity | right; left; lia].
+    - cbn. lia. }
+  unfold tailAR_ok in Hg. destruct (tailAR PRE_U SUF_U 7 m r factsB OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7b) as [o|]; [exists o; reflexivity | discriminate].
 Qed.
 Theorem fpsU_6566 : ltac2:(tb__ "0|0|
 S17S8Z41Vn;A2S8Vn;Z42A2A2S23S0Vok;S1eS0VJ0;S19Vrho;Vtp;A5S1dS0VKwr;SdS14Q8A1S1bS2S3Vstr;A3A2A1S21Vrho;Vtp;S4A6A4F_;").
 Proof.
-  intros Hn. destruct (okR_U n Hn) as [o Hcert].
+  intros Hn. pose proof (Z.mod_pos_bound (bv_unsigned (eval rho sX)) 4 ltac:(lia)) as HrA.
+  destruct (okR_U n (bv_unsigned (eval rho sX) mod 4) Hn ltac:(lia)) as [o Hcert].
   apply (FpsU_sum.fps_sound_B_gen ok J0 PRE_U SUF_U preU1 Hst0 rho tp HFN HokK); [unfold n in *; lia | cbn [length PRE_U Z.of_nat Pos.of_succ_nat Pos.succ]; unfold n in *; lia |].
-  unfold FpsU_sum.tail_stmt. change (Z.of_nat (length PRE_U)) with 7. change FpsU_cert.T7b with OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7b. rewrite Hal.
+  unfold FpsU_sum.tail_stmt. change (Z.of_nat (length PRE_U)) with 7. change FpsU_cert.T7b with OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7b.
   intros Hstr_len HlT8 HnT8 rho7 Hag7. pose proof (urange (rw rho 16)) as R16. fold n str in Hstr_len.
   apply (Fps_tailR.tailAR_sound ok J0 PRE_U SUF_U str Hst0 Hfd2 HokK HokP rho tp) with (len := 7 + n + 7) (o := o);
     [rewrite Hstr_len; reflexivity | rewrite Hstr_len; unfold n; lia | cbn [length PRE_U SUF_U Z.of_nat Pos.of_succ_nat Pos.succ]; lia | lia
@@ -448,9 +450,10 @@ Qed.
 Theorem fpsU_6566_ex : ltac2:(tb__ "0|0|
 S17S8Z41Vn;A2S8Vn;Z42A2A2S22S0S1eS0VJ0;S19Vrho;Vtp;A5S1dS0VKwr;SdS14Q8A1S1bS2S3Vstr;A3A2A1S21Vrho;Vtp;S4A6A3F_;").
 Proof.
-  intros Hn. destruct (okR_U n Hn) as [o Hcert].
+  intros Hn. pose proof (Z.mod_pos_bound (bv_unsigned (eval rho sX)) 4 ltac:(lia)) as HrA.
+  destruct (okR_U n (bv_unsigned (eval rho sX) mod 4) Hn ltac:(lia)) as [o Hcert].
   apply (FpsU_sum.fps_sound_B_gen_ex J0 PRE_U SUF_U preU1 Hst0 rho tp HFN); [unfold n in *; lia | cbn [length PRE_U Z.of_nat Pos.of_succ_nat Pos.succ]; unfold n in *; lia |].
-  unfold FpsU_sum.tail_stmt_ex. change (Z.of_nat (length PRE_U)) with 7. change FpsU_cert.T7b with OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7b. rewrite Hal.
+  unfold FpsU_sum.tail_stmt_ex. change (Z.of_nat (length PRE_U)) with 7. change FpsU_cert.T7b with OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7b.
   intros Hstr_len HlT8 HnT8 rho7 Hag7. pose proof (urange (rw rho 16)) as R16. fold n str in Hstr_len.
   apply (Fps_tailR.tailAR_sound_ex J0 PRE_U SUF_U str Hst0 Hfd2 rho tp) with (len := 7 + n + 7) (o := o);
     [rewrite Hstr_len; reflexivity | rewrite Hstr_len; unfold n; lia | cbn [length PRE_U SUF_U Z.of_nat Pos.of_succ_nat Pos.succ]; lia | lia
@@ -458,19 +461,23 @@ Proof.
 Qed.
 
 Lemma okBR_U : ltac2:(tb__ "0|0|
-S1S17S8Z43R1A2S8R1Z49A2A2S18S26S26S16S13S26A1S28S2S3R3Z0S27S2bS1aA7S11S26R1A2A3Lo;A2F_;Fm;").
+S1S1S17S8Z43R2A2S8R2Z49A2A2S17S8Z0R2A2S8R2Z3A2A2S18S26S26S16S13S26A1S28S2S3R5R4S27S2bS1aA7S11S26R1A2A3Lo;A2F_;F_;Fr;Fm;").
 Proof.
-  intros m Hm.
-  assert (Hg : tailBR_ok PRE_U SUF_U m 0 SUFA_U factsB OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7b = true).
-  { apply (okA_pickn (fun m => tailBR_ok PRE_U SUF_U m 0 SUFA_U factsB OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7b) _ m okBR_6). apply In_seqZ. cbn. lia. }
-  unfold tailBR_ok in Hg. destruct (tailBR PRE_U SUF_U m 0 SUFA_U factsB OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7b) as [o|]; [exists o; reflexivity | discriminate].
+  intros m r Hm Hr.
+  assert (Hg : tailBR_ok PRE_U SUF_U m r SUFA_U factsB OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7b = true).
+  { apply (okA_pickn (fun r => tailBR_ok PRE_U SUF_U m r SUFA_U factsB OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7b) (map Z.of_nat (seq 0 4)) r).
+    - apply (okA_pickn (fun m => forallb (fun r => tailBR_ok PRE_U SUF_U m r SUFA_U factsB OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7b) (map Z.of_nat (seq 0 4))) _ m okBR_6).
+      apply In_seqZ. cbn. lia.
+    - apply In_seqZ. cbn. lia. }
+  unfold tailBR_ok in Hg. destruct (tailBR PRE_U SUF_U m r SUFA_U factsB OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7b) as [o|]; [exists o; reflexivity | discriminate].
 Qed.
 Theorem fpsU_6773 : ltac2:(tb__ "0|0|
 S17S8Z43Vn;A2S8Vn;Z49A2A2S23S0Vok;S1eS0VJ0;S19Vrho;Vtp;A5S1dS0VKwr;SdS14Q8A1S1bS2S3Vstr;A3A2A1S21Vrho;Vtp;S4A6A4F_;").
 Proof.
-  intros Hn. destruct (okBR_U n Hn) as [o Hcert].
+  intros Hn. pose proof (Z.mod_pos_bound (bv_unsigned (eval rho sX)) 4 ltac:(lia)) as HrA.
+  destruct (okBR_U n (bv_unsigned (eval rho sX) mod 4) Hn ltac:(lia)) as [o Hcert].
   apply (FpsU_sum.fps_sound_B_gen ok J0 PRE_U SUF_U preU1 Hst0 rho tp HFN HokK); [unfold n in *; lia | cbn [length PRE_U Z.of_nat Pos.of_succ_nat Pos.succ]; unfold n in *; lia |].
-  unfold FpsU_sum.tail_stmt. change (Z.of_nat (length PRE_U)) with 7. change FpsU_cert.T7b with OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7b. rewrite Hal.
+  unfold FpsU_sum.tail_stmt. change (Z.of_nat (length PRE_U)) with 7. change FpsU_cert.T7b with OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7b.
   intros Hstr_len HlT8 HnT8 rho7 Hag7. pose proof (urange (rw rho 16)) as R16. fold n str in Hstr_len.
   apply (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.fz.Fps_tailB.tailBR_sound ok J0 PRE_U SUF_U str Hst0 Hfd2 HokK HokP rho tp) with (sufa := SUFA_U) (o := o);
     [rewrite Hstr_len; reflexivity | rewrite Hstr_len; unfold n; lia | cbn [length PRE_U Z.of_nat Pos.of_succ_nat Pos.succ]; unfold n in *; lia | exact preU1
@@ -479,9 +486,10 @@ Qed.
 Theorem fpsU_6773_ex : ltac2:(tb__ "0|0|
 S17S8Z43Vn;A2S8Vn;Z49A2A2S22S0S1eS0VJ0;S19Vrho;Vtp;A5S1dS0VKwr;SdS14Q8A1S1bS2S3Vstr;A3A2A1S21Vrho;Vtp;S4A6A3F_;").
 Proof.
-  intros Hn. destruct (okBR_U n Hn) as [o Hcert].
+  intros Hn. pose proof (Z.mod_pos_bound (bv_unsigned (eval rho sX)) 4 ltac:(lia)) as HrA.
+  destruct (okBR_U n (bv_unsigned (eval rho sX) mod 4) Hn ltac:(lia)) as [o Hcert].
   apply (FpsU_sum.fps_sound_B_gen_ex J0 PRE_U SUF_U preU1 Hst0 rho tp HFN); [unfold n in *; lia | cbn [length PRE_U Z.of_nat Pos.of_succ_nat Pos.succ]; unfold n in *; lia |].
-  unfold FpsU_sum.tail_stmt_ex. change (Z.of_nat (length PRE_U)) with 7. change FpsU_cert.T7b with OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7b. rewrite Hal.
+  unfold FpsU_sum.tail_stmt_ex. change (Z.of_nat (length PRE_U)) with 7. change FpsU_cert.T7b with OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.em.FpsU_st.T7b.
   intros Hstr_len HlT8 HnT8 rho7 Hag7. pose proof (urange (rw rho 16)) as R16. fold n str in Hstr_len.
   apply (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.fz.Fps_tailB.tailBR_sound_ex J0 PRE_U SUF_U str Hst0 Hfd2 rho tp) with (sufa := SUFA_U) (o := o);
     [rewrite Hstr_len; reflexivity | rewrite Hstr_len; unfold n; lia | cbn [length PRE_U Z.of_nat Pos.of_succ_nat Pos.succ]; unfold n in *; lia | exact preU1
@@ -735,7 +743,7 @@ S3cS7eS3cS7dS3cS7dS8fSdaA3S34Z3fA1A3S34N40A1A3").
 Definition XLe : sv := SAlu ALU_SUB XEe XBe.
 
 Definition sfl (p l n : positive) : list sprop := ltac2:(tb__ "0|9|
-SdS31S38S34Z7fff7ffff000A1S3cS7dS36P1A1M0S34N80A1A3M1A2SdS31S38G1S34Z7ffffffffff0A1A2SdS31S4cS4bS81S3cS7eS3cS80S34Z28A1S3cS7dG0S34N998A1A3A3S34ZfA1A3S34Z0A1A3A1SdS31S38S3cS7dS36Vl;A1M2S34Z8A1M3A3S36Vn;A1M4A2SdS31S38G3G4A2SdS31S38G4S34Z4000000000000000A1M5A2SdS31S38S34Z1A1M6S36Vp;A1M7A2SdS31S38G7G5A2SdS31S38S3cS7dS3cS7fG7Sa3A3M8G4A3Sa4A2SdS31S38G8Sa4A2SdS31S38G4Sa4A2SdS31S38Sa4S34Z10000000000A1A2SdS31S38S34Z10007fff8000A1Sa3A2SdS31S38Sa8S34Z800000000000A1A2SdS31S38Sa3S34Z7fffffffffc0A1A2SdS31S38S3cS7dG7G6A3Sa8A2SdS31S38G2S34Z1ffffA1A2SdS31S38G1G7A2SdS31S38S3cS7dG2S34Z10A1A3G4A2ScS31A1A3A3A3A3A3A3A3A3A3A3A3A3A3A3A3A3A3A3A3").
+SdS31S38S34Z7fff7ffff000A1S3cS7dS36P1A1M0S34N80A1A3M1A2SdS31S38G1S34Z7ffffffffff0A1A2SdS31S4cS4bS81S3cS7eS3cS80S34Z28A1S3cS7dG0S34N998A1A3A3S34ZfA1A3S34Z0A1A3A1SdS31S38S3cS7dS36Vl;A1M2S34Z8A1M3A3S36Vn;A1M4A2SdS31S38G3G4A2SdS31S38G4S34Z4000000000000000A1M5A2SdS31S38S34Z1A1M6S36Vp;A1M7A2SdS31S38G7G5A2SdS31S38S3cS7dS3cS7fG7Sa3A3M8G4A3Sa4A2SdS31S38G8Sa4A2SdS31S38G4Sa4A2SdS31S38Sa4S34Z10000000000A1A2SdS31S38S34Z10007fff8000A1Sa3A2SdS31S38Sa8S34Z800000000000A1A2SdS31S38Sa3S34Z7fffffffffc0A1A2SdS31S38S3cS7dG7G6A3Sa8A2SdS31S38G2S34Z1ffffA1A2SdS31S38G1G7A2SdS31S38S3cS7dG2S34ZaA1A3G4A2ScS31A1A3A3A3A3A3A3A3A3A3A3A3A3A3A3A3A3A3A3A3").
 
 Lemma sf_eqs : ltac2:(tb__ "0|2|
 S1S0S9S31A1M0Sc4Sa2P8P9PaA3M1A3S1S0G0Sc5G1A3S0G0Sc6Sa2P4P5PcA3A3A2A2").
@@ -755,7 +763,7 @@ S24S25VA;VN;A2S25VS;VAL;A2A2").
 Hypothesis HAL : ltac2:(tb__ "0|1|
 S1S24S25VS;VAL;A2S26Z2M0Z2fA2A2S24VAL;S26G0Z17A2A2A2").
 Hypothesis HLN : ltac2:(tb__ "0|0|
-S1S24S25VL;Z11A2VN;A2S1S24VN;S26Z2Z16A2A2S24VL;Z1ffffA2A2A2").
+S1S24S25VL;ZaA2VN;A2S1S24VN;S26Z2Z16A2A2S24VL;Z1ffffA2A2A2").
 
 Let XB := S - S mod 64.
 Let XE : ltac2:(tb__ "0|0|
@@ -810,11 +818,11 @@ Proof.
   assert (UpN : bv_unsigned (eval rho (SAlu ALU_ADD (SAlu ALU_SUB (SVar p) XBe) (SVar n))) = A - XB + N).
   { apply (U_add2 rho _ (SVar n) (A - XB) N U_pXB eq_refl). unfold A, N in *. lia. }
   assert (Ul8 : bv_unsigned (eval rho (SAlu ALU_ADD (SVar l) (SLit 8))) = L + 8) by (apply (U_addc rho (SVar l) 8 L eq_refl); unfold L in *; lia).
-  assert (Ul16 : bv_unsigned (eval rho (SAlu ALU_ADD (SVar l) (SLit 16))) = L + 16) by (apply (U_addc rho (SVar l) 16 L eq_refl); unfold L in *; lia).
+  assert (Ul10 : bv_unsigned (eval rho (SAlu ALU_ADD (SVar l) (SLit 10))) = L + 10) by (apply (U_addc rho (SVar l) 10 L eq_refl); unfold L in *; lia).
   assert (Up1 : bv_unsigned (eval rho (SAlu ALU_ADD (SVar p) (SLit 1))) = A + 1) by (apply (U_addc rho (SVar p) 1 A eq_refl); unfold A in *; lia).
   unfold sfl.
   repeat (apply Forall_cons); try apply Forall_nil; cbn [holds];
-    rewrite ?U_sp0m, ?UpN, ?U_pXB, ?U_XLe, ?U_XBe, ?U_XEe, ?Ul8, ?Ul16, ?Up1 by lia;
+    rewrite ?U_sp0m, ?UpN, ?U_pXB, ?U_XLe, ?U_XBe, ?U_XEe, ?Ul8, ?Ul10, ?Up1 by lia;
     rewrite ?(U_lit64 rho) by lia;
     try (change (eval rho (SVar p)) with (rw rho p)); try (change (eval rho (SVar l)) with (rw rho l)); try (change (eval rho (SVar n)) with (rw rho n));
     try (subst S AL A L N XB XE; lia).
@@ -985,7 +993,7 @@ Variables (vp vl vn : positive) (lX : positive) (str : list byte).
 Hypothesis Hvars : ltac2:(tb__ "0|0|
 S1S8bVvp;S5fA2S1S8bVvl;S5fA2S8bVvn;S5fA2A2A2").
 Hypothesis HP0str : ltac2:(tb__ "0|7|
-S30VP0f;R1A1S1S0S9S54Q8M0A1M1A1M2S6cG1Sb1S12G1Vstr;A2M3U1A2S3aR2VlX;A2M4A3SfG1Vstr;SdG1S55G0Z0A2ScG1A1A3A3A3S1S0S7S53Q40M5S32R2Vvl;A2A2M6S28G3A1A3S1S0G2S3aR2P3A2G4A3S24S25G6Z11A2S53G5S32R2Vvn;A2A2A2A2A2A2F_;Fr;").
+S30VP0f;R1A1S1S0S9S54Q8M0A1M1A1M2S6cG1Sb1S12G1Vstr;A2M3U1A2S3aR2VlX;A2M4A3SfG1Vstr;SdG1S55G0Z0A2ScG1A1A3A3A3S1S0S7S53Q40M5S32R2Vvl;A2A2M6S28G3A1A3S1S0G2S3aR2P3A2G4A3S24S25G6ZaA2S53G5S32R2Vvn;A2A2A2A2A2A2F_;Fr;").
 Hypothesis Hnonul : ~ In (Z_to_bv 8 0) str.
 
 Variables pre suf : list Z.
@@ -1245,7 +1253,7 @@ Proof.
 
     pose proof (Hlayout rho1 HF1) as (LS & LA & LAN & LAL1 & LAL2 & LN2 & LL3).
     pose proof (proj1 Hav vl (proj1 (proj2 Hvars))) as Evl. pose proof (proj1 Hav vn (proj2 (proj2 Hvars))) as Evn.
-    assert (Sslk1 : bv_unsigned (rw rho1 vl) + 17 <= bv_unsigned (rw rho1 vn)) by (rewrite <- Evl, <- Evn; exact Sslk).
+    assert (Sslk1 : bv_unsigned (rw rho1 vl) + 10 <= bv_unsigned (rw rho1 vn)) by (rewrite <- Evl, <- Evn; exact Sslk).
     pose proof (XB_facts rho1 vp vl vn LS) as (XB1 & XB2 & XB3). pose proof (XE_facts rho1 vp vl vn LS (conj LAL1 LAL2)) as (XE1 & XE2 & XE3).
     pose proof (U_XBe rho1) as UXB. pose proof (U_XLe rho1 vp vl vn LS (conj LAL1 LAL2)) as UXL.
     change XBe with OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.ga.FpsSite_states.XB in UXB. change XLe with OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.ga.FpsSite_states.XL in UXL.
@@ -1397,7 +1405,7 @@ Proof.
 
     pose proof (Hlayout rho1 HF1) as (LS & LA & LAN & LAL1 & LAL2 & LN2 & LL3).
     pose proof (proj1 Hav vl (proj1 (proj2 Hvars))) as Evl. pose proof (proj1 Hav vn (proj2 (proj2 Hvars))) as Evn.
-    assert (Sslk1 : bv_unsigned (rw rho1 vl) + 17 <= bv_unsigned (rw rho1 vn)) by (rewrite <- Evl, <- Evn; exact Sslk).
+    assert (Sslk1 : bv_unsigned (rw rho1 vl) + 10 <= bv_unsigned (rw rho1 vn)) by (rewrite <- Evl, <- Evn; exact Sslk).
     pose proof (XB_facts rho1 vp vl vn LS) as (XB1 & XB2 & XB3). pose proof (XE_facts rho1 vp vl vn LS (conj LAL1 LAL2)) as (XE1 & XE2 & XE3).
     pose proof (U_XBe rho1) as UXB. pose proof (U_XLe rho1 vp vl vn LS (conj LAL1 LAL2)) as UXL.
     change XBe with OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.ga.FpsSite_states.XB in UXB. change XLe with OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.ga.FpsSite_states.XL in UXL.
@@ -1659,15 +1667,15 @@ Definition B3 : axst := Eval vm_compute in exB3 B0.
 Definition CX : axst := Eval vm_compute in exCX B3.
 Definition Rx : list sobj := Eval vm_compute in optR (entails_frA CX (Pre_exit0 0 2) (s_exR 0 CX)).
 
-Lemma facts : ltac2:(tb__ "0|19|
-S1S0S57S139SbcA3S1S0S57S132SbeA3S1S0SbSa6S13bSb4A2SaA3S1S0S11S35A1S7bS35S3bS56S130A1M0A1Sa5P4M1S130A2A3S10S35S44S36G1A1S34Z0M2A1S36PcM3A1ScS43A1S42P2A1A5A2A3S1S0SbSedG0S56S137A1M4A2SaA3S1S0SbS47S12dA1SaA3S1S0S11SeS9SeS33S33A2M5A1M6S9S31A1M7A2M8A1SecG4S12dA2S10G8S15G6G7S135ScS31A1A4A2A3S1S1S0S8S37S12dA1S37G4A1M9A3S0S8G9S37S56Sb4A1MaA1MbA3A2S1S0SbSa9G1S135A2SaA3S1S0SbS79S31S3dS46S8cS34S89A1McA2A1S39GaA1MdA3SaA3S1S0SbS7aS31S40GbA1Sa2G1P5MeG3A3A3SaA3S1S0SbSa7GdG1GeG3A4SaA3S1S0SbS79S31S3dS48G1Z3A2A1GdA3SaA3S1S0S33Se0S136P10A2S36GeA1A3S1S0S57SfbSc1S132S136S13aS78A5S12eA3S1S0S11S57A1MfS96S12eSdS95S97Sb7S12S35S3bS56S12eA1A1A2A1A1ScS95A1A3A2S10S57S12cA2A3S1S1S0S9S35A1M10S3bS56S12cA1M11A1SfS35S3bS56S12fA1M12A1M13S6dS9aS35S9bSb2A4A3A3S0S57S59S12cSe3G11G13A2A2S12fA3A2S1S0S11S9S58A1M14A1S5bS2fU3cSb3S12fSaA5S10G14SdS58S5aS134Se2A2ScS58A1A3A2A3S1S1S0SbS8aS5fS37G12A1A2SaA3S0SbS45G12A1S17A3A2S1S0GfS96S134S13cA2S10S57S131A2A3S1S0SbSe8Sc7S131ScG5A1A2A1SaA3S1S0SbSe7S138GcA2SaA3S1S1S0SbS8aS5fS37S56S12bA1M15A1M16A2SaA3S0SbS7aS31S40G16A1S39G15A1A3SaA3A2S1S0S11G10A1SefS12bSe5G2Z2A2M17Se6G2S12bA2M18A3S10G10S133A2A3S0SbSeeS12bG17G18S133ScS57A1A5SaA3A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2").
+Lemma facts : ltac2:(tb__ "0|0|
+S1S0S57S139SbcA3S1S0S57S132SbeA3S1S0SbSa6S13bSb4A2SaA3S1S0S11S35A1S7bS35S3bS56S130A1A1Sa5P4S130A2A3S10S35S44S36P4A1S34Z0A1S36PcA1ScS43A1S42P2A1A5A2A3S1S0SbSedS56S130A1S56S137A1A2SaA3S1S0SbS47S12dA1SaA3S1S0S11SeS9SeS33S33A2A1S9S31A1A2A1SecS56S137A1S12dA2S10SeS9SeS33S33A2A1S9S31A1A2S15S9SeS33S33A2A1S9S31A1S135ScS31A1A4A2A3S1S1S0S8S37S12dA1S37S56S137A1A1A3S0S8S37S56S137A1A1S37S56Sb4A1A1A3A2S1S0SbSa9P4S135A2SaA3S1S0SbS79S31S3dS46S8cS34S89A1A2A1S39S56Sb4A1A1A3SaA3S1S0SbS7aS31S40S37S56Sb4A1A1A1Sa2P4P5PcA3A3SaA3S1S0SbSa7S39S56Sb4A1A1P4P5PcA4SaA3S1S0S33Se0S136P10A2S36P5A1A3S1S0S57SfbSc1S132S136S13aS78A5S12eA3S1S0S11S57A1S96S12eSdS95S97Sb7S12S35S3bS56S12eA1A1A2A1A1ScS95A1A3A2S10S57S12cA2A3S1S1S0S9S35A1S3bS56S12cA1A1SfS35S3bS56S12fA1A1S6dS9aS35S9bSb2A4A3A3S0S57S59S12cSe3S56S12cA1S3bS56S12fA1A1A2A2S12fA3A2S1S0S11S9S58A1A1S5bS2fU3cSb3S12fSaA5S10S9S58A1SdS58S5aS134Se2A2ScS58A1A3A2A3S1S1S0SbS8aS5fS37S56S12fA1A1A2SaA3S0SbS45S56S12fA1A1S17A3A2S1S0S11S57A1S96S134S13cA2S10S57S131A2A3S1S0SbSe8Sc7S131ScSeS33S33A2A1A2A1SaA3S1S0SbSe7S138S34S89A1A2SaA3S1S1S0SbS8aS5fS37S56S12bA1A1A2SaA3S0SbS7aS31S40S37S56S12bA1A1A1S39S56S12bA1A1A3SaA3A2S1S0S11S9S35A1A1SefS12bSe5Z0Z2A2Se6Z0S12bA2A3S10S9S35A1S133A2A3S0SbSeeS12bSe5Z0Z2A2Se6Z0S12bA2S133ScS57A1A5SaA3A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2").
 Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2. Qed.
 End SiteU.
 
 Definition P0C (argv1 : list byte) (r : valuation) : Prop := ltac2:(tb__ "0|3|
 S1S91Vr;A1S1S0S9S54Q8M0A1M1A1S6cG1Sb1S12G1Vargv1;A2M2U1A2S3aVr;P3A2A3SfG1Vargv1;SdG1S55G0Z0A2ScG1A1A3A3A3S1S0S7Sd4Vr;P9A2S28G2A1A3S1S1Sd3Vr;A1Sd2Vr;A1A2Sd9Vr;A1A2A2A2A2").
 Definition P0Us (argv0 : list byte) (r : valuation) : Prop := ltac2:(tb__ "0|6|
-S1S0S7Sd4Vr;P18A2S89A3S1S91Vr;A1S1S0S9S54Q8M0A1M1A1M2S6cG1Sb1S12G1Vargv0;A2M3U1A2S3aVr;P2A2M4A3SfG1Vargv0;SdG1S55G0Z0A2ScG1A1A3A3A3S1S0S7Sd4Vr;P5A2M5S28G3A1A3S1S1Sd3Vr;A1Sd2Vr;A1A2S1S0G2S3aVr;P3A2G4A3S24S25G5Z11A2Sd4Vr;PcA2A2A2A2A2A2A2A2").
+S1S0S7Sd4Vr;P18A2S89A3S1S91Vr;A1S1S0S9S54Q8M0A1M1A1M2S6cG1Sb1S12G1Vargv0;A2M3U1A2S3aVr;P2A2M4A3SfG1Vargv0;SdG1S55G0Z0A2ScG1A1A3A3A3S1S0S7Sd4Vr;P5A2M5S28G3A1A3S1S1Sd3Vr;A1Sd2Vr;A1A2S1S0G2S3aVr;P3A2G4A3S24S25G5ZaA2Sd4Vr;PcA2A2A2A2A2A2A2A2").
 
 Definition nd_U : ndesc := ltac2:(tb__ "0|0|
 SceScSeS33S33A2A1ScSeSeS33S7A2S33A2A1ScS14dA1ScdA4").
@@ -1727,7 +1735,7 @@ S30VP0f;R1A1S1Sd3R2A1Sd2R2A1A2F_;Fr;"). Proof. intros r Hr. exact (proj1 (proj2 
 Lemma C_P0R : ltac2:(tb__ "0|0|
 S30VP0f;R1A1S91R2A1F_;Fr;"). Proof. intros r Hr. exact (proj1 (HP0 r Hr)). Qed.
 Lemma C_P0str : ltac2:(tb__ "0|7|
-S30VP0f;R1A1S1S0S9S54Q8M0A1M1A1M2S6cG1Sb1S12G1Vargv1;A2M3U1A2S3aR2P3A2M4A3SfG1Vargv1;SdG1S55G0Z0A2ScG1A1A3A3A3S1S0S7S53Q40M5S32R2P9A2A2M6S28G3A1A3S1S0G2G4G4A3S24S25G6Z11A2S53G5S32R2PaA2A2A2A2A2A2F_;Fr;").
+S30VP0f;R1A1S1S0S9S54Q8M0A1M1A1M2S6cG1Sb1S12G1Vargv1;A2M3U1A2S3aR2P3A2M4A3SfG1Vargv1;SdG1S55G0Z0A2ScG1A1A3A3A3S1S0S7S53Q40M5S32R2P9A2A2M6S28G3A1A3S1S0G2G4G4A3S24S25G6ZaA2S53G5S32R2PaA2A2A2A2A2A2F_;Fr;").
 Proof. intros r Hr. destruct (HP0 r Hr) as (_ & H1 & H2 & _ & H3). unfold SLK1, Uv in *. repeat split; assumption. Qed.
 Lemma C_fblk : ltac2:(tb__ "0|1|
 S7S1S24SaeZ1eec0M0A1R1A2S2bR1SaeS25G0Z80A2A1A2A2S4S92R2A1Sd5R2A1A2F_;Fz;").
@@ -1796,7 +1804,7 @@ S30VP0f;R1A1S1Sd3R2A1Sd2R2A1A2F_;Fr;"). Proof. intros r Hr. exact (proj1 (proj2 
 Lemma D_P0R : ltac2:(tb__ "0|0|
 S30VP0f;R1A1S91R2A1F_;Fr;"). Proof. intros r Hr. exact (proj1 (proj2 (HP0 r Hr))). Qed.
 Lemma D_P0str : ltac2:(tb__ "0|7|
-S30VP0f;R1A1S1S0S9S54Q8M0A1M1A1M2S6cG1Sb1S12G1Vargv1;A2M3U1A2S3aR2P3A2M4A3SfG1Vargv1;SdG1S55G0Z0A2ScG1A1A3A3A3S1S0S7S53Q40M5S32R2P9A2A2M6S28G3A1A3S1S0G2G4G4A3S24S25G6Z11A2S53G5S32R2PaA2A2A2A2A2A2F_;Fr;").
+S30VP0f;R1A1S1S0S9S54Q8M0A1M1A1M2S6cG1Sb1S12G1Vargv1;A2M3U1A2S3aR2P3A2M4A3SfG1Vargv1;SdG1S55G0Z0A2ScG1A1A3A3A3S1S0S7S53Q40M5S32R2P9A2A2M6S28G3A1A3S1S0G2G4G4A3S24S25G6ZaA2S53G5S32R2PaA2A2A2A2A2A2F_;Fr;").
 Proof. intros r Hr. destruct (HP0 r Hr) as (_ & _ & H1 & H2 & _ & _ & H3). unfold SLK1, Uv in *. repeat split; assumption. Qed.
 Lemma D_top : ltac2:(tb__ "0|0|
 S30VP0f;R1A1Sd6R2A1F_;Fr;"). Proof. intros r Hr. exact (proj1 (proj2 (proj2 (proj2 (proj2 (proj2 (HP0 r Hr))))))). Qed.
@@ -1891,7 +1899,7 @@ S30VP0f;R1A1S1Sd3R2A1Sd2R2A1A2F_;Fr;"). Proof. intros r Hr. exact (proj1 (proj2 
 Lemma U_P0R : ltac2:(tb__ "0|0|
 S30VP0f;R1A1S91R2A1F_;Fr;"). Proof. intros r Hr. exact (proj1 (proj2 (HP0 r Hr))). Qed.
 Lemma U_P0str : ltac2:(tb__ "0|7|
-S30VP0f;R1A1S1S0S9S54Q8M0A1M1A1M2S6cG1Sb1S12G1Vargv0;A2M3U1A2S3aR2P2A2M4A3SfG1Vargv0;SdG1S55G0Z0A2ScG1A1A3A3A3S1S0S7S53Q40M5S32R2P5A2A2M6S28G3A1A3S1S0G2S3aR2P3A2G4A3S24S25G6Z11A2S53G5S32R2PcA2A2A2A2A2A2F_;Fr;").
+S30VP0f;R1A1S1S0S9S54Q8M0A1M1A1M2S6cG1Sb1S12G1Vargv0;A2M3U1A2S3aR2P2A2M4A3SfG1Vargv0;SdG1S55G0Z0A2ScG1A1A3A3A3S1S0S7S53Q40M5S32R2P5A2A2M6S28G3A1A3S1S0G2S3aR2P3A2G4A3S24S25G6ZaA2S53G5S32R2PcA2A2A2A2A2A2F_;Fr;").
 Proof. intros r Hr. destruct (HP0 r Hr) as (_ & _ & H1 & H2 & _ & H3 & H4). unfold Uv in *. repeat split; assumption. Qed.
 Lemma U_sp0 : ltac2:(tb__ "0|0|
 S0SbSfcS39S56S13eA1A1A1SaA3"). Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
@@ -1901,24 +1909,16 @@ Proof. intros z Hz. left. right. left. unfold Sh in *. lia. Qed.
 Lemma U_layout : ltac2:(tb__ "0|8|
 S30S6eS31S41R1A1S39S56Sb4A1A1A3S1S1S24Z7fff80000000S53Q40M0S32R2P1A2A2M1A2S24G1S29S26Z2M2Z2fA2M3Ze0A2A2A2S1S24S25G1Z18A2S53G0S32R2P4A2A2M4A2S1S24S25G4S53G0S32R2PcA2A2M5A2S25G1S53G0S32R2PbA2A2M6A2M7A2S1S24G7G3A2S1S24G6S26G2Z17A2A2S1S24G5S26G2Z16A2A2S24S53G0S32R2P5A2A2Z1ffffA2A2A2A2A2A2A2F_;Frho;").
 Proof. intros rho HF. apply (layout_okb_sound (ss_facts (ax_S E_U)) 4 5 12 rho); [OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc | exact HF]. Qed.
-Lemma U_al4 : ltac2:(tb__ "0|0|
-S0SbS79S31S3dS48P4Z3A2A1S39S56Sb4A1A1A3SaA3"). Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
-Lemma U_PX : ltac2:(tb__ "0|0|
-S30S6eS31S41R1A1S39S56Sb4A1A1A3S0S7S2cS53Q40S32R2P4A2A2Z4A2Z0A3F_;Frho;").
-Proof.
-  intros rho HF. pose proof (holds_mem _ _ _ HF U_al4) as H. cbn [holds] in H. destruct H as [_ H]. change (2 ^ 3) with 8 in H.
-  apply Z.mod_divide in H; [|lia]. apply Z.mod_divide; [lia|]. destruct H as [q Hq]. exists (2 * q). lia.
-Qed.
 
 Hypothesis HSPEC : ltac2:(tb__ "0|1|
 S1bVMDX;R1A1VSpec;SfS1aVT0;SfS1aScS1aA1M0SfS1aS6dS54Q8A1S1aS1fS60A1S70S76S77Vargv0;A3A4SdS1aS20S55Q40Z2A2S22R2A1A2G0A3A3A3A3A1F_;Fmd;").
 
-Lemma U_sum : ltac2:(tb__ "0|6|
-S66OF_;S62S64S2fS5fR1A3S30S9S54Q40M0A1A1M1S9S1aA1S1bR6R4R3R2R1A4S0S11S1cA1S1eS21R2A1S60A2S10S1cS1dS60A1A2A3F_;Fmd;Ftr;Ft;Fr;S30G1SadR2A1S0S7S2cS53G0S3fR3S13dA2A2Z4A2Z0A3S0S7S53G0S32R4P10M2A2A2S28S12S54Q8A1M3Vargv0;A2A1A3S14S65S2fRaS6fR9S76S77S6cG3S2aS53G0S32R6G2A2A2A1S3aR6P3M4A2A3R1A5A3Fk;S14Se4S2fRbS6fRaS76S77S6cG3S2aS53G0S32R7G2A2A2A1S3aR7G4A2A3M5R1A5A3Fk;S68S2fRbS61S2fRaSdbSdeZ16080Z80A3R7R6A5S63S2fS6fRaS76S77G5S12G3S70S76S77G5A3A2A5S5fR7R6S73A6A4F_;F_;F_;F_;F_;Ftp;Frho;F_;F_;FJ0;Fok';").
-Proof. intros ok' J0 Hst Hfd rho tp HFN Hal _ HK HP. exact (fpsU_all ok' J0 Hst Hfd rho tp HFN Hal HK HP). Qed.
-Lemma U_sumx : ltac2:(tb__ "0|5|
-S62S64S2fS5fR1A3S30S9S54Q40M0A1A1M1S9S1aA1S1bR6R4R3R2R1A4S0S11S1cA1S1eS21R2A1S60A2S10S1cS1dS60A1A2A3F_;Fmd;Ftr;Ft;Fr;S30G1SadR2A1S0S7S2cS53G0S3fR3S13dA2A2Z4A2Z0A3S0S7S53G0S32R4P10M2A2A2S28S12S54Q8A1M3Vargv0;A2A1A3S67S2fS61S2fR8SdbSdeZ16080Z80A3R5R4A5S63S2fS6fR8S76S77S6cG3S2aS53G0S32R5G2A2A2A1S3aR5P3A2A3M4S12G3S70S76S77G4A3A2A5S5fR5R4S73A6A3F_;F_;F_;Ftp;Frho;F_;F_;FJ0;").
-Proof. intros J0 Hst Hfd rho tp HFN Hal _. exact (fpsU_all_ex J0 Hst Hfd rho tp HFN Hal). Qed.
+Lemma U_sum : ltac2:(tb__ "0|0|
+S66OF_;S62S64S2fS5fR1A3S30S9S54Q40A1A1S9S1aA1S1bR6R4R3R2R1A4S0S11S1cA1S1eS21R2A1S60A2S10S1cS1dS60A1A2A3F_;Fmd;Ftr;Ft;Fr;S30S9S54Q40A1A1SadR2A1S3S0S7S53Q40S32R4P10A2A2S28S12S54Q8A1Vargv0;A2A1A3S14S65S2fRaS6fR9S76S77S6cS54Q8A1S2aS53Q40S32R6P10A2A2A1S3aR6P3A2A3R1A5A3Fk;S14Se4S2fRbS6fRaS76S77S6cS54Q8A1S2aS53Q40S32R7P10A2A2A1S3aR7P3A2A3R1A5A3Fk;S68S2fRbS61S2fRaSdbSdeZ16080Z80A3R7R6A5S63S2fS6fRaS76S77S6cS54Q8A1S2aS53Q40S32R7P10A2A2A1S3aR7P3A2A3S12S54Q8A1S70S76S77S6cS54Q8A1S2aS53Q40S32R7P10A2A2A1S3aR7P3A2A3A3A2A5S5fR7R6S73A6A4F_;F_;F_;F_;F_;Ftp;Frho;F_;F_;FJ0;Fok';").
+Proof. intros ok' J0 Hst Hfd rho tp HFN _ _ HK HP. exact (fpsU_all ok' J0 Hst Hfd rho tp HFN HK HP). Qed.
+Lemma U_sumx : ltac2:(tb__ "0|0|
+S62S64S2fS5fR1A3S30S9S54Q40A1A1S9S1aA1S1bR6R4R3R2R1A4S0S11S1cA1S1eS21R2A1S60A2S10S1cS1dS60A1A2A3F_;Fmd;Ftr;Ft;Fr;S30S9S54Q40A1A1SadR2A1S3S0S7S53Q40S32R4P10A2A2S28S12S54Q8A1Vargv0;A2A1A3S67S2fS61S2fR8SdbSdeZ16080Z80A3R5R4A5S63S2fS6fR8S76S77S6cS54Q8A1S2aS53Q40S32R5P10A2A2A1S3aR5P3A2A3S12S54Q8A1S70S76S77S6cS54Q8A1S2aS53Q40S32R5P10A2A2A1S3aR5P3A2A3A3A2A5S5fR5R4S73A6A3F_;F_;F_;Ftp;Frho;F_;F_;FJ0;").
+Proof. intros J0 Hst Hfd rho tp HFN _ _. exact (fpsU_all_ex J0 Hst Hfd rho tp HFN). Qed.
 
 Theorem usage_tail_safe : ltac2:(tb__ "0|0|
 S30S9S54Q40A1A1S68S2fVok;S61S2fVJU;S13eR2R1A5S66S2L_;A4Ftp;Frho;").
@@ -1926,9 +1926,9 @@ Proof.
   intros rho tp. apply (triple_preK _ _ (TOPV rho0)); [intros w HS; exact (TOPV_of_SPA (KcG T0 MDX fds []) BX0 nd_U S_U rho tp w U_sp0 HS)|]. intros Htop0.
   unshelve (eapply (fps_tail_safe AInv CST XGL ALA HLV HCSTok HCSTdrv HLPP HCSTdrv2 ok Spec HOKJ HOKP Hokh T0 MDX HMDXvm fds Hfds1 Hfds2 [] rho0 P0f
                       U_P0SH U_P0ZA U_P0R PA 4%positive 5%positive 12%positive 2%positive argv0 _ U_P0str Hnonul PRE_U SUF_U FMT_USAGE 0x16080 0x80
-                      HSPEC (fun z => z mod 4 = 0) U_sum Htop0 nd_U eq_refl S_U E_U 80%nat run_U1)
+                      HSPEC (fun _ => True) U_sum Htop0 nd_U eq_refl S_U E_U 80%nat run_U1)
      with (cuts := cuts_U) (i3 := siteI3 4 SiteU.A2) (S4 := SiteU.S4) (d4 := SiteU.d4) (Hfblk := U_fblk) (Hlayout := U_layout)
-          (s := SiteU.s) (R := SiteU.R) (HPX := U_PX) (Tq := SiteU.Tq) (S1 := SiteU.S1) (V := SiteU.V) (Xl := SiteU.Xl) (fuel2 := 60%nat)
+          (s := SiteU.s) (R := SiteU.R) (HPX := fun _ _ => I) (Tq := SiteU.Tq) (S1 := SiteU.S1) (V := SiteU.V) (Xl := SiteU.Xl) (fuel2 := 60%nat)
           (xsE := SiteU.xsE) (B0 := SiteU.B0) (Rx := SiteU.Rx)).
   all: OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2.
 Qed.
@@ -1939,9 +1939,9 @@ Proof.
   intros Q HQ rho tp. apply (etriple_preK _ (TOPV rho0)); [intros w HS; exact (TOPV_of_SPA (KcG T0 MDX fds []) BX0 nd_U S_U rho tp w U_sp0 HS)|]. intros Htop0.
   unshelve (eapply (fps_tail_ex AInv CST XGL ALA HLV HCSTok HCSTdrv HLPP HCSTdrv2 Spec T0 MDX HMDXvm fds Hfds1 Hfds2 [] rho0 P0f
                       U_P0SH U_P0ZA U_P0R PA 4%positive 5%positive 12%positive 2%positive argv0 _ U_P0str Hnonul PRE_U SUF_U FMT_USAGE 0x16080 0x80
-                      HSPEC (fun z => z mod 4 = 0) U_sumx Htop0 nd_U eq_refl S_U E_U 80%nat run_U1)
+                      HSPEC (fun _ => True) U_sumx Htop0 nd_U eq_refl S_U E_U 80%nat run_U1)
      with (cuts := cuts_U) (i3 := siteI3 4 SiteU.A2) (S4 := SiteU.S4) (d4 := SiteU.d4) (Hfblk := U_fblk) (Hlayout := U_layout)
-          (s := SiteU.s) (R := SiteU.R) (HPX := U_PX) (Tq := SiteU.Tq) (S1 := SiteU.S1) (V := SiteU.V) (Xl := SiteU.Xl) (fuel2 := 60%nat)
+          (s := SiteU.s) (R := SiteU.R) (HPX := fun _ _ => I) (Tq := SiteU.Tq) (S1 := SiteU.S1) (V := SiteU.V) (Xl := SiteU.Xl) (fuel2 := 60%nat)
           (xsE := SiteU.xsE) (B0 := SiteU.B0) (Rx := SiteU.Rx)).
   all: try exact HQ.
   all: OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast2.conj_vmc2.

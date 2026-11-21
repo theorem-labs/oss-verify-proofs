@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the KL invariant lets the reserved list end in the vDSO pair (kl_resv, kl_resv_top) and gains kl_meta_resv and kl_vdso, which carry what mprotect_expose_outcome now asks. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -82,8 +83,37 @@ Record KL (L : mled) (pbrk : Z) (mo : Model) : Prop := mkKL {
   kl_lazy : m_vm_lazy mo = [];
   kl_mat : m_vm_materialized mo = [];
   kl_wf : vmwf (vm_maps (m_vmmaps mo));
-  kl_resv : ld_resv L = map wwZ (vm_reserved (m_vmmaps mo));
-  kl_resv_top : forall e, In e (vm_reserved (m_vmmaps mo)) -> ehi e <= bv_unsigned (vm_start_brk (m_vmmaps mo));
+  (* the model's reserved list is the ledger's (the image's segments) followed by at most two more
+     entries of at most 2^18 bytes each: the vDSO pair init_reserved adds (08b1429) *)
+  kl_resv : exists vr, map wwZ (vm_reserved (m_vmmaps mo)) = ld_resv L ++ map wwZ vr
+      /\ Forall (fun p => bv_unsigned (snd p) <= 2^18) vr /\ (length vr <= 2)%nat;
+  (* every reserved entry is below the heap's start, or a guard pair's width above it *)
+  kl_resv_top : forall e, In e (vm_reserved (m_vmmaps mo)) ->
+      ehi e <= bv_unsigned (vm_start_brk (m_vmmaps mo))
+      \/ bv_unsigned (vm_start_brk (m_vmmaps mo)) + 4 * PGSZ <= elo e;
+  (* #38 gave mprotect_expose_outcome a premise saying the protected range misses the vDSO
+     pair.  The model has NO producer for that conclusion -- Search over
+     region_free (vdso_reserved _ _) _ _ = true returns only mprotect_expose_outcome itself --
+     and State.vdso_reserved_above only places the pair inside
+     [vdso_top - vdso_len kb, vdso_top), which KL's own bounds do not separate from a block
+     (both end at or below alloc_ceiling).  So the fact is CARRIED, exactly as the plan layer
+     carries it in co_vdso (AS/AsanPlanSound.v:457), and in the two halves the allocator can
+     actually establish:
+       kl_vdso      the pair is part of the ledger the placement search checks against.
+                    vdso_reserved reads m_kernel and vdso_top, and vdso_top reads vm_mmap_base
+                    and vm_init_sp -- all three immutable for the whole run
+                    (State.v:3466-3483) -- and no step here writes vm_reserved, so every
+                    preservation proof discharges this by assumption.
+       kl_meta_resv a meta block misses the reserved ledger.  This is what the grant's own
+                    region_free (vm_reserved h ++ vm_maps h) check buys, via
+                    region_free_app_r -- the same way kl_groups already carries resv_disj for
+                    a group.  Kept a separate field rather than a tenth conjunct of kl_metas
+                    so that no existing kl_metas destructuring pattern changes.
+     Together they give the mprotect site what mprotect_expose_outcome asks for. *)
+  kl_meta_resv : forall b l k, In (b, l, k) (ld_metas L) ->
+      resv_disj (m_vmmaps mo) b (mmap_len l);
+  kl_vdso : forall e, In e (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo))) ->
+      In e (vm_reserved (m_vmmaps mo));
   kl_start : 0 < bv_unsigned (vm_start_brk (m_vmmaps mo))
       /\ bv_unsigned (vm_start_brk (m_vmmaps mo)) mod PGSZ = 0
       /\ bv_unsigned (vm_start_brk (m_vmmaps mo)) <= bv_unsigned (vm_brk (m_vmmaps mo))

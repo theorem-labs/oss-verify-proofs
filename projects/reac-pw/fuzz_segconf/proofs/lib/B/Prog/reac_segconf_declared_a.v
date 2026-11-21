@@ -10,7 +10,8 @@
    cmd_prog_unowned (CmdRecImg.v), all over IMG : cmd_img_facts. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/chain_words_exact.v, with its module paths and module names changed; 20 of its 39 lines of code are new or changed and 65 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/trim.v, with its module paths and module names changed; 49 of its 70 lines of code are new or changed and 18 lines of the source are left out. *)
-(* The image-B port of lib/A/Prog/reac_segconf_declared_a.v (commit 29221b01c4cd): the assembly
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* The image-B port of lib/A/Prog/reac_segconf_declared_a.v: the assembly
    of the walk of reac_segconf_declared (fuzz_segconf.asan-ubsan, image B, entry 0x89e7c), in the form of
    plugin-hostd/fuzz_command's lib/B/Prog/chain_words_a.v (cw_loop / cw_run): the five segment statements of
    reac_segconf_declared_d.v and an induction over the passes of the loop over c->seg take every entry state with

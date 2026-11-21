@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACem.v, with its module paths and module names changed; 1540 of its 1601 lines of code are new or changed and 390 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_pj_string.v, with its module names changed; 1107 of its 1191 lines of code are new or changed and 1517 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_caw_emit.v, with its numbers changed; 794 of its 888 lines of code are new or changed and 1097 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The ACCEPT and the remaining REFUSAL arms of the tail of the inlined expected_body of check_as_written
    (fs.asan A_check_as_written 0x81590), machine code 0x81724 .. 0x817dc / 0x8197c, C source fuzz_state.c:96:
 
@@ -35,7 +36,7 @@
    RULE 24 (no function proved): there is no released ASan-image proof of any fuzz_state function,
    check_as_written included - second-agent check (internal path)
    (checker a Theorem Labs lane 2026-10-28 22:40-22:57Z; ossv proof index v5 built 2026-10-28T21:58:24Z,
-   ossv/recipes@566eb6ffa5df): all 54 functions CONFIRM.  fs's RELEASED plain proof
+   ossv/recipes): all 54 functions CONFIRM.  fs's RELEASED plain proof
    lib/Prog/check_as_written.v is a TEXT INPUT only: the control-flow template and the pure model, never a proof
    term of this walk.
 

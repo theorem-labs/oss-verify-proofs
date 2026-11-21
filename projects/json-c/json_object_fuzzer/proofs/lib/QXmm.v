@@ -1,9 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the mmap base floor EdAlloc.vm_base_ok reads, Linux's bottom-up window Mmap.task_unmapped_base, in place of the first page in vm_gap_available's lemmas). *)
 
 From Stdlib Require ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase State Specs.
+From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Mmap.
 From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Import EdAlloc.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
@@ -75,13 +77,18 @@ Qed.
 Definition iv_end_up (iv : word * word) : Z :=
 page_round_up_Z (bv_unsigned (fst iv) + bv_unsigned (snd iv)).
 
+(* LPS 727298f3: EdAlloc.vm_base_ok's floor is Linux's bottom-up window,
+   [Mmap.task_unmapped_base] *)
+Lemma task_unmapped_base_val : Mmap.task_unmapped_base = 0x2aaaaab000.
+Proof. reflexivity. Qed.
+
 Lemma vm_base_ok_intro : forall h nZ (c : word),
-bv_unsigned c mod page_size = 0 -> 0 < bv_unsigned c -> bv_unsigned c + nZ <= alloc_top h ->
+bv_unsigned c mod page_size = 0 -> Mmap.task_unmapped_base <= bv_unsigned c -> bv_unsigned c + nZ <= alloc_top h ->
 region_free (vm_reserved h ++ vm_maps h) c (Z_to_bv 64 nZ) = true ->
 vm_base_ok h nZ c = true.
 Proof.
 intros h nZ c H1 H2 H3 H4. unfold vm_base_ok.
-rewrite (proj2 (Z.eqb_eq _ _) H1), (proj2 (Z.ltb_lt _ _) H2), (proj2 (Z.leb_le _ _) H3), H4. reflexivity.
+rewrite (proj2 (Z.eqb_eq _ _) H1), (proj2 (Z.leb_le _ _) H2), (proj2 (Z.leb_le _ _) H3), H4. reflexivity.
 Qed.
 
 Lemma alloc_top_lt : forall h, alloc_top h < 2 ^ 64.
@@ -89,30 +96,31 @@ Proof. intros h. pose proof (alloc_top_room h). unfold two_pow_64, stack_max_siz
 
 Theorem vm_gap_available_complete : forall h nZ (a : word),
 0 <= nZ ->
-bv_unsigned a mod page_size = 0 -> 0 < bv_unsigned a ->
+bv_unsigned a mod page_size = 0 -> Mmap.task_unmapped_base <= bv_unsigned a ->
 bv_unsigned a + nZ <= alloc_top h ->
 region_free (vm_reserved h ++ vm_maps h) a (Z_to_bv 64 nZ) = true ->
 vm_gap_available h nZ = true.
 Proof.
-intros h nZ a HnZ Hal Hpos Hce Hfree. pose proof (alloc_top_lt h) as Hc64.
+intros h nZ a HnZ Hal Hpos Hce Hfree. pose proof (alloc_top_lt h) as Hc64. pose proof task_unmapped_base_val as Htv.
 change page_size with 4096 in Hal.
 set (L := vm_reserved h ++ vm_maps h) in *.
 set (aZ := bv_unsigned a) in *.
 assert (HnW : bv_unsigned (Z_to_bv 64 nZ) = nZ)
 by (rewrite Z_to_bv_unsigned; apply bv_wrap_small; change (bv_modulus 64) with (2 ^ 64); lia).
 set (cs := List.filter (fun e => e <=? aZ) (map iv_end_up L)).
-set (c := fold_left Z.max cs 4096).
+set (c := fold_left Z.max cs Mmap.task_unmapped_base).
 assert (Hcs : forall x, In x cs <-> In x (map iv_end_up L) /\ (x <=? aZ) = true)
 by (intro x; unfold cs; exact (filter_In _ x _)).
-assert (Hclo : 4096 <= c) by (unfold c; apply fold_max_ge_seed).
-assert (Ha4 : 4096 <= aZ) by (pose proof (Z.div_mod aZ 4096 ltac:(lia)); nia).
+assert (Hclo : Mmap.task_unmapped_base <= c) by (unfold c; apply fold_max_ge_seed).
+assert (Ha4 : Mmap.task_unmapped_base <= aZ) by exact Hpos.
+assert (Htub : 4096 <= Mmap.task_unmapped_base) by (rewrite task_unmapped_base_val; lia).
 assert (Hchi : c <= aZ).
 { unfold c. apply fold_max_le; [lia|]. intros x Hx. apply Hcs in Hx. apply Z.leb_le. exact (proj2 Hx). }
 assert (HcW : bv_unsigned (Z_to_bv 64 c) = c)
 by (rewrite Z_to_bv_unsigned; apply bv_wrap_small; change (bv_modulus 64) with (2 ^ 64); lia).
 assert (Hcal : c mod 4096 = 0).
-{ destruct (fold_max_in_or_seed cs 4096) as [Heq|Hin].
-- fold c in Heq. rewrite Heq. reflexivity.
+{ destruct (fold_max_in_or_seed cs Mmap.task_unmapped_base) as [Heq|Hin].
+- fold c in Heq. rewrite Heq. rewrite task_unmapped_base_val. reflexivity.
 - fold c in Hin. apply Hcs in Hin as [Hin _]. apply in_map_iff in Hin as (p & Hp & _).
 rewrite <- Hp. apply (proj2 (pru_spec _)). }
 assert (Hmax : forall p, In p L -> iv_end_up p <= aZ -> iv_end_up p <= c).
@@ -133,7 +141,7 @@ destruct (List.find (vm_base_ok h nZ) (vm_base_candidates h)) as [x|] eqn:Hf; [r
 exfalso.
 assert (Hin : In (Z_to_bv 64 c) (vm_base_candidates h)).
 { unfold vm_base_candidates. fold L.
-destruct (fold_max_in_or_seed cs 4096) as [Heq|Hin].
+destruct (fold_max_in_or_seed cs Mmap.task_unmapped_base) as [Heq|Hin].
 - left. fold c in Heq. rewrite Heq. reflexivity.
 - right. fold c in Hin. apply Hcs in Hin as [Hin _]. apply in_map_iff in Hin as (p & Hp & HinL).
 apply in_map_iff. exists p. split; [|exact HinL]. rewrite <- Hp. reflexivity. }
@@ -176,11 +184,13 @@ Qed.
 
 Theorem vm_gap_available_of_sum : forall h nZ,
 0 <= nZ ->
-4096 + zsumf (jcost nZ) (vm_reserved h ++ vm_maps h) + nZ <= alloc_top h ->
+Mmap.task_unmapped_base + zsumf (jcost nZ) (vm_reserved h ++ vm_maps h) + nZ <= alloc_top h ->
 vm_gap_available h nZ = true.
 Proof.
 intros h nZ HnZ Hroom. pose proof (alloc_top_lt h) as Hc64.
-destruct (sweep nZ HnZ (vm_reserved h ++ vm_maps h) 4096 eq_refl) as (a' & A1 & A2 & A3 & A4).
+assert (Htub : Mmap.task_unmapped_base mod 4096 = 0) by (rewrite task_unmapped_base_val; reflexivity).
+destruct (sweep nZ HnZ (vm_reserved h ++ vm_maps h) Mmap.task_unmapped_base Htub) as (a' & A1 & A2 & A3 & A4).
+assert (Htub0 : 0 <= Mmap.task_unmapped_base) by (rewrite task_unmapped_base_val; lia).
 assert (HaW : bv_unsigned (Z_to_bv 64 a') = a')
 by (rewrite Z_to_bv_unsigned; apply bv_wrap_small; change (bv_modulus 64) with (2 ^ 64); lia).
 assert (HnW : bv_unsigned (Z_to_bv 64 nZ) = nZ)
@@ -197,7 +207,7 @@ Corollary vm_gap_available_of_bounds : forall h nZ K S,
 0 <= nZ ->
 Z.of_nat (length (vm_reserved h ++ vm_maps h)) <= K ->
 zsumf esz (vm_reserved h ++ vm_maps h) <= S ->
-4096 + S + K * (nZ + 4095) + nZ <= alloc_top h ->
+Mmap.task_unmapped_base + S + K * (nZ + 4095) + nZ <= alloc_top h ->
 vm_gap_available h nZ = true.
 Proof.
 intros h nZ K S HnZ HK HS Hroom. apply vm_gap_available_of_sum; [exact HnZ|].
@@ -208,11 +218,11 @@ Corollary vm_gap_available_of_count : forall h nZ K S,
 0 <= nZ ->
 Z.of_nat (length (vm_reserved h ++ vm_maps h)) <= K ->
 zsumf esz (vm_reserved h ++ vm_maps h) <= S ->
-page_size + S + (K + 1) * (nZ + 4095) <= alloc_top h ->
+Mmap.task_unmapped_base + S + (K + 1) * (nZ + 4095) <= alloc_top h ->
 vm_gap_available h nZ = true.
 Proof.
 intros h nZ K S HnZ HK HS Hroom. apply (vm_gap_available_of_bounds h nZ K S HnZ HK HS).
-change page_size with 4096 in Hroom. lia.
+lia.
 Qed.
 
 End Mq0.

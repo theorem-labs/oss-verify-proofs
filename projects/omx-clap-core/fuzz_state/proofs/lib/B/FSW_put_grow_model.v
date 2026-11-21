@@ -4,8 +4,8 @@
    lib/Prog/WriterSpec.v (dbl / newcap). No engine run, no walk, no image numeral, no Section variable: pure
    arithmetic that the B put walk `apply`s.
 
-   TAKEN FROM: lib/A/FSW_put_grow_model.v at a working branch 860b2fb1188 (a Theorem Labs lane,
-   7a2986b06b8), every lemma and proof unchanged; only the import of FSH_Fn_writer moves from lib/A to lib/B
+   TAKEN FROM: lib/A/FSW_put_grow_model.v at a working branch (a Theorem Labs lane),
+   every lemma and proof unchanged; only the import of FSH_Fn_writer moves from lib/A to lib/B
    (FSH_Gen, which carries no image numeral, stays in lib/A, as lib/B/FSH_Fn_writer.v itself imports it). The
    reasons for each statement's form, and the released lemmas it rests on (put_blocks.v newcap_pow, WriterRet.v
    dbl_ge / newcap_pos), are in that file's header. The lemma names are A's: they live in lib/B, so they do not

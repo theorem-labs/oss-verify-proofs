@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the state invariants take the launch record [LaunchX], and the argument area is read from it). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -19,15 +20,11 @@ Open Scope Z_scope.
 Section Usage.
   Variable sp : word.
   Variable rdraw : EntryDraw.
-  Variables brk0 mbase : word.
+  Variable brk0 : word.
   Variable lim : Z.   (* [comment removed for export] *)
   Variables argv envp : list (list byte).
-  Variable fs : Fs.Fs.
-  Variable stdin : InStreams.
-  Variables uid gid hw : word.
-  Variable groups : list word.
-  Variable net : NetQueue.
-  Variables nofile sigmask : word.
+  Variables uid hw : word.
+  Variable L : LaunchX.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hbrk : valid_brk HASEGS brk0.
   Hypothesis Hlim : (AsanInit.LIMIT <= lim)%Z.
@@ -35,16 +32,18 @@ Section Usage.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
   Hypothesis Huid : valid_id uid.
+  Hypothesis HLX : launchL HAT sp rdraw brk0 argv envp uid hw L.
+  Let fs := lx_fs L.
   Let c := content_of argv fs.
-  #[local] Notation SV := (SINVm HAPH sp rdraw brk0 argv envp uid hw c).
-  #[local] Notation argH := (argH0 HAPH sp rdraw argv envp uid hw).
+  #[local] Notation SV := (SINVm HAPH sp rdraw brk0 argv envp uid hw L c).
+  #[local] Notation argH := (argH0 sp rdraw argv envp (lx_kb L) (lx_execfn L)).
   #[local] Notation ISP := (bv_unsigned sp).
   #[local] Notation LIM := AsanInit.LIMIT.
   #[local] Notation PIECE := (piece SV argH ISP fs).
   #[local] Notation FXHOLE := (fx_hole SV argH ISP fs).
-  Let SVF := SINVm_frame HAPH sp rdraw brk0 argv envp uid hw c.
-  Let SVA := SINVm_agree HAPH sp rdraw brk0 argv envp uid hw c.
-  Let SV1 := SVm_to1 sp rdraw brk0 argv envp uid hw c.
+  Let SVF := SINVm_frame HAPH sp rdraw brk0 argv envp uid hw L c.
+  Let SVA := SINVm_agree HAPH sp rdraw brk0 argv envp uid hw L c.
+  Let SV1 := SVm_to1 sp rdraw brk0 argv envp uid hw L c.
 
   (* [comment removed for export] *)
   Variable T98 : env -> Fs.Fs -> TSet.
@@ -78,7 +77,7 @@ Section Usage.
     PIECE csa TM -> PIECE csb TM -> PIECE cs TM.
   Proof.
     intros cs csa csb Hec Hn PA PB E R FULL m HC.
-    pose proof (ob1_brk2 sp rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit SV SV1 SVF SVA) as B2.
+    pose proof (ob1_brk2 sp rdraw brk0 argv envp uid hw fs Hsp Hva SV SV1 SVF SVA) as B2.
     refine (proj2 (B2 cs false csb csa E R FULL m (TM E (m_fs m)) (TM E (m_fs m)) HC Hec Hn _ _) eq_refl (t_eq_refl _)).
     - intros _ E' R' FULL' m' [Hag _] HC' Hfs. rewrite (TMA E E' (m_fs m) Hag), <- Hfs. exact (PB E' R' FULL' m' HC').
     - intros E' R' FULL' m' [Hag _] HC' Hfs. rewrite (TMA E E' (m_fs m) Hag), <- Hfs. exact (PA E' R' FULL' m' HC').
@@ -95,18 +94,17 @@ Section Usage.
   Qed.
 
   Theorem usage_chain :
-    crz HASEGS (init_config HASEGS Asan.M.init_pc HAPH sp brk0 mbase rdraw lim
-                  (inp argv envp fs stdin uid gid hw groups net nofile sigmask))
-        (TM (reblob (E0 HAPH sp rdraw brk0 argv envp uid hw) argv c) fs).
+    crz HASEGS (INITL HASEGS HAPH sp rdraw brk0 lim argv envp uid hw L)
+        (TM (reblob (E0L sp rdraw brk0 argv envp uid hw L) argv c) fs).
   Proof.
-    rewrite (init_cfg_eq HASEGS HAT HAPH sp rdraw brk0 mbase lim argv envp fs stdin uid gid hw groups net nofile sigmask Asan.M.init_pc (eq_trans ha_entry_eq (eq_sym hat_entry))).
-    pose proof (init_cs_ok HASEGS HAT HAPH sp rdraw brk0 mbase lim argv envp fs stdin uid gid hw groups net nofile sigmask
-                  ha_img_facts Hsp Hbrk Hlim Hva Hve Hfit Huid) as HC.
-    apply (cs_ok_reblob HASEGS HAT HAPH sp rdraw brk0 argv envp uid hw c) in HC; [|exact ha_init_noblob].
+    rewrite (init_cfg_eqL HASEGS HAT HAPH sp rdraw brk0 lim argv envp uid hw L (proj1 HLX)).
+    pose proof (init_cs_okL HASEGS HAT HAPH sp rdraw brk0 lim argv envp uid hw L ha_img_facts Hsp Hbrk Hlim Hva Hve Hfit Huid HLX) as HC.
+    apply (cs_ok_reblob HASEGS HAT HAPH sp rdraw brk0 argv envp uid hw L c) in HC; [|apply ha_init_noblob].
     apply cxs_cs_ok_of_aps in HC.
     pose proof (ha0sv_check_sound sp rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit SV SV1 SVF SVA C1_HS HOLES1 (fun h => TMA) (fun h => T_main_nil T98 T98_nil) (fun _ _ _ => eq_refl) c1_holes
-             C1_IT C1_IT_ok 0%nat true 3000%nat 400000%nat c1_plan (init_acs_of HAT) c1_shape c1_cert _ _ _ _ HC) as RZ.
-    unfold c1_shape in RZ. cbn [sd] in RZ. unfold HOLES1 in RZ.
+             C1_IT C1_IT_ok 0%nat true 3000%nat 400000%nat c1_plan_r (init_acs_r (rseq_z (kb_rseq (lx_kb L))) HAT) c1_shape
+             (c1_cert _ (rseq_z_range _)) _ _ _ _ HC) as RZ.
+    unfold c1_shape_ in RZ. cbn [sd] in RZ. unfold HOLES1 in RZ.
     rewrite (co_fs _ _ _ _ _ _ _ _ _ _ _ _ HC) in RZ.
     destruct (_ <=? _)%Z in RZ; exact RZ.
   Qed.

@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_codec proofs/libdiginet/fuzz_codec/lib/U/Prog/diginet_personality_from_name_c.v at d8e4e696562a3ec070d61f99e264ce9d80f5a5bd to fuzz_transport's images; the pcs of fuzz_codec's caller check_personality (no such function here) dropped; its unused Require of fuzz_codec's harness model codec_owe dropped *)
+(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_codec proofs/libdiginet/fuzz_codec/lib/U/Prog/diginet_personality_from_name_c.v to fuzz_transport's images; the pcs of fuzz_codec's caller check_personality (no such function here) dropped; its unused Require of fuzz_codec's harness model codec_owe dropped *)
 From Stdlib Require Import ZArith List Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Lib Require Import PropExec MState Mem Cells Exec Step Frame.

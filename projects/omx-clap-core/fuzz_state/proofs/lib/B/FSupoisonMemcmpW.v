@@ -5,14 +5,15 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/omx-clap-core/fuzz_state/lib/A/AE2z.v (donor image sha256 64b53ff86172), with its module paths changed and its addresses moved to omx-clap-core/fuzz_state's ASan build. *)
 (* Modified by Theorem Labs, 2026-10: image B twin of lib/A/AE2z.v: the line above is port_core 718254b3f4dd's, which moved its addresses from fuzz_state.asan (sha256 64b53ff86172) to fuzz_state.asan-ubsan (sha256 5ac5ce0954f8); then module paths only (fix_b_names.py): lib.A -> lib.B twins (A<x> -> Y<x>). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/YE2z.v; 90 of its 626 lines of code are new or changed and 176 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_state image B (fs.asan-ubsan): the memcmp interceptor walk under ARU (lib/A/FSupoison.v), for ANY set U of user-poisoned
    ranges (POISON-U lane, a Theorem Labs lane; the statement is lib/A/FSupoisonU.v:266 amemcmp_realizesU). ARU
    (any-user-poison) form, published as the shared one; two Theorem Labs lanes hold the U = [] form at their own
    addresses. Rule 24: no function is proved from scratch.
-   PORT (image B): text of lib/A/FSupoisonMemcmpW.v at a working branch cd7610bc4ed (a Theorem Labs lane); imports switched to the lib/B
+   PORT (image B): text of lib/A/FSupoisonMemcmpW.v at a working branch (a Theorem Labs lane); imports switched to the lib/B
    twins (YB1v YE34 YF0l YF0m YF0x YB1w YE20 YE2y; YE2s YE2z YE3b YE6z YE70 = this branch's relocations of
    lib/A/AE2s / AE2z / AE3b / AE6z / AE70 to fs.asan-ubsan), FSupoisonIntrinR -> lib/B/FSupoisonAsanR (the same region
-   lemmas over image B, McpyB f32c92531db), the image-generic lib/A modules (FSupoison, FSupoisonU) kept.
+   lemmas over image B, McpyB), the image-generic lib/A modules (FSupoison, FSupoisonU) kept.
    The text below is the image-A file's, with its addresses replaced by image B's.
 
    PORT-FROM: proofs/cgif/cgif_file_fuzzer/lib/A/AE2z.v:156-711 (mc_tail, mc_icpt_srr, mc_icpt_realizes: the released
@@ -24,7 +25,7 @@
    here unchanged.
    Step references (cross-check only, no import, no bridge into ARU): cgif's A/AE2s.v (the bcmp walk, the same
    structure step for step) and the released jsoncons proof proofs/jsoncons/fuzz_json_cursor/lib/Pm8MemcmpIcptI.v:337
-   wrap_memcmp_pk (ossv/recipes 566eb6ffa5; used at Pm8ArtWrapMemcmp.v:269), which runs the same steps of the same
+   wrap_memcmp_pk (used at Pm8ArtWrapMemcmp.v:269), which runs the same steps of the same
    compiler-rt functions in its own image (interceptor prologue, the asan-inited check, MemcmpInterceptorCommon with its
    2240-byte frame and the s - 2312 scratch bound, REAL(memcmp) as a callee) in a different interface (amemcmp_spec_at /
    asan_layout).

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch premises entry_launch_ok_va and valid_input; the run's CONFIG_RSEQ flag; AT_EXECFN; the launch's group id; the start-up hand-off states computed in the build; the channel-reader flag that fdchan asks for): changed HDIR, tfib_drv_main. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -8,7 +9,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.cgif.cgif_file_fuzzer.images Require Import Asan.
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require Import YK11 YK15 YK18 YK0c YK0e YK09 YA0c YA0e YA01 YA02 YA00.
-From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib.A Require Import AB12 AB1h AB01 AB1n.
+From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib.A Require Import AB12 AB1h AB01r AB1n.
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require Import YG0f YG00 YG01 YG0n.
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib.A Require Import AF0m.
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require Import YP0m YP09 YP0l YP08 YP03 YN3q YK04 YA0i YA0n YA0o YA0p.
@@ -81,25 +82,49 @@ Let RDD : rd0_dir_tfa B := tfib_rd0_dir B HB ARL RDERR.
 Let RDF : rd0_file_tfa B := tfib_rd0_file B HB ARL ML MSITE RCHK MCPY FREE REFUSED HDR.
 Let HFILE : file_arm_tfa B := tfib_file_arm B HB ARL ML MSITE RDF.
 Let HDIR : dir_arm_tfa B := tfib_dir_arm B HB ARL ML MSITE RDD.
-Theorem tfib_drv_main : forall (sp : word) (rdraw : EntryDraw) (brk : word) (inp : ProcInput) (h : nat) (ch : acs) (E : env) (R : bvmap 5 word)
-(FULL : word -> option byte) (model : Model),
+(* LPS 727298f3: the driver's main over the run's own CONFIG_RSEQ hand-off state ([AB01r.HS_tfib_r]), with the
+   stack invariant abstract and the launch's fifth [valid_entry] conjunct given: the statement is AD1q.v's
+   [drv_mainX_stmt].  The driver files' lemmas take their section arguments in the order of [inst]. *)
+Theorem tfib_drv_main : forall (sp : word) (rdraw : EntryDraw) (brk mbase : word) (inp : ProcInput) (h : nat) (ch : acs) (E : env) (R : bvmap 5 word)
+(FULL : word -> option byte) (model : Model) (SINV : env -> (word -> option byte) -> Prop),
 valid_sp sp -> valid_brk TSEGS brk -> entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) inp ->
 YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
-HS_tfib h = Some ch ->
-cs_ok TSEGS TFIB YA02.LIMIT (YA02.TOP sp)
-(YA02.SINV0 TPH sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-(YA02.argH0 TPH sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model ->
-(forall n, (n < NX0G)%nat -> ev E n = ev (YA02.E0 TPH sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) n) ->
-(forall a, YA02.argH0 TPH sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) E a = true ->
-FULL a = wrap_mem TPH sp (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) rdraw a) ->
+HS_tfib_r (rseq_z (kb_rseq (in_kernel inp))) h = Some ch ->
+(forall E' M, SINV E' M -> uE E' e_sp0 = YA02.TOP sp + 8388608) ->
+cs_ok TSEGS TFIB YA02.LIMIT (YA02.TOP sp) SINV
+(YA02.argH0 sp rdraw (in_argv inp) (in_envp inp) (in_kernel inp) (in_execfn inp)) (in_fs inp) E ch R FULL model ->
+(forall n, (n < NX0G)%nat -> ev E n = ev (YA02.E0 sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_gid inp)
+  (in_hwcap inp) (in_kernel inp) (in_execfn inp)) n) ->
+(forall a, YA02.argH0 sp rdraw (in_argv inp) (in_envp inp) (in_kernel inp) (in_execfn inp) E a = true ->
+FULL a = wrap_mem inp mbase TPH (Z_to_bv 64 (Z.of_N Asan.M.init_pc)) sp rdraw a) ->
 srealizes TSEGS (cfg_of TSEGS R (pc ch) FULL model) (CLOSEDX inp).
 Proof.
-intros sp rdraw brk inp h ch E R FULL model Hsp Hbrk Hfit (Hva & Hve & Hvfs & _) Hceil Hch HC HE HM.
-pose proof (tfib_main_entry sp rdraw brk inp Hsp Hva Hve Hfit h ch E R FULL model Hch HC HE HM (sliver_allowed sp rdraw brk inp Hsp Hva Hve Hfit h ch E R FULL model Hch HC Hceil)    ) as (Hpc & HST & HAI & Hfs & Hfds & _).
+intros sp rdraw brk mbase inp h ch E R FULL model SINV Hsp Hbrk Hfit Hvi Hlau Hceil Hch SINV_sp0 HC HE HM.
+pose proof Hvi as (Hva & Hve & Hvfs & _ & _ & _ & _ & _ & _ & _ & _ & _ & Hvl & _).
+pose proof (@AD1g.sliver_allowed) as SL.
+pose proof (@tfib_main_entry) as ME.
+pose proof (@tfib_finv_handoff) as HFI0.
+(* [inst] is local to this proof, as libreac/fuzz_boxreg's A/AD1p.v has it: a top-level [Ltac]
+   resolves each name it uses where it is defined, and these names exist only after the
+   [intros] above. *)
+let inst H := (try specialize (H YK11.fx0); try specialize (H B); try specialize (H HB);
+try specialize (H sp); try specialize (H rdraw); try specialize (H brk); try specialize (H mbase); try specialize (H inp);
+try specialize (H Hsp); try specialize (H Hva); try specialize (H Hve); try specialize (H Hfit);
+try specialize (H Hvl); try specialize (H Hlau); try specialize (H Hvi); try specialize (H h); try specialize (H ch);
+try specialize (H E); try specialize (H R); try specialize (H FULL); try specialize (H model); try specialize (H Hch);
+try specialize (H SINV); try specialize (H SINV_sp0); try specialize (H HC);
+try specialize (H HE); try specialize (H HM); try specialize (H rc); try specialize (H Hceil)) in
+(inst SL; inst ME; inst HFI0).
+destruct (ME SL) as (Hpc & HST & HAI & Hfs & Hfds & _). clear ME.
 set (ly := AD1g.ly0 ch E model).
 assert (HAR : AR TSEGS B ly init_state (W1 sp rdraw inp Hsp Hva ch E model) FULL model) by (eapply (tfib_AR B HB); eassumption).
 assert (HTOP : AD1v.top_ok (bv_unsigned sp) ly) by (eapply tfib_top_ok; eassumption).
-assert (HFI : FINV ly (w_H (W1 sp rdraw inp Hsp Hva ch E model)) FULL) by exact (tfib_finv_handoff sp rdraw brk inp Hsp Hva h ch E R FULL model Hch HC).
+assert (HFI : FINV ly (w_H (W1 sp rdraw inp Hsp Hva ch E model)) FULL) by exact HFI0.
+(* LPS 727298f3: [fdchan]'s third conjunct.  [cs_ok]'s last field [co_rdr] carries the launch's
+   channel-reader flag, which [YA02.init_cs_ok] proves; [eapply] leaves the projection's other
+   arguments to [HC]. *)
+assert (Hcr : m_channel_reader model = true) by (eapply co_rdr; exact HC).
 rewrite Hpc. change (cfg_of TSEGS R TFIB_MAIN FULL model) with (mkCfg (mkst R (Z_to_bv 64 TFIB_MAIN) FULL (seg_rom tfibsegs)) model).
 change TSEGS with tfibsegs in HST, HAI, HAR |- *. unfold CLOSEDX.
 destruct (Nat.eq_dec (length (in_argv inp)) 2) as [Hlen|Hlen].
@@ -108,14 +133,15 @@ destruct (Nat.eq_dec (length (in_argv inp)) 2) as [Hlen|Hlen].
 destruct Hargv as (a0 & p & Hargv).
 destruct (HST true ltac:(unfold two_ok; rewrite Hargv; cbn; lia)) as [HS HR].
 replace (CLOSEDX_args (in_argv inp) (in_fs inp)) with (CLOSEDX_args [a0; p] (in_fs inp)) by (rewrite Hargv; reflexivity).
-exact (tfib_arm_argv2 B HB ARL HCO HFILE HDIR sp inp (xwE E R) (xdE inp)
+exact (tfib_arm_argv2 B HB ARL HCO HFILE HDIR sp brk mbase inp rdraw (xwE E R) (xdE inp)
 (W1 sp rdraw inp Hsp Hva ch E model) (mkst R (Z_to_bv 64 TFIB_MAIN) FULL (seg_rom tfibsegs)) model ly a0 p
-Hargv Hsp Hva Hve Hfit Hvfs HS HR HAI HAR HTOP HFI Hfs Hfds).
+Hsp Hargv Hva Hve Hvl Hlau Hvi Hvfs HS HR HAI HAR HTOP HFI Hfs Hfds Hcr).
 - destruct (HST false I) as [HS HR].
 replace (CLOSEDX_args (in_argv inp) (in_fs inp)) with (diag (msg_usage (nth 0 (in_argv inp) [])) (in_fs inp)).
 2:{ clear -Hlen. unfold CLOSEDX_args. destruct (in_argv inp) as [|x [|y [|z r]]]; try reflexivity. cbn in Hlen. lia. }
-exact (tfib_usage B HB ARL xst est XFR ESTF FPU EXS sp inp (xwE E R) (xdE inp) (W1 sp rdraw inp Hsp Hva ch E model) (mkst R (Z_to_bv 64 TFIB_MAIN) FULL (seg_rom tfibsegs))
-model ly Hsp Hva Hve Hfit Hlen HS HR HAI HAR HTOP Hfs Hfds).
+exact (tfib_usage B HB ARL xst est XFR ESTF FPU EXS sp brk mbase inp rdraw (xwE E R) (xdE inp)
+(W1 sp rdraw inp Hsp Hva ch E model) (mkst R (Z_to_bv 64 TFIB_MAIN) FULL (seg_rom tfibsegs))
+model ly Hsp Hva Hve Hvl Hlau Hvi Hlen HS HR HAI HAR HTOP Hfs Hfds Hcr).
 Qed.
 End c.
 End b.

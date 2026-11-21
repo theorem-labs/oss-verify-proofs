@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the header leaf takes the output channel's reader; the stack window is the launch's 1500 pages below the stack pointer, not 8 MiB). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -152,6 +153,7 @@ Section Header.
   Variables (R0 : bvmap 5 word) (M0 : word -> option byte).
   Hypothesis HP : header_pre sp0 p1 gm tid area can sec content R0 M0.
   Hypothesis Hmap : map_has (vm_maps VM) gm (Z_to_bv 64 69632) = true.
+  Hypothesis Hrdr : ia_channel_reader stdin0 = true.   (* LPS 08b1429: SIGPIPE otherwise *)
 
   Let L : Z := Z.of_nat (length content).
   Definition modelh : Model := model_post VM stdin0 fs0 tid.
@@ -246,7 +248,7 @@ Section Header.
       all: try (lazymatch goal with
                 | |- _ /\ (forall d m, _ -> _ -> store_ok _ _ (Z_to_bv 64 (?B + d)) m = true) =>
                     split; [lia|]; intros d m Hd Hm;
-                    first [ replace (B + d)%Z with (bv_unsigned sp0 - 8388608 + d)%Z by lia; apply Hst; lia
+                    first [ replace (B + d)%Z with (bv_unsigned sp0 - 6144000 + d)%Z by lia; apply Hst; lia
                           | replace (B + d)%Z with (bv_unsigned gm + d)%Z by lia; apply Hgr; lia
                           | apply Hma; lia
                           | replace (B + d)%Z with (0x2d8000 + d)%Z by lia; apply data_store_ok; lia ]
@@ -472,6 +474,7 @@ Section Header.
                  _ _ msg_addr 31 HK eq_refl) by (cbn; lia);
       apply msg_img
     | apply fds_std_2
+    | exact Hrdr
     | reflexivity
     | reflexivity
     | apply t_exit_has_nil
@@ -821,13 +824,14 @@ Theorem header_phase : forall (mode : bool) (Q : config -> Prop) (sp0 p1 gm tid 
   (Z.of_nat (length content) < 65536)%Z ->
   (0 <= can < 2 ^ 64)%Z -> (0 <= sec < 2 ^ 64)%Z ->
   In (gm, Z_to_bv 64 69632) (vm_maps VM) ->
+  ia_channel_reader stdin0 = true ->   (* LPS 08b1429: SIGPIPE otherwise *)
   (mode = false -> (6 + hdr_cfglen content <= Z.of_nat (length content))%Z) ->
   (forall R', tgt_entry (bv_unsigned sp0) (bv_unsigned gm + 32) can content R' M ->
      GG RSEGS mode Q K (mkCfg (mkst R' (Z_to_bv 64 0xdd3a4) M (seg_rom RSEGS)) (model_post VM stdin0 fs0 tid))) ->
   GG RSEGS mode Q (t_hdr content fs0 K)
      (mkCfg (mkst R (Z_to_bv 64 0xdd1b8) M (seg_rom RSEGS)) (model_post VM stdin0 fs0 tid)).
 Proof.
-  intros mode Q sp0 p1 gm tid area brkv mas can sec content VM stdin0 fs0 Rr Mr R M K Hvsp RP W0 MF HL Hcan Hsec Hin Hmode HT.
+  intros mode Q sp0 p1 gm tid area brkv mas can sec content VM stdin0 fs0 Rr Mr R M K Hvsp RP W0 MF HL Hcan Hsec Hin Hrdr Hmode HT.
   pose proof (header_pre_intro sp0 p1 gm tid area brkv mas can sec content Rr Mr R M Hvsp RP W0 MF HL Hcan Hsec) as HP.
   pose proof (map_has_In _ _ _ Hin) as Hmap.
   pose proof (Z.mod_pos_bound (hdr_cfg content) 32768 ltac:(lia)) as CR.
@@ -835,12 +839,12 @@ Proof.
   destruct (MAX_INPUT <=? Z.of_nat (length content))%Z eqn:E1; [apply Z.leb_le in E1; unfold MAX_INPUT in E1; lia|].
   destruct (length content <? 6)%nat eqn:E2.
   - apply Nat.ltb_lt in E2. destruct mode.
-    + apply gg_of_rz. apply (header_short sp0 p1 gm tid area can sec content VM stdin0 fs0 R M HP Hmap E2).
+    + apply gg_of_rz. apply (header_short sp0 p1 gm tid area can sec content VM stdin0 fs0 R M HP Hmap Hrdr E2).
     + exfalso. specialize (Hmode eq_refl). unfold hdr_cfglen in *. lia.
   - apply Nat.ltb_ge in E2.
     destruct (length content <? 6 + Z.to_nat (hdr_cfglen content))%nat eqn:E3.
     + apply Nat.ltb_lt in E3. destruct mode.
-      * apply gg_of_rz. apply (header_overrun sp0 p1 gm tid area can sec content VM stdin0 fs0 R M HP Hmap E2).
+      * apply gg_of_rz. apply (header_overrun sp0 p1 gm tid area can sec content VM stdin0 fs0 R M HP Hmap Hrdr E2).
         unfold hdr_cfglen in *. lia.
       * exfalso. specialize (Hmode eq_refl). unfold hdr_cfglen in *. lia.
     + apply Nat.ltb_ge in E3.

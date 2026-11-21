@@ -96,7 +96,7 @@ Qed.
 (* Route (C), CORRECTED to a Theorem Labs lane's premise-free form (a Theorem Labs lane 11:26Z measurement; approved a Theorem Labs lane 11:30Z): this run
    reads and stores NO shadow byte THROUGH the shadow_rw premise -- HSW is introduced in reac_ctrl_block_cksum_stamp.v and never used
    (its shadow bytes come from addressable, rt_shadow_rd) -- so the _on forms DROP `shadow_rw m ->` and name no
-   region. Supersedes the narrowed form of c436911dedc, which carried a reac_ctrl_block_cksum_stamp_shadow_R; that
+   region. Supersedes the narrowed form, which carried a reac_ctrl_block_cksum_stamp_shadow_R; that
    predicate is gone. Same names as image A. *)
 Definition reac_ctrl_block_cksum_stamp_contract_on : Prop :=
   forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)

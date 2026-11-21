@@ -14,6 +14,7 @@
      gs_free  0x83940 .. 0x839b8   an end held at slot n: free #2 0x8394c, nheld -= 1,
                                    held[n] = held[nheld]
    and the three other exits of the search go straight to DLN (an end not held, a begin held). *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -666,7 +667,7 @@ Let BR := paj_branch (PI := PI).
 Let RET := paj_ret_at (PL := PL_fr) (PI := PI).
 
 (* ---- The relay entry in the line loop's form across a step that keeps its footprint. ----
-   W_rep.v:334 aentry_ok_kept, for W_drain_cx.v:231 aentry_okx (the two differ only in the conjuncts
+   W_rep.v:334 aentry_ok_kept, for W_drain_cx.v:232 aentry_okx (the two differ only in the conjuncts
    about s->buf's contents, which carry no memory). *)
 Lemma gs_aentry_okx_kept : forall ly S W mem ly' S' W' mem' e,
 aentry_okx B ly S W mem e ->
@@ -902,7 +903,7 @@ End a.
    gs_akept_of, gs_mo_ok_of and the list / model lemmas) are CITED.
    - The cut predicates GA_x / GF_x and the stage statements gs_scan_stmt_x / gs_add_stmt_x / gs_free_stmt_x are the
      AR texts with W_drain_cx_x.v's twins (DBASE_x, DGS_x, DLN_x, dPOST_x, LCORE_x); dr_gs_of_x composes them into
-     W_drain_cx_x.v:700 dr_gs_stmt_x, unchanged.
+     W_drain_cx_x.v:701 dr_gs_stmt_x, unchanged.
    - The journal's open / close at an allocator site over W_journal_x.ajournal_gx_x (gs_gx_open_x / gs_gx_close_x).
    - The room round's bookkeeping at a call (W_drain_cx_x.v dbud_x: the room rp_RM at MT_rk's charge of the requests
      still owed plus kr, and the live counts plus their peak tr_peakP + 2) is lib/A/W_drain_room_x.v, the drain
@@ -1066,7 +1067,7 @@ intros G STK sp0 FP ly S Hp W0 mem md own ly2 S2 Hp2 W2 mem2 md2 k2 memS HSTK Ha
 apply (ajournal_gx_pack_xR SEGS B PST ARx G 0 [] STK sp0 FP ly S Hp W0 mem md own ly2 S2 Hp2 W2 mem2 md2 k2 memS);
   [exact HSTK | lia | rewrite !Z.add_0_r; exact HJ | exact Hag | intros a Ha; lia].
 Qed.
-(* ---- The segment over ARx: W_drain_cx_x.v:700 dr_gs_stmt_x, from the three stages. ---- *)
+(* ---- The segment over ARx: W_drain_cx_x.v:701 dr_gs_stmt_x, from the three stages. ---- *)
 Theorem dr_gs_of_xR : (gs_scan_stmt_xR R) -> (gs_add_stmt_xR R) -> (gs_free_stmt_xR R) -> dr_gs_stmt_xR B PST ARx MT RP MMAX RG R.
 Proof.
 intros SCAN ADD FREE cx Hp kr s1 D p q W1 c1 HB HGS HN.
@@ -1095,7 +1096,7 @@ ajournal_x SEGS B PST ARx STK sp0 FP ly S Hp W0 memS md own ly2 S2 Hp2 W2 mem2 m
 Proof. eapply (gs_gx_close_xR (@wle SEGS)); first [exact (wle_refl SEGS) | exact (wle_trans SEGS) | exact (fun W W' (h : @wle SEGS W W') => h) | assumption]. Qed.
 
 
-(* ---- The segment over ARx: W_drain_cx_x.v:700 dr_gs_stmt_x, from the three stages. ---- *)
+(* ---- The segment over ARx: W_drain_cx_x.v:701 dr_gs_stmt_x, from the three stages. ---- *)
 Theorem dr_gs_of_x : gs_scan_stmt_x -> gs_add_stmt_x -> gs_free_stmt_x -> dr_gs_stmt_x B PST ARx MT RP MMAX RG.
 Proof. eapply (dr_gs_of_xR (@wle SEGS)); first [exact (wle_refl SEGS) | exact (wle_trans SEGS) | exact (fun W W' (h : @wle SEGS W W') => h) | assumption]. Qed.
 End cx.

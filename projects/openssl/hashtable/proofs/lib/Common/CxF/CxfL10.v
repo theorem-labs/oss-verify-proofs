@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's reserved ledger). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.
@@ -82,7 +83,7 @@ Definition LMAX : Z := 131071.
 Lemma L_ANL_LMAX : @LMAX = @AN.LMAX.
 Proof. unfold LMAX. reflexivity. Qed.
 
-Definition TOPNUL : Z := CXLF.p47 - 17.
+Definition TOPNUL : Z := CXLF.p47 - 9.
 Lemma L_ANL_TOPNUL : @TOPNUL = @AN.TOPNUL.
 Proof. unfold TOPNUL. rewrite ?CXLF.zshr_eq, ?CXLF.zm64_eq, ?CXLF.zhalf_eq, ?CXLF.zmodp_eq, ?CXLF.zpow2_eq, ?CXNAT.eqbF_eqf, ?CXNAT.lebF_eqf, ?CXNAT.ltbF_eqf, ?CXNAT.compareF_eqf, ?CXNAT.of_succ_natF_eqf, ?CXNAT.nthF_eqf. reflexivity. Qed.
 

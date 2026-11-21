@@ -1,5 +1,5 @@
-# The consumer's hypothesis closed by exact, on a scratch merge (never pushed) of the consumer's commit 9ee6811b6c95
-# (lib/A/UciClose.v:143 H_RT_STACK_MALLOC1, bindings segs := ucisegs0, B := AD2l.UciB) with this branch at 8d60aff2fa87:
+# The consumer's hypothesis closed by exact, on a scratch merge (never pushed) of the consumer's
+# (lib/A/UciClose.v:143 H_RT_STACK_MALLOC1, bindings segs := ucisegs0, B := AD2l.UciB) with this branch:
 # the merge had no conflict; the scratch file lib/A/ZSm1Fit.v below states the hypothesis's type verbatim under
 # UciClose.v's two bindings and closes it by exact of stack_malloc1_contract. Built by `CB_COMPILE=<it> cb build`.
 ## the scratch file

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: grant_exists_between takes the mmap hint, a page-aligned length and page_size <= FLOOR, bounds by mmap_top (was alloc_top), and proves the grant through Placement.linux_place_exists and linux_place_is_iff. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -12,6 +13,7 @@ From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require PropExec__Common. Fro
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require AxSymExec3 AxSymExec3Sound. From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require AxSymRun3__Common. Import OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.AxSymExec3 OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.AxSymExec3Sound OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.AxSymRun3__Common.AxSymRun3.
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require MmapSim AllocSim RefNodes. From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require AsanHexScan__Common. Import OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.MmapSim OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.AllocSim OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.RefNodes OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.AsanHexScan__Common.AsanCeil OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.AsanHexScan__Common.AsanPlacement.
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Lib Require StdioSymDrive EntryGlue. From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Lib Require NodesFs__Lib. From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Lib Require AsanBlock__Lib. Import OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Lib.StdioSymDrive OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Lib.EntryGlue OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Lib.NodesFs__Lib.NodesMm OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Lib.AsanBlock__Lib.AsanBlock.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Placement.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Import AX2. Import AX2S.
@@ -125,18 +127,24 @@ Section GapVar.
   Qed.
 End GapVar.
 
-(* [comment removed for export] *)
-Theorem grant_exists_between : forall (m : Model) nZ FLOOR,
-  0 < nZ -> 0 < FLOOR -> FLOOR mod page_size = 0 ->
-  FLOOR + nZ + gap_weight nZ (List.filter (live_at FLOOR) (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m))) <= alloc_top (m_vmmaps m) ->
-  exists a, grant_ok_na_pin m a nZ = true.
+(* LPS 727298f3: [grant_ok_na_pin hint m a nZ] is the address Linux picks for the hint
+   ([linux_place_is]), so the free gap only shows that the placement has an answer
+   ([linux_place_exists]): a gap in the top-down window [[page_size, mmap_top)]. *)
+Theorem grant_exists_between : forall hint (m : Model) nZ FLOOR,
+  0 < nZ -> nZ mod page_size = 0 -> page_size <= FLOOR -> FLOOR mod page_size = 0 ->
+  FLOOR + nZ + gap_weight nZ (List.filter (live_at FLOOR) (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m))) <= mmap_top (m_vmmaps m) ->
+  exists a, grant_ok_na_pin hint m a nZ = true.
 Proof.
-  intros m nZ FLOOR HnZ Hf Hfa Hslack.
-  pose proof (alloc_top_room (m_vmmaps m)) as Hroom. unfold two_pow_64, stack_max_size in Hroom.
+  intros hint m nZ FLOOR HnZ Hnm Hf Hfa Hslack.
+  pose proof (Placement.mmap_top_lt_two_pow_64 (m_vmmaps m)) as Hmt. unfold two_pow_64 in Hmt.
+  pose proof (Placement.alloc_top_lt_two_pow_64 (m_vmmaps m)) as Hat. unfold two_pow_64 in Hat.
   pose proof (gap_weight_nonneg nZ (List.filter (live_at FLOOR) (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m))) ltac:(lia)) as W0.
-  destruct (free_gap_between (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) nZ FLOOR (alloc_top (m_vmmaps m))
-              ltac:(lia) (conj Hf Hfa) ltac:(lia) Hslack) as (g & Hal & Hfl & Hc & Hfree).
-  exists (Z_to_bv 64 g). unfold grant_ok_na_pin. rewrite u_small by lia.
-  unfold page_size in Hal |- *. rewrite (proj2 (Z.eqb_eq _ _) Hal). rewrite (proj2 (Z.ltb_lt 0 g)) by lia.
-  rewrite (proj2 (Z.leb_le _ _) Hc). rewrite Hfree. reflexivity.
+  assert (Hfl0 : 0 < FLOOR /\ FLOOR mod page_size = 0) by (split; [unfold page_size in Hf; lia| exact Hfa]).
+  destruct (free_gap_between (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) nZ FLOOR (mmap_top (m_vmmaps m))
+              ltac:(lia) Hfl0 ltac:(lia) Hslack) as (g & Hal & Hfl & Hc & Hfree).
+  destruct (Placement.linux_place_exists (m_vmmaps m) (kb_thp (m_kernel m)) hint nZ HnZ Hnm) as (a & Ha).
+  { exists g. left. split; [exact Hal|]. split; [lia|]. split; [exact Hc | exact Hfree]. }
+  destruct (Placement.linux_place_admissible _ _ _ _ _ HnZ Hnm Ha) as (_ & Hpos & Htop & _).
+  exists (Z_to_bv 64 a). unfold grant_ok_na_pin.
+  apply (proj2 (Placement.linux_place_is_iff _ _ _ _ _ HnZ Hnm)). rewrite u_small by lia. exact Ha.
 Qed.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (1 recorded proof replaced by written proofs (srz_exit); srz_write1, srz_munmap restated for the revision's model; node_munmap re-proved; adds srz_silent_all; srz_node takes RomBase.sys_rob, so srz_silent1, srz_emit1, srz_alt2 and srz_silent_all take it too, discharged at the instruction, write and munmap nodes; imports RomBase, RomWrite). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -14,6 +15,7 @@ From OSSVerify.Proofs.zstd.huf_decompress.lib.AS Require Import
   SimInv ExitSim CatSim MmapSim ShapeAlg DivergeSim LazyFrame SymTac.
 From OSSVerify.Proofs.zstd.huf_decompress.lib.Lib Require Import Cfg.
 From OSSVerify.Proofs.zstd.huf_decompress.lib Require KReplay.
+From OSSVerify.Proofs.zstd.huf_decompress.lib.AS Require Import RomBase RomWrite.
 Ltac2 kr_t_SpinAlg () := "C4ELinuxProcessSemantics?LinuxProcessSem2Fs4pathI47Corelib4Init5Logic2eq00C47Corelib4Init5Logic6eq_indC47Corelib4Init5Logic8eq_transC47Corelib4Init5Logic7f_equalC47Corelib4Init5Logic8eq_ind_rk59OSSVerify5KrLib2AS7SpinAlg9srealizes01C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS8ShapeAlg5t_altC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS8ShapeAlg7node_okC1?~~~~~~~~~~~~~~~K59OSSVerify5KrLib2AS8ShapeAlg8realizes01C1?~~~~~~~~~~~~~~~C4ELinuxProcessSemantics?LinuxProcessSem2Fs2FsC47Corelib5Lists7ListDef3mapC4ELinuxProcessSemantics?LinuxProcessSem3Run9is_prefixC59OSSVerify5KrLib2AS8ShapeAlgCis_prefix_app_splitC1?~~~~~~~~~~~~~~~C4ELinuxProcessSemantics?LinuxProcessSem3Run=is_prefix_nilC59OSSVerify5KrLib2AS8ShapeAlg?is_prefix_nil_rC1?~~~~~~~~~~~~~~~C4ELinuxProcessSemantics?LinuxProcessSem3Run?is_prefix_transC47Corelib4Init9Datatypes3appC59OSSVerify5KrLib2AS8ShapeAlg8wr_indexC1?~~~~~~~~~~~~~~~C4ELinuxProcessSemantics5Riscv7Prelude5bvmapC4ELinuxProcessSemantics?LinuxProcessSem5State7PipeBufI59OSSVerify5KrLib2AS8ShapeAlg8realizes00C1?~~~~~~~~~~~~~~~i59OSSVerify5KrLib2AS7SpinAlg9srealizes00C1?~~~~~~~~~~~~~~~I47Corelib4Init9Datatypes4list00K47Corelib7Numbers7BinNums8positive02K47Corelib7Numbers7BinNums1N02I45stdpp9bitvector;definitions2bv00I47Corelib4Init9Datatypes6option00C4ELinuxProcessSemantics?LinuxProcessSem3Run9cfg_modelC4ELinuxProcessSemantics?LinuxProcessSem5State8m_haltedK47Corelib4Init9Datatypes6option02C47Corelib4Init5Logic3notk59OSSVerify5KrLib2AS7SpinAlg9srealizes02C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS8ShapeAlg4t_eqC1?~~~~~~~~~~~~~~~k59OSSVerify5KrLib2AS7SpinAlg9srealizes03C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS8ShapeAlg<realizes_indC1?~~~~~~~~~~~~~~~I4ELinuxProcessSemantics?LinuxProcessSem3Run6config00C59OSSVerify5KrLib2AS8ShapeAlg4TSetC1?~~~~~~~~~~~~~~~I4ELinuxProcessSemantics?LinuxProcessSem5State5event00K47Corelib7Numbers7BinNums8positive03K59OSSVerify5KrLib2AS8ShapeAlg8realizes02C1?~~~~~~~~~~~~~~~K59OSSVerify5KrLib2AS8ShapeAlg8realizes03C1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2AS7SpinAlg=srealizes_indC1?~~~~~~~~~~~~~~~K47Corelib4Init9Datatypes4list01C59OSSVerify5KrLib2AS8ShapeAlg6t_emitC1?~~~~~~~~~~~~~~~I47Corelib4Init5Logic3and00I47Corelib4Init5Logic2ex00K47Corelib4Init5Logic2or01K47Corelib4Init5Logic2ex01K47Corelib4Init5Logic2eq01I47Corelib4Init5Logic2or00K47Corelib4Init5Logic3and01K47Corelib4Init5Logic2or02C59OSSVerify5KrLib2AS8ShapeAlg5t_nilC1?~~~~~~~~~~~~~~~K4ELinuxProcessSemantics?LinuxProcessSem3Run7step_to01C59OSSVerify5KrLib3Lib3CfgCstar_cfg_halted_nilC1?~~~~~~~~~~~~~~~I4ELinuxProcessSemantics?LinuxProcessSem3Run8star_cfg00I4ELinuxProcessSemantics?LinuxProcessSem3Run9sstep_cfg00C59OSSVerify5KrLib3Lib3Cfg4ACFGC1?~~~~~~~~~~~~~~~I4ELinuxProcessSemantics?LinuxProcessSem3Run7step_to00C59OSSVerify5KrLib2AS:DivergeSimBis_prefix_app_monoC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib3Cfg<star_cfg_oneC1?~~~~~~~~~~~~~~~K4ELinuxProcessSemantics?LinuxProcessSem3Run8star_cfg02C59OSSVerify5KrLib3Lib3CfgAobs_trace_cfg_nilC1?~~~~~~~~~~~~~~~C4ELinuxProcessSemantics?LinuxProcessSem3Run=obs_trace_cfgc59OSSVerify5KrLib2AS7SpinAlgCsrealizes_star_onlyC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2AS7SpinAlgAsrealizes_pclosedC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2AS7SpinAlg@srealizes_admitsC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib3CfgEsstep_cfg_halted_noneC1?~~~~~~~~~~~~~~~C47Corelib4Init5Logic9False_indK4ELinuxProcessSemantics?LinuxProcessSem3Run7step_to02I47Corelib4Init5Logic5False00I47Corelib4Init5Logic4True00K47Corelib4Init5Logic4True01c59OSSVerify5KrLib2AS7SpinAlg8srz_pathC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2AS7SpinAlg>srealizes_stepC1?~~~~~~~~~~~~~~~C4ELinuxProcessSemantics?LinuxProcessSem3Run<star_cfg_indC4ELinuxProcessSemantics?LinuxProcessSem3RunAreaches_error_cfgc59OSSVerify5KrLib2AS7SpinAlg=srz_path_starC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2AS7SpinAlgDsrealizes_no_sserrorC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS8ShapeAlg:t_alt_unitC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2AS7SpinAlgBsrealizes_nonemptyC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS8ShapeAlg=t_emit_nil_eqC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS8ShapeAlg:t_eq_transC1?~~~~~~~~~~~~~~~I47Corelib4Init9Datatypes4unit00K47Corelib4Init9Datatypes4unit01I47Corelib4Init9Datatypes3sum00K47Corelib4Init9Datatypes3sum01K47Corelib4Init9Datatypes3sum02C59OSSVerify5KrLib2AS8ShapeAlg6t_alt2C1?~~~~~~~~~~~~~~~C47Corelib4Init5Logic5proj1C47Corelib4Init5Logic5proj2C47Corelib4Init5Logic3iffI47Corelib4Init9Datatypes4prod00C4ELinuxProcessSemantics?LinuxProcessSem5State9m_vm_lazyC4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics>ms_svc_pendingI4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics>machine_result00C4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics4stepK4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics>machine_result01K4ELinuxProcessSemantics?LinuxProcessSem3Run6config01C59OSSVerify5KrLib2AS8ShapeAlg:node_instrC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2AS7SpinAlg;srz_silent1C1?~~~~~~~~~~~~~~~I4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics=machine_state00I4ELinuxProcessSemantics?LinuxProcessSem5State5Model00I59OSSVerify5KrLib2AS6CatSim6msteps00C1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2AS7SpinAlg8srz_stepC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS6CatSim:msteps_indC1?~~~~~~~~~~~~~~~I4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics=access_report00C4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics=step_accessesK4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics=access_report01C59OSSVerify5KrLib2AS9LazyFrameEaccesses_outside_lazyC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS9LazyFrameHmi_account_step_disjointC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib3CfgAtransparent_instrC1?~~~~~~~~~~~~~~~I4ELinuxProcessSemantics?LinuxProcessSem3Run5sstep00K4ELinuxProcessSemantics?LinuxProcessSem3Run5sstep01C4ELinuxProcessSemantics?LinuxProcessSem3Run?mi_account_stepK4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics>machine_result02C47Corelib4Init5Logic6eq_symK4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics>machine_result03K47Corelib4Init9Datatypes6option01C4ELinuxProcessSemantics?LinuxProcessSem3Run9sys_inputC4ELinuxProcessSemantics?LinuxProcessSem5StateGsyscall_effect_accessesC4ELinuxProcessSemantics?LinuxProcessSem5StateJmaterialize_model_accessesC4ELinuxProcessSemantics?LinuxProcessSem3Run<apply_effectC4ELinuxProcessSemantics?LinuxProcessSem5State8m_killedC4ELinuxProcessSemantics?LinuxProcessSem5State4m_fsC4ELinuxProcessSemantics?LinuxProcessSem5Specs<syscall_specK4ELinuxProcessSemantics?LinuxProcessSem5State5event03K4ELinuxProcessSemantics?LinuxProcessSem5State5event04K4ELinuxProcessSemantics?LinuxProcessSem5Monad7outcome02C59OSSVerify5KrLib2AS8ShapeAlg@node_ok_of_pnodeC1?~~~~~~~~~~~~~~~K47Corelib4Init9Datatypes4prod01K4ELinuxProcessSemantics?LinuxProcessSem5Monad7outcome01C4ELinuxProcessSemantics?LinuxProcessSem3Run@advance_past_svcK47Corelib4Init9Datatypes4list02I4ELinuxProcessSemantics?LinuxProcessSem5State=SyscallEffect00C4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics=memory_accessc59OSSVerify5KrLib2AS7SpinAlgCnode_instr_disjointC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS8ShapeAlg:rz_silent1C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS6CatSim7fd1chanC1?~~~~~~~~~~~~~~~C45stdpp9bitvector;definitions;bv_unsignedK47Corelib7Numbers7BinNums1Z02C4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics6ms_gprC45stdpp9bitvector;definitions7Z_to_bvK47Corelib4Init9Datatypes3nat02C4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics=ms_read_bytesC59OSSVerify5KrLib2AS6CatSim;buf_modeledC1?~~~~~~~~~~~~~~~I47Corelib4Init5Peano2le00C47Corelib5Lists7ListDef6firstnC4ELinuxProcessSemantics?LinuxProcessSem6BvBase8len_wordC4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics8set_gpr0K4ELinuxProcessSemantics?LinuxProcessSem5State5event02C47Corelib4Init6Specif9proj1_sigC59OSSVerify5KrLib2AS8ShapeAlg7wr_fullC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS8ShapeAlg;node_write1C1?~~~~~~~~~~~~~~~K47Corelib4Init6Specif3sig01C59OSSVerify5KrLib2AS8ShapeAlg:t_write_chC1?~~~~~~~~~~~~~~~C47Corelib4Init9Datatypes6lengthI47Corelib7Numbers7BinNums1Z00K47Corelib4Init9Datatypes3nat01I47Corelib4Init9Datatypes3nat00I47Corelib4Init6Specif3sig00C59OSSVerify5KrLib2AS7ExitSim:is_exit_noC1?~~~~~~~~~~~~~~~K47Corelib7Numbers7BinNums8positive01C45stdpp9bitvector;definitions6bv_andC59OSSVerify5KrLib2AS8ShapeAlg6t_exitC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS8ShapeAlg7rz_exitC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2AS7SpinAlgEsrealizes_of_realizesC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS7MmapSim>munmap_args_okC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS7MmapSim:munmap_effC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS7MmapSim<munmap_modelC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib3CfgGtransparent_nonalloc_noC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS7MmapSim9munmap_okC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS7MmapSimCmunmap_model_haltedC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS7MmapSimDmunmap_model_no_lazyC1?~~~~~~~~~~~~~~~C4ELinuxProcessSemantics?LinuxProcessSem5StateRmaterialize_model_accesses_no_lazyK4ELinuxProcessSemantics?LinuxProcessSem3Run5sstep04C59OSSVerify5KrLib2AS7MmapSim@sstep_munmap_invC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS7MmapSim=page_round_upC1?~~~~~~~~~~~~~~~I47Corelib4Init9Datatypes4bool00K47Corelib4Init9Datatypes4bool02c59OSSVerify5KrLib2AS7SpinAlg;node_munmapC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2AS7SpinAlg:srz_mstepsC1?~~~~~~~~~~~~~~~I4ELinuxProcessSemantics?LinuxProcessSem<MemImageType7Segment00C59OSSVerify5KrLib2AS7MmapSim:mmap_modelC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS7MmapSim?mmap_model_lazyC1?~~~~~~~~~~~~~~~".
 Import ListNotations.
 Open Scope bv_scope.
@@ -27,6 +29,7 @@ Inductive srealizes : config -> TSet -> Prop :=
 | srz_node : forall c (I : Type) (evs : I -> list event) (nx : I -> config)
                     (T : I -> TSet) (i0 : I),
     node_ok segs c I evs nx ->
+    sys_rob segs c ->   (* LPS 727298f3: see [ShapeAlg.rz_node] *)
     (forall i, srealizes (nx i) (T i)) ->
     srealizes c (t_alt (fun i => t_emit (evs i) (T i)))
 | srz_halt : forall c,
@@ -40,8 +43,8 @@ Lemma srealizes_of_realizes : forall c T,
   realizes segs c T -> srealizes c T.
 Proof.
   intros c T H;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq].
-  - exact (srz_node c I evs nx T i0 Hnode IH).
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq].
+  - exact (srz_node c I evs nx T i0 Hnode Hrob IH).
   - exact (srz_halt c Hh).
   - exact (srz_conseq c T T' IH Heq).
 Qed.
@@ -51,8 +54,8 @@ Lemma realizes_of_srealizes : forall c T,
   srealizes c T -> realizes segs c T.
 Proof.
   intros c T H;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq].
-  - exact (rz_node segs c I evs nx T i0 Hnode IH).
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq].
+  - exact (rz_node segs c I evs nx T i0 Hnode Hrob IH).
   - exact (rz_halt segs c Hh).
   - exact (rz_conseq segs c T T' IH Heq).
 Qed.
@@ -62,7 +65,7 @@ Qed.
 Lemma srealizes_nonempty : forall c T, srealizes c T -> T [].
 Proof.
   intros c T H;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
                    | c T T' H IH Heq].
   - exists i0. left. apply is_prefix_nil.
   - reflexivity.
@@ -73,7 +76,7 @@ Lemma srealizes_pclosed : forall c T, srealizes c T ->
   forall tr tr', T tr -> is_prefix tr' tr -> T tr'.
 Proof.
   intros c T H;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
                    | c T T' H IH Heq];
     intros tr tr' HT Hp.
   - destruct HT as [i [Hpre | (tr0 & -> & HT0)]]; exists i.
@@ -91,7 +94,7 @@ Lemma srealizes_star_only : forall c T, srealizes c T ->
   forall tr c', star_cfg segs ACFG c tr c' -> T tr.
 Proof.
   intros c T H;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
                    | c T T' H IH Heq];
     intros tr c' Hstar.
   - inversion Hstar as [|c1 e c2 tr2 c3 Hss Hstar2]; subst.
@@ -111,7 +114,7 @@ Lemma srealizes_admits : forall c T, srealizes c T ->
   forall tr, T tr -> obs_trace_cfg segs ACFG c tr.
 Proof.
   intros c T H;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
                    | c T T' H IH Heq];
     intros tr HT.
   - destruct Hnode as [Hcomp _].
@@ -142,7 +145,7 @@ Lemma srealizes_step : forall c T e c',
   srealizes c T -> sstep_cfg segs ACFG c e (SNext c') -> exists T', srealizes c' T'.
 Proof.
   intros c T e c' H; revert e c';
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
                    | c T T' H IH Heq];
     intros e c' Hss.
   - destruct Hnode as [_ Hsound].
@@ -156,7 +159,7 @@ Lemma srealizes_no_sserror : forall c T e,
   srealizes c T -> ~ sstep_cfg segs ACFG c e SError.
 Proof.
   intros c T e H; revert e;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
                    | c T T' H IH Heq];
     intros e Hss.
   - destruct Hnode as [_ Hsound].
@@ -186,13 +189,13 @@ Qed.
 
 (* [comment removed for export] *)
 Lemma srz_silent1 : forall c c' T,
-  node_ok segs c unit (fun _ => []) (fun _ => c') ->
+  node_ok segs c unit (fun _ => []) (fun _ => c') -> sys_rob segs c ->
   srealizes c' T ->
   srealizes c T.
 Proof.
-  intros c c' T Hnode Hc.
+  intros c c' T Hnode Hrob Hc.
   apply (srz_conseq c (t_alt (fun _ : unit => t_emit [] T))).
-  - apply (srz_node c unit (fun _ => []) (fun _ => c') (fun _ => T) tt Hnode).
+  - apply (srz_node c unit (fun _ => []) (fun _ => c') (fun _ => T) tt Hnode Hrob).
     intros []; exact Hc.
   - eapply t_eq_trans;
       [ apply (t_alt_unit (fun _ : unit => t_emit [] T))
@@ -201,13 +204,13 @@ Qed.
 
 (* [comment removed for export] *)
 Lemma srz_emit1 : forall c c' e T,
-  node_ok segs c unit (fun _ => e) (fun _ => c') ->
+  node_ok segs c unit (fun _ => e) (fun _ => c') -> sys_rob segs c ->
   srealizes c' T ->
   srealizes c (t_emit e T).
 Proof.
-  intros c c' e T Hnode Hc.
+  intros c c' e T Hnode Hrob Hc.
   apply (srz_conseq c (t_alt (fun _ : unit => t_emit e T))).
-  - apply (srz_node c unit (fun _ => e) (fun _ => c') (fun _ => T) tt Hnode).
+  - apply (srz_node c unit (fun _ => e) (fun _ => c') (fun _ => T) tt Hnode Hrob).
     intros []; exact Hc.
   - apply t_alt_unit.
 Qed.
@@ -215,12 +218,12 @@ Qed.
 (* [comment removed for export] *)
 Lemma srz_alt2 : forall c (IA IB : Type) (nx : IA + IB -> config) (A B : TSet)
                         (a0 : IA) (b0 : IB),
-  node_ok segs c (IA + IB) (fun _ => []) nx ->
+  node_ok segs c (IA + IB) (fun _ => []) nx -> sys_rob segs c ->
   (forall i, srealizes (nx (inl i)) A) ->
   (forall i, srealizes (nx (inr i)) B) ->
   srealizes c (t_alt2 A B).
 Proof.
-  intros c IA IB nx A B a0 b0 Hnode HA HB.
+  intros c IA IB nx A B a0 b0 Hnode Hrob HA HB.
   assert (HA0 : A []) by (eapply srealizes_nonempty; apply (HA a0)).
   assert (HB0 : B []) by (eapply srealizes_nonempty; apply (HB b0)).
   apply (srz_conseq c
@@ -228,7 +231,7 @@ Proof.
               t_emit [] (match i with inl _ => A | inr _ => B end)))).
   - apply (srz_node c (IA + IB) (fun _ => []) nx
              (fun i => match i with inl _ => A | inr _ => B end)
-             (inl a0) Hnode).
+             (inl a0) Hnode Hrob).
     intros [i|i]; [apply HA | apply HB].
   - intro tr. unfold t_alt2. split.
     + intros [[i|i] Hi];
@@ -249,7 +252,7 @@ Lemma srz_step : forall ms model ms' T,
   srealizes (mkCfg ms model) T.
 Proof.
   intros ms model ms' T Hh Hlazy Hsvc Hstep Hc.
-  eapply srz_silent1; [apply node_instr; eassumption | exact Hc].
+  eapply srz_silent1; [apply node_instr; eassumption | apply sys_rob_instr; exact Hsvc | exact Hc].
 Qed.
 
 Lemma srz_msteps : forall ms ms' model T,
@@ -299,7 +302,7 @@ Lemma rz_step_disjoint : forall ms model ms' ranges T,
   realizes segs (mkCfg ms model) T.
 Proof.
   intros ms model ms' ranges T Hh Hsvc Hstep Hout Hc.
-  eapply rz_silent1; [eapply node_instr_disjoint; eassumption | exact Hc].
+  eapply rz_silent1; [eapply node_instr_disjoint; eassumption | apply sys_rob_instr; exact Hsvc | exact Hc].
 Qed.
 
 Lemma srz_step_disjoint : forall ms model ms' ranges T,
@@ -312,7 +315,7 @@ Lemma srz_step_disjoint : forall ms model ms' ranges T,
   srealizes (mkCfg ms model) T.
 Proof.
   intros ms model ms' ranges T Hh Hsvc Hstep Hout Hc.
-  eapply srz_silent1; [eapply node_instr_disjoint; eassumption | exact Hc].
+  eapply srz_silent1; [eapply node_instr_disjoint; eassumption | apply sys_rob_instr; exact Hsvc | exact Hc].
 Qed.
 
 (* [comment removed for export] *)
@@ -324,6 +327,8 @@ Lemma srz_write1 : forall ms model x8 buf T,
   bv_unsigned x8 = 64%Z ->
   ms_gpr ms 0 = Z_to_bv 64 1 ->
   ms_read_bytes ms (ms_gpr ms 1) (ms_gpr ms 2) = Some buf ->
+  (* the range [vfs_write]'s [access_ok] accepts; see [CatSim.write1_check_n] *)
+  access_okb (ms_gpr ms 1) (bv_unsigned (ms_gpr ms 2)) = true ->
   buf_modeled buf ->
   (1 <= length buf)%nat ->
   (forall n, (1 <= n)%nat -> (n <= length buf)%nat ->
@@ -331,7 +336,7 @@ Lemma srz_write1 : forall ms model x8 buf T,
                          (set_gpr0 ms (len_word (firstn n buf)))) model) T) ->
   srealizes (mkCfg ms model) (t_write_ch (Z_to_bv 64 1) buf T).
 Proof.
-  intros ms model x8 buf T Hh Hlazy Hfd Hsvc Hno Hg Hr Hbm Hnb Hc.
+  intros ms model x8 buf T Hh Hlazy Hfd Hsvc Hno Hg Hr Hok Hbm Hnb Hc.
   unfold t_write_ch.
   apply (srz_node (mkCfg ms model) (wr_index buf)
            (fun i => map (WriteEv (Z_to_bv 64 1)) (firstn (proj1_sig i) buf))
@@ -340,6 +345,7 @@ Proof.
                            model)
            (fun _ => T) (wr_full buf Hnb)).
   - apply (node_write1 segs ms model x8 buf); assumption.
+  - apply (write1_rob segs ms model x8 buf); assumption.
   - intros [n [Hn1 Hn2]]. cbn [proj1_sig]. apply Hc; assumption.
 Qed.
 
@@ -351,35 +357,40 @@ Lemma srz_exit : forall ms model x8,
   srealizes (mkCfg ms model)
             (t_exit (bv_and (ms_gpr ms 0) (Z_to_bv 64 255)) (m_fs model)).
 Proof.
-ltac2:(KReplay.run1 (kr_t_SpinAlg ()) ["WithSegs"] "h02Hhh14Hsvch23Hx8h35modelh42msh52x8p;1p;3p;2p;7g00A[j11Tg00B@j1CTg00B^j14Tg00CAj13Tg00DYj1BTg00EPj1;Tg000`j32Tg015Rj15Tg01Lfj26Tg01n0j17Tg019dj28Tg01`Dj29Tg01njj10Tg01_fj1ATg01aBj2@Tg01oOj3?Tg01R=j1<Tg0204j2=Tg020kj7>Tg021cj3:Tg01<Og01=Vg00LSR0#1#1#1#1#1#1#CR1#4R2%32R3f1R4#B%;232f3R5#51624523f2R3#7f5R2f4R6'8g01lV,92%00#0#0#0#0#0#0#A,@15?1%<6'=p,4segsP2P6P5P3P4f0F>3:W2W1W0W5W3W4o"). Qed.
+  intros ms model x8 Hh Hsvc Hx8.
+  apply srealizes_of_realizes. apply (rz_exit segs ms model x8); assumption.
+Qed.
 
 (* [comment removed for export] *)
+Lemma srz_silent_all : forall c (I : Type) (nx : I -> config) (T : TSet) (i0 : I),
+  node_ok segs c I (fun _ => []) nx -> sys_rob segs c ->
+  (forall i, srealizes (nx i) T) ->
+  srealizes c T.
+Proof.
+  intros c I nx T i0 Hnode Hrob HT.
+  assert (HT0 : T []) by (eapply srealizes_nonempty; apply (HT i0)).
+  apply (srz_conseq c (t_alt (fun _ : I => t_emit [] T))).
+  - apply (srz_node c I (fun _ => []) nx (fun _ => T) i0 Hnode Hrob).
+    intros i; exact (HT i).
+  - intro tr. split.
+    + intros [i Hi]. exact (proj1 (t_emit_nil_eq T HT0 tr) Hi).
+    + intro H. exists i0. exact (proj2 (t_emit_nil_eq T HT0 tr) H).
+Qed.
+
 Lemma node_munmap : forall ms model x8,
   m_halted model = None ->
   m_vm_lazy model = [] ->
   ms_svc_pending ms = Some x8 ->
   bv_unsigned x8 = 215%Z ->
   munmap_args_ok ms model ->
-  node_ok segs (mkCfg ms model) unit (fun _ => [])
+  node_ok segs (mkCfg ms model) unit
+    (fun _ => [])
     (fun _ => mkCfg (advance_past_svc (apply_effect ms (munmap_eff ms)))
                     (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1))
                                   model)).
 Proof.
   intros ms model x8 Hh Hlazy Hsvc Hno Hargs.
-  apply node_ok_of_pnode; [apply (transparent_nonalloc_no segs ms model x8 215 Hsvc Hno); reflexivity |]. split.
-  - intros []. apply (sstep_syscall segs ms model x8 (munmap_eff ms)
-                        (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model)
-                        (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) []).
-    + exact Hh.
-    + exact Hsvc.
-    + apply munmap_ok; assumption.
-    + rewrite munmap_model_halted; exact Hh.
-    + apply materialize_model_accesses_no_lazy.
-      exact (munmap_model_no_lazy _ _ _ Hlazy).
-  - intros e st Hss.
-    destruct (sstep_munmap_inv segs ms model x8 e st Hh Hlazy Hsvc Hno Hargs Hss)
-      as [-> ->].
-    exists tt. split; reflexivity.
+  exact (munmap_node_cfg segs ms model x8 Hh Hlazy Hsvc Hno Hargs).
 Qed.
 
 Lemma srz_munmap : forall ms model x8 T,
@@ -388,14 +399,22 @@ Lemma srz_munmap : forall ms model x8 T,
   ms_svc_pending ms = Some x8 ->
   bv_unsigned x8 = 215%Z ->
   munmap_args_ok ms model ->
+  (forall e, In e munmap_errnos ->
+     srealizes (mkCfg (advance_past_svc (set_gpr0 ms (errno_ret e))) model) T) ->
   srealizes (mkCfg (advance_past_svc (apply_effect ms (munmap_eff ms)))
                    (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model)) T ->
   srealizes (mkCfg ms model) T.
 Proof.
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-  intros ms model x8 T Hh Hlazy Hsvc Hno Hargs Hc.
-  eapply srz_silent1; [apply (node_munmap ms model x8); assumption | exact Hc].
+  (* Hfail is deliberately unused; the statement is unchanged.  Dropping it
+     would be a strengthening, so it stays. *)
+  intros ms model x8 T Hh Hlazy Hsvc Hno Hargs Hfail Hc.
+  apply (srz_silent_all (mkCfg ms model) unit
+           (fun _ => mkCfg (advance_past_svc (apply_effect ms (munmap_eff ms)))
+                           (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1))
+                                         model)) T tt);
+    [apply (node_munmap ms model x8); assumption
+    | eapply sys_rob_memfree; [exact Hsvc | rewrite Hno; exact memfree_215] |].
+  intros []. exact Hc.
 Qed.
 
 (* [comment removed for export] *)

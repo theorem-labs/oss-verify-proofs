@@ -6,6 +6,7 @@
    453-455, 470-475, 477-486, 489-491, 502-505, 511-514, 1255-1258. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_name_seg_rel.v, with its module paths, module names and numbers changed; 848 of its 931 lines of code are new or changed and 1841 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_hp_kit.v, with its module paths and module names changed; 213 of its 250 lines of code are new or changed and 894 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* G4.ExHead, IMAGE B: ex_seg_head (lib/B/FMW_ex_base.v:197), the scan head of expected 0x813c0 (fuzz_manifest.c:134-142)
    on fm.asan-ubsan (pin ca61e5c9eabc0050).
    From EX_L at index i (s7 = i, s5 = text + i): the instrumented load of text[i] at s5; '@' (0x813d8) -> the UBSan guard
@@ -18,7 +19,7 @@
    UBSan guards (a Theorem Labs lane's FM-B-TRAPS.md rows 30-34, 40; trap 0x8194c) on the head's paths, each decided not taken
    (0x816a0: taken, its fall-through is the trap) by the cut states' interval facts: 0x813e4, 0x81414, 0x8148c, 0x814b4,
    0x814c4, 0x816a0.
-   Shape after image A's lib/A/FMW_ex_head.v (06d82004dc3). *)
+   Shape after image A's lib/A/FMW_ex_head.v. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

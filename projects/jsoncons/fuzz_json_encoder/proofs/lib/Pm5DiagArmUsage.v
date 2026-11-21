@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the nine-byte string read-ahead): changed Hp, dg_usage_site; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/Pm9DiagArmUsage.v, lines 91-92, 257. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -96,7 +97,8 @@ Section Arm.
     Hypothesis HW : L5Defs.L5.writable ASEGS MV (S - 5440) 5440.
     Hypothesis HD : L5Defs.L5.defined MV (S - 5440) 5440.
     Hypothesis HIMG : L5Defs.L5.img_clear MV 65536 1466368.
-    Hypothesis Hp : S <= p /\ p + n + 1 + 16 <= 2 ^ 47.
+    (* SLACK 16 -> 9, old beside new: was [p + n + 1 + 16 <= 2 ^ 47]; see Pm5DrvEntryK.ent_str_hi.  lia margin UNCHECKED. *)
+    Hypothesis Hp : S <= p /\ p + n + 1 + 9 <= 2 ^ 47.
     Hypothesis HSTR : Pm5DiagStrnlen.DSN.cstr MV p bs t8.
     Hypothesis HSH : forall x : word, Pm5RegionPoisoned.SB + p / 8 - 7 <= bv_unsigned x < Z.min (Pm5RegionPoisoned.SB + (p + n) / 8 + 8) (Pm5RegionPoisoned.SB + 2 ^ 44) -> MV x = Some (Z_to_bv 8 0).
     Hypothesis HSTK : L5KnA.L5KA.zeros_at MV (Pm5RegionPoisoned.SB + S / 8 - 680) 688.
@@ -264,7 +266,7 @@ Section Arm.
     pose proof (str_hull L ar IL HI sp0 Hsp DL M0 _ _ _ _ _ _ (bv_unsigned p0) (Z.of_nat (length a0s)) D SAH (proj1 PLO) ltac:(lia)) as HSH.
     destruct (str_statics scfg L ar C IL HI HIok sp0 Hsp DL Hdg Hdgs M0 _ _ _ _ _ _ D HIMG) as (HSN & HMC).
     assert (G12 : getr R 12%bv = Z_to_bv 64 (bv_unsigned p0)) by (rewrite G12p; symmetry; apply Z_to_bv_bv_unsigned).
-    assert (Hp : S <= bv_unsigned p0 /\ bv_unsigned p0 + Z.of_nat (length a0s) + 1 + 16 <= 2 ^ 47) by (unfold S; lia).
+    assert (Hp : S <= bv_unsigned p0 /\ bv_unsigned p0 + Z.of_nat (length a0s) + 1 + 9 <= 2 ^ 47) by (unfold S; lia).
     set (mm := fun k => bv_unsigned (fr k)).
     assert (Hm : (0 <= mm 64 < 2 ^ 64 /\ 0 <= mm 72 < 2 ^ 64 /\ 0 <= mm 80 < 2 ^ 64 /\ 0 <= mm 88 < 2 ^ 64) /\ (0 <= mm 96 < 2 ^ 64 /\ 0 <= mm 104 < 2 ^ 64 /\ 0 <= mm 112 < 2 ^ 64 /\ 0 <= mm 120 < 2 ^ 64))
       by (unfold mm; repeat split; apply u64_range).

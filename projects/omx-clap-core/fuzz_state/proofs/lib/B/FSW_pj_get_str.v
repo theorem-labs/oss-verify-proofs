@@ -3,16 +3,17 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YCbq.v, with its module paths changed and off_img's image range set to libreac/fuzz_boxreg's own (Reusable/YImgTop.v IMG_LO, IMG_TOP). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/Reusable/YCbq.v, with its module paths and module names changed; 234 of its 308 lines of code are new or changed and 2888 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_frame.v from a working branch
-   2767db174a0, same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_frame.v from a working branch,
+   same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
    FSH_Fn_reader and the other lib/B FSW files); the image-agnostic FSupoison, FSupoisonU, FSH_YC20, FSH_Gen stay lib/A's.
    rule 24: proves no function (kind: segment lemma). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/FSW_frame.v; 494 of its 531 lines of code are new or changed and 271 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_rd.v from a working branch
-   2767db174a0, same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_rd.v from a working branch,
+   same lemma names; imports point at lib/B's image files (YB1v, YB1w, YF0x, FSH_Base, FSH_Rt, FSPstat,
    FSH_Fn_reader and the other lib/B FSW files); the image-agnostic FSupoison, FSupoisonU, FSH_YC20, FSH_Gen stay lib/A's.
    rule 24: proves no function (kind: segment lemma). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/FSW_rd.v; 297 of its 351 lines of code are new or changed and 477 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* pj_get_str (B 0x83a54, pf.c:364-369) on fs.asan-ubsan (image B, sha256 5ac5ce0954f8...), 34 words: its ASan
    contract lib/B/FSH_Fn_reader.v pj_get_str_spec, proved by a symbolic walk of IMAGE B's OWN machine code over the
    lib/B walk kit (FSW_K / FSW_ret / FSW_rd, the image-B twins of lib/A's), in the per-function form of the released
@@ -24,7 +25,7 @@
    `pj_get_str B: CONFIRM`). Its released proofs are the plain lib/Prog/pj_get_str.v and the ubsan lib/U one; the
    bespoke evt-form B proof of a working branch lib/B/Prog/pj_get_str.v is read as a TEMPLATE only (segments and
    shadow-check pcs of B's code), not imported and not bridged. This is a RE-WALK of B's code, not a port of A's: the
-   image-A walk lib/A/FSW_pj_get_str.v (a working branch b3097a2a998) is the template for the kit usage, the premise
+   image-A walk lib/A/FSW_pj_get_str.v (a working branch) is the template for the kit usage, the premise
    discharges and the post; no lib/A walk-kit or lib/A image-content file is loaded here (image-closure content rule).
    The code (MEASURED, (internal path)):
      0x83a54 `addi sp,sp,-16; sd ra,8(sp); sd s0,0(sp)`; the shadow base into s0 through the GOT

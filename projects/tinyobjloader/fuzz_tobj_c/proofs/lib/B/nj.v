@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (str_factsZ, the room after the printed string, weakened from its length plus 16 bytes to its length plus 10 with str_facts, and WS's room the same, equal to str_facts' fact: what the launch's image holds after the exec file name at LPS 727298f3). *)
 (* [comment removed for export] *)
 Local Set Warnings "-require-in-module".
 (* [comment removed for export] *)
@@ -408,7 +409,7 @@ S0S15S24S18S4eVT7;A1M0A1S18P10A1A2S6cVa;Vn;Vr;G0Vcls;A5A3").
 Definition WZ (v : positive) (n : Z) : list sprop := ltac2:(tb__ "0|0|
 S0S15S24S18Vv;A1S18P10A1A2S6bVv;Vn;A2A3").
 Definition WS : list sprop := ltac2:(tb__ "0|3|
-S6S15S0S15S1bS1dS88S18P10A1M0S17Z8A1M1A3S18P11A1M2A2S0S15S1bG1G2A2S0S15S1bG2S17Sb0A1A2S0S15S1bS1dS88G0S17Z10A1A3G2A2S5S15A1A3A3A3A3S54A3").
+S6S15S0S15S1bS1dS88S18P10A1M0S17Z8A1M1A3S18P11A1M2A2S0S15S1bG1G2A2S0S15S1bG2S17Sb0A1A2S0S15S1bS1dS88G0S17ZaA1A3G2A2S5S15A1A3A3A3A3S54A3").
 Definition WX : list sprop := ltac2:(tb__ "0|5|
 S0S15S1bS1dS88S98S18P11A1M0A3S95A2S0S15S1bS98S95A2S0S15S1bG0S95A2S0S15S1bS95S17S5dZ2M1Z28A2A1A2S0S15S1bS17ScbA1S97A2S0S15S1bS1dS88S97S95A3M2S17S5dG1Z2fA2M3A1A2S0S15S1bS97S17S5eG3Z40A2A1A2S0S15S23P12Z6M4A2S0S15S23P13G4A2S0S15S1bS1dS88S96S17Z1A1A3G2A2S0S15S1bS18PaA1S96A2S5S15A1A3A3A3A3A3A3A3A3A3A3A3").
 Definition FA1 (v : positive) (n : Z) : list sprop := ltac2:(tb__ "0|0|
@@ -712,7 +713,7 @@ Hypothesis H140 : ltac2:(tb__ "0|0|
 S10S1Q40A1S2Vr;P8cA2S2Vr;P10A2A3").
 Let z := bv_unsigned (rw r 16).
 Lemma str_factsZ : ltac2:(tb__ "0|5|
-SfSbSaS0Q40M0S2Vr;P10A2A2Z10A2S0G0S2Vr;P11A2A2M1A2SfSbG1ScZ2M2Z3eA2M3A2SfSbSaS0G0S2Vr;P14A2A2G1A2S0G0S2Vr;P13A2A2M4A2SfSbG4ScG2Z28A2A2SfSbSaS0G0S2Vr;P12A2A2G4A2ScG2Z2fA2A2SfSbS0G0S3Vr;S15A2A2G3A2S11A2A2A2A2A2A2").
+SfSbSaS0Q40M0S2Vr;P10A2A2ZaA2S0G0S2Vr;P11A2A2M1A2SfSbG1ScZ2M2Z3eA2M3A2SfSbSaS0G0S2Vr;P14A2A2G1A2S0G0S2Vr;P13A2A2M4A2SfSbG4ScG2Z28A2A2SfSbSaS0G0S2Vr;P12A2A2G4A2ScG2Z2fA2A2SfSbS0G0S3Vr;S15A2A2G3A2S11A2A2A2A2A2A2").
 Proof.
   pose proof HFs as HF. unfold str_facts in HF.
   apply Forall_cons_iff in HF as [F2 HF]. apply Forall_cons_iff in HF as [F3 HF]. apply Forall_cons_iff in HF as [F4 HF].
@@ -727,7 +728,7 @@ Proof.
   cbn [holds] in F7. rewrite two62_eq in F7. change (bv_unsigned (eval r (SLit (2 ^ 62)))) with ((2 ^ 62) mod 2 ^ 64) in F7. change ((2 ^ 62) mod 2 ^ 64) with (2 ^ 62) in F7.
   rewrite lit_unsigned in F15. rewrite lit_unsigned in F17. change ((2 ^ 47 - 64) mod 2 ^ 64) with (2 ^ 47 - 64) in F17.
   rewrite add_lit_val in F2. change (snorm 8) with 8 in F2.
-  rewrite add_lit_val in F24. change (snorm 16) with 16 in F24.
+  rewrite add_lit_val in F24. change (snorm 10) with 10 in F24.
   rewrite lit_unsigned in F3. change (8 mod 2 ^ 64) with 8 in F3.
   rewrite two62_eq, lit_unsigned in F4. change ((2 ^ 62) mod 2 ^ 64) with (2 ^ 62) in F4.
   rewrite add_val in F11. rewrite lit_unsigned in F14. change ((2 ^ 40) mod 2 ^ 64) with (2 ^ 40) in F14.
@@ -737,9 +738,9 @@ Proof.
     exfalso. replace (bv_unsigned (rw r 16) + 8) with ((bv_unsigned (rw r 16) + 8 - 2 ^ 64) + 1 * 2 ^ 64) in F2 by lia.
     rewrite Z_mod_plus_full, Z.mod_small in F2 by lia. lia. }
   rewrite Ea in F2.
-  assert (Ex : (bv_unsigned (rw r 16) + 16) mod 2 ^ 64 = bv_unsigned (rw r 16) + 16).
-  { destruct (Z_lt_le_dec (bv_unsigned (rw r 16) + 16) (2 ^ 64)); [apply Z.mod_small; lia |].
-    exfalso. replace (bv_unsigned (rw r 16) + 16) with ((bv_unsigned (rw r 16) + 16 - 2 ^ 64) + 1 * 2 ^ 64) in F24 by lia.
+  assert (Ex : (bv_unsigned (rw r 16) + 10) mod 2 ^ 64 = bv_unsigned (rw r 16) + 10).
+  { destruct (Z_lt_le_dec (bv_unsigned (rw r 16) + 10) (2 ^ 64)); [apply Z.mod_small; lia |].
+    exfalso. replace (bv_unsigned (rw r 16) + 10) with ((bv_unsigned (rw r 16) + 10 - 2 ^ 64) + 1 * 2 ^ 64) in F24 by lia.
     rewrite Z_mod_plus_full, Z.mod_small in F24 by lia. lia. }
   rewrite Ex in F24.
   assert (Eb : (bv_unsigned (rw r 20) + bv_unsigned (rw r 17)) mod 2 ^ 64 = bv_unsigned (rw r 20) + bv_unsigned (rw r 17)) by (apply Z.mod_small; lia).

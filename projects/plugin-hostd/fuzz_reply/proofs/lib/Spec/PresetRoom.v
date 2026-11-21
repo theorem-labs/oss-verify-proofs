@@ -2,15 +2,16 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/SpecA/AsanCtrl.v; 229 of its 252 lines of code are new or changed and 366 lines of the source are left out. *)
-(* CARRIED from commit 0deb5310273b0d538ec2a1697f391a1c8ad21c34,
+(* Modified by Theorem Labs, 2026-10: module paths changed from fuzz_preset lib to cgif_file_fuzzer lib; the text is otherwise unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/Spec/PresetRoom.v, sha256 46d31e4bec130906b9d91004087d59e48c3484babde4c765cf9b6ed466bcd74e (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the Require lines only:
    the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
    (lib.Spec -> fuzz_reply.lib.Spec).
 *)
 (* omx-clap-core/fuzz_preset, Spec: P8 part C, the allocator interface the per-class room bound needs (h-hpreset-7's
-(* Taken by path from a working branch a0fed4266a1b, provisional. *)
-(* Modified by Theorem Labs, 2026-10: module paths changed from fuzz_preset lib to cgif_file_fuzzer lib; the text is otherwise unchanged. *)
+(* Taken by path from a working branch, provisional. *)
    port of asan_halts, piece P8; c-frame-alloc).
 
    WHAT IT SAYS. An allocation of a primary request r (needed size <= 64 KiB) of class c returns NULL only when every

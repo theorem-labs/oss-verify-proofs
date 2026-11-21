@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (nstep_munmap_intro takes a premise that subtracting the range from vm_maps removes just its entry, as munmap now subtracts its range; proof re-done for munmap's refusal arm and its munmap_errnos answer; brk_r_ok_grant's budget is brk_grow_bytes, the growth between the page-rounded breaks; nstep_mmap_ok_intro takes the premise that Linux's placement for the NULL hint gives its address (linux_place_is), the anonymous PROT_NONE check also tests the placement, and place_declined_b is false at the NULL hint (place_declined_b_null); check_mprotect_gate and nstep_mprotect_ok_intro take a range clear of the vDSO pair). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
@@ -401,9 +402,14 @@ rewrite w_is0_lit by lia. replace (req =? 0) with false by (symmetry; apply Z.eq
   2:{ pose proof (Z_div_mod_eq_full req 4096). pose proof (Z_div_mod_eq_full (req+4096-1) 4096). pose proof (Z.mod_pos_bound (req+4096-1) 4096). nia. }
   replace (b <? req) with true by (symmetry; apply Z.ltb_lt; lia).
   rewrite (proj2 (Z.leb_le _ _) Hc). subst b. rewrite Z_to_bv_bv_unsigned, Hrf. cbn [andb].
-  assert (Hsub : bv_unsigned (Z_to_bv 64 req - vm_brk h)%bv = req - bv_unsigned (vm_brk h)).
-  { rewrite bv_sub_unsigned, unsigned_lit by lia. apply bv_wrap_small. unfold bv_modulus. lia. }
-  rewrite Hsub. apply Z.leb_le. exact Hl.
+  (* LPS 727298f3: the budget counts brk_grow_bytes, the pages between the page-rounded breaks *)
+  unfold brk_grow_bytes. fold h. rewrite unsigned_lit by lia. unfold page_round_up_Z. rewrite page_size_eq.
+  replace ((req + 4096 - 1) / 4096 * 4096) with req.
+  2:{ pose proof (Z_div_mod_eq_full req 4096). pose proof (Z_div_mod_eq_full (req+4096-1) 4096). pose proof (Z.mod_pos_bound (req+4096-1) 4096). nia. }
+  replace ((bv_unsigned (vm_brk h) + 4096 - 1) / 4096 * 4096) with (bv_unsigned (vm_brk h)).
+  2:{ pose proof (Z_div_mod_eq_full (bv_unsigned (vm_brk h)) 4096). pose proof (Z_div_mod_eq_full (bv_unsigned (vm_brk h)+4096-1) 4096).
+      pose proof (Z.mod_pos_bound (bv_unsigned (vm_brk h)+4096-1) 4096). nia. }
+  apply Z.leb_le. lia.
 Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
 
 (* [comment removed for export] *)
@@ -415,6 +421,8 @@ Lemma nstep_mmap_ok_intro : forall len prot mo a,
   0 < a -> a mod 4096 = 0 -> a + n <= alloc_top h ->
   region_free (vm_reserved h ++ vm_maps h) (Z_to_bv 64 a) (Z_to_bv 64 n) = true ->
   vm_backing_used mo + n <= vm_limit h ->
+  (* LPS 727298f3: a fresh grant takes the one address Linux gives; [a] is that address *)
+  Placement.linux_place_is h (kb_thp (m_kernel mo)) (Z_to_bv 64 0) n (Z_to_bv 64 a) = true ->
   nstep (NMmap 0 len prot MAPF) mo
         (mkEffectU (Z_to_bv 64 a) [] (if prot =? PROT_NONE then [] else [(Z_to_bv 64 a, Z_to_bv 64 n)])
                                   (if prot =? PROT_NONE then [(Z_to_bv 64 a, Z_to_bv 64 n)] else []) [] [])
@@ -422,7 +430,7 @@ Lemma nstep_mmap_ok_intro : forall len prot mo a,
                         (if prot =? PROT_NONE then (Z_to_bv 64 a, Z_to_bv 64 n) :: vm_noaccess h else vm_noaccess h)
                         (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h)) mo) [].
 Proof.
-  intros len prot mo a h n Hlen Hp Ha Hal Hc Hrf Hl. pose proof (alloc_top_lt h) as HT. unfold two_pow_64 in HT.
+  intros len prot mo a h n Hlen Hp Ha Hal Hc Hrf Hl Hpl. pose proof (alloc_top_lt h) as HT. unfold two_pow_64 in HT.
   Local Ltac2 Set LiaHints.tbl := fun () => "00<0>18758977476.142017689656.15 24926274299.1641551705773.1654050265901.1656759158153.1656767207403.1756769863146.1665116816174.1765116888390.1665119541063.1765121079756.1500000600<00F00G00H00Z00l01>01D01J01P01VS4HlenS4HlenS2Ha3Hal1ESSS4Hlen2Ha2Hc2HT2HnS4Hlen2Ha2Hc2HT2HnS4Hlen2Ha2Hc2HT2HnS4HlenS4HlenS4HlenS4Hlen".
 pose proof (mmap_len_ge len ltac:(lia)) as Hn. fold n in Hn.
   apply nstep_mmap_iff. split; [reflexivity|].
@@ -451,11 +459,18 @@ pose proof (mmap_len_ge len ltac:(lia)) as Hn. fold n in Hn.
   - change (mmap_modeled_b (Z_to_bv 64 PROT_NONE) (Z_to_bv 64 MAPF) (Z_to_bv 64 0)) with false.
     change (mmap_noaccess_b (Z_to_bv 64 PROT_NONE) (Z_to_bv 64 MAPF) (Z_to_bv 64 0)) with true. cbv iota beta.
     change (PROT_NONE =? PROT_NONE) with true. cbv iota. fold h. cbv zeta. rewrite Herr.
-    rewrite <- (TAIL ((Z_to_bv 64 a, Z_to_bv 64 n) :: vm_noaccess h)). rewrite !unsigned_lit by lia. reflexivity.
+    rewrite <- (TAIL ((Z_to_bv 64 a, Z_to_bv 64 n) :: vm_noaccess h)). rewrite !unsigned_lit by lia.
+    (* LPS 727298f3: the PROT_NONE arm tests the request's placement too *)
+    try (fold (mmap_len len); fold n).
+    rewrite ?page_size_eq, ?Hal, ?Z.eqb_refl, ?(proj2 (Z.ltb_lt 0 a) Ha), ?(proj2 (Z.leb_le _ _) Hc), ?Hrf, ?listNN_eqb_refl.
+    (* LPS 727298f3: the freely placed arm declines on place_declined_b; the hint is NULL *)
+    rewrite ?place_declined_b_null, ?Hpl. cbn [andb]. reflexivity.
   - change (mmap_modeled_b (Z_to_bv 64 PROT_RW) (Z_to_bv 64 MAPF) (Z_to_bv 64 0)) with true. cbv iota beta.
     change (PROT_RW =? PROT_NONE) with false. cbv iota. fold h. cbv zeta. rewrite Herr. rewrite Hbud.
-    rewrite <- (TAIL (vm_noaccess h)). rewrite !unsigned_lit by lia. cbn [andb].
-    destruct ((a mod page_size =? 0) && (0 <? a) && (a + page_round_up_Z len <=? alloc_top h) && region_free (vm_reserved h ++ vm_maps h) (Z_to_bv 64 a) (Z_to_bv 64 (page_round_up_Z len))); reflexivity.
+    rewrite <- (TAIL (vm_noaccess h)). rewrite !unsigned_lit by lia.
+    try (fold (mmap_len len); fold n).
+    rewrite ?page_size_eq, ?Hal, ?Z.eqb_refl, ?(proj2 (Z.ltb_lt 0 a) Ha), ?(proj2 (Z.leb_le _ _) Hc), ?Hrf, ?listNN_eqb_refl.
+    rewrite ?place_declined_b_null, ?Hpl. cbn [andb]. reflexivity.
 Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
 
 (* [comment removed for export] *)
@@ -543,17 +558,25 @@ Lemma nstep_munmap_intro : forall a len mo,
   let h := m_vmmaps mo in let n := mmap_len len in let aw := Z_to_bv 64 a in let nw := Z_to_bv 64 n in
   0 <= a -> a mod 4096 = 0 -> 0 < len -> a + n <= TASK_SIZE ->
   map_has (vm_maps h) aw nw = true ->
+  (* LPS 727298f3: munmap subtracts the range from [vm_maps] *)
+  maps_subtract (vm_maps h) (bv_unsigned aw) (bv_unsigned aw + bv_unsigned nw) = map_remove (vm_maps h) aw ->
   nstep (NMunmap a len) mo (mkEffectU (Z_to_bv 64 0) [] [] [(aw, nw)] [] [])
         (with_mmap_destroyed aw nw (munmap_h h aw nw) mo) [].
 Proof.
-  intros a len mo h n aw nw Ha Hal Hlen Hb Hhas. pose proof (mmap_len_ge len Hlen) as Hn. fold n in Hn. pose proof TASK_SIZE_val as TS.
-  apply nstep_munmap_iff. unfold check_munmap. fold aw h.
+  intros a len mo h n aw nw Ha Hal Hlen Hb Hhas Hex. pose proof (mmap_len_ge len Hlen) as Hn. fold n in Hn. pose proof TASK_SIZE_val as TS.
+  apply nstep_munmap_iff.
+  split; [| apply spurious_refusal_not_refusal; rewrite refusal_b_215 by reflexivity; reflexivity].
+  unfold check_munmap. fold aw h.
   Local Ltac2 Set LiaHints.tbl := fun () => "0040>2017773237.15 39965446173.1556765205659.1365120999233.1500000600:00L00^S4HlenS2HbS2Ha4Hlen2Hb2Hn2TSS2Ha4Hlen2Hb2Hn2TS".
-assert (Ua : bv_unsigned aw = a) by (subst aw; apply unsigned_lit; lia). rewrite Ua, page_size_eq, Hal.
+assert (Ua : bv_unsigned aw = a) by (subst aw; apply unsigned_lit; lia).
+  replace (negb (bv_unsigned aw mod page_size =? 0)) with false by (rewrite Ua, page_size_eq, Hal; reflexivity).
   rewrite w_is0_lit by lia. replace (len =? 0) with false by (symmetry; apply Z.eqb_neq; lia). cbn [Z.eqb negb orb]. cbv zeta.
   rewrite (unsigned_lit len) by lia. fold (mmap_len len). fold n nw.
-  replace (TASK_SIZE <? a + n) with false by (symmetry; apply Z.ltb_ge; lia).
-  rewrite Hhas. change (w_is0 (Z_to_bv 64 0)) with true. rewrite listNN_eqb_refl. cbn [andb]. unfold munmap_h. rewrite Ua. reflexivity.
+  replace (TASK_SIZE <? bv_unsigned aw + n) with false by (symmetry; apply Z.ltb_ge; lia).
+  rewrite Hhas. cbv iota.
+  replace (errno_ret_in munmap_errnos (Z_to_bv 64 0)) with false by (vm_compute; reflexivity).
+  change (w_is0 (Z_to_bv 64 0)) with true. rewrite listNN_eqb_refl. cbn [andb].
+  unfold munmap_h, mmap_fixed_destroyed_next. rewrite Hex. reflexivity.
 Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
 
 Lemma m_vmmaps_munmap : forall aw nw h mo, m_vmmaps (with_mmap_destroyed aw nw (munmap_h h aw nw) mo) = munmap_h h aw nw.
@@ -570,8 +593,10 @@ Hypothesis Hb : a + PGSZ < 2^64.
 Hypothesis Hal : a mod 4096 = 0.
 Hypothesis Hcn : map_contains (vm_noaccess h) aw nw = true.
 Hypothesis Hcm : map_contains (vm_maps h) aw nw = true.
+(* LPS 727298f3: check_mprotect leaves a range meeting the vDSO pair unmodeled; this one misses it *)
+Hypothesis Hvd : region_free (vdso_reserved (m_kernel mo) (vdso_top h)) aw nw = true.
 
-#[using="h Ha Hb Hal Hcn Hcm"] Lemma check_mprotect_gate : forall eff,
+#[using="h Ha Hb Hal Hcn Hcm Hvd"] Lemma check_mprotect_gate : forall eff,
   check_mprotect aw nw (Z_to_bv 64 PROT_RW) eff mo =
   match eff with
   | mkEffectU r [] zs [] [] [] =>
@@ -589,10 +614,11 @@ Proof.
 assert (Ua : bv_unsigned aw = a) by (subst aw; apply unsigned_lit; unfold PGSZ in *; lia). rewrite Ua, page_size_eq, Hal.
   change (w_is0 nw) with false. cbv iota. cbn [Z.eqb negb].
   assert (Un : bv_unsigned nw = PGSZ) by (subst nw; apply unsigned_lit; unfold PGSZ; lia). rewrite Un. change (page_round_up_Z PGSZ) with PGSZ.
-  replace (two_pow_64 <=? a + PGSZ) with false by (symmetry; apply Z.leb_gt; unfold two_pow_64; lia). cbv zeta. fold nw h. rewrite Hcn, Hcm. reflexivity.
+  replace (two_pow_64 <=? a + PGSZ) with false by (symmetry; apply Z.leb_gt; unfold two_pow_64; lia). cbv zeta. fold nw h.
+  rewrite Hvd, Hcn, Hcm. reflexivity.
 Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
 
-#[using="Ha Hb Hal Hcn Hcm"] Lemma nstep_mprotect_ok_intro :
+#[using="Ha Hb Hal Hcn Hcm Hvd"] Lemma nstep_mprotect_ok_intro :
   vm_live_bytes h <= vm_limit h -> minv mo ->
   nstep (NMprotect a PGSZ PROT_RW) mo (mkEffectU (Z_to_bv 64 0) [] [(aw, nw)] [] [] [])
         (mprotect_model_next mo aw nw) [].

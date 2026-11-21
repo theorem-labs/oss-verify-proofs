@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx (generic allocator relation) twins of the five SEG_EXIT block statements of
-   lib/B/W_bx_defs.v, for image B's ARx conversion of SEG_EXIT (the form lib/B/W_LLVMFuzzerTestOneInput_cut_x.v:639
-   consumes).  The AR files are NOT edited.  Template: image A's conversion, e60b29a425a
+   lib/B/W_bx_defs.v, for image B's ARx conversion of SEG_EXIT (the form lib/B/W_LLVMFuzzerTestOneInput_cut_x.v:640
+   consumes).  The AR files are NOT edited.  Template: image A's conversion,
    lib/A/W_LLVMFuzzerTestOneInput_exit_x.v.
    What changes against lib/B/W_bx_defs.v, and nothing else:
    - the journal is YCbqG / lib/B/W_journal_x.v's ajournal_gx_x segs B PST ARx ..., with the ghost head list after each
@@ -16,7 +17,7 @@
      lx_ctl_ev, lxo_e0, lx_rf_O, lx_norder, lx_ord), the costs (lx_ends_cost, lx_sr_total, lx_exit_cost) and
      lx_reset_model.
    The AR file's lx_cshe_spec (its verbatim copy of B's check_shape_ends contract) is NOT converted: the kit has the
-   contract's own _x twin (W_contract_x.v:1230 cshe_spec_x), and the ARx walk takes that. *)
+   contract's own _x twin (W_contract_x.v:1231 cshe_spec_x), and the ARx walk takes that. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -67,7 +68,7 @@ Local Notation A_LLVMF := YCfn.A_LLVMF.
 Local Notation RA_LLVMF := YCfn.RA_LLVMF.
 Local Notation LLVMF_STK := YCfn.LLVMF_STK.
 
-(* ---- cut_x's Section w header (lib/B/W_LLVMFuzzerTestOneInput_cut_x.v:199-244), verbatim ---- *)
+(* ---- cut_x's Section w header (lib/B/W_LLVMFuzzerTestOneInput_cut_x.v:200-245), verbatim ---- *)
 Variable B : asyms.
 Variable MT : ameter_ops.
 Variables XM_LIB XN_LIB : Z -> Z.
@@ -88,7 +89,7 @@ Hypothesis HG : gx_ok segs B G_fr.
 Variable LSx : lfcx -> Z -> lmod -> alayout -> astate -> Prop.
 Variable RINV : lfcx -> Z -> lmod -> Prop.
 Variable MMAX : Z.
-(* ---- the room round (image A's exit_x at 5a9b16eac9e): the allocator rules' room record RP (W_journal_x.v Record
+(* ---- the room round (image A's exit_x): the allocator rules' room record RP (W_journal_x.v Record
    roomp, cand13's kit), whose room invariant is the cut's NP; the block statements carry NP and the live counts ---- *)
 Variable RP : roomp.
 (* the AR-free model of lib/B/W_bx_defs.v, cited at this Section's variables *)
@@ -332,7 +333,7 @@ Definition lx_ffexit_S_x : Prop :=
        mem_grows (mrestrict (w_H W) mem) (mrestrict (w_H W') mem')).
 
 (* ================================================================== route R: the statements above at a world relation
-   R (the reply's shape, a working branch 7d2979ecc661 cut_x).  Each <name>R below is <name> with the
+   R (the reply's shape, a working branch cut_x).  Each <name>R below is <name> with the
    journal ajournal_gx_x segs B PST ARx -> ajournal_gx_xR segs B PST ARx R and SRr segs -> SRrG segs R; every other
    token is the strict text's.  At R := wle each is its strict text by conversion (the _wle lemmas after the Section). *)
 Section wR.

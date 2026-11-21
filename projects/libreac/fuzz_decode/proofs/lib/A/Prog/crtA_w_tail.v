@@ -6,7 +6,7 @@
      crt_seg7_F   CRT_RET_BCMP -> the free trampoline, a0 = R (bcmp answered 0, so the `bnez a0` into the abort
                   block is refuted inside the run);
      free(R)      YC5d.v:76 afree04_rule on the INNER journal of the cut (crtA_mid), o = -96, empty chain (s0 = P is
-                  a heap block below sp: YG00.v:367 bad_next), trace DEC_CRT_RA_FREE1 (dec_crt_ufix);
+                  a heap block below sp: YG00.v:368 bad_next), trace DEC_CRT_RA_FREE1 (dec_crt_ufix);
      crt_seg8_F   -> the free trampoline, a0 = Q; free(Q) likewise, trace DEC_CRT_RA_FREE2;
      crt_seg9_F   the epilogue: ra and s0 .. s10 reloaded from the frame (crtA_frame, kept across both frees by
                   the rule's acall_kept), sp = the entry sp, the tail jump to free with a0 = P;
@@ -124,7 +124,7 @@ Proof.
   induction ch as [|[[fp ra] nfp] ch IH]; [reflexivity|]. cbn [flat_map map]. f_equal. exact IH.
 Qed.
 
-(* s0 below sp: the chain the allocator walks is empty (YG00.v:367 bad_next). *)
+(* s0 below sp: the chain the allocator walks is empty (YG00.v:368 bad_next). *)
 Lemma crtT_chain_nil : forall ly rd (regsT : bvmap 5 word),
   4096 <= raZ regsT -> s0Z regsT <= spZ regsT -> chain_pre ly rd regsT [].
 Proof.

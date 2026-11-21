@@ -2,7 +2,7 @@
 # Control of palist.py's image-B form: on libreac/fuzz_decode's pinned fuzz_decode.asan-ubsan (the asan-ubsan pin of
 # projects/libreac/fuzz_decode/harness.yaml) and its unstripped twin, with that unit's released names, the renderer
 # must give fuzz_decode's released lib/B/Prog/DecodeBSyms.v, DecodeBAddr.v and DecodeBList.v (origin/ossv/recipes
-# 88154566652a) byte for byte. The released files' sha256 are below.
+#) byte for byte. The released files' sha256 are below.
 # Usage: control.sh IMAGE UNSTRIPPED_TWIN OUTDIR
 set -eu
 pin=5d05689fd5b196976890b91e68c113953d385775b9d811ef98c712b2cac7d4a9

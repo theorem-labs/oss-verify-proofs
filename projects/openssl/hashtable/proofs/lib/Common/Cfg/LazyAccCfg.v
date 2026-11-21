@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the accesses keep clear of the vvar pages; the failing store-conditional step is gone). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import bitvector.
@@ -70,7 +71,8 @@ Proof.
   intros S t Ht. induction Ht as [c | c | c | c | c | c | n a k HS Hk IH | n a v k HS Hk IH];
     intros m report H; cbn [interp_eff_accesses] in H; try discriminate H.
   - inversion H; subst. constructor.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs |]; [| discriminate H].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs |];
+      [| destruct (range_meets_vvar segs a (width_bytes n)); discriminate H].
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) m)
       as [r0 | |] eqn:E; try discriminate H.
     inversion H; subst. cbn [accessed_ranges]. constructor; [exact HS | exact (IH _ m r0 E)].
@@ -94,26 +96,6 @@ Proof.
     as [r0 | |] eqn:E; try discriminate H.
   pose proof (interp_acc_in _ _ (exec_acc_in (Z_to_bv 64 isz) i (lz_core ms)) _ _ E) as HF.
   destruct (@access_value _ r0) as [c m']. inversion H; subst. cbn [accessed_ranges]. exact HF.
-Qed.
-
-(* [comment removed for export] *)
-Theorem step_accesses_sc_fail : forall ms w wd x y rd rs1 rs2 isz report,
-  fetch_word segs (ms_pc ms) = Some w -> is_ecall w = false ->
-  decode_any w = Some (Sc wd x y rd rs1 rs2, isz) ->
-  amo_aligned wd (rget (lz_core ms) rs1) = true ->
-  match ms_resv ms with
-  | Some r => Z.eqb (bv_unsigned r) (bv_unsigned (rget (lz_core ms) rs1))
-  | None => false
-  end = false ->
-  step_accesses segs ms = MachineOk report ->
-  @accessed_ranges _ report = [].
-Proof.
-  intros ms w wd x y rd rs1 rs2 isz report Hf He Hd Hal Hres H.
-  unfold step_accesses in H. rewrite Hf in H.
-  unfold decode_exec_accesses in H. rewrite He, Hd in H. fold (lz_core ms) in H.
-  cbn [exec] in H. cbv zeta in H. rewrite Hal in H. cbn [negb] in H.
-  change (c_resv (lz_core ms)) with (ms_resv ms) in H. rewrite Hres in H.
-  cbn [interp_eff_accesses] in H. inversion H; subst. reflexivity.
 Qed.
 
 End WithSegs.

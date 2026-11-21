@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: a leftover Show command removed from a proof. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
@@ -103,7 +104,7 @@ pose proof (u32arr_read_nth rsegs m OUT ws 0 _ (u32arr_of_obox _ _ _ XB) ltac:(r
 zstep. zstep. zstep. zstep. zstep.
 out_store 0.
 zstep. zstep. out_store 1.
-zstep. zstep. zstep. Show. if_false_x. zstep.
+zstep. zstep. zstep. if_false_x. zstep.
 lazymatch goal with XB : rw_cells _ ?mc OUT (obox ?ws2), XS : rw_cells _ _ STEREO [C4 ?a; C4 ?b; C4 ?c; C4 ?d; C4 ?e; C4 ?f] |- _ =>
 pose proof (u8arr_of_u32arr _ _ _ _ (u32arr_of_obox _ _ _ XB)) as XO8;
 change (rw_cells rsegs mc STEREO (f32 [a; b; c; d; e; f])) in XS;

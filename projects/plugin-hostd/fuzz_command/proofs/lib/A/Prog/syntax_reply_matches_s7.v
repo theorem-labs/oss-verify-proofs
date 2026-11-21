@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported from proofs/cgif/cgif_file_fuzzer/lib/A/AC8b.v (a loop by fuel induction,
-   tcbb_loopX) and lib/A/AChd.v at c8557374ad2e: the walk of syntax_reply_matches on fuzz_command.asan, the item loop
+   tcbb_loopX) and lib/A/AChd.v: the walk of syntax_reply_matches on fuzz_command.asan, the item loop
    (the plain main_loop and skip_loop, lib/Prog/syntax_reply_matches.v): L0 (0x885e8, the next item) and L1 (0x885f4,
    check C1 and the spaces before an item). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -34,7 +35,7 @@ Open Scope bv_scope.
 Open Scope Z_scope.
 
 (* the items of the shape after the spaces in front of the next one (the plain main_loop, lib/Prog/
-   syntax_reply_matches.v:453-459, with items_f_cons :119 and item_scan_fst / _snd :98-109) *)
+   syntax_reply_matches.v:454-460, with items_f_cons :119 and item_scan_fst / _snd :98-109) *)
 Lemma items_next : forall (s : list byte) k0 k f, (k < length s)%nat ->
   bz (hd NUL (skipn k s)) <> 32 -> skip_sp (skipn k s) = skip_sp (skipn k0 s) ->
   items_f (S f) (skipn k0 s) =

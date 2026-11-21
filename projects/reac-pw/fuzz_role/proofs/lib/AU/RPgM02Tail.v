@@ -1,11 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: lib/A/RPgCheckStr.v at 77f59d02b01 (the call in the middle of a walk: the run
+(* Modified by Theorem Labs, 2026-10: lib/A/RPgCheckStr.v (the call in the middle of a walk: the run
    to the jal, the callee's contract through SRr_bind, a fresh entry state at the return pc; L_ANS_cs as tl_L4_cs and
    ch_L_cs) for the MATCH HALF of reac-pw/fuzz_role's image-A segment M02: the tail and the two checks, proved
    against lib/A/RPgSeg.v's rs_piece_W11b_tail_stmt and rs_piece_W11b_checks_stmt on lib/A/Img0.v rsegs. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02Tail.v at 1d255703e88, with
-   proofs/reac-pw/fuzz_rate/lib/AU/RtPgM02ChkB.v at b419fd3eb4f as the template of the absent arm at image B's form,
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02Tail.v, with
+   proofs/reac-pw/fuzz_rate/lib/AU/RtPgM02ChkB.v as the template of the absent arm at image B's form,
    for image B (fuzz_role.asan-ubsan): image B's pcs and callees; the tail reads the flags byte from s8 (no frame
    read) and keeps cur / req / changes / codes[0] in s7 / s4 / s5 / s4 (image A: s5 / s6 / s7 / s5); the role cell
    is at F+0x2a0 in s4 and the answer in s9; the absent arm reads the answer from the real-frame cell R+0x158 and its
@@ -13,6 +13,7 @@
    lib/AU/RPgImgA.v's hi_L4; the cuts are lib/AU/RPgSeg.v's, the half's kit is lib/AU/RPgM02Base.v and the callee
    theorems are lib/AU's rl_*_B; the tail's code has its own table (the kit's covers the key compare and the two
    checks, not the tail); the cut lemmas read a cut's list by location, not by position. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_role, image B (fuzz_role.asan-ubsan, pinned sha256
    b255d4935da5af137a3967dbe33380ea43be8e78bfe05d1e356e0a2be8a69ff0; every address measured on the unstripped twin
    dc791783f32962615e18a5f5cffae758ba56eb5dc87f70913c3579b101b4406a, the same loaded bytes). Proves no function

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: IMAGE-B TWIN of lib/A/CfPoison.v. The two contracts of YGcfHp.v
    (apoison_realizes_cf, aunpoison_realizes_cf) at omx-clap-core/fuzz_preset's ASan+UBSan image B
    (fuzz_preset.asan-ubsan, the #102 pin: stripped d663f82d, twin c90d4fa54d43160b; PAU pau-preset-102),
@@ -9,7 +10,7 @@
    This file is lib/A/CfPoison.v with the module map A<x> -> Y<x> (the internal file gen_fc_b.py), FCxA / CfImgA / CfPoisonRun ->
    AU/FCxA / AU/CfImgB / AU/CfPoisonRunB, CfImg_A -> CfImg_B, and the theorems renamed with a _B suffix;
    every proof line is the same. lib/A/CfPoison.v is a PORT of
-   proofs/omx-clap-core/fuzz_manifest/lib/A/FMpoisonW.v (origin/cold/port-fm-bcmp 9261fc100fcf): the
+   proofs/omx-clap-core/fuzz_manifest/lib/A/FMpoisonW.v: the
    same walk over cgif's AR with a list of user-poisoned ranges (ARU, A/FMupoison.v) instead of ARcf with the
    ghost set Hp. The donor's ARU_poison_step / ARU_unpoison_step are h-rw-man-5's ahead_poison_law /
    ahead_unpoison_law, already proved in Reusable/YGcfHp.v (ahead_poison_law_proof, ahead_unpoison_law_proof),
@@ -29,7 +30,7 @@
    head_end_ok (:219) as CfApiPreset.poison_next_vis_cf tfibsegs B .. with tfibsegs of Reusable/YB1v.v; it is generic
    in the implicit image class ci (Section PV's Context, through ARcf), inferred there with rc. No stand-in.
    Where p is (head_zone) comes from the block law in every case.
-   The memnorm keep (the texts' last conjunct since h-mani-a8's leaves2, s1b 459129c18903) is paid by the frame:
+   The memnorm keep (the texts' last conjunct since h-mani-a8's leaves2, s1b) is paid by the frame:
    memnorm_frame2 below, from the walk's raw-memory frame MEQ (the walk writes only the 64-byte frame below sp and
    the two head shadow bytes, both outside the image and below TASK_SIZE). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.

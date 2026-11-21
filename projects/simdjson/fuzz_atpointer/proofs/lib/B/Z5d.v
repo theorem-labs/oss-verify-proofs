@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor raised to the 0x5D0000 bytes below sp that the launch guarantees ([STACK_GAP])). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -297,7 +298,7 @@ Lemma sbctor_cps :
   rw_cells bsegs m X (sbj j0 j1 j2 j3 j4) -> bv_unsigned sp <= X -> X + 40 <= USTACK_TOP -> X mod 8 = 0 ->
   Z.of_nat (length (rt_live RT Σ)) < LIVE_MAX -> mcost (16 * n) <= rt_credit RT Σ ->
   ART RT Σ m -> mem_inv bsegs m ->
-  stk bsegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + 80 + RT_STACK <= bv_unsigned sp ->
+  stk bsegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= lo -> lo + 80 + RT_STACK <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 -> frm0 fc ->
   cps_f (ASTA RT Σ PMc (eq (entry_st ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11
                                          t3 t4 t5 t6 F fc VB_SBCTOR m)))
@@ -337,7 +338,7 @@ Proof using AF RTF.
     destruct RS2 as (u0 & u1 & u2 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & u3 & u4 & u5 & u6 & F2 & fc2 & ->).
     cbn [ms_fcsr] in FRM2. rewrite EU2 in ST2, PRES2.
     unfold VB_OPNEW_RET in Hc2'. rewrite (ret_pc_even 0x1131a4) in Hc2' by lia.
-    assert (LOW1 : rt_sp0 RT Σ1 - STACK_WIN <= lo) by (rewrite SP1; exact LOW).
+    assert (LOW1 : rt_sp0 RT Σ1 - STACK_WIN + STACK_GAP <= lo) by (rewrite SP1; exact LOW).
     assert (INN1 : In (p, 16 * n) (rt_live RT Σ1)) by (rewrite LV1; left; reflexivity).
     pose proof (af_live_range RT AF Σ1 m2 p (16 * n) ART2 INN1) as (_ & PW & _).
 
@@ -385,7 +386,7 @@ Lemma sbdtor_cps :
   0 <= bb < 2^63 -> fi <= ce < 2^63 -> 0 < al < 2^64 ->
   In (fi, nf) (rt_live RT Σ) ->
   ART RT Σ m -> mem_inv bsegs m ->
-  stk bsegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + RT_STACK <= bv_unsigned sp ->
+  stk bsegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= lo -> lo + RT_STACK <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 -> unwind_ok ra s0 sp -> frm0 fc ->
   cps_f (ASTA RT Σ PMc (eq (entry_st ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11
                                          t3 t4 t5 t6 F fc VB_SBDTOR m)))
@@ -432,7 +433,7 @@ Lemma sbdtor0_cps :
   rw_cells bsegs m X (sb_cells 0 bb ce al) -> bv_unsigned sp <= X -> X + 40 <= USTACK_TOP -> X mod 8 = 0 ->
   0 <= bb < 2^63 -> 0 <= ce < 2^63 -> 0 <= al < 2^64 ->
   ART RT Σ m -> mem_inv bsegs m ->
-  stk bsegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + 16 <= bv_unsigned sp ->
+  stk bsegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= lo -> lo + 16 <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> frm0 fc ->
   cps_f (ASTA RT Σ PMc (eq (entry_st ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11
                                          t3 t4 t5 t6 F fc VB_SBDTOR m)))

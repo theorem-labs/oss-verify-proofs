@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (m_channel_reader_MX added: MX keeps the model's channel reader). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.LibA Require Import AcctCore.
@@ -25,6 +26,8 @@ Lemma m_fds_MX : forall m mat, m_fds (MX m mat) = m_fds m. Proof. reflexivity. Q
 Lemma m_fs_MX : forall m mat, m_fs (MX m mat) = m_fs m. Proof. reflexivity. Qed.
 Lemma m_tid_MX : forall m mat, m_tid (MX m mat) = m_tid m. Proof. reflexivity. Qed.
 Lemma m_halted_MX : forall m mat, m_halted (MX m mat) = m_halted m. Proof. reflexivity. Qed.
+Lemma m_channel_reader_MX : forall m mat, m_channel_reader (MX m mat) = m_channel_reader m. Proof. reflexivity. Qed.
+
 Lemma strip_MX : forall m mat, strip (MX m mat) = strip m. Proof. reflexivity. Qed.
 Lemma vm_backing_used_MX : forall m mat,
 vm_backing_used (MX m mat) = nonlazy_bytes m + Z.of_nat (length mat) * page_size.

@@ -3,7 +3,9 @@ project: trafficserver
 harness: fuzz_yamlcpp
 rocq: OSSVerify.trafficserver.fuzz_yamlcpp
 origin: upstream
-summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
+summary: Copies the input (size_data from 8 to 1024 bytes) into a string and parses it with yaml-cpp's
+  YAML::Load, catching and dropping every exception (catch (...)), and drops the parsed node. It returns
+  -1 for an input with size_data below 8 or above 1024.
 entry: LLVMFuzzerTestOneInput
 source:
   files:
@@ -12,7 +14,7 @@ source:
     repository: https://github.com/apache/trafficserver
     commit: 97d2831fbd38c8f43b39e3ed996d9bd6e3173384
     path: tests/fuzzing/fuzz_yamlcpp.cc
-  modified: false
+  modified: true
   licence: NOASSERTION
 library:
   repository: https://github.com/apache/trafficserver
@@ -24,11 +26,14 @@ modifications:
 - In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the program
   depends only on its input.
 - A small driver reads the input file, calls the harness one to four times and prints each return value.
+- 'The harness source is modified: source/fuzz_yamlcpp.cc is trafficserver 97d2831f''s tests/fuzzing/fuzz_yamlcpp.cc
+  with one Theorem Labs change: its length check returns -1, not 1, for an input outside its limits (libFuzzer
+  rejects the input; the driver exits 0, not 78).'
 builds:
   plain:
     file: fuzz_yamlcpp.plain
     bytes: 816440
-    sha256: a8ffb16514ed95eaaa49b587c7b0ab5552ea2360ebbfed6620b56ab8153c4b03
+    sha256: cc10138ed38c553ac6da859e063ded38219466102575ab5697d20bf5965843a7
     segments:
     - 1
     - 1
@@ -56,7 +61,7 @@ builds:
   ubsan:
     file: fuzz_yamlcpp.ubsan
     bytes: 833792
-    sha256: e494d7cc377d9ec8f89326ec6148faaa1d2cc4b1013a0306412218ec6f48cc97
+    sha256: f7674c4ad836520f7b04816c33fce2ca60bc69ea06cf413788619433580d23c3
     segments:
     - 1
     - 1
@@ -84,7 +89,7 @@ builds:
   asan:
     file: fuzz_yamlcpp.asan
     bytes: 1614824
-    sha256: fa5a33338152c303cb57b40d53f9c2c9288b8697bf62c4cede226e41e4c9799a
+    sha256: dc6b4eca8b5c5f33cc76468c957b3236c2cf0490cbd5d7940a48dec27aa60eac
     segments:
     - 1
     - 1
@@ -115,7 +120,7 @@ builds:
   asan-ubsan:
     file: fuzz_yamlcpp.asan-ubsan
     bytes: 1614072
-    sha256: 7ac6882f6503396e915e5b972596385418f654c079863a92172c8a4f695b0403
+    sha256: f3e749ca6a07e6f530f2aa4c6af50a05da8e80eb9af5dd4bf2caceeee8a7f09c
     segments:
     - 1
     - 1
@@ -155,6 +160,7 @@ statements:
     budgets: asan
     abort: signal
     status: open
+    revision: 2
   ubsan_agrees:
     kind: agreement
     builds:
@@ -164,6 +170,7 @@ statements:
     budgets: standard
     abort: signal
     status: open
+    revision: 2
   asan_ubsan_agrees:
     kind: agreement
     builds:
@@ -173,6 +180,7 @@ statements:
     budgets: asan
     abort: signal
     status: open
+    revision: 2
   plain_halts:
     kind: halts
     builds:
@@ -183,6 +191,7 @@ statements:
     - 2
     binds_checks: false
     status: open
+    revision: 2
   asan_halts:
     kind: halts
     builds:
@@ -193,6 +202,7 @@ statements:
     - 2
     binds_checks: false
     status: open
+    revision: 2
   ubsan_halts:
     kind: halts
     builds:
@@ -203,6 +213,7 @@ statements:
     - 2
     binds_checks: false
     status: open
+    revision: 2
   asan_ubsan_halts:
     kind: halts
     builds:
@@ -213,3 +224,4 @@ statements:
     - 2
     binds_checks: false
     status: open
+    revision: 2

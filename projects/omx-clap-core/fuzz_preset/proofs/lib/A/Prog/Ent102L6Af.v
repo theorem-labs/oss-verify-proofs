@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image A' (asan, harness fix #102, PIN sha256
    1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44, unstripped twin bff8519bbe3ea0e4):
    SEGMENT L6f of LLVMFuzzerTestOneInput (entry 0x815e0), the FREE lane, proved against lib/A/Ent102CutsA.v's
@@ -13,7 +14,7 @@
              callee's journal (frame, saved block, frame shadow, flag word) and the kit's post (Lam' = [], the blocks back
              to the entry's, the ledger with its most / own, the room, memnorm, the position one model event later).
    STATEMENT: lib/A/Ent102CutsA.v, read at blob 99822ff0d52f
-   (commit aabc9294a5b9: the batch kit's pre-merge tip d607d12e4b0f plus the wild
+   (the batch kit's pre-merge tip plus the wild
    budget through the cuts):
    seg_L6f_stmt over ec_hyps (e_dw E),
    cut_free / cut_exit at the exact room position (os_c = e_os E ++ [trp], the index after the accepted tail's pieces),
@@ -22,7 +23,7 @@
    et_stk, ech_univ's eu_pjf, ech_ccut_ok / ech_lcut_ok; ech_pay is not read (pj_free only frees: the count is paid by
    ec_ccut_ok's monotonicity 10 -> 11, the live bytes by the entry budget). ec_pre's parts are taken by their TYPES
    (lib/A/Prog/Ent102CallA.v ec_conj_pick), before the cut's float state fy enters the context.
-   RE-FIT: the earlier Qed at a2d6bb26a279 (lane L6Lane) was against CutsA f40892fb5ddb and the kit's old pj_free text
+   RE-FIT: the earlier Qed (lane L6Lane) was against CutsA f40892fb5ddb and the kit's old pj_free text
    (rp_* entry position, prh_own / prh_most keeps, pj_fdR); then re-fitted to the local free-order text 40183db4cf90
    and the kit's NEW text. THE WILD BUDGET: ec_inv's last argument wk, cut_free at ec_wk_free (76) and cut_exit at
    ec_wk_exit = ec_wk_free + prh_wk F_pj_free (76; ec_wk_values); tpj_free_specX is NOT budgeted (no wild_room
@@ -48,8 +49,8 @@
    rule 24: proves function LLVMFuzzerTestOneInput, segment L6f (reuse search: `proof-index LLVMFuzzerTestOneInput`
    exit=0, output the lane's index output, the internal file idx-llvm-newpin.txt: 30 named, 1290 by address, 105 related, 7
    released lemma(s), 0 UNRELEASED hit(s) on live working heads; no released ASan walk on the #102 pins; checker
-   R24CheckLLVMF CONFIRM; NEW walk). TEMPLATE: this walk's own earlier Qed of this row (a2d6bb26a279, by path); the
-   exit's position step follows lib/A/Prog/Ent102L4jA.v of a working branch 7a3f2f1e8f63 (l4j_pos:
+   R24CheckLLVMF CONFIRM; NEW walk). TEMPLATE: this walk's own earlier Qed of this row (by path); the
+   exit's position step follows lib/A/Prog/Ent102L4jA.v of a working branch (l4j_pos:
    the index arithmetic over ec_call_evs_ranout_false). The step rules, the geometry and the pure facts are
    lib/A/Prog/Ent102L6AfLem.v's (blob a37e0dc13d12, its header names their sources).
    NUMERALS: 0x1bc / 0x1c0 / 0x1c4 are this lane's slot offsets (DERIVED: EC_FREE - EC_BASE, +4, +8); 128 / 120 / 104 /

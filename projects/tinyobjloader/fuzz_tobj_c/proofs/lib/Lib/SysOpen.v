@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (openat_rd_rob added, openat's robustness at a larger read-only backing for the frame obligation's new premise, LPS 75d69e00, with the read lemmas it uses; cstr_no_slash and cstr_no_slash_of_eq written as plain text, a faulting path read now False; RomBase required). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -13,6 +14,9 @@ From LinuxProcessSemantics.LinuxProcessSem.Sys Require Import Uaccess Uapi Sysca
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Fs Require Import Open.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw Require Import Safety SysSpec SysStep.
+(* LPS 75d69e00: [openat_rd_rob] below needs RomBase by name; RomBase depends on the model
+   only, so there is no cycle. *)
+From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw Require RomBase.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3 Require Import
   SymState SymStep SymSoundA SymSoundB SymSoundV SymSoundI SymSoundL SymSoundM SymSoundW
   SymSoundF SymSoundR SymComplete SymCall SymEntail SymExit SymFrame SymBytes Glue3.
@@ -21,8 +25,30 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope Z_scope.
 
-Definition cstr_no_slash (c : cstr_result) : Prop := ltac2:(tb__ "0|0|
-S7OLc;Vc;S18S15Q8A1A1S0S19S40R1A1S1aA3Lp;S3S3X7x3").
+(** LPS 75d69e00: the FAULT arm is [False], where it used to be [True].
+
+    [ok_pframe]'s new fourth premise, [RomBase.sys_rob], says the specification is the same
+    at every LARGER read-only backing, and for openat that is simply FALSE at a state whose
+    pathname does not read: [rom_ext] only grows the backing ([RomBase.ms_read_byte_wrom_ext],
+    RomBase.v:59-64), so an extension can turn [CstrFault] into [CstrOk] and change the check
+    from EFAULT to an open.  No weaker premise rules that out, and no invariant elsewhere in
+    this tree supplies it: the path is read from wherever argument 1 points.
+
+    Strengthening THIS premise rather than adding a new one is free at every call site, which
+    is the whole reason it is the right move.  All four discharges -- P/Drv_open__G1.v:389,
+    U/Drv_open__G1.v:388, A/DrvM.v:403, B/DrvM.v:412 -- end in
+    [destruct (length argv1 <? 4096)%nat; [exact Hnsl | exact I]], because the pathname they
+    hand openat is [arg1_cstr] / [cstr1], which is [CstrOk argv1] or [CstrTooLong] by
+    construction (Lib/InitArg1.v:137) and is NEVER [CstrFault].  Their text is unchanged. *)
+Definition cstr_no_slash (c : cstr_result) : Prop :=
+  match c with
+  | CstrOk p => path_has_slash p = false
+  | CstrTooLong => True
+  | CstrFault => False
+  end.
+
+Lemma cstr_no_slash_not_fault : forall c, cstr_no_slash c -> c <> CstrFault.
+Proof using . intros [p| |] H; [discriminate | discriminate | destruct H]. Qed.
 
 Lemma valid_argv_arg1_plain : ltac2:(tb__ "0|3|
 S18S18S15Q8A1M0A1M1A1S34R1A1S55U2S1eG1R2A2A2S1S0S19S40S56G1U1R3S1fG0A1A4M2A1S1aA3S0S19S3dG2S41A2S1aA3A2F_;F_;Fargv;").
@@ -40,9 +66,22 @@ Lemma path_is_dirref_not_dotdot : ltac2:(tb__ "0|0|
 S3eS0S19S3dR1S41A2S1aA3S0S19S43R2A1S3dR2S47A2A3F_;Fp;").
 Proof. intros p H. unfold path_is_dirref. rewrite H, Bool.orb_false_r. reflexivity. Qed.
 
-Lemma cstr_no_slash_of_eq : ltac2:(tb__ "0|1|
-S7S3eS0S19S40R1A1S1aA3S18S15Q8A1A1M0S0S7R4ScR1A1A3S0G0R2R4A3F_;Fp;S36R4A1F_;F_;Fa;Fc;").
-Proof. intros [p| |] a Ha He; cbn; [|exact I|exact I]. rewrite (He p eq_refl). exact Ha. Qed.
+(* LPS 75d69e00: restated in plain Coq with a [c <> CstrFault] premise, because
+   [cstr_no_slash]'s fault arm is now [False] and the old statement is FALSE without it:
+   [CstrFault] satisfies both of its hypotheses vacuously.  It has NO callers at this sha
+   (`git grep -nw cstr_no_slash_of_eq` returns only this definition; must-fire control
+   `path_is_dirref_not_dotdot` returns 11 hits in 5 files), so the premise costs nothing.
+   This producer is in SysOpen.v itself, not in the drivers, so a sweep of the drivers
+   alone does not find it. *)
+Lemma cstr_no_slash_of_eq : forall (c : cstr_result) (a : path),
+  path_has_slash a = false ->
+  (forall p, c = CstrOk p -> p = a) ->
+  c <> CstrFault ->
+  cstr_no_slash c.
+Proof.
+  intros [p| |] a Ha He Hnf; cbn; [| exact I | exfalso; apply Hnf; reflexivity].
+  rewrite (He p eq_refl). exact Ha.
+Qed.
 
 Definition openat_post (md : Model) (c : cstr_result) (r : word) (md' : Model) : Prop := ltac2:(tb__ "0|a|
 S7OLc;Vc;S18S15Q8A1M0A1M1G1OLp;R1S1S0S15Q40A1M2Vr;S8SfA1A3S0S5Vmd';Vmd;A3M3A2M4G0G1S19OL_;S43R3A1S4S2S25S25S1S5cS25R1S44A3S1S0G2Vr;S8R1A1A3G3A2A2Le;A2M5S1S0S1bSaA1S12S13Vmd;A1M6S11G6A1M7A2S20SaA1A3M8S1S0G2Vr;G7A3M9S0S5Vmd';S5aVmd;A1A3A2A2A2S1bG1A1OLx;S3fS14Vmd;A1R3A2G1S4G5S1G8S1G9S0S5Vmd';S5bVmd;R4A2A3A2A2A2Ll;G4X1bx2X19x2Ll;Lb;X18x2Lp;S1S0G2Vr;S8SeA1A3G3A2S1S0G2Vr;S8SdA1A3G3A2X7x3").
@@ -118,6 +157,75 @@ S23S5S15Q40M0A1M1S38R2A1S0S25S16G0R2A2Z38A3S0S25S4dS16G0S21R5U2A2A2S42A2Z0A3S0G1
     - exact (@openat_patherr_only_ok segs ms m x8 ENAMETOOLONG Hi Hno Hfl ltac:(rewrite Hc; reflexivity)).
     - exact (@openat_patherr_only_ok segs ms m x8 EFAULT Hi Hno Hfl ltac:(rewrite Hc; reflexivity)).
   Qed.
+
+  (** ** [RomBase.sys_rob] for openat (56)
+
+      56 is not in [RomBase.memfree_lit] and must not be: [memfree 56] is FALSE, because
+      [Open.check_openat_body] reads the pathname out of [in_mem].  [RomBase.sys_rob] asks
+      only that the check agree at a LARGER backing, and it does -- but ONLY when the path
+      read succeeds, which is what [cstr_no_slash]'s [CstrFault] arm now gives.
+
+      [RomBase.with_mem] changes the memory field alone, so these two hold by conversion. *)
+  Lemma in_arg_with_mem : forall i mp k, in_arg (RomBase.with_mem i mp) k = in_arg i k.
+  Proof using . reflexivity. Qed.
+
+  Lemma in_mem_with_mem : forall i mp, in_mem (RomBase.with_mem i mp) = mp.
+  Proof using . reflexivity. Qed.
+
+  (** A lemma ABOUT a model definition, written in this tree's proof library: nothing under
+      [theories/] changes.  [Open.check_openat_body] (75d69e00
+      theories/LinuxProcessSem/Checks/Sys/Fs/Open.v:482-493) reads [in_mem] in exactly one
+      place, [read_cstr (in_mem i) pathp]; every arm below that is a function of the decoded
+      path, the flags, the effect and the model.  So it is constant on memories that answer
+      that read the same way, which by [RomBase.read_cstr_ext] (RomBase.v:169) is every
+      larger one -- PROVIDED the read does not fault.  Without that proviso the statement is
+      FALSE, not merely unprovable: a larger backing can map a byte the smaller one did not
+      and turn EFAULT into an open. *)
+  Lemma check_openat_body_with_mem : forall i mp dirfd pathp flags eff m,
+    RomBase.mem_ext (in_mem i) mp ->
+    read_cstr (in_mem i) pathp <> CstrFault ->
+    Open.check_openat_body (RomBase.with_mem i mp) dirfd pathp flags eff m
+      = Open.check_openat_body i dirfd pathp flags eff m.
+  Proof using .
+    intros i mp dirfd pathp flags eff m Hx Hnf.
+    unfold Open.check_openat_body. rewrite in_mem_with_mem.
+    rewrite (RomBase.read_cstr_ext (in_mem i) mp pathp Hx Hnf). reflexivity.
+  Qed.
+
+  (** The copy-in record openat claims is the same prefix, by [cstr_access_len_aux_ext]
+      (RomBase.v:159) under the same proviso. *)
+  Lemma openat_reads_with_mem : forall i mp,
+    RomBase.mem_ext (in_mem i) mp ->
+    read_cstr (in_mem i) (in_arg i 1) <> CstrFault ->
+    openat_reads (RomBase.with_mem i mp) = openat_reads i.
+  Proof using .
+    intros i mp Hx Hnf. unfold openat_reads. cbv zeta.
+    rewrite !in_arg_with_mem, in_mem_with_mem.
+    rewrite (RomBase.cstr_access_len_aux_ext path_max (in_mem i) mp (in_arg i 1) Hx Hnf).
+    reflexivity.
+  Qed.
+
+  Lemma openat_rd_rob : forall ms m x8,
+    ms_svc_pending ms = Some x8 ->
+    bv_unsigned x8 = 56%Z ->
+    Z.ldiff (bv_unsigned (ms_gpr ms 2)) open_ignored_flags = 0%Z ->
+    cstr_no_slash (read_cstr (ms_read_byte ms) (ms_gpr ms 1)) ->
+    RomBase.sys_rob segs (mkCfg ms m).
+  Proof using .
+    intros ms m x8 Hp Hno Hfl Hns.
+    pose proof (cstr_no_slash_not_fault _ Hns) as Hnf.
+    eapply RomBase.sys_rob_of_mem_ext; [exact Hp|]. intros mp Hx eff.
+    rewrite (@openat_check (RomBase.with_mem (sys_input segs ms x8) mp) m Hno Hfl eff),
+            (@openat_check (sys_input segs ms x8) m Hno Hfl eff).
+    (* the section's [dirfd]/[pathp] may survive discharge as let-ins in the statement *)
+    cbv zeta.
+    rewrite !in_arg_with_mem.
+    rewrite (openat_reads_with_mem (sys_input segs ms x8) mp Hx Hnf).
+    rewrite (check_openat_body_with_mem (sys_input segs ms x8) mp
+               (fd32 (in_arg (sys_input segs ms x8) 0)) (in_arg (sys_input segs ms x8) 1)
+               (in_arg (sys_input segs ms x8) 2) (clear_copyins eff) m Hx Hnf).
+    reflexivity.
+  Qed.
 End Step.
 
 Section WithSegs.
@@ -153,7 +261,17 @@ Proof using .
   assert (Hfl : Z.ldiff (bv_unsigned (ms_gpr ms 2)) open_ignored_flags = 0%Z) by (rewrite G2; apply ldiff_rd_largefile).
   assert (Hdir : fd32 (ms_gpr ms 0) = AT_FDCWD32) by (rewrite G0; apply fd32_at_fdcwd_word).
   split.
-  - eapply Hokp; [exact Hk | exact Hp |]. eapply openat_rd_only_ok; [exact Hh | exact H56 | exact Hfl | exact Hdir | rewrite G1; exact (HNS tr ms md Hsp Hk)].
+  (* LPS 75d69e00: [ok_pframe]'s fourth premise.  openat is 56 and 56 is NOT in
+     [RomBase.memfree_lit] -- [memfree 56] is FALSE, the path is read out of [in_mem] -- so
+     [RomBase.rob_auto] cannot close it.  [openat_rd_rob] does, and it is the reason
+     [cstr_no_slash]'s fault arm is [False]: at a faulting path the premise is not merely
+     hard, it is false. *)
+  - eapply Hokp;
+      first
+        [ solve [ exact Hk ]
+        | solve [ exact Hp ]
+        | solve [ eapply openat_rd_only_ok; [exact Hh | exact H56 | exact Hfl | exact Hdir | rewrite G1; exact (HNS tr ms md Hsp Hk)] ]
+        | solve [ eapply openat_rd_rob; [exact Hp | exact H56 | exact Hfl | rewrite G1; exact (HNS tr ms md Hsp Hk)] ] ].
   - intros w' Hw.
     destruct (wstep_openat_rd_inv segs tr ms md _ w' Hp Hh H56 Hfl Hdir ltac:(rewrite G1; exact (HNS tr ms md Hsp Hk)) Hw) as (r & md' & Hpost & ->).
     assert (Hag : agree_below (ss_next S) rho (rho_set_rw rho (ss_next S) r)) by (apply agree_below_set_rw; lia).

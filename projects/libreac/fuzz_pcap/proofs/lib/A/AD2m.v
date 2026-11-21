@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AD2m.v (origin/ossv/recipes c8557374ad2e, 25 lines) for libreac/fuzz_pcap's ASan build, with its module paths changed and TfibSyms renamed PcapSyms; it holds no image numeral. tfib_AICPY stands on lib/A/AE31.v's memcpy_icpt_realizes and tfib_ARDCHK on lib/A/AE33.v's aread_check_realizes, both relocated core files (a working branch). Handed from a Theorem Labs lane to the driver lane on 2026-10-29 (OBLIGATIONS row 10); a Theorem Labs lane's uncommitted draft (AD2m.v (sha256 7332f1050b07; internal record)) is this text. rule 24: no function proved anew. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AD2m.v (theorem-labs/oss-verify-proofs@6b32741d849a, 25 lines) for libreac/fuzz_pcap's ASan build, with its module paths changed and TfibSyms renamed PcapSyms; it holds no image numeral. tfib_AICPY stands on lib/A/AE31.v's memcpy_icpt_realizes and tfib_ARDCHK on lib/A/AE33.v's aread_check_realizes, both relocated core files (a working branch). Handed from a Theorem Labs lane to the driver lane on 2026-10-29 (OBLIGATIONS row 10); a Theorem Labs lane's uncommitted draft (AD2m.v (sha256 7332f1050b07; internal record)) is this text. rule 24: no function proved anew. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

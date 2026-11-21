@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Rebound onto the old-pin kit 4f18c75d4900 (base cold/h-rw-pre-7-b-ex_value-rebind): EXB carries exv_rm; the two
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Rebound onto the old-pin kit (base cold/h-rw-pre-7-b-ex_value-rebind): EXB carries exv_rm; the two
    ends take the memnorm keep from the entry memory at the end memory (the runs' _inv P) and hand it to exv_kt.
    Does not rest on tex_word_specX. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B, ex_value, segment CI (container open, B entry + 0x374 .. + 0x530):

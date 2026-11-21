@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: PE_STATIC_A's new conjunct for it, named HBTs or skipped where STC is destructed). *)
 
 From Stdlib Require ZArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -50,7 +51,7 @@ AJ5 A4L HIx A T md
 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (Z_to_bv 64 0x9a0ac) fc None m (seg_rom asegs)).
 Proof.
 intros until fc. intros STC BSL INV PBK K0 Hco0 Hxn Hle1 Hle2 Hlen0 kB BK RA K.
-pose proof STC as (_ & _ & _ & _ & _ & LEN & SB0 & _).
+pose proof STC as (_ & _ & _ & _ & _ & _ & LEN & SB0 & _).
 pose proof INV as [(_ & _ & CO & _) REST]. pose proof REST as (HP & _ & _ & _ & _ & STR & PLEN & SBin & _).
 destruct SBin as [L0 | PL]; [exfalso; lia|].
 pose proof (bytes_at_sub A4H m (pf_sb pf) payload (Z.to_nat co0) (Z.to_nat xn) STR ltac:(lia)) as SRC. cbn [hl_segs hla_base A4L A4H] in SRC. rewrite Z2Nat.id in SRC by lia.
@@ -94,7 +95,7 @@ Hypothesis GA_pres : forall LB SP m m', heap_pres A4H LB SP m m' -> GA m -> GA m
 Hypothesis MAPP : memappend_A_stmt2 HIx.
 
 Ltac pe_openA STC INV :=
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
 destruct INV as [CORE REST];
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR);
 pose proof REST as (HP & LV & OBJ & ST & ERR & STR & PLEN & SBin & HPR & MDV & G & BUD).
@@ -409,7 +410,7 @@ AJ5 A4L HIx A T md
 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (Z_to_bv 64 0x9b4fc) fc None m (seg_rom asegs)).
 Proof.
 intros until fc. intros STC BSL INV PBK K0 Hco0 Hxn Hle1 Hle2 Hlen0 kB BK RA K.
-pose proof STC as (_ & _ & _ & _ & _ & LEN & SB0 & _).
+pose proof STC as (_ & _ & _ & _ & _ & _ & LEN & SB0 & _).
 pose proof INV as [(_ & _ & CO & _) REST]. pose proof REST as (HP & _ & _ & _ & _ & STR & PLEN & SBin & _).
 destruct SBin as [L0 | PL]; [exfalso; lia|].
 pose proof (bytes_at_sub A4H m (pf_sb pf) payload (Z.to_nat co0) (Z.to_nat xn) STR ltac:(lia)) as SRC. cbn [hl_segs hla_base A4L A4H] in SRC. rewrite Z2Nat.id in SRC by lia.
@@ -471,7 +472,7 @@ PE_INV_A HIx GA pf pa q LB0 LM FRS payload me lo m2 md A B ts cb nb pj sv errv
 Proof.
 intros until errv. intros STC INV MU WM MI2 ST2.
 destruct ts as [depth levels co pbx pbs x obj objs objbs]; cbn [t_depth t_levels t_co t_pb t_pbs t_x t_obj t_objs t_objbs] in *.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 pose proof INV as [CORE REST].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR).
 pose proof REST as (HP & LV & OBJ & ST & ERR & STR & PLEN & SBin & HPR & MDV & G & BUD).
@@ -538,7 +539,7 @@ evt asegs Q (MS (mkR ra (Z_to_bv 64 (pf_spf pf)) gp (Z_to_bv 64 A_TP) t0 t1 t2 s
 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (Z_to_bv 64 entry) fc None m (seg_rom asegs)).
 Proof.
 intros entry model SPEC TOT NREAD. intros until fc. intros STC INV Epbs Hn Hxa Hxb LIT SRC RA K.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 pose proof INV as [CORE REST].
 destruct CORE as (_ & _ & _ & _ & _ & PB & _ & _ & _).
 pose proof REST as (HP & _ & _ & ST & _).
@@ -651,7 +652,7 @@ Hypothesis GA_pres : forall LB SP m m', heap_pres A4H LB SP m m' -> GA m -> GA m
 Hypothesis MAPP : memappend_A_stmt2 HIx.
 
 Ltac pe_openA STC INV :=
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
 destruct INV as [CORE REST];
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR);
 pose proof REST as (HP & LV & OBJ & ST & ERR & STR & PLEN & SBin & HPR & MDV & G & BUD).
@@ -992,7 +993,7 @@ PE_INV_A HIx GA pf pa q LB0 LM FRS payload me lo m2 md A B ts cb nb pj sv errv
 Proof.
 intros until errv. intros STC INV MU WM MI2 ST2.
 destruct ts as [depth levels co pbx pbs x obj objs objbs]; cbn [t_depth t_levels t_co t_pb t_pbs t_x t_obj t_objs t_objbs] in *.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 pose proof INV as [CORE REST].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR).
 pose proof REST as (HP & LV & OBJ & ST & ERR & STR & PLEN & SBin & HPR & MDV & G & BUD).
@@ -1059,7 +1060,7 @@ evt asegs Q (MS (mkR ra (Z_to_bv 64 (pf_spf pf)) gp (Z_to_bv 64 A_TP) t0 t1 t2 s
 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (Z_to_bv 64 entry) fc None m (seg_rom asegs)).
 Proof.
 intros entry model SPEC TOT NREAD. intros until fc. intros STC INV Epbs Hn Hxa Hxb LIT SRC RA K.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 pose proof INV as [CORE REST].
 destruct CORE as (_ & _ & _ & _ & _ & PB & _ & _ & _).
 pose proof REST as (HP & _ & _ & ST & _).

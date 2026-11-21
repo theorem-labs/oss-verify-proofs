@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/AImgA.v; 15 of its 23 lines of code are new or changed and 4 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGif2cgif.v (cold/c-asan-realloc-c5 ced28ed2383, file sha256 f5aa8e82f671) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGif2cgif.v (file sha256 f5aa8e82f671) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/AU/AGif2cgif.v, with its module paths and module names changed; 1 of its 23 lines of code is new or changed and 1 line of the source is left out. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGif2cgif.v (a working branch 95e6f1d72b6, file sha256 f5aa8e82f671; written for cgif_file_fuzzer.asan-ubsan 1c29845fe605) onto libreac/fuzz_decode's asan image (pin 5973b76807d8, unstripped twin 4cb0a852e826); module paths changed, names TfibSyms -> GrantSyms; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGif2cgif.v (a working branch, file sha256 f5aa8e82f671; written for cgif_file_fuzzer.asan-ubsan 1c29845fe605) onto libreac/fuzz_decode's asan image (pin 5973b76807d8, unstripped twin 4cb0a852e826); module paths changed, names TfibSyms -> GrantSyms; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The cgif_file instance of the image class ImgBase.AImg: cgif's segments (tfibsegs), data cells (TFIB_TP / TFIB_TSD /
    TFIB_OOM / TFIB_ERRNO), image window (AF0x.img_cover), symbol facts (AF0m.PcapSyms) and constant cells
    (AF0m.Tfib_const).  The image-free interfaces (AGif2, ...) take the class as [Context {IM : AImg}]; a cgif_file

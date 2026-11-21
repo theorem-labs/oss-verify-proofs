@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/GrantFrame.v (a working branch d98082bd58b): PALibF holds image B's side-stack entries for frame classes 0, 1, 2, 4 and 6 (class 6 is reac_ctrl_build_grant_sweep's 3296-byte frame) and the separation of objects 1, 0, 35 and the flag cell; palf_uar_img states GrantTop.v's bounds; image A's file was made from proofs/cgif/cgif_file_fuzzer/lib/YC44.v. *)
+(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/GrantFrame.v (a working branch): PALibF holds image B's side-stack entries for frame classes 0, 1, 2, 4 and 6 (class 6 is reac_ctrl_build_grant_sweep's 3296-byte frame) and the separation of objects 1, 0, 35 and the flag cell; palf_uar_img states GrantTop.v's bounds; image A's file was made from proofs/cgif/cgif_file_fuzzer/lib/YC44.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From Stdlib Require Import FunctionalExtensionality.

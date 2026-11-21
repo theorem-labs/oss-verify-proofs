@@ -1,4 +1,4 @@
-(* Ported by a Theorem Labs lane from a working branch affce6489c8 proofs/omx-clap-core/fuzz_manifest/lib/A/Prog/strstr_wrap_c.v, unchanged. *)
+(* Ported by a Theorem Labs lane from a working branch proofs/omx-clap-core/fuzz_manifest/lib/A/Prog/strstr_wrap_c.v, unchanged. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Lib Require Import PropExec MState Mem Exec Frame Step Cells Arr Bytes.

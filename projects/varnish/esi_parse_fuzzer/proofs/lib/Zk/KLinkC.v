@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: mremap's room test and post-state cut the source range out of vm_maps (maps_subtract_exact_kl). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -66,7 +67,7 @@ Qed.
 Lemma m_vmmaps_with_vm_backing l p m : m_vmmaps (with_vm_backing l p m) = m_vmmaps m.
 Proof. destruct m; reflexivity. Qed.
 Lemma m_vmmaps_mremap_model_next mo old on dst nn :
-  m_vmmaps (mremap_model_next mo old on dst nn) = mremap_maps_next (m_vmmaps mo) old dst nn.
+  m_vmmaps (mremap_model_next mo old on dst nn) = mremap_maps_next (m_vmmaps mo) old on dst nn.
 Proof. unfold mremap_model_next, vm_resize_backing. rewrite m_vmmaps_with_vm_backing, with_vmmaps_vm. reflexivity. Qed.
 Lemma m_halted_mremap_model_next mo old on dst nn :
   m_halted (mremap_model_next mo old on dst nn) = m_halted mo.
@@ -84,16 +85,16 @@ Lemma nstep_mremap_cases : forall a on nd mo rsp mo',
   \/ (exists dst : word,
         let dZ := bv_unsigned dst in
         0 < dZ /\ dZ mod 4096 = 0 /\ dZ + nd <= alloc_ceiling /\ on <> nd
-        /\ m_vmmaps mo' = mremap_maps_next h (Z_to_bv 64 a) dst (Z_to_bv 64 nd)
+        /\ m_vmmaps mo' = mremap_maps_next h (Z_to_bv 64 a) (Z_to_bv 64 on) dst (Z_to_bv 64 nd)
         /\ minv mo' /\ m_halted mo' = None
-        /\ ((dst = Z_to_bv 64 a /\ (nd < on \/ (on < nd /\ region_free (vm_reserved h ++ map_remove (vm_maps h) (Z_to_bv 64 a)) (Z_to_bv 64 a) (Z_to_bv 64 nd) = true))
+        /\ ((dst = Z_to_bv 64 a /\ (nd < on \/ (on < nd /\ region_free (vm_reserved h ++ maps_subtract (vm_maps h) a (a + on)) (Z_to_bv 64 a) (Z_to_bv 64 nd) = true))
              /\ rsp = mremap_inplace_effect (Z_to_bv 64 a) (Z_to_bv 64 on) (Z_to_bv 64 nd) on nd)
             \/ (dst <> Z_to_bv 64 a /\ on < nd /\ region_free (vm_reserved h ++ vm_maps h) dst (Z_to_bv 64 nd) = true
                 /\ rsp = mremap_move_effect (Z_to_bv 64 a) (Z_to_bv 64 on) dst on nd))).
 Proof.
   intros a on nd mo rsp mo' Ha Hon Aon Hnd And AC AA Hmi Hh Hce H h. unfold ceil_ok in Hce.
   pose proof (minv_preserved _ _ _ _ Hmi Hh H) as [Hh' Hmi'].
-  cbn -[mremap_model_next mremap_inplace_effect mremap_move_effect mremap_inplace_grow_b mremap_fresh_b w wlen rlen Z.eqb Z.ltb region_free map_remove alloc_ceiling alloc_top] in H.
+  cbn -[mremap_model_next mremap_inplace_effect mremap_move_effect mremap_inplace_grow_b mremap_inplace_room_b mremap_dst_ok mremap_fresh_b w wlen rlen Z.eqb Z.ltb region_free map_remove alloc_ceiling alloc_top] in H.
   assert (Ron : rlen on = on) by (rewrite rlen_eq by lia; apply mmap_len_of_aligned; lia).
   assert (Rnd : rlen nd = nd) by (rewrite rlen_eq by lia; apply mmap_len_of_aligned; lia).
   assert (Won : wlen on = Z_to_bv 64 on) by (unfold wlen; rewrite Ron; reflexivity).
@@ -101,13 +102,17 @@ Proof.
   rewrite !Ron, !Rnd, !Won, !Wnd in H. change (w a) with (Z_to_bv 64 a) in H.
   assert (Ua : bv_unsigned (Z_to_bv 64 a) = a) by (apply unsigned_lit; lia).
   destruct H as [(E & -> & ->)|(NE & H)]; [right; left; auto|].
-  destruct H as [(e & He & -> & ->)|[(LT & -> & ->)|[(LT & GB & -> & ->)|(LT & dst & FB & -> & ->)]]].
+  destruct H as [(e & He & -> & ->)|[(LT & -> & ->)|[(LT & GB & -> & ->)|(LT & RM & dst & [_ FB] & -> & ->)]]].
   - left. exists e. auto.
   - right; right. exists (Z_to_bv 64 a). cbn zeta. rewrite Ua, m_vmmaps_mremap_model_next, m_halted_mremap_model_next.
     splits; try lia; auto 10.
   - right; right. exists (Z_to_bv 64 a). cbn zeta. rewrite Ua, m_vmmaps_mremap_model_next, m_halted_mremap_model_next.
-    unfold mremap_inplace_grow_b in GB. apply andb_prop in GB as [GB _]. apply andb_prop in GB as [G1 G2]. apply Z.leb_le in G1. rewrite Ua in G1.
+    (* LPS 727298f3: the grow test is [mremap_inplace_room_b] (room, cut by [maps_subtract] over
+       the source range) and the budget *)
+    unfold mremap_inplace_grow_b, mremap_inplace_room_b in GB. cbv zeta in GB.
+    apply andb_prop in GB as [GB _]. apply andb_prop in GB as [G1 G2]. apply Z.leb_le in G1. rewrite Ua in G1.
     rewrite Hce in G1.
+    assert (Uon : bv_unsigned (Z_to_bv 64 on) = on) by (apply unsigned_lit; lia). rewrite ?Ua, ?Uon in G2.
     splits; try lia; auto 10.
   - right; right. exists dst. cbn zeta. rewrite m_vmmaps_mremap_model_next, m_halted_mremap_model_next.
     unfold mremap_fresh_b in FB. apply andb_prop in FB as [FB F5]. apply andb_prop in FB as [FB F4].   (* [comment removed for export] *)
@@ -137,14 +142,53 @@ Qed.
 
 Lemma went_wz b n : went b n = (wz b, wz n). Proof. reflexivity. Qed.
 
+(* LPS 727298f3: mremap's room test and its post-state cut the source RANGE out of [vm_maps]
+   ([maps_subtract], Mremap.v [mremap_inplace_room_b], [mremap_maps_next]) where the released
+   model removed the source ENTRY ([map_remove]).  On a well-formed (pairwise disjoint) ledger
+   holding the source as one entry the two agree.  Copied from simdjson/fuzz_atpointer's
+   proofs/lib/Spec/KStep.v [maps_subtract_exact_kl] (the same KLink family). *)
+Lemma maps_subtract_exact_kl : forall maps (aw nw : word), vmwf maps -> In (aw, nw) maps ->
+  maps_subtract maps (bv_unsigned aw) (bv_unsigned aw + bv_unsigned nw) = map_remove maps aw.
+Proof.
+  intros maps aw nw Hwf Hin.
+  pose proof (proj1 Hwf _ Hin) as Bn. unfold elo, ehi in Bn. cbn [fst snd] in Bn.
+  assert (Hu : forall b s, In (b, s) maps -> b = aw -> s = nw).
+  { intros b s H ->. destruct (pwdisj_In _ _ _ (proj2 Hwf) H Hin) as [E|D]; [congruence|].
+    pose proof (proj1 Hwf _ H) as Bs. unfold edisj, elo, ehi in D, Bs. cbn [fst snd] in D, Bs. lia. }
+  assert (Hd : forall b s, In (b, s) maps -> b <> aw ->
+            bv_unsigned b + bv_unsigned s <= bv_unsigned aw \/ bv_unsigned aw + bv_unsigned nw <= bv_unsigned b).
+  { intros b s H Hne. destruct (pwdisj_In _ _ _ (proj2 Hwf) H Hin) as [E|D]; [congruence|].
+    unfold edisj, elo, ehi in D. cbn [fst snd] in D. lia. }
+  assert (Hb : forall b s, In (b, s) maps -> bv_unsigned b < bv_unsigned b + bv_unsigned s <= 2^64).
+  { intros b s H. pose proof (proj1 Hwf _ H) as Bs. unfold elo, ehi in Bs. cbn [fst snd] in Bs. lia. }
+  clear Hwf Hin. revert Hu Hd Hb.
+  induction maps as [|[b s] r IH]; intros Hu Hd Hb; [reflexivity|].
+  assert (IHr : maps_subtract r (bv_unsigned aw) (bv_unsigned aw + bv_unsigned nw) = map_remove r aw).
+  { apply IH.
+    - intros b' s' H; apply (Hu b' s'); right; exact H.
+    - intros b' s' H; apply (Hd b' s'); right; exact H.
+    - intros b' s' H; apply (Hb b' s'); right; exact H. }
+  cbn [maps_subtract]. rewrite IHr.
+  unfold map_remove. cbn [List.filter fst]. fold (map_remove r aw).
+  destruct (bv_eqb b aw) eqn:E; cbn [negb].
+  - apply bv_eqb_eq in E. subst b. rewrite (Hu aw s (or_introl eq_refl) eq_refl).
+    unfold iv_subtract. cbv zeta.
+    rewrite (proj2 (Z.ltb_ge _ _) (Z.le_refl (bv_unsigned aw))).
+    rewrite (proj2 (Z.ltb_ge _ _) (Z.le_refl (bv_unsigned aw + bv_unsigned nw))).
+    reflexivity.
+  - assert (Hne : b <> aw) by (intros ->; rewrite bv_eqb_refl in E; discriminate).
+    rewrite (KLink.iv_subtract_disjoint b s); [reflexivity | exact (Hb b s (or_introl eq_refl)) | lia
+                                         | exact (Hd b s (or_introl eq_refl) Hne)].
+Qed.
+
 (* [comment removed for export] *)
 Lemma KL_mremap : forall L G0 pbrk mo mo' a l0 nd (dst : word),
   KL (set_groups ((a, l0) :: G0) L) pbrk mo -> brk_quiet L ->
   let on := mmap_len l0 in let h := m_vmmaps mo in let dZ := bv_unsigned dst in
   4096 <= nd < LEN_MAX -> nd mod 4096 = 0 ->
   0 < dZ -> dZ mod 4096 = 0 -> dZ + nd <= alloc_ceiling ->
-  m_vmmaps mo' = mremap_maps_next h (wz a) dst (wz nd) -> minv mo' -> m_halted mo' = None -> m_vm_materialized mo' = [] ->
-  ((dst = wz a /\ (nd < on \/ region_free (vm_reserved h ++ map_remove (vm_maps h) (wz a)) (wz a) (wz nd) = true))
+  m_vmmaps mo' = mremap_maps_next h (wz a) (wz on) dst (wz nd) -> minv mo' -> m_halted mo' = None -> m_vm_materialized mo' = [] ->
+  ((dst = wz a /\ (nd < on \/ region_free (vm_reserved h ++ maps_subtract (vm_maps h) a (a + on)) (wz a) (wz nd) = true))
    \/ (dst <> wz a /\ region_free (vm_reserved h ++ vm_maps h) dst (wz nd) = true)) ->
   KL (set_groups ((dZ, nd) :: G0) L) pbrk mo'
   /\ (forall b l, (In (b, l) G0 \/ exists k, In (b, l, k) (ld_metas L)) -> dZ + nd <= b \/ b + mmap_len l <= dZ)
@@ -160,6 +204,11 @@ Proof.
   assert (Ua : bv_unsigned (wz a) = a) by (apply unsigned_wz; lia).
   assert (Un : bv_unsigned (wz nd) = nd) by (apply unsigned_wz; unfold LEN_MAX in Hnd; lia).
   assert (Uon : bv_unsigned (wz on) = on) by (apply unsigned_wz; lia).
+  (* the source range cut is the source entry's removal (one entry of a well-formed ledger) *)
+  assert (EXK : maps_subtract (vm_maps h) a (a + on) = map_remove (vm_maps h) (wz a)).
+  { pose proof (maps_subtract_exact_kl (vm_maps h) (wz a) (wz on) (kl_wf _ _ _ HK) A5) as E.
+    rewrite Ua, Uon in E. exact E. }
+  rewrite EXK in CASE. unfold mremap_maps_next in Evm. rewrite Ua, Uon, EXK in Evm.
   assert (MMn : mmap_len nd = nd) by (apply mmap_len_of_aligned; lia).
   assert (Ewent : went dZ (mmap_len nd) = (dst, wz nd)) by (rewrite MMn, went_wz; unfold wz; subst dZ; rewrite Z_to_bv_bv_unsigned; reflexivity).
   pose proof (kl_distinct _ _ _ HK) as Kd. cbn [set_groups ld_groups ld_metas map fst app] in Kd.

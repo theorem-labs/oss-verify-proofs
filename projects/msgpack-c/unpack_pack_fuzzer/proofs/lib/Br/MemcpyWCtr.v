@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a0's kept value read across the library's copies of the register read by conversion instead of rewriting). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import PrimInt63 Uint63.
 From stdpp Require Import base decidable list gmap.
@@ -164,7 +165,7 @@ Proof.
 
   assert (HKR : forall x, x <> X0 -> clob_pos x = None -> PropExec.getr R' (reg_of_r5 x) = PropExec.getr (ms_regs ms) (reg_of_r5 x)).
   { intros x NX0 CPx. destruct (r5_eqb x X10) eqn:Q.
-    - apply r5_eqb_spec in Q. subst x. rewrite reg_of_X10, A0', A0. reflexivity.
+    - apply r5_eqb_spec in Q. subst x. rewrite reg_of_X10. etransitivity; [exact A0'|]. symmetry. exact A0.
     - apply KEPT. apply MemcpyCtr.kept_or_clobbered; [exact NX0| intros ->; rewrite r5_eqb_refl in Q; discriminate| exact CPx]. }
   pose proof POS as POSn. pose proof B62 as B62n. rewrite <- NXn in POSn, B62n.
   destruct (MemFX.ccall_frame_above rsegs OPS E stn ERRNO r st2 (ms_regs ms) R' (ms_fregs ms) (Z_to_bv 64 RMEMCPY_SYM) (ms_fcsr ms) M' (seg_rom rsegs) mo
@@ -340,7 +341,7 @@ Proof.
 
   assert (HKR : forall x, x <> X0 -> clob_pos x = None -> PropExec.getr R' (reg_of_r5 x) = PropExec.getr (ms_regs ms) (reg_of_r5 x)).
   { intros x NX0 CPx. destruct (r5_eqb x X10) eqn:Q.
-    - apply r5_eqb_spec in Q. subst x. rewrite reg_of_X10, A0', A0. reflexivity.
+    - apply r5_eqb_spec in Q. subst x. rewrite reg_of_X10. etransitivity; [exact A0'|]. symmetry. exact A0.
     - apply KEPT. apply MemcpyCtr.TwinB.kept_or_clobbered; [exact NX0| intros ->; rewrite r5_eqb_refl in Q; discriminate| exact CPx]. }
   pose proof POS as POSn. pose proof B62 as B62n. rewrite <- NXn in POSn, B62n.
   destruct (MemFX.ccall_frame_above rsegs OPS E stn ERRNO r st2 (ms_regs ms) R' (ms_fregs ms) (Z_to_bv 64 RMEMCPY_SYM) (ms_fcsr ms) M' (seg_rom rsegs) mo

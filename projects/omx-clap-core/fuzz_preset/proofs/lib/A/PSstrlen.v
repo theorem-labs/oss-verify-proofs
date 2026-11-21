@@ -1,32 +1,33 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-29 (PresetStrlenPort, c-libc-stdio lane): fuzz_preset.asan's strlen interceptor, called at
    its trampoline __wrap_strlen 0x42d18, in the contract of the second allocator instance:
    `ps_strlen_realizes_cf : forall B, TfibSyms B -> PsRealStrlen B -> astrlen_realizes_cf tfibsegs B 0x42d18`
-   (lib/Reusable/YGcfStr.v, the text of commit 3e37c5476fe), and its CLOSED form `ps_strlen_realizes_cf_closed : forall
+   (lib/Reusable/YGcfStr.v, the text), and its CLOSED form `ps_strlen_realizes_cf_closed : forall
    B, TfibSyms B -> astrlen_realizes_cf tfibsegs B 0x42d18` (PsRealStrlen discharged by tfibsyms_real_strlen from the
    generated AF0m.v, 2026-10-29). Image A (fuzz_preset.asan) only.
    2026-10-29 (pstr102, #102 pin A' asan 1be0f53d, twin bff8519b): RelocA's relocation (blob d6ecdc9b0867) plus
-   presetstr-ro 45e489ec67c7's memnorm twin `ps_strlen_realizes_cfm` / `ps_strlen_realizes_cfm_closed`
+   presetstr-ro's memnorm twin `ps_strlen_realizes_cfm` / `ps_strlen_realizes_cfm_closed`
    (astrlen_realizes_cfm, YGcfStr.v), its A' numerals by symbol + offset (only the entry 0x42c84 -> 0x42d18 occurs
    in the added text); pc_strlen_A cites CfImgA's cf_pc_strlen by field name, as YGcfStr.v holds no pc any more.
    rule 24: no function proved. This file is a PORT of an existing composition; it composes:
 
    DONORS
-   - the composition: origin/cold/port-state-rt-str 17818dd9abc, proofs/omx-clap-core/fuzz_state/lib/A/FSstrlen.v
+   - the composition: proofs/omx-clap-core/fuzz_state/lib/A/FSstrlen.v
      (fuzz_state's strlen at its interceptor, astrlen_realizesU over cgif's AR). Every lemma below names its donor
      lines FSstrlen.v:N-M;
    - FSsl.v (same ref): msteps_to_bz (:40-45) and evt_to_bz (:47-50), the lib/Lib -> kit run conversion, here
      between preset's lib/Lib and lib/K;
    - FSupoison.v (same ref): aview_at (:69-70);
    - the shadow bridge: A/PSbz_str.v, a port of fuzz_state's FSbz_str.v (same ref), itself a port of port-fm's
-     origin/cold/port-fm-rtscan cedf3d02589 proofs/omx-clap-core/fuzz_manifest/lib/A/FMbz_str.v;
-   - the walk: this tree's lib/K, bzip2's kit (proofs/bzip2/bzip2_compress_target/lib/K at origin/ossv/recipes
-     c8557374ad2e) relocated to preset: K/A/I_strlen_entry.v `istrlen_wrap_closed` (= istrlen_wrap_spec rip_proof:
+     proofs/omx-clap-core/fuzz_manifest/lib/A/FMbz_str.v;
+   - the walk: this tree's lib/K, bzip2's kit (proofs/bzip2/bzip2_compress_target/lib/K)
+     relocated to preset: K/A/I_strlen_entry.v `istrlen_wrap_closed` (= istrlen_wrap_spec rip_proof:
      the trampoline step, then I_strlen.v istrlen_spec with K/A/R_isPoisoned.v rip_proof; musl's strlen 0x9b904 is
      walked inside, K/A/F_strlen.v, so the donor's SL hypothesis / FSsl.sl_proof has no counterpart here);
    - the evt -> SRr bridge: lib/Reusable/YEvtSRr.v (srr_of_evt, stk_of_apresent), a port of port-fm's
-     origin/cold/port-fm-rtscan 10d0c5cd0be FMbz_bridge.v, in place of the donor's FSbz_bridge.v;
+     FMbz_bridge.v, in place of the donor's FSbz_bridge.v;
    - the transports: c-asan-rt's lib/MemNorm.v (normalize_cj, evt_normalize_cj, ...) and lib/Lib/RegisterBridge.v
      (evt_register_transport) with lib/Lib/Regs6ss.v, already in this tree (byte-identical to the donor's copies
      after the module path fuzz_state -> fuzz_preset; measured with diff).
@@ -86,13 +87,13 @@
    cell, the only premise the donor did not have in this form: __interception::real_strlen at 0xa3d28 holds 0x9b904
    (musl strlen). Measured on the unstripped twin (sha256 bff8519bbe3e): its .symtab has _ZN14__interception11real_strlenE
    at 0xa3d28 (8 bytes, local, .data) and strlen at 0x9b904 (weak); the 8 bytes at 0xa3d28 (file offset 0x90d28) are 0x9b904, the
-   same in the pin 1be0f53d96cb; the kit's icells_sl (K/A/I_strlen.v:237) reads the same cell. At the port, lib/A/AF0m.v's
+   same in the pin 1be0f53d96cb; the kit's icells_sl (K/A/I_strlen.v:238) reads the same cell. At the port, lib/A/AF0m.v's
    Tfib_const_abs held real_memchr (0xa3d50) and real_strnlen (0xa3e38) from the same image bytes but omitted
-   real_strlen, which is why ARcf did not give it; h-hpreset-7's 977bd48ee806 (AF0m.v blob d14761416c8c) adds it, and
+   real_strlen, which is why ARcf did not give it; h-hpreset-7's (AF0m.v blob d14761416c8c) adds it, and
    tfibsyms_real_strlen discharges PsRealStrlen from it, so ps_strlen_realizes_cf_closed takes TfibSyms B alone.
    Every AF0m.v cell is found BY VALUE (cell_in: a vm_compute-decided search for the cell's exact address, width and
    value; 2026-10-29), never by a row index, so a regenerated table that adds, removes or reorders rows breaks nothing
-   here while each cell is still in it. The contract text (YGcfStr.v 3e37c5476fe) itself adds, against
+   here while each cell is still in it. The contract text (YGcfStr.v) itself adds, against
    cgif's astrnlen_realizes form, amem_range8 (the kit's region_in_mem) and the 2 * ESTACK window; those are the
    target's, not premises of this file. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
@@ -712,12 +713,12 @@ Section core. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp :
 (* NAMED PREMISE, the one the donor did not have in this form (its FsRtCells B, FSstrlen.v:580-581, cut to the one
    cell ARcf's const cells do not give): at every ARcf state, __interception::real_strlen (0xa3d28, .data) holds musl's
    strlen 0x9b904, the REAL(strlen) the interceptor jumps through (K/A/I_strlen.v icells_sl). The ELF's own .data bytes
-   there are 0x9b904. AF0m.v's Tfib_const_abs carries this slot since 977bd48ee806 (tfibsyms_real_strlen, below). *)
+   there are 0x9b904. AF0m.v's Tfib_const_abs carries this slot (tfibsyms_real_strlen, below). *)
 Definition PsRealStrlen (B : asyms) : Prop :=
   forall ly S Hp (W : world tfibsegs) mem md, ARcf tfibsegs B ly S Hp W mem md ->
   cell_holds B ly (aview tfibsegs (w_H W) mem) (z8 (ANum 0xa3d28) 0x9b904).
 
-(* image A's generated record gives it (Theorem Labs, 2026-10-29, PresetStrlenB): h-hpreset-7's 977bd48ee806 adds
+(* image A's generated record gives it (Theorem Labs, 2026-10-29, PresetStrlenB): h-hpreset-7's adds
    `z8 (ANum 0xa3d28) 0x9b904` to lib/A/AF0m.v Tfib_const_abs; found BY VALUE (cell_in), so amc_const under ts_const
    reads it. The image-B twin is lib/AU/PSstrlen.v tfibsyms_real_strlen_B. *)
 Lemma tfibsyms_real_strlen : forall B, TfibSyms B -> PsRealStrlen B.

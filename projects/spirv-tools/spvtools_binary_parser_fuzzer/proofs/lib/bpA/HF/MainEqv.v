@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the robustness of each node's system call over a larger read-only backing (RomBase.sys_rob), which the walk's nodes now ask, proved at each node). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -11,6 +12,7 @@ From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Import Scfg HPropExec HShapeAlg SReach RegsEquivM.
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Import HMState HLFrame.
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require KReplay.
+From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib.Common.Cfg Require RomBase.
 Ltac2 kr_t_MainEqv () := "C4ELinuxProcessSemantics?LinuxProcessSem2Fs4pathC47Corelib4Init5Logic6eq_indC47Corelib4Init6Specif9proj1_sigC47Corelib4Init5Logic8eq_ind_rC47Corelib4Init9Datatypes3fstC4ELinuxProcessSemantics?LinuxProcessSem2Fs2FsC4ELinuxProcessSemantics5Riscv7Prelude5bvmapC4ELinuxProcessSemantics?LinuxProcessSem5State7PipeBufK47Corelib7Numbers7BinNums8positive02K47Corelib7Numbers7BinNums8positive01K47Corelib7Numbers7BinNums1N02I45stdpp9bitvector;definitions2bv00C79OSSVerify5KrLib3bpA2HF3Lib7HLFrame3mkRC1?~~~~~~~~~~~~~~~K47Corelib4Init5Logic2eq01K47Corelib7Numbers7BinNums1Z02K45stdpp9bitvector;definitions2bv01C69OSSVerify5KrLib3bpA2HF9HPropExec4getrC1?~~~~~~~~~~~~~~~K47Corelib4Init5Logic4True01K47Corelib7Numbers7BinNums8positive03C69OSSVerify5KrLib3bpA2HF:RegsEquivM:reg_of_natC1?~~~~~~~~~~~~~~~I47Corelib4Init5Logic2eq00K47Corelib4Init9Datatypes3nat02C47Corelib4Init5Peano2ltI47Corelib4Init5Logic3and00I47Corelib4Init5Logic2ex00C45stdpp9bitvector;definitions7Z_to_bvK47Corelib4Init9Datatypes4list01C56Stdlib6ZArith6BinInt1Z6of_natC45stdpp9bitvector;definitionsDZ_to_bv_obligation_1C56Stdlib6ZArith6BinInt1Z2ltC56Stdlib6ZArith6BinInt1Z3addC46Stdlib9micromega;ZifyClasses7rew_iffC56Stdlib6ZArith4Znat5Nat2Z9is_nonnegC56Stdlib6ZArith6BinInt1Z2leI47Corelib4Init9Datatypes4list00K46Stdlib9micromega6VarMap1t02I46Stdlib9micromega6VarMap1t00I46Stdlib9micromega=RingMicromega7Formula00K46Stdlib9micromega7EnvRing5PExpr01K46Stdlib9micromega7EnvRing5PExpr02K46Stdlib9micromega=RingMicromega7Formula01K47Corelib4Init9Datatypes6option02K46Stdlib9micromega5Tauto8GFormula03C46Stdlib9micromega5Tauto8BFormulaC46Stdlib9micromega:ZMicromega=ZTautoCheckerC46Stdlib9micromega6VarMap4findC46Stdlib9micromega:ZMicromegaCZTautoChecker_soundK47Corelib4Init9Datatypes4list02C45stdpp9bitvector;definitions;bv_unsignedC56Stdlib6ZArith6BinInt1Z6to_natC47Corelib5Lists7ListDef3nthC46Stdlib9micromega;ZifyClasses5mkappC46Stdlib9micromega;ZifyClasses5mkrelK46Stdlib9micromega5Tauto8GFormula04K46Stdlib9micromega7EnvRing5PExpr03K46Stdlib9micromega5Tauto8GFormula08I47Corelib4Init9Datatypes3nat00I47Corelib7Numbers7BinNums1Z00C56Stdlib6ZArith4Znat5Nat2Z8inj_succC56Stdlib6ZArith4Znat5Nat2Z6inj_ltC46Stdlib9micromega5Tauto5eKindI47Corelib4Init9Datatypes4unit00K46Stdlib9micromega5Tauto4kind01K47Corelib4Init9Datatypes4unit01K47Corelib4Init9Datatypes3nat01K47Corelib7Numbers7BinNums1Z01I46Stdlib9micromega:ZMicromega;ZArithProof00K46Stdlib9micromega=RingMicromega3Op203K46Stdlib9micromega=RingMicromega3Op205I47Corelib4Init9Datatypes4bool00K47Corelib4Init9Datatypes4bool01".
 
 Import HPropExec.
@@ -22,9 +24,24 @@ Section Eqv.
   Variable segs : list Segment.
   Context {SC : StepCfg}.
 
+  (* LPS 08b1429: an equivalent configuration has the same system-call input over every backing
+     ([sys_input_eqv]), so robustness ([RomBase.sys_rob], asked by [rz_node]) carries over. *)
+  Lemma sys_rob_cfg_eqv : forall c c', cfg_eqv c c' -> RomBase.sys_rob segs c -> RomBase.sys_rob segs c'.
+  Proof.
+    intros [ms mo] [ms' mo'] [Hms Hmo] Hrob r x8 Hr Hs o. cbn [cfg_ms cfg_model] in *. subst mo'.
+    assert (Hw : ms_eqv (RomBase.wrom ms r) (RomBase.wrom ms' r)).
+    { destruct Hms as (H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8).
+      unfold ms_eqv, RomBase.wrom. cbn [ms_regs ms_fregs ms_pc_val ms_svc_pending ms_resv ms_fcsr ms_mem ms_rom].
+      repeat split; first [assumption | reflexivity]. }
+    rewrite <- (sys_input_eqv segs (RomBase.wrom ms r) (RomBase.wrom ms' r) x8 Hw).
+    rewrite <- (sys_input_eqv segs ms ms' x8 Hms).
+    destruct Hms as (_ & _ & _ & H4 & _ & _ & _ & H8).
+    apply (Hrob r x8); cbn [cfg_ms]; [rewrite H8; exact Hr | rewrite H4; exact Hs].
+  Qed.
+
   Theorem realizes_eqv : forall c T, realizes segs c T -> forall c', cfg_eqv c c' -> realizes segs c' T.
   Proof.
-    intros c T H. induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq]; intros c' Heqv.
+    intros c T H. induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq]; intros c' Heqv.
     -
       destruct Hnode as [N1 N2].
       set (I' := { p : I * config | sstep_cfg segs the_scfg c' (evs (fst p)) (SNext (snd p)) /\ cfg_eqv (nx (fst p)) (snd p) }).
@@ -42,6 +59,7 @@ Section Eqv.
              destruct (N2 e X' Hs) as (i & -> & ->).
              destruct st as [c2|]; cbn in HX; [|contradiction].
              exists (exist _ (i, c2) (conj Hst (cfg_eqv_sym _ _ HX))). cbn. auto.
+        * exact (sys_rob_cfg_eqv c c' Heqv Hrob).
         * intros [[i c2] [Hs He]]. cbn. apply (IH i). exact He.
       +
         intros tr. split.

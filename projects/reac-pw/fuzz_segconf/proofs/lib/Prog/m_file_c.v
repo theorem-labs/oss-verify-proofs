@@ -70,8 +70,8 @@ Open Scope Z_scope.
     0x1e430); bcmp_contract (Prog/bcmp_c.v, BCMP = 0x1e42c); memcpy_contract (Prog/memcpy_c.v, 0x1e52c);
     memset_contract (Prog/memset_c.v, 0x1e930); fuzz_catalogue_row_contract (Prog/fuzz_catalogue_row_c.v, 0x15d64,
     FCR_STACK 48: cat_img); ieq_contract (IEQ = 0x14c2c, IEQ_STACK 32), m_find_contract (M_FIND = 0x149dc,
-    M_FIND_STACK 48) and m_refuse_contract (M_REFUSE = 0x14b8c, M_REFUSE_STACK = 16 + PRINTF_K) of
-    commit 66de2e2eba42 (Prog/ieq_c.v, m_find_c.v, m_refuse_c.v). Why each holds at its site:
+    M_FIND_STACK 48) and m_refuse_contract (M_REFUSE = 0x14b8c, M_REFUSE_STACK = 16 + PRINTF_K)
+     (Prog/ieq_c.v, m_find_c.v, m_refuse_c.v). Why each holds at its site:
     the text pointers lie in [p, the text's NUL] of the text block (cstr_at, apart from the stack and from c), the
     stack is the region [lo, sp) with M_FILE_STACK - M_FILE_FRAME = M_REFUSE_STACK bytes below the frame, c is the
     16-aligned writable block above the image (mconf_at, wr_at, blk_slack: c->reading, printf's %s, ends at the

@@ -5,17 +5,18 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module names and numbers changed; 1592 of its 1709 lines of code are new or changed and 894 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F12.v, with its module paths, module names and addresses changed; 1175 of its 1288 lines of code are new or changed and 1596 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F17b.v, with its module paths, module names and numbers changed; 387 of its 471 lines of code are new or changed and 1204 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Provenance (route (a) bridge input, lead 22:18Z; auditor a Theorem Labs lane):
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
    source runs: lib/B/Prog/Seg/F17b.v f17_lu_evt (:76) and the inline stretch of seg_F17b (:706, stepped at
-     :760-1049 and exited at :1204 / :1210) at a working branch 3803efccea0
+     :760-1049 and exited at :1204 / :1210) at a working branch
      (blob dc9ae8087a72de90382bb6524f59281543b429f5);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
-   compare: seg_F17b_pre_F re-runs F17b.v lines 782-1049 (the body from 0x82468 up to the `jal __asan_memcpy`
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
+   compare: seg_F17b_pre_F re-runs F17b.v lines 783-1050 (the body from 0x82468 up to the `jal __asan_memcpy`
      at 0x82630) and lines 1195-1210 (the two guard exits), with the segment's own cut facts restated as
-     premises over regs / mem / Z; f17_lu_evt_F re-derives F17b.v:76 from an evtF. *)
+     premises over regs / mem / Z; f17_lu_evt_F re-derives F17b.v:77 from an evtF. *)
 (* rule 24: no function proved. *)
 (* Footprint twin of segment S_F17b's machine stretch 0x82468 -> {0x82634, __asan_memcpy}. It is the PRE-CALL
    stretch: it stops AT the callee entry (pc = ASAN_MEMCPY, ra = 0x82634, a0 = fr + 2885, a1 = Phi + 27,
@@ -589,7 +590,7 @@ Proof.
     f17_exitF.
 Qed.
 
-(* The footprint twin of F17b.v:76 (f17_lu_evt): the bridge takes a footprint run of the lib.Lib engine, through
+(* The footprint twin of F17b.v:77 (f17_lu_evt): the bridge takes a footprint run of the lib.Lib engine, through
    lib.Lib's Exec.evt. No _F ever steps through a callee, and this one steps nothing at all. *)
 Lemma f17_lu_evt_F : forall RNG Q ms, evtF rsegs RNG Q ms -> UEx.evt rsegs Q ms.
 Proof. intros RNG Q ms H. exact (F17b.f17_lu_evt Q ms (evtF_evt rsegs RNG Q ms H)). Qed.

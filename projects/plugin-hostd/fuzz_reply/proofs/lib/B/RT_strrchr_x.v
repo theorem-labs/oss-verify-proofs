@@ -6,12 +6,12 @@
    RT_strrchr.v is not edited; its helper lemmas are used by Import. The statement is W_sites_x.v's
    astrrchr_realizes_x; the proof of rt_strrchr_x is RT_strrchr.v's with AR -> ARx (am_layout of proj1 HAR ->
    rtl_layout, al_frame / al_stack -> rtl_frame / rtl_stack, RT_kit / RT_post's AR lemmas -> their _x forms there).
-   Measured (lines at a working branch 9b1367c7fe1): the original reads AR through
+   Measured (lines at a working branch): the original reads AR through
    al_const (through RT_kit.walk_cells, :204; RT_kit.walk_rest :206 uses FrRtCells only), al_frame / al_stack
-   (through RT_post.aentry_post_of_walk, :272) and the ARm field am_layout (:199 and RT_post.v:249), the layout law
+   (through RT_post.aentry_post_of_walk, :272) and the ARm field am_layout (:199 and RT_post.v:250), the layout law
    here; the three-law note (RESUME.md:116-122 sha256 704eb9d3afa6; internal record) did not count the ARm fields, hence the record's rtl_layout
    and rtl_const_cells.
-   The original's named premise FrRtCells (RT_kit.v:226) becomes RT_kit.FrRtCells_x over ARx in rt_strrchr_x_cells
+   The original's named premise FrRtCells (RT_kit.v:227) becomes RT_kit.FrRtCells_x over ARx in rt_strrchr_x_cells
    (the walk reads conjuncts 1-10 through RT_kit.walk_cells_x and 13-14 through RT_kit.walk_rest_x). The twin
    rt_strrchr_x has no cell premise: all 14 conjuncts come from rt_laws + TfibSyms (the const-cells law,
    RT_kit_cells_x.FrRtCells_x_of_syms), the cell 0x9fc90 (REAL(strrchr) = 0x9740c; the walk loads it and jumps to
@@ -21,7 +21,8 @@
    laws from AR_laws_cf (RTx.rt_laws_cf). rt_strrchr_cf's premises are AR_laws_cf frsegs B, FrShadowSyms B and
    TfibSyms B; at the cf top (B := TfibB) each is a closed theorem: AR_laws_ok_cf (Reusable/YG0lawscf.v),
    RT_kit.fr_shadow_of_palib of W_palib_fr.palib_tfib TfibB TfibB_syms, and AD2l.TfibB_syms. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/RT_strrchr_x.v at commit 6b4f6082575, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (5 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/RT_strrchr_x.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (5 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

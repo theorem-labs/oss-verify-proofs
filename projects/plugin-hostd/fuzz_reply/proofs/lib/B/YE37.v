@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YE37.v, with its module paths changed, and its fuzz_reply.asan-ubsan addresses relocated from cgif_file_fuzzer.asan-ubsan; asan.module_dtor's descriptor data made in the same way as lib/A/AE37.v (RelocA b94f5800280). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YE37.v, with its module paths changed, and its fuzz_reply.asan-ubsan addresses relocated from cgif_file_fuzzer.asan-ubsan; asan.module_dtor's descriptor data made in the same way as lib/A/AE37.v (RelocA). *)
 (* Modified by Theorem Labs, 2026-10: asan.module_dtor's data are fuzz_reply.asan-ubsan's: x2_rodata's descriptor row is the image's 27 asan_globals descriptors (0xa28a0..0xa2f60, the words the walk reads), x2_shw the four shadow runs __asan_unregister_globals clears (the 27 globals' size_with_redzone / 8 and the descriptor array's 1728 / 8), and each shadow byte is present either as a start-up const cell (Tfib_const_shadow) or inside a Tfib_zero_shadow range (zs_present), replacing cgif's per-byte list and its single zero byte. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Provenance of those data (HAND-WRITTEN, not generated): the 27 x 64-byte descriptor words were read from the image file
    fuzz_reply.asan-ubsan (sha256 10ffb5f9202ae2bd...cf2c) at 0xa28a0..0xa2f60 by an ad-hoc ELF reader (PT_LOAD mapping,
    little-endian 8-byte words); x2_shw is 0x7fff8000 + addr / 8 over each global's [beg, beg + size_with_redzone) and over

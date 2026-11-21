@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a load the overlay cannot read also tests range_meets_vvar, the model's new vvar check on loads). *)
 From Stdlib Require Import ZArith Bool List Lia.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType RiscvSemantics State Run.
@@ -44,7 +45,8 @@ Proof.
     try discriminate.
   - injection H as <-. constructor.
   - destruct HP as [Pa Pk].
-    destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|discriminate].
+    destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|];
+      [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) m) as [r| |] eqn:Hr; try discriminate.
     injection H as <-. cbn. constructor; [exact Pa|]. exact (IH _ m r (Pk _) Hr).
   - destruct HP as [Pa Pk].

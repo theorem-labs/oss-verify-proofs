@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths and module names changed; 506 of its 557 lines of code are new or changed and 463 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, walk of check_round_trip on the #102 pins, IMAGE B' (asan-ubsan d663f82d7f488d30),
    FREE-PIECES-102 Part 7a row T3 (CRT-B-UGKO1), STAGE O1: from the cut O1 (B' entry + 0x288, crt_at_O1_3 of
    Crt102B_T3Base.v) to W (+0x2a4, the glue's crt_at_W_B); O1 is the granted state only, so X is not reached.
@@ -87,7 +88,7 @@ Context {RL : PrhRoomLive} {SK : YI16.sink_head} {PA : PAImg B_prog_listing}.
 #[local] Notation PST := (@prh_pst prh_img_B).
 #[local] Notation STKC := (@STK_check_round_trip prh_img_B).
 #[local] Notation PL := PL_B102.
-(* THE IMAGE: Crt102Img.v's Section b hypotheses, verbatim (B' values in Crt102Img.v:1002-1013). Owner: the image-B
+(* THE IMAGE: Crt102Img.v's Section b hypotheses, verbatim (B' values in Crt102Img.v:1003-1014). Owner: the image-B
    instance; each is a vm_compute at PI_prog_B once lib/B/PAImg_prog.v builds (its :160 waits for the instance
    owner's IMG_TOP_B = 0x601000). *)
 Hypothesis HB_base : BASE = B_prog_base.
@@ -104,9 +105,9 @@ Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte
 #[local] Notation AJW := (ajournal_xwR (SK := SK) SEGS B PST ARx (YA0nH.wle' SEGS YGcfRehidePost.RZ_cf)).
 (* the allocator's engine laws at hl = cf_head (at the instance: AR_laws_x_cf of the instance owner's ARcf) *)
 Hypothesis LAWS : AR_laws_x SEGS B ARx cf_head.
-(* the two image facts walk S4's lanes carry (S4_PsSrc.v:116-119): the image's zero-shadow ranges are granule-aligned
+(* the two image facts walk S4's lanes carry (S4_PsSrc.v:117-120): the image's zero-shadow ranges are granule-aligned
    (asyms_ok's aso_zshadow, YG0f.v:191), and IMAGE B's shadow bytes are present: Crt102B_T3Base.crt3_img_shadow_vis_B,
-   the instance owner's YGcfAmx2.img_shadow_vis_cf (YGcfAmx2.v:47-49) at image B's CfImgB.CfImg_B, over
+   the instance owner's YGcfAmx2.img_shadow_vis_cf (YGcfAmx2.v:48-50) at image B's CfImgB.CfImg_B, over
    [IMG_LO_B, IMG_TOP_B), with ARcf -> ARx (crt3_img_shadow_vis_B_a8: at ARx := ARcf (ci := CfImg_B) it is the
    instance owner's definition). Never image A's IMG_LO / IMG_TOP. Owner: the instance owner (the instance's
    supply of img_shadow_vis_cf at CfImg_B). *)
@@ -144,7 +145,7 @@ Variables (ly : alayout) (S : astate) (Hp : list Z) (W : world SEGS) (regs : bvm
   (Lam : list (Z * Z)) (peak cnt ran most : Z).
 #[local] Notation sp0 := (spZ regs).
 #[local] Notation sp1 := (CRT_sp1 (regs := regs)).
-(* crt_side / crt_live take no rp_* since 11c39f7e88b7 (the position is crt_pos, on the r = 0 path only) *)
+(* crt_side / crt_live take no rp_* (the position is crt_pos, on the r = 0 path only) *)
 #[local] Notation liveB := (crt_live (rc := rc) (PI := prh_img_B) (RL := RL) (SK := SK) (L := B_prog_listing)
   (PA := PA) (B := B) (ARx := ARx)
   (ly := ly) (S := S) (Hp := Hp) (W := W) (regs := regs) (mem := mem) (md := md) (doc := doc) (t := t) (D := D)
@@ -449,7 +450,7 @@ exact (PRH_PjOrder.pj_foR_frame SEGS DOC_D _ _ (prh_lin Lamc) (prh_lin Lamc) _ D
   (fun a k Hin => HDc (a, k) Hin) AGc).
 Qed.
 
-(* ---- CLOSED (the former WAITS block, 2026-10-30, crt head 71a8716672850d3): the kit's DEAD-PJSTRING / -PJSET
+(* ---- CLOSED (the former WAITS block, 2026-10-30, crt head): the kit's DEAD-PJSTRING / -PJSET
    make O1 the granted state only (Base: sbit = 1, ranc = 0), so the C4a exit to X (r = 1) is unreachable and
    crt3o_toX is deleted; the kit's FREEORD-COPY gives S copy's ordered free list, which O1 carries as
    crt3_copy_fo and crt3o_after carries across fuzz_alloc_ran_out by pj_foR_frame: crt_at_W_B_copy_fo below. ---- *)

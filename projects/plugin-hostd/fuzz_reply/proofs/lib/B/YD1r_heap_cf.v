@@ -1,11 +1,11 @@
-(* Modified by Theorem Labs, 2026-10: the image-B (fuzz_reply.asan-ubsan) twin of lib/A/AD1r_heap_cf.v
-   (commit 46f1762ad5a), by a Theorem Labs lane for a Theorem Labs lane's DRIVER_CF_B: the same text over lib/B's
+(* Modified by Theorem Labs, 2026-10: the image-B (fuzz_reply.asan-ubsan) twin of lib/A/AD1r_heap_cf.v,
+   by a Theorem Labs lane for a Theorem Labs lane's DRIVER_CF_B: the same text over lib/B's
    YCfn_cf.v names (fr_hblks_b, fr_surv_b, fr_live_pre_b, fr_live_post_b over W_rep.v's fr_globals_b), which have the
    same shape as A's; module paths changed. No image numeral: the file reasons over ablocks and blocks_bytes only. *)
 (* The heap half of the cf driver loop (calls_loop, donor A/AD1r.v:570; B: YD1r.v): what replaces the donor's
    `Permutation (ablocks B ly S) [(buf, cap)]` / `[(buf, cap); (q, len)]` (AD1r.v:578-579), which is FALSE for
    fuzz_reply after its first call, since the entry keeps g_src's table and g_out's buffer alive across calls and may
-   move g_out's buffer.  The split with the cf driver lane (CfDriver, commit 46f1762ad5a, agreed 2026-10-29):
+   move g_out's buffer.  The split with the cf driver lane (CfDriver, agreed 2026-10-29):
    this file defines fr_heap and proves H_init / H_in / H_live / H_step over ablocks and blocks_bytes only (no AR,
    no ARcf, no events); CfDriver's calls_loop_cf uses them where the donor has the Permutation.
    fr_heap j: after j calls, the driver's input buffer (buf, cap) and payload copy (q, len, when len > 0) are alive
@@ -43,7 +43,7 @@ Definition fr_heap (j : nat) (buf cap q len : Z) (ly : alayout) (S : astate) (W 
   (0 < len -> In (q, len) (ablocks B ly S) /\ ~ In (q, len) (fr_hblks_b W mem)) /\
   blocks_bytes S <= cap + len + Z.of_nat j * (ATABLE + OUT_MAX) /\
   (* the harness blocks are distinct and alive: W8Entry-2's HB clause as LANDED on the B cut
-     (commit e879350a388, lib/B/W_LLVMFuzzerTestOneInput_cut.v): the pre ends with
+     (lib/B/W_LLVMFuzzerTestOneInput_cut.v): the pre ends with
      `List.NoDup ((if n =? 0 then [] else [(p, n)]) ++ fr_hblks W mem) /\ incl (fr_hblks W mem) (ablocks B ly S)`
      (:282) and the post with the harness-only `List.NoDup (fr_hblks W' mem') /\ incl (fr_hblks W' mem') (ablocks ..)`
      (:296); fr_hblks (:251) is fr_hblks_b's text. Stdlib's List.NoDup (bare NoDup is stdpp's here). With the payload

@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/AFib.v, with its module paths and module names changed; 66 of its 84 lines of code are new or changed and 251 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/ImgBaseAGS.v (commit 30a1993588f, c5 + memnorm; file sha256 477c5dbd27dc) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/ImgBaseAGS.v at commit 789778cb16f, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/ImgBaseAGS.v (c5 + memnorm; file sha256 477c5dbd27dc) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/ImgBaseAGS.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The image-free part of the secondary interface AGif4.AIfaceS (n >= 64513, the LargeMmapAllocator path).
 
    - [AImgS]: the class of the image facts AIfaceS names beyond ImgBase.AImg: the shadow offset, the image addresses
@@ -55,7 +56,7 @@ Context {IMS : AImgS}.
 (* ---------------------------------------------------------------------------------------------------------------- *)
 (* Stack sizes and the kernel's grant bound.                                                                        *)
 
-(* copy of AGhy.v:38, remove when AGhy.v is ported *)
+(* copy of AGhy.v:39, remove when AGhy.v is ported *)
 Definition AFSTACK : Z := 4096.
 (* copy of YFl0.v:58, remove when YFl0.v is ported *)
 Definition DEP_STK : Z := 512.
@@ -68,50 +69,50 @@ Definition NOB : Z := 536870912.
 Definition SHBv : Z := ims_shb.
 Section g.
 Variables (ly : alayout) (regs0 : bvmap 5 word) (n : Z) (idx : Z) (mb : Z).
-(* copy of AGjm.v:151, remove when AGjm.v is ported *)
+(* copy of AGjm.v:152, remove when AGjm.v is ported *)
 Let sp0 : Z := bv_unsigned (getr regs0 2).
-(* copy of AGjm.v:155, remove when AGjm.v is ported *)
-Let INSTv : Z := bv_unsigned (getr regs0 11).
 (* copy of AGjm.v:156, remove when AGjm.v is ported *)
+Let INSTv : Z := bv_unsigned (getr regs0 11).
+(* copy of AGjm.v:157, remove when AGjm.v is ported *)
 Let T : Z := ly_T ly.
-(* copy of AGjm.v:158, remove when AGjm.v is ported *)
-Let Qb : Z := ly_Q ly.
 (* copy of AGjm.v:159, remove when AGjm.v is ported *)
-Definition R8v : Z := (n + 7) / 8 * 8.
+Let Qb : Z := ly_Q ly.
 (* copy of AGjm.v:160, remove when AGjm.v is ported *)
-Definition N8D : Z := n / 8 * 8.
+Definition R8v : Z := (n + 7) / 8 * 8.
 (* copy of AGjm.v:161, remove when AGjm.v is ported *)
-Definition NDv : Z := R8v + 4096.
+Definition N8D : Z := n / 8 * 8.
 (* copy of AGjm.v:162, remove when AGjm.v is ported *)
+Definition NDv : Z := R8v + 4096.
+(* copy of AGjm.v:163, remove when AGjm.v is ported *)
 Definition MSv : Z := (NDv + 4095) / 4096 * 4096 + 4096.
-(* copy of AGjm.v:164, remove when AGjm.v is ported *)
-Definition QSv : Z := Qb + 8 * idx.
 (* copy of AGjm.v:165, remove when AGjm.v is ported *)
-Definition Kv : Z := mb + 4096.
+Definition QSv : Z := Qb + 8 * idx.
 (* copy of AGjm.v:166, remove when AGjm.v is ported *)
+Definition Kv : Z := mb + 4096.
+(* copy of AGjm.v:167, remove when AGjm.v is ported *)
 Definition Uv : Z := mb + 6144.
-(* copy of AGjm.v:169, remove when AGjm.v is ported *)
+(* copy of AGjm.v:170, remove when AGjm.v is ported *)
 Definition UEv : Z := mb + 6144 + R8v.
-(* copy of AGjm.v:171, remove when AGjm.v is ported *)
-Definition SMv : Z := SHBv + mb / 8.
 (* copy of AGjm.v:172, remove when AGjm.v is ported *)
-Definition PBv : Z := SHBv + (mb + 6144 + N8D) / 8.
+Definition SMv : Z := SHBv + mb / 8.
 (* copy of AGjm.v:173, remove when AGjm.v is ported *)
+Definition PBv : Z := SHBv + (mb + 6144 + N8D) / 8.
+(* copy of AGjm.v:174, remove when AGjm.v is ported *)
 Definition LGv : Z := Z.log2 (MSv / 4096) + 12.
-(* copy of AGjm.v:175, remove when AGjm.v is ported *)
+(* copy of AGjm.v:176, remove when AGjm.v is ported *)
 Definition BSLv : Z := INSTv + 168 + 8 * LGv.
-(* copy of AGjm.v:343, remove when AGjm.v is ported *)
+(* copy of AGjm.v:344, remove when AGjm.v is ported *)
 Definition WINT (a : Z) : Prop :=
 (T + 2768 <= a < T + 2824) \/ (T + 2872 <= a < T + 2888) \/ (T + 2904 <= a < T + 2912) \/ (T + t_unwinding <= a < T + t_unwinding + 1).
-(* copy of AGjm.v:347, remove when AGjm.v is ported *)
+(* copy of AGjm.v:348, remove when AGjm.v is ported *)
 Definition WINI (a : Z) : Prop :=
 (INSTv + o_sec_reserved <= a < INSTv + o_sec_sorted + 1) \/ (INSTv + o_sec_stats <= a < INSTv + o_sec_stats + 32) \/
 (BSLv <= a < BSLv + 8) \/ (INSTv + o_sec_mutex <= a < INSTv + o_sec_mutex + 4) \/ (INSTv + o_comb_stats <= a < INSTv + o_comb_stats + 40).
-(* copy of AGjm.v:350, remove when AGjm.v is ported *)
-Definition WINM (a : Z) : Prop := (QSv <= a < QSv + 8) \/ (mb <= a < mb + MSv) \/ (SMv <= a < SMv + MSv / 8).
 (* copy of AGjm.v:351, remove when AGjm.v is ported *)
+Definition WINM (a : Z) : Prop := (QSv <= a < QSv + 8) \/ (mb <= a < mb + MSv) \/ (SMv <= a < SMv + MSv / 8).
+(* copy of AGjm.v:352, remove when AGjm.v is ported *)
 Definition WIN (a : Z) : Prop := (sp0 - AFSTACK <= a < sp0) \/ WINT a \/ WINI a \/ WINM a.
-(* copy of AGjm.v:353, remove when AGjm.v is ported *)
+(* copy of AGjm.v:354, remove when AGjm.v is ported *)
 Definition WINP (a : Z) : Prop := (sp0 - AFSTACK <= a < sp0) \/ WINT a \/ WINI a.
 End g.
 
@@ -119,15 +120,15 @@ End g.
 (* The model's state after the secondary allocation (YFib's Section u). *)
 Section u.
 Variables (S : astate) (n : Z) (tr : list Z) (z : Z) (ms nd : Z) (grow : bool).
-(* copy of YFib.v:232, remove when YFib.v is ported *)
-Definition rS : nat := length (st_secs S).
 (* copy of YFib.v:233, remove when YFib.v is ported *)
-Definition KS : chunk := mkChunk (PSec rS kPage) n CAllocated.
+Definition rS : nat := length (st_secs S).
 (* copy of YFib.v:234, remove when YFib.v is ported *)
-Definition resF : Z := if grow then st_sec_reserved S + kPtrArrayEntriesPerCommit else st_sec_reserved S.
+Definition KS : chunk := mkChunk (PSec rS kPage) n CAllocated.
 (* copy of YFib.v:235, remove when YFib.v is ported *)
-Definition depF : list (list Z) := if z =? 0 then st_depot S else st_depot S ++ [tr].
+Definition resF : Z := if grow then st_sec_reserved S + kPtrArrayEntriesPerCommit else st_sec_reserved S.
 (* copy of YFib.v:236, remove when YFib.v is ported *)
+Definition depF : list (list Z) := if z =? 0 then st_depot S else st_depot S ++ [tr].
+(* copy of YFib.v:237, remove when YFib.v is ported *)
 Definition sfinal : astate :=
 mkA (st_regions S) (st_cache_inited S) (st_cache S) (st_chunks S ++ [KS]) (st_secs S ++ [mkSec ms nd true]) (st_sec_arr S ++ [rS]) resF
 (st_qthread S) (st_qglobal S) (st_fs S) depF (st_internal_inited S) (st_nev S + 1).
@@ -137,7 +138,7 @@ End u.
 (* The cache join's tail with the spin tag of the shadow-remap refusal as a parameter (AGif0n's). *)
 Section m.
 Local Open Scope am_scope.
-(* copy of AGif0n.v:129, remove when AGif0n.v is ported *)
+(* copy of AGif0n.v:130, remove when AGif0n.v is ported *)
 Definition malloc_K_t (stag : Z) (n : Z) (trace : list Z) (ob : option sptr) : M sptr :=
 match ob with
 | None => ret PNull

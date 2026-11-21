@@ -6,10 +6,11 @@
    libreac/fuzz_identity's ASan build (lib/A). The [Apache-2.0 OR MIT] text is used under Apache-2.0. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/LLVMFuzzerTestOneInput_L.v, with its module paths, module names and numbers changed; 1266 of its 1332 lines of code are new or changed and 1014 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_dec_E.v, with its module paths, module names and numbers changed; 1298 of its 1424 lines of code are new or changed and 1206 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: the per-function walk form of lib/A/FSW_pj_get.v (a working branch bfa606fd37a),
+(* Modified by Theorem Labs, 2026-10: the per-function walk form of lib/A/FSW_pj_get.v (a working branch),
    re-walked over image B's own code. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* pj_get (fs.asan-ubsan, IMAGE B, 0x83894 .. 0x83a54, 112 instructions; pf.c:352-362): its ASan contract
-   lib/B/FSH_Fn_reader.pj_get_spec (S0 aaf2c4ec41f), by a symbolic walk of B's OWN machine code over lib/B's walk kit
+   lib/B/FSH_Fn_reader.pj_get_spec (S0), by a symbolic walk of B's OWN machine code over lib/B's walk kit
    (FSW_K / FSW_ret / FSW_rd), in the per-function form of the donor cgif_file_fuzzer as ported by a Theorem Labs lane.
    rule 24 (a Theorem Labs lane): reuse search by name with control (proof-index pj_get pj_free pj_string; pj_object
    pj_get_str pj_string: released hits are the plain lib/Prog and ubsan lib/U proofs only, no ASan address), by every B

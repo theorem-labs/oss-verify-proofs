@@ -1,8 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the run-level lemmas take to_outcomes over run_segments, the mmap base, the whole ProcInput and the start model with the vDSO run state; brk grants and growable's budget are page-rounded (brk_page_range), the grow gate counts brk_grow_bytes; removed comments filled in, blank lines dropped. *)
 (* [comment removed for export] *)
-
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence OmniEquivalence.
@@ -17,8 +17,6 @@ From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib Require WallSim.
 Import OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.WallSim.CatExec.
 From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib Require Import WallSim.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
-
-
 Import ListNotations.
 Open Scope bv_scope.
 Unset Lia Cache.
@@ -26,12 +24,12 @@ Unset Lia Cache.
 Section WithFP1.
 Context {fx : FPState}.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* Local word-algebra helpers (candidates to lift into BvBase/PropExec if a  *)
+(* second Common file needs them).                                           *)
+(* ========================================================================= *)
 
-(* [comment removed for export] *)
+(** Unsigned value of a non-wrapping [bv] sum. *)
 Lemma u_add_small : forall a b : word,
   (bv_unsigned a + bv_unsigned b < 2 ^ 64)%Z ->
   bv_unsigned (a + b) = (bv_unsigned a + bv_unsigned b)%Z.
@@ -48,7 +46,7 @@ Proof.
   rewrite Z.add_0_r, bv_wrap64_mod. apply Z.mod_small. apply u64_range.
 Qed.
 
-(* [comment removed for export] *)
+(** [r + t - r = t] in the additive group of [bv 64] (no side conditions). *)
 Lemma word_add_sub_cancel : forall r t : word, r + t - r = t.
 Proof.
   intros r t. apply bv_eq.
@@ -65,7 +63,7 @@ Proof.
   intros r Hne Hu. apply Hne. apply bv_eq. rewrite Hu. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
+(** Address-walk step for [wbytes_app] ([nat_to_word] offset form). *)
 Lemma word_add_nat_S : forall (a : word) k,
   (a + 1) + nat_to_word k = a + nat_to_word (S k).
 Proof.
@@ -76,11 +74,13 @@ Proof.
   f_equal. lia.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* apply_zeros / zmem: the zero-backed grant as a functional overlay.        *)
+(* ========================================================================= *)
 
-(* [comment removed for export] *)
+(** The zero-fill of a single granted range [b, b+l).  Coverage is checked
+    in [Z] over unsigned values, mirroring [Run.zeros_cover] (grant ranges
+    never wrap). *)
 Definition zmem (mem : word -> option byte) (b l : word) : word -> option byte :=
   fun a => if Z.leb (bv_unsigned b) (bv_unsigned a)
               && Z.ltb (bv_unsigned a) (bv_unsigned b + bv_unsigned l)
@@ -110,7 +110,8 @@ Proof.
     rewrite E, andb_false_r. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
+(** No-overflow hypothesis (inherited from [rdn_ext]); trivial at
+    call sites — the read window sits far below 2^64. *)
 Lemma rdn_zmem_out : forall segs mem b l (a : word) n,
   (bv_unsigned a + Z.of_nat n <= 2 ^ 64)%Z ->
   (bv_unsigned a + Z.of_nat n <= bv_unsigned b
@@ -130,7 +131,8 @@ Proof.
   reflexivity.
 Qed.
 
-(* [comment removed for export] *)
+(** wbytes over a split list — lets a store loop accumulate one flat
+    [wbytes] over the granted region. *)
 Lemma wbytes_app : forall {bs1 bs2 : list byte} m (a : word),
   wbytes m a (bs1 ++ bs2) = wbytes (wbytes m a bs1) (a + nat_to_word (length bs1)) bs2.
 Proof.
@@ -142,9 +144,9 @@ Proof.
     rewrite IH, word_add_nat_S. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* Model plumbing for a brk transition.                                      *)
+(* ========================================================================= *)
 
 Lemma with_vmmaps_fds : forall h m, m_fds (with_vmmaps h m) = m_fds m.
 Proof. reflexivity. Qed.
@@ -161,7 +163,8 @@ Proof. reflexivity. Qed.
 Lemma fd1chan_with_vmmaps : forall h m, fd1chan m -> fd1chan (with_vmmaps h m).
 Proof. intros h m H. unfold fd1chan in *. exact H. Qed.
 
-(* [comment removed for export] *)
+(** VM lifecycle cleanup rewrites only the sparse-backing ledgers, so it
+    carries the fd table across unchanged. *)
 Lemma fd1chan_forget_vm_ranges : forall ranges m,
   fd1chan m -> fd1chan (forget_vm_ranges ranges m).
 Proof.
@@ -171,7 +174,7 @@ Proof.
     cbn [m_fds m_fd] in *. exact H.
 Qed.
 
-(* [comment removed for export] *)
+(** advance-past-svc of a brk effect applied at the raw ecall record. *)
 Lemma adv_brk : forall regs pc x8 mem rom r zs,
   advance_past_svc (apply_effect
     {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc; ms_svc_pending := Some x8;
@@ -188,9 +191,9 @@ Proof.
   rewrite b_npc4. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* brk syscall-spec decoding, through the verified checker.                  *)
+(* ========================================================================= *)
 
 Lemma in_sysno_sys_input214 : forall segs ms x8,
   in_sysno (sys_input segs ms x8) = x8.
@@ -200,7 +203,12 @@ Lemma in_arg0_sys_input214 : forall segs ms x8,
   in_arg (sys_input segs ms x8) 0 = ms_gpr ms 0.
 Proof. reflexivity. Qed.
 
-(* [comment removed for export] *)
+(** Which arm answers this number, on the SPEC side.  [syscall_spec] is
+    [dispatch spec_table], so fixing the number settles the table lookup by
+    conversion and the dispatcher disappears -- the same one-line argument
+    [Checks.Sys.DispatchCompute] makes for [check_syscall], made here
+    instead so that this file needs only the brk checker rather than the
+    module that re-exports every arm's. *)
 Lemma syscall_spec_brk : forall segs ms x8 model o,
   bv_unsigned x8 = 214%Z ->
   (syscall_spec (sys_input segs ms x8) model o
@@ -210,26 +218,33 @@ Proof.
   rewrite in_sysno_sys_input214, Hno. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
+(** The allocator examples have no lazy mappings or materialized sparse
+    pages.  Package a VM ledger with that empty backing state for the pure
+    outcome algebra below. *)
 Definition vm_model (h : VmMaps) : Model :=
   mkModel [] h IEof [] None None None.
 
 Definition brk_grow_ok (h : VmMaps) (req r : word) : bool :=
   Mmap.brk_grow_ok (vm_model h) req r.
 
-(* [comment removed for export] *)
+(** The admissibility condition used by the pure allocator outcome algebra. *)
 Definition brk_r_ok (h : VmMaps) (req r : word) : Prop :=
   Mmap.brk_r_ok (vm_model h) req r = true.
 
-(* [comment removed for export] *)
+(** The corresponding condition at a live syscall state, whose backing
+    ledger is part of the decision. *)
 Definition brk_resolution_ok (m : Model) (req r : word) : Prop :=
   Mmap.brk_r_ok m req r = true.
 
-(* [comment removed for export] *)
+(** The model after adopting resolution [r]. *)
 Definition brk_model (req r : word) (m : Model) : Model :=
   with_brk_next m req r.
 
-(* [comment removed for export] *)
+(** ... and so [brk] as a whole does: it retags the break, rewrites the
+    VM ledger and forgets the backing of what it unmapped.  Stated at
+    [brk_model] rather than at its [with_vmmaps] core so that a proof
+    stepping over a brk node does not have to know how [with_brk_next] is
+    layered. *)
 Lemma fd1chan_brk_model : forall req r m,
   fd1chan m -> fd1chan (brk_model req r m).
 Proof.
@@ -277,7 +292,7 @@ Proof.
   unfold brk_model. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
+(** Admissible outcomes of a brk syscall, in terms of the resolved [r]. *)
 Lemma brk_ok_iff : forall segs ms x8 model eff model' evs,
   bv_unsigned x8 = 214%Z ->
   (syscall_spec (sys_input segs ms x8) model (Ok eff model' evs) <->
@@ -310,7 +325,7 @@ Proof.
   apply (brk_ok_iff segs ms x8 model _ _ _ Hno). cbn [eff_ret]. auto.
 Qed.
 
-(* [comment removed for export] *)
+(** brk never takes the error transition. *)
 Lemma brk_no_unmodeled : forall segs ms x8 model,
   bv_unsigned x8 = 214%Z ->
   ~ syscall_spec (sys_input segs ms x8) model Unmodeled.
@@ -327,7 +342,10 @@ Proof.
     discriminate.
 Qed.
 
-(* [comment removed for export] *)
+(** brk is receptive: some resolution is always admissible.
+    KEEPING the current break ([r = vm_brk h]) is admitted by every path
+    (query/invalid returns it; shrink and grow both have the failure
+    branch that keeps it). *)
 Lemma brk_receptive : forall segs ms x8 model,
   bv_unsigned x8 = 214%Z ->
   exists eff model',
@@ -352,7 +370,8 @@ Proof.
       now rewrite Z.ltb_irrefl, andb_false_r.
 Qed.
 
-(* [comment removed for export] *)
+(** brk grow of req<>0 from an established nonzero break to r > old:
+    the visible zero-fill is exactly the shared page-rounded range helper. *)
 Lemma brk_zeros_grow : forall req r old,
   req <> Z_to_bv 64 0 ->
   (0 < bv_unsigned old)%Z -> (bv_unsigned old < bv_unsigned r)%Z ->
@@ -368,11 +387,16 @@ Proof.
   rewrite E1, E2, E3. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
+(** The ledger records the SAME page-rounded range the zero-fill names:
+    [Mmap.brk_grants] and [Mmap.brk_zeros] are one term, so a grow adds
+    exactly the pages it installs and a grow inside one page adds
+    nothing. *)
 Lemma brk_grants_grow : forall req r old,
   req <> Z_to_bv 64 0 ->
   (0 < bv_unsigned old)%Z -> (bv_unsigned old < bv_unsigned r)%Z ->
-  brk_grants req r old = [(old, r - old)].
+  brk_grants req r old =
+    brk_page_range (page_round_up_Z (bv_unsigned old))
+                   (page_round_up_Z (bv_unsigned r)).
 Proof.
   intros req r old Hreq Hold Hlt. unfold brk_grants, brk_is_grow.
   assert (E1 : w_is0 req = false)
@@ -381,6 +405,11 @@ Proof.
   assert (E3 : (bv_unsigned old <? bv_unsigned r)%Z = true) by (apply Z.ltb_lt; lia).
   rewrite E1, E2, E3. reflexivity.
 Qed.
+
+(** …and that is the same term as the zero-fill, with no hypotheses. *)
+Lemma brk_grants_is_brk_zeros : forall req r old,
+  brk_grants req r old = brk_zeros req r old.
+Proof. reflexivity. Qed.
 
 Lemma brk_zeros_query : forall r old, brk_zeros (Z_to_bv 64 0) r old = [].
 Proof.
@@ -406,7 +435,7 @@ Proof.
   rewrite Z.ltb_irrefl, !andb_false_r. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
+(** brk KEEPS the break: nothing is freed. *)
 Lemma brk_unmaps_keep : forall old, brk_unmaps old old = [].
 Proof.
   intros old. unfold brk_unmaps. cbv zeta.
@@ -414,12 +443,15 @@ Proof.
   unfold brk_page_range. rewrite Z.ltb_irrefl. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
+(** The QUERY resolution frees nothing — the same [r = vm_brk h] premise
+    [brk_model_query] takes, so a query node discharges both from it. *)
 Lemma brk_unmaps_query : forall h r,
   r = vm_brk h -> brk_unmaps r (vm_brk h) = [].
 Proof. intros h r ->. apply brk_unmaps_keep. Qed.
 
-(* [comment removed for export] *)
+(** Any resolution that does not LOWER the break frees nothing: page
+    rounding is monotone, so the freed interval is empty.  This covers
+    the query/invalid path ([r = old]) and both grow resolutions. *)
 Lemma brk_unmaps_grow : forall r old,
   (bv_unsigned old <= bv_unsigned r)%Z -> brk_unmaps r old = [].
 Proof.
@@ -431,7 +463,7 @@ Proof.
   unfold brk_page_range. rewrite E. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
+(** Unfolding [brk_grow_ok] on an actual grow. *)
 Lemma brk_grow_ok_grow : forall h req r,
   req <> Z_to_bv 64 0 ->
   (0 < bv_unsigned (vm_brk h))%Z -> (bv_unsigned (vm_brk h) < bv_unsigned r)%Z ->
@@ -444,7 +476,7 @@ Lemma brk_grow_ok_grow : forall h req r,
                 (Z_to_bv 64 (page_round_up_Z (bv_unsigned r) + page_size
                              - page_round_up_Z (bv_unsigned (vm_brk h))))
       else true)
-     && (vm_backed_bytes h + bv_unsigned (r - vm_brk h) <=? vm_limit h)%Z)%bool.
+     && (vm_backed_bytes h + brk_grow_bytes h r <=? vm_limit h)%Z)%bool.
 Proof.
   intros h req r Hreq H0 Hlt.
   assert (Hmaps : m_vmmaps (vm_model h) = h) by reflexivity.
@@ -473,7 +505,7 @@ Proof.
   rewrite Z.ltb_irrefl, andb_false_r. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
+(** Elementary page-rounding facts used by the allocator examples. *)
 Lemma page_round_up_Z_aligned : forall z,
   (0 <= z)%Z -> (z mod page_size = 0)%Z -> page_round_up_Z z = z.
 Proof.
@@ -495,7 +527,7 @@ Proof.
   lia.
 Qed.
 
-(* [comment removed for export] *)
+(** Eight-byte chunk rounding is contained in page rounding. *)
 Lemma round8_le_page_round : forall z,
   (0 <= z)%Z ->
   ((((z + 7) / 8) * 8) <= page_round_up_Z z)%Z.
@@ -531,7 +563,7 @@ Proof.
   unfold page_round_up_Z in *. lia.
 Qed.
 
-(* [comment removed for export] *)
+(** A prefix of a free interval with the same base is free. *)
 Lemma region_free_prefix : forall maps b small big,
   (bv_unsigned small <= bv_unsigned big)%Z ->
   region_free maps b big = true -> region_free maps b small = true.
@@ -548,7 +580,9 @@ Proof.
     apply Z.ltb_ge in Hhead; apply Z.ltb_ge; lia.
 Qed.
 
-(* [comment removed for export] *)
+(** On a page-aligned established break, every genuine grow crosses into a
+    nonempty physical page interval.  This is the convenient proof-facing
+    spelling of [brk_grow_ok]: physical ceiling/disjointness, logical budget. *)
 Lemma brk_grow_ok_aligned_grow : forall h req r,
   req <> Z_to_bv 64 0 ->
   (0 < bv_unsigned (vm_brk h))%Z ->
@@ -559,7 +593,7 @@ Lemma brk_grow_ok_aligned_grow : forall h req r,
       && region_free (vm_reserved h ++ vm_maps h) (vm_brk h)
            (Z_to_bv 64 (page_round_up_Z (bv_unsigned r) + page_size
                         - bv_unsigned (vm_brk h))))
-     && (vm_backed_bytes h + bv_unsigned (r - vm_brk h) <=? vm_limit h)%Z)%bool.
+     && (vm_backed_bytes h + brk_grow_bytes h r <=? vm_limit h)%Z)%bool.
 Proof.
   intros h req r Hreq Hpos Hlt Halign.
   rewrite brk_grow_ok_grow by assumption.
@@ -590,7 +624,25 @@ Proof.
   rewrite Z_to_bv_bv_unsigned. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
+(** Everything a caller needs about the page-rounded grant a successful grow
+    from [r] to [r + w] hands back, given only the two facts the brk spec
+    leaves on the table: that the new break fits under the run's grant top,
+    and that the granted pages and the one page above them are free (the
+    range [Mmap.brk_grow_ok] tests).  [g] is the grant the caller has
+    already named; the results say it holds the requested [w] bytes, that both
+    the grant and the request stay under the ceiling, and that the requested
+    prefix and the grant itself are free — the two prefixes of the gate's
+    range a run lemma asks for.
+
+    [top] exists because each caller spells the new break differently (a word
+    sum, or a nat length plus one).  Passing the caller's own spelling through
+    means the ceiling bound comes back already in the form the caller's
+    success lemma asks for, with no rewrite in between.
+
+    [ceil] is the run's [State.alloc_top], passed in with its own
+    bound ([State.alloc_top_page_lt]: a page above it is still below
+    2^64, which is what the gate's one-page lookahead needs) so this
+    file need not know which ledger it came from. *)
 Lemma brk_aligned_grant_ok :
   forall (res : list (word * word)) (r w g : word) (top ceil : Z),
   bv_unsigned (r + w) = (bv_unsigned r + bv_unsigned w)%Z ->
@@ -613,7 +665,7 @@ Proof.
   pose proof (page_round_up_Z_bounds (bv_unsigned (r + w))
                 (proj1 (u64_range (r + w)))).
   assert (Hps : (0 < page_size)%Z) by (vm_compute; reflexivity).
-  (* [comment removed for export] *)
+  (* [StepTac.u_Z2bv] is downstream of this file, so reprove it here. *)
   assert (Hu : forall z, (0 <= z)%Z -> (z < 2 ^ 64)%Z ->
                  bv_unsigned (Z_to_bv 64 z) = z).
   { intros z Hlo Hhi. rewrite Z_to_bv_unsigned.
@@ -623,7 +675,8 @@ Proof.
                 = (page_round_up_Z (bv_unsigned (r + w)) - bv_unsigned r)%Z)
     by (subst g; apply Hu; lia).
   repeat split; rewrite ?HgU; try lia.
-  (* [comment removed for export] *)
+  (* the gate tests one page more than the grant, so both the request and
+     the grant are prefixes of the range [Hfree] covers *)
   - apply (region_free_prefix res r w
              (Z_to_bv 64 (page_round_up_Z (bv_unsigned (r + w)) + page_size
                           - bv_unsigned r)));
@@ -634,24 +687,30 @@ Proof.
       [rewrite HgU, Hu by lia; lia | exact Hfree].
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* Two-node brk resolution-set algebra: a binary that queries the break      *)
+(* (req = 0), then grows it by [t] bytes (req = brk + t), taking the         *)
+(* failure exit ([([], 4)]) on either an unusable query resolution or a      *)
+(* refused/wrapping grow, and the success buffers [bufs] otherwise.  This    *)
+(* is the shared shape behind brk_rev_ns/alloc_join_ns/oob_read_bug_ns:      *)
+(* only the growth amount [t] and success buffers [bufs] differ per binary   *)
+(* (all three write [(list (list byte) * word)] outcomes, so no further      *)
+(* type parameter is needed).  [t = 0] is handled explicitly                 *)
+(* ([oob_read_bug_ns]'s n = 0 case: re-requesting the current break can      *)
+(* never fail) so every binary can use this algebra whether or not its       *)
+(* growth amount is provably positive.                                       *)
+(*                                                                           *)
+(* [t] is a [word]; the "wrap" arm of [T1] and the no-wrap bound of          *)
+(* [growable] are stated in [Z] over [bv_unsigned r + bv_unsigned t].        *)
+(* ========================================================================= *)
 
-(* [comment removed for export] *)
+(** Can the break grow from [r] by [t] bytes, against reservation list
+    [reserved], grant top [top] (the run's [State.alloc_top]) and
+    allocation budget [lim] ([State.vm_limit] of a fresh ledger: no live
+    grants yet, so the [t] added bytes must fit the whole budget)?  The
+    free region is the installed pages plus the one above them, as in
+    [Mmap.brk_grow_ok].  [t = 0] (re-requesting the current break) is
+    trivially growable regardless of the top/free-region/budget check. *)
 Definition growable (reserved : list (word * word)) (lim top : Z) (t r : word)
     : Prop :=
   r <> Z_to_bv 64 0 /\ (bv_unsigned r + bv_unsigned t < 2 ^ 64)%Z /\
@@ -666,9 +725,13 @@ Definition growable (reserved : list (word * word)) (lim top : Z) (t r : word)
                                (bv_unsigned r + bv_unsigned t)
                               + page_size - page_round_up_Z (bv_unsigned r)))
       else true)
-     && (bv_unsigned t <=? lim)%Z)%bool = true)).
+     && (Z.max 0 (page_round_up_Z (bv_unsigned r + bv_unsigned t)
+                  - page_round_up_Z (bv_unsigned r)) <=? lim)%Z)%bool = true)).
 
-(* [comment removed for export] *)
+(** Branch outcome set after the FIRST brk resolved to [r].  The exit-4
+    element is present iff a failing continuation exists: [r = 0],
+    address wraparound, or ([t <> 0] and the kernel may keep the old
+    break at the second brk). *)
 Definition T1 (reserved : list (word * word)) (lim top : Z) (t : word)
     (bufs : list (list byte))
     (r : word) : (list (list byte) * word) -> Prop :=
@@ -678,13 +741,16 @@ Definition T1 (reserved : list (word * word)) (lim top : Z) (t : word)
                 \/ t <> Z_to_bv 64 0))
         \/ (growable reserved lim top t r /\ o = (bufs, Z_to_bv 64 0)).
 
-(* [comment removed for export] *)
+(** Branch outcome set after the SECOND brk resolved to [r2]. *)
 Definition T2 (want : word) (bufs : list (list byte)) (r2 : word)
     : (list (list byte) * word) -> Prop :=
   fun o => (r2 = want /\ o = (bufs, Z_to_bv 64 0))
         \/ (r2 <> want /\ o = ([], Z_to_bv 64 4)).
 
-(* [comment removed for export] *)
+(** [brk_r_ok] at the FIRST query (req = 0) on an UNESTABLISHED break
+    with [brk(0)] (musl/glibc [sbrk(0)]) — which is DETERMINISTIC: the
+    kernel reports the break, established at [execve] (the quantified
+    ASLR base [Run.mi_init_brk]). *)
 Lemma brk_r_ok_query_iff : forall h r,
   brk_r_ok h (Z_to_bv 64 0) r <-> r = vm_brk h.
 Proof.
@@ -694,7 +760,9 @@ Proof.
   apply bv_eqb_eq.
 Qed.
 
-(* [comment removed for export] *)
+(** [reserved_top] bounds every reservation from above — the shape the
+    ASLR-base bound [Run.valid_brk] hands a [region_free_above]-style
+    argument. *)
 Lemma reserved_top_above : forall reserved (r : Z),
   (reserved_top reserved <= r)%Z ->
   Forall (fun p : word * word =>
@@ -705,7 +773,7 @@ Proof.
   - constructor; [cbn [fst snd]; lia | apply IH; lia].
 Qed.
 
-(* [comment removed for export] *)
+(** A region at or above the image top is free of every reservation. *)
 Lemma region_free_above_top : forall reserved (lo n : word),
   (reserved_top reserved <= bv_unsigned lo)%Z ->
   region_free reserved lo n = true.
@@ -718,7 +786,7 @@ Proof.
   rewrite E. cbn [andb negb]. apply IH. lia.
 Qed.
 
-(* [comment removed for export] *)
+(** A region entirely above every reservation is free. *)
 Lemma region_free_above : forall (l : list (word * word)) (lo n : word),
   Forall (fun p => (bv_unsigned (fst p) + bv_unsigned (snd p)
                     <= bv_unsigned lo)%Z) l ->
@@ -732,7 +800,7 @@ Proof.
   rewrite E. cbn [andb negb]. apply IH. exact Hl.
 Qed.
 
-(* [comment removed for export] *)
+(** A region entirely below every reservation is free. *)
 Lemma region_free_below : forall (l : list (word * word)) (lo n : word),
   Forall (fun p => (bv_unsigned lo + bv_unsigned n
                     <= bv_unsigned (fst p))%Z) l ->
@@ -746,7 +814,17 @@ Proof.
   rewrite E, andb_false_r. cbn [negb andb]. apply IH. exact Hl.
 Qed.
 
-(* [comment removed for export] *)
+(** The page-rounded disjunct of [growable], for the shape every example
+    grow site has: a page-aligned established break [r] sitting above
+    every reservation, grown by a positive [t] that fits under both the
+    physical ceiling and the budget.  On a page-aligned [r] the rounded
+    interval starts at [r] itself, so the whole free-region check reduces
+    to [region_free_above_top].  All five hypotheses are what a grow site
+    already holds — alignment and the reservation-top bound from its
+    initial-state facts, the rest from its own arithmetic on [t].  The
+    ceiling bound is stated on [r + t + page_size - 1], the largest value
+    the rounding can reach, so a site never has to reason about
+    [page_round_up_Z] itself. *)
 Lemma growable_aligned_grow : forall reserved lim top (t r : word),
   (bv_unsigned r mod page_size = 0)%Z ->
   (reserved_top reserved <= bv_unsigned r)%Z ->
@@ -783,7 +861,10 @@ Qed.
 Lemma brk_aslr_max_val : brk_aslr_max = 1073741824%Z.
 Proof. reflexivity. Qed.
 
-(* [comment removed for export] *)
+(** The model after a brk(0) QUERY is unchanged modulo re-tagging the
+    break: the resolution is the current break, nothing is granted or
+    freed.  (Normalizes the stuck [brk_maps_next] guard once the
+    resolution is known to BE the break.) *)
 Lemma brk_model_next_query : forall h r,
   r = vm_brk h ->
   brk_model_next h (Z_to_bv 64 0) r
@@ -809,7 +890,11 @@ Proof.
   rewrite brk_model_next_query by reflexivity. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
+(** The GROW-node decode: on an established break [r] with heap base
+    ([vm_start_brk]) [s], [brk(req)] with [req >= s] (not below Linux's
+    [min_brk] = [start_brk]), [req >= r], and [req > 0] resolves to [req]
+    (grow) or [r] (kept), gated by [brk_grow_ok] — the query/invalid and
+    shrink guards are all excluded. *)
 Lemma brk_r_ok_grow_iff : forall reserved lim s r maps noaccess mb sp req r2,
   (0 < bv_unsigned req)%Z ->
   (bv_unsigned s <= bv_unsigned req)%Z ->
@@ -835,7 +920,10 @@ Proof.
   rewrite andb_true_iff, orb_true_iff, !bv_eqb_eq. tauto.
 Qed.
 
-(* [comment removed for export] *)
+(** The ledger is spelled with a free [sp] (and a base nothing reads)
+    because [brk_grow_ok] compares against [State.alloc_top] of the
+    ledger it is handed: the [top] the set algebra was stated at has to
+    be THAT ledger's, [bv_unsigned sp - stack_max_size]. *)
 Lemma T1_iff_T2 : forall reserved lim s (mb sp : word) t bufs r,
   r <> Z_to_bv 64 0 -> (bv_unsigned s <= bv_unsigned r)%Z ->
   (bv_unsigned r + bv_unsigned t < 2 ^ 64)%Z ->
@@ -860,7 +948,7 @@ Proof.
     by (intro r2; apply brk_r_ok_grow_iff with (maps := []) (noaccess := []); lia).
   split.
   - intros [[-> Hcase] | [Hg ->]].
-    + (* [comment removed for export] *)
+    + (* exit 4: failure resolution r2 = r, which exists iff t <> 0 *)
       assert (Ht0 : t <> Z_to_bv 64 0)
         by (destruct Hcase as [Hc | [Hc | Hc]]; [congruence | lia | exact Hc]).
       pose proof (word_neq0_unsigned t Ht0) as Hut0.
@@ -870,7 +958,7 @@ Proof.
       * right. split; [| reflexivity].
         intro He. apply (f_equal bv_unsigned) in He.
         rewrite Huadd in He. lia.
-    + (* [comment removed for export] *)
+    + (* success: r2 = want *)
       destruct Hg as (_ & _ & Hb).
       exists (r + t). split.
       * apply Bridge. split; [left; reflexivity|].
@@ -884,13 +972,14 @@ Proof.
         rewrite brk_grow_ok_grow;
           cbn [vm_brk vm_reserved vm_maps vm_limit vm_live_bytes live_bytes];
           [| exact Hwant0 | lia | lia].
-        rewrite app_nil_r, word_add_sub_cancel, Huadd, Z.add_0_l.
+        unfold brk_grow_bytes. cbn [vm_brk].
+        rewrite app_nil_r, Huadd, Z.add_0_l.
         exact Hb.
       * left. split; reflexivity.
   - intros (r2 & Hrok & Hb).
     apply Bridge in Hrok. destruct Hrok as (Hcase & Hgrow).
     destruct Hb as [[-> ->] | [Hne ->]].
-    + (* [comment removed for export] *)
+    + (* success resolution *)
       right. split; [| reflexivity].
       split; [exact Hr0 | split; [exact Hnw |]].
       destruct (Z.eq_dec (bv_unsigned t) 0) as [Hz | Hz];
@@ -898,9 +987,10 @@ Proof.
       rewrite brk_grow_ok_grow in Hgrow;
         cbn [vm_brk vm_reserved vm_maps vm_limit vm_live_bytes live_bytes] in *;
         [| exact Hwant0 | lia | lia].
-      rewrite app_nil_r, word_add_sub_cancel, Huadd, Z.add_0_l in Hgrow.
+      unfold brk_grow_bytes in Hgrow. cbn [vm_brk] in Hgrow.
+      rewrite app_nil_r, Huadd, Z.add_0_l in Hgrow.
       exact Hgrow.
-    + (* [comment removed for export] *)
+    + (* failure resolution: r2 = r, and t <> 0 or r2 = want *)
       left. split; [reflexivity |].
       right. right.
       intro Ht0. subst t.
@@ -920,9 +1010,9 @@ Proof.
   intros want bufs o. unfold T2. tauto.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* to_outcomes: the exact outcome set of a brk-branching run.                *)
+(* ========================================================================= *)
 
 Section WithSegs.
 Variable segs : list Segment.
@@ -953,7 +1043,7 @@ Inductive to_outcomes : machine_state -> Model -> ((list (list byte) * word) -> 
           /\ T eff model' o)) ->
     to_outcomes ms model U.
 
-(* [comment removed for export] *)
+(** Prepend a deterministic instruction run. *)
 Lemma tou_msteps : forall ms ms' model U,
   msteps segs ms ms' -> to_outcomes ms' model U -> to_outcomes ms model U.
 Proof.
@@ -961,7 +1051,8 @@ Proof.
   intro Ht. eapply tou_step; eauto.
 Qed.
 
-(* [comment removed for export] *)
+(** Forgetting VM ranges preserves the non-VM state and cannot introduce
+    sparse mappings. *)
 Lemma forget_vm_ranges_frame : forall ranges model,
   m_halted (forget_vm_ranges ranges model) = m_halted model /\
   m_fs (forget_vm_ranges ranges model) = m_fs model /\
@@ -979,7 +1070,8 @@ Proof.
     intro Hempty. apply Hlazy. rewrite Hempty. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
+(** brk transitions keep the model running and the fs/fds untouched.  Starting
+    from an eager-only model, lifecycle cleanup also leaves no lazy mappings. *)
 Lemma brk_step_shape : forall ms x8 model eff model' evs,
   m_halted model = None ->
   m_vm_lazy model = [] ->
@@ -1006,7 +1098,7 @@ Proof.
     unfold with_vmmaps. cbn [m_vm_lazy]. exact Hlazy.
 Qed.
 
-(* [comment removed for export] *)
+(** One-step inversion at a brk ecall. *)
 Lemma sstep_brk_inv : forall ms model x8 evs st,
   m_halted model = None ->
   m_vm_lazy model = [] ->
@@ -1020,7 +1112,7 @@ Lemma sstep_brk_inv : forall ms model x8 evs st,
 Proof.
   intros ms model x8 evs st Hh Hlazy Hsvc Hno Hss.
   inversion Hss; subst; try congruence.
-  - (* [comment removed for export] *)
+  - (* sstep_syscall *)
     assert (Hx : x0 = x8) by congruence; subst x0.
     destruct (brk_step_shape ms x8 model eff model' evs Hh Hlazy Hno H3)
       as (He & _ & _ & _ & Hlazy').
@@ -1029,7 +1121,7 @@ Proof.
       (eq_trans Hlazy' Hlazy)) in H7.
     inversion H7; subst model''.
     exists eff, model'; auto.
-  - (* [comment removed for export] *)
+  - (* sstep_syscall_materialization_fault: no lazy range can fault *)
     exfalso.
     match goal with
     | Hspec : syscall_spec (sys_input segs ms ?x) model (Ok ?eff ?model' ?evs0),
@@ -1040,7 +1132,7 @@ Proof.
       rewrite (materialize_model_accesses_no_lazy _ _ (eq_trans Hlazy' Hlazy)) in Hmat;
       discriminate
     end.
-  - (* [comment removed for export] *)
+  - (* sstep_exit: brk cannot halt the model *)
     exfalso.
     match goal with
     | Hsvc' : ms_svc_pending ms = Some ?x,
@@ -1050,7 +1142,7 @@ Proof.
       destruct (brk_step_shape ms x8 model eff model' evs0 Hh Hlazy Hno Hspec) as (_ & Hm & _ & _);
       congruence
     end.
-  - (* [comment removed for export] *)
+  - (* sstep_killed: brk cannot kill it either *)
     exfalso.
     match goal with
     | Hsvc' : ms_svc_pending ms = Some ?x,
@@ -1061,7 +1153,7 @@ Proof.
       assert (Hhn : m_halted model' = None) by congruence;
       rewrite (m_killed_of_m_halted_none _ Hhn) in Hkill; discriminate
     end.
-  - (* [comment removed for export] *)
+  - (* sstep_syscall_unmodeled *)
     exfalso.
     match goal with
     | Hsvc' : ms_svc_pending ms = Some ?x,
@@ -1071,14 +1163,18 @@ Proof.
     end.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ------------------------------------------------------------------------- *)
+(* Trace characterization.                                                    *)
+(* ------------------------------------------------------------------------- *)
 
 Definition outcome_trace (fs : Fs.Fs) (o : list (list byte) * word) : list event :=
   wevents (fst o) ++ [ExitEv (snd o) fs].
 
-(* [comment removed for export] *)
+(** The omni reading of a brk-branching run: every execution ends by
+    halting with one of the outcomes, having emitted exactly that
+    outcome's trace.  One induction over [to_outcomes]; the leaves are
+    [WallSim.to_wallexit_exec], the brk node's successors are exactly the
+    admissible resolutions ([sstep_brk_inv]). *)
 Definition outcomes_post (fs : Fs.Fs) (U : (list (list byte) * word) -> Prop) : post :=
   fun tr o => exists out, U out /\ tr = outcome_trace fs out /\ exits_with (snd out) tr o.
 
@@ -1094,7 +1190,7 @@ Proof.
     | ms ms' model U Hsvc Hstep Hto IH
     | ms model x8 T U Hsvc Hno Hcont IH HU ];
     intros Hh Hlazy.
-  - (* [comment removed for export] *)
+  - (* tou_wexit *)
     eapply exec_conseq;
       [exact (to_wallexit_exec segs (Z_to_bv 64 1) (Z_to_bv 64 1) fd32_1 bufs code ms model
                 Hh Hlazy (fd1chan_fdchan model Hfd) Hbm Hte) |].
@@ -1102,13 +1198,13 @@ Proof.
     split; [apply HU; reflexivity |].
     split; [unfold outcome_trace; cbn [fst snd]; rewrite <- wevents_ch_fd1; exact Heq |].
     cbn [snd]. exact Hx.
-  - (* [comment removed for export] *)
+  - (* tou_step *)
     apply (exec_step_only segs _ _ [] (mkCfg ms' model)).
     + apply (sstep_instr segs ms model ms' model); [exact Hh | exact Hsvc |].
       rewrite (mi_account_step_no_lazy segs ms model Hlazy), Hstep. reflexivity.
     + intros evs st Hss. exact (sstep_instr_inv segs ms model ms' evs st Hlazy Hsvc Hstep Hss).
     + eapply exec_conseq; [exact (IH Hh Hlazy) |]. intros tr o H. cbn [app]. exact H.
-  - (* [comment removed for export] *)
+  - (* tou_brk: every admissible resolution is a successor *)
     apply exec_step; [exact Hh | | |].
     + destruct (brk_receptive segs ms x8 model Hno) as (eff & model' & Hspec).
       destruct (brk_step_shape ms x8 model eff model' [] Hh Hlazy Hno Hspec)
@@ -1131,7 +1227,9 @@ Proof.
       cbn [app]. unfold outcome_trace in Heq |- *. rewrite Hfs in Heq. exact Heq.
 Qed.
 
-(* [comment removed for export] *)
+(** Bites: the judgment names the outcome, so a different reading of the
+    same run is refuted — no exit code outside the outcome set, and no
+    silence. *)
 Lemma to_outcomes_no_other_exit : forall ms model U,
   to_outcomes ms model U -> m_halted model = None -> m_vm_lazy model = [] ->
   forall code', (forall o, U o -> snd o <> code') ->
@@ -1185,14 +1283,14 @@ Proof.
     | ms ms' model U Hsvc Hstep Hto IH
     | ms model x8 T U Hsvc Hno Hcont IH HU ];
     intros Hh Hlazy o Ho.
-  - (* [comment removed for export] *)
+  - (* tou_wexit *)
     apply HU in Ho. subst o.
     unfold outcome_trace; cbn [fst snd].
     rewrite <- wevents_ch_fd1.
     eapply (to_wallexit_star_admits segs (Z_to_bv 64 1) (Z_to_bv 64 1) fd32_1);
       [exact Hh | exact Hlazy | exact (fd1chan_fdchan model Hfd)
       | exact Hbm | exact Hte].
-  - (* [comment removed for export] *)
+  - (* tou_step *)
     destruct (IH Hh Hlazy o Ho) as [c Hstar].
     exists c.
     replace (outcome_trace (m_fs model) o)
@@ -1200,7 +1298,7 @@ Proof.
     eapply star_step; [|exact Hstar].
     apply (sstep_instr segs ms model ms' model); [assumption | assumption |].
     rewrite (mi_account_step_no_lazy segs ms model Hlazy), Hstep. reflexivity.
-  - (* [comment removed for export] *)
+  - (* tou_brk *)
     apply HU in Ho.
     destruct Ho as (eff & model' & evs & Hspec & Ht).
     destruct (brk_step_shape ms x8 model eff model' evs Hh Hlazy Hno Hspec)
@@ -1219,9 +1317,9 @@ Proof.
     reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ------------------------------------------------------------------------- *)
+(* No-error characterization.                                                 *)
+(* ------------------------------------------------------------------------- *)
 
 Lemma to_outcomes_no_error : forall ms model U,
   to_outcomes ms model U ->
@@ -1234,11 +1332,15 @@ Proof.
   intros tr o (out & _ & _ & Hx). exact (exits_with_never_errors _ _ _ Hx).
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ------------------------------------------------------------------------- *)
+(* Ergonomic brk node: everything in terms of the resolved break value r.     *)
+(* ------------------------------------------------------------------------- *)
 
-(* [comment removed for export] *)
+(** [tou_brk] specialized to a continuation family indexed by the
+    resolved break [r].  Per-binary proofs use this: they receive the
+    admissibility facts on [r], the post state written with
+    [apply_zeros], and the updated model, and must return the branch
+    outcome set [T' r]. *)
 Lemma tou_brk_r : forall ms model x8 (T' : word -> (list (list byte) * word) -> Prop) U,
   ms_svc_pending ms = Some x8 ->
   bv_unsigned x8 = 214%Z ->
@@ -1274,7 +1376,7 @@ Proof.
       exists (eff_ret eff). auto.
 Qed.
 
-(* [comment removed for export] *)
+(** Singleton leaf, ergonomic form. *)
 Lemma tou_wexit_eq : forall ms model bufs code,
   fd1chan model ->
   to_wallexit segs (Z_to_bv 64 1) bufs code ms ->
@@ -1285,7 +1387,7 @@ Proof.
   apply (tou_wexit ms model bufs code); [exact Hfd | exact Hte | exact Hbm | tauto].
 Qed.
 
-(* [comment removed for export] *)
+(** Rewire the outcome set along an extensional equivalence. *)
 Lemma tou_equiv : forall ms model U V,
   to_outcomes ms model U ->
   (forall o, V o <-> U o) ->
@@ -1307,67 +1409,77 @@ Qed.
 
 End WithSegs.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* Run-level packaging and the equivalence glue.                             *)
+(* ========================================================================= *)
 
-(* [comment removed for export] *)
+(** The run-level omni judgment of a brk-branching run. *)
 Lemma alloc_omni_run : forall segs pc ph sp brk0 mb rnd lim inp U,
-  to_outcomes segs (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-              (init_model (segments_reserved segs) brk0 mb sp lim inp) U ->
+  to_outcomes (run_segments segs inp sp mb)
+              (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp)
+              (with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+                 (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp)) U ->
   omni_run (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp (outcomes_post (in_fs inp) U).
 Proof.
   intros segs pc ph sp brk0 mb rnd lim inp U Hto.
   cbn [omni_run]. unfold init_config.
-  exact (to_outcomes_exec segs _ _ U Hto eq_refl eq_refl).
+  exact (to_outcomes_exec (run_segments segs inp sp mb) _ _ U Hto eq_refl eq_refl).
 Qed.
 
 Lemma alloc_obs_iff : forall segs pc ph sp brk0 mb rnd lim inp U,
-  to_outcomes segs (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-              (init_model (segments_reserved segs) brk0 mb sp lim inp) U ->
-  forall tr, obs_trace segs (init_config segs pc ph sp brk0 mb rnd lim inp) tr
+  to_outcomes (run_segments segs inp sp mb)
+              (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp)
+              (with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+                 (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp)) U ->
+  forall tr, obs_trace (run_segments segs inp sp mb)
+               (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) tr
     <-> exists o, U o /\ is_prefix tr (outcome_trace (in_fs inp) o).
 Proof.
   intros segs pc ph sp brk0 mb rnd lim inp U Hto tr.
   unfold init_config.
-  set (ms := init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) in *.
-  assert (Hh : m_halted (init_model (segments_reserved segs) brk0 mb sp lim inp) = None)
-    by reflexivity.
-  assert (Hlazy : m_vm_lazy
-      (init_model (segments_reserved segs) brk0 mb sp lim inp) = []) by reflexivity.
-  assert (Hfs : m_fs (init_model (segments_reserved segs) brk0 mb sp lim inp) = in_fs inp)
-    by reflexivity.
+  set (ms := init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp) in *.
+  set (m0 := with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+               (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp)) in *.
+  assert (Hh : m_halted m0 = None) by reflexivity.
+  assert (Hlazy : m_vm_lazy m0 = []) by reflexivity.
+  assert (Hfs : m_fs m0 = in_fs inp) by reflexivity.
   split.
   - intros (tr' & c & Hstar & Hp).
-    destruct (to_outcomes_star_only segs ms _ U Hto Hh Hlazy tr' c Hstar)
+    destruct (to_outcomes_star_only (run_segments segs inp sp mb) ms _ U Hto Hh Hlazy tr' c Hstar)
       as (o & Ho & Hp').
     exists o. split; [exact Ho|].
     rewrite Hfs in Hp'. eapply is_prefix_trans; eauto.
   - intros (o & Ho & Hp).
-    destruct (to_outcomes_star_admits segs ms _ U Hto Hh Hlazy o Ho) as [c Hstar].
+    destruct (to_outcomes_star_admits (run_segments segs inp sp mb) ms _ U Hto Hh Hlazy o Ho) as [c Hstar].
     rewrite Hfs in Hstar.
     exists (outcome_trace (in_fs inp) o), c. split; assumption.
 Qed.
 
 Lemma alloc_no_error_run : forall segs pc ph sp brk0 mb rnd lim inp U,
-  to_outcomes segs (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-              (init_model (segments_reserved segs) brk0 mb sp lim inp) U ->
-  ~ reaches_error segs (init_config segs pc ph sp brk0 mb rnd lim inp).
+  to_outcomes (run_segments segs inp sp mb)
+              (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp)
+              (with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+                 (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp)) U ->
+  ~ reaches_error (run_segments segs inp sp mb)
+      (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp).
 Proof.
   intros segs pc ph sp brk0 mb rnd lim inp U Hto. apply exec_no_error.
   eapply exec_conseq; [exact (alloc_omni_run segs pc ph sp brk0 mb rnd lim inp U Hto) |].
   intros tr o (out & _ & _ & Hx). exact (exits_with_never_errors _ _ _ Hx).
 Qed.
 
-(* [comment removed for export] *)
+(** The omni equivalence for two brk-allocating binaries with the SAME
+    outcome set [U], at the two role budgets. *)
 Lemma alloc_omni_strong_equiv :
   forall source_segs rpc rph rsp rbrk rmb rrnd target_segs apc aph asp abrk amb arnd U inp,
-  to_outcomes source_segs
-    (init_machine_state source_segs rpc rph rsp rrnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-    (init_model (segments_reserved source_segs) rbrk rmb rsp source_alloc_limit inp) U ->
-  to_outcomes target_segs
-    (init_machine_state target_segs apc aph asp arnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-    (init_model (segments_reserved target_segs) abrk amb asp target_alloc_limit inp) U ->
+  to_outcomes (run_segments source_segs inp rsp rmb)
+    (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp)
+    (with_vdso (Vdso.vdso_run_init (ed_vdso rrnd))
+       (init_model (segments_reserved (run_segments source_segs inp rsp rmb)) rbrk rmb rsp source_alloc_limit inp)) U ->
+  to_outcomes (run_segments target_segs inp asp amb)
+    (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp)
+    (with_vdso (Vdso.vdso_run_init (ed_vdso arnd))
+       (init_model (segments_reserved (run_segments target_segs inp asp amb)) abrk amb asp target_alloc_limit inp)) U ->
   omni_strong_equiv (mkImage source_segs rpc rph) (mkImage target_segs apc aph)
                     (mkEntry rsp rbrk rmb rrnd) (mkEntry asp abrk amb arnd) inp.
 Proof.
@@ -1389,16 +1501,21 @@ Proof.
     apply (alloc_no_error_run target_segs apc aph asp abrk amb arnd target_alloc_limit inp U Htarget).
 Qed.
 
-(* [comment removed for export] *)
+(** The [Equivalence]-level equivalence for two brk-allocating binaries
+    with the SAME outcome set [U] (each run at ITS quantified break
+    base — [U] must be base-independent, which [Run.valid_brk]'s bounds
+    give the examples). *)
 Lemma alloc_strong_equiv :
   forall source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim
          U inp,
-  to_outcomes source_segs
-    (init_machine_state source_segs rpc rph rsp rrnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-    (init_model (segments_reserved source_segs) rbrk rmb rsp rlim inp) U ->
-  to_outcomes target_segs
-    (init_machine_state target_segs apc aph asp arnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-    (init_model (segments_reserved target_segs) abrk amb asp alim inp) U ->
+  to_outcomes (run_segments source_segs inp rsp rmb)
+    (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp)
+    (with_vdso (Vdso.vdso_run_init (ed_vdso rrnd))
+       (init_model (segments_reserved (run_segments source_segs inp rsp rmb)) rbrk rmb rsp rlim inp)) U ->
+  to_outcomes (run_segments target_segs inp asp amb)
+    (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp)
+    (with_vdso (Vdso.vdso_run_init (ed_vdso arnd))
+       (init_model (segments_reserved (run_segments target_segs inp asp amb)) abrk amb asp alim inp)) U ->
   Equivalence.modeled (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
   /\ Equivalence.equiv (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
                        (run (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp).

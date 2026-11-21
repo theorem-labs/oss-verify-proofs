@@ -20,7 +20,7 @@
          the epilogue.
    The 12 UBSan trap branches go to `unimp` 0x83864; each is decided on its no-trap edge inside its segment from
    these cut states (no extra premise).
-   LAYOUT (gate 6o, a Theorem Labs lane 22:5xZ, as the asan-ubsan kit at ae48bfd851f): the image-specific YCbq (and YC5d) are Required from
+   LAYOUT (gate 6o, a Theorem Labs lane 22:5xZ, as the asan-ubsan kit): the image-specific YCbq (and YC5d) are Required from
    lib.AU; every other module from lib.Reusable, as in lib/A. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -43,7 +43,7 @@ From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU.Prog Require Import PaRun PaShad
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU.Prog Require Import PaJournal ScenePaLib SceneBase SceneRo SceneFrame.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require Import YM05.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Prog Require Import SceneBlock.
-(* reac_ctrl_parse (a Theorem Labs lane 8cd86323565, TPARSE_STK = 8352) and reac_ctrl_checksum_verify (a Theorem Labs lane 33d26845cd2,
+(* reac_ctrl_parse (a Theorem Labs lane, TPARSE_STK = 8352) and reac_ctrl_checksum_verify (a Theorem Labs lane,
    TCKV_STK = 16): a Theorem Labs lane's asan-ubsan statements, Required by name. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU.Prog Require Import P_reac_ctrl_checksum_verify P_reac_ctrl_parse.
 Import ListNotations.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the plan checker's CONFIG_RSEQ argument (after LIMIT) in the fast checker's equations and the certificate tactics. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool FunctionalExtensionality.
@@ -424,34 +425,38 @@ Proof.
   apply check_g_ref.
 Qed.
 
-Theorem check_f_eq : forall segs IT A nx0 LIMIT XN XE XB HS KC bfuel fuel lc cs p,
-  check_f segs IT A nx0 LIMIT XN XE XB HS KC bfuel fuel lc cs p = check segs IT A nx0 LIMIT XN XE XB HS KC bfuel fuel lc cs p.
+(* LPS 727298f3: [AP.check] takes the run's CONFIG_RSEQ flag [rz] after [LIMIT]
+   ([AsanPlan.v], Section WithSegs).  The two equations name it, so that a
+   certificate's [check ... LIMIT rz XN ...] lines up with them argument for
+   argument. *)
+Theorem check_f_eq : forall segs IT A nx0 LIMIT rz XN XE XB HS KC bfuel fuel lc cs p,
+  check_f segs IT A nx0 LIMIT rz XN XE XB HS KC bfuel fuel lc cs p = check segs IT A nx0 LIMIT rz XN XE XB HS KC bfuel fuel lc cs p.
 Proof. intros. rewrite check_f_fe. reflexivity. Qed.
 (* [comment removed for export] *)
-Theorem check_f_it_eq : forall segs rs A nx0 LIMIT XN XE XB HS KC bfuel fuel lc cs p,
-  check_f segs (BFXI.mk_itab_ranges_f segs rs) A nx0 LIMIT XN XE XB HS KC bfuel fuel lc cs p
-  = check segs (APC.mk_itab_ranges segs rs) A nx0 LIMIT XN XE XB HS KC bfuel fuel lc cs p.
+Theorem check_f_it_eq : forall segs rs A nx0 LIMIT rz XN XE XB HS KC bfuel fuel lc cs p,
+  check_f segs (BFXI.mk_itab_ranges_f segs rs) A nx0 LIMIT rz XN XE XB HS KC bfuel fuel lc cs p
+  = check segs (APC.mk_itab_ranges segs rs) A nx0 LIMIT rz XN XE XB HS KC bfuel fuel lc cs p.
 Proof. intros. rewrite check_f_fe, BFXI.mk_itab_ranges_f_fe. reflexivity. Qed.
 End BFXC.
 
 (* [comment removed for export] *)
 Ltac cert_f_plain :=
   lazymatch goal with
-  | |- @eq ?T (AP.check ?segs ?IT ?A ?nx0 ?LIMIT ?XN ?XE ?XB ?HS ?KC ?bfuel ?fuel ?lc ?cs ?p) ?rhs =>
-      refine (@eq_trans T (AP.check segs IT A nx0 LIMIT XN XE XB HS KC bfuel fuel lc cs p)
-                          (BFXC.check_f segs IT A nx0 LIMIT XN XE XB HS KC bfuel fuel lc cs p) rhs
-                          (@eq_sym T _ _ (BFXC.check_f_eq segs IT A nx0 LIMIT XN XE XB HS KC bfuel fuel lc cs p)) _)
+  | |- @eq ?T (AP.check ?segs ?IT ?A ?nx0 ?LIMIT ?rz ?XN ?XE ?XB ?HS ?KC ?bfuel ?fuel ?lc ?cs ?p) ?rhs =>
+      refine (@eq_trans T (AP.check segs IT A nx0 LIMIT rz XN XE XB HS KC bfuel fuel lc cs p)
+                          (BFXC.check_f segs IT A nx0 LIMIT rz XN XE XB HS KC bfuel fuel lc cs p) rhs
+                          (@eq_sym T _ _ (BFXC.check_f_eq segs IT A nx0 LIMIT rz XN XE XB HS KC bfuel fuel lc cs p)) _)
   end.
 Ltac cert_f_it :=
   lazymatch goal with
-  | |- @eq ?T (AP.check ?segs ?IT ?A ?nx0 ?LIMIT ?XN ?XE ?XB ?HS ?KC ?bfuel ?fuel ?lc ?cs ?p) ?rhs =>
+  | |- @eq ?T (AP.check ?segs ?IT ?A ?nx0 ?LIMIT ?rz ?XN ?XE ?XB ?HS ?KC ?bfuel ?fuel ?lc ?cs ?p) ?rhs =>
       let itb := eval cbv delta [IT] in IT in
       lazymatch itb with
       | APC.mk_itab_ranges segs ?rs =>
           change IT with (APC.mk_itab_ranges segs rs);
-          refine (@eq_trans T (AP.check segs (APC.mk_itab_ranges segs rs) A nx0 LIMIT XN XE XB HS KC bfuel fuel lc cs p)
-                              (BFXC.check_f segs (BFXI.mk_itab_ranges_f segs rs) A nx0 LIMIT XN XE XB HS KC bfuel fuel lc cs p) rhs
-                              (@eq_sym T _ _ (BFXC.check_f_it_eq segs rs A nx0 LIMIT XN XE XB HS KC bfuel fuel lc cs p)) _)
+          refine (@eq_trans T (AP.check segs (APC.mk_itab_ranges segs rs) A nx0 LIMIT rz XN XE XB HS KC bfuel fuel lc cs p)
+                              (BFXC.check_f segs (BFXI.mk_itab_ranges_f segs rs) A nx0 LIMIT rz XN XE XB HS KC bfuel fuel lc cs p) rhs
+                              (@eq_sym T _ _ (BFXC.check_f_it_eq segs rs A nx0 LIMIT rz XN XE XB HS KC bfuel fuel lc cs p)) _)
       end
   end.
 Ltac cert_f := first [ cert_f_it | cert_f_plain ].

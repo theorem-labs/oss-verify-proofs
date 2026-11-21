@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AD1l.v, with its module paths changed, names TfibSyms -> PcapSyms and its addresses moved to libreac/fuzz_pcap's ASan build. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's channel-reader flag fdchan reads, carried as cs_ok's co_rdr (reac-repacer/fuzz_uci's form)). *)
 From OSSVerify.Proofs.reac_pw.fuzz_link.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -135,7 +136,7 @@ apply (tfib_not_owned_static B F_STDERR (F_STDERR + FILE_SZ) a HB); [vm_compute;
 | exact (u64_range (sv_denot E (SOff 41 0)))
 | exact (ro_img_of_IMG E _ HIMG)
 | apply (rodata_hull_zero B HB LAWS ly S W mem md); [exact HAR | unfold FMT_open, FMT_rderr, FMT_usage; lia | unfold FMT_open, FMT_rderr, FMT_usage; lia | lia]
-| split; [exact Hfd | reflexivity]
+| exact Hfd
 | exact HAI
 | intros regs' mem' md' HAR' HP' Hsbm' Ha0' HFW' Hfr' Hpr' HAI';
 apply (HPOST regs' mem' md' HAR' HP' Hsbm');

@@ -4,13 +4,13 @@
    fact ro_img, in the form the A entry instance (lib/A/Prog/PcapEntryInst.v, at ROI := AE3i.ro_img and
    ro_chunk_addr := PcapGHarness.ro_chunk_addr) takes them; no function walk.
    - pcap_roimg_kept (the instance's ROIMG_KEPT): ro_img is kept when the bytes of AE3i.v's img_ro_chunks
-     (PcapGHarness.ro_chunk_addr) read the same through mbyte. The proof is cgif c8557374ad2e lib/A/AE3i.v:72-81
+     (PcapGHarness.ro_chunk_addr) read the same through mbyte. The proof is cgif lib/A/AE3i.v:72-81
      ro_img_kept (lib/A/AE3i.v:107-116 here), with its premise over the window [IMG_RO_LO, IMG_RO_HI) and mrestrict
      replaced by the premise over the chunk bytes and mbyte: the per-chunk step rewrites mbyte at c_off c + i, which is
      a chunk byte, instead of the restricted memory at the word Z_to_bv 64 (c_off c + i). The same statement is
-     a working branch fec3976e6ce lib/A/Prog/PcapSourceOpenK.v:95 ro_img_chunks_kept, which does not build
+     a working branch lib/A/Prog/PcapSourceOpenK.v:96 ro_img_chunks_kept, which does not build
      there (that tree has no AB1v.v / AE3i.v / PcapGHarness.v, so tfibsegs, ro_img and ro_chunk_addr are unbound); in
-     this tree the file states it as a Hypothesis instead (PcapSourceOpenK.v:110, ROIMG_KEPT).
+     this tree the file states it as a Hypothesis instead (PcapSourceOpenK.v:111, ROIMG_KEPT).
    - pcap_roimg_low (the instance's ROIMG_LOW, PcapFuzzFopenG.roimg_low tfibsegs ro_img unfolded): ro_img depends only
      on the bytes below alloc_ceiling. The proof is the donor kit's lib/Reusable/YI04.v region_ok_transport (cgif
      lib/YI04.v) at E' := E on img_ro_region, whose window [IMG_RO_LO, IMG_RO_HI) = [0x10000, 0x2ef70) lies below
@@ -18,6 +18,7 @@
      has no writable part. The donor has no roimg_low; only this composition is new text.
    Both are stated at segs := tfibsegs (lib/A/AB1v.v, = Asan.M.loaded_segments); the instance states them at
    pa_segs PI_pcap, which reduces to the same segments. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

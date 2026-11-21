@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: generated for reac-pw/fuzz_qdisc image A by port-reply's ae3i.py from fuzz_qdisc.asan and lib/A/AF0m.v's Tfib_owned_static (IMG_RO_HI = this image's read-only PT_LOAD end), template cgif_file_fuzzer A/AE3i.v at c8557374ad2e (h-small-a3) *)
+(* Modified by Theorem Labs, 2026-10: generated for reac-pw/fuzz_qdisc image A by port-reply's ae3i.py from fuzz_qdisc.asan and lib/A/AF0m.v's Tfib_owned_static (IMG_RO_HI = this image's read-only PT_LOAD end), template cgif_file_fuzzer A/AE3i.v at theorem-labs/oss-verify-proofs@6b32741d849a (h-small-a3) *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_qdisc.asan (reac-pw/fuzz_qdisc asan) sha256 980e2b8458528060633e6c98fff20d2f46b97738c06eae4307d09f59c82c890e; unstripped twin sha256 d77ead7cec5c42ebc28aff0443565f333cbb4dd08f5f1101d3deb805d5e34aac *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.

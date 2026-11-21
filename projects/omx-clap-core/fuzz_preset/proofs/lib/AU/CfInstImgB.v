@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10-31: fuzz_preset (a Theorem Labs lane, row MISS-top at field round 3 part 3c): image rows of a Theorem Labs lane's
    generic cf instance layer at B' (#102 pin fuzz_preset.asan-ubsan d663f82d7f48, twin c90d4fa54d43; image class
    AImg_cgif, lib/AU/AGif2cgif.v: im_syms := TfibSyms, im_img_cover := YF0x.img_cover).  The B' twin of
@@ -8,14 +9,14 @@
    AGif4cgif / AGis / AGjm / CfImgB; the image-free lib/A/ADIfaceImgA kept) and B''s values.
    rule 24: no function proved (image arithmetic over this unit's generated symbol facts).
 
-   B''s values (lib/Reusable/YF0m.v:15-20, lib/AU/CfImgB.v, lib/Reusable/YB13.v), each the same symbol + offset on
+   B''s values (lib/Reusable/YF0m.v:16-21, lib/AU/CfImgB.v, lib/Reusable/YB13.v), each the same symbol + offset on
    the twin as A''s: instance 0xa8098 (_ZN6__asanL8instanceE), so the four [img_sapart_B] ranges end at or below
    inst + 720 = 0xa8368, below the store 0x17d5c8, the depot 0x18d5d8, the internal allocator [0xac900, 0x12d930) and
-   its flag 0x13b188; ts_junk's window [0xa2000, IMG_TOP_B = 0x601000) (YF0m.v:1811), tiled by two segments
-   [0xa2000, 0xa4000) and [0xa4000, 0x601000) (YB13.v:96-113, found by value, junk_segs_check); the errbuf object
+   its flag 0x13b188; ts_junk's window [0xa2000, IMG_TOP_B = 0x601000) (YF0m.v:1812), tiled by two segments
+   [0xa2000, 0xa4000) and [0xa4000, 0x601000) (YB13.v:97-114, found by value, junk_segs_check); the errbuf object
    cf_errbuf_obj = 0xaaf68 (error_message_buffer), 56 bytes, inside the 4th owned static extent [0xaaf50, 0x5cdd50)
-   (YF0m.v:1789); the oom byte 0x12d960; errno [0x5de68c, +4); both depot zones' static part [0x17d5c8, 0x5cdd50)
-   (lib/AU/AGis.v:231, lib/AU/AGjm.v:573); the image window [0x10000, 0x601000) (YF0x.v:27 / :40).
+   (YF0m.v:1790); the oom byte 0x12d960; errno [0x5de68c, +4); both depot zones' static part [0x17d5c8, 0x5cdd50)
+   (lib/AU/AGis.v:232, lib/AU/AGjm.v:574); the image window [0x10000, 0x601000) (YF0x.v:27 / :40).
    - [img_sapart_B] IMG_SAPART, [img_junk_B] IMG_JUNK, [exh_off_B] EXH_OFF, [errb_obj_owned_B] ERRB_OWN, as at B'.
    - [dzone_owned_ag_B] / [dzone_apart_ag_B]: YGcfInstHit's HDZO / HDZX; [oom_errb_apart_B]: YGcfInstMiss's HOEB;
      [ERRB_SEP_B]: ERRB_SEP_t, from which YGcfErrbSep.ERRB_SEP_ag gives ERRB_AG. *)
@@ -109,7 +110,7 @@ Proof. exact (YGcfImgRows.EXH_OFF_bound cf_exh_off_B). Qed.
 (* The closed equation behind ERRB_OWN: one owned static extent of this unit's B' table holds the whole 56-byte errbuf
    object [0xaaf68, 0xaafa0) (error_message_buffer 8 + error_report_callback 8 + error_message_buf_mutex 16 +
    error_message_buffer_placeholder 24, twin c90d4fa54d43's .symtab): the 4th extent [0xaaf50, 0x5cdd50) of
-   lib/Reusable/YF0m.v:1789's Tfib_owned_static. *)
+   lib/Reusable/YF0m.v:1790's Tfib_owned_static. *)
 Lemma errb_own_check :
   existsb (fun r => (fst r <=? 0xaaf68) && (0xaaf68 + 56 <=? fst r + snd r))%bool Tfib_owned_static = true.
 Proof. vm_compute. reflexivity. Qed.
@@ -186,7 +187,7 @@ Proof. intros B TB. rewrite cf_errbuf_obj_B, (ts_oom B TB). unfold TFIB_OOM. lia
 (* ---- ERRB_SEP's final text (cgif/cgif_file_fuzzer lib/YGcfErrbSep.v (file sha256 f62c93ec3f86; donor not released) :26-29):
    ERRB_SEP_t B := YGcfImgRows.ERRB_QAPART /\ (the rest).  Both conjuncts at B'. ---- *)
 
-(* ERRB_QAPART (YGcfImgRows.v:23-24, class-free, every B, no layout premise) at B': the errbuf object [0xaaf68,
+(* ERRB_QAPART (YGcfImgRows.v:24-25, class-free, every B, no layout premise) at B': the errbuf object [0xaaf68,
    0xaafa0) lies above the instance object [0xa8098, 0xa8ec8). *)
 Theorem ERRB_QAPART_B : YGcfImgRows.ERRB_QAPART.
 Proof.
@@ -194,7 +195,7 @@ intros B TS a Ha. change (TfibSyms B) in TS. rewrite cf_errbuf_obj_B in Ha. rewr
 unfold TFIB_INST. lia.
 Qed.
 
-(* ERRB_SEP_t's second conjunct (YGcfErrbSep.v:27-29), verbatim, at B' (the last four of errb_sep5_B). *)
+(* ERRB_SEP_t's second conjunct (YGcfErrbSep.v:28-30), verbatim, at B' (the last four of errb_sep5_B). *)
 Theorem ERRB_SEP_rest_B : forall B, TfibSyms B ->
   forall ly a, layout_ok ly -> im_img_cover ly -> ly_tsd ly = as_tsd B ->
   cf_errbuf_obj <= a < cf_errbuf_obj + 56 ->

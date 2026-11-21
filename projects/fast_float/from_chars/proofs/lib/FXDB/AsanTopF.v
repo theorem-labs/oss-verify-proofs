@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput; the launch premises valid_launch and entry_launch_ok_va; the channel-reader premise). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -39,16 +40,17 @@ Hypothesis Hleaves : forall (path0 : path) (data0 : list byte) (fs0 : Fs.Fs) (ar
   Forall (fun b => b <> Z_to_bv 8 0) path0 -> 6 <= Z.of_nat (length data0) <= PHI ->
   Forall (cont_okR cfg path0 data0 fs0 argv0) CONTSCA /\ Forall (cont_okR cfg path0 data0 fs0 argv0) CONTSCB.
 
-#[using="Hoff Hfs Hleaves"] Theorem h_file : forall sp brk0 mb draw inp data, valid_sp sp -> valid_brk ASEGS brk0 -> entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+#[using="Hoff Hfs Hleaves"] Theorem h_file : forall sp brk0 mb draw inp data, valid_sp sp -> valid_brk ASEGS brk0 -> valid_launch inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk0 mb draw) inp -> in_channel_reader inp = true ->
   valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) -> length (in_argv inp) = 2%nat ->
   (length (nth 1 (in_argv inp) []) < 4096)%nat -> path_eqb (nth 1 (in_argv inp) []) [] = false ->
   path_is_dirref (nth 1 (in_argv inp) []) = false -> fs_lookup (in_fs inp) (nth 1 (in_argv inp) []) = Some data ->
   at_main cfg sp brk0 mb draw inp (t_alt2 (t_die (msg_cannot_open (nth 1 (in_argv inp) [])) (in_fs inp)) (t_body data (in_fs inp))).
 Proof. LiaFast.lf_pins (fun (Hoff Hfs Hleaves : LiaFast.U) => LiaFast.u0).
-  intros sp brk0 mb draw inp data Hsp Hbrk Hfit Hva Hve Hvfs H2 Hlt Hne Hdr Hlk mem0 E ms model Hag Hd HAa Hfk.
+  intros sp brk0 mb draw inp data Hsp Hbrk Hvl Hlau Hrdi Hva Hve Hvfs H2 Hlt Hne Hdr Hlk mem0 E ms model Hag Hd HAa Hfk.
   set (p := nth 1 (in_argv inp) []) in *. set (fs := in_fs inp) in *. set (a0 := nth 0 (in_argv inp) []).
   assert (Hsame : forall q, In q (sm_frz M1) -> forall w, uE E (fst q) <= w < uE E (fst q) + uE E (snd q) ->
-                    mem0 (Z_to_bv 64 w) = m0 sp draw inp (Z_to_bv 64 w)) by (rewrite FRZ0_M1; exact Hfk).
+                    mem0 (Z_to_bv 64 w) = m0 sp mb draw inp (Z_to_bv 64 w)) by (rewrite FRZ0_M1; exact Hfk).
   (* [comment removed for export] *)
   assert (Hin : In p (in_argv inp)) by (apply nth_In; lia).
   assert (Hex : exists x y, in_argv inp = [x; y]).
@@ -64,8 +66,8 @@ Proof. LiaFast.lf_pins (fun (Hoff Hfs Hleaves : LiaFast.U) => LiaFast.u0).
   (* [comment removed for export] *)
   assert (ENT : forall lo hi, lo <= flen_of (length data) <= hi ->
             let E1 := ext data p E in
-            DEN ASEGS LIM (model0 sp brk0 mb LIM inp) mem0 E1 (S1c2 lo hi) MMAIN ms model /\
-            INV PV p data fs false (Some H0) mem0 E1 (S1c2 lo hi) MMAIN FSClosed (model0 sp brk0 mb LIM inp) /\
+            DEN ASEGS LIM (model0 sp brk0 mb draw LIM inp) mem0 E1 (S1c2 lo hi) MMAIN ms model /\
+            INV PV p data fs false (Some H0) mem0 E1 (S1c2 lo hi) MMAIN FSClosed (model0 sp brk0 mb draw LIM inp) /\
             HAX awf HA E1 (S1c2 lo hi) MMAIN AMAIN mem0 /\
             uE E1 ARGC = 2 /\ uE E1 (hvar 17) = Z.of_nat (length p) /\ uE E1 (hvar 16) = flen_of (length data) /\
             (forall k, (k < 3)%nat -> uE E1 (hvar k) = bv_unsigned (nth k data (Z_to_bv 8 0)))).

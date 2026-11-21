@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN0g.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap's ENOMEM answer). *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -137,6 +138,11 @@ Definition ss_mun : sstate := Eval vm_compute in run_ ss_ret0.
 Definition ss_mun2 : sstate :=
 mkSS (ss_pc ss_mun + 4) (sr_set (ss_regs ss_mun) 10 (SLit 0)) (ss_mem ss_mun) None (ss_facts ss_mun).
 Definition ss_none_end : sstate := Eval vm_compute in run_ ss_mun2.
+(* 08b1429: under a may-fail mode the munmap of the fresh map can answer -ENOMEM; malloc ignores the answer
+   and returns NULL along the same path with a0 = -12. *)
+Definition ss_mun2e : sstate :=
+mkSS (ss_pc ss_mun + 4) (sr_set (ss_regs ss_mun) 10 (SLit (2 ^ 64 - 12))) (ss_mem ss_mun) None (ss_facts ss_mun).
+Definition ss_none_ende : sstate := Eval vm_compute in run_ ss_mun2e.
 Definition ss_enf : sstate := Eval vm_compute in runto_ src0_A_enframe ss_ret1.
 Section f.
 Variable segs : list Segment.
@@ -584,6 +590,15 @@ destruct Hr as [<-|[<-|[<-|[<-|Hv]]]];
 subst E; cbn [base_val r_base r_lo r_hi ew E_mi R_lock R_nl R_errno vml_region];
 unfold LOCK, NLK, CTX, ERRNO, TP, src0_D_malloc_lock, src0_D_malloc_context, src0_D_libc, src0_tp; lia.
 Qed.
+Lemma st_ok_mun2e : forall regs5 mem5,
+regs_ok E (ss_regs ss_mun) regs5 -> mem_ok src0segs E mem5 (ss_mem ss_mun) -> facts_ok E (ss_facts ss_mun) ->
+st_ok src0segs E ss_mun2e
+(mkst (regupd regs5 10 (Z_to_bv 64 (2 ^ 64 - 12))) (v_addi (Z_to_bv 64 (ss_pc ss_mun)) 4) mem5 (seg_rom src0segs)).
+Proof.
+intros regs5 mem5 HR HM HG.
+change ss_mun2e with (resume ss_mun (SLit (2 ^ 64 - 12)) (ss_mem ss_mun) (ss_facts ss_mun)).
+exact (st_ok_resume_sv src0segs E ss_mun regs5 mem5 (SLit (2 ^ 64 - 12)) (Z_to_bv 64 (2 ^ 64 - 12)) HR HM HG ltac:(reflexivity)).
+Qed.
 End p.
 Lemma run_mi : sym_runN src0segs src0tbl FUEL ss_mi = (ss_thr, RS_stopped (SR_branch BC_LTU (SOff 10 0) (SLit 131052))).
 Proof. vm_compute. reflexivity. Qed.
@@ -602,6 +617,8 @@ Proof. vm_compute. reflexivity. Qed.
 Lemma run_ret0 : sym_runN src0segs src0tbl FUEL ss_ret0 = (ss_mun, RS_ecall).
 Proof. vm_compute. reflexivity. Qed.
 Lemma run_mun2 : sym_runN src0segs src0tbl FUEL ss_mun2 = (ss_none_end, RS_stopped (SR_jalr (SOff 1 0))).
+Proof. vm_compute. reflexivity. Qed.
+Lemma run_mun2e : sym_runN src0segs src0tbl FUEL ss_mun2e = (ss_none_ende, RS_stopped (SR_jalr (SOff 1 0))).
 Proof. vm_compute. reflexivity. Qed.
 Lemma run_ret1 : sym_run_toN src0segs src0tbl FUEL src0_A_enframe ss_ret1 = (ss_enf, RS_running).
 Proof. vm_compute. reflexivity. Qed.
@@ -667,6 +684,8 @@ Qed.
 Lemma ref_end_checks : preserved_check ss_ref_end = true /\ scratch_check ss_ref_end = true.
 Proof. vm_compute. split; reflexivity. Qed.
 Lemma none_end_checks : preserved_check ss_none_end = true /\ scratch_check ss_none_end = true.
+Proof. vm_compute. split; reflexivity. Qed.
+Lemma none_ende_checks : preserved_check ss_none_ende = true /\ scratch_check ss_none_ende = true.
 Proof. vm_compute. split; reflexivity. Qed.
 Lemma enf_checks : preserved_check ss_enf = true /\ scratch_check ss_enf = true.
 Proof. vm_compute. split; reflexivity. Qed.

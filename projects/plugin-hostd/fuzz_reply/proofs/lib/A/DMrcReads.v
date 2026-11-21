@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcReads.v (commit 6fdbdd538bcf, H4 flag-free secondary Recycle walk set; file sha256 78734be5a5a4) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 2 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcReads.v (H4 flag-free secondary Recycle walk set; file sha256 78734be5a5a4) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 2 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, slice H4; ReallocPrimary's Theorem Labs lane walk lanes, brief
-   B-WALK-LANES.md (sha256 68c13c734927; internal record) of the Theorem Labs lane frame notes; interface DMwalkIF.v at dc3949af11c): the READ FIELDS of
+   B-WALK-LANES.md (sha256 68c13c734927; internal record) of the Theorem Labs lane frame notes; interface DMwalkIF.v): the READ FIELDS of
    __asan::QuarantineCallback::Recycle (0x33e30) over the opaque cut relation [ARXr] and recycle invariant [DRq].
    rule 24: no function proved here (kind: field statements; the slice's walk is DMrcPrim.v / DMrcSec.v).
 
@@ -94,7 +95,7 @@ cd_model RMAXD (AFf3.X1 X k) (prim_class off) off /\
 (forall a, YFeuC.puser ly X a -> ~ (ck_base B ly k <= a < ck_base B ly k + ck_extent k) -> ~ AFf3.D B ly k (spZ regs) a).
 
 (* The record of the slice's reads (primary half; the secondary half is DMrcSec.rc_sec_reads). *)
-(* CacheDealloc's free-array GROWTH room at the cut (DMwalkIF.cd_pre_cx's last conjunct, WalkB1 ffbbfde0c14): on the
+(* CacheDealloc's free-array GROWTH room at the cut (DMwalkIF.cd_pre_cx's last conjunct, WalkB1): on the
    growth arm (its branch test as the guard) the model's budget has room for the free array's map.  A READ of the cut
    state; the cf layer gives it from its room (room_wA_parts_cf / room_rec_cf). *)
 Definition rc_prim_room_t : Prop :=

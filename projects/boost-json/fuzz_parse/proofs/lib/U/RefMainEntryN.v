@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: recorded proofs written out as text, statements written out as text, lemmas added for the revision, the launch input as a ProcInput. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -37,6 +38,14 @@ Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Section MainEntryN.
   Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
   Context {AMB : Amb}.
+  (* LPS-revision port, MIRROR of the ported Section MainEntryN in this unit's own
+     plain RefMainEntryN.v and of the ported Section MainEntry in the farm-GREEN
+     U/RefMainEntry.v (:80-103).  main_entry gained the ProcInput, the mmap base and the
+     entry point (U/RefStartup.v:101), and av/envv are now read OFF the input, so this
+     section gains `inp`, `mbase`, `entry` and the two bridges Hargv/Hve'.  Both bridges
+     are reflexivity where MainOpen and MainTop build inp with mkProcInputC. *)
+  Variable inp : ProcInput.
+  Variable mbase entry : word.
   Variable sp0 : word.
   Variables av envv : list (list byte).
   Variable rdraw : ltac2:(zQ "10!nt4$0").
@@ -47,18 +56,61 @@ Section MainEntryN.
   Hypothesis Hve : ltac2:(zQ "10!ok9@1$0?4envv").
   Hypothesis Hvsp : ltac2:(zQ "10!ol7@1$0?3sp0").
   Hypothesis Htid : ltac2:(zQ "50!h9!om3!kp7!jt5!om9@2$3@2$1Z@2$2@1$0#k0?3tid@2$1@2$2@1$0#k0?3tid@2$4+2+h6").
-  Hypothesis ME : ltac2:(zQ "10!oqf@8$0?3AMB?3sp0?2av?4envv?5rdraw?3tid?4regs?3mem").
+  (* The encoded ME held the pre-revision 7-argument
+     `main_entry sp0 av envv rdraw tid regs mem`; a blob is never re-encoded, so it is
+     written out (rule 11). *)
+  Hypothesis Hargv : in_argv inp = av.
+  Hypothesis Hve' : in_envp inp = envv.
+  Hypothesis ME : main_entry inp mbase entry sp0 rdraw tid regs mem.
+  (* LPS-revision port, MIRROR of the plain twin's ported Section MainEntryN and of the
+     landed U/RefMainEntry.v's Section KnowProofs, whose comment records the About probe
+     a farm round these argument lists are read off:
+       lay_bsb_nw          v inp mbase ph entry sp brk rdraw Hvl Hlau Hsp_hi
+       argv_ptr_bounds_at  v inp mbase sp brk draw Hlau k Hk
+       u_cat_argv_ptr      v inp mbase ph entry sp brk rdraw Hvl Hlau Hlo Hhi k Hk
+       struct_av_bound     inp mbase ph entry sp brk rdraw
+       argv_str_len        inp Hva k Hk
+       read_argv_cstr_k    v segs inp mbase ph entry sp brk draw k Hlau Hk
+       read_word_stack     v segs inp mbase ph entry sp brk draw k m Hlau Hk Hm Hnw
+                           (MuslStrlen.v:655-664, read there)
+     so this section gains `brk`, `Hvl` and `Hlau`; `v` is Sv48 and `ph` is RPH.  `Hhw`
+     is the AT_HWCAP bridge.  None is a premise the top cannot meet: MainOpen and MainTop
+     build inp as `mkProcInputC [a0s; path] envv fs0 stdin0` (Amb.v:36-40), where
+     in_hwcap inp IS a_hwcap, and valid_launch / entry_launch_ok_va are already a
+     conjunct of valid_input and a Hypothesis of ref_startup. *)
+  Hypothesis Hhw : in_hwcap inp = a_hwcap.
+  Variable brk : word.
+  Hypothesis Hvl : valid_launch inp.
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp0 brk mbase rdraw) inp.
+  Lemma kvaN : valid_argv (in_argv inp). Proof. rewrite Hargv. exact Hva. Qed.
 
-  Definition p0N : ltac2:(zQ "20!h9!jc@1$1@1$0#k0") := ltac2:(zQ "10!nb@4$0?3sp0?2av?4envvN0").
-  Definition auxvpN : ltac2:(zQ "20!h9!jc@1$1@1$0#k0") := ltac2:(zQ "10!sd@3$0?3sp0?2av?4envv").
-  Definition rndN : ltac2:(zQ "20!h9!jc@1$1@1$0#k0") := ltac2:(zQ "10!hga@3$0?3sp0?2av?4envv").
+  (* LPS-revision port, written out rather than re-encoded (rule 11), the same three
+     tree-local signature moves the plain twin's Section MainEntryN carries:
+       cat_argv_ptr gained execfn and its base is the DRAWN top (CatExec.v:258-260);
+       auxv_w is exported over the ProcInput (U/RefStartupDefs.v:60);
+       at_random_ptr gained the rseq flag (U/RefStartupDefs.v:68's own rnd_w).
+     kb_rseq is read from the run and never pinned. *)
+  Definition p0N : word := cat_argv_ptr (ed_top rdraw) av envv (in_execfn inp) 0.
+  Definition auxvpN : word := auxv_w inp sp0.
+  Definition rndN : word := at_random_ptr sp0 (kb_rseq (in_kernel inp)) av envv.
 
   Definition valsN : ltac2:(zQ "30!hj2!h9!jc@1$0@1$2@1$1#k0") := ltac2:(zQ "b0!h9!jc!hja!hk2!hk9!hpd!hta!ii0!iid!ij7!ijf@3$3@1$1@1$0#k0@3$2@1$1@1$0#k0?3sp0@3$2@1$1@1$0#k0$5@3$2@1$1@1$0#k0$5@3$2@1$1@1$0#k0$8@3$2@1$1@1$0#k0$9@3$2@1$1@1$0#k0?3tid@1$4@1$1@1$0#k0@3$3@1$1@1$0#k0@1$7?4regs@3$2@1$1@1$0#k0@1$6?3AMB@3$2@1$1@1$0#k0@1$a?5rdraw@1$4@1$1@1$0#k0").
   Definition EN : ltac2:(zQ "10!io9$0") := ltac2:(zQ "80!hj2!hk9!h9!ip0!ipc!itc!iu7!jc@2$4@1$5$6@1$3@1$1@1$0@1$7@1$2#8").
 
   Definition sr_mainN : ltac2:(zQ "20!hj2!iv0@1$0$1") := ltac2:(zQ "60!iv0!hja!iv8!jg0!jk9!hk9@3$1$0@1$3Z@3$1$0@1$3+ttln4@3$1$0@1$4-j0@3$1$0@1$3+hgog0@3$1$0@1$3+hgurv8@3$1$0@1$2Nb@3$1$0@1$2Nc@3$1$0@1$2Nd@3$1$0@1$4+8@3$1$0@1$2Nf@3$1$0@1$2Nh0@3$1$0@1$4+8@3$1$0@1$2Nh2@3$1$0@1$2Nh3@3$1$0@1$2Nh4@3$1$0@1$2Nh5@3$1$0@1$2Nh6@3$1$0@1$2Nh7@3$1$0@1$3+kmvu4@3$1$0@1$2Nh9@3$1$0@1$3Z@3$1$0@1$3Z@3$1$0@1$3Z@3$1$0@1$3Z@3$1$0@1$3Z@3$1$0@1$3Z@3$1$0@1$3Z@3$1$0@1$3Z@3$1$0@1$2Ni2@3$1$0@1$2Ni3@3$1$0@1$2Ni4@3$1$0@1$2Ni5@1$5$0").
 
-  Definition kn_stackN : ltac2:(zQ "20!hj2!jl0@1$0$1") := ltac2:(zQ "90!iv8!jl0!hja!jla!jm4!hk9!jma!jn4!jnd@3$2$1@2$6@1$0N0+h0@3$2$1@3$3@1$0N0+nvvvogggggg0+ogggggggggg0@3$2$1@2$8@2$4@1$0N0-ogggg0+ogggg0@3$2$1@3$7@2$4@1$0N0+8N8@1$0N1@3$2$1@3$3@1$0N1+nvvvogggggg0+ogggggkgggg0@1$5$1").
+  (* LPS-revision port, written out rather than re-encoded (rule 11); the SAME ONE change
+     the landed plain twins had to make to kn_stack: the encoded KWr claimed the stack
+     write window as [sp0 - 8388608, sp0), and the model now certifies writes only from
+     MemSplit.wok_lo sp0 = bv_unsigned sp0 + stack_window_reach - stack_max_size
+     (MemSplit.v:137-138), 2,244,095 bytes higher.  Written SYMBOLICALLY, never as the
+     literal 6144513.  Every other entry is the encoded one unchanged, in its encoded
+     order: align 16; the sp0 range; the KWr; p0N's word at offset 8; p0N's range. *)
+  Definition kn_stackN : list kentry :=
+    [KAlign (EVar 0) 16; KRange (EVar 0) 0x7fff80000000 0x800000000000;
+     KWr (SA (EVar 0) (stack_window_reach - stack_max_size)) (stack_max_size - stack_window_reach);
+     KWord (SA (EVar 0) 8) 8 (EVar 1);
+     KRange (EVar 1) 0x7fff80000000 0x800000400000].
 
   Definition kn_mainN : ltac2:(zQ "20!hj2!jl0@1$0$1") := ltac2:(zQ "40!hk2!jl0!jo4!jp0@3$0$1$3$2").
 
@@ -98,25 +150,113 @@ ltac2:(KReplay.run1 (kr_t_RefMainEntryN ()) ["MainEntryN"] "h01zh12b1h22b2h31nh4
               first [ rewrite (evN_junk (n - 6)) by lia; reflexivity | idtac ]
             | |- _ => cbn [edenot] end ];
     first [ reflexivity
-          | exact (me_ra _ _ _ _ _ _ _ ME) | exact (me_gp _ _ _ _ _ _ _ ME) | exact (me_tp _ _ _ _ _ _ _ ME)
-          | exact (me_s2 _ _ _ _ _ _ _ ME)
-          | rewrite (me_sp _ _ _ _ _ _ _ ME); apply bv_eq; rewrite !u_small by lia; lia
-          | rewrite (me_s0 _ _ _ _ _ _ _ ME); reflexivity
-          | rewrite (me_a1 _ _ _ _ _ _ _ ME); reflexivity
-          | apply (me_szero _ _ _ _ _ _ _ ME); cbn; tauto
+          | exact (me_ra _ _ _ _ _ _ _ _ ME) | exact (me_gp _ _ _ _ _ _ _ _ ME) | exact (me_tp _ _ _ _ _ _ _ _ ME)
+          | exact (me_s2 _ _ _ _ _ _ _ _ ME)
+          | rewrite (me_sp _ _ _ _ _ _ _ _ ME); apply bv_eq; rewrite !u_small by lia; lia
+          | rewrite (me_s0 _ _ _ _ _ _ _ _ ME); reflexivity
+          | rewrite (me_a1 _ _ _ _ _ _ _ _ ME); reflexivity
+          | apply (me_szero _ _ _ _ _ _ _ _ ME); cbn; tauto
           | idtac ].
 
   Theorem main_regs_okN : ltac2:(zQ "30!kua!kl1!kv5@3$0$1$2?4regs").
 Proof.
-ltac2:(KReplay.run1z (kr_t_RefMainEntryN ()) ["MainEntryN"] "#$+=p'0h02Hih11ni001nh22H1h32H2h44__x1h51bh62Hah73Hi0h87__arithh94__ffh:6__sat1h;!s/%2h<!s/%3h=8__varmaph>5__with?4__p1h@!sI%4hA!s/%5hB2b1hC2b2hD1ihE1zhF1HhG2H0hH4cstrhI1xp%0p&0p;1p;2p;3p;4p;9p;6p;;p;<p;7p;8p;5g00Llj16Tg004jj15Tg005Oj1kTg00Bij2DTg0080j2ZTg00>CR0j10Tg00X;R1j21!sW$mj1STg01:6j3g!s/$Yj1[Tg00:Dj2`Tg00?<j2OTg00\bj4_Tg01;`m90:!tH$Lj1@Tg01<fk104Tg010lj2BTg00]>j2WTg00<^j33Tg01=Dj2dTg011Ik30!tO$ALR2j2>!sD$aj4tTg00@dj2v!sC$hj2i!uE$Ej3hTg00CSj2yTg00DDk20L!s0$dj1xTg006Pk10KTg00EDk20J!s0$bk10ITg00F@k10H!s0$kj2uTg01>Hk30ETg00H1j4fTg00Ibk20!u4$JDk20ATg00K0k30@!s0$Ok40?!sW$\k10>Tg00GNj2q!st$kk30=!w:$LR3j2oTg01?Nj2nTg003nj6LTg01@\m90<Tg016_j1mTg01Abj1lTg01Bnm909Tg01D4m908Tg01E:m907Tg01F@m906Tg01GFm90!x_$[ej3F!wt$jj3PTg01HLl;HTg01IUj2!wW$Ioj3TTg007PR4j1a!w%$?k102Tg00mfk10;Tg01JIj4j!s/$gk600Tg01KKj4~Tg017ej2rTg00MQl<}Tg01L^j3\Tg00N6k70!z&$I>j7|Tg002oj8{Tg00f0k20FTg01MAj3z!s/$[k50GTg01N8l<wTf0R5#6#6p=V%6!s0$#6p=X%55#5p=^!s-$#5#5p>0M!s3+!s$'p=C%55#@p=Qf6R6f5R7f4R8f3R9g01N]R:f2R;C_'Wg00kUR<g01OhR=f1R>g01PoR?P5C_'r33p=21r<5p=I1W;>=395p=:g01R;R@9g>5p=]%6!tA$Jg00NZRAg00O9RBP1P4P2g01RWP7P8P9P;P>P5M<}p=sg00P9R2/Z5p=<1qB5p=RA\B>5p>0CP>g002PS00g00PWR1P1g00Q7RCP5g00QWK0Dp=?PB!sO$W4P5Cfp=Y!s6%1S9!s6%eP;Q00P1P1PCP>P5F|p=pP9!s:,!t]$G{p=U%@5=g>@p==%55#6p=c20F<5,O>p=9g01S`S01,45p=EA3678A39;>/45'4p=A1O>59z9;p=GP7P8149!t#$I0Gp=M!sP'p=bAT;>59T89p=;%05#0p>031B89/B;/B>/B5p=8PAPAPBPBP0P4P4P6g01T=R6!v_$!sA19P6!vo'wM<wp=7A\B89=\B;=\B>=\B5p=N!t7$#0#0p=Kp,3HloS02g00R7R6#6R4#V#X!s$$^$0M#C!s$$QR0%56RD#5RE#5RF#5RG#5RH#5RI#kRJp,3sp0RK'DRL'Zp,3HhiS03%CI!sg&C#QRM,ZLP<P?p,4regsR<g00UMRN#0RO#0RP#0RQ#0RR#0RS#0RT#0RU#0RV#0RW#0RX#0RY#0RZ#0R[#0R\#0R]#0R^#0R_#0R`#0Ra#0Rb#0Rc#0Rd#0Re#0Rf#0Rg#0Rh#0Ri#0S04#0S05#0S06#0S07#0Rj,15RkPA%SJRlP<%6DRm#kRn#SRoP>Agn2@R@P>%[2RpF2^0kP>11Nj1`J2,OlPlP<P@%IpRkC:e!s4$oPNP:P@C_P=PNP?PpC_#IC:eW0PA%05R?/1j!sO%%0>S08P@Q08PpF2]0P511Ojp,3AMBRNPKp,2avR=p,4envvR:p,5rdrawRqp,3tidRrP<p,3memRsp,2MERtN90:PlP<%@6Ru,]n%54Rv#6S09#6S0:#J!s$&V!s+$Q#[!tj$!u/&OP@POPpF2!t{&?S0;!t|+Q08#0S0<P@Q0<!t~,PjR?Pl%5vS0=#5S0>#5Rv$04RO,BLS0?,`JRw%@DRD,]n,W<S0@=3l5X5lPl%@vRv,dLRx,`JS0AA3l5wX5lg018lRy%S5Rz%S>R{P3%S;?3>51D9;1D9>53BR3[1D;>1D;553B%S9?3;>[R|%S8?39;\3B01;>5P5n20010!s#$12!s-%0WCWBW1P|^C{^Bz^1yP5PJQ0APwPBPx1DJwS0B93B5XEBPBQ0?A3Bx!s3$?%@HRH,>DS0CPPPD1OBDPjPH1OBHS0DEsP>CtS0EQ0C%6mR?#QRw,vDS0F1>2DS0G%<w1iDwRy,>2[[S0H%<DRzg00UlR{AhDw>UW6S0I%<y\{^6zS0J%@GR|,yLS0K%<L%<|20LL|#<[[S0Lg00VHR|#xS0M&0K|S0N20JB>S0O&0IBS0P&0HBR|PB1uB6R6%Rv60EBR3g01Ta%RO-0C6R}Cf'?20B|CS0QP5P;g00SLS0Rg00W[R~'OQ0R20A5;;3~dB0@B2>H0?S0Rb9b=b>X4B1d5v1B5O53B^4BP5PLO1b8b:b;b<b7Q0BQ0?Q!v7%@IRI!v3$BQ0G%<I1iDIR~!v/&GAhDI>V{X6zS0S%<~!u}&TQ0FQ0HQ0IQ0JQ0KQ0LQ0MQ0NQ0OQ0PP|%RM,Y6,?|Rz&0>1R{P|%R0/!s9%6P{1qB2RI/Y},?|%RD>0=BJRD,e},?|5p|CUCUQ0QQ!uI/Z5MRM1Z0>R01B;OR}#<1>}~'o[[!uZ&Q03Q02O3R}!ub+@bAb7'nELQ0A,DJ!uj%!uv$GQ0SQ!u?EPzP{P|P6P{1YI3,?|1e3D!ts=d;vRv#<1>v~'o\0\M^4BP!t]2,nxELO4b2Q0@PNPKP=P:PqPrP<PsPtN90<EL%mO#I%lOEL!~n&PP@PP!~n+Q0;#0RP!~o-<#0R!#3:'!~m%Qj!t+89PlP<1=n4%6GRG#^#C!#4&2QP@PQ!#4&,P!t8-%0OR!sF+!t6%R!t698!t6&E%VG#c#c#V#X#^!t:3RP@PR!t:<QR!sF+!t:%Sj19lY!sb&SP@PS!sb<RR!sF+!sb%Tj19lZ!sb&TP@PT!sb<SR!sF+!sb%Uj19l[!sb&UP@PU!sb<TR!sF+!sb%VjPl%@FRG,BL,`JRL1]nG,W<R4!#6|'PLA3l5LX5lRx1OlLR}P4!vs87EL%mG#IR4%lGRG!y5+VP@PV!ta<UR!sF+!ta%Wj19l]!sb&WP@PW!sb<VR!sF+!sb%Xj19l^!sb&XP@PX!sb<WR!sF+!sb%YjPlPL1=n?,W<RM!uv-PxP}PM!uj86ELP4P!ub,YP@PY!tB<XR!sF+!tB%Zj19l`!sb&ZP@PZ!sb<YR!sF+!sb%[j19la!sb&[P@P[!sb<ZR!sF+!sb%\j19lb!sb&\P@P\!sb<[R!sF+!sb%]j19lc!sb&]P@P]!sb<\R!sF+!sb%^j19ld!sb&^P@P^!sb<]R!sF+!sb%_j19l!}Q'_P@P_!sb<^R!sF+!sb%`!~e95PlP<%JE,=n%VF!~e+!#A#3`P@P`!t<<_R!sF+!t<%aj19lg!sb&aP@Pa!sb<`R!sF+!sb%b!tx6%5mRm#5,=nRF1DJrRJ,>2R21>JyRJA3oFFRyPo%6m,=nRmPFPo1]nwRwPFPo%6?,=nR?PFPoQ0>,=nRG!s2%=#6,=nR4!s4%9!t-%MPFQ0:,=nRn=3oF#EFAFAFAR}PyP}PoPFCGX3JX22p,4HtidR}EM%xo9Fon9FoM9Fo49FoG9Fo?9Fow9Fom9FoFRy9PoFeM;H!uo$FP!#G,,bP@Pb!v?<aR!sF+!v?%c!v?6PmP2P!v$$mRxA3ommRLPoPwPmPoP?!s+$G!s+$4!s+$MPmA3onm#ECb!uT$0'4RvPLP0PoPmCG9Txv!u\%P}EMAPomy!u1+m!u1/cP@Pc!u1<bR!sF+!u1%d!u17w!u1'wRvA3omw!u8$wwR0!u2$w!u2$w!u2$w!u2$wA3onw!w`%RL'4R~'4RDPvPDPxP~P0P!uq$CGD;!u:0w!u:,w!u:/dP@Pd!u:<cR!sF+!u:%e!u:7?!u:'?RLA3om?R0A3ow?R~A3o??Rx!u;$?!u;$?!u;$?A3on?!wG%RD'4Rv'4R3'4R6PLP6P0P3PxPDPoP?CG9T~v!uC2?!uC,?!uC/eP@Pe!uC<dR!sF+!uC%f!uC7G!uC'GS0:A3omG!w_$wG!uD%GRDA3oGG!uK$4PG!uE$GA3onG#EFA!u;$0'4R6'4!wd$zQ0:PzPvPLP~P6PDP0PxP3PoPGCGD;!uN2G!uN,G!uN/fP@Pf!uN<eR!sF+!uN%g!uN74!uN'4!uN&4S09A3ow4S0=A3o?4R3A3oG4!z?$44!z?$MP4A3on4#ECb!wn$6!z/&L!wz&!uU%Q09PvQ0=PLP3!zB$DPoP4!|X$6!u[44!u[,4!u[/gP@Pg!u[<fR!sF+!u[%h!u[7M!u['M!uK%mM!u[&M!uk%?MS0>A3oGMS0;A3o4MR6A3oMM!uk$nM#E!u\$0!u\&3!u`1=!u`+:PLQ0>P3Q0;!xE$0!zm&M!xC%!uh2M!uh,M!uh/hP@Ph!uh<gR!sF+!uh%i!uh7n!uh'nRFA3omnRmA3ownRwA3o?nR?A3oGnRGA3o4nR4A3oMnRMA3onnRt#ERs'4Rr'4Rq'4R:'4R='4RK'4RNPFPNPmPKPwP=P?P:PGPqP4PrPtQ01PoPnCG9TMs!ue6n!ue,n!ue/iP@Pi!ue<hR!sF+]0P5Q04/1j&03jRk,9l!#Jj&4P@Q04!sk<iRnP@Pn!sk,5/1j%0k!sj05P@Q05!sj<nRyP@Py!sj,6!sj66P@Q06!sj<yR}P@P}!sj,7!sj%!sh-7P@Q07!sh&%0P!sG$}!sl$%a>RkPu!s$%D8!s0i/>HS07PP1B5uXIBRP!s#bkO1S06O1S05O1S04O1S01O1S0;O1R2O1RJO1RsO1RMO1RtO1RrO1R4O1RqO1RGO1R:O1R?O1R=O1RwO1RKO1RmO1RNO1RFO1RDO1RxO1R0O1R6O1R~O1R3O1RLO1RvO1RzO1PPP}PzPPPyPvPPPnPLPPPiP3PPPhP~PPPgP6PPPfP0PPPePxPPPdPDPPPcPFPPPbPNPPPaPmPPP`PKPPP_PwPPP^P=PPP]P?PPP\P:PPP[PGPPPZPqPPPYP4PPPXPrPPPWPtPPPVPMPPPUPsPPPTPJPPPSP2PPPRQ0;PPPQQ01PPPOQ04PPQ0<Q05PPQ08Q06PPP>Pk1OBkF7!s$APjPHQ0DEsP5CtQ07&02;%a;#<!#U|4p-0R;!#V%$PBPBQ0OP>&0;BRjCjP>PjCjQ0PP|1uBERE,YI,?|P{P|PE%RuREP!s$$DNP!s0h%RH'e!t/&!#jd+9J00!#WI5W?%<5P>!{`vP9[[^4B^?;P5!}7%f7Ro#K!s$1R<P@P<PpF2%aoP8P7O4!#Xm'Hb7W0XDAP5O1n0110001020111100X1!s>G0!s>~!s>~!s>~!s>50!s>~!s>W1!sn~!u6~!t^zP5O1!{l$C~bGbFo"). Qed.
+    pose proof Hlo as HloA. pose proof Hhi as HhiA. pose proof Hal as HalA.
+    apply regs_ok_by_index.
+    intros i Hi.
+    destruct i as [|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|[|i]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]; [ .. | lia]; reg_caseN.
+  Qed.
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   (* [comment removed for export] *)
 
-  Lemma main_strN : ltac2:(zQ "h83!h9!jc!hj2!hk9!kp7!jpd!jt5!lh8!nb!lhf!li5!lid!ju3!lj7!ln4!kp0!kmf!kn9!hk2!hja!jtc!lo7!jvb!kg2&@4$7@1$2@1$1@1$0#8^2?2av@1$3@1$1@1$0#8&@2$5@1$1@1$0#8~0&@2$4@1$0#k0@4$8?3sp0?2av?4envv^2>1k$h4>0@2$h7^1@2$5@1$2@1$1@1$0#8?2av@2$6@3$c@1$b@1$2@1$1@1$0#8@4$d$e?3mem@4$8?3sp0?2av?4envv^2@2$h6~1N1@2$a@1$2@1$1@1$0#8@3$h2@1$1@1$0#8~0@3$h3@1$1@1$0#8@2$h1@1$0#8Z@1$3@1$1@1$0#8@2$6@2$9@2$4@1$0#k0?3sp0~2@2$6@2$9~2@2$f@2$4@1$0#k0?3sp0+igior8@2$6@2$9@1$h0~1+hvvvf@2$h5@1$2@1$1@1$0#8\2t8@1$2@1$1@1$0#8@3$c@1$b@1$2@1$1@1$0#8@4$d$e?3mem@2$h1@1$0#k0@2$f@2$4@1$0#k0@4$8?3sp0?2av?4envv^3@1$h0@2$5@1$1@1$0#8@4$7@1$2@1$1@1$0#8^3?2av@1$3@1$1@1$0#8N8@2$a@1$2@1$1@1$0#8^1").
+  (* LPS-revision port, written out rather than re-encoded (rule 11).  The encoded
+     statement applied the pre-revision `cat_argv_ptr sp0 av envv k`; CatExec.v:258-260
+     gives it the DRAWN top as base and an execfn argument, as the landed
+     U/RefMainEntry.v's main_str states it.  Nothing else moves: the same five conjuncts,
+     the same 2107576, the same 131071, the same trailing 8-byte read.  Tactic text from
+     the plain-text twin
+     a donor tree
+     :projects/boost-beast/http_request/proofs/lib/RefMainEntryN.v:135-155, re-threaded
+     to the revision's generalisation sets (Section header). *)
+  Lemma main_strN : forall k, (k < length av)%nat ->
+    rdn RSEGS mem (cat_argv_ptr (ed_top rdraw) av envv (in_execfn inp) k) (length (nth k av []) + 1) = Some (nth k av [] ++ [Z_to_bv 8 0])
+    /\ (bv_unsigned sp0 <= bv_unsigned (cat_argv_ptr (ed_top rdraw) av envv (in_execfn inp) k))%Z
+    /\ (bv_unsigned (cat_argv_ptr (ed_top rdraw) av envv (in_execfn inp) k) <= bv_unsigned sp0 + 2107576)%Z   (* [comment removed for export] *)
+    /\ (Z.of_nat (length (nth k av [])) <= 131071)%Z
+    /\ (exists t8, rdn RSEGS mem (Z_to_bv 64 (bv_unsigned (cat_argv_ptr (ed_top rdraw) av envv (in_execfn inp) k) + Z.of_nat (length (nth k av []))))
+                         8 = Some t8).
 Proof.
-ltac2:(KReplay.run1z (kr_t_RefMainEntryN ()) ["MainEntryN"] "#$%Hh04__x1h14__x2h24Hk'0h34cstrh45cstr0h5!s-$1h67__arithh74__ffh88__varmaph95__with:!sR$2h;4__x3h<3Hf0h=4Hsb0h>3Hu0h?7__sat10h@6!s0$6hA!s/%9hB!sd$3hC!s-$4hD!s-$5hE!sG%7hF4__x4hG4__x5hH2t8hI1xhJ2HahK!sK%3hL!s/%8hM3Hl0hN!t?&1hO!s0&2hP!s0&3hQ!sS%4hR!s/%5hS!tC$6hT1yhU3Hr8hV!sA%2hW4__x6hX1ahY1nhZ1oh[1zh\2B1h]2B2h^1Hh_2H0h`2Hfha3Hk'hb3Hl8hc4Hlenhd3Hnwhe3Hsbhf2Huhg2Hwhh!t/%1hi1bhj2bshk1khl1mp%0p%1p&0p;1p;2p;4p;3p;:p;7p;8p;=p;9p;;p;<p;6p;>p;5p;Bg004jj13Tg005Ok102!s0$mj1{Tg006Pj1rTg0070j2ITg00X;R0j2XTg00Llj19Tg004Lj1@Tg00Bij2BTg0080R1j20Tg01UHk10\Tg00YYk10Y!st$PR2j1!t9$ALR3j27Tg01=aj4<Tg00@?j16!s/$dj2y!sL$hj2x!t0$Ej3wTg00CSk20ATg00DDk20!tM$Ddj1sTg00Ebk10!sq$F@k10:!s0$kj2qTg00H\k108Tg00Ibk20!t7$?<j2|Tg00JDk20!v+$<^j3Dj1tTg00K0k30c!s0$Ok40aTg01VEm:0[Tg01WMk70ZTg010lR4j21Tg01XSk80!vE$8LR5j2?Tg01Yak10WTg01ZCj4!v%$\bj4eTg00>Cj1LTg00ajj2WTg00:Dj2ZTg00[ej3]!sS$Ej3oTg01[Kj2J!s/$mj2nTg01\Gm=0QTg01]Sk20PTg01^^m90MTg01_kj1zTg01a;k20!t5$>bR6j2bTg01bPk40KTg01cZk80!t#$ddk70FTg01edk70ETg01fbk20DTg01gck70CTg01hhm;0BTg01j4j1u!s/$Rk40>Tg00MQl<STg00mfk10=Tg01>kk30;!wN$1j4V!y^$Aj4lTg003nj6UTg01k5l>vTg01lJj2}Tg01m3j2`!s/$_j1iTg01nZj3mTg01o?k20GTg020Ok60H!s0$kk20ITg021Nk307Tg00GNj2~Tg01<fk105!sC$kk20NTg022Lk30O!y'$>k704Tg01?Nk20RTg0235k40S!s0$Ok40TTg024Tm=0UTg025bk50VTg026fj4h!z?$Dk20dTg00N6j7fTg002oj8^Tg027Ak401Tg028Ak30b!s0$`mB0!|=$N8m<0!u`$JIk40_Tg01L^k30]Tg029Fk30^Tf0R7#9#9p=P%37#3p=d!s-$#3#3p>0?!s3+!s$'p=Kg00O9R8/|7p=4g00NZR9P8P0P2P3g01RWf5R3f4R0f3R:f2R;f1R<P7M<Sp=[g00P9R=/07p=520d87p=T1~87p=RP;g002PR>g00PWR?P?g00Q7R@P8P<g00W4RAP7CVg00QWRBFfp=>P:P>P?P?P@P;P<P7G^p=\%27,0=p=GP:!s<%CY,B0p=H!s6+e,I0p=;%27,1<p=Mg029oS00!sG%H01=D07p=FB0b;<7#zp=CAD8<7p==Q00!sk%H01p=QP9P8P6P2P1g00OWP3P!sk&!uh&pP9!s$$8P8P8g02;6P2!s$$4g02;V!sV/NB00p=g!sS'!sL$!sE/<0`p=_!sA$1f7R6P1f6R1!t@4j!se&!s$%4P7P<P;P4P:P0P3P1P6f8R4f9RC!t>%aP8!uF'_p=81q87p=OB0]!ue$:P<!w#+7P!w:$k1}87p=NB0^!sI$EP3!sI+0!s0+8P:PAP;CVPBFf!w`'A!sG-!x#/!sI,>09P1!s@+!uQ%!xO2G^p=cg00R7RB#3RA#3S01#3S02$02RD#{RE#rRFp,2avRG'IRH,X7p,3HloS03%9BS04#9S05#9#P!s$,RI#3#d$0?#K!s$$@RJQ02#3RK#dRL$02RMp,3sp0RN'BRO'0p,3HhiRP%3LRQ!s[&!s_$S06,0Og02<9RRPNp,5rdrawRSPGp,4envvRTp,3AMBS07$0\RUQ07$0YRVp,3HvaRW!s-$eRX1X:H%2:RY%2HRZ'7R[P:PY%4YPHPZ%4ZS08E[P;C<P[%60%20R[#5%6HRY%5ZR\%@AR]%9AS09#9#3#@R^'yR_17=]R`%5^1x]^Ra,7=[[Rb%5]Rcg00UlRdAw]^<UWJR^%5a\d^JcRa%@KRK-0AORe%5O%5K20@OK#5[[RKg00VHRf#sRg%rfS0:%T<S0;&0<8S0<&0:8Rh1q8BRiQ06#RS0=5>hRj&08?RkPjC\206h@RjP7!~b$SLRlg00W[Rm'|2037;=DlmdB0c8=<H0aRmb7b8b9X08Q06,07!s+$<[^08P7POPPO2b6RPbhbVbKb4b3b2g02=6,0ORleN:0[PRPNPGPTPUPVPSK0Z,IERn#2Ro,1O%@LRL,x]Rp'7!sM&WPX1X0H17[ZRqP0P[%4[PHPZQ!wG$:C<Pq%63%G3PYP\%6nRn%5oRo1y]LRq%5L17=p[\`R`Aw]L<VdXJcRL%5p!vz%cP_PbP^PaPePKPP!u+$QbRb@b5!u4%PleP0P:L0XPM!t`&0DHRd,0OPEPFP0PG%sER[D;,Md%@BRd'1/7p'?P5!sW+3DHR5!sW'3PGP!sT$5/1d/7p&0WFR5p,3memRr!sX&1CYRsPFP1PGP[CeRt,IERug00UMS0>#LS0?'W1ZD==]E[RD9oEt,JFDF1BMsRs,0O%9Q#3!z8$d!s+$9#P!s2$@RQ,1ORt,0s%2u%9I#@RI'0P5Pr!t}+6DHRu!tz$6!tz%'M,ZMQ0?#LS0@#LS0A#LS0B#LS0C#LS0D#LS0E#LRs1JF7S0FDFXHF,nF'?!s$%P710Ou!t/+4DH!t,$4!t,'!v$%!y0$S!y2+!xg$CH%2CRu/7ZRvPCPu%4u!xk,4C<RuPvPEPFf:S0G!su%Rw#6Rx%GwRwf;Ry#6Rz%GyR{PYP\PnPoPqP`PLP!xh1gQ0:Q0;Q0<Ph%RJS0H=>hiS0IPkQ0IC\PjP!{`,10J710J!{\+Q03O2b6!yQ+Eb:!yU'g02>1/0OePuPvPxPwPzP!tXAP!sm7PlePCP4N=0Q!vd+CDH20PGTRlACFCG'W,MO'=!vc5N90M%zGRX,WlS0J#2RP/0QS0K20LyGACFyG/bXPGPWf<S0LPyH0KPEPFQ0L!vo%#2/0IQ00!}p1L0J%{MS0M1BM<,0O1BM;%2<S0N'1/0pP5!~G3FP:P;!s;3E-0DNRW?Q:;DF[[^Y9]X!sH%f>R{CYRzPFP{!{l&w,IERxQ0?'WRv5QrS0OAoEwD,JF5D51BMzRw,0OS0P10wtS0Q%2xRt/0IS0R!{H$!t#%?S0SCYS0T,BMPFQ0S!t,&u,IES0U!{T$PsQ!{,,S0V'?S0W'?S0X!~8$!u<2CS0Y?QzvR|AoEuD,JF9D57XZ5RuP5AQWzvPuPRQ00!s]&{!s_%f=S0ZQ0GN;0BP|P7PzPvACF{GR|/bX%2|Ru%2XRD'0S0[P|!{d%XPD%4DS0\EpP;C<S0]Q0[Q0K%2lRu/1DR|/0QR}P7XI8R~10<7#uXT8XI8S0^PPP~P|O1P~P~%27S0_#4XI9S0`Q0JP|Pl!t2$S0JPXPDQ0\EgE_PQPQ%4QGjS0aP0C<S0bP}!vi&@S0cCYS0d,BMR|Q0c=CFGS0e!z%$f#2S0g,1OS0h'=Q0e#2RP,1uS0i,1O,=|S0jP8P8%t8S0kP~Q0k1=!t}/lP|P|%4|Q0hP~Q0iO1S0h,1OP~!s$$!#C\$>l11<7H0>#4Xl8XY8S0mPOPO%4OS0nQ0g!sd$P~Q0`Q0fQ0iPlPuQ0JQ0ePP%4PEgE_M:aM<SP1C<S0eQ0jfAS0i/XHQ0i!|=$7ZS!sa%P%4P!#4-'Q0cC<S0hQ0fPEPFfBS0g!|@%RP#6S0o%2PS0p#5S0q%6lS0r%5uS0sfD!sF%t%GPS0uPYP\fFS0v=CFG!s@%w!s@$x%6XS0y%5DS0z!#4h?%T;S0{&0=8RP78<S0|!#4w$OARA9>hiS0}PkQ0}!#4v1X18107<10<;S0~[^08^18P7!#3h&fOS10DHS11POfGS12O3b6b@bEbLbAb?bDbCbB!#4R+b>b=b<S13%2vS14,1wS15/0p11tdS16!s6$7/0pP~Q0^Q15Q17!x7%Q0mPwPw%4wQ14Q16!wt&PvQ16PxPt%4tS16Q0?Pd%4d!wv&PpPp%4pS14GjQ!{j&bP}Q!x-$Q!w[$Q0oQ0qQ0rQ0sQ0tQ!w1%Q0wQ0xQ0yQ!vsBQ!vd&P81:iAS0|%RdRw':g01S9S17%R]>0;8MS15CV,khS18Pk1:Aw,:iQ155>h!w5617<!#;3$11;d,1</0p!w>,EPFQ10!#6s&S19Q11Q0v!w=GClRwO4EUQ0OQ0!#Aq&Sp,3tidS0Op,4regsS1:Prp,2MES1;Q00PzPvQ13PwM>vEUQ0PQ0XP1Q0QQ0W!vstQ0B#NS0BQ0A#NQ0@#NQ0>,}8S0>'E'ES0@'ES0Ag02?PRw'`=]f!{B%0S0W?83P?8;P%T3S0Q?83PS0X%T:S0P78378<!wq%hP8Pig01TaS13Q01#9#ORvQ05#ORz':,:ACVPkPhPhQ02#OR],:v%RQS05!s<%PzP]!sF'HPAPkQ05,:!|R$EAEAEAI09!xB3X;8XF8XG8110;,1<,=71130/0Q100310J0113Q,00[[[!xZ&^;8^F8^G8P7PuPDQ10=CFG#2POQ11P{Q0SQ0cQ03O9!xhEQ0RQ0VP<PF1IE7=D9s!#;4$WQ0TQ0U#i5m!#:l&Rz'?XjFQ0VQ0RPzP5Pr!z2$0c!z2%Rz,M|!#;C2Q!st'd%iz!sr$1JF<DFPF!#3-&Q0gDHQ0p'1Rz,ZMR|=QrsS0pQ0F5D5XHFP;Q0!sR+iCYS0F!tF%i!tF%S0g!tu$Q0MP5PWP7!t2$:DFWiP7Q0F,BMQ0g'M,ZMS0MQ0FQ0g+0GJ0H!th%!tb%;DFP5Q0Y?Q|sS0Y1JF0!#<t%S0MP5AQW|sQ0MP7Q0YP0P|PsP8Pz10O7X[81IE:S0Y=D9sQ0Y#2RWQ02#@R5'=S02P9P8%t9P2Q0kQ0NQ0_'=AD9<720I<7407XT9XI9Q0YPW%4WPsP5%45S0YM<S!#=;$_Q02fC=CFGRW/bX%2WR2/0DS0NPWP2%42!#<_&pP6C<S0\!t5$KP}Q0aPCC<S0aP}!w7'fES0KDHRXQ0K!sy$2,WlS0M!#<^+F'=%22RW,1uS0d,1O,=XS0VP8P8Q!#<Y%Q0lPXPX%4XQ0FP~Q0dO1RX!#<L'Q!#<4$Q0nQ0gPX!#<0'MQ0d!#<0%P2!ud$!#</,yC<S0J!yv$v/XHQ0v#2Ry/7ZRWQ0vPy%4y!#<+,KC<S0KPW!xz$12!zB&Z#6S12%GZS08!#3m$fI!s;$0v!s;$dPYP\f!un%!s=$M!s=$g!#4'$1IE{RZ#6RH%GZRZ!#4:<@/`w!#3h%Q0{Q0P!#3J+1~8=R=Q04#ORyPkPhQ0}!s,%IPk1:Ay9>hiFcEA!~h6%5;Q0~10J;1103Ry,0:!~T/!#83$fURE!#84'0~!xE'PEDHS0IPOQ0ZfMQ03O6b6!~W$NbObPbS!~_9bM1BM|S0}Q!y|$Q!yR&aP}Q!wR&KPWQ12Q!vn'Q0vQ!ve%!x=$!vX&PHP!vM>E#NQ0D#NRMQ0C#NR[&05B-0N8Q0B60O8Q0?#NQ!#7p$!s$%!v~/W?8:PRBQ0X78;?8<P!w0&P=!#6m&P=Q09#3#OR2!s7'PA!s0$8PiQ!#7r$ORl1:2]':!#<]$01!w[$18!wb%H=>hlRX!sZ$!s+%!#]S%Q0|9>h=P8Q0|Q17Q!#=E%K04FcFc!#7}$!#7z;%5:R=%531161,13,=:11yd/7p10J6Ry10J41164R4#5174p'?[[[[\=!#877ACFEG#2REPOQ0~Q0IPCQ0LQ0ZQ0SfLfSQ03O<!x`I-0RzRCEUR=P8Pz%2sR4,17/0pX[811z4RJ/0p11z5Rd!#BP&PJPd!~9,zPz%4zP4P5!~8&PsP5Q0Y!#B:'Q!#B7$!yh}A,E[,EM!y=,%T1?81P98B;Q0Q?81P?81!}M+Q!x]%1:2vQ055>h!y=&]Pv!s0&A%RI!s1&lQ0=!xw'Q0|%R5':!#Bq&!x_%Fc!xa<XW8113:,1;,=71113/0Q1031100IQ06,011116/15/0p\y[!#=l5^W!#=o%P!xY+!#=i&ifHfR!xWNClQ0}PCEURC!#Ce$p!#Ce,Q0OQ1:PrQ!#CS$|PsP=PCM>vEUbUH0SWUWbH0TXHF!#Q30x!#Q5$Q0Z1bxx10ttPxPt!#H<%Q16Ep!#Gxz;Q0<A>hii!#YF177^08P7Q19O1!#FkFQ0GN=0UI0VCh!s$%bgbcb`bebfW]W\P<P7O2n200100001012!s/$00bXbdb_b^WaXk9o"). Qed.
+    intros k Hk.
+    pose proof Hlo as HloA. pose proof Hhi as HhiA.
+    assert (Hk' : (k < length (in_argv inp))%nat) by (rewrite Hargv; exact Hk).
+    pose proof (lay_bsb_nw Sv48 inp mbase RPH entry sp0 brk rdraw Hvl Hlau
+                  ltac:(unfold sp_window_hi; lia)) as Hnw.
+    destruct (argv_ptr_bounds_at Sv48 inp mbase sp0 brk rdraw Hlau k Hk') as [B1 B2].
+    pose proof (u_cat_argv_ptr Sv48 inp mbase RPH entry sp0 brk rdraw Hvl Hlau
+                  ltac:(unfold sp_window_lo; lia) ltac:(unfold sp_window_hi; lia) k Hk') as Hu.
+    pose proof (struct_av_bound inp mbase RPH entry sp0 brk rdraw) as Hsb.
+    pose proof (total_arg_bytes_firstn_le k (in_argv inp)) as Hf.
+    pose proof (argv_str_len inp kvaN k Hk') as Hlen.
+    pose proof (read_argv_cstr_k Sv48 RSEGS inp mbase RPH entry sp0 brk rdraw k Hlau Hk') as Hr.
+    pose proof (rdn_wmem_stack RSEGS inp mbase RPH entry sp0 rdraw) as Hw. unfold wmem in Hw.
+    (* The stack image's LENGTH bound (RefLayout.v:387, length <= 2101782): the span
+       bullet needs it and so does the trailing-word bullet's rdn_above side goal, so it
+       is posed once here rather than inside one bullet. *)
+    pose proof (lay_bsb_len Sv48 inp mbase RPH entry sp0 brk rdraw Hvl Hlau) as Hl.
+    rewrite <- Hargv, <- Hve'.
+    repeat split.
+    - rewrite (main_entry_rdn_above inp mbase entry sp0 rdraw tid regs mem ME)
+        by (first [ exact B1 | lia ]).
+      rewrite Hw by lia. exact Hr.
+    - exact B1.
+    - lia.
+    - exact Hlen.
+    - destruct (read_word_stack Sv48 RSEGS inp mbase RPH entry sp0 brk rdraw k
+                  (length (nth k (in_argv inp) [])) Hlau Hk' ltac:(lia) Hnw) as (t8 & Hl8 & Hr8).
+      exists t8. rewrite w_add_nat in Hr8.
+      rewrite (main_entry_rdn_above inp mbase entry sp0 rdraw tid regs mem ME)
+        by (rewrite u_small by lia; lia).
+      rewrite Hw by (rewrite u_small by lia; lia). exact Hr8.
+  Qed.
+
+  (* LPS-revision port.  MainOpen's path_facts carries a conjunct main_strN does not:
+     how far the argv string's END is from the top of the user address space.
+     PRE-REVISION that came from `build_stack_bytes_within_span` (the block fitted
+     inside `Run.entry_stack_span`, hence inside `sp0 + span <= 2^47`); 75d69e00 DELETED
+     that lemma and says in its own words why it is FALSE for the kernel's block
+     (PropExec.v:1839-1844: an `arch_align_stack` pad near 4095 makes the real block
+     longer than the span).  The replacement chain is the model's own:
+       bsb_len_lower          cat_string_off + TAB(argv) + 8 <= |image|   (MuslStrlen.v:604)
+       total_arg_bytes_firstn_within                                      (CatExec.v:204)
+       length_entry_stack_image_launch  |image| = ed_top - sp             (PropExec.v:1846)
+       entry_page_top_within_window     ed_top <= va_stack_top Sv48 = 2^47 (PropExec.v:2327)
+     i.e. the argv strings are followed inside the image by the envp strings, the exec
+     file name, its NUL and the eight-byte VMA-top slot, and the image ends AT ed_top.
+     THE MARGIN IS 8, NOT 17.  Measured, not inferred: the pre-revision `+ 17` is FALSE
+     at this revision -- at ed_top = 2^47 with envp = [] and a one-byte execfn
+     (State.v's `default_execfn`) the last argv NUL sits at 2^47 - 9, so `+ 17` asks for
+     2^47 + 6, and `Run.entry_stack_fits` does not exclude that corner (it bounds
+     sp + span from ABOVE, and under the launch sp + span <= ed_top - 274 already).
+     8 is exactly what the consumer needs: RefOpenFailCS.ref_cannot_open,
+     RefReadErr.ref_read_error take `bv_unsigned pp + length path + 8 <= 2^47`. *)
+  Lemma str_fits_N : forall k, (k < length av)%nat ->
+    (bv_unsigned (cat_argv_ptr (ed_top rdraw) av envv (in_execfn inp) k)
+       + Z.of_nat (length (nth k av [])) + 8 <= 0x800000000000)%Z.
+Proof.
+    intros k Hk.
+    pose proof Hlo as HloA. pose proof Hhi as HhiA.
+    assert (Hk' : (k < length (in_argv inp))%nat) by (rewrite Hargv; exact Hk).
+    pose proof (u_cat_argv_ptr Sv48 inp mbase RPH entry sp0 brk rdraw Hvl Hlau
+                  ltac:(unfold sp_window_lo; lia) ltac:(unfold sp_window_hi; lia) k Hk') as Hu.
+    pose proof (bsb_len_lower inp mbase RPH entry sp0 rdraw) as Hlow.
+    pose proof (total_arg_bytes_firstn_within (in_argv inp) k Hk') as Hw.
+    pose proof (length_entry_stack_image_launch Sv48 inp mbase RPH entry sp0 brk rdraw
+                  Hlau) as Hlen.
+    pose proof (entry_page_top_within_window Sv48 inp mbase sp0 brk rdraw Hlau) as Htop.
+    unfold entry_page_top, va_stack_top, sp_window_hi in Htop.
+    rewrite <- Hargv, <- Hve'. lia.
+  Qed.
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
@@ -142,13 +282,56 @@ Proof.
 ltac2:(KReplay.run1 (kr_t_RefMainEntryN ()) ["MainEntryN"] "g02AFo"). Qed.
 
   Lemma know_stackN : ltac2:(zQ "40!lod!kl1!jp0!ln4@4$0$3$1?3mem$2").
+  (* LPS-revision port, MIRROR of this unit's plain RefMainEntryN.v, written out rather
+     than re-encoded (rule 11); the STATEMENT is untouched.  Argument lists and the two
+     window unfolds from the landed U/RefMainEntry.v's own Section KnowProofs: the KWr
+     window is symbolic at this revision and main_entry_store_ok_win's lower bound is
+     MemSplit.wok_lo (MemSplit.v:137-138). *)
 Proof.
-ltac2:(KReplay.run1z (kr_t_RefMainEntryN ()) ["MainEntryN"] "##r\h04__x1h17__arithh24__ffh38__varmaph45__with55Hlen0h66__sat3h7!s/%4h84cstrh9!s6%5h:4__x2h;1bh<1mh=!s>%6h>!s/%7h?1dh@2HahA4__x3hB1zhC5cstr0hD1xhE2HrhF2_HhG4__p1hH2B1hI2B2hJ1HhK2H0hL2H1hM2HdhN4HlenhO2HmhP3_H0hQ!t7%2hR1lhS1nhT1ohU2t8hV1yp%0p&0p;1p;2p;3p;4p;6p;>p;<p;7p;8p;Bg00Llj1ATg004jj14!s/$Lj19Tg005Oj1yTg00Bij2@Tg0080S00j21Tg00DDj2pTg00<^j3LTg00>Cj10!s_$mk106Tg006Pk105Tg0070k20!s_$>bR0j2h!sv$Lj27Tg01Yak10HTg01ZCk40G!t/$dj1bTg00\bk40ETg00ajj2tTg00:Dj2HTg00[ej3!sA$\Ek30BTg01[Kj2QTg010lR1j22!tL$PR2j1?!sE$mk20=Tg02BPk40<Tg02C^k30;k40dTg02Dnj1{Tg02F5k208Tg02G>j3|Tg01<fk10nTg02HGk204Tg02IOk20cTg02JXk30^Tg00mfk10\Tg00Ebk10[Tg00F@k10YTg00GNj2~Tg00Ibk20XTg00?<j2OTg00JDk20WTg00K0k30U!s0$Ok40RTg026fj4]Tg00f0j2zTg003nj68!sh$Vj6ZTg01=aj4eTg00@?j1x!s/$dj2wTg00Ahj2v!xA$Ej3uTg00CSk20F!tw$Dj2c!tv$kj2!u1$H\k10D!s^$LR3j2>Tg02Kaj4[Tg01>kk30C!t?$Dj2sTg01JIj4YTg02Laj3r!sK$Hk30ATg02MDj2qTg01lJj2NTg029Fj3RTg01m3j2`Tg01?Nj2o!sS$am>0@Tg02O9j1lTg017ej2mTg02P@j1!wH$QFj3jTg02RQk20?Tg02S^k20!tu$Tej2dTg00LAj4TTg02Umj3kTg01j4k10I!s0$Rk40!zz$MQl<^Tg02VSj2gTg01UHk10:Tg00YYk109Tg01gck70!wl$X;R4k20P!ul$gk607Tg02WVm>0STg01ddk70!tE$Xak20m!u]$_k10!uB$nZk30kTg02Y8k10jTg01o?k20iTg020Ok60fTg02Z0k10bTg01k5m>0aTg02[;k20`!s0$\j6XTg02\=k20]Tg02]Jk80_Tg027Ak40!{b$H1k403Tg00N6k70!}X$I>k70!y:$2oj8iTg01L^k30!yV$N8m<0gTg028`mB0hTf0R5#A#Ap=D%45#4p=K!s-$#4#4p=_!s2+!s$'p=J%05#0p=}!s-$!s$/p>0V!s;4!s$3p>0N!sKD!s$Cp=3f4R6g029oR7f3R8f2R9f1R:H02;L5p=Fg00P9R;/>5p=Pg00O9R</~5p==P<P:g01S9P5H03p=WP:g002PR=g00PWR>P>g00Q7R?P5g00QWR@K00p=Sg00SLRAg00W[RB7L5p=VP7g00kURCP:P5H0dp=U11:5,79p=:1O<5p=Gg00NZRDP<P0P2Q00g00OWf5R0P6P8P9P:P5M<^p=f11;5p=5P9P=P>P>P?!ty%0W4!ty$P!tV%6!sF-:P5K0ep=;f6S01!s=+!t$%!s4'!t0$GiGip=C17!tk&<129:/15p=IB0Z<:5p=B!sZ5p=MP7!s3%H02p=aPDP<!s$$2P2P!u7-N<0gp>0JP<P<Q00P0Q00P6P;P;!uY/>0K!se&!s$%1P5P:P9P1P8P6P0Q01f7S02f8S03f9S04NB0hp>0M!tE$4P2P3g01RWg00UMR3!t'3Qp,3HloS05g00R7R2#AS06#D!s$/R4#4#K#_#J!s$$9R1%42R@#KRE#4RF#KRG#yRHp,3sp0RI'@RJ'1RKp,3HhiS07%4GRL#4#KRM#4#_#JRN#4RO!s{-9RP,1JR!t[$alRR%9FRF,pJRS=L<;RTg02^O%03RU%yERV$06RW$05RXp,2avRY+01RZ'hR[%}US08#0S09#0S0:#0S0;#}R\$0V$0N#3!s$_R],hZR^'7S0<&0HXR_p,3memR`PIPYp,4envvRaP3H0GRbPXP3PY%bWRcH0ERd-01WRe/tU1HV;=EWc:0BWd,QXDFS0=1@HbS0>,1JS0?Q0>%AL#4#A!vB$A!s0$D!s2$9S0@,2J'1S0A%?eRe%A4#9'1S0BP_P`Q0>/2e,HHP\1QX5S0CDFXUX-0=XS0DP7PCP`g02_ZH0<S0EQ0=Q0?Q0AQ0BQ0Dg02`gReB0;7C`R4%{3RL008FRdA|L1PRW&0nNRc-04LRV%9NRN+0cS0F%9ERE!s<$L%{URf80^\S0G%AO!xP-O9|f1S0H%beS0I5EeS0J5EeRf5EeRg5Ee&06HRhPI%PFRi1@H5Rj/pF=L<;'7X;hPiPTg00VHRk#bRl&05kRm&0\<Rn&0[<Ro&0Y<Rp1~<;Rq%=F'W'S20Xp?RrP5P91OAB20W59#VdB0U<;:H0RRBb2b3b4PiP5b1PRC]17iTRiePie1zC3S0Kg02b0S0LE81U`dePeP4PWPgPhPI111jS0M?:jPX;hQ0<%92Rg%?ZRd'1Ri%9MRM,1dS0N'7RTP[P^PiQ0NPUPg%GgPZPd%GdS0OEfPZPdQ0OP]PM%GMEfEZS0PP0CeR]PT%xZRi%5dR^%9@R[%D@#4#9RR'wRA%P[Rs%5R1v[RRt#P[[Ru%5[Rvg00UlRwAu[R:UW@RR%5t\w^@vRt20FJFRx%5J%5F%5S[[RSPlPm1c<:RFPoPp1\<2R2%=PS0Q56pRy&0D>RzPp%=1S0R=6p2R{PzA;p{yFCPrP!ve&X0<115PR|111:R}1119?:9P[[^0<P5PJQ07Q05O3S0Sb1b6b7b9b8b517KQRQePQeQ0KQ!w1&W!w1$Q0FPf!w2$2jcRf#5%9GRG,v[RW,>f%5NRQ12fN;:W3<%5:Rf%?:=I9NRKP7P`1@H6/2c/28,HHP9C[#V[[^<D^?<!yi$12JcR~#51>~W12~N=:QW3<!s`$2~8R~,HHS0T!s_%\K\f!sa%P]PTPiP^1w[GS0U%5G%PW[\sS0VAu[G:VwX@vS0W%5W!w8$S0XPAPuPRPtPxP!w1$P!w,$PyPzPpP{Pz%=c,B2Rv96pq%=[>0C<HR[,Wv,Sp%=NRw96pq1Bvw=6p[5;p!s%%!wA329cRG#51>GW12G!uD&\}\|^0<Q!w9-=b>b8b5p,3AMBRGPIPYPap,5rdrawS0Yp,3tidS0Zp,4regsS0[P`p,2MES0\P7Q0TP9P<P~g02c8,sJS0]/15XB<Q0<PTQ0PQ04CeS0^PT%x8S0_%?8S0`#5S0aPiP^!v+4<1c<9S0bP:PnCY!z@&@R@96pqS0cPz%=ERs%=MS0d5r<Q!s+$:0A<21Bv@Rv56pCM!v&0X:<1qEM/qM,s:12:c/29S0d'1\f^0<^:<P5f:S0ePJQ03O3!v9+Cb8b5Q0]/1~eQ0T,@HS0TQ0^PTQ0_Q!u5%Q0UQ0VQ0WQ!xG1Q09,N<1N<U1N<3RM5R<5R<g02?PS09'`S0]Q0;,N<Q0:!s+$8,N<=R<M5R<S085R<Q09'`=Ekl5EkPmP<P<PnP91c<8S0:CY!v=,Q06#4,\<RM96pqPzPp1B@M=6pwPzPpQ0c!yo$!yu+!s+%A6pqv1Wv[,S!yT%FC!yX2X:<XA<%59AI98N%58118PS0c1116S0;1110R6Q01/2cQ02'2Rc#51>cW'7[!s#$!vy%^A<P5f;#?f<PJQ02Q04Q0efDfEQ05O9!zE0!w6$,o~RcE8P<P~Q0`=I5J!yb$!w;0!yJ5Q0bP:Q!v6$!v0%!v-$,B@!u}%1BvM=6p2!y/5XA<AI:9NQ0d?I8:!u+/Q04#?Q!y,%2O4!y,1%?9=I~JeQ0TPcE8N>0@XOKXMfX<DX?<C]!#4l&%lV,mC,@H%nV!vC,12c!#3g/c!#4C+!#3b+'7eAjCVNP7P`20?CV!#4j-!sM0Q0F,U`!#5{%GQ0JPhg00g3Rf1h\\RK%?\RV9jCLS0J20>CL=a`\RN1d\5,QX5L_3<X;h!#6Y%E!ts'%5VRQ12cV;:W3<1d\f,QXRc9L_NRN5<KX;hPK12JER~#5Rv1>~WRw12~VS0F/1WS0T,7QS02'7S0e'7R@/7NPK11EES0dP\PE%GES06P\PEQ06Ef!x9$nPoA6pss!wo,Q0dP5b1CTP@PNP@%5ES0d12~ES0:!t5$a'7S0_,7wR@,7vPvQ0ePvP@p-0R@/Ov9kvvPwQ02PwQ0_1O@w9kwwPQQ0TQ0dQ0aP5XD<Rw11:5$0IXV<XD<Rv1O<;S0_PVPEPwPw%?5#GXDD!t|&J0JRDJ!#H]$Q00PwQ00PvQ0FQ0:Pw!s$$<P<g02>l12:5H0L#GX<<XS<P~P~%G~!s~$DN:0MPWPW%GWM<^S0:EZEZEZ!#9L&!#3d:!#9,61B2sRD!#5|$F1WD[,SpS00A6pqs1BDs=6p[S06!#9#=ER[#5S021>[WS0eQ0d12[E!xk$!#9/<CTPhPIP_P`1g5EP\PcDFX;hP_g02<9R[!#9G$&0:GRs&09GRwQ0YK0ORv1HH~R;;a\S0dAL_5cXT_S0^P7P!s[&PsPwQ0Yp,3Hva!s+$e!v7'!v':{PzP{!~C21115P}!#?\+5O2!#?V-g02>1/1J!t%CyPzPy!t%4:P!v6$!t$%7O2RP!t&2=6,1JeP320P3ZS07%PdS0`Q0_!#Cl%H0QRZ!tIA%=g=6p2Pp!#Pk'8J075;pPz1Wq2,S!#;63G@11g5/7:%P!#5$$G@P5Q0NPdP0O3b1Rd!tr,CTN>0SP_!w;2K0T20m\3,t\Rw$0l:0kHIRsP\&0jbR[,QXR@DFPhPsP_PvP5P\P@!xg%5%?w,2J,HHRs20iIwJ0f!sJ$s!sJ%P_P@Q0^PX1d\bQ0C=L_cXRX1O_cP[&0bbE8!~P$E8bEbEAa`;\P!#?}%Q0YQ0ZQ0[P`Q0\P7P;P\P<P~11J5XB<!ve?A6p2D!{W25E,15!x+&O1!x#/1@H;R;!}<W!~`$0!|m5Q02Q0e'7!|W=,o~R}!#;?$AI5VWXB<Q0TQ0aQ0:!tXQQ06!zg32:E?IEW!zk%P!}z6;P}E8N>0aE8!~&%I!~&&!#HU'P_P`%lL,mCR_%nLRL'g!sH&PNeC]!#;8+1@H_/2LRL#51>LW12LV!#;1$=<KNeQ0J!s-$1zCURUg02d5RCE8Q0G!#:`+HQ0IPhPfQ0M?:jOX;h!xI7Q08Q09'`Q0]!#A]-nP:Q0b!#>G&@#=,BM96p2PzPpA6pM!s/$Q0Q96pM!s1%R=6pMR!s3$PMPz%=O96p29;p{CM!#AM6Q0@,2:,15119:Q0cQ0;A:60O\6!#A-+!~p%>Q03Q04f=f>Q05O7!yz2fRf,11?:fORfeP!s%%UP!v+$H,U`e20`e4EX!s$'Q0EeWFWPWIWHWFQ07Q0`PZ!#H6&P5Ce!{f6dbQ!tB$!xU$-0]3L0_bNbLbKbJo"). Qed.
+    pose proof Hlo as HLO. pose proof Hhi as HHI. pose proof Hal as HAL.
+    pose proof len_avN as Hlen.
+    (* p0N's KRange entry is bounded by main_strN's own second and third conjuncts, about
+       exactly `cat_argv_ptr (ed_top rdraw) av envv (in_execfn inp) 0`; without them the
+       last bullet's lia has no bound on p0N. *)
+    destruct (main_strN 0%nat ltac:(lia)) as (_ & B1 & B2 & _ & _).
+    unfold kn_stackN, know_ok.
+    repeat apply Forall_cons; try apply Forall_nil; cbn [kentry_ok a_base a_off edenot];
+      rewrite ?keN0, ?keN1;
+      unfold flat, estart; cbn [a_base a_off edenot]; rewrite ?keN0.
+    - split; [lia | exact HAL].
+    - lia.
+    - split; [try unfold stack_window_reach; try unfold stack_max_size; lia|].
+      intros d m Hd Hm.
+      apply (main_entry_store_ok_win inp mbase entry sp0 rdraw tid regs mem ME);
+        rewrite u_small by (try unfold stack_window_reach, stack_max_size in *; lia);
+        try unfold MemSplit.wok_lo, stack_window_reach, stack_max_size in *; lia.
+    - split; [lia|]. split; [lia|].
+      unfold adenot. cbn [a_base a_off edenot]. rewrite keN0. unfold v_addi.
+      rewrite (main_entry_rdn_above inp mbase entry sp0 rdraw tid regs mem ME)
+        by (rewrite u_small by lia; lia).
+      pose proof (read_argv_ptr_w RSEGS Sv48 inp mbase RPH entry sp0 brk rdraw kvaN Hvl Hlau
+                    ltac:(unfold sp_window_lo; lia) ltac:(unfold sp_window_hi; lia) 0%nat
+                    ltac:(rewrite Hargv; lia)) as Hr.
+      unfold wmem in Hr. rewrite w_add_nat in Hr. change (Z.of_nat (8 + 8 * 0)) with 8%Z in Hr.
+      rewrite Hargv, Hve' in Hr.
+      rewrite Hr. unfold p0N. rewrite n_to_le_8_spec. reflexivity.
+    - unfold p0N. lia.
+  Qed.
 
   (* [comment removed for export] *)
-  Lemma D_main_auxvpN : ltac2:(zQ "d0!hj2!h9!jc!li5!lid!ju3!lsd!mgf!hta!lj7!iid!mi4!kn9>4segs@1$0$6@3$5@1$4@1$0@1$2@1$1#8@4$9^1@6$b?3sp0?2av?4envv@1$8?3AMB?5rdraw?3tid@2$c@1$1#k0+hiuup0N8@2$3@1$0@1$2@1$1#8@2$7N8$a").
+  Lemma D_main_auxvpN : forall segs,
+    rdn segs (D_main inp sp0 rdraw tid) (Z_to_bv 64 0x12ee90) 8
+    = Some (word_to_le_bytes 8 auxvpN).
+  (* LPS-revision port, written out rather than re-encoded (rule 11); the STATEMENT,
+     0x12ee90 -- the UBSAN image's own address -- included, is untouched.  The replay
+     applied `envp_w sp0 av` and the pre-revision 6-argument D_main.  Same lemma and same
+     address as the landed U/RefMainEntry.v's D_main_auxvp (:643-658), closing the same
+     way; D_cxx is THIS TREE'S name (RefStartupDefs.v:181, :191), not beast's D_cx. *)
 Proof.
-ltac2:(KReplay.run1z (kr_t_RefMainEntryN ()) ["MainEntryN"] "#%+,h07__arithh14__ffh28__varmaph35__with46__sat0h5!s/%1h61nh71xh82Hah91Hh:2H0h;2H1h<1mh=1oh>4segsh?1yh@1zp%0p%1p&0p;1p;2p;3p;4p;6p;5p;7p;<p;Bg006Pj1gTg02e=k10ATg004jj16Tg005Oj1oTg00Bij2f!sA$Lj1STg00Ahj2{Tg00Llj1ITg0080R0j21!s^$mj1mTg01Yak10:Tg00H\k107Tg00>Cj1WTg02fCj2~Tg02Tej2KTg00:Dj2LTg02gNj3xTg02hYj3UTg00YYj1wTg02i[j3vTg02jdj3tTg00Ddj1iTg00[ej3dTg00ZXj1pTg027Aj4:Tg01[Kj2hTg00<^j3aTg010lR1j22Tg00@dk20@!uL$Lj2`!ug$Ek30?Tg00mfk10>Tg00Ebk10=Tg00F@k10<Tg01>kk309Tg00Ibk208Tg00?<j2^Tg00JDk20!vg$K0k305!s0$Ok40!tD$GNj2jTg02l3k30!vV$3nj68Tg02m5k500!vt$Lj2!s/$7PR2j1VTg01IUj25Tg01j4j1|!s/$Rj4zTg02n@j6D!tS$Vj64!wf$Aj4H!sA$hj7<!sp$0j2RTg0307j2YTg031Gj6uTg032Rk203Tg01L^k30!sg$H1j4ZTg00N6j7[Tg02Umj3kTg01N8l<sTg028`mB0;Tg00MQl<r!v-$>j7]Tg033Zj7qTf0R3#6#6p=\g00P9R4f2R5'1f1R6/`3'0p==%I3#Ip=O%6!sQ$#6p=b!s2+!s$'p=X!s:'Sp=;%6!sZ$Pf3R71L56;U3p=J%I3#6p=M!sP&p=n%63#Sp=c20356=d73p=T1143p=_g00O9R8/j3p=9B04863p=?P5g002PR9g00PWR:P:g00Q7R;P8P6g00W4R<P3CZg00QWR=F[p=lP5P9P:P:P!sK&1S9P3CZP!sD$@f7R>f6R?f5R@f4RA/171163,55'0!s$%p=Gp-0RB/^39k56p=}1^83p=7g00NZRCP8!s$$2P2P@PAP7P5P6P3M<sp=e!sB&!s$%1P3P6P5P1P7PAP@P?P>f8f9NB0;p=>!sI$0P>P0P?!so1rp=3P>!s<%1^B69k75P3E4p=E!uR-6P3F]p=yP?!s9+@!uo-AP<P7!ul%!v/1P<!v+'Fqp=FPA!sC+7!sM-5P<P6!se&!t6$B!t68!sc,8P7P<P5!sY&6F]!s]%A!t-0!u42F]p=CPC!u`&R751Y63E8p=QPC!v/,E8p=Ng034>#gp,3tidS00$0Ag00R7RA#6R@#6S01#6R?#6R:#\R9#oR=Q00'fR<%S@R@%S9RB'{R>7=<p,3Hlo%IAR<#IR0#I#OR1#O!s$+b#X!s$$;p,3sp0R2,f=RD'1p,3Hhi%\9#bR9!sJ&X#;,1D%o?RD#mRE#gS02$0:RFP7%m=&07EUP=%O:R:#I#PRG#6#ORH#6RI#PRJ#P#;g00UMRK#WS03#WRL#WRM#WRN#WRO#WRP#WRQ#WRRp,2avS04,~2'KCJRSQ01#M#O#M#ORT#MRU#IRV#6RW#6RX#M#;RY,L=RZQ04p,4envvS055x2R[,KRR\3UR]P=%IVRV#I!sU$^p,3AMB#wS06,KRS07CJS08P=%IWRW#O#;R_%S9,L=S09!sG$:CJS0;P=%6XRX#6#;R9Q04Q055v2S0<!sJ$=CJS0>P=%6U!v|$;RU!sJ&t2S0?!sJ$@CJS0AP=%nT#PRT#6R`!st$a1L=4S0B,KRRbCJS0CP=%ITRT!sD$cP!s:$DP=%I`#;R`%S?R?!tm$E!s}$FCJS0GP=%6WRW!sY$d%\0#;!sI$H!sI$ICJS0J!uY$#;RWQ!sZ%K%MG#b#P#;RG!sS$L;UbS0MP=%IHRH!yL%Re!vT$fQ0L!sq$NCJS0O%IJRJ!t:$g!s`$PQ0P!sE$Q3US0RP=%IX#;RX%SARA,LD%iERh5dES0SCJS0TP=%MIRI#IRi#I#;Rj1L=@S0U,KNRkCJS0VP=%6i#;RiQ00,KNS0WCJS0XP=%60!u%$0%nV!u[&Y!tI$ZCJS0[%PH!sE$H!s@$\Q0\!sC$]3US0^P=%IJ#;RJQ0QCJS0_P=%6IRI!u@$V!s;&`P=%II#;RI!w@%a!wT'\Rl#cRmPEp,5rdrawRnPKPEPnQ03PEPnPL!s+$MPhCT!s$%S0!sh$cP=%MT#cRT!sG$N!s+$O!s+$P!s+$Q!sY/dCJS0eP=%Il#SRl1LD4=dEhS0fCJS0gP=%Pe#;Re%pnS0h!uT$iCJS0jP=%61#M#\#P!|?$;R1Q!w6%k%6:#MR:!sC&P#;Rh,L=RD1L=AS0l!w#$m3US0nP=%6:#P#M#MS0o#6R:#;RQQ0B!sJ$pCJS0q?UDkS0rP=%M:#cR:Q0mCJS0s%S<!w<$t!sR$u7UDS0vPZPRC:S0wQ02/h\9aF3X=FR\PFP7Q0s!sE'xP!s8&r!s8'y!s8'q!s8'z!s8'n!s8'{!s8'k!s8'|!s8'j!s8'}!s8'g!s8'~!s8'e!s8&10!s8'c!s8'1!s8'a!s8'2!s8'`!s8'3!s8'_!s8'4!s8'^!s8'5!s8'[!s8'6!s8'X!s8'7!s8'V!s8'8!s8'T!s8'9!s8'R!s8':!s8'O!s8';!s8'M!s8'<!s8'K!s8'=!s8'J!s8'>!s8'G!s8'?!s8'D!s8'@!s8'C!s8'A!s8'A!s8'B!s8'>!s8'C!s8';!s8'D!s8'8!s8%R!s7&P]!s6%P\P7PSPZP[P8PY123?/1>X@820@@BR[1`4@%_B1`4>[[RS%_@R\g00UlR<B0?@B6UW8RB%_>\<^8\!sB$VHR<#iRP%g<R<&0>8RO&0=8RM&0<8RL%9YRK%9?Ro'?Rp%9@>098=R@3lRq208L;R;P3P5g00SLRrg00W[Rs'^20635=arsdB05846H02Rsb1b2b312Y?Rr/1>R5P3b0b4b51f=ZPPP<POPM1j84R4=lLKS1EP;P!s\&%_YRtP3b0P[PSPBP\!sV'A@LK@S1F!sQ,1`Y>Ru!t&'601YE8I00PDP7Q07P]P^PYPRPR10tuRu%VRRt,2YR]/1>RDA=^^>Rv%V3Rw,2^RxP>11]^S1GPxPYGGX6C12^tS1H/1>S1IQ1GQ1H/1YS1J'5S1K'0S1L,0vRx,0DRy,0uS1M12^?S1N!sY$O11r^S1PQ1N!s]$Q'5S1R'0S1S,0vRz,05R{!s]$TPuPyPuP{A}uuuR{PDPxP5PzP3X78Rz1163#|X?8X78RxP]PrPz!s$$8P8g02>l1263Cz#7X<8X68R8PYPY%7YR6PtP?PzPz%7wX7CS1UPRP?%7?EeRyM:>R|P>P>%7>R}G3R~PvQ1LPvQ1SPvPvPvQ1IQ1KQ1OQ1RPzPxQ1HQ1N!tJ+^P^%7^Rv!t3$yM:>S1RP>P>P}G3!vL$JQ1PQ1QPzP!u'%|P^P^PvG3!ss,Q1RPYPYP6G3EDE4GEE4E4!xh3PLQ1EQ1F5yLRvPLPqPL!s$$4%9^R^A@L^@PLPL1?^oS1FP!s3$PpP^PLQ1FPKFFDBFADC!yO,Q1T!yL'CHQ1MePEQ07PRQ06FQF<E8Q1!yZ$:Q08P_!y[%PuPDA=__>R^12_wS08!yG$_S1DQ08!yH+_tS08/1>S07Q!s@$!xi$M'5S1T'0S1F,0^S1E,0DS1R!xk$N12_?!y}'Q11r_!yJ$!z%-G'0S1O!s_$K,05S1I!s_$SPuQ1RPuQ1IP{PDQ1EP5Q1KP~P^Q1FP^Q1O!w7$^Q07Q1TQ1QQ1G!wA$08Q1H!x6+_P_%7_R^!x6-G!x6,DQ1M!x6$J!x6-_P_P^!x6&!ss$Q1G!x6GP!x,2_R_A@L_!x,&_oR^!x++_PLP^!x'9S!x'/N!x'$:PRQ09!x''CP7Q0=Q0;P9!x'/99!x'$9wR_!x&$9S0;P_!x%+9tS1C!x%$9Q0;Q1C/1YS0:'5S1N!}l&^S1G!x%$H,0uS08129?R_!x$$J11r9S1P11_!x_'D'0S1Q!s\$T,05S07!w~$OPuQ1HPuQ07!w~%GP5Q1T!w~%SP^Q1Q!w~'9!|1$JQ1D!|A%CP_!w}+9P9%79!w}0D!w}+0;Q0:!w}$M!w}-9P9!w}+1CP_Q1D!w|W9R9A@L9!w|&9oR_!w|+9PLP_!w|9O!w|-08!w|$=PRQ0<!w|'BP7Q0@Q0>PU!w|/UU>R_12UwR9!w|$US0>P9!w|+UtR9!wG$BQ0>119YS0<'5S0='0S08,0_!|I$DS1D!wC$C12U?R^!sX$M11rU!wy$^!xW&0;'0S1J!s\$N!wy$9!s\$QPuQ1DPuQ09!wy%OP5Q1NP~P_Q08P_Q1J!{z$_Q1BQ0=Q1MQ0;!w?$9P^!wx+UPU%7UR_!wx,0;!wx,>Q0<Q1PQ0:!wx-UPUP_!wx%P9P^Q0;!wwWURUA@LU!ww&U!|u/U!|u=Q!|u/C!ww$@PRQ0?!ww'AP7PbQ0APa!wv/aa!|t$awRU!wv$aR9PU!wu+atRU!|r$A11UYS1A,59S0?'0S0@!|8$C!ws$Q!|n$;12a!|n&0:11ra!|n'!xQ%>'0S1M,0^S0=,05S1B!ws$JPuQ!wx%B!ws%CP5Q0=!|n$0@P^Q1M!|n'AQ0?Q0:Q0>!w$$U!|m-aPa%7a!|m/0>!ws'P9Q1A!wr$<!wr-aPa!|l'PUP_Q0>!wrWaRaA@La!wr&a!|k/a!|k=J!|k/;e1REbS0;Q0B,YRR_DN!ww%@!ww%CPc!ww/cc>Ra12c!ww'cR^!ww-c!ww'C!ww%@,5^S1J'0S0>,0aS0<!ww$P!wA$A12c?!}F%!ww$cS0?!}J%A'5S1M!xU&a!ww'C!s\$BPuQ1PPuQ1C!ww$0<!ww'aQ0>PaQ0@!v{$aQ0CQ1JQ0:!#5,&UP9!ww+cPc%7cRa!ww,1M!ww+^Q1@!xZ$A!ww-cPcPa!ww+9Q1M!wwWcRcA@Lc!ww&coR9!ww+cPLP9!ww9B!|k/AeQ0;P!wm+?P7Q0FQ0DP`!wn/``>R912`wRc!wn$`RUPc!wn+`tRc!w>$D11cYS1?,5US1A'0!{}$9!|7$DS0A!|g$?12`?Ra/1>S1@11r`!wu$a!#?W%0C!wn&9!xR$5R^!s[$=PuQ0APuP^!|e%MP5Q0>P~P9Q1BP9Q0@P9P9P9Q0D!|,$@Q0C!vz$cPa!wl+`P`%7`R9!wl+R^!wk+UQ1!}D$!#?Q/`P`P9!wk&cPaP^!wjW`R`A@L`!wj&`!#5W-`!#5W;0=!|c/?eQ0F,RES0?Q0E,YRS0E!ww'>P7Q0IQ0GPd!ww/dd>R^12dwR`!ww$dRaP`!ww+dtR`!ww$G11`YS1>,5a!#:U$1J,0^S0:!|g$?!wB$C12d?!xO%!ww$dS1A!xV$0D'5S0@!xU&^R9,05RU!sZ$>PuQ1?PuPU!|d%:P5P9!#?L$JP^Q1B!#5\&GQ0=!wu$@!w+$`Pc!wu+dPd%7d!#5\,R9!wu+aQ1>Q1AQ0D!wu-dPd!#5['`PcP9!wuWdRdA@Ld!wu&d!|a/d!|a<0>!wu/!#:N$IPRQ0H!#:N&=!|f&JPW!wm/WW!|f$WwRd!wm$WRcPd!wm+WtRd!wm$J11dYS0F,5cS1='0S0H!|0$I!|f$C!w9%12W?!xE&D11rW!wm$!xL$!wm&R^,09Ra!wl+1@PuQ0C!wl,IP5Pa!|c$0HP9P^!|b'JQ1=Q0D!wk'dP`!wk+WPW%7W!|b9cQ0F!}D$>!wk-WPW!|b+dP`!|bYWRWA@LW!wk&W!|b/W!|b<1@!wk/>eQ!|\$!|V'<!#:>$KPG!wf/GG!|U$GwRW!wf$GR`PW!wf+GtRW!w6$K11WYS1<,5`S0E'0S0?!|U$>!|U$@!w3$>12G?!x>%1A11rGS0F!xE%@'5R9'0Rc,0^!we-0DPuQ1@!we,>!we&^Q0?P^Pc!|R'KQ0EQ1AP9!vs$WPd!wd+GPG%7G!wd9`Q1<!zQ$@!wd-GPG!wd+WPd!wdYGRGA@LG!wd&G!wd/G!wd<0D!wd-1>!#:40;P7Q0NQ0MPf!wd/ff!wd$fwRG!wd$fRdPG!wd+ftRG!wd$M11GYS1;,5dS1>'0S0D!wd$@,0DRW!w1$F12f!#>{%1<11rf!wj$9YS0E'5R`!wc6KPuPW!wb,@!wb,D!wb/MQ1>Q1<!|@$xPG!#>r,fPf%7fR`!wb7dQ1;Q1AQ0E!wb-fPfP`!wb&G!}U$!wbVfRfA@Lf!wb&f!wb/f!wb=K!|H/FePEQ0NPRQ0L!#55&:P7Q0QQ0OPg!wg/gg!wg$gwRf!wg$gR9Pf!wg+gtRf!wg$O11fYS1:,59S0L'0S0N!wg$F,0DRG!w5%12g!#54$Rd11rgS0E!#53$A'5Rc'0Ra,0^RU,05!x@%1;PuPG!wj$!wf$FP5PU!wf%NP^Pa!wf'OQ0LPdPc!vt$f!#5/,gPg%7gRc!we,d!#HQ-:!}&&!we,gPgPc!we&fP`Pd!weWgRgA@Lg!we&goRd!we+gPLPd!we81;!we/KeQ0Q,RERdQ0P,YRRg!|T'9P7Q0SQ0RPXPYPRA=XX>R`Q03#VRf,2X!#CK%R11]XR9!#CQ$9'5S0P'0S0K'0S1;,0DS1A,0u12XA!#R&$0E11rXS1:!#R&$L'5Ra'0RU,0`RW,05!x0&OPuQ1A!w\${PDQ1;P5PWP~P`Q0KP`PUP`P`P`Q0RQ0PQ0EPa!#BU%!#Qz+XPX%7XRaPfPAPzPzQ1UQ03PA%7AEeS03M:>RU!wk/!wn%L!wk-XPX!#HE'cP^PU!wkWX!#R1,%9AR^,?URc!#R5/c!|V9!#W-,PuPDP`Q0S,RE#VR`,2XRXP>P9PXPYGGe!wy%8P7PkQ0TPj!|e$N!|e%jj>RX12j!#W=&jRc!#W<'%VNR9,2j!#MP%T!#MP$8,5cS0O'0S0L,0XS1!#Cg$9!w`$EQ01#SRa,2j!#:n%111rjS0P11WYS0R'5!xm,X!xm$!xC'NPuQ19!xC,:P5Q1AP~PXQ0LPXQ1;!w9$XQ0T!|z$1Q0K!#Lb%W!xF+jPj%7jS0KP9!xd$zQ1UPNPa%7aEeRXM:>RG!#?;,18!y8$R!xE-jPjQ0K!#Me'WP!#aHWjRjA@Lj!xF&aRG,?jRW!xF+jPLPW!xF9N!}7/Ee1REk!vu$U,YNS0U!}7'7P7Q0WQ0VPi!x=/ii>RW12iwRj!x=$iRUPj!#5|'i9Rj!w[$V11jYS17,5US0N!}I$,0WS0R,0DS0!#Rc$812ia!}~%1U11ri!x:$cYS0O'5S0T!x3&W!xu$5!~$%S1:PuQ0P!}V%{PDQ0RP5Q0LP~PWQ0KPWQ1;PWPWPWQ0VQ0N!}-$T!w2$j!#H~,iPi%7iRW!x4$XM:>S0T!#Mv-7!xm$O!w}-iPiPW!w|&jPcQ0T!w}WiRiA@Li!#62%iG!}A-i!}A<1:!wy-1!#aI$WPNQ00!#:q&6P7Q0ZQ0XP0!#:q-00>Rc120wRi!ws$0RjPi!ws+0tRi!ws$X11iYS16,5jS0W'0S18,0c!}-&0T!|K$O120?!}$-0S17!}$$1U'5!xQ&V!s\$;!#?^/Q0T!#?_'!}$%;P~!|#$PcQ0VPcPcPcQ0X!z&$1Q0N!w#$i!}$-0P0%70!#:{-!#66+jQ16Q17Q1U!wp-0P0!#:{'iPW!#66X0R0A@L0!wo&0oRU!wo+0PLPU!#?bEO!wo$ZPRQ0Y!wo'5P7Q0]Q0[PH!wo/HH>RU12HwR0!wo$HRWP0!wo+HtR0!w?$[110YS15,5WS0Y'0S0Z,0US0O!wo$K!|-$U12H?!xG%1711rHS16!xN$0N'5S01'0S0W,0URc,05Rj!wn$XPuQ0KPuPj!|a%OP5PcP~PUQ0ZPUQ0WPUPUPUQ0[Q0Y!|'%!v|$0Pi!wm+HPH%7HRU!wm,c!wm+WQ15Q16!xL'!wm%HPHPU!wm&0PiPc!wmWHRHA@LH!wm&Ho!|^-H!|^<0X!|^/U!wm$]PRQ0\!wm'4!#DQ%^PJ!wm/JJ!|^$JwRH!wm$JRiPH!wm+JtRH!wm$^11HYS14,5iS0\'0S0]!|$$U!wm$X!w9$N12J?!xE%1611rJS15!xL$01'5S17!#?{$c!#?{$!wl%YPuQ0X!wl+1U!#?{%cQ0]PcPU!|Z'^Q0\!{~%!vz$HP0!wk+JPJ%7J!|Z9iQ14Q15!xJ'!wk%JPJ!|Z+HP0!|ZYJRJA@LJ!wk&J!|Z/J!|Z=Y!|Z/NePdP!#DK'3!we&_PV!we/VV!|T$VwRJ!we$VR0PJ!we+VtRJ!we$_11JYS0Q,50S13!#I8%US0Y!we$1!|T$512V?!x=%1411rV!|[$HYS16!#I:%i,0U!wd/\PuQ01!|R,Y!wd&UQ0NPUPi!|Q'_Q13Q14!#I<%JP!#yV+VPV%7V!wc90Q0QQ17Q16!wc-VPV!wc+JPH!wcYVRVA@LV!wc&V!wc/V!wc=\!|P/5!wc02!#WC$`PI!wb/II>Rb12IwRg!wb$IRdPg!wb+ItRg!wb$`11gYS12,5dS15!{k%bRV,0DR!#yA$\12I?!x7$Rc11rI!|L$JYS17'5R0!w^%b!w^/QPuPH!w]'PV!w\&bPUPbPiPbPb!t{$Q15Pc!|7$xPgPJ!wZ+IPI%7IR0!#5+6dQ12!|v-!wZ%IPIP0!wZ&gPJ!#5+XIRIA@LI!wZ&I!#5+-I!#5+<!#t6-0\!#W;01P7Q0bQ0aPm!#Me$mm>R_12m9!#M_%a11]mRI!#M_$1'5RJ'0Rg'0R0,0DRd,0u12maRb/1>Ri11rmS0;11bYRU'5RW'0RV,0_Rj,05!wo'PuPd!wB${PDP0P5PjP~P_PgP_PV!#xS%0aPJ!#>&%xPcPb!w=+mPm%7m!#B},Ri!w=+IQ11Q0;P!#>1-mPm!#B{'c!xG$!w<Vm!#Bz2b!#Bz/b!{pDPuPDP_Q0b,RE#V,2mRmP>PIPm!#M;,0P7Q0dQ0cPT!wO%TT>Rm12T9RI!wO$c11]TR_11IYS10'5Rb'0Ri!#Zs$!#[H$12TaRU/1>RJ11rTRV11UYRg'5Rj!wv%mRH,05!w{$S0b!#[B%d!wN$cP5PHP~PmPiPmP0!vW$mQ0cPbPJPj!v^$I!vx$!wN%TPT%7TRj!wN,J!wN+_Q10PVPg!wM-TPTPj!wM&IPUPJ!wMWT!#8|0G!#8|Hb!wM2mQ0d!wM&TRTP>P_PT!wM,0~P7Q0fQ0ePl!wM%ll>RT12lfR_/1>Rm11]lRU!#|3$e!{u&I'0Rj,0DRg!wL$lARV/1>Rb11rlR011VYRi'5RH!ws%TRd!#[$'0~PuPg!#[$&PjP5PdP~PTPIPTPc!vV$TPmPJPbPH!v\$_PV!wK+lPl%7lRHPfPAQ!#V8$b!#Kr,0e!#Bf%!wL'lPlPH!wL&_PVPb!wLWlRbA@Lb!wL&b^RV!wL+bPLPV!wL9~!wL2TQ0f!wL&lRlP>PUPl!wL-}P7Q0iQ0gPe!#8z-ee>Rl12e!#|W&eRT!#|W,e!#|W$!{]&b,5TR_'0RH,0lRi,0DR0!w8$g12e!#8w%m11reRc11JYRI'5Rd!x6%l!#8u$g!sU$}PuP0!wk${PDPi!#8u%lPHPlPj!vq$lPVP_PmPd!#Tg%!#8s+ePe%7eRd!#8s+y!wf+TPbPcPI!we-ePePd!#UU'JPy!weWeReA@Le!we&eoRo!we+ePLPo!we9}!#8p-gePEQ0iPRQ0h!#Fv%0|!#_\%jP1!{}%11>Ro121fRe/1>Ry11]1RJ11e!#8G$d!{|&c,0DRb!{|$1ART/1>R?11r1Rt11TYRm'5!wj$V,0oRl!#=2&RHPuPb!#=1'cP5PlP~PoPIPoPVPo!s$$yPdP?P_!vL$ePT!w:+1P1%71R_!{{-A!w;+JPUPtPm!w;-1P1!$2>'ePTPA!w;W1RAA@LA!w;&A^!#h^,A!#h^:PH!{y2o121`R`P>PJ!#{'$!{r&{P7Q0mQ0kPh!#Yf-hh>R`12h!#FR&hR1!#FR'RJ12h9Ro/1>RH11oYR^,51RA'0RT,0`Re,0DR_,0uRm12haRt/1>RU11rhRf11tYR?!x1&y,0`RV,05RI,0uRlPuP_PuPI!w^$eP5PVP~P`PTP`Py!#d%$PHPAPU!{r&oPt!w^+hPh%7hRd!#9$+!#FC+1P^PfP?!w]-hPh!{r+oPt!#F@Xh!$6t0GRt!#ce/t!w]8l!w]-meRmQ0m,RERlQ0l,YNRt!#Ao%0zP7Q0pQ0nPQ!w]/QQ>RU12QwRo!w]$QRdPo!#4Q'Q!w[&?!w[$f,5dR^'0R1,0URA!#FJ&R`12QaRy/1>RT11rQRV11yYRe'5!|b$_!#TS/Rb!#FF/A!#TP&P1PUP_!#J{$P?P^PT!#3s%oPy!w[+QPQ%7QRI!w[,!#^'+dPfPVPe!w[-QPQPI!w[+yP!#^#WQRQA@LQ!w[&QGRT!w[+QPLPT!w[8!#=[-`ePEQ0pPNQ0B!#4M&y!#h0$q!|1+JPmQ0EQ!#c<'0x!|T&rP:!wu/::!|T$:wRb!wu$:RTPb!wu+:9!#FV$Q11bYRy,5TRo'0RI!|R+V,0uRf12:aRd/1>R^11r:R?11d!#5]$_!xK%`!wu%A,0uRjPuPVPuPA!|R+c!|R$IP`P1!|R&QPoP^!#52%b!#{P,:P:%7:R_!wu,!#vl+TPyP?!#Fz/:P:!#51'b!#{MZ:R:A@L:!wu&:G!#51,:!#51;j!wu-fePlP!|D+wP7Q0uQ0s!wp/PEQ0uPNQ0t!x>%P7Q0vP=Q0o#I#;R=PkC!$[i%!xU%vP=!x2/==>RN12=wRw!x2$=RkPw!x2+=9RC/1>Rw11CYRE,5kRm'0RJ,0NRh,0DRt,0uRl12=aRf/1>Rj11r=R^11fYR:!#5^%b,0NR_!#cF&R?PuPt!#cD&PhP5P_P~!uB$NPbPN!s$$wPmPj!#5^%CPf!x2+=P=%7=R8!x2,X!x2+kPEP^P!$EU-=P=P8!x2&CPfPX!x2W=R=A@L=!x2&=GRG!x2+=PLPG!x28?!x2-le!|[/P7P2!$mh$Q06PnQ00Eu!we%Q02g00h:,KR'h5aFeb;b:b9W>o"). Qed.
+    intros segs. pose proof (u64_range tid). pose proof Hlo. pose proof Hhi.
+    unfold auxvpN, auxv_w, D_main, D_cxx, D_fd, D_ssp, D_tls, D_tlsB, D_tlsA, D_libc. peel.
+    apply rdn_wbytes_hit8. unorm; lia.
+  Qed.
 
   (* [comment removed for export] *)
 
@@ -165,8 +348,22 @@ Proof.
 ltac2:(KReplay.run1z (kr_t_RefMainEntryN ()) ["MainEntryN"] "##J%h01Hh14__x1h24__x2h31xh44__x3h51nh61mh77__arithh84__ffh96__sat4h:!s/%5h;!s/%6h<8__varmaph=5__with>2b1h?2b2h@4cstrhA1AhB2H0hC2H2hD2H3hE2HahF4__x4hG1fhH1lhI2H1hJ2HchK4Hhi'hL4Hlo'hM1chN1ihO2lohP1yp;2p;1p;3p;6p;4p;7p;<p;8p;Bg03L:j2UTg0080R0j22Tg004Lj1=Tg010lR1j23Tg007PR2j14Tg03MLj26!sY$LR3j2B!s:$jj2aTg03=5j2_!sk$jj11Tg00Llj1?Tg03@Hj28Tg00>Cj1ITg03E;j2hTg006Pj1RTg03NKj3CTg00:jj3L!s8$gj3P!t$$Uj2Hj3OTg03OJj6^Tg00@?j1G!s/$dj2]Tg00ALj2N!s/$hj2\Tg00BEj3[Tg005Oj1Z!s8$ij2YTg00CSj2XTg00DDj2W!s/$dj1VTg00EDj2MTg00mfj1z!s8$bj1yTg00F@j1x!s/$kj2ATg00H\j1wTg00Ibj2sTg00?<j2>Tg00JDj2rTg00K0j3q!s/$Oj4pTg00GNj2ETg01L^j3K!uN$ej7oTg01lJj2JTg029Fj3QTg01m3j2jTg00[ej3iTg026fj4STg01j4j1k!s/$Rj4lTg00MQl<n!wC$Aj4fTg00<^j3eTg01JIj4d!u&$1j4cTg00N6j7tTg002oj8uTg01N8l<bTg028`lBvTg00SLR4f0R5g00W[R63ep=0f2R7f1R8/H5g03Q<R93Cp=5g00P9R:/85p=<%?5#?p=:%15#1p=F!s-$#1#1p=T!s2+!s$'p=D12:5p=7AC859p=`g00O9R;P7P8P5Cdp=@P7g002PR<g00PWR=P=g00Q7R>P;P8g00W4P5Ccg00QWFtp=9f3R?P<P=P=P>!sm%Gup=;g00NZR<P;!s$$2P2f5R2f4R@P?!sL%M<bp=g!sF&!s$%1P5P8P7P1P?P@P2f6R1f7RAf8RBf9RCMBvp=m1U78#012?8g00R7RD#=RE,37%4?,3@'2P31685#0%07RF%08RG'BRH[RI%05,BG1678#0RG[RJ%0?/BF\G1a85RGP8n20010!s#$12!s-%0X?4X>4RFPI^?4^>4RKP51_;<RL?512%<1RM'6RN%42,31%1DR2#1RO#:#1#F#?#T#D#=RP'8RQP?O3%0N%0Q'BP3A5LA1%<A'6#0%41,3A/8P#0g00UMRQ#IRN95L1/6M%4NRM,31/8P'6#0P5A5LCB%<C'6#0f:RB%4C'3!sc$PFPKP5f<RKf;55LRF%<KR1P7O3%0F%01'BP3f=RF=5LK#0%<F#0A5LKN/6113KM!t0+f?f>55L#0f@#<#0P31885#01278RK[R11285RF18!vg$R[RS12?7\R1h85RR!ve:6;X5;RTP1^6;^5;RUP5P:fBRVP8O3%7VPTPUP5fDRUfC#4'3RTPPPCO312TPP3PIPJ16?7#0\HPGP5!wp>GPJ!wp&J!vJ$UN%<U'6RH13UM/8PRU%0H%0UPGPJP5fERJ=5LNRG%<JRU%0G%0Ug03RNp4p710RUP4\5RG%R8RHP3AC785#0AL@57P@P8O1#0[^3?RI[AL?58P?!s:+7AC?78#0[RTAC@!u1$IAP785!u49WHWGWAPT^HH^GG^AUP5PLfFRU/HNP9ALL59RGfJRHfIRTP8fH1HHTRI,`L#0fMRCfLRV;O8#0\G^3L[fKRW=OV!s6'A5LWH#0[APLI9PBP8P5E^%GTRI%4T#7R9%=2RG%?2RX#?#1#=RY']RZ1N:G%7Y1\GYR[,N:[[R\%7GR]g00UlR^A[GY8UWERY%7[\^^E]R]%FORO#F#Zp,3sp0'YR^%=ORO'XR[%7^%7O1W^O#7[[ROg00VHRG#VR_%RGR`1M;7Ra%z;Rb7@8%y;Rc%x;Rd1A;DRe1A;2R259dRf%w=R=PfC;1sd>R>P5P71>461r57#0dAq;:8CpR6b8b<b=X1;X2;12581287[^1;^2;P5PCfOR4PWO3b7b9b:b;b@PIP9PZP\PYP]P[POP_P`1M;?R99@a8PcPd1E;E9K;eRa%?DRD,A;RI9K;!te$2P=P2C;P>P!tH0X4;135ER21387'2138E137?Rf'2!t[&^4;P5fN#4P4PCPHO4!t`,FoWJXMLO4b0P3P1PS18!yb$KPR!{m:!|x%RPS!|x&SP5P:PUfGRK#G%4K#7!uX/%INR1#I,J;1J;11J;Q5Q;5Q;g02?P'j=iG_R_P`A@97bR99@b!u|%A;XRX=9deP=!v2$:R:=9dXP=Pd%:D#:!s$-1#F#T#D!s$$=RG,E;=9dIRIP=A9d:eC;C;!vR9275%7?R712G?RGP7[[!vM/PCP^PWPTPBp,3HloRBO6!vU,O3b0CSO3b0PRPSP513JMRSPP12SPRR13JERT/2PP;P;P0P5X3;RCP0%kFXP;X3;PSPTPC!s$$;P;g02>l1385Cl,>;!w#%PJPJ1>;JPMPEPCPC%45,>;X3<PNPE1>;EEgM:mPPPP1>;PM<n%GU%4U!wC1!yu&@9@b@?@89PcPd%1D,A;9K;XRX99da!w#&PRD9!w#&P!vY%aD!vY<XF;122f13?@/2P13?E/2P\G!v^-^F;P5%4WPVP^PHPKPAPBO7!v^,CfPRe!vc,bDb0bCb0WCWIP8P5O2!z90!s/&b0bBWDW0!sHA1U?N#0eWKWLW0XN;X5<XO;o"). Qed.
 
   Lemma kimg_okN : ltac2:(zQ "c0!ko3!lhf!mkd!ml5!ju3!nlf!nm7!kl1!nkf!ln4!nn4!nnb>2lo$0>2hi$0>0@3$4$2@2$8^2@1$b@2$a^1^2$3>0@2$1^3^2>0@2$1^3+hjhgg0@4$6$9$7?3mem@2$5^5^4").
+  (* LPS-revision port, written out rather than re-encoded (rule 11); the STATEMENT,
+     including the 0x131000 bound -- this image's own, not the plain twin's 0x12d000 --
+     is untouched.  The replay applied the pre-revision 6-argument D_main.  Re-threaded
+     exactly as the landed U/RefMainEntry.v's kimg_ok: D_main_none's argv premise is over
+     `in_argv inp`, hence kvaN, and main_entry_mem_data is RefStartup.v:351's. *)
 Proof.
-ltac2:(KReplay.run1z (kr_t_RefMainEntryN ()) ["MainEntryN"] "##ODh04__x1h14__x2h27__arithh34__ffh46__sat1h5!s/%2h6!s/%3h78__varmaph85__with92Hbh:4__p1h;4__x3h<2Hah=1Hh>2_Hh?!sc%4h@!s/%5hA4__x4hB2b1hC2b2hD1ihE1mhF1nhG1zhH3HHIhI3HLOhJ4Hhi'hK2HihL3HlehM4Hlo0hN2hihO2lohP1op&0p;2p;1p;3p;4p;7p;6p;;p;8g03L:k208Tg0080j20Tg004jj11Tg00Llj1C!s8$Lj1!sJ$5Oj1XTg00Bij2WTg03MLj2J!se$LR0j27!s:$jk205Tg03=5j2{!s/$Uj2ETg007Pj1MTg010lj2>Tg03@Hj2DTg03E;j2rTg00Ahj2`!s/$Lj26!tF$mj1mTg01Yaj1lTg00:Dj2jTg00H\j1[Tg00<^j3PTg00@dj2Z!ts$Ej3YTg00CSj2iTg00DDj2h!s/$dj1gTg006Pj1fTg00EDj2K!s/$bj1eTg00F@k107Tg00GNj2d!s9$kj2GTg00Ibk20!ti$?<k204Tg00JDk20!vW$K0j3}!s/$Oj4zTg01>kj3yTg00YYj1xTg031Gj7wTg01=Dj2ATg03Rjj1^Tg00mfj1vTg01L^j3\!se$Hj3QTg03SJj2uTg003nj6T!s8$hj6tTg03U6l;sTg00>Cj1ITg01lJj2FTg01m3j2STg00[ej3UTg02Laj3VTg02MDj2_Tg01?Nj2qTg03VDl;pTg026fj4aTg03WXj2oTg02C^j4nTg03NKj3|!wD$1j4bTg00N6j7cTg002oj8~Tg01JIk400!s0$gj6k!vT$>k702Tg029Fk303Tf1R1f0R2'A#^p=;g00SLR3g00W[R47P2p=2%C2#Cp=9%12#1p=R!s-$#1#1p=O!s2+!s$'p=:g03Q<9|12p=?g00P9R5/D2p=B1052p=3f2R6g002PR7g00PWR8P8g00Q7R9g00O9R:P1g00W4P2Cbg00QWR;Fcp=5f3R<P7P8P8P9P6P1P2G~p=41d:2p==P:!s:%H00p=<P1!sP+2Ekp=]P6!s7+1P2K02p=HP!t8$1S9P2Cbp=N!s[/P!tB$LB03:12p=@1;21-081#21061R;g00R7R7#1R=#1R>#9#1#R#C#O#:#8R?,06p,3HloR@%C7RA#9!s$01#R!sP$:!sT$B%1>R>#1RC#RRD#XREp,3sp0RF'WRG'0p,3HhiRH%ODRI#1!s`+:#8RJ,0GP01J12#2%26RK%21RL'7[RM%22,7L1J61#2RL[%2</7K\L20512P1n20010!s#$12!s-%0XC3XB3RLPM^C3^B3RMP2g00NZ,{:RKf7RNf6RO/;NRP'E'?%BN'JRQ%MP,>N/D?RPf5RRO3%2Q%2P'7P0f8RP1;NPRQ'E,?K%BP'J#2%MQ,>P/D?#2f9RQ#3P2f:RS1;QS!sM&S'J#2f;RT1;ST#M'>!sS$PLPMP2f=RMf<RL/;M!sT$RU%BMRVP6O3%2U%2V!tG$>RV1;MV!sH$#2%BV#2f?RU!t:$@RW1;UW!sB&fA#B#2P01D12#2P;[R;1012R01D!vX$K[10<6\K1r!vU<E:XF:P;^E:^F:P2P5fCR;P1O3%3;P2b9b=W9W>P1P2O2!sg7!sH$>W9!sH61!sH,%3O%3N%8=R;%8DRD'`RK,0ORW10P2162N'7RX%X>#mRY#lRZp,3memR[1jE1R\O1R]%[YRY3P[^D:R^'7%C=R_#C#1#8R`,Z;Ra165;Rb%3`1`;`Rc,65[[Rd%3;Reg00UlRfAY;`1UW<R`%3c\f^<eRc%8CRC,iGRg%3G%3C1hGC#3[[RCg00VHRh#gRi%fhRj1K:1Rk%e:Rl&07:Rm1d:5Rn1G:7Ro55mRp%[8R8PpC4206m9R9P2P62043420126#2dA}:51CzR4b3b7b8X0:%32%31[^0:P2PTf4R3O2b2b4b5b6PWP^1Z;DR^%3D165K[\bRbAY;D1VfX<eRD%3K!u=%ePaPdP`PcPgPCPiPjPkPlPm%=?Rf95moP8%=;=y:ER;95moC4P9P!tS,102?101K!tU&LPQ!tS,b?b@PZPFp,2avR5p,4envvRWp,3AMBRq#xRrp,5rdrawRsp,3tidRtP\FwAPZ2YXPZPFP5PWPrPsPtP1p,3Hva!t};BRr=5moRZP8PZ!tt4B210B!vK'GP@!vI-!sv:J95moRkP8Pk!uj5J101J!st+H!st-Q1APQRH#^RJP1PN!t+/p-0RkPiPj1K:6RZ%v:RY7<1RuPlPm1G:=R=!tB$v1]m35HmP8Pv!tI2X1:W:1021/761016[^0:^1:^:kP216RLPRPMP3O4!t]+:PH%87R7,>61>S2'0XG:!uh31K:<Rv9<Z1!tW$]mRRZ1G:ARw,No,Lm!tY$%=79\:oAQ:w=9\:=55m!tj5X;:X:k1626,7<Rx1>171A<6,>6'0!ty';!t|&0MRR7PLPMPRP3O5!u$'%MJ!wX4!v?$A5m=oP8AQ:o=95mn!tL51A16#3\0!t7%P2PMPLPSO3!t%',uHETEtM;sP]Pq!yr&sPtp,4regsP[p,2MEP\!#;f$2c8,AGRt,62!vR2g00UMRs#IRW#IR5#IRF#IRq,F:R]1F:W1F:51F:sRs'@R5'@'@g02?PRW'S=UhiPjA<Y6v?<1Y!z$$1A,G:RA!w2%RH9HmZP8!uf$r=R!s1'AfRAP8PmPZP8%8>R>#=%8IRI#=RZ5V:=V:Z9Q:=!sk%C4!s$%!we:0B6103?10B3RB1_>I/_I,AR,63[[[\x!wn1P7PLPGPRP3PPPQP@O8!vm'161te1WE\P^PbPDP!#3O/%Iq,F:1F:F/@s'@/SW1@]5/SW=Uhi5Uh!z4$39<Y3A<v6Y7<!z:%G:_R_=5mo=HmH!uq&n_!uo$A!v3'wP81No;,Lm9Hmp!ub?A:1062162<'7%3<10R?%33163K'7\B[[!zQ-A:P2PVPUPGPNPOPPPT!ua/b?b@,q1ETM;pETXKXXD:CaCag029og00kUP[1oNOCnebMbHbIWJWLW9XN:XO:o"). Qed.
+    intros lo hi Hb Hle Hhi'. pose proof Hlo as HLO. pose proof Hhi as HHI.
+    assert (Hlo0 : (0 <= lo)%Z).
+    { unfold D_main_missb in Hb. apply andb_true_iff in Hb as [Hb _].
+      apply andb_true_iff in Hb as [_ Hb]. apply Z.leb_le in Hb. exact Hb. }
+    cbn [kentry_ok]. split; [lia|]. split; [lia|]. intros i Hi.
+    rewrite (main_entry_mem_data inp mbase entry sp0 rdraw tid regs mem ME)
+      by (rewrite u_small by lia; unfold stack_max_size; lia).
+    apply (D_main_none inp sp0 rdraw tid i kvaN); [lia | lia |].
+    apply (missb_subN lo (Z.to_nat (hi - lo))); [exact Hb | lia | rewrite Z2Nat.id by lia; lia].
+  Qed.
 
   Ltac kimgN := apply kimg_okN; [vm_compute; reflexivity | lia | lia].
 
@@ -175,22 +372,65 @@ ltac2:(KReplay.run1z (kr_t_RefMainEntryN ()) ["MainEntryN"] "##ODh04__x1h14__x2h
     unfold adenot; cbn [a_base a_off edenot]; unfold v_addi; rewrite u_small by lia; rewrite Z.add_0_l.
   Ltac kw_dataN L :=
     kw_preN;
-    rewrite (main_entry_rdn_data sp0 av envv rdraw tid regs mem ME) by (rewrite u_small by lia; unfold stack_max_size; lia);
+    rewrite (main_entry_rdn_data inp mbase entry sp0 rdraw tid regs mem ME) by (rewrite u_small by lia; unfold stack_max_size; lia);
     rewrite (L RSEGS); try reflexivity.
   Ltac kw_memN L := kw_preN; rewrite (L RSEGS); try reflexivity.
 
   Lemma know_imageN : ltac2:(zQ "40!lod!jo4!kl1!ln4@4$0$3$2?3mem$1").
+  (* LPS-revision port, written out rather than re-encoded (rule 11); the STATEMENT is
+     untouched -- the same kn_image this unit's U plain twin claims.  The replay applied
+     the pre-revision 6-argument D_main.  The bullets are the UBSAN image's OWN, taken
+     from the landed U/RefMainEntry.v:710-750 (whose nine goals were read off rule
+     3o-FINAL's all-goals probe a farm round), with E/ke* replaced by
+     EN/keN* and kimg by kimgN: 0xfc000 + 0x35000 window, hi 0x131000 -- the plain twin's
+     0xf9000/0x34000/0x12d000 are a different image and are NOT used (rule 22).  The
+     hwcap cell holds `in_hwcap inp` where kn_image claims the ambient a_hwcap, so Hhw
+     closes it (rule 12k-DONOR: re-index and bridge, never delete the claim). *)
 Proof.
-ltac2:(KReplay.run1z (kr_t_RefMainEntryN ()) ["MainEntryN"] "#$\]h07__arithh14__ffh28__varmaph35__with46__sat1h51zh64__x1h7!s:%0h8!s/%2h9!s/%3h:!s/%4h;!s/%5h<1bh=1mh>1oh?1dh@2HahA4__x2hB4cstrhC1xhD4__x3hE3HHIhF3HLOhG2HdhH2HmhI2HthJ1lhK1nhL1yp%0p%1p&0p&1p;1p;2p;3p;4p;>p;5p;6p;7p;=p;;p;8p;<p;Bg00Llj16Tg004jj13Tg005Ok109Tg00Bij2STg0080R0j20Tg02e=k10U!sW$Lj1JTg00Ahk20?!s0$Lj2<Tg02C^k311k40zTg01:Yk10>Tg02HGj2hTg02IOk20fTg03WXj2ETg00>Cj1TTg02JXj3mTg02Dnj1zTg02G>k30WTg00Ddk10ETg010lR1j22Tg007PR2j1pTg00:Dj2=Tg02Kaj4yTg00@dk20L!uE$Ek30!u$$6Pk10ITg00mfk10vTg00Ebk10rTg00F@k10oTg00GNk202Tg01>kk30HTg00Ibk20eTg00?<j2!tc$JDk20dTg00K0k30c!s0$Ok40bTg035=k10:!s0$_k10aTg036Ak10`!s0$ck10_Tg037@k10^!u%$?k10]Tg00CSk20\!uo$Dk20[!tw$Dk208!tw$kj2{Tg00H\k10ZTg01lJk206Tg029Fk30GTg01m3k20YTg00[ek30FTg01JIk404Tg01?Nj2lTg03Xam>0XTg026fj4_!xf$Lj21Tg02P@j1iTg02RQk20VTg03Ylj5B!w~$bR3k20D!yR$mk10CTg01Yak10!x=$Tej2^Tg01[Kj2!yP$LAj4oTg01j4k10S!s0$Rk40R!vt$Vj6!ur$<^j3!zE$YYk10QTg031Gk61;Tg03[8k71:Tg003nj6>Tg01=Dj2|Tg02MDk20OTg02Lak30N!x-$Hk319Tg03\Il=wTg03]]j1nTg03^>m;!{j%f0k20!{k$ZXk114Tg03_Rk7!|#$3`ek112Tg03b6k110Tg03cJm;0~Tg03d`k10{Tg03f1k80yTg03gFk70xTg02[;k20qTg02BPk40pTg01L^k30=!x-$1j4gTg00N6j7f!y|$>k701Tg002ok80nTg02O9k10wTg017ek20!|1$QFk30!x,$Rjk10kTg03L:k20!v$$S^k20}Tg027Ak400Tg00MQm<0;Tg01N8m<0jTg028`mB0!xN$Umk30!}X$VSk215!u2$\k60gTf0R4#6#6p=@%34#3#3#3p=u!s2+!s$'p=V!s:'Jp=4!s2$p=vg00P9R5f1R6'0/14p=q%6!sA$A!s-$!sa%~%34#6p=G%34#Jp=}!sq&p>07%T4#Tp>05!s/$#T#Tp=kg02`gS00@0F64p=;1054p=8f5R7f4R8'<f3R9f2R:/26/04'1'1p>0A12:6/04p=sg00SLR;g00W[R<794p=x11:6/14p>0P1254p=a!sV&,19p>1810591<!sJ$'1p>17g00O9R=0024p=5B0==64p=\P9g002PR>g00PWR?P?g00Q7R@P=B0==:6g00W4RAP4Cgg00QWRBFfp=XP8P>P?P?P@P9!s0+=P:PAP6CgPBFfP4K01p=D!sP;g01S9RC!sU2[1W=4p=?P:!sR-6P!tN$P!tI$7!sm-:P6P4L0np=P!sW2C!sW,eP=P8P9!sS%E>p=MP=P5!s7/Ig00kURC&0w4+0mp=`1S:6/24p=cB0lC64p=dg029oRDPCP6P4H0zp=Z1|64$0k-0|:=9;<p=C!tT/202=!u00F20}C4p=jPD!tL%H00=984p=Yf7S01f6S02,051<7810:6,19'1'1!x1%=Lg00NZREP=P3P2P0g00OWP7!uQ,N<0;p>0BPEP=!s$$2P2!sF2jp>0@!sB$0P7P0P8P5!v$,!sf&K!sd&!s$%1P4P6P:P1P9P8P7Q02Q01f8S03f9S04NB0ip=R!sy%Q01P0Q0!tC3;p=OQ01!s?&p-0/W6:0h9:P4E]p=K!z$'!vI%p=r!xO2!s2'4PBFf!y;$tPD!t+%H00p=HPDP82159!vp'74p=N!tV0CoP4C_p=b1164,1:p=QPDP91=:!sk&>0M10!sA%>0<!x&0p>0u!t`0!s0'6!zu,>0t!|{&p>0sQ00!uw,J0gp=:p,3HloS05g00R7RB#6S06#@#@R>#@!s$'RA#u#V!s$$4S07%3BS08#3S09#3S0:#3S0;#vR7$09R0p,3sp0R1'SR2'0p,3Hhi%u7S0<#vR3#uRF!ss,,02p,3tidRG$0U1S0GS0=Q0=Q08#JRH%J7R7+0?RI'<'qp,3memRJ:11DCRK&0>5RL%3>R>#v#V#4RM'hRNQ06#3#A#A!s9$O+0fS0>%JFRF%~>#G#@#~R>#}RP'ES0?%6>#JR>Q0;#@RQ#3#ARR#3#G#A#ARS#3#4RT'ES0@%6S#A#}RS%~R#G#GRR#4RU'ES0A%AR#}RR%6Q#G!sj$@RV#3RW#GRX#G#4RY'ES0BQ09#6RZ#G#@R[!sL$\#uR]$07#4R^%6]R]#v#4R_'ES0C%AX#4RX,hLR`g00UMS0D#T$05S0E#TRa#TS0F!s7$Rb&0>X3mS0G%6W#GRW!u,$c,hLS0HQ0F#zRd7maS0I%6W!u;$W%6VRV#GRe!tn$f'ES0J%Ae#4Re!sA%3Rg!sA$h'ES0K%Ag#4Rg!s\&#4Ri'ES0L1hLiS0M&05b#k!s$/S0N#TS0O#zRj7mbS0P%@V#4RV%6Q#vRQ$07Rk!so$l'ES0Q%Ak#4Rk%6Q#u#4RQ'ES0R%@]#4R]!u=$S?mbjS0T%A\R\!v`$j!u[$m%6j#4Rj'ES0U%6\R\#3Rn#3Ro!xr$G#JRp%6o!s5$4Rq'ES0V1hLqS0WQ0E#z!tk$X%6o#4Ro%6nRn!wI$r'ES0Y!s6%3#4S0Z%6n#4Rn'ES0[1hLnS0\%J3R3$0>!sj$]!tK$!x:$S0^%6\#A#4R\'ES0_1hL\S0`Q0N!t?&a%A[!|Y%b%~Z!zh&Z'ES0c%JBS0d%@A!}/$JS0e60WdS0f1E53S0gQ00$0ES0h';S0i';S0j';S0k';S0l';S0m';S0n';S0o';S0p';S0q';S0r';S0s';S0t';S0u';S0v';S0w';S0x';S0y';S0z';S0{';S0|';S0}';S0~';S10';S11';124MRd#8PdPI%8OS12PdPOPIJ0A%86Rd%p6=s:ORAPDPJ128M/29,=0P:Cy#x[[^=E^?=40PX5=%aMR[P[PIQ12P[POPIH18H17S13!sc%[!s`,\A\d!sb%S1420LH7R[1<5HS15%871<5IS16[[RL%8HRsg00UlRtB0JH76UW@R7%8I\t^@sRug00VHS17$0ERvQ17$0IRw&0v=Rx&0r=Ry&0o=RzPz202=5R{%5MS18,\{R|PzPzP|%5HS19>0H=0R}!s9${%5OS1:PzP|Q1:P}CXDDD[DD20ez@R@P4P:1W;<R<20d4:#xdB0c=56H0bR;b1b2b3Q13P4b0b7b4!uq$=0M12M9S1;,=0S1<g03:a$0:!s%'a$0`$0_$0^P:PMPZ%?M%?ZP[PLP7PuPvPwPxPy%5ZR|=7z}P@P!t7&10ZIR~!t:+~eg03hXQ1;10M4X5=&0]:S1=%p:#8S1>!sx'Q08#6S1?#AS1@#JR~-0LHS1AQ15%8~20?H~S1B,<5[[S15B0JH~6VtX@sS1CQ1B#8!wC$S1DQ0;#JRs-0\2S0;%82%8s20[2s#8[[S1EPvPw208=6S1FPyPz1{=BRB97z{S1G&0Z?R?Q18Q18/\BRs57zCP!uS,X6=%8412M6Rt,0M[^6=P4f:R~Q03O2b0b4b8b9b:b;bBQ1<,S0S1<Q1;Q1=Q!ub-!uM$Q1CQ!t}$Q1EQ17206=aQ0E-06=Q0D-06=60G!s&$g02?P+0Y<0FvPwP=PxP6P=208=9P:PxH04H04PyPzQ1?,{=RH97z{P?!yP$BPHQ1:CXP?PzQ1G!s,$07#5S1GQ06,{=57z!sQ&{PsAezs}DDCP!s$%!uo0XA=XD=%8:RHAs69OQ07/0812M8RM1<MI'q[\H[[^6=^A=^D=P4Q04#pRHP2P~!#Au$Q03Q05O7!vG1'lRMDMQ1;%p9=s4ZX5=!vNC!z>$!ux$:P6!ux$Py!ue%Q08,{=R8!uk+PsP8P|CX!uD5As46OAst:Z!u'&P4PHP~Q01O3!x94PMDMN>0XXHAXGdX=EX?=C_Q13Q14'1e1=05S14,S0RM!|33!v{&{Aez{}DD!|9/55Q16'1!|<',l5R~CI%`N%iN5c0RH#8PH!#4m$H!#5Z%!}t$2H!#4g640Pe1dNOPDPJ20VCN!#5p-!sM,'1eQ0>,ZJePKQ0?Q11PFPPP<ACFPFd!~9,PRd9FzF!t~/FPP4b0!sI'A7zd|!sE/PZP4b0DBPKQ0@Q10P>PTP<AC>T>!s~-TRP9Fz>!s_/>T!s~2P!s~0T!s~-AQ0~PSPUP<ACSUS!s~-URT9FzS!s_/SU!s~2T!s~0U!s~-BQ0}PRPYP<ACRYR!s~-YRU9FzR!s_/RY!s~2U!s~0Y!s~-CQ0|P^P_P<AC^_^!s~-_RY9Fz^!s_/^_!s~2Y!s~0_!s~-GQ0{20DbbR_124XRYPYPI%pbR^#8RU12Y^PIQ0:$09$0C$0IRR$0TRTPJ%j`Pb1=0XS0{,^b,URRSDYS0|GLX5=P_%aXRP#8R>1<PIRd12P^S0C/0IS0},1URF'1RA'1R9Q0|'1S0BP_Q0:#JRN/0NROPbPN%?NS0:PbPNQ0:J0B!uj,NRH=7zH!uK,POP4b0CoS0~P9Q0|P9%8NR912PNRO/0IRt'1R8,1dRs,1>S0AP>PAP>PsP>!s$$dPFPdP8Pd!s$$UQ0}P9PtP4XC=Rt1064$0SXL=XC=Rd1W=5S0}P^PNPtPt%p4#?XCES10!ty+@REJ0KS0@PtPdQ0CPOPt!s$$=P=g02>l1264H0R#?X==XK=ROPPPP%?P!s{$EM:RPIPI%?IS0CGOE]GKGK!~n9%5XS11,\{R8!s7$8P}PzA7z{HS0?PzAr8H}CtD[!#37-Q0A!#<G'TPJ1=0YPbPSDYX5=PX1=04S0A=HJbS0>=9TSX5=PTP1p,2avRYp,4envvR8p,3AMBRF$0QS12p,5rdrawR>PGJ1;S16Q0{;HbRsA9T4SX>TRAPTPSPA1WTSPsPFP1PYP8P>PGPDK1:E>Q0{=HJb!s@/p,4regsS13PJp,2MES1<PDQ0{PbPXg02c8,|2Rs9s4^X5=S0112X^S1:Q0<#JS0<-0ONQ0<+0OS0!sQ$A'012XNS1>/0A!wd$1:Q1>!we&OPXPX%?X!wM,APA%?AS1=GO!#9>@Q!#>F$Q1G=7zBS!#;j%11PHQ0<#5S0<:0N=HQ0<60N=:19=BS0<!#9G3Q07/04S07Q1>Q08,|6S08'0!#>a$P2Q05O2S05!#9O-CoQ1:/0seQ0{,S0!y>9Q11Q11=ez!#910<XI,qX!#9/+XDMM=wE>PP%nXDMPMP~CIPTPJQ14PXPbPSENePTPJ%``RX%i`RP!s;&Q0|eFbC_Q0B,1_e!s`&_Ac0XPRPPPPIPU12P^PIQ0|GLe1d`^Q0|5Q_eQ0G!#9=&IQ0z&0C0R`PG20DabS0zQ0H%paRP'dS0GQ0H#j=HJaRX1^a4,UR59T3QX<`Q0z124cS0|Q0|PI%8PS0BQ0|/2PPI1^aG,URRS99TXS11GLX5=Q0z%acRX#8S0{1<XI!yO$B12XP!y6$IS1;'1S03'1S02'1S04Q11'1S06Q0zQ09#JR2/0NS09PaP2%?2S1?!#4]62S0:!#4^0Q09P4b0Q!sx$Q04Q0{Q1:%82S0412X2S09!tN$7'1S0D'1S18'1S1HQ0{Q02!sT$8!s2$!s%$1:Q03!s+$D!{5$!s%$0BQ1;!t/$7!{N$0}PPP2PtPtQ10PaP2Q1?J0@S1?J0K!{p%>Q09!{p3P!sO$!#4@%Q!#4=Dc,\{R2!s4$2P!#K=%Q0:PzP2Q0!#K:,!v&-1H!#4=-Q0|,=0Pa!#4?&c!s;%A!s8,TPS!#3Z&1WTSPJP0PcPaH0M!#3[/:Q13PJQ1<PDN;16E>PX%nc!{;3cPa!{;+Q0H#`RcQ0H#iRX!s?&Q11eFbFb!xa$6'1!{A&Q0zAc0cXRXPXPI!yM&PIQ11GLe!sR$GQ113QeQ0F-03CS0Fg03ifS11E>Q0I!{X'JQ0yPWPfP<ACWfW!#=o,fRX9FzW!}d-0Wf!#=o1X!#=o/f!#=o,KQ0xPePhP<ACehe!s~-hRf9Fze!s_/eh!s~2f!s~0h!s~-LQ0wPgPiP<ACgig!s~-iRh9Fzg!s_/gi!s~2h!s~0i!s~-PQ0vP`&14>RgQ0M/d^S0vQ0M!~L$bRf1^b4,URRe59T5Q_X<`P_124i!wF%PU12X^PI1^bgS0w,URRW99TfRf!#?u'iRP#8Rc1<PIRS!#?u$L/0IS0x,1US0K'1S0y'1Ra/1fR2Q0~PaPfPa12PNS0J!sP$I,19S0G,1SRa,1cS0zPcQ0y!yZ$c!s$$SQ0KPSQ0GPS!s$$UQ0xP9Q0IQ!#>J&LQ0J!|r+!#>35!|qD1\{hRS!s2$SP}PzQ!#=~$S!#=~6z!#=~1XPbPW!|S%iQ0>=9TWX5=S0zPTQ161=0iRX;HbR!|n$WX>TRcPTPWPc1WTWS0JPS!#=M23E>AHJX!#=K/!}-,PXPbPiQ0112i^RS/0A12iNRa!#<j%PSPa!v&+iPi%?i!#<h/Q!#<eNP?PzPhPHQ!#<D8Q08,0a[^6=Q!#<,210Sse1S0X!w79PhAezh!#;~1iI,qi!#;~+i!#;~,i!#3i2iPbPW!#3i'M#`RiQ0M#iRP!s?'feFbC_11_2!#<#-i!#<#1PfGLeQ0v=Q_feQ0O!#3]$Og03jnS0vE>Q0P!#3]&QQ0uPVPlP<ACVlV!}]-l!~]$V!}>/Vl!~]@l!}]-RQ0tPkPQP<ACkQk!s~-QRl9Fzk!s_/kQ!s~2l!s~0Q!s~-TQ0sP`PgQ0S/d^RgQ0S!~X&Q=9Te!~P-]RlPl!v3%l^PIA9TQWRQ!~E+]Rk#8Rf1<kIRV12k^S0s!}s$t,1URP'1Ri'1R2/1QRhQ0~P2PQP212kNR2/0IRX,19RS,1VRa,1fS0RPfPiPf!~j$fPfPVPPPVPSPV!s$$UQ0tP9PX!~<+s!#<P$!{7$kPk%?k!~;Q%5]!#<-1!~=&2!~=7R!~=2l!~=,]Q0zPT&12>Rl,URPcPRQ0w1UR4!~S$JRQ0JPl&10>E>PJP0P]Pb!#</?0~E>Pk%n]!{D3]!{D0S#`R]Q0S#iRk!s?'Q!{D'h!{D/]kRkPk!x7%k^PIPQGLeAQ_gQeQ0OQ!{6%T!{6'UQ0rPmPjP<ACmjm!z6-jRQ9Fzm!yo/mj!z62Q!z60j!z6-VQ0qPpPqP<ACpqp!s~-qRj9Fzp!s_/pq!s~2j!s~0q!s~-XQ0pP`g00h:RpQ0W/d^RQQ0W!{;&m!{;2qRgPg!v&%g!#:e$p,URRp99TmRm!{C+q!{C$]!{C$h12k^RW/0IR:,1URl'1Rc!{A%mRX!{A%m!{A/V!{A&hRP,1]RfP]PcP]PPP]!s$$hPlPhPSPh!s$$UP:P9PV!{?&PW!{>b1\{j!{<IPf!{;2gPbPp!{;%q!#:R$pX5=!#:O&qRg;HbRfA9T4pX>TR2PTPpP21WTpPf&0{DE>AHJg!#:?:gPbPqQ0112q^Rf/0A12q!vN$!#:?$f!un-qPq%?q!#:?aj!#:?@2!#:?9fse1S0g!v{9PjAezj!#:?1qI,qq!#:?+q!#:?&k%nq!}y3qPbPp!}y+W#`RqQ0W!}y&!s?$m!}y'X!}y/q!}y3m!}y%QmeQ0E-03Cg03l7E>Q0X!~#'YQ0oPoPrP<ACoro!}#-rRm9Fzo!|`/or!}#2m!}#0r!}#-[Q0nQ0ZPnP<Q0ZQ0Z7Cn!t'+Q0Z%5nRr5Fz!#6>-Z/0n!t/2r!t/0n!t/-]Q0m!}b$nRmPm!uk%m^P!vc%0\#jPb1=03!#^J%oDY!#:3,n!}n$q!}n$X!}n$p/0IRj,1URg'1Rf!#:1&W!#:15!}n$:,1XRh,1qRSPqPfPqPhPq!s$$XPgPXP:PX!s$$UPj!}n/p!}ner!}nJS!}n2mPbPo!}n%n!}n%o!}n-nRm!#E?'o!}n'o!}n$o!#E<0p,3HvaPDL0y!~%$m!~%;mPbPn!~%$n!#EB&n!~%-S!v%-nPn%?n!~%br!~%Y!#EB$m!~%:rAezr!~%2nI,qn!~%,n!~%-n!~%3nPbPo!~%+\#`RnQ0\!~%&o!#<|/W!~%/n!#<|6Q0\/d^=Q_QeQ0]!}x'_Q0lQ0^P\P<Q0^Q0^7C\!|x-^%5\RQ!|x2^/0\!#=&?\!|x-aQ0kP`Q12Q0`/d^RkQ0`!#;~%n!#;~1\RePe!u+%e^PIQ12!}6&R99TnRn!}8+\RW#8Ro1<WIRr12W^Rm/0IRS,1UR2'1Rp'1RV/1nRjQ0~PVPnPV12WNRV!#DC':,1rRg,1oRqPoPpPoPgPo!s$$rP2PrP:Pr!s$$UPS!#DA,PmPV!z5+WPW%?W!}8TQRV!s2$V!}8-V!}86q!}82ePbPR!}8%\!}8%R!}8-\Re;HbRqA9T4RX>TRVPTPRPV1WTRPq!#ON10x!}2$e!}2;ePbP\!}2$\^R>!}2$\NR8!}2'>P8!u{+\P\%?\!}2bQ!}2A8!}2:>!}2$e!}2:QAezQ!}22\I,q\!}2,\!}2'W%n\!}23\PbPR!}2+`#`RTQ0`#iR!s?+n!}2'j!}2/T\R\P\!{+%\^PIPn!#<5$kneQ0N!#<5%m?E>Q0a!};'cQ0jQ0bPZP<Q0bQ0b7CZ!};-b=Fz!|n-Q0b/0Z!}72|!}70Z!}7-fQ0iP`PGQ0d1S04R0'0Q0e80<0X<`!wnH!vp&BQ19Q1@$0960H=9ezBD[!x-$zQ0d00uBQ0e#597zBH0t!x:31B,<4:0s54Q0d/06!tQ%6!#j%$Q0=p,4Htid!$%g0Q0dQ0='0Q0=Q0e40<R=eP!s%$Q0FQ!#_b$f!vc'gQ0hP5P3P<AC535!#?r,3R597z{!t_,%83!v]25!v]03!v]&Q0000qKD:!s$UPDPCPJg03nHH0pebIbEbFo"). Qed.
+    pose proof Hlo as HLO. pose proof Hhi as HHI. pose proof (u64_range tid) as Ht.
+    unfold kn_image, know_ok.
+    repeat apply Forall_cons; try apply Forall_nil;
+      try kimgN;
+      cbn [kentry_ok a_base a_off edenot]; rewrite ?keN3, ?keN5, ?keN38, ?keN39;
+      unfold flat, estart, elenZ; cbn [a_base a_off edenot];
+      rewrite ?(u_small 0) by lia; cbn [Z.add].
+    - split; [lia|]. intros d m Hd Hm.
+      eapply (store_ok_window RSEGS mem (Z_to_bv 64 0xfc000) (Z_to_bv 64 (0xfc000 + d))
+                0x35000 m 0xfc000 0x131000);
+        [reflexivity | reflexivity | cbn; lia | apply wseg_dataN
+        | rewrite u_small by lia; lia | rewrite u_small by lia; lia].
+    - kw_dataN (D_main_self inp sp0 rdraw tid).
+    - kw_memN (main_entry_tid inp mbase entry sp0 rdraw tid HLO regs mem ME).
+    - kw_dataN (D_main_canary inp sp0 rdraw tid); rewrite ?keN39; reflexivity.
+    - kw_memN (main_entry_guard inp mbase entry sp0 rdraw tid HLO regs mem ME);
+        rewrite ?keN39, ?(canary_bytes_w rdraw); reflexivity.
+    - kw_dataN D_main_auxvpN.
+    - kw_dataN (D_main_pagesize inp sp0 rdraw tid kvaN).
+    - kw_dataN (D_main_hwcap inp sp0 rdraw tid); rewrite ?Hhw; reflexivity.
+    - lia.
+  Qed.
 
   Theorem main_know_okN : ltac2:(zQ "40!lod!kl1!no5!ln4@4$0$3$1?3mem$2").
 Proof.
 ltac2:(KReplay.run1 (kr_t_RefMainEntryN ()) ["MainEntryN"] "h01Ah11Ph22l1h32l2h41Hp;1p;3p;2p;4g006Pj13Tg00\Ej31Tg009cj30Tg008LR0j22Tg03oSj47Tg02C^j36Tg026fj45Tg02BPj44Tg0402p4p710R1f0R2p-0[R3f1R4#3R5f2R6#3R7P0f3R0A1042706f4R8?006A0804'2R9[A0064A0062'2A18649080[R:f5R;A1;06708\9P0P6P4P2C7P2n2001000000120000000W3W2W1W0P:^37^25^13^01P2g02`gR2g029oR1g00kUR3p,3memR536R7g02_ZR:g03nHR4A027:A0274g040Og041^C5O5b4P1P3P5g042mC4eo"). Qed.
 
   (* [comment removed for export] *)
-  Lemma evN_argc : ltac2:(zQ "60!ju3!h9!nsb!kkb!kl1!jc@3$0@1$5@1$1#k0@2$3$4Nh0@1$2?2av").
+  (* LPS-revision port, written out rather than re-encoded (rule 11).  The encoded
+     statement held `argcN av`; ArgvEnv.v:58 now reads
+     `Definition argcN : word := len_word (in_argv inp)` over the Section's ProcInput,
+     so applied outside it argcN takes `inp`.  Hargv (`in_argv inp = av`) is the bridge,
+     the same move the landed U/RefMainEntry.v makes.  Index 16 is untouched. *)
+  Lemma evN_argc : ev EN 16 = argcN inp.
 Proof.
-ltac2:(KReplay.run1 (kr_t_RefMainEntryN ()) ["MainEntryN"] "h07__arithh14__ffh28__varmaph35__with41bp;1p;2p;3p;9p;4p;7p;6p;<g004jj11Tg005Oj17Tg005mj1@Tg00Llj1<Tg007PR0j1LTg00:Dj2?Tg00]>j2>Tg0449j1=Tg00<^j36Tg045:l9:Tg00ajj29Tg00f0j2STg00X;R1j2RTg004Lj14Tg00ALR2j2QTg00?<j23Tg00Ddj1KTg006Pj1DTg00mfj1ATg00Ebj1BTg00F@j1CTg00GNj25Tg00H1j4ETg00N6j7FTg00Ibj2GTg00JDj2HTg00K0j3ITg00KOj4JTg00LAj4;Tg046@j2MTg003nj6NTg00>Cj12Tg00MQl<OTf0R3#2#2p=8%23#2#2#2p=0g00NZg00O9R4P1P0P2g01RWf5f4f3f2R2f1R0P3M<Op=Pg00R7#1R1#1#1#1#1R5#1#7#@R6p,4regsR7%<1R1#7g00UM#8#0R8#0R9#L'?'>p,2avR:#=9663X46p,3AMBp,3sp0P:p,4envvp,5rdrawp,3tidP7p,3memp,2MEM9:g00kU1989'S%89#0#0#0#0#0R8,R9%11#4R1%45R5'QR7P9P11341P8P51345EPg00VHR8#K%D8%A4%B4%C4R8g002Pg00PWR:P:g00Q7R:P41541g01S91545CEg00QWFF1G8:P3P2g00SLR:g00W[R8'31H32=6:8dg00P9=I40CJb1b2b3P7P3b0C;,M9ENo"). Qed.
+    (* 16 = 6 + 10, and EN's slots 6..37 are the register file (evN_junk), so this is
+       register x10 = a0.  RefStartup.v:110 states main_entry's own `me_a0 : getr regs
+       10 = argcN inp` over the ProcInput at this revision, which is the whole content
+       of the lemma; the replay reconstructed the pre-revision `argcN av`. *)
+    etransitivity.
+    - exact (evN_junk 10%nat ltac:(lia)).
+    - first [ exact (me_a0 _ _ _ _ _ _ _ _ ME)
+            | rewrite <- (me_a0 _ _ _ _ _ _ _ _ ME); f_equal; vm_compute; reflexivity ].
+  Qed.
 End MainEntryN.
 
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).

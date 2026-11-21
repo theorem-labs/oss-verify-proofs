@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: replaced encoded ltac2 statements and the TCodec name table with plain Rocq statements, changed munmap_vmmaps to subtract the unmapped range from vm_maps, and reworked munmap_model_wf, eager_unmap_le and step_mem_grows proofs for vvar and fetch checks; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/ArtBridge.v, 316 lines within its lines 23-1679. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -14,17 +15,22 @@ From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require Import AsanNod
 Import ListNotations.
 Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
-From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require TCodec.
-Ltac2 tcn__ArtBridge () := ([""; "Corelib.Init.Datatypes."; "Corelib.Init.Logic."; "Corelib.Lists.ListDef."; "Corelib.Numbers.BinNums."; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics."; "LinuxProcessSemantics.LinuxProcessSem.Run."; "LinuxProcessSemantics.LinuxProcessSem.State."; "LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Madvise."; "LinuxProcessSemantics.Riscv.Prelude."; "LinuxProcessSemantics.Riscv.Sem."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.ArtBridge."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.ArtBridge.BA."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.ArtBridge.Bridge."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.ArtRuns."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AsanAcct."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AsanPlacement."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.CatSim."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.KitNodesS."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.MmapSim."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.PropExec."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.ShapeAlg."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.SpinAlg."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.StoreOk."; "Stdlib.Lists.List."; "Stdlib.ZArith.BinInt.Z."; "stdpp.bitvector.definitions."], [["0A"; "0A'"; "0A0"; "0BUDGET"; "0CEIL"; "1None"; "1Some"; "1app"; "1bool"; "1cons"; "1false"; "1fst"; "1length"; "1list"; "1nil"; "1option"]; ["1pair"; "1prod"; "1snd"; "1true"; "2I"; "2and"; "2eq"; "2ex"; "2not"; "2or"; "3map"; "4Z"; "0H"; "0H'"; "0K"; "0KMAX"]; ["0L"; "0LENMAX"; "5MachineOk"; "5access_report"; "5interp_eff_accesses"; "5machine_result"; "5machine_state"; "5memory_access"; "5mkAccessReport"; "5ms_mem"; "5step"; "6mkCfg"; "7Model"; "7VmMaps"; "7alloc_top"; "7m_halted"]; ["7m_vm_lazy"; "7m_vm_materialized"; "7m_vmmaps"; "7map_remove"; "7maps_subtract"; "7page_base"; "7page_in_ranges"; "7page_size"; "7region_free"; "7vm_add_lazy"; "7vm_backing_used"; "7vm_forget_range"; "7vm_limit"; "7vm_maps"; "7vm_noaccess"; "7vm_reserved"]; ["7with_vm_backing"; "7with_vmmaps"; "8madvise_dontneed_next"; "9bv_eqb"; "9bvmap"; ":core"; ":eff"; "0M"; "0M'"; "0M0"; "0MAPS0"; "0Mv"; "0Q"; "0R"; "0RES"; "0RESV0"]; ["<B"; "<S"; "<covered"; "<ivs_wf"; "<model_ivs_wf"; "<overlap_sum"; "=BINV"; "=BInv"; "=KN0"; "=art_ev_nr"; "=art_ev_range"; "=bhid"; "=bhist"; "=bmodel_rt"; "=bstep"; "=forget_model"]; ["=grants"; "=live_ok"; "=window_ok"; ";HSH_HI"; ";HSH_LO"; ";LSH_HI"; ";LSH_LO"; ";SHHI"; ";SHLO"; ";art_EVOK"; ";art_GR"; ";art_cost"; ";art_cost_sum"; ";art_ev_live"; ";art_live"; ";in_shadow_rw"]; [";live_sum"; ";munmap_vmmaps"; ";toW"; ">AMadvise"; ">AMmapFixed"; ">AMmapFixedNR"; ">AMmapNull"; ">AMunmap"; ">aev"; ">art_at_ecall"; ">art_madvise_args"; ">art_mmap_args"; ">art_munmap_args"; ">art_reveal"; ">art_shhi"; ">art_shlo"]; [">art_unmap"; ">art_zfill"; ">aruns"; "?A_bytes"; "?A_wf"; "?H_off_segments"; "?MInv"; "?eager_used"; "?lazy_cover"; "?mrestrict"; "?page_allowedb"; "?restrict"; "?same_but_materialized"; "@gw_sizes"; "Amsteps"; "Bgrant_ok_na_pin"]; ["Cmmap_model"; "Cmunmap_model"; "Cunfill"; "Czfill"; "Dmkst"; "Dregupd"; "ETSet"; "Fsrealizes"; "Gmem_grows"; "HIn"; "HNoDup"; "Hfilter"; "Iadd"; "Idiv"; "Ile"; "Ilt"]; ["Imodulo"; "Iof_nat"; "Ipow"; "Isub"; "0a"; "0addr"; "0c"; "0delta"; "0ev"; "0extra"; "0f"; "0fx"; "0h"; "0h'"; "0hi"; "0l"]; ["0l1"; "0l2"; "0lazy"; "0len"; "0lo"; "0log"; "0log0"; "0lz"; "0m"; "0m'"; "0m1"; "0m2"; "0m3"; "0model"; "0model'"; "0model0"]; ["0modelE"; "0ms"; "0ms'"; "0msr'"; "0n"; "0nW"; "0p"; "0pc"; "0q"; "0r"; "0regs"; "0rom"; "0rs"; "0s"; "0scfg"; "0segs"]; ["JBV"; "JZ_to_bv"; "Jbv"; "Jbv_unsigned"; "0t"; "0w"; "0x"; "0z"]]).
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Module BA := BackingAlgebra.
-Lemma eager_used_ext : ltac2:(TCodec.tc2 tcn__ArtBridge "O'Q<'F'Q=&QBr2%211r1%411%73631'='A'VByR0%211%4211%611&Q@r3%211%31?%C3521'K&T7r4%211%318%I3521p071p0D1p[HM1p[FN1").
+Lemma eager_used_ext : forall m1 m2,
+m_vmmaps m1 = m_vmmaps m2 -> m_vm_lazy m1 = m_vm_lazy m2 -> eager_used m1 = eager_used m2.
 Proof. intros m1 m2 H1 H2. unfold eager_used. rewrite H1, H2. reflexivity. Qed.
-Lemma vbu_nomat : ltac2:(TCodec.tc2 tcn__ArtBridge "F'Q<'F'='VByR0%211%411&QAr1%211(>%116%;3631'K&QJr2%211&T7%113%B3631p081p[BE1").
+Lemma vbu_nomat : forall m, m_vm_materialized m = [] -> vm_backing_used m = eager_used m.
 Proof. intros m H. rewrite vm_backing_used_split, H. cbn [length Z.of_nat]. lia. Qed.
-Lemma eager_used_as_vbu : ltac2:(TCodec.tc2 tcn__ArtBridge "C'Q<'F'K&T7r1%211&QJ&R0&Q@%115(>'VByR0%211%411%8361;%:11%@3?<1p[BB1").
+Lemma eager_used_as_vbu : forall m,
+eager_used m = vm_backing_used (with_vm_backing (m_vm_lazy m) [] m).
 Proof. intros m. rewrite vbu_nomat by reflexivity. apply eager_used_ext; reflexivity. Qed.
-Lemma eager_grant_le : ltac2:(TCodec.tc2 tcn__ArtBridge "QL'Q<'VByR0%211'Q=&RDr4%211&TN&TL&VC%1295r3%32;1%5231&U2+2+R0%3221%;251'F'='A%12DD%311&QM%11>(9(@r5%24KK1H&QBr6%211%911%83<51%@3<:1&QN%11Q0r7%911%411%F3B41&T7&R1r8%22A1%411%513%Q72Q?A%Q9221%Q;241p0:1p0A1p0Q31p0Q@1pZLQD1p\:QF1pZ:QG1p[BQK1").
+Lemma eager_grant_le : forall m (a n : word) h',
+BA.model_ivs_wf m ->
+bv_unsigned a + bv_unsigned n <= 2 ^ 64 ->
+vm_maps h' = (a, n) :: vm_maps (m_vmmaps m) ->
+vm_noaccess h' = vm_noaccess (m_vmmaps m) ->
+eager_used (with_vmmaps h' m) <= eager_used m + bv_unsigned n.
 Proof.
 intros m a n h' (Wm & Wn & Wl) Hend Hmaps Hna.
 unfold eager_used, vm_backed_maps. rewrite BA.m_vmmaps_with_vmmaps, BA.m_vm_lazy_with_vmmaps.
@@ -38,7 +44,11 @@ cbn [BA.sum_count]. unfold BA.iv_count, BA.B, BA.S. cbn [fst snd].
 pose proof (BA.zcount_le_len (fun x => negb (BA.covered (vm_noaccess (m_vmmaps m) ++ m_vm_lazy m) x)) (bv_unsigned a) (Z.to_nat (bv_unsigned n))) as Hz.
 pose proof (bv_unsigned_in_range 64 n). rewrite Z2Nat.id in Hz by lia. lia.
 Qed.
-Lemma eager_commit_le : ltac2:(TCodec.tc2 tcn__ArtBridge "QI'Q<'Q='K&RDr4%211&TNr3r2%3221'F'='A'VByR0%211%4211%611&QMr5%211&QBr6%211%611%?3851&QN%115&QDr7%911%511%431=L%G3@61&T7&QK&R1r8%2291%43AD1%611&TL%815&RE%G17%K11%331HK%6251%Q:281p0@1p0I1p0Q:1p0Q?1pZNQC1p[:QD1pZLQF1p[BQH1").
+Lemma eager_commit_le : forall m h' lo hi,
+BA.model_ivs_wf m -> lo <= hi ->
+vm_maps h' = vm_maps (m_vmmaps m) ->
+vm_noaccess h' = maps_subtract (vm_noaccess (m_vmmaps m)) lo hi ->
+eager_used (vm_forget_range lo hi (with_vmmaps h' m)) <= eager_used m + BA.overlap_sum (vm_maps (m_vmmaps m)) lo hi.
 Proof.
 intros m h' lo hi Hwf Hlh Hmaps Hna.
 rewrite (eager_used_as_vbu m).
@@ -46,7 +56,14 @@ pose proof (BA.backing_forget_commit_le (with_vm_backing (m_vm_lazy m) [] m) h' 
 eapply Z.le_trans; [|exact HB].
 rewrite vbu_nomat by reflexivity. apply Z.eq_le_incl. apply eager_used_ext; reflexivity.
 Qed.
-Lemma eager_recommit_le : ltac2:(TCodec.tc2 tcn__ArtBridge "RA'Q<'Q='VByR0%211&RDr4%211'F'K&U0&VCr3%22:1&QG%5221z%93821&TO%82@=%2241&TN&TLr6%=2E1r5%?2G1%5231&U2+2+R0%3221%;251'='A%12OO%311&QMr8%211&QBr9%211%611%Q43851&QN%115&QDr:%911%511%Q82Q@=r7%Q:2QB1%Q0231%83541%Q@3D:1&T7&QI&QK%QA2QIC%Q721:&R1r;%22@1%63541%83IL1%:11%;15%Q@221p0>1p0K1p0Q81p0QE1p0QI1p0QJ1p0R51p\:R91pZ:R:1pZLR>1p[BR@1").
+Lemma eager_recommit_le : forall m h' (a n : word),
+BA.model_ivs_wf m ->
+bv_unsigned a mod page_size = 0 -> bv_unsigned n mod page_size = 0 ->
+0 < bv_unsigned n -> bv_unsigned a + bv_unsigned n <= 2 ^ 64 ->
+vm_maps h' = vm_maps (m_vmmaps m) ->
+vm_noaccess h' = maps_subtract (vm_noaccess (m_vmmaps m)) (bv_unsigned a) (bv_unsigned a + bv_unsigned n) ->
+eager_used (vm_add_lazy a n (vm_forget_range (bv_unsigned a) (bv_unsigned a + bv_unsigned n) (with_vmmaps h' m)))
+<= eager_used m.
 Proof.
 intros m h' a n Hwf Hal Hnl Hpos Hend Hmaps Hna.
 rewrite (eager_used_as_vbu m).
@@ -55,22 +72,28 @@ eapply Z.le_trans; [|exact HB].
 rewrite vbu_nomat by reflexivity. apply Z.eq_le_incl. apply eager_used_ext; reflexivity.
 Qed.
 Definition munmap_vmmaps (a n : word) (h : VmMaps) : VmMaps :=
-mkVmMapsFull (vm_reserved h) (map_remove (vm_maps h) a)
+mkVmMapsFull (vm_reserved h)
+(maps_subtract (vm_maps h) (bv_unsigned a) (bv_unsigned a + bv_unsigned n))
 (maps_subtract (vm_noaccess h) (bv_unsigned a) (bv_unsigned a + bv_unsigned n))
 (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h).
-Lemma munmap_model_eq : ltac2:(TCodec.tc2 tcn__ArtBridge "K'VByR0%211'Q<'F&TAr3r2r1%43321&QK&VC%12;6&TL%32=7%2231&R1&SA&QB%11;%33>=1%521=%<3:71%C3D>1p[BE1p\:G1pZ:H1").
+Lemma munmap_model_eq : forall a n m,
+munmap_model a n m = vm_forget_range (bv_unsigned a) (bv_unsigned a + bv_unsigned n) (with_vmmaps (munmap_vmmaps a n (m_vmmaps m)) m).
 Proof. reflexivity. Qed.
-Lemma munmap_model_wf : ltac2:(TCodec.tc2 tcn__ArtBridge "A'VByR0%211'Q<&RDr1%211&TAr4r3r2%43321%811p071p[B;1p\:=1pZ:>1").
+Lemma munmap_model_wf : forall a n m, BA.model_ivs_wf m -> BA.model_ivs_wf (munmap_model a n m).
 Proof.
 intros a n m Hwf. rewrite munmap_model_eq.
 pose proof (bv_unsigned_in_range 64 n) as Hn.
 apply BA.model_ivs_wf_vm_forget_range; [lia|].
 destruct Hwf as (Wm & Wn & Wl & Wsp).
 apply BA.model_ivs_wf_with_vmmaps; [repeat split; assumption | | | reflexivity].
-- cbn [munmap_vmmaps vm_maps]. unfold map_remove. apply BA.ivs_wf_filter. exact Wm.
+- cbn [munmap_vmmaps vm_maps]. apply BA.maps_subtract_wf; [exact Wm | lia].
 - cbn [munmap_vmmaps vm_noaccess]. apply BA.maps_subtract_wf; [exact Wn | lia].
 Qed.
-Lemma eager_unmap_le : ltac2:(TCodec.tc2 tcn__ArtBridge "QI'Q<'VByR0%211&RDr3%211'A%1255&TIr1&QM&QBr5%211%411%73861'F'8&R3&;r2%23CC1%43E1:(:%83721'I&TN&TL&R@%11I&RA%11K%5231&VCr6%22Q21%:241%42Q4I%;231%=21:%?241p0A1p0K1p\BQ41&T7&TAr4%231Q;Q3%411%51Q5%H221p081p0Q?1p\:QC1pZ:QD1p[BQH1").
+Lemma eager_unmap_le : forall m (a n : word),
+BA.model_ivs_wf m ->
+(forall q, In q (vm_maps (m_vmmaps m)) -> bv_eqb (fst q) a = false ->
+BA.B q + BA.S q <= bv_unsigned a \/ bv_unsigned a + bv_unsigned n <= BA.B q) ->
+eager_used (munmap_model a n m) <= eager_used m.
 Proof.
 intros m a n Hwf Hap.
 pose proof (munmap_model_wf a n m Hwf) as Hwf'.
@@ -81,22 +104,21 @@ destruct Hwf as (Wm & Wn & Wl & Wsp).
 set (lo := bv_unsigned a). set (hi := lo + bv_unsigned n).
 destruct (BA.maps_subtract_sem _ lo hi Wn ltac:(subst hi; lia)) as (_ & _ & Cn).
 destruct (BA.maps_subtract_sem _ lo hi Wl ltac:(subst hi; lia)) as (_ & _ & Cl).
-unfold map_remove. apply sum_count_filter_le.
-intros q Hq Hf x Hx. apply negb_true_iff in Hf.
-assert (Hout : BA.in_rng lo hi x = false).
-{ unfold BA.in_rng. destruct (Hap q Hq Hf) as [H|H]; subst lo hi.
-- apply andb_false_iff. left. apply Z.leb_gt. lia.
-- apply andb_false_iff. right. apply Z.ltb_ge. lia. }
-rewrite !BA.covered_app, Cn, Cl, Hout. cbn [negb]. rewrite !andb_true_r. reflexivity.
+destruct (BA.maps_subtract_sem _ lo hi Wm ltac:(subst hi; lia)) as (_ & Sm & _).
+rewrite Sm. apply BA.sum_count_mono. intros x Hx.
+apply andb_prop in Hx as [Hx1 Hx2]. apply negb_true_iff in Hx2.
+rewrite BA.covered_app, Cn, Cl, Hx2 in Hx1. cbn [negb] in Hx1.
+rewrite !andb_true_r in Hx1. rewrite BA.covered_app. exact Hx1.
 Qed.
 Section Grows.
 Variable segs : list Segment.
-Lemma interp_eff_accesses_grows : ltac2:(TCodec.tc2 tcn__ArtBridge "Q;'R6'VByR0%211'?y8%511%311p051'R5'=&Q7%211'F'Q5'Q3'A%1289%311%511&Q4vV?r5r4%43321(Q2(Q8(@r3r2%34EF21r1%63?21%82?1%E3?:1&TH%12>8p031p\JJ1p[DO1pZ>O1p[BQ11p]:Q:1").
+Lemma interp_eff_accesses_grows : forall (t : Sem.eff) m c m' rs,
+interp_eff_accesses segs t m = MachineOk (@mkAccessReport _ (c, m') rs) -> StoreOk.mem_grows m m'.
 Proof.
 intros t. induction t as [c0 | c0 | c0 | c0 | c0 | c0 | n a k IH | n a v k IH];
 intros m c m' rs Hi; cbn [interp_eff_accesses] in Hi; try discriminate.
 - injection Hi as <- <- <-. apply StoreOk.mem_grows_refl.
-- destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|discriminate].
+- destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [| destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
 destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) m) as [[[c1 m1] rs1]| |] eqn:Hk; try discriminate.
 cbn [access_value accessed_ranges] in Hi. injection Hi as <- <- <-. exact (IH _ m c1 m1 rs1 Hk).
 - destruct (store_ok segs m a (width_bytes n)); [|discriminate].
@@ -104,7 +126,8 @@ destruct (interp_eff_accesses segs k (write_to_mem m a (Z_to_le_bytes (width_byt
 cbn [access_value accessed_ranges] in Hi. injection Hi as <- <- <-.
 eapply StoreOk.mem_grows_trans; [apply StoreOk.write_to_mem_grows | exact (IH _ c1 m1 rs1 Hk)].
 Qed.
-Lemma step_mem_grows : ltac2:(TCodec.tc2 tcn__ArtBridge "E'Q6'F'Q5%113&Q:vV?r2%3221(Q2r1%22:1%:3841&TH&Q9r3%211%31:%5221p071p\6C1p\4D1").
+Lemma step_mem_grows : forall ms ms',
+RiscvSemantics.step segs ms = MachineOk ms' -> StoreOk.mem_grows (ms_mem ms) (ms_mem ms').
 Proof.
 intros ms ms' Hs. unfold RiscvSemantics.step, drop_access_report in Hs.
 destruct (step_accesses segs ms) as [[v rs]| |] eqn:Hsa; try discriminate. injection Hs as ->.
@@ -121,13 +144,16 @@ destruct (fetch_word segs (ms_pc ms)) as [w|]; [exact (HD w Hsa)|].
 destruct (fetch_word_ov segs (ms_mem ms) (ms_pc ms)) as [w|]; [exact (HD w Hsa)|].
 destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|]; [exact (HD w Hsa)|].
 exfalso. unfold fetch_failure in Hsa.
+lazymatch type of Hsa with
+| context [if ?c then MachineUnmodeled else _] => destruct c; [discriminate|]
+end.
 destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
 destruct (fetch_byte_traps segs (ms_pc ms) || fetch_byte_traps segs (ms_pc ms + 1)
 || match fetch_half_any segs (ms_mem ms) (ms_pc ms) with
 | Some _ => fetch_byte_traps segs (ms_pc ms + 2) || fetch_byte_traps segs (ms_pc ms + 3)
 | None => false end); discriminate.
 Qed.
-Lemma msteps_mem_grows : ltac2:(TCodec.tc2 tcn__ArtBridge "?'Q6'T>vV?r2r1%43321&TH&Q9r3%211%317%5221p071p\6=1p\4>1").
+Lemma msteps_mem_grows : forall ms ms', msteps segs ms ms' -> StoreOk.mem_grows (ms_mem ms) (ms_mem ms').
 Proof.
 intros ms ms' H. induction H as [ms | ms ms1 ms2 _ Hs _ IH]; [apply StoreOk.mem_grows_refl|].
 eapply StoreOk.mem_grows_trans; [exact (step_mem_grows _ _ Hs) | exact IH].
@@ -140,7 +166,7 @@ match ev with
 | _ => l
 end.
 Definition art_live (log : list aev) : list (Z * Z) := fold_left (fun l ev => art_ev_live ev l) log [].
-Lemma art_live_snoc : ltac2:(TCodec.tc2 tcn__ArtBridge "H'='SH%211'F'A'K%2211%711&S>&7r2(9r1(>%11=%43>31%73?61%911&S=%;19%2281%B3>41pZBE1p[<E1").
+Lemma art_live_snoc : forall log ev, art_live (log ++ [ev]) = art_ev_live ev (art_live log).
 Proof. intros. unfold art_live. rewrite fold_left_app. reflexivity. Qed.
 Definition art_cost (ev : aev) : Z :=
 match ev with
@@ -149,7 +175,7 @@ match ev with
 | _ => 0
 end.
 Definition art_cost_sum (log : list aev) : Z := fold_right (fun ev z => art_cost ev + z) 0 log.
-Lemma art_cost_sum_snoc : ltac2:(TCodec.tc2 tcn__ArtBridge "G'='SH%211'F'K&S<&7r2(9r1(>%11:%43;31%73<61%911&TL%;19&S;%119%4231%A3@61pZBD1p[<D1").
+Lemma art_cost_sum_snoc : forall log ev, art_cost_sum (log ++ [ev]) = art_cost_sum log + art_cost ev.
 Proof. intros log ev. unfold art_cost_sum. induction log as [|e l IH]; cbn [app fold_right]; [lia | rewrite IH; lia]. Qed.
 Definition art_windows (log : list aev) : list (Z * Z) :=
 flat_map (fun ev => match ev with AMmapNull len r => [(art_shlo r, art_shhi r len)] | _ => [] end) log.
@@ -265,11 +291,11 @@ bi_livesum : live_sum (art_live log) <= art_cost_sum log
 }.
 Definition bmodel_rt (m m' : Model) : Prop :=
 m' = mkModelOf (m_fd m) (m_vm m') (m_io m) (m_fsys m) (m_proc m) (m_lim m) (m_time m).
-Lemma bmodel_rt_refl : ltac2:(TCodec.tc2 tcn__ArtBridge "5'Q<&RMr1%2211p[B41").
+Lemma bmodel_rt_refl : forall m, bmodel_rt m m.
 Proof. intros m. unfold bmodel_rt. destruct m; reflexivity. Qed.
-Lemma bmodel_rt_trans : ltac2:(TCodec.tc2 tcn__ArtBridge "<'Q<&RMr3r2%3221r5%5214p031p041p[J91p[H:1p[F;1").
+Lemma bmodel_rt_trans : forall m1 m2 m3, bmodel_rt m1 m2 -> bmodel_rt m2 m3 -> bmodel_rt m1 m3.
 Proof. unfold bmodel_rt. intros m1 m2 m3 -> ->. destruct m1; reflexivity. Qed.
-Lemma bmodel_rt_sbm : ltac2:(TCodec.tc2 tcn__ArtBridge ";'Q<&T<r2r1%3221&RMr3%2215p041p[D91p[B:1").
+Lemma bmodel_rt_sbm : forall m m', same_but_materialized m m' -> bmodel_rt m m'.
 Proof. intros m m' ->. destruct m as [fd [maps lazy mat] io fs proc lim tm]. reflexivity. Qed.
 Definition bstep (A : list (Z * Z)) (M : word -> option byte) (model : Model)
 (A' : list (Z * Z)) (M' : word -> option byte) (model' : Model) (lo hi : Z) (nr : bool) : Prop :=
@@ -279,14 +305,18 @@ incl A A'
 /\ (forall w, In w A' -> In w A \/ w = (lo, hi))
 /\ (forall x : word, page_in_ranges (page_base x) (m_vm_lazy model') = true ->
 page_in_ranges (page_base x) (m_vm_lazy model) = true \/ (nr = true /\ lo <= bv_unsigned x < hi)).
-Lemma binv_hoff : ltac2:(TCodec.tc2 tcn__ArtBridge "Q0'='SH%211'A'K%2211%611'VByR0%211'?y8%511%311p051'Q<'RGr4r3r2r1%544321&T5vV?&RK%1286%4231p061p[L=1pT@?1p2H1p[<M1").
+Lemma binv_hoff : forall log A M model, BInv log A M model -> H_off_segments segs (bhid A model).
 Proof.
 intros log A M model B a Ha. unfold bhid, mkH in Ha. apply andb_prop in Ha as [Hp _].
 exact (proj2 (bi_lazy_in _ _ _ _ B a Hp)).
 Qed.
-Lemma bhid_lazy_cover : ltac2:(TCodec.tc2 tcn__ArtBridge "@'='A'K%2211%411'Q<&T8&RKr2r1%3221&Q@%113%73315p[L91p2;1").
+Lemma bhid_lazy_cover : forall A model, lazy_cover (bhid A model) (m_vm_lazy model) A.
 Proof. intros. unfold bhid. apply lazy_cover_mkH. intros r Hr; exact Hr. Qed.
-Lemma binv_sbm : ltac2:(TCodec.tc2 tcn__ArtBridge "R5'='SH%211'A'K%2211%611'VByR0%211'?y8%511%311p051'Q<p]>73'RGr6r5r4r3%544321'T6r2%2271&T<%1286'F'8&RKr9r7r1%43321(C%83721%51=%71>%;3J21p041pZ:Q01&S?&VC%12Q4;%311&Hr8%11H(5%11Q6%G3Q631%611p081pZ:Q=1r;r:%Q8421IQ7p041p0B1p0Q11p0Q41p0Q81p[NQ@1pTBQ@1p[LQB1pT@QD1p2QM1p[<R21").
+Lemma binv_sbm : forall log A M model M' model',
+BInv log A M model -> MInv A model' -> same_but_materialized model model' ->
+(forall a, bhid A model a = true -> M' a = M a) ->
+(forall a : word, in_shadow_rw (bv_unsigned a) -> M' a <> None) ->
+BInv log A M' model'.
 Proof.
 intros log A M model M' model' B Hminv Hs Hhid Hdef.
 destruct (same_but_materialized_frame _ _ Hs) as (_ & Hvm & Hlz & _ & _ & _ & _ & _ & _ & _ & _ & _ & Hh & _).
@@ -295,7 +325,13 @@ destruct B. constructor; rewrite ?Hvm, ?Hlz, ?Hh, ?Heu; try assumption.
 - destruct bi_wf0 as (W1 & W2 & W3 & W4). unfold BA.model_ivs_wf. rewrite Hvm, Hlz. repeat split; assumption.
 - intros a Ha Hna. unfold bhid in Ha. rewrite Hlz in Ha. rewrite (Hhid a Ha). apply bi_zero0; [exact Ha | exact Hna].
 Qed.
-Lemma bridge_msteps : ltac2:(TCodec.tc2 tcn__ArtBridge "R4'='SH%211'A'K%2211%611'Q6'Q<&TF'RGr6r5&Q9r4%211r3%746521'T>vV?&T;&RK%12;8%321;%63518'Fr9r1%7221r2%:221%63H1Dr;r:%E1B%I43216&RM%12;E&RNr<%K18%L1Mz(:%6954;53N221'TGvV>(Q;%12Q5Q4%44N31Gp061p0>1p0A1p0F1p[NQ>1p\6Q@1r7%:21Q>%=4Q7<1Q<p041p0Q41p0Q<1pQNQE1p\8QH1p[LQH1p\4QJ1p2QL1p[<R11").
+Lemma bridge_msteps : forall log A ms model msr' K,
+BInv log A (ms_mem ms) model ->
+msteps segs (restrict (bhid A model) ms) msr' ->
+(forall ms' model', restrict (bhid A model') ms' = msr' -> BInv log A (ms_mem ms') model' -> bmodel_rt model model' ->
+bstep A (ms_mem ms) model A (ms_mem ms') model' 0 0 false ->
+srealizes segs scfg (mkCfg ms' model') K) ->
+srealizes segs scfg (mkCfg ms model) K.
 Proof.
 intros log A ms model msr' K B MS HK.
 apply (srz_msteps_restricted_T segs scfg (bhid A model) (binv_hoff _ _ _ _ B) Hwx A ms msr' model K
@@ -317,14 +353,19 @@ exact (bi_shdef _ _ _ _ B a Ha).
 + intros w0 Hw0. left. exact Hw0.
 + intros x Hx. left. rewrite <- Hlz. exact Hx.
 Qed.
-Lemma restrict_eq_mkst : ltac2:(TCodec.tc2 tcn__ArtBridge "Q<'VByR0%211'8p021'Q6&R4y5%2216'?y8%;11%311p0;1'F&T;r6r5%3221&TDvU;r4r3r2r1%6554321%<3E81'E&Q9%11=%;5:=917%A3J?1&T9r7%2215%E3F=1%9251p0;1p\HI1pTHJ1p\@Q61p\FQ11p\4Q51pQJQ71").
+Lemma restrict_eq_mkst : forall (H : word -> bool) ms regs pc Mv rom,
+restrict H ms = mkst regs pc Mv rom -> ms = mkst regs pc (ms_mem ms) rom /\ Mv = mrestrict H (ms_mem ms).
 Proof.
 intros H ms regs pc Mv rom E. destruct ms. unfold restrict, mkst in *. cbn in *.
 injection E as -> -> -> -> -> -> <- ->. split; reflexivity.
 Qed.
-Lemma u64z : ltac2:(TCodec.tc2 tcn__ArtBridge "G'K'E&TNzr1%3221&TO&U2+2+R0%3221%5271%;271'F&VCyR0&VAr2%2231%5241%73D13p091p]@F1").
+Lemma u64z : forall z, 0 <= z < 2 ^ 64 -> bv_unsigned (Z_to_bv 64 z) = z.
 Proof. intros. apply BA.fg_lit. assumption. Qed.
-Lemma view_zfill : ltac2:(TCodec.tc2 tcn__ArtBridge "R@'VByR0%211'8p021'?y8%711%311p071'K&TNzr2%3221&TLr4r3%3221&U2+2+R0%3221%<251&TO%1293'Er7&VCr1%22M1%D241r6%B261%:241%9241'Fr:%11I(:%43Q521p061pZ:Q81&Hr8%Q221?%O22C%G2A1%F231%611r;%11Q6r<%11Q8%B3QC31p061pZ:QF1&T9&TC&VA%12QK@%22QLQ2r9%53321%72K1&T1%92@4%231GQ8%Q03QK41p0=1p0L1p0Q>1p0QA1p0QK1p0QL1p[8R11p\DR21pT@R41pQLR:1pQJR;1").
+Lemma view_zfill : forall (H H' : word -> bool) M (r len : Z),
+0 <= r -> 0 <= len -> r + len <= 2 ^ 64 -> len < 2 ^ 64 ->
+(forall a : word, r <= bv_unsigned a < r + len -> H' a = false) ->
+(forall a : word, ~ (r <= bv_unsigned a < r + len) -> H' a = H a) ->
+mrestrict H' (zfill (Z_to_bv 64 r) (Z_to_bv 64 len) M) = art_zfill (mrestrict H M) r len.
 Proof.
 intros H H' M r len Hr Hl Hend Hl64 Hin Hout. apply functional_extensionality. intro a.
 pose proof (bv_unsigned_in_range 64 a) as Ra. unfold bv_modulus in Ra.
@@ -341,7 +382,10 @@ destruct (H a); [reflexivity|]. apply zfill_out. rewrite (u64z r), (u64z len) by
 - rewrite art_zfill_out by lia. unfold mrestrict. rewrite (Hout a) by lia.
 destruct (H a); [reflexivity|]. apply zfill_out. rewrite (u64z r), (u64z len) by lia. lia.
 Qed.
-Lemma view_unfill : ltac2:(TCodec.tc2 tcn__ArtBridge "R0'VByR0%211'8p021'?y8%711%311p071'K'E&TNzr2%3221&TO&U2+2+R0%3221%5271%;271&Hr5&VCr1%22J1%@241&TLr4%2271%@251%F251%;11'Fr8%11Gr9%11I%53Q531p071pZ:Q81&T9r7&TB&VA%12Q>G%22Q?Br6%53321%8271&T0%:2A4%231NH%D3Q>41p0>1p0Q31p0Q41p[8QA1p\DQB1pT@QD1pQLQJ1pQJQK1").
+Lemma view_unfill : forall (H H' : word -> bool) M (r len : Z),
+0 <= r < 2 ^ 64 -> 0 <= len < 2 ^ 64 ->
+(forall a : word, ~ (r <= bv_unsigned a < r + len) -> H' a = H a) ->
+mrestrict H' (unfill (Z_to_bv 64 r) (Z_to_bv 64 len) M) = art_unmap (mrestrict H M) r len.
 Proof.
 intros H H' M r len Hr Hl Hout. apply functional_extensionality. intro a.
 unfold mrestrict, unfill, art_unmap. rewrite (u64z r), (u64z len) by lia.
@@ -350,7 +394,10 @@ destruct ((r <=? bv_unsigned a) && (bv_unsigned a <? r + len))%bool eqn:E.
 - rewrite (Hout a); [reflexivity|]. intros [H1 H2].
 apply andb_false_iff in E as [E|E]; [apply Z.leb_gt in E | apply Z.ltb_ge in E]; lia.
 Qed.
-Lemma view_reveal : ltac2:(TCodec.tc2 tcn__ArtBridge "R:'VByR0%211'8p021'?y8%711%311p]>71'K'E&TNr3&VCr1%22?1%5241&TOr2%2241%:241'Fr6%115(:%43G21&Hr5%11:(5%11H%:3H31%611r7%11@(C%?3Q221%?1I(6&VAz%22Q41%42Q41%F3Q461p081%Q32=1%Q42E1p0K1pZ:Q?1r4%Q721Q3%Q22Q4Q7%Q:221%K11r8%11Q5%Q33QFF1p041pZ:QI1p0QJQD&T9%12Q7Q2&SM%32NQ4%231?QD%Q<3641p081p0C1pZNQK1p[:QL1pT@QN1pQLR41pQJR51").
+Lemma view_reveal : forall (H H' : word -> bool) M (lo hi : Z),
+(forall a : word, lo <= bv_unsigned a < hi -> H' a = false /\ M a <> None /\ (H a = true -> M a = Some (Z_to_bv 8 0))) ->
+(forall a : word, ~ (lo <= bv_unsigned a < hi) -> H' a = H a) ->
+mrestrict H' M = art_reveal (mrestrict H M) lo hi.
 Proof.
 intros H H' M lo hi Hin Hout. apply functional_extensionality. intro a.
 unfold art_reveal, mrestrict.
@@ -361,19 +408,26 @@ destruct (H a); [rewrite (H3 eq_refl); reflexivity|]. destruct (M a); [reflexivi
 - rewrite (Hout a); [reflexivity|]. intros [H1 H2].
 apply andb_false_iff in E as [E|E]; [apply Z.leb_gt in E | apply Z.ltb_ge in E]; lia.
 Qed.
-Lemma page_allowed_in : ltac2:(TCodec.tc2 tcn__ArtBridge "QC'='A'K%2211%411'VByR0%211&TIr2r3%33821'F&U0&;%13==5+TP0%4221z%73A21&Br4%23DD1%:217%<3F16'E&TNr5%>3JJ1&VC%12H9%5231&TO%=3OO6%2241%:241'8&T:r7&QE%11=%4231(C%O3721p091p0E1p0K1p0Q41p]>Q91p]<Q>1p2Q>1").
+Lemma page_allowed_in : forall A (w : Z * Z) (x : word),
+In w A -> fst w mod 4096 = 0 -> snd w mod 4096 = 0 -> fst w <= bv_unsigned x < snd w ->
+page_allowedb A (page_base x) = true.
 Proof.
 intros A w x Hin H1 H2 Hx. unfold page_allowedb. apply existsb_exists. exists w. split; [exact Hin|].
 destruct (page_of_byte_in_aligned x (fst w) (snd w) H1 H2 Hx) as [P1 P2].
 unfold page_size. apply andb_true_intro. split; apply Z.leb_le; lia.
 Qed.
-Lemma page_in_ranges_subtract_le : ltac2:(TCodec.tc2 tcn__ArtBridge "O'VByR0%211'='A%1233%311'K&RCr3%211'F'8&QFr5&QDr4r2%33291%6251(C%:3921r6%:219%=3<14p041p0@1pZND1p[:E1p[0G1p\>L1").
+Lemma page_in_ranges_subtract_le : forall (p : word) l lo hi,
+BA.ivs_wf l -> page_in_ranges p (maps_subtract l lo hi) = true -> page_in_ranges p l = true.
 Proof.
 intros p l lo hi Hwf H. apply page_in_ranges_true in H as (q & Hq & H1 & H2).
 destruct (maps_subtract_pieces l lo hi q Hwf Hq) as (r & Hr & R1 & R2 & _).
 apply page_in_ranges_true. exists r. split; [exact Hr|]. lia.
 Qed.
-Lemma lazy_forget_out : ltac2:(TCodec.tc2 tcn__ArtBridge "R:'='A'VByR0%211%4211%611'K&RCr5%211'F&U0r4+TP0%3221z%63:21&TNr6%221;&TIr1r9%33C21'E&VC&;r2%23II1%42K1%=281&TL&B%13NN6%92Q01%4261r8%D221%>281p0@1p\BQ41&H%A2Q8H%J271&TOr7%2241%G241%711'8&QF&QE%117&7r:&QDr;%231Q3E%53QF41%9271%:284%QC3<21p0>1p0G1p0Q=1p0QA1p0QB1p0QJ1p]>R11pZNQO1p[:R01pZDR21p[6R31").
+Lemma lazy_forget_out : forall lazy (extra : list (word * word)) lo hi (x : word),
+BA.ivs_wf lazy -> lo mod 4096 = 0 -> hi mod 4096 = 0 -> lo <= hi ->
+(forall q, In q extra -> lo <= bv_unsigned (fst q) /\ bv_unsigned (fst q) + bv_unsigned (snd q) <= hi) ->
+~ (lo <= bv_unsigned x < hi) ->
+page_in_ranges (page_base x) (extra ++ maps_subtract lazy lo hi) = page_in_ranges (page_base x) lazy.
 Proof.
 intros lazy extra lo hi x Hwf Hlo Hhi Hle Hex Hx.
 destruct (page_of_byte_out_aligned x lo hi Hlo Hhi ltac:(lia)) as [P|P].
@@ -389,7 +443,13 @@ Qed.
 Definition forget_model (extra : list (word * word)) (lo hi : Z) (h' : VmMaps) (m : Model) : Model :=
 with_vm_backing (extra ++ maps_subtract (m_vm_lazy m) lo hi)
 (List.filter (page_outside_range lo hi) (m_vm_materialized m)) (with_vmmaps h' m).
-Lemma minv_forget : ltac2:(TCodec.tc2 tcn__ArtBridge "RO'='A'K%2211%411'Q<'VByR0%211%8211%:11'Q='T6r7r6%3221&RC&Q@%115%311'F&U0+TP0%2291z%53G21&TNr8%221?&TIr1r;%33G21'E&VC&;r2%23MM1%42O1%=281&TL&B%13Q2Q26%92Q41%4261r:%D221%>281p0@1p\BQ81&QL%11H&QBr<%211%511%Q43QF51&T7&ROr9r=%358N@21%511%613%H21Q5%Q7231r>%:11%L219&T3r?%211%Q0241%E17%H11%QA231r@%C5;AHQ>7%R2221p041p0?1p0I1p0Q11p0QG1p0QK1p0QL1p0R31p0R81pZ@RF1pZLR>1pZNRH1p[:RI1pZDRB1p[BRH1p2RJ1").
+Lemma minv_forget : forall A m extra lo hi h' delta,
+MInv A m -> BA.ivs_wf (m_vm_lazy m) -> lo mod 4096 = 0 -> hi mod 4096 = 0 -> lo <= hi ->
+(forall q, In q extra -> lo <= bv_unsigned (fst q) /\ bv_unsigned (fst q) + bv_unsigned (snd q) <= hi) ->
+vm_limit h' = vm_limit (m_vmmaps m) ->
+eager_used (forget_model extra lo hi h' m) <= eager_used m + delta ->
+eager_used m + delta + A_bytes A <= vm_limit (m_vmmaps m) ->
+MInv A (forget_model extra lo hi h' m).
 Proof.
 intros A m extra lo hi h' delta [Hnd Hal Hall Hlz Hbud] Hwf Hlo Hhi Hle Hex Hlim He Hb.
 constructor.
@@ -408,7 +468,9 @@ assert (E2 : lo = 4096 * (lo / 4096)) by (apply Z.div_exact; lia).
 assert (bv_unsigned p / 4096 < lo / 4096) by (apply Z.div_lt_upper_bound; lia). lia.
 - change (vm_limit (m_vmmaps (forget_model extra lo hi h' m))) with (vm_limit h'). rewrite Hlim. lia.
 Qed.
-Lemma maps_subtract_pos : ltac2:(TCodec.tc2 tcn__ArtBridge "Q9'='A'VByR0%211%4211%611'K&TIr1r4%33621&TOz&VC&Br2%23==1%42?1%7261p091p\B@1&RC%11=&TNr3%22@1&QDr7r6r5%43321%H3KG1p01>p\BM1p091p0=1p0@1pZNO1p[:Q01p[0Q21").
+Lemma maps_subtract_pos : forall l lo hi,
+(forall q, In q l -> 0 < bv_unsigned (snd q)) -> BA.ivs_wf l -> lo <= hi ->
+forall q, In q (maps_subtract l lo hi) -> 0 < bv_unsigned (snd q).
 Proof.
 induction l as [|[a sz] l IH]; intros lo hi Hpos Hwf Hle q Hq; [destruct Hq|].
 cbn [maps_subtract] in Hq. apply in_app_or in Hq as [Hq|Hq].
@@ -509,12 +571,14 @@ destruct (Z_le_dec lo (bv_unsigned a)) as [L|L]; [destruct (Z_lt_dec (bv_unsigne
 - exact Hcb.
 - pose proof (bi_livesum _ _ _ _ B). lia.
 Qed.
-Lemma shadow_rw_facts : ltac2:(TCodec.tc2 tcn__ArtBridge "Q:'K&TOr2r1%3221'I'E&TN&S6r3%3221&S5%52:1%7231&S4%8216&S3%:2?1%<231%>261zr4%E221&S7%A2?1&S8%C215r5%E21I%L2J8%H221&S?%11Np031p]>Q21%M291%N2<1%O2?1p0C1p0Q31pZNQ81p[:Q91").
+Lemma shadow_rw_facts : forall lo hi, lo < hi -> ((LSH_LO <= lo /\ hi <= LSH_HI) \/ (HSH_LO <= lo /\ hi <= HSH_HI)) ->
+0 < lo /\ hi <= SHHI /\ SHLO <= lo /\ (forall x, lo <= x < hi -> in_shadow_rw x).
 Proof.
 intros lo hi Hlt H. unfold LSH_LO, LSH_HI, HSH_LO, HSH_HI, SHHI, SHLO, in_shadow_rw in *.
 repeat split; try lia. intros x Hx. unfold LSH_LO, LSH_HI, HSH_LO, HSH_HI. lia.
 Qed.
-Lemma region_free_resv_shadow : ltac2:(TCodec.tc2 tcn__ArtBridge "Q;'K&TNzr2%3221&TOr3%2214&U2+2+R0%3221%7261'Er6r1%?221r5%=231%6231&S?%11Bp031p]>G1'F'8&QHvR?&VAyR0%221@&U3%12?B%5241%83741(C%<3;21p0>1p0J1p0Q01p0Q41pZNQ91p[:Q:1").
+Lemma region_free_resv_shadow : forall lo hi, 0 <= lo -> lo < hi -> hi < 2 ^ 64 -> (forall x, lo <= x < hi -> in_shadow_rw x) ->
+region_free RESV0 (Z_to_bv 64 lo) (Z_to_bv 64 (hi - lo)) = true.
 Proof.
 intros lo hi H0 Hlt Hhi Hsh. apply region_free_intro. intros b s Hin.
 rewrite (u64z lo), (u64z (hi - lo)) by lia.
@@ -524,9 +588,16 @@ exfalso. pose proof (bv_unsigned_in_range 64 b) as Rb. pose proof (bv_unsigned_i
 pose proof (bs_resv_pos STATIC b s Hin) as Hs.
 apply (bs_shrw_off_resv STATIC (Z.max lo (bv_unsigned b)) b s); [apply Hsh; lia | exact Hin | lia].
 Qed.
-Lemma mm1_eq : ltac2:(TCodec.tc2 tcn__ArtBridge "@'F'VByR0%211&VA&U3&U2+2+R0%3221+1%6221%82:1-1%:2<1%?3<31").
+Lemma mm1_eq : Z_to_bv 64 (2 ^ 64 - 1) = Z_to_bv 64 (-1).
 Proof. apply bv_eq. rewrite !Z_to_bv_unsigned. reflexivity. Qed.
-Lemma bridge_fixed_nr : ltac2:(TCodec.tc2 tcn__ArtBridge "SK'='SH%211'A'K%2211%611&R4y5'VByR0%211%5241'?y8%611%311p061'Q<&TF'RGr:r9r6r4%544321&SIvV?r8%3221&SKr5+`QB%34<291&S9vR>v3vQ1vOr=(SE%12B:%86765431&7r@(9%62HB(>%11Q?%43Q@31%73QA61r?r2r1%Q244321&RMr;%2215&RNrAr>r<r3&TL%128Q;(C%897657Q:4:21'F&T9&RKrB%221Q?%421Q9&T1%524Q3%721H%331?D%:3QL51'TGvV>(Q;&TDvU;&TE(V@+:(D%33R?21&VA%12R?QB%73D31&VC%12RBQ1+4%O221%72RE1%?5>61R9Q=%A21R2%D4R7C1Q:p0F1p0Q21p0Q<1p0Q@1p[NRE1pTBRG1%H5GR2Q<QARD%J21RD%M4R@L1RDp041p0R31p0R=1p0RB1p0RG1pQNRN1p[8S>1pZ<S?1p[LS21p\HS41pT@S51p\@S<1p\FS<1p2SC1p[<SH1").
+Lemma bridge_fixed_nr : forall log A regs pc M rom model addr len K,
+BInv log A M model -> art_at_ecall segs pc -> art_mmap_args regs addr len 16434 ->
+EVOK log (AMmapFixedNR addr len) ->
+(forall M' model', BInv (log ++ [AMmapFixedNR addr len]) A M' model' -> bmodel_rt model model' ->
+bstep A M model A M' model' addr (addr + len) true ->
+mrestrict (bhid A model') M' = art_zfill (mrestrict (bhid A model) M) addr len ->
+srealizes segs scfg (mkCfg (mkst (regupd regs 10 (Z_to_bv 64 addr)) (Z_to_bv 64 (bv_unsigned pc + 4)) M' rom) model') K) ->
+srealizes segs scfg (mkCfg (mkst regs pc M rom) model) K.
 Proof.
 intros log A regs pc M rom model addr len K B (w & HF & HE) (H17 & H10 & H11 & H12 & H13 & H14 & H15)
 (Hal & Hll & Hlen & (win & Hwin & W1 & W2)) HK.
@@ -598,20 +669,24 @@ apply view_zfill; try lia.
 * intros a Ha. unfold bhid, mkH. rewrite (page_allowed_in A win a HwA Wa Wb ltac:(lia)). apply andb_false_r.
 * exact HOUT.
 Qed.
-Lemma overlap_sum_apart0 : ltac2:(TCodec.tc2 tcn__ArtBridge "Q4'='A'VByR0%211%4211%611'K&TIr1r4%33621'I&TN&TL&R@r2%211&RA%113%6231%821;r3%:216%<231p0>1p\BE1'F&RE%13C7=z%43H21p061pZNJ1p[:K1p[0M1").
+Lemma overlap_sum_apart0 : forall l lo hi,
+(forall q, In q l -> BA.B q + BA.S q <= lo \/ hi <= BA.B q) -> BA.overlap_sum l lo hi = 0.
 Proof.
 induction l as [|q l IH]; intros lo hi H; [reflexivity|].
 rewrite BA.overlap_sum_cons, (BA.iv_count_in_rng_disjoint q lo hi (H q (or_introl eq_refl))).
 rewrite IH; [reflexivity | intros q' Hq'; apply H; right; exact Hq'].
 Qed.
-Lemma ww_dec : ltac2:(TCodec.tc2 tcn__ArtBridge "?'A'VByR0%211%4211'I'Fr2r1%33521&H%112%7231p\D91p\B:1").
+Lemma ww_dec : forall q r : word * word, q = r \/ q <> r.
 Proof.
 intros [a b] [c d]. destruct (bv_eqb a c) eqn:E1; [destruct (bv_eqb b d) eqn:E2|].
 - left. apply bv_eqb_eq in E1. apply bv_eqb_eq in E2. subst. reflexivity.
 - right. intros E. injection E as _ ->. rewrite bv_eqb_refl in E2. discriminate.
 - right. intros E. injection E as -> _. rewrite bv_eqb_refl in E1. discriminate.
 Qed.
-Lemma overlap_sum_one : ltac2:(TCodec.tc2 tcn__ArtBridge "QB'='A'VByR0%211%4211%611'K'TJr4%2251&TNr3r2%3221&TIr1r7%33=21&H'F%13@84%311'I&TL&R@%11>&RA%11@%5231%C21=r6%E216%:231p0<1p0A1p\BO1&REr5%23F1N&U3%12Q03%O231p071p0N1p0Q31pZNQ71p[:Q81pTLQ;1p[0Q;1").
+Lemma overlap_sum_one : forall l R lo hi,
+List.NoDup l -> lo <= hi ->
+(forall q, In q l -> q <> R -> BA.B q + BA.S q <= lo \/ hi <= BA.B q) ->
+BA.overlap_sum l lo hi <= hi - lo.
 Proof.
 induction l as [|q l IH]; intros R lo hi Hnd Hle H; [rewrite BA.overlap_sum_nil; lia|].
 rewrite BA.overlap_sum_cons. inversion Hnd as [|q0 l0 Hnin Hnd']; subst.
@@ -622,18 +697,22 @@ destruct (ww_dec q R) as [E|E].
 - rewrite (BA.iv_count_in_rng_disjoint q lo hi (H q (or_introl eq_refl) E)).
 pose proof (IH R lo hi Hnd' Hle ltac:(intros q' Hq'; apply H; right; exact Hq')). lia.
 Qed.
-Lemma live_word : ltac2:(TCodec.tc2 tcn__ArtBridge "Q<'='A'K%2211%411&S1r2%211&TIr3%23741'E'F&R@&SB%116%311&;%13@@9%73A31&RA%116&B%13EE>%<3F31&TOz%2219%3225&TL%12<7&U2+2+R0%3221%:251%I281%J2:1%K2>1%L2D1p0N1p0Q21p\>Q71pR2Q71").
+Lemma live_word : forall L p, live_ok L -> In p L ->
+BA.B (toW p) = fst p /\ BA.S (toW p) = snd p /\ 0 < fst p /\ 0 < snd p /\ fst p + snd p < 2 ^ 64.
 Proof.
 intros L p (Hl & _ & _) Hp. destruct (Hl p Hp) as (H1 & H2 & _ & _ & H5 & _).
 destruct (bs_ceil STATIC) as (_ & Hc2 & _). unfold stack_max_size in Hc2.
 unfold BA.B, BA.S, toW. cbn [fst snd]. rewrite !u64z by lia. repeat split; lia.
 Qed.
-Lemma res_word : ltac2:(TCodec.tc2 tcn__ArtBridge "I'A'K%2211&TIr1vR>%33421'E'F&R@&SBr2%211%411&;%13>>4%83?31&RA%116&B%13CC9%=3D31%?261p0A1pTLF1").
+Lemma res_word : forall R, In R RES ->
+BA.B (toW R) = fst R /\ BA.S (toW R) = snd R.
 Proof.
 intros R HR. destruct (bs_res_in STATIC R HR) as (_ & H1 & H2 & _ & H4).
 unfold BA.B, BA.S, toW. cbn [fst snd]. rewrite !u64z by lia. split; reflexivity.
 Qed.
-Lemma overlap_in_res : ltac2:(TCodec.tc2 tcn__ArtBridge "QD'='SH%211'A'K%2211&S1&S>r4%211%411&TIvR>%23851&TN&;r5%23==1%421:%523;&TLr7%73BB1&B%13DD3%5231%<2:1&RE&7'VByR0%211%M211&S0r9%211vR:%93521r6%<32B1&U3%123D%L231p0A1p0I1p0K1p0Q11p0Q51pZNQ<1p[:Q=1pTLQ=1p[<QA1").
+Lemma overlap_in_res : forall log R lo hi,
+live_ok (art_live log) -> In R RES -> fst R <= lo -> lo <= hi -> hi <= fst R + snd R ->
+BA.overlap_sum (grants log ++ MAPS0) lo hi <= hi - lo.
 Proof.
 intros log R lo hi HL HR H1 Hle H2.
 destruct (bs_res_in STATIC R HR) as (HRin & _). destruct (res_word R HR) as (ER1 & ER2).
@@ -647,7 +726,14 @@ assert (Hkin : In (ivZ (toW R)) KN0) by (unfold KN0; apply in_map; apply in_or_a
 destruct (Hk _ Hkin) as [K|K]; unfold ivZ in K; cbn [fst snd] in K;
 fold (BA.B (toW R)) in K; fold (BA.S (toW R)) in K; rewrite ?ER1, ?ER2 in K; lia.
 Qed.
-Lemma bridge_fixed : ltac2:(TCodec.tc2 tcn__ArtBridge "SK'='SH%211'A'K%2211%611&R4y5'VByR0%211%5241'?y8%611%311p061'Q<&TF'RGr:r9r6r4%544321&SIvV?r8%3221&SKr5+QB%34<291&S9vR>v3vQ1vOr=(SD%12B:%86765431&7r@(9%62HB(>%11Q?%43Q@31%73QA61r?r2r1%Q244321&RMr;%2215&RNrAr>r<r3&TL%128Q;(:%897657Q:4:21'F&T9&RKrB%221Q?%421Q9&T1%524Q3%721H%331?D%:3QL51'TGvV>(Q;&TDvU;&TE(V@+:(D%33R?21&VA%12R?QB%73D31&VC%12RBQ1+4%O221%72RE1%?5>61R9Q=%A21R2%D4R7C1Q:p0F1p0Q21p0Q<1p0Q@1p[NRE1pTBRG1%H5GR2Q<QARD%J21RD%M4R@L1RDp041p0R31p0R=1p0RB1p0RG1pQNRN1p[8S>1pZ<S?1p[LS21p\HS41pT@S51p\@S<1p\FS<1p2SC1p[<SH1").
+Lemma bridge_fixed : forall log A regs pc M rom model addr len K,
+BInv log A M model -> art_at_ecall segs pc -> art_mmap_args regs addr len 50 ->
+EVOK log (AMmapFixed addr len) ->
+(forall M' model', BInv (log ++ [AMmapFixed addr len]) A M' model' -> bmodel_rt model model' ->
+bstep A M model A M' model' addr (addr + len) false ->
+mrestrict (bhid A model') M' = art_zfill (mrestrict (bhid A model) M) addr len ->
+srealizes segs scfg (mkCfg (mkst (regupd regs 10 (Z_to_bv 64 addr)) (Z_to_bv 64 (bv_unsigned pc + 4)) M' rom) model') K) ->
+srealizes segs scfg (mkCfg (mkst regs pc M rom) model) K.
 Proof.
 intros log A regs pc M rom model addr len K B (w & HF & HE) (H17 & H10 & H11 & H12 & H13 & H14 & H15)
 (Hal & Hll & Hlen & (R & HR & R1 & R2) & Hcb) HK.
@@ -727,13 +813,13 @@ Proof.
 intros T f l H. induction l as [|x l IH]; [reflexivity|]. cbn. rewrite (H x (or_introl eq_refl)).
 f_equal. apply IH. intros y Hy. apply H. right. exact Hy.
 Qed.
-Lemma live_sum_filter : ltac2:(TCodec.tc2 tcn__ArtBridge "L'A'K%2211'8p021'=%114&TIr1r2%33821&TNz&B%13==5%4231p061p\>?1&S@&TKr3%23C1<%411%51>%=221p081pR2D1pZFG1").
+Lemma live_sum_filter : forall (f : Z * Z -> bool) L, (forall p, In p L -> 0 <= snd p) -> live_sum (List.filter f L) <= live_sum L.
 Proof.
 intros f L H. unfold live_sum. induction L as [|q L IH]; cbn [List.filter fold_right]; [lia|].
 pose proof (IH ltac:(intros p Hp; apply H; right; exact Hp)) as IH'. pose proof (H q (or_introl eq_refl)).
 destruct (f q); cbn [fold_right]; lia.
 Qed.
-Lemma live_ok_filter : ltac2:(TCodec.tc2 tcn__ArtBridge "B'A'K%2211'8p021'=%114&S1r1%211&TKr3r2%33;21%711p061pR2:1pZF=1").
+Lemma live_ok_filter : forall (f : Z * Z -> bool) L, live_ok L -> live_ok (List.filter f L).
 Proof.
 intros f L (H1 & H2 & H3). split; [|split].
 - intros p Hp. apply filter_In in Hp as [Hp _]. exact (H1 p Hp).
@@ -743,13 +829,16 @@ intros Hin. apply Hnin. apply in_map_iff in Hin as (p & E & Hp). apply filter_In
 apply in_map_iff. exists p. split; assumption.
 - intros p p' Hp Hp'. apply filter_In in Hp as [Hp _]. apply filter_In in Hp' as [Hp' _]. exact (H3 p p' Hp Hp').
 Qed.
-Lemma maps0_apart_live : ltac2:(TCodec.tc2 tcn__ArtBridge "Q8'='A'K%2211%411'VByR0%211%7211&S1r3%211&TIr4%23;41vR:%43861'I&TN&TL&R@%118&RA%11:%5231&;r5%23II1%:241&B%13LL4%<241%>21;%@251p0B1p0E1p0I1p\BM1p\>Q31pR2Q31").
+Lemma maps0_apart_live : forall L p q, live_ok L -> In p L -> In q MAPS0 ->
+BA.B q + BA.S q <= fst p \/ fst p + snd p <= BA.B q.
 Proof.
 intros L p q (Hl & _ & _) Hp Hq. destruct (Hl p Hp) as (_ & _ & _ & _ & _ & _ & Hk).
 assert (Hkin : In (ivZ q) KN0) by (unfold KN0; apply in_map; apply in_or_app; right; exact Hq).
 unfold BA.B, BA.S. destruct (Hk _ Hkin) as [K|K]; unfold ivZ in K; cbn [fst snd] in K; lia.
 Qed.
-Lemma map_remove_live : ltac2:(TCodec.tc2 tcn__ArtBridge "QA'='SH%211'K&S1&S>r3%211%411&TI'A%1288(@r2%24;;81r4%;11%83631'F'VByR0%211%<211%G11&QC&7&S0r5%211vR:%53821&VA%12<A%9231(9(SG%12EN(>%11Q5%53Q631%?3Q7=1%?11%A3D1=%I3D:1p0K1p0Q51p[8Q;1pZ<Q<1p[<Q>1").
+Lemma map_remove_live : forall log addr len,
+live_ok (art_live log) -> In (addr, len) (art_live log) ->
+map_remove (grants log ++ MAPS0) (Z_to_bv 64 addr) = grants (log ++ [AMunmap addr len]) ++ MAPS0.
 Proof.
 intros log addr len HL Hin. unfold map_remove, grants. rewrite filter_app, art_live_snoc. cbn [art_ev_live].
 destruct (live_word _ _ HL Hin) as (E1 & E2 & P1 & P2 & P3). cbn [fst snd] in *.
@@ -760,7 +849,66 @@ unfold toW. cbn [fst]. f_equal. unfold bv_eqb. rewrite !u64z by lia. reflexivity
 pose proof (maps0_apart_live _ _ q HL Hin Hq) as Hap. pose proof (bs_maps_pos STATIC q Hq) as Hs.
 unfold BA.B in Hap. rewrite E, (u64z addr) in Hap by lia. cbn [fst snd] in Hap. lia.
 Qed.
-Lemma bridge_munmap : ltac2:(TCodec.tc2 tcn__ArtBridge "SK'='SH%211'A'K%2211%611&R4y5'VByR0%211%5241'?y8%611%311p061'Q<&TF'RGr:r9r6r4%544321&SIvV?r8%3221&SLr5%23;18&S9vR>v3vQ1vOr=(SG%12A9%86765431&7r@(9%62GA(>%11Q>%43Q?31%73Q@61r?r2r1%Q144321&RMr;%2215&RNrAr>r<r3&TL%128Q:(:%897657Q94:21'F&T9&RKrB%221Q>%421Q8&T0%524Q3%721H%331?D%:3QK51'TGvV>(Q;&TDvU;&TE(V@+:(D%33R>21&VAz%22R?1%83E41&VC%12RBQ2+4%Q0221%82RE1%@5?61R9Q>%B21R2%E4R7D1Q;p0G1p0Q31p0Q=1p0QA1p[NRE1pTBRG1%I5HR3Q=QBRD%K21RD%N4R@M1RDp041p0R41p0R>1p0RB1p0RG1pQNRN1p[8S>1pZ<S?1p[LS21p\HS41pT@S51p\@S<1p\FS<1p2SC1p[<SH1").
+Lemma live_fst_inj : forall L p p', live_ok L -> In p L -> In p' L -> fst p = fst p' -> p = p'.
+Proof.
+intros L p p' (_ & Hnd & _) Hp Hp' Hfst. revert Hnd Hp Hp'.
+induction L as [|q L IH]; intros Hnd Hp Hp'; [destruct Hp|].
+cbn [map] in Hnd. apply NoDup_cons_iff in Hnd as [Hni Hnd].
+destruct Hp as [<-|Hp]; destruct Hp' as [<-|Hp'].
+- reflexivity.
+- exfalso. apply Hni. rewrite Hfst. apply in_map. exact Hp'.
+- exfalso. apply Hni. rewrite <- Hfst. apply in_map. exact Hp.
+- exact (IH Hnd Hp Hp').
+Qed.
+Lemma maps_subtract_live : forall log addr len,
+live_ok (art_live log) -> In (addr, len) (art_live log) ->
+maps_subtract (grants log ++ MAPS0) (bv_unsigned (Z_to_bv 64 addr))
+(bv_unsigned (Z_to_bv 64 addr) + bv_unsigned (Z_to_bv 64 len))
+= map_remove (grants log ++ MAPS0) (Z_to_bv 64 addr).
+Proof.
+intros log addr len HL Hin.
+assert (HL' := HL). destruct HL' as (_ & _ & Hap0).
+destruct (live_word _ _ HL Hin) as (_ & _ & Hpos & Hlen0 & H64). cbn [fst snd] in *.
+assert (Ua : bv_unsigned (Z_to_bv 64 addr) = addr) by (apply u64z; lia).
+assert (Un : bv_unsigned (Z_to_bv 64 len) = len) by (apply u64z; lia).
+apply MmapSim.maps_subtract_exact.
+- rewrite Un. lia.
+- intros b s Hq. apply in_app_or in Hq as [Hq|Hq].
++ unfold grants in Hq. apply in_map_iff in Hq as (p & Ep & Hp).
+unfold toW in Ep. injection Ep as <- <-.
+destruct (live_word _ _ HL Hp) as (_ & _ & P1 & P2 & P3). cbn [fst snd] in *.
+rewrite (u64z (snd p)) by lia. exact P2.
++ pose proof (bs_maps_pos STATIC (b, s) Hq) as Hs. unfold BA.S in Hs. cbn [snd] in Hs. exact Hs.
+- intros b s Hq Eb. apply in_app_or in Hq as [Hq|Hq].
++ unfold grants in Hq. apply in_map_iff in Hq as (p & Ep & Hp).
+unfold toW in Ep. injection Ep as <- <-.
+destruct (live_word _ _ HL Hp) as (_ & _ & P1 & P2 & P3). cbn [fst snd] in *.
+assert (Efst : fst p = addr).
+{ apply (f_equal bv_unsigned) in Eb. rewrite (u64z (fst p)) in Eb by lia.
+rewrite Ua in Eb. exact Eb. }
+rewrite (live_fst_inj _ p (addr, len) HL Hp Hin ltac:(cbn [fst]; exact Efst)). reflexivity.
++ exfalso. pose proof (maps0_apart_live _ _ (b, s) HL Hin Hq) as Hq'.
+pose proof (bs_maps_pos STATIC (b, s) Hq) as Hs.
+unfold BA.B, BA.S in Hq', Hs. cbn [fst snd] in Hq', Hs.
+rewrite Eb, Ua in Hq'. lia.
+- intros b s Hq Hne. rewrite Ua, Un. apply in_app_or in Hq as [Hq|Hq].
++ unfold grants in Hq. apply in_map_iff in Hq as (p & Ep & Hp).
+unfold toW in Ep. injection Ep as <- <-.
+destruct (live_word _ _ HL Hp) as (_ & _ & P1 & P2 & P3). cbn [fst snd] in *.
+rewrite (u64z (fst p)) by lia. rewrite (u64z (snd p)) by lia.
+assert (Hne' : fst p <> addr) by (intros E; apply Hne; rewrite E; reflexivity).
+destruct (Hap0 p (addr, len) Hp Hin ltac:(cbn [fst]; exact Hne')); cbn [fst snd] in *; lia.
++ pose proof (maps0_apart_live _ _ (b, s) HL Hin Hq) as Hq'.
+unfold BA.B, BA.S in Hq'. cbn [fst snd] in Hq'. lia.
+Qed.
+Lemma bridge_munmap : forall log A regs pc M rom model addr len K,
+BInv log A M model -> art_at_ecall segs pc -> art_munmap_args regs addr len ->
+EVOK log (AMunmap addr len) ->
+(forall M' model', BInv (log ++ [AMunmap addr len]) A M' model' -> bmodel_rt model model' ->
+bstep A M model A M' model' addr (addr + len) false ->
+mrestrict (bhid A model') M' = art_unmap (mrestrict (bhid A model) M) addr len ->
+srealizes segs scfg (mkCfg (mkst (regupd regs 10 (Z_to_bv 64 0)) (Z_to_bv 64 (bv_unsigned pc + 4)) M' rom) model') K) ->
+srealizes segs scfg (mkCfg (mkst regs pc M rom) model) K.
 Proof.
 intros log A regs pc M rom model addr len K B (w & HF & HE) (H17 & H10 & H11) Hlive HK.
 cbn [art_EVOK] in Hlive.
@@ -778,7 +926,8 @@ assert (Em : munmap_model aW nW model = forget_model [] addr (addr + len) h' mod
 { rewrite munmap_model_eq, Ua, Un. reflexivity. }
 destruct (bi_wf _ _ _ _ B) as (Wm & Wn & Wl & Wsp).
 assert (Hmaps' : vm_maps h' = grants (log ++ [AMunmap addr len]) ++ MAPS0).
-{ unfold h', munmap_vmmaps. cbn [vm_maps]. unfold h. rewrite (bi_maps _ _ _ _ B).
+{ unfold h', munmap_vmmaps, aW, nW. cbn [vm_maps]. unfold h. rewrite (bi_maps _ _ _ _ B).
+rewrite (maps_subtract_live log addr len (bi_live _ _ _ _ B) Hlive).
 apply map_remove_live; [exact (bi_live _ _ _ _ B) | exact Hlive]. }
 destruct (binv_forget log (log ++ [AMunmap addr len]) A M (unfill aW nW M) model [] addr (addr + len) h' 0 B) as (B' & HOUT & HST).
 - exact Hal.
@@ -788,7 +937,8 @@ destruct (binv_forget log (log ++ [AMunmap addr len]) A M (unfill aW nW M) model
 - intros q [].
 - intros a Ha. cbn in Ha. discriminate.
 - exact Hmaps'.
-- unfold h', munmap_vmmaps. cbn [vm_maps]. unfold map_remove. apply BA.ivs_wf_filter. exact Wm.
+- unfold h', munmap_vmmaps. cbn [vm_maps].
+apply BA.maps_subtract_wf; [unfold h; exact Wm | rewrite Un; lia].
 - reflexivity.
 - reflexivity.
 - reflexivity.
@@ -815,7 +965,7 @@ destruct (page_of_byte_in_aligned a addr (addr + len) Hal ltac:(rewrite Z.add_mo
 destruct ((addr <=? bv_unsigned a) && (bv_unsigned a <? addr + len))%bool eqn:E; [|reflexivity].
 apply andb_prop in E as [E3 E4]. apply Z.leb_le in E3. apply Z.ltb_lt in E4. lia.
 -
-apply (AsanNodesLibEK.srz_munmap_lazy segs scfg regs pc M rom model w aW len K HF HE (bi_halt _ _ _ _ B) H17 H10
+apply (AsanNodesLibEK.srz_munmap_lazy segs scfg Halloc regs pc M rom model w aW len K HF HE (bi_halt _ _ _ _ B) H17 H10
 ltac:(rewrite Ua; unfold page_size; exact Hal) H11 Hlen ltac:(rewrite Ua, Hpr; unfold TASK_SIZE; lia)).
 + rewrite Hpr. fold nW. rewrite (bi_maps _ _ _ _ B). apply map_has_intro. apply in_or_app. left.
 unfold grants. apply in_map_iff. exists (addr, len). split; [reflexivity | exact Hlive].
@@ -823,7 +973,12 @@ unfold grants. apply in_map_iff. exists (addr, len). split; [reflexivity | exact
 apply HK; [exact B' | rewrite <- Em; unfold bmodel_rt; destruct model as [fd [maps lazy mat] io fs proc lim tm]; reflexivity | exact HST |].
 apply view_unfill; [lia | lia | exact HOUT].
 Qed.
-Lemma window_facts : ltac2:(TCodec.tc2 tcn__ArtBridge "R:'K'F&U0r2+TP0%3221z%63721&TOr3%2241&TNr5%2291&TLr6%2214&U2+2+Q?%3221%:251'Ir7%:219&S8%?221&S7%A215%7231'E&S2(@&SOr8%211&SN%123>%64Q6Q631%811&U3%1246&TM+8%22E1+XP0%Q0221%Q4261r9%@11r1%Q8221%@24B%Q=231%H231&Hr:%Q>21QF%Q<22:%QC2QH1%N231%611p081p]>QO1%Q22A1%Q32J1p0Q51p0Q>1p0QG1p0QK1p0QO1p0R01p[8R81p\DR91").
+Lemma window_facts : forall r len,
+r mod 4096 = 0 -> len mod 4096 = 0 -> 0 < len -> 4096 <= r -> r + len <= 2 ^ 47 ->
+(r + len <= SHLO \/ SHHI <= r) ->
+window_ok (art_shlo r, art_shhi r len)
+/\ art_shhi r len - art_shlo r <= len / 8 + 8192
+/\ (forall x, art_shlo r <= x < art_shhi r len -> ~ (r <= x < r + len)).
 Proof.
 intros r len Hr Hl Hlen H4 H47 Hsh. unfold window_ok, art_shlo, art_shhi, SHLO, SHHI, LSH_LO, LSH_HI, HSH_LO, HSH_HI in *.
 cbn [fst snd].
@@ -831,16 +986,18 @@ Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
 repeat split; try lia.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Qed.
-Lemma gw_sizes_app : ltac2:(TCodec.tc2 tcn__ArtBridge "F'='A'VByR0%211%4211%611'F'K&T=&7r2r1%33821%511&TL%715%815%3221%<3;51p[4>1p[2?1").
+Lemma gw_sizes_app : forall l1 l2, AsanPlacement.gw_sizes (l1 ++ l2) = AsanPlacement.gw_sizes l1 + AsanPlacement.gw_sizes l2.
 Proof. induction l1 as [|q l1 IH]; intros l2; cbn [app AsanPlacement.gw_sizes]; [lia | rewrite IH; lia]. Qed.
-Lemma gw_sizes_grants : ltac2:(TCodec.tc2 tcn__ArtBridge "H'='A'K%2211%411&S1r1%211'F&T=&J'VByR0%211%=211&SBr2%74>321%911&S@%114%=3C31p0?1pR2C1").
+Lemma gw_sizes_grants : forall L, live_ok L -> AsanPlacement.gw_sizes (map toW L) = live_sum L.
 Proof.
 intros L HL. assert (H : forall p, In p L -> BA.S (toW p) = snd p) by (intros p Hp; apply (live_word L p HL Hp)).
 clear HL. unfold live_sum. induction L as [|q L IH]; cbn [map AsanPlacement.gw_sizes fold_right]; [reflexivity|].
 rewrite IH by (intros p Hp; apply H; right; exact Hp).
 pose proof (H q (or_introl eq_refl)) as Hq. unfold BA.S in Hq. rewrite Hq. reflexivity.
 Qed.
-Lemma grant_exists : ltac2:(TCodec.tc2 tcn__ArtBridge "QJ'='SH%211'A'K%2211%611'VByR0%211'?y8%511%311p051'Q<'RGr5r4r3r2%544321'E&TOz%2215&TNvQ1%2281%7241&U1&<&S>r7%211%42N1%611vO%?221'G'F'8&T?r6r1%3321L(C%73621qZ:Q71%:2Q81p0<1p0F1p0O1p[8QA1p[LQ71pT@Q91p2QB1p[<QG1").
+Lemma grant_exists : forall log A M model len,
+BInv log A M model -> 0 < len <= LENMAX -> Z.of_nat (length (art_live log)) < KMAX ->
+exists a : word, grant_ok_na_pin model a len = true.
 Proof.
 intros log A M model len B Hlen HK.
 destruct (bs_budget STATIC) as (HB0 & HK0 & HL0). pose proof (bs_gap STATIC) as Hgap.
@@ -866,20 +1023,63 @@ rewrite Hfree. unfold page_size in Hal |- *.
 rewrite (proj2 (Z.eqb_eq _ _) Hal), (proj2 (Z.ltb_lt 0 g)) by lia.
 rewrite (proj2 (Z.leb_le _ _)) by lia. reflexivity.
 Qed.
-Lemma aligned_pos_ge : ltac2:(TCodec.tc2 tcn__ArtBridge "A'K'F&U0r1+TP0%3221z%63721&TOr2%2241&TNr3%2291p041p081p\D@1").
+Lemma grant_exists_na : forall log A M model len,
+BInv log A M model -> 0 < len <= LENMAX -> len mod page_size = 0 -> Z.of_nat (length (art_live log)) < KMAX ->
+exists a : word, RefNodes.grant_ok_na (Z_to_bv 64 0) model a len = true.
+Proof.
+intros log A M model len B Hlen Hnal HK.
+destruct (bs_budget STATIC) as (HB0 & HK0 & HL0). pose proof (bs_gap STATIC) as Hgap.
+set (h := m_vmmaps model).
+assert (EL : vm_reserved h ++ vm_maps h = RESV0 ++ grants log ++ MAPS0)
+by (unfold h; rewrite (bi_resv _ _ _ _ B), (bi_maps _ _ _ _ B); reflexivity).
+assert (Hsz : AsanPlacement.gw_sizes (vm_reserved h ++ vm_maps h) <= AsanPlacement.gw_sizes (RESV0 ++ MAPS0) + BUDGET).
+{ rewrite EL, !gw_sizes_app. unfold grants. rewrite (gw_sizes_grants _ (bi_live _ _ _ _ B)).
+pose proof (bi_livesum _ _ _ _ B). pose proof (bi_cost _ _ _ _ B). lia. }
+assert (Hlen' : Z.of_nat (length (vm_reserved h ++ vm_maps h)) <= Z.of_nat (length (RESV0 ++ MAPS0)) + KMAX).
+{ rewrite EL, !length_app. unfold grants. rewrite length_map. lia. }
+destruct (AsanPlacement.free_gap_of_totals h len (AsanPlacement.gw_sizes (RESV0 ++ MAPS0) + BUDGET) ltac:(lia) Hsz)
+as (g & Hal & Hfl & Hc & Hfree & _).
+{ assert (Hm : Z.of_nat (length (vm_reserved h ++ vm_maps h)) * (len + 4095)
+<= (Z.of_nat (length (RESV0 ++ MAPS0)) + KMAX) * (LENMAX + 4095)).
+{ apply Z.mul_le_mono_nonneg; lia. }
+lia. }
+destruct (bi_wf _ _ _ _ B) as (_ & _ & _ & Wsp).
+pose proof (AsanCeil.alloc_ceiling_le_alloc_top h Wsp) as Htop.
+pose proof AsanCeil.bottomup_floor_val as Hfv. pose proof AsanCeil.alloc_ceiling_val as Hcv.
+assert (Hn0 : 0 < len) by lia.
+destruct (Placement.linux_place_exists h (kb_thp (m_kernel model)) (Z_to_bv 64 0) len Hn0 Hnal) as (a & Hpl).
+{ exists g. right. apply Placement.gap_fits_b_iff. unfold Placement.gap_fits_b.
+rewrite Hfree, (proj2 (Z.eqb_eq _ _) Hal), (proj2 (Z.leb_le (g + len) _)) by lia.
+rewrite (proj2 (Z.leb_le _ g)); [reflexivity|].
+apply Z.le_trans with AsanCeil.bottomup_floor; [|exact Hfl].
+vm_compute. intro Hc0. discriminate Hc0. }
+destruct (Placement.linux_place_admissible _ _ _ _ _ Hn0 Hnal Hpl) as (Hal' & Hpos' & Hhi' & Hfree').
+pose proof (alloc_top_lt h) as Hat. unfold two_pow_64 in Hat.
+exists (Z_to_bv 64 a).
+apply (grant_ok_na_of_place _ _ _ _ Hn0 Hnal).
+apply (proj2 (Placement.linux_place_is_iff _ _ _ _ _ Hn0 Hnal)).
+rewrite (u64z a) by lia. exact Hpl.
+Qed.
+Lemma aligned_pos_ge : forall r, r mod 4096 = 0 -> 0 < r -> 4096 <= r.
 Proof.
 intros r H1 H2.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
 lia.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Qed.
-Lemma grant_parts : ltac2:(TCodec.tc2 tcn__ArtBridge "QE'Q<'VByR0%211'K'F'8&T?r3r2r1%43321(C%83721'E&U0&VC%12?9+TP0%4221z%@3A21&TO%1236&TN&TL%129A&Q>&QBr4%211%411%8261&QH&7'A%12Q1Q1&QO%118&QM%11:%73531&VA%12Q9Q2%;33Q41%Q83Q71Q1%Q02>1%Q12H1%Q22K1p0Q41p\:Q>1pZ:Q@1p[LQD1").
+Lemma grant_parts : forall model (a : word) n,
+grant_ok_na_pin model a n = true ->
+bv_unsigned a mod 4096 = 0 /\ 0 < bv_unsigned a /\ bv_unsigned a + n <= alloc_top (m_vmmaps model)
+/\ region_free (vm_reserved (m_vmmaps model) ++ vm_maps (m_vmmaps model)) a (Z_to_bv 64 n) = true.
 Proof.
 intros model a n H. unfold grant_ok_na_pin in H.
 apply andb_true_iff in H as [H Hrf]. apply andb_true_iff in H as [H Htop]. apply andb_true_iff in H as [Hal Hpos].
 apply Z.eqb_eq in Hal. apply Z.ltb_lt in Hpos. apply Z.leb_le in Htop. unfold page_size in Hal. auto.
 Qed.
-Lemma apart_of_covered : ltac2:(TCodec.tc2 tcn__ArtBridge "QH'='A'VByR0%211%4211%611'K'F'8&QHr5r4r3%43321(C%83721&TOz&VC%12A8%4231%52:9'E&TNr6r1%3221%;22A%6221&RBr:r2%3221%J3I1Cp061p]>M1'I&TLr8%E2Q51r7%G2Q71%5231%D21C%E2Q25%9221p0;1p0J1p0L1p0Q21pZNQ<1p[:Q=1p\:QA1pZ:QB1p[0QA1").
+Lemma apart_of_covered : forall l (a n : word) lo hi,
+region_free l a n = true -> 0 < bv_unsigned n -> lo < hi ->
+(forall x, lo <= x < hi -> BA.covered l x = true) ->
+bv_unsigned a + bv_unsigned n <= lo \/ hi <= bv_unsigned a.
 Proof.
 intros l a n lo hi Hrf Hn Hlh Hcov.
 destruct (Z_le_dec (bv_unsigned a + bv_unsigned n) lo) as [L|L]; [left; exact L|].
@@ -888,7 +1088,18 @@ set (x := Z.max (bv_unsigned a) lo).
 pose proof (Hcov x ltac:(unfold x; lia)) as Hc. rewrite <- in_ivs_covered in Hc.
 rewrite (region_free_sem l a n x Hrf Hn ltac:(unfold x; lia)) in Hc. discriminate.
 Qed.
-Lemma binv_null : ltac2:(TCodec.tc2 tcn__ArtBridge "S?'='SH%211'A'K%2211%611'VByR0%211'?y8%511%311p051'Q<'RGr6r5r4r3%544321&S9vR>v3vQ1vOr7(SFz%22:1%96876541'F'8&T?%13A?@(C%53421&VC%12OD&VA%12Q1H(@&SOr2%211&SN%123D%64Q<Q<31&T@r9%23H71'E&S:&RHv4r=&T9&RKr<r:%3221r;%6221%;6:981>Q=&7(9%Q72AQ@(>%11R4%43R531%63R6?1%41R3%73R4M1%93R5?1&TCr8%231QI?r1%QO48521&RM%12E3%H284%J216&SM&T1%13GR3Q4%Q<1R4%Q:2R5Q6%53321%QJ3R<71&RN(:%29Q2OQ1C@?651%Q:241%Q;2>1%Q<2A1%Q=2Q11t[NRCQ?1t]<RNQC1t\<RKQK1t\DS1QN1p0R11p0R81p0RC1pZ:S01p[8S61p[LRL1pT@RN1p2S71p[<S<1").
+Lemma binv_null : forall log A M model len (a : word),
+BInv log A M model -> EVOK log (AMmapNull len 0) -> grant_ok_na_pin model a len = true ->
+let r := bv_unsigned a in
+let nW := Z_to_bv 64 len in
+let w := (art_shlo r, art_shhi r len) in
+let model' := mmap_model a nW model in
+GR log (mrestrict (bhid A model) M) len r
+/\ BInv (log ++ [AMmapNull len r]) (A ++ [w]) (zfill a nW M) model'
+/\ bmodel_rt model model'
+/\ mrestrict (bhid (A ++ [w]) model') (zfill a nW M)
+= art_reveal (art_zfill (mrestrict (bhid A model) M) r len) (art_shlo r) (art_shhi r len)
+/\ bstep A M model (A ++ [w]) (zfill a nW M) model' (art_shlo r) (art_shhi r len) false.
 Proof.
 intros log A M model len a B (Hlen & Hll & Hmax & HKc & Hcb) Hg r nW w model'.
 destruct (grant_parts model a len Hg) as (Hal & Hpos & Htop & Hrf). fold r in Hal, Hpos, Htop.
@@ -935,7 +1146,7 @@ assert (HW1 : forall x : word, art_shlo r <= bv_unsigned x < art_shhi r len -> b
 { intros x Hx. unfold bhid, mkH.
 rewrite (page_allowed_in (A ++ [w]) w x); [apply andb_false_r | apply in_or_app; right; left; reflexivity | exact Wa | exact Wb | exact Hx]. }
 split; [|split; [|split; [|split]]].
-- unfold art_GR. repeat split; try assumption; lia.
+-   unfold art_GR. repeat split; try assumption; lia.
 -
 destruct (bi_wf _ _ _ _ B) as (Wm & Wn & Wl & Wsp).
 assert (Ecost : art_cost_sum (log ++ [AMmapNull len r]) = art_cost_sum log + (len + len / 8 + 8192))
@@ -1036,15 +1247,28 @@ exfalso. unfold bhid, mkH in Hx. rewrite (Hnl x ltac:(lia)) in Hx. discriminate.
 * rewrite (HW2 x ltac:(lia)), Hx in Hx'. discriminate.
 * rewrite (HW2 x ltac:(lia)), Hx in Hx'. discriminate.
 Qed.
-Lemma bridge_null : ltac2:(TCodec.tc2 tcn__ArtBridge "T='='SH%211'A'K%2211%611&R4y5'VByR0%211%5241'?y8%611%311p061'Q<&TF'RGr9r8r5r3%544321&SIvV?r7%3221&SKzr4+Q2%44=321&S9vR>v3vQ1vOr<(SF%12C;%86765431&S:&RHv4rA&T9&RKr@r;%3221r=%6221r:%<6;:921H&7rB(9%C29Q5(>%11QM%43QN31%73QO61r2%Q>42Q2Q:1&RM%12?Q<&RNrCr>r6&SO%11Q>&SN%12Q@G(:%998L76QGQ>421'F%O2QDQI%Q1219&SM&T1rDr?%Q5221%Q721Q8%531R2A%@1R3%?2R4C%93321%=3R;;1'TGvV>(Q;&TDvU;&TE(V@+:(D%33RN21&VA%12RNRC%73E31&TL&VC%12S2Q6+4%4221%82S51%@5?71RDR1%B21Q9%E4RGD1Q;p0G1p0Q61p0QA1p0QD1p0QO1p[NS61pTBS81p4SD1p\DSG1%L5KRDR9R5S7%N21S7%Q14S3Q01QFp041p0RE1p0RO1p0S51p0S:1pQNSA1p[8T11p[LSD1p\HSF1pT@SG1p\@SN1p\FSN1p2T51p[<T:1").
+Lemma bridge_null : forall log A regs pc M rom model len K,
+BInv log A M model -> art_at_ecall segs pc -> art_mmap_args regs 0 len 34 ->
+EVOK log (AMmapNull len 0) ->
+(forall r A' M' model', GR log (mrestrict (bhid A model) M) len r ->
+BInv (log ++ [AMmapNull len r]) A' M' model' -> bmodel_rt model model' ->
+bstep A M model A' M' model' (art_shlo r) (art_shhi r len) false ->
+mrestrict (bhid A' model') M'
+= art_reveal (art_zfill (mrestrict (bhid A model) M) r len) (art_shlo r) (art_shhi r len) ->
+srealizes segs scfg (mkCfg (mkst (regupd regs 10 (Z_to_bv 64 r)) (Z_to_bv 64 (bv_unsigned pc + 4)) M' rom) model') K) ->
+srealizes segs scfg (mkCfg (mkst regs pc M rom) model) K.
 Proof.
 intros log A regs pc M rom model len K B (w & HF & HE) (H17 & H10 & H11 & H12 & H13 & H14 & H15) Hev HK.
 pose proof Hev as (Hlen & Hll & Hmax & HKc & Hcb).
 destruct (bs_budget STATIC) as (HB0 & HK0 & HL0).
 assert (Hpr : page_round_up_Z len = len) by (apply AllocSim.page_round_up_Z_aligned; [lia | exact Hll]).
 apply (srz_mmap_rw1 segs scfg Halloc regs pc M rom model w len (Z_to_bv 64 34) K HF HE (bi_halt _ _ _ _ B) H17 H11
-ltac:(lia) H12 H13 mmap_flags_core_22 ltac:(rewrite H14; exact mm1_eq) H15).
-- rewrite Hpr. exact (grant_exists log A M model len B ltac:(lia) HKc).
+ltac:(lia) H12 H13 mmap_flags_core_22 ltac:(rewrite H14; exact mm1_eq) H15
+ltac:(rewrite H10; apply place_declined_b_null)).
+-
+rewrite Hpr, H10.
+exact (grant_exists_na log A M model len B ltac:(lia)
+ltac:(first [exact Hll | unfold page_size; exact Hll | unfold page_size in Hll; exact Hll]) HKc).
 - rewrite Hpr. unfold mmap_noreserve_backed_ok. rewrite mmap_noreserve_b_22. apply Z.leb_le.
 pose proof (vm_backing_used_le A model (bi_minv _ _ _ _ B) (bi_awf _ _ _ _ B)).
 pose proof (bi_budget _ _ _ _ B). pose proof (bi_limit _ _ _ _ B).
@@ -1057,9 +1281,9 @@ pose proof (HK (bv_unsigned a) _ _ _ HGR B' Hrt HST Hview) as HK'.
 replace (Z_to_bv 64 (bv_unsigned a)) with a in HK' by (symmetry; apply Z_to_bv_u_eq'; reflexivity).
 exact HK'.
 Qed.
-Lemma sbm_madvise : ltac2:(TCodec.tc2 tcn__ArtBridge ">'Q<'VByR0%211&T<r3&R2r2r1%33421%6251p\:81pZ:91p[B=1").
+Lemma sbm_madvise : forall m (a n : word), same_but_materialized m (madvise_dontneed_next m a n).
 Proof. intros m a n. unfold same_but_materialized, madvise_dontneed_next. destruct m as [fd [maps lazy mat] io fs proc lim tm]. reflexivity. Qed.
-Lemma minv_madvise : ltac2:(TCodec.tc2 tcn__ArtBridge "G'='A'K%2211%411'Q<'VByR0%211'T6r4r3%3221r5&R2r2%23651%8241p061p\:;1pZ:<1p[B@1p2B1").
+Lemma minv_madvise : forall A m (a n : word), MInv A m -> MInv A (madvise_dontneed_next m a n).
 Proof.
 intros A m a n [N1 N2 N3 N4 N5].
 destruct (same_but_materialized_frame _ _ (sbm_madvise m a n)) as (_ & Hvm & Hlz & _).
@@ -1073,7 +1297,8 @@ constructor.
 - intros p Hp. rewrite Hmat in Hp. apply filter_In in Hp as [Hp _]. rewrite Hlz. exact (N4 p Hp).
 - rewrite Hvm. rewrite (eager_used_ext (madvise_dontneed_next m a n) m) by assumption. exact N5.
 Qed.
-Lemma binv_snoc_madvise : ltac2:(TCodec.tc2 tcn__ArtBridge "Q8'='SH%211'A'K%2211%611'VByR0%211'?y8%511%311p051'Q<'RGr6r5r4r3%544321&7r7(9(SCr2%2271(>%11L%63M31%93N81%@41?>=p0<1p[8N1pZ<O1p[LE1pT@G1p2Q01p[<Q51").
+Lemma binv_snoc_madvise : forall log A M model addr len,
+BInv log A M model -> BInv (log ++ [AMadvise addr len]) A M model.
 Proof.
 intros log A M model addr len B. destruct B. constructor; try assumption.
 - unfold grants. rewrite art_live_snoc. exact bi_maps0.
@@ -1083,7 +1308,14 @@ intros log A M model addr len B. destruct B. constructor; try assumption.
 - rewrite art_cost_sum_snoc. cbn [art_cost]. lia.
 - rewrite art_live_snoc, art_cost_sum_snoc. cbn [art_ev_live art_cost]. lia.
 Qed.
-Lemma bridge_madvise : ltac2:(TCodec.tc2 tcn__ArtBridge "SK'='SH%211'A'K%2211%611&R4y5'VByR0%211%5241'?y8%611%311p061'Q<&TF'RGr:r9r6r4%544321&SIvV?r8%3221&SJr5%23;18&S9vR>v3vQ1vOr=(SC%12A9%86765431&7r@(9%62GA(>%11Q>%43Q?31%73Q@61r?r2r1%Q144321&RMr;%2215&RNrAr>r<r3&TL%128Q:(:%897657Q94:21'F&T9&RKrB%221Q>%421Q8&T1%524Q3%721H%331?D%:3QK51'TGvV>(Q;&TDvU;&TE(V@+:(D%33R>21&VAz%22R?1%83E41&VC%12RBQ2+4%Q0221%82RE1%@5?61R9Q>%B21R2%E4R7D1Q;p0G1p0Q31p0Q=1p0QA1p[NRE1pTBRG1%I5HR3Q=QBRD%K21RD%N4R@M1RDp041p0R41p0R>1p0RB1p0RG1pQNRN1p[8S>1pZ<S?1p[LS21p\HS41pT@S51p\@S<1p\FS<1p2SC1p[<SH1").
+Lemma bridge_madvise : forall log A regs pc M rom model addr len K,
+BInv log A M model -> art_at_ecall segs pc -> art_madvise_args regs addr len ->
+EVOK log (AMadvise addr len) ->
+(forall M' model', BInv (log ++ [AMadvise addr len]) A M' model' -> bmodel_rt model model' ->
+bstep A M model A M' model' addr (addr + len) false ->
+mrestrict (bhid A model') M' = art_zfill (mrestrict (bhid A model) M) addr len ->
+srealizes segs scfg (mkCfg (mkst (regupd regs 10 (Z_to_bv 64 0)) (Z_to_bv 64 (bv_unsigned pc + 4)) M' rom) model') K) ->
+srealizes segs scfg (mkCfg (mkst regs pc M rom) model) K.
 Proof.
 intros log A regs pc M rom model addr len K B (w & HF & HE) (H17 & H10 & H11 & H12)
 (Hal & Hll & Hlen & (win & Hwin & W1 & W2)) HK.
@@ -1142,7 +1374,8 @@ rewrite EH. apply view_zfill; try lia.
 + exact Hvis.
 + intros a _. reflexivity.
 Qed.
-Lemma restrict_mkst : ltac2:(TCodec.tc2 tcn__ArtBridge "Q2'VByR0%211'8p021&R4y5%2215'?y8%:11%311p0:1'F'Q6&T;r5&TDvU;r4r3r2r1%6554321%9281&T9%12:5%:598715%?3>41p\HA1pT@B1p\@M1p\FI1pQJM1").
+Lemma restrict_mkst : forall (H : word -> bool) regs pc M rom,
+restrict H (mkst regs pc M rom) = mkst regs pc (mrestrict H M) rom.
 Proof. intros. reflexivity. Qed.
 Definition art_ev_range (ev : aev) : Z * Z :=
 match ev with
@@ -1160,7 +1393,7 @@ exists sfx, log = log0 ++ sfx /\ incl A0 A
 /\ (forall x : word, page_in_ranges (page_base x) (m_vm_lazy model) = true ->
 page_in_ranges (page_base x) (m_vm_lazy model0) = true
 \/ exists a l, In (AMmapFixedNR a l) sfx /\ a <= bv_unsigned x < a + l).
-Lemma bhist_refl : ltac2:(TCodec.tc2 tcn__ArtBridge "J'='A'K%2211%411'VByR0%211'?y8%511%311p051'Q<'SH%?11&RLr4r3r2r1%5843211432p[<71p[L:1pT@<1p2E1").
+Lemma bhist_refl : forall A M model log, bhist A M model log log A M model.
 Proof.
 intros A M model log. exists []. rewrite app_nil_r. split; [reflexivity|]. split; [apply incl_refl|]. split; [|split; [|split]].
 - intros x Hx. split; [exact Hx | reflexivity].
@@ -1168,7 +1401,9 @@ intros A M model log. exists []. rewrite app_nil_r. split; [reflexivity|]. split
 - intros w Hw. left. exact Hw.
 - intros x Hx. left. exact Hx.
 Qed.
-Lemma bhist_step0 : ltac2:(TCodec.tc2 tcn__ArtBridge "Q>'='A'K%2211%411'VByR0%211'?y8%511%311p051'Q<'SH%?11&RLr:r9r8r7r6r5r4r3%9887654321&RNr2z(:%49987963221r<r;%A821@?>=:9p041p0:1p[NG1pTBI1p[LI1pT@K1p2Q41p[<J1p[>K1p\0N1pTDQ01p6Q91").
+Lemma bhist_step0 : forall A0 M0 model0 log0 log A M model M' model',
+bhist A0 M0 model0 log0 log A M model -> bstep A M model A M' model' 0 0 false ->
+bhist A0 M0 model0 log0 log A M' model'.
 Proof.
 intros A0 M0 model0 log0 log A M model M' model' (sfx & El & Hi & H2 & H3 & H4 & H5) (S1 & S2 & S3 & _ & S5).
 exists sfx. split; [exact El|]. split; [exact Hi|]. split; [|split; [|split; [exact H4|]]].
@@ -1179,7 +1414,10 @@ exists sfx. split; [exact El|]. split; [exact Hi|]. split; [|split; [|split; [ex
 + exact (H3 x Hx0 E).
 Qed.
 Definition art_ev_nr (ev : aev) : bool := match ev with AMmapFixedNR _ _ => true | _ => false end.
-Lemma bhist_step_same : ltac2:(TCodec.tc2 tcn__ArtBridge "QL'='A'K%2211%411'VByR0%211'?y8%511%311p051'Q<'SH%?11&RLr;r:r9r8r7r6r5r4%9887654321&RNr3&;&RJr2%211%43NN1&B%13Q0Q03&RI%116%;9@?>@=:531r=r<&7(9(>%11M%33NA1%53OJ1%N887ML1JGFp0:1p0G1pZBQ31p[NQ51pTBQ71p[LQ71pT@Q91p2QB1p[<Q81p[>Q91p\0Q<1pTDQ>1p6QG1").
+Lemma bhist_step_same : forall A0 M0 model0 log0 log A M model M' model' ev,
+bhist A0 M0 model0 log0 log A M model ->
+bstep A M model A M' model' (fst (art_ev_range ev)) (snd (art_ev_range ev)) (art_ev_nr ev) ->
+bhist A0 M0 model0 log0 (log ++ [ev]) A M' model'.
 Proof.
 intros A0 M0 model0 log0 log A M model M' model' ev (sfx & El & Hi & H2 & H3 & H4 & H5) (S1 & S2 & S3 & _ & S5).
 exists (sfx ++ [ev]). split; [rewrite El, app_assoc; reflexivity|]. split; [exact Hi|]. split; [|split; [|split]].
@@ -1195,7 +1433,10 @@ exists a, l. split; [apply in_or_app; right; left; reflexivity | exact Hr]. }
 - intros w Hw. destruct (H4 w Hw) as [Hw0|(len & r & Hin & Ew)]; [left; exact Hw0|].
 right. exists len, r. split; [apply in_or_app; left; exact Hin | exact Ew].
 Qed.
-Lemma bhist_step_null : ltac2:(TCodec.tc2 tcn__ArtBridge "QO'='A'K%2211%411'VByR0%211'?y8%511%311p051'Q<'SH%?11&RLr=r<r;r:r9r8r7r6%9887654321&RNr5r4&SOr2%211&SNr3%2241(:%:9?>=<98521r?r>&7(9(SF%12>9(>%11N%53O31%73Q0K1%O8:9NM1HGDp0<1p0H1p\DQ@1p[8QA1p[NQ71pTBQ91p4QB1p[LQ:1pT@Q<1p2QE1p[<Q;1p[>Q<1p\0Q?1pTDQA1p6QJ1").
+Lemma bhist_step_null : forall A0 M0 model0 log0 log A M model A' M' model' len r,
+bhist A0 M0 model0 log0 log A M model ->
+bstep A M model A' M' model' (art_shlo r) (art_shhi r len) false ->
+bhist A0 M0 model0 log0 (log ++ [AMmapNull len r]) A' M' model'.
 Proof.
 intros A0 M0 model0 log0 log A M model A' M' model' len r (sfx & El & Hi & H2 & H3 & H4 & H5) (S1 & S2 & S3 & S4 & S5).
 exists (sfx ++ [AMmapNull len r]). split; [rewrite El, app_assoc; reflexivity|]. split; [exact (incl_tran Hi S1)|]. split; [|split; [|split]].
@@ -1211,7 +1452,14 @@ right. exists a, l. split; [apply in_or_app; left; exact Hin | exact Hal]. }
 right. exists len', r'. split; [apply in_or_app; left; exact Hin | exact Ew].
 + right. exists len, r. split; [apply in_or_app; right; left; reflexivity | exact Ew].
 Qed.
-Theorem aruns_srealizes_h : ltac2:(TCodec.tc2 tcn__ArtBridge "S9'='SH%211'Q6!p021p041&TF'Q<'A'K%2211%<11'VByR0%211'?y8%511%311p051'RGr4r3&Q9r2%211r1%746521&RMr:%2216&RLr9r8r7r6r5%>1@%789654321@r>&T;&RK%127E%3217%52:1'TGvV?vV>(Q;%12>=%54431;p071p0>1p0G1p0K1p[LQ@1p\4QF1p2Q>1p[<QI1'T2&S9vR>v3vQ1vO%544321&S:&RHv4%3221vU;%<7I621Q:Q?Q='F%Q02QCQ?%Q221QB%33R91Q7%QE1QF%QI4Q;QH1QE%QB2Q7QHr=r<r;%QK1Q>%QD8Q<432QCQ@1QNrA%Q84Q7Q6Q41p031p091p0;1p0>1p[LRC1p\4RI1p2RA1p0F1p\LRL1p[<RN1p0Q61p[>S01p\2RK1pTDR@1p6RI1p\0RN1pQNS01pTJS21").
+Theorem aruns_srealizes_h : forall (Q : list aev -> machine_state -> Prop) K model0 A0 M0 modelE log0,
+(forall log A ms model, BInv log A (ms_mem ms) model -> bmodel_rt model0 model ->
+bhist A0 M0 modelE log0 log A (ms_mem ms) model ->
+Q log (restrict (bhid A model) ms) -> srealizes segs scfg (mkCfg ms model) K) ->
+forall log s, aruns segs EVOK GR Q log s ->
+forall A ms model, restrict (bhid A model) ms = s -> BInv log A (ms_mem ms) model -> bmodel_rt model0 model ->
+bhist A0 M0 modelE log0 log A (ms_mem ms) model ->
+srealizes segs scfg (mkCfg ms model) K.
 Proof.
 intros Q K model0 A0 M0 modelE log0 HQ log s R. induction R as
 [ log s Hq
@@ -1267,13 +1515,20 @@ apply (IH A (mkst (regupd regs 10 (Z_to_bv 64 0)) (Z_to_bv 64 (bv_unsigned pc + 
 + exact (bmodel_rt_trans _ _ _ Hrt Hrt').
 + exact (bhist_step_same _ _ _ _ _ _ _ _ _ _ (AMadvise addr len) HH HST).
 Qed.
-Theorem aruns_srealizes : ltac2:(TCodec.tc2 tcn__ArtBridge "RA'='SH%211'Q6!p021p041&TF'Q<'A'K%2211%<11'RGr4r3&Q9r2%211r1%746521&RMr6%2216r9&T;&RKr5%221=%421?%6281'TGvV?vV>(Q;%128E%54431<p071p0?1p0C1p[LQ01p\4Q61p2N1p[<Q91'T2&S9vR>v3vQ1vO%544321&S:&RHv4%3221vU;%<7H621Q2Q7Q5'F%Q02Q;Q7%Q221Q:%33QI1Q1r7%Q>1Q?%QB42QA1Q>r:%Q<21QBr<%Q44Q3Q2Q01p031p061p0:1p[LQO1p\4R51p2QM1p0B1p\LR81p[<R:1p0Q21p\0R61pQNR81pTJR:1").
+Theorem aruns_srealizes : forall (Q : list aev -> machine_state -> Prop) K model0,
+(forall log A ms model, BInv log A (ms_mem ms) model -> bmodel_rt model0 model ->
+Q log (restrict (bhid A model) ms) -> srealizes segs scfg (mkCfg ms model) K) ->
+forall log s, aruns segs EVOK GR Q log s ->
+forall A ms model, restrict (bhid A model) ms = s -> BInv log A (ms_mem ms) model -> bmodel_rt model0 model ->
+srealizes segs scfg (mkCfg ms model) K.
 Proof.
 intros Q K model0 HQ log s R A ms model Es B Hrt.
 apply (aruns_srealizes_h Q K model0 A (ms_mem ms) model log (fun log' A' ms' model' B' Hrt' _ Hq => HQ log' A' ms' model' B' Hrt' Hq)
 log s R A ms model Es B Hrt). apply bhist_refl.
 Qed.
-Lemma binv_ext : ltac2:(TCodec.tc2 tcn__ArtBridge "QI'='SH%211'A'K%2211%611'VByR0%211'?y8%511%311p051'Q<'RGr5r4r3r2%544321'F'Q=&QB%115%217%53421%I2CC%M11&Q@%11<%21>%;3421%H1I&Q?%11B(5%11M%A3531'T6r8%221Ir:r9r6%N43251p051p091p0@1p0G1p0N1p[HQ51p[FQ61pT@Q81p2QA1p[<QF1").
+Lemma binv_ext : forall log A M m1 m2,
+BInv log A M m1 -> m_vmmaps m2 = m_vmmaps m1 -> m_vm_lazy m2 = m_vm_lazy m1 ->
+m_halted m2 = None -> MInv A m2 -> BInv log A M m2.
 Proof.
 intros log A M m1 m2 B Hvm Hlz Hh Hminv.
 assert (Heu : eager_used m2 = eager_used m1) by (apply eager_used_ext; assumption).
@@ -1284,15 +1539,17 @@ Qed.
 Definition BINV (log : list aev) (A : list (Z * Z)) (M : word -> option byte) (h : VmMaps) (lz : list (word * word)) : Prop :=
 A_wf A /\ live_ok (art_live log)
 /\ forall model, m_vmmaps model = h -> m_vm_lazy model = lz -> m_halted model = None -> MInv A model -> BInv log A M model.
-Lemma BINV_elim : ltac2:(TCodec.tc2 tcn__ArtBridge "Q?'='SH%211'A'K%2211%611'VByR0%211'?y8%511%311p051'Q<&RFr4r3r2&QBr1%211&Q@%113%9587631'F%A1B&Q?%11:(5%11F%63531'T6r5%221A'RGr7r6%34215Fp051p091p0A1p[LL1pT@N1p2Q71p[<Q<1").
+Lemma BINV_elim : forall log A M model,
+BINV log A M (m_vmmaps model) (m_vm_lazy model) -> m_halted model = None -> MInv A model -> BInv log A M model.
 Proof. intros log A M model (_ & _ & H) Hh Hm. exact (H model eq_refl eq_refl Hh Hm). Qed.
-Lemma BINV_intro : ltac2:(TCodec.tc2 tcn__ArtBridge "Q2'='SH%211'A'K%2211%611'VByR0%211'?y8%511%311p051'Q<'RGr4r3r2r1%544321&RFr5&QB%116&Q@%118%655;:31p081p[L?1pT@A1p2J1p[<O1").
+Lemma BINV_intro : forall log A M model,
+BInv log A M model -> BINV log A M (m_vmmaps model) (m_vm_lazy model).
 Proof.
 intros log A M model B. split; [exact (bi_awf _ _ _ _ B)|]. split; [exact (bi_live _ _ _ _ B)|].
 intros m2 Hvm Hlz Hh Hm. exact (binv_ext log A M model m2 B Hvm Hlz Hh Hm).
 Qed.
-Lemma BINV_awf : ltac2:(TCodec.tc2 tcn__ArtBridge "Q1'='SH%211'A'K%2211%611'VByR0%211'?y8%511%311p051'Q=%=277%A11&RFr5r4r3r2r1%6554321&T4%117p031p[@;1pZJ>1pT@@1p2I1p[<N1").
+Lemma BINV_awf : forall log A M h lz, BINV log A M h lz -> A_wf A.
 Proof. intros log A M h lz (H & _). exact H. Qed.
-Lemma BINV_live : ltac2:(TCodec.tc2 tcn__ArtBridge "Q4'='SH%211'A'K%2211%611'VByR0%211'?y8%511%311p051'Q=%=277%A11&RFr5r4r3r2r1%6554321&S1&S>r6%211%411p061p[@>1pZJA1pT@C1p2L1p[<Q11").
+Lemma BINV_live : forall log A M h lz, BINV log A M h lz -> live_ok (art_live log).
 Proof. intros log A M h lz (_ & H & _). exact H. Qed.
 End Bridge.

@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFib.v, with its module paths changed; every one of its 16 image numerals names the same object in omx-clap-core/fuzz_preset's ASan build as in cgif_file_fuzzer.asan's (c-asan's checker e55e1b52a8a0, all SAME-* verdicts). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/AFib.v, with its module paths and module names changed; 68 of its 86 lines of code are new or changed and 251 lines of the source are left out. *)
-(* copied from proofs/cgif/cgif_file_fuzzer/lib/ImgBaseAGS.v @ 95e6f1d72b6 (a Theorem Labs lane, frozen), module paths changed only. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* copied from proofs/cgif/cgif_file_fuzzer/lib/ImgBaseAGS.v (a Theorem Labs lane, frozen), module paths changed only. *)
 (* The image-free part of the secondary interface AGif4.AIfaceS (n >= 64513, the LargeMmapAllocator path).
 
    - [AImgS]: the class of the image facts AIfaceS names beyond ImgBase.AImg: the shadow offset, the image addresses
@@ -139,7 +140,7 @@ End u.
 (* The cache join's tail with the spin tag of the shadow-remap refusal as a parameter (AGif0n's). *)
 Section m.
 Local Open Scope am_scope.
-(* copy of AGif0n.v:129, remove when AGif0n.v is ported *)
+(* copy of AGif0n.v:130, remove when AGif0n.v is ported *)
 Definition malloc_K_t (stag : Z) (n : Z) (trace : list Z) (ob : option sptr) : M sptr :=
 match ob with
 | None => ret PNull

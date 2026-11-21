@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (nretA_MSsvc: a system call's return clears the load reservation; open_ok and open_refused_ok prove the TASK_SIZE bound on open's path by X1cy.bytes_at_below). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys Require Import Uapi.
@@ -8,6 +9,7 @@ From LinuxProcessSemantics.LinuxProcessSem.Checks.Sys.Fs Require Open.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
 From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.AS Require Import X0mx X0k2.
 From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.LibA Require Import X1di X1cs X1d0 X1da X1d1 X1dh.
+From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.LibA Require X1cy.
 From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.SpecA Require Import X1rw X1rn X1s9 X1rz.
 From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.A Require Import X0bp X0j9 X0ec X00a X001 X00b X000 X00l X0jq.
 
@@ -22,7 +24,7 @@ Import ListNotations.
 Open Scope Z_scope.
 
 Lemma nretA_MSsvc : forall R F pc x8 fc rv m ro r,
-nretA (MSsvc R F pc x8 fc rv m ro) (mkEffect r [] []) = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4)%bv fc rv m ro.
+nretA (MSsvc R F pc x8 fc rv m ro) (mkEffect r [] []) = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4)%bv fc None m ro.
 Proof. reflexivity. Qed.
 
 Lemma pc_93368 : (Z_to_bv 64 0xf22dc + Z_to_bv 64 4)%bv = Z_to_bv 64 0xf22e0.
@@ -75,10 +77,13 @@ s fs0 ent); [| | exact HENT| | | exact Hc1'| |].
 - exact (ASTA_PM_mat_stable RT AF Σ F0 fs0).
 - intros fdw. apply mat_stable_and; [apply mat_stable_pure| exact (ASTA_PM_mat_stable RT AF Σ _ fs0)].
 - intros ms <-. split; [| split; intros; reflexivity].
-split; [reflexivity|]. split; [reflexivity|]. split; [vm_compute; reflexivity|]. split; [exact HNZ|]. split; [exact HSL|].
-split; [exact HDD|]. split; [reflexivity|].
 change (areg msA 11) with (Z_to_bv 64 path). pose proof (bytes_at_bound bsegs m1 path _ HB1) as BB.
-rewrite unsigned_lit by (rewrite length_app in BB; cbn [length] in BB; lia). exact HB1.
+pose proof (X1cy.bytes_at_below bsegs m1 path _ MI1 HB1 ltac:(intros E; apply app_eq_nil in E; destruct E as [_ E]; discriminate)) as BL.
+unfold X1cy.UTOP in BL. rewrite length_app in BB, BL. cbn [length] in BB, BL.
+split; [reflexivity|]. split; [reflexivity|]. split; [vm_compute; reflexivity|]. split; [exact HNZ|].
+split; [rewrite unsigned_lit by lia; unfold TASK_SIZE; lia|]. split; [exact HSL|].
+split; [exact HDD|]. split; [reflexivity|].
+rewrite unsigned_lit by lia. exact HB1.
 - intros mo (HAR & HF & HFS). split; [exact HFS|]. split; [split; [exact HAR| split; assumption]|].
 rewrite HF. split; [exact HFREE|]. split; [reflexivity|].
 split; [apply (af_with_fds RT AF); exact HAR| split; [reflexivity| exact HFS]].
@@ -191,10 +196,13 @@ apply (ast_open_fail bsegs SEGTOP_A asegs_wx asegs_below (rt_allow RT Σ) (eq ms
 (fun e ms => nretA msA (efferr e) = ms) (fun mo => ARTM RT Σ mo /\ PMfd F0 fs0 mo) s fs0); [| exact HENT| | | exact Hc1'|].
 - exact (ASTA_PM_mat_stable RT AF Σ F0 fs0).
 - intros ms <-. split; [| intros; reflexivity].
-split; [reflexivity|]. split; [reflexivity|]. split; [vm_compute; reflexivity|]. split; [exact HNZ|]. split; [exact HSL|].
-split; [exact HDD|]. split; [reflexivity|].
 change (areg msA 11) with (Z_to_bv 64 path). pose proof (bytes_at_bound bsegs m1 path _ HB1) as BB.
-rewrite unsigned_lit by (rewrite length_app in BB; cbn [length] in BB; lia). exact HB1.
+pose proof (X1cy.bytes_at_below bsegs m1 path _ MI1 HB1 ltac:(intros E; apply app_eq_nil in E; destruct E as [_ E]; discriminate)) as BL.
+unfold X1cy.UTOP in BL. rewrite length_app in BB, BL. cbn [length] in BB, BL.
+split; [reflexivity|]. split; [reflexivity|]. split; [vm_compute; reflexivity|]. split; [exact HNZ|].
+split; [rewrite unsigned_lit by lia; unfold TASK_SIZE; lia|]. split; [exact HSL|].
+split; [exact HDD|]. split; [reflexivity|].
+rewrite unsigned_lit by lia. exact HB1.
 - intros mo (HAR & HF & HFS). split; [exact HFS| split; [exact HAR| split; assumption]].
 - intros c2 (e & HeR & Hc2).
 assert (EQ : nretA msA (efferr e) = MS (mkR (Z_to_bv 64 0xe70d4) (Z_to_bv 64 (usp + -96)) gp (Z_to_bv 64 0x638c98) (Z_to_bv 64 path)
@@ -244,7 +252,7 @@ Import ListNotations.
 Open Scope Z_scope.
 
 Lemma nretA_MSsvc : forall R F pc x8 fc rv m ro r,
-nretA (MSsvc R F pc x8 fc rv m ro) (mkEffect r [] []) = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4)%bv fc rv m ro.
+nretA (MSsvc R F pc x8 fc rv m ro) (mkEffect r [] []) = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4)%bv fc None m ro.
 Proof. reflexivity. Qed.
 
 Lemma pc_93368 : (Z_to_bv 64 0xe9a68 + Z_to_bv 64 4)%bv = Z_to_bv 64 0xe9a6c.
@@ -297,10 +305,13 @@ s fs0 ent); [| | exact HENT| | | exact Hc1'| |].
 - exact (ASTA_PM_mat_stable RT AF Σ F0 fs0).
 - intros fdw. apply mat_stable_and; [apply mat_stable_pure| exact (ASTA_PM_mat_stable RT AF Σ _ fs0)].
 - intros ms <-. split; [| split; intros; reflexivity].
-split; [reflexivity|]. split; [reflexivity|]. split; [vm_compute; reflexivity|]. split; [exact HNZ|]. split; [exact HSL|].
-split; [exact HDD|]. split; [reflexivity|].
 change (areg msA 11) with (Z_to_bv 64 path). pose proof (bytes_at_bound asegs m1 path _ HB1) as BB.
-rewrite unsigned_lit by (rewrite length_app in BB; cbn [length] in BB; lia). exact HB1.
+pose proof (X1cy.bytes_at_below asegs m1 path _ MI1 HB1 ltac:(intros E; apply app_eq_nil in E; destruct E as [_ E]; discriminate)) as BL.
+unfold X1cy.UTOP in BL. rewrite length_app in BB, BL. cbn [length] in BB, BL.
+split; [reflexivity|]. split; [reflexivity|]. split; [vm_compute; reflexivity|]. split; [exact HNZ|].
+split; [rewrite unsigned_lit by lia; unfold TASK_SIZE; lia|]. split; [exact HSL|].
+split; [exact HDD|]. split; [reflexivity|].
+rewrite unsigned_lit by lia. exact HB1.
 - intros mo (HAR & HF & HFS). split; [exact HFS|]. split; [split; [exact HAR| split; assumption]|].
 rewrite HF. split; [exact HFREE|]. split; [reflexivity|].
 split; [apply (af_with_fds RT AF); exact HAR| split; [reflexivity| exact HFS]].
@@ -413,10 +424,13 @@ apply (ast_open_fail asegs SEGTOP_A asegs_wx asegs_below (rt_allow RT Σ) (eq ms
 (fun e ms => nretA msA (efferr e) = ms) (fun mo => ARTM RT Σ mo /\ PMfd F0 fs0 mo) s fs0); [| exact HENT| | | exact Hc1'|].
 - exact (ASTA_PM_mat_stable RT AF Σ F0 fs0).
 - intros ms <-. split; [| intros; reflexivity].
-split; [reflexivity|]. split; [reflexivity|]. split; [vm_compute; reflexivity|]. split; [exact HNZ|]. split; [exact HSL|].
-split; [exact HDD|]. split; [reflexivity|].
 change (areg msA 11) with (Z_to_bv 64 path). pose proof (bytes_at_bound asegs m1 path _ HB1) as BB.
-rewrite unsigned_lit by (rewrite length_app in BB; cbn [length] in BB; lia). exact HB1.
+pose proof (X1cy.bytes_at_below asegs m1 path _ MI1 HB1 ltac:(intros E; apply app_eq_nil in E; destruct E as [_ E]; discriminate)) as BL.
+unfold X1cy.UTOP in BL. rewrite length_app in BB, BL. cbn [length] in BB, BL.
+split; [reflexivity|]. split; [reflexivity|]. split; [vm_compute; reflexivity|]. split; [exact HNZ|].
+split; [rewrite unsigned_lit by lia; unfold TASK_SIZE; lia|]. split; [exact HSL|].
+split; [exact HDD|]. split; [reflexivity|].
+rewrite unsigned_lit by lia. exact HB1.
 - intros mo (HAR & HF & HFS). split; [exact HFS| split; [exact HAR| split; assumption]].
 - intros c2 (e & HeR & Hc2).
 assert (EQ : nretA msA (efferr e) = MS (mkR (Z_to_bv 64 0xde9a4) (Z_to_bv 64 (usp + -96)) gp (Z_to_bv 64 0x630458) (Z_to_bv 64 path)

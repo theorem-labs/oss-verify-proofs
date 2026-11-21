@@ -27,7 +27,7 @@
     maps classes 0, 1, 3, 4 to the entries above and every other class to 0 (the script check above, with its two
     controls af_stack_classes.before.out and af_stack_classes.control.out). lib/Reusable/AsStackSz.v,
     StackFreeDef.v, StackFreeJournal.v and StackFreeRaw.v are released files taken by path (libreac/fuzz_scene and
-    libreac/fuzz_disco at ossv/recipes 7cbe5270d908), byte-equal but for the module prefix (provenance/evidence/af/
+    libreac/fuzz_disco), byte-equal but for the module prefix (provenance/evidence/af/
     bypath_check.out); their headers describe the unit they come from: AsStackSz.v's says its record maps classes 1
     and 2, while in link the record maps 0, 1, 3, 4 and AsStackSz.v's contract serves classes 8 and 9. *)
 From Stdlib Require Import ZArith List Lia Bool.

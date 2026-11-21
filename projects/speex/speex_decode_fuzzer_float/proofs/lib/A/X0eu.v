@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (fc_grant proves the NULL hint argument that grant_node now requires). *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.LibA Require Import X1di X1cy X1cp X1cj X1dd X1cg X1cs X1cm X1da X1cx X1cq X1d0.
@@ -69,7 +70,7 @@ apply (GN Σ (fun P => sgΣ Σ P n) PMc fpost fK (smsz n) FDO MST HW Hpos E3 Hle
 - intros P. split; [reflexivity|]. split; [reflexivity|]. split; [rewrite rt_maps_sg; apply Permutation_refl|].
 rewrite rt_eager_sg. destruct HN as [X|X]; rewrite X in R2; lia.
 - intros ms HP. pose proof HP as (m1 & _ & _ & _ & (t0' & t1' & t2' & a6' & t3' & t4' & t5' & t6' & m' & -> & _)).
-split; [reflexivity|].
+split; [reflexivity|]. split; [reflexivity|].
 split; [transitivity (Z_to_bv 64 (roundup4k (sa_msz (needed2 n)))); [reflexivity | rewrite E2; reflexivity]|].
 split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].
 intros P _. exists (MSsvc (mod_regs (Z_to_bv 64 sa_retA) (Z_to_bv 64 (bv_unsigned (Z_to_bv 64 (B + -192)) - 96)) gp (Z_to_bv 64 tpA)
@@ -192,7 +193,7 @@ apply (GN Σ (fun P => sgΣ Σ P n) PMc fpost fK (smsz n) FDO MST HW Hpos E3 Hle
 - intros P. split; [reflexivity|]. split; [reflexivity|]. split; [rewrite rt_maps_sg; apply Permutation_refl|].
 rewrite rt_eager_sg. destruct HN as [X|X]; rewrite X in R2; lia.
 - intros ms HP. pose proof HP as (m1 & _ & _ & _ & (t0' & t1' & t2' & a6' & t3' & t4' & t5' & t6' & m' & -> & _)).
-split; [reflexivity|].
+split; [reflexivity|]. split; [reflexivity|].
 split; [transitivity (Z_to_bv 64 (roundup4k (sa_msz (needed2 n)))); [reflexivity | rewrite E2; reflexivity]|].
 split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].
 intros P _. exists (MSsvc (mod_regs (Z_to_bv 64 sa_retA) (Z_to_bv 64 (bv_unsigned (Z_to_bv 64 (B + -192)) - 96)) gp (Z_to_bv 64 tpA)

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the client's hand-off premise is taken for each CONFIG_RSEQ value over the hand-off states the start-up certificate computes; taken in part from projects/simdjson/fuzz_ondemand/proofs/lib/A/TopA_final.v, lines 14, 20, 33. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -10,13 +11,13 @@ From OSSVerify.simdjson.fuzz_print_json.images Require Import Plain.
 From OSSVerify.Proofs.simdjson.fuzz_print_json.lib.A Require Import RT_iface RT_iface2 RT_state RT_rep RT_malcore_stmt RT_refillstmt RT_sys_stmt RT_sys_fixed
   RT_sys_grant RT_sys_madvise RT_sys_munmap RT_refill RT_contracts RT_contracts2 RT_malsec RT_freestmt RT_drain_ldefs RT_drain_istmt RT_drain_fin
   RT_freeFin RT_dsec RT_drain_rhead RT_freeP D_client TopA_cert.
-From OSSVerify.Proofs.simdjson.fuzz_print_json.lib.AS Require Import AxSymExec3 AsanPlanCore AsanPlan StartupHSAsan.
+From OSSVerify.Proofs.simdjson.fuzz_print_json.lib.AS Require Import AxSymExec3 AsanPlanCore AsanPlan AsanStartupCert.
 From OSSVerify.Proofs.simdjson.fuzz_print_json.lib Require Import ProofBase TopLevelA.
 From OSSVerify.Proofs.simdjson.fuzz_print_json.lib.Lib Require Import Cfg.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 Theorem base_asan : forall CL : client_A,
-  (forall h ch, HS_asan h = Some ch -> cl_hs_ok CL ch = true) ->
+  (forall (b : bool) h ch, HS_asan (AP.rseq_z b) h = Some ch -> cl_hs_ok CL ch = true) ->
   impl_P_stmt ->
   strong_universal_error_free_T_scfg ACFG
     (mkImage Plain.M.loaded_segments Plain.M.init_pc Plain.M.phdrs)
@@ -29,7 +30,7 @@ Proof.
 Qed.
 
 Theorem s3s_asan : forall CL : client_A,
-  (forall h ch, HS_asan h = Some ch -> cl_hs_ok CL ch = true) ->
+  (forall (b : bool) h ch, HS_asan (AP.rseq_z b) h = Some ch -> cl_hs_ok CL ch = true) ->
   S3s_stmt_e Asan.M.loaded_segments Asan.M.init_pc Asan.M.phdrs.
 Proof.
   intros CL HS_cl.

@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/AD2o.v, with its module paths, module names and addresses changed; 45 of its 95 lines of code are new or changed and 32 lines of the source are left out. *)
-(* fuzz_state's ASan+UBSan side TFIB_T (COMP-B's lib/B/FSTfibB.v TFIB_T_B, a working branch
-   df45f86112f) from the relocated runtime core of cgif_file_fuzzer at image B (fs.asan-ubsan), in the form of
-   lib/A/FSTfibParts.v (S0 a9edd281227), of which this file is the image-B twin (a Theorem Labs lane, F11 / obligation B11,
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises)); internal commit ids in comments replaced by public commits or removed. *)
+(* fuzz_state's ASan+UBSan side TFIB_T (COMP-B's lib/B/FSTfibB.v TFIB_T_B, a working branch)
+   from the relocated runtime core of cgif_file_fuzzer at image B (fs.asan-ubsan), in the form of
+   lib/A/FSTfibParts.v (S0), of which this file is the image-B twin (a Theorem Labs lane, F11 / obligation B11,
    statement agreed with ENTRY a Theorem Labs lane 2026-10-29T09:29Z). The program part is a library invariant LI (a Section
    variable) and three Section hypotheses: LIBX_ALL, the ASan contract of fs's LLVMFuzzerTestOneInput at image B
    (lib/B/YCfn.v tfib_lib_contract_xI_all), at fs's library shape ag_shape checksum_shape, the trivial meter, the
@@ -12,7 +13,7 @@
    FS_RHI, lib/B/YCeg.v in_ro_tfa); LIK and LI0 over lib/B/FSPstat.v's statics (lib/B/YD1w.v lib_inv_stable,
    lib_inv_init). Every other part is a proved lemma of the relocated B core, one per Let below.
    arodata (obligation B11) is not a hypothesis: lib/B/YD1w.v:98 lib_site_x's arodata_ok premise is met inside the
-   driver walk (lib/B/YD1r.v:646 tfib_loop_L, handed on at lib/B/YD1m.v:55), and lib/B/YD1q.v:71 tfib_srealizesX
+   driver walk (lib/B/YD1r.v:646 tfib_loop_L, handed on at lib/B/YD1m.v:56), and lib/B/YD1q.v:71 tfib_srealizesX
    takes none.
    Changes from the A file: lib/B module paths (YB1h YCfn YB1v YF0m YD2l YCeg YD1v YD1w YD1x YD1i YD1k YD1l YD1o
    YD1j YD2m YF0w YF0q YE2k YD1u YCej YD1q), TfibBU / TfibBU_syms, AsanUbsan.M, RLO / RHI 0x9f6b0 / 0xa0908, the three
@@ -46,7 +47,7 @@ Unset Lia Cache. Unset Nia Cache.
    checksum_shape; every site that names the shape names it with @ as well. *)
 #[local] Instance fs_lib_shape : lib_shape := ag_shape checksum_shape.
 Open Scope Z_scope.
-(* SINK GUARD. Measured in this file's Require closure (Print Instances, build-20261029T093139Z on S0 a9edd281227):
+(* SINK GUARD. Measured in this file's Require closure (Print Instances, build-20261029T093139Z on S0):
    lib.Reusable.YI16.sink_head has the instance lib/B/YE2k.tfib_sink_head; lib.U.Reusable.YI16.sink_head has
    lib/U/Reusable/YI5b.src0_sink_head; lib.U.Reusable.YI14.sink_syms has lib/U/Reusable/YI5c.src0_sink (and
    sink_laws src0_sink_laws); lib.Reusable.YI14.sink_syms has none. All four are removed, #[global], as in the A
@@ -65,11 +66,12 @@ Definition XL0 : Z -> Z := fun _ => 0.
 Lemma valid_sp_windowX : forall sp, valid_sp sp -> (sp_window_lo <= bv_unsigned sp <= sp_window_hi)%Z.
 Proof. intros sp (H1 & H2 & _). split; [exact H1 | exact H2]. Qed.
 
-(* COMP-B's lib/B/FSTfibB.v TFIB_T_B (a working branch df45f86112f). *)
+(* COMP-B's lib/B/FSTfibB.v TFIB_T_B (a working branch). *)
 Definition FSTFIB_T_B : Prop :=
 forall sp brk mbase rnd inp,
 valid_sp sp -> valid_brk TSEGS brk -> valid_mmap_base mbase ->
 entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 srealizes TSEGS
 (init_config TSEGS AsanUbsan.M.init_pc TPH sp brk mbase rnd target_alloc_limit inp)
 (SPECX (LS := ag_shape checksum_shape) inp).
@@ -109,26 +111,28 @@ Let EXS : exit_site_tfa B est xst := tfib_exit_site B HB LAWS.
 Lemma fs_srealizesX_rc : forall sp rdraw brk mb inp,
   valid_sp sp -> valid_brk TSEGS brk -> valid_mmap_base mb ->
   entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
   YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
   srealizes TSEGS (init_config TSEGS AsanUbsan.M.init_pc TPH sp brk mb rdraw target_alloc_limit inp)
     (SPECX (LS := ag_shape checksum_shape) inp).
 Proof.
-intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil.
+intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil.
 change target_alloc_limit with YA02.LIMIT.
 exact (@tfib_srealizesX rc (ag_shape checksum_shape) B HB AMALLOC AFREE AICPY ARDCHK ameter_triv XL0 XL0 0x9f6b0 0xa0908 MT_FREE RO_IN
   LI LIBX LIK LI0 xst XFR PF1 PFN est ESTI ESTF FWS RFS FPO FPR FPU EXS
-  sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil).
+  sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil).
 Qed.
 End RC.
 Theorem fs_srealizesX_top : forall sp rdraw brk mb inp,
   valid_sp sp -> valid_brk TSEGS brk -> valid_mmap_base mb ->
   entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
   srealizes TSEGS (init_config TSEGS AsanUbsan.M.init_pc TPH sp brk mb rdraw target_alloc_limit inp)
     (SPECX (LS := ag_shape checksum_shape) inp).
 Proof.
-intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp.
-exact (@fs_srealizesX_rc (YM05.RunCeilOf (bv_unsigned sp) (valid_sp_windowX sp Hsp)) sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp (YM05.ceil_of_top_run _)).
+intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau.
+exact (@fs_srealizesX_rc (YM05.RunCeilOf (bv_unsigned sp) (valid_sp_windowX sp Hsp)) sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau (YM05.ceil_of_top_run _)).
 Qed.
 Theorem TFIB_T_of_lib_B : FSTFIB_T_B.
-Proof. intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp. exact (fs_srealizesX_top sp rnd brk mbase inp Hsp Hbrk Hmb Hfit Hinp). Qed.
+Proof. intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau. exact (fs_srealizesX_top sp rnd brk mbase inp Hsp Hbrk Hmb Hfit Hinp Hlau). Qed.
 End b.

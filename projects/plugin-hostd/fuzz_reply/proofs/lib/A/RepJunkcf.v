@@ -1,18 +1,19 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepJunkcf.v (commit f01d79f3fb5, cf refill round 3; file sha256 decb924d11f9) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by function pairs the comparison kit cmpkit 86da41d3ef68 calls the same code except at the by-hand acceptances named below (strictcmp3 65688e94214a, by funcpair_reply 6963bc4a94fc on the cgif twin ce511d541cda; 0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair; 1 pair(s) carry a BY-HAND acceptance (accept.tsv, re-measured each run): _ZN11__sanitizer20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEE17PopulateFreeArrayEPNS_14AllocatorStatsEmPNS5_10RegionInfoEm+0xb0 (lui-in-section: CONSTANT (size; enters a store base only as a scaled count into a runtime array): kUserMapSize = 0x40000)), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepJunkcf.v (cf refill round 3; file sha256 decb924d11f9) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by function pairs the comparison kit cmpkit 86da41d3ef68 calls the same code except at the by-hand acceptances named below (strictcmp3 65688e94214a, by funcpair_reply 6963bc4a94fc on the cgif twin ce511d541cda; 0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair; 1 pair(s) carry a BY-HAND acceptance (accept.tsv, re-measured each run): _ZN11__sanitizer20SizeClassAllocator64IN6__asan4AP64INS_21LocalAddressSpaceViewEEEE17PopulateFreeArrayEPNS_14AllocatorStatsEmPNS5_10RegionInfoEm+0xb0 (lui-in-section: CONSTANT (size; enters a store base only as a scaled count into a runtime array): kUserMapSize = 0x40000)), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, the class-full report walk): the cf relation ARcf (YG0ncf.v) is kept by a
    write to one unpinned junk byte of the RegionInfo page, and moves with the exhausted byte's store.
    rule 24: proves no function (kind: invariant lemmas: the cf relation ARcf across a junk-byte write and across the
    class-full arm's store of 1 to the exhausted byte with the model's set_exh_cf).
 
-   Field round 2 (dd8e46fd954): ARmcf pins the exhausted byte RegionInfo(c) + 68 (cf_exh_off) by its field amc_exh_cell
+   Field round 2: ARmcf pins the exhausted byte RegionInfo(c) + 68 (cf_exh_off) by its field amc_exh_cell
    (exh_cell_cf, YG0ncf.v), and region_junk_cf is cgif's region_junk, which skips offset 68: the byte is not junk.
    - In_junk_cf ly S a: [a] is in the RegionInfo page, in an entry of ajunk_cf, in no byte of a cell of acells_cf, and no
      class's exhausted byte.  ARcf_junk_write: ARcf holds again after a memory change at [a] alone that leaves [a]
      present.
    - ARcf_exh_set: PopulateFreeArray's class-full arm stores 1 to RI(c) + 68 (0x370a8) before the model's set_exh_cf
-     (RepIFcf.v:9-11); the store and the model flag move together, to RepModelcf.exh_set c S.  c <> kBatchClass is
+     (RepIFcf.v:10-12); the store and the model flag move together, to RepModelcf.exh_set c S.  c <> kBatchClass is
      needed: exh_cell_cf asks exh_mem_cf S kBatchClass = false and set_exh_cf adds the flag unguarded.
 
    Proof.  rj_ARcf_core: the relation at a state set_regions R S whose regions agree with S's on every field but the
@@ -24,7 +25,7 @@
    31 regions below the page, the batches in class 24's region, the secondary maps, the static extents and the image
    (with the errbuf object) are disjoint from the primary reservation, and the shadow bytes are below kHighMemBeg.  The
    range_vis conjuncts need only visibility, which the write keeps.  ahs reads the shadow band only, which is below the
-   page.  The cells' footprint is YG0tcf.v:96-304 (cell_bytes_in) at P := nri, with the primary zone narrowed to the
+   page.  The cells' footprint is YG0tcf.v:97-305 (cell_bytes_in) at P := nri, with the primary zone narrowed to the
    regions below the page. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.
@@ -162,7 +163,7 @@ apply nri_reg. rewrite rj_kRI. clearbody x. unfold kBatchBytes, kFreeArrayOffset
 Qed.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* 3. The cells off the page: YG0tcf.v:179-304 at P := nri.                                                         *)
+(* 3. The cells off the page: YG0tcf.v:180-305 at P := nri.                                                         *)
 Ltac rj_fc := apply Forall_cons; [cbn; lia|].
 Lemma cache_cells_nri : forall ly S Hp rd c, ARmcf B ly S Hp rd -> 1 <= c <= 31 -> Forall (cell_bytes_in B (nri ly) ly) (cache_cells S c).
 Proof.

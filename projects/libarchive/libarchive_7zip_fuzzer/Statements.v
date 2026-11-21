@@ -19,13 +19,21 @@
     harness.  Every statement quantifies over all of these cases and over every
     other process input (see Vocabulary in OSSVerify.Core.Shapes).
 
-    WHAT THE HARNESS CHECKS.  Reads the input as a 7-Zip archive (7zip format +
-    all filters, passphrase 'password') through a single-chunk read callback;
-    per entry calls pathname, pathname_w, size, mtime, mode and the three
-    encryption predicates, then drains archive_read_data. Every return value is
-    discarded.  The harness makes no check of its own beyond not crashing, so a
-    statement about it says only that the code it calls never crashes, hangs or
-    trips a sanitizer.
+    WHAT THE HARNESS CHECKS.  Reads the input as a 7-Zip archive (7zip + all
+    filters, passphrase 'password') through a read callback. It returns early if
+    archive_read_new returns NULL or archive_read_open does not return
+    ARCHIVE_OK. While archive_read_next_header returns ARCHIVE_OK, it calls
+    pathname(_w), size, mtime, mode and the three encryption predicates, then
+    reads the data while archive_read_data returns more than 0. It drops every
+    other result and the data read. If allocating its data buffer throws
+    std::bad_alloc, it frees the archive and returns 0. Each call first ignores
+    SIGPIPE, as bsdtar and bsdcpio do.  The harness makes no check of its own
+    beyond not crashing.  Its halts statements say only that the code it calls
+    never crashes, hangs or trips a sanitizer.  Its agreement statements say
+    only that the code never crashes or trips a sanitizer, and allow a run that
+    never ends.  Its bound statements say only how often its builds may
+    disagree.  Its decidability statements say only that some program decides
+    where its builds agree.
 
     Whether each statement is open, proved or known false is recorded in the
     harness README, not here: this file changes only when a statement does. *)

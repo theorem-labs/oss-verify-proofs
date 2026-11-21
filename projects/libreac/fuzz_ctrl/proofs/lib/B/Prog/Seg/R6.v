@@ -3,11 +3,12 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names, addresses and numbers changed; 1577 of its 1713 lines of code are new or changed and 875 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment R6 of fuzz_ctrl LLVMFuzzerTestOneInput (asan-ubsan, image B, libreac v1.9.0): [0x816ec, 0x8170c],
    9 instructions, cut Inv_B816ec_at (v1.9 pc 0x816ec) -> cut Inv_B81710_at (v1.9 pc 0x81710); the
    round-trip loop head's argument block and the returning call BAS@0x8170c = reac_ctrl_build_as (plan-asan-ubsan.md
    section 2, row R6; section 4, BAS = reac_ctrl_build_as 0x8528c).  rule 24: no function proved (a slot segment).
-   Re-fit of the v1.8 proof (a working branch c439fa41c5b) onto the v1.9.0 bytes and a Theorem Labs lane's v1.9 cut bundle: the
+   Re-fit of the v1.8 proof (a working branch) onto the v1.9.0 bytes and a Theorem Labs lane's v1.9 cut bundle: the
    argument spills move [A+288] -> [A+272], [A+272] -> [A+256], [A+256] -> [A+248] and the constant 32 the exit
    carries is s11 (register 27); the cut names are still the v1.8 names.
 
@@ -21,9 +22,9 @@
    catalogue row, the image bytes and the out[] / our[] addressability the call needs) and Inv_B81710_at b (exit,
    R7's entry).  The call's side-stack package (fp [0; 1] over r6_W / r6_D, reac_ctrl_build_as_tls, the frame and
    its shadow apart from the class-0 / class-1 areas) is built at the call from FRA by Tac_fsfree's fra_fp (
-   bc14aa7165: no cut carries it).  The call's result a0 is rnb g b: build_as returns the model's n_b when the
+   no cut carries it).  The call's result a0 is rnb g b: build_as returns the model's n_b when the
    row's E(b) holds and 0 otherwise (then 0x81710 branches to the latch, whose R6X g (S b) is r6x_of_rbe of the
-   exit's RBE).  Adopt 9 / 10 of a working branch (de0ff9e12a): the exit's RBE also carries PRA, [A + 160], [A + 112] and the
+   exit's RBE).  Adopt 9 / 10 of a working branch: the exit's RBE also carries PRA, [A + 160], [A + 112] and the
    fragment record's 72 addressable bytes (all at or above A, or with shadow bytes off the call's writes); the exit
    carries the turn-b identity / fragment records on both arms, s11 = 32 (a callee-saved register), and on
    n_b <> 0 out[]'s frame bytes rt_F, which are build_as's post under go && E (em_fr with a5 = [A + 248] =

@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs: generated for reac-pw/fuzz_pin image A by gen_ad1k.py a93a5ff60645 (the start-up tool set at tools commit 96d2c32e287) from this image's lib/A/AD2j.v and lib/A/AF0m.v, template proofs/cgif/cgif_file_fuzzer/lib/A/AD1k.v at c8557374ad2e, module paths changed and only its image literals regenerated *)
+(* Modified by Theorem Labs: generated for reac-pw/fuzz_pin image A by gen_ad1k.py a93a5ff60645 (the start-up tool set at tools) from this image's lib/A/AD2j.v and lib/A/AF0m.v, template proofs/cgif/cgif_file_fuzzer/lib/A/AD1k.v at theorem-labs/oss-verify-proofs@6b32741d849a, module paths changed and only its image literals regenerated *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (fdchan's third conjunct, the channel-reader flag, carried in cs_ok (co_rdr) and threaded to the fd sites); internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_pin.asan (reac-pw/fuzz_pin asan) sha256 3e4859aed23f78a6eb028120d664abda29bcb8a3bfdea5d6ee5b32b646de9d16; unstripped twin sha256 435309a6b12c4d3e09a8484ec253b5fab600e4f00c28694ac28db2fc7a4475ab *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -328,7 +329,7 @@ apply (tfib_not_owned_static B F_STDERR (F_STDERR + FILE_SZ) a HB); [vm_compute;
 - left. unfold kLowMemEnd. lia.
 - exact (proj1 (rodata_shadow_facts ly S W mem md p len HAR Hp1 ltac:(lia) ltac:(lia))).
 - exact (proj2 (rodata_shadow_facts ly S W mem md p len HAR Hp1 ltac:(lia) ltac:(lia))).
-- split; [exact Hfd | reflexivity].
+- exact Hfd.
 - exact HAI.
 - intros regs' mem' md' HAR' HP' Hsbm' Ha0' HFW' Hfr' Hpr' HAI'.
 apply (HPOST regs' mem' md' HAR' HP' Hsbm' Ha0').
@@ -361,7 +362,7 @@ apply (tfib_not_owned_static B F_STDERR (F_STDERR + FILE_SZ) a HB); [vm_compute;
 - exact (u64_range (sv_denot E (SOff 41 0))).
 - exact (ro_img_of_IMG E _ HIMG).
 - apply (rodata_hull_zero ly S W mem md); [exact HAR | unfold FMT_refused; lia | unfold FMT_refused; lia | lia].
-- split; [exact Hfd | reflexivity].
+- exact Hfd.
 - exact HAI.
 - intros regs' mem' md' HAR' HP' Hsbm' Ha0' HFW' Hfr' Hpr' HAI'.
 apply (HPOST regs' mem' md' HAR' HP' Hsbm').

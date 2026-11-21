@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/A/Prog/rp_uci_int_cgW.v, with its module paths, module names and addresses changed; 12 of its 425 lines of code are new or changed and 6 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* rp_uci_int_cgW: the proof of lib/B/Prog/rp_uci_int_cg.v's frozen uci_rp_uci_int_holds_stmt (image B,
    fuzz_uci.asan-ubsan), for every float state, run ceiling and record B. The walk is the cgif-form walk of
-   libreac/fuzz_decode's released lib/A/Prog/crtA_walk.v and lib/B/Prog/crtB_walk.v (origin/ossv/recipes
-   88154566652a), as this unit's image-A twin lib/A/Prog/rp_uci_int_cgW.v walks it: the function's own code runs as
+   libreac/fuzz_decode's released lib/A/Prog/crtA_walk.v and lib/B/Prog/crtB_walk.v,
+   as this unit's image-A twin lib/A/Prog/rp_uci_int_cgW.v walks it: the function's own code runs as
    footprint runs (lib/B/Prog/rp_uci_int_cgW_runs.v), each carried into SRr by the leaf kit's bridge
    (lib/B/Prog/LeafCgFacts.v bridge_evtF_stmt_YA0n) after the state transport of lib/B/Prog/LeafCgGlue.v; the one
    call, memchr (0x80020), is cut by the statement's memchr premise (lib/B/Rt/MemchrDef.v amemchr_realizesM at

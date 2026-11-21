@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's reserved pair (n_resx, p_resx)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -13,7 +14,7 @@ Open Scope Z_scope.
 
 (* [comment removed for export] *)
 Definition HAT : atable :=
-  {| img_lo := 0x10000; img_hi := 0xbfb000; n_res := 4; shadow_off := 0x7fff8000;
+  {| img_lo := 0x10000; img_hi := 0xbfb000; n_res := 4; n_resx := 2; p_resx := 20; shadow_off := 0x7fff8000;
      a_entry := 0x194ffc; rw_lo := 0x569000; rw_len := 0x692000; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 11;
      x_imemset := 0x1d0470; x_imemcpy := 0x1d03f4; x_memset := 0x56123c; x_memcpy := 0x560e08; x_memiszero := 0x1d09a0;
      x_istrncpy := 0x1d089c; x_sealed := 0x1410c; x_popfree := 0x19b7c4;

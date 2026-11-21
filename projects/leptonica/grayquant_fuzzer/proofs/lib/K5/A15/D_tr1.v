@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor rt_sp0 - STACK_SPAN, the span the start state guarantees writable, in the context invariant and lo). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -61,8 +62,8 @@ Local Ltac ul := unfold SEGTOP_A, STACK_WIN, USTACK_TOP, RT_STACK, FUZZ_STACK, F
 Definition TPRE (Σ : rts RT) (usp buf cap cp L pp plen : Z) (c0b : byte) (payload : list byte)
     (c0 c1 c2 c3 c4 c5 c6 c7 : word) (m : mem) : Prop :=
   ART RT Σ m /\ mem_inv asegs m /\ CLX OUT_rep ERR_rep XENV LIB stdout_init m /\ main_frame m usp c0 c1 c2 c3 c4 c5 c6 c7
-  /\ stk asegs m (rt_sp0 RT Σ - STACK_WIN) (usp - 80)
-  /\ usp mod 16 = 0 /\ rt_sp0 RT Σ - STACK_WIN + 0x100000 <= usp /\ usp <= rt_sp0 RT Σ /\ 0x7fff80000000 <= rt_sp0 RT Σ
+  /\ stk asegs m (rt_sp0 RT Σ - STACK_SPAN) (usp - 80)
+  /\ usp mod 16 = 0 /\ rt_sp0 RT Σ - STACK_SPAN + 0x100000 <= usp /\ usp <= rt_sp0 RT Σ /\ 0x7fff80000000 <= rt_sp0 RT Σ
   /\ rt_live RT Σ = [(buf, cap)] /\ rt_frames RT Σ = [] /\ CREDIT_DRV - 5 * cap <= rt_credit RT Σ /\ cap <= 67108864
   /\ buf <= cp /\ cp + 1 <= buf + cap /\ (0 < L -> bytes_at asegs m cp [c0b]) /\ 0 <= L < 32768
   /\ buf <= pp /\ pp + plen <= buf + cap /\ bytes_at asegs m pp payload /\ plen = Z.of_nat (length payload) /\ plen < 2^26
@@ -136,7 +137,7 @@ Proof using All.
   pose proof CLX0 as (_ & _ & XE0 & _ & _ & _ & _ & (l & LT)).
   destruct (REG_out m XE0) as (p1 & p2 & cdt & thr & sec & tm1 & j1 & j2 & ATX & F1 & A1 & LIBC & LATCH).
   pose proof (tr_calls_range L c0b) as TCR.
-  set (lo := rt_sp0 RT Σ - STACK_WIN) in *.
+  set (lo := rt_sp0 RT Σ - STACK_SPAN) in *.
   assert (EU : bv_unsigned (Z_to_bv 64 (usp - 80)) = usp - 80) by (apply unsigned_lit; ul).
   assert (B16' : (usp - 80) mod 16 = 0) by (apply Z.mod_divide; [lia|]; apply Z.mod_divide in B16; [| lia]; destruct B16 as (q & ->); exists (q - 5); lia).
   assert (CSEG : SEGTOP_A <= cp \/ cp + 1 <= 0x10000) by (destruct PR3; [right| left]; lia).
@@ -211,7 +212,7 @@ Proof using All.
     replace (usp - 80 - 80) with (usp - 160) in Hc1', ST1 by lia.
     apply (MAL Σ (PMfd fds0 fs) (Z_to_bv 64 0x906bc) (Z_to_bv 64 (usp - 160)) gp (Z_to_bv 64 TP_A) u0 u1 u2 (Z_to_bv 64 plen)
              (Z_to_bv 64 pp) (Z_to_bv 64 plen) b1 b2 b3 b4 b5 b6 b7 (Z_to_bv 64 L) (Z_to_bv 64 cp) (Z_to_bv 64 TR_BASE)
-             (Z_to_bv 64 (tr_calls L c0b)) x6 x7 s8 s9 s10 s11 u3 u4 u5 u6 F fc m1 plen lo); try reflexivity; try assumption.
+             (Z_to_bv 64 (tr_calls L c0b)) x6 x7 s8 s9 s10 s11 u3 u4 u5 u6 F fc m1 plen lo); try reflexivity; try assumption; try (match goal with |- _ - STACK_WIN <= lo => unfold lo, STACK_WIN; lia end).
     + apply PMfd_fdfs_only.
     + apply PMfd_mat_stable.
     + lia.
@@ -251,14 +252,14 @@ Proof using All.
       apply (MCP Σ1 (PMfd fds0 fs) (Z_to_bv 64 0x906d0) (Z_to_bv 64 (usp - 160)) gp (Z_to_bv 64 TP_A) v0 v1 v2 (Z_to_bv 64 plen)
                (Z_to_bv 64 pp) (Z_to_bv 64 owned) (Z_to_bv 64 pp) (Z_to_bv 64 plen) d3 d4 d5 d6 d7 (Z_to_bv 64 owned) (Z_to_bv 64 cp)
                (Z_to_bv 64 TR_BASE) (Z_to_bv 64 (tr_calls L c0b)) x6 x7 s8 s9 s10 s11 v3 v4 v5 v6 F2 fc2 m2 owned pp payload lo);
-        try reflexivity; try assumption.
+        try reflexivity; try assumption; try (match goal with |- _ - STACK_WIN <= lo => unfold lo, STACK_WIN; lia end).
       * apply PMfd_fdfs_only.
       * apply PMfd_mat_stable.
       * rewrite <- PL. reflexivity.
       * ul.
       * ul.
       * lia.
-      * rewrite <- PL. exact (checked_src_live RT AF Σ1 m2 _ lo buf cap pp plen ART2 INB1 ltac:(lia) ltac:(lia) ltac:(rewrite SP1; lia)).
+      * rewrite <- PL. exact (checked_src_live RT AF Σ1 m2 _ lo buf cap pp plen ART2 INB1 ltac:(try unfold lo; unfold STACK_WIN in *; lia) ltac:(try unfold lo; unfold STACK_WIN in *; lia) ltac:(rewrite SP1; try unfold lo; unfold STACK_WIN in *; lia)).
       * rewrite <- PL. exact (checked_dst_live RT AF Σ1 m2 _ owned plen owned plen ART2 INO ltac:(lia) ltac:(lia) ltac:(lia)).
       * rewrite <- PL. lia.
       * unfold call_ok. rewrite EU2, SP1. split; [exact ST2|]. ul.

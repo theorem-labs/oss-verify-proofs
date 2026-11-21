@@ -1,28 +1,26 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef); ported to LPS 727298f3: statements written out as text, lemmas added for the revision, the launch input as a ProcInput. *)
 (* [comment removed for export] *)
 
-(* [comment removed for export] *)
 From Stdlib Require Import NArith ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib Require Import PropExec CatExec SeqExec StepTac ArgvEnv.
-Require Import OSSVerify.Proofs.boost_json.fuzz_parse.lib.Lib.CDef.
-Local Ltac2 zQ s := CDef.cdeft "37Corelib7Numbers7BinNums04Npos35stdpp9bitvectorbdefinitionshf2bv37Corelib4Init9Datatypesk14listk13natk16optionk14Some37Corelib4Init5Logicn62eq69OSSVerify6Proofsaboost_jsonafuzz_parse3lib8PropExec~~~~~~of3rdn37Corelib4Init3Natt03add37Corelib4Init5Peanou82le37Corelib5Lists7ListDefhg16firstnhg15skipn3h5LinuxProcessSemanticsfLinuxProcessSem6BvBasehibbnat_to_word3h5LinuxProcessSemanticsfLinuxProcessSemcMemImageTypehm97Segmenthf6bv_addk13fsthg13nth3h5LinuxProcessSemanticsfLinuxProcessSembStackLayouthrfcstring_addrs69OSSVerify6Proofsaboost_jsonafuzz_parse3lib7CatExec~~~~~~ig3ccat_env_basehf7Z_to_bvk16lengtht03mulhm98PhdrInfok14consk14prodk13nilk13sndhrfcauxv_entries36Stdlib5Lists4Listipc8flat_maphib8word_le8hrfabuild_auxvhrfaauxv_bytes79OSSVerify6Proofsaboost_jsonafuzz_parse3lib9RefLayout4FPX1~~~~~~iu3aauxv_wordsk13apphib8len_wordig3fcat_string_baseofh3total_arg_bytes_natu82ltig3fcat_struct_size69OSSVerify6Proofsaboost_jsonafuzz_parse3lib9RefLayout~~~~~~jo6ccat_envp_ptr46Stdlib6ZArith6BinInt1Zjt22lejt26of_nathfbbv_unsigned01Zjt23addn63notig3ccat_argv_ptrjt24of_Nhm97ph_addrhm96ph_enthm96ph_numhrf7AT_EUIDhrf8AT_HWCAPhrf7AT_NULLhrf9AT_PAGESZhrf7AT_PHDRhrf8AT_PHENThrf8AT_PHNUMhrf9AT_RANDOMhrf9AT_SECUREhrf6AT_UIDjo6aauxv_wordshrf9EntryDraw3h5LinuxProcessSemanticsfLinuxProcessSem3Runku0avalid_argvku0avalid_envp3h5LinuxProcessSemanticsfLinuxProcessSem5Stateli8csp_window_loli8csp_window_hi" s.
 
 Import ListNotations.
 Open Scope bv_scope.
-Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. (* [comment removed for export] *)
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-Section FPX1. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
-Lemma rdn_skipn : ltac2:(zQ "f0!h9!jc!l9!m0!m6!mf!oa!sa!u2!vc!hh8!hi2!hla!hpe!hq9>4segs@1$2$d>3mem>0@1$1@1$0#k0@1$4@1$1@1$0#8>1n$3>1a@1$1@1$0#k0>2bs@1$2@1$1@1$0#8>3off$3>1k$3>0@3$6@1$4@1$2@1$1@1$0#8@4$7^7^6^4^5@2$5@1$2@1$1@1$0#8^3>0@2$9@2$8^3^2^6@3$6@1$4@1$2@1$1@1$0#8@4$7^9^8@3$e@1$0#k0^6@1$c^4^3@2$5@1$2@1$1@1$0#8@3$a@1$1@1$0#8^3@3$b@1$1@1$0#8^4^5").
+Section FPW1. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma rdn_skipn : forall segs mem n (a : word) bs off k,
+  rdn segs mem a n = Some bs -> (off + k <= n)%nat ->
+  rdn segs mem (a + nat_to_word off) k = Some (firstn k (skipn off bs)).
 Proof.
   intros segs mem n. induction n as [|n IH]; intros a bs off k H Hk.
   - assert (off = 0%nat) by lia. assert (k = 0%nat) by lia. subst.
@@ -41,35 +39,84 @@ Proof.
         by (rewrite word1_nat, nat_to_word_add_merge; reflexivity).
       apply (IH (a+1) rest off k Er). lia.
 Qed.
+End FPW1.
 
+Section FPW2. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
 Lemma firstn_app_exact : forall {A} (l1 l2 : list A) n,
   length l1 = n -> firstn n (l1 ++ l2) = l1.
 Proof.
   intros A l1 l2 n H. subst n. rewrite firstn_app, firstn_all, Nat.sub_diag.
   cbn. apply app_nil_r.
 Qed.
+End FPW2.
 
+Section FPW3. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
 Lemma skipn_app_exact : forall {A} (l1 l2 : list A) n,
   length l1 = n -> skipn n (l1 ++ l2) = l2.
 Proof.
   intros A l1 l2 n H. subst n. rewrite skipn_app, skipn_all, Nat.sub_diag. reflexivity.
 Qed.
+End FPW3.
+
+Section FPW4. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma skipn_repeat' : forall {A} (x : A) off n,
+  skipn off (repeat x n) = repeat x (n - off).
+Proof.
+  intros A x off. induction off as [|off IH]; intros n.
+  - cbn. rewrite Nat.sub_0_r. reflexivity.
+  - destruct n as [|n]; [reflexivity|]. cbn [repeat skipn]. rewrite IH. f_equal.
+Qed.
+End FPW4.
+
+Section FPW5. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma firstn_repeat' : forall {A} (x : A) k n, (k <= n)%nat ->
+  firstn k (repeat x n) = repeat x k.
+Proof.
+  intros A x k. induction k as [|k IH]; intros n H; [reflexivity|].
+  destruct n as [|n]; [lia|]. cbn [repeat firstn]. rewrite IH by lia. reflexivity.
+Qed.
+End FPW5.
+
+Section FPW6. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma repeat_firstn_skipn : forall {A} (x : A) n off k,
+  (off + k <= n)%nat -> firstn k (skipn off (repeat x n)) = repeat x k.
+Proof.
+  intros A x n off k H.
+  rewrite skipn_repeat', firstn_repeat' by lia. reflexivity.
+Qed.
+End FPW6.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-Definition cat_envp_ptr : ltac2:(zQ "40!l9!h9!jc!m0>2sp@1$2@1$1#k0>2av@1$0@1$0@1$2@1$1#8>2ev@1$0@1$0@1$2@1$1#8>1k$3@1$2@1$1#k0") := ltac2:(zQ "90!h9!jc!l9!hr2!m0!hr8!hv3!ijd!ikd\2sp@1$1@1$0#k0\2av@1$2@1$2@1$1@1$0#8\2ev@1$2@1$2@1$1@1$0#8\1k$4@4$5@1$1@1$0#k0^1@3$3@1$2@1$1@1$0#k0@1$1@1$0#k0@2$6@3$7^4^3^2^2@2$8@1$0#k0Z").
+Section FPW7. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Definition cat_envp_ptr (top : word) (av ev : list (list byte))
+    (execfn : list byte) (k : nat) : word :=
+  nth k (fst (string_addrs (cat_env_base top av ev execfn) ev)) (Z_to_bv 64 0).
+End FPW7.
 
 (* [comment removed for export] *)
-Definition envp_off : ltac2:(zQ "40!l9!m0!h9!jc>2av@1$0@1$0@1$3@1$2#8$1") := ltac2:(zQ "60!l9!u2!h9!jc!il7!im0\2av@1$0@1$0@1$3@1$2#8@2$1N8@2$5N8@2$1@2$4@1$0@1$3@1$2#8^1N1").
-Definition auxv_off : ltac2:(zQ "40!l9!h9!jc!m0>2av@1$0@1$0@1$2@1$1#8>2ev@1$0@1$0@1$2@1$1#8$3") := ltac2:(zQ "60!l9!u2!h9!jc!il7!im0\2av@1$0@1$0@1$3@1$2#8\2ev@1$0@1$0@1$3@1$2#8@2$1@2$1N8@2$5N8@2$1@2$4@1$0@1$3@1$2#8^2N1@2$5N8@2$1@2$4@1$0@1$3@1$2#8^1N1").
+Section FPW8. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Definition envp_off (av : list (list byte)) : nat := (8 + 8 * (length av + 1))%nat.
+End FPW8.
+Section FPW9. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Definition auxv_off (av ev : list (list byte)) : nat :=
+  (8 + 8 * (length av + 1) + 8 * (length ev + 1))%nat.
+End FPW9.
 
 (* [comment removed for export] *)
-Definition auxv_words : ltac2:(zQ "40!h9!jc!l9!im6>2ph$3>3rnd@1$1@1$0#k0>3uid@1$1@1$0#k0>2hw@1$1@1$0#k0@1$2@1$1@1$0#k0") := ltac2:(zQ "a1!h9!jc!in2!in9!hr2!io0!io6!im6!ioc!iqf&@2$3@1$1@1$0#k0@1$1@1$0#k0\2ph$7\3rnd@1$1@1$0#k0\3uid@1$1@1$0#k0\2hw@1$1@1$0#k0@4$9~0@1$1@1$0#k0\1e~0@3$2@1$1@1$0#k0@3$4@1$1@1$0#k0@1$1@1$0#k0^1@3$2@1$1@1$0#k0@3$6@1$1@1$0#k0@1$1@1$0#k0^1@1$5@1$1@1$0#k0@4$8^4^3^2^1").
+Section FPW10. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Definition auxv_words (la : LaunchAuxv) (ph : PhdrInfo)
+    (entry uid gid hwcap at_random at_execfn : word) : list word :=
+  flat_map (fun e => [fst e; snd e])
+    (auxv_entries la ph entry uid gid hwcap at_random at_execfn).
+End FPW10.
 
-Lemma build_auxv_words : ltac2:(zQ "c1!h9!jc!in9!in2!l9!iqf!hr2!io0!io6!oa!irb!is7&@2$2@1$1@1$0#k0@1$1@1$0#k0>7entries@1$4~0@3$9@1$4@1$1@1$0#8@1$b^1@4$5@1$1@1$0#k0@1$1@1$0#8$a@4$5~0@1$1@1$0#k0\1e~0@3$3@1$1@1$0#k0@3$6@1$1@1$0#k0@1$1@1$0#k0^1@3$3@1$1@1$0#k0@3$8@1$1@1$0#k0@1$1@1$0#k0^1@1$7@1$1@1$0#k0^1").
+Section FPW11. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma build_auxv_words : forall entries,
+  build_auxv entries = flat_map word_le8 (flat_map (fun e => [fst e; snd e]) entries).
 Proof.
   induction entries as [|[t v] es IH]; [reflexivity|].
   cbn [build_auxv flat_map fst snd app].
@@ -77,85 +124,150 @@ Proof.
     (flat_map (fun e : bv 64 * bv 64 => word_le8 (fst e) ++ word_le8 (snd e)) es) in IH.
   rewrite IH, <- app_assoc. reflexivity.
 Qed.
+End FPW11.
 
-Lemma auxv_bytes_words : ltac2:(zQ "90!h9!jc!l9!oa!irb!im6!it5!ji4!iqf>2ph$5>3rnd@1$1@1$0#k0>3uid@1$1@1$0#k0>2hw@1$1@1$0#k0@3$3@1$2@1$1@1$0#8@4$6^4^3^2^1@4$8@1$1@1$0#k0@1$1@1$0#8$4@4$7^4^3^2^1").
+Section FPW12. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma auxv_bytes_words : forall la ph entry uid gid hwcap ar ae,
+  auxv_bytes la ph entry uid gid hwcap ar ae
+  = flat_map word_le8 (auxv_words la ph entry uid gid hwcap ar ae).
 Proof. intros. unfold auxv_bytes, auxv_words. apply build_auxv_words. Qed.
+End FPW12.
 
-Lemma length_auxv_words : ltac2:(zQ "70!h9!jc!il7!m0!oa!im6!ji4>2ph$5>3rnd@1$1@1$0#k0>3uid@1$1@1$0#k0>2hw@1$1@1$0#k0@3$4$3@2$2@1$1@1$0#k0@4$6^4^3^2^1Nh4").
-Proof. reflexivity. Qed.
-End FPX1.
+Section FPW13. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+Lemma length_auxv_words : forall la ph entry uid gid hwcap ar ae,
+  length (auxv_words la ph entry uid gid hwcap ar ae)
+  = (2 * auxv_count (la_rseq la))%nat.
+Proof.
+  intros [ehdr c msz [|]] ph entry uid gid hwcap ar ae; reflexivity.
+Qed.
+End FPW13.
 
 Section Layout.
-  Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
 
-  Variable segs : ltac2:(zQ "20!l9!hpe@1$0$1").
-  Variable ph : ltac2:(zQ "10!im6$0").
-  Variable sp : word.
-  Variable rdraw : ltac2:(zQ "10!kt3$0").   (* [comment removed for export] *)
-  Variable av ev : list (list byte).
-  Variable uid : word.
-  Variable hw : word.       (* [comment removed for export] *)
-
-  Hypothesis Hva : ltac2:(zQ "10!lgc@1$0?2av").
-  Hypothesis Hve : ltac2:(zQ "10!lha@1$0?2ev").
-  Hypothesis Hsp_lo : ltac2:(zQ "40!h9!ll6!jua!jva@2$2$1@2$3@1$0#k0?2sp").
-  Hypothesis Hsp_hi : ltac2:(zQ "40!h9!lm6!jua!jva@2$2@2$3@1$0#k0?2sp$1").
-
-  Let bsb := build_stack_bytes ph sp av ev uid hw rdraw.
+  Variable segs : list Segment.
+  Variable v : VaSize.
+  Variable inp : ProcInput.
+  Variable mbase : word.
+  Variable ph : PhdrInfo.
+  Variable entry : word.
+  Variable sp brk : word.
   (* [comment removed for export] *)
-  Let stk := stack_to_mem sp (entry_stack_image ph sp av ev uid hw rdraw).
+  Variable rdraw : EntryDraw.
 
+  Hypothesis Hva : valid_argv (in_argv inp).
+  Hypothesis Hve : valid_envp (in_envp inp).
+  Hypothesis Hvl : valid_launch inp.
+  Hypothesis Hlau : entry_launch_ok_va v (mkEntry sp brk mbase rdraw) inp.
+  Hypothesis Hsp_lo : (sp_window_lo <= bv_unsigned sp)%Z.
+  Hypothesis Hsp_hi : (bv_unsigned sp <= sp_window_hi)%Z.
+
+  (* [comment removed for export] *)
+  Let bsb := entry_stack_image inp mbase ph entry sp rdraw.
+  Let stk := stack_to_mem sp (entry_stack_image inp mbase ph entry sp rdraw).
+
+  Section FPW14. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
   Lemma lay_bsb_nw : (bv_unsigned sp + Z.of_nat (length bsb) < 2^64)%Z.
-  Proof. exact (bsb_nw ph sp av ev uid hw rdraw Hva Hve Hsp_hi). Qed.
+  Proof.
+    unfold bsb.
+    exact (bsb_nw v inp mbase ph entry sp brk rdraw Hvl Hlau Hsp_hi).
+  Qed.
+  End FPW14.
+
+  Section FPW15. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+  Lemma lay_len_av : (1 <= length (in_argv inp) <= 1024)%nat.
+  Proof. destruct Hva as [[H1 H2] _]. lia. Qed.
+  End FPW15.
+
+  Section FPW16. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+  Lemma lay_len_ev : (length (in_envp inp) <= 256)%nat.
+  Proof. destruct Hve as [H1 _]. lia. Qed.
+  End FPW16.
 
   (* [comment removed for export] *)
-  Lemma bsb_decomp : exists strs_tail,
-    bsb = (word_le8 (len_word av)
-           ++ flat_map word_le8 (fst (string_addrs (cat_string_base sp av ev) av)))
+  Section FPW17. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+  Lemma bsb_decomp : exists head_tail,
+    bsb = (word_le8 (len_word (in_argv inp))
+           ++ flat_map word_le8
+                (fst (string_addrs
+                        (cat_string_base (ed_top rdraw) (in_argv inp) (in_envp inp)
+                           (in_execfn inp)) (in_argv inp))))
           ++ word_le8 (Z_to_bv 64 0)
-          ++ flat_map word_le8 (fst (string_addrs (cat_env_base sp av ev) ev))
+          ++ flat_map word_le8
+               (fst (string_addrs
+                       (cat_env_base (ed_top rdraw) (in_argv inp) (in_envp inp)
+                          (in_execfn inp)) (in_envp inp)))
           ++ word_le8 (Z_to_bv 64 0)
-          ++ auxv_bytes ph (at_random_ptr sp av ev) uid hw
-          ++ strs_tail.
+          ++ auxv_bytes (launch_auxv inp sp mbase) ph entry
+               (in_uid inp) (in_gid inp) (in_hwcap inp)
+               (at_random_ptr sp (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp))
+               (at_execfn_ptr (ed_top rdraw) (in_execfn inp))
+          ++ head_tail.
   Proof.
-    unfold bsb, build_stack_bytes, cat_env_base, cat_string_base, cat_struct_size.
-    rewrite (string_addrs_pair av). cbv beta iota.
-    rewrite (string_addrs_pair ev). cbv beta iota.
+    unfold bsb, entry_stack_image, build_stack_bytes, cat_env_base, cat_string_base.
+    cbv zeta.
+    rewrite (string_addrs_pair (in_argv inp)). cbv beta iota.
+    rewrite (string_addrs_pair (in_envp inp)). cbv beta iota.
     eexists. rewrite <- !app_assoc. reflexivity.
   Qed.
+  End FPW17.
 
-  Lemma len_argc_argv : ltac2:(zQ "f0!h9!jc!l9!il7!irb!jj2!hr2!m0!oa!u2!im0!jj8!hv3!jk4!iqf@3$8$7@2$3@1$1@1$0#8@3$5@1$1@1$0#8@1$4@2$b@1$2@1$1@1$0#8?2av@4$e@1$1@1$0#k0@1$1@1$0#8$4@3$6@1$2@1$1@1$0#k0@1$1@1$0#k0@2$c@3$d?2sp?2av?2ev?2av@2$9N8@2$aN8@2$3@1$2@1$1@1$0#8?2av").
+  Section FPW18. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+  Lemma len_argc_argv :
+    length (word_le8 (len_word (in_argv inp))
+            ++ flat_map word_le8
+                 (fst (string_addrs
+                         (cat_string_base (ed_top rdraw) (in_argv inp) (in_envp inp)
+                            (in_execfn inp)) (in_argv inp))))
+    = (8 + 8 * length (in_argv inp))%nat.
   Proof.
-    rewrite length_app, length_n_to_le_8, length_flat_map_le8, length_string_addrs_fst. lia.
+    rewrite length_app, length_n_to_le_8, length_flat_map_le8,
+      length_string_addrs_fst. lia.
   Qed.
+  End FPW18.
 
-  Lemma len_envp_ptrs : ltac2:(zQ "c0!h9!jc!il7!l9!hr2!m0!oa!im0!irb!hv3!ijd!iqf@3$6$5@2$2@1$1@1$0#8@4$b@1$1@1$0#k0@1$1@1$0#8$8@3$4@1$3@1$1@1$0#k0@1$1@1$0#k0@2$9@3$a?2sp?2av?2ev?2ev@2$7N8@2$2@1$3@1$1@1$0#8?2ev").
+  Section FPW19. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+  Lemma len_envp_ptrs :
+    length (flat_map word_le8
+              (fst (string_addrs
+                      (cat_env_base (ed_top rdraw) (in_argv inp) (in_envp inp)
+                         (in_execfn inp)) (in_envp inp))))
+    = (8 * length (in_envp inp))%nat.
   Proof. rewrite length_flat_map_le8, length_string_addrs_fst. lia. Qed.
+  End FPW19.
 
   (* [comment removed for export] *)
+  Section FPW20. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
   Lemma read_argv_null :
-    rdn segs stk (sp + nat_to_word (8 + 8 * length av)) 8%nat = Some (word_le8 (Z_to_bv 64 0)).
+    rdn segs stk (sp + nat_to_word (8 + 8 * length (in_argv inp))) 8%nat
+    = Some (word_le8 (Z_to_bv 64 0)).
   Proof.
     destruct bsb_decomp as [tl E].
-    pose proof (read_at_offset_image segs ph sp av ev uid hw rdraw _ (word_le8 (Z_to_bv 64 0)) _ 8%nat E
+    pose proof (read_at_offset_image segs inp mbase ph entry sp rdraw
+                  _ (word_le8 (Z_to_bv 64 0)) _ 8%nat E
                   (length_n_to_le_8 _) lay_bsb_nw) as H.
     rewrite len_argc_argv in H. exact H.
   Qed.
+  End FPW20.
 
   (* [comment removed for export] *)
-  Lemma read_envp_ptr_k : forall k, (k < length ev)%nat ->
-    rdn segs stk (sp + nat_to_word (envp_off av + 8 * k)) 8%nat
-    = Some (word_le8 (cat_envp_ptr sp av ev k)).
+  Section FPW21. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+  Lemma read_envp_ptr_k : forall k, (k < length (in_envp inp))%nat ->
+    rdn segs stk (sp + nat_to_word (envp_off (in_argv inp) + 8 * k)) 8%nat
+    = Some (word_le8 (cat_envp_ptr (ed_top rdraw) (in_argv inp) (in_envp inp)
+                        (in_execfn inp) k)).
   Proof.
     intros k Hk.
     destruct bsb_decomp as [tl E].
-    assert (Hk' : (k < length (fst (string_addrs (cat_env_base sp av ev) ev)))%nat)
+    assert (Hk' : (k < length (fst (string_addrs
+                     (cat_env_base (ed_top rdraw) (in_argv inp) (in_envp inp)
+                        (in_execfn inp)) (in_envp inp))))%nat)
       by (rewrite length_string_addrs_fst; exact Hk).
     rewrite (flat_map_le8_decomp _ k Hk') in E.
     rewrite <- !app_assoc in E.
     match type of E with
     | bsb = ?p1 ++ ?p2 ++ ?p3 ++ ?p4 ++ ?mid ++ ?rest =>
-        pose proof (read_at_offset_image segs ph sp av ev uid hw rdraw (p1 ++ p2 ++ p3 ++ p4) mid rest 8%nat) as H
+        pose proof (read_at_offset_image segs inp mbase ph entry sp rdraw
+                      (p1 ++ p2 ++ p3 ++ p4) mid rest 8%nat) as H
     end.
     rewrite <- !app_assoc in H.
     specialize (H E (length_n_to_le_8 _) lay_bsb_nw).
@@ -165,19 +277,24 @@ Section Layout.
     rewrite firstn_length_le in H by (rewrite length_string_addrs_fst; lia).
     rewrite !length_n_to_le_8 in H.
     unfold envp_off, cat_envp_ptr.
-    replace (8 + 8 * (length av + 1) + 8 * k)%nat with (8 + (8 * length av + (8 + 8 * k)))%nat by lia.
+    replace (8 + 8 * (length (in_argv inp) + 1) + 8 * k)%nat
+      with (8 + (8 * length (in_argv inp) + (8 + 8 * k)))%nat by lia.
     exact H.
   Qed.
+  End FPW21.
 
   (* [comment removed for export] *)
+  Section FPW22. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
   Lemma read_envp_null :
-    rdn segs stk (sp + nat_to_word (envp_off av + 8 * length ev)) 8%nat
+    rdn segs stk
+      (sp + nat_to_word (envp_off (in_argv inp) + 8 * length (in_envp inp))) 8%nat
     = Some (word_le8 (Z_to_bv 64 0)).
   Proof.
     destruct bsb_decomp as [tl E].
     match type of E with
     | bsb = ?p1 ++ ?p2 ++ ?p3 ++ ?mid ++ ?rest =>
-        pose proof (read_at_offset_image segs ph sp av ev uid hw rdraw (p1 ++ p2 ++ p3) mid rest 8%nat) as H
+        pose proof (read_at_offset_image segs inp mbase ph entry sp rdraw
+                      (p1 ++ p2 ++ p3) mid rest 8%nat) as H
     end.
     rewrite <- !app_assoc in H.
     specialize (H E (length_n_to_le_8 _) lay_bsb_nw).
@@ -187,203 +304,348 @@ Section Layout.
     unfold envp_off.
     match type of H with
     | rdn _ _ (sp + nat_to_word ?n) 8 = _ =>
-        replace (8 + 8 * (length av + 1) + 8 * length ev)%nat with n by lia
+        replace (8 + 8 * (length (in_argv inp) + 1)
+                 + 8 * length (in_envp inp))%nat with n by lia
     end.
     exact H.
   Qed.
+  End FPW22.
 
   (* [comment removed for export] *)
+  Section FPW23. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
   Lemma read_auxv_all :
-    rdn segs stk (sp + nat_to_word (auxv_off av ev)) 160%nat
-    = Some (auxv_bytes ph (at_random_ptr sp av ev) uid hw).
+    rdn segs stk (sp + nat_to_word (auxv_off (in_argv inp) (in_envp inp)))
+        (auxv_size (kb_rseq (in_kernel inp)))
+    = Some (auxv_bytes (launch_auxv inp sp mbase) ph entry
+              (in_uid inp) (in_gid inp) (in_hwcap inp)
+              (at_random_ptr sp (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp))
+              (at_execfn_ptr (ed_top rdraw) (in_execfn inp))).
   Proof.
     destruct bsb_decomp as [tl E].
     match type of E with
     | bsb = ?p1 ++ ?p2 ++ ?p3 ++ ?p4 ++ ?mid ++ ?rest =>
-        pose proof (read_at_offset_image segs ph sp av ev uid hw rdraw (p1 ++ p2 ++ p3 ++ p4) mid rest 160%nat) as H
+        pose proof (read_at_offset_image segs inp mbase ph entry sp rdraw
+                      (p1 ++ p2 ++ p3 ++ p4) mid rest
+                      (auxv_size (kb_rseq (in_kernel inp)))) as H
     end.
     rewrite <- !app_assoc in H.
-    specialize (H E (length_auxv_bytes _ _ _ _) lay_bsb_nw).
+    specialize (H E (length_auxv_bytes _ _ _ _ _ _ _ _) lay_bsb_nw).
     rewrite !length_app in H. rewrite len_envp_ptrs in H.
     rewrite !length_n_to_le_8 in H.
     rewrite length_flat_map_le8, length_string_addrs_fst in H.
     unfold auxv_off.
     match type of H with
     | rdn _ _ (sp + nat_to_word ?n) _ = _ =>
-        replace (8 + 8 * (length av + 1) + 8 * (length ev + 1))%nat with n by lia
+        replace (8 + 8 * (length (in_argv inp) + 1)
+                 + 8 * (length (in_envp inp) + 1))%nat with n by lia
     end.
     exact H.
   Qed.
+  End FPW23.
+
 
   (* [comment removed for export] *)
-  Lemma read_auxv_word : forall j, (j < 20)%nat ->
-    rdn segs stk (sp + nat_to_word (auxv_off av ev + 8 * j)) 8%nat
-    = Some (word_le8 (nth j (auxv_words ph (at_random_ptr sp av ev) uid hw) (Z_to_bv 64 0))).
+  Section FPW24. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+  Lemma lay_rseq : la_rseq (launch_auxv inp sp mbase) = kb_rseq (in_kernel inp).
+  Proof. reflexivity. Qed.
+  End FPW24.
+
+  (* [comment removed for export] *)
+  Section FPW25. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+  Lemma read_auxv_word : forall j,
+    (j < 2 * auxv_count (kb_rseq (in_kernel inp)))%nat ->
+    rdn segs stk
+      (sp + nat_to_word (auxv_off (in_argv inp) (in_envp inp) + 8 * j)) 8%nat
+    = Some (word_le8
+              (nth j (auxv_words (launch_auxv inp sp mbase) ph entry
+                        (in_uid inp) (in_gid inp) (in_hwcap inp)
+                        (at_random_ptr sp (kb_rseq (in_kernel inp))
+                           (in_argv inp) (in_envp inp))
+                        (at_execfn_ptr (ed_top rdraw) (in_execfn inp)))
+                   (Z_to_bv 64 0))).
   Proof.
     intros j Hj.
     rewrite <- nat_to_word_add_merge.
-    rewrite (rdn_skipn segs stk 160 _ _ (8 * j) 8 read_auxv_all) by lia.
+    rewrite (rdn_skipn segs stk (auxv_size (kb_rseq (in_kernel inp)))
+               _ _ (8 * j) 8 read_auxv_all)
+      by (unfold auxv_size, auxv_count in *;
+          destruct (kb_rseq (in_kernel inp)); lia).
     f_equal. rewrite auxv_bytes_words.
-    rewrite (flat_map_le8_decomp _ j) by (rewrite length_auxv_words; exact Hj).
+    rewrite (flat_map_le8_decomp _ j)
+      by (rewrite length_auxv_words, lay_rseq; exact Hj).
     rewrite skipn_app_exact
-      by (rewrite length_flat_map_le8, firstn_length_le by (rewrite length_auxv_words; lia); lia).
+      by (rewrite length_flat_map_le8, firstn_length_le
+            by (rewrite length_auxv_words, lay_rseq; lia); lia).
     apply firstn_app_exact. apply length_n_to_le_8.
   Qed.
+  End FPW25.
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   (* [comment removed for export] *)
 
-  (* [comment removed for export] *)
-  Lemma bsb_random_split : exists pre,
-    bsb = pre ++ at_random_bytes (ed_random rdraw)
-    /\ at_random_ptr sp av ev = sp + nat_to_word (length pre)
-    /\ (Z.of_nat (length pre) mod 8 = 0)%Z.
+  Section FPW26. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+  Lemma lay_bsb_len : (Z.of_nat (length bsb) <= 2101782)%Z.
   Proof.
-    unfold bsb, build_stack_bytes, at_random_ptr.
-    rewrite (string_addrs_pair av). cbv beta iota.
-    rewrite (string_addrs_pair ev). cbv beta iota zeta.
-    match goal with
-    | |- exists pre, ?raw ++ repeat ?z ?pd ++ at_random_bytes (ed_random rdraw) = _ /\ _ /\ _ =>
-        exists (raw ++ repeat z pd)
-    end.
-    split; [rewrite <- !app_assoc; reflexivity|].
-    rewrite !length_app, !repeat_length, !length_flat_map_le8, !length_string_addrs_fst,
-      !length_n_to_le_8, length_auxv_bytes, !length_flatten_strings.
-    unfold auxv_size.
-    match goal with
-    | |- _ /\ (Z.of_nat (?L' + _) mod 8 = 0)%Z => set (L := L')
-    end.
-    replace (8 + (length av + 1) * 8 + (length ev + 1) * 8 + 160
-             + total_arg_bytes_nat av + total_arg_bytes_nat ev)%nat with L by lia.
-    assert (Hpd : (0 <= (8 - Z.of_nat L mod 8) mod 8 < 8)%Z) by (apply Z.mod_pos_bound; lia).
-    split; [reflexivity|].
-    rewrite Nat2Z.inj_add, Z2Nat.id by lia.
-    rewrite <- Zplus_mod_idemp_l. rewrite Zplus_mod_idemp_r.
-    replace (Z.of_nat L mod 8 + (8 - Z.of_nat L mod 8))%Z with 8%Z by lia.
-    reflexivity.
+    unfold bsb. exact (bsb_bound v inp mbase ph entry sp brk rdraw Hvl Hlau).
   Qed.
+  End FPW26.
 
+  (* [comment removed for export] *)
+  Section FPW27. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+  Lemma lay_head_bound :
+    (block_head_size (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp)
+     <= length bsb)%nat.
+  Proof.
+    unfold bsb, entry_stack_image. rewrite length_build_stack_bytes.
+    cbn [launch_auxv la_rseq]. lia.
+  Qed.
+  End FPW27.
+
+  Section FPW28. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+  Lemma struct_av_bound :
+    (cat_string_off (kb_rseq (in_kernel inp)) sp (ed_top rdraw)
+       (in_argv inp) (in_envp inp) (in_execfn inp)
+     + total_arg_bytes_nat (in_argv inp)
+     + total_arg_bytes_nat (in_envp inp)
+     <= length bsb)%nat.
+  Proof.
+    unfold bsb, entry_stack_image. rewrite length_build_stack_bytes.
+    unfold cat_string_off, launch_string_bytes.
+    cbn [launch_auxv la_rseq]. rewrite !length_flatten_strings. lia.
+  Qed.
+  End FPW28.
+
+  Section FPW29. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+  Lemma auxv_off_bound :
+    (auxv_off (in_argv inp) (in_envp inp)
+     + auxv_size (kb_rseq (in_kernel inp)) + 16 <= length bsb)%nat.
+  Proof.
+    pose proof lay_head_bound.
+    unfold auxv_off, block_head_size, block_items in *. lia.
+  Qed.
+  End FPW29.
+
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+  (* [comment removed for export] *)
+
+  (* [comment removed for export] *)
+  Section FPW30. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+  Lemma bsb_random_split : exists pre post,
+    bsb = pre ++ at_random_bytes (ed_random rdraw) ++ post
+    /\ length pre = (block_head_size (kb_rseq (in_kernel inp))
+                       (in_argv inp) (in_envp inp) - 16)%nat.
+  Proof.
+    unfold bsb, entry_stack_image.
+    eexists. eexists. split; [apply build_stack_bytes_split_random|].
+    unfold block_below_random. cbv zeta.
+    rewrite (string_addrs_pair (in_argv inp)). cbv beta iota.
+    rewrite (string_addrs_pair (in_envp inp)). cbv beta iota.
+    rewrite !length_app, !repeat_length, !length_flat_map_le8,
+      !length_string_addrs_fst, !length_n_to_le_8, length_auxv_bytes.
+    cbn [launch_auxv la_rseq].
+    unfold block_head_size, block_items. lia.
+  Qed.
+  End FPW30.
+
+  Section FPW31. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
   Lemma at_random_off : exists off : nat,
-    at_random_ptr sp av ev = sp + nat_to_word off
-    /\ (off + 16 = length bsb)%nat
+    at_random_ptr sp (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp)
+    = sp + nat_to_word off
+    /\ off = (block_head_size (kb_rseq (in_kernel inp))
+                (in_argv inp) (in_envp inp) - 16)%nat
     /\ (Z.of_nat off mod 8 = 0)%Z
     /\ forall j n, (j + n <= 16)%nat ->
-         rdn segs stk (at_random_ptr sp av ev + nat_to_word j) n
+         rdn segs stk
+           (at_random_ptr sp (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp)
+            + nat_to_word j) n
          = Some (firstn n (skipn j (at_random_bytes (ed_random rdraw)))).
   Proof.
-    destruct bsb_random_split as [pre [E [Hp Hmod]]].
-    pose proof (length_at_random_bytes (ed_random rdraw)) as HL.
-    exists (length pre). split; [exact Hp|]. split.
-    { unfold bsb in E |- *. rewrite E, length_app, HL. reflexivity. }
-    split; [exact Hmod|].
-    intros j n Hjn. rewrite Hp, nat_to_word_add_merge.
+    destruct bsb_random_split as [pre [post [E Hlen]]].
+    unfold bsb in E.
+    exists (block_head_size (kb_rseq (in_kernel inp))
+              (in_argv inp) (in_envp inp) - 16)%nat.
+    split; [reflexivity|]. split; [reflexivity|]. split.
+    { unfold block_head_size, block_items, auxv_size, auxv_count.
+      pose proof (Nat.mod_upper_bound
+                    (length (in_argv inp) + length (in_envp inp) + 3) 2 ltac:(lia)).
+      destruct (kb_rseq (in_kernel inp));
+        [ replace (8 * (length (in_argv inp) + length (in_envp inp) + 3)
+                   + 16 * 29
+                   + 8 * ((length (in_argv inp) + length (in_envp inp) + 3) mod 2)
+                   + 16 - 16)%nat
+            with (8 * ((length (in_argv inp) + length (in_envp inp) + 3)
+                       + 58
+                       + ((length (in_argv inp) + length (in_envp inp) + 3) mod 2)))%nat
+            by lia
+        | replace (8 * (length (in_argv inp) + length (in_envp inp) + 3)
+                   + 16 * 27
+                   + 8 * ((length (in_argv inp) + length (in_envp inp) + 3) mod 2)
+                   + 16 - 16)%nat
+            with (8 * ((length (in_argv inp) + length (in_envp inp) + 3)
+                       + 54
+                       + ((length (in_argv inp) + length (in_envp inp) + 3) mod 2)))%nat
+            by lia ];
+        rewrite Nat2Z.inj_mul; change (Z.of_nat 8) with 8%Z;
+        rewrite Z.mul_comm, Z_mod_mult; reflexivity. }
+    intros j n Hjn.
+    unfold at_random_ptr. rewrite <- Hlen, nat_to_word_add_merge.
     rewrite <- (firstn_skipn j (at_random_bytes (ed_random rdraw))) in E.
-    rewrite app_assoc in E.
     rewrite <- (firstn_skipn n (skipn j (at_random_bytes (ed_random rdraw)))) in E.
-    pose proof (read_at_offset_image segs ph sp av ev uid hw rdraw (pre ++ firstn j (at_random_bytes (ed_random rdraw)))
+    pose proof (read_at_offset_image segs inp mbase ph entry sp rdraw
+                  (pre ++ firstn j (at_random_bytes (ed_random rdraw)))
                   (firstn n (skipn j (at_random_bytes (ed_random rdraw))))
-                  (skipn n (skipn j (at_random_bytes (ed_random rdraw)))) n E) as H.
-    assert (Hlen : length (pre ++ firstn j (at_random_bytes (ed_random rdraw))) = (length pre + j)%nat).
-    { rewrite length_app, firstn_length_le by lia. reflexivity. }
-    rewrite Hlen in H.
-    apply H; [rewrite firstn_length_le; [reflexivity | rewrite length_skipn; lia] | exact lay_bsb_nw].
+                  (skipn n (skipn j (at_random_bytes (ed_random rdraw))) ++ post)
+                  n) as H.
+    assert (Hl : length (pre ++ firstn j (at_random_bytes (ed_random rdraw)))
+                 = (length pre + j)%nat).
+    { rewrite length_app, firstn_length_le; [reflexivity|].
+      rewrite length_at_random_bytes. lia. }
+    rewrite Hl in H.
+    apply H;
+      [ rewrite E; rewrite <- !app_assoc; reflexivity
+      | rewrite firstn_length_le; [reflexivity|];
+        rewrite length_skipn, length_at_random_bytes; lia
+      | exact lay_bsb_nw ].
   Qed.
+  End FPW31.
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   (* [comment removed for export] *)
 
-  Lemma lay_bsb_len : (Z.of_nat (length bsb) <= 2240000)%Z.
-  Proof. exact (bsb_bound ph sp av ev uid hw rdraw Hva Hve). Qed.
-
-  Lemma auxv_off_bound : (auxv_off av ev + 160 + 16 <= length bsb)%nat.
-  Proof.
-    unfold bsb, build_stack_bytes. cbv zeta.
-    rewrite (string_addrs_pair av). cbv beta iota.
-    rewrite (string_addrs_pair ev). cbv beta iota.
-    rewrite !length_app, length_at_random_bytes, !repeat_length, !length_flat_map_le8,
-      !length_string_addrs_fst, !length_n_to_le_8, length_auxv_bytes,
-      !length_flatten_strings.
-    unfold auxv_size, auxv_off. lia.
-  Qed.
-
-
-  (* [comment removed for export] *)
-  (* [comment removed for export] *)
-  (* [comment removed for export] *)
-
-  Lemma cat_envp_ptr_eq : ltac2:(zQ "e0!h9!jc!l9!u2!jl7!il7!m0!oa!jme!hh8!hla!jn3!js2!hq9>1k$6>0@2$8^1@2$5@1$2@1$1@1$0#8?2ev@3$7@1$1@1$0#k0@4$c?2sp?2av?2ev^2@3$d@1$0#k0?2sp@1$a@2$3@2$3@2$b?2av?2ev@1$4?2av@1$4@3$9@1$2@1$1@1$0#8^2?2ev").
+  Section FPW32. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+  Lemma cat_envp_ptr_eq : forall k, (k < length (in_envp inp))%nat ->
+    cat_envp_ptr (ed_top rdraw) (in_argv inp) (in_envp inp) (in_execfn inp) k
+    = sp + nat_to_word (cat_string_off (kb_rseq (in_kernel inp)) sp (ed_top rdraw)
+                          (in_argv inp) (in_envp inp) (in_execfn inp)
+                        + total_arg_bytes_nat (in_argv inp)
+                        + total_arg_bytes_nat (firstn k (in_envp inp))).
   Proof.
     intros k Hk. unfold cat_envp_ptr. rewrite nth_string_addrs by exact Hk.
-    unfold cat_env_base, cat_string_base. rewrite !nat_to_word_add_merge.
-    rewrite Nat.add_assoc. reflexivity.
+    unfold cat_env_base.
+    rewrite (cat_string_base_offset v inp mbase sp brk rdraw Hlau).
+    rewrite !nat_to_word_add_merge. f_equal. f_equal. lia.
   Qed.
+  End FPW32.
 
-  Lemma total_firstn_ev_bound : ltac2:(zQ "80!l9!m0!hh8!h9!jl7!jua!jv0!jc>1k$1@2$5@1$6@1$4@3$2@1$0@1$7@1$3#8^1?2ev+iggg0").
+  Section FPW33. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+  Lemma total_firstn_ev_bound : forall k,
+    (Z.of_nat (total_arg_bytes_nat (firstn k (in_envp inp))) <= 131072)%Z.
   Proof.
     intros k. destruct Hve as [_ [Htot _]]. rewrite total_arg_bytes_Z in Htot.
-    pose proof (total_arg_bytes_firstn_le k ev). lia.
+    pose proof (total_arg_bytes_firstn_le k (in_envp inp)). lia.
   Qed.
+  End FPW33.
 
-  Lemma struct_av_bound : ltac2:(zQ "50!u2!jn3!jl7!jua!jv0@2$3@1$4@2$0@2$1?2av?2ev@1$2?2av+igior8").
-  Proof.
-    destruct Hva as [[Hl0 Hl] [Hta _]]. destruct Hve as [Hle _].
-    rewrite total_arg_bytes_Z in Hta. unfold cat_struct_size, auxv_size. lia.
-  Qed.
-
-  Lemma u_cat_envp_ptr : ltac2:(zQ "h00!h9!l9!u2!jl7!jc!jva!il7!m0!oa!jme!hh8!kg8!jn3!js2!kgb!jv0>1k$7>0@2$9^1@2$6@1$1@1$4@1$0#8?2ev@3$8$b@2$5@1$0#k0@4$d?2sp?2av?2ev^2@2$e@2$5@1$0#k0?2sp@1$f@2$2@2$2@2$c?2av?2ev@1$3?2av@1$3@3$a@1$1@1$4@1$0#8^2?2ev").
+  Section FPW34. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+  Lemma u_cat_envp_ptr : forall k, (k < length (in_envp inp))%nat ->
+    bv_unsigned (cat_envp_ptr (ed_top rdraw) (in_argv inp) (in_envp inp)
+                   (in_execfn inp) k)
+    = (bv_unsigned sp
+       + Z.of_nat (cat_string_off (kb_rseq (in_kernel inp)) sp (ed_top rdraw)
+                     (in_argv inp) (in_envp inp) (in_execfn inp)
+                   + total_arg_bytes_nat (in_argv inp)
+                   + total_arg_bytes_nat (firstn k (in_envp inp))))%Z.
   Proof.
     intros k Hk. rewrite cat_envp_ptr_eq by exact Hk. rewrite word_add_nat.
-    pose proof struct_av_bound. pose proof (total_firstn_ev_bound k).
+    pose proof struct_av_bound. pose proof lay_bsb_nw.
+    pose proof (total_arg_bytes_firstn_le k (in_envp inp)).
     unfold sp_window_hi in Hsp_hi. unfold sp_window_lo in Hsp_lo.
     apply u_Z2bv; lia.
   Qed.
+  End FPW34.
 
-  Lemma cat_envp_ptr_nz : ltac2:(zQ "b0!h9!il7!l9!m0!oa!kh2!jme!kg8!js2!jc!jva>1k$3>0@2$6^1@2$1@1$2@1$9@1$0#8?2ev@1$5@3$4$7@2$a@1$0#k0@4$8?2sp?2av?2ev^2Z").
+  Section FPW35. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+  Lemma cat_envp_ptr_nz : forall k, (k < length (in_envp inp))%nat ->
+    bv_unsigned (cat_envp_ptr (ed_top rdraw) (in_argv inp) (in_envp inp)
+                   (in_execfn inp) k) <> 0%Z.
   Proof.
-    intros k Hk. rewrite u_cat_envp_ptr by exact Hk. unfold sp_window_lo in Hsp_lo. lia.
+    intros k Hk. rewrite u_cat_envp_ptr by exact Hk.
+    unfold sp_window_lo in Hsp_lo. lia.
   Qed.
+  End FPW35.
 
-  Lemma u_cat_argv_ptr : ltac2:(zQ "h00!h9!l9!jc!jva!il7!m0!oa!u2!jme!hh8!kg8!kh8!jn3!jl7!kgb!jv0>1k$5>0@2$8^1@2$4@1$1@1$2@1$0#8?2av@3$6$a@2$3@1$0#k0@4$b?2sp?2av?2ev^2@2$e@2$3@1$0#k0?2sp@1$f@2$7@2$c?2av?2ev@1$d@3$9@1$1@1$2@1$0#8^2?2av").
+  Section FPW36. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+  Lemma u_cat_argv_ptr : forall k, (k < length (in_argv inp))%nat ->
+    bv_unsigned (cat_argv_ptr (ed_top rdraw) (in_argv inp) (in_envp inp)
+                   (in_execfn inp) k)
+    = (bv_unsigned sp
+       + Z.of_nat (cat_string_off (kb_rseq (in_kernel inp)) sp (ed_top rdraw)
+                     (in_argv inp) (in_envp inp) (in_execfn inp)
+                   + total_arg_bytes_nat (firstn k (in_argv inp))))%Z.
   Proof.
-    intros k Hk. rewrite cat_argv_ptr_offset by exact Hk. unfold cat_string_base.
+    intros k Hk.
+    rewrite (cat_argv_ptr_offset (ed_top rdraw) (in_argv inp) (in_envp inp)
+               (in_execfn inp) k Hk),
+            (cat_string_base_offset v inp mbase sp brk rdraw Hlau).
     rewrite nat_to_word_add_merge, word_add_nat.
-    pose proof struct_av_bound. pose proof (total_arg_bytes_firstn_le k av).
+    pose proof struct_av_bound. pose proof lay_bsb_nw.
+    pose proof (total_arg_bytes_firstn_le k (in_argv inp)).
     unfold sp_window_hi in Hsp_hi. unfold sp_window_lo in Hsp_lo.
     apply u_Z2bv; lia.
   Qed.
+  End FPW36.
 
-  Lemma argv_str_len : ltac2:(zQ "a0!h9!jc!il7!l9!m0!io0!jme!hr8!jua!jv0>1k$4>0@2$6^1@2$2@1$3@1$1@1$0#8?2av@2$8@1$9@2$2@1$1@1$0#8@4$7@1$3@1$1@1$0#8^2?2av@1$5@1$1@1$0#8+hvvvf").
-  Proof. intros k Hk. exact (valid_argv_str_len av k Hva Hk). Qed.
+  Section FPW37. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+  Lemma argv_str_len : forall k, (k < length (in_argv inp))%nat ->
+    (Z.of_nat (length (nth k (in_argv inp) [])) <= 131071)%Z.
+  Proof. intros k Hk. exact (valid_argv_str_len (in_argv inp) k Hva Hk). Qed.
+  End FPW37.
 
   (* [comment removed for export] *)
-  Lemma auxv_words_eq : ltac2:(zQ "h60!h9!jc!in2!ikd!ki8!l9!io0!oa!kj0!kjb!kk5!kkf!kla!km6!kn1!kne!ko9!kp5!kq1!kqe!krb!ks5>3rnd@1$1@1$0#k0@3$7@1$5@1$1@1$0#k0@4$h5?2ph^1?3uid?2hw@3$2@1$1@1$0#k0$f@3$2@1$1@1$0#k0@2$3@1$0#k0@1$4@1$8?2ph@3$2@1$1@1$0#k0$h0@3$2@1$1@1$0#k0@2$3@1$0#k0@1$4@1$9?2ph@3$2@1$1@1$0#k0$h1@3$2@1$1@1$0#k0@2$3@1$0#k0@1$4@1$a?2ph@3$2@1$1@1$0#k0$c@3$2@1$1@1$0#k0?2hw@3$2@1$1@1$0#k0$e@3$2@1$1@1$0#k0@2$3@1$0#k0+hgg0@3$2@1$1@1$0#k0$h4@3$2@1$1@1$0#k0?3uid@3$2@1$1@1$0#k0$b@3$2@1$1@1$0#k0?3uid@3$2@1$1@1$0#k0$h3@3$2@1$1@1$0#k0@2$3@1$0#k0Z@3$2@1$1@1$0#k0$h2@3$2@1$1@1$0#k0^1@3$2@1$1@1$0#k0$d@3$2@1$1@1$0#k0@2$3@1$0#k0Z@1$6@1$1@1$0#k0").
+  Section FPW38. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+  Lemma auxv_words_eq : forall ar ae,
+    auxv_words (launch_auxv inp sp mbase) ph entry
+      (in_uid inp) (in_gid inp) (in_hwcap inp) ar ae
+    = flat_map (fun e => [fst e; snd e])
+        (auxv_entries (launch_auxv inp sp mbase) ph entry
+           (in_uid inp) (in_gid inp) (in_hwcap inp) ar ae).
   Proof. reflexivity. Qed.
+  End FPW38.
 
   (* [comment removed for export] *)
+  Section FPW39. Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
   Lemma rnd_facts : forall (Hal : (bv_unsigned sp mod 16 = 0)%Z),
-    (bv_unsigned sp <= bv_unsigned (at_random_ptr sp av ev))%Z
-    /\ (bv_unsigned (at_random_ptr sp av ev) + 16 <= bv_unsigned sp + Z.of_nat (length bsb))%Z
+    (bv_unsigned sp
+     <= bv_unsigned (at_random_ptr sp (kb_rseq (in_kernel inp))
+                       (in_argv inp) (in_envp inp)))%Z
+    /\ (bv_unsigned (at_random_ptr sp (kb_rseq (in_kernel inp))
+                       (in_argv inp) (in_envp inp)) + 16
+        <= bv_unsigned sp + Z.of_nat (length bsb))%Z
     /\ (bv_unsigned sp + Z.of_nat (length bsb) < 2^64)%Z
-    /\ (bv_unsigned (at_random_ptr sp av ev) mod 8 = 0)%Z
+    /\ (bv_unsigned (at_random_ptr sp (kb_rseq (in_kernel inp))
+                       (in_argv inp) (in_envp inp)) mod 8 = 0)%Z
     /\ (forall j n, (j + n <= 16)%nat ->
-          rdn segs stk (Z_to_bv 64 (bv_unsigned (at_random_ptr sp av ev) + Z.of_nat j)) n
+          rdn segs stk
+            (Z_to_bv 64 (bv_unsigned (at_random_ptr sp (kb_rseq (in_kernel inp))
+                                        (in_argv inp) (in_envp inp))
+                         + Z.of_nat j)) n
           = Some (firstn n (skipn j (at_random_bytes (ed_random rdraw))))).
   Proof.
     intros Hal.
-    destruct at_random_off as [off [Hp [Hlen [Hmod Hrd]]]].
+    destruct at_random_off as [off [Hp [Hoff [Hmod Hrd]]]].
     pose proof lay_bsb_nw as Hnw. pose proof lay_bsb_len as Hbl.
+    pose proof lay_head_bound as Hhead.
     unfold sp_window_hi in Hsp_hi. unfold sp_window_lo in Hsp_lo.
-    assert (Hu : bv_unsigned (at_random_ptr sp av ev) = (bv_unsigned sp + Z.of_nat off)%Z).
+    assert (Hoff16 : (off + 16
+                      <= block_head_size (kb_rseq (in_kernel inp))
+                           (in_argv inp) (in_envp inp))%nat).
+    { rewrite Hoff. unfold block_head_size. lia. }
+    assert (Hu : bv_unsigned (at_random_ptr sp (kb_rseq (in_kernel inp))
+                                (in_argv inp) (in_envp inp))
+                 = (bv_unsigned sp + Z.of_nat off)%Z).
     { rewrite Hp, word_add_nat. apply u_Z2bv; lia. }
     rewrite Hu. split; [lia|]. split; [lia|]. split; [lia|]. split.
     - rewrite Z.add_mod by lia.
       replace (bv_unsigned sp mod 8)%Z with 0%Z.
-      2:{ symmetry. rewrite <- (Z.mod_mod_divide _ 16 8) by (exists 2%Z; reflexivity). rewrite Hal. reflexivity. }
+      2:{ symmetry.
+          rewrite <- (Z.mod_mod_divide _ 16 8) by (exists 2%Z; reflexivity).
+          rewrite Hal. reflexivity. }
       rewrite Hmod. reflexivity.
     - intros j n Hjn. rewrite <- Hu. rewrite <- word_add_nat. apply Hrd. exact Hjn.
   Qed.
+  End FPW39.
 
 End Layout.
-(* [comment removed for export] *)

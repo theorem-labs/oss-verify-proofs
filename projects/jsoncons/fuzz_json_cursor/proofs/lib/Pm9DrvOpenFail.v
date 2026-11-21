@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed dg_nofile_of_openerr, open_fail_nofileA. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -129,6 +130,7 @@ Section OpenFail.
     destruct Hcase as [Hlong | [Hemp | (Hne & Hppl & Hlk)]].
     -
       eapply (rz_openat_toolong_lz ASEGS scfg R _ M model ECALLW HF is_ecall_ECALLW Hh A17 A10 A12 Hnl (firstn 4096 path)).
+      + rewrite A11. unfold TASK_SIZE. lia.
       + rewrite A11.
         replace (firstn 4096 path) with (firstn 4096 (path ++ [Z_to_bv 8 0]))
           by (rewrite firstn_app; replace (4096 - length path)%nat with 0%nat by lia; cbn [firstn]; apply app_nil_r).
@@ -138,11 +140,12 @@ Section OpenFail.
     -
       eapply (rz_openat_empty_lz ASEGS scfg R _ M model ECALLW HF is_ecall_ECALLW Hh A17 A10 A12 Hnl).
       + split; [cbn; lia|]. split; [intros [] |]. rewrite A11.
-        rewrite Hemp in Sr. exact Sr.
+        split; [rewrite Hemp in Sr; exact Sr|]. cbn [length]. unfold TASK_SIZE. pose proof (proj2 P1lo). lia.
       + apply (after_openat_failA KA ENOENT vals); try assumption. unfold ENOENT. lia.
     -
       destruct (Nat.leb_spec0 4096 (length path)) as [Hlong|Hshort].
       { eapply (rz_openat_toolong_lz ASEGS scfg R _ M model ECALLW HF is_ecall_ECALLW Hh A17 A10 A12 Hnl (firstn 4096 path)).
+        + rewrite A11. unfold TASK_SIZE. lia.
         + rewrite A11.
           replace (firstn 4096 path) with (firstn 4096 (path ++ [Z_to_bv 8 0]))
             by (rewrite firstn_app; replace (4096 - length path)%nat with 0%nat by lia; cbn [firstn]; apply app_nil_r).
@@ -150,7 +153,8 @@ Section OpenFail.
         + intros Hin. apply Hnonul. eapply In_firstnA. exact Hin.
         + apply (after_openat_failA KA ENAMETOOLONG vals); try assumption. unfold ENAMETOOLONG. lia. }
       eapply (rz_openat_absent_lz ASEGS scfg R _ M model ECALLW HF is_ecall_ECALLW Hh A17 A10 A12 Hnl path).
-      + split; [lia|]. split; [exact Hnonul|]. rewrite A11. exact Sr.
+      + split; [lia|]. split; [exact Hnonul|]. rewrite A11.
+        split; [exact Sr|]. unfold TASK_SIZE. pose proof (proj2 P1lo). lia.
       + exact Hne.
       + exact Hppl.
       + rewrite F2. exact Hlk.
@@ -163,7 +167,7 @@ Theorem dg_nofile_of_openerr : forall scfg (L : asan_layout) (C : asan_statics_c
 Proof.
   intros scfg L C IL Lay LSt DG_OPENERR.
   unfold dg_nofile_stmt, drv_main_on.
-  intros Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs Hcase ar HI p0 p1 can tid A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK AUXV DI M0def FDS EFS STR PLO Ecr PDEF SAH.
+  intros Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs Hcase ar HI p0 p1 can tid A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK DI M0def FDS EFS STR PLO Ecr PDEF SAH.
   assert (Hsp : 0x7fff80000000 <= bv_unsigned sp <= 2 ^ 47) by (destruct Hvsp as (H1 & H2 & H3); unfold sp_window_lo, sp_window_hi in H1, H2; lia).
   assert (Hal : bv_unsigned sp mod 16 = 0) by (destruct Hvsp as (_ & _ & H3); exact H3).
   pose proof CONSTS as CONSTS'. destruct CONSTS as (ILY & HRD & Hkpm & Hlin & Hovh & HPR & HEX & _).

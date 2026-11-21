@@ -26,11 +26,12 @@
      the G-coverage and image facts (HGs, HG_DR, HGlock, HG_GK, HERR_HI, DR_ROM_OUT, HZS, HAP), and
      the model obligations RI_* / LS_* (pure, over lmod and the plain records). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_LLVMFuzzerTestOneInput_drain.v, with its module paths and module names changed; 137 of its 198 lines of code are new or changed and 5326 lines of the source are left out. *)
-(* REGRESSION CHECKS ABOUT RETIRED TEXTS.  The rules below are byte copies of top_x's PRE-ROOM texts (integ b4343cabfa9 /
-   riplug 5dfdaedea77; this file's commits 2a368424fed and 8b3470dfded), NOT of today's top_x.  The room round restated
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* REGRESSION CHECKS ABOUT RETIRED TEXTS.  The rules below are byte copies of top_x's PRE-ROOM texts (integ /
+   riplug; this file's commits), NOT of today's top_x.  The room round restated
    LS_event_step, LS_cnl_pre, LS_drain_step and LS_rm_cnl_pre (they now tie the result state to the start state).
-   Checked 2026-10-30 08:49Z (a Theorem Labs lane's settling check): with the six rules re-copied byte for byte from top_x at
-   03b02fb0cf3, each of the four proofs below FAILS, at its use of the restated rule (LS_event_step, LS_cnl_pre,
+   Checked 2026-10-30 08:49Z (a Theorem Labs lane's settling check): with the six rules re-copied byte for byte from top_x,
+   each of the four proofs below FAILS, at its use of the restated rule (LS_event_step, LS_cnl_pre,
    LS_rm_cnl_pre, LS_drain_step).  So nothing here says today's texts are false.  The file stays so that a revert to
    the old texts is caught: at the instance's meter MT := ameter_triv (Reusable/YCbp.v: mo_ok / mo_le are True), the
    OLD rules are inconsistent with two consecutive event ops (or a drain / remove leaving an expected record, or a
@@ -119,7 +120,7 @@ W_LLVMFuzzerTestOneInput_remove W_LLVMFuzzerTestOneInput_remove_x W_shadow_pin_x
    without Import, as SEG_EXIT's *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require
 W_sites W_LLVMFuzzerTestOneInput_gone_base W_LLVMFuzzerTestOneInput_gone W_LLVMFuzzerTestOneInput_gone_x.
-(* C1 (a Theorem Labs lane's 922a710cda0; relay_event re-proved by AddX's C3 88557c15170): relay_add's, relay_event's and
+(* C1 (a Theorem Labs lane; relay_event re-proved by AddX's C3): relay_add's, relay_event's and
    relay_finish's _x proofs, which build RA_x / RE_x / RF_x below; Require without Import *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require W_relay_add W_relay_event W_relay_finish_h.
 (* W3's check_shape_done and check_no_loss_read _x walks, which build CSD_x / CNLR_x below; Require without Import *)

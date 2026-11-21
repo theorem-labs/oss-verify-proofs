@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: statements written out as text, lemmas added for the revision, the revision's auxiliary vector (auxv_keys). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -291,23 +292,103 @@ Qed.
 (* [comment removed for export] *)
 
 
-(* [comment removed for export] *)
-Definition rauxv_list : ltac2:(zQ "40!h9!j4!jb!le>2x3$0>2x4$0>2x5$0>3x16$0>2x6$0>3x11$0>3x12$0>3x23$0>3rnd$0@1$1@1$3@1$2#k0") := ltac2:(zQ "70!h9!m3!ma!o7!jb!sf!le\2x3$0\2x4$0\2x5$0\3x16$0\2x6$0\3x11$0\3x12$0\3x23$0\3rnd$0@4$3$0@1$6@1$4#k0$5@3$1$0+3@3$1$0^9@3$1$0+4@3$1$0^8@3$1$0+5@3$1$0^7@3$1$0+h0@3$1$0^6@3$1$0+6@3$1$0^5@3$1$0+b@3$1$0^4@3$1$0+c@3$1$0^3@3$1$0+h7@3$1$0^2@3$1$0+h9@3$1$0^1@3$1$0Z@3$1$0Z@1$2$0").
+(* LPS 727298f3: the auxv block [rauxv_ok] claims.  The old [rauxv_list] named TEN pairs
+   starting at AT_PHDR with a [0;0] terminator and [rauxv_ok] bounded it by [av + 160]: that
+   is not the vector the revision builds, which is [StackLayout.auxv_entries] -- ARCH_DLINFO's
+   ten pairs first (AT_SYSINFO_EHDR 33, the eight cache words 40..47, AT_MINSIGSTKSZ 51),
+   then 16 6 17 3 4 5 7 8 9 11 12 13 14 23, AT_RANDOM 25, AT_EXECFN 31, then AT_RSEQ_FEATURE_SIZE
+   27 and AT_RSEQ_ALIGN 28 when the kernel build has CONFIG_RSEQ, then AT_NULL.  [auxv_keys]
+   claims every key word of that vector and, of the values, only AT_RANDOM's (the pointer the
+   allocator's secret is read through), with the CONFIG_RSEQ tail as a disjunction so the flag
+   is not pinned.  The form is boost-beast/http_request's Ref/RMallocTree.v [auxv_keys]
+   (OSSV-509 tree), over the same model table. *)
+(* LPS 727298f3: besides the key words, the value words musl's static [dl_iterate_phdr] stores for
+   the keys below AUX_CNT (38) -- the exception path's unwinder walks the whole vector -- and the
+   CONFIG_RSEQ tail tied to the run's flag [hrseq]: [auxv_vals] and [auxv_tie]. *)
+Definition auxv_vals (m : mem) (av x16 x6 x11 x12 x23 : Z) : Prop :=
+  (exists v, bytes_at rsegs m (av + 8) (le8 (wz v)))
+  /\ bytes_at rsegs m (av + 168) (le8 (wz x16)) /\ bytes_at rsegs m (av + 184) (le8 (wz x6))
+  /\ bytes_at rsegs m (av + 200) (le8 (wz 100)) /\ bytes_at rsegs m (av + 216) (le8 (wz 65600))
+  /\ bytes_at rsegs m (av + 232) (le8 (wz 56)) /\ bytes_at rsegs m (av + 248) (le8 (wz 10))
+  /\ bytes_at rsegs m (av + 264) (le8 (wz 0)) /\ bytes_at rsegs m (av + 280) (le8 (wz 0))
+  /\ bytes_at rsegs m (av + 296) (le8 (wz 290456))
+  /\ bytes_at rsegs m (av + 312) (le8 (wz x11)) /\ bytes_at rsegs m (av + 328) (le8 (wz x12))
+  /\ (exists v, bytes_at rsegs m (av + 344) (le8 (wz v))) /\ (exists v, bytes_at rsegs m (av + 360) (le8 (wz v)))
+  /\ bytes_at rsegs m (av + 376) (le8 (wz x23))
+  /\ (exists v, bytes_at rsegs m (av + 408) (le8 (wz v))).
+Definition auxv_tie (m : mem) (av : Z) : Prop :=
+  (hrseq = true -> bytes_at rsegs m (av + 416) (le8 (wz 27)) /\ bytes_at rsegs m (av + 424) (le8 (wz 28))
+                   /\ bytes_at rsegs m (av + 432) (le8 (wz 28)) /\ bytes_at rsegs m (av + 440) (le8 (wz 32))
+                   /\ bytes_at rsegs m (av + 448) (le8 (wz 0)))
+  /\ (hrseq = false -> bytes_at rsegs m (av + 416) (le8 (wz 0))).
+Definition auxv_keys (m : mem) (av x16 x6 x11 x12 x23 rnd : Z) : Prop :=
+  bytes_at rsegs m av (le8 (wz 33)) /\ bytes_at rsegs m (av + 16) (le8 (wz 40)) /\ bytes_at rsegs m (av + 32) (le8 (wz 41))
+  /\ bytes_at rsegs m (av + 48) (le8 (wz 42)) /\ bytes_at rsegs m (av + 64) (le8 (wz 43)) /\ bytes_at rsegs m (av + 80) (le8 (wz 44))
+  /\ bytes_at rsegs m (av + 96) (le8 (wz 45)) /\ bytes_at rsegs m (av + 112) (le8 (wz 46)) /\ bytes_at rsegs m (av + 128) (le8 (wz 47))
+  /\ bytes_at rsegs m (av + 144) (le8 (wz 51)) /\ bytes_at rsegs m (av + 160) (le8 (wz 16)) /\ bytes_at rsegs m (av + 176) (le8 (wz 6))
+  /\ bytes_at rsegs m (av + 192) (le8 (wz 17)) /\ bytes_at rsegs m (av + 208) (le8 (wz 3)) /\ bytes_at rsegs m (av + 224) (le8 (wz 4))
+  /\ bytes_at rsegs m (av + 240) (le8 (wz 5)) /\ bytes_at rsegs m (av + 256) (le8 (wz 7)) /\ bytes_at rsegs m (av + 272) (le8 (wz 8))
+  /\ bytes_at rsegs m (av + 288) (le8 (wz 9)) /\ bytes_at rsegs m (av + 304) (le8 (wz 11)) /\ bytes_at rsegs m (av + 320) (le8 (wz 12))
+  /\ bytes_at rsegs m (av + 336) (le8 (wz 13)) /\ bytes_at rsegs m (av + 352) (le8 (wz 14)) /\ bytes_at rsegs m (av + 368) (le8 (wz 23))
+  /\ bytes_at rsegs m (av + 384) (le8 (wz 25)) /\ bytes_at rsegs m (av + 392) (le8 (wz rnd))
+  /\ bytes_at rsegs m (av + 400) (le8 (wz 31))
+  /\ ((bytes_at rsegs m (av + 416) (le8 (wz 27)) /\ bytes_at rsegs m (av + 432) (le8 (wz 28))
+       /\ bytes_at rsegs m (av + 448) (le8 (wz 0)))
+      \/ bytes_at rsegs m (av + 416) (le8 (wz 0)))
+  /\ auxv_vals m av x16 x6 x11 x12 x23 /\ auxv_tie m av.
 
-Definition rauxv_ok : ltac2:(zQ "20!h9!hh7>1m$1>1B$0P") := ltac2:(zQ "h70!hj1!h9!hl0!hl6!hld!hm3!hm9!hn0!hr3!sf!hv8!ija!m3!ma!hh7!io1!is7!jgc!jh4!jha!jlc!jqa!kg0\1m$e\1B$1@2$4$1\2av$1@2$4$1\2x3$1@2$4$1\2x4$1@2$4$1\2x5$1@2$4$1\3x16$1@2$4$1\2x6$1@2$4$1\3x11$1@2$4$1\3x12$1@2$4$1\3x23$1@2$4$1\3rnd$1@2$0@4$h4$8^c$h5@3$c$a@1$h2@1$9^a@1$d$a@2$0@4$b$8^c^a@1$h1@9$h6^9^8^7^6^5^4^3^2^1@2$0@4$b$8^c@2$6^1+8@1$h3@1$9@1$h0?4HSEC@2$0@2$2@1$f?5HCEIL^b@2$0@2$2^b^a@2$0@2$2@2$6^a+q0@2$3+2+k0@2$0@2$2^b@2$6^1+8@2$0@2$2@2$6^1+h0@2$3+2+k0@2$0@2$0@2$2Z^9@2$5^9@2$3+2+k0@2$0@2$0@2$2Z^8@2$5^8@2$3+2+k0@2$0@2$0@2$2Z^7@2$5^7@2$3+2+k0@2$0@2$0@2$2Z^6@2$5^6@2$3+2+k0@2$0@2$0@2$2Z^5@2$5^5@2$3+2+k0@2$0@2$0@2$2Z^4@2$5^4@2$3+2+k0@2$0@2$0@2$2Z^3@2$5^3@2$3+2+k0@2$0@2$0@2$2Z^2@2$5^2@2$3+2+k0@2$0@2$0@2$2Z^1@2$5^1@2$3+2+k0@2$0@3$7$1^9+hggk0@2$0@3$7$1^8+j8@3$7$1^7+a").
+Lemma auxv_keys_map : forall m m' av x16 x6 x11 x12 x23 rnd,
+  (forall A w, av <= A -> A + 8 <= av + 464 -> bytes_at rsegs m A (le8 w) -> bytes_at rsegs m' A (le8 w)) ->
+  auxv_keys m av x16 x6 x11 x12 x23 rnd -> auxv_keys m' av x16 x6 x11 x12 x23 rnd.
+Proof.
+  intros m m' av x16 x6 x11 x12 x23 rnd HT H. unfold auxv_keys, auxv_vals, auxv_tie in *.
+  repeat match goal with H : bytes_at _ _ _ _ /\ _ |- _ => destruct H end.
+  match goal with H : (_ \/ _) /\ _ |- _ => destruct H as (TAIL & VALS & TR & TF) end.
+  repeat match goal with
+         | H : (exists _, _) /\ _ |- _ => destruct H
+         | H : bytes_at _ _ _ _ /\ _ |- _ => destruct H
+         end.
+  repeat match goal with H : exists _, _ |- _ => destruct H end.
+  repeat match goal with |- _ /\ _ => split end.
+  all: try (eapply HT; [| |eassumption]; lia).
+  all: try (eexists; eapply HT; [| |eassumption]; lia).
+  all: try (destruct TAIL as [(T1 & T2 & T3) | T1]; [left; repeat split | right]; (eapply HT; [| |eassumption]; lia)).
+  all: try (intros HR; specialize (TR HR); destruct TR as (R1 & R2 & R3 & R4 & R5); repeat split;
+            (eapply HT; [| |eassumption]; lia)).
+  all: try (intros HR; specialize (TF HR); eapply HT; [| |eassumption]; lia).
+Qed.
 
-Lemma rauxv_ok_weaken : ltac2:(zQ "60!h9!kge!hl0!hj1!hh7!io1>1m$4>1B$0>2B'$0>0@2$1^3^2>0@2$3@2$2@1$5?5HCEIL^2@2$2^2^3@2$1^5^3").
+(* The statement is the old one with the [u64s (rauxv_list ...)] block replaced by
+   [auxv_keys m av x16 x6 x11 x12 x23 rnd] (whose value words are the existentials [x16 x6 x11 x12
+   x23]) and its bound [av + 160] by the revision's largest vector, 29 pairs ([av + 464]); the
+   existentials and every other conjunct are unchanged. *)
+Definition rauxv_ok (m : mem) (B : Z) : Prop :=
+  exists av x3 x4 x5 x16 x6 x11 x12 x23 rnd : Z,
+    rw_cells rsegs m RAUXV_CELL [C8 (wz av)]
+    /\ auxv_keys m av x16 x6 x11 x12 x23 rnd
+    /\ bytes_at rsegs m (rnd + 8) (le8 (wz hsecret))
+    /\ hceil <= B /\ B <= av /\ av + 464 <= 2^64 /\ B <= rnd + 8 /\ rnd + 16 <= 2^64
+    /\ 0 <= x3 < 2^64 /\ 0 <= x4 < 2^64 /\ 0 <= x5 < 2^64 /\ 0 <= x16 < 2^64 /\ 0 <= x6 < 2^64
+    /\ 0 <= x11 < 2^64 /\ 0 <= x12 < 2^64 /\ 0 <= x23 < 2^64 /\ 0 <= rnd < 2^64
+    /\ x3 = 65600 /\ x4 = 56 /\ x5 = 10.
+
+Lemma rauxv_ok_weaken : forall m B B', rauxv_ok m B -> hceil <= B' <= B -> rauxv_ok m B'.
 Proof. try hcb. try hsb.
   (intros m B B' nd_i9 HB; ndestruct nd_i9 as (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & H)).
   nexists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. repeat (split; [tauto|]). lia.
 Qed.
 
-Lemma rauxv_ok_frame : ltac2:(zQ "h40!h9!hl0!kha!ki1!jb!jqa!kge!le!ki7!j4!kid!hj1!kj6!kjc!hh7!ko1!ko8!kp1!hr3!hm9>1m$e>2m'>0@1$7@1$4#k0@1$a@1$7@1$4#8>1B$0>1W@1$9$f>0@2$6^4^2>0@3$h0^2^5^4>0@3$h1$h2^6^5>0@3$d@2$2$0$0\2iv@2$2$0$0@2$b@2$1@3$3$0$0^1^6@2$c@2$1@3$3$0$0^1$5@2$1@2$h3$5+8@3$8$0$0^1^4@2$6^7^6").
+Lemma rauxv_ok_frame : forall m m' B W,
+  rauxv_ok m B -> munch W m m' -> wmono rsegs m m' ->
+  Forall (fun iv : Z * Z => snd iv <= B /\ (snd iv <= RAUXV_CELL \/ RAUXV_CELL + 8 <= fst iv)) W ->
+  rauxv_ok m' B.
 Proof. try hcb. try hsb.
   (intros m m' B W nd_i10 MU WM FW; ndestruct nd_i10 as (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & C & A1 & A2 & H)).
   nexists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. split; [|split; [|split; [|exact H]]].
   - eapply rw_cells_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [_ ?]. lia.
-  - eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [? _]. lia.
+  - eapply auxv_keys_map; [|exact A1]. intros A w HA HB Hb.
+    pose proof (length_le8 w) as LL.
+    eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn -[le8]. intros lo hi [? _]. rewrite LL. lia.
   - eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [? _]. lia.
 Qed.
 

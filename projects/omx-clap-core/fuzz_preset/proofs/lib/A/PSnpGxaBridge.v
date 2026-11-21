@@ -4,11 +4,11 @@
 (* The bridge from the GXA (ASan printf core) walks to the harness's call-site form.
    GXA ends every walk in the CJ tree's `evt img_segs Q ms`: "some step chain from ms reaches a
    state in Q" (lib/CJ/Lib/Exec.v:41, over `msteps` at Exec.v:21).  The harness continues from
-   `SRr segs W (cfg_at segs pc regs mem md) POST` (lib/Reusable/YA0n.v:35).  This file is the
+   `SRr segs W (cfg_at segs pc regs mem md) POST` (lib/Reusable/YA0n.v:36).  This file is the
    generic half of the join, for the CJ tree.
 
-   Three facts make it one short file, the same three that FMbz_bridge.v (port-fm's RtScan,
-   origin/cold/port-fm-rtscan 445e498a469) uses for the Bz tree:
+   Three facts make it one short file, the same three that FMbz_bridge.v (port-fm's RtScan)
+   uses for the Bz tree:
    - the two trees name the same image: `@img_segs N_img_asan = tfibsegs` by reflexivity, because
      RT_IImgA.v:96 builds N_img_asan on tfibsegs;
    - the two step relations are the same relation: CJ's `mstep` (Exec.v:18) is
@@ -19,7 +19,8 @@
    `mkst` and `seg_rom` are written qualified: the CJ tree defines its own `mkst`, which empties
    the floating-point registers, while the harness's `cfg_at` uses YK11's over fx.  An import order
    that let the CJ name win here would state these lemmas about another machine state. *)
-(* Modified by Theorem Labs, 2026-10: c-libc-stdio's copy for fuzz_preset image A (L3-V2, the GXA seam over ARx; parent c-libc-stdio 14:3xZ) of proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxa_bridge.v at origin/cold/port-fm-rtprintf-param 3e35620c52e: module paths fuzz_manifest -> fuzz_preset; the image record RT_IImgA.A_img -> preset's rebuilt-pin lib/CJ/RL/I/IImgA.v N_img_asan (taken by path by c-libc-str, f697dea427f); gxa_segs_tfib_vsn (fm's second record A_img_vsn) is left out. @img_segs N_img_asan = tfibsegs holds by reflexivity: N_img_asan is built on Img0.rsegs, AB1v.tfibsegs is the same Asan.M.loaded_segments. The sentences above name fm's files. *)
+(* Modified by Theorem Labs, 2026-10: c-libc-stdio's copy for fuzz_preset image A (L3-V2, the GXA seam over ARx; parent c-libc-stdio 14:3xZ) of proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxa_bridge.v: module paths fuzz_manifest -> fuzz_preset; the image record RT_IImgA.A_img -> preset's rebuilt-pin lib/CJ/RL/I/IImgA.v N_img_asan (taken by path by c-libc-str); gxa_segs_tfib_vsn (fm's second record A_img_vsn) is left out. @img_segs N_img_asan = tfibsegs holds by reflexivity: N_img_asan is built on Img0.rsegs, AB1v.tfibsegs is the same Asan.M.loaded_segments. The sentences above name fm's files. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

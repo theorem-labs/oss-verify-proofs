@@ -1,25 +1,24 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: start-up certificate made again at LPS 727298f3, for each CONFIG_RSEQ value, from the hand-off states the build computes. *)
 (* [comment removed for export] *)
-From Stdlib Require Import ZArith List Bool Lia.
-From OSSVerify.Proofs.pupnp.FuzzHttp.lib.ASN Require Import AxSymExec3 AsanPlanCore AsanPlan AsanPlanSound AsanPlanImages AsanInit AsanNodesWJoin AsanStartup StartupPlanAsan StartupHSAsan.
+From Stdlib Require Import ZArith List Bool.
+From Ltac2 Require Import Ltac2 Constr Std Control.
+From OSSVerify.Proofs.pupnp.FuzzHttp.lib.ASN Require Import AxSymExec3 AsanPlanCore AsanPlan PlanRegen StartupHSAsan.
+Set Default Proof Mode "Classic".
 Import ListNotations. Import AX2. Import AP.
 Open Scope Z_scope.
 
-Definition BFUEL : nat := 400000.
-Definition KC0 : nat := 0.
-Definition FUEL : nat := 3000.
-
-Definition IT0 : itab := mk_itab_ranges ASEGS startup_plan_ranges.
-Lemma IT0_ok : itab_sound ASEGS IT0.
-Proof. apply APS.mk_itab_ranges_sound. Qed.
-Definition startup_shape : shape := SHole 10.
-From Ltac2 Require Import Ltac2 Constr Std Control.
+(* LPS 727298f3: segment A of the ASan start-up chain (the launch to hand-off 10) at each
+   CONFIG_RSEQ value, from that value's start state, on the renumbered recorded plan and against
+   the computed hand-off map ([StartupHSAsan]). *)
 Ltac2 vm_cert_refl (rhs : constr) :=
   let g := Control.goal () in
   let r := constr:(@eq_refl cres $rhs) in
   Std.exact_no_check (Constr.Unsafe.make (Constr.Unsafe.Cast r Constr.Cast.vm g)).
-Lemma startup_cert :
-  check ASEGS IT0 ASAN NX0 AsanInit.LIMIT (XNS ASEGS ASAN NX0 AsanInit.LIMIT) XE0 XB0 HS_asanA KC0 BFUEL FUEL None asan_init startup_plan = COk startup_shape.
-Proof. Time (vm_cert_refl constr:(COk startup_shape)). Time Qed.
+
+Lemma acertA0 : ACHK aIT 0 NX0 (asan_init 0) aplanA aHSA0 = COk ashA0.
+Proof. ltac2:(vm_cert_refl constr:(COk ashA0)). Qed.
+Lemma acertA1 : ACHK aIT 1 NX0 (asan_init 1) aplanA aHSA1 = COk ashA1.
+Proof. ltac2:(vm_cert_refl constr:(COk ashA1)). Qed.

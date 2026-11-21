@@ -1,4 +1,4 @@
-(* lib/A/Prog/TwAsan.v (RtStr's port, unchanged from cold/c-asan-rt-fmio-n affce6489c8) with the local-shadow change
+(* lib/A/Prog/TwAsan.v (RtStr's port, unchanged) with the local-shadow change
    (FMss_shv.v): TW_ASAN's `shadow_rw m` becomes `shv2 m a0 a1 hb nb` (the shadow words of the haystack's and the
    needle's checked bytes) and tw_asan_kept keeps it through shvis_kept.  Same names as the original; import this
    module instead of TwAsan. *)

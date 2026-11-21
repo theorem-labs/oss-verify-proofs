@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the THP flag). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -418,12 +419,12 @@ Section Deq.
     rewrite c_eq_Z by llia.
     (* [comment removed for export] *)
     assert (TAIL : forall s1 ws (cnd : bool),
-      RepW A (ms_mem s) ws (ms_mem s1) -> WIN s1 -> ms_vm s1 = ms_vm s -> ms_lo s1 = ms_lo s -> ms_hi s1 = ms_hi s ->
+      RepW A (ms_mem s) ws (ms_mem s1) -> WIN s1 -> ms_vm s1 = ms_vm s -> ms_lo s1 = ms_lo s -> ms_hi s1 = ms_hi s -> ms_thp s1 = ms_thp s ->
       Wz2 :: Wz1 :: ws = dws -> (cnd = true <-> hd0 <> ma) ->
       tsafe ((x <- (m_sd (Z_to_bv 64 ma) w0 ;; m_sd (Z_to_bv 64 (ma + 8)) w0 ;;
                     (if cnd then mret tt
                      else nt_activate (v_add A_CTX (v_slli (Z_to_bv 64 sc) 3)))) ;; K x) s1) P).
-    { intros s1 ws cnd RW HWIN1 Hvm Hlo Hhi Hws Hcnd.
+    { intros s1 ws cnd RW HWIN1 Hvm Hlo Hhi Hthp Hws Hcnd.
       try reassoc. replace (Z_to_bv 64 ma) with (Z_to_bv 64 (ma + 0)) at 1 by (f_equal; lia).
       eapply (ts_sd_metaW A HW); [exact RW | exact HWIN1 | exact Hma | lia | lia |]. intros m1 RW1. change (bv_unsigned w0) with 0 in RW1. rewrite Z.add_0_r in RW1.
       try reassoc.
@@ -431,7 +432,7 @@ Section Deq.
       fold Wz1 Wz2 in RW2. rewrite Hws in RW2.
       destruct (commit_d m2 RW2) as [HII2 HF2].
       lazymatch goal with |- tsafe (mbind ?a ?k ?st) ?Q =>
-        replace st with (upd s m2 (ms_vm s)) by (unfold upd; cbn; rewrite ?Hvm, ?Hlo, ?Hhi; reflexivity) end.
+        replace st with (upd s m2 (ms_vm s)) by (unfold upd; cbn; rewrite ?Hvm, ?Hlo, ?Hhi, ?Hthp; reflexivity) end.
       destruct cnd.
       2: assert (Ehd : hd0 = ma) by (destruct (Z.eq_dec hd0 ma) as [E | NE]; [exact E | exfalso; pose proof (proj2 Hcnd NE); discriminate]).
       1: assert (Nhd : hd0 <> ma) by (apply (proj1 Hcnd); reflexivity).
@@ -454,7 +455,7 @@ Section Deq.
       { destruct (list_eq_dec Z.eq_dec (l1 ++ l2) []) as [E | E]; [exact E|]. exfalso. destruct (Dmulti E) as (mtn & mtp & _ & _ & _ & _ & Hnm & _). exact (Hnm Exn). }
       try reassoc. eapply (ts_sd_ctxW A s (ms_mem s) [] (KActive sc)); [exact RW0 | exact HWIN | exact Hsc | reflexivity |].
       intros m1 RW1. change (bv_unsigned w0) with 0 in RW1. rewrite ?at_Z.
-      apply (TAIL (upd s m1 (ms_vm s)) _ _ RW1 HWIN eq_refl eq_refl eq_refl).
+      apply (TAIL (upd s m1 (ms_vm s)) _ _ RW1 HWIN eq_refl eq_refl eq_refl eq_refl).
       + unfold dws. rewrite E12. cbn [list_eq_dec app]. reflexivity.
       + rewrite c_eq_Z by llia. rewrite Bool.negb_true_iff, Z.eqb_neq. tauto.
     - (* [comment removed for export] *)
@@ -497,12 +498,12 @@ Section Deq.
         change (mt_f mt FNext) with (mt_next mt). rewrite Hnx.
         eapply (ts_sd_ctxW A _ (ms_mem s) _ (KActive sc)); [exact RW2 | exact HWIN | exact Hsc | reflexivity |].
         intros m3 RW3. rewrite uZ in RW3 by llia. change (ma + moff FNext) with (ma + 8).
-        apply (TAIL (upd s m3 (ms_vm s)) _ _ RW3 HWIN eq_refl eq_refl eq_refl).
+        apply (TAIL (upd s m3 (ms_vm s)) _ _ RW3 HWIN eq_refl eq_refl eq_refl eq_refl).
         * unfold dws. destruct (list_eq_dec Z.eq_dec (l1 ++ l2) []); [contradiction|].
           destruct (list_eq_dec Z.eq_dec l1 []) as [_ | NE]; [reflexivity | exfalso; exact (NE (proj1 Hhdma Ehd))].
         * cbn [negb]. split; [discriminate | intros NE; exfalso; exact (NE Ehd)].
       + apply ts_bind_ret. change (ma + moff FNext) with (ma + 8).
-        apply (TAIL (upd s m2 (ms_vm s)) _ _ RW2 HWIN eq_refl eq_refl eq_refl).
+        apply (TAIL (upd s m2 (ms_vm s)) _ _ RW2 HWIN eq_refl eq_refl eq_refl eq_refl).
         * unfold dws. destruct (list_eq_dec Z.eq_dec (l1 ++ l2) []); [contradiction|].
           destruct (list_eq_dec Z.eq_dec l1 []) as [E1 | _]; [exfalso; exact (Nhd (proj2 Hhdma E1)) | reflexivity].
         * cbn [negb]. tauto.

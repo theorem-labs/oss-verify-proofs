@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the fd-stability lemmas also ask the kernel state unchanged, the initial model carries the vDSO draw, and the mmap_base_min bound is derived for the initial invariant. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation String.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
@@ -51,12 +52,13 @@ Hypothesis Hcount' : forall X, mspecN (own' X) alloc_count (fun _ => own' X).
 
 Hypothesis Hown_minv : forall X s mo, own X s mo -> minv mo /\ m_halted mo = None.
 Hypothesis Hown_fds : forall X s mo mo', own X s mo ->
-  m_vmmaps mo' = m_vmmaps mo -> minv mo' -> m_halted mo' = None -> own X s mo'.
+  m_vmmaps mo' = m_vmmaps mo -> minv mo' -> m_halted mo' = None -> m_kernel mo' = m_kernel mo -> own X s mo'.
 
 Lemma own_after_node : forall X s mo n rsp mo' evs,
   own X s mo -> nsafe n mo -> nstep n mo rsp mo' evs -> m_vmmaps mo' = m_vmmaps mo -> own X s mo'.
 Proof.
   intros X s mo n rsp mo' evs Ho Hsafe Hst Hvm. destruct (Hown_minv _ _ _ Ho) as [Hmi Hh].
+  pose proof (nstep_kernel n mo rsp mo' evs (nsafe_no_noreserve n mo Hsafe) Hst) as Hk.
   destruct (minv_preserved n mo rsp mo' evs Hmi Hh Hsafe Hst) as [Hh' Hmi']. eapply Hown_fds; eauto.
 Qed.
 
@@ -429,14 +431,14 @@ Lemma alloc_count_GI0 : forall X, mspecN (GI0 X) alloc_count (fun _ => GI0 X).
 Proof. intros X. unfold alloc_count. apply mspecN_ret. auto. Qed.
 Lemma GI0_minv : forall X s mo, GI0 X s mo -> minv mo /\ m_halted mo = None.
 Proof. intros X s mo [H _]. eapply GI_minv; exact H. Qed.
-Lemma GI0_fds : forall X s mo mo', GI0 X s mo -> m_vmmaps mo' = m_vmmaps mo -> minv mo' -> m_halted mo' = None -> GI0 X s mo'.
-Proof. intros X s mo mo' [H E] Hv Hm Hh. split; [eapply GI_fds; eauto| exact E]. Qed.
+Lemma GI0_fds : forall X s mo mo', GI0 X s mo -> m_vmmaps mo' = m_vmmaps mo -> minv mo' -> m_halted mo' = None -> m_kernel mo' = m_kernel mo -> GI0 X s mo'.
+Proof. intros X s mo mo' [H E] Hv Hm Hh Hk. split; [eapply GI_fds; eauto| exact E]. Qed.
 Lemma GIx_perm : forall X Y s mo, Permutation X Y -> GIx X s mo -> GIx Y s mo.
 Proof. intros X Y s mo HP H. unfold GIx in *. eapply GI_perm; [| exact H]. apply Permutation_app_head. exact HP. Qed.
 Lemma GIx_minv : forall X s mo, GIx X s mo -> minv mo /\ m_halted mo = None.
 Proof. intros X s mo H. eapply GI_minv; exact H. Qed.
-Lemma GIx_fds : forall X s mo mo', GIx X s mo -> m_vmmaps mo' = m_vmmaps mo -> minv mo' -> m_halted mo' = None -> GIx X s mo'.
-Proof. intros X s mo mo' H Hv Hm Hh. unfold GIx in *. eapply GI_fds; eauto. Qed.
+Lemma GIx_fds : forall X s mo mo', GIx X s mo -> m_vmmaps mo' = m_vmmaps mo -> minv mo' -> m_halted mo' = None -> m_kernel mo' = m_kernel mo -> GIx X s mo'.
+Proof. intros X s mo mo' H Hv Hm Hh Hk. unfold GIx in *. eapply GI_fds; eauto. Qed.
 Lemma run_GI0 : forall X cfg payload, zlength payload <= MAX_INPUT -> mspecN (GI0 X) (run cfg payload) (fun _ => GIx X).
 Proof. intros X cfg payload Hpl. eapply mspecN_pre; [apply run_GIx; exact Hpl|]. intros s mo [H _]. exact H. Qed.
 Lemma startup_GI0 : forall X, mspecN (GI0 X) startup (fun _ => GI0 X).
@@ -487,13 +489,20 @@ Theorem prog_model_ok : forall segs rstage pc ph lim en inp,
   /\ tsafe nstep nsafe (prog segs rstage (in_argv inp)) (mo0 segs lim en inp).
 Proof.
   intros segs rstage pc ph lim [sp brk0 mbase] inp Hsegs Hve Hvi Htop HN.
-  destruct Hve as (_ & Hbrk & _). destruct Hvi as (Hargv & _).
+  pose proof Hvi as (_ & _ & _ & _ & _ & _ & _ & _ & _ & HSv & _).
+  destruct Hve as (_ & Hbrk & Hmbv & _). destruct Hvi as (Hargv & _).
+  assert (Hmb : mmap_base_min <= bv_unsigned mbase) by (destruct Hmbv as (Hm & _); rewrite HSv in Hm; exact Hm).
   unfold prog, mo0 in *. cbn [en_brk en_mmap_base en_sp] in *.
   apply (mspecN_program (GI0 []) (prog_with rstage (argv_Z (in_argv inp)))); [| | exact HN].
   - apply prog_with_GIN; [apply argv_Z_short| apply argv_Z_paths]; exact Hargv.
   - cbn [img_segments] in Hbrk.
     split; [| reflexivity].
-    apply (GI_init segs); [exact Hbrk| apply reserved_top_pu; exact Hsegs| apply ceil_pu; exact Hsegs| exact Htop].
+    (* [mo0] carries the entry's vDSO draw ([with_vdso]); the VM ledger,
+       the fd table and the halt flag are [init_model]'s. *)
+    eapply GI_fds;
+      [ apply (GI_init segs); [exact Hbrk| apply reserved_top_pu; exact Hsegs| apply ceil_pu; exact Hsegs| exact Htop
+                              | destruct Hsegs as [E|E]; rewrite E; vm_compute; discriminate | exact Hmb]
+      | reflexivity | apply minv_with_vdso, minv_init | reflexivity | reflexivity ].
 Qed.
 
 Theorem prog_model_ok_P : forall en inp,

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (sec_grant_exists gives a grant at Linux's placement for a null hint through linux_place_exists, from a free gap that also avoids the vDSO pair in the reserved ledger, for a page-aligned size). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap.
@@ -140,44 +141,68 @@ try (subst z; cbn [fst snd] in *); try lia; try (exact (EXz Hz)); try (destruct 
 all: subst z; lia.
 Qed.
 Definition SEC_LIVE_N : Z := 16384.
+Definition unz (e : word * word) : Z * Z := (bv_unsigned (fst e), bv_unsigned (snd e)).
+(* 08b1429: the grant is Linux's placement for a null hint ([linux_place]); a free gap in the bottom-up window
+   gives one ([Placement.linux_place_exists]). The gap now also avoids the vDSO pair in the reserved ledger. *)
 Theorem sec_grant_exists : forall segs ly S md nZ,
 layout_ok ly -> ALedger segs ly S md ->
 (forall e, In e (vm_maps (m_vmmaps md)) -> 0 < bv_unsigned (snd e)) ->
 Z.of_nat (length (sec_extents ly S)) <= SEC_LIVE_N ->
 Forall (fun e => 0 <= snd e <= NOB) (sec_extents ly S) ->
-0 < nZ <= NOB ->
-exists a, grant_ok_na_pin md a nZ = true.
+0 < nZ <= NOB -> nZ mod page_size = 0 ->
+exists a, grant_ok_na_pin (Z_to_bv 64 0) md a nZ = true.
 Proof.
-intros segs ly S md nZ LY L NZ SECN SECS HnZ.
+intros segs ly S md nZ LY L NZ SECN SECS HnZ HnZal.
+destruct (al_reserved _ _ _ _ L) as (rx & Hres & HRX & Hrxl).
 pose proof (YN05.ceil_le_top _ (al_top _ _ _ _ L)) as Htop. pose proof bottomup_floor_val as Hfv.
-set (obs := obstacles (lazy_zones ly ++ sec_extents ly S)).
-assert (LEN : Z.of_nat (length obs) <= 257 * 25 + SEC_LIVE_N).
-{ subst obs. rewrite obstacles_app, length_app, Nat2Z.inj_add.
+set (obs := obstacles (lazy_zones ly ++ sec_extents ly S ++ map unz rx)).
+assert (LEN : Z.of_nat (length obs) <= 257 * 25 + SEC_LIVE_N + 2).
+{ subst obs. rewrite !obstacles_app, !length_app, !Nat2Z.inj_add.
 pose proof (obstacles_len (lazy_zones ly) 257 ltac:(lia) (lazy_zones_relevant ly LY)) as A.
 pose proof (lazy_zones_len ly LY) as B.
-pose proof (obstacles_len (sec_extents ly S) 1 ltac:(lia) ltac:(apply Forall_impl with (2 := SECS); intros e He _; lia)) as C. lia. }
+pose proof (obstacles_len (sec_extents ly S) 1 ltac:(lia) ltac:(apply Forall_impl with (2 := SECS); intros e He _; lia)) as C.
+assert (D : Z.of_nat (length (obstacles (map unz rx))) <= 1 * Z.of_nat (length (map unz rx))).
+{ apply obstacles_len; [lia|]. apply Forall_map. apply Forall_impl with (2 := HRX). intros e (_ & H1 & H2) _.
+unfold unz. cbn [snd]. unfold NOB. lia. }
+rewrite length_map in D. lia. }
 destruct (pick_candidateZ NOB nZ obs (seq 0 (Datatypes.S (length obs))) ltac:(lia) (obstacles_size _) (List.seq_NoDup _ _) ltac:(rewrite length_seq; lia))
 as (j & Hj & Hfree).
 apply in_seq in Hj.
 set (a := cand NOB j).
-assert (Ha : bottomup_floor <= a <= bottomup_floor + (257 * 25 + SEC_LIVE_N) * (2 * NOB)).
+assert (Ha : bottomup_floor <= a <= bottomup_floor + (257 * 25 + SEC_LIVE_N + 2) * (2 * NOB)).
 { subst a. unfold cand. unfold NOB, SEC_LIVE_N in *. split; [nia|]. apply Z.add_le_mono_l. apply Z.mul_le_mono_nonneg_r; [lia|]. lia. }
 assert (Hce : a + nZ <= ASAN_CEIL) by (ceil; unfold ASAN_CEIL, NOB, SEC_LIVE_N in *; rewrite Hfv in Ha; lia).
-exists (Z_to_bv 64 a).
-unfold grant_ok_na_pin. rewrite !u64_lit by (ceil; unfold ASAN_CEIL in Hce; lia).
 assert (E1 : a mod page_size = 0).
 { subst a. unfold cand. rewrite Hfv. unfold page_size, NOB. rewrite Z.add_mod by lia.
 replace (Z.of_nat j * (2 * 536870912)) with ((Z.of_nat j * 262144) * 4096) by lia. rewrite Z_mod_mult. reflexivity. }
-rewrite (proj2 (Z.eqb_eq _ _) E1), (proj2 (Z.ltb_lt 0 _)) by lia.
-rewrite (proj2 (Z.leb_le _ _)) by (unfold ASAN_CEIL in Hce; lia).
-rewrite YK13.region_free_app.
-rewrite (al_reserved _ _ _ _ L).
-replace (Z_to_bv 64 a) with (w64 a) by reflexivity. replace (Z_to_bv 64 nZ) with (w64 nZ) by reflexivity.
 assert (IMGb : forall sg, In sg segs -> 4096 <= Z.of_N (seg_base sg) /\ Z.of_N (seg_base sg) + Z.of_N (seg_size sg) <= kImgEnd).
 { intros sg Hsg. pose proof (al_img _ _ _ _ L sg Hsg) as [I1 I2]. pose proof (lo_img ly LY) as (J0 & J1 & J2 & J3). rewrite J0 in I1, I2. unfold kImgLo in *. lia. }
+assert (GF : LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.gap_fits (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.task_unmapped_base (alloc_top (m_vmmaps md)) nZ a).
+{ apply LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.gap_fits_b_iff. unfold LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.gap_fits_b.
+rewrite (proj2 (Z.eqb_eq _ _) E1), (proj2 (Z.leb_le LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.task_unmapped_base _)) by (unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.task_unmapped_base; lia).
+rewrite (proj2 (Z.leb_le _ _)) by (unfold ASAN_CEIL in Hce; lia).
+rewrite YK13.region_free_app, Hres, YK13.region_free_app.
+replace (Z_to_bv 64 a) with (w64 a) by reflexivity. replace (Z_to_bv 64 nZ) with (w64 nZ) by reflexivity.
 rewrite (YG0j.region_free_reserved segs a nZ IMGb) by (ceil; unfold kImgEnd, ASAN_CEIL in *; lia).
-rewrite (YG0j.region_free_intro); [reflexivity|].
-intros e He. unfold YG0j.uw, w64. rewrite !u64_lit by (ceil; unfold ASAN_CEIL in *; lia).
-apply (obstacles_free (lazy_zones ly ++ sec_extents ly S) a nZ); [lia | exact (NZ e He) | lia | exact Hce | exact Hfree | exact (al_cover _ _ _ _ L e He)].
+rewrite (YG0j.region_free_intro rx); [rewrite (YG0j.region_free_intro); [reflexivity|]|].
+- intros e He. unfold YG0j.uw, w64. rewrite !u64_lit by (ceil; unfold ASAN_CEIL in *; lia).
+apply (obstacles_free (lazy_zones ly ++ sec_extents ly S ++ map unz rx) a nZ); [lia | exact (NZ e He) | lia | exact Hce | exact Hfree |].
+destruct (Exists_exists (fun z => fst z <= bv_unsigned (fst e) /\ bv_unsigned (fst e) + bv_unsigned (snd e) <= fst z + snd z) (lazy_zones ly ++ sec_extents ly S))
+as [X _]. destruct (X (al_cover _ _ _ _ L e He)) as (z & Hz & Hz1).
+apply Exists_exists. exists z. split; [rewrite app_assoc; apply in_app_iff; left; exact Hz | exact Hz1].
+- intros e He. unfold YG0j.uw, w64. rewrite !u64_lit by (ceil; unfold ASAN_CEIL in *; lia).
+pose proof (proj1 (Forall_forall _ _) HRX e He) as (_ & H1 & H2).
+apply (obstacles_free (lazy_zones ly ++ sec_extents ly S ++ map unz rx) a nZ); [lia | lia | lia | exact Hce | exact Hfree |].
+apply Exists_exists. exists (unz e). split; [|unfold unz; cbn [fst snd]; lia].
+rewrite app_assoc. apply in_app_iff. right. apply in_map. exact He. }
+assert (HnZ0 : 0 < nZ) by lia.
+destruct (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_exists
+(m_vmmaps md) (kb_thp (m_kernel md)) (Z_to_bv 64 0) nZ HnZ0 HnZal (ex_intro _ a (or_intror GF))) as (a' & Ha').
+destruct (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_admissible
+(m_vmmaps md) _ (Z_to_bv 64 0) nZ a' HnZ0 HnZal Ha') as (Hal' & Hpos' & Hhi' & _).
+pose proof (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.alloc_top_lt_two_pow_64 (m_vmmaps md)) as Hat. unfold two_pow_64 in Hat.
+exists (Z_to_bv 64 a'). unfold grant_ok_na_pin.
+apply (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is_iff _ _ _ _ _ HnZ0 HnZal).
+rewrite u64_lit by lia. exact Ha'.
 Qed.
 End b.

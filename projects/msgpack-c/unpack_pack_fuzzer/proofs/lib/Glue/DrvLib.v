@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the run record has a field r_rdr, the far-end reader as a launch fact (m_channel_reader m = true), which stdio_write_sound and stdio_write_sound_b now take. *)
 From Stdlib Require Import ZArith Bool List Lia.
 From Stdlib Require Import PrimInt63 Uint63.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
@@ -51,7 +52,10 @@ Record drun := DRun {
   r_tm : tab_model r_heap (FD3 r_p1 r_file) (RSTAGE r_file r_RS r_RSr) FD3DIR FDINIT r_ext;
   r_tm_fds : forall mo fds, op_minv (CtrSys.OPS r_heap r_ext r_p1 r_file r_RS r_RSr r_tm) mo ->
                             op_minv (CtrSys.OPS r_heap r_ext r_p1 r_file r_RS r_RSr r_tm) (with_fds fds mo);
-  r_tm_cov1 : forall id args a, op_cov1 (CtrSys.OPS r_heap r_ext r_p1 r_file r_RS r_RSr r_tm) id args a -> id = 1%uint63
+  r_tm_cov1 : forall id args a, op_cov1 (CtrSys.OPS r_heap r_ext r_p1 r_file r_RS r_RSr r_tm) id args a -> id = 1%uint63;
+  (* LPS 08b1429: write/writev read the far-end reader. It is a launch fact no step writes:
+     the plain tables carry it in [mfacts], the ASan run in its model predicate. *)
+  r_rdr : forall m, r_MP m -> op_minv (CtrSys.OPS r_heap r_ext r_p1 r_file r_RS r_RSr r_tm) m -> m_channel_reader m = true
 
 }.
 
@@ -201,7 +205,7 @@ Theorem node_sw : forall (T P : sstate) (C : swcert) (fd : Z) (bs : list byte) (
 Proof.
   intros T P C fd bs K HV Hrun HX Hfd Hbs HK HP E ms m HPB HMP HS.
   rewrite <- (Hbs E HPB (so_zero _ _ _ _ _ _ HS) (so_facts _ _ _ _ _ _ HS)), <- Hfd.
-  apply (stdio_write_sound segs (OPS R) it L fdok HIT fdok_sound MP (r_MPA R) T P C E ms m K HV Hrun HX HS HMP HK).
+  apply (stdio_write_sound segs (OPS R) it L fdok HIT fdok_sound MP (r_MPA R) (r_rdr R) T P C E ms m K HV Hrun HX HS HMP HK).
   intros E' ms' mo' Heb HMP' HS'. apply (HP E' ms' mo'); [rewrite Heb; exact HPB | exact HMP' | exact HS'].
 Qed.
 End SW.
@@ -540,7 +544,7 @@ Proof.
   change (DR R (SWr fd cs k)) with (W fd (den_chunks a0 p1 cs) (DR R k)).
   intros E ms m HPB HMP HS.
   rewrite <- (bytes_chk_sound _ _ _ E HB HPB (so_facts _ _ _ _ _ _ HS)), <- H4.
-  apply (stdio_write_sound_b segs (OPS R) it L fdok HIT fdok_sound MP (r_MPA R) T P C E ms m (DR R k) H1 H2 H3 HS HMP (D_nil _ _ _ _)).
+  apply (stdio_write_sound_b segs (OPS R) it L fdok HIT fdok_sound MP (r_MPA R) (r_rdr R) T P C E ms m (DR R k) H1 H2 H3 HS HMP (D_nil _ _ _ _)).
   intros E' ms' mo' Heb HMP' HS'. apply (HP E' ms' mo'); [rewrite Heb; exact HPB | exact HMP' | exact HS'].
 Qed.
 End SWB.

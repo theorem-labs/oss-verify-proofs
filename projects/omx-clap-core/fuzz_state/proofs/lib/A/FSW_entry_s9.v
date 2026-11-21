@@ -7,7 +7,7 @@
    whose fact says >= 4096: the real-stack arm 0x81158-0x81174 is dead), eight f5 shadow stores, `ld a0, 0x38(s2)` (the
    frame's flag word: atom 44), `sb zero, 0(a0)` (the frame release, on the one-byte flag region added at atom 44),
    `j 0x81178`, a0 = 0, sp = s0 - 96, the eleven reloads from the s0 region (atoms 33..43), sp = s0, stopping at `ret`.
-   The store run is the kit's FSW_frame.fsw_flag_storeU (a working branch c266b4b4388): its
+   The store run is the kit's FSW_frame.fsw_flag_storeU (a working branch): its
    continuation gives the journal with own = [] over stack_free_state. The return is YA0o.SRr_ret_at.
    Port-from: the donor's aj_flag_store users (cgif_file_fuzzer lib/A/ACf4.v:76-121 rt_XP: the flag region, the store
    run, SRr_ret_at, the post; YCbq.v aj_flag_store), FSW_ret.v fsw_retU (SRr_ret_at + ajournal_materialize) and FSW_K.v's

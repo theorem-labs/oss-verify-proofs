@@ -1,4 +1,4 @@
-(* lib/A/Prog/TwFront.v (a Theorem Labs lane's port, unchanged from a working branch affce6489c8), re-run over the
+(* lib/A/Prog/TwFront.v (a Theorem Labs lane's port, unchanged from a working branch), re-run over the
    local-shadow TW_ASAN / TW_STATIC / twoway contract (FMss_TwAsan.v, FMss_TwSetup_c.v, FMss_twoway_strstr_c.v);
    only the imports differ. *)
 From Stdlib Require Import ZArith NArith Arith List Lia Bool.

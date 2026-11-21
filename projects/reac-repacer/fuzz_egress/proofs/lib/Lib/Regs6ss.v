@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/varnish/esi_parse_fuzzer/lib/Lib/Regs6ss.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vvar load branch; fetch_failure's vDSO-text branch; sstep_xport and xport_round_trip dropped, which the vDSO arms make false). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -195,7 +196,7 @@ Lemma interp_eff_accesses_eqv : forall t t', eff_eqv t t' -> forall m,
   end.
 Proof.
   intros t t' H. induction H; intros m; cbn [interp_eff_accesses]; auto.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|exact I].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|destruct (range_meets_vvar segs a (width_bytes n)); exact I].
     specialize (H0 (bv_extract 0 n (le_bytes_to_word bs)) m).
     destruct (interp_eff_accesses segs (k _) m) as [ra| |]; destruct (interp_eff_accesses segs (k' _) m) as [rb| |];
       cbn [access_value accessed_ranges] in *; try exact H0; try contradiction.
@@ -232,7 +233,8 @@ Proof.
   destruct (fetch_word segs (ms_pc_val ms)); [apply decode_exec_accesses_eqv; exact Heqv|].
   destruct (fetch_word_ov segs (ms_mem ms) (ms_pc_val ms)); [apply decode_exec_accesses_eqv; exact Heqv|].
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc_val ms)); [apply decode_exec_accesses_eqv; exact Heqv|].
-  unfold fetch_failure. destruct (negb _); [exact I|]. destruct (_ || _)%bool; exact I.
+  unfold fetch_failure.
+  repeat match goal with |- context [if ?b then _ else _] => destruct b end; exact I.
 Qed.
 
 (* [comment removed for export] *)
@@ -314,118 +316,6 @@ Lemma materialize_halted : forall m acc m',
 Proof.
   intros m acc m' H. pose proof (materialize_model_accesses_frame m acc m' H) as (_ & _ & _ & _ & _ & Hp & _).
   unfold m_halted. rewrite Hp. reflexivity.
-Qed.
-
-Lemma sstep_xport : forall ms ms' mo evs X, ms_eqv ms ms' ->
-  sstep_cfg segs ACFG (mkCfg ms mo) evs X ->
-  sstep_cfg segs ACFG (mkCfg ms' mo) evs (xport ms ms' X) /\ to_eqv X (xport ms ms' X).
-Proof.
-  intros ms ms' mo evs X Heqv Hst.
-  pose proof (step_accesses_eqv ms ms' Heqv) as Hrep.
-  pose proof Heqv as (_ & _ & _ & Hsvc & _ & _ & _ & _).
-  inversion Hst; subst.
-  - (* [comment removed for export] *)
-    unfold mi_account_step in H5.
-    destruct (RiscvSemantics.step_accesses segs ms) as [[msa acc]| |] eqn:E; try discriminate.
-    cbn [access_value accessed_ranges] in H5.
-    destruct (materialize_model_accesses mo acc) as [mo1|] eqn:M; [|discriminate].
-    inversion H5; subst.
-    destruct (RiscvSemantics.step_accesses segs ms') as [[msb acc']| |] eqn:E'; cbn in Hrep; try contradiction.
-    destruct Hrep as [Hab <-].
-    assert (HS : RiscvSemantics.step segs ms' = MachineOk msb).
-    { unfold RiscvSemantics.step. rewrite E'. reflexivity. }
-    unfold xport, xport_cfg; cbn [cfg_ms cfg_model]. match goal with Hs : ms_svc_pending ms = None |- _ => rewrite Hs end. rewrite HS.
-    split; [| split; [exact Hab| reflexivity]].
-    apply sstep_cfg_instr; [assumption| congruence|].
-    unfold mi_account_step. rewrite E'. cbn [access_value accessed_ranges]. rewrite M. reflexivity.
-  - unfold mi_account_step in H5.
-    destruct (RiscvSemantics.step_accesses segs ms) as [[msa acc]| |] eqn:E; try discriminate.
-    + cbn [access_value accessed_ranges] in H5.
-      destruct (materialize_model_accesses mo acc) as [mo1|] eqn:M; [discriminate|].
-      destruct (RiscvSemantics.step_accesses segs ms') as [[msb acc']| |] eqn:E'; cbn in Hrep; try contradiction.
-      destruct Hrep as [Hab <-].
-      unfold xport, xport_cfg; cbn [cfg_ms cfg_model]. split; [|exact I].
-      apply sstep_cfg_instr_fault; [assumption| congruence|].
-      unfold mi_account_step. rewrite E'. cbn [access_value accessed_ranges]. rewrite M. reflexivity.
-    + destruct (RiscvSemantics.step_accesses segs ms') as [b| |] eqn:E'; cbn in Hrep; try contradiction.
-      unfold xport, xport_cfg; cbn [cfg_ms cfg_model]. split; [|exact I].
-      apply sstep_cfg_instr_fault; [assumption| congruence|]. unfold mi_account_step. rewrite E'. reflexivity.
-  - unfold mi_account_step in H5.
-    destruct (RiscvSemantics.step_accesses segs ms) as [[msa acc]| |] eqn:E; try discriminate.
-    + cbn [access_value accessed_ranges] in H5. destruct (materialize_model_accesses mo acc); discriminate.
-    + destruct (RiscvSemantics.step_accesses segs ms') as [b| |] eqn:E'; cbn in Hrep; try contradiction.
-      unfold xport, xport_cfg; cbn [cfg_ms cfg_model]. split; [|exact I].
-      apply sstep_cfg_instr_unmodeled; [assumption| congruence|]. unfold mi_account_step. rewrite E'. reflexivity.
-  - (* [comment removed for export] *)
-    unfold xport, xport_cfg; cbn [cfg_ms cfg_model]. match goal with Hs : ms_svc_pending ms = Some _ |- _ => rewrite Hs end.
-    match goal with Hm : materialize_model_accesses _ _ = Some _ |- _ => rewrite (materialize_halted _ _ _ Hm) end.
-    match goal with Hh : m_halted model' = None |- _ => rewrite Hh end.
-    assert (EQ : with_ms_regs (bvmap_set 10 (reg_get (ms_regs (advance_past_svc (apply_effect ms eff))) 10) (ms_regs ms'))
-                              (advance_past_svc (apply_effect ms eff))
-                 = advance_past_svc (apply_effect ms' eff)).
-    { destruct ms as [R F pc svc rv fc m ro], ms' as [R' F' pc' svc' rv' fc' m' ro'].
-      destruct Heqv as (HR & HF & Hpc & Hsvc' & Hrv & Hfc & Hm & Hro); simpl in *; subst.
-      unfold with_ms_regs, advance_past_svc, apply_effect, set_reg, ms_pc; simpl.
-      unfold reg_get. rewrite bvmap_get_set_same. reflexivity. }
-    rewrite EQ. split.
-    + apply (sstep_cfg_syscall segs ACFG ms' mo x8 eff model' model'' evs);
-        [assumption| congruence| rewrite <- (sys_input_eqv ms ms' x8 Heqv); assumption
-        | rewrite <- (sys_input_eqv ms ms' x8 Heqv); assumption| assumption| assumption].
-    + split; [| reflexivity]. apply advance_past_svc_eqv, apply_effect_eqv, Heqv.
-  - (* [comment removed for export] *)
-    unfold xport, xport_cfg; cbn [cfg_ms cfg_model]. split; [|exact I].
-    apply (sstep_cfg_syscall_materialization_fault segs ACFG ms' mo x8 eff model' evs0);
-      [assumption| congruence| rewrite <- (sys_input_eqv ms ms' x8 Heqv); assumption
-      | rewrite <- (sys_input_eqv ms ms' x8 Heqv); assumption| assumption| assumption].
-  - (* [comment removed for export] *)
-    unfold xport, xport_cfg; cbn [cfg_ms cfg_model]. match goal with Hs : ms_svc_pending ms = Some _ |- _ => rewrite Hs end.
-    match goal with Hh : m_halted model' = Some _ |- _ => rewrite Hh end. split.
-    + apply (sstep_cfg_exit segs ACFG ms' mo x8 eff model' evs0 code);
-        [assumption| congruence| rewrite <- (sys_input_eqv ms ms' x8 Heqv); assumption| assumption| assumption].
-    + split; [exact Heqv| reflexivity].
-  - (* [comment removed for export] *)
-    unfold xport, xport_cfg; cbn [cfg_ms cfg_model]. match goal with Hs : ms_svc_pending ms = Some _ |- _ => rewrite Hs end.
-    assert (Hh : exists c, m_halted model' = Some c).
-    { destruct (m_halted model') eqn:E; [eexists; reflexivity|].
-      match goal with Hk : m_killed model' = Some _ |- _ => rewrite (m_killed_of_m_halted_none _ E) in Hk; discriminate end. }
-    destruct Hh as [c Hc]. rewrite Hc. split.
-    + apply (sstep_cfg_killed segs ACFG ms' mo x8 eff model' evs0 sig);
-        [assumption| congruence| rewrite <- (sys_input_eqv ms ms' x8 Heqv); assumption| assumption].
-    + split; [exact Heqv| reflexivity].
-  - unfold xport, xport_cfg; cbn [cfg_ms cfg_model]. split; [|exact I].
-    apply (sstep_cfg_syscall_unmodeled segs ACFG ms' mo x8);
-      [assumption| congruence| rewrite <- (sys_input_eqv ms ms' x8 Heqv); assumption].
-Qed.
-
-(* [comment removed for export] *)
-Lemma xport_round_trip : forall ms ms' mo evs X', ms_eqv ms ms' ->
-  sstep_cfg segs ACFG (mkCfg ms' mo) evs X' -> xport ms ms' (xport ms' ms X') = X'.
-Proof.
-  intros ms ms' mo evs X' Heqv Hst0.
-  pose proof (sstep_cfg_sub segs ACFG _ _ _ Hst0) as Hst.
-  pose proof Heqv as (_ & _ & _ & Hsvc & _ & _ & _ & _).
-  inversion Hst; subst; unfold xport, xport_cfg; cbn [cfg_ms cfg_model]; try reflexivity.
-  - (* [comment removed for export] *)
-    match goal with Hs : ms_svc_pending ms' = None |- _ => rewrite Hsvc, Hs end.
-    match goal with Ha : mi_account_step segs ms' mo = MachineOk _ |- _ =>
-      pose proof (mi_account_step_projects segs _ _ _ _ Ha) as HS end.
-    rewrite HS. reflexivity.
-  - (* [comment removed for export] *)
-    match goal with Hs : ms_svc_pending ms' = Some _ |- _ => rewrite Hsvc, Hs end.
-    match goal with Hm : materialize_model_accesses _ _ = Some _ |- _ => rewrite (materialize_halted _ _ _ Hm) end.
-    match goal with Hh : m_halted model' = None |- _ => rewrite Hh end.
-    cbn [with_ms_regs ms_regs ms_fregs ms_pc_val ms_svc_pending ms_resv ms_fcsr ms_mem ms_rom].
-    destruct ms as [R F pc svc rv fc m ro], ms' as [R' F' pc' svc' rv' fc' m' ro'].
-    destruct Heqv as (HR & HF & Hpc & Hsvc' & Hrv & Hfc & Hm & Hro); simpl in *; subst.
-    unfold advance_past_svc, apply_effect, set_reg, ms_pc; simpl.
-    unfold reg_get. rewrite !bvmap_get_set_same. reflexivity.
-  - (* [comment removed for export] *)
-    match goal with Hs : ms_svc_pending ms' = Some _ |- _ => rewrite Hsvc, Hs end.
-    match goal with Hh : m_halted model' = Some _ |- _ => rewrite Hh end. reflexivity.
-  - (* [comment removed for export] *)
-    match goal with Hs : ms_svc_pending ms' = Some _ |- _ => rewrite Hsvc, Hs end.
-    destruct (m_halted model') eqn:E; [reflexivity|].
-    match goal with Hk : m_killed model' = Some _ |- _ => rewrite (m_killed_of_m_halted_none _ E) in Hk; discriminate end.
 Qed.
 
 (* [comment removed for export] *)

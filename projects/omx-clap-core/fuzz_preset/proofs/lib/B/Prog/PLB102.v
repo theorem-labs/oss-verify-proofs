@@ -1,5 +1,5 @@
 (* fuzz_preset, image B' (asan-ubsan, pin d663f82d7f488d30, #102): the PAListing instance of h-verbs-1's listing of
-   record lib/B/Listing_prog.v (blob 8bcc2c9e7809, cold/h-verbs-1-listing-pins102 d42e123915ae), for the B' walks while
+   record lib/B/Listing_prog.v (blob 8bcc2c9e7809), for the B' walks while
    lib/B/PAImg_prog.v (blob 4392ab2c09ba) fails at :160 (B_prog_range waits for h-mani-a2's IMG_TOP_B = 0x601000):
    PL_prog_B is defined there at :177-181, after the failing lemma, so no walk can use it. The body below is
    PAImg_prog.v :177-181 with names suffixed B102 and B102_tpi pre-evaluated (below). It reads the listing only (no image address, no segment), so it

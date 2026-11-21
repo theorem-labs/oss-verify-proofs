@@ -4,20 +4,21 @@
    [Apache-2.0]; proofs/cgif/cgif_file_fuzzer/lib/YCbq.v:518-584, 622-634 [Apache-2.0 OR MIT];
    proofs/cgif/cgif_rgb_fuzzer/lib/YC05.v:110-141, 221-225, 227-235, 264-270 [Apache-2.0 OR MIT], for
    libreac/fuzz_identity's ASan build (lib/A). The [Apache-2.0 OR MIT] text is used under Apache-2.0. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/A/Prog/LLVMFuzzerTestOneInput_L.v at origin/ossv/recipes 6ebe35ba632; its three generic lemmas L_set_shadow_at, L_fresh and L_chain are kept as rx_set_shadow_at, rx_fresh and rx_chain (rx_set_shadow_at takes the kit's ajournal_after_write, which the strong shadow-fill text allows, in place of L_after_write_win), module paths changed to reac_pw.fuzz_role; the segment walk of reac-pw/fuzz_role's image A below is new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgX01.v at c83d21158e9 for reac-pw/fuzz_headamp's
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/A/Prog/LLVMFuzzerTestOneInput_L.v; its three generic lemmas L_set_shadow_at, L_fresh and L_chain are kept as rx_set_shadow_at, rx_fresh and rx_chain (rx_set_shadow_at takes the kit's ajournal_after_write, which the strong shadow-fill text allows, in place of L_after_write_win), module paths changed to reac_pw.fuzz_role; the segment walk of reac-pw/fuzz_role's image A below is new. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgX01.v for reac-pw/fuzz_headamp's
    image A: module paths changed to reac_pw.fuzz_headamp and the prefix rx_ renamed to hx_; kept: rx_chain,
    rx_rdword_of_val, rx_st_region, rx_chunk_zero, rx_reg_atom, rx_reg_ext, rx_reg_lit, rx_ew_reg, rx_flag0_of,
    rx_entry0, rx_jF, the tactics rx_atom, rx_lit, rx_ext, z5, z5g, rx_mach and the flag-store tactic rx_run_flag
    (the corrected local copy of the kit's aj_run_flag); rx_ffacts restated for the class-4 frame (1024 bytes, 128
    shadow bytes, flag pointer at F+0x3f8); rx_fresh, rx_regs, rx_regs_pres, rx_regs_run and rx_aview_same dropped;
    rx_set_shadow_at replaced by fuzz_identity's L_set_shadow_at and L_after_write_win
-   (proofs/libreac/fuzz_identity/lib/A/Prog/LLVMFuzzerTestOneInput_L.v at origin/ossv/recipes 2d2ff01bb6f, renamed
+   (proofs/libreac/fuzz_identity/lib/A/Prog/LLVMFuzzerTestOneInput_L.v, renamed
    hx_set_shadow_at and hx_after_write_win), whose journal step needs only the shadow-fill text of
    libreac/fuzz_boxreg's released lib/A/Rt/SetShadowDef.v; the step-keep lemma and the 8-byte read follow
-   proofs/libreac/fuzz_disco/lib/A/Prog/ReacRateSnap.v (origin/ossv/recipes 2d2ff01bb6f) rs_step_keep and rs_rdn8;
+   proofs/libreac/fuzz_disco/lib/A/Prog/ReacRateSnap.v rs_step_keep and rs_rdn8;
    the walks of headamp's X01 (lib/A/HPgSegM.v hq_S_X01f_stmt and hq_S_X01r_stmt) are new. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/A/HPgX01.v, with its module paths, module names and addresses changed; 306 of its 361 lines of code are new or changed and 1170 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image B (fuzz_headamp.asan-ubsan, pinned sha256
    53edda9bdeeba1803865babfecb1af6732babe47ab83c64d38cc59a90d717a94; addresses from the unstripped twin
    1674e30a0698f381704e66d2398d7906c881f4ba8fc619cb41b89fb97ad112ff): THE WHOLE RUN OF LLVMFuzzerTestOneInput AT IMAGE

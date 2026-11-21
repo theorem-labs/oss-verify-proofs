@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed phi_extract_after. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
@@ -139,10 +140,14 @@ Proof.
     + destruct (IH eq_refl Hh) as (fs & [(code & Hin) | (sig & Hin)]); exists fs; [left; exists code | right; exists sig]; apply in_app_iff; right; exact Hin.
 Qed.
 
+(* The no-spin premise is [srealizes_must_exit_gen]'s: a spin site only matters when
+   [sc_alloc scfg = true].  At LPS 727298f3 the run reads its segments followed by the
+   vDSO pair ([Run.run_segments]), and a run with [sc_alloc scfg = false] discharges this
+   premise by computation, without a no-spin scan of the vDSO text. *)
 Theorem phi_extract_after : forall S c T t0 (Phi : Prop),
   srealizes segs scfg c T ->
   Safe segs scfg c ->
-  ~ spin_site_present segs ->
+  (spin_site_present segs -> sc_alloc scfg = true -> False) ->
   m_halted (cfg_model c) = None ->
   codes_ok S T -> nokill T ->
   T t0 -> ~ has_halt_ev t0 ->
@@ -150,7 +155,7 @@ Theorem phi_extract_after : forall S c T t0 (Phi : Prop),
   Phi.
 Proof.
   intros S c T t0 Phi Hsrz Hsafe Hns Hrun Hcodes Hnk Ht0 Hnoh G.
-  pose proof (srealizes_must_exit segs scfg S c T Hsrz Hsafe Hns (or_introl Hrun) Hcodes Hnk) as Hme.
+  pose proof (srealizes_must_exit_gen segs scfg S c T Hsrz Hsafe Hns (or_introl Hrun) Hcodes Hnk) as Hme.
   destruct (srealizes_admits segs scfg c T Hsrz Hsafe t0 Ht0) as (tr' & c' & Hstar & Hpre).
   destruct (is_prefix_split t0 tr' Hpre) as [rest ->].
   pose proof (must_exit_in_at_cfg_star S c (t0 ++ rest) c' Hme Hstar) as Hme'.

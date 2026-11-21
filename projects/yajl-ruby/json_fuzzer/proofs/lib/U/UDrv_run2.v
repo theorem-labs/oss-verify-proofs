@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launchT context; RETINV's entry block as UIMG_ok, moved by UIMG_ok_agree; the stack window from usp0 - 6,144,513 in place of the 8 MiB below sp for malloc and free). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -65,6 +66,7 @@ Qed.
 
 Section RUN2.
   Context {RC__ : OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Lib.RunCeiling.RunCeiling}.
+  Context {LT : launchT}.
   Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw) (arg0 arg1 : list byte) (TID : Z)
             (PAD : list byte) (S4 S5 S6 S7 X7 S8 S9 S10 S11 : word).
   Hypothesis VSP : valid_sp sp0.
@@ -83,7 +85,6 @@ Section RUN2.
   Notation usp0 := (bv_unsigned sp0).
   Notation gpv := (Z_to_bv 64 0x10800).
   Notation tpv := (Z_to_bv 64 RATP).
-  Notation IMGB := (build_stack_bytes rph sp0 argv envp uid hw rnd).
   Notation LO' := (LO sp0).
   Notation BASE' := (BASE sp0 argv envp uid hw rnd TID).
   Notation FRAME' mm := (MFRAME sp0 argv mm PAD S7 S6 S5 S4).
@@ -117,7 +118,7 @@ Section RUN2.
 
     Definition RETINV (so : stdout_st) (s : PState) (mo : Model) (mm : mem) (fc : bv 32) : Prop :=
       exists (LB : list block) (errv : word),
-        FRAME' mm /\ stk usegs mm LO' (usp0 + -128) /\ mem_inv usegs mm /\ RSTAT TID mm /\ rauxv_ok mm usp0 /\ bytes_at usegs mm usp0 IMGB
+        FRAME' mm /\ stk usegs mm LO' (usp0 + -128) /\ mem_inv usegs mm /\ RSTAT TID mm /\ rauxv_ok mm usp0 /\ UIMG_ok sp0 argv envp uid hw rnd mm
         /\ stderr_wfile0 mm /\ YST mm /\ stdout_file mm so /\ zlength (so_buf so) <= STDOUT_BUFSIZ
         /\ HK s LB mm mo /\ In (bufp, A, cap) LB /\ m_fs mo = FS0
         /\ rw_cells usegs mm RERRNO [C4 errv] /\ frm0 fc.
@@ -161,7 +162,7 @@ Section RUN2.
       - (* [comment removed for export] *)
         destruct OWN as [|q|q] eqn:EO; try lia. subst REST0.
         apply evt_done.
-        eapply (di_freeX HKG DI (G_fdfs (m_fds mo) FS0) (frame_ok_G_fdfs _ _)) with (lo := usp0 - 8388608) (B := usp0) (p := pown) (A := Z.pos q) (n := PL);
+        eapply (di_freeX HKG DI (G_fdfs (m_fds mo) FS0) (frame_ok_G_fdfs _ _)) with (lo := usp0 - 6144513) (B := usp0) (p := pown) (A := Z.pos q) (n := PL);
           try reflexivity.
         all: unfold RATP; rewrite ?(unsigned_lit 0x356a0) by lia; rewrite ?(unsigned_lit (usp0 + -208)) by lia.
         + apply KR_nil.
@@ -222,7 +223,7 @@ Section RUN2.
       assert (TPR_nil : forall n so, TPR n so []) by (intros; unfold TPR; apply ShapeAlg.t_emit_has_nil).
       rz_seg Hh Hl. zstep. zstep. apply evt_done.
       (* [comment removed for export] *)
-      eapply (di_mallocX HKG DI (G_fdfs (m_fds mo) FS0) (frame_ok_G_fdfs _ _)) with (lo := usp0 - 8388608) (B := usp0) (s := s) (LB := [(bufp, A, cap)]) (n := PL);
+      eapply (di_mallocX HKG DI (G_fdfs (m_fds mo) FS0) (frame_ok_G_fdfs _ _)) with (lo := usp0 - 6144513) (B := usp0) (s := s) (LB := [(bufp, A, cap)]) (n := PL);
         try reflexivity.
       all: unfold RATP; rewrite ?(unsigned_lit 0x356a0) by lia; rewrite ?(unsigned_lit (usp0 + -208)) by lia.
       - apply TPR_nil.
@@ -351,7 +352,7 @@ Section RUN2.
       destruct (ATX_unreg _ AX TR1) as (p3 & p4 & FJ & AJ & ATC & FLG & DSO). unfold atx_cells in ATC. clear AX.
       assert (BLKK : held (rw_cells usegs mm A [CB (length FILE) FILE; CB (Z.to_nat (cap - Z.of_nat (length FILE))) junk])) by exact BLK.
       assert (BLKFK : held (bytes_at usegs mm A FILE)) by exact BLKF.
-      assert (IMGK : held (bytes_at usegs mm usp0 IMGB)) by exact IMG.
+      assert (IMGK : held (UIMG_ok sp0 argv envp uid hw rnd mm)) by exact IMG.
       clear BLK BLKF IMG.
       rz_seg Hh Hl.
       pose proof (munch_refl [(usp0 - 256, usp0 - 128); (0x355a0, 0x355a0 + 1); (0x556e8, 0x556e8 + 544)] mm) as MU. pose proof (wmono_refl usegs mm) as WM.
@@ -386,7 +387,7 @@ Section RUN2.
                  - eexists true, _, _, _, _.
                    split; [exact ATC1|]. split; [exact INI1|]. split; [exact FLG1| exact DSO1]. }
         split. { eapply rauxv_ok_frame; [exact AUX| exact MU1| exact WM1|]. unfold RAUXV_CELL, RLIBC, alloc_ceiling. constructor; [cbn [fst snd]; lia|]. constructor; [cbn [fst snd]; lia|]. constructor; [cbn [fst snd]; lia| constructor]. }
-        split. { eapply bytes_at_agree; [exact AG1| exact IMGK| intros a Ha; apply OUT; pose proof (IMGB_len sp0 argv envp uid hw rnd VSP VARGV VENVP); lia]. }
+        split. { eapply UIMG_ok_agree; [exact AG1| intros a Ha; apply OUT; lia| exact IMGK]. }
         split. { eapply (stderr_wfile0_agree _ _ _ AG1); [intros a Ha; apply OUT; unfold stderr_addr in Ha; lia| exact SE]. }
         split; [exact YS1|]. split; [exact YS2| exact YS3]. }
       assert (FR1 : FRAME' m1) by (unfold MFRAME; eapply rw_cells_agree; [exact AG1 | exact FR0 | intros ax Ha; apply OUT; cbn in Ha; lia]).

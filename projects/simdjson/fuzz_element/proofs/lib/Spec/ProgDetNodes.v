@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: mmap safety has a placement-decline part, the munmap step is shown with both its check and its fairness part, and the fd-entry case split covers the new entry kinds; taken in part from projects/simdjson/fuzz_ondemand/proofs/lib/Spec/ProgDetNodes.v, lines 49, 56, 66-67, 128, 219. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
@@ -45,14 +46,14 @@ Proof.
       as (e1 & m1 & v1 & Checked & Fair).
     exists e1, m1, v1. apply nstep_brk_iff. exact (conj Checked Fair).
   - destruct (kernel_placed flags) eqn:Placement; [exact (Forced Placement)|].
-    cbn [nsafe] in Safe.
+    cbn [nsafe] in Safe. destruct Safe as [Safe Sdecl].
     assert (Agree : forall e,
               check_syscall (pure_input 222 [Z_to_bv 64 addr; Z_to_bv 64 len; Z_to_bv 64 prot; Z_to_bv 64 flags;
                                             Z_to_bv 64 (-1); Z_to_bv 64 0]) e mo
               = check_mmap (Z_to_bv 64 addr) (Z_to_bv 64 len) (Z_to_bv 64 prot) (Z_to_bv 64 flags)
                            (Z_to_bv 64 (-1)) (Z_to_bv 64 0) e mo).
     { intros e. rewrite check_syscall_mmap by reflexivity. reflexivity. }
-    destruct (Answerable _ _ Agree (fun e => mmap_safe_no_unmodeled _ _ _ _ _ _ e mo Safe))
+    destruct (Answerable _ _ Agree (fun e => mmap_safe_no_unmodeled _ _ _ _ _ _ e mo Sdecl Safe))
       as (e1 & m1 & v1 & Checked & Fair).
     exists e1, m1, v1.
     apply (nstep_mmap_iff addr len prot flags mo e1 m1 v1 (mmap_safe_noreserve _ _ _ _ _ _ _ Safe)).
@@ -62,8 +63,8 @@ Proof.
               check_syscall (pure_input 215 [Z_to_bv 64 addr; Z_to_bv 64 len]) e mo
               = check_munmap (Z_to_bv 64 addr) (Z_to_bv 64 len) e mo).
     { intros e. rewrite check_syscall_munmap by reflexivity. reflexivity. }
-    destruct (Answerable _ _ Agree (fun e => munmap_safe_no_unmodeled _ _ e mo Safe)) as (e1 & m1 & v1 & Checked & _).
-    exists e1, m1, v1. apply nstep_munmap_iff. exact Checked.
+    destruct (Answerable _ _ Agree (fun e => munmap_safe_no_unmodeled _ _ e mo Safe)) as (e1 & m1 & v1 & Checked & Fair).
+    exists e1, m1, v1. apply nstep_munmap_iff. exact (conj Checked Fair).
 Qed.
 
 Lemma osel_not_open : forall sel n mo rsp, match n with NOpen _ => False | _ => True end -> osel sel n mo rsp.
@@ -124,7 +125,7 @@ Lemma nprog_read : forall sel fd buf cnt mo,
   end -> nprog sel (NRead fd buf cnt) mo.
 Proof.
   intros sel fd buf cnt mo Hfd. apply nprog_of_nstep; [exact I|].
-  destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|pi pw|rd wr| ]|] eqn:E; try contradiction.
+  destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|pi pw|rd wr| |sid sd st|ctx|fam|aid af]|] eqn:E; try contradiction.
   - destruct (fs_lookup (m_fs mo) p) as [data|] eqn:Hfs; [|contradiction].
     eexists _, _, []. cbn [nstep]. rewrite E, Hfs. split; [reflexivity|]. split; reflexivity.
   - exists (efferr EISDIR), mo, []. cbn [nstep]. rewrite E. auto.
@@ -215,7 +216,7 @@ Proof.
   destruct Hst as ((Hs & _) & Hst & _).
   assert (Hn' : match n with NBrk _ | NMunmap _ _ | NMprotect _ _ _ => True
              | NMmap _ _ _ flags => mmap_noreserve_b (Z_to_bv 64 flags) = false | _ => False end).
-  { destruct n; try exact I; try contradiction. cbn [nsafe] in Hs. eapply mmap_safe_noreserve. exact Hs. }
+  { destruct n; try exact I; try contradiction. cbn [nsafe] in Hs. eapply mmap_safe_noreserve. exact (proj1 Hs). }
   destruct (nstep_mm_vm_only n mo rsp mo' evs Hn' Hst) as ((Hfd & Hfs & _) & -> & _). auto.
 Qed.
 

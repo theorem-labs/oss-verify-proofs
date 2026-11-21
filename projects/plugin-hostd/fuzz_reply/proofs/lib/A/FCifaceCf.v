@@ -3,7 +3,7 @@
 (* Theorem Labs, 2026-10: the frame-area interface (FCiface.v) at the second allocator instance, image-free.
    fs_iface_ARcf: ARcf segs B (YG0ncf.v) satisfies fs_iface, given AR_laws_cf segs B (YG0dcf.v). ARcf takes its
    arguments in ARx's order (ly S Hp W mem md after segs B), so ARx := ARcf segs B with no wrapper.
-   Each field is a projection, as in cgif's fs_iface_AR (FCiface.v:173):
+   Each field is a projection, as in cgif's fs_iface_AR (FCiface.v:174):
    - fi_hints, fi_layout, fi_tsd, fi_const, fi_flags: ARmcf's amc_wf (Wf_cf's wfc_fakestack), amc_layout, amc_tsd,
      amc_const, amc_flags (YG0ncf.v:208-236);
    - fi_fs_cells: amc_cells, fs_cells S being the sixth block of acells_cf (YG0ncf.v:63-66);
@@ -18,8 +18,9 @@
      FCiface's astack_malloc_law_x at ARx := ARcf segs B, by conversion);
    - fi_stack, fi_frame, fi_frames: AR_laws_cf's alc_stack, alc_frame, alc_frames.
    No address and no image numeral appears in this file. *)
-(* Modified by Theorem Labs, 2026-10-29: carried from proofs/omx-clap-core/fuzz_preset/lib/Reusable/FCifaceCf.v (commit 01f3a73c8d7f) into lib/A, with its module paths changed (OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib). *)
-(* CARRIED from commit 01f3a73c8d7f8df213ec0b236be6784d76b08263 (omx-clap-core/fuzz_preset: fs_iface at the second
+(* Modified by Theorem Labs, 2026-10-29: carried from proofs/omx-clap-core/fuzz_preset/lib/Reusable/FCifaceCf.v into lib/A, with its module paths changed (OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* CARRIED (omx-clap-core/fuzz_preset: fs_iface at the second
    allocator instance), proofs/omx-clap-core/fuzz_preset/lib/Reusable/FCifaceCf.v, sha256
    a09f6b65876e13900c4b7e6334906b54b4937abca6ebcfdcaad896ce0a19d169, into lib/A (fuzz_reply's surface, not
    lib/Reusable). DO NOT EDIT in this tree: change it at the source and carry it again. The only change made here is

@@ -5,6 +5,7 @@
    358-363, for libreac/fuzz_identity's ASan build (lib/A). The same text also appears in
    projects/cgif/cgif_file_fuzzer/proofs/lib/A/AC8h.v:75-78, 95-98, 104-107. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_family_of.v, with its module paths and module names changed; 1114 of its 1204 lines of code are new or changed and 748 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Segment E of LLVMFuzzerTestOneInput's ASan walk, 0x8157c..0x815f8 (31 slots): seg_E of
    lib/A/Prog/LLVMFuzzerTestOneInput_inv.v.
 
@@ -186,22 +187,22 @@ Variable arodata_okS : list Segment -> asyms -> Z -> Z -> reader -> Prop.
 Hypothesis HSTK : STK_LLVMF <= LLVMF_STK.
 Hypothesis LAWS : AR_laws SEGS B.
 Hypothesis PSIG : ident_prog_sig_ok (PI := PI).
-(* the read-only image of the contract, in the callees' shape (LLVMFuzzerTestOneInput.v:154) *)
+(* the read-only image of the contract, in the callees' shape (LLVMFuzzerTestOneInput.v:155) *)
 Hypothesis HRO : forall rdr, arodata_okS SEGS B RLO RHI rdr -> arodata_okP SEGS pa_relro_lo pa_relro_hi B rdr.
-(* the registered globals (LLVMFuzzerTestOneInput.v:156-162): HW_TABLE is one of them *)
+(* the registered globals (LLVMFuzzerTestOneInput.v:157-163): HW_TABLE is one of them *)
 Variable G : list (Z * Z).
 Hypothesis GM : globs_marked SEGS B G.
 Hypothesis IV : img_shadow_vis SEGS B.
 Hypothesis G_HW : In (VAL (A_OBJ 6), 36) G.
 (* the bcmp interceptor (CONVENTIONS section 4) *)
 Hypothesis ABCMP : abcmp_realizes SEGS B (SIGMA IS___interceptor_trampoline_bcmp).
-(* cgif ACfh.v:162-164 *)
+(* cgif ACfh.v:163-165 *)
 Hypothesis AJ_NIL_IO : forall STK sp0 ly S (W : world SEGS) mem md own ly' S' W' mem' md' k,
 ajournal SEGS B STK sp0 [] ly S W mem md own ly' S' W' mem' md' k ->
 m_fds md' = m_fds md /\ m_fs md' = m_fs md.
 (* the program callee: reac_box_family_of (proved on the integration branch) *)
 Hypothesis HFAM : reac_box_family_of.treac_box_family_of_spec B.
-(* The image constants (contract, LLVMFuzzerTestOneInput.v:257-261): this segment uses HW_TABLE's 36 bytes
+(* The image constants (contract, LLVMFuzzerTestOneInput.v:258-262): this segment uses HW_TABLE's 36 bytes
    and its room inside the image's read range (IdentRo.ro_hull needs that slack for the bcmp at 0x815b8). *)
 Hypothesis HIMG : forall (W : world SEGS) mem,
 arodata_okP SEGS pa_relro_lo pa_relro_hi B (aview SEGS (w_H W) mem) -> llvmf_img B G W mem.

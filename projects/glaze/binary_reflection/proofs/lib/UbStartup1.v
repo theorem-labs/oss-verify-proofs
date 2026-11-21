@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput: the start-up frame definitions read inp, the mmap base and the entry; the AT_EXECFN and AT_SYSINFO_EHDR values; musl's auxv frame with the two CONFIG_RSEQ slots; launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef)). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -132,7 +133,7 @@ Proof. vm_refl_bv. Qed.
 Lemma img_aae48_8 : rdn SEGS (fun _ => None) (Z_to_bv 64 699976) 8%nat = Some (word_to_le_bytes 8 (Z_to_bv 64 0)).
 Proof. vm_refl_bv. Qed.
 End UbImgCells.
-Require Stdlib.micromega.Lia Stdlib.Bool.Bool LinuxProcessSemantics.LinuxProcessSem.StackLayout LinuxProcessSemantics.LinuxProcessSem.State LinuxProcessSemantics.LinuxProcessSem.Run OSSVerify.Proofs.glaze.binary_reflection.lib.Common.SumsLib.
+Require Stdlib.micromega.Lia Stdlib.Bool.Bool Stdlib.Logic.FunctionalExtensionality LinuxProcessSemantics.LinuxProcessSem.StackLayout LinuxProcessSemantics.LinuxProcessSem.State LinuxProcessSemantics.LinuxProcessSem.Run OSSVerify.Proofs.glaze.binary_reflection.lib.Common.SumsLib.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Module UbStartupDefs.
 (* [comment removed for export] *)
@@ -163,11 +164,20 @@ Definition progname_off (s : list byte) : nat := after_last_slash s 0 0.
 
 
 Section Defs.
+  (** The launch: the entry stack pointer, the process input (argv, envp,
+      credentials, AT_HWCAP, the exec file name and the kernel build are its
+      fields), the mmap base and the entry draw ([ed_random] = the AT_RANDOM
+      bytes, [ed_top] = the stack VMA's end). *)
   Variable sp0 : word.
-  Variables av ev : list (list byte).
-  Variable uid : word.
-  Variable hw : word.          (* [comment removed for export] *)
-  Variable rdraw : EntryDraw.  (* [comment removed for export] *)
+  Variable inp : ProcInput.
+  Variable mbase : word.
+  Variable rdraw : EntryDraw.          (* [comment removed for export] *)
+  Local Notation av := (in_argv inp) (only parsing).
+  Local Notation ev := (in_envp inp) (only parsing).
+  Local Notation uid := (in_uid inp) (only parsing).
+  Local Notation gid := (in_gid inp) (only parsing).
+  Local Notation hw := (in_hwcap inp) (only parsing).
+  Local Notation rseq := (kb_rseq (in_kernel inp)) (only parsing).
 
   (* [comment removed for export] *)
   Definition aux_base : word := Z_to_bv 64 (bv_unsigned sp0 - 368).
@@ -176,13 +186,17 @@ Section Defs.
   Definition envp_w : word := Z_to_bv 64 (bv_unsigned sp0 + 16 + 8 * Z.of_nat (length av)).
   Definition auxv_w : word :=
     Z_to_bv 64 (bv_unsigned sp0 + 24 + 8 * Z.of_nat (length av) + 8 * Z.of_nat (length ev)).
-  Definition argc_w : word := argcN av.
+  Definition argc_w : word := argcN inp.
   (* [comment removed for export] *)
-  Definition pn_w : word := cat_argv_ptr sp0 av ev 0.
+  Definition pn_w : word := cat_argv_ptr (ed_top rdraw) av ev (in_execfn inp) 0.
   Definition progname_w : word :=
     Z_to_bv 64 (bv_unsigned pn_w + Z.of_nat (progname_off (nth 0 av []))).
   (* [comment removed for export] *)
-  Definition rnd_w : word := at_random_ptr sp0 av ev.
+  Definition rnd_w : word := at_random_ptr sp0 rseq av ev.
+  (** AT_EXECFN's value, and AT_SYSINFO_EHDR's (the vDSO text base the launch
+      computes from the mmap base). *)
+  Definition execfn_w : word := at_execfn_ptr (ed_top rdraw) (in_execfn inp).
+  Definition ehdr_w : word := la_sysinfo_ehdr (launch_auxv inp sp0 mbase).
   (* [comment removed for export] *)
   Definition rnd_bytes : list byte := at_random_bytes (ed_random rdraw).
   Definition rb (i : nat) : byte := nth i rnd_bytes (Z_to_bv 8 0).
@@ -212,19 +226,44 @@ Section Defs.
       (Z_to_bv 64 (bv_unsigned sp0 - 56)) (word_to_le_bytes 8 argc_w))
       (Z_to_bv 64 (bv_unsigned sp0 - 64)) (word_to_le_bytes 8 (Z_to_bv 64 0x2eb44)).
 
-  (* [comment removed for export] *)
-  Definition J_aux (Jf : word -> option byte) : word -> option byte :=
+  (** musl's [__init_libc] frame after its auxv loop: [aux[AUX_CNT]] zeroed at
+      [sp0 - 368], then [aux[t] = v] for each pair of [StackLayout.auxv_entries]
+      with [t < 38], in the auxv's order.  The pairs with [t >= 38] (the cache
+      words, AT_MINSIGSTKSZ) are skipped by the loop.  Under CONFIG_RSEQ the
+      auxv carries two more pairs, AT_RSEQ_FEATURE_SIZE (27) and
+      AT_RSEQ_ALIGN (28), stored last. *)
+  Definition J_aux27 (Jf : word -> option byte) : word -> option byte :=
     wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes
+    (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes
       (wbytes Jf aux_base (zeros 304))
-      (Z_to_bv 64 (bv_unsigned sp0 - 344)) (word_to_le_bytes 8 (Z_to_bv 64 0x10040)))  (* [comment removed for export] *)
-      (Z_to_bv 64 (bv_unsigned sp0 - 336)) (word_to_le_bytes 8 (Z_to_bv 64 56)))       (* [comment removed for export] *)
-      (Z_to_bv 64 (bv_unsigned sp0 - 328)) (word_to_le_bytes 8 (Z_to_bv 64 10)))       (* [comment removed for export] *)
-      (Z_to_bv 64 (bv_unsigned sp0 - 240)) (word_to_le_bytes 8 hw))                   (* [comment removed for export] *)
-      (Z_to_bv 64 (bv_unsigned sp0 - 320)) (word_to_le_bytes 8 (Z_to_bv 64 4096)))     (* [comment removed for export] *)
-      (Z_to_bv 64 (bv_unsigned sp0 - 280)) (word_to_le_bytes 8 uid))                  (* [comment removed for export] *)
-      (Z_to_bv 64 (bv_unsigned sp0 - 272)) (word_to_le_bytes 8 uid))                  (* [comment removed for export] *)
-      (Z_to_bv 64 (bv_unsigned sp0 - 184)) (word_to_le_bytes 8 (Z_to_bv 64 0)))        (* [comment removed for export] *)
-      (Z_to_bv 64 (bv_unsigned sp0 - 168)) (word_to_le_bytes 8 rnd_w).                  (* [comment removed for export] *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 104)) (word_to_le_bytes 8 ehdr_w))              (* AT_SYSINFO_EHDR *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 240)) (word_to_le_bytes 8 hw))                  (* AT_HWCAP *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 320)) (word_to_le_bytes 8 (Z_to_bv 64 4096)))    (* AT_PAGESZ *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 232)) (word_to_le_bytes 8 (Z_to_bv 64 100)))     (* AT_CLKTCK *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 344)) (word_to_le_bytes 8 (Z_to_bv 64 0x10040)))  (* AT_PHDR *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 336)) (word_to_le_bytes 8 (Z_to_bv 64 56)))      (* AT_PHENT *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 328)) (word_to_le_bytes 8 (Z_to_bv 64 10)))      (* AT_PHNUM *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 312)) (word_to_le_bytes 8 (Z_to_bv 64 0)))       (* AT_BASE *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 304)) (word_to_le_bytes 8 (Z_to_bv 64 0)))       (* AT_FLAGS *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 296)) (word_to_le_bytes 8 (Z_to_bv 64 0x2e9f8)))  (* AT_ENTRY *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 280)) (word_to_le_bytes 8 uid))                 (* AT_UID *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 272)) (word_to_le_bytes 8 uid))                 (* AT_EUID *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 264)) (word_to_le_bytes 8 gid))                 (* AT_GID *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 256)) (word_to_le_bytes 8 gid))                 (* AT_EGID *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 184)) (word_to_le_bytes 8 (Z_to_bv 64 0)))       (* AT_SECURE *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 168)) (word_to_le_bytes 8 rnd_w))               (* AT_RANDOM *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 120)) (word_to_le_bytes 8 execfn_w).            (* AT_EXECFN *)
+
+  (** The two CONFIG_RSEQ slots are written with the value the loop leaves
+      there in either case: 28 and 32 when the auxv carries the pairs, and the
+      memset's 0 when it does not ([J_aux_norseq]).  Keeping the stores
+      unconditional keeps every other slot readable by peeling. *)
+  Definition J_aux (Jf : word -> option byte) : word -> option byte :=
+    wbytes (wbytes (J_aux27 Jf)
+      (Z_to_bv 64 (bv_unsigned sp0 - 152))
+      (word_to_le_bytes 8 (Z_to_bv 64 (if rseq then 28 else 0))))   (* AT_RSEQ_FEATURE_SIZE *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 144))
+      (word_to_le_bytes 8 (Z_to_bv 64 (if rseq then 32 else 0))).   (* AT_RSEQ_ALIGN *)
 
   (* [comment removed for export] *)
   Definition D_tlsA (D : word -> option byte) : word -> option byte :=
@@ -279,6 +318,48 @@ Section Defs.
   Definition D_main (tid : word) : word -> option byte := D_fd (D_ssp (D_tls tid D_libc)).
 
 End Defs.
+
+Lemma nth_le8_zero : forall i, nth i (word_to_le_bytes 8 (Z_to_bv 64 0)) (Z_to_bv 8 0) = Z_to_bv 8 0.
+Proof.
+  intros i. destruct (Nat.lt_ge_cases i 8) as [H|H].
+  - do 8 (destruct i as [|i]; [reflexivity|]). lia.
+  - apply nth_overflow. rewrite length_N_to_le_bytes. exact H.
+Qed.
+
+(** Without CONFIG_RSEQ the loop never writes [aux[27]] or [aux[28]]: the
+    memset's zeros stay, which is what [J_aux]'s two stores write. *)
+Lemma J_aux_norseq : forall sp0 inp mbase rdraw Jf,
+  (0x7fff80000000 <= bv_unsigned sp0)%Z -> (bv_unsigned sp0 <= 0x800000000000)%Z ->
+  kb_rseq (in_kernel inp) = false ->
+  J_aux sp0 inp mbase rdraw Jf = J_aux27 sp0 inp mbase rdraw Jf.
+Proof.
+  intros sp0 inp mbase rdraw Jf Hlo Hhi Hrs. unfold J_aux. rewrite Hrs. cbv iota.
+  apply Stdlib.Logic.FunctionalExtensionality.functional_extensionality. intros x.
+  pose proof (u64_range x) as Hx.
+  destruct (Z_lt_le_dec (bv_unsigned x) (bv_unsigned sp0 - 152)) as [H1|H1];
+    [| destruct (Z_lt_le_dec (bv_unsigned x) (bv_unsigned sp0 - 136)) as [H2|H2]].
+  1, 3: rewrite !wbytes_outside by (rewrite ?length_N_to_le_bytes; rewrite ?u_Z2bv by lia; lia);
+        reflexivity.
+  destruct (Z_lt_le_dec (bv_unsigned x) (bv_unsigned sp0 - 144)) as [H3|H3].
+  - rewrite (wbytes_outside _ _ (Z_to_bv 64 (bv_unsigned sp0 - 144)))
+      by (rewrite ?length_N_to_le_bytes; rewrite ?u_Z2bv by lia; lia).
+    rewrite wbytes_inside by (rewrite ?length_N_to_le_bytes; rewrite ?u_Z2bv by lia; lia).
+    unfold J_aux27, aux_base.
+    rewrite !wbytes_outside by (rewrite ?length_N_to_le_bytes; rewrite ?u_Z2bv by lia; lia).
+    rewrite wbytes_inside
+      by (rewrite ?OSSVerify.Proofs.glaze.binary_reflection.lib.Common.SumsLib.ZStores.length_zeros;
+          rewrite ?u_Z2bv by lia; lia).
+    rewrite nth_le8_zero, OSSVerify.Proofs.glaze.binary_reflection.lib.Common.SumsLib.ZStores.nth_zeros.
+    reflexivity.
+  - rewrite wbytes_inside by (rewrite ?length_N_to_le_bytes; rewrite ?u_Z2bv by lia; lia).
+    unfold J_aux27, aux_base.
+    rewrite !wbytes_outside by (rewrite ?length_N_to_le_bytes; rewrite ?u_Z2bv by lia; lia).
+    rewrite wbytes_inside
+      by (rewrite ?OSSVerify.Proofs.glaze.binary_reflection.lib.Common.SumsLib.ZStores.length_zeros;
+          rewrite ?u_Z2bv by lia; lia).
+    rewrite nth_le8_zero, OSSVerify.Proofs.glaze.binary_reflection.lib.Common.SumsLib.ZStores.nth_zeros.
+    reflexivity.
+Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -387,6 +468,8 @@ Abbreviation SEGS := Ubsan.M.loaded_segments.
 (* [comment removed for export] *)
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Abbreviation RPH := Ubsan.M.phdrs.
+(** The image's entry, as [Run.init_machine_state] hands it to the auxv. *)
+Abbreviation RENT := (Z_to_bv 64 (Z.of_N Ubsan.M.init_pc)).
 
 (* [comment removed for export] *)
 Definition regs_init (sp0 : word) : bvmap 5 word :=
@@ -394,26 +477,34 @@ Definition regs_init (sp0 : word) : bvmap 5 word :=
 
 Section P1.
   Variable sp0 : word.
-  Variables av ev : list (list byte).
-  Variable uid : word.
-  Variable hw : word.
+  Variable inp : ProcInput.
+  Variables mbase brk : word.
   Variable rdraw : EntryDraw.
-  Hypothesis Hva : valid_argv av.
-  Hypothesis Hve : valid_envp ev.
+  Hypothesis Hva : valid_argv (in_argv inp).
+  Hypothesis Hve : valid_envp (in_envp inp).
+  Hypothesis Hvl : valid_launch inp.
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp0 brk mbase rdraw) inp.
   Hypothesis Hlo : (0x7fff80000000 <= bv_unsigned sp0)%Z.
   Hypothesis Hhi : (bv_unsigned sp0 <= 0x800000000000)%Z.
   Hypothesis Hal : (bv_unsigned sp0 mod 16 = 0)%Z.
+  Local Notation av := (in_argv inp) (only parsing).
+  Local Notation ev := (in_envp inp) (only parsing).
 
-  Local Notation mem0 := (wrap_mem RPH sp0 av ev uid hw rdraw) (only parsing).
-  Local Notation CM := (cmem sp0 (wrap_mem RPH sp0 av ev uid hw rdraw)) (only parsing).
+  Local Notation mem0 := (wrap_mem inp mbase RPH RENT sp0 rdraw) (only parsing).
+  Local Notation CM := (cmem sp0 (wrap_mem inp mbase RPH RENT sp0 rdraw)) (only parsing).
 
-  Let argc : word := argcN av.
+  Lemma Hsp_lo' : (sp_window_lo <= bv_unsigned sp0)%Z. Proof using Hlo. exact Hlo. Qed.
+  Lemma Hsp_hi' : (bv_unsigned sp0 <= sp_window_hi)%Z. Proof using Hhi. exact Hhi. Qed.
+  (* the launch facts a layout lemma of ArgvEnv/RefLayout asks for *)
+  Ltac lctx := first [ exact Hva | exact Hve | exact Hvl | exact Hlau | exact Hsp_lo' | exact Hsp_hi' | exact Hal ].
+
+  Let argc : word := argcN inp.
   Local Notation argvp := (Z_to_bv 64 (bv_unsigned sp0 + 8)) (only parsing).
-  Let envp : word := envp_ptr sp0 av.
-  Let pn : word := cat_argv_ptr sp0 av ev 0.
+  Let envp : word := envp_ptr inp sp0.
+  Let pn : word := cat_argv_ptr (ed_top rdraw) av ev (in_execfn inp) 0.
 
   Lemma u_argc : bv_unsigned argc = Z.of_nat (length av).
-  Proof using Hva. exact (u_argcN av Hva). Qed.
+  Proof using Hva. exact (u_argcN inp Hva). Qed.
 
   Lemma len_av : (1 <= Z.of_nat (length av) <= 1024)%Z.
   Proof using Hva sp0. destruct Hva as [[H1 H2] _]. lia. Qed.
@@ -447,7 +538,7 @@ Section P1.
       /\ getr regs' 12 = Z_to_bv 64 304
       /\ getr regs' 18 = Z_to_bv 64 0x2eb44
       /\ (forall r : reg, In r [5;19;20;21;22;23;24;25;26;27]%list -> getr regs' r = Z_to_bv 64 0).
-  Proof using Hal Hhi Hlo Hve Hva.
+  Proof using Hal Hhi Hlo Hve Hva Hvl Hlau.
     intros rom J HJ.
     pose proof len_av as Hlen. pose proof u_argc as Hargc.
     eexists. split.
@@ -465,7 +556,7 @@ Section P1.
         [ exact F_2e9b4 | reflexivity | exact D_2e9b4
         | addr_norm; rewrite rdn_cmem_above by region_side;
           apply (rdn_low_bytes SEGS mem0 sp0 argc 4); [lia|];
-          exact (read_argc_w SEGS RPH sp0 av ev uid hw rdraw Hva Hve Hhi)
+          eapply read_argc_w; lctx
         | apply bytes_le_to_Z_4_small; rewrite Hargc; lia ]
         | step_simpl]; vnorm.
       rewrite (v_lw_small argc) by (rewrite Hargc; lia).
@@ -498,7 +589,7 @@ Section P1.
         | addr_norm; rewrite rdn_cmem_above by region_side;
           replace (Z_to_bv 64 (bv_unsigned sp0 + 8)) with (sp0 + nat_to_word (8 + 8 * 0))
             by (rewrite word_add_nat; f_equal; lia);
-          exact (read_argv_ptr_w SEGS RPH sp0 av ev uid hw rdraw Hva Hve Hlo Hhi 0 ltac:(lia))
+          eapply read_argv_ptr_w; first [lctx | lia]
         | apply bytes_le_to_Z_8 ]
         | step_simpl]; vnorm.
       stepiv F_65784 D_65784 (Z_to_bv 64 (8 * Z.of_nat (length av)))

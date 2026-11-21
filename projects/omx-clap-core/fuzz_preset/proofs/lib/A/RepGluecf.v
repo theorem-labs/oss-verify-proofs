@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/plugin-hostd/fuzz_reply/lib/A/RepGluecf.v (commit eb934de95d13, blob 7c06069bd256) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; pin 1be0f53d96cb), from reply A d751b179ea49 (pin 42c58610e125); module paths changed; 0 image numerals moved by port_addr_check 3d2eee813cce MAPS predictions and the twins' symbol + offset map (0 model labels and sizes kept); no other numeral changed; comments removed (the source file keeps them). *)
+(* Modified by Theorem Labs, 2026-10: from proofs/plugin-hostd/fuzz_reply/lib/A/RepGluecf.v (blob 7c06069bd256) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; pin 1be0f53d96cb), from reply A d751b179ea49 (pin 42c58610e125); module paths changed; 0 image numerals moved by port_addr_check 3d2eee813cce MAPS predictions and the twins' symbol + offset map (0 model labels and sizes kept); no other numeral changed; comments removed (the source file keeps them). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved-region ledger). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool String Ascii.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -25,13 +26,14 @@ Variable B : asyms.
 
 Lemma anon_grant_facts_cf : forall U pp cc bb (ly : alayout) (S : astate) (md : Model) (a n : word),
 layout_ok ly -> WfP_cf U pp cc bb S -> sec_placed ly S -> ALedger_cf tfibsegs ly S md ->
-grant_ok_na_pin md a (bv_unsigned n) = true -> 0 < bv_unsigned n -> bv_unsigned n mod 4096 = 0 ->
+grant_ok_na_pin (Z_to_bv 64 0) md a (bv_unsigned n) = true -> 0 < bv_unsigned n -> bv_unsigned n mod 4096 = 0 ->
 page_aligned (bv_unsigned a) /\ in_app (bv_unsigned a) (bv_unsigned n) /\ bv_unsigned a + bv_unsigned n <= ASAN_CEIL /\
 Forall (zdisjoint (bv_unsigned a, bv_unsigned n)) (static_extents ly ++ sec_extents ly S ++ perm_maps ly ++ band_maps).
 Proof.
 intros U pp cc bb ly S md a n LO W PL L G Hn Hnal.
 pose proof (bv_unsigned_in_range 64 a) as Ra. pose proof (bv_unsigned_in_range 64 n) as Rn. unfold bv_modulus in Ra, Rn.
-unfold grant_ok_na_pin in G. apply andb_prop in G as [G G4]. apply andb_prop in G as [G G3]. apply andb_prop in G as [G1 G2].
+pose proof (YK13.grant_ok_na_pin_facts _ _ _ _ Hn ltac:(unfold page_size; exact Hnal) G) as G0. clear G. rename G0 into G.
+unfold YK13.grant_ok_na_pin_b in G. apply andb_prop in G as [G G4]. apply andb_prop in G as [G G3]. apply andb_prop in G as [G1 G2].
 apply Z.eqb_eq in G1. apply Z.ltb_lt in G2. apply Z.leb_le in G3. unfold page_size in G1.
 assert (Hn64 : Z_to_bv 64 (bv_unsigned n) = n) by (apply w64_uw). rewrite Hn64 in G4.
 set (lo := bv_unsigned a) in *. set (len := bv_unsigned n) in *.
@@ -77,7 +79,7 @@ destruct (Z_lt_le_dec lo (fst (ly_img ly) + snd (ly_img ly))) as [X1|X1]; [|righ
 destruct (Z_lt_le_dec (fst (ly_img ly)) (lo + len)) as [X2|X2]; [|left; lia]. exfalso.
 set (x := Z.max lo (fst (ly_img ly))).
 destruct (L14 x ltac:(unfold in_zr; subst x; lia)) as (e & He & E1).
-pose proof (YK13.region_free_In _ a n (fst e) (snd e) G4 ltac:(apply in_app_iff; left; rewrite L3, <- surjective_pairing; exact He)) as D.
+pose proof (YK13.region_free_In _ a n (fst e) (snd e) G4 ltac:(destruct L3 as (rx & L3e & _); apply in_app_iff; left; rewrite L3e, <- surjective_pairing; apply in_app_iff; left; exact He)) as D.
 subst lo len x. lia. }
 assert (PERM : Forall (zdisjoint (lo, len)) (perm_maps ly)).
 { apply Forall_forall. intros z Hz. pose proof (perm_facts ly 1 LO ltac:(lia) z Hz) as (Z1 & Z2 & Z3 & _). apply RFm; [lia | lia | lia | exact (L10 z Hz)]. }
@@ -116,7 +118,7 @@ Qed.
 Lemma rep_grant_apart : forall (lk : option Z) (Hp : list Z) (ly : alayout) (S : astate) (W : world tfibsegs)
   (mem : word -> option byte) (md : Model) (ncap sp K : Z),
 errb_call_pre B lk Hp ly S W mem md -> 0 < ncap -> ncap mod 4096 = 0 -> ly_stk_lo ly <= sp - K -> sp < 2 ^ 64 ->
-forall a', grant_ok_na_pin md (w64 a') ncap = true ->
+forall a', grant_ok_na_pin (Z_to_bv 64 0) md (w64 a') ncap = true ->
 (a' + ncap <= TFIB_IMG_LO \/ TFIB_IMG_END <= a') /\ (a' + ncap <= sp - K \/ sp <= a') /\
 (a' + ncap <= C_ERRBUF_VEC \/ C_ERRBUF_VEC + 24 <= a').
 Proof.
@@ -124,11 +126,12 @@ intros lk Hp ly S W mem md ncap sp K PRE Hn Hal HSTK Hsp a' G.
 destruct PRE as (_ & _ & LO & IC & _ & _ & (_ & AR & _) & _).
 destruct AR as (M & L & _).
 pose proof (amc_wf _ _ _ _ _ M) as WF. pose proof (amc_placed _ _ _ _ _ M) as PL.
-pose proof G as G0. unfold grant_ok_na_pin in G0. apply andb_prop in G0 as [G0 _]. apply andb_prop in G0 as [_ G3]. apply Z.leb_le in G3.
+pose proof (YK13.grant_ok_na_pin_facts _ _ _ _ Hn ltac:(unfold page_size; exact Hal) G) as G0. unfold YK13.grant_ok_na_pin_b in G0.
+apply andb_prop in G0 as [G0 _]. apply andb_prop in G0 as [_ G3]. apply Z.leb_le in G3.
 assert (ATL : alloc_top (m_vmmaps md) < 2 ^ 64) by (unfold alloc_top, stack_max_size; pose proof (u64_range (vm_init_sp (m_vmmaps md))); lia).
 pose proof (u64_range (w64 a')) as Ra.
 assert (Hn64 : bv_unsigned (w64 ncap) = ncap) by (unfold w64; rewrite Z_to_bv_unsigned; apply bv_wrap_small; unfold bv_modulus; lia).
-assert (G' : grant_ok_na_pin md (w64 a') (bv_unsigned (w64 ncap)) = true) by (rewrite Hn64; exact G).
+assert (G' : grant_ok_na_pin (Z_to_bv 64 0) md (w64 a') (bv_unsigned (w64 ncap)) = true) by (rewrite Hn64; exact G).
 destruct (anon_grant_facts_cf _ 0 0 0 ly S md (w64 a') (w64 ncap) LO WF PL L G' ltac:(lia) ltac:(rewrite Hn64; exact Hal))
   as (_ & FA2 & FA3 & FA4).
 rewrite Hn64 in FA2, FA3, FA4.
@@ -195,18 +198,19 @@ Qed.
 Lemma rep_grant_below_ceil : forall (lk : option Z) (Hp : list Z) (ly : alayout) (S : astate)
   (W : world tfibsegs) (mem : word -> option byte) (md : Model) (ncap : Z),
 errb_call_pre B lk Hp ly S W mem md -> 0 < ncap -> ncap mod 4096 = 0 ->
-forall a', 0 <= a' < 2 ^ 64 -> grant_ok_na_pin md (w64 a') ncap = true ->
+forall a', 0 <= a' < 2 ^ 64 -> grant_ok_na_pin (Z_to_bv 64 0) md (w64 a') ncap = true ->
   a' + ncap <= ASAN_CEIL /\ ASAN_CEIL <= ly_stk_lo ly.
 Proof.
 intros lk Hp ly S W mem md ncap PRE Hn Hal a' Ha G.
 destruct PRE as (_ & _ & LO & _ & _ & _ & (_ & AR & _) & _).
 destruct AR as (M & L & _).
 pose proof (amc_wf _ _ _ _ _ M) as WF. pose proof (amc_placed _ _ _ _ _ M) as PL.
-pose proof G as G0. unfold grant_ok_na_pin in G0. apply andb_prop in G0 as [G0 _]. apply andb_prop in G0 as [_ G3]. apply Z.leb_le in G3.
+pose proof (YK13.grant_ok_na_pin_facts _ _ _ _ Hn ltac:(unfold page_size; exact Hal) G) as G0. unfold YK13.grant_ok_na_pin_b in G0.
+apply andb_prop in G0 as [G0 _]. apply andb_prop in G0 as [_ G3]. apply Z.leb_le in G3.
 assert (ATL : alloc_top (m_vmmaps md) < 2 ^ 64) by (unfold alloc_top, stack_max_size; pose proof (u64_range (vm_init_sp (m_vmmaps md))); lia).
 pose proof (u64_range (w64 a')) as Ra.
 assert (Hn64 : bv_unsigned (w64 ncap) = ncap) by (unfold w64; rewrite Z_to_bv_unsigned; apply bv_wrap_small; unfold bv_modulus; lia).
-assert (G' : grant_ok_na_pin md (w64 a') (bv_unsigned (w64 ncap)) = true) by (rewrite Hn64; exact G).
+assert (G' : grant_ok_na_pin (Z_to_bv 64 0) md (w64 a') (bv_unsigned (w64 ncap)) = true) by (rewrite Hn64; exact G).
 destruct (anon_grant_facts_cf _ 0 0 0 ly S md (w64 a') (w64 ncap) LO WF PL L G' ltac:(lia) ltac:(rewrite Hn64; exact Hal))
   as (_ & _ & FA3 & _).
 assert (Ea : bv_unsigned (w64 a') = a') by (unfold w64; rewrite Z_to_bv_unsigned; apply bv_wrap_small; unfold bv_modulus; lia).
@@ -216,18 +220,19 @@ Qed.
 Lemma rep_grant_above_stack : forall (lk : option Z) (Hp : list Z) (ly : alayout) (S : astate)
   (W : world tfibsegs) (mem : word -> option byte) (md : Model) (ncap : Z),
 errb_call_pre B lk Hp ly S W mem md -> 0 < ncap -> ncap mod 4096 = 0 ->
-forall a', grant_ok_na_pin md (w64 a') ncap = true ->
+forall a', grant_ok_na_pin (Z_to_bv 64 0) md (w64 a') ncap = true ->
   a' + ncap <= ly_stk_lo ly \/ ly_stk_hi ly <= a'.
 Proof.
 intros lk Hp ly S W mem md ncap PRE Hn Hal a' G.
 destruct PRE as (_ & _ & LO & _ & _ & _ & (_ & AR & _) & _).
 destruct AR as (M & L & _).
 pose proof (amc_wf _ _ _ _ _ M) as WF. pose proof (amc_placed _ _ _ _ _ M) as PL.
-pose proof G as G0. unfold grant_ok_na_pin in G0. apply andb_prop in G0 as [G0 _]. apply andb_prop in G0 as [_ G3]. apply Z.leb_le in G3.
+pose proof (YK13.grant_ok_na_pin_facts _ _ _ _ Hn ltac:(unfold page_size; exact Hal) G) as G0. unfold YK13.grant_ok_na_pin_b in G0.
+apply andb_prop in G0 as [G0 _]. apply andb_prop in G0 as [_ G3]. apply Z.leb_le in G3.
 assert (ATL : alloc_top (m_vmmaps md) < 2 ^ 64) by (unfold alloc_top, stack_max_size; pose proof (u64_range (vm_init_sp (m_vmmaps md))); lia).
 pose proof (u64_range (w64 a')) as Ra.
 assert (Hn64 : bv_unsigned (w64 ncap) = ncap) by (unfold w64; rewrite Z_to_bv_unsigned; apply bv_wrap_small; unfold bv_modulus; lia).
-assert (G' : grant_ok_na_pin md (w64 a') (bv_unsigned (w64 ncap)) = true) by (rewrite Hn64; exact G).
+assert (G' : grant_ok_na_pin (Z_to_bv 64 0) md (w64 a') (bv_unsigned (w64 ncap)) = true) by (rewrite Hn64; exact G).
 destruct (anon_grant_facts_cf _ 0 0 0 ly S md (w64 a') (w64 ncap) LO WF PL L G' ltac:(lia) ltac:(rewrite Hn64; exact Hal))
   as (_ & _ & FA3 & _).
 rewrite Hn64 in FA3.

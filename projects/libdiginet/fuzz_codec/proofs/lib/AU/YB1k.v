@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: generated from proofs/cgif/cgif_file_fuzzer/lib/YB1k.v (commit 25e3d17bdb50), with its module paths changed and its GetMaxUserVirtualAddress addresses moved to that function in libdiginet/fuzz_codec's asan-ubsan image (sha256 73109e32e77b...) by gen_ab1hk.py (sha256 0f51cb9cdb18); every fetched word checked equal. *)
+(* Modified by Theorem Labs, 2026-10: generated from proofs/cgif/cgif_file_fuzzer/lib/YB1k.v (commit theorem-labs/oss-verify-proofs@6b32741d849a), with its module paths changed and its GetMaxUserVirtualAddress addresses moved to that function in libdiginet/fuzz_codec's asan-ubsan image (sha256 73109e32e77b...) by gen_ab1hk.py (sha256 0f51cb9cdb18); every fetched word checked equal. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_codec.asan-ubsan (libdiginet/fuzz_codec asan-ubsan) sha256 73109e32e77beff294d41ae6f16d607479ad1884485781b322645e6f8afa99c3; unstripped twin sha256 43feeaa314a42fe569b4443c710a74561e9077e617f7412cc54fbf4a6557b266 *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.

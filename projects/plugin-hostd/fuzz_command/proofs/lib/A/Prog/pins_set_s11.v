@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the last segment of pins_set's ASan walk, after cgif_file_fuzzer's cgif_close
-   walk, proofs/cgif/cgif_file_fuzzer/lib/A/ACh2.v .. ACh6.v at c8557374ad2e (a segment as one
+   walk, proofs/cgif/cgif_file_fuzzer/lib/A/ACh2.v .. ACh6.v at theorem-labs/oss-verify-proofs@6b32741d849a (a segment as one
    symbolic run from a re-seeded state, and the step through a call and back), over fuzz_command's recorder. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* `ps_seg_x4`: from the return of the fourth xstrdup (0x8c9a4) to the end of pins_set. The run stores the last
    copy into the slot (nargs := 4, args[3] := p; the two instrumented checks on the slot's words pass, because

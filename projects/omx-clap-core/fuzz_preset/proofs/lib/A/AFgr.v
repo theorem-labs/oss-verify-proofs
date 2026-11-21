@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFgr.v, with its module paths changed; its address literals moved to omx-clap-core/fuzz_preset's ASan build where h-mani-a2's maps/reloc-cgif-preset.A.tsv maps them; the literals it does not map are still cgif_file_fuzzer.asan's (listed in the commit that moved them). *)
-(* Modified by Theorem Labs, 2026-10-30: a Theorem Labs lane's B3 weakening of the Enqueue / DoRecycle walk premises (commits ba6af81cc6b + de1e889fb0f; proofs/cgif/cgif_file_fuzzer/lib/YFgr.v, file sha256 9e464f54cb7a) applied at A' by a 3-way merge: base = c5 8e0ff8e049b's YFgr.v relocated cgif -> A', theirs = de1e889fb0f's YFgr.v relocated the same way, ours = this file; 12 lines changed, no conflict; this file's #102 adaptations are kept. *)
+(* Modified by Theorem Labs, 2026-10-30: a Theorem Labs lane's B3 weakening of the Enqueue / DoRecycle walk premises (commits; proofs/cgif/cgif_file_fuzzer/lib/YFgr.v, file sha256 9e464f54cb7a) applied at A' by a 3-way merge: base = c5's YFgr.v relocated cgif -> A', theirs = a commit's YFgr.v relocated the same way, ours = this file; 12 lines changed, no conflict; this file's #102 adaptations are kept. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

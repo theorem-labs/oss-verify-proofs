@@ -31,13 +31,13 @@
    SECTION HYPOTHESES (exact text below)
    - LAWS : the core's AR laws (YCbq Section a0's hypothesis), as A5.v and ACtl.v:237.
    - none other: the kit's helpers (A.ACtlG.Kit.kit_wx, kit_segs_low) are cited inside RNIng.v's glue_rn_ing.
-     (On the glue base eb89fed7fac, where Kit.v did not compile, they were placeholders with the kit's text:
-     commits aa8ed9670fb / 18025d163cd.)
+     (On the glue base, where Kit.v did not compile, they were placeholders with the kit's text:
+     commits.)
 
    CLOSURE: every project Require is qualified; no statement names a frame-route identifier.  SHADOWED NAMES:
    getr / FPState / RunCeil are the core's lib.Reusable.YK11 / lib.Reusable.YM05 (RNIng.v's header says why).
 
-   BUILD STATE: on a working branch 1502cba0417 (no port_core_refused name in lib/A or lib/Reusable); the Require closure
+   BUILD STATE: on a working branch (no port_core_refused name in lib/A or lib/Reusable); the Require closure
    reaches no stand-in.  No Axiom, no Parameter, no unproved step. *)
 
 From Stdlib Require Import ZArith List Lia Permutation.

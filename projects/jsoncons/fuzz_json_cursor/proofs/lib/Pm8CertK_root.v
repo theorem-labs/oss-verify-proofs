@@ -1,64 +1,29 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the rseq-dependent auxv): changed JS_as0_root, cert_root, shape_root; planK_root moved to Pm8PlanK.v. *)
 From Stdlib Require Import ZArith NArith List Bool.
 From LinuxProcessSemantics.Riscv Require Import Instr.
 From OSSVerify.jsoncons.fuzz_json_cursor.images Require Import Asan.
-From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib Require Import AxSymExec3K AsanPlanCoreK AsanPlanK AsanPlanFastK AsanNodesExtraDefsK AsanInitK Pm8DefsK Pm8HSK_201 Pm8ResK.
+From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib Require Import AxSymExec3K AsanPlanCoreK AsanPlanK AsanPlanFastK AsanNodesExtraDefsK AsanInitK Pm8DefsK Pm8ResK Pm8PlanK Pm8HSK_201.
 Import ListNotations. Import AX2K. Import APCK. Import APK.
 Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
-Definition JS_as0_root (h : nat) : option acs := if Nat.eqb h 201 then Some HS_201 else None.
-Definition planK_root : plan :=
-  PRun [] (PX XIMemset []
-  (PRun [] (PX XEnvScan []
-  (PRun [] (PX XPnScan []
-  (PRun [] (PX XIMemcpy []
-  (PRun [] (PSys YSetTid
-  (PRun [] (PX XIMemcpy []
-  (PRun [0x133a84] (PExt 98 [ELit 0; ELit 0x6b0a90; ELit 8]
-  (PRun [0x93ca4] (PExt 97 []
-  (PRun [] (PMmap PContra
-  (PRun [] (PMmap PContra
-  (PRun [] (PMmap PContra
-  (PRun [0x92a6c] (PX XIStrncpy []
-  (PRun [0x92a6c] (PX XIStrncpy []
-  (PRun [] (PMmap PContra
-  (PRun [] (PX XIMemset []
-  (PRun [] (PX XIMemcpy []
-  (PRun [] (PX XIMemcpy []
-  (PRun [] (PX XIMemcpy []
-  (PRun [] (PX XIMemcpy []
-  (PRun [] (PX XIMemset []
-  (PRun [] (PX XIMemcpy []
-  (PRun [] (PX XIMemcpy []
-  (PRun [0x880a8] (PDropRange (escale 4096 (EVar 94)) (ELit 65536)
-  (PRun [0x880d0] (PDropRange (escale 4096 (EVar 94)) (ELit 65536)
-  (PRun [0x93ca4] (PExt 97 []
-  (PRun [] (PMmap PContra
-  (PRun [] (PMmap PContra
-  (PRun [0x9aacc] (PFresh 9 12 None
-  (PRun [] (PMmapIn PContra
-  (PRun [0x81d70] (PExt 95 []
-  (PRun [] (PX XMemset []
-  (PRun [] (PMmap PContra
-  (PRun [] (PMmap PContra
-  (PRun [] (PMmap PContra
-  (PRun [0x81d70] (PExt 95 []
-  (PRun [] (PX XMemset []
-  (PRun [] (PMmap PContra
-  (PRun [] (PX XIMemcpy []
-  (PRun [] (PX XIMemcpy []
-  (PRun [] (PX XMemIsZero []
-  (PRun [] (PX XMemset []
-  (PRun [] (PMmap PContra
-  (PRun [] (PMmap PContra
-  (PRun [] (PX XIMemcpy []
-  (PRun [] (PX XIMemcpy []
-  (PRun [] (PSys YMunmap
-  (PRun [0x9b000] (PHandoff 201)))))))))))))))))))))))))))))))))))) PContra))))))))))))))))))))))))))))))))))))))))))))))))))))))))).
 
-Definition shape_root : shape := (SHole 201).
-Lemma cert_root :
-  check ASEGS0 IT0 ASAN0 NX0 AsanInitK.LIMIT XN0 XE0 XB0 JS_as0_root KC0 BFUEL FUEL None asan0_init planK_root = COk shape_root.
-Proof. rewrite <- APKF.check_fast_eq. vm_cast_no_check (@eq_refl cres (COk shape_root)). Qed.
+(* STATEMENT CHANGED, old beside new: certified once PER CONFIG_RSEQ FLAG.
+     OLD  cert_root : check ... LIMIT XN0 ... asan0_init planK_root = COk shape_root
+     NEW  cert_root : forall b, check ... LIMIT (rseq_z b) XN0 ... (asan0_init (rseq_z b)) planK_root = COk (shape_root b)
+   The plan text moved to Pm8PlanK (fresh indices +4); [shape_root b] is the shape
+   the checker returns, computed per flag.  The proof destructs [b] ABOVE the
+   computation, so nothing is computed under an open binder. *)
+Definition JS_as0_root (b : bool) (h : nat) : option acs := if Nat.eqb h 201 then Some (HS_201 b) else None.
+Definition shape_root (b : bool) : shape :=
+  if b then ltac:(let s := eval vm_compute in (shape_of (chkK 1 (JS_as0_root true) (asan0_init 1) planK_root)) in exact s)
+  else ltac:(let s := eval vm_compute in (shape_of (chkK 0 (JS_as0_root false) (asan0_init 0) planK_root)) in exact s).
+Lemma cert_root : forall b,
+  check ASEGS0 IT0 ASAN0 NX0 AsanInitK.LIMIT (rseq_z b) XN0 XE0 XB0 (JS_as0_root b) KC0 BFUEL FUEL None (asan0_init (rseq_z b)) planK_root = COk (shape_root b).
+Proof.
+  intros [|]; rewrite <- APKF.check_fast_eq.
+  - vm_cast_no_check (@eq_refl cres (COk (shape_root true))).
+  - vm_cast_no_check (@eq_refl cres (COk (shape_root false))).
+Qed.

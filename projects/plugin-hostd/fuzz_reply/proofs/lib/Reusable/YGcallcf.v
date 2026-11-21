@@ -1,4 +1,4 @@
-(* CARRIED from commit a0fed4266a1b18b1453af093bfe2ee477dcbe241,
+(* CARRIED from
    proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcallcf.v, sha256 f26843de34bf8209d3b0733f995d869c8436f477f7f80e8473ab8926ba82e675.
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change
    made here is the module prefix OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib. *)
@@ -10,6 +10,7 @@
    REFLEXIVITY; QM := QM_cf, their STATE part (the new FA_GROW headroom + FA_GROW_MAX / 8, and cf_hull_ok), for the model
    laws; QMQ_cf (QMm_cf S mem -> QM_cf S) is a projection. QM_cf_of_room takes cf_hull_ok, as the layer's
    acall_pre_cf_intro does (abudget_room_cf and mroom_cf_of_live need it); QMm_cf_of_room adds the two memory facts. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the cf BRIDGE. Each call form of the second allocator instance (YG0dcf.v) IS the generic
    form of YGcallx.v at
      ARx  := fun ly S Hp W mem md => ARcf segs B ly S Hp W mem md,

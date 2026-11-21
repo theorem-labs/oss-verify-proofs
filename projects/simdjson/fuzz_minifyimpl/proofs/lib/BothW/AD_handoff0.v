@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: argv's strings are read from the launch's own block image at its top (InitMem's img_pieces), each with its bytes up to the next 8-byte boundary, and the old layout's argv pointer lemma is removed. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -377,17 +378,6 @@ Section HandoffFacts2.
   Qed.
 
   (* [comment removed for export] *)
-  Lemma argv_ptrs_init :
-       bytes_at bsegs m (usp + 8) (word_to_le_bytes 8 (Z_to_bv 64 (32768 * V 0%nat + (8 * V 1%nat + (8 * V 2%nat + (16 * V 6%nat + 4096 * V 10%nat))) + 184)))
-    /\ bytes_at bsegs m (usp + 16) (word_to_le_bytes 8 (Z_to_bv 64
-         (Z.b2z ((1 mod two64) <? (V 1%nat mod two64)) * (32768 * V 0%nat + (8 * V 1%nat + (8 * V 2%nat + (V 3%nat + (16 * V 6%nat + 4096 * V 10%nat)))) + 185)))).
-  Proof.
-    clear HAT. split.
-    - mf V m HM (MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit 8)) 8 (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 184))) H. exact H.
-    - mf V m HM (MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit 16)) 8 (ZMul (ZLtu (ZLit 1) (ZV 1)) (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZV 3) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10))))))) (ZLit 185)))) H. exact H.
-  Qed.
-
-  (* [comment removed for export] *)
   Lemma stack_shclean_init : forall lo hi RLO RHI,
     ATOP <= RLO -> RLO <= lo -> lo < hi -> hi <= RHI -> hi + 8 <= KEND -> RHI <= KEND -> RLO mod 64 = 0 -> RHI mod 64 = 0 ->
     shclean m lo hi RLO RHI.
@@ -430,79 +420,76 @@ Proof.
   unfold mrd. rewrite (AG (a + Z.of_nat i)) by lia. apply (H i Hi).
 Qed.
 
+(* LPS 727298f3: argv's strings at the TOP of the launch block (Lib/InitMem's [str_base], argv[0] at
+   [MainEntryBoth.str0_of]), each with the bytes after its NUL up to the next 8-byte boundary: those lie in
+   the envp strings, the exec file name and the eight NUL bytes under the stack VMA's end, so in the
+   block; the memory holds the launch's own image there ([BothMainU.main_hidden]) *)
 Section StringBlock.
-  Variables (sp : word) (argv envp : list (list byte)) (uid hw : word) (draw : EntryDraw) (m : word -> option byte).   (* [comment removed for export] *)
+  Variables (inp : ProcInput) (mbase sp : word) (draw : EntryDraw).
   Notation usp := (bv_unsigned sp).
-  Notation m0 := (wrap_mem b_phdrs sp argv envp uid hw draw).
-  (* [comment removed for export] *)
-  Definition SBLK : list byte := flatten_strings argv ++ flatten_strings envp ++ repeat (Z_to_bv 8 0) (Z.to_nat (pad_len argv envp)).
-  Notation SB := (str_base sp argv envp).
-  Lemma SBLK_length : Z.of_nat (length SBLK) = total_arg_bytes argv + total_arg_bytes envp + pad_len argv envp.
+  Notation top := (ed_top draw).
+  Notation utop := (bv_unsigned (ed_top draw)).
+  Notation argv := (in_argv inp).
+  Notation envp := (in_envp inp).
+  Notation execfn := (in_execfn inp).
+  Notation entry := (Z_to_bv 64 (Z.of_N b_init_pc)).
+  Notation img := (build_stack_bytes (launch_auxv inp sp mbase) b_phdrs entry sp top argv envp execfn
+                     (in_uid inp) (in_gid inp) (in_hwcap inp) draw).
+  Notation m0 := (wrap_mem inp mbase b_phdrs entry sp draw).
+  Notation SB := (str_base top argv envp execfn).
+
+  Lemma img_len : geom_ok (kb_rseq (in_kernel inp)) sp top argv envp execfn ->
+    Z.of_nat (length img) = utop - usp.
   Proof.
-    unfold SBLK. rewrite !length_app, repeat_length. pose proof (flatten_strings_length argv). pose proof (flatten_strings_length envp).
-    pose proof (raw_len_nonneg argv envp). lia.
+    intros GEOM. exact (img_length (launch_auxv inp sp mbase) b_phdrs entry sp top argv envp execfn
+                          (in_uid inp) (in_gid inp) (in_hwcap inp) draw GEOM).
   Qed.
 
-  Hypothesis SPLO : stack_max_size <= usp.
-  Hypothesis IMGHI : usp + Z.of_nat (length (entry_stack_image b_phdrs sp argv envp uid hw draw)) <= 2^64.
-  Hypothesis SP16 : usp mod 16 = 0.
-  Hypothesis VARGV : valid_argv argv.
-  (* [comment removed for export] *)
-  Hypothesis HID : forall z, SB <= z < SB + Z.of_nat (length SBLK) -> m (wa z) = m0 (wa z).
-
-  Lemma SBLK_mod8 : (SB + Z.of_nat (length SBLK)) mod 8 = 0 /\ SB mod 8 = 0.
+  Lemma img_at : geom_ok (kb_rseq (in_kernel inp)) sp top argv envp execfn -> utop <= 2^47 ->
+    bytes_at bsegs m0 usp img.
   Proof.
-    clear SPLO IMGHI VARGV HID. rewrite SBLK_length. unfold str_base, struct_size, pad_len, raw_len, struct_size, Lib.InitMem.argc, Lib.InitMem.envc.
-    pose proof (raw_len_nonneg argv envp) as (R1 & R2 & R3 & R4). unfold struct_size, Lib.InitMem.argc, Lib.InitMem.envc in R1.
-    split; Z.div_mod_to_equations; lia.
+    intros GEOM TOPHI. pose proof (img_len GEOM) as BL.
+    apply (init_stack_bytes bsegs inp mbase b_phdrs entry sp draw).
+    change (entry_stack_image inp mbase b_phdrs entry sp draw) with img. lia.
   Qed.
 
-  Lemma SBLK_at : bytes_at bsegs m SB SBLK.
-  Proof.
-    eapply bytes_at_agree; [| exact HID].
-    pose proof (init_stack_bytes bsegs b_phdrs sp argv envp uid hw draw SPLO IMGHI) as B. rewrite build_stack_bytes_eq in B.
-    unfold raw_bytes in B. set (U := u64s _) in B. set (FA := flatten_strings argv) in B. set (FE := flatten_strings envp) in B.
-    set (PAD := repeat _ _) in B. set (RND := rnd_bytes draw) in B.
-    replace ((U ++ FA ++ FE) ++ PAD ++ RND) with (U ++ ((FA ++ FE ++ PAD) ++ RND)) in B by (rewrite <- !app_assoc; reflexivity).
-    apply bytes_at_app in B. destruct B as [_ B]. apply bytes_at_app in B. destruct B as [B _].
-    assert (LU : Z.of_nat (length U) = struct_size argv envp).
-    { subst U. rewrite u64s_length. cbn [length]. rewrite !length_app. cbn [length].
-      unfold argv_ptrs, envp_ptrs. rewrite !map_length, !str_ptrs_length.
-      match goal with |- context [length (auxv_words ?a ?b ?c ?d ?e ?f)] => change (length (auxv_words a b c d e f)) with 20%nat end.
-      unfold struct_size, Lib.InitMem.argc, Lib.InitMem.envc. lia. }
-    unfold SBLK. subst FA FE PAD. replace SB with (usp + Z.of_nat (length U)); [exact B|].
-    unfold str_base. lia.
-  Qed.
-
-  (* [comment removed for export] *)
-  Lemma arg_string : forall i s, nth_error argv i = Some s ->
+  Lemma arg_string : forall (m : word -> option byte),
+    geom_ok (kb_rseq (in_kernel inp)) sp top argv envp execfn -> utop <= 2^47 -> utop mod 8 = 0 ->
+    (forall z, SB <= z < utop -> m (wa z) = m0 (wa z)) ->
+    forall i s, nth_error argv i = Some s ->
     exists off, nth_error (str_ptrs SB argv) i = Some (SB + off) /\ 0 <= off /\
       let P := SB + off in
       let k := (- (P + Z.of_nat (length s) + 1)) mod 8 in
-      exists slack : list byte, zlength slack = k /\ P + Z.of_nat (length s) + 1 + k <= SB + Z.of_nat (length SBLK)
+      exists slack : list byte, zlength slack = k /\ P + Z.of_nat (length s) + 1 + k <= utop - 8
         /\ bytes_at bsegs m P (s ++ Z_to_bv 8 0 :: slack).
   Proof.
-    intros i s Hn. destruct (str_ptrs_nth argv SB i s Hn) as (off & Hp & Ho & Ht & Hf).
+    intros m GEOM TOPHI TOP8 HID i s Hn. destruct (str_ptrs_nth argv SB i s Hn) as (off & Hp & Ho & Ht & Hf).
     exists off. split; [exact Hp|]. split; [exact Ho|]. cbv zeta.
-    pose proof SBLK_mod8 as [M1 M2]. pose proof SBLK_length as SL. pose proof (raw_len_nonneg argv envp) as (R1 & R2 & R3 & R4).
-    set (k := (- (SB + off + Z.of_nat (length s) + 1)) mod 8).
-    assert (Hk : 0 <= k < 8) by (subst k; Z.div_mod_to_equations; lia).
-    assert (FIT : SB + off + Z.of_nat (length s) + 1 + k <= SB + Z.of_nat (length SBLK)).
-    { subst k. Z.div_mod_to_equations. nia. }
-    exists (firstn (Z.to_nat k) (skipn (Z.to_nat off + (length s + 1)) SBLK)).
-    assert (LS : (Z.to_nat off + (length s + 1) + Z.to_nat k <= length SBLK)%nat) by lia.
-    split. { unfold zlength. rewrite firstn_length, length_skipn. lia. }
-    split; [exact FIT|].
-    pose proof (bytes_at_slice bsegs b_phdrs sp argv envp uid hw draw m SB SBLK (Z.to_nat off) (length s + 1 + Z.to_nat k) SBLK_at ltac:(lia)) as B.
-    rewrite Z2Nat.id in B by lia. rewrite firstn_add_split in B. rewrite skipn_skipn in B || rewrite <- skipn_add in B || idtac.
-    eapply bytes_at_ext; [exact B|].
-    replace (length s + 1 + Z.to_nat off)%nat with (Z.to_nat off + (length s + 1))%nat by lia.
-    replace (firstn (length s + 1) (skipn (Z.to_nat off) SBLK)) with (s ++ [Z_to_bv 8 0]); [rewrite <- app_assoc; reflexivity|].
-    (* [comment removed for export] *)
-    symmetry. unfold SBLK. rewrite skipn_app, firstn_app.
-    pose proof (flatten_strings_length argv) as FL.
-    rewrite Hf. rewrite length_skipn.
-    replace (length s + 1 - (length (flatten_strings argv) - Z.to_nat off))%nat with 0%nat by lia. cbn [firstn]. apply app_nil_r.
+    pose proof (img_len GEOM) as BL. pose proof (img_at GEOM TOPHI) as IMG.
+    pose proof (flatten_strings_length argv) as L1. pose proof (lsb_eq argv envp execfn) as LE.
+    pose proof (total_arg_bytes_nonneg envp) as TE.
+    pose proof (str_base_ge _ _ _ _ _ _ GEOM) as SBG.
+    pose proof (head_len_eq (kb_rseq (in_kernel inp)) argv envp) as HLE.
+    unfold Lib.InitMem.argc, Lib.InitMem.envc, gap_len in HLE.
+    assert (HK : 0 <= (- (SB + off + Z.of_nat (length s) + 1)) mod 8 < 8) by (apply Z.mod_pos_bound; lia).
+    assert (HE : SB + off + Z.of_nat (length s) + 1 + (- (SB + off + Z.of_nat (length s) + 1)) mod 8 <= utop - 8).
+    { unfold str_base, lsb in *. Z.div_mod_to_equations. lia. }
+    set (e := SB + off + Z.of_nat (length s) + 1) in *.
+    set (k := (- e) mod 8) in *.
+    exists (firstn (Z.to_nat k) (skipn (Z.to_nat (e - usp)) img)).
+    assert (LS : length (firstn (Z.to_nat k) (skipn (Z.to_nat (e - usp)) img)) = Z.to_nat k).
+    { rewrite length_firstn, length_skipn. lia. }
+    split; [unfold zlength; rewrite LS; lia|]. split; [lia|].
+    destruct (img_pieces bsegs (launch_auxv inp sp mbase) b_phdrs entry sp top argv envp execfn
+                (in_uid inp) (in_gid inp) (in_hwcap inp) draw m0 IMG GEOM) as (_ & _ & _ & _ & _ & B6 & _).
+    pose proof (bytes_at_slice bsegs m0 SB (flatten_strings argv) (Z.to_nat off) (length s + 1) B6 ltac:(lia)) as BS.
+    rewrite Hf in BS. replace (SB + Z.of_nat (Z.to_nat off)) with (SB + off) in BS by lia.
+    pose proof (bytes_at_slice bsegs m0 usp img (Z.to_nat (e - usp)) (Z.to_nat k) IMG ltac:(lia)) as BK.
+    replace (usp + Z.of_nat (Z.to_nat (e - usp))) with (SB + off + Z.of_nat (length (s ++ [Z_to_bv 8 0]))) in BK
+      by (rewrite length_app; cbn [length]; subst e; lia).
+    pose proof (proj2 (bytes_at_app bsegs m0 (SB + off) _ _) (conj BS BK)) as BB. rewrite <- app_assoc in BB. cbn [app] in BB.
+    eapply bytes_at_agree; [exact BB|]. intros z Hz. apply HID.
+    rewrite length_app in Hz; cbn [length] in Hz. rewrite LS in Hz. subst e. lia.
   Qed.
 End StringBlock.
 (* [comment removed for export] *)
@@ -594,32 +581,21 @@ Section VisRng.
 End VisRng.
 (* [comment removed for export] *)
 Section ArgPack.
-  Variables (V : nat -> Z) (sp : word) (argv envp : list (list byte)) (uid hw : word) (draw : EntryDraw) (m : word -> option byte).
+  Variables (V : nat -> Z) (inp : ProcInput) (mbase sp : word) (draw : EntryDraw) (m : word -> option byte).
   Notation usp := (bv_unsigned sp).
-  Notation SB := (str_base sp argv envp).
-  Hypothesis HM : Forall (mfact_ok bsegs V m) both_mem_facts.
-  Hypothesis HP : Forall (pfact_ok V) both_pure_facts.
-  Hypothesis SPLO : stack_max_size <= usp.
-  Hypothesis IMGHI : usp + Z.of_nat (length (entry_stack_image b_phdrs sp argv envp uid hw draw)) <= 2^64.
-  Hypothesis SP16 : usp mod 16 = 0.
-  Hypothesis SPW : ATOP + 8388608 <= usp.
-  Hypothesis HAT : 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat - 8388608 = ATOP.
-  Hypothesis FITS : usp + entry_stack_span argv envp <= 2^47.
-  Hypothesis VARGV : valid_argv argv.
-  Hypothesis HID : forall z, SB <= z < SB + Z.of_nat (length (SBLK argv envp)) -> m (wa z) = wrap_mem b_phdrs sp argv envp uid hw draw (wa z).
+  Notation utop := (bv_unsigned (ed_top draw)).
+  Notation argv := (in_argv inp).
+  Notation SB := (str_base (ed_top draw) (in_argv inp) (in_envp inp) (in_execfn inp)).
 
   Definition round_dn64 (x : Z) : Z := x / 64 * 64.
   Definition round_up64 (x : Z) : Z := (x + 63) / 64 * 64.
 
-  Lemma span_ge : SB + Z.of_nat (length (SBLK argv envp)) + 16 <= usp + entry_stack_span argv envp /\ usp + 192 <= SB.   (* [comment removed for export] *)
-  Proof.
-    clear HM HP SPLO IMGHI SP16 SPW FITS HID. rewrite SBLK_length. unfold str_base, struct_size, Lib.InitMem.argc, Lib.InitMem.envc, entry_stack_span, pad_len, raw_len, struct_size, Lib.InitMem.argc, Lib.InitMem.envc.
-    pose proof (raw_len_nonneg argv envp) as (R1 & R2 & R3 & R4). unfold pad_len, raw_len, struct_size, Lib.InitMem.argc, Lib.InitMem.envc in R4.
-    destruct VARGV as (A1 & _). change (Z.of_nat auxv_size) with 160.   (* [comment removed for export] *)
-    split; [| lia]. Z.div_mod_to_equations. lia.
-  Qed.
-
-  Lemma arg_pack : forall i s, nth_error argv i = Some s ->
+  Lemma arg_pack :
+    Forall (mfact_ok bsegs V m) both_mem_facts -> Forall (pfact_ok V) both_pure_facts ->
+    ATOP + 8388608 <= usp -> 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat - 8388608 = ATOP ->
+    geom_ok (kb_rseq (in_kernel inp)) sp (ed_top draw) argv (in_envp inp) (in_execfn inp) -> utop <= 2^47 -> utop mod 8 = 0 ->
+    (forall z, SB <= z < utop -> m (wa z) = wrap_mem inp mbase b_phdrs (Z_to_bv 64 (Z.of_N b_init_pc)) sp draw (wa z)) ->
+    forall i s, nth_error argv i = Some s ->
     exists off (slack : list byte) (r : region),
       nth_error (str_ptrs SB argv) i = Some (SB + off) /\ 0 <= off
       /\ bytes_at bsegs m (SB + off) (s ++ Z_to_bv 8 0 :: slack)
@@ -630,12 +606,14 @@ Section ArgPack.
       /\ usp + -112 <= r_rlo r /\ ATOP <= r_rlo r /\ r_rhi r <= 2^47
       /\ SB + off + Z.of_nat (length s) + 1 + zlength slack <= 2^47.
   Proof.
-    intros i s Hn.
-    destruct (arg_string sp argv envp uid hw draw m SPLO IMGHI SP16 HID i s Hn) as (off & Hp & Ho & slack & SL & FIT & BY).
+    intros HM HP SPW HAT GEOM TOPHI TOP8 HID i s Hn.
+    destruct (arg_string inp mbase sp draw m GEOM TOPHI TOP8 HID i s Hn) as (off & Hp & Ho & slack & SL & FIT & BY).
     cbv zeta in SL, FIT.
-    pose proof span_ge as [SG1 SG2]. pose proof (SBLK_mod8 sp argv envp SP16) as [M1 M2]. atop_facts.
+    pose proof (str_base_ge _ _ _ _ _ _ GEOM) as SBG.
+    pose proof (head_len_eq (kb_rseq (in_kernel inp)) argv (in_envp inp)) as HLE.
+    unfold Lib.InitMem.argc, Lib.InitMem.envc, gap_len in HLE. atop_facts.
     assert (LS : 0 <= zlength slack) by (unfold zlength; lia).
-    assert (HE : SB + off + Z.of_nat (length s) + 1 + zlength slack <= 2^47 - 16) by lia.
+    assert (HE : SB + off + Z.of_nat (length s) + 1 + zlength slack <= 2^47 - 8) by lia.
     assert (D1 : SB + off - 63 <= round_dn64 (SB + off) <= SB + off /\ round_dn64 (SB + off) mod 64 = 0) by (unfold round_dn64; Z.div_mod_to_equations; lia).
     assert (U1 : SB + off + Z.of_nat (length s) + 1 + zlength slack <= round_up64 (SB + off + Z.of_nat (length s) + 1 + zlength slack) <= 2^47
                  /\ round_up64 (SB + off + Z.of_nat (length s) + 1 + zlength slack) mod 64 = 0) by (unfold round_up64; Z.div_mod_to_equations; lia).

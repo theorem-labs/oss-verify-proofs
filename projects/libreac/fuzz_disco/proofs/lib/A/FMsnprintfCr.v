@@ -1,4 +1,4 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfCr.v (a working branch 3e35620c52e); relocated to libreac/fuzz_disco.asan by reloc.py (target disco-A): module paths changed; 7 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table: this file's rows in provenance/evidence/g9-gxa/g9tool/g9-table-disco-A.tsv). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfCr.v (a working branch); relocated to libreac/fuzz_disco.asan by reloc.py (target disco-A): module paths changed; 7 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table: this file's rows in provenance/evidence/g9-gxa/g9tool/g9-table-disco-A.tsv). *)
 (* The read-only constants of fm's snprintf chain: cr = fm's non-writable segments (the same expression as Pcommon's
    RT_pf_shU.PCM_CR), with its bounds (fm_cr_bounds, fm_cr_in_image), the static side condition GXA's seam asks of a
    contract's constant list (FMgxaSeamNorm.ro_covered), and consts_view over it from the harness's two read-only views

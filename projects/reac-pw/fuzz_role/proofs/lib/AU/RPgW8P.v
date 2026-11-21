@@ -1,40 +1,41 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: restates text of proofs/reac-pw/fuzz_role/lib/A/RPgX01.v at 9bffaa83ff88
+(* Modified by Theorem Labs, 2026-10: restates text of proofs/reac-pw/fuzz_role/lib/A/RPgX01.v
    [Apache-2.0] (rx_reg_atom / rx_reg_ext / rx_ew_reg / rx_st_region / rx_chunk_zero / rx_flag0_of, the saved-slot
    chunk list rx_sv_chunks, the numeral tactics z5 / z5g and the flag-store tactic rx_run_flag, which passes
-   aj_flag_store its sixteen journal arguments) and of proofs/reac-pw/fuzz_role/lib/A/RPgCheck.v at 77f59d02b018
+   aj_flag_store its sixteen journal arguments) and of proofs/reac-pw/fuzz_role/lib/A/RPgCheck.v
    [Apache-2.0] (the shape of a `ret` leaf into a callee post), for reac-pw/fuzz_rate's image A: the walk is
    check_csv's release and epilogue, the side-stack class is 2 instead of 3, and the post is RtPgCSpec.rt_cpost_o,
    whose owned-set conjunct is discharged from the cut's layout, chunk and frame equalities. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_rate/lib/A/RtPgCcsvS3.v, with its module names changed; 147 of its 171 lines of code are new or changed and 302 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW5Int.v at 3e85ad4cf5dd for reac-pw/fuzz_rate's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW5Int.v for reac-pw/fuzz_rate's
    image A: the run is the first run of the piece "write + record" (J 0x81e00 -> __asan_memcpy 0x51860) and its
    statement is lib/A/RtPgW8Kit.v's rw8_runA_stmt (post RtPgSteps.rts_post); the start state adds the frame for
    locals (e's type and size at F + 0xf0 / F + 0xf4, read through s3 = F + 0xe0) and two capacity conditions; the
    eight bytes written are read back as e->size and e->type (the second word carries the engine's sign extension). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW8A.v and lib/A/RtPgW8B.v at 8f1d7a0a9084 for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW8A.v and lib/A/RtPgW8B.v for
    the same unit's image B (fuzz_rate.asan-ubsan): the run is lib/AU/RtPgBW8Kit.v's run P (J 0x820dc -> pod_write_ent
    0x83cc4, statement rbw8_runP_stmt, post RtPgStepsB.rtsb_post); the prefix rw8_ becomes rbw8_, RtPgMem's rtm_ becomes
    RtPgMemB's rtmb_ and RtPgSteps' rts_ becomes RtPgStepsB's rtsb_; the start state is image B's (the shadow address of
    pp->len is the frame cell R+0x170, no byte is written, the capacity guard reads len + 112). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_rate/lib/AU/RtPgBW8P.v, with its module paths, module names and addresses changed; 71 of its 173 lines of code are new or changed and 69 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW5Int.v at 3e85ad4cf5dd for reac-pw/fuzz_rate's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW5Int.v for reac-pw/fuzz_rate's
    image A: the run is the first run of the piece "write + record" (J 0x81e00 -> __asan_memcpy 0x51860) and its
    statement is lib/A/RtPgW8Kit.v's rw8_runA_stmt (post RtPgSteps.rts_post); the start state adds the frame for
    locals (e's type and size at F + 0xf0 / F + 0xf4, read through s3 = F + 0xe0) and two capacity conditions; the
    eight bytes written are read back as e->size and e->type (the second word carries the engine's sign extension). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW8A.v and lib/A/RtPgW8B.v at 8f1d7a0a9084 for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW8A.v and lib/A/RtPgW8B.v for
    the same unit's image B (fuzz_rate.asan-ubsan): the run is lib/AU/RtPgBW8Kit.v's run P (J 0x820dc -> pod_write_ent
    0x83cc4, statement rbw8_runP_stmt, post RtPgStepsB.rtsb_post); the prefix rw8_ becomes rbw8_, RtPgMem's rtm_ becomes
    RtPgMemB's rtmb_ and RtPgSteps' rts_ becomes RtPgStepsB's rtsb_; the start state is image B's (the shadow address of
    pp->len is the frame cell R+0x170, no byte is written, the capacity guard reads len + 112). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgBW8P.v at 6c65f5a5cf5c for reac-pw/fuzz_role's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgBW8P.v for reac-pw/fuzz_role's
    image B (fuzz_role.asan-ubsan): module paths fuzz_rate -> fuzz_role, the segments lib/AU/Img0.v rsegs; the prefix
    rbw8_ becomes w8_, RtPgMemB's rtmb_ becomes RPgMem's rm_ and RtPgStepsB's rtsb_ becomes RPgSteps' rl_; the run is
    role B's (J 0x818d8 -> pod_write_ent 0x82bac): the check's branch is one `bnez` to the error path 0x827f4, the
    shadow address of pp->len is the cell R+0x148, pp is in a5 and &pp->len in s6, &e62 is read from the cell R+0x158
    (a fourth atom), the two moves s8 := a3 and s2 := t1 and `li s4,1` are new and named in the post. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_role image B (fuzz_role.asan-ubsan, pinned sha256
    b255d4935da5af137a3967dbe33380ea43be8e78bfe05d1e356e0a2be8a69ff0; addresses measured on the unstripped twin
    dc791783f32962615e18a5f5cffae758ba56eb5dc87f70913c3579b101b4406a): run P of the walk piece "write + record" of

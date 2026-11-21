@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the new auxv for both values of the CONFIG_RSEQ flag, the vDSO and the 6144513-byte init stack window). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -16,7 +17,7 @@ From Stdlib Require ZArith NArith List Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType StackLayout State Run.
 From LinuxProcessSemantics.EquivalenceDefinition Require Equivalence.
 From OSSVerify.bzip2.bzip2_compress_target.images Require Plain.
-From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib Require S0World RunW.
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib Require S0World RunW ModelAmb.
 From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Lib Require CpsOpen.
 Module S0WorldVM.
 (* [comment removed for export] *)
@@ -35,23 +36,23 @@ Import OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Lib.CpsOpen.
 
 (* [comment removed for export] *)
 Definition target_vmx (sp0 gm area brkv mas : Z) (VM : VmMaps) : Prop :=
-  exists (brk0 mbase : word), valid_brk Plain.M.loaded_segments brk0 /\
+  exists (brk0 mbase : word) (rs : list (word * word)), valid_brk Plain.M.loaded_segments brk0 /\
   ( (mas = 0 /\ area = bv_unsigned brk0 + 4096 /\ brkv = bv_unsigned brk0 + 8192 /\
      exists (maps na : list (word * word)),
-       VM = mkVmMapsFull (segments_reserved Plain.M.loaded_segments)
+       VM = mkVmMapsFull rs
               ((Z_to_bv 64 gm, Z_to_bv 64 69632) :: maps) na brk0 (Z_to_bv 64 (bv_unsigned brk0 + 8192))
               source_alloc_limit mbase (Z_to_bv 64 sp0)
        /\ ((maps = [(brk0, Z_to_bv 64 8192)] /\ (na = [] \/ na = [(brk0, Z_to_bv 64 4096)]))
            \/ (maps = [(Z_to_bv 64 (bv_unsigned brk0 + 4096), Z_to_bv 64 4096)] /\ na = [])))
   \/ (mas = 1 /\ brkv = 2 ^ 64 - 1 /\ exists a : word, area = bv_unsigned a + 4096 /\
-       VM = mkVmMapsFull (segments_reserved Plain.M.loaded_segments)
+       VM = mkVmMapsFull rs
               [(Z_to_bv 64 gm, Z_to_bv 64 69632); (a, Z_to_bv 64 8192)] [(a, Z_to_bv 64 4096)] brk0 brk0
               source_alloc_limit mbase (Z_to_bv 64 sp0))).
 
 Lemma target_vmx_init_sp : forall sp0 gm area brkv mas VM,
   target_vmx sp0 gm area brkv mas VM -> vm_init_sp VM = Z_to_bv 64 sp0.
 Proof.
-  (intros sp0 gm area brkv mas VM; cps_intros (brk0 & mbase & _ & [(_ & _ & _ & maps & na & -> & _)|(_ & _ & a & _ & ->)])); reflexivity.
+  (intros sp0 gm area brkv mas VM; cps_intros (brk0 & mbase & rs & _ & [(_ & _ & _ & maps & na & -> & _)|(_ & _ & a & _ & ->)])); reflexivity.
 Qed.
 
 Lemma target_vmx_alloc_top : forall sp0 gm area brkv mas VM,
@@ -67,14 +68,44 @@ Qed.
 Section AuxV.
 Context {RUNW__ : RunW}.
 
+(* LPS 08b1429: the auxv as [StackLayout.auxv_entries] writes it.  24 fixed-key pairs come first
+   (AT_SYSINFO_EHDR 33 .. AT_SECURE 23), then AT_RANDOM (25) and AT_EXECFN (31); the two
+   AT_RSEQ_* pairs (27, 28) follow only when the kernel build has CONFIG_RSEQ, then AT_NULL.
+   musl's [__init_malloc] walks every key up to AT_NULL, so both layouts are carried: the
+   vector ends at [av + 432] (27 pairs) or at [av + 464] (29 pairs). *)
+Definition auxv_cells (M : word -> option byte) (av rnd : Z) : Prop :=
+    cell M av 8 33 /\ cell M (av + 16) 8 40 /\ cell M (av + 32) 8 41 /\ cell M (av + 48) 8 42 /\
+    cell M (av + 64) 8 43 /\ cell M (av + 80) 8 44 /\ cell M (av + 96) 8 45 /\ cell M (av + 112) 8 46 /\
+    cell M (av + 128) 8 47 /\ cell M (av + 144) 8 51 /\ cell M (av + 160) 8 16 /\ cell M (av + 176) 8 6 /\
+    cell M (av + 192) 8 17 /\ cell M (av + 208) 8 3 /\ cell M (av + 224) 8 4 /\ cell M (av + 240) 8 5 /\
+    cell M (av + 256) 8 7 /\ cell M (av + 272) 8 8 /\ cell M (av + 288) 8 9 /\ cell M (av + 304) 8 11 /\
+    cell M (av + 320) 8 12 /\ cell M (av + 336) 8 13 /\ cell M (av + 352) 8 14 /\ cell M (av + 368) 8 23 /\
+    cell M (av + 384) 8 25 /\ cell M (av + 392) 8 rnd /\ cell M (av + 400) 8 31 /\
+    ((cell M (av + 416) 8 27 /\ cell M (av + 432) 8 28 /\ cell M (av + 448) 8 0) \/ cell M (av + 416) 8 0).
+
 Definition auxv0 (sp0 : Z) (M : word -> option byte) : Prop :=
   exists av rnd : Z,
-    cell M 0x5a978 8 av /\
-    cell M av 8 3 /\ cell M (av + 16) 8 4 /\ cell M (av + 32) 8 5 /\ cell M (av + 48) 8 16 /\
-    cell M (av + 64) 8 6 /\ cell M (av + 80) 8 11 /\ cell M (av + 96) 8 12 /\ cell M (av + 112) 8 23 /\
-    cell M (av + 128) 8 25 /\ cell M (av + 136) 8 rnd /\ cell M (av + 144) 8 0 /\
+    cell M 0x5a978 8 av /\ auxv_cells M av rnd /\
     cell M (rnd + 8) 8 run_secret /\
-    sp0 <= av /\ av + 160 <= 2 ^ 64 /\ sp0 <= rnd + 8 /\ rnd + 16 < 2 ^ 64.
+    sp0 <= av /\ av + 464 <= 2 ^ 64 /\ sp0 <= rnd + 8 /\ rnd + 16 < 2 ^ 64.
+
+(* the auxv cells move with a memory that agrees on [av .. av + 464) *)
+Lemma auxv_cells_agree : forall M M' av rnd,
+  auxv_cells M av rnd -> 0 <= av -> av + 464 <= 2 ^ 64 ->
+  (forall i, av <= i < av + 464 -> M' (Z_to_bv 64 i) = M (Z_to_bv 64 i)) ->
+  auxv_cells M' av rnd.
+Proof.
+  intros M M' av rnd H Ha Hb Hag. unfold auxv_cells in *.
+  assert (CA : forall k v, 0 <= k -> k + 8 < 464 -> cell M (av + k) 8 v -> cell M' (av + k) 8 v)
+    by (intros k v Hk1 Hk2 Hc; eapply cell_agree; [cbn; lia | lia | intros i Hi; cbn in Hi; apply Hag; lia | exact Hc]).
+  assert (CA0 : forall v, cell M av 8 v -> cell M' av 8 v)
+    by (intros v Hc; rewrite <- (Z.add_0_r av) in Hc |- *; apply CA; [lia | lia | exact Hc]).
+  repeat match goal with H : _ /\ _ |- _ => destruct H end.
+  repeat match goal with |- _ /\ _ => split end;
+    try (apply CA0; assumption); try (apply CA; [lia | lia | assumption]).
+  match goal with H : _ \/ _ |- _ => destruct H as [(T1 & T2 & T3) | T1] end;
+    [left; repeat split; apply CA; first [lia | assumption] | right; apply CA; first [lia | assumption]].
+Qed.
 
 (* [comment removed for export] *)
 Lemma auxv0_agree : forall sp0 M M',
@@ -84,10 +115,12 @@ Lemma auxv0_agree : forall sp0 M M',
   0 <= sp0 ->
   auxv0 sp0 M'.
 Proof.
-  (intros sp0 M M'; cps_intros (av & rnd & C0 & C1 & C2 & C3 & C4 & C5 & C6 & C7 & C8 & C9 & C10 & C11 & SB & B1 & B2 & B3 & B4); intros AB AL SP).
+  (intros sp0 M M'; cps_intros (av & rnd & C0 & AC & SB & B1 & B2 & B3 & B4); intros AB AL SP).
   exists av, rnd.
-  repeat match goal with |- _ /\ _ => split end; try lia;
-    try (eapply cell_agree; [ | | | eassumption]; [cbn; lia | lia | intros i Hi; cbn in Hi; first [apply AB; lia | apply AL; lia]]).
+  split; [eapply cell_agree; [cbn; lia | lia | intros i Hi; cbn in Hi; apply AL; lia | exact C0]|].
+  split; [apply (auxv_cells_agree M M' av rnd AC); [lia | lia | intros i Hi; apply AB; lia]|].
+  split; [eapply cell_agree; [cbn; lia | lia | intros i Hi; cbn in Hi; apply AB; lia | exact SB]|].
+  lia.
 Qed.
 End AuxV.
 End S0WorldVM.
@@ -115,10 +148,17 @@ Definition hdr_cfg (content : list byte) : Z := hdr_b0 content + 256 * hdr_b1 co
 Definition hdr_cfglen (content : list byte) : Z := hdr_cfg content mod 32768.
 Definition hdr_paylen (content : list byte) : Z := Z.of_nat (length content) - 6 - hdr_cfglen content.
 
-(* [comment removed for export] *)
-Definition stack_writableZ (M : word -> option byte) (sp0 : Z) : Prop :=
+(* LPS 75d69e00 (#38): the OLD 8 MiB span, kept for reference and used by nothing.  FALSE for
+   some launches: init maps only [stack_window_depth] = 6144513 bytes below sp, and
+   [store_ok] needs mapped bytes.  See [S0ReadBase.stack_writable]. *)
+Definition stack_writableZ_8M (M : word -> option byte) (sp0 : Z) : Prop :=
   forall d m, 0 <= d -> d + Z.of_nat m <= 8388608 ->
     store_ok RSEGS M (Z_to_bv 64 (sp0 - 8388608 + d)) m = true.
+
+(* The writable span #38's init guarantees: [kn_stack]'s 6144513. *)
+Definition stack_writableZ (M : word -> option byte) (sp0 : Z) : Prop :=
+  forall d m, 0 <= d -> d + Z.of_nat m <= 6144513 ->
+    store_ok RSEGS M (Z_to_bv 64 (sp0 - 6144513 + d)) m = true.
 
 (* [comment removed for export] *)
 Record target_pre (sp0 gm area brkv mas tid hw : Z) (content : list byte)
@@ -163,7 +203,9 @@ Inductive seps : list (word * word) -> Prop :=
 
 (* [comment removed for export] *)
 Record target_vm (gm area : Z) (VM : VmMaps) : Prop := TARGET_VM {
-  tv_res   : vm_reserved VM = segments_reserved RSEGS;
+  (* the reserved ledger at the revision: the segments and the vDSO/vvar pair
+     ([ModelAmb.res_ok]) *)
+  tv_res   : ModelAmb.res_ok (segments_reserved RSEGS) VM;
   tv_has   : In (Z_to_bv 64 gm, Z_to_bv 64 69632) (vm_maps VM);
   tv_area  : exists lo sz, In (lo, sz) (vm_maps VM)
                /\ bv_unsigned lo <= area /\ area + 4096 <= bv_unsigned lo + bv_unsigned sz;

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (K1/K2 over the computed hand-off states at both CONFIG_RSEQ values, by computed position). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -18,6 +19,17 @@ Open Scope Z_scope.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
+(* Membership read off the computed hand-off state, at either flag value, without a
+   position: the states are per flag value and their fact lists differ in length. *)
+Fixpoint idx_of (K : kentry) (k : list kentry) : nat :=
+  match k with [] => O | K' :: r => if kentry_eqb K K' then O else S (idx_of K r) end.
+Lemma In_kb : forall (K : kentry) (k : list kentry), nth_error k (idx_of K k) = Some K -> In K k.
+Proof. intros K k H. exact (nth_error_In k (idx_of K k) H). Qed.
+(* The hand-off states' mapping ledgers do not depend on the flag. *)
+Lemma HS_1_maps_rz : forall b : bool, a_maps (HS_1 (rseq_z b)) = a_maps (HS_1 0).
+Proof. intros [|]; vm_compute; reflexivity. Qed.
+Lemma HS_2_maps_rz : forall b : bool, a_maps (HS_2 (rseq_z b)) = a_maps (HS_2 0).
+Proof. intros [|]; vm_compute; reflexivity. Qed.
 Module K1.
 
 
@@ -31,25 +43,25 @@ Module K1.
 
 
 
-Lemma rng_v518 : In (KRange (EVar 518) 1629 34359734272) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 84). vm_compute. reflexivity. Qed.
+Lemma rng_v518 : forall b : bool, In (KRange (EVar 518) 1629 34359734272) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
-Lemma disj_g21_g22 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 517); a_off := 0 |} (ELit 1048576) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 518); a_off := 0 |} (ELit 8388608)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 88). vm_compute. reflexivity. Qed.
-Lemma disj_g16_g22 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 397); a_off := 0 |} (ELit 11571200) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 518); a_off := 0 |} (ELit 8388608)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 89). vm_compute. reflexivity. Qed.
-Lemma disj_g12_g22 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 330); a_off := 0 |} (ELit 4096) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 518); a_off := 0 |} (ELit 8388608)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 90). vm_compute. reflexivity. Qed.
-Lemma disj_g10_g22 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 248); a_off := 0 |} (ELit 65536) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 518); a_off := 0 |} (ELit 8388608)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 92). vm_compute. reflexivity. Qed.
-Lemma disj_g9_g22 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 247); a_off := 0 |} (ELit 4096) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 518); a_off := 0 |} (ELit 8388608)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 93). vm_compute. reflexivity. Qed.
-Lemma disj_g8_g22 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 246); a_off := 0 |} (ELit 8388608) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 518); a_off := 0 |} (ELit 8388608)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 94). vm_compute. reflexivity. Qed.
-Lemma disj_g6_g22 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 227); a_off := 0 |} (ELit 137439023104) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 518); a_off := 0 |} (ELit 8388608)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 95). vm_compute. reflexivity. Qed.
-Lemma disj_g22_band : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 518); a_off := 0 |} (ELit 8388608) {| a_base := ELit 0; a_off := 2147446784 |} (ELit 17592186048512)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 101). vm_compute. reflexivity. Qed.
+Lemma disj_g21_g22 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 517); a_off := 0 |} (ELit 1048576) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 518); a_off := 0 |} (ELit 8388608)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g16_g22 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 397); a_off := 0 |} (ELit 11571200) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 518); a_off := 0 |} (ELit 8388608)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g12_g22 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 330); a_off := 0 |} (ELit 4096) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 518); a_off := 0 |} (ELit 8388608)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g10_g22 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 248); a_off := 0 |} (ELit 65536) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 518); a_off := 0 |} (ELit 8388608)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g9_g22 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 247); a_off := 0 |} (ELit 4096) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 518); a_off := 0 |} (ELit 8388608)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g8_g22 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 246); a_off := 0 |} (ELit 8388608) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 518); a_off := 0 |} (ELit 8388608)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g6_g22 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 227); a_off := 0 |} (ELit 137439023104) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 518); a_off := 0 |} (ELit 8388608)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g22_band : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 518); a_off := 0 |} (ELit 8388608) {| a_base := ELit 0; a_off := 2147446784 |} (ELit 17592186048512)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
 
 
@@ -58,29 +70,29 @@ Proof. apply (@nth_error_In _ _ 101). vm_compute. reflexivity. Qed.
 
 
 
-Lemma rng_v517 : In (KRange (EVar 517) 1629 34359736064) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 111). vm_compute. reflexivity. Qed.
+Lemma rng_v517 : forall b : bool, In (KRange (EVar 517) 1629 34359736064) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
-Lemma disj_g16_g21 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 397); a_off := 0 |} (ELit 11571200) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 517); a_off := 0 |} (ELit 1048576)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 115). vm_compute. reflexivity. Qed.
-Lemma disj_g12_g21 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 330); a_off := 0 |} (ELit 4096) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 517); a_off := 0 |} (ELit 1048576)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 116). vm_compute. reflexivity. Qed.
-Lemma disj_g10_g21 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 248); a_off := 0 |} (ELit 65536) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 517); a_off := 0 |} (ELit 1048576)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 118). vm_compute. reflexivity. Qed.
-Lemma disj_g9_g21 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 247); a_off := 0 |} (ELit 4096) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 517); a_off := 0 |} (ELit 1048576)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 119). vm_compute. reflexivity. Qed.
-Lemma disj_g8_g21 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 246); a_off := 0 |} (ELit 8388608) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 517); a_off := 0 |} (ELit 1048576)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 120). vm_compute. reflexivity. Qed.
-Lemma disj_g6_g21 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 227); a_off := 0 |} (ELit 137439023104) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 517); a_off := 0 |} (ELit 1048576)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 121). vm_compute. reflexivity. Qed.
-Lemma disj_g21_band : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 517); a_off := 0 |} (ELit 1048576) {| a_base := ELit 0; a_off := 2147446784 |} (ELit 17592186048512)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 127). vm_compute. reflexivity. Qed.
+Lemma disj_g16_g21 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 397); a_off := 0 |} (ELit 11571200) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 517); a_off := 0 |} (ELit 1048576)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g12_g21 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 330); a_off := 0 |} (ELit 4096) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 517); a_off := 0 |} (ELit 1048576)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g10_g21 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 248); a_off := 0 |} (ELit 65536) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 517); a_off := 0 |} (ELit 1048576)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g9_g21 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 247); a_off := 0 |} (ELit 4096) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 517); a_off := 0 |} (ELit 1048576)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g8_g21 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 246); a_off := 0 |} (ELit 8388608) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 517); a_off := 0 |} (ELit 1048576)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g6_g21 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 227); a_off := 0 |} (ELit 137439023104) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 517); a_off := 0 |} (ELit 1048576)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g21_band : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 517); a_off := 0 |} (ELit 1048576) {| a_base := ELit 0; a_off := 2147446784 |} (ELit 17592186048512)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
 
-Lemma rng_v10 : In (KRange (EVar 10) 0 8) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 154). vm_compute. reflexivity. Qed.
-Lemma rng_v397 : In (KRange (EVar 397) 1629 34359733495) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 158). vm_compute. reflexivity. Qed.
+Lemma rng_v10 : forall b : bool, In (KRange (EVar 10) 0 8) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma rng_v397 : forall b : bool, In (KRange (EVar 397) 1629 34359733495) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
 
 
@@ -92,18 +104,18 @@ Proof. apply (@nth_error_In _ _ 158). vm_compute. reflexivity. Qed.
 
 
 
-Lemma disj_g12_g16 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 330); a_off := 0 |} (ELit 4096) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 397); a_off := 0 |} (ELit 11571200)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 180). vm_compute. reflexivity. Qed.
-Lemma disj_g10_g16 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 248); a_off := 0 |} (ELit 65536) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 397); a_off := 0 |} (ELit 11571200)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 182). vm_compute. reflexivity. Qed.
-Lemma disj_g9_g16 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 247); a_off := 0 |} (ELit 4096) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 397); a_off := 0 |} (ELit 11571200)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 183). vm_compute. reflexivity. Qed.
-Lemma disj_g8_g16 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 246); a_off := 0 |} (ELit 8388608) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 397); a_off := 0 |} (ELit 11571200)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 184). vm_compute. reflexivity. Qed.
-Lemma disj_g6_g16 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 227); a_off := 0 |} (ELit 137439023104) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 397); a_off := 0 |} (ELit 11571200)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 185). vm_compute. reflexivity. Qed.
-Lemma disj_g16_band : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 397); a_off := 0 |} (ELit 11571200) {| a_base := ELit 0; a_off := 2147446784 |} (ELit 17592186048512)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 191). vm_compute. reflexivity. Qed.
+Lemma disj_g12_g16 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 330); a_off := 0 |} (ELit 4096) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 397); a_off := 0 |} (ELit 11571200)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g10_g16 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 248); a_off := 0 |} (ELit 65536) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 397); a_off := 0 |} (ELit 11571200)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g9_g16 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 247); a_off := 0 |} (ELit 4096) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 397); a_off := 0 |} (ELit 11571200)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g8_g16 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 246); a_off := 0 |} (ELit 8388608) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 397); a_off := 0 |} (ELit 11571200)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g6_g16 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 227); a_off := 0 |} (ELit 137439023104) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 397); a_off := 0 |} (ELit 11571200)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g16_band : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 397); a_off := 0 |} (ELit 11571200) {| a_base := ELit 0; a_off := 2147446784 |} (ELit 17592186048512)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
 
 
@@ -117,19 +129,19 @@ Proof. apply (@nth_error_In _ _ 191). vm_compute. reflexivity. Qed.
 
 
 
-Lemma rng_v330 : In (KRange (EVar 330) 1 34359736319) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 233). vm_compute. reflexivity. Qed.
+Lemma rng_v330 : forall b : bool, In (KRange (EVar 330) 1 34359736319) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
-Lemma disj_g10_g12 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 248); a_off := 0 |} (ELit 65536) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 330); a_off := 0 |} (ELit 4096)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 238). vm_compute. reflexivity. Qed.
-Lemma disj_g9_g12 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 247); a_off := 0 |} (ELit 4096) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 330); a_off := 0 |} (ELit 4096)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 239). vm_compute. reflexivity. Qed.
-Lemma disj_g8_g12 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 246); a_off := 0 |} (ELit 8388608) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 330); a_off := 0 |} (ELit 4096)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 240). vm_compute. reflexivity. Qed.
-Lemma disj_g6_g12 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 227); a_off := 0 |} (ELit 137439023104) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 330); a_off := 0 |} (ELit 4096)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 241). vm_compute. reflexivity. Qed.
-Lemma disj_g12_band : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 330); a_off := 0 |} (ELit 4096) {| a_base := ELit 0; a_off := 2147446784 |} (ELit 17592186048512)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 247). vm_compute. reflexivity. Qed.
+Lemma disj_g10_g12 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 248); a_off := 0 |} (ELit 65536) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 330); a_off := 0 |} (ELit 4096)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g9_g12 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 247); a_off := 0 |} (ELit 4096) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 330); a_off := 0 |} (ELit 4096)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g8_g12 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 246); a_off := 0 |} (ELit 8388608) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 330); a_off := 0 |} (ELit 4096)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g6_g12 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 227); a_off := 0 |} (ELit 137439023104) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 330); a_off := 0 |} (ELit 4096)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g12_band : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 330); a_off := 0 |} (ELit 4096) {| a_base := ELit 0; a_off := 2147446784 |} (ELit 17592186048512)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
 
 
@@ -139,8 +151,8 @@ Proof. apply (@nth_error_In _ _ 247). vm_compute. reflexivity. Qed.
 
 
 
-Lemma rng_v248 : In (KRange (EVar 248) 1629 34359736304) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 284). vm_compute. reflexivity. Qed.
+Lemma rng_v248 : forall b : bool, In (KRange (EVar 248) 1629 34359736304) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
 
 
@@ -160,27 +172,27 @@ Proof. apply (@nth_error_In _ _ 284). vm_compute. reflexivity. Qed.
 
 
 
-Lemma disj_g9_g10 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 247); a_off := 0 |} (ELit 4096) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 248); a_off := 0 |} (ELit 65536)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 313). vm_compute. reflexivity. Qed.
-Lemma disj_g8_g10 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 246); a_off := 0 |} (ELit 8388608) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 248); a_off := 0 |} (ELit 65536)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 314). vm_compute. reflexivity. Qed.
-Lemma disj_g6_g10 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 227); a_off := 0 |} (ELit 137439023104) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 248); a_off := 0 |} (ELit 65536)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 315). vm_compute. reflexivity. Qed.
-Lemma disj_g10_band : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 248); a_off := 0 |} (ELit 65536) {| a_base := ELit 0; a_off := 2147446784 |} (ELit 17592186048512)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 321). vm_compute. reflexivity. Qed.
+Lemma disj_g9_g10 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 247); a_off := 0 |} (ELit 4096) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 248); a_off := 0 |} (ELit 65536)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g8_g10 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 246); a_off := 0 |} (ELit 8388608) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 248); a_off := 0 |} (ELit 65536)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g6_g10 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 227); a_off := 0 |} (ELit 137439023104) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 248); a_off := 0 |} (ELit 65536)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g10_band : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 248); a_off := 0 |} (ELit 65536) {| a_base := ELit 0; a_off := 2147446784 |} (ELit 17592186048512)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
 
 
 
-Lemma rng_v247 : In (KRange (EVar 247) 1 34359736319) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 355). vm_compute. reflexivity. Qed.
+Lemma rng_v247 : forall b : bool, In (KRange (EVar 247) 1 34359736319) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
-Lemma disj_g8_g9 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 246); a_off := 0 |} (ELit 8388608) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 247); a_off := 0 |} (ELit 4096)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 359). vm_compute. reflexivity. Qed.
-Lemma disj_g6_g9 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 227); a_off := 0 |} (ELit 137439023104) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 247); a_off := 0 |} (ELit 4096)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 360). vm_compute. reflexivity. Qed.
-Lemma disj_g9_band : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 247); a_off := 0 |} (ELit 4096) {| a_base := ELit 0; a_off := 2147446784 |} (ELit 17592186048512)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 366). vm_compute. reflexivity. Qed.
+Lemma disj_g8_g9 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 246); a_off := 0 |} (ELit 8388608) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 247); a_off := 0 |} (ELit 4096)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g6_g9 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 227); a_off := 0 |} (ELit 137439023104) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 247); a_off := 0 |} (ELit 4096)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g9_band : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 247); a_off := 0 |} (ELit 4096) {| a_base := ELit 0; a_off := 2147446784 |} (ELit 17592186048512)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
 
 
@@ -195,31 +207,31 @@ Proof. apply (@nth_error_In _ _ 366). vm_compute. reflexivity. Qed.
 
 
 
-Lemma rng_v246 : In (KRange (EVar 246) 1629 34359734272) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 391). vm_compute. reflexivity. Qed.
+Lemma rng_v246 : forall b : bool, In (KRange (EVar 246) 1629 34359734272) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
-Lemma disj_g6_g8 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 227); a_off := 0 |} (ELit 137439023104) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 246); a_off := 0 |} (ELit 8388608)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 395). vm_compute. reflexivity. Qed.
-Lemma disj_g8_band : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 246); a_off := 0 |} (ELit 8388608) {| a_base := ELit 0; a_off := 2147446784 |} (ELit 17592186048512)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 401). vm_compute. reflexivity. Qed.
+Lemma disj_g6_g8 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 227); a_off := 0 |} (ELit 137439023104) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 246); a_off := 0 |} (ELit 8388608)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g8_band : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 246); a_off := 0 |} (ELit 8388608) {| a_base := ELit 0; a_off := 2147446784 |} (ELit 17592186048512)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
 
 
 
 
 
-Lemma rng_v229 : In (KRange (EVar 229) 1 16) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 410). vm_compute. reflexivity. Qed.
-Lemma align_w6 : In (KRange (EAlu Instr.ALU_ADD (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit (-4096)) (EVar 229)) (EMd Instr.M_MUL (ELit (-1)) (EAlu Instr.ALU_AND (EMd Instr.M_MUL (ELit 4096) (EVar 227)) (ELit 65535)))) (ELit 65536)) 0 0) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 411). vm_compute. reflexivity. Qed.
+Lemma rng_v229 : forall b : bool, In (KRange (EVar 229) 1 16) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma align_w6 : forall b : bool, In (KRange (EAlu Instr.ALU_ADD (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit (-4096)) (EVar 229)) (EMd Instr.M_MUL (ELit (-1)) (EAlu Instr.ALU_AND (EMd Instr.M_MUL (ELit 4096) (EVar 227)) (ELit 65535)))) (ELit 65536)) 0 0) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
 
-Lemma rng_v227 : In (KRange (EVar 227) 4295491576 34326181871) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 418). vm_compute. reflexivity. Qed.
+Lemma rng_v227 : forall b : bool, In (KRange (EVar 227) 4295491576 34326181871) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
 
-Lemma disj_g6_band : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 227); a_off := 0 |} (ELit 137439023104) {| a_base := ELit 0; a_off := 2147446784 |} (ELit 17592186048512)) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 429). vm_compute. reflexivity. Qed.
+Lemma disj_g6_band : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 227); a_off := 0 |} (ELit 137439023104) {| a_base := ELit 0; a_off := 2147446784 |} (ELit 17592186048512)) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
 
 
@@ -250,8 +262,8 @@ Proof. apply (@nth_error_In _ _ 429). vm_compute. reflexivity. Qed.
 
 
 
-Lemma rng_v0 : In (KRange (EVar 0) 4294901760 4294967295) (kn HS_1).
-Proof. apply (@nth_error_In _ _ 619). vm_compute. reflexivity. Qed.
+Lemma rng_v0 : forall b : bool, In (KRange (EVar 0) 4294901760 4294967295) (kn (HS_1 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
 
 
@@ -282,25 +294,25 @@ Module K2.
 
 
 
-Lemma rng_v518 : In (KRange (EVar 518) 1629 34359734272) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 83). vm_compute. reflexivity. Qed.
+Lemma rng_v518 : forall b : bool, In (KRange (EVar 518) 1629 34359734272) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
-Lemma disj_g21_g22 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 517); a_off := 0 |} (ELit 1048576) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 518); a_off := 0 |} (ELit 8388608)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 87). vm_compute. reflexivity. Qed.
-Lemma disj_g16_g22 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 397); a_off := 0 |} (ELit 11571200) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 518); a_off := 0 |} (ELit 8388608)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 88). vm_compute. reflexivity. Qed.
-Lemma disj_g12_g22 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 330); a_off := 0 |} (ELit 4096) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 518); a_off := 0 |} (ELit 8388608)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 89). vm_compute. reflexivity. Qed.
-Lemma disj_g10_g22 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 248); a_off := 0 |} (ELit 65536) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 518); a_off := 0 |} (ELit 8388608)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 91). vm_compute. reflexivity. Qed.
-Lemma disj_g9_g22 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 247); a_off := 0 |} (ELit 4096) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 518); a_off := 0 |} (ELit 8388608)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 92). vm_compute. reflexivity. Qed.
-Lemma disj_g8_g22 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 246); a_off := 0 |} (ELit 8388608) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 518); a_off := 0 |} (ELit 8388608)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 93). vm_compute. reflexivity. Qed.
-Lemma disj_g6_g22 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 227); a_off := 0 |} (ELit 137439023104) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 518); a_off := 0 |} (ELit 8388608)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 94). vm_compute. reflexivity. Qed.
-Lemma disj_g22_band : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 518); a_off := 0 |} (ELit 8388608) {| a_base := ELit 0; a_off := 2147446784 |} (ELit 17592186048512)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 100). vm_compute. reflexivity. Qed.
+Lemma disj_g21_g22 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 517); a_off := 0 |} (ELit 1048576) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 518); a_off := 0 |} (ELit 8388608)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g16_g22 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 397); a_off := 0 |} (ELit 11571200) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 518); a_off := 0 |} (ELit 8388608)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g12_g22 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 330); a_off := 0 |} (ELit 4096) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 518); a_off := 0 |} (ELit 8388608)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g10_g22 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 248); a_off := 0 |} (ELit 65536) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 518); a_off := 0 |} (ELit 8388608)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g9_g22 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 247); a_off := 0 |} (ELit 4096) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 518); a_off := 0 |} (ELit 8388608)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g8_g22 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 246); a_off := 0 |} (ELit 8388608) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 518); a_off := 0 |} (ELit 8388608)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g6_g22 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 227); a_off := 0 |} (ELit 137439023104) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 518); a_off := 0 |} (ELit 8388608)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g22_band : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 518); a_off := 0 |} (ELit 8388608) {| a_base := ELit 0; a_off := 2147446784 |} (ELit 17592186048512)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
 
 
@@ -309,29 +321,29 @@ Proof. apply (@nth_error_In _ _ 100). vm_compute. reflexivity. Qed.
 
 
 
-Lemma rng_v517 : In (KRange (EVar 517) 1629 34359736064) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 110). vm_compute. reflexivity. Qed.
+Lemma rng_v517 : forall b : bool, In (KRange (EVar 517) 1629 34359736064) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
-Lemma disj_g16_g21 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 397); a_off := 0 |} (ELit 11571200) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 517); a_off := 0 |} (ELit 1048576)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 114). vm_compute. reflexivity. Qed.
-Lemma disj_g12_g21 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 330); a_off := 0 |} (ELit 4096) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 517); a_off := 0 |} (ELit 1048576)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 115). vm_compute. reflexivity. Qed.
-Lemma disj_g10_g21 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 248); a_off := 0 |} (ELit 65536) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 517); a_off := 0 |} (ELit 1048576)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 117). vm_compute. reflexivity. Qed.
-Lemma disj_g9_g21 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 247); a_off := 0 |} (ELit 4096) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 517); a_off := 0 |} (ELit 1048576)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 118). vm_compute. reflexivity. Qed.
-Lemma disj_g8_g21 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 246); a_off := 0 |} (ELit 8388608) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 517); a_off := 0 |} (ELit 1048576)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 119). vm_compute. reflexivity. Qed.
-Lemma disj_g6_g21 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 227); a_off := 0 |} (ELit 137439023104) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 517); a_off := 0 |} (ELit 1048576)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 120). vm_compute. reflexivity. Qed.
-Lemma disj_g21_band : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 517); a_off := 0 |} (ELit 1048576) {| a_base := ELit 0; a_off := 2147446784 |} (ELit 17592186048512)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 126). vm_compute. reflexivity. Qed.
+Lemma disj_g16_g21 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 397); a_off := 0 |} (ELit 11571200) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 517); a_off := 0 |} (ELit 1048576)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g12_g21 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 330); a_off := 0 |} (ELit 4096) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 517); a_off := 0 |} (ELit 1048576)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g10_g21 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 248); a_off := 0 |} (ELit 65536) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 517); a_off := 0 |} (ELit 1048576)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g9_g21 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 247); a_off := 0 |} (ELit 4096) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 517); a_off := 0 |} (ELit 1048576)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g8_g21 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 246); a_off := 0 |} (ELit 8388608) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 517); a_off := 0 |} (ELit 1048576)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g6_g21 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 227); a_off := 0 |} (ELit 137439023104) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 517); a_off := 0 |} (ELit 1048576)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g21_band : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 517); a_off := 0 |} (ELit 1048576) {| a_base := ELit 0; a_off := 2147446784 |} (ELit 17592186048512)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
 
-Lemma rng_v10 : In (KRange (EVar 10) 0 8) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 153). vm_compute. reflexivity. Qed.
-Lemma rng_v397 : In (KRange (EVar 397) 1629 34359733495) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 157). vm_compute. reflexivity. Qed.
+Lemma rng_v10 : forall b : bool, In (KRange (EVar 10) 0 8) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma rng_v397 : forall b : bool, In (KRange (EVar 397) 1629 34359733495) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
 
 
@@ -343,18 +355,18 @@ Proof. apply (@nth_error_In _ _ 157). vm_compute. reflexivity. Qed.
 
 
 
-Lemma disj_g12_g16 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 330); a_off := 0 |} (ELit 4096) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 397); a_off := 0 |} (ELit 11571200)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 179). vm_compute. reflexivity. Qed.
-Lemma disj_g10_g16 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 248); a_off := 0 |} (ELit 65536) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 397); a_off := 0 |} (ELit 11571200)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 181). vm_compute. reflexivity. Qed.
-Lemma disj_g9_g16 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 247); a_off := 0 |} (ELit 4096) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 397); a_off := 0 |} (ELit 11571200)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 182). vm_compute. reflexivity. Qed.
-Lemma disj_g8_g16 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 246); a_off := 0 |} (ELit 8388608) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 397); a_off := 0 |} (ELit 11571200)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 183). vm_compute. reflexivity. Qed.
-Lemma disj_g6_g16 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 227); a_off := 0 |} (ELit 137439023104) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 397); a_off := 0 |} (ELit 11571200)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 184). vm_compute. reflexivity. Qed.
-Lemma disj_g16_band : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 397); a_off := 0 |} (ELit 11571200) {| a_base := ELit 0; a_off := 2147446784 |} (ELit 17592186048512)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 190). vm_compute. reflexivity. Qed.
+Lemma disj_g12_g16 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 330); a_off := 0 |} (ELit 4096) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 397); a_off := 0 |} (ELit 11571200)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g10_g16 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 248); a_off := 0 |} (ELit 65536) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 397); a_off := 0 |} (ELit 11571200)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g9_g16 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 247); a_off := 0 |} (ELit 4096) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 397); a_off := 0 |} (ELit 11571200)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g8_g16 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 246); a_off := 0 |} (ELit 8388608) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 397); a_off := 0 |} (ELit 11571200)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g6_g16 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 227); a_off := 0 |} (ELit 137439023104) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 397); a_off := 0 |} (ELit 11571200)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g16_band : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 397); a_off := 0 |} (ELit 11571200) {| a_base := ELit 0; a_off := 2147446784 |} (ELit 17592186048512)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
 
 
@@ -368,19 +380,19 @@ Proof. apply (@nth_error_In _ _ 190). vm_compute. reflexivity. Qed.
 
 
 
-Lemma rng_v330 : In (KRange (EVar 330) 1 34359736319) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 232). vm_compute. reflexivity. Qed.
+Lemma rng_v330 : forall b : bool, In (KRange (EVar 330) 1 34359736319) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
-Lemma disj_g10_g12 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 248); a_off := 0 |} (ELit 65536) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 330); a_off := 0 |} (ELit 4096)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 237). vm_compute. reflexivity. Qed.
-Lemma disj_g9_g12 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 247); a_off := 0 |} (ELit 4096) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 330); a_off := 0 |} (ELit 4096)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 238). vm_compute. reflexivity. Qed.
-Lemma disj_g8_g12 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 246); a_off := 0 |} (ELit 8388608) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 330); a_off := 0 |} (ELit 4096)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 239). vm_compute. reflexivity. Qed.
-Lemma disj_g6_g12 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 227); a_off := 0 |} (ELit 137439023104) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 330); a_off := 0 |} (ELit 4096)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 240). vm_compute. reflexivity. Qed.
-Lemma disj_g12_band : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 330); a_off := 0 |} (ELit 4096) {| a_base := ELit 0; a_off := 2147446784 |} (ELit 17592186048512)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 246). vm_compute. reflexivity. Qed.
+Lemma disj_g10_g12 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 248); a_off := 0 |} (ELit 65536) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 330); a_off := 0 |} (ELit 4096)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g9_g12 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 247); a_off := 0 |} (ELit 4096) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 330); a_off := 0 |} (ELit 4096)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g8_g12 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 246); a_off := 0 |} (ELit 8388608) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 330); a_off := 0 |} (ELit 4096)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g6_g12 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 227); a_off := 0 |} (ELit 137439023104) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 330); a_off := 0 |} (ELit 4096)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g12_band : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 330); a_off := 0 |} (ELit 4096) {| a_base := ELit 0; a_off := 2147446784 |} (ELit 17592186048512)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
 
 
@@ -390,8 +402,8 @@ Proof. apply (@nth_error_In _ _ 246). vm_compute. reflexivity. Qed.
 
 
 
-Lemma rng_v248 : In (KRange (EVar 248) 1629 34359736304) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 283). vm_compute. reflexivity. Qed.
+Lemma rng_v248 : forall b : bool, In (KRange (EVar 248) 1629 34359736304) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
 
 
@@ -411,27 +423,27 @@ Proof. apply (@nth_error_In _ _ 283). vm_compute. reflexivity. Qed.
 
 
 
-Lemma disj_g9_g10 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 247); a_off := 0 |} (ELit 4096) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 248); a_off := 0 |} (ELit 65536)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 312). vm_compute. reflexivity. Qed.
-Lemma disj_g8_g10 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 246); a_off := 0 |} (ELit 8388608) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 248); a_off := 0 |} (ELit 65536)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 313). vm_compute. reflexivity. Qed.
-Lemma disj_g6_g10 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 227); a_off := 0 |} (ELit 137439023104) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 248); a_off := 0 |} (ELit 65536)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 314). vm_compute. reflexivity. Qed.
-Lemma disj_g10_band : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 248); a_off := 0 |} (ELit 65536) {| a_base := ELit 0; a_off := 2147446784 |} (ELit 17592186048512)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 320). vm_compute. reflexivity. Qed.
+Lemma disj_g9_g10 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 247); a_off := 0 |} (ELit 4096) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 248); a_off := 0 |} (ELit 65536)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g8_g10 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 246); a_off := 0 |} (ELit 8388608) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 248); a_off := 0 |} (ELit 65536)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g6_g10 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 227); a_off := 0 |} (ELit 137439023104) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 248); a_off := 0 |} (ELit 65536)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g10_band : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 248); a_off := 0 |} (ELit 65536) {| a_base := ELit 0; a_off := 2147446784 |} (ELit 17592186048512)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
 
 
 
-Lemma rng_v247 : In (KRange (EVar 247) 1 34359736319) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 354). vm_compute. reflexivity. Qed.
+Lemma rng_v247 : forall b : bool, In (KRange (EVar 247) 1 34359736319) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
-Lemma disj_g8_g9 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 246); a_off := 0 |} (ELit 8388608) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 247); a_off := 0 |} (ELit 4096)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 358). vm_compute. reflexivity. Qed.
-Lemma disj_g6_g9 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 227); a_off := 0 |} (ELit 137439023104) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 247); a_off := 0 |} (ELit 4096)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 359). vm_compute. reflexivity. Qed.
-Lemma disj_g9_band : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 247); a_off := 0 |} (ELit 4096) {| a_base := ELit 0; a_off := 2147446784 |} (ELit 17592186048512)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 365). vm_compute. reflexivity. Qed.
+Lemma disj_g8_g9 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 246); a_off := 0 |} (ELit 8388608) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 247); a_off := 0 |} (ELit 4096)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g6_g9 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 227); a_off := 0 |} (ELit 137439023104) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 247); a_off := 0 |} (ELit 4096)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g9_band : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 247); a_off := 0 |} (ELit 4096) {| a_base := ELit 0; a_off := 2147446784 |} (ELit 17592186048512)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
 
 
@@ -446,31 +458,31 @@ Proof. apply (@nth_error_In _ _ 365). vm_compute. reflexivity. Qed.
 
 
 
-Lemma rng_v246 : In (KRange (EVar 246) 1629 34359734272) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 390). vm_compute. reflexivity. Qed.
+Lemma rng_v246 : forall b : bool, In (KRange (EVar 246) 1629 34359734272) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
-Lemma disj_g6_g8 : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 227); a_off := 0 |} (ELit 137439023104) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 246); a_off := 0 |} (ELit 8388608)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 394). vm_compute. reflexivity. Qed.
-Lemma disj_g8_band : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 246); a_off := 0 |} (ELit 8388608) {| a_base := ELit 0; a_off := 2147446784 |} (ELit 17592186048512)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 400). vm_compute. reflexivity. Qed.
+Lemma disj_g6_g8 : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 227); a_off := 0 |} (ELit 137439023104) {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 246); a_off := 0 |} (ELit 8388608)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma disj_g8_band : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 246); a_off := 0 |} (ELit 8388608) {| a_base := ELit 0; a_off := 2147446784 |} (ELit 17592186048512)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
 
 
 
 
 
-Lemma rng_v229 : In (KRange (EVar 229) 1 16) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 409). vm_compute. reflexivity. Qed.
-Lemma align_w6 : In (KRange (EAlu Instr.ALU_ADD (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit (-4096)) (EVar 229)) (EMd Instr.M_MUL (ELit (-1)) (EAlu Instr.ALU_AND (EMd Instr.M_MUL (ELit 4096) (EVar 227)) (ELit 65535)))) (ELit 65536)) 0 0) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 410). vm_compute. reflexivity. Qed.
+Lemma rng_v229 : forall b : bool, In (KRange (EVar 229) 1 16) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
+Lemma align_w6 : forall b : bool, In (KRange (EAlu Instr.ALU_ADD (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit (-4096)) (EVar 229)) (EMd Instr.M_MUL (ELit (-1)) (EAlu Instr.ALU_AND (EMd Instr.M_MUL (ELit 4096) (EVar 227)) (ELit 65535)))) (ELit 65536)) 0 0) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
 
-Lemma rng_v227 : In (KRange (EVar 227) 4295491576 34326181871) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 417). vm_compute. reflexivity. Qed.
+Lemma rng_v227 : forall b : bool, In (KRange (EVar 227) 4295491576 34326181871) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
 
-Lemma disj_g6_band : In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 227); a_off := 0 |} (ELit 137439023104) {| a_base := ELit 0; a_off := 2147446784 |} (ELit 17592186048512)) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 428). vm_compute. reflexivity. Qed.
+Lemma disj_g6_band : forall b : bool, In (KDisj {| a_base := EMd Instr.M_MUL (ELit 4096) (EVar 227); a_off := 0 |} (ELit 137439023104) {| a_base := ELit 0; a_off := 2147446784 |} (ELit 17592186048512)) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
 
 
@@ -501,8 +513,8 @@ Proof. apply (@nth_error_In _ _ 428). vm_compute. reflexivity. Qed.
 
 
 
-Lemma rng_v0 : In (KRange (EVar 0) 4294901760 4294967295) (kn HS_2).
-Proof. apply (@nth_error_In _ _ 618). vm_compute. reflexivity. Qed.
+Lemma rng_v0 : forall b : bool, In (KRange (EVar 0) 4294901760 4294967295) (kn (HS_2 (rseq_z b))).
+Proof. intros [|]; apply In_kb; vm_compute; reflexivity. Qed.
 
 
 

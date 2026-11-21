@@ -1,5 +1,5 @@
 (* G4.ExDecl, IMAGE B: dseg_D5 (FMW_ex_decl_base.v), expected 0x81664..0x816c0 (fuzz_manifest.c:162) on
-   fm.asan-ubsan, after strncmp (uri, ns, nl2) answered v. B twin of lib/A/FMW_ex_decl_d5.v (06d82004dc3); B's code
+   fm.asan-ubsan, after strncmp (uri, ns, nl2) answered v. B twin of lib/A/FMW_ex_decl_d5.v; B's code
    (fm_b_expected_iface.out lines 254-287): 0x81664 `beqz a0`:
    - v <> 0 (the namespace differs from the uri's first nl2 bytes): 0x81668..0x81678 a6 = ld F+0x78 = text, a7 = 6,
      t0 = ':', t1 = ld F+0x70 = the mask, a1 = ld F+0x40 = text + close, 0x8167c j EX_JUMP (the declaration does not

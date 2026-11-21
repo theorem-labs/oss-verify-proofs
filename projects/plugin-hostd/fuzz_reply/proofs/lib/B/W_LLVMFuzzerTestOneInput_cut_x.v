@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx-GENERIC twin of lib/B/W_LLVMFuzzerTestOneInput_cut.v (a Theorem Labs lane's step 1 of route
-   (b), image B fuzz_reply.asan-ubsan), from its owner's text at
-   40dd4bf5a95 (STKR the pre's last conjunct; no `full` flag; SEG_PRO lands on INV_H alone; the two out-of-line
-   callees RSRC / RRDS), in the form of lib/A's twin lib/A/W_LLVMFuzzerTestOneInput_cut_x.v (a working branch
-   a79f44b3297). The cut file is NOT edited.
-   W8's HEADER ROUND (W8Entry-2, as on A at a working branch 22b783d524a+): fr_surv names the memories, the pre gains
+   (b), image B fuzz_reply.asan-ubsan), from its owner's text
+    (STKR the pre's last conjunct; no `full` flag; SEG_PRO lands on INV_H alone; the two out-of-line
+   callees RSRC / RRDS), in the form of lib/A's twin lib/A/W_LLVMFuzzerTestOneInput_cut_x.v (a working branch).
+   The cut file is NOT edited.
+   W8's HEADER ROUND (W8Entry-2, as on A at a working branch+): fr_surv names the memories, the pre gains
    `LIBROOM S /\ NP S` after fr_live_pre and the post `NP S'` after fr_live_post (DriverCF's order), Section w gains
    HP0 beside LAWS; the Section br bridges instantiate LIBROOM / NP := True and fr_surv with the memories ignored.
    - Section cf: fr_lib_pre_cf_x / fr_lib_post_cf_x / fr_lib_contract_cf_x, the program contract over a relation ARx
@@ -17,7 +18,7 @@
      owner's, unchanged); the AR-free cut-point facts (aframe_at, amodel_at, ainput_at, ablocks_sep, lregs_*, jt_rom,
      sv8, ...) and glob_wr_law are cited; errno_law_x is errno_law over ARx. SEG_JT is walked (lf_seg_jt_x, over
      lib/B/W_journal_x's generic run chain and lib/B/W_kit_x's paj_run_tok_x). The two callees B calls out of line
-     are RSRC_x / RRDS_x over afn_pre_x with Hp, their posts aleafx_post_x (lib/B/W_contract.v:142 aleafx_post over
+     are RSRC_x / RRDS_x over afn_pre_x with Hp, their posts aleafx_post_x (lib/B/W_contract.v:143 aleafx_post over
      the generic journal, the callee's Hp at both ends); the other segments are Section hypotheses, as in the owner's
      file; the composition lf_main_x and lf_contract_of_segments_x is the owner's proof.
    - Section br: at ARx := AR (Hp ignored), PST := [], fr_lib_pre_cf_x / fr_lib_post_cf_x are iff-equal to the owner's
@@ -54,8 +55,8 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Prog Require Import HarnessRep
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import W_rep W_contract.
 (* RelocB's sink-instance guard, after the Import of YE2k as in the owner's file *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require ReplyGuardB.
-(* the generic carries are the Reusable ones, as the B kit's generated W_kit_x / W_journal_x take them (a working branch
-   fb28b53a2b8); lib/B's re-pointed copies are not Required *)
+(* the generic carries are the Reusable ones, as the B kit's generated W_kit_x / W_journal_x take them (a working branch);
+   lib/B's re-pointed copies are not Required *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YCbqG.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import W_kit_x W_journal_x W_LLVMFuzzerTestOneInput_cut.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YA0nH.
@@ -89,7 +90,7 @@ Variable PST : list (Z * Z).
 Variable ARx : alayout -> astate -> list Z -> world tfibsegs -> (word -> option byte) -> Model -> Prop.
 Local Notation segs := tfibsegs.
 Local Notation rd W mem := (mrestrict (w_H W) mem).
-(* W_LLVMFuzzerTestOneInput_cut.v:270 fr_lib_pre_cf *)
+(* W_LLVMFuzzerTestOneInput_cut.v:271 fr_lib_pre_cf *)
 Definition fr_lib_pre_cf_x (regs : bvmap 5 word) (ly : alayout) (S : astate) (Hp : list Z) (W : world segs)
 (mem : word -> option byte) (md : Model) (p n : Z) (pl : list byte) (M : Z) : Prop :=
 afn_pre_x segs B ARx LLVMF_STK ly S Hp W regs mem md [] /\
@@ -116,7 +117,7 @@ mo_ok MT S (XM_LIB n) /\
   ReplyCnt.xcnt_ok B S ly (if n =? 0 then [] else [(p, n)]) T0 cap out) /\
 (* CAPOUT (_cut.v's last clause): g_capout at most CAPOUT_MAX.  Stated LAST, after XCNT. *)
 (exists c, val_mem segs (arm W mem) (rg_capout fr_RG) 8 c /\ 0 <= c <= CAPOUT_MAX).
-(* W_LLVMFuzzerTestOneInput_cut.v:303 fr_lib_post_cf *)
+(* W_LLVMFuzzerTestOneInput_cut.v:304 fr_lib_post_cf *)
 Definition fr_lib_post_cf_x (regs : bvmap 5 word) (ly : alayout) (S : astate) (Hp : list Z) (W : world segs)
 (mem : word -> option byte) (md : Model) (p n : Z) (M : Z) (l : lleaf)
 (ly' : alayout) (S' : astate) (Hp' : list Z) (W' : world segs) (regs' : bvmap 5 word) (mem' : word -> option byte)
@@ -139,7 +140,7 @@ mo_le MT S S' (XN_LIB n) /\
   ReplyCnt.xcnt_ok B S' ly' (if n =? 0 then [] else [(p, n)]) T0 cap out) /\
 (* CAPOUT at the return (_cut.v's last post clause) *)
 (exists c, val_mem segs (arm W' mem') (rg_capout fr_RG) 8 c /\ 0 <= c <= CAPOUT_MAX).
-(* W_LLVMFuzzerTestOneInput_cut.v:323 fr_lib_contract_cf *)
+(* W_LLVMFuzzerTestOneInput_cut.v:324 fr_lib_contract_cf *)
 Definition fr_lib_contract_cf_x : Prop :=
 forall ly S Hp (W : world segs) (regs : bvmap 5 word) mem md p n pl M (K : lleaf -> TSet),
 AI segs (w_H W) (w_A W) md ->
@@ -155,7 +156,7 @@ srealizes segs (cfg_at segs A_LLVMF regs mem md) (LIBK pl (m_fs md) K).
    fr_lib_post_cf_x / fr_lib_contract_cf_x (the two _wle lemmas below, by reflexivity). *)
 Section cfR.
 Variable R : world segs -> world segs -> Prop.
-(* W_LLVMFuzzerTestOneInput_cut.v:303 fr_lib_post_cf *)
+(* W_LLVMFuzzerTestOneInput_cut.v:304 fr_lib_post_cf *)
 Definition fr_lib_post_cf_xR (regs : bvmap 5 word) (ly : alayout) (S : astate) (Hp : list Z) (W : world segs)
 (mem : word -> option byte) (md : Model) (p n : Z) (M : Z) (l : lleaf)
 (ly' : alayout) (S' : astate) (Hp' : list Z) (W' : world segs) (regs' : bvmap 5 word) (mem' : word -> option byte)
@@ -178,7 +179,7 @@ mo_le MT S S' (XN_LIB n) /\
   ReplyCnt.xcnt_ok B S' ly' (if n =? 0 then [] else [(p, n)]) T0 cap out) /\
 (* CAPOUT at the return (_cut.v's last post clause) *)
 (exists c, val_mem segs (arm W' mem') (rg_capout fr_RG) 8 c /\ 0 <= c <= CAPOUT_MAX).
-(* W_LLVMFuzzerTestOneInput_cut.v:323 fr_lib_contract_cf *)
+(* W_LLVMFuzzerTestOneInput_cut.v:324 fr_lib_contract_cf *)
 Definition fr_lib_contract_cf_xR : Prop :=
 forall ly S Hp (W : world segs) (regs : bvmap 5 word) mem md p n pl M (K : lleaf -> TSet),
 AI segs (w_H W) (w_A W) md ->
@@ -218,7 +219,7 @@ Hypothesis LAWS : AR_laws_x segs B ARx hl.
    HP0 its second projection): the driver reads the post's Hp' = [] through it *)
 Hypothesis HP0 : forall ly S Hp (W : world segs) mem md, ARx ly S Hp W mem md -> Hp = [].
 Hypothesis HG : gx_ok segs B G_fr.
-(* W_LLVMFuzzerTestOneInput_cut.v:412 glob_wr_law is AR-free: cited (glob_wr_law G_fr).
+(* W_LLVMFuzzerTestOneInput_cut.v:413 glob_wr_law is AR-free: cited (glob_wr_law G_fr).
    :318 errno_law over ARx *)
 Definition errno_law_x : Prop :=
   forall ly S Hp (W : world segs) mem md, ARx ly S Hp W mem md ->
@@ -553,7 +554,7 @@ Proof. eapply (lf_seg_jt_xR (@wle segs)); wle_inst. Qed.
 Definition SEG_JT_x := lf_seg_jt_x.
 
 (* :680-742 the two callees B calls out of line, over afn_pre_x with the callee's ghost list Hp.  Their post is
-   lib/B/W_contract.v:142 aleafx_post over the generic journal (G = [], XO = 0, OUT = [], placement PST; a pure
+   lib/B/W_contract.v:143 aleafx_post over the generic journal (G = [], XO = 0, OUT = [], placement PST; a pure
    read-only leaf allocates and frees nothing, so the ghost list is Hp at both ends); every other conjunct is the
    owner's text.  RSRC_STK / RRDS_STK are cited. *)
 Definition aleafx_post_x (STK : Z) (regs : bvmap 5 word) ly S (Hp : list Z) (W : world segs)

@@ -36,11 +36,11 @@ Definition FS_AREALLOC_IPC_A : Z := 0x535b0.
 
 (* ---- the realloc runtime's stack need: STK_RT_REALLOC := ASTACK + 0x8a0, defined in FSH_Gen.v beside STK_RT_ALLOC ----
    (FSH_Base's STK_fuzz_realloc uses it and imports FSH_Gen, not this file.) CORRECTED 2026-10-29 (a Theorem Labs lane's
-   FSupoisonRealloc e0461c947a1, ruled by a Theorem Labs lane 08:04Z): the old text here said ASTACK covers realloc because its
+   FSupoisonRealloc, ruled by a Theorem Labs lane 08:04Z): the old text here said ASTACK covers realloc because its
    runtime prefix is shallower than malloc's. That is WRONG under a Theorem Labs lane's per-callee rule: realloc's four runtime
    frames (interceptor 0x7f0 + GetCurrentPc / unwind 0x70 + asan_realloc 0x10 + Reallocate 0x30 = 0x8a0, identical on
-   A and B) sit ABOVE the inner Allocate / Deallocate, whose contracts need `ly_bot ly < sp_callee` (AllocG.v:75,
-   DeallocG.v:81; c5's realloc_pre carries it as RSTACK, ReallocG.v:121). The caller's astk_ok (YCbq.v:333) gives
+   A and B) sit ABOVE the inner Allocate / Deallocate, whose contracts need `ly_bot ly < sp_callee` (AllocG.v:76,
+   DeallocG.v:82; c5's realloc_pre carries it as RSTACK, ReallocG.v:122). The caller's astk_ok (YCbq.v:333) gives
    only `ly_bot + STK < sp0 + ASTACK`, so the call budget must carry the prefix: arealloc_realizesU takes
    `ly_bot ly + 0x8a0 < spZ regs`, which `STK_RT_REALLOC - o <= STK` supplies. *)
 (* The NAMED HYPOTHESIS the lane table requires (owner a Theorem Labs lane), stated so that it is never absent:

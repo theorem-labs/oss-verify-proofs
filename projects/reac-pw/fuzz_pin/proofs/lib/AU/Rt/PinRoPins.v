@@ -4,7 +4,7 @@
    constant value is the image's little-endian word there. The fact is decided by ro_pins_ok, a boolean check over
    pin's own tables and segments (vm_compute), and ro_pins_sound reads it as the proposition.
    rule 24 (reuse): no function is proved here. The shape is libreac/fuzz_boxreg's lib/A/Rt/StrncmpViewInst.v
-   box_ro_owned_pinned (origin/ossv/recipes f26f9fbd8777), which takes the same fact from boxreg's AF0mCheck.v
+   box_ro_owned_pinned, which takes the same fact from boxreg's AF0mCheck.v
    gate; pin has no such gate file, so the check is written here over StrncmpView.v's own ro_img_word. *)
 (* Modified by Theorem Labs, 2026-10: the asan-ubsan twin of lib/A/Rt/PinRoPins.v of this library, for reac-pw/fuzz_pin's asan-ubsan image (fuzz_pin.asan-ubsan d6f83d301522) instead of its asan image (fuzz_pin.asan 3e4859aed23f): module paths lib.A -> lib.AU (the core files A<xyz> -> Y<xyz>); no numeral changed (every address numeral checked on the asan-ubsan image); by hand, one comment: it names lib/AU/YF0m.v. The comment lines above describe how lib/A/Rt/PinRoPins.v was made and quote the asan image's values; the code and comments below carry the asan-ubsan values. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.

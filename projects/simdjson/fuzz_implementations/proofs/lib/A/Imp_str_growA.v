@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -55,7 +56,7 @@ Local Ltac ul := unfold OSS_PB_STACK_A, SEGTOP_A, STACK_WIN, USTACK_TOP, RT_STAC
 Lemma pb_tailA : forall (Σ : rts RT) (K : config -> Prop) (L : list (Z * Z)) (st : ossA) (len lo O q fO : Z) (kO : nat) (oldD olda : Z) (src : list byte)
     (cra gp cs0 cs1 a2 a3 a4 a5 a6 a7 cs2 cs3 cs4 cs5 cs6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32) (m0 m : mem)
     (xra xt0 xt1 xt2 xa1 xs4 xt3 xt4 xt5 xt6 : word),
-  rt_live RT Σ = oachunk st ++ L -> (forall p n, In (p, n) L -> 0 < n) -> In (fO, kO) (rt_frames RT Σ) -> oss_inA fO kO O -> rt_sp0 RT Σ - STACK_WIN <= lo -> 0x7fff7f800000 <= lo ->
+  rt_live RT Σ = oachunk st ++ L -> (forall p n, In (p, n) L -> 0 < n) -> In (fO, kO) (rt_frames RT Σ) -> oss_inA fO kO O -> rt_sp0 RT Σ - STACK_SPAN <= lo -> 0x7fff7f800000 <= lo ->
   OSNUMA len st -> OSHADOWA m O -> oa_w st = oa_lim st -> 0 <= len <= SJ_PADMAX -> 2 * oa_cap st <= PJ_CAPMAX len ->
   ART RT Σ m -> mem_inv asegs m -> stk asegs m lo (q + -64) -> lo + OSS_PB_STACK_A <= q -> q + 16 <= USTACK_TOP -> q mod 16 = 0 ->
   Z.of_nat (length (rt_live RT Σ)) + 1 <= LIVE_MAX -> mcost (2 * oa_cap st) <= rt_credit RT Σ ->

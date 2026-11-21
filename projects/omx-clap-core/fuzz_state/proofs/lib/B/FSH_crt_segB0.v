@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/YE05.v, with its module paths changed; 2671 of its 2756 lines of code are new or changed and 333 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segA.v, with its module names and numbers changed; 1374 of its 1597 lines of code are new or changed and 2533 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_round_trip 0x81b9c (fuzz_state.c:278-314 with round_trip_document fs.c:229-264 inlined), fs.asan-ubsan (image
    tfibsegs = lib/B/YB1v.v, the pinned fuzz_state.asan-ubsan sha256
    5ac5ce0954f87e2d050c481b7b0599cfd55ef554eadc008e51491f44c053d204): the B twin of the ASan walk of lib/B/FSH_Fn_crt.v
@@ -10,12 +11,12 @@
    return of the second strcmp) across the second preset_base64_decode (call 0x821d0, return 0x821d4) and the bcmp
    thunk (call 0x821f4) to the bcmp-return boundaries crtB_INV_8209c (B 0x821f8) / crtB_INV_820a0 (B 0x821fc), where
    lib/B/FSH_crt_segB.v's segment 12 starts; the class-3 fake frame is live throughout (own = [(3, pos)]).
-   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from 737d62e41df)
-   rule 24: proves no function (kind: segment lemmas of check_round_trip's walk, PORTED from 1ab57ca7ad7) - RT : CrtRt B
-   (not FsRt), fr_bcmp tfibsegs B RT now crt_fr_bcmp B RT (a working branch 1ab57ca7ad7).
-   Port source: a working branch 737d62e41df proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segB0.v (1733
-   lines, on A base v28 a working branch 19c84cdc567), itself PORTED from a working branch
-   d25a984c903 proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_stdefs.v St3 :260 / St4 :315 and
+   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED)
+   rule 24: proves no function (kind: segment lemmas of check_round_trip's walk, PORTED) - RT : CrtRt B
+   (not FsRt), fr_bcmp tfibsegs B RT now crt_fr_bcmp B RT (a working branch).
+   Port source: a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segB0.v (1733
+   lines, on A base v28 a working branch), itself PORTED from a working branch
+   proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_stdefs.v St3 :260 / St4 :315 and
    check_round_trip_sd3.v crt_cmp_seg :239, with check_round_trip_calls.v CR :142 and check_round_trip_sdglue.v
    crt_keep_blk :612 (the checker's CONFIRM for the walk is on (internal path),
    a Theorem Labs lane, role check, 2026-10-29 04:3xZ; the hit's Require closure is 334 files with 0 Admitted / Axiom /
@@ -305,7 +306,7 @@ Lemma crtB0_sc11z_shape :
 Proof. repeat split; vm_compute; reflexivity. Qed.
 
 (* ================= the walk's helpers, from lane D1 (FSH_crt_segD1_keep.v / _bd.v / _bcmp.v / _s31.v /
-   FSH_crt_segD1.v at a working branch 82a1d1bf3a6) and a Theorem Labs lane (FSH_crt_segA23.v reseat / reenter),
+   FSH_crt_segD1.v at a working branch) and a Theorem Labs lane (FSH_crt_segA23.v reseat / reenter),
    renamed ================= *)
 Section h. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Variable SK : YI16.sink_head.

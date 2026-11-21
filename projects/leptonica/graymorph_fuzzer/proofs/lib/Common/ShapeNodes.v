@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the read-only-backing premise sys_rob of rz_sys_chk, rz_sys_chk_const, rz_ret_chk and rz_ret_chk_silent; the Cfg RomBase import). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool FunctionalExtensionality.
@@ -14,6 +15,7 @@ From OSSVerify.Proofs.leptonica.graymorph_fuzzer.lib.Common Require Import
 From LinuxProcessSemantics.Riscv Require Import Prelude Sem.
 From Stdlib Require Finite.
 
+From OSSVerify.Proofs.leptonica.graymorph_fuzzer.lib.Common.Cfg Require Import RomBase.
 Import ListNotations.
 Open Scope bv_scope.
 
@@ -224,6 +226,7 @@ Lemma rz_sys_chk : forall ms model x8 (chk : SyscallEffect -> check_result) (I :
     (E : I -> SyscallEffect) (M : I -> Model) (EV : I -> list event) (T : I -> TSet) (i0 : I),
   m_halted model = None ->
   ms_svc_pending ms = Some x8 ->
+  sys_rob segs (mkCfg ms model) ->
   pending_on segs kit_cfg (mkCfg ms model) ->
   (forall eff, check_syscall (sys_input segs ms x8) eff model = chk eff) ->
   (forall i, chk (E i) = CheckOk (M i) (EV i)) ->
@@ -234,10 +237,11 @@ Lemma rz_sys_chk : forall ms model x8 (chk : SyscallEffect -> check_result) (I :
   (forall i, realizes segs (mkCfg (advance_past_svc (apply_effect ms (E i))) (M i)) (T i)) ->
   realizes segs (mkCfg ms model) (t_alt (fun i => t_emit (EV i) (T i))).
 Proof.
-  intros ms model x8 chk I E M EV T i0 Hh Hsvc Hon Hchk Hok Hinv Hnu Hnh Hnl Hcont.
+  intros ms model x8 chk I E M EV T i0 Hh Hsvc Hrob Hon Hchk Hok Hinv Hnu Hnh Hnl Hcont.
   apply (rz_node segs (mkCfg ms model) I EV
            (fun i => mkCfg (advance_past_svc (apply_effect ms (E i))) (M i)) T i0).
   - eapply node_sys_chk; eassumption.
+  - exact Hrob.
   - exact Hcont.
 Qed.
 
@@ -246,6 +250,7 @@ Lemma rz_sys_chk_const : forall ms model x8 (chk : SyscallEffect -> check_result
     (E : I -> SyscallEffect) (M : I -> Model) (T : TSet) (i0 : I),
   m_halted model = None ->
   ms_svc_pending ms = Some x8 ->
+  sys_rob segs (mkCfg ms model) ->
   pending_on segs kit_cfg (mkCfg ms model) ->
   (forall eff, check_syscall (sys_input segs ms x8) eff model = chk eff) ->
   (forall i, chk (E i) = CheckOk (M i) []) ->
@@ -256,7 +261,7 @@ Lemma rz_sys_chk_const : forall ms model x8 (chk : SyscallEffect -> check_result
   (forall i, realizes segs (mkCfg (advance_past_svc (apply_effect ms (E i))) (M i)) T) ->
   realizes segs (mkCfg ms model) T.
 Proof.
-  intros ms model x8 chk I E M T i0 Hh Hsvc Hon Hchk Hok Hinv Hnu Hnh Hnl Hcont.
+  intros ms model x8 chk I E M T i0 Hh Hsvc Hrob Hon Hchk Hok Hinv Hnu Hnh Hnl Hcont.
   eapply rz_conseq.
   - apply (rz_sys_chk ms model x8 chk I E M (fun _ => []) (fun _ => T) i0);
       try eassumption.
@@ -270,13 +275,14 @@ Qed.
 Lemma rz_ret_chk : forall ms model x8 r m' evs T,
   m_halted model = None ->
   ms_svc_pending ms = Some x8 ->
+  sys_rob segs (mkCfg ms model) ->
   (forall eff, check_syscall (sys_input segs ms x8) eff model = check_ret_only eff r m' evs) ->
   m_halted m' = None ->
   m_vm_lazy m' = [] ->
   realizes segs (mkCfg (advance_past_svc (apply_effect ms (mkEffect r [] []))) m') T ->
   realizes segs (mkCfg ms model) (t_emit evs T).
 Proof.
-  intros ms model x8 r m' evs T Hh Hsvc Hchk Hh' Hnl' Hcont.
+  intros ms model x8 r m' evs T Hh Hsvc Hrob Hchk Hh' Hnl' Hcont.
   assert (Hu : node_ok_u segs (mkCfg ms model) unit (fun _ => evs)
                  (fun _ => mkCfg (advance_past_svc (apply_effect ms (mkEffect r [] []))) m')).
   { apply (node_sys_u ms model x8 unit (fun _ => mkEffect r [] []) (fun _ => m') (fun _ => evs) Hh Hsvc).
@@ -300,7 +306,7 @@ Proof.
       rewrite Hr in Hnr. discriminate Hnr.
     - intros [] _. exists tt. split; reflexivity. }
   eapply rz_conseq.
-  - apply (rz_node segs (mkCfg ms model) unit (fun _ => evs) _ (fun _ => T) tt Hn).
+  - apply (rz_node segs (mkCfg ms model) unit (fun _ => evs) _ (fun _ => T) tt Hn Hrob).
     intros []. exact Hcont.
   - apply t_alt_unit.
 Qed.
@@ -309,13 +315,14 @@ Qed.
 Lemma rz_ret_chk_silent : forall ms model x8 r m' T,
   m_halted model = None ->
   ms_svc_pending ms = Some x8 ->
+  sys_rob segs (mkCfg ms model) ->
   (forall eff, check_syscall (sys_input segs ms x8) eff model = check_ret_only eff r m' []) ->
   m_halted m' = None ->
   m_vm_lazy m' = [] ->
   realizes segs (mkCfg (advance_past_svc (apply_effect ms (mkEffect r [] []))) m') T ->
   realizes segs (mkCfg ms model) T.
 Proof.
-  intros ms model x8 r m' T Hh Hsvc Hchk Hh' Hnl' Hcont.
+  intros ms model x8 r m' T Hh Hsvc Hrob Hchk Hh' Hnl' Hcont.
   eapply rz_conseq; [eapply rz_ret_chk; eassumption|].
   apply t_emit_nil_eq. eapply realizes_nonempty. exact Hcont.
 Qed.

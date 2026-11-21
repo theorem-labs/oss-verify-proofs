@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the robustness of each node's system call over a larger read-only backing (RomBase.sys_rob), which the walk's nodes now ask, proved at each node; recorded proofs written as text where the node premise changed their terms). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -6,6 +7,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Import Bcfg BCatSim BShapeAlg BazyRestrict BazyRestrictRun.
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require KReplay.
+From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib.Common.Cfg Require RomBase.
 Ltac2 kr_t_BazyRestrictAlg () := "K47Corelib7Numbers7BinNums8positive02K47Corelib7Numbers7BinNums1N02I45stdpp9bitvector;definitions2bv00I47Corelib4Init9Datatypes6option00C4ELinuxProcessSemantics?LinuxProcessSem5State8m_haltedK47Corelib4Init9Datatypes6option02I47Corelib4Init5Logic2eq00C4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics>ms_svc_pendingI47Corelib4Init9Datatypes4prod00I4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics>machine_result00C4ELinuxProcessSemantics?LinuxProcessSem3Run?mi_account_stepK47Corelib4Init9Datatypes4prod01K4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics>machine_result01C69OSSVerify5KrLib3bpB2HF9BShapeAlg?node_instr_acctC1?~~~~~~~~~~~~~~~I4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics=machine_state00I4ELinuxProcessSemantics?LinuxProcessSem5State5Model00K47Corelib7Numbers7BinNums8positive03I69OSSVerify5KrLib3bpB2HF?BazyRestrictRun6dsteps00C1?~~~~~~~~~~~~~~~I69OSSVerify5KrLib3bpB2HF9BShapeAlg8realizes00C1?~~~~~~~~~~~~~~~K4ELinuxProcessSemantics?LinuxProcessSem3Run6config01c69OSSVerify5KrLib3bpB2HF?BazyRestrictAlg<node_accountC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib3bpB2HF9BShapeAlg:rz_silent1C1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib3bpB2HF?BazyRestrictRun:dsteps_indC1?~~~~~~~~~~~~~~~I4ELinuxProcessSemantics?LinuxProcessSem3Run6config00C69OSSVerify5KrLib3bpB2HF9BShapeAlg4TSetC1?~~~~~~~~~~~~~~~I69OSSVerify5KrLib3bpB2HF<BazyRestrict8lazy_inv00C1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib3bpB2HF<BazyRestrict8restrictC1?~~~~~~~~~~~~~~~I69OSSVerify5KrLib3bpB2HF7BCatSim6msteps00C1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib3bpB2HF<BazyRestrictEsame_but_materializedC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib3bpB2HF<BazyRestrict=unrestrict_toC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib3bpB2HF?BazyRestrictRun?msteps_restrictC1?~~~~~~~~~~~~~~~I47Corelib4Init5Logic2ex00c69OSSVerify5KrLib3bpB2HF?BazyRestrictAlg9rz_dstepsC1?~~~~~~~~~~~~~~~I47Corelib4Init5Logic3and00".
 Import ListNotations.
 Open Scope bv_scope.
@@ -26,7 +28,12 @@ ltac2:(KReplay.run1 (kr_t_BazyRestrictAlg ()) ["WithSegs"] "h05modelh16model'h22
 Lemma rz_dsteps : forall c c' T,
   dsteps segs c c' -> realizes segs c' T -> realizes segs c T.
 Proof.
-ltac2:(KReplay.run1 (kr_t_BazyRestrictAlg ()) ["WithSegs"] "h01ch11Hh22Hrh32c'h44Hacch52Hhh64Hsvch72IHh81Th92c3h:5modelh;6model'h<2msh=3ms'p;3p;4p;1p;2p;7g00<dj34Tg00=hj41Tg0000j10Tg000Uj15Tg0013j1BTg001Vj1<Tg0028j1;Tg002oj16Tg003Qj33Tg003kj17Tg0051j28Tg005Qj19Tg006Yj3:Tg007Uj4ATg0085j2@Tg00>hj22Tg00?]j7=Tg00@ej7>Tg00Aej7?Tg00BkR0g00C`p,4segsR1f2R2f1R334P1P1p,2SCR4f0R5f3R6C1P1P4P2f4R7C1[X30X00P1P4P5P2C1P5W2X00g00:BR8g00;IR9g00<?#0#0#0#0#0#0#5#BR:#<R;%;6%6:R:33f5R<#7=3;:1889R:#9f6R;=:1<P8P9P7P6CA,@:3312<7=416P1P4P7f:R:C1P1P4f7R=/2;f;R;C1[P1P4P<P;C1P1P4f9R4,2:f8R1/2=f<P:P4P1P=P<P7P6F=P3P5O1F>W2W7W1W4W6W5X90X;9X=8W:W<P6P2P5F?W1W8X30W0o"). Qed.
+  (* LPS 08b1429: text in place of the recorded proofs; an instruction node is robust
+     ([RomBase.sys_rob_instr]), which [rz_silent1] now asks *)
+  intros c c' T H; induction H as [c | ms model ms' model' c3 Hh Hsvc Hacc H IH]; intros Hr; [exact Hr|].
+  eapply rz_silent1; [apply node_account; [exact Hh | exact Hsvc | exact Hacc]
+                     | apply RomBase.sys_rob_instr; exact Hsvc | apply IH; exact Hr].
+Qed.
 
 Lemma rz_account_step : forall ms model ms' model' T,
   m_halted model = None ->
@@ -35,7 +42,9 @@ Lemma rz_account_step : forall ms model ms' model' T,
   realizes segs (mkCfg ms' model') T ->
   realizes segs (mkCfg ms model) T.
 Proof.
-ltac2:(KReplay.run1 (kr_t_BazyRestrictAlg ()) ["WithSegs"] "h04Hacch12Hhh22Hrh34Hsvch41Th55modelh66model'h72msh83ms'p;1p;3p;2p;4p;7g0000j10Tg000Uj1@Tg0013j14Tg001Vj13Tg0028j1?Tg002oj1;Tg003Qj31Tg003kj15Tg0051j26Tg005Qj17Tg006Yj38Tg007Uj49Tg0085j2:Tg00>hj22Tg00=hj4>Tg00?]j7=Tg00@ej7<Tg00:BR0g00;IR1g00C`g00<?#0#0#0#0#0#0#@#4R2#3R3f3R4#?%;2R231f5R5#5=1321601R2#7p,4segsR3f6R6;85P0P1f4R7P4C9,:231P3p,2SCR21257P4C>P3P2f8R2f7R3'21265P7P2P3P6P5P4f2f1F=f0F<W2W0W3W1W4X61X80W5W7o"). Qed.
+  intros ms model ms' model' T Hh Hsvc Hacc Hr.
+  eapply rz_silent1; [apply node_account; eassumption | apply RomBase.sys_rob_instr; exact Hsvc | exact Hr].
+Qed.
 
 Section WithLazy.
 Variables L S : list (word * word).

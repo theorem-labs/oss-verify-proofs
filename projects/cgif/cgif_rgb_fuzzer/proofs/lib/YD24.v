@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the TRB section takes the mmap base, break, entry draw and launch premise entry_launch_ok_va, with the layout environment at the entry draw's top, the run's CONFIG_RSEQ flag and execfn string, and EL6 proved from the launch through YQ0a.ew6 in place of z_rand_end; the channel-reader flag carried to the exit leaf beside the fd table). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
@@ -60,20 +61,27 @@ apply Exists_exists in Y as ([lo l] & Hin & Hz). unfold in_zr in Hz. cbn in Hz.
 unfold Trb_owned_static in Hin. unfold STDOUT_MUT, STDOUT_LO, STDOUT_HI, SOBUF_LO, SOBUF_HI in Ha. cbn in Hin.
 repeat (destruct Hin as [Heq|Hin]; [injection Heq as <- <-; lia|]). exact Hin.
 Qed.
-Variables (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte).
+Variables (sp : word) (inp : ProcInput) (mbase brk : word) (rnd : EntryDraw) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte).
 Hypothesis Hargv : in_argv inp = [a0; p].
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv [a0; p].
 Hypothesis Hve : valid_envp (in_envp inp).
-#[local] Notation EL := (YQ0a.E0 sp [a0; p] (in_envp inp) xw xd).
+(* #38: ew6 and the layout facts beneath it (layout_facts, lay_strs, launch_sp,
+   top_hi) are all proved from the launch, so it has to be threaded.  The caller
+   supplies it. *)
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp.
+#[local] Notation EL := (YQ0a.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd).
 #[local] Notation usp := (bv_unsigned sp).
 #[local] Notation envp := (in_envp inp).
 Let HWXi : wx_segs_nowrap trbsegs := Hwx_tfa.
 Lemma EL6 : usp <= bv_unsigned (ew EL 6).
 Proof.
-change (ew EL 6) with (Z_to_bv 64 (z_rand usp [a0; p] envp)).
-pose proof (YQ0a.z_rand_end sp [a0; p] envp Hsp Hva Hve) as Hz. pose proof (u64_range sp).
-unfold z_rand in *. rewrite u64_lit by lia. lia.
+rewrite <- Hargv.
+(* rewrite ... by eassumption rather than a positional application: the Section t
+   discharge order is not something we can check locally. *)
+rewrite YQ0a.ew6 with (mbase := mbase) (brk := brk) by eassumption.
+pose proof (YQ0a.hs_eq inp). pose proof (YQ0a.aux_size inp).
+unfold z_rand. lia.
 Qed.
 Definition at_rs (rs : smem) (ss' : sstate) (E : YQ0j.env) (W : world trbsegs) (mem0 : word -> option byte) (md : Model) : world trbsegs -> config -> Prop :=
 fun W' c' => W' = W /\ exists ms' mat,
@@ -106,10 +114,10 @@ st_ok trbsegs E S_CM (restrict (w_H W) ms) ->
 AI trbsegs (w_H W) (w_A W) md -> AR trbsegs B ly S W (ms_mem ms) md -> top_ok usp ly ->
 In (pb, cap) (blocks S)   -> qtightB S -> vev S + 2 <= VEV_MAX ->
 so_state k (w_H W) (ms_mem ms) ->
-m_fds md = APSG.fds_std -> m_fs md = in_fs inp ->
+m_fds md = APSG.fds_std -> m_channel_reader md = true -> m_fs md = in_fs inp ->
 srealizes trbsegs (mkCfg ms md) (wr ch_stdout (concat (repeat line0 (k - 1))) (ex (if count_mode data then 0 else v) (in_fs inp))).
 Proof.
-intros E W ms md ly S data pb cap v k HEE HEd Hlen E41 E79 Hv HS HAI HAR HTOP Hbl HQT Hnev HSO Hfds Hfs.
+intros E W ms md ly S data pb cap v k HEE HEd Hlen E41 E79 Hv HS HAI HAR HTOP Hbl HQT Hnev HSO Hfds Hcr Hfs.
 pose proof Hsp as (Ulo & Uhi & U16). pose proof (u64_range sp) as Usp. pose proof (proj1 (@YN05.alloc_ceiling_value rc)) as CV.
 pose proof (top_ok_ceil _ _ HTOP) as HCT. pose proof (YN05.ceil_le_top _ HCT) as CLE. unfold stack_max_size in CLE.
 set (buf := sptr_addr B ly pb) in *.
@@ -239,6 +247,7 @@ rewrite E6_0. intros a Ha. exact (apresent_some' _ _ _ (Hwin8 a Ha)).
 - drv_lia.
 - apply (so_state_frame k (w_H W2) E6 (WIN (-128) :: rs_FB) _ _ HFr8 (proj1 (proj2 CM_so_ok))); [rewrite E6_0; exact Ulo | rewrite E6_0, E6old by (unfold K_FB; lia); exact E6' | exact HSO6].
 - rewrite wvb_fds', Efds6. subst md1. rewrite wvb_fds'. exact Hfds.
+- rewrite YK05.wvb_channel_reader, (same_io_channel_reader _ _ Hio6). subst md1. rewrite YK05.wvb_channel_reader. exact Hcr.
 - rewrite wvb_fs', Efs6. subst md1. rewrite wvb_fs'. exact Hfs.
 Qed.
 End c.

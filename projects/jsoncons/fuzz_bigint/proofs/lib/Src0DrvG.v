@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the section takes main_entry's launch input and mmap base and the channel reader (ReaderOn), and argv's pointers follow the launch's string layout. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -154,7 +155,7 @@ Lemma msg_refused_k : kbytes knRa (EVar 0) (-560) 38 = Some (map bv_unsigned msg
 Proof. vm_compute. repeat split; reflexivity. Qed.
 
 Section DrvG.
-  Context {RE : RunEnv}.
+  Context {RE : RunEnv}. Context {RO : ReaderOn}.
   Local Open Scope Z_scope.
   Variable L : heap_layout.
   Variable HI : heap_iface.
@@ -177,7 +178,9 @@ Section DrvG.
   Hypothesis Hve : valid_envp envv.
   Hypothesis Hvsp : valid_sp sp0.
   Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-  Hypothesis ME : main_entry sp0 [a0s; path] envv uid hw rdraw tid regs0 mem0.
+  Variable inp : ProcInput.
+  Variable mbase entry : word.
+  Hypothesis ME : main_entry inp mbase entry sp0 [a0s; path] envv uid hw rdraw tid regs0 mem0.
   Hypothesis Hfile : fs_lookup fs0 path = Some fdata.
   Hypothesis Hplen : (length path <= 4095)%nat.
   Hypothesis DL : drv_layout L sp0.
@@ -192,15 +195,20 @@ Section DrvG.
 
   (* [comment removed for export] *)
   Definition hdr_vals (vals : list word) : Prop :=
-    vals_ev vals 0 = sp0 /\ vals_ev vals 1 = p0 sp0 a0s path envv /\ vals_ev vals 2 = p1 sp0 a0s path envv /\
-    vals_ev vals 3 = auxvp sp0 a0s path envv /\ vals_ev vals 4 = rnd sp0 a0s path envv /\ vals_ev vals 5 = tid.
+    vals_ev vals 0 = sp0 /\ vals_ev vals 1 = p0 a0s path envv rdraw inp /\ vals_ev vals 2 = p1 a0s path envv rdraw inp /\
+    vals_ev vals 3 = auxvp sp0 a0s path envv /\ vals_ev vals 4 = rnd sp0 a0s path envv inp /\ vals_ev vals 5 = tid.
 
   Lemma hdr_relay : forall vals R x38 x48 x70 ext, hdr_vals vals -> hdr_vals (relayV vals R x38 x48 x70 ext).
   Proof. intros vals R x38 x48 x70 ext H. unfold hdr_vals. rewrite !relayV_lo by lia. exact H. Qed.
 
   Lemma hiv_facts' : forall vals, hdr_vals vals ->
     forall i, In i [3%nat; 4%nat] -> (bv_unsigned sp0 <= bv_unsigned (vals_ev vals i))%Z /\ (bv_unsigned (vals_ev vals i) + 2 ^ 20 <= 2 ^ 64)%Z.
-  Proof. intros vals (_ & _ & _ & P3 & P4 & _) i Hi. exact (hiv_facts sp0 a0s path envv uid hw rdraw Hva Hve Hvsp Hplen vals P3 P4 i Hi). Qed.
+  (* same Src0DrvA prefix as Src0DrvB.v:149 and Src0DrvH.v:214:
+     [sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME Hplen] *)
+  Proof.
+    intros vals (_ & _ & _ & P3 & P4 & _) i Hi.
+    exact (hiv_facts sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME Hplen vals P3 P4 i Hi).
+  Qed.
 
   (* [comment removed for export] *)
   Definition CAPk (k : Z) : Z := 65536 * 2 ^ k.
@@ -239,8 +247,8 @@ Section DrvG.
   Definition close_kg (CAP : Z) (crC : credit) (KC : TSet) : Prop :=
     forall vals R M VM (A1 : Z),
       length vals = 71%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 48 = Z_to_bv 64 A1 -> vals_ev vals 70 = Z_to_bv 64 LEN ->
-      vals_ev vals 1 = p0 sp0 a0s path envv -> vals_ev vals 2 = p1 sp0 a0s path envv ->
-      vals_ev vals 3 = auxvp sp0 a0s path envv -> vals_ev vals 4 = rnd sp0 a0s path envv -> vals_ev vals 5 = tid ->
+      vals_ev vals 1 = p0 a0s path envv rdraw inp -> vals_ev vals 2 = p1 a0s path envv rdraw inp ->
+      vals_ev vals 3 = auxvp sp0 a0s path envv -> vals_ev vals 4 = rnd sp0 a0s path envv inp -> vals_ev vals 5 = tid ->
       regs_ok (ENVb vals) srGL R ->
       (forall lo hi, (lo <= LEN <= hi)%Z -> know_ok RSEGS (ENVb vals) M (knG lo hi)) ->
       above M -> block_range L A1 CAP ->
@@ -889,7 +897,9 @@ Section DrvG.
   (* [comment removed for export] *)
   Hypothesis Hcr0 : cred 0 (debit L cr0 65536).
 
-  Theorem drv_file : file_k scfg L HI sp0 a0s path envv hw rdraw tid mem0 fs0 stdin0 fdata cr0 K.
+  (* [file_k] (Src0DrvA.v:143-151) reads [p0 .. inp] and [p1 .. inp], so Src0DrvA's
+     section discharges [inp] as well. *)
+  Theorem drv_file : file_k scfg L HI sp0 a0s path envv hw rdraw tid mem0 fs0 stdin0 fdata cr0 inp K.
   Proof.
     unfold file_k.
     intros vals R M VM A1 HL P0 P48 P1 P2 P3 P4 P5 HR HK HA HBR HH.
@@ -1048,7 +1058,7 @@ Section DrvG.
     unfold t_die, W;
     assert (HSC : stdio_call 71 sr kn = Some scR) by (vm_compute; reflexivity);
     pose proof (stdio_call_sound_fr scfg vals _ sr kn Rc Mc (model1o 67108864 VM) scR msg_refused []
-             (t_exit (exit_code 2) fs0) HR HK (eq_trans (f_equal (fun n => stdio_call n sr kn) HL) HSC)) as Hsc;
+             (t_exit (exit_code 2) fs0) ltac:(rdr) HR HK (eq_trans (f_equal (fun n => stdio_call n sr kn) HL) HSC)) as Hsc;
     cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn scR app Z.of_nat] in Hsc;
     rewrite app_nil_r, LB38 in Hsc;
     apply Hsc; clear Hsc HSC

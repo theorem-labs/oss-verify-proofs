@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the auxv mallocng's secret scan reads is the launch's, 27 or 29 pairs by CONFIG_RSEQ). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -259,12 +260,21 @@ Qed.
 
 Class auxv_mode : Type := AuxvMode { AUXAVAIL : Prop }.
 
+(* LPS 727298f3: the launch's auxv ([StackLayout.auxv_entries]): the 24 pairs before AT_RANDOM,
+   AT_RANDOM, AT_EXECFN, the CONFIG_RSEQ pair when [rs], and AT_NULL.  mallocng's secret scan reads
+   every key up to AT_NULL; the values it does not read are those of [g], by key. *)
+Definition rauxv_list (x3 x4 x5 x16 x6 x11 x12 x23 rnd : Z) (rs : bool) (g : Z -> Z) : list word :=
+  map wz ([33; g 33; 40; g 40; 41; g 41; 42; g 42; 43; g 43; 44; g 44; 45; g 45; 46; g 46; 47; g 47; 51; g 51;
+           16; x16; 6; x6; 17; g 17; 3; x3; 4; x4; 5; x5; 7; g 7; 8; g 8; 9; g 9;
+           11; x11; 12; x12; 13; g 13; 14; g 14; 23; x23; 25; rnd; 31; g 31]
+          ++ (if rs then [27; g 27; 28; g 28] else []) ++ [0; 0]).
+
 Definition rauxv_full (m : mem) (B sec : Z) : Prop :=
   exists av x3 x4 x5 x16 x6 x11 x12 x23 rnd,
     rw_cells rsegs m RAUXV_CELL [C8 (wz av)]
-    /\ bytes_at rsegs m av (u64s (auxv_list x3 x4 x5 x16 x6 x11 x12 x23 rnd))
+    /\ (exists rs g, bytes_at rsegs m av (u64s (rauxv_list x3 x4 x5 x16 x6 x11 x12 x23 rnd rs g)))
     /\ bytes_at rsegs m (rnd + 8) (le8 (wz sec))
-    /\ alloc_ceiling <= B /\ B <= av /\ av + 160 <= 2^64 /\ B <= rnd + 8 /\ rnd + 16 <= 2^64
+    /\ alloc_ceiling <= B /\ B <= av /\ av + 464 <= 2^64 /\ B <= rnd + 8 /\ rnd + 16 <= 2^64
     /\ 0 <= x3 < 2^64 /\ 0 <= x4 < 2^64 /\ 0 <= x5 < 2^64 /\ 0 <= x16 < 2^64 /\ 0 <= x6 < 2^64
     /\ 0 <= x11 < 2^64 /\ 0 <= x12 < 2^64 /\ 0 <= x23 < 2^64 /\ 0 <= rnd < 2^64.
 
@@ -279,10 +289,10 @@ Lemma rauxv_full_frame : forall m m' B sec W,
   Forall (fun iv : Z * Z => snd iv <= B /\ (snd iv <= RAUXV_CELL \/ RAUXV_CELL + 8 <= fst iv)) W ->
   rauxv_full m' B sec.
 Proof.
-  intros m m' B sec W (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & C & A1 & A2 & H) MU WM FW.
+  intros m m' B sec W (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & C & (rs & g & A1) & A2 & H) MU WM FW.
   exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. split; [|split; [|split; [|exact H]]].
   - eapply rw_cells_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [_ ?]. lia.
-  - eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [? _]. lia.
+  - exists rs, g. eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [? _]. lia.
   - eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [? _]. lia.
 Qed.
 

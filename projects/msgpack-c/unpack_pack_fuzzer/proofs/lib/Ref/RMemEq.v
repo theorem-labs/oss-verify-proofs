@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the proofs that open or rebuild rauxv_ok take its new witnesses, the CONFIG_RSEQ flag and the list of auxv values, in place of the old table's fixed pair values). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -119,8 +120,8 @@ Qed.
 
 Lemma rauxv_ok_memeq m m' B : memeq m m' -> rauxv_ok m B -> rauxv_ok m' B.
 Proof.
-  intros H (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & A1 & A2 & A3 & REST).
-  exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd.
+  intros H (r & av & vals & rnd & A1 & A2 & A3 & REST).
+  exists r, av, vals, rnd.
   split; [eapply rw_cells_memeq; eauto|]. split; [eapply bytes_at_memeq; eauto|]. split; [eapply bytes_at_memeq; eauto| exact REST].
 Qed.
 
@@ -251,8 +252,8 @@ Qed.
 
 Lemma rauxv_ok_memeq m m' B : memeq m m' -> rauxv_ok m B -> rauxv_ok m' B.
 Proof.
-  intros H (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & A1 & A2 & A3 & REST).
-  exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd.
+  intros H (r & av & vals & rnd & A1 & A2 & A3 & REST).
+  exists r, av, vals, rnd.
   split; [eapply rw_cells_memeq; eauto|]. split; [eapply bytes_at_memeq; eauto|]. split; [eapply bytes_at_memeq; eauto| exact REST].
 Qed.
 

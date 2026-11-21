@@ -1,8 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Theorem Labs, 2026-10-30 (ReallocPrimary.CfW, lane W, cf refill re-base, B3 half; base a working branch on the
-   cf layer): MnRefillB3cf, the B3 top of the cf refill, the cf twin of MnRefillB3.v (this tree's copy, = c5 8d6c9f45705b).
-   A hand port of MnRefillB3.v at commit 8d6c9f45705b (its mechanical part scripted outside the tree): imports the B3 cf
+   cf layer): MnRefillB3cf, the B3 top of the cf refill, the cf twin of MnRefillB3.v (this tree's copy, = c5).
+   A hand port of MnRefillB3.v (its mechanical part scripted outside the tree): imports the B3 cf
    twins YFk5cf..YFkmcf; RI+68 is the junk atom rJEX = 55 of YFkpcf with value jex, so the B3 atoms are 56..69.
    The walk (the machine side) is c5's.  The model side is re-based onto the cf model:
    - Section g: cgif's refill_reg / EV_A slack / qloosem are dropped; the case premises of
@@ -23,13 +23,14 @@
   MnRefillSeamcf.refill_B3_classfull_cf (the class-full arm, another hand's) -> MnRefillSeamcf.refill_B3_inner_cf.
    EVENT-FREE: no st_nev, EV_A, EV_MAX, EV_BIG, mtr_ok, aregime, refill_reg, qloosem or non-cf abudget.
    rule 24: no function proved (kind: re-base of the proved refill walk onto the cf instance). *)
-(* Theorem Labs, 2026-10-29 (a Theorem Labs lane, hand H1 of task MEMNORM): copy of CLrefillB3.v:1-2056 at fd6ec37fd04 (c5
-   ad994c27165), plus the memnorm keep.  Changed, and nothing else: this comment, the MnRefillLoc / MnRefillLoccgif /
+(* Theorem Labs, 2026-10-29 (a Theorem Labs lane, hand H1 of task MEMNORM): copy of CLrefillB3.v:1-2056 (c5),
+   plus the memnorm keep.  Changed, and nothing else: this comment, the MnRefillLoc / MnRefillLoccgif /
    MemnormT / MemnormLoc imports, [LEAFQ] (MnRefillLoc.refill_leafR_em in place of refill_leafR), and the end of
    [LEAF_std], which also proves the keep from the same machine frame MEQ and YFkm.XC_where's location of XC.
    rule 24: no function proved (kind: run invariant twin of SizeClassAllocator64LocalCache::Refill's B3 branch). *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MnRefillB3cf.v (commit f01d79f3fb5, cf refill round 3; file sha256 43cd28733da5) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 8 image addresses moved by function pairs the comparison kit cmpkit 86da41d3ef68 calls the same code (strictcmp3 65688e94214a, by funcpair_reply 6963bc4a94fc on the cgif twin ce511d541cda; 4 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 6 code pcs the tool read as sizes, by the pair); 39 hand maps (resolve-run-f01d79f3fb5.tsv (sha256 ba54f3af32ab; internal record), each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MnRefillB3cf.v (cf refill round 3; file sha256 43cd28733da5) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 8 image addresses moved by function pairs the comparison kit cmpkit 86da41d3ef68 calls the same code (strictcmp3 65688e94214a, by funcpair_reply 6963bc4a94fc on the cgif twin ce511d541cda; 4 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 6 code pcs the tool read as sizes, by the pair); 39 hand maps (resolve-run.tsv (sha256 ba54f3af32ab; internal record), each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* CLrefillB3: the released YFkn.v (the refill's B3 branch, inited or not: the class has fewer than max_cached / 2
    free entries, so the refill maps user memory and/or a free-array page) re-run with the stronger leaf
    CLrefill0.refill_leafR.  The file is YFkn.v verbatim except: this comment, the CLrefill0 import, [LEAFQ]
@@ -791,7 +792,7 @@ vm_limit (m_vmmaps (grant_md true FL50 a n md)) = vm_limit (m_vmmaps md) /\
 vm_mmap_base (m_vmmaps (grant_md true FL50 a n md)) = vm_mmap_base (m_vmmaps md) /\
 vm_init_sp (m_vmmaps (grant_md true FL50 a n md)) = vm_init_sp (m_vmmaps md).
 Proof. clear. intros a n md. unfold grant_md, with_mmap_backing, mmap_model. rewrite nores50. destruct md as [fd [maps lazy mat] io fs pr lim tm]. cbn. destruct maps; cbn. repeat split; reflexivity. Qed.
-(* ---- the cf model of the refill tree (refill_tree_cf, YGcfInstRefill.v:62) ---- *)
+(* ---- the cf model of the refill tree (refill_tree_cf, YGcfInstRefill.v:63) ---- *)
 Lemma WF0S : WfP_cf (as_universe B) 0 0 0 S.
 Proof. eapply WfP_cf_weaken; [exact HWT | clear; zlia | clear; zlia | clear; zlia]. Qed.
 (* populate_cf's success tail: cgif's `ret true` at kBatchClass, `clear_exh_cf c ;; ret true` at every other class *)
@@ -1117,7 +1118,7 @@ destruct (mem (Z_to_bv 64 a)) as [b|] eqn:Eb; [exists b; reflexivity | exfalso; 
 Qed.
 Definition FLR : word := Z_to_bv 64 0x104022.
 Lemma noresR : mmap_noreserve_b FLR = true. Proof. clear. reflexivity. Qed.
-(* the layer's machine leaf (YGcfInstRefill.v:378), at the call state S *)
+(* the layer's machine leaf (YGcfInstRefill.v:379), at the call state S *)
 Definition LEAFQ : unit * astate -> world tfibsegs -> config -> Prop := refill_leaf_core_cf B Hph ly S c W regs0 mem0 md0.
 Lemma VIS64 : forall r i, In r (ajunk B ly S ++ aareas S ++ aclient S) -> 0 <= i < snd r -> 0 <= aeval B ly (fst r) + i < 2 ^ 64.
 Proof.

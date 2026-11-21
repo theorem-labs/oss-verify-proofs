@@ -3,22 +3,23 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/YE05.v, with its module paths changed; 2671 of its 2756 lines of code are new or changed and 333 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segA.v, with its module names changed; 214 of its 311 lines of code are new or changed and 2659 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_round_trip (fs.asan 0x81a9c), build A: crt6_keepA, the exit facts of lane A0 of its ASan walk at 0x81d0c (the
    head of the expected_text loop): crt_keepA and, when the body is not empty, crt_l5_mem (lib/A/FSH_crt_base.v, base
    v32), from the facts lane A0 holds at 0x81d0c (its last call, malloc same, returns at 0x81cbc): the three new blocks
    on top of the entry's, U3, the journal from the entry, ARU, the frame, the text block and bytes, the input bytes, the
    statics, the n cell's granule and the four registers. No engine run: pure reasoning over the base's definitions.
-   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from d25a984c903
+   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from
    proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_sdglue.v crt_keep_blk :612 / crt_spared_blk :659 - the
    donor's footprint lemmas: the bytes of a block live at both ends of a run keep their values, and a block the run
    made is spared by every older block, the stack and the statics; here over the S0 journal (YCbq.ajournal's block
    clause) and AR's block separation (YCbq.sep_blocks_pos / sep_block_frame)).
    The function's rule-24 line (checker a Theorem Labs lane, crt-lane-head.md): proves function check_round_trip - PORTED
-   from a working branch d25a984c903 proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip.v:11.
+   from a working branch proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip.v:11.
    The donor is a concrete-execution proof (contract a_call_pre / a_call_post) and is not importable; only the
    argument is ported. Copied with statements kept (prefix crt6_): a Theorem Labs lane's crtA_blk_keep, crtA_blk_sep, crtA_blk_new,
-   crtA_addr_uniq, crtA_body_addressable_U, crtA_len, crtA_zs_bz and crtA_bb (a working branch 6eca7c1f51f
-   lib/A/FSH_crt_segA.v - the same file as at 636fafafadc, which the comments below cite with its line numbers);
+   crtA_addr_uniq, crtA_body_addressable_U, crtA_len, crtA_zs_bz and crtA_bb (a working branch
+   lib/A/FSH_crt_segA.v - the same file as, which the comments below cite with its line numbers);
    its crtA_U_fresh / crtA_U_miss are restated over this lemma's premises as crt6_fresh / crt6_U_new.
    A new file: no licence lines (internal).
 
@@ -61,7 +62,7 @@ Variable B : asyms.
    crt_keep_blk :612 - here the journal's block clause, crt6_blk_keep) and what a block the run made is spared by (sdglue.v
    crt_spared_blk :659 - here AR's block separation and the block law: crt6_blk_sep, crt6_blk_new, crt6_U_new). ---- *)
 
-(* a Theorem Labs lane's crtA_blk_keep (a working branch 636fafafadc lib/A/FSH_crt_segA.v:842), statement kept: a byte of
+(* a Theorem Labs lane's crtA_blk_keep (a working branch lib/A/FSH_crt_segA.v:843), statement kept: a byte of
    a block live at both ends of a journal keeps its value on the machine's memory (the journal's block clause; FS_PSTAT_FP
    holds image bytes only, and no block byte is one: YCbq.blk_img, crt_pstat_img) *)
 Lemma crt6_blk_keep : forall ly S U (W : world tfibsegs) mem md ly' S' U' (W' : world tfibsegs) mem' md' k STK sp0 own
@@ -87,7 +88,7 @@ apply (crt_raw_of_unp B ly S U W mem md ly' S' U' W' mem' md' (p + i) HARU HARU'
 - exact (K2 p n i Hin Hin' Hi Hnfp).
 Qed.
 
-(* a Theorem Labs lane's crtA_blk_sep (FSH_crt_segA.v:2508 at 636fafafadc), statement kept: two distinct live blocks are disjoint *)
+(* a Theorem Labs lane's crtA_blk_sep (FSH_crt_segA.v:2508), statement kept: two distinct live blocks are disjoint *)
 Lemma crt6_blk_sep : forall ly S (W : world tfibsegs) mem md x y,
   AR tfibsegs B ly S W mem md -> In x (ablocks B ly S) -> In y (ablocks B ly S) -> x <> y ->
   zdisjoint (block_rng x) (block_rng y).
@@ -101,7 +102,7 @@ apply in_app_or in Hy as [Hy | [Hy | Hy]]; [| exfalso; exact (Hne Hy) |].
 - destruct (in_split _ _ Hy) as (m1 & m2 & E2). rewrite E2 in E1.
   exact (sep_blocks_pos tfibsegs B (AR_laws_ok tfibsegs B) ly S W mem md x y l1 m1 m2 HAR E1).
 Qed.
-(* a Theorem Labs lane's crtA_blk_new (FSH_crt_segA.v:2522 at 636fafafadc), statement kept: a block that joins the list after the
+(* a Theorem Labs lane's crtA_blk_new (FSH_crt_segA.v:2522), statement kept: a block that joins the list after the
    entry's is not one of the entry's (a block is never disjoint from itself) *)
 Lemma crt6_blk_new : forall ly3 S3 (W3 : world tfibsegs) mem md ly S x l,
   AR tfibsegs B ly3 S3 W3 mem md -> ablocks B ly3 S3 = ablocks B ly S ++ l -> In x l -> 0 <= snd x ->
@@ -115,7 +116,7 @@ pose proof (sep_blocks_pos tfibsegs B (AR_laws_ok tfibsegs B) ly3 S3 W3 mem md x
 unfold zdisjoint, block_rng in D. cbn [fst snd] in D.
 destruct (req_size_pos (snd x) Hs) as (R1 & R2). lia.
 Qed.
-(* a Theorem Labs lane's crtA_addr_uniq (FSH_crt_segA.v:2535 at 636fafafadc), statement kept: two live blocks at one address are one
+(* a Theorem Labs lane's crtA_addr_uniq (FSH_crt_segA.v:2535), statement kept: two live blocks at one address are one
    block *)
 Lemma crt6_addr_uniq : forall ly S (W : world tfibsegs) mem md p m m',
   AR tfibsegs B ly S W mem md -> In (p, m) (ablocks B ly S) -> In (p, m') (ablocks B ly S) -> m = m'.
@@ -131,7 +132,7 @@ Qed.
 
 (* a block that joined after the entry, and is disjoint from the block whose head the walk added to U, has no head in
    U3 = U0 ++ [(h, HEAD)]: the entry's heads are entry blocks' (fs_heads), and the added one is the other block's.
-   a Theorem Labs lane's crtA_U_fresh (FSH_crt_segA.v:2566 at 636fafafadc), restated over U3's two parts with the separation in
+   a Theorem Labs lane's crtA_U_fresh (FSH_crt_segA.v:2566), restated over U3's two parts with the separation in
    place of its size test. *)
 Lemma crt6_fresh : forall ly0 S0 U0 ly3 S3 (W3 : world tfibsegs) mem md h hs p m,
   AR tfibsegs B ly3 S3 W3 mem md -> FSupoisonU.fs_heads B ly0 S0 U0 ->
@@ -151,7 +152,7 @@ apply in_app_or in Hbad as [Hb | [Hb | []]].
   unfold zdisjoint, block_rng in D. cbn [fst snd] in D. lia.
 Qed.
 (* a live block with no head in U meets no range of U: every range is a live block's 16-byte head (fs_heads), and two
-   live blocks are disjoint (a Theorem Labs lane's crtA_U_miss, FSH_crt_segA.v:2550 at 636fafafadc, restated without its crtA_core) *)
+   live blocks are disjoint (a Theorem Labs lane's crtA_U_miss, FSH_crt_segA.v:2550, restated without its crtA_core) *)
 Lemma crt6_U_new : forall ly3 S3 (W3 : world tfibsegs) mem md U3 p m,
   AR tfibsegs B ly3 S3 W3 mem md -> FSupoisonU.fs_heads B ly3 S3 U3 ->
   In (p, m) (ablocks B ly3 S3) -> ~ In (p, 16) U3 ->
@@ -164,7 +165,7 @@ pose proof (crt6_blk_sep ly3 S3 W3 mem md (p, m) (x, m') HAR Hin Hin' ltac:(inje
 unfold zdisjoint, block_rng in D. cbn [fst snd] in D. lia.
 Qed.
 
-(* a Theorem Labs lane's crtA_body_addressable_U (FSH_crt_segA.v:2139 at 636fafafadc), statement kept: a block's bytes clear of
+(* a Theorem Labs lane's crtA_body_addressable_U (FSH_crt_segA.v:2139), statement kept: a block's bytes clear of
    every range of U are addressable on the machine's memory (FSW_rd.fsw_block_body_addressable with the head clause
    replaced by U-disjointness) *)
 Lemma crt6_body_addressable_U : forall ly S U (W : world tfibsegs) mem md P n z len,
@@ -193,7 +194,7 @@ assert (NI : in_ush U (bv_unsigned (Z_to_bv 64 (shadow_of_addr SHADOW_OFF x))) =
 rewrite <- (aview_unpoison_out tfibsegs (w_H W) U mem _ NI). exact Es.
 Qed.
 
-(* a Theorem Labs lane's crtA_len (FSH_crt_segA.v:875 at 636fafafadc), statement kept: the decoded body's length, at most 3/4 of the
+(* a Theorem Labs lane's crtA_len (FSH_crt_segA.v:875), statement kept: the decoded body's length, at most 3/4 of the
    text's (WriterSpecFacts.b64_dec_bound) *)
 Lemma crt6_len : forall (tb : list byte) (bs : list Z),
   WriterSpec.b64_dec (HState.zs tb) = Some bs -> Z.of_nat (length tb) <= 3 * 2 ^ 20 ->
@@ -207,7 +208,7 @@ rewrite Hzs in Hb. pose proof (Zle_0_nat (length bs)) as Hnn. pose proof (Zle_0_
 assert (Hn : 0 <= Z.of_nat (length bs) <= 2359298) by (Z.div_mod_to_equations; lia).
 split; [exact Hn|]. unfold FSH_Fn_writer.enc_size, LIVE_check_round_trip, HEAD. Z.div_mod_to_equations. lia.
 Qed.
-(* a Theorem Labs lane's crtA_zs_bz (FSH_crt_segA.v:952 at 636fafafadc), statement kept: crt_base states the body's bytes as
+(* a Theorem Labs lane's crtA_zs_bz (FSH_crt_segA.v:952), statement kept: crt_base states the body's bytes as
    `zs (bz bs)`, which is bs on bytes *)
 Lemma crt6_zs_bz : forall l : list Z, WriterSpec.bytes_ok l -> HState.zs (HState.bz l) = l.
 Proof.
@@ -216,7 +217,7 @@ induction l as [|a l IH]; [reflexivity|].
 pose proof (proj1 (Forall_cons_iff _ _ _) H) as (Ha & Hl). cbn [map]. rewrite (IH Hl).
 f_equal. rewrite Z_to_bv_unsigned. unfold bv_wrap. change (bv_modulus 8) with 256. apply Z.mod_small. exact Ha.
 Qed.
-(* a Theorem Labs lane's crtA_bb (FSH_crt_segA.v:1863 at 636fafafadc), statement kept: blocks_bytes of a state, from its ablocks *)
+(* a Theorem Labs lane's crtA_bb (FSH_crt_segA.v:1863), statement kept: blocks_bytes of a state, from its ablocks *)
 Lemma crt6_bb : forall ly S ly' S' l,
   ablocks B ly' S' = ablocks B ly S ++ l -> blocks_bytes S' = blocks_bytes S + bsum l.
 Proof.

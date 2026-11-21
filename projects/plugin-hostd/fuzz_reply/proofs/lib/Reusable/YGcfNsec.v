@@ -1,4 +1,4 @@
-(* CARRIED from commit 0deb5310273b0d538ec2a1697f391a1c8ad21c34,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YGcfNsec.v, sha256 02dcfe855f9116d7cf6331ccc466eadea98f12c2902a9fb354f740dab4b2bda5 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the Require lines only:
    the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
@@ -7,12 +7,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10-30: the five lemmas are derived from YGcfSecsStep.v's posts through cfx_ipost_of_ipost. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30: the model-level step lemmas for nsec_cf (YG0ncf.v), the number of USER st_secs entries
    (sec_user_cf, YGcfNames.v: 0 <= sm_size), on every path of the cf model's operations, in YGcfXs.v's cfx_ipost form:
    - nsec_malloc_cf: malloc_cf adds at most one user entry, and none when the request is primary (from_primary);
    - nsec_free_cf: free_cf adds none;
    - nsec_errb_append_cf / nsec_errb_report_cf: the errbuf steps keep it exactly (they append, re-tag or update in
-     place only CONTROL entries, whose sm_size is negative: YG00cf.v:57-65);
+     place only CONTROL entries, whose sm_size is negative: YG00cf.v:58-66);
    - nsec_sec_alloc_cf: cgif's sec_alloc appends one entry, so at most one more.
    ONE proof per fact (Main 2026-10-30): the paths are walked once, by preset row A14's YGcfSecsStep.v over YGcfAmx.v's
    ipost (secs_malloc, secs_free, secs_errb_append, secs_errb_report, secs_sec_alloc_entry, which state both counts

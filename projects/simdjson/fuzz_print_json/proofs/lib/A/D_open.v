@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB; the path string ends by USTACK_TOP - 9 instead of USTACK_TOP - 16; taken in part from projects/simdjson/fuzz_ondemand/proofs/lib/A/D_open.v, 8 lines within its lines 200-362. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -196,7 +197,7 @@ Proof.
   pose proof (af_sp0_range RT AF Σ m HART) as SP0R.
   pose proof HSIG as (LV & FRS & CR & USP0 & SPW).
   pose proof (u64arr_bound asegs m ap ptrs ARR) as ARB.
-  set (lo := rt_sp0 RT Σ - STACK_WIN) in *.
+  set (lo := rt_sp0 RT Σ - STACK_SPAN) in *.
   rewrite HL in HA, P1lo. rewrite Lptrs in ARB. replace (Nat.min 2 (length argvb)) with 2%nat in ARB by lia.
   pose proof (to_open_walk usp ap gp t0 t1 t2 s0 s1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m lo ptrs p1) as W1.
   lazymatch type of W1 with _ -> _ -> _ -> _ -> _ -> _ -> _ -> _ -> _ -> _ -> evt asegs _ ?X =>
@@ -239,11 +240,11 @@ Qed.
 
 Lemma failed_intro : forall fc Σ usp ap path gp s1 s3 s4 s5 s6 s7 s8 s9 s10 s11 c0 c1 c2 c3 c4 c5 c6 c7 m m' (e : Z) c,
   frm0 fc -> MAINCTX RT OUT_rep ERR_rep XENV LIB argvb Σ stdout_init usp ap c0 c1 c2 c3 c4 c5 c6 c7 m -> sigma0_ok RT Σ usp ->
-  bytes_at asegs m path (path_b argvb ++ [Z_to_bv 8 0]) -> ap < path -> path + Z.of_nat (length (path_b argvb)) + 1 <= USTACK_TOP - 16 ->
+  bytes_at asegs m path (path_b argvb ++ [Z_to_bv 8 0]) -> ap < path -> path + Z.of_nat (length (path_b argvb)) + 1 <= USTACK_TOP - 9 ->
   path_slack argvb m path ->
   ASTA RT Σ (PMfd fds0 fs) (fun ms => ret_stF fc (Z_to_bv 64 RET_OPEN) (Z_to_bv 64 (usp - 80)) gp (Z_to_bv 64 TP_A) (Z_to_bv 64 2) s1
          (Z_to_bv 64 path) s3 s4 s5 s6 s7 s8 s9 s10 s11 (Z_to_bv 64 (-1)) m' ms
-      /\ musl_after RT Σ (bv_unsigned (Z_to_bv 64 (usp - 80))) (rt_sp0 RT Σ - STACK_WIN) [(errno_cell (Z_to_bv 64 TP_A), errno_cell (Z_to_bv 64 TP_A) + 4)] m m'
+      /\ musl_after RT Σ (bv_unsigned (Z_to_bv 64 (usp - 80))) (rt_sp0 RT Σ - STACK_SPAN) [(errno_cell (Z_to_bv 64 TP_A), errno_cell (Z_to_bv 64 TP_A) + 4)] m m'
       /\ rw_cells asegs m' (errno_cell (Z_to_bv 64 TP_A)) [C4 (Z_to_bv 64 e)]) c ->
   FAILED RT OUT_rep ERR_rep XENV LIB argvb fs c.
 Proof using AF OUT_loc ERR_loc XENV_loc LIB_loc IO_img XENV_img.
@@ -284,7 +285,7 @@ Proof using AF AF_DRV OPR VARGV OUT_loc ERR_loc XENV_loc LIB_loc IO_img XENV_img
   rewrite nth1_argv_Z in HCL. apply oc_fail in HCL.
   apply (OPR Σ fds0 fs (Z_to_bv 64 RET_OPEN) (Z_to_bv 64 (usp - 80)) gp (Z_to_bv 64 TP_A) t0 t1 t2 (Z_to_bv 64 2) s1
            (Z_to_bv 64 path) (Z_to_bv 64 0) a2 a3 a4 a5 a6 a7 (Z_to_bv 64 path) s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
-           F fc m path (path_b argvb) (rt_sp0 RT Σ - STACK_WIN)); try reflexivity; try assumption.
+           F fc m path (path_b argvb) (rt_sp0 RT Σ - STACK_SPAN)); try reflexivity; try assumption.
   - rewrite unsigned_lit by ul. exact ST0.
   - rewrite unsigned_lit by ul. ul.
   - right. rewrite unsigned_lit by ul. lia.
@@ -294,12 +295,12 @@ Qed.
 
 Lemma opened_intro : forall fc Σ usp ap path gp s1 s3 s4 s5 s6 s7 s8 s9 s10 s11 c0 c1 c2 c3 c4 c5 c6 c7 m m' ent c,
   frm0 fc -> MAINCTX RT OUT_rep ERR_rep XENV LIB argvb Σ stdout_init usp ap c0 c1 c2 c3 c4 c5 c6 c7 m -> sigma0_ok RT Σ usp ->
-  bytes_at asegs m path (path_b argvb ++ [Z_to_bv 8 0]) -> ap < path -> path + Z.of_nat (length (path_b argvb)) + 1 <= USTACK_TOP - 16 ->
+  bytes_at asegs m path (path_b argvb ++ [Z_to_bv 8 0]) -> ap < path -> path + Z.of_nat (length (path_b argvb)) + 1 <= USTACK_TOP - 9 ->
   open_ent (path_b argvb) fs = Some ent -> path_slack argvb m path ->
   ASTA RT Σ (PMfd (fd_insert fds0 (alloc_fd fds0) ent) fs)
     (fun ms => ret_stF fc (Z_to_bv 64 RET_OPEN) (Z_to_bv 64 (usp - 80)) gp (Z_to_bv 64 TP_A) (Z_to_bv 64 2) s1
          (Z_to_bv 64 path) s3 s4 s5 s6 s7 s8 s9 s10 s11 (alloc_fd fds0) m' ms
-      /\ musl_after RT Σ (bv_unsigned (Z_to_bv 64 (usp - 80))) (rt_sp0 RT Σ - STACK_WIN) [] m m') c ->
+      /\ musl_after RT Σ (bv_unsigned (Z_to_bv 64 (usp - 80))) (rt_sp0 RT Σ - STACK_SPAN) [] m m') c ->
   OPENED RT OUT_rep ERR_rep XENV LIB argvb fs c.
 Proof using AF OUT_loc ERR_loc XENV_loc LIB_loc IO_img XENV_img.
   intros fc Σ usp ap path gp s1 s3 s4 s5 s6 s7 s8 s9 s10 s11 c0 c1 c2 c3 c4 c5 c6 c7 m m' ent c FRM
@@ -337,7 +338,7 @@ Proof using AF AF_DRV OPC VARGV OUT_loc ERR_loc XENV_loc LIB_loc IO_img XENV_img
   rewrite nth1_argv_Z in HCL. destruct (oc_notfail _ _ HCL) as (ent & HENT).
   apply (OPC Σ fds0 fs (Z_to_bv 64 RET_OPEN) (Z_to_bv 64 (usp - 80)) gp (Z_to_bv 64 TP_A) t0 t1 t2 (Z_to_bv 64 2) s1
            (Z_to_bv 64 path) (Z_to_bv 64 0) a2 a3 a4 a5 a6 a7 (Z_to_bv 64 path) s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
-           F fc m path (path_b argvb) (rt_sp0 RT Σ - STACK_WIN) ent); try reflexivity; try assumption.
+           F fc m path (path_b argvb) (rt_sp0 RT Σ - STACK_SPAN) ent); try reflexivity; try assumption.
   - rewrite unsigned_lit by ul. exact ST0.
   - rewrite unsigned_lit by ul. ul.
   - right. exact ERRN0.
@@ -358,7 +359,7 @@ Proof using AF AF_DRV FPR EXC VARGV OUT_loc ERR_loc XENV_loc LIB_loc IO_img XENV
   pose proof (AF_DRV Σ m ART0) as DC0. pose proof DC0 as (SC0 & _). pose proof (drv_ssp m g0 DC0 SG0) as SSP0.
   pose proof (af_sp0_range RT AF Σ m ART0) as SP0R.
   destruct (path_b_facts HL) as (NZ & NSL & NDD & LEN).
-  set (lo := rt_sp0 RT Σ - STACK_WIN) in *.
+  set (lo := rt_sp0 RT Σ - STACK_SPAN) in *.
   rewrite nth1_argv_Z.
   replace (evw 2 (msg_cannot_open (map bv_unsigned (nth 1 argvb []))))
     with (evw 2 (fp_msg (FPcannot_open path (path_b argvb))) ++ evw 1 (so_buf stdout_init))

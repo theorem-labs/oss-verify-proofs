@@ -3,13 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: the walk of reac_box_catalogue on fuzz_segconf.asan-ubsan (image B, pin sha256
    c3796c0b38f3, twin 80e82127e8ca; entry 0x8a8a0, 84 bytes, 21 instructions, a 16-byte frame, no side-stack
    frame): reac_box_catalogue_contract of lib/B/Prog/reac_box_catalogue_c.v (image B's copy of the image-A owner's FINAL
-   text at 6f783602b5e3) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
+   text) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
    entry, SRr of apost_base at the return, over `Context {PI : PAImg seg_listing}` of image B's listing,
    lib/B/Prog/SegPa.v).
-   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane, commit
-   434ade288123, both arms): the same entry seeds, token runs and return steps over image B's listing modules and
+   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane,
+    both arms): the same entry seeds, token runs and return steps over image B's listing modules and
    B's kit copies. The UBSan alignment check is read from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_catalogue.v
-   at origin/ossv/recipes 3abc3740de97 (the same image-B code but 4 pc-relative words; caller-journal form, not
+   (the same image-B code but 4 pc-relative words; caller-journal form, not
    copied), whose token run decides it the same way.
    Image B's code differs from image A's by two instructions: `andi a1,a0,7` (0x8a8ac) and `bnez a1,0x8a8ec`
    (0x8a8b0) to `unimp` (0x8a8ec), the UBSan alignment check of the 8-byte store through c.
@@ -37,10 +37,11 @@
    definitions (SegInstA's names at image B): SegInstB.STK_reac_box_catalogue and SegInstB.catA, tied to this walk
    by the lemmas STK_reac_box_catalogue_B (the value 16) and catA_B (listing object 77 of B's seg_objs). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/reac_box_catalogue.v; 391 of its 448 lines of code are new or changed and 396 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin sha256 c3796c0b38f3...): the loop of fuzz_catalogue_row
    (0x8a828 .. 0x8a894), one lemma per segment, in the form of fuzz_command's lib/A/Prog/rec_shape_of_s.v
-   (origin/ossv/recipes 501c0d516c69; each segment seeded by the walk kit fuzz_catalogue_row_k.v and run by the token
-   executor), with the loop invariant and the row arithmetic of proofs/reac-pw/fuzz_pin/lib/A/PPgRow.v (b4e9443a2b9c;
+   (each segment seeded by the walk kit fuzz_catalogue_row_k.v and run by the token
+   executor), with the loop invariant and the row arithmetic of proofs/reac-pw/fuzz_pin/lib/A/PPgRow.v (
    rw_head_seg / rw_next_seg / rw_loop):
    HEAD -> R1  the instrumented check of row i's token-pointer word (decided by the shadow entry of the row's
                first granule, so the error path is not reached), the load of the token pointer, the strlen
@@ -50,8 +51,8 @@
    NEXT        s6 -= 1, s0 / s3 += 296, s5 += 37; the head of row i + 1, or after row 10 the return of 0.
    The row index is an atom's value, so each segment runs once; fcr_heads closes the loop by induction on the rows
    left. No segment holds a UBSan trap branch (the function has none).
-   rule 24 (reuse), RELOCATION: reused lib/A/Prog/fuzz_catalogue_rowA_s.v (the image-A m_file-family lane, commit
-   01bfbfa568f9); what differs: the Require lines (image B's lib/B copies; SegInstB.v, image B's values under
+   rule 24 (reuse), RELOCATION: reused lib/A/Prog/fuzz_catalogue_rowA_s.v (the image-A m_file-family lane);
+   what differs: the Require lines (image B's lib/B copies; SegInstB.v, image B's values under
    SegInstA's names, for SegInstA.v), HcA (catA = 0xa20a0) and the program points' addresses in the comments. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

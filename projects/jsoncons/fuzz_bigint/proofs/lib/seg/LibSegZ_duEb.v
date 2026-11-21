@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, a string pointer is at most 2 ^ 47 - 10, was 2 ^ 47 - 17, and the segment walk is computed in the build in place of the recorded walk. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -23,7 +24,7 @@ Definition kn0 : list kentry := [KRange (EVar 2) 140735332552704 140737488355328
    KWr (SA (EVar 2) (-48)) (ELit 112);
    KUnk (SA (EVar 2) (-48)) (ELit 112);
    KImg 65536 880640;
-   KRange (EVar 33) 140735332552704 140737488355311;
+   KRange (EVar 33) 140735332552704 140737488355318;
    KRange (EVar 34) 67 73;
    KDisj (SA (EVar 2) (-48)) (ELit 112) (SA (EVar 33) 0) (EAlu Instr.ALU_ADD (EVar 34) (ELit 1));
    KWr (SA (ELit 0) (892872)) (ELit 8);
@@ -54,8 +55,7 @@ Definition BLOCK := SGP.step1 RSEGS IT X_CPY X_SET X_LEN RO_LO RO_HI BF F0 (SR.S
 Set Printing Width 1000000. Set Printing Depth 1000000.
 
 (* [comment removed for export] *)
-Definition ex1 : list SGA.aitem * (Z * sym_state) :=
-  (([SGA.AStep (SR.SBlock [798184; 798184])], (93, SS 798184 [ELit 0; ELit 802608; EAlu Instr.ALU_ADD (EVar 2) (ELit (-48)); EVar 3; EVar 4; EVar 5; ELit 798124; EVar 7; ELit 7; ELit 892832; EVar 40; ELit 89964; ELit 7; EVar 13; EVar 14; EVar 15; EVar 16; EVar 17; EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit (-1)) (EVar 34)) (ELit 2147483640); EAlu Instr.ALU_ADD (EVar 34) (ELit 7); ELit 892832; ELit 6491464; ELit 7; ELit 89964; EVar 24; EVar 25; ELit 7; EVar 27; EVar 28; EVar 29; EVar 30; EVar 31] [] [KWord {| a_base := EVar 2; a_off := -8 |} 8 (EVar 40); KWord {| a_base := EVar 2; a_off := 0 |} 8 (ELit 7); KWord {| a_base := EVar 2; a_off := 8 |} 8 (ELit 89971); KWord {| a_base := EVar 2; a_off := 16 |} 8 (ELit 892832); KWord {| a_base := EVar 2; a_off := 24 |} 8 (EAlu Instr.ALU_ADD (EVar 34) (ELit 7)); KWord {| a_base := EVar 2; a_off := 32 |} 8 (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit (-1)) (EVar 34)) (ELit 2147483640)); KWord {| a_base := EVar 2; a_off := 40 |} 8 (ELit 2147483647); KWord {| a_base := EVar 2; a_off := 48 |} 8 (ELit 37); KWord {| a_base := EVar 2; a_off := 56 |} 8 (ELit 802608); KWord {| a_base := ELit 0; a_off := 892872 |} 8 (EAlu Instr.ALU_ADD (EAlu Instr.ALU_ADD (EVar 2) (EVar 34)) (ELit 631)); KRange (EVar 2) 140735332552704 140737488355328; KAlign (EVar 2) 16; KWr {| a_base := EVar 2; a_off := -48 |} (ELit 112); KUnk {| a_base := EVar 2; a_off := -48 |} (ELit 40); KImg 65536 880640; KRange (EVar 33) 140735332552704 140737488355311; KRange (EVar 34) 67 73; KDisj {| a_base := EVar 2; a_off := -48 |} (ELit 112) {| a_base := EVar 33; a_off := 0 |} (EAlu Instr.ALU_ADD (EVar 34) (ELit 1)); KWr {| a_base := ELit 0; a_off := 892872 |} (ELit 8); KWord {| a_base := ELit 0; a_off := 892832 |} 1 (ELit 5); KWord {| a_base := ELit 0; a_off := 892864 |} 8 (EAlu Instr.ALU_ADD (EVar 2) (ELit 704)); KWord {| a_base := ELit 0; a_off := 892904 |} 8 (ELit 798124); KWord {| a_base := ELit 0; a_off := 6491464 |} 8 (EVar 40)] 140))).
+Definition ex1 := Eval vm_compute in (AUTO 4000 ss0).
 Definition s1 : sym_state := snd (snd ex1).
 
 Definition plan : SGP.splan := SGA.mkplan (fst ex1) (SGP.PEnd 0).

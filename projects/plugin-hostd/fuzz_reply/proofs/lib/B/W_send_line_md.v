@@ -4,8 +4,9 @@
    (lib/B/W_send_line_*.v): one round of the plain model (Prog/send_line_b_c.v sl_run through W_contract.v's
    send_line_cap / sl_cost_run / sl_alloc_run / sl_max_run), the control flags at a live and at a dead controller,
    and the pairwise disjointness of a list of extents.  No image fact: verbatim from image A's
-   lib/A/W_send_line_loop.v:37-226 and :728-806 (a working branch 9367674296a), which states them over the
+   lib/A/W_send_line_loop.v:37-226 and :728-806 (a working branch), which states them over the
    same W_contract.v names. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

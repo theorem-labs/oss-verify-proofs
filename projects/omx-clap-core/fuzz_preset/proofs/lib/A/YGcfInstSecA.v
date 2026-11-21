@@ -9,6 +9,7 @@
    asan image A' (#102 pin fuzz_preset.asan 1be0f53d96cb, unstripped twin sha256 bff8519bbe3e); module paths changed;
    every image address is this unit's named value (A/AF0m.v TFIB_* / Tfib_const / Tfib_owned_static, A/AF0x.v,
    A/AGjm.v DZONE, A/CfImgA.v, A/AGImgA.v, A/AGImgSA.v), and no image address is typed in this file. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* The secondary Allocate interfaces of the generic cf instance layer (lib/Reusable/YGcfInstSec.v: ifaceSw_cf, ifaceSE_cf)
    at preset's image A' (AImg_A, AGImg_A, AImgS_A; CfImg_A, CfParams_preset), every image row of YGcfInstSec.v's
    Section b discharged here at a symbol table with TfibSyms, and the two interfaces closed at preset's record
@@ -100,7 +101,7 @@ Definition win_ok (c : acell) : bool :=
 Lemma win_oks : forallb win_ok (Tfib_const_abs ++ Tfib_const_shadow) = true.
 Proof. vm_compute. reflexivity. Qed.
 
-(* A byte of a segment's read-only content is visible in every view (A/AGimW.v:291 aview_rw_some's script). *)
+(* A byte of a segment's read-only content is visible in every view (A/AGimW.v:292 aview_rw_some's script). *)
 Lemma view_of_rom_A : forall (H : word -> bool) (mem : word -> option byte) a,
   seg_rom tfibsegs (Z_to_bv 64 a) <> None -> aview tfibsegs H mem a <> None.
 Proof.

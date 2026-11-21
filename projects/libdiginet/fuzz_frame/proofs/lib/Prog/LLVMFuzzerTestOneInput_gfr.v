@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
-(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/Prog/LLVMFuzzerTestOneInput_gfr.v at bc49657c087a; module path, the name egress_slot_g_frame, LLVM_K from check_inject. *)
+(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/Prog/LLVMFuzzerTestOneInput_gfr.v; module path, the name egress_slot_g_frame, LLVM_K from check_inject. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_egress/lib/Prog/LLVMFuzzerTestOneInput_gfr.v, with its module paths changed; 5 of its 34 lines of code are new or changed and 5 lines of the source are left out. *)
-(* ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Prog/LLVMFuzzerTestOneInput_gfr.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_frame; decode_slot_g_frame is frame_slot_g_frame and takes the SR contract of LLVMFuzzerTestOneInput (Statement.v slot_sr_all) as its first hypothesis; the stack bound is LLVMFuzzerTestOneInput_c.v llvm_K_slot; module path OSSVerify.Proofs.libdiginet.fuzz_frame.lib. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Prog/LLVMFuzzerTestOneInput_gfr.v for libdiginet/fuzz_frame; decode_slot_g_frame is frame_slot_g_frame and takes the SR contract of LLVMFuzzerTestOneInput (Statement.v slot_sr_all) as its first hypothesis; the stack bound is LLVMFuzzerTestOneInput_c.v llvm_K_slot; module path OSSVerify.Proofs.libdiginet.fuzz_frame.lib. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

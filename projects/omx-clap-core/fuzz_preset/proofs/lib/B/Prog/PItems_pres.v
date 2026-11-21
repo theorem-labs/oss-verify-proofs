@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the SEGMENT PRES of parse_items' image-B walk, in ONE file, so that
    every segment file imports the pres it needs and holds only lemmas and Section hypotheses (the neighbours' LEMMA
    statements): pres living in the segment files made import cycles (Entry <-> Head, Body <-> Value;
@@ -175,7 +176,7 @@ Definition pi_loop_pre (fx0 : YK11.FPState) (ly : alayout) (S : astate) (Hp : li
     (* the prefix's block move, as the record's post states it, and its byte bound: every exit reads its post's
        rd_blocks_move and blocks_bytes clauses off these (PItemsBody 06:1xZ G2; pi_blk is its projection) *)
     rd_blocks_move B ly S lyc Sc D0 tr0 (rest_atR tb text p) d /\
-    (* THE TRAVELLING POSITION AND LIVE REQUESTS (form (b), f97c8b2f046b; PItems_posb.v): the run position from the
+    (* THE TRAVELLING POSITION AND LIVE REQUESTS (form (b); PItems_posb.v): the run position from the
        entry state S to this block's state Sc over the prefix trace tr0, and the live requests moved by tr0 *)
     PItems_posb.pi_posb S Sc tr0 /\
     PItems_posb.pi_live (PresetRoom.rs_live (YGcfRoom.room_of_cf S))
@@ -217,7 +218,7 @@ Definition pi_body_pre (fx0 : YK11.FPState) (ly : alayout) (S : astate) (Hp : li
     (* the prefix's block move, as the record's post states it, and its byte bound: every exit reads its post's
        rd_blocks_move and blocks_bytes clauses off these (PItemsBody 06:1xZ G2; pi_blk is its projection) *)
     rd_blocks_move B ly S lyc Sc D0 tr0 (rest_atR tb text p) d /\
-    (* THE TRAVELLING POSITION AND LIVE REQUESTS (form (b), f97c8b2f046b; PItems_posb.v): the run position from the
+    (* THE TRAVELLING POSITION AND LIVE REQUESTS (form (b); PItems_posb.v): the run position from the
        entry state S to this block's state Sc over the prefix trace tr0, and the live requests moved by tr0 *)
     PItems_posb.pi_posb S Sc tr0 /\
     PItems_posb.pi_live (PresetRoom.rs_live (YGcfRoom.room_of_cf S))
@@ -278,7 +279,7 @@ Definition pi_free_pre (fx0 : YK11.FPState) (ly : alayout) (S : astate) (Hp : li
     (* the prefix's block move, as the record's post states it, and its byte bound: every exit reads its post's
        rd_blocks_move and blocks_bytes clauses off these (PItemsBody 06:1xZ G2; pi_blk is its projection) *)
     rd_blocks_move B ly S lyc Sc D0 tr0 (rest_atR tb text p) d /\
-    (* THE TRAVELLING POSITION AND LIVE REQUESTS (form (b), f97c8b2f046b; PItems_posb.v): the run position from the
+    (* THE TRAVELLING POSITION AND LIVE REQUESTS (form (b); PItems_posb.v): the run position from the
        entry state S to this block's state Sc over the prefix trace tr0, and the live requests moved by tr0; the
        fuzz_free call composes its own post transfer (HFr) onto pi_posb by PItems_posb.pi_posb_call *)
     PItems_posb.pi_posb S Sc tr0 /\
@@ -357,7 +358,7 @@ Definition pi_val_pre (fx0 : YK11.FPState) (ly : alayout) (S : astate) (Hp : lis
     (* the prefix's block move, as the record's post states it, and its byte bound: every exit reads its post's
        rd_blocks_move and blocks_bytes clauses off these (PItemsBody 06:1xZ G2; pi_blk is its projection) *)
     rd_blocks_move B ly S lyc Sc D0 tr0 (rest_atR tb text p) d /\
-    (* THE TRAVELLING POSITION AND LIVE REQUESTS (form (b), f97c8b2f046b; PItems_posb.v): the run position from the
+    (* THE TRAVELLING POSITION AND LIVE REQUESTS (form (b); PItems_posb.v): the run position from the
        entry state S to this block's state Sc over the prefix trace tr0, and the live requests moved by tr0 *)
     PItems_posb.pi_posb S Sc tr0 /\
     PItems_posb.pi_live (PresetRoom.rs_live (YGcfRoom.room_of_cf S))
@@ -491,7 +492,7 @@ Definition pi_ajR (R : world segs -> world segs -> Prop) (ly : alayout) (S : ast
   (regs0 : bvmap 5 word) (d : nat) (e q v : Z)
   (lyc : alayout) (Sc : astate) (Hpc : list Z) (Wc : world segs) (memc : word -> option byte) (mdc : Model) (k : Z)
   (WS : list (list Z)) : Prop :=
-  (* the journal at the BUDGET WS (the batch kit 240b06ed4fd4): the wild traces the run's allocator calls stored so far; every
+  (* the journal at the BUDGET WS (the batch kit): the wild traces the run's allocator calls stored so far; every
      so far; every segment pre carries `YCbqGwild.wbudget CW 0 WS` (they are all CW's), and the post is at wbudget CW 0 *)
   ajournal_xwR (SK := SK) segs B prh_pst ARx R (STK_parse_items d + e) (spZ regs0 + e) (rd_fp q v)
     ly S Hp W mem md [] lyc Sc Hpc Wc memc mdc k WS.

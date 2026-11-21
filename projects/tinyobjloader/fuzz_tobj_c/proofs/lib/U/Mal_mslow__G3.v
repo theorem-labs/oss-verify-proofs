@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the walk's world predicate K also keeps the vDSO fact, which the call's MInvR needs at the leaf; auxv_init_rdext proved by the malloc contract's shared auxv lemma, which reads the launch's auxv for either CONFIG_RSEQ value). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -765,15 +766,7 @@ Proof. intros Hx. unfold Glue.rd_of. rewrite (off_image_none x Hx). destruct (m 
 
 Lemma auxv_init_rdext Ly (r r' : valuation) : ltac2:(tb__ "0|2|
 S159S2dS12aVLy;Vr;A4S78Q40A1M0S0SfS78Q8A1A1S14fS2dS3eVr';A1R1A3S14fS2dS3eVr;A1R1A3A3Fa;S0G0S3bVr';PaM1A2S3bVr;G1A2A3S159S2dS12aVLy;Vr';A4F_;F_;F_;").
-Proof.
-  intros (av & q & R1 & R2 & R3 & R4 & R5 & REST) AG Hsp.
-  assert (T : forall a w v, am_reads segsU (rm r) a w v -> am_reads segsU (rm r') a w v).
-  { intros a w v H k Hk. rewrite AG. exact (H k Hk). }
-  exists av, q. rewrite Hsp.
-  split; [apply T; exact R1|]. split; [intros j Hj; apply T; exact (R2 j Hj)|].
-  split; [intros j Hj; destruct (R3 j Hj) as [v Hv]; exists v; apply T; exact Hv|].
-  split; [apply T; exact R4|]. split; [apply T; exact R5|]. exact REST.
-Qed.
+Proof. exact (auxv_init_rdext_gen segsU C_U Ly r r'). Qed.
 
 Lemma mem_kept_trans00 C A A2 (m0 m1 m2 : word -> option byte) : ltac2:(tb__ "0|0|
 S14eS2dVC;VA;VA;Vm0;Vm1;A6S14eS2dVC;VA;VA2;Vm1;Vm2;A6S14eS2dVC;VA;VA2;Vm0;Vm2;A6F_;F_;").
@@ -888,8 +881,10 @@ Variables (Kc : list event -> Model -> Prop) (RF GF : Prop) (TR : Z -> assn -> a
 Hypothesis RR : ltac2:(tb__ "0|0|
 S15aS2dVKc;VRF;VGF;VTR;A5").
 
-Definition K (tr' : list event) (md' : Model) : Prop := ltac2:(tb__ "0|0|
-S1VKc;Vtr';Vmd';A2S0S149S14aVmd';A1Vvm;A3A2").
+(* LPS 727298f3: K also keeps the vDSO fact of the entry's invariant ([MInvR]), which the call's
+   [JC] asks for at the leaf. *)
+Definition K (tr' : list event) (md' : Model) : Prop :=
+  Kc tr' md' /\ (m_vmmaps md' = vm /\ OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.vdso_ok md').
 Lemma HK : implK Kc K. Proof using . intros tr' md' [H _]. exact H. Qed.
 
 Let rhoW : valuation := rho1 m0.
@@ -1607,7 +1602,7 @@ Proof using Erd Erm Ewok HCS HLok HMI HP12 HW Hdepth Hinit Hm0_ctz Hm0_sct Hrom 
   { apply (WalkReab.relinkp segsU K rho' Lf (CALLX pv) w sets d NF0 Hvars (swf_CALLX pv) Hsd (Hd HagS)); [|exact HSP].
     constructor; [|constructor; [|constructor]]; hfact HagS; zev; [lia|].
     rewrite zr1_10. rewrite (Z.mod_small _ _ (urange _)). exact (proj1 Hsp). }
-  destruct w as [trw [msw mdw]]. destruct HSPX as [HsmX HKX]. cbn [w_tr w_cfg cfg_model] in HKX. destruct HKX as [HKc Hvm].
+  destruct w as [trw [msw mdw]]. destruct HSPX as [HsmX HKX]. cbn [w_tr w_cfg cfg_model] in HKX. destruct HKX as [HKc [Hvm VDX]].
 
   pose proof (smatch_release_tail segsU rhoS (CALLX pv) trw msw mdw O_stk_frame N_all NX HsmX eq_refl swf_CALL) as HsmR.
   cbn zeta in HsmR. change (smatch segsU (mkVal (rw rhoS) (rl rhoS) (mR rhoS msw)) (CALL MR_P) (trw, mkCfg msw mdw)) in HsmR.
@@ -1630,7 +1625,7 @@ Proof using Erd Erm Ewok HCS HLok HMI HP12 HW Hdepth Hinit Hm0_ctz Hm0_sct Hrom 
   unfold JC, U.Mal_mslow__G2.Mal_mslow_K.agC. cbn zeta.
   split.
   {
-    unfold MInvR. rewrite RM, Hvm.
+    minvr_split. rewrite RM, Hvm.
     pose proof (proj1 (MInv_MInvI C_U (mkMA s L) rd0 wok0 vm) HMI) as [MI RO].
     apply (proj2 (MInv_MInvI C_U (mkMA s L) _ _ vm)). split; [|exact RO]. unfold MInvI.
     apply (minvG_frame C_U [] None U0 s L rd0 (Contract.rd_of segsU (mR rhoS msw)) wok0 (Contract.wok_of segsU (mR rhoS msw)) vm (fun _ => False) MI (Zones2.xraw_nil s));
@@ -1845,7 +1840,7 @@ Proof.
                 (ih_rom _ _ _ _ _ _ IH) (ih_sct _ _ _ _ _ _ IH) (ih_ctz _ _ _ _ _ _ IH) Kc RF GF TR RR Htp Hini eq_refl) as CH.
   replace k with (0 + k) by lia.
   apply (trr_seq RR 0 k (eq (tr, mkCfg ms md)) (QC s0 L0 n rho0 Kc) Q).
-  - eapply (trr_pre RR); [|exact CH]. intros w <-. split; [exact HsmW|]. split; [exact HKc | reflexivity].
+  - eapply (trr_pre RR); [|exact CH]. intros w <-. split; [exact HsmW|]. split; [exact HKc | split; [reflexivity | exact (proj2 HM)]].
   - unfold QC. apply (trr_ex RR); [exact Hk|]. exact HQ.
 Qed.
 End Mal_mslow_C.

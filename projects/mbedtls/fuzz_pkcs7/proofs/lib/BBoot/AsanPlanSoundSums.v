@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (new section variable rz, the plan's CONFIG_RSEQ flag, passed to x_stmt and x_stmt0 in every node soundness theorem; node_x_sound_XIStrncpy decoded from its encoded statement to plain text). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -574,6 +575,7 @@ Variable SEGS : list Segment.
 Variable A : atable.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+Variable rz : Z.   (** #108: the plan's CONFIG_RSEQ flag ([AP.node_x] reads it only at XPnScan / XLayout) *)
 Hypothesis SEGS_wx : wx_segs_nowrap SEGS.
 Hypothesis SEGS_in_hull : forall a : word, in_hull A (bv_unsigned a) = false -> find_segment SEGS (bv_unsigned a) 1 = None.
 (* [comment removed for export] *)
@@ -1575,36 +1577,38 @@ Proof.
 Qed.
 
 #[using="SEGS_wx SEGS_in_hull HULL_ok SP0_ok argH_high argH_agree SINV_frame SINV_agree"] Theorem node_x_sound_XIMemset :
-  fill_spec SEGS (x_imemset A) 256 -> x_stmt SEGS A nx0 LIMIT SP0 SINV argH FS0 XIMemset.
+  fill_spec SEGS (x_imemset A) 256 -> x_stmt SEGS A nx0 LIMIT rz SP0 SINV argH FS0 XIMemset.
 Proof. intros SUM args. exact (summary_fill_sound _ _ SUM). Qed.
 
 (* [comment removed for export] *)
 #[using="SEGS_wx SEGS_in_hull HULL_ok SP0_ok argH_high argH_agree SINV_frame SINV_agree"] Theorem node_x_sound0_XIMemset :
-  fill_spec SEGS (x_imemset A) 256 -> x_stmt0 SEGS A nx0 LIMIT SP0 SINV argH FS0 XIMemset.
+  fill_spec SEGS (x_imemset A) 256 -> x_stmt0 SEGS A nx0 LIMIT rz SP0 SINV argH FS0 XIMemset.
 Proof. intros SUM args. exact (summary_fill_sound_R (srealizes0 SEGS) (APS.srchain_srealizes0 SEGS) _ _ SUM). Qed.
 
 #[using="SEGS_wx SEGS_in_hull HULL_ok SP0_ok argH_high argH_agree SINV_frame SINV_agree"] Theorem node_x_sound_XMemset :
-  fill_spec SEGS (x_memset A) two64 -> x_stmt SEGS A nx0 LIMIT SP0 SINV argH FS0 XMemset.
+  fill_spec SEGS (x_memset A) two64 -> x_stmt SEGS A nx0 LIMIT rz SP0 SINV argH FS0 XMemset.
 Proof. intros SUM args. exact (summary_fill_sound _ _ SUM). Qed.
 
 #[using="SEGS_wx SEGS_in_hull HULL_ok SP0_ok argH_high argH_agree SINV_frame SINV_agree SEGS_wr"] Theorem node_x_sound_XIMemcpy :
-  copy_spec SEGS (x_imemcpy A) -> x_stmt SEGS A nx0 LIMIT SP0 SINV argH FS0 XIMemcpy.
+  copy_spec SEGS (x_imemcpy A) -> x_stmt SEGS A nx0 LIMIT rz SP0 SINV argH FS0 XIMemcpy.
 Proof. intros SUM args. exact (summary_copy_sound _ SUM). Qed.
 
 #[using="SEGS_wx SEGS_in_hull HULL_ok SP0_ok argH_high argH_agree SINV_frame SINV_agree SEGS_wr"] Theorem node_x_sound_XMemcpy :
-  copy_spec SEGS (x_memcpy A) -> x_stmt SEGS A nx0 LIMIT SP0 SINV argH FS0 XMemcpy.
+  copy_spec SEGS (x_memcpy A) -> x_stmt SEGS A nx0 LIMIT rz SP0 SINV argH FS0 XMemcpy.
 Proof. intros SUM args. exact (summary_copy_sound _ SUM). Qed.
 
 #[using="SEGS_wx SEGS_in_hull HULL_ok SP0_ok argH_high argH_agree SINV_frame SINV_agree"] Theorem node_x_sound_XMemIsZero :
-  miz_spec SEGS (x_memiszero A) -> x_stmt SEGS A nx0 LIMIT SP0 SINV argH FS0 XMemIsZero.
+  miz_spec SEGS (x_memiszero A) -> x_stmt SEGS A nx0 LIMIT rz SP0 SINV argH FS0 XMemIsZero.
 Proof. intros SUM args. exact (summary_miz_sound SUM). Qed.
 
-#[using="SEGS_wx SEGS_in_hull HULL_ok SP0_ok argH_high argH_agree SINV_frame SINV_agree"] Theorem node_x_sound_XIStrncpy : ltac2:(CDefT.buildp (gd_tbl_AsanPlanSoundSums ()) "P,(91.VSEGS,(92.VA,)(93.VA,))(9:.VSEGS,VA,Vnx0,VLIMIT,VSP0,VSINV,VargH,VFS0,$9;.)")
+(* Was encoded (CDefT.buildp) over [x_stmt]'s old arity; written out from its decode with #108's [rz]. *)
+#[using="SEGS_wx SEGS_in_hull HULL_ok SP0_ok argH_high argH_agree SINV_frame SINV_agree"] Theorem node_x_sound_XIStrncpy :
+  istrncpy_spec SEGS (x_istrncpy A) (x_sealed A) -> x_stmt SEGS A nx0 LIMIT rz SP0 SINV argH FS0 XIStrncpy
 (* [comment removed for export] *).
 Proof. intros SUM args. exact (summary_istrncpy_sound SUM). Qed.
 
 #[using="SEGS_wx SEGS_in_hull HULL_ok SP0_ok argH_high argH_agree SINV_frame SINV_agree"] Theorem node_x_sound_XPopFree :
-  popfree_spec SEGS (x_popfree A) -> x_stmt SEGS A nx0 LIMIT SP0 SINV argH FS0 XPopFree.
+  popfree_spec SEGS (x_popfree A) -> x_stmt SEGS A nx0 LIMIT rz SP0 SINV argH FS0 XPopFree.
 Proof. intros SUM args. exact (summary_popfree_sound SUM args). Qed.
 
 End Sound.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the writable stack window is the 6144513 bytes below sp0; the reserved ranges may hold up to two more entries). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -26,8 +27,9 @@ Definition hdr_paylen (content : list byte) : Z := Z.of_nat (length content) - 6
 
 (* [comment removed for export] *)
 Definition stack_writableZ (M : word -> option byte) (sp0 : Z) : Prop :=
-  forall d m, 0 <= d -> d + Z.of_nat m <= 8388608 ->
-    store_ok RSEGS M (Z_to_bv 64 (sp0 - 8388608 + d)) m = true.
+  (* twin of RefTargetPre.v:32-40 *)
+  forall d m, 0 <= d -> d + Z.of_nat m <= 6144513 ->
+    store_ok RSEGS M (Z_to_bv 64 (sp0 - 6144513 + d)) m = true.
 
 Record target_pre (sp0 gm area brkv mas tid sec : Z) (content : list byte)   (* [comment removed for export] *)
        (R : bvmap 5 word) (M : word -> option byte) : Prop := TARGET_PRE {
@@ -70,7 +72,7 @@ Inductive seps : list (word * word) -> Prop :=
 
 (* [comment removed for export] *)
 Record target_vm (sp0 gm area : Z) (VM : VmMaps) : Prop := TARGET_VM {   (* [comment removed for export] *)
-  tv_res   : vm_reserved VM = segments_reserved RSEGS;
+  tv_res   : exists VX, vm_reserved VM = segments_reserved RSEGS ++ VX /\ (length VX <= 2)%nat /\ Forall (fun p => (0 < bv_unsigned (snd p) <= 2 ^ 30)%Z /\ (bv_unsigned (fst p) + bv_unsigned (snd p) <= 2 ^ 64)%Z) VX;
   tv_isp   : vm_init_sp VM = Z_to_bv 64 sp0;                                   (* [comment removed for export] *)
   tv_top   : Forall (fun p => bv_unsigned (fst p) + bv_unsigned (snd p) <= sp0 - 8388608) (vm_maps VM);
                                                                                (* [comment removed for export] *)

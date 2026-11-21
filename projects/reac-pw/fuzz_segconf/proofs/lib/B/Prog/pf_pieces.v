@@ -4,16 +4,17 @@
 (* Modified by Theorem Labs, 2026-10: the boundary states and segment statements of LLVMFuzzerTestOneInput's ASan+UBSan walk (plugin-hostd/fuzz_command image B, 0x86530), the B twin of lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh6.v (the CL_*_stmtX statements: from a point of the function to its return, under the entry's context) and A/ACf5.v (rtcx, rt_base: the entry's facts bundled once). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths, module names, addresses and numbers changed; 469 of its 518 lines of code are new or changed and 289 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths and module names changed; 579 of its 604 lines of code are new or changed and 493 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca): the walk-internal
    piece statements of reac_segconf_parse_file (0x87e38, 5312 bytes, 1328 instructions; reac_segconf.c:120-296).
    proves no function (kind: statement text). No segment and no walk is proved here, and pf_pieces_give_contract
    (the whole function from its 16 segments) is stated, not proved. The image-B piece-statement lane of the image-B G3 walk owner, 2026-10-30.
-   ADAPTED from the image-A G3 walk owner's image-A file lib/A/Prog/pf_pieces.v (commit 25613ab0b927, the
+   ADAPTED from the image-A G3 walk owner's image-A file lib/A/Prog/pf_pieces.v (the
    image-A piece-statement lane): the same form, the same cut names and plain invariants where the meaning is the same; every
    register, slot and shadow conjunct is re-derived from image B's code and cites its B pc; each cut also carries
    the facts that the UBSan trap branches of the segments leaving it need (pf_tf, below).
 
-   THE FORM (the A file's; fuzz_command's released segment form, origin/ossv/recipes 501c0d516c69,
+   THE FORM (the A file's; fuzz_command's released segment form,
    proofs/plugin-hostd/fuzz_command/lib/A/Prog/ and its lib/B/Prog twin): a bundle of the contract's variables
    (check_reply_m.v crv), the state at each cut as a predicate over the machine state (chain_words_d.v INV_K* /
    cw_fi, check_round_trip.v crt_J / crt_fr / crt_regs / crt_slots for the class-5 frame), and per cut "from this
@@ -108,8 +109,8 @@
    every cut pc by computation against B's seg_text). No region letter, listing object number or STK row of an A
    table is used.
 
-   IMAGE B'S PARAMETER VALUES: SegInstB.v (the image-B harness owner, lib/B/Prog/SegInstB.v 1f771e2f2066, in base
-   commit 2ba03f668177), which keeps the image-A owner's SegInstA names at image B's values: RLO_A
+   IMAGE B'S PARAMETER VALUES: SegInstB.v (the image-B harness owner, lib/B/Prog/SegInstB.v, in base),
+   which keeps the image-A owner's SegInstA names at image B's values: RLO_A
    0xa1c60, RHI_A 0xa3f08, catA 0xa20a0, gotwA 0xa3e98, guardA 0x5ff838, seg_litA_rc (and seg_litA_rc_facts),
    STK_trim 4128, STK_refuse 12464, STK_reac_segconf_parse_file 12832; this file uses them as the A file uses
    SegInstA's. pf_B_values below checks the ones the cuts name. *)

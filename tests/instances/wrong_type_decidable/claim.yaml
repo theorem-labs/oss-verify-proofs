@@ -1,0 +1,3 @@
+claims: toy/ebreak/asan_agreement_decidable_alloc_forced_only
+refused_at: wrapper
+because: while it is expected to have type

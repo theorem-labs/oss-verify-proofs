@@ -5,12 +5,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths and module names changed; 371 of its 396 lines of code are new or changed and 3828 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v, with its module paths, module names and numbers changed; 783 of its 813 lines of code are new or changed and 366 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/R15.v; 42 of its 74 lines of code are new or changed and 781 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/R15.v blob a5f7d12e483b at fdd2ed9f9d7.
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   FACTS, PAU pau-libreac-v190. Source: Seg/R15.v blob a5f7d12e483b.
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: each <r>_of_F re-derives R15.<r> at ExecF.RNG_all; <r>_of_F_verbatim checks by constr_eq that its type
    is the type of R15.<r>. Mechanical re-run, route (a) (lead 22:15Z); input to the ported walk only. *)
 
@@ -20,7 +21,7 @@
    - r15_evt is 0x817c8 `beqz a0,8191c` with a0 = 0 (one branch, taken);
    - rfree_evt is 0x8191c `mv a0,s8` ; 0x81920 `jal wrapper_free` (a register move and a jump-and-link; the free
      call itself is NOT in this run, which stops at the callee's first pc 0x53378).
-   Instruction fetch is not an access (recipe step 2). R15.v's code is unchanged since release c5e779efe8c (comments edited); it differs from the source blob above: 5 of its code lines changed or removed, 5 added. *)
+   Instruction fetch is not an access (recipe step 2). R15.v's code is unchanged since release (comments edited); it differs from the source blob above: 5 of its code lines changed or removed, 5 added. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Import PropExec MState Mem Exec Frame Cells Step Tac Bytes.

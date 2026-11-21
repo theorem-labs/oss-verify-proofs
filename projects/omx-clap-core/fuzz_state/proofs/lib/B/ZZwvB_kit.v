@@ -1,5 +1,5 @@
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/ZZwv_kit.v (a working branch
-   1a5dc5b2e7c): same lemma names, statements and proofs; imports point at lib/B's image files and walk kit (YB1v, YB1w,
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/ZZwv_kit.v (a working branch):
+   same lemma names, statements and proofs; imports point at lib/B's image files and walk kit (YB1v, YB1w,
    FSH_Base, FSH_Rt, FSPstat, FSH_Fn_writer, FSH_Fn_alloc, FSW_K, FSW_K3, FSW_ret, FSW_rres, FSW_rd, FSW_pj, YF0x and
    FSW_write_value_entry, which holds the names of image A's FSW_writer_tbl); the image-agnostic FSupoison, FSupoisonU,
    FSH_YC20, FSH_Gen, FSupoisonStack stay lib/A's; FSH_Fn_reader is lib/B's (Required, used qualified: lib/B's
@@ -591,7 +591,7 @@ Qed.
    fp_spares FP; the read-only range is image bytes (zwk_j_roP_img), so the premise is fp_spares FP over it (a caller
    with ~ YI16.sink_open_fp FP, e.g. every FP whose ranges start above 0 (YCbq.sink_closed_pos), has it by
    YCbq.fp_spares_closed). Stated over the journal's own memories, then in the walk's raw-memory form. *)
-(* FP-keyed core (S0 400b2a240b3): the image clause spares an image byte that is not runtime-owned, not errno,
+(* FP-keyed core (S0): the image clause spares an image byte that is not runtime-owned, not errno,
    NOT in FP and fp_spares FP, so the caller states both FP premises over the read-only range. *)
 Lemma zwk_arodata_journal : forall STK sp0 FP ly S (W : world tfibsegs) mem md own ly' S' (W' : world tfibsegs) mem' md' k,
   ajournal tfibsegs B STK sp0 FP ly S W mem md own ly' S' W' mem' md' k ->

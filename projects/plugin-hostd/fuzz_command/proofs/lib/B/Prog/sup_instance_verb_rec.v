@@ -7,15 +7,16 @@
    proofs/cgif/cgif_file_fuzzer/lib/A/AChc.v (the seed of a walk segment, the run, the step through a program call)
    over fuzz_command's listing; it finishes the function by lib/A/Prog/sup_pin_accept_s2.v's `spa_from_B0`. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/sup_pin_accept_s4.v, with its module paths and module names changed; 564 of its 678 lines of code are new or changed and 1091 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: copied verbatim from lib/B/Prog/sup_chain_clear_rec.v (a working branch
-   b23f4439f75) for the B walk of sup_instance_verb, which appends two arguments (arg_line's canonical line, arg_s's
+(* Modified by Theorem Labs, 2026-10: copied verbatim from lib/B/Prog/sup_chain_clear_rec.v (a working branch)
+   for the B walk of sup_instance_verb, which appends two arguments (arg_line's canonical line, arg_s's
    ledger text) to record()'s slot: rec_repA_arg, rec_slotA_home, rec_slotA_entry. *)
-(* Modified by Theorem Labs, 2026-10: copied from lib/A/Prog/sup_chain_clear_s1.v (a working branch abd8a14a6b8) for fuzz_command.asan-ubsan, the representation lemmas the B walk of sup_chain_clear uses (lib/B/Prog/sup_chain_clear.v): module paths only. *)
+(* Modified by Theorem Labs, 2026-10: copied from lib/A/Prog/sup_chain_clear_s1.v (a working branch) for fuzz_command.asan-ubsan, the representation lemmas the B walk of sup_chain_clear uses (lib/B/Prog/sup_chain_clear.v): module paths only. *)
 (* Modified by Theorem Labs, 2026-10: ported from proofs/plugin-hostd/fuzz_command/lib/Prog/RecStep.v to the ASan
    representation lib/B/Prog/CmdRep.v (rec_repA / arep_at over a reader), for the walk of sup_chain_clear. *)
 (* Modified by Theorem Labs, 2026-10: the keep lemmas for aval_mem, abytes_atR, astr_atR and acall_at and the
    block lemma arep_at_in follow proofs/plugin-hostd/fuzz_command/lib/A/Prog/RecBLemmas.v (aval_mem_agree_in,
    astr_atR_agree_in, acall_at_agree, acall_at_in, lay_blocks_in), restated with the keep premise in point form. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* The recorder's representation on the ASan side, step by step, as the plain proof's RecStep.v states it on the
    plain side (rec_rep_record_lt :63, rep_at_record_full :395, call_at_arg :442, rep_at_arg_lt :487,

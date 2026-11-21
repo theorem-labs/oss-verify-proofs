@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Trevor Hansen, 2026-11: module names. *)
+(* Modified by Theorem Labs, 2026-11: ported toward LPS 727298f3 by the change of the same file of cgif/cgif_rgb_fuzzer, its addresses relocated to this unit's binaries. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -175,7 +176,7 @@ Qed.
 Lemma new_disjoint_img : forall x, in_img B x -> ~ (bv_unsigned a <= x < bv_unsigned a + len).
 Proof.
 intros x [_ (sg & Hsg & Hx)] Hin. pose proof grant_facts as (_ & _ & _ & RF & _).
-rewrite <- (lg_reserved _ _ _ _ G) in Hsg.
+destruct (lg_reserved _ _ _ _ G) as (rx & Hres & _). assert (Hsg' : In sg (vm_reserved (m_vmmaps md))) by (rewrite Hres; apply in_app_iff; left; exact Hsg). clear Hsg. rename Hsg' into Hsg.
 pose proof (region_free_In _ a (Z_to_bv 64 len) sg RF ltac:(apply in_app_iff; left; exact Hsg) ltac:(rewrite len_u; lia) ltac:(lia)) as D.
 rewrite len_u in D. unfold ranges_disjoint in D. cbn [fst snd] in D. lia.
 Qed.
@@ -274,6 +275,8 @@ split; [exact Hceil|]. intros x Hx Himg. exact (new_disjoint_img x Himg Hx).
 - rewrite live_bytes_A2. unfold md1. pose proof (vm_backing_used_mmap a (Z_to_bv 64 len) md). rewrite len_u in *.
 pose proof (lg_backing _ _ _ _ G). lia.
 -   exact (lg_ceil _ _ _ _ G).
+-   intros e He. destruct He as [<-|He]; [exact (lgr_app_l _ _ _ _ RF) | exact (lg_mres _ _ _ _ G e He)].
+-   exact (lg_vin _ _ _ _ G).
 Qed.
 Lemma ledger_x_A2 : ledger_x L1 A2 md1.
 Proof.

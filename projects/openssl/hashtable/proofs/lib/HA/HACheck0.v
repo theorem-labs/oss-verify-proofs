@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the state invariants take the launch record [LaunchX], and the argument area is read from it). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -26,21 +27,22 @@ Section HA0Check.
   Variable brk0 : word.
   Variables argv envp : list (list byte).
   Variables uid hw : word.
+  Context {L : LaunchX}.
   Variable fs : Fs.Fs.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
 
-  #[local] Notation SINV := (SINV0 HAPH sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 HAPH sp rdraw argv envp uid hw).
+  #[local] Notation SINV := (SINVL HAPH sp rdraw brk0 argv envp uid hw L).
+  #[local] Notation argH := (argH0 sp rdraw argv envp (lx_kb L) (lx_execfn L)).
   #[local] Notation ISP := (bv_unsigned sp).
   #[local] Notation LIM := AsanInit.LIMIT.
-  Let AH := argH0_high HAPH sp rdraw argv envp uid hw Hsp Hva.
-  Let AA := argH0_agree HAPH sp rdraw argv envp uid hw.
-  Let SF := SINV0_frame HAPH sp rdraw brk0 argv envp uid hw.
-  Let SA := SINV0_agree HAPH sp rdraw brk0 argv envp uid hw.
-  Let SP := SINV0_pgsp HAPH sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit.
+  Let AH := argH0_high sp rdraw argv envp (lx_kb L) (lx_execfn L) Hsp Hva.
+  Let AA := argH0_agree sp rdraw argv envp (lx_kb L) (lx_execfn L).
+  Let SF := SINVL_frame HAPH sp rdraw brk0 argv envp uid hw L.
+  Let SA := SINVL_agree HAPH sp rdraw brk0 argv envp uid hw L.
+  Let SP := SINVL_pgsp HAPH sp rdraw brk0 argv envp uid hw L Hsp.
   Lemma NXS : CAP.expr_vars_lt NX0 e_spw = true. Proof. reflexivity. Qed.
   (* [comment removed for export] *)
   Lemma ob_sys : forall y, sys_stmt HASEGS HAT NX0 LIM SINV argH ISP fs y.

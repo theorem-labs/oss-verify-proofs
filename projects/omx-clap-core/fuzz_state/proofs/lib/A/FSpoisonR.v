@@ -1,4 +1,4 @@
-(* Ported from: a working branch 52efd1c871f7 proofs/omx-clap-core/fuzz_manifest/lib/A/FMpoisonR.v:1-189
+(* Ported from: a working branch proofs/omx-clap-core/fuzz_manifest/lib/A/FMpoisonR.v:1-189
    (a Theorem Labs lane, design/POISON.md section 7), moved from fuzz_manifest.asan to fs.asan (pinned, sha256 64b53ff86172...).
    Changed: module prefix fuzz_manifest -> fuzz_state, FMpoisonS -> FSpoisonS, and the walk's numerals, rewritten in
    one simultaneous pass to names (fm -> fs; each checked by capstone 5.0.7 disassembly of the pinned fs.asan):

@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN1r.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed Zify, MX1). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -25,7 +26,6 @@ Unset Lia Cache. Unset Nia Cache.
 Open Scope Z_scope.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
-Context {AM : AllocMode}.
 Lemma statics_facts : 0x10000 <= NLK /\ NLK + 1 <= CTX /\ CTX + 928 <= 0x52000 /\ (CTX + 80) mod 8 = 0.
 Proof. unfold NLK, CTX, src0_D_libc, src0_D_malloc_context. repeat split; reflexivity || lia. Qed.
 Section T1.
@@ -63,7 +63,7 @@ pose proof PRE_facts as (MX & _ & _ & _ & Hal & Hceil & _). pose proof (proj1 al
 destruct (mc_md _ _ _ _ _ (MRx_MRc _ _ _ _ _ MX)) as (Hh & Hlz & Hmat).
 assert (OWN : forall a, owned B L A a -> mem1 (Z_to_bv 64 a) = mem (Z_to_bv 64 a)).
 { intros a Ho. pose proof (mr_owned_low _ _ (MRx_laws B) L A mem md a MX Ho). apply (pa_out _ _ _ _ _ AT); unfold SP0, YN1p_cf.SP0 in *; lia. }
-apply (mr_frame _ _ (MRx_laws B) L A mem mem1 md md MX).
+apply (mr_frame _ _ (MRx_laws B) L A mem mem1 md md MX eq_refl).
 - intros a Ho. apply mbyte_ext. apply OWN. exact Ho.
 - intros a Ho [b Hb]. exists b. rewrite (OWN a Ho). exact Hb.
 - intros p k i Hin Hi. pose proof (mr_blocks _ _ (MRx_laws B) L A mem md p k i MX Hin Hi) as (Pp & Plo & Phi & _).

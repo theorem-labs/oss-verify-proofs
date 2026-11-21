@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (YLO follows the narrower stack window under sp, stack_window_lo; the gap from an argv string's end to the stack top is at least 10 bytes now that the strings sit above the AT_RANDOM block). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -762,7 +763,9 @@ Definition STR0 : expr := eadd SP0 D0.
 Definition STR1 : expr := eadd SP0 D1.
 Definition END0 : expr := eadd STR0 L0.     (* [comment removed for export] *)
 Definition END1 : expr := eadd STR1 L1.
-Definition YLO : Z := 8388608 - 48.
+(* The stack window the launch guarantees under sp: Run.stack_window_lo is at most
+   MemSplit.wok_lo sp0 = sp0 - 6144513 (it was sp0 - 8 MiB before 08b1429). *)
+Definition YLO : Z := 6144000 - 48.
 (* [comment removed for export] *)
 Definition DRG : Z := EVT + KFREE.
 Definition drung (i : nat) (cap mtr : expr) : kentry :=
@@ -820,7 +823,7 @@ Definition RTCELLS : list kentry :=
 Definition knM : list kentry :=
   [ KRange SP0 (CEIL + YLO) (HI47 - 48); KAlign SP0 16; KRange TID 1 4194303;
     KRange ARGC 1 1024; KRange D0 240 4194304; KRange L0 0 131071;
-    KRange G0 17 4194304; KAlign (eadd END0 G0) 64; KRange (eadd END0 G0) 0 two47;                           (* [comment removed for export] *)
+    KRange G0 10 4194304; KAlign (eadd END0 G0) 64; KRange (eadd END0 G0) 0 two47;                           (* [comment removed for export] *)
     KWord (SA SP0 48) 8 ARGC; KWord (SA SP0 56) 8 STR0;
     KWord (SA END0 0) 1 (ELit 0); KBlob (SA STR0 0) L0 1;
     KRange H0 1 4194304; KAlign (eadd END0 H0) 8; KRange (eadd END0 H0) 1 two47; KUnk (SA STR0 0) (eadd L0 H0);                               (* [comment removed for export] *)
@@ -841,7 +844,7 @@ Definition tMu3 : acs := add_kn tMA [KRange ARGC 3 1024].
 Definition knO : list kentry :=
   [KRange ARGC 2 2; KRange D1 241 4194304; KRange L1 0 131071; KWord (SA SP0 64) 8 STR1; KWord (SA END1 0) 1 (ELit 0); KBlob (SA STR1 0) L1 2;
    KRange H1 1 4194304; KAlign (eadd END1 H1) 8; KRange (eadd END1 H1) 1 two47; KUnk (SA STR1 0) (eadd L1 H1); KShOk (SA SP0 48) (eaddz (eadd (eadd D1 L1) G1) (-48));
-   KRange G1 17 4194304; KAlign (eadd END1 G1) 64; KRange (eadd END1 G1) 0 two47].
+   KRange G1 10 4194304; KAlign (eadd END1 G1) 64; KRange (eadd END1 G1) 0 two47].
 Definition tMo : acs := add_kn tMA knO.
 
 (* [comment removed for export] *)

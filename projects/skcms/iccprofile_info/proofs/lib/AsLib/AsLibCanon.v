@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the inclusion step ends in assumption alone, so a missing inclusion fails there and prints no goal. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -523,7 +524,7 @@ Section Proof.
   Ltac solve_incl :=
     lazymatch goal with |- regions_incl ?rs _ => change (regions_incl rs TGT) end; apply incl_of_in_tgt;
     pose proof tgt_facts as (?T1 & ?T2 & ?T3 & ?T4 & ?T5 & ?T6 & ?T7 & ?T8 & ?T9 & ?T10 & ?T11 & ?T12 & ?T13 & ?T14 & ?T15 & ?T16 & ?T17 & ?T18 & ?T19 & ?T20 & ?T21);
-    repeat (apply Forall_cons); try apply Forall_nil; cbn [fst snd]; first [assumption | match goal with |- ?g => idtac "INCL-MISS" g end].
+    repeat (apply Forall_cons); try apply Forall_nil; cbn [fst snd]; assumption.
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)

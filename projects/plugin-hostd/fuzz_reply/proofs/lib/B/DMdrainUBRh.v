@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainUB.v (commit 67fc7ef5787c2195464dbe4d4f7905278328dc0c, drain recycle tail; file sha256 a40e841d8d00) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainUB.v (drain recycle tail; file sha256 a40e841d8d00) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainUB.v, with its module paths and module names changed; 14 of its 69 lines of code are new or changed and 9 lines of the source are left out. *)
-(* Theorem Labs, 2026-10-30 (lane F2b, CfF2b): the lib/B twin of lib/A/DMdrainUBRh.v by path (a working branch 67deba317dfb), with lib.A -> lib.B in the Require lines and image B's names (the rows _reply_B, YGcfInstCdeallocB; CfParams_reply stays lib/A/CfParamsReply's, the one record the B files use). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10-30 (lane F2b, CfF2b): the lib/B twin of lib/A/DMdrainUBRh.v by path (a working branch), with lib.A -> lib.B in the Require lines and image B's names (the rows _reply_B, YGcfInstCdeallocB; CfParams_reply stays lib/A/CfParamsReply's, the one record the B files use). *)
 (* Theorem Labs, 2026-10-30 (lane F2b, CfF2b; drain-rh split row (b2)): the drain's LEAF on a recycle arm at the
    re-hide twin - DIfaceRh.drain_leaf_g_rh with MnEnq.acall_raw_em_x, the twin of DMdrainUB.leaf_recyc.  On a
    recycle arm DoRecycle's callees may re-hide a dead secondary's shadow, so the final world [W2] is only above the

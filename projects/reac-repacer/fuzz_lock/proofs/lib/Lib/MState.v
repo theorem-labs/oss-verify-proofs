@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/varnish/esi_parse_fuzzer/lib/Lib/MState.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vvar test on failed loads). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -39,7 +40,31 @@ Definition lift_result (ro : word -> option byte) (r : machine_result (core * (w
   | MachineUnmodeled => MachineUnmodeled
   end.
 
-(* [comment removed for export] *)
+(* A failed load can reach vvar only when a segment is marked vvar.
+   Test that image-wide fact first so binary-only walks reduce to a fault. *)
+Definition segs_vvar (segs : list Segment) : bool := existsb seg_vdso_vvar segs.
+
+Lemma find_segment_in_vv : forall segs a n seg,
+  find_segment segs a n = Some seg -> In seg segs.
+Proof.
+  induction segs as [|s r IH]; intros a n seg H; cbn in H; [discriminate|].
+  destruct (_ && _)%bool;
+    [injection H as <-; left; reflexivity | right; exact (IH _ _ _ H)].
+Qed.
+
+Lemma range_meets_vvar_segs : forall segs a n,
+  range_meets_vvar segs a n = true -> segs_vvar segs = true.
+Proof.
+  intros segs a n; revert a. induction n as [|n IH]; intros a H;
+    cbn in H; [discriminate|].
+  apply orb_prop in H as [H|H]; [|exact (IH _ H)].
+  unfold vvar_byte_at in H.
+  destruct (find_segment segs (bv_unsigned a) 1) as [seg|] eqn:E;
+    [|discriminate].
+  unfold segs_vvar. apply existsb_exists. exists seg.
+  split; [exact (find_segment_in_vv _ _ _ _ E) | exact H].
+Qed.
+
 Fixpoint interp_eff0 (segs : list Segment) (t : eff) (m : word -> option byte)
     : machine_result (core * (word -> option byte)) :=
   match t with
@@ -49,7 +74,9 @@ Fixpoint interp_eff0 (segs : list Segment) (t : eff) (m : word -> option byte)
   | ELoad n a k =>
       match ov_read_bytes segs m a (width_bytes n) with
       | Some bs => interp_eff0 segs (k (bv_extract 0 n (le_bytes_to_word bs))) m
-      | None => MachineFault
+      | None =>
+          if (segs_vvar segs && range_meets_vvar segs a (width_bytes n))%bool
+          then MachineUnmodeled else MachineFault
       end
   | EStore n a v k =>
       if store_ok segs m a (width_bytes n)
@@ -60,9 +87,13 @@ Fixpoint interp_eff0 (segs : list Segment) (t : eff) (m : word -> option byte)
 Lemma interp_eff0_eq : forall segs t m, interp_eff segs t m = interp_eff0 segs t m.
 Proof.
   intros segs t; induction t as [c|c|c|c|c|c|n a k IH|n a v k IH]; intros m; cbn; try reflexivity.
-  - unfold interp_eff. cbn. destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|reflexivity].
-    rewrite <- IH. unfold interp_eff.
-    destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) m) as [[[c m'] acc]| |]; reflexivity.
+  - unfold interp_eff. cbn.
+    destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|].
+    + rewrite <- IH. unfold interp_eff.
+      destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) m) as [[[c m'] acc]| |]; reflexivity.
+    + destruct (range_meets_vvar segs a (width_bytes n)) eqn:Ev.
+      * rewrite (range_meets_vvar_segs _ _ _ Ev). reflexivity.
+      * rewrite andb_false_r. reflexivity.
   - unfold interp_eff. cbn. destruct (store_ok segs m a (width_bytes n)); [|reflexivity].
     rewrite <- IH. unfold interp_eff.
     destruct (interp_eff_accesses segs k (write_to_mem m a (Z_to_le_bytes (width_bytes n) (bv_unsigned v)))) as [[[c m'] acc]| |]; reflexivity.

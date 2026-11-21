@@ -56,7 +56,7 @@ Module DemoIdxImg.
 Import Stdlib.Strings.String Stdlib.Strings.PrimString.
 Definition seg : Segment := {|
   seg_base := 0x1000%N; seg_size := 32%N; seg_perms := "r-x"%string;
-  seg_bytes := ["972704009387072293164700131727003387e640b387e70023a2b70003a54700"%pstring] |}.
+  seg_bytes := ["972704009387072293164700131727003387e640b387e70023a2b70003a54700"%pstring]; seg_kind := SegLoader |}.
 End DemoIdxImg.
 Definition idx_segs : list Segment := [DemoIdxImg.seg].
 

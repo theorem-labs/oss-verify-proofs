@@ -23,14 +23,15 @@
    achain_chain_pre of it. joined's new premises at its call: len's 8 bytes present (the journal's window), and
    (pass 5b) the stack from len - 16 present, from the statement's astack_pres kept by astack_pres_journal. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 333 of its 380 lines of code are new or changed and 5006 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3): segment B5 of reac_segconf_parse_file,
    piece R3 -> LONG / R4 (the B5 segment lane of the image-B G3 walk owner, piece prover: a sub-lane, 2026-10-30):
    b5_r3_ok : H_LONG B n -> H_R4 B n -> H_R3 B n.
    proves no function (kind: segment lemma of reac_segconf_parse_file's image-B walk; the function's rule-24 record
    is the rule-24 lookup record).
-   ADAPTED from the image-A G3 walk owner's image-A piece lib/A/Prog/pf_a5_r3.v (commit 003b9dc874eb, a5_r3_ok),
+   ADAPTED from the image-A G3 walk owner's image-A piece lib/A/Prog/pf_a5_r3.v (a5_r3_ok),
    re-derived on image B's code with the B5 kit (pf_seg_B5_k.v) and the template piece pf_seg_B5_r2.v (the
-   B5 segment lane, 2305ce2c2c85). B differs from A here: buf comes from slot 0xd0 (A: 0xb8 through s4), the text pointer
+   B5 segment lane). B differs from A here: buf comes from slot 0xd0 (A: 0xb8 through s4), the text pointer
    is s11 (A: s9), and B stores no cur slot before the call (A: `sd s4,0xb0(s1)`).
    The code (reac_segconf_parse_file.fuzz_segconf.asan-ubsan.s), reached from Q3 after meta_fill_00 put buf in
    scope (s11 = p = t + o, s7 = LEN):

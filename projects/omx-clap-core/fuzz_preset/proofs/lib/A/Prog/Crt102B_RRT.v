@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/ExvB_Loop_kitQ.v, with its module paths and module names changed; 1634 of its 1673 lines of code are new or changed and 157 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* On the Step-1 contract texts (the re-hiding move): this row runs at the world-relation
    contract (the internal file WLE-CONTRACT.md): every journal is ajournal_xwR / ajournal_xR at R := YA0nH.wle' SEGS
    YGcfRehidePost.RZ_cf (AJW / AJ below), every step statement is YA0nH.SRr' SEGS YGcfRehidePost.RZ_cf, TAIL / REWR /
@@ -15,9 +16,9 @@
 
    INPUTS OF RECORD (taken by path, as Crt102Glue.v's header):
    - pins: A' asan 1be0f53d96cb9d6c (twin bff8519bbe3ea0e4), B' asan-ubsan d663f82d7f488d30 (twin c90d4fa54d43160b).
-   - base: the crt lane head 71a8716672850d3cc31b00bbc497633106293cac (the landing kit cut
-     7cdbb61b5fa0 merged into ed827ae6a6ae, with the lane's DW drop), merged on this row's head f4b4f2dba93 (on
-     6bb495fd9c56): the glue predicates are Prop Records (read here by projection, built by named literal);
+   - base: the crt lane head (the landing kit cut
+     merged into, with the lane's DW drop), merged on this row's head ():
+     the glue predicates are Prop Records (read here by projection, built by named literal);
      crt_at_J_B's r = 0 field and its r = 0 arm's ORDERED free list of copy; crt_at_U_B's copy_cap (pj_hdrR form) and
      copy_fo (the kit's pj_set entry premise shape); crt_pos carries the strtod tie and the consumer window; the bridge
      Crt102Glue.crt_copy_cap_of_ncap48. The texts at the cut (PRH_FnCheck.v): round_trip_text's run is KEYED on
@@ -28,17 +29,17 @@
      states the read-back's block sizes up to permutation, copy's ORDERED free list (FREEORD-COPY) and its
      capacities (CAP, PRH_Reader.pj_ncapR). The A' twin of this file is Crt102Arms.v (the template of this re-cut).
      lib/Reusable/YImgTop.v blob d2a97d3111ce.
-   - listing of record: commit d42e123915ae, lib/B/Listing_prog.v 8bcc2c9e7809 and
+   - listing of record: lib/B/Listing_prog.v 8bcc2c9e7809 and
      lib/B/PAImg_prog.v (PI_prog_B, PL_prog_B); check_round_trip at B_prog_slot 1111 (0x82828 = B_prog_base + CRT_PC_B).
-   - build route pins102: the zfb-targets script dc6f8f60073340be, FACTS 8f3e7e1a07f1,
+   - build route pins102: the zfb-targets script dc6f8f60073340be, FACTS,
      PAU pau-preset-102.
    - rule 24: re-point of this row's own proof (proof-index check_round_trip / crtb_rrt / crt_at_U_B_copy_fo,
      index v5 2026-10-30T01:54:20Z; the row's saved lookup outputs): crtb_rrt's one
-     unreleased hit is this file (commit 584e0622b04e), crt_at_U_B_copy_fo has none.
+     unreleased hit is this file, crt_at_U_B_copy_fo has none.
     Structure only (no premise relocated) from the old-framework donor lib/A/Prog/check_round_trip.v at commit 8fdc81e94c63.
 
    AT THE RECORD B' INSTANCE: PI_prog_B / PL_prog_B of lib/B/PAImg_prog.v (which builds on the record IMG_TOP_B,
-   lib/Reusable/YImgTop.v blob d2a97d3111ce from commit a9548e31002a). The two instance facts
+   lib/Reusable/YImgTop.v blob d2a97d3111ce). The two instance facts
    the walk reads are lemmas here, not hypotheses: crtb_base (pa_val A_TEXT = B_prog_base, by computation) and
    S1ImgB.v's pst_not_ro_B (alloc.c's statics lie in no read-only byte).
 
@@ -57,7 +58,7 @@
    carries the text's post into crtb_rtt_Q_k0 from the cut's own conjuncts (FREEORD-COPY verbatim; CAP's cap
    word, the first conjunct of pj_ncapR's object clause) and closes with crtb_wild_budget_goal. The one budget STEP UP
    is C3 (t not an object, after rtt2): 64 -> 66 by crtb_live_mono (crtb_kb_C3_lt: a real step). round_trip_text's
-   last premise at the kit text 4b8f95c0455c, astack_up_x at the callee's sp, is given at both calls from HUP0
+   last premise at the kit text, astack_up_x at the callee's sp, is given at both calls from HUP0
    through the journal from the entry (YGcallStackUp.astack_up_at_x, as Crt102Arms.arms_rtt_call).
    C1 / C2 (rtt1 / rtt2 returned 1) are UNREACHABLE by the text's dead r = 1 arm; C3 lands in crt_at_J_B's r = 0 arm,
    the object case in crt_at_U_B. rtt1's post is used in the text's own form (crtb_rtt_Q). The call rule is
@@ -463,7 +464,7 @@ Context {SK : YI16.sink_head} {RL : PrhRoomLive}.
 #[local] Notation STKC := (@STK_check_round_trip prh_img_B).
 #[local] Notation STKR := (@STK_round_trip_text prh_img_B).
 
-(* the instance's text base is the listing's (lib/B/PAImg_prog.v:379-380), by computation *)
+(* the instance's text base is the listing's (lib/B/PAImg_prog.v:380-381), by computation *)
 Lemma crtb_base : BASE = B_prog_base.
 Proof. vm_compute. reflexivity. Qed.
 
@@ -532,7 +533,7 @@ Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte
 (* the allocator laws at hl = cf_head (the engine fold's 18 fields; projections by name only) *)
 Hypothesis LAWS : AR_laws_x SEGS B ARx cf_head.
 Variable CTX0 : list (list Z).
-(* round_trip_text's text (the contract text, lib/A/PRH_FnCheck.v at the landing cut 71a8716672:1172-1301; walked in
+(* round_trip_text's text (the contract text, lib/A/PRH_FnCheck.v at the landing cut:1172-1301; walked in
    its own walk), at ANY float state: rtt2 is entered at the float state rtt1 returned in (aj_call_xbF_sp's fx'), so
    the text is taken at every fxk *)
 Hypothesis RTT : forall fxk : YK11.FPState,
@@ -568,7 +569,7 @@ Hypothesis HWR0 : YCbqGwild.wild_room (as_universe B) [] (prh_wk F_check_round_t
    tround_trip_text_specX); the callee's rp_os is this walk's. check_round_trip's own text premise (PRH_FnCheck.v:2363)
    gives it at the top *)
 Hypothesis HOS4 : (length rp_os <= 4)%nat.
-(* the live real stack above the entry sp (the text's last premise at the 4b8f95c0455c kit text, PRH_FnCheck.v:1390,
+(* the live real stack above the entry sp (the text's last premise kit text, PRH_FnCheck.v:1390,
    unguarded); read only at the round_trip_text calls (crtb_rtt_call), whose text takes it at the callee's sp *)
 Hypothesis HUP0 : YGcallStackUp.astack_up_x SEGS ly W (spZ regs) mem.
 
@@ -724,7 +725,7 @@ destruct (Z_le_gt_dec (ly_top lyc - 16) sp0) as [Hbad|Hgood].
 Qed.
 
 (* ---- round_trip_text's post at a call from a live state: the text's own Q (tround_trip_text_specX's post,
-   PRH_FnCheck.v at the landing cut 71a8716672:1241-1301) at the call's binders, VERBATIM (the text's local
+   PRH_FnCheck.v at the landing cut:1241-1301) at the call's binders, VERBATIM (the text's local
    `rdW W mem` is `mrestrict (w_H W) mem`; the run's strtod model is ReaderRes.jr_strtod, the text's keying); the
    call rule hands it over as fQmn of it. `rpi` is the call's position. THE r = 1 ARM IS DEAD (`r = 0 /\` in front,
    the text's statement under its entry premise prh_cons_from); the r = 0 arm gives the room at the EXACT advance by
@@ -1090,11 +1091,11 @@ eapply (YSRrG.SRr'_bind SEGS YGcfRehidePost.RZ_cf).
         change (fs_frame_bytes CRT_CID) with 512 in Hd. unfold CRT_OFF_COPY. fold F in Hd. lia. }
     assert (HFRS : Z.of_nat (length (frames Sc)) <= ck_FRAMES_CAP - FR_round_trip_text).
     { rewrite HFRc. cbn [app length]. pose proof (cm_frames_before (length (frames S)) HFR). lia. }
-    (* THE LIVE REAL STACK ABOVE THE CALLEE'S sp (the text's last premise at the 4b8f95c0455c kit text,
+    (* THE LIVE REAL STACK ABOVE THE CALLEE'S sp (the text's last premise kit text,
        PRH_FnCheck.v:1241): from check_round_trip's own entry fact HUP0 through the journal from the entry at its budget
        (YGcallStackUp.astack_up_at_xwR at RZW, which reads no depot and no world conjunct), the callee's sp SP1 inside
        the entry's window (crtb_sp1, crtb_stk); as Crt102Arms.arms_rtt_call. The measured witness
-       rtt_up_at_call_B (RttStackUpB.v at commit 5208cc4f6eb0, a file not in this tree) is the same step; it is
+       rtt_up_at_call_B (RttStackUpB.v, a file not in this tree) is the same step; it is
        done here at the walk's binders, not Required *)
     assert (HUPc : YGcallStackUp.astack_up_x SEGS lyc Wc (spZ (ms_regs ms)) (ms_mem ms)).
     { rewrite Hspz. pose proof crtb_stk as (Sk0 & Sk1). pose proof crtb_sp1 as (_ & (Sp1 & Sp2) & _).
@@ -1985,7 +1986,7 @@ Qed.
    through crt_at_U_B at U (+0x1ec) or crt_at_J_B at J (+0x348) on C3. crtb_at_M (Qed) carries M to QF given rtt1's
    post in the form it reads and crtb_wild_budget. This proof carries the text's post (crtb_rtt_Q, the cut's
    tround_trip_text_specX) into that form conjunct by conjunct, the two copy-arm facts from the cut's own conjuncts:
-   FREEORD-COPY verbatim (PRH_FnCheck.v 71a8716672:1290-1293) and CAP's cap word as the first conjunct of
+   FREEORD-COPY verbatim (PRH_FnCheck.v:1290-1293) and CAP's cap word as the first conjunct of
    pj_ncapR's object clause (:1301; PRH_Reader.v:247), and gives crtb_wild_budget by crtb_wild_budget_goal. CLOSED
    (kb round). ---- *)
 Lemma crtb_rrt : forall fxk lyc Sc Hpc Wc memc mdc kj pos rg,
@@ -2006,7 +2007,7 @@ apply (crtb_at_M fxk lyc Sc Hpc Wc memc mdc kj pos rg HFZ HFK HL HDR HZ HPOS).
   destruct Harm as [H1 | (Er & Ho & Ec & Era & Hpos & Hz0 & Hcopy)]; [left; exact H1 | right].
   split; [exact Er|]. split; [exact Ho|]. split; [exact Ec|]. split; [exact Era|]. split; [exact Hpos|].
   split; [exact Hz0|].
-  (* the copy arm's nine conjuncts at the cut, one name each (PRH_FnCheck.v 71a8716672:1265-1301) *)
+  (* the copy arm's nine conjuncts at the cut, one name each (PRH_FnCheck.v:1265-1301) *)
   intros Hnz. destruct (Hcopy Hnz) as (Db & HPm & Hfr & Hlsz & HRB & HFO & Hnl & HPab & HNd2 & HNC).
   exists Db. split; [exact HPm|]. split; [exact Hfr|]. split; [exact Hlsz|]. split; [exact HRB|].
   split; [exact Hnl|]. split; [exact HPab|]. split; [exact HNd2|].

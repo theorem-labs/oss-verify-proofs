@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the division core's exponent bound div_core_emax). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool SpecFloat.
@@ -299,9 +300,9 @@ Proof.
   pose proof (mpos_val n Hn) as Hp.
   unfold fp_div, nan_pass2. rewrite is_nan_one, (is_nan_ieee n Hn). cbn [orb].
   rewrite decode_one, (decode_ieee n Hn).
-  unfold SFdiv_core_binary. replace (fp_prec F32) with 24 by reflexivity. replace (fp_emax F32) with 128 by reflexivity.
+  unfold SFdiv_core_binary. replace (fp_prec F32) with 24 by reflexivity. change (div_core_emax F32) with 280.
   rewrite (Zdigits24 (Z.pos (mpos n))) by lia. change (Zdigits2 8388608) with 24.
-  replace (Z.min (fexp 24 128 (24 + fexpo n - (24 + -23))) (fexpo n - -23)) with (fexpo n - 1) by (unfold fexp, emin; lia).
+  replace (Z.min (fexp 24 280 (24 + fexpo n - (24 + -23))) (fexpo n - -23)) with (fexpo n - 1) by (unfold fexp, emin; lia).
   replace (fexpo n - -23 - (fexpo n - 1)) with 24 by lia. cbn iota.
   rewrite div_eucl_pair, Z.shiftl_mul_pow2 by lia.
   replace (Z.pos (mpos n) * 2 ^ 24) with ((2 * Z.pos (mpos n)) * 8388608) by (change (2 ^ 24) with (2 * 8388608); lia).

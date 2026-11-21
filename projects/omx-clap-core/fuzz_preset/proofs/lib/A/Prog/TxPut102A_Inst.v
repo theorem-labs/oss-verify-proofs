@@ -55,7 +55,7 @@ Variable B : asyms.
 Variable SK : YI16.sink_head.
 Variable CTX0 : list (list Z).
 
-(* THE UNIT'S SYMBOL BINDING OF B, which the top supplies (FuzzStrdup.v:248's TB): every image fact of B below is
+(* THE UNIT'S SYMBOL BINDING OF B, which the top supplies (FuzzStrdup.v:249's TB): every image fact of B below is
    proved from it in TxPut102A_Wit.v *)
 Hypothesis TB : TfibSyms B.
 (* __asan_memcpy's callee text with the memnorm keep (YGcallMxmn.aintrin_realizes_xm at OCpy, taken at the listing's

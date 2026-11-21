@@ -1,7 +1,7 @@
 (* fm program part, statement base: fm.asan addresses, the per-function stack/event/live constants, the user-poison
    wrappers over the donor's afn_pre / apost_base, C-string premises, fm's static allocation counters (fuzz/alloc.c).
    Definitions only. Design: a Theorem Labs lane's design/HARNESS.md. *)
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMH_Base.v (a working branch 3e35620c52e) *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMH_Base.v (a working branch) *)
 (* Modified by Theorem Labs, 2026-10 (a Theorem Labs lane, G9 row P8-A-base): fuzz_disco.asan's SUBSET of fm's file, the names
    the G9 snprintf route reads (g9/P0/pieces/P8-A-base.md): PC_snprintf, FM_GOT_canary, FM_canary, ecall_pre_k,
    ecall_preU_k, cstr, cstr_ok, bytes_at, rom_viewN, rom_viewO. Each kept Definition is fm's text; module paths changed;

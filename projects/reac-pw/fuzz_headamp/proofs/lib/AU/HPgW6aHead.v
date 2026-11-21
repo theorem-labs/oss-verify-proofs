@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/cgif/cgif_file_fuzzer/lib/A/AC8j.v at c8557374ad2e (st_ok_region_nth, field_of_region, as pa_i_region_nth over a restricted state and pa_i_field) and proofs/reac-pw/fuzz_role/lib/Reusable/YCbq.v at a0d3fb0309b (aj_intrin_at, as pa_i_memset_at: at OSet on rsegs, its post adds same_io from the contract's same_but_materialized); the rest of the file is new: the block lemma pa_int7 of LLVMFuzzerTestOneInput's shape-7 Int pod block and its helpers. *)
+(* Modified by Theorem Labs, 2026-10: proofs/cgif/cgif_file_fuzzer/lib/A/AC8j.v at theorem-labs/oss-verify-proofs@6b32741d849a (st_ok_region_nth, field_of_region, as pa_i_region_nth over a restricted state and pa_i_field) and proofs/reac-pw/fuzz_role/lib/Reusable/YCbq.v (aj_intrin_at, as pa_i_memset_at: at OSet on rsegs, its post adds same_io from the contract's same_but_materialized); the rest of the file is new: the block lemma pa_int7 of LLVMFuzzerTestOneInput's shape-7 Int pod block and its helpers. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_role/lib/A/RPgPropIntB.v, with its module paths changed; 221 of its 316 lines of code are new or changed and 404 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6aHead.v at 876d0cb3d0d; for reac-pw/fuzz_headamp image A: module paths and the rl_ prefix renamed to hd_, every pc moved by +0xd20 (the memset at 0x521a8), the real-frame cells [R+0xd8] / [R+0xf0] moved to [R+0xf8] / [R+0x110] (the plan's slot map), the frame for locals of class 4 (1024 bytes, 128 shadow bytes). *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6aHead.v; for reac-pw/fuzz_headamp image A: module paths and the rl_ prefix renamed to hd_, every pc moved by +0xd20 (the memset at 0x521a8), the real-frame cells [R+0xd8] / [R+0xf0] moved to [R+0xf8] / [R+0x110] (the plan's slot map), the frame for locals of class 4 (1024 bytes, 128 shadow bytes). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/A/HPgW6aHead.v, with its addresses and numbers changed; 94 of its 222 lines of code are new or changed and 188 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6aHead.v at 80bf14ccf11 (role's image-A
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6aHead.v (role's image-A
    block lemma w6_head) for reac-pw/fuzz_headamp's image B: every pc, register and real-frame cell measured on image
    B's twin; e62 at F+0x210 is held in s4 (no extra env slot); the frame is class 4 (1024 bytes, 128 shadow bytes);
    the shadow post is the frame pattern hm_setn pat 66 13 0 (lib/A/HPgMem.v hm_fsh_set); the context, the post and
    the memset step are lib/AU/HPgCaseB.v's cb_ctx / lib/AU/HPgSteps.v's hdu_blk_postE / HPgCaseB.v's cb_memset_at
    in place of the donor's own; AR_laws is YG0q.AR_laws_ok, not a hypothesis. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image B (fuzz_headamp.asan-ubsan, pinned sha256
    53edda9bdeeba1803865babfecb1af6732babe47ab83c64d38cc59a90d717a94; every address measured on the unstripped twin
    1674e30a0698f381704e66d2398d7906c881f4ba8fc619cb41b89fb97ad112ff, whose loaded sections are byte-equal to the

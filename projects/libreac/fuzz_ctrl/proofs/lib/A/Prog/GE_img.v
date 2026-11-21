@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 440 of its 488 lines of code are new or changed and 963 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/reac_ctrl_build_asG.v, with its module paths and module names changed; 210 of its 278 lines of code are new or changed and 420 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* fuzz_ctrl image A, ctrl_emit_as (0x849d8): the part of a Theorem Labs lane's cgif-form glue that gives the facts about
    the IMAGE OBJECTS the lifted stretch reads, at the call state (W, memc) of `tctrl_emit_as_spec`:
      f  = VAL (A_OBJ A_FRAMES) + ROW_BYTES * r   row r of CTRL_FRAMES, 24 bytes, 3 <= r <= 9;
@@ -24,7 +25,7 @@
    the premises of `tctrl_emit_as_spec` (:129-160) at rlo := RLO, rhi := RHI.
 
    The two JOIN blocks: the statement has no binder that marks their bytes usable (their shadow bytes zero), so
-   ge_j14_addr / ge_j13_addr take that binder themselves, in the form A/Prog/C_reac_box_model_block.v:216-217
+   ge_j14_addr / ge_j13_addr take that binder themselves, in the form A/Prog/C_reac_box_model_block.v:217-218
    states it (HZS_J13, HZS_J14). Their shadow covers need only img_shadow_vis.
 
    The step from the core's world to lib.Lib. A byte the world view `aview SEGS (w_H W) memc` reads at an address

@@ -1,17 +1,17 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the certificates are stated once per CONFIG_RSEQ layout (modules R1 and R0), against hand-off, join and loop states that MainRegen's collector computes in the build from the computed start-up hand-off state. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.skcms.iccprofile_info.lib.AsLib Require AsFuzzContract.
 From Stdlib Require Import ZArith List Bool.
 From LinuxProcessSemantics.Riscv Require Import Instr.
 From OSSVerify.Proofs.skcms.iccprofile_info.lib.Asan Require Import AxSymExec3 AsanPlanCore AsanPlan AsanPlanFO BothAsanPlanImages AsanInit AsanMainLib AsanMainHooksBoth AsanMainDefsBoth
-  AsanMainTreeBoth AsanMainCertLibBoth AsanMainItabBoth StartupHSBoth CertRefl.
+  AsanMainTreeBoth AsanMainCertLibBoth AsanMainItabBoth StartupHSBoth CertRefl PlanRegen MainRegenBoth.
 From Ltac2 Require Import Ltac2.
 Unset Lia Cache. Unset Nia Cache.  (* [comment removed for export] *)
 Import ListNotations. Import AX2. Import APC. Import AP.
 Open Scope Z_scope.
-Definition ST : list Z := [406508; 406384; 626768; 625740; 407836; 407576; 406848; 625488; 608584; 223012].
 Definition ST1 : list Z := [406508; 406384; 626768; 625740; 407836; 407576; 406848; 625488; 608584; 223012; 343360].
 Definition pl_r0a : plan :=
   (PForget [15;16;17;20;23;28;33;43;53;56;58;59;117;118;133;135;157;160;178;189;191;193;197;200;214;218;232;233;234;235;253;256;257;258;259;260;261;262;263;264;265;266;267;268;269;270;271;272;273;281;282;284;285;295;300;301;305;306;309;314;316;320;322;326;330;334;337;341;344;352;355;362;366;370;372]%nat (PX XLayout [ELit 0] (PRun ST1 (PRun ST1 (PX XIMemset [] (PRun ST1 (PExt 0 [ELit 0] (PRun ST1 (PX XIMemset [] (PRun ST1 (PX XMemcpy [] (PRun ST1 (PX XMemcpy [] (PRun ST1 (PExt 1 [ELit 0] (PRun ST1 (PExt 2 [ELit 0] (PRun ST1 (PX XMemcpy [] (PRun ST1 (PX XMemcpy [] (PRun ST1 (PX XMemcpy [] (PRun ST1 (PEmit 0 [] (PRun ST1 (PX XMemset [] (PRun ST1 (PX XMemset [] (PRun ST1 (PX XMemset [] (PRun ST1 (PX XMemset [] (PRun ST1 (PX XMemset [] (PRun ST1 PExit)))))))))))))))))))))))))))))))))))).
@@ -53,11 +53,39 @@ Definition TREE_h0_r0 : mtree := (MSplit QL0 0 (MLeaf 0 (PForget IXS_h0 pl_r0a))
 Definition TREE_h0_r1 : mtree := (MSplit QL0 0 (MLeaf 0 (PForget IXS_h0 pl_r1a)) (MSplit QL0 63 (MLeaf 0 (PForget IXS_h0 pl_r1ba)) (MSplit QL0 64 (MLeaf 0 (PForget IXS_h0 pl_r1bba)) (MSplit QL0 66 (MLeaf 0 (PForget IXS_h0 pl_r1bbba)) (MSplit QL0 73 (MLeaf 0 (PForget IXS_h0 pl_r1bbbba)) (MLeaf 0 (PForget IXS_h0 pl_r1bbbbb))))))).
 Definition TREE_h0_r2 : mtree := (MLeaf 0 (PForget IXS_h0 pl_r2)).
 Definition TREE_h0_r3 : mtree := (MSplit QL1 0 (MLeaf 0 (PForget IXS_h0 pl_r3a)) (MSplit QL1 62 (MLeaf 0 (PForget IXS_h0 pl_r3ba)) (MSplit QL1 63 (MLeaf 0 (PForget IXS_h0 pl_r3bba)) (MLeaf 0 (PForget IXS_h0 pl_r3bbb))))).
-Lemma tree_ok_h0_r0 : mtree_ok KCm BFUELm FUELm ITmD 0 0 (HSA HS_both 0) (root_class 0) TREE_h0_r0 = true.
+Module R1.
+Definition TREE_h0_r0 : mtree := mregen 1 ((root_class 0)) ((HSA (HS_both true) 0)) TREE_h0_r0.
+Definition TREE_h0_r1 : mtree := mregen 1 ((root_class 1)) ((HSA (HS_both true) 0)) TREE_h0_r1.
+Definition TREE_h0_r2 : mtree := mregen 1 ((root_class 2)) ((HSA (HS_both true) 0)) TREE_h0_r2.
+Definition TREE_h0_r3 : mtree := mregen 1 ((root_class 3)) ((HSA (HS_both true) 0)) TREE_h0_r3.
+
+Lemma tree_ok_h0_r0 : mtree_ok 1 KCm BFUELm FUELm ITmD 0 0 (HSA (HS_both true) 0) (root_class 0) TREE_h0_r0 = true.
 Proof. cert_refl_vm constr:(true). Qed.
-Lemma tree_ok_h0_r1 : mtree_ok KCm BFUELm FUELm ITmD 0 0 (HSA HS_both 0) (root_class 1) TREE_h0_r1 = true.
+
+Lemma tree_ok_h0_r1 : mtree_ok 1 KCm BFUELm FUELm ITmD 0 0 (HSA (HS_both true) 0) (root_class 1) TREE_h0_r1 = true.
 Proof. cert_refl_vm constr:(true). Qed.
-Lemma tree_ok_h0_r2 : mtree_ok KCm BFUELm FUELm ITmD 0 0 (HSA HS_both 0) (root_class 2) TREE_h0_r2 = true.
+
+Lemma tree_ok_h0_r2 : mtree_ok 1 KCm BFUELm FUELm ITmD 0 0 (HSA (HS_both true) 0) (root_class 2) TREE_h0_r2 = true.
 Proof. cert_refl_vm constr:(true). Qed.
-Lemma tree_ok_h0_r3 : mtree_ok KCm BFUELm FUELm ITmD 0 0 (HSA HS_both 0) (root_class 3) TREE_h0_r3 = true.
+
+Lemma tree_ok_h0_r3 : mtree_ok 1 KCm BFUELm FUELm ITmD 0 0 (HSA (HS_both true) 0) (root_class 3) TREE_h0_r3 = true.
 Proof. cert_refl_vm constr:(true). Qed.
+End R1.
+Module R0.
+Definition TREE_h0_r0 : mtree := mregen 0 ((root_class 0)) ((HSA (HS_both false) 0)) TREE_h0_r0.
+Definition TREE_h0_r1 : mtree := mregen 0 ((root_class 1)) ((HSA (HS_both false) 0)) TREE_h0_r1.
+Definition TREE_h0_r2 : mtree := mregen 0 ((root_class 2)) ((HSA (HS_both false) 0)) TREE_h0_r2.
+Definition TREE_h0_r3 : mtree := mregen 0 ((root_class 3)) ((HSA (HS_both false) 0)) TREE_h0_r3.
+
+Lemma tree_ok_h0_r0 : mtree_ok 0 KCm BFUELm FUELm ITmD 0 0 (HSA (HS_both false) 0) (root_class 0) TREE_h0_r0 = true.
+Proof. cert_refl_vm constr:(true). Qed.
+
+Lemma tree_ok_h0_r1 : mtree_ok 0 KCm BFUELm FUELm ITmD 0 0 (HSA (HS_both false) 0) (root_class 1) TREE_h0_r1 = true.
+Proof. cert_refl_vm constr:(true). Qed.
+
+Lemma tree_ok_h0_r2 : mtree_ok 0 KCm BFUELm FUELm ITmD 0 0 (HSA (HS_both false) 0) (root_class 2) TREE_h0_r2 = true.
+Proof. cert_refl_vm constr:(true). Qed.
+
+Lemma tree_ok_h0_r3 : mtree_ok 0 KCm BFUELm FUELm ITmD 0 0 (HSA (HS_both false) 0) (root_class 3) TREE_h0_r3 = true.
+Proof. cert_refl_vm constr:(true). Qed.
+End R0.

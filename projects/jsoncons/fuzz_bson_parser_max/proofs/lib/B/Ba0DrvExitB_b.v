@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader fact, the 6 MiB zero-filled stack window): changed exit_preB, exit_run_2B, exit_run_3B and 1 more. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -109,7 +110,7 @@ Definition exit_preB (LB : list (Z * Z)) (LK : list fframe) (cr : credit) (A : l
     (M : word -> option byte) (model : Model) (S tid : Z) : Prop :=
   dinvA LB LK cr A M model
   /\ usp - 0x1000 <= S /\ S <= usp /\ S mod 16 = 0
-  /\ (forall a n, usp - 0x800000 <= a -> a + n <= usp -> L5Defs.L5.writable ASEGS (mrestrict (ahid A model) M) a n)
+  /\ (forall a n, usp - 6144513 <= a -> a + n <= usp -> L5Defs.L5.writable ASEGS (mrestrict (ahid A model) M) a n)
   /\ L5Defs.L5.img_clear (mrestrict (ahid A model) M) 0x10000 0x139000
   /\ exitB tid (mrestrict (ahid A model) M).
 
@@ -268,6 +269,7 @@ Proof.
   - exact minv2.
   - rewrite halt2. exact halt0.
   - rewrite fds2. exact fd1.
+  - rewrite (sbm_rdrA _ _ same2). exact (di_rdr _ _ _ _ _ _ _ _ _ _ inv).
   - exact (conj r17_1 (conj r10_1 (conj r11_1 (conj r12_1 (conj r9_1 (conj r18_1 (conj r22_1 r19_1))))))).
   - rewrite vis2. unfold wv_iov.
     split; [lia|]. split; [lia|]. split; [right; reflexivity|]. split; [exact m136|].
@@ -465,6 +467,7 @@ Proof.
   - exact minv2.
   - rewrite halt2. exact halt0.
   - rewrite fds2. exact fd1.
+  - rewrite (sbm_rdrA _ _ same2). exact (di_rdr _ _ _ _ _ _ _ _ _ _ inv).
   - exact (conj r17_1 (conj r10_1 (conj r11_1 (conj r12_1 (conj r9_1 (conj r18_1 (conj r22_1 r19_1))))))).
   - rewrite vis2. unfold wv_iov.
     split; [lia|]. split; [lia|]. split; [right; reflexivity|]. split; [exact m136|].
@@ -664,6 +667,7 @@ Proof.
   - exact minv2.
   - rewrite halt2. exact halt0.
   - rewrite fds2. exact fd1.
+  - rewrite (sbm_rdrA _ _ same2). exact (di_rdr _ _ _ _ _ _ _ _ _ _ inv).
   - exact (conj r17_1 (conj r10_1 (conj r11_1 (conj r12_1 (conj r9_1 (conj r18_1 (conj r22_1 r19_1))))))).
   - rewrite vis2. unfold wv_iov.
     split; [lia|]. split; [lia|]. split; [right; reflexivity|]. split; [exact m136|].

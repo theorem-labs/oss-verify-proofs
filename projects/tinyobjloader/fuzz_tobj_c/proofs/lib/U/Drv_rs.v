@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch model's channel-reader flag from the driver context, LPS 08b1429, as a section fact; the vDSO fact, from deJ_vdso, in the lifted world predicate). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -53,6 +54,7 @@ Let Hargc : length argv = 2%nat := f_argc cx.
 Let md0 : Model := f_md0 cx.
 Let Hfds0 : m_fds md0 = std_fds := f_fds0 cx.
 Let Hfs : m_fs md0 = fs := f_fs0 cx.
+Let Hrdr0 : m_channel_reader md0 = true := f_rdr0 cx.
 Let mdo : Model := md_open md0 argv1.
 Let ok : world -> Prop := f_ok cx.
 Let SpecT : list event -> Prop := Spec inp.
@@ -667,13 +669,13 @@ Proof using Hent Hinp Hargc.
   destruct Jnow as (Ai & Gi & Dg).
   destruct (deJ segs C_U 31 P0 wtop P0_top (KdR 0) r0 tv0 (DG 65536 0) Ai rho _ _ Gi Dg P0rho) as [Snap Kcur].
   exists (m_vmmaps (cfg_model (w_cfg w))), (m_vm_materialized (cfg_model (w_cfg w))).
-  split; [exact Snap|]. split; [exact Smatch|]. split; [exact Kcur|]. split; reflexivity.
+  split; [exact Snap|]. split; [exact Smatch|]. split; [exact Kcur|]. split; [reflexivity | split; [reflexivity | eapply deJ_vdso; exact Gi]].
 Qed.
 
 Lemma fromKs : ltac2:(tb__ "0|1|
 S11S11S64S2eS39Q40A1A1S5S16S3dS93S7S72VP0;Vwtop;S4eS47Z10000Z0A2M0R7R5R4A9S52R8R7A2S40S7S51Vcx;R5R7R6A4R4R8R3A5S1S3fS7VJD;S50Vcx;R6A2R9S4eG0A4R5R9R4A5VP0;R9A1A2F_;F_;F_;Fw;FS;Foff;Fmat;Fvm;Frho;FrhoB;").
 Proof using Hent Hinp Hargc.
-  intros rhoB rho vm mat off S w SnapB [Wlow Mem] [Smatch (Kr & Evm & Emat)].
+  intros rhoB rho vm mat off S w SnapB [Wlow Mem] [Smatch (Kr & Evm & Emat & VDk)].
   assert (P0rho : P0 rho).
   { destruct SnapB as (AiB & mdB & _ & _ & _ & P0B & _).
     refine (P0_agree sp brk mb draw inp Hent Hinp Hargc rhoB rho P0B _ _).

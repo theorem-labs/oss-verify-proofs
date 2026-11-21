@@ -1,5 +1,5 @@
-(* Ported from proofs/libreac/fuzz_knock/lib/A/Prog/asan_memsetF.v (commit 9e04a304e70, a working branch),
-   itself a route-1 port of omx-clap-core/fuzz_manifest d1fff804be0: namespace libreac.fuzz_knock ->
+(* Ported from proofs/libreac/fuzz_knock/lib/A/Prog/asan_memsetF.v (a working branch),
+   itself a route-1 port of omx-clap-core/fuzz_manifest: namespace libreac.fuzz_knock ->
    libreac.fuzz_ctrl. The plain proof asan_memset_holds (lib/A/Prog/asan_memset.v) is the same text in both units
    modulo namespace, so the script is the source's; every constant it unfolds (ASAN_MEMSET_K = 2208, IMG_LO,
    IMG_HI, RT_LO, RT_HI, the ASan layout) is this unit's own, from asan_memset_c.v, ImgBounds.v and

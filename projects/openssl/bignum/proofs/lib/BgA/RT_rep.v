@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved ledger and the vDSO). *)
 (* [comment removed for export] *)
 
 From OSSVerify.Proofs.openssl.bignum.lib.BgLib Require Import ImageBgA.
@@ -200,9 +201,156 @@ Definition artm_sys (Σ : rtsA) (mo : Model) : Prop :=
 
   /\ NodesA_madv.noaccess_pos mo.
 
+(* LPS@75d69e00: the reserved ledger is NO LONGER the image's reservations alone.
+   [State.init_model] seeds [vm_reserved] with
+   [init_reserved (segments_reserved segs) mbase sp kb = segments_reserved segs ++ vdso_reserved kb top]
+   (VCommon/Ax/AxEntryS.v:614-621), because [segments_reserved] gained
+   [filter (fun s => negb (seg_kernel_map s))] (LPS@75d69e00 Run.v:253-254) and
+   [init_reserved] puts the vDSO/vvar pair back.  So
+     vm_reserved (m_vmmaps mo) = segments_reserved bgasegs
+   is FALSE at the revision whenever that tail is non-empty, and ARTM_A must not pin it.
+   The clause below is [mr_res]'s own append form (VCommon/Ax/AxModelRel.v:48-51) cut down
+   to what this cone's consumers use, plus the one fact the tail forces:
+     - the prefix equation        -- RT_sys_grant's membership step and every node's
+                                     pass-through of the clause;
+     - [length rx <= 2]           -- RT_sys_grant's [length_app] sum;
+     - [live_bytes rx <= 0x14000] -- RT_sys_grant's [live_bytes_app'] sum;
+     - every tracked mapping apart from the tail -- what RT_sys_fixed and RT_sys_madvise
+       need, because NO NUMERIC BOUND separates their ranges from the pair: layout_ok's
+       [grant_ok (l_PRB L) 0x2000011000] bounds the region only by [l_ACEIL], which is
+       [alloc_top], and the pair sits just below [alloc_top] too.  What separates them is
+       that each such range lies inside a mapping the runtime already tracks, and reserved
+       entries are disjoint from tracked mappings -- [mr_res]'s sibling [mr_disj]
+       (AxModelRel.v:62), which is where BridgeA gets it.
+   mr_res's fourth fact [Forall (fun q => 0x154500000000 <= bas q) rx] is deliberately NOT
+   carried: no consumer in this cone uses a floor.
+   ARTM_A is tree-local: projects/openssl/bignum/Statements.v names it nowhere (the same
+   scan of that file finds plain_halts 5 times, so it is not a false zero), and no
+   proofs/*/Proof.v mentions it (13 such files exist).
+   Ported per hunk from openssl/ct CtA/RT_rep.v:255-261, itself ported from
+   simdjson/fuzz_atpointer A/RT_rep.v:202-313 -- the two trees that had already made this
+   call. *)
 Definition ARTM_A (Σ : rtsA) (mo : Model) : Prop :=
-  Permutation (List.filter vpos (vm_maps (m_vmmaps mo))) (rt_maps Σ) /\ vm_reserved (m_vmmaps mo) = segments_reserved bgasegs
+  Permutation (List.filter vpos (vm_maps (m_vmmaps mo))) (rt_maps Σ)
+  /\ (exists rx, vm_reserved (m_vmmaps mo) = segments_reserved bgasegs ++ rx
+                 /\ (length rx <= 2)%nat
+                 /\ live_bytes rx <= 0x14000
+                 /\ Forall (fun e => Forall (iv_apart e) rx) (vm_maps (m_vmmaps mo)))
   /\ vm_limit (m_vmmaps mo) = VMLIMIT /\ eager_used mo <= E0_MAX + rt_eager Σ /\ artm_sys Σ mo.
+
+(* The three ways this cone uses ARTM_A's reserved clause, packaged so every consumer is a
+   single application and the LPS@75d69e00 argument is written down once.
+
+   [artm_res_free_in_maps]: a range INSIDE a tracked mapping is free of the whole ledger.
+   [artm_res_cons]:         a newly granted range, proved free of [vm_reserved ++ vm_maps],
+                            may be consed onto the tracked list.
+   [artm_res_incl]:         a sublist of the tracked list keeps the clause. *)
+(* Private copy of [region_free_apart].  The unit's own copy lives in
+   {BgA,BgB}/RT_sys_grant.v:108, which is DOWNSTREAM of this file, so calling it here
+   failed with "The variable region_free_apart was not found in the current environment"
+   (BgA|BgB/RT_rep.v:261).  Same text as that copy, under a
+   private name so the two never collide in a file that imports both.  openssl/ct's
+   CtA|CtB/RT_rep.v has the SAME latent defect -- its own region_free_apart is at
+   CtA/RT_sys_grant.v:122 -- and its cone has never been reached by a round. *)
+Lemma artm_rf_apart : forall l (lo n : word) e, region_free l lo n = true -> In e l ->
+  apart (bv_unsigned lo) (bv_unsigned n) (bv_unsigned (fst e)) (bv_unsigned (snd e)).
+Proof.
+  intros l lo n [b s] H Hin. pose proof (region_free_In _ _ _ _ _ H Hin) as X. unfold iv_overlap in X. cbn [fst snd].
+  unfold apart. apply andb_false_iff in X as [X|X]; apply Z.ltb_ge in X; lia.
+Qed.
+
+Lemma artm_res_free_in_maps : forall (mo : Model) (lo n : word) (e : word * word),
+  (exists rx, vm_reserved (m_vmmaps mo) = segments_reserved bgasegs ++ rx
+              /\ (length rx <= 2)%nat
+              /\ live_bytes rx <= 0x14000
+              /\ Forall (fun q => Forall (iv_apart q) rx) (vm_maps (m_vmmaps mo))) ->
+  In e (vm_maps (m_vmmaps mo)) ->
+  bv_unsigned (fst e) <= bv_unsigned lo ->
+  bv_unsigned lo + bv_unsigned n <= bv_unsigned (fst e) + bv_unsigned (snd e) ->
+  region_free (segments_reserved bgasegs) lo n = true ->
+  region_free (vm_reserved (m_vmmaps mo)) lo n = true.
+Proof.
+  intros mo lo n e (rx & Hres & _ & _ & Hme) He H1 H2 Himg.
+  rewrite Hres. apply region_free_intro. intros a sz Hin.
+  apply in_app_or in Hin as [Hin|Hin].
+  (* Both bullets are openssl/ct's, taken verbatim from CtA/RT_rep.v:290-294, whose
+     opening line, hypothesis names and goal are character-identical to these and
+     which is GREEN (ct's acceptance round).  The
+     previous text here was reasoned out from the sibling bullet rather than from a
+     donor and got the goal shape wrong in both bullets:
+     a farm round reported :287 characters 26-31 --
+     the [right] -- as "Not an inductive goal with 2 constructors", i.e. the goal
+     [region_free_intro] leaves is the BOOLEAN [iv_overlap ... = false], not a
+     disjunction, so [right]/[left] had nothing to select and the missing step is
+     [unfold iv_overlap. apply andb_false_iff].  The first bullet needs no
+     disjunction at all: the segments half is [Himg] applied by [region_free_In],
+     which is also why [artm_rf_apart] is not needed here. *)
+  - exact (region_free_In _ _ _ a sz Himg Hin).
+  - pose proof (proj1 (Forall_forall _ _) (proj1 (Forall_forall _ _) Hme e He) (a, sz) Hin) as D.
+    unfold iv_apart in D. cbn [fst snd] in D.
+    unfold iv_overlap. apply andb_false_iff.
+    destruct D as [D|D]; [right | left]; apply Z.ltb_ge; lia.
+Qed.
+
+Lemma artm_res_cons : forall (R M : list (word * word)) (p : word * word),
+  (exists rx, R = segments_reserved bgasegs ++ rx
+              /\ (length rx <= 2)%nat
+              /\ live_bytes rx <= 0x14000
+              /\ Forall (fun q => Forall (iv_apart q) rx) M) ->
+  region_free (R ++ M) (fst p) (snd p) = true ->
+  exists rx, R = segments_reserved bgasegs ++ rx
+             /\ (length rx <= 2)%nat
+             /\ live_bytes rx <= 0x14000
+             /\ Forall (fun q => Forall (iv_apart q) rx) (p :: M).
+Proof.
+  intros R M p (rx & Hres & Hcnt & Hbyt & Hme) Hfp.
+  exists rx. split; [exact Hres|]. split; [exact Hcnt|]. split; [exact Hbyt|].
+  constructor; [|exact Hme].
+  apply Forall_forall. intros [b sz] Hq.
+  assert (Hin : In (b, sz) (R ++ M))
+    by (apply in_or_app; left; rewrite Hres; apply in_or_app; right; exact Hq).
+  pose proof (artm_rf_apart _ _ _ (b, sz) Hfp Hin) as X.
+  unfold apart in X. cbn [fst snd] in X. unfold iv_apart.
+  (* [X] is ALREADY a disjunction here -- [artm_rf_apart] concludes [apart ...] and
+     the [unfold apart] above turns it into [_ <= _ \/ _ <= _], so there is no [&&]
+     left for [andb_false_iff] to take apart: a farm round reported
+     :313 characters 8-22 "Unable to apply lemma of type b1 && b2 = false <-> ... on
+     hypothesis of type bv_unsigned p.1 + bv_unsigned p.2 <= bv_unsigned b \/ ...".
+     Destruct it instead, and let [solve] pick the arm rather than assuming the
+     orientation the two predicates happen to use. *)
+  (* A farm round reports :320 characters 2-181 -- the WHOLE block --
+     as "No applicable tactic", so NONE of the four arms closed it.  The arms cover
+     both orientations of a disjunction goal and both of a boolean one, so the thing
+     that is wrong is not the shape: it is the ATOMS.  The round's earlier printing of
+     [X] spells its components [bv_unsigned p.1] and [bv_unsigned p.2], i.e. PRIMITIVE
+     PROJECTIONS, which the [cbn [fst snd] in X] above does not touch and which [lia]
+     treats as different atoms from the goal's [fst]/[snd] applications.  So [p] is
+     destructed and both sides normalised before the arms run.  Nothing is removed: all
+     four arms are kept, because the goal shape is still unread and this widens what can
+     close rather than betting on one.  PREDICTED, not measured -- the round prints no
+     goal for this error and the next one is the instrument. *)
+  destruct p as [pb psz]; cbn [fst snd] in X |- *;
+  destruct X as [X|X];
+    solve [ left; lia | right; lia
+          | apply andb_false_iff; left; apply Z.ltb_ge; lia
+          | apply andb_false_iff; right; apply Z.ltb_ge; lia ].
+Qed.
+
+Lemma artm_res_incl : forall (R M M' : list (word * word)),
+  (exists rx, R = segments_reserved bgasegs ++ rx
+              /\ (length rx <= 2)%nat
+              /\ live_bytes rx <= 0x14000
+              /\ Forall (fun q => Forall (iv_apart q) rx) M) ->
+  (forall q, In q M' -> In q M) ->
+  exists rx, R = segments_reserved bgasegs ++ rx
+             /\ (length rx <= 2)%nat
+             /\ live_bytes rx <= 0x14000
+             /\ Forall (fun q => Forall (iv_apart q) rx) M'.
+Proof.
+  intros R M M' (rx & Hres & Hcnt & Hbyt & Hme) Hsub.
+  exists rx. split; [exact Hres|]. split; [exact Hcnt|]. split; [exact Hbyt|].
+  apply Forall_forall. intros q Hq. exact (proj1 (Forall_forall _ _) Hme q (Hsub q Hq)).
+Qed.
 
 Definition RTA : rt_sig := mkRTS rtsA ART_A ARTM_A rtA_live rtA_frames rtA_allow rtA_sp0 rtA_credit.
 

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Trevor Hansen, 2026-11: hex addresses and numbers for the binaries of libtasn1/asn1_get_length_der_fuzzer, and module names. *)
+(* Modified by Theorem Labs, 2026-11: ported toward LPS 727298f3 by the change of the same file of cgif/cgif_rgb_fuzzer, its addresses relocated to this unit's binaries. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -135,6 +136,12 @@ Definition ss_mun : sstate := Eval vm_compute in run_ ss_ret0.
 Definition ss_mun2 : sstate :=
 mkSS (ss_pc ss_mun + 4) (sr_set (ss_regs ss_mun) 10 (SLit 0)) (ss_mem ss_mun) None (ss_facts ss_mun).
 Definition ss_none_end : sstate := Eval vm_compute in run_ ss_mun2.
+(* 08b1429: the refused munmap resumes with a0 = -ENOMEM. *)
+Definition ss_mun2r : sstate :=
+mkSS (ss_pc ss_mun + 4) (sr_set (ss_regs ss_mun) 10 (SLit 18446744073709551604)) (ss_mem ss_mun) None (ss_facts ss_mun).
+(* small fuel for the refused path (see YO0c.RFUEL) *)
+Definition RFUEL : N := 60%N.
+Definition ss_none_endr : sstate := Eval vm_compute in fst (sym_runN ubs2segs ubs2tbl RFUEL ss_mun2r).
 Definition ss_enf : sstate := Eval vm_compute in runto_ ubs2_A_enframe ss_ret1.
 Section f.
 Variable segs : list Segment.
@@ -566,6 +573,16 @@ destruct Hr as [<-|[<-|[<-|[<-|[]]]]];
 [ rewrite S1, S2, S3 | ..]; subst E; cbn [base_val r_base r_lo r_hi ew E_mi R_lock R_nl R_errno];
 unfold LOCK, NLK, CTX, ERRNO, TP, ubs2_D_malloc_lock, ubs2_D_malloc_context, ubs2_D_libc, ubs2_tp; lia.
 Qed.
+Lemma st_ok_mun2r : forall regs5 mem5,
+regs_ok E (ss_regs ss_mun) regs5 -> mem_ok ubs2segs E mem5 (ss_mem ss_mun) -> facts_ok E (ss_facts ss_mun) ->
+st_ok ubs2segs E ss_mun2r
+(mkst (regupd regs5 10 (errno_ret ENOMEM)) (v_addi (Z_to_bv 64 (ss_pc ss_mun)) 4) mem5 (seg_rom ubs2segs)).
+Proof.
+intros regs5 mem5 HR HM HG.
+change ss_mun2r with (resume ss_mun (SLit 18446744073709551604) (ss_mem ss_mun) (ss_facts ss_mun)).
+eapply (st_ok_resume_mem ubs2segs 51 E E); [exact HR | apply env_agree_refl | vm_compute; reflexivity
+| first [reflexivity | apply bv_eq; vm_compute; reflexivity | vm_compute; reflexivity] | exact HM | exact HG].
+Qed.
 End p.
 Lemma run_mi : sym_runN ubs2segs ubs2tbl FUEL ss_mi = (ss_thr, RS_stopped (SR_branch BC_LTU (SOff 10 0) (SLit 131052))).
 Proof. vm_compute. reflexivity. Qed.
@@ -584,6 +601,8 @@ Proof. vm_compute. reflexivity. Qed.
 Lemma run_ret0 : sym_runN ubs2segs ubs2tbl FUEL ss_ret0 = (ss_mun, RS_ecall).
 Proof. vm_compute. reflexivity. Qed.
 Lemma run_mun2 : sym_runN ubs2segs ubs2tbl FUEL ss_mun2 = (ss_none_end, RS_stopped (SR_jalr (SOff 1 0))).
+Proof. vm_compute. reflexivity. Qed.
+Lemma run_mun2r : sym_runN ubs2segs ubs2tbl RFUEL ss_mun2r = (ss_none_endr, RS_stopped (SR_jalr (SOff 1 0))).
 Proof. vm_compute. reflexivity. Qed.
 Lemma run_ret1 : sym_run_toN ubs2segs ubs2tbl FUEL ubs2_A_enframe ss_ret1 = (ss_enf, RS_running).
 Proof. vm_compute. reflexivity. Qed.
@@ -649,6 +668,8 @@ Qed.
 Lemma ref_end_checks : preserved_check ss_ref_end = true /\ scratch_check ss_ref_end = true.
 Proof. vm_compute. split; reflexivity. Qed.
 Lemma none_end_checks : preserved_check ss_none_end = true /\ scratch_check ss_none_end = true.
+Proof. vm_compute. split; reflexivity. Qed.
+Lemma none_endr_checks : preserved_check ss_none_endr = true /\ scratch_check ss_none_endr = true.
 Proof. vm_compute. split; reflexivity. Qed.
 Lemma enf_checks : preserved_check ss_enf = true /\ scratch_check ss_enf = true.
 Proof. vm_compute. split; reflexivity. Qed.

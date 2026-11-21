@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip_k.v
-   (origin/ossv/recipes 501c0d516c69, lines 34-234: ajournal_after_write_win and aj_set_shadow_atS, the step of a
+   (lines 34-234: ajournal_after_write_win and aj_set_shadow_atS, the step of a
    call of a shadow-fill entry __asan_set_shadow_XX on the shadow of the caller's own side-stack frame) for
    reac-pw/fuzz_segconf's image A, segment A2 of reac_segconf_parse_file (the image-A A2 segment lane of the image-A G3 walk owner): module paths
    only. The kit has no copy of this step (fuzz_command's PaRt.v is not in segconf's lib), so the segment carries it
    (brief g3-pf-seg.md). aj_stack_free_cls_atS of the same donor file is segment A4's and is not copied here. *)
-(* Modified by Theorem Labs, 2026-10: copied from lib/A/Prog/pf_a2_k.v (commit c181e576cd21) for
+(* Modified by Theorem Labs, 2026-10: copied from lib/A/Prog/pf_a2_k.v for
    reac-pw/fuzz_segconf's image B (fuzz_segconf.asan-ubsan), segment B2 of reac_segconf_parse_file (the B2 segment lane of
    the image-B G3 walk owner): module paths only (the image-B kit copies lib/B/YA0n YA0o YCbm YA0q YG0f YG0n YG0d YCbq YG0p YC5d,
    bkit-namemap.tsv; the image-B listing lib/B/Prog; the image-B carriers lib/B/Rt/RtStack, RtShadow). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the tables of stack_malloc_4 at 0x3d244 of libreac/fuzz_grant: class-4 frame constants (1024 frames of 1024 bytes, hints at +32, flags at +0x8800, frames at +0x409000), addresses; module names. *)
 (* Modified by Theorem Labs, 2026-10: the tables of __asan_stack_malloc_4 (0x3fdb8) of plugin-hostd/fuzz_command's ASan build: module paths; the code addresses and the image words of the TLS path re-read from fuzz_command.asan; the code table is RtSM1T's (this image's class-1 table, which covers every class). *)
-(* Modified by Theorem Labs, 2026-10: proofs/plugin-hostd/fuzz_command/lib/A/Rt/RtSM4T.v at 2d2ff01bb6f; the tables of __asan_stack_malloc_4 (0x3ccac) of reac-pw/fuzz_headamp's ASan build: module paths; the code addresses and the image words of the TLS path for this image; the code table is the block of proofs/plugin-hostd/fuzz_command/lib/A/Rt/RtSM1T.v at 2d2ff01bb6f stated here, with this image's class-4 entry and its callees, because this image has no other side-stack class. *)
+(* Modified by Theorem Labs, 2026-10: proofs/plugin-hostd/fuzz_command/lib/A/Rt/RtSM4T.v; the tables of __asan_stack_malloc_4 (0x3ccac) of reac-pw/fuzz_headamp's ASan build: module paths; the code addresses and the image words of the TLS path for this image; the code table is the block of proofs/plugin-hostd/fuzz_command/lib/A/Rt/RtSM1T.v stated here, with this image's class-4 entry and its callees, because this image has no other side-stack class. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

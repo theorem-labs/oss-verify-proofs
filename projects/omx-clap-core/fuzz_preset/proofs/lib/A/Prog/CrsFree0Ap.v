@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumC.v, with its module paths and module names changed; 671 of its 740 lines of code are new or changed and 859 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/CrsKitAp.v; 14 of its 44 lines of code are new or changed and 710 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image A' (the #102 pins): ONE SHARED INTERIM PREMISE of the walk of check_reject_clean_starved,
    fuzz_free (NULL). KIT-OWNED INTERIM (a Theorem Labs lane's decision, 2026-10-29): it is tfuzz_free_specX (lib/A/PRH_FnAlloc.v
-   blob 83fe93bc86e2 :252-301, the #102 kit tip of record decff67d721f) restricted to p = 0, and is
+   blob 83fe93bc86e2 :252-301, the #102 kit tip of record) restricted to p = 0, and is
    replaced by that text once a Theorem Labs lane guards the text's entry position with p <> 0.
    WHY. decff's tpj_write_specX (PRH_FnWriter.v blob 2b497bc72172 :689-691) gives the model-run position after a
    pj_write only under prh_granted, so after a REFUSED grow (ran' = 1, q = 0) no position is known; tfuzz_free_specX
@@ -27,9 +28,9 @@
    of that lookup; CONFIRM by checker LookupCheckCrcsAp. At that search origin/ossv/recipes had no lib/A or lib/B, its
    released rows were lib/Prog (plain) and lib/U/Prog (ubsan) only, and no released asan Proof.v existed for
    check_reject_clean_starved). Written new. This file proves nothing: it STATES.
-   Inputs: pin A' asan sha256 1be0f53d96cb9d6c (harness.yaml of release/fuzz-preset-ran-out-pins 8f3e7e1a07f1);
+   Inputs: pin A' asan sha256 1be0f53d96cb9d6c (harness.yaml);
    listing lib/A/Listing_prog.v blob 7ed1529926bd + lib/A/PAImg_prog.v blob 505a51ff7d08; kit lib/A/Prog/CrsKitAp.v
-   (cold/h-w6u-rep-crsa2-v3 df14c8cd3eb9, blob 03dab244d6e6). No numeral is an address. *)
+   (blob 03dab244d6e6). No numeral is an address. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: munmap_exact_outcome's errno refusal and mmap_fixed_destroyed_next ledger, the channel reader premise of the write and writev outcomes and write's access_ok premise, solve_iirr's fd-lookup match for file-backed mmap, and unlinkat's AT_REMOVEDIR arm as an alt. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -389,30 +390,34 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
+(* 215 joined the injected family in the revision, so munmap_spec now offers an
+   errno refusal beside the unmap, exactly as 222 and 226 already did, and the
+   kept arm rebuilds the maps with [mmap_fixed_destroyed_next]. *)
 Lemma munmap_exact_outcome : forall addr len i m o,
   (bv_unsigned addr mod page_size = 0)%Z ->
   w_is0 len = false ->
-  (bv_unsigned addr + page_round_up_Z (bv_unsigned len) <= TASK_SIZE)%Z ->   (* [comment removed for export] *)
+  (bv_unsigned addr + page_round_up_Z (bv_unsigned len) <= TASK_SIZE)%Z ->
   let n := Z_to_bv 64 (page_round_up_Z (bv_unsigned len)) in
   map_has (vm_maps (m_vmmaps m)) addr n = true ->
   munmap_spec addr len i m o <->
-  o = Ok (mkEffectU (Z_to_bv 64 0) [] [] [(addr, n)] [] [])
+  (exists e, In e munmap_errnos /\ o = Ok (mkEffect (errno_ret e) [] []) m [])
+  \/ o = Ok (mkEffectU (Z_to_bv 64 0) [] [] [(addr, n)] [] [])
          (with_mmap_destroyed addr n
-            (mkVmMapsFull (vm_reserved (m_vmmaps m))
-               (map_remove (vm_maps (m_vmmaps m)) addr)
-               (maps_subtract (vm_noaccess (m_vmmaps m))
-                  (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n))
-               (vm_start_brk (m_vmmaps m)) (vm_brk (m_vmmaps m))
-               (vm_limit (m_vmmaps m)) (vm_mmap_base (m_vmmaps m)) (vm_init_sp (m_vmmaps m))) m) [].
+            (mmap_fixed_destroyed_next (m_vmmaps m) addr n) m) [].
 Proof.
   intros addr len i m o Hal Hlen Hnw. cbv zeta. intros Hhas. unfold munmap_spec.
   rewrite (proj2 (Z.eqb_eq _ _) Hal), Hlen. cbn [negb orb].
   rewrite (proj2 (Z.ltb_ge _ _) Hnw). sys_unfold.
   split.
-  - destruct o as [x m' evs|]; intros H; inv_sys; rewrite Hhas in *; inv_sys. reflexivity.
-  - intros ->. eexists _, _, _, _. split; [reflexivity|]. rewrite Hhas.
-    split; [|reflexivity]. eexists _, _, _, _. split; [reflexivity|].
-    split; [|reflexivity]. eexists _, _, _, _. repeat split; reflexivity.
+  - destruct o as [x m' evs|]; intros H; inv_sys; rewrite Hhas in *; inv_sys;
+      solve [ left; eexists; split; [eassumption|reflexivity] | right; reflexivity ].
+  - intros [(e & He & ->) | ->].
+    + eexists _, _, _, _. split; [reflexivity|]. rewrite Hhas.
+      split; [|reflexivity]. left. eexists _, _, _, _.
+      split; [exists e; split; [exact He|reflexivity]|]. split; reflexivity.
+    + eexists _, _, _, _. split; [reflexivity|]. rewrite Hhas.
+      split; [|reflexivity]. right. eexists _, _, _, _. split; [reflexivity|].
+      split; [|reflexivity]. eexists _, _, _, _. repeat split; reflexivity.
 Qed.
 
 (* [comment removed for export] *)
@@ -731,13 +736,22 @@ Lemma writev_chan_outcome : forall fd iov iovcnt i m o ch iovs bs,
   (iovs_total iovs <= MAX_RW_COUNT)%Z ->
   gather_iovecs (in_mem i) iovs = Some bs ->
   (1 <= Z.of_nat (length bs))%Z ->
+  (* THE READER GATE, new at 75d69e00.  [writev_spec]'s channel arm now answers
+     [sigpipe_write] -- -EPIPE over [raise_sigpipe], which KILLS the process at the
+     default disposition -- when the far end has no reader, between the zero-aggregate
+     test and the gather (75d69e00 Sys/Fs/ReadWrite.v:2866).  So the delivery
+     characterisation below holds only WITH a reader, and the premise is that, not an
+     assumption about the environment: the published statements carry
+     [in_channel_reader inp = true] already, and [Common.CatSim.fd1chan] is where the
+     corpus keeps the same conjunct for the same reason. *)
+  m_channel_reader m = true ->
   let CA := import_iovecs_accesses (in_mem i) iov (iovcnt32 iovcnt) in
   writev_spec fd iov iovcnt i m o <->
   exists k, (1 <= k <= length bs)%nat /\
     o = Ok (mkEffectU (Z_to_bv 64 (Z.of_nat k)) [] [] [] [] (CA ++ iov_prefix_accesses iovs k))
            m (map (WriteEv ch) (firstn k bs)).
 Proof.
-  intros fd iov iovcnt i m o ch iovs bs Hfd Hch Himp Htot Hg Hbs1.
+  intros fd iov iovcnt i m o ch iovs bs Hfd Hch Himp Htot Hg Hbs1 Hrdr.
   cbv zeta.
   pose proof (gather_iovecs_length _ _ _ Hg) as Hlen.
   assert (Hcap : cap_iovecs iovs = iovs) by (apply cap_iovecs_id_max; exact Htot).
@@ -764,6 +778,7 @@ Proof.
     unfold writev_gathered.
     rewrite Hcap, (gather_prefix_full _ _ _ Hg).
     replace (iovs_total iovs =? 0)%Z with false by (symmetry; apply Z.eqb_neq; lia).
+    rewrite Hrdr.
     replace (length bs =? 0)%nat with false by (symmetry; apply Nat.eqb_neq; lia).
     replace (addr_is_error_b (len_word bs)) with false
       by (symmetry; rewrite <- (firstn_all bs); rewrite (Herrk (length bs)) by lia; reflexivity).
@@ -860,6 +875,13 @@ Ltac solve_iirr :=
   lazymatch goal with
   | |- iirr (bind _ _) => apply iirr_bind; [solve_iirr | intros; solve_iirr]
   | |- iirr (alt _ _) => apply iirr_alt; solve_iirr
+  (* 75d69e00 Sys/Mm/Mmap.v:1877-1914 gave the file-backed arm an fd lookup --
+     a CLOSED fd is -EBADF, an open one stays unmodeled -- so [mmap_spec] now
+     contains [match fd_lookup (m_fds m) (fd32 fd) with Some _ => _ | None => _
+     end].  Ltac's [if _ then _ else _] pattern matches any two-branch [match],
+     so the [option] case has to come FIRST: otherwise the [if] arm below fires
+     and [apply iirr_if] cannot unify the [Some]-branch's binder away. *)
+  | |- iirr (match ?x with Some _ => _ | None => _ end) => destruct x; solve_iirr
   | |- iirr (if _ then _ else _) => apply iirr_if; solve_iirr
   | |- iirr (match ?x with _ => _ end) => destruct x; solve_iirr
   | |- iirr ?c =>
@@ -947,12 +969,26 @@ Lemma write_chan_outcome : forall fd buf count i m o ch bs,
   (bv_unsigned count <= rw_bytes_max)%Z ->
   w_is0 count = false ->
   read_bytes_map (in_mem i) buf count = Some bs ->
+  (* THE [access_ok] GATE, new at 75d69e00 together with the reader gate below and tested
+     BEFORE it: [write_spec]'s channel arm answers -EFAULT when [access_ok] refuses the
+     range the call NAMED, between the zero-count branch and the no-reader branch
+     (75d69e00 Sys/Fs/ReadWrite.v:1693-1708).  It is NOT implied by [modeled_rw_range]
+     above, which bounds the count alone; the corpus carries it as a separate premise in
+     the same slot -- after the source read, before the reader -- see
+     [Common.CatSim.write_ch_check_n] at 75d69e00 CatSim.v:1546.
+     [writev_chan_outcome] above needs no such premise: the vectored arm makes its own
+     [access_ok] inside [import_iovecs] (75d69e00 Sys/Fs/ReadWrite.v:2877-2878). *)
+  access_okb buf (bv_unsigned count) = true ->
+  (* the reader gate, as in [writev_chan_outcome] above: [write_spec]'s channel arm
+     answers [sigpipe_write] with no reader, after [access_ok] and before the source
+     walk (75d69e00 Sys/Fs/ReadWrite.v:1708) *)
+  m_channel_reader m = true ->
   write_spec fd buf count i m o <->
   exists k, (1 <= k <= length bs)%nat /\
     o = Ok (mkEffectU (Z_to_bv 64 (Z.of_nat k)) [] [] [] [] [(buf, k)])
            m (map (WriteEv ch) (firstn k bs)).
 Proof.
-  intros fd buf count i m o ch bs Hfd Hch Hmax Hcnt0 Hbs.
+  intros fd buf count i m o ch bs Hfd Hch Hmax Hcnt0 Hbs Hacc Hrdr.
   pose proof (read_bytes_map_length _ _ _ _ Hbs) as Hlen.
   assert (Hpos : (1 <= length bs)%nat).
   { destruct bs; [|cbn; lia]. cbn in Hlen. exfalso.
@@ -962,7 +998,8 @@ Proof.
   assert (Hclamp : rw_count_clamp count = bv_unsigned count).
   { apply rw_count_clamp_small. unfold rw_bytes_max in Hmax. unfold MAX_RW_COUNT. lia. }
   unfold write_spec. rewrite (bind_input_model (fun i0 m0 => _)). cbv beta.
-  rewrite Hfd, Hch, Hrange, Hcnt0. cbn [negb]. cbv zeta.
+  (* the two gates in the spec's own order: [access_ok] first, the reader second *)
+  rewrite Hfd, Hch, Hrange, Hcnt0, Hacc, Hrdr. cbn [negb]. cbv zeta.
   unfold write_source. rewrite Hclamp, Z_to_bv_bv_unsigned.
   rewrite (readable_bytes_full _ _ _ _ Hbs).
   replace (length bs =? 0)%nat with false by (symmetry; apply Nat.eqb_neq; lia).
@@ -1416,7 +1453,17 @@ Definition unlink_out (R : list (word * nat)) (m : Model) (p : path) (rmdir : bo
   match fs_lookup (m_fs m) p with
   | None => o = Ok (with_copyins R (mkEffect (errno_ret ENOENT) [] [])) m []
   | Some _ =>
-      if rmdir then o = Ok (with_copyins R (mkEffect (errno_ret ENOTDIR) [] [])) m []
+      if rmdir then
+        (* 75d69e00:theories/LinuxProcessSem/Sys/Fs/Namei.v:337-341 -- [unlink_found_spec]'s
+           AT_REMOVEDIR arm is no longer the single -ENOTDIR answer.  [may_delete] reaches
+           -EROFS, -ENOMEM, -EOVERFLOW, -EACCES and -EPERM BEFORE it tests the type
+           ([unlink_before_type_errnos], :314), and the model's comment at :331-336 says
+           those refusals "stand beside it" rather than replacing it.  So the arm is an
+           [alt], exactly as the non-rmdir arm already was, and this branch gains the
+           same existential shape. *)
+        (exists e, In e unlink_before_type_errnos
+                   /\ o = Ok (with_copyins R (mkEffect (errno_ret e) [] [])) m [])
+        \/ o = Ok (with_copyins R (mkEffect (errno_ret ENOTDIR) [] [])) m []
       else (exists e, In e unlinkat_errnos /\ o = Ok (with_copyins R (mkEffect (errno_ret e) [] [])) m [])
            \/ o = Ok (with_copyins R (mkEffect (Z_to_bv 64 0) [] [])) (with_fs (fs_remove (m_fs m) p) m) []
   end.
@@ -1437,7 +1484,9 @@ Proof.
   assert (Hbody : forall o', unlinkat_body_spec dirfd pathp flags i m i m o' <->
             (match fs_lookup (m_fs m) p with
              | None => err_ret ENOENT
-             | Some _ => if unlink_rmdir flags then err_ret ENOTDIR
+             | Some _ => if unlink_rmdir flags
+                         then alt (e <- errno_from unlink_before_type_errnos ;; err_ret e)
+                                  (err_ret ENOTDIR)
                          else alt (e <- errno_from unlinkat_errnos ;; err_ret e)
                                   (set_fs (fs_remove (m_fs m) p) ;; ret_only (Z_to_bv 64 0))
              end)%sys i m o').
@@ -1459,7 +1508,20 @@ Proof.
   destruct (fs_lookup (m_fs m) p) eqn:Hl.
   2:{ apply after_copyins_det. intros o'. rewrite Hbody. apply err_ret_outcome. }
   destruct (unlink_rmdir flags) eqn:Hr.
-  { apply after_copyins_det. intros o'. rewrite Hbody. apply err_ret_outcome. }
+  (* The AT_REMOVEDIR arm is an [alt] at 75d69e00 and no longer a single outcome, so
+     [after_copyins_det] no longer applies to it.  Same shape as the removal arm below,
+     with [err_ret ENOTDIR] where that one has the [set_fs] removal. *)
+  { unfold after_copyins. destruct o as [eff m' evs|]; split.
+    - intros (core & Hc & ->). apply Hbody in Hc. revert Hc. sys_unfold. intros Hc. inv_sys.
+      + left. eexists. split; [eassumption|]. cbn [eff_copyins]. rewrite app_nil_r. reflexivity.
+      + right. cbn [eff_copyins]. rewrite app_nil_r. reflexivity.
+    - intros [(e & He & H) | H]; apply Ok_inj in H as (-> & -> & ->).
+      + exists (mkEffect (errno_ret e) [] []). split; [|cbn [eff_copyins]; rewrite app_nil_r; reflexivity].
+        apply Hbody. sys_unfold. left. eexists _, _, _, _. split; [exists e; split; [exact He|reflexivity]|]. split; reflexivity.
+      + exists (mkEffect (errno_ret ENOTDIR) [] []). split; [|cbn [eff_copyins]; rewrite app_nil_r; reflexivity].
+        apply Hbody. sys_unfold. right. reflexivity.
+    - intros H. apply Hbody in H. revert H. sys_unfold. intros H. inv_sys.
+    - intros [(e & _ & H) | H]; discriminate H. }
   unfold after_copyins. destruct o as [eff m' evs|]; split.
   - intros (core & Hc & ->). apply Hbody in Hc. revert Hc. sys_unfold. intros Hc. inv_sys.
     + left. eexists. split; [eassumption|]. cbn [eff_copyins]. rewrite app_nil_r. reflexivity.

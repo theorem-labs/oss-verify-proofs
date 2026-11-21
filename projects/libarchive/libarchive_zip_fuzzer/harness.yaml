@@ -3,10 +3,12 @@ project: libarchive
 harness: libarchive_zip_fuzzer
 rocq: OSSVerify.libarchive.libarchive_zip_fuzzer
 origin: upstream
-summary: Reads the input as a ZIP archive (passphrases password/test/empty, zip:ignorecrc32, all filters);
-  per entry calls pathname(_w), size, mtime, mode, encryption predicates, format/filter names and drains
-  archive_read_data. Every return value is discarded; CRC checking is explicitly disabled by the ignorecrc32
-  option.
+summary: Reads the input as a ZIP archive (passphrases password/test/empty, zip:ignorecrc32, all filters).
+  It returns early if archive_read_new returns NULL or archive_read_open does not return ARCHIVE_OK. While
+  archive_read_next_header returns ARCHIVE_OK, it calls pathname(_w), size, mtime, mode, encryption predicates
+  and format/filter names, then reads the data while archive_read_data returns more than 0. It drops every
+  other result and the data read. If allocating its data buffer throws std::bad_alloc, it frees the archive
+  and returns 0. Each call first ignores SIGPIPE, as bsdtar and bsdcpio do.
 entry: LLVMFuzzerTestOneInput
 source:
   files:
@@ -15,7 +17,7 @@ source:
     repository: https://github.com/libarchive/libarchive
     commit: 3670ecf7c59a6b12fe93e6255bbe4a1f3420edf8
     path: contrib/oss-fuzz/libarchive_zip_fuzzer.cc
-  modified: false
+  modified: true
   licence: BSD-2-Clause
 library:
   repository: https://github.com/libarchive/libarchive
@@ -26,11 +28,15 @@ modifications:
 - In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the program
   depends only on its input.
 - A small driver reads the input file, calls the harness one to four times and prints each return value.
+- 'The harness source is modified: source/libarchive_zip_fuzzer.cc is libarchive 3670ecf7''s contrib/oss-fuzz/libarchive_zip_fuzzer.cc
+  with two Theorem Labs changes. On std::bad_alloc it frees any open archive and returns 0; the original
+  aborts. It ignores SIGPIPE, as bsdtar and bsdcpio do, so a write to a filter program that stopped reading
+  fails with EPIPE instead of killing the run.'
 builds:
   plain:
     file: libarchive_zip_fuzzer.plain
-    bytes: 3453048
-    sha256: 6de39a8fea90f691748ee80c216b28aecfc088deff879b3e43a42611fefa4d13
+    bytes: 3453368
+    sha256: 9fd8101987dc6d061a8abc056fd17d68a17be6932dcdd7b72b05c7d14e30ed21
     segments:
     - 1
     - 1
@@ -72,8 +78,8 @@ builds:
       sha256: 539ef9c90b070e1615db19d02ac34a1585c7cf3acdec41de6d789bc252701846
   ubsan:
     file: libarchive_zip_fuzzer.ubsan
-    bytes: 3477032
-    sha256: ed239582db7ed4f4a9c6ad4c5c62e99e4cfce5e97d83eeef19ca46f33c8b0c0e
+    bytes: 3477344
+    sha256: c6d9bc76034fdc477f82ead77058ff39e78bc3829dee6f00c7d03df1ef14646a
     segments:
     - 1
     - 1
@@ -115,8 +121,8 @@ builds:
       sha256: 539ef9c90b070e1615db19d02ac34a1585c7cf3acdec41de6d789bc252701846
   asan:
     file: libarchive_zip_fuzzer.asan
-    bytes: 4222232
-    sha256: a11b610bfbc7456d50ee1d221593f245c14c07acbfc1b73e0082ea8ab7db6da1
+    bytes: 4223816
+    sha256: e5896a6846b9044f74ef79cf9d4ee6158de9ab6956f14403532012483b5ede4a
     segments:
     - 1
     - 1
@@ -161,8 +167,8 @@ builds:
       sha256: 539ef9c90b070e1615db19d02ac34a1585c7cf3acdec41de6d789bc252701846
   asan-ubsan:
     file: libarchive_zip_fuzzer.asan-ubsan
-    bytes: 4238680
-    sha256: 0fedc0354e958d44fe684643d06e94e43a73eaed707f12fa5ca46b215503aa4e
+    bytes: 4240264
+    sha256: b825ee2d1b03383e5ec1c487405685ea49cdb72e4f6a5fd158d3e84eb7b8102c
     segments:
     - 1
     - 1
@@ -207,6 +213,11 @@ builds:
       sha256: 539ef9c90b070e1615db19d02ac34a1585c7cf3acdec41de6d789bc252701846
 licence: NOASSERTION
 checks: []
+model_gap:
+- nonblocking-io
+- resource-limits
+- signal-handlers
+- threads
 statements:
   asan_agrees:
     kind: agreement
@@ -216,7 +227,8 @@ statements:
     reading: may-fail
     budgets: asan
     abort: signal
-    status: open
+    status: model-gap
+    revision: 2
   ubsan_agrees:
     kind: agreement
     builds:
@@ -225,7 +237,8 @@ statements:
     reading: may-fail
     budgets: standard
     abort: signal
-    status: open
+    status: model-gap
+    revision: 2
   asan_ubsan_agrees:
     kind: agreement
     builds:
@@ -234,7 +247,8 @@ statements:
     reading: may-fail
     budgets: asan
     abort: signal
-    status: open
+    status: model-gap
+    revision: 2
   plain_halts:
     kind: halts
     builds:
@@ -244,7 +258,8 @@ statements:
     - 0
     - 2
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2
   plain_halts_may_fail:
     kind: halts
     builds:
@@ -252,7 +267,8 @@ statements:
     reading: may-fail
     exits: any
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2
   asan_halts:
     kind: halts
     builds:
@@ -262,7 +278,8 @@ statements:
     - 0
     - 2
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2
   ubsan_halts:
     kind: halts
     builds:
@@ -272,7 +289,8 @@ statements:
     - 0
     - 2
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2
   ubsan_halts_may_fail:
     kind: halts
     builds:
@@ -280,7 +298,8 @@ statements:
     reading: may-fail
     exits: any
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2
   asan_ubsan_halts:
     kind: halts
     builds:
@@ -290,4 +309,5 @@ statements:
     - 0
     - 2
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2

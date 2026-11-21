@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC1f.v at c8557374ad2e, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC1f.v at theorem-labs/oss-verify-proofs@6b32741d849a, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-10: blk_off_imgP's image top changed from cgif's 0x5fb000 to knock's 0x5f3000 (both knock ASan builds); its 0x10000 image bottom and those of pa_slot_img / pa_base_lo are knock's too and kept; the image bounds of pa_slot_img, pa_base_lo and blk_off_imgP are cited from YImgTop (IMG_LO = 0x10000, IMG_TOP = 0x5f3000) instead of written as literals; the object indices of PALib, got_regionP and bcell_regionP are knock's (GOT shadow slot A_OBJ 1 and shadow-base cell A_OBJ 7, by an internal audit of both builds) in place of cgif's A_OBJ 0 and A_OBJ 12. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YC1f.v at 4b6f0df50aa7 (donor image sha256 61768cf4739b), with its module paths changed and its listing object indices moved to libdiginet/fuzz_codec's asan listing by role, not by position: the shadow-base cell A_OBJ 7 -> A_OBJ 31 (0xa6478) in PALib, got_regionP and bcell_regionP; the GOT shadow slot A_OBJ 1 is codec's too (0x9db10, the .got word that holds 0xa6478) and kept; the image bounds cited from YImgTop are codec's (IMG_LO 0x10000, IMG_TOP 0x5fb000). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YC1f.v (donor image sha256 61768cf4739b), with its module paths changed and its listing object indices moved to libdiginet/fuzz_codec's asan listing by role, not by position: the shadow-base cell A_OBJ 7 -> A_OBJ 31 (0xa6478) in PALib, got_regionP and bcell_regionP; the GOT shadow slot A_OBJ 1 is codec's too (0x9db10, the .got word that holds 0xa6478) and kept; the image bounds cited from YImgTop are codec's (IMG_LO 0x10000, IMG_TOP 0x5fb000). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.AU Require YImgTopU.
 From Stdlib Require Import ZArith NArith List Lia Bool.

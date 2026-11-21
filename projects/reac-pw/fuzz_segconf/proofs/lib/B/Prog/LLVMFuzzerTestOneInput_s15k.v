@@ -4,12 +4,13 @@
 (* Modified by Theorem Labs, 2026-10: the boundary states and segment statements of LLVMFuzzerTestOneInput's ASan+UBSan walk (plugin-hostd/fuzz_command image B, 0x86530), the B twin of lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh6.v (the CL_*_stmtX statements: from a point of the function to its return, under the entry's context) and A/ACf5.v (rtcx, rt_base: the entry's facts bundled once). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths, module names, addresses and numbers changed; 469 of its 518 lines of code are new or changed and 289 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths and module names changed; 311 of its 344 lines of code are new or changed and 485 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan+UBSan image B (fuzz_segconf.asan-ubsan, pin sha256 c3796c0b38f3): the kit of the
    walk of segment S05 of the test harness's entry function LLVMFuzzerTestOneInput (0x85210 .. 0x85334 and
    0x85520 .. 0x8552c). Statement text and pure model facts only: no function of the binary is proved here.
 
-   THE FORM: the image-B twin of image A's kit lib/A/Prog/LLVMFuzzerTestOneInput_s15k.v (image A's S05 commit
-   8922f0c88986), with the same names; the inner cut points carry image B's pcs and registers (PLAN-asanubsan-main
+   THE FORM: the image-B twin of image A's kit lib/A/Prog/LLVMFuzzerTestOneInput_s15k.v (image A's S05),
+   with the same names; the inner cut points carry image B's pcs and registers (PLAN-asanubsan-main
    section 11, out/correspond.tsv), and image B's code (dis/LLVMFuzzerTestOneInput.fuzz_segconf.asan-ubsan.s lines
    278-351 and 474-477).
 

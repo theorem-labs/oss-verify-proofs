@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor raised to the 0x5D0000 bytes below sp that the launch guarantees ([STACK_GAP])). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -179,7 +180,7 @@ Proof using AF RTF SM1 SPLIT.
   assert (FDC4 : rw_cells asegs m4 FD [C8 (Z_to_bv 64 D); C8 (Z_to_bv 64 L)]).
   { unfold L. apply (rw_cells_agree_nw asegs m m4 _ _ FDC). intros a Ha. cbn [cells_size csize Nat.add] in Ha. rewrite (PRES4 a); [| left; ul| ul].
     rewrite (MU3 a). 2:{ unfold si_W1. cbn [outside]. split; [ul|]. split; [ul|]. split; [ul| exact I]. } rewrite (PRES2 a) by (left; ul). apply MU1. cbn [outside]. split; [ul| exact I]. }
-  assert (BLO : rt_sp0 RT Σ - STACK_WIN + 16 <= sp') by (clear - LOW LOR SPR; ul).
+  assert (BLO : rt_sp0 RT Σ - STACK_WIN + STACK_GAP + 16 <= sp') by (clear - LOW LOR SPR; ul).
   assert (PB4 : bytes_at asegs m4 D (to_bytes d)).
   { apply (bytes_at_agree asegs m m4 _ _ PB). intros a Ha. rewrite LBL in Ha.
     destruct INLV as [(pk & nk & INK & PK1 & PK2)|(DN & DLO)]; [| rewrite DN in Ha; cbn in Ha; lia]. unfold zlength in PK2.
@@ -430,7 +431,7 @@ Proof using AF RTF SM1 SPLIT.
       rewrite (AG8 a); [| apply STK2; clear - Ha UFD FDT SPR; lia| clear - Ha FLO UFD LOR; ul]. rewrite (AG7 a); [| clear - Ha UFD SPR; lia| clear - Ha FHI0 F01 LOW UFD LOR; ul].
       apply AG6; [left; clear - Ha UFD FDT SPR; ul| clear - Ha FLO UFD LOR; ul| clear - Ha SLO UFD LOR; ul]. }
     pose proof (af_client_consts RT AF Σ2 m8 ART8) as (G1' & G2' & _).
-    assert (XSH8 : forall X n, rt_sp0 RT Σ - STACK_WIN + 8 <= X -> 0 <= n -> X + n <= USTACK_TOP ->
+    assert (XSH8 : forall X n, rt_sp0 RT Σ - STACK_WIN + STACK_GAP + 8 <= X -> 0 <= n -> X + n <= USTACK_TOP ->
                     x_shz [(sp' - 32, sp'); (sp' + 16, sp' + 24); (shad f + 4, shad f + 7); (FD, FD + 16)] m8 X n).
     { intros X n X0 N0 XT m' MU WM. apply (shz_stackv RT AF Σ2 m' X n); [| rewrite SP2; exact X0| exact N0| exact XT].
       apply (ARTW Σ2 m8 m' _ ART8 MU WM SP2 INF2 INF02). intros x. cbn [outside]. clear - SPR LOR SPT UFD FDT. ul. }

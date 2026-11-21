@@ -8,11 +8,12 @@
    (s8 >> 3) + s7), a plain run through the 88 shadow stores to the branch on ntok < 3, and the cut facts (cw_pc)
    read back from the symbolic state at the cut. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/chain_words_s1.v, with its module paths, module names and numbers changed; 57 of its 147 lines of code are new or changed and 476 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan+UBSan image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca): the symbolic
    entry state of reac_segconf_parse_file (0x87e38 = BASE + AF_reac_segconf_parse_file, B's SegList.v) for segment B1
    of its walk (lib/B/Prog/pf_seg_B1.v), and its seed lemma. The B1 segment lane of the image-B G3 walk owner, 2026-10-30. ADAPTED from
-   the entry seed of refuse's image-B walk (the image-B refuse walk lane, lib/B/Prog/refuse_E.v: numberE.v's form, origin/ossv/recipes
-   501c0d516c69 proofs/plugin-hostd/fuzz_command/lib/B/Prog/numberE.v), re-derived on parse_file's image-B prologue
+   the entry seed of refuse's image-B walk (the image-B refuse walk lane, lib/B/Prog/refuse_E.v: numberE.v's form,
+    proofs/plugin-hostd/fuzz_command/lib/B/Prog/numberE.v), re-derived on parse_file's image-B prologue
    (reac_segconf_parse_file.fuzz_segconf.asan-ubsan.s, 0x87e38 .. 0x87eac):
      0x87e38 addi sp,sp,-352; 0x87e3c sd zero,0(sp)            the probe word at sp0 - 352            (b1_stk_lo)
      0x87e40 .. 0x87e70 sd ra,344(sp) .. sd s11,248(sp)       ra .. s11 at sp0 - 8 .. sp0 - 104       (b1_stk_hi)

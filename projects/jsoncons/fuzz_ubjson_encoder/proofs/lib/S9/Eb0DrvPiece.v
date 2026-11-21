@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the channel-reader premise of writev; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Bo0DrvPiece.v, line 65. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
@@ -61,6 +62,7 @@ Proof.
     + exact (sbm_vml _ _ SBM).
     + exact MI1.
     + rewrite (sbm_halted_eq _ _ SBM). exact Hh.
+    + exact (sbm_rdrA _ _ SBM).
   - exact SBM.
   - rewrite AH. exact VIS.
   - exact FR1.

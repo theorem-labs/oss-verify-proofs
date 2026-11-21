@@ -3,10 +3,10 @@
    needs, over SegModel and m_file_m.v's line terms (mf_line, mf_rest, mf_next, mf_fin). Pure list facts; no
    instruction is executed here. A walk lane of the image-B m_file-family owner's G2B (on a working branch).
 
-   ADAPTED from image A's lib/A/Prog/m_file_s_front_mdl.v (the image-A m_file-family lane, commit
-   ae5120b8b0ec), statements and proofs unchanged but for the Require of image B's m_file_m.v (the line terms are the
-   same text word for word). That file's own sources: the segconf porter's plain lib/Prog/mfu_facts.v and mfp_facts.v at
-   dec616e11c2f.
+   ADAPTED from image A's lib/A/Prog/m_file_s_front_mdl.v (the image-A m_file-family lane),
+   statements and proofs unchanged but for the Require of image B's m_file_m.v (the line terms are the
+   same text word for word). That file's own sources: the segconf porter's plain lib/Prog/mfu_facts.v and mfp_facts.v.
+   
    NEW here (image B calls strip, image A inlines it): the strip call's answer as the stripped line's indices
    (fr_strip_idx, from lib/B/Prog/strip_c.v's strip_mid / strip_le), the first byte and the emptiness of a slice
    (fr_hd_slice, fr_slice_ne, fr_slice_len_nil), and the comment loop's decisions as cut_at facts (fr_cut_at0,

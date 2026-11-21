@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the write-node lemma takes the channel-reader flag and the access_ok check on the write range as premises. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -92,18 +93,22 @@ Lemma rz_write_chan : forall segs regs pc mem model fd ch n bs T,
   bv_unsigned (getr regs 17) = 64%Z ->
   getr regs 10 = fd -> (bv_unsigned fd < 2 ^ 32)%Z ->
   fd_lookup (m_fds model) fd = Some (FdChannel ch) -> w_is0 ch = false ->
+  m_channel_reader model = true ->
   getr regs 12 = Z_to_bv 64 (Z.of_nat n) ->
   (1 <= n)%nat -> (Z.of_nat n <= rw_bytes_max)%Z -> (Z.of_nat n < 2 ^ 64)%Z ->
   rdn segs mem (getr regs 11) n = Some bs ->
+  (* the range [vfs_write]'s [access_ok] accepts on the count [n]; see
+     [CatSim.write1_check_n] *)
+  access_okb (getr regs 11) (Z.of_nat n) = true ->
   (forall k, (1 <= k)%nat -> (k <= n)%nat ->
      realizes segs (mkCfg (mkst (regupd regs 10 (Z_to_bv 64 (Z.of_nat k))) (v_addi pc 4) mem (seg_rom segs)) model) T) ->
   realizes segs (mkCfg (epend regs pc mem (seg_rom segs) (getr regs 17)) model)
            (t_write_ch ch bs T).
 Proof.
-  intros segs regs pc mem model fd ch n bs T Hh Hlazy Hno Hfd Hfd32 Hlk Hch Hcnt Hn1 Hmax Hn64 Hrd Hc.
+  intros segs regs pc mem model fd ch n bs T Hh Hlazy Hno Hfd Hfd32 Hlk Hch Hrdr Hcnt Hn1 Hmax Hn64 Hrd Hok Hc.
   pose proof (rdn_length segs mem n (getr regs 11) bs Hrd) as Hlen.
   eapply (rz_write_ch segs _ model fd ch (getr regs 17) bs T Hh Hlazy).
-  - unfold fdchan. split; [exact Hlk | exact Hch].
+  - unfold fdchan. split; [exact Hlk | split; [exact Hch | exact Hrdr]].
   - apply fd32_id. exact Hfd32.
   - reflexivity.
   - exact Hno.
@@ -111,6 +116,7 @@ Proof.
   - rewrite ms_gpr_epend1, ms_gpr_epend2, Hcnt.
     rewrite (ms_read_bytes_rdn segs) by reflexivity. cbn [ms_mem epend].
     unfold word_to_nat. rewrite u64_lit by lia. rewrite Nat2Z.id. exact Hrd.
+  - rewrite ms_gpr_epend1, ms_gpr_epend2, Hcnt, u64_lit by lia. exact Hok.
   - unfold buf_modeled. rewrite Hlen. exact Hmax.
   - rewrite Hlen. exact Hn1.
   - intros k Hk1 Hk2. rewrite adv_set_epend.

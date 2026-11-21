@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC45.v for libreac/fuzz_disco's program walk, taken from libreac/fuzz_grant's copy (lib/A/Prog/YC45.v, 3ac49e35db5): the listing's names are dsym and YC44 is DiscoFrame; module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC45.v for libreac/fuzz_disco's program walk, taken from libreac/fuzz_grant's copy (lib/A/Prog/YC45.v): the listing's names are dsym and YC44 is DiscoFrame; module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

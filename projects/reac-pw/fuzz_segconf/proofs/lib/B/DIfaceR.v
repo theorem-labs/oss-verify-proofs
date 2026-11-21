@@ -1,4 +1,4 @@
-(* copied from proofs/cgif/cgif_file_fuzzer/lib/DIfaceR.v @ 95e6f1d72b6 (c-asan, frozen), module paths changed only. *)
+(* copied from proofs/cgif/cgif_file_fuzzer/lib/DIfaceR.v (c-asan, frozen), module paths changed only. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* The raw-frame obligations of the frame-generic Deallocate walk, split out of DGif0.DIface.
@@ -21,6 +21,7 @@
    holds when [rawb = true].  DIface gives the [rawb = false] contracts, DIface + DIfaceR the [rawb = true] ones;
    the [false] leaf is DeallocG.dealloc_leaf, the [true] leaf DeallocG.dealloc_leaf_raw. *)
 (* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/Reusable/DIfaceR.v, derived mechanically (bkit derive_b.py): its Require lines name the lib/B copies; nothing else differs. The comments are the A file's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

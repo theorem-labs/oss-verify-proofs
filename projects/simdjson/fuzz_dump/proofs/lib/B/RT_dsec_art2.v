@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the runtime's mapped-stack window starts 0x5D0000 bytes (STACK_SPAN) below the start's stack pointer instead of at the 8 MiB allocator ceiling; taken in part from projects/simdjson/fuzz_ondemand/proofs/lib/B/RT_dsec_art2.v, line 190. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -186,7 +187,7 @@ Proof using HG Hk HLO HLZ HZ47 Hdep HQB.
     + assert (E1 : pg_dn (shad 0x10000) = 0x7fffa000) by reflexivity. assert (E2 : shad SEGTOP_A = 0x800d1a00) by reflexivity.
       rewrite E1, E2. apply an_av_shadow; unfold SHB; lia.
     + destruct A10 as (_ & _ & _ & _ & SW). apply (stk_nw_hole W m m' _ _ lo zhi SW MU STZ). intros a Ha Hn.
-      cbn [outside]. clear - Ha Hn M2 HLO HLZ. split; [lia | split; [lia | exact I]].
+      cbn [outside]. clear - Ha Hn M2 HLO HLZ. unfold l_ACEIL in *. split; [lia | split; [lia | exact I]].
   - change (vis_rep (lay Σ) (rtA_allow Σ) m) in A11. change (vis_rep (lay Σ) (rtA_allow Σ) m').
     apply (vis_rep_nw W _ _ m m' A11 MU). intros z Hz. cbn [outside]. unfold shreg in Hz.
     clear - Hz M3 G1 HLO HLZ. unfold K_LOW_SHADOW_lo, K_LOW_SHADOW_hi, K_HIGH_SHADOW_lo, K_HIGH_SHADOW_hi, SHB in *.

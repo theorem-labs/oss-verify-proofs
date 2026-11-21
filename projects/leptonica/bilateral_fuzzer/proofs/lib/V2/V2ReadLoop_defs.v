@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (addresses and constants; proofs as pix_orient_fuzzer's copy, the unused KReplay table removed). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib.H Require GcFlushS2.   (* [comment removed for export] *)
@@ -11,8 +12,6 @@ From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib.Common.CliDriver Require Im
 From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib.Common Require Import PropExec RefMemcpyLib AllocIface.
 From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib.Common.Leptonica Require Import PortLib.
 From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib.V2 Require Import V2MainEntry V2LibStdioCall V2OpenFail_defs V2Open_defs V2Oom_defs V2DirRead_defs.
-From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib Require KReplay.
-Ltac2 kr_t_V2ReadLoop_defs () := "I47Corelib4Init9Datatypes4list00I47Corelib4Init9Datatypes4prod00K47Corelib7Numbers7BinNums8positive02K47Corelib7Numbers7BinNums8positive01K47Corelib7Numbers7BinNums1Z02K47Corelib4Init9Datatypes4list01K47Corelib4Init9Datatypes4prod01I47Corelib4Init5Logic2eq00K47Corelib4Init9Datatypes4list02K47Corelib4Init5Logic2eq01K47Corelib4Init5Logic3and01C47Corelib4Init9Datatypes3fstC79OSSVerify5KrLib6Common9CliDriver8SymExec23SX24s_pcC1?~~~~~~~~~~~~~~~C47Corelib4Init9Datatypes3sndC79OSSVerify5KrLib6Common9CliDriver8SymExec23SX25s_logC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common9CliDriver;LibKnowXfer;sr_mismatchC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common9CliDriver;LibKnowXfer4kmapC1?~~~~~~~~~~~~~~~C47Corelib5Lists7ListDef3mapC69OSSVerify5KrLib6Common9CliDriver;LibKnowXfer:kn_missingC1?~~~~~~~~~~~~~~~I47Corelib4Init5Logic3and00I47Corelib7Numbers7BinNums1Z00I79OSSVerify5KrLib6Common9CliDriver8SymExec23SX28sidecond00C1?~~~~~~~~~~~~~~~I79OSSVerify5KrLib6Common9CliDriver8SymExec23SX26sentry00C1?~~~~~~~~~~~~~~~K47Corelib7Numbers7BinNums8positive03I47Corelib4Init9Datatypes3nat00I79OSSVerify5KrLib6Common9CliDriver8SymExec23SX26kentry00C1?~~~~~~~~~~~~~~~K47Corelib4Init9Datatypes3nat01I79OSSVerify5KrLib6Common9CliDriver8SymExec23SX29sym_state00C1?~~~~~~~~~~~~~~~I79OSSVerify5KrLib6Common9CliDriver8SymExec23SX27scripts00C1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2V2?V2ReadLoop_defs3e_rC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2V2?V2ReadLoop_defs5e_rvlC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2V2?V2ReadLoop_defs3idbC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2V2?V2ReadLoop_defs4e_srC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2V2?V2ReadLoop_defs4sr_LC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2V2?V2ReadLoop_defs4e_knC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2V2?V2ReadLoop_defs5kn_MLC1?~~~~~~~~~~~~~~~K47Corelib7Numbers7BinNums1Z03K79OSSVerify5KrLib6Common9CliDriver8SymExec23SX24expr01C1?~~~~~~~~~~~~~~~K47Corelib4Init9Datatypes3nat02K79OSSVerify5KrLib6Common9CliDriver8SymExec23SX24expr02C1?~~~~~~~~~~~~~~~K79OSSVerify5KrLib6Common9CliDriver8SymExec23SX24expr05C1?~~~~~~~~~~~~~~~K79OSSVerify5KrLib6Common9CliDriver8SymExec23SX24expr03C1?~~~~~~~~~~~~~~~K79OSSVerify5KrLib6Common9CliDriver8SymExec23SX28sidecond01C1?~~~~~~~~~~~~~~~K79OSSVerify5KrLib6Common9CliDriver8SymExec23SX26kentry05C1?~~~~~~~~~~~~~~~K79OSSVerify5KrLib6Common9CliDriver8SymExec23SX26kentry06C1?~~~~~~~~~~~~~~~K79OSSVerify5KrLib6Common9CliDriver8SymExec23SX26kentry07C1?~~~~~~~~~~~~~~~K79OSSVerify5KrLib6Common9CliDriver8SymExec23SX25saddr01C1?~~~~~~~~~~~~~~~K79OSSVerify5KrLib6Common9CliDriver8SymExec23SX26kentry08C1?~~~~~~~~~~~~~~~K79OSSVerify5KrLib6Common9CliDriver8SymExec23SX26kentry03C1?~~~~~~~~~~~~~~~K79OSSVerify5KrLib6Common9CliDriver8SymExec23SX26kentry04C1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common9CliDriver7SymCall9log_win_bC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2V2?V2OpenFail_defs8kn_afterC1?~~~~~~~~~~~~~~~C47Corelib5Lists7ListDef3nthK47Corelib7Numbers7BinNums1N02C45stdpp9bitvector;definitions4BvWfK45stdpp9bitvector;definitions2bv01C79OSSVerify5KrLib6Common9CliDriver8SymExec23SX24ridxC1?~~~~~~~~~~~~~~~C79OSSVerify5KrLib6Common9CliDriver8SymExec23SX26sr_updC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common9CliDriver6SymRun:sr_vars_ltC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common9CliDriver6SymRun:kn_vars_ltC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common9CliDriver<LibKnowFrame8kn_frameC1?~~~~~~~~~~~~~~~K79OSSVerify5KrLib6Common9CliDriver8SymExec23SX26kentry01C1?~~~~~~~~~~~~~~~I47Corelib4Init9Datatypes4bool00K47Corelib4Init9Datatypes4bool01I79OSSVerify5KrLib6Common9CliDriver8SymExec23SX24expr00C1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2V2?V2ReadLoop_defs6l_srAnC1?~~~~~~~~~~~~~~~K47Corelib4Init9Datatypes4bool02K4ELinuxProcessSemantics5Riscv5Instr;branch_cond05K4ELinuxProcessSemantics5Riscv5Instr5aluop01K4ELinuxProcessSemantics5Riscv5Instr5mulop01K47Corelib7Numbers7BinNums1Z01c59OSSVerify5KrLib2V2?V2ReadLoop_defs5l_rAnC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2V2?V2ReadLoop_defs6want_xC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2V2?V2ReadLoop_defs5l_rAtC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2V2?V2ReadLoop_defs5l_knAC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2V2?V2ReadLoop_defs6l_srAtC1?~~~~~~~~~~~~~~~K47Corelib4Init5Logic4True01c59OSSVerify5KrLib2V2?V2ReadLoop_defs5l_knRC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2V2?V2ReadLoop_defs4l_rCC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2V2?V2ReadLoop_defs5l_srCC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2V2?V2ReadLoop_defs5l_rC2C1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2V2?V2ReadLoop_defs5h_rvlC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2V2?V2ReadLoop_defs6l_srC2C1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2V2?V2ReadLoop_defs4sr_HC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2V2?V2ReadLoop_defs6l_knC2C1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common9CliDriver8SymDrive?sr_after_call_jC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common9CliDriver7SymCall7kn_callC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2V2?V2ReadLoop_defs5l_srBC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2V2?V2ReadLoop_defs4l_rBC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2V2?V2ReadLoop_defs5l_knBC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2V2?V2OpenFail_defs7KEPT_MCC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2V2?V2ReadLoop_defs6l_srD0C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2V2?V2OpenFail_defs3IHIC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2V2?V2ReadLoop_defs6l_knD0C1?~~~~~~~~~~~~~~~K4ELinuxProcessSemantics5Riscv5Instr;branch_cond01c59OSSVerify5KrLib2V2?V2ReadLoop_defs5l_rDnC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2V2?V2ReadLoop_defs5l_rDtC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2V2?V2ReadLoop_defs5l_knDC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2V2?V2ReadLoop_defs5d_rvlC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2V2?V2ReadLoop_defs6l_srDnC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2V2?V2ReadLoop_defs5f_rvlC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2V2?V2ReadLoop_defs6l_srDtC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib2V2?V2ReadLoop_defs4sr_FC1?~~~~~~~~~~~~~~~".
 Import ListNotations. Import SX2. Import SX2S.
 #[local] Existing Instance PropExec.fx0.
 
@@ -45,7 +44,7 @@ Definition sr_F : list expr :=
 
 (* [comment removed for export] *)
 Definition kn_ML : list kentry :=
-  [KAlign (EVar 0) 16; KRange (EVar 0) 0x7fff80000000 0x800000000000; KWr (SA (EVar 0) (-8388608)) 8388608;
+  [KAlign (EVar 0) 16; KRange (EVar 0) 0x7fff80000000 0x800000000000; KWr (SA (EVar 0) (-6144513)) 6144513;
    (* [comment removed for export] *)
    KWord (SA (EVar 0) (-120)) 8 (ELit 0); KWord (SA (EVar 0) (-112)) 8 (ELit 0); KWord (SA (EVar 0) (-104)) 8 (ELit 0);
    KWord (SA (EVar 0) (-96)) 8 (ELit 0); KWord (SA (EVar 0) (-88)) 8 (spx 32); KWord (SA (EVar 0) (-80)) 8 (ELit 0x17868);
@@ -120,8 +119,7 @@ Lemma e_itin :
   (s_pc (fst (fst e_r)), snd (fst e_r), s_log (fst (fst e_r))) = (0x17934%Z, [], [])
   /\ (sr_mismatch e_rvl idb e_sr sr_L 0, kn_missing e_kn (map (kmap e_rvl idb) kn_ML)) = ([0%nat], []).
 Proof.
-repeat match goal with |- _ /\ _ => split end; vm_compute; reflexivity.
-Qed.
+repeat match goal with |- _ /\ _ => split end; vm_compute; reflexivity. Qed.
 
 Lemma l_itinA :
   (s_pc (fst (fst l_rAn)), snd (fst l_rAn), log_win_b 0 (s_log (fst (fst l_rAn))))
@@ -136,9 +134,7 @@ Lemma l_itinA :
   /\ sr_vars_lt 41 l_srAn = true /\ sr_vars_lt 41 l_srAt = true /\ kn_vars_lt 41 l_knA = true
   /\ kn_frame l_knA (ELit 0) 0x46169 65536 = l_knR
   /\ sr_vars_lt 42 (sr_upd l_srAn (ridx 12) (EVar 41)) = true /\ kn_vars_lt 42 l_knR = true.
-Proof.
-repeat match goal with |- _ /\ _ => split end; vm_compute; reflexivity.
-Qed.
+Proof. vm_compute. repeat split; reflexivity. Qed.
 
 Lemma l_itinC :
   (s_pc (fst (fst l_rC)), snd (fst l_rC), log_win_b 0 (s_log (fst (fst l_rC))), nth 17 l_srC (ELit 0), nth 10 l_srC (ELit 0))
@@ -146,8 +142,7 @@ Lemma l_itinC :
   /\ (s_pc (fst (fst l_rC2)), snd (fst l_rC2), s_log (fst (fst l_rC2))) = (0x17964%Z, [], [])
   /\ (sr_mismatch h_rvl idb l_srC2 sr_H 0, kn_missing l_knC2 (map (kmap h_rvl idb) kn_ML)) = ([], []).
 Proof.
-repeat match goal with |- _ /\ _ => split end; vm_compute; reflexivity.
-Qed.
+repeat match goal with |- _ /\ _ => split end; vm_compute; reflexivity. Qed.
 
 Lemma l_itinB :
   (s_pc (fst (fst l_rB)), snd (fst l_rB), log_win_b 0 (s_log (fst (fst l_rB)))) = (0x4347c%Z, [], true)
@@ -155,9 +150,7 @@ Lemma l_itinB :
      = (ELit 0x178e8, EAlu ALU_ADD (EVar 6) (EVar 7), ELit 0x46169, EVar 42)
   /\ sr_vars_lt 43 l_srB = true /\ kn_vars_lt 43 l_knB = true
   /\ sr_after_call_j l_srB KEPT_MC 43 = l_srD0 /\ kn_call [] 0 0 IHI 0x45000 l_knB = l_knD0 /\ kn_vars_lt 43 l_knD0 = true.
-Proof.
-repeat match goal with |- _ /\ _ => split end; vm_compute; reflexivity.
-Qed.
+Proof. vm_compute. repeat split; reflexivity. Qed.
 
 Lemma l_itinD :
   (s_pc (fst (fst l_rDn)), snd (fst l_rDn), s_log (fst (fst l_rDn)))
@@ -170,7 +163,5 @@ Lemma l_itinD :
   /\ (sr_mismatch f_rvl idb l_srDt sr_F 0, kn_missing l_knD (map (kmap f_rvl idb) kn_ML))
      = ([0%nat; 19%nat], [KWr (SA (EVar 6) 0) 65536])
   /\ nth 19 l_srDt (ELit 0) = EAlu ALU_ADD (EVar 7) (EVar 42).
-Proof.
-repeat match goal with |- _ /\ _ => split end; vm_compute; reflexivity.
-Qed.
+Proof. vm_compute. repeat split; reflexivity. Qed.
 End VP1.

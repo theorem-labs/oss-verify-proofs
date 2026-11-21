@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the realized runs are over run_segments and the sanitizer builds' relation is srealizesE, and the halting statements' forms at the flag true (asan_spec_stmt_T, both_spec_stmt_T) are added. *)
 (* [comment removed for export] *)
 From Stdlib Require Import NArith List ZArith Lia Bool.
 Require OSSVerify.coturn.FuzzStunClient.images.Plain.
@@ -21,23 +22,39 @@ Module BOTHM := OSSVerify.coturn.FuzzStunClient.images.AsanUbsan.M.
 Definition ref_spec_stmt_san : Prop :=
   forall sp brk mb rnd inp,
     valid_entry (mkImage SRCM.loaded_segments SRCM.init_pc SRCM.phdrs) (mkEntry sp brk mb rnd) inp -> valid_input inp ->
-    realizes SRCM.loaded_segments
-      (init_config SRCM.loaded_segments SRCM.init_pc SRCM.phdrs sp brk mb rnd SanitizerBudgets.lim_source inp)
+    realizes (run_segments SRCM.loaded_segments inp sp mb)
+      (init_config (run_segments SRCM.loaded_segments inp sp mb) SRCM.init_pc SRCM.phdrs sp brk mb rnd SanitizerBudgets.lim_source inp)
       (spec (in_argv inp) (in_fs inp)).
 
 (* [comment removed for export] *)
 Definition asan_spec_stmt : Prop :=
   forall sp brk mb rnd inp,
     valid_entry (mkImage ASANM.loaded_segments ASANM.init_pc ASANM.phdrs) (mkEntry sp brk mb rnd) inp -> valid_input inp ->
-    srealizes ASANM.loaded_segments
-      (init_config ASANM.loaded_segments ASANM.init_pc ASANM.phdrs sp brk mb rnd target_alloc_limit inp)
+    srealizesE (run_segments ASANM.loaded_segments inp sp mb)
+      (init_config (run_segments ASANM.loaded_segments inp sp mb) ASANM.init_pc ASANM.phdrs sp brk mb rnd target_alloc_limit inp)
       (spec (in_argv inp) (in_fs inp)).
 
 Definition both_spec_stmt : Prop :=
   forall sp brk mb rnd inp,
     valid_entry (mkImage BOTHM.loaded_segments BOTHM.init_pc BOTHM.phdrs) (mkEntry sp brk mb rnd) inp -> valid_input inp ->
-    srealizes BOTHM.loaded_segments
-      (init_config BOTHM.loaded_segments BOTHM.init_pc BOTHM.phdrs sp brk mb rnd target_alloc_limit inp)
+    srealizesE (run_segments BOTHM.loaded_segments inp sp mb)
+      (init_config (run_segments BOTHM.loaded_segments inp sp mb) BOTHM.init_pc BOTHM.phdrs sp brk mb rnd target_alloc_limit inp)
+      (spec (in_argv inp) (in_fs inp)).
+
+(* The halting statements read the same launch at the flag [true] of [SpinAlg.srealizesM]: every refused
+   arm left at the flag [false] is dead under [forced_only_cfg]. *)
+Definition asan_spec_stmt_T : Prop :=
+  forall sp brk mb rnd inp,
+    valid_entry (mkImage ASANM.loaded_segments ASANM.init_pc ASANM.phdrs) (mkEntry sp brk mb rnd) inp -> valid_input inp ->
+    srealizesM (run_segments ASANM.loaded_segments inp sp mb) true
+      (init_config (run_segments ASANM.loaded_segments inp sp mb) ASANM.init_pc ASANM.phdrs sp brk mb rnd target_alloc_limit inp)
+      (spec (in_argv inp) (in_fs inp)).
+
+Definition both_spec_stmt_T : Prop :=
+  forall sp brk mb rnd inp,
+    valid_entry (mkImage BOTHM.loaded_segments BOTHM.init_pc BOTHM.phdrs) (mkEntry sp brk mb rnd) inp -> valid_input inp ->
+    srealizesM (run_segments BOTHM.loaded_segments inp sp mb) true
+      (init_config (run_segments BOTHM.loaded_segments inp sp mb) BOTHM.init_pc BOTHM.phdrs sp brk mb rnd target_alloc_limit inp)
       (spec (in_argv inp) (in_fs inp)).
 
 Theorem asan_base_of_specs : ref_spec_stmt_san -> asan_spec_stmt ->

@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (its main-phase plans and the expressions its trees name checked renumbered to the new hand-off numbering). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
-From OSSVerify.Proofs.double_conversion.string_to_double_fuzzer.lib Require Import AxSymExec3 AsanPlanCore AsanLibNode AsanPlan AsanPlanImages AsanInit AsanNodesArg AsanNodesIO AsanNodesRP AsanMainLib AsanLibTab.
+From OSSVerify.Proofs.double_conversion.string_to_double_fuzzer.lib Require Import AxSymExec3 AsanPlanCore AsanLibNode AsanPlan AsanPlanImages AsanInit AsanNodesArg AsanNodesIO AsanNodesRP AsanMainLib AsanLibTab PlanRegen.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Import AX2. Import AP.
@@ -74,6 +75,11 @@ Definition class_le (C C' : class) : bool :=
 (* [comment removed for export] *)
 Definition XLm segs (A : atable) (nx0 : nat) : acs -> option acs := ALN.summary_lib segs LIBTAB_ASAN A nx0.
 
+(* the first of two check results that succeeds *)
+Definition cres_or (r1 r2 : cres) : cres := match r1 with COk s => COk s | CErr _ _ _ => r2 end.
+Lemma cres_or_ok : forall r1 r2 s, cres_or r1 r2 = COk s -> r1 = COk s \/ r2 = COk s.
+Proof. intros [s1|c1 p1 cs1] r2 s H; cbn in H; [left; exact H | right; exact H]. Qed.
+
 (* [comment removed for export] *)
 Section Forms.
   Variable HS_asan : nat -> option acs.
@@ -85,18 +91,21 @@ Section Forms.
     (check ASEGS ITm ASAN NX0 AsanInit.LIMIT (XNm ASEGS ASAN NX0 RPN.RP_ASAN (iotab_of C)) (XEm ASEGS ASAN NX0) (XBm ASEGS NX0 (iotab_of C)) (XLm ASEGS ASAN NX0)
            HS HL TTm KCm BFUELm FUELm None cs p).
 
-  (* [comment removed for export] *)
-  Definition main_check (h : nat) (C : class) (p : plan) : cres := CHK C HS_none HL_none (main_start HS_asan h C) p.
-  Definition pre_check (h : nat) (C : class) (HT : list (nat * (nat * acs))) (p : plan) : cres := CHK C (hs_of HT) (lv_of HT) (main_start HS_asan h C) p.
-  Definition pay_check (ch : acs) (C : class) (p : plan) : cres := CHK C HS_none HL_none (pay_start ch C) p.
-  Definition seg_check (ch : acs) (C : class) (HT : list (nat * (nat * acs))) (p : plan) : cres := CHK C (hs_of HT) (lv_of HT) (pay_start ch C) p.
+  (* LPS 727298f3: the main phase's recorded plans are checked renumbered to the new hand-off
+     numbering, with their [PForget] nodes ([PlanRegen.mplan]) or, when that fails, without them
+     ([PlanRegen.mplanD]); the start-up segments' [pre0_check] takes its plans as they are *)
+  #[local] Notation CHK2 C HS HL cs p := (cres_or (CHK C HS HL cs (mplan p)) (CHK C HS HL cs (mplanD p))).
+  Definition main_check (h : nat) (C : class) (p : plan) : cres := CHK2 C HS_none HL_none (main_start HS_asan h C) p.
+  Definition pre_check (h : nat) (C : class) (HT : list (nat * (nat * acs))) (p : plan) : cres := CHK2 C (hs_of HT) (lv_of HT) (main_start HS_asan h C) p.
+  Definition pay_check (ch : acs) (C : class) (p : plan) : cres := CHK2 C HS_none HL_none (pay_start ch C) p.
+  Definition seg_check (ch : acs) (C : class) (HT : list (nat * (nat * acs))) (p : plan) : cres := CHK2 C (hs_of HT) (lv_of HT) (pay_start ch C) p.
   (* [comment removed for export] *)
   Definition pre0_check (h : nat) (HT : list (nat * (nat * acs))) (p : plan) : cres := CHK [] (hs_of HT) (lv_of HT) (HSA HS_asan h) p.
 
   (* [comment removed for export] *)
   Definition tailf_check (T : acs) (p : plan) : cres :=
     check ASEGS ITm ASAN NX0 AsanInit.LIMIT (XNm ASEGS ASAN NX0 RPN.RP_ASAN (iotab_of [])) (XEm ASEGS ASAN NX0) (XBm ASEGS NX0 (iotab_of [])) (XLm ASEGS ASAN NX0)
-          HS_none HL_none AP.TT_none KCm BFUELm FUELm None T p.
+          HS_none HL_none AP.TT_none KCm BFUELm FUELm None T (mplan p).
   Definition tailsF_ok : Prop :=
     forall t T p s, TTm t = Some (T, p, s) -> AP.is_full p = true -> tailf_check T p = COk s /\ shape_closed s = true.
   Definition tailsF_okb (TL : list (acs * plan * shape)) : bool :=

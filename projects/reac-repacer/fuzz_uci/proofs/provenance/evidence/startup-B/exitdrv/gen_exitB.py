@@ -726,7 +726,7 @@ A9CORE, A9AE37 = 'a8fc5eedae69', 'proofs/reac-repacer/fuzz_uci/lib/A/AE37.v'   #
 
 def render_desc8(base, ds):
     """the globals-array row stating ALL 8 descriptor words (finding of record: cgif's YE37 text omits the +24 name
-    cell, a donor-text gap, not an image difference), in the image-A layout (core a8fc5eedae69 lib/A/AE37.v:37-38):
+    cell, a donor-text gap, not an image difference), in the image-A layout (core lib/A/AE37.v:37-38):
     per descriptor `(o, 8%N, beg); (o+8, ..size); (o+16, ..swr); (o+24, ..name);` then `(o+32, ..module_name);
     (o+40, ..); (o+48, ..); (o+56, ..odr)`."""
     key = {0: 'beg', 8: 'size', 16: 'swr', 24: 'name', 32: 'mod', 40: 'dyn', 48: 'loc', 56: 'odr'}
@@ -798,7 +798,7 @@ def gen_ye37(src, dec, gra, plant):
     okd = check(len(ddesc) == 1 and rd == dec[ddesc[0][0]:ddesc[0][1]], 'YE37 descriptor renderer: decode B row differs')
     print('  E2 globals-array row renderer (donor field offsets %s): cgif image -> donor row byte-equal: %s; decode B pin'
           ' -> decode row byte-equal: %s' % (fields, okc, okd))
-    # E2b the 8-word renderer: uci A's pin -> the image-A lib/A/AE37.v globals row (core a8fc5eedae69) byte-equal; the
+    # E2b the 8-word renderer: uci A's pin -> the image-A lib/A/AE37.v globals row (core) byte-equal; the
     # MEASUREMENT behind that finding: both pinned images' asan_globals arrays, word by word
     a9t = git_show(A9CORE, A9AE37)
     _, _, arows = rodata_block(a9t)
@@ -1096,7 +1096,7 @@ def main():
             tr = tokens(mask_xw2(body(rt)) if nm == 'YE23' else body(rt))
             tcr, nodec = tc, False
             if tag == 'decode B' and nm == 'YE23' and len(tr) != len(tc):
-                # decode B's committed YE23 (7eb81ddb186, shape round 3) names its 7 decimal literals (def_eq F_STDOUT
+                # decode B's committed YE23 (shape round 3) names its 7 decimal literals (def_eq F_STDOUT
                 # ...) instead of writing them: pair the hex numerals only; the decimals are checked against uci A / grant B
                 tcr, tr, nodec = [t for t in tc if t[0] == 'h'], [t for t in tr if t[0] == 'h'], True
             # the a9 file pairs with the donor's image-A twin; that pairs with the image-B donor (C1), same positions

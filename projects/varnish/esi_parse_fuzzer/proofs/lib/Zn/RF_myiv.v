@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: auxv_ok_magree follows auxv_ok to the 27/29-pair auxv of LPS 727298f3. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -723,11 +724,11 @@ Context {Clg : Ceiling} {Rr : RunRandom}.  (* [comment removed for export] *)
 Lemma auxv_ok_magree C m m' B :
   auxv_ok m B -> magree C m m' -> (forall a, C a -> a < B /\ ~ (AUXV_CELL <= a < AUXV_CELL + 8)) -> auxv_ok m' B.
 Proof.
-  ((first [ intro dR_69; dex10 dR_69 as av x3 x4 x5 hw x6 x11 x12 x23 rnd; dand4 dR_69 as AC AL RN H | intro dR_69; dand14 dR_69 as av x3 x4 x5 hw x6 x11 x12 x23 rnd AC AL RN H | intros (av & x3 & x4 & x5 & hw & x6 & x11 & x12 & x23 & rnd & AC & AL & RN & H) ]); intros AG HC).
-  exists av, x3, x4, x5, hw, x6, x11, x12, x23, rnd. split; [|split; [|split; [|exact H]]].
+  intros (av & rs & v & rnd & AC & AL & RN & HB0 & HBav & HAV & HBr & HR16 & HV & HR) AG HC.
+  exists av, rs, v, rnd. split; [|split; [|split; [|exact (conj HB0 (conj HBav (conj HAV (conj HBr (conj HR16 (conj HV HR))))))]]].
   - eapply rw_cells_magree; [exact AC| exact AG|]. cbn. intros a Ha X. destruct (HC a X) as [_ Y]. apply Y. exact Ha.
   - eapply bytes_at_magree; [exact AL| exact AG|]. intros a Ha X. destruct (HC a X) as [Y _].
-    unfold auxv_list in Ha. rewrite u64s_length, map_length in Ha. cbn in Ha. lia.
+    lia.
   - eapply bytes_at_magree; [exact RN| exact AG|]. intros a Ha X. destruct (HC a X) as [Y _]. rewrite ?zeros_length, ?length_le8 in Ha. lia.   (* [comment removed for export] *)
 Qed.
 

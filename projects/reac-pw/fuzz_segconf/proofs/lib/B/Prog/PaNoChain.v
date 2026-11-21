@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/YCbq.v (afn_pre, afn_pre_at, ajournal_init) and lib/YC85.v (cl_callS) for fuzz_command's program walk: the entry condition of a function that never reaches the allocator or a side-stack entry, without the frame-chain conjunct (as the runtime's own ecall_pre has none), with its start-of-walk and call rules; their proofs are the originals' with the chain conjunct dropped. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/Prog/PaNoChain.v (origin/ossv/recipes 501c0d516c69) for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths; csym -> ssym; CmdSyms, CmdPa -> SegSyms, SegPa. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/Prog/PaNoChain.v for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths; csym -> ssym; CmdSyms, CmdPa -> SegSyms, SegPa. *)
 (* Modified by Theorem Labs, 2026-10: copied from lib/A/Prog/PaNoChain.v for fuzz_segconf.asan-ubsan: module paths. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

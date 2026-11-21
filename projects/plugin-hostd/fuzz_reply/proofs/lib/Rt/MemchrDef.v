@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: only cgif_file_fuzzer lib/YG0d.v's amemchr0_realizes, restated for the memchr wrapper of libreac/fuzz_disco with any byte c in a1, any n below 2^32, and a found or not-found result; module paths. *)
-(* Modified by Theorem Labs, 2026-10: a second text exists for user-poisoning callers, omx-clap-core/fuzz_state's amemchr_realizesU (origin/cold/port-state-rt-str 17818dd9abc, over ARU); U = [] reduces it to this one (unpoison [] mem = mem, ARU_nil, ecall_preU_k_nil, rt_post_ro_of_U), so both stay (c-asan, 2026-10-29). cgif's amemchr0_realizes stays for the strnlen-wrapper path (reads [x, x+k+1) plus slack). *)
+(* Modified by Theorem Labs, 2026-10: a second text exists for user-poisoning callers, omx-clap-core/fuzz_state's amemchr_realizesU (over ARU); U = [] reduces it to this one (unpoison [] mem = mem, ARU_nil, ecall_preU_k_nil, rt_post_ro_of_U), so both stay (c-asan, 2026-10-29). cgif's amemchr0_realizes stays for the strnlen-wrapper path (reads [x, x+k+1) plus slack). *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_disco/lib/Rt/MemchrDef.v
-   (a working branch 3b8a77d146c, the general memchr), with its module paths changed. *)
+   (a working branch, the general memchr), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

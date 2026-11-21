@@ -1,11 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (R0 is the whole vm_reserved ledger, vDSO/vvar pair included; the ledger bound counts the launch's extra reserved intervals by n_resx and resx_bytes); Sections Trans3, Trans3C and Hole3 are generic in the Leaf class of their realizes_cfg walks; the leaf check also runs ghost3_chk, and the drive's whole-ledger apartness of its operations (lp_opsR) reaches the leaf. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From stdpp Require Import bitvector.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType RiscvSemantics Fs State Run.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import Leaf.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import ShapeAlgBase ShapeCfg NodesCfg LedgerCfg LazyCfg.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.FX Require Import
   W64 ITrie FxSpec FxInstr FxState FxMem FxExec FxRel FxKind FxMemSound FxImage FxRun FxRn FxHandoff FxLazy FxCellFrame
@@ -205,6 +207,8 @@ Hypothesis NX0_spw : APC.expr_vars_lt nx0 APC.e_sp0_early = true.
 Hypothesis argH_agree : forall E E' (a : word), AxSymRun3.env_agree nx0 E E' -> argH E a = argH E' a.
 Hypothesis SINV_agree : forall E E' M, AxSymRun3.env_agree nx0 E E' -> SINV E M -> SINV E' M.
 Hypothesis SINV_frame : forall E M M', (forall a, argH E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
+(* LPS c0dd863a: [APS.cs_ok_agree]'s transport of [co_ehdr] *)
+Hypothesis EHDR_lt : APC.V_EHDR_below nx0.
 
 (* [comment removed for export] *)
 Variable TT : ttab_e.
@@ -236,7 +240,7 @@ Hypothesis HcwX : forall x, claimed_wr IM (rho_of TT E) (f_mem (state_of d)) x -
 
 Local Notation rho := (rho_of TT E).
 Local Notation V := (m_vmmaps m).
-Local Notation R0 := (segments_reserved segs).
+Local Notation R0 := (vm_reserved V).   (* 08b1429: the whole ledger, vDSO/vvar pair included *)
 Local Notation F0 := (dress (state_of d) bs).
 Local Notation M0 := (f_mem (state_of d)).
 Local Notation ms0 := (PropExec.mkst R (Z_to_bv 64 (AX2.s_pc (APC.a_ss CS))) FULL (PropExec.seg_rom segs)).
@@ -305,7 +309,9 @@ Definition leaf3a_chk : bool :=
   && commit3_chk n (fl_all L') (fl_ops L') END (fl_ord L')
   && commit_regs_chk
   && forallb (fun e => to_Z (fent_tag e) <? to_Z n) XA
-  && vmx_chk (la_xtn ax) (fl_ops L') (APC.a_vmops CS) (APC.a_vmops END).     (* [comment removed for export] *)
+  && vmx_chk (la_xtn ax) (fl_ops L') (APC.a_vmops CS) (APC.a_vmops END)     (* [comment removed for export] *)
+  (* the end state's ghost ranges: the start state's, or inside a region the drive operated on *)
+  && ghost3_chk CS (fl_ops L') END XT1.
 
 (* [comment removed for export] *)
 Definition in_fresh (t : int) (o nn : Z) : bool :=
@@ -429,9 +435,11 @@ Lemma leaf3a_parts : leaf3a_chk = true ->
                 (la_shp ax ++ shp_of M1) XA (pb_of M1) M1 (fl_ex L') TT = true
   /\ commit3_chk n (fl_all L') (fl_ops L') END (fl_ord L') = true /\ commit_regs_chk = true
   /\ forallb (fun e => to_Z (fent_tag e) <? to_Z n) XA = true
-  /\ vmx_chk (la_xtn ax) (fl_ops L') (APC.a_vmops CS) (APC.a_vmops END) = true.
+  /\ vmx_chk (la_xtn ax) (fl_ops L') (APC.a_vmops CS) (APC.a_vmops END) = true
+  /\ ghost3_chk CS (fl_ops L') END XT1 = true.
 Proof.
   unfold leaf3a_chk. intros Hc.
+  apply andb_prop in Hc as [Hc H14].
   apply andb_prop in Hc as [Hc H13]. apply andb_prop in Hc as [Hc H12]. apply andb_prop in Hc as [Hc H11]. apply andb_prop in Hc as [Hc H10].
   apply andb_prop in Hc as [Hc H9]. apply andb_prop in Hc as [Hc H8]. apply andb_prop in Hc as [Hc H7].
   apply andb_prop in Hc as [Hc H6]. apply andb_prop in Hc as [Hc H5]. apply andb_prop in Hc as [Hc H4].
@@ -448,7 +456,7 @@ Theorem leaf3_cs_ok :
   /\ m_fs m' = m_fs m /\ AxSymRun3.env_agree (APC.nxt CS) E E1.
 Proof.
   intros Hchk Hchkb.
-  destruct (leaf3a_parts Hchk) as (Hfresh & HVT & HTv & HTn & Hskip & Hopc & Hxtn & Hshp & Hmodel & Hcommit & Hcregs & HXAt & Hvmxc).
+  destruct (leaf3a_parts Hchk) as (Hfresh & HVT & HTv & HTn & Hskip & Hopc & Hxtn & Hshp & Hmodel & Hcommit & Hcregs & HXAt & Hvmxc & Hg3).
   destruct (root3_parts segs A Lim TT n classes CS d bs L3 W Hroot) as (Hnf & Hres & Hmaps3 & Htags0 & Eops0 & Eallow0 & Hshz & Hregs3).
   pose proof (shz_zones A CS TT _ L3 Hshz) as Hzones.
   (* [comment removed for export] *)
@@ -458,7 +466,7 @@ Proof.
   apply andb_prop in Hf as [Hf Fgh]. apply andb_prop in Hf as [Hf Fvis]. apply Nat.leb_le in Hle.
   assert (Fallow : APC.pairs_vars_lt (APC.nxt CS) (APC.a_vis CS ++ APC.a_ghost CS) = true)
     by (unfold APC.pairs_vars_lt in *; rewrite forallb_app, Fvis, Fgh; reflexivity).
-  pose proof (CXI.cs_ok_agree segs A nx0 Lim NX0_spw SINV argH ISP argH_agree SINV_agree FS0 E E1 CS R FULL m Hag Hfresh0 HCS) as HCS1.
+  pose proof (CXI.cs_ok_agree segs A nx0 Lim NX0_spw SINV argH ISP argH_agree SINV_agree EHDR_lt FS0 E E1 CS R FULL m Hag Hfresh0 HCS) as HCS1.
   (* [comment removed for export] *)
   assert (Hlxs : CxOpt.ledger_exact E (APC.a_maps CS) /\ CxOpt.ledger_exact E1 (APC.a_maps CS)).
   { pose proof Hroot as Hc. unfold root3_chk in Hc. do 7 (apply andb_prop in Hc as [Hc _]). apply andb_prop in Hc as [Hnf0 Hled0].
@@ -474,12 +482,14 @@ Proof.
   destruct HD' as (HDI & Hlp & Hsp & Hx).
   destruct HDI as (HRn' & Hr0' & Hhalt' & _ & Hli & _ & _ & _ & _ & _ & _).
   rewrite erase_halted in Hhalt'. rewrite erase_vmmaps in Hli.
-  destruct Hli as [li1 _ li3 li4 li5 li6 li7 li8 li9 li10 li11 _ _ _ _ _].
+  destruct Hli as [li1 _ li3 li4 li5 li6 li7 li8 li9 li10 li11 _ _ _ _].
   cbn [erase_vm vm_reserved vm_maps vm_init_sp] in li1, li3, li4, li5, li6, li7, li8, li9, li10, li11.
   assert (Eat : alloc_top (erase_vm (Z_to_bv 64 W) V') = alloc_top V') by reflexivity. rewrite Eat in li7.
   destruct Hlp as [lp_pi _ lp_pw lp_mat _ _ lp_lim lp_maps lp_na lp_lz _ _ _ lp_E _ lp_wfna lp_wflz lp_opsR lp_ord lp_opsF].
   destruct Hsp as [HShZ _ Hspok Hexcov]. destruct Hx as (Hfr0 & Hfc0 & Hrom0 & Hhi & Hbrk).
-  destruct Hext as [(Hnn & Hrho & Hsame & Hisp & Hsbrk & _) Hmfr].
+  destruct Hext as [(Hnn & Hrho & Hsame & Hisp & Hsbrk & Hmb) Hmfr].
+  (* 08b1429: [R0] is the whole ledger; the leaf lemmas speak of the image's own reservations. *)
+  pose proof (fun o x p Ho Hp => lp_opsR o x p Ho (CXI.co_res_in _ _ _ _ _ _ _ _ _ _ _ _ HCS1 p Hp)) as lp_opsRs.
   destruct Hmfr as (new & Enew & _ & HfrA & _ & _). rewrite Eops0 in Enew. cbn [app] in Enew. subst new.
   assert (HR1 : FxRel.R segs IM rho' F' ms') by (apply HRn'; split; [exact Hr0' | intros; reflexivity]).
   pose proof (R_mem _ _ _ _ _ HR1) as Hmem1.
@@ -562,7 +572,7 @@ Proof.
   assert (Hunt : forall x : word, H x = false -> ~ touched rho' (List.filter (fun o => negb (is_commit o)) (fl_ops L')) (bv_unsigned x)).
   { intros x Hx. unfold H in Hx. rewrite <- Ehid in Hx. unfold APS.hid in Hx. apply orb_false_iff in Hx as [_ Hv]. apply negb_false_iff in Hv.
     exact (leaf_untouched segs A Lim SINV argH ISP FS0 E1 CS R FULL m HCS1 Hlx1 Hres n rho (fl_all L3) Hmaps0 Htags0 rho' m' (fl_all L') (fl_ops L')
-             (fl_c (fl3 L')) (fl_S (fl3 L')) Hrho lp_maps Hfacts' Hisp lp_opsF lp_opsR Hopc fresh HALL Hav x Hv). }   (* [comment removed for export] *)
+             (fl_c (fl3 L')) (fl_S (fl3 L')) Hrho lp_maps Hfacts' Hisp lp_opsF lp_opsRs Hopc fresh HALL Hav x Hv). }   (* [comment removed for export] *)
   assert (Hfrv : forall e, In e fresh -> forall x : word, e_lo (den rho' e) <= bv_unsigned x < e_hi (den rho' e) -> H' x = false).
   { intros e He x Hx.
     exact (leaf_fresh_visible segs A Lim SINV argH ISP FS0 E1 CS R FULL m HCS1 n rho (fl_all L3) Hmaps0 Htags0 rho' m' (fl_all L') (fl_ops L')
@@ -729,7 +739,7 @@ Proof.
           apply SEGS_in_hull. unfold APS.in_hull. apply andb_false_iff. right. apply Z.ltb_ge. exact Hih. }
       destruct (Hinfr t o nn Eif j Hj) as (e & He & Hx).
       assert (Hin' : In (den rho' e) (vm_maps V')) by (rewrite lp_maps, HALL; apply in_map; apply in_or_app; left; exact He).
-      pose proof (proj1 (Forall_forall _ _) (leaf_bounds segs A Hres m' (fl_c (fl3 L')) (fl_S (fl3 L')) Hfacts') _ Hin') as (_ & _ & _ & Hh & _).
+      pose proof (proj1 (Forall_forall _ _) (leaf_bounds segs A Lim SINV argH ISP FS0 E1 CS R FULL m HCS1 Hres m' (fl_c (fl3 L')) (fl_S (fl3 L')) Hfacts') _ Hin') as (_ & _ & _ & Hh & _).
       apply SEGS_in_hull. unfold APS.in_hull. unfold e_hi, e_lo, e_sz in Hx.
       apply andb_false_iff. destruct Hh as [Hh|Hh]; [left; apply Z.leb_gt; lia | right; apply Z.ltb_ge; lia]. }
   assert (Hknow : AX2S.know_ok segs E1 (APS.Mr A argH E1 END m' (ms_mem ms')) (APC.kn END)).
@@ -781,10 +791,10 @@ Proof.
     apply Hregs'. apply in_seq. lia. }
   split; [|split; [|split]].
   - refine (leaf_cs_ok segs A Lim SINV argH ISP FS0 E1 CS R FULL m HCS1 Hlx1 Hres n rho (fl_all L3) Hmaps0 Htags0 rho' m'
-            (fl_all L') (fl_ops L') (fl_c (fl3 L')) (fl_S (fl3 L')) (fl_E L') Hrho lp_maps lp_na lp_lz Hfacts' lp_wfna lp_wflz Hsame Hisp Hsbrk Hbrk
-            Hhalt' lp_lim lp_E lp_opsF lp_opsR Hopc fresh HALL END XT1 Hr0' HXT (fl_lazy L') lp_pw _ (fl_ord L') Hord1 Hcommit _ (fl_allow L') (la_shp ax ++ shp_of M1)
+            (fl_all L') (fl_ops L') (fl_c (fl3 L')) (fl_S (fl3 L')) (fl_E L') Hrho lp_maps lp_na lp_lz Hfacts' lp_wfna lp_wflz Hsame Hisp Hsbrk Hbrk Hmb
+            Hhalt' lp_lim lp_E lp_opsF lp_opsRs lp_opsR Hopc fresh HALL END XT1 Hr0' HXT (fl_lazy L') lp_pw _ (fl_ord L') Hord1 Hcommit _ (fl_allow L') (la_shp ax ++ shp_of M1)
             HSHP HshK XA (pb_of M1) (pb_of_sound rho' M1 HM1) Hpi' lp_mat IM (f_mem F0) M1 (ms_mem ms') (fl_ex L') TT
-            SEGS_in_hull argH_high Hrho_tt HfrA Hcw HShZ HM1 Hspok Hexcov SINV_frame Hhi' Hvmx1 (ms_regs ms') Hmodel Hregs Hlog Hknow).
+            SEGS_in_hull argH_high Hrho_tt HfrA Hcw HShZ HM1 Hspok Hexcov SINV_frame Hhi' Hvmx1 (ms_regs ms') Hmodel Hg3 Hregs Hlog Hknow).
     + unfold model3_chk in Hmodel. do 4 (apply andb_prop in Hmodel as [Hmodel _]). exact Hmodel.
     + unfold model3_chk in Hmodel. do 3 (apply andb_prop in Hmodel as [Hmodel _]). apply andb_prop in Hmodel as [_ Hs]. exact Hs.
   - apply ms_eta; try reflexivity.
@@ -816,6 +826,7 @@ Definition xpc_of (IM : fimage) (code : itrie finstr) (xask : fstate -> option (
 Section Trans3.
 Variable cfg : SpuriousCfg.
 Variable segs : list Segment.
+Context {LF : Leaf}.
 Variable IM : fimage.
 Variable code : itrie finstr.
 Hypothesis Hcode : code_ok segs code.
@@ -836,6 +847,7 @@ Hypothesis NX0_spw : APC.expr_vars_lt nx0 APC.e_sp0_early = true.
 Hypothesis argH_agree : forall E E' (a : word), AxSymRun3.env_agree nx0 E E' -> argH E a = argH E' a.
 Hypothesis SINV_agree : forall E E' M, AxSymRun3.env_agree nx0 E E' -> SINV E M -> SINV E' M.
 Hypothesis SINV_frame : forall E M M', (forall a, argH E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
+Hypothesis EHDR_lt : APC.V_EHDR_below nx0.
 
 Variable TT : ttab_e.
 Variable n : int.
@@ -912,7 +924,9 @@ Qed.
 Definition rest3x_chk : bool :=
   root3_chk segs A Lim TT n classes CS d bs L3 W
   && xa_root_chk CS L3 XA
-  && (live_bytes R0 <=? Rb) && (Z.of_nat (length R0) <=? Rc)
+  (* 08b1429: the ledger also holds the launch's extra reserved intervals (the
+     vDSO/vvar pair), at most [n_resx A] of them and [resx_bytes A] bytes ([CXI.co_resx]). *)
+  && (live_bytes R0 + APC.resx_bytes A <=? Rb) && (Z.of_nat (length R0 + APC.n_resx A) <=? Rc)
   && (let ra := ra_fast (APC.kn CS) in                   (* [comment removed for export] *)
       let pre := pre_old IM A TT classes CS d bs ra END in
       match tree3x_chk ra pre (drive3 IM code Rb Rc Lim [] shp (fun _ _ _ => None) xask (xpc_of IM code xask hk) bp k fuel F0 L3 n) [] with
@@ -938,17 +952,21 @@ Proof.
   apply andb_prop in Hchk as [Hc Htree]. apply andb_prop in Hc as [Hc HRc]. apply andb_prop in Hc as [Hc HRb].
   apply andb_prop in Hc as [Hroot Hxa].
   apply Z.leb_le in HRb, HRc.
+  assert (HRb' : live_bytes (vm_reserved (m_vmmaps m)) <= Rb /\ Z.of_nat (length (vm_reserved (m_vmmaps m))) <= Rc).
+  { destruct (CXI.co_resx _ _ _ _ _ _ _ _ _ _ _ _ HCS) as (rx & Erx & _ & Hlen & Hsum).
+    rewrite sum_sizes_live in Hsum. rewrite Erx, live_bytes_app, length_app. split; lia. }
+  destruct HRb' as [HRb' HRc'].
   pose proof (rb_DInv3_genX cfg segs IM A Lim SINV argH ISP FS0 HULL_ok argH_high TT n classes CS d bs L3 W
                 E R FULL m HCS HTT HRn0 Hdlt Hdok Hroot XA Hxa HLZX) as HD0.
   unfold APS.cfg_of.
-  refine (drive3_universal cfg segs IM code Hcode Halloc R0 Rb Rc Lim HRb HRc [] FULL (fun _ _ => True) []
+  refine (drive3_universal cfg segs IM code Hcode Halloc (vm_reserved (m_vmmaps m)) Rb Rc Lim HRb' HRc' [] FULL (fun _ _ => True) []
             (fun _ _ _ _ H => H) (fun _ _ _ _ H => H) bvmap_empty (Z_to_bv 32 0) (PropExec.seg_rom segs) (fun x => argH E x = true)
             (Z_to_bv 64 W) _ _ _ (map (denA (rho_of TT E)) XA ++ APS.allowA A E CS) shp (fun _ _ _ => None) xask (xpc_of IM code xask hk) _ _ bp k Hk fuel n _ F0 L3 _ m T HD0 _).
   - intros n1 rho1 F1 L1 ms1 m1 res Hn. discriminate Hn.
   - intros n1 rho1 F1 L1 ms1 m1 res Hx HD1. destruct hk as [|Wj kwj rj]; cbn [xpc_of] in Hx.
-    + exact (xpc_builtin6_sound cfg segs IM code Hcode R0 Lim [] FULL (fun _ _ => True) [] (fun _ _ _ _ H => H) bvmap_empty (Z_to_bv 32 0)
+    + exact (xpc_builtin6_sound cfg segs IM code Hcode (vm_reserved (m_vmmaps m)) Lim [] FULL (fun _ _ => True) [] (fun _ _ _ _ H => H) bvmap_empty (Z_to_bv 32 0)
                (PropExec.seg_rom segs) (fun x => argH E x = true) (Z_to_bv 64 W) _ _ _ (map (denA (rho_of TT E)) XA ++ APS.allowA A E CS) n1 rho1 F1 L1 ms1 m1 res Hx HD1).
-    + exact (xpc_builtin7_sound cfg segs IM code Hcode R0 Lim [] FULL (fun _ _ => True) [] (fun _ _ _ _ H => H) bvmap_empty (Z_to_bv 32 0)
+    + exact (xpc_builtin7_sound cfg segs IM code Hcode (vm_reserved (m_vmmaps m)) Lim [] FULL (fun _ _ => True) [] (fun _ _ _ _ H => H) bvmap_empty (Z_to_bv 32 0)
                (PropExec.seg_rom segs) (fun x => argH E x = true) (Z_to_bv 64 W) _ _ _ (map (denA (rho_of TT E)) XA ++ APS.allowA A E CS)
                xask Wj kwj rj n1 rho1 F1 L1 ms1 m1 res Hx HD1).
   - intros F' L' n' r Hin rho' ms' m' HD' Hext _.
@@ -957,7 +975,7 @@ Proof.
                 (drive3 IM code Rb Rc Lim [] shp (fun _ _ _ => None) xask (xpc_of IM code xask hk) bp k fuel F0 L3 n) []) as [seen'|] eqn:Etree;
       [|discriminate Htree].
     destruct (proj2 (tree3x_leaf _ _ _ _ _ Etree (Forall_nil _)) F' L' n' r Hin) as [Ha Hb].
-    destruct (leaf3_cs_ok cfg segs IM HIM HWR A Lim SINV argH ISP FS0 SEGS_in_hull HULL_ok argH_high nx0 NX0_spw argH_agree SINV_agree SINV_frame
+    destruct (leaf3_cs_ok cfg segs IM HIM HWR A Lim SINV argH ISP FS0 SEGS_in_hull HULL_ok argH_high nx0 NX0_spw argH_agree SINV_agree SINV_frame EHDR_lt
                 TT n classes CS d bs L3 W E R FULL m HCS HTT HRn0 Hdlt Hdok Hroot XA HcwX (ra_fast (APC.kn CS)) (ra_fast_eq _) n' rho' F' L' ms' m' HD' Hext END (aux F' (strip_res L') n') Ha Hb)
       as (HCS' & Ems & Hfs & Hag).
     rewrite Ems. exact (HK _ _ _ _ Hag HCS' Hfs).
@@ -989,6 +1007,7 @@ Definition trans3_chk segs IM code A Lim nx0 TT n shapes cuts classes CS d bs L3
 Section Trans3C.
 Variable cfg : SpuriousCfg.
 Variable segs : list Segment.
+Context {LF : Leaf}.
 Variable IM : fimage.
 Variable code : itrie finstr.
 Hypothesis Hcode : code_ok segs code.
@@ -1009,6 +1028,7 @@ Hypothesis NX0_spw : APC.expr_vars_lt nx0 APC.e_sp0_early = true.
 Hypothesis argH_agree : forall E E' (a : word), AxSymRun3.env_agree nx0 E E' -> argH E a = argH E' a.
 Hypothesis SINV_agree : forall E E' M, AxSymRun3.env_agree nx0 E E' -> SINV E M -> SINV E' M.
 Hypothesis SINV_frame : forall E M M', (forall a, argH E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
+Hypothesis EHDR_lt : APC.V_EHDR_below nx0.
 
 Theorem fx_transform3h_gen hk TT n classes CS d bs L3 W Rb Rc shp xask bp k fuel END aux E R FULL m T :
   CXI.cs_ok segs A Lim SINV argH ISP FS0 E CS R FULL m ->
@@ -1032,7 +1052,7 @@ Proof.
   pose proof (APS.lazy_cover_cs segs A Lim (fun _ => None) (fun _ _ _ => None) (fun _ _ _ => None) (fun _ _ _ => None)
                 HULL_ok SINV argH FS0 0%nat E CS R FULL m (CXI.cs_ok_aps _ _ _ _ _ _ _ _ _ _ _ _ HCS)) as Hcover.
   apply (fx_transform3_genX cfg segs IM code Hcode Halloc HIM HWR A Lim SINV argH ISP FS0 SEGS_in_hull HULL_ok argH_high nx0 NX0_spw
-           argH_agree SINV_agree SINV_frame TT n classes CS d bs L3 W Rb Rc shp xask bp k fuel END aux [] hk E R FULL m T HCS HTT HRn0 Hdlt Hdok);
+           argH_agree SINV_agree SINV_frame EHDR_lt TT n classes CS d bs L3 W Rb Rc shp xask bp k fuel END aux [] hk E R FULL m T HCS HTT HRn0 Hdlt Hdok);
     [ | | exact Hrest | exact Hk | exact HK].
   - exact (side_LZ segs IM A E TT (APC.kn CS) _ FULL d _ _ HTT Hnoseg (CXI.co_know _ _ _ _ _ _ _ _ _ _ _ _ HCS) Hhull Hcover Hmem0 Hside).
   - intros x Hx. left.
@@ -1089,6 +1109,7 @@ End Trans3C.
 Section Hole3.
 Variable cfg : SpuriousCfg.
 Variable segs : list Segment.
+Context {LF : Leaf}.
 Variable IM : fimage.
 Variable code : itrie finstr.
 Hypothesis Hcode : code_ok segs code.
@@ -1109,6 +1130,7 @@ Hypothesis NX0_spw : APC.expr_vars_lt nx0 APC.e_sp0_early = true.
 Hypothesis argH_agree : forall E E' (a : word), AxSymRun3.env_agree nx0 E E' -> argH E a = argH E' a.
 Hypothesis SINV_agree : forall E E' M, AxSymRun3.env_agree nx0 E E' -> SINV E M -> SINV E' M.
 Hypothesis SINV_frame : forall E M M', (forall a, argH E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
+Hypothesis EHDR_lt : APC.V_EHDR_below nx0.
 
 Theorem fx_hole3h_chk hk TT n shapes cuts classes START d bs L3 W Rb Rc shp xask bp k fuel END aux :
   trans3h_chk hk segs IM code A Lim nx0 TT n shapes cuts classes START d bs L3 W Rb Rc shp xask bp k fuel END aux = true ->
@@ -1117,7 +1139,7 @@ Theorem fx_hole3h_chk hk TT n shapes cuts classes START d bs L3 W Rb Rc shp xask
 Proof.
   intros Hchk Hk E R FULL m T HCS HK.
   exact (fx_transform3h cfg segs IM code Hcode Halloc HIM HWR A Lim SINV argH ISP FS0 SEGS_in_hull HULL_ok argH_high nx0 NX0_spw
-           argH_agree SINV_agree SINV_frame hk TT n shapes cuts classes START d bs L3 W Rb Rc shp xask bp k fuel END aux
+           argH_agree SINV_agree SINV_frame EHDR_lt hk TT n shapes cuts classes START d bs L3 W Rb Rc shp xask bp k fuel END aux
            E R FULL m T HCS Hchk Hk HK).
 Qed.
 

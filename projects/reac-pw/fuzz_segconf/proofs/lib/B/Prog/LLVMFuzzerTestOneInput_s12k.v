@@ -4,27 +4,28 @@
 (* Modified by Theorem Labs, 2026-10: the first stretch of the inlined words_of of LLVMFuzzerTestOneInput's ASan+UBSan walk (plugin-hostd/fuzz_command image B, 0x86760 .. 0x867b4: strnlen of the message, the three mallocs stored at 120/128/136(sp) and their NULL tests reloaded from the frame), the B twin of lib/A/Prog/LLVMFuzzerTestOneInput_s41.v, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh2.v (a call and back, the caller's facts carried past it) and A/ACh6.v (a segment from one point of the function to the next, the next point's statement a premise). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/LLVMFuzzerTestOneInput_s41.v, with its module paths, module names and numbers changed; 2758 of its 2894 lines of code are new or changed and 886 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/LLVMFuzzerTestOneInput_s20.v, with its module paths and module names changed; 351 of its 706 lines of code are new or changed and 2539 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan+UBSan image B (fuzz_segconf.asan-ubsan, pin sha256 c3796c0b38f3): the kit of the walk
    of the test harness's entry function LLVMFuzzerTestOneInput (0x84dc0; segments S01 and S02,
    LLVMFuzzerTestOneInput_s12.v), and the calloc call step every calloc site of the harness walk takes.
 
-   THE FORM: the image-B twin of image A's lib/A/Prog/LLVMFuzzerTestOneInput_s12k.v (image A's S01 / S02 commit
-   119b28fad68f): the same lemmas under the same names, over image B's kit copies (lib/B) and image B's cut
+   THE FORM: the image-B twin of image A's lib/A/Prog/LLVMFuzzerTestOneInput_s12k.v (image A's S01 / S02):
+   the same lemmas under the same names, over image B's kit copies (lib/B) and image B's cut
    statements (lib/B/Prog/LLVMFuzzerTestOneInput_defs.v), with image B's frame (352 bytes, S1 = (SP0 - 352) & -32;
    the shadow base kept at 200(s1), SH(FR) at 184(s1)):
    - acalloc04_sub: the walk form of image B's row-13 rule RtSegCalloc.aseg_calloc04_rule (pc_calloc cstk)
-     (lib/B/Rt/RtSegCalloc.v, the image-B wrapper owner's commit ae8b6d1202c7, with the premise m * n <= YGCalloc.PRIM_MAX), beside
+     (lib/B/Rt/RtSegCalloc.v, the image-B wrapper owner, with the premise m * n <= YGCalloc.PRIM_MAX), beside
      PaCall.v's amalloc04_sub: the inner journal opened by ajournal_sub_init at window cstk and joined by
      ajournal_sub_tok, the rule's post plus that inner journal. Generic in segs.
    - lt_malloc_at / lt_calloc_at: one allocator call of the harness from a point where lt_core holds (sp = s1 = S1,
      the frame, the image facts, the blocks, the budget), to the call's return with lt_core at k + 1, one block more
      (newest first), the budget charged one event, the stack above S1 kept; in the form of fuzz_command's
-     lib/A/Prog/LLVMFuzzerTestOneInput_s41.v aw_malloc_loc (origin/ossv/recipes 501c0d516c69).
+     lib/A/Prog/LLVMFuzzerTestOneInput_s41.v aw_malloc_loc.
    - lk_img_kept: lt_img at a later reader at an AR state that keeps every image byte the runtime does not own; the
-     form of image A's S00 walk's s10_lt_img_kept (image A's S00 commit 52ff1753c784), RELRO in the image from
+     form of image A's S00 walk's s10_lt_img_kept (image A's S00), RELRO in the image from
      image B's record SegRecBase.seg_img_facts (lib/B/Prog/SegRecBase.v: cif_relro_img), in place of the twin's
      HRELRO; the stack-protector cells (the .got word gotwA holds guardA, guardA readable; gotwA is runtime-owned in
-     the regenerated listing, the image-B listing owner's commit ec20d5d4e1df) from AR at the later state by SegRecCells.seg_rec_cells, in
+     the regenerated listing, the image-B listing owner) from AR at the later state by SegRecCells.seg_rec_cells, in
      place of the twin's HSSP.
    - S01's own pieces (image B only; the twin's file has no S01 yet): the seed shapes ss_s01 / ss_s01z and their
      seed lemmas s01_seed / s01_seedz (fuzz_command's lib/B/Prog/LLVMFuzzerTestOneInput_s23.v lhh_seed with the s1
@@ -34,7 +35,7 @@
    Statement text and proofs only about the walk's own points: no other function of the binary is proved here.
 
    Section hypotheses beyond the statement's B / MT (AR_laws is image B's kit's YG0q.AR_laws_ok, as the twin takes
-   it since 734c2dd5a567): MTL (ameter_laws), TL (PALib: the malloc trampoline is the kit's wrapper entry), IMGF
+   it): MTL (ameter_laws), TL (PALib: the malloc trampoline is the kit's wrapper entry), IMGF
    (image B's record SegRecBase.seg_img_facts), HSY (the record of image B's symbols YF0m.SegBSyms, which
    SegRecCells.seg_rec_cells takes), AMALLOC4 (fuzz_command's form), ACALLOC4 at the calloc trampoline with the
    window cstk and HCSTK (the twin's text from the image-A G1 walk owner, 17:57Z). *)
@@ -130,7 +131,7 @@ End g.
 End c.
 
 (* ============================== lists, words, registers ============================== *)
-(* blocks_bytes is the sum of the live blocks' sizes (fuzz_command lib/A/Prog/LLVMFuzzerTestOneInput_defs.v:218-229) *)
+(* blocks_bytes is the sum of the live blocks' sizes (fuzz_command lib/A/Prog/LLVMFuzzerTestOneInput_defs.v:219-230) *)
 Fixpoint lk_bsum (bl : list (Z * Z)) : Z := match bl with [] => 0 | b :: l => snd b + lk_bsum l end.
 Lemma lk_bsum_app : forall l1 l2, lk_bsum (l1 ++ l2) = lk_bsum l1 + lk_bsum l2.
 Proof. induction l1 as [|b l IH]; intros l2; cbn [lk_bsum app]; [reflexivity | rewrite IH; ring]. Qed.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the recorded (KReplay) proof re-proved by tactics, for the argv pointers that no longer take the stack pointer; the KReplay table removed). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool String.
@@ -16,8 +17,6 @@ From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib.Common.Mallocng Require Imp
 From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib.Common.CliDriver Require Import Spec.
 From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib.O2 Require Import O2MallocLayout O2ExitBase O2Startup O2StartupDefs O2StartupFacts O2MainEntry O2LibStdioCall O2OpenFail_defs O2OpenFail_tail2 O2Open_defs O2Open O2Oom_defs O2MemPreds O2ReadErr O2Malloc65536 O2DirRead_defs O2DirRead O2OpenFailBranch.
 From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib.Common Require Import RefNodesFS MuslStrlen RefLayout ArgvEnv StartupTac.
-From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib Require KReplay.
-Ltac2 kr_t_O2MainDir () := "C46Stdlib5Lists4List2hdK47Corelib7Numbers7BinNums8positive02K47Corelib7Numbers7BinNums1N02I45stdpp9bitvector;definitions2bv00I47Corelib4Init9Datatypes4list00I47Corelib4Init5Logic2eq00C69OSSVerify5KrLib6Common9CliDriver4Spec?msg_cannot_openC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common9CliDriver4Spec5t_dieC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common9CliDriver4Spec>msg_read_errorC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2O2@O2OpenFailBranchKopen_err_branch_cannot_openC1?~~~~~~~~~~~~~~~K47Corelib7Numbers7BinNums8positive01C4ELinuxProcessSemantics5Riscv7Prelude5bvmapI47Corelib4Init9Datatypes6option00C47Corelib4Init9Datatypes6lengthK47Corelib4Init9Datatypes3nat02C69OSSVerify5KrLib6Common9CliDriver6SymRun7vals_evC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2O2;O2MainEntry2p0C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2O2;O2MainEntry2p1C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2O26O2Open3ENVC1?~~~~~~~~~~~~~~~C79OSSVerify5KrLib6Common9CliDriver=SymExec2Sound4SX2S7regs_okC1?~~~~~~~~~~~~~~~C79OSSVerify5KrLib6Common9CliDriver=SymExec2Sound4SX2S7know_okC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2O26O2Open7out_winC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2O29O2DirRead>dir_read_errorC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2O2=O2Malloc65536@malloc65536_nodeC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2O26O2Open9at_mallocC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2O26O2OpenAopen_dir_pipelineC1?~~~~~~~~~~~~~~~K47Corelib7Numbers7BinNums1Z02C45stdpp9bitvector;definitions7Z_to_bvC59OSSVerify5KrLib6Common8PropExec7seg_romC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib6Common8PropExec4mkstC1?~~~~~~~~~~~~~~~K4ELinuxProcessSemantics?LinuxProcessSem3Run6config01C69OSSVerify5KrLib6Common9CliDriver4Spec<t_opened_dirC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib6Common8ShapeAlg6t_alt2C1?~~~~~~~~~~~~~~~I59OSSVerify5KrLib6Common8ShapeAlg8realizes00C1?~~~~~~~~~~~~~~~K47Corelib7Numbers7BinNums8positive03C69OSSVerify5KrLib6Common9CliDriver4Spec8dot_pathC1?~~~~~~~~~~~~~~~I47Corelib4Init9Datatypes3nat00K47Corelib4Init9Datatypes3nat01C59OSSVerify5KrLib2O2;O2Open_defs5o_srBC1?~~~~~~~~~~~~~~~C69OSSVerify6KrSpec8ProblemsTSrc_leptonica_bilateral_fuzzer_repro1M?loaded_segmentsC1@~~~~~~~~~~~~~~~~C59OSSVerify5KrLib2O2;O2Open_defs5o_knBC1?~~~~~~~~~~~~~~~K4ELinuxProcessSemantics?LinuxProcessSem5State7FdEntry06C59OSSVerify5KrLib6Common8PropExec3fx0C1?~~~~~~~~~~~~~~~".
 Import ListNotations.
 Open Scope bv_scope.
 Import SX2. Import SX2S.
@@ -75,5 +74,11 @@ Section MainDir.
     realizes RSEGS (mkCfg (mkst regs0 (Z_to_bv 64 0x17618) mem0 (seg_rom RSEGS)) model0)
              (t_alt2 (t_die (msg_cannot_open path) fs0) (t_opened_dir path fs0)).
 Proof.
-ltac2:(KReplay.run1 (kr_t_O2MainDir ()) ["MainDir"] "h02HKh12HLh23HOWh32HRh44Hdoth51Mh62P0h72P1h82P2h92P5h:1Rh;4valsp;1p;3p;2p;Bp;4p;Fp;^p;>p;Gp;5p-1p10000p4p710p8g000Gj13Tg000lj17Tg001Jj1:Tg001mj1;Tg002Mj34Tg002gj1MTg0041j28Tg0051j1ATg006:lB@Tg007Nj11Tg0083j2=Tg008_j1<Tg009Aj2STg009aj10Tg00:@j26Tg00;Dj4QTg00<:j4LTg00=0j49Tg00=bj3KTg00?2j4CTg00@Bj3BTg00A8lFDTg00B8l^ETg00C>l>FTg00D6lGGTg00E6j1HTg00ETj2ITg00F:j1JTg00G6j5?Tg00Goj2>Tg00Hdj2NTg00Ikj2OTg00Jfj3PTf0R0#3#3p=5%00#0p=R%00#0#0#0p=2g00KeR1#3R2#5R3#7#:R4#;p,4pathR5g00LJ34p,3AMBR6p,3sp0R7p,3a0sR8P5p,4envvR9p,3tidR:p,5regs0R;p,4mem0R<p,3brkR=p,5mbaseR>p,3fs0R?p,6stdin0R@p,3limRAp,3HvaRBp,3HveRCp,4HvspRDp,4HtidREp,2MERF%M5/8?RG%A5/8?RHP0P6P7P8P5P9P:P;P<P=P>P?P@PAPBPCPDPFp,5HfitsMB@%33#5#7R3#:RI#;%12#7/=I%<4\Ig00MMf2R4,SIg00MlR2#0RJ#0RK#0#RRL#0#2#2#2#2#2#2#2#234f3RM/62=4I7f4R2/6JP7P8P5P9CQ54If5RJ/6KP7P8P5P9CL54If6RK/6L=4I:P6P8P5f7RIC9g00NK;KKg00ODRLP6P8P5f8RNC9PKg00PjCCAB7<IP6p,2ALROp,2CLRPp,3ASRRQP7P8P5P9P:P;P<P=P>P?P@PAPDPEPFp,4Hbrkp,7AL_segsp,6AL_romp,9AL_mallocp,5AL_tpp,7AL_globp,8AL_grantp,8AL_errnop,5AL_rop,5AL_rwp,5AL_hip,6AL_retp,6AL_envg00QcRRPHP6POPPPQP7P8P5P9P:P;P<P=P>P?P@PAPBPCPDPEPFf;MFDf:f9PNPIPKPJP2PMP4f1P0M^EW2W0W3W9W8W7W6W1W5W:W;P6P7P8P5P9P:P<P=P>P?P@PAPRPHM>FeMGGg00R[P;%31#1#1#1#3#1#1#5#5#1#1#3#5#H,I3P<%JLD?p,6model0'>1N5?,OG5PLeW4o"). Qed.
+  intros Hdot.
+  eapply open_dir_pipeline; try eassumption.
+  - eapply open_err_branch_cannot_open; eassumption.
+  - intros vals R M HL P0 P1 P2 P5 HR HK HOW.
+    eapply malloc65536_node; try eassumption.
+    eapply dir_read_error; eassumption.
+Qed.
 End MainDir.

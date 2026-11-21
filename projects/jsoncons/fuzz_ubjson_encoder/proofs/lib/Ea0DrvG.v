@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the new launch (process input, auxv, group id, exec file name); the channel-reader premise of writev. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -142,8 +143,8 @@ Section DrvG.
   Variables a0s path : list byte.
   Variable fs0 : Fs.Fs.
   Variable fdata : list byte.
-  Variables p0 p1 can : word.
-  Variable M0 : word -> option byte.                    (* [comment removed for export] *)
+  Variables auxvp p1 can : word.
+  Variable M0 : word -> option byte.
   Hypothesis M0_def : defined M0 (bv_unsigned sp0) (ar_stack_top ar - bv_unsigned sp0).
   Hypothesis Hfile : fs_lookup fs0 path = Some fdata.
   Variable LK0 : list fframe.
@@ -155,7 +156,7 @@ Section DrvG.
 
   (* [comment removed for export] *)
   Definition hdr_valsA (vals : list word) : Prop :=
-    vals_ev vals 0 = sp0 /\ vals_ev vals 1 = p0 /\ vals_ev vals 2 = p1 /\ vals_ev vals 3 = can.
+    vals_ev vals 0 = sp0 /\ vals_ev vals 5 = auxvp /\ vals_ev vals 2 = p1 /\ vals_ev vals 3 = can.
   Lemma hdr_relayA : forall vals R x38 x48 x70 ext, hdr_valsA vals -> hdr_valsA (relayV vals R x38 x48 x70 ext).
 Proof. intros vals R x38 x48 x70 ext H. unfold hdr_valsA. rewrite !relayV_lo by lia. exact H. Qed.
   Lemma hdr_appA : forall vals ext, hdr_valsA vals -> (6 <= length vals)%nat -> hdr_valsA (vals ++ ext).
@@ -459,7 +460,7 @@ eapply (rz_close_lz ASEGS scfg _ _ M model ECALLW (Z_to_bv 64 3)); try apply is_
 rewrite F1, fds_remove3A.
 set (model2 := with_fds fds0 model).
 assert (DI2 : dinvA [(A1, CAPk k)] LK0 cr A M model2).
-{ apply (dinv_model scfg L ar C IL HI HIok sp0 Hsp DL M0 _ _ _ _ _ model model2 DI); [apply with_fds_vm|].
+{ apply (dinv_model scfg L ar C IL HI HIok sp0 Hsp DL M0 _ _ _ _ _ model model2 DI); [apply with_fds_vm| |apply with_fds_rdr].
 unfold model2. rewrite with_fds_halted'. exact (di_halt _ _ _ _ _ _ _ _ _ _ DI). }
 assert (HK2 : know_ok ASEGS (ENVG vals2) (mrestrict (ahid A model2) M) (cellCA :: knRf0A)) by exact HK.
 assert (G1 : m_fds model2 = fds0) by (unfold model2; apply with_fds_fds).
@@ -835,43 +836,43 @@ Qed.
   Variable cr0 : credit.
   Hypothesis Hcr0 : credA 0 (adebit L cr0 65536).
 
-  Theorem drv_fileA : file_kA scfg L ar HI sp0 path fs0 fdata p0 p1 can M0 LK0 cr0 A0 K.
-Proof.
-unfold file_kA.
-intros vals R M model A A1 HL P0 P1 P2 P3 P48 HR HK DI HINC MF MS HBR.
-pose proof Hsp as Hsp'. pose proof Hal as Hal'.
-assert (HV : hdr_valsA vals) by (unfold hdr_valsA; repeat split; assumption).
-change (Ea0DrvA.ENVA fdata vals) with (ENVG vals) in HR, HK.
-drv_block0 HIok Hsp DL HR HK DI P0 scr0 70%nat.
-pose proof (block_nolog _ _ _ _ _ EQM EQH) as EQA.
-destruct (sbm_fds _ _ SBM) as (F1 & F2). rewrite MF in F1. rewrite MS in F2.
-pose proof (read_okA (LEN + 1) ltac:(replace (LEN + 1 - 1) with (Z.of_nat (length fdata)) by (unfold LEN; lia); apply loop_okA)) as RD.
-lazymatch goal with |- srealizes _ _ (mkCfg (mkst ?Rc _ _ _) _) _ =>
-set (valsR := relayV vals Rc (gr Rc 21) (gr Rc 9) (gr Rc 19) [gr Rc 12]);
-apply (RD 0 0 65536 A1 valsR Rc M1 model0 A (adebit L cr0 65536))
-end.
-- lia.
-- unfold CAPk. rewrite Z.pow_0_r. lia.
-- unfold LEN. lia.
-- unfold LEN. lia.
-- unfold CAPk. rewrite Z.pow_0_r. reflexivity.
-- reflexivity.
-- unfold valsR. apply hdr_relayA. exact HV.
-- unfold valsR. rewrite relayV_38. unfold gr. regv1 HR0. unfold CAPk. rewrite Z.pow_0_r. reflexivity.
-- unfold valsR. rewrite relayV_48. unfold gr. regv1 HR0. exact P48.
-- unfold valsR. rewrite relayV_70. unfold gr. regv1 HR0. reflexivity.
-- unfold valsR. rewrite relayV_71. unfold gr. regv1 HR0. reflexivity.
-- unfold valsR, ENVA. relay_regs HR0; try (relay2 HR0; reflexivity).
-- rewrite knLPA_split. apply Forall_app. split.
-+ apply (kn_blkA_of_inv scfg L ar C IL HI HIok sp0 Hsp DL M0 valsR _ [(A1, 65536)] LK0 (adebit L cr0 65536) A M1 model0 48%nat A1 65536 65536 DI0);
-[left; reflexivity | lia | | unfold valsR; rewrite relayV_lo by lia; exact P0].
-unfold valsR. rewrite relayV_48. unfold gr. regv1 HR0. exact P48.
-+ unfold valsR, ENVA. eapply relay_know6; [exact HK1 | vm_compute; reflexivity | vm_compute; reflexivity].
-- reflexivity.
-- unfold CAPk. rewrite Z.pow_0_r. exact DI0.
-- exact HINC.
-- split; [exact F1 | exact F2].
-- exact Hcr0.
-Qed.
+  Theorem drv_fileA : file_kA scfg L ar HI sp0 path fs0 fdata auxvp p1 can M0 LK0 cr0 A0 K.
+  Proof.
+    unfold file_kA.
+    intros vals R M model A A1 HL P0 P1 P2 P3 P48 HR HK DI HINC MF MS HBR.
+    pose proof Hsp as Hsp'. pose proof Hal as Hal'.
+    assert (HV : hdr_valsA vals) by (unfold hdr_valsA; repeat split; assumption).
+    change (Ea0DrvA.ENVA fdata vals) with (ENVG vals) in HR, HK.
+    drv_block0 HIok Hsp DL HR HK DI P0 scr0 70%nat.
+    pose proof (block_nolog _ _ _ _ _ EQM EQH) as EQA.
+    destruct (sbm_fds _ _ SBM) as (F1 & F2). rewrite MF in F1. rewrite MS in F2.
+    pose proof (read_okA (LEN + 1) ltac:(replace (LEN + 1 - 1) with (Z.of_nat (length fdata)) by (unfold LEN; lia); apply loop_okA)) as RD.
+    lazymatch goal with |- srealizes _ _ (mkCfg (mkst ?Rc _ _ _) _) _ =>
+      set (valsR := relayV vals Rc (gr Rc 21) (gr Rc 9) (gr Rc 19) [gr Rc 12]);
+      apply (RD 0 0 65536 A1 valsR Rc M1 model0 A (adebit L cr0 65536))
+    end.
+    - lia.
+    - unfold CAPk. rewrite Z.pow_0_r. lia.
+    - unfold LEN. lia.
+    - unfold LEN. lia.
+    - unfold CAPk. rewrite Z.pow_0_r. reflexivity.
+    - reflexivity.
+    - unfold valsR. apply hdr_relayA. exact HV.
+    - unfold valsR. rewrite relayV_38. unfold gr. regv1 HR0. unfold CAPk. rewrite Z.pow_0_r. reflexivity.
+    - unfold valsR. rewrite relayV_48. unfold gr. regv1 HR0. exact P48.
+    - unfold valsR. rewrite relayV_70. unfold gr. regv1 HR0. reflexivity.
+    - unfold valsR. rewrite relayV_71. unfold gr. regv1 HR0. reflexivity.
+    - unfold valsR, ENVA. relay_regs HR0; try (relay2 HR0; reflexivity).
+    - rewrite knLPA_split. apply Forall_app. split.
+      + apply (kn_blkA_of_inv scfg L ar C IL HI HIok sp0 Hsp DL M0 valsR _ [(A1, 65536)] LK0 (adebit L cr0 65536) A M1 model0 48%nat A1 65536 65536 DI0);
+          [left; reflexivity | lia | | unfold valsR; rewrite relayV_lo by lia; exact P0].
+        unfold valsR. rewrite relayV_48. unfold gr. regv1 HR0. exact P48.
+      + unfold valsR, ENVA. eapply relay_know6; [exact HK1 | vm_compute; reflexivity | vm_compute; reflexivity].
+    - reflexivity.
+    - unfold CAPk. rewrite Z.pow_0_r. exact DI0.
+    - exact HINC.
+    - split; [exact F1 | exact F2].
+    - exact Hcr0.
+  Qed.
 End DrvG.
 End FPX_1.

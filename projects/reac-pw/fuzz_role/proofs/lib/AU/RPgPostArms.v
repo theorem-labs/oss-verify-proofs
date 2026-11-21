@@ -1,27 +1,28 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: restates text of proofs/reac-pw/fuzz_role/lib/A/RPgX01.v at 9bffaa83ff88
+(* Modified by Theorem Labs, 2026-10: restates text of proofs/reac-pw/fuzz_role/lib/A/RPgX01.v
    [Apache-2.0] (rx_reg_atom / rx_reg_ext / rx_ew_reg / rx_st_region / rx_chunk_zero / rx_flag0_of, the saved-slot
    chunk list rx_sv_chunks, the numeral tactics z5 / z5g and the flag-store tactic rx_run_flag, which passes
-   aj_flag_store its sixteen journal arguments) and of proofs/reac-pw/fuzz_role/lib/A/RPgCheck.v at 77f59d02b018
+   aj_flag_store its sixteen journal arguments) and of proofs/reac-pw/fuzz_role/lib/A/RPgCheck.v
    [Apache-2.0] (the shape of a `ret` leaf into a callee post), for reac-pw/fuzz_rate's image A: the walk is
    check_csv's release and epilogue, the side-stack class is 2 instead of 3, and the post is RtPgCSpec.rt_cpost_o,
    whose owned-set conjunct is discharged from the cut's layout, chunk and frame equalities. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_rate/lib/A/RtPgCcsvS3.v, with its module names changed; 904 of its 944 lines of code are new or changed and 286 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_rate/lib/A/RtPgPostArms.v, with its module paths, module names, addresses and numbers changed; 474 of its 989 lines of code are new or changed and 429 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgPostArms.v at 8af9cea6f917; ported to image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgPostArms.v; ported to image B
    (fuzz_rate.asan-ubsan) over lib/AU's RtPgMemB / RtPgSegB / RtPgStepsB / RtPgPostKB / RtPgPostReqB under the prefix
    wb10a_: image B's code from T = 0x8270c (the cursor in s10 and what is left in t4, the shadow address of &pp->len in
    the cell R+0x170, len read into s6, the B-only divide-by-zero trap 0x82918), len split at the Coq level into 8 and
    9 .. 5440 so that the engine decides `bltu s6,9` and the trap, one run lemma per length class 0 / 1 / 2 / 3 / >= 4
    of what is left (image A: 0, 1 or 2, 3, >= 4) and one for len = 8. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgPostArmsB.v at db4fc362bebf; ported to
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgPostArmsB.v; ported to
    reac-pw/fuzz_role's image B (fuzz_role.asan-ubsan) over lib/AU's RPgMem / RPgSeg / RPgSteps / RPgPostK /
    RPgPostReq under the prefix w10a_: image B's code from T = 0x81eec (the cursor in a7 and what is left in t3, the
    shadow address of &pp->len in the cell R+0x148, pp in the cell R+0x140 that the two arms load into t2, len read
    into s8, the divide-by-zero trap 0x82054), len split at the Coq level into 8 and 9 .. 5440 so that the engine
    decides `bltu s8,9` and the trap, one run lemma per length class 0 / 1 / 2 / 3 / >= 4 of what is left and one
    for len = 8. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_role image B (fuzz_role.asan-ubsan, pinned sha256
    b255d4935da5af137a3967dbe33380ea43be8e78bfe05d1e356e0a2be8a69ff0; addresses measured on the unstripped twin
    dc791783f32962615e18a5f5cffae758ba56eb5dc87f70913c3579b101b4406a): the second half of the post piece of the walk

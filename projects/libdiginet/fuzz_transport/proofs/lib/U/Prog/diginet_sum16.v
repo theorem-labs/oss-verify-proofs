@@ -1,5 +1,5 @@
 (* proves the UBSan contract of diginet_sum16 (fuzz_transport.ubsan, 0x17f60), with its three pointer traps not taken. *)
-(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/diginet_sum16.v at 9bd29914ffdef650a37285056a472ff186b4331a to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/diginet_sum16.v to fuzz_transport's images *)
 (* Walk of diginet_sum16 (src/diginet_frame.c:42-48 at 835f336c) in fuzz_transport.ubsan, 0x17f60.
    Each turn of the loop at 0x17f74 checks p + i before it reads p[i]: 0x17f74 (p + i < p),
    0x17f80 ((p != 0) == (p + i == 0)) and 0x17f84 (p == 0) branch to the trap at 0x17fac.

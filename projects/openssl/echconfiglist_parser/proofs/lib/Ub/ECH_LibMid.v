@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the resolved vdso_func cell holds hvdso, the vDSO's clock_gettime entry, not 0). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -68,8 +69,8 @@ Proof.
 Qed.
 
 Lemma VDSO_agreeR : forall (R : Z -> Prop) m m' (v : bool),
-  rw_cells usegs m A_vdso_func [C8 (wz (if v then 0 else P_cgt_init))] -> magree R m m' ->
-  (forall a, A_vdso_func <= a < A_vdso_func + 8 -> R a) -> rw_cells usegs m' A_vdso_func [C8 (wz (if v then 0 else P_cgt_init))].
+  rw_cells usegs m A_vdso_func [C8 (wz (if v then hvdso else P_cgt_init))] -> magree R m m' ->
+  (forall a, A_vdso_func <= a < A_vdso_func + 8 -> R a) -> rw_cells usegs m' A_vdso_func [C8 (wz (if v then hvdso else P_cgt_init))].
 Proof. intros R m m' v C AG HR. eapply rw_cells_agree; [exact AG| exact C|]. intros a Ha. apply HR. cellr Ha. lia. Qed.
 
 Lemma CLEAN_agreeR : forall (R : Z -> Prop) m m', m (wa A_global_cleanup) = None -> magree R m m' -> R A_global_cleanup -> m' (wa A_global_cleanup) = None.
@@ -288,7 +289,7 @@ Qed.
 (* [comment removed for export] *)
 Lemma LIBMID_agree_vdso : forall LIB m m' M,
   LIBMID LIB m M -> magree (fun a => c4_addr LIB a /\ ~ (A_vdso_func <= a < A_vdso_func + 8)) m m' ->
-  rw_cells usegs m' A_vdso_func [C8 (wz 0)] ->
+  rw_cells usegs m' A_vdso_func [C8 (wz hvdso)] ->
   LIBMID LIB m' (mkMID (mid_flag M) (mid_ctx M) (mid_err M) (mid_E M) true).
 Proof.
   intros LIB m m' M LM AG VD'.

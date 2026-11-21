@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGjs.v (cold/c-asan-realloc-primary 1d3dc5f4932, file sha256 4826b138ee45) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53); module paths changed; its 15 image addresses moved by code-verified function pairs (32 port_addr_check 16f8a030c869 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py; 1 the tool cannot place or places wrongly, read out of image B itself); no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10-29: c-asan's c5 change to this file, cold/c-asan-realloc-c5 ced28ed2383 (file sha256 4826b138ee45) -> 84ee52cd012 (file sha256 6a689e4f23ad), applied by a 3-way merge; no numeral of the changed lines names an image address. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGjs.v (file sha256 4826b138ee45) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53); module paths changed; its 15 image addresses moved by code-verified function pairs (32 port_addr_check 16f8a030c869 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py; 1 the tool cannot place or places wrongly, read out of image B itself); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-29: c-asan's c5 change to this file, (file sha256 4826b138ee45) -> (file sha256 6a689e4f23ad), applied by a 3-way merge; no numeral of the changed lines names an image address. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -530,7 +531,7 @@ ALedger tfibsegs ly S (cfg_model c1) -> amwf (cfg_model c1) -> same_io md0 (cfg_
 amreal tfibsegs (K 0) W c' Q) ->
 (forall (a : word) (W3 : world tfibsegs) (ms : machine_state) (E' : env),
 let A := bv_unsigned a in let md2 := mmap_model a (w64 MSv) (cfg_model c1) in
-grant_ok_na_pin (cfg_model c1) a MSv = true ->
+grant_ok_na_pin (Z_to_bv 64 0) (cfg_model c1) a MSv = true ->
 ALedger tfibsegs ly S (cfg_model c1) -> amwf (cfg_model c1) ->
 wle W W3 -> hsub (w_H W3) (w_H W) -> (forall x : word, w_H W x = false -> w_H W3 x = false) ->
 w_A W3 = (SHLO A, SHHI A) :: (A, A + MSv) :: w_A W ->
@@ -576,15 +577,16 @@ assert (R14 : getr regs 14 = Z_to_bv 64 (-1)) by (rewrite (Hregs 14%bv), H14; cb
 assert (R15 : getr regs 15 = Z_to_bv 64 0) by (rewrite (Hregs 15%bv), H15; reflexivity).
 (* cgif's own node: its sizes stay below MALLOC_MAX (HNM), inside YFia's grant bound NOB *)
 assert (MSB : 0 < MSv <= MALLOC_MAX + 4 * 4096) by (pose proof size_facts as (_ & _ & _ & _ & _ & _ & _ & _ & _ & Z10m & _); clear - Z8 Z3 Z7 Z10m HNM; unfold MALLOC_MAX in *; zlia).
-destruct (sec_grant_exists_AR B ly S _ mdN MSv HARm LN MWN ltac:(clear - MSB; unfold YF06.NOB, MALLOC_MAX in *; zlia)) as [a0 Ha0].
+destruct (sec_grant_exists_AR B ly S _ mdN MSv HARm LN MWN ltac:(clear - MSB; unfold YF06.NOB, MALLOC_MAX in *; zlia)
+  ltac:(rewrite <- pru_MS; unfold page_round_up_Z, page_size; apply Z_mod_mult)) as [a0 Ha0].
 assert (SL0 : eager_used mdN + A_bytes (w_A W) + 2 ^ 30 <= vm_limit (m_vmmaps mdN)).
 { apply (slackS mdN W 0 HAR Hev L0); [unfold mdN; rewrite m_vmmaps_wvb; reflexivity | unfold mdN; rewrite eager_used_wvb; clear; zlia | clear; zlia | clear; zlia | clear; zlia]. }
-assert (PER : forall a : word, grant_ok_na_pin mdN a MSv = true ->
+assert (PER : forall a : word, grant_ok_na_pin (Z_to_bv 64 0) mdN a MSv = true ->
 (AI tfibsegs (w_H W) (w_A W) (grant_md true (Z_to_bv 64 34) a (w64 MSv) mdN) /\ MWF (grant_md true (Z_to_bv 64 34) a (w64 MSv) mdN)) /\
 mmap_noreserve_backed_ok (Z_to_bv 64 34) mdN MSv = true /\
 eager_used (grant_md true (Z_to_bv 64 34) a (w64 MSv) mdN) <= eager_used mdN + MSv /\
 maps_nonempty (grant_md true (Z_to_bv 64 34) a (w64 MSv) mdN)).
-{ intros a Ha. pose proof (YFia.grant_parts mdN a MSv Ha) as (Pal & Ppos & Pce & Prf & Ppl).
+{ intros a Ha. pose proof (YFia.grant_parts mdN a MSv MSB Z9 Ha) as (Pal & Ppos & Pce & Prf & Ppl).
 assert (CE : bv_unsigned a + page_round_up_Z MSv <= alloc_top (m_vmmaps mdN)) by (rewrite pru_MS; exact Pce).
 assert (PL' : region_free (vm_reserved (m_vmmaps mdN) ++ vm_maps (m_vmmaps mdN)) a (Z_to_bv 64 (page_round_up_Z MSv)) = true) by (rewrite pru_MS; exact Prf).
 assert (SL1 : eager_used mdN + A_bytes (w_A W) + page_round_up_Z MSv <= vm_limit (m_vmmaps mdN)) by (rewrite pru_MS; clear - SL0 MSB; unfold MALLOC_MAX in MSB; zlia).
@@ -611,7 +613,7 @@ set (a := ga i) in *. set (A := bv_unsigned a) in *.
 destruct (PER a Hg) as ([AIg MWFg] & _ & EG & NZg).
 pose proof (grant_anon_shape a (w64 MSv) mdN) as (SH1 & SH2 & SH3 & SH4 & SH5).
 set (md2 := grant_md true (Z_to_bv 64 34) a (w64 MSv) mdN) in *.
-pose proof (YFia.grant_parts mdN a MSv Hg) as (Pal & Ppos & Pce & Prf & Ppl).
+pose proof (YFia.grant_parts mdN a MSv MSB Z9 Hg) as (Pal & Ppos & Pce & Prf & Ppl).
 fold A in Pal, Ppos, Pce.
 pose proof (SH_hull A) as (U1' & U2 & U3 & U4 & U5 & U6).
 assert (AL1 : A <= A + MSv) by (clear - MSB; zlia).

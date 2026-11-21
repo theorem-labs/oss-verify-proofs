@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the client's hand-off fact is stated for each CONFIG_RSEQ value over the hand-off states the start-up certificate computes. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Monad Specs Run Fs.
 From OSSVerify.Proofs.simdjson.fuzz_ondemand.lib.Lib Require Import Ceiling RzCPS.
-From OSSVerify.Proofs.simdjson.fuzz_ondemand.lib.AS Require Import StartupHSBoth.
+From OSSVerify.Proofs.simdjson.fuzz_ondemand.lib.AS Require Import AsanPlan BothStartupCert.
 From OSSVerify.Proofs.simdjson.fuzz_ondemand.lib.A Require Import Shadow.
 From OSSVerify.Proofs.simdjson.fuzz_ondemand.lib.B Require Import Layout RT_iface RT_iface2 RT_state RT_rep RT_malcore_stmt RT_refillstmt RT_sys_stmt RT_sys_fixed
   RT_sys_grant RT_sys_madvise RT_sys_munmap RT_refill RT_contracts RT_contracts2 RT_malsec RT_freestmt RT_drain_ldefs RT_drain_istmt RT_drain_fin
@@ -77,5 +78,5 @@ Definition client_od : client_B :=
     (fun A nx0 LIMIT SINV argH FS0 H1 H2 H3 E ch R FULL model HC A' HA' HT => hs_lib_gen A nx0 LIMIT SINV argH FS0 H1 H2 H3 E ch R FULL model HC A' HA' HT)
     (fun _ => rta_fuzz_one_od).
 
-Lemma client_od_hs : forall h ch, HS_both h = Some ch -> cl_hs_ok client_od ch = true.
-Proof. intros h ch H. exact (HS_lib_ok h ch H). Qed.
+Lemma client_od_hs : forall (b : bool) h ch, HS_both (AP.rseq_z b) h = Some ch -> cl_hs_ok client_od ch = true.
+Proof. intros b h ch H. exact (HS_lib_ok b h ch H). Qed.

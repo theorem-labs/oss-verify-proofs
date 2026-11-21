@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: in both copies, EB and VB take mbase, blobs0 takes the launch input and the draw, and split_lit_denot is applied without the old launch arguments (PH, sp, draw, argv, envp, uid, hwcap). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -90,8 +91,8 @@ Section Theorems14.
   Hypothesis VE : valid_entry IMG (mkEntry sp brk mbase draw) inp.
   Let usp := bv_unsigned sp.
   #[local] Notation bootS' := (bootS sp brk mbase draw lim inp).
-  #[local] Notation EB' := (EB sp draw inp).
-  #[local] Notation VB' := (VB sp draw inp).
+  #[local] Notation EB' := (EB sp mbase draw inp).
+  #[local] Notation VB' := (VB sp mbase draw inp).
 
   (* [comment removed for export] *)
   #[using="VI VE usp"] Theorem bs_expose_keep : forall H A a tid c pl js sr kn L hc lz R M mdl (e : expr) (eo m lo n : Z) (rlo rhi : Z),
@@ -158,8 +159,8 @@ Section Theorems15.
   Hypothesis VE : valid_entry IMG (mkEntry sp brk mbase draw) inp.
   Let usp := bv_unsigned sp.
   #[local] Notation bootS' := (bootS sp brk mbase draw lim inp).
-  #[local] Notation EB' := (EB sp draw inp).
-  #[local] Notation VB' := (VB sp draw inp).
+  #[local] Notation EB' := (EB sp mbase draw inp).
+  #[local] Notation VB' := (VB sp mbase draw inp).
 
   (* [comment removed for export] *)
   #[using="VI VE usp"] Theorem cross_musl_memcpy8 : forall (clob : list reg) (j : nat) H A a tid c pl js sr kn L hc lz R M mdl
@@ -197,7 +198,7 @@ Section Theorems15.
     assert (Ud : bv_unsigned dw = d) by (unfold dw; apply u_small; lia).
     assert (Us : bv_unsigned sw = s) by (unfold sw; apply u_small; lia).
     assert (G10 : getr R 10%bv = dw).
-    { rewrite (HR 10%bv), (split_lit_denot PH sp draw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) _ _ _ _ S10). reflexivity. }
+    { rewrite (HR 10%bv), (split_lit_denot _ _ _ _ S10). reflexivity. }
     assert (G11 : getr R 11%bv = sw) by (rewrite (HR 11%bv); exact S11).
     assert (G12 : getr R 12%bv = Z_to_bv 64 8) by (rewrite (HR 12%bv); exact S12).
     assert (G1 : getr R 1%bv = Z_to_bv 64 ret) by (rewrite (HR 1%bv), S1; reflexivity).
@@ -274,18 +275,18 @@ Section Theorems15.
       assert (U31 : bv_unsigned r <> 31) by (intros X; apply Hm; do 13 right; left; apply bv_eq; symmetry; exact X).
       lia. }
     set (w := le_bytes_to_word bs) in *.
-    assert (VBapp : VB sp draw inp a tid c pl (js ++ [w]) = VB sp draw inp a tid c pl js ++ [w]) by (unfold VB; rewrite <- !app_assoc; reflexivity).
-    assert (LENw : length (VB sp draw inp a tid c pl (js ++ [w])) = Datatypes.S (length (VB sp draw inp a tid c pl js))).
+    assert (VBapp : VB sp mbase draw inp a tid c pl (js ++ [w]) = VB sp mbase draw inp a tid c pl js ++ [w]) by (unfold VB; rewrite <- !app_assoc; reflexivity).
+    assert (LENw : length (VB sp mbase draw inp a tid c pl (js ++ [w])) = Datatypes.S (length (VB sp mbase draw inp a tid c pl js))).
     { rewrite VBapp, length_app. cbn [length]. lia. }
-    assert (Hsr1 : sr_vars_lt (length (VB sp draw inp a tid c pl (js ++ [w]))) sr = true).
-    { rewrite LENw. apply (sr_vars_lt_weaken (length (VB sp draw inp a tid c pl js))); [lia | exact Hsr]. }
-    assert (AGR : env_agree (length (VB sp draw inp a tid c pl js)) (EB sp draw inp a tid c pl js) (Env (vals_ev (VB sp draw inp a tid c pl js ++ [w])) (blobs0 draw (in_argv inp)))).
+    assert (Hsr1 : sr_vars_lt (length (VB sp mbase draw inp a tid c pl (js ++ [w]))) sr = true).
+    { rewrite LENw. apply (sr_vars_lt_weaken (length (VB sp mbase draw inp a tid c pl js))); [lia | exact Hsr]. }
+    assert (AGR : env_agree (length (VB sp mbase draw inp a tid c pl js)) (EB sp mbase draw inp a tid c pl js) (Env (vals_ev (VB sp mbase draw inp a tid c pl js ++ [w])) (blobs0 inp draw))).
     { unfold EB. apply vals_app_agree. }
     apply HK; [constructor |].
     13:{ intros x Hx. destruct (H x) eqn:EH; [rewrite (munrestrict_hidden _ _ _ _ EH); reflexivity|].
          rewrite (munrestrict_visible _ _ _ _ EH), V'out by exact Hx. unfold V. rewrite (mrestrict_visible' _ _ _ EH). reflexivity. }
     - (* [comment removed for export] *)
-      rewrite EB_app, <- LENw. apply (regs_after_clob clob (VB sp draw inp a tid c pl (js ++ [w])) (blobs0 draw (in_argv inp)) sr R R' Hsr1).
+      rewrite EB_app, <- LENw. apply (regs_after_clob clob (VB sp mbase draw inp a tid c pl (js ++ [w])) (blobs0 inp draw) sr R R' Hsr1).
       + rewrite VBapp. apply env_app_regs; [exact Hsr | exact HR].
       + exact AG.
       + exact Hc0.
@@ -293,15 +294,15 @@ Section Theorems15.
     - (* [comment removed for export] *)
       rewrite EQV. rewrite EB_app. apply env_app_know.
       { rewrite LENw. cbn [kn_vars_lt kentry_vars_lt saddr_vars_lt a_base expr_vars_lt andb].
-        rewrite (expr_vars_lt_weaken (length (VB sp draw inp a tid c pl js))) by (lia || exact Hev). cbn [andb].
+        rewrite (expr_vars_lt_weaken (length (VB sp mbase draw inp a tid c pl js))) by (lia || exact Hev). cbn [andb].
         rewrite (proj2 (Nat.ltb_lt _ _)) by lia. cbn [andb].
-        unfold kn_keep. apply kn_vars_lt_filter. apply kn_vars_lt_skipn. apply (kn_vars_lt_weaken (length (VB sp draw inp a tid c pl js))); [lia | exact Hkn]. }
+        unfold kn_keep. apply kn_vars_lt_filter. apply kn_vars_lt_skipn. apply (kn_vars_lt_weaken (length (VB sp mbase draw inp a tid c pl js))); [lia | exact Hkn]. }
       rewrite VBapp. constructor.
       + cbn [kentry_ok]. split; [lia|].
-        assert (Ee : edenot (Env (vals_ev (VB sp draw inp a tid c pl js ++ [w])) (blobs0 draw (in_argv inp))) e = edenot (EB sp draw inp a tid c pl js) e).
-        { symmetry. apply (edenot_agree (length (VB sp draw inp a tid c pl js))); [exact AGR | exact Hev]. }
-        assert (Ew : edenot (Env (vals_ev (VB sp draw inp a tid c pl js ++ [w])) (blobs0 draw (in_argv inp))) (EVar (length (VB sp draw inp a tid c pl js))) = w).
-        { cbn [edenot ev]. replace (length (VB sp draw inp a tid c pl js)) with (length (VB sp draw inp a tid c pl js) + 0)%nat by lia. rewrite vals_ev_app_r. reflexivity. }
+        assert (Ee : edenot (Env (vals_ev (VB sp mbase draw inp a tid c pl js ++ [w])) (blobs0 inp draw)) e = edenot (EB sp mbase draw inp a tid c pl js) e).
+        { symmetry. apply (edenot_agree (length (VB sp mbase draw inp a tid c pl js))); [exact AGR | exact Hev]. }
+        assert (Ew : edenot (Env (vals_ev (VB sp mbase draw inp a tid c pl js ++ [w])) (blobs0 inp draw)) (EVar (length (VB sp mbase draw inp a tid c pl js))) = w).
+        { cbn [edenot ev]. replace (length (VB sp mbase draw inp a tid c pl js)) with (length (VB sp mbase draw inp a tid c pl js) + 0)%nat by lia. rewrite vals_ev_app_r. reflexivity. }
         unfold flat, estart, elenZ. rewrite adenot_SA. cbn [a_base a_off]. rewrite Ee, Ew. fold d.
         split; [lia|]. unfold V'. fold dw. replace (word_to_le_bytes 8 w) with bs by (unfold w; symmetry; exact (wleb8_lez bs LEN)).
         rewrite <- LEN. apply rdn_wbytes_hit. rewrite LEN, Ud. lia.
@@ -309,7 +310,7 @@ Section Theorems15.
         * apply know_ok_skipn. apply (know_ok_agree SEGS _ _ _ _ _ AGR); [| exact HKN]. exact Hkn.
         * apply know_ok_skipn. apply (know_ok_agree SEGS _ _ _ _ _ AGR); [| exact HKN]. exact Hkn.
         * unfold estart, elenZ. cbn [a_base a_off edenot].
-          rewrite <- (edenot_agree (length (VB sp draw inp a tid c pl js)) _ _ ce AGR Hce). rewrite u_small by lia.
+          rewrite <- (edenot_agree (length (VB sp mbase draw inp a tid c pl js)) _ _ ce AGR Hce). rewrite u_small by lia.
           apply (mem_change_grow_mono V V' d 8); [| lia | lia].
           rewrite <- Ud. replace 8 with (Z.of_nat (length bs)) by (rewrite LEN; reflexivity). unfold V'. apply mem_change_wbytes.
           rewrite LEN, Ud. lia.
@@ -422,8 +423,8 @@ Section Theorems14.
   Hypothesis VE : valid_entry IMG (mkEntry sp brk mbase draw) inp.
   Let usp := bv_unsigned sp.
   #[local] Notation bootS' := (bootS sp brk mbase draw lim inp).
-  #[local] Notation EB' := (EB sp draw inp).
-  #[local] Notation VB' := (VB sp draw inp).
+  #[local] Notation EB' := (EB sp mbase draw inp).
+  #[local] Notation VB' := (VB sp mbase draw inp).
 
   (* [comment removed for export] *)
   #[using="VI VE usp"] Theorem bs_expose_keep : forall H A a tid c pl js sr kn L hc lz R M mdl (e : expr) (eo m lo n : Z) (rlo rhi : Z),
@@ -490,8 +491,8 @@ Section Theorems15.
   Hypothesis VE : valid_entry IMG (mkEntry sp brk mbase draw) inp.
   Let usp := bv_unsigned sp.
   #[local] Notation bootS' := (bootS sp brk mbase draw lim inp).
-  #[local] Notation EB' := (EB sp draw inp).
-  #[local] Notation VB' := (VB sp draw inp).
+  #[local] Notation EB' := (EB sp mbase draw inp).
+  #[local] Notation VB' := (VB sp mbase draw inp).
 
   (* [comment removed for export] *)
   #[using="VI VE usp"] Theorem cross_musl_memcpy8 : forall (clob : list reg) (j : nat) H A a tid c pl js sr kn L hc lz R M mdl
@@ -529,7 +530,7 @@ Section Theorems15.
     assert (Ud : bv_unsigned dw = d) by (unfold dw; apply u_small; lia).
     assert (Us : bv_unsigned sw = s) by (unfold sw; apply u_small; lia).
     assert (G10 : getr R 10%bv = dw).
-    { rewrite (HR 10%bv), (split_lit_denot PH sp draw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) _ _ _ _ S10). reflexivity. }
+    { rewrite (HR 10%bv), (split_lit_denot _ _ _ _ S10). reflexivity. }
     assert (G11 : getr R 11%bv = sw) by (rewrite (HR 11%bv); exact S11).
     assert (G12 : getr R 12%bv = Z_to_bv 64 8) by (rewrite (HR 12%bv); exact S12).
     assert (G1 : getr R 1%bv = Z_to_bv 64 ret) by (rewrite (HR 1%bv), S1; reflexivity).
@@ -606,18 +607,18 @@ Section Theorems15.
       assert (U31 : bv_unsigned r <> 31) by (intros X; apply Hm; do 13 right; left; apply bv_eq; symmetry; exact X).
       lia. }
     set (w := le_bytes_to_word bs) in *.
-    assert (VBapp : VB sp draw inp a tid c pl (js ++ [w]) = VB sp draw inp a tid c pl js ++ [w]) by (unfold VB; rewrite <- !app_assoc; reflexivity).
-    assert (LENw : length (VB sp draw inp a tid c pl (js ++ [w])) = Datatypes.S (length (VB sp draw inp a tid c pl js))).
+    assert (VBapp : VB sp mbase draw inp a tid c pl (js ++ [w]) = VB sp mbase draw inp a tid c pl js ++ [w]) by (unfold VB; rewrite <- !app_assoc; reflexivity).
+    assert (LENw : length (VB sp mbase draw inp a tid c pl (js ++ [w])) = Datatypes.S (length (VB sp mbase draw inp a tid c pl js))).
     { rewrite VBapp, length_app. cbn [length]. lia. }
-    assert (Hsr1 : sr_vars_lt (length (VB sp draw inp a tid c pl (js ++ [w]))) sr = true).
-    { rewrite LENw. apply (sr_vars_lt_weaken (length (VB sp draw inp a tid c pl js))); [lia | exact Hsr]. }
-    assert (AGR : env_agree (length (VB sp draw inp a tid c pl js)) (EB sp draw inp a tid c pl js) (Env (vals_ev (VB sp draw inp a tid c pl js ++ [w])) (blobs0 draw (in_argv inp)))).
+    assert (Hsr1 : sr_vars_lt (length (VB sp mbase draw inp a tid c pl (js ++ [w]))) sr = true).
+    { rewrite LENw. apply (sr_vars_lt_weaken (length (VB sp mbase draw inp a tid c pl js))); [lia | exact Hsr]. }
+    assert (AGR : env_agree (length (VB sp mbase draw inp a tid c pl js)) (EB sp mbase draw inp a tid c pl js) (Env (vals_ev (VB sp mbase draw inp a tid c pl js ++ [w])) (blobs0 inp draw))).
     { unfold EB. apply vals_app_agree. }
     apply HK; [constructor |].
     13:{ intros x Hx. destruct (H x) eqn:EH; [rewrite (munrestrict_hidden _ _ _ _ EH); reflexivity|].
          rewrite (munrestrict_visible _ _ _ _ EH), V'out by exact Hx. unfold V. rewrite (mrestrict_visible' _ _ _ EH). reflexivity. }
     - (* [comment removed for export] *)
-      rewrite EB_app, <- LENw. apply (regs_after_clob clob (VB sp draw inp a tid c pl (js ++ [w])) (blobs0 draw (in_argv inp)) sr R R' Hsr1).
+      rewrite EB_app, <- LENw. apply (regs_after_clob clob (VB sp mbase draw inp a tid c pl (js ++ [w])) (blobs0 inp draw) sr R R' Hsr1).
       + rewrite VBapp. apply env_app_regs; [exact Hsr | exact HR].
       + exact AG.
       + exact Hc0.
@@ -625,15 +626,15 @@ Section Theorems15.
     - (* [comment removed for export] *)
       rewrite EQV. rewrite EB_app. apply env_app_know.
       { rewrite LENw. cbn [kn_vars_lt kentry_vars_lt saddr_vars_lt a_base expr_vars_lt andb].
-        rewrite (expr_vars_lt_weaken (length (VB sp draw inp a tid c pl js))) by (lia || exact Hev). cbn [andb].
+        rewrite (expr_vars_lt_weaken (length (VB sp mbase draw inp a tid c pl js))) by (lia || exact Hev). cbn [andb].
         rewrite (proj2 (Nat.ltb_lt _ _)) by lia. cbn [andb].
-        unfold kn_keep. apply kn_vars_lt_filter. apply kn_vars_lt_skipn. apply (kn_vars_lt_weaken (length (VB sp draw inp a tid c pl js))); [lia | exact Hkn]. }
+        unfold kn_keep. apply kn_vars_lt_filter. apply kn_vars_lt_skipn. apply (kn_vars_lt_weaken (length (VB sp mbase draw inp a tid c pl js))); [lia | exact Hkn]. }
       rewrite VBapp. constructor.
       + cbn [kentry_ok]. split; [lia|].
-        assert (Ee : edenot (Env (vals_ev (VB sp draw inp a tid c pl js ++ [w])) (blobs0 draw (in_argv inp))) e = edenot (EB sp draw inp a tid c pl js) e).
-        { symmetry. apply (edenot_agree (length (VB sp draw inp a tid c pl js))); [exact AGR | exact Hev]. }
-        assert (Ew : edenot (Env (vals_ev (VB sp draw inp a tid c pl js ++ [w])) (blobs0 draw (in_argv inp))) (EVar (length (VB sp draw inp a tid c pl js))) = w).
-        { cbn [edenot ev]. replace (length (VB sp draw inp a tid c pl js)) with (length (VB sp draw inp a tid c pl js) + 0)%nat by lia. rewrite vals_ev_app_r. reflexivity. }
+        assert (Ee : edenot (Env (vals_ev (VB sp mbase draw inp a tid c pl js ++ [w])) (blobs0 inp draw)) e = edenot (EB sp mbase draw inp a tid c pl js) e).
+        { symmetry. apply (edenot_agree (length (VB sp mbase draw inp a tid c pl js))); [exact AGR | exact Hev]. }
+        assert (Ew : edenot (Env (vals_ev (VB sp mbase draw inp a tid c pl js ++ [w])) (blobs0 inp draw)) (EVar (length (VB sp mbase draw inp a tid c pl js))) = w).
+        { cbn [edenot ev]. replace (length (VB sp mbase draw inp a tid c pl js)) with (length (VB sp mbase draw inp a tid c pl js) + 0)%nat by lia. rewrite vals_ev_app_r. reflexivity. }
         unfold flat, estart, elenZ. rewrite adenot_SA. cbn [a_base a_off]. rewrite Ee, Ew. fold d.
         split; [lia|]. unfold V'. fold dw. replace (word_to_le_bytes 8 w) with bs by (unfold w; symmetry; exact (wleb8_lez bs LEN)).
         rewrite <- LEN. apply rdn_wbytes_hit. rewrite LEN, Ud. lia.
@@ -641,7 +642,7 @@ Section Theorems15.
         * apply know_ok_skipn. apply (know_ok_agree SEGS _ _ _ _ _ AGR); [| exact HKN]. exact Hkn.
         * apply know_ok_skipn. apply (know_ok_agree SEGS _ _ _ _ _ AGR); [| exact HKN]. exact Hkn.
         * unfold estart, elenZ. cbn [a_base a_off edenot].
-          rewrite <- (edenot_agree (length (VB sp draw inp a tid c pl js)) _ _ ce AGR Hce). rewrite u_small by lia.
+          rewrite <- (edenot_agree (length (VB sp mbase draw inp a tid c pl js)) _ _ ce AGR Hce). rewrite u_small by lia.
           apply (mem_change_grow_mono V V' d 8); [| lia | lia].
           rewrite <- Ud. replace 8 with (Z.of_nat (length bs)) by (rewrite LEN; reflexivity). unfold V'. apply mem_change_wbytes.
           rewrite LEN, Ud. lia.

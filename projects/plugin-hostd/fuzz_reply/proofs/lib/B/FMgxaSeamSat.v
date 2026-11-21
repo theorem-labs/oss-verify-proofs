@@ -5,7 +5,8 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/PSnpSeam.v, with its module paths and module names changed; 837 of its 913 lines of code are new or changed and 487 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/PSnpSeamReady.v, with its module paths and module names changed; 215 of its 368 lines of code are new or changed and 760 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/RT_pf_chain_sat.v, with its module paths, module names and addresses changed; 64 of its 245 lines of code are new or changed and 187 lines of the source are left out. *)
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamSat.v (a working branch 3242941dc96); relocated to plugin-hostd/fuzz_reply/fuzz_reply.asan-ubsan by a Theorem Labs lane's pfinst/tool (reloc.py target reply-B): module paths changed; 25 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_reply.asan-ubsan, symbol + offset; table pfinst/tool/tables-3242941dc96/reply-B/FMgxaSeamSat.table); by hand (numerals.py BY_HAND, reason in the table): 0x929a8 -> 0x96e80, 0x92f68 -> 0x973c8; names: record RT_IImgA -> ; A-core -> B-core (lib.B): AB1v->YB1v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamSat.v (a working branch); relocated to plugin-hostd/fuzz_reply/fuzz_reply.asan-ubsan by a Theorem Labs lane's pfinst/tool (reloc.py target reply-B): module paths changed; 25 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_reply.asan-ubsan, symbol + offset; table pfinst/tool/tables/reply-B/FMgxaSeamSat.table); by hand (numerals.py BY_HAND, reason in the table): 0x929a8 -> 0x96e80, 0x92f68 -> 0x973c8; names: record RT_IImgA -> ; A-core -> B-core (lib.B): AB1v->YB1v. *)
 (* SATISFIABILITY CONTROL for the GXA seam's READY (FMgxaSeam.v:317-328): seam_calls_ready (FMgxaSeamGuard.v:99) at
    fm's three readiness predicates FMgxa_mem.copy_ready, FMgxa_mem.set_ready and RT_gxa_strnlen.strn_ready holds at a
    store and a geometry where every clause has calls to cover.
@@ -25,7 +26,7 @@
      CK  = Fp + 0xe8 = Fp + 232  its cookie {s, n} (FMsnprintfI.v:40 CKO)
      D   = S + 0x40, dn = 32     the destination: a 32-byte buffer in the snprintf caller's frame, above the
                                  interceptor's va area (sp0 + 0xa08, FMsnprintfGI.v:15) and its five register slots,
-                                 so GXA (3) (FMsnprintfSx.v:243) holds through its right disjunct
+                                 so GXA (3) (FMsnprintfSx.v:244) holds through its right disjunct
    The store sat_m is built here, as seam_calls_ready is a statement about a store only: every ASan shadow byte is
    present and 0 (no poison), the runtime cells the three predicates read (FMgxa_mem.v:136-141, :222-228;
    RT_gxa_strnlen.v:100-104) hold their values, and the stack window, the FILE, the cookie and the destination are

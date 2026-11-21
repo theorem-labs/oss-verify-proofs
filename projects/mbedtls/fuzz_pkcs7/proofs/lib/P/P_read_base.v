@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (stack_writable, read_regions0 and kn_RE_base's stack window and disjointness entries moved to sp0 - 6144512, the floor of the stack the launch maps (was sp0 - 8388608)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -57,7 +58,7 @@ Definition mem_eq_outside (M M' : word -> option byte) (rs : list (word * Z)) : 
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-Definition stack_writable (M : word -> option byte) (sp0 : word) : Prop := ltac2:(CDefT.buildp (gd_tbl_P_read_base ()) "Pd,$8.Pm,$9.P,(:.=R2.)P,(:.(;.R3.(<.R2.))+800000.)(=.$>.(?.$10.O2.(5.&40.(;.(11.(12.&40.O1.)+800000.)R4.))R3.)$13.)")
+Definition stack_writable (M : word -> option byte) (sp0 : word) : Prop := ltac2:(CDefT.buildp (gd_tbl_P_read_base ()) "Pd,$8.Pm,$9.P,(:.=R2.)P,(:.(;.R3.(<.R2.))+5=<200.)(=.$>.(?.$10.O2.(5.&40.(;.(11.(12.&40.O1.)+5=<200.)R4.))R3.)$13.)")
 (* [comment removed for export] *).
 
 (* [comment removed for export] *)
@@ -125,7 +126,7 @@ Definition vm_pre (VM : VmMaps) (mb gm : word) : Prop := ltac2:(CDefT.buildp (gd
 
 (* [comment removed for export] *)
 Definition read_regions0 (sp0 gm : word) (L : Z) : list (word * Z) :=
-  [(Z_to_bv 64 (bv_unsigned sp0 - 8388608), 8388496%Z); (Z_to_bv 64 (bv_unsigned gm + 32), L)].
+  [(Z_to_bv 64 (bv_unsigned sp0 - 6144512), 6144400%Z); (Z_to_bv 64 (bv_unsigned gm + 32), L)].
 
 Record read_post0 (sp0 p1 gm : word) (content : list byte)
        (R0 : bvmap 5 word) (M0 : word -> option byte)
@@ -165,7 +166,7 @@ Definition sr_RE : list expr := ltac2:(CDefT.buildp (gd_tbl_P_read_base ()) "(0.
 (* [comment removed for export] *).
 
 (* [comment removed for export] *)
-Definition kn_RE_base : list kentry := ltac2:(CDefT.buildp (gd_tbl_P_read_base ()) "(0.$14.(36.(1;.#0.)+10.)(0.$14.(37.(1;.#0.)+7???80000000.+800000000000.)(0.$14.(38.(39.(1;.#0.)-800000.)+800000.)(0.$14.(36.(1;.#3.)+1000.)(0.$14.(37.(1;.#3.)+7;000.+7???7?7>?000.)(0.$14.(38.(39.(1;.#3.)=)+11000.)(0.$14.(3:.(39.(1;.#0.)-800000.)+800000.(39.(1;.#3.)=)+11000.)(0.$14.(37.(1;.#1.)+7???80000000.+800000400000.)(7.$14.)))))))))")
+Definition kn_RE_base : list kentry := ltac2:(CDefT.buildp (gd_tbl_P_read_base ()) "(0.$14.(36.(1;.#0.)+10.)(0.$14.(37.(1;.#0.)+7???80000000.+800000000000.)(0.$14.(38.(39.(1;.#0.)-5=<200.)+5=<200.)(0.$14.(36.(1;.#3.)+1000.)(0.$14.(37.(1;.#3.)+7;000.+7???7?7>?000.)(0.$14.(38.(39.(1;.#3.)=)+11000.)(0.$14.(3:.(39.(1;.#0.)-5=<200.)+5=<200.(39.(1;.#3.)=)+11000.)(0.$14.(37.(1;.#1.)+7???80000000.+800000400000.)(7.$14.)))))))))")
 (* [comment removed for export] *).
 Definition kn_RE (Llo Lhi : Z) : list kentry := kn_RE_base ++ [KRange (EVar 4) Llo Lhi].
 

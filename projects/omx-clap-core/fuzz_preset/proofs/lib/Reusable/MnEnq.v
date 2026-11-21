@@ -1,20 +1,21 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-29 (p102 row N9-MNARM; task MEMNORM): statements.
    rule 24: no function proved (kind: statements - the memnorm-keeping twin of the QuarantineCache::Enqueue callee
    contract at Put's call, used by the Deallocate mid arm (DGg2) and drain arm (DGfz); cgif proof CLenqcgif's arms
    enq_room_xs / enq_hit_xs / enq_miss_xs, raw frames YFgp.MEQ and twins).
-   WHY INSIDE THE WALK.  At cgif the owned set [aowned] meets the read-only segment [0x10000, 0x30000) (YF0m.v:279-286
+   WHY INSIDE THE WALK.  At cgif the owned set [aowned] meets the read-only segment [0x10000, 0x30000) (YF0m.v:280-287
    Tfib_owned_static: (0x102e8, 8) .. (0x20e62, 0x1e), (0x1cccb, 21) .. (0x2146c, 2)), so the callee post's raw frame
    DIfaceR.acall_raw_x (outside the owned sets, the scratch and E: mem' = mem) admits a ROM byte copied into the overlay
    at an owned address and does not give the keep.  The keep is proved inside the callee walk, per runner phase, from
    the phase's own write window (proof route: st_ok + frame_of as preset's YGcallMxmn.v:677
-   memnorm_frame_of; the mmap / munmap nodes by MemnormGk.klaw_commit3 / klaw_munmap and MemnormG.amreal_m_node, in    lib/Reusable/MemnormGk.v / MemnormG.v at ossv/recipes 87c4b944683b; this tree no longer has those files).
+   memnorm_frame_of; the mmap / munmap nodes by MemnormGk.klaw_commit3 / klaw_munmap and MemnormG.amreal_m_node, in    lib/Reusable/MemnormGk.v / MemnormG.v; this tree no longer has those files).
    STATEMENT SHAPE: ErrnoG's raw add-on with `MemnormT.memnorm_keep im_segs mem mem'` next to
    `errno_kept B mem mem'` in the SAME post (amreal has no rule that joins two contracts). Additive: ErrnoG, DIfaceR and
    every existing statement are unchanged.
-   - [acall_raw_em_x]: ErrnoG.acall_raw_e_x (ErrnoG.v:251-253) plus the keep; also the Drain add-on's (MnDrain.v);
-   - [de_enqueue_m_t]: ErrnoG.de_enqueue_t (ErrnoG.v:356) at acall_raw_em_x;
+   - [acall_raw_em_x]: ErrnoG.acall_raw_e_x (ErrnoG.v:252-254) plus the keep; also the Drain add-on's (MnDrain.v);
+   - [de_enqueue_m_t]: ErrnoG.de_enqueue_t (ErrnoG.v:357) at acall_raw_em_x;
    - [de_enqueue_em_e]: it gives ErrnoG.de_enqueue_t (drop the keep; Qed). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.

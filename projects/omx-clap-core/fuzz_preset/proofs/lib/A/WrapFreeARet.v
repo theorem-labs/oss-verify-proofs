@@ -1,18 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: copied from lib/AU/WrapMallocBRetRun.v (origin/cold/h-rw-man-5-icpt fe4845c761b,
+(* Modified by Theorem Labs, 2026-10: copied from lib/AU/WrapMallocBRetRun.v (
    image B's malloc return run) and moved to image A's free interceptor (asan, pin d83eb25dbf0d, twin f0d2e8d40c7e):
    the seed is the state at Deallocate's return 0x53854 (one frame: the interceptor's saved ra, s0, s1, s2..s5 at
    sp + 2072 .. sp + 2128 = the caller's sp - 56 .. sp, as environment atoms 32..38), the run is the epilogue
    0x53854-0x53878 over A's table tfibtbl_rtA (no store) and SRr_ret_at, as lib/A/AFh1.v:336-351 ends its walk.
-   Added: wf_ret_A, field F2 wf_ret of h-mani-a8's Record wrap_free_walk_cf (lib/Reusable/YGcfMallocCompose.v:352-366)
+   Added: wf_ret_A, field F2 wf_ret of h-mani-a8's Record wrap_free_walk_cf (lib/Reusable/YGcfMallocCompose.v:353-367)
    at segs := tfibsegs, atpD := 1, ARX := YGcfDIface.ARXs_cf B tfibsegs, K := K_A (lib/A/WrapFreeAK.v), from the run,
    DeallocG.dealloc_post_raw's raw frame and window (the caller's frame words and stack window are off Deallocate's
    window and errno, unowned by AR_laws_ok_cf's stack law, and below no freed block: YGcfBlockRange.block_user_range_cf)
    and AR_laws_ok_cf's frame law (memory unchanged, the model changes by materialization only). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/WrapFreeARet.v, with its module paths and addresses changed; 280 of its 522 lines of code are new or changed and 30 lines of the source are left out. *)
 (* Theorem Labs, 2026-10: RELOCATED to the #102 pins (image A' = asan 1be0f53d96cb, twin bff8519bbe3e) from commit preset-tree-at-2026-10-29T17-46-55Z.tsv (sha256 7c0bbc66e4a5; internal record) (old-pin image A) by the relocation script, the internal file reloc_A2.py (named with its outputs in the commit that added this line): every code address moved by symbol + offset (the internal file reloc_A2.out), the walk's functions checked by bytecmp 1480ca2faea0 + a target pass (the internal file measure_A2.out); data addresses come by name from int102's A' tables; ARXs_cf / ARmcf follow preset-tree-at-2026-10-29T18-16-07Z.tsv (sha256 4c721de248fd; internal record) (xs_placed is ARmcf's field amc_xs_placed). *)
-(* Modified by Theorem Labs, 2026-10: copied from lib/AU/WrapMallocBRetRun.v (commit fe4845c761b,
+(* Modified by Theorem Labs, 2026-10: copied from lib/AU/WrapMallocBRetRun.v (
    image B's malloc return run) and moved to image A's free interceptor (asan, pin 1be0f53d96cb, twin bff8519bbe3e):
    the seed is the state at Deallocate's return 0x538e8 (one frame: the interceptor's saved ra, s0, s1, s2..s5 at
    sp + 2072 .. sp + 2128 = the caller's sp - 56 .. sp, as environment atoms 32..38), the run is the epilogue
@@ -22,6 +22,7 @@
    DeallocG.dealloc_post_raw's raw frame and window (the caller's frame words and stack window are off Deallocate's
    window and errno, unowned by AR_laws_ok_cf's stack law, and below no freed block: YGcfBlockRange.block_user_range_cf)
    and AR_laws_ok_cf's frame law (memory unchanged, the model changes by materialization only). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -171,7 +172,7 @@ H (Z_to_bv 64 a) = false -> H' (Z_to_bv 64 a) = false -> m' (Z_to_bv 64 a) = m (
 mbyte tfibsegs (mrestrict H' m') a = mbyte tfibsegs (mrestrict H m) a.
 Proof. intros H H' m m' a E1 E2 E3. unfold mbyte, mrestrict. rewrite E1, E2, E3. reflexivity. Qed.
 
-(* Field F2 wf_ret of the Record wrap_free_walk_cf (YGcfMallocCompose.v:352-366) at image A, for ANY call-site
+(* Field F2 wf_ret of the Record wrap_free_walk_cf (YGcfMallocCompose.v:353-367) at image A, for ANY call-site
    relation ARX that gives ARcf (HXA) and survives a view-equal memory and materialization (HXF) (the
    WrapMallocARetG.v method), so a change of the record's ARX re-instantiates it: segs := tfibsegs, atpD := 1, K := K_A. *)
 Theorem wf_ret_gen : forall B, TfibSyms B -> forall ARX : YGcfMallocCompose.ARXh_t tfibsegs,

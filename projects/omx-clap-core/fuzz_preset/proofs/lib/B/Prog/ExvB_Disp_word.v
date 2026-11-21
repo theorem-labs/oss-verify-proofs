@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Rests on the tex_word_specX (kit 4f18c75d4900, PRH_FnEx ff16e926fb9e) through the Section premise EHW,
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Rests on the tex_word_specX (kit, PRH_FnEx ff16e926fb9e) through the Section premise EHW,
    discharged in ExvB_Disp.v by a Theorem Labs lane's PROVED ExwB.ex_word_holds_B; memnorm is carried as EXB's keep from the entry
    memory (YSRrMemnorm.v's design), not taken as a law. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B (asan-ubsan, rebuilt pin f8f98a95bc52, unstripped twin 3b5e1a099b53),
@@ -215,7 +216,7 @@ Variable B : asyms.
 Variable ARx : alayout -> astate -> list Z -> world rsegs -> (word -> option byte) -> Model -> Prop.
 Variable SK : YI16.sink_head.
 Hypothesis HYP : EXV_HYP B ARx SK.
-(* ex_word's text: the tex_word_specX (kit 4f18c75d4900, PRH_FnEx ff16e926fb9e); discharged in ExvB_Disp.v by
+(* ex_word's text: the tex_word_specX (kit, PRH_FnEx ff16e926fb9e); discharged in ExvB_Disp.v by
    a Theorem Labs lane's PROVED ExwB.ex_word_holds_B *)
 Hypothesis EHW : forall fx : YK11.FPState,
   tex_word_specX (fx := fx) (PI := prh_img_B) (L := B_prog_listing) (PA := PI_prog_B) B ARx SK.

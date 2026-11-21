@@ -22,7 +22,7 @@ Definition FF_got_cflags : Z := 0xa63e0.
 Definition FF_cflags : Z := 0x142be8.
 Definition FF_got_shadow : Z := 0xa63f0.
 Definition FF_SB : Z := 0x7fff8000.
-(* cgif's sink-file strings; fuzz_command's harness opens no file *)
+(* cgif's sink-file strings, 0 here: fuzz_command's image has no fopen and opens no sink file (its input is opened with the open system call) *)
 Definition A_RWA : Z := 0.
 Definition A_WB : Z := 0.
 Definition A_TRAILER : Z := 0.

@@ -6,8 +6,9 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3a.v, with its module names changed; 4006 of its 4152 lines of code are new or changed and 2320 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW4b.v, with its module paths and module names changed; 782 of its 845 lines of code are new or changed and 4089 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/F12.v; 222 of its 251 lines of code are new or changed and 816 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/F27.v -- GLUE for stage seg_F27 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput (lib/A/ACtl.v:826-827),
-   written in the route (C) form of a working branch shell (a working branch 1899bed1aee: ctl_from carries
+   written in the route (C) form of a working branch shell (a working branch: ctl_from carries
    A.ACtlRtC.ctl_rt_C B ly3 S3 mem3).  Written by a Theorem Labs lane; single writer.  proves no function (kind:
    segment lemma); rule 24: no function proved.  Pattern: glue-pattern.md sections 1-8 (a working note, not in this delivery);
    template: this branch's read-only arm ACtlG/F18.v (f18_evt0_F, lifted by SRr_fevt).
@@ -61,7 +62,7 @@
    (no shadow byte is read or written).
 
    CLOSURE: every Require is qualified; no statement names a frame-route identifier (F27F / F27 / SlotModel /
-   A.Reusable.YK11 appear only inside Qed proofs).  Frame-route files Required, blobs on a working branch 1899bed1aee:
+   A.Reusable.YK11 appear only inside Qed proofs).  Frame-route files Required, blobs on a working branch:
    Seg/F27F.v 35e3622a4b, Seg/F27.v c521acaf7a.
    SHADOWED NAMES: getr / mkst / seg_rom / cfg_at are fully qualified everywhere. *)
 

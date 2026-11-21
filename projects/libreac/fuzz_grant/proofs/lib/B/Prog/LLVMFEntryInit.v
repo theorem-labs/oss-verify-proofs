@@ -3,8 +3,9 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntryInit), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v, proofs/cgif/cgif_file_fuzzer/lib/A/ACf5.v, proofs/cgif/cgif_file_fuzzer/lib/A/ACf6.v. *)
 (* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/Prog/GrantEntryInit.v. *)
-(* Image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/GrantEntryInit.v (a working branch
-   7c8c67da870, blob c94a1a65482, 1541 lines; that file carries no licence line): image
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/GrantEntryInit.v (a working branch,
+   blob c94a1a65482, 1541 lines; that file carries no licence line): image
    B's cut offsets, registers, spill slots and shadow base, and the two UBSan branches
    image A's code has not got (the pointer-overflow guard at 0x80eac, whose trap is
    0x81f48, and the out-of-line shadow test at 0x80ec4, whose report call is 0x81f70). *)

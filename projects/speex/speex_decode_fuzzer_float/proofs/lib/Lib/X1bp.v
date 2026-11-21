@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (interp_eff_accesses_feqv and step_accesses_feqv take the vvar-read and vDSO-text fetch cases). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
@@ -117,7 +118,7 @@ accessed_ranges _ r = accessed_ranges _ r'
 end.
 Proof.
 intros t t' H. induction H; intros m; cbn [interp_eff_accesses access_value accessed_ranges fst snd]; auto.
-- destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [| exact I].
+- destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [| destruct (range_meets_vvar segs a (width_bytes n)); exact I].
 specialize (H0 (bv_extract 0 n (le_bytes_to_word bs)) m).
 destruct (interp_eff_accesses segs (k _) m) as [[[c1 m1] acc1]| |];
 destruct (interp_eff_accesses segs (k' _) m) as [[[c1' m1'] acc1']| |];
@@ -172,7 +173,7 @@ unfold step_accesses, ms_pc. rewrite <- Hpc, <- Hm.
 destruct (fetch_word segs (ms_pc_val ms)); [apply decode_exec_accesses_feqv; exact Heqv|].
 destruct (fetch_word_ov segs (ms_mem ms) (ms_pc_val ms)); [apply decode_exec_accesses_feqv; exact Heqv|].
 destruct (fetch_tail_any segs (ms_mem ms) (ms_pc_val ms)); [apply decode_exec_accesses_feqv; exact Heqv|].
-unfold fetch_failure. destruct (negb _); [exact I|]. destruct (_ || _)%bool; exact I.
+unfold fetch_failure. destruct (vdso_text_at _ _); [exact I|]. destruct (negb _); [exact I|]. destruct (_ || _)%bool; exact I.
 Qed.
 
 #[using="Type"] Lemma step_feqv : forall ms ms', ms_feqv ms ms' ->

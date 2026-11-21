@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: the post-construction kit for musl fread's walk inside libreac/fuzz_pcap
    (libreac v1.9.0, ASan build): rread_kept and rfread_post's conjuncts (lib/A/Stdio/PFreadM.v)
    from memory-agreement facts, and the stream predicate asource_at (lib/A/Stdio/PSource.v)
@@ -8,7 +9,7 @@
    rule 24: no function proved. These are composition and transport lemmas, not a function walk.
 
    WHAT EACH PART GIVES THE WALK.
-   1. frd_kept_of_agree: the six clauses of rread_kept (PFreadM.v:344-360). Its first premise is
+   1. frd_kept_of_agree: the six clauses of rread_kept (PFreadM.v:345-361). Its first premise is
       rread_kept's first clause, word for word. The block clause (:349-350) and the frame clause
       (:354-357) speak of bytes BELOW alloc_ceiling: AR_blocks_law puts every live block in
       [4096, alloc_ceiling) (YG0d.v:423-426), frames_bounds every frame (YCbq.v:447-450), and
@@ -26,7 +27,7 @@
       band [kLowMemEnd, kHighShadowEnd) lies below alloc_ceiling, so it is off the callee
       window; it is off the FILE block because a live block lies in application memory
       (in_app, YG0f.v:277), and off the destination because of amem_range (YG0d.v:317).
-   3. asource_at_w is asource_at (PSource.v:258-281) with its window named, and asource_at is
+   3. asource_at_w is asource_at (PSource.v:259-282) with its window named, and asource_at is
       convertibly `exists Wl, asource_at_w ... Wl` (asource_at_w_of, asource_at_of_w).
       asource_at_w_build / asource_at_build are the introduction forms.
    4. asource_at_drain_w / asource_at_drain: the stream after the walk copies j bytes out of the

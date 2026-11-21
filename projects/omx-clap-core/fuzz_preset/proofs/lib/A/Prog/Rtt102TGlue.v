@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module names changed; 382 of its 438 lines of code are new or changed and 458 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, lane WalkRtt102.RttT: the IMAGE-GENERIC half of STRETCH T of the walk of round_trip_text on the
    #102 pins - the inlined rendered() between the cuts RT_PJW (entry + 304) and RT_TXE (entry + 388):
      __asan_memset (&t, 0, 32); tx_put (&t, "", 0); tx_value (&t, doc, pretty, 0); if (pretty) tx_put (&t, "\n", 1).
@@ -13,8 +14,8 @@
    Released plain files are cited for FUNCTIONAL CONTENT only, by name, never as proof.
 
    INPUTS OF RECORD: Rtt102Cut.v's header (pins A' asan 1be0f53d96cb9d6c, twin bff8519bbe3ea0e4; the kit's texts and
-   a Theorem Labs lane's engine set at the batch kit's cut, the batch kit head 7cdbb61b5fa0; listings from
-   the pins102 listing head; build route pins102, FACTS 8f3e7e1a07f1, PAU pau-preset-102). This file
+   a Theorem Labs lane's engine set at the batch kit's cut, the batch kit head; listings from
+   the pins102 listing head; build route pins102, FACTS, PAU pau-preset-102). This file
    compiles unchanged on the cut (it names no text that changed there).
 
    THE MODEL. The rendering makes three tx calls whose appended pieces are, in order, "" (0 bytes),
@@ -291,7 +292,7 @@ Proof. intros H mem a (Hh & b & Hb). unfold aview, mbyte, mrestrict. rewrite Hh,
 
 (* an eight-byte value in the view is the word the unwinder reads. (YCem.rdword_of_val_mem states this; that file
    is not cited because its Require closure reaches lib/Reusable/YCeh.v, which does not build on the #102 pins -
-   YCeh.v:84-85 vm_computes image A's OLD segment table.) *)
+   YCeh.v:85-86 vm_computes image A's OLD segment table.) *)
 Lemma rtt_t_rdword_of_vm : forall (H : word -> bool) mem a v,
   val_mem segs (mrestrict H mem) a 8 v -> 0 <= v < 2 ^ 64 -> rdword (aview segs H mem) a = Some v.
 Proof.

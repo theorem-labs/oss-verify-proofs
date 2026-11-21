@@ -3,10 +3,11 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACf1.v, with its module paths and module names changed; 639 of its 687 lines of code are new or changed and 451 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_fuzz_free.v; 834 of its 931 lines of code are new or changed and 590 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs program part, group ALLOC, a Theorem Labs lane: fuzz_realloc's p <> 0 arms over fs.asan (A 0x829e8, alloc.c:75-94) and
    the theorem fuzz_realloc_holds (lib/A/FSH_Fn_alloc.v fuzz_realloc_spec), on top of lib/A/FSW_realloc.v (the p = 0
    arm fsr_p0, the realloc call site fsw_aj_reallocU and the dead NULL arm arealloc_granted).
-   port-from: the control flow of fs's released plain lib/Prog/fuzz_realloc_c.v:29-66 (@ c8557374ad2e); the walk kit
+   port-from: the control flow of fs's released plain lib/Prog/fuzz_realloc_c.v:29-66; the walk kit
    lib/A/FSW_K.v / FSW_ret.v / FSW_rres.v / FSW_K3.v (a Theorem Labs lane), FSW_statics_awr.v (a Theorem Labs lane), and this lane's
    FSW_statics.v / FSW_head.v / FSW_poison_conv.v. No rename. Rule 24: see the lane brief (no released ASan proof of
    fuzz_realloc; none on the lane branches). *)

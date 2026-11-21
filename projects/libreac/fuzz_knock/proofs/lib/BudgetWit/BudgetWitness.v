@@ -3,12 +3,14 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YL0j.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from the argc <> 2 branch of Reusable/YL0j.v's src0_realizes_specX, over BudgetWit.Rzb.rzb; adds the budget-premise witness for the plain build and the lemma that applies the plain_halts proof there. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3, with libreac/fuzz_scene's port of its copy of this file (changed usage_rzb, usage_never_refused). *)
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From OSSVerify.Core Require Import Shapes.
+From LinuxProcessSemantics.LinuxProcessSem Require Vdso.
 From OSSVerify.Core Require Premises.
 From OSSVerify.libreac.fuzz_knock Require Images Statements.
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require Import YK11 YK0h YK0i YK14 YK1b YK1a YK15 YK0n YP0n.
@@ -18,6 +20,7 @@ From OSSVerify.libreac.fuzz_knock.images Require Import Plain.
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable.R Require Import Cfg.
 From OSSVerify.Proofs.libreac.fuzz_knock.lib Require Theorems.
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.BudgetWit Require Import Rzb StartB UsageB.
+From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YM05.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 #[local] Existing Instance YK11.fx0.
@@ -60,27 +63,32 @@ Open Scope Z_scope.
 Lemma usage_rzb : forall sp brk mbase rnd lim inp,
 valid_sp sp -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
 entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp -> valid_input inp ->
 (length (in_argv inp) <> 2)%nat ->
 @rzb src0segs MayFail (init_config src0segs Plain_init_pc Plain_phdrs sp brk mbase rnd lim inp)
 (diag (msg_usage (nth 0 (in_argv inp) [])) (in_fs inp)).
 Proof.
-intros sp brk mbase rnd lim inp Hsp Hva Hve Hfits Hlen.
-apply (@src0_start_b MayFail false sp brk mbase rnd lim inp _ Hsp Hva Hve Hfits I).
+intros sp brk mbase rnd lim inp Hsp Hva Hve Hfits Hvl Hlau Hvi Hlen.
+apply (@src0_start_b MayFail false sp brk mbase rnd lim inp _ Hsp Hva Hve Hfits Hvl Hlau I).
 intros ms tid Htid HS HR.
-assert (Hh : m_halted (with_tid tid (init_model (segments_reserved src0segs) brk mbase sp lim inp)) = None) by reflexivity.
-assert (Hlz : m_vm_lazy (with_tid tid (init_model (segments_reserved src0segs) brk mbase sp lim inp)) = []) by reflexivity.
-change (in_fs inp) with (m_fs (with_tid tid (init_model (segments_reserved src0segs) brk mbase sp lim inp))).
-apply (@src0_usage_b YK11.fx0 MayFail sp (in_argv inp) (in_envp inp) tid rnd Hsp Hva Hve Hfits Hlen ms _).
+set (md := with_tid tid (with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+  (init_model (segments_reserved src0segs) brk mbase sp lim inp))).
+assert (Hh : m_halted md = None) by reflexivity.
+assert (Hlz : m_vm_lazy md = []) by reflexivity.
+change (in_fs inp) with (m_fs md).
+apply (@src0_usage_b YK11.fx0 (YM05.RunCeilOf (bv_unsigned sp) (conj (proj1 Hsp) (proj1 (proj2 Hsp))) lim) MayFail
+  sp inp mbase brk tid rnd Hsp Hva Hve Hvl Hlau Hfits Hlen ms md).
 + apply st_ok_add_cond; [exact HS |].
-pose proof (ew3 sp (in_argv inp) (in_envp inp) Hva (xw_main sp (in_argv inp) (in_envp inp) tid rnd) (xd_main rnd)) as H3.
-change (E0 _ _ _ _ _) with (E_main sp (in_argv inp) (in_envp inp) tid rnd) in H3.
+assert (H3 : bv_unsigned (ew (E_main sp inp tid rnd) 3) = Z.of_nat (length (in_argv inp)))
+by (exact (ew3 src0segs Plain_phdrs inp mbase Plain_init_pc sp brk rnd Hsp Hva Hve Hvl Hlau 1 ltac:(lia) (xw_main inp rnd tid) (xd_main rnd))).
 unfold branch_taken. cbn [sv_denot]. rewrite Z.add_0_r, Z_to_bv_bv_unsigned.
 apply Bool.negb_true_iff. apply bv_eqb_neq. intros Heq.
 apply (f_equal bv_unsigned) in Heq. rewrite H3 in Heq. change (bv_unsigned (Z_to_bv 64 2)) with 2 in Heq. lia.
 + exact HR.
 + exact Hh.
 + exact Hlz.
-+ split; reflexivity.
++ (* [fdchan] at LPS 727298f3 also asks for the channel reader, which [valid_input] gives *)
+refine (conj eq_refl (conj eq_refl _)). exact (valid_input_channel_reader inp Hvi).
 Qed.
 
 (** On every valid entry of the plain build and every valid input whose argv has
@@ -95,9 +103,12 @@ Proof.
 intros [sp brk mbase rnd] inp Hen Hinp Hlen cfg lim.
 pose proof (valid_input_va_size _ Hinp) as Hv.
 apply (valid_entry_sv48 _ _ _ Hv) in Hen.
-destruct Hen as (Hsp & _ & _ & Hfits).
-destruct Hinp as (Hva & Hve & _).
-exact (rzb_never_refused_cfg src0segs cfg _ _ (usage_rzb sp brk mbase rnd lim inp Hsp Hva Hve Hfits Hlen)).
+destruct Hen as (Hsp & _ & _ & Hfits & Hlau).
+pose proof Hinp as (Hva & Hve & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & Hvl & _).
+(* LPS 727298f3: the run is read against [run_segments], the binary's segments with the vDSO pair *)
+exact (rzb_never_refused_cfg (run_segments src0segs inp sp mbase) cfg _ _
+  (rzb_run_init src0segs inp sp mbase Plain_init_pc Plain_phdrs brk rnd lim _ eq_refl
+    (usage_rzb sp brk mbase rnd lim inp Hsp Hva Hve Hfits Hvl Hlau Hinp Hlen))).
 Qed.
 
 (** [plain_halts]'s three premises hold together: at [Premises.witness_input false]

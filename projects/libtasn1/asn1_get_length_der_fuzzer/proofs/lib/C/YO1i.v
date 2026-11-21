@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Trevor Hansen, 2026-11: the R_tabs bounds as TABS_LEN, hex addresses and numbers for libtasn1/asn1_get_length_der_fuzzer's plain binary, and module names. *)
+(* Modified by Theorem Labs, 2026-11: ported toward LPS 727298f3 by the change of the same file of cgif/cgif_rgb_fuzzer, its addresses relocated to this unit's binaries. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -1235,7 +1236,7 @@ destruct (In_footprint_inv sq e He) as [-> | [(ar & Har & ->) | (kk & rg2 & Hrg2
 - intros x Hx. destruct (areas_off_img B (m :: X) (Some (hg, idx)) U L' sq mem' md' HIq MID' ar x Har Hx) as [NI Rx]. apply PRES; [exact (FO x Hx) | clear - Rx AC; lia | exact NI].
 - intros x Hx. pose proof (lg_placed _ _ _ _ (mid_ledger _ _ _ _ _ MID') _ rg2 Hrg2 Hlv2) as (_ & B1 & B2 & Bimg). cbn [loc_addr] in Hx.
 apply PRES; [exact (FO x Hx) | clear - Hx B1 B2 AC; lia | exact (Bimg x ltac:(clear - Hx; lia))]. }
-destruct (ledger_same B L' sq md' (mid_ledger _ _ _ _ _ MID') (mid_ledgerx _ _ _ _ _ MID') sNq md' Qr Qb eq_refl eq_refl eq_refl) as [LG5 LX5].
+destruct (ledger_same B L' sq md' (mid_ledger _ _ _ _ _ MID') (mid_ledgerx _ _ _ _ _ MID') sNq md' Qr Qb eq_refl eq_refl eq_refl eq_refl) as [LG5 LX5].
 split.
 - exact SO.
 - split; [apply Forall_forall; exact IMG | split; [apply Forall_forall; exact TAIL | exact FOOT]].

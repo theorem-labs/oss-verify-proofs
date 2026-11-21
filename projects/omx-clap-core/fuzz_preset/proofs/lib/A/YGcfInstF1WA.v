@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10-30 (lane F1 of the generic cf instance layer; integrator ReallocPrimary).
    SATISFIABILITY WITNESSES at preset's REAL image A (A', the #102 pin fuzz_preset.asan
    1be0f53d96cb), for the image and contract hypotheses of the cf layer's errno / depot / enqueue files, taken by path into
@@ -9,7 +10,7 @@
    - [errno_seg_A] / [errno_nstatic_A]: errno's bytes are segment bytes (AB13.tfib_rw_rom) and lie in no owned static
      range (AF0m.Tfib_owned_static): the two UNIT IMAGE obligations of YGcfInstErrno.v at image A';
    - [IMG_COVER_A]: the kit's image premise YGcfDIface.IMG_COVER (AF0x.img_cover_of_ledger's script over ALedger_cf);
-   - [noial_A] .. [const_noizone_A]: the constant cells avoid the internal allocator's zone (CLdepotcgif.v:43-111's
+   - [noial_A] .. [const_noizone_A]: the constant cells avoid the internal allocator's zone (CLdepotcgif.v:44-112's
      script at image A; preset has no CLdepotcgif);
    - [dep_fp_a_A] / [dep_fp_d_A] / [dep_keep_a_A] / [dep_keep_d_A]: YGcfInstDepot's image premises (A/AGix.v's
      footprint_DZONE / const_kept / depot_mem_ok_agree / cell_holds_agree);
@@ -72,7 +73,7 @@ intros ly S md L. change (AF0x.img_cover ly). split.
 Qed.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* 2. The constant cells avoid the internal allocator's zone (CLdepotcgif.v:43-111 at image A).                     *)
+(* 2. The constant cells avoid the internal allocator's zone (CLdepotcgif.v:44-112 at image A).                     *)
 Definition noial_A (a w : Z) : bool :=
 (a + w <=? TFIB_IAL_LO) || ((TFIB_IAL_HI <=? a) && (a + w <=? TFIB_IAL_FLAG)) || (TFIB_IAL_FLAG + 4 <=? a).
 Definition const_noial_A (c : acell) : bool :=

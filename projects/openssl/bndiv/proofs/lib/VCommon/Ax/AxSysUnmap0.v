@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap's errno refusal: refusal_215 is deleted and check_munmap_has and chk_munmap gain the munmap_errnos arm; unmap_gate gains ug_exact, and maps_subtract_exact shows the maps_subtract rebuild is map_remove). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith Lia Bool List.
@@ -16,8 +17,8 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-Lemma refusal_215 (i : SyscallInput) (m : Model) (r : word) : bv_unsigned (in_sysno i) = 215 -> refusal_b i m r = false.
-Proof. intros H. unfold refusal_b. rewrite H. reflexivity. Qed.
+(* refusal_215: deleted, as in bignum. At LPS 08b1429 munmap (215) is in injected_table, so its
+   refusal_b is ret_in_errnos munmap_errnos, not false. No caller. *)
 
 (* [comment removed for export] *)
 Definition munmap_model (addr n : word) (m : Model) : Model :=
@@ -31,36 +32,94 @@ Record unmap_gate (m : Model) (addr len : word) : Prop := mkUnmapGate {
   ug_len : bv_unsigned len <> 0;
   ug_al  : bv_unsigned addr mod 4096 = 0;
   ug_top : bv_unsigned addr + fix_nZ len <= TASK_SIZE;
-  ug_has : map_has (vm_maps (m_vmmaps m)) addr (fix_n len) = true
+  ug_has : map_has (vm_maps (m_vmmaps m)) addr (fix_n len) = true;
+  (* At LPS 08b1429 munmap rebuilds the maps with [maps_subtract]
+     ([mmap_fixed_destroyed_next]); over a ledger whose only entry meeting
+     the range is the range itself that is [map_remove]. *)
+  ug_exact : forall q, In q (vm_maps (m_vmmaps m)) -> q = (addr, fix_n len)
+               \/ (0 < bv_unsigned (snd q)
+                   /\ (bv_unsigned (fst q) + bv_unsigned (snd q) <= bv_unsigned addr
+                       \/ bv_unsigned addr + fix_nZ len <= bv_unsigned (fst q)))
 }.
 
 Section Unmap.
 Variables (m : Model) (addr len : word).
 Hypothesis G : unmap_gate m addr len.
 
+Lemma maps_subtract_exact (l : list (word * word)) (a n : word) :
+  0 < bv_unsigned n ->
+  (forall q, In q l -> q = (a, n)
+     \/ (0 < bv_unsigned (snd q)
+         /\ (bv_unsigned (fst q) + bv_unsigned (snd q) <= bv_unsigned a
+             \/ bv_unsigned a + bv_unsigned n <= bv_unsigned (fst q)))) ->
+  maps_subtract l (bv_unsigned a) (bv_unsigned a + bv_unsigned n) = map_remove l a.
+Proof.
+  intros Hn. induction l as [|[qa qs] l IH]; intros H; [reflexivity|].
+  cbn [maps_subtract]. unfold map_remove in *. cbn [List.filter fst].
+  rewrite IH by (intros q Hq; apply H; right; exact Hq).
+  pose proof (bv_unsigned_in_range 64 qa) as Rqa. pose proof (bv_unsigned_in_range 64 qs) as Rqs.
+  pose proof (bv_unsigned_in_range 64 a) as Ra. pose proof (bv_unsigned_in_range 64 n) as Rn.
+  unfold bv_modulus in Rqa, Rqs, Ra, Rn. cbn [Z.of_N] in Rqa, Rqs, Ra, Rn.
+  destruct (H (qa, qs) (or_introl eq_refl)) as [Heq | [Hpos Hside]]; cbn [fst snd] in *.
+  - injection Heq as -> ->. unfold iv_subtract. cbv zeta.
+    rewrite (proj2 (Z.ltb_ge (bv_unsigned a) (bv_unsigned a))) by lia.
+    rewrite (proj2 (Z.ltb_ge (bv_unsigned a + bv_unsigned n) (bv_unsigned a + bv_unsigned n))) by lia.
+    rewrite (proj2 (bv_eqb_eq a a) eq_refl). reflexivity.
+  - destruct (bv_eqb qa a) eqn:Eq.
+    { apply bv_eqb_eq in Eq. subst qa. lia. }
+    cbn [negb]. unfold iv_subtract. cbv zeta. destruct Hside as [Hlo | Hhi].
+    + rewrite (proj2 (Z.ltb_lt (bv_unsigned qa) (bv_unsigned a))) by lia.
+      rewrite (proj2 (Z.ltb_ge (bv_unsigned a + bv_unsigned n) (bv_unsigned qa + bv_unsigned qs))) by lia.
+      rewrite Z.min_l by lia. rewrite Z_to_bv_bv_unsigned. reflexivity.
+    + rewrite (proj2 (Z.ltb_ge (bv_unsigned qa) (bv_unsigned a))) by lia.
+      rewrite (proj2 (Z.ltb_lt (bv_unsigned a + bv_unsigned n) (bv_unsigned qa + bv_unsigned qs))) by lia.
+      rewrite Z.max_l by lia.
+      replace (bv_unsigned qa + bv_unsigned qs - bv_unsigned qa) with (bv_unsigned qs) by lia.
+      rewrite !Z_to_bv_bv_unsigned. reflexivity.
+Qed.
+
 Lemma check_munmap_has (eff : SyscallEffect) :
   check_munmap addr len eff m =
   match eff with
   | mkEffectU r [] [] us [] [] =>
-      if w_is0 r && listNN_eqb us [(addr, fix_n len)] then CheckOk (munmap_model addr (fix_n len) m) [] else CheckReject
+      if errno_ret_in munmap_errnos r
+      then match us with [] => CheckOk m [] | _ => CheckReject end
+      else if w_is0 r && listNN_eqb us [(addr, fix_n len)] then CheckOk (munmap_model addr (fix_n len) m) [] else CheckReject
   | _ => CheckReject
   end.
 Proof.
-  destruct G as [g1 g2 g3 g4]. unfold check_munmap.
+  destruct G as [g1 g2 g3 g4 g5].
+  assert (Hm : with_mmap_destroyed addr (fix_n len) (mmap_fixed_destroyed_next (m_vmmaps m) addr (fix_n len)) m
+               = munmap_model addr (fix_n len) m).
+  { pose proof (bv_unsigned_in_range 64 len) as Rl. pose proof (bv_unsigned_in_range 64 addr) as Ra.
+    unfold bv_modulus in Rl, Ra. cbn [Z.of_N] in Rl, Ra.
+    assert (Hz : 0 < fix_nZ len).
+    { unfold fix_nZ, page_round_up_Z, page_size.
+      assert (1 <= (bv_unsigned len + 4096 - 1) / 4096) by (apply Z.div_le_lower_bound; lia). lia. }
+    assert (Hu : bv_unsigned (fix_n len) = fix_nZ len).
+    { unfold fix_n. apply u_Z_to_bv. unfold TASK_SIZE in g3. unfold AxAcct.two64. lia. }
+    unfold munmap_model, mmap_fixed_destroyed_next. f_equal. f_equal.
+    apply maps_subtract_exact; [lia|].
+    intros q Hq. destruct (g5 q Hq) as [E|[P1 P2]]; [left; exact E|right; split; [exact P1|]].
+    rewrite Hu. exact P2. }
+  unfold check_munmap.
   replace (negb (bv_unsigned addr mod page_size =? 0)) with false by (symmetry; apply negb_false_iff, Z.eqb_eq; exact g2).
   rewrite (w_is0_false len g1). cbn [orb]. cbv zeta. fold (fix_nZ len).
   replace (TASK_SIZE <? bv_unsigned addr + fix_nZ len) with false by (symmetry; apply Z.ltb_ge; exact g3).
-  fold (fix_n len). rewrite g4. reflexivity.
+  fold (fix_n len). rewrite g4. rewrite Hm. reflexivity.
 Qed.
 
 Lemma chk_munmap (eff : SyscallEffect) (m' : Model) (evs : list event) :
   check_munmap addr len eff m = CheckOk m' evs ->
-  eff = mkEffectU (Z_to_bv 64 0) [] [] [(addr, fix_n len)] [] [] /\ m' = munmap_model addr (fix_n len) m /\ evs = [].
+  (errno_ret_in munmap_errnos (eff_ret eff) = true /\ m' = m /\ evs = [])
+  \/ (eff = mkEffectU (Z_to_bv 64 0) [] [] [(addr, fix_n len)] [] [] /\ m' = munmap_model addr (fix_n len) m /\ evs = []).
 Proof.
   rewrite check_munmap_has. destruct eff as [r ws zs us cs ci].
   destruct ws; [|discriminate]. destruct zs; [|discriminate]. destruct cs; [|discriminate]. destruct ci; [|discriminate].
+  destruct (errno_ret_in munmap_errnos r) eqn:Ee.
+  { destruct us; [|discriminate]. intros H. injection H as <- <-. left. cbn [eff_ret]. repeat split; [exact Ee]. }
   destruct (w_is0 r && listNN_eqb us [(addr, fix_n len)]) eqn:E; [|discriminate].
-  intros H. injection H as <- <-. apply andb_prop in E as [E1 E2]. unfold w_is0 in E1. apply bv_eqb_eq in E1.
+  intros H. injection H as <- <-. right. apply andb_prop in E as [E1 E2]. unfold w_is0 in E1. apply bv_eqb_eq in E1.
   apply listNN_eqb_eq in E2. subst r us. repeat split; reflexivity.
 Qed.
 
@@ -68,6 +127,7 @@ Lemma chk_munmap_ok :
   check_munmap addr len (mkEffectU (Z_to_bv 64 0) [] [] [(addr, fix_n len)] [] []) m = CheckOk (munmap_model addr (fix_n len) m) [].
 Proof.
   rewrite check_munmap_has.
+  replace (errno_ret_in munmap_errnos (Z_to_bv 64 0)) with false by reflexivity.
   replace (w_is0 (Z_to_bv 64 0)) with true by reflexivity.
   replace (listNN_eqb [(addr, fix_n len)] [(addr, fix_n len)]) with true by (symmetry; apply listNN_eqb_eq; reflexivity).
   reflexivity.
@@ -77,6 +137,7 @@ Lemma chk_munmap_modeled (eff : SyscallEffect) : check_munmap addr len eff m <> 
 Proof.
   rewrite check_munmap_has. destruct eff as [r ws zs us cs ci].
   destruct ws; [|discriminate]. destruct zs; [|discriminate]. destruct cs; [|discriminate]. destruct ci; [|discriminate].
+  destruct (errno_ret_in munmap_errnos r); [destruct us; discriminate|].
   destruct (_ && _); discriminate.
 Qed.
 

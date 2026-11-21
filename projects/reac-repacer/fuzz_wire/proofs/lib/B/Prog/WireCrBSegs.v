@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/boost-beast/http_request/lib/Spec/StrFun.v; 216 of its 246 lines of code are new or changed and 434 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* WireCrBSegs: the footprint (ExecF.evtF) runs of the straight-line segments of reac-repacer/fuzz_wire's check_ret in
    image B (fuzz_wire.asan-ubsan 0x7ff2c = wire_sigma WS_check_ret; objdump of record sha256 440b9550f4f5), stepped by
-   lib/Lib/StepF.v, in the form of reac-repacer/fuzz_uci's lib/B/Prog/UciCvBSegs.v (recipes commit 0295462466b2; its
+   lib/Lib/StepF.v, in the form of reac-repacer/fuzz_uci's lib/B/Prog/UciCvBSegs.v (recipes; its
    frame-word helpers copied), the shadow checks stepped as in this unit's lib/B/Prog/rp_ret_accept_FW.v:
      cr_seg1_F  entry -> the call of rp_ret_accept (`jal` at +0x78, return address +0x7c): the 0x10-byte frame (ra, s0
                 at 8(sp), 0(sp)); when n < 14 `bltu a1, a2` (a2 = 14) goes to +0x74 `mv s0, zero`; otherwise the UBSan

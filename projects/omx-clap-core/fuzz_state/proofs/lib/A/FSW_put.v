@@ -6,7 +6,7 @@
    tok_branch under FSW_K.fsw_run_tok_AJU, Bx := FSW_K.fs_Bx, Bspan := FSW_K.fs_Bspan), discharged by ONE shadow
    entry (shent) covering o's 32 bytes, so the __asan_report_* branch is never reached and no obligation is left.
    The statement proved is lib/A/FSH_Fn_writer.v `put_spec`'s conclusion under its own premises plus `failed <> 0`
-   (a working branch ab2272efc32's text, over S0 400b2a240b3's FP-keyed core: budgets by the call's own trace,
+   (a working branch's text, over S0's FP-keyed core: budgets by the call's own trace,
    wbudget_kept / bswap in the post, the journal's k = 3 * wcalls st', which is 0 on this arm: put1 makes no call).
 
    Kit used by path, never copied: lib/A/FSW_K.v (a working branch: fss0T_args / fsw_entryT_args with
@@ -17,9 +17,9 @@
 
    Rule 24 (proof-index v5 built 2026-10-28T21:58:24Z, exit 0, read from a file; re-checked by a Theorem Labs lane
    2026-10-28T22:23Z): put has RELEASED proofs for fs's PLAIN and UBSAN builds only (lib/Prog/put.v,
-   lib/A/Prog/put_blocks.v, lib/U/Prog/..., ossv/recipes@566eb6ffa5), none for an ASan build; the eight named
+   lib/A/Prog/put_blocks.v, lib/U/Prog/..., ossv/recipes), none for an ASan build; the eight named
    fuzz_state rows are all under lib/Prog or lib/U/Prog, none under lib/A or lib/B. The plain `put_failed`
-   (211ff3e9df0:proofs/omx-clap-core/fuzz_state/lib/A/Prog/put_blocks.v:49-84) has the same control flow over the
+   (proofs/omx-clap-core/fuzz_state/lib/A/Prog/put_blocks.v:49-84) has the same control flow over the
    same bytes and was read as the step reference; it is not a drop-in (different state form, no journal, no ARU). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

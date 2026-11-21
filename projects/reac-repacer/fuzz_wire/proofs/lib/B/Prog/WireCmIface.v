@@ -1,6 +1,6 @@
 (* WireCmIface: what the pieces of the image-B walk of check_meter (fuzz_wire.asan-ubsan 0x8016c = wire_sigma
    WS_check_meter, lib/B/Prog/WirePAddr.v) share, for the caller-journal statement lib/B/Prog/check_meter_cg.v. In the
-   form of reac-repacer/fuzz_uci's lib/B/Prog/UciCvBIface.v (recipes commit 0295462466b2): check_meter's own body
+   form of reac-repacer/fuzz_uci's lib/B/Prog/UciCvBIface.v (recipes): check_meter's own body
    runs as footprint runs (lib/Lib/ExecF.v evtF, stepped by lib/Lib/StepF.v), carried into SRr by
    lib/B/Prog/LeafCgFacts.v bridge_evtF_stmt_YA0n; each call is cut by its callee's contract (the class-0 stack
    malloc, the leaf rp_meter_counter through the kit's lib/B/Prog/WireCcLeafb.v).

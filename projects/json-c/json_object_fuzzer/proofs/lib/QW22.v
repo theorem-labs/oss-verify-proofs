@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: mf_genA, mf_scalarA, new_double_s_A_stmt and printbuf_new32_A_cps take it after alloc_ceiling <= lo, and the printbuf_new_A_cps and mf_genA calls pass it). *)
 
 From Stdlib Require ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -71,7 +72,7 @@ HEAPAx A LB LM FRS B m md ->
 uw_at (hiA_top A4L HIx) m (bv_unsigned sp) (bv_unsigned s0) u -> uw_ok A4L (hl_malloc A4H) (Z_to_bv 64 0x9daec) u ->
 In (b, n) LB -> str_in_block A4H m b n bytes ds str ->
 Z.of_nat (length str) + 1 <= 2^31 ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 80 - 16 - 4096 ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 80 - 16 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
 tp = Z_to_bv 64 A_TP -> bv_unsigned ra mod 2 = 0 ->
@@ -87,7 +88,7 @@ Lemma json_object_new_double_s_A_cps : new_double_s_A_stmt.
 Proof.
 unfold new_double_s_A_stmt.
 intros until u.
-intros HP UW UWK Hin SIB LEN32 ST LO LOS SPA HT ERR TP RA BB BD A0 K.
+intros HP UW UWK Hin SIB LEN32 ST LO HBT LOS SPA HT ERR TP RA BB BD A0 K.
 unfold newdbls_costB in BB.
 destruct SIB as (BLKB & Hbds & Hdse & Hfst & NONUL).
 cbn [hl_segs hla_base A4L A4H] in BLKB.
@@ -469,7 +470,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 (A : ASA A4L HIx) (LB LM : list blk) (FRS : list frame) (B : bud) (lo : Z) (errv : word) (u : uwd),
 HEAPAx A LB LM FRS B m md ->
 uw_at (hiA_top A4L HIx) m (bv_unsigned sp) (bv_unsigned s0) u -> uw_ok A4L (hl_calloc A4H) (Z_to_bv 64 0x99fe0) u ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 32 - 4096 ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 32 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
 tp = Z_to_bv 64 A_TP ->
@@ -481,9 +482,9 @@ AJ5 A4L HIx A T md
 (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 printbuf_new32_A_entry) fc None m (seg_rom asegs)).
 Proof.
-intros until u. intros HP UW UWK ST LO LOS SPA HT ERR TP RA BB BD K.
+intros until u. intros HP UW UWK ST LO HBT LOS SPA HT ERR TP RA BB BD K.
 eapply (printbuf_new_A_cps HIx) with (u := u) (lo := lo) (errv := errv);
-[exact HP | exact UW | exact UWK | exact ST | exact LO | exact LOS | exact SPA | exact HT | exact ERR | exact TP | exact RA | exact BB | exact BD | ].
+[exact HP | exact UW | exact UWK | exact ST | exact LO | exact HBT | exact LOS | exact SPA | exact HT | exact ERR | exact TP | exact RA | exact BB | exact BD | ].
 intros ms' md' A' (m' & r & errv' & B' & RS & VM & ST' & HPR & ERR' & HB & HD & OUT).
 apply K. exists m', r, errv', B'.
 split; [exact RS|]. split; [exact VM|]. split; [exact ST'|]. split; [exact HPR|]. split; [exact ERR'|]. split; [exact HB|]. split; [exact HD|].
@@ -646,7 +647,7 @@ HEAPAx A LB LM FRS B m md ->
 uw_at (hiA_top A4L HIx) m (bv_unsigned sp) (bv_unsigned s0) u -> uw_ok A4L (hl_malloc A4H) (Z_to_bv 64 0x9f57c) u ->
 In (b, n) LB -> str_in_block A4H m b n bytes ds str ->
 Z.of_nat (length str) + 1 <= 2^31 ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 112 - 16 - 4096 ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 112 - 16 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
 tp = Z_to_bv 64 A_TP -> bv_unsigned ra mod 2 = 0 ->
@@ -662,7 +663,7 @@ Lemma json_object_new_double_s_A_cps : new_double_s_A_stmt.
 Proof.
 unfold new_double_s_A_stmt.
 intros until u.
-intros HP UW UWK Hin SIB LEN32 ST LO LOS SPA HT ERR TP RA BB BD A0 K. pose proof OBL_AMEMSET as OBL_unused_on_B.
+intros HP UW UWK Hin SIB LEN32 ST LO HBT LOS SPA HT ERR TP RA BB BD A0 K. pose proof OBL_AMEMSET as OBL_unused_on_B.
 unfold newdbls_costB in BB.
 destruct SIB as (BLKB & Hbds & Hdse & Hfst & NONUL).
 cbn [hl_segs hla_base A4L A4H] in BLKB.
@@ -1066,7 +1067,7 @@ HEAPAx A ((x, n) :: PBS ++ LB) LM FRS B m md -> 48 <= n ->
 rw_cells asegs m x (jhdr_cells ty 0 tojs pb u1 u2 ++ rest) ->
 opt_pbuf asegs m PBS pb ->
 mf_frameA m ->
-stk asegs m lo (bv_unsigned sp + -64) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp + -64 - 16 - 4096 ->
+stk asegs m lo (bv_unsigned sp + -64) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp + -64 - 16 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] -> bv_unsigned ra mod 2 = 0 ->
 model_vm_only (cfg_model md0) (cfg_model md) -> heap_pres A4H (LB ++ LM ++ fr_ivs A4L FRS) (bv_unsigned sp) m0 m -> fsaved F F1 -> (frm0 fc -> frm0 fc1) -> rc = 1 ->
@@ -1077,7 +1078,7 @@ AJ5 A4L HIx A T md
 x18 (Z_to_bv 64 A_SB) x20 x21 x22 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F1 (Z_to_bv 64 0x9c3b8) fc1 None m (seg_rom asegs)).
 Proof.
-intros until PBS. intros HP Hn HDR OPB FR ST LO LOS SPA HT ERR RA VM0 HPR FS FRM Hrc BD BB BBc K.
+intros until PBS. intros HP Hn HDR OPB FR ST LO HBT LOS SPA HT ERR RA VM0 HPR FS FRM Hrc BD BB BBc K.
 unfold mf_frameA in FR. unfold_consts. unfold A_SB, A_TP, A_ERRNO in *. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
 pose proof (heapA_budget A4L HIx _ _ _ _ _ _ _ HP) as [HB0 HD0].
@@ -1163,7 +1164,7 @@ rw_cells asegs m x (jhdr_cells ty 0 tojs pb 0 0 ++ rest) ->
 (ty = 1 \/ ty = 2 \/ ty = 3) ->
 opt_pbuf asegs m PBS pb ->
 mf_frameA m ->
-stk asegs m lo (bv_unsigned sp + -64) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp + -64 - 16 - 4096 ->
+stk asegs m lo (bv_unsigned sp + -64) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp + -64 - 16 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] -> bv_unsigned ra mod 2 = 0 ->
 model_vm_only (cfg_model md0) (cfg_model md) -> heap_pres A4H (LB ++ LM ++ fr_ivs A4L FRS) (bv_unsigned sp) m0 m -> fsaved F F1 -> (frm0 fc -> frm0 fc1) -> rc = 1 ->
@@ -1174,7 +1175,7 @@ AJ5 A4L HIx A T md
 x18 (Z_to_bv 64 A_SB) x20 x21 x22 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F1 (Z_to_bv 64 0x9c30c) fc1 None m (seg_rom asegs)).
 Proof.
-intros until PBS. intros HP Hn HDR Hty OPB FR ST LO LOS SPA HT ERR RA VM0 HPR FS FRM Hrc BD BB BBc K.
+intros until PBS. intros HP Hn HDR Hty OPB FR ST LO HBT LOS SPA HT ERR RA VM0 HPR FS FRM Hrc BD BB BBc K.
 pose proof FR as FR0. unfold mf_frameA in FR. unfold_consts. unfold A_SB, A_TP, A_ERRNO in *. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
 blk_factsA A4L HIx HP x n Hxal Hxlo Hxhi Hximg.
@@ -1188,7 +1189,7 @@ asan_chk0.
 bstep. norm_w32.
 bstep. bstep. if_falsex. bstep. bstep. if_falsex. bstep. bstep. if_truex.
 evt_done5.
-eapply mf_genA; [exact HP | exact Hn | exact HDR0 | exact OPB | exact FR0 | exact ST | clia | clia | exact SPA | exact HT
+eapply mf_genA; [exact HP | exact Hn | exact HDR0 | exact OPB | exact FR0 | exact ST | clia | first [assumption | lia] | clia | exact SPA | exact HT
 | assumption | exact RA | exact VM0 | exact HPR | exact FS | exact FRM | exact Hrc | exact BD | exact BB | exact BBc | exact K].
 Qed.
 End MF.
@@ -1237,7 +1238,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 (A : ASA A4L HIx) (LB LM : list blk) (FRS : list frame) (B : bud) (lo : Z) (errv : word) (u : uwd),
 HEAPAx A LB LM FRS B m md ->
 uw_at (hiA_top A4L HIx) m (bv_unsigned sp) (bv_unsigned s0) u -> uw_ok A4L (hl_calloc A4H) (Z_to_bv 64 0x9b424) u ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 32 - 4096 ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 32 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
 tp = Z_to_bv 64 A_TP ->
@@ -1249,9 +1250,9 @@ AJ5 A4L HIx A T md
 (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 printbuf_new32_A_entry) fc None m (seg_rom asegs)).
 Proof.
-intros until u. intros HP UW UWK ST LO LOS SPA HT ERR TP RA BB BD K.
+intros until u. intros HP UW UWK ST LO HBT LOS SPA HT ERR TP RA BB BD K.
 eapply (printbuf_new_A_cps HIx) with (u := u) (lo := lo) (errv := errv);
-[exact HP | exact UW | exact UWK | exact ST | exact LO | exact LOS | exact SPA | exact HT | exact ERR | exact TP | exact RA | exact BB | exact BD | ].
+[exact HP | exact UW | exact UWK | exact ST | exact LO | exact HBT | exact LOS | exact SPA | exact HT | exact ERR | exact TP | exact RA | exact BB | exact BD | ].
 intros ms' md' A' (m' & r & errv' & B' & RS & VM & ST' & HPR & ERR' & HB & HD & OUT).
 apply K. exists m', r, errv', B'.
 split; [exact RS|]. split; [exact VM|]. split; [exact ST'|]. split; [exact HPR|]. split; [exact ERR'|]. split; [exact HB|]. split; [exact HD|].
@@ -1418,7 +1419,7 @@ HEAPAx A ((x, n) :: PBS ++ LB) LM FRS B m md -> 48 <= n ->
 rw_cells asegs m x (jhdr_cells ty 0 tojs pb u1 u2 ++ rest) ->
 opt_pbuf asegs m PBS pb ->
 mf_frameA m junk8 ->
-stk asegs m lo (bv_unsigned sp + -48) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp + -48 - 16 - 4096 ->
+stk asegs m lo (bv_unsigned sp + -48) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp + -48 - 16 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] -> bv_unsigned ra mod 2 = 0 ->
 model_vm_only (cfg_model md0) (cfg_model md) -> heap_pres A4H (LB ++ LM ++ fr_ivs A4L FRS) (bv_unsigned sp) m0 m -> fsaved F F1 -> (frm0 fc -> frm0 fc1) -> rc = 1 ->
@@ -1429,7 +1430,7 @@ AJ5 A4L HIx A T md
 (Z_to_bv 64 A_SB) x19 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F1 (Z_to_bv 64 0x9ad20) fc1 None m (seg_rom asegs)).
 Proof.
-intros until junk8. intros HP Hn HDR OPB FR ST LO LOS SPA HT ERR RA VM0 HPR FS FRM Hrc BD BB BBc K.
+intros until junk8. intros HP Hn HDR OPB FR ST LO HBT LOS SPA HT ERR RA VM0 HPR FS FRM Hrc BD BB BBc K.
 unfold mf_frameA in FR. unfold_consts. unfold A_SB, A_TP, A_ERRNO in *. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
 pose proof (heapA_budget A4L HIx _ _ _ _ _ _ _ HP) as [HB0 HD0].
@@ -1515,7 +1516,7 @@ rw_cells asegs m x (jhdr_cells ty 0 tojs pb 0 0 ++ rest) ->
 (ty = 1 \/ ty = 2 \/ ty = 3) ->
 opt_pbuf asegs m PBS pb ->
 mf_frameA m junk8 ->
-stk asegs m lo (bv_unsigned sp + -48) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp + -48 - 16 - 4096 ->
+stk asegs m lo (bv_unsigned sp + -48) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp + -48 - 16 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] -> bv_unsigned ra mod 2 = 0 ->
 model_vm_only (cfg_model md0) (cfg_model md) -> heap_pres A4H (LB ++ LM ++ fr_ivs A4L FRS) (bv_unsigned sp) m0 m -> fsaved F F1 -> (frm0 fc -> frm0 fc1) -> rc = 1 ->
@@ -1526,7 +1527,7 @@ AJ5 A4L HIx A T md
 (Z_to_bv 64 A_SB) x19 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F1 (Z_to_bv 64 0x9ac74) fc1 None m (seg_rom asegs)).
 Proof.
-intros until junk8. intros HP Hn HDR Hty OPB FR ST LO LOS SPA HT ERR RA VM0 HPR FS FRM Hrc BD BB BBc K.
+intros until junk8. intros HP Hn HDR Hty OPB FR ST LO HBT LOS SPA HT ERR RA VM0 HPR FS FRM Hrc BD BB BBc K.
 pose proof FR as FR0. unfold mf_frameA in FR. unfold_consts. unfold A_SB, A_TP, A_ERRNO in *. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
 blk_factsA A4L HIx HP x n Hxal Hxlo Hxhi Hximg.
@@ -1540,7 +1541,7 @@ asan_chk0.
 step. norm_w32.
 step. step. if_falsex. step. step. if_falsex. step. step. if_truex.
 evt_done5.
-eapply mf_genA; [exact HP | exact Hn | exact HDR0 | exact OPB | exact FR0 | exact ST | clia | clia | exact SPA | exact HT
+eapply mf_genA; [exact HP | exact Hn | exact HDR0 | exact OPB | exact FR0 | exact ST | clia | first [assumption | lia] | clia | exact SPA | exact HT
 | assumption | exact RA | exact VM0 | exact HPR | exact FS | exact FRM | exact Hrc | exact BD | exact BB | exact BBc | exact K].
 Qed.
 End MF.

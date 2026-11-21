@@ -21,9 +21,12 @@
     WHAT THE HARNESS CHECKS.  mz_zip_reader_init_mem on the input, then for each
     non-directory, non-encrypted stored/deflated entry: validate headers, get
     filename, file_stat, extract_file_to_mem into a 256 KiB buffer; every return
-    value ignored.  The harness makes no check of its own beyond not crashing,
-    so a statement about it says only that the code it calls never crashes,
-    hangs or trips a sanitizer.
+    value ignored.  The harness makes no check of its own beyond not crashing.
+    Its halts statements say only that the code it calls never crashes, hangs or
+    trips a sanitizer.  Its agreement statements say only that the code never
+    crashes or trips a sanitizer, and allow a run that never ends.  Its bound
+    statements say only how often its builds may disagree.  Its decidability
+    statements say only that some program decides where its builds agree.
 
     Whether each statement is open, proved or known false is recorded in the
     harness README, not here: this file changes only when a statement does. *)

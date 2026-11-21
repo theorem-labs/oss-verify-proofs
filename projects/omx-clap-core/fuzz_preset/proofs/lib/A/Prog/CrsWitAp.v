@@ -1,15 +1,15 @@
 (* fuzz_preset, image A' (the #102 pins): INSTANCE WITNESSES of the three image premises of crs_seg_E
    (lib/A/Prog/CrsSeg_E.v, row CR-E of the crcs walk) that PALibA does not cover (h-rw-man-5, 2026-10-29): each lemma
    is the premise's text with B := AD2l.TfibB and PA := PI_prog_A, the statement the composition plugs in, closed by
-   computation (the PALibB form, origin/cold/h-rw-man-5-palib-core b597f50c7705 lib/B/PALibB.v blob 415450eb4ece).
+   computation (the PALibB form, lib/B/PALibB.v blob 415450eb4ece).
      crs_wit_pal_uar_img_A'    = HX_pal_uar_img    : the use-after-return option cell lies in the image band
      crs_wit_pal_sm1_A'        = HX_pal_sm1        : the listing's __asan_stack_malloc_1 is the code record's class-1
                                                      frame-area entry
      crs_wit_pal_pst_static_A' = HX_pal_pst_static : alloc.c's statics (prh_pst) are neither runtime-owned statics
                                                      nor errno
    rule 24: no function proved here (image facts only).
-   INPUTS. The instance record lib/A/AD2l.v blob eb321db7a357 (the same blob as RelocA, origin/cold/h-rw-pre-4-reloc102-a
-   e36f036fc5ee; already on this branch's kit v2 base, so not re-taken), its code record lib/A/AF0m.v blob 97f423adf6eb,
+   INPUTS. The instance record lib/A/AD2l.v blob eb321db7a357 (the same blob as RelocA,;
+   already on this branch's kit v2 base, so not re-taken), its code record lib/A/AF0m.v blob 97f423adf6eb,
    the listing instance lib/A/PAImg_prog.v blob 505a51ff7d08, the statics' places lib/A/PRH_Img.v (prh_img_A).
    Numerals: 4 (LENGTH: the use-after-return cell and errno are 4 bytes); 1 (the frame class). No ADDRESS literal:
    every address is read from the instance record, the listing or prh_img_A. *)

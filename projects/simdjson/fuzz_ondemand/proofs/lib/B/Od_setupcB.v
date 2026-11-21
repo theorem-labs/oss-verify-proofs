@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -49,7 +50,7 @@ Lemma aevt_splitinto :
   Z.of_nat (length (rt_live RT Σ)) + 4 <= LIVE_MAX -> 1 + vcost_pushes (length (poffs d)) 0 0 <= rt_credit RT Σ ->
   (length (rt_frames RT Σ) + 1 < FRAMES_MAX2)%nat ->
   ART RT Σ m -> mem_inv bsegs m ->
-  stk bsegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + ATPA_SPLITINTO_STACK <= bv_unsigned sp ->
+  stk bsegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + ATPA_SPLITINTO_STACK <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 -> frm0 fc ->
   (forall (Σ' : rts RT) (A' : Z) v t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F' fc' m', frm0 fc' ->
      rt_after_f RT Σ' (bv_unsigned sp) lo m m' ->
@@ -83,7 +84,7 @@ Lemma aevt_empls :
   size = cap -> size + 1 <= 2^24 -> fobj RT Σ m V 24 ->
   Z.of_nat (length L0) + 4 <= LIVE_MAX -> vcost_push cap size <= rt_credit RT Σ ->
   ART RT Σ m -> mem_inv bsegs m ->
-  stk bsegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + ATPA_PUSH_STACK <= bv_unsigned sp ->
+  stk bsegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + ATPA_PUSH_STACK <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 -> frm0 fc ->
   (forall (Σ' : rts RT) (A' : Z) t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F' fc' m', frm0 fc' ->
      rt_after_f RT Σ' (bv_unsigned sp) lo m m' ->

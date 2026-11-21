@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the SIGPIPE disposition left free, the launch input's kernel build): changed AH, SINV, argH and 8 more; added Hapc, Hbrk, Hfit and 22 more. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.jsoncons.fuzz_json_cursor.images Require Import Asan.
@@ -66,17 +67,31 @@ Definition chk_lit1 (k : list kentry) (c : Z * nat * Z) : bool :=
 Definition art_lits_chk (cs : acs) : bool := forallb (chk_lit1 (kn cs)) ART_LITW.
 
 Section Lits.
-  Variable sp brk0 : word.
-  Variable rdraw : EntryDraw.
-  Variable argv envp : list (list byte).
-  Variables uid hw : word.
-  Variable fs : Fs.Fs.
+  (* THE SECTION'S PARAMETERS, old beside new.
+       OLD  sp brk0 rdraw argv envp uid hw fs, with Hsp Hva;
+            SINV0 APH0 sp rdraw brk0 argv envp uid hw, argH0 APH0 sp rdraw argv envp uid hw.
+       NEW  the launch's whole input, in [HandoffBridgeK]'s Section Image order.
+     The proofs below are generic over SINV/argH ([HandoffCellsK]) and change not at all. *)
+  Variables (sp : word) (rdraw : EntryDraw) (brk0 mbase : word) (argv envp : list (list byte)).
+  Variables (ifs : Fs.Fs) (stdin : InputStream) (uid gid hw : word) (groups : list word) (net : NetQueue).
+  Variables (nofile sigmask : word) (abrt : bool) (urnd : InputStream) (tmp0 : Fs.Fs).
+  Variables (kb : KernelBuild) (execfn : list byte) (sdf : bool) (apc : N) (fs : Fs.Fs).
   Hypothesis Hsp : valid_sp sp.
+  Hypothesis Hbrk : valid_brk ASEGS0 brk0.
+  Hypothesis Hmb : valid_mmap_base mbase.
   Hypothesis Hva : valid_argv argv.
-  #[local] Notation SINV := (SINV0 APH0 sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 APH0 sp rdraw argv envp uid hw).
+  Hypothesis Hve : valid_envp envp.
+  Hypothesis Hfit : entry_stack_fits sp argv envp.
+  Hypothesis Huid : valid_id uid.
+  Hypothesis Hhw : valid_hwcap hw.
+  Hypothesis Hapc : Z.of_N apc = a_entry ASAN0.
+  #[local] Notation INP := (AsanInitK.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf).
+  Hypothesis Hlaunch : valid_launch INP.
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) INP.
+  #[local] Notation SINV := (SINV0 APH0 sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf apc).
+  #[local] Notation argH := (argH0 sp rdraw argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf).
   #[local] Notation CSOK := (cs_ok ASEGS0 ASAN0 AsanInitK.LIMIT SINV argH fs).
-  Let AH := argH0_high APH0 sp rdraw argv envp uid hw Hsp Hva.
+  Let AH := argH0_high sp rdraw argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf apc Hsp Hva.
 
   Lemma art_lit1 : forall E cs R FULL model c, CSOK E cs R FULL model -> chk_lit1 (kn cs) c = true ->
     cell ASEGS0 FULL (fst (fst c)) (snd (fst c)) (snd c).

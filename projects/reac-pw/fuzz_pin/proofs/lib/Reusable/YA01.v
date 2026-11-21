@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YA01.v, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YA01.v at origin/ossv/recipes 6ebe35ba632 (fuzz_knock's released ASan tree); module paths changed to reac-pw/fuzz_pin. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YA01.v (fuzz_knock's released ASan tree); module paths changed to reac-pw/fuzz_pin. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the CONFIG_RSEQ-sized auxiliary vector; the start-up nodes' CONFIG_RSEQ argument; binary addresses); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -709,16 +710,35 @@ end
 | _, _, _ => None
 end.
 End G.
-Definition V_HW : nat := 9.
-Definition NX0G : nat := 10.
-Definition init_kn_g (A : atable) : list kentry :=
-KRange e_atr8 0xFFFF0000001 0xFFFFFFFFFE7
-:: init_kn A ++ KRange (EVar V_HW) 0x112D 0x20112D :: auxw 3 16 (EVar V_HW).
+(* swept Reusable/YK09.v for LPS 75d69e00: fourteen definitions there
+   gained a leading `(r : Z)` (the rseq flag as 0/1, YK09 `rseq_z`), a NEW symbolic variable
+   `V_G : nat := 9` appeared, and `NX0` went 9 -> 10.  The g-variant below was left behind, three
+   ways:
+     - V_HW was 9, which at 75d69e00 IS V_G; the prepended `KRange (EVar V_HW) 0x112D 0x20112D`
+       would then contradict init_kn's `KRange (EVar V_G) 0 1`.  V_HW is the next fresh index
+       after YK09's variables, so it moves 9 -> 10 and NX0G, which is V_HW + 1, moves 10 -> 11.
+     - init_kn and init_acs_of take the flag, so init_kn_g and init_acs_of_g take it too and pass
+       it on.  They must not pin it: at 75d69e00 recorded_kernel PRESERVES kb_rseq (Run.v:4575).
+     - the prepended e_atr8 upper bound is the exact one, 8*e_atr8 = e_atrandom - 456 - 32*r from
+       YK09's e_sp0/e_envp/e_auxv/e_atrandom/e_atr8 and AUXSZ r = 432 + 32*r, against
+       e_atrandom + 16 <= 0x800000000000: (0x800000000000 - 16)/8 - 57 - 4*r = 0xFFFFFFFFFC5 - 4*r.
+       The old 0xFFFFFFFFFE7 is that same derivation with the old 184-byte head (184/8 = 23). *)
+Definition V_HW : nat := 10.
+(* AT_GID/AT_EGID (pairs 21, 22) are in the 727298f3 vector, and musl's [__init_libc]
+   compares [aux[AT_GID]] with [aux[AT_EGID]], so both values are the one launch variable
+   [V_GID], appended after [V_HW]; NX0G moves 11 -> 12.  As cgif/cgif_file_fuzzer's YA01.v
+   in this working copy (bzip2's [K/AS/AsanPlanCore.v] NX0 12 has it too). *)
+Definition V_GID : nat := 11.
+Definition NX0G : nat := 12.
+Definition init_kn_g (r : Z) (A : atable) : list kentry :=
+KRange e_atr8 0xFFFF0000001 (0xFFFFFFFFFC5 - 4 * r)
+:: init_kn r A ++ (KRange (EVar V_HW) 0x112D 0x20112D :: auxw 10 16 (EVar V_HW))
+++ auxw 21 13 (EVar V_GID) ++ auxw 22 14 (EVar V_GID).
 Definition STACK_VIS : Z := 0x80800000.
 Definition init_vis_g (A : atable) : list (expr * expr) :=
 [(ELit (img_lo A), ELit (img_hi A - img_lo A)); stack_side].
-Definition init_acs_of_g (A : atable) : acs :=
-ACS (mk_ss (a_entry A) init_regs (init_kn_g A) NX0G) [] (img_hi A - img_lo A) MBASE_MIN 0 (init_vis_g A) []
+Definition init_acs_of_g (r : Z) (A : atable) : acs :=
+ACS (mk_ss (a_entry A) init_regs (init_kn_g r A) NX0G) [] (img_hi A - img_lo A) MBASE_MIN 0 (init_vis_g A) []
 (vis_cost (img_hi A - img_lo A) + vis_cost STACK_VIS) (escale 4096 (EVar V_BRK)) FdStd false.
 Fixpoint cover_sweep (l : list (word * word)) (z hi : Z) (fuel : nat) : bool :=
 match fuel with

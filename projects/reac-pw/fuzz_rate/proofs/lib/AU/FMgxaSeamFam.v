@@ -1,12 +1,12 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamFam.v (cold/port-fm-rtprintf-param 0ddf65fd8cc); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMgxaSeamFam.table); names: record RT_IImgA -> A_img RecAsanVfA.N_img_asan_vf. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMgxaSeamFam.v at 2d2ff01bb6f2 relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamFam.v; relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMgxaSeamFam.table); names: record RT_IImgA -> A_img RecAsanVfA.N_img_asan_vf. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMgxaSeamFam.v relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
 (* Step 2 of the evt -> SRr seam at musl vfprintf: the FORMAT and the ARGUMENTS.
 
    The shared contract's family (FMsnprintfShared.v pf_family, refined in FMgxaSeamDef.v as
    pf_family_ro) states the format and the arguments over the harness's reader
    `aview tfibsegs H mem`: fmt_at for the format, words_at for the va_list words, pf_args_asan per
    argument and pf_args_slack for the word past each string.  The released GXA statement
-   (lib/CJ/RL/GXA/G_vfprintf_snf.v:194 vfprintf_snf_a_stmt) asks instead, over the CJ store
+   (lib/CJ/RL/GXA/G_vfprintf_snf.v:195 vfprintf_snf_a_stmt) asks instead, over the CJ store
    `cjstore H mem` at the image A_img:
      bytes_at img_segs m A (zb fmt), Forall (0 <= c < 256) fmt   the format, its NUL included
      va_area m VA slots                                           (G_pop_arg.v:456)
@@ -28,7 +28,7 @@
    app_mem_of_amem_range, not from its pf_rng_of_view: that lemma asks amem_range w (|s| + 1 + 8),
    one byte more than pf_args_slack gives when w + |s| = 7 mod 8 and the string ends 9 bytes below
    kLowMemEnd or kHighMemEnd; pf_rng itself reads only up to w + |s| + 7 (amem_str_tail). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/FMgxaSeamFam.v at 71994ff034c7, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/FMgxaSeamFam.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/FMgxaSeamFam.v keeps its donor's comment text) is kept as lib/A/FMgxaSeamFam.v writes it. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/FMgxaSeamFam.v, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/FMgxaSeamFam.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/FMgxaSeamFam.v keeps its donor's comment text) is kept as lib/A/FMgxaSeamFam.v writes it. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

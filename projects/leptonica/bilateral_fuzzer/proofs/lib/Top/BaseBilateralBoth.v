@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (recorded (KReplay) proofs re-proved by tactics). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -18,4 +19,6 @@ Theorem strong_universal_error_free_bilateral_fuzzer_both :
     (mkImage Plain.M.loaded_segments Plain.M.init_pc Plain.M.phdrs)
     (mkImage AsanUbsan.M.loaded_segments AsanUbsan.M.init_pc AsanUbsan.M.phdrs).
 Proof.
-ltac2:(KReplay.run1 (kr_t_BaseBilateralBoth ()) [] "p;1p;3p;6g0000j14Tg001Lj13Tg002ij30Tg0042j11Tg0053j62Tg006CR0#4R1%30R0g007>R29010g0089%12g0090E2o"). Qed.
+  exact (@bilateral_both_pre _ _ (@acr_sure _ _ s16_credit) O2Pins.s16_pins (s16_fuzz_call s16_credit)
+           (OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib.K5.B02.TopA_final.s3s_closed OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib.K5.B02.TopA.topA_runseg)).
+Qed.

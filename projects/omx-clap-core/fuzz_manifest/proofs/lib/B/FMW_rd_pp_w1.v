@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_rd_pp_w1.v (a working branch e2e59892bef), re-walked
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_rd_pp_w1.v (a working branch), re-walked
    for B's code (B-readings.lst 0x82098 .. 0x820ec). *)
 (* lv2_locate_manifest_readings on fm.asan-ubsan, segment PP, the first inner loop (lv2_locate.c:116, while
    (isspace (p[0])) p++): its head 0x82098 (FMW_rd_pp_cuts.v pp_at_L1) with k spaces consumed after p0.  One

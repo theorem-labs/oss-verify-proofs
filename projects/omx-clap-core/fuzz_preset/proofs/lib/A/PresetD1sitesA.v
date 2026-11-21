@@ -21,7 +21,7 @@
        that ARcf does not give (the strict live-secondary count, ERRB_ROOM and batch_room_cf);
    (4) free is free_cf (YG00cf.v); the free law of cgif's model_laws (YG0d.v ml_free) becomes the premise
        free_tok_cf, which a8's YG03cf.v ml_free_with_cf gives at md := maybe_drain_cf once drain_spec_cf holds
-       for it (free_cf p tr s = free_with_cf maybe_drain_cf p tr s, YG03cf.v:2076-2078).
+       for it (free_cf p tr s = free_with_cf maybe_drain_cf p tr s, YG03cf.v:2077-2079).
    The image literals are the base's lib/A twins (AD1w.v, AD1x.v, AD1v.v), relocated by h-mani-a2.
    Rule 24: no function is proved here (composition / driver layer of a port). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/PresetD1sitesA.v, with its module paths and module names changed; 148 of its 284 lines of code are new or changed and 24 lines of the source are left out. *)
@@ -45,7 +45,7 @@
        3e7 allocator events per harness call) and takes its room from live state (YG08cf.v abudget_room_cf);
    (3) drv_pre_cf adds ROOM_cf (lib/Reusable/YGcfRoomPre.v), the three input-driven call premises of acall_pre_cf
        that ARcf does not give (the strict live-secondary count, ERRB_ROOM and batch_room_cf);
-   (4) free is free_cf (YG00cf.v); cgif's free law (YG0d.v ml_free) is a8's ml_free_cf (YG03dcf.v:428) and cgif's
+   (4) free is free_cf (YG00cf.v); cgif's free law (YG0d.v ml_free) is a8's ml_free_cf (YG03dcf.v:429) and cgif's
        AR_laws_ok is a8's AR_laws_ok_cf (YG0lawscf.v), both cited by the proofs, so neither is a premise here;
    (5) THE ROOM (owner ruling, 2026-10-29, after a Theorem Labs lane's P8): a driver state carries NO headroom number
        and NO P8 conjunct. `ROOM_cf_k S (4 * N_LLVMF + 3)` and every other headroom number of this layer are
@@ -53,13 +53,14 @@
        a Theorem Labs lane's note, the internal file n-llvmf.md). In their place a driver state carries NP S, the
        interface's non-primary room (see the Section below). P8 (preset_room / room_at) enters only at the loop
        entry, which is CwRunqm's, not this file's.
-   (6) THE MEMNORM KEEP (interface a working branch 446222ec0601): printf_post_cf's continuation takes
+   (6) THE MEMNORM KEEP (interface a working branch): printf_post_cf's continuation takes
        `YAkMemnorm.memnorm tfibsegs mem -> YAkMemnorm.memnorm tfibsegs mem'`, so the loop keeps the overlay's
        normal form across the printf call between two harness calls. With it, tfib_printf_first_cf_A and
        tfib_printf_next_cf_A take their memcpy / memset premise in the keep form YGcallMxmn.aintrin_realizes_xm
        (see the results below), and the vfprintf walks are re-run in lib/A/PresetD1sitesAmn.v.
    The image literals are the base's lib/A twins (AD1w.v, AD1x.v, AD1v.v), relocated by a Theorem Labs lane.
    Rule 24: no function is proved here (composition / driver layer of a port). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises); the model's channel reader that fdchan asks for beside the descriptor (cs_ok's co_rdr, proved at the launch)). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -90,14 +91,14 @@ Section S.
 Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : CfParams}.
 (* THE RUN LAYER'S ROOM (owner ruling 2026-10-29). A driver state carries NP S and nothing else about room:
    NP is the interface's non-primary room (the secondary count, the error buffer and the batch-class map),
-   lib/A/PresetCfnA.v's Section Variable `iface_room_np` (lane IfacePort, a working branch
-   3f83c075b61f). Here it is a Section Variable of the same type, which the driver instantiates with the
+   lib/A/PresetCfnA.v's Section Variable `iface_room_np` (lane IfacePort, a working branch).
+   Here it is a Section Variable of the same type, which the driver instantiates with the
    interface's.
    Two laws of NP are used by this file. They are the INTERFACE's definitions, cited, never restated and never
    proved here (a Theorem Labs lane gives them bodies in lib/A/CfRoomLivePreset.v at room_live_cf):
-   - PCA.iface_room_np_tail NP (PresetCfnA.v:460): NP S -> ROOM_cf_k S 2, which hands a single call its a8
+   - PCA.iface_room_np_tail NP (PresetCfnA.v:461): NP S -> ROOM_cf_k S 2, which hands a single call its a8
      premise ROOM_cf S (acall_pre_cf_intro, ml_free_cf);
-   - PCA.iface_room_np_step NP (PresetCfnA.v:455-459): the malloc arm and the free arm, each under Wf_cf U S,
+   - PCA.iface_room_np_step NP (PresetCfnA.v:456-460): the malloc arm and the free arm, each under Wf_cf U S,
      qtight S and length (blocks S) <= 3; the free sites here use the free arm (proj2).
    a Theorem Labs lane's P8 (preset_room, room_at, PCA.iface_room_at_entry) is NOT in this file: it enters at the
    loop entry only, which is CwRunqm's. *)
@@ -192,7 +193,10 @@ Definition tail_at_pinv_A (ss : sstate) (E : YP0m.env) (sp : word) (inp : ProcIn
 (W : world tfibsegs) (ms : machine_state) (md : Model) (ly : alayout) (S : astate) (pb : sptr) (cap : Z) : Prop :=
 st_ok tfibsegs E ss (restrict (w_H W) ms) /\
 bv_unsigned (ew E A_BUF) = sptr_addr B ly pb /\ bv_unsigned (ew E A_LEN) = dlen data /\
-runs_at (bv_unsigned sp) (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp [a0; p] (in_envp inp)) /\
+(* the entry draw is quantified existentially in this conjunct, as in the core's AD1w.tail_at (runs_main_tfa takes
+   the draw's top and the execfn at 727298f3), so tail_at_pinv_A keeps its arity *)
+(exists rnd : EntryDraw, runs_at (bv_unsigned sp) (mrestrict (w_H W) (ms_mem ms))
+(runs_main_tfa true sp (ed_top rnd) [a0; p] (in_envp inp) (in_execfn inp))) /\
 AI tfibsegs (w_H W) (w_A W) md /\ ARcf tfibsegs B ly S [] W (ms_mem ms) md /\
 NP S /\ top_ok (bv_unsigned sp) ly /\
 blocks S = [(pb, cap)] /\ 65536 <= cap <= 2 ^ 26 /\ dlen data < cap /\
@@ -201,7 +205,11 @@ m_fs md = in_fs inp /\ m_fds md = APSG.fds_std /\ drv_minv_cf S cap (dlen data) 
 PCA.PINV (aview tfibsegs (w_H W) (ms_mem ms)) 0 0 /\
 xs_placed_cf ly S /\
 (* memnorm of the full overlay (lane MnPrefix): the tail carries it from main to the loop head *)
-YAkMemnorm.memnorm tfibsegs (ms_mem ms).
+YAkMemnorm.memnorm tfibsegs (ms_mem ms) /\
+(* LAST conjunct, beside the descriptor fact, as in the core's AD1w.tail_at: [fdchan] at LPS 727298f3
+   asks for the model's channel reader as well.  It comes from the hand-off, where [cs_ok]'s [co_rdr]
+   proves it. *)
+m_channel_reader md = true.
 
 (* ---------------------------------------------------------------------- *)
 (* 2. The free sites. Donor: AD1v.v:303-314 (free_site_tfa), AD1w.v:107-115 (free_null_site_tfa). The pre
@@ -304,7 +312,7 @@ xst k' (w_H W) mem' ->
 aview tfibsegs (w_H W) mem' a = aview tfibsegs (w_H W) mem a) ->
 (forall a, 0 <= a < 2 ^ 64 -> ~ STDOUT_MUT a -> apresent (w_H W) mem a -> apresent (w_H W) mem' a) ->
 AI tfibsegs (w_H W) (w_A W) md' ->
-(* the MEMNORM KEEP (interface a working branch 446222ec0601, header item (6)): the loop needs the overlay's
+(* the MEMNORM KEEP (interface a working branch, header item (6)): the loop needs the overlay's
    normal form again at the next harness call, and no call rule derives it from a post stated through views
    (YGcallMxmn.v's header), so the printf site hands it on. Lane MnLoop takes exactly this line. *)
 (YAkMemnorm.memnorm tfibsegs mem -> YAkMemnorm.memnorm tfibsegs mem') ->
@@ -313,7 +321,7 @@ srealizes tfibsegs (cfg_at tfibsegs (raZ regs) regs' mem' md') T.
 Definition printf_first_cf : Prop :=
 forall ly S (W : world tfibsegs) regs mem md T,
 printf_pre_cf ly S W regs mem md -> stdout_img (w_H W) mem ->
-(forall k, fd_lookup (m_fds md) k = fd_lookup APSG.fds_std k) ->
+(forall k, fd_lookup (m_fds md) k = fd_lookup APSG.fds_std k) -> m_channel_reader md = true ->
 AI tfibsegs (w_H W) (w_A W) md ->
 printf_post_cf ly S W regs mem md 1%nat T ->
 srealizes tfibsegs (cfg_at tfibsegs A_icpt_vprintf regs mem md) (wr ch_stdout line0 T).
@@ -321,7 +329,7 @@ srealizes tfibsegs (cfg_at tfibsegs A_icpt_vprintf regs mem md) (wr ch_stdout li
 Definition printf_next_cf : Prop :=
 forall ly S (W : world tfibsegs) regs mem md T k,
 printf_pre_cf ly S W regs mem md -> xst k (w_H W) mem -> (1 <= k <= 3)%nat ->
-(forall k, fd_lookup (m_fds md) k = fd_lookup APSG.fds_std k) ->
+(forall k, fd_lookup (m_fds md) k = fd_lookup APSG.fds_std k) -> m_channel_reader md = true ->
 AI tfibsegs (w_H W) (w_A W) md ->
 printf_post_cf ly S W regs mem md (Datatypes.S k) T ->
 srealizes tfibsegs (cfg_at tfibsegs A_icpt_vprintf regs mem md) T.
@@ -339,7 +347,7 @@ mem_ok tfibsegs E' (mrestrict (w_H W) mem) IMG_L ->
 (forall a, usp - 65536 <= a < usp -> apresent (w_H W) mem a) ->
 AI tfibsegs (w_H W) (w_A W) md -> ARcf tfibsegs B ly S [] W mem md -> top_ok usp ly ->
 ((k = 0%nat /\ stdout_img (w_H W) mem) \/ ((1 <= k)%nat /\ xst k (w_H W) mem)) ->
-(forall k, fd_lookup (m_fds md) k = fd_lookup APSG.fds_std k) -> m_fs md = fs ->
+(forall k, fd_lookup (m_fds md) k = fd_lookup APSG.fds_std k) -> m_channel_reader md = true -> m_fs md = fs ->
 srealizes tfibsegs (mkCfg (mkst regs (w64 A_EXIT) mem (seg_rom tfibsegs)) md)
 (wr ch_stdout (concat (repeat line0 (k - 1))) (ex code fs)).
 
@@ -358,6 +366,9 @@ AI tfibsegs (w_H W) (w_A W) md -> ARcf tfibsegs B ly S [] W mem md -> top_ok usp
 est (w_H W) mem ->
 ((k = 0%nat /\ stdout_img (w_H W) mem) \/ ((1 <= k)%nat /\ xst k (w_H W) mem)) ->
 ((1 <= k)%nat -> fd_lookup (m_fds md) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))) ->
+(* guarded as the descriptor premise above is (the core's AD1x.exit_site_tfa): only a run that writes a
+   line needs the model's channel reader, which [fdchan] asks for at LPS 727298f3. *)
+((1 <= k)%nat -> m_channel_reader md = true) ->
 m_fs md = fs ->
 srealizes tfibsegs (mkCfg (mkst regs (w64 A_exit) mem (seg_rom tfibsegs)) md)
 (wr ch_stdout (concat (repeat line0 (k - 1))) (ex code fs)).
@@ -406,13 +417,13 @@ xst_frame_tfa xst -> est_img_tfa est -> est_frame_tfa est ->
 exit_site_cf B est xst -> exit_leaf_cf B xst.
 
 (* AD1o.v tfib_printf_first / tfib_printf_next and AD1j.v tfib_exit_site, over ARcf, at AD1k's xst / est.
-   The vfprintf and exit walks they consume are CwPreA's cf copies (a working branch 69a96c2fbc65:
+   The vfprintf and exit walks they consume are CwPreA's cf copies (a working branch:
    AE35cf.tfib_vprintf_icpt_A, AE3mcf.tfib_vfprintf_stdout_first / _next, AE23cf.tfib_exit_pristine / _pristine1 /
    _empty / _flush, and the exit returns AE36cf.x1_realizes / x3_realizes, AE37cf.x2_realizes), cited by
    the proofs; AR_laws_cf is a8's AR_laws_ok_cf.
    THE NAMED REALIZER PREMISE CHANGED WITH THE MEMNORM KEEP (2026-10-29): the two printf results take the memcpy /
    memset texts in a Theorem Labs lane's KEEP FORM, YGcallMxmn.aintrin_realizes_xm (lib/Reusable/YGcallMxmn.v, taken by path
-   from a working branch 8e33ecc4965b, blob 87de220caca2), not a8's aintrin_realizes_cf. The keep form
+   from a working branch, blob 87de220caca2), not a8's aintrin_realizes_cf. The keep form
    is aintrin_realizes_cf with ONE more post conjunct, `memnorm segs mem -> memnorm segs mem'`, which the row's
    owner pays from its own run; without it printf_post_cf's keep has no proof (YGcallMxmn.v's header: no call rule
    derives memnorm from a post stated through views). Both tops that name these premises must pass the keep form.

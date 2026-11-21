@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-11: copied from projects/jsoncons/fuzz_json_cursor/proofs/lib/PmInteg/PmHaltsAsanC.v at 874e3397a35 and ported to the ubsan image; the exiting half is Pm10HeapBridge_u.src0_realizes_spec_heap_lim at target_alloc_limit, with the Lay0F_u/LS0F_u instances copied from PmInteg/PmCubsanBase.v at the same commit, in place of the ASan PmCasanFinal.pm_casan_tgt half. *)
+(* Modified by Theorem Labs, 2026-11: copied from projects/jsoncons/fuzz_json_cursor/proofs/lib/PmInteg/PmHaltsAsanC.v at theorem-labs/oss-verify-proofs@c5665593c2d8 and ported to the ubsan image; the exiting half is Pm10HeapBridge_u.src0_realizes_spec_heap_lim at target_alloc_limit, with the Lay0F_u/LS0F_u instances copied from PmInteg/PmCubsanBase.v, in place of the ASan PmCasanFinal.pm_casan_tgt half. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (walks lifted to the run's segments): changed must_exit_cfg0_big; internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import NArith ZArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -9,6 +10,7 @@ From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib Require Import ShapeAlg Dive
 From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib Require PmFinal Pm10DrvLibL.
 From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib.Common.LimSim Require Import LimSimSys.
 From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib Require PropExec.
+From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib.Common.Cfg Require SRomStable.
 From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib.U Require PmLibSpecs_u PmFinal_u Pm10DrvLibL_u Pm10HeapBridge_u.
 From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib.U.CJ.Bridge Require PmHeapInst10_u.
 From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib.U.PmTop Require TopGlueC_u.
@@ -44,10 +46,18 @@ Proof.
   intros [sp brk mb rnd] inp Hen Hvalid.
   pose proof (Pm10HeapBridge_u.src0_realizes_spec_heap_lim PmFinal_u.cfg0 eq_refl eq_refl Lay0F_u LS0F_u DLL0_u LIB0_u LX0_u BUD0_u target_alloc_limit) as TGT0.
   pose proof (valid_input_va_size _ Hvalid) as Hsv48.
-  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb Hfit]]].
-  pose proof Hvalid as (Hargv & Henvp & Hfs & _ & Hcreds & _).
+  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb [_ Hlau]]]].
+  (* valid_entry's 5th conjunct is the launch; valid_input is read through the model's BY-NAME
+     accessors, for Pm10DrvMain_u's src_realizes_stmt2_lim (.. Hmb Hvl Hlau Hargv Henvp Hfs
+     Hcreds Hcr). *)
   eapply (srealizes_must_exit_init_fo _ PmFinal.cfg0 CODES).
-  - exact (TGT0 sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hargv Henvp Hfs Hcreds).
+  - (* the run reads the binary's segments with the run's vDSO appended
+       ([Run.run_segments]); [SRomStable.srun_init] lifts the walk over the binary's own
+       segments ([vdso_image] of them is [None] by computation) *)
+    apply (SRomStable.srun_init PmFinal.cfg0 Ubsan.M.loaded_segments inp sp mb _ _ _ _ _ _ eq_refl).
+    exact (TGT0 sp brk mb rnd inp Hsp Hbrk Hmb (valid_input_launch _ Hvalid) Hlau
+             (valid_input_argv _ Hvalid) (valid_input_envp _ Hvalid) (valid_input_fs _ Hvalid)
+             (valid_input_creds _ Hvalid) (valid_input_channel_reader _ Hvalid)).
   - apply Safe_init_big. exact nbr_limit_target.
   - reflexivity.
   - apply HaltsSpec.codes_ok_spec; [exact codes_0 | exact codes_2].

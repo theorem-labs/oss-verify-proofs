@@ -1,25 +1,26 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30: new file holding code from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstSec.v (statement texts, a working branch 8aea1d52068), proofs/cgif/cgif_file_fuzzer/lib/AGif5.v (const_cells_CZS, 4c2fd365d8e) and lib/B/ReplyImg_zone3.v (proof shape, 7e00c6a5ee29), restated at reply's image A tables (A/AF0m.v, AImg_reply / AImgS_reply). *)
+(* Modified by Theorem Labs, 2026-10-30: new file holding code from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstSec.v (statement texts, a working branch), proofs/cgif/cgif_file_fuzzer/lib/AGif5.v (const_cells_CZS) and lib/B/ReplyImg_zone3.v (proof shape), restated at reply's image A tables (A/AF0m.v, AImg_reply / AImgS_reply). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, row img-zone3-A of a Theorem Labs lane's REPLY-IMG-ROWS.md (sha256 a33a582e3ffd; internal record), for the cf layer at
    plugin-hostd/fuzz_reply).
    rule 24: no function proved
    proves no function (kind: segment lemma; closed image facts at plugin-hostd/fuzz_reply image A, no machine walk;
    fuzz_reply.asan, pin 42c58610e125).
 
-   Template: the B twin, proofs/plugin-hostd/fuzz_reply/lib/B/ReplyImg_zone3.v (a working branch
-   7e00c6a5ee29): the same four rows at image B, ported here to image A's tables (A/AF0m.v) and instances.
-   The cf layer states these rows as Section hypotheses of proofs/cgif/cgif_file_fuzzer/lib/YGcfInstSec.v (commit
-   8aea1d52068; the same text at 4c2fd365d8e, lines in brackets), over its Section b's [Variable B : asyms] and the image
+   Template: the B twin, proofs/plugin-hostd/fuzz_reply/lib/B/ReplyImg_zone3.v (a working branch):
+   the same four rows at image B, ported here to image A's tables (A/AF0m.v) and instances.
+   The cf layer states these rows as Section hypotheses of proofs/cgif/cgif_file_fuzzer/lib/YGcfInstSec.v (
+   the same text, lines in brackets), over its Section b's [Variable B : asyms] and the image
    classes ImgBase.AImg / ImgBaseAGS.AImgS.  Reply does not carry the layer files.  So each Lemma below states the
-   hypothesis's text VERBATIM at reply's instances (AImg_reply, A/AGif2reply.v:23; AImgS_reply, A/AGif4reply.v:26),
+   hypothesis's text VERBATIM at reply's instances (AImg_reply, A/AGif2reply.v:24; AImgS_reply, A/AGif4reply.v:26),
    with [forall B, @im_syms AImg_reply B ->] in front where the text names B, and a consumer closes the layer's
    hypothesis with [exact] once the layer is on reply.  No Definition of the layer is copied here.
    - ZONE3 (:377-378 [:365-366]): names no B, so it takes no symbol facts.  im_img_cover is img_cover and ims_zone3 is
      zone3 at reply's instances, and the row is A/AF0x.v's zone3_intro.
-   - CONST_KEEP_S (:383-388 [:371-376]): every constant cell of Tfib_const (A/AF0m.v:819) reads only bytes of AGif4.CZS
+   - CONST_KEEP_S (:383-388 [:371-376]): every constant cell of Tfib_const (A/AF0m.v:820) reads only bytes of AGif4.CZS
      (A/AGif4.v:66) or the mutex's three pad bytes, and each pad cell holds 0 (cgif's AGif5.const_cells_CZS and its use,
-     AGif5.v:336-372 / :500-525 at 4c2fd365d8e).  Name check (REPLY-IMG-ROWS.md (sha256 a33a582e3ffd; internal record) :73-74): NOT the text of
+     AGif5.v:336-372 / :500-525).  Name check (REPLY-IMG-ROWS.md (sha256 a33a582e3ffd; internal record) :73-74): NOT the text of
      YGcfInstDepot.dep_keep_img (:154): that one takes the kept zone as a parameter, a world and a depot state with NoDup /
      incl / depot_mem_ok premises and also concludes depot_mem_ok; CONST_KEEP_S fixes the zone to ims_dzone \/ CZS, takes
      a bare hidden-set H, adds the pad-byte premise and concludes only the constant cells.
@@ -160,8 +161,8 @@ lia.
 Qed.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* AREAS_DISJ (YGcfInstSec.v:752 at 8aea1d52068): the symbol table's areas are pairwise apart.  TfibSyms pins the
-   instance, depot, store, internal allocator, its flag, the out-of-memory byte and the thread pointer (A/AF0m.v:870-882);
+(* AREAS_DISJ (YGcfInstSec.v:751): the symbol table's areas are pairwise apart.  TfibSyms pins the
+   instance, depot, store, internal allocator, its flag, the out-of-memory byte and the thread pointer (A/AF0m.v:871-883);
    asyms_ok's aso_const_law (Reusable/YG0f.v:191-193) makes the shadow cell, the use-after-return cell and their two GOT
    cells addresses of Tfib_const cells, and z3_cells_at reads each one's candidates off the table. *)
 Lemma areas_disj_A : forall B, @im_syms AImg_reply B -> pairwise zdisjoint (asyms_areas B).

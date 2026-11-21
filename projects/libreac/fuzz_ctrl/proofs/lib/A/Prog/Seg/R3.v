@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 1137 of its 1175 lines of code are new or changed and 210 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_box_model_block.v; 1090 of its 1202 lines of code are new or changed and 1063 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P5.v, with its module paths, module names, addresses and numbers changed; 866 of its 1005 lines of code are new or changed and 1063 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment R3 of fuzz_ctrl LLVMFuzzerTestOneInput (asan, image A): [0x8152c, 0x81574], Inv_A8152c -> Inv_A81578.
    rule 24: no function proved (a slot segment).  With s3 = S(fr) the code marks round-trip frame variables usable in
    the frame shadow (plan-asan FP.4): out[]'s last granule (S(fr) + 254 = 04, 0x81544), id at fr + 2176
@@ -569,7 +570,7 @@ Variables ra empty : Z.
 Hypothesis FF : frame_facts B APIf LS SH SK ra empty.
 Hypothesis INIT : OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog.reac_identity_init_c.reac_identity_init_contract.
 
-(* The cuts are SlotInv.v's own (push 8, e2cbb53991f): Inv_A8152c is R2's exit, Inv_A81578 is R4's entry.  Entry:
+(* The cuts are SlotInv.v's own (push 8): Inv_A8152c is R2's exit, Inv_A81578 is R4's entry.  Entry:
    CUR g 7 (s6 = p + 7, s9 = n - 7, untouched here), the spill [A + 48] = fr + 2256, and out[]'s first 1488 bytes
    addressable (the 0x81528 fill), which with the store S(fr) + 254 = 04 at 0x81544 makes all 1492 bytes of out[]
    addressable.  Both cuts carry the spills [A + 128] = fr + 544, [A + 168] = fr + 2624, [A + 152] = S(fr) + 68,

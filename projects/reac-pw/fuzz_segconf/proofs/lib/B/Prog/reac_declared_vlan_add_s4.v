@@ -16,12 +16,13 @@
      0x89fb4 and 0x89fec (a + 56i < a, b + 56i < b unsigned) and 0x8a064, 0x8a068 (~(a[i].args) < 8k, ~(b[i].args) < 8k)
      are refuted at the branch from the values of their operands. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/rec_calls_equal.v, with its module paths and module names changed; 327 of its 409 lines of code are new or changed and 1510 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_declared_vlan_add on fuzz_segconf.asan-ubsan (image B), segment 4 of the walk of
    lib/B/Prog/reac_declared_vlan_add_c.v: the checked memset's return RMS 0x8a654 (BASE + VAD_RMS) .. the strncpy
    call's return RSN 0x8a698 (BASE + VAD_RSN), on the append path. Adapts the image-A seeds of
-   lib/A/Prog/reac_declared_vlan_add_s0.v (commit fcd2fa03dd27; vad_st_seed / vad_store: a seed with
-   the count cell's region and its shadow entry) and the wrapper call of check_declared.v (commit
-   68125773e710; cd_loop_step: ecall_pre_stk_at, the parent's string facts, rt_rom_view), with the call stepped by
+   lib/A/Prog/reac_declared_vlan_add_s0.v (vad_st_seed / vad_store: a seed with
+   the count cell's region and its shadow entry) and the wrapper call of check_declared.v (
+   cd_loop_step: ecall_pre_stk_at, the parent's string facts, rt_rom_view), with the call stepped by
    PaArtOwn.aj_art_own_at (the wrapper writes footprint bytes) in place of aj_art_at. Image A has no stretch of its
    own for this: its strncpy call follows the memset call in one segment.
    The code: 0x8a654 `ld a0,0(sp)` reloads the spill (the shadow address of the count cell), `lb a0,0(a0); bnez`

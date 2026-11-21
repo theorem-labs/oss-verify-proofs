@@ -17,13 +17,13 @@
    kit's vocabulary (FMsnprintfSk.v): the frame is sw_frame over the window [sp - K, sp) of the entry sp. Glue's runs
    are redone over a stack region of SVR = 64 bytes (the frame 0x30 and TryAsanInitFromRtl's 16 bytes below it) in
    place of Glue's VFI_K, so that K is free; the image cells and the shape checks are Glue's. New file. *)
-(* Modified by Theorem Labs, 2026-10: port-fm's FMsnprintfSvfi.v (origin/cold/port-fm-rtprintf-param 7e395de08f5)
+(* Modified by Theorem Labs, 2026-10: port-fm's FMsnprintfSvfi.v
    restated over the engine's generic ARx with the ghost list Hp fixed (route (a), c-omx-hpreset 10:51Z) and re-pinned
    at preset image A (fuzz_preset.asan, unstripped f0d2e8d4, pin d83eb25d). Restatement: ARU tfibsegs B .. U .. ->
    ARx .. Hp ..; the shared contracts -> their _x forms (PSnpSx: sh_apcommon_realizes_xz, sh_avfprintf_icpt_realizes_xx);
    the laws are Section hypotheses named after their AR_laws_x fields (alx_frame, alx_stack, alx_const_cells), not
    the record; stk_kHighMemBeg (ARU_ARm ..) -> stk_bounds_x, a Section hypothesis of the engine lemma's exact statement
-   (YCbqG.stk_bounds_x, 7792959a2abb); g_ecall_preU -> PSnpGt's g_ecall_pre_x; the rodata site (fm :220-223: vfi_ro_region_low over
+   (YCbqG.stk_bounds_x); g_ecall_preU -> PSnpGt's g_ecall_pre_x; the rodata site (fm :220-223: vfi_ro_region_low over
    unpoison U mem, the ARU_mem_low rewrite, AE2y.rodata_ok over ARU_ARm) -> one PSnpRodata.rodata_ok_lx at
    vfi_rodata (ARx reads the real memory, so no transport). Re-pin: TFIB_IMG_END 6254592 = 0x5f7000 (fm) -> 6291456
    = 0x600000 (preset A's AF0x.v); the walk's addresses (A_VFPI, A_PCOM, A_VFP, A_SNW, RA_ constants) are PSnpI's, vfi_rodata
@@ -39,14 +39,15 @@
      ___interceptor_vfprintf                          +0x0    0x460d4 -> 0x46158
      __interception::real_vfprintf (object)           +0x0    0xa3848 -> 0xa40e8
    TFIB_IMG_END is 0x600000 at A' and 0x601000 at B' (YF0x.v). *)
-(* Modified by Theorem Labs, 2026-10: port-fm 00daeaf3796's destination slack (origin/cold/port-fm-rtprintf-param, the
-   final text 3e35620c52e) passed through: vf_contractX / vf_applyX carry GXA (5) 'amem_range s0 (sn_len n0 T + 8)' (Hd8),
+(* Modified by Theorem Labs, 2026-10: port-fm's destination slack (origin/cold/port-fm-rtprintf-param, the
+   final text) passed through: vf_contractX / vf_applyX carry GXA (5) 'amem_range s0 (sn_len n0 T + 8)' (Hd8),
    handed unchanged to musl vfprintf's contract. The '+ 8' is an address-range fact. *)
 (* Modified by Theorem Labs, 2026-10: the memnorm keep (c-omx-alloc 17:03Z ruling (b); c-libc-stdio KEEP-SPLIT G2):
    each PSnpSk.sw_step takes the step's keep `memnorm segs mem -> memnorm segs mem'`: after printf_common its post's
    last conjunct (carried through kcall's Q), after musl vfprintf vf_post's last conjunct (through srr_fx_continue's
    REST); vf_post's keep is sw_frame's sixth conjunct. *)
-(* Modified by Theorem Labs, 2026-10: moved to the #102 pins, image B' (fuzz_preset.asan-ubsan d663f82d, unstripped c90d4fa5), from the old-pin donor origin/cold/c-libc-stdio-presetsnp-vfp ac1750cac8be: every code numeral by symbol + offset, checked equal to the B -> B' map of record (preset-F reloc102-maps bmap_b2bp.py 27b4c628bef6 over this file); B''s derived bounds from that map: the read-only top / writable start 0xa1000 -> 0xa2000, the image top 0x600000 -> 0x601000; kept as written: the IImg record keys, the instruction words and the segment sizes; audited by port_addr_check 0767e70e074a (only the record keys flag). Per-numeral table: c-libc-stdio scratch/p102/reloc/AU/PSnpSvfi.v.reloc.tsv. Comment numerals are as written. *)
+(* Modified by Theorem Labs, 2026-10: moved to the #102 pins, image B' (fuzz_preset.asan-ubsan d663f82d, unstripped c90d4fa5), from the old-pin donor: every code numeral by symbol + offset, checked equal to the B -> B' map of record (preset-F reloc102-maps bmap_b2bp.py 27b4c628bef6 over this file); B''s derived bounds from that map: the read-only top / writable start 0xa1000 -> 0xa2000, the image top 0x600000 -> 0x601000; kept as written: the IImg record keys, the instruction words and the segment sizes; audited by port_addr_check 0767e70e074a (only the record keys flag). Per-numeral table: c-libc-stdio scratch/p102/reloc/AU/PSnpSvfi.v.reloc.tsv. Comment numerals are as written. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -200,7 +201,7 @@ Variable B : asyms.
 Variable ARx : alayout -> astate -> list Z -> world tfibsegs -> (word -> option byte) -> Model -> Prop.
 Hypothesis alx_frame : ARx_frame_law tfibsegs B ARx.
 Hypothesis alx_stack : ARx_stack_law tfibsegs B ARx.
-(* the stack band, as the engine lemma's exact statement (YCbqG.stk_bounds_x, c-omx-alloc 7792959a2abb YCbqG.v:308,
+(* the stack band, as the engine lemma's exact statement (YCbqG.stk_bounds_x, c-omx-alloc YCbqG.v:309,
    which needs the whole AR_laws_x record): an instance passes `YCbqG.stk_bounds_x segs B ARx LAWS`; never proved here *)
 Hypothesis stk_bounds_x : forall ly S Hp W mem md, ARx ly S Hp W mem md ->
   kHighMemBeg <= ly_stk_lo ly /\ ly_stk_hi ly <= kHighMemEnd.
@@ -230,7 +231,7 @@ Variable ARx : alayout -> astate -> list Z -> world tfibsegs -> (word -> option 
 Hypothesis alx_frame : ARx_frame_law tfibsegs B ARx.
 Hypothesis alx_stack : ARx_stack_law tfibsegs B ARx.
 Hypothesis alx_const_cells : ARx_const_cells_law tfibsegs B ARx.
-(* the stack band, as the engine lemma's exact statement (YCbqG.stk_bounds_x, c-omx-alloc 7792959a2abb YCbqG.v:308,
+(* the stack band, as the engine lemma's exact statement (YCbqG.stk_bounds_x, c-omx-alloc YCbqG.v:309,
    which needs the whole AR_laws_x record): an instance passes `YCbqG.stk_bounds_x segs B ARx LAWS`; never proved here *)
 Hypothesis stk_bounds_x : forall ly S Hp W mem md, ARx ly S Hp W mem md ->
   kHighMemBeg <= ly_stk_lo ly /\ ly_stk_hi ly <= kHighMemEnd.

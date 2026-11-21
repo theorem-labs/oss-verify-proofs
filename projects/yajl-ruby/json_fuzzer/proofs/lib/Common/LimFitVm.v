@@ -1,9 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the pending SIGPIPE in sigmask delivery, munmap and brk shrink cut by maps_subtract, page-rounded brk grants, anonymous grants at Linux's placement, and mremap's room test and destination check). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Placement.
+From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Mmap.
 From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Common Require Import LimBase LimMonad LimFitBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
@@ -108,7 +111,8 @@ Proof. reflexivity. Qed.
 Lemma fits_sigmask_deliver_model : forall new m, fits (sigmask_deliver_model new m) <-> fits m.
 Proof.
   intros new m. unfold sigmask_deliver_model.
-  destruct (m_sigabrt_pending m && negb (sigabrt_blocked new))%bool; reflexivity.
+  destruct (m_sigabrt_pending m && negb (sigabrt_blocked new))%bool; [reflexivity |].
+  destruct (m_sigpipe_pending m && negb (sigpipe_blocked new))%bool; reflexivity.
 Qed.
 
 Lemma pr_rt_sigprocmask : forall how nset oset ss i m, PR i m (rt_sigprocmask_spec how nset oset ss).
@@ -133,7 +137,11 @@ Proof. intros addr len advice i m. unfold madvise_spec. pr. Qed.
 Lemma pr_munmap : forall addr len i m, PR i m (munmap_spec addr len).
 Proof.
   intros addr len i m. unfold munmap_spec. pr.
-  all: intros HF; apply fits_with_vmmaps; cbn [vm_maps]; apply fits_map_remove; exact HF.
+  all: intros HF;
+    repeat first [ apply fits_vm_forget_range | apply fits_forget_vm_ranges
+                 | (unfold with_mmap_destroyed; apply fits_vm_forget_range)
+                 | apply fits_with_vmmaps ];
+    unfold mmap_fixed_destroyed_next; cbn [vm_maps]; apply fits_maps_subtract; exact HF.
 Qed.
 
 (* [comment removed for export] *)
@@ -147,14 +155,23 @@ Proof.
   unfold with_brk_next. cbv zeta. apply fits_forget_vm_ranges. apply fits_with_vmmaps.
   unfold brk_model_next. cbn [vm_maps]. unfold brk_maps_next.
   destruct (Z.ltb 0 (bv_unsigned (vm_brk (m_vmmaps m))) && Z.ltb (bv_unsigned x0) (bv_unsigned (vm_brk (m_vmmaps m))))%bool.
-  - apply fits_maps_subtract. exact HF.
+  - unfold brk_unmap_cut. cbv zeta.
+    destruct (Z.ltb _ _); [apply fits_maps_subtract |]; exact HF.
   - apply Forall_app. split; [| exact HF].
-    unfold brk_grants. destruct (brk_is_grow req x0 (vm_brk (m_vmmaps m))) eqn:G; [| constructor].
+    unfold brk_grants. destruct (brk_is_grow req x0 (vm_brk (m_vmmaps m))); [| constructor].
+    unfold brk_page_range. destruct (Z.ltb _ _) eqn:LT; [| constructor].
     constructor; [| constructor]. unfold entry_fits. cbn [fst snd].
-    unfold brk_is_grow in G. apply andb_true_iff in G as [_ G]. apply Z.ltb_lt in G.
+    apply Z.ltb_lt in LT.
     pose proof (word_range x0). pose proof (word_range (vm_brk (m_vmmaps m))).
-    rewrite bv_sub_unsigned. unfold bv_wrap, bv_modulus.
-    rewrite Z.mod_small by (unfold two_pow_64 in *; lia). lia.
+    set (lo := page_round_up_Z (bv_unsigned (vm_brk (m_vmmaps m)))) in *.
+    set (hi := page_round_up_Z (bv_unsigned x0)) in *.
+    assert (Hhi : hi <= two_pow_64)
+      by (subst hi; unfold page_round_up_Z, page_size, two_pow_64 in *; Z.div_mod_to_equations; lia).
+    assert (Hlo : 0 <= lo)
+      by (subst lo; unfold page_round_up_Z, page_size, two_pow_64 in *; Z.div_mod_to_equations; lia).
+    pose proof (unsigned_Z_to_bv_le lo Hlo).
+    pose proof (unsigned_Z_to_bv_le (hi - lo) ltac:(lia)).
+    lia.
 Qed.
 
 (* [comment removed for export] *)
@@ -166,9 +183,34 @@ Proof.
   intros z Hz. unfold page_round_up_Z, page_size. Z.div_mod_to_equations. lia.
 Qed.
 
+(* LPS 08b1429: [mmap_spec]'s anonymous grants choose Linux's own address
+   ([Mmap.linux_place]); [Placement.linux_place_admissible] gives its bound. *)
+Lemma entry_fits_place : forall h thp hint (a : word) z,
+  0 <= z ->
+  LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.linux_place h thp hint (page_round_up_Z z) (bv_unsigned a) ->
+  entry_fits (a, Z_to_bv 64 (page_round_up_Z z)).
+Proof.
+  intros h thp hint a z Hz Hp.
+  pose proof (page_round_up_Z_nonneg z Hz) as Hn.
+  destruct (Z.eq_dec (page_round_up_Z z) 0) as [E|E].
+  - unfold entry_fits. cbn [fst snd]. rewrite E.
+    pose proof (word_range a). change (bv_unsigned (Z_to_bv 64 0)) with 0. lia.
+  - assert (Hal : page_round_up_Z z mod page_size = 0).
+    { unfold page_round_up_Z. apply Z_mod_mult. }
+    assert (Hpos : 0 < page_round_up_Z z)
+      by exact (proj2 (Z.le_neq 0 _) (conj Hn (fun H0 => E (eq_sym H0)))).
+    destruct (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_admissible
+                h thp hint _ _ Hpos Hal Hp) as (_ & _ & Ht & _).
+    exact (entry_fits_top h a _ Hn Ht).
+Qed.
+
 (* [comment removed for export] *)
 Ltac fits_entry :=
   match goal with
+  | Hx : LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.linux_place ?h ?thp ?hint (page_round_up_Z ?z) (bv_unsigned ?a) /\ _ |- entry_fits (?a, Z_to_bv 64 _) =>
+      apply (entry_fits_place h thp hint a z); [apply word_range | exact (proj1 Hx)]
+  | Hx : LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.linux_place ?h ?thp ?hint (page_round_up_Z ?z) (bv_unsigned ?a) |- entry_fits (?a, Z_to_bv 64 _) =>
+      apply (entry_fits_place h thp hint a z); [apply word_range | exact Hx]
   | Hx : _ /\ _ /\ (bv_unsigned ?a + ?nZ <= alloc_top ?h) /\ _ |- entry_fits (?a, Z_to_bv 64 ?nZ) =>
       apply (entry_fits_top h); [apply page_round_up_Z_nonneg; apply word_range | exact (proj1 (proj2 (proj2 Hx)))]
   | E : negb (bv_unsigned ?a + ?nZ <=? alloc_top ?h) = false |- entry_fits (?a, Z_to_bv 64 ?nZ) =>
@@ -208,7 +250,8 @@ Proof.
   apply fits_vm_resize_backing. apply fits_with_vmmaps. unfold mremap_maps_next. cbn [vm_maps].
   apply Forall_cons.
   - exact (entry_fits_top (m_vmmaps m) dst new_nZ Hn Ht).
-  - apply fits_map_remove. exact HF.
+  - (* LPS 08b1429: the source is cut by [maps_subtract], not [map_remove] *)
+    apply fits_maps_subtract. exact HF.
 Qed.
 
 Lemma pr_mremap : forall old old_size new_size flags i m, PR i m (mremap_spec old old_size new_size flags).
@@ -218,20 +261,25 @@ Proof.
   all: fr_inv; apply fits_mremap_model_next;
        [ apply page_round_up_Z_nonneg; apply word_range | ].
   - (* [comment removed for export] *)
-    apply negb_false_iff in Heqb3. apply andb_true_iff in Heqb3 as [Hs _].
+    (* by shape, not by generated name: LPS 08b1429 added a TASK_SIZE gate *)
+    match goal with E : negb (mremap_source_b _ _ _ _ && _) = false |- _ =>
+      apply negb_false_iff in E; apply andb_true_iff in E as [Hs _] end.
     unfold mremap_source_b in Hs.
     apply andb_true_iff in Hs as [Hs _]. apply andb_true_iff in Hs as [Hs _].
-    apply andb_true_iff in Hs as [Hs _]. apply Z.leb_le in Hs. apply Z.ltb_lt in Heqb5. lia.
+    apply andb_true_iff in Hs as [Hs _]. apply Z.leb_le in Hs.
+    match goal with E : (_ <? _)%Z = true |- _ => apply Z.ltb_lt in E; lia end.
   - (* [comment removed for export] *)
-    match goal with E : mremap_inplace_grow_b _ _ _ _ _ _ = true |- _ =>
-      unfold mremap_inplace_grow_b in E; cbv zeta in E;
-      apply andb_true_iff in E as [E _]; apply andb_true_iff in E as [E _]; apply Z.leb_le in E; exact E end.
+    (* LPS 08b1429: the in-place test is [mremap_inplace_room_b] (room only) *)
+    first
+      [ match goal with E : mremap_inplace_room_b _ _ _ _ _ _ = true |- _ =>
+          unfold mremap_inplace_room_b in E; cbv zeta in E;
+          apply andb_true_iff in E as [E _]; apply Z.leb_le in E; exact E end
+      | match goal with E : mremap_inplace_grow_b _ _ _ _ _ _ = true |- _ =>
+          unfold mremap_inplace_grow_b, mremap_inplace_room_b in E; cbv zeta in E;
+          apply andb_true_iff in E as [E _]; apply andb_true_iff in E as [E _]; apply Z.leb_le in E; exact E end ].
   - (* [comment removed for export] *)
-    match goal with E : mremap_fresh_b _ _ _ _ _ _ _ = true |- _ =>
-      unfold mremap_fresh_b in E; cbv zeta in E;
-      apply andb_true_iff in E as [E _]; apply andb_true_iff in E as [E _];
-      apply andb_true_iff in E as [_ E]; apply Z.leb_le in E; exact E end.
-  - (* [comment removed for export] *)
+    (* LPS 08b1429: a move's destination is [mremap_dst_ok] = placement /\ fresh *)
+    try match goal with D : mremap_dst_ok _ _ _ _ _ _ _ |- _ => destruct D as [_ D] end;
     match goal with E : mremap_fresh_b _ _ _ _ _ _ _ = true |- _ =>
       unfold mremap_fresh_b in E; cbv zeta in E;
       apply andb_true_iff in E as [E _]; apply andb_true_iff in E as [E _];

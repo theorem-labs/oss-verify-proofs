@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the node statements carry the flag of the flagged relation SpinAlg.srealizesM. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -641,6 +642,7 @@ End KnowTests.
 (* [comment removed for export] *)
 
 Section Sound.
+Context {sfl : bool}.   (* the flag of [SpinAlg.srealizesM] *)
 Variable SEGS : list Segment.
 Variable A : atable.
 Variable nx0 : N.
@@ -810,8 +812,8 @@ Lemma call_core : forall cs E E' R FULL model T (ret : Z) sr2 k' nx2 regs' MR',
   know_ok SEGS E' MR' k' ->
   (forall R' FULL' model',
       CSOK E' (with_ss cs (mk_ss ret sr2 k' nx2)) R' FULL' model' -> m_fs model' = m_fs model ->
-      srealizes SEGS (cfg R' ret FULL' model') T) ->
-  srealizes SEGS (cfg R (pc cs) FULL model) T.
+      srealizesM SEGS sfl (cfg R' ret FULL' model') T) ->
+  srealizesM SEGS sfl (cfg R (pc cs) FULL model) T.
 Proof.
   intros cs E E' R FULL model T ret sr2 k' nx2 regs' MR' HC Hfresh Hag Hms HR' HK' Hk.
   destruct (w_fresh_ok_parts cs Hfresh) as (Fsr & Fkn & Fmaps & Fallow & Fbrk & Ffd & Fle).
@@ -861,8 +863,8 @@ Lemma call_node_sound : forall cs cs' E R FULL model T (ret : Z) rv k' regs' MR'
   know_ok SEGS E MR' k' ->
   (forall E' R' FULL' model',
       env_agree nx0 E E' /\ env_agree (nxt cs) E E' -> CSOK E' cs' R' FULL' model' -> m_fs model' = m_fs model ->
-      srealizes SEGS (cfg R' (pc cs') FULL' model') T) ->
-  srealizes SEGS (cfg R (pc cs) FULL model) T.
+      srealizesM SEGS sfl (cfg R' (pc cs') FULL' model') T) ->
+  srealizesM SEGS sfl (cfg R (pc cs) FULL model) T.
 Proof.
   intros cs cs' E R FULL model T ret rv k' regs' MR' HC Hac Hms Hkept Hrv HK' Hk.
   unfold after_call in Hac.
@@ -908,8 +910,8 @@ Lemma call_node_sound2 : forall cs cs' E R FULL model T (ret : Z) rv k' extra va
   know_ok SEGS (ext_call2 E (nxt cs) regs' vals) MR' k' ->
   (forall E' R' FULL' model',
       env_agree nx0 E E' /\ env_agree (nxt cs) E E' -> CSOK E' cs' R' FULL' model' -> m_fs model' = m_fs model ->
-      srealizes SEGS (cfg R' (pc cs') FULL' model') T) ->
-  srealizes SEGS (cfg R (pc cs) FULL model) T.
+      srealizesM SEGS sfl (cfg R' (pc cs') FULL' model') T) ->
+  srealizesM SEGS sfl (cfg R (pc cs) FULL model) T.
 Proof.
   intros cs cs' E R FULL model T ret rv k' extra vals regs' MR' HC Hac Hms Hkept Hrv HK' Hk.
   unfold after_call2 in Hac.
@@ -1002,7 +1004,7 @@ Qed.
 (* [comment removed for export] *)
 Lemma summary_fill_sound : forall entry cmax,
   fill_spec SEGS entry cmax ->
-  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 always (fun cs => summary_fill A nx0 cs entry cmax).
+  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl always (fun cs => summary_fill A nx0 cs entry cmax).
 Proof.
   intros entry cmax SUM cs cs' E R FULL model T HC _ Hn Hk.
   pose proof HC as HKN. apply co_know in HKN.
@@ -1038,7 +1040,7 @@ Proof.
      store_ok SEGS M s (Z.to_nat n) = true ->
      know_ok SEGS E (wbytes M s (repeat (Z_to_bv 8 c) (Z.to_nat n))) k' ->
      after_call nx0 cs ret (Some (reg cs 10)) k' = Some cs' ->
-     srealizes SEGS (cfg R (pc cs) FULL model) T).
+     srealizesM SEGS sfl (cfg R (pc cs) FULL model) T).
   { intros k' Hst HK' Hac.
     destruct (SUM M s (Z_to_bv 64 c) n R (Z_to_bv 64 ret) ltac:(lia) ltac:(lia) Hst
                  ltac:(rewrite u64_lit by (unfold two64 in Hc; lia); lia) Hrok R1 R10 R11 ltac:(rewrite Hnwn; exact R12))
@@ -1106,7 +1108,7 @@ Qed.
 
 Lemma summary_miz_sound :
   miz_spec SEGS (x_memiszero A) ->
-  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 always (fun cs => summary_miz A nx0 cs).
+  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl always (fun cs => summary_miz A nx0 cs).
 Proof.
   intros SUM cs cs' E R FULL model T HC _ Hn Hk.
   pose proof HC as HKN. apply co_know in HKN.
@@ -1194,7 +1196,7 @@ Qed.
 
 Lemma summary_copy_sound : forall entry,
   copy_spec SEGS entry ->
-  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 always (fun cs => summary_copy SEGS A nx0 cs entry).
+  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl always (fun cs => summary_copy SEGS A nx0 cs entry).
 Proof.
   intros entry SUM cs cs' E R FULL model T HC _ Hn Hk.
   pose proof HC as HKN. apply co_know in HKN.
@@ -1238,7 +1240,7 @@ Proof.
      (bv_unsigned s + n <= bv_unsigned sr \/ bv_unsigned sr + n <= bv_unsigned s) ->
      know_ok SEGS E (wbytes M s bs) k' ->
      after_call nx0 cs ret (Some (reg cs 10)) k' = Some cs' ->
-     srealizes SEGS (cfg R (pc cs) FULL model) T).
+     srealizesM SEGS sfl (cfg R (pc cs) FULL model) T).
   { intros k' bs Hlbs Hrd Hst Hdisj HK' Hac.
     destruct (SUM M s sr n bs R (Z_to_bv 64 ret) ltac:(lia) Hlbs Hrd Hst Hdisj ltac:(lia) ltac:(lia) Hrok R1 R10 R11
                  ltac:(rewrite Hnwn; exact R12)) as (regs' & Hms & Hkept & Ha0).
@@ -1286,7 +1288,7 @@ Proof.
       (map (fun i : nat => KWord (SA db (dk + 8 * Z.of_nat i)) 8 (EVar (nxt cs + NCS + N.of_nat i))) (seq 0 W)
        ++ kblob_prefix (kn cs) sb sk db dk nlo ne ++ (if u then KUnk (SA db dk) ne :: kn_havoc k0 db dk ne else kn_havoc k0 db dk ne)) (N.of_nat W)
       = Some cs' ->
-    srealizes SEGS (cfg R (pc cs) FULL model) T).
+    srealizesM SEGS sfl (cfg R (pc cs) FULL model) T).
   { intros Hswr Hsfl W u HW Hu Hac.
     destruct (kwritable_x_sound SEGS E M (kn cs) (kn cs) sb sk ne HKN HKN Hswr) as (SWst & Slo & Shi).
     destruct (w_flat_x_sound E M (kn cs) sb sk ne HKN Hsfl) as (_ & _ & Spos).
@@ -1418,7 +1420,7 @@ Proof.
              ++ kblob_prefix (kn cs) sb sk db dk nlo ne ++ (if Z.ltb 0 nlo then KUnk (SA db dk) ne :: kn_havoc k0 db dk ne else kn_havoc k0 db dk ne))
             (N.of_nat (if (Z.eqb nlo nhi && Z.eqb (nhi mod 8) 0 && Z.leb nhi 256 && Z.ltb 0 nhi)%bool then Z.to_nat (nhi / 8) else 0%nat))
      else None) = Some cs' ->
-    srealizes SEGS (cfg R (pc cs) FULL model) T).
+    srealizesM SEGS sfl (cfg R (pc cs) FULL model) T).
   { destruct (kwritable_x (kn cs) (kn cs) sb sk ne && flat_x (kn cs) sb sk ne)%bool eqn:Hsw; [|discriminate].
     apply andb_prop in Hsw as [Hswr Hsfl].
     assert (Hu : Z.ltb 0 nlo = true -> 0 < n) by (intros Hnlo0; apply Z.ltb_lt in Hnlo0; lia).
@@ -1500,7 +1502,7 @@ Qed.
 
 Lemma summary_istrncpy_sound :
   istrncpy_spec SEGS (x_istrncpy A) (x_sealed A) ->
-  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 always (fun cs => summary_istrncpy A nx0 cs).
+  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl always (fun cs => summary_istrncpy A nx0 cs).
 Proof.
   intros SUM cs cs' E R FULL model T HC _ Hn Hk.
   pose proof HC as HKN. apply co_know in HKN.
@@ -1612,7 +1614,7 @@ Qed.
 
 Lemma summary_popfree_sound :
   popfree_spec SEGS (x_popfree A) ->
-  forall args, node1_stmt SEGS A nx0 LIMIT SINV argH FS0 always (fun cs => summary_popfree A nx0 cs args).
+  forall args, node1_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl always (fun cs => summary_popfree A nx0 cs args).
 Proof.
   intros SUM args cs cs' E R FULL model T HC _ Hn Hk.
   pose proof HC as HKN. apply co_know in HKN.
@@ -1700,31 +1702,31 @@ Proof.
 Qed.
 
 Theorem node_x_sound_XIMemset :
-  fill_spec SEGS (x_imemset A) 256 -> x_stmt SEGS A nx0 LIMIT SINV argH FS0 XIMemset.
+  fill_spec SEGS (x_imemset A) 256 -> x_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl XIMemset.
 Proof. intros SUM args. exact (summary_fill_sound _ _ SUM). Qed.
 
 Theorem node_x_sound_XMemset :
-  fill_spec SEGS (x_memset A) two64 -> x_stmt SEGS A nx0 LIMIT SINV argH FS0 XMemset.
+  fill_spec SEGS (x_memset A) two64 -> x_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl XMemset.
 Proof. intros SUM args. exact (summary_fill_sound _ _ SUM). Qed.
 
 Theorem node_x_sound_XIMemcpy :
-  copy_spec SEGS (x_imemcpy A) -> x_stmt SEGS A nx0 LIMIT SINV argH FS0 XIMemcpy.
+  copy_spec SEGS (x_imemcpy A) -> x_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl XIMemcpy.
 Proof. intros SUM args. exact (summary_copy_sound _ SUM). Qed.
 
 Theorem node_x_sound_XMemcpy :
-  copy_spec SEGS (x_memcpy A) -> x_stmt SEGS A nx0 LIMIT SINV argH FS0 XMemcpy.
+  copy_spec SEGS (x_memcpy A) -> x_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl XMemcpy.
 Proof. intros SUM args. exact (summary_copy_sound _ SUM). Qed.
 
 Theorem node_x_sound_XMemIsZero :
-  miz_spec SEGS (x_memiszero A) -> x_stmt SEGS A nx0 LIMIT SINV argH FS0 XMemIsZero.
+  miz_spec SEGS (x_memiszero A) -> x_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl XMemIsZero.
 Proof. intros SUM args. exact (summary_miz_sound SUM). Qed.
 
 Theorem node_x_sound_XIStrncpy :
-  istrncpy_spec SEGS (x_istrncpy A) (x_sealed A) -> x_stmt SEGS A nx0 LIMIT SINV argH FS0 XIStrncpy.
+  istrncpy_spec SEGS (x_istrncpy A) (x_sealed A) -> x_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl XIStrncpy.
 Proof. intros SUM args. exact (summary_istrncpy_sound SUM). Qed.
 
 Theorem node_x_sound_XPopFree :
-  popfree_spec SEGS (x_popfree A) -> x_stmt SEGS A nx0 LIMIT SINV argH FS0 XPopFree.
+  popfree_spec SEGS (x_popfree A) -> x_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl XPopFree.
 Proof. intros SUM args. exact (summary_popfree_sound SUM args). Qed.
 
 End Sound.

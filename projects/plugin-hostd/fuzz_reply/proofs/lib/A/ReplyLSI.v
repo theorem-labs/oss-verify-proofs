@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/W_LLVMFuzzerTestOneInput_top_x.v, with its module paths and module names changed; 648 of its 762 lines of code are new or changed and 1113 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* ONE LS instance for every LS hypothesis of top_x (W_LLVMFuzzerTestOneInput_top_x.v at the window head
-   a working branch 1b86af9bd95, with W8's F8 / F9 text 7ff2278dbb61; the gone rules at gone_base's KF-COUNT
+   a working branch, with W8's F8 / F9 text; the gone rules at gone_base's KF-COUNT
    text):
      LSI B OM nsec KMAX KC := fr_LS3cp B /\ fr_OUT OM /\ fr_ENT B /\ fr_CAP /\ fr_SEC nsec KMAX KC   (OUT_MAX4 <= OM),
    RINV := fr_RINV, MT := ReplyKfMeter.MT_sec nsec KMAX (the counting meter, KF-COUNT), TfibB := B.  proves no function
@@ -668,7 +669,7 @@ Proof.
   eapply LS_exit_end3e_xR; eassumption.
 Qed.
 
-(* top_x LS_exit_end (lib/A/W_LLVMFuzzerTestOneInput_exit_x.v:183, the strict rule): lsi_LS_exit_end_xR at R := wle *)
+(* top_x LS_exit_end (lib/A/W_LLVMFuzzerTestOneInput_exit_x.v:184, the strict rule): lsi_LS_exit_end_xR at R := wle *)
 Lemma lsi_LS_exit_end : forall fr_FP ARX G,
   forall cx t m ly3 S3 rest ly' S' (W' : world segs) mem' md' fpos k' C cap out,
   LSx cx t m ly3 S3 ->

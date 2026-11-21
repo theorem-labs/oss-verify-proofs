@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (RES_len' takes the first conjunct of res_len_ok, which now also bounds n_resx, and slice_args no longer passes RES_hull; mmap_null_sound1 discharges the place_declined_b premise of srz_mmap_rw1 and srz_mmap_none1 on its five mmap steps for the NULL hint (place_declined_b_null) and passes gap_ok_sound's new page-alignment argument; mmap_fixed_free_sound1 bounds the classic path's fixed range below resx_clear and proves the hole path, MAP_FIXED over exactly a hole token's range, as LPS 727298f3's theories/Common/AsanNodesMmA.v does; node_mprotect_sound1 shows the range clear of the vDSO pair, the reserved ledger's tail). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -55,7 +56,7 @@ Let HS : nat -> option acs := fun _ => None.
 Let XN : nat -> list expr -> acs -> option acs := fun _ _ _ => None.
 Let XE : nat -> list expr -> acs -> option (Z * list spiece * acs) := fun _ _ _ => None.
 Let XB : nat -> list expr -> acs -> option (acs * acs) := fun _ _ _ => None.
-Let RES_len' : length (segments_reserved SEGS) = n_res A := RES_len.
+Let RES_len' : length (segments_reserved SEGS) = n_res A := proj1 RES_len.
 Let HULL_ok' : 0 <= img_lo A /\ img_lo A mod 4096 = 0 /\ img_hi A mod 4096 = 0 /\ img_hi A <= KHI := HULL_ok.
 Let SHADOW_ok' : 0 <= shadow_off A <= 2 ^ 47 := SHADOW_ok.
 Let RES_hullH : RES_hull_def SEGS A := RES_hull.
@@ -118,7 +119,7 @@ Let reserved_free_above := AsanNodesMmLib.reserved_free_above SEGS A RES_len RES
 Let safe_range_apart := AsanNodesMmLib.safe_range_apart SEGS A RES_len HULL_ok.
 Let seps_map_disjoint := AsanNodesMmLib.seps_map_disjoint SEGS A RES_len.
 Let shadow_facts_new_ok := AsanNodesMmLib.shadow_facts_new_ok SEGS A LIMIT SINV argH FS0 RES_len HULL_ok SHADOW_ok.
-Let slice_args := AsanNodesMmLib.slice_args SEGS A LIMIT SINV argH FS0 RES_len RES_hull HULL_ok.
+Let slice_args := AsanNodesMmLib.slice_args SEGS A LIMIT SINV argH FS0 RES_len HULL_ok.
 Let slice_hyps := AsanNodesMmLib.slice_hyps SEGS A LIMIT SINV argH FS0.
 Let split_flat_estart := AsanNodesMmLib.split_flat_estart SEGS A RES_len HULL_ok.
 Let vis_add_inv := AsanNodesMmLib.vis_add_inv A LIMIT.
@@ -176,7 +177,7 @@ Proof.
   change (Z_to_bv 5 11) with (Z_to_bv 5 (Z.of_nat 11)) in R11. rewrite <- bv5_11 in R11.
   set (len := bv_unsigned (edenot E (reg cs 11))) in *. set (nZ := page_round_up_Z len) in *.
   set (n := Z_to_bv 64 nZ).
-  destruct (gap_ok_sound E cs R FULL model nhi nZ HC Hgap ltac:(lia)) as (a0 & Ha0). rewrite <- R10 in Ha0.
+  destruct (gap_ok_sound E cs R FULL model nhi nZ HC Hgap ltac:(lia) HnZal) as (a0 & Ha0). rewrite <- R10 in Ha0.
   pose proof (co_halt _ _ _ _ _ _ _ _ _ _ _ HC) as Hhalt.
   pose proof (proj2 (proj2 (proj2 (co_wf _ _ _ _ _ _ _ _ _ _ _ HC)))) as Hisp.
 
@@ -218,6 +219,9 @@ Proof.
   -
     destruct eager; [|discriminate].
     eapply (srz_mmap_rw1 SEGS R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 34) TB Hf He Hhalt Hisp R17 R11 Hlen R12 R13 mmap_flags_core_22 R14 R15).
+    (* the gate pinned the hint to the literal NULL ([R10]), and a null hint is
+       never declined, so the obligation is PROVED here, not assumed *)
+    + apply place_declined_b_null. rewrite R10. vm_compute. reflexivity.
     + exists a0. exact Ha0.
     + unfold mmap_noreserve_backed_ok. rewrite mmap_noreserve_b_22.
       apply Z.leb_le. cbn in Hbud. eapply Z.le_trans; [|eapply (budget_slack E cs R FULL model nhi HC Hbud)]. fold nZ. lia.
@@ -227,6 +231,7 @@ Proof.
   -
     destruct eager; [discriminate|].
     eapply (srz_mmap_rw1 SEGS R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 16418) TB Hf He Hhalt Hisp R17 R11 Hlen R12 R13 mmap_flags_core_4022 R14 R15).
+    + apply place_declined_b_null. rewrite R10. vm_compute. reflexivity.
     + exists a0. exact Ha0.
     + unfold mmap_noreserve_backed_ok. rewrite mmap_noreserve_b_4022. reflexivity.
     + intros a Hg _. rewrite (with_mmap_backing_lazy _ _ _ _ mmap_noreserve_b_4022). apply (CONT a); [exact Hg | | | reflexivity].
@@ -238,6 +243,7 @@ Proof.
   -
     destruct eager; [discriminate|].
     eapply (srz_mmap_none1 SEGS R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 34) TB Hf He Hhalt Hisp R17 R11 Hlen R12 R13 mmap_flags_core_22 R14 R15).
+    + apply place_declined_b_null. rewrite R10. vm_compute. reflexivity.
     + exists a0. exact Ha0.
     + intros a Hg. rewrite (with_mmap_backing_plain _ _ _ _ mmap_noreserve_b_22). apply (CONT a); [exact Hg | | | reflexivity].
       * constructor; reflexivity.
@@ -245,6 +251,7 @@ Proof.
   -
     destruct eager; [discriminate|].
     eapply (srz_mmap_none1 SEGS R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 16418) TB Hf He Hhalt Hisp R17 R11 Hlen R12 R13 mmap_flags_core_4022 R14 R15).
+    + apply place_declined_b_null. rewrite R10. vm_compute. reflexivity.
     + exists a0. exact Ha0.
     + intros a Hg. rewrite (with_mmap_backing_lazy _ _ _ _ mmap_noreserve_b_4022). apply (CONT a); [exact Hg | | | reflexivity].
       * destruct (grant_ok_na_unpack _ _ _ _ Hg) as (Hal & Hpos & Hceil & _). pose proof (alloc_top_lt_2_64 (m_vmmaps model)) as ATL.
@@ -255,6 +262,7 @@ Proof.
   -
     destruct eager; [|discriminate].
     eapply (srz_mmap_rw1 SEGS R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 34) TB Hf He Hhalt Hisp R17 R11 Hlen R12 R13 mmap_flags_core_22 R14 R15).
+    + apply place_declined_b_null. rewrite R10. vm_compute. reflexivity.
     + exists a0. exact Ha0.
     + unfold mmap_noreserve_backed_ok. rewrite mmap_noreserve_b_22.
       apply Z.leb_le. cbn in Hbud. eapply Z.le_trans; [|eapply (budget_slack E cs R FULL model nhi HC Hbud)]. fold nZ. lia.
@@ -438,17 +446,27 @@ Lemma mmap_fixed_free_sound1 : forall cs kd (fl : Z) (eager visible : bool) cs' 
 Proof.
   intros cs kd fl eager visible cs' E R FULL model TB HC Hec H17 H12 H13 Hfl H14 H15 Hkind Hkfog Hvisible Hn HK.
   unfold mmap_fixed_free in Hn.
-  destruct (fixed_args A cs CEIL) as [[[[[b off] ne] nlo] nhi]|] eqn:HFA.
-  -
+  destruct (fixed_args A cs (resx_clear cs)) as [[[[[b off] ne] nlo] nhi]|] eqn:HFA.
+  - (* the classic path: no tokens, every tracked entry provably apart, below [resx_clear cs] *)
     match type of Hn with (if ?c then _ else _) = _ => destruct c eqn:Hcond; [|discriminate] end.
     apply andb_prop in Hcond as [Hcond Hav]. apply andb_prop in Hcond as [Hcond Hnev].
     apply andb_prop in Hcond as [Hcond Hbud]. apply andb_prop in Hcond as [Hnf Hall].
     destruct (mmap_fixed_old_facts cs b off ne nlo nhi E R FULL model HC HFA Hnf Hall) as (HC0 & Hrf & Hholes).
-    eapply (mmap_fixed_grant_sound1 cs (a_maps cs) CEIL b off ne nlo nhi kd fl eager visible cs' E R FULL model TB
-              HC Hec H17 H12 H13 Hfl H14 H15 Hkind Hkfog Hvisible HFA ltac:(lia) Hbud
+    eapply (mmap_fixed_grant_sound1 cs (a_maps cs) (resx_clear cs) b off ne nlo nhi kd fl eager visible cs' E R FULL model TB
+              HC Hec H17 H12 H13 Hfl H14 H15 Hkind Hkfog Hvisible HFA
+              ltac:(unfold resx_clear; pose proof (Z.le_min_l KHI (a_ylo cs)); unfold KHI, CEIL in *; lia) Hbud
               HC0 Hrf Hholes Hn HK).
-  -
-    discriminate.
+  - (* the HOLE path (LPS 727298f3 theories/Common/AsanNodesMmA.v [mmap_fixed_free_sound2]): MAP_FIXED
+       over exactly a hole token's range, every other hole provably apart *)
+    destruct (fixed_args A cs CEIL) as [[[[[b off] ne] nlo] nhi]|] eqn:HFA2; [|discriminate].
+    destruct (find_hole (kn cs) (a_maps cs) (reg cs 10) ne) as [h|] eqn:Hfh; [|discriminate].
+    match type of Hn with (if ?c then _ else _) = _ => destruct c eqn:Hcond; [|discriminate] end.
+    apply andb_prop in Hcond as [Hcond Hav]. apply andb_prop in Hcond as [Hcond Hnev].
+    apply andb_prop in Hcond as [Hap Hbud].
+    destruct (mmap_fixed_hole_facts cs b off ne nlo nhi h E R FULL model HC HFA2 Hfh Hap) as (HC0 & Hrf & Hholes).
+    eapply (mmap_fixed_grant_sound1 cs (unhole (a_maps cs) h) CEIL b off ne nlo nhi kd fl eager visible cs' E R FULL model TB
+              HC Hec H17 H12 H13 Hfl H14 H15 Hkind Hkfog Hvisible HFA2 ltac:(lia) Hbud
+              HC0 Hrf Hholes Hn HK).
 Qed.
 
 Lemma node_mprotect_sound1 : forall cs cs' E R FULL model TB,
@@ -494,6 +512,9 @@ Proof.
   eapply (srz_mprotect1 SEGS R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w addr len TB Hf He Hhalt R17 R10 Hal R11 ltac:(lia)).
   - unfold two_pow_64. fold nZ. lia.
   - exact R12.
+  - (* the vdso/vvar pair is the tail of the ledger ([co_res]); the slice is free of the whole ledger *)
+    pose proof Hrfres as Hvd. rewrite (co_res _ _ _ _ _ _ _ _ _ _ _ HC), RefNodes.region_free_app in Hvd.
+    apply andb_prop in Hvd as [_ Hvd]. exact Hvd.
   - exact Hna.
   - exact Hmc.
   - apply mprotect_budget_ok_intro_gen; [exact Hwf|]. pose proof (budget_slack E cs R FULL model nhi HC ltac:(unfold budget_ok; apply Z.leb_le; exact Hbud)). fold nZ n. lia.

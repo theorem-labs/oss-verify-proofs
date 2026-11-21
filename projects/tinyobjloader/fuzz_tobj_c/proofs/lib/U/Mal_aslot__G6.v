@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO fact as a section hypothesis of each section whose post builds MInvIR). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -288,6 +289,7 @@ Local Notation mnext := (RingFacts.mnext s).
 Local Notation mprev := (RingFacts.mprev s).
 
 Variables (tr : list event) (md : Model).
+Context {Hvd : OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.vdso_ok md}.
 Hypothesis EmW : ltac2:(tb__ "0|0|
 S27S92Q40A1S2eS92Q8A1A1F_;VmW;S4eVrho;A1A3").
 Hypothesis Evm : ltac2:(tb__ "0|0|
@@ -663,7 +665,7 @@ Qed.
 
 Theorem variant_R1sh : ltac2:(tb__ "0|0|
 VTR;Z0S143S8dVK;SaaVrhoW;A4SecVX;VU;S12eVs;VL;A2VKc;Vrho;A5A3").
-Proof using EmW Erd Evm Ewok HI HK HKc HMI HVa0 HVact HVf0 HVskip HXr Hbnc Hbnc_rd Hbnc_val Hbytes Hbytes_rd Hdepth Hgd Hgd_holds Hhd Hm_ctz Hm_sct Hmaskv Hmv Hr Hreq Hreq_rho Hrom Hsc Hsc_rho Hsm_pre Hsp Hsp_high Hspanv RR Rg am0.
+Proof using am0 EmW Erd Evm Ewok Hbnc Hbnc_rd Hbnc_val Hbytes Hbytes_rd Hdepth Hgd Hgd_holds Hhd HI HK HKc Hm_ctz Hm_sct Hmaskv HMI Hmv Hr Hreq Hreq_rho Hrom Hsc Hsc_rho Hsm_pre Hsp Hsp_high Hspanv HVa0 HVact Hvd HVf0 HVskip HXr Rg RR.
   apply (tr_seq _ (POST ST_R1sh)).
   { apply (seg_run 300 SA_R1sh LA_R1sh _ rhoW eq_refl eq_refl runA_R1sh (agrees_refl rhoW)).
     intros LfA rhoA [trA [msA mdA]] HinA HagA HSPA.
@@ -933,6 +935,7 @@ Local Notation mnext := (RingFacts.mnext s).
 Local Notation mprev := (RingFacts.mprev s).
 
 Variables (tr : list event) (md : Model).
+Context {Hvd : OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.vdso_ok md}.
 Hypothesis EmW : ltac2:(tb__ "0|0|
 S27S92Q40A1S2eS92Q8A1A1F_;VmW;S4eVrho;A1A3").
 Hypothesis Evm : ltac2:(tb__ "0|0|
@@ -1409,7 +1412,7 @@ Qed.
 
 Theorem variant_D5sh : ltac2:(tb__ "0|0|
 VTR;Z0S143S8dVK;Sf3VrhoW;A4SecVX;VU;S12eVs;VL;A2VKc;Vrho;A5A3").
-Proof using EmW Erd Evm Ewok HI HK HKc HMI HVa0 HVact HVf0 HVskip HXr Hbnc Hbnc_rd Hbnc_val Hbytes Hbytes_rd Hdepth Hgd Hgd_holds Hhd Hm_ctz Hm_sct Hmaskv Hmv Hr Hreq Hreq_rho Hrom Hsc Hsc_rho Hsm_pre Hsp Hsp_high Hspanv RR Rg am0.
+Proof using am0 EmW Erd Evm Ewok Hbnc Hbnc_rd Hbnc_val Hbytes Hbytes_rd Hdepth Hgd Hgd_holds Hhd HI HK HKc Hm_ctz Hm_sct Hmaskv HMI Hmv Hr Hreq Hreq_rho Hrom Hsc Hsc_rho Hsm_pre Hsp Hsp_high Hspanv HVa0 HVact Hvd HVf0 HVskip HXr Rg RR.
   apply (tr_seq _ (POST ST_D5sh)).
   { apply (seg_run 300 SA_D5sh LA_D5sh _ rhoW eq_refl eq_refl runA_D5sh (agrees_refl rhoW)).
     intros LfA rhoA [trA [msA mdA]] HinA HagA HSPA.
@@ -1674,6 +1677,7 @@ Local Notation mnext := (RingFacts.mnext s).
 Local Notation mprev := (RingFacts.mprev s).
 
 Variables (tr : list event) (md : Model).
+Context {Hvd : OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.vdso_ok md}.
 Hypothesis EmW : ltac2:(tb__ "0|0|
 S27S92Q40A1S2eS92Q8A1A1F_;VmW;S4eVrho;A1A3").
 Hypothesis Evm : ltac2:(tb__ "0|0|
@@ -2057,7 +2061,7 @@ Qed.
 
 Theorem variant_R2nr : ltac2:(tb__ "0|0|
 VTR;Z0S143S8dVK;SabVrhoW;A4SecVX;VU;S12eVs;VL;A2VKc;Vrho;A5A3").
-Proof using EmW Erd Evm Ewok HI HK HKc HMI HVa0 HVact HVf0 HVskip HXr Hbnc Hbnc_rd Hbnc_val Hbytes Hbytes_rd Hdepth Hgd Hgd_holds Hhd Hm_ctz Hm_sct Hmaskv Hmv Hr Hreq Hreq_rho Hrom Hsc Hsc_rho Hsm_pre Hsp Hsp_high Hspanv RR Rg am0.
+Proof using am0 EmW Erd Evm Ewok Hbnc Hbnc_rd Hbnc_val Hbytes Hbytes_rd Hdepth Hgd Hgd_holds Hhd HI HK HKc Hm_ctz Hm_sct Hmaskv HMI Hmv Hr Hreq Hreq_rho Hrom Hsc Hsc_rho Hsm_pre Hsp Hsp_high Hspanv HVa0 HVact Hvd HVf0 HVskip HXr Rg RR.
   apply (tr_seq _ (POST ST_R2nr)).
   { apply (seg_run 300 SA_R2nr LA_R2nr _ rhoW eq_refl eq_refl runA_R2nr (agrees_refl rhoW)).
     intros LfA rhoA [trA [msA mdA]] HinA HagA HSPA.
@@ -2322,6 +2326,7 @@ Local Notation mnext := (RingFacts.mnext s).
 Local Notation mprev := (RingFacts.mprev s).
 
 Variables (tr : list event) (md : Model).
+Context {Hvd : OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.vdso_ok md}.
 Hypothesis EmW : ltac2:(tb__ "0|0|
 S27S92Q40A1S2eS92Q8A1A1F_;VmW;S4eVrho;A1A3").
 Hypothesis Evm : ltac2:(tb__ "0|0|
@@ -2704,7 +2709,7 @@ Qed.
 
 Theorem variant_R2sh : ltac2:(tb__ "0|0|
 VTR;Z0S143S8dVK;SacVrhoW;A4SecVX;VU;S12eVs;VL;A2VKc;Vrho;A5A3").
-Proof using EmW Erd Evm Ewok HI HK HKc HMI HVa0 HVact HVf0 HVskip HXr Hbnc Hbnc_rd Hbnc_val Hbytes Hbytes_rd Hdepth Hgd Hgd_holds Hhd Hm_ctz Hm_sct Hmaskv Hmv Hr Hreq Hreq_rho Hrom Hsc Hsc_rho Hsm_pre Hsp Hsp_high Hspanv RR Rg am0.
+Proof using am0 EmW Erd Evm Ewok Hbnc Hbnc_rd Hbnc_val Hbytes Hbytes_rd Hdepth Hgd Hgd_holds Hhd HI HK HKc Hm_ctz Hm_sct Hmaskv HMI Hmv Hr Hreq Hreq_rho Hrom Hsc Hsc_rho Hsm_pre Hsp Hsp_high Hspanv HVa0 HVact Hvd HVf0 HVskip HXr Rg RR.
   apply (tr_seq _ (POST ST_R2sh)).
   { apply (seg_run 300 SA_R2sh LA_R2sh _ rhoW eq_refl eq_refl runA_R2sh (agrees_refl rhoW)).
     intros LfA rhoA [trA [msA mdA]] HinA HagA HSPA.
@@ -2978,6 +2983,7 @@ Local Notation mnext := (RingFacts.mnext s).
 Local Notation mprev := (RingFacts.mprev s).
 
 Variables (tr : list event) (md : Model).
+Context {Hvd : OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.vdso_ok md}.
 Hypothesis EmW : ltac2:(tb__ "0|0|
 S27S92Q40A1S2eS92Q8A1A1F_;VmW;S4eVrho;A1A3").
 Hypothesis Evm : ltac2:(tb__ "0|0|
@@ -3463,7 +3469,7 @@ Qed.
 
 Theorem variant_D5sr : ltac2:(tb__ "0|0|
 VTR;Z0S143S8dVK;Sf4VrhoW;A4SecVX;VU;S12eVs;VL;A2VKc;Vrho;A5A3").
-Proof using EmW Erd Evm Ewok HI HK HKc HMI HVa0 HVact HVf0 HVskip HXr Hbnc Hbnc_rd Hbnc_val Hbytes Hbytes_rd Hdepth Hgd Hgd_holds Hhd Hm_ctz Hm_sct Hmaskv Hmv Hr Hreq Hreq_rho Hrom Hsc Hsc_rho Hsm_pre Hsp Hsp_high Hspanv RR Rg am0.
+Proof using am0 EmW Erd Evm Ewok Hbnc Hbnc_rd Hbnc_val Hbytes Hbytes_rd Hdepth Hgd Hgd_holds Hhd HI HK HKc Hm_ctz Hm_sct Hmaskv HMI Hmv Hr Hreq Hreq_rho Hrom Hsc Hsc_rho Hsm_pre Hsp Hsp_high Hspanv HVa0 HVact Hvd HVf0 HVskip HXr Rg RR.
   apply (tr_seq _ (POST ST_D5sr)).
   { apply (seg_run 300 SA_D5sr LA_D5sr _ rhoW eq_refl eq_refl runA_D5sr (agrees_refl rhoW)).
     intros LfA rhoA [trA [msA mdA]] HinA HagA HSPA.

@@ -4,13 +4,14 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module names changed; 615 of its 727 lines of code are new or changed and 899 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F35.v, with its module paths, module names and numbers changed; 171 of its 279 lines of code are new or changed and 619 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/Prog/Seg/F18F_on.v -- route (C), a Theorem Labs lane (owner a Theorem Labs lane): the `_on` twins of Seg/F18F.v's (not in this delivery) two footprint
-   runs that take the shadow premise (F18F.v (an earlier version, blob c731bf084e4, not in this delivery) on a working branch 9e63d6e1607). This file edits no line of F18F.v (not in this delivery), whose later versions differ from that one only in module qualification;
+   runs that take the shadow premise (F18F.v (an earlier version, blob c731bf084e4, not in this delivery) on a working branch). This file edits no line of F18F.v (not in this delivery), whose later versions differ from that one only in module qualification;
    this file adds lemmas only. Proves no function (kind: segment run). rule 24: no function proved.
 
-     f18_evt_F_on    <- F18F.f18_evt_F    (F18F.v:78)
-     f18_evt_ro_F_on <- F18F.f18_evt_ro_F (F18F.v:242)
-     f18_evt0_F_on   <- F18F.f18_evt0_F   (F18F.v:391), moved here, not narrowed (below)
+     f18_evt_F_on    <- F18F.f18_evt_F    (F18F.v:79)
+     f18_evt_ro_F_on <- F18F.f18_evt_ro_F (F18F.v:243)
+     f18_evt0_F_on   <- F18F.f18_evt0_F   (F18F.v:392), moved here, not narrowed (below)
 
    f18_evt0_F_on (a Theorem Labs lane's decision, 2026-10-29 ~17:00Z, under a Theorem Labs lane's standing beside-file consent): ACtlG/F18.v
    used one name of Seg/F18F.v (not in this delivery), f18_evt0_F (the [A+240] = 0 arm), and F18F.v (not in this delivery) Requires the frozen bcmp_wrap_F.v (not in this delivery), which
@@ -19,7 +20,7 @@
    edit: `seg_rom` is written `AK11.seg_rom`, the copy F18F.v's own .glob records for it (A.Reusable.YK11, 13 references)
    and the alias this file already uses for the gate. F18F.f18_evt0_F has no shadow premise, and the run
    (0x823e8 `ld a0,240(s1)`; `beqz a0,8275c` taken) reads one 8-byte spill at A + 240, no shadow byte, and stores
-   nothing, so there is nothing to remove. The proof is F18F.v:405-414 with `bv_eqb_refl` written `AK11.bv_eqb_refl`
+   nothing, so there is nothing to remove. The proof is F18F.v:406-415 with `bv_eqb_refl` written `AK11.bv_eqb_refl`
    (the copy F18F.v's .glob records). f18_evt0_of_F_on / f18_evt0_of_F_on_verbatim are F18F.v's f18_evt0_of_F /
    f18_evt0_of_F_verbatim for it: the corollary at RNG_all states F18.f18_evt0's type term for term (constr_eq).
    This file edits no line of F18F.v.
@@ -34,8 +35,8 @@
    Where it comes from: the run (0x823e8 ld a0,240(s1); beqz a0 (not taken); li a2,6; ld a0,72(s1); mv a1,s7;
    jal wrapper_bcmp) loads only the spills A+240 and A+72, no shadow byte. The original proofs use the shadow
    premise HSW once each:
-   - f18_evt_F: `exact HSW` (F18F.v:163), the shadow premise of the wrapper call, at the call's registers
-     a0 = [A+72] = Z_to_bv 64 L, a1 = s7 = Z_to_bv 64 R, a2 = Z_to_bv 64 6 (EL / ER / E6, F18F.v:139-141).
+   - f18_evt_F: `exact HSW` (F18F.v:164), the shadow premise of the wrapper call, at the call's registers
+     a0 = [A+72] = Z_to_bv 64 L, a1 = s7 = Z_to_bv 64 R, a2 = Z_to_bv 64 6 (EL / ER / E6, F18F.v:140-142).
      Here that premise is bcmp_wrap_contract_F_on's (bcmp_wrap_c_on.v:73)
      `shadow_rw_on (bcmp_wrap_shadow_R L R N) m` at L := L, R := R, N := 6. Its disjuncts:
        sh_word_on L 6  : the aligned shadow words of [L, L+6), the ASan range check of the first string
@@ -45,10 +46,10 @@
      The contract is discharged by bcmp_wrap_on.bcmp_wrap_holds_F_on (bcmp_wrap_on.v:168) in place of
      bcmp_wrap_F.bcmp_wrap_holds_F; its post bcmp_wrap_post_on (bcmp_wrap_c_on.v:31) already carries the
      forall-P shadow conjunct, over the call's memory, which is m (the run before the call only loads).
-   - f18_evt_ro_F: `F18.shadow_rw_rel m _ REL HSW` (F18F.v:297), the premise of f18_evt_F on normalize rsegs m.
+   - f18_evt_ro_F: `F18.shadow_rw_rel m _ REL HSW` (F18F.v:298), the premise of f18_evt_F on normalize rsegs m.
      Here it is A.ShadowRwOnT.shadow_rw_on_rel (ShadowRwOnT.v:27) into f18_evt_F_on's premise, same R
      (normalizing changes no shadow byte).
-   Template: the plain-form twins F18.f18_evt_on / f18_evt_ro_on (a Theorem Labs lane, Seg/F18.v (a version not in this delivery; written on a working branch aef5855f4dd)),
+   Template: the plain-form twins F18.f18_evt_on / f18_evt_ro_on (a Theorem Labs lane, Seg/F18.v (a version not in this delivery; written on a working branch)),
    same R. The scripts are F18F's, with these three changes: the contract lemma, the transport, and f18_evt_F_on
    in place of f18_evt_F. *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.
@@ -298,7 +299,7 @@ Proof.
   exact (F18.stk_rel_hi_back memX m0' lo _ Hmr Hlo0 Hsp64 ST').
 Qed.
 
-(* ---- F18F.f18_evt0_F (F18F.v:391-415), moved here (header). The [s1+240] = 0 arm: `ld a0,240(s1)` reads 0 and
+(* ---- F18F.f18_evt0_F (F18F.v:392-416), moved here (header). The [s1+240] = 0 arm: `ld a0,240(s1)` reads 0 and
    `beqz a0,8275c` is taken; only a0 changes, memory is kept. The run's one data access is that 8-byte load, so the
    single footprint premise is the lemma's own bytes_at range (A + 240, 8). No callee, no shadow premise. ---- *)
 Lemma f18_evt0_F_on :
@@ -327,7 +328,7 @@ Proof.
   apply ExecF.evtF_done. reflexivity.
 Qed.
 
-(* F18.f18_evt0's statement as a corollary of f18_evt0_F_on (F18F.v:417-438: evtF_evt at RNG_all; the one rng
+(* F18.f18_evt0's statement as a corollary of f18_evt0_F_on (F18F.v:418-439: evtF_evt at RNG_all; the one rng
    premise by rng_all, its bounds from the lemma's own bytes_at (A + 240)). *)
 Lemma f18_evt0_of_F_on :
   forall (ra0 sp gp tp t0 t1 t2 s0 s1v a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7v s8 s9 s10 s11 t3 t4 t5 t6 : word)
@@ -350,7 +351,7 @@ Proof.
   apply ExecF.rng_all; lia.
 Qed.
 
-(* The pin (F18F.v:440-445): f18_evt0 takes no contract premise, so the corollary states its type term for term. *)
+(* The pin (F18F.v:441-446): f18_evt0 takes no contract premise, so the corollary states its type term for term. *)
 Example f18_evt0_of_F_on_verbatim : True.
 Proof.
   let A := type of F18.f18_evt0 in let B := type of f18_evt0_of_F_on in constr_eq A B.

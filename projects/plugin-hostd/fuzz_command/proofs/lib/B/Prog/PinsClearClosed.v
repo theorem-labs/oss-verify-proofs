@@ -4,12 +4,13 @@
    section F): tpins_clear_closed proves the same tpins_clear_spec B MT as the walk's tpins_clear_holds
    (lib/B/Prog/pins_clear.v), at the pinned image (lib/B/Prog/CmdImg.v's instance PB_cmd, whose segments are B's
    tfibsegs, and the sink head YE2k.tfib_sink_head), with the per-binary hypotheses the walk names discharged by
-   exact, as a Theorem Labs lane's RecBClosed.v (a working branch f349bdaedba lib/A/Prog/RecBClosed.v:163-191)
-   and SupRemoveAllRefitClosed.v (a working branch e84227c9553 lib/A/Prog/SupRemoveAllRefitClosed.v:50-60) do on
+   exact, as a Theorem Labs lane's RecBClosed.v (a working branch lib/A/Prog/RecBClosed.v:163-191)
+   and SupRemoveAllRefitClosed.v (a working branch lib/A/Prog/SupRemoveAllRefitClosed.v:50-60) do on
    image A: cmd_img_facts_tfib is CmdRecImg.cmd_img_facts_tfib, cmd_sig_prog_PB and VOBJS are CmdRecRest's
    cmd_sig_prog_PB and cmd_val_objs_PB, and PRW is CmdRecRest's cmd_prw_tfib (the program's statics lie in B's
    read-write window, lib/B/YB13.v's tfib_rw_window). What remains is the callees' contracts at every FP state (the
    statement's TRECORD, TARG_S, TMIX_CALL, TANSWER_CODE), HB and MTL. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -2,8 +2,8 @@
     (U/Prog/seg_cuts.v, the UBSan twins of the plain cuts: P_K13984 (calloc(m)), P_K139e4 (the file-loop head) at
     f = 0 and f = 1, P_K13aac (malloc(text)), P_K13c34 (free(text)), P_K13c3c (after the loop), P_K13e90
     (calloc(mt)), P_K141ec (the frees)) and the entry facts of the HEAD cuts of reac_segconf_parse_file
-    (U/Prog/reac_segconf_parse_file_pieces_c.v: H_HEAD) and of m_file (U/Prog/m_file_c.v: H_MF_HEAD), of
-    commit aca5136e2baf. One closed lemma each, at the real run of the input INP2
+    (U/Prog/reac_segconf_parse_file_pieces_c.v: H_HEAD) and of m_file (U/Prog/m_file_c.v: H_MF_HEAD),.
+    One closed lemma each, at the real run of the input INP2
     (Prog/SegSatKit234.v).
 
     proves no function (kind: statement text; closed satisfiability lemmas of contract premises). Nothing here is an

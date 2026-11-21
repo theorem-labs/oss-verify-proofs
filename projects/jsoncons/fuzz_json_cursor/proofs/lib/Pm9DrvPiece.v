@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader fact): changed drv_piece; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Bo0DrvPiece.v, line 65. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
@@ -60,6 +61,7 @@ Proof.
     + exact (sbm_vml _ _ SBM).
     + exact MI1.
     + rewrite (sbm_halted_eq _ _ SBM). exact Hh.
+    + exact (sbm_rdrA _ _ SBM).
   - exact SBM.
   - rewrite AH. exact VIS.
   - exact FR1.

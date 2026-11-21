@@ -1,13 +1,14 @@
-(* copied from proofs/cgif/cgif_file_fuzzer/lib/YG00cf.v @ 95e6f1d72b6 (a Theorem Labs lane, frozen), module paths changed only. *)
-(* prefix-only copy of proofs/omx-clap-core/fuzz_preset/lib/Reusable/YG00cf.v@6e9ff2e6573c487199f2990b43c5e19cce86e581, do not edit (single writer: a Theorem Labs lane; send change requests to a Theorem Labs lane as diffs). *)
+(* copied from proofs/cgif/cgif_file_fuzzer/lib/YG00cf.v (a Theorem Labs lane, frozen), module paths changed only. *)
+(* prefix-only copy of proofs/omx-clap-core/fuzz_preset/lib/Reusable/YG00cf.v, do not edit (single writer: a Theorem Labs lane; send change requests to a Theorem Labs lane as diffs). *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset's second allocator instance (suffix cf), the MODEL.
    cgif's map_more_user (YG00.v:279-295) closes the class-full case with a VACUOUS mcheck at :285, so a full
    class is "impossible". On preset a class DOES fill on accepted input (class 17 maps 3,584 MiB = kFreeArrayOffset,
    measured). This file replaces that one check by the arm the binary runs, in cgif's vocabulary, ported from
    msgpack-c's released refusal (proofs/msgpack-c/unpack_pack_fuzzer/lib/Spec/AsanCtrl.v:284, exh_report :363-371,
-   release ref b6a0088adc): report, flag the class, return NULL; no IFail.
+   release ref): report, flag the class, return NULL; no IFail.
    cgif's YG00.v is NOT edited; class 24 keeps cgif's vacuous arm, by calling cgif's own functions.
    No address: the image pcs come from the class CfImg (YGcfNames.v). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.

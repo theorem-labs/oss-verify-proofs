@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx form of FMgxaSeamPost.v's two AR lemmas (Section P, step 4: the allocator relation
    after the walk), over the engine's allocator relation ARx and its laws YCbqG.AR_laws_x. FMgxaSeamPost.v is not
    edited: its AR-free lemmas (outside_dec, win_view_out, win_visible, ...) are used from it.
 
-   The conversion is fuzz_preset's (PSnpSeamPost.v at a working branch dad42dbecbc4, :213-255) of
-   a Theorem Labs lane's FMgxaSeamPost.v (3242941dc964, :205-245):
+   The conversion is fuzz_preset's (PSnpSeamPost.v at a working branch, :213-255) of
+   a Theorem Labs lane's FMgxaSeamPost.v (205-245):
    - `Hypothesis LAWS : AR_laws tfibsegs B` -> ARx, hl and `LAWS : YCbqG.AR_laws_x tfibsegs B ARx hl` (preset: the
      fields alx_frame and alx_stack, :213-215);
    - win_owned (fm :209-220, preset :219-230): ecall_preU -> FCiface.ecall_pre_x, AR's al_stack at

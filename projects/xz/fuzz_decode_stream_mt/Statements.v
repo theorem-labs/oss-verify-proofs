@@ -23,9 +23,12 @@
     decoder (threads=2, LZMA_IGNORE_CHECK) never returns LZMA_PROG_ERROR
     (liblzma's ''API misuse / internal inconsistency'' code) for any input;
     every other return code, including data and memory-limit errors, is
-    accepted.  The harness makes no check of its own beyond not crashing, so a
-    statement about it says only that the code it calls never crashes, hangs or
-    trips a sanitizer.
+    accepted.  The harness makes no check of its own beyond not crashing.  Its
+    halts statements say only that the code it calls never crashes, hangs or
+    trips a sanitizer.  Its agreement statements say only that the code never
+    crashes or trips a sanitizer, and allow a run that never ends.  Its bound
+    statements say only how often its builds may disagree.  Its decidability
+    statements say only that some program decides where its builds agree.
 
     Whether each statement is open, proved or known false is recorded in the
     harness README, not here: this file changes only when a statement does. *)

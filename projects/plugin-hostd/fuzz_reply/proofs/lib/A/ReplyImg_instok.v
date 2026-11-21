@@ -1,37 +1,38 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, for a Theorem Labs lane's cf layer at plugin-hostd/fuzz_reply; image row img-instok-A).
    rule 24: no function proved (kind: measurement; an image row, a closed computation at reply's image A,
    fuzz_reply.asan, pin 42c58610e125).
 
    The cf layer states this row as a Hypothesis of the Hit and Sec layers and as a Definition of lane F2a, over their
    own Section contexts; reply has not taken those layer files yet.  So each Lemma below states the layer text
-   VERBATIM at reply's instance (the image classes ImgBase.AImg at AImg_reply, A/AGif2reply.v:23; ImgBaseAG.AGImg at
-   AGImg_reply, A/AGif0reply.v:116; ImgBaseDG.DImg at DImg_reply, A/DGif0reply.v:30), for a B with the image's symbol
+   VERBATIM at reply's instance (the image classes ImgBase.AImg at AImg_reply, A/AGif2reply.v:24; ImgBaseAG.AGImg at
+   AGImg_reply, A/AGif0reply.v:117; ImgBaseDG.DImg at DImg_reply, A/DGif0reply.v:30), for a B with the image's symbol
    facts (each layer's Section has `Variable B : asyms` and the unit's B satisfies im_syms), and a consumer closes the
    layer's row with `exact` once the layer is on reply.  No Definition of the layer is copied here.
 
    The cf texts:
-   - Hit, YGcfInstHit.v:169-170 (a working branch ee95275bccb; :161 at d2e17f315ba, the text a Theorem Labs lane's
+   - Hit, YGcfInstHit.v:170-171 (a working branch; :161, the text a Theorem Labs lane's
      CF-UNIT-HYPS.md:49 (sha256 77b3f94c95d2; internal record) names in place of the Hit layer's earlier HIOK, `IOK inst -> ag_inst_ok inst`), in
      `Section h. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : CfParams} {IM : AImg}
      {AG : AGImg}. ... Section b. Variable B : asyms.`:
        (* the binary's allocator object is in AGImg's instance window *)
        Hypothesis INST_AG : ag_inst_ok (as_inst B).
-   - Sec, YGcfInstSec.v:1345-1346 (a working branch 8aea1d52068; it replaced Sec's IOK_AG of :1281 at 4c2fd365d8e,
-     `Hypothesis IOK_AG : forall inst, IOK inst -> ag_inst_ok inst.`, in b81e8b96881):
+   - Sec, YGcfInstSec.v:1345-1346 (a working branch; it replaced Sec's IOK_AG of :1281,
+     `Hypothesis IOK_AG : forall inst, IOK inst -> ag_inst_ok inst.`):
        (* The symbol table's instance object is in AGImg's instance window [cgif: AGif0cgif.inst_ok at TFIB_INST]. *)
        Hypothesis INST_AG : ag_inst_ok (as_inst B).
-   - F2a, YGcfInstFreeModel.v:43-44 (a working branch 89caf2ed683), in `Section a. Context {fx : YK11.FPState}
+   - F2a, YGcfInstFreeModel.v:44-45 (a working branch), in `Section a. Context {fx : YK11.FPState}
      {rc : YM05.RunCeil} {ci : CfImg} {cp : CfParams} {IM : AImg} {DI : DImg}. ... Variable B : asyms.`:
        (* DImg accepts the symbol table's instance object (cgif: DGif1.inst_cgif). *)
        Definition FM_INST_OK : Prop := dg_inst_ok (as_inst B).
-   cgif's discharges: YGcfInstHitcgif.v:115-119 INST_AG_cgif (a working branch, file at cc4fb1f2a13); DGif1.v:2162-2163
-   inst_cgif (a working branch 89caf2ed683), `unfold inst_ok, TFIB_INST. lia`.
+   cgif's discharges: YGcfInstHitcgif.v:115-119 INST_AG_cgif (a working branch, file); DGif1.v:2162-2163
+   inst_cgif (a working branch), `unfold inst_ok, TFIB_INST. lia`.
 
-   Proof at image A: both class fields are AGif0reply.inst_ok (A/AGif0reply.v:58, `0x9f878 <= inst /\ inst + 0xe60 <=
+   Proof at image A: both class fields are AGif0reply.inst_ok (A/AGif0reply.v:59, `0x9f878 <= inst /\ inst + 0xe60 <=
    0xa38e0 /\ inst mod 8 = 0`; AGImg_reply's ag_inst_ok, :116, and DImg_reply's dg_inst_ok, A/DGif0reply.v:31), and
-   ts_inst (A/AF0m.v:870) gives as_inst B = TFIB_INST = 0xa2a58 (A/AF0m.v:17): 0x9f878 <= 0xa2a58, 0xa2a58 + 0xe60 =
+   ts_inst (A/AF0m.v:871) gives as_inst B = TFIB_INST = 0xa2a58 (A/AF0m.v:18): 0x9f878 <= 0xa2a58, 0xa2a58 + 0xe60 =
    0xa38b8 <= 0xa38e0, and 0xa2a58 mod 8 = 0. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.

@@ -1,4 +1,4 @@
-(* CARRIED from commit 0deb5310273b0d538ec2a1697f391a1c8ad21c34,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YG08cf.v, sha256 e1dafd546d7506a4fb6fa7703b7bf85061f3f6486a42126bf27cc1f335244217 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the Require lines only:
    the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
@@ -6,8 +6,9 @@
 *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Taken by path from a working branch a0fed4266a1b, provisional. *)
+(* Taken by path from a working branch, provisional. *)
 (* Modified by Theorem Labs, 2026-10: module paths changed from fuzz_preset lib.Reusable to cgif_file_fuzzer lib; the text is otherwise unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset's second allocator instance (suffix cf), the VM BUDGET on live state.
    cgif's YG08.v bounds the budget through the event counter, and both branches are false here:
    - vm_budget_slack (YG08.v:151-164), small branch: `st_nev s <= EV_MAX`, with prim_committed_bound

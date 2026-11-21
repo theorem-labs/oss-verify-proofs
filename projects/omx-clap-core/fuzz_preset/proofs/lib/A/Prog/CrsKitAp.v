@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumC.v, with its module paths and module names changed; 671 of its 740 lines of code are new or changed and 859 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image A' (the #102 pins): the KIT of the walk of check_reject_clean_starved against the text
    tcheck_reject_clean_starved_specX. This file STATES the walk: the stage record, the text's pre and post, the
    boundary pcs, the stage invariants, the register sets and one continuation predicate per segment entry. The
@@ -12,9 +13,9 @@
    lib/U/Prog (ubsan) only, and no released asan Proof.v existed for
    check_reject_clean_starved). Written new.
    INPUTS.
-   - Pin A' asan sha256 1be0f53d96cb9d6c (harness.yaml of release/fuzz-preset-ran-out-pins 8f3e7e1a07f1).
-   - Listing lib/A/Listing_prog.v blob 7ed1529926bd + lib/A/PAImg_prog.v blob 505a51ff7d08 (h-verbs-1 listings v3,
-     cold/h-verbs-1-listing-pins102 74dcda1eda12: the d42e123915ae contents with a pre-evaluated slot tree). Entry
+   - Pin A' asan sha256 1be0f53d96cb9d6c (harness.yaml).
+   - Listing lib/A/Listing_prog.v blob 7ed1529926bd + lib/A/PAImg_prog.v blob 505a51ff7d08 (h-verbs-1 listings v3,:
+     the contents with a pre-evaluated slot tree). Entry
      0x82160 = slot 736 (A_entry_check_reject_clean_starved), 294 slots (736..1029).
    - The text: tcheck_reject_clean_starved_specX in lib/A/PRH_FnCheck.v:1756-1858,
      with lib/A/PRH_Base.v (prh_ledger with g_most and
@@ -41,7 +42,7 @@
    under ran' = 0; every boundary's position is exact too: crs_pos C evs ran3 S3 says `ran3 = 0 -> iface_room_pos ..
    (c_rp_i C + length evs) ..`, with evs the boundary's consumed prefix of ck_crcs_evs, crs_evs_at_<SEG>. After a
    REFUSAL (ran3 = 1) no position of the model's run describes the state (the text's own note), so none is stated.
-   TEMPLATE (design only, never Required): the old-pin kit lib/A/Prog/CrsKitA.v at cold/h-w6u-rep-crs2 f83099b5b0d
+   TEMPLATE (design only, never Required): the old-pin kit lib/A/Prog/CrsKitA.v
    (A 0x820b0, 271 insns, the old text). Its shape is kept (Sections d / f over B, ARx, LAWS; the stage record; crs_pre
    / crs_post; crs_cfg / crs_regsat; the saved-slot, frame, slot, live, data and tree invariants; crs_from_<SEG>;
    CrsKeep). Every pc, register list and invariant below is re-derived for the A' body and the new text.

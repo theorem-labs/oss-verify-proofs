@@ -1,6 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/zstd/zstd_frame_info/lib/UbsanMain.v, with its module paths and module names changed. *)
+(* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by gabelogan195, 2026-11: made from this harness's proofs/lib/HaltsPlainB.v at commit f92feaf8b7 for the UBSan build: its image, names and limit lemma are changed from the plain build's to the UBSan build's, its imports leave out PlainTree, Plain.PImg and images.Plain and add ModelInv, ModelOK, Ubsan.UImgX and Ubsan.PlainClosed, and its two comments are left out; ubsan_tree_ok_L is ubsan_tree_ok from proofs/lib/UbsanMain.v, lines 20-27, restated for any limit of at least 2^31 after the form of proofs/lib/PlainTree.v, lines 12-19, with the UBSan build's facts in place of the plain build's from proofs/lib/Spec/ModelOK.v, lines 39-43; UbsanMain.v, PlainTree.v and Spec/ModelOK.v are also at commit f92feaf8b7. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (haltsB_from_tree_gen's new premise segs_top segs <= 0x10000000, proved by computation). *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -30,7 +33,8 @@ Proof.
   intros cfg Hle.
   exact (haltsB_from_tree_gen usegs u_init_pc u_phdrs ShippedBudgets.lim_source EXITS02 (Prog.prog usegs UREAD_STAGE)
            (epost (fun (_ : unit) (_ : machine_state) => True)) cfg Hle
-           (ubsan_tree_ok_L ShippedBudgets.lim_source lim31_sourceU) (fun inp en => prog_texits usegs UREAD_STAGE inp en)).
+           (ubsan_tree_ok_L ShippedBudgets.lim_source lim31_sourceU) (fun inp en => prog_texits usegs UREAD_STAGE inp en)
+           ltac:(apply Z.leb_le; vm_compute; reflexivity)).
 Qed.
 
 Theorem halts_ubsanB_fo :

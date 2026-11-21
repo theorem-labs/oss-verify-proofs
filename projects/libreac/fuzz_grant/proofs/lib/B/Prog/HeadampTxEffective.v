@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the head-amp table layout and the contract and walk of reac_headamp_tx_effective on fuzz_grant.asan, written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v, proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v. *)
-(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/HeadampTxEffective.v at a working branch 5651bf66924 (blob 388b000b518, the blob the walk was ported from), restated over image B's listing, addresses and walk layer (lib/B/Prog) against GrantBContracts.v; B's contract allows tx = 0 (the test at 0x85c18 then answers the default value) and B adds four UBSan pointer-overflow guards and one alignment guard into the trap at 0x85cc4, refuted with PaNot.U_not_ltb from tx = 0 mod 4 and tx + 287 < 2^64. *)
+(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/HeadampTxEffective.v at a working branch (blob 388b000b518, the blob the walk was ported from), restated over image B's listing, addresses and walk layer (lib/B/Prog) against GrantBContracts.v; B's contract allows tx = 0 (the test at 0x85c18 then answers the default value) and B adds four UBSan pointer-overflow guards and one alignment guard into the trap at 0x85cc4, refuted with PaNot.U_not_ltb from tx = 0 mod 4 and tx + 287 < 2^64. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/HeadampTxEffective.v (source cited in the line above): the walk
    of reac_headamp_tx_effective over image B's listing and walk layer
    (lib/B/Prog), against the contract GrantBContracts.v states (walk_reac_headamp_tx_effective).

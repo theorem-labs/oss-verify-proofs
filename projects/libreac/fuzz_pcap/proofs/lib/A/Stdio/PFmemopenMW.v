@@ -1,6 +1,7 @@
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (a Theorem Labs lane): the ASan-image walk of musl fmemopen for
    libreac/fuzz_pcap v1.9.0 -- the proof of lib/A/Stdio/PFmemopenM.v's rfmemopen_contract at the musl
    entry 0x8e870 (PFMEMOPEN), with ra = 0x8e90c (FM_MALLOC_RA) and the __strchrnul window
@@ -39,14 +40,14 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 
    SECTION HYPOTHESES (named; no axiom, no Admitted):
      ASIL    asource_img_laws SK tfibsegs B pcap_KS   -- a Theorem Labs lane's PSourceMeta.v; discharged once against
-                                                         a Theorem Labs lane's B (PSourceK.v:48-52)
+                                                         a Theorem Labs lane's B (PSourceK.v:49-53)
      TL      PcapSyms B (A/AF0m.v, gated PASS A+B)    -- a Theorem Labs lane's B (A/AD2l.v PcapB_syms at B := PcapB)
      AINTR   aintrin_realizes tfibsegs B OSet 0x5150c  -- the ASan memset interceptor; the core's (a Theorem Labs lane)
                                                          A/AE32.v memset_icpt_realizes states it, but AE32
-                                                         does not build at a working branch e8bb946b7e4 (A/AE79.v:
+                                                         does not build at a working branch (A/AE79.v:
                                                          `pcap_img_end` not found)
-   The strchr calls use a Theorem Labs lane's PROVED contract tfib_strchr_lit (lib/A/AE2j.v, a working branch
-   2bf40e72137), whose premises cells_hold st_cells / rwa_img / mconsts_view this walk discharges from AR + TL,
+   The strchr calls use a Theorem Labs lane's PROVED contract tfib_strchr_lit (lib/A/AE2j.v, a working branch),
+   whose premises cells_hold st_cells / rwa_img / mconsts_view this walk discharges from AR + TL,
    asrc_stdio_env and rfmemopen_pre's window [0x10350, 0x10370).
    Values consumed from a working branch's gen/A (WIP): AF0m Tfib_const_abs rows 0x9b540 -> 0x93058 and
    0x20d43..0x20d47 = 0, Tfib_const_shadow rows 0x7fffc1a8..ab, Tfib_zero_shadow rows (0x10000, ..) and
@@ -365,10 +366,10 @@ Local Abbreviation STK := RFMEMOPEN_STK.
 (* NAMED SECTION HYPOTHESES. *)
 (* The read stream's image laws (a Theorem Labs lane's PSourceMeta.v), discharged once with the core's B. *)
 Hypothesis ASIL : asource_img_laws SK tfibsegs B pcap_KS.
-(* The core's symbol record for pcap's ASan image (A/AF0m.v, gated PASS A+B at c061542723f / 731386609e0). *)
+(* The core's symbol record for pcap's ASan image (A/AF0m.v, gated PASS A+B). *)
 Hypothesis TL : PcapSyms B.
 (* The ASan memset interceptor at its trampoline 0x5150c (cgif's AINTR, A/AE25.v:74). The core's
-   A/AE32.v memset_icpt_realizes states exactly this (premises reordered), but at a working branch e8bb946b7e4 it
+   A/AE32.v memset_icpt_realizes states exactly this (premises reordered), but at a working branch it
    does not build: its import A/AE79.v fails (`pcap_img_end` not found). *)
 Hypothesis AINTR : aintrin_realizes tfibsegs B OSet FM_MEMSET.
 
@@ -1594,8 +1595,8 @@ Print Assumptions rfmemopen_contract_pcap.
 (*    OSet's body (Reusable/YG0d.v:318-335), up to the position of amem_range and the trivial         *)
 (*    `OSet => True` premise; its post is aintrin_realizes's with the `match op` reduced at OSet.     *)
 (*    The donor keeps AMEMSET as a Section hypothesis (cgif AC8l / AC8q / AC8s / AC8u) and discharges  *)
-(*    it at instantiation; this is that instantiation for pcap. Needs commit 595c3188fe3 or later     *)
-(*    (at e8bb946b7e4, AE32's import AE79 lacked its PcapImgEnd Require).                             *)
+(*    it at instantiation; this is that instantiation for pcap. Needs or later     *)
+(*    (AE32's import AE79 lacked its PcapImgEnd Require).                             *)
 (* ---------------------------------------------------------------------------------------------- *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.A Require AE32.
 

@@ -1,16 +1,17 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseL.v at afaa3cb55c1 (the engine plumbing
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseL.v (the engine plumbing
    of a segment of a parse walk and its arithmetic lemmas U_subba, U_sext32, U_sext32_eqb, U_next, U_and3, U_off_of,
    U_s8), for reac_headamp_prop_parse_result's pair loop on reac-pw/fuzz_headamp's ASan + UBSan image B, its two
    segments WALK and ADV of lib/AU/HPgParseCut.v; the entry states, exits, the strncmp call inside the frame hole and
    the walks below are new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/AU/HPgParseW.v at f7ae59d74add (pbW_tcs_ok,
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/AU/HPgParseW.v (pbW_tcs_ok,
    pbW_loop_stop, pbW_exit_exit, pbW_exit_adv, pbW_exit_key, pbW_exit_wlb, pbW_ret_at, pbW_call, pbW_lb_ok,
    pbW_ret_ok) for image A's segments of lib/A/HPgParseCut.v: image A's pcs, registers, frame cells and literal (the
    inner cuts LAST 0x84994 and RET 0x849cc; a5, s9 = rf and [spa + 40] = keys in place of image B's registers and
    cells; the last body byte by a branch in place of a mask); the call's stop (pw_exit_call), the run of WALK from
    0x84910 (hp_segWALK_A) and the segment ADV (hp_segADV_A) are new. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_headamp_prop_parse_result 0x845b4 of reac-pw/fuzz_headamp's ASan image A (fuzz_headamp.asan, pinned sha256
    f3e0669d2819724922df0556b11c2dcd22d1e16fe7e0fe1535ce784b34436c47; unstripped twin
    b5f352154c54a97c66fd92dfa228e8a854498f6cd313dba0107900546b043f9a, the same loaded bytes except .note.gnu.build-id): the two segments of the

@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YP0g.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed SR_mmap_rw, SR_mmap_none, SR_mprotect_rw, SR_munmap_exact). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -125,6 +126,8 @@ m_halted model = None -> m_vm_lazy model = [] ->
 bv_unsigned (getr regs 17) = 222%Z ->
 getr regs 11 <> Z_to_bv 64 0 -> getr regs 12 = Z_to_bv 64 3 ->
 getr regs 13 = Z_to_bv 64 34 -> getr regs 14 = Z_to_bv 64 (-1) -> getr regs 15 = Z_to_bv 64 0 ->
+LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.place_declined_b (m_kernel model) (m_vmmaps model) (getr regs 10)
+  (page_round_up_Z (bv_unsigned (getr regs 11))) = false ->
 (forall e, In e mmap_errnos ->
 SR segs (mkCfg (mkst (regupd regs 10 (errno_ret e)) (v_addi pc 4) mem rom) model) Q) ->
 (forall a, grant_ok (getr regs 10) model a (page_round_up_Z (bv_unsigned (getr regs 11))) = true ->
@@ -134,9 +137,12 @@ SR segs (mkCfg (mkst (regupd regs 10 a) (v_addi pc 4)
 (exists a, grant_ok (getr regs 10) model a (page_round_up_Z (bv_unsigned (getr regs 11))) = true) ->
 SR segs (mkCfg (pend_at regs pc mem rom) model) Q.
 Proof.
-intros regs pc mem rom model Q Hh Hlz Hno H1 H2 H3 H4 H5 HA HB Hex.
-apply (SR_node segs _ _ _ (mmap_rw_wit04 (getr regs 10) model _) Q
-(node_mmap_rw04 segs regs pc mem rom model Hh Hlz Hno H1 H2 H3 H4 H5)).
+intros regs pc mem rom model Q Hh Hlz Hno H1 H2 H3 H4 H5 Hdecl HA HB Hex.
+(* 08b1429: the witness takes the length facts (mmap_grant_len_ok, from the nonzero length H1). *)
+pose proof (LinuxProcessSemantics.LinuxProcessSem.Checks.Sys.Mm.Mmap.mmap_grant_len_ok (getr regs 11)
+  ltac:(unfold w_is0; apply bv_eqb_neq; exact H1)) as Hn0.
+apply (SR_node segs _ _ _ (mmap_rw_wit04 (getr regs 10) model _ (proj1 Hn0) (proj2 Hn0)) Q
+(node_mmap_rw04 segs regs pc mem rom model Hh Hlz Hno H1 H2 H3 H4 H5 Hdecl)).
 intros [[e [He Hx]] | [a Ha]]; unfold mmap_rw_ef04, mmap_rw_md04; cbn [proj1_sig]; rewrite adv_pend; cbn [eff_ret].
 - rewrite effmem_ret_only. apply HA. exact He.
 - rewrite effmem_zeros. apply HB. exact Ha.
@@ -146,6 +152,8 @@ m_halted model = None -> m_vm_lazy model = [] ->
 bv_unsigned (getr regs 17) = 222%Z ->
 getr regs 11 <> Z_to_bv 64 0 -> getr regs 12 = Z_to_bv 64 0 -> getr regs 13 = Z_to_bv 64 34 ->
 getr regs 14 = Z_to_bv 64 (-1) -> getr regs 15 = Z_to_bv 64 0 ->
+LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.place_declined_b (m_kernel model) (m_vmmaps model) (getr regs 10)
+  (page_round_up_Z (bv_unsigned (getr regs 11))) = false ->
 (forall e, In e mmap_errnos ->
 SR segs (mkCfg (mkst (regupd regs 10 (errno_ret e)) (v_addi pc 4) mem rom) model) Q) ->
 (forall a, place_ok (getr regs 10) model a (page_round_up_Z (bv_unsigned (getr regs 11))) = true ->
@@ -155,9 +163,11 @@ SR segs (mkCfg (mkst (regupd regs 10 a) (v_addi pc 4)
 (exists a, place_ok (getr regs 10) model a (page_round_up_Z (bv_unsigned (getr regs 11))) = true) ->
 SR segs (mkCfg (pend_at regs pc mem rom) model) Q.
 Proof.
-intros regs pc mem rom model Q Hh Hlz Hno H1 H2 H3 H4 H5 HA HB Hex.
-apply (SR_node segs _ _ _ (mmap_none_wit04 (getr regs 10) model _) Q
-(node_mmap_none04 segs regs pc mem rom model Hh Hlz Hno H1 H2 H3 H4 H5)).
+intros regs pc mem rom model Q Hh Hlz Hno H1 H2 H3 H4 H5 Hdecl HA HB Hex.
+pose proof (LinuxProcessSemantics.LinuxProcessSem.Checks.Sys.Mm.Mmap.mmap_grant_len_ok (getr regs 11)
+  ltac:(unfold w_is0; apply bv_eqb_neq; exact H1)) as Hn0.
+apply (SR_node segs _ _ _ (mmap_none_wit04 (getr regs 10) model _ (proj1 Hn0) (proj2 Hn0)) Q
+(node_mmap_none04 segs regs pc mem rom model Hh Hlz Hno H1 H2 H3 H4 H5 Hdecl)).
 intros [[e [He Hx]] | [a Ha]]; unfold mmap_none_ef04, mmap_none_md04; cbn [proj1_sig]; rewrite adv_pend; cbn [eff_ret].
 - rewrite effmem_ret_only. apply HA. exact He.
 - rewrite effmem_unmaps. apply HB. exact Ha.
@@ -200,6 +210,7 @@ getr regs 11 <> Z_to_bv 64 0 ->
 getr regs 12 = Z_to_bv 64 3 ->
 map_contains (vm_noaccess (m_vmmaps model)) (getr regs 10) (page_round_up (getr regs 11)) = true ->
 map_contains (vm_maps (m_vmmaps model)) (getr regs 10) (page_round_up (getr regs 11)) = true ->
+region_free (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) (getr regs 10) (page_round_up (getr regs 11)) = true ->
 mprotect_budget_ok model (getr regs 10) (page_round_up (getr regs 11)) = true ->
 (forall e, In e mprotect_errnos ->
 SR segs (mkCfg (mkst (regupd regs 10 (errno_ret e)) (v_addi pc 4) mem rom) model) Q) ->
@@ -208,9 +219,9 @@ SR segs (mkCfg (mkst (regupd regs 10 (Z_to_bv 64 0)) (v_addi pc 4)
 (mprotect_model (getr regs 10) (page_round_up (getr regs 11)) model)) Q ->
 SR segs (mkCfg (pend_at regs pc mem rom) model) Q.
 Proof.
-intros regs pc mem rom model Q Hh Hlz Hno Hal Hlen Hnw Hprot Hna Hma Hbud HA HB.
+intros regs pc mem rom model Q Hh Hlz Hno Hal Hlen Hnw Hprot Hna Hma Hvd Hbud HA HB.
 apply (SR_node segs _ _ _ (mprotect_wit04 model (getr regs 10) (page_round_up (getr regs 11))) Q
-(node_mprotect_rw04 segs regs pc mem rom model Hh Hlz Hno Hal Hlen Hnw Hprot Hna Hma)).
+(node_mprotect_rw04 segs regs pc mem rom model Hh Hlz Hno Hal Hlen Hnw Hprot Hna Hma Hvd)).
 intros [[e [He Hx]] | [[] Hb]]; unfold mprotect_ef04, mprotect_md04; cbn [proj1_sig]; rewrite adv_pend; cbn [eff_ret].
 - rewrite effmem_ret_only. apply HA. exact He.
 - rewrite effmem_zeros. exact HB.
@@ -222,13 +233,18 @@ bv_unsigned (getr regs 17) = 215%Z ->
 getr regs 11 <> Z_to_bv 64 0 ->
 (bv_unsigned (getr regs 10) + page_round_up_Z (bv_unsigned (getr regs 11)) <= TASK_SIZE)%Z ->
 map_has (vm_maps (m_vmmaps model)) (getr regs 10) (page_round_up (getr regs 11)) = true ->
+(* 08b1429, may-fail mode: munmap may answer an errno of munmap_errnos *)
+(amf = true -> forall e, In e munmap_errnos ->
+  SR segs (mkCfg (mkst (regupd regs 10 (errno_ret e)) (v_addi pc 4) mem rom) model) Q) ->
 SR segs (mkCfg (mkst (regupd regs 10 (Z_to_bv 64 0)) (v_addi pc 4)
 (apply_unmaps mem [(getr regs 10, page_round_up (getr regs 11))]) rom)
 (munmap_model (getr regs 10) (page_round_up (getr regs 11)) model)) Q ->
 SR segs (mkCfg (pend_at regs pc mem rom) model) Q.
 Proof.
-intros regs pc mem rom model Q Hh Hlz Hno Hal Hlen Hnw Hhas HK0 T HK.
-apply (rz_munmap_exact segs regs pc mem rom model T Hh Hlz Hno Hal Hlen Hnw Hhas). exact (HK0 T HK).
+intros regs pc mem rom model Q Hh Hlz Hno Hal Hlen Hnw Hhas HF HK0 T HK.
+apply (rz_munmap_exact segs regs pc mem rom model T Hh Hlz Hno Hal Hlen Hnw Hhas).
+- intros Ham e He. exact (HF Ham e He T HK).
+- exact (HK0 T HK).
 Qed.
 End d.
 Ltac sr_run_with tblok HS :=

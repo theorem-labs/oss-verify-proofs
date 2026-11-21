@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_decode/lib/B/Prog/LLVMFuzzerTestOneInput_segX_exit_td.v, with its module paths, module names and numbers changed; 635 of its 665 lines of code are new or changed and 322 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset lib/A, slice S4 (parse_string, image A): the two TAIL stretches of the walk, proved against the
    contract S4_PsBase.v (this row's; at walk-S4-gp blob a59ce5bfcbe3), in the GENERIC-P form (a Theorem Labs lane
    12:18Z): ps_ret0_walkP : ps_seg_ret0P P (from PS_RET0) and ps_retok_walkP : ps_seg_retokP P (from PS_RETOK), each
@@ -9,9 +10,9 @@
    run goes through its YSRrMemnorm twin (paj_run_x_inv / paj_run_tok_x_inv, now YC1fPx.v 7814b594066f) at P, laws
    PLAW, premise the carry's P mem; the return leaves ms_mem as it is, so the post's P mem' is the run's HPM. The
    stable ps_ret0_walk / ps_retok_walk are the P := (fun _ => True) corollaries, statements byte-identical.
-   FILE SET: as the kit's cut 7cdbb61b5fa0 carries it (PRH_Base blob ef7c8ca98529, PRH_FnReader blob f1ae32e3b2cd); the
-   unit's set of record was, as S4_PsBase.v at 1503ed77ab4: the kit walkkit 9d109484e53, engine files and YCbqG.v by path
-   from a working branch 63997a07aa6, PRW_StepKit / PRW_HShadow by path from walk-S7B b77dc99e0b5, PRW_CallerJ of walk-S4.
+   FILE SET: as the kit's cut carries it (PRH_Base blob ef7c8ca98529, PRH_FnReader blob f1ae32e3b2cd); the
+   unit's set of record was, as S4_PsBase.v: the kit walkkit, engine files and YCbqG.v by path
+   from a working branch, PRW_StepKit / PRW_HShadow by path from walk-S7B, PRW_CallerJ of walk-S4.
    THE CODE (the neutral listing of the image of record, the internal file parse_string.fuzz_preset.asan.s, byte-identical to
    the internal file neutral_dis.py on omx-clap-core-preset-ranout/asan; every offset is a DERIVED byte offset from parse_string's
    entry, the listing's A_prog_slot AS_parse_string):

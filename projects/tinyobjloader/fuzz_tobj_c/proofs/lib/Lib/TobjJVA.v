@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (MInvR, which gained the vDSO conjunct, taken apart by minvr_dest). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -439,7 +440,7 @@ S3fS0S0A2M0S65G0R1Vtv;A3Sb9Vrho;R2A2S39S36S3fS33S33A2SbaVrho;R3A2Vbn;A3A1F_;F_;F
 Lemma blocks_disjoint : ltac2:(tb__ "0|2|
 SacS2S6aS33S33S33S33S33SdcVsegs;VC;R8R7R6A5S65S3fS33S33A2M0S42S33S33R6R5A4M1SadR9A1A3S65G0S42S33S33R5R4A4SadRaA1A3S39S36G0S42S33S33R8R7A4G1A3A1S37S9dR9R5A2S9fR5S9eR9R8A2A2A2S37S9dR8R6A2S9fR6S9eR8R7A2A2A2S3cF_;F_;F_;F_;F_;F_;Fz;Fn2;Fb2;Fn1;Fb1;Fmd;Frho;FAi;").
 Proof using .
-  clear_sec. intros Ai rho md b1 n1 b2 n2 z HM H1 H2 Hne Hz1 Hz2. unfold MInvR in HM.
+  clear_sec. intros Ai rho md b1 n1 b2 n2 z HM H1 H2 Hne Hz1 Hz2. minvr_dest HM.
   destruct (pairwise_in2 _ _ _ _ (minv_blocks_pairwise C Ai _ _ _ HM) H1 H2) as [X|[X|X]];
     [exact (Hne X) | |]; unfold MallocInv.ranges_disjoint in X; cbn [fst snd] in X; lia.
 Qed.
@@ -501,7 +502,7 @@ Proof using ML.
   cbn [rho_patch rm]. unfold patchf.
   destruct (in_ranges_dec rho R (Z_to_bv 64 z)) as [Hi|Hn]; [reflexivity|].
   rewrite Hrm.
-  pose proof HM as HMi. unfold MInvR in HMi.
+  pose proof HM as HMi. minvr_dest HMi.
   pose proof (block_addr_props segs C Ai _ _ _ b n z ML HMi Hb Hz) as [Hlt _].
   assert (Hzr : 0 <= z < 2 ^ 64).
   { pose proof (minv_block_geom C Ai _ _ _ b n HMi Hb) as (G0 & _ & G2 & _). unfold PGSZ, UNIT in G2. top_ranges. lia. }
@@ -604,7 +605,7 @@ Proof using ML TR_callP TR_ex TR_facts TR_pre.
       { subst n. f_equal. symmetry. apply (proj1 Hag1). reflexivity. }
       assert (Hnrho : bv_unsigned (eval rho (wsub_get s 12)) = n) by (subst n; rewrite rw_call'; reflexivity).
       assert (HinNew : In (p, n) (ma_blocks A')) by (rewrite HbA'; apply in_or_app; right; left; reflexivity).
-      pose proof HM' as HMi'. unfold MInvR in HMi'.
+      pose proof HM' as HMi'. minvr_dest HMi'.
       pose proof (minv_block_geom C A' _ _ _ p n HMi' HinNew) as (G0 & _ & G2 & G3 & G4).
       unfold PGSZ, UNIT, IB in G2, G3. pose proof (topL_range (ma_L A')) as TR3. pose proof (init_kept_top _ _ Hinit) as TK. unfold top_kept in TK.
       assert (NEWFREE : forall a, p <= a < p + n -> caddr segs C Ai None a -> False).
@@ -1013,7 +1014,7 @@ Qed.
 Lemma block_geom : ltac2:(tb__ "0|3|
 SacS2S6aS33S33SdcVsegs;VC;R5R4R3A5S65S3fS33S33A2S42S33S33R3R2A4SadR6A1A3S37S9dZ0M0R3A2S37S36S33Sa5R4Z10M1A2G0A3S37S9dS9eZ1000G1A2R4A2S37S37S9dS9eS9eR4R3A2Z4A2Sf7SaeR7A1A1M2A2S9dG2Z7fffff800000A2A2S33S37S9dR5R1A2S9fR1S9eR5R4A2A2A2S39S37S9dSf9VC;A1R2A2S9fR2Sf8VC;A1A2A2A1F_;Fa;A2A2A2A2F_;F_;Fn;Fb;Fmd;Frho;FAi;").
 Proof using ML.
-  clear - ML HNP Uv. intros Ai rho md b n HM Hin. unfold MInvR in HM.
+  clear - ML HNP Uv. intros Ai rho md b n HM Hin. minvr_dest HM.
   pose proof (minv_block_geom C Ai _ _ _ b n HM Hin) as (G0 & G1 & G2 & G3 & G4).
   pose proof (topL_range (ma_L Ai)) as TRg. unfold PGSZ, UNIT, IB in *.
   split; [exact G0|]. split; [exact G1|]. split; [lia|]. split; [lia|].

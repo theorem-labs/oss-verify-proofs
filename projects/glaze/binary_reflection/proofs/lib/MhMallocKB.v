@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the place_declined_b premise on the big mmap and grant_ok's placement conjunct; munmap's maps_subtract cut, LEDGERX_exact; the channel reader and the vDSO reservation inclusion in the malloc results; the ledger's map/reserved separation). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -61,7 +62,10 @@ Section SpecR.
       WF st' ((p, n) :: L) /\ REP st' M' /\ LEDGER st' (m_vmmaps mdl') /\ nojunk st' /\ nolimbo st' /\
       m_halted mdl' = None /\ m_vm_lazy mdl' = [] /\ m_vm_materialized mdl' = [] /\
       m_fs mdl' = m_fs mdl /\ m_fds mdl' = m_fds mdl /\
+      (* [m_channel_reader] rides with the group above; see MhUnmap.with_vmmaps_rdr. *)
+      m_channel_reader mdl' = m_channel_reader mdl /\
       vm_limit (m_vmmaps mdl') = vm_limit (m_vmmaps mdl) /\
+      incl (vdso_reserved (m_kernel mdl') (vdso_top (m_vmmaps mdl'))) (vm_reserved (m_vmmaps mdl')) /\
       (forall x, is_group st' x -> lone st' x \/ gkeep st st' x).
 
   Definition malloc_failkR (st : mst) (stk : Z) (L : list (Z * Z)) (sp : Z) (regs : bvmap 5 word) (M : mem) (mdl : Model)
@@ -74,21 +78,23 @@ Section SpecR.
       WF st' L /\ REP st' M' /\ LEDGER st' (m_vmmaps mdl') /\ nojunk st' /\ nolimbo st' /\
       m_halted mdl' = None /\ m_vm_lazy mdl' = [] /\ m_vm_materialized mdl' = [] /\
       m_fs mdl' = m_fs mdl /\ m_fds mdl' = m_fds mdl /\
+      m_channel_reader mdl' = m_channel_reader mdl /\
       vm_limit (m_vmmaps mdl') = vm_limit (m_vmmaps mdl) /\
+      incl (vdso_reserved (m_kernel mdl') (vdso_top (m_vmmaps mdl'))) (vm_reserved (m_vmmaps mdl')) /\
       (forall x, is_group st' x -> gkeep st st' x).
 
   Lemma postkR_postk : forall st stk L n sp regs M mdl rom c',
     malloc_postkR st stk L n sp regs M mdl rom c' -> malloc_postk stk L n sp regs M mdl rom c'.
   Proof using.
     intros st stk L n sp regs M mdl rom c' (regs' & M' & mdl' & p & st' & X). exists regs', M', mdl', p, st'.
-    repeat match goal with |- _ /\ _ => split; [apply (proj1 X) | apply proj2 in X] end. exact (proj1 X).
+    tauto.
   Qed.
 
   Lemma failkR_failk : forall st stk L sp regs M mdl rom c',
     malloc_failkR st stk L sp regs M mdl rom c' -> malloc_failk stk L sp regs M mdl rom c'.
   Proof using.
     intros st stk L sp regs M mdl rom c' (regs' & M' & mdl' & st' & X). exists regs', M', mdl', st'.
-    repeat match goal with |- _ /\ _ => split; [apply (proj1 X) | apply proj2 in X] end. exact (proj1 X).
+    tauto.
   Qed.
 End SpecR.
 
@@ -115,6 +121,7 @@ Section Big.
   Hypothesis Hh : m_halted mdl = None.
   Hypothesis Hlz : m_vm_lazy mdl = [].
   Hypothesis Hmat : m_vm_materialized mdl = [].
+  Hypothesis HVDSO : incl (vdso_reserved (m_kernel mdl) (vdso_top (m_vmmaps mdl))) (vm_reserved (m_vmmaps mdl)).
   Hypothesis HCR : Z.of_nat (length (s_regions st)) <= 240.
   Hypothesis HCA : s_flist st = [] -> c_avail_cnt (s_ctx st) = 0 -> Z.of_nat (length (s_areas st)) + 1 <= AREAMAX.
   Hypothesis HBUD : RSUM (s_regions st) + (n + 4116) + 2 ^ 24 <= vm_limit (m_vmmaps mdl).
@@ -237,7 +244,7 @@ Section Big.
                     (maps_subtract (vm_noaccess vm) p0 (p0 + len'))
                     (vm_start_brk vm) (vm_brk vm) (vm_limit vm) (vm_mmap_base vm) (vm_init_sp vm)).
   Proof using st.
-    intros stx p0 len' vm XWF LX Xp0 Xlen Xce XAP. destruct LX as [XLM XLN XLB XLR XLT]. ceil.
+    intros stx p0 len' vm XWF LX Xp0 Xlen Xce XAP. destruct LX as [XLM XLN XLB XLR XLT XMF]. ceil.
     constructor; cbn [vm_maps vm_noaccess vm_brk vm_start_brk vm_reserved vm_init_sp vm_limit vm_mmap_base].
     - unfold map_remove. eapply Permutation_trans. { apply perm_filter. exact XLM. }
       cbn [List.filter app fst]. rewrite bv_eqb_refl. cbn [negb].
@@ -257,6 +264,31 @@ Section Big.
     - exact XLB.
     - exact XLR.
     - exact XLT.
+    - apply Forall_forall. intros iv Hin. unfold map_remove in Hin.
+      apply filter_In in Hin. rewrite Forall_forall in XMF. exact (XMF iv (proj1 Hin)).
+  Qed.
+
+  (* the exact-cut premise [munmap_model_eq] takes at 08b1429 (munmap cuts with
+     [maps_subtract]): the big mapping is the only entry at [p0], every other ledger entry is a
+     nonempty region apart from it *)
+  Lemma LEDGERX_exact : forall (stx : mst) (p0 len' : Z) vm,
+    WF stx L -> LEDGERX stx [(Z_to_bv 64 p0, Z_to_bv 64 len')] vm ->
+    0 <= p0 -> 0 < len' -> p0 + len' <= CEIL ->
+    (forall r, In r (s_regions stx) -> p0 + len' <= rg_base r \/ rg_base r + rg_len r <= p0) ->
+    forall bb ss, In (bb, ss) (vm_maps vm) ->
+      (bb = Z_to_bv 64 p0 /\ ss = Z_to_bv 64 len')
+      \/ (0 < bv_unsigned ss
+          /\ (bv_unsigned bb + bv_unsigned ss <= bv_unsigned (Z_to_bv 64 p0)
+              \/ bv_unsigned (Z_to_bv 64 p0) + bv_unsigned (Z_to_bv 64 len') <= bv_unsigned bb)).
+  Proof using st.
+    intros stx p0 len' vm XWF LX Xp0 Xlen Xce XAP bb ss Hin. destruct LX as [XLM _ _ _ _ _]. ceil.
+    apply (Permutation_in _ XLM) in Hin. cbn [app] in Hin. destruct Hin as [E | Hin].
+    - left. injection E as <- <-. split; reflexivity.
+    - right. apply in_map_iff in Hin. destruct Hin as (r & E & Hr).
+      destruct (wr_rng stx (WF_regions stx L XWF) r Hr) as (Q1 & Q2 & Q3 & Q4 & Q5).
+      pose proof (XAP r Hr) as D. unfold HEAPLO in Q1.
+      destruct r as [rb rl rk]. cbn [region_entry rg_base rg_len] in E, Q1, Q2, Q4, D.
+      injection E as <- <-. rewrite !u_Z2bv by lia. split; lia.
   Qed.
 
   Lemma w8_zero_nth : forall j, nth j (word_to_le_bytes 8 (Z_to_bv 64 0)) (Z_to_bv 8 0) = Z_to_bv 8 0.
@@ -329,7 +361,7 @@ Section Big.
   Qed.
 
   Theorem malloc_big_kfx : kat RSEGS (mkCfg (mkst regs (0x628d0%bv : word) M rom) mdl) (kfx F bo).
-  Proof using HQF HQ DEF Hsp R4 R2 Rra R10 Hn HLL HBUD HCA HCR Hmat Hlz Hh NLB NJ HLG HREP HWF HAM HL sp n L st RN.
+  Proof using HQF HQ DEF Hsp R4 R2 Rra R10 Hn HLL HBUD HCA HCR HVDSO Hmat Hlz Hh NLB NJ HLG HREP HWF HAM HL sp n L st RN.
     pose proof Hsp as [S1 S2]. ceil; unfold BSTK in S1. pose proof Hn as [N1 N2]. unfold MMAP_THRESHOLD in N1.
     pose proof len_rng as (L1 & L2 & L3 & L4). assert (LEN : len = 4096 * ml) by reflexivity.
     pose proof (rp_statics st M HREP) as [Snl Spg Slock Scan Sgot Serr Sctz Ssc].
@@ -366,10 +398,11 @@ Section Big.
       + pose proof (M2W y Hy NE1). ceil. lia. }
     (* [comment removed for export] *)
     pose proof (proj1 (LEDGERX_nil st _) HLG) as HLX.
-    destruct (ledgerx_grant_rw st L [] mdl HWF HLX xok_nil Hlz Hmat (getr r3 10) len ltac:(lia) ltac:(cbn [length Z.of_nat]; lia)
+    destruct (ledgerx_grant_rw st L [] mdl HWF HLX xok_nil Hlz Hmat (getr r3 10) len ltac:(lia)
+                ltac:(unfold page_size; exact L4) ltac:(cbn [length Z.of_nat]; lia)
                 ltac:(rewrite XSUM_nil; lia)) as (a0 & GR0 & _).
     apply (kat_of_kfx F bo).
-    apply (as_kfx_mmap_rw F r3 (0x63d3c%bv : word) M2 rom mdl W_63ce8 (n + 20) HL Hh Hlz F_63ce8 E_63ce8 C17 C11 ltac:(lia) C12 C13 C14 C15 false bo).
+    apply (as_kfx_mmap_rw F r3 (0x63d3c%bv : word) M2 rom mdl W_63ce8 (n + 20) HL Hh Hlz F_63ce8 E_63ce8 C17 C11 ltac:(lia) C12 C13 C14 C15 ltac:(rewrite C10; apply place_declined_b_null) false bo).
     { rewrite len_eq. exists a0. exact GR0. }
     { (* [comment removed for export] *)
       unfold mmrw_fail. replace (errno_ret ENOMEM) with (Z_to_bv 64 (2 ^ 64 - 12)) by (apply bv_eq; reflexivity).
@@ -444,17 +477,18 @@ Section Big.
       split; [eapply defined_grows; [exact Gf | exact DEF]|].
       split; [apply WF_set_errno; [exact HWF | lia]|]. split; [exact REPf|]. split; [apply LEDGER_set_errno; exact HLG|].
       split; [exact NJ|]. split; [exact NLB|].
-      split; [exact Hh|]. split; [exact Hlz|]. split; [exact Hmat|]. split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].
+      split; [exact Hh|]. split; [exact Hlz|]. split; [exact Hmat|]. split; [reflexivity|]. split; [reflexivity|].
+      split; [reflexivity (* m_channel_reader: the model is [mdl] on this arm *)|]. split; [reflexivity|]. split; [exact HVDSO|].
       intros x Hx. split; [exact Hx|]. split; [reflexivity|]. split; reflexivity. }
     (* [comment removed for export] *)
     intros aw GR. apply (kfx_of_kat F HL false). unfold mmrw_grant. rewrite len_eq in GR |- *.
     replace (v_addi (0x63d3c%bv : word) 4) with (0x63d40%bv : word) by (apply bv_eq; reflexivity).
     (* [comment removed for export] *)
-    pose proof GR as GR'. unfold grant_ok in GR'. rewrite !Bool.andb_true_iff in GR'. destruct GR' as [[[[GA1 GA2] GA3] GA4] GA5].
+    pose proof GR as GR'. unfold grant_ok in GR'. rewrite !Bool.andb_true_iff in GR'. destruct GR' as [[[[[GA0 GA1] GA2] GA3] GA4] GA5].
     apply Z.eqb_eq in GA1. apply Z.ltb_lt in GA2. apply Z.leb_le in GA3. unfold page_size in GA1.
     set (p0 := bv_unsigned aw) in *.
     assert (Ea : aw = Z_to_bv 64 p0) by (symmetry; apply Z_to_bv_u_eq'; reflexivity).
-    pose proof GA4 as GA4'. rewrite (lx_res st [] _ HLX) in GA4'.
+    pose proof (ledgerx_prefix_free st [] _ _ _ HLX GA4) as GA4'.
     destruct (grant_range_hz (m_vmmaps mdl) (vm_maps (m_vmmaps mdl)) aw (Z_to_bv 64 len) (lx_top st [] _ HLX) GA4'
                 ltac:(rewrite u_Z2bv by lia; lia) ltac:(fold p0; lia) ltac:(rewrite u_Z2bv by lia; exact (proj2 (proj2 (proj2 len_rng)))) ltac:(rewrite u_Z2bv by lia; fold p0; lia)) as [HCE IMGF].
     rewrite u_Z2bv in HCE by lia. rewrite u_Z2bv in IMGF by lia. fold p0 in HCE, IMGF.
@@ -468,13 +502,16 @@ Section Big.
     pose (h1 := mkVmMapsFull (vm_reserved (m_vmmaps mdl)) ((Z_to_bv 64 p0, Z_to_bv 64 len) :: vm_maps (m_vmmaps mdl)) (vm_noaccess (m_vmmaps mdl))
                (vm_start_brk (m_vmmaps mdl)) (vm_brk (m_vmmaps mdl)) (vm_limit (m_vmmaps mdl)) (vm_mmap_base (m_vmmaps mdl)) (vm_init_sp (m_vmmaps mdl))).
     pose proof (with_vmmaps_facts h1 mdl) as MF. change (with_vmmaps h1 mdl) with mdl1 in MF. destruct MF as (MF1 & MF2 & MF3 & MF4 & MF5 & MF6).
+    pose proof (with_vmmaps_rdr h1 mdl) as MFR. change (with_vmmaps h1 mdl) with mdl1 in MFR.
     assert (HLX1 : LEDGERX st [(Z_to_bv 64 p0, Z_to_bv 64 len)] (m_vmmaps mdl1)).
-    { rewrite MF1. destruct HLG as [G1 G2 G3 G4 G5]. constructor; cbn [h1 vm_maps vm_noaccess vm_brk vm_start_brk vm_reserved vm_mmap_base vm_init_sp app].
+    { rewrite MF1. destruct HLG as [G1 G2 G3 G4 G5 G6]. constructor; cbn [h1 vm_maps vm_noaccess vm_brk vm_start_brk vm_reserved vm_mmap_base vm_init_sp app].
       - apply perm_skip. exact G1.
       - exact G2.
       - exact G3.
       - exact G4.
-      - exact G5. }
+      - exact G5.
+      - constructor; [|exact G6]. rewrite <- Ea.
+        pose proof GA4 as HF. rewrite region_free_app in HF. apply andb_true_iff in HF. exact (proj1 HF). }
     assert (M3W : forall y, 0 <= y < 2 ^ 64 -> M3 (Z_to_bv 64 y) <> M (Z_to_bv 64 y) -> (sp - 112 <= y < sp) \/ (p0 <= y < p0 + len)).
     { intros y Hy NE. unfold M3 in NE.
       destruct (decide (zfill (Z_to_bv 64 p0) (Z_to_bv 64 len) M2 (Z_to_bv 64 y) = M2 (Z_to_bv 64 y))) as [E0|NE0].
@@ -528,6 +565,7 @@ Section Big.
     { rewrite MF2. exact Hh. }
     { rewrite MF3. exact Hlz. }
     { rewrite MF4. exact Hmat. }
+    { eapply vdso_included_same; [reflexivity|reflexivity|reflexivity|reflexivity|exact HVDSO]. }
     { exact HCA. }
     { cbn [length Z.of_nat Pos.of_succ_nat]. change (s_regions st5) with (s_regions st). lia. }
     { rewrite MF1. cbn [h1 vm_limit]. change (s_regions st5) with (s_regions st). rewrite XSUM_one by (ceil; lia). lia. }
@@ -540,7 +578,7 @@ Section Big.
     2: { (* [comment removed for export] *)
       intros c' PF. apply (kf_of_kat F HL).
       (* [comment removed for export] *)
-      destruct PF as (st6 & M6 & mdl6 & r6 & -> & WF6 & REP6 & LG6 & Hh6 & Hlz6 & Hmat6 & Hfs6 & Hfds6 & Hvl6 &
+      destruct PF as (st6 & M6 & mdl6 & r6 & -> & WF6 & REP6 & LG6 & Hh6 & Hlz6 & Hmat6 & Hfs6 & Hfds6 & Hrdr6 & Hvdso6 & Hvl6 &
                       Elim & Efl & Ear & Emeta & Eerr & KEEP & REG & F10 & F2 & K6 & M6W & DEF6).
       destruct KEEP as (Egrp & Eslot & Ealist & Eai & Ekind & Ecan & Eact & Eus & Ebn & Euq & Esq & Ectr & Esec & Emg & Elm6 & MU6).
       destruct REG as (RS6 & RL6 & RX6).
@@ -592,11 +630,14 @@ Section Big.
       apply (kat_ecall_munmap_ru r8 (0x63ea8%bv : word) M8 rom mdl6 W_63e54 (Z_to_bv 64 p0) (n + 20) len (Kf F) F_63e54 E_63e54 Hh6 Hlz6 H17 H10
                ltac:(rewrite u_Z2bv by lia; exact (proj1 HP0)) H11 ltac:(lia) len_eq ltac:(rewrite u_Z2bv by lia; lia) (map_has_In _ _ _ INX)).
       replace (v_addi (0x63ea8%bv : word) 4) with (0x63eac%bv : word) by (apply bv_eq; reflexivity).
-      rewrite (munmap_model_eq (Z_to_bv 64 p0) (Z_to_bv 64 len) mdl6 Hlz6 Hmat6).
+      rewrite (munmap_model_eq (Z_to_bv 64 p0) (Z_to_bv 64 len) mdl6 Hlz6 Hmat6
+                 ltac:(rewrite u_Z2bv by lia; lia)
+                 (LEDGERX_exact st6 p0 len (m_vmmaps mdl6) WF6 LG6 ltac:(lia) ltac:(lia) ltac:(lia) AP6)).
       set (h9 := mkVmMapsFull (vm_reserved (m_vmmaps mdl6)) (map_remove (vm_maps (m_vmmaps mdl6)) (Z_to_bv 64 p0))
                   (maps_subtract (vm_noaccess (m_vmmaps mdl6)) (bv_unsigned (Z_to_bv 64 p0)) (bv_unsigned (Z_to_bv 64 p0) + bv_unsigned (Z_to_bv 64 len)))
                   (vm_start_brk (m_vmmaps mdl6)) (vm_brk (m_vmmaps mdl6)) (vm_limit (m_vmmaps mdl6)) (vm_mmap_base (m_vmmaps mdl6)) (vm_init_sp (m_vmmaps mdl6))).
       pose proof (with_vmmaps_facts h9 mdl6) as MF9. destruct MF9 as (MF91 & MF92 & MF93 & MF94 & MF95 & MF96).
+      pose proof (with_vmmaps_rdr h9 mdl6) as MF9R.
       set (mdl9 := with_vmmaps h9 mdl6) in *.
       set (M9 := unfill (Z_to_bv 64 p0) (Z_to_bv 64 len) M8).
       assert (M9out : forall y, 0 <= y < 2 ^ 64 -> ~ (p0 <= y < p0 + len) -> M9 (Z_to_bv 64 y) = M8 (Z_to_bv 64 y)).
@@ -689,11 +730,13 @@ Section Big.
       split; [unfold nolimbo; rewrite Elim; exact NLB|].
       split; [rewrite MF92; exact Hh6|]. split; [rewrite MF93; exact Hlz6|]. split; [rewrite MF94; exact Hmat6|].
       split; [rewrite MF95, Hfs6; exact MF5|]. split; [rewrite MF96, Hfds6; exact MF6|].
+      split; [rewrite MF9R, Hrdr6; exact MFR|].
       split; [rewrite MF91; unfold h9; cbn [vm_limit]; rewrite Hvl6, MF1; reflexivity|].
+      split; [eapply vdso_included_same; [reflexivity|reflexivity|reflexivity|reflexivity|exact Hvdso6]|].
       intros x Hx. assert (Gx : is_group st x) by (unfold is_group in Hx |- *; rewrite Egrp in Hx; exact Hx).
       split; [exact Gx|]. split; [rewrite Ekind; reflexivity|]. split; [unfold g_W; rewrite Emeta; reflexivity|]. rewrite Eslot; reflexivity. }
     intros c' POST. apply (kfx_of_kat F HL false).
-    destruct POST as (st6 & M6 & mdl6 & r6 & mm & -> & WF6 & REP6 & LG6 & Hh6 & Hlz6 & Hmat6 & Hfs6 & Hfds6 & Hvl6 &
+    destruct POST as (st6 & M6 & mdl6 & r6 & mm & -> & WF6 & REP6 & LG6 & Hh6 & Hlz6 & Hmat6 & Hfs6 & Hfds6 & Hrdr6 & Hvdso6 & Hvl6 &
                       Elim & Um & Zm & NLm6 & Efl & Eerr & KEEP & REG & F10 & F2 & K6 & M6W & DEF6).
     destruct KEEP as (Egrp & Eslot & Ealist & Eai & Ekind & Ecan & Eact & Eus & Ebn & Euq & Esq & Ectr & Esec & Emeta & Elm6 & MU6).
     destruct REG as (RS6 & RL6 & RX6).
@@ -947,7 +990,9 @@ Section Big.
       unfold zremove. cbn. rewrite Z.eqb_refl. reflexivity. }
     split; [exact Hh6|]. split; [exact Hlz6|]. split; [exact Hmat6|].
     split; [rewrite Hfs6; exact MF5|]. split; [rewrite Hfds6; exact MF6|].
+    split; [rewrite Hrdr6; exact MFR|].
     split; [rewrite Hvl6, MF1; reflexivity|].
+    split; [exact Hvdso6|].
     (* [comment removed for export] *)
     intros x Hx. unfold is_group in Hx. cbn [s_groups st8 MhEnfr.st' set_slot] in Hx.
     change (In x (s_groups st7)) with (is_group st7 x) in Hx.

@@ -23,12 +23,13 @@
    achain_chain_pre of it. joined's new premises at its call: len's 8 bytes present (the journal's window), and
    (pass 5b) the stack from len - 16 present, from the statement's astack_pres kept by astack_pres_journal. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 455 of its 515 lines of code are new or changed and 4993 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image A (fuzz_segconf.asan): the cut ZST of segment A11a of reac_segconf_parse_file's walk,
    `a11a_zst_ok : forall n, HA_MISS B n -> A11_HIT_stmt B n -> forall li, A11_ZST_stmt B n li`
    (statements: lib/A/Prog/pf_a11a_k.v and lib/A/Prog/pf_pieces.v). Part of segment A11a's proof (the cut ZST), by the G3 walk owner,
    2026-10-30. proves no function (kind: segment lemma of reac_segconf_parse_file's image-A walk -- A11a's NUL
    store, by_token call and miss arm); the whole function's rule-24 lookup and CONFIRM (the G3 walk owner's) are in
-   the unit's internal record, commit dfb49d6ad789, path records/segp/g3-lookup.md.
+   the unit's internal record, path records/segp/g3-lookup.md.
 
    The code (the excerpt reac_segconf_parse_file.fuzz_segconf.asan.s:683-691 in records/segp/dis/ at that commit),
    9 instructions, 0x8851c .. 0x8853c (and the

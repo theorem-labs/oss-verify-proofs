@@ -6,24 +6,25 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P5.v, with its module paths, module names and addresses changed; 1348 of its 1450 lines of code are new or changed and 1100 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/A1.v, with its module paths and module names changed; 631 of its 720 lines of code are new or changed and 1361 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSstrlen.v, with its module paths, module names, addresses and numbers changed; 123 of its 239 lines of code are new or changed and 604 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs.asan's memchr interceptor (PC_memchr 0x4266c), its runtime contract in S0's ARU form: amemchr_realizesU.
    rule 24: no function proved. This file composes existing pieces:
-   - the Bz body walk: a working branch 840c4afa7e2 lib/A/Bz/A/I_memchrw.v imemchr_spec (from
+   - the Bz body walk: a working branch lib/A/Bz/A/I_memchrw.v imemchr_spec (from
      __interceptor_memchr 0x43e30 to the return), with its section hypotheses RIP = R_isPoisoned.rip_proof and
      MCH = FSsl.mch_proof (the plain memchr 0x98924 through REAL(memchr));
    - the bridge and the transport: lib/A/FSstrlen.v (a Theorem Labs lane's FMbz_bridge.v / FMbz_str.v, a Theorem Labs lane MemNorm /
      RegisterBridge; post_of_walk, walk_cells, chk_norm, stk_norm_high);
-   - the statements: S0 a working branch 71efad42f00 lib/A/FSH_Gen.v amemchr_realizesU (with
+   - the statements: S0 a working branch lib/A/FSH_Gen.v amemchr_realizesU (with
      `amem_range x (n + 8)`) / amemchr_realizes_of_U.
    The trampoline __wrap_memchr 0x4266c is one `j 0x43e30` (one step, tramp_memchr).
    The window lies below the walk's stack frame by one lemma, zbuf_off_frame (the statement's `x + n <= alloc_ceiling`
    and layout_ok's ASAN_CEIL <= ly_stk_lo).
    Named premises beyond AR_laws / TfibSyms: FSH_Base.FsShadowSyms B and FSstrlen.FsRtCells B (see FSstrlen.v).
    Theorem Labs TEXTS (a Theorem Labs lane 2026-10-29 00:19Z): memchr has TWO runtime-contract texts, kept on purpose. This file proves fs's
-   U form (poisoned heads allowed, U <> []). The image-neutral M form is disco's: a working branch 67a52884e5d
+   U form (poisoned heads allowed, U <> []). The image-neutral M form is disco's: a working branch
    proofs/libreac/fuzz_disco/lib/Rt/MemchrDef.v:37 amemchr_realizesM lo hi pc (U = [] only; read-only bytes by consts_view lo hi; the whole window
    [x, x + n) addressable, where fs states the prefix up to the first match).
-   The free bridge from fs's U form to the U = [] case: S0 a working branch 77f52bf41b8 lib/A/FSupoison.v:37
+   The free bridge from fs's U form to the U = [] case: S0 a working branch lib/A/FSupoison.v:37
    unpoison_nil, :39 ARU_nil, lib/A/FSH_Gen.v:258 ecall_preU_k_nil, :419 rt_post_ro_of_U, giving amemchr_realizes_of_U (FSH_Gen.v:491).
    The two texts are not derived from each other; revisit only if a third unit needs the poisoned form. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.

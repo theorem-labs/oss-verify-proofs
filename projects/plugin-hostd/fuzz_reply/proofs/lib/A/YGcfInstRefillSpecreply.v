@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstRefillSpeccgif.v (commit f01d79f3fb5, cf refill round 3; file sha256 03717aa9575f) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstRefillSpeccgif.v (cf refill round 3; file sha256 03717aa9575f) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane for a Theorem Labs lane, lane refill-b2): the cf layer's REFILL CONTRACT at cgif's image.
    refill_spec_core_cf_cgif: MnRefillSeamcf.refill_spec_core_cf_of_cases applied to the three entry cases at cgif:
    - B3 (inited, few free chunks): CfW's MnRefillB3Topcf.refill_B3_entry_cf_of_parts;

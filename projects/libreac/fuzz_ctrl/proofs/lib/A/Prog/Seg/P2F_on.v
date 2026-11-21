@@ -5,11 +5,12 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths and module names changed; 371 of its 396 lines of code are new or changed and 3828 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v; 134 of its 423 lines of code are new or changed and 107 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2F.v; 35 of its 89 lines of code are new or changed and 369 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/Prog/Seg/P2F_on.v -- route (C) twin of Seg/P2F.v's footprint run of segment P2 (0x81b10 -> 0x81b14).
    Written by a Theorem Labs lane (piece W3a: P1, P1_70, P2, P4), with a Theorem Labs lane's 12:55Z consent for a
    `<S>F_on` twin of a run no other lane owns (P2F is in nobody's STARTED list).  Seg/P2F.v is UNCHANGED
-   (blob 75f692c4dba, the file of record, on a working branch and on a Theorem Labs lane's fold a working branch
-   4bae33fdf54; its rng table Seg/P2F.rng.tsv (a working note, not in this delivery) 672ea605af0 is unchanged too).
+   (blob 75f692c4dba, the file of record, on a working branch and on a Theorem Labs lane's fold a working branch;
+   its rng table Seg/P2F.rng.tsv (a working note, not in this delivery) 672ea605af0 is unchanged too).
    rule 24: no function proved (a re-stated run of a transcribed segment).
 
    WHY.  a Theorem Labs lane's truth audit found the full-shadow `ctl_rt` FALSE at an AR state, so route (C) narrows the walk's

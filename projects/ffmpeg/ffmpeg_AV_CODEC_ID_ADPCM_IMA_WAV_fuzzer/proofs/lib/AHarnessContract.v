@@ -242,8 +242,8 @@ Proof. intros a Ha Hh. apply in_hw_iff in Hh. unfold errno_addr in Ha. cbn in Ha
 Lemma hw_not_env : forall a, env_addr a -> ~ in_hw a.
 Proof.
   intros a Ha Hh. apply in_hw_iff in Hh. unfold env_addr in Ha.
-  cbv [sk_ofl_head sk_threaded sk_ofl_lock sk_path_addr sk_mode_addr sk_trailer_addr sk_rwa_addr sk_highs_addr sk_ones_addr src0_sink src0_sink_head src0_D_ofl_head src0_D_ofl_lock src0_D_libc
-    src0_D_str_tmp_out_gif src0_D_str_wb src0_D_str_3 src0_D_str_rwa src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha. lia.
+  cbv [sk_ofl_head sk_threaded sk_ofl_lock sk_file sk_highs_addr sk_ones_addr src0_sink src0_sink_head src0_D_ofl_head src0_D_ofl_lock src0_D_libc
+    src0_D_const_HIGHS_0x8080808080808080 src0_D_const_ONES_0x0101010101010100] in Ha. lia.
 Qed.
 
 Lemma ah_post : forall L A regs mem md p n pl b regs' mem',

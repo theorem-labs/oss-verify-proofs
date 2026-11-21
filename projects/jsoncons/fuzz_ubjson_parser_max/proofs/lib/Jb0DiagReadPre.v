@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: tightens the pointer bound hypothesis Hp from p + n + 1 + 16 to p + n + 1 + 9 below 2^47 and widens the derived range assertion Pr's upper limit to 140737488355318 accordingly; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Bo0DiagReadPre.v, lines 36, 176. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp.bitvector Require Import definitions.
@@ -31,7 +32,7 @@ Hypothesis Hal : S mod 16 = 0.
 Hypothesis HW : L5.writable RSEGS M (S - 5440) 5440.
 Hypothesis HD : L5.defined M (S - 5440) 5440.
 Hypothesis HIMG : L5.img_clear M 65536 1269760.
-Hypothesis Hp : S <= p /\ p + n + 1 + 16 <= 2 ^ 47.
+Hypothesis Hp : S <= p /\ p + n + 1 + 9 <= 2 ^ 47.
 Hypothesis Hn : n = 1.
 Hypothesis HSTR : cstr M p bs t8.
 Hypothesis HSH : forall x : word, SB + p / 8 - 7 <= bv_unsigned x < Z.min (SB + (p + n) / 8 + 8) (SB + 2 ^ 44) -> M x = Some (Z_to_bv 8 0).
@@ -169,7 +170,7 @@ Proof.
 pose proof HC as (C1 & C2 & C3 & C4 & C5 & C6 & C7 & F1 & F2 & F3 & F4 & F5 & F6 & F7 & F8 & FW).
 pose proof (u64_of_zeros M 2147466776 (L5KA.zeros_at_sub M 2147466776 16 2147466776 8 HFMT ltac:(lia) ltac:(lia)) ltac:(lia) ltac:(lia)) as HFMT64.
 pose proof (u64_of_zeros M 2147466776 (L5KA.zeros_at_sub M 2147466776 16 2147466776 8 HFMT ltac:(lia) ltac:(lia)) ltac:(lia) ltac:(lia)) as HFMT64b.
-assert (Pr : 140735332552704 <= p <= 140737488355311) by lia.
+assert (Pr : 140735332552704 <= p <= 140737488355318) by lia.
 assert (Nr : 0 <= n <= 131071) by lia.
 cfeed P (drA_conc fx R M (fun j => match j with 2%nat => S | 33%nat => p | 34%nat => n | _ => 0 end)) ltac:(first [apply UR | apply U_to | scc | (rkb K2; sc) | shz]).
 dk_open P as fx1 R1 M1 MG1 FR1 FZ1 MS1 KS1.

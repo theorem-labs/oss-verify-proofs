@@ -48,7 +48,7 @@ Definition cawb_cs : list YP09.chunk :=
    YP09.mkChunk 16 (CVal 8 (SOff 34 0)); YP09.mkChunk 24 (CVal 8 (SOff 35 0));
    YP09.mkChunk 32 (CVal 8 (SOff 36 0)); YP09.mkChunk 40 (CVal 8 (SOff 37 0))].
 (* ---- the hand-over state at 0x8197c (`jal __wrap_free` of six), the one every arm of the walk reaches: FSW_caw_accept.v's
-   caa_xss (a working branch fdddc0ed0f9), copied verbatim, so the two are convertible.
+   caa_xss (a working branch), copied verbatim, so the two are convertible.
    NOTE atom 2 is the ENTRY sp: the frame region caw_stk is based at atom 2 with its chunks at -48 .. -8, while the
    machine sp is SOff 2 (-48) = entry sp - 48. So the epilogue's `ld ra, 0x28(sp)` reads entry sp - 48 + 40 =
    entry sp - 8, caw_stk's last chunk (atom 1, the entry ra). Atoms 0 .. 30 are the entry registers (the front's

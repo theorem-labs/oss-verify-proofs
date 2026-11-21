@@ -1,7 +1,8 @@
-(* copied from proofs/cgif/cgif_file_fuzzer/lib/DGif0.v @ 95e6f1d72b6 (c-asan, frozen), module paths changed only. *)
+(* copied from proofs/cgif/cgif_file_fuzzer/lib/DGif0.v (c-asan, frozen), module paths changed only. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The interface between the frame-generic walk of Allocator::Deallocate (the DG* files) and an allocator model.
 
    DeallocG.adealloc_realizes is stated over an opaque allocator relation [ARX inst ly S W mem md], an owned set

@@ -34,17 +34,23 @@ Import ListNotations.
     [hwcap_rv64gc]), so they satisfy the declared predicates too. *)
 Lemma demo_input_rv64gc : valid_input_hwcap_rv64gc demo_proc_input.
 Proof.
-  destruct demo_input_valid as (a & b & c & k & d & e & f & _ & h & v & u).
+  destruct demo_input_valid as (a & b & c & k & d & e & f & s & _ & u).
   exact (conj a (conj b (conj c (conj k (conj d (conj e (conj f
-    (conj eq_refl (conj h (conj v u)))))))))).
+    (conj s (conj eq_refl u))))))))).
 Qed.
 
 Lemma abrt_input_rv64gc : valid_input_abort_hwcap_rv64gc abrt_input.
 Proof.
-  destruct abrt_input_valid as (a & b & c & k & d & e & f & _ & h & v & u).
+  destruct abrt_input_valid as (a & b & c & k & d & e & f & s & _ & u).
   exact (conj a (conj b (conj c (conj k (conj d (conj e (conj f
-    (conj eq_refl (conj h (conj v u)))))))))).
+    (conj s (conj eq_refl u))))))))).
 Qed.
+
+(** lps's launch places the stack by the input
+    ([Checks.Examples.demo_entry_of]), so each input below is entered at its
+    own entry: [demo_entry] for the demo input, [abrt_entry] for the abort
+    input, and [fin_entry] for the finite-input witness. *)
+Abbreviation fin_entry := (demo_entry_of (to_proc_input inhabited_fin_input)).
 
 Lemma ebreak_never_refused_cfg : forall cfg lim,
   ~ run_scfg_budget_refused cfg ebreak_image lim demo_entry demo_proc_input.
@@ -56,27 +62,30 @@ Proof.
 Qed.
 
 (** The unconfigured run under the abort declaration errors too:
-    [ebreak_errors] at lps's abort input. *)
+    [ebreak_errors] at lps's abort input and its entry. *)
 Lemma ebreak_errors_abort : forall lim,
-  bh_errors (run ebreak_image lim demo_entry abrt_input).
+  bh_errors (run ebreak_image lim abrt_entry abrt_input).
 Proof.
-  intros lim. cbn [run ebreak_image demo_entry bh_errors]. rewrite ebreak_config_abort.
-  exists [], (mkCfg ebreak_ms (ebreak_model_abort lim)), []. split; [apply star_refl |].
+  intros lim. unfold run, ebreak_image.
+  rewrite (entry_eta abrt_entry). cbn beta iota zeta delta [bh_errors].
+  rewrite ebreak_config_abort.
+  exists [], (mkCfg ebreak_ms_abort (ebreak_model_abort lim)), []. split; [apply star_refl |].
   apply sstep_instr_fault; [reflexivity | reflexivity |].
-  no_lazy. rewrite ebreak_faults. reflexivity.
+  no_lazy. rewrite ebreak_faults_abort. reflexivity.
 Qed.
 
 (** ... and so does every configured run at lps's finite-input witness
     ([Premises.inhabited_fin_input_valid]), which the bound and classifier
     shapes quantify over. *)
 Lemma ebreak_errors_fin : forall cfg lim,
-  bh_errors (run_scfg cfg ebreak_image lim demo_entry (to_proc_input inhabited_fin_input)).
+  bh_errors (run_scfg cfg ebreak_image lim fin_entry (to_proc_input inhabited_fin_input)).
 Proof.
-  intros cfg lim. cbn [run_scfg ebreak_image demo_entry bh_errors].
+  intros cfg lim. unfold run_scfg, ebreak_image.
+  rewrite (entry_eta fin_entry). cbn beta iota zeta delta [bh_errors].
   match goal with |- reaches_error_cfg _ _ ?c => exists [], c, [] end.
   split; [apply star_cfg_refl |]. unfold init_config.
   apply sstep_cfg_instr_fault; [reflexivity | reflexivity |].
-  no_lazy. vm_compute. reflexivity.
+  no_lazy. unfold run_segments. vm_compute. reflexivity.
 Qed.
 
 (** The two builds disagree on that input, under any environment. *)
@@ -84,7 +93,7 @@ Lemma ebreak_exit0_disagree_fin : forall env,
   ~ good_input_s env ebreak_image exit0_image (to_proc_input inhabited_fin_input).
 Proof.
   intros env Hg. pose proof inhabited_fin_input_valid as Hf.
-  destruct (Hg demo_entry demo_entry (demo_entry_valid_ebreak _ Hf) (demo_entry_valid_exit0 _ Hf))
+  destruct (Hg fin_entry fin_entry (demo_entry_valid_ebreak _ Hf) (demo_entry_valid_exit0 _ Hf))
     as (Hef & _).
   exact (Hef (ebreak_errors_fin env source_alloc_limit)).
 Qed.
@@ -158,7 +167,7 @@ Theorem ebreak_refutes_agrees_abort_modelled_rv64gc : forall lp ls,
   ~ agrees_abort_modelled_rv64gc lp ls ebreak_image exit0_image.
 Proof.
   intros lp ls H.
-  destruct (H demo_entry demo_entry abrt_input
+  destruct (H abrt_entry abrt_entry abrt_input
               (demo_entry_valid_ebreak_abort _ abrt_input_valid)
               (demo_entry_valid_exit0_abort _ abrt_input_valid)
               abrt_input_rv64gc (ebreak_source_within_budget_abort lp)) as ((Hef & _) & _).
@@ -209,14 +218,17 @@ Qed.
     on no input is believed true, not proved here. *)
 Lemma exit0_accepts_fin :
   must_exit_with_scfg forced_only_cfg verdict_accept exit0_image classifier_alloc_limit
-    demo_entry (to_proc_input inhabited_fin_input).
-Proof. exact (exit0_must_exit_at_cfg _ _ _ _ _ _ _). Qed.
+    fin_entry (to_proc_input inhabited_fin_input).
+Proof.
+  unfold must_exit_with_scfg, exit0_image. rewrite (entry_eta fin_entry).
+  cbn beta iota zeta. apply exit0_must_exit_at_cfg.
+Qed.
 
 Theorem asan_refutes_classifies : forall env,
   ~ classifies env ebreak_image exit0_image exit0_image.
 Proof.
   intros env H. pose proof inhabited_fin_input_valid as Hf.
-  destruct (H inhabited_fin_input Hf demo_entry (demo_entry_valid_exit0 _ Hf))
+  destruct (H inhabited_fin_input Hf fin_entry (demo_entry_valid_exit0 _ Hf))
     as ((Hacc & _) & _).
   exact (ebreak_exit0_disagree_fin env (Hacc exit0_accepts_fin)).
 Qed.
@@ -225,7 +237,7 @@ Theorem asan_refutes_classifies_rv64gc : forall env,
   ~ classifies_rv64gc env ebreak_image exit0_image exit0_image.
 Proof.
   intros env H. pose proof inhabited_fin_input_valid as Hf.
-  destruct (H inhabited_fin_input Hf inhabited_fin_input_rv64gc demo_entry
+  destruct (H inhabited_fin_input Hf inhabited_fin_input_rv64gc fin_entry
               (demo_entry_valid_exit0 _ Hf)) as ((Hacc & _) & _).
   exact (ebreak_exit0_disagree_fin env (Hacc exit0_accepts_fin)).
 Qed.

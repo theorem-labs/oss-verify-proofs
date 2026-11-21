@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YB1i.v (origin/ossv/recipes c8557374ad2e) for libreac/fuzz_knock: module paths changed; tfib_popfree_head re-derived in fuzz_knock's asan-ubsan image (sha256 f834165f5002...) as SizeClassAllocator64<AP64>::PopulateFreeArray + 0x1bc = 0x35e88, the loop head whose eight words equal PW0..PW7 (objdump). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YB1i.v (theorem-labs/oss-verify-proofs@6b32741d849a) for libreac/fuzz_knock: module paths changed; tfib_popfree_head re-derived in fuzz_knock's asan-ubsan image (sha256 f834165f5002...) as SizeClassAllocator64<AP64>::PopulateFreeArray + 0x1bc = 0x35e88, the loop head whose eight words equal PW0..PW7 (objdump). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

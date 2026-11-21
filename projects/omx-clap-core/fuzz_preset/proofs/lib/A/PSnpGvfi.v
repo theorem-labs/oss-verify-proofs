@@ -7,7 +7,7 @@
    the epilogue and ret as in tfib_vprintf_icpt_E; the inline printf_common run is replaced by a kcall of the
    printf_common contract (apcommon_realizesU), musl vfprintf by a kcall of avfp_realizes; the vprintf entry part
    (tfib_vprintf_icpt_A) is not used; stated as FMsnprintfGI's avfpi_realizes over FMsnprintfI's snk_frame. *)
-(* Modified by Theorem Labs, 2026-10: the image-bearing half of origin/cold/port-fm-rtprintf-param 7e395de08f5
+(* Modified by Theorem Labs, 2026-10: the image-bearing half of
    proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfGvfi.v for the snprintf chain restated over ARx (route (a),
    c-omx-hpreset 10:51Z), re-pinned at preset image A (fuzz_preset.asan d83eb25d; symbols from its unstripped twin
    f0d2e8d4): only vfi_rodata / vfi_rodata_chk (:36-39), the items of the four roots' closure that carry image
@@ -20,7 +20,8 @@
      __sanitizer::common_flags_dont_use + 0x54         0x1338fc   0x13c43c (check_printf; .bss, value 1 at run time)
      __interception::real_vfprintf + 0                 0x9b740    0xa3848
      vfprintf + 0 (value)                              0x8ede0    0x950a0 *)
-(* Modified by Theorem Labs, 2026-10: moved to the #102 pins, image A' (fuzz_preset.asan 1be0f53d, unstripped bff8519b), from the old-pin donor origin/cold/c-libc-stdio-presetsnp-vfp ac1750cac8be: every code numeral by symbol + offset by c-asan's alreloc of record (frame/alreloc.py.frozen-c4338d099cfb8025, --src omx-clap-core/fuzz_preset --src-pin d83eb25d --assume-source; the chain's code is equal old -> #102); kept as written: the IImg record keys (fm addresses), the instruction words and the segment sizes; audited by port_addr_check 0767e70e074a (only the record keys flag). Per-numeral table: c-libc-stdio scratch/p102/reloc/A/PSnpGvfi.v.reloc.tsv. Comment numerals are as written (sentences above that name preset A's addresses describe the old pin). *)
+(* Modified by Theorem Labs, 2026-10: moved to the #102 pins, image A' (fuzz_preset.asan 1be0f53d, unstripped bff8519b), from the old-pin donor: every code numeral by symbol + offset by c-asan's alreloc of record (frame/alreloc.py.frozen-c4338d099cfb8025, --src omx-clap-core/fuzz_preset --src-pin d83eb25d --assume-source; the chain's code is equal old -> #102); kept as written: the IImg record keys (fm addresses), the instruction words and the segment sizes; audited by port_addr_check 0767e70e074a (only the record keys flag). Per-numeral table: c-libc-stdio scratch/p102/reloc/A/PSnpGvfi.v.reloc.tsv. Comment numerals are as written (sentences above that name preset A's addresses describe the old pin). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

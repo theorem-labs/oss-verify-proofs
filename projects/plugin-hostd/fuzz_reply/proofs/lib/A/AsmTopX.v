@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane B2, ASM rows; integrator ReallocPrimary).
    rule 24: no function proved here (instance discharge): this file takes the fs_iface-form contracts of
-   __asan_stack_malloc_0 (lib/A/RT_asan_stack_malloc_0_x.v, a Theorem Labs lane, at commit 6b4f6082575) and
+   __asan_stack_malloc_0 (lib/A/RT_asan_stack_malloc_0_x.v, a Theorem Labs lane) and
    __asan_stack_malloc_1 (lib/A/RT_asan_stack_malloc_1_x.v, lane B2) to fuzz_reply's top relation.
    Reuse search for the two functions: `proof-index __asan_stack_malloc_0 __asan_stack_malloc_1`
    exit 0, the frame note LOOKUP-ASM-stackmalloc.txt (sha256 531e6f2a43ce; internal record); rule-24 check
@@ -11,7 +12,7 @@
    The rows ASM0 / ASM1 (TOPX-HYPS.md (sha256 47b88854dcb3; internal record) table, rows ASM0 and ASM1) ask for
    `astack_malloc_pres_x segs TfibB ARX cid` at top_x's relation
      ARX := fun ly S Hp W mem md => ARcf (cp := CfParams_reply) segs TfibB ly S Hp W mem md /\ Hp = []
-   (lib/A/W_LLVMFuzzerTestOneInput_top_x.v:87-88; segs = pa_segs PB_fr = tfibsegs by reflexivity, Rt/Bcmp.v:44).
+   (lib/A/W_LLVMFuzzerTestOneInput_top_x.v:88-89; segs = pa_segs PB_fr = tfibsegs by reflexivity, Rt/Bcmp.v:45).
    The class walks are proved for ANY relation with FCiface.fs_iface; FCifaceCf.fs_iface_ARcf gives it for ARcf
    from AR_laws_cf, and YG0lawscf.AR_laws_ok_cf discharges AR_laws_cf unconditionally.  The one step this file adds
    is the Hp = [] conjunct ([fs_iface_and_hp]): every field of fs_iface is either a projection of the relation (read
@@ -94,8 +95,8 @@ unfold ARX_asm0. apply fs_iface_and_hp.
 exact (FCC.fs_iface_ARcf (cp := CfParams_reply) tfibsegs TfibB (AR_laws_ok_cf (cp := CfParams_reply) tfibsegs TfibB)).
 Qed.
 
-(* ---- QMm W1 (image A by a Theorem Labs lane, 2026-10-31; token for token a Theorem Labs lane's image-B text, B/AsmTopX.v at
-   80b0ca840db6, with CfImg_B -> CfImg_A and ReplyRelroGeoB.relro_seg_reply_B -> ReplyRelroGeoA.relro_seg_reply_A):
+(* ---- QMm W1 (image A by a Theorem Labs lane, 2026-10-31; token for token a Theorem Labs lane's image-B text, B/AsmTopX.v,
+   with CfImg_B -> CfImg_A and ReplyRelroGeoB.relro_seg_reply_B -> ReplyRelroGeoA.relro_seg_reply_A):
    top_x's ARX gains the read-only bytes arodata_ok_cf as its last conjunct. fs_iface's malloc / frame laws keep only
    OWNED views, so that conjunct does not ride through fs_iface; it comes from astack_malloc_pres_x's own post instead
    (A/W_frame_x.v astack_malloc_pres_x: W' = W, and every byte owned neither before nor after and off the call's stack

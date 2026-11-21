@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: SEG_PRO of the ASan+UBSan walk of fuzz_reply's LLVMFuzzerTestOneInput (image B,
    fuzz_reply.asan-ubsan) OVER ARx (a Theorem Labs lane's route (b)): the ARx conversion of lib/B/W_LLVMFuzzerTestOneInput_pro.v's
-   lf_seg_pro (a Theorem Labs lane's, Qed at a working branch 4bd2015c065, LS_pro at the proposed fr_LS_pro text),
+   lf_seg_pro (a Theorem Labs lane's, Qed at a working branch, LS_pro at the proposed fr_LS_pro text),
    stated as B cut_x Section w's hypothesis SEG_PRO.  Neither _pro.v nor cut_x is edited.  The template is image A's
    lib/A/W_LLVMFuzzerTestOneInput_pro_x.v (SmallX); every conversion step below is that file's.
    - The Section header is B cut_x's Section w header (B .. RINV, with PST / ARx / hl / LAWS / HP0 / HG / LSx).
@@ -10,16 +11,16 @@
      W_op_add.oa_spec_g_x; ERRL at cut_x's errno_law_x; ASM1 / FFL at W_frame_x's astack_malloc_pres_x
      / frame_flag_lawP_x; GSHV over ARx; HFP_pro, LS_pro_oa, RI_pro, LS_pro with lf_base -> lf_base_x at the entry's
      ghost list Hp (bound after cx) and LS -> LSx, the rest of their text verbatim; LS_pro at B top_x's text
-     (W_LLVMFuzzerTestOneInput_top_x.v:326, the room round's: xcnt_ok and HFH0 inside its existential).
-   - KF-COUNT F2 (A f937a8adaa8, B top_x e1c3324bb6d): LS_pro_oa and LS_pro take mo_le MT (c_S cx) S2 0, which the
-     seat gives from MO_FR (B top_x's text, W_LLVMFuzzerTestOneInput_top_x.v:287): the seat's set_fs costs nothing.
-   - OA is op_add's contract at the kit's form at the room record RP: a Theorem Labs lane's room-form lib/B/W_op_add.v:2896
-     oa_spec_g_x .. RP (24341ca6749).
-   - The room round (A 7c2c4577649): Variable RP, RP_NP, NPF and LS_cnt; NP is carried from the entry through the
+     (W_LLVMFuzzerTestOneInput_top_x.v:327, the room round's: xcnt_ok and HFH0 inside its existential).
+   - KF-COUNT F2 (A, B top_x): LS_pro_oa and LS_pro take mo_le MT (c_S cx) S2 0, which the
+     seat gives from MO_FR (B top_x's text, W_LLVMFuzzerTestOneInput_top_x.v:288): the seat's set_fs costs nothing.
+   - OA is op_add's contract at the kit's form at the room record RP: a Theorem Labs lane's room-form lib/B/W_op_add.v:2897
+     oa_spec_g_x .. RP.
+   - The room round (A): Variable RP, RP_NP, NPF and LS_cnt; NP is carried from the entry through the
      seat (NPF) into op_add and from op_add's rp_RM post (RP_NP) to the first cut; prx_cells reads the pre's XCNT.
    - ML and SMP (cgif's model_laws / stack_malloc_progressP) are not hypotheses here: the generic stack_malloc seat
      W_frame_x.aj_stack_malloc_pres_at_x takes in their place its Section fsp hypotheses OWNLOW, WFx / WFL and
-     SMALLOC, stated here in B's W_frame_x.v:744-755 text.
+     SMALLOC, stated here in B's W_frame_x.v:745-756 text.
    - OWED (kit has no twin): BLKN, add_x's text (AR's al_blocks has 0 <= n, AR_laws_x's alx_blocks does not).
      Forced by the generic placement, add_x's text: HPST (the image is off PST; at the instance's PST := [] it holds
      trivially), which the ROM-view lemma W_journal_x.ajournal_gx_rom_view_x and the journal's image clause ask.
@@ -326,7 +327,7 @@ End kit_x.
 #[local] Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
 Section prx.
-(* ---- B cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:200-244) ---- *)
+(* ---- B cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:201-245) ---- *)
 Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 #[local] Notation segs := (@pa_segs _ fr_prog_listing PB_fr).
 #[local] Notation VAL := (@pa_val _ fr_prog_listing PB_fr).
@@ -351,7 +352,7 @@ Hypothesis HP0 : forall ly S Hp (W : world segs) mem md, ARx ly S Hp W mem md ->
 Hypothesis HG : gx_ok segs B G_fr.
 Variable LSx : lfcx -> Z -> lmod -> alayout -> astate -> Prop.
 Variable RINV : lfcx -> Z -> lmod -> Prop.
-(* ---- the room round (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) 0.2 / 0.4; A 7c2c4577649 pro_x :98-103): the allocator rules' room
+(* ---- the room round (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) 0.2 / 0.4; A pro_x :98-103): the allocator rules' room
    record RP (lib/B/W_journal_x.v roomp), whose room invariant is the cut's NP (the walk's RM := fun S _ => NP S; at
    top_x rp_RM RP := fun S _ => room_live_cf S = NP), and NPF: the fake frame's seat (a set_fs) keeps NP (top_x:
    room_live_set_fs) ---- *)
@@ -359,17 +360,17 @@ Variable RP : roomp.
 Hypothesis RP_NP : forall S k, rp_RM RP S k <-> NP S.
 Hypothesis NPF : forall S f, NP S -> NP (set_fs f S).
 (* ---- KF-COUNT F2: the meter law of the same seat, a set_fs costs nothing at MT (B top_x's MO_FR verbatim,
-   lib/B/W_LLVMFuzzerTestOneInput_top_x.v:287): it gives LS_pro_oa's / LS_pro's premise mo_le MT (c_S cx) S2 0 ---- *)
+   lib/B/W_LLVMFuzzerTestOneInput_top_x.v:288): it gives LS_pro_oa's / LS_pro's premise mo_le MT (c_S cx) S2 0 ---- *)
 Hypothesis MO_FR : forall s f, mo_le MT s (set_fs f s) 0.
 
 (* ---------------------------------------------------------------- SEG_PRO's own hypotheses, in _pro.v's order *)
-(* op_add: _pro.v:624's OA over ARx, at the kit's form at the room record RP: a Theorem Labs lane's room-form lib/B/W_op_add.v:2896
-   oa_spec_g_x .. RP (a working branch 24341ca6749, the B twin of A's 327fa3d3616; its post carries
+(* op_add: _pro.v:624's OA over ARx, at the kit's form at the room record RP: a Theorem Labs lane's room-form lib/B/W_op_add.v:2897
+   oa_spec_g_x .. RP (a working branch, the B twin of A; its post carries
    rp_RM RP S' kr, its pre rp_RM RP S (oa_rk + kr) and cnt_ok_pk RP oa_peak) *)
 Hypothesis OA : W_op_add.oa_spec_g_x (PI := PB_fr) B PST ARx MT RP (BASE + AF_fr_op_add).
 Hypothesis TL : PALib B.                            (* the allocator instance (lib/B/W_kit.v) *)
 Hypothesis TLF : PALibF B.                          (* its fake-stack fields (lib/B/W_frame.v) *)
-(* the stack_malloc seat's Section fsp hypotheses (B's W_frame_x.v:744-755, verbatim), in place of _pro.v's ML / SMP *)
+(* the stack_malloc seat's Section fsp hypotheses (B's W_frame_x.v:745-756, verbatim), in place of _pro.v's ML / SMP *)
 Hypothesis OWNLOW : ARx_owned_low_law segs B ARx.
 Variable WFx : astate -> Prop.
 Hypothesis WFL : ARx_wf_law segs ARx WFx.
@@ -410,10 +411,10 @@ Hypothesis RI_pro : forall cx Hp q T' pj c O cap out,
   (exists c0 mx0, aout_at B fr_RG (c_ly cx) (c_S cx) (c_W cx) (c_mem cx) c0 O mx0 (Z.of_nat (length O)) cap out) ->
   ct_cl c = 3 -> ct_br c = 0 -> ct_dd c = 0 -> ct_ei c = 0 ->
   RINV cx 0 (pro_m q T' pj c O cap out).
-(* LS_pro at the PROPOSED text (W8Add's fr_LS_pro, a working branch f57b3e2d0ca lib/A/ReplyLS.v:571;
+(* LS_pro at the PROPOSED text (W8Add's fr_LS_pro, a working branch lib/A/ReplyLS.v:572;
    _pro.v:687): the blocks after op_add with the entry's split at its table T0 and relay_add's two cases.  The room
    round (ruling (a)): the entry's xcnt_ok and HFH0 (fr_hblks is the entry's table and g_out buffer, the three harness
-   reads SEG_PRO makes) sit inside the existential.  B top_x's text (lib/B/W_LLVMFuzzerTestOneInput_top_x.v:326-339,
+   reads SEG_PRO makes) sit inside the existential.  B top_x's text (lib/B/W_LLVMFuzzerTestOneInput_top_x.v:327-340,
    with KF-COUNT F2's `mo_le MT (c_S cx) S2 0 ->`) at this Section's names; inline, since s5-r1d's
    lib/B/ReplyBTxPro.v TX_LS_pro_xok has no F2 premise *)
 Hypothesis LS_pro : forall cx Hp q T' pj c O cap out (S2 : astate) pos ly S,
@@ -430,8 +431,8 @@ Hypothesis LS_pro : forall cx Hp q T' pj c O cap out (S2 : astate) pos ly S,
      ((T0 = 0 /\ Permutation (ablocks B ly S) ((T', ATABLE) :: (q, APARTIAL) :: ablocks B (c_ly cx) (c_S cx))) \/
       (T0 <> 0 /\ T' = T0 /\ Permutation (ablocks B ly S) ((q, APARTIAL) :: ablocks B (c_ly cx) (c_S cx))))) ->
   LSx cx 0 (W_LLVMFuzzerTestOneInput_pro.pro_m q T' pj c O cap out) ly S.
-(* the room round's count row for SEG_PRO (A 7c2c4577649 lib/A/W_LLVMFuzzerTestOneInput_pro_x.v:116-119, B names;
-   discharged at the top by s5-r1d's fr_cnt_pro, A ba8e99b5bd2 lib/A/ReplyLScnt.v:300): op_add's count premise at the
+(* the room round's count row for SEG_PRO (A lib/A/W_LLVMFuzzerTestOneInput_pro_x.v:117-120, B names;
+   discharged at the top by s5-r1d's fr_cnt_pro, A lib/A/ReplyLScnt.v:301): op_add's count premise at the
    seat's state S2, whose blocks are the entry's.  The counts come from the entry's xcnt_ok (fr_lib_pre_cf_x's XCNT,
    at the entry's table T0 and g_out), not from LS *)
 Hypothesis LS_cnt : forall cx T0 cap out (S2 : astate),
@@ -1163,7 +1164,7 @@ Proof.
 Qed.
 
 (* ---- the room round: the entry's three harness cells (g_src, g_capout, g_out) read back as the relay's table and
-   the stream's buffer; SEG_PRO's HFH0 and the identification of the pre's XCNT witnesses with fr_gi's (A 7c2c4577649
+   the stream's buffer; SEG_PRO's HFH0 and the identification of the pre's XCNT witnesses with fr_gi's (A
    prx_cells) ---- *)
 Lemma prx_cells : forall ly S Hp (W : world segs) mem md T c O mx cap out,
   ARx ly S Hp W mem md ->
@@ -2038,7 +2039,7 @@ Proof.
     RQ7 RQ6 RQ5 RQ4 RQ3 RQ2 RQ1 RQS RQF RQV RQP Q1 Q2 Q3 Q4 Q8 Q9 Q19 Q21 Q22 Q24 Q27 KEEP).
 Qed.
 
-(* ---- THE CHECK: B cut_x Section w's SEG_PRO (W_LLVMFuzzerTestOneInput_cut_x.v:621), restated in its text at
+(* ---- THE CHECK: B cut_x Section w's SEG_PRO (W_LLVMFuzzerTestOneInput_cut_x.v:622), restated in its text at
    cut_x's names (the forms B lib/B/W_LLVMFuzzerTestOneInput_top_x.v uses) and closed by `exact` from lf_seg_pro_x ---- *)
 Local Notation BASEx cx Hp := (lf_base_x B MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G_fr ARx cx Hp).
 Local Notation IH := (INV_H_x B NP G_fr fr_FP PST ARx LSx RINV).

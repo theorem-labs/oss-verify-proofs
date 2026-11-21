@@ -1,21 +1,22 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/ErrnoApartcgif.v (a working branch 29b7505aa27, file sha256 6c556421afce) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53; pin f8f98a95bc52); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-(* Modified by Theorem Labs, 2026-10: relocated from the old pin B (pinned fuzz_preset.asan-ubsan f8f98a95bc52, twin 3b5e1a099b53; this file at 74f20580f552) to B' (#102 pin d663f82d7f48, twin c90d4fa54d43) by the relocation route of record, frozen alreloc a5c53bb2bed4ad03 (a Theorem Labs lane's internal file alreloc.py.frozen-a5c53bb2bed4ad03), --assume-source, --resolve resolve-B102.txt (sha256 5cd2316e3413; internal record) (16 lines name this file); 0 numerals changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/ErrnoApartcgif.v (a working branch, file sha256 6c556421afce) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53; pin f8f98a95bc52); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: relocated from the old pin B (pinned fuzz_preset.asan-ubsan f8f98a95bc52, twin 3b5e1a099b53; this file) to B' (#102 pin d663f82d7f48, twin c90d4fa54d43) by the relocation route of record, frozen alreloc a5c53bb2bed4ad03 (a Theorem Labs lane's internal file alreloc.py.frozen-a5c53bb2bed4ad03), --assume-source, --resolve resolve-B102.txt (sha256 5cd2316e3413; internal record) (16 lines name this file); 0 numerals changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The cgif_file discharges of ErrnoApart.v's image facts, at the cgif instances AImg_cgif (AGif2cgif), AGImg_cgif
-   (AGif0cgif) and DImg_cgif (DGif0cgif).  errno is TFIB_ERRNO = 0x5de68c (YF0m.v:16, ts_errno YF0m.v:297), 4 bytes,
+   (AGif0cgif) and DImg_cgif (DGif0cgif).  errno is TFIB_ERRNO = 0x5de68c (YF0m.v:17, ts_errno YF0m.v:298), 4 bytes,
    in the image [TFIB_IMG_LO, TFIB_IMG_END) = [0x10000, 0x601000) (YF0x.v:24, :36):
    - errno_in_img: img_cover (YF0x.v:53) puts the layout's image window around [0x10000, 0x601000);
    - errno_unhidden: errno lies in the image's read-write window [0xa2000, 0x601000), where every byte is a segment
-     byte (YB13.tfib_rw_rom, YB13.v:107) and a world hides no segment byte (w_Hoff, YK04.memory_read1_hidden): the
+     byte (YB13.tfib_rw_rom, YB13.v:108) and a world hides no segment byte (w_Hoff, YK04.memory_read1_hidden): the
      proof of YFff.rw_unhidden / AGif1m.rw_not_hidden (AGif1m removed in this series).  It Requires YB13 alone, whose closure sets no Zify flag:
      AGif1m reaches YA09 (CLrefillR -> YFkn), and YFff reaches YB15 / YE08, which reset the flag (to true);
-   - the depot zone (AGis.v:230-231 = DGgi.v:514-515): [0x17d5c8, 0x5cdd50) ends 0x1093c below errno; the nodes and
+   - the depot zone (AGis.v:231-232 = DGgi.v:515-516): [0x17d5c8, 0x5cdd50) ends 0x1093c below errno; the nodes and
      store blocks are owned extents, apart by errno_in_img (ErrnoApart.errno_apart_owned);
-   - the internal allocator's zone (DGgi.v:516): [0xac900, 0x12d930) and [0x13b188, 0x13b18c), below errno;
-   - the shadow offset AGis.SHBv (AGis.v:165): 0x7fff8000, above errno;
+   - the internal allocator's zone (DGgi.v:517): [0xac900, 0x12d930) and [0x13b188, 0x13b18c), below errno;
+   - the shadow offset AGis.SHBv (AGis.v:166): 0x7fff8000, above errno;
    - zone3 (YF0x.v:64): off the image (zone3_off_img, YF0x.v:72);
-   - the instance window inst_ok (AGif0cgif.v:58): [inst, inst + 0xe60) inside [0xa46d8, 0xa8f20), below errno.
+   - the instance window inst_ok (AGif0cgif.v:59): [inst, inst + 0xe60) inside [0xa46d8, 0xa8f20), below errno.
    The arms apply ErrnoApart's lemmas with these as the image premises.
 
    Moved to ErrnoApartScgif.v, names and proofs unchanged, with the Props they discharge (now in ErrnoApartS.v):

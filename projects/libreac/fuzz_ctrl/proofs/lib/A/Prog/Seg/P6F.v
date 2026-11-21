@@ -4,12 +4,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 823 of its 864 lines of code are new or changed and 970 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F3F.v, with its module paths, module names, addresses and numbers changed; 312 of its 369 lines of code are new or changed and 807 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/P6.v 26275b3ec1b0 (the blob this tree had at release c5e779efe8c) at fdd2ed9f9d7.
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   FACTS, PAU pau-libreac-v190. Source: Seg/P6.v 26275b3ec1b0 (the blob this tree had at release).
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: p6_evt_of_pre_post / p6_evt_ro_of_pre_post re-derive P6.p6_evt / P6.p6_evt_ro from the two stretches at
    ExecF.RNG_all and the PLAIN callee contract; the *_verbatim pins check by constr_eq that their types are the
    types of P6.p6_evt / P6.p6_evt_ro. Mechanical re-run, route (a) (lead 22:15Z); SPLIT STRETCHES (a Theorem Labs lane 00:45Z),
@@ -217,7 +218,7 @@ Proof.
   exact I.
 Qed.
 
-(* P6.v imports image-A's YK11 before its second half (P6.v:277), so p6_evt_ro's statement is written with that
+(* P6.v imports image-A's YK11 before its second half (P6.v:278), so p6_evt_ro's statement is written with that
    YK11's getr. Import it here too, after everything above, so the ro stretches state P6.v's text. *)
 Import OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Reusable.YK11.
 Open Scope Z_scope.
@@ -324,7 +325,7 @@ Qed.
 
 End PostRoF.
 
-(* The ro run is the plain run on the normalized memory (P6.v:629-633 applies p6_evt there), so its derivation
+(* The ro run is the plain run on the normalized memory (P6.v:630-634 applies p6_evt there), so its derivation
    composes the two plain stretches under MemNorm.evt_normalize and carries the post back with P6.v's own
    mem_rel lemmas; the ro-form stretches above (p6_evt_ro_pre_F / p6_evt_ro_post_F) are the pieces the walk's
    glue consumes. Its two ro_agree are lib.A.MemNorm's by full path, as P6.p6_evt_ro's statement writes them, so

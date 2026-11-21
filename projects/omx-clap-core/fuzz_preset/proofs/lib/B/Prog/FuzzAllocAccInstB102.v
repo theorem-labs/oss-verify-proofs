@@ -1,9 +1,9 @@
 (* fuzz_preset image B' (asan-ubsan, #102 pin d663f82d7f48): the INSTANCE corollaries of FuzzAllocAccB102.v's seven
    walks, fuzz_alloc_{live,peak,peak_reset,count,fail,ran_out,ran_out_reset}_holds_B_inst: the texts
-   (lib/A/PRH_FnAlloc.v tfuzz_alloc_*_specX, byte-equal at decff67d721f :71-146 and at the kit of record
+   (lib/A/PRH_FnAlloc.v tfuzz_alloc_*_specX, byte-equal :71-146 and at the kit of record
    tip preset-tree-at-2026-10-29T18-51-23Z.tsv (sha256 c6f0aa3569e3; internal record) :110-185) at the real image-B' record B := YD2l.TfibB, with NO image premise.
    THE RECORD is the one h-rw-man-5's PALib binds at the program listing: lib/B/PALibB.v 5baa19c890f7
-   (origin/cold/h-rw-man-5-palib102bj ed438196d17c; on int102), exvi_eh_palib : YC1fP.PALib (PI := PI_prog_B)
+   (on int102), exvi_eh_palib : YC1fP.PALib (PI := PI_prog_B)
    YD2l.TfibB, with exvi_eh_errno (api_env rsegs YD2l.TfibB), exvi_eh_head and exvi_eh_laws. The walks take none of
    these (their laws are AR_laws_ok_cf's, proved inside), and PALib has no field for the walks' one stand-in,
    pal_pst_ok. So pal_pst_ok is DISCHARGED here BY COMPUTATION at that record (acc_pal_pst_ok_B, by

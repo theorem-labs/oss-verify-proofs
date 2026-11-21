@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the frame's channel-reader premise Hrdr, LPS 08b1429, which Kw_rdr gives each writev's new reader goal). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -382,6 +383,9 @@ Hypothesis HokP : ltac2:(tb__ "0|0|
 S34S80S2cVok;S59R1A1A3Fk;").
 Hypothesis Hfd : ltac2:(tb__ "0|0|
 S33S4dA1S4eVK;R2R1A2S0S39S4fA1S52S53R2A1S5cA2S38S4fS51S5cA1A2A3F_;Fmd;Ftr;").
+(* LPS 08b1429: a nonempty writev to a channel with no reader raises SIGPIPE ([writev_spec]), so the
+   frame carries the run's reader flag ([Run.valid_input_either] pins it, no step writes it). *)
+Hypothesis Hrdr : forall tr md, K tr md -> m_channel_reader md = true.
 
 Lemma MSG_len : ltac2:(tb__ "0|1|
 S0S34S35S7Q8A1M0S5bA2S64S35G0Vbs1;A2S35G0Vbs2;A2A2A3").
@@ -424,6 +428,8 @@ Proof using HU15 bs1 cert_misc cert_runs. intros rho HG. cbn [eval]. rewrite (G_
 Lemma Kw_fd : ltac2:(tb__ "0|0|
 S34S33S4dA1S4eS59R3R2R1A3S0S39S4fA1S52S53R2A1S5cA2S38S4fS51S5cA1A2A3F_;Fmd;Ftr;Fk;").
 Proof using Hfd. intros k tr md (tr0 & Hk & _). exact (Hfd tr0 md Hk). Qed.
+Lemma Kw_rdr : forall k tr md, Kw k tr md -> m_channel_reader md = true.
+Proof using Hrdr. intros k tr md (tr0 & Hk & _). exact (Hrdr tr0 md Hk). Qed.
 
 Lemma firstn_add_skipn : forall {A} (l : list A) n k, firstn n l ++ firstn k (skipn n l) = firstn (n + k) l.
 Proof using .
@@ -469,7 +475,7 @@ S66S2SaSaS2S34S34S1S5aR2A1S1S19S11VS;A1M0Vrho;R2A3S1S0S7Q40M1A1SdR2G0A2S8G1S44R1
 
 Lemma writev2 : ltac2:(tb__ "0|6|
 ScSeSeSaS34S8fS2cS2dR5R4R3A5S5aR3A1S81P5cS11R7A1A2S0S36S1fS11R8A1S15R8Z16M0A2A2S37A3S57R5S35S7Q8A1M1Vbs1;A2M2A2S57U1S64R6S35G1Vbs2;A2M3A2A2S0S4S6Q40M4SbR8R9A2A2S44R7A1A3S0S4S6G4SbR9RbA2A2S43S6G4SdR9PcA2A2S44S65G2R8A2A1A2A3S0S4S6G4SbRaS15RdG0A2A2A2S44S64R9G3A2A1A3S67S2cVok;S4aS2cS59S65G2RaA2M5A1ReRbA4S62ReS15ReG0A2G5S64RaG3A2RbA5A4F_;F_;F_;F_;F_;F_;F_;F_;F_;FL0;Frho;Fl0;Fe0;FS;").
-Proof using HU13 HU15 Hfd Hmax HokK HokP Hrl5 Hrl6 cert_misc cert_runs wl_fd_rng.
+Proof using HU13 HU15 Hfd Hmax HokK HokP Hrdr Hrl5 Hrl6 cert_misc cert_runs wl_fd_rng.
   intros S e0 l0 rho L0 HS HG Hn He HL0 H1 Hl0 He0 H22.
   destruct HS as [Hlen Hrng Hb1 Hb2 C8 C16 C24 C32 R11 Hi H17 H10 H12 F10a F10b F12 F14 UR].
   pose proof wl_fd_u as FD.
@@ -482,7 +488,7 @@ Proof using HU13 HU15 Hfd Hmax HokK HokP Hrl5 Hrl6 cert_misc cert_runs wl_fd_rng
     eapply (triple1_writev2J segs ok (liftK (Kw n)) J' S rho wl_fd (skipn n bs1) bs2 (reg_sv S 22));
       [ apply ok_frame_liftK; apply HokK
       | intros r tr ms md x8 Hk; exact (HokP n tr ms md x8 Hk)
-      | exact Hi | exact H17 | exact H10 | exact H12 | exact wl_fd_rng | rewrite Hbs; pose proof rwmax as RWM; rewrite MSG_len in RWM; lia | exact He | | ]].
+      | exact Hi | exact H17 | exact H10 | exact H12 | exact wl_fd_rng | rewrite Hbs; pose proof rwmax as RWM; rewrite MSG_len in RWM; lia | exact He | | | ]].
   - intros w (rho' & Hag & Hsm & (k & Hk & Hkb & HK)). exists rho', k.
     split; [exact (G_agree _ _ _ Hag Hn HG)|]. split; [exact Hag|]. split; [exact Hk|]. split; [exact Hkb|].
     split; [exact Hsm | exact HK].
@@ -516,11 +522,12 @@ Proof using HU13 HU15 Hfd Hmax HokK HokP Hrl5 Hrl6 cert_misc cert_runs wl_fd_rng
     change (eval rho (SVar 14)) with (rw rho 14). change (eval rho (SVar 15)) with (rw rho 15).
     rewrite task_size_val. split; [rewrite H22, Hbs; reflexivity|]. split; [lia|]. split; [|exact U14].
     rewrite He0, Hl0. rewrite V13 in U12. lia.
+  - intros tr ms md _ HK. exact (Kw_rdr _ _ _ HK).
 Qed.
 
 Lemma writev1 : ltac2:(tb__ "0|4|
 ScSeSeSaS34S34S8eS2cS2dR6R5R4A5S5aR4A1S81P5cS11R8A1A2S0S36S1fS11R9A1S15R9Z16M0A2A2S37A3S1S57U1R6A2S57R6S35S7Q8A1M1Vbs2;A2M2A2A2S0S34R6S64S35G1Vbs1;A2S65G2R7A2A2A3S0S4S6Q40M3SbR9RaA2A2S44R8A1A3S0S4S6G3SbRaRcA2A2S43S6G3SdRaPeA2A2S44S65G2R9A2A1A2A3S0S4S6G3SbRbS15ReG0A2A2A2S44RaA1A3S67S2cVok;S4aS2cS59RaA1RfRcA4S62RfS15RfG0A2RaRbRcA5A4F_;F_;F_;F_;F_;F_;F_;F_;F_;Fn0;FR;Frho;Fl1;Fe1;FS;").
-Proof using HU15 Hfd Hmax HokK HokP Hrl6 cert_misc cert_runs wl_fd_rng.
+Proof using HU15 Hfd Hmax HokK HokP Hrdr Hrl6 cert_misc cert_runs wl_fd_rng.
   intros S e1 l1 rho R n0 HS HG Hn He HR Hn0 Hl1 He1 H22.
   destruct HS as [Hlen Hrng Hb2 C24 C32 R11 Hi H17 H10 H12 F10a F10b F14 UR].
   pose proof wl_fd_u as FD.
@@ -532,7 +539,7 @@ Proof using HU15 Hfd Hmax HokK HokP Hrl6 cert_misc cert_runs wl_fd_rng.
     eapply (triple1_writev1J segs ok (liftK (Kw n0)) J' S rho wl_fd (skipn (length bs2 - R) bs2) (reg_sv S 22));
       [ apply ok_frame_liftK; apply HokK
       | intros r tr ms md x8 Hk; exact (HokP n0 tr ms md x8 Hk)
-      | exact Hi | exact H17 | exact H10 | exact H12 | exact wl_fd_rng | rewrite Hbs; pose proof rwmax as RWM; rewrite MSG_len in RWM; lia | exact He | | ]].
+      | exact Hi | exact H17 | exact H10 | exact H12 | exact wl_fd_rng | rewrite Hbs; pose proof rwmax as RWM; rewrite MSG_len in RWM; lia | exact He | | | ]].
   - intros w (rho' & Hag & Hsm & (k & Hk & Hkb & HK)). exists rho', k.
     split; [exact (G_agree _ _ _ Hag Hn HG)|]. split; [exact Hag|]. split; [exact Hk|]. split; [exact Hkb|].
     split; [exact Hsm | exact HK].
@@ -558,6 +565,7 @@ Proof using HU15 Hfd Hmax HokK HokP Hrl6 cert_misc cert_runs wl_fd_rng.
     destruct (UR rho (SPp_facts segs _ _ _ _ _ Hsp)) as (U10 & U14).
     rewrite task_size_val. split; [rewrite H22, Hbs; reflexivity|]. split; [lia|].
     rewrite He1, Hl1. rewrite V15 in U14. lia.
+  - intros tr ms md _ HK. exact (Kw_rdr _ _ _ HK).
 Qed.
 
 Definition P_of (rho : valuation) : nat := Z.to_nat (bv_unsigned (rw rho 93)).
@@ -592,7 +600,7 @@ Proof using . intros S S' p v f <- Hv Hf. exact (eq_trans (f_equal (fun n => spr
 
 Lemma loop : ltac2:(tb__ "0|8|
 S34S1SaS5aR1A1M0S57S5dR2A1M1S35S7Q8A1M2Vbs1;A2M3A2S57U1M4S64S5dR3A1M5S35G2Vbs2;A2M6A2A2S57S64S5dR4A1M7G6A2R5A2S67S2cVok;S4aS2cS59S65G3S5dR5A1A2A1S32R5A4S5fA4F_;F_;F_;F_;Frho;SaG0S1S57G4G1A2S57G1G6A2A2S57G5R4A2S67S2cVok;S4aS2cS59S64G3S65G6G7A2A2A1S31R4A4S5fA4F_;F_;F_;Frho;A2Fm;").
-Proof using HU13 HU15 Hfd Hmax HokK HokP Hrl5 Hrl6 PB1_eq PB2_eq PB2a_eq PB2b_eq cert_misc cert_runs ent_PB1_CB1 ent_PB1_D ent_PB2a_CB2 ent_PB2a_D ent_PB2b_CB1 ent_PB2b_D run_PB1 run_PB2a run_PB2b site_CB1 site_CB2 subs_id sv93 wl_fd_rng.
+Proof using HU13 HU15 Hfd Hmax HokK HokP Hrdr Hrl5 Hrl6 PB1_eq PB2_eq PB2a_eq PB2b_eq cert_misc cert_runs ent_PB1_CB1 ent_PB1_D ent_PB2a_CB2 ent_PB2a_D ent_PB2b_CB1 ent_PB2b_D run_PB1 run_PB2a run_PB2b site_CB1 site_CB2 subs_id sv93 wl_fd_rng.
   pose proof rwmax as RWM. rewrite MSG_len in RWM.
   pose proof subs_id as SI. cbn [forallb] in SI.
   apply andb_prop in SI as [S1 SI]. apply andb_prop in SI as [S2 SI]. apply andb_prop in SI as [S3 SI].
@@ -752,7 +760,7 @@ S66S2SaSaS2S34S34S1S5aR2A1S1S19S11VS;A1M0Vrho;R2A3S1S0S7Q40M1A1M2SdR2G0A2M3S8G1S
 
 Lemma ewritev2 : ltac2:(tb__ "0|6|
 ScSeSeSaS34S8fS2cS2dR5R4R3A5S5aR3A1S81P5cS11R7A1A2S0S36S1fS11R8A1S15R8Z16M0A2A2S37A3S57R5S35S7Q8A1M1Vbs1;A2M2A2S57U1S64R6S35G1Vbs2;A2M3A2A2S0S4S6Q40M4SbR8R9A2A2S44R7A1A3S0S4S6G4SbR9RbA2A2S43S6G4SdR9PcA2A2S44S65G2R8A2A1A2A3S0S4S6G4SbRaS15RdG0A2A2A2S44S64R9G3A2A1A3S68S2cS4aS2cS59S65G2RaA2M5A1ReRbA4S63ReS15ReG0A2G5S64RaG3A2RbA5A3F_;F_;F_;F_;F_;F_;F_;F_;F_;FL0;Frho;Fl0;Fe0;FS;").
-Proof using HU13 HU15 Hfd Hmax Hrl5 Hrl6 cert_misc cert_runs wl_fd_rng.
+Proof using HU13 HU15 Hfd Hmax Hrdr Hrl5 Hrl6 cert_misc cert_runs wl_fd_rng.
   intros S e0 l0 rho L0 HS HG Hn He HL0 H1 Hl0 He0 H22.
   destruct HS as [Hlen Hrng Hb1 Hb2 C8 C16 C24 C32 R11 Hi H17 H10 H12 F10a F10b F12 F14 UR].
   pose proof wl_fd_u as FD.
@@ -762,7 +770,7 @@ Proof using HU13 HU15 Hfd Hmax Hrl5 Hrl6 cert_misc cert_runs wl_fd_rng.
   assert (Hbs : length (skipn n bs1 ++ bs2) = (L0 + length bs2)%nat) by (rewrite length_app, length_skipn; lia).
   eapply etriple_conseq; [intros w Hw; exact Hw | |
     eapply (etriple_writev2J segs (liftK (Kw n)) J' S rho wl_fd (skipn n bs1) bs2 (reg_sv S 22));
-      [ exact Hi | exact H17 | exact H10 | exact H12 | exact wl_fd_rng | rewrite Hbs; pose proof rwmax as RWM; rewrite MSG_len in RWM; lia | exact He | | ]].
+      [ exact Hi | exact H17 | exact H10 | exact H12 | exact wl_fd_rng | rewrite Hbs; pose proof rwmax as RWM; rewrite MSG_len in RWM; lia | exact He | | | ]].
   - intros w (rho' & Hag & Hfull & Hsm & (k & Hk & Hkb & HK)). exists rho', k.
     split; [exact (G_agree _ _ _ Hag Hn HG)|]. split; [exact Hag|]. split; [exact Hk|]. split; [exact Hkb|].
     split; [rewrite Hbs in Hfull; exact Hfull|]. split; [exact Hsm | exact HK].
@@ -795,11 +803,12 @@ Proof using HU13 HU15 Hfd Hmax Hrl5 Hrl6 cert_misc cert_runs wl_fd_rng.
     change (eval rho (SVar 14)) with (rw rho 14). change (eval rho (SVar 15)) with (rw rho 15).
     rewrite task_size_val. split; [rewrite H22, Hbs; reflexivity|]. split; [lia|]. split; [|exact U14].
     rewrite He0, Hl0. rewrite V13 in U12. lia.
+  - intros tr ms md _ HK. exact (Kw_rdr _ _ _ HK).
 Qed.
 
 Lemma ewritev1 : ltac2:(tb__ "0|4|
 ScSeSeSaS34S34S8eS2cS2dR6R5R4A5S5aR4A1S81P5cS11R8A1A2S0S36S1fS11R9A1S15R9Z16M0A2A2S37A3S1S57U1R6A2S57R6S35S7Q8A1M1Vbs2;A2M2A2A2S0S34R6S64S35G1Vbs1;A2S65G2R7A2A2A3S0S4S6Q40M3SbR9RaA2A2S44R8A1A3S0S4S6G3SbRaRcA2A2S43S6G3SdRaPeA2A2S44S65G2R9A2A1A2A3S0S4S6G3SbRbS15ReG0A2A2A2S44RaA1A3S68S2cS4aS2cS59RaA1RfRcA4S63RfS15RfG0A2RaRbRcA5A3F_;F_;F_;F_;F_;F_;F_;F_;F_;Fn0;FR;Frho;Fl1;Fe1;FS;").
-Proof using HU15 Hfd Hmax Hrl6 cert_misc cert_runs wl_fd_rng.
+Proof using HU15 Hfd Hmax Hrdr Hrl6 cert_misc cert_runs wl_fd_rng.
   intros S e1 l1 rho R n0 HS HG Hn He HR Hn0 Hl1 He1 H22.
   destruct HS as [Hlen Hrng Hb2 C24 C32 R11 Hi H17 H10 H12 F10a F10b F14 UR].
   pose proof wl_fd_u as FD.
@@ -808,7 +817,7 @@ Proof using HU15 Hfd Hmax Hrl6 cert_misc cert_runs wl_fd_rng.
   assert (Hbs : length (skipn (length bs2 - R) bs2) = R) by (rewrite length_skipn; lia).
   eapply etriple_conseq; [intros w Hw; exact Hw | |
     eapply (etriple_writev1J segs (liftK (Kw n0)) J' S rho wl_fd (skipn (length bs2 - R) bs2) (reg_sv S 22));
-      [ exact Hi | exact H17 | exact H10 | exact H12 | exact wl_fd_rng | rewrite Hbs; pose proof rwmax as RWM; rewrite MSG_len in RWM; lia | exact He | | ]].
+      [ exact Hi | exact H17 | exact H10 | exact H12 | exact wl_fd_rng | rewrite Hbs; pose proof rwmax as RWM; rewrite MSG_len in RWM; lia | exact He | | | ]].
   - intros w (rho' & Hag & Hfull & Hsm & (k & Hk & Hkb & HK)). exists rho', k.
     split; [exact (G_agree _ _ _ Hag Hn HG)|]. split; [exact Hag|]. split; [exact Hk|]. split; [exact Hkb|].
     split; [rewrite Hbs in Hfull; exact Hfull|]. split; [exact Hsm | exact HK].
@@ -833,6 +842,7 @@ Proof using HU15 Hfd Hmax Hrl6 cert_misc cert_runs wl_fd_rng.
     destruct (UR rho (SPp_facts segs _ _ _ _ _ Hsp)) as (U10 & U14).
     rewrite task_size_val. split; [rewrite H22, Hbs; reflexivity|]. split; [lia|].
     rewrite He1, Hl1. rewrite V15 in U14. lia.
+  - intros tr ms md _ HK. exact (Kw_rdr _ _ _ HK).
 Qed.
 
 Lemma G0 : G rho0. Proof using . apply agree_below_refl. Qed.
@@ -843,7 +853,7 @@ Proof using . intros S rho w [Hsm Hk]. split; [exact Hsm|]. exists (w_tr w). spl
 
 Theorem wl2_sum : ltac2:(tb__ "0|1|
 S57U1S35S7Q8A1M0Vbs1;A2A2S67S2cVok;S4aS2cVK;S30Vrho0;A4S4bS2cS59S35G0S5bA2A1P5cVrho0;S5eA5A4F_;").
-Proof using HU13 HU15 Hfd Hmax HokK HokP Hrl5 Hrl6 PA2_eq PA2a_eq PA2b_eq PB1_eq PB2_eq PB2a_eq PB2b_eq cert_misc cert_pre cert_runs ent_PA2a_CB2 ent_PA2a_D ent_PA2b_CB1 ent_PA2b_D ent_PB1_CB1 ent_PB1_D ent_PB2a_CB2 ent_PB2a_D ent_PB2b_CB1 ent_PB2b_D run_PA2a run_PA2b run_PB1 run_PB2a run_PB2b site_CB1 site_CB2 site_Pre_wl2 subs_id sv93 wl_fd_rng.
+Proof using HU13 HU15 Hfd Hmax HokK HokP Hrdr Hrl5 Hrl6 PA2_eq PA2a_eq PA2b_eq PB1_eq PB2_eq PB2a_eq PB2b_eq cert_misc cert_pre cert_runs ent_PA2a_CB2 ent_PA2a_D ent_PA2b_CB1 ent_PA2b_D ent_PB1_CB1 ent_PB1_D ent_PB2a_CB2 ent_PB2a_D ent_PB2b_CB1 ent_PB2b_D run_PA2a run_PA2b run_PB1 run_PB2a run_PB2b site_CB1 site_CB2 site_Pre_wl2 subs_id sv93 wl_fd_rng.
   intros Hbs1. pose proof rwmax as RWM. rewrite MSG_len in RWM.
   pose proof subs_id as SI. cbn [forallb] in SI.
   apply andb_prop in SI as [S1 SI]. apply andb_prop in SI as [S2 SI]. apply andb_prop in SI as [S3 SI].
@@ -941,7 +951,7 @@ Qed.
 
 Theorem wl1_sum : ltac2:(tb__ "0|1|
 S0S33S7Q8A1M0A1Vbs1;S3aG0A1A3S57U1S35G0Vbs2;A2A2S67S2cVok;S4aS2cVK;S2fVrho0;A4S4bS2cS59S35G0S5bA2A1P5cVrho0;S5eA5A4F_;F_;").
-Proof using HU13 HU15 Hfd Hmax HokK HokP Hrl5 Hrl6 PA1_eq PB1_eq PB2_eq PB2a_eq PB2b_eq cert_misc cert_pre cert_runs ent_PA1_CB1 ent_PA1_D ent_PB1_CB1 ent_PB1_D ent_PB2a_CB2 ent_PB2a_D ent_PB2b_CB1 ent_PB2b_D run_PA1 run_PB1 run_PB2a run_PB2b site_CB1 site_CB2 site_Pre_wl1 subs_id sv93 wl_fd_rng.
+Proof using HU13 HU15 Hfd Hmax HokK HokP Hrdr Hrl5 Hrl6 PA1_eq PB1_eq PB2_eq PB2a_eq PB2b_eq cert_misc cert_pre cert_runs ent_PA1_CB1 ent_PA1_D ent_PB1_CB1 ent_PB1_D ent_PB2a_CB2 ent_PB2a_D ent_PB2b_CB1 ent_PB2b_D run_PA1 run_PB1 run_PB2a run_PB2b site_CB1 site_CB2 site_Pre_wl1 subs_id sv93 wl_fd_rng.
   intros Hnil Hbs2. pose proof rwmax as RWM. rewrite MSG_len in RWM.
   assert (L1z : length bs1 = 0%nat) by (rewrite Hnil; reflexivity).
   pose proof subs_id as SI. cbn [forallb] in SI.
@@ -1009,7 +1019,7 @@ Qed.
 
 Theorem wl2_sum_ex : ltac2:(tb__ "0|0|
 S57U1S35S7Q8A1Vbs1;A2A2S68S2cS4aS2cVK;S30Vrho0;A4S61A3F_;").
-Proof using HU13 HU15 Hfd Hmax Hrl5 Hrl6 PA2_eq PA2a_eq PA2b_eq cert_misc cert_pre cert_runs ent_PA2a_D ent_PA2b_D run_PA2a run_PA2b site_Pre_wl2 subs_id wl_fd_rng.
+Proof using HU13 HU15 Hfd Hmax Hrdr Hrl5 Hrl6 PA2_eq PA2a_eq PA2b_eq cert_misc cert_pre cert_runs ent_PA2a_D ent_PA2b_D run_PA2a run_PA2b site_Pre_wl2 subs_id wl_fd_rng.
   intros Hbs1. pose proof rwmax as RWM. rewrite MSG_len in RWM.
   pose proof subs_id as SI. cbn [forallb] in SI.
   apply andb_prop in SI as [S1 SI]. apply andb_prop in SI as [S2 SI]. apply andb_prop in SI as [S3 SI].
@@ -1068,7 +1078,7 @@ Qed.
 
 Theorem wl1_sum_ex : ltac2:(tb__ "0|1|
 S0S33S7Q8A1M0A1Vbs1;S3aG0A1A3S57U1S35G0Vbs2;A2A2S68S2cS4aS2cVK;S2fVrho0;A4S61A3F_;F_;").
-Proof using HU15 Hfd Hmax Hrl6 PA1_eq cert_misc cert_pre cert_runs ent_PA1_D run_PA1 site_Pre_wl1 subs_id wl_fd_rng.
+Proof using HU15 Hfd Hmax Hrdr Hrl6 PA1_eq cert_misc cert_pre cert_runs ent_PA1_D run_PA1 site_Pre_wl1 subs_id wl_fd_rng.
   intros Hnil Hbs2. pose proof rwmax as RWM. rewrite MSG_len in RWM.
   assert (L1z : length bs1 = 0%nat) by (rewrite Hnil; reflexivity).
   pose proof subs_id as SI. cbn [forallb] in SI.

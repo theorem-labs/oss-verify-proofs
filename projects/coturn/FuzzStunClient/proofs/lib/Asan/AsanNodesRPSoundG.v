@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the node statements carry the flag of the flagged relation SpinAlg.srealizesM. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -119,6 +120,7 @@ Definition rc_spec (SEGS : list Segment) (T : RPN.rptab) : Prop :=
 (* [comment removed for export] *)
 
 Section Sound.
+Context {sfl : bool}.   (* the flag of [SpinAlg.srealizesM] *)
 Variable SEGS : list Segment.
 Variable A : atable.
 Variable nx0 : N.
@@ -185,7 +187,7 @@ Qed.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
 
 #[using="SEGS_wx SEGS_in_hull HULL_ok argH_high argH_agree SINV_frame SINV_agree nx0_ge7 IMG SPEC"] Theorem node_rpoison_int_sound :
-  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 always (RPN.node_rpoison_int SEGS nx0 T).
+  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl always (RPN.node_rpoison_int SEGS nx0 T).
 Proof.
   intros cs cs' E R FULL model TT HC _ Hn Hk.
   pose proof HC as HKN. apply co_know in HKN.
@@ -342,7 +344,7 @@ Proof.
 Qed.
 
 #[using="SEGS_wx SEGS_in_hull HULL_ok argH_high argH_agree SINV_frame SINV_agree nx0_ge7 IMG SPEC"] Theorem node_rpoison_rel_sound :
-  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 always (RPN.node_rpoison_rel SEGS nx0 T).
+  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl always (RPN.node_rpoison_rel SEGS nx0 T).
 Proof.
   intros cs cs' E R FULL model TT HC _ Hn Hk.
   pose proof HC as HKN. apply co_know in HKN.
@@ -493,7 +495,7 @@ Proof.
 Qed.
 
 #[using="SEGS_wx SEGS_in_hull HULL_ok argH_high argH_agree SINV_frame SINV_agree nx0_ge7 IMG SPEC"] Theorem node_rpoison_sound :
-  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 always (RPN.node_rpoison SEGS nx0 T).
+  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl always (RPN.node_rpoison SEGS nx0 T).
 Proof.
   intros cs cs' E R FULL model TT HC Hpre Hn Hk. unfold RPN.node_rpoison in Hn.
   destruct (RPN.node_rpoison_int SEGS nx0 T cs) as [cs1|] eqn:H1.
@@ -532,7 +534,7 @@ Qed.
 
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
 #[using="SEGS_wx SEGS_in_hull HULL_ok argH_high argH_agree SINV_frame SINV_agree nx0_ge7 IMG RSPEC"] Theorem node_readcheck_sound :
-  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 always (RPN.node_readcheck SEGS nx0 T).
+  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl always (RPN.node_readcheck SEGS nx0 T).
 Proof.
   intros cs cs' E R FULL model TT HC _ Hn Hk.
   pose proof HC as HKN. apply co_know in HKN.
@@ -652,7 +654,7 @@ Proof.
 Qed.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
-#[using="SEGS_wx SEGS_in_hull HULL_ok argH_high argH_agree SINV_frame SINV_agree nx0_ge7 IMG SPEC RSPEC"] Theorem rp_xn_sound : ext_stmt SEGS A nx0 LIMIT (RPN.xn SEGS nx0 T) SINV argH FS0.
+#[using="SEGS_wx SEGS_in_hull HULL_ok argH_high argH_agree SINV_frame SINV_agree nx0_ge7 IMG SPEC RSPEC"] Theorem rp_xn_sound : ext_stmt SEGS A nx0 LIMIT (RPN.xn SEGS nx0 T) SINV argH FS0 sfl.
 Proof.
   intros id args. unfold RPN.xn.
   destruct (Nat.eqb id 100); [apply node_rpoison_sound|].

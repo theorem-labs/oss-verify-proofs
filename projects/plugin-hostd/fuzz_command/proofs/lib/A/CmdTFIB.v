@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made from the TFIB_T definition of proofs/cgif/cgif_file_fuzzer/lib/A/AZ03.v for fuzz_grant's ASan image and grant_shape; module paths changed. *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/libreac/fuzz_grant/lib/A/GrantTFIB.v for fuzz_command's ASan image and cmd_shape; names, comment and module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: TFIB_T takes the fifth conjunct of the model's valid_entry, entry_launch_ok_va. *)
 (* What the ASan side of fuzz_command's two ASan statements proves: from every valid start, the ASan build realizes
    the same trace set SPECX as the plain build (lib/Reusable/YK18.v srealizes, no cut). *)
 From Stdlib Require Import NArith ZArith List Lia Bool.
@@ -19,6 +20,8 @@ Definition TFIB_T : Prop :=
 forall sp brk mbase rnd inp,
 valid_sp sp -> valid_brk cmdsegs0 brk -> valid_mmap_base mbase ->
 entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+(* LPS 727298f3: [Run.valid_entry]'s fifth conjunct, which the ASan start-up reads; the statements give it *)
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 srealizes cmdsegs0
 (init_config cmdsegs0 Asan.M.init_pc Asan.M.phdrs sp brk mbase rnd target_alloc_limit inp)
 (SPECX (LS:=cmd_shape) inp).

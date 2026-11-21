@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 646 of its 686 lines of code are new or changed and 208 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Route (C) `_on` forms of stretch S5 (reac_box_catalogue_match_F5.v, unchanged): the same run with the narrowed
    shadow premise `SR_on : shadow_rw_on (reac_box_catalogue_match_shadow_R f len S FS) m` in place of
    `SR : shadow_rw m`, and the bcmp wrapper's `_on` footprint contract `bcmp_wrap_contract_F_on`
@@ -43,7 +44,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Import ExecF StepF.
 Import ListNotations.
 Open Scope Z_scope.
 
-(* MemMono.v's store-footprint hook, Local here (a Theorem Labs lane made MemMono's `::=` Local at 8bac67328ab; a Theorem Labs lane
+(* MemMono.v's store-footprint hook, Local here (a Theorem Labs lane made MemMono's `::=` Local; a Theorem Labs lane
    sanctioned this copy of MemMono.v:207-217's body): the store_done steps of the re-proved scripts carry munch /
    wmono / rd_mono / stk across each store by it, as reac_box_catalogue_match.v's scripts do. *)
 Local Ltac footprint_after_store segs m a bs ::=

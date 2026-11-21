@@ -14,6 +14,7 @@
    head carries lies below alloc_ceiling + 8 (a live block, the image band) and moves across the stores. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_drain_pro.v, with its module paths, module names and numbers changed; 1682 of its 1766 lines of code are new or changed and 1187 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/PjGetB.v, with its module paths and module names changed; 617 of its 693 lines of code are new or changed and 1690 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image B' (asan-ubsan, harness fix #102: pin sha256 d663f82d7f488d30, unstripped twin c90d4fa54d43160b):
    the SHARED STATEMENTS of the segment walk of check_as_written (B' entry 0x81f78, 69 slots; slot 555 of h-verbs-1's
    whole-program listing) against K0's text tcheck_as_written_specX. Lane CawB102 of h-rw-pre-5's #102 re-walk.
@@ -35,14 +36,14 @@
       YGcallMxmn blob 3c08bbab8292, ...); YCej.v blob 71ae24321ba4 (the
       Univ form with the P'' set, owner 00:52Z). Every other image / start-up / generated file is the cut's (PRH_ImgB,
       YD2l, YF0l, YF0m, YImgCellsB, YB13, PALibB 5baa19c890f7, YImgTop, PresetCfnA / PresetCfnB).
-    - Listing: #102 listings v3 (owner 16:28Z), origin/cold/h-verbs-1-listing-pins102 74dcda1eda12: lib/B/Listing_prog.v
-      c97cc46b3e13 (d42e123915ae's listing 8bcc2c9e7809, header comment only changed; YPsym.v b6f5a85d234d).
+    - Listing: #102 listings v3 (owner 16:28Z): lib/B/Listing_prog.v
+      c97cc46b3e13 (a commit's listing 8bcc2c9e7809, header comment only changed; YPsym.v b6f5a85d234d).
       lib/B/PAImg_prog.v is NOT Required: the walk is PARAMETRIC over {PA : PAImg B_prog_listing} and uses the
       listing's own tables (PL_caw_B below); its instance PI_prog_B is witnessed in Caw102B_Img.v (pins102 only).
-      Slot check on d42e123915ae (this lane, 13:1xZ): the 69 slots of caw B' are the pin's words or the same
-      relocations as on 1678fc5f0191 but for the g_own_ran_out load 0x82024, PLdHi .. (A_OBJ 13) (13 = g_own_ran_out).
+      Slot check (this lane, 13:1xZ): the 69 slots of caw B' are the pin's words or the same
+      relocations as but for the g_own_ran_out load 0x82024, PLdHi .. (A_OBJ 13) (13 = g_own_ran_out).
     - Engine and cf-instance files: the P'' set as the cut carries it (above); the lane kit files, by path:
-      lib/A/Prog/H2CawPure.v af16a877672b (a working branch 1934271f1f4); PRW_StepKit.v 0df3991c13f4 is int102's.
+      lib/A/Prog/H2CawPure.v af16a877672b (a working branch); PRW_StepKit.v 0df3991c13f4 is int102's.
    FORM (rulings 12:18Z-13:26Z): generic P, abstract in every proof; each segment is a CONTINUATION lemma over a generic
    Q: `caw_K_<next>R R C P Q -> caw_K_<this>R R C P Q` (an R form takes the world relation R first, a plain form drops it; the image-A' walk Caw102A_WA* has the same shape), the End segment concludes
    caw_post. The allocator relation is the cf instance ARcfx (as FuzzFreeB.v / H2CawF.v), the image parametric.
@@ -92,7 +93,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require Import PRH_Base PR
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require Import CfParamsPreset.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A.Prog Require Import PRW_StepKit.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YI5b.
-(* the PLAIN build's sink head must never fill SK here (YC1fP.v:23-33 does the same): every SK below is explicit *)
+(* the PLAIN build's sink head must never fill SK here (YC1fP.v:24-34 does the same): every SK below is explicit *)
 #[global] Remove Hints YI5b.src0_sink_head : typeclass_instances.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
@@ -139,7 +140,7 @@ Variable B : asyms.
 #[local] Abbreviation AJ := (ajournal_x (SK := SK) SEGS B prh_pst ARcfx).
 #[local] Abbreviation LEDGER := (prh_ledger B).
 
-(* ---- the text's binders (tcheck_as_written_specX, PRH_FnCheck.v c40cf3fdcd2a :833 @7cdbb61b5fa0) and the call-context
+(* ---- the text's binders (tcheck_as_written_specX, PRH_FnCheck.v c40cf3fdcd2a :833) and the call-context
    closure's argument (the run-word list DW is gone) ---- *)
 Record cawB : Type := mkCawB {
   c_ly : alayout; c_S : astate; c_Hp : list Z; c_W : world SEGS;
@@ -404,10 +405,10 @@ Proof. reflexivity. Qed.
 (* the struct ex at sp + 8 = sp0 - 72: p, end, and the 8 bytes of depth + pad at sp0 - 56 *)
 Definition caw_ex3 (C : cawB) (W3 : world SEGS) (mem3 : word -> option byte) (p : Z) : Prop :=
   val_mem SEGS (rdW W3 mem3) (c_sp C - 72) 8 p /\ val_mem SEGS (rdW W3 mem3) (c_sp C - 64) 8 (c_data C + c_size C).
-(* the ledger at a cut (the kit's Batch 2, decff67d721f): the entry's values, the record's most, and own, the byte
+(* the ledger at a cut (the kit's Batch 2): the entry's values, the record's most, and own, the byte
    g_own_ran_out holds at the cut (prh_ledger_own reads it; a hand step writes it only at WB1's NULL-arm
-   `sb 1, g_own_ran_out`). The same spelling as the A' base's caw_ledger; it replaces the caw_pst threading of
-   61529ce7f9ec by citation. *)
+   `sb 1, g_own_ran_out`). The same spelling as the A' base's caw_ledger; it replaces the caw_pst threading
+    by citation. *)
 Definition caw_ledger (C : cawB) (ly3 : alayout) (S3 : astate) (Hp3 : list Z) (W3 : world SEGS)
   (mem3 : word -> option byte) (own : Z) : Prop :=
   LEDGER ly3 S3 Hp3 W3 mem3 (c_Lam C) (c_peak C) (c_cnt C) (c_fail C) (c_ran C) (c_most C) own.

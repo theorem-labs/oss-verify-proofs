@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by gabelogan195, 2026-11: copied from projects/openssl/bndiv/proofs/lib/Lib/LimTransfer.v at commit f92feaf8b7, whole, with the module path OSSVerify.Proofs.openssl.bndiv.lib.Lib changed to OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.Halts.Lim and nothing else. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the step lemma sstep_fit covers the vDSO call arm of sstep and the transfer lim_transfer_scfg runs over run_segments, with comments on these changes. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs RiscvSemantics MemImageType Run.
@@ -37,12 +38,25 @@ Definition cfg_fit (c : config) : Prop := vm_fit (m_vmmaps (cfg_model c)).
 Lemma sstep_fit : forall segs c evs c', cfg_fit c -> sstep segs c evs (SNext c') -> cfg_fit c'.
 Proof.
   intros segs c evs c' Hf Hss. unfold cfg_fit in *.
+  (* [sstep] ([c0dd863a:theories/LinuxProcessSem/Run.v:686]) has 11 constructors, with the
+     three vDSO arms at slots 4-6 (instr, instr_fault, instr_unmodeled, vdso_call,
+     vdso_materialization_fault, vdso_unmodeled, syscall, syscall_materialization_fault,
+     exit, killed, syscall_unmodeled).  The two SError vdso arms cannot unify
+     with this lemma's [SNext c'] index and discharge themselves; [vdso_call] concludes
+     [SNext] and is the one goal they add.  Binders spelled as the sites in
+     [Asan/SpinAlgCfg.v:384/:438/:490] spell them. *)
   inversion Hss as
     [ ms0 m0 ms1 m1 Hh Hsvc Hacc
+    | | | ms0 m0 fn n eff m1 m2 evs0 Hh Hsvc Hacc1 Hfn Hn Hs Hef Hh1 Hmat
     | | | ms0 m0 x8 eff m1 m2 evs0 Hh Hsvc Hs Hh1 Hmat
     | | ms0 m0 x8 eff m1 evs0 code Hh Hsvc Hs Hh1 Hk1
     | ms0 m0 x8 eff m1 evs0 sig Hh Hsvc Hs Hk1 | ]; subst; cbn [cfg_model] in *.
   - destruct (mi_account_step_model_frame segs ms0 m0 ms1 m1 Hacc) as (_ & Hv & _). rewrite Hv. exact Hf.
+  - (* vdso_call: the model it leaves is [with_vdso_bump m2], and the vDSO setters rebuild the
+       vDSO view and nothing else ([State.m_vmmaps_with_vdso_bump] at [75d69e00:theories/LinuxProcessSem/State.v:5048],
+       proved by [reflexivity]), so this closes exactly as the syscall arm below does. *)
+    rewrite ?m_vmmaps_with_vdso_bump.
+    exact (materialize_fit m1 _ m2 (syscall_spec_fit _ _ _ _ _ Hf Hs) Hmat).
   - exact (materialize_fit m1 _ m2 (syscall_spec_fit _ _ _ _ _ Hf Hs) Hmat).
   - exact (syscall_spec_fit _ _ _ _ _ Hf Hs).
   - exact (syscall_spec_fit _ _ _ _ _ Hf Hs).
@@ -94,5 +108,6 @@ Corollary lim_transfer_scfg : forall cfg S img en inp lim_small lim_big,
 Proof.
   intros cfg S [segs pc ph] [sp brk0 mbase rnd] inp lim_small lim_big Hle Hbig Hnr.
   cbn [must_exit_in_scfg run_scfg_budget_refused] in *.
-  exact (lim_transfer_init cfg segs S pc ph sp brk0 mbase rnd inp lim_small lim_big Hle Hbig Hnr).
+  (* LPS 727298f3: the run's segments are [run_segments segs inp sp mbase]. *)
+  exact (lim_transfer_init cfg (run_segments segs inp sp mbase) S pc ph sp brk0 mbase rnd inp lim_small lim_big Hle Hbig Hnr).
 Qed.

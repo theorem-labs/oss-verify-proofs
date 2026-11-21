@@ -1,6 +1,6 @@
 (* lib/A/ACtlLayImg.v -- a Theorem Labs lane, 2026-10-29.
    proves no function (kind: image facts). The three image facts that a Theorem Labs lane's pb_ctrl_lay_block
-   (lib/A/Prog/C_ctrl_lay_block_glue.v, a working branch 43e169975d6, blob 08a730f9dde) takes as
+   (lib/A/Prog/C_ctrl_lay_block_glue.v, a working branch, blob 08a730f9dde) takes as
    Section hypotheses and that no lemma stated (rule 24, lookup a Theorem Labs lane 18:5xZ: proof-index exit 4, a
    census-1 sweep of 1081 refs finds no lemma about CTRL_FRAMES 0x9f7e0 or BOX_CATALOGUE 0x9e800):
      HFR_ro  (:442)  lay_img_fr_ro    CTRL_FRAMES   [0x9f7e0, +11 * 24):  read-only, not owned, not errno;
@@ -11,17 +11,17 @@
    CTS, :412); lay_img_fr_ro_CtrlB / lay_img_cat_ro_CtrlB are the instances at B := A.AD2l.CtrlB.
 
    RLO / RHI. Both objects lie in the WRITABLE PT_LOAD [0x9e348, 0xa1000) (.data.rel.ro), so in_roP's first
-   disjunct (a non-writable segment, Reusable/APostBase.v:22) is false for their bytes: in_roP holds only through
+   disjunct (a non-writable segment, Reusable/APostBase.v:23) is false for their bytes: in_roP holds only through
    its RELRO disjunct RLO <= x < RHI. The glue's RLO / RHI are Section variables (:400), bounded only by RELRO_IMG
    (:402); the top (C_ctrl_emit_as.v:211) takes TLAY at PA_RLO / PA_RHI. So HFR_ro / HCAT_ro are stated with the
-   premises `RLO = PA_RLO -> RHI = PA_RHI ->`, as a Theorem Labs lane's ba_img_rows (lib/A/Prog/BuildAsImg.v (at head lib/A/Prog/BuildAsImg.v:141; written on a working branch f1ae402bb2c))
+   premises `RLO = PA_RLO -> RHI = PA_RHI ->`, as a Theorem Labs lane's ba_img_rows (lib/A/Prog/BuildAsImg.v (at head lib/A/Prog/BuildAsImg.v:141; written on a working branch))
    states them. HFR_rom names neither B nor RLO / RHI and has no premise.
 
    Proofs. HFR_ro / HCAT_ro by intervals: the object's range lies in [PA_RLO, PA_RHI) = [0x9e380, 0xa07c8)
    (CtrlImg.v:96-97), it misses every row of AF0m's Tfib_owned_static (computed: the rows (0x9e7d0, 0x30),
    (0x9f4b8, 0x328) and (0x9f8e8, 0x58) end or start exactly at the bounds) and the errno word 0x5db76c; the
-   exclusions go through CtrlTSyms' ts_owned / ts_errno, as R7.v's r7t_cat_ro (from a working branch 8b0ff2e4e96) (at head
-   lib/A/ACtlG/R7.v:786). HFR_rom with fr := C_ctrl_emit_as.CROW r: a per-byte decision over the 7 rows x 24
+   exclusions go through CtrlTSyms' ts_owned / ts_errno, as R7.v's r7t_cat_ro (from a working branch) (at head
+   lib/A/ACtlG/R7.v:787). HFR_rom with fr := C_ctrl_emit_as.CROW r: a per-byte decision over the 7 rows x 24
    bytes, evaluated by vm_compute against SEGS's seg_rom (the same reads a Theorem Labs lane's ba_rowcells_ok makes); the length and
    the kind byte are GE_row.v:31 / :35's ge_row_len / ge_row_k, proved here the same way (GE_row's closure,
    GEbase, is not loaded). *)

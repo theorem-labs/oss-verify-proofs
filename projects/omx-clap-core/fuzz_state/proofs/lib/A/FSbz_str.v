@@ -1,16 +1,16 @@
-(* Ported from: a working branch cedf3d02589 proofs/omx-clap-core/fuzz_manifest/lib/A/FMbz_str.v (a Theorem Labs lane).
+(* Ported from: a working branch proofs/omx-clap-core/fuzz_manifest/lib/A/FMbz_str.v (a Theorem Labs lane).
    Changes for fuzz_state (a Theorem Labs lane, 2026-10-28): module path fuzz_manifest -> fuzz_state; FMbz_str -> FSbz_str;
    imports POISON-U's FSupoison for FMupoison;
    FM_SHADOW_OFF keeps its name (0x7fff8000, the same in fs). *)
 (* The shadow half of the bridge between the donor's ASan state and the string walks'
-   memory vocabulary.  The walks ask for `chk_ok m p n` (lib/A/Bz/A/I_qck.v:31) - what the
+   memory vocabulary.  The walks ask for `chk_ok m p n` (lib/A/Bz/A/I_qck.v:32) - what the
    interceptors' range check reads - while the donor's call-site contracts carry
    `range_addressable` and `shadow_hull_vis` over `aview` (lib/Reusable/YG0v.v:32,
    YG0d.v:309).  This file turns the second into the first.
 
    It is stated over the reader `aview_of H mem`, which is `aview tfibsegs H mem` written
    out (YG0n.v:17), so that it does not depend on the part of the core that is still in
-   flight (YG0n -> YA0n -> YK18, which does not compile on a working branch bad0693aadc
+   flight (YG0n -> YA0n -> YK18, which does not compile on a working branch
    yet).  `aview_eq` closes that gap in one line as soon as it does.
 
    a Theorem Labs lane owns the rest of the bridge (lib/A/FMbz_bridge.v: evt/msteps -> SRr and the frame

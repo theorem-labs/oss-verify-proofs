@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up over the run's entry stack). *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
 From Stdlib Require Import Uint63.
@@ -14,11 +14,16 @@ Import ListNotations.
 
 Local Open Scope Z_scope.
 
-(* [comment removed for export] *)
 Definition stk_max : Z := 8388608.
+(* At the revision the zero stack window is [State.stack_window_lo kb mbase draw, sp),
+   not [sp - 8 MiB, sp): its floor is max(top - 8 MiB, mbase + guard).  For EVERY
+   kernel build the model's [StoreOk.stack_window_lo_valid] puts that floor at or
+   below [sp + stack_window_reach - stack_max_size] = sp - 6144513, so this much of
+   the stack below sp is zero and writable.  1500 pages. *)
+Definition stk_zero : Z := 6144000.
+(* the block is exactly top - sp bytes, at most 2101782 under [valid_launch]. *)
 Definition eb_size : Z := 2238672.
 
-(* [comment removed for export] *)
 Definition entry_store (fl : list (lin * (Z * Z))) : store :=
   fold_left (fun s p => sadd s (fst p) (fst (snd p)) (snd (snd p))) fl st_empty.
 
@@ -34,7 +39,6 @@ Lemma sat_entry_store (ρ : valuation) (fl : list (lin * (Z * Z))) :
   Forall (fun p => fst (snd p) <= leval ρ (fst p) <= snd (snd p)) fl -> sat ρ (entry_store fl).
 Proof. intros H. unfold entry_store. apply sat_fold; [apply sat_empty | exact H]. Qed.
 
-(* [comment removed for export] *)
 Definition img_region (i : nat) (sg : Segment) : region :=
   Rg [] (wofZ (Z.of_N (seg_base sg))) (of_Z (Z.of_N (seg_size sg))) (KImg (seg_writable sg) i)
      (depth_for (Z.of_N (seg_size sg))) IEmpty.
@@ -47,13 +51,13 @@ Fixpoint img_regions_from (i : nat) (segs : list Segment) : list region :=
 
 Definition img_regions (segs : list Segment) : list region := img_regions_from 0 segs.
 
-Definition stk_region : region := zero_rg sp_terms (wofZ (- stk_max)) stk_max.
+Definition stk_region : region := zero_rg sp_terms (wofZ (- stk_zero)) stk_zero.
 
-Definition eb_region (ph : PhdrInfo) : region :=
-  Rg sp_terms w_zero (of_Z eb_size) (KEntry ph) (depth_for eb_size) IEmpty.
+Definition eb_region (r : bool) (ph : PhdrInfo) : region :=
+  Rg sp_terms w_zero (of_Z eb_size) (KEntry r ph) (depth_for eb_size) IEmpty.
 
-Definition entry_mem (segs : list Segment) (ph : PhdrInfo) : list region :=
-  img_regions segs ++ [stk_region; eb_region ph].
+Definition entry_mem (r : bool) (segs : list Segment) (ph : PhdrInfo) : list region :=
+  img_regions segs ++ [stk_region; eb_region r ph].
 
 Definition entry_regs : aregs := aset IEmpty 2%uint63 (XS sp_terms w_zero).
 
@@ -62,9 +66,9 @@ Definition brk_form : lin := (0, [(v_b, 4096)]).
 Definition entry_model : amodel :=
   AM [] brk_form brk_form None false 100%uint63 (- stk_max, sp_terms) [] [] FDStd.
 
-Definition entry_state (segs : list Segment) (pc : Z) (ph : PhdrInfo) (s : store) : AST :=
-  AS (wofZ pc) entry_regs RNone (entry_mem segs ph) s entry_model 0 0.
+Definition entry_state (r : bool) (segs : list Segment) (pc : Z) (ph : PhdrInfo) (s : store) : AST :=
+  AS (wofZ pc) entry_regs RNone (entry_mem r segs ph) s entry_model 0 0.
 
-Lemma entry_out (ρ : valuation) (segs : list Segment) (pc : Z) (ph : PhdrInfo) (s : store) :
-  out_val ρ (entry_state segs pc ph s) [].
+Lemma entry_out (ρ : valuation) (r : bool) (segs : list Segment) (pc : Z) (ph : PhdrInfo) (s : store) :
+  out_val ρ (entry_state r segs pc ph s) [].
 Proof. reflexivity. Qed.

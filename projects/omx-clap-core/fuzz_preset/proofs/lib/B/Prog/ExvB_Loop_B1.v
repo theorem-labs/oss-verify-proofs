@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Rests on memnorm through EXV_PRE's last conjunct and EXB's exv_rm keep (old-pin kit 4f18c75d4900); not on
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Rests on memnorm through EXV_PRE's last conjunct and EXB's exv_rm keep (old-pin kit); not on
    tex_word_specX. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B (asan-ubsan), ex_value, segment CL, piece B1 (the item): from the cut LR
    (B 0x83c8c, exv_pc 0x760) through the NESTED ex_value call to the cut LS (B 0x83ca0, exv_pc 0x774) or the exit CX
@@ -16,7 +17,7 @@
    continuation ExvB_Loop_B1_post.v's exb1_post_ls (result 0: the item
    (nm, u), PURE_L_STEP / PURE_V_REST / PURE_SUFFIX give LS's grammar premise) or exb1_post_cx (result -1: the
    grammar refuses, exv_V E = None by PURE_L_STEP).
-   Old-pin kit 4f18c75d4900 rebind: the run is YC1fPx.v's paj_run_x_inv carrying EXB's memnorm keep (P := exvl_P
+   Old-pin kit rebind: the run is YC1fPx.v's paj_run_x_inv carrying EXB's memnorm keep (P := exvl_P
    (e_mem E), ExvB_Loop_exw.v) into KIT_RUNs and, with EXV_PRE's memnorm, to the text's memnorm premise at the call
    memory; fpre's `raZ < alloc_ceiling` from the jal's return pc B 0x83c98 (exb1_ra_ceil, YM05.alloc_ceiling_value);
    KIT_CALLs's exv_room Sc S2 is the post's room / iface implications and its hull use, its memnorm keep the post's

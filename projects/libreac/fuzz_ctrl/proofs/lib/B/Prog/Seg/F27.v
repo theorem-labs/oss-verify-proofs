@@ -4,9 +4,10 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 3817 of its 3853 lines of code are new or changed and 212 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths and module names changed; 371 of its 396 lines of code are new or changed and 3828 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v, with its module paths changed; 297 of its 332 lines of code are new or changed and 361 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment F27 of fuzz_ctrl LLVMFuzzerTestOneInput (asan-ubsan, libreac v1.9.0 image B), 0x828b4-0x82928: the head
    of the inlined check_ports after the second reac_ports_unknown call (0x828b0), up to the port-slot loop head
-   0x8292c (F28's cut). The v1.9.0 move of the patched-image seg_F27 (a working branch 4131ff88f40, patched
+   0x8292c (F28's cut). The v1.9.0 move of the patched-image seg_F27 (a working branch, patched
    0x82838-0x828b8), itself the image-B port of the image-A seg_F27 (lib/A/Prog/Seg/F27.v).
    Entry cut: the official Inv_B828b4_at of lib/B/Prog/SlotInv.v (F27K, s9 = r = t_rp, s7 = unk = t_unk from the
    first count, a0 = the second count = t_unk, PORTS, FIRSTb, s4 = len, FTL, FTURN, IFS (S j), s5 = fr + 128). Exit

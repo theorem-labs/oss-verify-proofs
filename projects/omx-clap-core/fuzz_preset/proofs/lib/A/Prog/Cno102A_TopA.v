@@ -1,5 +1,5 @@
 (* fuzz_preset, image A' (#102 pins: asan sha256 1be0f53d96cb9d6c, unstripped twin bff8519bbe3ea0e4; binaries
-   pau-preset-102): the cno A' top (Cno102A_Top.v, the kit cut 7cdbb61b5fa0's text) AT THE A' INSTANCE:
+   pau-preset-102): the cno A' top (Cno102A_Top.v, the kit cut's text) AT THE A' INSTANCE:
    PA := PI_prog_A, B := AD2l.TfibB (the #102 A' runtime symbol record), cp := CfParams_preset (fixed in Top.v). Row
    R7-5 (holder a Theorem Labs lane); the lead's rulings 17:46Z, 18:47Z, 20:58Z, 22:59Z and 10-30 06:40Z (re-state on the cut;
    compose when the cut's segment shas land).
@@ -31,7 +31,7 @@
               by AD2l.TfibB_pair (owner's 01:11Z ruling; agreed 01:25Z to take it at this rebind);
     SS5M   (FE's __asan_set_shadow_f5 row) cn_ss5m_A_inst: FCxmCfx.set_shadow_f5_contract_xm_cfx, the same way;
     HSAME  (the kit's tsame_specX at DOC_D) a Theorem Labs lane's SameAp_inst.same_holds_Ap_HSAME_fit_s (A' same walk with its
-              strcmp and bcmp rows discharged at the A' instance, a working branch e6023510cb8a).
+              strcmp and bcmp rows discharged at the A' instance, a working branch).
   NOT DISCHARGED (premises the cited lemmas will add): AMALLOC (a Theorem Labs lane's malloc row), AFREE (a Theorem Labs lane), HRO /
     HPN / HPJFREE (the kit's texts; their walks). HTIE is gone: K0-PJF-TIE is CLOSED at the cut (Cno102A_F.v).
    This file Requires PAImg_prog.v, whose certificate checks the #102 A' bytes: it builds on the pins102 route only.
@@ -192,7 +192,7 @@ Definition check_no_overread_walk_A_inst :=
     cn_img_A PALibA.palib_A (proj1 AD2l.TfibB_pair) cn_sm3_A cn_imgsh_A AMALLOC cn_asm3_A_inst
     cn_memcpy_A_inst cn_memset_A_inst AFREE cn_ss5m_A_inst PALibA.palib_errno_A HRO cn_same_A_inst HPN HPJFREE.
 
-(* The kit's text (the cut 7cdbb61b5fa0) at the A' instance: the same discharges *)
+(* The kit's text (the cut) at the A' instance: the same discharges *)
 Definition check_no_overread_holds_A_inst :=
   fun CTX0 AMALLOC AFREE HRO HPN HPJFREE =>
   @Cno102A_Top.check_no_overread_holds_A fx rc CfImgA.CfImg_A SK (IMG_PI_A rc) AD2l.TfibB CTX0

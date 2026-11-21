@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* LLVMFuzzerTestOneInput_segX_crt1_runs: the footprint runs (lib/Lib/ExecF.v evtF) of the OWN CODE of image B's
    LLVMFuzzerTestOneInput segment crt1 (+0x5cc .. +0x6ec), i.e. every stretch between two calls:
 
@@ -17,7 +18,7 @@
    into +0xb84: +0x608 (buffer + i wraps), +0x66c and +0x69c (copy null), +0x678 and +0x6a8 (copy + 50 wraps).
 
    PORT. The same code is proved at the same addresses (this image's entry is 0x800b0, the donor's listing is the
-   same binary) by the old footprint-era record on a working branch at 3ee4cb94cb5, in
+   same binary) by the old footprint-era record on a working branch, in
    proofs/libreac/fuzz_decode/lib/B/Prog/afd_down_scan.v: Section CK1 (c1_head :518, c1_loop :479, c1_chk :451,
    c1_tail :392, at 0x8067c .. 0x80774 = +0x5cc .. +0x6c4) and Section CK2 (ck_braid :633, ck_ret :672, at
    0x8074c / 0x80740).  Those are Exec.evt runs; here they are ExecF.evtF runs, as that branch's own footprint

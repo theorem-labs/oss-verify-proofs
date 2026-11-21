@@ -24,10 +24,11 @@
    (pass 5b) the stack from len - 16 present, from the statement's astack_pres kept by astack_pres_journal. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 414 of its 496 lines of code are new or changed and 4971 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/pf_seg_B2.v; 101 of its 169 lines of code are new or changed and 428 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca): the LOWOUT piece
    of segment B11c of reac_segconf_parse_file's walk, b11_lowout : HA_TAIL n -> H_LOWOUT n (the second half of
    pf_pieces.v S_B11c). The B11c segment lane of the image-B G3 walk owner, 2026-10-30. proves no function (kind: segment lemma).
-   ADAPTED from the image-A G3 walk owner's image-A join piece lib/A/Prog/pf_a10b_j.v (commit c6f2a9302a3c,
+   ADAPTED from the image-A G3 walk owner's image-A join piece lib/A/Prog/pf_a10b_j.v (
    pj_join: a seed on the shadow cells, one run of the plain executor to TAIL, the cells read back, every other
    byte kept, H_TAIL at the next line's offset), re-derived on image B's code.
    The code (reac_segconf_parse_file.fuzz_segconf.asan-ubsan.s), LOWOUT 0x88c70 .. 0x88c7c, 4 instructions,

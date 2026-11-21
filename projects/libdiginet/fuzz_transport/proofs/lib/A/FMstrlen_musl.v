@@ -1,5 +1,6 @@
 (* This file states or restates instruction words of the task's compiled program (third-party object code: the upstream library at its pinned commit, the C library, the sanitizer runtime and the task authors' wrapper) for use in the proofs - see NOTICE. No Anthropic licence header is applied to this file. *)
-(* Relocated from libreac/fuzz_identity's released proofs/lib/A/FMstrlen_musl.v (c3777b3715d0) to libdiginet/fuzz_transport's
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Relocated from libreac/fuzz_identity's released proofs/lib/A/FMstrlen_musl.v to libdiginet/fuzz_transport's
    image A, fuzz_transport.asan e89be137db17 (unstripped twin 86efc3a80314).
    The walked functions (the trampoline, ___interceptor_strlen, __asan_region_is_poisoned,
    __asan::TryAsanInitFromRtl, __sanitizer::mem_is_zero, 0xb58 above the donor's; musl strlen, 0x8bfc above)

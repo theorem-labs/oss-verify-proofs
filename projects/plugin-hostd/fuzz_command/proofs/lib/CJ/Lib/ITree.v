@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3, with libreac/fuzz_boxreg's port of its copy of this file (changed sstep_mstep_inv). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -324,6 +325,11 @@ Proof.
   match goal with H : mi_account_step segs ms mo = ?r |- _ =>
     pose proof (mi_account_step_inv ms mo r Hl H) as K; cbn in K end.
   - destruct K as [K ->]. rewrite Hstep in K. inversion K; subst. split; reflexivity.
+  - rewrite Hstep in K. discriminate K.
+  - rewrite Hstep in K. discriminate K.
+  (* the three vDSO arms (08b1429): svc = None like the instruction arms, and
+     mi_account_step = MachineUnmodeled, which Hstep contradicts *)
+  - rewrite Hstep in K. discriminate K.
   - rewrite Hstep in K. discriminate K.
   - rewrite Hstep in K. discriminate K.
 Qed.

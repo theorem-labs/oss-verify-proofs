@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mmap's MAP_FIXED overflow arm). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs.
@@ -52,7 +53,15 @@ Ltac at_step :=
                        | let H := fresh "Hc" in let Hm := fresh "Hm" in let He := fresh "He" in let m1 := fresh "m1" in let ev := fresh "ev" in intros ? m1 ev H; apply choose_inv in H; destruct H as (? & Hm & He); subst m1 ev]
   | |- lim_at _ _ _ (bind (modify _) _) (bind (modify _) _) =>
         apply at_bind; [apply at_modify; at_mod_side | intros [] ? ? _]
-  | |- lim_at _ _ _ _ _ => at_leaf
+  (* #38: the MAP_FIXED arms' overflow branch is now the named constant
+     [mmap_fixed_overflow] rather than a bare [err_ret ENOMEM], and the
+     file-backed arm resolves [fd] through a [match] on an [option].
+     Neither has a syntactic shape the clauses above recognise, so step
+     through a stuck [match] the way the [if] clause does, and fall back
+     to unfolding the common head constant when the leaf list misses. *)
+  | |- lim_at _ _ _ (match ?s1 with _ => _ end) (match ?s2 with _ => _ end) =>
+        change s2 with s1; destruct s1
+  | |- lim_at _ _ _ ?c1 _ => first [ at_leaf | lim_head c1 ]
   end.
 Ltac at_auto := repeat at_step.
 

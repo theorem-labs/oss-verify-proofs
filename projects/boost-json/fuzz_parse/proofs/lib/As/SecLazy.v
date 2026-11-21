@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: recorded proofs written out as text, statements written out as text, the mmap decline premise (place_declined_b). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -79,9 +80,9 @@ Lemma is_ecall_ECALLW : ltac2:(zQ "50!hk8!ir9!r4!is0!jg8@3$2$0@1$3$4$1").
 Proof.
 ltac2:(KReplay.run1 (kr_t_SecLazy ()) [] "p;2g00DGj20Tg00Pkg00V^'0o"). Qed.
 
-Lemma sysret_MSsvc : ltac2:(zQ "f1!hk2!hr9!p7!jj8!jk1!r4!jk5!jl5!jpe!ju5!jub!jv4!jva!ii9!kg2&>0@1$1@1$0#k0@1$2@1$1@1$0#8>1R@2$3@1$0#5@1$1@1$0#k0>1F@2$3@1$0#5@1$1@1$0#k0>2pc@1$1@1$0#k0>2x8@1$1@1$0#k0>2fc@1$1@1$0#i0>2rv@1$2@1$1@1$0#k0>1m~0>2ro~0>1r@1$1@1$0#k0>1M~0@3$5$6@3$8@8$a^a^9^8^7^6^5^4^3^2^1@7$9@5$7@1$0#5@1$1@1$0#k0@3$b@1$0#5+aKv$4@2$c@1$0#5+a^2^a^9@3$e@1$0#k0^8@2$d@1$0#k0+4^6^5^1^3").
-Proof.
-ltac2:(KReplay.run1 (kr_t_SecLazy ()) [] "h01Fh11Mh21Rh32fch41mh52pch61rh72roh82rvh92x8p;1p;2p;3p;5p;7g007Dj10Tg006_j1<Tg00K_j11Tg00\Xj12Tg004Cj2;Tg009Dj14Tg005ej13Tg01DLj38Tg01Doj57Tg00b[j26Tg01E_j35Tg01FDj79Tg00DGj2:Tg00PF#0R0#<R1#1R2%00R0#0R3#0#0R4#0#1R5#2R6';R7%14#2%46%13#2#4\6R3g01GEP2P6%01#3g016K582f1f9D7f8f7%30,65555f5f4f0f2F9':X13X66X73W4W8W3X96X56X07W2o"). Qed.
+Lemma sysret_MSsvc : forall R F pc x8 fc rv m ro r M,
+  sysret (MSsvc R F pc x8 fc rv m ro) r M = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4) fc None M ro.
+Proof. reflexivity. Qed.
 
 Section CjNodes.
   Variables (L S Zr : list (word * word)).
@@ -99,8 +100,11 @@ Section CjNodes.
        restrict L S msF' = MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs) ->
        hid_same L S msF msF' -> sreach asegs Q (mkCfg msF' mo)) ->
     sreach asegs Q (mkCfg msF mo).
-Proof.
-ltac2:(KReplay.run1 (kr_t_SecLazy ()) ["CjNodes"] "h04msF'h12FWh23HS'h31Kh42OKh53OK'h61Qh73VISh84VIS'h91mh:2moh;3msFp;2p;5p;3p;1p;7p;8p;4p;6p;@g01HLj22Tg01IAj53Tg01JBj37Tg007Dj10Tg00K_j14Tg00b[j2MTg01@Gj1FTg01FDj7ATg00;ej31Tg00\Xj16Tg009Dj15Tg01KKj2<Tg00:aj29Tg01LMj8OTg01MQj4;Tg01NTj4NTg01OWj1LTg00DGj28Tg01P]j1KTg01Q\j1ETg01R\j1BTg006_j1:Tg005ej1@Tg01DLj3CTg01S]j2DTg01T[j1?Tg01UZj1GTg01VYj1HTg01WWj1>Tg01XUj8ITg0037j6JTg01Y\l@=Tg01GER0g01Zkg01[ap-0[g00[VR1p,1LR2p,1SR3p,2ZrR4f2R5f1R6'2D3f3R79723R8p,1RR9p,1FR:g00PF#0R;#0#0R<#0#0R=#0#4R>p,2pc'MR?p,2fcR@p,2rvRAp,1mRB%F1RCFARD510%4=#6R=#51<1?g01\VRE,9=31P1P2P3P4f0R=f5RF'2D3A7236RGP9P:P?p,3x17P@PAPBPCGORC510P2P3f8RBP5C;P1g01][RAf7127BCN[[[^00P1PAP2P3P4PDf6RAPFPEf4REP7P5%6>R>#5%LD'8P6g01^aP1P2P3P412=AD3%KD%ED%BD%:;#4%:<#@g016K3C,DD,9>%?D%GD%HD%>DGIRD910GP2P3f9P5C;PEP7P5P0PDA10=CX90180CP8P6EJP=O4W2W8W5X00M@=W3W1W7W4W6W:W;o"). Qed.
+  Proof.
+    intros msF mo Q OK VIS FW K.
+    eapply (sreach_ecall_lazy asegs L S Zr _ msF mo ECALLW Q OK VIS eq_refl FW is_ecall_ECALLW).
+    intros msF' OK' VIS' HS'. apply (K msF' OK'); [| exact HS']. rewrite VIS'. reflexivity.
+  Qed.
 
   (* [comment removed for export] *)
   Lemma sr_mmap_kernel_MS : forall (na nr : bool) msF mo (Q : config -> Prop),
@@ -112,10 +116,14 @@ ltac2:(KReplay.run1 (kr_t_SecLazy ()) ["CjNodes"] "h04msF'h12FWh23HS'h31Kh42OKh5
     let h := m_vmmaps mo in
     x11 <> Z_to_bv 64 0 ->
     x12 = Z_to_bv 64 (kprot na) -> x13 = Z_to_bv 64 (kflags nr) -> x14 = Z_to_bv 64 (-1) -> x15 = Z_to_bv 64 0 ->
+    (* LPS 727298f3: off the hint decline ([Mmap.place_declined_b]) *)
+    place_declined_b (m_kernel mo) (m_vmmaps mo) x10 nZ = false ->
     entries_nowrap (vm_maps h) ->
     (na = false -> nr = false -> eager_used mo + pages_total S * page_size + nZ <= vm_limit h) ->
     (exists g : word, bv_unsigned g mod page_size = 0 /\ 0 < bv_unsigned g /\ bv_unsigned g + nZ <= alloc_top h
-                      /\ region_free (vm_reserved h ++ vm_maps h) g n = true) ->
+                      /\ region_free (vm_reserved h ++ vm_maps h) g n = true
+                      (* 08b1429: Linux places only in [page_size, mmap_top) or [task_unmapped_base, alloc_top) *)
+                      /\ (bv_unsigned g + nZ <= mmap_top h \/ task_unmapped_base <= bv_unsigned g)) ->
     (nr = true -> forall a : word, region_free (vm_reserved h) a n = true -> bv_unsigned a + nZ <= alloc_top h -> lazy_range_okb asegs (a, n) = true) ->
     (forall (a : word) (msF' : machine_state),
        bv_unsigned a mod page_size = 0 -> 0 < bv_unsigned a -> bv_unsigned a + nZ <= alloc_top h ->
@@ -123,13 +131,29 @@ ltac2:(KReplay.run1 (kr_t_SecLazy ()) ["CjNodes"] "h04msF'h12FWh23HS'h31Kh42OKh5
        let mo' := grant_model (Z_to_bv 64 (kflags nr)) a n na mo in
        lzok asegs ((if nr then [(a, n)] else []) ++ L) S ((if nr && negb na then [(a, n)] else []) ++ Zr) (mkCfg msF' mo') ->
        restrict ((if nr then [(a, n)] else []) ++ L) S msF'
-         = MS (Ra a) F (Z_to_bv 64 (pc + 4)) fc rv (if na || nr then unfill a n m else zfill a n m) (seg_rom asegs) ->
+         = MS (Ra a) F (Z_to_bv 64 (pc + 4)) fc None (if na || nr then unfill a n m else zfill a n m) (seg_rom asegs) ->
        hid_same L S msF msF' ->
        eager_used mo' <= eager_used mo + (if na || nr then 0 else nZ) ->
        sreach asegs Q (mkCfg msF' mo')) ->
     sreach asegs Q (mkCfg msF mo).
-Proof.
-ltac2:(KReplay.run1z (kr_t_SecLazy ()) ["CjNodes"] "##Q0p'0h01ah14msF'h21bh31gh43mo'h52ALh63BUDh72CEh83EAGh94FREEh:3GAPh;3H12h<3H13h=3H14h>3H15h?3H17h@3HS'hA1KhB3LENhC2NWhD2OKhE3OK'hF3POShG1QhH3ROKhI3VIShJ4VIS'hK1hhL1mhM2mohN3msFhO1nhP2nZhQ2nahR2nri002nrhS3x17p%0p;2p;5p;3p;1p;8p;4p;7p;6p;Op;Pp;:p;Kg01HLj2=Tg01IAj5LTg01JBj3ETg007Dj18Tg00K_j1UTg00b[j21Tg01@Gj1gTg01LMj8cTg00\Xj1ZTg006_j1CTg005ej1QTg00;ej33Tg010Tj1rTg01_oj1_Tg01a2j1GTg01b6j1k!s/$Tj19Tg01cKj1?Tg01dAj1]Tg01eNj17Tg01fYj1dTg01gej2bTg009fj22Tg00];j2ITg01hBj1aTg01i@j1[!tg$Cj24Tg01j7j2YTg008hj2X!s8$Wj1>Tg00f8j2`Tg01kOj1ATg01lIj30!s/$fj3;Tg00acj2BTg01=<j2W!s\$Xj4:Tg01m`j2VTg00?\j1qTg00>\j1p!s8$<j3FTg00^gj1PTg00:Cj2OTg01noj5D!u<$Dj1^Tg0209j2@Tg01CJj3KTg00e7j3HTg01FDj7<Tg01MQj4NTg01OWj1jTg00DGj2TTg0037j6J!sn$Vj3STg01DLj3i!s/$oj5\Tg01E_j3fTg004Cj2hTg021ZlORTg022[j2eTg023elPlTg024ol:mTg026:lKnTg01NTj4oTg01GER0f1R1f0R233p=6g00PkR3g00V^732p=5g00[VR4g01][R5P1P2Cop=Mg01ZkS00g01[ap-0[P4p,1LR6p,1SR7p,2ZrR8f2R9/=1DLf3R:9E67p,1RS01p,1FR;g00PFR<#8R=#8R>#8R?#8!s$$UR@p,2pcRA'1S02p,3x17RBp,2fcRCp,2rvRDp,1mRE%g4RFGcRG'6%Z@RH%C<#8#C!s$&8#QRI,1@RJ73B!sm$1RKg00Y5RL,1@RM53H#rS03!sB$2RNf8RO#_,1@53H!s:$3RP%GO!s7-4RQ%k<!s7%S04!s:$5R<=3HMS05f9RM#9#?#]f=RRg00Z0S06533RSf<RT#7%d7g027ORU'bS07'21I@K#aRV'2%9TRW#['4\S[g00L[RS1I@2RX/YU;3LS081XLXS0912XV%>W'41`HHRY%AW%?W3011@VRW7;2#5'B'B'BX3H,WHf>RZ#5%9Z#A?;2W#51I@1R[/2Vf?R\#9#>'4PHPHP9PWC:,V4#5[[^0H[1Y[U=3SLRU1I@9,XLR]1I@:S0:/2VR^fAR_!sd%fBR`#9Ra#A%?a50Yf4Rb;;W#5P4P3%qYRcfERdPHPHf5RePWC:%pYRf5FYRgPfn0110000020000=0Y6P7P3PcfFRh#P,OdP!sK%0!sK08%Gd,1@PePWPhfCRiDD,=bDLP3PcPh!t:$6RjPWC:=FYfS0;!t77?E7ep,2RaS0<PjO1P;%Q>R>,2A,1@RkPCPDP3%U?#Z#^\HR?fGRl/@hAKjWERmAHjWERn!ti1PFF<'6P6P7PhPjCNfHRo#G,1@S0=POPWfIRpPhDD#7%7hP3PS1@poS0>PLPV!sp1'2'4%Gp,1@RqPMPWfJRrPlDD,=O,Mh[!s#&^10^0HP4P5g028GP_f@R5!tM$8P\PGPZPBPRPTf;RT%^H%jG'TPHPJA3SXIXSH1TSIPBf:RIEJPMPOf7RJPjPePbP:P9P1%>a,4^S0?%9iRi#A%?i50Y?;bW#5S0@P4!w6&!x6>%Pl,Oh!x3;h!x3'lfDDDS0A!x4,lQ!w|9S0B?E7eP3P?1@olPmP!wJ29SGj!wJ&lPjCNPqPOPWP!v\$#7%7l!w>%rp!w;9PIPMPOP!u~,0P3P?fKRq/@rS0CAKMWEAHMWE!sb1S0D9SGMS0EQ0<PIO1P;P!yZ&P?fLS0F/@qAKIWEAHI!sc5GPFF<Rq,62XL0RnP0%C=R=#URmPH%8=#Qg016K5imS0HPMQ01D\P;Q0211@>5f@S0IPCPDQ0DPFF<S0JPn1hmHS0Kp,2x1S0Lp,2x2S0Mp,2x3S0Np,2x4S0Op,2x5S0Pp,2x6S0Qp,2x7Rnp,2x8R=p,2x9RgPMPKPNPPPQP<p,3x16RiP!#6Q$8R^!s-$9Rap,3x20Rs!s-$1Rt!s-$2Ru!s-$3Rv!s-$4Rw!s-$5Rx!s-$6Ry!s-$7Rz!s-$8R{!s-$9R|p,3x30R}!s-$1R~MORQ0KP2P;Q!ue'!vU$/6qW2PHPkQ0LQ0MQ0NQ0OQ0PQ0QPnP=PgPI!u5,PiPBP^PaPsPtPuPvPwPxPyPzP{P|P}P~MORP;P2!t,1X2HQ0<PM!xD,!w0&Rq,T0Q0I1eA>EJPmPHQ!wf%!tW9!vH$0Rm!t]PD\!uN<!soNPMMPlEJQ0J/6qeQ0EQ01!yX$PB!zd$EPFPMQ0DM:mEJ!}8$rPHPHPM!#6D&!#6A9OP9EJP1P2O:W8W@WJWEW9W7XF]X5UQ0?Q0@Q0AQ00P4Q0B!~s'o,O!~?+!~t21=e2Rl!~d&o!tR$J!tRBjP3P?Q0>AKJWEAHJ!|m39SGJ!~q&oPJCN%7:R:%7oP3PSQ0C!~g91=MbRG,Mo[[[[b4[[\]\UeX10X0HMKnWAWHW:W6WCW>W=W<W;WBPVPS11@2PH%9jg029UQ03%_T,1@93HN%G!s0&PQ04Q05%?e#]Q069335RP%7\Q07'2/2I%[O'4\P[Q08Q0912XI%>O'4%AO%?O50Y?;2M!#=}0%5_%AI?;2T#512[R%>T!#=n'R!#=n/Q0:/2\%>R'4%AZ%?Z!sv$b\#5Q0=PeP5PpPhDD!ww$!wI$p!sm$jP_!wI%R4!#8;>r,OpP4!xE7P!xA'!ym%JP`!xAAQ0<PJ!#6D0Q0CAKJ`EAHJ`E!#<g;r!xP%rP3PSfMQ0F'@PLPd!xO3,4:1MrG!xK/!#<<$1=`_,M5[!s#+bKbObPeW?WIWDWGWMXN0XR3XQ3o"). Qed.
+  Proof.
+    intros na nr msF mo Q OK VIS H17. cbv zeta. intros LEN H12 H13 H14 H15 DECL NW BUD GAP ROK K.
+    eapply (sreach_mmap_kernel_lazy asegs na nr L S Zr msF _ mo x17 Q OK VIS eq_refl); [ rewrite H17; reflexivity | ..];
+    change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 1) with x11;
+    change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 2) with x12;
+    change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 3) with x13;
+    change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 4) with x14;
+    change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 5) with x15;
+    change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 0) with x10;
+      [ exact LEN | exact H12 | exact H13 | exact H14 | exact H15 | exact DECL | exact NW | exact BUD | exact GAP | exact ROK | ].
+    intros a msF'.
+    change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 1) with x11.
+    change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 0) with x10.
+    change (ms_mem (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs))) with m.
+    cbv zeta. intros AL POS CE FREE OK' VIS' HS' EAG.
+    apply (K a msF' AL POS CE FREE OK'); [| exact HS' | exact EAG].
+    rewrite VIS', sysret_MSsvc. unfold R. rewrite mkR_set_a0, lit_add_lit. reflexivity.
+  Qed.
 
   (* [comment removed for export] *)
   Lemma sr_mmap_commit_MS : forall (nr : bool) msF mo (Q : config -> Prop),
@@ -154,15 +178,31 @@ ltac2:(KReplay.run1z (kr_t_SecLazy ()) ["CjNodes"] "##Q0p'0h01ah14msF'h21bh31gh4
        let L' := (if nr then [(addr, n)] else []) ++ maps_subtract L (bv_unsigned addr) (bv_unsigned addr + nZ) in
        lzok asegs L' S Zr (mkCfg msF' mo') ->
        restrict L' S msF'
-         = MS (Ra addr) F (Z_to_bv 64 (pc + 4)) fc rv
+         = MS (Ra addr) F (Z_to_bv 64 (pc + 4)) fc None
               (if nr then (fun x => if zin_rangeb (bv_unsigned x) (addr, n) && in_rangesb x S then Some (Z_to_bv 8 0) else m x)
                else zfill addr n m) (seg_rom asegs) ->
        hid_same L' S msF msF' ->
        eager_used mo' <= eager_used mo + (if nr then 0 else nZ) ->
        sreach asegs Q (mkCfg msF' mo')) ->
     sreach asegs Q (mkCfg msF mo).
-Proof.
-ltac2:(KReplay.run1z (kr_t_SecLazy ()) ["CjNodes"] "##MOp'0h01xh14msF'h22L'h31bh43mo'h52ALh63BUDh72CEh83EAGh93H12h:3H13h;3H14h<3H15h=3H17h>3HS'h?1Kh@3LENhA2MChB3NOVhC2NWhD3NWAhE2OKhF3OK'hG3POShH1QhI2RFhJ3ROKhK3VIShL4VIS'hM2ZFhN2ZThO4addrhP1hhQ1mhR2mohS3msFhT1nhU2nZhV2nri002nrhW3x17p%0p;2p;5p;3p;1p;8p;4p;7p;6p;Op;Pp;:p;Rg01HLj2?Tg01IAj5JTg01JBj3CTg007Dj16Tg00K_j1NTg00b[j20Tg01@Gj1iTg01LMj8eTg00\Xj1TTg006_j1;Tg005ej1FTg00;ej32Tg010Tj1uTg02:Lj1<Tg01b6j1pTg00];j25Tg01hBj1lTg009fj21!sJ$Tj18Tg01jWj1V!t1$Cj23!s8$7j2\Tg008hj2ATg01kOj1WTg01lfj3UTg01cKj1=Tg02;Pj3STg01dAj1ETg02<Kj1RTg02=Ej1PTg00acj2KTg02>Mj2OTg00fXj4HTg01m`j2QTg01eNj19Tg01fYj1bTg01gej2aTg01i@j1`!s\$8j2tTg00?\j1sTg00>\j1r!s8$<j3_Tg02?Xj3^!ty$Ij3>Tg02@Tj5D!ur$Dj1]Tg02A_j2[Tg00:Cj2Z!s/$aj2mTg00e7j3YTg01FDj7:Tg01MQj4GTg01OWj1jTg00DGj2LTg0037j6BTg020Vj3MTg01DLj3h!s/$oj5XTg01E_j3gTg004Cj2kTg021ZlOfTg022[j2nTg023elPoTg024ol:dTg02BjlRcTg01NTj4qTg01GER0f1R1f0R232p=7g00PkR3g00V^722p=4g00Z0R49!sF$@g00[VR5g01][R6P1P2Cqp=Ig01ZkS00g01[ap-0[P5p,1LR7p,1SR8p,2ZrR9f2R:/?1S01DJf3R;9C78p,1RR<p,1FR=g00PFR>#6R?#6R@#6RA#6!s$$NRBp,2pcRC'0RDp,3x17REp,2fcRFp,2rvRGp,1mRH%i5RIGeRJ'7%TBRK%;>RL#6#;!s$&6#FRM,0BRN72E!so$1ROg00Y5RP,0BRQ52K#uS02!sB$2RR%FL,0B52KS03!s:$3RLf8RS#<!s=%!s:$4RT%p>!sN'4!s:$5R>=2KQS05!s5$0RQ,5BRU15BO#lRV'1RWf9RX#8#V'3g00L[RYg027ORZ,\U;2P1APUf<R[#8#W10BVR\7UQ#4f=R]#8#=?SQ\#4f>R^#8#=#Ef?R_#8#R#Ef@R`!s:$PfCRa#@15B2Rb,3U1AbW'KRc1O19Rd#@S06[^0K[fDS07#4%4dS08\c!s9$ERc#4PKPKPQP\CHRd,Q5#4[fFRe#@%9c%b8/aZRf'1/1V%8c#`'3[P51tKKRgP3%sgRhfHRi%rgRj9_gdRkPjn0110000020000A^7UWRW3>P8P9%<i,0BPQP\P4PeDD,?2DJP3PhfIRUP!sb4=>gWRl?C81p,2RaS09PQO1RmP=%F@R@,1C,0BRnPFPGP3%NARA#TRo#]Rp\KRqPUP3Pp1[bd1O28Rd'Z10AP,moS0:PHP2O1S0;n0!t>%!t?%X0KRoAYQ\HRA!tY1PIF:'7!ty$JRr!ty:sP8PUP:CGfKRt!yR$!ua&UDD#9%9URuP3PYPtPPPV!sf1'1'3f4RvfLRw!s`$S0<!sc&rDDRx'?,IU[[[[^10P5P6g028GPiP7P8P9fGR6PJPePEPcQ07Pa%]K%jJ'LPKPNA2YbMXWK1LYMPEfBRMEBfARNP`P_P^P]P[f;R]f:R^PXPSf7R_f6R`f5RyPvP;P:P1P5Pl!x+%U!uI,6DDS0=!x/$ACs81P3PqPrPoP!vW29MJQ!vW%Pt!vU9P8PrP:CG%9x%9r!v?$w!v?9P!ta%0P3PqfMRx!t<5R\9MJQS0>PmP=P!y0&PqfNS0?!sT6lPIF:Rz,72XQ0R{P0%;?R?#NR|PK%6?#Fg016K5h|S0@PQP<DXP=10B@9gBDR?!t+$\!si$}P{1k|KR{p,2x1S0Ap,2x2S0Bp,2x3S0Cp,2x4S0Dp,2x5S0Ep,2x6S0Fp,2x7S0Gp,2x8S0Hp,2x9S0IPQPOPRPLPTP>p,3x16S0JP!#4{$8S0!#4@$9S0Lp,3x20S0M!s/$1S0N!s/$2S0O!s/$3S0P!s/$4S0Q!s/$5S0R!s/$6S0S!s/$7S0T!s/$8S0U!s/$9S0Vp,3x30S0W!s/$1S0XMOfR~P2P=P!ur%!v]$/7zX3{PKPnP~P=P2!s@2K!wP-!vJ%m,L0P?1nC@EBP|PKQ!vz$~DXQ0AQ0BQ0CQ0DQ0EQ0FQ0GQ0HQ!v,1Q0JPEQ0KQ0LQ0MQ0NQ0OQ0PQ0QQ0RQ0SQ0TQ0UQ0VQ0WQ0XPQMPoEB17}meQ0>P<P=PDPE!t_$HPIPQP\M:dEB!za$x!za9?C8vP:EBP1P2O5W8W>WLWFQ0=Q00PsPhP5P2P8P9Q01DJR9AC18;R;!{y$w!{y<:P8PwPvCG%9vRJ%9wP3PYQ0?!{b91?`yR`,Iw[[[[b2b4eX10MRcW?W6WJWNWMWBWDWCWAWIWGW5W7W<W;W:W9W@PQPKPVPY10B2PK%8_g029UQ02Q03%<[,0B92KLQ04Q0515BS/1_%Vy'315BX/\Z=2YP15B^,AP%WS?U]X#4%=X?S[^#4%=^#E%R]#E%=[#P%@615BMR[/3b11[N,Ab'KQ!#9y%%4i15Ba!sC'M!sC&8!sC&UPKPKPaPNCH!#9~$%@r11uf/1a%`N'3[Q0<PcPa!#5j$Q00!wy&KPKPeQ07CH=_gj!x-315BeRB11Bc5^75>gPhQ09PiO1!#3#/ORqP3Pp!sr$UP6CH,[b/ZdQ0:Q!#8s5AYieH!#8o4,7;!xD$q!xD%qP3PYfQPPPU!x>3,3J1Iq`[[[\9b2b4^101?tr!#82%!s#1bPbTbUbOeW=WKWEWHWRXS0XV3o"). Qed.
+  Proof.
+    intros nr msF mo Q OK VIS H17. cbv zeta. intros LEN H12 H13 H14 H15 CE AL POS RF MC NW NWA NOV ZF ZT ROK BUD K.
+    eapply (sreach_mmap_fixed_commit_lazy asegs nr L S Zr msF _ mo x17 Q OK VIS eq_refl); [ rewrite H17; reflexivity | ..];
+    change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 0) with x10;
+    change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 1) with x11;
+    change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 2) with x12;
+    change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 3) with x13;
+    change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 4) with x14;
+    change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 5) with x15;
+      [ exact LEN | exact H12 | exact H13 | exact H14 | exact H15 | exact CE | exact AL | exact POS
+      | exact RF | exact MC | exact NW | exact NWA | exact NOV | exact ZF | exact ZT | exact ROK | exact BUD | ].
+    intros msF'.
+    change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 1) with x11.
+    change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 0) with x10.
+    change (ms_mem (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs))) with m.
+    cbv zeta. intros OK' VIS' HS' EAG. apply (K msF' OK'); [| exact HS' | exact EAG].
+    rewrite VIS', sysret_MSsvc. unfold R. rewrite mkR_set_a0, lit_add_lit. reflexivity.
+  Qed.
 
   (* [comment removed for export] *)
   Lemma sr_munmap_MS : forall msF mo (Q : config -> Prop),
@@ -181,14 +221,25 @@ ltac2:(KReplay.run1z (kr_t_SecLazy ()) ["CjNodes"] "##MOp'0h01xh14msF'h22L'h31bh
        let mo' := munmap_model a n mo in
        lzok asegs (maps_subtract L (bv_unsigned a) (bv_unsigned a + nZ)) S Zr (mkCfg msF' mo') ->
        restrict (maps_subtract L (bv_unsigned a) (bv_unsigned a + nZ)) S msF'
-         = MS (Ra (Z_to_bv 64 0)) F (Z_to_bv 64 (pc + 4)) fc rv (unfill a n m) (seg_rom asegs) ->
+         = MS (Ra (Z_to_bv 64 0)) F (Z_to_bv 64 (pc + 4)) fc None (unfill a n m) (seg_rom asegs) ->
        hid_same L S msF msF' ->
        (forall x, hiddenb (maps_subtract L (bv_unsigned a) (bv_unsigned a + nZ)) S x = hiddenb L S x) ->
        eager_used mo' + rem (a, n) (cuts mo) <= eager_used mo ->
        sreach asegs Q (mkCfg msF' mo')) ->
     sreach asegs Q (mkCfg msF mo).
-Proof.
-ltac2:(KReplay.run1z (kr_t_SecLazy ()) ["CjNodes"] "##Afh01xh14msF'h21bh33mo'h42ALh53EAGh63H17h73HASh83HIDh93HS'h:1Kh;3LENh<3NOVh=2NWh>3NW2h?3NWAh@2OKhA3OK'hB1QhC2RLhD3VIShE4VIS'hF1ahG1hhH1mhI2mohJ3msFhK1nhL2nZhM3x17p%0p;2p;5p;3p;1p;8p;7p;4p;6p;Op;Pp;:p;Gg01HLj28Tg01IAj5>Tg01JBj3=Tg007Dj14Tg00K_j1TTg00b[j26Tg01@Gj1YTg01LMj8XTg00\Xj1VTg006_j1:Tg005ej1GTg00;ej31Tg00];j22Tg01j7j2STg010Tj1bTg01hBj1\Tg009fj20!sn$Cj25Tg01bTj1DTg01cKj19Tg02DEj3PTg02=Ej1OTg01dAj1CTg02<Kj1NTg008hj2MTg00acj2LTg02>Mj2WTg02?Xj3ATg02E;j3;Tg01CJj3KTg01FDj7<Tg01MQj4BTg02FCj3HTg01eNj17Tg00fXj4JTg02GKj1FTg02HNj2@!u3$Dj1UTg01OWj1eTg00DGj2ITg0037j6?Tg020Vj3dTg01DLj3c!s/$oj5QTg01E_j3aTg004Cj2_Tg021ZlORTg022[j2[Tg023elP]Tg024ol:^Tg02IPlGZTg01NTj4`Tg01GER0f1R1f0R231p=3g00[VR3g01][R4P1P2C`p=Eg01ZkS00g01[ap-0[P3p,1LR5p,1SR6p,2ZrR7f2R8/81D>f3R99=56p,1RR:p,1FR;g00PFR<#4R=#4R>#4!s$&TR?p,2pcR@'6RAp,3x17RBp,2fcRCp,2rvRDp,1mRE%Y3RFGXRG'3%V?RH%:<#4#:!s&$:#:#GR<,6?RI71Bg00L[RJ!st$0RK,2?RLg027OS01'Sg00Y5RM31!sF$1RN16?MRO51H#bS0212?N#\RP,0LRQg02J`S03'5g00PkRRf7RS#DS04#916?PRT7PKg00V^S0531f8RU#D#9#Of9RV!s0$Cf:RW#D#N#C12?2RX,5L1MXQ'L1W15g00Z051RS06[^0HP3AA5LQRQP6P7f=RL9;KT,82D>A=Q61RYp,2RaPOO1S07P;%G>R>,0@,6?RZPCPDAKKTER[PFF<R\'3P5P6f@R]P8CBAHQ62AH562S0851R^0HR^fAR_9;KT#7PHPHPKPTCJR`%F_'@'0%7_'5f5RafBRb9;KTRc'8,E_[[[[[^10P3P4P5!tx$>R4PGPLPBf<Rdf;RePW%UH%eG'IPHPIA1JX<XMH1IJ<PBPVE?PUPSf6RSPaf4RUP9P8P1P3P!un$A;KT4S09!un%dGO[RG,3Y!t9$_P8CB%7c%Fb,@`'0%7b'5PSPaPUP0PG132\XH0RcP0%:=R=#TRYPH%4=#Gg016K5cYS0:POP:DQP;16?>9a?AR=PCPDP!vU%TPc1_YHRcp,2x1RVp,2x2R<p,2x3RIp,2x4Rfp,2x5Rgp,2x6Rhp,2x7Rip,2x8Rjp,2x9RkPOPN!yw$2Rl!s-$3Rm!s-$4Rn!s-$5Ro!s-$6RpPB!s0$8Rq!s-$9Rrp,3x20Rs!s-$1Rt!s-$2Ru!s-$3Rv!s-$4Rw!s-$5Rx!s-$6Ry!s-$7Rz!s-$8R{!s-$9R|p,3x30R}!s-$1R~MORS0;P2P;P!us-/3\X2cPHPZQ0;P;P2!sA2H1I0\P=1[@>E?PYPHQ!vk$VP<PIPfPgPhPiPjPkPKPNPlPmPnPoPpPBPqPrPsPtPuPvPwPxPyPzP{P|P}P~MORDQ!siaPOMP]E?13T\ePGP:P;PAPB!u2$EPFPOP[M:^E?A=Q6aP9E?!z'$2O6W5X8^W9WEWAQ09Q00!z@'1812R1!}'%8/3G!z9$bP9CB%7URGfCRQ#F!z>&Q'518SaR`,EQ[\^[[[b3eX10MGZW:WCW?W=W<W7W>W;W4PKPHPPPJ16?2PHQ04g029U12?9Q01'S=1JMQ0212?a/0UQ03'5%99?PSUQ0551R%9U#O%9a#C%NS#C12?eRe/5X10eW,MX'LQ!#3M$A;dW_!uF$12?LR3103d5A!}a$P1D>12?4R1101L5A5?=68Q07P;P!#3H%4dEPFF<!#3D%EP9CB12?_R?10?]5A5?H62Q!#3I&PHPHP_f?CJfFRH#F'@,0G%7H'51EH`[[!v,$^1018b_,E][!s#'bGbKbLbFeW6WDW@WBWIXJ0o"). Qed.
+  Proof.
+    intros msF mo Q OK VIS H17. cbv zeta. intros AL LEN NW2 HAS NOV NW NWA RL K.
+    eapply (sreach_munmap_lazy asegs L S Zr msF _ mo x17 Q OK VIS eq_refl); [ rewrite H17; reflexivity | ..];
+    change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 0) with x10;
+    change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 1) with x11;
+      [ exact AL | exact LEN | exact NW2 | exact HAS | exact NOV | exact NW | exact NWA | exact RL | ].
+    intros msF'.
+    change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 1) with x11.
+    change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 0) with x10.
+    change (ms_mem (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs))) with m.
+    cbv zeta. intros OK' VIS' HS' HID EAG. apply (K msF' OK'); [| exact HS' | exact HID | exact EAG].
+    rewrite VIS', sysret_MSsvc. unfold R. rewrite mkR_set_a0, lit_add_lit. reflexivity.
+  Qed.
 End CjNodes.
 
 (* [comment removed for export] *)
@@ -266,7 +317,10 @@ Proof.
 ltac2:(KReplay.run1z (kr_t_SecLazy ()) [] "##9jh02H0h11Hh22H1h32H2h42H3h52H4h62H5h72SBh82VMh92moh:3mo'h;1vp;2p;3p;1p;6p;4g0305j2RTg031Kj3QTg02d^j1?Tg01bTj17Tg007Dj1CTg00K_j1PTg00\Xj1OTg00f8j2NTg00?\j1MTg032hj16Tg02eQj14Tg02fDj13Tg02g9j12!s/$nj10Tg02hbj1:Tg00;ej31Tg02nlj2@Tg01jWj1DTg00acR0j25Tg00DGj2JTg0037j6ITg01Aij4BTg02jOf1R1f0R231p=9g02kGR3?112p=;g02n2R4%:1;12p=>g02l?R5f4R6f3R731g02m9R8f2R9;11/52'5p=81512,59p=AA1791/52p=<%:29141p==A13!s;&H%229151p=LA18!s;&G%21=152p=E%029181p=K%01=182p=Fg01ZkR81R12AQ912g02iWR5%?1%?9R3g029UR4%71%79R:g00PF#C!s$-P#OR;/N;#MR;%61%69R<%41%49R='9%31%39R>';%21%29R?%01%09R@%:9R9,>1D83AC<C<C<P0%?79153P4P:%77P;P<%67%47,9=%37,;>P?%27P@%071=97!sa'1@67P2%?6f5R6#?515P4%76f6R7#7R9P;%66%67R@%46%47R?'9%36%37!tf%6%27R=%06%07R<%:7R7,>6!t''P0f7R:#79149P;P@%6:%4:,9?%3:,;>P=%2:P<%0:1=7:!s[%f8R7/@:P2%77f9R7#7514P;%67f:R:#6R<%47%4:!v?%7%3:!tW%7%2:R?%07%0:R@%::R:,>!u\&P0f;R9#691;<%49!v0$9!v0&9P@%091=:9D83Af<R:/@9P2%6:f=R:#651;%4:f>R;#4R9'9%3:%3;R@';%2:%2;R?%0:%0;R>%:;R;,>!u>$P0f?R=#4,99%3=P?%2=P>%0=1=;=D85H@f@R@/@=P2%4@fAR@#4'9%3@fBR=#3R;%2@%2=R>%0@%0=R?%:=R=,>@D83HP0fCR@#3,;;P>%2@P?%0@1==@D8fDR=/@@P2%3=fER=#3';%2=fFR@#2R?%0=%0@R>%:@R@,>=D8P0fGR;,L?%0;1=@;5G>fHR>/@;P2fIR;#2,E>%0;fJR>#0R@%:>R>,>;3GP0fKR0,K@1=>0fLR>/@0P2fMR0#0,F>fNR>#:R@,>0%?>fOR0!yr$%4>%40'9R5%3>%30';R?%20,E>R9%00,F>R<1=@0R@g00L[R3%7>R>#D%70R0#DRA31RB'5RC'5RD'5RE'5RF'5P;P5PFP:P?PEP7P9PDP6P<PCP1P@PBP2P4P0%D2fP#7#D513X;41J3AP>P=EICB!s$,W6W5P1P2O2n20010!s#$12!s/&W5W4!sD>4W3!sD>3W2!sD>2W0!sD>0W8!sD@1!sD=b1W7X:8W9o"). Qed.
 Lemma nonvm_same_grant : ltac2:(zQ "60!hk2!hr9!hk8!lmc!nk3!nmb>5flags@1$1@1$0#k0>1a@1$1@1$0#k0>1n@1$1@1$0#k0>2na$2>2mo$3@2$4^1@5$5^5^4^3^2^1").
 Proof.
-ltac2:(KReplay.run1z (kr_t_SecLazy ()) [] "##;_p'0h01ah11bi001bh22fdh35flagsh42fsh52ioh64lazyh72lmh86m_fsysi01!s0&h94m_ioi02!s-$h:5m_limi03!s/%h;6m_proci04!s0&h<6m_timei05!s0&h=4m_vmi06!s-$h>4mapsh?3math@2mohA1nhB2nahC4!sj$D2tmhE1vi071vi081mi094m_fdi0:9vmst_lazyi0;!s3%mapsi0<A!s3&terializedp;1p;4p;5p;7p;2p;3p;6g007Dj1ETg00K_j1WTg00\Xj1VTg01bTj1>Tg033`j4FTg01noj5GTg02d^j13Tg02eQj14Tg02fDj11Tg02g9j15!s/$nj12Tg02hbj10Tg01jWj16Tg034kj7HTg00f8j2UTg00?\j1PTg035aj1TTg036fj2OTg037bj3ITg038Zj2NTg032hj1MTg01lIj3LTg039Tj1KTg03:Tj3JTg00acj27Tg00DGj2?Tg01Aij4CTg03;Rj5RTg0037j6QTg02nlj2STg00;ej3@Tg02iWR0f1R1f0R23@p=9g02jOR3?@12p=8g02kGR4!s4%:g02l?R5!s4%=g02m9R6!s4%<g02n2R7!s4%;g00L[R8!s4%Df2R91712'7p=Bf4R:f3R;1712,79'7'7p=Ag00PF#E!s$-W#VR<g00PkR=g01ZkR>g029UR?%>2R@P;P9P1CFf5RAP:!s4%DGRB#3%31'9%4B%41'8%1B%11':%5B%51'=%2B%21'<%0B%01';%62%>1#6'D3BDAXE?P>P!sv'2!sv'2!sv&2!sv&2!sv&2!sv&2!sv&2';P@!sc%CF#6%6@!s}%P2g03<cR@P@fCfBR@fARBf@RCf7RD!t=+1P2FHREDGRF#3%3E'9%4F%4E'8%1F%1E':%5F%5E'=%2F%2E'<%0F%0E';%>EREP@PBPC!tF%E!tF%^<7^:6^;5^84^93P21U<<RE#P%P<fHRC#TP=!s$$>P2fIR>/OCf>f9f8R=;IDf6RB!tk'FHR@#>RFP>PCfGR>CFRG/N@RH#M5LE%KH;JHPHn010!s#$20000RH#3%3@'9%4H%4@'8%1H%1@':%5H%5@'=%2H%2@'<%0H%0@';%6G%6F!vQ'f=RFAI=D!tR+P1FHR=#>RGPCP>fFR@CFRH/N=RI#3RJ/9F%4IRK/8ARL%1IRM/::RN%5IRO/=;RP%2IRQ/<9RR%0IRS/;1RT%6H%6GRG'DRH'7RU'7RV'7RW'7RX'71?0FPLPX1?3APNPW1?4:PPPV1?5;PRPU1?69PTPH1?711?8GC!s#-RG1OC>%MI!v>$I;JIRI#3%3=R!xG$I%4=R8'8%1I%1=RT':%5I%5=RU'=%2I%2=RR'<%0I%0=R=';;BHDAePG19JE18K81:MT1=OU1<QR1;S=!sF%n0110001020101b1PCP>P@fERCf<AIDB!z%1DDG!wj%D!wj&D!wj&D!wj&D!wj&D!wj&D';%>DRDP>P@!z%'D!wv%eXD7X76XC5X44X53W?W6X>?!t:%O3!tg$700013110;10:10<W=X20P!xN-P2O7!sP$8000171109106102101104103105!sS,DGRA#>!s6-REQ1S2AeW@WBXA<X0<W3o"). Qed.
+  intros flags a n na mo. unfold nonvm_same. rewrite grant_model_vmmaps.
+  destruct mo as [fd [maps lazy mat] io fs proc lm tm]. unfold grant_model, with_mmap_backing, vm_add_lazy.
+  destruct (mmap_noreserve_b flags); cbn; repeat split; reflexivity.
+Qed.
 Lemma nonvm_same_commit : ltac2:(zQ "60!hk2!hr9!hk8!lmc!nk3!nna>5flags@1$1@1$0#k0>1a@1$1@1$0#k0>1n@1$1@1$0#k0>2na$2>2mo$3@2$4^1@5$5^5^4^3^2^1").
 Proof.
 ltac2:(KReplay.run1z (kr_t_SecLazy ()) [] "##1%h01Hh12H0h22H1h32H2h42H3h52H4h61ah75flagsh82moh91nh:2nah;1vp;1p;5p;3p;2p;4p;6p;9g007Dj18Tg00K_j1ETg00\Xj1>Tg02@Tj57Tg02d^j1:Tg00;ej30Tg02eQj14Tg02fDj13Tg02g9j15!s/$nj12Tg02hbj16Tg02nlj2=Tg01bTj1<Tg03=[j4DTg01jWj1;Tg00acj21Tg00DGj2CTg01Aij49Tg03>gj5BTg0037j6?Tg03@9j5@Tg03AJl9ATg00PF#8!s$-E#>R0g00Pkg01Zkg02iWR1f4R2f3R3f2R4f1R5f0R6D7R7#:%:630R8g02jOR9%47%4630g02kGR:%37%3!s5%l?R;%57%5!s5%m9R<%27%2!s5%n2R=%67%66301=67f5R7P2P3P4P5D7#4%45509f6R>P!s>&D7#3%3450:f7R?P!s>&D7#5%5350;f8R@P!s>&D7#2%2250<f9RAP!s>&D7#6%6750=g029URB%<>RCP!sF$CDRDf;f:RE!s6%D7RF#:%:?501%4F%4?509%3F%3?50:%5F%5?50;%2F%2?50<%6F%6?!t%$0L[RF%;6%<?#;30'1!s$,X;BP!t/&P>D7RB#:%:>!t1$B%4>509R9%3B%3>50:R:%5B%5>50;R;%2B%2>50<R<%6B%6>50=R=%;D%;CRC50FRD'1R1'1RG'1RH'1RI'1P7P9PIP2P:PHP3P;PGP4P<P1P5P=PDP61CFCC9!s$,%<!tm/BE?1=>BeW5W4W3W2W1X08!wj'P6D@M9AW8W:X90X60W7o"). Qed.

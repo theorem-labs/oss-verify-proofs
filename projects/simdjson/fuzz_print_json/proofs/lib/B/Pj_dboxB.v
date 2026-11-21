@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -596,7 +597,7 @@ Hypothesis EL : rt_live RT Σ1 = rt_live RT Σ.
 Hypothesis ES : rt_sp0 RT Σ1 = rt_sp0 RT Σ.
 Hypothesis INF : In (fN, kN) (rt_frames RT Σ).
 Hypothesis NBF : fN <= d_NB I /\ d_NB I + 40 <= fN + fs_size kN - 8.
-Hypothesis LOR : rt_sp0 RT Σ - STACK_WIN <= d_lo I.
+Hypothesis LOR : rt_sp0 RT Σ - STACK_SPAN <= d_lo I.
 
 Local Ltac ul := unfold SEGTOP_A, STACK_WIN, USTACK_TOP, RT_STACK in *; lia.
 
@@ -779,7 +780,7 @@ Hypothesis ES : rt_sp0 RT Σ1 = rt_sp0 RT Σ.
 Hypothesis EC : rt_credit RT Σ1 = rt_credit RT Σ - 1.
 Hypothesis INF : In (fN, kN) (rt_frames RT Σ).
 Hypothesis NBF : fN <= d_NB I /\ d_NB I + 40 <= fN + fs_size kN - 8.
-Hypothesis LOR : rt_sp0 RT Σ - STACK_WIN <= d_lo I.
+Hypothesis LOR : rt_sp0 RT Σ - STACK_SPAN <= d_lo I.
 Hypothesis FRM : frm0 fc.
 
 Hypothesis HK : forall (Σ' : rts RT) (n e : Z) t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F' fc' m' (nb' : list byte),

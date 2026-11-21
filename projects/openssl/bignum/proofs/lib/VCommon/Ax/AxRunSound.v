@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's segment list). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
@@ -8,6 +9,7 @@ From Stdlib Require Import Uint63.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.openssl.bignum.lib.VCommon Require Import PropExec FastWord FastWordSem ShapeAlg ShapeAlgCfg.
 From OSSVerify.Proofs.openssl.bignum.lib.VCommon.Ax Require Import ExTrie.
+From OSSVerify.Proofs.openssl.bignum.lib.VCommon.Cfg Require RomBase.
 From OSSVerify.Proofs.openssl.bignum.lib.VCommon.Ax Require Import AxLazy AxLin AxVal AxMem AxMemC AxZZ AxState AxStep AxFetch AxEntryRel AxSys AxOcc AxJoin AxJoinSound AxRun.
 Import ListNotations.
 
@@ -54,7 +56,7 @@ Lemma step_next_sound (ic ic' : itrie icent) (A A' : AST) :
 Proof.
   intros Hic Hst HS ρ c HR o Ho.
   destruct (astep_next_node segs cfg amodel MR LIM MR_mat Hlow ic ic' A A' ρ c Hic HR Hst) as [c' [Hnode HR']].
-  apply (rzc_silent1 segs cfg c c' _ Hnode). apply (HS ρ c' HR' o).
+  apply (rzc_silent1 segs cfg c c' _ Hnode (RomBase.sys_rob_instr segs c (r_svc _ _ _ _ _ _ _ HR))). apply (HS ρ c' HR' o).
   destruct (astep_cases segs amodel LIM ic A ic' _ Hst) as [[w [i [d [_ Er]]]]|[[w [_ Er]]|[_ [Er _]]]]; try discriminate.
   pose proof (astep_d_model segs amodel LIM A d) as Hm. destruct (astep_d segs amodel LIM A d); try discriminate.
   injection Er as <-. rewrite Hm. exact Ho.
@@ -65,7 +67,7 @@ Lemma step_fork_sound (ic ic' : itrie icent) (A : AST) (l : list AST) :
 Proof.
   intros Hic Hst HS ρ c HR o Ho.
   destruct (astep_fork_node segs cfg amodel MR LIM MR_mat ic ic' A l ρ c Hic HR Hst) as [c' [Hnode [A' [HIn HR']]]].
-  apply (rzc_silent1 segs cfg c c' _ Hnode). apply (HS A' HIn ρ c' HR' o).
+  apply (rzc_silent1 segs cfg c c' _ Hnode (RomBase.sys_rob_instr segs c (r_svc _ _ _ _ _ _ _ HR))). apply (HS A' HIn ρ c' HR' o).
   destruct (astep_cases segs amodel LIM ic A ic' _ Hst) as [[w [i [d [_ Er]]]]|[[w [_ Er]]|[_ [Er _]]]]; try discriminate.
   pose proof (astep_d_model segs amodel LIM A d) as Hm. destruct (astep_d segs amodel LIM A d); try discriminate.
   injection Er as <-. rewrite (Hm A' HIn). exact Ho.

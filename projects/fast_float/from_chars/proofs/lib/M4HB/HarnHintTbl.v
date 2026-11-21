@@ -1,10 +1,11 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (HINT_MODE 0: the joins are computed in the build; the recorded hints are keyed by main's start-up states, which the relaunched states no longer match). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope Z_scope.
-Definition HINT_MODE : Z := 2.
+Definition HINT_MODE : Z := 0.
 Definition HINTS : list (list Z * positive * list Z) := [
   ([1; 449112; 14473; 2; 405; 155], 111870718431542817204760874740917337854381793641291611443130662899652593770909781872442516663377454591520935582886717656540612737332317877736113382974861639142628415265543797274479692427652260844707187532155254872952853725026318685997495262134665214%positive, []);
   ([1; 593384; 14693; 3; 442; 155], 528294531135665246352339784916516606518847326036121522127960709026673902556724859474417255887657187894674394993257128678882347559502685537250538978462939576908386683999005084168731517676426441053024232908211188404148028292751561738838396898767036476489538580897737998314%positive, [0; 8; 0; 996672; 0; 38; 0; 51; 0; 998728]);

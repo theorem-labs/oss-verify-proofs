@@ -1,5 +1,5 @@
-# YI5cSat consumer grep, ref 77bc9603b25b (the series head before this commit)
-# command: git grep -l -w -e <word> 77bc9603b25b -- proofs/reac-repacer/fuzz_wire/lib
+# YI5cSat consumer grep, ref (the series head before this commit)
+# command: git grep -l -w -e <word> -- proofs/reac-repacer/fuzz_wire/lib
 sink_at	Reusable/YI14.v U/Reusable/YI14.v 
 file_at	Reusable/YE00.v Reusable/YI14.v U/Reusable/YI14.v 
 stdio_env	Reusable/YI14.v U/Reusable/YI14.v 

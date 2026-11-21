@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -48,7 +49,7 @@ Definition os_put_cpsA : Prop :=
   OSX m OS fill -> FILLOK fill -> os_hullA m OS -> LOCBA m ->
   bytes_at asegs m BUF bs -> Z.of_nat (length bs) = CAP -> 0 <= N <= CAP -> CAP <= 2^40 -> 0 < BUF -> acc asegs m BUF N -> srcA RT Σ q BUF CAP bs ->
   (BUF + CAP <= OS \/ OS + 288 <= BUF) ->
-  ART RT Σ m -> mem_inv asegs m -> stk asegs m lo q -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + EL_PUT_STACK_A <= q ->
+  ART RT Σ m -> mem_inv asegs m -> stk asegs m lo q -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + EL_PUT_STACK_A <= q ->
   q + 16 <= USTACK_TOP -> q mod 16 = 0 ->
   Z.of_nat (length (rt_frames RT Σ)) + 2 <= FRAMES_TOT -> 2 <= rt_credit RT Σ ->
   (forall (Σ' : rts RT) t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F' m',
@@ -66,7 +67,7 @@ Definition ins_cpsA (ENTRY : Z) (VOKP : Z -> Prop) (FL W : Z) (fills : Z -> Prop
   fdfs_only PMc -> mat_stable PMc ->
   In (fO, kO) (rt_frames RT Σ) -> fO <= OS -> OS + 288 <= fO + fs_size kO - 8 -> OS mod 16 = 0 ->
   OSXW m OS FL W fill -> fills fill -> os_hullA m OS -> LOCBA m -> el_tploc m -> io_ssp m -> VOKP v -> frm0 fc ->
-  ART RT Σ m -> mem_inv asegs m -> stk asegs m lo q -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + DEPTH <= q ->
+  ART RT Σ m -> mem_inv asegs m -> stk asegs m lo q -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + DEPTH <= q ->
   q + 16 <= USTACK_TOP -> q mod 32 = 0 ->
   Z.of_nat (length (rt_frames RT Σ)) + 1 <= FRAMES_TOT -> 1 <= rt_credit RT Σ ->
   (forall (Σ' : rts RT) t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' (F' : bvmap 5 word) (fc' : bv 32) m',
@@ -90,7 +91,7 @@ Definition ins_d_cpsA : Prop :=
   fdfs_only PMc -> mat_stable PMc ->
   In (fO, kO) (rt_frames RT Σ) -> fO <= OS -> OS + 288 <= fO + fs_size kO - 8 -> OS mod 16 = 0 ->
   OSXW m OS 0x1002 0 fill -> FILLOK fill -> os_hullA m OS -> LOCBA m -> el_tploc m -> io_ssp m -> reg_get F (Z_to_bv 5 10) = dw -> frm0 fc ->
-  ART RT Σ m -> mem_inv asegs m -> stk asegs m lo q -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + EL_INSD_STACK_A <= q ->
+  ART RT Σ m -> mem_inv asegs m -> stk asegs m lo q -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + EL_INSD_STACK_A <= q ->
   q + 16 <= USTACK_TOP -> q mod 32 = 0 ->
   Z.of_nat (length (rt_frames RT Σ)) + 1 <= FRAMES_TOT -> 1 <= rt_credit RT Σ ->
   (forall (Σ' : rts RT) t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' (F' : bvmap 5 word) (fc' : bv 32) m',
@@ -110,7 +111,7 @@ Definition setfill_cpsA : Prop :=
   In (fO, kO) (rt_frames RT Σ) -> fO <= OS -> OS + 288 <= fO + fs_size kO - 8 -> OS mod 16 = 0 ->
   OSXW m OS FL W fill -> (fill = 0x20 \/ fill = 0x30) -> os_hullA m OS ->
   bytes_at asegs m CP [Z_to_bv 8 c] -> 0 <= c < 256 -> q <= CP -> CP + 1 <= USTACK_TOP - 16 ->
-  ART RT Σ m -> mem_inv asegs m -> stk asegs m lo q -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + EL_SETFILL_STACK_A <= q ->
+  ART RT Σ m -> mem_inv asegs m -> stk asegs m lo q -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + EL_SETFILL_STACK_A <= q ->
   q + 16 <= USTACK_TOP -> q mod 32 = 0 ->
   (length (rt_frames RT Σ) < FRAMES_MAX)%nat -> 1 <= rt_credit RT Σ ->
   (forall (Σ' : rts RT) t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F' m',

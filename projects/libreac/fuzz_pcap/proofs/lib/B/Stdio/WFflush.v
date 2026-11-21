@@ -1,6 +1,7 @@
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the walk of fflush on libreac/fuzz_pcap's v1.9.0 ASAN-UBSAN image, for the fmemopen
    READ stream, at BOTH entries lib/A/Stdio/PFflush.v's pfflush_entry_ok admits:
      PFFLUSH_MUSL_U 0x8e308   musl fflush itself
@@ -8,12 +9,12 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    The statement is PFflush.v's afflush_source_spec, UNCHANGED and not copied: this file Requires it. It is
    image-generic (the entry pc is a parameter), so the same text serves the asan and the asan-ubsan images.
 
-   PORTED FROM a Theorem Labs lane's OWN PROVED ASAN WALK, lib/A/Stdio/WFflush.v at a working branch 2f839b241ee
+   PORTED FROM a Theorem Labs lane's OWN PROVED ASAN WALK, lib/A/Stdio/WFflush.v at a working branch
    (afflush_source_spec_musl / _icpt / _pcap), for the structure, the case split and the tactics; and from the
    RELEASED PLAIN proof proofs/libreac/fuzz_pcap/lib/Prog/fflush_c.v for facts and pcs only. NEITHER IS
    IMPORTED: the first states over the asan image, the second over the plain model.
    rule 24 (lookup) was run UNPIPED and CONFIRMED by a fresh read-only checker before this file was written:
-   at ossv/recipes 25e3d17bdb50 (2026-10-29), no released proof stated fflush on ANY pcap ASan image; pcap's released hits were the PLAIN (lib/Prog,
+   (2026-10-29), no released proof stated fflush on ANY pcap ASan image; pcap's released hits were the PLAIN (lib/Prog,
    images.Plain) and UBSAN (lib/U/Prog, images.Ubsan) images only. Output
    fflush.out (sha256 a8a821383af7; internal record), EXIT=0.
 
@@ -38,11 +39,11 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    So PFFLUSH_JALR_U = 0x8e3a0 (word 0x000680e7, read off the image) and PFFLUSH_RET_MSEEK_U = 0x8e3a4.
 
    THE _U CONSTANTS AND THEIR SOURCE. PFFLUSH_MUSL_U 0x8e308, PFFLUSH_ICPT_U 0x41618 and PMSEEK_U 0x8eaf4 are
-   a Theorem Labs lane's lib/B/Stdio/PStdioImgB.v at a working branch b4439851fa3 (the image pcs left the statement
-   files at a working branch c625af6eaa9; their values there were the same), taken BY NAME, never
+   a Theorem Labs lane's lib/B/Stdio/PStdioImgB.v at a working branch (the image pcs left the statement
+   files at a working branch; their values there were the same), taken BY NAME, never
    redeclared here; PMSEEK_STK 48 and PFFLUSH_OWN_STK 1840 stay in lib/A/Stdio/PFmopsM.v / PFflush.v. The
-   asan-ubsan symbol record KS_U is a Theorem Labs lane's lib/B/Stdio/PSourceK.v (a working branch d6edf2117df, an
-   ancestor of a working branch b4439851fa3, which changes only a comment of it; auditor a Theorem Labs lane PASSED it 18/18);
+   asan-ubsan symbol record KS_U is a Theorem Labs lane's lib/B/Stdio/PSourceK.v (a working branch, an
+   ancestor of a working branch, which changes only a comment of it; auditor a Theorem Labs lane PASSED it 18/18);
    this file takes `pcap_KS` from THAT file, never from lib/A/Stdio/PSourceK.v.
    PFFLUSH_OWN_STK 1840 needs no twin: a Theorem Labs lane measured it identical in both images, and every step of
    this walk re-measured against it agrees (fflush's own frame 32, mseek 48, the interceptor front 80 and its
@@ -83,20 +84,20 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    __asan_report_* call site; the only fatal edges in reach are inside iflush_tail, which refutes them.
 
    ajournal_sub_tok IS COPIED INTO THIS FILE (Section J), verbatim from lib/A/Prog/YC85.v at
-   a working branch 02075de74ec, statement and proof unchanged, under the name wffu_aj_sub_tok. WHY: the
+   a working branch, statement and proof unchanged, under the name wffu_aj_sub_tok. WHY: the
    lib/B closure rule. YC85 Requires lib/A/Prog/PcapSyms and PcapPa, whose closure reaches lib/A/Prog/PcapList
    -- an asan-address listing that the auditor's three-limb checker flags (limb b, twin literals), and whose
    au twin lives on a working branch, a branch this union does not need for anything else. The lemma
    itself names no image and no address. Nothing else of YC85 is used.
 
    THE UNION this file builds in (a LOCAL merge commit of pushed shas, never pushed), every member listed:
-     a working branch     this branch (base a working branch 02075de74ec, merged c625af6eaa9)
-     a working branch   83eefd767e6   (the au core: YB1v YE2f YE2h YE2y YE3i YF0m YF0x and their
-                                                closure; it merges a working branch 6927e0d899c, so the generated
+     a working branch     this branch (base a working branch, merged)
+     a working branch   (the au core: YB1v YE2f YE2h YE2y YE3i YF0m YF0x and their
+                                                closure; it merges a working branch, so the generated
                                                 set YF0m / YB1v / YB1k / YD2j is a Theorem Labs lane's text byte for byte
-                                                and 6927e0d899c is an ANCESTOR, not a separate member)
-     a working branch      595c3188fe3   (the lib/A core this branch's statement closure needs)
-     a working branch      b4439851fa3   (lib/B/Stdio/PSourceK.v = KS_U, lib/B/Stdio/PStdioImgB.v)
+                                                and is an ANCESTOR, not a separate member)
+     a working branch   (the lib/A core this branch's statement closure needs)
+     a working branch   (lib/B/Stdio/PSourceK.v = KS_U, lib/B/Stdio/PStdioImgB.v)
    No -wip branch is merged into this branch.
 
    THE lib/B CLOSURE. The Require closure of this file reaches exactly four lib/A files, all of them the
@@ -137,7 +138,7 @@ Open Scope bv_scope.
 Open Scope Z_scope.
 
 (* ---------------------------------------------------------------------------------------------- *)
-(* 0. ajournal_sub_tok, COPIED VERBATIM from lib/A/Prog/YC85.v (a working branch 02075de74ec),   *)
+(* 0. ajournal_sub_tok, COPIED VERBATIM from lib/A/Prog/YC85.v (a working branch),   *)
 (*    statement and proof unchanged, renamed wffu_aj_sub_tok.                                        *)
 (*                                                                                                   *)
 (* The porter's rule is that a token-carrying footprint (asource_fp, which holds YI16.sink_token) is  *)
@@ -241,7 +242,7 @@ Proof. rewrite wffu_tbl_eq. apply build_table_ok0. unfold PFFLUSH_MUSL_U. lia. Q
 Lemma wffu_ausegs_wx : wx_segs_nowrap ausegs.
 Proof. apply wx_segs_nowrap_of_b. vm_compute. reflexivity. Qed.
 (* The same shape as a Theorem Labs lane's pcapu_segs_low over this image (WMclose.v (sha256 4729121bf767; internal record),
-   a working branch 9c2da15fd15), which carries the asan-ubsan twin of the asan lemma. *)
+   a working branch), which carries the asan-ubsan twin of the asan lemma. *)
 Lemma wffu_ausegs_low : forall a, in_img ausegs a -> 0 <= a < kLowMemEnd.
 Proof.
   intros a (sg & Hin & Hlo & Hhi).

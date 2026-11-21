@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (2 recorded proofs replaced by written proofs (rta_fp_meta, rta_fp_grp)). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
@@ -37,11 +38,9 @@ Lemma rta_fp_ctx st lo sp a : RCTX <= a < RCTX + 928 -> rta_fp st lo sp a.
 Proof.
 ltac2:(KReplay.run1 (kr_t_RASlot_W9 ()) ["CANSEC1"] "h01ah12loh22sph32sth41bh52ghh61qp;2p;1p;4p;6p;3g00>9j24Tg00?Lj13Tg00@1j10Tg00@Vj15Tg00A4j27Tg00>Uj22Tg00?1j21Tg00AQj2=Tg00BPj28Tg00CEj26Tg00C_j1<Tg00DAj4;Tg00D_j6:Tg00;Nj4ETg0056j4DTg00E@j1CTg005aj6ATg00F9j2@Tg002:j3?Tg00F[j29Tg00G5j3>Tg00MHj3BTg00GOR0g00HHR1g00HfR2f0R3'4g00I`R4#3#3#0#3#0#0#0#0#0#5,72R5,23'1f3R6f1R7'4f2R8,27'114271275'1R5g001ER2f5R9/=31893R9/48%04R4#3#0#0#0#5,79,28'1'1X62'6g00JER9%<9P2P9P2g00K<R:g00KZR;P1g00L3R<C;R=P:P;g00LLP1P<g00LjE:R<P9CEP2P=P<P9CDP7f6R<#CEA1@933?18<7R</46%04#3#5,7<,26'1'1X59'6X42,62'9R2'9A>5233BUX01X21X11X30P6P8P7P3O4X01X21W1W3o"). Qed.
 Lemma rta_fp_meta st lo sp a q : meta_slot st q -> conc st q <= a < conc st q + 40 -> rta_fp st lo sp a.
-Proof.
-ltac2:(KReplay.run1 (kr_t_RASlot_W9 ()) ["CANSEC1"] "h01qh11ah22loh32sph42sth51bh62ghp;2p;1p;4p;6p;3g00AQj29Tg00BPj26Tg00>9j23Tg00@1j10Tg00?Lj15Tg00@Vj18Tg00A4j24Tg00>Uj22Tg00?1j21Tg00CEj27Tg00C_j1>Tg00DAj4=Tg00D_j6<Tg00;Nj4GTg0056j4FTg00E@j1ETg005aj6DTg00F9j2CTg002:j3BTg00F[j2;Tg00Mbj4@Tg00N=j4ATg00G5j3?Tg00MHj3:Tg00GOR0g00HHR1g001ER2f4R3f0R4'9f5R5f1R6'6R7f2R8'3g00I`R9#0R:#5#0#0#0#8R;,47,28'1f3R7,351273'1g00HfR</37%59#5#0#5#0#0#0#0#0#8,4<,27'1R<f7R9/941694R9/33149;,23'1'1X02R9,72R=g00JER>%>>P2P>P2g00K<R?g00KZR@P1g00L3RAC=RBP?P@g00LLP1PAg00LjE<RAP>CGP2PBPAP>CFP6f8RA#EED1C>43B16A6RA/35%0:#5#8,4A,25'1'1X6>'7X52,72R>';R5';P2P9P8f6R9/981698R9/37149;,27'1P6P4C@CA9?=>9:<53:UUX02X11X31X21X40P3P7P8P6P4O5W0X11X31W2W4o"). Qed.
+Proof. intros; do 2 right; left. exists q; auto. Qed.
 Lemma rta_fp_grp st lo sp a b gh : (s_groups st) !! b = Some gh -> conc st b <= a < conc st b + 9 -> rta_fp st lo sp a.
-Proof.
-ltac2:(KReplay.run1 (kr_t_RASlot_W9 ()) ["CANSEC1"] "h02ghh11bh21ah32loh42sph52sth61qp;1p;4p;6p;2p;3g00C_j1GTg00DAj4FTg00D_j6BTg00;Nj4@Tg0056j4ETg00E@j17Tg00F9j2?Tg002:j38Tg00BPj25Tg00>9j23Tg00@1j10Tg00?Lj16Tg00@Vj1<Tg00A4j24Tg00>Uj22Tg00?1j21Tg00AQj2DTg00CEj2;Tg00F[j2>Tg00Mbj4CTg00N=j4=Tg00MHj3:Tg005aj6ATg001ER0g00JER1f3R2f2R3f1R4f0R5EAp=9g00GOR6g00HHR7%G1R8P0g00K<R9g00KZR:P7g00L3R;CFR<P9P:g00LLP7P;g00LjEBR;P1C@R:P0P<P;P1CER;P4f5R<#7C91?15R938f6R=/53R>/32g00I`R?#0R@#0#6#<RA,4>,22'1f4R>,3=12><'1g00HfRB/3>%6?#6#0#6#0#0#0#0#0#<,4B,2>'1RBf8R?/D515?5RC/3<%6@#0#0#0#<,4C,2<'1'1X60,;0RCP:P;P4f9R@#7C9=88915@4R@/3=14@A,2='1'1X01,;1X10R=,;0R@'>RD'>P0P=P2P1P:P;P>%7?C9=88915?>R?/3<14?A,2<'1'1X01P3P:P;P2f7R;#7C91?1358815;2R;/3>14;A,2>'1P4P5CCC=C=9:C@9:BD3:UUX01X10X27X47X37X56P<P>P2P3P4P5O6X01X10X27X47W3W5o"). Qed.
+Proof. intros; do 3 right. exists b, gh; auto. Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)

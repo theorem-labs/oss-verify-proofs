@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the recorded proof of strong_universal_error_free_pix_orient_fuzzer_both replaced by plain proof). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -18,4 +19,6 @@ Theorem strong_universal_error_free_pix_orient_fuzzer_both :
     (mkImage Plain.M.loaded_segments Plain.M.init_pc Plain.M.phdrs)
     (mkImage AsanUbsan.M.loaded_segments AsanUbsan.M.init_pc AsanUbsan.M.phdrs).
 Proof.
-ltac2:(KReplay.run1 (kr_t_BasePixOrientBoth ()) [] "p;1p;3p;6g0000j14Tg001Lj13Tg002ij30Tg0042j11Tg0055j62Tg006FR0#4R1%30R0g007CR29010g008@%12g0099E2o"). Qed.
+  exact (@pix_orient_both_pre _ _ (@acr_sure _ _ s16_credit) O23Pins.s16_pins (s16_fuzz_call s16_credit)
+           (OSSVerify.Proofs.leptonica.pix_orient_fuzzer.lib.K5.B23.TopA_final.s3s_closed OSSVerify.Proofs.leptonica.pix_orient_fuzzer.lib.K5.B23.TopA.topA_runseg)).
+Qed.

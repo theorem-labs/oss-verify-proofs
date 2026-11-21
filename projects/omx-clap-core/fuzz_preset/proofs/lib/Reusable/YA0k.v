@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YA0k.v, with its module paths changed; relocated to fuzz_preset asan-ubsan (pin f8f98a95bc52), map sha256 40ba3a40933d, checker port_addr_check.py 5033540ba83b; 1 numeral(s) of it stay cgif_file_fuzzer's (UNMAPPED / NOT RELOCATED in dry run sha256 d62a4bb8656b). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -14,6 +15,7 @@ From LinuxProcessSemantics.LinuxProcessSem.Checks.Sys Require Import Prelude.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Fs Require Import Namei Open ReadWrite.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YK16 YK0n YK11 YK0i YK0h YK14 YK0v YK0p YK02 YK15 YK18.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YP0n YK04 YA0i YA0m.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import RomWritev.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
@@ -115,6 +117,16 @@ apply (node_ret_only_copyins_lazy segs H A regs pc mem rom model accs (len_word 
 - subst m'. rewrite with_fds_halted, with_fs_halted. exact (AI_halted segs H A model HAI).
 - subst m'. apply ledgers_with_fds_fs.
 - exact Hav.
+- (* LPS 727298f3: node_ok carries sys_rob; the file writev's reads succeed over every larger
+     backing with the same bytes (RomWritev), so its closed form is the same there. *)
+  apply (rob_pend segs). intros rom' Hr eff.
+  pose proof (pend_mem_ext regs pc mem rom rom' Hr) as Hx.
+  rewrite (writev_file_chk_canon regs pc mem rom' model fd p off data iovs bs Hno Hlk H32 Hfd Hcnt Hmax
+    (copy_iovecs_aux_ext _ _ _ _ _ Hx Himp) Hiok Hbok (gather_iovecs_ext _ _ _ _ Hx Hg) Htot Hnb Hfs Hpos Hgap eff).
+  rewrite (writev_file_chk_canon regs pc mem rom model fd p off data iovs bs Hno Hlk H32 Hfd Hcnt Hmax
+    Himp Hiok Hbok Hg Htot Hnb Hfs Hpos Hgap eff).
+  rewrite (writev_copyins_ext regs pc mem rom rom' iovs bs (length bs) Hr Hcnt Hmax Himp Hiok Hbok Hg Htot).
+  reflexivity.
 Qed.
 Lemma node_writev_file2_lazy : forall regs pc mem rom model fd p off data (b0 l0 b1 l1 : word) bs0 bs1,
 AI segs H A model ->

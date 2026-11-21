@@ -13,37 +13,37 @@ directory.
 
 ## Command and checks
 
-`headers_check.py --repo REPO --ref 88154566652a --out STARTUP-HEADERS.tsv GEN.v=F[=BODY.tsv] [GEN.v=cgif:F ...]`,
-with each donor read by `git show` (libreac/fuzz_pcap's `lib/A/F.v` at 88154566652a, or with `cgif:F`
-cgif_file_fuzzer's `lib/A/F.v` at c8557374ad2e). For each generated file:
+`headers_check.py --repo REPO --out STARTUP-HEADERS.tsv GEN.v=F[=BODY.tsv] [GEN.v=cgif:F ...]`,
+with each donor read by `git show` (libreac/fuzz_pcap's `lib/A/F.v`, or with `cgif:F`
+cgif_file_fuzzer's `lib/A/F.v`). For each generated file:
 
 - it checks that lines 1-3 (Copyright, SPDX, the 'ported' notice) are byte-identical to the donor's, line 3 either
   exactly or with only the start-up tools' undating (`Theorem Labs, 2026-10: ` -> `Theorem Labs: `);
 - it records the donor's top comment lines after line 3 that the generated file does not have (removed before the
   tool ran), the count of the tool's own header lines, the body comment lines removed before the tool (from BODY.tsv),
-  and whether any removed line occurs in the Anthropic-derived cgif_file_fuzzer file of the same name at
-  c8557374ad2e. It exits 1 on a failed header check or on a removed line found in that file.
+  and whether any removed line occurs in the Anthropic-derived cgif_file_fuzzer file of the same name.
+  It exits 1 on a failed header check or on a removed line found in that file.
 
 ## Result (STARTUP-HEADERS.tsv): 16 files, 0 FAIL
 
 | file | donor at commit | header lines 1-3 | header lines removed | tool-written lines | body lines removed | removed lines in the cgif file |
 |---|---|---|---|---|---|---|
-| `reac-pw/fuzz_link/lib/A/AB01.v` | `proofs/libreac/fuzz_pcap/lib/A/AB01.v@88154566652a` | PASS (1-3 byte-identical to the donor; 3 undated by the tool) | 3 | 7 | 0 | no (0 of 3) |
-| `reac-pw/fuzz_link/lib/A/AB03.v` | `proofs/libreac/fuzz_pcap/lib/A/AB03.v@88154566652a` | PASS (1-3 byte-identical to the donor; 3 undated by the tool) | 2 | 5 | 0 | no (0 of 2) |
-| `reac-pw/fuzz_link/lib/A/AB05.v` | `proofs/libreac/fuzz_pcap/lib/A/AB05.v@88154566652a` | PASS (1-3 byte-identical to the donor) | 2 | 1 | 0 | no (0 of 2) |
-| `reac-pw/fuzz_link/lib/A/AB12.v` | `proofs/libreac/fuzz_pcap/lib/A/AB12.v@88154566652a` | PASS (1-3 byte-identical to the donor; 3 undated by the tool) | 4 | 1 | 0 | no (0 of 4) |
-| `reac-pw/fuzz_link/lib/A/AF0m.v` | `proofs/libreac/fuzz_pcap/lib/A/AF0m.v@88154566652a` | PASS (1-3 byte-identical to the donor; 3 undated by the tool) | 1 | 3 | 50 | no (0 of 51) |
-| `reac-pw/fuzz_link/lib/A/AD2i.v` | `proofs/libreac/fuzz_pcap/lib/A/AD2i.v@88154566652a` | PASS (1-3 byte-identical to the donor) | 3 | 2 | 0 | no (0 of 3) |
-| `reac-pw/fuzz_link/lib/A/AD2j.v` | `proofs/cgif/cgif_file_fuzzer/lib/A/AD2j.v@c8557374ad2e` | PASS (1-3 byte-identical to the donor; 3 undated by the tool) | 0 | 2 | 0 | no (0 of 0) |
-| `reac-pw/fuzz_link/lib/A/AE3i.v` | `proofs/libreac/fuzz_pcap/lib/A/AE3i.v@88154566652a` | PASS (1-3 byte-identical to the donor) | 1 | 1 | 13 | no (0 of 14) |
-| `reac-pw/fuzz_link/lib/A/ACej.v` | `proofs/libreac/fuzz_pcap/lib/A/ACej.v@88154566652a` | PASS (1-3 byte-identical to the donor; 3 undated by the tool) | 1 | 4 | 0 | no (0 of 1) |
-| `reac-pw/fuzz_link/lib/A/AB1m.v` | `proofs/libreac/fuzz_pcap/lib/A/AB1m.v@88154566652a` | PASS (1-3 byte-identical to the donor) | 4 | 0 | 0 | no (0 of 4) |
-| `reac-pw/fuzz_link/lib/A/AB1v.v` | `proofs/libreac/fuzz_pcap/lib/A/AB1v.v@88154566652a` | PASS (1-3 byte-identical to the donor) | 1 | 0 | 0 | no (0 of 1) |
-| `reac-pw/fuzz_link/lib/A/AB1h.v` | `proofs/libreac/fuzz_pcap/lib/A/AB1h.v@88154566652a` | PASS (1-3 byte-identical to the donor) | 1 | 0 | 0 | no (0 of 1) |
-| `reac-pw/fuzz_link/lib/A/AB1k.v` | `proofs/libreac/fuzz_pcap/lib/A/AB1k.v@88154566652a` | PASS (1-3 byte-identical to the donor) | 1 | 0 | 0 | no (0 of 1) |
-| `reac-pw/fuzz_link/lib/A/AE23.v` | `proofs/libreac/fuzz_pcap/lib/A/AE23.v@88154566652a` | PASS (1-3 byte-identical to the donor) | 1 | 0 | 5 | no (0 of 6) |
-| `reac-pw/fuzz_link/lib/A/AE37.v` | `proofs/libreac/fuzz_pcap/lib/A/AE37.v@88154566652a` | PASS (1-3 byte-identical to the donor) | 27 | 0 | 12 | no (0 of 39) |
-| `<staged>/lib/A/AD1k.v` | `proofs/cgif/cgif_file_fuzzer/lib/A/AD1k.v@c8557374ad2e` | PASS (1-3 byte-identical to the donor; 3 undated by the tool) | 0 | 2 | 0 | no (0 of 0) |
+| `reac-pw/fuzz_link/lib/A/AB01.v` | `proofs/libreac/fuzz_pcap/lib/A/AB01.v` | PASS (1-3 byte-identical to the donor; 3 undated by the tool) | 3 | 7 | 0 | no (0 of 3) |
+| `reac-pw/fuzz_link/lib/A/AB03.v` | `proofs/libreac/fuzz_pcap/lib/A/AB03.v` | PASS (1-3 byte-identical to the donor; 3 undated by the tool) | 2 | 5 | 0 | no (0 of 2) |
+| `reac-pw/fuzz_link/lib/A/AB05.v` | `proofs/libreac/fuzz_pcap/lib/A/AB05.v` | PASS (1-3 byte-identical to the donor) | 2 | 1 | 0 | no (0 of 2) |
+| `reac-pw/fuzz_link/lib/A/AB12.v` | `proofs/libreac/fuzz_pcap/lib/A/AB12.v` | PASS (1-3 byte-identical to the donor; 3 undated by the tool) | 4 | 1 | 0 | no (0 of 4) |
+| `reac-pw/fuzz_link/lib/A/AF0m.v` | `proofs/libreac/fuzz_pcap/lib/A/AF0m.v` | PASS (1-3 byte-identical to the donor; 3 undated by the tool) | 1 | 3 | 50 | no (0 of 51) |
+| `reac-pw/fuzz_link/lib/A/AD2i.v` | `proofs/libreac/fuzz_pcap/lib/A/AD2i.v` | PASS (1-3 byte-identical to the donor) | 3 | 2 | 0 | no (0 of 3) |
+| `reac-pw/fuzz_link/lib/A/AD2j.v` | `proofs/cgif/cgif_file_fuzzer/lib/A/AD2j.v@theorem-labs/oss-verify-proofs@6b32741d849a` | PASS (1-3 byte-identical to the donor; 3 undated by the tool) | 0 | 2 | 0 | no (0 of 0) |
+| `reac-pw/fuzz_link/lib/A/AE3i.v` | `proofs/libreac/fuzz_pcap/lib/A/AE3i.v` | PASS (1-3 byte-identical to the donor) | 1 | 1 | 13 | no (0 of 14) |
+| `reac-pw/fuzz_link/lib/A/ACej.v` | `proofs/libreac/fuzz_pcap/lib/A/ACej.v` | PASS (1-3 byte-identical to the donor; 3 undated by the tool) | 1 | 4 | 0 | no (0 of 1) |
+| `reac-pw/fuzz_link/lib/A/AB1m.v` | `proofs/libreac/fuzz_pcap/lib/A/AB1m.v` | PASS (1-3 byte-identical to the donor) | 4 | 0 | 0 | no (0 of 4) |
+| `reac-pw/fuzz_link/lib/A/AB1v.v` | `proofs/libreac/fuzz_pcap/lib/A/AB1v.v` | PASS (1-3 byte-identical to the donor) | 1 | 0 | 0 | no (0 of 1) |
+| `reac-pw/fuzz_link/lib/A/AB1h.v` | `proofs/libreac/fuzz_pcap/lib/A/AB1h.v` | PASS (1-3 byte-identical to the donor) | 1 | 0 | 0 | no (0 of 1) |
+| `reac-pw/fuzz_link/lib/A/AB1k.v` | `proofs/libreac/fuzz_pcap/lib/A/AB1k.v` | PASS (1-3 byte-identical to the donor) | 1 | 0 | 0 | no (0 of 1) |
+| `reac-pw/fuzz_link/lib/A/AE23.v` | `proofs/libreac/fuzz_pcap/lib/A/AE23.v` | PASS (1-3 byte-identical to the donor) | 1 | 0 | 5 | no (0 of 6) |
+| `reac-pw/fuzz_link/lib/A/AE37.v` | `proofs/libreac/fuzz_pcap/lib/A/AE37.v` | PASS (1-3 byte-identical to the donor) | 27 | 0 | 12 | no (0 of 39) |
+| `<staged>/lib/A/AD1k.v` | `proofs/cgif/cgif_file_fuzzer/lib/A/AD1k.v@theorem-labs/oss-verify-proofs@6b32741d849a` | PASS (1-3 byte-identical to the donor; 3 undated by the tool) | 0 | 2 | 0 | no (0 of 0) |
 
 `<staged>/` is the staged copy of the unit's `lib/` that held AD1k.v when the check ran.
 
@@ -55,6 +55,6 @@ byte-identical to the donor; 3 undated by the tool)".
 
 ## AF0m.body-removed.tsv
 
-51 lines of AF0m's base, none of them in cgif_file_fuzzer's `lib/A/AF0m.v` at c8557374ad2e: header line 4 (base line
+51 lines of AF0m's base, none of them in cgif_file_fuzzer's `lib/A/AF0m.v`: header line 4 (base line
 4), the comments on the real_fmemopen row (base lines 292-294) and on the real_fread row (295-297), the
 Tfib_owned_static per-entry notes (350-392) and the ts_junk comment (455).

@@ -1,8 +1,8 @@
 (* fs WRITER walks, image B (fs.asan-ubsan), the bookkeeping half: the facts about U (the live user-poisoned heads)
    that every writer walk needs, proved once over S0's names and lib/B/FSH_Fn_writer's `uswap`. The lib/B twin of
-   lib/A/FSW_writer_kit.v (a working branch 1a264574ee7), same lemma names; no address numeral. Used by
+   lib/A/FSW_writer_kit.v (a working branch), same lemma names; no address numeral. Used by
    lib/B/FSW_indent.v (fs_heads_put, through fs_heads_uswap and uswap_new_head). `uswap` is lib/B/FSH_Fn_writer.v's
-   (a working branch adfa7850046, over a working branch bddf781b317).
+   (a working branch, over a working branch).
    rule 24: proves no function (kind: segment lemma). *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.

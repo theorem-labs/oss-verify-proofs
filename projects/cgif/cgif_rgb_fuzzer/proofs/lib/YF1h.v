@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap_node has the model's refusal children, one per munmap errno, beside the unmapping one, so it is built by node_chk_noacc with node_ok_nx_ext instead of as a deterministic node; the node gives the third part of node_ok, sys_rob: its check reads no memory). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -11,6 +12,7 @@ YK16 YK0o YK11 YK0i YK0j YK14 YK1c YK0v YK02 YK0q YK15 YK18 YK0y YK1b YK00 YK01 
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YG0h YG0u YG0l.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YF00 YF03.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YN05.
+From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import RomBase.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Open Scope bv_scope.
@@ -18,6 +20,14 @@ Open Scope Z_scope.
 Section f. Context {fx : YK11.FPState} {rc : YN05.RunCeil}.
 Section K. Context {imgk : img}.
 Variable segs : list Segment.
+Lemma node_ok_nx_ext : forall c (I : Type) (nx nx' : I -> config),
+(forall i, nx i = nx' i) -> node_ok segs c I (fun _ => []) nx -> node_ok segs c I (fun _ => []) nx'.
+Proof.
+intros c I nx nx' E HN. rewrite <- (FunctionalExtensionality.functional_extensionality nx nx' E). exact HN.
+Qed.
+(* 75d69e00 Sys/Mm/Munmap.v: [check_munmap] dispatches [errno_ret_in munmap_errnos] before the
+   exact-unmap arm (restated at YK0v.v:233), so this node has the refusal children beside the
+   unmapping one and is not deterministic; the [unit] index was false at this revision. *)
 Theorem munmap_node : forall regs (pc : word) mem rom md (a : word) (len : Z),
 m_halted md = None ->
 getr regs 17 = Z_to_bv 64 215 ->
@@ -26,8 +36,11 @@ getr regs 11 = Z_to_bv 64 len -> 0 < len ->
 bv_unsigned a + page_round_up_Z len <= TASK_SIZE ->
 map_has (vm_maps (m_vmmaps md)) a (Z_to_bv 64 (page_round_up_Z len)) = true ->
 let n := Z_to_bv 64 (page_round_up_Z len) in
-node_ok segs (mkCfg (pend_at regs pc mem rom) md) unit (fun _ => [])
-(fun _ => mkCfg (mkst (regupd regs 10 (Z_to_bv 64 0)) (v_addi pc 4) (unfill a n mem) rom) (munmap_model a n md)).
+node_ok segs (mkCfg (pend_at regs pc mem rom) md) ({e : Z | In e munmap_errnos} + unit) (fun _ => [])
+(fun i => match i with
+| inl (exist _ e _) => mkCfg (mkst (regupd regs 10 (errno_ret e)) (v_addi pc 4) mem rom) md
+| inr _ => mkCfg (mkst (regupd regs 10 (Z_to_bv 64 0)) (v_addi pc 4) (unfill a n mem) rom) (munmap_model a n md)
+end).
 Proof.
 intros regs pc mem rom md a len Hh H17 H10 Hal H11 Hlen Hnw Hhas n.
 assert (Hlen' : len < two_pow_64).
@@ -37,6 +50,8 @@ pose proof (pend_gpr0 regs pc mem rom) as H0. pose proof (pend_gpr1 regs pc mem 
 assert (UF : advance_past_svc (apply_effect (pend_at regs pc mem rom) (mkEffectU (Z_to_bv 64 0) [] [] [(a, n)] [] [])) = mkst (regupd regs 10 (Z_to_bv 64 0)) (v_addi pc 4) (unfill a n mem) rom).
 { rewrite adv_pend. cbn [eff_ret]. rewrite effmem_unmaps. f_equal. img_apply FunctionalExtensionality.functional_extensionality. intros x.
 unfold apply_unmaps, zeros_cover, unfill. cbn [existsb fst snd]. rewrite Bool.orb_false_r. img_refl. }
+assert (RT : forall r, advance_past_svc (apply_effect (pend_at regs pc mem rom) (mkEffectU r [] [] [] [] [])) = mkst (regupd regs 10 r) (v_addi pc 4) mem rom).
+{ intros r. rewrite adv_pend. cbn [eff_ret]. rewrite effmem_ret_only. img_refl. }
 set (ms := pend_at regs pc mem rom) in *.
 assert (Hu1 : bv_unsigned (ms_gpr ms 1) = len).
 { rewrite G1. img_apply u64_lit. unfold two_pow_64 in Hlen'. img_lia. }
@@ -45,20 +60,51 @@ assert (Hargs : munmap_args_ok ms md).
 { unfold munmap_args_ok. rewrite H0, Hu1, Hpr. repeat split; try assumption.
 intros Hz. apply (f_equal bv_unsigned) in Hz. rewrite Hu1 in Hz. img_change (bv_unsigned (Z_to_bv 64 0)) with 0 in Hz. img_lia. }
 pose proof (fun eff => eq_trans (munmap_check segs ms (getr regs 17) md eff Hno) (munmap_check_modeled ms md eff Hargs)) as Hchk. rewrite H0, Hpr in Hchk.
-rewrite <- UF.
-img_apply (node_det_noacc segs ms md (getr regs 17) (mkEffectU (Z_to_bv 64 0) [] [] [(a, n)] [] []) (munmap_model a n md) []);
-[img_try (img_exact Hh) | img_refl | | | img_try (rewrite munmap_model_halted; img_exact Hh) | img_refl].
-- intros eff m' evs. split.
-+ intros Hck. rewrite Hchk in Hck. destruct eff as [r ws zs us cs ci].
-destruct ws; [|img_try (discriminate)]. destruct zs; [|img_try (discriminate)]. destruct cs; [|img_try (discriminate)]. destruct ci; [|img_try (discriminate)].
-destruct (w_is0 r) eqn:E0; [|img_try (discriminate)].
+pose (effs := fun i : {e : Z | In e munmap_errnos} + unit =>
+match i with
+| inl (exist _ e _) => mkEffectU (errno_ret e) [] [] [] [] []
+| inr _ => mkEffectU (Z_to_bv 64 0) [] [] [(a, n)] [] []
+end).
+pose (mds := fun i : {e : Z | In e munmap_errnos} + unit =>
+match i with
+| inl _ => md
+| inr _ => munmap_model a n md
+end).
+assert (EXT : forall i : {e : Z | In e munmap_errnos} + unit,
+mkCfg (advance_past_svc (apply_effect ms (effs i))) (mds i)
+= match i with
+| inl (exist _ e _) => mkCfg (mkst (regupd regs 10 (errno_ret e)) (v_addi pc 4) mem rom) md
+| inr _ => mkCfg (mkst (regupd regs 10 (Z_to_bv 64 0)) (v_addi pc 4) (unfill a n mem) rom) (munmap_model a n md)
+end).
+{ intros [[e He] | []]; cbn [effs mds]; [rewrite RT | rewrite UF]; img_refl. }
+img_apply (node_ok_nx_ext (mkCfg ms md) ({e : Z | In e munmap_errnos} + unit)
+(fun i => mkCfg (advance_past_svc (apply_effect ms (effs i))) (mds i))); [img_try (img_exact EXT) |].
+img_apply (node_chk_noacc segs ms md (getr regs 17) ({e : Z | In e munmap_errnos} + unit) effs mds);
+[img_try (img_exact Hh) | img_refl | | | | img_try (intros [[e He] | []]; cbn [mds]; [img_exact Hh | rewrite munmap_model_halted; img_exact Hh]) | img_try (intros [[e He] | []]; img_refl)
+| exact (sys_rob_memfree segs ms md (getr regs 17) eq_refl ltac:(rewrite Hno; exact memfree_215))].
+-
+intros [[e He] | []]; cbn [effs mds]; rewrite Hchk.
++ rewrite (errno_ret_in_intro _ _ He). img_refl.
++ replace (errno_ret_in munmap_errnos (Z_to_bv 64 0)) with false by img_refl.
+cbv beta iota. unfold w_is0. rewrite bv_eqb_refl. rewrite (proj2 (listNN_eqb_eq _ _) eq_refl). img_refl.
+-
+intros [r ws zs us cs ci] m' evs Hck. rewrite Hchk in Hck.
+destruct ws; [|img_try (discriminate)]. destruct zs; [|img_try (discriminate)].
+destruct cs; [|img_try (destruct us; discriminate)]. destruct ci; [|img_try (destruct us; discriminate)].
+destruct (errno_ret_in munmap_errnos r) eqn:Er.
++ destruct us; [|img_try (discriminate)]. injection Hck as <- <-.
+destruct (proj1 (errno_ret_in_true _ _) Er) as (e & He & ->).
+exists (inl (exist _ e He)). repeat split; img_refl.
++ destruct (w_is0 r) eqn:E0; [|img_try (discriminate)].
 destruct (listNN_eqb us [(a, n)]) eqn:Hl; [|img_try (discriminate)].
 apply listNN_eqb_eq in Hl. (subst us; cbv beta). cbn [andb] in Hck. injection Hck as <- <-.
-unfold w_is0 in E0. apply bv_eqb_eq in E0. (subst r; cbv beta). repeat split; img_refl.
-+ intros (-> & -> & ->). rewrite Hchk. unfold w_is0. rewrite bv_eqb_refl.
-rewrite (proj2 (listNN_eqb_eq _ _) eq_refl). img_refl.
-- intros eff Hck. rewrite Hchk in Hck. destruct eff as [r ws zs us cs ci].
-destruct ws; [|img_try (discriminate)]. destruct zs; [|img_try (discriminate)]. destruct cs; [|img_try (discriminate)]. destruct ci; [|img_try (discriminate)].
+unfold w_is0 in E0. apply bv_eqb_eq in E0. (subst r; cbv beta).
+exists (inr tt). repeat split; img_refl.
+-
+intros [r ws zs us cs ci] Hck. rewrite Hchk in Hck.
+destruct ws; [|img_try (discriminate)]. destruct zs; [|img_try (discriminate)].
+destruct cs; [|img_try (destruct us; discriminate)]. destruct ci; [|img_try (destruct us; discriminate)].
+destruct (errno_ret_in munmap_errnos r); [img_try (destruct us; discriminate)|].
 destruct (w_is0 r && listNN_eqb us _)%bool; discriminate.
 Qed.
 Lemma same_io_munmap : forall a n md, same_io md (munmap_model a n md).

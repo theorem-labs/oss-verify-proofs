@@ -1,8 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_parse_items_grow.v, with its module paths changed; 102 of its 168 lines of code are new or changed and 339 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/ZZwv_ret.v (a working branch
-   1a5dc5b2e7c): same lemma names, statements and proofs; imports point at lib/B's image files and walk kit (YB1v, YB1w,
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/ZZwv_ret.v (a working branch):
+   same lemma names, statements and proofs; imports point at lib/B's image files and walk kit (YB1v, YB1w,
    FSH_Base, FSH_Rt, FSPstat, FSH_Fn_writer, FSW_K, FSW_K3, FSW_ret, FSW_rres); the image-agnostic FSupoison,
    FSupoisonU, FSH_YC20, FSH_Gen stay lib/A's.
    rule 24: proves no function (kind: segment lemma) - the container arms of write_value B.
@@ -15,6 +15,7 @@
    (sp0 - STK <= spF - f, spF <= sp0); their proofs are FSW_rres's (a Theorem Labs lane's kit) and wvc_after_call_ot's with that
    one change. Rule 24: no function proved here (write_value's lookup: lane record (internal path), CHECKER CONFIRM
    a Theorem Labs lane). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

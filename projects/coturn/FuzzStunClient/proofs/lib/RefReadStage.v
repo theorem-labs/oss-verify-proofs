@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the stack window is 6144513 bytes, was 8388608, vm_stage's ledger is the launch's init_reserved over the kernel build (Amb), and a refused munmap may leave each stage's old buffer mapped (grow_unmap_maps, seps_cons_apart). *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -83,7 +84,7 @@ Definition sr_FULL (j : Z) : list expr := sr_LOOP (bx (off_of j)) (cap_of j) (ca
 (* [comment removed for export] *)
 Definition kn_static (j : Z) : list kentry :=
   [KAlign (EVar 0) 16; KRange (EVar 0) 0x7fff80000000 0x800000000000;
-   KWr (SA (EVar 0) (-8388608)) 8388608;
+   KWr (SA (EVar 0) (-6144513)) 6144513;   (* LPS 08b1429: RefReadBase.stack_writable's window *)
    KRange (EVar 1) 0x7fff80000000 0x800000400000;
    KAlign (EVar 2) 4096; KRange (EVar 2) 0x1000 (HTOP - 8192);
    KDisj (LA 0x10000) 0x48000 (SA (EVar 2) 0) 8192;     (* [comment removed for export] *)
@@ -163,7 +164,7 @@ Definition kn_FULL (j : Z) : list kentry := kn_static j ++ kn_ctx j ++ kn_meta j
 (* [comment removed for export] *)
 Definition kn_G0 : list kentry :=
   [KAlign (EVar 0) 16; KRange (EVar 0) 0x7fff80000000 0x800000000000;
-   KWr (SA (EVar 0) (-8388608)) 8388608;
+   KWr (SA (EVar 0) (-6144513)) 6144513;   (* LPS 08b1429: RefReadBase.stack_writable's window *)
    KRange (EVar 1) 0x7fff80000000 0x800000400000;
    KAlign (EVar 2) 4096; KRange (EVar 2) 0x1000 (HTOP - 8192);
    KDisj (LA 0x10000) 0x48000 (SA (EVar 2) 0) 8192;
@@ -406,21 +407,114 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Definition vm_stage (VM : VmMaps) (sp0 mb B : word) (nb : Z) : Prop :=
-  vm_reserved VM = segments_reserved RSEGS
+(* LPS 08b1429: the reserved ledger the launch installs is [init_reserved] (the image's entries
+   plus the vdso/vvar pair), and RefReadBase.vm_pre already states it so; this stage invariant
+   carries the same ledger. *)
+Definition vm_stage {AMB : Amb} (VM : VmMaps) (sp0 mb B : word) (nb : Z) : Prop :=
+  vm_reserved VM = init_reserved (segments_reserved RSEGS) (vm_mmap_base VM) sp0 a_kernel
   /\ (2 ^ 31 <= vm_limit VM)%Z
   /\ vm_init_sp VM = sp0      (* [comment removed for export] *)
   /\ exists rest,
       vm_maps VM = (B, Z_to_bv 64 nb) :: rest
       /\ Forall (fun p => (0 < bv_unsigned (snd p) <= 2 ^ 30)%Z
                           /\ (bv_unsigned (fst p) + bv_unsigned (snd p) <= 2 ^ 64)%Z) rest
-      /\ (length rest <= 8)%nat
-      /\ (live_bytes rest <= 2 ^ 20)%Z
+      (* 08b1429: a refused munmap leaves the old buffer mapped, so each stage may add one entry
+         (log2 (nb_of j) = 16 + j) and the old buffer's bytes to [rest] *)
+      /\ (Z.of_nat (length rest) <= Z.log2 nb - 7)%Z
+      /\ (live_bytes rest <= 2 ^ 20 + 2 * nb - 2 ^ 17)%Z
       /\ (exists p, In p rest /\ (bv_unsigned (fst p) <= bv_unsigned mb + 4096)%Z
                              /\ (bv_unsigned mb + 8192 <= bv_unsigned (fst p) + bv_unsigned (snd p))%Z)
       /\ Forall (fun p => (bv_unsigned (fst p) + bv_unsigned (snd p) <= bv_unsigned B
                           \/ bv_unsigned B + nb <= bv_unsigned (fst p))%Z) rest
       /\ seps rest.
+
+Lemma log2_nb_of : forall j, (0 <= j)%Z -> Z.log2 (nb_of j) = (16 + j)%Z.
+Proof.
+  intros j Hj. pose proof (Z.pow_pos_nonneg 2 j ltac:(lia) Hj) as P.
+  apply Z.log2_unique; [lia|]. unfold nb_of, cap_of.
+  rewrite Z.pow_succ_r by lia. rewrite Z.pow_add_r by lia. change (2 ^ 16)%Z with 65536%Z. lia.
+Qed.
+
+(* 08b1429: munmap is [maps_subtract] over the request; for an exact entry of a disjoint ledger it removes just that entry *)
+Lemma grow_unmap_maps : forall (B B' : word) (nb nb' : Z) rest,
+  (0 < nb)%Z -> (0 < nb')%Z -> (bv_unsigned B + nb < 2 ^ 64)%Z -> (bv_unsigned B' + nb' < 2 ^ 64)%Z ->
+  (bv_unsigned B' + nb' <= bv_unsigned B \/ bv_unsigned B + nb <= bv_unsigned B')%Z ->
+  Forall (fun p => (0 < bv_unsigned (snd p))%Z) rest ->
+  Forall (fun p => (bv_unsigned (fst p) + bv_unsigned (snd p) <= bv_unsigned B
+                    \/ bv_unsigned B + nb <= bv_unsigned (fst p))%Z) rest ->
+  maps_subtract ((B', Z_to_bv 64 nb') :: (B, Z_to_bv 64 nb) :: rest)
+    (bv_unsigned B) (bv_unsigned B + bv_unsigned (Z_to_bv 64 nb))
+  = (B', Z_to_bv 64 nb') :: map_remove rest B.
+Proof.
+  intros B B' nb nb' rest Hnb Hnb' HB HB' Hd Hpos Hdisj.
+  pose proof (u64_range B) as RB. pose proof (u64_range B') as RB'.
+  assert (Hne : B' <> B) by (intros ->; lia).
+  rewrite maps_subtract_exact.
+  - unfold map_remove at 1. cbn [List.filter fst].
+    rewrite (bv_eqb_neq B' B Hne), bv_eqb_refl. cbn [negb]. reflexivity.
+  - rewrite u_small by lia. lia.
+  - intros b s [Hp|[Hp|Hp]]; [injection Hp as <- <-; rewrite u_small by lia; lia
+                              | injection Hp as <- <-; rewrite u_small by lia; lia
+                              | exact (proj1 (Forall_forall _ _) Hpos _ Hp)].
+  - intros b s [Hp|[Hp|Hp]] Hb; subst b.
+    + injection Hp as Hp _. congruence.
+    + congruence.
+    + pose proof (proj1 (Forall_forall _ _) Hpos _ Hp) as X. pose proof (proj1 (Forall_forall _ _) Hdisj _ Hp) as Y.
+      cbn [fst snd] in X, Y. exfalso. lia.
+  - intros b s [Hp|[Hp|Hp]] Hb.
+    + injection Hp as <- <-. rewrite !u_small by lia. lia.
+    + injection Hp as Hp _. congruence.
+    + pose proof (proj1 (Forall_forall _ _) Hdisj _ Hp) as Y. cbn [fst snd] in Y. rewrite u_small by lia. lia.
+Qed.
+
+Lemma seps_In2_st : forall l p q, seps l -> In p l -> In q l -> p = q \/ iv_disjoint p q.
+Proof.
+  intros l p q Hs. induction Hs as [|r l Hf Hs IH]; intros Hp Hq; [destruct Hp|].
+  destruct Hp as [<-|Hp]; destruct Hq as [<-|Hq].
+  - left; reflexivity.
+  - right. exact (proj1 (Forall_forall _ _) Hf q Hq).
+  - right. pose proof (proj1 (Forall_forall _ _) Hf p Hp) as H. unfold iv_disjoint in *. lia.
+  - exact (IH Hp Hq).
+Qed.
+
+Lemma grow0_unmap_maps : forall (gm B : word) (nb : Z) l,
+  (0 < nb)%Z -> (bv_unsigned B + nb < 2 ^ 64)%Z ->
+  (bv_unsigned B + nb <= bv_unsigned gm \/ bv_unsigned gm + 69632 <= bv_unsigned B)%Z ->
+  In (gm, Z_to_bv 64 69632) l -> seps l -> Forall (fun p => (0 < bv_unsigned (snd p))%Z) l ->
+  maps_subtract ((B, Z_to_bv 64 nb) :: l) (bv_unsigned gm) (bv_unsigned gm + bv_unsigned (Z_to_bv 64 69632))
+  = (B, Z_to_bv 64 nb) :: map_remove l gm.
+Proof.
+  intros gm B nb l Hnb HB Hd Hin Hs Hpos.
+  pose proof (u64_range B) as RB. pose proof (u64_range gm) as RG.
+  assert (Hne : B <> gm) by (intros ->; lia).
+  rewrite maps_subtract_exact.
+  - unfold map_remove at 1. cbn [List.filter fst].
+    rewrite (bv_eqb_neq B gm Hne). cbn [negb]. reflexivity.
+  - reflexivity.
+  - intros b s [Hp|Hp]; [injection Hp as <- <-; rewrite u_small by lia; lia
+                        | exact (proj1 (Forall_forall _ _) Hpos _ Hp)].
+  - intros b s [Hp|Hp] Hb; subst b.
+    + injection Hp as Hp _. congruence.
+    + destruct (seps_In2_st _ _ _ Hs Hp Hin) as [E|D]; [congruence|].
+      pose proof (proj1 (Forall_forall _ _) Hpos _ Hp) as X. unfold iv_disjoint in D. cbn [fst snd] in D, X.
+      change (bv_unsigned (Z_to_bv 64 69632)) with 69632%Z in D. exfalso. lia.
+  - intros b s [Hp|Hp] Hb.
+    + injection Hp as <- <-. rewrite !u_small by lia. change (bv_unsigned (Z_to_bv 64 69632)) with 69632%Z. lia.
+    + destruct (seps_In2_st _ _ _ Hs Hp Hin) as [E|D]; [injection E as -> _; congruence|].
+      unfold iv_disjoint in D. cbn [fst snd] in D. change (bv_unsigned (Z_to_bv 64 69632)) with 69632%Z in *. lia.
+Qed.
+
+(* the refused branch conses the old buffer back onto the ledger; it is apart from every other entry *)
+Lemma seps_cons_apart : forall (B : word) (nb : Z) rest,
+  (0 < nb < 2 ^ 62)%Z -> (bv_unsigned B + nb <= 2 ^ 64)%Z ->
+  Forall (fun p => (bv_unsigned (fst p) + bv_unsigned (snd p) <= bv_unsigned B
+                    \/ bv_unsigned B + nb <= bv_unsigned (fst p))%Z) rest ->
+  seps rest -> seps ((B, Z_to_bv 64 nb) :: rest).
+Proof.
+  intros B nb rest Hnb Hnw Hd Hs. constructor; [|exact Hs].
+  eapply Forall_impl; [|exact Hd]. intros [qb qs] Hq. unfold iv_disjoint. cbn [fst snd] in *.
+  rewrite u_small by lia. lia.
+Qed.
 
 (* [comment removed for export] *)
 Lemma seps_filter : forall (f : word * word -> bool) l, seps l -> seps (List.filter f l).
@@ -431,7 +525,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma vm_stage_seps : forall VM sp0 mb B nb, (0 < nb < 2 ^ 62)%Z -> (bv_unsigned B + nb <= 2 ^ 64)%Z ->
+Lemma vm_stage_seps {AMB : Amb} : forall VM sp0 mb B nb, (0 < nb < 2 ^ 62)%Z -> (bv_unsigned B + nb <= 2 ^ 64)%Z ->
   vm_stage VM sp0 mb B nb -> seps (vm_maps VM)
   /\ Forall (fun p => (0 < bv_unsigned (snd p))%Z /\ (bv_unsigned (fst p) + bv_unsigned (snd p) <= 2 ^ 64)%Z) (vm_maps VM).
 Proof.
@@ -451,13 +545,13 @@ Definition loop_at (sr : list expr) (kn : list kentry) (sp0 p1 mb gm sec cn : wo
       /\ regs_ok (ENV_RD sp0 p1 mb gm sec cn B e extra content) sr R
       /\ know_ok RSEGS (ENV_RD sp0 p1 mb gm sec cn B e extra content) M kn.
 
-Definition half (j : Z) (sp0 p1 mb gm sec cn : word) (B e : word) (content : list byte)
+Definition half {AMB : Amb} (j : Z) (sp0 p1 mb gm sec cn : word) (B e : word) (content : list byte)
        (M0 : word -> option byte) (R : bvmap 5 word) (M : word -> option byte) (VM : VmMaps) : Prop :=
   loop_at (sr_HALF j) (kn_HALF j) sp0 p1 mb gm sec cn B e content R M
   /\ pres M0 M sp0
   /\ vm_stage VM sp0 mb B (nb_of j).
 
-Definition full (j : Z) (sp0 p1 mb gm sec cn : word) (B e : word) (content : list byte)
+Definition full {AMB : Amb} (j : Z) (sp0 p1 mb gm sec cn : word) (B e : word) (content : list byte)
        (M0 : word -> option byte) (R : bvmap 5 word) (M : word -> option byte) (VM : VmMaps) : Prop :=
   loop_at (sr_FULL j) (kn_FULL j) sp0 p1 mb gm sec cn B e content R M
   /\ pres M0 M sp0
@@ -481,7 +575,7 @@ Definition kn_POST (k : Z) : list kentry := kn_static k ++ kn_ctx k ++ kn_meta k
    KWord (BA (off_of k + cap_of k)) 1 (ELit 0); KWord (BA (nb_of k - 9)) 1 (ELit 0);
    KWord (BA (nb_of k - 8)) 4 (ELit (res_of k)); KZero (BA (nb_of k - 4)) (ELit 4)].
 
-Record read_post (k : Z) (sp0 p1 mb gm sec cn B e : word) (content : list byte)
+Record read_post {AMB : Amb} (k : Z) (sp0 p1 mb gm sec cn B e : word) (content : list byte)
        (M0 : word -> option byte) (R : bvmap 5 word) (M : word -> option byte) (VM : VmMaps) : Prop := READ_POST {
   rk_sp : getr R 2 = Z_to_bv 64 (bv_unsigned sp0 - 128);
   rk_gp : getr R 3 = Z_to_bv 64 0x10800;

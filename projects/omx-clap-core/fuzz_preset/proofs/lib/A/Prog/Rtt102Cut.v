@@ -1,11 +1,11 @@
 (* fuzz_preset, program walk of round_trip_text ON THE #102 PINS (src-102/new/fuzz_preset.c:669-711, sha256
    c7b4007bba7bab3e, with rendered() :478-492 inlined): the walk's IMAGE-GENERIC CUT LAYER. Lane WalkRtt102 for
    the text owner. Statements, the capacity lemma and the composition lemma only; the stretches are per image.
-   THE GOAL is the kit's text tround_trip_text_specX VERBATIM AT THE BATCH KIT'S CUT, the batch kit head 7cdbb61b5fa0
+   THE GOAL is the kit's text tround_trip_text_specX VERBATIM AT THE BATCH KIT'S CUT, the batch kit head
    (lib/A/PRH_FnCheck.v blob c40cf3fdcd2a, PRH_Base.v ef7c8ca98529, PRH_FnAlloc 4d8aeba047e5, PRH_FnParse f0d92dcec7e9,
    PRH_FnPj 5aca5cbe2cfb, PRH_FnReader f1ae32e3b2cd, PRH_FnTx 88468bf162d8, PRH_FnWriter d89d3c67b78c, PRH_Supply
    e9069249fade, PRH_PjOrder e5917626b82b, PRH_Reader 4266e709561a, engine YCbqG 219748197d6b / YCbqGwild
-   0c63874858e4: a Theorem Labs lane's P'' set c38112fc7e22 under the kit), merged into this lane whole. AGAINST THE PRE-CUT
+   0c63874858e4: a Theorem Labs lane's P'' set under the kit), merged into this lane whole. AGAINST THE PRE-CUT
    TEXT: DW and the strtod-model binder rp_sm are gone (prh_univ_closure's 4a / 4b split; ReaderRes.jr_strtod is
    written where rp_sm stood, so rtt_in has no ri_sm); the entry gains the WILD ROOM `wild_room (as_universe B) []
    (prh_wk F_round_trip_text) (st_depot S)`, in the slot of rtt_pre the `rp_sm = jr_strtod` equation vacated; the post
@@ -26,11 +26,11 @@
    rendering's grows, PRH_FnTx.prhtx_evs_le_30), which leaves parse_noting its 2 (rtt_wild_room). rtt_post's budget is
    rtt_wild's at RT_X by YCbqGwild.ajournal_xw_unbase0.
    PINS (sha256): A' asan 1be0f53d96cb9d6c, B' asan-ubsan d663f82d7f488d30 (unstripped twins bff8519bbe3ea0e4 /
-   c90d4fa54d43160b). LISTINGS of record: v3, the pins102 listing at 74dcda1eda12 (lib/A/Listing_prog.v
+   c90d4fa54d43160b). LISTINGS of record: v3, the pins102 listing (lib/A/Listing_prog.v
    7ed1529926bd, lib/A/PAImg_prog.v 505a51ff7d08, lib/B/Listing_prog.v c97cc46b3e13, lib/B/PAImg_prog.v 15fab93fe702,
    lib/Reusable/YPsym.v b6f5a85d234d). ENGINE: a Theorem Labs lane's P'' set at the cut (YCbqG.v 219748197d6b, YCbqGwild.v
-   0c63874858e4, the set c38112fc7e22). BASE: the batch kit's cut 7cdbb61b5fa0 merged into the walk's top lane
-   f85f15b123a (merge c46ea8f2977, every conflict resolved to the cut / the set; the merged tree is the cut plus this
+   0c63874858e4, the set). BASE: the batch kit's cut merged into the walk's top lane
+   (merge, every conflict resolved to the cut / the set; the merged tree is the cut plus this
    walk's lib/A/Prog/Rtt102*.v).
    LIBRARY CALLEES: library code unchanged (the comparison's author, the internal file INSN-COMPARE-9e1283d1.md); library texts stand WHERE THE
    REQUEST BOUND IS CARRIED. The bound RQA_rtt t p <= most (rtt_pre) and g_most = most (the ledger field, rtt_led's
@@ -42,7 +42,7 @@
    +0x1bc / +0x328; capstone over each twin's symtab body, the capstone listing of each twin's round_trip_text). So the
    program points are byte offsets inside the function that both images share; only the RUNS are per image.
    THE SEGMENT CUT (re-cut from the measured #102 offsets; the RTT layer reviewer's five-stretch PRW_RttBase.v layer at
-   the five-stretch layer head ce0a2fa8241 does NOT survive and is not re-synced; its idea, one stretch per callee boundary,
+   the five-stretch layer head does NOT survive and is not re-synced; its idea, one stretch per callee boundary,
    is kept):
      entry      + 0     (A' 0x8496c)  prologue, frame_alloc_1 (+116), the frame's header and shadow, pj_write
      RT_PJW     + 304   (A' 0x84a9c)  pj_write returned (`mv s6, a0`)
@@ -257,7 +257,7 @@ Definition ri_sp (D : rtt_in) : Z := spZ (ri_regs D).
 Definition ri_tb (D : rtt_in) : list Z := WriterValue.wdoc (ri_t D) (ri_p D).
 
 (* the text's premises (PRH_FnCheck.v at the batch kit's cut, blob c40cf3fdcd2a, with the stack-premise text head
-   4b8f95c0455c's appended premise, blob 8feca2000b7: g_most and g_own_ran_out are fields of the ledger; the run's
+   a commit's appended premise, blob 8feca2000b7: g_most and g_own_ran_out are fields of the ledger; the run's
    strtod model is written ReaderRes.jr_strtod; the call's allocations are consumer allocations of the run,
    prh_cons_from; the WILD ROOM is the 26th conjunct; THE LIVE REAL STACK ABOVE sp, astack_up_x, is the 28th), at one
    record, in the text's order; the Step-2 text's `(length rp_os <= 4)%nat` (its premise between ck_frm0 and the wild
@@ -299,7 +299,7 @@ intros D HP. apply rtt_capacity_of_len.
 destruct HP as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & H & _).
 exact H.
 Qed.
-(* THE LIVE REAL STACK ABOVE THE ENTRY sp, the text's last premise (the stack-premise text head 4b8f95c0455c) *)
+(* THE LIVE REAL STACK ABOVE THE ENTRY sp, the text's last premise (the stack-premise text head) *)
 Lemma rtt_pre_up : forall D, rtt_pre D ->
   YGcallStackUp.astack_up_x segs (ri_ly D) (ri_W D) (ri_sp D) (ri_mem D).
 Proof.
@@ -585,7 +585,7 @@ Definition rtt_wout (D : rtt_in) (q : Z) (Lamw : list (Z * Z)) (cntw ranw : Z) (
     capw = last (PresetReqAt.wcaps t p) 0.
 
 (* the ledger at a cut: harness list Lamc, its peak at least the entry's, g_fail_at still SIZE_MAX, g_most the
-   entry's (a field of the ledger since walkkit-next 663c569f0c1a), g_own_ran_out = ownc *)
+   entry's (a field of the ledger since walkkit-next), g_own_ran_out = ownc *)
 Definition rtt_led (D : rtt_in) (ly : alayout) (S : astate) (Hp : list Z) (W : world segs)
   (mem : word -> option byte) (Lamc : list (Z * Z)) (peakc cntc ranc ownc : Z) : Prop :=
   prh_ledger B ly S Hp W mem Lamc peakc cntc SIZE_MAXZ ranc (ri_most D) ownc /\ ri_peak D <= peakc.
@@ -641,7 +641,7 @@ Definition rtt_at_txe (D : rtt_in) (fxc : YK11.FPState) (ly : alayout) (S : asta
     rtt_pos D S (RT_K_R D) /\ rtt_wild D S RTT_WK_T.
 
 (* RT_R1 (+460, the r = 1 exit after the rendering: free (want), fuzz_free (text), s5 = 1) is UNREACHABLE since the
-   text takes prh_cons_from at entry and states r = 0 (walkkit-next de5e947c224b): F reads own = 0 (rtt_at_txe) and
+   text takes prh_cons_from at entry and states r = 0 (walkkit-next): F reads own = 0 (rtt_at_txe) and
    ranw = 0 (rtt_wout) and takes only the CMP edge; O2 likewise takes only the CK edge. Its cut and its stretch
    RTT_SEG_R1 are therefore DELETED (the text owner's ruling, recorded here; RttFR1's R1 work is at
    the RttFR1 lane head and the B' R5 porter's B' R5 at the B' row R5 head, both kept as the record).

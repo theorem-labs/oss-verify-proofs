@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (4 recorded proofs replaced by written proofs (maskw_zero, maskw_range, ntf_cond_unfold and 1 more)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -74,17 +75,14 @@ Hypothesis LO : ATOP <= lo.
 Hypothesis LOLE : lo <= bv_unsigned sp - 80.
 
 Lemma maskw_zero : maskw = 0 <-> mask = 0.
-Proof.
-ltac2:(KReplay.run1 (kr_t_F_ntf_H ()) ["CANSEC1"; "ENTRY"] "p;2p;1p;4g0000j25Tg000mj14Tg001ej10Tg002]j41Tg003Yj43Tg004Uj42Tp,2stR0p,1gR1'5R2#4%02P0P1p,1iR2p,2EHR3C1P0P1P2P3C3C2o"). Qed.
+Proof. apply lor_sxv_zero; [apply (eh_freed _ _ _ EH) | apply (eh_avail _ _ _ EH)]. Qed.
 Lemma maskw_range : 0 <= maskw < 2^64.
-Proof.
-ltac2:(KReplay.run1 (kr_t_F_ntf_H ()) ["CANSEC1"; "ENTRY"] "p;2p;1p;4g0000j25Tg000mj14Tg005Zj10Tg001ej12Tg006Wj11Tg007Zj43Tp,2stp,1g'5R0#4R1#0%20R0#0%11%10C3o"). Qed.
+Proof. apply lor_range64; apply sxv_range. Qed.
 
 (* [comment removed for export] *)
 Lemma ntf_cond_unfold :
   ntf_cond st g i = ((mask + bit i =? mask_upto (m_last_idx mr)) && okay_to_free st g)%bool.
-Proof.
-ltac2:(KReplay.run1 (kr_t_F_ntf_H ()) ["CANSEC1"; "ENTRY"] "p;2p;1g0000j2;Tg000mj1:Tg001ej10Tg008_j21Tg009<j19Tg00:0j22Tg00:Mj13Tg00;Hj14Tg00<Bj25Tg00<_j26Tg00=\j27Tg00>:j28Tg00>Tp,2stR0p,1gR1';R2#:%02'1p,1i#9'2%32#4'51601'7'8o"). Qed.
+Proof. reflexivity. Qed.
 
 Lemma okf_unfold :
   okay_to_free st g =
@@ -94,8 +92,7 @@ Lemma okf_unfold :
     else if negb (optr_eqb (m_next mr) (Some g)) then true
     else if negb (is_bouncing sc st) then true
     else if (9 * (m_last_idx mr + 1) <=? usage st sc) && (m_last_idx mr + 1 <? 20) then true else false.
-Proof.
-ltac2:(KReplay.run1 (kr_t_F_ntf_H ()) ["CANSEC1"; "ENTRY"] "p;2p;1g0000j2GTg00?4j1FTg00<Bj27Tg00?oj12Tg00@Tj10Tg00A9j11Tg00AWj1=Tg00BSj25Tg00C0j1:Tg00Ckj19Tg00Dfj23Tg00ECj24Tg00E`j28Tg00F=j1ETg00G6j1DTg00Gmj2CTg00HOj2>Tg00IHj16Tg00Ifj2?Tg00:Mj1@Tg00:0j2ATg00Jbj2BTg00=\j2<Tg00>:j2;Tg00>TR0P0P0p,2stR1p,1gR2'GR3#Fg00KXR4'7g00L6R5P0P0g00LVR6#2#0#0#0#0#1%=3R7'5%:3g00M;%97'3'4'8g00N0R8P0P0%E3/74P8P0P0%D3g00NP/C2'>#6P8P0P01?71#6P8P0P0%06R0#0#2#1%@3%16'AR6'31B17'5%20#0#0#1,46'<P8P5n0100000020000n0100000020000n0100000020000n0100000020000n0100000020000n0100000020000';o"). Qed.
+Proof. reflexivity. Qed.
 
 Ltac post_common MU WM MI ST FR MR m1 junk :=
   apply evt_done; exists m1, junk; split; [| exact (conj MU (conj WM (conj MI (conj ST (conj FR MR)))))].

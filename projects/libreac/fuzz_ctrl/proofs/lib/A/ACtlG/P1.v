@@ -7,17 +7,18 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/R7tail.v; 1150 of its 1202 lines of code are new or changed and 1180 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/R7.v, with its module names changed; 329 of its 397 lines of code are new or changed and 1134 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/P1_70.v, with its addresses changed; 44 of its 89 lines of code are new or changed and 352 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/P1.v -- GLUE for stage seg_P1 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput (lib/A/ACtl.v:711):
      glue_seg_P1 : forall POST, CF POST C_A81b10 -> CF POST C_A81ac0
    with ACtl.v's own CF notation (SK := A.AE2k.tfib_sink_head, FP := []), i.e. exactly ACtl.v's Section hypothesis
    seg_P1.  Written by a Theorem Labs lane's glue lane (piece W3a: P1, P1_70, P2, P4); single writer.
    rule 24: no function proved (stage glue of a walk).
 
-   THE SEGMENT (Seg/P1.v at U 6a74d5929d2, seg_P1 :1084, "composed from seg_P1_70", plan section 2.3 row 27):
+   THE SEGMENT (Seg/P1.v at U, seg_P1 :1084, "composed from seg_P1_70", plan section 2.3 row 27):
    0x81ac0 `beqz a0,0x81ac8` with a0 = 0 (the cut's a0v regs 0), one register-only step to 0x81ac8, then segment
    P1_70 (0x81ac8 -> 0x81b10).  So the stage is the beqz step composed with glue_seg_P1_70 (ACtlG/P1_70.v).
 
-   THE RUN LIFTED: a Theorem Labs lane's P1F.p1_beqz_F (lib/A/Prog/Seg/P1F.v:38): no data access, so it is lifted with
+   THE RUN LIFTED: a Theorem Labs lane's P1F.p1_beqz_F (lib/A/Prog/Seg/P1F.v:39): no data access, so it is lifted with
    YA0nR.SRr_fevt at the empty footprint Kit.kit_RNG0 (as the pilot A5).  Its end state is the run's canonical
    register map with the same registers; the walk moves back to the cut's map by YA0nR.SRr_xregs_eqv.
 

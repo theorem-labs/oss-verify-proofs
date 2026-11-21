@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: recorded proofs written out as text, statements written out as text, lemmas added for the revision. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -115,9 +116,25 @@ Proof.
 ltac2:(KReplay.run1z (kr_t_AllocSim ()) ["FPX1"] "##55h04__x1h11bh21Hh37__arithh44__ffh58__varmaph65__with74__x2h81mh91nh:2E1h;2E2h<2E3h=3Hlth>4Holdh?4Hreqh@3oldhA1rhB3reqp;1p;2p;3p;4p;6p;7p;8g006kj15Tg007Pj1W!s/$nj1OTg00?Kj2FTg00@Sj33Tg01Efj1VTg00<lj21Tg00F^j22Tg01F\j4LTg01Gcj1;Tg00>Pj20Tg01H]j2DTg00:3j1CTg00HPj1BTg00I0j2ATg00JJj1U!s/$hj1TTg01I=j2PTg00KSj2?Tg00L6j4@!s/$aj1NTg00MCj2M!tp$mj2<!s8$ej2KTg00NQj3HTg00O0j4G!t:$Nj1I!s/$lj4JTg0093j2E!t:$`j1=!u&$mj26Tg01J>j17Tg01K<j28Tg004ij69Tg00fWj3QTg00Qjj7RTg00RNj8STg00E@R0f0R1g00W=R233p=4f1R3g00S2R4g00SQR5P5g00T1R6P1g00TQFRp=:f3R7P4P5P5P6f2R4P3P1GSp=>g00D[R8#5R9#5!s$+WR:#OR;g00E`R<,F:R=93;4#V11:3,2<11:411:7R>'2P:f5R?P=P4CL%;?g00F>R=530R@eP@g00U1R!s,$O1031#41243RA[12311043#4[RB1074#4\A1D31P1n20010!s#$12!s-%0X8@W9RAPB^8@^9@RBP1P<11:?RCg00UjRD#CRE%BDRD1A@3%U@RF%T@RGP@1P@<g00VVRH1?@8R8C@,:GRI%N5R5PIC>1MG6R6P1P41<021K14#4dAH@<3CGRIb4b5b6X0@12<112<3[^0@P1f6,1:RJf4RKO2b3O3b211:KRL,0<#4PAPBP1PJf7,1:RBPEPDP@1A@4P3%I@CJPFPGP@P8PH1?@9!t_%GP5PGC>P6P!tB,X7@12131234[^0@^7@P1f8R@,1:R:PBPKO3!tJ&0CJ#4P0P=1E;;RC#BRIP0PI%=110<B'610B:R6'6%7BRG%7:'8R:%CCRCn!w2'!w1$;3:X10P0P2!sd%=R=/61/66P:P!sQ2=3I!sR/16=2/61!sN<%7J/8G,<I10JBP1E910<JP3E9%;@P4E9b<b;b:AQ?K7%7>%7L'853IeW=W>W?X@;XA;WBo"). Qed.
 
 (* [comment removed for export] *)
-Lemma brk_grants_grow : ltac2:(zQ "e1!h9!jc!r9!m2!u8!hn9!s0!hu6!s7!sd!kh5!kkd!qf!klb&@2$2@1$1@1$0#k0@1$1@1$0#k0>3req@1$1@1$0#k0>1r@1$1@1$0#k0>3old@1$1@1$0#k0>0@1$a@3$4@1$1@1$0#k0^3@2$c@1$0#k0Z>0@2$5Z@2$3@1$0#k0^2>0@2$5@2$3@1$0#k0^3@2$3@1$0#k0^4@3$4@1$7~0@3$b^6^5^4@3$6~0@4$9@1$1@1$0#k0@1$1@1$0#k0^4@3$d@1$0#k0^5^4@1$8~0").
+Lemma brk_grants_grow : forall req r old,
+  req <> Z_to_bv 64 0 ->
+  (0 < bv_unsigned old)%Z -> (bv_unsigned old < bv_unsigned r)%Z ->
+  brk_grants req r old =
+    brk_page_range (page_round_up_Z (bv_unsigned old))
+                   (page_round_up_Z (bv_unsigned r)).
 Proof.
-ltac2:(KReplay.run1z (kr_t_AllocSim ()) ["FPX1"] "##5Zh04__x1h11bh21Hh37__arithh44__ffh58__varmaph65__with74__x2h81mh91nh:2E1h;2E2h<2E3h=3Hlth>4Holdh?4Hreqh@3oldhA1rhB3reqp;1p;2p;3p;4p;6p;7p;8g006kj16Tg007Pj1X!s/$nj1PTg00?Kj2GTg00@Sj33Tg01Efj1VTg00<lj21Tg00F^j22Tg01F\j4MTg01Gcj1;Tg00>Pj20Tg01H]j2ETg00:3j1DTg00HPj1CTg00I0j2BTg00JJj1U!s/$hj1TTg01I=j2QTg00KSj2?Tg00L6j4@!s/$aj1OTg00MCj2N!tp$mj2<!s8$ej2LTg00NQj3KTg00O0j4H!t:$Nj1I!s/$lj4JTg0093j2F!t:$`j1=!u&$mj25Tg01L?j37!sJ$Sj48!u3$Sj3:Tg004ij69!sJ$dj3RTg00Qjj7STg00RNj8WTg00E@R0f0R1g00W=R233p=4f1R3g00S2R4g00SQR5P5g00T1R6P1g00TQFSp=Af3R7P4P5P5P6f2R4P3P1GWp=>g00D[R8#6R9#6!s$+XR:#PR;g00E`R<,G:R=93;4#V11:3,2<11:411:7'2P:f5R>P=P4CM%;>g00F>R=530R?eP?g00U1R!s,$O1031#41243R@[12311043#4[RA1074#4\@1E31P1n20010!s#$12!s-%0X8?W9R@PA^8?^9?RAP1P<11:>RBg00UjRC#DRD%CCRC1B?3%U?RE%T?RFP?1Q?<g00VVRG1??8R8C@,AFRH%O5R5PHC>1NF6R6P1P41<021L14#4dAK?<3CHRHb4b5b6X0?12<112<3[^0?P1f6RI,1:RJf4RKO2b3O3b211:K,0<#4P@PAP1PJf7RA,1:R@PDPCP?1B?4P3%I?CJPEPFP?P8PG1??9!ta%FP5PFC>P6P!tD,X7?12131234[^0?^7?P1f8R?,1:RHP@PKO3!tJ&0BJ#4P0P=1F;;RB#CR6P0P6%=110<@'510@HRH'5P;P;PAA7:?AC8%DBRF5:BR5PFn!w<'!w;$;35X10P0P2!sl%=R=/51/5HP!sQ4=36!sR/15=2/51!sN=;P;PIA7:AIC8=:BF,<610J@P1E910<JP3E9%;?P4E9b<b;b:AR>K7!s\$7A7:K7!s\%536eW=W>W?X@;XA;WBo"). Qed.
+  intros req r old Hreq Hold Hlt. unfold brk_grants, brk_is_grow.
+  assert (E1 : w_is0 req = false)
+    by (unfold w_is0; apply bv_eqb_neq; exact Hreq).
+  assert (E2 : (0 <? bv_unsigned old)%Z = true) by (apply Z.ltb_lt; lia).
+  assert (E3 : (bv_unsigned old <? bv_unsigned r)%Z = true) by (apply Z.ltb_lt; lia).
+  rewrite E1, E2, E3. reflexivity.
+Qed.
+
+Lemma brk_grants_is_brk_zeros : forall req r old,
+  brk_grants req r old = brk_zeros req r old.
+Proof. reflexivity. Qed.
+
 
 Lemma brk_zeros_query : ltac2:(zQ "81!h9!jc!r9!hu6!s7!u8!jta!qf&@2$2@1$1@1$0#k0@1$1@1$0#k0>1r@1$1@1$0#k0>3old@1$1@1$0#k0@3$5@1$3~0@3$6@2$7@1$0#k0Z^2^1@1$4~0").
 Proof.
@@ -133,7 +150,9 @@ ltac2:(KReplay.run1z (kr_t_AllocSim ()) ["FPX1"] "##'`h01bh13oldh23reqp;1p;2p;3p
 
 Lemma brk_grants_keep : ltac2:(zQ "71!h9!jc!r9!hu6!s7!u8!kkd&@2$2@1$1@1$0#k0@1$1@1$0#k0>3req@1$1@1$0#k0>3old@1$1@1$0#k0@3$5@1$3~0@3$6^2^1^1@1$4~0").
 Proof.
-ltac2:(KReplay.run1z (kr_t_AllocSim ()) ["FPX1"] "##'th01bh13oldh23reqp;1p;2p;3p;4p;6g006kj10Tg007Pj1C!s/$nj1<Tg0093j2;Tg00HPj1BTg01Gcj16Tg01I`j17Tg00<lj24Tg00>Pj22!s/$mj21Tg01L?j3:!sn$Sj48Tg00:3j19!s/$Sj3ATg00@Sj33!s/$mj2@Tg00QJj1>Tg004ij65Tg01OXj1?!sw$dj3=Tg00D[#0!s$-CR0#<R1g00E@R2g00F>R31;11R4#BR5P2P5f2#6#7g00E`R6f1R7,40'2'1f0R8'1P1P1P7A:077C8%94R95A4R4P9n010!s#$20000;39X02P2P3P2P5P8P!sH4=359X021@59%67#71408R0,26'1R6/13%>6E51200%?0E5A=788=359eX11W2o"). Qed.
+  intros req old. unfold brk_grants, brk_is_grow.
+  rewrite Z.ltb_irrefl, !andb_false_r. reflexivity.
+Qed.
 
 (* [comment removed for export] *)
 Lemma brk_unmaps_keep : ltac2:(zQ "71!h9!jc!r9!hu6!s7!u8!jsc&@2$2@1$1@1$0#k0@1$1@1$0#k0>3old@1$1@1$0#k0@3$5@1$3~0@2$6^1^1@1$4~0").
@@ -184,7 +203,22 @@ ltac2:(KReplay.run1z (kr_t_AllocSim ()) ["FPX1"] "##:Oh07__arithh14__ffh28__varm
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-Definition growable : ltac2:(zQ "50!h9!jc!jm4!hu6!r9>8reserved@1$3@2$4@1$1@1$0#k0@1$1@1$0#k0>3lim$2>3top$2>1t@1$1@1$0#k0>1r@1$1@1$0#k0P") := ltac2:(zQ "h72!h9!m2!ki8!jc!pd!n0!qf!u8!ne!iq1!jl3!jm4!q3!hu6!r9!kh5!hmf!km4!ko0!hn9!q9!kof!kna&@2$4@2$1@1$0#k0^1@2$1@1$0#k0^2&@1$2~0\8reserved@1$d@2$e@1$3@1$0#k0@1$3@1$0#k0\3lim$b\3top$b\1t@1$3@1$0#k0\1r@1$3@1$0#k0@2$a@1$f@3$7@1$3@1$0#k0^1@2$6@1$0#k0Z@2$a@2$h3~0@2$h5+2+k0@2$h0@3$7@1$3@1$0#k0^2@2$6@1$0#k0Z@3$7$5@2$8M5\0$5$5@2$h4@1$2@2$1@1$0#k0^1~1@2$8@2$c~1^3@3$h2^5@2$6@1$0#k0@1$2@2$1@1$0#k0^1@2$6@1$0#k0@2$h6@2$4~1$h1@1$2@2$1@1$0#k0^1$9@2$c@2$1@1$0#k0^2^4$9").
+Definition growable (reserved : list (word * word)) (lim top : Z) (t r : word)
+    : Prop :=
+  r <> Z_to_bv 64 0 /\ (bv_unsigned r + bv_unsigned t < 2 ^ 64)%Z /\
+  (t = Z_to_bv 64 0 \/
+   (((if (page_round_up_Z (bv_unsigned r)
+          <? page_round_up_Z (bv_unsigned r + bv_unsigned t))%Z
+      then (page_round_up_Z (bv_unsigned r + bv_unsigned t)
+            <=? top)%Z
+           && region_free reserved
+                (Z_to_bv 64 (page_round_up_Z (bv_unsigned r)))
+                (Z_to_bv 64 (page_round_up_Z
+                               (bv_unsigned r + bv_unsigned t)
+                              + page_size - page_round_up_Z (bv_unsigned r)))
+      else true)
+     && (Z.max 0 (page_round_up_Z (bv_unsigned r + bv_unsigned t)
+                  - page_round_up_Z (bv_unsigned r)) <=? lim)%Z)%bool = true)).
 
 (* [comment removed for export] *)
 Definition T1 : ltac2:(zQ "50!h9!jc!hu6!r9!jm4>8reserved@1$2@2$3@1$1@1$0#k0@1$1@1$0#k0>3lim$4>3top$4>1t@1$1@1$0#k0>4bufs@1$2@1$2@1$1@1$0#8>1r@1$1@1$0#k0>0@2$3@1$2@1$2@1$1@1$0#8@1$1@1$0#k0P") := ltac2:(zQ "h11!h9!jc!hu6!r9!u8!qf!hmf!sd!jl3!jm4!m2!s7!kh5!kp5!pd!hn4!kof&@2$3@1$2@1$2@1$1@1$0#8@1$1@1$0#k0\8reserved@1$2@2$3@1$1@1$0#k0@1$1@1$0#k0\3lim$9\3top$9\1t@1$1@1$0#k0\4bufs@1$2@1$2@1$1@1$0#8\1r@1$1@1$0#k0\1o~0@2$6@2$8@3$4~0^1@4$7@1$2@1$2@1$1@1$0#8@1$1@1$0#k0@1$b@1$2@1$1@1$0#8@2$5@1$0#k0+4@2$6@3$4@1$1@1$0#k0^2@2$5@1$0#k0Z@2$6@2$f@2$h0+2+k0@2$e@2$a@1$0#k0^2@2$a@1$0#k0^4@1$c@3$4@1$1@1$0#k0^4@2$5@1$0#k0Z@2$8@5$d^7^6^5^4^2@3$4~0^1@4$7@1$2@1$2@1$1@1$0#8@1$1@1$0#k0^3@2$5@1$0#k0Z").
@@ -207,7 +241,10 @@ Definition T2 : ltac2:(zQ "40!h9!jc!hu6!r9>4want@1$1@1$0#k0>4bufs@1$2@1$2@1$1@1$
 (* [comment removed for export] *)
 Lemma brk_model_next_query : ltac2:(zQ "f0!h9!u8!hs1!jc!kq1!jk3!kr1!krf!ksb!kt6!ku6!kv5!lg4!lh4!qf>1h$2>1r@1$3@1$0#k0>0@3$1@1$3@1$0#k0^1@1$5^2@3$1$2@3$d^3@2$e@1$0#k0Z^2@8$4@1$b^3@1$8^3@1$a^3@1$c^3^2@1$7^3@1$9^3@1$6^3").
 Proof.
-ltac2:(KReplay.run1z (kr_t_AllocSim ()) ["FPX1"] "##/{h01bh11lh21rh31Hh41hp;1p;3p;2p;8p;6g006kj12Tg007Pj1P!s/$nj1JTg00ebj15Tg00@Sj3DTg00?Kj2OTg01a^j3ATg01baj1=Tg01c[j1:Tg01dQj1BTg01eKj1?Tg01fFj17Tg01g=j19Tg01h8j1CTg01i1j80Tg0093j2NTg00HPj1MTg00<lj2@Tg00>Pj26!s/$mj2>!s\$hj3LTg01Ldj3<Tg01jdj34Tg00gUj28Tg01kAj2;Tg00:3j1I!u<$mj2HTg01lJj1GTg004ij63Tg01mVj2KTg00QJj1FTg01OXj1ETg00Y;R0f1R1f0R23Dp=1g00D[#2!s$-PR3#JR4%519D42P4f2R5#5R6f3R7g00E`R8,O3R9;A2%=7R:%:7R;%B7R<%?7R=P2%77R>%97R?%C7R@G0'1X24g00E@RAg00F>RBP:PA1N44R4#MRC%57R7,@3RD,68/>2AL;DDRDA<977=44;REn010!s#$200001877,;<RFP=P7P>P?P@G0P:P;P<!s8/RG'1X0APAP!t>$PCP2PDP!sr2P!sk0/1GX0APC%I4RAP:A442;!sH51CPCP!sE%A;1;<2!sG5%=5%:5%B5%?5P6%75%95%C5G0RC,H01866%G6E3A<9661K66E31@36R3,68R8/>B%F8E31633%E3E3AA596/1CeP1P2E3W3W2X40o"). Qed.
+  intros h r ->. unfold brk_model_next, brk_maps_next.
+  rewrite Z.ltb_irrefl, andb_false_r.
+  rewrite brk_grants_query, brk_unmaps_keep. reflexivity.
+Qed.
 
 Lemma brk_model_query : ltac2:(zQ "h10!hta!h9!u8!hr8!jc!kq1!jk3!kr1!krf!ksb!kt6!ku6!kv5!lg4!hsb!ju7!qf>1r@1$4@1$1#k0>1m$3>0@3$2@1$4@1$1#k0^2@1$6@1$0^1@3$2$3@3$f@2$h0@1$1#k0Z^3^2@2$e@8$5@1$c@1$0^2@1$9@1$0^2@1$b@1$0^2@1$d@1$0^2^3@1$8@1$0^2@1$a@1$0^2@1$7@1$0^2^2").
 Proof.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's channel reader, which a write to the standard channels needs, carried as a premise to the writes). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -26,9 +27,10 @@ Section Tails.
     getr regs 4 = Z_to_bv 64 0x6c5858 ->
     lzok RSEGS L S Zr (mkCfg msF mo) -> restrict L S msF = mkst regs (Z_to_bv 64 0xe863c) mem (seg_rom RSEGS) ->
     fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+    m_channel_reader mo = true ->
     realizes RSEGS (mkCfg msF mo) (t_die msg_refused (m_fs mo)).
   Proof.
-    intros regs mem msF mo sp can tid TB PH XA R4 OK RS Hfd2. unfold t_die.
+    intros regs mem msF mo sp can tid TB PH XA R4 OK RS Hfd2 Hrd2. unfold t_die.
     apply (as_refused_k L S Zr regs mem msF mo sp can); try assumption; [apply t_exit_has_nil|].
     intros regs' mem' msF' mo' PO OK' SB' HS' RS'.
     rewrite <- (same_but_materialized_fs _ _ SB').

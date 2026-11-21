@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: auxv_list is built from the model's auxv_entries (LaunchAuxv, entry, gid, AT_EXECFN) with new length lemmas, and auxv_ok quantifies those and bounds the vector by auxv_size (was 160 bytes). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
-From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.Lib Require Import Tac Image ZBridge SysStep ITree Nodes Decode Arr.
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.MA Require Import SFModel.
@@ -127,8 +128,23 @@ Definition ptr_rel (p : optr) (r : option bptr) : Prop :=
   end.
 
 (* [comment removed for export] *)
-Definition auxv_list (x3 x4 x5 x16 x6 x11 x12 x23 rnd : Z) : list word :=
-  map wz [3; x3; 4; x4; 5; x5; 16; x16; 6; x6; 11; x11; 12; x12; 23; x23; 25; rnd; 0; 0].
+Definition auxv_list (la : LaunchAuxv) (ph : PhdrInfo)
+    (entry uid gid hwcap at_random at_execfn : word) : list word :=
+  flat_map (fun e => [fst e; snd e])
+    (auxv_entries la ph entry uid gid hwcap at_random at_execfn).
+
+(* [comment removed for export] *)
+#[using="Type"] Lemma auxv_list_length : forall la ph entry uid gid hwcap ar ae,
+  length (auxv_list la ph entry uid gid hwcap ar ae)
+  = (2 * auxv_count (la_rseq la))%nat.
+Proof. intros [ehdr c msz [|]] ph entry uid gid hwcap ar ae; reflexivity. Qed.
+
+#[using="Type"] Lemma u64s_auxv_list_length : forall la ph entry uid gid hwcap ar ae,
+  length (u64s (auxv_list la ph entry uid gid hwcap ar ae)) = auxv_size (la_rseq la).
+Proof.
+  intros la ph entry uid gid hwcap ar ae.
+  rewrite u64s_length, auxv_list_length. unfold auxv_size. lia.
+Qed.
 
 #[using="Type"] Lemma Forall_disjoint_from : forall (P : Z * Z -> Prop) W a n,
   Forall P W -> (forall lo hi, P (lo, hi) -> a + n <= lo \/ hi <= a) -> disjoint_from W a n.
@@ -556,18 +572,20 @@ Qed.
 Variable auxv_cell : Z.
 
 Definition auxv_ok (m : mem) (B : Z) : Prop :=
-  exists av x3 x4 x5 x16 x6 x11 x12 x23 rnd,
+  exists (av : Z) (la : LaunchAuxv) (ph : PhdrInfo)
+         (entry uid gid hwcap at_random at_execfn : word) (rnd : Z),
     rw_cells segs m auxv_cell [C8 (wz av)]
-    /\ bytes_at segs m av (u64s (auxv_list x3 x4 x5 x16 x6 x11 x12 x23 rnd))
+    /\ bytes_at segs m av (u64s (auxv_list la ph entry uid gid hwcap at_random at_execfn))
     /\ bytes_at segs m (rnd + 8) (le8 (wz msecret))      (* [comment removed for export] *)
-    /\ alloc_ceiling <= B /\ B <= av /\ av + 160 <= 2^64 /\ B <= rnd + 8 /\ rnd + 16 <= 2^64
-    /\ 0 <= x3 < 2^64 /\ 0 <= x4 < 2^64 /\ 0 <= x5 < 2^64 /\ 0 <= x16 < 2^64 /\ 0 <= x6 < 2^64
-    /\ 0 <= x11 < 2^64 /\ 0 <= x12 < 2^64 /\ 0 <= x23 < 2^64 /\ 0 <= rnd < 2^64.
+    /\ at_random = wz rnd
+    /\ alloc_ceiling <= B /\ B <= av
+    /\ av + Z.of_nat (auxv_size (la_rseq la)) <= 2^64
+    /\ B <= rnd + 8 /\ rnd + 16 <= 2^64 /\ 0 <= rnd < 2^64.
 
 #[using="Type"] Lemma auxv_ok_weaken : forall m B B', auxv_ok m B -> alloc_ceiling <= B' <= B -> auxv_ok m B'.
 Proof.
-  intros m B B' (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & H) HB.
-  exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. repeat (split; [tauto|]). lia.
+  intros m B B' (av & la & ph & entry & uid & gid & hwcap & at_random & at_execfn & rnd & H) HB.
+  exists av, la, ph, entry, uid, gid, hwcap, at_random, at_execfn, rnd. repeat (split; [tauto|]). lia.
 Qed.
 
 #[using="Type"] Lemma auxv_ok_frame : forall m m' B W,
@@ -575,10 +593,10 @@ Qed.
   Forall (fun iv : Z * Z => snd iv <= B /\ (snd iv <= auxv_cell \/ auxv_cell + 8 <= fst iv)) W ->
   auxv_ok m' B.
 Proof.
-  intros m m' B W (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & C & A1 & A2 & H) MU WM FW.
-  exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. split; [|split; [|split; [|exact H]]].
+  intros m m' B W (av & la & ph & entry & uid & gid & hwcap & at_random & at_execfn & rnd & C & A1 & A2 & H) MU WM FW.
+  exists av, la, ph, entry, uid, gid, hwcap, at_random, at_execfn, rnd. split; [|split; [|split; [|exact H]]].
   - eapply rw_cells_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [_ ?]. lia.
-  - eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [? _]. lia.
+  - eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn [fst snd]. intros lo hi [? _]. lia.
   - eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [? _]. lia.
 Qed.
 

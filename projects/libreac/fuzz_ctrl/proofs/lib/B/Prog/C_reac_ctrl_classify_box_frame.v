@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_ctrl_classify_box_frame (0x837c4) of fuzz_ctrl's ASan+UBSan build (image B, libreac v1.9.0): its contract in
    cgif's CALLER-JOURNAL form (CONVENTIONS.md section 2 (a working note, not in this delivery); cgif lib/YC20.v:311-365), because the
    call writes its caller's memory: the 4 bytes at v (sw a0,0(s0) at 0x83900) and, through reac_ctrl_parse, the 36
-   bytes at o.  Image-B twin of a Theorem Labs lane's image-A spec (a working branch 4a9c3fec6d3,
+   bytes at o.  Image-B twin of a Theorem Labs lane's image-A spec (a working branch,
    lib/A/Prog/C_reac_ctrl_classify_box_frame.v): the same premises C1-C22 and posts Q1-Q7, under a Theorem Labs lane's binding
    decisions (decisions.md (a working note, not in this delivery)):
      item 1 / 16  the segment term is Reusable.YB1v.tfibsegs and the sink head Reusable.YE2k.tfib_sink_head;
@@ -21,7 +22,7 @@
 
    rule 24: proves function reac_ctrl_classify_box_frame (reuse search:
    reuse-search-B.md (a working note, not in this delivery) + checker a Theorem Labs lane CONFIRM 05:33Z: no
-   released image-B proof; the released plain / ubsan proofs on origin/ossv/recipes e5e7eba2cc are other images).
+   released image-B proof; the released plain / ubsan proofs are other images).
 
    The proof `pb_reac_ctrl_classify_box_frame` cuts the run at the ONE call of reac_ctrl_parse (jal 0x83808, return
    0x8380c), because that callee takes a side-stack frame, which is an allocator EVENT in cgif's world and so cannot
@@ -32,10 +33,10 @@
    Each lift is ProgBridge.fevt_of_evtF + the kit's YA0nR.SRr_fevt_hid at RNG := ProgBridge.RNG_W (w_H W), and each
    stretch runs on MemNorm.normalize of its own base memory (decisions.md item 27a: mem_inv is false at a real
    memory that holds a read-only byte), carried back by MemNormF.evtF_normalize_ro.  The glue is a port of image A's
-   Qed glue (a working branch 4a9c3fec6d3, lib/A/Prog/reac_ctrl_classify_box_frame_glue.v): the same
+   Qed glue (a working branch, lib/A/Prog/reac_ctrl_classify_box_frame_glue.v): the same
    sections and lemma names, with image B's runs, numerals, normalization (lib/B/MemNorm, MemNormTr) and ProgWorld.
 
-   ROUTE (C) (a Theorem Labs lane 16:05Z; the A twin's switch, a working branch 4888ecb2074, and A's stretch shape,
+   ROUTE (C) (a Theorem Labs lane 16:05Z; the A twin's switch, a working branch, and A's stretch shape,
    a Theorem Labs lane 16:12Z): the glue takes neither AR_states_vis0_shadow (FALSE at an AR state) nor AR_states_owned_ro.
    ro_agree comes from the PROVED ProgWorldCtlRtC.ctl_rt_C_of_AR (its 4th part), asan_cells, the cut-shadow region and
    the runtime cells from the PROVED ProgWorldRtC.RT_used_of_AR_C (8 conjuncts).  Stretch B runs in its region form:
@@ -81,14 +82,14 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YK04R YA0nR YP09.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Mem Frame Cells Step MState ExecF PropExec Regs6ss.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B Require Img0 AsanRT ProgBridge MemNorm MemNormF MemNormTr ProgWorld.
 (* route (C): the PROVED VIS0- and OWNED_RO-free producers of the cut's runtime facts (a Theorem Labs lane's B layer,
-   a working branch 778cb94a47a, merged): ctl_rt_C_of_AR (ProgWorldCtlRtC.v) and RT_used_of_AR_C
+   a working branch, merged): ctl_rt_C_of_AR (ProgWorldCtlRtC.v) and RT_used_of_AR_C
    (ProgWorldRtC.v); the region form (ShadowRwOn) and the cut's regions (ACtlRtC); the bcmp wrapper's _on statement
    and its region (bcmp_wrap_c_on, sh_word_on, rng_asan). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B Require ShadowRwOn ACtlRtC ProgWorldCtlRtC ProgWorldRtC.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require
   ImgBounds bcmp_wrap_c bcmp_wrap_c_on bcmp_wrap_on rng_asan sh_word_on memcmp_c
   reac_ctrl_classify_box_frame_F C_reac_ctrl_classify_box_frameLib.
-(* reac_ctrl_parse's cgif-form spec of record (a working branch ea59dbb03aa; owner of
+(* reac_ctrl_parse's cgif-form spec of record (a working branch; owner of
    record a Theorem Labs lane), statement only, consumed at the cut *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require C_reac_ctrl_parse.
 Module BPS := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog.C_reac_ctrl_parse.
@@ -154,7 +155,7 @@ Definition REAC_CTRL_CLASSIFY_BOX_FRAME_STK : Z := 8864.
 Definition EV_CLASSIFY : Z := 0.
 
 Section b. Context {fx : CK11.FPState} {rc : CM05.RunCeil}.
-(* The journal's sink head is image B's core instance (decisions.md item 16; Reusable/YE2k.v:43), named explicitly
+(* The journal's sink head is image B's core instance (decisions.md item 16; Reusable/YE2k.v:44), named explicitly
    because YE2k is only Required. *)
 #[local] Existing Instance OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable.YE2k.tfib_sink_head.
 #[local] Notation SEGS := Reusable.YB1v.tfibsegs.
@@ -931,7 +932,7 @@ Proof.
 Qed.
 
 (* ret_ok k (YK0s: jalr k 0 lands on k) says k is even, so lib/Lib's ret_pc returns k itself (the proof of
-   a Theorem Labs lane's bl_ret_pc, a working branch C_reac_ctrl_build_asLib.v:387). *)
+   a Theorem Labs lane's bl_ret_pc, a working branch C_reac_ctrl_build_asLib.v:388). *)
 Lemma cls_ret_pc_ok : forall k : word, CK0s.ret_ok k -> LMS.ret_pc k = k.
 Proof.
   intros k H. unfold CK0s.ret_ok in H. rewrite <- H at 2.
@@ -1006,7 +1007,7 @@ Proof.
                   (or_intror (or_introl (ex_intro _ cid (ex_intro _ pos (conj Hin Ha))))))).
 Qed.
 
-(* Every live fake frame is 64-aligned and a multiple of 64 bytes (A's CtrlFrame.v:257 frame_al64, a Theorem Labs lane's PA
+(* Every live fake frame is 64-aligned and a multiple of 64 bytes (A's CtrlFrame.v:258 frame_al64, a Theorem Labs lane's PA
    layer, copied: lib/A/Prog/CtrlFrame.v Requires image-A PA files that this closure does not need). *)
 Lemma cls_frame_al64 : forall ly S W mem md cid pos,
   AR SEGS B ly S W mem md -> In (cid, pos) (CG01.frames S) ->
@@ -1188,15 +1189,15 @@ Qed.
    - RELRO_IMG: decisions.md item 17's twin rule; the composer, from PI_ctrl_B's pa_relro_img.
    - LAWS: the core's AR_laws (decisions.md item 76: core-level, Reusable.YG0q.AR_laws_ok at B's top).
    - TPARSE: reac_ctrl_parse's cgif-form spec of record, lib/B/Prog/C_reac_ctrl_parse.v (a Theorem Labs lane,
-     a working branch ea59dbb03aa) at SEGS := tfibsegs and the core sink head; its proof
+     a working branch) at SEGS := tfibsegs and the core sink head; its proof
      pb_reac_ctrl_parse is a Theorem Labs lane's / a Theorem Labs lane's.
    - TS: image B's bundle law CtrlTSyms B (the composer, B := CtrlB, CtrlB_syms).
    route (C): no AR_states_vis0_shadow and no AR_states_owned_ro.  ro_agree and RT_used_C are not hypotheses: their
-   PROVED producers PWCC.ctl_rt_C_of_AR / PWRC.RT_used_of_AR_C (a working branch
-   778cb94a47a) are applied to TS and LAWS, the only premises their statements carry.  The bcmp wrapper's contract is
+   PROVED producers PWCC.ctl_rt_C_of_AR / PWRC.RT_used_of_AR_C (a working branch)
+   are applied to TS and LAWS, the only premises their statements carry.  The bcmp wrapper's contract is
    not a hypothesis either (it was HBCMP): stretch B is given its PROVED route-(C) form bcmp_wrap_on.bcmp_wrap_holds_F_on
-   (bcmp_wrap_c_on.bcmp_wrap_contract_F_on; a Theorem Labs lane's root-free text, a working branch
-   417f5c8e944, taken by path). *)
+   (bcmp_wrap_c_on.bcmp_wrap_contract_F_on; a Theorem Labs lane's root-free text, a working branch,
+   taken by path). *)
 Section m.
 Variable B : asyms.
 Variables RLO RHI : Z.

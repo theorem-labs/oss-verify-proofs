@@ -11,6 +11,7 @@
    scl_loop_from take the FP state of the pass explicitly, and sc_loop's continuation takes the FP state at the exit;
    PaFx.v's st_ok_restrict_xfx takes the call site's symbolic state to the FP state each pass returns. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/sup_chain_s5.v, with its module paths and module names changed; 1026 of its 1134 lines of code are new or changed and 1086 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The segment lemmas of the join loop of sup_host_setting's ASan+UBSan walk (plugin-hostd/fuzz_command,
    fuzz_command.asan-ubsan, recorder.c:371-374), on the points and statements of sup_host_setting_s0.v:
    - hs_seg_l2s: from L2S n (0x8b744, back from the strlen wrapper on the word list w, token n >= 1,
@@ -24,7 +25,7 @@
      the last token, the reloads of c, F, F from the realigned stack (0x8b7c8 .. 0x8b7d0) and the call of
      arg_s(c, w) (0x8a820, at 0x8b800) through cl_callS_wide (arg_s writes c->nargs and c->args[2], program
      statics in the whole call's footprint), back at AS2 (0x8b804).
-   The B twin of the ASan walk's lib/A/Prog/sup_host_setting_s6.v (a working branch e323bbe76d2):
+   The B twin of the ASan walk's lib/A/Prog/sup_host_setting_s6.v (a working branch):
    B's loop keeps w in s6, 8n in s7, n in s11, ntok in s2, ' ' in s4, ~tok in s5 and the shadow base in s10, makes
    every call at the realigned sp1 = hs_sp1 sp0 with s0 = sp0 and the class-0 side-stack frame (0, fpos) owned by
    the whole call's journal, and records the joined words with a call of arg_s where A inlines xstrdup. Shared
@@ -706,10 +707,10 @@ clearbody E.
 unfold hs_at.
 (* 0x8b744 .. 0x8b770: a0 := w + L, the two store_n checks of [w + L, w + L + 2), w[L] := ' ', w[L+1] := 0; the run
    stops at the UBSan check 0x8b774.
-   0x8b754/0x8b7ac: refuted by hsb6_seedS at sup_host_setting_s6.v:469, from range_addressable_of_block of the word
+   0x8b754/0x8b7ac: refuted by hsb6_seedS at sup_host_setting_s6.v:470, from range_addressable_of_block of the word
    list's block (hs_mid's Nw, ST_L2S) with L + 2 <= |join_sp toks| + 1 (hsb_join_sep_in): the token executor reads
    shadow byte 0 at (w + L) >> 3, `bnez a1` not taken.
-   0x8b768/0x8b7b8: refuted by hsb6_seedS at sup_host_setting_s6.v:469, from the same block fact: shadow byte 0 at
+   0x8b768/0x8b7b8: refuted by hsb6_seedS at sup_host_setting_s6.v:470, from the same block fact: shadow byte 0 at
    (w + L + 1) >> 3, `bnez a1` not taken. *)
 paj_run_tok RUN HS HJ SHOK hsb6_Bspan.
 { lazymatch goal with |- awr_ok _ _ ?Ex ?rs ?stk ?spx ?fp ?bb0 ?bc ?fr ?lyx ?own =>
@@ -734,7 +735,7 @@ psrr_branch_tok RUN BR HS SHOK hsb6_Bspan.
     rewrite (hsb6_ub774 Env (i_ptok x) (8 * Z.of_nat n) X21 X23 ltac:(lia) U774) in Hc; discriminate Hc
   end.
 - (* not taken: 0x8b778 .. 0x8b794: a0 := tok + 8n, the load8 check of &tok[n], a1 := tok[n], a0 := w, strcat.
-     0x8b788: refuted by hsb6_seedS at sup_host_setting_s6.v:469, from hsb6_arr_now (sup_host_setting_s6.v:407):
+     0x8b788: refuted by hsb6_seedS at sup_host_setting_s6.v:470, from hsb6_arr_now (sup_host_setting_s6.v:408):
      the slot &tok[n] is addressable (afobj's range or a live block, hs_cx's array premise), so the token executor
      reads shadow byte 0 at (tok + 8n) >> 3, `bnez a1` not taken *)
   paj_run_tok RUN HS HJ SHOK hsb6_Bspan.

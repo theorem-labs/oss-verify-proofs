@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed MV_OK_wf. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From stdpp Require Import bitvector.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Run Specs.
@@ -36,7 +37,6 @@ Proof. intros f lo n H. pose proof (zsum_le (fun _ => 0) f lo n H) as H'. revert
   assert (E : forall lo' k, zsum (fun _ => 0) lo' k = 0) by (intros lo' k; revert lo'; induction k as [|k IH]; intros; cbn [zsum]; [lia| rewrite IH; lia]).
   rewrite E. lia.
 Qed.
-
 Lemma zsum_zero : forall f lo n, (forall x, lo <= x < lo + Z.of_nat n -> f x = 0) -> zsum f lo n = 0.
 Proof. intros f lo n; revert lo; induction n as [|k IH]; intros lo H; cbn [zsum]; [lia|]. rewrite H by lia. rewrite IH; [lia|]. intros x Hx; apply H; lia. Qed.
 Lemma zsum_indicator : forall n lo a b, lo <= a -> a <= b -> b <= lo + Z.of_nat n ->
@@ -56,12 +56,10 @@ Qed.
 Definition plo (p : word * word) : Z := bv_unsigned (fst p).
 Definition psz (p : word * word) : Z := bv_unsigned (snd p).
 Definition phi (p : word * word) : Z := plo p + psz p.
-
 Definition nwr (P : list (word * word)) : Prop := Forall (fun p => phi p <= 2 ^ 64) P.
 Definition N64 : nat := Z.to_nat (2 ^ 64).
 Lemma N64_Z : Z.of_nat N64 = 2 ^ 64.
 Proof. unfold N64. rewrite Z2Nat.id; [reflexivity|]. apply Z.pow_nonneg. discriminate. Qed.
-
 Global Opaque N64.
 
 Definition cov (C : list (word * word)) (x : Z) : bool := existsb (fun c => owns_b c x) C.
@@ -154,7 +152,6 @@ Proof.
   pose proof (alloc_top_lt h) as ATOP. unfold two_pow_64 in ATOP. pose proof (word_range dst) as Rd.
   assert (Honz : 0 <= onz) by (subst onz; unfold page_round_up_Z, page_size; pose proof (word_range old_size); apply Z.mul_nonneg_nonneg; [apply Z.div_pos; lia|lia]).
   assert (Rn : bv_unsigned new_n = nnz) by (subst new_n; apply u64; lia).
-
   unfold vm_backing_used, mremap_move_charge, mremap_model_next, vm_resize_backing, mremap_maps_next, vm_backed_maps.
   cbv zeta. fold h.
   change (m_vmmaps (with_vm_backing ?lz ?mt ?mm)) with (m_vmmaps mm).
@@ -162,31 +159,31 @@ Proof.
   change (m_vm_materialized (with_vm_backing ?lz ?mt ?mm)) with mt.
   change (m_vmmaps (with_vmmaps ?hh m)) with hh. cbn [vm_maps vm_noaccess].
   change (m_vm_lazy (with_vmmaps ?hh m)) with (m_vm_lazy m). change (m_vm_materialized (with_vmmaps ?hh m)) with (m_vm_materialized m).
-  set (M := map_remove (vm_maps h) old). set (NA := vm_noaccess h). set (LZ := m_vm_lazy m). set (MT := m_vm_materialized m).
+  set (M := maps_subtract (vm_maps h) (bv_unsigned old) (bv_unsigned old + bv_unsigned old_n)). set (NA := vm_noaccess h). set (LZ := m_vm_lazy m). set (MT := m_vm_materialized m).
   set (sl := mremap_source_lazy_b m old old_n).
   set (olo := bv_unsigned old). set (dlo := bv_unsigned dst).
   set (KL := maps_subtract LZ olo (olo + bv_unsigned old_n)).
   set (KL' := maps_subtract KL dlo (dlo + bv_unsigned new_n)).
-
   rewrite length_app.
   match goal with |- context [List.map (move_page_base old dst) ?l] => set (FL := l) in * end.
   pose proof (filter_length_le (page_outside_range dlo (dlo + bv_unsigned new_n)) (List.filter (page_outside_range olo (olo + bv_unsigned old_n)) MT)) as LEN1.
   assert (LEN2 : length (if sl then List.map (move_page_base old dst) FL else []) = length (if sl then FL else [])) by (destruct sl; [apply length_map | reflexivity]).
   rewrite LEN2.
-
-  assert (NWM : nwr M) by (subst M; unfold map_remove; apply nwr_filter; exact HWF).
+  assert (NWM : nwr M) by (subst M; apply nwr_maps_subtract; [pose proof (word_range old); lia | pose proof (word_range old_n); lia | exact HWF]).
   assert (NWD : nwr ((dst, new_n) :: M)) by (constructor; [unfold phi, plo, psz; cbn [fst snd]; fold dlo; rewrite Rn; lia | exact NWM]).
   rewrite (live_bytes_zsum (maps_subtract_all (maps_subtract_all ((dst, new_n) :: M) NA) _)) by (apply nwr_maps_subtract_all, nwr_maps_subtract_all; exact NWD).
   rewrite (live_bytes_zsum (maps_subtract_all (maps_subtract_all M NA) KL)) by (apply nwr_maps_subtract_all, nwr_maps_subtract_all; exact NWM).
-
   assert (IND : zsum (fun x => if (dlo <=? x) && (x <? dlo + nnz) then 1 else 0) 0 N64 = nnz) by (rewrite zsum_indicator; rewrite ?N64_Z; lia).
-
   assert (FREE_M : forall x, dlo <= x < dlo + nnz -> owners M x = 0%nat).
-  { intros x Hx. pose proof (owners_filter_le (fun p => negb (bv_eqb (fst p) old)) (vm_maps h) x) as LE.
-    change (List.filter (fun p => negb (bv_eqb (fst p) old)) (vm_maps h)) with M in LE.
+  { intros x Hx.
+    assert (LE : (owners M x <= owners (vm_maps h) x)%nat).
+    { subst M. rewrite owners_maps_subtract;
+        [| pose proof (word_range old); lia
+         | pose proof (word_range old_n); pose proof (word_range old); lia
+         | right; exact HWF ].
+      destruct ((bv_unsigned old <=? x) && (x <? bv_unsigned old + bv_unsigned old_n))%bool; lia. }
     rewrite (region_free_no_owner (vm_maps h) dst new_n x (region_free_app_r _ _ _ _ FREE)) in LE; [lia|].
     apply owns_intro; fold dlo; [lia | rewrite Rn; lia]. }
-
   enough (PW : forall x,
     Z.of_nat (owners (maps_subtract_all (maps_subtract_all ((dst, new_n) :: M) NA) (if sl then lazy_interior dst new_n ++ KL' else KL')) x)
     <= (if sl then 0 else if (dlo <=? x) && (x <? dlo + nnz) then 1 else 0) + Z.of_nat (owners (maps_subtract_all (maps_subtract_all M NA) KL) x)).
@@ -198,7 +195,6 @@ Proof.
   intros x. clear IND LEN1 LEN2 FL.
   rewrite !owners_maps_subtract_all; try (exact NWD || exact NWM || (apply nwr_maps_subtract_all; (exact NWD || exact NWM))).
   rewrite owners_cons, owns_b_spec. cbn [fst snd]. fold dlo. rewrite Rn.
-
   assert (CE : forall C, cov C x = negb (Nat.eqb (owners C x) 0)).
   { intros C; induction C as [|c C IH]; [reflexivity|]. rewrite cov_cons, owners_cons, IH. destruct (owns_b c x), (owners C x); reflexivity. }
   assert (CKL' : cov KL' x = (negb ((dlo <=? x) && (x <? dlo + nnz)) && cov KL x)%bool).
@@ -225,7 +221,7 @@ Proof.
       replace (dlo + nnz - dlo) with nnz by (clear; lia).
       rewrite (u64 dlo) by (clear - Rd; lia). rewrite (u64 nnz) by (clear - TOP ATOP Rd LT Honz; lia).
       destruct ((dlo <=? x) && (x <? dlo + nnz))%bool; reflexivity. }
-
+   
     rewrite CI. destruct (Z.leb_spec dlo x); destruct (Z.ltb_spec x (dlo + nnz)); cbn [negb andb orb];
       destruct (cov KL x), (cov NA x); cbn [negb andb orb]; lia.
   -

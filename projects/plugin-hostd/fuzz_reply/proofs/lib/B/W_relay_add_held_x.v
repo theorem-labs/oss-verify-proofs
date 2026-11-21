@@ -3,8 +3,8 @@
 (* Modified by Theorem Labs, 2026-10-30 (G-BRA): the HELD segment of the image-B walk of fuzz_reply's relay_add over a
    generic allocator relation ARx in the ROOM form: pb_rb_held_x : rb_held_stmt B PST ARx MT RP G RG CTX
    (lib/B/W_relay_add_cut_x.v), from the cut RBH (0x82b3c, back from pthread_mutex_lock) to the cut RBA (0x82b90, the
-   append).  Converted from the AR segment lib/B/W_relay_add_held.v (pb_ra_held, a working branch
-   22c3862876d; removed from this tree by KF-COUNT #4), whose machine-code account holds
+   append).  Converted from the AR segment lib/B/W_relay_add_held.v (pb_ra_held, a working branch;
+   removed from this tree by KF-COUNT #4), whose machine-code account holds
    unchanged (below), by route (b) (CONVERSION.md sha256 1015972e02a9; internal record): AR_laws -> AR_laws_x with the laws
    al_* -> alx_*, ajournal_gx -> ajournal_gx_x (Hp after S, Hp' after S'), paj_run_x / paj_run_to_x ->
    paj_run_x_x / paj_run_to_x_x with the token tactics paj_run_tok_x / paj_run_to_tok_x (W_kit_x.v), and the realloc
@@ -34,6 +34,7 @@
    Section hypotheses: the donor's, converted (only those this segment uses), plus HPST (the image is off PST: the
    ROM-view lemma ajournal_gx_rom_view_x asks the ROM bytes off PST; the text of lib/B/W_op_add.v Section x; trivial at
    PST = []). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

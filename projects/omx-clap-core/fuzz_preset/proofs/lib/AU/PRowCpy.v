@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B (ASan+UBSan build, #102 B' pin d663f82d7f48, unstripped twin c90d4fa54d43; donor pin f8f98a95; tfibsegs = Reusable/YB1v.v AsanUbsan.M.loaded_segments; TfibSyms = Reusable/YF0m.v): the two memcpy runtime rows of h-mani-a8's API record
    (lib/A/CfApiPreset.v po_asan_memcpy_cf, po_memcpy_icpt_cf) in the target text of c-omx-alloc's engine,
    YGcallMxmn.aintrin_realizes_xm (op OCpy) over the generic allocator relation ARx with its laws AR_laws_x:
@@ -11,7 +12,7 @@
    The walks are lib/AU/PRowCpyA.v asan_memcpy_realizes_xm (preset's lib/Reusable/YE2q.v walk) and lib/AU/PRowCpyI.v memcpy_icpt_realizes_xm (lib/Reusable/YE31.v); each takes the four AR_laws_x fields it reads, which the record gives here.
    The record's fields at the s1b tree still have the OLD cf text (YG0d2cf.aintrin_realizes_cf); h-mani-a8 restates
    each as the _xm row at ARx := ARcf. No bridge to the old text is made here.
-   #102 B' (c-libc-stdio rows102): origin/cold/c-libc-stdio-rows-cpy 532cf8bd849e's lib/AU/PRowCpy.v (blob 48de77417f81) relocated by the
+   #102 B' (c-libc-stdio rows102): a commit's lib/AU/PRowCpy.v (blob 48de77417f81) relocated by the
    frozen alreloc c4338d099cfb8025 (2 comment numerals moved by symbol + offset, both as the internal file b-to-bprime.tsv 5a684bb2: __asan_memcpy
    -> 0x524d0, __wrap_memcpy -> 0x524cc); theorem names and statements unchanged. The pcs come from the tree's #102 record
    Reusable/YB1v.v b8d05529c744, Reusable/YF0l.v 4a405a3dba65, Reusable/YF0m.v f82202ebccdf, Reusable/YE34.v cc3d7182c344, Reusable/YImgCellsB.v f1cc7493a79d, Reusable/YImgTop.v d2a97d3111ce (IMG_TOP_B 0x601000): Tfib_code's pc_asan_memcpy / pc_wrap_memcpy are

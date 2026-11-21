@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: chan_ok also gives the channel reader, so rzt_stdout_stdio_write passes its two halves to rzt_stdio_writev and rzt_stdout_writefn passes its first half to rzt_ioctl. *)
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -885,7 +886,7 @@ Section StdoutModel.
   Proof.
     intros s st mo CH B. unfold stdout_stdio_write.
     eapply (rzt_mbind_nil_l usegs _ _ _ _ _ (fun r => r = (st, st))); [apply rzt_rd_so; reflexivity|]. intros so s' E. injection E as -> ->.
-    eapply rzt_mbind_nil_r; [apply (rzt_stdio_writev usegs st mo 1 (so_buf st) s CH); exact B|].
+    eapply rzt_mbind_nil_r; [apply (rzt_stdio_writev usegs st mo 1 (so_buf st) s (proj1 CH) (proj2 CH)); exact B|].
     intros [] s' E. cbn [snd] in E. subst s'. apply rzt_upd_so. reflexivity.
   Qed.
 
@@ -901,7 +902,7 @@ Section StdoutModel.
       + eapply (rzt_mbind_nil_l usegs _ _ _ _ _ (fun r => r = (tt, mkStdout act buf lbf false))); [apply rzt_upd_so; reflexivity|].
         intros [] s1 E. injection E as ->.
         eapply (rzt_mbind_nil_l usegs _ _ _ _ _ (fun r => (exists err, fst r = SErr err) /\ snd r = mkStdout act buf lbf false));
-          [eapply (rzt_ioctl usegs); [exact CH| discriminate|]; intros err; split; [exists err; reflexivity| reflexivity] |].
+          [eapply (rzt_ioctl usegs); [exact (proj1 CH)| discriminate|]; intros err; split; [exists err; reflexivity| reflexivity] |].
         intros r s1 [[err E1] E2]. cbn [fst snd] in E1, E2. subst r s1. apply rzt_upd_so. reflexivity.
       + intros [] s1 E. cbn [snd] in E. subst s1.
         eapply rzt_mono; [apply rzt_stdout_stdio_write; [exact CH| cbn [so_buf]; exact B]|]. intros [[] s2] E2. exact E2.

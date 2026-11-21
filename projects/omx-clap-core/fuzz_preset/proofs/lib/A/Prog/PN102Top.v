@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image A' (asan, harness fix #102, pin sha256
    1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44, unstripped twin bff8519bbe3ea0e4): THE TOP of the
    walk of parse_noting (A' 0x81f14, 120 bytes, 30 instructions, frame 48; row N10-PNA; cut table
    lib/A/Prog/PN102Cuts.v): the six segments composed into the batch kit's tparse_noting_specX ITSELF (lib/A/PRH_FnCheck.v
-   :596-730 on the kit's cut of record 7cdbb61b5fa0) at the A' instance, then at the
+   :596-730 on the kit's cut of record) at the A' instance, then at the
    real A' binding B := AD2l.TfibB, then in the consumer's form (a Theorem Labs lane's H_txt_parse_noting_A, drv102
    lib/A/PresetD2pAPf.v:99-101 / :195). NO _FIX TWIN and NO premise of the walk's own: the signed walk's FIX premises
    are all retired by the batch kit (the cut table's header has the text diff).
@@ -22,19 +23,19 @@
    YA0nH.SRrG_bind at wle' (YA0nH.wle'_trans).
    rule 24: proves function parse_noting (reuse search: `proof-index parse_noting` exit 4 at 2026-10-30 07:2xZ,
    index v5 06:36:24Z: 0 named / 0 by address / 0 related / 0 released; the unreleased hits are this lane's own N10-PNA
-   files and the plain / UBSan / B' twins; R24Pna CONFIRM 2026-10-29 18:2xZ; own signed walk 13970867e0c9, its one
+   files and the plain / UBSan / B' twins; R24Pna CONFIRM 2026-10-29 18:2xZ; own signed walk, its one
    announced re-bind). This file: the top of that walk.
-   THE BATCH KIT'S RE-BIND: a Theorem Labs lane's signed A' file of the same role (a working branch 13970867e0c9),
-   re-fit to the batch kit's cut (commit 7cdbb61b5fa0) as the B' twin was re-fit
-   (a working branch c7276d935095 lib/B/Prog/PN102B<same role>.v, read back at PI_prog_A / prh_img_A).
-   ON COMBINE6 (a working branch, base f40eca0736e0 on the
+   THE BATCH KIT'S RE-BIND: a Theorem Labs lane's signed A' file of the same role (a working branch),
+   re-fit to the batch kit's cut as the B' twin was re-fit
+   (a working branch lib/B/Prog/PN102B<same role>.v, read back at PI_prog_A / prh_img_A).
+   ON COMBINE6 (a working branch, base on the
    combine6 tree, the cut merged with int102): the kit texts are the cut's (same blobs);
    ARcf below is combine6's (YG0ncf.v 6748bee76f02, with cls1_band_vis_cf; the cut's 9c48a1a860d6). The files are the
-   k1 line's (a working branch 319a231e9da8), unchanged but for comments.
+   k1 line's (a working branch), unchanged but for comments.
    CWPJ RE-FIT (POST-BATCH, not for the cut landing): the texts are those of the kit's prh_cw_pj repair
-   a working branch f29626eb1667 (the cut + 4b8f95c0455, 0ee9bda470d, f29626eb1667). Of them only
+   a working branch (the cut +). Of them only
    PRH_Base.prh_cw_pj, the cursor-set premise of HPJ's tpj_parse_specX, changes a statement this walk reads (defect
-   repair: the old text is unprovable at a satisfiable CW on B' (cwpjcm 8fa0b4530baa); falsity of the old text not
+   repair: the old text is unprovable at a satisfiable CW on B' (cwpjcm); falsity of the old text not
    shown); tparse_noting_specX itself is unchanged. The re-fit is PN102Cuts.v pn_cw_pj only.
    THE INSTANCE: PA := PI_prog_A (lib/A/PAImg_prog.v, the A' listing lib/A/Listing_prog.v), PI := prh_img_A
    (lib/A/PRH_Img.v), cp := CfParams_preset, RL := prh_room_live_a8, ARx := ARcf /\ xs_placed_cf (= PresetCfnA.v
@@ -166,7 +167,7 @@ Qed.
 End R.
 
 (* ---------------------------------------------------------------------- *)
-(* THE CONSUMER'S FORM: a Theorem Labs lane's txt_parse_noting_A (a working branch 4c5ae3c40e82
+(* THE CONSUMER'S FORM: a Theorem Labs lane's txt_parse_noting_A (a working branch
    lib/A/PresetD2pAPf.v:99-101), every argument spelled as there - ci := CfImg_A, PI := PresetCfnA.preset_prh_img,
    ARx := PresetCfnA.iface_ARx at TfibB, SK := PresetCfnA.preset_sink_head, CTX0 := PresetCfnA.iface_ctx0 - from the
    four callee texts at the same instance. It is the theorem above by conversion. Since the round-6f CfImg repairs

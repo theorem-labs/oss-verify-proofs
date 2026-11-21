@@ -3,10 +3,11 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntrySchedTurnD), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/ACa1.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_grant/lib/A/Prog/GrantEntrySchedTurnD.v, with its module paths changed; 151 of its 223 lines of code are new or changed and 208 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The image-B (UBSan) walk of the call of reac_headamp_tx_effective in one
    frame-loop turn of LLVMFuzzerTestOneInput, over image B's own addresses, registers, spill slots and UBSan
    guards; the shape is image A's.
-   Ported from proofs/libreac/fuzz_grant/lib/A/Prog/GrantEntrySchedTurnC.v at e6bd82f51c9. *)
+   Ported from proofs/libreac/fuzz_grant/lib/A/Prog/GrantEntrySchedTurnC.v. *)
 (* The frame-loop turn of LLVMFuzzerTestOneInput (image B, entry 0x80a3c), segment C:
    0x81c18 (GP_eff) .. 0x81c1c (GP_effr), LLVMFEntrySchedTurnDefs.v.
      81c18 jal reac_headamp_tx_effective    a0 = t, a1 = c, a2 = p; returns eff T' t c p in a0

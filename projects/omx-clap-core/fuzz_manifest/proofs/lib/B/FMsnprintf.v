@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMsnprintf.v at a working branch 5d8d8a15571, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMsnprintf.v at a working branch, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
 (* fm's snprintf contract, closed: HarnessDesign's asnprintf_realizes (lib/A/FMH_Rt.v) at PC_snprintf from nothing but
    the image laws, by composing the chain's pieces:
      FMsnprintfG.v    snprintf_realizesU   the ASan interceptors, musl vsnprintf / vfprintf, the WRITE_RANGE check

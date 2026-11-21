@@ -4,11 +4,12 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/Prog/LLVMFuzzerTestOneInput_fr.v, with its module paths and module names changed; 456 of its 574 lines of code are new or changed and 409 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/Prog/Seg/Tac_slot.v, with its module paths and module names changed; 259 of its 298 lines of code are new or changed and 535 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/Prog/SegSlot.v, with its module paths and module names changed; 20 of its 38 lines of code are new or changed and 280 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The segment statements of reac-pw/fuzz_segconf LLVMFuzzerTestOneInput (UBSan) over the cut-free invariants
    U/Prog/SlotInvCF.v: Section Stmts of U/Prog/LLVMFuzzerTestOneInput_c.v, word for word (S_E01 .. S_X01 at the cuts
    ENTRY -> K13984 -> K139e4 f -> K13aac f -> K13c34 f -> K139e4 (S f) | K13c3c -> K13e90 -> K141ec -> RET,
    seg_lemmas), with Hcut, Hat and the cut invariants read from SlotInvCF (SR := SRcf), as reac-pw/fuzz_pin's
-   U/Prog/SegCF/StmtsCF.v (commit a2a7540da98) restates pin's. Statement text only. *)
+   U/Prog/SegCF/StmtsCF.v restates pin's. Statement text only. *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

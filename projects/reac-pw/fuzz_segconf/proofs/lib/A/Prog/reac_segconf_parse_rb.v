@@ -1,8 +1,8 @@
 (* reac-pw/fuzz_segconf: how many refusals one call of the reader's parse counts (SegModel.v only, no image), for
    the ASan walk of reac_segconf_parse (lib/A/Prog/reac_segconf_parse.v): cross_check_pre asks
    rc_refused + 64 < 2 ^ 32 of the state parse_file returns. Copied by the G3 walk owner from the plain-build walk owner's plain
-   lib/Spec/SegRefusedBound.v (commit db8c4beebf62), whose SegModel.v is the one in this tree
-   (git diff db8c4beebf62 45ef51243c87 -- lib/Spec/SegModel.v is empty); module paths unchanged, names unchanged.
+   lib/Spec/SegRefusedBound.v, whose SegModel.v is the one in this tree
+   (git diff -- lib/Spec/SegModel.v is empty); module paths unchanged, names unchanged.
    Every line of SegModel.r_lines adds 0 or 1 to rc_refused, so r_parse_file adds at most length (lines text),
    and with SegModel.lines_props (at most length text lines for a NUL-free text) and reader_pre's bounds (a text
    of at most 65535 bytes, rc_refused + 2 ^ 17 < 2 ^ 32) the count stays 64 below 2 ^ 32. *)

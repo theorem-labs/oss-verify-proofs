@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the hypothesis T_large and the lemma large_granted take the placement premise placed_at, which large_split passes on from the grant continuation of srzJ_mmap_anon_split; their encoded statements kept verbatim, with lemmas proving them equal to the written-out statements without that premise). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -135,8 +136,30 @@ Section LargeSplit.
   (* [comment removed for export] *)
   Hypothesis K_apart : ltac2:(CDefT.buildp (gd_tbl_AW_LargeSplit ()) "Psc,(0.(20.$2.$2.))Pr,$2.Pmo,$21.Pa,(>.&40.)Pn,(>.&40.)P,A3.VK,R5.R4.R3.P,(:.$22.(23.(24.(20.(>.&40.)(>.&40.))(25.(26.R4.))(27.(26.R4.)))R3.R2.)$28.)P,(4.+10000.(29.&40.R3.))P,(4.(5.(29.&40.R5.)(29.&40.R4.))(2:.VhAR,))Py,$2.P,(1?.A3.VCSf,R:.R9.R1.(1?.(1>.(4.(2;.VAL,)R1.)(9.R1.(2<.VAL,)))(1?.(1>.(4.+7???7000.R1.)(9.R1.+10007???8000.))(1>.(4.VPA,R1.)(9.R1.(5.VPA,+800000.))))))(2=.(1>.(4.(29.&40.R8.)R2.)(9.R2.(5.(29.&40.R8.)(29.&40.R7.)))))")
 (* [comment removed for export] *).
-  Hypothesis T_large : ltac2:(CDefT.buildp (gd_tbl_AW_LargeSplit ()) "Psc,(0.(20.$2.$2.))Pr,$2.Pms,$2.Pmo,$21.Pa,(>.&40.)P,A3.VGl,R5.R4.R3.P,A3.VK,R6.R5.R3.P,(:.$2.(2>.(29.&40.R3.)+1000.)=)P,(9.=(29.&40.R4.))P,(4.(5.(29.&40.R5.)R7.)(2:.VhAR,))P,(:.$22.(23.(24.(20.(>.&40.)(>.&40.))(25.(26.R7.))(27.(26.R7.)))R6.(1<.&40.R8.))$28.)(1>.A3.VK,(24.(20.$2.$2.)R;.(15.(20.$2.$2.)(2?.$2.$2.(29.&40.R7.)R9.)(18.(20.$2.$2.))))R:.(30.+22.R7.R9.R8.)(31.A2.VCSf,(24.(20.$2.$2.)R;.(15.(20.$2.$2.)(2?.$2.$2.(29.&40.R7.)R9.)(18.(20.$2.$2.))))R:.(29.&40.R7.)R9.))")
-(* [comment removed for export] *).
+  Definition ZZ_T_large_old : Prop := ltac2:(CDefT.buildp (gd_tbl_AW_LargeSplit ()) "Psc,(0.(20.$2.$2.))Pr,$2.Pms,$2.Pmo,$21.Pa,(>.&40.)P,A3.VGl,R5.R4.R3.P,A3.VK,R6.R5.R3.P,(:.$2.(2>.(29.&40.R3.)+1000.)=)P,(9.=(29.&40.R4.))P,(4.(5.(29.&40.R5.)R7.)(2:.VhAR,))P,(:.$22.(23.(24.(20.(>.&40.)(>.&40.))(25.(26.R7.))(27.(26.R7.)))R6.(1<.&40.R8.))$28.)(1>.A3.VK,(24.(20.$2.$2.)R;.(15.(20.$2.$2.)(2?.$2.$2.(29.&40.R7.)R9.)(18.(20.$2.$2.))))R:.(30.+22.R7.R9.R8.)(31.A2.VCSf,(24.(20.$2.$2.)R;.(15.(20.$2.$2.)(2?.$2.$2.(29.&40.R7.)R9.)(18.(20.$2.$2.))))R:.(29.&40.R7.)R9.))").
+  Lemma ZZ_T_large_faithful : ZZ_T_large_old =
+    (forall (sc : list (Z * Z)) (r ms : Z) (mo : Model) (a : word),
+       Gl sc r ms ->
+       K sc r mo ->
+       bv_unsigned a mod 4096 = 0 ->
+       0 < bv_unsigned a ->
+       bv_unsigned a + ms <= ACEIL ->
+       region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 ms) = true ->
+       K (sc ++ [(bv_unsigned a, ms)]) r (anon_grant 0x22 a ms mo)
+       /\ crange (CSf (sc ++ [(bv_unsigned a, ms)]) r) (bv_unsigned a) ms).
+  Proof. exact eq_refl. Qed.
+
+  Hypothesis T_large :
+    forall (sc : list (Z * Z)) (r ms : Z) (mo : Model) (a : word),
+      Gl sc r ms ->
+      K sc r mo ->
+      bv_unsigned a mod 4096 = 0 ->
+      0 < bv_unsigned a ->
+      bv_unsigned a + ms <= ACEIL ->
+      region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 ms) = true ->
+      ASys.placed_at ms mo a ->
+      K (sc ++ [(bv_unsigned a, ms)]) r (anon_grant 0x22 a ms mo)
+      /\ crange (CSf (sc ++ [(bv_unsigned a, ms)]) r) (bv_unsigned a) ms.
   (* [comment removed for export] *)
   Hypothesis LEDGER_P : ltac2:(CDefT.buildp (gd_tbl_AW_LargeSplit ()) "Psc,(0.(20.$2.$2.))Pr,$2.Pmo,$21.P,A2.VGp,R3.R2.P,A3.VK,R4.R3.R2.(1>.(:.$22.(23.(25.(26.R3.))(1<.&40.A1.VU,R4.)(1<.&40.+20000.))$28.)(1?.(:.$22.(32.(27.(26.R3.))(1<.&40.A1.VU,R4.)(1<.&40.+20000.))$28.)(:.$22.(23.(24.(20.(>.&40.)(>.&40.))(25.(26.R3.))(27.(26.R3.)))(1<.&40.A1.VU,R4.)(1<.&40.+20000.))$28.)))")
 (* [comment removed for export] *).
@@ -250,12 +273,166 @@ Section LargeSplit.
            res = 0 /\ K sc r mo' /\ J mm mo' /\ munch [(lo, SP)] m0 mm
            /\ rw_cells asegs mm (T + 2872) [C8 j1; C8 j2].
 
-  #[using="AL IMG ALWF ASB CSOKf KL CSmono_l CSmono_p U CST CSCTX CSPA K_apart T_large LEDGER_P TP_commit TP_fresh ROOM_P SCAR_P die_statics_transport DIE_NEED_ge MOD_DIE"] Lemma large_granted : ltac2:(CDefT.buildp (gd_tbl_AW_LargeSplit ()) "PQ,P,$52.SpPra,(>.&40.)Pgp,(>.&40.)Ptp,(>.&40.)Pt0,(>.&40.)Pt1,(>.&40.)Pt2,(>.&40.)Ps0,(>.&40.)Ps1,(>.&40.)Pa4,(>.&40.)Pa5,(>.&40.)Pa6,(>.&40.)Pa7,(>.&40.)Ps2,(>.&40.)Ps3,(>.&40.)Ps4,(>.&40.)Ps5,(>.&40.)Ps6,(>.&40.)Ps7,(>.&40.)Ps8,(>.&40.)Ps9,(>.&40.)Ps10,(>.&40.)Ps11,(>.&40.)Pt3,(>.&40.)Pt4,(>.&40.)Pt5,(>.&40.)Pt6,(>.&40.)Pj1,(>.&40.)Pj2,(>.&40.)Psrt,(>.&8.)Pps,(0.(>.&40.))Prest,(0.(>.&40.))Psc,(0.(20.$2.$2.))PSP,$2.PF,(37.&5.(>.&40.))Pfc,(>.&20.)Pm,P,(>.&40.)(;.(>.&8.))Pmo,$21.Pr,$2.Px,$2.Pncks,$2.Plo,$2.P,(1>.(9.+10000.R3.)(4.R3.(39.+2.+20.)))P,(:.$2.(2>.R4.+8.)=)P,(4.=R6.)P,(1>.(4.=R5.)(4.R5.(1:.+4000.R7.)))P,(4.(5.(1:.+4000.R8.)+4000.)(39.+2.+14.))P,(:.$2.(12.(50.(>.&40.)R11.))R7.)P,(:.$2.(12.(50.(>.&40.)R11.))(3=.(1:.+4000.R:.)R8.))P,(4=.R=.)P,(:.(>.&40.)R2?.(1<.&40.$53.))P,(54.R?.)P,(14.$11.R10.(5.VT,+;38.)(15.$16.(3;.R19.)(15.$16.(3;.R18.)(18.$16.))))P,(51.R11.(1:.+4000.R?.)R=.R18.=)P,(1=.$11.R12.VPA,R18.)P,(1=.$11.R13.(5.VPA,(1:.+8.R?.))R18.)P,(3<.$11.R14.R?.R17.)P,(4.(2:.VhAR,)R10.)P,(4.R11.(3=.(3=.R19.+<0.)VDIE_NEED,))P,(4.R1:.(39.+2.+3?.))P,(:.$2.(2>.R1;.+10.)=)P,(31.A2.VCSf,R1=.R17.R14.(3=.R1<.R14.))P,(40.$11.R1:.)P,A3.VK,R1?.R19.R1:.P,(55.R1<.R1;.)P,A3.VGl,R21.R1;.(56.R1:.)P,Pp,(20.$2.$2.)A2.VGp,(24.(20.$2.$2.)R23.(15.(20.$2.$2.)R1.(18.(20.$2.$2.))))R1=.P,Pc',$52.P,(57.$28.R23.R42.R41.R3=.R3<.R37.R36.R35.R34.R33.R32.R31.R30.R2?.R2>.R43.R22.R21.R24.R1>.R1=.R1<.R1;.R29.R28.R26.R20.R1.)(58.$11.R45.R2.)Pmo1,$21.Pj0,(0.(>.&8.))Pm1,P,(>.&40.)(;.(>.&8.))Pmo2,$21.Pu0,(>.&40.)Pu1,(>.&40.)Pu2,(>.&40.)Pu3,(>.&40.)Pu4,(>.&40.)Pu5,(>.&40.)Pu6,(>.&40.)Pua6,(>.&40.)Pm2,P,(>.&40.)(;.(>.&8.))Pfr,(0.(>.&8.))Paw,(>.&40.)P,(1>.(9.+10000.R2<.)(4.R2<.(39.+2.+28.)))P,(1>.(4.+65?000.VPA,)(1?.(4.(5.VPA,+800000.)+7???7000.)(4.+10007???8000.VPA,)))P,(4.(5.VPA,+800000.)(2:.VhAR,))P,(:.$2.(2>.VPA,+1000.)=)P,(1>.(1>.(4.+1000.VT,)(1?.(4.(5.VT,+1000.)+10000.)(4.+65?000.VT,)))(1?.(4.(5.VT,+1000.)+7???7000.)(4.+10007???8000.VT,)))P,(4.(5.VT,+1000.)(2:.VhAR,))P,(:.$2.(2>.VT,+1000.)=)P,(1>.(4.+65?000.VCTX,)(1?.(4.(5.VCTX,+10000.)+7???7000.)(4.+10007???8000.VCTX,)))P,(4.(5.VCTX,+10000.)(2:.VhAR,))P,(1?.(4.(5.VT,+1000.)VPA,)(4.(5.VPA,+800000.)VT,))P,(1?.(4.(5.VCTX,+10000.)VT,)(4.(5.VT,+1000.)VCTX,))P,(1?.(4.(5.VCTX,+10000.)VPA,)(4.(5.VPA,+800000.)VCTX,))P,(1>.(4.(5.R38.+1000.)(56.R38.))(9.(56.R38.)(5.R38.+2000.)))P,(:.$2.(2>.(56.R39.)+1000.)=)P,(3>.(15.(20.$2.$2.)(2?.$2.$2.R38.R40.)(18.(20.$2.$2.)))R3=.R1;.)P,(3?.$11.R3>.R1<.)P,A3.VK,R43.R3=.R1?.P,(59.R3?.R20.)P,(40.$11.R15.)P,(14.$11.R16.(5.(5.R45.-60.)-30.)(15.$16.(17.#<.R15.)(15.$16.(3:.(1<.&40.+22.))(15.$16.(3;.(1<.&40.(56.R3?.)))(15.$16.(3;.(1<.&40.(5.$35.+40.)))(15.$16.(3;.(1<.&40.(5.$35.+2;0.)))(15.$16.(3;.(1<.&40.+4<39<.))(18.$16.))))))))P,(3<.$11.R17.R3>.(5.(5.R46.-60.)-30.))P,A3.VK,R48.R42.R21.P,(55.R19.R22.)P,(59.R26.R23.)P,(4=.R1;.)P,(14.$11.R1<.(5.VT,+;38.)(15.$16.(3;.R51.)(15.$16.(3;.R50.)(18.$16.))))P,(51.R1=.(1:.+4000.R47.)R45.R50.=)P,(1=.$11.R1>.VPA,R50.)P,(1=.$11.R1?.(5.VPA,(1:.+8.R47.))R50.)P,(5:.R20.R4?.R2;.R5<.R5=.R5>.R5?.R60.R61.R62.R63.R68.R69.R6?.)P,(54.R21.)P,(3>.(15.(20.$2.$2.)(2?.$2.$2.R49.R51.)(18.(20.$2.$2.)))R4>.R22.)P,(3?.$11.R4?.R23.)P,(:.$2.(1:.(5;.(5.(56.R4=.)+???.)+1000.)+1000.)(56.R4=.))P,(:.$2.(2>.(29.&40.R23.)+1000.)=)P,(9.=(29.&40.R24.))P,(4.(5.(29.&40.R25.)(56.R50.))(2:.VhAR,))P,(:.$22.(23.(24.(20.(>.&40.)(>.&40.))(25.(26.R31.))(27.(26.R31.)))R26.(1<.&40.(56.R51.)))$28.)(58.$11.R79.(5<.(5=.(5>.(5?.(1<.&40.+7<;:<.)(1<.&40.(5.(5.R58.-60.)-30.))R77.R76.R31.R30.R2?.(1<.&40.$60.)(1<.&40.(1:.(5;.(5.(56.R52.)+???.)+1000.)+1000.))(1<.&40.=)(1<.&40.(1:.(5;.(5.(56.R52.)+???.)+1000.)+1000.))(1<.&40.+3.)(1<.&40.+22.)(1<.&40.-1.)(1<.&40.=)R2:.(1<.&40.+=>.)(1<.&40.$61.)(1<.&40.R52.)R6:.(1<.&40.+8.)R68.R67.(1<.&40.+7.)R65.R64.R63.R2>.R2=.R2<.R2;.)R57.(1<.&40.$62.)(1<.&40.+=>.)R56.(=.(>.&40.))R29.(63.$11.))(64.R27.(18.(20.(>.&40.)(0.(>.&8.))))(15.(20.(>.&40.)(>.&40.))(2?.(>.&40.)(>.&40.)R27.(1<.&40.(56.R52.)))(18.(20.(>.&40.)(>.&40.))))(18.(20.(>.&40.)(>.&40.)))(18.$65.)(18.(20.(>.&40.)$?.))))(30.+22.R27.(56.R52.)R32.)))")
-(* [comment removed for export] *).
+  (* LPS 727298f3: large_granted takes the placement of the granted chunk, AO_grant's
+     ASys.placed_at, which T_large now asks for.  Written out from its decode; the encoded
+     statement is kept as ZZ_large_granted_old, and ZZ_large_granted_faithful proves it equal
+     to the text below without that premise. *)
+  Definition ZZ_large_granted_old : Prop := ltac2:(CDefT.buildp (gd_tbl_AW_LargeSplit ()) "PQ,P,$52.SpPra,(>.&40.)Pgp,(>.&40.)Ptp,(>.&40.)Pt0,(>.&40.)Pt1,(>.&40.)Pt2,(>.&40.)Ps0,(>.&40.)Ps1,(>.&40.)Pa4,(>.&40.)Pa5,(>.&40.)Pa6,(>.&40.)Pa7,(>.&40.)Ps2,(>.&40.)Ps3,(>.&40.)Ps4,(>.&40.)Ps5,(>.&40.)Ps6,(>.&40.)Ps7,(>.&40.)Ps8,(>.&40.)Ps9,(>.&40.)Ps10,(>.&40.)Ps11,(>.&40.)Pt3,(>.&40.)Pt4,(>.&40.)Pt5,(>.&40.)Pt6,(>.&40.)Pj1,(>.&40.)Pj2,(>.&40.)Psrt,(>.&8.)Pps,(0.(>.&40.))Prest,(0.(>.&40.))Psc,(0.(20.$2.$2.))PSP,$2.PF,(37.&5.(>.&40.))Pfc,(>.&20.)Pm,P,(>.&40.)(;.(>.&8.))Pmo,$21.Pr,$2.Px,$2.Pncks,$2.Plo,$2.P,(1>.(9.+10000.R3.)(4.R3.(39.+2.+20.)))P,(:.$2.(2>.R4.+8.)=)P,(4.=R6.)P,(1>.(4.=R5.)(4.R5.(1:.+4000.R7.)))P,(4.(5.(1:.+4000.R8.)+4000.)(39.+2.+14.))P,(:.$2.(12.(50.(>.&40.)R11.))R7.)P,(:.$2.(12.(50.(>.&40.)R11.))(3=.(1:.+4000.R:.)R8.))P,(4=.R=.)P,(:.(>.&40.)R2?.(1<.&40.$53.))P,(54.R?.)P,(14.$11.R10.(5.VT,+;38.)(15.$16.(3;.R19.)(15.$16.(3;.R18.)(18.$16.))))P,(51.R11.(1:.+4000.R?.)R=.R18.=)P,(1=.$11.R12.VPA,R18.)P,(1=.$11.R13.(5.VPA,(1:.+8.R?.))R18.)P,(3<.$11.R14.R?.R17.)P,(4.(2:.VhAR,)R10.)P,(4.R11.(3=.(3=.R19.+<0.)VDIE_NEED,))P,(4.R1:.(39.+2.+3?.))P,(:.$2.(2>.R1;.+10.)=)P,(31.A2.VCSf,R1=.R17.R14.(3=.R1<.R14.))P,(40.$11.R1:.)P,A3.VK,R1?.R19.R1:.P,(55.R1<.R1;.)P,A3.VGl,R21.R1;.(56.R1:.)P,Pp,(20.$2.$2.)A2.VGp,(24.(20.$2.$2.)R23.(15.(20.$2.$2.)R1.(18.(20.$2.$2.))))R1=.P,Pc',$52.P,(57.$28.R23.R42.R41.R3=.R3<.R37.R36.R35.R34.R33.R32.R31.R30.R2?.R2>.R43.R22.R21.R24.R1>.R1=.R1<.R1;.R29.R28.R26.R20.R1.)(58.$11.R45.R2.)Pmo1,$21.Pj0,(0.(>.&8.))Pm1,P,(>.&40.)(;.(>.&8.))Pmo2,$21.Pu0,(>.&40.)Pu1,(>.&40.)Pu2,(>.&40.)Pu3,(>.&40.)Pu4,(>.&40.)Pu5,(>.&40.)Pu6,(>.&40.)Pua6,(>.&40.)Pm2,P,(>.&40.)(;.(>.&8.))Pfr,(0.(>.&8.))Paw,(>.&40.)P,(1>.(9.+10000.R2<.)(4.R2<.(39.+2.+28.)))P,(1>.(4.+65?000.VPA,)(1?.(4.(5.VPA,+800000.)+7???7000.)(4.+10007???8000.VPA,)))P,(4.(5.VPA,+800000.)(2:.VhAR,))P,(:.$2.(2>.VPA,+1000.)=)P,(1>.(1>.(4.+1000.VT,)(1?.(4.(5.VT,+1000.)+10000.)(4.+65?000.VT,)))(1?.(4.(5.VT,+1000.)+7???7000.)(4.+10007???8000.VT,)))P,(4.(5.VT,+1000.)(2:.VhAR,))P,(:.$2.(2>.VT,+1000.)=)P,(1>.(4.+65?000.VCTX,)(1?.(4.(5.VCTX,+10000.)+7???7000.)(4.+10007???8000.VCTX,)))P,(4.(5.VCTX,+10000.)(2:.VhAR,))P,(1?.(4.(5.VT,+1000.)VPA,)(4.(5.VPA,+800000.)VT,))P,(1?.(4.(5.VCTX,+10000.)VT,)(4.(5.VT,+1000.)VCTX,))P,(1?.(4.(5.VCTX,+10000.)VPA,)(4.(5.VPA,+800000.)VCTX,))P,(1>.(4.(5.R38.+1000.)(56.R38.))(9.(56.R38.)(5.R38.+2000.)))P,(:.$2.(2>.(56.R39.)+1000.)=)P,(3>.(15.(20.$2.$2.)(2?.$2.$2.R38.R40.)(18.(20.$2.$2.)))R3=.R1;.)P,(3?.$11.R3>.R1<.)P,A3.VK,R43.R3=.R1?.P,(59.R3?.R20.)P,(40.$11.R15.)P,(14.$11.R16.(5.(5.R45.-60.)-30.)(15.$16.(17.#<.R15.)(15.$16.(3:.(1<.&40.+22.))(15.$16.(3;.(1<.&40.(56.R3?.)))(15.$16.(3;.(1<.&40.(5.$35.+40.)))(15.$16.(3;.(1<.&40.(5.$35.+2;0.)))(15.$16.(3;.(1<.&40.+4<39<.))(18.$16.))))))))P,(3<.$11.R17.R3>.(5.(5.R46.-60.)-30.))P,A3.VK,R48.R42.R21.P,(55.R19.R22.)P,(59.R26.R23.)P,(4=.R1;.)P,(14.$11.R1<.(5.VT,+;38.)(15.$16.(3;.R51.)(15.$16.(3;.R50.)(18.$16.))))P,(51.R1=.(1:.+4000.R47.)R45.R50.=)P,(1=.$11.R1>.VPA,R50.)P,(1=.$11.R1?.(5.VPA,(1:.+8.R47.))R50.)P,(5:.R20.R4?.R2;.R5<.R5=.R5>.R5?.R60.R61.R62.R63.R68.R69.R6?.)P,(54.R21.)P,(3>.(15.(20.$2.$2.)(2?.$2.$2.R49.R51.)(18.(20.$2.$2.)))R4>.R22.)P,(3?.$11.R4?.R23.)P,(:.$2.(1:.(5;.(5.(56.R4=.)+???.)+1000.)+1000.)(56.R4=.))P,(:.$2.(2>.(29.&40.R23.)+1000.)=)P,(9.=(29.&40.R24.))P,(4.(5.(29.&40.R25.)(56.R50.))(2:.VhAR,))P,(:.$22.(23.(24.(20.(>.&40.)(>.&40.))(25.(26.R31.))(27.(26.R31.)))R26.(1<.&40.(56.R51.)))$28.)(58.$11.R79.(5<.(5=.(5>.(5?.(1<.&40.+7<;:<.)(1<.&40.(5.(5.R58.-60.)-30.))R77.R76.R31.R30.R2?.(1<.&40.$60.)(1<.&40.(1:.(5;.(5.(56.R52.)+???.)+1000.)+1000.))(1<.&40.=)(1<.&40.(1:.(5;.(5.(56.R52.)+???.)+1000.)+1000.))(1<.&40.+3.)(1<.&40.+22.)(1<.&40.-1.)(1<.&40.=)R2:.(1<.&40.+=>.)(1<.&40.$61.)(1<.&40.R52.)R6:.(1<.&40.+8.)R68.R67.(1<.&40.+7.)R65.R64.R63.R2>.R2=.R2<.R2;.)R57.(1<.&40.$62.)(1<.&40.+=>.)R56.(=.(>.&40.))R29.(63.$11.))(64.R27.(18.(20.(>.&40.)(0.(>.&8.))))(15.(20.(>.&40.)(>.&40.))(2?.(>.&40.)(>.&40.)R27.(1<.&40.(56.R52.)))(18.(20.(>.&40.)(>.&40.))))(18.(20.(>.&40.)(>.&40.)))(18.$65.)(18.(20.(>.&40.)$?.))))(30.+22.R27.(56.R52.)R32.)))").
+  Lemma ZZ_large_granted_faithful : ZZ_large_granted_old =
+    (forall (Q : config -> Prop)
+           (ra gp tp t0 t1 t2 s0 s1 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 j1 j2 : word)
+           (srt : byte) (ps rest : list word) (sc : list (Z * Z)) (SP : Z) (F : bvmap 5 word) (fc : bv 32)
+           (m : mem) (mo : Model) (r x ncks lo : Z),
+        65536 < x /\ x <= 2 ^ 32 ->
+        x mod 8 = 0 ->
+        0 <= r ->
+        0 <= ncks /\ ncks <= 16384 * r ->
+        16384 * r + 16384 <= 2 ^ 20 ->
+        Z.of_nat (length ps) = ncks ->
+        Z.of_nat (length rest) = 16384 * r - ncks ->
+        lstat m ->
+        tp = Z_to_bv 64 A_TP ->
+        shadow_wr m ->
+        rw_cells asegs m (T + 2872) [C8 j1; C8 j2] ->
+        limg m (16384 * r) ncks srt 0 ->
+        u64arr asegs m PA ps ->
+        u64arr asegs m (PA + 8 * ncks) rest ->
+        stk asegs m lo SP ->
+        ACEIL <= lo ->
+        lo <= SP - 192 - DIE_NEED ->
+        SP <= 2 ^ 63 ->
+        SP mod 16 = 0 ->
+        crange (CSf sc r) lo (SP - lo) ->
+        mem_inv asegs m ->
+        K sc r mo ->
+        J m mo ->
+        Gl sc r (map_size x) ->
+        (forall p : Z * Z, Gp (sc ++ [p]) r) ->
+        (forall c' : config, large_cpostS true SP gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 ra F fc sc r x ncks lo j1 j2 ps m c' -> aevtS asegs Q c') ->
+      forall (mo1 : Model) (j0 : list byte) (m1 : mem) (mo2 : Model) (u0 u1 u2 u3 u4 u5 u6 ua6 : word)
+           (m2 : mem) (fr : list byte) (aw : word),
+        65536 < x /\ x <= 2 ^ 40 ->
+        6680576 <= PA /\ (PA + 8388608 <= 2147446784 \/ 17594333495296 <= PA) ->
+        PA + 8388608 <= ACEIL ->
+        PA mod 4096 = 0 ->
+        (4096 <= T /\ (T + 4096 <= 65536 \/ 6680576 <= T)) /\ (T + 4096 <= 2147446784 \/ 17594333495296 <= T) ->
+        T + 4096 <= ACEIL ->
+        T mod 4096 = 0 ->
+        6680576 <= CTX /\ (CTX + 65536 <= 2147446784 \/ 17594333495296 <= CTX) ->
+        CTX + 65536 <= ACEIL ->
+        T + 4096 <= PA \/ PA + 8388608 <= T ->
+        CTX + 65536 <= T \/ T + 4096 <= CTX ->
+        CTX + 65536 <= PA \/ PA + 8388608 <= CTX ->
+        x + 4096 <= map_size x /\ map_size x < x + 8192 ->
+        map_size x mod 4096 = 0 ->
+        munch [(lo, SP)] m m1 ->
+        wmono asegs m m1 ->
+        K sc r mo1 ->
+        mo_mat mo mo1 ->
+        mem_inv asegs m2 ->
+        rw_cells asegs m2 (SP + (-96) + (-48)) [CB 12%nat fr; C4 (Z_to_bv 64 34); C8 (Z_to_bv 64 (map_size x)); C8 (Z_to_bv 64 (A_INSTANCE + 64)); C8 (Z_to_bv 64 (A_INSTANCE + 688)); C8 (Z_to_bv 64 312220)] ->
+        stk asegs m2 lo (SP + (-96) + (-48)) ->
+        K sc r mo2 ->
+        J m2 mo2 ->
+        mo_mat mo1 mo2 ->
+        lstat m2 ->
+        rw_cells asegs m2 (T + 2872) [C8 j1; C8 j2] ->
+        limg m2 (16384 * r) ncks srt 0 ->
+        u64arr asegs m2 PA ps ->
+        u64arr asegs m2 (PA + 8 * ncks) rest ->
+        large_frame m2 SP j0 s9 s8 s7 s6 s5 s4 s3 s2 s1 s0 ra ->
+        shadow_wr m2 ->
+        munch [(lo, SP)] m m2 ->
+        wmono asegs m m2 ->
+        (map_size x + 4095) / 4096 * 4096 = map_size x ->
+        bv_unsigned aw mod 4096 = 0 ->
+        0 < bv_unsigned aw ->
+        bv_unsigned aw + map_size x <= ACEIL ->
+        region_free (vm_reserved (m_vmmaps mo2) ++ vm_maps (m_vmmaps mo2)) aw (Z_to_bv 64 (map_size x)) = true ->
+        aevtS asegs Q (mkCfg (nret (MSsvc (mkR (Z_to_bv 64 510892) (Z_to_bv 64 (SP + (-96) + (-48))) gp tp u0 u1 u2 (Z_to_bv 64 A_LNAME) (Z_to_bv 64 ((map_size x + 4095) / 4096 * 4096)) (Z_to_bv 64 0) (Z_to_bv 64 ((map_size x + 4095) / 4096 * 4096)) (Z_to_bv 64 3) (Z_to_bv 64 34) (Z_to_bv 64 (-1)) (Z_to_bv 64 0) ua6 (Z_to_bv 64 222) (Z_to_bv 64 A_PAGESZ_CELL) (Z_to_bv 64 x) s4 (Z_to_bv 64 8) s6 s7 (Z_to_bv 64 7) s9 s10 s11 u3 u4 u5 u6)
+         F (Z_to_bv 64 A_MMAP_ECALL) (Z_to_bv 64 222) fc None m2 (seg_rom asegs))
+         (mkEffectU aw [] [(aw, Z_to_bv 64 (map_size x))] [] [] [])) (anon_grant 34 aw (map_size x) mo2))).
+  Proof. exact eq_refl. Qed.
+
+  #[using="AL IMG ALWF ASB CSOKf KL CSmono_l CSmono_p U CST CSCTX CSPA K_apart T_large LEDGER_P TP_commit TP_fresh ROOM_P SCAR_P die_statics_transport DIE_NEED_ge MOD_DIE"] Lemma large_granted :
+    forall (Q : config -> Prop)
+         (ra gp tp t0 t1 t2 s0 s1 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 j1 j2 : word)
+         (srt : byte) (ps rest : list word) (sc : list (Z * Z)) (SP : Z) (F : bvmap 5 word) (fc : bv 32)
+         (m : mem) (mo : Model) (r x ncks lo : Z),
+      65536 < x /\ x <= 2 ^ 32 ->
+      x mod 8 = 0 ->
+      0 <= r ->
+      0 <= ncks /\ ncks <= 16384 * r ->
+      16384 * r + 16384 <= 2 ^ 20 ->
+      Z.of_nat (length ps) = ncks ->
+      Z.of_nat (length rest) = 16384 * r - ncks ->
+      lstat m ->
+      tp = Z_to_bv 64 A_TP ->
+      shadow_wr m ->
+      rw_cells asegs m (T + 2872) [C8 j1; C8 j2] ->
+      limg m (16384 * r) ncks srt 0 ->
+      u64arr asegs m PA ps ->
+      u64arr asegs m (PA + 8 * ncks) rest ->
+      stk asegs m lo SP ->
+      ACEIL <= lo ->
+      lo <= SP - 192 - DIE_NEED ->
+      SP <= 2 ^ 63 ->
+      SP mod 16 = 0 ->
+      crange (CSf sc r) lo (SP - lo) ->
+      mem_inv asegs m ->
+      K sc r mo ->
+      J m mo ->
+      Gl sc r (map_size x) ->
+      (forall p : Z * Z, Gp (sc ++ [p]) r) ->
+      (forall c' : config, large_cpostS true SP gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 ra F fc sc r x ncks lo j1 j2 ps m c' -> aevtS asegs Q c') ->
+    forall (mo1 : Model) (j0 : list byte) (m1 : mem) (mo2 : Model) (u0 u1 u2 u3 u4 u5 u6 ua6 : word)
+         (m2 : mem) (fr : list byte) (aw : word),
+      65536 < x /\ x <= 2 ^ 40 ->
+      6680576 <= PA /\ (PA + 8388608 <= 2147446784 \/ 17594333495296 <= PA) ->
+      PA + 8388608 <= ACEIL ->
+      PA mod 4096 = 0 ->
+      (4096 <= T /\ (T + 4096 <= 65536 \/ 6680576 <= T)) /\ (T + 4096 <= 2147446784 \/ 17594333495296 <= T) ->
+      T + 4096 <= ACEIL ->
+      T mod 4096 = 0 ->
+      6680576 <= CTX /\ (CTX + 65536 <= 2147446784 \/ 17594333495296 <= CTX) ->
+      CTX + 65536 <= ACEIL ->
+      T + 4096 <= PA \/ PA + 8388608 <= T ->
+      CTX + 65536 <= T \/ T + 4096 <= CTX ->
+      CTX + 65536 <= PA \/ PA + 8388608 <= CTX ->
+      x + 4096 <= map_size x /\ map_size x < x + 8192 ->
+      map_size x mod 4096 = 0 ->
+      munch [(lo, SP)] m m1 ->
+      wmono asegs m m1 ->
+      K sc r mo1 ->
+      mo_mat mo mo1 ->
+      mem_inv asegs m2 ->
+      rw_cells asegs m2 (SP + (-96) + (-48)) [CB 12%nat fr; C4 (Z_to_bv 64 34); C8 (Z_to_bv 64 (map_size x)); C8 (Z_to_bv 64 (A_INSTANCE + 64)); C8 (Z_to_bv 64 (A_INSTANCE + 688)); C8 (Z_to_bv 64 312220)] ->
+      stk asegs m2 lo (SP + (-96) + (-48)) ->
+      K sc r mo2 ->
+      J m2 mo2 ->
+      mo_mat mo1 mo2 ->
+      lstat m2 ->
+      rw_cells asegs m2 (T + 2872) [C8 j1; C8 j2] ->
+      limg m2 (16384 * r) ncks srt 0 ->
+      u64arr asegs m2 PA ps ->
+      u64arr asegs m2 (PA + 8 * ncks) rest ->
+      large_frame m2 SP j0 s9 s8 s7 s6 s5 s4 s3 s2 s1 s0 ra ->
+      shadow_wr m2 ->
+      munch [(lo, SP)] m m2 ->
+      wmono asegs m m2 ->
+      (map_size x + 4095) / 4096 * 4096 = map_size x ->
+      bv_unsigned aw mod 4096 = 0 ->
+      0 < bv_unsigned aw ->
+      ASys.placed_at (map_size x) mo2 aw ->
+      bv_unsigned aw + map_size x <= ACEIL ->
+      region_free (vm_reserved (m_vmmaps mo2) ++ vm_maps (m_vmmaps mo2)) aw (Z_to_bv 64 (map_size x)) = true ->
+      aevtS asegs Q (mkCfg (nret (MSsvc (mkR (Z_to_bv 64 510892) (Z_to_bv 64 (SP + (-96) + (-48))) gp tp u0 u1 u2 (Z_to_bv 64 A_LNAME) (Z_to_bv 64 ((map_size x + 4095) / 4096 * 4096)) (Z_to_bv 64 0) (Z_to_bv 64 ((map_size x + 4095) / 4096 * 4096)) (Z_to_bv 64 3) (Z_to_bv 64 34) (Z_to_bv 64 (-1)) (Z_to_bv 64 0) ua6 (Z_to_bv 64 222) (Z_to_bv 64 A_PAGESZ_CELL) (Z_to_bv 64 x) s4 (Z_to_bv 64 8) s6 s7 (Z_to_bv 64 7) s9 s10 s11 u3 u4 u5 u6)
+         F (Z_to_bv 64 A_MMAP_ECALL) (Z_to_bv 64 222) fc None m2 (seg_rom asegs))
+         (mkEffectU aw [] [(aw, Z_to_bv 64 (map_size x))] [] [] [])) (anon_grant 34 aw (map_size x) mo2)).
   Proof.
     intros Q ra gp tp t0 t1 t2 s0 s1 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 j1 j2 srt ps rest sc SP F fc m mo r x ncks lo
       Hx XAL HR HNC HNR LPS LREST LS TP SHW TJ LI HPS HREST ST LOIMG SPL SPH SPA SCS MI HK HJ HGl HGp HC mo1 j0 m1 mo2 u0 u1 u2 u3 u4 u5 u6 ua6 m2 fr aw
-      Hx40 PA0 PA1 PAL T0 T1 TAL CX0 CX1 SEP1 SEP2 SEP3 MSZ MSAL MU1 WM1 HK1 MM1 MI2 FR2 ST2 HK2 HJ2 MM2 LS2 TJ2 LI2 HPS2 HREST2 FR12 SHW2 MU12 WM12 PRU AAL A0 ACE RF.
+      Hx40 PA0 PA1 PAL T0 T1 TAL CX0 CX1 SEP1 SEP2 SEP3 MSZ MSAL MU1 WM1 HK1 MM1 MI2 FR2 ST2 HK2 HJ2 MM2 LS2 TJ2 LI2 HPS2 HREST2 FR12 SHW2 MU12 WM12 PRU AAL A0 APL ACE RF.
     facts.
       rewrite nret_MSsvc, mkR_set_a0, apply_mem_zeros.
       change (Z_to_bv 64 A_MMAP_ECALL + Z_to_bv 64 4)%bv with (Z_to_bv 64 0x7b260).
@@ -279,7 +456,7 @@ Section LargeSplit.
       assert (SEPA' : PA + 0x800000 <= a \/ a + map_size x <= PA).
       { eapply (apart_of (fun y => PA <= y < PA + 0x800000)); [intros y Hy; apply AP; right; right; right; exact Hy| intros y Hy; exact Hy| clear; lia| clear - MSZ Hx; lia]. }
       assert (SEPA : a + map_size x <= PA \/ PA + 0x800000 <= a) by (clear - SEPA'; lia). clear SEPA'.
-      destruct (T_large sc r (map_size x) mo2 aw HGl HK2 AAL A0 ACE RF) as [HK3 CR3]. fold a in HK3, CR3.
+      destruct (T_large sc r (map_size x) mo2 aw HGl HK2 AAL A0 ACE RF APL) as [HK3 CR3]. fold a in HK3, CR3.
       pose proof (J_anon_grant m2 mo2 0x22 aw (map_size x) HJ2 ltac:(clear - MSZ Hx; lia) ltac:(fold a; clear - ACE AC; lia) RF) as HJ3.
       rewrite <- (Z_to_bv_bv_unsigned aw) in HK3 |- *. fold a in HK3 |- *.
       change (Z_to_bv 64 a, Z_to_bv 64 (map_size x)) with (wa a, Z_to_bv 64 (map_size x)).
@@ -954,7 +1131,7 @@ Section LargeSplit.
       | unfold mmap_anon_args, areg, MSsvc; cbn [ms_regs]; simp_regs
       | exact (ROOM_l sc r (map_size x) mo2 HGl HK2)
       | intros e HIn
-      | intros aw AAL A0 ACE RF ]
+      | intros aw AAL A0 APL ACE RF ]
     end.
     { pose proof aceil_bounds as AC.
       rewrite !PRU. repeat split; try reflexivity.
@@ -1003,7 +1180,7 @@ Section LargeSplit.
                ra gp tp t0 t1 t2 s0 s1 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 j1 j2 srt ps rest sc SP F fc m mo r x ncks lo
                Hx XAL HR HNC HNR LPS LREST LS TP SHW TJ LI HPS HREST ST LOIMG SPL SPH SPA SCS MI HK HJ HGl HGp (fun c' PC => aevtS_now asegs _ c' PC)
                mo1 j0 m1 mo2 u0 u1 u2 u3 u4 u5 u6 ua6 m2 fr aw
-               Hx40 PA0 PA1 PAL T0 T1 TAL CX0 CX1 SEP1 SEP2 SEP3 MSZ MSAL MU1 WM1 HK1 MM1 MI2 FR2 ST2 HK2 HJ2 MM2 LS2 TJ2 LI2 HPS2 HREST2 FR12 SHW2 MU12 WM12 PRU AAL A0 ACE RF). }
+               Hx40 PA0 PA1 PAL T0 T1 TAL CX0 CX1 SEP1 SEP2 SEP3 MSZ MSAL MU1 WM1 HK1 MM1 MI2 FR2 ST2 HK2 HJ2 MM2 LS2 TJ2 LI2 HPS2 HREST2 FR12 SHW2 MU12 WM12 PRU AAL A0 APL ACE RF). }
   Qed.
   (* [comment removed for export] *)
   Definition combsec_cpostS (ok : bool) (SP : Z) (gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 ra : word) (F : bvmap 5 word) (fc : bv 32)

@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGfw.v (a working branch 30a1993588f, c5 + memnorm; file sha256 34c67b63d231) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 12 image addresses moved by code-verified function pairs (9 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 2 code pcs the tool read as sizes, by funcpair.py); 1 hand maps (agreloc-resolve-R.tsv, each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGfw.v (a working branch, c5 + memnorm; file sha256 34c67b63d231) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 12 image addresses moved by code-verified function pairs (9 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 2 code pcs the tool read as sizes, by funcpair.py); 1 hand maps (agreloc-resolve-R.tsv, each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The states of the frame-generic Deallocate walk, the arms that open a new batch or drain (from YFfw): the
    released script from Deallocate's entry on, over the generic seed DGgm.SS0.  QuarantineChunk's sp is 48 below
    Deallocate's entry sp (released: 2176 below the free interceptor's). *)

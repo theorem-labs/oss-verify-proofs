@@ -3,21 +3,22 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_ubjson_encoder/lib/S8/AsanAcct.v, with its module paths and module names changed; 403 of its 523 lines of code are new or changed and 1138 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/A/FMbz_clean.v, with its module paths and module names changed; 344 of its 386 lines of code are new or changed and 481 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: lib/A/HPgWrapNcmp.v's hd_strncmp_core (itself reac-pw/fuzz_pin's
-   lib/A/PPgWrapNcmp.v pin_strncmp_core at 90722657971) re-run with the caller's frame hole of lib/A/HPgHole.v
+   lib/A/PPgWrapNcmp.v pin_strncmp_core) re-run with the caller's frame hole of lib/A/HPgHole.v
    (ecall_preH in, the hole post out), as lib/A/Rt/FMrt_lift.v rt_post_roU_win re-runs rt_post_ro_win with
    lib/A/Rt/FMupoison.v ARU_frame: hd_rt_post_roH_win is rt_post_roU_win with HPgHole.ARH_frame in place of
    ARU_frame; the walk's premises that AR gives (the stack window, the runtime cells, the read-only views) are read
    off AR of the unpoisoned memory and carried to the memory itself, which agrees with it off the hole; the rest
    is pin's proof. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/A/HPgWrapNcmpH.v, with its module paths and module names changed; 179 of its 234 lines of code are new or changed and 331 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The comments in this file are libreac/fuzz_boxreg's lib/A/FMrt_lift.v, through reac-pw/fuzz_pin's lib/A/Rt/FMrt_lift.v, unchanged apart from names, this unit's image and values, and the note on the W^X fact fm_wx, which is this unit's. omx-clap-core/fuzz_manifest's runtime contracts in the donor's form, the generic half.
    - A walk proved over the machine state alone (lib/Lib `evt`, its registers written `mkR ...`) is
-     read at a donor call site (`SRr` from `cfg_at`, YG0d.v:213): the register map is moved with
+     read at a donor call site (`SRr` from `cfg_at`, YG0d.v:214): the register map is moved with
      lib/Lib/RegisterBridge.v (canonical_contract_transport), and each step of the walk is a step of
-     the donor's `msteps`, which `SRr_msteps` (YA0n.v:149) lifts.
+     the donor's `msteps`, which `SRr_msteps` (YA0n.v:150) lifts.
    - A walk that returns to ra with the callee-saved registers kept and changes nothing but a window
      of K <= STK bytes below sp gives the donor-form post `rt_post_ro` (FMH_Rt.v:88); AR is kept by
-     the donor's frame law (al_frame, YG0d.v:439), as cgif_file A/AE2j.v:142 keeps it.  Inside fuzz_manifest's
+     the donor's frame law (al_frame, YG0d.v:440), as cgif_file A/AE2j.v:142 keeps it.  Inside fuzz_manifest's
      user-poison window the same walk gives `rt_post_roU` (FMH_Rt.v:96), ARU kept by
      FMupoison.ARU_frame.
    - A body walk of lib/A/Bz (its own copy of `evt`) is read the same way (srr_of_canon_bz). *)
@@ -63,7 +64,7 @@ Qed.
 
 Open Scope Z_scope.
 
-(* the image's W^X fact: the same one-line computation as lib/AU/YF0x.v:26 Hwx_tfa, which this file does
+(* the image's W^X fact: the same one-line computation as lib/AU/YF0x.v:27 Hwx_tfa, which this file does
    not Require *)
 Lemma fm_wx : wx_segs_nowrap tfibsegs.
 Proof. apply wx_segs_nowrap_of_b. vm_compute. reflexivity. Qed.

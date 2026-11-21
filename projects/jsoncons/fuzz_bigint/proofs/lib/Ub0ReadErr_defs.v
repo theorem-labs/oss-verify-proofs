@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the recorded zero window below the stack pointer is DRV_ZWIN, 6144513 bytes, was 8388608. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -45,7 +46,13 @@ Definition srRE0 : list expr := Eval vm_compute in sr_after_call_j srRE_base KEP
 (* [comment removed for export] *)
 Definition knRE0 : list kentry :=
   [KAlign (EVar 0) 16; KRange (EVar 0) 0x7fff80000000 0x800000000000;
-   KWr (SA (EVar 0) (-8388608)) 8388608;
+   (* THE ZERO-FILLED WINDOW: [KWr (SA (EVar 0) (- DRV_ZWIN)) DRV_ZWIN], DRV_ZWIN = 6144513 =
+      StoreOk.stack_window_depth (Ub0MainEntry).  An 8 MiB row would be FALSE at LPS
+      75d69e00 (wrap_mem zero-fills only to MemSplit.wok_lo sp0 = sp0 - 6144513).
+      Discharged by [Ub0ReadErr.know_okRE] from
+      [stack_writable], which Ub0DrvH proves off [Ub0MainEntry.kn_stack]'s narrow row.
+      This run's own stack reach is a few hundred bytes under sp0 ([BUF_LO] = -560). *)
+   KWr (SA (EVar 0) (- DRV_ZWIN)) DRV_ZWIN;
    KRange (EVar 2) 0x7fff80000000 0x800000400000;
    KWr (SA (ELit 0) 0x60000) 0x32000;
    KImg 0x10000 0x60368; KImg 0x60371 0x603b9; KImg 0x703b9 0x70e68; KImg 0x90f40 0x90f60;

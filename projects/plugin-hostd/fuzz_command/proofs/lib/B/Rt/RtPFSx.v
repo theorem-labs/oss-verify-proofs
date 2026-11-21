@@ -144,10 +144,10 @@ dest_ok segs B ly S W regs mem d (sn_len (n - 1) T) -> amem_range d (sn_len (n -
 range_addressable (aview segs (w_H W) mem) SHADOW_OFF d (sn_len (n - 1) T) ->
 shadow_hull_vis (aview segs (w_H W) mem) d (sn_len (n - 1) T) ->
 (* dest_off_globals: the caller discharges it by measurement *) zdisjoint (d, sn_len (n - 1) T) (img_lo, img_hi - img_lo) ->
-(* frm0_entry: rounding mode 0 at entry (GXA VfprintfCall.v:37) *) Z.land (Z.shiftr (bv_unsigned (@fp_csr fx)) 5) 7 = 0 ->
+(* frm0_entry: rounding mode 0 at entry (GXA VfprintfCall.v:38) *) Z.land (Z.shiftr (bv_unsigned (@fp_csr fx)) 5) 7 = 0 ->
 (* order: the arguments lie at or above the entry sp (every caller's va area is its own spill or above it) *)
 spZ regs <= ap ->
-(* the destination is below the window or above the argument slots (GXA VfprintfCall.v:42, first disjunction) *)
+(* the destination is below the window or above the argument slots (GXA VfprintfCall.v:43, first disjunction) *)
 (d + sn_len (n - 1) T <= spZ regs - K \/ ap + 8 * Z.of_nat (length ws) <= d) ->
 (* the argument slots below 2^47 (the normalized store GXA and printf_common's cleaned run read drops higher bytes) *)
 ap + 8 * Z.of_nat (length ws) <= 2 ^ 47 ->
@@ -186,10 +186,10 @@ dest_ok segs B ly S W regs mem d (sn_len (n - 1) T) -> amem_range d (sn_len (n -
 range_addressable (aview segs (w_H W) mem) SHADOW_OFF d (sn_len (n - 1) T) ->
 shadow_hull_vis (aview segs (w_H W) mem) d (sn_len (n - 1) T) ->
 (* dest_off_globals: the caller discharges it by measurement *) zdisjoint (d, sn_len (n - 1) T) (img_lo, img_hi - img_lo) ->
-(* frm0_entry: rounding mode 0 at entry (GXA VfprintfCall.v:37) *) Z.land (Z.shiftr (bv_unsigned (@fp_csr fx)) 5) 7 = 0 ->
+(* frm0_entry: rounding mode 0 at entry (GXA VfprintfCall.v:38) *) Z.land (Z.shiftr (bv_unsigned (@fp_csr fx)) 5) 7 = 0 ->
 (* order: the arguments lie at or above the entry sp (every caller's va area is its own spill or above it) *)
 spZ regs <= ap ->
-(* the destination is below the window or above the argument slots (GXA VfprintfCall.v:42, first disjunction) *)
+(* the destination is below the window or above the argument slots (GXA VfprintfCall.v:43, first disjunction) *)
 (d + sn_len (n - 1) T <= spZ regs - K \/ ap + 8 * Z.of_nat (length ws) <= d) ->
 (* the argument slots below 2^47 (the normalized store GXA and printf_common's cleaned run read drops higher bytes) *)
 ap + 8 * Z.of_nat (length ws) <= 2 ^ 47 ->

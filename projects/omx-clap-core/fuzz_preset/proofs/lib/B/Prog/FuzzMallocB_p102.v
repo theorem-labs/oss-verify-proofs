@@ -2,30 +2,31 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk (image B, fuzz_reply.asan-ubsan) of fuzz_reply's
    relay_finish, a NEW walk over lib/B/W_listing.v (B's body is not A's up to relocation: VERDICT.md (sha256 810ca1df9ca9; internal record)),
-   after lib/A/W_relay_finish_h.v (a working branch a3987bff22c: its loop rf_loop and its tail rf_tail), in the
-   form of the B walks lib/B/W_check_bounded.v (a working branch 7e062bb9b9c) and lib/B/W_gse_loop.v
-   (a working branch bb5ed8a0689). *)
+   after lib/A/W_relay_finish_h.v (a working branch: its loop rf_loop and its tail rf_tail), in the
+   form of the B walks lib/B/W_check_bounded.v (a working branch) and lib/B/W_gse_loop.v
+   (a working branch). *)
 (* Modified by Theorem Labs, 2026-10: the room `_x` form (a Theorem Labs lane, RoomRFB): the walk is pb_relay_finish_x,
    stated over any allocator relation ARx with its laws as W_contract_x.v rf_spec_x (Section c below: PST / ARx / hl /
    LAWS / HP0 / BLKN, the callees' and the allocator rules' `_x` twins, PSTR / PSTC), and it threads rf_spec_x's room
    round: the budget rp_RM RP (each round: the free's 1, then gestures_end's charge) and the count premise
    cnt_ok_pk RP rf_pk (rf_pk = 5) to the free (cnt_ok) and to gestures_end (gse_pk = 4); the round's room bound follows
    rf_room's `- cap` threading (the round frees the old g_out block).  The room argument is lib/A/W_relay_finish_h.v's
-   (a working branch 9e4f84a8fb9), the ARx form that of lib/B/W_list_free.v / W_source_reset.v
-   (a working branch dfa1a225350).
+   (a working branch), the ARx form that of lib/B/W_list_free.v / W_source_reset.v
+   (a working branch).
    B's relay_finish sets no frame pointer and calls no __asan_stack_malloc, so A's fake-frame seat, its set_fs step and rp_RPF across the seat do not apply.
    pb_relay_finish keeps its statement, byte-identical, and its Section hypotheses (the same terms in the same order;
    HPLAIN / HWSEG write rf_cells as rf_cells RG GTU GL): it is re-derived from pb_relay_finish_x at ARx := ARi0,
    PST := [], RP := RP_AR (Section cAR); pb_relay_finish_fr / _fr_tfib are unchanged. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/W_relay_finish.v, with its module paths and module names changed; 2648 of its 2780 lines of code are new or changed and 4211 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/FuzzReallocB_p102.v, with its module names changed; 322 of its 379 lines of code are new or changed and 2723 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, the #102 re-walk of fuzz_malloc on image B' (asan-ubsan, pinned d663f82d, unstripped twin c90d4fa5;
    merged alloc.c fuzz_malloc :80-93 with refused :70-78): B' 0x85d08, 45 instructions, frame 16, own out of line at
    0x85dbc. Slot B_prog_slot AS_fuzz_malloc of h-verbs-1's #102 whole-program listing lib/B/Listing_prog.v /
-   PAImg_prog.v (d42e123915ae; objects numbered BY NAME by the internal file pins102.json).
+   PAImg_prog.v (objects numbered BY NAME by the internal file pins102.json).
    THIS PART IS STATEMENT-INDEPENDENT (row AL2's prep, h-verbs-4): it names no kit text (no PRH_Base / PRH_FnAlloc /
    PrhImg term), so a text change cannot invalidate it. It ports from s1b's lib/B/Prog/FuzzMallocB.v.wip (the V1
-   walk, 459129c18903) the parts that do not mention the text: the listing and image facts, the symbolic state, the
+   walk) the parts that do not mention the text: the listing and image facts, the symbolic state, the
    write windows and their keep lemmas, the entry state (generalised over the allocator relation and the frame
    budget), and the pure engine runs of every segment, the REFUSED arm's four paths included.
    The V1 -> V2 change of the code (the internal file REWALK-102-PLAN.md section 2; capstone on the twin): refused(n) (16 new
@@ -68,8 +69,8 @@ Local Set Warnings "-notation-for-abbreviation".
 Open Scope bv_scope.
 Open Scope Z_scope.
 
-(* ---- the alloc.c statics fuzz_malloc touches, BY NAME (the internal file pins102.json objects[k], a working branch
-   5472bf2e7a82; the d42e listing keeps v4's 7..11 and gives the #102 statics 13 / 14) ---- *)
+(* ---- the alloc.c statics fuzz_malloc touches, BY NAME (the internal file pins102.json objects[k], a working branch;
+   the d42e listing keeps v4's 7..11 and gives the #102 statics 13 / 14) ---- *)
 Definition OBJ_g_count : nat := A_OBJ 7.
 Definition OBJ_g_fail_at : nat := A_OBJ 8.
 Definition OBJ_g_live : nat := A_OBJ 9.

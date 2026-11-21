@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: numbers for the image of libreac/fuzz_grant (image end, thread cells); module names; TfibSyms renamed GrantSyms. *)
-(* Modified by Theorem Labs, 2026-10: relocated from a working branch af735a950e2 lib/A/Rt/AF0u.v to libreac/fuzz_grant image B (asan-ubsan, bin fde52226dc48, symbols 5a5ee7c02b4e): every image value read from image B (the image end TFIB_IMG_END = IMG_TOP 0x5fb000 = 6270976 of B's lib/B/YImgTop.v, so the fake-stack floor 6270976 and its shadow 6270976 / 8 = 783872; the low shadow floor kLowShadowBeg + 783872 = 2148230656 of the shadow bound HSHe; the thread-object cells T + 48 / T + 56 holding 0x5d9048 / 0x5d9124, B's certificate rows z8 (AT 48) / z8 (AT 56) in lib/B/YF0m.v; every probe point, cell and class constant from YF0t.v, the B twin of AF0t.v). *)
+(* Modified by Theorem Labs, 2026-10: relocated from a working branch lib/A/Rt/AF0u.v to libreac/fuzz_grant image B (asan-ubsan, bin fde52226dc48, symbols 5a5ee7c02b4e): every image value read from image B (the image end TFIB_IMG_END = IMG_TOP 0x5fb000 = 6270976 of B's lib/B/YImgTop.v, so the fake-stack floor 6270976 and its shadow 6270976 / 8 = 783872; the low shadow floor kLowShadowBeg + 783872 = 2148230656 of the shadow bound HSHe; the thread-object cells T + 48 / T + 56 holding 0x5d9048 / 0x5d9124, B's certificate rows z8 (AT 48) / z8 (AT 56) in lib/B/YF0m.v; every probe point, cell and class constant from YF0t.v, the B twin of AF0t.v). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

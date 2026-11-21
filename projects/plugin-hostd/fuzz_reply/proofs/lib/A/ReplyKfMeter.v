@@ -1,7 +1,7 @@
 (* KF-COUNT (a Theorem Labs lane's row; a Theorem Labs lane's 09:2xZ decision): the allocator meter MT_sec that counts SECONDARY allocations.
    proves no function (kind: model lemma).
    Every allocating or freeing `_x` callee spec already has `mo_ok MT S (cost)` in its pre and `mo_le MT S S' (cost)` in
-   its post, the cost being its request trace's tr_cost (lib/A/W_contract.v:944-951), and the arms and top_x take MT as
+   its post, the cost being its request trace's tr_cost (lib/A/W_contract.v:945-952), and the arms and top_x take MT as
    a Variable.  At MT := MT_sec nsec KMAX:
      mo_malloc n = 1 for a secondary request (64,512 < n, = PresetRoom's not is_primary, sec_lit below), else 0;
      mo_free = 0;  mo_le s s' m = nsec s' <= nsec s + m;  mo_ok s m = nsec s + m <= KMAX.

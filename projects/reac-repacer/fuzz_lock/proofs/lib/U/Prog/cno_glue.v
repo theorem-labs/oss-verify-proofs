@@ -9,9 +9,10 @@
    variable K instead of decode's CRT_STACK, and with cr_frame_call generalised from decode's fixed frame cell list
    to any (base, cells): so fuzz_uci's check_no_overread and check_value, whose frames differ, share one copy. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/Prog/CheckGlue.v, with its module paths changed; 38 of its 342 lines of code are new or changed and 187 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Glue between the Exec.evt walks and the SR / allocator contracts, for check_no_overread in fuzz_lock.ubsan.
    lib/Prog/cno_glue.v with the UBSan kit (lib/U) in place of the plain one; the lemmas crt_* are those of
-   libreac/fuzz_decode's lib/Prog/crt_glue.v (release 25e3d17bdb50) that check_no_overread uses, relocated to
+   libreac/fuzz_decode's lib/Prog/crt_glue.v (release) that check_no_overread uses, relocated to
    fuzz_lock's library; the cno_* lemmas are new. Written by Theorem Labs. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

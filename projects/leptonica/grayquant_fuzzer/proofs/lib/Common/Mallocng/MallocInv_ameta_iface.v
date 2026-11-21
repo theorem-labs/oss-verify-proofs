@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the THP flag of the mmap placement). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -73,7 +74,7 @@ Qed.
 Definition am_budget (A : astate) (s : mstate) : Prop :=
   0 < spare A \/
   (vm_backed_bytes (ms_vm s) + 4096 <= vm_limit (ms_vm s) /\
-   (0 < a_ctx A KAac \/ (a_areas A = [] /\ exists a, grant_ok_na_vm (ms_vm s) a 8192 = true))).
+   (0 < a_ctx A KAac \/ (a_areas A = [] /\ forall thp, exists a, grant_ok_na_vm thp (Z_to_bv 64 0) (ms_vm s) a 8192 = true))).
 (* [comment removed for export] *)
 
 Definition alloc_meta_spec : Prop :=

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the root ledger is the whole vm_reserved, vDSO/vvar pair included, in rb3_ledger_inv, rb3_span_ok and the DInv3 roots). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From stdpp Require Import bitvector.
@@ -188,19 +189,21 @@ Definition led_chk : bool :=
   && (APC.a_totsz CS - live_bytes R0 <=? S)
   && (0 <? W) && (W <? 2 ^ 64) && (W mod 4096 =? 0) && (reserved_top R0 <=? W).
 
-Theorem rb3_ledger_inv : led_chk = true -> ledger_inv R0 BIG c S (erase_vm (Z_to_bv 64 W) V).
+(* 08b1429: the ledger is the whole of [vm_reserved], the image's reservations
+   [R0] plus the launch's vDSO/vvar pair ([CXI.co_resx]). *)
+Theorem rb3_ledger_inv : led_chk = true -> ledger_inv (vm_reserved V) BIG c S (erase_vm (Z_to_bv 64 W) V).
 Proof.
   unfold led_chk. intros Hc.
   apply andb_prop in Hc as [Hc HW4]. apply andb_prop in Hc as [Hc HW3]. apply andb_prop in Hc as [Hc HW2].
   apply andb_prop in Hc as [Hc HW1]. apply andb_prop in Hc as [Hc HS]. apply andb_prop in Hc as [Hc Hcnt].
   apply andb_prop in Hc as [Hres Hpos].
   apply Z.leb_le in HW4, HS, Hcnt. apply Z.ltb_lt in HW1, HW2. apply Z.eqb_eq in HW3.
-  destruct (cs_maps_facts segs A Lim SINV argH ISP FS0 E CS R FULL m HCS (res_in_hull Hres))
+  destruct (cs_maps_facts segs A Lim SINV argH ISP FS0 E CS R FULL m HCS)
     as (F1 & F2 & F3 & F4 & F5 & F6 & F7 & F8 & F9).
   pose proof (lo_pos Hpos) as Hlp.
   assert (EW : bv_unsigned (Z_to_bv 64 W) = W) by (apply br_lit_small; lia).
   constructor; cbn [erase_vm vm_reserved vm_maps vm_noaccess vm_start_brk vm_brk vm_limit vm_init_sp].
-  - exact F1.
+  - reflexivity.
   - reflexivity.   (* [comment removed for export] *)
   - exact (proj1 F8).
   - exact (proj2 F8).
@@ -211,12 +214,13 @@ Proof.
   - exact F6.
   - exact F7.
   - rewrite (CxOpt.maps_exact_D1 E _ _ Hlx (CXI.co_maps _ _ _ _ _ _ _ _ _ _ _ _ HCS)), length_map. exact Hcnt.
-  - pose proof (CXI.co_totsz _ _ _ _ _ _ _ _ _ _ _ _ HCS) as Ht. rewrite sum_sizes_live, live_bytes_app, F1 in Ht. lia.
+  - pose proof (CXI.co_totsz _ _ _ _ _ _ _ _ _ _ _ _ HCS) as Ht. destruct F1 as (rx & Erx).
+    rewrite sum_sizes_live, live_bytes_app, Erx, live_bytes_app in Ht.
+    pose proof (live_bytes_nonneg rx). lia.
   - constructor.
   - rewrite EW. exact HW1.
   - rewrite EW. exact HW3.
   - lia.
-  - rewrite EW. exact HW4.
 Qed.
 
 End Root.
@@ -465,7 +469,7 @@ Proof.
   exact (class_chk_sound segs A Lim SINV argH ISP FS0 E CS R FULL m HCS Hlx TT t _ _ c Hcl Hnw x Hx).
 Qed.
 
-Theorem rb3_span_ok : regs3_chk = true -> forall t rg, iget t M = Some rg -> span_ok R0 rho M t rg.
+Theorem rb3_span_ok : regs3_chk = true -> forall t rg, iget t M = Some rg -> span_ok segs (vm_reserved V) rho M t rg.
 Proof.
   intros Hc t rg Hg. destruct (reg3_get t rg Hc Hg) as (c & _ & Hcl & Hlt & Hk).
   unfold regs3_chk, span_ok_chk in Hc. apply andb_prop in Hc as [Hsp _]. apply andb_prop in Hsp as [Hsc Hih]. apply Z.leb_le in Hih.
@@ -485,7 +489,7 @@ Proof.
       destruct (Hsem (0 + to_Z (rg_len rg) - 1) ltac:(lia)) as (Hs2 & _).
       split; [lia|]. split; [lia|]. intros y Hy.
       destruct (res_cover_ex segs A Hres (8 * (y - to_Z shadow_K)) ltac:(lia)) as (q & Hq & Hyq).
-      exists q. split; [exact Hq|]. split; [lia|].
+      exists q. split; [exact (CXI.co_res_in _ _ _ _ _ _ _ _ _ _ _ _ HCS q Hq)|]. split; [exact Hq|]. split; [lia|].
       pose proof (proj1 (Forall_forall _ _) (res_al8 segs A Hres) q Hq) as [_ Hal].
       clear - Hyq Hal. Z.div_mod_to_equations. lia.
     + (* [comment removed for export] *)
@@ -1350,7 +1354,7 @@ Proof.
 Qed.
 
 Theorem rb_DInv3_genX :
-  DInv3 cfg segs IM R0 Lim [] FULL (fun _ _ => True) [] bvmap_empty (Z_to_bv 32 0) (PropExec.seg_rom segs)
+  DInv3 cfg segs IM (vm_reserved V) Lim [] FULL (fun _ _ => True) [] bvmap_empty (Z_to_bv 32 0) (PropExec.seg_rom segs)
         (fun x => argH E x = true) (Z_to_bv 64 W) (vm_noaccess V) (m_vm_lazy m) (vm_brk V) A0X
         n rho (dress (state_of d) bs) L3 ms0 m.
 Proof.
@@ -1470,7 +1474,7 @@ Theorem rb_DInv3_gen cfg segs IM A Lim SINV argH ISP FS0
   Forall (ditem_lt n) bs -> Forall (ditem_ok (rho_of TT E)) bs ->
   root3_chk segs A Lim TT n classes CS d bs L3 W = true ->
   side_chk A TT (APC.kn CS) d = true ->
-  DInv3 cfg segs IM (segments_reserved segs) Lim [] FULL (fun _ _ => True) [] bvmap_empty (Z_to_bv 32 0) (PropExec.seg_rom segs)
+  DInv3 cfg segs IM (vm_reserved (m_vmmaps m)) Lim [] FULL (fun _ _ => True) [] bvmap_empty (Z_to_bv 32 0) (PropExec.seg_rom segs)
         (fun x => argH E x = true) (Z_to_bv 64 W) (vm_noaccess (m_vmmaps m)) (m_vm_lazy m) (vm_brk (m_vmmaps m)) (APS.allowA A E CS)
         n (rho_of TT E) (dress (state_of d) bs) L3
         (PropExec.mkst R (Z_to_bv 64 (AX2.s_pc (APC.a_ss CS))) FULL (PropExec.seg_rom segs)) m.
@@ -1502,7 +1506,7 @@ Theorem rb_DInv3 cfg segs IM (HIM : image_ok segs IM) (HWR : image_wr_ok IM) A L
   forallb (dress_chk TT (APC.kn CS) n) bs = true ->
   root3_chk segs A Lim TT n classes CS d bs L3 W = true ->
   side_chk A TT (APC.kn CS) d = true ->
-  DInv3 cfg segs IM (segments_reserved segs) Lim [] FULL (fun _ _ => True) [] bvmap_empty (Z_to_bv 32 0) (PropExec.seg_rom segs)
+  DInv3 cfg segs IM (vm_reserved (m_vmmaps m)) Lim [] FULL (fun _ _ => True) [] bvmap_empty (Z_to_bv 32 0) (PropExec.seg_rom segs)
         (fun x => argH E x = true) (Z_to_bv 64 W) (vm_noaccess (m_vmmaps m)) (m_vm_lazy m) (vm_brk (m_vmmaps m)) (APS.allowA A E CS)
         n (rho_of TT E) (dress (state_of d) bs) L3
         (PropExec.mkst R (Z_to_bv 64 (AX2.s_pc (APC.a_ss CS))) FULL (PropExec.seg_rom segs)) m.

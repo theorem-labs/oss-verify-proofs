@@ -4,13 +4,14 @@
 (* Modified by Theorem Labs, 2026-10: the boundary states and segment statements of LLVMFuzzerTestOneInput's ASan+UBSan walk (plugin-hostd/fuzz_command image B, 0x86530), the B twin of lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh6.v (the CL_*_stmtX statements: from a point of the function to its return, under the entry's context) and A/ACf5.v (rtcx, rt_base: the entry's facts bundled once). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths, module names, addresses and numbers changed; 469 of its 518 lines of code are new or changed and 289 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_defs.v; 376 of its 398 lines of code are new or changed and 496 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan image A (fuzz_segconf.asan, pin sha256 48c5355bdacb): the kit of segment S14 of the
    walk of the test harness's entry function LLVMFuzzerTestOneInput (0x858f4 .. 0x85ac0 with the continue join
    0x859c4 .. 0x859f8), the head of the inlined m_declared loop at turn i.
 
    THE FORM: plugin-hostd/fuzz_command's lib/A/Prog/LLVMFuzzerTestOneInput_s43.v (the trim loop: a seed, the
    symbolic engine's runs and their branches, a loop by induction on its counter) and _s40.v (the inner cut
-   statements of a segment), at origin/ossv/recipes 501c0d516c69.
+   statements of a segment).
 
    This file holds the part of S14 that is pure Gallina: the model lemmas that say what the code's tests mean in
    SegModel's terms. No function of the binary is proved here.

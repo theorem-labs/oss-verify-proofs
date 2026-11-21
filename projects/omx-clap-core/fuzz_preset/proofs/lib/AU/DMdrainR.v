@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/DMdrainR.v (commit ce1a656b52b7, file sha256 a975e8c14b5e) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 1 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainR.v (commit 9259077395a9, Quarantine::Drain walk set; file sha256 91a0ee79132a) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainR.v at commit 257c1d78b5c, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (1 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/DMdrainR.v (file sha256 a975e8c14b5e) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 1 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainR.v (Quarantine::Drain walk set; file sha256 91a0ee79132a) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainR.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (1 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, WalkB1): the ranges of the post-merge lists, which the segment at 0x34504
-   (DMseg_rj.free_hyps, DMseg_rj.v:78-84) and the dequeue loop (DMdeq.deq_pre, DMdeq.v:675-702) ask of the kept
+   (DMseg_rj.free_hyps, DMseg_rj.v:79-85) and the dequeue loop (DMdeq.deq_pre, DMdeq.v:676-703) ask of the kept
    list and of the extracted list.  Everything here is derived from the MergeBatches slice's own facts
    (DMwalkIF.mb_pre's batch facts and DMwalkIF.mb_model_facts), so the drain's composition does not have to
    re-derive them from the allocator relation.
@@ -15,7 +16,7 @@
    - [len_of_bytes]: a list of batches whose bytes are bounded is short (DMdeq's len_L, restated for any list);
    - [addr_in]: a batch of the post-merge lists sits where an entry batch sat (its self is an entry self);
    - [fa_range] / [la_range]: the first and last addresses are in range and 8192-aligned (fh_Hl / fh_Ht's
-     clauses, DMseg_rj.v:81-82);
+     clauses, DMseg_rj.v:82-83);
    - [kept_bytes_range]: the kept list's byte word (the entry bytes less kBatchBytes per extracted batch) is in
      [0, 2 ^ 31] (fh_Hl's last clause);
    - [ext_len_range] / [kept_len_range]: both counts are below 2 ^ 40.
@@ -37,7 +38,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YFeu
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import DMspec DMiface. From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU Require Import DMwalkIF DMdrainQ.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
-(* the released idiom for ASAN_CEIL's range and for a chain of splits (DMdeq.v:44-47) *)
+(* the released idiom for ASAN_CEIL's range and for a chain of splits (DMdeq.v:45-48) *)
 Ltac ceil := try (let H := fresh "CR" in let H2 := fresh "CR" in pose proof (proj1 (@YG0f.ASAN_CEIL_range _)) as H; pose proof H as H2; unfold YG0f.ASAN_CEIL in H2).
 Ltac splits := repeat lazymatch goal with |- _ /\ _ => split end.
 Local Set Warnings "-abstract-large-number".

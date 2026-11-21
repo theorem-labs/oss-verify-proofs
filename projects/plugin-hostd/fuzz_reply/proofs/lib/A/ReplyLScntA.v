@@ -1,10 +1,10 @@
-(* The LS_cnt rows of SEG_PRO, ARM_add, ARM_write and ARM_remove at W8's re-fit arm texts (the TOP-step head
-   14fbe276057: lib/A/W_LLVMFuzzerTestOneInput_pro_x.v:241 (and its check Section's twin :2009), _add_x.v:760,
-   _write_x.v:162 (twin :2092), _remove_x.v:230; the first three as at armsrest bcd04daf1a1), at LSx := fr_LS3cp B and
+(* The LS_cnt rows of SEG_PRO, ARM_add, ARM_write and ARM_remove at W8's re-fit arm texts (the TOP-step head:
+   lib/A/W_LLVMFuzzerTestOneInput_pro_x.v:242 (and its check Section's twin :2009), _add_x.v:760,
+   _write_x.v:162 (twin :2092), _remove_x.v:230; the first three as at armsrest), at LSx := fr_LS3cp B and
    RINV := fr_RINV, with HRP_CNT (ReplyLScntRP.v: RP's count fields are ReplyCnt.v's; the top discharges it at RP_cf by
    rp_cnt_cf).  proves no function (kind: invariant lemma).
 
-   THE BRIDGE.  The arms give amodel_at (lib/A/W_LLVMFuzzerTestOneInput_cut.v, the same text at bcd04daf1a1) where
+   THE BRIDGE.  The arms give amodel_at (lib/A/W_LLVMFuzzerTestOneInput_cut.v, the same text) where
    ReplyLScnt.v's rows take ReplyCnt.msz_ok (lm_es m) (lm_hs m) (each entry's buffer at most 16,384 bytes and its keys
    at most APARTIAL; each open source's expected and held texts at most APARTIAL).  msz_ok_of_amodel_at reads them off
    amodel_at: the entries' from arelay_at's aentry_ok (lib/A/W_rep.v:124 the buffer's three sizes, :139 the keys'
@@ -145,7 +145,7 @@ Hypothesis HRP_CNT : RP_CNT RP.
 #[local] Notation RINV := fr_RINV.
 
 (* ================================================================== the arms' LS_cnt texts *)
-(* _pro_x.v:241 (and :2009) at bcd04daf1a1 *)
+(* _pro_x.v:241 (and :2009) *)
 Lemma rp_cnt_pro_A : forall cx T0 cap out (S2 : astate),
   ReplyCnt.xcnt_ok B (c_S cx) (c_ly cx) (input_blks cx) T0 cap out ->
   ablocks B (c_ly cx) S2 = ablocks B (c_ly cx) (c_S cx) ->
@@ -154,7 +154,7 @@ Proof.
   intros cx T0 cap out S2 HX E.
   exact (rp_cnt_pro B RP HRP_CNT (c_S cx) S2 (c_ly cx) (c_p cx) (c_n cx) T0 cap out HX E).
 Qed.
-(* _add_x.v:760 at bcd04daf1a1 *)
+(* _add_x.v:760 *)
 Lemma rp_cnt_add_A : forall cx t m ly S (W : world segs) mem,
   LSx cx t m ly S -> RINV cx t m -> ad_at_op cx m -> amodel_at B ly S W mem m -> 0 <= t < OPS_MAX ->
   cnt_ok_pk RP oa_peak (ablocks B ly S).
@@ -162,7 +162,7 @@ Proof.
   intros cx t m ly S W mem HLS HRI Hop HM Ht.
   exact (rp_cnt_add B RP HRP_CNT cx t m ly S HLS HRI Hop (msz_ok_of_amodel_at B ly S W mem m HM) Ht).
 Qed.
-(* _write_x.v:162 (and :2092) at bcd04daf1a1 *)
+(* _write_x.v:162 (and :2092) *)
 Lemma rp_cnt_write_A : forall cx t m si h ly S (W : world segs) mem,
   LSx cx t m ly S -> RINV cx t m -> wr_pick cx m si h -> 0 < wr_n cx m -> amodel_at B ly S W mem m -> 0 <= t < OPS_MAX ->
   cnt_ok_pk RP (lp_peak (hs_pending h) (wr_n cx m)) (ablocks B ly S).
@@ -171,7 +171,7 @@ Proof.
   exact (rp_cnt_write B RP HRP_CNT cx t m si h (wr_n cx m) ly S HLS HRI Hpk Hn
            (msz_ok_of_amodel_at B ly S W mem m HM) Ht).
 Qed.
-(* _remove_x.v:230 at the TOP-step head 14fbe276057 (top_x LS_cnt_remove) *)
+(* _remove_x.v:230 at the TOP-step head (top_x LS_cnt_remove) *)
 Lemma rp_cnt_rm_A : forall cx t m ly S (W : world segs) mem si h j0,
   LSx cx t m ly S -> RINV cx t m -> W_LLVMFuzzerTestOneInput_remove.rm_at cx m si h j0 ->
   amodel_at B ly S W mem m -> 0 <= t < OPS_MAX ->

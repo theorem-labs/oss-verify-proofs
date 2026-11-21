@@ -9,6 +9,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_parse_value.v, with its module paths, module names, addresses and numbers changed; 1014 of its 1163 lines of code are new or changed and 2537 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_check_no_overread.v, with its module paths and module names changed; 1341 of its 1416 lines of code are new or changed and 1088 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_check_no_overread_top.v, with its module paths, module names and addresses changed; 1416 of its 1530 lines of code are new or changed and 1302 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_no_overread B 0x8124c (fs.c), fs.asan-ubsan: the FIRST span of the walk, segM_T of
    lib/B/FSW_check_no_overread_inv.v: from the return of __wrap_malloc (0x813a0, the symbolic boundary ss_M / INV_M)
    to the machine at the first preset_base64_decode call (INV_D1). Owner a Theorem Labs lane.
@@ -38,7 +39,7 @@
    - 0x81444 `jal preset_base64_decode` (ra 0x81448): INV_D1.
    NO edge of this range reaches the abort block 0x815f4 or the UBSan trap 0x815fc, and neither inline check reaches
    its report (0x81608 / 0x81614): every branch above is closed by the engine on this file's facts.
-   Template (text only): lib/A/FSW_check_no_overread_top.v at a working branch cefc3a4505b (its segM
+   Template (text only): lib/A/FSW_check_no_overread_top.v at a working branch (its segM
    pieces ss_S0 / cno_R22 / cno_R52 / cno_GS / cno_vm1 / cno_app_regions / cno_st_lift). Kit lemmas by path.
    rule 24: proves PART of check_no_overread's walk only (the lookup line is lib/B/FSW_check_no_overread.v's header). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.

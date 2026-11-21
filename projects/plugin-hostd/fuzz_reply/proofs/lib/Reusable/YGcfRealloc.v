@@ -1,12 +1,13 @@
-(* CARRIED from commit fec7cbb6287c9fd68af5237a45b58f1431d31a82,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YGcfRealloc.v, sha256 628b00af9dcfd4da5028163be2915bc3240f1f4e82b24cf6346c36055ac2d2ec (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change made here is the module
    prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
    (lib.Spec -> fuzz_reply.lib.Spec). *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Taken by path from a working branch a0fed4266a1b, provisional. *)
+(* Taken by path from a working branch, provisional. *)
 (* Modified by Theorem Labs, 2026-10: module paths changed from fuzz_preset lib.Reusable to cgif_file_fuzzer lib; the text is otherwise unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the realloc forms of the event-free second allocator instance (suffix cf), over
    c-asan's ReallocP.v (its P forms, instantiated at mt := malloc_cf, ft := free_cf, cpre := acall_pre_cf at a
    fixed Hp, rpre := True, nmax := cf_malloc_max, lmax := LIVE_MAX, areal := amreal). realloc(p, n) also takes

@@ -1,4 +1,4 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfFm.v (a working branch 0ddf65fd8cc); relocated to libreac/fuzz_disco.asan by reloc.py (target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table: this file's rows in provenance/evidence/g9-gxa/g9tool/g9-table-disco-A.tsv). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfFm.v (a working branch); relocated to libreac/fuzz_disco.asan by reloc.py (target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table: this file's rows in provenance/evidence/g9-gxa/g9tool/g9-table-disco-A.tsv). *)
 (* fm.asan's snprintf over the shared contract (FMsnprintfShared.v sh_asnprintf_realizesU), composed from the four walks:
    __wrap_snprintf / __interceptor_snprintf (FMsnprintfSnp.v snp_ok) -> __interceptor_vsnprintf (FMsnprintfSvsni.v
    svsni_ok) -> musl vsnprintf (FMsnprintfSvsn.v svsn_ok) -> __interceptor_vfprintf (FMsnprintfSvfi.v svfi_ok) ->
@@ -23,13 +23,13 @@ Import ListNotations.
 Local Open Scope Z_scope.
 
 (* ---- fm.asan's glue depth: the top's sp down to musl vfprintf's entry sp ---- *)
-(* MEASURED from fm.asan (the frame offsets of proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfGI.v (a working branch 3e35620c52e), a Theorem Labs lane's pinned chain): __interceptor_snprintf's frame 0x60,
+(* MEASURED from fm.asan (the frame offsets of proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfGI.v (a working branch), a Theorem Labs lane's pinned chain): __interceptor_snprintf's frame 0x60,
    __interceptor_vsnprintf's 0x870, musl vsnprintf's 0x130, __interceptor_vfprintf's 0x30 *)
 Definition fm_glue_img : Z := 0xa30.
 Lemma fm_glue_img_parts : fm_glue_img = 0x60 + 0x870 + 0x130 + 0x30.
 Proof. reflexivity. Qed.
 (* GXA's released musl vfprintf window: VF_DEPTH = VFA_DEPTH 368 + PC_DEPTH 5184 (fuzz_reply
-   lib/CJ/RL/GXA/G_printf_core_common.v:141, G_vfprintf_snf.v:54, origin/ossv/recipes 568db058c1d) *)
+   lib/CJ/RL/GXA/G_printf_core_common.v:141, G_vfprintf_snf.v:54) *)
 Definition GXA_VF_DEPTH : Z := 5552.
 (* on the GXA route the top's window is at least 8160 (= 2256 to musl vsnprintf + VSN_DEPTH 5904); 2 * ESTACK fits *)
 Lemma fm_K_min_gxa : fm_glue_img + GXA_VF_DEPTH = 8160.

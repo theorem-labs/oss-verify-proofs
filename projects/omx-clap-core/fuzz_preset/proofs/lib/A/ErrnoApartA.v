@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/ErrnoApartcgif.v (a working branch 29b7505aa27, file sha256 6c556421afce) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 f0d2e8d40c7e; pin d83eb25dbf0d); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-(* Modified by Theorem Labs, 2026-10: relocated from the old pin A (pinned fuzz_preset.asan d83eb25dbf0d, twin f0d2e8d40c7e; this file at 3d44582d342f) to A' (#102 pin 1be0f53d96cb, twin bff8519bbe3e) by the relocation route of record, frozen alreloc ced0368250cb6538 (a working branch b85bfdee67c4), --assume-source, --resolve the internal file resolve-102.txt (16 lines name this file); 0 numerals changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/ErrnoApartcgif.v (a working branch, file sha256 6c556421afce) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 f0d2e8d40c7e; pin d83eb25dbf0d); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: relocated from the old pin A (pinned fuzz_preset.asan d83eb25dbf0d, twin f0d2e8d40c7e; this file) to A' (#102 pin 1be0f53d96cb, twin bff8519bbe3e) by the relocation route of record, frozen alreloc ced0368250cb6538 (a working branch), --assume-source, --resolve the internal file resolve-102.txt (16 lines name this file); 0 numerals changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The cgif_file discharges of ErrnoApart.v's image facts, at the cgif instances AImg_A (AGif2cgif), AGImg_A
    (AGif0cgif) and DImg_A (DGif0cgif).  errno is TFIB_ERRNO = 0x5dde4c (AF0m.v:19, ts_errno AF0m.v:1798), 4 bytes,
    in the image [TFIB_IMG_LO, TFIB_IMG_END) = [0x10000, 0x600000) (AF0x.v:26, :39):
@@ -10,12 +11,12 @@
      byte (AB13.tfib_rw_rom, AB13.v:110) and a world hides no segment byte (w_Hoff, YK04.memory_read1_hidden): the
      proof of YFff.rw_unhidden / AGif1m.rw_not_hidden (AGif1m removed in this series).  It Requires YB13 alone, whose closure sets no Zify flag:
      AGif1m reaches YA09 (CLrefillR -> YFkn), and YFff reaches YB15 / YE08, which reset the flag (to true);
-   - the depot zone (AGis.v:231-232 = DGgi.v:515-516): [0x17cd88, 0x5cd510) ends 0x1093c below errno; the nodes and
+   - the depot zone (AGis.v:232-233 = DGgi.v:516-517): [0x17cd88, 0x5cd510) ends 0x1093c below errno; the nodes and
      store blocks are owned extents, apart by errno_in_img (ErrnoApart.errno_apart_owned);
-   - the internal allocator's zone (DGgi.v:517): [0xac0c0, 0x12d0f0) and [0x13a948, 0x13a94c), below errno;
-   - the shadow offset AGis.SHBv (AGis.v:166): 0x7fff8000, above errno;
+   - the internal allocator's zone (DGgi.v:518): [0xac0c0, 0x12d0f0) and [0x13a948, 0x13a94c), below errno;
+   - the shadow offset AGis.SHBv (AGis.v:167): 0x7fff8000, above errno;
    - zone3 (AF0x.v:68): off the image (zone3_off_img, AF0x.v:76);
-   - the instance window inst_ok (AGImgA.v:60): [inst, inst + 0xe60) inside [0xa3e98, 0xa86e0), below errno.
+   - the instance window inst_ok (AGImgA.v:61): [inst, inst + 0xe60) inside [0xa3e98, 0xa86e0), below errno.
    The arms apply ErrnoApart's lemmas with these as the image premises.
 
    Moved to ErrnoApartScgif.v, names and proofs unchanged, with the Props they discharge (now in ErrnoApartS.v):

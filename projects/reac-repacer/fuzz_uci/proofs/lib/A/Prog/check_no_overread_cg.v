@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs: reac-repacer/fuzz_uci's check_no_overread in the caller-journal form of proofs/libreac/fuzz_decode/lib/A/Prog/check_round_trip_cg.v (origin/ossv/recipes 88154566652a; cgif_file_fuzzer lib/A/ACey.v trfc_specX, lib/YC20.v tlzw_spec), at this unit's core names and image A. *)
+(* Modified by Theorem Labs: reac-repacer/fuzz_uci's check_no_overread in the caller-journal form of proofs/libreac/fuzz_decode/lib/A/Prog/check_round_trip_cg.v (cgif_file_fuzzer lib/A/ACey.v trfc_specX, lib/YC20.v tlzw_spec), at this unit's core names and image A. *)
 (* check_no_overread_cg: the ASan walk contract of check_no_overread (fuzz_uci.asan 0x7f4fc =
    uci_sigma US_check_no_overread, AF_check_no_overread = 0x214 of lib/A/Prog/UciPList.v), as STATEMENTS only (no
    proof). The caller's journal is the premise, the post extends it by the call's events, the allocations are metered,

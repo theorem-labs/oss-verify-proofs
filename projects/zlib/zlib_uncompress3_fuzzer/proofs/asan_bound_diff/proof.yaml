@@ -1,0 +1,4 @@
+schema: oss-fuzz-theorems/proof/1
+proves: zlib/zlib_uncompress3_fuzzer/asan_bound_diff
+bound: '0'
+fingerprint: 109e09d3c88efd652cb2898beac715ed3d4908d703f46613036c89d95bad39ff

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: lh_resize_A_stmt, memappend_A_cps_nf and the lh_insert lemmas (lh_insert_prologueA, lh_insert_finishA, lh_insert_small_A_cps, lh_insert_A_cps) take it after alloc_ceiling <= lo, and their calls discharge it). *)
 
 From Stdlib Require ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -61,7 +62,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 HEAPAx A (lh_blocks t tbl size es ++ LB) LM FRS B m md ->
 lh_open asegs A4F m t tbl size es svs -> lh_globA m ->
 In ns lf_sizes -> lf_thr size + 1 <= lf_thr ns ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - RD ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - RD ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] -> tp = Z_to_bv 64 A_TP -> bv_unsigned ra mod 2 = 0 -> frm0 fc ->
 Z.of_nat (length FRS) < 4096 ->
@@ -109,7 +110,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 
 HEAPAx A LB LM FRS B m md -> In (t, 56) LB ->
 mem_inv asegs m -> frm0 fc ->
 lh_openf asegs A4F ffn m t tbl size es svs -> lh_below lo t tbl size es ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 96 ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 96 ->
 evt asegs (fun ms' => exists fc' m' junk8,
 ms' = MS (mkR ra (Z_to_bv 64 (bv_unsigned sp + -96)) gp tp t0 t1 t2 (Z_to_bv 64 (t + 4)) a1 (Z_to_bv 64 t)
 (bword (lf_thr size <=? Z.of_nat (length es))) a2 a3 a4 (Z_to_bv 64 size) (Z_to_bv 64 66524) a7
@@ -123,7 +124,7 @@ s2 s3 (Z_to_bv 64 SB0) (Z_to_bv 64 (t / 8 + SB0)) (Z_to_bv 64 (t / 8 + SB0)) s7 
 (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 t) a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 lh_insert_A_entry) fc None m (seg_rom asegs)).
 Proof.
-intros until ffn. intros HP INt MI FRM OPEN BELOW ST LO LOS.
+intros until ffn. intros HP INt MI FRM OPEN BELOW ST LO HBT LOS.
 pose proof OPEN as (HDR & SL & LINK & KEYS & Hsz & Hcnt & Hlen). unfold lh_hdrf in HDR. pose proof BELOW as (Ht0 & Ht & _).
 pose proof (lf_thr_lt size Hsz) as Hlt. pose proof (lf_size_range size Hsz) as HSR. word_range sp SPR. unfold_consts.
 pose proof (rw_cells_bound asegs m t _ HDR) as TB. cbn [cells_size csize Nat.add] in TB.
@@ -169,7 +170,7 @@ lh_openf asegs A4F ffn m t tbl size es svs ->
 Z.of_nat (length es) + 1 <= lf_thr size ->
 cstr asegs m k kn ks -> 0 <= v < 2^64 -> 0 <= h < 2^64 ->
 lh_globA m ->
-stk asegs m lo (bv_unsigned sp + -96) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 96 - 4096 ->
+stk asegs m lo (bv_unsigned sp + -96) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 96 - 4096 ->
 ins_frameA sp ra s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 m junk8 ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
 bv_unsigned ra mod 2 = 0 ->
@@ -183,7 +184,7 @@ AJ5 A4L HIx A T md
 x18 x19 (Z_to_bv 64 SB0) (Z_to_bv 64 (t / 8 + SB0)) (Z_to_bv 64 (t / 8 + SB0)) x23 x24 x25 s10 s11 t3 t4 t5 t6)
 F1 (Z_to_bv 64 0xa23f8) fc1 None m (seg_rom asegs)).
 Proof.
-intros until junk8. intros HP OPEN ROOM CS Hv Hh G ST LO LOS FR ERR RA FS FRM VM0 HPR K.
+intros until junk8. intros HP OPEN ROOM CS Hv Hh G ST LO HBT LOS FR ERR RA FS FRM VM0 HPR K.
 pose proof OPEN as (HDR & SL & LINK & KEYS & Hsz & Hcnt & Hlen).
 pose proof (lf_thr_lt size Hsz) as Hlt. pose proof (lf_size_range size Hsz) as HSR.
 unfold_consts. word_range sp SPR.
@@ -267,7 +268,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 HEAPAx A (lh_blocks t tbl size es ++ (k, kn) :: LB) LM FRS B m md ->
 lh_open asegs A4F m t tbl size es svs -> lh_globA m -> cstr asegs m k kn ks -> kn <= 2^31 ->
 0 <= v < 2^64 -> 0 <= h < 2^64 ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 96 - 4096 - RD ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 96 - 4096 - RD ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] -> tp = Z_to_bv 64 A_TP -> bv_unsigned ra mod 2 = 0 -> frm0 fc ->
 Z.of_nat (length FRS) < 4096 ->
@@ -279,7 +280,7 @@ AJ5 A4L HIx A T md
 (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 lh_insert_A_entry) fc None m (seg_rom asegs)).
 Proof.
-intros RD RESIZE HRD. intros until h. intros HP OPEN G CS Hkn Hv Hh ST LO LOS SPA HT ERR TP RA FRM FRN A0 A1 A2 A3 A4 BB BD K.
+intros RD RESIZE HRD. intros until h. intros HP OPEN G CS Hkn Hv Hh ST LO HBT LOS SPA HT ERR TP RA FRM FRN A0 A1 A2 A3 A4 BB BD K.
 pose proof OPEN as (HDR & SL & LINK & KEYS & Hsz & Hcnt & Hlen).
 pose proof (lf_thr_lt size Hsz) as Hlt. pose proof (lf_size_range size Hsz) as HSR.
 unfold_consts. word_range sp SPR.
@@ -297,7 +298,7 @@ pose proof (wmono_refl asegs m) as WM.
 pose proof (munch_refl [(bv_unsigned sp - 96, bv_unsigned sp)] m) as MU.
 assert (INt : In (t, 56) (lh_blocks t tbl size es ++ (k, kn) :: LB)) by (apply in_or_app; left; left; reflexivity).
 subst a0 a1 a2 a3 a4 tp. a4l. reenterA asegs A4L HIx asegs_wx HP.
-call lh_insert_prologueA; [exact HP | exact INt | exact MI | exact FRM | exact OPEN | exact BELOW | exact ST | lia | lia |].
+call lh_insert_prologueA; [exact HP | exact INt | exact MI | exact FRM | exact OPEN | exact BELOW | exact ST | lia | first [assumption | lia] | lia |].
 match goal with H : frm0 ?f |- evt _ _ (MS _ _ _ ?f _ _ _) => rename H into FRM1 end.
 match goal with H : ins_frameA _ _ _ _ _ _ _ _ _ _ _ _ ?mx _ |- evt _ _ (MS _ _ _ _ _ ?mx _) => rename H into FR1 end.
 match goal with H : stk asegs ?mx lo _ |- evt _ _ (MS _ _ _ _ _ ?mx _) => rename H into ST1 end.
@@ -320,7 +321,7 @@ destruct (Z.leb_spec (lf_thr size) (Z.of_nat (length es))) as [GE | LT].
 cbn [bword]. if_false.
 evt_done5.
 eapply (lh_insert_finishA ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB LM FRS B lo t k kn ks v T (fn_lh_entry_free A4F) ltac:(cbn; lia) Hkn SPA HT tbl size es svs h);
-first [exact HP1 | exact OPEN1 | exact CS1 | exact G1' | exact ST1 | exact FR1 | exact RA | apply fsaved_caller_saved3
+first [exact HP1 | exact OPEN1 | exact CS1 | exact G1' | exact ST1 | exact FR1 | first [assumption | lia] | exact RA | apply fsaved_caller_saved3
 | apply MREL_refl | exact HPR1 | lia | idtac].
 all: try eassumption. all: try (intros _; assumption). all: try clia.
 
@@ -404,7 +405,7 @@ reenterA asegs A4L HIx asegs_wx HP2.
 step. step. step. step. step. step. if_false. step.
 evt_done5.
 eapply (lh_insert_finishA ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB LM FRS B2 lo t k kn ks v T (fn_lh_entry_free A4F) ltac:(cbn; lia) Hkn SPA HT tbl' ns es' svs' h);
-first [exact HP2 | exact OPEN2 | exact CS2 | exact GL2 | exact ST2 | exact ERR2 | exact RA | exact VM2 | exact HPR' | lia | idtac].
+first [exact HP2 | exact OPEN2 | exact CS2 | exact GL2 | exact ST2 | exact ERR2 | first [assumption | lia] | exact RA | exact VM2 | exact HPR' | lia | idtac].
 all: try clia.
 all: try (unfold ins_frameA; exact FR1).
 all: try (eapply QCcH.fsaved_trans; [apply fsaved_caller_saved3 | exact FS2]).
@@ -424,7 +425,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 HEAPAx A (lh_blocks t tbl size es ++ (k, kn) :: LB) LM FRS B m md ->
 lh_openf asegs A4F ffn m t tbl size es svs -> lh_globA m -> cstr asegs m k kn ks -> kn <= 2^31 -> 0 <= ffn < 2^64 ->
 Z.of_nat (length es) + 1 <= lf_thr size -> 0 <= v < 2^64 -> 0 <= h < 2^64 ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 96 - 4096 ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 96 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] -> tp = Z_to_bv 64 A_TP -> bv_unsigned ra mod 2 = 0 -> frm0 fc ->
 a0 = Z_to_bv 64 t -> a1 = Z_to_bv 64 k -> a2 = Z_to_bv 64 v -> a3 = Z_to_bv 64 h -> a4 = Z_to_bv 64 0 ->
@@ -434,7 +435,7 @@ AJ5 A4L HIx A T md
 (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 lh_insert_A_entry) fc None m (seg_rom asegs)).
 Proof.
-intros until ffn. intros HP OPEN G CS Hkn Hffn HcntS Hv Hh ST LO LOS SPA HT ERR TP RA FRM A0 A1 A2 A3 A4 K.
+intros until ffn. intros HP OPEN G CS Hkn Hffn HcntS Hv Hh ST LO HBT LOS SPA HT ERR TP RA FRM A0 A1 A2 A3 A4 K.
 pose proof OPEN as (HDR & SL & LINK & KEYS & Hsz & Hcnt & Hlen).
 pose proof (lf_thr_lt size Hsz) as Hlt. pose proof (lf_size_range size Hsz) as HSR.
 unfold_consts. word_range sp SPR.
@@ -451,7 +452,7 @@ pose proof (wmono_refl asegs m) as WM.
 pose proof (munch_refl [(bv_unsigned sp - 96, bv_unsigned sp)] m) as MU.
 assert (INt : In (t, 56) (lh_blocks t tbl size es ++ (k, kn) :: LB)) by (apply in_or_app; left; left; reflexivity).
 subst a0 a1 a2 a3 a4 tp. a4l. reenterA asegs A4L HIx asegs_wx HP.
-call lh_insert_prologueA; [exact HP | exact INt | exact MI | exact FRM | exact OPEN | exact BELOW | exact ST | lia | lia |].
+call lh_insert_prologueA; [exact HP | exact INt | exact MI | exact FRM | exact OPEN | exact BELOW | exact ST | lia | first [assumption | lia] | lia |].
 match goal with H : frm0 ?f |- evt _ _ (MS _ _ _ ?f _ _ _) => rename H into FRM1 end.
 match goal with H : ins_frameA _ _ _ _ _ _ _ _ _ _ _ _ ?mx _ |- evt _ _ (MS _ _ _ _ _ ?mx _) => rename H into FR1 end.
 match goal with H : stk asegs ?mx lo _ |- evt _ _ (MS _ _ _ _ _ ?mx _) => rename H into ST1 end.
@@ -473,7 +474,7 @@ destruct (Z.leb_spec (lf_thr size) (Z.of_nat (length es))) as [GE | LT]; [exfals
 cbn [bword]. if_false.
 evt_done5.
 eapply (lh_insert_finishA ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB LM FRS B lo t k kn ks v T ffn Hffn Hkn SPA HT tbl size es svs h);
-first [exact HP1 | exact OPEN1 | exact CS1 | exact G1' | exact ST1 | exact FR1 | exact RA | apply fsaved_caller_saved3
+first [exact HP1 | exact OPEN1 | exact CS1 | exact G1' | exact ST1 | exact FR1 | first [assumption | lia] | exact RA | apply fsaved_caller_saved3
 | apply MREL_refl | exact HPR1 | exact K | lia | idtac].
 all: try eassumption. all: try (intros _; assumption). all: try clia.
 Qed.
@@ -515,7 +516,7 @@ HEAPAx A ((pb, PB_SZ) :: (buf, cap) :: LB) LM FRS B0 m0 md0 ->
 pbuf_core asegs m0 pb buf bpos cap content -> 0 <= n < 2^31 ->
 bytes_at asegs m0 b src -> Z.of_nat (length src) = n -> 0 <= b ->
 src_locA LB FRS b n -> (0 < n -> unpoisoned asegs m0 A_SB b n) ->
-stk asegs m0 lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 112 - 4096 ->
+stk asegs m0 lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 112 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m0 A_ERRNO [C4 errv] -> tp = Z_to_bv 64 A_TP -> bv_unsigned ra mod 2 = 0 ->
 a0 = Z_to_bv 64 pb -> a1 = Z_to_bv 64 b -> a2 = Z_to_bv 64 n ->
@@ -526,7 +527,7 @@ AJ5 A4L HIx A T md0
 (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 printbuf_memappend_A_entry_nf) fc None m0 (seg_rom asegs)).
 Proof.
-intros until A. intros HP PBX Hn SRC SRCL Hb0 SRCB UPS0 ST LO LOS SPA HT ERR TP RA A0 A1 A2 BB K.
+intros until A. intros HP PBX Hn SRC SRCL Hb0 SRCB UPS0 ST LO HBT LOS SPA HT ERR TP RA A0 A1 A2 BB K.
 pose proof PBX as PB0. destruct PBX as (Hbp & Hcap & Hlen & PBS & PBUF).
 unfold_consts. unfold printbuf_memappend_A_entry_nf, A_SB, A_TP, A_ERRNO in *. word_range sp SPR. subst tp a0 a1 a2.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
@@ -876,7 +877,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 HEAPAx A (lh_blocks t tbl size es ++ LB) LM FRS B m md ->
 lh_open asegs A4F m t tbl size es svs -> lh_globA m ->
 In ns lf_sizes -> lf_thr size + 1 <= lf_thr ns ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - RD ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - RD ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] -> tp = Z_to_bv 64 A_TP -> bv_unsigned ra mod 2 = 0 -> frm0 fc ->
 Z.of_nat (length FRS) < 4096 ->
@@ -924,7 +925,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 
 HEAPAx A LB LM FRS B m md -> In (t, 56) LB ->
 mem_inv asegs m -> frm0 fc ->
 lh_openf asegs A4F ffn m t tbl size es svs -> lh_below lo t tbl size es -> 0 < t -> t mod 16 = 0 ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 96 ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 96 ->
 evt asegs (fun ms' => exists fc' m' junk8,
 ms' = MS (mkR ra (Z_to_bv 64 (bv_unsigned sp + -96)) gp tp t0 t1 t2 (Z_to_bv 64 (t + 4)) s1 (Z_to_bv 64 t)
 a1 a2 a3 a4 (bword (lf_thr size <=? Z.of_nat (length es))) (Z_to_bv 64 size) (Z_to_bv 64 67584)
@@ -938,7 +939,7 @@ a1 a2 a3 a4 (bword (lf_thr size <=? Z.of_nat (length es))) (Z_to_bv 64 size) (Z_
 (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 t) a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 lh_insert_A_entry) fc None m (seg_rom asegs)).
 Proof.
-intros until ffn. intros HP INt MI FRM OPEN BELOW Htlo Htal ST LO LOS.
+intros until ffn. intros HP INt MI FRM OPEN BELOW Htlo Htal ST LO HBT LOS.
 pose proof OPEN as (HDR & SL & LINK & KEYS & Hsz & Hcnt & Hlen). unfold lh_hdrf in HDR. pose proof BELOW as (Ht0 & Ht & _).
 pose proof (lf_thr_lt size Hsz) as Hlt. pose proof (lf_size_range size Hsz) as HSR. word_range sp SPR. unfold_consts.
 pose proof (rw_cells_bound asegs m t _ HDR) as TB. cbn [cells_size csize Nat.add] in TB.
@@ -986,7 +987,7 @@ lh_openf asegs A4F ffn m t tbl size es svs ->
 Z.of_nat (length es) + 1 <= lf_thr size ->
 cstr asegs m k kn ks -> 0 <= v < 2^64 -> 0 <= h < 2^64 ->
 lh_globA m ->
-stk asegs m lo (bv_unsigned sp + -96) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 96 - 4096 ->
+stk asegs m lo (bv_unsigned sp + -96) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 96 - 4096 ->
 ins_frameA sp ra s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 m junk8 ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
 bv_unsigned ra mod 2 = 0 ->
@@ -1000,7 +1001,7 @@ AJ5 A4L HIx A T md
 (Z_to_bv 64 SB0) (Z_to_bv 64 (t / 8 + SB0)) x20 (Z_to_bv 64 (t / 8 + SB0)) x22 x23 x24 x25 s10 s11 t3 t4 t5 t6)
 F1 (Z_to_bv 64 0xa4890) fc1 None m (seg_rom asegs)).
 Proof.
-intros until junk8. intros HP OPEN ROOM CS Hv Hh G ST LO LOS FR ERR RA FS FRM VM0 HPR K.
+intros until junk8. intros HP OPEN ROOM CS Hv Hh G ST LO HBT LOS FR ERR RA FS FRM VM0 HPR K.
 pose proof OPEN as (HDR & SL & LINK & KEYS & Hsz & Hcnt & Hlen).
 pose proof (lf_thr_lt size Hsz) as Hlt. pose proof (lf_size_range size Hsz) as HSR.
 unfold_consts. word_range sp SPR.
@@ -1084,7 +1085,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 HEAPAx A (lh_blocks t tbl size es ++ (k, kn) :: LB) LM FRS B m md ->
 lh_open asegs A4F m t tbl size es svs -> lh_globA m -> cstr asegs m k kn ks -> kn <= 2^31 ->
 0 <= v < 2^64 -> 0 <= h < 2^64 ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 96 - 4096 - RD ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 96 - 4096 - RD ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] -> tp = Z_to_bv 64 A_TP -> bv_unsigned ra mod 2 = 0 -> frm0 fc ->
 Z.of_nat (length FRS) < 4096 ->
@@ -1096,7 +1097,7 @@ AJ5 A4L HIx A T md
 (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 lh_insert_A_entry) fc None m (seg_rom asegs)).
 Proof.
-intros RD RESIZE HRD. intros until h. intros HP OPEN G CS Hkn Hv Hh ST LO LOS SPA HT ERR TP RA FRM FRN A0 A1 A2 A3 A4 BB BD K.
+intros RD RESIZE HRD. intros until h. intros HP OPEN G CS Hkn Hv Hh ST LO HBT LOS SPA HT ERR TP RA FRM FRN A0 A1 A2 A3 A4 BB BD K.
 pose proof OPEN as (HDR & SL & LINK & KEYS & Hsz & Hcnt & Hlen).
 pose proof (lf_thr_lt size Hsz) as Hlt. pose proof (lf_size_range size Hsz) as HSR.
 unfold_consts. word_range sp SPR.
@@ -1114,7 +1115,7 @@ pose proof (wmono_refl asegs m) as WM.
 pose proof (munch_refl [(bv_unsigned sp - 96, bv_unsigned sp)] m) as MU.
 assert (INt : In (t, 56) (lh_blocks t tbl size es ++ (k, kn) :: LB)) by (apply in_or_app; left; left; reflexivity).
 subst a0 a1 a2 a3 a4 tp. a4l. reenterA asegs A4L HIx asegs_wx HP.
-call lh_insert_prologueA; [exact HP | exact INt | exact MI | exact FRM | exact OPEN | exact BELOW | lia | exact Htal | exact ST | lia | lia |].
+call lh_insert_prologueA; [exact HP | exact INt | exact MI | exact FRM | exact OPEN | exact BELOW | lia | exact Htal | exact ST | lia | first [assumption | lia] | lia |].
 match goal with H : frm0 ?f |- evt _ _ (MS _ _ _ ?f _ _ _) => rename H into FRM1 end.
 match goal with H : ins_frameA _ _ _ _ _ _ _ _ _ _ _ _ ?mx _ |- evt _ _ (MS _ _ _ _ _ ?mx _) => rename H into FR1 end.
 match goal with H : stk asegs ?mx lo _ |- evt _ _ (MS _ _ _ _ _ ?mx _) => rename H into ST1 end.
@@ -1137,7 +1138,7 @@ destruct (Z.leb_spec (lf_thr size) (Z.of_nat (length es))) as [GE | LT].
 cbn [bword]. if_true.
 evt_done5.
 eapply (lh_insert_finishA ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB LM FRS B lo t k kn ks v T (fn_lh_entry_free A4F) ltac:(cbn; lia) Hkn HT tbl size es svs h);
-first [exact HP1 | exact OPEN1 | exact CS1 | exact G1' | exact ST1 | exact FR1 | exact RA | apply fsaved_caller_saved3
+first [exact HP1 | exact OPEN1 | exact CS1 | exact G1' | exact ST1 | exact FR1 | first [assumption | lia] | exact RA | apply fsaved_caller_saved3
 | apply MREL_refl | exact HPR1 | lia | idtac].
 all: try eassumption. all: try (intros _; assumption). all: try clia.
 
@@ -1235,7 +1236,7 @@ step. step. step. step. if_false.
 step. step. rewrite ?LEN2 in *. norm_sx32. step.
 evt_done5.
 eapply (lh_insert_finishA ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB LM FRS B2 lo t k kn ks v T (fn_lh_entry_free A4F) ltac:(cbn; lia) Hkn HT tbl' ns es' svs' h);
-first [exact HP2 | exact OPEN2 | exact CS2 | exact GL2 | exact ST2 | exact ERR2 | exact RA | exact VM2 | exact HPR' | lia | idtac].
+first [exact HP2 | exact OPEN2 | exact CS2 | exact GL2 | exact ST2 | exact ERR2 | first [assumption | lia] | exact RA | exact VM2 | exact HPR' | lia | idtac].
 all: try clia.
 all: try (unfold ins_frameA; exact FR1).
 all: try (eapply QCcH.fsaved_trans; [apply fsaved_caller_saved3 | exact FS2]).
@@ -1255,7 +1256,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 HEAPAx A (lh_blocks t tbl size es ++ (k, kn) :: LB) LM FRS B m md ->
 lh_openf asegs A4F ffn m t tbl size es svs -> lh_globA m -> cstr asegs m k kn ks -> kn <= 2^31 -> 0 <= ffn < 2^64 ->
 Z.of_nat (length es) + 1 <= lf_thr size -> 0 <= v < 2^64 -> 0 <= h < 2^64 ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 96 - 4096 ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 96 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] -> tp = Z_to_bv 64 A_TP -> bv_unsigned ra mod 2 = 0 -> frm0 fc ->
 a0 = Z_to_bv 64 t -> a1 = Z_to_bv 64 k -> a2 = Z_to_bv 64 v -> a3 = Z_to_bv 64 h -> a4 = Z_to_bv 64 0 ->
@@ -1265,7 +1266,7 @@ AJ5 A4L HIx A T md
 (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 lh_insert_A_entry) fc None m (seg_rom asegs)).
 Proof.
-intros until ffn. intros HP OPEN G CS Hkn Hffn HcntS Hv Hh ST LO LOS SPA HT ERR TP RA FRM A0 A1 A2 A3 A4 K.
+intros until ffn. intros HP OPEN G CS Hkn Hffn HcntS Hv Hh ST LO HBT LOS SPA HT ERR TP RA FRM A0 A1 A2 A3 A4 K.
 pose proof OPEN as (HDR & SL & LINK & KEYS & Hsz & Hcnt & Hlen).
 pose proof (lf_thr_lt size Hsz) as Hlt. pose proof (lf_size_range size Hsz) as HSR.
 unfold_consts. word_range sp SPR.
@@ -1282,7 +1283,7 @@ pose proof (wmono_refl asegs m) as WM.
 pose proof (munch_refl [(bv_unsigned sp - 96, bv_unsigned sp)] m) as MU.
 assert (INt : In (t, 56) (lh_blocks t tbl size es ++ (k, kn) :: LB)) by (apply in_or_app; left; left; reflexivity).
 subst a0 a1 a2 a3 a4 tp. a4l. reenterA asegs A4L HIx asegs_wx HP.
-call lh_insert_prologueA; [exact HP | exact INt | exact MI | exact FRM | exact OPEN | exact BELOW | lia | exact Htal | exact ST | lia | lia |].
+call lh_insert_prologueA; [exact HP | exact INt | exact MI | exact FRM | exact OPEN | exact BELOW | lia | exact Htal | exact ST | lia | first [assumption | lia] | lia |].
 match goal with H : frm0 ?f |- evt _ _ (MS _ _ _ ?f _ _ _) => rename H into FRM1 end.
 match goal with H : ins_frameA _ _ _ _ _ _ _ _ _ _ _ _ ?mx _ |- evt _ _ (MS _ _ _ _ _ ?mx _) => rename H into FR1 end.
 match goal with H : stk asegs ?mx lo _ |- evt _ _ (MS _ _ _ _ _ ?mx _) => rename H into ST1 end.
@@ -1304,7 +1305,7 @@ destruct (Z.leb_spec (lf_thr size) (Z.of_nat (length es))) as [GE | LT]; [exfals
 cbn [bword]. if_true.
 evt_done5.
 eapply (lh_insert_finishA ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB LM FRS B lo t k kn ks v T ffn Hffn Hkn HT tbl size es svs h);
-first [exact HP1 | exact OPEN1 | exact CS1 | exact G1' | exact ST1 | exact FR1 | exact RA | apply fsaved_caller_saved3
+first [exact HP1 | exact OPEN1 | exact CS1 | exact G1' | exact ST1 | exact FR1 | first [assumption | lia] | exact RA | apply fsaved_caller_saved3
 | apply MREL_refl | exact HPR1 | exact K | lia | idtac].
 all: try eassumption. all: try (intros _; assumption). all: try clia.
 Qed.
@@ -1480,7 +1481,7 @@ HEAPAx A ((pb, PB_SZ) :: (buf, cap) :: LB) LM FRS B0 m0 md0 ->
 pbuf_core asegs m0 pb buf bpos cap content -> 0 <= n < 2^31 ->
 bytes_at asegs m0 b src -> Z.of_nat (length src) = n -> 0 <= b ->
 src_locA LB FRS b n -> (0 < n -> unpoisoned asegs m0 A_SB b n) ->
-stk asegs m0 lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 112 - 4096 ->
+stk asegs m0 lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 112 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m0 A_ERRNO [C4 errv] -> tp = Z_to_bv 64 A_TP -> bv_unsigned ra mod 2 = 0 ->
 a0 = Z_to_bv 64 pb -> a1 = Z_to_bv 64 b -> a2 = Z_to_bv 64 n ->
@@ -1491,7 +1492,7 @@ AJ5 A4L HIx A T md0
 (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 printbuf_memappend_A_entry_nf) fc None m0 (seg_rom asegs)).
 Proof.
-intros until A. intros HP PBX Hn SRC SRCL Hb0 SRCB UPS0 ST LO LOS SPA HT ERR TP RA A0 A1 A2 BB K.
+intros until A. intros HP PBX Hn SRC SRCL Hb0 SRCB UPS0 ST LO HBT LOS SPA HT ERR TP RA A0 A1 A2 BB K.
 pose proof PBX as PB0. destruct PBX as (Hbp & Hcap & Hlen & PBS & PBUF).
 unfold_consts. unfold printbuf_memappend_A_entry_nf, A_SB, A_TP, A_ERRNO in *. word_range sp SPR. subst tp a0 a1 a2.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.

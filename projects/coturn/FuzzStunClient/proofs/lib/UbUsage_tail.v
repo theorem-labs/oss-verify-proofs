@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the section assumes the stderr write's channel reader (m_channel_reader) and passes it on. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -83,6 +84,7 @@ Section UTail.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  Hypothesis Hrdr : m_channel_reader model = true.   (* LPS 08b1429: the stderr write's channel reader *)
 
   (* [comment removed for export] *)
   Definition ENV (vals : list word) : env := Env (vals_ev vals) (blobs_ev []).
@@ -158,7 +160,7 @@ Ltac close_exit_at HR HK P0 Hh Hlazy sp0 OFF WLO :=
     rdn RSEGS M (Z_to_bv 64 (bv_unsigned sp0 - 553 + L)) 7%nat = Some SUF7 ->
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x1e71c) M (seg_rom RSEGS)) model)
                (t_emit (W 2 (msg_usage a0s)) (t_exit (exit_code 2) (m_fs model))).
-  Proof using Hvsp Hh Hlazy Hfd2 SPlo SPhi.
+  Proof using Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi.
     intros a0s L vals R M HP HPr HL P0 P112 HR HK SBp SBn.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
     run_blk_keep scr0 230%nat.
@@ -205,6 +207,7 @@ Ltac close_exit_at HR HK P0 Hh Hlazy sp0 OFF WLO :=
       replace (bv_unsigned sp0 + -560)%Z with (bv_unsigned sp0 + -560)%Z by lia. exact MSG.
     - reflexivity.
     - exact Hfd2.
+    - exact Hrdr.
     - exact Hh.
     - exact Hlazy.
     - apply t_exit_has_nil.
@@ -226,7 +229,7 @@ Ltac close_exit_at HR HK P0 Hh Hlazy sp0 OFF WLO :=
 
   Lemma us_segF : forall (a0s : list byte) (L : Z), Z.of_nat (length a0s) = L -> (0 <= L <= 66)%Z ->
     atUF0 a0s L (t_emit (W 2 (msg_usage a0s)) (t_exit (exit_code 2) (m_fs model))).
-  Proof using Hvsp Hh Hlazy Hfd2 SPlo SPhi.
+  Proof using Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi.
     intros a0s L HP HPr vals R M HL P0 P112 HR HK SBp.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
     run_blk_keep u_scrF 198%nat.
@@ -628,7 +631,7 @@ Ltac close_exit_at HR HK P0 Hh Hlazy sp0 OFF WLO :=
     regs_ok (ENV vals) u_srG30 R -> know_ok RSEGS (ENV vals) M u_knG30 ->
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x1ebdc) M (seg_rom RSEGS)) model)
                (t_exit (exit_code 2) (m_fs model)).
-  Proof using Hvsp Hh Hlazy Hfd2 SPlo SPhi.
+  Proof using Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi.
     intros vals R M HL P0 HR HK.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
     (* [comment removed for export] *)
@@ -652,6 +655,7 @@ Ltac close_exit_at HR HK P0 Hh Hlazy sp0 OFF WLO :=
     - reflexivity.
     - reflexivity.
     - exact Hfd2.
+    - exact Hrdr.
     - exact Hh.
     - exact Hlazy.
     - apply t_exit_has_nil.
@@ -664,7 +668,7 @@ Ltac close_exit_at HR HK P0 Hh Hlazy sp0 OFF WLO :=
 
   Lemma us_segF3 : forall (a0s : list byte) (L : Z), Z.of_nat (length a0s) = L -> (67 <= L <= 73)%Z ->
     atUF0 a0s L (t_emit (W 2 (msg_usage a0s)) (t_exit (exit_code 2) (m_fs model))).
-  Proof using Hvsp Hh Hlazy Hfd2 SPlo SPhi.
+  Proof using Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi.
     intros a0s L HP HPr vals R M HL P0 P112 HR HK SBp.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
     run_blk_keep u_scrF3 198%nat.
@@ -708,6 +712,7 @@ Ltac close_exit_at HR HK P0 Hh Hlazy sp0 OFF WLO :=
       replace (7 + length a0s)%nat with (7 + length a0s)%nat by lia. exact B80.
     - cbn [edenot]. exact Hsuf.
     - exact Hfd2.
+    - exact Hrdr.
     - exact Hh.
     - exact Hlazy.
     - apply t_exit_has_nil.
@@ -741,7 +746,7 @@ Ltac close_exit_at HR HK P0 Hh Hlazy sp0 OFF WLO :=
     regs_ok (ENV vals) u_srG40 R -> know_ok RSEGS (ENV vals) M u_knG40 ->
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x1e71c) M (seg_rom RSEGS)) model)
                (t_emit (W 2 SUF7) (t_exit (exit_code 2) (m_fs model))).
-  Proof using Hvsp Hh Hlazy Hfd2 SPlo SPhi.
+  Proof using Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi.
     intros vals R M HL P0 HR HK.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
     (* [comment removed for export] *)
@@ -769,6 +774,7 @@ Ltac close_exit_at HR HK P0 Hh Hlazy sp0 OFF WLO :=
       replace (bv_unsigned sp0 + -560)%Z with (bv_unsigned sp0 + -560)%Z by lia. exact Hb.
     - reflexivity.
     - exact Hfd2.
+    - exact Hrdr.
     - exact Hh.
     - exact Hlazy.
     - apply t_exit_has_nil.
@@ -783,7 +789,7 @@ Ltac close_exit_at HR HK P0 Hh Hlazy sp0 OFF WLO :=
     (bv_unsigned sp0 <= bv_unsigned pp)%Z -> (bv_unsigned pp + L + 8 <= bv_unsigned sp0 + 4194304)%Z ->
     (bv_unsigned pp + L + 1 <= 2 ^ 47)%Z ->   (* [comment removed for export] *)
     atUE0 a0s pp L (t_emit (W 2 (msg_usage a0s)) (t_exit (exit_code 2) (m_fs model))).
-  Proof using Hvsp Hh Hlazy Hfd2 SPlo SPhi.
+  Proof using Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi.
     intros a0s pp L HP HPr Hpp1 Hpp2 Hpp47 vals R M HL P0 P1 P112 HR HK Hstr.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi. pose proof (u64_range pp) as Hppr.
     assert (Psmall : (bv_unsigned (edenot (ENV vals) (EVar 112)) < 2 ^ 31)%Z).
@@ -830,6 +836,7 @@ Ltac close_exit_at HR HK P0 Hh Hlazy sp0 OFF WLO :=
       replace (bv_unsigned sp0 + -560)%Z with (bv_unsigned sp0 + -560)%Z by lia. exact Hw0.
     - cbn [edenot ev ENV LX]. rewrite P1. exact Hsrc.
     - exact Hfd2.
+    - exact Hrdr.
     - exact Hh.
     - exact Hlazy.
     - apply t_emit_has_nil.
@@ -910,7 +917,7 @@ Ltac close_exit_at HR HK P0 Hh Hlazy sp0 OFF WLO :=
     rdn RSEGS M (Z_to_bv 64 (bv_unsigned pp + Z.of_nat (length a0s))) 8 = Some t8 ->
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x1e71c) M (seg_rom RSEGS)) model)
                (t_die (msg_usage a0s) (m_fs model)).
-  Proof using Hvsp Hh Hlazy Hfd2 SPlo SPhi.
+  Proof using Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi.
     intros a0s pp t8 vals R M Hnonul HPl HL P0 P1 Hpp1 Hpp2 Hpp47 HR HK Hstr Ht8.
     unfold t_die.
     eapply (us_segB a0s pp (Z.of_nat (length a0s)) _ t8 vals); try eassumption; try lia.

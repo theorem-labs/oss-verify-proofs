@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by a Theorem Labs lane (ReallocPrimary.TkSecLink), 2026-10-30: P'' universe / depot premises, taken from fuzz_preset's own port of this file at commit 116f6c4dab1. *)
+(* Modified by a Theorem Labs lane (ReallocPrimary.TkSecLink), 2026-10-30: P'' universe / depot premises, taken from fuzz_preset's own port of this file. *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YFf3.v, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: the case split over Tfib_zero_shadow does not fix its length (the generated B/YF0m.v has 13 ranges, the donor's 5), as lib/A/AFf3.v (RelocA e5cf89b8f08). *)
+(* Modified by Theorem Labs, 2026-10: the case split over Tfib_zero_shadow does not fix its length (the generated B/YF0m.v has 13 ranges, the donor's 5), as lib/A/AFf3.v (RelocA). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.
 From Stdlib Require Import Sorting.Permutation.

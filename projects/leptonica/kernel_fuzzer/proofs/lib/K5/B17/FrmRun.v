@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (fetch_failure_not_ok over fetch_failure's new arms, the vDSO-text decline among them). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -66,8 +67,8 @@ Qed.
 
 Lemma fetch_failure_not_ok : forall segs m a st, fetch_failure segs m a <> MachineOk st.
 Proof.
-  intros segs m a st. unfold fetch_failure. destruct (negb _); [discriminate|].
-  destruct (_ || _)%bool; discriminate.
+  intros segs m a st. unfold fetch_failure. cbv zeta.
+  repeat match goal with |- context [if ?b then _ else _] => destruct b end; discriminate.
 Qed.
 
 (* [comment removed for export] *)

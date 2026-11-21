@@ -85,7 +85,7 @@ Proof.
   change mem3 with (ms_mem (mkst regs3 (Z_to_bv 64 EX_MS) mem3 (seg_rom tfibsegs))) in HJ.
   unfold cfg_at. change (w64 EX_MS) with (Z_to_bv 64 EX_MS).
   aj_run_to_tok EX_tbl_ok HS HJ SHOK EX_Bspan EX_L.
-  { (* named arguments and both shapes of awr_ok: the core may put `segs B` in front (Reloc aeb12aaa12b) *)
+  { (* named arguments and both shapes of awr_ok: the core may put `segs B` in front (Reloc) *)
     first
       [ lazymatch goal with |- awr_ok ?E ?rs ?stk ?sp0 ?fp ?b0 ?bc ?ly ?own =>
           let rs' := eval vm_compute in rs in change (awr_ok E rs' stk sp0 fp b0 bc ly own) end

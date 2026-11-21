@@ -20,8 +20,9 @@
    add_atom's st_ok arm uses st_ok_havoc_hi (new here), where ACja.v used the st_ok_pi lemma, which does not apply
    to an st_ok hypothesis. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/PaWalk.v, with its module paths, module names and numbers changed; 126 of its 267 lines of code are new or changed and 513 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* sup_resp's walk on the ASan+UBSan build of plugin-hostd/fuzz_command, part 1: the walk tactics, the symbolic entry
-   state and its seed lemma. The A walk's part 1 (a working branch 3b9b122549f, lib/A/Prog/sup_resp_s1.v) on
+   state and its seed lemma. The A walk's part 1 (a working branch, lib/A/Prog/sup_resp_s1.v) on
    B's listing: module paths and B's stack need SUP_RESP_STK = 16512.
 
    The tactics are cgif_file_fuzzer's walk tactics (cgif lib/A/ACkc.v:32-389, the support of its cgif_close and

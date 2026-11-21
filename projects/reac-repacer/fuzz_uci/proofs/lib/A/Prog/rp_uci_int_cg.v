@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs: the realizes form of proofs/libreac/fuzz_boxreg/lib/A/Rt/MemchrDef.v amemchr_realizes (origin/ossv/recipes 88154566652a), stated for reac-repacer/fuzz_uci's rp_uci_int in image A, in the module and naming conventions of proofs/libreac/fuzz_decode/lib/A/Prog/check_round_trip_cg.v. *)
+(* Modified by Theorem Labs: the realizes form of proofs/libreac/fuzz_boxreg/lib/A/Rt/MemchrDef.v amemchr_realizes, stated for reac-repacer/fuzz_uci's rp_uci_int in image A, in the module and naming conventions of proofs/libreac/fuzz_decode/lib/A/Prog/check_round_trip_cg.v. *)
 (* rp_uci_int_cg: the ASan contract of rp_uci_int (fuzz_uci.asan 0x7fef0, listing name US_rp_uci_int,
    AF_rp_uci_int = 0xc08 of lib/A/Prog/UciPList.v), as a STATEMENT only (no proof).
 

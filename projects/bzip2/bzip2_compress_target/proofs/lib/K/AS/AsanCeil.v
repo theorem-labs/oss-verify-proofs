@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the zero AT_RANDOM draw's sixteen bytes). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith List Bool Lia.
@@ -101,6 +102,10 @@ Proof. intros z Hz. pose proof (page_round_up_Z_ge z). lia. Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Definition zero_random_draw (rdraw : bv 128) : Prop := rdraw = Z_to_bv 128 0.
+
+(* the zero draw's sixteen bytes (statement and proof from openssl/pem Common/AsanCeil.v:262-263) *)
+Lemma at_random_bytes_zero : at_random_bytes (Z_to_bv 128 0) = repeat (Z_to_bv 8 0) 16.
+Proof. vm_compute. reflexivity. Qed.
 
 (* [comment removed for export] *)
 

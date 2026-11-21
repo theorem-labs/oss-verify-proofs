@@ -6,10 +6,11 @@
    lib/Reusable/AsStackSz.v (cgif_rgb_fuzzer lib/YG0e.v:17). The composition is PROVED here; the four segment
    statements are Props that the four proof lanes discharge, one lane each. No Axiom, no Admitted,
    no admit. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (*   This file holds NO literal address: every address and class constant is a name of lib/A/Rt/StackMalloc8Tbl.v,
    which also re-exports the two image-free callee summaries of lib/Reusable/AsStackLeaf.v. Same Tbl / walk split
-   as a Theorem Labs lane's lib/A/Rt/StackMalloc4Tbl.v + StackMalloc4.v (libreac/fuzz_grant at 798447a1772) and a Theorem Labs lane's
+   as a Theorem Labs lane's lib/A/Rt/StackMalloc4Tbl.v + StackMalloc4.v (libreac/fuzz_grant) and a Theorem Labs lane's
    class 3. These cuts are tied to the ASAN image: every Prop is stated over `tfibsegs` (lib/A/AB1v.v, the asan
    segment list) and over this asan Tbl's pcs. So the asan-ubsan side needs its own copy of this file over its
    own segment list and lib/AU/Rt/StackMalloc8Tbl.v (a Theorem Labs lane's review, 23:43Z), not a Tbl twin alone.

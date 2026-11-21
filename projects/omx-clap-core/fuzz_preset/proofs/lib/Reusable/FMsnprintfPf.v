@@ -3,9 +3,10 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cjson/cjson_read_fuzzer/lib/P/F_vsnprintf.v, with its module paths and module names changed; 710 of its 816 lines of code are new or changed and 1295 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/CJ/RL/GX/Printf_text.v; 3 of its 76 lines of code are new or changed and 743 lines of the source are left out. *)
-(* copy of proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfPf.v@0ddf65fd8cc; module paths fuzz_manifest -> fuzz_preset, lib.A -> lib.Reusable *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* copy of proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfPf.v; module paths fuzz_manifest -> fuzz_preset, lib.A -> lib.Reusable *)
 (* printf's format pieces, arguments, parser and renderer, as the shared snprintf contracts (FMsnprintfShared.v) state
-   them. Copied from fuzz_disco lib/Rt/PfFacts.v (origin/cold/h-rw-dis-5-s4printf 4a8b5df89c3; itself copied from
+   them. Copied from fuzz_disco lib/Rt/PfFacts.v (itself copied from
    fuzz_disco lib/Prog/printf_facts_c.v with the address-dependent parts left out); semantics unchanged. *)
 From Stdlib Require Import ZArith List Bool.
 Import ListNotations.

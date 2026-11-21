@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGleafE.v (a working branch 30a1993588f, c5 + memnorm; file sha256 3c2f7302bdb1) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGleafE.v (a working branch, c5 + memnorm; file sha256 3c2f7302bdb1) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The errno-kept forms the Deallocate arms and DGtop share (step 2 of the errno-kept twins, beside DIfaceR).
 
    DIfaceR gives the arms one proof for both frames ([rawb]: the view frame, plus the raw frame when [rawb = true]).

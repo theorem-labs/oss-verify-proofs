@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (impl takes its new node post-state argument, fun _ => nret, on these trap nodes). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -56,7 +57,7 @@ Proof. try hcb. try hsb.
     exists r1, []. cbn. auto.
   - cbn [membed] in *. unfold implM, mbind in *. unfold ebind in *.
     assert (UNR : forall A B (f : exc A -> itree node (exc B)) Qx msx,
-              impl usegs (at_node usegs) (ITree.bind _ (Ret Unr) f) Qx msx = impl usegs (at_node usegs) (f Unr) Qx msx) by reflexivity.
+              impl usegs (at_node usegs) (fun _ => nret) (ITree.bind _ (Ret Unr) f) Qx msx = impl usegs (at_node usegs) (fun _ => nret) (f Unr) Qx msx) by reflexivity.
     destruct e as [addr|addr len prot flags|addr len|addr len prot|p c h|w].
     5:{ cbn [ev_step] in *. unfold munr in *. cbn [ITree.bind] in *. exact H. }
     5:{ cbn [ev_step] in *. unfold munr in *. cbn [ITree.bind] in *. exact H. }

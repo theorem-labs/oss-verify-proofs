@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: written for zlib/checksum_fuzzer on the frame of the cgif proof's library; 5 of its 29 lines of code, among them its imports, match lines of proofs/cgif/cgif_rgb_fuzzer/lib/YCfw.v up to module paths and module names, and the rest is new. *)
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/ZAllocator.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_frame; the unit links no calloc: CallocCert is not required and CAL is the vacuous src0_calloc_none (ms_calloc = None); module path OSSVerify.Proofs.libdiginet.fuzz_frame.lib. *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/ZAllocator.v for libdiginet/fuzz_frame; the unit links no calloc: CallocCert is not required and CAL is the vacuous src0_calloc_none (ms_calloc = None); module path OSSVerify.Proofs.libdiginet.fuzz_frame.lib. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (** Allocator composition adapted from the pinned cgif YZ04 proof, using the
     separately rechecked zlib-specific routine certificates. *)
 From Stdlib Require Import ZArith List.

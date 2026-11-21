@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_qdisc/lib/A/QPgMain3.v (reseatQ) at 160c9b4d5750 and
-   proofs/libreac/fuzz_knock/lib/A/APgRt.v (rt_chain) and APgMain4.v (the region and frame-chain steps) at
-   6ebe35ba632; adapted to reac_box_pin_parse's calls of the strcspn wrapper and reac_box_catalogue. *)
+   proofs/libreac/fuzz_knock/lib/A/APgRt.v (rt_chain) and APgMain4.v (the region and frame-chain steps);
+   adapted to reac_box_pin_parse's calls of the strcspn wrapper and reac_box_catalogue. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_pin, image A (fuzz_pin.asan): reac_box_pin_parse 0x80b44, the segment 0x80c70 -> 0x80cc0 (pp_seg2)
    and the call-site lemmas of its three calls 0x80c84 (the strcspn wrapper), 0x80c94 (reac_box_catalogue) and
    0x80ce4 (the strncmp wrapper).

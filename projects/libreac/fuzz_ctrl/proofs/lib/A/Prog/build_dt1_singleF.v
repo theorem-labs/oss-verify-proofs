@@ -799,7 +799,7 @@ Qed.
 (* Route (C) (a Theorem Labs lane 2026-10-29 09:20Z; wave lead a Theorem Labs lane): build_dt1_single_F_holds_on proves the _F_on twin
    build_dt1_single_contract_F_on (a Theorem Labs lane's build_dt1_single_c.v, taken by path) from the footprint _on contract of
    __asan_memcpy, a Theorem Labs lane's asan_memcpy_contract_F_on (asan_memcpy_cF_on.v). It is the port into this footprint walk
-   of a Theorem Labs lane's Module BDAon (build_dt1_single.v, a working branch ec2ad5b4f4f): Module BDAFon holds
+   of a Theorem Labs lane's Module BDAon (build_dt1_single.v, a working branch): Module BDAFon holds
    Section BDAF again with the same changes BDAon makes to Section BDA. HMC is the footprint _on contract of
    __asan_memcpy; HSW is the region premise shadow_rw_on R m with R = build_dt1_single_shadow_R o d n, the region of
    __asan_memcpy at its one call (o + 20, d, n); the shadow conjunct of QaF (given by bdaF_rt) is the region transport

@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MnRefillLoccgif.v (a working branch 30a1993588f, c5 + memnorm; file sha256 c420700196db) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MnRefillLoccgif.v (a working branch, c5 + memnorm; file sha256 c420700196db) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-29 (a Theorem Labs lane, hand H1 of task MEMNORM; lead a Theorem Labs lane, integrator ReallocPrimary).
    rule 24: no function proved (kind: location facts - the refill and Enqueue write windows are mn_safe at cgif).
    At cgif_file's image: a byte of the stack, the thread object, the primary space / region info / free arrays or the
    high shadow is [MemnormT.mn_safe tfibsegs] (off every read-only segment byte, below TASK_SIZE).  Built on a Theorem Labs lane's
-   MemnormHitG.mn_safe_high / mn_safe_owned and MemnormLoc (a working branch fd6ec37fd04); the primary space
+   MemnormHitG.mn_safe_high / mn_safe_owned and MemnormLoc (a working branch); the primary space
    and its region info / free arrays are MemnormLoc.mn_safe_ceil.  Every existing statement is unchanged. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.

@@ -358,7 +358,7 @@ Proof.
   - left. rewrite Elo, Ehi. lia.
 Qed.
 
-(* the class of a byte of a read set (`akb`, link_amem.v 7cd4e1d95689: clause 1 is the real-stack row) *)
+(* the class of a byte of a read set (`akb`, link_amem.v: clause 1 is the real-stack row) *)
 Lemma sclass_of_akb : forall lyc Sc slo shi a,
   akb segs B lyc Sc slo shi a -> sclass lyc Sc a.
 Proof.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/Ent102CallA.v, with its module paths changed; 150 of its 347 lines of code are new or changed and 18 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image A' (asan, harness fix #102, PIN sha256
    1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44): the SHARED CALL-SITE LEMMAS of the walk of
    LLVMFuzzerTestOneInput (entry 0x815e0), for every lane that calls a kit check_* text (L1 / L3 / L4 / L5b / L5c) or
@@ -27,7 +28,7 @@
        A row after cut_cno calls a kit text that takes `prh_ledger .. most 0` from ec_inv's `exists most own,
        prh_ledger ..` and the cut's ec_most / ec_own_is; ONE copy for every row (a Theorem Labs lane's decision 18:43Z; first
        written in a Theorem Labs lane's lib/A/Prog/Ent102TailA.v).
-   STATEMENT read: lib/A/Ent102CutsA.v (read at blob 00eff43e6ffa, commit aff1e4878ed5, the exact-position
+   STATEMENT read: lib/A/Ent102CutsA.v (read at blob 00eff43e6ffa, the exact-position
    statements: ec_inv with the cut's index pair os_c i_c, ec_pre, ec_img's ei_fp / ei_rets, ec_ctx0,
    ec_call_rets, e_x / e_n / e_p).
    TAKEN BY PATH: lib/A/Prog/Ent102L6AfLem.v blob a37e0dc13d12 (a working branch: l6f_pc4,

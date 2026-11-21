@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/Ent102L0A.v, with its module paths changed; 517 of its 1128 lines of code are new or changed and 23 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image A' (asan, harness fix #102, PIN sha256
    1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44): segments L0a and L0b of the walk of
    LLVMFuzzerTestOneInput (A' 0x815e0, 201 instructions).
@@ -11,8 +12,8 @@
    sync to the kit of record (lib/A/PRH_Base.v, below), statements = CUT STABLE: THE EXACT ROOM POSITION record (section 6, ec_inv),
    prh_ledger's arity in lib/A/PRH_Base.v, the run's data words e_dw, since dropped): seg_L0a_stmt / seg_L0b_stmt,
    now each over `ec_hyps` (no data words); the count / live budgets of cut_frame / cut_s1 / cut_exit come from the record laws
-   ech_ccut_ok / ech_lcut_ok (bound at 0, antitone in the cut index). RE-FIT on it from this file's proof on
-   9a4f89c34639 (66a3e722272f); the re-fit follows the shapes of the B' twin lib/AU/Prog/Ent102L0B.v
+   ech_ccut_ok / ech_lcut_ok (bound at 0, antitone in the cut index). RE-FIT on it from this file's proof;
+   the re-fit follows the shapes of the B' twin lib/AU/Prog/Ent102L0B.v
    (blob 7c480089ab0e, green on the CUT STABLE statements; A' and B' differ only in pc-relative
    words, which the engine runs symbolically), which is not imported. ec_pre / ec_inv are read BY NAME (section 2':
    lib/A/Prog/Ent102CallA.v's projections, blob aefcab75548d, where it has one, else the l0_pre_* / l0_inv_*
@@ -34,7 +35,7 @@
    discharged from ec_pre's frames S = []. The three conditional branches of L0 (the option test `beqz a2` at
    +0x068 and `bnez s2` at +0x084 inside the runs, the size guard `bltu a0, s3` at +0x120 by psrr_branch_tok) are
    symbolic-run steps of the engine; no listing-slot branch lemma is used.
-   Image-free arithmetic ported BY PATH from a working branch d63027f077c5 lib/A/H6_Base.v
+   Image-free arithmetic ported BY PATH from a working branch lib/A/H6_Base.v
    (h6_land_m32 / h6_and_m32 / h6_val_mem_of_rd32 as l0_land_m32 / l0_and_m32 / l0_val_mem_of_rd32; h6_alias_U
    as l1_alias_U).
    rule 24: proves function LLVMFuzzerTestOneInput, segments L0a / L0b (reuse search
@@ -83,7 +84,7 @@ Open Scope bv_scope.
 Open Scope Z_scope.
 
 (* ---------------------------------------------------------------------- *)
-(* 1. Image-free arithmetic the prologue needs (ported BY PATH from a working branch d63027f077c5,
+(* 1. Image-free arithmetic the prologue needs (ported BY PATH from a working branch,
       lib/A/H6_Base.v:66-98 h6_land_m32 / h6_and_m32 / h6_add0, and :41-47 h6_val_mem_of_rd32; the old image's
       numbers are not carried, only these pure lemmas). *)
 Lemma l0_land_m32 : forall x, 0 <= x < 2 ^ 64 -> Z.land x (2 ^ 64 - 32) = x / 32 * 32.
@@ -497,7 +498,7 @@ intros H m m' a v Hag Hr k Hk. rewrite (Hag (Z.of_nat k) ltac:(lia)). exact (Hr 
 Qed.
 
 (* The kit's ledger cells are PST: a memory change that keeps the view on PST keeps prh_glob. The proof reads prh_glob's
-   cells by shape (every val_mem conjunct is one PST cell, g_most / g_own_ran_out's included since the kit decff67d721f),
+   cells by shape (every val_mem conjunct is one PST cell, g_most / g_own_ran_out's included since the kit),
    not by position, so a cell the kit owner adds is carried too. *)
 Lemma l0_glob_keep : forall (W0 : world SEGS) (m m' : word -> option byte) live peak cnt fail ran most own,
   (forall a, Exists (in_zr a) PST -> aview SEGS (w_H W0) m' a = aview SEGS (w_H W0) m a) ->

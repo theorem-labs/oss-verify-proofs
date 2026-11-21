@@ -1,7 +1,8 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/Spec/StrFun2.v: ported from a working branch affce6489c8 proofs/omx-clap-core/fuzz_manifest/lib/B/Spec/StrFun2.v, which equals the A->B relocation (Theorem Labs tools) of lib/A/Spec/StrFun2.v at a working branch 5d8d8a15571 modulo module paths; module paths for this tree. *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/Spec/StrFun2.v: ported from a working branch proofs/omx-clap-core/fuzz_manifest/lib/B/Spec/StrFun2.v, which equals the A->B relocation (Theorem Labs tools) of lib/A/Spec/StrFun2.v at a working branch modulo module paths; module paths for this tree. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

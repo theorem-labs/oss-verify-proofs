@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main-phase stack floor is sp0 - 6144512, the window the revision's launch maps; the header invariant TINVA carries the channel reader, ti_rdr, which the revision's writev reads; close_glue builds it from LINVA's la_rdr across the close, and after_loopA passes it to err_tailA and the target phase). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -152,7 +153,7 @@ Section Hdr.
   Hypothesis SPlo : 0x7fff80000000 <= bv_unsigned sp0.       (* [comment removed for export] *)
   Hypothesis SPhi : bv_unsigned sp0 <= 0x800000000000.       (* [comment removed for export] *)
   Hypothesis SPal : bv_unsigned sp0 mod 16 = 0.
-  Hypothesis STKLO : arl_stklo R = bv_unsigned sp0 - 8388608.
+  Hypothesis STKLO : arl_stklo R = bv_unsigned sp0 - 6144512.
   Variables (path : list byte) (pathp : word) (fs0 : Fs) (fdata : list byte).
   Hypothesis Hfs : fs_lookup fs0 path = Some fdata.
   Variables (can : word) (tid : Z) (wp0 rp0 wp1 rp1 : word).
@@ -254,6 +255,7 @@ Section Hdr.
     ti_frame : rw_cells asegs m msp FRAMEA;
     ti_fs : m_fs mo = fs0;
     ti_fds : m_fds mo = FDS2;
+    ti_rdr : m_channel_reader mo = true;   (* the revision's writev reads the channel reader *)
     ti_bytes : bytes_at asegs m buf fdata;
     ti_wr : wr_at asegs m buf cap;
     ti_lcap : Ln < cap;
@@ -278,7 +280,7 @@ Section Hdr.
                                  bvmap_empty (Z_to_bv 64 0x096c60) (Z_to_bv 32 0) None m (seg_rom asegs)) mo) T.
   Proof.
     intros * LI HLc HC.
-    pose proof LI as LI'. destruct LI' as [HH HKmo HT HS VOL FRB TM FI SSH SIm ST FR RSW FS FDSq BY REST WR LEN COK BR FRSH FRSH0].
+    pose proof LI as LI'. destruct LI' as [HH HKmo HT HS VOL FRB TM FI SSH SIm ST FR RSW FS FDSq RDq BY REST WR LEN COK BR FRSH FRSH0].
     pose proof (cap_ok_bounds sp0 cap COK) as CB.
     pose proof (art_alwf _ _ HIA) as ALWF. pose proof (hcs_ok _ _ HIA h) as CSOK.
     pose proof (hd_blk_band _ _ _ HID h _ _ m buf cap HH ltac:(left; reflexivity)) as (BLO & BCE & BHI).
@@ -335,6 +337,8 @@ Section Hdr.
       cbn [cells_size csize A_main_loop.FRAMEA FRAMEA Nat.add disjoint_from fst snd]. rewrite STKLO. cbv delta [msp]. lia.
     - rewrite (mo_mat_fs _ _ MM3). subst mo2. change (m_fs (with_fds FDS2 mo1)) with (m_fs mo1). rewrite (mo_mat_fs _ _ MM1). exact FS.
     - rewrite (A_main_fin.mo_mat_fds _ _ MM3). subst mo2. reflexivity.
+    - rewrite (mo_mat_rdr _ _ MM3). subst mo2. change (m_channel_reader (with_fds FDS2 mo1)) with (m_channel_reader mo1).
+      rewrite (mo_mat_rdr _ _ MM1). exact RDq.
     - rewrite firstn_all2 in BY by lia. eapply bytes_at_transport; [exact BY | exact MU1 |]. cbn [disjoint_from fst snd]. rewrite STKLO. lia.
     - eapply wr_at_transport; [exact WR | exact WM1].
     - exact HLc.
@@ -455,7 +459,7 @@ Section Hdr.
     intros buf cap ra t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 x7 t3 t4 t5 t6 m mo h LI HLc.
     eapply close_glue; [exact LI | exact HLc |].
     intros a2' a3' a4' a5' a6' m1 mo1 TI.
-    pose proof TI as TI'. destruct TI' as [HH HKmo HT HS VOL FRB TM FI SSH SIm ST FR FS FDSq BY WR LCAP COK BR FRSH FRSH0].
+    pose proof TI as TI'. destruct TI' as [HH HKmo HT HS VOL FRB TM FI SSH SIm ST FR FS FDSq _ BY WR LCAP COK BR FRSH FRSH0].
     pose proof (cap_ok_bounds sp0 cap COK) as CB.
     pose proof (art_alwf _ _ HIA) as ALWF. pose proof (hcs_ok _ _ HIA h) as CSOK.
     pose proof (hd_blk_band _ _ _ HID h _ _ m1 buf cap HH ltac:(left; reflexivity)) as (BLO & BCE & BHI).
@@ -473,7 +477,8 @@ Section Hdr.
           replace (length fdata <? 6)%nat with true by (symmetry; apply Nat.ltb_lt; cbv delta [Ln] in *; lia). reflexivity. }
       eapply (err_tailA R HIA HID IMG ASB HFREE HTP HIMGCS sp0 SPlo SPhi SPal STKLO fs0 tid wp0 rp0 TOP STKHI HTOPlo HSTKHI pad can wp1 rp1 0x096d24 msg_short buf cap);
         [ left; split; reflexivity | exact HH | exact HK2 | exact HT | exact HS | unfold AVOL_CALL in *; lia | unfold fr_charge; lia
-        | rewrite (mo_mat_fs _ _ MM2); exact FS | rewrite (A_main_fin.mo_mat_fds _ _ MM2); exact FD2 | exact TM | exact FR | exact ST ]. }
+        | rewrite (mo_mat_fs _ _ MM2); exact FS | rewrite (A_main_fin.mo_mat_fds _ _ MM2); exact FD2 | rewrite (mo_mat_rdr _ _ MM2); exact (ti_rdr _ _ _ _ _ TI)
+        | exact TM | exact FR | exact ST ]. }
     (* [comment removed for export] *)
     set (b0 := nth 0 fdata (Z_to_bv 8 0)). set (b1 := nth 1 fdata (Z_to_bv 8 0)).
     pose proof (nth_byte_readA m1 buf fdata 0 BY ltac:(cbv delta [Ln] in *; lia)) as RB0. change (Z.of_nat 0) with 0 in RB0. fold b0 in RB0.
@@ -494,7 +499,8 @@ Section Hdr.
           replace (length fdata <? 6 + Z.to_nat cl)%nat with true by (symmetry; apply Nat.ltb_lt; cbv delta [Ln] in *; lia). reflexivity. }
       eapply (err_tailA R HIA HID IMG ASB HFREE HTP HIMGCS sp0 SPlo SPhi SPal STKLO fs0 tid wp0 rp0 TOP STKHI HTOPlo HSTKHI pad can wp1 rp1 0x096d40 msg_overrun buf cap);
         [ right; split; reflexivity | exact HH | exact HK2 | exact HT | exact HS | unfold AVOL_CALL in *; lia | unfold fr_charge; lia
-        | rewrite (mo_mat_fs _ _ MM2); exact FS | rewrite (A_main_fin.mo_mat_fds _ _ MM2); exact FD2 | exact TM | exact FR | exact ST ]. }
+        | rewrite (mo_mat_fs _ _ MM2); exact FS | rewrite (A_main_fin.mo_mat_fds _ _ MM2); exact FD2 | rewrite (mo_mat_rdr _ _ MM2); exact (ti_rdr _ _ _ _ _ TI)
+        | exact TM | exact FR | exact ST ]. }
     (* [comment removed for export] *)
     pose proof (nth_byte_readA m1 buf fdata (Z.to_nat (cl + 2)) BY ltac:(cbv delta [Ln] in *; lia)) as RP0.
     pose proof (nth_byte_readA m1 buf fdata (Z.to_nat (cl + 3)) BY ltac:(cbv delta [Ln] in *; lia)) as RP1.
@@ -507,7 +513,7 @@ Section Hdr.
     eapply srzJ_conseq.
     - fold b1. eapply (TARGET buf cap cl (Ln - cl - 6) _ _ _ _ _ _ _ _ _ _ _ _ m1 mo2 h); [| lia | lia | lia].
       destruct TI; split; try assumption.
-      all: rewrite ?(A_main_fin.mo_mat_fds _ _ MM2), ?(mo_mat_fs _ _ MM2); assumption.
+      all: rewrite ?(A_main_fin.mo_mat_fds _ _ MM2), ?(mo_mat_fs _ _ MM2), ?(mo_mat_rdr _ _ MM2); assumption.
     - (* [comment removed for export] *)
       unfold TAIL, SUCC, CALLS, BODYA, t_body.
       replace (MAX_INPUT <=? Z.of_nat (length fdata)) with false by (symmetry; apply Z.leb_gt; unfold MAX_INPUT; cbv delta [Ln] in *; lia).

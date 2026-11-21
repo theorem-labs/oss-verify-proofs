@@ -4,10 +4,11 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 3817 of its 3853 lines of code are new or changed and 212 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths and module names changed; 371 of its 396 lines of code are new or changed and 3828 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v, with its module paths and module names changed; 754 of its 794 lines of code are new or changed and 356 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment F31 of fuzz_ctrl LLVMFuzzerTestOneInput (asan-ubsan, image B, libreac v1.9.0): the range 0x82af8-0x82b34
    (F31 (slot-plan-asan-ubsan section 2 (a working note, not in this delivery)), call BCMP@0x82b34, twin C02; v1.8 0x82a94-0x82ad0, a Theorem Labs lane's
    S_F31 (v190-segment-table (a working note, not in this delivery)): IDENTICAL-RENUMBER). The image-B port of lib/A/Prog/Seg/F31.v (image A v1.8
-   0x826ec-0x82728, commit 3b7ac10af31).
+   0x826ec-0x82728).
      0x82af8 bnez a0,0x82b5c    a0 = cl_r (the classify result of F30's call): taken iff classify = None (a0 = -1)
      0x82afc ld a0,144(s1)      [A+144] = fr+452 = o+4 (0x81e94-0x81e9c; o = [A+216] = fr+448 from 0x81494-0x81498)
      0x82b00 lbu a0,0(a0)       the byte o+4 = 0x00

@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-29: relocated from libreac/fuzz_grant lib/A/Rt/StrcmpTbl.v (a working branch 97c611eec86, owner a Theorem Labs lane, proved there on fuzz_grant.asan) to libreac/fuzz_identity image B (fuzz_identity.asan-ubsan, sha256 baf1a4d065e02f55521d39f05d8c8d9ed763a0ef798c70cc3eabe5816ffb3f66) by an address map recorded by the porting lane; module paths lib.A -> lib.B, GrantSyms -> TfibSyms, #[local] Zify override. The proof text is unchanged. *)
+(* Modified by Theorem Labs, 2026-10-29: relocated from libreac/fuzz_grant lib/A/Rt/StrcmpTbl.v (a working branch, owner a Theorem Labs lane, proved there on fuzz_grant.asan) to libreac/fuzz_identity image B (fuzz_identity.asan-ubsan, sha256 baf1a4d065e02f55521d39f05d8c8d9ed763a0ef798c70cc3eabe5816ffb3f66) by an address map recorded by the porting lane; module paths lib.A -> lib.B, GrantSyms -> TfibSyms, #[local] Zify override. The proof text is unchanged. *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/libreac/fuzz_identity/lib/B/Rt/StrcmpTbl.v, with its module paths and addresses changed. *)
-(* Relocated from libreac/fuzz_identity's released proofs/lib/B/Rt/StrcmpTbl.v (c3777b3715d0) to libdiginet/fuzz_transport's
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Relocated from libreac/fuzz_identity's released proofs/lib/B/Rt/StrcmpTbl.v to libdiginet/fuzz_transport's
    image B, fuzz_transport.asan-ubsan 41113a03c82f (unstripped twin e217cb0a84f1); the donor is proved against
    fuzz_identity.asan-ubsan baf1a4d065e0 (unstripped twin 43b44d50be8a).
    The walked functions (the trampoline, ___interceptor_strcmp, __sanitizer_weak_hook_strcmp,

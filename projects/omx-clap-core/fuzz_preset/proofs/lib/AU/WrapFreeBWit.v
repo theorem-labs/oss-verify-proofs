@@ -1,16 +1,17 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/AU/WrapFreeBWit.v, with its module paths and module names changed; 13 of its 29 lines of code are new or changed and 7 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: omx-clap-core/fuzz_preset image B (asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43; relocated from pin f8f98a95bc52 by alreloc c4338d099cfb8025): the
    free interceptor walk as the primed keep record, CLOSED, at the real symbol table YD2l.TfibB
-   (lib/Reusable/YD2l.v:13, generated from the unstripped twin) and the real image record AU/CfImgB.CfImg_B
+   (lib/Reusable/YD2l.v:14, generated from the unstripped twin) and the real image record AU/CfImgB.CfImg_B
    (lib/AU/CfImgB.v):
    - wf_TB_wit: TfibSyms YD2l.TfibB (the premise TB of WrapFreeBF1.wf_call_B and WrapFreeBF2.wf_ret_B), which is
-     YD2l.TfibB_syms (YD2l.v:71; its conjuncts close by reflexivity, lia and vm_compute).
+     YD2l.TfibB_syms (YD2l.v:72; its conjuncts close by reflexivity, lia and vm_compute).
    - wf_HpcD_wit: CfImg_B's cf_pc_deallocate is Deallocate's symbol entry (the premise HpcD of wf_call_B; lib/AU/CfImgB.v
      and YB1w's tfib_A__ZN6__asan9Allocator10Deallocate... (lib/Reusable/YB1w.v) both give 0x32390), closed by vm_compute.
    - wrap_free_walk_keep_cf_rh_B: YGcfMallocComposeKeep.wrap_free_walk_keep_cf_rh (YGcfMallocComposeKeep.v:398-423) at
-     segs := tfibsegs, atpD := 1, ARX := YGcfInstBase.ARXq_cf (YGcfInstBase.v:480; IM := AGif2cgif.AImg_cgif by
+     segs := tfibsegs, atpD := 1, ARX := YGcfInstBase.ARXq_cf (YGcfInstBase.v:481; IM := AGif2cgif.AImg_cgif by
      instance) with IOK := (fun i => i = as_inst YD2l.TfibB), K := WrapFreeBF2.K_F, built by WrapFreeBStmt.wf_record_of
      from the two fields wf_call_B and wf_ret_B with the two witnesses. No premise: the stack room is acall_pre_cf's
      own conjunct (YG0dcf.v:225), internal_allocator and UnwindImpl are YFfg.tfib_ialloc_ok and YFl4.tfib_unwind_ok.

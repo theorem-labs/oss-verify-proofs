@@ -1,17 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YEvtSRr.v, with its module paths changed; 24 of its 59 lines of code are new or changed and 87 lines of the source are left out. *)
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxa_bridge.v (a working branch 3e35620c52e); relocated to plugin-hostd/fuzz_reply/fuzz_reply.asan-ubsan by a Theorem Labs lane's pfinst/tool (reloc.py target reply-B): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_reply.asan-ubsan, symbol + offset; table pfinst/tool/tables/reply-B/FMgxa_bridge.table); names: record RT_IImgA -> ; A-core -> B-core (lib.B): AB1v->YB1v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxa_bridge.v (a working branch); relocated to plugin-hostd/fuzz_reply/fuzz_reply.asan-ubsan by a Theorem Labs lane's pfinst/tool (reloc.py target reply-B): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_reply.asan-ubsan, symbol + offset; table pfinst/tool/tables/reply-B/FMgxa_bridge.table); names: record RT_IImgA -> ; A-core -> B-core (lib.B): AB1v->YB1v. *)
 (* The bridge from the GXA (ASan printf core) walks to the harness's call-site form.
    GXA ends every walk in the CJ tree's `evt img_segs Q ms`: "some step chain from ms reaches a
    state in Q" (lib/CJ/Lib/Exec.v:41, over `msteps` at Exec.v:21).  The harness continues from
    `SRr segs W (cfg_at segs pc regs mem md) POST` (lib/Reusable/YA0n.v:37).  This file is the
    generic half of the join, for the CJ tree.
 
-   Three facts make it one short file, the same three that FMbz_bridge.v (port-fm's RtScan,
-   origin/cold/port-fm-rtscan 445e498a469) uses for the Bz tree:
+   Three facts make it one short file, the same three that FMbz_bridge.v (port-fm's RtScan)
+   uses for the Bz tree:
    - the two trees name the same image: `@img_segs A_img = tfibsegs` by reflexivity, because
-     RT_IImgA.v:96 builds A_img on tfibsegs;
+     RT_IImgA.v:97 builds A_img on tfibsegs;
    - the two step relations are the same relation: CJ's `mstep` (Exec.v:18) is
      `ms_svc_pending ms = None /\ RiscvSemantics.step segs ms = MachineOk ms'`, which is what each
      step of the harness's `msteps` (lib/Reusable/YK0i.v) asks;

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Bool.
@@ -132,7 +133,8 @@ Proof.
   induction 1 as [c1 c2 H|c1 c2 H|c1 c2 H|c1 c2 H|c1 c2 H|c1 c2 H|n a k1 k2 Hk IH|n a v k1 k2 Hk IH]; intros m; cbn [interp_eff_accesses res_eqv];
     try exact I.
   - cbn [res_eqv accessed_ranges access_value fst snd]. split; [reflexivity|]. split; [reflexivity|exact H].
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|exact I].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|];
+      [|destruct (range_meets_vvar segs a (width_bytes n)); exact I].
     specialize (IH (bv_extract 0 n (le_bytes_to_word bs)) m).
     destruct (interp_eff_accesses segs (k1 _) m) as [r1| |], (interp_eff_accesses segs (k2 _) m) as [r2| |];
       cbn in IH |- *; try contradiction; try exact I.
@@ -225,6 +227,25 @@ Proof.
   unfold advance_past_svc, apply_effect, set_reg, ms_pc. cbn.
   destruct (bv_eqb 10 0); cbn; rewrite ?Hf, ?Hp, ?Hrv, ?Hfc, ?Hm, ?Hrom; repeat split; auto.
   apply regs_eqv_set, HR.
+Qed.
+
+(* A/SrzEqv.v:322 discharges [sstep_cfg_vdso_unmodeled]'s last premise with
+   [vdso_call_unmodeled_eqv], which this file did not carry.  [vdso_call_unmodeled]
+   (LPS@75d69e00 Run.v:634) is a three-way disjunction and reads the machine state only
+   through [sys_input], so [ms_eqv] transports it one rewrite per arm -- the same shape
+   Lib/RegsEquiv.v:484 and Lib/LimRun.v:183 already use for the model-side transport of
+   the same predicate in this unit.  Taken verbatim from the sibling openssl/bndiv
+   Common/RegEqv.v:283-292, which is self-consistent with it: bndiv's own A/SrzEqv.v
+   calls it in the same position.  Inside [Section Lift], so discharge gives it [segs]
+   first, which is the spelling A/SrzEqv.v:322 already passes. *)
+Lemma vdso_call_unmodeled_eqv : forall ms1 ms2 model fn, ms_eqv ms1 ms2 ->
+  vdso_call_unmodeled segs ms2 model fn -> vdso_call_unmodeled segs ms1 model fn.
+Proof.
+  intros ms1 ms2 model fn H Hun. unfold vdso_call_unmodeled in *.
+  destruct Hun as [Hun | [(k & Hk & Hsp) | (k & e & m' & ev & Hk & Hsp & Hor)]].
+  - left; exact Hun.
+  - right; left. exists k. rewrite (sys_input_eqv ms1 ms2 _ H). exact (conj Hk Hsp).
+  - right; right. exists k, e, m', ev. rewrite (sys_input_eqv ms1 ms2 _ H). exact (conj Hk (conj Hsp Hor)).
 Qed.
 
 Definition cfg_eqv (c1 c2 : config) : Prop := ms_eqv (cfg_ms c1) (cfg_ms c2) /\ cfg_model c1 = cfg_model c2.

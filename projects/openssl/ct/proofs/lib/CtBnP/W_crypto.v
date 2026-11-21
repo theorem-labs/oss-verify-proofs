@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the new auxv table). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.openssl.ct.lib.CtLib Require Import ImageCt.
@@ -195,7 +196,7 @@ Section Proofs.
     do 14 eexists. exists x13, A, errv2. split; [reflexivity|].
     split; [exact MI0|]. split; [exact ST3|]. split; [unfold LX_ERRNO, RATP; exact ERR3|].
     split. { eapply rauxv_ok_frame; [exact AUX3| exact MU3| exact WM3|].
-             pose proof AUX3 as (av & x3' & x4' & x5' & x16' & x6' & x11' & x12' & x23' & rnd & _ & _ & _ & HB & _).
+             pose proof AUX3 as (av & axv & rnd & execfn & r & _ & _ & _ & HB & _).
              constructor; [cbn; unfold RAUXV_CELL; lia|]. constructor; [cbn; unfold RAUXV_CELL; lia| constructor]. }
     split. { eapply rheap_pres_trans; [exact HP0|]. eapply heap_pres_of_munch; [exact MU3| exact WM3| apply CLI3]. }
     split; [exact FA|]. split; [exact SO|]. split; [exact BR|].
@@ -504,7 +505,7 @@ Section Proofs.
            constructor; [eapply (W_ok_block _ _); [exact IN| cbn; lia| cbn; lia]| constructor]);
         assert (AUX1 : rauxv_ok mx _) by
           (eapply rauxv_ok_frame; [exact AUX| exact MU| exact WM|];
-           let HB := fresh "HB" in pose proof AUX as (? & ? & ? & ? & ? & ? & ? & ? & ? & ? & _ & _ & _ & HB & _);
+           let HB := fresh "HB" in pose proof AUX as (? & ? & ? & ? & ? & _ & _ & _ & HB & _);
            constructor; [cbn; unfold RAUXV_CELL; lia|]; constructor; [cbn; unfold RAUXV_CELL; lia| constructor]);
         ihere;
         lazymatch goal with |- impl ?segs _ (?c ?st) (epost ?E) ?ms =>

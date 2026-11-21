@@ -1,9 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: imports the model's Mmap and Placement modules. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State.
+From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement.
 (* [comment removed for export] *)
 Unset Lia Cache.
 Import ListNotations.

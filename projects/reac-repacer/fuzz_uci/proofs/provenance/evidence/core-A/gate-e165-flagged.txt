@@ -1,5 +1,5 @@
 # port_addr_check.py sha256 e165063a00810b376b9f65ef3da645c11eed0e22e6b50b2ae10db97ccc6b2d3b
-# text: src = port_core stage (364 files of A/, listing id 45c940f0a4a8); dst = port_core stage-out (364 files of A/, listing id e2f712164819; every file blob-identical to lib/A/ at commit 7f39d662ad6c)
+# text: src = port_core stage (364 files of A/, listing id 45c940f0a4a8); dst = port_core stage-out (364 files of A/, listing id e2f712164819; every file blob-identical to lib/A/)
 # listing id = sha256 of the sorted lines "<git blob id>\t<file name>" of the tree's .v files
 # below: the run's output lines; paths made repository-relative or named by role; the tool's two pointers to its own documentation (file-pairing note, donor-vs-donor note) are left out
 

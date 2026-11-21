@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs: copied from this unit's lib/A/Prog/UciPCJ.v (commit 8c3eb0365c8c; itself from proofs/libreac/fuzz_decode/lib/A/Prog/DecodeCJ.v, the caller-journal shapes of proofs/cgif/cgif_file_fuzzer/lib/YC20.v:311-365, tcj_kept, twr_ok, tsrc_ok, tdst_ok and ajournal_sub_awr, as libreac/fuzz_boxreg's lib/A/Prog/BoxCJ.v carries them) for reac-repacer/fuzz_uci's image B: the listing's names are usym of lib/B/Prog/UciPSyms.v (uci_listing of lib/B/Prog/UciPList.v), the per-image import YCbq is the B core's lib/B/YCbq.v, and the image-generic Pa files stay lib/A/Prog's. No image numeral occurs in this file. *)
+(* Modified by Theorem Labs: copied from this unit's lib/A/Prog/UciPCJ.v (itself from proofs/libreac/fuzz_decode/lib/A/Prog/DecodeCJ.v, the caller-journal shapes of proofs/cgif/cgif_file_fuzzer/lib/YC20.v:311-365, tcj_kept, twr_ok, tsrc_ok, tdst_ok and ajournal_sub_awr, as libreac/fuzz_boxreg's lib/A/Prog/BoxCJ.v carries them) for reac-repacer/fuzz_uci's image B: the listing's names are usym of lib/B/Prog/UciPSyms.v (uci_listing of lib/B/Prog/UciPList.v), the per-image import YCbq is the B core's lib/B/YCbq.v, and the image-generic Pa files stay lib/A/Prog's. No image numeral occurs in this file. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* A callee whose writes may land in a frame of its caller (or of its caller's caller) states its contract in
    the caller-journal form: the premise is the caller's journal, the right to write each byte is the caller's
    premise (twr_ok), and the post extends the same journal and says what the call kept (tcj_kept).

@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx-GENERIC twin of lib/A/W_LLVMFuzzerTestOneInput_cut.v (a Theorem Labs lane's step 1 of route
-   (b)), from its owner's text at ebe8aee727b (sha256 fe8f8ac9b974; internal record: no sink token in fr_FP,
+   (b)), from its owner's text (sha256 fe8f8ac9b974; internal record: no sink token in fr_FP,
    G_fr writable not present, the FP over a block's request size, the fake frame's flag word). The AR file is NOT edited.
    W8's CHANGES since the emission (W8Entry-2, the one header round agreed with a Theorem Labs lane / ATopKeeper / DriverCF):
    fr_surv names the memories (alayout -> astate -> world -> mem -> alayout -> astate -> world -> mem -> Prop, the
@@ -77,7 +78,7 @@ Variable PST : list (Z * Z).
 Variable ARx : alayout -> astate -> list Z -> world tfibsegs -> (word -> option byte) -> Model -> Prop.
 Local Notation segs := tfibsegs.
 Local Notation rd W mem := (mrestrict (w_H W) mem).
-(* W_LLVMFuzzerTestOneInput_cut.v:182 fr_lib_pre_cf *)
+(* W_LLVMFuzzerTestOneInput_cut.v:183 fr_lib_pre_cf *)
 Definition fr_lib_pre_cf_x (regs : bvmap 5 word) (ly : alayout) (S : astate) (Hp : list Z) (W : world segs)
 (mem : word -> option byte) (md : Model) (p n : Z) (pl : list byte) (M : Z) : Prop :=
 afn_pre_x segs B ARx LLVMF_STK ly S Hp W regs mem md [] /\
@@ -108,7 +109,7 @@ mo_ok MT S (XM_LIB n) /\
   ReplyCnt.xcnt_ok B S ly (if n =? 0 then [] else [(p, n)]) T0 cap out) /\
 (* CAPOUT (_cut.v's last clause): g_capout at most CAPOUT_MAX.  Stated LAST, after XCNT. *)
 (exists c, val_mem segs (arm W mem) (rg_capout fr_RG) 8 c /\ 0 <= c <= CAPOUT_MAX).
-(* W_LLVMFuzzerTestOneInput_cut.v:214 fr_lib_post_cf *)
+(* W_LLVMFuzzerTestOneInput_cut.v:215 fr_lib_post_cf *)
 Definition fr_lib_post_cf_x (regs : bvmap 5 word) (ly : alayout) (S : astate) (Hp : list Z) (W : world segs)
 (mem : word -> option byte) (md : Model) (p n : Z) (M : Z) (l : lleaf)
 (ly' : alayout) (S' : astate) (Hp' : list Z) (W' : world segs) (regs' : bvmap 5 word) (mem' : word -> option byte)
@@ -131,7 +132,7 @@ mo_le MT S S' (XN_LIB n) /\
   ReplyCnt.xcnt_ok B S' ly' (if n =? 0 then [] else [(p, n)]) T0 cap out) /\
 (* CAPOUT at the return (_cut.v's last post clause) *)
 (exists c, val_mem segs (arm W' mem') (rg_capout fr_RG) 8 c /\ 0 <= c <= CAPOUT_MAX).
-(* W_LLVMFuzzerTestOneInput_cut.v:234 fr_lib_contract_cf *)
+(* W_LLVMFuzzerTestOneInput_cut.v:235 fr_lib_contract_cf *)
 Definition fr_lib_contract_cf_x : Prop :=
 forall ly S Hp (W : world segs) (regs : bvmap 5 word) mem md p n pl M (K : lleaf -> TSet),
 AI segs (w_H W) (w_A W) md ->
@@ -147,7 +148,7 @@ srealizes segs (cfg_at segs A_LLVMF regs mem md) (LIBK pl (m_fs md) K).
    fr_lib_post_cf_x / fr_lib_contract_cf_x (the two _wle lemmas below, by reflexivity). *)
 Section cfR.
 Variable R : world segs -> world segs -> Prop.
-(* W_LLVMFuzzerTestOneInput_cut.v:214 fr_lib_post_cf *)
+(* W_LLVMFuzzerTestOneInput_cut.v:215 fr_lib_post_cf *)
 Definition fr_lib_post_cf_xR (regs : bvmap 5 word) (ly : alayout) (S : astate) (Hp : list Z) (W : world segs)
 (mem : word -> option byte) (md : Model) (p n : Z) (M : Z) (l : lleaf)
 (ly' : alayout) (S' : astate) (Hp' : list Z) (W' : world segs) (regs' : bvmap 5 word) (mem' : word -> option byte)
@@ -170,7 +171,7 @@ mo_le MT S S' (XN_LIB n) /\
   ReplyCnt.xcnt_ok B S' ly' (if n =? 0 then [] else [(p, n)]) T0 cap out) /\
 (* CAPOUT at the return (_cut.v's last post clause) *)
 (exists c, val_mem segs (arm W' mem') (rg_capout fr_RG) 8 c /\ 0 <= c <= CAPOUT_MAX).
-(* W_LLVMFuzzerTestOneInput_cut.v:234 fr_lib_contract_cf *)
+(* W_LLVMFuzzerTestOneInput_cut.v:235 fr_lib_contract_cf *)
 Definition fr_lib_contract_cf_xR : Prop :=
 forall ly S Hp (W : world segs) (regs : bvmap 5 word) mem md p n pl M (K : lleaf -> TSet),
 AI segs (w_H W) (w_A W) md ->
@@ -206,11 +207,11 @@ Variable PST : list (Z * Z).
 Variable ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop.
 Context {hl : Z}.
 Hypothesis LAWS : AR_laws_x segs B ARx hl.
-(* the instance's ghost poisoned-head set stays empty (a Theorem Labs lane's HP0 ruling, W_journal_x at 0c4d57d9bf1;
+(* the instance's ghost poisoned-head set stays empty (a Theorem Labs lane's HP0 ruling, W_journal_x;
    fuzz_reply calls no poison routine): the driver reads the post's Hp' = [] from the journal's ARx through it *)
 Hypothesis HP0 : forall ly S Hp (W : world segs) mem md, ARx ly S Hp W mem md -> Hp = [].
 Hypothesis HG : gx_ok segs B G_fr.
-(* W_LLVMFuzzerTestOneInput_cut.v:328 errno_law over ARx *)
+(* W_LLVMFuzzerTestOneInput_cut.v:329 errno_law over ARx *)
 Definition errno_law_x : Prop :=
   forall ly S Hp (W : world segs) mem md, ARx ly S Hp W mem md ->
   (exists v, val_mem segs (arm W mem) (as_errno B) 4 v /\ 0 <= v < 2 ^ 32) /\ awr W mem (as_errno B) 4.

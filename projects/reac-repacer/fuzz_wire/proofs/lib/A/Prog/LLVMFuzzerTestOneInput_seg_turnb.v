@@ -1,7 +1,7 @@
 (* LLVMFuzzerTestOneInput_seg_turnb: u_turn_b_ok : u_turn_b_stmt (lib/A/Prog/LLVMFuzzerTestOneInput_segs.v), the
    turn_b segment of the image-A walk of fuzz_wire.asan's LLVMFuzzerTestOneInput (+0xfc .. +0x144). It is the image-A
-   twin of this unit's image-B lib/B/Prog/LLVMFuzzerTestOneInput_seg_turnb.v (commit adb74ccdb2a), in the form of
-   fuzz_uci's lib/A/Prog/LLVMFuzzerTestOneInput_seg_turnb.v (commit 14922e68e3b0: a run of the Pa engine to a call,
+   twin of this unit's image-B lib/B/Prog/LLVMFuzzerTestOneInput_seg_turnb.v, in the form of
+   fuzz_uci's lib/A/Prog/LLVMFuzzerTestOneInput_seg_turnb.v (a run of the Pa engine to a call,
    the callee's rule or contract at the call, the run from its return address).
 
    Four runs of the Pa engine, each from a seat with no region and the registers as atoms (Ereg regs []); this stretch

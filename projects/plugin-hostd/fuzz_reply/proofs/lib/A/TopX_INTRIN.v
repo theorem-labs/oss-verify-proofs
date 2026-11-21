@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: top_x group INTRIN (port-reply's TOPX-OWNERS.md, owner g-ph-verbs): the
-   intrinsic hypothesis of A's top_x (W_LLVMFuzzerTestOneInput_top_x.v at integ bb9dae5d905) PROVED at the instance
+   intrinsic hypothesis of A's top_x (W_LLVMFuzzerTestOneInput_top_x.v at integ) PROVED at the instance
      AMEMCPY_x (top_x.v:194) : aintrin_realizes_x segs TfibB ARX OCpy (SIGMA WS_asan_memcpy)
    with ARX := TopX_RT.ARX_rt (top_x.v:125-126 verbatim), so the plug is `exact` up to unfolding ARX.
    The proof is the ARx port of the __asan_memcpy walk at 0x52728 (lib/A/AE6k_x.v .. AE6s_x.v, AE2q_x.v
@@ -15,10 +15,11 @@
    AMEMSET_x (top_x.v:202) is not in this file yet: its walk is the port of the __asan_memset chain (AE2r_x).
    rule 24: no function proved. rule 24: proves no function (kind: statement text). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/TopX_INTRIN.v, with its module paths changed; 33 of its 81 lines of code are new or changed and 14 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* top_x group INTRIN (TOPX-OWNERS.md (sha256 bb821fae800d; internal record)): the two
-   intrinsic hypotheses of A's top_x (W_LLVMFuzzerTestOneInput_top_x.v at integ bb9dae5d905) PROVED at the instance
-     AMEMCPY_x (lib/A/W_LLVMFuzzerTestOneInput_top_x.v:194) : aintrin_realizes_x segs TfibB ARX OCpy (SIGMA WS_asan_memcpy)
-     AMEMSET_x (lib/A/W_LLVMFuzzerTestOneInput_top_x.v:202) : aintrin_realizes_x segs TfibB ARX OSet (SIGMA WS_asan_memset)
+   intrinsic hypotheses of A's top_x (W_LLVMFuzzerTestOneInput_top_x.v at integ) PROVED at the instance
+     AMEMCPY_x (lib/A/W_LLVMFuzzerTestOneInput_top_x.v:195) : aintrin_realizes_x segs TfibB ARX OCpy (SIGMA WS_asan_memcpy)
+     AMEMSET_x (lib/A/W_LLVMFuzzerTestOneInput_top_x.v:203) : aintrin_realizes_x segs TfibB ARX OSet (SIGMA WS_asan_memset)
    with ARX := TopX_RT.ARX_rt (top_x.v:125-126 verbatim), so the plug is `exact` up to unfolding ARX.
    The proofs are the ARx ports of the two walks at ARx := ARX_rt: __asan_memcpy at 0x52728 (lib/A/AE6k_x.v ..
    AE6s_x.v, AE2q_x.v asan_memcpy_realizes_x) and __asan_memset at 0x52bc4 (a Theorem Labs lane's lib/A/AE6t_x.v .. AE6v_x.v,
@@ -106,7 +107,7 @@ Proof.
            G10 G11 G12 Hn Hd Hdn HDST HRA HHULL HAM).
 Qed.
 
-(* QMm W1: the two intrinsic rows at top_x's W1 relation TopX_RT.ARX_rtW (lib/A/W_LLVMFuzzerTestOneInput_top_x.v:180-182, which adds arodata_ok_cf),
+(* QMm W1: the two intrinsic rows at top_x's W1 relation TopX_RT.ARX_rtW (lib/A/W_LLVMFuzzerTestOneInput_top_x.v:181-183, which adds arodata_ok_cf),
    beside the rows at ARX_rt above.  The rule at ARX_rt, then arodata_ok_cf at the post memory by TopX_RT.aro_keep_view:
    the post's view frame is off the destination [d, d + n), which holds no kept byte (the rule's not-kept premise),
    and off the ESTACK window, which lies above the image (TopX_RT.stk_above_img). *)

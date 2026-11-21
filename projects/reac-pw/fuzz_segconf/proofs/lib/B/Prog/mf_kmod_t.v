@@ -1,7 +1,7 @@
 (* m_file on fuzz_segconf.asan-ubsan (image B, pin c3796c0b38f3, 0x86140), segment S_MF_KMOD (KMODEL 0x86840 -> KIGN
    0x86968 or KDONE 0x86c1c; the image-B m_file segment table section 8): the model, encoding and reader lemmas its
    walk uses. No symbolic execution here. A walk lane of the image-B m_file-family owner's G2B. Adapted from the image-A m_file-family lane's image-A
-   lib/A/Prog/m_file_s_kmod_t.v (commit c1e1a58468c5), image-independent but for the module
+   lib/A/Prog/m_file_s_kmod_t.v, image-independent but for the module
    paths; the image-A fold-loop lemmas (mk_ln) are dropped, image B calls fold (lib/B/Prog/fold_c.v).
 
    - the model branch: mk_mod (mk_disp's "model" arm), mkt_disp_model, mkt_hfold_len (h_fold v 24 has min(|v|, 23)

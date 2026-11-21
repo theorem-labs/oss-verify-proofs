@@ -2,12 +2,13 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: call lemmas for the ASan walk of check_round_trip: ajournal_after_write_win (the core's ajournal_after_write, lib/Reusable/YCbq.v, with its presence premise narrowed to the journal's stack window), aj_set_shadow_atS (a shadow-fill entry __asan_set_shadow_XX on the shadow of the caller's own side-stack frame) and aj_stack_free_cls_atS (the release entry of a side-stack class that fills the whole frame's shadow). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip_k.v, with its module paths changed; 8 of its 245 lines of code are new or changed and 63 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3): the two journal lemmas that the walk of
    segment B4 of reac_segconf_parse_file (lib/B/Prog/pf_seg_B4.v) needs for the CALL that releases its class-5
    side-stack frame (`jal frame_release_5` = __asan_stack_free_5 0x3ecc4 at 0x89170, a0 = slot 0x88 = F,
-   a1 = 0x480). ADAPTED from the image-A G3 walk owner's image-A file lib/A/Prog/pf_a4_k.v (commit
-   418db7ebe1da, the image-A A4 segment lane), which carries them verbatim from the released donor walk
-   plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip_k.v at origin/ossv/recipes 501c0d516c69 (its lines
+   a1 = 0x480). ADAPTED from the image-A G3 walk owner's image-A file lib/A/Prog/pf_a4_k.v (
+   the image-A A4 segment lane), which carries them verbatim from the released donor walk
+   plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip_k.v (its lines
    34-173 and 236-313). Only the module paths differ from the A file: the image-B kit copies (lib/B: YA0n YA0o
    YCbm YA0q YG0f YG0n YG0d YCbq YG0p YC5d, the bkit name map), image B's Pa engine (lib/B/Prog PaTable PaSym)
    and image B's side-stack carrier (lib/B/Rt/RtStack.v astack_free_cls_realizes).

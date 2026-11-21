@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: changed rauxv_ok_malloc_fp, rauxv_ok_malloc_fp_ER, rauxv_ok_pres and 2 more; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/CJ/Ref/RF_ntf_E.v at theorem-labs/oss-verify-proofs@f92feaf8b7e6, 107 lines within its lines 70-357. *)
 From OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.CJ.Ref Require Mh_0091_blobs1 Mh_0091_blobs2.
 (* [comment removed for export] *)
 Set Warnings "-require-in-module".
@@ -228,7 +229,12 @@ Lemma rauxv_ok_pres : forall C m m' B,
   (forall a, B <= a -> ~ C a) -> (forall a, RAUXV_CELL <= a < RAUXV_CELL + 8 -> ~ C a) ->
   rauxv_ok m' B.
 Proof.
-ltac2:(KReplay.run1 (kr_t_RMallocKit_A ()) ["CEIL_WRAP_1"] (Mh_0091_blobs1.kr_b_010 ())). Qed.
+  intros C m m' B (av & vs & rnd & C1 & A1 & A2 & H & HL) HP HB HC.
+  exists av, vs, rnd. split; [|split; [|split; [|exact (conj H HL)]]].
+  - eapply rpres_except_rw_cells; [exact HP| exact C1|]. cbn. intros a Ha. apply HC. lia.
+  - eapply rpres_except_bytes_at; [exact HP| exact A1|]. intros a Ha. apply HB. lia.
+  - eapply rpres_except_bytes_at; [exact HP| exact A2|]. intros a Ha. apply HB. lia.
+Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -1313,7 +1319,12 @@ Lemma rauxv_ok_malloc_fp_ER stE mE lo sp m1 m' B :
   rmrep stE mE -> rauxv_ok m1 B -> rpres_except (rmalloc_fp st0 stE lo sp) m1 m' ->
   alloc_ceiling <= lo -> sp <= B -> rauxv_ok m' B.
 Proof.
-ltac2:(KReplay.run1 (kr_t_RASlot_M0 ()) ["CEIL_WRAP_1"; "FPER"] (Mh_0091_blobs1.kr_b_104 ())). Qed.
+  intros MRE AUX PE CLO SB. eapply rauxv_ok_pres; [exact AUX| exact PE| |].
+  - intros a Ha Hfp. destruct (rmalloc_fp_cases_ER stE mE lo sp a MRE Hfp); [lia|].
+    destruct AUX as (av & vs & rnd & _ & _ & _ & HH & _). pose_ceil. lia.
+  - intros a Ha Hfp. unfold RAUXV_CELL in Ha.
+    destruct (rmalloc_fp_image_ER stE mE lo sp a MRE Hfp CLO ltac:(lia)) as [X|X]; unfold RCTX in X; lia.
+Qed.
 
 Lemma rframe_keep_ER stE mE lo sp m1 m' A cs :
   rmrep stE mE -> rpres_except (rmalloc_fp st0 stE lo sp) m1 m' -> rw_cells rsegs m1 A cs ->
@@ -1627,7 +1638,12 @@ Lemma rauxv_ok_malloc_fp st st2 lo sp m0 m2 m m' B :
   rmrep st m0 -> rmrep st2 m2 -> rauxv_ok m B -> rpres_except (rmalloc_fp st st2 lo sp) m m' ->
   alloc_ceiling <= lo -> sp <= B -> rauxv_ok m' B.
 Proof.
-ltac2:(KReplay.run1 (kr_t_RF_malloc_join ()) ["CEIL_WRAP_1"] (Mh_0091_blobs1.kr_b_123 ())). Qed.
+  intros MR0 MR2 AUX PE CLO SB. eapply rauxv_ok_pres; [exact AUX| exact PE| |].
+  - intros a Ha Hfp. destruct (rmalloc_fp_cases st st2 lo sp m0 m2 a MR0 MR2 Hfp); [lia|].
+    destruct AUX as (av & vs & rnd & _ & _ & _ & HH & _). pose_ceil. lia.
+  - intros a Ha Hfp. unfold RAUXV_CELL, RLIBC in Ha.
+    destruct (rmalloc_fp_image st st2 lo sp m0 m2 a MR0 MR2 Hfp CLO ltac:(lia)) as [X|X]; unfold RCTX in X; lia.
+Qed.
 End CEIL_WRAP_1.
 
 
@@ -3170,7 +3186,113 @@ Definition rat00_post (ra sp gp tp s0 s1 s3 s4 s5 s6 s7 s8 s9 s10 s11 t1 t2 t3 t
       (MS (mkR ra (Z_to_bv 64 (bv_unsigned sp + -96)) gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 (conc stm g)) (Z_to_bv 64 (RCTX + sc * 8)) a2 a3 a4 a5 a6 a7 (Z_to_bv 64 RCTX) s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
           F (Z_to_bv 64 0xaba38) fc None m (seg_rom rsegs)).
 Proof.
-ltac2:(KReplay.run1 (kr_tL_Mh_0091 ()) ["CEIL_WRAP_1"] (Mh_0091_blobs1.kr_b_225 ())). Qed.
+  (* The tactic proof of this statement in
+     projects/jsoncons/fuzz_bigint/proofs/lib/CJ/{Ref,Tgt}/RF_ntf_E.v, with its
+     one address (RCTX, the malloc context) set to this binary's, in place of
+     a recorded replay term that no longer typechecks at LPS 727298f3: the
+     term carried [Sem.exec]'s unfolding for the lr.w/sc.w pair this walk
+     steps through, and the revision changed [exec]'s sc arm.  The tactics
+     compute [exec] afresh at each step. *)
+  intros until an. intros st1 MR MI MSL SC HA2 HACT FR FRL ST LO LOLE.
+  pose proof (wmono_refl rsegs m) as WM.
+  pose proof (bv_unsigned_in_range _ sp) as SPR. change (bv_modulus 64) with (2^64) in SPR.
+  pose proof (bv_unsigned_in_range _ a2) as A2R. change (bv_modulus 64) with (2^64) in A2R.
+  pose proof (rmeta_slot_bounds stm m g MR MSL) as GB. pose_ceil.
+  pose proof FR as [[WFfr _] _]. pose proof (cells_bytes_length _ WFfr) as LFR. rewrite FRL in LFR.
+  (pose_ceil; unfold RCTX in *).
+  pose proof (munch_refl [(conc stm g, conc stm g + 40); (conc stm g, conc stm g + 40)]%Z m) as MU.
+  rmeta_open (conc stm g) MUg WMg.
+  rmeta_chunk MR MSL CH.
+  st1. st1.
+  lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
+    assert (MR1 : rmrep st1 mX)
+      by (unfold st1; rewrite upd_meta_put; eapply rmrep_put_meta_frame; [exact MR | exact MSL | exact MUg | exact WMg |];
+          eapply rw_cells_congr; [ | | | exact CH]; [reflexivity | reflexivity | cbn; tauto]);
+    clear MUg WMg CH
+  end.
+  assert (COV : forall m', munch [(conc stm g, conc stm g + 40); (conc stm g, conc stm g + 40)]%Z m m' -> wmono rsegs m m' ->
+                 rpres_except (rfree_fp stm lo (bv_unsigned sp)) m m').
+  { intros m' MU' WM'. apply (rpres_except_of_munch_cov (rfree_fp stm lo (bv_unsigned sp))) in MU'; [exact MU'|exact WM'|].
+    cbn [ivs_covered]. repeat split; intros x Hx; (eapply rfree_fp_meta; [exact MR | exact MSL | lia]). }
+  assert (MSg1 : meta_slot st1 g) by (unfold st1; rewrite upd_meta_put; apply meta_slot_put_meta; exact MSL).
+  assert (Hconc : forall q, conc st1 q = conc stm q) by (intros; reflexivity).
+  st1. if_cases K; zify_cond K.
+  - (* [comment removed for export] *)
+    destruct an. { exfalso. apply K. rewrite ?unsigned_lit by lia. lia. }
+    cbn [pd_st].
+    apply evt_done. unfold rat00_post. do 9 eexists. split; [cbv delta [mkR]; unfold RCTX; reflexivity|].
+    split; [apply COV; [exact MU|exact WM]|]. split; [exact WM|]. split; [assumption|]. split; [exact ST|]. split; [exact FR|exact MR1].
+  - (* [comment removed for export] *)
+    destruct an. 2:{ exfalso. apply HA2. rewrite ?unsigned_lit in K by lia. lia. }
+    cbn [pd_st].
+    pose proof (rmrep_active_read st1 _ sc (wa (RCTX + 80 + 8 * sc)) MR1 SC eq_refl) as RDA. unfold RCTX in RDA.
+    assert (HPW : forall q, pw st1 q = pw stm q) by (intros [q|]; reflexivity). rewrite HPW in RDA.
+    replace (wa (1018976 + 80 + 8 * sc)) with (Z_to_bv 64 (1018976 + sc * 8 + 80)) in RDA by (unfold wa; f_equal; lia).
+    st1. clear RDA.
+    st1. destruct (active st1 sc) as [a|] eqn:HA1.
+    + destruct (HACT eq_refl a eq_refl) as (MSa & NEa & AV0 & FRR & ba & gh & Hmem & Hgh & AI).
+      pose proof (rmeta_slot_bounds st1 _ a MR1 MSa) as AB. pose_ceil. rewrite !Hconc in AB.
+      munch_grow MU (conc stm a, conc stm a + 40).
+      unfold pw, wz; cbn [oconc]. if_cases K2; zify_cond K2. { exfalso. rewrite ?unsigned_lit in K2 by lia. lia. } clear K2.
+      rmeta_chunk MR1 MSa CHa. rewrite AV0, Hmem in CHa. cbn [oconc] in CHa.
+      st1. st1. if_cases K3; zify_cond K3. 2:{ exfalso. apply K3. rewrite ?unsigned_lit by lia. reflexivity. } clear K3.
+      st1.
+      destruct (rmrep_group_read st1 _ ba gh MR1 Hgh) as [_ (w8 & RD8 & Hw8)].
+      rewrite Hconc in RD8.
+      st1.
+      pose proof (bv_unsigned_in_range _ w8) as W8R. change (bv_modulus 8) with 256 in W8R.
+      assert (MOD8 : bv_unsigned w8 mod 32 = g_active_idx gh).
+      { rewrite <- Hw8. change 31 with (Z.ones 5). rewrite Z.land_ones by lia. reflexivity. }
+      st1. st1. unfold zxb. rewrite (sllw2_word (bv_unsigned w8)) by lia. rewrite MOD8.
+      set (y := 2 ^ (g_active_idx gh + 1)).
+      st1. st1. rewrite negw_word.
+      clear CHa. rmeta_open (conc stm a) MUa WMa.
+      rmeta_chunk MR1 MSa CHa. rewrite Hmem in CHa. cbn [oconc] in CHa.
+      pose proof (sxv_range (m_freed (get_meta_rec st1 a))) as RF. pose proof (sxv_range (- y)) as RY. pose proof (sxv_range y) as RY1.
+      st1. rewrite sx32_wz_sxv by lia.
+      st1. rewrite ?(wz_unsigned (sxv _)) by (apply sxv_range). rewrite sxv_land.
+      assert (AMO : amo_aligned AW (Z_to_bv 64 (conc stm a + 28)) = true).
+      { apply amo_aligned_intro; [lia|]. Z.div_mod_to_equations. lia. }
+      amo_step AMO. rewrite ?sx32_wz_sxv by lia.
+      st1. if_false.
+      amo_step AMO.
+      st1. if_false.
+      st1. rewrite ?sextw_sxv, ?sextw_sxv', ?sextw_sxv0, ?sextw_sxv1. st1. if_false.
+      st1. st1. st1.
+      set (f := m_freed (get_meta_rec st1 a)) in *.
+      assert (AI31 : Z.land (g_active_idx gh) 31 = g_active_idx gh).
+      { change 31 with (Z.ones 5). rewrite Z.land_ones by lia. apply Z.mod_small. lia. }
+      assert (ACT : act_of st1 a = y - 1).
+      { unfold act_of. rewrite Hmem. cbn [default]. unfold group_active_idx, get_group. rewrite Hgh, AI31. unfold mask_upto, y. reflexivity. }
+      assert (E1 : Z.land f (- y) = Z.ldiff f (y - 1)) by (unfold y; apply land_neg_pow2; lia).
+      assert (Y1 : 1 <= y <= 2^32).
+      { unfold y. split; [pose proof (Z.pow_pos_nonneg 2 (g_active_idx gh + 1)); lia| apply Z.pow_le_mono_r; lia]. }
+      pose proof (land_upper f (y - 1) ltac:(lia) ltac:(lia)) as R1.
+      pose proof (ldiff_le f (y - 1) ltac:(lia) ltac:(lia)) as R2.
+      pose proof (Z.ldiff_nonneg f (y - 1)) as R3.
+      lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
+        assert (MR2 : rmrep (act_st st1 a (act_of st1 a)) mX)
+      end.
+      { unfold act_st. rewrite upd_meta_put, ACT. eapply rmrep_put_meta_frame; [exact MR1 | exact MSa | exact MUa | exact WMa |].
+        eapply rw_cells_congr; [ | | | exact CHa]; [ | reflexivity | cbn; tauto].
+        unfold meta_cells. unfold pw. cbn [cells_bytes cbytes m_prev m_next m_mem m_avail m_freed m_set_avail m_set_freed meta_word m_last_idx m_freeable m_sizeclass m_maplen oconc].
+        fold f. rewrite E1. rewrite (act_mask_le4 f y) ; [| lia | exact Y1 | rewrite <- Zplus_mod_idemp_l, swrap32_mod32, Zplus_mod_idemp_l; reflexivity].
+        rewrite !le4_sxv by lia. rewrite Hmem. cbn [oconc]. reflexivity. }
+      clear MUa WMa CHa.
+      apply evt_done. unfold rat00_post. do 9 eexists. split; [cbv delta [mkR]; unfold RCTX; reflexivity|].
+      split. { apply (rpres_except_of_munch_cov (rfree_fp stm lo (bv_unsigned sp))) in MU; [exact MU|exact WM|].
+               cbn [ivs_covered]. repeat split; intros x Hx.
+               - eapply rfree_fp_meta; [exact MR | exact MSL | lia].
+               - eapply rfree_fp_meta; [exact MR | exact MSa | lia].
+               - eapply rfree_fp_meta; [exact MR | exact MSL | lia]. }
+      split; [exact WM|]. split; [assumption|]. split; [exact ST|]. split; [exact FR|].
+      unfold pd_st. rewrite ?HA1. exact MR2.
+    + (* [comment removed for export] *)
+      unfold pw, wz; cbn [oconc]. if_cases K2; zify_cond K2. 2:{ exfalso. apply K2. rewrite ?unsigned_lit by lia. reflexivity. } clear K2.
+      apply evt_done. unfold rat00_post. do 9 eexists. split; [cbv delta [mkR]; unfold RCTX; reflexivity|].
+      split; [apply COV; [exact MU|exact WM]|]. split; [exact WM|]. split; [assumption|]. split; [exact ST|]. split; [exact FR|].
+      unfold pd_st. rewrite ?HA1. exact MR1.
+Qed.
 End CEIL_WRAP_1.
 
 
@@ -3845,7 +3967,12 @@ Lemma rauxv_ok_pres_B : forall C m m' B,
   (forall a, B <= a -> ~ C a) -> (forall a, RAUXV_CELL <= a < RAUXV_CELL + 8 -> ~ C a) ->
   rauxv_ok m' B.
 Proof.
-ltac2:(KReplay.run1 (kr_t_RF_free_spec ()) ["CEIL_WRAP_1"] (Mh_0091_blobs2.kr_b_262 ())). Qed.
+  intros C m m' B (av & vs & rnd & C1 & A1 & A2 & H & HL) HP HB HC.
+  exists av, vs, rnd. split; [|split; [|split; [|exact (conj H HL)]]].
+  - eapply rpres_except_rw_cells; [exact HP| exact C1|]. cbn. intros a Ha. apply HC. lia.
+  - eapply rpres_except_bytes_at; [exact HP| exact A1|]. intros a Ha. apply HB. lia.
+  - eapply rpres_except_bytes_at; [exact HP| exact A2|]. intros a Ha. apply HB. lia.
+Qed.
 
 (* [comment removed for export] *)
 Section FP.

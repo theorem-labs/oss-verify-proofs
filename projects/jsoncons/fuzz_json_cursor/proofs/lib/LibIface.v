@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed lib_init_facts; removed auxv_words. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib Require Import PropExec StoreOk ShapeAlg SpinAlg HeapIface.
@@ -35,9 +36,20 @@ Definition in_initc (Lay : lib_layout) (a : Z) : Prop :=
 Definition cellz (segs : list Segment) (M : word -> option byte) (a : Z) (n : nat) (v : Z) : Prop :=
   rdn segs M (Z_to_bv 64 a) n = Some (word_to_le_bytes n (Z_to_bv 64 v)).
 
-Definition auxv_words (Lay : lib_layout) (uid rnd hw : Z) : list Z :=
-  [3; ll_phdr Lay; 4; ll_phent Lay; 5; ll_phnum Lay; 16; hw; 6; 4096; 11; uid; 12; uid; 23; 0; 25; rnd; 0; 0].
-
+(* STATEMENT CHANGED, old beside new (Main's ruling, option D):
+     OLD  /\ cellz segs M (ll_auxvp Lay) 8 av /\ sptop <= av /\ av + 160 <= 2 ^ 47 /\ av mod 8 = 0
+          /\ (forall j, (j < 20)%nat -> cellz segs M (av + 8 * Z.of_nat j) 8 (nth j (auxv_words Lay uid rnd hw) 0))
+          with  auxv_words Lay uid rnd hw := [3; ll_phdr; 4; ll_phent; 5; ll_phnum; 16; hw; 6; 4096;
+                                              11; uid; 12; uid; 23; 0; 25; rnd; 0; 0]
+     NEW  both conjuncts DROPPED, and [auxv_words] with them.
+   They are FALSE at LPS 75d69e00: the vector is 27 pairs, or 29 under CONFIG_RSEQ
+   ([StackLayout.auxv_count]), in [StackLayout.auxv_entries]' order, with
+   AT_SYSINFO_EHDR and the cache words first, so the 20 words at __auxv are not this
+   ten-pair list.  And NO CONSUMER READS THEM: [lib_init_facts] is consumed only by
+   [lib_statics_init], and its two provers read only the first conjunct
+   (PmLibStaticsA.lib_init_okA:141, [destruct F as (IMG & _)]) and the first and last
+   (PmTop/TopGlueC.pm_statics_init:167-171).  [av] is kept as a parameter so no
+   quantifier over [lib_init_facts] changes shape. *)
 Definition lib_init_facts (Lay : lib_layout) (av uid rnd tid canary hw : Z) (M : word -> option byte) : Prop :=
   let segs := hl_segs (ll_heap Lay) in let sptop := hl_sptop (ll_heap Lay) in
      (forall iv a, In iv (ll_init_img Lay) -> fst iv <= a < snd iv -> M (Z_to_bv 64 a) = None)
@@ -47,8 +59,6 @@ Definition lib_init_facts (Lay : lib_layout) (av uid rnd tid canary hw : Z) (M :
   /\ (forall k, (k < 6)%nat -> cellz segs M (ll_locale Lay + 8 * Z.of_nat k) 8 0)
   /\ cellz segs M (ll_td_canary Lay) 8 canary
   /\ cellz segs M (ll_guard Lay) 8 canary /\ 0 <= canary < 2 ^ 64
-  /\ cellz segs M (ll_auxvp Lay) 8 av /\ sptop <= av /\ av + 160 <= 2 ^ 47 /\ av mod 8 = 0
-  /\ (forall j, (j < 20)%nat -> cellz segs M (av + 8 * Z.of_nat j) 8 (nth j (auxv_words Lay uid rnd hw) 0))
   /\ 0 <= uid < 2 ^ 32 /\ 0 <= hw < 2 ^ 64
   /\ sptop <= rnd /\ rnd + 16 <= 2 ^ 64
   /\ (forall c, In c (ll_init_cells Lay) -> cellz segs M (fst (fst c)) (snd (fst c)) (snd c)).

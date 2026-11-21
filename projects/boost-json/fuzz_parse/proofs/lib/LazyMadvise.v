@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: imports. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -16,6 +17,7 @@ From OSSVerify.Proofs.boost_json.fuzz_parse.lib Require Import
   ShapeAlg Nodes AgentNodes Gap04 RefNodes SReach AllocNodes
   LazyRestrict LazyRestrictRun LazyRestrictAlg LazyLedger LazySR LazyNodes.
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib.Lib Require Import Nd.
+From OSSVerify.Proofs.boost_json.fuzz_parse.lib.Common.Cfg Require RomBase.
 Require Import OSSVerify.Proofs.boost_json.fuzz_parse.lib.Lib.CDef.
 Local Ltac2 zQ s := CDef.cdeft "3h5LinuxProcessSemanticsfLinuxProcessSem5State06in_arg37Corelib4Init5Logicj62eqj63iff37Corelib7Numbers7BinNumsl54Nposl51Z3h5LinuxProcessSemanticsfLinuxProcessSem5Monadn97outcome3h5LinuxProcessSemanticsfLinuxProcessSem5Specsr1csyscall_spec05Model0dSyscallEffect0cSyscallInput08in_sysno5h5LinuxProcessSemanticsfLinuxProcessSem3Sys2Mm7Madvisehhccmadvise_spec4h5LinuxProcessSemanticsfLinuxProcessSem3Sys7Syscallhm35int3235stdpp9bitvectorbdefinitionshq0bbv_unsigned3h5LinuxProcessSemanticsfLinuxProcessSem3RunhscbInjectedArm37Corelib4Init9Datatypesig74Noneig76optionhsccinjected_armig74boolig74truehhch2madvise_dontneed_b46Stdlib6ZArith6BinInt1Zim86moduloim83powhq02bvig73nilig74prodhq07Z_to_bvig74consig75falseig74listig73natig74pairn92Ok07MemCopy05event08m_vmmaps09mkEffectU0fpage_round_up_Z09page_size0atwo_pow_64hhch5madvise_dontneed_nexthhch3madvise_dontneed_okhm35w_is0im83addim82lt69OSSVerify6Proofsaboost_jsonafuzz_parse3libcLazyRestrict~~~~~~jn3h5same_but_materialized09m_vm_lazy0h1m_vm_materialized0h2page_outside_range36Stdlib5Lists4Listkg06filter06VmMaps08m_haltedjn3aeager_used3h5LinuxProcessSemanticsfLinuxProcessSemeRiscvSemanticskjd6ms_memkjddmachine_statehsccapply_effect69OSSVerify6Proofsaboost_jsonafuzz_parse3lib7MmapSim~~~~~~kpf5zfillj63andim82le0bregion_free0dmaps_subtract69OSSVerify6Proofsaboost_jsonafuzz_parse3libaLazyLedger~~~~~~lgaeentries_nowrapkjd6ms_gprhsc9sys_inputig74Someig74andbig74negbjn37hiddenbjn3azin_rangeb79OSSVerify6Proofsaboost_jsonafuzz_parse3libbLazyMadvise8WithSegs~~~~~~lq15mzerojn3ain_rangesbjn38restricthsc5mkCfg69OSSVerify6Proofsaboost_jsonafuzz_parse3lib6LazySR~~~~~~mh44lzokhsch0advance_past_svc69OSSVerify6Proofsaboost_jsonafuzz_parse3lib9LazyNodes~~~~~~mma6sysretmh48hid_same69OSSVerify6Proofsaboost_jsonafuzz_parse3lib6SReach~~~~~~mrc6sreachj63notkjdems_svc_pendinghsc6config0cmap_contains07vm_maps0bvm_noaccess0bvm_reserved3h5LinuxProcessSemanticsfLinuxProcessSemcMemImageTypenl27Segment" s.   (* [comment removed for export] *)
 Import ListNotations.
@@ -221,7 +223,7 @@ Proof.
     - intros o Ho. exists tt. exact Ho.
     - intros []. exact (lzok_halted Hok').
     - intros []. reflexivity. }
-  apply (sreach_node segs _ unit _ tt _ Hnode). intros [].
+  apply (sreach_node segs _ unit _ tt _ Hnode ltac:(RomBase.rob_auto)). intros [].
   apply (Hk _ Hok' Hvis Hhs). apply madvise_dontneed_next_sbm.
 Qed.
 

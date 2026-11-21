@@ -1,9 +1,9 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6c6.v at cb9cdc023f20; ported to the same
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6c6.v; ported to the same
    unit's image B (fuzz_rate.asan-ubsan): image B's pcs, registers and real-frame cells; the pod is e62 (F + 0x210) in
    the class-4 side-stack frame; the no-byte arm reads the table too, so both arms carry the table and its shadow
    granules (a zero shadow region) and the split t & 3 = j sits before the table's check; the three UBSan trap
    branches (two decided by the engine from atom facts, one split and refuted). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgW6c6B.v at 05426fac6916 for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgW6c6B.v for
    reac-pw/fuzz_role's image B (fuzz_role.asan-ubsan): module paths fuzz_rate -> fuzz_role (lib/AU/Img0.rsegs,
    lib/A/RPgBase and RPgCSpec, lib/AU/RPgMem rm_ and RPgSteps rl_ names, lib/AU/RPgW6cBase); every pc is role B's
    (0x811d8 .. 0x81734, the table's check 0x814ec, __asan_memcpy 0x5116c, return 0x81738), the table t[] is at

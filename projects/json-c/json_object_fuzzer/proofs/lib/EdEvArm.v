@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the place_declined_b premise on mmap_outcome_ekept and mmap_noaccess_outcome_ekept, and a declined call's lack of an Ok outcome in the _live lemmas; the refusal predicates take the hint address; mprotect_outcome_ekept carries the model's vDSO gate (region_free of vdso_reserved / vdso_top)). *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Monad Specs Run.
 From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Import EdAlloc EdBridge EdEvNode.
@@ -28,42 +29,56 @@ Import Q6q3.
 Lemma mmap_outcome_ekept (segs : list Segment) : forall ms x8 model o,
   bv_unsigned x8 = 222%Z ->
   mmap_args_ok ms ->
+  (* LPS 727298f3: the model's decline of a freely placed call (QuJV.mmap_outcome_si) *)
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   ekept (sys_input segs ms x8) model o <->
-  (mmap_grant_refusable (ms_gpr ms 3) model (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true
+  (mmap_grant_refusable (ms_gpr ms 0) (ms_gpr ms 3) model (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true
    /\ exists e, In e mmap_errnos /\ o = Ok (mkEffect (errno_ret e) [] []) model [])
   \/ (exists a, grant_ok (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true
       /\ o = Ok (mkEffect a [] [(a, page_round_up (ms_gpr ms 1))])
                (mmap_model a (page_round_up (ms_gpr ms 1)) model) []).
 Proof.
-  intros ms x8 model o Hno Ha.
+  intros ms x8 model o Hno Ha Hpd.
   refine (ekept_arm (sys_input segs ms x8) model
-    (mmap_grant_refusable (ms_gpr ms 3) model (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true)
+    (mmap_grant_refusable (ms_gpr ms 0) (ms_gpr ms 3) model (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true)
     (fun o => exists e, In e mmap_errnos /\ o = Ok (mkEffect (errno_ret e) [] []) model [])
     (fun o => exists a, grant_ok (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true
       /\ o = Ok (mkEffect a [] [(a, page_round_up (ms_gpr ms 1))])
                (mmap_model a (page_round_up (ms_gpr ms 1)) model) [])
     _ _ _ _ _ o).
   - right. left. exact Hno.
-  - intros o'. exact (mmap_outcome_si segs ms x8 model o' Hno Ha).
+  - intros o'. exact (mmap_outcome_si segs ms x8 model o' Hno Ha Hpd).
   - intros o' (e & He & ->). do 3 eexists. split; [reflexivity |]. destruct He as [<- | []]. reflexivity.
   - intros o' (a & Hg & ->). do 3 eexists. split; [reflexivity |]. change (a <> errno_ret ENOMEM).
-    unfold grant_ok in Hg. rewrite !andb_true_iff in Hg. destruct Hg as [[[[_ _] G3] _] _].
+    unfold grant_ok in Hg. rewrite !andb_true_iff in Hg. destruct Hg as [[[[[_ _] _] G3] _] _].
     apply (ed_below_top_ne_enomem a (m_vmmaps model) (page_round_up_Z (bv_unsigned (ms_gpr ms 1))));
       [apply ed_nZ_nonneg | apply Z.leb_le; exact G3].
   - apply ekept_bool. split.
-    + intros HR. destruct Ha as (_ & _ & H3 & _ & _). rewrite H3 in HR.
-      destruct (not_refusable_grant_ok (ms_gpr ms 0) model _ HR) as [a Hg].
+    + intros HR. destruct (mmap_args_ok_gates ms Ha) as (_ & _ & Hl & _).
+      destruct (ed_nZ_pos_aligned _ Hl) as [Hn Hnal].
+      destruct Ha as (_ & _ & H3 & _ & _). rewrite H3 in HR.
+      destruct (not_refusable_grant_ok (ms_gpr ms 0) model _ Hn Hnal HR) as [a Hg].
       eexists. exists a. split; [exact Hg | reflexivity].
     + intros (o' & a & Hg & _). exact (grant_ok_not_refusable _ _ _ _ _ Hg).
 Qed.
 
+(* Given an Ok outcome, no premise: a declined call has none (QwNp.mmap_declined_not_ok). *)
 Lemma mmap_outcome_live (segs : list Segment) : forall ms x8 model,
   bv_unsigned x8 = 222%Z -> mmap_args_ok ms -> m_halted model = None ->
   forall eff m' evs, syscall_spec (sys_input segs ms x8) model (Ok eff m' evs) -> m_halted m' = None.
 Proof.
   intros ms x8 model Hno Ha Hh eff m' evs Hs.
-  apply (mmap_outcome_si segs ms x8 model _ Hno Ha) in Hs.
-  destruct Hs as [(e & _ & E) | (a & _ & E)]; injection E as _ E2 _; rewrite E2; exact Hh.
+  destruct (place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+              (page_round_up_Z (bv_unsigned (ms_gpr ms 1)))) eqn:Hpd.
+  - exfalso. destruct (mmap_args_ok_gates ms Ha) as (Hoff & Hanon & Hl & Hmb).
+    rewrite (syscall_spec_222 _ model _) in Hs by (rewrite in_sysno_sys_input; exact Hno).
+    rewrite in_arg0_si, in_arg1_si, in_arg2_si,
+      in_arg3_sys_input, in_arg4_sys_input, in_arg5_sys_input in Hs.
+    refine (mmap_declined_not_ok _ _ _ _ _ _ _ model eff m' evs Hoff Hanon Hl _ Hpd Hs).
+    rewrite Hmb. reflexivity.
+  - apply (mmap_outcome_si segs ms x8 model _ Hno Ha Hpd) in Hs.
+    destruct Hs as [(e & _ & E) | (a & _ & E)]; injection E as _ E2 _; rewrite E2; exact Hh.
 Qed.
 
 End Mm.
@@ -83,37 +98,53 @@ Open Scope bv_scope.
 Lemma mmap_noaccess_outcome_ekept (segs : list Segment) : forall ms x8 model,
   bv_unsigned x8 = 222%Z -> mmap_noaccess_args_ok ms ->
   let n := page_round_up_Z (bv_unsigned (ms_gpr ms 1)) in
+  (* LPS 727298f3: the model's decline of a freely placed call (QSpR.mmap_noaccess_outcome_si) *)
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0) n = false ->
   forall o, ekept (sys_input segs ms x8) model o <->
-  (mmap_reserve_refusable model n = true
+  (mmap_reserve_refusable (ms_gpr ms 0) model n = true
    /\ exists e, In e mmap_errnos /\ o = Ok (mkEffect (errno_ret e) [] []) model [])
   \/ (exists a, grant_ok_na (ms_gpr ms 0) model a n = true
       /\ o = Ok (mkEffectU a [] [] [(a, Z_to_bv 64 n)] [] []) (noaccess_model a (Z_to_bv 64 n) model) []).
 Proof.
-  intros ms x8 model Hno Ha n o.
-  refine (ekept_arm (sys_input segs ms x8) model (mmap_reserve_refusable model n = true)
+  intros ms x8 model Hno Ha n Hpd o.
+  refine (ekept_arm (sys_input segs ms x8) model (mmap_reserve_refusable (ms_gpr ms 0) model n = true)
     (fun o => exists e, In e mmap_errnos /\ o = Ok (mkEffect (errno_ret e) [] []) model [])
     (fun o => exists a, grant_ok_na (ms_gpr ms 0) model a n = true
       /\ o = Ok (mkEffectU a [] [] [(a, Z_to_bv 64 n)] [] []) (noaccess_model a (Z_to_bv 64 n) model) [])
     _ _ _ _ _ o).
   - right. left. exact Hno.
-  - intros o'. exact (mmap_noaccess_outcome_si segs ms x8 model Hno Ha o').
+  - intros o'. exact (mmap_noaccess_outcome_si segs ms x8 model Hno Ha Hpd o').
   - intros o' (e & He & ->). do 3 eexists. split; [reflexivity |]. destruct He as [<- | []]. reflexivity.
   - intros o' (a & Hg & ->). do 3 eexists. split; [reflexivity |]. change (a <> errno_ret ENOMEM).
-    unfold grant_ok_na in Hg. rewrite !andb_true_iff in Hg. destruct Hg as [[[_ _] G3] _].
+    unfold grant_ok_na in Hg. rewrite !andb_true_iff in Hg. destruct Hg as [[[[[_ _] _] G3] _] _].
     apply (ed_below_top_ne_enomem a (m_vmmaps model) n); [apply ed_nZ_nonneg | apply Z.leb_le; exact G3].
   - apply ekept_bool. split.
-    + intros HR. destruct (not_refusable_grant_ok_na (ms_gpr ms 0) model n HR) as [a Hg].
+    + intros HR.
+      assert (Hl : w_is0 (ms_gpr ms 1) = false)
+        by (destruct Ha as (H1 & _); unfold w_is0; apply bv_eqb_neq; exact H1).
+      destruct (ed_nZ_pos_aligned _ Hl) as [Hn Hnal].
+      destruct (not_refusable_grant_ok_na (ms_gpr ms 0) model n Hn Hnal HR) as [a Hg].
       eexists. exists a. split; [exact Hg | reflexivity].
     + intros (o' & a & Hg & _). exact (grant_ok_na_not_refusable _ _ _ _ Hg).
 Qed.
 
+(* Given an Ok outcome, no premise: a declined call has none (QwNp.mmap_declined_not_ok). *)
 Lemma mmap_noaccess_outcome_live (segs : list Segment) : forall ms x8 model,
   bv_unsigned x8 = 222%Z -> mmap_noaccess_args_ok ms -> m_halted model = None ->
   forall eff m' evs, syscall_spec (sys_input segs ms x8) model (Ok eff m' evs) -> m_halted m' = None.
 Proof.
   intros ms x8 model Hno Ha Hh eff m' evs Hs.
-  apply (mmap_noaccess_outcome_si segs ms x8 model Hno Ha) in Hs.
-  destruct Hs as [(e & _ & E) | (a & _ & E)]; injection E as _ E2 _; rewrite E2; exact Hh.
+  destruct (place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+              (page_round_up_Z (bv_unsigned (ms_gpr ms 1)))) eqn:Hpd.
+  - exfalso. destruct Ha as (H1 & H2 & H3 & H4 & H5).
+    assert (Hl : w_is0 (ms_gpr ms 1) = false) by (unfold w_is0; apply bv_eqb_neq; exact H1).
+    rewrite (syscall_spec_222 _ model _) in Hs by (rewrite in_sysno_si; exact Hno).
+    rewrite in_arg0_si, in_arg1_si, in_arg2_si,
+      in_arg3_sys_input, in_arg4_sys_input, in_arg5_sys_input in Hs.
+    rewrite H2, H3, H4, H5 in Hs.
+    refine (mmap_declined_not_ok _ _ _ _ _ _ _ model eff m' evs _ _ Hl _ Hpd Hs); vm_compute; reflexivity.
+  - apply (mmap_noaccess_outcome_si segs ms x8 model Hno Ha Hpd) in Hs.
+    destruct Hs as [(e & _ & E) | (a & _ & E)]; injection E as _ E2 _; rewrite E2; exact Hh.
 Qed.
 
 Lemma mprotect_outcome_ekept (segs : list Segment) : forall ms x8 model (addr : word) (len : Z),
@@ -123,6 +154,9 @@ Lemma mprotect_outcome_ekept (segs : list Segment) : forall ms x8 model (addr : 
   (bv_unsigned addr + page_round_up_Z len < two_pow_64)%Z ->
   ms_gpr ms 2 = Z_to_bv 64 3 ->
   let n := Z_to_bv 64 (page_round_up_Z len) in
+  (* carried, not discharged: mprotect_outcome_si gained the model's vDSO gate
+     (QSpR.v:1578, from QwNp.v:526 and cjson lib/RelSpec.v:563) *)
+  region_free (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) addr n = true ->
   map_contains (vm_noaccess (m_vmmaps model)) addr n = true ->
   map_contains (vm_maps (m_vmmaps model)) addr n = true ->
   m_halted model = None ->
@@ -133,8 +167,8 @@ Lemma mprotect_outcome_ekept (segs : list Segment) : forall ms x8 model (addr : 
         /\ o = Ok (mkEffect (Z_to_bv 64 0) [] [(addr, n)]) (mprotect_model addr n model) []))
   /\ (forall eff m' evs, syscall_spec (sys_input segs ms x8) model (Ok eff m' evs) -> m_halted m' = None).
 Proof.
-  intros ms x8 model addr len Hno H0 Hal H1 Hlen Hnw H2 n Hna Hma Hh.
-  pose proof (mprotect_outcome_si segs ms x8 model addr len Hno H0 Hal H1 Hlen Hnw H2 Hna Hma) as Hchk.
+  intros ms x8 model addr len Hno H0 Hal H1 Hlen Hnw H2 n Hvd Hna Hma Hh.
+  pose proof (mprotect_outcome_si segs ms x8 model addr len Hno H0 Hal H1 Hlen Hnw H2 Hvd Hna Hma) as Hchk.
   cbv zeta in Hchk. fold n in Hchk.
   split.
   - intros o.

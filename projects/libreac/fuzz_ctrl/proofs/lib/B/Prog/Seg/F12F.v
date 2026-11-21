@@ -4,15 +4,16 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module names and numbers changed; 1592 of its 1709 lines of code are new or changed and 894 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F12.v; 137 of its 323 lines of code are new or changed and 1523 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* rule 24: no function proved. *)
 (* Provenance (route (a) bridge input, lead 22:18Z; auditor a Theorem Labs lane):
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17; measured against this image only;
    source runs: lib/B/Prog/Seg/F12.v f12_evt (:633; the run of BOTH segment rows S_F12 and S_F12_298, which enter
-     at pc = 0x82304 and at pc = 0x82308) at a working branch 3803efccea0
+     at pc = 0x82304 and at pc = 0x82308) at a working branch
      (blob 00a442384dd51240c922c0e15640c08fabaff84f);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    split (parent 23:50Z: split at EVERY call, never state a callee contract locally): f12_evt calls __asan_memcpy
      (0x52164) at 0x8233c.  f12_pre_F re-runs F12.v lines 686-848 (pc -> the callee entry 0x52164, ra = 0x82340):
      the branch bltz a0 at 0x82304 not taken, the nine shadow stores 0x82308-0x82328, the count, the two spill

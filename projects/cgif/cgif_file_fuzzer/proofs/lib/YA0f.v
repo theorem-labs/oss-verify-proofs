@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's CONFIG_RSEQ flag): changed SEGS_wr, node_x_sound_XIMemset, node_x_sound_XMemset, node_x_sound_XIMemcpy, node_x_sound_XMemcpy, node_x_sound_XMemIsZero, node_x_sound_XIStrncpy, node_x_sound_XPopFree; added rz. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -572,6 +573,11 @@ Hypothesis SHADOW_ok : shadow_ok A.
 Variable FS0 : Fs.Fs.
 Definition segs_wr_ok : Prop := forall seg, In seg SEGS -> seg_writable seg = true -> seg_readable seg = true.
 Hypothesis SEGS_wr : segs_wr_ok.
+(* CONFIG_RSEQ flag, as [YK09.rseq_z] writes it (0 or 1), threaded so these
+   node proofs are not pinned to the rseq-on build.  Declared LAST among this
+   section's variables on purpose: [rz] lands after [FS0] in every signature,
+   matching [YA0e]'s [x_stmt]. *)
+Variable rz : Z.
 #[local] Notation cfg := (cfg_of SEGS) (only parsing).
 #[local] Notation CSOK := (cs_ok SEGS A LIMIT TOP SINV argH FS0) (only parsing).
 #[local] Notation HID := (hid A TOP argH) (only parsing).
@@ -2092,7 +2098,7 @@ unfold M, Mr, mrestrict in Zi. rewrite Hhx in Zi. exact Zi.
 split; [eapply w_env_agree_le; [exact Hag | exact Fle] | exact Hag].
 Qed.
 Theorem node_x_sound_XIMemset :
-fill_spec SEGS (x_imemset A) 256 -> x_stmt SEGS A nx0 LIMIT TOP SINV argH FS0 XIMemset.
+fill_spec SEGS (x_imemset A) 256 -> x_stmt SEGS A nx0 LIMIT TOP SINV argH FS0 rz XIMemset.
 Proof.
 intros SUM args cs cs' E R FULL model T HC Hal Hn Hk. cbn [node_x] in Hn.
 destruct (spad_fillz A nx0 cs (x_imemset A) 256) as [cs0|] eqn:Hsz.
@@ -2102,7 +2108,7 @@ destruct (spad_fill0 A nx0 cs (x_imemset A) 256) as [cs1|] eqn:Hsp.
 - exact (summary_fill_sound _ _ SUM cs cs' E R FULL model T HC Hal Hn Hk).
 Qed.
 Theorem node_x_sound_XMemset :
-fill_spec SEGS (x_memset A) two64 -> x_stmt SEGS A nx0 LIMIT TOP SINV argH FS0 XMemset.
+fill_spec SEGS (x_memset A) two64 -> x_stmt SEGS A nx0 LIMIT TOP SINV argH FS0 rz XMemset.
 Proof.
 intros SUM args cs cs' E R FULL model T HC Hal Hn Hk. cbn [node_x] in Hn.
 destruct (spad_fillz A nx0 cs (x_memset A) two64) as [cs0|] eqn:Hsz.
@@ -2112,19 +2118,19 @@ destruct (spad_fill0 A nx0 cs (x_memset A) two64) as [cs1|] eqn:Hsp.
 - exact (summary_fill_sound _ _ SUM cs cs' E R FULL model T HC Hal Hn Hk).
 Qed.
 Theorem node_x_sound_XIMemcpy :
-copy_spec SEGS (x_imemcpy A) -> x_stmt SEGS A nx0 LIMIT TOP SINV argH FS0 XIMemcpy.
+copy_spec SEGS (x_imemcpy A) -> x_stmt SEGS A nx0 LIMIT TOP SINV argH FS0 rz XIMemcpy.
 Proof. intros SUM args. exact (summary_copy_sound _ SUM). Qed.
 Theorem node_x_sound_XMemcpy :
-copy_spec SEGS (x_memcpy A) -> x_stmt SEGS A nx0 LIMIT TOP SINV argH FS0 XMemcpy.
+copy_spec SEGS (x_memcpy A) -> x_stmt SEGS A nx0 LIMIT TOP SINV argH FS0 rz XMemcpy.
 Proof. intros SUM args. exact (summary_copy_sound _ SUM). Qed.
 Theorem node_x_sound_XMemIsZero :
-miz_spec SEGS (x_memiszero A) -> x_stmt SEGS A nx0 LIMIT TOP SINV argH FS0 XMemIsZero.
+miz_spec SEGS (x_memiszero A) -> x_stmt SEGS A nx0 LIMIT TOP SINV argH FS0 rz XMemIsZero.
 Proof. intros SUM args. exact (summary_miz_sound SUM). Qed.
 Theorem node_x_sound_XIStrncpy :
-istrncpy_spec SEGS (x_istrncpy A) (x_sealed A) -> x_stmt SEGS A nx0 LIMIT TOP SINV argH FS0 XIStrncpy.
+istrncpy_spec SEGS (x_istrncpy A) (x_sealed A) -> x_stmt SEGS A nx0 LIMIT TOP SINV argH FS0 rz XIStrncpy.
 Proof. intros SUM args. exact (summary_istrncpy_sound SUM). Qed.
 Theorem node_x_sound_XPopFree :
-popfree_spec SEGS (x_popfree A) -> x_stmt SEGS A nx0 LIMIT TOP SINV argH FS0 XPopFree.
+popfree_spec SEGS (x_popfree A) -> x_stmt SEGS A nx0 LIMIT TOP SINV argH FS0 rz XPopFree.
 Proof. intros SUM args. exact (summary_popfree_sound SUM args). Qed.
 Lemma w_cover_x_rd1 : forall fuel E M k b i stop,
 know_ok SEGS E M k -> cover_x fuel k b i stop = true ->

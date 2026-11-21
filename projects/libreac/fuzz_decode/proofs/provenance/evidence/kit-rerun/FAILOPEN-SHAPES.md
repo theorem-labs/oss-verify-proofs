@@ -1,6 +1,6 @@
 # kit-rerun: the KNOWN FAIL-OPEN shapes (a)-(h) of cmpkit 86da41d3ef68, on every function the records compare
 
-cmpkit 86da41d3ef68 stays the kit of record. Its registry of known fail-opens (tools commit 7f2e3c70626) says: an
+cmpkit 86da41d3ef68 stays the kit of record. Its registry of known fail-opens (tools) says: an
 EQUAL verdict of the kit is not evidence where an address value reaches a load / store / jalr / AMO base through one
 of these shapes:
 
@@ -216,7 +216,7 @@ The pass checks the code around the settled rows. It does not settle them again:
 The A record's author answered the same eight shapes in a reviewed trace of the A record (the original record, of
 which `A/` here is a token copy):
 
-- commit `ec63ec6c4edeb4e7ee2360980dbd3f1070504c41`;
+-;
 - `proofs/libreac/fuzz_decode/provenance/alloc-reloc/A/kit-rerun-4bbd3a74be89/LUI-HANDTRACE.md`;
 - sha256 `0a84f50288235502c4c3173fb276d808f802796accb9d47fec960580ec83a119`, section 9.
 

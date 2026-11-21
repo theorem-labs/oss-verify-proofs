@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/YGcfReallocCompose.v; 125 of its 531 lines of code are new or changed and 416 lines of the source are left out. *)
-(* CARRIED from commit 08d2b9719e4ba2b74ff3b229a5b7680906920eba,
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YGcfReallocComposeRh.v, sha256 199e1971319f541547358f3d17564a200bf507e3ed090a68181bd50b48dcc86e (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the Require lines only:
    the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
@@ -162,7 +163,7 @@ rwh_mid_a : forall ly S Hp W regs mem md p n_old n ch S1 W1 inst so bp regsA mem
     same_io md2 mdM /\ RGtop.rkeep segs B regs W2 mem2 W3 memM /\
     errno_kept_cf B mem2 memM /\ 
     K2 ly S Hp W regs mem md p n_old n ch q ly2 S2 W3 regsM memM mdM);
-(* The copy routine (REAL(memcpy), reached at cf_pc_memcpy): ReallocG.amemcpy_realizes (ReallocG.v:243-251) at that
+(* The copy routine (REAL(memcpy), reached at cf_pc_memcpy): ReallocG.amemcpy_realizes (ReallocG.v:244-252) at that
    pc, with the overlay normal form kept. *)
 rwh_memcpy : forall (W : world segs) regs mem md d s n,
   ReallocG.rmemcpy_pre segs W regs mem d s n ->

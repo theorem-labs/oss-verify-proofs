@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: copied from the released projects/libreac/fuzz_decode/proofs/lib/A/Prog/reac_frame_is_reac_F_c.v (commit 48907dc7e8ca) for reac-repacer/fuzz_wire's image A (fuzz_wire.asan). Changed: the module paths (libreac.fuzz_decode -> reac_repacer.fuzz_wire); the entry in the comment (0x81154 -> 0x817bc, measured on this image). The statement text is unchanged. *)
+(* Modified by Theorem Labs, 2026-10: copied from the released projects/libreac/fuzz_decode/proofs/lib/A/Prog/reac_frame_is_reac_F_c.v for reac-repacer/fuzz_wire's image A (fuzz_wire.asan). Changed: the module paths (libreac.fuzz_decode -> reac_repacer.fuzz_wire); the entry in the comment (0x81154 -> 0x817bc, measured on this image). The statement text is unchanged. *)
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Lib Require Import PropExec MState Mem Exec Frame.

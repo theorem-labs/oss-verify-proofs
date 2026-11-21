@@ -1,9 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: added place_in_model_linux, place_in_model_linux_complete, place_in_model_linux_grants; taken in part from projects/simdjson/fuzz_minifyimpl/proofs/lib/Common/PlacementSearch.v, lines 7-8, 357-407. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State.
+From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. (* [comment removed for export] *)
 Import ListNotations.
 Open Scope bv_scope.
@@ -351,6 +354,58 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
+
+(* From the model's PlacementSearch.v at 08b1429 (new upstream). *)
+Definition place_in_model_linux (h : VmMaps) (nZ : Z) : option Z :=
+  place (vm_reserved h ++ vm_maps h) task_unmapped_base (alloc_top h) nZ.
+
+(** THE WITNESS A BUILDER NEEDS.  A free gap in Linux's fallback window
+    means the rule has an answer — for every kernel build and every
+    hint.  The answer is [Placement.linux_place_b]'s, NOT [g]: the
+    search here only shows the admissible set is non-empty. *)
+
+(* From the model's PlacementSearch.v at 08b1429 (new upstream). *)
+Lemma place_in_model_linux_grants : forall h thp hint nZ g,
+  (0 < nZ)%Z -> (nZ mod page_size = 0)%Z ->
+  place_in_model_linux h nZ = Some g ->
+  exists a, linux_place h thp hint nZ a.
+Proof.
+  intros h thp hint nZ g HnPos HnAl H. unfold place_in_model_linux in H.
+  destruct (place_sound _ _ _ _ _ H) as (Hal & Hlo & Hhi & Hfree).
+  apply (linux_place_exists h thp hint nZ HnPos HnAl).
+  exists g. right. unfold gap_fits. repeat split; assumption.
+Qed.
+
+(** …and the search finds one whenever a free aligned range sits in
+    that window, so the bridge is not vacuous. *)
+
+(* From the model's PlacementSearch.v at 08b1429 (new upstream). *)
+Lemma place_in_model_linux_complete : forall h nZ g,
+  (0 < nZ)%Z -> (nZ mod page_size = 0)%Z ->
+  (g mod page_size = 0)%Z -> (task_unmapped_base <= g)%Z ->
+  (g + nZ <= alloc_top h)%Z ->
+  region_free (vm_reserved h ++ vm_maps h)
+    (Z_to_bv 64 g) (Z_to_bv 64 nZ) = true ->
+  exists a, place_in_model_linux h nZ = Some a.
+Proof.
+  intros h nZ g Hn Hnal HgAl Hglo Hghi Hfree.
+  unfold place_in_model_linux.
+  apply (place_complete _ _ _ _ g); try assumption.
+  - unfold task_unmapped_base. lia.
+  - unfold task_unmapped_base, page_size. reflexivity.
+  - exact (alloc_top_lt h).
+Qed.
+
+(* ---- that the completeness lemma is not vacuous ---- *)
+
+(** [place_complete] concludes [exists a, place … = Some a], which cannot
+    hold for a reason other than the search returning something — the
+    only way it could be hollow is if its HYPOTHESES were unsatisfiable,
+    which no reader can see by inspection.  These three instances settle
+    that, and they are computations rather than assumptions: the first
+    two exhibit ledgers meeting every premise, and the third exhibits one
+    that does not, so the function is visibly partial rather than
+    trivially total. *)
 
 Definition witness_ledger : list (word * word) :=
   [(Z_to_bv 64 4096, Z_to_bv 64 8192)].

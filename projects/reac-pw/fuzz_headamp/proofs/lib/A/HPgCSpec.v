@@ -1,12 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/A/APgCSpec.v at origin/ossv/recipes 6ebe35ba632
-   (the Section form of its lines 32-164) and proofs/libreac/fuzz_grant/lib/A/ACfn.v at origin/ossv/recipes
-   2638f9235e2 (lines 50-61 and 87-116: tfib_lib_post_x, tfib_lib_pre_xf, tfib_lib_contract_xf) for
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/A/APgCSpec.v
+   (the Section form of its lines 32-164) and proofs/libreac/fuzz_grant/lib/A/ACfn.v
+    (lines 50-61 and 87-116: tfib_lib_post_x, tfib_lib_pre_xf, tfib_lib_contract_xf) for
    reac-pw/fuzz_role, image A and image B. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgCSpec.v at
-   0de5d668c87 for reac-pw/fuzz_headamp, image A (fuzz_headamp.asan) and image B (fuzz_headamp.asan-ubsan): module
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgCSpec.v
+    for reac-pw/fuzz_headamp, image A (fuzz_headamp.asan) and image B (fuzz_headamp.asan-ubsan): module
    paths changed, the rl_ prefix renamed to hd_, role's ten callee contracts replaced by headamp's ten (the parse,
    its 8-byte wrapper and the eight check functions), and role's two middle-segment contracts replaced by headamp's
    five. What differs from role's file, and why:
@@ -30,11 +30,12 @@
      stack-guard cells, the errno cell and the four read-only strings those wrappers read.
    - role's pod_nearest contract has no counterpart: headamp inlines pod_nearest into M03 (no symbol, lo = 0,
      hi = 255 folded in), so its steps are part of headamp_check_contract.
-   The ASan texts restate the plain contracts of lib/Prog at 87a4cb29502 (
+   The ASan texts restate the plain contracts of lib/Prog (
    reac_headamp_prop_parse_result_c.v, reac_headamp_prop_parse_c.v, check_*_c.v) over the same shared model
    (lib/Pod/Headamp.v, lib/Spec/HeadBytes.v) and must not weaken them: each ASan contract's premises are the plain
    ones plus the shadow facts the instrumented checks read, and each post states the plain post's memory and
    register facts in the reader form of this engine. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The ASan-level contracts of reac-pw/fuzz_headamp's own functions. IMAGE-INDEPENDENT: no image module is
    Required; segs, the symbol record B, the meter MT, the sink K, every entry address, string address, table
    address and constant cell is a Section variable, a parameter or a field of the record hd_himg, so image A
@@ -71,7 +72,7 @@
      its float-cast check, restored only by the epilogue), and fa0 (f10: fmv.s A 0x834c0, the argument of the
      soft-float call), and the parse's fa4 and fa5; every other segment leaves the float state as it is.
    - the strtol and strncmp wrappers are NOT restated here: their texts are the ones their port sources state,
-     plugin-hostd/fuzz_command lib/A/Rt/RtNumber.v astrtol_realizes (at 2d2ff01bb6f2) and
+     plugin-hostd/fuzz_command lib/A/Rt/RtNumber.v astrtol_realizes and
      reac-pw/fuzz_pin lib/A/PPgWrap.v astrncmp_realizes (with its
      len + 8 range), and the strcmp and strlen wrappers' are fuzz_identity's astrcmp_realizes / astrlen_realizes.
      Each walk takes the one it calls as a Section hypothesis at its own image's trampoline (image A:

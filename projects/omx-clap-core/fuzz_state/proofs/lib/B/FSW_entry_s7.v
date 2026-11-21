@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/PItems_entry.v, with its module paths and module names changed; 2668 of its 2786 lines of code are new or changed and 1447 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S7a_put.v, with its module paths and module names changed; 881 of its 954 lines of code are new or changed and 2713 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs program part, lane ENTRY, IMAGE B (fs.asan-ubsan, sha256 5ac5ce0954f8...), segment S7 of the LLVMFuzzerTestOneInput
    walk (fs.asan-ubsan 0x81148-0x8116c; lib/B/FSW_entry_defs.v): from check_as_written's return (C6, 0x81148) to the join
    after the round-trip / reject check (C7, 0x81170). `ld a2, 0(s4)` (0x81148) reads len (the frame's offset 32, atom 46;
@@ -15,9 +16,9 @@
    answer, the payload, the allocator statics) is carried across each run by its frame and across each call by the
    callee's journal and AR at the return.
    rule 24: proves function LLVMFuzzerTestOneInput (segment S7; reuse search: proof-index LLVMFuzzerTestOneInput,
-   ported from a working branch 08ad70da3bf).
-   Ported from: a working branch 0d34d65d2b7 lib/A/FSW_entry_s7.v (fuzz_state's own A walk, from
-   a working branch 08ad70da3bf, itself from donor cgif_file_fuzzer lib/A/ACf5.v:73-84 and A/ACfk.v:220-245), with
+   ported from a working branch).
+   Ported from: a working branch lib/A/FSW_entry_s7.v (fuzz_state's own A walk, from
+   a working branch, itself from donor cgif_file_fuzzer lib/A/ACf5.v:73-84 and A/ACfk.v:220-245), with
    the CTX premise of check_round_trip_spec dropped (post-drop shape) and the image-B form of cgif_file_fuzzer
    lib/YCfj.v + lib/YCfi.v (origin/ossv/recipes).
    Named Section hypotheses, owner RELOC-B: none (the Section takes only the statement's own facts: fs_img_facts and the

@@ -1,6 +1,6 @@
 schema: oss-fuzz-theorems/release/1
-release: 2026.11.2
-date: '2026-11-08'
+release: 2026.11.3
+date: '2026-11-21'
 namespace: OSSVerify
 opam_stem: oss-verify
 oss_fuzz:
@@ -11,17 +11,18 @@ semantics:
   name: rocq-linux-process-semantics-core
   version: unreleased
   repository: https://github.com/theorem-labs/rocq-linux-process-semantics
-  commit: f1006fe8178338a499b5e5c41be83006c4edd058
+  commit: c0dd863a0f8f307beca7f2ee5cb4d7686a875779
   published: true
 rocq:
   package: rocq-core
   version: 9.2.0
 images:
-  checker: ghcr.io/theorem-labs/oss-fuzz-theorems-checker@sha256:063f93261f11ba449f1c3825884fadc65cf1fc836d4a3ee534633211abbdc3eb
+  checker: ghcr.io/theorem-labs/oss-fuzz-theorems-checker@sha256:dbe610615b7e22cf20e45ac04c0740b05ce9d1ad4211006abf546f845fc3f12f
   runner: ghcr.io/theorem-labs/oss-fuzz-theorems-runner@sha256:2eb5afc7b37095cbab0e290966b991cda8bdedbefe8fdb4ce44f56d0c30834c0
   builder:
   - ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
   - ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:c7c5abdc2676e121ca7532b553a83148b384001a553b6ffea63b1911848fd711
+  - ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain-rust@sha256:ad8a4572d32dcb70ea3c4ac90e0c4d9c4ecd5cc61721792b0b456b748469e48f
 binaries:
   store: github-release-assets
 counts:

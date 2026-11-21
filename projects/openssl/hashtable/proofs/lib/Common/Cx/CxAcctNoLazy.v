@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the output channel keeps a reader; the nodes check the read-only backing). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -19,6 +20,7 @@ From OSSVerify.Proofs.openssl.hashtable.lib Require Import
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 From OSSVerify.Proofs.openssl.hashtable.lib Require Import CxRel CxAcctShape CxNodesLibE.
+From OSSVerify.Proofs.openssl.hashtable.lib.Common.Cfg Require Import RomBase.
 Import ListNotations.
 Open Scope bv_scope.
 
@@ -495,7 +497,9 @@ Proof.
   rewrite (read_u64_rdn segs ms _ n Hrom Hn).
   rewrite (proj2 (Z.leb_gt _ _) Hlt).
   rewrite bv_add_Zform. change (bv_unsigned (16 : word)) with 16%Z.
-  rewrite (IH _ Hrom Hr). f_equal.
+  rewrite (IH _ Hrom Hr).
+  rewrite (iovec_entry_accesses_of_array segs ms b n r iov Hrom (conj Hb (conj Hn (conj Hlt Hr)))).
+  cbn [app]. f_equal.
   - f_equal. rewrite Z.mul_0_r, Z.add_0_r. symmetry. apply u64_roundtrip'.
   - rewrite <- seq_shift, map_map. apply map_ext. intros i. f_equal.
     apply bv_eq. rewrite !Z_to_bv_unsigned. unfold bv_wrap.
@@ -588,7 +592,7 @@ Theorem srz_step_nolazy : forall ms msr' model T,
 Proof.
   intros ms msr' model T HL Hh Hsvc Hs Hk.
   destruct (node_instr_nolazy segs H HH Hwx ms msr' model HL Hh Hsvc Hs) as [_ Hnode].
-  exact (crz_silent1 segs _ _ T Hnode Hk).
+  exact (crz_silent1 segs _ _ T Hnode (sys_rob_instr segs (mkCfg ms model) Hsvc) Hk).
 Qed.
 
 Lemma srz_msteps_nolazy_ind : forall msr0 msr',
@@ -604,7 +608,7 @@ Proof.
   - rewrite unrestrict_restrict in Hk. exact Hk.
   - rewrite restrict_svc_pending in Hsvc.
     destruct (node_instr_nolazy segs H HH Hwx ms msr1 model HL Hh Hsvc Hstep) as [Hcl1 Hnode].
-    apply (crz_silent1 segs _ _ T Hnode).
+    apply (crz_silent1 segs _ _ T Hnode (sys_rob_instr segs (mkCfg ms model) Hsvc)).
     apply (IH (unrestrict H (ms_mem ms) msr1) model T).
     + symmetry. apply restrict_unrestrict_clean. exact Hcl1.
     + exact HL.
@@ -724,6 +728,7 @@ Lemma srz_writev2_R : forall F regs (pc : word) mr model w (fd : Z) (iov b1 n1 b
   fetch_word segs pc = Some w -> is_ecall w = true ->
   lazy_all_hidden H model -> m_halted model = None -> mclean H mr ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  m_channel_reader model = true ->
   (0 < fd < 2^31)%Z ->
   getr regs 17 = Z_to_bv 64 66 ->
   getr regs 10 = Z_to_bv 64 fd ->
@@ -747,9 +752,9 @@ Lemma srz_writev2_R : forall F regs (pc : word) mr model w (fd : Z) (iov b1 n1 b
     (t_alt (fun i : wr_index (bs1 ++ bs2) =>
        t_emit (map (WriteEv (Z_to_bv 64 fd)) (firstn (proj1_sig i) (bs1 ++ bs2))) (T (proj1_sig i)))).
 Proof.
-  intros F regs pc mr model w fd iov b1 n1 b2 n2 bs1 bs2 T HF HE HL Hh Hc Hfd Hfdr H17 H10 H11 H12
+  intros F regs pc mr model w fd iov b1 n1 b2 n2 bs1 bs2 T HF HE HL Hh Hc Hfd Hrdr Hfdr H17 H10 H11 H12
          Rb1 Rn1 Rb2 Rn2 Rs1 Rs2 Hiov Hb1 Hb2 Ht1 Ht30 Hk.
-  eapply (srz_writev2_mi segs regs pc (munrestrict H F mr) model w fd iov b1 n1 b2 n2 bs1 bs2 T HF HE Hh Hfd Hfdr H17 H10 H11 H12);
+  eapply (srz_writev2_mi segs regs pc (munrestrict H F mr) model w fd iov b1 n1 b2 n2 bs1 bs2 T HF HE Hh Hfd Hrdr Hfdr H17 H10 H11 H12);
     try (apply (rdn_R segs H HH F mr); assumption); try assumption.
   apply (mat_id_writev2 F mr model iov b1 n1 b2 n2 bs1 bs2); assumption.
 Qed.
@@ -758,6 +763,7 @@ Lemma srz_writev1_R : forall F regs (pc : word) mr model w (fd : Z) (iov b1 n1 :
   fetch_word segs pc = Some w -> is_ecall w = true ->
   lazy_all_hidden H model -> m_halted model = None -> mclean H mr ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  m_channel_reader model = true ->
   (0 < fd < 2^31)%Z ->
   getr regs 17 = Z_to_bv 64 66 ->
   getr regs 10 = Z_to_bv 64 fd ->
@@ -777,9 +783,9 @@ Lemma srz_writev1_R : forall F regs (pc : word) mr model w (fd : Z) (iov b1 n1 :
     (t_alt (fun i : wr_index bs1 =>
        t_emit (map (WriteEv (Z_to_bv 64 fd)) (firstn (proj1_sig i) bs1)) (T (proj1_sig i)))).
 Proof.
-  intros F regs pc mr model w fd iov b1 n1 bs1 T HF HE HL Hh Hc Hfd Hfdr H17 H10 H11 H12
+  intros F regs pc mr model w fd iov b1 n1 bs1 T HF HE HL Hh Hc Hfd Hrdr Hfdr H17 H10 H11 H12
          Rb1 Rn1 Rs1 Hiov Hb1 Ht1 Ht30 Hk.
-  eapply (srz_writev1_mi segs regs pc (munrestrict H F mr) model w fd iov b1 n1 bs1 T HF HE Hh Hfd Hfdr H17 H10 H11 H12);
+  eapply (srz_writev1_mi segs regs pc (munrestrict H F mr) model w fd iov b1 n1 bs1 T HF HE Hh Hfd Hrdr Hfdr H17 H10 H11 H12);
     try (apply (rdn_R segs H HH F mr); assumption); try assumption.
   apply (mat_id_writev1 F mr model iov b1 n1 bs1); assumption.
 Qed.
@@ -788,6 +794,7 @@ Lemma srz_writev2_wall_R : forall F regs (pc : word) mr model w (fd : Z) (iov b1
   fetch_word segs pc = Some w -> is_ecall w = true ->
   lazy_all_hidden H model -> m_halted model = None -> mclean H mr ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  m_channel_reader model = true ->
   (0 < fd < 2^31)%Z ->
   getr regs 17 = Z_to_bv 64 66 ->
   getr regs 10 = Z_to_bv 64 fd ->
@@ -811,7 +818,7 @@ Lemma srz_writev2_wall_R : forall F regs (pc : word) mr model w (fd : Z) (iov b1
   crz segs (mkCfg (mkst regs pc (munrestrict H F mr) (seg_rom segs)) model)
             (t_emit (map (WriteEv (Z_to_bv 64 fd)) (bs1 ++ bs2)) K).
 Proof.
-  intros F regs pc mr model w fd iov b1 n1 b2 n2 bs1 bs2 K HF HE HL Hh Hc Hfd Hfdr H17 H10 H11 H12
+  intros F regs pc mr model w fd iov b1 n1 b2 n2 bs1 bs2 K HF HE HL Hh Hc Hfd Hrdr Hfdr H17 H10 H11 H12
          Rb1 Rn1 Rb2 Rn2 Rs1 Rs2 Hiov Hb1 Hb2 Ht1 Ht30 HK Hk.
   pose proof (rdn_length segs mr _ _ _ Rs1) as L1. pose proof (rdn_length segs mr _ _ _ Rs2) as L2.
   pose proof (u64_range n1). pose proof (u64_range n2).
@@ -824,6 +831,7 @@ Lemma srz_writev1_wall_R : forall F regs (pc : word) mr model w (fd : Z) (iov b1
   fetch_word segs pc = Some w -> is_ecall w = true ->
   lazy_all_hidden H model -> m_halted model = None -> mclean H mr ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  m_channel_reader model = true ->
   (0 < fd < 2^31)%Z ->
   getr regs 17 = Z_to_bv 64 66 ->
   getr regs 10 = Z_to_bv 64 fd ->
@@ -843,7 +851,7 @@ Lemma srz_writev1_wall_R : forall F regs (pc : word) mr model w (fd : Z) (iov b1
   crz segs (mkCfg (mkst regs pc (munrestrict H F mr) (seg_rom segs)) model)
             (t_emit (map (WriteEv (Z_to_bv 64 fd)) bs1) K).
 Proof.
-  intros F regs pc mr model w fd iov b1 n1 bs1 K HF HE HL Hh Hc Hfd Hfdr H17 H10 H11 H12
+  intros F regs pc mr model w fd iov b1 n1 bs1 K HF HE HL Hh Hc Hfd Hrdr Hfdr H17 H10 H11 H12
          Rb1 Rn1 Rs1 Hiov Hb1 Ht1 Ht30 HK Hk.
   pose proof (rdn_length segs mr _ _ _ Rs1) as L1. pose proof (u64_range n1).
   apply crz_wall; [unfold word_to_nat in L1; lia | exact HK |].

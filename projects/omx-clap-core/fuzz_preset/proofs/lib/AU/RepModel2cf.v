@@ -1,20 +1,21 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/RepModel2cf.v (commit 4d286b2e618d, file sha256 1bf9e3508481) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 0 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepModel2cf.v (commit f01d79f3fb5, cf refill round 3; file sha256 6161557ead7e) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/RepModel2cf.v (file sha256 1bf9e3508481) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 0 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepModel2cf.v (cf refill round 3; file sha256 6161557ead7e) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a prior worker, RepF1Leaf): model lemmas of the class-full report arm, at the MODEL
    level only (itree / astate): no machine, no symbolic execution, no address.
    rule 24: proves no function (kind: model lemma).
    (1) [amreal_ibind_ipost]: amreal (YG0d.v:67-86) of [ibind t k] depends on k only at the results that t can
        return, so two continuations that agree on every result allowed by cfx_ipost (YGcfXs.v:301) are exchangeable.
-   (2) [only_secs]: errb_append_cf (YG00cf.v:133-143) changes the state only in st_secs and in the event counter
-       (the tick of errb_map_cf, YG00cf.v:122-127); [append_only_secs] and the field projections.
+   (2) [only_secs]: errb_append_cf (YG00cf.v:134-144) changes the state only in st_secs and in the event counter
+       (the tick of errb_map_cf, YG00cf.v:123-128); [append_only_secs] and the field projections.
    (3) [xs_same] / [errb_room]: errb_append_cf keeps the errbuf extent of xs_cf (YG0ncf.v:102-106) when it does
-       not remap ([append_keeps_xs]: errb_set_size, YG00cf.v:91-96, replaces the size entry in place or appends one,
+       not remap ([append_keeps_xs]: errb_set_size, YG00cf.v:92-97, replaces the size entry in place or appends one,
        and neither is a capacity entry), and the first of two appends either keeps it or leaves room for the second
        ([append_first]); [xs_cf_same] carries the extent across a layout step (layout_le, YG0f.v:64-69).
-   (4) exh_set (RepModelcf.v:34-37), the state shift of set_exh_cf: its fields, the class's flag, and the invariant
-       after the shift ([wfp_exh_set], from set_exh_ret_cf_ok, YG06cf.v:228-242).
+   (4) exh_set (RepModelcf.v:35-38), the state shift of set_exh_cf: its fields, the class's flag, and the invariant
+       after the shift ([wfp_exh_set], from set_exh_ret_cf_ok, YG06cf.v:229-243).
    The event counter is never named here (the event-term gate): [only_secs] fixes it by an existential, and
    [exh_set_regions_only] states that exh_set changes st_regions only. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
@@ -97,7 +98,7 @@ Lemma only_secs_cache : forall s s' c, only_secs s s' -> cache s' c = cache s c.
 Proof. intros s s' c H. unfold cache. rewrite (only_secs_st_cache s s' H). reflexivity. Qed.
 Lemma only_secs_exh_mem : forall s s' c, only_secs s s' -> exh_mem_cf s' c = exh_mem_cf s c.
 Proof. intros s s' c H. unfold exh_mem_cf. rewrite (only_secs_reg s s' c H). reflexivity. Qed.
-(* qloose (YG01.v:231-232) reads the two quarantine caches and st_chunks only. *)
+(* qloose (YG01.v:232-233) reads the two quarantine caches and st_chunks only. *)
 Lemma only_secs_qloose : forall s s', only_secs s s' -> (qloose s' <-> qloose s).
 Proof. intros s s' [n E]. rewrite E. reflexivity. Qed.
 
@@ -243,7 +244,7 @@ induction l as [|sm t IH]; intros k v H Hv; cbn [find_sz app length] in *.
 - destruct (is_errb_sz sm); [discriminate H|]. rewrite (IH (S k) v H Hv). f_equal. lia.
 Qed.
 
-(* The state errb_set_size ns writes (YG00cf.v:91-96). *)
+(* The state errb_set_size ns writes (YG00cf.v:92-97). *)
 Definition sz_set (ns : Z) (s : astate) : astate :=
   match find_sz (st_secs s) 0 with
   | Some i => set_secs (lupd (st_secs s) i (mkSec ns ERRB_SZ_TAG false)) s

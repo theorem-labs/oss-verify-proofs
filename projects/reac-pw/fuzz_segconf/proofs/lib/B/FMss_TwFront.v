@@ -1,5 +1,5 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMss_TwFront.v at cold/port-fm-int b6bc009d623, relocated A->B by asan-kit elfmap.py + remap.py over the unstripped twins; every image numeral re-derived by symbol / section (fmb-b4 reloc report). *)
-(* lib/A/Prog/TwFront.v (RtStr's port, unchanged from cold/c-asan-rt-fmio-n affce6489c8), re-run over the
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMss_TwFront.v, relocated A->B by asan-kit elfmap.py + remap.py over the unstripped twins; every image numeral re-derived by symbol / section (fmb-b4 reloc report). *)
+(* lib/A/Prog/TwFront.v (RtStr's port, unchanged), re-run over the
    local-shadow TW_ASAN / TW_STATIC / twoway contract (FMss_TwAsan.v, FMss_TwSetup_c.v, FMss_twoway_strstr_c.v);
    only the imports differ. *)
 From Stdlib Require Import ZArith NArith Arith List Lia Bool.

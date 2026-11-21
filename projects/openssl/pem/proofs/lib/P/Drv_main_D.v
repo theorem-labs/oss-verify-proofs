@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up facts stated over the launch's ProcInput; the write-certified stack window). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -52,7 +53,9 @@ Local Ltac OSSVerify.Proofs.openssl.pem.lib.Lib.Step.slia ::= first [ exact I | 
 Section WithCeiling0. Context {CE__ : Ceiling} {RN__ : RunRnd}.
 Section D.
   Variable CS : cli_sig.
-  Variables (sp0 : word) (argv envp : list (list byte)) (uid : word) (arg0 arg1 : list byte) (TID : Z) (PAD : list byte) (S4 S5 S6 S7 S8 S9 S10 S11 : word).
+  Variables (sp0 : word) (inp : ProcInput) (mbase : word) (arg0 arg1 : list byte) (TID : Z) (PAD : list byte) (S4 S5 S6 S7 S8 S9 S10 S11 : word).
+  Local Notation argv := (in_argv inp) (only parsing).
+  Local Notation envp := (in_envp inp) (only parsing).
   Hypothesis VSP : valid_sp sp0.
   Hypothesis CEIL : ceil_ok sp0.
   Hypothesis VARGV : valid_argv argv.
@@ -69,10 +72,10 @@ Section D.
 
   Notation usp0 := (bv_unsigned sp0).
   Notation LO' := (LO sp0).
-  Notation BASE' := (BASE sp0 argv envp uid TID).
-  Notation FRAME' mm := (MFRAME sp0 argv mm PAD S7 S6 S5 S4).
-  Notation IMGB := (build_stack_bytes pph sp0 argv envp uid run_hw run_draw).
-  Notation RUN0' := (RUN0 CS sp0 argv envp uid TID PAD S4 S5 S6 S7 S8 S9 S10 S11).
+  Notation BASE' := (BASE sp0 inp mbase TID).
+  Notation FRAME' mm := (MFRAME sp0 inp mm PAD S7 S6 S5 S4).
+  Notation IMGB := (entry_stack_image inp mbase pph PENTRY sp0 run_draw).
+  Notation RUN0' := (RUN0 CS sp0 inp mbase TID PAD S4 S5 S6 S7 S8 S9 S10 S11).
   Notation RQEXIT := (Drv_main_C.RQEXIT).
 
   Notation GST pc x1 t0 t1 t2 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 t3 t4 t5 t6 F fc mm :=
@@ -101,7 +104,7 @@ Section D.
     lazymatch goal with |- impl _ _ (?tm _) _ ?msx => apply (implM_unfold__ psegs tm s RQEXIT msx) end.
     eapply implM_bind.
     { unfold rfree_stmt in FREE.
-      eapply FREE with (lo := usp0 - 8388608) (B := usp0) (p := bufp) (A := A) (n := cap); try reflexivity; unfold RATP;
+      eapply FREE with (lo := usp0 - 6144513) (B := usp0) (p := bufp) (A := A) (n := cap); try reflexivity; unfold RATP;
         rewrite ?(unsigned_lit RMallocRep.RATP) by (unfold RMallocRep.RATP; lia); rewrite ?(unsigned_lit (usp0 + -128)) by lia; unfold RMallocRep.RATP; cbn [Z.add];
         first [ exact P0 | apply in_or_app; right; left; reflexivity | exact AUX | exact ST | exact MI | exact ERR | unfold RFREE_STACK; lia | lia ]. }
     cbv beta. intros [] s2 ms2 PO.
@@ -116,7 +119,7 @@ Section D.
       - right; left. unfold LXW_CLIENT, LXW_BASEINIT, LXW_LIBCRYPTO, LXW_PSELF, LXW_PKEYS, LXW_MREPL, LXW_DKEY in Hw. cbn [rin_ivs fst snd] in Hw.
         unfold ralloc_static, RMallocRep.RLIBC, RMallocRep.RCTX, RMallocRep.RERRNO, RMallocRep.RSSP_GUARD, RMallocRep.RGOT_SSP. lia. }
     apply implM_ret. unfold Drv_main_C.RQEXIT.
-    eapply (main_return sp0 argv TID PAD S4 S5 S6 S7 S8 S9 S10 S11 VSP CEIL HT code s2 CLB); [lia| eapply (MFRAME_heap sp0 argv); [exact HPR3| exact FR0]| unfold LO; exact ST3| | exact (cli_exit CS _ _ CLI3)| exact HEAP3| | | exact MI3|].
+    eapply (main_return sp0 inp TID PAD S4 S5 S6 S7 S8 S9 S10 S11 VSP CEIL HT code s2 CLB); [lia| eapply (MFRAME_heap sp0 inp); [exact HPR3| exact FR0]| unfold LO; exact ST3| | exact (cli_exit CS _ _ CLI3)| exact HEAP3| | | exact MI3|].
     - eapply (ESTAT_agree TID _ _ _ AG); [| exact ES]. intros a Ha. right; left.
       unfold estat_addr, ralloc_static, RMallocRep.RLIBC, RMallocRep.RCTX, RMallocRep.RERRNO, RMallocRep.RSSP_GUARD, RMallocRep.RGOT_SSP in *. lia.
     - rewrite SOE3. eapply stdout_file_agree; [exact AG| | exact SOF]. intros a Ha. right; left.
@@ -147,7 +150,7 @@ Section D.
     lazymatch goal with |- impl _ _ (?tm _) _ ?msx => apply (implM_unfold__ psegs tm s RQEXIT msx) end.
     eapply implM_bind.
     { unfold rtarget_run_stmt, RTARGET_RUN in TRUN.
-      eapply TRUN with (lo := usp0 - 8388608) (B := usp0) (p := bufp) (cap := cap) (flags := fl) (errv := errv);
+      eapply TRUN with (lo := usp0 - 6144513) (B := usp0) (p := bufp) (cap := cap) (flags := fl) (errv := errv);
         rewrite ?(unsigned_lit (usp0 + -128)) by lia.
       - exact P0.
       - left; reflexivity.

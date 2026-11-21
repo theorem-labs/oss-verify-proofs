@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (ASAN_B's launch-extra reservation bounds n_resx and p_resx, and asan_b_init per value of the CONFIG_RSEQ flag). *)
 From Stdlib Require Import ZArith List.
 From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.AS Require Import X0m4 X0li.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -9,7 +10,7 @@ Open Scope Z_scope.
 Import APC.
 
 Definition ASAN_B : atable :=
-{| img_lo := 0x10000; img_hi := 0x65b000; n_res := 4; shadow_off := 0x7fff8000;
+{| img_lo := 0x10000; img_hi := 0x65b000; n_res := 4; n_resx := 2; p_resx := 20; shadow_off := 0x7fff8000;
 a_entry := 0x449a8; rw_lo := 0xf7000; rw_len := 0x564000; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 11;
 x_imemset := 0x79c2c; x_imemcpy := 0x79bb0; x_memset := 0xf1af8; x_memcpy := 0xf16f4; x_memiszero := 0x7a15c;
 x_istrncpy := 0x7a058; x_sealed := 0x11d01; x_popfree := 0x4b138;
@@ -21,4 +22,5 @@ x_hsort := 0x66298 |}.
 Definition ASAN_B_TEXT_LO : Z := 0x449a8.
 Definition ASAN_B_TEXT_N : nat := 182561.
 Definition ASAN_B_MAIN : Z := 0x962b4.
-Definition asan_b_init : acs := init_acs_of ASAN_B.
+(** one initial state per value of the run's CONFIG_RSEQ flag [r] ([X0li.AUXSZ]) *)
+Definition asan_b_init (r : Z) : acs := init_acs_of r ASAN_B.

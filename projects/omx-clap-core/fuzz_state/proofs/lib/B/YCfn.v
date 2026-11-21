@@ -2,14 +2,15 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YCfn.v, with its module paths changed and its addresses moved to omx-clap-core/fuzz_state's ASan+UBSan build (fuzz_state.asan-ubsan). *)
-(* Modified by Theorem Labs, 2026-10-29: A/ACfn.v's library-invariant contract (tfib_lib_contract_xI / _xI_all, eeccafe492f) applied to this file by 3-way merge of A's delta 4aa3d96b823 -> 946ad86dc9f; B's literals unchanged. *)
+(* Modified by Theorem Labs, 2026-10-29: A/ACfn.v's library-invariant contract (tfib_lib_contract_xI / _xI_all) applied to this file by 3-way merge of A's delta ->; B's literals unchanged. *)
 (* Modified by Theorem Labs, 2026-10-29: one line diverges from the cgif donor text. The harness FP of
    tfib_lib_post_x is `sink_token :: FS_PSTAT_FP`, not the donor's `[sink_token]`: fuzz_state's harness owns
    allocator statics (g_live / g_peak / g_count / g_fail_at) that it provably writes, so the donor's FP would
    freeze cells the program changes and make fs_entry_goal unprovable. a Theorem Labs lane states the same shape
-   (FM_PSTAT_FP threaded to LLVMFuzzerTestOneInput, FMTfibParts on a working branch aeb12aaa12b).
+   (FM_PSTAT_FP threaded to LLVMFuzzerTestOneInput, FMTfibParts on a working branch).
    Approved by the unit owner 2026-10-29. *)
-(* Modified by Theorem Labs, 2026-10: the driver's library-invariant form of the contract, ADDED beside the plain one (ported from: a working branch 4e5e8a3dde1 A/ACfn.v): a Section variable LI and tfib_lib_contract_xI / tfib_lib_contract_xI_all, where call ci (0 <= ci < 4) needs LI ci W mem and its post also gives LI (ci + 1) W' mem'. tfib_lib_pre_x, tfib_lib_post_x, tfib_lib_contract_x and tfib_lib_contract_x_all are unchanged. *)
+(* Modified by Theorem Labs, 2026-10: the driver's library-invariant form of the contract, ADDED beside the plain one (ported from: a working branch A/ACfn.v): a Section variable LI and tfib_lib_contract_xI / tfib_lib_contract_xI_all, where call ci (0 <= ci < 4) needs LI ci W mem and its post also gives LI (ci + 1) W' mem'. tfib_lib_pre_x, tfib_lib_post_x, tfib_lib_contract_x and tfib_lib_contract_x_all are unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

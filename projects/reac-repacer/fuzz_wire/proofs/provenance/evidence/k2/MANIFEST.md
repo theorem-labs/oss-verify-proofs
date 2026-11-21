@@ -7,7 +7,7 @@
 | k2-conflicts.tsv | hex values the address tool also classes NON-ADDRESS, left to the decimal table (see gate/GATE.md) |
 | k2-cells.tsv | the 100 code cells set by symbol or by measurement (YH03's): file, line, value, rule, measurement |
 
-k2_relocate.py is the version of record of the relocation script (sha256 9bb41757a964acc926625b529b6522cd2d39846323cce1cdac6757ca722d3415),
+k2_relocate.py is the version of record of the relocation script (sha256 5f757ea4a4b2a27678ec5eb7ac20be8549b1b487c9d93130f6c674a38a66b2f9),
 run on this unit's recorded inputs (the same plain and UBSan images, the same decode release and donor binaries, the same
 address tool) to regenerate every output here and the lib files it writes. The earlier run for this unit used the script with
 sha256 df0e51712933b707883822ce110208a9cf852cad897eeb6c8ccfbd8319e76bcb; its value table (8f49e4dc71b5, 1595 rows) is kept in

@@ -6,6 +6,7 @@
    contract application, the frame transport), to libreac/fuzz_decode's asan_calloc in image A
    (lib/A/DecodeCallocEntry.v), and from there to image B (fuzz_decode.asan-ubsan); [amreal_post_SRrB] is YG0d.v:119
    amreal_ibind's induction with an SRr continuation in place of a tree. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* The walk of __asan::asan_calloc (image B, 0x31c20 .. 0x31d00, 56 instructions) over the Allocate contract of
    lib/Reusable/YGAlloc.v and the fill contract of lib/A/DecodeCallocRt.v.
 
@@ -74,7 +75,7 @@
      `z8 (ANum 0x9dfb8) 0x9fe28` and :96 `z8 (ANum 0x9fe28) 0x97698`.
    - [HINST]: the symbol record's instance address is the image's, as_inst B = DEC_B_instance = 0x9dcd8 (the
      symbol record's ts_inst, lib/B/YF0m.v TFIB_INST; the twin of lib/A/DecodeCallocTopB.v's HTP).  It moves the
-     third IMG_CONST cell to 0x9dcf8, as a Theorem Labs lane's AGiy.v:286-292 inst_cells does.
+     third IMG_CONST cell to 0x9dcf8, as a Theorem Labs lane's AGiy.v:287-293 inst_cells does.
    - [ERRNO_LOW]: errno lies in low memory, below kLowMemEnd: the first conjunct of the walk layer's YCbq.v:808
      api_env (YCbq.v:817 Hypothesis errno_low).  Allocate's post may write errno (ascratch); this keeps the 48
      saved bytes of the frame, which lie in high memory, out of that range. *)

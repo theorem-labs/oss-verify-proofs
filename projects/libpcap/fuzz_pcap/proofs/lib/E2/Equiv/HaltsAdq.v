@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: must_exit_of_tree_CFG and must_exit_of_tree read the run over run_segments (the binary's segments then the vDSO pair), lifting the walk with RsLift.impl_rs_nodes, nodes_sound_rs and init_config_run. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool Classical_Prop.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
-From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.Lib Require Import PropExec MState Mem Exec ITree Nodes RegsEquiv.
+From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.Lib Require Import PropExec MState Mem Exec ITree Nodes RegsEquiv RsLift.
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2 Require Import TopLevel.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
@@ -223,17 +224,26 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
+(* LPS 727298f3: the run reads [Run.run_segments segs inp sp mbase], the binary's
+   segments followed by the vDSO pair; [RsLift.impl_rs_nodes] carries the walk
+   over [segs] to that list, as [TopLevel.run_of_tree] does. *)
 Lemma must_exit_of_tree_CFG : forall {R : Type} segs pc ph lim (t : itree node R) (Q : R -> machine_state -> Prop) en inp (S : list word),
   impl segs (at_node segs) (npeek segs) t Q (ms0 segs pc ph en inp) ->
   leaves_unreachable_m nstep t (mo0 segs lim en inp) ->
   tsafe nstep nsafe t (mo0 segs lim en inp) ->
   exits_in nstep nexit t (mo0 segs lim en inp) (fun c => In c S) ->
   valid_input inp ->
-  must_exit_in_at_cfg CFG segs S (mkCfg (ms0 segs pc ph en inp) (mo0 segs lim en inp)).
+  let vsegs := run_segments segs inp (en_sp en) (en_mmap_base en) in
+  must_exit_in_at_cfg CFG vsegs S (mkCfg (ms0 vsegs pc ph en inp) (mo0 segs lim en inp)).
 Proof.
-  intros R segs pc ph lim t Q en inp S Himpl Hleaves Hsafe Hex Hvi.
-  exact (impl_must_exit_in node segs CFG (at_node segs) (npeek segs) nstep nexit minv nsafe
-           (nodes_sound segs) nexit_nokill t Q _ _ S Himpl Hleaves (mo0_not_halted _ _ _ _)
+  intros R segs pc ph lim t Q en inp S Himpl Hleaves Hsafe Hex Hvi vsegs.
+  set (tail := vdso_segments (in_kernel inp) (en_sp en) (en_mmap_base en)).
+  pose proof (vdso_segments_inert (in_kernel inp) (en_sp en) (en_mmap_base en)) as Hin. fold tail in Hin.
+  change vsegs with (segs ++ tail).
+  pose proof (impl_rs_nodes segs tail Hin _ t Q (ms0 segs pc ph en inp) Himpl) as Himpl'.
+  change (rs_ms segs tail (ms0 segs pc ph en inp)) with (ms0 (segs ++ tail) pc ph en inp) in Himpl'.
+  exact (impl_must_exit_in node (segs ++ tail) CFG (at_node (segs ++ tail)) (npeek segs) nstep nexit minv nsafe
+           (nodes_sound_rs segs tail) nexit_nokill t _ _ _ S Himpl' Hleaves (mo0_not_halted _ _ _ _)
            (mo0_minv segs lim en inp Hvi) Hsafe Hex).
 Qed.
 
@@ -247,14 +257,12 @@ Theorem must_exit_of_tree : forall {R : Type} segs pc ph lim (t : itree node R) 
   must_exit_in_scfg forced_only_cfg S (mkImage segs pc ph) lim en inp.
 Proof.
   intros R segs pc ph lim t Q en inp S Himpl Hleaves Hsafe Hex Hvi.
-  pose proof (must_exit_of_tree_CFG segs pc ph lim t Q en inp S Himpl Hleaves Hsafe Hex Hvi) as H.
-  destruct en as [sp brk mb rnd]. unfold must_exit_in_scfg.
-  change (init_config segs pc ph sp brk mb rnd lim inp)
-    with (init_config segs pc ph (en_sp (mkEntry sp brk mb rnd)) (en_brk (mkEntry sp brk mb rnd))
-                      (en_mmap_base (mkEntry sp brk mb rnd)) (en_draw (mkEntry sp brk mb rnd)) lim inp).
-  rewrite init_config_eq.
-  apply (must_exit_in_at_cfg_down forced_only_cfg CFG segs S _ (forced_only_cfg_least CFG)).
-  apply (must_exit_in_at_cfg_eqv segs CFG S _ H).
+  pose proof (must_exit_of_tree_CFG segs pc ph lim t Q en inp S Himpl Hleaves Hsafe Hex Hvi) as H. cbv zeta in H.
+  pose proof (init_config_run segs pc ph lim en inp) as E.
+  destruct en as [sp brk mb rnd]. unfold must_exit_in_scfg. cbv zeta.
+  cbn [en_sp en_brk en_mmap_base en_draw] in E, H. rewrite E.
+  apply (must_exit_in_at_cfg_down forced_only_cfg CFG _ S _ (forced_only_cfg_least CFG)).
+  apply (must_exit_in_at_cfg_eqv _ CFG S _ H).
   split; [|reflexivity]. cbn [cfg_ms]. apply ms_eqv_sym. apply init_machine_state_eqv.
 Qed.
 

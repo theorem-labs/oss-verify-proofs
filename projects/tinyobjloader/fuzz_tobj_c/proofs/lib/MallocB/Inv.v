@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (ledger_inv's reserved conjunct stated as the image's entries followed by the vDSO/vvar pair, ledger_inv written as plain text). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -321,8 +322,27 @@ S4S2aS26Q40M0A1M1G1A2M2G2S0S3cG2R1SefVV;A1A3S0S6S28G0S32G1G1R1A3A2M3Vlo;A2S6Vhi;
 Definition vm_geom (A : AA) (md : Model) : Prop := ltac2:(tb__ "0|f|
 Sf1Vmd;A1Sf3S7fVA;A1S7eS0S2aS26Q40M0A1M1G1A2M2S5S3cG2R2Sf2R4A1A3S0S6S28G0S32G1G1R3A3A2M3R2A2S8R2S7G3S28G0S33G1G1R3A3A2A2A2A2S4G2G2S0S3cG2R1SefR7A1A3S0S6S28G0S32G1G1R1A3A2M4R4A2S8R4S7G4S28G0S33G1G1R1A3A2A2A2A2A2Le';A2F_;F_;Fx;Fe;S0Sb4R2S81R1A1M5S7S7G5S4dA2Z1000M6A2A3S0Sb4R2S82R1A1M7S7G7G6A2A3S0Sb4R2S84R1A1M8S7G8G6A2A3S0Sb4R2S85R1A1M9S7G9G6A2A3S0Sb4R2S80R1A1MaS7GaS47A2A3S0Sb4R2S8aR1A1MbS7GbS4fA2A3S0S7cS3cS7cR1S89VA;A1A3S3cG2S2dG1G1S27G0S8dR2A1A2S27G0S96R2A1A2A4SefR4A1A3F_;Fch;G1S1S5S9S28G0R1A2S46A2Z0McA3S2S0S6S5fS28G0R2A2MdA2S6S7GdS46A2MeS60A2A2S0S6S5dGdA2S6GeS50A2A2A2S0S1S2cSf7R3Sf6Vmd;A1A2S35A3S5S0S6GcR1A2S8R1S46A2A2S1S2cS103Sf2R7A1S7S28G0R5A2R2A2A2S36A3F_;Fj;A2F_;F_;Fp;A2A2A2A2A2A2A2A2TG;TV;").
 
-Definition ledger_inv (A : AA) (md : Model) (tp : list word) : Prop := ltac2:(tb__ "0|b|
-Sf1Vmd;A1Sf3S0S1S29S2aS26Q40M0A1M1G1A2M2A1Sf9R1A1M3SffVsegs;A1A3S0S102SefR1A1M4S101S100A3S0SebS31G2G3G4A3A1S0SeaVA;R1A2S0S10cS8eVA;A1M5Vmd;Vtp;A3S0S6SaaG5A1S7S7S92VA;A1M6S91VA;A1A2Z1A2A2S0S0S6Z0M7S94VA;A1M8A2S6G8S7ScZ8G6A2S65A2A2A2S0S0G1G1S3cG2S2dG1G1R2R1A4M9SefR3A1A3S8G7S28G0R2A2A2MaF_;Fs;Fb;S0Sb4R1S5fS60A3Sb4R1S5dS50A3A2A2S0S6SbS2fS7cS89VA;A1A2A1G6A2G1G1S3cG2G9Sf2R3A1A3GaF_;Fs;Fb;A2A2A2A2A2A2A2A2A2TV;").
+(* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v
+   [vdso_pair_ok]); the pair is counted in [gap_ok] like any ledger entry.  Written as plain text
+   (decoded from this file's [tbs__] table), the first conjunct changed. *)
+Definition ledger_inv (A : AA) (md : Model) (tp : list word) : Prop :=
+  let V : VmMaps := m_vmmaps md in
+  (exists W, vm_reserved V = segments_reserved segs ++ W /\ OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysSpec.vdso_pair_ok W)
+  /\ OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.Placement.band_covered (vm_maps V)
+       OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.Placement.SHADOW_BAND_LO
+       OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.Placement.SHADOW_BAND_HI
+  /\ OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocB.i0.Ledger.maps_disjoint (vm_reserved V ++ vm_maps V)
+  /\ OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocB.i0.Ledger.gap_ok A V
+  /\ OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocB.SegD_wf.depot_vm (aa_depot A) md tp
+  /\ dN (aa_depot A) <= aa_Km A + aa_Kf A + 1
+  /\ (0 <= aa_ptr_committed A /\ aa_ptr_committed A <= 8 * aa_Km A + OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocB.Geometry.kPtrArrayCommit)
+  /\ ((forall b s : word, In (b, s) (vm_maps V) -> 0 < bv_unsigned s)
+      /\ in_maps V OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocB.Geometry.LOW_SHADOW_BEG
+           OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocB.Geometry.SHADOW_GAP_BEG
+      /\ in_maps V OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocB.Geometry.HIGH_SHADOW_BEG
+           OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocB.Geometry.HIGH_SHADOW_END)
+  /\ Z.of_nat (length (aa_sec A)) <= aa_Km A
+  /\ (forall b s : word, In (b, s) (vm_noaccess V) -> 0 < bv_unsigned s).
 Definition model_inv (A : AA) (tp : list word) (md : Model) : Prop := ltac2:(tb__ "0|2|
 S0Se4VA;Vmd;A2S0S6S7S105Vmd;Vtp;A2S109VA;A1A2Se9VA;A1A2S0S1S5Sf8Sf1Vmd;A1M0A1S106A3S0S6Z0M1S97VA;A1A2S0S6G1S92VA;A1A2S0S6G1S91VA;A1A2S0S1S5Sf5G0A1S9dS7fVA;A1A1A3Sd4VA;Vmd;Vtp;A3A2A2A2A2A2A2A2").
 

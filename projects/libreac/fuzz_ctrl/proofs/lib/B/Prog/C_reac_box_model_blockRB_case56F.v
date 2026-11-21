@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 978 of its 993 lines of code are new or changed and 233 lines of the source are left out. *)
-(* GENERATED - do not edit.  C_reac_box_model_blockRB_case56F.v is the re-based copy of lib/B/Prog/reac_box_model_block_case56F.v at 20372bbcc3a
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* GENERATED - do not edit.  C_reac_box_model_blockRB_case56F.v is the re-based copy of lib/B/Prog/reac_box_model_block_case56F.v
    (source sha256 eab41c74b27c6c86c3a14d1fce53bd2e6e41ba040c888dddab44995708f6a0a8) by gen_rb_modelblock.py
    (its sha256 is cited in the commit that adds this file); the substitutions are listed there.  Dropped here: nothing. *)
-(* This delivery then edited comment text only: the code is unchanged from release c5e779efe8c, the comments are not. *)
+(* This delivery then edited comment text only: the code is unchanged from release, the comments are not. *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Sem.
@@ -25,7 +26,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require Import name_field_c_o
 Import ListNotations.
 Open Scope Z_scope.
 
-(* Local copy of C_reac_box_model_blockRB.v:228's store hook: that file made it Local (a Theorem Labs lane; generator owner a Theorem Labs lane stopped, a Theorem Labs lane audits). *)
+(* Local copy of C_reac_box_model_blockRB.v:229's store hook: that file made it Local (a Theorem Labs lane; generator owner a Theorem Labs lane stopped, a Theorem Labs lane audits). *)
 Local Ltac footprint_after_store segs m a bs ::=
   repeat match goal with
   | MU : munch ?Wq ?mq m |- _ =>
@@ -339,7 +340,7 @@ Section c56F_S.
       - exact (acl_addr_sub mc (A + 35) 37 (A + k) 16 AWB ltac:(c56_lia) ltac:(c56_lia) ltac:(c56_lia)).
       - apply c56_app_win. c56_lia.
       - right. unfold RT_HI; c56_lia.
-      (* the regions of the call, in name_field_contract_F's order (40a1a45d985) *)
+      (* the regions of the call, in name_field_contract_F's order *)
       - exact RBY.
       - eapply rng_sub; [exact RIMG | unfold IMG_LO, IMG_HI; lia | unfold IMG_LO, IMG_HI; lia].
       - eapply rng_sub; [exact RWIN | c56_lia | c56_lia].

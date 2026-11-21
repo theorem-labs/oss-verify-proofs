@@ -1,20 +1,21 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: ex_word (fuzz_preset.c :295-305) of fuzz_preset's asan-ubsan image B' (the #102 pin d663f82d,
    unstripped twin c90d4fa5), B_prog_sigma AS_ex_word = 0x848d4, 96 slots of B_prog_listing (neutral listing
    the internal file ex_word.fuzz_preset.asan-ubsan.s, read for the instruction stream
-   only). RELOCATED from the old-pin walk origin/cold/h-pre-b3-exword-b 7974f60dc186 (image B f8f98a95 / 3b5e1a09):
+   only). RELOCATED from the old-pin walk (image B f8f98a95 / 3b5e1a09):
    ex_word's 380 bytes are equal up to pc-relative fields on B and B', every pc-relative target naming the
-   same symbol + offset, the address numerals moved by alreloc.py (sha256 c4338d099cfb8025, commit d99acc3edd97; audited against
+   same symbol + offset, the address numerals moved by alreloc.py (sha256 c4338d099cfb8025; audited against
    the internal file b-to-bprime.tsv 5a684bb2), and
    the ledger's two #102 cells (most own) added where the kit text has them.
    TWO THEOREMS, ONE WALK (ex_word_walk, over a memory invariant P):
-   - ex_word_holds_B: this tree's tex_word_specX (cstr_ok's bound p + len + 1, PRH_Base.v:1872; the + 8 bound is the kit decff67d721f's, lib/A/PRH_FnEx.v blob
+   - ex_word_holds_B: this tree's tex_word_specX (cstr_ok's bound p + len + 1, PRH_Base.v:1872; the + 8 bound is the kit, lib/A/PRH_FnEx.v blob
      45ddb7a7d5ae, PRH_Base.v blob 3004a98fe2d9), verbatim, no extra premise. Its post is the m-form fpostWm (the
      memnorm keep) with S' = S; P := (memnorm mem -> memnorm _)
      (YSRrMemnorm.v srr_inv_laws_imp of srr_inv_laws_memnorm_k), the calls through YGcallMxmn.v's aj_strlen_at_xrom
      and aj_bcmp_at_xm (the keep as their last conjunct).
-   - ex_word_holds_B_bounded: the pre-04388d628fb text with the range premise of v (ExwB_Stmt.v tex_word_specX_vr; why:
+   - ex_word_holds_B_bounded: the pre text with the range premise of v (ExwB_Stmt.v tex_word_specX_vr; why:
      the internal file specX-obstacle.md), kept while ex_value's EHW cites it; P := True, the calls through YGcallMxmn.v's
      aj_strlen_at_xro and YGcallMx.v's aj_bcmp_at_x.
    RUNNER: YC1fPx's paj_run_x_inv / paj_run_tok_x_inv over YCbqG's ajournal_x (journal from
@@ -455,7 +456,7 @@ Hypothesis PAL : PALib (PI := PI_prog_B) B.
 Hypothesis STRLEN :
   YGcallMxmn.astrlen_realizes_xro rsegs B ARx B_prog_relro_lo B_prog_relro_hi (B_prog_sigma AS___wrap_strlen).
 Hypothesis BCMP : abcmp_realizes_x rsegs B ARx (B_prog_sigma AS___wrap_bcmp).
-(* ex_word_holds_B (kit 04388d628fb's m-form post) takes the same two texts WITH the memnorm keep as the last post
+(* ex_word_holds_B (kit's m-form post) takes the same two texts WITH the memnorm keep as the last post
    conjunct: YGcallMxmn.v's astrlen_realizes_xrom (the strlen text above plus the keep; MARKED TEXT, owner
    c-libc-stdio) and abcmp_realizes_xm (YGcallMx.v's abcmp_realizes_x plus the keep) *)
 Hypothesis STRLENm :
@@ -666,7 +667,7 @@ aregs_preserved regsT regs2 /\ getr regs2 10 = v /\
 (forall a, 0 <= a < 2 ^ 64 -> ~ (sp0 + o - 2 * ESTACK <= a < sp0 + o) -> aview SEGS (w_H W) mem2 a = aview SEGS (w_H W) memT a) /\
 (forall a, apresent (w_H W) memT a -> apresent (w_H W) mem2 a) /\
 (P memT -> P mem2)).
-(* the walk's statement: kit 04388d628fb's tex_word_specX (PRH_FnEx.v blob d32e3229d5dc) premise for premise, plus
+(* the walk's statement: kit's tex_word_specX (PRH_FnEx.v blob d32e3229d5dc) premise for premise, plus
    P at the entry memory, and its post at fpostW with Q /\ P mem' (fpostWm is fpostW at fQmn mem Q = Q /\ the keep) *)
 Definition ew_core (P : (word -> option byte) -> Prop) : Prop :=
   forall ly S Hp (W : world SEGS) (regs : bvmap 5 word) (mem : word -> option byte) md ch (q w ty v t x0 i0 d : Z)
@@ -1409,7 +1410,7 @@ exact (conj Hc (conj K1 (conj K2 (conj K3 (conj K4 (conj K5 (conj K6
   (YSRrMemnorm.srr_inv_call_imp SEGS mem0 memT mem2 Kmn)))))))).
 Qed.
 
-(* ex_word_holds_B: kit 04388d628fb's tex_word_specX (lib/A/PRH_FnEx.v blob d32e3229d5dcf3d74f35fb6471aecd7e033047f8),
+(* ex_word_holds_B: kit's tex_word_specX (lib/A/PRH_FnEx.v blob d32e3229d5dcf3d74f35fb6471aecd7e033047f8),
    VERBATIM, no extra premise: the walk at P := (memnorm mem -> memnorm _), whose post is fpostWm's by unfolding *)
 Theorem ex_word_holds_B :
   tex_word_specX (PI := prh_img_B) (L := B_prog_listing) (PA := PI_prog_B) B ARx SK.
@@ -1424,7 +1425,7 @@ exact (ex_word_walk (fun m => YAkMemnorm.memnorm SEGS mem -> YAkMemnorm.memnorm 
 Qed.
 
 (* ex_word_holds_B_bounded: the bounded text (ExwB_Stmt.v tex_word_specX_vr), kept while ex_value's EHW cites it
-   (origin/cold/h-rw-pre-7-b-ex_value 30962b8840a, ExvB_Disp.v:39-40, with the texts without the keep): the walk at
+   (ExvB_Disp.v:40-41, with the texts without the keep): the walk at
    P := True, the range premise from ex_word_vrange, S' = S and P dropped from the post *)
 Theorem ex_word_holds_B_bounded :
   tex_word_specX_vr (PI := prh_img_B) (L := B_prog_listing) (PA := PI_prog_B) B ARx SK.

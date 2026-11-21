@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's reservations with the vDSO pair). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -78,7 +79,8 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   assert (Hc1 : covered (vm_maps (m_vmmaps model)) x = true).
   { apply (grant_covered E _ M model g (dn_maps _ _ _ _ _ _ _ _ _ Hd) (dn_gsh _ _ _ _ _ _ _ _ _ Hd) Hg Hgm). unfold x. lia. }
   pose proof (dn_mres _ _ _ _ _ _ _ _ _ Hd x Hc1) as Hc2. rewrite (dn_res _ _ _ _ _ _ _ _ _ Hd) in Hc2.
-  rewrite (res_cov x ltac:(unfold x; lia)) in Hc2. discriminate.
+  (* the launch ledger is the segments' then the vDSO pair's ([dn_res]) *)
+  rewrite FxBacking.covered_app, (res_cov x ltac:(unfold x; lia)) in Hc2. cbn [orb] in Hc2. discriminate.
 Qed.
 
 (* [comment removed for export] *)

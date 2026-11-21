@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stdio call proof discharges the new channel-reader premise of the materialization-stability lemma. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
@@ -526,7 +527,7 @@ Proof using AF RIP AF_SHW AF_PF.
              Qfin (fun _ => t_emit [] T)
              (entry_st ra (Z_to_bv 64 usp) gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 STDERR_FILE) (Z_to_bv 64 (fp_fmt c))
                 (Z_to_bv 64 (fp_arg c)) a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc e_fprintf m) c'
-             (ASTA_PM_mat_stable RT AF Σ F0 fs0)); [| exact TOK| exact Hc| exact IMPL|].
+             (ASTA_PM_mat_stable RT AF Σ F0 fs0)); [| intros mo (_ & _ & _ & HRD); exact HRD| exact TOK| exact Hc| exact IMPL|].
     - intros mo fd (HAR & HF & _) Hin. cbn in Hin. destruct Hin as [<-|[]]. rewrite HF. exact HFD.
     - intros x ms' c2 HQ Hc2.
       assert (R : realizes asegs c2 T).

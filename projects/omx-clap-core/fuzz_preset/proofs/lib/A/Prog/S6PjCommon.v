@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumA.v, with its module paths and module names changed; 267 of its 331 lines of code are new or changed and 714 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, slice S6 (WalkS6): the IMAGE-FREE pieces of the pj_* walks (pj_get_str, pj_get, pj_string, pj_free, ...),
    generic over the program listing {L} and its image facts {PA : PAImg L}, so image A's walks (lib/A/Prog/S6Pj*.v) and
    image B's (lib/B/Prog) import ONE copy. No address, no image fact, no listing slot: byte / node / register / shadow
@@ -93,7 +94,7 @@ unfold SHADOW_OFF in *. lia.
 Qed.
 
 (* the found member's address the code computes, kids - (-56 i) (the engine's add of a times -1); transcribed from
-   fuzz_state's lib/A/FSW_pj_get.v pg_U_hit (cold/rd5-pjget 703aaa74bca), any two atoms *)
+   fuzz_state's lib/A/FSW_pj_get.v pg_U_hit, any two atoms *)
 Lemma gs_U_hit : forall E na nb i kids, ew E na = Z_to_bv 64 (-56 * i) -> ew E nb = Z_to_bv 64 kids ->
   0 <= kids < 2 ^ 64 -> 0 <= kids + 56 * i < 2 ^ 64 ->
   U E (SAlu ALU_ADD (SMd M_MUL (SOff na 0) (SLit (-1))) (SOff nb 0)) = kids + 56 * i.
@@ -235,7 +236,7 @@ split; [split; [|exact Hnz]|].
   + intros a Ha.
     (* the NUL's aligned word lies below alloc_ceiling: the string ends below it (cstr_ok's ceiling bound, with or
        without the old `+ 8`: K1's batch states `p + len + 1`) and alloc_ceiling is page-aligned
-       (YM05.alloc_ceiling_value). Proof form by WalkS6R (cold/h-rw-pre-5-r102-s6-batchprep 825f574a1c52). *)
+       (YM05.alloc_ceiling_value). Proof form by WalkS6R. *)
     assert (Hqa : 0 <= a < alloc_ceiling).
     { pose proof alloc_ceiling_value as [_ Hc4096].
       set (e := p + Z.of_nat (length l)) in *.

@@ -20,6 +20,7 @@
    the keep (MN.memnorm segs memT -> MN.memnorm segs mem2) from their conclusion: each _m / _mR rule is now its
    YGcallx.v original VERBATIM (the _mR forms are proved by it), under its own name for the walks that apply it. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcallMxmn.v, with its module paths and module names changed; 489 of its 563 lines of code are new or changed and 2255 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image A' (the #102 pins): segment R of the walk of check_reject_clean_starved against the text
    tcheck_reject_clean_starved_specX, row CR-R of the crs family's internal file PART7-ROWS.md. Its one export is
    crs_seg_R : .. -> crs_from_R B ARx CTX0 C (lib/A/Prog/CrsKitAp.v :626).
@@ -29,7 +30,7 @@
    or lib/B, its released rows were lib/Prog (plain) and lib/U/Prog (ubsan) only, and no released asan
    Proof.v existed for check_reject_clean_starved). Written new.
    INPUTS.
-   - Pin A' asan sha256 1be0f53d96cb9d6c (harness.yaml of release/fuzz-preset-ran-out-pins 8f3e7e1a07f1).
+   - Pin A' asan sha256 1be0f53d96cb9d6c (harness.yaml).
    - Listing lib/A/Listing_prog.v blob 7ed1529926bd + lib/A/PAImg_prog.v blob 505a51ff7d08 (listings v3, through kit v3);
      entry 0x82160 = slot 736 (A_entry_check_reject_clean_starved); R = slots 908 .. 971 (A' 0x82410 .. 0x8250c).
    - The text: tcheck_reject_clean_starved_specX in lib/A/PRH_FnCheck.v:1756-1858, through the kit
@@ -476,7 +477,7 @@ intros x [Hx | ((a, k0) & Hb & Hx)].
     exact (proj1 (Hb' x Hrq)).
 Qed.
 
-(* THE POSITION STEP of R, the one place R reads the model-run position (kit v2 c0766e47c280: crs_pos is the EXACT
+(* THE POSITION STEP of R, the one place R reads the model-run position (kit v2: crs_pos is the EXACT
    position c_rp_i C + length evs under ran3 = 0): the inline release keeps it (PresetRoomPosKeep.room_pos_stack_free) *)
 Lemma crsR_pos_step : forall C evs ran3 S3 c p, crs_pos C evs ran3 S3 -> crs_pos C evs ran3 (stack_free_state c p S3).
 Proof.

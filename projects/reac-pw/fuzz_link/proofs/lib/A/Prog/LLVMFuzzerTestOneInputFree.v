@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC85.v for libreac/fuzz_boxreg's program walk (as fuzz_identity's lib/A/Prog/YC85.v, ea5560a967b, carries it): the listing's names are bsym; module paths changed. No image numeral occurs in this file. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC85.v for libreac/fuzz_boxreg's program walk (as fuzz_identity's lib/A/Prog/YC85.v, carries it): the listing's names are bsym; module paths changed. No image numeral occurs in this file. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/A/Prog/YC85.v, with its module paths and module names changed; 313 of its 404 lines of code are new or changed and 320 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* LLVMFuzzerTestOneInput on image A: the allocator calls of its walk that are RAW allocator rules (not an own
    allocating callee's contract), shared by the walk's phases (one file, by ruling).
    The sites: free at 0x82e6c / 0x82e74 (op_decide), 0x83750 / 0x83758 (op_read), 0x838d8 (op_write), 0x83b88 /
@@ -201,7 +202,7 @@ acall_kept segs B lyc Sc W memT W2 mem2 (sp0 + o - ASTACK) (sp0 + o) (fun _ => F
 mo_le MT Sc S2 (mo_free MT) /\
 same_io mdc md2 /\ depot_step (ctr lyc (pc_free_ra0 code) regsT ch) (st_depot Sc) (st_depot S2)).
 
-(* YGCalloc.v:257 acalloc04_rule at the walk's journal (YCbq.v ajournal, acall_kept) and meter, and the two
+(* YGCalloc.v:258 acalloc04_rule at the walk's journal (YCbq.v ajournal, acall_kept) and meter, and the two
    clauses *)
 Definition acalloc04_rule_w (pc pc0 cmax cdepth : Z) : Prop :=
 forall W regsT memT STK sp0 FP ly S W0 mem md own lyc Sc mdc k nm sz (o : Z) raw ch,

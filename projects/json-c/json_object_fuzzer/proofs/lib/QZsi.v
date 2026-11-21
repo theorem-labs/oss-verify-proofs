@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: the interface's fields hiA_malloc, hiA_free, hiA_calloc, hiA_realloc, hiA_strdup, hiA_malloc2, hiA_free2 and hiA_stack_malloc, the tier fields t1_hiA_stack_malloc, t2_hiA_realloc and t2_hiA_strdup, and hiA_malloc_paid_ty, hiA_calloc_paid_ty, hiA_free_paid_ty and hiA_free2_null_ty take hiA_bot <= lo after alloc_ceiling <= lo). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -662,7 +663,7 @@ hiA_malloc : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4
 (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (c : config) (T : TSet)
 (A : ASA) (LB LM : list blk) (FR : list frame) (B : bud) (n lo : Z) (errv : word) (u : uwd),
 HEAPA A LB LM FR B m c ->
-stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
+stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top + 64 ->
 rw_cells segs m errno_a [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp L) -> gp = Z_to_bv 64 (hl_gp L) ->
@@ -687,7 +688,7 @@ hiA_free : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s
 (A : ASA) (LB LM : list blk) (FR : list frame) (B : bud) (p lo : Z) (errv : word) (u : uwd),
 HEAPA A LB LM FR B m c ->
 (p = 0 \/ exists n, In (p, n) LB) ->
-stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
+stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top + 64 ->
 rw_cells segs m errno_a [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp L) -> gp = Z_to_bv 64 (hl_gp L) ->
@@ -710,7 +711,7 @@ hiA_calloc : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4
 (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (c : config) (T : TSet)
 (A : ASA) (LB LM : list blk) (FR : list frame) (B : bud) (cnt sz lo : Z) (errv : word) (u : uwd),
 HEAPA A LB LM FR B m c ->
-stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
+stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top + 64 ->
 rw_cells segs m errno_a [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp L) -> gp = Z_to_bv 64 (hl_gp L) ->
@@ -735,7 +736,7 @@ hiA_realloc : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s
 (A : ASA) (LB LM : list blk) (FR : list frame) (B : bud) (p n0 n lo : Z) (errv : word) (old junk0 : list byte) (u : uwd),
 HEAPA A LB LM FR B m c -> In (p, n0) LB ->
 rw_cells segs m p [CB (Z.to_nat n0) (old ++ junk0)] ->
-stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
+stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top + 64 ->
 rw_cells segs m errno_a [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp L) -> gp = Z_to_bv 64 (hl_gp L) ->
@@ -762,7 +763,7 @@ hiA_strdup : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4
 HEAPA A LB LM FR B m c ->
 In (ab, nb) LB -> ab <= src -> src + Z.of_nat (length str) + 1 <= ab + nb ->
 bytes_at segs m src (str ++ [Z_to_bv 8 0]) -> ~ In (Z_to_bv 8 0) str -> Z.of_nat (length str) + 1 <= 2^26 ->
-stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
+stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top + 64 ->
 rw_cells segs m errno_a [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp L) -> gp = Z_to_bv 64 (hl_gp L) ->
@@ -787,7 +788,7 @@ hiA_malloc2 : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s
 (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (c : config) (T : TSet)
 (A : ASA) (LB LM : list blk) (FR : list frame) (B : bud) (n lo : Z) (errv : word),
 HEAPA A LB LM FR B m c ->
-stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack L ->
+stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot <= lo -> lo <= bv_unsigned sp - hl_stack L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top + 64 ->
 rw_cells segs m errno_a [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp L) -> gp = Z_to_bv 64 (hl_gp L) ->
@@ -812,7 +813,7 @@ hiA_free2 : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 
 (A : ASA) (LB LM : list blk) (FR : list frame) (B : bud) (p lo : Z) (errv : word),
 HEAPA A LB LM FR B m c ->
 (p = 0 \/ exists n, In (p, n) LM) ->
-stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack L ->
+stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot <= lo -> lo <= bv_unsigned sp - hl_stack L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top + 64 ->
 rw_cells segs m errno_a [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp L) -> gp = Z_to_bv 64 (hl_gp L) ->
@@ -835,7 +836,7 @@ hiA_stack_malloc : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2
 HEAPA A LB LM FR B m c ->
 (0 <= k <= 2 \/ (k = 3 /\ hl_stack_malloc L 3 <> 0 /\ Z.of_nat (length FR) < 2048)) -> 1 <= bytes <= fr_size k -> bytes mod 8 = 0 ->
 (Z.of_nat (length FR) < 4096) ->
-stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
+stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top + 64 ->
 tp = Z_to_bv 64 (hl_tp L) -> gp = Z_to_bv 64 (hl_gp L) ->
 a0 = Z_to_bv 64 bytes ->
@@ -903,7 +904,7 @@ t1_hiA_stack_malloc : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7
 HEAPA A LB LM FR B m c ->
 (0 <= k <= 2 \/ (k = 3 /\ hl_stack_malloc L 3 <> 0 /\ Z.of_nat (length FR) < 2048)) -> 1 <= bytes <= fr_size k -> bytes mod 8 = 0 ->
 (Z.of_nat (length FR) < 4096) ->
-stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
+stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top + 64 ->
 tp = Z_to_bv 64 (hl_tp L) -> gp = Z_to_bv 64 (hl_gp L) ->
 a0 = Z_to_bv 64 bytes ->
@@ -941,7 +942,7 @@ t2_hiA_realloc : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s
 (A : ASA) (LB LM : list blk) (FR : list frame) (B : bud) (p n0 n lo : Z) (errv : word) (old junk0 : list byte) (u : uwd),
 HEAPA A LB LM FR B m c -> In (p, n0) LB ->
 rw_cells segs m p [CB (Z.to_nat n0) (old ++ junk0)] ->
-stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
+stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top + 64 ->
 rw_cells segs m errno_a [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp L) -> gp = Z_to_bv 64 (hl_gp L) ->
@@ -967,7 +968,7 @@ t2_hiA_strdup : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3
 HEAPA A LB LM FR B m c ->
 In (ab, nb) LB -> ab <= src -> src + Z.of_nat (length str) + 1 <= ab + nb ->
 bytes_at segs m src (str ++ [Z_to_bv 8 0]) -> ~ In (Z_to_bv 8 0) str -> Z.of_nat (length str) + 1 <= 2^26 ->
-stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
+stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top + 64 ->
 rw_cells segs m errno_a [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp L) -> gp = Z_to_bv 64 (hl_gp L) ->
@@ -1027,7 +1028,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 (A : ASA) (LB LM : list blk) (FR : list frame) (B : bud) (n lo : Z) (errv : word) (u : uwd),
 u = UWpaid ->
 HEAPA A LB LM FR B m c ->
-stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
+stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top + 64 ->
 rw_cells segs m errno_a [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp L) -> gp = Z_to_bv 64 (hl_gp L) ->
@@ -1053,7 +1054,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 u = UWpaid ->
 HEAPA A LB LM FR B m c ->
 (p = 0 \/ exists n, In (p, n) LB) ->
-stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
+stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top + 64 ->
 rw_cells segs m errno_a [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp L) -> gp = Z_to_bv 64 (hl_gp L) ->
@@ -1077,7 +1078,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 (A : ASA) (LB LM : list blk) (FR : list frame) (B : bud) (cnt sz lo : Z) (errv : word) (u : uwd),
 u = UWpaid ->
 HEAPA A LB LM FR B m c ->
-stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
+stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top + 64 ->
 rw_cells segs m errno_a [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp L) -> gp = Z_to_bv 64 (hl_gp L) ->
@@ -1104,7 +1105,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 p = 0 ->
 HEAPA A LB LM FR B m c ->
 (p = 0 \/ exists n, In (p, n) LM) ->
-stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack L ->
+stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot <= lo -> lo <= bv_unsigned sp - hl_stack L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top + 64 ->
 rw_cells segs m errno_a [C4 errv] ->
 tp = Z_to_bv 64 (hl_tp L) -> gp = Z_to_bv 64 (hl_gp L) ->

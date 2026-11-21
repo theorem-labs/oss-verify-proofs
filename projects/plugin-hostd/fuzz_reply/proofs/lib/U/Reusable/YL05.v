@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YL05.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the allocation mode (the ledger's counting fields in the forced mode only; munmap's errno arm a real outcome in the may-fail mode)). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -15,6 +16,7 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.U.Reusable Require Import YM05
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Local Open Scope Z_scope.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.U.Reusable.R Require Import Cfg.
 Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Lemma regs_atoms_lt_upd : forall k sr n e,
 regs_atoms_lt k sr = true -> sv_atoms_lt k e = true -> regs_atoms_lt k (sr_upd sr n e) = true.
@@ -131,6 +133,8 @@ pose proof (forallb_In _ _ (lo, len) H Hg) as Hg'. cbn [fst snd] in Hg'. pose pr
 unfold ivl_disjoint in D. cbn [fst snd] in D. apply orb_prop in D as [D|D]; apply Z.leb_le in D; lia.
 Qed.
 Section h.
+(* The allocation mode: these facts hold for the ledger of either mode. *)
+Context {AM : AllocMode}.
 Variable B : malloc_syms.
 Variable API : AllocAPI B.
 Let MR := aa_MR API.

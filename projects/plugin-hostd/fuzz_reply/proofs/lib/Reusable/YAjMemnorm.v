@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YAjMemnorm.v, with its module paths changed. *)
-(* CARRIED from fuzz_preset cf67bba98b9 proofs/omx-clap-core/fuzz_preset/lib/Reusable/YAjMemnorm.v, sha256 7a620156cdb7deb96869b0568926f8344043e75bf43ac8ba5366959870572859.
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises); the input-owned, top-anchored launch stack); internal commit ids in comments replaced by public commits or removed. *)
+(* CARRIED from fuzz_preset proofs/omx-clap-core/fuzz_preset/lib/Reusable/YAjMemnorm.v, sha256 7a620156cdb7deb96869b0568926f8344043e75bf43ac8ba5366959870572859.
    Changes: the module prefix OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib ->
    OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib (17 occurrences), and the two licence lines removed.
    The body is otherwise unchanged. *)
 (* Theorem Labs, 2026-10: fuzz_preset, the WORLD-LAYER STEP half of retiring aj_memnorm (h-hpreset-7's journal
    obligation, given to h-rw-man-8 05:26Z). aj_memnorm m := Lib.Mem.mem_inv segs m /\ MemNorm.task_mem segs m
-   (lib/Reusable/YStrtodRowX.v:344, origin/cold/h-verbs-1-preset-strtodB 5a1376f3c69); the lemmas here are stated over
+   (lib/Reusable/YStrtodRowX.v:344); the lemmas here are stated over
    that conjunction directly (memnorm below is the same body), so they apply to it by conversion.
    rule 24: no function proved. rule 24: proves no function (kind: segment lemma).
 
@@ -17,7 +18,7 @@
      mem_inv half is Lib/Mem.v mem_inv_store and Lib/Step.v mem_inv_store_cbytes, reused; the task_mem half is new);
    - memnorm_munch: a frame-level write (Lib/Frame.v munch W m m', every address of W wview-defined in m), the form a
      callee's post gives; the task_mem half is the port of libreac fuzz_disco lib/Prog/tj_lemmas.v:221
-     task_mem_munch (c8557374ad2e), with its rsegs generalised to segs.
+     task_mem_munch, with its rsegs generalised to segs.
    - memnorm_mrestrict: restricting the overlay (YK04.v mrestrict, the journal's view) keeps both.
    THE START-UP SIDE: the INIT case is memnorm_wrap_mem below (LPS's initial overlay). At main, the mem_inv half is
    lib/A/AjMemInvMainA.v mem_inv_at_main (image A, by computation over AB01); the task_mem half is NOT decided by the
@@ -27,7 +28,7 @@
    harness function and no allocator state appears, so the bound fix's re-pin changes nothing in this file.
 
    Reuse search (2026-10-29 ~05:35Z): `git grep -n -E '(Lemma|Theorem) [a-z_]*task_mem[a-z_]*'` over the release
-   c8557374ad2e proofs/ and origin/cold/{h-verbs-1-preset-strtodB,h-mani-a8-preset-alloc,h-pre-b1-cwd2}: hits are
+   proofs/ and origin/cold/{h-verbs-1-preset-strtodB,h-mani-a8-preset-alloc,h-pre-b1-cwd2}: hits are
    task_mem_same_cj, task_mem_norm, task_mem_back, task_mem_rel, task_mem_munch (fuzz_disco); none for a store, none
    for the conjunction. mem_inv_store exists (lib/Lib/Mem.v:306) and is reused. Control: the same grep finds
    MemNorm.v:950 task_mem_same_cj. *)
@@ -239,28 +240,32 @@ End MemDenot.
    R1 (memnorm carried by the start-up invariant); it is NOT the at-main fact, which needs the start-up steps. *)
 Section Init.
 Context {fx : OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable.YK11.FPState}.
-Lemma memnorm_wrap_mem : forall segs ph (sp : word) argv envp uid hw rnd,
-  entry_stack_fits sp argv envp ->
+(* 727298f3: the overlay is [wrap_mem inp mbase ph entry sp draw] and the entry facts come from the launch
+   ([entry_launch_ok_va]); the proof is YAkMemnorm.memnorm_wrap_mem's. *)
+Lemma memnorm_wrap_mem : forall segs inp mbase ph entry (sp brk : word) draw,
+  entry_launch_ok_va Sv48 (mkEntry sp brk mbase draw) inp ->
   (forall a : word, (bv_unsigned sp - stack_max_size <= bv_unsigned a)%Z -> find_segment segs (bv_unsigned a) 1 = None) ->
-  memnorm segs (OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable.YK11.wrap_mem ph sp argv envp uid hw rnd).
+  memnorm segs (OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable.YK11.wrap_mem inp mbase ph entry sp draw).
 Proof.
-  intros segs ph sp argv envp uid hw rnd Hfit Hseg.
-  pose proof (OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable.YK11.entry_page_top_within_window
-                ph sp argv envp uid hw rnd Hfit) as Htop.
-  pose proof (entry_stack_image_top ph sp argv envp uid hw rnd) as Himg.
-  assert (Hsupp : forall a b,
-    OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable.YK11.wrap_mem ph sp argv envp uid hw rnd a = Some b ->
+  intros segs inp mbase ph entry sp brk draw Hlau Hseg.
+  pose proof (OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable.YK11.entry_page_top_within_window Sv48 inp mbase sp brk draw Hlau) as Htop.
+  pose proof (OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable.YK11.length_entry_stack_image_launch Sv48 inp mbase ph entry sp brk draw Hlau) as Hlen.
+  pose proof (OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable.YK0h.launch_sp_le_ed_top Sv48 inp mbase sp brk draw Hlau) as Hsp.
+  pose proof (Z.le_max_l (bv_unsigned (ed_top draw) - stack_max_size)
+                (bv_unsigned mbase + stack_guard_gap_bytes (in_kernel inp))) as Hmax.
+  unfold entry_page_top in Htop. cbn [va_stack_top] in Htop.
+  assert (Hsupp : forall a b, OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable.YK11.wrap_mem inp mbase ph entry sp draw a = Some b ->
     (bv_unsigned sp - stack_max_size <= bv_unsigned a < TASK_SIZE)%Z).
   { intros a b E. unfold OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable.YK11.wrap_mem, stack_to_mem in E.
     unfold sp_window_hi in Htop. unfold TASK_SIZE.
     destruct (Z.leb_spec (bv_unsigned sp) (bv_unsigned a)) as [H1|H1].
     - destruct (Z.ltb_spec (bv_unsigned a - bv_unsigned sp)
-                  (Z.of_nat (length (entry_stack_image ph sp argv envp uid hw rnd)))) as [H2|H2].
-      + unfold stack_max_size. lia.
+                  (Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw)))) as [H2|H2].
+      + rewrite Hlen in H2. unfold stack_max_size. lia.
       + destruct (andb _ _) eqn:Hb; [|discriminate].
         apply andb_prop in Hb as [_ Hb]. apply Z.ltb_lt in Hb. lia.
     - destruct (andb _ _) eqn:Hb; [|discriminate].
-      apply andb_prop in Hb as [Hb _]. apply Z.leb_le in Hb. lia. }
+      apply andb_prop in Hb as [Hb _]. apply Z.leb_le in Hb. unfold stack_window_lo in Hb. lia. }
   split.
   - intros a b E. destruct (Hsupp a b E) as [Hlo _]. unfold ro_addr. rewrite (Hseg a Hlo). reflexivity.
   - intros a b E. destruct (Hsupp a b E) as [_ Hhi]. right. exact Hhi.

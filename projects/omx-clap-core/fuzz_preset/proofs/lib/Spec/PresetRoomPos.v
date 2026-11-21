@@ -1,7 +1,7 @@
 (* omx-clap-core/fuzz_preset, Spec: iface_room_pos, P8's premises at a position of the model run, and NOTHING else.
    WHY THIS FILE EXISTS (the driver-contract owner's ruling, owner of lib/A/PresetCfnA.v, and the kit owner's, 2026-10-29): the kit's contract
    texts (lib/A/PRH_Fn*.v) carry iface_room_pos at entry and in every post arm. The definition lived in
-   lib/A/PresetCfnA.v (f346344fe450 :438-445), the interface, which Requires the kit (PRH_Base / PRH_Img), so the kit
+   lib/A/PresetCfnA.v (438-445), the interface, which Requires the kit (PRH_Base / PRH_Img), so the kit
    could not Require it without inverting the layering, and through PresetLiveSec / PresetGate -> lib/Prog/SlotSizes.v
    it would pull six plain lib/Prog/*_c.v files into the kit's closure. This leaf adds four files to the kit's Require closure
    (Reusable/YGcfFrees.v, Spec/PresetRun.v, Spec/PresetReqAtNoMiss.v, and the ASan owner's Spec/PresetRunQ.v for the fifth
@@ -11,7 +11,7 @@
    (the same term, the PresetLiveBounds pattern), so counts_of_room_pos / _rl / _ok, run_allocs_follow,
    iface_room_pos_entry and the rest apply unchanged. DO NOT define it a second time; the lemmas over it stay in
    PresetCfnA.v (they need PresetLiveSec).
-   The definition below is VERBATIM from PresetCfnA.v f346344fe450 :438-445, with its comment :432-437, except its
+   The definition below is VERBATIM from PresetCfnA.v :438-445, with its comment :432-437, except its
    fifth conjunct (the free history) and its comment's free_cf clause (two cases now, :76-78, PresetRoomPosKeep.rp_free_parts_big), plus the A15 conjunct below (the last one). *)
 (* Modified by Theorem Labs, 2026-10-30, for the kit: the free history is
    PresetRunQ.hfrees_q, the frees that enter the quarantine (free_cf's size test, Quarantine::Put), not hfrees. *)

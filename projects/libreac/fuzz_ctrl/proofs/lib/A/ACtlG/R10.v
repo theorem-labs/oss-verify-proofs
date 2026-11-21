@@ -4,16 +4,17 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names, addresses and numbers changed; 2252 of its 2377 lines of code are new or changed and 886 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/R10A.v, with its numbers changed; 2171 of its 2324 lines of code are new or changed and 2224 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/R10.v -- GLUE for stage seg_R10 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput (lib/A/ACtl.v,
    piece W2, the round trip's turn b).  Written by a Theorem Labs lane (a Theorem Labs lane's stage lane), single writer.
-   rule 24: no function proved (stage glue of a walk; At ossv/recipes c5e779efe8c (2026-10-31), no released proof of this unit's LLVMFuzzerTestOneInput outside this unit).
+   rule 24: no function proved (stage glue of a walk; At (2026-10-31), no released proof of this unit's LLVMFuzzerTestOneInput outside this unit).
 
    WHAT IT PROVES
      glue_seg_R10 : forall POST (b : nat), CF POST (ix_cut C_A816c4_at [Z.of_nat b]) -> CF POST (ix_cut C_A81708_at ..)
        -> CF POST (ix_cut C_A81768_at ..) -> CF POST (ix_cut C_A817c8_at ..) -> CF POST (ix_cut C_A817ec_at ..)
        -> CF POST (ix_cut C_A81680_at [Z.of_nat b])
    with ACtl.v's own CF notation (SK := A.AE2k.tfib_sink_head, FP := []): ACtl.v (at head lib/A/ACtl.v:682-684)'s Hypothesis seg_R10,
-   character for character (from a working branch 1899bed1aee).  Segment R10 (seg_R10 of Seg/R10.v, not in this delivery) dispatches on the turn b:
+   character for character (from a working branch).  Segment R10 (seg_R10 of Seg/R10.v, not in this delivery) dispatches on the turn b:
      b = 0     r10_b0   0x81680 .. 0x81768   R10AF.r10a_evt0_F            exit C_A81768_at
      b = 1, 2  r10_b12  0x81680 .. 0x817ec   R10AF.r10a_evt12_F           exit C_A817ec_at
      b = 3, 4  r10_b34  0x81680 .. 0x816ac   R10AF.r10a_head34_F, then 0x816ac .. the reply entry
@@ -798,7 +799,7 @@ Hypothesis LAWS : lib.Reusable.YG0d.AR_laws segs B.
 Hypothesis TFIB_SYMS : A.AF0m.CtrlTSyms B.
 
 (* ---- arm b = 3, 4: the cgif-form spec of reac_ctrl_identity_reply, cited at the SPLIT POINT (a Theorem Labs lane 03:14Z).
-   REPLY_SPEC has the text of ACtl.v's Section hypothesis TREPLY (ACtl.v:304 at a working branch 1899bed1aee): a Theorem Labs lane's
+   REPLY_SPEC has the text of ACtl.v's Section hypothesis TREPLY (ACtl.v:304 at a working branch): a Theorem Labs lane's
    treac_ctrl_identity_reply_spec, cited by name from lib/A/Prog/C_reac_ctrl_identity_reply.v.  It stays a
    hypothesis for the reason ACtl.v gives at :311-314 (a Theorem Labs lane's pb_reac_ctrl_identity_reply takes six PA-layer laws at B
    that the base does not prove).  It takes no shadow premise, so route (C) changes nothing in it. *)
@@ -2592,7 +2593,7 @@ Proof.
 Qed.
 
 (* ---------------------------------------------------------------------------------------------------------
-   8. The stage: ACtl.v's Hypothesis seg_R10, character for character (ACtl.v:667-669 at a working branch 1899bed1aee). *)
+   8. The stage: ACtl.v's Hypothesis seg_R10, character for character (ACtl.v:667-669 at a working branch). *)
 Lemma glue_seg_R10 : forall POST (b : nat),
   CF POST (ix_cut C_A816c4_at [Z.of_nat b]) -> CF POST (ix_cut C_A81708_at [Z.of_nat b]) -> CF POST (ix_cut C_A81768_at [Z.of_nat b]) ->
   CF POST (ix_cut C_A817c8_at [Z.of_nat b]) -> CF POST (ix_cut C_A817ec_at [Z.of_nat b]) -> CF POST (ix_cut C_A81680_at [Z.of_nat b]).

@@ -5,20 +5,21 @@
    STATES, for libreac/fuzz_scene's asan-ubsan tree: `aj_set_shadow_at_stmt` (a call to an __asan_set_shadow_XX
    entry) and `aj_stack_malloc_sz_at_stmt` (a call to a size-dependent __asan_stack_malloc_N entry).  Each statement
    is J_StackSz.v's text, used unchanged: this file only Requires it and proves `<name> : <name>_stmt segs B`.
-   The source of both proofs is cgif_rgb_fuzzer lib/YC05.v (c8557374ad2e): :206-258 aj_set_shadow_at and
+   The source of both proofs is cgif_rgb_fuzzer lib/YC05.v (theorem-labs/oss-verify-proofs@6b32741d849a): :206-258 aj_set_shadow_at and
    :143-205 aj_stack_malloc_sz_at, restated over cgif_file_fuzzer's journal.
      - set-shadow: rgb's write rule YC05.v:39-142 ajournal_after_write_win is, for this tree, the proved lemma of
        lib/AU/StackFreeJournal.v (a Theorem Labs lane, landed by a Theorem Labs lane), whose event premise is `st_nev S' <= st_nev Sc`
        where rgb has `bud_le Sc S' 0 0 0 0`.  The contract it consumes is lib/Reusable/SetShadowDef.v's
        aset_shadow_realizes; the proof reads only its first five post clauses (AR, registers, model, the filled
        bytes, the bytes kept), so it does not depend on whether that file's post also carries a presence clause.
-       Proved by a Theorem Labs lane (a working branch 0733d73bbad); kept here byte for byte.
+       Proved by a Theorem Labs lane (a working branch); kept here byte for byte.
      - stack-malloc: the contract is lib/Reusable/AsStackSz.v's astack_malloc_sz_realizes (a Theorem Labs lane).  rgb's
        `vev S2 = vev Sc` is this journal's `st_nev S2 = st_nev Sc` (the step adds no event), rgb's qtightB is this
        tree's qtight (YG01.qtight_ext), and this ajournal has seventeen fields, not sixteen.  The body is
        lib/Reusable/YCbq.v:1749-1809 aj_stack_malloc_at (the class-only twin) with the size argument `n` threaded
        through the contract and the zero_shadow clause.
    This file names no image value: the runtime entry pc and the frame class are arguments. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,9 +1,11 @@
+(* Modified by Theorem Labs, 2026-11: migrated the local YP08 consumers to the input-owned top-anchored stack layout. *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Core Require Import Shapes.
 From OSSVerify.plugin_hostd.fuzz_reply Require Statements Images.
 From OSSVerify.plugin_hostd.fuzz_reply.images Require Import Ubsan.
+(* Modified by Theorem Labs, 2026-11: propagated the settled launch premises through the top agreement wrapper. The entry decomposition follows release.yaml's pinned LPS 75d69e0079f900c91a145cb8347a37f1c9c6b6c9, Run.v:3748-3757; valid_launch follows valid_input at Run.v:4583-4599. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.U.Reusable Require Import
   YK11 YK15 YM05 YM02 YM0b YO0i YO0f YO0g YO0x YO0d YO05 YO0j YO0m YO03 YO09 YO06 YO04 YO0o
   YH00 YH02 YI06 YI14 YI16 YI5b YI5c YL01 YL0g YL0i YL0k YL0s YL0j YN03 YN2b YN33 YP09 DriverSlots YO0d_cf YL0i_cfw.
@@ -102,7 +104,7 @@ Theorem zlib_walk_crealizes : forall (rc : RunCeil) (LS : lib_shape)
   lib_contract_x_Rc_all src0_msyms (@zlib_API rc) (@RI_G LS) src0_G src0_R GI OUT LIBPC RA_LIB EMPTY LIB_STACK ->
   forall sp brk mbase rnd lim inp,
   valid_sp sp -> valid_brk src0segs brk -> valid_mmap_base mbase ->
-  entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+  valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
   valid_input inp -> SRC_LIM_MIN <= lim ->
   YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
   YM05.rc_lim = lim ->
@@ -128,7 +130,8 @@ Theorem ubsan_crealizes_of_cg : forall (LS : lib_shape) (G : list (Z * Z)) (GI :
 Proof.
   intros LS G GI HROOM HG GIL GI0 H [sp brk0 mbase rnd] inp lim Hentry Hinput Hlim.
   apply (valid_entry_sv48 _ _ inp (valid_input_va_size inp Hinput)) in Hentry.
-  destruct Hentry as [Hsp [Hbrk [Hmb Hfits]]].
+  destruct Hentry as [Hsp [Hbrk [Hmb [_ Hlau]]]].
+  assert (Hvl : valid_launch inp) by (unfold valid_input in Hinput; tauto).
   set (rc := RunCeilOf (bv_unsigned sp) (valid_sp_window_for_ceil sp Hsp) lim).
   assert (HG' : forall a, in_globals G a -> in_globals src0_G a) by (intros a h; exact (frame_G_src0 a (HG a h))).
   change (crealizes src0_msyms (init_config src0segs Ubsan_init_pc Ubsan_phdrs sp brk0 mbase rnd lim inp)
@@ -138,7 +141,7 @@ Proof.
     (fun mem Hm => conj eq_refl (GI0 mem (G_img_mono src0segs G src0_G mem HG' Hm)))
     (lib_contract_x_Rc_all_of_cg src0_msyms (@zlib_API rc) (zlib_tables rc) G src0_G frame_RELRO src0_R GI
       LIBPC RA_LIB EMPTY LIB_STACK HG' frame_RELRO_src0 (H rc))
-    sp brk0 mbase rnd lim inp Hsp Hbrk Hmb Hfits Hinput Hlim).
+    sp brk0 mbase rnd lim inp Hsp Hbrk Hmb Hvl Hlau Hinput Hlim).
   unfold rc. apply ceil_of_top_run.
   unfold rc. reflexivity.
 Qed.

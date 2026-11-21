@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ARM_drain of the ASan+UBSan walk (image B) of fuzz_reply's LLVMFuzzerTestOneInput
    over the GENERIC allocator relation ARx, its SECOND stage: the ARx twin of lib/B/W_LLVMFuzzerTestOneInput_drain_calls.v
-   (a Theorem Labs lane's, a working branch af5c712458a; NOT edited): dr_stage_calls, the six calls from
+   (a Theorem Labs lane's, a working branch; NOT edited): dr_stage_calls, the six calls from
    `jal pthread_mutex_lock` (DLK, lib/B/..._drain_defs_x.v) to the latch.  Proves no function (kind: segment walk): the
    six callees are the kit's _x contracts, read from the interface record EV : dr_env_x.
    The method: the AR file generalizes every lemma of its Section over ALL its Section variables (its EV : dr_env and
@@ -18,11 +18,12 @@
    converted the same way.
    The Section header is cut_x's Section w header (B .. RINV), the arm's MMAX, the room round's RP / dr_cnl_pk and the
    interface record EV : dr_env_x.
-   THE ROOM ROUND (an internal work row, the image-B twin of image A's b5892edd1cb, item by item): DLK / INV_K_x carry the
+   THE ROOM ROUND (an internal work row, the image-B twin of image A, item by item): DLK / INV_K_x carry the
    cut's NP; dc_stB's drain call takes RP's rp_RM (from NP by RP_NP) and the count premise (LS_cnt at the cut), and
    exports dcB_out (the entry / source bundles at the call, dr_post's frame and clauses, NP, check_no_loss's count by
    DR_CNT_grow / DR_CNT_cnl); dc_stE takes NP and that count, and exports NP, cnl_post's frame and the held list's
    count clause; dr_stage_calls feeds LS_cnl_pre / LS_drain_step their TX texts' premises. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -83,7 +84,7 @@ Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 #[local] Notation VAL := (@pa_val _ fr_prog_listing PB_fr).
 #[local] Notation SIGMA := (@pa_sigma _ fr_prog_listing PB_fr).
 #[local] Notation BASE := (@pa_val _ fr_prog_listing PB_fr A_TEXT).
-(* ---- cut_x's Section w (W_LLVMFuzzerTestOneInput_cut_x.v:199-244), verbatim ---- *)
+(* ---- cut_x's Section w (W_LLVMFuzzerTestOneInput_cut_x.v:200-245), verbatim ---- *)
 Variable B : asyms.
 Variable MT : ameter_ops.
 Variables XM_LIB XN_LIB : Z -> Z.
@@ -1311,7 +1312,7 @@ Proof.
   exact HCH.
 Qed.
 (* the caller's stack is readable from the arm's frame base up to ly_top, at any state the arm's journal reaches:
-   the kit's cnl_spec asks it at the check_no_loss call (lib/B/W_contract.v:2086, sp = F).  [F, sp0) is the
+   the kit's cnl_spec asks it at the check_no_loss call (lib/B/W_contract.v:2087, sp = F).  [F, sp0) is the
    function's own window, present at the end of the journal (dcF_pres); [sp0, ly_top) is the cut's STKR at the
    entry (fr_lib_pre_cf's 18th conjunct, before HB), kept to here because the journal changes no byte above its window
    (aview_above_of_journal) and no stack byte is a G_fr byte (inG_low: G_fr lies in the image). *)
@@ -1329,7 +1330,7 @@ Proof.
     by (unfold fr_lib_pre_cf_x in HPRE; tauto).
   pose proof HPREE as (_ & _ & _ & _ & _ & Hstk0 & _).
   pose proof Hstk0 as (_ & _ & _ & _ & _ & H47 & _ & _ & Htop2).
-  (* STKR, the 18th conjunct of the cut's fr_lib_pre_cf (lib/B/W_LLVMFuzzerTestOneInput_cut.v:293); HB follows it as the
+  (* STKR, the 18th conjunct of the cut's fr_lib_pre_cf (lib/B/W_LLVMFuzzerTestOneInput_cut.v:294); HB follows it as the
      19th and last (:282), so an explicit destruct, not a repeat that would also open HB *)
   assert (HSTKR : forall x, spZ (c_regs cx) <= x < ly_top (c_ly cx) ->
                     aview segs (w_H (c_W cx)) (c_mem cx) x <> None).
@@ -1476,8 +1477,8 @@ Ltac dr_meq HF Em := lazymatch type of HF with frame_of ?E ?rs ?m ?m' =>
 
 (* ================================================================== the six calls, one stage each *)
 (* ---- stage A: 0x84900 jal pthread_mutex_lock -> 0x84904.
-   Contract: lib/B/W_sites.v:90 alock_realizes at SIGMA WS_pthread_mutex_lock (the interface's dre_ALOCK);
-   journal composition: lib/B/W_sites.v:392 aj_gx_entry_at_x. ---- *)
+   Contract: lib/B/W_sites.v:91 alock_realizes at SIGMA WS_pthread_mutex_lock (the interface's dre_ALOCK);
+   journal composition: lib/B/W_sites.v:393 aj_gx_entry_at_x. ---- *)
 
 Lemma dc_stA : forall cx Hpe t m j si h fpos ly3 S3 Hp3 k W c,
   lf_base_x B MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G_fr ARx cx Hpe ->
@@ -1556,8 +1557,8 @@ Proof.
 Qed.
 
 (* ---- stage C: 0x8490c mv a0,s7 ; li s7,1 ; jal pthread_mutex_unlock -> 0x84918.
-   Contract: lib/B/W_sites.v:105 aunlock_realizes at SIGMA WS_pthread_mutex_unlock (dre_AUNLOCK);
-   journal composition: lib/B/W_sites.v:392 aj_gx_entry_at_x.  s7 leaves holding 1 (what lregs_common asks at
+   Contract: lib/B/W_sites.v:106 aunlock_realizes at SIGMA WS_pthread_mutex_unlock (dre_AUNLOCK);
+   journal composition: lib/B/W_sites.v:393 aj_gx_entry_at_x.  s7 leaves holding 1 (what lregs_common asks at
    the latch); image A reloads &g_lock from the frame cell F+40 here, B has it in s7 already. ---- *)
 
 Lemma dc_stC : forall cx Hpe t m j si fpos FF ly S Hp mc W c,
@@ -1657,7 +1658,7 @@ Proof.
 Qed.
 
 (* ---- stage D: 0x84918 mv a0,s5 ; jal check_no_loss_read -> 0x84920.
-   Contract: lib/B/W_contract.v:484 cnlr_spec at BASE + AF_fr_check_no_loss_read (dre_CNLR); its aleaf_post gained
+   Contract: lib/B/W_contract.v:485 cnlr_spec at BASE + AF_fr_check_no_loss_read (dre_CNLR); its aleaf_post gained
    errno's view as its last conjunct (:112), which this stage does not need;
    journal composition: dr_callZ above (W_journal.v ajournal_gx_sub_x). ---- *)
 
@@ -1809,7 +1810,7 @@ Proof.
     pose proof Hsl as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & HEX & HHD & _).
     split; [exact (Hlist _ _ HEX) | exact (Hlist _ _ HHD)].
 Qed.
-(* the entry's bundles at the drain's call (s5-r1d's dr3_epre, ReplyLSDrain3.v:80; ls3_kh, ReplyLS3Arms.v:306):
+(* the entry's bundles at the drain's call (s5-r1d's dr3_epre, ReplyLSDrain3.v:81; ls3_kh, ReplyLS3Arms.v:307):
    aentry_ok's clauses W_rep.v:126-127, :133-134, :141 *)
 Lemma dcB_epre : forall ly S (W : world segs) mem e, aentry_ok B ly S W mem e ->
   dr3_epre e /\ ls3_kh e.
@@ -1823,7 +1824,7 @@ Proof.
     + left. split; assumption.
     + right. split; assumption.
 Qed.
-(* the source's bundles at the drain's call (dr3_hpre, ReplyLSDrain3.v:87; ls3_hn, ReplyLS3Arms.v:309): asrc_at's
+(* the source's bundles at the drain's call (dr3_hpre, ReplyLSDrain3.v:88; ls3_hn, ReplyLS3Arms.v:310): asrc_at's
    offset clause W_rep.v:106-107 and its three lists' alist_at (count clause :81, pending texts non-empty :91) *)
 Lemma dcB_hpre : forall ly S (W : world segs) mem HA h, asrc_at B ly S W mem HA h ->
   dr3_hpre h /\ ls3_hn h.
@@ -2149,8 +2150,8 @@ Definition dcB_out (m : lmod) (j : nat) (h : hsrc) (ly : alayout) (S : astate) (
   NP S' /\ cnt_ok_pk RP (cnl_pk (hs_expected h') (hs_held h')) (ablocks B ly' S').
 
 (* ---- stage B: 0x84904 mv a0,s6 ; jal drain -> 0x8490c.
-   Contract: lib/B/W_contract.v:1027 dr_spec at BASE + AF_fr_drain (dre_DRAIN), in its _x form at the stack budget
-   DRAIN_STK_x = DRAIN_STK + 128 (lib/B/W_contract_x.v, kit a working branch c96258ef05e);
+   Contract: lib/B/W_contract.v:1028 dr_spec at BASE + AF_fr_drain (dre_DRAIN), in its _x form at the stack budget
+   DRAIN_STK_x = DRAIN_STK + 128 (lib/B/W_contract_x.v, kit a working branch);
    journal composition: dr_callZ above (W_journal.v ajournal_gx_sub_x, then ajournal_gx_G_mono_x from drain's
    G_DR to the entry's G_fr in dcB_post_of). ---- *)
 
@@ -2214,7 +2215,7 @@ Proof.
   destruct (dr_blk ly S Hp W mem md (lm_G m) ATABLE HAR HGin) as (HG4096 & HGceil & _).
   assert (HSA : lm_G m <= lm_G m + AENT * Z.of_nat j /\ lm_G m + AENT * Z.of_nat j + AENT <= lm_G m + ATABLE)
     by (unfold AENT, ATABLE; lia).
-  (* dr_spec's entry-pointer alignment (lib/B/W_contract.v:1035, cand11): the table is a live block, so 16-aligned
+  (* dr_spec's entry-pointer alignment (lib/B/W_contract.v:1036, cand11): the table is a live block, so 16-aligned
      (al_blocks), and AENT = 56 is a multiple of 8 - the derivation of _drain_entry.v's HSA8 *)
   assert (HSA8 : (lm_G m + AENT * Z.of_nat j) mod 8 = 0).
   { destruct (alx_blocks _ _ _ LAWS ly S Hp W mem md (lm_G m) ATABLE HAR HGin) as (HG16 & _).
@@ -2977,7 +2978,7 @@ Proof.
 Qed.
 
 (* ---- stage E: 0x84920 addi a1,s1,192 ; mv a0,s5 ; jal check_no_loss -> 0x8492c.
-   Contract: the kit's cnl_spec, lib/B/W_contract.v:2053 (cnl_post :1967, CNL_STK :1966 = 16640, Section w3n), at
+   Contract: the kit's cnl_spec, lib/B/W_contract.v:2054 (cnl_post :1967, CNL_STK :1966 = 16640, Section w3n), at
    BASE + AF_fr_check_no_loss, taken through dre_CNL at G = [(HA + 64, 32)], the drained slot's two list headers
    (gx_ok from dre_HGs / HG, gx_rt from dre_HGs / dre_HERR_HI / dre_HAP, rom_out from dre_ROM_OUT); its memmove
    bound `AREC * capb .. < 2 ^ 32` (:2018) from dcE_capb above; its last premise, the caller's stack readable from
@@ -3175,7 +3176,7 @@ Proof.
   pose proof (dcE_lit W mem _ _ HRV (proj1 (proj2 dcE_lits))) as L2.
   pose proof (dcE_lit W mem _ _ HRV (proj2 (proj2 dcE_lits))) as L3.
   assert (P20 : 0 <= 0 <= Z.of_nat (length (lm_O mc))) by lia.
-  (* cnl_spec's last premise (W_contract.v:2086): the stack readable from sp = F up to ly_top *)
+  (* cnl_spec's last premise (W_contract.v:2087): the stack readable from sp = F up to ly_top *)
   assert (HSTK : forall a, spZ regsc <= a < ly_top ly -> aview segs (w_H W) mem a <> None).
   { intros a Ha. rewrite Hspc in Ha. exact (dcF_stk_rd cx Hpe ly S Hp fpos W mem mdc k HB HJ a Ha). }
   (* ---- the call ---- *)
@@ -3213,7 +3214,7 @@ Proof.
           HPREc ltac:(lia) eq_refl P4 P5 Rc10 Rc11 P8 Hsi HF8 P11 P12 HSRC P14 HZc
           HND HnE HnH SAT P20 P21 P22 P23 P24 HOBAT eq_refl HNO40 HNO32 HMR HOB0 HOB HRV L1 L2 L3 HROOM HMO
           0%nat ltac:(apply RP_NP; exact HNPs) HCNTc HCAPB HSTK). }
-      (* the kit's cnl_post carries errno's view after apres_kept (W_contract.v:2031); this stage re-reads errno *)
+      (* the kit's cnl_post carries errno's view after apres_kept (W_contract.v:2032); this stage re-reads errno *)
       cbv beta. intros W2 c2 _ (ly2 & S2 & Hp2 & regs2 & mem2 & md2 & kk & E' & H' & -> & JC & HPR & HPK & _ & HSRC2 & ER &
         EV' & EC & HNDH & HTX & HCAPH & MAT & MGN & MNO & MOUT & HOB2 & HPERM & HFRS & HMO2 & HRM2 & _ & _).
       exists ly2, S2, Hp2, regs2, mem2, md2, kk. split; [reflexivity|].
@@ -3359,7 +3360,7 @@ Proof.
 Qed.
 
 (* ---- stage F: 0x8492c ld a0,192(s1) ; jal check_shape_done -> 0x84934 ; j 84804 (the latch).
-   Contract: lib/B/W_contract.v:157 csd_spec at BASE + AF_fr_check_shape_done (dre_CSD) - aleaf_post, whose
+   Contract: lib/B/W_contract.v:158 csd_spec at BASE + AF_fr_check_shape_done (dre_CSD) - aleaf_post, whose
    errno-view conjunct (:112) this stage does not need;
    journal composition: dr_callZ above (ajournal_gx_sub_x), then the plain run of `j 84804` (W_journal.v
    paj_run_to_x).  B's arm has no join block: s9 = t and s4 = the cursor are already the latch's (image A
@@ -4389,7 +4390,7 @@ Proof.
     by (unfold fr_lib_pre_cf_x in HPRE; tauto).
   pose proof HPREE as (_ & _ & _ & _ & _ & Hstk0 & _).
   pose proof Hstk0 as (_ & _ & _ & _ & _ & H47 & _ & _ & Htop2).
-  (* STKR, the 18th conjunct of the cut's fr_lib_pre_cf (lib/B/W_LLVMFuzzerTestOneInput_cut.v:293); HB follows it as the
+  (* STKR, the 18th conjunct of the cut's fr_lib_pre_cf (lib/B/W_LLVMFuzzerTestOneInput_cut.v:294); HB follows it as the
      19th and last (:282), so an explicit destruct, not a repeat that would also open HB *)
   assert (HSTKR : forall x, spZ (c_regs cx) <= x < ly_top (c_ly cx) ->
                     aview segs (w_H (c_W cx)) (c_mem cx) x <> None).
@@ -4841,7 +4842,7 @@ Proof.
   destruct (dr_blk_xR ly S Hp W mem md (lm_G m) ATABLE HAR HGin) as (HG4096 & HGceil & _).
   assert (HSA : lm_G m <= lm_G m + AENT * Z.of_nat j /\ lm_G m + AENT * Z.of_nat j + AENT <= lm_G m + ATABLE)
     by (unfold AENT, ATABLE; lia).
-  (* dr_spec's entry-pointer alignment (lib/B/W_contract.v:1035, cand11): the table is a live block, so 16-aligned
+  (* dr_spec's entry-pointer alignment (lib/B/W_contract.v:1036, cand11): the table is a live block, so 16-aligned
      (al_blocks), and AENT = 56 is a multiple of 8 - the derivation of _drain_entry.v's HSA8 *)
   assert (HSA8 : (lm_G m + AENT * Z.of_nat j) mod 8 = 0).
   { destruct (alx_blocks _ _ _ LAWS ly S Hp W mem md (lm_G m) ATABLE HAR HGin) as (HG16 & _).
@@ -5536,7 +5537,7 @@ Proof.
   pose proof (dcE_lit W mem _ _ HRV (proj1 (proj2 dcE_lits))) as L2.
   pose proof (dcE_lit W mem _ _ HRV (proj2 (proj2 dcE_lits))) as L3.
   assert (P20 : 0 <= 0 <= Z.of_nat (length (lm_O mc))) by lia.
-  (* cnl_spec's last premise (W_contract.v:2086): the stack readable from sp = F up to ly_top *)
+  (* cnl_spec's last premise (W_contract.v:2087): the stack readable from sp = F up to ly_top *)
   assert (HSTK : forall a, spZ regsc <= a < ly_top ly -> aview segs (w_H W) mem a <> None).
   { intros a Ha. rewrite Hspc in Ha. exact (dcF_stk_rd_xR cx Hpe ly S Hp fpos W mem mdc k HB HJ a Ha). }
   (* ---- the call ---- *)
@@ -5574,7 +5575,7 @@ Proof.
           HPREc ltac:(lia) eq_refl P4 P5 Rc10 Rc11 P8 Hsi HF8 P11 P12 HSRC P14 HZc
           HND HnE HnH SAT P20 P21 P22 P23 P24 HOBAT eq_refl HNO40 HNO32 HMR HOB0 HOB HRV L1 L2 L3 HROOM HMO
           0%nat ltac:(apply RP_NP; exact HNPs) HCNTc HCAPB HSTK). }
-      (* the kit's cnl_post carries errno's view after apres_kept (W_contract.v:2031); this stage re-reads errno *)
+      (* the kit's cnl_post carries errno's view after apres_kept (W_contract.v:2032); this stage re-reads errno *)
       cbv beta. intros W2 c2 _ (ly2 & S2 & Hp2 & regs2 & mem2 & md2 & kk & E' & H' & -> & JC & HPR & HPK & _ & HSRC2 & ER &
         EV_R' & EC & HNDH & HTX & HCAPH & MAT & MGN & MNO & MOUT & HOB2 & HPERM & HFRS & HMO2 & HRM2 & _ & _).
       exists ly2, S2, Hp2, regs2, mem2, md2, kk. split; [reflexivity|].

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise of writev). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -47,7 +48,8 @@ Hypothesis Htid : 0 < bv_unsigned tid < 2 ^ 22.
   file_clean (ms_mem ms3) 0x66bd8 wp2 rp2 ->
   ((pending = [] /\ exists wp1 rp1, file_clean (ms_mem ms3) 0x66cc8 wp1 rp1)
    \/ (exists (wb wp : Z) (bufp bufsz rp1 can : word), stdout_pending (ms_mem ms3) wb wp bufp bufsz rp1 can pending
-          /\ fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)))) ->
+          /\ fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))
+          /\ m_channel_reader model = true)) ->
   exit_pre (ms_regs ms3) (ms_mem ms3) model (Z_to_bv 64 c) pending.
 Proof. LiaFast.lf_pins (fun (SL SH Htid : LiaFast.U) => LiaFast.u0).
   intros E3 L ms3 model csp c i0 i3 i7 i9 i21 o0 c7 c9 c21 k7 k9 wp2 rp2 pending Hd3 HSP HT Hcsp Hc EG Hh Hl G2 G4 G10 N3 N7 C7 N9 C9 N21 C21 FRM FC5 SO.

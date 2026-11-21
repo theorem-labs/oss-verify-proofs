@@ -3,13 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: the walk of reac_box_catalogue on fuzz_segconf.asan-ubsan (image B, pin sha256
    c3796c0b38f3, twin 80e82127e8ca; entry 0x8a8a0, 84 bytes, 21 instructions, a 16-byte frame, no side-stack
    frame): reac_box_catalogue_contract of lib/B/Prog/reac_box_catalogue_c.v (image B's copy of the image-A owner's FINAL
-   text at 6f783602b5e3) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
+   text) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
    entry, SRr of apost_base at the return, over `Context {PI : PAImg seg_listing}` of image B's listing,
    lib/B/Prog/SegPa.v).
-   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane, commit
-   434ade288123, both arms): the same entry seeds, token runs and return steps over image B's listing modules and
+   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane,
+    both arms): the same entry seeds, token runs and return steps over image B's listing modules and
    B's kit copies. The UBSan alignment check is read from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_catalogue.v
-   at origin/ossv/recipes 3abc3740de97 (the same image-B code but 4 pc-relative words; caller-journal form, not
+   (the same image-B code but 4 pc-relative words; caller-journal form, not
    copied), whose token run decides it the same way.
    Image B's code differs from image A's by two instructions: `andi a1,a0,7` (0x8a8ac) and `bnez a1,0x8a8ec`
    (0x8a8b0) to `unimp` (0x8a8ec), the UBSan alignment check of the 8-byte store through c.
@@ -37,9 +37,10 @@
    definitions (SegInstA's names at image B): SegInstB.STK_reac_box_catalogue and SegInstB.catA, tied to this walk
    by the lemmas STK_reac_box_catalogue_B (the value 16) and catA_B (listing object 77 of B's seg_objs). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/reac_box_catalogue.v, with its module paths and module names changed; 808 of its 860 lines of code are new or changed and 401 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* m_file on fuzz_segconf.asan (image A, 0x85ebc), the first half of segment S_MF_LONGP (guide MF-CUTS-A.md
    section 4): LONG (0x86110) to LK_CALLP (0x861e4), the long line's blank-skip loop and its two exits.
-   The LONGP blank-skip sub-lane of the LONGP / KKNOCKP segment lane (the G2 walk owner's G2). Base: commit c3fe5d4adfce.
+   The LONGP blank-skip sub-lane of the LONGP / KKNOCKP segment lane (the G2 walk owner's G2). Base:.
 
    THE CODE (listing dis/m_file.fuzz_segconf.asan.s; listing offset = AF_m_file + (pc - 0x85ebc)):
      86110 bgeu s11,s7,861e0      not taken at LONG (s7 = p + |line|, |line| >= 512, so s11 = p < s7)
@@ -53,8 +54,8 @@
      863d8 sd a1,136(s1) ; j 861e4
    Both exits meet at LK_CALLP = 0x861e4 (m_file_s_long_d.v), where m_file_s_long.v takes over.
 
-   THE PROOF. One small symbolic state per token run (fuzz_command's lib/A/Prog/answer_l.v form at
-   origin/ossv/recipes 501c0d516c69: a loop re-seeded at each iteration, by strong induction on the bytes left):
+   THE PROOF. One small symbolic state per token run (fuzz_command's lib/A/Prog/answer_l.v form:
+   a loop re-seeded at each iteration, by strong induction on the bytes left):
    the registers are atoms (s3 and s9 pinned to the two constants the loop reads), two regions - the text byte at
    s11 = a0 = p + i (read only, atom 32 its value) and the cur slot 136(s1) (writable, atom 33 its value) - and no
    shadow entry, so each inline check leaves the obligation that the byte at a0 is addressable, which mf_loop's
@@ -63,7 +64,7 @@
    LONG's memc everywhere off the cur slot and whose cur slot holds cur; the two exits hand LK_CALLPX_stmt the same
    two facts, with cur' = cur (exit 1) or cur' = (byte = '[' ? None : cur) (exit 2).
    The model: m_line_long (the long-line equation of SegModel.m_line) and dropwhile_blank_idx (the blank prefix
-   fixes dropwhile blank), plain lemmas copied from the plain / image-B owner's lib/Prog/mfp_facts.v at dec616e11c2f (cited at each
+   fixes dropwhile blank), plain lemmas copied from the plain / image-B owner's lib/Prog/mfp_facts.v (cited at each
    one; that file is not in this tree and its Prog/mfu_facts dependency is not either, so mff_line_split is
    reproved here from break_nl).
    No Section hypothesis beyond the contract's B: every image fact the runs need is in mf_cx / mf_core / mf_loop. *)

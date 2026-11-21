@@ -75,7 +75,7 @@ AU/Rt/RtBzPins.v:3	H1	note names lib/A/Rt/RtBzPins.v
 AU/Rt/RtBzPins.v:3	H2	note moved to after line 1
 AU/Rt/RtBzPins.v	H6	every read-only byte of this image (fuzz_headamp.asan) that -> every read-only byte of this image (fuzz_headamp.asan-ubsan) that (1)
 AU/Rt/RtBzPins.v	H6	A/YF0m.v -> AU/YF0m.v (3)
-AU/Rt/RtBzPins.v	H6	(AU/YF0m.v at A2 1e6517d5536) -> (AU/YF0m.v at B0 d2a2313d53c) (1)
+AU/Rt/RtBzPins.v	H6	(AU/YF0m.v at A2) -> (AU/YF0m.v at B0) (1)
 AU/Rt/RtBzPre.v:3	H1	note names lib/A/Rt/RtBzPre.v
 AU/Rt/RtBzPre.v:3	H2	note moved to after line 1
 AU/Rt/RtBzStr.v:3	H1	note names lib/A/Rt/RtBzStr.v

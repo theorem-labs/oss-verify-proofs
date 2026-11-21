@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_fuzz_alloc_peak.v at a working branch 0d38fb8ac64, relocated A->B by
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_fuzz_alloc_peak.v at a working branch, relocated A->B by
    Theorem Labs tools over the unstripped twins, every image numeral re-derived by symbol / section / string
    content and checked by revcheck (reports in (internal path)). Imports: lib.Reusable kernel kept;
    the per-image root files from lib.ReusableB; fm's own per-image files from lib.B; FMupoison shared from lib.A. *)

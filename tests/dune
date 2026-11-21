@@ -2,9 +2,10 @@
 ; repository, their statements, and finished proofs of them.  Built by a plain
 ; `dune build`; never installed.  tests/negative/ holds proofs that must be
 ; rejected, so dune never compiles it: tests/check.sh does, and requires each
-; one to fail.
+; one to fail.  tests/instances/ holds instance lemmas, which tests/check.sh
+; compiles as oft check compiles an instance's lemma, so dune does not either.
 (include_subdirs qualified)
-(data_only_dirs negative)
+(data_only_dirs negative instances)
 
 (rocq.theory
  (name OSSVerify.Tests)

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the new auxv table). *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.openssl.ct.lib.CtLib Require Import ImageCt.
 (* [comment removed for export] *)
@@ -136,8 +137,8 @@ Lemma rauxv_ok_agree : forall P m m' B,
   agree_on P m m' -> (forall a, B <= a -> P a) -> (forall a, RAUXV_CELL <= a < RAUXV_CELL + 8 -> P a) ->
   rauxv_ok m B -> rauxv_ok m' B.
 Proof.
-  intros P m m' B AG HP HC (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & C & A1 & A2 & H).
-  exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. split; [|split; [|split; [|exact H]]].
+  intros P m m' B AG HP HC (av & axv & rnd & execfn & r & C & A1 & A2 & H).
+  exists av, axv, rnd, execfn, r. split; [|split; [|split; [|exact H]]].
   - eapply rw_cells_agree; [exact AG| exact C|]. intros a Ha. apply HC. cbn in Ha. lia.
   - eapply bytes_at_agree; [exact AG| exact A1|]. intros a Ha. apply HP. lia.
   - eapply bytes_at_agree; [exact AG| exact A2|]. intros a Ha. apply HP. cbn in Ha. lia.

@@ -1,7 +1,8 @@
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcRh.v (a working branch 5ad50e61fc6a, file sha256 d3814de1376e) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53); module paths changed; its 3 image addresses moved by code-verified function pairs (3 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10-30: a Theorem Labs lane's delta to proofs/cgif/cgif_file_fuzzer/lib/DMrcRh.v (5ad50e61fc6a -> a working branch 9f12c64c854, file sha256 9c8e6156f0a5) applied at B' by a 3-way merge (base and theirs the two cgif texts, ours this file): the index-keyed dead_shadow_new (the cut's sc_ELEN gives LIVE). 0 conflicts; no numeral in the delta. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcRh.v (a working branch, file sha256 d3814de1376e) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53); module paths changed; its 3 image addresses moved by code-verified function pairs (3 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-30: a Theorem Labs lane's delta to proofs/cgif/cgif_file_fuzzer/lib/DMrcRh.v (-> a working branch, file sha256 9c8e6156f0a5) applied at B' by a 3-way merge (base and theirs the two cgif texts, ours this file): the index-keyed dead_shadow_new (the cut's sc_ELEN gives LIVE). 0 conflicts; no numeral in the delta. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (F1 priming row R3, lane B1, slice H4; integrator a Theorem Labs lane): new file. rule 24: no function
    proved here (kind: F1 priming of an already proved walk, the secondary arm of __asan::QuarantineCallback::Recycle
    (0x348fc): lift to YA0nH.SRr' / YG0dH.amreal' and apply the core's re-hide step at the return).
@@ -392,7 +393,7 @@ destruct RM as (regs' & mem' & md' & Ec & POST & RAW & ERR & MN & AV & PU & CI &
 rewrite Ec in Ec1. unfold cfg_at in Ec1. injection Ec1 as E1 E2 E3. subst regs1 mem1 md1. subst c'.
 pose (HO := YA0nR.Hoff_rehide tfibsegs (w_H W2) (YGcfRehidePost.rh_lo MAP) (YGcfRehidePost.rh_hi MAP LEN) (w_Hoff W2) HS).
 pose (HA := YA0nR.Awf_rehide (w_A W2) (shull (MAP, LEN)) (YGcfRehidePost.rh_lo MAP) (YGcfRehidePost.rh_hi MAP LEN) (w_Awf W2) SH).
-(* preset's world carries w_H8 (YA0n.v:25): the re-hidden world's proof of it, from w_H8 W2 and the 8-aligned (page
+(* preset's world carries w_H8 (YA0n.v:26): the re-hidden world's proof of it, from w_H8 W2 and the 8-aligned (page
    rounded) rh_lo / rh_hi, by YA0nR.H_rehide_H8 *)
 assert (M8 : forall x, (x / 4096 * 4096) mod 8 = 0)
   by (intro x; replace (x / 4096 * 4096) with ((x / 4096 * 512) * 8) by ring; apply Z.mod_mul; lia).

@@ -11,8 +11,9 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    the only non-.bss loads are .got 0x996f8 (-> __asan_shadow_memory_dynamic_address) and .got 0x99750
    (-> __asan_option_detect_stack_use_after_return), each a TfibLib field of its own (tl_got_shadow / tl_got_uar), and
    .got 0x9a370 / 0x9a378 (-> __start / __stop_asan_globals), taken by the start-up and exit walks; no .rodata cell is
-   read and there is no indirect jump. So the set is empty, as lib/A's ACeg / ACeh state it (a working branch
-   c9ead13e994, libconst.md (sha256 756f3f83371a; internal record)); 0x103b0 is read only by the ASan runtime. *)
+   read and there is no indirect jump. So the set is empty, as lib/A's ACeg / ACeh state it (a working branch,
+   libconst.md (sha256 756f3f83371a; internal record)); 0x103b0 is read only by the ASan runtime. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.

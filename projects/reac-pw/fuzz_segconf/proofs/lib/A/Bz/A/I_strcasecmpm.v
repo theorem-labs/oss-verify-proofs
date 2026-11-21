@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/leptonica/fhmtgen_fuzzer/lib/K5/A10/I_strcmpw.v, with its module paths, module names and addresses changed; 133 of its 171 lines of code are new or changed and 61 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf image A (fuzz_segconf.asan, sha256 48c5355bdacb...): the comparison loop of the strcasecmp
    wrapper ___interceptor_strcasecmp (0x44af8, 0x500 bytes; the loop is 0x44b58-0x44b94) and the model of what it
-   computes. Written for this unit; the shape follows fuzz_manifest's strncasecmp walk (lib/A/Bz/A/I_scasem.v at
-   origin/ossv/recipes 501c0d516c69), without the length bound: the loop stops at the first index where the
+   computes. Written for this unit; the shape follows fuzz_manifest's strncasecmp walk (lib/A/Bz/A/I_scasem.v),
+   without the length bound: the loop stops at the first index where the
    ASCII-lowered bytes differ or the first string's byte is 0.
 
    The loop body, per index k (s2 = first string, s1 = second string, s4 = k):

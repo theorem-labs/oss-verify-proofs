@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Written by Theorem Labs, 2026-10, for omx-clap-core/fuzz_state's ASan build (image A, fuzz_state.asan sha256
    64b53ff86172bb07f93f146e67b81a0354bca88e0a580e93fb1da01406fb76e0): fs's instance of the ONE strcmp text.
    1. fs_strcmp_U: AStrcmpDefU.astrcmp_realizesU (Reusable/AStrcmpDefU.v:27, a Theorem Labs lane's registry text) at FSH_Base.PC_strcmp
@@ -17,7 +18,7 @@
       `Z.of_nat (length l1) + 1 < 2 ^ 32`: the U text asks k + 1 < 2 ^ 32 (AStrcmpDefU.v:32), and at l1 = l2 of length
       2 ^ 32 - 1 str_meet forces k = 2 ^ 32 - 1.
    3. fs_strcmp_realizesU: FSH_Gen.astrcmp_realizesU at FSH_Base.PC_strcmp exactly. cstr_ok's fourth conjunct is
-      `Z.of_nat (length l) + 1 < 2 ^ 32` (FSH_Gen.v:302; a Theorem Labs lane 2026-10-29T09:53Z, a working branch 40390baa3df),
+      `Z.of_nat (length l) + 1 < 2 ^ 32` (FSH_Gen.v:302; a Theorem Labs lane 2026-10-29T09:53Z, a working branch),
       which is (2)'s extra premise for l1. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -576,7 +577,7 @@ Theorem fs_strcmp_contract : forall B, AR_laws tfibsegs B -> TfibSyms B ->
     (FSH_Gen.rt_post_roU tfibsegs B FSH_Gen.STK_RT_STR ly S U W regs mem md (fun v => v = 0 <-> FSH_Gen.str_eq l1 l2)).
 Proof. intros B LAWS TB. exact (fs_strcmp_of_U B FSH_Base.PC_strcmp (fs_strcmp_U B LAWS TB)). Qed.
 (* (3) FSH_Gen.astrcmp_realizesU (FSH_Gen.v:426-432) exactly, at FSH_Base.PC_strcmp: since S0's cstr_ok carries
-   `Z.of_nat (length l) + 1 < 2 ^ 32` as its fourth conjunct (a working branch 40390baa3df, a Theorem Labs lane 09:53Z),
+   `Z.of_nat (length l) + 1 < 2 ^ 32` as its fourth conjunct (a working branch, a Theorem Labs lane 09:53Z),
    fs_strcmp_contract's extra premise is that conjunct of l1's cstr_ok. *)
 Theorem fs_strcmp_realizesU : forall B, AR_laws tfibsegs B -> TfibSyms B ->
   FSH_Gen.astrcmp_realizesU tfibsegs B FSH_Base.PC_strcmp.

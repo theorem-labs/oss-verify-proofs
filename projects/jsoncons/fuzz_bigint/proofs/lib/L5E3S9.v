@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the auxv cells, which these steps do not use, are no longer read (auxv_cells). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp.bitvector Require Import definitions.
@@ -277,7 +278,6 @@ Proof.
   (* [comment removed for export] *)
   pose proof ES14 as (S_1 & S_2 & S_3 & S_4 & S_5 & S_6 & S_7 & S_8 & S_9 & S_10 & S_11 & S_12 & S_13 & S_14 & S_15 & S_16 & S_17 & S_18 & S_19 & S_20 & S_21 & S_22 & S_23 & S_24 & S_25).
   unfold EH_CAUGHT, EH_UNCAUGHT, SYSCAT_GUARD, UW_FLAGS, TD_LOCALE, LOCALE_MSGCAT, GLOBAL_LOCALE, CANARY, AUXVP in S_1, S_2, S_3, S_4, S_5, S_6, S_7, S_8, S_9, S_10, S_11, S_12, S_13, S_14.
-  pose proof (auxv_cells M14 av uid rnd hw S_18) as (X_0 & X_1 & X_2 & X_3 & X_4 & X_5 & X_6 & X_7 & X_8 & X_9 & X_10 & X_11 & X_12 & X_13 & X_14 & X_15 & X_16 & X_17 & X_18 & X_19).
   unshelve epose proof (e3p2_conc fx14 R14 M14 (S - 896) (A + 128) fb696 fb664 d1 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)
     as (fx15 & R15 & M15 & MS15 & K15 & R15_1 & R15_2 & R15_8 & R15_10 & R15_11 & FR15 & GR15).
   { (* [comment removed for export] *) pr. }
@@ -438,7 +438,7 @@ Proof.
     exact GR15.
     constructor. apply L5PK.wr_scratch; lia.
     constructor. }
-  clear X_0 X_1 X_2 X_3 X_4 X_5 X_6 X_7 X_8 X_9 X_10 X_11 X_12 X_13 X_14 X_15 X_16 X_17 X_18 X_19 S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20 S_21 S_22 S_23 S_24 S_25. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
+  clear S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20 S_21 S_22 S_23 S_24 S_25. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
   clear AG15 FR15 MS15. try clear STAT15. try clear K14.
   try clear c14_Sm840. try clear c14_Sm848. try clear c14_Sm856. try clear c14_Sm864. try clear c14_Sm872. try clear c14_Sm776. try clear c14_Sm784. try clear c14_Sm792. try clear c14_Sm800. try clear c14_Sm472. try clear c14_Sm480. try clear c14_Sm488. try clear c14_Sm496. try clear c14_Sm504. try clear c14_Sm512. try clear c14_Sm520. try clear c14_Sm528. try clear c14_Sm536. try clear c14_Sm544. try clear c14_Sm552. try clear c14_Sm560. try clear c14_Sm568. try clear c14_Sm424. try clear c14_Sm432. try clear c14_Sm360. try clear c14_Sm368. try clear c14_Sm376. try clear c14_Sm56. try clear c14_Sm64. try clear c14_Sm72. try clear c14_Sm80. try clear c14_Sm88. try clear c14_Sm96. try clear c14_Sm104. try clear c14_Sm112. try clear c14_Sm120. try clear c14_Sm128. try clear c14_Sm136. try clear c14_Sm144. try clear c14_Sm152. try clear c14_Sm8. try clear c14_Sm16. try clear c14_Sm696w1. try clear c14_Sm664w1. try clear c14_Sm640. try clear c14_Sm648. try clear c14_Sm632w1. try clear c14_Sm608. try clear c14_Sm616. try clear c14_Sm600w1. try clear c14_Sm464w1. try clear c14_Sm408w1. try clear c14_Sm280w1. try clear c14_Sm248w1. try clear c14_Sm216w1. try clear c14_Sm192. try clear c14_Sm200. try clear c14_Sm184w1. try clear c14_Sm160. try clear c14_Sm168. try clear c14_Sm48w1. try clear c14_Om128z8. try clear c14_Om80z12. try clear c14_Sm880. try clear c14_Sm888. try clear c14_Sm896. try clear c14_Op0. try clear c14_Op8. try clear c14_Fp24. try clear c14_Fp32. try clear c14_Fp40. try clear c14_Fp48. try clear c14_Fp56. try clear c14_Fp64w1. try clear c14_Fp65w1. try clear c14_Fp16w4. try clear c14_Fp8. try clear c14_Fp0. try clear c14_Om8. try clear c14_Om40. try clear c14_Om48. try clear c14_Om56. try clear c14_Om64. try clear c14_Om68w4. try clear c14_Om16. try clear c14_Om120. try clear c14_Om24. try clear c14_Om32. try clear c14_Om88. try clear c14_Om104. try clear c14_Om112. try clear c14_Om96. try clear R14_1. try clear R14_2. try clear R14_3. try clear R14_4. try clear R14_8. try clear R14_9. try clear R14_10. try clear R14_11. try clear R14_18. try clear R14_19. try clear R14_20. try clear DEF14. try clear HH14. try clear HQ14. try clear ES14. try clear DEFref_14. try clear DEFA_14. try clear DEFd1_14. try clear DEFd2_14. try clear DEFd3_14. try clear DEFd4_14.
   (* [comment removed for export] *)

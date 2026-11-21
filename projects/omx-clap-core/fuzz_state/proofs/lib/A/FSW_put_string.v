@@ -9,7 +9,7 @@
 
    The closing theorem `put_string_holds` is NOT here: owner ruling (a Theorem Labs lane 23:03Z, relayed by a Theorem Labs lane
    23:06Z) pauses the final Qed of put / put_string / encode / decode until S0 carries the restated writer text
-   (a working branch a43075a340a, which this file is drafted against). Every stage lemma, call-site
+   (a working branch, which this file is drafted against). Every stage lemma, call-site
    lemma and arm is proved here against that text.
 
    CONTROL FLOW (MEASURED by vm_compute on the pinned fs.asan through FSW_writer_tbl.fsw_wr_tbl, never from a
@@ -28,8 +28,8 @@
      `SAlu ALU_ADD (SAlu ALU_SRL (SOff nF 0) (SLit 3)) (SOff 32 0)`); then put (a0 = o, a1 = PS_Q1 0x21240, a2 = 1).
    Rule 24 (proof-index v5 built 2026-10-28T21:58:24Z, exit 0, read from a file, not a pipe; re-checked by
    a Theorem Labs lane 2026-10-28T22:32Z): put_string has RELEASED proofs for fs's PLAIN and UBSAN builds only
-   (lib/Prog, lib/U/Prog, ossv/recipes@566eb6ffa5, release/pau-projects-recipes@b6a0088adc), none for an ASan build.
-   The generation-N plain proof (211ff3e9df0 lib/A/Prog/put_string_blocks.v, put_string.v) is the template for the
+   (lib/Prog, lib/U/Prog, ossv/recipes, release/pau-projects-recipes), none for an ASan build.
+   The generation-N plain proof (lib/A/Prog/put_string_blocks.v, put_string.v) is the template for the
    stage cuts and the case split, not a drop-in: it is over fs.plain's engine (evt / rw_cells), not this one.
    `git grep -n -w` over origin/main, origin/ossv/recipes, origin/ossv/candidates and
    origin/release/pau-projects-recipes (under proofs/) finds no hit for any `ps_*` name introduced here. *)
@@ -335,7 +335,7 @@ Lemma psl_on33 : forall lo hi, psl_rng lo hi ->
 Proof. intros lo hi [(-> & ->) | [(-> & ->) | (-> & ->)]]; vm_compute; reflexivity. Qed.
 
 (* ---- the rest of a Theorem Labs lane's scan-loop helpers, ported here (its scratch is parked at
-   a working branch 88c60453b45; that branch does not build as-is on this base) ---- *)
+   a working branch; that branch does not build as-is on this base) ---- *)
 
 (* ---- the shift's closed data: the register file and the state the rebase lands on ---- *)
 Definition psl_regsF : list sv := Eval vm_compute in (regs_rebase psl_rb (ss_regs (psl_ssD 35 91 1 255))).
@@ -429,7 +429,7 @@ Let HCELL : as_shadow_cell B = tfib_D_asan_shadow_memory_dynamic_address := proj
 
 (* ---- the kit steps this walk uses are all PROVED and imported by path, none is a hypothesis:
    FSW_frame.fsw_stack_malloc_atU and FSW_frame3.fsw_flag_storeU / fsw_after_callU_s0_ot (a Theorem Labs lane,
-   a working branch 2fe0e09c2c7, taken by path; the after-call takes the four-arm FP relation, so
+   a working branch, taken by path; the after-call takes the four-arm FP relation, so
    ps_put_call states that form, not FSW_K3's five-arm fsw_fp_sub), FSW_ret.fsw_retU / fsw_fpreU_atFP
    (a Theorem Labs lane). ---- *)
 
@@ -1088,7 +1088,7 @@ Lemma ps_put_call :
   getr regsc 3 = w64 (as_gp B) -> getr regsc 4 = w64 (as_tp B) ->
   achain lyc (aview tfibsegs (w_H W) (unpoison U memc)) (spZ regsc) (s0Z regsc) ch1 ->
   (* put's own premises, at the call *)
-  (* NO CTX row and no CTX binder: the writer specs dropped both (S0 794d06a106b, owner-approved on a Theorem Labs lane's proof
+  (* NO CTX row and no CTX binder: the writer specs dropped both (S0, owner-approved on a Theorem Labs lane's proof
      that the row is unsatisfiable in a reachable state; the binder by owner ruling 05:05Z). *)
   fs_heads B lyc Sc U ->
   Z.of_nat (length (frames Sc)) <= FRL_CRT_CALLEE + 1 ->

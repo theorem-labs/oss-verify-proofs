@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AD1j.v, with its module paths changed, names TfibSyms -> CmdBSyms and its addresses moved to plugin-hostd/fuzz_command's ASan build; the module destructor's contract x2_realizes comes from the class DtorExit of lib/A/AE37.v (a Section hypothesis). *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/AD1j.v (donor image sha256 c0661b96b5bd), with its module paths changed, names CmdBSyms -> SegBSyms and its addresses moved to reac-pw/fuzz_segconf's ASan build. *)
 (* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/A/AD1j.v, derived mechanically (derive_y.py b7b132fb12a7; every changed numeral checked against alreloc.py a5c53bb2bed4 and against image B), with its module paths changed (lib/A to lib/B) and its addresses moved to reac-pw/fuzz_segconf's ASan+UBSan build. The comments are the A file's. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader conjunct of fdchan). *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -131,7 +132,7 @@ match type of Hr with ?lo <= a < ?hi => apply (G lo hi a); [vm_compute; reflexiv
 Qed.
 Theorem tfib_exit_site : exit_site_tfa B est xst.
 Proof.
-intros XI E W regs mem md ly S usp d fs code k HXI E0 [Ulo Uhi] U16 Htid Ha0 Hcode Hsp Hd Hret R3 R4 HMX Hwin HAI HAR HTOP Hnev HEST HK Hfd1 Hfs.
+intros XI E W regs mem md ly S usp d fs code k HXI E0 [Ulo Uhi] U16 Htid Ha0 Hcode Hsp Hd Hret R3 R4 HMX Hwin HAI HAR HTOP Hnev HEST HK Hfd1 Hcr1 Hfs.
 assert (HXI' : XI = IMG_X \/ XI = IMG_XL) by (destruct HXI as [[HX _] | HX]; [left | right]; exact HX).
 assert (HXC : exists cls, XC XI cls /\ ((XI = IMG_X /\ k = 0%nat /\ cls = ex_consts1) \/ (XI = IMG_XL /\ cls = ex_consts))).
 { destruct HXI as [[HX Hk] | HX]; [exists ex_consts1 | exists ex_consts]; (split; [| first [left; repeat split; assumption || reflexivity | right; split; [assumption | reflexivity]]]);
@@ -190,7 +191,7 @@ HPRE Hsp44 Hstk Hband Ha0 Hcode' HTPX HC Htidc ltac:(lia) Hgot Hcan (u64_range (
 * rewrite length_pend. lia.
 * rewrite HBS. lia.
 * intros i Hi. rewrite (HPEND i Hi). f_equal. f_equal. apply nth_indep. exact Hi.
-* split; [exact (Hfd1 Hk1) | reflexivity].
+* split; [exact (Hfd1 Hk1) | split; [reflexivity | exact (Hcr1 Hk1)]].
 * exact HXown.
 * exact HBown.
 * exact HAI.

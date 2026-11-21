@@ -1,6 +1,6 @@
 (* Region conditions of the malloc PRIMARY walk under ARU: threads lib/A/AF0w.v's released walk (AFij.v, AFik.v, AFil.v, AFim.v, AFin.v) and the glue it calls (AFhy.v, AFis.v, AFiy.v, AFjc.v, AFiz.v, AFj0.v, AFje.v, AFix.v, AFjb.v, AFj1.v, AFjf.v, AFj2.v, AFjg.v) over lib/A/FSupoison.v, FSupoisonU.v and the kit FSupoisonAllocR.v. *)
 (* Shared any-U allocator, within-budget units (cgif's EV_MAX 11,776, < 2 GiB per class); the cf form (fuzz_preset / fuzz_reply, YG0dcf.v) bridges to this. *)
-(* Modified by Theorem Labs, 2026-10: image-B port (fuzz_state.asan-ubsan, sha256 5ac5ce0954f87e2d) of lib/A/FSupoisonAllocMp1.v at 5cc58921ee2: each lib/A donor is its lib/B twin (AFxx -> YFxx, ABxx -> YBxx, AExx -> YExx), the kit is lib/B/FSupoisonAllocR / Rf / Rt, every statement is over B's tfibsegs (lib/B/YB1v.v); the image's shadow bounds TFIB_IMG_LO / 8 and TFIB_IMG_END / 8 are computed from lib/B/YF0x.v's names. *)
+(* Modified by Theorem Labs, 2026-10: image-B port (fuzz_state.asan-ubsan, sha256 5ac5ce0954f87e2d) of lib/A/FSupoisonAllocMp1.v: each lib/A donor is its lib/B twin (AFxx -> YFxx, ABxx -> YBxx, AExx -> YExx), the kit is lib/B/FSupoisonAllocR / Rf / Rt, every statement is over B's tfibsegs (lib/B/YB1v.v); the image's shadow bounds TFIB_IMG_LO / 8 and TFIB_IMG_END / 8 are computed from lib/B/YF0x.v's names. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -95,12 +95,12 @@ Qed.
 (* The image's constant cells (YF0m.v Tfib_const): where they sit, and that their bytes are off UP.                   *)
 (* ---------------------------------------------------------------------------------------------------------------- *)
 
-(* A literal byte range of the image, or a shadow byte range of the image. Port-from: lib/B/YFev.v:393 low_okd. *)
+(* A literal byte range of the image, or a shadow byte range of the image. Port-from: lib/B/YFev.v:394 low_okd. *)
 Definition cimgb (a w : Z) : bool :=
   ((TFIB_IMG_LO <=? a) && (a + w <=? TFIB_IMG_END)) ||
   ((SHADOW_OFF + TFIB_IMG_LO / 8 <=? a) && (a + w <=? SHADOW_OFF + TFIB_IMG_END / 8)).
 
-(* Where every constant cell sits. Port-from: lib/B/YFev.v:396 const_loc_okd (the o_quar clause dropped: this
+(* Where every constant cell sits. Port-from: lib/B/YFev.v:397 const_loc_okd (the o_quar clause dropped: this
    file only needs the cell's location, not its disjointness from the quarantine window). *)
 Definition const_locb (c : acell) : bool :=
   let w := Z.max 1 (Z.of_nat (c_w c)) in

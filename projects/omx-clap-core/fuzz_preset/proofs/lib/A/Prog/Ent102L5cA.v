@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image A' (asan, harness fix #102, PIN sha256
    1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44, unstripped twin bff8519bbe3ea0e4):
    SEGMENT L5c of LLVMFuzzerTestOneInput (entry 0x815e0), check_round_trip's result tested and the starved check on
@@ -27,8 +28,8 @@
              call's fake frame, the blocks of D in Lam).
    (A' 0x818e8 -> 0x81900; B' 0x819d4 -> 0x819ec.)
    STATEMENT: lib/A/Ent102CutsA.v, read at blob eef90bf355e6
-   (commit b1ed4e6c944d = 8422ba84f257 on the batch kit's pre-merge tip d607d12e4b0f + the
-   CallA / CallB fix 3ea93d01b97c + the row helpers, which leave the statements unchanged; no DW, ec_pjf in
+   (= on the batch kit's pre-merge tip + the
+   CallA / CallB fix + the row helpers, which leave the statements unchanged; no DW, ec_pjf in
    cut_pno .. cut_free, ec_inv's journal at a wild budget wk: `exists WS, ajournal_xw .. WS /\ wbudget [] wk WS`,
    ec_wk_crt at cut_crt, ec_wk_crs1 at cut_crs1): seg_L5c_stmt, cut_crt, cut_free, cut_crs1, ec_room_at,
    ec_wk_values, ec_hyps (by its part names), ec_pre's

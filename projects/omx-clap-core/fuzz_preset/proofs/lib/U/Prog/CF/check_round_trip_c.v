@@ -31,7 +31,7 @@ Local Open Scope Z_scope.
    (round_trip_text then returns 1 at once, fuzz_preset.c:675-680), else 0.  The two arms of the post partition these
    two cases by the entry flags ro / oo.
    CRT_K = CRT_F + round_trip_text_c.RTT_K (the deepest callee; RTT_K = 112 + parse_noting_c.PN_K = 14320).
-   CF form: this is lib/U/Prog/check_round_trip_c.v of origin/cold/h-rw-pre-4-rw102-crt e0ca34385157 (blob a26bed86a790)
+   CF form: this is lib/U/Prog/check_round_trip_c.v (blob a26bed86a790)
    with the callee contracts of lib/U/Prog/CF and SRCF's SR (the cut-free form); the statement text is the same. *)
 Definition CHECK_ROUND_TRIP : Z := 0x1408c.
 Definition CRT_F : Z := 272.

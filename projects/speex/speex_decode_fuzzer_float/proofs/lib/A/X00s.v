@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor of usage_cpsE at STACK_SPAN in place of STACK_WIN's literal value). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
@@ -142,7 +143,14 @@ pose proof (af_sp0_range RT AF Σ m HART) as SP0R. unfold SEGTOP_A, STACK_WIN, U
 destruct HSIG as (LV & FRS & CR & USP0 & SPW).
 pose proof (AF_DRV Σ m HART) as (SC0 & _).
 pose proof (u64arr_bound bsegs m ap ptrs ARR) as ARB.
-set (lo := rt_sp0 RT Σ - 8388608) in *.
+  (* LPS 75d69e00 (#38): was [set (lo := rt_sp0 RT Σ - 8388608) in *.], the
+     literal STACK_WIN.  START and the context invariants now carry
+     [stk .. (rt_sp0 RT Σ - STACK_SPAN) ..], so a walk naming any other floor
+     leaves [stk bsegs m lo usp] open for [try assumption] and then for [lia].
+     An earlier change migrated the same [set] at 30 sites in 13 D_* files by
+     matching the token STACK_WIN; this site spelled the floor as the literal
+     and was missed. *)
+  set (lo := rt_sp0 RT Σ - STACK_SPAN) in *.
 rewrite (nth0_argv_Z argvb arg0 Ha0).
 replace (evw 2 (msg_usage (map bv_unsigned arg0))) with (evw 2 (fp_msg (FPusage (bv_unsigned p0) arg0)) ++ evw 1 (so_buf stdout_init))
 by (cbn [fp_msg so_buf stdout_init]; rewrite app_nil_r; reflexivity).
@@ -343,7 +351,10 @@ pose proof (af_sp0_range RT AF Σ m HART) as SP0R. unfold SEGTOP_A, STACK_WIN, U
 destruct HSIG as (LV & FRS & CR & USP0 & SPW).
 pose proof (AF_DRV Σ m HART) as (SC0 & _).
 pose proof (u64arr_bound asegs m ap ptrs ARR) as ARB.
-set (lo := rt_sp0 RT Σ - 8388608) in *.
+  (* LPS 75d69e00 (#38): was [set (lo := rt_sp0 RT Σ - 8388608) in *.], the
+     literal STACK_WIN -- see the A twin above.  Missed by that earlier change for the
+     same reason: its script matched the token STACK_WIN, not the literal. *)
+  set (lo := rt_sp0 RT Σ - STACK_SPAN) in *.
 rewrite (nth0_argv_Z argvb arg0 Ha0).
 replace (evw 2 (msg_usage (map bv_unsigned arg0))) with (evw 2 (fp_msg (FPusage (bv_unsigned p0) arg0)) ++ evw 1 (so_buf stdout_init))
 by (cbn [fp_msg so_buf stdout_init]; rewrite app_nil_r; reflexivity).

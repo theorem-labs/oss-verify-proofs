@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the debugging print of the written bytes in Section IMemsetZero is removed. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -110,7 +111,7 @@ Section IMemsetZero.
   Proof.
     induction K as [K IH] using lt_wf_ind; intros i m1 HK Hi ARR MI1 MU WM. unfold wz.
     pose proof (u8arr_store_ok asegs m1 dst _ i (wa (dst + i)) ARR ltac:(hci; rewrite repeat_length; lia) eq_refl) as HS.
-    step. match goal with |- context [write_to_mem _ _ ?bs] => idtac "BYTES:" bs end.
+    step.
     match goal with |- context [write_to_mem _ _ ?bs] => change bs with [b8 0] end.
     pose proof (u8arr_write asegs m1 dst _ i (b8 0) ARR ltac:(hci; rewrite repeat_length; lia)) as ARR'. rewrite upd_repeat_same in ARR'. clear ARR. store_done.
     (* [comment removed for export] *)

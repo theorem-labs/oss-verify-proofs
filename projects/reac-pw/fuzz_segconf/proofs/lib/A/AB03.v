@@ -1,6 +1,7 @@
 (* Machine-generated data computed from the task's compiled program image (the start-up checker's join state, collected by running the checker over the image); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: the pass-1 join state is fuzz_segconf.asan's own, collected by the start-up collector of tools/startup (the start-up tool set of record at commit d9aa42da992, hsform.py 9747a6731b7e) running the donor checker of proofs/cgif/cgif_file_fuzzer (c8557374ad2e) on this image; module paths changed; the comment line above is fuzz_command's (origin/ossv/recipes 501c0d516c69, A/AB03.v). *)
+(* Modified by Theorem Labs, 2026-10: the pass-1 join state is fuzz_segconf.asan's own, collected by the start-up collector of tools/startup (the start-up tool set of record, hsform.py 9747a6731b7e) running the donor checker of proofs/cgif/cgif_file_fuzzer on this image; module paths changed; the comment line above is fuzz_command's (A/AB03.v). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* gate: _ZN6__asanL19malloc_context_sizeE (0xaccfc) reads [30] in all 1 join state *)
 (* gate: _ZN6__asanL11asan_initedE (0xaccd8) reads [1] in all 1 join state *)
 (* info: _ZN11__sanitizer21common_flags_dont_useE (0x13db4c) reads [30] in all 1 join state *)

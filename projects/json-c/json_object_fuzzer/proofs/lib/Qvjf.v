@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the CONFIG_RSEQ flag of the start-up layer: four main-entry states in HSCLASS_S, with the per-value driver-piece certificates DRVPIECES_HS2sA_1R, HS2sA_2R, HS2sB_3R and HS2sB_4R; the launch's ProcInput: the sections' SINV0 and argH0 over the launch's fields with apc, mbase, kb and execfn, and QpvH.launch_ok in place of entry_stack_fits; the main-entry states' variable numbers renumbered for the states the build computes, by the map read off the new start-up run). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -29,15 +30,19 @@ Lemma DRV_CHECKS : forall w ch, HSCLASS_S w ch ->
 drv_pieces_check (kn_view ch) = true
 /\ img_ranges (kn_view ch) (QupI.PRIS_A ++ QupI.STDIO0_A) = true
 /\ img_range (kn_view ch) 0x10000 0xe4000 = true
-/\ kn_mem (KRange (EVar 44) 1 4194303) (kn_view ch) = true
+/\ kn_mem (KRange (EVar 48) 1 4194303) (kn_view ch) = true
 /\ a_fd ch = FdStd.
 Proof.
 
-intros [|] ch [-> | ->].
+intros [|] ch [-> | [-> | [-> | ->]]].
 - split; [exact DRVPIECES_HS2sA_1_ok|]. repeat split; vm_compute; reflexivity.
 - split; [exact DRVPIECES_HS2sA_2_ok|]. repeat split; vm_compute; reflexivity.
+- split; [exact DRVPIECES_HS2sA_1R_ok|]. repeat split; vm_compute; reflexivity.
+- split; [exact DRVPIECES_HS2sA_2R_ok|]. repeat split; vm_compute; reflexivity.
 - split; [exact DRVPIECES_HS2sB_3_ok|]. repeat split; vm_compute; reflexivity.
 - split; [exact DRVPIECES_HS2sB_4_ok|]. repeat split; vm_compute; reflexivity.
+- split; [exact DRVPIECES_HS2sB_3R_ok|]. repeat split; vm_compute; reflexivity.
+- split; [exact DRVPIECES_HS2sB_4R_ok|]. repeat split; vm_compute; reflexivity.
 Qed.
 
 Lemma seg_w : seg_writable AsanUbsan.AsanUbsan_segment_002 = true
@@ -75,17 +80,31 @@ Variable brk0 : word.
 Variable argv envp : list (list byte).
 Variable fs : Fs.Fs.
 Variables uid hw : word.
+Variable apc : N.
+Variable mbase : word.
+Variable ifs : Fs.Fs.
+Variable stdin : InputStream.
+Variable gid : word.
+Variable groups : list word.
+Variable net : NetQueue.
+Variables nofile sigmask : word.
+Variable abort_terminal : bool.
+Variable urnd : InputStream.
+Variable tmp : Fs.Fs.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variables rdr sgd sgt : bool.
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hfit : QpvH.launch_ok sp brk0 mbase rdraw (QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt).
 Variables (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (mo : Model).
 Variable w : bool.
 Variable ch : acs.
 Hypothesis HCL : HSCLASS_S w ch.
-Hypothesis CS : cs_ok JOB6SEGS BJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JOB6PH sp rdraw brk0 argv envp uid hw) (argH0 JOB6PH sp rdraw argv envp uid hw) fs E ch R FULL mo.
+Hypothesis CS : cs_ok JOB6SEGS BJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JOB6PH apc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) (argH0 sp rdraw argv envp kb execfn) fs E ch R FULL mo.
 #[local] Notation LV := (LV_J E).
-#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
 #[local] Notation m := (view LV mo FULL).
 #[local] Notation KV := (MV4 main_know_view).
 
@@ -107,8 +126,8 @@ Proof.
 destruct (DRV_CHECKS w ch HCL) as (C & _ & _ & KR & _). unfold drv_pieces_check in C.
 apply andb_prop in C as [C _]. apply andb_prop in C as [C _].
 pose proof (proj1 (Forall_forall _ _) KV _ (kn_mem_In _ _ KR)) as RG. cbn [kentry_ok edenot] in RG.
-exists (bv_unsigned (ev E 44)). split; [| lia].
-refine (proj1 (check_cells_at JOB6SEGS E m (kn_view ch) KV DTID (ELit 0) _ [QbVh.C4 (Z_to_bv 64 (bv_unsigned (ev E 44)))] C _ _ _ _)).
+exists (bv_unsigned (ev E 48)). split; [| lia].
+refine (proj1 (check_cells_at JOB6SEGS E m (kn_view ch) KV DTID (ELit 0) _ [QbVh.C4 (Z_to_bv 64 (bv_unsigned (ev E 48)))] C _ _ _ _)).
 - change (bv_unsigned (edenot E (ELit 0))) with 0. unfold Qwm6.Mq4.A_TP. lia.
 - change (bv_unsigned (edenot E (ELit 0))) with 0. cbn. lia.
 - cbn [sc_match DTID]. split; [| exact I]. cbn [edenot QbVh.cbytes]. rewrite Z_to_bv_bv_unsigned. reflexivity.
@@ -248,24 +267,38 @@ Variable brk0 : word.
 Variable argv envp : list (list byte).
 Variable fs : Fs.Fs.
 Variables uid hw : word.
+Variable apc : N.
+Variable mbase : word.
+Variable ifs : Fs.Fs.
+Variable stdin : InputStream.
+Variable gid : word.
+Variable groups : list word.
+Variable net : NetQueue.
+Variables nofile sigmask : word.
+Variable abort_terminal : bool.
+Variable urnd : InputStream.
+Variable tmp : Fs.Fs.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variables rdr sgd sgt : bool.
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hfit : QpvH.launch_ok sp brk0 mbase rdraw (QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt).
 Variables (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (mo : Model).
 Variable ch : acs.
 Hypothesis HCL : HSCLASS_S true ch.
-Hypothesis CS : cs_ok JO6SEGS AJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JO6PH sp rdraw brk0 argv envp uid hw) (argH0 JO6PH sp rdraw argv envp uid hw) fs E ch R FULL mo.
+Hypothesis CS : cs_ok JO6SEGS AJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JO6PH apc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) (argH0 sp rdraw argv envp kb execfn) fs E ch R FULL mo.
 
 Hypothesis HSEC : Z_to_bv 64 Q6q3.rc_secret = edenot E (EBlob false 25 8 8).
-Hypothesis HCAN : Q6q3.rc_canary = ev E 45.
+Hypothesis HCAN : Q6q3.rc_canary = ev E 49.
 Hypothesis HCEIL : Q6q3.rc_ceil = atopE E.
 #[local] Notation LV := (LV_J E).
-#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo true ch HCL CS) (only parsing).
+#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo true ch HCL CS) (only parsing).
 #[local] Notation m := (view LV mo FULL).
 #[local] Notation KV := (MV4 main_know_view).
 #[local] Notation MTA := (4096 * bv_unsigned (ev E 5)).
-#[local] Notation GRP := (4096 * bv_unsigned (ev E 423)).
+#[local] Notation GRP := (4096 * bv_unsigned (ev E 429)).
 #[local] Notation ST0 := (Q8zf.ST0_A Q6q3.rc_secret QW7x.Mq0.ref_reserved MTA GRP).
 
 Lemma mta_bounds : 4096 <= MTA /\ MTA + 8192 <= 2^47.
@@ -278,12 +311,12 @@ Proof.
 intros k Hk. destruct mta_bounds. apply bv_eq. cbn [edenot]. rewrite u_add64, u_mul64, !u64_lit by lia.
 rewrite (Z.mod_small (4096 * _)) by lia. rewrite Z.mod_small by lia. reflexivity.
 Qed.
-Lemma ed_grp : forall k, 0 <= k < 2^32 -> edenot E (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 423)) (ELit k)) = Z_to_bv 64 (GRP + k).
+Lemma ed_grp : forall k, 0 <= k < 2^32 -> edenot E (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 429)) (ELit k)) = Z_to_bv 64 (GRP + k).
 Proof.
 intros k Hk. destruct grp_bounds. apply bv_eq. cbn [edenot]. rewrite u_add64, u_mul64, !u64_lit by lia.
 rewrite (Z.mod_small (4096 * _)) by lia. rewrite Z.mod_small by lia. reflexivity.
 Qed.
-Lemma ed_grp0 : edenot E (EMd Instr.M_MUL (ELit 4096) (EVar 423)) = Z_to_bv 64 (GRP + 0).
+Lemma ed_grp0 : edenot E (EMd Instr.M_MUL (ELit 4096) (EVar 429)) = Z_to_bv 64 (GRP + 0).
 Proof. destruct grp_bounds. apply bv_eq. cbn [edenot]. rewrite u_mul64, !u64_lit by lia. rewrite Z.mod_small by lia. rewrite Z.add_0_r. reflexivity. Qed.
 
 Lemma lit_rw : forall A cs tcs n, cells_check JO6SEGS (kn_view ch) (ELit 0) A cs = true -> img_w_b JO6SEGS A n = true ->
@@ -353,9 +386,9 @@ rewrite ?ctx_A, ?brk_word_A; cbn [Q8zf.ST0_A_ctx QUZl.c_secret QUZl.c_free_meta_
 lazymatch goal with
 | |- word_to_le_bytes _ (edenot _ (EAlu _ (EMd _ _ (EVar 5)) _)) = _ =>
 rewrite ed_mta by lia; unfold QnDM_c1.Mq0.pw, QUZl.oconc; rewrite ?conc_A0; reflexivity
-| |- word_to_le_bytes _ (edenot _ (EAlu _ (EMd _ _ (EVar 423)) _)) = _ =>
+| |- word_to_le_bytes _ (edenot _ (EAlu _ (EMd _ _ (EVar 429)) _)) = _ =>
 rewrite ed_grp by lia; unfold QnDM_c1.Mq0.pw, QUZl.oconc; rewrite ?conc_A1; reflexivity
-| |- word_to_le_bytes _ (edenot _ (EMd _ _ (EVar 423))) = _ =>
+| |- word_to_le_bytes _ (edenot _ (EMd _ _ (EVar 429))) = _ =>
 rewrite ed_grp0; unfold QnDM_c1.Mq0.pw, QUZl.oconc; rewrite ?conc_A1; reflexivity
 | |- word_to_le_bytes _ (edenot _ (EBlob _ _ _ _)) = _ => rewrite <- HSEC; reflexivity
 | |- True => exact I
@@ -392,7 +425,7 @@ Qed.
 
 Lemma u_pgM : bv_unsigned (edenot E (EMd Instr.M_MUL (ELit 4096) (EVar 5))) = MTA.
 Proof. exact (proj1 (MV4 pge_meta)). Qed.
-Lemma u_pgG : bv_unsigned (edenot E (EMd Instr.M_MUL (ELit 4096) (EVar 423))) = GRP.
+Lemma u_pgG : bv_unsigned (edenot E (EMd Instr.M_MUL (ELit 4096) (EVar 429))) = GRP.
 Proof. exact (proj1 (MV4 pge_grp)). Qed.
 Lemma meta_wr : QZDE.wr_at JO6SEGS m (MTA + 4096) 4096.
 Proof. exact (proj2 (MV4 meta_bytes)). Qed.
@@ -408,7 +441,7 @@ pose proof (check_rw_cells JO6SEGS E m (kn_view ch) KV cs _ off tcs C) as X. cbv
 apply X; [lia | lia | exact M | exact WF |].
 replace (MTA + off) with ((MTA + 4096) + (off - 4096)) by lia. apply (wr_at_sub JO6SEGS m (MTA + 4096) 4096); [exact meta_wr | lia | lia | lia].
 Qed.
-Lemma grp_piece_rw : forall off cs tcs, cells_check JO6SEGS (kn_view ch) (EMd Instr.M_MUL (ELit 4096) (EVar 423)) off cs = true ->
+Lemma grp_piece_rw : forall off cs tcs, cells_check JO6SEGS (kn_view ch) (EMd Instr.M_MUL (ELit 4096) (EVar 429)) off cs = true ->
 0 <= off -> off + Z.of_nat (scs_len cs) <= 4096 -> sc_match JO6SEGS E (GRP + off) cs tcs -> QbVh.cells_wf tcs ->
 QlEo_c1.rw_cells JO6SEGS m (GRP + off) tcs.
 Proof.
@@ -486,7 +519,7 @@ pose proof (bytes_at_nth JO6SEGS m GRP _ (Z.to_nat o) _ (proj1 (MV4 grp_bytes)) 
 rewrite Z2Nat.id in B by lia. exact B.
 Qed.
 
-#[local] Notation M1 L := (L sp rdraw brk0 argv envp fs uid hw Hsp E R FULL mo true ch HCL CS) (only parsing).
+#[local] Notation M1 L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp E R FULL mo true ch HCL CS) (only parsing).
 Lemma obj_facts : forall o, In o (OBJS_W true) ->
 (4096 * bv_unsigned (ev E (fst o)) + snd o <= 0x10000 \/ 0x645000 <= 4096 * bv_unsigned (ev E (fst o)))
 /\ 4096 * bv_unsigned (ev E (fst o)) + snd o <= atopE E.
@@ -499,11 +532,11 @@ Qed.
 Lemma mta_facts : (MTA + 8192 <= 0x10000 \/ 0x645000 <= MTA) /\ MTA + 8192 <= atopE E.
 Proof. exact (obj_facts (5%nat, 8192) ltac:(cbn; tauto)). Qed.
 Lemma grp_facts : (GRP + 4096 <= 0x10000 \/ 0x645000 <= GRP) /\ GRP + 4096 <= atopE E.
-Proof. exact (obj_facts (423%nat, 4096) ltac:(cbn; tauto)). Qed.
+Proof. exact (obj_facts (429%nat, 4096) ltac:(cbn; tauto)). Qed.
 Lemma mta_grp_disj : GRP + 4096 <= MTA \/ MTA + 8192 <= GRP.
 Proof.
-assert (IM : In (5%nat, 8192) (OBJS_W true)) by (cbn; tauto). assert (IG : In (423%nat, 4096) (OBJS_W true)) by (cbn; tauto).
-assert (NE : obj_e E (423%nat, 4096) <> obj_e E (5%nat, 8192)).
+assert (IM : In (5%nat, 8192) (OBJS_W true)) by (cbn; tauto). assert (IG : In (429%nat, 4096) (OBJS_W true)) by (cbn; tauto).
+assert (NE : obj_e E (429%nat, 4096) <> obj_e E (5%nat, 8192)).
 { intros X. apply (M1 obj_e_inj _ _ IG IM) in X. discriminate X. }
 pose proof (M1 maps_disj _ _ (M1 in_maps_obj _ IG) (M1 in_maps_obj _ IM) NE) as D. unfold iv_disjoint in D.
 rewrite !(M1 u_obj_base _ IM), !(M1 u_obj_base _ IG), !(M1 u_obj_len _ IM), !(M1 u_obj_len _ IG) in D. cbn [fst snd] in D. exact D.
@@ -670,24 +703,38 @@ Variable brk0 : word.
 Variable argv envp : list (list byte).
 Variable fs : Fs.Fs.
 Variables uid hw : word.
+Variable apc : N.
+Variable mbase : word.
+Variable ifs : Fs.Fs.
+Variable stdin : InputStream.
+Variable gid : word.
+Variable groups : list word.
+Variable net : NetQueue.
+Variables nofile sigmask : word.
+Variable abort_terminal : bool.
+Variable urnd : InputStream.
+Variable tmp : Fs.Fs.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variables rdr sgd sgt : bool.
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hfit : QpvH.launch_ok sp brk0 mbase rdraw (QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt).
 Variables (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (mo : Model).
 Variable ch : acs.
 Hypothesis HCL : HSCLASS_S false ch.
-Hypothesis CS : cs_ok JO6SEGS AJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JO6PH sp rdraw brk0 argv envp uid hw) (argH0 JO6PH sp rdraw argv envp uid hw) fs E ch R FULL mo.
+Hypothesis CS : cs_ok JO6SEGS AJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JO6PH apc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) (argH0 sp rdraw argv envp kb execfn) fs E ch R FULL mo.
 
 Hypothesis HSEC : Z_to_bv 64 Q6q3.rc_secret = edenot E (EBlob false 25 8 8).
-Hypothesis HCAN : Q6q3.rc_canary = ev E 45.
+Hypothesis HCAN : Q6q3.rc_canary = ev E 49.
 Hypothesis HCEIL : Q6q3.rc_ceil = atopE E.
 #[local] Notation LV := (LV_J E).
-#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo false ch HCL CS) (only parsing).
+#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo false ch HCL CS) (only parsing).
 #[local] Notation m := (view LV mo FULL).
 #[local] Notation KV := (MV4 main_know_view).
-#[local] Notation MTA := (4096 * bv_unsigned (ev E 423)).
-#[local] Notation GRP := (4096 * bv_unsigned (ev E 424)).
+#[local] Notation MTA := (4096 * bv_unsigned (ev E 429)).
+#[local] Notation GRP := (4096 * bv_unsigned (ev E 430)).
 #[local] Notation ST0 := (QEoy.ST0_B Q6q3.rc_secret QW7x.Mq0.ref_reserved MTA GRP).
 
 Lemma mta_bounds : 4096 <= MTA /\ MTA + 8192 <= 2^47.
@@ -695,17 +742,17 @@ Proof. pose proof (MV4 pge_meta) as (_ & B1 & B2). unfold METAB, MV, MV_B in B1,
 Lemma grp_bounds : 4096 <= GRP /\ GRP + 4096 <= 2^47.
 Proof. pose proof (MV4 pge_grp) as (_ & B1 & B2). unfold GRPBx, GV, GV_B in B1, B2. lia. Qed.
 
-Lemma ed_mta : forall k, 0 <= k < 2^32 -> edenot E (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 423)) (ELit k)) = Z_to_bv 64 (MTA + k).
+Lemma ed_mta : forall k, 0 <= k < 2^32 -> edenot E (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 429)) (ELit k)) = Z_to_bv 64 (MTA + k).
 Proof.
 intros k Hk. destruct mta_bounds. apply bv_eq. cbn [edenot]. rewrite u_add64, u_mul64, !u64_lit by lia.
 rewrite (Z.mod_small (4096 * _)) by lia. rewrite Z.mod_small by lia. reflexivity.
 Qed.
-Lemma ed_grp : forall k, 0 <= k < 2^32 -> edenot E (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 424)) (ELit k)) = Z_to_bv 64 (GRP + k).
+Lemma ed_grp : forall k, 0 <= k < 2^32 -> edenot E (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 430)) (ELit k)) = Z_to_bv 64 (GRP + k).
 Proof.
 intros k Hk. destruct grp_bounds. apply bv_eq. cbn [edenot]. rewrite u_add64, u_mul64, !u64_lit by lia.
 rewrite (Z.mod_small (4096 * _)) by lia. rewrite Z.mod_small by lia. reflexivity.
 Qed.
-Lemma ed_grp0 : edenot E (EMd Instr.M_MUL (ELit 4096) (EVar 424)) = Z_to_bv 64 (GRP + 0).
+Lemma ed_grp0 : edenot E (EMd Instr.M_MUL (ELit 4096) (EVar 430)) = Z_to_bv 64 (GRP + 0).
 Proof. destruct grp_bounds. apply bv_eq. cbn [edenot]. rewrite u_mul64, !u64_lit by lia. rewrite Z.mod_small by lia. rewrite Z.add_0_r. reflexivity. Qed.
 
 Lemma lit_rw : forall A cs tcs n, cells_check JO6SEGS (kn_view ch) (ELit 0) A cs = true -> img_w_b JO6SEGS A n = true ->
@@ -773,11 +820,11 @@ Lemma ctx_B : QUZl.ctx ST0 = QEoy.ST0_B_ctx Q6q3.rc_secret.  Proof. reflexivity.
 Ltac cellB :=
 rewrite ?ctx_B, ?brk_word_B; cbn [QEoy.ST0_B_ctx QUZl.c_secret QUZl.c_free_meta_head QUZl.c_avail_meta QUZl.c_meta_area_head QUZl.c_meta_area_tail QUZl.c_avail_meta_areas];
 lazymatch goal with
-| |- word_to_le_bytes _ (edenot _ (EAlu _ (EMd _ _ (EVar 423)) _)) = _ =>
+| |- word_to_le_bytes _ (edenot _ (EAlu _ (EMd _ _ (EVar 429)) _)) = _ =>
 rewrite ed_mta by lia; unfold QnDM_c1.Mq0.pw, QUZl.oconc; rewrite ?conc_B0; reflexivity
-| |- word_to_le_bytes _ (edenot _ (EAlu _ (EMd _ _ (EVar 424)) _)) = _ =>
+| |- word_to_le_bytes _ (edenot _ (EAlu _ (EMd _ _ (EVar 430)) _)) = _ =>
 rewrite ed_grp by lia; unfold QnDM_c1.Mq0.pw, QUZl.oconc; rewrite ?conc_B1; reflexivity
-| |- word_to_le_bytes _ (edenot _ (EMd _ _ (EVar 424))) = _ =>
+| |- word_to_le_bytes _ (edenot _ (EMd _ _ (EVar 430))) = _ =>
 rewrite ed_grp0; unfold QnDM_c1.Mq0.pw, QUZl.oconc; rewrite ?conc_B1; reflexivity
 | |- word_to_le_bytes _ (edenot _ (EBlob _ _ _ _)) = _ => rewrite <- HSEC; reflexivity
 | |- True => exact I
@@ -812,16 +859,16 @@ unfold QCwx.Mq1.rmrep_ctx. split; [|split; [|split; [|split; [|split; [|split]]]
 - reflexivity.
 Qed.
 
-Lemma u_pgM : bv_unsigned (edenot E (EMd Instr.M_MUL (ELit 4096) (EVar 423))) = MTA.
+Lemma u_pgM : bv_unsigned (edenot E (EMd Instr.M_MUL (ELit 4096) (EVar 429))) = MTA.
 Proof. exact (proj1 (MV4 pge_meta)). Qed.
-Lemma u_pgG : bv_unsigned (edenot E (EMd Instr.M_MUL (ELit 4096) (EVar 424))) = GRP.
+Lemma u_pgG : bv_unsigned (edenot E (EMd Instr.M_MUL (ELit 4096) (EVar 430))) = GRP.
 Proof. exact (proj1 (MV4 pge_grp)). Qed.
 Lemma meta_wr : QZDE.wr_at JO6SEGS m (MTA + 4096) 4096.
 Proof. exact (proj2 (MV4 meta_bytes)). Qed.
 Lemma grp_wr : QZDE.wr_at JO6SEGS m GRP 4096.
 Proof. exact (proj2 (MV4 grp_bytes)). Qed.
 
-Lemma mta_piece_rw : forall off cs tcs, cells_check JO6SEGS (kn_view ch) (EMd Instr.M_MUL (ELit 4096) (EVar 423)) off cs = true ->
+Lemma mta_piece_rw : forall off cs tcs, cells_check JO6SEGS (kn_view ch) (EMd Instr.M_MUL (ELit 4096) (EVar 429)) off cs = true ->
 4096 <= off -> off + Z.of_nat (scs_len cs) <= 8192 -> sc_match JO6SEGS E (MTA + off) cs tcs -> QbVh.cells_wf tcs ->
 QlEo_c1.rw_cells JO6SEGS m (MTA + off) tcs.
 Proof.
@@ -830,7 +877,7 @@ pose proof (check_rw_cells JO6SEGS E m (kn_view ch) KV cs _ off tcs C) as X. cbv
 apply X; [lia | lia | exact M | exact WF |].
 replace (MTA + off) with ((MTA + 4096) + (off - 4096)) by lia. apply (wr_at_sub JO6SEGS m (MTA + 4096) 4096); [exact meta_wr | lia | lia | lia].
 Qed.
-Lemma grp_piece_rw : forall off cs tcs, cells_check JO6SEGS (kn_view ch) (EMd Instr.M_MUL (ELit 4096) (EVar 424)) off cs = true ->
+Lemma grp_piece_rw : forall off cs tcs, cells_check JO6SEGS (kn_view ch) (EMd Instr.M_MUL (ELit 4096) (EVar 430)) off cs = true ->
 0 <= off -> off + Z.of_nat (scs_len cs) <= 4096 -> sc_match JO6SEGS E (GRP + off) cs tcs -> QbVh.cells_wf tcs ->
 QlEo_c1.rw_cells JO6SEGS m (GRP + off) tcs.
 Proof.
@@ -908,7 +955,7 @@ pose proof (bytes_at_nth JO6SEGS m GRP _ (Z.to_nat o) _ (proj1 (MV4 grp_bytes)) 
 rewrite Z2Nat.id in B by lia. exact B.
 Qed.
 
-#[local] Notation M1 L := (L sp rdraw brk0 argv envp fs uid hw Hsp E R FULL mo false ch HCL CS) (only parsing).
+#[local] Notation M1 L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp E R FULL mo false ch HCL CS) (only parsing).
 Lemma obj_facts : forall o, In o (OBJS_W false) ->
 (4096 * bv_unsigned (ev E (fst o)) + snd o <= 0x10000 \/ 0x645000 <= 4096 * bv_unsigned (ev E (fst o)))
 /\ 4096 * bv_unsigned (ev E (fst o)) + snd o <= atopE E.
@@ -919,13 +966,13 @@ cbn [img_lo img_hi AJO6] in B4. rewrite UB, UL in B4.
 pose proof (M1 maps_below_atop _ Hin) as T. rewrite UB, UL, <- (M1 main_atop) in T. split; [exact B4 | exact T].
 Qed.
 Lemma mta_facts : (MTA + 8192 <= 0x10000 \/ 0x645000 <= MTA) /\ MTA + 8192 <= atopE E.
-Proof. exact (obj_facts (423%nat, 8192) ltac:(cbn; tauto)). Qed.
+Proof. exact (obj_facts (429%nat, 8192) ltac:(cbn; tauto)). Qed.
 Lemma grp_facts : (GRP + 4096 <= 0x10000 \/ 0x645000 <= GRP) /\ GRP + 4096 <= atopE E.
-Proof. exact (obj_facts (424%nat, 4096) ltac:(cbn; tauto)). Qed.
+Proof. exact (obj_facts (430%nat, 4096) ltac:(cbn; tauto)). Qed.
 Lemma mta_grp_disj : GRP + 4096 <= MTA \/ MTA + 8192 <= GRP.
 Proof.
-assert (IM : In (423%nat, 8192) (OBJS_W false)) by (cbn; tauto). assert (IG : In (424%nat, 4096) (OBJS_W false)) by (cbn; tauto).
-assert (NE : obj_e E (424%nat, 4096) <> obj_e E (423%nat, 8192)).
+assert (IM : In (429%nat, 8192) (OBJS_W false)) by (cbn; tauto). assert (IG : In (430%nat, 4096) (OBJS_W false)) by (cbn; tauto).
+assert (NE : obj_e E (430%nat, 4096) <> obj_e E (429%nat, 8192)).
 { intros X. apply (M1 obj_e_inj _ _ IG IM) in X. discriminate X. }
 pose proof (M1 maps_disj _ _ (M1 in_maps_obj _ IG) (M1 in_maps_obj _ IM) NE) as D. unfold iv_disjoint in D.
 rewrite !(M1 u_obj_base _ IM), !(M1 u_obj_base _ IG), !(M1 u_obj_len _ IM), !(M1 u_obj_len _ IG) in D. cbn [fst snd] in D. exact D.
@@ -1095,24 +1142,38 @@ Variable brk0 : word.
 Variable argv envp : list (list byte).
 Variable fs : Fs.Fs.
 Variables uid hw : word.
+Variable apc : N.
+Variable mbase : word.
+Variable ifs : Fs.Fs.
+Variable stdin : InputStream.
+Variable gid : word.
+Variable groups : list word.
+Variable net : NetQueue.
+Variables nofile sigmask : word.
+Variable abort_terminal : bool.
+Variable urnd : InputStream.
+Variable tmp : Fs.Fs.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variables rdr sgd sgt : bool.
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hfit : QpvH.launch_ok sp brk0 mbase rdraw (QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt).
 Variables (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (mo : Model).
 Variable ch : acs.
 Hypothesis HCL : HSCLASS_S true ch.
-Hypothesis CS : cs_ok JOB6SEGS BJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JOB6PH sp rdraw brk0 argv envp uid hw) (argH0 JOB6PH sp rdraw argv envp uid hw) fs E ch R FULL mo.
+Hypothesis CS : cs_ok JOB6SEGS BJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JOB6PH apc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) (argH0 sp rdraw argv envp kb execfn) fs E ch R FULL mo.
 
 Hypothesis HSEC : Z_to_bv 64 Q6q3.rc_secret = edenot E (EBlob false 25 8 8).
-Hypothesis HCAN : Q6q3.rc_canary = ev E 45.
+Hypothesis HCAN : Q6q3.rc_canary = ev E 49.
 Hypothesis HCEIL : Q6q3.rc_ceil = atopE E.
 #[local] Notation LV := (LV_J E).
-#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo true ch HCL CS) (only parsing).
+#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo true ch HCL CS) (only parsing).
 #[local] Notation m := (view LV mo FULL).
 #[local] Notation KV := (MV4 main_know_view).
 #[local] Notation MTA := (4096 * bv_unsigned (ev E 5)).
-#[local] Notation GRP := (4096 * bv_unsigned (ev E 423)).
+#[local] Notation GRP := (4096 * bv_unsigned (ev E 429)).
 #[local] Notation ST0 := (Q8zf.ST0_A Q6q3.rc_secret QXEH.ref_reserved MTA GRP).
 
 Lemma mta_bounds : 4096 <= MTA /\ MTA + 8192 <= 2^47.
@@ -1125,12 +1186,12 @@ Proof.
 intros k Hk. destruct mta_bounds. apply bv_eq. cbn [edenot]. rewrite u_add64, u_mul64, !u64_lit by lia.
 rewrite (Z.mod_small (4096 * _)) by lia. rewrite Z.mod_small by lia. reflexivity.
 Qed.
-Lemma ed_grp : forall k, 0 <= k < 2^32 -> edenot E (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 423)) (ELit k)) = Z_to_bv 64 (GRP + k).
+Lemma ed_grp : forall k, 0 <= k < 2^32 -> edenot E (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 429)) (ELit k)) = Z_to_bv 64 (GRP + k).
 Proof.
 intros k Hk. destruct grp_bounds. apply bv_eq. cbn [edenot]. rewrite u_add64, u_mul64, !u64_lit by lia.
 rewrite (Z.mod_small (4096 * _)) by lia. rewrite Z.mod_small by lia. reflexivity.
 Qed.
-Lemma ed_grp0 : edenot E (EMd Instr.M_MUL (ELit 4096) (EVar 423)) = Z_to_bv 64 (GRP + 0).
+Lemma ed_grp0 : edenot E (EMd Instr.M_MUL (ELit 4096) (EVar 429)) = Z_to_bv 64 (GRP + 0).
 Proof. destruct grp_bounds. apply bv_eq. cbn [edenot]. rewrite u_mul64, !u64_lit by lia. rewrite Z.mod_small by lia. rewrite Z.add_0_r. reflexivity. Qed.
 
 Lemma lit_rw : forall A cs tcs n, cells_check JOB6SEGS (kn_view ch) (ELit 0) A cs = true -> img_w_b JOB6SEGS A n = true ->
@@ -1200,9 +1261,9 @@ rewrite ?ctx_A, ?brk_word_A; cbn [Q8zf.ST0_A_ctx QUZl.c_secret QUZl.c_free_meta_
 lazymatch goal with
 | |- word_to_le_bytes _ (edenot _ (EAlu _ (EMd _ _ (EVar 5)) _)) = _ =>
 rewrite ed_mta by lia; unfold QnDM_c1.Mq0.pw, QUZl.oconc; rewrite ?conc_A0; reflexivity
-| |- word_to_le_bytes _ (edenot _ (EAlu _ (EMd _ _ (EVar 423)) _)) = _ =>
+| |- word_to_le_bytes _ (edenot _ (EAlu _ (EMd _ _ (EVar 429)) _)) = _ =>
 rewrite ed_grp by lia; unfold QnDM_c1.Mq0.pw, QUZl.oconc; rewrite ?conc_A1; reflexivity
-| |- word_to_le_bytes _ (edenot _ (EMd _ _ (EVar 423))) = _ =>
+| |- word_to_le_bytes _ (edenot _ (EMd _ _ (EVar 429))) = _ =>
 rewrite ed_grp0; unfold QnDM_c1.Mq0.pw, QUZl.oconc; rewrite ?conc_A1; reflexivity
 | |- word_to_le_bytes _ (edenot _ (EBlob _ _ _ _)) = _ => rewrite <- HSEC; reflexivity
 | |- True => exact I
@@ -1239,7 +1300,7 @@ Qed.
 
 Lemma u_pgM : bv_unsigned (edenot E (EMd Instr.M_MUL (ELit 4096) (EVar 5))) = MTA.
 Proof. exact (proj1 (MV4 pge_meta)). Qed.
-Lemma u_pgG : bv_unsigned (edenot E (EMd Instr.M_MUL (ELit 4096) (EVar 423))) = GRP.
+Lemma u_pgG : bv_unsigned (edenot E (EMd Instr.M_MUL (ELit 4096) (EVar 429))) = GRP.
 Proof. exact (proj1 (MV4 pge_grp)). Qed.
 Lemma meta_wr : QZDE.wr_at JOB6SEGS m (MTA + 4096) 4096.
 Proof. exact (proj2 (MV4 meta_bytes)). Qed.
@@ -1255,7 +1316,7 @@ pose proof (check_rw_cells JOB6SEGS E m (kn_view ch) KV cs _ off tcs C) as X. cb
 apply X; [lia | lia | exact M | exact WF |].
 replace (MTA + off) with ((MTA + 4096) + (off - 4096)) by lia. apply (wr_at_sub JOB6SEGS m (MTA + 4096) 4096); [exact meta_wr | lia | lia | lia].
 Qed.
-Lemma grp_piece_rw : forall off cs tcs, cells_check JOB6SEGS (kn_view ch) (EMd Instr.M_MUL (ELit 4096) (EVar 423)) off cs = true ->
+Lemma grp_piece_rw : forall off cs tcs, cells_check JOB6SEGS (kn_view ch) (EMd Instr.M_MUL (ELit 4096) (EVar 429)) off cs = true ->
 0 <= off -> off + Z.of_nat (scs_len cs) <= 4096 -> sc_match JOB6SEGS E (GRP + off) cs tcs -> QbVh.cells_wf tcs ->
 QlEo_c1.rw_cells JOB6SEGS m (GRP + off) tcs.
 Proof.
@@ -1333,7 +1394,7 @@ pose proof (bytes_at_nth JOB6SEGS m GRP _ (Z.to_nat o) _ (proj1 (MV4 grp_bytes))
 rewrite Z2Nat.id in B by lia. exact B.
 Qed.
 
-#[local] Notation M1 L := (L sp rdraw brk0 argv envp fs uid hw Hsp E R FULL mo true ch HCL CS) (only parsing).
+#[local] Notation M1 L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp E R FULL mo true ch HCL CS) (only parsing).
 Lemma obj_facts : forall o, In o (OBJS_W true) ->
 (4096 * bv_unsigned (ev E (fst o)) + snd o <= 0x10000 \/ 0x647000 <= 4096 * bv_unsigned (ev E (fst o)))
 /\ 4096 * bv_unsigned (ev E (fst o)) + snd o <= atopE E.
@@ -1346,11 +1407,11 @@ Qed.
 Lemma mta_facts : (MTA + 8192 <= 0x10000 \/ 0x647000 <= MTA) /\ MTA + 8192 <= atopE E.
 Proof. exact (obj_facts (5%nat, 8192) ltac:(cbn; tauto)). Qed.
 Lemma grp_facts : (GRP + 4096 <= 0x10000 \/ 0x647000 <= GRP) /\ GRP + 4096 <= atopE E.
-Proof. exact (obj_facts (423%nat, 4096) ltac:(cbn; tauto)). Qed.
+Proof. exact (obj_facts (429%nat, 4096) ltac:(cbn; tauto)). Qed.
 Lemma mta_grp_disj : GRP + 4096 <= MTA \/ MTA + 8192 <= GRP.
 Proof.
-assert (IM : In (5%nat, 8192) (OBJS_W true)) by (cbn; tauto). assert (IG : In (423%nat, 4096) (OBJS_W true)) by (cbn; tauto).
-assert (NE : obj_e E (423%nat, 4096) <> obj_e E (5%nat, 8192)).
+assert (IM : In (5%nat, 8192) (OBJS_W true)) by (cbn; tauto). assert (IG : In (429%nat, 4096) (OBJS_W true)) by (cbn; tauto).
+assert (NE : obj_e E (429%nat, 4096) <> obj_e E (5%nat, 8192)).
 { intros X. apply (M1 obj_e_inj _ _ IG IM) in X. discriminate X. }
 pose proof (M1 maps_disj _ _ (M1 in_maps_obj _ IG) (M1 in_maps_obj _ IM) NE) as D. unfold iv_disjoint in D.
 rewrite !(M1 u_obj_base _ IM), !(M1 u_obj_base _ IG), !(M1 u_obj_len _ IM), !(M1 u_obj_len _ IG) in D. cbn [fst snd] in D. exact D.
@@ -1517,24 +1578,38 @@ Variable brk0 : word.
 Variable argv envp : list (list byte).
 Variable fs : Fs.Fs.
 Variables uid hw : word.
+Variable apc : N.
+Variable mbase : word.
+Variable ifs : Fs.Fs.
+Variable stdin : InputStream.
+Variable gid : word.
+Variable groups : list word.
+Variable net : NetQueue.
+Variables nofile sigmask : word.
+Variable abort_terminal : bool.
+Variable urnd : InputStream.
+Variable tmp : Fs.Fs.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variables rdr sgd sgt : bool.
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hfit : QpvH.launch_ok sp brk0 mbase rdraw (QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt).
 Variables (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (mo : Model).
 Variable ch : acs.
 Hypothesis HCL : HSCLASS_S false ch.
-Hypothesis CS : cs_ok JOB6SEGS BJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JOB6PH sp rdraw brk0 argv envp uid hw) (argH0 JOB6PH sp rdraw argv envp uid hw) fs E ch R FULL mo.
+Hypothesis CS : cs_ok JOB6SEGS BJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JOB6PH apc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) (argH0 sp rdraw argv envp kb execfn) fs E ch R FULL mo.
 
 Hypothesis HSEC : Z_to_bv 64 Q6q3.rc_secret = edenot E (EBlob false 25 8 8).
-Hypothesis HCAN : Q6q3.rc_canary = ev E 45.
+Hypothesis HCAN : Q6q3.rc_canary = ev E 49.
 Hypothesis HCEIL : Q6q3.rc_ceil = atopE E.
 #[local] Notation LV := (LV_J E).
-#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo false ch HCL CS) (only parsing).
+#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo false ch HCL CS) (only parsing).
 #[local] Notation m := (view LV mo FULL).
 #[local] Notation KV := (MV4 main_know_view).
-#[local] Notation MTA := (4096 * bv_unsigned (ev E 423)).
-#[local] Notation GRP := (4096 * bv_unsigned (ev E 424)).
+#[local] Notation MTA := (4096 * bv_unsigned (ev E 429)).
+#[local] Notation GRP := (4096 * bv_unsigned (ev E 430)).
 #[local] Notation ST0 := (QEoy.ST0_B Q6q3.rc_secret QXEH.ref_reserved MTA GRP).
 
 Lemma mta_bounds : 4096 <= MTA /\ MTA + 8192 <= 2^47.
@@ -1542,17 +1617,17 @@ Proof. pose proof (MV4 pge_meta) as (_ & B1 & B2). unfold METAB, MV, MV_B in B1,
 Lemma grp_bounds : 4096 <= GRP /\ GRP + 4096 <= 2^47.
 Proof. pose proof (MV4 pge_grp) as (_ & B1 & B2). unfold GRPBx, GV, GV_B in B1, B2. lia. Qed.
 
-Lemma ed_mta : forall k, 0 <= k < 2^32 -> edenot E (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 423)) (ELit k)) = Z_to_bv 64 (MTA + k).
+Lemma ed_mta : forall k, 0 <= k < 2^32 -> edenot E (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 429)) (ELit k)) = Z_to_bv 64 (MTA + k).
 Proof.
 intros k Hk. destruct mta_bounds. apply bv_eq. cbn [edenot]. rewrite u_add64, u_mul64, !u64_lit by lia.
 rewrite (Z.mod_small (4096 * _)) by lia. rewrite Z.mod_small by lia. reflexivity.
 Qed.
-Lemma ed_grp : forall k, 0 <= k < 2^32 -> edenot E (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 424)) (ELit k)) = Z_to_bv 64 (GRP + k).
+Lemma ed_grp : forall k, 0 <= k < 2^32 -> edenot E (EAlu Instr.ALU_ADD (EMd Instr.M_MUL (ELit 4096) (EVar 430)) (ELit k)) = Z_to_bv 64 (GRP + k).
 Proof.
 intros k Hk. destruct grp_bounds. apply bv_eq. cbn [edenot]. rewrite u_add64, u_mul64, !u64_lit by lia.
 rewrite (Z.mod_small (4096 * _)) by lia. rewrite Z.mod_small by lia. reflexivity.
 Qed.
-Lemma ed_grp0 : edenot E (EMd Instr.M_MUL (ELit 4096) (EVar 424)) = Z_to_bv 64 (GRP + 0).
+Lemma ed_grp0 : edenot E (EMd Instr.M_MUL (ELit 4096) (EVar 430)) = Z_to_bv 64 (GRP + 0).
 Proof. destruct grp_bounds. apply bv_eq. cbn [edenot]. rewrite u_mul64, !u64_lit by lia. rewrite Z.mod_small by lia. rewrite Z.add_0_r. reflexivity. Qed.
 
 Lemma lit_rw : forall A cs tcs n, cells_check JOB6SEGS (kn_view ch) (ELit 0) A cs = true -> img_w_b JOB6SEGS A n = true ->
@@ -1620,11 +1695,11 @@ Lemma ctx_B : QUZl.ctx ST0 = QEoy.ST0_B_ctx Q6q3.rc_secret.  Proof. reflexivity.
 Ltac cellB :=
 rewrite ?ctx_B, ?brk_word_B; cbn [QEoy.ST0_B_ctx QUZl.c_secret QUZl.c_free_meta_head QUZl.c_avail_meta QUZl.c_meta_area_head QUZl.c_meta_area_tail QUZl.c_avail_meta_areas];
 lazymatch goal with
-| |- word_to_le_bytes _ (edenot _ (EAlu _ (EMd _ _ (EVar 423)) _)) = _ =>
+| |- word_to_le_bytes _ (edenot _ (EAlu _ (EMd _ _ (EVar 429)) _)) = _ =>
 rewrite ed_mta by lia; unfold QnDM_c1.Mq0.pw, QUZl.oconc; rewrite ?conc_B0; reflexivity
-| |- word_to_le_bytes _ (edenot _ (EAlu _ (EMd _ _ (EVar 424)) _)) = _ =>
+| |- word_to_le_bytes _ (edenot _ (EAlu _ (EMd _ _ (EVar 430)) _)) = _ =>
 rewrite ed_grp by lia; unfold QnDM_c1.Mq0.pw, QUZl.oconc; rewrite ?conc_B1; reflexivity
-| |- word_to_le_bytes _ (edenot _ (EMd _ _ (EVar 424))) = _ =>
+| |- word_to_le_bytes _ (edenot _ (EMd _ _ (EVar 430))) = _ =>
 rewrite ed_grp0; unfold QnDM_c1.Mq0.pw, QUZl.oconc; rewrite ?conc_B1; reflexivity
 | |- word_to_le_bytes _ (edenot _ (EBlob _ _ _ _)) = _ => rewrite <- HSEC; reflexivity
 | |- True => exact I
@@ -1659,16 +1734,16 @@ unfold QCwx.Mq3.rmrep_ctx. split; [|split; [|split; [|split; [|split; [|split]]]
 - reflexivity.
 Qed.
 
-Lemma u_pgM : bv_unsigned (edenot E (EMd Instr.M_MUL (ELit 4096) (EVar 423))) = MTA.
+Lemma u_pgM : bv_unsigned (edenot E (EMd Instr.M_MUL (ELit 4096) (EVar 429))) = MTA.
 Proof. exact (proj1 (MV4 pge_meta)). Qed.
-Lemma u_pgG : bv_unsigned (edenot E (EMd Instr.M_MUL (ELit 4096) (EVar 424))) = GRP.
+Lemma u_pgG : bv_unsigned (edenot E (EMd Instr.M_MUL (ELit 4096) (EVar 430))) = GRP.
 Proof. exact (proj1 (MV4 pge_grp)). Qed.
 Lemma meta_wr : QZDE.wr_at JOB6SEGS m (MTA + 4096) 4096.
 Proof. exact (proj2 (MV4 meta_bytes)). Qed.
 Lemma grp_wr : QZDE.wr_at JOB6SEGS m GRP 4096.
 Proof. exact (proj2 (MV4 grp_bytes)). Qed.
 
-Lemma mta_piece_rw : forall off cs tcs, cells_check JOB6SEGS (kn_view ch) (EMd Instr.M_MUL (ELit 4096) (EVar 423)) off cs = true ->
+Lemma mta_piece_rw : forall off cs tcs, cells_check JOB6SEGS (kn_view ch) (EMd Instr.M_MUL (ELit 4096) (EVar 429)) off cs = true ->
 4096 <= off -> off + Z.of_nat (scs_len cs) <= 8192 -> sc_match JOB6SEGS E (MTA + off) cs tcs -> QbVh.cells_wf tcs ->
 QlEo_c1.rw_cells JOB6SEGS m (MTA + off) tcs.
 Proof.
@@ -1677,7 +1752,7 @@ pose proof (check_rw_cells JOB6SEGS E m (kn_view ch) KV cs _ off tcs C) as X. cb
 apply X; [lia | lia | exact M | exact WF |].
 replace (MTA + off) with ((MTA + 4096) + (off - 4096)) by lia. apply (wr_at_sub JOB6SEGS m (MTA + 4096) 4096); [exact meta_wr | lia | lia | lia].
 Qed.
-Lemma grp_piece_rw : forall off cs tcs, cells_check JOB6SEGS (kn_view ch) (EMd Instr.M_MUL (ELit 4096) (EVar 424)) off cs = true ->
+Lemma grp_piece_rw : forall off cs tcs, cells_check JOB6SEGS (kn_view ch) (EMd Instr.M_MUL (ELit 4096) (EVar 430)) off cs = true ->
 0 <= off -> off + Z.of_nat (scs_len cs) <= 4096 -> sc_match JOB6SEGS E (GRP + off) cs tcs -> QbVh.cells_wf tcs ->
 QlEo_c1.rw_cells JOB6SEGS m (GRP + off) tcs.
 Proof.
@@ -1755,7 +1830,7 @@ pose proof (bytes_at_nth JOB6SEGS m GRP _ (Z.to_nat o) _ (proj1 (MV4 grp_bytes))
 rewrite Z2Nat.id in B by lia. exact B.
 Qed.
 
-#[local] Notation M1 L := (L sp rdraw brk0 argv envp fs uid hw Hsp E R FULL mo false ch HCL CS) (only parsing).
+#[local] Notation M1 L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp E R FULL mo false ch HCL CS) (only parsing).
 Lemma obj_facts : forall o, In o (OBJS_W false) ->
 (4096 * bv_unsigned (ev E (fst o)) + snd o <= 0x10000 \/ 0x647000 <= 4096 * bv_unsigned (ev E (fst o)))
 /\ 4096 * bv_unsigned (ev E (fst o)) + snd o <= atopE E.
@@ -1766,13 +1841,13 @@ cbn [img_lo img_hi BJO6] in B4. rewrite UB, UL in B4.
 pose proof (M1 maps_below_atop _ Hin) as T. rewrite UB, UL, <- (M1 main_atop) in T. split; [exact B4 | exact T].
 Qed.
 Lemma mta_facts : (MTA + 8192 <= 0x10000 \/ 0x647000 <= MTA) /\ MTA + 8192 <= atopE E.
-Proof. exact (obj_facts (423%nat, 8192) ltac:(cbn; tauto)). Qed.
+Proof. exact (obj_facts (429%nat, 8192) ltac:(cbn; tauto)). Qed.
 Lemma grp_facts : (GRP + 4096 <= 0x10000 \/ 0x647000 <= GRP) /\ GRP + 4096 <= atopE E.
-Proof. exact (obj_facts (424%nat, 4096) ltac:(cbn; tauto)). Qed.
+Proof. exact (obj_facts (430%nat, 4096) ltac:(cbn; tauto)). Qed.
 Lemma mta_grp_disj : GRP + 4096 <= MTA \/ MTA + 8192 <= GRP.
 Proof.
-assert (IM : In (423%nat, 8192) (OBJS_W false)) by (cbn; tauto). assert (IG : In (424%nat, 4096) (OBJS_W false)) by (cbn; tauto).
-assert (NE : obj_e E (424%nat, 4096) <> obj_e E (423%nat, 8192)).
+assert (IM : In (429%nat, 8192) (OBJS_W false)) by (cbn; tauto). assert (IG : In (430%nat, 4096) (OBJS_W false)) by (cbn; tauto).
+assert (NE : obj_e E (430%nat, 4096) <> obj_e E (429%nat, 8192)).
 { intros X. apply (M1 obj_e_inj _ _ IG IM) in X. discriminate X. }
 pose proof (M1 maps_disj _ _ (M1 in_maps_obj _ IG) (M1 in_maps_obj _ IM) NE) as D. unfold iv_disjoint in D.
 rewrite !(M1 u_obj_base _ IM), !(M1 u_obj_base _ IG), !(M1 u_obj_len _ IM), !(M1 u_obj_len _ IG) in D. cbn [fst snd] in D. exact D.
@@ -1896,15 +1971,19 @@ Lemma DRV_CHECKS : forall w ch, HSCLASS_S w ch ->
 drv_pieces_check (kn_view ch) = true
 /\ img_ranges (kn_view ch) (Q2y2.PRIS_A ++ Q2y2.STDIO0_A) = true
 /\ img_range (kn_view ch) 0x10000 0xe2000 = true
-/\ kn_mem (KRange (EVar 44) 1 4194303) (kn_view ch) = true
+/\ kn_mem (KRange (EVar 48) 1 4194303) (kn_view ch) = true
 /\ a_fd ch = FdStd.
 Proof.
 
-intros [|] ch [-> | ->].
+intros [|] ch [-> | [-> | [-> | ->]]].
 - split; [exact DRVPIECES_HS2sA_1_ok|]. repeat split; vm_compute; reflexivity.
 - split; [exact DRVPIECES_HS2sA_2_ok|]. repeat split; vm_compute; reflexivity.
+- split; [exact DRVPIECES_HS2sA_1R_ok|]. repeat split; vm_compute; reflexivity.
+- split; [exact DRVPIECES_HS2sA_2R_ok|]. repeat split; vm_compute; reflexivity.
 - split; [exact DRVPIECES_HS2sB_3_ok|]. repeat split; vm_compute; reflexivity.
 - split; [exact DRVPIECES_HS2sB_4_ok|]. repeat split; vm_compute; reflexivity.
+- split; [exact DRVPIECES_HS2sB_3R_ok|]. repeat split; vm_compute; reflexivity.
+- split; [exact DRVPIECES_HS2sB_4R_ok|]. repeat split; vm_compute; reflexivity.
 Qed.
 
 Lemma seg_w : seg_writable Asan.Asan_segment_002 = true
@@ -1942,17 +2021,31 @@ Variable brk0 : word.
 Variable argv envp : list (list byte).
 Variable fs : Fs.Fs.
 Variables uid hw : word.
+Variable apc : N.
+Variable mbase : word.
+Variable ifs : Fs.Fs.
+Variable stdin : InputStream.
+Variable gid : word.
+Variable groups : list word.
+Variable net : NetQueue.
+Variables nofile sigmask : word.
+Variable abort_terminal : bool.
+Variable urnd : InputStream.
+Variable tmp : Fs.Fs.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variables rdr sgd sgt : bool.
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hfit : QpvH.launch_ok sp brk0 mbase rdraw (QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt).
 Variables (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (mo : Model).
 Variable w : bool.
 Variable ch : acs.
 Hypothesis HCL : HSCLASS_S w ch.
-Hypothesis CS : cs_ok JO6SEGS AJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JO6PH sp rdraw brk0 argv envp uid hw) (argH0 JO6PH sp rdraw argv envp uid hw) fs E ch R FULL mo.
+Hypothesis CS : cs_ok JO6SEGS AJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JO6PH apc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) (argH0 sp rdraw argv envp kb execfn) fs E ch R FULL mo.
 #[local] Notation LV := (LV_J E).
-#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
 #[local] Notation m := (view LV mo FULL).
 #[local] Notation KV := (MV4 main_know_view).
 
@@ -1974,8 +2067,8 @@ Proof.
 destruct (DRV_CHECKS w ch HCL) as (C & _ & _ & KR & _). unfold drv_pieces_check in C.
 apply andb_prop in C as [C _]. apply andb_prop in C as [C _].
 pose proof (proj1 (Forall_forall _ _) KV _ (kn_mem_In _ _ KR)) as RG. cbn [kentry_ok edenot] in RG.
-exists (bv_unsigned (ev E 44)). split; [| lia].
-refine (proj1 (check_cells_at JO6SEGS E m (kn_view ch) KV DTID (ELit 0) _ [QbVh.C4 (Z_to_bv 64 (bv_unsigned (ev E 44)))] C _ _ _ _)).
+exists (bv_unsigned (ev E 48)). split; [| lia].
+refine (proj1 (check_cells_at JO6SEGS E m (kn_view ch) KV DTID (ELit 0) _ [QbVh.C4 (Z_to_bv 64 (bv_unsigned (ev E 48)))] C _ _ _ _)).
 - change (bv_unsigned (edenot E (ELit 0))) with 0. unfold Qwm6.Mq0.A_TP. lia.
 - change (bv_unsigned (edenot E (ELit 0))) with 0. cbn. lia.
 - cbn [sc_match DTID]. split; [| exact I]. cbn [edenot QbVh.cbytes]. rewrite Z_to_bv_bv_unsigned. reflexivity.

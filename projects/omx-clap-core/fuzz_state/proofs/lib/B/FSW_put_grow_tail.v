@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/PItems_entry.v, with its module paths and module names changed; 2668 of its 2786 lines of code are new or changed and 1447 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S7a_put.v, with its module paths and module names changed; 260 of its 308 lines of code are new or changed and 2738 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs WRITER walk, image B (fs.asan-ubsan): the SECOND HALF of put's GROW arm (preset_file.c:454-476, A_put 0x8449c),
    the case `failed = 0 /\ cap < len + n + 1`: from the call of the PROGRAM function fuzz_realloc (A_fuzz_realloc
    0x82bc4, ra = 0x84580) to the `ret` 0x84668, concluding lib/B/FSH_Fn_writer.v put_spec's post. The image-B twin of
@@ -36,8 +37,8 @@
    B IS NOT A's CODE: A's granted path calls __asan_memcpy right after the stores; B re-joins the fast arm at 0x845a0
    and so meets UBSan's checks 0x845c0 / 0x845d0 before the copy and 0x84604 / 0x84614 / 0x84618 after it.
 
-   TAKEN FROM: lib/A/FSW_put_grow_tail.v at a working branch 860b2fb1188 (the same blob is on
-   a working branch f0e2574c33c): pgt_sh / pgt_regs1 / pgt_cs1 / pgt_o1 / pgt_gf1 / pgt_ss1 / pgt_SH1 /
+   TAKEN FROM: lib/A/FSW_put_grow_tail.v at a working branch (the same blob is on
+   a working branch): pgt_sh / pgt_regs1 / pgt_cs1 / pgt_o1 / pgt_gf1 / pgt_ss1 / pgt_SH1 /
    pgt_xs with B's registers (s3 / s4 swapped) and B's resume pc, the small facts pgt_aview_nonneg .. pgt_new_once
    unchanged, the Section data unchanged, pgt_E'_reg / pgt_E'_x unchanged, pgt_call_regs with B's ra and s3 / s4.
 
@@ -280,7 +281,7 @@ Variable B : asyms.
 Hypothesis HSS : FsShadowSyms B.
 Hypothesis RT_memcpy : FSupoisonU.aintrin_realizesU tfibsegs B OCpy PC_memcpy.
 Hypothesis IMG : fs_img_facts tfibsegs B.
-(* THE CALLEE: fuzz_realloc's ASan contract, a statement only (lib/B/FSH_Fn_alloc.v, by path from dda8331bd25:
+(* THE CALLEE: fuzz_realloc's ASan contract, a statement only (lib/B/FSH_Fn_alloc.v, by path:
    CTX-free with its `cnt <> fail ->` room guards), discharged at composition. *)
 Hypothesis HREALLOC : fuzz_realloc_spec tfibsegs B.
 

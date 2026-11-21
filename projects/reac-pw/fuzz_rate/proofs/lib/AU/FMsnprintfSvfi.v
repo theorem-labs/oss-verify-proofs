@@ -8,8 +8,8 @@
    printf_common contract (apcommon_realizesU), musl vfprintf by a kcall of avfp_realizes; the vprintf entry part
    (tfib_vprintf_icpt_A) is not used; stated as FMsnprintfGI's avfpi_realizes over FMsnprintfI's snk_frame. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfGvfi.v, with its module paths and module names changed; 285 of its 375 lines of code are new or changed and 317 lines of the source are left out. *)
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfSvfi.v (cold/port-fm-rtprintf-param 3e35620c52e); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 2 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMsnprintfSvfi.table); YImgTop zify_pre_hook added after the last Require. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMsnprintfSvfi.v at 2d2ff01bb6f2 relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv); the zify hook that unfolds YImgTop.IMG_TOP / IMG_LO dropped (rate's YImgTop states both as notations, which lia reads as they are). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfSvfi.v; relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 2 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMsnprintfSvfi.table); YImgTop zify_pre_hook added after the last Require. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMsnprintfSvfi.v relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv); the zify hook that unfolds YImgTop.IMG_TOP / IMG_LO dropped (rate's YImgTop states both as notations, which lia reads as they are). *)
 (* fm's __interceptor_vfprintf (fm.asan 0x457ec, frame 0x30, entered from musl vsnprintf through __wrap_vfprintf)
    over the GXA-route form sh_avfprintf_icpt_realizesUx (FMsnprintfSx.v), generic in the format family and in the
    stack windows: TryAsanInitFromRtl and the common_flags ()->check_printf test run through, printf_common (ctx,
@@ -19,7 +19,8 @@
    kit's vocabulary (FMsnprintfSk.v): the frame is sw_frame over the window [sp - K, sp) of the entry sp. Glue's runs
    are redone over a stack region of SVR = 64 bytes (the frame 0x30 and TryAsanInitFromRtl's 16 bytes below it) in
    place of Glue's VFI_K, so that K is free; the image cells and the shape checks are Glue's. New file. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/FMsnprintfSvfi.v at 71994ff034c7, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/FMsnprintfSvfi.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/FMsnprintfSvfi.v keeps its donor's comment text) is kept as lib/A/FMsnprintfSvfi.v writes it. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/FMsnprintfSvfi.v, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/FMsnprintfSvfi.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/FMsnprintfSvfi.v keeps its donor's comment text) is kept as lib/A/FMsnprintfSvfi.v writes it. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

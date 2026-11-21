@@ -1,4 +1,4 @@
-(* CARRIED from commit 0deb5310273b0d538ec2a1697f391a1c8ad21c34,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YGcfNil.v, sha256 759f43e471099c153ebd32d9f4e548ad397bd11c7c00db607a7fd3a0e289274f (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the Require lines only:
    the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
@@ -6,8 +6,9 @@
 *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Taken by path from a working branch a0fed4266a1b, provisional. *)
+(* Taken by path from a working branch, provisional. *)
 (* Modified by Theorem Labs, 2026-10: module paths changed from fuzz_preset lib.Reusable to cgif_file_fuzzer lib; the text is otherwise unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the conversion point of the event-free second allocator instance (suffix cf).
    cgif's AR (YG0n.v:490-491) at a state implies ARcf (YG0ncf.v) at the same state with Hp = [], at an
    exposed world W' (wle W W') that adds class 1's shadow band; the driver switches once, at main. Two forms:

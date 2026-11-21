@@ -5,10 +5,11 @@
 (* Modified by Theorem Labs, 2026-10: KDEP's depot check tag is 14 (label 469488), the tag the kit's YG00.depot_put carries; malloc_K_some proves KDEP equal to malloc_K by reflexivity, so the two texts must agree. *)
 (* Modified by Theorem Labs, 2026-10: Htr is areq_ok S (KDepot tr), the depot walk's trace-length premise; the depot id bound after the insertion is 20482, from depot_ids_bound on wf_depot (depot_inv). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/AFk0.v; 1142 of its 2405 lines of code are new or changed and 92 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the NULL hint and page-aligned size of the malloc grant; the reservation tail past the image's reservations at the pointer-array commit); internal commit ids in comments replaced by public commits or removed. *)
 (* Threads UP through the donor secondary-malloc walk lib/A/AF0w.v -> AFio.v malloc_sec: AFjh.v seg0 (seed AFjx.v SEED_ok), AFjj.v segR, AFjs.v nodeS, AFju.v D1W_ok, AFjz.v LEAF_S (AFjy.v AR_transport at the unpoisoned memories), AFk0.v refuseS and Section h (grantS_ne, grantS_eq), AFio.v malloc_sec; with the secondary walk's region lemmas. *)
 (* Shared any-U allocator, within-budget units (cgif's EV_MAX 11,776, < 2 GiB per class); the cf form (fuzz_preset / fuzz_reply, YG0dcf.v) bridges to this. *)
-(* The low shadow band of the constant cells ends at 0x800b4000 (the page above fs's last constant shadow cell, which ends at 0x800b34c4; AF0m.v Tfib_const_shadow), the same bound RELOC's Theorem Labs lane d1729a06009 uses in AFhn / AFix / AFjb / AFju / AFkm / AFkz. *)
-(* The trace premises follow S0 946ad86dc9f: Htr is areq_ok S (KDepot tr) in the depot and grant sections (as AFju / AFk0) and tr_admit (as_universe B) S tr in malloc_secU_walk and malloc_secU (as AFio.malloc_sec); the grant leaves get the trace length (tr_admit_len); the depot id bound after the insertion is 20482. *)
+(* The low shadow band of the constant cells ends at 0x800b4000 (the page above fs's last constant shadow cell, which ends at 0x800b34c4; AF0m.v Tfib_const_shadow), the same bound RELOC's Theorem Labs lane uses in AFhn / AFix / AFjb / AFju / AFkm / AFkz. *)
+(* The trace premises follow S0: Htr is areq_ok S (KDepot tr) in the depot and grant sections (as AFju / AFk0) and tr_admit (as_universe B) S tr in malloc_secU_walk and malloc_secU (as AFio.malloc_sec); the grant leaves get the trace length (tr_admit_len); the depot id bound after the insertion is 20482. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -1272,7 +1273,7 @@ ALedger tfibsegs ly S (cfg_model c1) -> amwf (cfg_model c1) -> same_io md0 (cfg_
 amreal tfibsegs (K 0) W c' Q) ->
 (forall (a : word) (W3 : world tfibsegs) (ms : machine_state) (E' : env),
 let A := bv_unsigned a in let md2 := mmap_model a (w64 MSv) (cfg_model c1) in
-grant_ok_na_pin (cfg_model c1) a MSv = true ->
+grant_ok_na_pin (Z_to_bv 64 0) (cfg_model c1) a MSv = true ->
 ALedger tfibsegs ly S (cfg_model c1) -> amwf (cfg_model c1) ->
 wle W W3 -> hsub (w_H W3) (w_H W) -> (forall x : word, w_H W x = false -> w_H W3 x = false) ->
 w_A W3 = (SHLO A, SHHI A) :: (A, A + MSv) :: w_A W ->
@@ -1317,15 +1318,16 @@ assert (R13 : getr regs 13 = Z_to_bv 64 34) by (rewrite (Hregs 13%bv), H13; refl
 assert (R14 : getr regs 14 = Z_to_bv 64 (-1)) by (rewrite (Hregs 14%bv), H14; cbn [sv_denot]; apply lit_m1).
 assert (R15 : getr regs 15 = Z_to_bv 64 0) by (rewrite (Hregs 15%bv), H15; reflexivity).
 assert (MSB : 0 < MSv <= MALLOC_MAX + 4 * 4096) by (clear - Z8 Z1 Z2 Z3; unfold MALLOC_MAX in *; zlia).
-destruct (sec_grant_exists_AR B ly S _ mdN MSv HARm LN MWN ltac:(clear - MSB; unfold YF06.NOB, MALLOC_MAX in *; zlia)) as [a0 Ha0].
+destruct (sec_grant_exists_AR B ly S _ mdN MSv HARm LN MWN ltac:(clear - MSB; unfold YF06.NOB, MALLOC_MAX in *; zlia)
+  ltac:(rewrite <- pru_MS; unfold page_round_up_Z, page_size; apply Z_mod_mult)) as [a0 Ha0].
 assert (SL0 : eager_used mdN + A_bytes (w_A W) + 2 ^ 30 <= vm_limit (m_vmmaps mdN)).
 { apply (slackS mdN W 0 HAR Hev L0); [unfold mdN; rewrite m_vmmaps_wvb; reflexivity | unfold mdN; rewrite eager_used_wvb; clear; zlia | clear; zlia | clear; zlia | clear; zlia]. }
-assert (PER : forall a : word, grant_ok_na_pin mdN a MSv = true ->
+assert (PER : forall a : word, grant_ok_na_pin (Z_to_bv 64 0) mdN a MSv = true ->
 (AI tfibsegs (w_H W) (w_A W) (grant_md true (Z_to_bv 64 34) a (w64 MSv) mdN) /\ MWF (grant_md true (Z_to_bv 64 34) a (w64 MSv) mdN)) /\
 mmap_noreserve_backed_ok (Z_to_bv 64 34) mdN MSv = true /\
 eager_used (grant_md true (Z_to_bv 64 34) a (w64 MSv) mdN) <= eager_used mdN + MSv /\
 maps_nonempty (grant_md true (Z_to_bv 64 34) a (w64 MSv) mdN)).
-{ intros a Ha. pose proof (AFia.grant_parts mdN a MSv Ha) as (Pal & Ppos & Pce & Prf & Ppl).
+{ intros a Ha. pose proof (AFia.grant_parts mdN a MSv MSB Z9 Ha) as (Pal & Ppos & Pce & Prf & Ppl).
 assert (CE : bv_unsigned a + page_round_up_Z MSv <= alloc_top (m_vmmaps mdN)) by (rewrite pru_MS; exact Pce).
 assert (PL' : region_free (vm_reserved (m_vmmaps mdN) ++ vm_maps (m_vmmaps mdN)) a (Z_to_bv 64 (page_round_up_Z MSv)) = true) by (rewrite pru_MS; exact Prf).
 assert (SL1 : eager_used mdN + A_bytes (w_A W) + page_round_up_Z MSv <= vm_limit (m_vmmaps mdN)) by (rewrite pru_MS; clear - SL0 MSB; unfold MALLOC_MAX in MSB; zlia).
@@ -1352,7 +1354,7 @@ set (a := ga i) in *. set (A := bv_unsigned a) in *.
 destruct (PER a Hg) as ([AIg MWFg] & _ & EG & NZg).
 pose proof (grant_anon_shape a (w64 MSv) mdN) as (SH1 & SH2 & SH3 & SH4 & SH5).
 set (md2 := grant_md true (Z_to_bv 64 34) a (w64 MSv) mdN) in *.
-pose proof (AFia.grant_parts mdN a MSv Hg) as (Pal & Ppos & Pce & Prf & Ppl).
+pose proof (AFia.grant_parts mdN a MSv MSB Z9 Hg) as (Pal & Ppos & Pce & Prf & Ppl).
 fold A in Pal, Ppos, Pce.
 pose proof (SH_hull A) as (U1' & U2 & U3 & U4 & U5 & U6).
 assert (AL1 : A <= A + MSv) by (clear - MSB; zlia).
@@ -1824,7 +1826,7 @@ Hypothesis Htr : areq_ok S (KDepot tr).
 Hypothesis D1 : tfib_depot_spec B.
 Hypothesis HBC : BCELLS.
 Hypothesis HDP : forall z m, DPOST z m <-> DPOSTS W3 z m.
-Hypothesis GOK : grant_ok_na_pin mdN (w64 mb) MSv = true.
+Hypothesis GOK : grant_ok_na_pin (Z_to_bv 64 0) mdN (w64 mb) MSv = true.
 Hypothesis LE3 : wle W W3.
 Hypothesis SUB3 : hsub (w_H W3) (w_H W).
 Hypothesis MON3 : forall x : word, w_H W x = false -> w_H W3 x = false.
@@ -2230,7 +2232,7 @@ pose proof VM2 as (VMa & VMr & VMl & VMb).
 apply (nodeV W3 md2 sV KV QLEAFU (fun _ => True) c4 EQ HN HAI).
 - clear; intros m m' _ _; exact I.
 - rewrite EcM. exact MWV.
-- rewrite EcM. exact (al_reserved _ _ _ _ (LV 0)).
+- rewrite EcM. destruct (al_reserved _ _ _ _ (LV 0)) as (rx & Hrx & _ & _ & RQ & _). exists rx. split; [exact Hrx | exact RQ].
 - exact (al_img_env tfibsegs lyF (SFS false 0) _ lyF_ok (LV 0)).
 - rewrite EcM. exact (al_Q _ _ _ _ (LV 0)).
 -
@@ -2461,7 +2463,7 @@ assert (EA : a = w64 A) by (unfold w64, A; symmetry; apply Z_to_bv_bv_unsigned).
 rewrite EA in GOK, AI2, MW2, IO2, EG2, VM2. rewrite EA.
 pose proof (AFjm.size_facts n Nrange) as (Z1 & Z2 & Z3 & Z4 & Z5 & Z6 & Z7 & Z8 & Z9 & _).
 assert (MSB : 0 < AFjm.MSv n <= MALLOC_MAX + 4 * 4096) by (clear - Z1 Z8; unfold MALLOC_MAX in *; lia).
-pose proof (AFia.grant_parts _ (w64 A) _ GOK) as (GP1 & GP2 & GP3 & _).
+pose proof (AFia.grant_parts _ (w64 A) _ MSB Z9 GOK) as (GP1 & GP2 & GP3 & _).
 pose proof (AFia.grant_zone B ly S _ _ (w64 A) _ HARm L1 MSB Z9 GOK) as GH.
 pose proof (AFia.grant_apart B ly S _ _ (w64 A) _ HARm L1 MSB Z9 GOK) as GA.
 assert (UA : bv_unsigned (w64 A) = A) by (rewrite <- EA; reflexivity). rewrite UA in GP1, GP2, GP3, GH, GA.

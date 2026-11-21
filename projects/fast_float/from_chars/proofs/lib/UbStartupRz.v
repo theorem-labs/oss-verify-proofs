@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput; the launch premises valid_launch and entry_launch_ok_va; the run's segment list run_segments; the launch's reservations with the vDSO pair). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -25,24 +26,29 @@ Qed.
 
 Theorem ub_startup_rz : forall (cfg : SpuriousCfg) (K : TSet) sp brk mbase rnd lim inp,
   valid_sp sp -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+  valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
   (forall tid regs mem,
      (0 < bv_unsigned tid < PID_MAX_ENVELOPE)%Z ->
-     main_entry sp (in_argv inp) (in_envp inp) (in_uid inp) tid (in_hwcap inp) rnd regs mem ->
-     realizes_cfg SEGS cfg
-       (mkCfg (mkst regs (0x228cc : word) mem (seg_rom SEGS))
-              (with_tid tid (init_model (segments_reserved SEGS) brk mbase sp lim inp))) K) ->
-  realizes_cfg SEGS cfg (init_config SEGS Ubsan.M.init_pc
-                                     Ubsan.M.phdrs sp brk mbase rnd lim inp) K.
+     main_entry inp mbase (0x22780 : word) sp rnd tid regs mem ->
+     realizes_cfg (run_segments SEGS inp sp mbase) cfg
+       (mkCfg (mkst regs (0x228cc : word) mem (seg_rom (run_segments SEGS inp sp mbase)))
+              (with_tid tid (cfg_model (init_config (run_segments SEGS inp sp mbase) Ubsan.M.init_pc
+                                                    Ubsan.M.phdrs sp brk mbase rnd lim inp)))) K) ->
+  realizes_cfg (run_segments SEGS inp sp mbase) cfg
+    (init_config (run_segments SEGS inp sp mbase) Ubsan.M.init_pc Ubsan.M.phdrs sp brk mbase rnd lim inp) K.
 Proof.
-  intros cfg K sp brk mbase rnd lim inp Hsp Hva Hve HK.
-  set (P := fun (st : machine_state) (model : Model) => realizes_cfg SEGS cfg (mkCfg st model) K).
-  change (P (cfg_ms (init_config SEGS Ubsan.M.init_pc
+  intros cfg K sp brk mbase rnd lim inp Hsp Hva Hve Hvl Hlau HK.
+  set (P := fun (st : machine_state) (model : Model) =>
+              realizes_cfg (run_segments SEGS inp sp mbase) cfg (mkCfg st model) K).
+  change (P (cfg_ms (init_config (run_segments SEGS inp sp mbase) Ubsan.M.init_pc
                                    Ubsan.M.phdrs sp brk mbase rnd lim inp))
-            (cfg_model (init_config SEGS Ubsan.M.init_pc
+            (cfg_model (init_config (run_segments SEGS inp sp mbase) Ubsan.M.init_pc
                                    Ubsan.M.phdrs sp brk mbase rnd lim inp))).
-  apply (ub_startup P); [ | | exact Hsp | exact Hva | exact Hve | exact HK ].
+  apply (ub_startup sp brk mbase rnd lim inp P);
+    [ | | exact Hsp | exact Hva | exact Hve | exact Hvl | exact Hlau | exact HK ].
   - intros model Hh Hl st st' Hms H. unfold P in *.
-    eapply rzc_isteps; [exact Hh | exact Hl | apply isteps_of_msteps; exact Hms | exact H].
-  - intros regs pc mem model w HF HE Hh Hl H17 Ht HKt. unfold P in *.
-    eapply (rzc_set_tid SEGS cfg regs pc mem (seg_rom SEGS) model w K HF HE Hh Hl H17 Ht). exact HKt.
+    eapply rzc_isteps; [exact Hh | exact Hl | apply isteps_of_msteps; apply msteps_run_segments; exact Hms | exact H].
+  - intros regs pc mem rom model w HF HE Hh Hl H17 Ht HKt. unfold P in *.
+    eapply (rzc_set_tid (run_segments SEGS inp sp mbase) cfg regs pc mem rom model w K
+              (fetch_word_run_segments _ _ _ _ _ _ HF) HE Hh Hl H17 Ht). exact HKt.
 Qed.

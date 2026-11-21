@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the RomBase.sys_rob premise on rz_alt3; munmap cuts vm_maps with maps_subtract; brk grants as page ranges and the page-granular brk budget; place_declined_b on the noaccess mmap, whose outcome is linux_place_is; the mprotect vDSO/vvar gate; grant_ok_na_pin_of_grant_ok re-proved). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -15,6 +16,7 @@ From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap Mprotect.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import AsanCeil Scfg RelSpec.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import SimInv ExitSim PropExec CatExec CatSim SeqExec StreamExec MmapSim AllocSim FileSim ShapeAlg Nodes StoreOk AgentLib AgentNodes SpecConsts.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require RomBase.
 Import ListNotations.
 Open Scope bv_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -93,12 +95,13 @@ Inductive three : Type := T1 | T2 | T3.
 
 Lemma rz_alt3 : forall c (nx : three -> config) (A B C : TSet),
   node_ok segs c three (fun _ => []) nx ->
+  RomBase.sys_rob segs c ->
   realizes segs (nx T1) A -> realizes segs (nx T2) B -> realizes segs (nx T3) C ->
   realizes segs c (t_alt3 A B C).
 Proof.
-  intros c nx A B C Hnode HA HB HC.
+  intros c nx A B C Hnode Hrob HA HB HC.
   apply (rz_conseq segs c (t_alt (fun i => match i with T1 => A | T2 => B | T3 => C end))).
-  - apply (rz_cases segs c three nx _ T1 Hnode). intros [| |]; assumption.
+  - apply (rz_cases segs c three nx _ T1 Hnode Hrob). intros [| |]; assumption.
   - intros tr. unfold t_alt3, t_alt2, t_alt. split.
     + intros [[| |] H]; tauto.
     + intros [H | [H | H]]; [exists T1 | exists T2 | exists T3]; exact H.
@@ -177,7 +180,12 @@ Proof. intros. unfold epend. rewrite adv_apply_write, write_to_mem_wbytes. refle
 Lemma munmap_model_simple : forall (a n : word) m,
   m_vm_lazy m = [] -> m_vm_materialized m = [] ->
   munmap_model a n m
-  = with_vmmaps (mkVmMapsFull (vm_reserved (m_vmmaps m)) (map_remove (vm_maps (m_vmmaps m)) a)
+(* OLD (false at 75d69e00): vm_maps := map_remove (vm_maps (m_vmmaps m)) a.
+   NEW: as RefNodes.v -- the model's mmap_fixed_destroyed_next cuts vm_maps with the same
+   interval as vm_noaccess
+   (rocq-linux-process-semantics@75d69e00:theories/LinuxProcessSem/Sys/Mm/Mmap.v:1488-1494). *)
+  = with_vmmaps (mkVmMapsFull (vm_reserved (m_vmmaps m))
+                   (maps_subtract (vm_maps (m_vmmaps m)) (bv_unsigned a) (bv_unsigned a + bv_unsigned n))
                    (maps_subtract (vm_noaccess (m_vmmaps m)) (bv_unsigned a) (bv_unsigned a + bv_unsigned n))
                    (vm_start_brk (m_vmmaps m)) (vm_brk (m_vmmaps m)) (vm_limit (m_vmmaps m))
                  (vm_mmap_base (m_vmmaps m)) (vm_init_sp (m_vmmaps m))) m.
@@ -251,10 +259,21 @@ Proof.
   unfold brk_model_next, brk_maps_next. fold b.
   rewrite (proj2 (Z.ltb_ge (bv_unsigned req) (bv_unsigned b))) by lia. rewrite andb_false_r.
   rewrite (brk_grants_grow req req b Hreq0 Hb0 Hlt), (brk_unmaps_grow req b) by lia.
+  (* 08b1429: the grant is the page-rounded range [brk_page_range]; both ends
+     are page-aligned here, so it is the one range [(b, d)]. *)
+  assert (Pb : page_round_up_Z (bv_unsigned b) = bv_unsigned b).
+  { unfold page_round_up_Z. unfold page_size in *. Z.div_mod_to_equations. lia. }
+  assert (Preq : page_round_up_Z (bv_unsigned req) = bv_unsigned req).
+  { rewrite Hureq. unfold page_round_up_Z. unfold page_size in *. Z.div_mod_to_equations. lia. }
+  rewrite Pb, Preq. unfold Mmap.brk_page_range.
+  rewrite (proj2 (Z.ltb_lt (bv_unsigned b) (bv_unsigned req))) by lia.
   cbn [app maps_subtract_ranges fold_left].
-  replace (req - b) with (Z_to_bv 64 d); [reflexivity|].
-  apply bv_eq. rewrite bv_sub_unsigned, Hureq.
-  rewrite bv_wrap_small by (unfold bv_modulus; lia). rewrite u64_lit by lia. lia.
+  (* [Z_to_bv_bv_unsigned]'s FIRST explicit argument is the WIDTH ([n : N]), not the vector,
+     so passing [b] put a [word] in the [N] slot ("The term "b" has type "word" while it is
+     expected to have type "N"").  Every other use of this lemma in these two trees passes
+     no explicit argument; an [_] keeps this one aimed at [b] without naming the width. *)
+  rewrite (Z_to_bv_bv_unsigned _ b), Hureq.
+  replace (bv_unsigned b + d - bv_unsigned b)%Z with d by lia. reflexivity.
 Qed.
 
 (* [comment removed for export] *)
@@ -285,8 +304,44 @@ Proof. intros. exact H. Qed.
 
 Lemma grant_ok_na_pin_of_grant_ok : forall hint m a n, grant_ok hint m a n = true -> grant_ok_na_pin m a n = true.
 Proof.
-  intros hint m a n H. unfold grant_ok, place_ok in H. unfold grant_ok_na_pin.
-  apply andb_true_iff in H as [H _]. exact H.
+  (* LPS revision repair.  The predecessor's diagnosis was right and its cure was not,
+     and a SPEAKING PROBE measured the difference rather than a third guess.
+
+     MmapSim.v:199-204: grant_ok is SIX left-associated conjuncts -
+       linux_place_is .. && (a mod page_size =? 0) && (0 <? a)
+                      && (a + n <=? alloc_top) && region_free .. && (budget)
+     and MmapSim.v:189-192's place_ok is a DIFFERENT four-conjunct definition that
+     grant_ok never calls, so `unfold place_ok in H` was always a no-op.
+
+     WHAT THE PROBE SHOWED (a farm round of a probe
+     tree that was NEVER MERGED; it printed both sides and then still ran the
+     failing tactic, so the round stayed a FAIL and nothing was claimed).  After
+     `rewrite !andb_true_iff in H |- *`:
+       HYP : (((linux_place_is .. && (a mod page_size =? 0) && (0 <? a) = true
+                /\ (a + n <=? alloc_top) = true)
+               /\ region_free .. = true) /\ (budget) = true)
+       GOAL: ((((a mod page_size =? 0) = true /\ (0 <? a) = true)
+               /\ (a + n <=? alloc_top) = true) /\ region_free .. = true)
+     The rewrite split the GOAL to the bottom but left the hypothesis's innermost
+     THREE-WAY conjunction `place_is && A && B = true` as ONE atom.  Two of the goal's
+     four atoms are therefore not atoms of the hypothesis at all, and tauto is RIGHT to
+     refuse: "Classical tauto failed." is a true report that the goal does not follow
+     propositionally from what the rewrite produced, not a weakness of tauto.
+     "Decompose both sides and let tauto select" cannot work while one side is
+     decomposed further than the other, however the extra conjunct associates.
+
+     The cure peels H explicitly - exact rather than guessed, because the probe printed
+     the association - and discards linux_place_is and the budget conjunct by position
+     in a chain whose shape is now measured.  A later slot moving breaks this LOUDLY
+     (a pattern-arity error naming the line) instead of silently, which is the better
+     failure mode of the two. *)
+  intros hint m a n H. unfold grant_ok in H. unfold grant_ok_na_pin.
+  apply andb_true_iff in H as [H _].
+  apply andb_true_iff in H as [H Hrf].
+  apply andb_true_iff in H as [H Htop].
+  apply andb_true_iff in H as [H Hpos].
+  apply andb_true_iff in H as [_ Hal].
+  rewrite Hal, Hpos, Htop, Hrf. reflexivity.
 Qed.
 
 Lemma grant_ok_na_pin_of_gate : forall hint m a n,
@@ -321,28 +376,49 @@ Definition mmap_noaccess_args_ok (ms : machine_state) : Prop :=
 (* [comment removed for export] *)
 Lemma mmap_noaccess_outcome_si : forall ms x8 model,
   bv_unsigned x8 = 222%Z -> mmap_noaccess_args_ok ms ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   let n := page_round_up_Z (bv_unsigned (ms_gpr ms 1)) in
   forall o, syscall_spec (sys_input segs ms x8) model o <->
     mmap_err_out model o
-    \/ exists a, grant_ok_na_pin model a n = true
+    \/ exists a, Placement.linux_place_is (m_vmmaps model) (kb_thp (m_kernel model))
+                   (ms_gpr ms 0) n a = true
                  /\ o = Ok (mkEffectU a [] [] [(a, Z_to_bv 64 n)] [] []) (noaccess_model a (Z_to_bv 64 n) model) [].
 Proof.
-  intros ms x8 model Hno (H1 & H2 & H3 & H4 & H5) n o.
+  intros ms x8 model Hno (H1 & H2 & H3 & H4 & H5) Hdecl n o.
   assert (E1 : w_is0 (ms_gpr ms 1) = false) by (unfold w_is0; apply bv_eqb_neq; exact H1).
   rewrite (syscall_spec_222 _ model o) by (rewrite in_sysno_si; exact Hno).
   rewrite in_arg0_si, in_arg1_si, in_arg2_si, in_arg3_sys_input, in_arg4_sys_input, in_arg5_sys_input.
   rewrite (mmap_noaccess_outcome _ _ _ _ _ _ _ model o); rewrite ?H2, ?H3, ?H5;
-    [| vm_compute; reflexivity | vm_compute; reflexivity | exact E1 | vm_compute; reflexivity | vm_compute; reflexivity].
-  unfold grant_ok_na_pin, noaccess_model, with_mmap_backing. fold n.
+    [| vm_compute; reflexivity | vm_compute; reflexivity | exact E1 | vm_compute; reflexivity | vm_compute; reflexivity | exact Hdecl].
+  (* THE RHS IS THE MODEL'S OWN PREDICATE; the AllocNodes.v:206 twin carries the same note.
+     RelSpec.v:488-490 puts exactly ONE atom on this iff's left at #38 - [linux_place_is] -
+     where the released model exposed four hygiene conjuncts.  Three candidates, only the
+     third both true and provable:
+       grant_ok_na_pin (the four)   BACKWARD FALSE - four hygiene conditions do not single
+         out the address Linux's search returns, so no tactic exists for that bullet;
+       grant_ok (placement + four + budget)   FORWARD UNPROVABLE - measured,
+         a farm round reached
+           Unable to unify "true" with "true && true && true && true && true &&
+            (vm_backing_used model + nZ <=? vm_limit (m_vmmaps model))"
+         after [linux_place_is_admissible] applied and all five rewrites fired: grant_ok has
+         a SIXTH conjunct, the backing budget (MmapSim.v:199-204), which [admissible] does
+         not supply and which has NO SOURCE on this side;
+       linux_place_is alone   TRUE BOTH WAYS, both bullets [exact Hp].
+     Nothing is lost against the old RHS: a consumer wanting the four calls
+     [Placement.linux_place_is_admissible] (75d69e00 Checks/Placement.v:1038-1043), which is
+     what MmapSim.v:194-197 says the four are kept for, and it now also has the placement
+     fact the old RHS did not carry at all.  The name needs its [Placement.] qualifier here:
+     the unqualified form failed at :422 in that same round with "The variable
+     linux_place_is_admissible was not found in the current environment", even though this
+     file prints [linux_place_is] unqualified in its goals. *)
+  unfold noaccess_model, with_mmap_backing. fold n.
   replace (mmap_noreserve_b (Z_to_bv 64 34)) with false by (vm_compute; reflexivity).
   split.
-  - intros [He | (a & (G1 & G2 & G3 & G4) & ->)]; [left; exact He | right].
-    exists a. rewrite (proj2 (Z.eqb_eq _ _) G1), (proj2 (Z.ltb_lt _ _) G2), (proj2 (Z.leb_le _ _) G3), G4.
-    split; reflexivity.
-  - intros [He | (a & Hg & ->)]; [left; exact He | right].
-    exists a. rewrite !andb_true_iff in Hg. destruct Hg as [[[G1 G2] G3] G4].
-    apply Z.eqb_eq in G1. apply Z.ltb_lt in G2. apply Z.leb_le in G3.
-    split; [repeat split; assumption | reflexivity].
+  - intros [He | (a & Hp & ->)]; [left; exact He | right].
+    exists a. split; [exact Hp | reflexivity].
+  - intros [He | (a & Hp & ->)]; [left; exact He | right].
+    exists a. split; [exact Hp | reflexivity].
 Qed.
 
 Lemma grant_na_not_errno : forall hint model a n,
@@ -373,6 +449,10 @@ Lemma mprotect_outcome_si : forall ms x8 model (addr : word) (len : Z),
   (bv_unsigned addr + page_round_up_Z len < two_pow_64)%Z ->
   ms_gpr ms 2 = Z_to_bv 64 3 ->
   let n := Z_to_bv 64 (page_round_up_Z len) in
+  (* 75d69e00: [mprotect_spec] is unmodeled on a range meeting the vDSO/vvar pair,
+     so RelSpec.v's [mprotect_expose_outcome] takes that gate BEFORE its noaccess
+     premise.  Positional, so without it here [Hna] lands in the vdso slot. *)
+  region_free (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) addr n = true ->
   map_contains (vm_noaccess (m_vmmaps model)) addr n = true ->
   map_contains (vm_maps (m_vmmaps model)) addr n = true ->
   forall o, syscall_spec (sys_input segs ms x8) model o <->
@@ -380,18 +460,18 @@ Lemma mprotect_outcome_si : forall ms x8 model (addr : word) (len : Z),
     \/ (mprotect_budget_ok model addr n = true
         /\ o = Ok (mkEffect (Z_to_bv 64 0) [] [(addr, n)]) (mprotect_model addr n model) []).
 Proof.
-  intros ms x8 model addr len Hno H0 Hal H1 Hlen Hnw H2 n Hna Hma o.
+  intros ms x8 model addr len Hno H0 Hal H1 Hlen Hnw H2 n Hvd Hna Hma o.
   assert (Hlen' : (len < two_pow_64)%Z).
   { pose proof (page_round_up_Z_bounds len ltac:(lia)). pose proof (u64_range addr). lia. }
   assert (Hu1 : bv_unsigned (ms_gpr ms 1) = len) by (rewrite H1; apply u64_lit; unfold two_pow_64 in Hlen'; lia).
   rewrite (syscall_spec_226 _ model o) by (rewrite in_sysno_si; exact Hno).
   rewrite in_arg0_si, in_arg1_si, in_arg2_si, H0, H2.
-  rewrite <- mprotect_model_next_eq.
-  rewrite (mprotect_expose_outcome addr (ms_gpr ms 1) (Z_to_bv 64 3) _ model o); rewrite ?Hu1;
-    [reflexivity | vm_compute; reflexivity | exact Hal
-    | unfold w_is0; apply bv_eqb_neq; intros E; apply (f_equal bv_unsigned) in E; rewrite Hu1 in E;
-      change (bv_unsigned (Z_to_bv 64 0)) with 0%Z in E; lia
-    | exact Hnw | vm_compute; reflexivity | exact Hna | exact Hma].
+  rewrite <- mprotect_model_next_eq. subst n. rewrite <- Hu1.
+  apply (mprotect_expose_outcome addr (ms_gpr ms 1) (Z_to_bv 64 3) _ model o);
+    [vm_compute; reflexivity | exact Hal | | rewrite Hu1; exact Hnw | vm_compute; reflexivity
+    | rewrite Hu1; exact Hvd | rewrite Hu1; exact Hna | rewrite Hu1; exact Hma].
+  unfold w_is0, bv_eqb. rewrite Hu1. change (bv_unsigned (Z_to_bv 64 0)) with 0%Z.
+  apply Z.eqb_neq. lia.
 Qed.
 
 Lemma ENOMEM_in_mprotect_errnos : In ENOMEM mprotect_errnos.
@@ -527,7 +607,18 @@ Proof.
   pose proof alloc_ceiling_val as Hcv. pose proof (u64_range b) as Hbr.
   pose proof (alloc_ceiling_le_alloc_top h Hisp) as Htop.
   assert (Hureq : bv_unsigned (Z_to_bv 64 (bv_unsigned b + d)) = (bv_unsigned b + d)%Z) by (apply u64_lit; lia).
-  unfold Mmap.brk_grow_ok, Mmap.brk_budget_ok. fold h. fold b. rewrite Hureq.
+  (* 75d69e00 made the brk budget conjunct PAGE-GRANULAR: [Mmap.brk_budget_ok] now
+     charges [Mmap.brk_grow_bytes h r = Z.max 0 (page_round_up_Z (bv_unsigned r) -
+     page_round_up_Z (bv_unsigned (vm_brk h)))] where it charged the byte difference
+     [bv_unsigned (r - vm_brk h)] (commit b07fadbb3483).  Both ends are page-aligned
+     here, so the new charge reduces to the old one - but it has to be UNFOLDED to get
+     there, which is why [Hlive] no longer rewrites.  Body taken verbatim from the
+     MODEL's own #38 text of this very lemma, 75d69e0079f9
+     theories/Common/RefNodes.v:721-747: same name, and its statement at :721-729 is
+     character-identical to :593-601 here, so this is the model donor rather than a
+     sibling adaptation.  Exactly two tactic lines differ from the released body. *)
+  unfold Mmap.brk_grow_ok, Mmap.brk_budget_ok, Mmap.brk_grow_bytes.
+  fold h. fold b. rewrite Hureq.
   rewrite (proj2 (Z.ltb_lt 0 _) Hb0), (proj2 (Z.ltb_lt (bv_unsigned b) _)) by lia. cbn [andb].
   rewrite (page_round_up_Z_aligned (bv_unsigned b)) by (first [lia | exact Hbal]).
   rewrite (page_round_up_Z_aligned (bv_unsigned b + d))
@@ -536,8 +627,7 @@ Proof.
   rewrite (proj2 (Z.leb_le _ _)) by lia.
   replace (Z_to_bv 64 (bv_unsigned b)) with b by (symmetry; apply Z_to_bv_u_eq'; reflexivity).
   replace (bv_unsigned b + d + page_size - bv_unsigned b)%Z with (d + page_size)%Z by lia. rewrite Hrf.
-  replace (bv_unsigned (Z_to_bv 64 (bv_unsigned b + d) - b)) with d.
-  2:{ rewrite bv_sub_unsigned, Hureq. rewrite bv_wrap_small by (unfold bv_modulus; lia). lia. }
+  replace (Z.max 0 (bv_unsigned b + d - bv_unsigned b))%Z with d by lia.
   rewrite (proj2 (Z.leb_le _ _) Hlive). reflexivity.
 Qed.
 

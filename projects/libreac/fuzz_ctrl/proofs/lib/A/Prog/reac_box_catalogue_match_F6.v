@@ -3,13 +3,14 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 3060 of its 3101 lines of code are new or changed and 207 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/reac_box_catalogue_match.v, with its addresses changed; 279 of its 357 lines of code are new or changed and 3023 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Footprint (_F) re-run of stretch S6 of reac_box_catalogue_match.v (image A, asan): the exit cut 0x84724 to the
    inline frame-release store `sb zero,0(a0)` at 0x847bc, the state at the store before it executes. Only the
    side-stack arm (nn = 1, s2 = fr = fs_frame FS 2 jj) is lifted: the cgif-form walk takes that arm, and the
    release itself is cgif's event (astack_free_law), not a step of this run.
 
-   Provenance: footprint re-run of reac_box_catalogue_match.v (source commit d69f7c708f6, proved on FACTS
-   ed6b6b7b0ab) by the same script over lib/Lib/StepF; image fuzz_ctrl v1.9.0 asan, ELF fuzz_ctrl.debug sha256
+   Provenance: footprint re-run of reac_box_catalogue_match.v (source, proved on FACTS)
+   by the same script over lib/Lib/StepF; image fuzz_ctrl v1.9.0 asan, ELF fuzz_ctrl.debug sha256
    78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd; route (a) of 22:20Z; for the cgif-form walk
    C_reac_box_catalogue_match.v only.
 

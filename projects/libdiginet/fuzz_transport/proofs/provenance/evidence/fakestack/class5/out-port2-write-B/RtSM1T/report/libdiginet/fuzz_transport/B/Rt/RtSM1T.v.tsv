@@ -1,4 +1,4 @@
-# alreloc per-numeral report: plugin-hostd/fuzz_command lib/B/Rt/RtSM1T.v at 781f46bc05cd -> libdiginet/fuzz_transport asan-ubsan lib/B/Rt/RtSM1T.v: written
+# alreloc per-numeral report: plugin-hostd/fuzz_command lib/B/Rt/RtSM1T.v -> libdiginet/fuzz_transport asan-ubsan lib/B/Rt/RtSM1T.v: written
 # source image <AGENTS>/pau-pipeline/plugin-hostd/unstripped/fuzz_command/fuzz_command.asan-ubsan; unit image <WORK>/target/unstripped/fuzz_transport/fuzz_transport.asan-ubsan
 file:line	old	new	rule	old in source image	new in unit image
 B/Rt/RtSM1T.v:4	0x3fa7c	0x3fa7c	resolve (identity)	__asan_stack_malloc_0+0x128	__asan_register_globals+0x208

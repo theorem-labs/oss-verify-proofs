@@ -4,13 +4,14 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names, addresses and numbers changed; 1684 of its 1797 lines of code are new or changed and 898 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/R6.v; 143 of its 279 lines of code are new or changed and 1661 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/Prog/Seg/R6Fs.v -- the SPLIT of segment R6's run at the call of reac_ctrl_build_as (0x815e8), in footprint
    form.  Written by a Theorem Labs lane (stage seg_R6, lib/A/ACtlG/R6.v); single writer.  rule 24: no
    function proved (a segment run split; proves no function, kind: segment lemma).
 
    PROVENANCE.  Image A = fuzz_ctrl.asan, libreac v1.9.0 (pinned
    (internal path) sha256
-   aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d), FACTS ed6b6b7b0ab, PAU pau-libreac-v190.
+   aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d), FACTS, PAU pau-libreac-v190.
    Source: Seg/R6.v (r6_evt :69, its script :144-205) and a Theorem Labs lane's Seg/R6F.v (r6_evt_F :47, whose script
    :161-176 is the same eight steps under StepF).  Tools: lib/Lib/StepF.v, lib/Lib/ExecF.v, The Rocq Prover 9.2.
 
@@ -84,7 +85,7 @@ Lemma r6_evt_pre_Fs :
 Proof.
   intros RNG ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
     F fc m A mdv d -> HA0 HA1 C96 C104 C112 C168 R96 R104 R112 R168.
-  (* the spill base does not wrap: solve_accs needs it for the four ld at s1 + 96 / 104 / 112 / 168 (R6F.v:162) *)
+  (* the spill base does not wrap: solve_accs needs it for the four ld at s1 + 96 / 104 / 112 / 168 (R6F.v:163) *)
   assert (EA : bv_unsigned (Z_to_bv 64 A) = A) by (apply OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.MState.unsigned_lit; lia).
   pose proof (r6_q64_ro m (A + 96) 0x1234 C96) as RW96.
   pose proof (r6_q64_ro m (A + 104) 0x21140 C104) as RW104.
@@ -163,7 +164,7 @@ Lemma r6_evt_pre_F :
     (mdv <> 0 -> (bb = 5 \/ bb = 6) /\ has mb <> 0 /\ rname mb <> 0 ->
        fp_dj [(rname mb, rname mb + Z.of_nat (length nb))] (fp_w [0%nat; 1%nat] FS)) ->
     BA.reac_ctrl_build_as_tls m TPv FS (spv - BA.REAC_CTRL_BUILD_AS_K) spv ->
-    (* footprint: the segment's own four spill loads (R6F.v:105-108) *)
+    (* footprint: the segment's own four spill loads (R6F.v:106-109) *)
     ExecF.rng RNG (A + 96) 8 ->
     ExecF.rng RNG (A + 104) 8 ->
     ExecF.rng RNG (A + 112) 8 ->

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed src0_realizes_specG_heap_lim. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -40,8 +41,8 @@ Section WithLibW.
     - exact DLLF.
     - exact LIokWF.
     - exact LXokF.
-    - intros lim sp a0s path envp uid hw rdraw tid regs mem brk mbase Hlim Hsp Hbrk Hmb Hva Hve Htid ME.
-      exact (main_hi_heap0 sp a0s path envp uid hw rdraw tid regs mem Hva Hve Hsp Htid ME brk mbase lim Hlim Hbrk Hmb).
+    - intros lim sp a0s path envp uid hw rdraw tid regs mem brk mbase inp Hlim Hsp Hbrk Hmb Hva Hve Htid ME.
+      eapply (main_hi_heap0 sp a0s path envp uid hw rdraw tid regs mem); eassumption.
     - exact Hfs.
     - exact Hbudget.
     - exact Hlim0.

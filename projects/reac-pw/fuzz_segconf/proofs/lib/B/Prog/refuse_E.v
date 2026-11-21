@@ -3,9 +3,10 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: number's walk on the ASan build of plugin-hostd/fuzz_command, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/AC9z.v (the entry state of a walk): the symbolic state at number's entry (0x8e430) and its seed lemma. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/numberE.v, with its module paths, module names and numbers changed; 147 of its 259 lines of code are new or changed and 133 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan+UBSan image B (fuzz_segconf.asan-ubsan, pin sha256 c3796c0b38f3...): the symbolic
    entry state of refuse (0x892f8 = BASE + AF_refuse, B listing lib/B/Prog/SegList.v) and its seed lemma, in the form
-   of plugin-hostd/fuzz_command lib/B/Prog/numberE.v (origin/ossv/recipes 501c0d516c69; number is the released class-0
+   of plugin-hostd/fuzz_command lib/B/Prog/numberE.v (number is the released class-0
    walk). The image-B refuse walk lane of the image-B G3 walk owner, 2026-10-30; ADAPTED from numberE.v to refuse's image-B code
    (refuse.fuzz_segconf.asan-ubsan.s).
 

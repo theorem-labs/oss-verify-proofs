@@ -1,16 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main entry's recorded facts read as the main entry keeps them: APKN, imported from BothEntry; ported by content from zstd_frame_info's file of the same role, with this binary's addresses and names). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.zstd.huf_decompress.lib.Lib Require Import MState Mem Cells ITree Nodes Decode.
 From OSSVerify.Proofs.zstd.huf_decompress.lib.Spec Require Import STree AsanCtrl BothHandoff.
-From OSSVerify.Proofs.zstd.huf_decompress.lib.AS Require Import AsanPlan MainExport MainFactsBoth.
+From OSSVerify.Proofs.zstd.huf_decompress.lib.AS Require Import AsanPlan MainExport MainFactsBoth BothEntry.
 From OSSVerify.Proofs.zstd.huf_decompress.lib.BothW Require Import BImg ABase AMalloc_iface ARepInit_kit.
 From OSSVerify.Proofs.zstd.huf_decompress.lib.Common Require Import RunDraw.
-From OSSVerify.Proofs.zstd.huf_decompress.lib Require KReplay.
-Ltac2 kr_t_AResv () := "C46Stdlib5Lists4List2InC46Stdlib5Lists4List8map_consC47Corelib4Init5Logic8eq_ind_rK47Corelib7Numbers7BinNums8positive02K47Corelib7Numbers7BinNums1Z02K59OSSVerify5KrLib2AS:MainExport4zexp01C1?~~~~~~~~~~~~~~~K59OSSVerify5KrLib2AS:MainExport4zexp02C1?~~~~~~~~~~~~~~~K59OSSVerify5KrLib2AS:MainExport4zexp04C1?~~~~~~~~~~~~~~~K59OSSVerify5KrLib2AS:MainExport6lentry01C1?~~~~~~~~~~~~~~~C56Stdlib6ZArith6BinInt1Z2leK47Corelib7Numbers7BinNums8positive01C56Stdlib6ZArith6BinInt1Z3powC56Stdlib6ZArith6BinInt1Z3mulC56Stdlib6ZArith6BinInt1Z3addI47Corelib4Init9Datatypes4prod00C59OSSVerify5KrLib4Spec;BothHandoff7resv_ofC1?~~~~~~~~~~~~~~~C47Corelib4Init9Datatypes3fstC47Corelib4Init9Datatypes3sndI47Corelib4Init5Logic3and00I47Corelib4Init9Datatypes4list00K47Corelib7Numbers7BinNums1N02I45stdpp9bitvector;definitions2bv00C59OSSVerify5KrLib2AS:MainExport2zvC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib3Lib3Mem2waC1?~~~~~~~~~~~~~~~K47Corelib4Init9Datatypes4prod01K47Corelib4Init9Datatypes4list01K47Corelib4Init9Datatypes4list02C47Corelib5Lists7ListDef3mapC4ELinuxProcessSemantics?LinuxProcessSem3RunAsegments_reservedC47Corelib4Init9Datatypes3appI47Corelib4Init5Logic2or00C46Stdlib5Lists4List:in_app_iffI47Corelib4Init5Logic2eq00I47Corelib4Init5Logic2ex00C46Stdlib5Lists4List:in_map_iffC59OSSVerify5KrLib4Spec;BothHandoff5iv_ofC1?~~~~~~~~~~~~~~~C45stdpp9bitvector;definitions7Z_to_bvC45stdpp9bitvector;definitions;bv_unsignedK47Corelib4Init5Logic2eq01K46Stdlib9micromega6VarMap1t02I46Stdlib9micromega6VarMap1t00I46Stdlib9micromega=RingMicromega7Formula00K46Stdlib9micromega7EnvRing5PExpr01K46Stdlib9micromega7EnvRing5PExpr02K46Stdlib9micromega7EnvRing5PExpr07K47Corelib4Init9Datatypes6option02C46Stdlib9micromega5Tauto8BFormulaC46Stdlib9micromega:ZMicromega=ZTautoCheckerC46Stdlib9micromega6VarMap4findC46Stdlib9micromega:ZMicromegaCZTautoChecker_soundC59OSSVerify5KrLib3Lib6MState<unsigned_litC1?~~~~~~~~~~~~~~~K46Stdlib9micromega=RingMicromega5Psatz07K47Corelib4Init9Datatypes3nat02K46Stdlib9micromega=RingMicromega5Psatz02K46Stdlib9micromega=RingMicromega5Psatz05K46Stdlib9micromega:ZMicromega;ZArithProof02K46Stdlib9micromega:ZMicromega;ZArithProof03K46Stdlib9micromega7EnvRing5PExpr05C46Stdlib5Lists4List8flat_mapC46Stdlib5Lists4List;in_flat_mapK47Corelib4Init5Logic2or01K47Corelib4Init5Logic3and01K47Corelib4Init5Logic2ex01C46Stdlib5Lists4List7map_appK46Stdlib9micromega6VarMap1t01K46Stdlib9micromega6VarMap1t03K46Stdlib9micromega7EnvRing5PExpr03C59OSSVerify5KrLib5BothW=AMalloc_iface4pcovC1?~~~~~~~~~~~~~~~C56Stdlib6ZArith6BinInt1Z2ltK46Stdlib9micromega=RingMicromega7Formula01K46Stdlib9micromega5Tauto8GFormula04K46Stdlib9micromega5Tauto8GFormula05K46Stdlib9micromega5Tauto8GFormula08K46Stdlib9micromega=RingMicromega5Psatz06I59OSSVerify5KrLib2AS:MainExport6lentry00C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS=MainFactsBoth;asan_ledgerC1?~~~~~~~~~~~~~~~I47Corelib7Numbers7BinNums1Z00K46Stdlib9micromega=RingMicromega3Op203C46Stdlib9micromega5Tauto5eKindI47Corelib4Init9Datatypes4unit00K46Stdlib9micromega5Tauto4kind01K47Corelib4Init9Datatypes4unit01K46Stdlib9micromega=RingMicromega3Op205I47Corelib4Init9Datatypes3nat00I69OSSVerify5KrLib2AS8AsanPlan2AP5mkind00C1?~~~~~~~~~~~~~~~K47Corelib7Numbers7BinNums8positive03K47Corelib7Numbers7BinNums1Z01C59OSSVerify5KrLib5BothW4BImg5bsegsC1?~~~~~~~~~~~~~~~C46Stdlib5Lists4List8nil_consI46Stdlib9micromega:ZMicromega;ZArithProof00I47Corelib4Init9Datatypes4bool00K47Corelib4Init9Datatypes4bool01K47Corelib4Init9Datatypes3nat01K46Stdlib9micromega:ZMicromega;ZArithProof01C59OSSVerify5KrLib4Spec;BothHandoff4uns2C1?~~~~~~~~~~~~~~~C47Corelib4Init5Logic7f_equalK47Corelib4Init5Logic2or02C47Corelib4Init5Logic6eq_indC46Stdlib6ZArith:ZArith_dec;Z_lt_le_decI47Corelib4Init6Specif7sumbool00C47Corelib4Init5Logic7and_indK46Stdlib9micromega5Tauto8GFormula03C59OSSVerify5KrLib5BothW5ABase7AIMG_HIC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib4Spec;BothHandoff=reserved_evalC1?~~~~~~~~~~~~~~~I47Corelib4Init5Logic5False00C59OSSVerify5KrLib2AS:MainExport8pfact_okC1?~~~~~~~~~~~~~~~I47Corelib5Lists7ListDef6Forall00K59OSSVerify5KrLib2AS:MainExport5pfact01C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib4Spec;BothHandoff:pfact_findC1?~~~~~~~~~~~~~~~c59OSSVerify5KrLib5BothW5AResv8resv_imgC1?~~~~~~~~~~~~~~~K59OSSVerify5KrLib2AS:MainExport6lentry02C1?~~~~~~~~~~~~~~~C47Corelib4Init5Logic5proj1c59OSSVerify5KrLib5BothW5AResv8resv_litC1?~~~~~~~~~~~~~~~C47Corelib4Init5Logic5proj2c59OSSVerify5KrLib5BothW5AResv:resv_namedC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW<ARepInit_kit2LVC1?~~~~~~~~~~~~~~~K59OSSVerify5KrLib5BothW5ABase7alayout01C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib5BothW=AMalloc_iface8aresv_okC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib4Spec;BothHandoff9pfact_eqbC1?~~~~~~~~~~~~~~~C46Stdlib5Lists4List7existsbC59OSSVerify5KrLib5BothW5ABase4al_VC1?~~~~~~~~~~~~~~~I59OSSVerify5KrLib2AS:MainExport5pfact00C1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib2AS=MainFactsBoth?asan_pure_factsC1?~~~~~~~~~~~~~~~K69OSSVerify5KrLib2AS8AsanPlan2AP5mkind01C1?~~~~~~~~~~~~~~~K69OSSVerify5KrLib2AS8AsanPlan2AP5mkind02C1?~~~~~~~~~~~~~~~K69OSSVerify5KrLib2AS8AsanPlan2AP5mkind04C1?~~~~~~~~~~~~~~~".
 Import ListNotations. Import AP.
 Open Scope Z_scope.
 
@@ -68,7 +67,7 @@ Local Ltac pv PF k lo hi :=
 
 Section CANSEC2. Context {rc : runConstT}.
 Theorem aresv_ok_handoff : forall V (w : bool) (U : list (list Z)),
-  Forall (pfact_ok V) asan_pure_facts ->
+  Forall (pfact_ok V) APKN ->
   aresv_ok (mkALayout (LV V) w U) (resv_of V).
 Proof.
   intros V w U PF.
@@ -79,7 +78,7 @@ Proof.
   unfold aresv_ok, al_space_beg, al_ptr_array, al_t, al_ctx, al_nodes, al_store, al_fake. cbv [al_V LV Nat.eqb].
   split; [apply resv_img|].
   split.
-  {
+  { (* [comment removed for export] *)
     intros x Hx.
     destruct (Z_lt_le_dec x 0x8fff7000); [| destruct (Z_lt_le_dec x 0x2008fff7000)].
     - eapply (resv_lit V 2147446784 268435456 KRWLAZY); [inled| lia| lia| | | exact (conj (proj1 Hx) l)]; cbn; lia.
@@ -93,10 +92,11 @@ Proof.
   split; [eapply (resv_named V 454 8388608 KRWLAZY); [inled| lia| lia| lia| cbn; lia]|].
   split; [eapply (resv_named V 377 11571200 KRW); [inled| lia| lia| lia| cbn; lia]|].
   split; [eapply (resv_named V 310 4096 KRW); [inled| lia| lia| lia| cbn; lia]|].
+  (* [comment removed for export] *)
   split; [eapply (resv_named V 78 65536 KRW); [inled| lia| lia| lia| cbn; lia]|].
   split; [eapply (resv_named V 207 3727360 KRW); [inled| lia| lia| lia| cbn; lia]|].
   split; [eapply (resv_named V 245 4096 KRW); [inled| lia| lia| lia| cbn; lia]|].
   split; [eapply (resv_named V 471 4096 KRW); [inled| lia| lia| lia| cbn; lia]|].
-  eapply (resv_named V 471 4096 KRW); [inled| lia| lia| lia| cbn; lia].
+  eapply (resv_named V 471 4096 KRW);   (* [comment removed for export] *) [inled| lia| lia| lia| cbn; lia].
 Qed.
 End CANSEC2.

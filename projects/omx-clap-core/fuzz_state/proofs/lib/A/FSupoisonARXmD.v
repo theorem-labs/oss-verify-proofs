@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/Reusable/DGif0.v, with its module paths and module names changed; 671 of its 717 lines of code are new or changed and 218 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* The AR -> ARU transfer of a Theorem Labs lane's frozen Deallocate interface record DGif0.DIface (a Theorem Labs lane;
    rule 24: no function proved, kind "statement transfer of an interface record").
 
@@ -341,7 +342,7 @@ End aux.
 Section defs. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {IM : AImg} {DI : DImg}.
 Local Open Scope am_scope.
 
-(* DGif0.v's di_enqueue field (DGif0.v:302-325), word for word, over its parameters: QuarantineCache::Enqueue's
+(* DGif0.v's di_enqueue field (DGif0.v:303-326), word for word, over its parameters: QuarantineCache::Enqueue's
    contract at Put's call.  A callee contract (kind 5): the ARU record takes it as a premise. *)
 Definition di_enqueue_t (B : asyms) (U : list Z -> astate -> Prop)
 (ARX : Z -> alayout -> astate -> world im_segs -> (word -> option byte) -> Model -> Prop)

@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: number's walk on the ASan build of plugin-hostd/fuzz_command, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/AC9z.v (the entry state of a walk): the symbolic state at number's entry (0x8e430) and its seed lemma. *)
-(* Modified by Theorem Labs, 2026-10: copied from lib/A/Prog/numberE.v (a working branch a7e5999afe4) for fuzz_command.asan-ubsan: module paths and number's addresses in that image (entry 0x8df2c = BASE + 0x79fc; every A address mapped by number + offset, the code bytes equal up to pc-relative words). *)
+(* Modified by Theorem Labs, 2026-10: copied from lib/A/Prog/numberE.v (a working branch) for fuzz_command.asan-ubsan: module paths and number's addresses in that image (entry 0x8df2c = BASE + 0x79fc; every A address mapped by number + offset, the code bytes equal up to pc-relative words). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

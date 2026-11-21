@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC1h.v for libreac/fuzz_boxreg's program walk (as fuzz_identity's lib/A/Prog/YC1h.v, ea5560a967b, carries it): the listing's names are bsym; frm_off_imgP states fuzz_boxreg.asan's image range as Reusable/YImgTop.v's [IMG_LO, IMG_TOP) in place of cgif's off_img (as BoxPaLib's blk_off_imgP does); module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC1h.v for libreac/fuzz_boxreg's program walk (as fuzz_identity's lib/A/Prog/YC1h.v, carries it): the listing's names are bsym; frm_off_imgP states fuzz_boxreg.asan's image range as Reusable/YImgTop.v's [IMG_LO, IMG_TOP) in place of cgif's off_img (as BoxPaLib's blk_off_imgP does); module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/A/Prog/YC1h.v, with its module paths and module names changed; 74 of its 98 lines of code are new or changed and 170 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The program walk of reac_declared_vlan_add on reac-pw/fuzz_segconf image B (fuzz_segconf.asan-ubsan, entry
    BASE + AF_reac_declared_vlan_add = 0x8a514, 177 instructions, 112-byte frame, no side-stack frame) against
-   reac_declared_vlan_add_contract (lib/B/Prog/reac_declared_vlan_add_c.v, image B's copy of the FINAL contract text
-   at 6f783602b5e3): the image-B port of lib/A/Prog/reac_declared_vlan_add.v (commit
-   fcd2fa03dd27, whose segment 0 it ports; the A walk was not closed at the port), ADAPTED to image B's code (the
+   reac_declared_vlan_add_contract (lib/B/Prog/reac_declared_vlan_add_c.v, image B's copy of the FINAL contract text):
+   the image-B port of lib/A/Prog/reac_declared_vlan_add.v (
+   whose segment 0 it ports; the A walk was not closed at the port), ADAPTED to image B's code (the
    spilled shadow index, the loop's registers, UBSan's 13 branches to the trap `unimp` 0x8a760). Written for
    the image-B G4 + G5 walks. Step plan: the unit record's Bwalks-G45-plans/plan-reac_declared_vlan_add.md.
    The runtime entries the call reaches are Section hypotheses: the strcmp wrapper (RtString.astrcmp_realizes, row

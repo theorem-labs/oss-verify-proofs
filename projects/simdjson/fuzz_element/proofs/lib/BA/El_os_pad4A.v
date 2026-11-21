@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -227,7 +228,7 @@ Lemma snB : forall (Σ : rts RT) (K : config -> Prop) (sp D n c lo fr : Z) (kr :
   client_consts m -> bytes_at asegs m (D / 8 + 2147450880) [z8; z8; z8] ->
   rw_cells asegs m D [CB 1 b1] -> wr_at asegs m (D + 1) n -> rw_cells asegs m (D + 1 + n) [CB 1 b4] -> mem_inv asegs m ->
   ART RT Σ m -> In (fr, kr) (rt_frames RT Σ) -> fr <= D -> D + 24 <= fr + fs_size kr - 8 ->
-  rt_sp0 RT Σ - STACK_WIN <= lo -> lo + RT_STACK <= sp - 64 -> sp <= USTACK_TOP -> sp mod 16 = 0 ->
+  rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + RT_STACK <= sp - 64 -> sp <= USTACK_TOP -> sp mod 16 = 0 ->
   (forall (t0' t1' t2' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' : word) (F' : bvmap 5 word) (m1 : mem),
      ART RT Σ m1 -> mem_inv asegs m1 -> wmono asegs m m1 -> stk asegs m1 lo sp ->
      rt_pres_fp (rt_live RT Σ) (rt_frames RT Σ) sp [(sp - 64, sp); (D, D + 1 + n + 1)] m m1 ->
@@ -317,7 +318,7 @@ Lemma pad_ws : forall (Σ : rts RT) (K : config -> Prop) (S sp2 f OS FILL ns lo 
   client_consts m ->
   rw_cells asegs m (f / 8 + 2147450880) (map C1 pad_sh12 ++ map (fun l => CB 1 l) ls4) ->
   rw_cells asegs m (f + 32) [CB 1 b1] -> wr_at asegs m (f + 33) ns -> rw_cells asegs m (f + 33 + ns) [CB 1 b4] -> mem_inv asegs m ->
-  ART RT Σ m -> In (f, 1%nat) (rt_frames RT Σ) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + RT_STACK <= sp2 - 64 -> sp2 <= USTACK_TOP -> sp2 mod 16 = 0 ->
+  ART RT Σ m -> In (f, 1%nat) (rt_frames RT Σ) -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + RT_STACK <= sp2 - 64 -> sp2 <= USTACK_TOP -> sp2 mod 16 = 0 ->
   (forall (t0' t1' t2' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' : word) (F' : bvmap 5 word) (m1 : mem),
      ART RT Σ m1 -> mem_inv asegs m1 -> wmono asegs m m1 -> stk asegs m1 lo sp2 ->
      rt_pres_fp (rt_live RT Σ) (rt_frames RT Σ) sp2 [(f / 8 + 2147450880 + 4, f / 8 + 2147450880 + 7); (sp2 - 64, sp2); (f + 32, f + 33 + ns + 1)] m m1 ->

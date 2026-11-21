@@ -11,7 +11,7 @@
      gn_pair_ok source is at slot k (fr_RINV's distinct fds, RI_fds_holds), so after relay_instance_gone slot k holds
      rig_post's source for entry j, which rig_rel's dr_rel leaves drained (pending list empty, offset 0).
    - RI_gone_read_sat: one state meets all of RI_gone_read's premises (and RI_gone_pairs's).
-   - Section collapse / collapse2: the records of rounds 1 and 2 of the gone rules' texts (bb9dae5d905, a1a3591c77c),
+   - Section collapse / collapse2: the records of rounds 1 and 2 of the gone rules' texts,
      which were false at the instance; machine-checked counter-instances, not proofs of the rows.
    Part 2 (over W_LLVMFuzzerTestOneInput_gone_base.v's own model): RI_gone_pairs_plug / RI_gone_read_plug restate
    part 1 at gone_base's GN_RI_pairs / GN_RI_read; then the step and end rows.
@@ -19,22 +19,23 @@
      check_no_loss and check_shape_ends left of what relay_instance_gone left there; when gone = 0, `at` is the
      entry's position in the stream relay_instance_gone sent (rg_acc_pos), which is the entries' drained lines and
      then their ended keys' end lines (rg_rel_dec, rg_strm).
-   - RI_gone_step_holds(_c): GN_RI_step of a working branch a39b599f92e (copied verbatim as
+   - RI_gone_step_holds(_c): GN_RI_step of a working branch (copied verbatim as
      GN_RI_step_d) at MT := ameter_triv, RINV := fr_RINV, MMAX := WR_MMAX, LS := fr_LS3 B / fr_LS3c B.  The LS-side
-     conjunct cnl_room is a Theorem Labs lane's gx6_step_room(_c) (ReplyLS3cTopxGoneF.v at b25d82fcf04); mo_ok is True at
+     conjunct cnl_room is a Theorem Labs lane's gx6_step_room(_c) (ReplyLS3cTopxGoneF.v); mo_ok is True at
      ameter_triv; the rest is RINV-side (rg_step_rinv_side).
-   - RI_gone_end_holds_q5(_c): GN_RI_end of a39b599f92e (copied as GN_RI_end_q5) with REQ5 (no held list's capacity
-     shrinks from m to mc) as one more, last, premise: s5-r1d's gx6_end_LS3(_c) needs it, and a39b599f92e's gn_cnl_ok
+   - RI_gone_end_holds_q5(_c): GN_RI_end (copied as GN_RI_end_q5) with REQ5 (no held list's capacity
+     shrinks from m to mc) as one more, last, premise: s5-r1d's gx6_end_LS3(_c) needs it, and's gn_cnl_ok
      does not carry `hl_cap (hs_held h) <= hl_cap H'` from which ReplyLS3cTopxGoneH.v's gxh_req5 derives it.
-   - GN_RI_step_r3 (Section rg3): the record of round 3 (aa34c06e82c): without re_U NUL-free the step row is false.
+   - GN_RI_step_r3 (Section rg3): the record of round 3: without re_U NUL-free the step row is false.
    Local helpers rg_lines_nz / rg_upds_in / rg_W_read_lines_nz state what a Theorem Labs lane's ReplyRINV_a12.v
    (lines_nul_free / upds_nul_free) states; they stay local. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyRINV_gone.v, with its module paths changed; 472 of its 575 lines of code are new or changed and 2820 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fr_CAP: g_capout's model value stays within the entry contract's CAPOUT_MAX at every cut, and the exit's two LS
    rules at the top's instance.  proves no function (kind: invariant lemma).
 
-   WHY fr_CAP (a Theorem Labs lane's ruling (A), 2026-10-30 05:40Z).  RiRestate's LS_exit_cap (a working branch
-   5a9b16eac9e, W_LLVMFuzzerTestOneInput_exit_x.v:196-198 and _exit.v:7785-7787) needs lm_cap m <= CAPOUT_MAX
+   WHY fr_CAP (a Theorem Labs lane's ruling (A), 2026-10-30 05:40Z).  RiRestate's LS_exit_cap (a working branch,
+   W_LLVMFuzzerTestOneInput_exit_x.v:197-199 and _exit.v:7785-7787) needs lm_cap m <= CAPOUT_MAX
    (ou_rf_cap: relay_finish never lowers g_capout).  Over fr_LS3cp B /\ fr_OUT OM /\ fr_ENT B nothing bounds lm_cap m
    by a constant: fr_OUT gives lm_cap m <= XB + OM, and under fr_ENT XB is the ENTRY's harness bytes, which hold the
    entry's g_capout (ReplyLS3eCap.v ent_XB), bounded only by fr_LS3's blocks_bytes (c_S cx) + CALL_ROOM <= LIVE_MAX.
@@ -146,8 +147,8 @@ Proof.
   split; [exact H0|]. apply (Z.le_trans _ _ _ Hle). apply Z.max_lub; lia.
 Qed.
 
-(* ReplyLSI.v's slot fr_CAP_sat (`fr_CAP lsi_cx 0 (ls3_m B) ls3_ly ls3_S`, ReplyLSI.v:783 at ce7d0d0bf8c): fr_CAP reads
-   only the model's capacity, and ls3_m's (ReplyLS3.v:485, the first head's) is 0; plug it as
+(* ReplyLSI.v's slot fr_CAP_sat (`fr_CAP lsi_cx 0 (ls3_m B) ls3_ly ls3_S`, ReplyLSI.v:783): fr_CAP reads
+   only the model's capacity, and ls3_m's (ReplyLS3.v:486, the first head's) is 0; plug it as
    `fr_CAP_sat_at B lsi_cx ls3_ly ls3_S` (lsi_cx is ReplyLSI.v's, which Requires this file) *)
 Lemma fr_CAP_sat_at : forall B cx ly S, fr_CAP cx 0 (ls3_m B) ly S.
 Proof.
@@ -204,7 +205,7 @@ Lemma fr_CAP_write_push_r : forall cx t m si h (l' : hlist) d ly S ly' S' ev,
   fr_CAP cx (t + 1) (wr_push m (wr_k2 cx m) si (set_pending h l') ev) ly' S'.
 Proof. intros cx t m si h l' d ly S ly' S' ev _ _ _ _ _ _ _ _. apply fr_CAP_keep. reflexivity. Qed.
 
-(* ---- the drain arm's step (fr_OUT_drain_step_p, ReplyLS3o.v:519): g_capout <= max (lm_cap m) (2 * MASS m) ---- *)
+(* ---- the drain arm's step (fr_OUT_drain_step_p, ReplyLS3o.v:520): g_capout <= max (lm_cap m) (2 * MASS m) ---- *)
 Lemma fr_CAP_drain_step_r : forall cx t m ly S (S1 : astate) (ly' : alayout) (S' : astate)
     si h j h'' e' c' O' cap' out' (E H : hlist) (ly1 : alayout) (h1 : hsrc) (E' H' : hlist),
   fr_LS3 B cx t m ly S -> fr_OUT OM cx t m ly S -> fr_CAP cx t m ly S -> dr_pick cx m si h ->
@@ -278,7 +279,7 @@ Proof.
   all: first [exact HCAP | apply MASS_nonneg | (apply CAPOUT_MAX_2WMAX; lia) | (apply CAPOUT_MAX_4WMAX; lia) | lia].
 Qed.
 
-(* ---- the remove arm's step (fr_OUT_rm_step_p, ReplyLS3o.v:728): g_capout <= max (lm_cap m) (4 * MASS m) ---- *)
+(* ---- the remove arm's step (fr_OUT_rm_step_p, ReplyLS3o.v:729): g_capout <= max (lm_cap m) (4 * MASS m) ---- *)
 Lemma fr_CAP_rm_step_r : forall cx t m ly0 S0 (ly : alayout) (S : astate)
     si h j0 e1 h1 ev LB c2 O2 cap2 out2 E' H' H'' ds cc ev5,
   fr_LS3 B cx t m ly0 S0 -> fr_OUT OM cx t m ly0 S0 -> fr_CAP cx t m ly0 S0 ->
@@ -312,7 +313,7 @@ Proof.
   all: first [exact HCAP | apply MASS_nonneg | (apply CAPOUT_MAX_2WMAX; lia) | (apply CAPOUT_MAX_4WMAX; lia) | lia].
 Qed.
 
-(* ---- the event arm's step (fr_OUT_event_step_p, ReplyLS3o.v:781): g_capout <= max (lm_cap m) (2 * 65,536) ---- *)
+(* ---- the event arm's step (fr_OUT_event_step_p, ReplyLS3o.v:782): g_capout <= max (lm_cap m) (2 * 65,536) ---- *)
 Lemma fr_CAP_event_step_r : forall cx t m ly S (S1 S2 S3 : astate) (ly3 : alayout) e v out' (ly1 ly2 : alayout) q,
   fr_LS3 B cx t m ly S -> fr_OUT OM cx t m ly S -> fr_CAP cx t m ly S -> ev_evt cx m e ->
   0 <= lm_k m < c_n cx -> lm_O m = [] -> 0 <= lm_cap m ->
@@ -339,7 +340,7 @@ Proof.
   apply (Z.le_trans _ _ _ Hcle). apply Z.max_lub; [lia | unfold CAPOUT_MAX, OPS_MAX; lia].
 Qed.
 
-(* ---- the gone arm (fr_OUT_gone_end, ReplyLS3oGn.v:265): g_capout <= max (lm_cap m) (2 * |O2|), |O2| <= 2 * MASS m ---- *)
+(* ---- the gone arm (fr_OUT_gone_end, ReplyLS3oGn.v:266): g_capout <= max (lm_cap m) (2 * |O2|), |O2| <= 2 * MASS m ---- *)
 Lemma fr_CAP_gone_end_r : forall cx t m ly S hs qs c2 O2 cap2 out2 m1 mc A (lyx : alayout) (Sx : astate),
   fr_RINV cx t m -> gn_op cx t m ->
   Forall (fun e => ~ In (Z_to_bv 8 0) (re_U e) /\
@@ -447,8 +448,8 @@ Proof.
 Qed.
 
 (* ================================================================== the slots of a Theorem Labs lane's ReplyLSI.v
-   Each statement below is ReplyLSI.v's `Hypothesis fr_CAP_<rule>` (a working branch 1318828167d,
-   lib/A/ReplyLSI.v:248-350) word for word, at this file's fr_CAP, so ReplyLSI.v swaps its slots for these lemmas. *)
+   Each statement below is ReplyLSI.v's `Hypothesis fr_CAP_<rule>` (a working branch,
+   lib/A/ReplyLSI.v:249-351) word for word, at this file's fr_CAP, so ReplyLSI.v swaps its slots for these lemmas. *)
 Lemma fr_CAP_head_nout : forall cx t m ly S,
   fr_OUT OM cx t m ly S -> fr_CAP cx t m ly S -> fr_CAP cx t (lm_clear_O m) ly S.
 Proof.
@@ -658,7 +659,7 @@ Proof.
   - intros c _. exact (H2 c).
 Qed.
 
-(* LS_exit_cnt (exit_x.v:190-195 / lib/A/W_LLVMFuzzerTestOneInput_exit.v:7779-7784 at rmexit 5a9b16eac9e; a Theorem Labs lane 06:03Z): ReplyLS3w.v:89
+(* LS_exit_cnt (exit_x.v:190-195 / lib/A/W_LLVMFuzzerTestOneInput_exit.v:7780-7785 at rmexit; a Theorem Labs lane 06:03Z): ReplyLS3w.v:89
    fr_LS3c_exit_cnt through xcnt_ok_of_post *)
 Lemma LS_exit_cnt_I : forall cx t m ly3 S3 rest (ly' : alayout) (S' : astate) cap out,
   LSI4 cx t m ly3 S3 ->
@@ -672,7 +673,7 @@ Proof.
   exact (fr_LS3c_exit_cnt B cx t m ly3 S3 rest ly' S' cap out HLS HP3 HP' HA).
 Qed.
 
-(* LS_exit_cap (exit_x.v:196-198 / lib/A/W_LLVMFuzzerTestOneInput_exit.v:7785-7787 at rmexit 5a9b16eac9e): relay_finish's capacity is at most
+(* LS_exit_cap (exit_x.v:196-198 / lib/A/W_LLVMFuzzerTestOneInput_exit.v:7786-7788 at rmexit): relay_finish's capacity is at most
    max (lm_cap m) (2 * rf_sum (lm_es m)) (ReplyLS3o.v ou_rf_cap); fr_CAP bounds the first, fr_OUT's mass the second *)
 Lemma LS_exit_cap_I : forall (RINV : lfcx -> Z -> lmod -> Prop) cx t m ly S,
   LSI4 cx t m ly S -> RINV cx t m -> 0 <= t <= OPS_MAX ->

@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the closing pattern of a Theorem Labs lane's PASS4-REFIT.md section F for descriptors_get's
    ASan+UBSan walk (lib/B/Prog/descriptors_get.v, tdescriptors_get_holds), modelled on lib/A/Prog/RecBClosed.v
-   (a working branch f349bdaedba, :163-191) and lib/A/Prog/SupRemoveAllRefitClosed.v (a working branch
-   e84227c9553, :50-60). *)
+   (a working branch, :163-191) and lib/A/Prog/SupRemoveAllRefitClosed.v (a working branch,
+   :50-60). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* descriptors_get's walk at the pinned image: lib/B/Prog/CmdImg.v's instance PB_cmd (segments tfibsegs) and the sink
    head YE2k.tfib_sink_head. The walk's per-binary hypotheses are discharged by a Theorem Labs lane's record facts: VOBJS by

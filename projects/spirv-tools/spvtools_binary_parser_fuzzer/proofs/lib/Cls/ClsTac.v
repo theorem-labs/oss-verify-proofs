@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revised stack window). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith List Lia Bool.
@@ -48,9 +49,19 @@ Ltac len_rw :=
          | |- context [length (repeat ?x ?n)] => rewrite (repeat_length x n)
          end.
 
+(* #38: the certified stack window narrowed inside the revision series (091615f4,
+   "the 8 MiB stack window counts the entry image, as Linux does"), so a knowledge
+   row over the window is now written with the SYMBOL [stack_window_depth]
+   (= stack_max_size - stack_window_reach) rather than the literal 8388608.  This
+   tactic must therefore be able to see through that symbol as it already sees
+   through win_lo, wok_lo and stack_window_reach.  Both forms are given and both
+   are optional, so no existing goal changes: a goal with no [stack_window_depth]
+   is left exactly as before. *)
 Ltac region_side :=
-  unfold win_lo;
+  unfold win_lo; try unfold wok_lo; try unfold stack_window_depth;
+  rewrite ?stack_window_depth_val;
   match goal with |- context [stack_max_size] => rewrite ?stack_max_size_val | _ => idtac end;
+  try unfold stack_window_reach;
   len_rw;
   cbn [length Z.of_nat Pos.of_succ_nat Pos.succ Nat.add Nat.mul]; imm_norm; unorm; lia.
 

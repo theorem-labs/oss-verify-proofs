@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the plan dispatcher takes the run's CONFIG_RSEQ flag rz as a section variable and passes it to node_pnscan, node_layout and init_acs_of; taken in part from projects/simdjson/fuzz_utf8/proofs/lib/AS/AsanPlan.v, lines 28-34, 127-128, 153. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -26,6 +27,13 @@ Variable IT : itab.
 Variable A : atable.
 Variable nx0 : nat.     (* [comment removed for export] *)
 Variable LIMIT : Z.     (* [comment removed for export] *)
+(* The run's rseq flag as 0/1, matching AsanPlanCore.v's Section variable of the same name
+   and declared in the same position, AFTER LIMIT, so the discharged argument order of
+   everything below agrees with APC's.  Only node_pnscan and node_layout read it, through the
+   auxv-relative expressions (e_str0/e_argv1w); APC:126-130 names those two as the only
+   readers.  Never pinned to a literal here: kb_rseq is one of the fields Run.valid_input
+   leaves free, so the certificate quantifies over rz instead. *)
+Variable rz : Z.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -116,8 +124,8 @@ Definition node_x (x : xnode) (args : list expr) (cs : acs) : option acs :=
   | XMemcpy => summary_copy segs A nx0 cs (x_memcpy A)
   | XMemIsZero => summary_miz A nx0 cs
   | XEnvScan => node_envscan A cs
-  | XPnScan => node_pnscan A nx0 cs
-  | XLayout => node_layout cs args
+  | XPnScan => node_pnscan A nx0 rz cs
+  | XLayout => node_layout rz cs args
   | XIStrncpy => summary_istrncpy A nx0 cs
   | XPopFree => summary_popfree A nx0 cs args
   | XMaxVA => summary_maxva A cs
@@ -142,7 +150,7 @@ Variable bfuel : nat.              (* [comment removed for export] *)
 (* [comment removed for export] *)
 Definition check_all (chk : acs -> plan -> cres) (k : plan) (css : list acs) : cres :=
   match css with
-  | [] => CErr 3 k (init_acs_of A)
+  | [] => CErr 3 k (init_acs_of rz A)
   | cs0 :: rest =>
       match chk cs0 k with
       | COk s0 =>

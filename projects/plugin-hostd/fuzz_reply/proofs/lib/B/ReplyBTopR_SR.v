@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30: new file holding code from lib/A/ReplyRINV_a12.v (419c9d7c02f), lib/A/ReplyRINV_a3.v, lib/A/ReplyRINV.v and lib/A/ReplyTopXRI.v (8da615a239d) and lib/B/ReplyRINVB.v (f908a004fd1), restated at image B's names and at lib/B/ReplyBTop.v's Context texts. *)
+(* Modified by Theorem Labs, 2026-10-30: new file holding code from lib/A/ReplyRINV_a12.v, lib/A/ReplyRINV_a3.v, lib/A/ReplyRINV.v and lib/A/ReplyTopXRI.v and lib/B/ReplyRINVB.v, restated at image B's names and at lib/B/ReplyBTop.v's Context texts. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyRINVB_exit.v; 81 of its 124 lines of code are new or changed and 895 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Image B (plugin-hostd fuzz_reply, ASan-UBSan): the row SR_R of ReplyBTop's Section btop, source_reset at route R,
    at ReplyBTop's instance (MT := ReplyKfMeterB.MT_sec nsec_cf cf_kmax, ARx := top_x's ARX, R := wle' tfibsegs RZ_cf).
    btr_SR_R is W_source_reset.pb_source_reset_gc_lf_xR (source_reset's R walk with list_free's R walk

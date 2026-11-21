@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the read-only-backing form of the system-call steps; the model's access_ok checks; imports. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -10,6 +10,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require Import SimInv.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S8 Require Import ExitSim CatSim ShapeAlg DivergeSim SpinAlg.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S8 Require Import BMode.
+From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.Common.Cfg Require RomBase RomWrite.
 Import ListNotations.
 Open Scope bv_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -23,6 +24,8 @@ Lemma srz_write_ch : forall segs scfg ms model fd ch x8 buf T,
   bv_unsigned x8 = 64%Z ->
   ms_gpr ms 0 = fd ->
   ms_read_bytes ms (ms_gpr ms 1) (ms_gpr ms 2) = Some buf ->
+  (* the range [vfs_write]'s [access_ok] accepts; see [ShapeAlg.node_write_ch] *)
+  access_okb (ms_gpr ms 1) (bv_unsigned (ms_gpr ms 2)) = true ->
   buf_modeled buf ->
   (1 <= length buf)%nat ->
   (forall n, (1 <= n)%nat -> (n <= length buf)%nat ->
@@ -30,7 +33,7 @@ Lemma srz_write_ch : forall segs scfg ms model fd ch x8 buf T,
        (mkCfg (advance_past_svc (set_gpr0 ms (len_word (firstn n buf)))) model) T) ->
   srealizes segs scfg (mkCfg ms model) (t_write_ch ch buf T).
 Proof.
-  intros segs scfg ms model fd ch x8 buf T Hh Hlazy Hfdc H32 Hsvc Hno Hg Hr Hbm Hnb Hc.
+  intros segs scfg ms model fd ch x8 buf T Hh Hlazy Hfdc H32 Hsvc Hno Hg Hr Hok Hbm Hnb Hc.
   unfold t_write_ch.
   apply (srz_node segs scfg (mkCfg ms model) (wr_index buf)
            (fun i => map (WriteEv ch) (firstn (proj1_sig i) buf))
@@ -39,6 +42,7 @@ Proof.
                            model)
            (fun _ => T) (wr_full buf Hnb)).
   - eapply node_write_ch; eassumption.
+  - eapply RomWrite.write_ch_rob; eassumption.
   - intros [n [Hn1 Hn2]]. cbn [proj1_sig]. apply Hc; assumption.
 Qed.
 

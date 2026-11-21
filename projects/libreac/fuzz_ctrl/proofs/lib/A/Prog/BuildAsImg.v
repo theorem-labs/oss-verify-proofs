@@ -48,8 +48,8 @@ Proof. split; apply Z.leb_le; vm_compute; reflexivity. Qed.
 Lemma ba_img_cat_rng : IMG_LO + 64 <= VAL (A_OBJ A_CAT) /\ VAL (A_OBJ A_CAT) + 11 * CAT_BYTES + 64 <= IMG_HI.
 Proof. split; apply Z.leb_le; vm_compute; reflexivity. Qed.
 
-(* ---- HSW_glob / HCAT_glob: against a Theorem Labs lane's image-A registered-globals list (lib/A/ACtlGlobs.v, a working branch
-   86f27fff835; a Theorem Labs lane 17:52Z: one definition, a Theorem Labs lane's), whose two rows a Theorem Labs lane proves there. ---- *)
+(* ---- HSW_glob / HCAT_glob: against a Theorem Labs lane's image-A registered-globals list (lib/A/ACtlGlobs.v, a working branch;
+   a Theorem Labs lane 17:52Z: one definition, a Theorem Labs lane's), whose two rows a Theorem Labs lane proves there. ---- *)
 Lemma ba_img_sw_glob : In (VAL (A_OBJ A_SW), SW_BYTES) ACtlGlobs.ctrl_globs_A.
 Proof.
   replace (VAL (A_OBJ A_SW)) with 0x21980 by (vm_compute; reflexivity). unfold SW_BYTES.

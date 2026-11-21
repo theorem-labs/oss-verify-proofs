@@ -1,12 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the erased model keeps m_kernel and m_vdso; the shadowed interval is also one of segments_reserved, since the reserved ledger holds the vDSO/vvar pair); Section Drive3 is generic in the Leaf class of its realizes_cfg walks. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From stdpp Require Import bitvector.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType RiscvSemantics State Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap Mprotect.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import Leaf.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import
   ShapeAlgBase ShapeCfg NodesCfg LedgerCfg AllocCfg LazyCfg LazyAccCfg AllocLazyCfg EagerCfg CountCfg.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.FX Require Import
@@ -22,7 +24,7 @@ Definition BIG : Z := 2 ^ 62.
 Definition erase_vm (wb : word) (h : VmMaps) : VmMaps :=
   mkVmMapsFull (vm_reserved h) (vm_maps h) [] wb wb BIG (vm_mmap_base h) (vm_init_sp h).
 Definition erase (wb : word) (m : Model) : Model :=
-  mkModelOf (m_fd m) (mkVmState (erase_vm wb (m_vmmaps m)) [] [])
+  mkModelOf (m_fd m) (mkVmState (erase_vm wb (m_vmmaps m)) [] [] (m_kernel m) (m_vdso m))
             (m_io m) (m_fsys m) (m_proc m) (m_lim m) (m_time m).
 
 Lemma erase_vmmaps wb m : m_vmmaps (erase wb m) = erase_vm wb (m_vmmaps m).
@@ -40,7 +42,7 @@ Proof. repeat split; reflexivity. Qed.
 Lemma lazy_frame_same_but_vm m m' : lazy_frame m m' -> same_but_vm m m'.
 Proof. intros [mat' ->]. repeat split; reflexivity. Qed.
 Lemma same_but_vm_sym m m' : same_but_vm m m' -> same_but_vm m' m.
-Proof. intros (A1 & A2 & A3 & A4 & A5 & A6). repeat split; congruence. Qed.
+Proof. intros (A1 & A2 & A3 & A4 & A5 & A6 & A7). repeat split; congruence. Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -499,6 +501,7 @@ End Frame.
 Section Drive3.
 Variable cfg : SpuriousCfg.
 Variable segs : list Segment.
+Context {LF : Leaf}.
 Variable IM : fimage.
 Variable code : itrie finstr.
 Hypothesis Hcode : code_ok segs code.
@@ -567,7 +570,9 @@ Definition span_ok (rho : int -> word) (M : itrie region) (t : int) (rg : region
       \/ (span_lo <= bv_unsigned (rho t) + to_Z (rg_lo rg)
           /\ bv_unsigned (rho t) + to_Z (rg_len rg) <= span_hi
           /\ forall y, bv_unsigned (rho t) + to_Z (rg_lo rg) <= y < bv_unsigned (rho t) + to_Z (rg_len rg) ->
-               exists p, In p R0 /\ e_lo p <= 8 * (y - to_Z shadow_K)
+               (* 08b1429: [R0] is the whole reserved ledger, which also holds the launch's
+                  vDSO/vvar pair; the shadowed interval is one of the image's own. *)
+               exists p, In p R0 /\ In p (segments_reserved segs) /\ e_lo p <= 8 * (y - to_Z shadow_K)
                          /\ 8 * (y - to_Z shadow_K) + 8 <= e_hi p)
   | RK_shadow p =>
       t = (p + 1)%uint63

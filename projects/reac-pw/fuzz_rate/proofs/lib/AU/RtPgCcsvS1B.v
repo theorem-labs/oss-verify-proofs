@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgCcsvS1.v at ad46b8b766a1; the same walk for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgCcsvS1.v; the same walk for
    image B (fuzz_rate.asan-ubsan): the image is images.AsanUbsan and the kit is image B's (RtPgStepsB, RtPgMemB,
    RtPgCcsvCutB, RtPgCcsvMB, RtPgCcsvKitB); the segment, the run table and the registers are image B's; the frame F is
    an extra atom of the environment (no register holds it); closed_list after the frame call comes from

@@ -5,11 +5,12 @@
    fuzz_command.asan-ubsan) that need no callee statement: the walk's points in B's listing, the 122 slots, the
    96-byte frame and its realignment, the entry seed, the two image literals it hands to a callee and to the
    snprintf entry, and the frame chain each callee gets for s0 (achain_push on afn_pre's chain). In the form of
-   lib/B/Prog/sup_reset_aux.v (a working branch 93eeb37e147: the listing facts, the literal's shadow from
-   the allocator record, the seeds) after the A walks lib/A/Prog/sup_instance_info.v (a working branch
-   0de7ca03d26) and lib/A/Prog/answer_code.v (a working branch 2ba4488ce71: the side-stack frame, its header
-   and shadow, the realignment arithmetic) and lib/A/Prog/arg_i_s0.v, arg_i_s1.v (a working branch
-   12dc52bfe84: the "%d" text). *)
+   lib/B/Prog/sup_reset_aux.v (a working branch: the listing facts, the literal's shadow from
+   the allocator record, the seeds) after the A walks lib/A/Prog/sup_instance_info.v (a working branch)
+   and lib/A/Prog/answer_code.v (a working branch: the side-stack frame, its header
+   and shadow, the realignment arithmetic) and lib/A/Prog/arg_i_s0.v, arg_i_s1.v (a working branch:
+   the "%d" text). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* B's sup_instance_info (recorder.c:395-401, entry BASE + AF_sup_instance_info = 0x8bb70, 122 instructions, 488
    bytes; measured with capstone 5.0.7 on the .symtab entry of fuzz_command.asan-ubsan, sha256 658cefbe806b...):

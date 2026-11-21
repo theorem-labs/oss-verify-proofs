@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start ownership takes the launch's mmap_base bound, which places the vdso/vvar pair above the brk room). *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Lib Require Import PropExec MState ITree Nodes NodesM Decode DecodeM.
@@ -57,6 +58,8 @@ Lemma OWNS_init : forall (G : PState -> Model -> Prop) segs brk0 mbase sp lim in
   valid_brk segs brk0 -> 0 < reserved_top (segments_reserved segs) ->
   reserved_top (segments_reserved segs) + brk_aslr_max + 4 * PGSZ <= alloc_ceiling ->
   ceil_ok (m_vmmaps (init_model (segments_reserved segs) brk0 mbase sp lim inp)) ->
+  valid_mmap_base mbase ->
+  reserved_top (segments_reserved segs) + brk_aslr_max + 26 * PGSZ <= mmap_base_min ->
   G (ps_init (reservedZ segs)) (init_model (segments_reserved segs) brk0 mbase sp lim inp) ->
   OWNS [] G (ps_init (reservedZ segs)) (init_model (segments_reserved segs) brk0 mbase sp lim inp).
 Proof. intros. apply OWN_OWNS. apply OWN_init; assumption. Qed.

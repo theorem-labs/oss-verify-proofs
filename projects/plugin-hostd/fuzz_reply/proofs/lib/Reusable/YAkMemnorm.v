@@ -1,9 +1,10 @@
-(* CARRIED from commit a0fed4266a1b18b1453af093bfe2ee477dcbe241,
+(* CARRIED from
    proofs/omx-clap-core/fuzz_preset/lib/Reusable/YAkMemnorm.v, sha256 b000fb9776e800f12ed9e91c1f997d95177f9a93c820db2d087f41c4cc78faf5.
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change
    made here is the module prefix OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (memnorm_interp_eff0, fetch_failure_never_ok and memnorm_wrap_mem take the revision's vvar and vDSO-text cases of a memory read; imports YK0h); internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset, route R1 (h-hpreset-7): memnorm, the overlay normal form, as the start-up kit
    carries it, with the step lemmas each start-up step uses.
    rule 24: no function proved. rule 24: proves no function (kind: segment lemma).
@@ -29,7 +30,7 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
-From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YK04 YK0i YK11 YP00.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YK04 YK0i YK11 YK0h YP00.
 Import ListNotations.
 Open Scope Z_scope.
 
@@ -134,7 +135,7 @@ Proof.
   induction t as [c0| | | | | |n a k IH|n a v k IH]; intros m c1 m' Hm H; cbn [YP00.interp_eff0] in H;
     try discriminate.
   - injection H as <- <-. exact Hm.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|discriminate].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
     exact (IH _ m c1 m' Hm H).
   - destruct (store_ok segs m a (width_bytes n)) eqn:Hs; [|discriminate].
     refine (IH _ c1 m' _ H). apply memnorm_write; [exact Hm|].
@@ -155,7 +156,7 @@ Qed.
 Lemma fetch_failure_never_ok : forall m a st', fetch_failure segs m a = MachineOk st' -> False.
 Proof.
   intros m a st' H. unfold fetch_failure in H.
-  destruct (negb _); [discriminate|]. destruct (_ || _ || _)%bool; discriminate.
+  try (destruct (vdso_text_at _ _); [discriminate|]). destruct (negb _); [discriminate|]. destruct (_ || _ || _)%bool; discriminate.
 Qed.
 
 Lemma memnorm_step : forall st st',
@@ -184,26 +185,30 @@ End S.
 (* the loader's overlay: YK11.wrap_mem (= init_machine_state's ms_mem) holds bytes only in
    [sp - stack_max_size, entry_page_top), and entry_page_top <= sp_window_hi = TASK_SIZE; given no segment at or above
    sp - stack_max_size, memnorm holds. The proof is YAjMemnorm.memnorm_wrap_mem's. *)
-Lemma memnorm_wrap_mem : forall segs ph (sp : word) argv envp uid hw rnd,
-  entry_stack_fits sp argv envp ->
+Lemma memnorm_wrap_mem : forall segs inp mbase ph entry (sp brk : word) draw,
+  entry_launch_ok_va Sv48 (mkEntry sp brk mbase draw) inp ->
   (forall a : word, bv_unsigned sp - stack_max_size <= bv_unsigned a -> find_segment segs (bv_unsigned a) 1 = None) ->
-  memnorm segs (YK11.wrap_mem ph sp argv envp uid hw rnd).
+  memnorm segs (YK11.wrap_mem inp mbase ph entry sp draw).
 Proof.
-  intros segs ph sp argv envp uid hw rnd Hfit Hseg.
-  pose proof (YK11.entry_page_top_within_window ph sp argv envp uid hw rnd Hfit) as Htop.
-  pose proof (entry_stack_image_top ph sp argv envp uid hw rnd) as Himg.
-  assert (Hsupp : forall a b, YK11.wrap_mem ph sp argv envp uid hw rnd a = Some b ->
+  intros segs inp mbase ph entry sp brk draw Hlau Hseg.
+  pose proof (YK11.entry_page_top_within_window Sv48 inp mbase sp brk draw Hlau) as Htop.
+  pose proof (YK11.length_entry_stack_image_launch Sv48 inp mbase ph entry sp brk draw Hlau) as Hlen.
+  pose proof (YK0h.launch_sp_le_ed_top Sv48 inp mbase sp brk draw Hlau) as Hsp.
+  pose proof (Z.le_max_l (bv_unsigned (ed_top draw) - stack_max_size)
+                (bv_unsigned mbase + stack_guard_gap_bytes (in_kernel inp))) as Hmax.
+  unfold entry_page_top in Htop. cbn [va_stack_top] in Htop.
+  assert (Hsupp : forall a b, YK11.wrap_mem inp mbase ph entry sp draw a = Some b ->
     bv_unsigned sp - stack_max_size <= bv_unsigned a < TASK_SIZE).
   { intros a b E. unfold YK11.wrap_mem, stack_to_mem in E.
     unfold sp_window_hi in Htop. unfold TASK_SIZE.
     destruct (Z.leb_spec (bv_unsigned sp) (bv_unsigned a)) as [H1|H1].
     - destruct (Z.ltb_spec (bv_unsigned a - bv_unsigned sp)
-                  (Z.of_nat (length (entry_stack_image ph sp argv envp uid hw rnd)))) as [H2|H2].
-      + unfold stack_max_size. lia.
+                  (Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw)))) as [H2|H2].
+      + rewrite Hlen in H2. unfold stack_max_size. lia.
       + destruct (andb _ _) eqn:Hb; [|discriminate].
         apply andb_prop in Hb as [_ Hb]. apply Z.ltb_lt in Hb. lia.
     - destruct (andb _ _) eqn:Hb; [|discriminate].
-      apply andb_prop in Hb as [Hb _]. apply Z.leb_le in Hb. lia. }
+      apply andb_prop in Hb as [Hb _]. apply Z.leb_le in Hb. unfold stack_window_lo in Hb. lia. }
   split.
   - intros a b E. destruct (Hsupp a b E) as [Hlo _]. unfold ro_addr. rewrite (Hseg a Hlo). reflexivity.
   - intros a b E. destruct (Hsupp a b E) as [_ Hhi]. right. exact Hhi.

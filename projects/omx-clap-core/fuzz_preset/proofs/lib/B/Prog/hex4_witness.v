@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: instance witnesses for the two walk hypotheses of lib/B/Prog/hex4_x.v hex4_x_holds and
    lib/B/Prog/hex4_mn.v hex4_x_holds_mnI on fuzz_preset's asan-ubsan image B' (#102 pin d663f82d7f48, unstripped twin
-   c90d4fa54d43; facts 8f3e7e1a07f1):
+   c90d4fa54d43; facts):
    - TL : PALibCore (PI := PI_hex4) B holds at B := TfibB, the image's generated asyms record (lib/Reusable/YD2l.v),
      at the per-function listing instance PI_hex4 (lib/B/PAImg_leaves.v): hex4_B_palib_core. It is derived from
      h-rw-man-5's B' PALib at the whole-program listing (lib/B/PALibB.v exvi_eh_palib): the cells, the allocator pcs
@@ -10,7 +11,7 @@
    - LAWS : AR_laws_x rsegs B ARx HL holds at ARx := ARcf rsegs TfibB, HL := cf_head of CfParams_preset
      (lib/B/PALibB.v exvi_eh_laws).
    hex4_B_holds_inst / hex4_B_holds_mnI_inst state both leaf theorems with both hypotheses discharged there.
-   Old-pin donor of this file: origin/cold/h-verbs-1-hex4-mn d83df2ff2fa4 (blob 65b86089b1ba; PALibCore closed by
+   Old-pin donor of this file: (blob 65b86089b1ba; PALibCore closed by
    vm_compute at the old-pin record). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.

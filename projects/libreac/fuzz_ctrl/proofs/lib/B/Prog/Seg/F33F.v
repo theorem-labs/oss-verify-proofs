@@ -5,16 +5,17 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths and module names changed; 371 of its 396 lines of code are new or changed and 3828 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v, with its module paths, module names and addresses changed; 105 of its 141 lines of code are new or changed and 360 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F33.v, with its numbers changed; 73 of its 116 lines of code are new or changed and 98 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Footprint (ExecF.evtF) twin of the segment-F33 machine run of lib/B/Prog/Seg/F33.v (fuzz_ctrl
    LLVMFuzzerTestOneInput, asan-ubsan image B). Bridge input for the cgif-form walk only.
    rule 24: no function proved. *)
 (* Provenance (route (a) bridge input, lead 22:18Z; auditor a Theorem Labs lane):
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
-   source runs: lib/B/Prog/Seg/F33.v f33_evt at a working branch 3803efccea0
+   source runs: lib/B/Prog/Seg/F33.v f33_evt at a working branch
      (blob 333b7b7d6414e90ea5d52104f814ff481f51d2a2);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    compare: f33_evt_of_F_bounded re-derives the source statement (the UL-engine `evt` of lib.B.Tk.UL.Exec) under
      two added address bounds on the count pointer c, through f33_evtF_ulevt (mstepF_step into the UL engine's
      mstep, the two step relations being the same RiscvSemantics.step) and rng_all; shape check
@@ -44,7 +45,7 @@ Module ULMem := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Tk.UL.Mem.
 Module LFrame := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.Frame.
 
 (* The start register map of sl_run, written with lib.Lib's mkR so the lib.Lib StepF engine reads it
-   (F33.v:56-64 writes the same identity with the UL engine's mkR). *)
+   (F33.v:57-65 writes the same identity with the UL engine's mkR). *)
 Lemma f33F_mkR_of : forall regs, Regs6ss.mkR_of regs =
   LFrame.mkR (Sem.reg_get regs 1) (Sem.reg_get regs 2) (Sem.reg_get regs 3) (Sem.reg_get regs 4)
       (Sem.reg_get regs 5) (Sem.reg_get regs 6) (Sem.reg_get regs 7) (Sem.reg_get regs 8) (Sem.reg_get regs 9)
@@ -74,7 +75,7 @@ Proof.
   split; [exact (f33_mstepsF_ul RNG ms ms' H) | exact HQ].
 Qed.
 
-(* 0x82bcc -> 0x82bf4 with a0 = 0x9f620 and the 8 bytes at s7 = c holding 11 (F33.v:69-98): both branches to
+(* 0x82bcc -> 0x82bf4 with a0 = 0x9f620 and the 8 bytes at s7 = c holding 11 (F33.v:70-99): both branches to
    0x82c84 fall through. The run reads the 8 bytes [c, c + 8) and writes no memory. *)
 Lemma f33_evt_F : forall (regs F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (c : Z)
     (RNG : footprint),
@@ -109,7 +110,7 @@ Proof.
   all: reflexivity.
 Qed.
 
-(* The source statement of F33.v:69-98 under the two address-range side conditions that rng_all needs: the source
+(* The source statement of F33.v:70-99 under the two address-range side conditions that rng_all needs: the source
    does not bound the count pointer c, read by `ld a0,0(s7)` at pc 0x82bd4. NOT the source statement verbatim:
    hence the `_bounded` name. *)
 Lemma f33_evt_of_F_bounded : forall (regs F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (c : Z),

@@ -4,10 +4,11 @@
 (* Modified by Theorem Labs, 2026-10: number's walk on the ASan build of plugin-hostd/fuzz_command, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/AC9z.v (the entry state of a walk): the symbolic state at number's entry (0x8e430) and its seed lemma. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/numberE.v, with its module paths, module names and numbers changed; 140 of its 263 lines of code are new or changed and 122 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: refuse's walk on reac-pw/fuzz_segconf's ASan image A (fuzz_segconf.asan,
-   refuse at 0x88da4), in the form of plugin-hostd/fuzz_command's lib/A/Prog/numberE.v at origin/ossv/recipes
-   501c0d516c69 (number's entry state and seed): the symbolic state at refuse's entry and its seed lemma, and the
+   refuse at 0x88da4), in the form of plugin-hostd/fuzz_command's lib/A/Prog/numberE.v
+    (number's entry state and seed): the symbolic state at refuse's entry and its seed lemma, and the
    state tactics of the walk (numberE.v's nam / nnorm / ndj / nzl / addreg / n_keep_regions / n_rewin, with an r prefix).
    The image-A refuse walk, 2026-10-30. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YN2j.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

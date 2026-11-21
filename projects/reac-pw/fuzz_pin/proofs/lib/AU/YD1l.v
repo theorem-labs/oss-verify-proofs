@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AD1l.v, with its module paths changed and its addresses moved to libreac/fuzz_knock's ASan build; AB1v's tfibsegs is A/AWalkFw0.v's. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/A/AD1l.v (donor image sha256 61768cf4739b), with its module paths changed and its addresses moved to reac-pw/fuzz_pin's ASan build. *)
 (* Modified by Theorem Labs, 2026-10: derived from lib/A/AD1l.v of this library by derive_y.py: module names A.Axyz -> AU.Yxyz, addresses moved from reac-pw/fuzz_pin's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/AD1l.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (fdchan's third conjunct, the channel-reader flag, carried in cs_ok (co_rdr) and threaded to the fd sites). *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YImgTop.
 From Stdlib Require Import ZArith NArith List Lia Bool String.
@@ -138,7 +139,7 @@ apply (tfib_not_owned_static B F_STDERR (F_STDERR + FILE_SZ) a HB); [vm_compute;
 | exact (u64_range (sv_denot E (SOff 41 0)))
 | exact (ro_img_of_IMG E _ HIMG)
 | apply (rodata_hull_zero B HB LAWS ly S W mem md); [exact HAR | unfold FMT_open, FMT_rderr, FMT_usage; lia | unfold FMT_open, FMT_rderr, FMT_usage, YImgTop.IMG_TOP; lia | lia]
-| split; [exact Hfd | reflexivity]
+| exact Hfd
 | exact HAI
 | intros regs' mem' md' HAR' HP' Hsbm' Ha0' HFW' Hfr' Hpr' HAI';
 apply (HPOST regs' mem' md' HAR' HP' Hsbm');

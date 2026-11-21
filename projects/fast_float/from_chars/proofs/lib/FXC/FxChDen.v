@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput; the launch premises valid_launch and entry_launch_ok_va; the vDSO run state; the launch's reservations with the vDSO pair; the model's m_kernel field). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool FunctionalExtensionality.
@@ -482,7 +483,8 @@ Record DEN (E : valu) (S : sst) (M : smodel) (ms : machine_state) (model : Model
   dn_anz    : Forall (fun p => 0 <= snd p) (sm_allow M);
   dn_minv   : MInv (AM E M) model;                        (* [comment removed for export] *)
   dn_hoff   : H_off_segments segs (Hof E M model);
-  dn_res    : vm_reserved (m_vmmaps model) = segments_reserved segs;
+  (* the launch ledger is [State.init_reserved]: the segments, then the vDSO/vvar pair *)
+  dn_res    : vm_reserved (m_vmmaps model) = segments_reserved segs ++ vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model));
   dn_lim    : vm_limit (m_vmmaps model) = LIMIT;
   dn_sp     : vm_init_sp (m_vmmaps model) = lden E (sm_sp M);
   dn_spok   : init_sp_ok (m_vmmaps model) /\ bv_unsigned (vm_init_sp (m_vmmaps model)) <= sp_window_hi;
@@ -511,7 +513,11 @@ Record DEN (E : valu) (S : sst) (M : smodel) (ms : machine_state) (model : Model
                 ms_mem ms (Z_to_bv 64 w) = mem0 (Z_to_bv 64 w);
   dn_rom    : ms_rom ms = seg_rom segs ;               (* [comment removed for export] *)
   dn_own    : own_ok E S M ms model;                   (* [comment removed for export] *)
-  dn_blob   : blob_ok E M model (blob_of model0)       (* [comment removed for export] *)
+  dn_blob   : blob_ok E M model (blob_of model0) ;     (* [comment removed for export] *)
+  (* the launch's vDSO/vvar pair ([State.init_reserved]) sits above the whole shadow, so a fixed
+     placement checked against the image's segments alone is also disjoint from it.  LAST, so that
+     every destruct written for the 33-field record still binds the fields it names. *)
+  dn_vdso   : (SH_HI + vdso_len (m_kernel model) <= vdso_top (m_vmmaps model))%Z
 }.
 
 #[using="Type"] Lemma alloc_top_lo : forall h, init_sp_ok h -> 0x7fff7f800000 <= alloc_top h.
@@ -598,6 +604,57 @@ Qed.
 #[using="Type"] Lemma own_nil : forall E S M ms model, sm_own M = [] -> own_ok E S M ms model.
 Proof. LiaFast.lf_pins LiaFast.u0. intros E S M ms model H p Hp. rewrite H in Hp. destruct Hp. Qed.
 End Den.
+
+(* THE ENTRY CASE OF [dn_vdso], cited rather than derived.  The model already states the floor of
+   every admitted mmap base: [Run.entry_launch_ok_va_base] gives [Run.valid_mmap_base_va] from the
+   launch conjunct alone, i.e. [State.mmap_base_min <= mbase] under Sv48.  [State.vdso_top_init_model]
+   puts the pair's top at [page_round_down_Z (Z.min mbase (sp - stack_max_size))], so the field
+   follows from that floor, [valid_sp]'s, and [State.vdso_len_bounds].  (A derivation of the floor
+   through the [mmap_gap] clamp was tried in this tree, mis-read the clamp and is unnecessary: the
+   model carries the bound.) *)
+Lemma vdso_hi_init : forall reserved brk0 mbase sp lim inp, valid_sp sp -> valid_mmap_base_va Sv48 mbase ->
+  (SH_HI + vdso_len (in_kernel inp) <= vdso_top (m_vmmaps (init_model reserved brk0 mbase sp lim inp)))%Z.
+Proof.
+  intros reserved brk0 mbase sp lim inp (Hlo & _ & _) (Hb & _ & _). rewrite vdso_top_init_model.
+  pose proof (vdso_len_bounds (in_kernel inp)) as Hv.
+  set (x := Z.min (bv_unsigned mbase) (bv_unsigned sp - stack_max_size)).
+  assert (Hx : mmap_base_min <= x).
+  { unfold x, va_mmap_base_min in *. unfold mmap_base_min, sp_window_lo, stack_max_size in *. lia. }
+  unfold page_round_down_Z, page_size in *. pose proof (Z.div_mod x 4096 ltac:(lia)). pose proof (Z.mod_pos_bound x 4096 ltac:(lia)).
+  unfold SH_HI, mmap_base_min in *. lia.
+Qed.
+
+Lemma vdso_hi_launch : forall reserved brk0 mbase sp draw lim inp, valid_sp sp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase draw) inp ->
+  (SH_HI + vdso_len (in_kernel inp) <= vdso_top (m_vmmaps (init_model reserved brk0 mbase sp lim inp)))%Z.
+Proof.
+  intros reserved brk0 mbase sp draw lim inp Hsp Hlau.
+  exact (vdso_hi_init reserved brk0 mbase sp lim inp Hsp (entry_launch_ok_va_base Sv48 (mkEntry sp brk0 mbase draw) inp Hlau)).
+Qed.
+
+(* the frame of [dn_vdso]: the pair's top reads the mmap base and the allocation top only *)
+Lemma vdso_keep : forall model model', vm_mmap_base (m_vmmaps model') = vm_mmap_base (m_vmmaps model) ->
+  alloc_top (m_vmmaps model') = alloc_top (m_vmmaps model) -> m_kernel model' = m_kernel model ->
+  (SH_HI + vdso_len (m_kernel model) <= vdso_top (m_vmmaps model))%Z ->
+  (SH_HI + vdso_len (m_kernel model') <= vdso_top (m_vmmaps model'))%Z.
+Proof. intros model model' Hb Ht Hk H. unfold vdso_top, mmap_top in *. rewrite Hb, Ht, Hk. exact H. Qed.
+Lemma den_vdso_of : forall segs LIMIT model0 mem0 E S M ms model, DEN segs LIMIT model0 mem0 E S M ms model ->
+  (SH_HI + vdso_len (m_kernel model) <= vdso_top (m_vmmaps model))%Z.
+Proof. intros segs LIMIT model0 mem0 E S M ms model Hd. exact (dn_vdso _ _ _ _ _ _ _ _ _ Hd). Qed.
+(* closes a site's [dn_vdso] obligation from the old state's, leaving the three frame equations *)
+Ltac vdso_keep_tac := match goal with
+  | H : (SH_HI + vdso_len (m_kernel ?m) <= vdso_top (m_vmmaps ?m))%Z |- (SH_HI + vdso_len (m_kernel ?m') <= vdso_top (m_vmmaps ?m'))%Z =>
+      first [exact H | apply (vdso_keep m m'); [ | | | exact H]] end.
+(* the vDSO/vvar pair adds at most two entries and twenty pages to the reserved ledger *)
+Lemma vdso_ledger_small : forall kb top,
+  (ledger_size (vdso_reserved kb top) <= 20 * 4096)%Z /\ (length (vdso_reserved kb top) <= 2)%nat.
+Proof.
+  intros kb top. pose proof (vdso_len_bounds kb) as Hv. pose proof (vdso_text_pages_pos kb) as Hp.
+  unfold vdso_reserved. cbv zeta. destruct (top - vdso_len kb <? page_size)%Z; [cbn; lia|].
+  cbn [ledger_size length]. unfold vdso_len, vdso_vvar_pages, page_size in *.
+  rewrite !Z_to_bv_unsigned. unfold bv_wrap. change (bv_modulus 64) with 18446744073709551616.
+  rewrite !(Z.mod_small (_ * 4096)) by lia. split; lia.
+Qed.
 
 Lemma lden_agree_wf : forall n E E' l, lwf n l = true -> agree n E E' -> lden E' l = lden E l.
 Proof. intros n E E' l H Ha. symmetry. exact (lden_agree n E E' l H Ha). Qed.
@@ -863,7 +920,7 @@ Proof. LiaFast.lf_pins (fun (Hwx : LiaFast.U) => LiaFast.u0).
   - exact Hanz.
   - rewrite (AM_agree (s_next S) model0 E E' M Hwf Ha). exact Hinv'.
   - rewrite HH. exact Hhoff.
-  - rewrite Hvm. exact Hres.
+  - rewrite Hvm, (same_but_materialized_kernel _ _ Hsb'). exact Hres.
   - rewrite Hvm. exact Hlim.
   - rewrite Hvm, Hsp. symmetry. exact (lden_agree_wf _ E E' _ Hwsp Ha).
   - rewrite Hvm. exact Hspok.
@@ -905,6 +962,7 @@ Proof. LiaFast.lf_pins (fun (Hwx : LiaFast.U) => LiaFast.u0).
     { apply (proj2 (outside_agree (s_next S) E E' (s_rgs S) _ Hbw Ha)). apply (outside_shape E' (s_rgs L) (s_rgs S) _ (eq_sym Hsh)). exact Hout'. }
     cbn [unrestrict ms_mem]. rewrite (munrestrict_outside H (ms_mem ms) (restrict H ms) msr' _ eq_refl (Hfr _ Hout)). exact (Hm Hout).
   - apply (blob_ok_agree (s_next S) E E' M model model' _ Hwf Ha); [rewrite Hvm; reflexivity | exact Hblob].
+  - rewrite Hvm, (same_but_materialized_kernel _ _ Hsb'). vdso_keep_tac.
 Qed.
 
 #[using="Hwx"] Theorem den_seg : forall t img ins depth p S finals E M ms model T,

@@ -1,18 +1,19 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/AU/WrapMallocBInst.v, with its module paths and addresses changed; 16 of its 34 lines of code are new or changed and 9 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: omx-clap-core/fuzz_preset image B (asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43; relocated from pin f8f98a95bc52 by alreloc c4338d099cfb8025): the
    malloc interceptor walk at the real image, closed.
    - wrap_malloc_walk_keep_cf_B: the keep record wrap_malloc_walk_keep_cf (lib/Reusable/YGcfMallocComposeKeep.v:74-102)
      at segs := tfibsegs, B := YD2l.TfibB, every nmax, al := 8, atp := 1 (FROM_MALLOC), acf := 1 (can_fill),
-     ARX := YGcfInstBase.ARXq_cf YD2l.TfibB (fun i => i = as_inst YD2l.TfibB) (lib/Reusable/YGcfInstBase.v:480) at
+     ARX := YGcfInstBase.ARXq_cf YD2l.TfibB (fun i => i = as_inst YD2l.TfibB) (lib/Reusable/YGcfInstBase.v:481) at
      IM := AU/AGif2cgif.AImg_cgif and ci := AU/CfImgB.CfImg_B, K := WrapMallocBM1.K_B. Field wmk_call is
      WrapMallocBM1.wm_call_B, field wmk_ret is WrapMallocBM2.wm_ret_B.
-   - wrap_malloc_walk_cf_B: the plain record wrap_malloc_walk_cf (lib/Reusable/YGcfMallocCompose.v:168-201) at the same
+   - wrap_malloc_walk_cf_B: the plain record wrap_malloc_walk_cf (lib/Reusable/YGcfMallocCompose.v:169-202) at the same
      arguments, by YGcfMallocComposeKeep.wrap_malloc_walk_cf_of_keep (YGcfMallocComposeKeep.v:104).
    The fields' image premises and their witnesses:
    - TfibSyms B (WrapBKit, WrapMallocBSeed, WrapBEntry, WrapMallocBCall, WrapMallocBM1, WrapMallocBM2): at
-     YD2l.TfibB, YD2l.TfibB_syms (lib/Reusable/YD2l.v:71, its decidable parts closed by vm_compute).
+     YD2l.TfibB, YD2l.TfibB_syms (lib/Reusable/YD2l.v:72, its decidable parts closed by vm_compute).
    - cf_pc_allocate = 0x326a4 (WrapMallocBM1's Hpc): at AU/CfImgB.v's CfImg_B, cf_pc_allocate_B below (vm_compute).
    - tfib_unwind_spec (U1, UnwindImpl's contract over the image's code; the donors' named premise, YFl0.v:24): not a
      table fact but a callee contract; discharged by YFl4.tfib_unwind_ok (lib/Reusable/YFl4.v:1208), a walk.

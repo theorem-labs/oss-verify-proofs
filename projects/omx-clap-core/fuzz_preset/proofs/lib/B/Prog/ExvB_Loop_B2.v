@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Does not rest on tex_word_specX or memnorm: EXV_HYP has neither field since b29a52d6b76b / 379ec9e4a7d5. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Does not rest on tex_word_specX or memnorm: EXV_HYP has neither field. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B, ex_value, segment CL piece B2 (the separator): ExvB_Loop_Stmt.v's
    CUT_LS (B 0x83ca0 = exv_pc 0x774, the nested ex_value returned 0) from the downstream cuts CUT_CX, CUT_CC and
    CUT_CLm at m - 1: `mv a0, s3; jal ex_ws` (B 0x83ca0 / 0x83ca4), ex_ws's PROVED text (EXV_HYP's exv_ws) in the
@@ -8,7 +9,7 @@
    o = exv_s1 E - (exv_sp E + e_d E), FP1 = [(q, q + 8)]), EXBs re-seated after the call (KIT_CALLs), then
    ExvB_Loop_B2_post.v's stretch from the return site B 0x83ca8 to the three cuts. in->p after ex_ws is x0 + ip'
    with ip' = len - |skip (x from ip2)|; the grammar's continuation reads from ip' (PURE_SUFFIX, skip a suffix).
-   Old-pin kit rebind (4f18c75d4900): ex_ws's m-form post (fpostWm: its Q with S' = S, plus the memnorm keep from
+   Old-pin kit rebind: ex_ws's m-form post (fpostWm: its Q with S' = S, plus the memnorm keep from
    the call memory), so the room is exv_room_refl and the keep composes with EXB's (exvl_P (e_mem E)); the memnorm
    keep rides the table runs by ExvB_Loop_exw.v's SRr_run_to_tok_AJx_inv into KIT_RUNs / KIT_CALLs; fpre's
    `raZ < alloc_ceiling` from the jal's return pc B2_PC (a listing literal below 2 ^ 32).

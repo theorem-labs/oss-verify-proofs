@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC81.v for libreac/fuzz_grant's program walk, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: taken by path from port-grant's copy (origin/cold/pg-prog cb6eddd4032, proofs/libreac/fuzz_grant/lib/A/Prog/YC81.v) for libreac/fuzz_decode's
+(* Modified by Theorem Labs, 2026-10: taken by path from port-grant's copy (proofs/libreac/fuzz_grant/lib/A/Prog/YC81.v) for libreac/fuzz_decode's
    program walk: module paths and the listing's names changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.

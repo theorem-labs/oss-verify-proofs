@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: lib/A/RPgCheckStr.v at 77f59d02b01 (the call in the middle of a walk: the run
+(* Modified by Theorem Labs, 2026-10: lib/A/RPgCheckStr.v (the call in the middle of a walk: the run
    to the jal, the callee's contract through SRr_bind, a fresh entry state at the return pc) for the common value
    tail of reac-pw/fuzz_role's image-A segment M02 (0x823e0 .. 0x823f8: the role's range test, check_role, the jump
    to T). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_role, image A (fuzz_role.asan, pinned sha256
    614cffc0864cc31d9d1ced61322c4efd567b64bc89fe09a227a05b5126e0debb; every address measured on the unstripped twin
    6da77bafc5c050954dd89149e1e55a24064c2211e3cbd351822d1c0a20900ad6, the same loaded bytes). Proves no function

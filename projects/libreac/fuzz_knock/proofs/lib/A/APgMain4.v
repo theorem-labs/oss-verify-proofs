@@ -4,17 +4,18 @@
 (* Modified by Theorem Labs, 2026-10: made for libreac/fuzz_knock's ASan harness walk of LLVMFuzzerTestOneInput
    (fuzz_knock.asan, sha256 61768cf4739b7641c99c825dde45eddafc55b601d41109555be0272fc7ca4118): SEGMENT S4 TAIL,
    pc 0x7f194-0x7f1c0, from ss_T to ss_M (lib/A/APgLoop0.v), with the optional call of reac_knock_heard at 0x7f1b8.
-   Donor model, proofs/cgif/cgif_file_fuzzer/lib/A at c8557374ad2e:
+   Donor model, proofs/cgif/cgif_file_fuzzer/lib/A:
      ACfe.v:228-285   the call through the callee contract (eapply SRr_bind; [eapply (TRFCX ...) ...]) and the
                       destructuring of its post;
      ACfc.v:110-127   the call chain built with rt_chain from the caller's saved ra / s0 at sp0-8 / sp0-16;
      ACfc.v:128-183   the object's fields from its region (field_of_region), the zero shadow chunks and afobj;
      ACfe.v:181-208   the same chain and zero-shadow steps in the form this file follows;
      ACfe.v:294-318   the re-seat after the call, with its kept-region cases (88 / 75 / 2 / the four cells);
-     ACf9.v:364-388   reseatL (as lib/A/AWalkFw2.v:190-214 carries it), copied here as reseatK;
+     ACf9.v:364-388   reseatL (as lib/A/AWalkFw2.v:191-215 carries it), copied here as reseatK;
      ACf6.v:52-61     rt_region_kept_eq, copied. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Knock-specific changes:
-   - the callee contract is a Theorem Labs lane's tknock_heard_specX (libreac/fuzz_knock lib/A/APgCSpec.v at 48907dc7e8ca) at the concrete entry
+   - the callee contract is a Theorem Labs lane's tknock_heard_specX (libreac/fuzz_knock lib/A/APgCSpec.v) at the concrete entry
      A_reac_knock_heard = 0x7f4e8, taken as the Section hypothesis HEARD.  Against the donor's trfc_specX it has no
      call-trace, LIVE_MAX or mo_ok premise; afobj replaces the two range_addressable premises; it adds
      `kp <> 0` and `spZ regs <= kp \/ kp + 40 <= spZ regs - T_heard_STK` (the right disjunct: k sits in the
@@ -135,10 +136,10 @@ assert (Hf : afact_ok Ev n f) by
      ltac:(vm_compute; repeat (first [left; reflexivity | right]))) as Hm;
    unfold afact_ok in Hm |- *; replace (ew Ev n) with (ew Ev m) by vtac; exact Hm);
 pose proof (st_ok_add_fact tfibsegs Ev ssx msx n f HS Hf) as HS3; clear HS Hf; rename HS3 into HS end.
-(* [DONOR A/ACf9.v:364-388 reseatL, as lib/A/AWalkFw2.v:190-214 carries it], with the junk-atom floor K a parameter
+(* [DONOR A/ACf9.v:364-388 reseatL, as lib/A/AWalkFw2.v:191-215 carries it], with the junk-atom floor K a parameter
    instead of the state's atom bound: the call's clobbered registers get atoms K.., which must stay clear of the
    ss_M havoc window 720..735 that the join writes.  The re-based facts' side conditions are closed numerals, so
-   nat_side closes them (as rebaseE, lib/A/AWalkFw1.v:55); AG2's need only Hnn.  A whole-context lia there took
+   nat_side closes them (as rebaseE, lib/A/AWalkFw1.v:56); AG2's need only Hnn.  A whole-context lia there took
    about 6 minutes of rt_S4. *)
 Ltac reseatK HS K HJ2 HP2 keep AG kept_tac :=
 let HS2 := fresh "HS2" in

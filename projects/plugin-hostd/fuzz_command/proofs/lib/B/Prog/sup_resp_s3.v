@@ -1,5 +1,5 @@
 (* sup_resp's walk on the ASan+UBSan build of plugin-hostd/fuzz_command, part 3 (the A walk's part 3,
-   a working branch 3b9b122549f lib/A/Prog/sup_resp_s3.v, over lib/B/Prog/CmdRep.v): the recorder's representation `rec_repA`
+   a working branch lib/A/Prog/sup_resp_s3.v, over lib/B/Prog/CmdRep.v): the recorder's representation `rec_repA`
    (lib/B/Prog/CmdRep.v:154) carried across a change of reader and of block list.
 
    Every byte arep_at reads lies in one of three places: the record [gr, gr + REC_SIZE) (the scalar fields and the

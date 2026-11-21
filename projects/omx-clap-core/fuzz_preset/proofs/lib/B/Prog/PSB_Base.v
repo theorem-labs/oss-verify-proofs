@@ -3,17 +3,18 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_decode/lib/B/Prog/LLVMFuzzerTestOneInput_segX_exit_td.v, with its module paths, module names and numbers changed; 635 of its 665 lines of code are new or changed and 322 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S4_PsRet.v, with its module paths and module names changed; 354 of its 408 lines of code are new or changed and 611 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset lib/B, parse_string on image B (asan-ubsan, B_entry slot of a Theorem Labs lane's whole-program listing
    lib/B/Listing_prog.v + PAImg_prog.v, 386 instructions): the walk's B CUT LAYER.
    rule 24: proves no function (kind: statement text). The function proof is parse_string_holds_B (PSB_Top.v); its reuse search
    is in that file's header.
-   The goal is the kit's tparse_string_specX (lib/A/PRH_FnReader.v blob f1ae32e3b2cd at the kit's cut 7cdbb61b5fa0) at image B's
+   The goal is the kit's tparse_string_specX (lib/A/PRH_FnReader.v blob f1ae32e3b2cd at the kit's cut) at image B's
    instances (prh_img_B, B_prog_listing, PI_prog_B). The image-free part of the cut layer (the entry record, the
    premises, the post ps_post, the carried journal ps_carry, ps_dec_rel, ps_alloc, ps_at_ret0, ps_close,
    ps_holds_of_entry) is lib/A/Prog/PS_Gen.v, shared with image A's walk (WalkS4); this file adds B's register maps,
    B's cut offsets and the B stretch statements. FILE SET: every non-lane file as the kit's cut carries it (YCbqG.v
    219748197d6b, B Listing_prog.v c97cc46b3e13, PRW_StepKit.v 0df3991c13f4 / PRW_HShadow.v 2662d68ca36b); earlier the kit
-   PREVIEW walkkit-next 0afb3f76c28, engine and YCbqG.v from a working branch 63997a07aa6, listing a working branch 7c8ffeba5035.
+   PREVIEW walkkit-next, engine and YCbqG.v from a working branch, listing a working branch.
    THE CUTS (DERIVED byte offsets from parse_string's B entry, read off the neutral listing of the rebuilt image B,
    asan-ubsan sha256 f8f98a95bc52 (the internal file neutral_dis.py omx-clap-core-preset-ranout/asan-ubsan/fuzz_preset),
    the neutral listing parse_string.fuzz_preset.asan-ubsan.s (sha256 549ddc2d23bf; internal record)):
@@ -80,7 +81,7 @@ Section psb. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : 
 Variable B : asyms.
 Variable ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop.
 Variable SK : YI16.sink_head.
-(* the run's caller contexts and the cursor set CW (the kit cut 7cdbb61b5fa0: the closure takes no run words; the cursor
+(* the run's caller contexts and the cursor set CW (the kit cut: the closure takes no run words; the cursor
    free's trace is in CW, PRH_Base.prh_cw_ok) *)
 Variable CTX : list (list Z).
 Variable CW : list (list Z).
@@ -270,7 +271,7 @@ Qed.
 
 
 
-(* ==== THE GENERIC-P FORM (a Theorem Labs lane 12:18Z / 12:22Z; the B twin of WalkS4's S4_PsBase.v gp section, 44a91d58bb5):
+(* ==== THE GENERIC-P FORM (a Theorem Labs lane 12:18Z / 12:22Z; the B twin of WalkS4's S4_PsBase.v gp section):
    every cut and stretch statement over an invariant P of the memory, carried as ps_carryP's last conjunct and at the
    post (ps_postP). The definitions above stay byte-identical; they are the P := (fun _ => True) instances
    (psb_seg_*_of_True). The top instantiates P once per record as PS_Gen's ps_mn D. ==== *)

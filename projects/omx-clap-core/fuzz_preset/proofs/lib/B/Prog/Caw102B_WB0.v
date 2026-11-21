@@ -14,6 +14,7 @@
    head carries lies below alloc_ceiling + 8 (a live block, the image band) and moves across the stores. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_drain_pro.v, with its module paths, module names and numbers changed; 1682 of its 1766 lines of code are new or changed and 1187 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/PjGetB.v, with its module paths and module names changed; 221 of its 280 lines of code are new or changed and 1707 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image B' (asan-ubsan, harness fix #102): segment WB0 of the walk of check_as_written, the Entry
    (B' 0x81f78 -> 0x81fbc, call-free): the prologue, the struct ex's first three words and the two UBSan
    pointer-overflow branches, up to the jal of __wrap_malloc (CAWB_MAL, WB1's entry), in the continuation form of
@@ -33,7 +34,7 @@
    WHAT CHANGED (the batch-prep base, the batch tip), and why: the batch text has no run-word list DW (the base
    dropped cawB's c_DW; this segment never read it) and takes the ROOM COUNTS `sec_cnt S <= LSEC + DRV`, `ccnt24 S
    <= L24 + DRV` as entry premises after room_live_cf (:862-863); with the hull budget and HPOS after them caw_pre now has 27
-   conjuncts (Caw102B.v:139-165) and ck_frm0 moved by four places, 23rd to 27th: the old positional destruct of caw_pre would mis-bind. HOW here: caw_pre is read BY NAME, one base
+   conjuncts (Caw102B.v:140-166) and ck_frm0 moved by four places, 23rd to 27th: the old positional destruct of caw_pre would mis-bind. HOW here: caw_pre is read BY NAME, one base
    projection per premise (caw_pre_fpre .. caw_pre_room, caw_pre_frm0), under the old hypothesis names; the two
    count premises are not read (this segment makes no malloc or free). caw_WB0's statement is unchanged.
    EARLIER (the re-keyed base): that base's tcheck_as_written_specX binds no run position at entry and
@@ -43,12 +44,12 @@
    prologue makes no event and keeps the allocator state, S3 = c_S C, so any entry position i is a position i + 0 of
    S3). K0-FRM0-ENTRY: fpre gains frm_zero (fp_csr fx) last; the destruct of fpre names it (HFRM0); this segment is
    call-free and builds no callee fpre, and caw_base's frm_zero (fp_csr fx) at the cut takes caw_pre's ck_frm0 (HFRM).
-   EARLIER (base dc2529c4c8b2, K0's Batch 2): caw_pst is removed; cut_mal ends in `caw_ledger C ly3 S3 Hp3 W3 mem3 0`
+   EARLIER (base, K0's Batch 2): caw_pst is removed; cut_mal ends in `caw_ledger C ly3 S3 Hp3 W3 mem3 0`
    (prh_ledger .. (c_ran C) (c_most C) 0), carried over the prologue by prh_ledger_kept_aview (S1Ledger.v): the aview
    of every prh_pst byte (g_most and g_own_ran_out among them) and of every Lam head at the cut is the entry's (KST,
    KO: the prologue writes only the frame [sp0 - 80, sp0); the statics lie below alloc_ceiling, caw_pst_low; the heads
    lie in entry blocks above 4096).
-   INPUTS, BY PATH (the cut's): the engine s1b of int102 (8a01e111a410): YC1fPx.v 7814b594066f (paj_run_to_x_inv,
+   INPUTS, BY PATH (the cut's): the engine s1b of int102: YC1fPx.v 7814b594066f (paj_run_to_x_inv,
    paj_run_to_tok_x_inv), YC80x.v 14f84f225e8f (srr_inv_laws); lib/A/Prog/S1Ledger.v 8cf15eeb6311
    (prh_ledger_kept_aview :736); lib/B/PRH_ImgB.v 3216eca68342 (prh_img_B); lib/B/Listing_prog.v c97cc46b3e13.
    SECTION HYPOTHESES (owners): Hent, the image fact SIGMA AS_check_as_written = BASE + AF_cawB (discharged at

@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/Prog/FSW_shcell.v (a working branch
-   f9ccbd8f565, a Theorem Labs lane; the same text at a working branch 582c4d69613), over B's image (YB1v tfibsegs)
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/Prog/FSW_shcell.v (a working branch,
+   a Theorem Labs lane; the same text at a working branch), over B's image (YB1v tfibsegs)
    instead of A's AB1v. Same names; nothing else changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* A shadow byte the walk reads through a SAVED register, as a 1-byte read-only region of value 0. The token run
    (FSW_K fsw_aj_run_tokU, Reusable/YCbn.v tok_load) recognizes an inline check only when its address is (x >> 3) + Bx
    computed in the run; a function that keeps a shadow address in a callee-saved register across a program call and

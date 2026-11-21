@@ -1,9 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the mmap grant and reserve witnesses, refusal and nonspur lemmas take the place_declined_b premise and Linux's placement, vm_place_available and Placement.linux_place, with the mmap hint; the mprotect lemmas take the range clear of the vDSO reserve; the mmap and mprotect numbers found in alloc_mark_sysnos by value; imports Placement). *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap Mprotect.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Scfg Require Import Fcfg EdDefs.
 Import ListNotations.
 Open Scope sys_scope.
@@ -77,11 +79,11 @@ Qed.
 
 Lemma alloc_222 : forall i, bv_unsigned (in_sysno i) = 222%Z ->
   In (bv_unsigned (in_sysno i)) alloc_mark_sysnos.
-Proof. intros i E. rewrite E. right. right. left. reflexivity. Qed.
+Proof. intros i E. rewrite E. unfold alloc_mark_sysnos. repeat (first [left; reflexivity | right]). Qed.
 
 Lemma alloc_226 : forall i, bv_unsigned (in_sysno i) = 226%Z ->
   In (bv_unsigned (in_sysno i)) alloc_mark_sysnos.
-Proof. intros i E. rewrite E. right. right. right. left. reflexivity. Qed.
+Proof. intros i E. rewrite E. unfold alloc_mark_sysnos. repeat (first [left; reflexivity | right]). Qed.
 
 Lemma nonspur_cases : forall (b : bool) i m eff,
   In (bv_unsigned (in_sysno i)) alloc_mark_sysnos ->
@@ -261,23 +263,30 @@ Lemma mmap_grant_refusable_false_grant : forall i m,
   mmap_off_aligned_b (in_arg i 5) = true -> mmap_anon_b (in_arg i 3) = true ->
   w_is0 (in_arg i 1) = false ->
   mmap_modeled_b (in_arg i 2) (in_arg i 3) (in_arg i 5) = true ->
-  mmap_grant_refusable (in_arg i 3) m (page_round_up_Z (bv_unsigned (in_arg i 1))) = false ->
+  (* LPS #144/#146: the decline is tested ahead of the [alt], so a witness
+     for the grant arm has to pass it.  It sits BEFORE the refusability
+     premise because [nonspur_cases] applies this lemma to a goal whose
+     antecedent is that refusability. *)
+  place_declined_b (m_kernel m) (m_vmmaps m) (in_arg i 0)
+    (page_round_up_Z (bv_unsigned (in_arg i 1))) = false ->
+  mmap_grant_refusable (in_arg i 3) (in_arg i 0) m (page_round_up_Z (bv_unsigned (in_arg i 1))) = false ->
   exists eff m' evs, syscall_spec i m (Ok eff m' evs) /\ refusal_b i m (eff_ret eff) = false.
 Proof.
-  intros i m E Hoff Han Hlen Hmod Hr.
+  intros i m E Hoff Han Hlen Hmod Hdecl Hr.
   pose proof (len_page_pos _ Hlen) as Hn.
+  pose proof (ed_page_round_up_aligned (bv_unsigned (in_arg i 1))) as Hnal.
   unfold mmap_grant_refusable in Hr. apply orb_false_iff in Hr as [Hb Hg].
   apply negb_false_iff in Hb. apply negb_false_iff in Hg.
-  apply vm_gap_available_iff in Hg as (a & HP).
+  apply (vm_place_available_iff _ _ _ _ Hn Hnal) in Hg as (a & HP).
+  destruct (linux_place_admissible _ _ _ _ _ Hn Hnal HP) as (_ & _ & A3 & _).
   pose proof (conj HP Hb) as HPb. clear HP Hb.
   eexists _, _, _. split.
   - apply (proj2 (scfg_spec_222 i m _ E)). unfold mmap_spec. gates.
-    apply alt_r. apply (proj2 (bind_get_model _ _ _ _)). cbv beta zeta.
-    destruct HPb as ((A1 & A2 & A3 & A4) & Hb).
-    eapply bind_ok_nil; [apply (choose_ok _ a); exact (conj A1 (conj A2 (conj A3 (conj A4 Hb))))|].
+    apply (proj2 (bind_get_model _ _ _ _)). cbv beta zeta. rewrite Hdecl.
+    apply alt_r.
+    eapply bind_ok_nil; [apply (choose_ok _ a); exact HPb|].
     eapply bind_ok_nil; [apply modify_ok|]. apply pure_ok.
-  - destruct HPb as ((_ & _ & A3 & _) & _).
-    cbn [eff_ret]. eapply refusal_b_222_placed; [exact E| |exact A3]. lia.
+  - cbn [eff_ret]. eapply refusal_b_222_placed; [exact E| |exact A3]. clear Hnal. lia.
 Qed.
 
 Lemma mmap_grant_refusable_true_forced : forall i m,
@@ -285,16 +294,19 @@ Lemma mmap_grant_refusable_true_forced : forall i m,
   mmap_off_aligned_b (in_arg i 5) = true -> mmap_anon_b (in_arg i 3) = true ->
   w_is0 (in_arg i 1) = false ->
   mmap_modeled_b (in_arg i 2) (in_arg i 3) (in_arg i 5) = true ->
-  mmap_grant_refusable (in_arg i 3) m (page_round_up_Z (bv_unsigned (in_arg i 1))) = true ->
+  mmap_grant_refusable (in_arg i 3) (in_arg i 0) m (page_round_up_Z (bv_unsigned (in_arg i 1))) = true ->
   forall eff m' evs, syscall_spec i m (Ok eff m' evs) -> refusal_b i m (eff_ret eff) = true.
 Proof.
   intros i m E Hoff Han Hlen Hmod Hr eff m' evs Hs.
   apply (proj1 (scfg_spec_222 _ _ _ E)) in Hs. unfold mmap_spec in Hs. gates_in Hs.
-  unfold alt in Hs. destruct Hs as [Hs|Hs]; [exact (enomem_arm_refusal _ _ _ _ _ E Hs)|].
   apply (proj1 (bind_get_model _ _ _ _)) in Hs. cbv beta zeta in Hs.
-  apply choose_bind_inv in Hs as (a & (A1 & A2 & A3 & A4 & A5) & _).
+  destruct (place_declined_b (m_kernel m) (m_vmmaps m) (in_arg i 0)
+              (page_round_up_Z (bv_unsigned (in_arg i 1)))) eqn:Hdecl;
+    [unfold unmodeled in Hs; discriminate|].
+  unfold alt in Hs. destruct Hs as [Hs|Hs]; [exact (enomem_arm_refusal _ _ _ _ _ E Hs)|].
+  apply choose_bind_inv in Hs as (a & (Hpl & A5) & _).
   exfalso. unfold mmap_grant_refusable in Hr. rewrite A5 in Hr. cbn [negb orb] in Hr.
-  rewrite (proj2 (vm_gap_available_iff _ _) (ex_intro _ a (conj A1 (conj A2 (conj A3 A4))))) in Hr.
+  rewrite (vm_place_available_intro _ _ _ _ a (len_page_pos _ Hlen) (ed_page_round_up_aligned _) Hpl) in Hr.
   cbn [negb] in Hr. discriminate Hr.
 Qed.
 
@@ -303,11 +315,13 @@ Lemma mmap_grant_nonspur : forall i m eff,
   mmap_off_aligned_b (in_arg i 5) = true -> mmap_anon_b (in_arg i 3) = true ->
   w_is0 (in_arg i 1) = false ->
   mmap_modeled_b (in_arg i 2) (in_arg i 3) (in_arg i 5) = true ->
+  place_declined_b (m_kernel m) (m_vmmaps m) (in_arg i 0)
+    (page_round_up_Z (bv_unsigned (in_arg i 1))) = false ->
   (~ spurious_refusal_cfg fcfg i m eff <->
    (refusal_b i m (eff_ret eff) = true ->
-    mmap_grant_refusable (in_arg i 3) m (page_round_up_Z (bv_unsigned (in_arg i 1))) = true)).
+    mmap_grant_refusable (in_arg i 3) (in_arg i 0) m (page_round_up_Z (bv_unsigned (in_arg i 1))) = true)).
 Proof.
-  intros i m eff E Hoff Han Hlen Hmod. apply (nonspur_cases _ i m eff (alloc_222 i E)).
+  intros i m eff E Hoff Han Hlen Hmod Hdecl. apply (nonspur_cases _ i m eff (alloc_222 i E)).
   - apply mmap_grant_refusable_false_grant; assumption.
   - apply mmap_grant_refusable_true_forced; assumption.
 Qed.
@@ -317,10 +331,12 @@ Lemma mmap_grant_refusal_nonspur_iff : forall i m eff,
   mmap_off_aligned_b (in_arg i 5) = true -> mmap_anon_b (in_arg i 3) = true ->
   w_is0 (in_arg i 1) = false ->
   mmap_modeled_b (in_arg i 2) (in_arg i 3) (in_arg i 5) = true ->
+  place_declined_b (m_kernel m) (m_vmmaps m) (in_arg i 0)
+    (page_round_up_Z (bv_unsigned (in_arg i 1))) = false ->
   refusal_b i m (eff_ret eff) = true ->
   (~ spurious_refusal_cfg fcfg i m eff <->
-   mmap_grant_refusable (in_arg i 3) m (page_round_up_Z (bv_unsigned (in_arg i 1))) = true).
-Proof. intros i m eff E Hoff Han Hlen Hmod. apply nonspur_refusal_iff, mmap_grant_nonspur; assumption. Qed.
+   mmap_grant_refusable (in_arg i 3) (in_arg i 0) m (page_round_up_Z (bv_unsigned (in_arg i 1))) = true).
+Proof. intros i m eff E Hoff Han Hlen Hmod Hdecl. apply nonspur_refusal_iff, mmap_grant_nonspur; assumption. Qed.
 
 (* PROT_NONE reserve *)
 
@@ -330,20 +346,24 @@ Lemma mmap_reserve_refusable_false_grant : forall i m,
   w_is0 (in_arg i 1) = false ->
   mmap_modeled_b (in_arg i 2) (in_arg i 3) (in_arg i 5) = false ->
   mmap_noaccess_b (in_arg i 2) (in_arg i 3) (in_arg i 5) = true ->
-  mmap_reserve_refusable m (page_round_up_Z (bv_unsigned (in_arg i 1))) = false ->
+  place_declined_b (m_kernel m) (m_vmmaps m) (in_arg i 0)
+    (page_round_up_Z (bv_unsigned (in_arg i 1))) = false ->
+  mmap_reserve_refusable (in_arg i 0) m (page_round_up_Z (bv_unsigned (in_arg i 1))) = false ->
   exists eff m' evs, syscall_spec i m (Ok eff m' evs) /\ refusal_b i m (eff_ret eff) = false.
 Proof.
-  intros i m E Hoff Han Hlen Hmod Hna Hr.
+  intros i m E Hoff Han Hlen Hmod Hna Hdecl Hr.
   pose proof (len_page_pos _ Hlen) as Hn.
+  pose proof (ed_page_round_up_aligned (bv_unsigned (in_arg i 1))) as Hnal.
   unfold mmap_reserve_refusable in Hr. apply negb_false_iff in Hr.
-  apply vm_gap_available_iff in Hr as (a & HP).
+  apply (vm_place_available_iff _ _ _ _ Hn Hnal) in Hr as (a & HP).
+  destruct (linux_place_admissible _ _ _ _ _ Hn Hnal HP) as (_ & _ & A3 & _).
   eexists _, _, _. split.
   - apply (proj2 (scfg_spec_222 i m _ E)). unfold mmap_spec. gates.
-    apply alt_r. apply (proj2 (bind_get_model _ _ _ _)). cbv beta zeta.
+    apply (proj2 (bind_get_model _ _ _ _)). cbv beta zeta. rewrite Hdecl.
+    apply alt_r.
     eapply bind_ok_nil; [apply (choose_ok _ a); exact HP|].
     eapply bind_ok_nil; [apply modify_ok|]. apply pure_ok.
-  - destruct HP as (_ & _ & A3 & _).
-    cbn [eff_ret]. eapply refusal_b_222_placed; [exact E| |exact A3]. lia.
+  - cbn [eff_ret]. eapply refusal_b_222_placed; [exact E| |exact A3]. clear Hnal. lia.
 Qed.
 
 Lemma mmap_reserve_refusable_true_forced : forall i m,
@@ -352,16 +372,19 @@ Lemma mmap_reserve_refusable_true_forced : forall i m,
   w_is0 (in_arg i 1) = false ->
   mmap_modeled_b (in_arg i 2) (in_arg i 3) (in_arg i 5) = false ->
   mmap_noaccess_b (in_arg i 2) (in_arg i 3) (in_arg i 5) = true ->
-  mmap_reserve_refusable m (page_round_up_Z (bv_unsigned (in_arg i 1))) = true ->
+  mmap_reserve_refusable (in_arg i 0) m (page_round_up_Z (bv_unsigned (in_arg i 1))) = true ->
   forall eff m' evs, syscall_spec i m (Ok eff m' evs) -> refusal_b i m (eff_ret eff) = true.
 Proof.
   intros i m E Hoff Han Hlen Hmod Hna Hr eff m' evs Hs.
   apply (proj1 (scfg_spec_222 _ _ _ E)) in Hs. unfold mmap_spec in Hs. gates_in Hs.
-  unfold alt in Hs. destruct Hs as [Hs|Hs]; [exact (enomem_arm_refusal _ _ _ _ _ E Hs)|].
   apply (proj1 (bind_get_model _ _ _ _)) in Hs. cbv beta zeta in Hs.
-  apply choose_bind_inv in Hs as (a & (A1 & A2 & A3 & A4) & _).
+  destruct (place_declined_b (m_kernel m) (m_vmmaps m) (in_arg i 0)
+              (page_round_up_Z (bv_unsigned (in_arg i 1)))) eqn:Hdecl;
+    [unfold unmodeled in Hs; discriminate|].
+  unfold alt in Hs. destruct Hs as [Hs|Hs]; [exact (enomem_arm_refusal _ _ _ _ _ E Hs)|].
+  apply choose_bind_inv in Hs as (a & Hpl & _).
   exfalso. unfold mmap_reserve_refusable in Hr.
-  rewrite (proj2 (vm_gap_available_iff _ _) (ex_intro _ a (conj A1 (conj A2 (conj A3 A4))))) in Hr.
+  rewrite (vm_place_available_intro _ _ _ _ a (len_page_pos _ Hlen) (ed_page_round_up_aligned _) Hpl) in Hr.
   cbn [negb] in Hr. discriminate Hr.
 Qed.
 
@@ -371,11 +394,13 @@ Lemma mmap_reserve_nonspur : forall i m eff,
   w_is0 (in_arg i 1) = false ->
   mmap_modeled_b (in_arg i 2) (in_arg i 3) (in_arg i 5) = false ->
   mmap_noaccess_b (in_arg i 2) (in_arg i 3) (in_arg i 5) = true ->
+  place_declined_b (m_kernel m) (m_vmmaps m) (in_arg i 0)
+    (page_round_up_Z (bv_unsigned (in_arg i 1))) = false ->
   (~ spurious_refusal_cfg fcfg i m eff <->
    (refusal_b i m (eff_ret eff) = true ->
-    mmap_reserve_refusable m (page_round_up_Z (bv_unsigned (in_arg i 1))) = true)).
+    mmap_reserve_refusable (in_arg i 0) m (page_round_up_Z (bv_unsigned (in_arg i 1))) = true)).
 Proof.
-  intros i m eff E Hoff Han Hlen Hmod Hna. apply (nonspur_cases _ i m eff (alloc_222 i E)).
+  intros i m eff E Hoff Han Hlen Hmod Hna Hdecl. apply (nonspur_cases _ i m eff (alloc_222 i E)).
   - apply mmap_reserve_refusable_false_grant; assumption.
   - apply mmap_reserve_refusable_true_forced; assumption.
 Qed.
@@ -386,10 +411,12 @@ Lemma mmap_reserve_refusal_nonspur_iff : forall i m eff,
   w_is0 (in_arg i 1) = false ->
   mmap_modeled_b (in_arg i 2) (in_arg i 3) (in_arg i 5) = false ->
   mmap_noaccess_b (in_arg i 2) (in_arg i 3) (in_arg i 5) = true ->
+  place_declined_b (m_kernel m) (m_vmmaps m) (in_arg i 0)
+    (page_round_up_Z (bv_unsigned (in_arg i 1))) = false ->
   refusal_b i m (eff_ret eff) = true ->
   (~ spurious_refusal_cfg fcfg i m eff <->
-   mmap_reserve_refusable m (page_round_up_Z (bv_unsigned (in_arg i 1))) = true).
-Proof. intros i m eff E Hoff Han Hlen Hmod Hna. apply nonspur_refusal_iff, mmap_reserve_nonspur; assumption. Qed.
+   mmap_reserve_refusable (in_arg i 0) m (page_round_up_Z (bv_unsigned (in_arg i 1))) = true).
+Proof. intros i m eff E Hoff Han Hlen Hmod Hna Hdecl. apply nonspur_refusal_iff, mmap_reserve_nonspur; assumption. Qed.
 
 (* MAP_FIXED PROT_NONE over an existing mapping (never refusable) *)
 
@@ -452,6 +479,8 @@ Lemma mprotect_refusable_false_grant : forall i m,
   w_is0 (in_arg i 1) = false ->
   (bv_unsigned (in_arg i 0) + page_round_up_Z (bv_unsigned (in_arg i 1)) < two_pow_64)%Z ->
   mprotect_modeled_b (in_arg i 2) = true ->
+  region_free (vdso_reserved (m_kernel m) (vdso_top (m_vmmaps m))) (in_arg i 0)
+    (Z_to_bv 64 (page_round_up_Z (bv_unsigned (in_arg i 1)))) = true ->
   map_contains (vm_noaccess (m_vmmaps m)) (in_arg i 0)
     (Z_to_bv 64 (page_round_up_Z (bv_unsigned (in_arg i 1)))) = true ->
   map_contains (vm_maps (m_vmmaps m)) (in_arg i 0)
@@ -459,12 +488,12 @@ Lemma mprotect_refusable_false_grant : forall i m,
   mprotect_refusable m (in_arg i 0) (Z_to_bv 64 (page_round_up_Z (bv_unsigned (in_arg i 1)))) = false ->
   exists eff m' evs, syscall_spec i m (Ok eff m' evs) /\ refusal_b i m (eff_ret eff) = false.
 Proof.
-  intros i m E Hgc Hal Hlen Hnw Hmod Hna Hma Hr.
+  intros i m E Hgc Hal Hlen Hnw Hmod Hvd Hna Hma Hr.
   pose proof (proj2 (Z.eqb_eq _ _) Hal) as Hal'.
   pose proof (proj2 (Z.leb_gt _ _) Hnw) as Hnw'.
   eexists _, _, _. split.
-  - apply (proj2 (scfg_spec_226 i m _ E)). unfold mprotect_spec. gates.
-    apply (proj2 (bind_get_model _ _ _ _)). cbv beta zeta. gates.
+  - apply (proj2 (scfg_spec_226 i m _ E)). unfold mprotect_spec. gates. rewrite ?Hvd; cbn [negb].
+    apply (proj2 (bind_get_model _ _ _ _)). cbv beta zeta. gates. rewrite ?Hvd; cbn [negb].
     unfold mprotect_refusable in Hr. apply negb_false_iff in Hr.
     apply alt_r. eapply bind_ok_nil; [apply (choose_ok _ tt); exact Hr|].
     eapply bind_ok_nil; [apply modify_ok|]. apply pure_ok.
@@ -479,6 +508,8 @@ Lemma mprotect_refusable_true_forced : forall i m,
   w_is0 (in_arg i 1) = false ->
   (bv_unsigned (in_arg i 0) + page_round_up_Z (bv_unsigned (in_arg i 1)) < two_pow_64)%Z ->
   mprotect_modeled_b (in_arg i 2) = true ->
+  region_free (vdso_reserved (m_kernel m) (vdso_top (m_vmmaps m))) (in_arg i 0)
+    (Z_to_bv 64 (page_round_up_Z (bv_unsigned (in_arg i 1)))) = true ->
   map_contains (vm_noaccess (m_vmmaps m)) (in_arg i 0)
     (Z_to_bv 64 (page_round_up_Z (bv_unsigned (in_arg i 1)))) = true ->
   map_contains (vm_maps (m_vmmaps m)) (in_arg i 0)
@@ -486,11 +517,11 @@ Lemma mprotect_refusable_true_forced : forall i m,
   mprotect_refusable m (in_arg i 0) (Z_to_bv 64 (page_round_up_Z (bv_unsigned (in_arg i 1)))) = true ->
   forall eff m' evs, syscall_spec i m (Ok eff m' evs) -> refusal_b i m (eff_ret eff) = true.
 Proof.
-  intros i m E Hgc Hal Hlen Hnw Hmod Hna Hma Hr eff m' evs Hs.
+  intros i m E Hgc Hal Hlen Hnw Hmod Hvd Hna Hma Hr eff m' evs Hs.
   pose proof (proj2 (Z.eqb_eq _ _) Hal) as Hal'.
   pose proof (proj2 (Z.leb_gt _ _) Hnw) as Hnw'.
-  apply (proj1 (scfg_spec_226 _ _ _ E)) in Hs. unfold mprotect_spec in Hs. gates_in Hs.
-  apply (proj1 (bind_get_model _ _ _ _)) in Hs. cbv beta zeta in Hs. gates_in Hs.
+  apply (proj1 (scfg_spec_226 _ _ _ E)) in Hs. unfold mprotect_spec in Hs. gates_in Hs. rewrite ?Hvd in Hs; cbn [negb] in Hs.
+  apply (proj1 (bind_get_model _ _ _ _)) in Hs. cbv beta zeta in Hs. gates_in Hs. rewrite ?Hvd in Hs; cbn [negb] in Hs.
   unfold alt in Hs. destruct Hs as [Hs|Hs]; [exact (enomem_arm_refusal_226 _ _ _ _ _ E Hs)|].
   apply choose_bind_inv in Hs as (u & Hb & _).
   exfalso. unfold mprotect_refusable in Hr. rewrite Hb in Hr. cbn [negb] in Hr. discriminate Hr.
@@ -503,6 +534,8 @@ Lemma mprotect_nonspur : forall i m eff,
   w_is0 (in_arg i 1) = false ->
   (bv_unsigned (in_arg i 0) + page_round_up_Z (bv_unsigned (in_arg i 1)) < two_pow_64)%Z ->
   mprotect_modeled_b (in_arg i 2) = true ->
+  region_free (vdso_reserved (m_kernel m) (vdso_top (m_vmmaps m))) (in_arg i 0)
+    (Z_to_bv 64 (page_round_up_Z (bv_unsigned (in_arg i 1)))) = true ->
   map_contains (vm_noaccess (m_vmmaps m)) (in_arg i 0)
     (Z_to_bv 64 (page_round_up_Z (bv_unsigned (in_arg i 1)))) = true ->
   map_contains (vm_maps (m_vmmaps m)) (in_arg i 0)
@@ -511,7 +544,7 @@ Lemma mprotect_nonspur : forall i m eff,
    (refusal_b i m (eff_ret eff) = true ->
     mprotect_refusable m (in_arg i 0) (Z_to_bv 64 (page_round_up_Z (bv_unsigned (in_arg i 1)))) = true)).
 Proof.
-  intros i m eff E Hgc Hal Hlen Hnw Hmod Hna Hma. apply (nonspur_cases _ i m eff (alloc_226 i E)).
+  intros i m eff E Hgc Hal Hlen Hnw Hmod Hvd Hna Hma. apply (nonspur_cases _ i m eff (alloc_226 i E)).
   - apply mprotect_refusable_false_grant; assumption.
   - apply mprotect_refusable_true_forced; assumption.
 Qed.
@@ -523,6 +556,8 @@ Lemma mprotect_refusal_nonspur_iff : forall i m eff,
   w_is0 (in_arg i 1) = false ->
   (bv_unsigned (in_arg i 0) + page_round_up_Z (bv_unsigned (in_arg i 1)) < two_pow_64)%Z ->
   mprotect_modeled_b (in_arg i 2) = true ->
+  region_free (vdso_reserved (m_kernel m) (vdso_top (m_vmmaps m))) (in_arg i 0)
+    (Z_to_bv 64 (page_round_up_Z (bv_unsigned (in_arg i 1)))) = true ->
   map_contains (vm_noaccess (m_vmmaps m)) (in_arg i 0)
     (Z_to_bv 64 (page_round_up_Z (bv_unsigned (in_arg i 1)))) = true ->
   map_contains (vm_maps (m_vmmaps m)) (in_arg i 0)
@@ -530,7 +565,7 @@ Lemma mprotect_refusal_nonspur_iff : forall i m eff,
   refusal_b i m (eff_ret eff) = true ->
   (~ spurious_refusal_cfg fcfg i m eff <->
    mprotect_refusable m (in_arg i 0) (Z_to_bv 64 (page_round_up_Z (bv_unsigned (in_arg i 1)))) = true).
-Proof. intros i m eff E Hgc Hal Hlen Hnw Hmod Hna Hma. apply nonspur_refusal_iff, mprotect_nonspur; assumption. Qed.
+Proof. intros i m eff E Hgc Hal Hlen Hnw Hmod Hvd Hna Hma. apply nonspur_refusal_iff, mprotect_nonspur; assumption. Qed.
 
 (* MAP_FIXED PROT_NONE over a free range (never refusable) *)
 Lemma mmap_fixed_none_fresh_grant : forall i m,
@@ -1338,9 +1373,11 @@ Lemma mmap_rw_nonspur : forall i m eff,
   bv_unsigned (in_sysno i) = 222%Z ->
   mmap_off_aligned_b (in_arg i 5) = true -> mmap_anon_b (in_arg i 3) = true -> w_is0 (in_arg i 1) = false ->
   mmap_modeled_b (in_arg i 2) (in_arg i 3) (in_arg i 5) = true ->
+  place_declined_b (m_kernel m) (m_vmmaps m) (in_arg i 0)
+    (page_round_up_Z (bv_unsigned (in_arg i 1))) = false ->
   (~ spurious_refusal_cfg fcfg i m eff <->
    (refusal_b i m (eff_ret eff) = true ->
-    mmap_grant_refusable (in_arg i 3) m (page_round_up_Z (bv_unsigned (in_arg i 1))) = true)).
+    mmap_grant_refusable (in_arg i 3) (in_arg i 0) m (page_round_up_Z (bv_unsigned (in_arg i 1))) = true)).
 Proof. exact mmap_grant_nonspur. Qed.
 
 Lemma mmap_fixed_noaccess_nonspur : forall i m eff,
@@ -1369,6 +1406,7 @@ Lemma mprotect_expose_nonspur : forall i m eff,
   mprotect_modeled_b (in_arg i 2) = true ->
   let h := m_vmmaps m in
   let n := Z_to_bv 64 (page_round_up_Z (bv_unsigned (in_arg i 1))) in
+  region_free (vdso_reserved (m_kernel m) (vdso_top h)) (in_arg i 0) n = true ->
   map_contains (vm_noaccess h) (in_arg i 0) n = true ->
   map_contains (vm_maps h) (in_arg i 0) n = true ->
   (~ spurious_refusal_cfg fcfg i m eff <->

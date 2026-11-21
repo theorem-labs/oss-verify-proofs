@@ -68,7 +68,7 @@ Section c. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}
 Variable B : asyms.
 #[local] Notation rdW W mem := (mrestrict (w_H W) mem).
 
-(* a source window's home: empty, or inside a block live at the entry (check_no_overread_spec, hdesign 0caf3fb9019) *)
+(* a source window's home: empty, or inside a block live at the entry (check_no_overread_spec, hdesign) *)
 Definition cno_home (ly : alayout) (S : astate) (p : Z) (l : list Z) : Prop :=
   l = [] \/ exists b m, In (b, m) (ablocks B ly S) /\ b <= p /\ p + Z.of_nat (length l) <= b + m.
 

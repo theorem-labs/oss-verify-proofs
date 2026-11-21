@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (1 recorded proof replaced by written proofs (land4_of_aligned)). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -43,7 +44,13 @@ Ltac setreg r v' tac := let v := reg_val r in replace v with v' by tac.
 
 Lemma land4_of_aligned : forall x, (0 <= x)%Z -> (x mod 4 = 0)%Z -> Z.land x 4 = (x mod 8)%Z.
 Proof.
-ltac2:(KReplay.run1 (kr_t_F_memset ()) [] "h01Rh11zh22H0h32H6h47__arithh54__ffh68__varmaph75__with84__x1h94__x2h:4__x3h;4__x4h<4__x5h=1Hh>2H1h?2H2h@2H3hA2H4hB2H5hC2H7hD2H8hE2H9hF2HxhG1qhH2q0hI1rhJ2r0hK1xp;1p;2p;3p;6p;4p;7p;8g0000j1MTg000Uj1@Tg0013j21Tg001Sj25Tg0021j1JTg002Vj1eTg0034j2;Tg003Nj3_Tg0042j6OTg004Nj2^Tg004kj1tTg005Kj1qTg005kj1oTg006Ij1kTg006gj1jTg007Rj2ETg0085j4DTg008`j2fTg009Bj2dTg009nj3ITg00:Hj3bTg00:gj4aTg00;Yj3`Tg00<<j2STg00<]j1RTg00=6j2=Tg00=Sj2FTg00>0j2BTg00>Mj2PTg00?4j22Tg00?Pj28Tg00?kj2QTg00@Rj2GTg00@nj2NTg00ATj2TTg00B:j2UTg00B[j1sTg00C9j2rTg00CZj16Tg00D9j3LTg00Dbj2]Tg00EKj2nTg00F7j2CTg00Fcj3ZTg00GCj2YTg00Gaj4HTg00H?j1iTg00Haj2>Tg00IDj3WTg00Igj3VTg00JJj7hTg00Jnj7gTg00KRR0j2\Tg00Klj6[Tg00LJj6lTg00Lhj7mTg00MLj3KTg00N5j6cTg00NYj8pTg00O=R1f0R2'Gp=:g00O[R3?I21p=4f1R4=I32p=0P4g00P9R5g00PXR6P6g00Q8R7P2g00QXFmp=31]32p=<AK342p=?f2R8AK3425K3p=AP3P4g00R8P2CDp=7P4P5P6P6P7P2Ecp=Xf3R9P5P6P6P7P8P4P2Gpp=9%:2R:g00R_R;#MR<#MR=#@R>,14#4P3158>%M=#@R?,18R@/5>P@P3%J;RA#@RB#e,58159>RC152>RD'0X13P3%JA#@RE/5>,58RF10C2X131;3F158E/5>A_8E>EO%@</^B,18g00SDRE#tRF%qERC%o3RG%k3RH%j3RIP31E31RJg00T0RK1E3BCD'31fI7RLP2P8g00TWRMg00U7RN';1d28=IMNdAb314CaRNb5b6b7%:BP2b49`8BEO1S8?%4?RB#R1=9?,F?119?RM'B,09[1P9?121?ROf4RP/1?RQ#:12Q?'8[1QP?12?1f5RR/1?RS,2?1GS1'8[1NR?f6RT/=?#4\B1TT?f7RU/1?/0U\B1=U?P3f8RU/1?P3f9RV/S>%4>RW#Rf:RX1=X>,F>11X>'B'0[1PX>121>RYf;RZ/1>R[#:12[>'8[1QZ>12>1f<R[/1>R\,2>1G\1'8[1N[>f=R[/=>#4\W1T[>f>R\/1>/0\\W1=\>P3f?/1>P3PRg00UWR\1U1>';PYeO1122>,8:P[1U1?,;\POeO1%:U12U?'8%s;,r3RUg00V=RO#6R\#6R[#6R:#6RY#6#6R]#<5L3R^%<:R:%<[R[9L3UR_1]3ORO'?3A%6]#<R]%<YRY9L3URU1?:[3A%<\R\/?Og00V\'nRO'C'C1?:_9A^Y1?:\9A]U/CO'C=ZEF5ZEPCP3P31Y3PP8PGCHP4P31Y3RP9PGCHCHPHPIPI1E3>RH/7J,3I,XI%i6RG1>3<RC%J<,>39W3H1>3ARA5V3'7,3IC9PGPIPIP5P6P6P7P3PJPK1>3;R;CD,3IP3P;g00WH1E3?RKCD,3IFhPGPIPI17KJ,3I,XIPG1>3=9W3K=V3;,7C,3IC9PGPI17AJ,3IPGPIP5P6P6P717;J,3I17;H,3IFgC9C9C9C9PLPNb5b6b7X83X93X:3X;3X<3g00WoRN\W1F>R/B9,08[%:4124?'8PN\B1F?T/B9,0P[%4R%4P10P>'\[[[[^83^93^:3^;3^<3P2PPPZP9fCPXPVP4f@fAO9b4b2b3bJbHbEbDbCb3bBbIbGb@b?b>b2b=%4@10@>'\P0%4M10M>15Q>/0QP2%4QP3P110D2X13RD1;31PSP2E[W0P2O110Q>P3P>PD1;3>PSP2E[W0P2O1n200100000021000010000b0ElWAWFXK3o"). Qed.
+  intros x Hx H4.
+  transitivity (Z.land (x mod 8) 4).
+  { change 8%Z with (2^3)%Z. rewrite <- Z.land_ones by lia. change (Z.ones 3) with 7%Z.
+    rewrite <- Z.land_assoc. reflexivity. }
+  assert (R : (x mod 8 = 0 \/ x mod 8 = 4)%Z) by (Z.div_mod_to_equations; lia).
+  destruct R as [R|R]; rewrite R; reflexivity.
+Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)

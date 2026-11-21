@@ -18,11 +18,17 @@
     harness.  Every statement quantifies over all of these cases and over every
     other process input (see Vocabulary in OSSVerify.Core.Shapes).
 
-    WHAT THE HARNESS CHECKS.  load_time_zone(fuzzed name); cctz::parse(fuzzed
-    format, fuzzed date); convert(civil_second(6 fuzzed uint32));
-    cctz::format(fuzzed format); every return value discarded.  The harness
-    makes no check of its own beyond not crashing, so a statement about it says
-    only that the code it calls never crashes, hangs or trips a sanitizer.
+    WHAT THE HARNESS CHECKS.  load_time_zone(fuzzed name); only when it returns
+    true, cctz::parse(fuzzed format, fuzzed date) in the loaded zone, then
+    convert(civil_second(6 fuzzed uint32)) in that zone, whose time goes to
+    cctz::format(fuzzed format). The parse result, the parsed time and the
+    formatted string are dropped.  The harness makes no check of its own beyond
+    not crashing.  Its halts statements say only that the code it calls never
+    crashes, hangs or trips a sanitizer.  Its agreement statements say only that
+    the code never crashes or trips a sanitizer, and allow a run that never
+    ends.  Its bound statements say only how often its builds may disagree.  Its
+    decidability statements say only that some program decides where its builds
+    agree.
 
     Whether each statement is open, proved or known false is recorded in the
     harness README, not here: this file changes only when a statement does. *)

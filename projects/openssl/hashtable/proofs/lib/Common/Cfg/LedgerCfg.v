@@ -1,10 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved ledger is the launch's, with the kernel's placement and transparent huge pages). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith List Lia Bool Finite.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement.
 
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
@@ -584,8 +586,10 @@ Record ledger_inv (R : list (word * word)) (L c S : Z) (h : VmMaps) : Prop := mk
                        (vm_noaccess h);
   li_brk_pos  : 0 < bv_unsigned (vm_brk h);
   li_brk_al   : bv_unsigned (vm_brk h) mod page_size = 0;
-  li_brk_min  : bv_unsigned (vm_start_brk h) <= bv_unsigned (vm_brk h);
-  li_brk_R    : reserved_top R <= bv_unsigned (vm_start_brk h)
+  li_brk_min  : bv_unsigned (vm_start_brk h) <= bv_unsigned (vm_brk h)
+  (* LPS 08b1429: no [reserved_top R <= start_brk] field.  [R] is the whole
+     reserved ledger, and since 08b1429 that ends with the vDSO/vvar pair
+     ([State.init_reserved]), which sits near the mmap base, far above brk. *)
 }.
 
 Lemma ledger_inv_weaken : forall R L c S c' S' h,
@@ -605,21 +609,6 @@ Lemma ledger_inv_params_nonneg : forall R L c S h,
   ledger_inv R L c S h -> 0 <= c /\ 0 <= S.
 Proof.
   intros R L c S h []. pose proof (live_bytes_nonneg (vm_maps h)). lia.
-Qed.
-
-(* [comment removed for export] *)
-Lemma ledger_inv_init : forall segs brk0 mbase sp lim inp,
-  valid_sp sp -> valid_brk segs brk0 ->
-  0 < reserved_top (segments_reserved segs) ->
-  ledger_inv (segments_reserved segs) lim 0 0
-    (m_vmmaps (init_model (segments_reserved segs) brk0 mbase sp lim inp)).
-Proof.
-  intros segs brk0 mbase sp lim inp (Hs1 & Hs2 & _) (Hb1 & _ & Hb3) HR.
-  change (m_vmmaps (init_model (segments_reserved segs) brk0 mbase sp lim inp))
-    with (mkVmMapsFull (segments_reserved segs) [] [] brk0 brk0 lim mbase sp).
-  constructor; cbn [vm_reserved vm_limit vm_init_sp vm_maps vm_noaccess vm_brk vm_start_brk
-                    length live_bytes pw_disj];
-    try solve [constructor | reflexivity | assumption | lia].
 Qed.
 
 (* [comment removed for export] *)
@@ -656,12 +645,12 @@ Lemma ledger_inv_cons_entry : forall R L c S h a n nacc sb b,
   (* [comment removed for export] *)
   Forall (fun q => 0 < e_sz q /\ exists p, In p ((a, n) :: vm_maps h) /\ e_inside q p) nacc ->
   0 < bv_unsigned b -> bv_unsigned b mod page_size = 0 ->
-  bv_unsigned sb <= bv_unsigned b -> reserved_top R <= bv_unsigned sb ->
+  bv_unsigned sb <= bv_unsigned b ->
   ledger_inv R L (c + 1) (S + bv_unsigned n)
     (mkVmMapsFull (vm_reserved h) ((a, n) :: vm_maps h) nacc sb b
                   (vm_limit h) (vm_mmap_base h) (vm_init_sp h)).
 Proof.
-  intros R L c S h a n nacc sb b [] Hn Ha1 Hn1 Ha0 Htop Hfree Hnacc Hb0 Hb1 Hsb HsbR.
+  intros R L c S h a n nacc sb b [] Hn Ha1 Hn1 Ha0 Htop Hfree Hnacc Hb0 Hb1 Hsb.
   rewrite region_free_app in Hfree. apply andb_true_iff in Hfree as [HfR Hfm].
   apply region_free_iff in HfR, Hfm.
   constructor; cbn [vm_reserved vm_limit vm_init_sp vm_maps vm_noaccess vm_brk vm_start_brk];
@@ -703,7 +692,7 @@ Proof.
   rewrite Hu in H. pose proof Hinv as [].
   unfold ledger_grant.
   exact (H Hn Haal Hnal Ha Htop Hfree (noacc_weaken_cons _ _ _ li_noacc0)
-           li_brk_pos0 li_brk_al0 li_brk_min0 li_brk_R0).
+           li_brk_pos0 li_brk_al0 li_brk_min0).
 Qed.
 
 (* [comment removed for export] *)
@@ -737,7 +726,7 @@ Proof.
   assert (Hsb : bv_unsigned (vm_start_brk h) <= bv_unsigned req)
     by (clear - Hlt li_brk_min0; lia).
   exact (H Hdpos li_brk_al0 Hdal li_brk_pos0 Hdtop Hfree' (noacc_weaken_cons _ _ _ li_noacc0)
-           Hreq0 Hal Hsb li_brk_R0).
+           Hreq0 Hal Hsb).
 Qed.
 
 (* [comment removed for export] *)
@@ -795,7 +784,6 @@ Proof.
   - exact li_brk_pos0.
   - exact li_brk_al0.
   - exact li_brk_min0.
-  - exact li_brk_R0.
 Qed.
 
 (* [comment removed for export] *)
@@ -875,7 +863,7 @@ Proof.
                 ((a, Z_to_bv 64 nZ) :: vm_noaccess h) (vm_start_brk h) (vm_brk h) Hinv) as H.
   rewrite Hu in H. pose proof Hinv as [].
   unfold ledger_grant_na.
-  refine (H Hn Haal Hnal Ha Htop Hfree _ li_brk_pos0 li_brk_al0 li_brk_min0 li_brk_R0).
+  refine (H Hn Haal Hnal Ha Htop Hfree _ li_brk_pos0 li_brk_al0 li_brk_min0).
   constructor.
   - split; [unfold e_sz; cbn [snd]; rewrite Hu; exact Hn |].
     exists (a, Z_to_bv 64 nZ). split; [left; reflexivity | split; lia].
@@ -996,6 +984,169 @@ Proof.
   pose proof (li_size _ _ _ _ _ Hinv) as Hs. lia.
 Qed.
 
+(* At the revision [mmap_spec] grants the ONE address [Mmap.linux_place] names
+   for the ledger, the kernel build and the caller's hint, not any free aligned
+   page.  [mmap_place_b] is that test ([Placement.linux_place_is]) together
+   with [mmap_grant_b], whose four admissibility facts the placed address
+   satisfies ([Placement.linux_place_is_admissible]) and whose budget conjunct
+   the spec's [mmap_noreserve_backed_ok] reads. *)
+Definition mmap_place_b (hint : word) (m : Model) (a : word) (nZ : Z) : bool :=
+  linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint nZ a && mmap_grant_b m a nZ.
+
+Lemma mmap_place_b_grant : forall hint m a nZ,
+  mmap_place_b hint m a nZ = true -> mmap_grant_b m a nZ = true.
+Proof. intros hint m a nZ H. unfold mmap_place_b in H. apply andb_true_iff in H. tauto. Qed.
+
+Lemma mmap_place_b_iff : forall hint m a nZ,
+  0 < nZ -> nZ mod page_size = 0 ->
+  mmap_place_b hint m a nZ = true <->
+  linux_place (m_vmmaps m) (kb_thp (m_kernel m)) hint nZ (bv_unsigned a)
+  /\ vm_backing_used m + nZ <= vm_limit (m_vmmaps m).
+Proof.
+  intros hint m a nZ Hn Hal. unfold mmap_place_b. rewrite andb_true_iff.
+  rewrite (linux_place_is_iff _ _ _ _ _ Hn Hal). split.
+  - intros [Hp Hg]. split; [exact Hp|]. apply mmap_grant_b_iff in Hg. tauto.
+  - intros [Hp Hb]. split; [exact Hp|]. apply mmap_grant_b_iff.
+    pose proof (proj2 (linux_place_is_iff _ _ _ _ _ Hn Hal) Hp) as Hpi.
+    destruct (linux_place_is_admissible _ _ _ _ _ Hn Hal Hpi) as (A1 & A2 & A3 & A4).
+    repeat split; assumption.
+Qed.
+
+(* LPS 08b1429: the reserved ledger [R] ends with the vDSO/vvar pair, which the
+   bottom-up window can meet.  An entry wholly below [task_unmapped_base] never
+   meets that window, so the slack argument below counts only the entries that
+   reach above it ([res_hi]): an image linked low costs nothing there, and the
+   pair costs its own bytes and count. *)
+Definition res_hi (R : list (word * word)) : list (word * word) :=
+  List.filter (fun p => task_unmapped_base <? e_hi p) R.
+Definition res_cost (R : list (word * word)) : Z := live_bytes (res_hi R).
+Definition res_count (R : list (word * word)) : nat := length (res_hi R).
+
+Lemma live_bytes_filter_le : forall (f : word * word -> bool) l,
+  live_bytes (List.filter f l) <= live_bytes l.
+Proof.
+  intros f l. induction l as [|p l IH]; [cbn; lia|].
+  cbn [List.filter]. pose proof (e_sz_nonneg p).
+  destruct (f p); rewrite ?live_bytes_cons; unfold e_sz in *; lia.
+Qed.
+
+Lemma res_cost_le : forall R, res_cost R <= live_bytes R.
+Proof. intros R. apply live_bytes_filter_le. Qed.
+
+Lemma res_count_le : forall R, (res_count R <= length R)%nat.
+Proof.
+  intros R. unfold res_count, res_hi. induction R as [|p R IH]; [cbn; lia|].
+  cbn [List.filter length]. destruct (task_unmapped_base <? e_hi p); cbn [length]; lia.
+Qed.
+
+Lemma res_cost_app : forall R1 R2, res_cost (R1 ++ R2) = res_cost R1 + res_cost R2.
+Proof. intros R1 R2. unfold res_cost, res_hi. rewrite List.filter_app. apply live_bytes_app. Qed.
+
+Lemma res_count_app : forall R1 R2, res_count (R1 ++ R2) = (res_count R1 + res_count R2)%nat.
+Proof. intros R1 R2. unfold res_count, res_hi. rewrite List.filter_app. apply length_app. Qed.
+
+Lemma region_free_res_hi : forall R a n,
+  task_unmapped_base <= bv_unsigned a ->
+  region_free (res_hi R) a n = true -> region_free R a n = true.
+Proof.
+  intros R a n Ha H. apply region_free_iff. apply region_free_iff in H.
+  rewrite Forall_forall in *. intros p Hp.
+  destruct (task_unmapped_base <? e_hi p) eqn:E.
+  - apply H. unfold res_hi. apply List.filter_In. split; assumption.
+  - apply Z.ltb_ge in E. right. unfold e_lo at 1. cbn [fst]. lia.
+Qed.
+
+Lemma region_free_res_hi_app : forall R l a n,
+  task_unmapped_base <= bv_unsigned a ->
+  region_free (res_hi R ++ l) a n = true -> region_free (R ++ l) a n = true.
+Proof.
+  intros R l a n Ha H. rewrite region_free_app in H |- *.
+  apply andb_true_iff in H as [Hr Hl]. rewrite Hl, (region_free_res_hi R a n Ha Hr). reflexivity.
+Qed.
+
+(* A free range in Linux's bottom-up window [[task_unmapped_base, alloc_top)]
+   is enough for the rule to have an answer ([Placement.linux_place_exists]),
+   so the slack argument runs from [task_unmapped_base] instead of the first
+   page. *)
+Theorem mmap_place_exists_inv_lim : forall hint R L c S m nZ,
+  ledger_inv R L c S (m_vmmaps m) ->
+  0 < nZ -> nZ mod page_size = 0 ->
+  task_unmapped_base + (res_cost R + S) + (Z.of_nat (res_count R) + c) * (nZ + page_size) + nZ
+    <= alloc_lo_bound ->
+  vm_backing_used m + nZ <= vm_limit (m_vmmaps m) ->
+  exists a, mmap_place_b hint m a nZ = true.
+Proof.
+  intros hint R L c S m nZ Hinv Hn Hal Hband Hbud.
+  destruct (ledger_inv_alloc_top _ _ _ _ _ Hinv) as [Hlo _].
+  pose proof (alloc_top_lt (m_vmmaps m)) as Hlt. unfold two_pow_64 in Hlt.
+  pose proof Hinv as [].
+  destruct (grant_candidate_exists (res_hi R ++ vm_maps (m_vmmaps m)) task_unmapped_base nZ
+              (Z.of_nat (res_count R) + c) (res_cost R + S) (alloc_top (m_vmmaps m)))
+    as (g & Hg1 & Hg2 & Hg3 & Hg4).
+  - unfold task_unmapped_base. lia.
+  - reflexivity.
+  - lia.
+  - rewrite length_app, Nat2Z.inj_add. unfold res_count. clear - li_count0. lia.
+  - rewrite live_bytes_app. unfold res_cost. clear - li_size0. lia.
+  - unfold page_size in *. clear - Hband Hlo. lia.
+  - exact Hlt.
+  - apply (region_free_res_hi_app R _ _ _ Hg2) in Hg4.
+    destruct (linux_place_exists (m_vmmaps m) (kb_thp (m_kernel m)) hint nZ Hn Hal)
+      as (a' & Ha').
+    { exists (bv_unsigned g). right. unfold gap_fits. rewrite u64_id, li_reserved0.
+      repeat split; assumption. }
+    destruct (linux_place_admissible _ _ _ _ _ Hn Hal Ha') as (_ & Hp & Ht & _).
+    exists (Z_to_bv 64 a'). apply (mmap_place_b_iff _ _ _ _ Hn Hal).
+    rewrite u64_lit by lia.
+    split; [exact Ha' | exact Hbud].
+Qed.
+
+Corollary mmap_place_exists_inv_acct : forall hint R L c S m nZ,
+  ledger_inv R L c S (m_vmmaps m) ->
+  m_vm_materialized m = [] ->
+  0 < nZ -> nZ mod page_size = 0 ->
+  task_unmapped_base + (res_cost R + S) + (Z.of_nat (res_count R) + c) * (nZ + page_size) + nZ
+    <= alloc_lo_bound ->
+  S + nZ <= L ->
+  exists a, mmap_place_b hint m a nZ = true.
+Proof.
+  intros hint R L c S m nZ Hinv Hmat Hn Hal Hband Hbud.
+  apply (mmap_place_exists_inv_lim hint R L c S m nZ Hinv Hn Hal Hband).
+  pose proof (vm_backing_used_le_live m Hmat) as Hu.
+  pose proof (li_size _ _ _ _ _ Hinv) as Hs. pose proof (li_limit _ _ _ _ _ Hinv) as Hl. lia.
+Qed.
+
+(* The PROT_NONE arm places the same way, without the budget conjunct. *)
+Definition mmap_place_na_b (hint : word) (m : Model) (a : word) (nZ : Z) : bool :=
+  linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint nZ a
+  && ((bv_unsigned a mod page_size =? 0) && (0 <? bv_unsigned a)
+      && (bv_unsigned a + nZ <=? alloc_top (m_vmmaps m))
+      && region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 nZ)).
+
+Lemma mmap_place_na_b_adm : forall hint m a nZ,
+  mmap_place_na_b hint m a nZ = true ->
+  bv_unsigned a mod page_size = 0 /\ 0 < bv_unsigned a
+  /\ bv_unsigned a + nZ <= alloc_top (m_vmmaps m)
+  /\ region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 nZ) = true.
+Proof.
+  intros hint m a nZ H. unfold mmap_place_na_b in H.
+  rewrite !andb_true_iff, Z.eqb_eq, Z.ltb_lt, Z.leb_le in H. tauto.
+Qed.
+
+Lemma mmap_place_na_b_iff : forall hint m a nZ,
+  0 < nZ -> nZ mod page_size = 0 ->
+  mmap_place_na_b hint m a nZ = true <->
+  linux_place (m_vmmaps m) (kb_thp (m_kernel m)) hint nZ (bv_unsigned a).
+Proof.
+  intros hint m a nZ Hn Hal. split.
+  - intros H. unfold mmap_place_na_b in H. apply andb_true_iff in H as [H _].
+    exact (proj1 (linux_place_is_iff _ _ _ _ _ Hn Hal) H).
+  - intros Hp. pose proof (proj2 (linux_place_is_iff _ _ _ _ _ Hn Hal) Hp) as Hpi.
+    destruct (linux_place_is_admissible _ _ _ _ _ Hn Hal Hpi) as (A1 & A2 & A3 & A4).
+    unfold mmap_place_na_b. rewrite Hpi, A4, (proj2 (Z.eqb_eq _ _) A1), (proj2 (Z.ltb_lt _ _) A2),
+      (proj2 (Z.leb_le _ _) A3). reflexivity.
+Qed.
+
 (* [comment removed for export] *)
 Definition mmap_grant_na_b (h : VmMaps) (a : word) (nZ : Z) : bool :=
   (bv_unsigned a mod page_size =? 0) && (0 <? bv_unsigned a)
@@ -1036,6 +1187,67 @@ Proof.
   - exists a. apply mmap_grant_na_b_iff. rewrite li_reserved0.
     unfold page_size in Ha2. repeat split; try assumption. clear - Ha2. lia.
 Qed.
+
+(* Linux's floor [task_unmapped_base] as the literal the FX gates carry. *)
+Lemma task_unmapped_base_val : task_unmapped_base = 183251939328.
+Proof. reflexivity. Qed.
+
+(* The PROT_NONE / MAP_NORESERVE arms: a free range in the bottom-up window is
+   enough for the placement rule to name an address, stated over the maps and
+   the kernel build so that a caller holding the invariant of an erased copy
+   of the maps can use it. *)
+Theorem place_na_exists_inv : forall hint thp R L c S h nZ,
+  ledger_inv R L c S h ->
+  0 < nZ -> nZ mod page_size = 0 ->
+  task_unmapped_base + (res_cost R + S) + (Z.of_nat (res_count R) + c) * (nZ + page_size) + nZ
+    <= alloc_lo_bound ->
+  exists a, linux_place_is h thp hint nZ a
+            && ((bv_unsigned a mod page_size =? 0) && (0 <? bv_unsigned a)
+                && (bv_unsigned a + nZ <=? alloc_top h)
+                && region_free (vm_reserved h ++ vm_maps h) a (Z_to_bv 64 nZ)) = true.
+Proof.
+  intros hint thp R L c S h nZ Hinv Hn Hal Hband.
+  destruct (ledger_inv_alloc_top _ _ _ _ _ Hinv) as [Hlo _].
+  pose proof (alloc_top_lt h) as Hlt. unfold two_pow_64 in Hlt.
+  pose proof Hinv as [].
+  destruct (grant_candidate_exists (res_hi R ++ vm_maps h) task_unmapped_base nZ
+              (Z.of_nat (res_count R) + c) (res_cost R + S) (alloc_top h))
+    as (g & Hg1 & Hg2 & Hg3 & Hg4).
+  - unfold task_unmapped_base. lia.
+  - reflexivity.
+  - lia.
+  - rewrite length_app, Nat2Z.inj_add. unfold res_count. clear - li_count0. lia.
+  - rewrite live_bytes_app. unfold res_cost. clear - li_size0. lia.
+  - unfold page_size in *. clear - Hband Hlo. lia.
+  - exact Hlt.
+  - apply (region_free_res_hi_app R _ _ _ Hg2) in Hg4.
+    destruct (linux_place_exists h thp hint nZ Hn Hal) as (a' & Ha').
+    { exists (bv_unsigned g). right. unfold gap_fits. rewrite u64_id, li_reserved0.
+      repeat split; assumption. }
+    destruct (linux_place_admissible _ _ _ _ _ Hn Hal Ha') as (_ & Hp & Ht & _).
+    exists (Z_to_bv 64 a').
+    assert (Hp' : linux_place h thp hint nZ (bv_unsigned (Z_to_bv 64 a')))
+      by (rewrite u64_lit by lia; exact Ha').
+    pose proof (proj2 (linux_place_is_iff _ _ _ _ _ Hn Hal) Hp') as Hpi.
+    destruct (linux_place_is_admissible _ _ _ _ _ Hn Hal Hpi) as (A1 & A2 & A3 & A4).
+    rewrite Hpi, A4, (proj2 (Z.eqb_eq _ _) A1), (proj2 (Z.ltb_lt _ _) A2),
+      (proj2 (Z.leb_le _ _) A3). reflexivity.
+Qed.
+
+Corollary mmap_place_na_exists_inv : forall hint R L c S m nZ,
+  ledger_inv R L c S (m_vmmaps m) ->
+  0 < nZ -> nZ mod page_size = 0 ->
+  task_unmapped_base + (res_cost R + S) + (Z.of_nat (res_count R) + c) * (nZ + page_size) + nZ
+    <= alloc_lo_bound ->
+  exists a, mmap_place_na_b hint m a nZ = true.
+Proof.
+  intros hint R L c S m nZ Hinv Hn Hal Hband.
+  exact (place_na_exists_inv hint (kb_thp (m_kernel m)) R L c S (m_vmmaps m) nZ Hinv Hn Hal Hband).
+Qed.
+
+Lemma mmap_place_na_b_grant_na : forall hint m a nZ,
+  mmap_place_na_b hint m a nZ = true -> mmap_grant_na_b (m_vmmaps m) a nZ = true.
+Proof. intros hint m a nZ H. unfold mmap_place_na_b in H. apply andb_true_iff in H. exact (proj2 H). Qed.
 
 Lemma budget_of_inv_acct : forall R L c S m nZ,
   ledger_inv R L c S (m_vmmaps m) ->
@@ -1141,11 +1353,16 @@ Lemma brk_model_next_grow : forall (h : VmMaps) (req : word),
   brk_model_next h req req = ledger_brk_grow req h.
 Proof.
   intros h req Hb0 Hbal Hlt Hral.
-  unfold brk_model_next, ledger_brk_grow, brk_maps_next, brk_grants, brk_is_grow.
+  unfold brk_model_next, ledger_brk_grow, brk_maps_next, brk_grants, brk_is_grow,
+    brk_page_range.
   rewrite (brk_unmaps_grow h req Hb0 Hbal Hlt Hral). unfold maps_subtract_ranges. cbn [fold_left].
   rewrite (brk_grow_req_nonzero h req Hb0 Hbal Hlt Hral). cbn [negb andb].
   rewrite (proj2 (Z.ltb_lt _ _) Hb0), (proj2 (Z.ltb_lt _ _) Hlt). cbn [andb].
   rewrite (proj2 (Z.ltb_ge (bv_unsigned req) (bv_unsigned (vm_brk h)))) by lia.
+  (* the grant is now the PAGE range [PAGE_ALIGN(b), PAGE_ALIGN(req)), and both
+     ends are already page-aligned here *)
+  rewrite !page_round_up_Z_aligned by assumption.
+  rewrite (proj2 (Z.ltb_lt _ _) Hlt). rewrite u64_id.
   cbn [app]. reflexivity.
 Qed.
 
@@ -1164,13 +1381,12 @@ Lemma brk_grow_ok_aligned : forall m req,
   bv_unsigned req mod page_size = 0 ->
   brk_grow_ok m req req = brk_grow_b m req.
 Proof.
-  intros m req Hb0 Hbal Hlt Hral. unfold brk_grow_ok, brk_grow_b, brk_budget_ok. cbv zeta.
+  intros m req Hb0 Hbal Hlt Hral. unfold brk_grow_ok, brk_grow_b, brk_budget_ok, brk_grow_bytes. cbv zeta.
   rewrite (proj2 (Z.ltb_lt _ _) Hb0), (proj2 (Z.ltb_lt _ _) Hlt). cbn [andb].
   rewrite !page_round_up_Z_aligned by assumption.
-  rewrite (proj2 (Z.ltb_lt _ _) Hlt). rewrite u64_id.
-  pose proof (u64_range req) as Hr. pose proof (u64_range (vm_brk (m_vmmaps m))) as Hbr.
-  rewrite bv_sub_unsigned. unfold bv_wrap. change (bv_modulus 64) with (2 ^ 64).
-  rewrite Z.mod_small by lia. reflexivity.
+  rewrite (proj2 (Z.ltb_lt _ _) Hlt). rewrite !u64_id.
+  rewrite (Z.max_r 0 (bv_unsigned req - bv_unsigned (vm_brk (m_vmmaps m)))) by lia.
+  reflexivity.
 Qed.
 
 (* [comment removed for export] *)
@@ -1186,12 +1402,14 @@ Lemma brk_grow_b_intro : forall R L c S m req,
   bv_unsigned req <= alloc_top (m_vmmaps m) ->
   region_free (vm_maps (m_vmmaps m)) (vm_brk (m_vmmaps m))
     (Z_to_bv 64 (bv_unsigned req + page_size - bv_unsigned (vm_brk (m_vmmaps m)))) = true ->
+  (* LPS 08b1429: the growth misses the reserved ledger, vDSO/vvar pair included *)
+  region_free R (vm_brk (m_vmmaps m))
+    (Z_to_bv 64 (bv_unsigned req + page_size - bv_unsigned (vm_brk (m_vmmaps m)))) = true ->
   vm_backing_used m + (bv_unsigned req - bv_unsigned (vm_brk (m_vmmaps m))) <= L ->
   brk_grow_b m req = true.
 Proof.
-  intros R L c S m req Hinv Htop Hfree Hbud. pose proof Hinv as [].
-  unfold brk_grow_b. cbv zeta. rewrite region_free_app, Hfree, li_reserved0.
-  rewrite (region_free_above_top R) by (clear - li_brk_min0 li_brk_R0; lia).
+  intros R L c S m req Hinv Htop Hfree HfreeR Hbud. pose proof Hinv as [].
+  unfold brk_grow_b. cbv zeta. rewrite region_free_app, Hfree, li_reserved0, HfreeR.
   rewrite (proj2 (Z.leb_le _ _) Htop). rewrite (proj2 (Z.leb_le _ _)) by (clear - Hbud li_limit0; lia). reflexivity.
 Qed.
 
@@ -1201,12 +1419,13 @@ Lemma brk_grow_b_intro_lim : forall R L c S m req,
   bv_unsigned req <= alloc_top (m_vmmaps m) ->
   region_free (vm_maps (m_vmmaps m)) (vm_brk (m_vmmaps m))
     (Z_to_bv 64 (bv_unsigned req + page_size - bv_unsigned (vm_brk (m_vmmaps m)))) = true ->
+  region_free R (vm_brk (m_vmmaps m))
+    (Z_to_bv 64 (bv_unsigned req + page_size - bv_unsigned (vm_brk (m_vmmaps m)))) = true ->
   vm_backing_used m + (bv_unsigned req - bv_unsigned (vm_brk (m_vmmaps m))) <= vm_limit (m_vmmaps m) ->
   brk_grow_b m req = true.
 Proof.
-  intros R L c S m req Hinv Htop Hfree Hbud. pose proof Hinv as [].
-  unfold brk_grow_b. cbv zeta. rewrite region_free_app, Hfree, li_reserved0.
-  rewrite (region_free_above_top R) by (clear - li_brk_min0 li_brk_R0; lia).
+  intros R L c S m req Hinv Htop Hfree HfreeR Hbud. pose proof Hinv as [].
+  unfold brk_grow_b. cbv zeta. rewrite region_free_app, Hfree, li_reserved0, HfreeR.
   rewrite (proj2 (Z.leb_le _ _) Htop), (proj2 (Z.leb_le _ _) Hbud). reflexivity.
 Qed.
 

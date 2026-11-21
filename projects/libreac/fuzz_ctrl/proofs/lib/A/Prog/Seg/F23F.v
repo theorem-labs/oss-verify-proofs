@@ -5,12 +5,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_box_model_block.v; 1090 of its 1202 lines of code are new or changed and 1063 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P5.v, with its module paths, module names, addresses and numbers changed; 1068 of its 1186 lines of code are new or changed and 1084 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F23.v; 463 of its 632 lines of code are new or changed and 1017 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/F23.v 39b3fcab64e4 (the blob this tree had at release c5e779efe8c) at fdd2ed9f9d7.
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   FACTS, PAU pau-libreac-v190. Source: Seg/F23.v 39b3fcab64e4 (the blob this tree had at release).
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: f23_evt_of_F re-derives F23.f23_evt at ExecF.RNG_all; f23_evt_of_F_verbatim checks by constr_eq that
    its type is the type of F23.f23_evt. Mechanical re-run, route (a) (lead 22:15Z); input to the ported walk only. *)
 
@@ -44,8 +45,8 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A Require Import Img0 AsanRT AsanRTI
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A Require Contract FrameAPI.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import SlotModel SlotInv RcAsanFPLib asan_memcpy_c.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import asan_memcpy_cF asan_memcpyF.
-(* route (C) (f23_evt_F_on / f23_evt_of_F_on): the copy's region-restricted contracts and proof (a Theorem Labs lane
-   83ab88c3325, taken by path), the form (lib/A/ShadowRwOn.v, ShadowRwOnT.v; a Theorem Labs lane 9ec78006def) and MemMono's
+(* route (C) (f23_evt_F_on / f23_evt_of_F_on): the copy's region-restricted contracts and proof (a Theorem Labs lane,
+   taken by path), the form (lib/A/ShadowRwOn.v, ShadowRwOnT.v; a Theorem Labs lane) and MemMono's
    rd_mono for the two shadow stores *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import asan_memcpy_c_on asan_memcpy_cF_on.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require A.ShadowRwOn A.ShadowRwOnT A.Prog.MemMono.
@@ -404,7 +405,7 @@ Qed.
    The third use (`F23.f23_shadow_rw_rel_back m3 m3n R8 SW3`, the post's shadow_rw m') becomes the forall-P post and
    needs no byte. The copy's own stack shadow is a footprint premise (sh_word_rng), not read through shadow_rw by
    asan_memcpy_contract_F_on, so it is not in R. The same region as F23.v's plain twin f23_evt_on (a Theorem Labs lane,
-   F23.v (a version not in this delivery; from a working branch f556cbc34ed) f23_evt_shadow_R), stated here for the footprint twin. Transports: the stores by
+   F23.v (a version not in this delivery; from a working branch) f23_evt_shadow_R), stated here for the footprint twin. Transports: the stores by
    ShadowRwOnT.shadow_rw_on_mem_mono (MemMono.rd_mono_write), normalize by ShadowRwOnT.shadow_rw_on_rel, back by
    ShadowRwOnT.shadow_rw_on_of_rel. *)
 Definition f23_evt_F_shadow_R (fr Sf a : Z) : Prop :=

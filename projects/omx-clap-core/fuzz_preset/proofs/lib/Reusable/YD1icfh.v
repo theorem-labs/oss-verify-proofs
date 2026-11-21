@@ -4,6 +4,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD1i.v, with its module paths changed; its addresses are still cgif_file_fuzzer.asan's. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -121,7 +122,7 @@ Theorem tfib_read_check : aread_check_stmt B -> read_check_tfa B.
 Proof.
 intros ARD ly S Hp W regs mem md n ptr HPRE Hrl Hqt R10 R9 Hn Hp0 Hp1 Ham Hra Hhv.
 (* overlay: read_check_tfa (A/AD1v.v:303) is unchanged, so the memnorm keep is dropped here;
-   SRr_mono (YA0n.v:48) hands the continuation a `wle W W'` first *)
+   SRr_mono (YA0n.v:49) hands the continuation a `wle W W'` first *)
 eapply SRr_mono; [exact (ARD ly S _ W regs mem md n ptr (ecall_pre_of_drv _ _ _ _ _ _ _ HPRE) R10 R9 Hn Hp0 Hp1 Ham Hra Hhv)|].
 intros W' c' _ [HW (r' & m' & d' & HQ)]. split; [exact HW|]. exists r', m', d'.
 unfold chk_regs_post. tauto.

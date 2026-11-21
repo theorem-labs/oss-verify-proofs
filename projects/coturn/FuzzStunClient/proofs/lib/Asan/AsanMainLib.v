@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the main sections take AsanInit's LPS 727298f3 launch, the agreement of environments also covers the byte strings that reblob leaves alone (eblob_fixed, kfix), and the IO nodes take the table for argv's rseq layout. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import Logic.FunctionalExtensionality.
@@ -25,48 +26,62 @@ Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-Fixpoint eblob_free (e : expr) : bool :=
+(* [reblob] below rewrites exactly the byte strings at index 1, index 2 and every index >= 8.
+   [kfix k] says index [k] is one of the ones it leaves alone: 0 and 3..7.  AT_RANDOM lives at
+   [AsanPlanCore.K_RND] = 3, inside that set, so the start-up tables' [EBlob false 3 8 8]
+   (the libc stack guard copied from the AT_RANDOM draw) survives [reblob] unchanged. *)
+Definition kfix (k : nat) : bool :=
+  negb (Nat.eqb k 1) && negb (Nat.eqb k 2) && negb (Nat.leb 8 k).
+
+(* "every byte string this expression reads sits at an index [reblob] fixes", so its denotation
+   is the same in [E] and in [reblob E argv c]. *)
+Fixpoint eblob_fixed (e : expr) : bool :=
   match e with
   | ELit _ | EVar _ => true
-  | EAlu _ a b | EAluw _ a b | EMd _ a b | EMdw _ a b => eblob_free a && eblob_free b
-  | EExt _ _ _ a => eblob_free a
-  | EBlob _ _ _ _ => false
+  | EAlu _ a b | EAluw _ a b | EMd _ a b | EMdw _ a b => eblob_fixed a && eblob_fixed b
+  | EExt _ _ _ a => eblob_fixed a
+  | EBlob _ k _ _ => kfix k
   end.
-Definition saddr_bf (a : saddr) : bool := eblob_free (a_base a).
+Definition saddr_bf (a : saddr) : bool := eblob_fixed (a_base a).
 Definition kentry_bf (K : kentry) : bool :=
   match K with
-  | KWord a _ v => saddr_bf a && eblob_free v
-  | KZero a n => saddr_bf a && eblob_free n
-  | KBlob _ _ _ => false
+  | KWord a _ v => saddr_bf a && eblob_fixed v
+  | KZero a n => saddr_bf a && eblob_fixed n
+  | KBlob _ _ _ => false   (* no collected table carries one; left conservative on purpose *)
   | KImg _ _ => true
-  | KAlign e _ => eblob_free e
-  | KRange e _ _ => eblob_free e
-  | KWr a n => saddr_bf a && eblob_free n
-  | KDisj a1 n1 a2 n2 => saddr_bf a1 && eblob_free n1 && saddr_bf a2 && eblob_free n2
-  | KFill a n _ => saddr_bf a && eblob_free n
-  | KUnk a n => saddr_bf a && eblob_free n
-  | KPriv _ rs args _ => forallb (fun r : saddr * expr => saddr_bf (fst r) && eblob_free (snd r)) rs && forallb eblob_free args   (* [comment removed for export] *)
+  | KAlign e _ => eblob_fixed e
+  | KRange e _ _ => eblob_fixed e
+  | KWr a n => saddr_bf a && eblob_fixed n
+  | KDisj a1 n1 a2 n2 => saddr_bf a1 && eblob_fixed n1 && saddr_bf a2 && eblob_fixed n2
+  | KFill a n _ => saddr_bf a && eblob_fixed n
+  | KUnk a n => saddr_bf a && eblob_fixed n
+  | KPriv _ rs args _ => forallb (fun r : saddr * expr => saddr_bf (fst r) && eblob_fixed (snd r)) rs && forallb eblob_fixed args   (* [comment removed for export] *)
   end.
-Definition pair_bf (p : expr * expr) : bool := eblob_free (fst p) && eblob_free (snd p).
+Definition pair_bf (p : expr * expr) : bool := eblob_fixed (fst p) && eblob_fixed (snd p).
 (* [comment removed for export] *)
-Definition acs_noblob (cs : acs) : bool :=
-  forallb eblob_free (s_regs (a_ss cs))
+Definition acs_blob_fixed (cs : acs) : bool :=
+  forallb eblob_fixed (s_regs (a_ss cs))
   && forallb kentry_bf (kn cs)
-  && forallb (fun m => eblob_free (am_base m) && eblob_free (am_len m)) (a_maps cs)
+  && forallb (fun m => eblob_fixed (am_base m) && eblob_fixed (am_len m)) (a_maps cs)
   && forallb pair_bf (a_vis cs) && forallb pair_bf (a_ghost cs)
-  && eblob_free (a_brk cs)
+  && eblob_fixed (a_brk cs)
   && match a_fd cs with FdStd => true | _ => false end.
 
-Definition ev_same (E E' : env) : Prop := forall n, ev E n = ev E' n.
+(* [E] and [E'] agree on every variable and on every byte string at a [reblob]-fixed index.
+   The byte-string conjunct is what pays for [eblob_fixed] admitting blobs, and [reblob_evsame]
+   discharges it by construction. *)
+Definition ev_same (E E' : env) : Prop :=
+  (forall n, ev E n = ev E' n) /\ (forall k, kfix k = true -> eb E k = eb E' k).
 
-Lemma edenot_evsame : forall E E' e, ev_same E E' -> eblob_free e = true -> edenot E e = edenot E' e.
+Lemma edenot_evsame : forall E E' e, ev_same E E' -> eblob_fixed e = true -> edenot E e = edenot E' e.
 Proof.
-  intros E E' e HS. induction e; cbn [eblob_free edenot]; intros H;
+  intros E E' e [HV HB]. induction e; cbn [eblob_fixed edenot]; intros H;
     repeat match goal with H : (_ && _)%bool = true |- _ => apply andb_prop in H; destruct H end;
-    try reflexivity; try discriminate;
+    try reflexivity;
     repeat match goal with IH : ?b = true -> edenot E ?x = edenot E' ?x, Hb : ?b = true |- _ => rewrite (IH Hb); clear IH end;
     try reflexivity.
-  apply HS.
+  - apply HV.
+  - rewrite (HB _ H). reflexivity.
 Qed.
 
 Lemma flat_map_ext_in {X Y} : forall (f g : X -> list Y) l, (forall x, In x l -> f x = g x) -> flat_map f l = flat_map g l.
@@ -84,13 +99,13 @@ Section EvSame.
   Variables E E' : env.
   Hypothesis HS : ev_same E E'.
 
-  Lemma uE_evsame : forall e, eblob_free e = true -> uE E' e = uE E e.
+  Lemma uE_evsame : forall e, eblob_fixed e = true -> uE E' e = uE E e.
   Proof. intros e H. unfold uE. rewrite (edenot_evsame E E' e HS H). reflexivity. Qed.
   Lemma estart_evsame : forall a, saddr_bf a = true -> estart E' a = estart E a.
   Proof. intros [b o] H. unfold estart. cbn [a_base a_off]. rewrite (edenot_evsame E E' b HS H). reflexivity. Qed.
   Lemma adenot_evsame : forall a, saddr_bf a = true -> adenot E' a = adenot E a.
   Proof. intros [b o] H. unfold adenot. cbn [a_base a_off]. rewrite (edenot_evsame E E' b HS H). reflexivity. Qed.
-  Lemma elenZ_evsame : forall n, eblob_free n = true -> elenZ E' n = elenZ E n.
+  Lemma elenZ_evsame : forall n, eblob_fixed n = true -> elenZ E' n = elenZ E n.
   Proof. intros n H. unfold elenZ. rewrite (edenot_evsame E E' n HS H). reflexivity. Qed.
   Lemma flat_evsame : forall a z, saddr_bf a = true -> flat E' a z = flat E a z.
   Proof. intros a z H. unfold flat. rewrite (estart_evsame a H). reflexivity. Qed.
@@ -103,7 +118,7 @@ Section EvSame.
       rewrite ?flat_evsame, ?estart_evsame, ?adenot_evsame, ?elenZ_evsame by assumption;
       rewrite <- ?(edenot_evsame E E') by assumption; try exact HK.
     (* [comment removed for export] *)
-    lazymatch goal with Hrs : forallb _ ?prs = true, Hargs : forallb eblob_free ?pargs = true |- _ =>
+    lazymatch goal with Hrs : forallb _ ?prs = true, Hargs : forallb eblob_fixed ?pargs = true |- _ =>
       destruct HK as [Hfl HP]; split;
       [ apply Forall_forall; intros r Hr; pose proof (proj1 (Forall_forall _ _) Hfl r Hr) as F;
         pose proof (proj1 (forallb_forall _ _) Hrs r Hr) as X; apply andb_prop in X as [X1 X2];
@@ -124,7 +139,7 @@ Section EvSame.
     cbn [forallb] in Hb. apply andb_prop in Hb as [H1 H2]. constructor; [apply kentry_ok_evsame; assumption | apply IH; exact H2].
   Qed.
 
-  Lemma regs_ok_evsame : forall sr R, forallb eblob_free sr = true -> regs_ok E sr R -> regs_ok E' sr R.
+  Lemma regs_ok_evsame : forall sr R, forallb eblob_fixed sr = true -> regs_ok E sr R -> regs_ok E' sr R.
   Proof.
     intros sr R Hb HR r. rewrite (HR r). apply edenot_evsame; [exact HS|].
     unfold sr_get. destruct (bv_eqb r 0); [reflexivity|].
@@ -133,18 +148,18 @@ Section EvSame.
     - rewrite nth_overflow by exact Hl. reflexivity.
   Qed.
 
-  Lemma amap_den_evsame : forall m, (eblob_free (am_base m) && eblob_free (am_len m))%bool = true -> amap_den E' m = amap_den E m.
+  Lemma amap_den_evsame : forall m, (eblob_fixed (am_base m) && eblob_fixed (am_len m))%bool = true -> amap_den E' m = amap_den E m.
   Proof.
     intros m H. apply andb_prop in H as [H1 H2]. unfold amap_den.
     rewrite !(edenot_evsame E E') by assumption. reflexivity.
   Qed.
-  Lemma maps_den_evsame : forall ms, forallb (fun m => eblob_free (am_base m) && eblob_free (am_len m)) ms = true ->
+  Lemma maps_den_evsame : forall ms, forallb (fun m => eblob_fixed (am_base m) && eblob_fixed (am_len m)) ms = true ->
     map (amap_den E') ms = map (amap_den E) ms.
   Proof.
     intros ms H. apply map_ext_in. intros m Hin. apply amap_den_evsame. exact (proj1 (forallb_forall _ _) H m Hin).
   Qed.
 
-  Lemma maps_match_evsame : forall ms l, forallb (fun m => eblob_free (am_base m) && eblob_free (am_len m)) ms = true ->
+  Lemma maps_match_evsame : forall ms l, forallb (fun m => eblob_fixed (am_base m) && eblob_fixed (am_len m)) ms = true ->
     maps_match E ms l -> maps_match E' ms l.
   Proof.
     induction ms as [|m ms IH]; intros l Hb HM; [exact HM|].
@@ -200,25 +215,48 @@ Definition reblob (E : env) (argv : list (list byte)) (c : list byte) : env :=
   Env (ev E) (fun k => if Nat.eqb k 1 then nth 0 argv [] else if Nat.eqb k 2 then nth 1 argv []
                       else if Nat.leb 8 k then chunk (k - 8) c else eb E k).
 
+(* [reblob] agrees with [E] on the variables (it reuses [ev E]) and on every [kfix] index
+   (its last branch returns [eb E k] verbatim).  This is what pays for [eblob_fixed]
+   admitting blobs at indices 0 and 3..7, and it needs no hypothesis. *)
 Lemma reblob_evsame : forall E argv c, ev_same E (reblob E argv c).
-Proof. intros E argv c n. reflexivity. Qed.
+Proof.
+  intros E argv c. split; [intros n; reflexivity|].
+  intros k Hk. unfold kfix in Hk.
+  apply andb_prop in Hk as [Hk H8]. apply andb_prop in Hk as [H1 H2].
+  apply negb_true_iff in H1. apply negb_true_iff in H2. apply negb_true_iff in H8.
+  cbn [reblob eb]. rewrite H1, H2, H8. reflexivity.
+Qed.
 
 Section Main.
   Variables (segs : list Segment) (A : atable) (ph : PhdrInfo).
-  Variables (sp : word) (rdraw : EntryDraw) (brk0 : word) (argv envp : list (list byte)).   (* [comment removed for export] *)
-  Variable uid : word.
-  Variable hw : word.   (* [comment removed for export] *)
+  (* AsanInit's launch, in its section order (SINV0 ph apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups
+     net nofile sigmask urnd tmp kb execfn; argH0 sp rdraw argv envp kb execfn). *)
+  Variable apc : N.
+  Variables (sp : word) (rdraw : EntryDraw) (brk0 mbase : word) (argv envp : list (list byte)).   (* [comment removed for export] *)
+  Variable fs : Fs.Fs.
+  Variable stdin : InputStream.
+  Variables uid gid hw : word.   (* [comment removed for export] *)
+  Variable groups : list word.
+  Variable net : NetQueue.
+  Variables nofile sigmask : word.
+  Variable urnd : InputStream.
+  Variable tmp : Fs.Fs.
+  Variable kb : KernelBuild.
+  Variable execfn : list byte.
+  Context {sigpipe_default : bool}.   (* AsanInit's: the launch's SIGPIPE disposition at entry *)
   Variable c : list byte.
+  #[local] Notation SINV0L := (@SINV0 ph apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sigpipe_default).
+  #[local] Notation argH0L := (argH0 sp rdraw argv envp kb execfn).
 
   (* [comment removed for export] *)
   Definition SINVm (E : env) (M : word -> option byte) : Prop :=
-    SINV0 ph sp rdraw brk0 argv envp uid hw E M /\ eb E 1%nat = nth 0 argv [] /\ eb E 2%nat = nth 1 argv []
+    SINV0L E M /\ eb E 1%nat = nth 0 argv [] /\ eb E 2%nat = nth 1 argv []
     /\ forall j, eb E (8 + j)%nat = chunk j c.
 
-  Lemma SINVm_SINV0 : forall E M, SINVm E M -> SINV0 ph sp rdraw brk0 argv envp uid hw E M.
+  Lemma SINVm_SINV0 : forall E M, SINVm E M -> SINV0L E M.
   Proof. intros E M [H _]. exact H. Qed.
 
-  Lemma SINVm_frame : forall E M M', (forall a, argH0 ph sp rdraw argv envp uid hw E a = true -> M' a = M a) -> SINVm E M -> SINVm E M'.
+  Lemma SINVm_frame : forall E M M', (forall a, argH0L E a = true -> M' a = M a) -> SINVm E M -> SINVm E M'.
   Proof. intros E M M' Hf (H0 & H1 & H2 & H3). split; [eapply SINV0_frame; eassumption | auto]. Qed.
 
   Lemma SINVm_agree : forall E E' M, env_agree NX0 E E' -> SINVm E M -> SINVm E' M.
@@ -227,7 +265,7 @@ Section Main.
     rewrite <- Heb. auto.
   Qed.
 
-  Lemma SINVm_reblob : forall E M, SINV0 ph sp rdraw brk0 argv envp uid hw E M -> SINVm (reblob E argv c) M.
+  Lemma SINVm_reblob : forall E M, SINV0L E M -> SINVm (reblob E argv c) M.
   Proof.
     intros E M [Hev HM]. split; [split; [exact Hev | exact HM]|].
     split; [reflexivity|]. split; [reflexivity|]. intros j. cbn [reblob eb].
@@ -237,7 +275,7 @@ Section Main.
 
   Lemma hid_reblob : forall E cs model,
     forallb pair_bf (a_vis cs) = true ->
-    hid A (argH0 ph sp rdraw argv envp uid hw) (reblob E argv c) cs model = hid A (argH0 ph sp rdraw argv envp uid hw) E cs model.
+    hid A argH0L (reblob E argv c) cs model = hid A argH0L E cs model.
   Proof.
     intros E cs model Hv. apply functional_extensionality. intros a. unfold hid, vis, APS.in_allow.
     rewrite (in_vis_evsame E (reblob E argv c) (reblob_evsame E argv c) cs _ Hv).
@@ -245,16 +283,16 @@ Section Main.
   Qed.
 
   Theorem cs_ok_reblob : forall LIMIT FS0 E cs R FULL model,
-    acs_noblob cs = true ->
-    cs_ok segs A LIMIT (SINV0 ph sp rdraw brk0 argv envp uid hw) (argH0 ph sp rdraw argv envp uid hw) FS0 E cs R FULL model ->
-    cs_ok segs A LIMIT SINVm (argH0 ph sp rdraw argv envp uid hw) FS0 (reblob E argv c) cs R FULL model.
+    acs_blob_fixed cs = true ->
+    cs_ok segs A LIMIT SINV0L argH0L FS0 E cs R FULL model ->
+    cs_ok segs A LIMIT SINVm argH0L FS0 (reblob E argv c) cs R FULL model.
   Proof.
     intros LIMIT FS0 E cs R FULL model Hnb HC.
-    unfold acs_noblob in Hnb.
+    unfold acs_blob_fixed in Hnb.
     apply andb_prop in Hnb as [Hnb Hfd]. apply andb_prop in Hnb as [Hnb Hbrk]. apply andb_prop in Hnb as [Hnb Hgh].
     apply andb_prop in Hnb as [Hnb Hvis]. apply andb_prop in Hnb as [Hnb Hmaps]. apply andb_prop in Hnb as [Hregs Hkn].
     pose proof (reblob_evsame E argv c) as HS. set (E' := reblob E argv c) in *.
-    destruct HC as [f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f10h f11 f12 f13 f14 f15 f16 f17 f18 f19 f20 f21 f22 f23 f24 f25 f26].
+    destruct HC as [f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f10h f11 f12 f13 f14 f15 f16 f17 f18 f19 f20 f21 f22 f23 f24 f25 f26 f27 f28].
     constructor.
     - eapply regs_ok_evsame; [exact HS | exact Hregs | exact f1].
     - exact f2.
@@ -291,6 +329,11 @@ Section Main.
     - rewrite (allowA_evsame E E' HS A cs Hvis Hgh). exact f24.
     - unfold E'. rewrite (hid_reblob E cs model Hvis). intros a H1 H2 H3 H4 H5. rewrite (in_ghost_evsame E (reblob E argv c) (reblob_evsame E argv c) cs _ Hgh) in H5. exact (f25 a H1 H2 H3 H4 H5).
     - apply SINVm_reblob. exact f26.
+    - exact f27.   (* co_mres: model-only, unchanged by the env *)
+    - exact f28.   (* co_vdso: model-only *)
+    - (* [co_rdr] (LPS 08b1429): model-only, like [co_mres]/[co_vdso] above — the env move
+         cannot touch the channel reader *)
+      assumption.
   Qed.
 End Main.
 
@@ -480,7 +523,7 @@ Section Hooks.
   Variables (segs : list Segment) (A : atable) (nx0 : N) (RP : RPN.rptab) (FP : FAParams) (DL : Z * Z * Z) (UG : UGN.ugtab) (LC : list LCN.lctab) (T : ION.iotab).   (* [comment removed for export] *)
   Definition XNm (id : nat) (args : list expr) (cs : acs) : option acs :=
     if (id <? 10)%nat then AN.xn segs A nx0 id args cs
-    else if (id <? 100)%nat then ION.xn segs T id args cs
+    else if (id <? 100)%nat then ION.xn segs A T id args cs   (* ION's openat reads e_str1 A *)
     else if (id <? 102)%nat then RPN.xn segs nx0 RP id args cs
     else if (id <? 103)%nat then FN.xn segs A nx0 FP id args cs   (* [comment removed for export] *)
     else if (id <? 105)%nat then HSN.xn segs nx0 id args cs      (* [comment removed for export] *)
@@ -493,7 +536,7 @@ Section Hooks.
     else if (id <? 122)%nat then UGN.xn segs A nx0 UG id args cs   (* [comment removed for export] *)
     else LCN.xn segs A nx0 LC id args cs.                          (* [comment removed for export] *)
   Definition XEm (id : nat) (args : list expr) (cs : acs) : option (Z * list spiece * acs) := AN.xe segs A nx0 id args cs.
-  Definition XBm (id : nat) (args : list expr) (cs : acs) : option (acs * acs) := ION.xb segs nx0 T id args cs.
+  Definition XBm (id : nat) (args : list expr) (cs : acs) : option (acs * acs) := ION.xb segs A nx0 T id args cs.   (* XBm takes the table A *)
 End Hooks.
 (* [comment removed for export] *)
 Definition HS_none (h : nat) : option acs := None.
@@ -548,13 +591,23 @@ Proof.
 Qed.
 
 Section ClassSound.
-  Variables (ph : PhdrInfo) (sp : word) (rdraw : EntryDraw) (brk0 mbase : word) (argv envp : list (list byte)) (fs : Fs.Fs) (stdin : InputStream).   (* [comment removed for export] *)
-  Variable uid : word.
-  Variable hw : word.   (* [comment removed for export] *)
+  (* AsanInit's launch, in its section order; uE0 also needs the launch hypothesis Hlau. *)
+  Variables (ph : PhdrInfo) (apc : N) (sp : word) (rdraw : EntryDraw) (brk0 mbase : word) (argv envp : list (list byte)) (fs : Fs.Fs) (stdin : InputStream).   (* [comment removed for export] *)
+  Variables uid gid hw : word.   (* [comment removed for export] *)
+  Variable groups : list word.
+  Variable net : NetQueue.
+  Variables nofile sigmask : word.
+  Variable urnd : InputStream.
+  Variable tmp : Fs.Fs.
+  Variable kb : KernelBuild.
+  Variable execfn : list byte.
+  Context {sigpipe_default : bool}.   (* AsanInit's: the launch's SIGPIPE disposition at entry *)
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw)
+                      (@AsanInit.inp argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn sigpipe_default).
 
   Let argc := Z.of_nat (length argv).
   Let L0 := Z.of_nat (length (nth 0 argv [])).
@@ -565,7 +618,7 @@ Section ClassSound.
   Lemma L0_range' : 0 <= L0 <= 131071.
   Proof. unfold L0. pose proof (valid_argv_str_len argv 0 Hva ltac:(destruct Hva as [Hl _]; lia)). lia. Qed.
   Lemma L1_range' : 0 <= L1 <= 131071.
-  Proof. exact (L1_range ph sp rdraw argv envp uid hw Hva). Qed.
+  Proof. exact (L1_range apc sp rdraw argv envp kb execfn Hva). Qed.
   Lemma qlook_range : 0 <= qlook argv fs <= 4.
   Proof.
     pose proof (qlook_cases argv fs) as Q. destruct argv as [|a0 [|p [|x r]]]; try (rewrite Q; lia).
@@ -604,13 +657,14 @@ Section ClassSound.
   Qed.
 
   Theorem facts_of_class_sound : forall segs C E M,
-    in_class C argv fs = true -> (forall n, (n < 8)%N -> ev E n = ev (E0 ph sp rdraw brk0 argv envp uid hw) n) ->
+    in_class C argv fs = true -> (forall n, (n < 8)%N -> ev E n = ev (E0 sp rdraw brk0 argv envp uid gid kb execfn) n) ->
     know_ok segs E M (facts_of_class C).
   Proof.
     intros segs C E M HC Hev.
-    pose proof (uE0 ph sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit) as (_ & _ & UA & _ & UL0 & _).
-    pose proof (uE0_L1 ph sp rdraw brk0 argv envp uid hw Hva) as UL1.
-    assert (HV : forall n, (n < 8)%N -> uE E (EVar n) = uE (E0 ph sp rdraw brk0 argv envp uid hw) (EVar n)).
+    pose proof (uE0 ph apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask urnd tmp kb execfn
+                  Hsp Hva Hve Hfit Hlau) as (_ & _ & UA & _ & UL0 & _).
+    pose proof (uE0_L1 apc sp rdraw brk0 argv envp uid gid kb execfn Hva) as UL1.
+    assert (HV : forall n, (n < 8)%N -> uE E (EVar n) = uE (E0 sp rdraw brk0 argv envp uid gid kb execfn) (EVar n)).
     { intros n Hn. unfold uE. cbn [edenot]. rewrite (Hev n Hn). reflexivity. }
     pose proof argc_range as HA. pose proof L0_range' as HL0. pose proof L1_range' as HL1.
     pose proof (cbounds_sound C QArgc argv fs HC (qval_bounds QArgc)) as BA.

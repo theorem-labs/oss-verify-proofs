@@ -1,5 +1,5 @@
 (* proves the UBSan contract of diginet_frame_is_keepalive (fuzz_transport.ubsan, 0x17ff4), with its alignment and null-pointer traps not taken. *)
-(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/diginet_frame_is_keepalive.v at 9bd29914ffdef650a37285056a472ff186b4331a to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/diginet_frame_is_keepalive.v to fuzz_transport's images *)
 (* Walk of diginet_frame_is_keepalive (src/diginet_frame.c:55-58 at 835f336c) in fuzz_transport.ubsan, 0x17ff4.
    The UBSan checks at 0x17ffc (f & 7 is not 0) and 0x18018 (f->body is 0) branch to the trap at
    0x18030; the premises f mod 8 = 0 and 0 < body keep them from firing. *)

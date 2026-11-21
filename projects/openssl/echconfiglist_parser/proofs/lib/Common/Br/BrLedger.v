@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the ledger invariant is destructured with the one field fewer it now has). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From stdpp Require Import bitvector.
@@ -106,7 +107,7 @@ Proof.
   destruct (den_interval t off len Hent) as (Elo & Esz & rg & Hg & Hrlo & Hrhi).
   set (p := den rho (t, off, len)) in *.
   assert (Hp : In p (vm_maps V)) by (rewrite Hmaps; apply in_map; exact Hin).
-  destruct Hinv as [_ _ _ _ _ Hal Htop _ _ _ _ _ _ _ _ _].
+  destruct Hinv as [_ _ _ _ _ Hal Htop _ _ _ _ _ _ _ _].
   pose proof (proj1 (Forall_forall _ _) Hal p Hp) as [Hal1 Hal2].
   pose proof (proj1 (Forall_forall _ _) Htop p Hp) as [_ Ht2].
   exists (e_hi p). unfold e_hi in *. rewrite Elo, Esz in *. split; [lia|]. split; [exact Ht2|]. split.
@@ -150,7 +151,7 @@ Proof.
     destruct (den_interval t o' l' Hent) as (Elo & Esz & _).
     set (p := den rho (t, o', l')) in *.
     assert (Hp : In p (vm_maps V)) by (rewrite Hmaps; apply in_map; exact Hin).
-    destruct Hinv as [_ _ _ _ _ Hal Htop _ _ _ _ _ _ _ _ _].
+    destruct Hinv as [_ _ _ _ _ Hal Htop _ _ _ _ _ _ _ _].
     pose proof (proj1 (Forall_forall _ _) Hal p Hp) as [Hal1 _].
     pose proof (proj1 (Forall_forall _ _) Htop p Hp) as [Ht1 Ht2].
     unfold e_hi in Ht2. rewrite Elo, Esz in *. unfold page_size in Hal1.

@@ -1,7 +1,7 @@
 (* check_no_overread 0x811c8 (fs.c), fs.asan: the TAIL of the ASan walk - the epilogue, the `ret` and the R2 arms of
    that range. a Theorem Labs lane owns the statement (lib/A/FSH_Fn_cno.v check_no_overread_spec) and the walk file
    lib/A/FSW_check_no_overread.v; this file proves ONE of that file's call-step interface statements,
-   `cno_tail_ret_T B` (FSW_check_no_overread.v:1123 at a working branch fb4231f5e1e, the CTX-free interface,
+   `cno_tail_ret_T B` (FSW_check_no_overread.v:1124 at a working branch, the CTX-free interface,
    = cno_from cno_ss_R INV_R), with the name cno_tail_ret.
    The other call steps of the tail are cno_call_bcmp / cno_call_afree (the other tail hand's,
    lib/A/FSW_check_no_overread_tail.v) and cno_call_ffree (lib/A/FSW_check_no_overread_ffree.v). Rule 24: this file
@@ -33,11 +33,11 @@
 
    LOOKUP (rule 24): the walk file's header carries the index runs; re-CONFIRMED for this file (a Theorem Labs lane,
    2026-10-29 03:4xZ): `proof-index check_no_overread`, unpiped, rc=0, index v5
-   built 2026-10-29T01:50:18Z (main f4cc67298b7, ossv/recipes 5121fb8693b, ossv/candidates ee89628c997,
-   release/pau-projects-recipes b6a0088adcb): 20 named / 50 by address / 36 related / 9 lemma(s), 71 hit lines, all
+   built 2026-10-29T01:50:18Z (main,):
+   20 named / 50 by address / 36 related / 9 lemma(s), 71 hit lines, all
    under lib/Prog, lib/Prog/CF, lib/U/Prog, lib/U/Prog/CF (plain and UBSan), none under lib/A or lib/B; full output
    (internal path). TEMPLATE (text only, never Required): the bespoke A-build
-   proof on a working branch 1da71ab56d4, lib/A/Prog/check_no_overread_epi.v (cno_epiF, the fake-frame arm
+   proof on a working branch, lib/A/Prog/check_no_overread_epi.v (cno_epiF, the fake-frame arm
    of the same 0x8144c epilogue: it fixes the same instruction count, 8 + beqz + 17 + ld + sb + j + 16, the same
    0x78(a1) flag word and the same 0xf5 / 0x45e0360e writes) and check_no_overread_exit.v; that proof is built on the
    pre-ruling model (AA / a_call_pre_tp / its own ALedger), so nothing is bridged from it. *)
@@ -70,7 +70,7 @@ Fail Definition probe_SK : Reusable.YI16.sink_head := _.
 Fail Definition probe_SH : Reusable.YI14.sink_syms := _.
 
 (* ================= the engine's answers over this range (MEASURED here, by vm_compute) ================= *)
-(* the pre-state is a Theorem Labs lane's cno_ss_R (FSW_check_no_overread.v:931) = cno_ss 0x8144c 19 18 cno_flag_chunk
+(* the pre-state is a Theorem Labs lane's cno_ss_R (FSW_check_no_overread.v:932) = cno_ss 0x8144c 19 18 cno_flag_chunk
    cno_cssl_R: the thirteen saved words at s0, the fake frame at atom 19 with its flag word at frame + 120, the
    frame's sixteen shadow bytes at atom 18, and the slots at s1 with the frame address at sp1 + 0x10. The epilogue
    also WRITES the flag byte, which is not a byte of the frame (AR_flag_law owns it, AR_frames_law does not own any
@@ -134,7 +134,7 @@ Proof. split; [vm_compute; discriminate | vm_compute; reflexivity]. Qed.
 
 (* ================= pure facts ================= *)
 (* fuzz/alloc.c's statics are image bytes (the last RW segment of tfibsegs holds .data and .bss); shape taken from
-   a Theorem Labs lane's crcs_glob_img (a working branch c4bfd3bc057) *)
+   a Theorem Labs lane's crcs_glob_img (a working branch) *)
 Lemma cno_glob_img : forall a, (G_FAIL <= a < G_FAIL + 8 \/ G_LIVE <= a < G_LIVE + 8 \/ G_PEAK <= a < G_PEAK + 8 \/
   G_COUNT <= a < G_COUNT + 8) -> in_img tfibsegs a.
 Proof.
@@ -206,7 +206,7 @@ split; [exact Hp|]. split; [exact Ho|]. split.
 Qed.
 
 (* ================= the tail: the epilogue, the frame release and the `ret` =================
-   a Theorem Labs lane's cno_tail_ret_T (FSW_check_no_overread.v:1123): from a machine at which cno_ss_R holds under an env E
+   a Theorem Labs lane's cno_tail_ret_T (FSW_check_no_overread.v:1124): from a machine at which cno_ss_R holds under an env E
    whose atoms are cno_E's, with the walk's journal at k = EV_check_no_overread over the entry's U and blocks, to
    check_no_overread_spec's post. *)
 Lemma cno_tail_ret : cno_tail_ret_T B.

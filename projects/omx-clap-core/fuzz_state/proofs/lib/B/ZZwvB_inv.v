@@ -1,5 +1,5 @@
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/ZZwv_inv.v (a working branch
-   1a5dc5b2e7c): same names; the loop's register list (wvc_inv) and the open point's (wvc_invO) re-measured on
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/ZZwv_inv.v (a working branch):
+   same names; the loop's register list (wvc_inv) and the open point's (wvc_invO) re-measured on
    fs.asan-ubsan (ZZwvB_defs.v); imports point at lib/B's image files and walk kit.
    rule 24: proves no function (kind: segment lemma) - the container arms of write_value B.
    write_value's CONTAINER arms, image B: the item loop's invariant. Between two calls the walk holds the engine state

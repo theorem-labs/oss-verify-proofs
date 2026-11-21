@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: relocated by R4Printf.BzPrintfPort (a Theorem Labs lane) onto plugin-hostd/fuzz_reply.asan from a working branch 840c4afa7e2 proofs/omx-clap-core/fuzz_state/lib/A/Bz/A/I_pcfmt.v: module paths and 1 address numerals, rewritten in one pass, each paired by object (the code functions are identical modulo pc-relative fields): 0x44fdc->0x45964 printf_common+0x0. *)
+(* Modified by Theorem Labs, 2026-10: relocated by R4Printf.BzPrintfPort (a Theorem Labs lane) onto plugin-hostd/fuzz_reply.asan from a working branch proofs/omx-clap-core/fuzz_state/lib/A/Bz/A/I_pcfmt.v: module paths and 1 address numerals, rewritten in one pass, each paired by object (the code functions are identical modulo pc-relative fields): 0x44fdc->0x45964 printf_common+0x0. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A.Bz Require BvWfKernel.
 (* [comment removed for export] *)
@@ -35,7 +36,7 @@ Proof.
 Qed.
 Ltac img_tac := apply img_bytes; [assumption | lia | cbn; lia | vm_compute; reflexivity].
 
-(* pcom_post: the definition of lib/A/Bz/K/I_vprintfw.v:58-64 (the same text as ct I_pcfmt.v:38-44), imported above. *)
+(* pcom_post: the definition of lib/A/Bz/K/I_vprintfw.v:59-65 (the same text as ct I_pcfmt.v:39-45), imported above. *)
 
 Lemma txt_ok_bytes : forall l, txt_ok l = true -> forallb (fun c => (0 <? c) && (c <? 256)) l = true.
 Proof.

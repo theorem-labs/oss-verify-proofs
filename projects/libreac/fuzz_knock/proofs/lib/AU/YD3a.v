@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: new file, written by a Theorem Labs lane: the asan-ubsan twin of libreac/fuzz_knock lib/A/AD3a.v
-   at 48907dc7e8ca (by a Theorem Labs lane, the S1 prover, with amendment 11 to the statement's approval), the statement of
+   (by a Theorem Labs lane, the S1 prover, with amendment 11 to the statement's approval), the statement of
    __sanitizer::StackStore::Store (0x6e8f4-0x6ea18, 73 insns, YB1w.v tfib_A_StackStore_Store, fuzz_knock.asan-ubsan
    sha256 f834165f5002...) for store block 0, on the call of knock's first post-main StackDepotPut that creates the block
    (through StackStore::Alloc 0x6ea18, piece S2, consumed here as the Section hypothesis alloc_contract: S2's
@@ -22,9 +22,10 @@
    - Unchanged: Store's 73 words (both pins: 0x6e8f4-0x6ea18 byte-identical) and internal_memcpy's 9 (0x6232c-0x62350
      byte-identical), so the code addresses (0x6e8f4, the jal Alloc 0x6ea18 at 0x6e968 with ra 0x6e96c, the jal
      internal_memcpy 0x6232c at 0x6e988 with ra 0x6e98c, MC_LOOP 0x62338, the amoadd.w at 0x6e9a0); the image end
-     YImgTop.IMG_TOP = 0x5f3000 and the writable window's low end 0x96000 (YB1h.v:87-88 tfib_rw_window).
+     YImgTop.IMG_TOP = 0x5f3000 and the writable window's low end 0x96000 (YB1h.v:88-89 tfib_rw_window).
    lib/AU/YF0m.v (TfibSyms, TFIB_STORE) was not on the base this file was written on: it built from
    YF0m.v (sha256 77ff7f6e6d76; internal record), a build-only input. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -64,7 +65,7 @@ Local Open Scope Z_scope.
 Section g. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 
 Section kd.
-(* The layout step, as S3 states it (YD3c.v:96-99, amendment 8): the first Put's growth is the placeholder relation
+(* The layout step, as S3 states it (YD3c.v:97-100, amendment 8): the first Put's growth is the placeholder relation
    layout_grow_kd; YD3j's kd_inst instantiates it with layout_grow (YG0f.v:99). Satisfiable: fun _ _ => True. *)
 Variable layout_grow_kd : alayout -> alayout -> Prop.
 Variable B : asyms.

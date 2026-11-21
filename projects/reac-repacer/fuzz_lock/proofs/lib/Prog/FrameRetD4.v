@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs: the twin of lib/Reusable/YL0z.v (return value of the fuzz target 0 or -1) *)
-(* Donor: reac-repacer/fuzz_lock, proofs/reac-repacer/fuzz_lock/lib/Reusable/YL0z.v at 901d1549395.
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput in the walk's environment, with a0 and path no longer section variables); internal commit ids in comments replaced by public commits or removed. *)
+(* Donor: reac-repacer/fuzz_lock, proofs/reac-repacer/fuzz_lock/lib/Reusable/YL0z.v.
    Module: OSSVerify.Proofs.reac_repacer.fuzz_lock.lib.Prog.FrameRetD4. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_lock.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -36,8 +37,10 @@ Hypothesis HLS : forall pl fs K, LIBK pl fs K = K (LL (rt pl) fs []).
 Hypothesis HR01 : forall pl, rt pl = 0 \/ rt pl = -1.
 Hypothesis ARMS : arms_m1.
 Hypothesis FRM : frm_zero fp_csr.
-Variables (sp tid : word) (a0 path : list byte) (inp : ProcInput) (data : list byte) (rnd : EntryDraw).
-Hypothesis HSA0 : forall G, anchored_atoms G = anchored_atoms RD_facts -> stack_anchored (E_main sp [a0; path] (in_envp inp) tid rnd) G.
+(* [E_main] reads the entry strings and execfn from [inp] at 727298f3, so [a0] and [path] are
+   no longer variables here; as libreac/fuzz_decode's copy. *)
+Variables (sp tid : word) (inp : ProcInput) (data : list byte) (rnd : EntryDraw).
+Hypothesis HSA0 : forall G, anchored_atoms G = anchored_atoms RD_facts -> stack_anchored (E_main sp inp tid rnd) G.
 Hypothesis Hvfs : valid_fs (in_fs inp).
 Hypothesis Hsp47 : bv_unsigned sp <= 2 ^ 47.
 Lemma run_from_QX_r : forall cap0 L' A' b0 E ms md (K : dleaf * astate -> TSet),
@@ -181,7 +184,7 @@ exact (src0_overrun_tail API AX inp data cap0 L' A' b0 Hub Hcap0 HW HB Hid E ms2
 Qed.
 Theorem src0_postX_r : forall K : dleaf * astate -> TSet,
 (forall r, t_eq (K r) (leaf_shapeX_r data (in_fs inp) r)) ->
-POST API sp tid a0 path inp data rnd (run_RI RI (payload data)) K.
+POST API sp tid inp data rnd (run_RI RI (payload data)) K.
 Proof.
 intros K HK. unfold POST. cbv zeta beta.
 intros cap' bufp' A' Lc' J' g' len0 w ms' md' HLc Hcap Hlen0 Hub HW HB Hid HS Hw HL0 HMR Hmd0 HD HJ HG HL.
@@ -200,7 +203,7 @@ apply u64_of_Z. lia.
 - rewrite ew_ewset_other by lia. unfold E_lp. rewrite ew_ewset_other, ew_ewset_same by lia.
 apply u64_of_Z. unfold dlen in HLc. lia. }
 assert (HAN : hdr_anch E).
-{ intros G HGa. subst E. apply (anch_lp sp tid a0 path inp data rnd HSA0 J' (ptr_addr Lc' bufp') g' (Z.of_nat (length data)) cap' _ G); [| exact HGa].
+{ intros G HGa. subst E. apply (anch_lp sp tid inp data rnd HSA0 J' (ptr_addr Lc' bufp') g' (Z.of_nat (length data)) cap' _ G); [| exact HGa].
 apply (ext29_ewset data); [lia | apply ext29_refl]. }
 drv_run_with src0tbl_ok HS HF.
 lazymatch type of HS with st_ok _ _ _ ?msx => change (st_ok src0segs E ss_h0 msx) in HS end.

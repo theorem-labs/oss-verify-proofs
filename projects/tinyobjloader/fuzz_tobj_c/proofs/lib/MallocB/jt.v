@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the munmap step's exact-cut fact from ks_munmap_ok passed on). *)
 (* [comment removed for export] *)
 Local Set Warnings "-require-in-module".
 (* [comment removed for export] *)
@@ -796,11 +797,13 @@ Proof.
     { unfold REFX, ZDX. apply Forall2_app; [exact Z3|]. cbn [app]. constructor; [exact Z1 | exact Z2]. }
     assert (HLF : l = false -> (i < length (aa_sec A) - 1)%nat) by (intros E; exact (proj1 (XF E))).
     pose proof (zsepE K A it i ch HKS r tp tr md l lst HK QS Hl HLF) as HSEPZ.
-    destruct (ks_munmap_ok segsA K HKS A r tp tr md HK ch (nth_error_In _ _ HI)) as (MU1 & MU2 & MU3). fold h msz in MU1, MU2, MU3.
+    destruct (ks_munmap_ok segsA K HKS A r tp tr md HK ch (nth_error_In _ _ HI)) as (MU1 & MU2 & MU3 & MU4). fold h msz in MU1, MU2, MU3, MU4.
     assert (DISJ : forall o, In o (ss_objs (ax_S (EUd f l))) -> SymState.ranges_disjoint (obj_range r2 o) (h, h + msz)).
     { intros o Ho. rewrite (obj_range_agree_vars (fun _ => true) r r2 o ltac:(intros v0 _; symmetry; apply RW2) ltac:(intros l0; symmetry; apply RL2) (proj1 (forallb_forall _ _) (EUd_vars f l) o Ho)).
       apply (offzone_sound r (zbE A i ch lst) zloS (zhiX (sc_map_size ch)) (ZUXl l) (REFX l) (ZDX l) 5%nat _ h (h + msz) HSEPZ ZALL (EUd_off5 f l)); [destruct l; cbn; tauto | | | exact Ho]; unfold zbE, zbX, zloS, zhiX; fold h msz; lia. }
-    split; [unfold page_size; exact CH1|]. split; [unfold TASK_SIZE; lia|]. split; [exact MU1|]. split; [exact MU2|]. split; [exact MU3|]. split; [exact DISJ|].
+    split; [unfold page_size; exact CH1|]. split; [unfold TASK_SIZE; lia|]. split; [exact MU1|].
+    split; [first [exact MU4 | rewrite (u64_lit h) in MU4 by lia; exact MU4]|].
+    split; [exact MU2|]. split; [exact MU3|]. split; [exact DISJ|].
     split; [intros rr y Hin; rewrite N6 in Hin; destruct Hin|].
 
     set (aw := Z_to_bv 64 h). set (nw := Z_to_bv 64 msz).

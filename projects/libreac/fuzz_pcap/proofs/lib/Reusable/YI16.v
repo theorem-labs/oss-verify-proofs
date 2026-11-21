@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YI16.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3, with libreac/fuzz_boxreg's port of its copy of this file (changed os_upd, os_upd_self, with_vmmaps_os_upd, with_fds_os_upd, with_fs_os_upd). *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State.
@@ -16,27 +17,29 @@ Definition sink_token : Z * Z := (0, 1).
 Definition os_upd (vm' : VmMaps) (fds' : list (word * FdEntry)) (fs' : Fs.Fs)
 (pins' : list (Fs.path * list byte)) (m : Model) : Model :=
 mkModelOf (mkFdState fds' (m_pipes m))
-(mkVmState vm' (m_vm_lazy m) (m_vm_materialized m))
+(mkVmState vm' (m_vm_lazy m) (m_vm_materialized m) (m_kernel m) (m_vdso m))
 (m_io m) (mkFsState fs')
 (mkProcState (m_halted m) (m_tid m) (m_creds m)
 (m_setsid_succeeded m) (m_sigmask m)
 (m_has_children m) (m_utsname m)
 (m_sigaltstack_installed m)
 (procst_killed (m_proc m)) (m_sigabrt_pending m)
-(m_abort_terminal m) pins')
+(m_abort_terminal m) pins'
+(procst_sigpipe_pending (m_proc m)) (procst_channel_reader (m_proc m))
+(procst_sigpipe_action (m_proc m)) (procst_sigpipe_terminal (m_proc m)))
 (m_lim m) (m_time m).
 Lemma os_upd_self : forall m, m = os_upd (m_vmmaps m) (m_fds m) (m_fs m) (m_statpins m) m.
-Proof. intros [[t p] [v l z] io [fs] [h ti c ss sm ch u sa k sp at_ pins] li tm]. reflexivity. Qed.
+Proof. intros [[t p] [v l z kb vd] io [fs] [h ti c ss sm ch u sa k sp at_ pins spp cr spa spt] li tm]. reflexivity. Qed.
 Lemma os_upd_twice : forall v1 f1 s1 p1 v2 f2 s2 p2 m,
 os_upd v2 f2 s2 p2 (os_upd v1 f1 s1 p1 m) = os_upd v2 f2 s2 p2 m.
 Proof. intros. reflexivity. Qed.
 Lemma with_vmmaps_os_upd : forall vm' m, with_vmmaps vm' m = os_upd vm' (m_fds m) (m_fs m) (m_statpins m) m.
-Proof. intros vm' [[t p] [v l z] io [fs] [h ti c ss sm ch u sa k sp at_ pins] li tm]. reflexivity. Qed.
+Proof. intros vm' [[t p] [v l z kb vd] io [fs] [h ti c ss sm ch u sa k sp at_ pins spp cr spa spt] li tm]. reflexivity. Qed.
 Lemma with_fds_os_upd : forall fds' m, with_fds fds' m = os_upd (m_vmmaps m) fds' (m_fs m) (m_statpins m) m.
-Proof. intros fds' [[t p] [v l z] io [fs] [h ti c ss sm ch u sa k sp at_ pins] li tm]. reflexivity. Qed.
+Proof. intros fds' [[t p] [v l z kb vd] io [fs] [h ti c ss sm ch u sa k sp at_ pins spp cr spa spt] li tm]. reflexivity. Qed.
 Lemma with_fs_os_upd : forall fs' m,
 with_fs fs' m = os_upd (m_vmmaps m) (m_fds m) fs' (statpins_restrict fs' (m_statpins m)) m.
-Proof. intros fs' [[t p] [v l z] io [fs] [h ti c ss sm ch u sa k sp at_ pins] li tm]. reflexivity. Qed.
+Proof. intros fs' [[t p] [v l z kb vd] io [fs] [h ti c ss sm ch u sa k sp at_ pins spp cr spa spt] li tm]. reflexivity. Qed.
 Lemma os_upd_vmmaps : forall v f s p m, m_vmmaps (os_upd v f s p m) = v.            Proof. reflexivity. Qed.
 Lemma os_upd_fds : forall v f s p m, m_fds (os_upd v f s p m) = f.                  Proof. reflexivity. Qed.
 Lemma os_upd_fs : forall v f s p m, m_fs (os_upd v f s p m) = s.                    Proof. reflexivity. Qed.

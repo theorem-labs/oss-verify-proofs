@@ -3,12 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the call of send_message in LLVMFuzzerTestOneInput's ASan walk (plugin-hostd/fuzz_command, jal at 0x86714, back at 0x86718), in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh2.v:122-290 (a program call through cl_callS, the callee's statement applied, the caller's facts carried past it). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/LLVMFuzzerTestOneInput_s30.v, with its module paths and module names changed; 622 of its 671 lines of code are new or changed and 292 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan image A (fuzz_segconf.asan, pin sha256 48c5355bdacb): the kit of file group _s20, segments
    S11 (0x856bc .. 0x857b8: the probe loop, the "nosuch0" pair, checks 25 and 26, calloc(cap + 1, 18)) and S12
    (0x857bc .. 0x857c8: calloc(cap + 1, 20)) of the test harness's entry function LLVMFuzzerTestOneInput (0x84d34).
 
-   proves function LLVMFuzzerTestOneInput (reuse search: origin/main@6e24fa4d602c origin/ossv/recipes@3abc3740de97
-   origin/ossv/candidates@ee89628c9971 origin/release/pau-projects-recipes@b6a0088adcb4 / the stream's proof index
+   proves function LLVMFuzzerTestOneInput (reuse search: origin/main origin/ossv/recipes
+   origin/ossv/candidates origin/release/pau-projects-recipes / the stream's proof index
    LLVMFuzzerTestOneInput + four-ref git grep; output pasted verbatim in
    the walk's shared brief; checker (fresh, read-only): CONFIRM; none: written new)
 

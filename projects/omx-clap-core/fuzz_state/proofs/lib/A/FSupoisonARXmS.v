@@ -24,7 +24,7 @@
    - [wframe_up ims_wframe]: fs's entry frame is AGif0n.wframe, the image-free copy of AGif0cgif.wframe that cgif's
      AImgS instance takes (ims_wframe := AGif0cgif.wframe); [wframe_up_AGif0n] below proves the premise for it.
    - [nmax <= MALLOC_MAX]: fs instantiates nmax := MALLOC_MAX, as cgif does (cgif AGif5.v:1148, ifaceS_cgif); the walk's
-     top asks it of every consumer (cgif AGio.v:66, Hnmax).  The posts need it: ifs_apart's size premise
+     top asks it of every consumer (cgif AGio.v:67, Hnmax).  The posts need it: ifs_apart's size premise
      (sz <= MALLOC_MAX + 4 * 4096) at the block's map size, and the by_size_log slot (WINI's BSLv) inside the instance
      object.
 
@@ -429,8 +429,8 @@ constructor.
 - (* ifs_ledger *)
   intros inst ly S W mem md H. exact (Fledger inst ly S W _ md (ARX_ARU_AR im_segs B I Up inst ly S W mem md H)).
 - (* ifs_grant *)
-  intros inst ly S W mem md mat sz H Hsz.
-  exact (Fgrant inst ly S W _ md mat sz (ARX_ARU_AR im_segs B I Up inst ly S W mem md H) Hsz).
+  intros inst ly S W mem md mat sz H Hsz Hal.
+  exact (Fgrant inst ly S W _ md mat sz (ARX_ARU_AR im_segs B I Up inst ly S W mem md H) Hsz Hal).
 - (* ifs_apart *)
   intros inst ly S W mem md mat sz a [E HARU] Hsz Hm HG. subst inst.
   pose proof (FSP.ARU_AR _ _ _ _ _ _ _ _ HARU) as HAR.

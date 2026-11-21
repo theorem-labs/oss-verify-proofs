@@ -3,11 +3,11 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: sup_chain's walk on plugin-hostd/fuzz_command's ASan+UBSan build
    (fuzz_command.asan-ubsan, entry 0x8c1c4 = BASE + AF_sup_chain, 940 bytes): a Theorem Labs lane's lib/B/Prog/sup_chain_c.v
-   `tsup_chain_spec` (statement from a Theorem Labs lane f490061c104; kit from a Theorem Labs lane fc8bcbd8b42), proved over its callee and
+   `tsup_chain_spec` (statement from a Theorem Labs lane; kit from a Theorem Labs lane), proved over its callee and
    runtime contracts (each at every FP state, as the statement states them).
 
-   The walk is the B re-walk of the ASan walk lib/A/Prog/sup_chain.v + sup_chain_s1 .. s8 (a working branch
-   3cc8391594b), cut where the A walk cuts it, at B's addresses:
+   The walk is the B re-walk of the ASan walk lib/A/Prog/sup_chain.v + sup_chain_s1 .. s8 (a working branch),
+   cut where the A walk cuts it, at B's addresses:
    - sup_chain_s2.v `scb_head`: entry 0x8c1c4 to the loop head 0x8c3d0 (prologue and realignment, the class-1
      side-stack frame by __asan_stack_malloc_1, record (17), xmalloc (12n + 1), the two inlined arg_i (snprintf into
      the frame, arg_s), list[0] = 0 with its store1 check refuted, the loop set-up);
@@ -23,6 +23,7 @@
    Walk hypotheses (a Theorem Labs lane convention: a fact a Theorem Labs lane states only at the pinned image is a hypothesis under its
    lemma's name; lib/B/Prog/SupChainClosed.v discharges them at PB_cmd): HB, MTL, MTLF, cmd_sig_prog_PB, cmd_palib,
    cmd_palibf, cmd_img_facts_tfib, cmd_frame_flag_law. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

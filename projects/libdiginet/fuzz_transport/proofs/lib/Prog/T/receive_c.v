@@ -10,9 +10,9 @@
    smaller (diginet_session_poll 3840, diginet_session_rx 2272, m_rx 144, settle 80, memcpy / memset 0), and free's
    window [sp - 8192, sp) lies inside [sp - 8240, sp).
    The contract is an SR contract (Reusable/YM06.v SR, as the kit's malloc_contract / free_contract,
-   Contract.v:91-113, and the donor's segment contracts, fuzz_decode Prog/fd_segments_c.v): the allocator state
+   Contract.v:92-114, and the donor's segment contracts, fuzz_decode Prog/fd_segments_c.v): the allocator state
    (L, A, md) goes in and comes out. The evt contracts of the callees that do not allocate are cut in by evt_SR
-   (Contract.v:24), after MemNorm.v evt_normalize. The heap frame's address a is chosen by malloc, so the model premise quantifies over it
+   (Contract.v:25), after MemNorm.v evt_normalize. The heap frame's address a is chosen by malloc, so the model premise quantifies over it
    (every a that a successful malloc can return: 0 < a, a + 65536 <= 2^64) and the post names the a malloc
    returned: the world after is receive_m's at that a (m_rx stores pointers into the frame). *)
 From Stdlib Require Import ZArith List Bool Lia.
@@ -42,7 +42,7 @@ Definition H_GUARD : Z := 0x62b20.
 Definition h_world (x : Z) : Prop := W_BASE_PLAIN <= x < W_BASE_PLAIN + W_LEN.
 
 (* The heap-frame addresses the model is asked about: every address a successful malloc returns (fresh_block,
-   Contract.v:73, and alloc_ceiling below 2^63 give it). TSim's heap_ok (TSim/LoopOk.v) asks the same of each A k. *)
+   Contract.v:74, and alloc_ceiling below 2^63 give it). TSim's heap_ok (TSim/LoopOk.v) asks the same of each A k. *)
 Definition h_addr_ok (a : Z) : Prop := 0 < a /\ a + 65536 <= 2 ^ 64.
 
 Section K.

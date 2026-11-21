@@ -52,10 +52,10 @@
      `asnprintf_link_realizes`) asks of d = a0 + 4 + 16 n and w <= 16: the
      bytes writable and outside the window (the write set's `ajw`, `amarks_at`'s writability and
      `apart_frame`), in memory, addressable with the hull visible (`amarks_blk_ok`), not the runtime's
-     (`~ aowned`), placed by `link_snp_place d w` (LinkSnpDef.v:179-180:
+     (`~ aowned`), placed by `link_snp_place d w` (LinkSnpDef.v:180-181:
      above the image, the span between the stack-guard .got word and the guard, or the low arm
      `d + w <= IMG_LO`) and apart from the runtime cells `link_snp_rt_cells` (all inside the image [0x10000,
-     0x654000); `link_snp_rt_cells_of_off`, LinkSnpDef.v:283).
+     0x654000); `link_snp_rt_cells_of_off`, LinkSnpDef.v:284).
      `amarks_ledger bl a0` gives the last three: `In (a0, MK_SIZE) bl` over the block list `aleaf_fx` hands the
      Pre (AR's block law then gives `~ aowned`), and `YCbq.off_img a0 MK_SIZE` (the block below the image's
      first page or above its top). The second is stated because no other premise places the block, and it is
@@ -96,7 +96,7 @@
    Released proofs (rule 24): none of remember (link-a/index/SUMMARY.md (internal record, sha256 58ab2c29f038)).
    THE FLOATING-POINT STATE is `aleaf_fx`'s. Entry: the shape takes `YK0o.frm_zero (fp_csr fx)`, which the
    released snprintf contract asks (boxreg A/Rt/SnprintfDef.v, its last premise) and the plain mark_quietly
-   states (lib/Prog/mark_quietly_c.v:151); it holds at every call site, because the start-up fcsr is 0
+   states (lib/Prog/mark_quietly_c.v:152); it holds at every call site, because the start-up fcsr is 0
    (`fp_frm_zero_fx0`, Reusable/YK0o.v:15) and none of the 36 listings of link's own functions holds an f* or
    csr* instruction (checked over link-a/listings/*.fuzz_link.asan.s (36 internal records, the sha256 of each in the
    records MANIFEST)). Exit: `apostF` returns at some fx' with `BoxBase.fxr fx fx'` (every f register but f10 kept, the

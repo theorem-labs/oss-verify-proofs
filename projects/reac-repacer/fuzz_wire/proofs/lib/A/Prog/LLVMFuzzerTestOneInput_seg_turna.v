@@ -1,7 +1,7 @@
 (* LLVMFuzzerTestOneInput_seg_turna: u_turn_a_ok : u_turn_a_stmt (lib/A/Prog/LLVMFuzzerTestOneInput_segs.v), the
    turn_a segment of image A's walk (+0xa4 .. +0xfc, the seven checks on f): the image-A twin of this unit's
-   lib/B/Prog/LLVMFuzzerTestOneInput_seg_turna.v (commit da4c55efd5b6), itself in the form of reac-repacer/fuzz_uci's
-   lib/A/Prog/LLVMFuzzerTestOneInput_seg_turnb.v and _seg_turnb_lib.v (commit 14922e68e3b0): a run of the Pa engine
+   lib/B/Prog/LLVMFuzzerTestOneInput_seg_turna.v, itself in the form of reac-repacer/fuzz_uci's
+   lib/A/Prog/LLVMFuzzerTestOneInput_seg_turnb.v and _seg_turnb_lib.v: a run of the Pa engine
    to a call, the callee's caller-journal contract (the record u_prem) at the call, the cut state rebuilt at the return
    address. Image A's offsets, its modules (lib/A, lib/Reusable) and its segment library (lib/A/Prog/WirePPa.v,
    WirePPaImg.v, WirePPaLib.v, PaJournal.v, LLVMFuzzerTestOneInput_seg_lib.v).

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader fact, the 6 MiB zero-filled stack window): changed exit_preBS, exit_run_2BS, exit_run_3BS and 1 more. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -108,7 +109,7 @@ Section Exit.
   Definition exit_preBS (LB : list (Z * Z)) (LK : list fframe) (cr : credit) (A : list (Z * Z)) (M : word -> option byte) (model : Model) (S tid : Z) : Prop :=
     dinvA LB LK cr A M model
     /\ usp - 4096 <= S /\ S <= usp /\ S mod 16 = 0
-    /\ (forall a n : Z, usp - 8388608 <= a -> a + n <= usp -> L5Defs.L5.writable ASEGS (mrestrict (ahid A model) M) a n)
+    /\ (forall a n : Z, usp - 6144513 <= a -> a + n <= usp -> L5Defs.L5.writable ASEGS (mrestrict (ahid A model) M) a n)
     /\ L5Defs.L5.img_clear (mrestrict (ahid A model) M) 65536 1282048
     /\ exitBS tid (mrestrict (ahid A model) M).
 
@@ -330,6 +331,7 @@ Proof.
   - exact MI1.
   - exact Halt1.
   - rewrite Fds1. exact Fd1.
+  - rewrite (sbm_rdrA _ _ SBM1). exact (di_rdr _ _ _ _ _ _ _ _ _ _ Inv).
   - unfold wv_regs. repeat split.
     all: first [exact Q17 | exact Q10 | exact Q11 | exact Q12 | exact Q9 | exact Q18 | exact Q22 | exact Q19].
   - unfold wv_iov. rewrite Vis1.
@@ -583,6 +585,7 @@ Proof.
   - exact MI1.
   - exact Halt1.
   - rewrite Fds1. exact Fd1.
+  - rewrite (sbm_rdrA _ _ SBM1). exact (di_rdr _ _ _ _ _ _ _ _ _ _ Inv).
   - unfold wv_regs. repeat split.
     all: first [exact Q17 | exact Q10 | exact Q11 | exact Q12 | exact Q9 | exact Q18 | exact Q22 | exact Q19].
   - unfold wv_iov. rewrite Vis1.
@@ -837,6 +840,7 @@ Proof.
   - exact MI1.
   - exact Halt1.
   - rewrite Fds1. exact Fd1.
+  - rewrite (sbm_rdrA _ _ SBM1). exact (di_rdr _ _ _ _ _ _ _ _ _ _ Inv).
   - unfold wv_regs. repeat split.
     all: first [exact Q17 | exact Q10 | exact Q11 | exact Q12 | exact Q9 | exact Q18 | exact Q22 | exact Q19].
   - unfold wv_iov. rewrite Vis1.

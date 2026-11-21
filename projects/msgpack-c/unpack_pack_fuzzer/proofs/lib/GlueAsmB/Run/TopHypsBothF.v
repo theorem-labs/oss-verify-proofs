@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (hypsFR, the file family's hypotheses for its certificates of the start state with CONFIG_RSEQ, from the same family facts and those certificates' contract tables and library nodes). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import PrimInt63 Uint63.
 From stdpp Require Import gmap.
@@ -20,6 +21,13 @@ From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Bridge Require GlueA Fake
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.GlueA Require AsanRun AsanImgx AsanDrun AsanPB.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Unp Require Ops ClientX.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.BothU Require UnivBoth.
+(* The CONFIG_RSEQ copies first: their short names are shadowed by the in-place ones below, and are used only
+   through the full-path aliases after the imports. *)
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Both2FR Require T_Both2F.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Both2LR Require T_Both2L.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Both2ER Require T_Both2E.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.RunR Require Both2F_1.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.LibRunR Require Both_r9 Both_r12.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Both2F Require T_Both2F.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Both2L Require T_Both2L.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Both2E Require T_Both2E.
@@ -33,6 +41,12 @@ Local Notation AIu2 := (AInstanceU2.TwinB.AIu2 ExhFirst.TwinB.exh_first).
 Open Scope Z_scope.
 Unset Lia Cache.
 Module AM := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.ALib.Mem.
+Module TFR := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Both2FR.T_Both2F.
+Module TLR := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Both2LR.T_Both2L.
+Module TER := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Both2ER.T_Both2E.
+Module H1R := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.RunR.Both2F_1.
+Module L12R := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.LibRunR.Both_r12.LibRunBoth_r12.
+Module L9R := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.LibRunR.Both_r9.LibRunBoth_r9.
 
 Section TopHypsBothF.
 Context {rc : runConstT}.
@@ -88,6 +102,22 @@ Proof.
   - cbn [r_p1 RAx AsanDrun.TwinB.RA]. fold p1. repeat split; assumption.
   - exact (Both_r12.LibRunBoth_r12.lib_ok_r12 RAx cL cE G0).
   - exact (Both_r9.LibRunBoth_r9.lib_ok_r9 RAx cL cE).
+Qed.
+
+(* the same contract tables and library node for the certificates of the start state with CONFIG_RSEQ *)
+Hypothesis cFR : ctab_ok bsegs RAx TFR.CONTRACTS.
+Hypothesis cLR : ctab_ok bsegs RAx TLR.CONTRACTS.
+Hypothesis cER : ctab_ok bsegs RAx TER.CONTRACTS.
+Hypothesis G0R : forall E0 K, r_PB RAx (eb E0) -> LNODE bsegs RAx L12R.N E0 K (t_st TFR.R_LIBGEN_r12_RET) ->
+  LNODE bsegs RAx L12R.N E0 K (t_st TLR.T_G0_r31o5n0o1n63o7n1o15n2o10n0o11n0o12n0o13n0o14n1o16n0o17n0).
+
+Theorem hypsFR : H1R.hyps RAx.
+Proof.
+  refine (H1R.Hyps RAx cFR file_pb_RA _ _ _ _).
+  - intros m Hm. cbn [r_p1 r_file RAx AsanDrun.TwinB.RA]. exact (AsanPB.TwinB.MP_file inp HFILE m Hm).
+  - cbn [r_p1 RAx AsanDrun.TwinB.RA]. fold p1. repeat split; assumption.
+  - exact (L12R.lib_ok_r12 RAx cLR cER G0R).
+  - exact (L9R.lib_ok_r9 RAx cLR cER).
 Qed.
 End TopHypsBothF.
 

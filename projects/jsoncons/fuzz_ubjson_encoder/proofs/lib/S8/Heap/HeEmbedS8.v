@@ -1,11 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the vDSO; the Linux placement of mmap grants; the reserved-range ledger; imports; new lemmas; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/CJ/Bridge/Embed.v, 58 lines within its lines 9-982. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap.
+From LinuxProcessSemantics.LinuxProcessSem Require Vdso.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S8 Require Import PropExec CatSim MmapSim AllocSim Scfg ShapeAlg SpinAlg AgentLib RefNodes.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S8.CJ.Lib Require Import MStateS8 MemS8 ExecS8 ITreeS8 NodesS8 DecodeS8.
@@ -102,6 +104,51 @@ Proof. intros A P f l H. induction H; cbn; [constructor|]. destruct (f x); [cons
 Lemma length_filter_le : forall {A} f (l : list A), (length (List.filter f l) <= length l)%nat.
 Proof. intros. apply List.filter_length_le. Qed.
 
+Definition vdso_inc (kb : KernelBuild) (h : VmMaps) : Prop :=
+  incl (vdso_reserved kb (vdso_top h)) (vm_reserved h).
+
+Lemma vdso_inc_keep : forall kb h h',
+  vdso_inc kb h -> vm_reserved h' = vm_reserved h ->
+  vm_mmap_base h' = vm_mmap_base h -> vm_init_sp h' = vm_init_sp h -> vdso_inc kb h'.
+Proof.
+  intros kb h h' H E1 E2 E3. unfold vdso_inc in *. rewrite E1.
+  replace (vdso_top h') with (vdso_top h) by (unfold vdso_top, mmap_top, alloc_top; rewrite E2, E3; reflexivity).
+  exact H.
+Qed.
+
+Ltac vdso_keep_tac :=
+  rewrite ?with_vmmaps_vm;
+  match goal with H : vdso_inc ?kb _ |- vdso_inc ?kb _ => apply (vdso_inc_keep _ _ _ H); reflexivity end.
+
+Lemma vdso_init_facts : forall kb (x : Z), 0 <= x < 2 ^ 64 ->
+  (length (vdso_reserved kb (page_round_down_Z x)) <= 2)%nat
+  /\ Forall (fun p => bv_unsigned (snd p) <= 20 * 4096) (vdso_reserved kb (page_round_down_Z x))
+  /\ (forall e, In e (vdso_reserved kb (page_round_down_Z x)) -> x - 4095 - 20 * 4096 <= bv_unsigned (fst e)).
+Proof.
+  intros kb x Hx.
+  assert (T1 : page_round_down_Z x <= x) by apply page_round_down_Z_le.
+  assert (T0 : x - 4095 <= page_round_down_Z x).
+  { unfold page_round_down_Z, page_size. pose proof (Z_div_mod_eq_full x 4096). pose proof (Z.mod_pos_bound x 4096 ltac:(lia)). lia. }
+  assert (Ttop : page_round_down_Z x < two_pow_64) by (unfold two_pow_64; lia).
+  pose proof (vdso_len_bounds kb) as VL. unfold page_size in VL.
+  split; [unfold vdso_reserved; destruct (_ <? _)%Z; cbn [length]; lia|].
+  split.
+  - apply Forall_forall. intros [a n] Hin. destruct (vdso_reserved_above kb _ a n Ttop Hin) as [A1 A2].
+    cbn [snd]. pose proof (bv_unsigned_in_range 64 a). lia.
+  - intros [a n] Hin. destruct (vdso_reserved_above kb _ a n Ttop Hin) as [A1 A2]. cbn [fst]. lia.
+Qed.
+
+Lemma vdso_reserved_kb_indep : forall kb kb' top,
+  vdso_reserved kb top = vdso_reserved kb' top.
+Proof.
+  intros kb kb' top.
+  assert (E : forall k, vdso_text_pages k = vdso_text_pages kb').
+  { intros k. unfold vdso_text_pages, vdso_image_of.
+    change (length Vdso.vdso_images) with 1%nat. rewrite !Nat.mod_1_r. reflexivity. }
+  unfold vdso_reserved, vdso_len. rewrite (E kb). reflexivity.
+Qed.
+
+
 Definition RI (lim0 CAPK CAPB : Z) (ne : nat) (bb : Z) (h : VmMaps) : Prop :=
      Z.of_nat (length (vm_reserved h ++ vm_maps h)) + Z.of_nat ne <= CAPK
   /\ Forall (fun p => bv_unsigned (snd p) <= NMAX) (vm_reserved h ++ vm_maps h)
@@ -148,23 +195,27 @@ Qed.
 
 Lemma RI_grant_rw : forall lim0 CAPK CAPB ne bb (mo : Model) (n : Z),
   RI lim0 CAPK CAPB ne bb (m_vmmaps mo) -> CAPK <= CAPKMAX ->
-  0 <= n <= NMAX ->
+  0 < n <= NMAX -> n mod page_size = 0 ->
   vm_backing_used mo + n <= vm_limit (m_vmmaps mo) ->
   exists a, grant_ok (Z_to_bv 64 0) mo a n = true.
 Proof.
-  intros lim0 CAPK CAPB ne bb mo n (R1 & R2 & R3 & R4 & R5 & R6 & R7) HK Hn Hfit.
-  pose proof (alloc_top_ge_window _ R6) as Htop. pose proof NMAX_facts as (N0 & N1 & _). pose proof UE_band as HB.
-  apply (grant_exists_gen (Z_to_bv 64 0) mo NMAX n CAPKMAX (2 ^ 32)); [exact N0| exact N1| exact Hn| exact R2| lia| reflexivity| lia| lia| exact Hfit].
+  intros lim0 CAPK CAPB ne bb mo n (R1 & R2 & R3 & R4 & R5 & R6 & R7) HK Hn Hnal Hfit.
+  pose proof (alloc_top_ge_window _ R6) as Htop. pose proof NMAX_facts as (N0 & N1 & _).
+  apply (grant_exists_gen (Z_to_bv 64 0) mo NMAX n CAPKMAX task_unmapped_base);
+    [exact N0| exact N1| exact Hn| exact Hnal| exact R2| lia| rewrite task_unmapped_base_val; reflexivity| lia
+    | rewrite task_unmapped_base_val; unfold NMAX, CAPKMAX; lia| exact Hfit].
 Qed.
 
 Lemma RI_grant_na : forall lim0 CAPK CAPB ne bb (mo : Model) (n : Z),
   RI lim0 CAPK CAPB ne bb (m_vmmaps mo) -> CAPK <= CAPKMAX ->
-  0 <= n <= NMAX ->
+  0 < n <= NMAX -> n mod page_size = 0 ->
   exists a, grant_ok_na (Z_to_bv 64 0) mo a n = true.
 Proof.
-  intros lim0 CAPK CAPB ne bb mo n (R1 & R2 & R3 & R4 & R5 & R6 & R7) HK Hn.
-  pose proof (alloc_top_ge_window _ R6) as Htop. pose proof NMAX_facts as (N0 & N1 & _). pose proof UE_band as HB.
-  apply (grant_exists_na_gen (Z_to_bv 64 0) mo NMAX n CAPKMAX (2 ^ 32)); [exact N0| exact N1| exact Hn| exact R2| lia| reflexivity| lia| lia].
+  intros lim0 CAPK CAPB ne bb mo n (R1 & R2 & R3 & R4 & R5 & R6 & R7) HK Hn Hnal.
+  pose proof (alloc_top_ge_window _ R6) as Htop. pose proof NMAX_facts as (N0 & N1 & _).
+  apply (grant_exists_na_gen (Z_to_bv 64 0) mo NMAX n CAPKMAX task_unmapped_base);
+    [exact N0| exact N1| exact Hn| exact Hnal| exact R2| lia| rewrite task_unmapped_base_val; reflexivity| lia
+    | rewrite task_unmapped_base_val; unfold NMAX, CAPKMAX; lia].
 Qed.
 
 Lemma RI_live_limit : forall lim0 CAPK CAPB ne bb h, RI lim0 CAPK CAPB ne bb h -> (bm_on = true \/ CAPB <= CAPBMAX) ->
@@ -373,7 +424,7 @@ Proof.
       - exfalso. apply Z.leb_gt in Hfit. pose proof (RefNodes.vm_backing_used_le_live mo Hl Hm). unfold vm_live_bytes in *. fold h in Hll. subst h. lia. }
   apply Z.leb_le in Hfit.
   eapply (bn_mmap_rw segs scfg Halloc ms mo len K Hh Hl Hat); [unfold LEN_MAX in Hlen; lia| |].
-  - change (page_round_up_Z len) with n. eapply (RI_grant_rw lim0 CAPK CAPB (S ne) bb mo n HRI HCAPK); [lia| exact Hfit].
+  - change (page_round_up_Z len) with n. eapply (RI_grant_rw lim0 CAPK CAPB (S ne) bb mo n HRI HCAPK); [lia| exact HnA| exact Hfit].
   - intros a Hg. change (page_round_up_Z len) with n in Hg |- *.
     destruct (grant_ok_unpack _ _ _ _ Hg) as (G1 & G2 & G3 & G4 & G5).
     fold h in G3. rewrite (KL2_alloc_top _ _ _ _ _ HK) in G3.
@@ -411,7 +462,7 @@ Proof.
   assert (HnA : n mod page_size = 0) by (unfold n; apply mmap_len_aligned).
   assert (Hun : bv_unsigned (Z_to_bv 64 n) = n) by (apply u64_lit; unfold NMAX in HnN; lia).
   eapply (bn_mmap_none segs scfg Halloc ms mo len K Hh Hl Hat); [unfold LEN_MAX in Hlen; lia| |].
-  - change (page_round_up_Z len) with n. eapply (RI_grant_na lim0 CAPK CAPB (S ne) bb mo n HRI HCAPK); lia.
+  - change (page_round_up_Z len) with n. eapply (RI_grant_na lim0 CAPK CAPB (S ne) bb mo n HRI HCAPK); [lia| exact HnA].
   - intros a Hg. change (page_round_up_Z len) with n in Hg |- *.
     destruct (grant_ok_na_unpack _ _ _ _ Hg) as (G1 & G2 & G3 & G4).
     fold h in G3. rewrite (KL2_alloc_top _ _ _ _ _ HK) in G3.
@@ -504,13 +555,15 @@ Proof.
     as (Hlen1 & Hlen2 & Hal & Ha0 & Hn0 & Hce & Hhas & Hans & HK' & Hcnt & Hlb).
   fold n aw nw in Hhas, HK', Hcnt, Hlb, Hlen2, Hn0, Hce.
   assert (Hpr : page_round_up_Z len = n) by (rewrite <- Hlen2; reflexivity).
-  eapply (bn_munmap segs scfg ms mo a len K Hh Hl Hat).
+  eapply (bn_munmap segs scfg Halloc ms mo a len K Hh Hl Hat).
   - unfold page_size. unfold PGSZ in Hal. exact Hal.
   - lia.
   - lia.
   - rewrite Hpr. unfold TASK_SIZE. pose_ceil. lia.
   - rewrite Hpr. exact Hhas.
   - rewrite Hpr. fold aw nw. rewrite (munmap_model_simple aw nw mo Hl Hm). fold h.
+    unfold mmap_fixed_destroyed_next.
+    rewrite (maps_subtract_has (vm_maps h) aw nw (k2_wf _ _ _ _ _ HK) Hhas).
     assert (Ua : bv_unsigned aw = a) by (subst aw; apply u64_lit; lia).
     assert (Un : bv_unsigned nw = n) by (subst nw; apply u64_lit; lia).
     rewrite Ua, Un. apply HC.
@@ -532,6 +585,7 @@ Lemma step_mprotect : forall L pbrk ms mo b l k ne bb K,
   KL L pbrk h -> brk_quiet L -> In (b, l, k) (ld_metas L) -> (2 + k) * PGSZ <= round_up_pg l ->
   m_halted mo = None -> m_vm_lazy mo = [] -> m_vm_materialized mo = [] ->
   RI lim0 CAPK CAPB (S ne) bb h ->
+  vdso_inc (m_kernel mo) h ->
   NodesS8.at_node segs (NMprotect a PGSZ 3) ms ->
   K [] ->
   (let rsp := mkEffectU (Z_to_bv 64 0) [] [(aw, nw)] [] [] [] in
@@ -544,7 +598,7 @@ Lemma step_mprotect : forall L pbrk ms mo b l k ne bb K,
    srealizes segs scfg (mkCfg (nret ms rsp) (with_vmmaps h' mo)) K) ->
   srealizes segs scfg (mkCfg ms mo) K.
 Proof.
-  intros L pbrk ms mo b l k ne bb K h a e aw nw HK Hq Hin Hk Hh Hl Hm HRI Hat HK0 HC. subst e.
+  intros L pbrk ms mo b l k ne bb K h a e aw nw HK Hq Hin Hk Hh Hl Hm HRI Hvd Hat HK0 HC. subst e.
   pose proof alloc_ceiling_lt as Hcl.
   destruct (KL2_mprotect resv_img img_hi L pbrk h b l k HK Hq Hin Hk) as (Hal & Ha0 & Hce & Hcn & Hcm & Hans & HK').
   fold a in Hal, Ha0, Hce, Hcn, Hcm, HK', Hans |- *. fold aw nw in Hcn, Hcm, HK'.
@@ -557,6 +611,7 @@ Proof.
         + unfold PGSZ; lia.
         + lia.
         + unfold two_pow_64. lia.
+        + exact (KL2_meta_page_free resv_img img_hi L pbrk h b l k _ HK Hin Hk Hvd).
         + exact Hcn.
         + exact Hcm.
         + fold nw. exact Hfit.
@@ -569,6 +624,7 @@ Proof.
   - unfold PGSZ; lia.
   - lia.
   - rewrite HprP. unfold two_pow_64. lia.
+  - rewrite HprP. exact (KL2_meta_page_free resv_img img_hi L pbrk h b l k _ HK Hin Hk Hvd).
   - rewrite HprP. exact Hcn.
   - rewrite HprP. exact Hcm.
   - rewrite HprP. fold nw. exact Hfit.
@@ -645,23 +701,26 @@ Theorem embed : forall {R} (t : M R) L Post (E : ev -> Prop) (ne : nat) (bb : Z)
   mo = with_vmmaps (m_vmmaps mo) mo0 ->
   m_halted mo0 = None -> m_vm_lazy mo0 = [] -> m_vm_materialized mo0 = [] ->
   RI lim0 CAPK CAPB ne bb (m_vmmaps mo) ->
+  vdso_inc (m_kernel mo0) (m_vmmaps mo) ->
   (forall r s' ms' mo' L' c n,
      Qm r s' ms' -> cpathf lim0 ecost L t L' r c n -> Post L' r -> Q r ->
      KL L' (ps_brk s') (m_vmmaps mo') ->
      mo' = with_vmmaps (m_vmmaps mo') mo0 ->
      RI lim0 CAPK CAPB (ne - n)%nat (bb - c) (m_vmmaps mo') ->
+     vdso_inc (m_kernel mo0) (m_vmmaps mo') ->
      ps_m s' = ps_m s -> ps_fa s' = ps_fa s -> ps_so s' = ps_so s ->
      srealizes segs scfg (mkCfg ms' mo') K) ->
   K [] ->
   srealizes segs scfg (mkCfg ms mo) K.
 Proof.
-  intros R t. induction t as [r|e k IH]; intros L Post E ne bb Q s Qm ms mo mo0 K Hct Hgt HE Himpl HK Emo Hh Hl Hm HRI CONT HK0.
+  intros R t. induction t as [r|e k IH]; intros L Post E ne bb Q s Qm ms mo mo0 K Hct Hgt HE Himpl HK Emo Hh Hl Hm HRI Hvd CONT HK0.
   -
     cbn [membed] in Himpl. apply implM_ret_inv in Himpl. destruct Himpl as (ms' & Hms & HQ).
     eapply srz_cj_msteps; [exact Emo| exact Hh| exact Hl| exact Hms|].
     cbn [ctree_ok] in Hct. cbn [gtree] in Hgt.
     eapply (CONT r s ms' mo L 0 0%nat HQ (cpf_ret lim0 ecost L r) Hct Hgt HK Emo); try reflexivity.
     eapply RI_weaken; [exact HRI| lia| pose proof HRI as (_ & _ & _ & R4 & _); lia].
+    exact Hvd.
   -
     cbn [ctree_ok] in Hct. destruct Hct as [Hpre Hk].
     assert (Hne : match e with EUndef _ => False | _ => True end) by (destruct e; cbn in Hpre; auto).
@@ -671,7 +730,7 @@ Proof.
     assert (Hl' : m_vm_lazy mo = []) by (rewrite Emo, with_vmmaps_lazy'; exact Hl).
     assert (Hm' : m_vm_materialized mo = []) by (rewrite Emo, with_vmmaps_mat; exact Hm).
     pose proof HRI as (_ & _ & _ & Hbb0 & _).
-
+    assert (Hvdm : vdso_inc (m_kernel mo) (m_vmmaps mo)) by (rewrite Emo at 1; exact Hvd).
     assert (KONT : forall z (s1 : PState) ms2 (mo1 : Model) (bb1 : Z),
               evfit lim0 e z ->
               answer_ok L e z = true -> good e z ->
@@ -680,13 +739,15 @@ Proof.
               mo1 = with_vmmaps (m_vmmaps mo1) mo0 ->
               RI lim0 CAPK CAPB ne' bb1 (m_vmmaps mo1) -> 0 <= bb - ecost e <= bb1 ->
               ps_m s1 = ps_m s -> ps_fa s1 = ps_fa s -> ps_so s1 = ps_so s ->
+              vdso_inc (m_kernel mo0) (m_vmmaps mo1) ->
               srealizes segs scfg (mkCfg ms2 mo1) K).
-    { intros z s1 ms2 mo1 bb1 Hfz Hans Hgood Hi1 HK1 Emo1 HRI1 Hbb1 E1 E2 E3.
+    { intros z s1 ms2 mo1 bb1 Hfz Hans Hgood Hi1 HK1 Emo1 HRI1 Hbb1 E1 E2 E3 Hvd1.
       eapply (IH z (event_post L e z) Post E ne' (bb - ecost e) Q s1 Qm ms2 mo1 mo0 K (Hk z Hans) (Hg z Hgood) HE Hi1 HK1 Emo1 Hh Hl Hm).
       - eapply RI_weaken; [exact HRI1| lia| lia].
-      - intros r s' ms' mo' L' c n HQ' Hcp HP HQr HK' Emo' HRI' E1' E2' E3'.
+      - exact Hvd1.
+      - intros r s' ms' mo' L' c n HQ' Hcp HP HQr HK' Emo' HRI' Hvd' E1' E2' E3'.
         eapply (CONT r s' ms' mo' L' (ecost e + c) (S n) HQ'); [eapply cpf_vis; [exact Hans| exact Hfz| exact Hcp]| exact HP| exact HQr| exact HK'| exact Emo'
-          | replace (bb - (ecost e + c)) with (bb - ecost e - c) by lia; exact HRI'| congruence| congruence| congruence].
+          | replace (bb - (ecost e + c)) with (bb - ecost e - c) by lia; exact HRI'| exact Hvd'| congruence| congruence| congruence].
       - exact HK0. }
     clear IH CONT Hk Hg.
     destruct e as [req|a len prot flags|a len|a len prot|p c hh|u]; cbn [event_pre] in Hpre; try contradiction.
@@ -702,7 +763,7 @@ Proof.
         eapply srz_cj_msteps; [exact Emo| exact Hh| exact Hl| eapply ExecS8.msteps_trans; [exact Hms2| exact Hms3]|].
         eapply (KONT r0 (set_brk_ps r0 s) ms3 mo bb);
           [exact I| exact Hans| exact I| exact Hi3| exact HK'| exact Emo| eapply RI_weaken; [exact HRI| lia| lia]| cbn [ecost Z.eqb]; lia
-          | reflexivity| reflexivity| reflexivity].
+          | reflexivity| reflexivity| reflexivity| exact Hvd].
       *
         destruct (KL2_brk_grow1 resv_img img_hi L (ps_brk s) (m_vmmaps mo) cur HK Hph)
           as (Ecur & Epbrk & Ereq & Hbal & Hb0 & Hnw & Hsb & Hne0 & HREF & HGR).
@@ -722,7 +783,7 @@ Proof.
            eapply srz_cj_msteps; [exact Emo| exact Hh| exact Hl| eapply ExecS8.msteps_trans; [exact Hms2| exact Hms3]|].
            eapply (KONT (ps_brk s) s ms3 mo bb);
              [exact I| exact Hans| exact I| exact Hi3| exact HK'| exact Emo| exact HRI'| lia
-             | reflexivity| reflexivity| reflexivity].
+             | reflexivity| reflexivity| reflexivity| exact Hvd].
         --
            intros rsp h' Hdec Hans HK' HRI'.
            destruct (Hk1 _ _ Hdec) as (ms2 & Hms2 & Hi2). apply implM_mupd_inv, implM_ret_inv in Hi2.
@@ -731,7 +792,7 @@ Proof.
            eapply (KONT _ (set_brk_ps _ s) ms3 _ (bb - 2 * PGSZ));
              [exact I| exact Hans| exact I| exact Hi3| cbn [ps_brk set_brk_ps]; rewrite with_vmmaps_vm; exact HK'
              | rewrite Emo, with_vmmaps_twice, with_vmmaps_vm; reflexivity| rewrite with_vmmaps_vm; exact HRI'| lia
-             | reflexivity| reflexivity| reflexivity].
+             | reflexivity| reflexivity| reflexivity| vdso_keep_tac].
       *
         destruct (KL2_brk_grow2 resv_img img_hi L (ps_brk s) (m_vmmaps mo) b l HK Hph Hreg)
           as (Epbrk & Ebrk & Ereq & Hbal & Hb0 & Hnw & Hsb & Hne0 & HREF & HGR).
@@ -752,7 +813,7 @@ Proof.
            eapply srz_cj_msteps; [exact Emo| exact Hh| exact Hl| eapply ExecS8.msteps_trans; [exact Hms2| exact Hms3]|].
            eapply (KONT (ps_brk s) s ms3 mo bb);
              [exact I| exact Hans| exact I| exact Hi3| exact HK'| exact Emo| exact HRI'| unfold PGSZ in *; lia
-             | reflexivity| reflexivity| reflexivity].
+             | reflexivity| reflexivity| reflexivity| exact Hvd].
         --
            intros rsp h' Hdec Hans HK' HRI'.
            destruct (Hk1 _ _ Hdec) as (ms2 & Hms2 & Hi2). apply implM_mupd_inv, implM_ret_inv in Hi2.
@@ -761,7 +822,7 @@ Proof.
            eapply (KONT _ (set_brk_ps _ s) ms3 _ (bb - PGSZ));
              [exact I| exact Hans| exact I| exact Hi3| cbn [ps_brk set_brk_ps]; rewrite with_vmmaps_vm; exact HK'
              | rewrite Emo, with_vmmaps_twice, with_vmmaps_vm; reflexivity| rewrite with_vmmaps_vm; exact HRI'| unfold PGSZ in *; lia
-             | reflexivity| reflexivity| reflexivity].
+             | reflexivity| reflexivity| reflexivity| vdso_keep_tac].
     +
       destruct Hpre as [(Hq & -> & -> & Hprot & Hlen)|(cur & Hph & -> & -> & -> & ->)].
       *
@@ -778,7 +839,7 @@ Proof.
            eapply (KONT z s ms3 _ (bb - mmap_len len));
              [exact I| exact Hans| cbn [good]; right; exact Herr| exact Hi3| rewrite with_vmmaps_vm; exact HK'
              | rewrite Emo, with_vmmaps_twice, with_vmmaps_vm; reflexivity| rewrite with_vmmaps_vm; exact HRI'| lia
-             | reflexivity| reflexivity| reflexivity].
+             | reflexivity| reflexivity| reflexivity| vdso_keep_tac].
         --
            rewrite ev_step_mmap_rw in Himpl. destruct (machine_event _ _ _ _ _ _ Himpl) as (ms1 & Hms & Hat & Hk1).
            eapply srz_cj_msteps; [exact Emo| exact Hh| exact Hl| exact Hms|].
@@ -789,7 +850,7 @@ Proof.
            eapply (KONT z s ms3 _ (bb - mmap_len len));
              [intros _; exact Hfn| exact Hans| cbn [good]; right; exact Herr| exact Hi3| rewrite with_vmmaps_vm; exact HK'
              | rewrite Emo, with_vmmaps_twice, with_vmmaps_vm; reflexivity| rewrite with_vmmaps_vm; exact HRI'| lia
-             | reflexivity| reflexivity| reflexivity].
+             | reflexivity| reflexivity| reflexivity| vdso_keep_tac].
       *
         assert (Hc2 : ecost (EMmap (round_up_pg cur) PGSZ PROT_NONE MAPFX) = 0) by reflexivity. rewrite Hc2 in *.
         rewrite ev_step_mmap_fixed in Himpl. destruct (machine_event _ _ _ _ _ _ Himpl) as (ms1 & Hms & Hat & Hk1).
@@ -801,7 +862,7 @@ Proof.
         eapply (KONT (round_up_pg cur) s ms3 _ bb);
           [exact I| exact Hans| cbn [good]; left; reflexivity| exact Hi3| rewrite with_vmmaps_vm; exact HK'
           | rewrite Emo, with_vmmaps_twice, with_vmmaps_vm; reflexivity| rewrite with_vmmaps_vm; exact HRI'| lia
-          | reflexivity| reflexivity| reflexivity].
+          | reflexivity| reflexivity| reflexivity| vdso_keep_tac].
     +
       destruct Hpre as (Hq & l0 & Hin & Hlen).
       assert (Hc2 : ecost (EMunmap a len) = 0) by reflexivity. rewrite Hc2 in *.
@@ -814,20 +875,20 @@ Proof.
       eapply (KONT 0 s ms3 _ bb);
         [exact I| exact Hans| reflexivity| exact Hi3| rewrite with_vmmaps_vm; exact HK'
         | rewrite Emo, with_vmmaps_twice, with_vmmaps_vm; reflexivity| rewrite with_vmmaps_vm; exact HRI'| lia
-        | reflexivity| reflexivity| reflexivity].
+        | reflexivity| reflexivity| reflexivity| vdso_keep_tac].
     +
       destruct Hpre as (Hq & -> & -> & b & l & kk & Hin & -> & Hk2).
       assert (Hc2 : ecost (EMprotect (b + (1 + kk) * PGSZ) PGSZ PROT_RW) = 0) by reflexivity. rewrite Hc2 in *.
       rewrite ev_step_mprotect in Himpl. destruct (machine_event _ _ _ _ _ _ Himpl) as (ms1 & Hms & Hat & Hk1).
       eapply srz_cj_msteps; [exact Emo| exact Hh| exact Hl| exact Hms|].
-      eapply (step_mprotect L (ps_brk s) ms1 mo b l kk ne' bb K HK Hq Hin Hk2 Hh' Hl' Hm' HRI Hat HK0).
+      eapply (step_mprotect L (ps_brk s) ms1 mo b l kk ne' bb K HK Hq Hin Hk2 Hh' Hl' Hm' HRI Hvdm Hat HK0).
       intros rsp h' Hdec Hans HK' HRI'.
       destruct (Hk1 _ _ Hdec) as (ms2 & Hms2 & Hi2). apply implM_ret_inv in Hi2. destruct Hi2 as (ms3 & Hms3 & Hi3).
       eapply (srz_cj_msteps _ ms3 _ mo0); [rewrite Emo, with_vmmaps_twice; reflexivity| exact Hh| exact Hl| eapply ExecS8.msteps_trans; [exact Hms2| exact Hms3]|].
       eapply (KONT 0 s ms3 _ bb);
         [exact I| exact Hans| reflexivity| exact Hi3| rewrite with_vmmaps_vm; exact HK'
         | rewrite Emo, with_vmmaps_twice, with_vmmaps_vm; reflexivity| rewrite with_vmmaps_vm; exact HRI'| lia
-        | reflexivity| reflexivity| reflexivity].
+        | reflexivity| reflexivity| reflexivity| vdso_keep_tac].
 Qed.
 
 Definition vm_shrunk (h0 h : VmMaps) : Prop :=
@@ -872,13 +933,15 @@ Proof.
     as (Hlen1 & Hlen2 & Hal & Ha0 & Hn0 & Hce & Hhas & Hans & HK' & Hcnt & Hlb).
   fold n aw nw in Hhas, HK', Hcnt, Hlb, Hlen2, Hn0, Hce.
   assert (Hpr : page_round_up_Z len = n) by (rewrite <- Hlen2; reflexivity).
-  eapply (bn_munmap segs scfg ms mo a len K Hh Hl Hat).
+  eapply (bn_munmap segs scfg Halloc ms mo a len K Hh Hl Hat).
   - unfold page_size. unfold PGSZ in Hal. exact Hal.
   - lia.
   - lia.
   - rewrite Hpr. unfold TASK_SIZE. pose_ceil. lia.
   - rewrite Hpr. exact Hhas.
   - rewrite Hpr. fold aw nw. rewrite (munmap_model_simple aw nw mo Hl Hm). fold h.
+    unfold mmap_fixed_destroyed_next.
+    rewrite (maps_subtract_has (vm_maps h) aw nw (k2_wf _ _ _ _ _ HK) Hhas).
     assert (Ua : bv_unsigned aw = a) by (subst aw; apply u64_lit; lia).
     assert (Un : bv_unsigned nw = n) by (subst nw; apply u64_lit; lia).
     rewrite Ua, Un. apply HC.

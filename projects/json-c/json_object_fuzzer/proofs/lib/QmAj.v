@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the auxv entries: rauxv_ok's new witnesses (the keyed auxv values, AT_EXECFN, the CONFIG_RSEQ entries) where the HEAPc preservation proof takes it apart; heapc_model_frame keeps the kernel build, which KL's vDSO fields read). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -630,9 +631,9 @@ eapply Permutation_trans; [apply Permutation_sym; exact HP| exact PLB].
 Qed.
 
 #[using="Type"] Lemma heapc_model_frame A LB m md md' : HEAPc B A LB m md ->
-m_vmmaps md' = m_vmmaps md -> m_vm_lazy md' = m_vm_lazy md -> m_halted md' = None -> HEAPc B A LB m md'.
+m_vmmaps md' = m_vmmaps md -> m_vm_lazy md' = m_vm_lazy md -> m_kernel md' = m_kernel md -> m_halted md' = None -> HEAPc B A LB m md'.
 Proof.
-intros (LB0 & P1 & P2 & P3 & P4 & HK & REST) E1 E2 Hh. exists LB0. splits; auto; try tauto.
+intros (LB0 & P1 & P2 & P3 & P4 & HK & REST) E1 E2 Ek Hh. exists LB0. splits; auto; try tauto.
 eapply KL_model_frame; eauto.
 Qed.
 
@@ -687,7 +688,7 @@ wmono rsegs m m' -> mem_inv rsegs m' ->
 HEAPc B A LB m' md.
 Proof.
 intros (LB0 & PLB & RH & MI & CR & HK & PLV & NDL & SZ & AUX & CAN) CH WM MI'.
-pose proof AUX as (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & _ & _ & _ & HBc & _).
+pose proof AUX as (av & vs & rnd & ex & rs & _ & _ & _ & HBc & _).
 assert (MU : munch (frameW LB0) m m').
 { intros x Hout. pose proof (bv_unsigned_in_range 64 x) as R. unfold bv_modulus in R. change (2 ^ Z.of_N 64) with (2^64) in R.
 rewrite <- (Z_to_bv_bv_unsigned x). apply CH; [lia|]. eapply frameW_outside; [exact PLB| exact HBc| exact Hout]. }

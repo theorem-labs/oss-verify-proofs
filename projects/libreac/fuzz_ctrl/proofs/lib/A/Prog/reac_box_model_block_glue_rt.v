@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* reac_box_model_block (0x85b44) on fuzz_ctrl's ASan build, image A: the ro_agree and asan_cells conjuncts of the glue's
    rt_facts (lib/A/Prog/reac_box_model_block_glue.v (a version not in this delivery), Section Glue) WITHOUT A.ProgWorld.AR_states_vis0_shadow, for
    a Theorem Labs lane's glue lane.  rule 24: no function is proved here (a VIS0-free restatement of two conjuncts of
@@ -71,7 +72,7 @@ Import lib.Lib.ExecF lib.Lib.StepF.
 Import ListNotations.
 Local Open Scope Z_scope.
 
-(* The glue's Section Glue header (reac_box_model_block_glue.v:958-962, :1158), without VIS0 and without the
+(* The glue's Section Glue header (reac_box_model_block_glue.v:959-963, :1159), without VIS0 and without the
    hypotheses rt_facts does not take (TL TLF ML SMP ASM0). *)
 Section Glue.
 Context {fx : lib.Reusable.YK11.FPState} {rc : lib.Reusable.YM05.RunCeil} {SK : lib.Reusable.YI16.sink_head}.

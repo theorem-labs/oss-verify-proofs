@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the walk pcs are fuzz_state.asan's: the __asan_memset pcs move with the function by +0x744 (cgif 0x51a78 -> 0x521bc), and the return into __asan_region_is_poisoned after its mem_is_zero call is 0x54d58 (cgif 0x542cc). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/AE6t.v; 1494 of its 2186 lines of code are new or changed and 358 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_state image A: __asan_memset (0x521bc) under the ANY-USER-POISON invariant ARU (lib/A/FSupoison.v:34), for ANY
    set U of user-poisoned ranges: FSupoisonU.aintrin_realizesU tfibsegs B OSet FSH_Base.PC_memset (lib/A/FSupoisonU.v:244).
    RULE 24 LINE: proves function __asan_memset (fs image A 0x521bc, image B 0x5222c). Reuse search:
@@ -14,9 +15,9 @@
    proves a U-form at 0x521bc; the ARU memset at 0x51d18 is the __wrap_memset interceptor, walk AE79, not this one).
 
    Templates. The walk is S0's U = [] proof lib/A/AE2r.v:567 asan_memset_realizes (AE6t -> AE6u -> AE6v -> AE2r), ported
-   to ARU. Primary template: a working branch 53ce9e4138c lib/A/FSupoisonAsanC.v (the sibling
+   to ARU. Primary template: a working branch lib/A/FSupoisonAsanC.v (the sibling
    __asan_memcpy walk AE6k .. AE2q over ARU, the same AE-walk lineage; memset has ONE range, the destination); method
-   as in a working branch cd7610bc4ed lib/A/FSupoisonIntrinS.v (the interceptor memset walk AE79 over ARU).
+   as in a working branch lib/A/FSupoisonIntrinS.v (the interceptor memset walk AE79 over ARU).
    Both are read with git show, not merged, not imported (neither is in S0). Code text unchanged except where U is
    threaded:
      AE6t.v:347-534  ms_tail  -> ms_tailU: the one step that consumes AR. Its post closes with FSupoison.ARU_frame /

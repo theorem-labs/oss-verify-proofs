@@ -7,6 +7,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3b.v, with its module paths, module names and numbers changed; 884 of its 966 lines of code are new or changed and 1993 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/F13.v, with its module names changed; 426 of its 465 lines of code are new or changed and 927 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/R8.v, with its module names, addresses and numbers changed; 166 of its 338 lines of code are new or changed and 293 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/R4.v -- GLUE for stage seg_R4 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput (lib/A/ACtl.v:666,
    `Hypothesis seg_R4 : forall POST, CF POST C_A81588 -> CF POST C_A81578`).  Written by a Theorem Labs lane's glue lane
    (piece W0/W1); single writer.  The pattern is
@@ -20,9 +21,9 @@
    The spill [A + 48] holds D = fr + 2256, so the call zeroes the 72 fragment-record bytes [D, D + 72) of the owned
    class-6 frame; the callee's stack window is [sp - 2208, sp).
 
-   RULE 24 (released proofs first): proof-index LLVMFuzzerTestOneInput (index v5, built 2026-10-28 20:16:23Z
-   from e966c513ee6, ossv/recipes@a8831f7c5c), second-agent check a Theorem Labs lane 21:10Z CONFIRM: the released ASan
-   donor is cgif/cgif_file_fuzzer at origin/ossv/recipes c8557374ad2e; its walk lifts no outside-proved run, so this
+   RULE 24 (released proofs first): proof-index LLVMFuzzerTestOneInput (index v5, built 2026-10-28 20:16:23Z,
+   ossv/recipes), second-agent check a Theorem Labs lane 21:10Z CONFIRM: the released ASan
+   donor is cgif/cgif_file_fuzzer; its walk lifts no outside-proved run, so this
    glue has no donor counterpart.  Its pieces are the donor's SRr (YA0n) and ajournal (YCbq), a Theorem Labs lane's kit and
    bridge (YA0nR.SRr_xregs_eqv / SRr_fsteps; ProgBridge; ProgWorldVis{Win,Frame}), a Theorem Labs lane's
    ProgWorld.ajournal_of_fsteps, a Theorem Labs lane's footprint run (and its route (C) twin), a Theorem Labs lane's

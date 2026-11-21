@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanHead.v at cdde2c4d95be for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanHead.v for
    reac-pw/fuzz_rate's image A: role's pcs (C3 0x820c4, the memcpy return 0x820e4, the parse return 0x8210c, E
    0x8212c, MAL 0x823fc, T 0x82408) become rate's (0x828b8, 0x828dc, 0x8290c, E 0x82930, MAL 0x82c9c, A 0x82ca8);
    the registers are renamed as rate's code has them (pod s2 -> s6, &cell s6 -> s5 = &hz, flags & 1 s4 -> s3, the
@@ -13,15 +13,16 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_rate/lib/A/RtPgScanHead.v, with its module paths and module names changed; 211 of its 269 lines of code are new or changed and 973 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanF.v (rk_skipn_cons, rk_pairs_skip,
    rk_pairs_run, rk_pairs_end, rk_pairs_last) and proofs/reac-pw/fuzz_role/lib/A/RPgScanOuter.v and RPgScanInner.v
-   (ro_post, ro_post_intro, ro_at_get, ro_at_sub, ro_at_keep, ro_chk_base, ro_denot0, ro_bge and the run tactics) at
-   e39c26ea588; module paths fuzz_role -> fuzz_headamp, the rk_ / ro_ / si_ prefixes -> hb_, the cut lists and the
+   (ro_post, ro_post_intro, ro_at_get, ro_at_sub, ro_at_keep, ro_chk_base, ro_denot0, ro_bge and the run tactics);
+   module paths fuzz_role -> fuzz_headamp, the rk_ / ro_ / si_ prefixes -> hb_, the cut lists and the
    cut base restated over headamp's lib/A/HPgSeg.v and HPgSegM.v (hs_at, hq_base3), the record facts restated over
    headamp's fold (Pod/Headamp.v ha_fold) instead of role's role_of_pairs. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgM3bBase.v at 42ff422eb80; the prefix
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgM3bBase.v; the prefix
    hb_ -> hbu_, every statement restated over image B's segment layer (lib/AU/HPgSeg.v hsu_at, hsu_core,
    lib/AU/HPgSegM.v hqu_base3, hqu_fold_inv, hqu_pair_inv, hqu_exp and the hqu_L_ cut lists), image B's segments
    (lib/AU/Img0U.v) and image B's real frame of 0x220 bytes; the five-register scan list of image A (hq_L_scan)
    has no twin in image B and is dropped from the list tactics. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image B (fuzz_headamp.asan-ubsan, pinned sha256
    53edda9bdeeba1803865babfecb1af6732babe47ab83c64d38cc59a90d717a94; every address measured on the unstripped twin
    1674e30a0698f381704e66d2398d7906c881f4ba8fc619cb41b89fb97ad112ff, the same loaded bytes except .note.gnu.build-id): THE SHARED STEPS of the

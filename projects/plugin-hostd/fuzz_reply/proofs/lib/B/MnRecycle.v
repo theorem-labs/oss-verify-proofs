@@ -1,22 +1,23 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MnRecycle.v (commit 30a1993588f, c5 + memnorm; file sha256 c5ed09f39019) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 2 pcs named in comments; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: relocated from lib/A/MnRecycle.v (commit d2dafa219c1, file sha256 bcf8d2e5c31a) onto plugin-hostd/fuzz_reply's asan-ubsan image (unstripped fuzz_reply.asan-ubsan, sha256 3389287e1d61; pin 10ffb5f9202a) by alreloc ced0368250cb6538 (A -> B, direct map 541d2a13b9d2): 2 numerals moved; module paths lib.A -> lib.B and the image twins A<r> -> Y<r>. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MnRecycle.v (c5 + memnorm; file sha256 c5ed09f39019) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 2 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: relocated from lib/A/MnRecycle.v (file sha256 bcf8d2e5c31a) onto plugin-hostd/fuzz_reply's asan-ubsan image (unstripped fuzz_reply.asan-ubsan, sha256 3389287e1d61; pin 10ffb5f9202a) by alreloc ced0368250cb6538 (A -> B, direct map 541d2a13b9d2): 2 numerals moved; module paths lib.A -> lib.B and the image twins A<r> -> Y<r>. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-29 (a Theorem Labs lane, p102 row N9-MNARM; task MEMNORM, a Theorem Labs lane; split a Theorem Labs lane): DRAFT, statements.
    rule 24: no function proved (kind: statement drafts - the memnorm-keeping twins of QuarantineCallback::Recycle
    (0x33e88) and SizeClassAllocator64LocalCache::Deallocate (0x3428c) inside the drain's DoRecycle; cgif proofs
    DGif1dr.dgif1_rchunk_cgif (YFfs / YFg7 primary arm, YFg9 / YFg8 secondary arm) and dgif1_cdealloc_cgif (YFg0),
    through DGif1dI).
-   WHY INSIDE THE WALK.  At cgif the owned set [aowned] meets the read-only segment [0x10000, 0x30000) (YF0m.v:279-286
+   WHY INSIDE THE WALK.  At cgif the owned set [aowned] meets the read-only segment [0x10000, 0x30000) (YF0m.v:280-287
    Tfib_owned_static: (0x102e8, 8) .. (0x20e62, 0x1e), (0x1cccb, 21) .. (0x2146c, 2)), so the callee post's raw frame
    DIfaceR.acall_raw_x (outside the owned sets, the scratch and E: mem' = mem) admits a ROM byte copied into the overlay
    at an owned address and does not give the keep.  The keep is proved inside the callee walk, per runner phase, from
-   the phase's own write window (proof route, a Theorem Labs lane 16:30Z: st_ok + frame_of as preset's YGcallMxmn.v:677
+   the phase's own write window (proof route, a Theorem Labs lane 16:30Z: st_ok + frame_of as preset's YGcallMxmn.v:676
    memnorm_frame_of; the mmap / munmap nodes by MemnormGk.klaw_commit3 / klaw_munmap and MemnormG.amreal_m_node).
    STATEMENT SHAPE (a Theorem Labs lane): ErrnoG's raw add-on with `MemnormT.memnorm_keep im_segs mem mem'` next to
    `errno_kept B mem mem'` in the SAME post (amreal has no rule that joins two contracts). Additive: ErrnoG, DIfaceR and
    every existing statement are unchanged.
-   - [de_rchunk_m_t] / [de_cdealloc_m_t]: ErrnoG.de_rchunk_t / de_cdealloc_t (ErrnoG.v:277-289 / :301-312) with the
+   - [de_rchunk_m_t] / [de_cdealloc_m_t]: ErrnoG.de_rchunk_t / de_cdealloc_t (ErrnoG.v:278-290 / :302-313) with the
      keep right after errno_kept;
    - [de_rchunk_em_e] / [de_cdealloc_em_e]: they give the ErrnoG forms (drop the keep; Qed);
    - [DIfaceREm]: ErrnoG.DIfaceRE's four fields at the keep forms, and [DIfaceREm_RE] (Qed). *)

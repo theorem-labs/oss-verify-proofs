@@ -1,18 +1,19 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs: reply image row img-fqconst-B of the cf layer at plugin-hostd/fuzz_reply.
    rule 24: no function proved (kind: closed image fact over the constant-cell table of reply's image B,
    fuzz_reply.asan-ubsan, pin 10ffb5f9202a).
 
-   FQ_CONST, proofs/cgif/cgif_file_fuzzer/lib/YGcfInstFreeView.v:56-58 @ 587da63d252, with const_at
-   (YGcfInstFreeView.v:54-55 @ 587da63d252) unfolded: const_at ly a w v := exists e, In (ACell e w (AV (ANum v)))
+   FQ_CONST, proofs/cgif/cgif_file_fuzzer/lib/YGcfInstFreeView.v:56-58, with const_at
+   (YGcfInstFreeView.v:54-55) unfolded: const_at ly a w v := exists e, In (ACell e w (AV (ANum v)))
    (as_const B ly) /\
    aeval B ly e = a.  The layer states both over its Section's Variable B; its consumers hold TS : im_syms B.  Reply
    does not carry YGcfInstFreeView.v, so the Lemma states FQ_CONST's body, const_at unfolded, at a B with image B's
-   symbol facts (im_syms of AImg_reply, B/AGif2reply.v:24, which is YF0m.TfibSyms).
+   symbol facts (im_syms of AImg_reply, B/AGif2reply.v:25, which is YF0m.TfibSyms).
    Proof: each cell is found in Tfib_const by cell_lookup, computed by vm_compute (cgif's pattern: YF0x.v:206
    tfib_const_lookup; YFev.v:111 / :121 / :131).  At image B the four cells are inst + o_q_max, inst + o_q_maxcache,
-   inst + o_q_min (8 bytes each) and inst + o_q_cmutex + 2 (2 bytes), TFIB_INST = 0xa2fd8 (B/YF0m.v:16). *)
+   inst + o_q_min (8 bytes each) and inst + o_q_cmutex + 2 (2 bytes), TFIB_INST = 0xa2fd8 (B/YF0m.v:17). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -29,7 +30,7 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import ImgBas
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import AGif2reply.
 Open Scope Z_scope.
 
-(* FQ_CONST at image B: YGcfInstFreeView.v:57-58 @ 587da63d252, const_at unfolded. *)
+(* FQ_CONST at image B: YGcfInstFreeView.v:57-58, const_at unfolded. *)
 Lemma FQ_CONST_B : forall B, @im_syms AImg_reply B -> forall ly,
   (exists e, In (ACell e 8 (AV (ANum kQuarantineMax))) (as_const B ly) /\ aeval B ly e = as_inst B + o_q_max) /\
   (exists e, In (ACell e 8 (AV (ANum kQuarantineCacheMax))) (as_const B ly) /\ aeval B ly e = as_inst B + o_q_maxcache) /\

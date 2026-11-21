@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -129,7 +130,7 @@ Proof. exact store_bytes_1. Qed.
 Lemma evt_step_gen : ltac2:(zQ "hb1!h9!jc!m0!hkc!m9!jne!jr3!hk5!jrc!ju9!kid!ii2!kj4!l9!kjc!kn8!ko3!kp0!kpe!kqa!ku2!kv0!kv8!ljd!lk3!ll2!it2&>0@1$1@1$0#k0@1$2@1$1@1$0#8>4segs@1$d$f>1Q>0$5P>1R@2$9@1$0#5@1$1@1$0#k0>1F@2$9@1$0#5@1$1@1$0#k0>2pc@1$1@1$0#k0>2fc@1$1@1$0#i0>2rv@1$2@1$1@1$0#k0>1m~0>2ro~0>1w@1$1@1$0#i0>1i$6>2sz$4>3ms1$5>0@3$3@1$2@1$1@1$0#i0@2$h1^d^9@2$7@1$1@1$0#i0^4>0@3$3$b@1$h2^5$c>0@3$3@1$2@2$8$6$4@1$h4^6@2$7@2$8$6$4@4$e$6$4^5^4>0@3$3@1$h3$5@2$h9^8@3$h8^h0@3$h6@2$ha@1$0#k0^5^6@5$h5^e^d^c^b^a^9@2$h0$5^4>0@3$a^h1^h0^5@3$a^h2^h1@7$h7^h0^f^e^d^c^b^a").
 Proof.
   intros segs Q R F pc fc rv m ro w i sz ms1 Hf He Hd Hx Hq. eapply evt_step; [|exact Hq].
-  split; [reflexivity|]. rewrite (step_gen segs R F pc fc rv m ro w i sz Hf He Hd). exact Hx.
+  split; [reflexivity|]. exact (step_gen_ok _ _ _ _ _ _ _ _ _ _ _ _ Hf He Hd Hx).
 Qed.
 
 (* [comment removed for export] *)

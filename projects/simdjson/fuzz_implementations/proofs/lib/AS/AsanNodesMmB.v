@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the brk and munmap node proofs follow the plan invariant's new shape: the reserved list may hold the vDSO pair after the image's reservations, and the invariant's new facts (allocation ceiling, mappings clear of the reserved list, vDSO pair kept reserved, channel reader) are kept; munmap's maps_subtract is shown to be the old map_remove; reserved_free_above takes the invariant; CEIL_eq becomes GAP_CEIL_eq; taken in part from projects/simdjson/fuzz_ondemand/proofs/lib/AS/AsanNodesMmB.v, 63 lines within its lines 12-1531. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -8,6 +9,7 @@ From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap Mprotect.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From OSSVerify.Proofs.simdjson.fuzz_implementations.lib.AS Require Import
   PropExec CatExec CatSim SeqExec StoreOk ShapeAlg SpinAlg AgentLib AgentNodes Nodes RefNodes AllocSim MmapSim
@@ -25,6 +27,7 @@ Import ListNotations.
 Open Scope Z_scope.
 
 Import AX2. Import AX2S. Import AP. Import APS.
+Local Ltac ceilnum := let H := fresh "CEILF" in pose proof ceil_facts as H; unfold ceil_ok in H.
 
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
@@ -194,6 +197,7 @@ Proof.
   - intros Hin. pose proof (proj1 (Forall_forall _ _) Hf h Hin) as D. pose proof (Hpos h (or_introl eq_refl)). unfold iv_disjoint in D. lia.
   - apply IH; [exact Ht|]. intros iv Hiv. apply Hpos. right. exact Hiv.
 Qed.
+
 
 Section SoundB.
 Variable SEGS : list Segment.
@@ -539,7 +543,7 @@ Proof.
   destruct (brk_req_sound E cs R FULL model d HC Hreq) as (D1 & D2 & D3 & Dm).
   destruct (brk_base_ok_sound E cs R FULL model d HC Hbase) as (B1 & B2 & B3 & B4).
   pose proof (brk_req_val E cs R FULL model d HC Hreq Hbase) as G10.
-  pose proof (co_res _ _ _ _ _ _ _ _ _ _ _ _ HC) as Hres.
+  destruct (co_res _ _ _ _ _ _ _ _ _ _ _ _ HC) as (rx & Hres & Hrxg & _ & _).
   pose proof (proj1 (APS.maps_match_exact nx0 (fun _ => None) (fun _ _ _ => None) (fun _ _ _ => None) (fun _ _ _ => None) E _ _ Hnf) (co_maps _ _ _ _ _ _ _ _ _ _ _ _ HC)) as Hmaps.
   pose proof (co_limit _ _ _ _ _ _ _ _ _ _ _ _ HC) as Hlim. pose proof (co_sbrk _ _ _ _ _ _ _ _ _ _ _ _ HC) as Hsbrk.
   pose proof (co_brk _ _ _ _ _ _ _ _ _ _ _ _ HC) as Hbrk.
@@ -639,9 +643,12 @@ Proof.
   set (dw := Z_to_bv 64 d). assert (Udw : bv_unsigned dw = d) by (unfold dw; apply u64_lit; unfold KHI in *; lia).
   assert (Hrf : region_free (vm_reserved h ++ vm_maps h) b dw = true).
   { apply region_free_intro. intros a sz Hin. apply in_app_iff in Hin as [Hin|Hin].
-    - rewrite Hres in Hin.
-      pose proof (proj1 (Forall_forall _ _) RES_hull _ Hin) as [R1 R2]. cbn [fst snd] in R1, R2.
-      unfold iv_overlap. apply andb_false_iff. left. apply Z.ltb_ge. lia.
+    - rewrite Hres in Hin. apply in_app_iff in Hin as [Hin|Hin].
+      + pose proof (proj1 (Forall_forall _ _) RES_hull _ Hin) as [R1 R2]. cbn [fst snd] in R1, R2.
+        unfold iv_overlap. apply andb_false_iff. left. apply Z.ltb_ge. lia.
+      + (* [comment removed for export] *)
+        pose proof (proj1 (Forall_forall _ _) Hrxg _ Hin) as (_ & _ & _ & _ & Hk & _). cbn [fst] in Hk.
+        unfold iv_overlap. rewrite Udw. apply andb_false_iff. right. apply Z.ltb_ge. unfold KHI in *. lia.
     - rewrite Hmaps in Hin. apply in_map_iff in Hin as (m & Em & Hin).
       unfold amap_den in Em. injection Em as <- <-.
       unfold iv_overlap. rewrite Udw. apply andb_false_iff.
@@ -712,7 +719,13 @@ Proof.
           rewrite Hmaps; apply Forall_forall; intros iv Hin; apply in_map_iff in Hin as (m & <- & Hin);
           unfold iv_disjoint, amap_den; cbn [fst snd]; rewrite Udw; destruct (APART m Hin); lia
       | |- model_ivs_wf _ =>
-          apply model_ivs_wf_with_vmmaps; [exact co_wf0 | apply ivs_wf_cons; [exact Wb | exact Wf] | exact (proj1 (proj2 co_wf0)) | reflexivity]
+          apply model_ivs_wf_with_vmmaps; [exact co_wf0 | apply ivs_wf_cons; [exact Wb | exact Wf] | exact (proj1 (proj2 co_wf0)) | reflexivity]  (* [comment removed for export] *)
+      | |- Forall (fun _ => Forall _ _) (vm_maps _) =>   (* [comment removed for export] *)
+          rewrite Hvm'; unfold h'; cbn [vm_reserved vm_maps]; constructor; [|exact co_mres0];
+          apply Forall_forall; intros [b0 s0] Hin0; unfold iv_disjoint; cbn [fst snd]; rewrite Udw;
+          pose proof (RefNodes.region_free_In _ _ _ b0 s0 Hrf
+            ltac:(apply in_app_iff; left; exact Hin0)) as DD;
+          rewrite Udw in DD; lia
       | |- Forall _ (vm_maps _) =>
           rewrite Hvm'; unfold h'; cbn [vm_maps]; constructor; [|exact co_bounds0];
           cbn [fst snd]; rewrite Udw; unfold alloc_top, stack_max_size in *; cbn [vm_init_sp]; unfold CEIL, ATOPMAX, KHI in *; lia
@@ -768,6 +781,12 @@ Proof.
           apply (lazy_in_maps_of model model' co_lazyin0);
           [ intros e0 He0; rewrite Hvm'; unfold h'; cbn [vm_maps]; right; exact He0
           | intros iv0 Hiv0 _; left; exists iv0; split; [exact Hiv0 | lia] ]
+      | |- incl _ _ =>
+          exact co_vdso0
+      (* [co_ceil]: [h'] keeps [vm_init_sp], so [alloc_top] stays. *)
+      | |- CEIL <= alloc_top _ => exact co_ceil0
+      (* [co_rdr]: [with_vmmaps] keeps [m_proc], where the reader lives. *)
+      | |- m_channel_reader _ = true => exact co_rdr0
       | |- ?g => idtac "UNSOLVED FIELD:" g
       end.
     +
@@ -776,7 +795,7 @@ Proof.
       { intros i Hi. set (a := Z_to_bv 64 (bv_unsigned b + i)).
         assert (Ua : bv_unsigned a = bv_unsigned b + i) by (unfold a; apply u64_lit; unfold KHI in *; lia).
         assert (Hargh : argH E a = false).
-        { destruct (argH E a) eqn:Ha; [|reflexivity]. pose proof (argH_high _ _ Ha). unfold CEIL, KHI in *. lia. }
+        { destruct (argH E a) eqn:Ha; [|reflexivity]. pose proof (argH_high _ _ Ha). unfold KHI in *; ceilnum. lia. }
         assert (Hvis : vis A E csb model' a = true).
         { assert (Hal : in_allow A E csb (bv_unsigned a) = true).
           { unfold in_allow, in_vis. rewrite HvisB'. cbn [existsb fst snd]. unfold uE at 1 2 3. rewrite Eb. cbn [edenot].
@@ -933,7 +952,8 @@ Lemma bv5_17 : (17%bv : bv 5) = Z_to_bv 5 (Z.of_nat 17). Proof. apply bv_eq. ref
 Lemma some_inj : forall {T} (a b : T), Some a = Some b -> a = b.
 Proof. intros T a b H. injection H as H1. exact H1. Qed.
 
-Lemma CEIL_eq : alloc_ceiling = CEIL.
+(* [comment removed for export] *)
+Lemma GAP_CEIL_eq : alloc_ceiling = GAP_CEIL.
 Proof. reflexivity. Qed.
 Lemma KHI_eq : kHighMemBeg = KHI.
 Proof. reflexivity. Qed.
@@ -943,13 +963,25 @@ Proof. rewrite bottomup_floor_val. reflexivity. Qed.
 Lemma Z_to_bv64_m1 : forall m1, m1 = two64 - 1 -> Z_to_bv 64 m1 = Z_to_bv 64 (-1).
 Proof. intros m1 ->. apply bv_eq. rewrite !Z_to_bv_unsigned. reflexivity. Qed.
 
-Lemma reserved_free_above : forall model (lo n : word),
-  vm_reserved (m_vmmaps model) = segments_reserved SEGS ->
+(* [comment removed for export] *)
+Lemma reserved_free_above : forall E cs R FULL model (lo n : word),
+  CSOK E cs R FULL model ->
   img_hi A <= bv_unsigned lo ->
+  bv_unsigned lo + bv_unsigned n <= a_ylo cs ->
   region_free (vm_reserved (m_vmmaps model)) lo n = true.
 Proof.
-  intros model lo n Hres Hlo. rewrite Hres. apply RefNodes.region_free_intro. intros b s Hin.
-  pose proof (proj1 (Forall_forall _ _) RES_hullH _ Hin) as [H1 H2]. cbn [fst snd] in H1, H2. right. lia.
+  intros E cs R FULL model lo n HC Hlo Hhi.
+  destruct (co_res _ _ _ _ _ _ _ _ _ _ _ _ HC) as (rx & Hres & HG & _ & _).
+  destruct (co_split _ _ _ _ _ _ _ _ _ _ _ _ HC) as (Y & HY1 & _ & _ & HY4).
+  rewrite Hres. apply RefNodes.region_free_intro.
+  intros b s Hin. apply in_app_iff in Hin as [Hin|Hin].
+  - pose proof (proj1 (Forall_forall _ _) RES_hullH _ Hin) as [H1 H2]. cbn [fst snd] in H1, H2. right. lia.
+  - pose proof (proj1 (Forall_forall _ _) HG _ Hin) as (_ & _ & _ & _ & Hk & _).
+    cbn [fst] in Hk. pose proof (u64_range s) as Rs.
+    assert (Hin' : In (b, s) (vm_reserved (m_vmmaps model) ++ vm_maps (m_vmmaps model))).
+    { apply in_app_iff. left. rewrite Hres. apply in_app_iff. right. exact Hin. }
+    destruct (HY4 b s Hin') as [Hlow|Hhigh];
+      [cbn [fst snd] in Hk, Hlow; unfold kHighMemBeg, KHI in *; lia | left; cbn [fst]; lia].
 Qed.
 
 Lemma vis_add_inv : forall cs b n k cs2,
@@ -1264,8 +1296,22 @@ Proof.
   set (cs' := ACS _ _ _ _ _ _ _ _ _ _ _) in HK.
   specialize (HK E (regupd R (Z_to_bv 5 (Z.of_nat 10)) (Z_to_bv 64 0)) FULL' model' (conj (env_agree_refl' _ _) (env_agree_refl' _ _))).
   unfold cfg_of in HK. replace (pc cs') with (pc cs + 4) in HK by reflexivity. rewrite bv5_10. apply HK; [|reflexivity]. clear HK.
-
-  assert (PM : vm_maps (m_vmmaps model') = map_remove (vm_maps (m_vmmaps model)) addr) by reflexivity.
+  (* [comment removed for export] *)
+  assert (PM : vm_maps (m_vmmaps model') = map_remove (vm_maps (m_vmmaps model)) addr).
+  { (* [comment removed for export] *)
+    transitivity (maps_subtract (vm_maps (m_vmmaps model)) (bv_unsigned addr)
+                    (bv_unsigned addr + bv_unsigned n)); [reflexivity|].
+    apply maps_subtract_exact.
+    - pose proof (BPOS _ HIN) as Hpn. unfold amap_den in Hpn. cbn [snd] in Hpn. exact Hpn.
+    - intros pb ps Hpin. exact (BPOS (pb, ps) Hpin).
+    - intros pb ps Hpin Hpb. pose proof (UNIQ (pb, ps) Hpin Hpb) as Hpq.
+      unfold amap_den in Hpq. injection Hpq as _ Hps. exact Hps.
+    - intros pb ps Hpin Hpne.
+      assert (Hpne' : (pb, ps) <> amap_den E m).
+      { intros Hpeq. apply Hpne. unfold amap_den in Hpeq. rewrite Haddr in Hpeq.
+        injection Hpeq as Hpb _. exact Hpb. }
+      pose proof (DISJl (pb, ps) Hpin Hpne') as Hpd. cbn [fst snd] in Hpd.
+      unfold hi, lo in Hpd. lia. }
   assert (PN : vm_noaccess (m_vmmaps model') = maps_subtract (vm_noaccess (m_vmmaps model)) lo (lo + bv_unsigned n)) by reflexivity.
   assert (PL : m_vm_lazy model' = maps_subtract (m_vm_lazy model) lo (lo + bv_unsigned n)) by reflexivity.
   assert (PISP : vm_init_sp (m_vmmaps model') = vm_init_sp (m_vmmaps model)) by reflexivity.
@@ -1335,7 +1381,7 @@ Proof.
     split; [exact Hm'|]. split; [exact Hne'|]. intros Hnf'. exact (DISJ' m' Hm' Hnf' Hne'). }
   assert (KNF : forall m', am_kind m' = KNONE \/ am_kind m' = KNONELAZY \/ am_kind m' = KRWLAZY -> is_fog m' = false).
   { intros m' Hk. unfold is_fog. destruct Hk as [-> |[-> | ->]]; reflexivity. }
-  destruct HC as [Xregs Xlog Xknow Xhalt Xfds Xfs Xtid Xres Xlimit Xmaps Xholes Xseps Xwf Xbounds Xlazyb Xnasub Xnone Xkinds Xtotsz Xsplit Xbrk Xsbrk Xeager Xabytes Xminv Xzero Xsinv Xisp Xargh Xlazyin Xnaal].
+  destruct HC as [Xregs Xlog Xknow Xhalt Xfds Xfs Xtid Xres Xlimit Xmaps Xholes Xseps Xwf Xceil Xbounds Xlazyb Xnasub Xnone Xkinds Xtotsz Xsplit Xbrk Xsbrk Xeager Xabytes Xminv Xzero Xsinv Xisp Xargh Xlazyin Xnaal Xmres Xvdso Xrdr].
   destruct Hlohi as (L1 & L2 & L3 & L4 & L5).
   assert (HAeq : ALLOW E cs' = flat_map (allow1 A E) (kept ++ gone ++ a_ghost cs)) by reflexivity.
   constructor; rewrite ?HAeq; subst cs'; cbn [a_ss a_maps a_totsz a_ylo a_eager a_vis a_ghost a_abytes a_brk a_fd a_tidset kn s_regs s_log s_know s_next mk_ss];
@@ -1375,6 +1421,8 @@ Proof.
     + unfold map_remove. apply ivs_wf_filter. exact W1.
     + apply maps_subtract_wf; [exact W2 | lia].
     + apply maps_subtract_wf; [exact W3 | lia].
+  -   (* [co_ceil]: [munmap_model] keeps [vm_init_sp], so [alloc_top] stays. *)
+    rewrite (alloc_top_isp _ _ PISP). exact Xceil.
   -   rewrite PM, (alloc_top_isp _ _ PISP). unfold map_remove. apply Forall_forall. intros iv Hiv. apply filter_In in Hiv as [Hiv _]. exact (proj1 (Forall_forall _ _) Xbounds iv Hiv).
   -   rewrite PL, (alloc_top_isp _ _ PISP). apply Forall_forall. intros q Hq. destruct (maps_subtract_pieces _ _ _ q W3 Hq) as (r & Hr & R1 & R2 & _).
     pose proof (proj1 (Forall_forall _ _) Xlazyb r Hr) as [Y1 Y2]. split; lia.
@@ -1474,6 +1522,13 @@ Proof.
     unfold amap_den in E01, E02. cbn [fst snd] in E01, E02. rewrite Haddr in E01, E02. fold n in E02. rewrite Un in E02.
     unfold lo, hi in *. lia.
   -   rewrite PN. apply maps_subtract_aligned_pos; [exact W2 | exact Xnaal | exact L4 | exact L5].
+  - (* [comment removed for export] *)
+    rewrite PM. unfold map_remove. apply Forall_forall. intros iv Hiv.
+    apply filter_In in Hiv as [Hiv _]. exact (proj1 (Forall_forall _ _) Xmres iv Hiv).
+  - (* [comment removed for export] *)
+    exact Xvdso.
+  -   (* [co_rdr]: [munmap_model] keeps [m_proc], where the reader lives. *)
+    exact Xrdr.
 Qed.
 
 Theorem node_sys_sound_YMunmap : sys_stmt SEGS A nx0 LIMIT SINV argH FS0 YMunmap.

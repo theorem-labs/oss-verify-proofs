@@ -2,8 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the SEGMENT INTERFACE of the image-B walk of fuzz_reply's relay_add
    (fuzz_reply.asan-ubsan 0x82af4 .. 0x82ca0, 107 instructions), over the image-B kit lib/B
-   (a working branch), in the form of lib/B/W_relay_remove_cx.v (a working branch
-   df8beed2cfa).  The file fixes the Section hypotheses, the entry context, the cut predicates over concrete machine
+   (a working branch), in the form of lib/B/W_relay_remove_cx.v (a working branch).
+   The file fixes the Section hypotheses, the entry context, the cut predicates over concrete machine
    states and the statement of every segment, so that the segments are proved in parallel; it proves only the
    composition ra_all and small shared lemmas.
 
@@ -49,6 +49,7 @@
    The walk's journal is at RA_G RG (relay_add's own globals, W_contract.v RA_G), lifted to the caller's G at the
    two returns by ajournal_gx_G_mono with ra_spec's premise `forall a, inG (RA_G RG) a -> inG G a` (ra_lift).
    wake's contract is W6's lib/B/W_wake_c.v (Section hypothesis WAKE). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -74,7 +75,7 @@ Local Unset Lia Cache. Local Unset Nia Cache.
 Local Set Warnings "-abstract-large-number".
 Local Open Scope Z_scope.
 
-(* ---- Rebasing a region: lib/A W_rebase.v (a working branch 25efee4c09e) with the prefix ra_, a local copy
+(* ---- Rebasing a region: lib/A W_rebase.v (a working branch) with the prefix ra_, a local copy
    (that file is not on the kit branch).  A PLdHi load addresses a global through its object atom, a store through
    the kept auipc register; ra_st_ok_pi_rebase switches a region's base atom between the two. ---- *)
 Section rebase. Context {fx : FPState}.
@@ -231,7 +232,7 @@ Definition RA_HI_NSRC : Z := 484.
 Definition RA_HI_CAPSRC : Z := 576.
 Definition RA_HI_SRC : Z := 500.
 
-(* wake's contract is W6's lib/B/W_wake_c.v (a working branch 34e402d7967, taken by path): wk_spec B RG
+(* wake's contract is W6's lib/B/W_wake_c.v (a working branch, taken by path): wk_spec B RG
    at BASE + AF_fr_wake (0x82484), journal at G = [] (wake writes no global and no block), presence of image bytes
    kept, g_wake[1] still -1, errno kept; its walk is a Theorem Labs lane's pb_wake. *)
 

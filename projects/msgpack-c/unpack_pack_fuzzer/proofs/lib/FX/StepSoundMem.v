@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the failing store-conditional cases close by the engine's new stop; the FAILC helper for the old failure step removed). *)
 From Stdlib Require Import ZArith Bool List Lia.
 From Stdlib Require Import PrimInt63 Uint63.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
@@ -725,16 +726,8 @@ Proof.
   rewrite <- (getr_den E st ms model rs1 rs1' HS Hrs1) in AA.
   cbn [Sem.exec]. rewrite AA. cbn [negb]. rewrite <- (reg_of_r5_of_reg rd' rd Hrd). rewrite (npc_eq E st ms model HS Hpc).
   pose proof (so_resv _ _ _ _ _ _ HS) as RV.
-
-  assert (FAILC : st' = setpc (setresv (setr st rd (VL wone)) RNone) (pc4 st) ->
-     exists c m', interp_eff segs (EDone (rset (reg_of_r5 rd) w1 (with_resv None (with_pc (Z_to_bv 64 (to_Z (pc4 st))) (core_of ms))))) (ms_mem ms)
-                  = MachineOk (c, m') /\ st_ok segs OPS E st' (ms_upd ms c m') model).
-  { intros ->. rewrite interp_EDone. eexists; eexists; split; [reflexivity|].
-    eapply st_ok_ms_eq; [exact (st_ok_resv E _ _ model RNone None (st_ok_reg_pc segs OPS E st ms model rd (VL wone) w1 (pc4 st) HS (den_wone E)) eq_refl)
-                        | reflexivity |].
-    cbn_st. unfold rset. rewrite is_x0_reg_of_r5. destruct (r5_eqb rd X0); reflexivity. }
   destruct (s_resv st) as [|a'|] eqn:SR; cbn [resv_ok] in RV; [| |discriminate].
-  -   cbn [c_resv core_of]. rewrite RV. apply FAILC. congruence.
+  - discriminate Hx.
   - cbn [c_resv core_of]. rewrite RV.
     destruct (decide_eq (s_facts st) a' (getr st rs1)) as [[|]|] eqn:D; [| |discriminate].
     +
@@ -753,11 +746,7 @@ Proof.
         first [rewrite store_bytes_32 | rewrite store_bytes_64];
         (eapply st_ok_ms_eq; [exact ST3| reflexivity|]);
         cbn_st; unfold rset; rewrite is_x0_reg_of_r5; destruct (r5_eqb rd X0); reflexivity.
-    +
-      apply (decide_eq_sound E _ (so_facts _ _ _ _ _ _ HS)) in D. apply (proj1 (eqb_iff _ _ false)) in D.
-      destruct (Z.eqb_spec (bv_unsigned (den E a')) (bv_unsigned (rget (core_of ms) rs1'))) as [X|X].
-      { exfalso. apply D. apply bv_eq. rewrite X. rewrite (getr_den E st ms model rs1 rs1' HS Hrs1). reflexivity. }
-      apply FAILC. congruence.
+    + discriminate Hx.
 Qed.
 
 Lemma sound_IAmo : forall (i : instr) (op : amoop) (wd : awidth) (rd rs1 rs2 : r5), case_stmt segs OPS i (IAmo op wd rd rs1 rs2).

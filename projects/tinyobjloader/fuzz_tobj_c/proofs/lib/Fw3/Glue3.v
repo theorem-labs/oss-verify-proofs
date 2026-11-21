@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (read_cstr_aux_string written as plain text, the string below TASK_SIZE for the read's access_ok test; the four write triples written as plain text with a premise of the channel reader and the buffer below TASK_SIZE, LPS 08b1429, and the frame obligation's new premise closed by write_rob, the exit steps' by RomBase's tactics; RomBase imported). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -10,7 +11,7 @@ From stdpp Require Import bitvector.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType Fs State Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
-From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw Require Import Safety SysSpec SysStep.
+From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw Require Import Safety SysSpec SysStep RomBase.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3 Require Import
   SymState SymStep SymSoundA SymSoundB SymSoundV SymSoundI SymSoundL SymSoundM SymSoundW
   SymSoundF SymSoundR SymComplete SymCall SymEntail SymExit SymFrame.
@@ -147,14 +148,29 @@ Proof.
   - apply fd_lookup_filter_other. exact Hne.
 Qed.
 
-Lemma read_cstr_aux_string : ltac2:(tb__ "0|6|
-S76Q40M0A1S4aS76Q8M1A1M2A1M3Fx;S49G2A1S51S47S5bZ0M4R1A2S5dS5cS5cR2S5fS52G2R4A2A1A2Z1A2S5eZ2Z40A2A2S51S9eR1S52G2R6A2A2S0G3R8S77G0S5cR5S5fR2A1A2A2A1S4cG2S84G2R2S4fG2R7S54G2S77G1G4A2M5S53G2A1A3A3G5A4A2A3F_;Fj;S4Sc3G2G5R6A3A1S0S70S75R8S77G0R5A2R6A3S4dS70L_;Sd3S52G2R7A2R6A2S72R7A1S73X4dx2A3F_;F_;F_;F_;Fz;Fk;Fs;Fmp;").
+(* LPS 08b1429: each step of [read_cstr_aux] first tests [access_okb a 1] (strncpy_from_user's clamp) and
+   faults at or above [TASK_SIZE]; so the string, NUL included, must lie below it (recipes/read-cstr-accessok.md).
+   The old bound [z + length s + 1 < 2^64] follows from this one. *)
+Lemma read_cstr_aux_string : forall (mp : bv 64%N -> option (bv 8%N)) (s : list (bv 8%N)) (k : nat) (z : Z),
+  0 <= z ->
+  z + Z.of_nat (length s) < TASK_SIZE ->
+  (forall j : nat, (j <= length s)%nat ->
+     mp (Z_to_bv 64 (z + Z.of_nat j)) = Some (nth j (s ++ [Z_to_bv 8 0]) (Z_to_bv 8 0))) ->
+  ~ In (Z_to_bv 8 0) s ->
+  read_cstr_aux mp (Z_to_bv 64 z) k = (if (length s <? k)%nat then CstrOk s else CstrTooLong).
 Proof.
   intros mp s. induction s as [|b s IH]; intros k z Hz Hnw Hmp Hnin.
-  - destruct k as [|k]; cbn [read_cstr_aux length Nat.ltb Nat.leb]; [reflexivity|].
+  - destruct k as [|k]; [reflexivity|].
+    rewrite read_cstr_aux_accepted
+      by (rewrite access_okb_one; apply Z.ltb_lt;
+          rewrite u64_of_sum by (split; unfold TASK_SIZE in *; lia); unfold TASK_SIZE in *; lia).
+    cbn [length Nat.ltb Nat.leb].
     specialize (Hmp 0%nat ltac:(cbn; lia)). rewrite Z.add_0_r in Hmp. cbn in Hmp. rewrite Hmp.
     unfold bv_eqb. rewrite Z.eqb_refl. reflexivity.
-  - destruct k as [|k]; [reflexivity|]. cbn [read_cstr_aux].
+  - destruct k as [|k]; [reflexivity|].
+    rewrite read_cstr_aux_accepted
+      by (rewrite access_okb_one; apply Z.ltb_lt;
+          rewrite u64_of_sum by (split; unfold TASK_SIZE in *; lia); unfold TASK_SIZE in *; lia).
     pose proof (Hmp 0%nat ltac:(cbn; lia)) as H0. rewrite Z.add_0_r in H0. cbn [nth app] in H0. rewrite H0.
     assert (Hb : bv_eqb b (Z_to_bv 8 0) = false).
     { unfold bv_eqb. apply Z.eqb_neq. intros E. apply Hnin. left. apply bv_eq. exact E. }
@@ -996,10 +1012,24 @@ Proof using .
   - cbn [holds eval]. rewrite rho_set_rw_at, Hu, Hev. lia.
 Qed.
 
-Lemma triple1_write_ch : ltac2:(tb__ "0|6|
-S7aOF_;S49S66A1M0S67OF_;F_;G0S67OFx0;Fx;SbS8S47S49S76Q8A1M1A1M2S7S7S89Vsegs;R9R8A3SbcVsegs;RaR9A3S0S4aS99A1SbfVsegs;S15R8A1A2S4cS99S9aA2A3S0S7SeR9Z11A2SfZ40A1A3S0S7SeRaZaA2SfR8A1A3S0S7SeRbZbA2R7A3S0S7SeRcZcA2R7A3S1S5dZ0RbA2S5dRbS5eZ2Z20A2A2A2S1S5bZ1S5fS52G1RbA2A1M3A2S5bG3ScaA2A2G0S67S51R14R3R2A2S1S9eU1R2A2S9eR2S52G1R10A2A2A2S1S0S4aS68A1S69S6dR4A1S77Q40M4R12A2M5A2S4cS68S6bG5A1A2A3R15S4fS66R5S83G1S66S6cG5A1S85G1R3R11A3A4A3R4A2A2F_;F_;Fk;Fmd;Ftr;G0S8eS67SbaVsegs;R12R13S4eG0S8bR3S8cR2R1A2A4A4R16R4R2A2S0S4aG2A1S28R4ScR14R11A2S63S78G4ScR14R10A2A2A1A3S4cG2R12A2A3F_;F_;Fmd;Fms;Ftr;S7eVsegs;R14S88Vsegs;R13R11R10A4S7aS2S8S8S1S21S12R13A1R12R1A3S88Vsegs;R14Sc9R13ReA2R1R2A5A2Lrho';A2Lw;A4F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;Fe;Fa1;Fbs;Fch;Frho;FS;FK';FK;Fok;").
+Lemma triple1_write_ch : forall (ok : world -> Prop) (K K' : list event -> Model -> Prop) S rho ch bs (a1 e : sv),
+  ok_frame segs ok K -> ok_pframe segs ok K ->
+  instr_at segs (ss_pc S) = Some Ecall ->
+  reg_sv S 17 = SLit 64 -> reg_sv S 10 = SLit ch -> reg_sv S 11 = a1 -> reg_sv S 12 = e ->
+  0 < ch < 2 ^ 32 ->
+  1 <= Z.of_nat (length bs) <= rw_bytes_max ->
+  (forall tr md k, K tr md -> (1 <= k <= length bs)%nat ->
+     fd_lookup (m_fds md) (Z_to_bv 64 ch) = Some (FdChannel (Z_to_bv 64 ch))
+     /\ K' (tr ++ map (WriteEv (Z_to_bv 64 ch)) (firstn k bs)) md) ->
+  (forall tr ms md, smatch_pending segs rho S (tr, mkCfg ms md) -> K tr md ->
+     rd_bytes ms (eval rho a1) (Z.to_nat (bv_unsigned (eval rho e))) = Some bs) ->
+  (* LPS 08b1429: [check_write]'s reader and [access_ok] gates (see [SysStep.wstep_write_inv]). *)
+  (forall tr ms md, smatch_pending segs rho S (tr, mkCfg ms md) -> K tr md ->
+     m_channel_reader md = true /\ bv_unsigned (eval rho a1) + bv_unsigned (eval rho e) <= TASK_SIZE) ->
+  triple1 segs ok (SP segs K S rho)
+    (fun w => exists rho', agree_below (ss_next S) rho rho' /\ SP segs K' (S_after_write S e) rho' w).
 Proof using .
-  intros ok K K' S rho ch bs a1 e Hokf Hokp Hi H17 H10 H11 H12 Hch Hlen HK Hbs. subst a1 e.
+  intros ok K K' S rho ch bs a1 e Hokf Hokp Hi H17 H10 H11 H12 Hch Hlen HK Hbs Hrd. subst a1 e.
   apply triple1_ecall_det; [exact Hokf | exact Hi |].
   intros tr ms md Hsp Hk.
   pose proof (smatch_pending_pending segs _ _ _ _ _ Hsp) as Hp. rewrite H17 in Hp. cbn [eval] in Hp.
@@ -1019,18 +1049,41 @@ Proof using .
   pose proof (urange (ms_gpr ms 2)) as Hr2.
   assert (Hpos : (0 < bv_unsigned (ms_gpr ms 2))%Z) by lia.
   assert (Hmax : (bv_unsigned (ms_gpr ms 2) <= rw_bytes_max)%Z) by lia.
+  destruct (Hrd tr ms md Hsp Hk) as [Hrdr Hok]. rewrite <- G1, <- G2 in Hok.
   split.
-  - eapply Hokp; [exact Hk | exact Hp |]. eapply write_only_ok; [exact Hh | exact H64 | exact Hfd' | exact Hch0 | exact Hbuf | exact Hpos | exact Hmax].
-  - intros w' Hw. destruct (wstep_write_inv Hp Hh H64 Hfd' Hch0 Hbuf Hpos Hmax Hw) as (k & Hk1 & ->).
+  (* LPS 75d69e00: [ok_pframe]'s fourth premise.  write is 64 and 64 is NOT in
+     [RomBase.memfree_lit] -- [memfree 64] is FALSE, because [check_write] reads the user
+     buffer out of [in_mem] -- so [RomBase.rob_auto] cannot and must not close it.
+     [SysStep.write_rob] closes it instead, by [write_check] at both backings. *)
+  - eapply Hokp;
+      first
+        [ solve [ exact Hk ]
+        | solve [ exact Hp ]
+        | solve [ eapply write_only_ok; [exact Hh | exact H64 | exact Hfd' | exact Hch0 | exact Hbuf | exact Hpos | exact Hmax | exact Hok | exact Hrdr] ]
+        | solve [ eapply write_rob; [exact Hp | exact H64 | exact Hfd' | exact Hch0 | exact Hbuf | exact Hpos | exact Hmax | exact Hok | exact Hrdr] ] ].
+  - intros w' Hw. destruct (wstep_write_inv Hp Hh H64 Hfd' Hch0 Hbuf Hpos Hmax Hok Hrdr Hw) as (k & Hk1 & ->).
     exists (rho_set_rw rho (ss_next S) (Z_to_bv 64 (Z.of_nat k))). split; [apply agree_below_set_rw; lia|].
     split; [|exact (proj2 (HK tr md k Hk Hk1))].
     eapply smatch_after_write; [exact Hsp | apply sv_below_reg; exact Hwf | rewrite <- G2; reflexivity | lia].
 Qed.
 
-Lemma etriple_write_ch : ltac2:(tb__ "0|7|
-S49S66A1M0S67OFx0;Fx;M1G1SbS8S47S49S76Q8A1M2A1M3S7S7S0S4aS99A1SbfVsegs;S15R6A1A2S4cS99S9aA2A3S0S7SeR7Z11A2SfZ40A1A3S0S7SeR8ZaA2SfR6A1A3S0S7SeR9ZbA2R5A3S0S7SeRaZcA2R5A3S1S5dZ0R9A2S5dR9S5eZ2Z20A2A2A2S1S5bZ1S5fS52G2R9A2A1M4A2S5bG4ScaA2A2G0S67S51R12R3R2A2S1S9eU1R2A2S9eR2S52G2ReA2A2A2S1S0S4aS68A1S69S6dR4A1S77Q40M5R10A2M6A2S4cS68S6bG6A1A2A3R13S4fS66R5S83G2S66S6cG6A1S85G2R3RfA3A4A3R4A2A2F_;F_;Fk;Fmd;Ftr;G0S8eS67SbaVsegs;R10R11S4eG0S8bR3S8cR2R1A2A4A4R14R4R2A2S0S4aG3A1S28R4ScR12RfA2S63S78G5ScR12ReA2A2A1A3S4cG3R10A2A3F_;F_;Fmd;Fms;Ftr;S7dVsegs;S88Vsegs;R11RfReA4S7aS2S8S8S1S21S12R11A1R10R1A3S88Vsegs;R12Sc9R11RcA2R1R2A5A2Lrho';A2Lw;A3F_;F_;F_;F_;F_;F_;F_;F_;F_;Fe;Fa1;Fbs;Fch;Frho;FS;FK';FK;").
+Lemma etriple_write_ch : forall (K K' : list event -> Model -> Prop) S rho ch bs (a1 e : sv),
+  instr_at segs (ss_pc S) = Some Ecall ->
+  reg_sv S 17 = SLit 64 -> reg_sv S 10 = SLit ch -> reg_sv S 11 = a1 -> reg_sv S 12 = e ->
+  0 < ch < 2 ^ 32 ->
+  1 <= Z.of_nat (length bs) <= rw_bytes_max ->
+  (forall tr md k, K tr md -> (1 <= k <= length bs)%nat ->
+     fd_lookup (m_fds md) (Z_to_bv 64 ch) = Some (FdChannel (Z_to_bv 64 ch))
+     /\ K' (tr ++ map (WriteEv (Z_to_bv 64 ch)) (firstn k bs)) md) ->
+  (forall tr ms md, smatch_pending segs rho S (tr, mkCfg ms md) -> K tr md ->
+     rd_bytes ms (eval rho a1) (Z.to_nat (bv_unsigned (eval rho e))) = Some bs) ->
+  (* LPS 08b1429: [check_write]'s reader and [access_ok] gates (see [SysStep.wstep_write_inv]). *)
+  (forall tr ms md, smatch_pending segs rho S (tr, mkCfg ms md) -> K tr md ->
+     m_channel_reader md = true /\ bv_unsigned (eval rho a1) + bv_unsigned (eval rho e) <= TASK_SIZE) ->
+  etriple segs (SP segs K S rho)
+    (fun w => exists rho', agree_below (ss_next S) rho rho' /\ SP segs K' (S_after_write S e) rho' w).
 Proof using .
-  intros K K' S rho ch bs a1 e Hi H17 H10 H11 H12 Hch Hlen HK Hbs. subst a1 e.
+  intros K K' S rho ch bs a1 e Hi H17 H10 H11 H12 Hch Hlen HK Hbs Hrd. subst a1 e.
   apply etriple_ecall_det; [exact Hi |].
   intros tr ms md Hsp Hk.
   pose proof (smatch_pending_pending segs _ _ _ _ _ Hsp) as Hp. rewrite H17 in Hp. cbn [eval] in Hp.
@@ -1050,8 +1103,9 @@ Proof using .
   pose proof (urange (ms_gpr ms 2)) as Hr2.
   assert (Hpos : (0 < bv_unsigned (ms_gpr ms 2))%Z) by lia.
   assert (Hmax : (bv_unsigned (ms_gpr ms 2) <= rw_bytes_max)%Z) by lia.
+  destruct (Hrd tr ms md Hsp Hk) as [Hrdr Hok]. rewrite <- G1, <- G2 in Hok.
   eexists. split.
-  { exact (@wstep_write_intro_prefix segs tr ms md _ _ _ (length bs) Hp Hh H64 Hfd' Hch0 Hbuf Hpos Hmax ltac:(lia)). }
+  { exact (@wstep_write_intro_prefix segs tr ms md _ _ _ (length bs) Hp Hh H64 Hfd' Hch0 Hbuf Hpos Hmax Hok Hrdr ltac:(lia)). }
   exists (rho_set_rw rho (ss_next S) (Z_to_bv 64 (Z.of_nat (length bs)))). split; [apply agree_below_set_rw; lia|].
   split; [|exact Hk'].
   eapply smatch_after_write; [exact Hsp | apply sv_below_reg; exact Hwf | rewrite <- G2; reflexivity | lia].
@@ -1096,7 +1150,7 @@ Proof using .
     assert (Hno : bv_unsigned (eval rho (reg_sv S 17)) = 93 \/ bv_unsigned (eval rho (reg_sv S 17)) = 94).
     { destruct H17 as [-> | ->]; cbn; [right | left]; reflexivity. }
     split.
-    + eapply Hokp; [exact Hk | exact Hp |]. apply exit_only_ok. exact Hno.
+    + eapply Hokp; try exact Hk; try exact Hp; try (solve [RomBase.rob_auto | eapply RomBase.sys_rob_exit; eassumption]). apply exit_only_ok. exact Hno.
     + intros w' Hw. rewrite (wstep_exit_inv Hp (model_idle_halted Hh) Hno Hw).
       exists tr, ms, md. split; [exact Hk|]. split; [exact Hsp | reflexivity].
   - apply triple_halt. intros w' (tr & ms & md & Hk & Hsp & ->).
@@ -1121,10 +1175,24 @@ Proof using .
   exists tr, md. split; [exact Hk|]. cbn. rewrite (exit_code_eval rho S tr ms md c Hsp Hc). reflexivity.
 Qed.
 
-Lemma triple1_write_chJ : ltac2:(tb__ "0|7|
-S7aOF_;S87S87SbS8S47S49S76Q8A1M0A1M1S7S7S8aVsegs;R9R8A3SbdVsegs;RaR9A3S0S4aS99A1SbfVsegs;S15R8A1A2S4cS99S9aA2A3S0S7SeR9Z11A2SfZ40A1A3S0S7SeRaZaA2SfR8A1A3S0S7SeRbZbA2R7A3S0S7SeRcZcA2R7A3S1S5dZ0RbA2S5dRbS5eZ2Z20A2A2A2S1S5bZ1S5fS52G0RbA2A1M2A2S5bG2ScaA2A2S8S49S66A1M3S67S51S21S12R13A1M4R12R4A3R16R13R4R3A3S1S9eU1R3A2S9eR3S52G0R12A2A2A2S1S0S4aS68A1S69S6dR5A1S77Q40M5R14A2M6A2S4cS68S6bG6A1A2A3R17R7S4fS66R6S83G0S66S6cG6A1S85G0R4R13A3A4A3R5A3A2F_;F_;F_;Fk;Fmd;Ftr;Frho';G3S8eS67SbaVsegs;R12R13S4eG3S8bR3S8cR2R1A2A4A4R16R13R4R2A3S0S4aG1A1S28R4ScR14R11A2S63S78G5ScR14R10A2A2A1A3S4cG1R12A2A3F_;F_;Fmd;Fms;Ftr;S7eVsegs;R14S86Vsegs;R13R11R10A4S7aS2S8S8S1S21G4R12R1A3S86Vsegs;R14Sc9R13ReA2R1R2A5A2Lrho';A2Lw;A4F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;Fe;Fa1;Fbs;Fch;Frho;FS;FJ';FJ;Fok;").
+Lemma triple1_write_chJ : forall (ok : world -> Prop) (J J' : jpred) S rho ch bs (a1 e : sv),
+  ok_frameJ segs ok J -> ok_pframeJ segs ok J ->
+  instr_at segs (ss_pc S) = Some Ecall ->
+  reg_sv S 17 = SLit 64 -> reg_sv S 10 = SLit ch -> reg_sv S 11 = a1 -> reg_sv S 12 = e ->
+  0 < ch < 2 ^ 32 ->
+  1 <= Z.of_nat (length bs) <= rw_bytes_max ->
+  (forall rho' tr md k, agree_below (ss_next S) rho rho' -> J rho tr md -> (1 <= k <= length bs)%nat ->
+     fd_lookup (m_fds md) (Z_to_bv 64 ch) = Some (FdChannel (Z_to_bv 64 ch))
+     /\ J' rho' (tr ++ map (WriteEv (Z_to_bv 64 ch)) (firstn k bs)) md) ->
+  (forall tr ms md, smatch_pending segs rho S (tr, mkCfg ms md) -> J rho tr md ->
+     rd_bytes ms (eval rho a1) (Z.to_nat (bv_unsigned (eval rho e))) = Some bs) ->
+  (* LPS 08b1429: [check_write]'s reader and [access_ok] gates (see [SysStep.wstep_write_inv]). *)
+  (forall tr ms md, smatch_pending segs rho S (tr, mkCfg ms md) -> J rho tr md ->
+     m_channel_reader md = true /\ bv_unsigned (eval rho a1) + bv_unsigned (eval rho e) <= TASK_SIZE) ->
+  triple1 segs ok (SPJ segs J S rho)
+    (fun w => exists rho', agree_below (ss_next S) rho rho' /\ SPJ segs J' (S_after_write S e) rho' w).
 Proof using .
-  intros ok J J' S rho ch bs a1 e Hokf Hokp Hi H17 H10 H11 H12 Hch Hlen HK Hbs. subst a1 e.
+  intros ok J J' S rho ch bs a1 e Hokf Hokp Hi H17 H10 H11 H12 Hch Hlen HK Hbs Hrd. subst a1 e.
   apply triple1_ecall_detJ; [exact Hokf | exact Hi |].
   intros tr ms md Hsp Hk.
   pose proof (smatch_pending_pending segs _ _ _ _ _ Hsp) as Hp. rewrite H17 in Hp. cbn [eval] in Hp.
@@ -1144,19 +1212,40 @@ Proof using .
   pose proof (urange (ms_gpr ms 2)) as Hr2.
   assert (Hpos : (0 < bv_unsigned (ms_gpr ms 2))%Z) by lia.
   assert (Hmax : (bv_unsigned (ms_gpr ms 2) <= rw_bytes_max)%Z) by lia.
+  destruct (Hrd tr ms md Hsp Hk) as [Hrdr Hok]. rewrite <- G1, <- G2 in Hok.
   split.
-  - eapply Hokp; [exact Hk | exact Hp |]. eapply write_only_ok; [exact Hh | exact H64 | exact Hfd' | exact Hch0 | exact Hbuf | exact Hpos | exact Hmax].
-  - intros w' Hw. destruct (wstep_write_inv Hp Hh H64 Hfd' Hch0 Hbuf Hpos Hmax Hw) as (k & Hk1 & ->).
+  (* LPS 75d69e00: as at :1053 -- the fourth premise is [SysStep.write_rob]'s, not
+     [RomBase.rob_auto]'s, because [memfree 64] is false. *)
+  - eapply Hokp;
+      first
+        [ solve [ exact Hk ]
+        | solve [ exact Hp ]
+        | solve [ eapply write_only_ok; [exact Hh | exact H64 | exact Hfd' | exact Hch0 | exact Hbuf | exact Hpos | exact Hmax | exact Hok | exact Hrdr] ]
+        | solve [ eapply write_rob; [exact Hp | exact H64 | exact Hfd' | exact Hch0 | exact Hbuf | exact Hpos | exact Hmax | exact Hok | exact Hrdr] ] ].
+  - intros w' Hw. destruct (wstep_write_inv Hp Hh H64 Hfd' Hch0 Hbuf Hpos Hmax Hok Hrdr Hw) as (k & Hk1 & ->).
     assert (Hag : agree_below (ss_next S) rho (rho_set_rw rho (ss_next S) (Z_to_bv 64 (Z.of_nat k)))) by (apply agree_below_set_rw; lia).
     exists (rho_set_rw rho (ss_next S) (Z_to_bv 64 (Z.of_nat k))). split; [exact Hag|].
     split; [|exact (proj2 (HK _ tr md k Hag Hk Hk1))].
     eapply smatch_after_write; [exact Hsp | apply sv_below_reg; exact Hwf | rewrite <- G2; reflexivity | lia].
 Qed.
 
-Lemma etriple_write_chJ : ltac2:(tb__ "0|7|
-S87S87SbS8S47S49S76Q8A1M0A1M1S7S7S0S4aS99A1SbfVsegs;S15R6A1A2S4cS99S9aA2A3S0S7SeR7Z11A2SfZ40A1A3S0S7SeR8ZaA2SfR6A1A3S0S7SeR9ZbA2R5A3S0S7SeRaZcA2R5A3S1S5dZ0R9A2S5dR9S5eZ2Z20A2A2A2S1S5bZ1S5fS52G0R9A2A1M2A2S5bG2ScaA2A2S8S49S66A1M3S67S51S21S12R11A1M4R10R4A3R14R11R4R3A3S1S9eU1R3A2S9eR3S52G0R10A2A2A2S1S0S4aS68A1S69S6dR5A1S77Q40M5R12A2M6A2S4cS68S6bG6A1A2A3R15R7S4fS66R6S83G0S66S6cG6A1S85G0R4R11A3A4A3R5A3A2F_;F_;F_;Fk;Fmd;Ftr;Frho';G3S8eS67SbaVsegs;R10R11S4eG3S8bR3S8cR2R1A2A4A4R14R11R4R2A3S0S4aG1A1S28R4ScR12RfA2S63S78G5ScR12ReA2A2A1A3S4cG1R10A2A3F_;F_;Fmd;Fms;Ftr;S7dVsegs;S86Vsegs;R11RfReA4S7aS2S8S8S1S21G4R10R1A3S86Vsegs;R12Sc9R11RcA2R1R2A5A2Lrho';A2Lw;A3F_;F_;F_;F_;F_;F_;F_;F_;F_;Fe;Fa1;Fbs;Fch;Frho;FS;FJ';FJ;").
+Lemma etriple_write_chJ : forall (J J' : jpred) S rho ch bs (a1 e : sv),
+  instr_at segs (ss_pc S) = Some Ecall ->
+  reg_sv S 17 = SLit 64 -> reg_sv S 10 = SLit ch -> reg_sv S 11 = a1 -> reg_sv S 12 = e ->
+  0 < ch < 2 ^ 32 ->
+  1 <= Z.of_nat (length bs) <= rw_bytes_max ->
+  (forall rho' tr md k, agree_below (ss_next S) rho rho' -> J rho tr md -> (1 <= k <= length bs)%nat ->
+     fd_lookup (m_fds md) (Z_to_bv 64 ch) = Some (FdChannel (Z_to_bv 64 ch))
+     /\ J' rho' (tr ++ map (WriteEv (Z_to_bv 64 ch)) (firstn k bs)) md) ->
+  (forall tr ms md, smatch_pending segs rho S (tr, mkCfg ms md) -> J rho tr md ->
+     rd_bytes ms (eval rho a1) (Z.to_nat (bv_unsigned (eval rho e))) = Some bs) ->
+  (* LPS 08b1429: [check_write]'s reader and [access_ok] gates (see [SysStep.wstep_write_inv]). *)
+  (forall tr ms md, smatch_pending segs rho S (tr, mkCfg ms md) -> J rho tr md ->
+     m_channel_reader md = true /\ bv_unsigned (eval rho a1) + bv_unsigned (eval rho e) <= TASK_SIZE) ->
+  etriple segs (SPJ segs J S rho)
+    (fun w => exists rho', agree_below (ss_next S) rho rho' /\ SPJ segs J' (S_after_write S e) rho' w).
 Proof using .
-  intros J J' S rho ch bs a1 e Hi H17 H10 H11 H12 Hch Hlen HK Hbs. subst a1 e.
+  intros J J' S rho ch bs a1 e Hi H17 H10 H11 H12 Hch Hlen HK Hbs Hrd. subst a1 e.
   apply etriple_ecall_detJ; [exact Hi |].
   intros tr ms md Hsp Hk.
   pose proof (smatch_pending_pending segs _ _ _ _ _ Hsp) as Hp. rewrite H17 in Hp. cbn [eval] in Hp.
@@ -1177,8 +1266,9 @@ Proof using .
   pose proof (urange (ms_gpr ms 2)) as Hr2.
   assert (Hpos : (0 < bv_unsigned (ms_gpr ms 2))%Z) by lia.
   assert (Hmax : (bv_unsigned (ms_gpr ms 2) <= rw_bytes_max)%Z) by lia.
+  destruct (Hrd tr ms md Hsp Hk) as [Hrdr Hok]. rewrite <- G1, <- G2 in Hok.
   eexists. split.
-  { exact (@wstep_write_intro_prefix segs tr ms md _ _ _ (length bs) Hp Hh H64 Hfd' Hch0 Hbuf Hpos Hmax ltac:(lia)). }
+  { exact (@wstep_write_intro_prefix segs tr ms md _ _ _ (length bs) Hp Hh H64 Hfd' Hch0 Hbuf Hpos Hmax Hok Hrdr ltac:(lia)). }
   exists (rho_set_rw rho (ss_next S) (Z_to_bv 64 (Z.of_nat (length bs)))). split; [exact Hag|].
   split; [|exact Hk'].
   eapply smatch_after_write; [exact Hsp | apply sv_below_reg; exact Hwf | rewrite <- G2; reflexivity | lia].
@@ -1196,7 +1286,7 @@ Proof using .
     assert (Hno : bv_unsigned (eval rho (reg_sv S 17)) = 93 \/ bv_unsigned (eval rho (reg_sv S 17)) = 94).
     { destruct H17 as [-> | ->]; cbn; [right | left]; reflexivity. }
     split.
-    + eapply Hokp; [exact Hk | exact Hp |]. apply exit_only_ok. exact Hno.
+    + eapply Hokp; try exact Hk; try exact Hp; try (solve [RomBase.rob_auto | eapply RomBase.sys_rob_exit; eassumption]). apply exit_only_ok. exact Hno.
     + intros w' Hw. rewrite (wstep_exit_inv Hp (model_idle_halted Hh) Hno Hw).
       exists tr, ms, md. split; [exact Hk|]. split; [exact Hsp | reflexivity].
   - apply triple_halt. intros w' (tr & ms & md & Hk & Hsp & ->).

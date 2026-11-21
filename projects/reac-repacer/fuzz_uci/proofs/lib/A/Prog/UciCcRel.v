@@ -9,7 +9,7 @@
 (* Modified by Theorem Labs, 2026-10: cgif's frame-area call rule aj_stack_malloc_at (proofs/cgif/cgif_file_fuzzer/lib/
    YCbq.v:1749-1809, this tree's copy lib/Reusable/YCbq.v:1749) restated over YCbqG.v's journal ajournal_x (allocator
    invariant a parameter ARx, ghost head set Hp after S / Hpc after Sc, program statics PST), for the frame-area
-   contract astack_malloc_realizes_x of the frozen lib/Reusable/FCiface.v (frameclass d9a884240c6e, sha256
+   contract astack_malloc_realizes_x of the frozen lib/Reusable/FCiface.v (frameclass, sha256
    673aac5ee2f6ed86). Generic: no image
    class, no address, no allocator instance.
    Differences from the donor, each minimal:
@@ -27,14 +27,15 @@
    (ASFX = YG0dcf.v astack_free_law_cf; FFLX = the two conjuncts of cgif's frame_flag_lawP the rule reads, over ARx;
    SFX = YG05cf.v stack_free_ok_cf).
    THIRD RULE, aj_set_shadow_at_x: cgif's frame-area set_shadow call rule (cgif_rgb_fuzzer lib/YC05.v:206) over
-   ajournal_x for FCiface's aset_shadow_realizes_x, taken from WalkH6's set-shadow-v2.patch (cold/h-hpreset-7-walk-H6
-   321efcb143d) unchanged but for its comment.
+   ajournal_x for FCiface's aset_shadow_realizes_x, taken from WalkH6's set-shadow-v2.patch
+    unchanged but for its comment.
    Rule 24: no ajournal_x port of aj_stack_malloc_at or aj_flag_store existed on any branch read (WalkS8a confirmed,
    2026-10-28 ~23:40Z; h-hpreset-7 stopped c-omx-alloc's lane for both); cgif's released YCbq.v is the source ported.
    Numerals: 0, 10 (cgif's class range), 16 (stack alignment), 64 (the smallest frame), 4096 (= ESTACK, YG0d.v),
    2 ^ 40, 2 ^ 64: LENGTH / DERIVED. No ADDRESS. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcallSx.v, with its module paths and module names changed; 408 of its 467 lines of code are new or changed and 302 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_decode/lib/A/Prog/LLVMFuzzerTestOneInput_seg_exit_tail.v, with its module paths, module names and numbers changed; 205 of its 287 lines of code are new or changed and 385 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* UciCcRel: Lemma cc_rel : cc_rel_stmt (lib/A/Prog/UciCcCut.v), the release-and-return piece of check_clamp,
    offsets +0x244 .. +0x314 of the audited listing lib/A/Prog/UciPList.v.
 

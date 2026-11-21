@@ -10,12 +10,13 @@
    check and the same call once, for the first word; its lemmas are copied here with the prefix cw3_ and generalised
    over the pass index. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/chain_words_s3.v, with its module paths and module names changed; 1876 of its 1987 lines of code are new or changed and 762 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment S2 of the walk of cross_check (image A fuzz_segconf.asan 0x89218), interface cross_check_d.v:
    ONE PASS of the segment loop, from its head CC_LOOP (0x892ac, pass i) to the head again (pass i + 1) or to
    the epilogue CC_EPI (0x89460).
 
-   The pass (the unit's internal record, commit dfb49d6ad789, path records/segp/plans/
-   PLAN-small-asan.md sections 4.2, 4.4; the same record, commit dfb49d6ad789, path records/segp/
+   The pass (the unit's internal record, path records/segp/plans/
+   PLAN-small-asan.md sections 4.2, 4.4; the same record, path records/segp/
    dis/cross_check.fuzz_segconf.asan.s lines 39-147):
      0x892ac-0x892c8  s4 = &seg[i], s5 = &s->role_set, check 2 (load4 role_set), `beqz` role_set
      0x892cc-0x89318  role_set != 0: check 3 (load4 role), check 4 (load4 model_set), the two branches on

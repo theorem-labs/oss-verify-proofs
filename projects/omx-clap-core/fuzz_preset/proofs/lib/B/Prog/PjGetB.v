@@ -13,18 +13,19 @@
    frame.  No call, no shadow check, no store outside [sp0 - 336, sp0): every representation the outer loop's
    head carries lies below alloc_ceiling + 8 (a live block, the image band) and moves across the stores. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_drain_pro.v, with its module paths, module names and numbers changed; 1682 of its 1766 lines of code are new or changed and 1187 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image B' (asan-ubsan, #102 pin d663f82d, unstripped twin c90d4fa54d43): the program walks of
    fuzz_preset's pj_get_str (34 words, entry pa_sigma AS_pj_get_str) and pj_get (112 words, entry pa_sigma AS_pj_get) over
    a Theorem Labs lane's whole-program listing lib/B/Listing_prog.v of the #102 pins (c97cc46b3e13 at the cut: the listing
-   8bcc2c9e7809 at commit d42e123915ae with its header comment only changed), against
-   the texts tpj_get_str_specX / tpj_get_specX (lib/A/PRH_FnPj.v 5aca5cbe2cfb at the kit cut
-   7cdbb61b5fa0; the two texts are character-identical to f97c8b2f046b's:
+   8bcc2c9e7809 with its header comment only changed), against
+   the texts tpj_get_str_specX / tpj_get_specX (lib/A/PRH_FnPj.v 5aca5cbe2cfb at the kit cut;
+   the two texts are character-identical to:
    S' = S, the reader's name bound in pj_cstrR, the m-form post over YAkMemnorm.memnorm, fpre's bound
    raZ regs < YM05.alloc_ceiling and its FRM0-ENTRY frm_zero conjunct (PRH_Base.v ef7c8ca98529), the Batch-2
    ledger prh_ledger .. most own): pj_get_holds_B_top /
    pj_get_str_holds_B_top at the end, at the unit's image instance (B := YD2l.TfibB, ARx := ARcf at CfParams_preset;
    PALib and the laws by lib/B/PALibB.v), from pj_get_holds_B_K0 / pj_get_str_holds_B_K0 (generic in B, ARx, LAWS, PALib).
-   RELOCATED B -> B' (h-rw-pre-5, 2026-10-29) from the signed old-pin walk origin/cold/h-rw-pre-5-b-pjget 062542d01e8
+   RELOCATED B -> B' (h-rw-pre-5, 2026-10-29) from the signed old-pin walk
    (blob ae1372130547; pin f8f98a95, twin 3b5e1a09, listing v4): pj_get / pj_get_str are instruction-EQUAL in B and B'
    (the internal file INSN-COMPARE-9e1283d1.md), so the walk is unchanged but for the listing offset of pj_get's loop head (21048 on B, slot
    5217; 22060 on B', slot 5470; now computed at its two use sites from AF_pgB, not typed), the return-address lower
@@ -37,14 +38,14 @@
    Generic in the image facts (Context PAImg B_prog_listing, the image facts Hent / Hobj discharged at
    PI_prog_B by computation at the end) and in the allocator relation ARx (LAWS : AR_laws_x .. cf_head, at
    CfParams_preset). fpre's raZ bound at pj_get_str's call of pj_get comes from the jal's own return pc
-   (PRW_StepKit.pa_slot_lt_ceil_b, WalkS7b c50d0958c0b).
+   (PRW_StepKit.pa_slot_lt_ceil_b, WalkS7b).
    THE KEEP: every walk runs with an invariant (runner twins YC1fPx.paj_run_x_inv / paj_run_to_x_inv over YC80x's
    srr_inv_laws, after c-omx-alloc's YC80x collapse);
    branches and returns leave the memory. The function-level theorems instantiate it ONCE at their top as
    m |-> (P mem -> P m) (srr_inv_laws_imp). The member loop's segment lemmas pgl_loopP / pgl_startP have the generic-P
    form (h-hpreset-7 12:18Z / 12:22Z): any R with srr_inv_laws SEGS R and srr_inv_call SEGS R (the loop crosses the
    strcmp call, whose row keeps YAkMemnorm.memnorm only); their statements changed for the INVARIANT's sake, so the
-   statements before the keep (a43c94406a1) stay byte-identical as the corollaries pgl_loop / pgl_start at
+   statements before the keep stay byte-identical as the corollaries pgl_loop / pgl_start at
    R := fun _ => True. Consumers of these segment lemmas: none outside this file (none told). pj_get_str's call of pj_get
    keeps P by tpj_get_specXP's last conjunct; no callee here has a memnorm entry premise, so srr_inv_mn is not used.
    STRUCTURE: image A's twins (WalkS6, origin/cold/h-hpreset-7-walk-S6) lib/A/Prog/S6PjGetStr.v and S6PjGet.v; the
@@ -52,11 +53,11 @@
    shared with WalkS6). The walk is image B's: frame sizes, seats and return slots from B's listing.
    B differs from A by the UBSan trap checks (`andi; bnez` to an unimp on a misaligned pointer; pj_get's
    pointer-overflow checks before keys[i] and before kids + 56 i), each a branch refuted by the tree's facts.
-   #102 TREE: the kit cut 7cdbb61b5fa0 (the #102 integration f44822dff082 + the P'' universe set + the kit texts; S1Ledger.v
+   #102 TREE: the kit cut (the #102 integration + the P'' universe set + the kit texts; S1Ledger.v
    8cf15eeb6311, lib/B/PALibB.v 5baa19c890f7, lib/Reusable/YCej.v 71ae24321ba4, the engine set, image tables and listings
    of the #102 pins), merged forward into this row; the shared image-free files lib/A/Prog/S6PjCommon.v f3ddc9375b1d
    (gs_cstr_kept holds under cstr_ok's `p + len + 1` ceiling), S6PjStrcmp.v de1559aa1234 (the ledger's `most own`) and
-   PRW_StepKit.v 0df3991c13f4 (the S7b walk c50d0958c0b, pa_slot_lt_ceil_b), one copy each, as the cut carries them.
+   PRW_StepKit.v 0df3991c13f4 (the S7b walk, pa_slot_lt_ceil_b), one copy each, as the cut carries them.
    The top theorems pj_get_holds_B_top / pj_get_str_holds_B_top take ONE hypothesis, ASC : astrcmp_realizes_xrom (the
    strcmp row at the wrapper, family 1b's text, owner c-libc-stdio), by name; the call goes through c-omx-alloc's
    aj_strcmp_at_xrom. pj_get_holds_B_K0 / pj_get_str_holds_B_K0 also take LAWS and TL (PALib) for any B, ARx;
@@ -95,7 +96,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A.Prog Require Import S1Ledg
 From Stdlib Require Import FunctionalExtensionality.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Spec Require Import PjTree.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YI5b.
-(* the PLAIN build's sink head must never fill SK here (YC1fP.v:23-33 does the same): every SK below is explicit *)
+(* the PLAIN build's sink head must never fill SK here (YC1fP.v:24-34 does the same): every SK below is explicit *)
 #[global] Remove Hints YI5b.src0_sink_head : typeclass_instances.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
@@ -1511,7 +1512,7 @@ split; [lia|]. split; [exact HJ|]. split; [exact KF|]. split; [exact HFR|].
 repeat (split; [assumption|]). intros j nm u Hj. lia.
 Qed.
 
-(* the two statements before the keep (a43c94406a1), byte-identical, as corollaries at R := fun _ => True (h-hpreset-7
+(* the two statements before the keep, byte-identical, as corollaries at R := fun _ => True (h-hpreset-7
    12:18Z condition (1): these statements changed for the invariant's sake) *)
 Lemma pgl_loop : forall (j i : nat) regsL memL mdL k0, (length members - i = j)%nat ->
   pgl_inv i regsL memL mdL k0 ->
@@ -1936,7 +1937,7 @@ eapply pj_get_str_holds_B;
 Qed.
 End inst.
 
-(* ======== the texts (PRH_FnPj.v 5aca5cbe2cfb at the kit cut 7cdbb61b5fa0, character-identical to
+(* ======== the texts (PRH_FnPj.v 5aca5cbe2cfb at the kit cut, character-identical to
    at the #102 kit tip, 908f34f0beaa: fQmn over YAkMemnorm.memnorm) at PI_prog_B:
    the P-instance at YAkMemnorm.memnorm (laws YSRrMemnorm.srr_inv_laws_memnorm_k), converted by S6PjStrcmp.v
    tpj_get_specX_of_P / tpj_get_str_specX_of_P ======== *)
@@ -1965,7 +1966,7 @@ exact (pj_get_str_holds_B_inst SK B ARx LAWS TL (YAkMemnorm.memnorm SEGSB) (srr_
 Qed.
 End k0.
 
-(* ======== the top at the unit's image instance (lib/B/PALibB.v 5baa19c890f7, h-rw-man-5 palib102bj ed438196d17c):
+(* ======== the top at the unit's image instance (lib/B/PALibB.v 5baa19c890f7, h-rw-man-5 palib102bj):
    B := YD2l.TfibB, ARx := ARcf at CfParams_preset; PALib by exvi_eh_palib, the laws by exvi_eh_laws. Required HERE,
    after every walk proof, because PALibB's closure (YStrtodRowX -> lib/Lib/Mem.v) loads lib/Lib/LiaTwx2.v, which
    redefines lia. The one remaining hypothesis is c-libc-stdio's strcmp row. ======== *)

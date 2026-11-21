@@ -5,8 +5,9 @@
    libreac/fuzz_knock's ASan harness walk of LLVMFuzzerTestOneInput in fuzz_knock.asan-ubsan (sha256
    f834165f5002e65398e68d514ab2a5a5b10e53144f0b41b93ebbc6f895290e82), pc 0x7f21c-0x7f26c, from ss_M to ss_C (both
    lib/AU/APgStates.v; invariants lib/AU/APgLoop0.v).  The proof is lib/A/APgMain5.v's (modelled on
-   proofs/cgif/cgif_file_fuzzer/lib/A at c8557374ad2e: ACfe.v:67-70, :155-212, :228-273, :274-316; ACf6.v:52-62;
+   proofs/cgif/cgif_file_fuzzer/lib/A: ACfe.v:67-70, :155-212, :228-273, :274-316; ACf6.v:52-62;
    ACf9.v:252-282), with the module paths of the lib/AU twins, the asan-ubsan pcs, and the register moves below. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* THE CODE (asan-ubsan image; the asan code in brackets)
      0x7f21c andi a0,s7,2; beqz a0,0x7f270                     (no STEP call)

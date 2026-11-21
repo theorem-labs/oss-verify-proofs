@@ -1,11 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: some recorded proofs replaced by tactic proofs; the channel-reader premise of writev; the BMode context; the model's access_ok checks. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -22,12 +19,7 @@ Ltac2 kr_t_AgentNodes () := "C4ELinuxProcessSemantics5Riscv7Prelude5bvmapC47Core
 Import ListNotations.
 Open Scope bv_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
-Section FPX_1. Context {fx : PropExec.FPState}. Context {bmK : BMode}.   (* [comment removed for export] *)
-
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+Section FPX_1. Context {fx : PropExec.FPState}. Context {bmK : BMode}.
 
 Definition epend (regs : bvmap 5 word) (pc : word) (mem rom : word -> option byte)
     (x8 : word) : machine_state :=
@@ -110,7 +102,6 @@ Lemma adv_eff_ret_copyins_epend : forall regs pc mem rom x8 r reads,
 Proof.
 ltac2:(KReplay.run1 (kr_t_AgentNodes ()) ["FPX_1"] "h01mh13memh22pch31rh45readsh54regsh63romh72x8p;1p;2p;5p;3p;6g001Zj10Tg002?j1GTg002dj13Tg003Bj14Tg0000j2FTg003ej1@Tg00`[j22Tg001:j16Tg00=hj5:Tg00[<j28Tg00\<j17Tg00;_j15Tg00<=j39Tg00]9j3ETg00^Cj2DTg009[j5CTg005kj3?Tg00dij6>Tg00a;j11Tg00a[j6=Tg00f<j2ATg00bYj2BTg00g7j3<Tg000\j6;Tg00A:#0R0#GR1#3R2%00R0#0R3#0#0#0#3#4R4'F%33#4R3#@\4R5g00dJ,24R6#6g00B_R7f6R8f5R9f4R:f3R;f2R<D:R=f1R>'8f0R?#7p,2fxf7%01#5g00Cf592;E<%50,D8P9P:DC5?7X07P8P9P:P;P<P>E>P>%63,24#11244#1R3P3g00cR#1%16E=,A?,B=A<=>?E;W4X34X74X65W1X24W5o"). Qed.
 
-(* [comment removed for export] *)
 Lemma rz_sys : forall segs scfg regs pc mem rom model w T,
   m_halted model = None ->
   m_vm_lazy model = [] ->
@@ -120,30 +111,42 @@ Lemma rz_sys : forall segs scfg regs pc mem rom model w T,
 Proof.
 ltac2:(KReplay.run1 (kr_t_AgentNodes ()) ["FPX_1"] "h02HEh12HFh22Hch32Hhh45Hlazyh51Th63memh75modelh82pch94regsh:3romh;4scfgh<4segsh=1wp;1p;2p;3p;5p;8p;<g001:j18Tg001Zj10Tg002?j17Tg002dj11Tg003Bj14Tg0000j2CTg003ej13Tg00hVj1>Tg00iMj1<Tg005kj32Tg00`[j2;Tg00ioj1:Tg00a;j19Tg004Gj2ITg005Ij2HTg006Ej1GTg00;_j1BTg00<=j3@Tg00<`j25Tg00=hj56Tg00jgj2?Tg00k\j5ATg009[j5=Tg00DBj2DTg00lhj8ETg00n>l<FTg00@;#8g00oIg00A:#0R0#7#1R1%00#0R0#0#0R2#0#1#4R3'C%10#4#3\3R4g010C%12#4R2g0119%33R5f2R6#>%<3R7321;33R8#8f3R9#:%9832%32f:R8f7R:'I1H2932g00A_f4R2#Gg00B?32p,3bmKR;f<R<f;R=P8f9R>f8R?P:%70#Bg00Cf5@1R1,58D6f6R0'?P2DAP;f=R;P<p,2fxP=P8P>P?D=P:P=P8P>P?15=1D6f5P2P91D57P;P=P8P>P?P0P6f1GEf0M<FW2W0W1W4W3W5W=W7X:4W6X83W9W;W<o"). Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Lemma rz_write_chan : forall segs scfg regs pc mem model fd ch n bs T,
   m_halted model = None ->
   m_vm_lazy model = [] ->
   bv_unsigned (getr regs 17) = 64%Z ->
   getr regs 10 = fd -> (bv_unsigned fd < 2 ^ 32)%Z ->
   fd_lookup (m_fds model) fd = Some (FdChannel ch) -> w_is0 ch = false ->
+  m_channel_reader model = true ->
   getr regs 12 = Z_to_bv 64 (Z.of_nat n) ->
   (1 <= n)%nat -> (Z.of_nat n <= rw_bytes_max)%Z -> (Z.of_nat n < 2 ^ 64)%Z ->
   rdn segs mem (getr regs 11) n = Some bs ->
+  (* the range [vfs_write]'s [access_ok] accepts on the count [n]; see
+     [CatSim.write1_check_n] *)
+  access_okb (getr regs 11) (Z.of_nat n) = true ->
   (forall k, (1 <= k)%nat -> (k <= n)%nat ->
      srealizes segs scfg (mkCfg (mkst (regupd regs 10 (Z_to_bv 64 (Z.of_nat k))) (v_addi pc 4) mem (seg_rom segs)) model) T) ->
   srealizes segs scfg (mkCfg (epend regs pc mem (seg_rom segs) (getr regs 17)) model)
            (t_write_ch ch bs T).
 Proof.
-ltac2:(KReplay.run1 (kr_t_AgentNodes ()) ["FPX_1"] "h04__x1h13Hk0h21nh32Hah45Hlen0h53Hn0h67__arithh74__ffh87__sat66h97__sat67h:7__sat68h;8__varmaph<5__with=4__x2h>4__x3h?1bh@4cstrhA5cstr0hB1xhC7__sat65hD5cstr1hE4__p1hF4__x4hG1khH1yhI1HhJ3H65hK2HchL3HchhM4HcnthN3HfdhO5Hfd32hP2HhhQ3Hk1hR3Hk2hS5HlazyhT4HlenhU3HlkhV4HmaxhW3Hn1hX4Hn64hY3HnohZ3Hrdh[1Th\7__sat69h]2bsh^2chh_2fdh`1mha3memhb5modelhc1ohd2pche4regshf4scfghg4segshh1zhi3z65p%0p&0p;1p;2p;3p;4p;5p;6p;<p;7p;8p;Ep;Bg001:j1VTg001Zj1<Tg002?j1HTg002dj1WTg003Bj1vTg0000k20NTg003ej1OTg00hVk10CTg00iMj1kTg005kj31j1sTg00`[k203Tg00ioj1~Tg00a;j1uTg00;_j1>Tg00<=j3NTg00<`j26Tg00EFj2eTg012Aj2rTg012^j2=Tg013:j1qTg013nj2nTg014fj1mTg005Ij2CTg015^j1lTg00IOR0j10Tg00JLj2Bk106Tg00QIj1MTg016XR1j29Tg0172R2j22Tg017Nj4GTg00]9j3[Tg00^Cj2]Tg018Uj1UTg009[j5dTg00jgj2cTg00k\j5bTg019`j6zTg01:nj28Tg00=hj5gTg01;Nk40YTg01;ik30XTg01=1k20WTg00DBj2ITg00L1j2TTg01=mk50VTg000\j67Tg01?@j3fTg01@Ek10STg01ACk10MTg01B>j1tTg01B^k10LTg01C<k20HTg01C_k30GTg01D<j4;Tg01Dcj1@Tg01EHj2pTg01F0j3oTg01FTj2STg01G2k10ETg01GPk10DTg01H;j2_Tg01H^j2JTg01IAk30BTg01Idj4^Tg01JOk20ATg01K1k20@Tg01K]k30?Tg01L<k40>Tg00Mkj2KTg01Lnk20=Tg01N9k50<Tg01OMk50;Tg01P`k509Tg01R3k108Tg01S@j3jTg01S_j2iTg01TWj2ZTg01TnR3j2\Tg01UKk105Tg01Uil<YTg01VNk20:Tg01W0j2hTg01WJj2FTg01X3j2PTg01X_k102Tg01Y=k201Tg01Y^k300Tg01ZGj3RTg01Zgj4QTg01[Ej6}Tg01[ik70FTg01\Mj4aTg01]8j8|Tg01]Uk30ITg01^7j1{Tg00FTk60JTg00[<k20KTg00\<j1yTg00dik60OTg01^UmE0PTg01_ej7xTg01`Ik70QTg01`mk80RTg01aQlBwTg01b7m<0TTg01b\k30UTg00NFR4f1R5f0R631p=41I46p=3g00dJR7P4P6P0P5f2R8f3R9f4R:f5R;f6R<f7R=f8R>M<Yp=`P7P4P1P0P2g01cEP;P:P9P8P5P6M<Yp=Ag00LoR2/26p=5P4P5g01cgP6C^p=EP5g01dNR1g01dmR?P?g01eMR@P6g01emFxp=:P8P1P?P?P@P5P6K0Qp=XP9P1P?P?P@P8P5P6L0Rp=?P7P7P7P4P4P4g01fMP0P0P0P3g01fmP;P:P9P8P5P6MBwp>07P7P4P4P4P0P0P;P:P9P8P5P6N<0Tp>04B0U456p=DP4P5g01gPP6C^p=Lg00@;#Vg00oIg00A:R0#<R3#HRA#WRB%<3RC#<RD#<#<RE#<RF#WRG#vRH+0N%WD#vRI#O\HS00g010C%VIRJg0119%OHRK&0C;%kH31203HHRL#V%~<%uL31f:RL%HD#>g00CfRD5NBRM'6,eG%>FRF'4f;RN%<A#>=NBDRO'6=1H=1eG>%>3RP%>ERE'rRQ'=g01h7RR#ORS%qLf9RT'n%m>,CR31g00A_RU%lTg01hoRV31f?RW%H0S01#<S02#<#>=NBDRX'6%0TRY,BG51Hg00O]RZ#MR[/9L%0Ng01iOS03'2f<R\#01rPFR]'=%OJR^fER_fAR`fCRa%HA#>=NBDRD'6f=S04CG1CJ\3119[6RBf@Rb,95p,3bmKRcfIRdfHRep,2fxS05fGRf%08Rg,BGS067[OfFRh%>CRC']P_%UdRiDdfDRj'cPWDb[[^G7PfPaPW16_Df>RkP5Ez18Ik=17WPcPePfPhP_Pj%UeRl16hMRmDgRnPafBRoP`PmPWPkQ04P\%qa/no%m`,CR51S%l`=1UVP>P=H0YB0Xo`ae20WoT1CHm,IKPNPH16hOA1H6aX?HPL1TnZPhP_PjPlPmI0VE7PH16hDRKPfPhP_Pi16fMDgRi%M[R>,Ti7f61CJbRV51^X?HPH16hXS0716fDRD=fi6=1^VX?HRiPH%0bRX,BGRSPiP^Pe&0SnPK&0MSS08CGRiA1^6VXc^P4PXPdP_PD%t6CG=1^VXh4P7PbPdP_PDP6CG=1^VX27P8%tX&0LbE71eGS18IWRV=17b%0VRD/4XRR%s7S09%s4Rk%05%06Rp'4A175620H5640GXH7XB7S0:PVPD%3DPbPX%3XM9`P6C;PR19[`%>0RR%0`RD'2RqP[PR%3RRrP`PD%3DEAP<C;Pq18I`R`#@%0`#5%@a%0aRq#51pPERD1=2PRs%5E1=2Q[[Rt%5PRug00OARvAoPE5UW3RE%5Q\v^3uRQ1pPFRw%5F1=2][\sRsAoPF5VvX3uRF%5]\v^3uRug01jPRv#uRx%VvRy1S45S0;&0E4Rz&0D4R{1_4R1J40R|'E,:{S0<%k?R}P{P4P|g01k<1_4P>0B4GC^,:{RPP}1_42/E|,:{=X{PC?C?20A{@RPP6P8g00B?R~,IU20@68=1U~dB0?425H0>R2b7b;b<X0412R6R~1=5]%581=8]'K[[^04P6%0dR]P=P\O3b6bCb8b9b:bAb@b5b4-0=XE7PePjPKQ08CG1CJWRJ51^eA1^iJeAfnKSPePnPKPSQ00/IlI0<E7Q07P<E71Tn>PhP_PjPlPmI0;E71Tn[PhP_PjPlPmI09E7P7PbQ03,2pX27P:PVP6E7&08WeP7PbPBX27P;PVP6E7195`g00B_R`Q05AjI8oRV,iIRb9[dO1]eCPffKRm#URlDdPcfLS03Pm1c6fPoDbX``P718IoR`,Z8%09Rn,BGRS1BGp51HX27P7Pa1Z96#0,BG91HSX27P4PH&06GRGPGPg1Z8aRK#0RJPH\4/IG14gJ1\gqRG,4gP4P4PkP6XB4RiPk1456R^$05XH4XB4PgPg%3gRUPJPGPiPi%3pXB7PKPGP8PgPUPaPq%3qJ07J04M<Y198`%0`Rq,2gRGP8PgPUP`Pq%3qEAP6C;PG19[9RG12RnRqP[PRPrP9Pn%3nRUEARgP8C;Pq18IjRK=17_%0KRp%0_Ri'4RJQ09PkQ0:PKPp%3pP_Pi%3iM9`P;C;PJ19[h%0hRJ,2RRiP[PRPrPhPJ%3JS07EAPNC;Pi%@<%0<#518IfRi#@%0i#5%@d%5]fJR]#0Ri-0:Y1=Yi1\YiRp/4Y'K12iY14pi'K'h%0L%0m'\P4PDPtPEPQPwPsPFPup-0Rp%M>RY#M,F41F4YRY1F4ZRZ'D'Dg01kcRK'P&020-014>004YRY1F4>1F4[/DZ'DR>'D/PK1DYZ/PK=Rvx5Rv5RvPyP41S48P5P41S49RYP:1S4:CQCQPzP{P{P1P?P?P@P{P1P?P?P@P<E}1J43R3/L|,:{5X{1J4ARA/E|,:{1L3A,:{5X{K0FP}P{Q01#H,J4R@/LA,:{P}P{1E|@,:{P}1L|3,:{C?C?C?PPP2b7b;b<X04X=4X>4XF4WE1K:^12861458'K'h14:9128;149:[[[^04^=4^>4^F4^EpP6fQ#0Rp,=XfPR^,8I#0PpP;PXP<PNQ04O8b6b8b9b:b\bibJbDbAb@b5b4b1b1CaG|P`P9E718IVB0II8oE7Q06=1HbRoePoPHPSPcfMRcQ03Q05A[mO61]]CPd%UcDd/cePaDbX?HP;P9PGPqPg18IaRg,99%0gRq,2nRGP9PnPUPgPq%3qEAP5C;RqPG19[:%0:Rg,2RR;P[PRPrP:Pg%3gEAP9C;RgP;18I_R_=17h%0_R:/4JRcQ09PkQ0:P_P:%3:PhPJQ07M9`P<C;R<Pc19[f%0fRJ,2RRhP[PRPrPfPJ%3JEAP\C;R\Ph%@=RJ%0=#5R=18IeRr#@R[%0r#5Rr%@]R]%5iRiPDPtPEPQPwPsPFPuPxPyQ0;PzP{Q0<P}Q0<C?PPP2b7b;b<X0412R5\~^04P6%0WRWPLO2b6bCb8b9b:bDbAb@b5b4b1b1Ca199j%0jRL,2nP9PnPUPjPL%3LEAPqPGPgP;P<PcP\PhPJP=P[PrP]PiPDPtPEPQPwPsPFPu1P>K=RvxPyP4P4%{4RyP8PYCQP5PyCQPzP{Q02,J4Rz/L3,:{P}P{1E|z,:{P}1E|3,:{C?C?PPP2b7b;b<X04X=4X>4148512591289[[^04^=4^>4P6fO,8I#0%0^PWPTPNO5b6bCb8b9b:bDbAb@b5b4b1b1CaO3AjI9a,iIP6J0JbIPdPePfPl16dMRMDg00Kb#yPdPePfPlPMPbJ0OE7WRXQBXG7NE0PbTWKWZWXWVWWWMWLWUWOWNWYWSWPW[W]X27X^HX_HWbWaXdHWeWfWgo"). Qed.
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+  intros segs scfg regs pc mem model fd ch n bs T Hh Hlazy Hno Hfd Hfd32 Hlk Hch Hrdr Hcnt Hn1 Hmax Hn64 Hrd Hok Hc.
+  pose proof (rdn_length segs mem n (getr regs 11) bs Hrd) as Hlen.
+  eapply (srz_write_ch segs scfg _ model fd ch (getr regs 17) bs T Hh Hlazy).
+  - unfold fdchan. split; [exact Hlk | split; [exact Hch | exact Hrdr]].
+  - apply fd32_id. exact Hfd32.
+  - reflexivity.
+  - exact Hno.
+  - rewrite ms_gpr_epend0. exact Hfd.
+  - rewrite ms_gpr_epend1, ms_gpr_epend2, Hcnt.
+    rewrite (ms_read_bytes_rdn segs) by reflexivity. cbn [ms_mem epend].
+    unfold word_to_nat. rewrite u64_lit by lia. rewrite Nat2Z.id. exact Hrd.
+  - rewrite ms_gpr_epend1, ms_gpr_epend2, Hcnt, u64_lit by lia. exact Hok.
+  - unfold buf_modeled. rewrite Hlen. exact Hmax.
+  - rewrite Hlen. exact Hn1.
+  - intros k Hk1 Hk2. rewrite adv_set_epend.
+    replace (len_word (firstn k bs)) with (Z_to_bv 64 (Z.of_nat k)); [apply Hc; lia|].
+    unfold len_word. rewrite length_firstn, Hlen. f_equal. lia.
+Qed.
 
 Lemma bv_and_255_small : forall code, (0 <= code < 256)%Z ->
   bv_and (Z_to_bv 64 code) (Z_to_bv 64 255) = Z_to_bv 64 code.

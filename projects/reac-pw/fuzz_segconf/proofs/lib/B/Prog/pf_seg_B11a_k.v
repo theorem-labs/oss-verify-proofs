@@ -4,10 +4,11 @@
 (* Modified by Theorem Labs, 2026-10: the boundary states and segment statements of LLVMFuzzerTestOneInput's ASan+UBSan walk (plugin-hostd/fuzz_command image B, 0x86530), the B twin of lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh6.v (the CL_*_stmtX statements: from a point of the function to its return, under the entry's context) and A/ACf5.v (rtcx, rt_base: the entry's facts bundled once). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths, module names, addresses and numbers changed; 469 of its 518 lines of code are new or changed and 289 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths and module names changed; 100 of its 125 lines of code are new or changed and 493 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3): the KIT of segment B11a of
    reac_segconf_parse_file's walk -- the internal cut points, the state each carries, and the cut statements.
    Statement text only: no machine run is proved here. The B11a segment lane of the image-B G3 walk owner, 2026-10-30.
-   ADAPTED from the image-A G3 walk owner's image-A kit lib/A/Prog/pf_a11a_k.v (commit c379667ff414, an
+   ADAPTED from the image-A G3 walk owner's image-A kit lib/A/Prog/pf_a11a_k.v (an
    image-A segment lane): the same form (a context b11_cx, one INV_ / _stmt pair per internal cut, every cut targeting the post
    written with SegModel.r_key's model branch); the cut pcs, the registers and the slots are re-derived from image
    B's code (reac_segconf_parse_file.fuzz_segconf.asan-ubsan.s), which differs from A's in its registers (B keeps

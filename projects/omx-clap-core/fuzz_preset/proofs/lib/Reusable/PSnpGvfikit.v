@@ -7,7 +7,7 @@
    the epilogue and ret as in tfib_vprintf_icpt_E; the inline printf_common run is replaced by a kcall of the
    printf_common contract (apcommon_realizesU), musl vfprintf by a kcall of avfp_realizes; the vprintf entry part
    (tfib_vprintf_icpt_A) is not used; stated as FMsnprintfGI's avfpi_realizes over FMsnprintfI's snk_frame. *)
-(* Modified by Theorem Labs, 2026-10: the image-free half of origin/cold/port-fm-rtprintf-param 7e395de08f5
+(* Modified by Theorem Labs, 2026-10: the image-free half of
    proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfGvfi.v for the snprintf chain restated over ARx (route (a),
    c-omx-hpreset 10:51Z): only the items the four roots' closure (snp_ok / svsni_ok / svsn_ok / svfi_ok) reaches,
    vfi_facts (:43), ro_far, CS_REGS, regs_kept (:75-82), st_ok_first, ro_far_sound (:165-184), sv_atom, vfi_preserved
@@ -17,6 +17,7 @@
    not ported. The read-only cells vfi_rodata and their check are image-bearing and live in lib/A/PSnpGvfi.v. The walk
    of __interceptor_vfprintf and avfpi_ok (the HarnessDesign route over FMsnprintfGI's avfpi_realizes) are not reached
    and not ported. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

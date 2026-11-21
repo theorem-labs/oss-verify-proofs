@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_wire/lib/U/Prog/LLVMFuzzerTestOneInput_cfb.v, with its module paths changed; 95 of its 235 lines of code are new or changed and 5 lines of the source are left out. *)
-(* ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/Prog/LLVMFuzzerTestOneInput_cfb.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_frame; decode's harness file fd_segments_c is not imported and segs_tac has no fd_env case (fd_env is decode's harness); module path OSSVerify.Proofs.libdiginet.fuzz_frame.lib. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/Prog/LLVMFuzzerTestOneInput_cfb.v for libdiginet/fuzz_frame; decode's harness file fd_segments_c is not imported and segs_tac has no fd_env case (fd_env is decode's harness); module path OSSVerify.Proofs.libdiginet.fuzz_frame.lib. *)
 From Stdlib Require Import ZArith List Bool Lia Wf_nat.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

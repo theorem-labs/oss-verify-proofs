@@ -2,7 +2,7 @@
 # run_gates.sh -- reac-repacer/fuzz_wire image B (asan-ubsan) start-up data set (19 files, lib/B layout): every gate,
 # each with its control FIRST. rule 24: proves no function (start-up facts). The twin of the fuzz_uci image-B gate run
 # (UCI/sub/gates/run_gates.sh, UCI/GATES-uciB.md gate table); every unit number is MEASURED from the fuzz_wire images
-# in the run that uses it, never copied. Tool set of record: commit dbb5a97ad14 tools/startup-set (FT, run through
+# in the run that uses it, never copied. Tool set of record: tools/startup-set (FT, run through
 # its frozen-run.sh with its bundle: codeptr 12348302dfd2, pins 4778073f01be, keyset f050b43e480e, ifchk f5cde600cc18);
 # the other tools are copies in tools/ (sha256 in logs/SHA256.tools.txt; each change listed in REPORT.md).
 #
@@ -96,7 +96,7 @@ G0() {  # snapshot of the files + their raw twins; cgif inputs; sha256 of every 
        frozen/ifchk.py.frozen-* frozen/gen_ad1k.py.frozen-* | sed 's#  #  FT/#')
     (cd "$LTOOLS" && sha256sum nsW.py hdrcheck.py pg-reloc/0e4e065eab9f/port_core.py | sed 's#  #  W/tools/#'); } > "$X/raw/SHA256.tools.txt"
   klog < "$X/raw/SHA256.tools.txt" > "$L/SHA256.tools.txt"
-  # the two gen_ad1k versions lowbeg.py imports (G11): 43a0cf0abc67 (FT's bundle, dbb5) and 814c81b8966e (8cd71d3a4bb)
+  # the two gen_ad1k versions lowbeg.py imports (G11): 43a0cf0abc67 (FT's bundle, dbb5) and 814c81b8966e
   local b tag rest bun fz name sha
   for b in dbb5:"$BUNDLE":"$FT/frozen" 8cd7:"$T/frozen/startup-set-8cd71d3a4bb.tsv":"$T/frozen"; do
     tag=${b%%:*}; rest=${b#*:}; bun=${rest%%:*}; fz=${rest#*:}
@@ -260,7 +260,7 @@ EOF
   lg GD.reqdiff.control2bad.log python3 "$T/reqdiff.py" "$X/gdbase" "$X/ctl/gd2/bad" YB1l; rc "GD reqdiff planted Definition" $? 1; tail -1 "$L/GD.reqdiff.control2bad.log"
   # reqdiff reads Require sentences only: a change in a COMMENT is NOT Require-only and it refuses (by design). The
   # comment-stripped comparison is the gate for a comment-only change: tools/stripcmp.py (a copy of the fuzz_uci
-  # lane's, 006d278b3a92's 476ab3345401) drops every `(* ... *)` and keeps the newlines, so a code change moves a line
+  # lane's, a commit's 476ab3345401) drops every `(* ... *)` and keeps the newlines, so a code change moves a line
   # and a comment change does not.
   echo "=== GD CONTROL 3a: a copy of the base YF0m with a word added INSIDE its first comment must be comment-stripped EQUAL ==="
   rm -rf "$X/ctl/gd3"; mkdir -p "$X/ctl/gd3"

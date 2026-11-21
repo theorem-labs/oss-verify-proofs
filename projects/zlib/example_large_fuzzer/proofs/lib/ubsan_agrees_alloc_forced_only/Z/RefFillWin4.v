@@ -1,0 +1,75 @@
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
+From Stdlib Require Import ZArith.
+From Stdlib Require Import NArith.
+From Stdlib Require Import List.
+From Stdlib Require Import Lia.
+From Stdlib Require Import Bool.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.Z Require Import ZPropExecP.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.Z Require Import ZSeqExecP.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.Z Require Import ZChecksum.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.Z Require Import ZChkAdl.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.Z Require Import SymEx2Expr.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.Z Require Import MemRel.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.Z Require Import MemFill.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.Z Require Import DSLayout.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.Z Require Import ZSLayout.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.Z Require Import LmatchModel.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.Z Require Import AdlerModel.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.Z Require Import FillWinModel.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.Z Require Import FillWinMem.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.Z Require Import ZIface.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.Z Require Import DeflateState.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.Z Require Import DeflateLz.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.Z Require Import RefAdler_run.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.Z Require Import RefFillWin1.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.Z Require Import RefFillWin2.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.Z Require Import RefFillWin3.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Import ListNotations.
+Local Open Scope Z_scope.
+
+Section Walk.
+Variable S : Z.
+Variable sp : Z.
+Variable p : ds_ptrs.
+Variable zp : zs_ptrs.
+Variable ds : deflate_state.
+
+Local Notation W := (p_window p).
+Local Notation PV := (p_prev p).
+Local Notation HD := (p_head p).
+Local Notation strm := (p_strm p).
+Local Notation INP := (zp_in zp).
+Local Notation ws := (ds_w_size ds).
+Local Notation hs := (ds_hash_size ds).
+Local Notation ILEN := (arr_len (cs_input (ds_strm ds))).
+Local Notation CSTL := (RefFillWin1.CSTL ds).
+Local Notation LF := (RefFillWin1.LF S sp p ds).
+Local Notation moreof := (RefFillWin1.moreof ds).
+Local Notation CSTL_match_start := (RefFillWin1.CSTL_match_start ds).
+Local Notation CSTL_strstart := (RefFillWin1.CSTL_strstart ds).
+Local Notation CSTL_lookahead := (RefFillWin1.CSTL_lookahead ds).
+Local Notation CSTL_block_start := (RefFillWin1.CSTL_block_start ds).
+Local Notation CSTL_ins_h := (RefFillWin1.CSTL_ins_h ds).
+Local Notation CSTL_insert := (RefFillWin1.CSTL_insert ds).
+Local Notation CSTL_high_water := (RefFillWin1.CSTL_high_water ds).
+Local Notation CSTL_set_window := (RefFillWin1.CSTL_set_window ds).
+Local Notation CSTL_set_head := (RefFillWin1.CSTL_set_head ds).
+Local Notation CSTL_set_prev := (RefFillWin1.CSTL_set_prev ds).
+Local Notation ILINV := (RefFillWin3.ILINV ds).
+Local Ltac open_lregs H :=
+  let H' := fresh "HL'" in pose proof H as H';
+  destruct H' as (P20 & P2 & P8 & P9 & P18 & P19 & P21 & P22).
+Local Ltac open_cstl HK :=
+  pose proof HK as (Kwl & Kpl & Khl & Kin & Kwr & Kws & Khs);
+  pose proof (f_equal (@arr_len Z) Kin) as KIL; cbn beta in KIL.
+Local Ltac in_LF := unfold RefFillWin1.LF; repeat first [ apply sub_franges_here; cbn; lia | apply sub_franges_later ].
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
+End Walk.

@@ -4,10 +4,11 @@
 (* Modified by Theorem Labs, 2026-10: [malloc_gen_ns] and [malloc_ok_ns] (with the tactics [splits] and
    [ff04_leaf]) copied from proofs/cgif/cgif_file_fuzzer/lib/YG0u.v:13-205, with its module paths changed; that file
    is not relocated to this unit's lib/Reusable.  Everything after them is new. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The allocator-model side of calloc's contract (lib/Reusable/YGCalloc.v).
 
    calloc(nm, sz) in its in-range arm is the allocator's malloc tree at n = nm * sz (YG00.v:411 [malloc]); a Theorem Labs lane's
-   Allocate statement (lib/Reusable/YGAlloc.v:106-117 [alloc_leaf]) hands its caller the reached result [r] together
+   Allocate statement (lib/Reusable/YGAlloc.v:107-118 [alloc_leaf]) hands its caller the reached result [r] together
    with [exists trc, apath (mt n tr S) trc r /\ gflag trc = true]: [r] is the end of a path of the model tree on
    which every kernel answer was granted.  This file proves what the allocator model says about such an [r], at
    n = nm * sz.  No machine code is involved.
@@ -17,18 +18,18 @@
      (YG0n.v:206-207 am_wf / am_universe of ARm, the first conjunct of AR); [calloc_model_of_AR] below reads them
      off an AR.  [universe_ok U] is the premise of the depot step of the malloc tree (YG07.v:35 depot_put_ok).
    - [aregime S]: the regime conjunct of the call precondition (YG0d.v:228 acall_pre) and of the Allocate
-     statement's [rpre] at the unit's instantiation (YGCalloc.v:302 rpre_cgif); a call rule that carries
+     statement's [rpre] at the unit's instantiation (YGCalloc.v:303 rpre_cgif); a call rule that carries
      [st_nev S < EV_MAX] instead gets it from YG01.v:205 aregime_small.
    - [0 <= nm], [0 <= sz], [nm * sz < MALLOC_MAX], [blocks_bytes S + nm * sz <= LIVE_MAX]: the room premises of
-     YGCalloc.v:193 acalloc_realizesP and :233 acalloc04_rule.
-   - [In tr U]: the trace premise of the Allocate statement (YGAlloc.v:92).
+     YGCalloc.v:194 acalloc_realizesP and :233 acalloc04_rule.
+   - [In tr U]: the trace premise of the Allocate statement (YGAlloc.v:93).
 
    cgif refutes a NULL result of a granted malloc path from the model law record (YCbq.v:1587-1605: YG0d.v:527
    ml_malloc_ns gives [fst r = PNull -> ns = false], YG0d.v:176 atok_apath_flag turns the path's flag into [ns],
    YG0d.v:174 last_flag_true closes it).  The same argument is used here, with the law discharged by its released
    proof (cgif YG0u.v:198 malloc_ok_ns, copied below) instead of being assumed: no [model_laws] hypothesis is left.
 
-   THE SPLIT for YGCalloc.v:229-249 [acalloc04_rule]'s post (res = the returned a0, ly2 / S2 = the post's layout
+   THE SPLIT for YGCalloc.v:230-250 [acalloc04_rule]'s post (res = the returned a0, ly2 / S2 = the post's layout
    and state, S2 = snd r):
    - from the model ([calloc_model_post]): the block is not PNull; [st_nev S2 = st_nev Sc + 1] (the journal's event
      count); [frames S2 = frames Sc]; [secs_ext Sc S2] (YCbq.v:843 secs_ext_length turns it into the journal's
@@ -263,7 +264,7 @@ Qed.
 (* ------------------------------------------------------------------------------------------------------------
    The malloc tree at calloc's size n = nm * sz.  The hypothesis
    [exists trc, apath (malloc (nm * sz) tr S) trc r /\ gflag trc = true] is, word for word, the conjunct of
-   YGAlloc.v:116 [alloc_leaf] at mt = YG00.malloc and n = nm * sz, so a caller of that leaf passes it as is. *)
+   YGAlloc.v:117 [alloc_leaf] at mt = YG00.malloc and n = nm * sz, so a caller of that leaf passes it as is. *)
 Lemma calloc_size : forall nm sz, 0 <= nm -> 0 <= sz -> nm * sz < MALLOC_MAX -> 0 <= nm * sz < MALLOC_MAX.
 Proof. intros nm sz H1 H2 H3. split; [apply Z.mul_nonneg_nonneg; assumption | exact H3]. Qed.
 

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: nsafe_mmap_rw gets place_declined_b_null for the NULL hint, and the destruct of aok's unmap arm skips its two new ledger facts. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
@@ -562,7 +563,7 @@ Proof.
   intros b G A k mo len HK Hlen Hal Hlb. pose proof HK as (M & Hb & HN & _). pose proof M as (M1 & M2 & _).
   split; [| split; [| left; reflexivity]].
   - (* [comment removed for export] *)
-    pose proof (nsafe_mmap_rw 0 len mo ltac:(lia)) as X.
+    pose proof (nsafe_mmap_rw 0 len mo ltac:(lia) (place_declined_b_null _ _ _)) as X.
     change PROT_RW with (PROT_READ + PROT_WRITE). change F_ANON with (MAP_PRIVATE + MAP_ANONYMOUS). exact X.
   - cbn [nslack]. rewrite (mmap_len_lit len) by lia. cbv zeta. rewrite M2. split.
     + right. apply robust_le. lia.
@@ -941,7 +942,9 @@ Proof.
            ++ exact Hk.
            ++ exact HKC.
     + (* [comment removed for export] *)
-      destruct Hok as (Hlen & Ha & Haal & Hce & Hmh & Hsh). cbn [aev_node] in En. injection En as <- <-.
+      (* 08b1429: [aok]'s unmap arm gained the two ledger facts the kept
+         [munmap] arm's [maps_subtract] rebuild needs; nothing here reads them. *)
+      destruct Hok as (Hlen & Ha & Haal & Hce & Hmh & _ & _ & Hsh). cbn [aev_node] in En. injection En as <- <-.
       cbn [evq] in HE.
       rewrite aembed_vis. cbn [aev_tree]. apply TS_event.
       * eapply KI_acct_ok; [exact HK| lia].

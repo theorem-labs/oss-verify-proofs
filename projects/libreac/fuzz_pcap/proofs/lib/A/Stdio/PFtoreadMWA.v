@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the asan instance of musl's __toread walk inside libreac/fuzz_pcap
    (libreac v1.9.0). The walk rtoread_contract_proof is image-free, in lib/A/Stdio/PFtoreadMW.v;
    this file applies it to the asan image at PTOREAD = 0x8e638 (lib/A/Stdio/PStdioImgA.v). The
    asan-ubsan instance is in lib/B/Stdio/PFtoreadMWB.v. Its image facts are checked by computation
    over the image's own segments, AR_laws by YG0q.AR_laws_ok; the stream record's image law stays a
-   premise (the composition's). Moved unchanged from PFtoreadMW.v (a working branch 016391ab8b5).
+   premise (the composition's). Moved unchanged from PFtoreadMW.v (a working branch).
    rule 24: no function proved (split of a proved file). *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.

@@ -2,8 +2,8 @@
 # One line per file of this slice: <path relative to this directory> <kind> <sha256 of the file as committed> <role>.
 # This MANIFEST names every file of the slice except itself.
 GATES.md doc f879fd15bd9d38d6ec09eb581557517a74dc220087e97ec86ce0f9841c002e36 every gate result with its control
-MANIFEST.md doc 7a6e8641fcb602be1e6f184bffb2a569b815f404e0f00f70142082b0782d79a3 the role of each file, in prose
-METHOD.md doc 4368343302d9f4e729354a59c3210973d181b1303b1ae336cca1451b6831279b the route, the run status, and every decision with its measurement
+MANIFEST.md doc 5ecce05ee683bd4a3a3df4ace1fdb16f140242311e98f3e7dd6f569013d202a9 the role of each file, in prose
+METHOD.md doc f95a13c700f1d7da2672990b7bcc3b39873326ad23f5c0de619d97096607a42a the route, the run status, and every decision with its measurement
 ad1q-shape.patch input b7a6e350fd47a9d5b083e68548a8e6f04dd47a54e43b9476ef142b8741c8f72a run.sh --patch: A/AD1q.v takes transport_shape
 add-kit.sh script 0210310d68520d66681a3098a77a0f0c7d9dd6865b9678146736bc0278eea4a3 writes the composition kit (17 files) into the lib by module path only (HUB named)
 afet-cost.patch input 9f5dfea19198b183735e332d13d4d0700b3d6398a90952982b2d295a6db2d8a1 run.sh --patch (14th): the A/AFet.v proof-script cost fix (forallb + vm_compute)
@@ -20,12 +20,12 @@ g-AD1w.patch input ed41960ef097e3518ee00992d20e900a66a9d620164ce7fdb50d12e8cf824
 g-AD2f.patch input f9d48ede68ec826b14eb87af28c5e8c8893d200bca36a14457e1bf5f6b41542f run.sh --patch (G): DRV_G, the hull clip in IMG_L / IMG_LC / L_pieces, L_mem_avoids_G
 hdrcheck.py script 025c9ca1c5b5f27aa9cbc8704b5cf869057f20179b7cd034f53a58d6e08173c4 run.sh: the donor notice block and the one registered provenance line on every staged file
 imgtop-alias.patch input a1b73a8107be43c49948cc793a004325016a0d4e3970e1fa4114ef35972d7540 run.sh --patch: image bounds as the numerals vm_compute gives
-kit-rec.tsv record 67d7e02f36a3481ae604c86560f53088d25fde72cc42e071f150e789f7a1c575 add-kit.sh table for the run of record: donor blob, written blob, module paths changed
+kit-rec.tsv record 86735535f540b28f176e57d4e844188b9cefd135546bec22174891d18a243f78 add-kit.sh table for the run of record: donor blob, written blob, module paths changed
 not-relocated-startup-layer.txt input 0f4837905d40cfb58770851995c034acf6ef10034ddae88e5246a0e4c6747c8c run.sh --no-stage list: T3r cut start-up layer (19 files) and YI0a, YI17
 overrides.tsv input 50a44ad70d1b28bf1ccd1438840225aa1865711cc995571afce79da39b4b99f4 run.sh --override rows (59 in 19 groups), each group with its measured reason
 required.tsv record 14068fe359df484a9b0fbac0937f62e0aa97eaf7421bb8d3359734d5acd88b97 the run of record: port_core require-unresolved rows (4, the G patches Requires)
 reusable-local.py script f3b058010eab9abb40d5d7fa8bbf8fad047a35dfa9ed8a17e61d96d148c8afe2 run.sh: the shared Zify redefinitions of Reusable/YA09.v and YA0e.v made Local
-run.sh script 3bfa4dc85eceb8c0f2e87eddb0d25b770ddb02d9d1ac07a8c95dc850c08d2cdb the relocation run of record (port_core 83f5203d2a2f, --src-rev 25e3d17bdb50, 14 patches, then hdrcheck.py and reusable-local.py)
+run.sh script ecfe6a6dac67b01afc912f8e9b6df8b5c83cf7ca3e8ac233a318d2d3dde4dc05 the relocation run of record (port_core 83f5203d2a2f, --src-rev 25e3d17bdb50, 14 patches, then hdrcheck.py and reusable-local.py)
 versions.txt record c7a8893123d17516deebff62925313493c651cb3bfa9ac1800c56d3b9c222e1e the run of record: sha256 of port_core.py and every helper
 zero-shadow-forallb.patch input c61928f405d4e151bf4e8941c89c35b62efa82f42dd8eefa99f805a87150e3bd run.sh --patch: Tfib_zero_shadow case splits as forallb checks
 checks/alreloc-gate.sh script 6dc73d448e87c2be119bedae20833974e24cdbadafcbea485208eda7769ba655 alreloc cross-check as one command: record run, control, two sweeps, tables
@@ -76,7 +76,7 @@ gates/codeptr-notaddr.tsv input 449015a11709e6d3006e5b2d37bd081449d1062808a2a21c
 gates/flag-gate-A.sh script 1624404302ebd1fea1975227b8a4d017da9454d64038beeaeba5e2116c4d33f1 gate (a): record run, triage and the planted pointers
 gates/pac-A.sh script cf205cb0cdd86b27ed67052a310bf5f152e39a1ac04d7d2bee1e52b3c72c25c6 gate (a): port_addr_check 205a90fd19b8 (SHA256SUMS checked) over stage vs stage-out
 gates/triage-A.py script ce9ec163a04c2136a5e0f112e61e5ddf9470ab2f979b60b14ef7d403cee129fa gate (a): one measured reason per flagged row
-records/ALRELOC-CROSSCHECK.md record 6a9300db64955088fa580d77c49df2166d01be528599a6bd79704174b4385ebc alreloc cross-check: result, controls, the czone group, limits
+records/ALRELOC-CROSSCHECK.md record 8105df14bab3b52ccb13a20144bbe29f0488fb58532ba6c806df5c4acab362e4 alreloc cross-check: result, controls, the czone group, limits
 records/PAC-GATE.md record 696598b35ef25ec8566e1cc5c56d0769611ff6f05a4a37ff8679a5b67c150ee1 gate (a): command, result, controls, rules, TOOL-LIMIT and known rows
 records/PAC-NAMEDIFF.md record d1804aef840a1ec6d68de994784ff59fba0228056740949100fc2e2fbc518876 gate (a) addendum: rows 0d24592683b6 flagged and 205a90fd19b8 passes, each read
 records/RESULT.txt record d59d02ffe09b06dfef6d501d4eb4fa936ebb028daf149f9db3b63cca7e462854 values in hypothesis positions: listing, derivation, control
@@ -85,11 +85,11 @@ records/STRICTCMP-RUNTIME.md record 9ad82dc68cf8b8e86d5be23aaeeea31a626598ca9a9f
 records/TFIB-WHOLE-TABLE.md record a701d02d3eae20757b8503fa8a820126d2f1539c5ce8d784bd8df404cb8c1e4c the whole tfib table: the classes, the reading lines, all 83 removed pairs (80 WRONG, 3 FALSE) with the function at each value and the alias re-check, the diff against image B
 records/VALUES.md record 82f68de6f87b89ea167249ba137cfff57779f1b61223f01f43cf2d42d248b38e the value lane on the run of record: results, controls, rows decided by hand
 records/WRONG-ROWS.md record 8f3dfb5f002cb729351d22072b11d39632fbb396dbca62fd27af84de8975b991 values in hypothesis positions: the WRONG rows, each read by hand
-records/alreloc-crosscheck-rows.part-1.tsv record 5b9a4b9b3a3c8a8a76ea3272c428481581df70f26e20b8fa6a452df7eb5e394c alreloc cross-check: one row per numeral position (part 1 of 5 of alreloc-crosscheck-rows.tsv; header in part 1 only; cat part-*.tsv restores it)
-records/alreloc-crosscheck-rows.part-2.tsv record 25ded7d0ec9e4a0b4317d2a909f1067d50eecd3f8cb752f9aa7c2e49edbfacd4 alreloc cross-check: one row per numeral position (part 2 of 5 of alreloc-crosscheck-rows.tsv; header in part 1 only; cat part-*.tsv restores it)
-records/alreloc-crosscheck-rows.part-3.tsv record ae3dfd273030ac9056f23e9da0029556a0a5f16c11e0fa8ba13ff2bc782779c3 alreloc cross-check: one row per numeral position (part 3 of 5 of alreloc-crosscheck-rows.tsv; header in part 1 only; cat part-*.tsv restores it)
-records/alreloc-crosscheck-rows.part-4.tsv record 01454bc90fc962e134795fcc6c1d56a7196ec32a7789ebf875aa06a5084ecbe1 alreloc cross-check: one row per numeral position (part 4 of 5 of alreloc-crosscheck-rows.tsv; header in part 1 only; cat part-*.tsv restores it)
-records/alreloc-crosscheck-rows.part-5.tsv record 8484a5a45765c2cd261c62fdd4773ca432e4408e67e574b16329eae54573f0ed alreloc cross-check: one row per numeral position (part 5 of 5 of alreloc-crosscheck-rows.tsv; header in part 1 only; cat part-*.tsv restores it)
+records/alreloc-crosscheck-rows.part-1.tsv record f5dcf8a9cf006bbcd021fdd57a9fb3ae100c72e5be07663db316a3ffe25ec338 alreloc cross-check: one row per numeral position (part 1 of 5 of alreloc-crosscheck-rows.tsv; header in part 1 only; cat part-*.tsv restores it)
+records/alreloc-crosscheck-rows.part-2.tsv record 3ce54850697eff8054d587404512740e665578789e772bc60d0f1deec714e132 alreloc cross-check: one row per numeral position (part 2 of 5 of alreloc-crosscheck-rows.tsv; header in part 1 only; cat part-*.tsv restores it)
+records/alreloc-crosscheck-rows.part-3.tsv record 7b69f3fa912852a0e2ab6333315d59292e0b819b3a5b170205cb896882585f17 alreloc cross-check: one row per numeral position (part 3 of 5 of alreloc-crosscheck-rows.tsv; header in part 1 only; cat part-*.tsv restores it)
+records/alreloc-crosscheck-rows.part-4.tsv record 9bac5e035b744ec0e3b2d2521ea6839fed63ad5462611c07860c01b93ffc01e3 alreloc cross-check: one row per numeral position (part 4 of 5 of alreloc-crosscheck-rows.tsv; header in part 1 only; cat part-*.tsv restores it)
+records/alreloc-crosscheck-rows.part-5.tsv record 40b2304eabebfe839d9084e8e23b111913aad93a527ae3fbfcd8ca8604000cdc alreloc cross-check: one row per numeral position (part 5 of 5 of alreloc-crosscheck-rows.tsv; header in part 1 only; cat part-*.tsv restores it)
 records/alreloc-gate.txt record 8333fbb11d4a603f246e09006448d1ec88b672aaed4de3753974fe6326cb1cf9 alreloc cross-check: each step status and the control lines
 records/alreloc-wrong-rows.tsv record 02f4a47995d4e02ef519debfb8a00b910a35db635cef70772901e4b4cd2e8f4f alreloc cross-check: the rows the rules call WRONG or UNDECIDED, each read by hand
 records/atable.txt record ea808635ae4f2f79d47b02c4693c7745373e4109ee0115a9a0b64cdaf0bc95b5 core-side atable check and plants
@@ -132,13 +132,13 @@ records/kept.tsv record eb0e0c81fa8464c075c779e6df1580eb97ecbb82041a13d706c4ba47
 records/pac-namediff.tsv record 0b30d56e3b023bdab893850b6a948501f229114993d6c52e521dce78471dda2d gate (a) addendum: the 54 rows with both readings
 records/rec-triage.out record 50b245e883b16fd3bf233fdd58cb09879f764b2a0da99fa67ad96574a82e04e7 gate (a): triage counts by class and reason
 records/rec.log record 91952eefe0ee0b559dca7b5278c5b0b43856c639a65c3f50040f9fa37def7c35 gate (a): the checker log of the record pass
-records/record-tables.md record 5f45eb0128a32c91052bc64803f188d57d69ea4ef91f9daf7ce1bf6f36924815 alreloc cross-check: the generated tables
+records/record-tables.md record c45ba83b93ef1a7192f9d24a266e3bc0fbac5ea24741dcfe041cc3337199f617 alreloc cross-check: the generated tables
 records/roundconst-read.txt record b5c5e322c0a72b48c4b5ae5a035f523fb2f1b6b6d105a8345b2943fc88ec31e3 roundconst-gate v2: the 1751 non-SAME rows read by hand
 records/roundconst.txt record 73cdbbbfcd42967b0572bd9e3b7b6666c3573285a55cef0b753ea01ca68959d8 roundconst-gate v2: runs, plants, every non-SAME row
-records/run-gates.txt record d28905337cf887f67936d32b2478d15ad14f0803243954701997d7c3810a1c3b run-gates.sh: every gate command, exit status, wall time, script sha256
-records/run-of-record.txt record 0b8b69c480e86acfaa9051b387f2aa989b957e59f6f932608867d8d127b03ecf run.sh summary lines, every FAIL row with its reason, limits L1-L4
+records/run-gates.txt record 54c62c367af81344d4ce332b6368f95ba0362d2db5e69fe2018a0bda314f008a run-gates.sh: every gate command, exit status, wall time, script sha256
+records/run-of-record.txt record 28b86e55d209c5e48d8b64284b6c791a742d4ef422280b2ec500b28a84508638 run.sh summary lines, every FAIL row with its reason, limits L1-L4
 records/secbounds.txt record 7274bb060df1c6a53fb74803ed3eae15d6b5f81079183f01f273642c1064319b section-bound cells and control
-records/settings-count.txt record 73cebc8be975f3f64dc4f9db74e8e98a021b3b18284925f9bda9d84a198eb82f gate (d): counts, donor files, plant
+records/settings-count.txt record 64f16ebe026e224febbf136d177bb5b92abe801ec575c5a485a2d272586686dd gate (d): counts, donor files, plant
 records/startup-layer.tsv record 15b9cc2b490bd70b9262df7e129190b92a320e44a76c948e03ee7d28d519ad00 the 19 start-up files of row T3r's cut layer the run read, each with its file sha256
 records/strftime-neutral-oldpin.s record 3b0ff4dd16704a64257498ad08168455f556de1b55c99d2c2cf45c1064d9503f neutral listing of __strftime_fmt_1, the input of strftime_a1_trace.py
 records/strictcmp3-five.txt record 667ffcba5525d6a8b8ef8ca419fd3b80693d3d01d531f6c8534a47a534888f94 cmpkit 86da41d3ef68: strictcmp3 output
@@ -151,11 +151,11 @@ records/symoff.txt record 18b292bb2bddb14a8132ec78c8bbe35d4c525fba8c6fcd64343ba8
 records/tfib-whole-table.tsv record a2ee77e7e08129055ce82bad089fc443a9c699fc54496841fd7ddfa263c768d8 the whole tfib table: one row per cell, on the lib before both removals
 records/unlisted-derived.tsv record 56ef298500a73b28b8b7e68dc33b36ca5e3712ce5da5a146d18fe6d1586f3fa2 differing numerals outside hypothesis positions, derived
 records/unlisted-differs.tsv record bb6119f66f424b57debc6e0c55a33c1ef2fbc20cfd2febfd7194e5a8c56d7a05 differing numerals outside hypothesis positions
-records/v10-donor-lines.tsv record aa3a51c35b36f54b066612ef04eaeb37ad380be577f65362cf264ac23db41759 gate (d): settings rows and their donor lines
+records/v10-donor-lines.tsv record 0c3e7e2477bbcc98ce8736c4674a9158c585299a88f2788a4e01af055cfeb2da gate (d): settings rows and their donor lines
 records/xcheck.log record 846aa5369a2a3bd1811ce4502c7ffd6104119daa2160ba5d1c4bd3e37865b6d1 alreloc cross-check: the record run summary
 records/yh03check.txt record f2f80b3b7bea706030374726ff2ab50d8c6545b589d829cc75ed0611e475dc0b gate (e): yh03check fb3bfbc1eea8 runs, plants and the cells read by content
 records/afet/AFET-COST.md record a76dd49d400a9ecd3b62140e49207305fd6e19530f69bf2d8931886082ed230a the A/AFet.v cost fix: the lane report (cause, cell counts, times, patch, build)
-records/e0e9-dry/E0E9-DRY.md record 9d7f91f78b207258b7efa5e291284356861c8b2f4bfc971d6ed4d947ed2a5e04 the DRY cross-check with port_core e0e94a04094b
+records/e0e9-dry/E0E9-DRY.md record 784df5af8229706a8b34b1d46d4cfb8d5a7a07ff0173ff38b85661d982757743 the DRY cross-check with port_core e0e94a04094b
 records/e0e9-dry/check-diff.tsv record d690d681644ff717017b8250ca37b8dce89cca4ce6c1a12b9892355c547ba682 the DRY cross-check: check rows in one run only
 records/e0e9-dry/compare.out record 74c3715e446f63e56354bc19a2fac87a0965d475ea458f0c4b10c2f4025aca3b the DRY cross-check: the comparison output
 records/e0e9-dry/compare.py script e315448e23c0bf9ec9f91fa8bf08aef1e78266dc772ec50435ed61645d763f5c the DRY cross-check: the comparison against the run of record
@@ -168,7 +168,7 @@ records/e0e9-dry/run.log record c34598fbf92143762f56fbdb171a0e28ea86636325c56227
 records/e0e9-dry/stage-out-cells.tsv record 3c54943c49466add26eecaa5d80388a25be700b4467fd2d9a090d7d4f1bc7ffa the DRY cross-check: differing stage-out cells (header only)
 records/e0e9-dry/stage-out.diff record 43e9784e33dbfd31d1b367390c1ef27da3d9e13272943b6abee31cb18a7692a4 the DRY cross-check: the stage-out diff
 records/ghunks/GHUNKS-A-rec3.md record a388476f2c8da3fa2f87fb2b563010120a258a65a227fd54487b5d3c0ac4c032 the G work record for the cut start-up layer
-records/ghunks/GHUNKS-A.md record 0963005966df49cd0a38020cf712ac91a9a46d4b5261f3c677dc24455016c36b the G work first record (section 3 and 9 still hold)
+records/ghunks/GHUNKS-A.md record 2c7a3c91874d478f9120413097101c3e5b8178ef0957aa6d946327594dd4211c the G work first record (section 3 and 9 still hold)
 records/ghunks/asan_globals-86efc3a80314.tsv record d71845727cab89896da607196e9b5e1fad697aab550020869be3e8fa9a7221d9 the G work: the asan_globals table of the twin
 records/ghunks/check_gpatches.out record c9320d21c92c1121029e57e30fa4831b5a05c24de5c25f183ddb91960bce2943 the G work: its patch check on work-rec3
 records/ghunks/measure_gcut-control.out record 3ce45dc5ed6a0dbae5ae0a5bd0e766971c6735c20fea96245db74dd3d113be7d the G work: the control on the uncut list

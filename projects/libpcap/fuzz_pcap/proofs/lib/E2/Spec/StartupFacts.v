@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: startup_mo's reserved ledger is State.init_reserved (the image segments then the vDSO/vvar pair), and its proofs read m_tid, m_vmmaps and m_kernel through the with_vdso wrapper of the initial model. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith List Lia Bool.
@@ -37,9 +38,11 @@ Section Startup.
   Notation mo0 := (mo0 segs lim en inp).
   Hypothesis CEQ : alloc_ceiling = page_round_down_Z (alloc_top (m_vmmaps mo0)).
 
-  (* The kernel model after start-up: the initial one with the thread id set. *)
+  (* The kernel model after start-up: the initial one with the thread id set.
+     LPS 727298f3: its reserved ledger is the image segments followed by the
+     vDSO/vvar pair ([State.init_reserved]). *)
   Definition startup_mo (tb t : Z) (mo' : Model) : Prop :=
-    m_vmmaps mo' = mkVmMapsFull (segments_reserved segs) [] []
+    m_vmmaps mo' = mkVmMapsFull (init_reserved (segments_reserved segs) (en_mmap_base en) (en_sp en) (m_kernel mo')) [] []
                                 (en_brk en) (en_brk en) lim (en_mmap_base en) (en_sp en)
     /\ m_fds mo' = m_fds mo0 /\ m_fs mo' = m_fs mo0 /\ m_halted mo' = None /\ m_stdin mo' = m_stdin mo0
     /\ m_tid mo' = Some (Z_to_bv 64 t) /\ lazyfree mo' /\ minv mo'
@@ -59,11 +62,12 @@ Section Startup.
     pose proof (nstep_dec_set_tid mo0 rsp2 mo2 evs2 MI0 Hst2) as (-> & t & Hdt & Ht & Hmo2).
     rewrite Hdt in H. cbn [tpath ITree.bind ebind fst snd] in H. destruct H as (<- & -> & ->).
     exists tls, t. split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|]. split; [exact Ht|].
-    assert (Htid0 : m_tid mo0 = None) by (unfold TopLevel.mo0; apply m_tid_init_model).
+    assert (Htid0 : m_tid mo0 = None) by (unfold TopLevel.mo0; change (m_tid (with_vdso ?v ?m)) with (m_tid m); apply m_tid_init_model).
     destruct Hmo2 as [[Hc _]|[_ ->]]; [rewrite Htid0 in Hc; discriminate|].
     destruct (minv_preserved NSetTid mo0 rsp2 (with_tid (Z_to_bv 64 t) mo0) [] I MI0 (mo0_not_halted _ _ _ _) Hst2) as [HH2 MI2].
     unfold startup_mo.
-    split; [rewrite m_vmmaps_with_tid; unfold TopLevel.mo0; apply m_vmmaps_init_model|].
+    split; [rewrite m_vmmaps_with_tid; change (m_kernel (with_tid ?t ?m)) with (m_kernel m); unfold TopLevel.mo0;
+            rewrite m_vmmaps_with_vdso, m_kernel_with_vdso, m_kernel_init_model; apply m_vmmaps_init_model|].
     split; [rewrite m_fds_with_tid; reflexivity|].
     split; [rewrite m_fs_with_tid; reflexivity|].
     split; [exact HH2|].

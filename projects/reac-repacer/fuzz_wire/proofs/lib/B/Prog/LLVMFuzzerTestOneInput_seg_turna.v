@@ -1,6 +1,6 @@
 (* LLVMFuzzerTestOneInput_seg_turna: u_turn_a_ok : u_turn_a_stmt (lib/B/Prog/LLVMFuzzerTestOneInput_segs.v), the
    turn_a segment of image B's walk (+0xb0 .. +0x108, the seven checks on f), in the form of reac-repacer/fuzz_uci's
-   image-B lib/B/Prog/LLVMFuzzerTestOneInput_seg_turnb.v and _seg_turnb_lib.v (recipes commit 0295462466b2): a run of
+   image-B lib/B/Prog/LLVMFuzzerTestOneInput_seg_turnb.v and _seg_turnb_lib.v (recipes): a run of
    the Pa engine to a call, the callee's caller-journal contract (the record u_prem) at the call, the cut state rebuilt
    at the return address.
 

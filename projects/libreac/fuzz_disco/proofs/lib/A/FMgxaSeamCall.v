@@ -1,11 +1,11 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamCall.v (a working branch 3e35620c52e); relocated to libreac/fuzz_disco.asan by reloc.py (target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; its relocation table has no rows); names: record RT_IImgA -> A_img RecAsanVfA.N_img_asan_vf. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamCall.v (a working branch); relocated to libreac/fuzz_disco.asan by reloc.py (target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; its relocation table has no rows); names: record RT_IImgA -> A_img RecAsanVfA.N_img_asan_vf. *)
 (* The GXA side of the seam, packaged: the three ASan interceptor call contracts the released
    theorem leaves open, the readiness predicates its guard asks for, and musl vfprintf's walk at
    fm.asan instantiated on them.
 
    RT_gxa_inst.v leaves exactly three hypotheses (its header): memcpy_stack_contract at
    __wrap_memcpy 0x51a64, memset_stack_contract at __wrap_memset 0x51a60, strnlen_stack_contract at
-   __wrap_strnlen 0x412cc.  a Theorem Labs lane supplies the first two (proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxa_mem.v (a working branch 3e35620c52e), relocating
+   __wrap_strnlen 0x412cc.  a Theorem Labs lane supplies the first two (proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxa_mem.v (a working branch), relocating
    a Theorem Labs lane's I_memcpyw*.v / I_memsetw.v) and another Theorem Labs lane the third.  Each is stated
    over a `*_ready` predicate that says when the interceptor may be called; the released design
    pushes that readiness to the caller (G_vsnprintf.v's vsnprintf_ready does the same one layer up),

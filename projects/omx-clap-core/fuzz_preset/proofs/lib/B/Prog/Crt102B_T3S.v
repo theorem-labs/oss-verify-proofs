@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths and module names changed; 1260 of its 1335 lines of code are new or changed and 439 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3; internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -62,7 +63,7 @@ Context {RL : PrhRoomLive} {SK : YI16.sink_head} {PA : PAImg B_prog_listing}.
 #[local] Notation PST := (@prh_pst prh_img_B).
 #[local] Notation STKC := (@STK_check_round_trip prh_img_B).
 #[local] Notation PL := PL_B102.
-(* THE IMAGE: Crt102Img.v's Section b hypotheses, verbatim (B' values in Crt102Img.v:1002-1013). Owner: the image-B
+(* THE IMAGE: Crt102Img.v's Section b hypotheses, verbatim (B' values in Crt102Img.v:1003-1014). Owner: the image-B
    instance; each is a vm_compute at PI_prog_B once lib/B/PAImg_prog.v builds (its :160 waits for the instance
    owner's IMG_TOP_B = 0x601000). *)
 Hypothesis HB_base : BASE = B_prog_base.
@@ -79,9 +80,9 @@ Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte
 #[local] Notation AJW := (ajournal_xwR (SK := SK) SEGS B PST ARx (YA0nH.wle' SEGS YGcfRehidePost.RZ_cf)).
 (* the allocator's engine laws at hl = cf_head (at the instance: AR_laws_x_cf of the instance owner's ARcf) *)
 Hypothesis LAWS : AR_laws_x SEGS B ARx cf_head.
-(* the two image facts walk S4's lanes carry (S4_PsSrc.v:116-119): the image's zero-shadow ranges are granule-aligned
+(* the two image facts walk S4's lanes carry (S4_PsSrc.v:117-120): the image's zero-shadow ranges are granule-aligned
    (asyms_ok's aso_zshadow, YG0f.v:191), and IMAGE B's shadow bytes are present: Crt102B_T3Base.crt3_img_shadow_vis_B,
-   the instance owner's YGcfAmx2.img_shadow_vis_cf (YGcfAmx2.v:47-49) at image B's CfImgB.CfImg_B, over
+   the instance owner's YGcfAmx2.img_shadow_vis_cf (YGcfAmx2.v:48-50) at image B's CfImgB.CfImg_B, over
    [IMG_LO_B, IMG_TOP_B), with ARcf -> ARx (crt3_img_shadow_vis_B_a8: at ARx := ARcf (ci := CfImg_B) it is the
    instance owner's definition). Never image A's IMG_LO / IMG_TOP. Owner: the instance owner (the instance's
    supply of img_shadow_vis_cf at CfImg_B). *)
@@ -119,7 +120,7 @@ Variables (ly : alayout) (S : astate) (Hp : list Z) (W : world SEGS) (regs : bvm
   (Lam : list (Z * Z)) (peak cnt ran most : Z).
 #[local] Notation sp0 := (spZ regs).
 #[local] Notation sp1 := (CRT_sp1 (regs := regs)).
-(* crt_side / crt_live take no rp_* since 11c39f7e88b7 (the position is crt_pos, on the r = 0 path only) *)
+(* crt_side / crt_live take no rp_* (the position is crt_pos, on the r = 0 path only) *)
 #[local] Notation liveB := (crt_live (rc := rc) (PI := prh_img_B) (RL := RL) (SK := SK) (L := B_prog_listing)
   (PA := PA) (B := B) (ARx := ARx)
   (ly := ly) (S := S) (Hp := Hp) (W := W) (regs := regs) (mem := mem) (md := md) (doc := doc) (t := t) (D := D)
@@ -210,7 +211,7 @@ Lemma crt3s_nodup_app : forall (l1 l2 : list Z) y, NoDup (l1 ++ l2) -> In y l1 -
 Proof.
 intros l1. induction l1 as [|z l1 IH]; intros l2 y H H1 H2; [destruct H1|].
 cbn [app] in H. inversion H as [|? ? Hn Hd]; subst. destruct H1 as [<- | H1].
-- apply Hn. first [apply list_elem_of_In | apply elem_of_list_In | idtac]. apply in_or_app. right. exact H2.
+- apply Hn. first [apply list_elem_of_In | apply list_elem_of_In | idtac]. apply in_or_app. right. exact H2.
 - exact (IH l2 y Hd H1 H2).
 Qed.
 Lemma crt3s_nodup_perm : forall (l l' : list Z), Permutation l l' -> NoDup l -> NoDup l'.
@@ -368,7 +369,7 @@ Qed.
 
 (* ---- an image string under route (a) (kept_img): its shadow at any ARx state (S4_PsSrc.v psrc_shadow, case 3,
    with its two arithmetic lemmas psrc_hull_img / psrc_zs_byte). The hull is IMAGE B's, [IMG_LO_B, IMG_TOP_B), in
-   the allocator lane's FuzzStrdupB form (commit e8c226ad89c3,
+   the allocator lane's FuzzStrdupB form (
    lib/B/Prog/FuzzStrdupB.v:131-135 sd_hull_img): never image A's
    IMG_LO / IMG_TOP ---- *)
 Lemma crt3s_hull_img : forall p n s, 0 < n -> IMG_LO_B + 64 <= p -> p + n + 64 <= IMG_TOP_B ->
@@ -777,7 +778,7 @@ assert (I1 : PRH_FnPj.RQ_pj_parse (WriterValue.wdoc t false) <= RQ_rtt t false)
   by (unfold RQ_rtt; apply Crt102Model.zmaxl_in; right; right; left; reflexivity).
 assert (I2 : RQ_rtt t false <= RQ_crt t) by (unfold RQ_crt; apply Crt102Model.zmaxl_in; left; reflexivity).
 (* cf_malloc_max is the of-record blob b60d0f63c926 at this base (2^28 + 2^27); bound it ABOVE by the statement's
-   literal rather than equate it, so a future cf_malloc_max change does not reopen this (at the base e2c0399f04d9) *)
+   literal rather than equate it, so a future cf_malloc_max change does not reopen this (at the base) *)
 assert (Hmm : @cf_malloc_max CfParams_preset <= 2 ^ 29 - 2 ^ 20) by (vm_compute; discriminate).
 assert (Hh : @cf_head CfParams_preset = 16) by reflexivity.
 rewrite Hh in HRQ. lia.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-11: copied from projects/openssl/bndiv/proofs/lib/TopBndivHaltsA.v at commit 874e3397a35, its lemma lim_source_le_target and its halting theorem's lim_transfer_scfg step, with the module paths changed to libpcap/fuzz_pcap and the large-budget halting fact taken from this unit's ASan+UBSan equivalence proof (HaltsAsanKit.v) in place of bndiv's realizes_asan. *)
+(* Modified by Theorem Labs, 2026-11: copied from projects/openssl/bndiv/proofs/lib/TopBndivHaltsA.v at commit theorem-labs/oss-verify-proofs@f92feaf8b7e6, its lemma lim_source_le_target and its halting theorem's lim_transfer_scfg step, with the module paths changed to libpcap/fuzz_pcap and the large-budget halting fact taken from this unit's ASan+UBSan equivalence proof (HaltsAsanKit.v) in place of bndiv's realizes_asan. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: must_exit_forced_of_srz takes one more argument, and the new goal, that the ASan+UBSan binary carries no vDSO image, closes by reflexivity; internal commit ids in comments replaced by public commits or removed. *)
 (** The ASan+UBSan build of fuzz_pcap halts within the 16 GiB budget.
 
     The equivalence proof of this build gives an srealizes fact for its run at
@@ -35,8 +36,10 @@ Proof.
            lim_source_le_target); [| exact Hbud].
   destruct (plain_entry inp Hi) as [enS HvS].
   destruct UNodes__Equiv.EquivPlan.budgets_ok as [LIMS _].
-  apply (must_exit_forced_of_srz _ _ _ _ en inp _
-           (Final_asan__EquivA.Final_both.fuzz_pcap_both_srz ImplTopA.TwB.stkA_real ImplTopA.TwB.stkA_real_ok ImplTopA.TwB.IMPL_A_real
-              source_alloc_limit LIMS enS en inp HvS He Hi)).
-  exact (plain_traces_ok source_alloc_limit LIMS enS inp HvS Hi).
+  pose proof (Final_asan__EquivA.Final_both.fuzz_pcap_both_srz ImplTopA.TwB.stkA_real ImplTopA.TwB.stkA_real_ok ImplTopA.TwB.IMPL_A_real
+                source_alloc_limit LIMS enS en inp HvS He Hi) as SRZ.
+  (* the plain build's traces exit with 0 or 2 *)
+  refine (must_exit_forced_of_srz _ _ _ _ en inp _ _ SRZ (plain_traces_ok source_alloc_limit LIMS enS inp HvS Hi)).
+  (* the ASan+UBSan binary carries no vDSO image (LPS 727298f3) *)
+  reflexivity.
 Qed.

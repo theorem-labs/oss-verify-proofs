@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (P_realizes_spec_LM, P_realizes_spec_lim and P_realizes_spec gain three premises: the input's channel reader is on, valid_launch of the input, and entry_launch_ok_va for the entry). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -35,7 +36,7 @@ Section Top.
   #[using="SI SIFP FUZZ"] Theorem P_realizes_spec_LM {AMB : Amb} {LM : Lim} : forall sp brk mbase (rd : EntryDraw) (inp : ProcInput),
     valid_sp sp -> valid_brk psegs' brk ->
     valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
-    entry_stack_fits sp (in_argv inp) (in_envp inp) ->                 (* [comment removed for export] *)
+    entry_stack_fits sp (in_argv inp) (in_envp inp) -> in_channel_reader inp = true -> valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rd) inp ->                 (* [comment removed for export] *)
     realizes psegs' (init_config psegs' ppc pph sp brk mbase rd LIM inp) (spec (in_argv inp) (in_fs inp)).
   Proof.
     apply (P_realizes_spec_drv P_heap_rz.P_DRV P_heap_rz.P_nosmall P_heap_rz.P_malloc_rz P_heap_rz.P_free_c P_heap_rz.P_drv_mo SI SIFP FUZZ).
@@ -48,7 +49,7 @@ Section Top.
     2 ^ 31 <= lim ->
     valid_sp sp -> valid_brk psegs' brk ->
     valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
-    entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+    entry_stack_fits sp (in_argv inp) (in_envp inp) -> in_channel_reader inp = true -> valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rd) inp ->
     realizes psegs' (init_config psegs' ppc pph sp brk mbase rd lim inp) (spec (in_argv inp) (in_fs inp)).
   Proof.
     intros lim sp brk mbase rd inp Hlim. exact (@P_realizes_spec_LM AMB (mkLim lim Hlim) sp brk mbase rd inp).
@@ -58,7 +59,7 @@ Section Top.
   #[using="SI SIFP FUZZ"] Theorem P_realizes_spec {AMB : Amb} : forall sp brk mbase (rd : EntryDraw) (inp : ProcInput),
     valid_sp sp -> valid_brk psegs' brk ->
     valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
-    entry_stack_fits sp (in_argv inp) (in_envp inp) ->                 (* [comment removed for export] *)
+    entry_stack_fits sp (in_argv inp) (in_envp inp) -> in_channel_reader inp = true -> valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rd) inp ->                 (* [comment removed for export] *)
     realizes psegs' (init_config psegs' ppc pph sp brk mbase rd source_alloc_limit inp) (spec (in_argv inp) (in_fs inp)).
   Proof.
     intros sp brk mbase rd inp. exact (P_realizes_spec_lim source_alloc_limit sp brk mbase rd inp source_alloc_limit_ge31).

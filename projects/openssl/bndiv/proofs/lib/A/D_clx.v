@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (exit_E also unfolds STACK_WOK, the main-level stack floor). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -367,7 +368,7 @@ Ltac exit_E :=
       first [ match goal with HA : ART RT S _, AF : art_facts RT |- _ => exact (af_credit_nonneg RT AF S _ HA) end
             | unfold CREDIT_DRV, FUZZ_COST in *; lia ]
   | |- _ + RT_STACK + 0x1000 <= bv_unsigned (Z_to_bv 64 _) =>
-      rewrite unsigned_lit by (unfold SEGTOP_A, STACK_WIN, USTACK_TOP, RT_STACK in *; lia); unfold SEGTOP_A, STACK_WIN, USTACK_TOP, RT_STACK in *; lia
+      rewrite unsigned_lit by (unfold SEGTOP_A, STACK_WIN, STACK_WOK, USTACK_TOP, RT_STACK in *; lia); unfold SEGTOP_A, STACK_WIN, STACK_WOK, USTACK_TOP, RT_STACK in *; lia
   | |- ?LL ?mm =>      (* [comment removed for export] *)
       match goal with H : CLX _ _ _ LL _ mm |- _ => exact (proj1 (proj2 (proj2 (proj2 H)))) end
   end.

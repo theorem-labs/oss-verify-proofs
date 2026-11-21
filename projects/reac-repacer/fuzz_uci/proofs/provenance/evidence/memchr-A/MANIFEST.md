@@ -1,6 +1,6 @@
 # provenance/evidence/memchr-A: fuzz_uci image A memchr interceptor chain = fuzz_boxreg's released one
 
-Written by scripts/mk_evidence_memchr.py; not edited by hand. What a reader needs to re-derive why lib/A/Rt/Memchr.v may port fuzz_boxreg's released walk (proofs/libreac/fuzz_boxreg/lib/A/Rt/Memchr.v:562 memchr_icpt_realizesM, recipes 88154566652a): the code of fuzz_uci's chain equals the donor's up to relocation. Tools cited, not shipped: the tools of record (commit 8cd71d3a4bb) tools/bytecmp/7daa0e2a03d9/bytecmp.py and tools/repin_check/9cbc3553c09e/repin_check.py. Generation logs are not here.
+Written by scripts/mk_evidence_memchr.py; not edited by hand. What a reader needs to re-derive why lib/A/Rt/Memchr.v may port fuzz_boxreg's released walk (proofs/libreac/fuzz_boxreg/lib/A/Rt/Memchr.v:562 memchr_icpt_realizesM, recipes): the code of fuzz_uci's chain equals the donor's up to relocation. Tools cited, not shipped: the tools of record tools/bytecmp/7daa0e2a03d9/bytecmp.py and tools/repin_check/9cbc3553c09e/repin_check.py. Generation logs are not here.
 
 ## Verdict
 
@@ -28,7 +28,7 @@ Written by scripts/mk_evidence_memchr.py; not edited by hand. What a reader need
 
 ## Re-run on the comparison kit cmpkit 4bbd3a74be89
 
-Written by scripts/mk_evidence_memchr_kit.py; not edited by hand. The sections above and the tables directly under tables/ were made with bytecmp 7daa0e2a03d9 + repin_check 9cbc3553c09e. This section and `tables/cmpkit-4bbd3a74be89/` re-run the same comparisons with the comparison kit of record, cmpkit 4bbd3a74be89 (commit 3c3e62ee278, tools/cmpkit/4bbd3a74be89/; sha256 of its SHA256SUMS 4bbd3a74be8994d014875952efdb79ef6516680988de43e95a3e217194f0ec33), its seven files run from one directory that holds only them. Tools cited, not shipped. Each verdict is the kit's first; where the kit fails closed, the settled verdict follows it, from a named measurement of this builder (`acceptances.tsv`), or "not certified".
+Written by scripts/mk_evidence_memchr_kit.py; not edited by hand. The sections above and the tables directly under tables/ were made with bytecmp 7daa0e2a03d9 + repin_check 9cbc3553c09e. This section and `tables/cmpkit-4bbd3a74be89/` re-run the same comparisons with the comparison kit of record, cmpkit 4bbd3a74be89 (tools/cmpkit/4bbd3a74be89/; sha256 of its SHA256SUMS 4bbd3a74be8994d014875952efdb79ef6516680988de43e95a3e217194f0ec33), its seven files run from one directory that holds only them. Tools cited, not shipped. Each verdict is the kit's first; where the kit fails closed, the settled verdict follows it, from a named measurement of this builder (`acceptances.tsv`), or "not certified".
 
 Images (file name, sha256):
 

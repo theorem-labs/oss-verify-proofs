@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, AFREE_CF premise #11 at plugin-hostd/fuzz_reply image A, asan): the cf
-   layer's primed callee record YGcfInstFree.DIfaceExtRh (lane F2a's text, cf-f2a 4b146f4de82c, carried to reply A on
-   fu2-mp 8db00dd2a209) at reply A, [diface_ext_rh_reply_A_n] (section 3), for EVERY recycle-invariant size bound
+   layer's primed callee record YGcfInstFree.DIfaceExtRh (lane F2a's text, cf-f2a, carried to reply A on
+   fu2-mp) at reply A, [diface_ext_rh_reply_A_n] (section 3), for EVERY recycle-invariant size bound
    NMAXD with kQuarantineMax <= NMAXD < 2 ^ 30, EVERY instance predicate IOK with IOK_ok TfibB IOK and every ghost set
    Hp, from its eleven fields; and its two instances (section 4): [diface_ext_rh_reply_A] at NMAXD := kQuarantineMax
    (the small arm's) and [diface_ext_rh_reply_A_big] at NMAXD := NMAXD_big_cf (the big arm's, a Theorem Labs lane's EXTB in
@@ -14,23 +15,23 @@
      release/pau-projects-recipes by name and address / proof-index, FOUND: cgif_file asan-ubsan 0x724e0, reply A
      0x7430c) - PORTED, not re-proved: reply A's released contract A/AFem.v:1511 tfib_depot_ok (over A/AFl0.v:68
      tfib_depot_spec), through lane F1's YGcfInstDepot.di_depot_cf (carried by path, byte-identical, with
-     YGcfInstDepotWreply.v, from a working branch 5174ba1afc97);
+     YGcfInstDepotWreply.v, from a working branch);
    - proves function __sanitizer::QuarantineCache<__asan::QuarantineCallback>::Enqueue (reuse search: same, FOUND: cgif
-     asan-ubsan 0x35800, reply A 0x36094) - PORTED: lane F1's YGcfInstEnq.di_enqueue_cf (cf-f1 22b5f48d6248's text,
-     carried by path to reply A by ReplyEnqReloc, fu2-mp cc0b03bd5ad4) through lane F2a's
+     asan-ubsan 0x35800, reply A 0x36094) - PORTED: lane F1's YGcfInstEnq.di_enqueue_cf (cf-f1's text,
+     carried by path to reply A by ReplyEnqReloc, fu2-mp) through lane F2a's
      YGcfInstFreeMidE.exr_enqueue_cf, its three arms ReplyEnqReloc's YGcfInstEnqMissreply.enq_arms_cf_reply
-     (a working branch 37eb0120d284), their Refill contract B3LeafCf's
-     YGcfRefillTopreply.refill_spec_cf_reply_inst (a working branch c4c4a9802594);
+     (a working branch), their Refill contract B3LeafCf's
+     YGcfRefillTopreply.refill_spec_cf_reply_inst (a working branch);
    - proves function __sanitizer::Quarantine<__asan::QuarantineCallback, __asan::AsanChunk>::Drain (reuse search: same,
      FOUND: cgif asan-ubsan 0x32f58, reply A 0x337ec) - PORTED by citation: CfF2b's primed drain field
-     YGcfInstDrainTopRh.ds_drain_rh_cf (route P, a working branch 67deba317dfb);
+     YGcfInstDrainTopRh.ds_drain_rh_cf (route P, a working branch);
    - proves function __asan::QuarantineCallback::Recycle (reuse search: same, FOUND: cgif asan-ubsan 0x3359c, reply A
      0x33e30) - PORTED: H4's Recycle twin DMrcCf.rchunk_ok_rh_cf_closed (a Theorem Labs lane's RCH,
-     a working branch 2c35faeeaec5);
+     a working branch);
    - proves function __sanitizer::SizeClassAllocator64LocalCache<__sanitizer::SizeClassAllocator64<__asan::AP64<
      __sanitizer::LocalAddressSpaceView> > >::Deallocate (reuse search: same, FOUND: cgif asan-ubsan 0x339a0, reply A
-     0x34234) - PORTED by citation: a Theorem Labs lane's reply A CDH YGcfInstCdealloc.di_cdealloc_cf (a working branch
-     9ee489aa7d76), and H3's DMcdF.cdealloc_g_of_reads at YGcfInstCdReads.cd_reads_cf inside the Recycle twin;
+     0x34234) - PORTED by citation: a Theorem Labs lane's reply A CDH YGcfInstCdealloc.di_cdealloc_cf (a working branch),
+     and H3's DMcdF.cdealloc_g_of_reads at YGcfInstCdReads.cd_reads_cf inside the Recycle twin;
    - proves function __sanitizer::Quarantine<__asan::QuarantineCallback, __asan::AsanChunk>::DoRecycle (reuse search:
      same, FOUND: cgif asan-ubsan 0x33464, reply A 0x33cf8; it holds the inlined __asan::QuarantineCallback::Deallocate)
      - PORTED by citation, inside the drain field (a Theorem Labs lane's DMrecFRh.dorecycle_ok_rh, through ds_drain_rh_cf).
@@ -65,9 +66,9 @@
      taken to NMAXD by [DRq_cf_mono] under kQuarantineMax <= NMAXD;
    - exr_enqueue (section 3)  YGcfInstFreeMidE.exr_enqueue_cf at its ten image rows: reply A's
      ReplyImg_fvzones.izone_owned_img / dzone_owned_img / fv_ial_img, a Theorem Labs lane's YGcfInstFreeImgreply.FP_*_TfibB
-     (a working branch 6381f3da313e), YGcfInstF1Wreply.IMG_COVER_reply, ReplyImg_errbapart.ERRB_APART_A
-     and a Theorem Labs lane's ReplyPfApartA.pf_apart_reply_A (a working branch 1f97204e0d5e);
-   - [exr_rchunk_reply_A] (section 3)  DMrcCf.v:107-220 at NMAXD (rc_prim_step_reply, rc_prim_mach_rh_cf, rc_reads_cf
+     (a working branch), YGcfInstF1Wreply.IMG_COVER_reply, ReplyImg_errbapart.ERRB_APART_A
+     and a Theorem Labs lane's ReplyPfApartA.pf_apart_reply_A (a working branch);
+   - [exr_rchunk_reply_A] (section 3)  DMrcCf.v:108-221 at NMAXD (rc_prim_step_reply, rc_prim_mach_rh_cf, rc_reads_cf
      and rchunk_ok_rh_cf_closed, whose pieces YGcfInstRcPrim states at every NMAXD) in memnorm form
      DIfaceRh.de_rchunk_m_rh_t, its conjuncts past the view form dropped; the walk constants NMAXD + 1 and
      sec_map_size NMAXD (DMrcCf's NMAXD_cf / LMAXD_cf at kQuarantineMax, YGcfInstFreeSecRhreply.SEC_rh_reply's at
@@ -132,7 +133,7 @@ Qed.
 (* 1. The fields at every CfImg.                                                                                    *)
 Section r. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : CfParams}.
 Local Open Scope am_scope.
-(* DRq_cf's size bound (YGcfInstDrainR.v:242, its conjunct Forall (fun k => ck_n k <= NMAXD)) *)
+(* DRq_cf's size bound (YGcfInstDrainR.v:243, its conjunct Forall (fun k => ck_n k <= NMAXD)) *)
 Variable NMAXD : Z.
 Variable IOK : Z -> Prop.
 Hypothesis HIOK : IOK_ok TfibB IOK.
@@ -162,7 +163,7 @@ destruct (depot_fits_incl_TfibB (st_depot S) HDF) as [ND INC].
 exact (ReplyImg_depkeep.dep_keep_d_A TfibB TfibB_syms ly S W mem0 mem LY IMG TSD ND INC CST DEP MEQ).
 Qed.
 
-(* exr_depot (DIfaceExt's ext_depot, YGcfInstFree.v:77-95). *)
+(* exr_depot (DIfaceExt's ext_depot, YGcfInstFree.v:78-96). *)
 Lemma exr_depot_reply_A :
   forall inst ly S W mem0 md0 tr (regs : bvmap 5 word) (mem : word -> option byte) (md : Model) (buf : Z),
     ARX inst ly S W mem0 md0 -> U tr S ->
@@ -189,11 +190,11 @@ exact (YGcfInstDepot.di_depot_cf TfibB Hp ARX (ARX_cf_ARcf TfibB IOK Hp)
   (YGcfInstDepotWreply.depot_spec_d_reply TfibB TfibB_syms ReplyImg_dhash.dhash_img_A)).
 Qed.
 
-(* exr_dpost_aok (YGcfInstFree.v:96). *)
+(* exr_dpost_aok (YGcfInstFree.v:97). *)
 Lemma exr_dpost_aok_reply_A : forall inst ly S W tr z m, dpost inst ly S W tr z m -> aok S (KDepot tr) z.
 Proof. exact (YGcfInstDepot.dpost_aok_cf TfibB). Qed.
 
-(* exr_requar_e (YGcfInstFree.v:123): YGcfInstDrainR.ARX_cf_of_ARXr_end, which holds at every bound (YGcfInstDrainQ's
+(* exr_requar_e (YGcfInstFree.v:124): YGcfInstDrainR.ARX_cf_of_ARXr_end, which holds at every bound (YGcfInstDrainQ's
    di_requar_e_cf applies it at kQuarantineMax). *)
 Lemma exr_requar_e_reply_A : di_requar_e_t ARX ARXr DRq.
 Proof.
@@ -201,7 +202,7 @@ intros inst ly S W mem md HR HD. exact (proj1 (ARX_cf_of_ARXr_end TfibB IOK Hp i
 Qed.
 
 (* H3's DMcdR.cd_reads at DRq: YGcfInstCdReads.cd_reads_cf's fields; its one field that reads DRq, rd_budget_x, by
-   YGcfInstCdReads.cr_budget_x's proof (YGcfInstCdReads.v:425-437), which reads DRq_cf's deficit, byte, pending-bytes
+   YGcfInstCdReads.cr_budget_x's proof (YGcfInstCdReads.v:426-438), which reads DRq_cf's deficit, byte, pending-bytes
    and admission conjuncts and not the size one. *)
 Lemma cr_budget_x_n : DMcdR.rd_budget_x TfibB ARXr DRq.
 Proof.
@@ -223,7 +224,7 @@ destruct (YGcfInstCdReads.cd_reads_cf TfibB IOK Hp TfibB_syms HIOK).
 constructor; try assumption. exact cr_budget_x_n.
 Qed.
 
-(* H3's DMwalkIF.drq_cd at DRq: YGcfInstDrainDq.drq_cd_cf's proof (YGcfInstDrainDq.v:71-144), which carries DRq_cf's
+(* H3's DMwalkIF.drq_cd at DRq: YGcfInstDrainDq.drq_cd_cf's proof (YGcfInstDrainDq.v:72-145), which carries DRq_cf's
    size conjunct SZ through CacheDealloc unchanged (CacheDealloc keeps the pending list), so it holds at every bound. *)
 Lemma drq_cd_n : DMwalkIF.drq_cd DRq RMAXD_cf.
 Proof.
@@ -299,7 +300,7 @@ split.
     apply (cf_hull_counts _ S); [unfold nsec_cf; rewrite ES; reflexivity | unfold sec_T_cf; rewrite ES; reflexivity | exact HHO].
 Qed.
 
-(* exr_cdealloc (YGcfInstFree.v:125): a Theorem Labs lane's reply A CDH composition (YGcfInstCdealloc.v:46-69) at DRq: H3's
+(* exr_cdealloc (YGcfInstFree.v:126): a Theorem Labs lane's reply A CDH composition (YGcfInstCdealloc.v:46-69) at DRq: H3's
    walk DMcdF.cdealloc_m_of_reads over [cd_reads_n] and [drq_cd_n], then MnRecycle.de_cdealloc_em_e, the raw frame
    and errno conjuncts dropped. *)
 Lemma exr_cdealloc_reply_A : di_cdealloc_t B ARXr AOX DRq.
@@ -312,11 +313,11 @@ intros r W' c' (regs' & mem' & md' & Hc & HP & _ & _ & REST).
 exists regs', mem', md'. split; [exact Hc|]. split; [exact HP | exact REST].
 Qed.
 
-(* exr_frame_r (YGcfInstFree.v:126). *)
+(* exr_frame_r (YGcfInstFree.v:127). *)
 Lemma exr_frame_r_reply_A : di_frame_t ARXr AOX.
 Proof. exact (di_frame_r_cf TfibB IOK Hp). Qed.
 
-(* exr_rview (YGcfInstFree.v:127): YGcfInstDrainQ.di_rview_cf's proof (YGcfInstDrainQ.v:165-183), which reads only
+(* exr_rview (YGcfInstFree.v:128): YGcfInstDrainQ.di_rview_cf's proof (YGcfInstDrainQ.v:166-184), which reads only
    DRq_cf's first conjunct (RIx_cf), so it holds at every bound; the image rows ReplyImg_sbconst.SB_CONST_A and
    AD2l.TfibB_syms. *)
 Lemma exr_rview_reply_A : di_rview_t B ARXr DRq.
@@ -341,7 +342,7 @@ split; [|split].
 Qed.
 
 (* The batch class's allocated bound of the view x-form (DMwalkIF.di_rview_x_t's second half):
-   YGcfInstDrainQ.di_rview_alloc_cf's proof (YGcfInstDrainQ.v:189-198), which does not read DRq. *)
+   YGcfInstDrainQ.di_rview_alloc_cf's proof (YGcfInstDrainQ.v:190-199), which does not read DRq. *)
 Lemma rview_alloc_n : forall inst ly X W mem md its zs, ARXr inst ly X W mem md -> DRq X its zs ->
   rg_alloc_user (reg X kBatchClass) <= RMAXD_cf.
 Proof.
@@ -374,14 +375,14 @@ Local Notation L24 := L24MAX_cf.
 Local Notation QB := (QB_cf kQuarantineMax).
 Local Notation DRq := (DRq_cf TfibB NMAXD).
 
-(* exr_requar_x (YGcfInstFree.v:121). *)
+(* exr_requar_x (YGcfInstFree.v:122). *)
 Lemma exr_requar_x_reply_A : di_requar_x_t B ARX AOX L24 QB.
 Proof.
 exact (di_requar_x_cf TfibB IOK Hp HIOK TfibB_syms ReplyImg_qapart.IMG_QAPART_A ReplyImg_errbqapart.ERRB_QAPART_A
   ReplyImg_constapart.CONST_APART_A L24MAX_cf kQuarantineMax).
 Qed.
 
-(* exr_requar_r (YGcfInstFree.v:122): YGcfInstDrainX.di_requar_r_cf, whose invariant at kQuarantineMax
+(* exr_requar_r (YGcfInstFree.v:123): YGcfInstDrainX.di_requar_r_cf, whose invariant at kQuarantineMax
    (YGcfInstDrainR.drain_recyc_DRq_cf) [DRq_cf_mono] raises to NMAXD. *)
 Lemma exr_requar_r_reply_A : di_requar_r_t B ARX ARXr AOX L24 QB DRq.
 Proof.
@@ -395,7 +396,7 @@ Qed.
 End ra.
 
 (* ================================================================================================================ *)
-(* 3. The record DIfaceExtRh (YGcfInstFree.v:137) at reply A, at reply's CfParams_reply (A/CfParamsReply.v:120).     *)
+(* 3. The record DIfaceExtRh (YGcfInstFree.v:138) at reply A, at reply's CfParams_reply (A/CfParamsReply.v:120).     *)
 #[local] Existing Instance CfParamsReply.CfParams_reply.
 
 Section e. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
@@ -408,7 +409,7 @@ Hypothesis HIOK : IOK_ok TfibB IOK.
 Local Notation AOX := (aowned TfibB).
 Local Notation DRq := (DRq_cf TfibB NMAXD).
 
-(* exr_drain (YGcfInstFree.v:182, PRIMED) in its memnorm form: CfF2b's YGcfInstDrainTopRh.ds_drain_rh_cf at the image
+(* exr_drain (YGcfInstFree.v:183, PRIMED) in its memnorm form: CfF2b's YGcfInstDrainTopRh.ds_drain_rh_cf at the image
    rows of reply A (TfibB_syms, ERRB_QAPART_A), lane F2a's four layer fields at ARX (as YGcfInstFree.diface_cf takes
    them) and the drop bound YGcfInstDrainTopRh.rec_le_reply at CfParams_reply. *)
 Lemma exr_drain_m_reply_A : forall Hp,
@@ -424,7 +425,7 @@ exact (YGcfInstDrainTopRh.ds_drain_rh_cf TfibB IOK Hp HIOK TfibB_syms TfibB_syms
 Qed.
 
 (* The size premises of H4's RChunk top DMwalkIFRh.rchunk_ok_rh_t at DRq, at the walk constants NMAXD + 1 and
-   sec_map_size NMAXD: DMrcCf's NMAXD_cf / LMAXD_cf (YGcfInstDrainR.v:507-508) at kQuarantineMax, and
+   sec_map_size NMAXD: DMrcCf's NMAXD_cf / LMAXD_cf (YGcfInstDrainR.v:508-509) at kQuarantineMax, and
    YGcfInstFreeSecRhreply.SEC_rh_reply's NOK / LOK / RDS at NMAXD_big_cf. *)
 Lemma nmaxd_ok_n : DMwalkIF.nmaxd_ok (NMAXD + 1).
 Proof. pose proof HNM as [N1 N2]. unfold DMwalkIF.nmaxd_ok. unfold kQuarantineMax in N1. lia. Qed.
@@ -454,7 +455,7 @@ assert (H2 : 2 * kMaxSize + 96 <= NMAXD) by (pose proof HNM as [N1 _]; unfold kM
 exact (YGcfInstDrainR.drq_sizes_cf TfibB NMAXD H2 S its zs k D Hin).
 Qed.
 
-(* DMrcCf.rc_prim_step_reply (DMrcCf.v:107-117) at DRq: YGcfInstRcPrim.rc_prim_step_cf at NMAXD. *)
+(* DMrcCf.rc_prim_step_reply (DMrcCf.v:108-118) at DRq: YGcfInstRcPrim.rc_prim_step_cf at NMAXD. *)
 Lemma rc_prim_step_n : forall Hp,
   DMrcReads.rc_prim_step_t TfibB (ARXr_cf TfibB IOK Hp) AOX DRq RMAXD_cf.
 Proof.
@@ -466,7 +467,7 @@ split; [exact A1|]. split; [exact (DMrcCf.cd_model_of_cf _ _ _ _ A2)|].
 split; [exact A3|]. split; [exact A4 | exact A5].
 Qed.
 
-(* DMrcCf.rc_prim_mach_rh_cf (DMrcCf.v:122-132) at DRq: DMrcPrim.rchunk_prim_m, which is generic in DRq. *)
+(* DMrcCf.rc_prim_mach_rh_cf (DMrcCf.v:123-133) at DRq: DMrcPrim.rchunk_prim_m, which is generic in DRq. *)
 Lemma rc_prim_mach_rh_n : forall Hp,
   DMrcRhOk.rc_prim_mach_rh_t TfibB (ARXr_cf TfibB IOK Hp) AOX DRq RMAXD_cf.
 Proof.
@@ -478,7 +479,7 @@ exists regs', mem', md'. split; [exact Hc|].
 split; [exact (YGcfRehidePost.acall_post_x_rh_of TfibB _ AOX _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ HP) | exact HT].
 Qed.
 
-(* DMrcCf.rc_reads_cf (DMrcCf.v:168-189) at DRq: H4's read record under the re-hide, its DRq fields by
+(* DMrcCf.rc_reads_cf (DMrcCf.v:169-190) at DRq: H4's read record under the re-hide, its DRq fields by
    YGcfInstRcPrim's head / model / fh / room / split fields at NMAXD. *)
 Lemma rc_reads_n : forall Hp,
   DMrcRhOk.rc_reads_rh TfibB (ARXr_cf TfibB IOK Hp) (DMrcSecCf.ARXsl_cf TfibB IOK Hp) AOX DRq RMAXD_cf.
@@ -503,7 +504,7 @@ split; [|split; [|split; [|split; [|split; [|split; [|split]]]]]].
 - exact (DMrcCf.rc_sec_rehide_all_cf TfibB IOK Hp).
 Qed.
 
-(* exr_rchunk (YGcfInstFree.v:187, PRIMED): H4's Recycle twin, DMrcRhOk.rchunk_ok_rh on [rc_reads_n] (DMrcCf's
+(* exr_rchunk (YGcfInstFree.v:188, PRIMED): H4's Recycle twin, DMrcRhOk.rchunk_ok_rh on [rc_reads_n] (DMrcCf's
    rchunk_ok_rh_cf / rchunk_ok_rh_cf_closed at DRq), in its memnorm form DIfaceRh.de_rchunk_m_rh_t, at the size premises
    above, the frame law di_frame_r_cf, the view x-form ([exr_rview_reply_A] and [rview_alloc_n], as
    YGcfInstDrainTop.drain_reads_cf states it) and H3's CacheDealloc contract DMcdF.cdealloc_g_of_reads at [cd_reads_n]

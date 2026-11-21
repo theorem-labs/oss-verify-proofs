@@ -1,29 +1,30 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_LLVMFuzzerTestOneInput_event_x.v; 149 of its 219 lines of code are new or changed and 2573 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* WIP (a Theorem Labs lane's FREE-PIECES row B1c, a Theorem Labs lane): the event arm's two post-state LS rules at the instance
    LS := fr_LS B (lib/A/ReplyLS.v), RINV := fr_RINV (lib/A/ReplyRINV.v), MT := ameter_triv, MMAX := WR_MMAX.
-   The arm is a working branch 1172d6d9065 lib/A/W_LLVMFuzzerTestOneInput_event.v:
+   The arm is a working branch lib/A/W_LLVMFuzzerTestOneInput_event.v:
    LS_event_relay :1034 and LS_event_step :1045.  Both tie their post-state (S1, S3) to S only by mo_le, which is True
    at ameter_triv, so as stated neither is provable for an LS that bounds live bytes.  Each is proved below at a
    PROPOSED text that keeps every premise and conclusion of the arm's text and adds premises the arm holds at its
-   call (each named beside it, with the arm line or the callee post clause, all at 1172d6d9065):
+   call (each named beside it, with the arm line or the callee post clause, all):
    - lm_O m = [] and 0 <= lm_k m < c_n cx: the cut's registers, lregs_P1 :285 (HO, Hk at :1825);
    - 0 <= lm_cap m: amodel_at's aout_at (HMOD, :1824; HAO :2329), W_rep.v:177-178 (cap = 0 \/ 0 < cap);
-   - malloc: W_journal.v:767 amalloc_cf_rule `ablocks B ly2 S2 = ablocks B lyc Sc ++ [(res, n)]` (arm :2014 Hblq,
+   - malloc: W_journal.v:768 amalloc_cf_rule `ablocks B ly2 S2 = ablocks B lyc Sc ++ [(res, n)]` (arm :2014 Hblq,
      n = slen + 1 = re_len e by :1965 Hrelen);
-   - relay_event: W_contract.v:1048-1049 re_post `exists rest, Permutation (ablocks B ly S) (aout_blks cap out ++ rest)
+   - relay_event: W_contract.v:1049-1050 re_post `exists rest, Permutation (ablocks B ly S) (aout_blks cap out ++ rest)
      /\ Permutation (ablocks B ly' S') (aout_blks (sl_cap c mx no cap (re_len e)) out' ++ rest)` (arm :2363 HPERM5);
-   - free: W_journal.v:789 afree_cf_rule `exists l1 l2, ablocks B lyc Sc = l1 ++ (pa, n) :: l2 /\
+   - free: W_journal.v:790 afree_cf_rule `exists l1 l2, ablocks B lyc Sc = l1 ++ (pa, n) :: l2 /\
      ablocks B ly2 S2 = l1 ++ l2` (arm :2724, pa = q, n = slen + 1).
    LS_event_relay's first two conjuncts also need lm_cap m < MMAX (Hcap), which neither fr_LS nor fr_RINV gives and
    which the entry contract does not give either (g_capout is static across runs).  fr_LS_event_relay_Hcap_needed
    shows Hcap is exactly what is missing: the conclusion's first conjunct implies it.  The arm consumes those two
-   conjuncts only as relay_event's re_spec premises (W_contract.v:1066-1067, arm :2361), and relay_event's proof
-   (a working branch 378aa2733e7 W_relay_event.v:571-572) uses them only to derive send_line's sl_spec premises
-   (W_contract.v:903-904: sl_maxr < MMAX, blocks_bytes S + sl_alloc <= LIVE_MAX).  fr_LS_event_relay_r proves that
+   conjuncts only as relay_event's re_spec premises (W_contract.v:1067-1068, arm :2361), and relay_event's proof
+   (a working branch W_relay_event.v:572-573) uses them only to derive send_line's sl_spec premises
+   (W_contract.v:904-905: sl_maxr < MMAX, blocks_bytes S + sl_alloc <= LIVE_MAX).  fr_LS_event_relay_r proves that
    RELAXED pair (no lm_cap bound): with O cleared, every growth request (no + n) * 2 is at most 2 * re_len e.
-   ev_evt / ev_step / ev_k2 are ReplyRINV.v's copies (ReplyRINV.v:330-345), the same text as the arm's :997-1016;
+   ev_evt / ev_step / ev_k2 are ReplyRINV.v's copies (ReplyRINV.v:331-346), the same text as the arm's :997-1016;
    ev_k1 / ev_len are the worktree's _event.v, the same text as the arm's :246-253. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -178,7 +179,7 @@ Ltac ev3_perm_lia :=
   repeat progress (rewrite ?count_occ_app, ?cnt_cons, ?cnt_nil in *); lia.
 
 (* ================================================================== LS_event_relay, PROPOSED text with Hcap
-   1172d6d9065 _event.v:1034, plus: lm_O m = [] (lregs_P1 :285, HO), malloc's block (W_journal.v:766, Hblq), and
+   _event.v:1034, plus: lm_O m = [] (lregs_P1 :285, HO), malloc's block (W_journal.v:767, Hblq), and
    the ONE extra hypothesis Hcap : lm_cap m < MMAX that fr_LS v2 + fr_RINV do not give *)
 Lemma fr_LS_event_relay_p : forall cx t m ly S (S1 : astate) e (ly1 : alayout) q,
   fr_LS B cx t m ly S -> fr_RINV cx t m -> ev_evt cx m e ->
@@ -204,9 +205,9 @@ Proof.
 Qed.
 
 (* ================================================================== LS_event_relay, RELAXED conjuncts
-   The same premises without Hcap, concluding send_line's own room premises (1172d6d9065 W_contract.v:873-874,
-   sl_spec) in place of the capacity bound re_spec (W_contract.v:1036-1037) asks for.  Needs re_spec's two premises
-   relaxed to these, and pb_relay_event (378aa2733e7 W_relay_event.v:571-572) to pass them through. *)
+   The same premises without Hcap, concluding send_line's own room premises (W_contract.v:874-875,
+   sl_spec) in place of the capacity bound re_spec (W_contract.v:1037-1038) asks for.  Needs re_spec's two premises
+   relaxed to these, and pb_relay_event (W_relay_event.v:572-573) to pass them through. *)
 Lemma fr_LS_event_relay_r : forall cx t m ly S (S1 : astate) e (ly1 : alayout) q,
   fr_LS B cx t m ly S -> fr_RINV cx t m -> ev_evt cx m e ->
   mo_le MT S S1 (mo_malloc MT (re_len e)) ->
@@ -231,9 +232,9 @@ Proof.
 Qed.
 
 (* ================================================================== LS_event_step, PROPOSED text
-   1172d6d9065 _event.v:1045, plus: the cursor and the cleared O (lregs_P1 :285, Hk / HO), 0 <= lm_cap m (aout_at,
-   W_rep.v:177-178), and the three callees' block relations (W_journal.v:767 malloc, W_contract.v:1048-1049
-   relay_event, W_journal.v:789 free).  The out buffer may move and grow to sl_cap; the growth is at most
+   _event.v:1045, plus: the cursor and the cleared O (lregs_P1 :285, Hk / HO), 0 <= lm_cap m (aout_at,
+   W_rep.v:177-178), and the three callees' block relations (W_journal.v:768 malloc, W_contract.v:1049-1050
+   relay_event, W_journal.v:790 free).  The out buffer may move and grow to sl_cap; the growth is at most
    2 * re_len e (O was empty), paid by MB_K = 65 per byte of the 1 + 2 + ev_len input bytes the event consumes. *)
 Lemma fr_LS_event_step_p : forall cx t m ly S (S1 S2 S3 : astate) (ly3 : alayout) e v out' (ly1 ly2 : alayout) q,
   fr_LS B cx t m ly S -> ev_evt cx m e ->

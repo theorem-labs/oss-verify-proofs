@@ -5,6 +5,7 @@
    W_LLVMFuzzerTestOneInput_cut.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_LLVMFuzzerTestOneInput_remove.v, with its module names changed; 321 of its 391 lines of code are new or changed and 5205 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyCntArms.v, with its module paths and module names changed; 80 of its 293 lines of code are new or changed and 178 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* The remove arm's three count rules on image B, each at the text of lib/B/ReplyBTop.v's Context of the same name
    (RM_CNT_cnl, RM_CNT_cshe, RM_CNT_sr: the Section hypotheses of lib/B/W_LLVMFuzzerTestOneInput_remove_x.v :316 /
    :310 / :315 at the composition's instance), for every rc, fx:
@@ -20,7 +21,7 @@
    dr_tr / dr_live / dr_lines, _remove.v rm_rr_ok / rm_cnl_ok / rm_cshe_ok / rm_mfacts / rm_mk / rm_at, _remove_x.v
    rm_pk / rm_cnl_pk / rm3_pre, W_contract_x.v cnl_tr / cnl_pk / cshe_pk / sr_pk) are B's word for word.
    A's two family arguments are read off fr_RINV here: RI_rm_rr_pair's fact (the removed entry's skip and partial
-   line against the source) and the held texts' NoDup are clauses of fr_pair_ok (lib/B/ReplyRINVB.v:140) of the
+   line against the source) and the held texts' NoDup are clauses of fr_pair_ok (lib/B/ReplyRINVB.v:141) of the
    pair ReplyLSBDrainPre.rm3_pair gives; relay_remove keeps the held list, so the NoDup holds after it. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -66,7 +67,7 @@ Open Scope Z_scope.
 Module RX := W_LLVMFuzzerTestOneInput_remove_x.
 Module GC := ReplyB3CntAcc.
 
-(* Speed (image A's ReplyCntArms.v:71-75): at Qed the kernel's conversion of lia's certificate should unfold lia's
+(* Speed (image A's ReplyCntArms.v:72-76): at Qed the kernel's conversion of lia's certificate should unfold lia's
    checker before these model functions, the arithmetic's atoms; A measured cnt_rm_rr's Qed at 215 s without it,
    1.6 s with it.  Local keeps it out of importers. *)
 Local Strategy 1000 [drain_b_c.drain_run dr_fin dr_tr ReplyCnt.tr_peakP GC.tz GC.ws GC.za rr_tr rm_rr_tr].
@@ -150,7 +151,7 @@ Proof.
   unfold rm_rr_ok in Hrr. cbv zeta in Hrr. fold e in Hrr. destruct Hrr as (Hd & _).
   destruct (Z.eq_dec (re_eof e) 0) as [E0|E0].
   - rewrite (proj2 (Z.eqb_eq _ _) E0) in Hd |- *. cbv iota in Hd.
-    (* RI_rm_rr_pair's fact: fr_pair_ok's eof clause (ReplyRINVB.v:148) of fr_RINV's pair (e, h) *)
+    (* RI_rm_rr_pair's fact: fr_pair_ok's eof clause (ReplyRINVB.v:149) of fr_RINV's pair (e, h) *)
     destruct (ReplyLSBDrainPre.rm3_pair cx t m si h j0 HRI Hat) as (HPR & _).
     destruct HPR as (_ & _ & _ & HSW & _).
     destruct (HSW E0) as (SO & SW). cbn [fst] in SO, SW. fold e in SO, SW.
@@ -249,7 +250,7 @@ Proof.
 Qed.
 
 (* A's cnt_rm_after_cnl: the model after check_no_loss is 2 under the arm's start count plus rm_pk; the held texts'
-   NoDup is fr_pair_ok's clause (ReplyRINVB.v:150) of fr_RINV's pair (rm_ent m j0, h), and relay_remove keeps the
+   NoDup is fr_pair_ok's clause (ReplyRINVB.v:151) of fr_RINV's pair (rm_ent m j0, h), and relay_remove keeps the
    held list (btcnt_rm_rr) *)
 Lemma btcnt_rm_after_cnl : forall (cx : @lfcx rc) t m si h j0 e1 h1 ev LB c2 O2 cap2 out2 E' H' (P : Z -> bool),
   ReplyRINVB.fr_RINV cx t m -> rm_at cx m si h j0 -> rm_rr_ok m h j0 e1 h1 ev LB c2 O2 cap2 -> rm_cnl_ok h1 E' H' ->

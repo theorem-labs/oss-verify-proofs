@@ -55,7 +55,7 @@ Three rows resolve to such a place. The .got cell stack_malloc_1 +0x18 takes the
 the same TLS index pair in both images, module id 1 and offset -0x800 (`__tls_get_addr`'s argument). The two EMPTY
 strings, RegisterCommonFlags +0x1210 (.rodata 0x13f5f / 0x13e5f) and AsyncSignalSafeLazyInitFakeStack +0x194 (.rodata
 0x20b1a / 0x2093a, a zero byte that starts a 64-byte table), are equal on the 64-byte window too. The record of this
-slice at commit 2894d73b0f91 (tool blob sha256 96785f56336f) reported the .got cell as a single zero byte for a wrong
+slice (tool blob sha256 96785f56336f) reported the .got cell as a single zero byte for a wrong
 reason: the cell is 0x18 bytes before the end of p_filesz (0x9d568 / 0x97d18), and that reader zero-filled the WHOLE
 64-byte window that crossed it, so both sides read zeros; and the empty strings were compared by the NUL cut alone.
 With the fixed reader and rules the verdicts are unchanged (13 bodies, 0 not equal, 249 rows SAME, 0 DIFFERENT, before
@@ -85,7 +85,7 @@ fs_ranges' other three entries, fuzz_grant A's __asan_stack_malloc_0 (0x3cda4, 9
 
 ## The tool: the image-B record's fixed tool and one change, measured
 
-`bytecmp.py` is the image-B record's tool at commit 51cfb939a547 (../stackmalloc1-B/bytecmp.py, sha256 f31bad62a6cb:
+`bytecmp.py` is the image-B record's tool (../stackmalloc1-B/bytecmp.py, sha256 f31bad62a6cb:
 the pointer-cell and window rules, the p_filesz reader, `--plant-data`) with the two image shas changed and one change:
 an `addi rd, rs, 0` word (OP-IMM, funct3 0, immediate 0; capstone prints it `mv rd, rs`) is taken as the addi half of an
 auipc pair, offset 0; `--no-addi0` turns it off. `bytecmp.py --no-addi0` prints, byte for byte, what f31bad62a6cb
@@ -97,7 +97,7 @@ twin), so the pair is a pc-relative address formation, the kind every SAME row i
 asan_inited - pc (0x4c000) is a multiple of 4 KiB there. The changed tool decides this pair SAME and no other row
 changes (bodies-b-tool.out and bodies.out differ in that body's line, its two rows and the summary only). Regression
 control: the changed tool with the image-B shas, run on the image-B twins (fuzz_grant.asan-ubsan 5a5ee7c02b4e,
-fuzz_uci.asan-ubsan 8d07ffcf5948), prints the image-B record at 51cfb939a547 (../stackmalloc1-B/records/
+fuzz_uci.asan-ubsan 8d07ffcf5948), prints the image-B record (../stackmalloc1-B/records/
 bytecmp-bodies.out) line for line.
 
 Controls (records/bytecmp-control-1.out .. -6.out), each exit 1, unplanted exit 0:
@@ -111,7 +111,7 @@ Controls (records/bytecmp-control-1.out .. -6.out), each exit 1, unplanted exit 
 | 5 | `--plant-data 0x97d00:b8c1030000000000` | the resolve branch: the same cell pointed at __asan_stack_malloc_1 | the same two rows DIFFERENT (cell against ptr __asan_stack_malloc_1+0) |
 | 6 | `--plant 0x13e5f:48002800` | the window rule: one byte (0x27 -> 0x28) in the 64-byte window after the empty string at RegisterCommonFlags +0x1210 | the two rows of that auipc + addi pair DIFFERENT (string 00 on both sides, windows differ) |
 
-Control 6 run with the tool of 2894d73b0f91 (`git show 2894d73b0f91:<this directory>/bytecmp.py`, the same arguments;
+Control 6 run with the tool (`git show:<this directory>/bytecmp.py`, the same arguments;
 records/bytecmp-control-6-before-fix.out) misses the plant: the row stays SAME (`'00'` against `'00'`) and the run
 exits 0. That is the empty-string defect, caught by the fixed rule.
 
@@ -125,7 +125,7 @@ call site differs: check_clamp 0x7f8ec on A, 0x7f9b4 on B, a0 = 0x60 on both.
 
 ## Re-run on the comparison kit 4bbd3a74be89 (records/cmpkit-4bbd3a74be89-*.out)
 
-The kit of record, tools/cmpkit/4bbd3a74be89 at commit 3c3e62ee278 (kit id = sha256(SHA256SUMS)[:12]; SHA256SUMS pins its seven files):
+The kit of record, tools/cmpkit/4bbd3a74be89 (kit id = sha256(SHA256SUMS)[:12]; SHA256SUMS pins its seven files):
 strictcmp2 16982e3ef42b is the compare (tcmp per function pair), drvcmp 4d70e90bc1fa the loader, bytecmp 1480ca2faea0.
 `cmpkit-sm1.py KITDIR OUTDIR` (env P, R) checks that KITDIR holds exactly the seven pinned files and SHA256SUMS, each
 matching, and runs: `drvcmp.py twins` on each side; the kit's own `strictcmp2.py cmp` command over the 12 bodies named
@@ -219,8 +219,8 @@ compared with the kit's `strictcmp2.py cmp` on the planted function): all 6 caug
 This slice's control 6 of the earlier section (a byte in the empty string's window at RegisterCommonFlags +0x1210) is
 not repeated: under the kit that target already differs unplanted. Its place here is the C-string control 6 above.
 
-Scans clear on cmpkit 86da41d3ef68 (tools/cmpkit/86da41d3ef68 at commit 98e50c029045; `cmpkit-86da41d3ef68-scans.sh KIT P R OUT`, records/cmpkit-86da41d3ef68-kit.out / -luiscan.out / -ambiscan.out): luiscan 9ae61e4a0e01 exposure 0 in both images for all 13 functions above (the MemToShadow copy as `_ZN6__asanL11MemToShadowEm{asan_fake_stack.cpp}`, 0x3d410 / 0x3c348; RegisterCommonFlags has no lui word, so its +0x358 words have none), so rule 8 leaves every verdict of this section unchanged; ambiscan 9f61b4cee422 0 ambiguous hits in the 12 records/cmpkit-4bbd3a74be89-*.out files (12 by-name compares, none of a duplicated name; MemToShadow was compared by address).
+Scans clear on cmpkit 86da41d3ef68 (tools/cmpkit/86da41d3ef68; `cmpkit-86da41d3ef68-scans.sh KIT P R OUT`, records/cmpkit-86da41d3ef68-kit.out / -luiscan.out / -ambiscan.out): luiscan 9ae61e4a0e01 exposure 0 in both images for all 13 functions above (the MemToShadow copy as `_ZN6__asanL11MemToShadowEm{asan_fake_stack.cpp}`, 0x3d410 / 0x3c348; RegisterCommonFlags has no lui word, so its +0x358 words have none), so rule 8 leaves every verdict of this section unchanged; ambiscan 9f61b4cee422 0 ambiguous hits in the 12 records/cmpkit-4bbd3a74be89-*.out files (12 by-name compares, none of a duplicated name; MemToShadow was compared by address).
 
-Rule 8 by hand (records/cmpkit-86da41d3ef68-lui-trace.md): luiscan's `memfed 0` is not proof (the tool set's README at commit 6d8ff128a01 records that rule 8's dataflow does not follow add / sub / sh*add), and every lui row above was cleared on `memfed 0` or the section test. Each of the 10 lui words per image (stack_malloc_1 1, TryAsanInitFromRtl 2, DTLS_on_tls_get_addr 2, FakeStack::GC 1, AsyncSignalSafeLazyInitFakeStack 4) is traced through every use, add / sub / sh*add included, to its next write, in both images: none forms a static address. 0x1000 in stack_malloc_1 and FakeStack::GC is added to a runtime FakeStack pointer (fake_stack_tls's value / `this`); TryAsanInitFromRtl's 0xff0000 / 0x10000 are the data of an `sc.w` to asan_inited+0; DTLS_on_tls_get_addr's 0xff8 is a size argument; AsyncSignalSafeLazyInitFakeStack's four popcount masks reach an address only as the index 0..63 into a 64-byte unnamed .rodata table whose bytes are equal in both images. No verdict changes.
+Rule 8 by hand (records/cmpkit-86da41d3ef68-lui-trace.md): luiscan's `memfed 0` is not proof (the tool set's README records that rule 8's dataflow does not follow add / sub / sh*add), and every lui row above was cleared on `memfed 0` or the section test. Each of the 10 lui words per image (stack_malloc_1 1, TryAsanInitFromRtl 2, DTLS_on_tls_get_addr 2, FakeStack::GC 1, AsyncSignalSafeLazyInitFakeStack 4) is traced through every use, add / sub / sh*add included, to its next write, in both images: none forms a static address. 0x1000 in stack_malloc_1 and FakeStack::GC is added to a runtime FakeStack pointer (fake_stack_tls's value / `this`); TryAsanInitFromRtl's 0xff0000 / 0x10000 are the data of an `sc.w` to asan_inited+0; DTLS_on_tls_get_addr's 0xff8 is a size argument; AsyncSignalSafeLazyInitFakeStack's four popcount masks reach an address only as the index 0..63 into a 64-byte unnamed .rodata table whose bytes are equal in both images. No verdict changes.
 
-Ops followed by that trace (the tool set's README at commit 797c750bbb0 records that a `lui-const (dataflow)` settlement fails open through logical ops): every register-register op (add, sub, sh*add, shifts, slt / sltu, and / or / xor, mul, the *w forms) and every register-immediate op (addi / mv, andi / ori / xori / not, slti / sltiu, shifts, addiw / sext.w) that reads a lui-derived register, to its destination's next write, plus memory base / data, branches, AMO / LR / SC, call arguments / returns and stack spills. The logical ops a lui value passes (TryAsanInitFromRtl's xor / and into the sc.w data; AsyncSignalSafeLazyInitFakeStack's popcount and / xori into the table index 0..63) are traced there; no row is `lui-const (dataflow)` (insec 0) and no row changes.
+Ops followed by that trace (the tool set's README records that a `lui-const (dataflow)` settlement fails open through logical ops): every register-register op (add, sub, sh*add, shifts, slt / sltu, and / or / xor, mul, the *w forms) and every register-immediate op (addi / mv, andi / ori / xori / not, slti / sltiu, shifts, addiw / sext.w) that reads a lui-derived register, to its destination's next write, plus memory base / data, branches, AMO / LR / SC, call arguments / returns and stack spills. The logical ops a lui value passes (TryAsanInitFromRtl's xor / and into the sc.w data; AsyncSignalSafeLazyInitFakeStack's popcount and / xori into the table index 0..63) are traced there; no row is `lui-const (dataflow)` (insec 0) and no row changes.

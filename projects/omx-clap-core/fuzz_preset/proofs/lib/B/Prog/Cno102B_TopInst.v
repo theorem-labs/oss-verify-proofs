@@ -1,6 +1,6 @@
 (* fuzz_preset, image B' (asan-ubsan, harness fix #102: pin sha256 d663f82d7f488d30, twin c90d4fa54d43160b): the cno B'
    top AT THE INSTANCE. cnb_B_top_inst is lib/B/Prog/Cno102B_Top.v's cnb_B_top (the kit's tcheck_no_overread_specX at the
-   cut 7cdbb61b5fa0, PRH_FnCheck.v c40cf3fdcd2a :738-823) taken at PA := PI_prog_B, B := YD2l.TfibB, ARx := the cf
+   cut, PRH_FnCheck.v c40cf3fdcd2a :738-823) taken at PA := PI_prog_B, B := YD2l.TfibB, ARx := the cf
    relation at TfibB,
    with every STATIC-LAYOUT fact discharged by its instance witness:
      PAL  = Cno102B_Wit.cnbw_pal  (a Theorem Labs lane's PALibB.exvi_eh_palib, lib/B/PALibB.v 5baa19c890f7)
@@ -13,7 +13,7 @@
    takes). The instance's CfImg is CfImgB.CfImg_B, the one the witnesses are stated at.
    The cut closed PJF-TIE inside CB8 (Cno102B_F.v's cnb_fo), so no inner named premise is left. Row R7-7
    (a Theorem Labs lane; family lead a Theorem Labs lane). Template: lib/B/Prog/Caw102B_Img.v caw_B_top_inst
-   (a working branch db029676dbf7).
+   (a working branch).
    rule 24: no function proved. rule 24: proves no function (kind: segment lemma; the composition at the instance).
    PA is passed EXPLICITLY at every use (wrong-image trap: instance search can also find PI_prog_A in this closure).
    No numeral. No ADDRESS. *)

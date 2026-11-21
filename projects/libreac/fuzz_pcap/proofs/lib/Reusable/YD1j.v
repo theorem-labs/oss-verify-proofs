@@ -2,7 +2,8 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD1j.v (origin/ossv/recipes c8557374ad2e), with its module paths changed, names TfibSyms -> PcapSyms and its addresses moved to libreac/fuzz_pcap's asan-ubsan build (pinned image fuzz_pcap.asan-ubsan sha256 9e66f771f22a, symbols from its unstripped twin fuzz_pcap.asan-ubsan sha256 c969d83cdd59). It is the asan-ubsan twin of a Theorem Labs lane's lib/A/AD1j.v (a working branch 9700d736a50): every hunk of that file against the donor's A file is mirrored here, each address re-measured on the asan-ubsan image (keyed by symbol + offset or section + offset, never by a delta from the asan value); a Theorem Labs lane's hunks there are relocation (__stderr_FILE, the stderr / stdout / stdin FILE ranges, __stack_chk_guard and its .got slot, the stdout buffer buf + 8 = 0x5f4ea0 (__stdout_FILE's buf pointer), the thread pointer builtin_tls + 0xc8 = 0x5d4790, the exit-time cells __do_fini.__finalized 0x9e150, asan mu_for_globals 0x9f070, sancov pc_guard_controller 0x133660), the image-end class (the third side goal hi <= pcap_img_end of the G lemma in ex_ranges_free) and the dropped Require of cgif's YE2k. ex_consts_chk checks the exit-time image cells against Reusable/YE23.v's ex_consts, which hold oft_in_callback (0x5d3e14, 1, 0) (YE23.v:55; .symtab oft_in_callback 0x5d3e14 size 1): the flag oft_exit_guard (0x80710: auipc a0,0x553; lbu a0,0x704(a0) = 0x5d3e14; bnez; ret) reads before its fflush branch. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD1j.v (theorem-labs/oss-verify-proofs@6b32741d849a), with its module paths changed, names TfibSyms -> PcapSyms and its addresses moved to libreac/fuzz_pcap's asan-ubsan build (pinned image fuzz_pcap.asan-ubsan sha256 9e66f771f22a, symbols from its unstripped twin fuzz_pcap.asan-ubsan sha256 c969d83cdd59). It is the asan-ubsan twin of a Theorem Labs lane's lib/A/AD1j.v (a working branch): every hunk of that file against the donor's A file is mirrored here, each address re-measured on the asan-ubsan image (keyed by symbol + offset or section + offset, never by a delta from the asan value); a Theorem Labs lane's hunks there are relocation (__stderr_FILE, the stderr / stdout / stdin FILE ranges, __stack_chk_guard and its .got slot, the stdout buffer buf + 8 = 0x5f4ea0 (__stdout_FILE's buf pointer), the thread pointer builtin_tls + 0xc8 = 0x5d4790, the exit-time cells __do_fini.__finalized 0x9e150, asan mu_for_globals 0x9f070, sancov pc_guard_controller 0x133660), the image-end class (the third side goal hi <= pcap_img_end of the G lemma in ex_ranges_free) and the dropped Require of cgif's YE2k. ex_consts_chk checks the exit-time image cells against Reusable/YE23.v's ex_consts, which hold oft_in_callback (0x5d3e14, 1, 0) (YE23.v:56; .symtab oft_in_callback 0x5d3e14 size 1): the flag oft_exit_guard (0x80710: auipc a0,0x553; lbu a0,0x704(a0) = 0x5d3e14; bnez; ret) reads before its fflush branch. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel reader that fdchan asks for at LPS 727298f3 carried beside the descriptor fact, from cs_ok's co_rdr). *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -123,7 +124,7 @@ match type of Hr with ?lo <= a < ?hi => apply (G lo hi a); [vm_compute; reflexiv
 Qed.
 Theorem tfib_exit_site : exit_site_tfa B est xst.
 Proof.
-intros XI E W regs mem md ly S usp d fs code k HXI E0 [Ulo Uhi] U16 Htid Ha0 Hcode Hsp Hd Hret R3 R4 HMX Hwin HAI HAR HTOP Hnev HEST HK Hfd1 Hfs.
+intros XI E W regs mem md ly S usp d fs code k HXI E0 [Ulo Uhi] U16 Htid Ha0 Hcode Hsp Hd Hret R3 R4 HMX Hwin HAI HAR HTOP Hnev HEST HK Hfd1 Hcr Hfs.
 assert (HXI' : XI = IMG_X \/ XI = IMG_XL) by (destruct HXI as [[HX _] | HX]; [left | right]; exact HX).
 assert (HXC : exists cls, XC XI cls /\ ((XI = IMG_X /\ k = 0%nat /\ cls = ex_consts1) \/ (XI = IMG_XL /\ cls = ex_consts))).
 { destruct HXI as [[HX Hk] | HX]; [exists ex_consts1 | exists ex_consts]; (split; [| first [left; repeat split; assumption || reflexivity | right; split; [assumption | reflexivity]]]);
@@ -182,7 +183,8 @@ HPRE Hsp44 Hstk Hband Ha0 Hcode' HTPX HC Htidc ltac:(lia) Hgot Hcan (u64_range (
 * rewrite length_pend. lia.
 * rewrite HBS. lia.
 * intros i Hi. rewrite (HPEND i Hi). f_equal. f_equal. apply nth_indep. exact Hi.
-* split; [exact (Hfd1 Hk1) | reflexivity].
+(* [fdchan]'s third conjunct at LPS 727298f3 is the model's channel reader. *)
+* split; [exact (Hfd1 Hk1) | split; [reflexivity | exact (Hcr Hk1)]].
 * exact HXown.
 * exact HBown.
 * exact HAI.

@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10-31, QMm W1 lift kit, image A (a Theorem Labs lane, the image-A lead; owner a Theorem Labs lane 01:53Z).
-   QMm W1 made top_x's relation carry arodata_ok_cf (W_LLVMFuzzerTestOneInput_top_x.v:189-191). Every file that
+   QMm W1 made top_x's relation carry arodata_ok_cf (W_LLVMFuzzerTestOneInput_top_x.v:190-192). Every file that
    states a runtime contract at its OWN COPY of that relation must give the copy the same last conjunct and re-prove
    the contract there. Each of those contracts has the same shape: its post gives the relation at mem', W' = W, and
    a VIEW FRAME, `~ aowned at S -> ~ aowned at S' -> ~ (the stack window) -> aview mem' a = aview mem a`, outside

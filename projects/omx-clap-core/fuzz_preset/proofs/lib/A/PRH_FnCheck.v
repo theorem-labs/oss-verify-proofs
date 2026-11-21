@@ -6,7 +6,7 @@
    The unit owner's ruling C2 (2026-10-31 04:19Z) struck the scratch notice that stood here, by a
    comment-only edit that keeps the header at 7 lines, so every line after it keeps its number. *)
 (* fuzz_preset, program part (the kit's check texts): the ASan contract TEXTS of the harness's checks and their helpers
-   (fuzz_preset.c @0b89c6c1bd, the rebuilt image's harness): check_bounded_alloc, check_reject_clean, parse_noting,
+   (fuzz_preset.c, the rebuilt image's harness): check_bounded_alloc, check_reject_clean, parse_noting,
    check_no_overread, check_as_written, check_reject_clean_starved, round_trip_text, check_round_trip. Form: PRH_FnAlloc.v's
    (cgif_file lib/YC21.v:33-66; the fm port's FMH_Fn.v:101-180): fpre (YCbqG's afn_pre_x + the read-only view), argument
    registers, the alloc.c ledger (PRH_Base.v prh_ledger), the allocation traces in the image's universe where the
@@ -20,7 +20,7 @@
    its entry state on both images: A 0x81f78, B 0x82084), check_no_overread's three copy mallocs, and the rest - comes
    from P8's preset_room through the driver's slot (the driver-contract owner).
    NOT HERE: LLVMFuzzerTestOneInput, whose statement is the driver-contract owner's preset_lib_contract_x (lib/A/PresetCfnA.v); its
-   callee interface (afn_spec_cf, PresetCfnA.v:1024-1035) takes these texts: the same pre (afn_pre + the universe closure
+   callee interface (afn_spec_cf, PresetCfnA.v:1025-1036) takes these texts: the same pre (afn_pre + the universe closure
    + frames bound + read-only view + live room + room_live_cf + own pre) and post (the journal post with Hp in Q).
    IMAGE-PARAMETRIC: the image is the listing class (YC4aP PAImg L); each entry is pa_sigma AS_<fn>; no image constant.
    ALLOCATOR-PARAMETRIC: ARx is an explicit argument.
@@ -52,7 +52,7 @@
    - round_trip_text: pj_wf t, depth <= 32, wlen + 1 <= 2 ^ 28 (the writer's text is the rendered one and reads back
      to t), g_fail_at = SIZE_MAX.
    - check_round_trip: json_read x = Some t with the plain length bounds, g_fail_at = SIZE_MAX.
-   DEFERRED (fixed harness #102). In the harness at 0b89c6c1bd an allocator REFUSAL (the class-full NULL; a class
+   DEFERRED (fixed harness #102). In the harness an allocator REFUSAL (the class-full NULL; a class
    does fill on accepted input) reaches abort() at the NULL sites below. By the kit owner's ruling a NULL-site arm is
    DEFERRED: check_no_overread, check_as_written, round_trip_text and check_round_trip are stated as the FIXED pin's
    kit texts WITHOUT an abort disjunct (no fabort / fabortW arm, no free-standing hypothesis), to be proved against
@@ -82,9 +82,9 @@
   text). NO LONGER MISSING for these arms: g_own_ran_out has its generated row (PRH_Img.v:158-159), which the ledger
   reads (PRH_Base.prh_own, PRH_Base.v:806), so the four r = 1 arms state own' = 1 \/ ran' = 1 (check_as_written's
   own' = 1) by the ledger's own fields, not only by what the call did.
-  The address table above is the TODAY'S-BINARY table (0b89c6c1bd) and stays until the new pins land.
+  The address table above is the TODAY'S-BINARY table and stays until the new pins land.
    The abort-arm evidence below (ck_E_null, ck_E_txnull, ck_E_ran, ck_Ek) is KEPT though no text here uses it now:
-   the H2/H5 walk's files cited it at commit 841830f5dcb, not on this tree (HISTORY: lib/A/Prog/H2CawBase.v:319-320,
+   the H2/H5 walk's files cited it, not on this tree (HISTORY: lib/A/Prog/H2CawBase.v:319-320,
    :412; H5CrtDefs.v:170-174; H5CrtNull.v:13-150; H5RttDefs.v:165-167). ck_Ek now carries room_live_cf S' and no
    margin argument (room ruling (B)), so those citations' `ck_Ek B ARc kr E` becomes `ck_Ek B ARc E`.
    NAMED GAPS:
@@ -93,9 +93,9 @@
      inside one as_zero_shadow range, so in_zs holds for it. check_round_trip's "modifiedAt" (0x210a0, 11 bytes) and
      "2026-10-25T00:00:00Z" (0x21360, 21 bytes), read by strlen / memcpy / strcmp (:647-677), are NOT: their last
      granules' shadow is 03 / 05. So in_zs / kept_at's read-only case must NEVER be stated for these two over the whole
-     object. Route (a) is now the kit's kept_img (PRH_Base.v, 6dbe0e718cd: 64-byte image margins, read-only, not
+     object. Route (a) is now the kit's kept_img (PRH_Base.v: 64-byte image margins, read-only, not
      owned, not errno, and each granule a whole zero-shadow granule or one with a const-shadow cell of value 0 or above
-     the byte's offset, AR_laws_x field 16 alx_const_cells keeping those cells, journal d15706bda36):
+     the byte's offset, AR_laws_x field 16 alx_const_cells keeping those cells, journal):
      tcheck_round_trip_specX takes kept_img for both strings, so it supplies pj_set's and pj_string's kept_at (its
      third case, kept_img). The
      two addresses are the text's arguments a_mod_at / a_stamp (the instance passes the image's .str.10 / .str.30; no
@@ -123,7 +123,7 @@
      membership: the closure implies each (its literal clause at every site with an empty chain - check_as_written
      keeps rc in s0 - and at an entry near the stack top; its frame-pointer clause at prh_ctx for the four, and
      prh_ctx_call for their callees). Kept in these texts: none; ck_realloc_univ stays defined (no text takes it); the H2/H5
-     walk cited it (841830f5dcb, not on this tree: H5CrtDefs.v:143, H5RttDefs.v:125), ck_tx_univ is deleted (uncited). NOT covered by the
+     walk cited it (not on this tree: H5CrtDefs.v:143, H5RttDefs.v:125), ck_tx_univ is deleted (uncited). NOT covered by the
      closure, named here and carried by no text of this file: tx_put's prhtx_trace chain part (C-TXTRACE, below; its
      two short traces are the closure's). C-RDWORD is CLOSED by the closure's clause 4b: parse_string's /
      parse_items' free traces read pj_parse's frame - [pc0; r; ra] for ra a return site of pj_parse's parse_value
@@ -246,7 +246,7 @@ Definition ck_tx_len (t : PjTree.jv) (p : bool) : Z := TxModel.zsum (ck_rtt_ns t
    rendered r_evs, parse_evs of the text, r_free, w_free) plus the HBulk of back, so check_round_trip's supply is the
    model's round_trip unfolded (ck_rtt_evs_supply) and the per-callee segments are supplied by lib/A/PRH_Supply.v
    (pj_write's list = w_evs, rendered's prhtx_evs 0 0 (ck_rtt_ns t p) = r_evs). pj_free (&back)'s HBulk lists back's
-   blocks in pj_free's POST-ORDER, PresetReqAt.fo t (the record model, P8 commit 715ef46e03c; before 16:3xZ
+   blocks in pj_free's POST-ORDER, PresetReqAt.fo t (the record model, P8; before 16:3xZ
    this read rd_blocks (rt_tr ..), the live list, which the record refuted as pj_free's order). ---- *)
 Definition ck_rtt_evs (sm : list Z -> Z * Z) (t : PjTree.jv) (p : bool) (copy : Z) : list PresetReqAt.hev :=
   PresetReqAt.rt_text sm t p ++
@@ -323,7 +323,7 @@ Definition ck_crcs_evs (sm : list Z -> Z * Z) (tb : list Z) (took doc : Z) (t : 
   PresetReqAt.starved_parse sm tb (Z.to_nat took) ++ (if doc =? 0 then [] else PresetReqAt.starved_writes tb t).
 
 (* THE SUPPLY of check_reject_clean_starved's run premise from LLVMFuzzerTestOneInput's list (row N9's N9-SUPPLY
-   census, commit 5432b023703 provenance/N9-SUPPLY/TABLE.md sec. 2, its draft statement taken
+   census, provenance/N9-SUPPLY/TABLE.md sec. 2, its draft statement taken
    verbatim with the module paths resolved): PresetRun.call_tail is starved_parse on a refused reading, and round_trip
    ++ starved_parse ++ starved_writes ++ [HBulk ..] on an accepted one, so crcs's list is call_tail's (after the round
    trip on the accepted branch), with took = the reading's call count (crcs's own CHOSEN failure, pick; not F1). *)
@@ -364,7 +364,7 @@ Definition ck_crt_count (t : PjTree.jv) (cset : Z) : Z :=
 
 (* ---- allocator steps on each function's longest path, as model expressions (YGcfRoomKeep.v RK_*: malloc one, free one,
    realloc both). No text takes them since room is an invariant (ruling (B)); kept because the H2/H5 walk cited them
-   (commit 841830f5dcb, not on this tree: lib/A/Prog/H2CawBase.v:307, H5CrtDefs.v:156-374,
+   (not on this tree: lib/A/Prog/H2CawBase.v:307, H5CrtDefs.v:156-374,
    H5RttDefs.v:143-344, H5RttS1.v:14, H5RttS2.v:35, H5RttS4.v:767) ---- *)
 (* a reading of x: pj_parse's own count (lib/A/PRH_FnPj.v prhPj_parse_steps), so its premise follows *)
 Definition ck_rk_read (x : list Z) : nat := PRH_FnPj.prhPj_parse_steps x.
@@ -442,7 +442,7 @@ Definition ck_frm0 : Prop := frm_zero (@YK11.fp_csr fx).
 
 (* the realloc call's two traces, code-only (fuzz_realloc holds n in s0: empty chain), in the FIXED part explicitly.
    No text takes it now: prh_univ_closure implies it (prh_univ_closure_lit); kept as a name: the H2/H5 walk's
-   citations (lib/A/Prog/H5CrtDefs.v:143, H5RttDefs.v:125) are at commit 841830f5dcb, not on this tree *)
+   citations (lib/A/Prog/H5CrtDefs.v:143, H5RttDefs.v:125) are, not on this tree *)
 Definition ck_realloc_univ : Prop :=
   In [cf_pc_realloc_ra0] (u_fix (as_universe B)) /\
   In (prh_trace cf_pc_realloc_ra0 pi_ret_realloc []) (u_fix (as_universe B)).
@@ -464,7 +464,7 @@ Definition ck_out_ok (STK : Z) (ly : alayout) (S : astate) (W : world segs) (reg
    handing these texts a doc is LLVMFuzzerTestOneInput, and its fk = 0 arm (doc on the real stack) is UNREACHABLE.
    (1) The frame-area call is made: AR_const_law (alx_const: rd32 (as_uar_cell B) 1; A 0xaa8c0) takes the option
    word's beqz past the real-stack skip. (2) It returns a frame: the engine's aj_stack_malloc_at_x (YGcallSx.v:67,
-   S1 commit fd7be1c86ca2) under count_cid 1 (frames S) < fs_frames 1 - at the entry frames S = [], so
+   S1) under count_cid 1 (frames S) < fs_frames 1 - at the entry frames S = [], so
    count_cid 1 [] = 0 < 8192 - gives a0 = frame_addr lyc 1 pos with (1, pos) in frames S2. (3) The frame is not 0:
    AR_frames_law_x (alx_frames) gives in_app (frame_addr lyc 1 pos) (fs_frame_bytes 1), and in_app starts with
    4096 <= lo (YG0f.v:277), so the `beqz a0` to the real-stack fallback is not taken. Answered by the H6 walk (its
@@ -1351,10 +1351,10 @@ Definition tcheck_as_written_specX (CTX0 : list (list Z)) : Prop :=
      the internal file CAW-STANDIN-TABLE.md, its HPOS row and closing paragraph): THE RUN POSITION AT ENTRY, whose next event is
      expected ()'s scratch malloc, in a run of at most 4 calls. It is NOT a consequence of the other premises (none
      names a run position). The hull at this call's allocator calls comes from THE HULL BUDGET above, not from it
-     (caw_pre_hull with PresetHullPay.hull_ok_of_budget, Caw102A_WA0.v:452-456 / :478-482). The caller supplies it:
+     (caw_pre_hull with PresetHullPay.hull_ok_of_budget, Caw102A_WA0.v:453-457 / :479-483). The caller supplies it:
      the driver walk of LLVMFuzzerTestOneInput at its check_as_written call (Ent102L3A.v:435 / Ent102L3B.v:446) through
-     Ent102OfPost.tcheck_as_written_grantX_of_post (Ent102OfPost.v:650-656), from Ent102GrantA.tcheck_as_written_grantX's
-     run, position and `(length rp_os <= 4)%nat` (Ent102GrantA.v:171, :181-184); caw_pre (Caw102A_Base / Caw102B) carries
+     Ent102OfPost.tcheck_as_written_grantX_of_post (Ent102OfPost.v:651-657), from Ent102GrantA.tcheck_as_written_grantX's
+     run, position and `(length rp_os <= 4)%nat` (Ent102GrantA.v:172, :182-185); caw_pre (Caw102A_Base / Caw102B) carries
      it as a conjunct. The text is proved at drv3_check_as_written_A / _B (Ent102DrvTopA3.v:625 / Ent102DrvTopB3.v:479). *)
   (exists (rp_sm : list Z -> Z * Z) (rp_x : list Z) (rp_os : list (option nat * option nat * option nat)) (rp_i : nat)
      (rp_H0 : list Z) (rp_hist : list YG00.chunk),
@@ -1806,8 +1806,8 @@ Definition tcheck_reject_clean_starved_specX (CTX0 : list (list Z)) : Prop :=
      the STARVED reading (ck_crcs_evs: parse_evs tb (okk (pick tb took))), a prefix of the all-granted events, so P8
      bounds no count past the injected failure. pj_parse's own spelling at the call (fuzz_alloc_live, fuzz_alloc_fail
      and the fake frame leave the live set as at entry), as check_no_overread and parse_noting take it.
-     SUPPLIED (no longer open) by the driver-contract owner's room-count leaf lib/Spec/PresetRoomCounts.v (blob e7bf70e17551,
-     commit 146ac6ef7be8; image-free, Print Assumptions closed): on the REFUSED arm
+     SUPPLIED (no longer open) by the driver-contract owner's room-count leaf lib/Spec/PresetRoomCounts.v (blob e7bf70e17551,;
+     image-free, Print Assumptions closed): on the REFUSED arm
      (new:828; the position after check_no_overread's piece, the reading and the scratch pair) peak_sec_at_tail /
      peak_c24_at_tail, on the ACCEPTED arm (new:833; + round_trip sm t) peak_sec_after_rt / peak_c24_after_rt. Their
      premises: `PresetRun.call_evs sm x o1 o2 o0 = C ++ PresetRun.call_rest sm x`; the three ranout flags false;
@@ -2020,9 +2020,9 @@ Definition tround_trip_text_specX (CTX0 : list (list Z)) : Prop :=
      last to every text on the caller chain up to the harness entry - tcheck_round_trip_specX below, then
      LLVMFuzzerTestOneInput's slot pre (PresetCfnA.v / PresetCfnB.v preset_lib_pre_x, owned by the driver-contract owner). MET AT THE REAL
      CALL STATE given check_round_trip's own entry fact: the check_round_trip walks prove it at both calls by
-     YGcallStackUp.astack_up_at_xwR (lib/A/Prog/Crt102Arms.v:1102-1109, lib/A/Prog/Crt102B_RRT.v:1096-1101). The
+     YGcallStackUp.astack_up_at_xwR (lib/A/Prog/Crt102Arms.v:1103-1110, lib/A/Prog/Crt102B_RRT.v:1097-1102). The
      round-trip stack walker's witness and its controls C1 / C2 (RttStackUpA.v / RttStackUpB.v, RttStackUpCtlA.v /
-     RttStackUpCtlB.v) are at commit 5208cc4f6eb0, not on this tree (HISTORY). *)
+     RttStackUpCtlB.v) are, not on this tree (HISTORY). *)
   YGcallStackUp.astack_up_x segs ly W (spZ regs) mem ->
   (* #102 (src-102/new:669 against the base's :604): round_trip_text RETURNS int, "1 when memory ran out, and the
      call ends" (new:668). Same shape as the two check_* rows: the condition on g_own_ran_out is stated through
@@ -2383,8 +2383,8 @@ Definition tcheck_round_trip_specX (CTX0 : list (list Z)) (a_mod_at a_stamp : Z)
      Nothing else gives it there: fpre gives only this function's window [sp - STK, sp), and no AR_laws_x field reads
      a real-stack byte (YGcallStackUp.v's header). MET AT THE REAL CALL STATE GIVEN THIS ENTRY FACT: this text's walks
      carry this conjunct and the journal to each call by YGcallStackUp.astack_up_at_xwR (lib/A/Prog/Crt102Arms.v
-     :1102-1109, lib/A/Prog/Crt102B_RRT.v:1096-1101). The round-trip stack walker's witness and its controls C1 / C2
-     (RttStackUpA.v / RttStackUpB.v, RttStackUpCtlA.v / RttStackUpCtlB.v) are at commit 5208cc4f6eb0, not on this
+     :1102-1109, lib/A/Prog/Crt102B_RRT.v:1097-1102). The round-trip stack walker's witness and its controls C1 / C2
+     (RttStackUpA.v / RttStackUpB.v, RttStackUpCtlA.v / RttStackUpCtlB.v) are, not on this
      tree (HISTORY).
      NOT GUARDED (tsame_specX's guarded twin is a different statement). Supplied by LLVMFuzzerTestOneInput's caller
      through the slot pre (PresetCfnA.v / PresetCfnB.v preset_lib_pre_x, owned by the driver-contract owner); its root at the initial

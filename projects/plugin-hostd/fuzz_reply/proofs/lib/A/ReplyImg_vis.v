@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: new file for plugin-hostd/fuzz_reply's ASan image (a Theorem Labs lane's REPLY-IMG-ROWS.md (sha256 a33a582e3ffd; internal record) row
    img-vis-A): the three visibility facts the cf layer takes as Section hypotheses, YGcfInstSec.v:359-360 COMB_VIS,
-   :736-737 ERRNO_VIS and :380-382 DEP_UNHID (cgif_file_fuzzer @ 4c2fd365d8e), proved as closed lemmas over the reply
+   :736-737 ERRNO_VIS and :380-382 DEP_UNHID (cgif_file_fuzzer), proved as closed lemmas over the reply
    image's symbol table, in the pattern of cgif's discharge (rw_view, YB1h.tfib_rw_window; YFff.rw_unhidden). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Every address these facts name lies in the image's writable window [0x9d000, 0x5fb000): the combined stats words at
    TFIB_INST + o_comb_stats = 0xa2d08 (40 bytes), errno at TFIB_ERRNO = 0x5d93cc (4 bytes), the depot from TFIB_DEPOT =
    0x187f98 to 0x187f98 + d_map1 + 8 * 32768 = 0x5c7fa8, and the store at TFIB_STORE = 0x177f88 (64 bytes).  There the

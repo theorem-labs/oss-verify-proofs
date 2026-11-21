@@ -1,10 +1,11 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMsnprintfGvf.v at a working branch 5d8d8a15571, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMsnprintfGvf.v at a working branch, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported from A/YE3h.v (vf_entry, the frame lemmas built on vf_file /
    vf_windows_ok): vf_file is musl vsnprintf's stack FILE at sp0 + 0x30 (write = sn_write) instead of the stderr FILE,
    the addresses are fm.asan's, the inline printf_core runs are calls of the printf_core contracts and the flush is a
    call of the sn_write contract (FMsnprintfI.v). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* musl vfprintf 0x8f0c8 on musl vsnprintf's FILE: the walk of fm's snprintf chain at the level of vfprintf, proved
    from the contracts of printf_core (both passes) and of the flush sn_write (f, 0, 0). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require YZ00.

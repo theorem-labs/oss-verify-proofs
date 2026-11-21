@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset image B' (#102 asan-ubsan pin d663f82d), lane of write_value: THE
    CONTRACT of write_value's container walk (an array or an object): the container's entry data (wvx), the text's
    premises at that entry (wv_pre), what every join carries (wv_common), the two measured join states - the ITEM LOOP
@@ -109,7 +110,7 @@ Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte
 
 (* NOTE: a binder of type YK11.FPState in scope is a typeclass candidate, so every text / post / pre that must be
    at the Section's fx is written `(fx := fx)` wherever another FPState is bound. *)
-(* ---- THE FLOAT POST, ONE LEMMA EACH WAY (FRM0-ENTRY, kit f97c8b2f046b) ----
+(* ---- THE FLOAT POST, ONE LEMMA EACH WAY (FRM0-ENTRY, kit) ----
    (1) a post at the CURRENT float state fx (put's / indent's non-float fpostW, with the machine at fx) is the
        float-form post at an earlier float state fx0, when fx has rounding mode 0 and keeps fx0's callee-saved f
        registers (the join's float invariant, wv_common);

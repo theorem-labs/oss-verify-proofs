@@ -8,13 +8,14 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_ex_tok_e.v, with its numbers changed; 225 of its 286 lines of code are new or changed and 244 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_ex_tok_lha.v; 261 of its 300 lines of code are new or changed and 247 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_ex_tok_lh.v, with its module paths, module names, addresses and numbers changed; 125 of its 342 lines of code are new or changed and 83 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* G4 IMAGE B: tk_seg_LH (lib/B/FMW_ex_tok_base.v): expected's ex_token loop body (fuzz_manifest.c:103-108) at
    TK_LH 0x81730 .. 0x817c8 of B's expected (listing lines 315-353). One symbolic walk from tl_entry (kit:
    lib/B/FMW_ex_tok_lha.v): the guard 0x81734; run to bcmp (text + j, text + name, nl) at 0x81748 (tl_bcmp, reseat by
    jafter_call_keep); a7, t1, a6 re-made; a0 <> 0: TK_N; else the guard 0x8175c, the ASan check and text[j + nl]:
    <> ':': TK_N; else the guard 0x81780 and bcmp (text + j + nl + 1, local, ll) at 0x81790; a7, t1, a6 re-made;
    a0 <> 0: TK_N; else s8 = 0: TK_E, s8 > 0: the guard 0x817c4, TK_B. Each cut's tk_mem / tk_regs come from tl_exit.
-   Twin of image A's lib/A/FMW_ex_tok_lh.v (06d82004dc3).
+   Twin of image A's lib/A/FMW_ex_tok_lh.v.
    UBSan guards refuted (B5 table): 0x81734 #42 (bltu ~text, j), 0x8175c #43 (bltu ~text - j, nl), 0x81780 #44
    (beq text + nl + j, -1), 0x817c4 #45 (beq text + j, 1). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require YZ00.

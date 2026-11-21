@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: recorded proofs replaced by tactic proofs; the channel-reader premise of writev; the BMode context; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Src0StdioDefs.v, lines 67-69, 75, 103-106, 142-144. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -18,14 +19,12 @@ From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require Import
   ExitSim ShapeAlg DivergeSim SpinAlg SpinAlgX Nodes SumWalkTac.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require Export Es0ExitBase Es0Exit_run1.      (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require Import BMode.
-From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require KReplay.
-Ltac2 kr_t_Es0StdioDefs () := "K47Corelib7Numbers7BinNums8positive02K47Corelib7Numbers7BinNums1N02I45stdpp9bitvector;definitions2bv00I47Corelib4Init9Datatypes6option00I47Corelib4Init9Datatypes4list00i79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib<Es0StdioDefs7sw_post00C13~~~C79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib8PropExec3rdnC13~~~K47Corelib4Init9Datatypes6option01I47Corelib4Init5Logic2eq00C45stdpp9bitvector;definitions;bv_unsignedC56Stdlib6ZArith6BinInt1Z6of_natK47Corelib7Numbers7BinNums1Z02C56Stdlib6ZArith6BinInt1Z3powK47Corelib7Numbers7BinNums8positive01C56Stdlib6ZArith6BinInt1Z3subC56Stdlib6ZArith6BinInt1Z2leI47Corelib4Init5Logic2or00C56Stdlib6ZArith6BinInt1Z3addC56Stdlib6ZArith6BinInt1Z2ltI47Corelib4Init5Logic3and00C56Stdlib6ZArith4Znat5Nat2Z9is_nonnegC56Stdlib6ZArith6BinInt1Z>pow_pos_nonnegC56Stdlib6ZArith6BinInt1Z:pow_nonnegK47Corelib4Init9Datatypes3nat02K46Stdlib9micromega=RingMicromega5Psatz02K46Stdlib9micromega=RingMicromega5Psatz06K46Stdlib9micromega:ZMicromega;ZArithProof02K47Corelib4Init9Datatypes4list01K47Corelib4Init9Datatypes4list02K46Stdlib9micromega6VarMap1t02K46Stdlib9micromega6VarMap1t01K46Stdlib9micromega6VarMap1t03I46Stdlib9micromega6VarMap1t00I46Stdlib9micromega=RingMicromega7Formula00K46Stdlib9micromega7EnvRing5PExpr02K46Stdlib9micromega7EnvRing5PExpr03K47Corelib4Init9Datatypes6option02K46Stdlib9micromega7EnvRing5PExpr01K46Stdlib9micromega7EnvRing5PExpr04C46Stdlib9micromega5Tauto8BFormulaK47Corelib4Init5Logic2eq01C46Stdlib9micromega:ZMicromega=ZTautoCheckerC46Stdlib9micromega6VarMap4findC46Stdlib9micromega:ZMicromegaCZTautoChecker_soundc79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib<Es0StdioDefs9swp_agreeC13~~~C79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib8PropExec7rdn_extC13~~~C47Corelib4Init5Logic8eq_ind_rK46Stdlib9micromega=RingMicromega7Formula01K46Stdlib9micromega5Tauto8GFormula04K46Stdlib9micromega5Tauto8GFormula05K46Stdlib9micromega5Tauto8GFormula06K46Stdlib9micromega5Tauto8GFormula07K46Stdlib9micromega5Tauto8GFormula08C46Stdlib9micromega5Tauto5eKindI47Corelib4Init9Datatypes4unit00K46Stdlib9micromega5Tauto4kind01I47Corelib7Numbers7BinNums1Z00K46Stdlib9micromega=RingMicromega3Op203K47Corelib4Init9Datatypes4unit01K46Stdlib9micromega=RingMicromega3Op205K47Corelib7Numbers7BinNums8positive03I47Corelib4Init9Datatypes3nat00C79OSSVerify8jsonconsCfuzz_ubjson_encoder6images5Plain1M?loaded_segmentsC13~~~K47Corelib7Numbers7BinNums1Z01I47Corelib4Init5Logic4True00I46Stdlib9micromega:ZMicromega;ZArithProof00K47Corelib4Init9Datatypes3nat01K46Stdlib9micromega:ZMicromega;ZArithProof01I47Corelib4Init9Datatypes4bool00K47Corelib4Init9Datatypes4bool01I47Corelib4Init5Logic5False00C4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics8store_okc79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib<Es0StdioDefs9swp_growsC13~~~C79OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib7StoreOk=store_ok_monoC13~~~".
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope bv_scope.
 
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
-Section FPX_1. Context {fx : PropExec.FPState}. Context {bmK : BMode}.   (* [comment removed for export] *)
+Section FPX_1. Context {fx : PropExec.FPState}. Context {bmK : BMode}.
 
 
 (* [comment removed for export] *)
@@ -70,13 +69,15 @@ Lemma sw_post_rdn : forall mem su f bufp bufsz mem' (a : word) n bs,
   (bv_unsigned a + Z.of_nat n <= f + 56 \/ f + 64 <= bv_unsigned a)%Z ->
   rdn RSEGS mem' a n = Some bs.
 Proof.
-ltac2:(KReplay.run1 (kr_t_Es0StdioDefs ()) ["FPX_1"] "h04__x1h14__x2h24__x3h34__x4h47__arithh54__ffh66__sat4h76__sat5h88__varmaph95__with:4cstrh;2Hah<2D1h=2D2h>2D3h?1Hh@3HnwhA2HxhB1PhC1ahD2bshE4bufphF5bufszhG1fhH3memhI4mem'hJ1nhK1ohL2suhM1xp;1p;6p;4p;2p;3p;;p;7p;8g0000j10Tg000Uj1TTg0013j1OTg001Vj1KTg0028j1UTg002Xj6gTg003ij4ITg0050j2PTg005Rj3GTg005lj26Tg006Vj17Tg0076j1<Tg007Tj2VTg0081j1STg008Vj2JTg0093j21Tg009Oj2;Tg009ij24Tg00:Fj25Tg00:bj2:Tg00;=j1]Tg00;bj2\Tg00<Jj3[Tg00<nj1BTg00=Mj2=Tg00>6j3DTg00>_j2NTg00?Kj1ZTg00?kj3ATg00@Kj2MTg00@ij1YTg00AGj4LTg00Aej1XTg00BCj1WTg00Bnj2@Tg00CQj3>Tg00D4j1lTg00DVj29Tg00E9j3kTg00E\j2jTg00F>j2iTg00FXj2fTg00GDj3eTg00Gcj4dTg00HUl;cTg00Ifj7bTg00K1j6aTg00KOj4QTg00L:j7RTg00L^j7`Tg00MBj7_Tg00Mfj6^Tg00NJj8hTf2R0f1R1'4f0R2'1p=2P0g00NnR3g00OMR4P4g00OmR5g00PMR6P1g00PkP2CQg00QRR7FRp=3P6P1g00R2P2CQp=?P1P3P4P4P5P2P7FRp=CP0P3P4P4P5P1P2F`p=EP0P3P4P4P5P1P2F_p=FP1P3P4P4P5P2E^p=Hf3R7P3P4P4P5P0P1P2Ghp=8g00RYR3#0R8#0R9#0R:#0#0R;#0R<#TR=#OR>%T:#OR:#K[R?g00S>%U:R:f8R@f7RAf6RBf5RCf4RDP7Eg%K:REg00S]RFf9RGP7P0CI1P:13G16=D%77%<8RH%<<R<'VRI3216=CRJ%7Df:RK%S3RL#S#0#0#0RM#0#<RN'J3211KJ';16=BRO%7C%<;R;,4K32%0L#0#0#0#<RP=2KO';16=ARO%7Bf;RK%<MRM'432A2K<O';PEPFf>ROP@PACI1P:A9GE2XKEPDPFPGP@PACIPFPAPGPOP@P716=GRF16=2RE'1%7@,4F,5E':f@f?POf=REf<PKPAP1%]GRKg00TkRF%7G'1RG1\H<R:15FH11F<15FI[[RQ11FHRRg00UIRSA[H<1UW;RH11FI\S^;RRRg00UeRSg00VQRI#BRT#BRU#BRV,=61=6URU1=6T5D65D6g00W0RT'NRW%BV,=61=6I9D6U5D6/NTRT%ZSRU5AS3ARI%USRVP6P61M6DP0%Y6CLP11M67CLRX%X6RY%W6RZ1@6LRL1@68R853Z1@69R99>6LR[,?8,CZ5EZR\%l4R4PZ1@63R3196N5k6R]93Z[A3Z3L5FZP4A3Z]81?83,CZ5EZ,HZC8C81jZ5R5P2P0g00W\R]g00X<R^'i1f20=G]^dAe6F1CdR^b5b8b9X06X16X26X3611011407,51':R]147DR_1J1N'11117';1J0N/171570':g00X\RN[[[^06^16^26^36P2%7ERE16=OROPJfCPDP@O6b4b6b7b:PKPGP:PQPHPRAASWU9ASTPVPXPYPZ196F=3Z9P4PZP\P4PZ196;9>63R993Z[196P9>63RT=3ZL5FZP4A3Z981?8T,CZ5EZ,HZC8C8C8P5P^b5b8b9X06X16X26X3611F71170150_':140;92DCA20PD';A27;D147P,5D':PN[[[[^06^16^26^36P2PEPOPJfBRPP7PDPAO7b4b6b7b:PKPGP:PQPHPRPIPVPXPYPZP\P4PZ196M9>63R\93Z[196<9>63R3=3ZL5FZP4A3Z\81?83,CZ5EZ,HZC8C8P5P^b5b8b9X06X16X26X36141M,1_A21<7';A20M7140<,57':PN[[\]^06^16^26^36P2PEPOPJPPPDPBO6b4b6b7b:M;cWAXM>FbEaW>W=W<W@W?WBWDWJXC>XI?XF>XE>XG6XL6WHo"). Qed.
+  intros mem su f bufp bufsz mem' a n bs P H Hnw D1 D2 D3.
+  rewrite (rdn_ext RSEGS n mem' mem a Hnw); [exact H|].
+  intros x Hx. apply (swp_agree _ _ _ _ _ _ P); lia.
+Qed.
 
 Lemma sw_post_store_ok : forall mem su f bufp bufsz mem' (a : word) n,
   sw_post mem su f bufp bufsz mem' ->
   store_ok RSEGS mem a n = true -> store_ok RSEGS mem' a n = true.
-Proof.
-ltac2:(KReplay.run1 (kr_t_Es0StdioDefs ()) ["FPX_1"] "h01Hh11Ph21ah34bufph45bufszh51fh63memh74mem'h81nh92sup;1p;6p;4p;3p;7g0000j10Tg000Uj12Tg0013j11Tg001Vj13Tg002Xj68Tg00Y9j47Tg005Rj36Tg00Z9j74Tg00[Jj75Tg00RY#0#0#0R0#0#0#0#2#1R1%20#1#3[R0g00PMR2g00S>f7R3f6R4f5R5f4R6f3R7f2R8E8g00W\g00S]R9f8R:P8f1R;C7g00X<36P9P8f9R8P6P7P8P:P3P4P5P6P;F4f0F5W0W1W8X21X70X41X31X52W9W6o"). Qed.
+Proof. intros mem su f bufp bufsz mem' a n P H. eapply store_ok_mono; [apply (swp_grows _ _ _ _ _ _ P) | exact H]. Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -104,10 +105,10 @@ Record exit_common (regs : bvmap 5 word) (mem : word -> option byte)
   ec_fa   : rdn RSEGS mem (Z_to_bv 64 0xb24f8) 8%nat = Some (word_to_le_bytes 8 (Z_to_bv 64 0x344b4));
   (* [comment removed for export] *)
   ec_comp : rdn RSEGS mem (Z_to_bv 64 0xb9608) 1%nat = Some [Z_to_bv 8 0];
-  ec_g1   : rdn RSEGS mem (Z_to_bv 64 0xb8138) 8%nat = Some (word_to_le_bytes 8 (Z_to_bv 64 0x9bc14));      (* [comment removed for export] *)
-  ec_dso  : rdn RSEGS mem (Z_to_bv 64 0xb92d0) 8%nat = Some (word_to_le_bytes 8 (Z_to_bv 64 0xb92d0));      (* [comment removed for export] *)
-  ec_ax   : exists ax : axv, atexit_cells mem ax;      (* [comment removed for export] *)
-  ec_cb   : rdn RSEGS mem (Z_to_bv 64 0xc9614) 1%nat = Some [Z_to_bv 8 0];      (* [comment removed for export] *)
+  ec_g1   : rdn RSEGS mem (Z_to_bv 64 0xb8138) 8%nat = Some (word_to_le_bytes 8 (Z_to_bv 64 0x9bc14));
+  ec_dso  : rdn RSEGS mem (Z_to_bv 64 0xb92d0) 8%nat = Some (word_to_le_bytes 8 (Z_to_bv 64 0xb92d0));
+  ec_ax   : exists ax : axv, atexit_cells mem ax;
+  ec_cb   : rdn RSEGS mem (Z_to_bv 64 0xc9614) 1%nat = Some [Z_to_bv 8 0];
   ec_g2   : rdn RSEGS mem (Z_to_bv 64 0xb8140) 8%nat = Some (word_to_le_bytes 8 (Z_to_bv 64 0));
   (* [comment removed for export] *)
   ec_glob : stdio_globals mem;
@@ -143,7 +144,9 @@ Definition exit_pre (regs : bvmap 5 word) (mem : word -> option byte) (model : M
     /\ ( (pending = [] /\ exists wp1 rp1, file_clean mem 0xb94a8 wp1 rp1)
        \/ (exists (wb wp : Z) (bufp bufsz rp1 can : word),
               stdout_pending mem wb wp bufp bufsz rp1 can pending
-              /\ fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))) ).
+              /\ fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))
+              (* 08b1429: writev_spec reads [m_channel_reader] *)
+              /\ m_channel_reader model = true) ).
 End FPX_1.
 
 

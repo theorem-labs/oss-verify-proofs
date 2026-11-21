@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW7bIter.v at 25d4b718638e for reac-pw/fuzz_rate's image A: module paths changed; the image is fuzz_rate.asan (images.Asan) in place of lib/A/Img0; the turn's registers are rate's (x in a0 and s8, n in s9, t in s5; role's s9, s8, s10); RPgMem.rm_hull_sub is lib/A/RtPgMem.v rtm_hull_sub; the strlen and memcpy entries are rate's 0x42194 and 0x51860. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW7bIter.v for reac-pw/fuzz_rate's image A: module paths changed; the image is fuzz_rate.asan (images.Asan) in place of lib/A/Img0; the turn's registers are rate's (x in a0 and s8, n in s9, t in s5; role's s9, s8, s10); RPgMem.rm_hull_sub is lib/A/RtPgMem.v rtm_hull_sub; the strlen and memcpy entries are rate's 0x42194 and 0x51860. *)
 (* reac-pw/fuzz_rate image A (fuzz_rate.asan, pinned sha256
    22bc8613d780c9a99353dc86368f9401311ef5c8358882651217836298529b6a; addresses measured on the unstripped twin
    0d508f2c65c249840b6c8fe3c1960824f2548b175c23583632f06bb7956458c3): one turn of the parts loop of

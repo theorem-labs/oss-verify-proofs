@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: lane IndentB (a Theorem Labs lane): the INSTANCE WITNESSES of indent's image premises at image B' (the
    asan-ubsan #102 pin d663f82d7f48, unstripped twin c90d4fa54d43; unit ruling a Theorem Labs lane 16:45Z: an image premise
    counts only beside a lemma closed by vm_compute at the instance). PORTED from a working branch
@@ -10,7 +11,7 @@
    (B' holds "  " at two local labels, neither of the donor's name .str.23) were decided by hand to 0x21680 / 0x21683,
    B' .str.24 + 0 / + 3, the target indent's B' code forms at slots 14-15 (repin_check). By hand also: the Require
    lines and the comments that named image A. No proof step changed.
-   The instance, all of it from the kit's cut 7cdbb61b5fa0: B := YD2l.TfibB (lib/Reusable/YD2l.v), PA :=
+   The instance, all of it from the kit's cut: B := YD2l.TfibB (lib/Reusable/YD2l.v), PA :=
    PAImg_prog.PI_prog_B (lib/B/PAImg_prog.v), PI := PRH_ImgB.prh_img_B (lib/B/PRH_ImgB.v, the SEVEN-cell table of the
    #102 kit), the const-shadow cells, zero-shadow ranges and owned statics of YF0m (lib/Reusable/YF0m.v, the B'
    image's), the segments lib/B/Img0.rsegs, named FULLY QUALIFIED here (RSEGS_B; the short name Img0.rsegs can

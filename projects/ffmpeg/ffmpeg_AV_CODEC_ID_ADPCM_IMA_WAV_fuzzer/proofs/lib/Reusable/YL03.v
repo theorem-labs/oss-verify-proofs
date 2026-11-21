@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YL03.v, with its module paths changed. *)
 (* Modified by Trevor Hansen, 2026-11: copied from projects/zlib/checksum_fuzzer/proofs/lib/Reusable/YL03.v for ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: env_ivl takes the FILE sink's intervals only when sk_file is Some. *)
 From OSSVerify.Proofs.ffmpeg.ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -17,18 +18,27 @@ Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Local Open Scope Z_scope.
 Section b. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SH : sink_head} {SK : sink_syms}.
+Definition file_ivl (F : file_sink_syms) : ivl :=
+[(sk_path_addr F, sk_path_addr F + 13); (sk_mode_addr F, sk_mode_addr F + 3); (sk_trailer_addr F, sk_trailer_addr F + 2);
+(sk_rwa_addr F, sk_rwa_addr F + 8)].
 Definition env_ivl : ivl :=
-[(sk_ofl_head, sk_ofl_head + 8); (sk_threaded, sk_threaded + 1); (sk_ofl_lock, sk_ofl_lock + 4);
-(sk_path_addr, sk_path_addr + 13); (sk_mode_addr, sk_mode_addr + 3); (sk_trailer_addr, sk_trailer_addr + 2);
-(sk_rwa_addr, sk_rwa_addr + 8); (sk_highs_addr, sk_highs_addr + 8); (sk_ones_addr, sk_ones_addr + 8)].
+[(sk_ofl_head, sk_ofl_head + 8); (sk_threaded, sk_threaded + 1); (sk_ofl_lock, sk_ofl_lock + 4)] ++
+match sk_file with Some F => file_ivl F | None => [] end ++
+[(sk_highs_addr, sk_highs_addr + 8); (sk_ones_addr, sk_ones_addr + 8)].
 Lemma env_addr_ivl : forall a, env_addr a -> in_ivl env_ivl a = true.
 Proof.
 intros a Ha. unfold env_addr in Ha. unfold in_ivl, env_ivl. apply existsb_exists.
-destruct Ha as [H|[H|[H|[H|[H|[H|[H|[H|H]]]]]]]];
-[ exists (sk_ofl_head, sk_ofl_head + 8) | exists (sk_threaded, sk_threaded + 1) | exists (sk_ofl_lock, sk_ofl_lock + 4)
-| exists (sk_path_addr, sk_path_addr + 13) | exists (sk_mode_addr, sk_mode_addr + 3) | exists (sk_trailer_addr, sk_trailer_addr + 2)
-| exists (sk_rwa_addr, sk_rwa_addr + 8) | exists (sk_highs_addr, sk_highs_addr + 8) | exists (sk_ones_addr, sk_ones_addr + 8) ];
-(split; [cbn; tauto | cbn [fst snd]; rewrite (proj2 (Z.leb_le _ _)), (proj2 (Z.ltb_lt _ _)) by lia; reflexivity]).
+revert Ha. destruct sk_file as [F|]; intros Ha.
+- destruct Ha as [H|[H|[H|[[H|[H|[H|H]]]|[H|H]]]]];
+  [ exists (sk_ofl_head, sk_ofl_head + 8) | exists (sk_threaded, sk_threaded + 1) | exists (sk_ofl_lock, sk_ofl_lock + 4)
+  | exists (sk_path_addr F, sk_path_addr F + 13) | exists (sk_mode_addr F, sk_mode_addr F + 3)
+  | exists (sk_trailer_addr F, sk_trailer_addr F + 2) | exists (sk_rwa_addr F, sk_rwa_addr F + 8)
+  | exists (sk_highs_addr, sk_highs_addr + 8) | exists (sk_ones_addr, sk_ones_addr + 8) ];
+  (split; [cbn; tauto | cbn [fst snd]; rewrite (proj2 (Z.leb_le _ _)), (proj2 (Z.ltb_lt _ _)) by lia; reflexivity]).
+- destruct Ha as [H|[H|[H|[[]|[H|H]]]]];
+  [ exists (sk_ofl_head, sk_ofl_head + 8) | exists (sk_threaded, sk_threaded + 1) | exists (sk_ofl_lock, sk_ofl_lock + 4)
+  | exists (sk_highs_addr, sk_highs_addr + 8) | exists (sk_ones_addr, sk_ones_addr + 8) ];
+  (split; [cbn; tauto | cbn [fst snd]; rewrite (proj2 (Z.leb_le _ _)), (proj2 (Z.ltb_lt _ _)) by lia; reflexivity]).
 Qed.
 Definition env_check (rs : smem) : bool :=
 forallb (fun p => sub_ivl (cimg_ivl rs) (fst p) (snd p)) env_ivl.

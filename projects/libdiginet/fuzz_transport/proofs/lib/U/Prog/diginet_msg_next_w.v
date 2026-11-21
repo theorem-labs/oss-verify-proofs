@@ -1,5 +1,5 @@
 (* proves the wide UBSan contract of diginet_msg_next (fuzz_transport.ubsan, 0x18844) and that it gives the narrow one. *)
-(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/diginet_msg_next_w.v at bb3053036017d1d92db6eca9e973ce610be16c08 to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/diginet_msg_next_w.v to fuzz_transport's images *)
 (* Walk of diginet_msg_next (src/diginet_msg.c:27-103 at 835f336c) in fuzz_transport.ubsan for
    U/Prog/diginet_msg_next_w_c.v. With no bytes the position is 0 = len: after the tests of c
    and mp against 0 and of c & 7 (0x18854, not taken: c mod 8 = 0), 0x18860 goes to 0x1890c

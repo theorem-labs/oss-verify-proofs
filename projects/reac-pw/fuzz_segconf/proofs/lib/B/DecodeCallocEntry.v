@@ -7,6 +7,7 @@
    [amreal_post_SRr] is YG0d.v:119 amreal_ibind's induction with an SRr continuation in place of a tree. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_decode/lib/A/DecodeCallocEntry.v (donor image sha256 5973b76807d8), with its module paths changed, names decodesegs0 -> tfibsegs and its addresses moved to reac-pw/fuzz_segconf's ASan build. *)
 (* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/A/DecodeCallocEntry.v, derived mechanically (derive_y.py b7b132fb12a7; every changed numeral checked against alreloc.py a5c53bb2bed4 and against image B), with its module paths changed (lib/A to lib/B; lib/Lib/DecodeCallocKit.v to its image-B copy lib/B/DecodeCallocKit.v) and its addresses moved to reac-pw/fuzz_segconf's ASan+UBSan build. The comments are the A file's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The walk of __asan::asan_calloc (image A, 0x31bd4 .. 0x31cb4, 56 instructions) over the Allocate contract of
    lib/Reusable/YGAlloc.v and the fill contract of lib/A/DecodeCallocRt.v.
 
@@ -45,7 +46,7 @@
    The overflow arm 0x31c64 .. 0x31cb0, the NULL arm 0x31c74 and the two skips of the fill at 0x31c30 / 0x31c3c are
    not reached.
 
-   THE ZERO BYTES.  The size premise gives from_primary n = true ([prim_fp], ported from cgif A/AFij.v:38-49), so the
+   THE ZERO BYTES.  The size premise gives from_primary n = true ([prim_fp], ported from cgif A/AFij.v:39-50), so the
    block is a primary one: the granted path puts (fst r, n) in the block table (YGCallocModel.v calloc_block_table),
    and the chunk facts of the allocator relation after the call (YG0s.v:240 chunk_facts) make it PPrim off with its
    address in [ly_space ly', ly_space ly' + 2 ^ 37) ([prim_block_in_space]).  The word at 0x9d778 is ly_space ly'
@@ -70,7 +71,7 @@
      record's own form `c8 (AInst o_space) (ASp 0)` (lib/A/AF0m.v Tfib_const_sym).  The image bytes of the first
      two are these values (DecodeCallocRt.v dec_A_got_real_memset_val, dec_A_real_memset_val); the third is .bss,
      written at start-up.  The walk reads all three after Allocate, so it needs them as cells of the relation, not
-     as image bytes.  cgif gets the same three from its symbol record TfibSyms (ts_const): A/AF0m.v:27 `c8 (AInst
+     as image bytes.  cgif gets the same three from its symbol record TfibSyms (ts_const): A/AF0m.v:28 `c8 (AInst
      o_space) (ASp 0)`, :178 `z8 (ANum 0x9dfb8) 0x9fe28` and :96 `z8 (ANum 0x9fe28) 0x97698`; decode's (lib/A/AF0m.v
      GrantSyms) gives all three in lib/A/DecodeARows.v dec_a_img_const.
    - [HINST]: B's allocator instance is __asan::instance, as_inst B = DEC_A_instance = 0x9d758, so the third
@@ -438,7 +439,7 @@ unfold aview, mbyte, mrestrict in Hv. unfold apresent. rewrite HR in Hv.
 destruct (H (Z_to_bv 64 a)) eqn:Hh; [exfalso; apply Hv; reflexivity|].
 split; [reflexivity|]. destruct (m (Z_to_bv 64 a)) as [b|]; [exists b; reflexivity | exfalso; apply Hv; reflexivity].
 Qed.
-(* A request of at most 64512 bytes is a primary one.  Ported from cgif A/AFij.v:38-49 (prim_fp). *)
+(* A request of at most 64512 bytes is a primary one.  Ported from cgif A/AFij.v:39-50 (prim_fp). *)
 Lemma prim_fp : forall n, 0 <= n <= PRIM_MAX -> from_primary n = true.
 Proof.
 intros n Nrange. unfold PRIM_MAX in Nrange.

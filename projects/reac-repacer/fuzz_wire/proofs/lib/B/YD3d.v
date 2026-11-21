@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: asan-ubsan twin of lib/A/AD3d.v by a Theorem Labs lane; renames A->AU per derive_y.py; numerals re-measured on fuzz_knock's asan-ubsan pin f834165f5002: none changed (md_takes and md_room hold no image address; 4096 is the model's page size). *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/AU/YD3d.v (donor image sha256 f834165f5002), with its module paths changed and its addresses moved to reac-repacer/fuzz_wire's ASan+UBSan build. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (Linux's mmap placement for the NULL hint; the mprotect gate over the reservations). *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -26,7 +27,7 @@ Section g. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
    page aligned, its size is a page multiple and x + size <= alloc_top (LPS Mmap.v:1425-1427), so
    x + size <= page_floor alloc_top (grant_end_page_floor below). Before amendment 10 the bound was alloc_top, but
    alloc_top <= ly_stk_lo is not what the at-main facts give: al_top (YG0n.v:614, YM05.v:50) makes the ceiling page_floor
-   alloc_top, and the stack lies at or above that ceiling (the premise of stack_takes, YG0s.v:241). *)
+   alloc_top, and the stack lies at or above that ceiling (the premise of stack_takes, YG0s.v:242). *)
 Definition md_takes (md : Model) (e : Z * Z) : Prop :=
   (0 < snd e /\ forall a, in_zr a e -> Exists (fun q => bv_unsigned (fst q) <= a < bv_unsigned (fst q) + bv_unsigned (snd q))
                                   (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)))
@@ -42,9 +43,13 @@ intros x n top Hx Hn Hle. apply page_floor_ge; [| exact Hle].
 rewrite Z.add_mod by lia. rewrite Hx, Hn. reflexivity.
 Qed.
 
+(* 727298f3: the anonymous mmap grant is Linux's placement ([YK13.grant_ok_na_pin] with the NULL hint), whose
+   bottom-up window starts at [Mmap.task_unmapped_base]; a room at or above it is one that placement reaches
+   ([YK13.grant_ok_na_pin_of_gap]). *)
 Definition md_room (md : Model) (n : Z) : Prop :=
   exists g, g mod 4096 = 0 /\ 0 < g /\ g + n <= alloc_top (m_vmmaps md) /\
-    region_free (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) (Z_to_bv 64 g) (Z_to_bv 64 n) = true.
+    region_free (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) (Z_to_bv 64 g) (Z_to_bv 64 n) = true /\
+    LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.task_unmapped_base <= g.
 
 End g.
 (* S4 twin: appended by a Theorem Labs lane *)
@@ -104,7 +109,7 @@ Section g. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
    [Hypothesis mnr_contract : tfib_mnr_spec] is closed by [exact mnr_holds] up to delta. In this twin md_takes and
    md_room, which lib/A/AD3d.v states here, are the first Section g above, word for word. ===== *)
 
-(* The refused arm, in the form amreal gives a refusable kernel ask (lib/Reusable/YG0d.v:76-88): the run
+(* The refused arm, in the form amreal gives a refusable kernel ask (lib/Reusable/YG0d.v:77-89): the run
    reaches an event-free node; the children marked [sp] (the mmap refusal, ReportMmapFailureAndDie 0x5f11c) end in
    the halt form [AIw -> srealizes c t_nil] and carry no post; at least one child [i0] is unmarked, and every unmarked
    child goes on to Q. *)
@@ -117,7 +122,7 @@ Definition SRr_refusable (W : world tfibsegs) (c : config) (Q : world tfibsegs -
       (forall i, sp i = true -> AI tfibsegs (w_H W1) (w_A W1) (cfg_model (nx i)) -> srealizes tfibsegs (nx i) t_nil) /\
       (forall i, sp i = false -> SRr tfibsegs W1 (nx i) Q)).
 
-(* A caller SRr_binds through the node: the refused children are absorbed by SRr_node_tnil (YG0d.v:42). *)
+(* A caller SRr_binds through the node: the refused children are absorbed by SRr_node_tnil (YG0d.v:43). *)
 Lemma SRr_refusable_SRr : forall W c Q, SRr_refusable W c Q -> SRr tfibsegs W c Q.
 Proof.
   intros W c Q H. eapply SRr_bind; [exact H|].
@@ -156,7 +161,7 @@ Variable mnr_stk : Z.
    PRE: the size is a positive page multiple; the cells the chain reads (mnr_cells); room for the grant
    (md_room, which makes every mmap refusal SPURIOUS at the ecall, so the node has no refused child, as
    mnr_ecall_step (line 366) proves); the VM budget allow_expose asks for
-   (YG0b.v:423, charged ONCE: a 0x4022 grant is entirely lazy and adds nothing eager); and a 16-aligned sp whose
+   (YG0b.v:424, charged ONCE: a 0x4022 grant is entirely lazy and adds nothing eager); and a 16-aligned sp whose
    touched band [sp - mnr_stk, sp) is present and lies in high memory, above the image, and which (with the two
    cells read after the ecall) the model already takes, so the grant cannot land on it.
    POST, normal exit only, with x the granted address:
@@ -166,8 +171,8 @@ Variable mnr_stk : Z.
         itself is NOT in this post: on this base it is not a model fact (grant_facts derives it from ARm and ALedger, YFia.v:60-61, 70-72);
      P3 [x, x+size) is fresh against every reserved or mapped area of md, and ends below alloc_top;
      P4 every byte of [x, x+size) is present in the reader and reads 0 (zfill at the ecall, exposed by
-        allow_expose YG0b.v:421-427);
-     world: w_A grows by exactly the new block and w_H changes ONLY inside [x, x+size) (wallow, YG0b.v:419-420);
+        allow_expose YG0b.v:422-428);
+     world: w_A grows by exactly the new block and w_H changes ONLY inside [x, x+size) (wallow, YG0b.v:420-421);
      P5 memory is unchanged outside [x, x+size) and the touched band -- no shadow byte is written, no global is
         written -- presence only grows, the I/O state is untouched, and the model now takes [x, x+size) and still
         takes everything it took. *)
@@ -178,8 +183,8 @@ Definition mnr_contract : Prop :=
   mnr_cells m -> md_room md size ->
   (* the model's own map list is well formed: every (base, size) ends below 2^64. The post's budget bookkeeping
      (MInv for the granted model) is read off eager_used, and eager_used only has its byte-counting form
-     (eager_used_sem_brk, YA08.v:127-129; live_msa, YK0g.v:292-295) under this. It is the weakest part of
-     amwf / MWF (YG0b.v:129, amwf_MWF YG0b.v:148) and is implied by either. *)
+     (eager_used_sem_brk, YA08.v:127-129; live_msa, YK0g.v:293-296) under this. It is the weakest part of
+     amwf / MWF (YG0b.v:130, amwf_MWF YG0b.v:149) and is implied by either. *)
   YK0g.ivs_wf (vm_maps (m_vmmaps md)) ->
   eager_used md + A_bytes (w_A W) + size <= vm_limit (m_vmmaps md) ->
   sp mod 16 = 0 -> kHighMemBeg <= sp - mnr_stk -> sp <= kHighMemEnd ->
@@ -189,7 +194,7 @@ Definition mnr_contract : Prop :=
     (fun W' c' => exists x regs' mem' md',
       c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom tfibsegs)) md' /\
       (* P1 *) getr regs' 10 = Z_to_bv 64 x /\ regs_preserved regs regs' /\
-      (* P2 *) YG0f.page_aligned x /\ 4096 <= x /\ grant_ok_na_pin md (Z_to_bv 64 x) size = true /\
+      (* P2 *) YG0f.page_aligned x /\ 4096 <= x /\ grant_ok_na_pin (Z_to_bv 64 0) md (Z_to_bv 64 x) size = true /\
       (* P3 *) Forall (fun q => zdisjoint (x, size) (bv_unsigned (fst q), bv_unsigned (snd q)))
                  (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) /\
                x + size <= alloc_top (m_vmmaps md) /\
@@ -273,11 +278,13 @@ intros x Hx. pose proof (YK0g.S_range q) as HS. rewrite Z2Nat.id in Hx by lia.
 exact (HE q x (or_introl eq_refl) Hx).
 Qed.
 
-Lemma gnap_parts : forall md (a : word) n, grant_ok_na_pin md a n = true ->
+Lemma gnap_parts : forall md (a : word) n, 0 < n -> n mod page_size = 0 ->
+  grant_ok_na_pin (Z_to_bv 64 0) md a n = true ->
   bv_unsigned a mod page_size = 0 /\ 0 < bv_unsigned a /\ bv_unsigned a + n <= alloc_top (m_vmmaps md) /\
   region_free (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) a (Z_to_bv 64 n) = true.
 Proof.
-intros md a n H. unfold grant_ok_na_pin in H.
+intros md a n Hn Hnal H0. pose proof (YK13.grant_ok_na_pin_facts _ _ _ _ Hn Hnal H0) as H.
+unfold YK13.grant_ok_na_pin_b in H.
 apply andb_prop in H as [H Hrf]. apply andb_prop in H as [H Htop]. apply andb_prop in H as [Hal Hpos].
 apply Z.eqb_eq in Hal. apply Z.ltb_lt in Hpos. apply Z.leb_le in Htop. auto.
 Qed.
@@ -369,10 +376,10 @@ Lemma mnr_ecall_step : forall (W : world tfibsegs) regs (pc : word) mem md (len 
   getr regs 12 = Z_to_bv 64 3 -> getr regs 13 = Z_to_bv 64 16418 ->
   getr regs 14 = Z_to_bv 64 (-1) -> getr regs 15 = Z_to_bv 64 0 ->
   YK0g.ivs_wf (vm_maps (m_vmmaps md)) ->
-  (exists g, grant_ok_na_pin md g len = true) ->
+  (exists g, grant_ok_na_pin (Z_to_bv 64 0) md g len = true) ->
   eager_used md + A_bytes (w_A W) + len <= vm_limit (m_vmmaps md) ->
   (forall (a : word) (W3 : world tfibsegs),
-     grant_ok_na_pin md a len = true ->
+     grant_ok_na_pin (Z_to_bv 64 0) md a len = true ->
      wle W W3 -> w_A W3 = (bv_unsigned a, bv_unsigned a + len) :: w_A W ->
      (forall y : word, bv_unsigned a <= bv_unsigned y < bv_unsigned a + len -> w_H W3 y = false) ->
      (forall y : word, w_H W y = false -> w_H W3 y = false) ->
@@ -399,7 +406,7 @@ rewrite Hpru in OUT.
 apply (YA09.srz_silent_all tfibsegs _ I nx T i0 NODE).
 intros i. destruct (OUT i) as (md_i & Hh_i & Hio_i & Hbit & Hg_i & HNX & HMD).
 set (a := ga i) in *.
-destruct (gnap_parts md a len Hg_i) as (Hala & Hposa & Htop & Hrfa).
+destruct (gnap_parts md a len Hpos Hmod Hg_i) as (Hala & Hposa & Htop & Hrfa).
 assert (Hlen_a : bv_unsigned a + len <= 2 ^ 64).
 { pose proof (alloc_top_room (m_vmmaps md)) as HR. unfold stack_max_size, two_pow_64 in HR. lia. }
 assert (HAL : bv_unsigned a <= bv_unsigned a + len) by lia.
@@ -689,7 +696,7 @@ Definition POST : world tfibsegs -> config -> Prop := fun W' c' =>
   exists x regs' mem' md',
     c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom tfibsegs)) md' /\
     getr regs' 10 = Z_to_bv 64 x /\ regs_preserved regs regs' /\
-    YG0f.page_aligned x /\ 4096 <= x /\ grant_ok_na_pin md (Z_to_bv 64 x) size = true /\
+    YG0f.page_aligned x /\ 4096 <= x /\ grant_ok_na_pin (Z_to_bv 64 0) md (Z_to_bv 64 x) size = true /\
     Forall (fun q => zdisjoint (x, size) (bv_unsigned (fst q), bv_unsigned (snd q)))
       (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) /\
     x + size <= alloc_top (m_vmmaps md) /\
@@ -726,12 +733,13 @@ rewrite (YK0v.zfill_out a (Z_to_bv 64 size) m (Z_to_bv 64 y)
 reflexivity.
 Qed.
 
-Lemma grant_misses : forall (a : word) e, grant_ok_na_pin md a size = true -> md_takes md e ->
+Lemma grant_misses : forall (a : word) e, grant_ok_na_pin (Z_to_bv 64 0) md a size = true -> md_takes md e ->
   forall y, fst e <= y < fst e + snd e -> ~ (bv_unsigned a <= y < bv_unsigned a + size).
 Proof.
 intros a e Hg Ht y Hy Hin.
 pose proof geo as (G1 & G2 & _).
-destruct (gnap_parts md a size Hg) as (Hal & _ & Htop & Hrf).
+destruct (gnap_parts md a size Hpos ltac:(unfold YG0f.page_aligned in Hpal; unfold page_size; exact Hpal) Hg)
+  as (Hal & _ & Htop & Hrf).
 pose proof (alloc_top_room (m_vmmaps md)) as HR. unfold stack_max_size, two_pow_64 in HR.
 assert (Hnun : bv_unsigned (Z_to_bv 64 size) = size) by (apply YK00.u64_lit; lia).
 destruct Ht as [[Hsz Hcov] | Hat].
@@ -782,31 +790,24 @@ assert (R11 : getr regs_e 11%bv = Z_to_bv 64 size).
 { rewrite (HRE 11%bv), HRG. red_sr. rewrite denot_off0, <- EW10. symmetry. apply Z_to_bv_bv_unsigned. }
 assert (Hvm : m_vmmaps (with_vm_backing (m_vm_lazy md) mt md) = m_vmmaps md) by apply m_vmmaps_wvb.
 assert (Heg : eager_used (with_vm_backing (m_vm_lazy md) mt md) = eager_used md) by apply eager_used_wvb.
-assert (Hgrant : exists g, grant_ok_na_pin (with_vm_backing (m_vm_lazy md) mt md) g size = true).
-{ destruct Hroom as (g & Hg4 & Hgp & Hgt & Hgf). exists (Z_to_bv 64 g).
-  assert (Hgu : bv_unsigned (Z_to_bv 64 g) = g) by (apply YK00.u64_lit; lia).
-  unfold grant_ok_na_pin. rewrite Hvm, Hgu.
-  repeat (apply andb_true_iff; split).
-  - apply Z.eqb_eq. exact Hg4.
-  - apply Z.ltb_lt. exact Hgp.
-  - apply Z.leb_le. exact Hgt.
-  - exact Hgf. }
+assert (Hgrant : exists g, grant_ok_na_pin (Z_to_bv 64 0) (with_vm_backing (m_vm_lazy md) mt md) g size = true).
+{ destruct Hroom as (g & Hg4 & Hgp & Hgt & Hgf & Hfl).
+  apply (YK13.grant_ok_na_pin_of_gap (Z_to_bv 64 0) _ g size Hpos
+           ltac:(unfold YG0f.page_aligned in Hpal; unfold page_size; exact Hpal)
+           ltac:(unfold page_size; exact Hg4) Hfl); rewrite Hvm; assumption. }
 rewrite Hms, HPC, Hmodel.
 apply (mnr_ecall_step W regs_e (Z_to_bv 64 0x638d4) mem_e (with_vm_backing (m_vm_lazy md) mt md) size POST
   R17 R10 R11 Hpos ltac:(lia) Hpal R12 R13 R14 R15
   ltac:(rewrite Hvm; exact Hwf) Hgrant ltac:(rewrite Hvm, Heg; exact Hbud)).
 intros a W3 Hg HLE HA3 HV1 HV2 HVout HAI3.
-destruct (gnap_parts _ a size Hg) as (Hxal & Hxpos & Hxtop & Hxrf).
+destruct (gnap_parts _ a size Hpos ltac:(unfold YG0f.page_aligned in Hpal; unfold page_size; exact Hpal) Hg)
+  as (Hxal & Hxpos & Hxtop & Hxrf).
 rewrite Hvm in Hxtop, Hxrf.
 assert (Hx4096 : 4096 <= bv_unsigned a).
 { pose proof Hxal as Hq. apply Z.mod_divide in Hq as [q Hq]; [|unfold page_size; lia].
   unfold page_size in Hq. nia. }
-assert (Hgmd : grant_ok_na_pin md a size = true).
-{ unfold grant_ok_na_pin. repeat (apply andb_true_iff; split).
-  - apply Z.eqb_eq. exact Hxal.
-  - apply Z.ltb_lt. exact Hxpos.
-  - apply Z.leb_le. exact Hxtop.
-  - exact Hxrf. }
+(* [with_vm_backing] keeps [m_vmmaps] and [m_kernel], all the placement test reads. *)
+assert (Hgmd : grant_ok_na_pin (Z_to_bv 64 0) md a size = true) by exact Hg.
 assert (MissB : forall y, spZ regs - MNR_STK <= y < spZ regs -> ~ (bv_unsigned a <= y < bv_unsigned a + size)).
 { intros y Hy. apply (grant_misses a _ Hgmd HTband y). cbn [fst snd]. unfold MNR_STK in *. lia. }
 assert (MissCG : forall y, MNR_CF_GOT <= y < MNR_CF_GOT + 8 -> ~ (bv_unsigned a <= y < bv_unsigned a + size)).

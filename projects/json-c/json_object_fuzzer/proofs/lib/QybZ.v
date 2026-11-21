@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise m_channel_reader model = true in fd1chan and fdchan). *)
 
 From Stdlib Require ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase State StackLayout Run.
@@ -68,7 +69,8 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope bv_scope.
 
 Definition fd1chan (model : Model) : Prop :=
-fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)).
+  fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))
+  /\ m_channel_reader model = true.
 
 Definition buf_modeled (b : list byte) : Prop :=
 (Z.of_nat (length b) <= rw_bytes_max)%Z.
@@ -148,7 +150,8 @@ fun tr o =>
 End WithSegs.
 
 Definition fdchan (fd ch : word) (model : Model) : Prop :=
-fd_lookup (m_fds model) fd = Some (FdChannel ch) /\ w_is0 ch = false.
+  fd_lookup (m_fds model) fd = Some (FdChannel ch) /\ w_is0 ch = false
+  /\ m_channel_reader model = true.
 
 Section WithSegsCh.
 Variable segs : list Segment.

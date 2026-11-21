@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/ExvB_Entry_r1.v, with its module paths and module names changed; 1673 of its 1709 lines of code are new or changed and 261 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/CrsSeg_X1.v, with its module paths and module names changed; 1281 of its 1466 lines of code are new or changed and 1524 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image A' (the #102 pins): segment W1 of the walk of check_reject_clean_starved, A' 0x82324 (+452)
    to 0x82358 (+504, H2) or 0x82410 (+688, R). Row CR-W1 of the crcs A' rows (the internal file PART7-ROWS.md);
    the closing lemma crs_seg_W1 : crs_from_R -> crs_from_H2 -> crs_from_W1.
@@ -11,7 +12,7 @@
    released rows were lib/Prog (plain) and lib/U/Prog (ubsan) only, and no released asan Proof.v existed for
    check_reject_clean_starved). Written new; this file proves one segment lemma of it.
    INPUTS.
-   - Pin A' asan sha256 1be0f53d96cb9d6c (harness.yaml of release/fuzz-preset-ran-out-pins 8f3e7e1a07f1).
+   - Pin A' asan sha256 1be0f53d96cb9d6c (harness.yaml).
    - Listing lib/A/Listing_prog.v blob 7ed1529926bd + lib/A/PAImg_prog.v blob 505a51ff7d08 (h-verbs-1 listings v3);
      entry 0x82160 = slot 736 (A_entry_check_reject_clean_starved); W1 = slots 849-861.
    - The kit lib/A/Prog/CrsKitAp.v blob cd00cafa2dbc (its crs_from_* at the re-hiding relation wle' SEGS RZ_cf) over

@@ -1,4 +1,4 @@
-(* Image B twin of lib/A/RT_pf_vsn_body_k.v at 2c1f180a413 (sha256 bd554293bc71; internal record): module paths lib.A -> lib.B; 4 image numerals moved to fuzz_reply.asan-ubsan by symbol + offset, each checked against that image (CHAINKB-numerals.tsv sha256 86a76b0550d0; internal record). *) (* Copy of lib/A/RT_pf_vsn_body.v:11-57 at d49bd1db505 (sha256 94d3a16c2833; internal record), retargeted to RT_pf_stmt_k.v's keep-fx
+(* Image B twin of lib/A/RT_pf_vsn_body_k.v (sha256 bd554293bc71; internal record): module paths lib.A -> lib.B; 4 image numerals moved to fuzz_reply.asan-ubsan by symbol + offset, each checked against that image (CHAINKB-numerals.tsv sha256 86a76b0550d0; internal record). *) (* Copy of lib/A/RT_pf_vsn_body.v:11-57 (sha256 94d3a16c2833; internal record), retargeted to RT_pf_stmt_k.v's keep-fx
    statements.
    ___interceptor_vsnprintf at fuzz_reply.asan-ubsan entered at its BODY 0x46538
    (PF_ICPT_VSNPRINTF), where ___interceptor_snprintf calls it, jumping past the trampoline __wrap_vsnprintf 0x4222c

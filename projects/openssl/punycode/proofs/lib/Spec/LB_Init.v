@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (QI_init takes the in_channel_reader premise minv_init now needs; the initial reserved list is the image's segments followed by the vDSO pair, so kl_resv is an inclusion, kl_resv_top takes the vDSO entries as its witness and the new kl_vdso is proved). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -78,18 +79,36 @@ Theorem QI_init : forall P segs brk0 mbase sp lim inp,
   bv_unsigned sp - stack_max_size = alloc_ceiling ->
   (forall c, 0 <= P c) -> PHI P <= LBUDGET ->
   reserved_top (segments_reserved segs) + brk_aslr_max <= 2 ^ 33 -> KLIM + SMALLREQ <= lim ->   (* [comment removed for export] *)
+  in_channel_reader inp = true ->
   QI [] P (ps_init (reservedZ segs)) (init_model (segments_reserved segs) brk0 mbase sp lim inp).
 Proof.
-  intros P segs brk0 mbase sp lim inp (Hlo & Hhi & Hal) Hpos Hceil Htop HP HPHI Hlow Hroom. split; [| unfold R63X, zsum; cbn; lia].
+  intros P segs brk0 mbase sp lim inp (Hlo & Hhi & Hal) Hpos Hceil Htop HP HPHI Hlow Hroom Hrd. split; [| unfold R63X, zsum; cbn; lia].
   exists (minit 0 (reservedZ segs)), (led_init (reservedZ segs)), [], (fun _ => []).
   split; [reflexivity|]. split; [apply INVL_init; lia|]. split; [apply SINV_minit|]. split; [apply AQ_minit; exact HP|].
   split; [| split; [| apply Permutation_refl]].
-  - constructor; rewrite ?m_vmmaps_init_model, ?m_halted_init_model; cbn -[Z.pow Z.mul Z.add].
-    + apply minv_init.
+  - constructor; rewrite ?m_vmmaps_init_model, ?m_halted_init_model; cbn -[Z.pow Z.mul Z.add init_model].
+    + apply minv_init. exact Hrd.
     + reflexivity.
     + split; [intros e []| apply pwdisj_nil].
-    + reflexivity.
-    + intros e Hin. pose proof (reserved_top_ge' _ _ Hin). unfold ehi. lia.
+    (* [KInv.KL]'s [kl_resv] is an inclusion at the revision: [init_model]'s reserved
+       list is the image's segments FOLLOWED BY the vDSO/vvar pair ([State.init_reserved]). *)
+    + unfold init_reserved; rewrite map_app; apply incl_appl, incl_refl.
+    (* [kl_resv_top]'s witness is [State.vdso_reserved] at [init_reserved]'s top *)
+    + exists (vdso_reserved (in_kernel inp)
+                (page_round_down_Z (Z.min (bv_unsigned mbase) (bv_unsigned sp - stack_max_size)))).
+      split; [|split].
+      * unfold vdso_reserved; cbv zeta; destruct (_ <? _); cbn [length]; lia.
+      * pose proof (vdso_len_bounds (in_kernel inp)) as HB.
+        pose proof (vdso_text_pages_pos (in_kernel inp)) as HPP.
+        pose proof (vdso_text_pages_le (in_kernel inp)) as HL.
+        unfold vdso_reserved, vdso_len, vdso_vvar_pages, page_size in *; cbv zeta.
+        destruct (_ <? 4096); cbn [live_bytes]; [lia|].
+        rewrite !bv_unsigned_Z_to_bv_u64 by (unfold two_pow_64 in *; lia); lia.
+      * intros e Hin. unfold init_reserved in Hin. apply in_app_or in Hin as [Hseg|Hvd].
+        -- left. pose proof (reserved_top_ge' _ _ Hseg). unfold ehi. lia.
+        -- right. exact Hvd.
+    (* [kl_vdso]: [init_model] has no tracked maps *)
+    + intros r _ e [].
     + unfold PGSZ in *. unfold page_size in Hal. lia.
     + intros b l [].
     + intros b l k [].

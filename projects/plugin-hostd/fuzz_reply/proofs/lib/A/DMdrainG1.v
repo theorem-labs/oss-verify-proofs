@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainG1.v (commit 9259077395a9, Quarantine::Drain walk set; file sha256 842fe27b0f71) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainG1.v (Quarantine::Drain walk set; file sha256 842fe27b0f71) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, WalkB1): the LAYOUT facts Drain's entry shell asks of the process layout,
    from layout_ok alone - where the thread object, the primary space and the stack sit, and that they are apart.
    DMdrainE takes them as hypotheses (HT / HTz / HTstk / Hstklo / HSB); this file is where they come from, so the
    drain's composition needs nothing of the layout beyond DMiface.qview's qv_ly.  The derivation is DMdeq.LYB's
-   (DMdeq.v:97-112), for the thread object and the space instead of the batch list.
+   (DMdeq.v:98-113), for the thread object and the space instead of the batch list.
    rule 24: no function proved (kind: layout arithmetic; the lane's reuse search is LOOKUP-B1-drain.txt (sha256 c6e48b676fd5; internal record),
    `proof-index MergeBatches Recycle QuarantineCallback_Recycle Drain` 2026-10-29T23:07:48Z exit 0, rule-24
    check B1LookupCheck CONFIRM).

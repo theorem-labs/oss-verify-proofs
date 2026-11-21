@@ -2,10 +2,10 @@
    btri_RI_rm_rr_pair: the remove arm's model rule RI_rm_rr_pair at RINV := ReplyRINVB.fr_RINV (image B), stated as
    the Context RI_rm_rr_pair of lib/B/ReplyBTop.v:171, binder for binder, so that it closes ReplyBTop.v:369's
    `exact (RI_rm_rr_pair rc fx)` as `exact (btri_RI_rm_rr_pair rc fx)`.
-   Image-A twin: lib/A/ReplyTopXRI.v:301 topx_RI_rm_rr_pair, by lib/A/ReplyRINV_a12.v:137 RI_rm_rr_pair_holds.
-   Proof: lib/B/ReplyRINVB_rm_a12.v:796 fr_rm_pair (the B relocation of that A proof's argument: the relay entry j0
+   Image-A twin: lib/A/ReplyTopXRI.v:302 topx_RI_rm_rr_pair, by lib/A/ReplyRINV_a12.v:138 RI_rm_rr_pair_holds.
+   Proof: lib/B/ReplyRINVB_rm_a12.v:797 fr_rm_pair (the B relocation of that A proof's argument: the relay entry j0
    that has slot si's fd is fr_relay's pair of slot si's source h) gives fr_pair_ok m t (rm_ent m j0) (h, si), and
-   fr_pair_ok's relay / splitter clause (lib/B/ReplyRINVB.v:148, from lib/Prog/SlotInv.v:258) at re_eof = 0 is the
+   fr_pair_ok's relay / splitter clause (lib/B/ReplyRINVB.v:149, from lib/Prog/SlotInv.v:258) at re_eof = 0 is the
    conclusion. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

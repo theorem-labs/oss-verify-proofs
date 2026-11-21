@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: proof steps for the model's changed definitions; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Src0DrvLib.v, lines 156-166, 184-185, 432-433, 441-442, 514-515. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
@@ -22,6 +23,7 @@ Import SX2. Import SX2S.
 
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
+(* [comment removed for export] *)
 Record drv_layout (L : heap_layout) (sp0 : word) : Prop := DRV_LAYOUT {
   dl_segs : hl_segs L = RSEGS;
   dl_malloc : hl_malloc L = 0x9dddc;
@@ -49,17 +51,21 @@ Section DrvLayout.
   Hypothesis Hal : bv_unsigned sp0 mod 16 = 0.
   Hypothesis DL : drv_layout L sp0.
 
+  (* [comment removed for export] *)
   Lemma wseg_5d3cc : wseg_ok RSEGS (Z_to_bv 64 0xb2000) 28672 = true.
   Proof. vm_compute. reflexivity. Qed.
   Lemma wseg_623cc : wseg_ok RSEGS (Z_to_bv 64 0xb9000) 208896 = true.
   Proof. vm_compute. reflexivity. Qed.
 
+  (* [comment removed for export] *)
   Definition CPm (LB : list (Z * Z)) (sp : Z) (a : Z) : Prop := client_addr L LB sp (hl_stack L) a /\ ~ in_errno L a.
   Definition SCm (sp : Z) (a : Z) : Prop := sp - hl_stack L <= a < sp.
 
+  (* [comment removed for export] *)
   Definition sub_block (LB : list (Z * Z)) (A nb : Z) : Prop :=
     exists cap, 0 < nb <= cap /\ In (A, cap) LB /\ block_range L A cap.
 
+  (* [comment removed for export] *)
   Definition hz (A n : Z) : Prop := 4096 <= A /\ (A + n <= 0x10000 \/ 0xec000 <= A) /\ A + n <= bv_unsigned sp0 - 8388608.
 
   Lemma hz_of_block_range : forall A n, block_range L A n -> hz A n.
@@ -117,6 +123,7 @@ Section DrvLayout.
           [reflexivity | reflexivity | lia | exact wseg_623cc | rewrite u_small by lia; lia | rewrite u_small by lia; lia].
   Qed.
 
+  (* [comment removed for export] *)
   Lemma regs_preserved_kept : forall R R', regs_preserved R R' -> forall r : reg, In r c_kept -> getr R' r = getr R r.
   Proof.
     intros R R' HP r Hr. apply HP. unfold c_kept in Hr. unfold callee_saved_idx.
@@ -126,12 +133,14 @@ Section DrvLayout.
   Lemma c_kept_no0 : ~ In (0%bv : reg) c_kept.
   Proof. unfold c_kept. intros H. repeat (destruct H as [H|H]; [discriminate|]). exact H. Qed.
 
+  (* [comment removed for export] *)
   Lemma has_entry_nth : forall kn K, existsb (kentry_eqb K) kn = true -> exists i, nth_error kn i = Some K.
   Proof.
     intros kn K H. apply existsb_exists in H as (K' & Hin & Heq). apply kentry_eqb_eq in Heq. subst K'.
     apply In_nth_error in Hin. exact Hin.
   Qed.
 
+  (* [comment removed for export] *)
   Lemma block_store_ok : forall vals ebs M kn v n (A : Z) (k : Z) (m : nat),
     let E := Env (vals_ev vals) ebs in
     know_ok RSEGS E M kn -> existsb (kentry_eqb (KWr (SA (EVar v) 0) n)) kn = true ->
@@ -146,9 +155,17 @@ Section DrvLayout.
     rewrite u_small in W by lia. exact W.
   Qed.
 
-  Definition has_window (kn : list kentry) : bool := existsb (kentry_eqb (KWr (SA (EVar 0) (-8388608)) 8388608)) kn.
+  (* THE ZERO-FILLED WINDOW, old beside new: [KWr (SA (EVar 0) (-8388608)) 8388608] ->
+     [KWr (SA (EVar 0) (- DRV_ZWIN)) DRV_ZWIN], DRV_ZWIN = 6144513 = StoreOk.stack_window_depth
+     (Es0MainEntry).  The 8 MiB row is FALSE at LPS 75d69e00 (wrap_mem zero-fills only to
+     MemSplit.wok_lo sp0 = sp0 - 6144513), and [Es0MainEntry.kn_stack] already carries the narrow
+     row, so this is also what [has_window] must match.  Every consumer below needs at most
+     [2 ^ 22 + 16384] ([stack_ok_of_window]'s [- 2 ^ 22 <= so] and [hl_stack L <= 16384]).
+     [bv_unsigned sp0 - 8388608] in this file's [hz] and [CPstk] is the [hl_ceil] /
+     [stack_max_size] homonym, not this window; it stays. *)
+  Definition has_window (kn : list kentry) : bool := existsb (kentry_eqb (KWr (SA (EVar 0) (- DRV_ZWIN)) DRV_ZWIN)) kn.
 
-  Lemma has_window_nth : forall kn, has_window kn = true -> exists i, nth_error kn i = Some (KWr (SA (EVar 0) (-8388608)) 8388608).
+  Lemma has_window_nth : forall kn, has_window kn = true -> exists i, nth_error kn i = Some (KWr (SA (EVar 0) (- DRV_ZWIN)) DRV_ZWIN).
   Proof.
     intros kn H. unfold has_window in H. apply existsb_exists in H as (K & Hin & Heq). apply kentry_eqb_eq in Heq. subst K.
     apply In_nth_error in Hin. exact Hin.
@@ -166,12 +183,14 @@ Section DrvLayout.
     unfold stack_ok. rewrite TOP. split; [|split; [lia|split; [lia|split; [lia|]]]].
     { rewrite Z.add_mod, Hal, Hsoal by lia. reflexivity. }
     intros d m Hd Hm.
-    pose proof (kwr_store_ok RSEGS E M kn i (EVar 0) (-8388608) 8388608 (so - hl_stack L + d) m HK Hn ltac:(lia) ltac:(lia)) as W.
+    (* old: [... (EVar 0) (-8388608) 8388608 ...]; [so - hl_stack L + d >= - 2 ^ 22 - 16384 = -4210688 >= - DRV_ZWIN] *)
+    pose proof (kwr_store_ok RSEGS E M kn i (EVar 0) (- DRV_ZWIN) DRV_ZWIN (so - hl_stack L + d) m HK Hn ltac:(lia) ltac:(lia)) as W.
     unfold adenot in W. cbn [a_base a_off edenot ev E] in W. rewrite P0 in W. unfold v_addi in W.
     rewrite (dl_segs L sp0 DL).
     replace (bv_unsigned sp0 + so - hl_stack L + d) with (bv_unsigned sp0 + (so - hl_stack L + d)) by lia. exact W.
   Qed.
 
+  (* [comment removed for export] *)
   Lemma kn_blk_ok : forall vals ebs M' v n A,
     let E := Env (vals_ev vals) ebs in
     vals_ev vals v = Z_to_bv 64 A -> vals_ev vals 0 = sp0 ->
@@ -199,8 +218,11 @@ Section DrvLayout.
     apply Forall_nil.
   Qed.
 
+
+  (* [comment removed for export] *)
   Definition IMG_W : list (Z * Z) := [(0xb9000, 0xeb2b0); (0xeb2b8, 0xeb2d0); (0xeb808, 0xebc34); (0xebc38, 0xec000)]%Z.
 
+  (* [comment removed for export] *)
   Definition CW (LB : list (Z * Z)) (a : Z) : Prop := ~ alloc_private L LB a.
 
   Lemma regions_write : forall vals ebs bls LB,
@@ -240,6 +262,7 @@ Section DrvLayout.
     - intros lo hi [].
   Qed.
 
+  (* [comment removed for export] *)
   Lemma heap_block : forall vals ebs bls LB cr M VM log,
     let E := Env (vals_ev vals) ebs in
     vals_ev vals 0 = sp0 ->
@@ -255,6 +278,8 @@ Section DrvLayout.
     - intros x Hx. exact (mem_denot_grows E M log x Hx).
   Qed.
 
+
+  (* [comment removed for export] *)
   Definition CPstk (a : Z) : Prop := a < 4096 \/ (0x10000 <= a < 0xec000) \/ bv_unsigned sp0 - 8388608 <= a.
 
   Lemma regions_stk : forall vals ebs,
@@ -301,6 +326,7 @@ Section DrvLayout.
     apply (mem_heap_frame vals ebs M log); [exact P0 | exact Hlog | eapply hz_sub; [exact HZ| lia | lia | lia]].
   Qed.
 
+  (* [comment removed for export] *)
   Lemma heap_wbytes : forall LB cr M VM (A n a : Z) bs,
     hi_heap HI LB cr M VM -> In (A, n) LB -> A <= a -> a + Z.of_nat (length bs) <= A + n -> A + n <= 2 ^ 64 ->
     hi_heap HI LB cr (wbytes M (Z_to_bv 64 a) bs) VM.
@@ -318,6 +344,8 @@ Section DrvLayout.
     - intros x Hx. exact (wbytes_grows bs M (Z_to_bv 64 a) x Hx).
   Qed.
 
+
+  (* [comment removed for export] *)
   Definition CPout (A n : Z) (a : Z) : Prop := ~ (A <= a < A + n).
 
   Lemma regions_blockwrite : forall vals ebs A n,
@@ -367,6 +395,7 @@ Section DrvLayout.
     intros vals R' i Hi. rewrite vals_ev_app_r. unfold vals_ev, junk_vals. rewrite nth_map_seq by exact Hi. reflexivity.
   Qed.
 
+  (* [comment removed for export] *)
   Lemma malloc_site : forall vals ebs sr kn R M (model : Model) LB cr n so bls vbnd (ra : Z) K,
     let E := Env (vals_ev vals) ebs in
     regs_ok E sr R -> know_ok RSEGS E M kn ->
@@ -404,8 +433,8 @@ Section DrvLayout.
     rewrite (dl_segs L sp0 DL), (dl_malloc L sp0 DL), (dl_tp L sp0 DL) in MS.
     rewrite R1 in MS.
     apply MS; clear MS; try assumption.
-    -   apply ret_ok_even. rewrite u_small by lia. exact Hra2.
-    -   rewrite R2, u_small by lia. eapply stack_ok_of_window; eassumption.
+    - (* [comment removed for export] *) apply ret_ok_even. rewrite u_small by lia. exact Hra2.
+    - (* [comment removed for export] *) rewrite R2, u_small by lia. eapply stack_ok_of_window; eassumption.
     - intros R' M' model' A HA HP HBR HAP HDEF HPRES HBUT HH'.
       assert (HL' : length (vals ++ junk_vals R') = (length vals + 32)%nat) by (rewrite length_app, junk_vals_length; reflexivity).
       assert (HA' : vals_ev (vals ++ junk_vals R') (length vals + 10) = Z_to_bv 64 A).
@@ -413,8 +442,8 @@ Section DrvLayout.
       assert (P0' : vals_ev (vals ++ junk_vals R') 0 = sp0).
       { rewrite vals_ev_app_l by lia. exact P0. }
       apply (CONT R' M' model' A HL' HA').
-      +   apply (regs_after_keeps vals ebs sr R R' c_kept Hsv HR (regs_preserved_kept R R' HP) c_kept_no0).
-      +   apply Forall_app. split.
+      + (* [comment removed for export] *) apply (regs_after_keeps vals ebs sr R R' c_kept Hsv HR (regs_preserved_kept R R' HP) c_kept_no0).
+      + (* [comment removed for export] *) apply Forall_app. split.
         * eapply kn_blk_ok; [exact HA' | exact P0' | exact HBR | exact HDEF].
         * unfold keep_alloc.
           pose proof (env_app_know RSEGS vals (junk_vals R') ebs M kn Hkv HK) as HK1.
@@ -449,6 +478,7 @@ Section DrvLayout.
         * unfold in_errno. rewrite (dl_errno L sp0 DL). lia.
   Qed.
 
+  (* [comment removed for export] *)
   Lemma free_site : forall vals ebs sr kn R M (model : Model) LB cr (A n : Z) so bls vbnd (ra : Z) K,
     let E := Env (vals_ev vals) ebs in
     regs_ok E sr R -> know_ok RSEGS E M kn ->
@@ -485,8 +515,8 @@ Section DrvLayout.
     rewrite (dl_segs L sp0 DL), (dl_free L sp0 DL), (dl_tp L sp0 DL) in MS.
     rewrite R1 in MS.
     apply MS; clear MS; try assumption.
-    -   apply ret_ok_even. rewrite u_small by lia. exact Hra2.
-    -   rewrite R2, u_small by lia. eapply stack_ok_of_window; eassumption.
+    - (* [comment removed for export] *) apply ret_ok_even. rewrite u_small by lia. exact Hra2.
+    - (* [comment removed for export] *) rewrite R2, u_small by lia. eapply stack_ok_of_window; eassumption.
     - intros R' M' model' HP HPRES HBUT HH'.
       assert (HL' : length (vals ++ junk_vals R') = (length vals + 32)%nat) by (rewrite length_app, junk_vals_length; reflexivity).
       assert (P0' : vals_ev (vals ++ junk_vals R') 0 = sp0).

@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_pitems_dev.v, with its module paths and module names changed; 149 of its 179 lines of code are new or changed and 512 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_caw_epi.v
-   (a working branch 2ed11a3c43f), the same names over B's own code (B listing: capstone over the
+   (a working branch), the same names over B's own code (B listing: capstone over the
    unstripped twin of fs.asan-ubsan, whose instructions 0x8164c .. 0x81b5c equal the pinned image's).
    check_as_written over fs.asan-ubsan, the epilogue (B 0x81aa4 .. 0x81ad0): from the state FSW_caw_back.cawb_mid gives
    at the bcmp return 0x81aa4 (a0 = 0, equal bytes) or at the join 0x81aa8, to check_as_written_spec's post cawb_post:
@@ -19,10 +19,11 @@
    Section hypotheses: FSW_caw_back.v's Section W, by name (of the runtime, RTf only). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/FSW_caw_epi.v; 813 of its 871 lines of code are new or changed and 121 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_caw_back.v
-   (a working branch 2ed11a3c43f), the same names over B's own code. Every B literal below is from
+   (a working branch), the same names over B's own code. Every B literal below is from
    B's listing (capstone over the unstripped twin of fs.asan-ubsan, (internal path), whose
    instructions 0x8164c .. 0x81b5c equal the pinned image's, sha256 5ac5ce0954f8...) or from B's constants (lib/B/FSH_Base.v
    PC_free 0x530e0, PC_bcmp 0x426d8, FRAME_check_as_written = 64). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (*   check_as_written over fs.asan-ubsan, the back of the walk: from pc 0x81a78 (the `jal __wrap_free` of six, fs.c:102)
    to the function's return, B 0x81a78 .. 0x81ad0. In order (MEASURED, B listing):
    - 0x81a78 free (six) (FsRt.fr_free, FSW_malloc_free.fsw_aj_freeU), return 0x81a7c;

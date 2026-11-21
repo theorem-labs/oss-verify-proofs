@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YE3f.v, with its module paths changed, and its fuzz_reply.asan-ubsan addresses relocated from cgif_file_fuzzer.asan-ubsan (17 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: new lemma iovec_entry_accesses_in, as an iovec entry whose base word faults is now charged as the eight bytes at a + 8; copy_iovecs_accesses_in and import_iovecs_accesses_in place each access inside its sixteen-byte entry rather than at its start, and wl_copyins_avoid follows. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -274,33 +275,54 @@ Qed.
 Lemma ranges_avoid_of_elems : forall l,
 (forall a n, In (a, n) l -> range_avoids HH a n) -> ranges_avoid HH l.
 Proof. intros l Hl a n Hin. exact (Hl a n Hin). Qed.
+(* 727298f3 ([State.iovec_entry_accesses]): an iovec entry whose [iov_len] word reads but
+   whose [iov_base] word faults is now charged as the eight bytes at [a + 8], not as the
+   sixteen at [a], so an access is CONTAINED in its entry rather than equal to it. *)
+Lemma iovec_entry_accesses_in : forall mp (a b : word) n,
+bv_unsigned a + 16 <= 2^64 ->
+In (b, n) (iovec_entry_accesses mp a) ->
+(n <= 16)%nat /\ bv_unsigned a <= bv_unsigned b /\ bv_unsigned b + Z.of_nat n <= bv_unsigned a + 16.
+Proof.
+intros mp a b n Ha Hin. unfold iovec_entry_accesses in Hin.
+assert (Hu8 : bv_unsigned (a + 8)%bv = bv_unsigned a + 8).
+{ rewrite bv_add_unsigned. unfold bv_wrap. change (bv_modulus 64) with (2^64).
+pose proof (u64_range a). replace (bv_unsigned (8%bv : word)) with 8 by reflexivity.
+apply Z.mod_small. lia. }
+repeat match type of Hin with context [match read_u64 ?m ?x with _ => _ end] => destruct (read_u64 m x) end;
+cbn [In] in Hin; try contradiction;
+destruct Hin as [Heq|[]]; injection Heq as <- <-; cbn [Z.of_nat Pos.of_succ_nat Pos.succ]; rewrite ?Hu8; lia.
+Qed.
 Lemma copy_iovecs_accesses_in : forall mp k (a b : word) n,
 bv_unsigned a + 16 * Z.of_nat k <= 2^64 ->
 In (b, n) (copy_iovecs_accesses mp a k) ->
-n = 16%nat /\ exists i, (i < k)%nat /\ bv_unsigned b = bv_unsigned a + 16 * Z.of_nat i.
+(n <= 16)%nat /\ exists i, (i < k)%nat /\ bv_unsigned a + 16 * Z.of_nat i <= bv_unsigned b
+/\ bv_unsigned b + Z.of_nat n <= bv_unsigned a + 16 * Z.of_nat i + 16.
 Proof.
-intros mp k; induction k as [|k IH]; intros a b n Hk Hin; cbn in Hin; [destruct Hin|].
-destruct Hin as [Heq | Hin].
-- injection Heq as <- <-. split; [reflexivity|]. exists 0%nat. split; [lia|]. lia.
+intros mp k; induction k as [|k IH]; intros a b n Hk Hin; cbn [copy_iovecs_accesses] in Hin; [destruct Hin|].
+apply in_app_or in Hin as [Hin | Hin].
+- destruct (iovec_entry_accesses_in mp a b n ltac:(lia) Hin) as (Hn & H1 & H2).
+split; [exact Hn|]. exists 0%nat. split; [lia|]. lia.
 - destruct (read_iovec_entry mp a) as [? len| |]; [|destruct Hin|destruct Hin].
 destruct k as [|k']; [cbn in Hin; destruct Hin|].
 assert (Hu : bv_unsigned (a + 16)%bv = bv_unsigned a + 16).
 { rewrite bv_add_unsigned. unfold bv_wrap. change (bv_modulus 64) with (2^64).
 pose proof (u64_range a). replace (bv_unsigned (16%bv : word)) with 16 by reflexivity.
 apply Z.mod_small. lia. }
-destruct (IH (a + 16)%bv b n ltac:(rewrite Hu; lia) Hin) as [Hn [i [Hi Hb]]].
-split; [exact Hn|]. exists (S i). split; [lia|]. rewrite Hb, Hu. lia.
+destruct (IH (a + 16)%bv b n ltac:(rewrite Hu; lia) Hin) as [Hn [i [Hi [Hb1 Hb2]]]].
+split; [exact Hn|]. exists (S i). split; [lia|]. rewrite Hu in Hb1, Hb2. lia.
 Qed.
 Lemma import_iovecs_accesses_in : forall mp (a b cnt : word) n,
 (1 <= bv_unsigned cnt <= 2)%Z ->
 bv_unsigned a + 16 * bv_unsigned cnt <= 2^64 ->
 In (b, n) (import_iovecs_accesses mp a cnt) ->
-n = 16%nat /\ exists i, (Z.of_nat i < bv_unsigned cnt)%Z /\ bv_unsigned b = bv_unsigned a + 16 * Z.of_nat i.
+(n <= 16)%nat /\ exists i, (Z.of_nat i < bv_unsigned cnt)%Z /\ bv_unsigned a + 16 * Z.of_nat i <= bv_unsigned b
+/\ bv_unsigned b + Z.of_nat n <= bv_unsigned a + 16 * Z.of_nat i + 16.
 Proof.
 intros mp a b cnt n Hc Ha Hin. unfold import_iovecs_accesses in Hin.
 destruct (bv_eqb cnt (Z_to_bv 64 1)) eqn:E1.
 - apply bv_eqb_eq in E1. destruct (negb (access_okb a 16)); [destruct Hin|].
-destruct Hin as [Heq|[]]. injection Heq as <- <-. split; [reflexivity|]. exists 0%nat. split; [lia|lia].
+destruct (iovec_entry_accesses_in mp a b n ltac:(lia) Hin) as (Hn & H1 & H2).
+split; [exact Hn|]. exists 0%nat. split; [lia|lia].
 - destruct (bv_eqb cnt (Z_to_bv 64 0)); [destruct Hin|].
 destruct (IOV_MAX <? bv_unsigned cnt)%Z; [destruct Hin|].
 destruct (negb (access_okb a (16 * bv_unsigned cnt))); [destruct Hin|].
@@ -395,9 +417,9 @@ assert (Hcv : iovcnt32 (Z_to_bv 64 c) = Z_to_bv 64 c) by (destruct Hc12 as [-> |
 rewrite Hcv in Hin.
 assert (Hcu : (1 <= bv_unsigned (Z_to_bv 64 c) <= 2)%Z) by (rewrite u_Z2bv by lia; lia).
 assert (Hnw : bv_unsigned (Z_to_bv 64 (SP + 40 - 16 * c)) + 16 * bv_unsigned (Z_to_bv 64 c) <= 2 ^ 64) by (rewrite !u_Z2bv by lia; lia).
-destruct (import_iovecs_accesses_in _ _ _ _ _ Hcu Hnw Hin) as [-> [i [Hi Hb]]].
-rewrite !u_Z2bv in Hi, Hb by lia.
-apply (range_avoids_of_vis W a 16 (SP + 8) (SP + 40) HvisW); cbn [Z.of_nat Pos.of_succ_nat Pos.succ] in *; lia.
+destruct (import_iovecs_accesses_in _ _ _ _ _ Hcu Hnw Hin) as [Hm [i [Hi [Hb1 Hb2]]]].
+rewrite !u_Z2bv in Hi, Hb1, Hb2 by lia.
+apply (range_avoids_of_vis W a m (SP + 8) (SP + 40) HvisW); lia.
 - destruct (iov_prefix_accesses_in _ _ _ _ Hin) as [len [Hil Hm]].
 destruct (Nat.eq_dec m 0) as [-> | Hm0]; [intros k Hk; exfalso; lia|].
 destruct Hc12 as [-> | ->]; cbn [Z.eqb Pos.eqb] in Hil, Hv0.

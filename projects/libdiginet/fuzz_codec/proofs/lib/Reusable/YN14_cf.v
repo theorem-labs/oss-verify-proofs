@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN14.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap's refusal under a may-fail allocator). *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -32,6 +33,7 @@ Ltac lits := unfold LOCK, CTX, LIBC, ERRNO, TP, GOT, GUARD, SCT, SCNT, MCNT, ASF
 src0_D_got_stack_chk_guard, src0_D_stack_chk_guard, src0_D_size_classes, src0_D_small_cnt_tab, src0_D_med_cnt_tab in *.
 Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Context {AM : AllocMode}.
+Context {AMF : Forced AM}.
 Definition mp_usage (s : astate) (sc u : Z) : Z := if Z.even sc && (sc <? 32) then u + usage_of s (sc + 1) else u.
 Definition mp_red (sc size cnt0 : Z) : Z :=
 if (Z.land sc 3 =? 1) && (8 * PGSZ <? size * cnt0) then 2

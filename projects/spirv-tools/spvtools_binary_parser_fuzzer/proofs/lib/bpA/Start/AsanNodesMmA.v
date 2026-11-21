@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the mmap decline premise place_declined_b). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -87,7 +88,12 @@ Let escale_4096_denot := AsanNodesMmLib.escale_4096_denot SEGS A RES_len RES_cov
 Let find_containing_sound := AsanNodesMmLib.find_containing_sound SEGS A RES_len.
 Let fixed_args_sound := AsanNodesMmLib.fixed_args_sound SEGS A LIMIT SINV argH FS0 RES_len RES_cover HULL_ok.
 Let fixed_cs1 := AsanNodesMmLib.fixed_cs1 A.
-Let gap_ok_sound := AsanNodesMmLib.gap_ok_sound SEGS A LIMIT SINV argH FS0 RES_len RES_cover HULL_ok SHADOW_ok.
+(* #38: [gap_ok_sound]'s proof no longer uses SHADOW_ok - it reaches the reserved
+   ledger through [co_resx] (AsanNodesMmLib.v:1899) rather than the shadow table - so
+   Coq discharges one section variable fewer and the tenth argument here lands in the
+   lemma's own [E : env] slot.  Coq discharges in DECLARATION ORDER, so the overflow
+   naming SHADOW_ok is what identifies SHADOW_ok as the one dropped. *)
+Let gap_ok_sound := AsanNodesMmLib.gap_ok_sound SEGS A LIMIT SINV argH FS0 RES_len RES_cover HULL_ok.
 Let gap_weight_eq := AsanNodesMmLib.gap_weight_eq SEGS A RES_len.
 Let grant_cs1_ok := AsanNodesMmLib.grant_cs1_ok SEGS A LIMIT SINV argH FS0 RES_len RES_cover HULL_ok argH_sp0 SINV_frame.
 Let grant_eager_le := AsanNodesMmLib.grant_eager_le SEGS A RES_len RES_cover HULL_ok.
@@ -117,13 +123,23 @@ Let overlap_sum_contained := AsanNodesMmLib.overlap_sum_contained SEGS A RES_len
 Let page_aligned_sound := AsanNodesMmLib.page_aligned_sound SEGS A RES_len.
 Let refuse_cont := AsanNodesMmLib.refuse_cont SEGS A nx0 LIMIT SINV argH FS0 SINV_frame.
 Let refuse_ok := AsanNodesMmLib.refuse_ok SEGS A LIMIT SINV argH FS0 SINV_frame.
-Let region_free_of_apart := AsanNodesMmLib.region_free_of_apart SEGS A nx0 LIMIT SINV argH FS0 RES_len RES_hull RES_cover HULL_ok.
+(* #38: mine.  [region_free_of_apart] now routes its reserved half through
+   [reserved_free_above]'s KHI premise and [co_resx] rather than the old hull
+   equation, so its proof no longer uses RES_cover or HULL_ok and Coq discharges
+   two section variables fewer.  The error names RES_cover as the overflow, and
+   discharge is in declaration order, so the prefix ends at RES_hull. *)
+Let region_free_of_apart := AsanNodesMmLib.region_free_of_apart SEGS A nx0 LIMIT SINV argH FS0 RES_len RES_hull.
 Let regs_ok_regupd_same := AsanNodesMmLib.regs_ok_regupd_same SEGS A RES_len.
-Let reserved_free_above := AsanNodesMmLib.reserved_free_above SEGS A RES_len RES_hull RES_cover HULL_ok.
+Let reserved_free_above := AsanNodesMmLib.reserved_free_above SEGS A RES_hull.
 Let safe_range_apart := AsanNodesMmLib.safe_range_apart SEGS A RES_len RES_cover HULL_ok.
 Let seps_map_disjoint := AsanNodesMmLib.seps_map_disjoint SEGS A RES_len.
 Let shadow_facts_new_ok := AsanNodesMmLib.shadow_facts_new_ok SEGS A LIMIT SINV argH FS0 RES_len RES_cover HULL_ok SHADOW_ok.
-Let slice_args := AsanNodesMmLib.slice_args SEGS A LIMIT SINV argH FS0 RES_len RES_hull RES_cover HULL_ok.
+(* #38: [slice_args]'s reserved half is now [reserved_free_inside] over [co_mres]
+   (AsanNodesMmLib.v:2943) rather than [reserved_free_above], so its proof no longer
+   mentions RES_hull and Coq discharges one section variable fewer.  Read off the
+   proof body, and confirmed by an earlier farm round, whose error at this
+   line gives RES_hull against RES_cover's expected type. *)
+Let slice_args := AsanNodesMmLib.slice_args SEGS A LIMIT SINV argH FS0 RES_len RES_cover HULL_ok.
 Let slice_hyps := AsanNodesMmLib.slice_hyps SEGS A LIMIT SINV argH FS0.
 Let split_flat_estart := AsanNodesMmLib.split_flat_estart SEGS A RES_len HULL_ok.
 Let vis_add_inv := AsanNodesMmLib.vis_add_inv A LIMIT.
@@ -184,7 +200,7 @@ Proof.
   change (Z_to_bv 5 11) with (Z_to_bv 5 (Z.of_nat 11)) in R11. rewrite <- bv5_11 in R11.
   set (len := bv_unsigned (edenot E (reg cs 11))) in *. set (nZ := page_round_up_Z len) in *.
   set (n := Z_to_bv 64 nZ).
-  destruct (gap_ok_sound E cs R FULL model nhi nZ HC Hgap ltac:(lia)) as [a0 Ha0]. rewrite <- R10 in Ha0.
+  destruct (gap_ok_sound E cs R FULL model nhi nZ HC Hgap ltac:(lia) HnZal) as [a0 Ha0]. rewrite <- R10 in Ha0.
   pose proof (co_halt _ _ _ _ _ _ _ _ _ _ _ HC) as Hhalt.
   pose proof (co_top _ _ _ _ _ _ _ _ _ _ _ HC) as HTOP. unfold TOP, CEIL, CEILMAX in HTOP.
   assert (Hbudget : eager = true -> a_eager cs + a_abytes cs + nhi <= LIMIT).
@@ -232,7 +248,10 @@ Proof.
     assert (Hbk : mmap_noreserve_backed_ok (Z_to_bv 64 34) model nZ = true).
     { unfold mmap_noreserve_backed_ok. rewrite mmap_noreserve_b_22.
       apply Z.leb_le. cbn in Hbud. eapply Z.le_trans; [|eapply (budget_slack E cs R FULL model nhi HC Hbud)]. fold nZ. lia. }
-    eapply (srz_mmap_rw1 SEGS R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 34) TB Hf He Hhalt R17 R11 Hlen R12 R13 mmap_flags_core_22 R14 R15).
+    (* 727298f3: the new [Mmap.place_declined_b] premise.  This call has a
+       NULL hint ([R10]), and [place_declined_b]'s first conjunct is
+       [negb (hint_address hint =? 0)], so it is [false] by computation. *)
+    eapply (srz_mmap_rw1 SEGS R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 34) TB Hf He Hhalt R17 R11 Hlen R12 R13 mmap_flags_core_22 R14 R15 ltac:(rewrite R10; first [apply place_declined_b_null | reflexivity])).
     + exists a0. split; [exact Ha0 | exact Hbk].
     + intros a Hg _. rewrite (with_mmap_backing_plain _ _ _ _ mmap_noreserve_b_22). apply (CONT a); [exact Hg | | | reflexivity].
       * constructor; reflexivity.
@@ -241,7 +260,7 @@ Proof.
     destruct eager; [discriminate|].
     assert (Hbk : mmap_noreserve_backed_ok (Z_to_bv 64 16418) model nZ = true).
     { unfold mmap_noreserve_backed_ok. rewrite mmap_noreserve_b_4022. reflexivity. }
-    eapply (srz_mmap_rw1 SEGS R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 16418) TB Hf He Hhalt R17 R11 Hlen R12 R13 mmap_flags_core_4022 R14 R15).
+    eapply (srz_mmap_rw1 SEGS R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 16418) TB Hf He Hhalt R17 R11 Hlen R12 R13 mmap_flags_core_4022 R14 R15 ltac:(rewrite R10; first [apply place_declined_b_null | reflexivity])).
     + exists a0. split; [exact Ha0 | exact Hbk].
     + intros a Hg _. rewrite (with_mmap_backing_lazy _ _ _ _ mmap_noreserve_b_4022). apply (CONT a); [exact Hg | | | reflexivity].
       * destruct (grant_ok_na_unpack _ _ _ _ Hg) as (Hal & Hpos & Htop & _). unfold page_size in Hal.
@@ -250,14 +269,14 @@ Proof.
       * split; [intros x Hx; apply zfill_out; exact Hx | intros x Hx; apply zfill_in; exact Hx].
   -
     destruct eager; [discriminate|].
-    eapply (srz_mmap_none1 SEGS R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 34) TB Hf He Hhalt R17 R11 Hlen R12 R13 mmap_flags_core_22 R14 R15).
+    eapply (srz_mmap_none1 SEGS R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 34) TB Hf He Hhalt R17 R11 Hlen R12 R13 mmap_flags_core_22 R14 R15 ltac:(rewrite R10; first [apply place_declined_b_null | reflexivity])).
     + exists a0. exact Ha0.
     + intros a Hg. rewrite (with_mmap_backing_plain _ _ _ _ mmap_noreserve_b_22). apply (CONT a); [exact Hg | | | reflexivity].
       * constructor; reflexivity.
       * split; [intros x Hx; apply unfill_out; exact Hx | intros x Hx; apply unfill_in; exact Hx].
   -
     destruct eager; [discriminate|].
-    eapply (srz_mmap_none1 SEGS R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 16418) TB Hf He Hhalt R17 R11 Hlen R12 R13 mmap_flags_core_4022 R14 R15).
+    eapply (srz_mmap_none1 SEGS R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 16418) TB Hf He Hhalt R17 R11 Hlen R12 R13 mmap_flags_core_4022 R14 R15 ltac:(rewrite R10; first [apply place_declined_b_null | reflexivity])).
     + exists a0. exact Ha0.
     + intros a Hg. rewrite (with_mmap_backing_lazy _ _ _ _ mmap_noreserve_b_4022). apply (CONT a); [exact Hg | | | reflexivity].
       * destruct (grant_ok_na_unpack _ _ _ _ Hg) as (Hal & Hpos & Htop & _). unfold page_size in Hal.
@@ -427,14 +446,15 @@ Lemma mmap_fixed_free_sound1 : forall cs kd (eager visible : bool) f13 cs' E R F
 Proof.
   intros cs kd eager visible f13 cs' E R FULL model TB HC Hec H17 H12 H13 Hf13 H14 H15 Hkind Hkfog Hvisible Hn HK.
   unfold mmap_fixed_free in Hn.
-  destruct (fixed_args A cs KHI false) as [[[[[b off] ne] nlo] nhi]|] eqn:HFA.
+  destruct (fixed_args A cs (resx_clear cs) false) as [[[[[b off] ne] nlo] nhi]|] eqn:HFA.
   -
     match type of Hn with (if ?c then _ else _) = _ => destruct c eqn:Hcond; [|discriminate] end.
     apply andb_prop in Hcond as [Hcond Hav]. apply andb_prop in Hcond as [Hcond Hnev].
     apply andb_prop in Hcond as [Hcond Hbud]. apply andb_prop in Hcond as [Hnf Hall].
     destruct (mmap_fixed_old_facts cs b off ne nlo nhi E R FULL model HC HFA Hnf Hall) as (HC0 & Hrf & Hholes).
-    eapply (mmap_fixed_grant_sound1 cs (a_maps cs) KHI b off ne nlo nhi kd eager visible f13 cs' E R FULL model TB
-              HC Hec H17 H12 H13 Hf13 H14 H15 Hkind Hkfog Hvisible HFA ltac:(unfold KHI, CEIL; lia) Hbud
+    eapply (mmap_fixed_grant_sound1 cs (a_maps cs) (resx_clear cs) b off ne nlo nhi kd eager visible f13 cs' E R FULL model TB
+              HC Hec H17 H12 H13 Hf13 H14 H15 Hkind Hkfog Hvisible HFA
+              ltac:(pose proof (Z.le_min_l KHI (a_ylo cs)); unfold resx_clear, KHI, CEIL in *; lia) Hbud
               HC0 Hrf Hholes Hn HK).
   -
     destruct (fixed_args A cs CEIL false) as [[[[[b off] ne] nlo] nhi]|] eqn:HFA2; [|discriminate].
@@ -489,6 +509,22 @@ Proof.
   eapply (srz_mprotect1 SEGS R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w addr len TB Hf He Hhalt R17 R10 Hal R11 ltac:(lia)).
   - unfold two_pow_64. fold nZ. unfold CEILMAX in HaC. lia.
   - exact R12.
+  - (* the revision's new premise: the range is clear of the vDSO pair.
+       co_vdso (bpA/Start/AsanPlanSound.v:344-346) gives
+         incl (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model)))
+              (vm_reserved (m_vmmaps model))
+       from the cs_ok contract HC already in scope, and Hrfres (destructured at
+       :477 from slice_args) is region_free (vm_reserved (m_vmmaps model)) addr
+       n = true.  Body copied from boost-beast MmapSim.v:246-253
+       region_free_vdso_of_reserved, which this tree does not vendor; its two
+       steps are bpA/Start/AsanRefNodes.v:307-310 region_free_intro and
+       :298-300 region_free_In.  No new premise reaches this lemma's callers. *)
+    apply region_free_intro. intros b' s' Hin.
+    (* co_vdso is stated inside AsanPlanSound's Section, so outside it takes the
+       same six section arguments as its siblings co_resx / co_mres (applied with
+       eleven holes before HC at bpA/Start/AsanNodesMmLib.v:1472 and :2951); five holes
+       put HC where the section's FS0 : Fs.Fs is expected (8d33d8, :519). *)
+    exact (region_free_In _ _ _ b' s' Hrfres (co_vdso _ _ _ _ _ _ _ _ _ _ _ HC (b', s') Hin)).
   - exact Hna.
   - exact Hmc.
   - apply mprotect_budget_ok_intro_gen; [exact Hwf|]. pose proof (budget_slack E cs R FULL model nhi HC ltac:(unfold budget_ok; apply Z.leb_le; exact Hbud)). fold nZ n. lia.
@@ -788,7 +824,7 @@ Proof.
   change (Z_to_bv 5 11) with (Z_to_bv 5 (Z.of_nat 11)) in R11. rewrite <- bv5_11 in R11.
   set (len := bv_unsigned (edenot E (reg cs 11))) in *. set (nZ := page_round_up_Z len) in *.
   set (n := Z_to_bv 64 nZ).
-  destruct (gap_ok_sound E cs R FULL model nhi nZ HC Hgap ltac:(lia)) as [a0 Ha0]. rewrite <- R10 in Ha0.
+  destruct (gap_ok_sound E cs R FULL model nhi nZ HC Hgap ltac:(lia) HnZal) as [a0 Ha0]. rewrite <- R10 in Ha0.
   pose proof (co_halt _ _ _ _ _ _ _ _ _ _ _ HC) as Hhalt.
   pose proof (co_top _ _ _ _ _ _ _ _ _ _ _ HC) as HTOP. unfold TOP, CEIL, CEILMAX in HTOP.
   assert (Hbudget : true = true -> a_eager cs + a_abytes cs + nhi <= LIMIT).
@@ -834,7 +870,7 @@ Proof.
   assert (Hbk : mmap_noreserve_backed_ok (Z_to_bv 64 34) model nZ = true).
   { unfold mmap_noreserve_backed_ok. rewrite mmap_noreserve_b_22.
     apply Z.leb_le. eapply Z.le_trans; [|eapply (budget_slack E cs R FULL model nhi HC Hbud)]. fold nZ. lia. }
-  eapply (srz_mmap_rw1 SEGS R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 34) TB Hf He Hhalt R17 R11 Hlen R12 R13 mmap_flags_core_22 R14 R15).
+  eapply (srz_mmap_rw1 SEGS R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 34) TB Hf He Hhalt R17 R11 Hlen R12 R13 mmap_flags_core_22 R14 R15 ltac:(rewrite R10; first [apply place_declined_b_null | reflexivity])).
   + exists a0. split; [exact Ha0 | exact Hbk].
   + intros a Hga _. rewrite (with_mmap_backing_plain _ _ _ _ mmap_noreserve_b_22). apply (CONT a); [exact Hga | | | reflexivity].
     * constructor; reflexivity.

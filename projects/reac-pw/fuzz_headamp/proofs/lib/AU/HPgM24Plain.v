@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanHead.v at cdde2c4d95b (its hd_reg_is lemma and the run-to-the-call form of hd_A / hd_B) for reac-pw/fuzz_headamp image A, segment M04b (C8 0x83764 -> C9 0x83794); every pc, register, cell and callee is headamp's, and the three runs end in block posts (lib/A/HPgSteps.v hd_blk_post). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgM04b.v at 4b39d5ebfc9 for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanHead.v (its hd_reg_is lemma and the run-to-the-call form of hd_A / hd_B) for reac-pw/fuzz_headamp image A, segment M04b (C8 0x83764 -> C9 0x83794); every pc, register, cell and callee is headamp's, and the three runs end in block posts (lib/A/HPgSteps.v hd_blk_post). *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgM04b.v for image B
    (fuzz_headamp.asan-ubsan): image B's modules, pcs (C8 0x83920 .. C9 0x83950), callees (__asan_memset 0x52228,
    reac_headamp_prop_parse 0x849a4, check_plain 0x844cc), registers (out in s6, cap in s4, rc in s9, first in s7),
    real-frame cells (R+0x150, R+0x140) and cut lists (hi_L8, hi_L9 of headamp_himg_B); the call steps are
    lib/AU/HPgIntrinU.v hdu_memset_at, lib/A/HPgCalls.v hc_parse_k_call and hc_call_ck at image B's entries, the
    call-site facts lib/AU/HPgSiteB.v's; names unchanged (h4b_). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image B (fuzz_headamp.asan-ubsan, pinned sha256
    53edda9bdeeba1803865babfecb1af6732babe47ab83c64d38cc59a90d717a94; every address measured on the unstripped twin
    1674e30a0698f381704e66d2398d7906c881f4ba8fc619cb41b89fb97ad112ff, same loaded bytes except .note.gnu.build-id): the segment M04b of

@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: THE GENERIC LITERAL READER (slice S7a, a Theorem Labs lane; the ONE copy, cited by S7a_indent_wit.v
    and by the writer row's literal witnesses). Function-free: it states no walk and Requires no walk file, only the
    engine, PRH_Base and the image vocabulary.
    - s7w_lit_rd (any B, any ARx with AR_laws_x, any PAImg whose bounds pa_lo / pa_hi lie above page 0 and below
      kLowMemEnd): kept_img (PRH_Base.v, route (a), per instance), the ROM bytes and one img_shadow_cover check give
      src_rd and kept_at at any ARx state with arodata_okP. Its per-byte shadow argument is WalkS10's s10_src_img
-     (lib/A/Prog/S10TxState.v at a working branch 8a8cbf8b36a6); that lemma's two stand-ins are replaced:
+     (lib/A/Prog/S10TxState.v at a working branch); that lemma's two stand-ins are replaced:
      the hull visibility by the cover check (YImgShadowCover.img_shadow_cover_sound), and zs_aligned by a premise an
      instance discharges by vm_compute.
    - the closed-check helpers an instance witness uses: s7w_ro_b (a read-only segment holds a), s7w_zr_b (some range
@@ -35,7 +36,7 @@ Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Open Scope Z_scope.
 
-(* a read-only segment holds a (h-verbs-1's lit_inst_in_rom_b, lib/A/Prog/literal_inst.v at 68059ec877b4) *)
+(* a read-only segment holds a (h-verbs-1's lit_inst_in_rom_b, lib/A/Prog/literal_inst.v) *)
 Definition s7w_ro_b (segs : list Segment) (a : Z) : bool :=
   existsb (fun sg => negb (seg_writable sg) && (Z.of_N (seg_base sg) <=? a) &&
     (a <? Z.of_N (seg_base sg) + Z.of_N (seg_size sg))) segs.
@@ -102,7 +103,7 @@ Variable ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte
 Context {HL : Z}.
 Hypothesis LAWS : AR_laws_x segs B ARx HL.
 
-(* one read-back byte (WalkS10's s10_val1_of_aview, S10TxState.v :183-194 at 8a8cbf8b36a6) *)
+(* one read-back byte (WalkS10's s10_val1_of_aview, S10TxState.v :183-194) *)
 Lemma s7w_val1_of_aview : forall (H : word -> bool) mem a v, aview segs H mem a = Some v ->
   val_mem segs (mrestrict H mem) a 1 v /\ 0 <= v < 256.
 Proof.

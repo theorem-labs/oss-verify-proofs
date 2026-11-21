@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths and module names changed; 996 of its 1069 lines of code are new or changed and 441 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, walk of check_round_trip on the #102 pins, IMAGE B' (asan-ubsan
    d663f82d7f488d30, unstripped twin c90d4fa54d43160b), FREE-PIECES-102 Part 7a row T7 = CRT-B-CEXIT (segment C
    +0x6f8 .. the exit `j` to X +0x80c, fuzzpreset.c new:756-768, round_trip_rewrite inlined):
@@ -39,13 +40,13 @@
    the branches are YSRrG.paj_branchR at R; strcmp goes through the engine's YGcallMxmn.aj_strcmp_at_xromR (the engine
    lemma is cited; no local copy t7_aj_strcmp_at_xromR is kept) lifted by YA0nH.SRr_SRr'.
 
-   INPUTS OF RECORD: this tree's files below (the row's base was commit cbe6d10993c2, an ancestor of this tree; the
-   contract texts at the kit tip 3ac20a5c9e30: Crt102Glue.v crt_at_C_B / crt_side / crt_live / crt_pos, PRH_Base.v
+   INPUTS OF RECORD: this tree's files below (the row's base was, an ancestor of this tree; the
+   contract texts at the kit tip: Crt102Glue.v crt_at_C_B / crt_side / crt_live / crt_pos, PRH_Base.v
    prh_ledger .. ran most own, S1Ledger.v, PRH_PjOrder.v); lib/B/Prog/Crt102B_T7_bd.v (the row's cuts),
    Crt102B_T7_tree.v / Crt102B_T7_kit.v
    (this row). No row's file: t7_fdR_frame is Crt102Kit.v's crt102rw_fdR_frame statement over PRH_PjOrder.v, t7_sp
    restates Crt102KitB.v's cb4_sp, t7_keep is cb4_keep's body. PORTED with credit (statement and
-   proof, A' -> B'): lib/A/Prog/Crt102Loops.v 70d17b8c1668 (cl_live_keep / cl_strcmp_call
+   proof, A' -> B'): lib/A/Prog/Crt102Loops.v (cl_live_keep / cl_strcmp_call
    and their helpers); listing lib/B/Listing_prog.v 8bcc2c9e7809 (decoded by the row's crt prep,
    the row's PREP note, PREP.md (sha256 3e72b797012a; internal record)).
 
@@ -171,7 +172,7 @@ Hypothesis HKMA : @kept_img _ B_prog_listing PA B (@CRT_MOD_AT_B _ PA) (Z.of_nat
 Hypothesis HKST : @kept_img _ B_prog_listing PA B (@CRT_STAMP_B _ PA) (Z.of_nat (length ck_STAMP) + 1).
 (* BOK: image B's start-up record YF0m ts_ok *)
 Hypothesis BOK : asyms_ok B.
-(* IMGVIS: the img_shadow_vis_cf form (lib/Reusable/YGcfAmx2.v:47) at ci := CfImgB.CfImg_B, i.e. over
+(* IMGVIS: the img_shadow_vis_cf form (lib/Reusable/YGcfAmx2.v:48) at ci := CfImgB.CfImg_B, i.e. over
    image B's band [cf_img_lo, cf_img_top), which is PI_prog_B's [pa_lo, pa_hi) (Crt102B_T7_tree.v cb7t_band_eq_B) *)
 Hypothesis IMGVIS : forall ly S Hp (W : world SEGS) mem md a,
   ARx ly S Hp W mem md -> @cf_img_lo CfImgB.CfImg_B <= a < @cf_img_top CfImgB.CfImg_B ->
@@ -418,7 +419,7 @@ Ltac t7_step RUNTO HS HJ SHOK HPM :=
 (* ======================================================================================================== *)
 (* SUPPORT OF THE STRETCH C -> FF. The live state across a change confined to a window of the real stack below s1,
    the strcmp call at s1, the read-back facts at C. PORTED (statement and proof, image A' -> B') from
-   lib/A/Prog/Crt102Loops.v at 70d17b8c1668: cl_writable_mono / cl_agree / cl_ra_keep /
+   lib/A/Prog/Crt102Loops.v: cl_writable_mono / cl_agree / cl_ra_keep /
    cl_hull_keep :156-197, cl_own_cell / cl_most_cell / cl_ro_low :410-419, cl_doc_low / cl_blk_low :439-455,
    cl_live_keep :460-524, cl_strcmp_call :549-604. *)
 

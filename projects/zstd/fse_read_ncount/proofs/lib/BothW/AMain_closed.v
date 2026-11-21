@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (bmain_open's facts read through keep_facts, the recorded lists as the main entry keeps them). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -47,7 +48,7 @@ Proof. unfold UDRV. repeat constructor. Qed.
 Proof.
 intros en inp w V m ms mo HV HI HM HA. rewrite E. unfold H, AFake_arep.AH, LDRV.
 apply (aheapP_at_main ATsafeMain.A0 ATsafeMain.A0_init ATsafeMain.A0_lat UDRV UDRV_len UDRV_traces ASEC_of en inp w V m ms mo HV HI HM HA).
-pose proof HM as (_ & _ & PIN & HMF & HPF & _ & _ & _ & SH0 & _). apply Forall_app in HMF as [HMF _]. apply Forall_app in HPF as [HPF _].
+pose proof HM as (_ & _ & PIN & HMF0 & HPF0 & _ & _ & _ & _ & SH0 & _). destruct (keep_facts _ _ _ _ _ HMF0 HPF0) as (HMF & _ & HPF).
 assert (HAT : 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat - 8388608 = ATOP).
 { destruct PIN as (_ & _ & _ & USP & _). rewrite USP. exact HA. }
 Local Ltac2 Set LiaHints.tbl := fun () => "0010>63989141300.2600000<S3PIN3HAT2H0".
@@ -55,7 +56,7 @@ apply (ASEC_of_init V w UDRV m HMF HPF); first [exact HAT | exact SH0 | unfold A
 Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
 #[using="Type"] Lemma aresv_init : aresv_init_stmt.
 Proof.
-intros en inp w V m ms mo _ _ HM. pose proof HM as (_ & _ & _ & _ & HPF & _). apply Forall_app in HPF as [HPF _].
+intros en inp w V m ms mo _ _ HM. pose proof HM as (_ & _ & _ & HMF0 & HPF0 & _). destruct (keep_facts bsegs _ _ _ _ HMF0 HPF0) as (_ & _ & HPF).
 apply aresv_ok_handoff. exact HPF.
 Qed.
 #[using="FUZZ"] Lemma fuzz_oneA : fuzz_oneA_stmt AI afake_rng.
@@ -68,7 +69,7 @@ afake_rng_mono DRV_CI CLI_CI (fun iv Hiv => proj1 (CI_OK iv Hiv))
 Qed.
 #[using="Type"] Lemma model_ok : progA_model_ok ATsafeMain.NMAX ATsafeMain.A0.
 Proof.
-intros en inp w V m ms mo _ _ HM HA. pose proof HM as (_ & _ & PIN & _ & HP & _ & _ & _ & _ & [HLIM HMOD]). apply Forall_app in HP as [HP _].
+intros en inp w V m ms mo _ _ HM HA. pose proof HM as (_ & _ & PIN & HMF0 & HPF0 & _ & _ & _ & _ & _ & [HLIM HMOD]). destruct (keep_facts _ _ _ _ _ HMF0 HPF0) as (_ & _ & HP).
 assert (HAT : a_usp0 V - 8388608 = ATOP).
 { unfold a_usp0. destruct PIN as (_ & _ & _ & USP & _). rewrite USP. exact HA. }
 rewrite <- HA. exact (progA_tsafe_open_L (vm_limit (m_vmmaps mo)) ASTAGE V (en_sp en) inp mo HLIM HP HAT HA HMOD).

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10-31: fuzz_preset (a Theorem Labs lane, row MISS-top at field round 3 part 3c): preset's Allocate tops
    at B' (#102 pin fuzz_preset.asan-ubsan d663f82d7f48, twin c90d4fa54d43) from the relocated memnorm walk, at the cf
    instance's arguments.  The B' twin of lib/A/AllocGtopPresetM.v (this lane's own file, no cgif source), ported
@@ -20,21 +21,21 @@
    the rows of section c.
 
    NOT CLOSED.  Of lib/AU/YGcfInstMissWB.v's 27 Section b hypotheses, 24 are DISCHARGED at B' in section c from B''s
-   own facts: HIMG (the ledger's image cover, lib/A/ADIfaceA.v:81-96's script over B''s segments and YImgTop's _B
+   own facts: HIMG (the ledger's image cover, lib/A/ADIfaceA.v:82-97's script over B''s segments and YImgTop's _B
    bounds), HSHB (AGis.SHBv = 0x7fff8000 = SHADOW_OFF), HTSD / HOOM / HERR (the symbol record), INST_AG (B''s
    TFIB_INST in AGif0cgif's window), oom_owned_img (B''s TFIB values), EII / EDZ / ESH (lib/AU/ErrnoApartAB.v), HPFA
    (lib/A/CfIalApartPreset.v's pf_cells_apart_B), HRS (lib/AU/CfAroPresetB.v), PF_AG (from HPFA over B''s DZONE, the
    A' script), HDZO / HDZX / ERRB_AG / HOEB (lib/AU/CfInstImgB.v) and HCW / INST_CELLS / oom_const_img
    (lib/AU/CfInstHitImgB.v), the B' twins of this lane's A' image rows; and from a Theorem Labs lane's B' files
-   (a working branch): HRW (lib/AU/YGcfRefillToppreset.v:57 refill_walk_cf_preset_closed), HEROM
-   (lib/AU/PresetImg_errnoseg.v:41) and HFP (lib/AU/PresetImg_depfp.v:48: the footprint lies in AGis.DZONE's three
-   arms, which is ag_dzone at B'); and HDEP from a Theorem Labs lane's lib/AU/YGcfInstF1WB.v:131 HDEP_B (pool row
+   (a working branch): HRW (lib/AU/YGcfRefillToppreset.v:58 refill_walk_cf_preset_closed), HEROM
+   (lib/AU/PresetImg_errnoseg.v:42) and HFP (lib/AU/PresetImg_depfp.v:49: the footprint lies in AGis.DZONE's three
+   arms, which is ag_dzone at B'); and HDEP from a Theorem Labs lane's lib/AU/YGcfInstF1WB.v:132 HDEP_B (pool row
    N11-HDEP-B, a working branch), given the record's depot hash HDH, as at A'.  OPEN at B', with
    their owners:
    - TS, IOK_inst               as at A' (the record; the instance object).
    - HDH                        the record's depot hash, as at A'; at B := lib/Reusable/YD2l.TfibB it is YD2l's
                                 as_dhash field (reflexivity).
-   - HENS                       a Theorem Labs lane's lib/AU/PresetImg_errnonst.v:36 states it at the record
+   - HENS                       a Theorem Labs lane's lib/AU/PresetImg_errnonst.v:37 states it at the record
                                 lib/Reusable/YD2l.TfibB only; [aalloc_realizes_cf_em_m_TfibB_B] cites it there.
    - IFSc / IFSEc               the secondary interfaces: a Theorem Labs lane S, as at A'.
    At B''s record all of them close: [aalloc_realizes_cf_em_m_TfibB_B] (TS, IOK_inst, HDH, HENS) and
@@ -128,7 +129,7 @@ Local Ltac ctx Hp :=
   pose proof ErrnoApartAB.errno_apart_shadow_ag_cgif as EAS;
   pose proof ErrnoApartAB.errno_apart_dzone_ag_cgif as EAD;
   pose proof CfNmaxwPreset.nmaxw_preset_ok as (HNW & HNOB & HROOM);
-  (* the secondary top AGioMB.alloc_sec_w_em takes the cap at 2 ^ 29 (lib/AU/AGioMB.v:62; lib/A/AGioM.v:66 has the
+  (* the secondary top AGioMB.alloc_sec_w_em takes the cap at 2 ^ 29 (lib/AU/AGioMB.v:63; lib/A/AGioM.v:67 has the
      2 ^ 30 widening, B''s twin has not), which is the instance witness's own HNW. *)
   pose proof (Z.le_refl cf_malloc_max) as HNM.
 
@@ -192,7 +193,7 @@ Hypothesis IOK_inst : IOK_ok B IOK.
 Hypothesis HDH : forall t, as_dhash B t = YF0p.tfib_dhash t.
 Hypothesis HENS : errno_nstatic_t B.
 
-(* MissWB's HDEP at B': a Theorem Labs lane's lib/AU/YGcfInstF1WB.v:131 (YGcfInstF1WA's if_depot_cf_at at B'). *)
+(* MissWB's HDEP at B': a Theorem Labs lane's lib/AU/YGcfInstF1WB.v:132 (YGcfInstF1WA's if_depot_cf_at at B'). *)
 Lemma HDEP_B : forall Hp, CLdepot.depot_field im_segs ag_depot_put im_tp B (ARXq_cf B IOK Hp) (U_cf B) ag_dzone
   (fun ly a => ag_dzone ly a \/ ag_czone ly a).
 Proof. pose proof TS as TB. change (TfibSyms B) in TB. exact (YGcfInstF1WB.HDEP_B B TB IOK HDH). Qed.
@@ -231,7 +232,7 @@ Proof. exact (YGcfErrbSep.ERRB_SEP_ag B (CfInstImgB.ERRB_SEP_B B TS)). Qed.
 Lemma HOEB_B : ~ (cf_errbuf_obj <= as_oom_byte B < cf_errbuf_obj + 56).
 Proof. exact (CfInstImgB.oom_errb_apart_B B TS). Qed.
 
-(* The ledger's image cover at B': lib/A/ADIfaceA.v:81-96's script over B''s segments (lib/Reusable/YB1v.v) and the
+(* The ledger's image cover at B': lib/A/ADIfaceA.v:82-97's script over B''s segments (lib/Reusable/YB1v.v) and the
    _B bounds of lib/Reusable/YImgTop.v (YF0x.v:27 / :40 bridge TFIB_IMG_LO / TFIB_IMG_END to them). *)
 Lemma img_lo_seg_B : YGcfDIface.IMG_LO_SEG tfibsegs YImgTop.IMG_LO_B.
 Proof.
@@ -249,11 +250,11 @@ Proof.
 intros ly S md L. change (YF0x.img_cover ly). unfold YF0x.img_cover. rewrite YF0x.TFIB_IMG_LO_lo, YF0x.TFIB_IMG_END_top.
 exact (YGcfDIface.img_cover_of_ledger_cf tfibsegs YImgTop.IMG_LO_B YImgTop.IMG_TOP_B ly S md img_lo_seg_B img_hi_seg_B L).
 Qed.
-(* B''s shadow base: AGImg_cgif's ag_shadow is lib/AU/AGis.v:166 SHBv = 0x7fff8000, lib/Reusable/YG0f.v:12 SHADOW_OFF. *)
+(* B''s shadow base: AGImg_cgif's ag_shadow is lib/AU/AGis.v:167 SHBv = 0x7fff8000, lib/Reusable/YG0f.v:12 SHADOW_OFF. *)
 Lemma HSHB_B : ag_shadow = SHADOW_OFF. Proof. reflexivity. Qed.
 Lemma HTSD_B : as_tsd B = im_tsd. Proof. exact (ts_tsd B TS). Qed.
-(* B''s instance object TFIB_INST = 0xa8098 (lib/Reusable/YF0m.v:15) lies in AGif0cgif's window
-   [0xa46d8, 0xa8f20) (lib/AU/AGif0cgif.v:60) and is 8-aligned. *)
+(* B''s instance object TFIB_INST = 0xa8098 (lib/Reusable/YF0m.v:16) lies in AGif0cgif's window
+   [0xa46d8, 0xa8f20) (lib/AU/AGif0cgif.v:61) and is 8-aligned. *)
 Lemma INST_AG_B : ag_inst_ok (as_inst B).
 Proof.
 change (AGif0cgif.inst_ok (as_inst B)). rewrite (ts_inst B TS).
@@ -266,7 +267,7 @@ Lemma HOOM_B : as_oom_byte B = im_oom. Proof. exact (ts_oom B TS). Qed.
 Lemma HERR_B : as_errno B = im_errno. Proof. exact (ts_errno B TS). Qed.
 (* oom_areas_t at B': the oom byte 0x12d960 is outside the instance [0xa8098, 0xa8ec8), the depot [0x18d5d8, ...),
    the store [0x17d5c8, +32), the internal allocator [0xac900, 0x12d930) and its flag [0x13b188, +2)
-   (lib/Reusable/YF0m.v:15-18). *)
+   (lib/Reusable/YF0m.v:16-19). *)
 Lemma oom_owned_B : oom_areas_t B.
 Proof.
 unfold oom_areas_t. rewrite (ts_inst B TS), (ts_oom B TS), (ts_depot B TS), (ts_store B TS), (ts_ial_lo B TS),
@@ -279,7 +280,7 @@ Proof. pose proof TS as TB. change (TfibSyms B) in TB. exact (CfIalApartPreset.p
 Lemma HRS_B : YG0ncf.relro_seg_t im_segs. Proof. exact CfAroPresetB.relro_seg_preset_AU. Qed.
 
 (* field round 3 (lane M): the depot's write zone misses the two printf cells, at B'.  The A' script
-   (lib/A/AllocGtopPresetM.v PF_AG_A, cgif's YGcfInstHitcgif.PF_AG_cgif): B''s zone AGis.DZONE (lib/AU/AGis.v:231) is
+   (lib/A/AllocGtopPresetM.v PF_AG_A, cgif's YGcfInstHitcgif.PF_AG_cgif): B''s zone AGis.DZONE (lib/AU/AGis.v:232) is
    the static part [0x17d5c8, 0x5cdd50) or the NB / SB blocks; the cells lie below the store ([HPFA_B]), so not in the
    static part, and inside the image, which the NB / SB blocks miss (static extents 4 and 5 against 9). *)
 Lemma PF_AG_B : forall ly' a, layout_ok ly' -> im_img_cover ly' -> ly_tsd ly' = as_tsd B -> ag_dzone ly' a ->
@@ -308,8 +309,8 @@ Local Ltac img_rows :=
   pose proof oom_const_B as oom_const_img; pose proof ERRB_AG_B as ERRB_AG; pose proof HOEB_B as HOEB;
   pose proof HRW_B as HRW; pose proof HEROM_B as HEROM; pose proof HFP_B as HFP; pose proof HDEP_B as HDEP.
 
-(* ---- the k interface at the cf instance: lane H's ifaceK_cf (YGcfInstHit.v:589; AOX_cf B / rpre_cf B are AOXm_cf B /
-   rpre_cfr B by definition, YGcfInstBase.v:598-599), over the rows above. ---- *)
+(* ---- the k interface at the cf instance: lane H's ifaceK_cf (YGcfInstHit.v:590; AOX_cf B / rpre_cf B are AOXm_cf B /
+   rpre_cfr B by definition, YGcfInstBase.v:599-600), over the rows above. ---- *)
 Lemma IFKc_B : forall Hp,
   AIfaceK B (U_cf B) malloc_cf (ARXq_cf B IOK Hp) (AOXm_cf B) (YGcfRmodel.rpre_cfr B) cf_malloc_max LIVE_MAX qtight
     (dpost_cf B) cf_pc_malloc_max cf_pc_spin_shadow.
@@ -386,7 +387,7 @@ End c.
 
 (* ---- At B''s record B := lib/Reusable/YD2l.TfibB and IOK := (fun i => i = as_inst TfibB), the symbol record, the
    instance object, the depot hash (so HDEP, lib/AU/YGcfInstF1WB.v's HDEP_TfibB) and HENS close (YD2l.TfibB_syms, by
-   IOK's definition, YD2l's as_dhash field, a Theorem Labs lane's lib/AU/PresetImg_errnonst.v:36 errno_nstatic_B).  Open: lane
+   IOK's definition, YD2l's as_dhash field, a Theorem Labs lane's lib/AU/PresetImg_errnonst.v:37 errno_nstatic_B).  Open: lane
    S's two secondary interfaces. ---- *)
 Corollary aalloc_realizes_cf_em_m_TfibB_B : forall acf, acf = 0 \/ acf = 1 ->
   (forall Hp, AGif4.AIfaceSw YD2l.TfibB (U_cf YD2l.TfibB) malloc_cf

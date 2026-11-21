@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/Ent102L4A.v, with its module paths and module names changed; 300 of its 745 lines of code are new or changed and 262 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image A' (asan, harness fix #102, PIN sha256
    1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44, unstripped twin bff8519bbe3ea0e4):
    SEGMENT L4 of LLVMFuzzerTestOneInput (entry 0x815e0), proved against lib/A/Ent102CutsA.v's `seg_L4_stmt`
@@ -18,17 +19,17 @@
                                     ec_supply_run, ec_call_evs_ranout_false and call_tail's None arm - through the
                                     BRIDGE l4_rej_bridge: that list is ec_rej E when e_sm E = jr_strtod)
      +0x2f4  the return site = EC_AR_CRS0 = cut_crs0, at cut_caw's index + |ec_rej E| (l4_idx_crs0).
-   STATEMENT: lib/A/Ent102CutsA.v blob 2fb50b636f51 (a working branch 83576a163e5b, statements of CUT STABLE
-   2ab248e3b164: the exact room position of 5e3a8d7d8a3b, its record fix 9a4f89c34639 - e_sm E = jr_strtod in ec_pre,
+   STATEMENT: lib/A/Ent102CutsA.v blob 2fb50b636f51 (a working branch, statements of CUT STABLE:
+   the exact room position, its record fix - e_sm E = jr_strtod in ec_pre,
    cut_caw at r = 0 only, cut_crs0 at ran = 0 with `e_n E <= EC_NMAX /\ fst (jr_run (e_sm E) (e_x E) []) = None`,
-   ech_noref - the decff kit sync eb783552c019 (the ledger's `.. ran most own`), ei_empty over both image bounds, the
+   ech_noref - the decff kit sync (the ledger's `.. ran most own`), ei_empty over both image bounds, the
    segments over `ec_hyps (e_dw E)` with ec_pre's `In (e_p E + e_n E) (e_dw E)`, ei_most_w);
    lib/A/Ent102PosA.v blob fd7e26dd0721 (ec_supply_run, ec_run_split, ec_call_evs_ranout_false, ec_rd_ck_read).
    LISTING: a Theorem Labs lane's whole-program listing lib/A/Listing_prog.v (blob 1ab147923c5d; slot k = byte offset 4k from the
    entry), with the PAListing PL_102_A of lib/A/Ent102PLA.v (blob a55fa7414ddf); the image half stays generic
    ({PA : PAImg A_prog_listing}; lib/A/PAImg_prog.v, PresetCfnA.v, PresetCfnB.v are not loaded, no vm_compute on pa_val /
    pa_sigma).
-   The kit TEXTS (the kit of record f97c8b2f046b by path on the record): lib/A/PRH_Base.v fdb45545469b (fpre with its last
+   The kit TEXTS (the kit of record by path on the record): lib/A/PRH_Base.v fdb45545469b (fpre with its last
    conjunct frm_zero, FRM0-ENTRY: each call's fy from ec_at; fpostm, fpostFm, src_rd, kept_at, kept_img, prh_run_at,
    prh_ledger's named projections), lib/A/PRH_FnCheck.v 9ecd8eb167c6 (tcheck_reject_clean_specX, ck_crcs_evs,
    ck_crcs_max, LIVE_check_reject_clean_starved, RQ_crcs), lib/A/PRH_FnPj.v 908f34f0beaa (RQ_pj_parse). Proved helpers
@@ -59,7 +60,7 @@
    lib/A/Prog/Ent102L6AfLem.v (blob a37e0dc13d12: the addi / jal steps, the frame geometry, the byte and register keeps).
    TEMPLATES TAKEN (by path): the call and its post follow lib/A/Prog/Ent102L6Af.v of a working branch
    (seg_L6f_A: the registers, the window and the exit assembly from the two journals); the arm structure follows
-   lib/B/Prog/EntS3B.v of a working branch 9a84f11012ba (es3_pay, es3_doc_src; old pin, its image facts
+   lib/B/Prog/EntS3B.v of a working branch (es3_pay, es3_doc_src; old pin, its image facts
    not cited). The sub step, the concrete call rules, the doc's window and the refused tail's run supply are
    lib/A/Prog/Ent102L4ADefs.v's.
    NUMERALS: 0x1b8 / 0x1bc / 0x2c8 / 0x2cc / 0x2d0 .. 0x2f4 / 0x2f8 are this lane's slot offsets (DERIVED from the cut

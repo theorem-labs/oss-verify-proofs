@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a failed load is split on range_meets_vvar, the model's vvar case); Section WithCfg is generic in the Leaf class of its realizes_cfg walks. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import bitvector.
@@ -8,6 +9,7 @@ From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import Leaf.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import
   ShapeAlgBase ShapeCfg NodesCfg LedgerCfg.
 
@@ -83,7 +85,7 @@ Proof.
   intros a t Ht. induction Ht as [c | c | c | c | c | c | n k Hk IH | n v k Hk IH];
     intros m report H; cbn [interp_eff_accesses] in H; try discriminate H.
   - inversion H; subst. constructor.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs |]; [| discriminate H].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs |]; [| destruct (range_meets_vvar segs a (width_bytes n)); discriminate H].
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) m)
       as [r0 | |] eqn:E; try discriminate H.
     inversion H; subst. cbn [accessed_ranges]. constructor.
@@ -499,6 +501,7 @@ Qed.
 Section WithCfg.
 Variable cfg : SpuriousCfg.
 Variable segs : list Segment.
+Context {LF : Leaf}.
 
 Theorem mi_account_step_exact : forall ms m report,
   step_accesses segs ms = MachineOk report ->

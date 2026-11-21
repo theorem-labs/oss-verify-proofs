@@ -24,7 +24,7 @@
      0x81d68: s_and_ptr (Reusable/YP0m.v:969-980) rewrites ps & 7 to 0 from the alignment fact, so `bnez` sees 0 and is
               not taken.
    These are the decisions of the released UBSan proof for the v1.8 image (proofs/libreac/fuzz_pcap/lib/U/Prog/
-   pcap_source_close.v on origin/ossv/recipes c8557374ad2e): close_closed :43 (if_false, premise bv_unsigned a0 <> 0 at
+   pcap_source_close.v): close_closed :43 (if_false, premise bv_unsigned a0 <> 0 at
    :23) and :45-46 (ub_align A8, premise bv_unsigned a0 mod 8 = 0 at :23), close_pro :82 and :84-85 (premises :58).
 
    The contract is lib/A's, not a copy (the shared-text rule): pb_pcap_source_closeX proves lib/A's image-generic
@@ -38,6 +38,7 @@
    lib/B/Stdio/WFclose.v (lib/B/Stdio/PFcloseInstB.v's inst_AFCLOSE_U composes it with lib/B/Stdio/WFcloseI.v).
    getr / mkst / seg_rom come from YK11; nothing from lib/Lib is imported. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_pcap/lib/B/Prog/PcapSourceClose.v, with its module paths, module names and numbers changed; 1709 of its 1849 lines of code are new or changed and 490 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* pcap_source_open (fuzz_pcap.asan 0x8145c, listing offset AF_pcap_source_open = 0xd24, 240 instructions) on
    libreac v1.9.0's ASan build: the walk of the code against its contract PcapSourceOpenDefs.tpcap_source_open_specX,
    in cgif_file's walk style (proofs/cgif/cgif_file_fuzzer/lib/A/AChf.v for the side-stack frame, and this unit's
@@ -374,7 +375,7 @@ rewrite Z.land_ones, Z.mod_small by lia.
 rewrite Z.ldiff_ones_r by lia. rewrite Z.shiftr_div_pow2, Z.shiftl_mul_pow2 by lia. change (2 ^ 5) with 32. lia.
 Qed.
 
-(* cgif_file_fuzzer lib/A/ACer.v:156-164 (origin/ossv/recipes c8557374ad2e). *)
+(* cgif_file_fuzzer lib/A/ACer.v:156-164 (theorem-labs/oss-verify-proofs@6b32741d849a). *)
 Lemma denot_and_m32 : forall E n v c, ew E n = Z_to_bv 64 v -> 0 <= v + c -> v + c < 2 ^ 64 -> 0 <= v < 2 ^ 64 ->
   sv_denot E (SAlu ALU_AND (SOff n c) (SLit (-32))) = Z_to_bv 64 (32 * ((v + c) / 32)).
 Proof.
@@ -637,7 +638,7 @@ split; [split; [|split; [|split; [|split; [|split]]]]|].
 Qed.
 
 (* ---- reading the cut's state off the engine's regions ---------------------- *)
-(* The shape the engine pins for every state it certifies (PcapHarnessTail.v:83-86 ms_eta, in the
+(* The shape the engine pins for every state it certifies (PcapHarnessTail.v:84-87 ms_eta, in the
    form op_mid asks for). *)
 Lemma op_ms_shape : forall (msx : machine_state) r pcv m,
   msx = mkst r pcv m (seg_rom SEGS) ->

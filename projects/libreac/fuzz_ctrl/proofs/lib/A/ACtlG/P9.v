@@ -6,6 +6,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3a.v, with its module names changed; 1977 of its 2075 lines of code are new or changed and 2368 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3b.v, with its module paths, module names and numbers changed; 884 of its 966 lines of code are new or changed and 1993 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/F13.v; 128 of its 145 lines of code are new or changed and 949 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/P9.v -- GLUE for stage seg_P9 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput (lib/A/ACtl.v:729).
    Written by a Theorem Labs lane's glue lane (piece W3, second part); single writer.  rule 24: no function proved
    (stage glue of a walk).
@@ -26,7 +27,7 @@
    the munch (P8.w3_ctlrtC_munch).
 
    SECTION HYPOTHESIS: LAWS (ACtl.v:183).  The memory helpers are cited by name from
-   a Theorem Labs lane's shared lib/A/ACtlG/KitMem.v (a working branch 4a56e997c0f, merged).
+   a Theorem Labs lane's shared lib/A/ACtlG/KitMem.v (a working branch, merged).
 
    CLOSURE and SHADOWED NAMES: as lib/A/ACtlG/P8.v (twin modules through fully qualified aliases). *)
 

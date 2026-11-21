@@ -1,5 +1,5 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgSeg.v at 256ddb9487c and
-   proofs/reac-pw/fuzz_role/lib/A/RPgHarn.v at 680a13dcf7c for reac-pw/fuzz_rate image A: role's pcs, registers and
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgSeg.v and
+   proofs/reac-pw/fuzz_role/lib/A/RPgHarn.v for reac-pw/fuzz_rate image A: role's pcs, registers and
    real-frame cells are replaced by the ones measured on fuzz_rate.asan and its contract file and image record by
    rate's (lib/A/RtPgCSpec.v, lib/A/RtPgImgA.v; the rl_ vocabulary becomes rt_); the build's latch gains a third
    entry; the checks' tail becomes the asked[] set-up, the decide loop and its tail; the third segment (the list), the

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reservation a system-call return or a failing store-conditional clears). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
@@ -20,6 +21,10 @@ Local Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 #[local] Arguments Uint63Axioms.to_Z : simpl never.
 #[local] Arguments Uint63Axioms.of_Z : simpl never.
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
 
 Lemma page_round_up_bounds (len : Z) : 0 < len -> len <= page_round_up_Z len < len + 4096 /\ page_round_up_Z len mod 4096 = 0.
 Proof.
@@ -60,6 +65,10 @@ Variable fs0 : Fs.Fs.
 Hypothesis Hlow : segs_low segs.
 
 Notation MRm := (MR segs fs0).
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
 
 Section Gate.
 Variable ρ : valuation.
@@ -112,6 +121,10 @@ Qed.
 
 End Gate.
 
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
 Section NaFresh.
 Variable ρ : valuation.
 Variable am : amodel.
@@ -160,6 +173,10 @@ Qed.
 
 End NaFresh.
 
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
 Lemma expose_ledger (ρ : valuation) (am : amodel) (model model' : Model) (e0 : aent) (a n : Z) :
   MRm ρ am model -> In e0 (am_maps am) -> leval ρ (ae_base e0) <= a -> a + n <= leval ρ (ae_base e0) + ae_size e0 ->
   vm_maps (m_vmmaps model') = vm_maps (m_vmmaps model) -> alloc_top (m_vmmaps model') = alloc_top (m_vmmaps model) ->
@@ -178,6 +195,10 @@ Qed.
 
 End Shared.
 
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
 Section Post.
 Variable segs : list Segment.
 Variable fs0 : Fs.Fs.
@@ -185,15 +206,19 @@ Variable LIM : Z.
 
 Notation MRm := (MR segs fs0).
 Notation RR ρ := (R segs amodel (MRm ρ) LIM ρ).
-
+(* WAS `a_resv B = a_resv A` with `(ms_resv ms)` in the conclusion.  advance_past_svc
+   clears the reservation at this revision (LPS@75d69e00 Run.v:221-227), so the
+   post-syscall machine state carries None and the abstract post-state built by
+   AxSys.v's with_model carries RNone.  Same restatement as AxSysSound.v's R_sys_post,
+   which this lemma is the mem'-varying twin of. *)
 Lemma R_sys_post_B (ρ : valuation) (A B : AST) (ms : machine_state) (model m' : Model) (ret : word) (rv : xv) (mem' : word -> option byte) :
   RR ρ A (mkCfg ms model) ->
-  a_pc B = npc A -> pc_ok (npc A) = true -> a_regs B = aset (a_regs A) reg_a0 rv -> a_resv B = a_resv A ->
+  a_pc B = npc A -> pc_ok (npc A) = true -> a_regs B = aset (a_regs A) reg_a0 rv -> a_resv B = RNone ->
   xv_val ρ rv ret -> sat ρ (a_facts B) -> MRm ρ (a_model B) m' -> m_halted m' = None ->
   vm_backing_used m' <= a_budget B -> vm_limit (m_vmmaps m') = LIM ->
   RMem segs ρ (a_mem B) mem' -> hs_ok ρ (a_mem B) mem' -> mem_cov segs m' mem' -> comp_inv segs ρ (a_mem B) m' ->
   na_ok segs ρ (a_mem B) m' mem' ->
-  RR ρ B (mkCfg (setx ms (Z_to_bv 5 10) ret (ms_pc_val ms + Z_to_bv 64 4) (ms_resv ms) mem') m').
+  RR ρ B (mkCfg (setx ms (Z_to_bv 5 10) ret (ms_pc_val ms + Z_to_bv 64 4) None mem') m').
 Proof.
   intros HR Epc Hok Eregs Eresv Hv Hsat HM Hh Hb Hl HRM Hhs Hcov Hcomp Hna.
   destruct HR as [H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15]. cbn [cfg_ms cfg_model] in *.
@@ -202,21 +227,28 @@ Proof.
   - rewrite Epc. exact (pc_ok_spec _ Hok).
   - reflexivity.
   - rewrite Eregs. change reg_a0 with (ri (Z_to_bv 5 10)). apply RRegs_set; assumption.
-  - rewrite Eresv. exact H5.
+  - rewrite Eresv. reflexivity.
   - split; assumption.
 Qed.
 
+(* [comment removed for export] *)
+(* The fifth (reservation) argument WAS `(ms_resv ms)` in both of these; see
+   AxSysSound.v's adv_effect for the one field advance_past_svc moved. *)
 Lemma adv_zeros (ms : machine_state) (ret a n : word) :
   advance_past_svc (apply_effect (latch ms) (mkEffect ret [] [(a, n)]))
-  = setx ms (Z_to_bv 5 10) ret (ms_pc_val ms + Z_to_bv 64 4) (ms_resv ms) (apply_zeros (ms_mem ms) [(a, n)]).
+  = setx ms (Z_to_bv 5 10) ret (ms_pc_val ms + Z_to_bv 64 4) None (apply_zeros (ms_mem ms) [(a, n)]).
 Proof. reflexivity. Qed.
 
 Lemma adv_unmaps (ms : machine_state) (ret a n : word) :
   advance_past_svc (apply_effect (latch ms) (mkEffectU ret [] [] [(a, n)] [] []))
-  = setx ms (Z_to_bv 5 10) ret (ms_pc_val ms + Z_to_bv 64 4) (ms_resv ms) (apply_unmaps (ms_mem ms) [(a, n)]).
+  = setx ms (Z_to_bv 5 10) ret (ms_pc_val ms + Z_to_bv 64 4) None (apply_unmaps (ms_mem ms) [(a, n)]).
 Proof. reflexivity. Qed.
 
 End Post.
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
 
 Lemma smod_form (ρ : valuation) (f : lin) :
   0 <= fst f < 9223372036854775808 -> 0 <= leval ρ f < AxAcct.two64 -> smod ρ (snd f) (wofZ (fst f)) = leval ρ f.
@@ -224,6 +256,9 @@ Proof.
   intros Hc Hv. unfold smod, leval in *. rewrite wZ_wofZ. unfold AxAcct.two64 in Hv.
   rewrite Zplus_mod_idemp_r. rewrite Z.add_comm. apply Z.mod_small. unfold FastWord.two64. lia.
 Qed.
+
+Lemma wZ_form (f : lin) : 0 <= fst f < 9223372036854775808 -> wZ (wofZ (fst f)) = fst f.
+Proof. intros Hc. rewrite wZ_wofZ. apply Z.mod_small. unfold FastWord.two64. lia. Qed.
 
 Section Expose.
 Variable segs : list Segment.
@@ -250,6 +285,7 @@ Hypothesis Hlo : leval ρ (ae_base e0) <= leval ρ f.
 Hypothesis Hhi : leval ρ f + nZ <= leval ρ (ae_base e0) + ae_size e0.
 Hypothesis Hexp : forall z, leval ρ f <= z < leval ρ f + nZ -> ~ in_exp ρ (am_exp (a_model A)) e0 z.
 
+(* [comment removed for export] *)
 Variable model' : Model.
 Hypothesis Em : vm_maps (m_vmmaps model') = vm_maps (m_vmmaps model).
 Hypothesis Et : alloc_top (m_vmmaps model') = alloc_top (m_vmmaps model).
@@ -351,6 +387,10 @@ Qed.
 
 End Expose.
 
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
 Section Main.
 Variable segs : list Segment.
 Variable cfg : SpuriousCfg.
@@ -363,6 +403,8 @@ Hypothesis Hlow : segs_low segs.
 Notation MRm := (MR segs fs0).
 Notation RR ρ := (R segs amodel (MRm ρ) LIM ρ).
 
+(* [comment removed for export] *)
+(* [comment removed for export] *)
 Lemma fix_nores (flagsw : word) (flags : Z) : bv_unsigned flagsw = flags -> (flags = 50 \/ flags = 16434) ->
   mmap_noreserve_b flagsw = (flags =? 16434).
 Proof.
@@ -409,14 +451,14 @@ Proof.
   destruct (fix_shape_spec A 3 nZ lz Esh) as (len & flags & L11 & L12 & L13 & L15 & Hlen & EnZ & Hfl & Elz).
   subst nZ. set (nZ := page_round_up_Z len) in *.
   pose proof HR as [H1 H2 H3 H4 H5 H6 H7 H8 H9 [H10 H10'] H11 H12 H13 H14 H15]. cbn [cfg_ms cfg_model] in *.
-
+  (* [comment removed for export] *)
   pose proof (reg_lit ρ _ ms (Z_to_bv 5 17) 17%uint63 222 H4 eq_refl H17) as R17.
   pose proof (reg_lit ρ _ ms (Z_to_bv 5 11) 11%uint63 len H4 eq_refl L11) as R11.
   pose proof (reg_lit ρ _ ms (Z_to_bv 5 12) 12%uint63 3 H4 eq_refl L12) as R12.
   pose proof (reg_lit ρ _ ms (Z_to_bv 5 13) 13%uint63 flags H4 eq_refl L13) as R13.
   pose proof (reg_lit ρ _ ms (Z_to_bv 5 15) 15%uint63 0 H4 eq_refl L15) as R15.
   pose proof (xform_sound ρ _ _ (rg ms (Z_to_bv 5 10)) f H11 (H4 (Z_to_bv 5 10)) Ef) as R10.
-
+  (* [comment removed for export] *)
   destruct (find_ent_spec _ f nZ _ e0 Ee) as [He0 Hhas]. destruct (ent_has_sound ρ _ f nZ e0 H11 Hhas) as [Hlo Hhi].
   destruct (page_round_up_bounds len ltac:(lia)) as [Hb1 Hb2]. fold nZ in Hb1, Hb2.
   assert (HnZ : 0 < nZ < 70368744181760) by lia.
@@ -424,7 +466,7 @@ Proof.
   pose proof (lin_al_sound ρ 4096 f ltac:(lia) P4) as Hal.
   assert (Hexp : forall z, leval ρ f <= z < leval ρ f + nZ -> ~ in_exp ρ (am_exp (a_model A)) e0 z)
     by (intros z Hz; exact (exp_miss_sound ρ _ f nZ e0 _ z H11 Hmiss Hz)).
-
+  (* [comment removed for export] *)
   pose proof (gate_of_MR segs fs0 ρ _ model H8 e0 He0 f len Hlen Hlo Hhi
                 Hal (rg ms (Z_to_bv 5 10)) (rg ms (Z_to_bv 5 11)) R10 R11) as G.
   pose proof (fix_rw_shape_lit (rg ms (Z_to_bv 5 12)) (rg ms (Z_to_bv 5 13)) (rg ms (Z_to_bv 5 15)) R12 ltac:(rewrite R13; exact Hfl) R15) as S.
@@ -439,9 +481,10 @@ Proof.
   assert (Hbok : mmap_fixed_rw_budget_ok flagsw model addr (fix_n (rg ms (Z_to_bv 5 11))) = true).
   { unfold mmap_fixed_rw_budget_ok, vm_backing_within_limit. fold (fix_rw_model flagsw addr (fix_n (rg ms (Z_to_bv 5 11))) model). fold m'.
     apply Z.leb_le. rewrite Hlim. lia. }
-
+  (* [comment removed for export] *)
   apply (rzc_latch segs cfg ms model w (KT ρ o) H9 H3 Hf He).
-  apply (rzc_sys_silent segs cfg (latch ms) model (rg ms (Z_to_bv 5 17)) (KT ρ o) H9 eq_refl).
+  apply (rzc_sys_silent segs cfg (latch ms) model (rg ms (Z_to_bv 5 17)) (KT ρ o) H9 eq_refl
+           (rob_sys_222 segs (latch ms) model (rg ms (Z_to_bv 5 17)) eq_refl R17)).
   - rewrite (check_syscall_222 segs (latch ms) _ _ model R17).
     exact (chk_fix_rw_modeled model addr (rg ms (Z_to_bv 5 11)) (rg ms (Z_to_bv 5 12)) flagsw (rg ms (Z_to_bv 5 14)) (rg ms (Z_to_bv 5 15)) S G _).
   - intros eff m1 evs Hc. rewrite (check_syscall_222 segs (latch ms) _ _ model R17) in Hc.
@@ -469,10 +512,10 @@ Proof.
       apply (R_sys_post_B segs fs0 LIM ρ A B ms model m' _ (aget (a_regs A) reg_a0) _ HR); try reflexivity; try assumption.
       * rewrite <- Eaddr. exact (H4 (Z_to_bv 5 10)).
       * rewrite Em'. apply (MR_fix segs fs0 ρ _ model H8 e0 He0 f nZ ltac:(lia) Hlo Hhi (conj Hal ltac:(unfold nZ, page_round_up_Z, page_size; apply Z_mod_mult)) flagsw).
-        --
+        -- (* [comment removed for export] *)
            intros Hnrk. rewrite (fix_nores flagsw flags R13 Hfl) in Hnrk. rewrite <- Elz in Hnrk. rewrite Hnrk in Kbig. cbn in Kbig.
            apply Z.leb_le in Kbig. exact Kbig.
-        --
+        -- (* [comment removed for export] *)
            intros Hfk. rewrite (AxLz.lzfull_na e0 P1) in Hfk. discriminate Hfk.
       * unfold m'. rewrite fix_rw_halted. exact H9.
 Qed.

@@ -5,13 +5,14 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/Reusable/YN0j.v, with its module paths and module names changed; 546 of its 584 lines of code are new or changed and 260 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segC.v, with its module names changed; 1538 of its 1613 lines of code are new or changed and 509 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segC2.v, with its module paths and module names changed; 411 of its 469 lines of code are new or changed and 1555 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs program part, lane ENTRY, IMAGE B (fs.asan-ubsan, pinned 5ac5ce0954f8), segment S2 of the LLVMFuzzerTestOneInput
    walk (fs.asan-ubsan 0x80ff8-0x81094, the B twin of lib/A/FSW_entry_s2.v) against lib/B/FSH_Fn_entry.v fs_entry_goal:
    fe_seg2, from the resume after __asan_stack_malloc_0 (lib/B/FSW_entry_defs.v ss_B2 / INV_B2) to the return of
    memchr(data, 0, size) (fe_ss RA_memchr [] / INV_C1); A's lemma names and argument order, every numeral image B's own
    (B listing dis_fsB/LLVMFuzzerTestOneInput.fuzz_state.asan-ubsan.s), no CTX / trace premise.
    rule 24: proves function LLVMFuzzerTestOneInput (segment S2; reuse search: proof-index LLVMFuzzerTestOneInput,
-   ported from a working branch 08ad70da3bf).
+   ported from a working branch).
    The code (B listing): `mv s2, a0; j; mv s8, s2; bnez s2` (0x80ff8-0x81008; taken: the granted frame is at least
    4096, so the real-stack fallback 0x8100c-0x81024 is dead), `sd s8, 0(s1)` (0x81028), the frame header words at
    s8 + 0 / 8 / 16 (0x8104c-0x81054: 0x41b58ab3, the frame string 0x1377c, FS_LLVMF 0x80f8c), `srli s9, s8, 3; add s9,
@@ -28,8 +29,8 @@
    Section hypotheses: IMG - A's own, at B's values - and fe_mch (the entry's own runtime use: FsEntryRt's fe_memchr at
    PC_memchr), discharged by the top file from the goal's fs_img_facts / FsEntryRt.
    RELOC-B hypotheses (owner RELOC-B): none.
-   Ported from: a working branch 0d34d65d2b7 lib/A/FSW_entry_s2.v (itself from a Theorem Labs lane's crcs lane,
-   a working branch c4bfd3bc057 lib/A/FSH_check_reject_clean_starved.v:91-150). *)
+   Ported from: a working branch lib/A/FSW_entry_s2.v (itself from a Theorem Labs lane's crcs lane,
+   a working branch lib/A/FSH_check_reject_clean_starved.v:91-150). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

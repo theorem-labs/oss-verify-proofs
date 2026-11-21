@@ -4,10 +4,11 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/AE2y.v, with its module paths and module names changed; 503 of its 563 lines of code are new or changed and 644 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/PSnpSeam.v, with its module paths and module names changed; 837 of its 913 lines of code are new or changed and 487 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/PSnpSeamReady.v, with its module paths and module names changed; 215 of its 368 lines of code are new or changed and 760 lines of the source are left out. *)
-(* Image B twin of lib/A/RT_pf_chain_sat.v at 915f98b09fb: module paths lib.A -> lib.B, AB1v -> YB1v; 27 image numerals moved to fuzz_reply.asan-ubsan by symbol + offset, each checked against that image (CHAINB-numerals.tsv sha256 3cedf5e564f7; internal record). *) (* NON-VACUITY WITNESS for RT_pf_chain.v snprintf_chain_closed.
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Image B twin of lib/A/RT_pf_chain_sat.v: module paths lib.A -> lib.B, AB1v -> YB1v; 27 image numerals moved to fuzz_reply.asan-ubsan by symbol + offset, each checked against that image (CHAINB-numerals.tsv sha256 3cedf5e564f7; internal record). *) (* NON-VACUITY WITNESS for RT_pf_chain.v snprintf_chain_closed.
 
    snprintf_chain_closed proves PS.snprintf_icpt_stmt GM.set_ready (PS.vf_ready_icpt fr_vfb).  Its premise icpt_ready
-   (RT_pf_stmt.v:93-97) asks vf_ready_icpt fr_vfb (RT_pf_stmt.v:193-200), and fr_vfb is GXA's vf_ready_a
+   (RT_pf_stmt.v:94-98) asks vf_ready_icpt fr_vfb (RT_pf_stmt.v:194-201), and fr_vfb is GXA's vf_ready_a
    (G_vfprintf_snf.v:218-220) at out_ready := snf_out_ready GM.copy_ready, set_ready := GM.set_ready and
    strn_ready := GC.strn_ready (fr_vfb_unfold).  vf_ready_a asks GXA's pc_guard (G_printf_core_common.v:149-158) at
    every store its footprint reaches (G_vfprintf_snf.v:186-191; fr_vfb_pc_guard).  At the set_ready that asked
@@ -21,7 +22,7 @@
    reaches from sat_m.  chain_pc_guard_bites: each clause has a call to cover (the memset call has N = 64, so its
    clause does not hold only through set_ready's premise 0 <= n).
 
-   The construction is a Theorem Labs lane's FMgxaSeamSat.v (relocated to reply on a working branch 6e47a021e3f, where it
+   The construction is a Theorem Labs lane's FMgxaSeamSat.v (relocated to reply on a working branch, where it
    does not build: its FMgxaSeamReady.v needs the world field w_H8).  This file takes Sat's store and cells and the
    generic cell lemmas of FMgxaSeamReady.v section 5 that Sat uses (bz_mrd_mbyte .. cells_cons8, proofs unchanged,
    FMupoison.wz copied as wz).  None of them reads w_H8 or any world.  The clauses are proved directly in place of

@@ -3,16 +3,17 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the trim loop of the inlined words_of in LLVMFuzzerTestOneInput's ASan walk (plugin-hostd/fuzz_command, 0x867a4 .. 0x867e4, back to its head or on to 0x8680c), in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACbk.v (a seed, the symbolic engine's runs and their branches) and A/ACfj.v (rt_G_allX: a loop by induction on its counter), over the plain proof's lib/Prog/SlotWordsRun.v sw_trim. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/LLVMFuzzerTestOneInput_s43.v, with its module paths and module names changed; 484 of its 560 lines of code are new or changed and 548 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan image A (fuzz_segconf.asan, pin sha256 48c5355bdacb): piece 2 of segment S14 of the walk
    of the test harness's entry function LLVMFuzzerTestOneInput (0x84d34), file group _s22b: from the return of
    the strrchr wrapper (S22_VR, 0x85930) to the continue join (S22_JOIN, 0x859c4) or to the head of the digit loop
    (S22_VD, 0x85974), the statement s22_p2_stmt of LLVMFuzzerTestOneInput_s22k.v.
 
-   proves function LLVMFuzzerTestOneInput (reuse search: origin/main@6e24fa4d602c origin/ossv/recipes@3abc3740de97
-   origin/ossv/candidates@ee89628c9971 origin/release/pau-projects-recipes@b6a0088adcb4 / the stream's proof index
+   proves function LLVMFuzzerTestOneInput (reuse search: origin/main origin/ossv/recipes
+   origin/ossv/candidates origin/release/pau-projects-recipes / the stream's proof index
    LLVMFuzzerTestOneInput + four-ref git grep; checker (fresh, read-only): CONFIRM; none: written new)
 
-   THE FORM: plugin-hostd/fuzz_command's lib/A/Prog/LLVMFuzzerTestOneInput_s43.v (origin/ossv/recipes 501c0d516c69):
+   THE FORM: plugin-hostd/fuzz_command's lib/A/Prog/LLVMFuzzerTestOneInput_s43.v:
    a seed with the one byte the code reads (a region at a0), the symbolic engine's runs and their branches, the
    context carried by a kept-memory lemma. The code (dis:769-785, 804-805, 930-932 of the neutral excerpt):
    - 0x85930 beqz a0: strrchr found no '.' -> 0x859bc ld a5,176(s1); 0x859c0 ld a6,168(s1); the join 0x859c4;

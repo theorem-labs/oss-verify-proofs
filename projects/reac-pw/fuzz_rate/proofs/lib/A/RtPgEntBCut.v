@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgEntBCut.v at d1ed1a6d9011 for reac-pw/fuzz_rate's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgEntBCut.v for reac-pw/fuzz_rate's
    image A: module paths changed; the cut states are lib/A/RtPgSeg.v's and the block context and entry premise are
    lib/A/RtPgW6aBase.v's w6_ctx and lib/A/RtPgW6bBase.v's w6b_in (rate's registers and real-frame cells); the image
    record is RtPgImgA.rate_himg_A (six write ranges, the 56-byte frame shadow); the entry bridge also carries the

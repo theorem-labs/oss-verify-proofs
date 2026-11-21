@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseLB.v at d428443238a; for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseLB.v; for image B
    (fuzz_role.asan-ubsan): image B's pcs and code; the last body byte's address is in a0 (atom 10) and P + c + 8 in a1
    (atom 11); the key select is branchless (snez / addi / and, lb_mask_U and lb_key_val, by cases on the byte), so the
    walk splits only at the alignment branch; the key slot at L2 is in a1; lib/AU/RPgParseBase.v and lib/AU/Img0.v in

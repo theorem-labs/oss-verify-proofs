@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (tall_of_twf over nstep_cfg acfg). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -67,7 +68,10 @@ Proof.
   intros rsp mo' evs Hst. apply IH. exact (H _ _ _ (SUB _ _ _ _ _ Hst)).
 Qed.
 
-Lemma tall_of_twf {R} (t : itree node R) : forall mo Q, twf t mo Q -> tall nstep t mo Q.
+(* LPS 75d69e00: [twf] is now stated over [nstep_cfg acfg], so this concludes over the
+   same relation.  [ctall] below already used that form, and [ctall_of_etwf]'s
+   [tall_antitone] step is therefore no longer needed. *)
+Lemma tall_of_twf {R} (t : itree node R) : forall mo Q, twf t mo Q -> tall (nstep_cfg acfg) t mo Q.
 Proof.
   induction t as [r | n k IH]; intros mo Q H; cbn in *; [exact H|].
   destruct H as [_ Hk]. intros rsp mo' evs Hst. apply IH. exact (Hk _ _ _ Hst).
@@ -79,7 +83,7 @@ Definition ctall {A} (t : itree node (exc A)) (mo : Model) (Q : A -> Model -> Pr
 
 Lemma ctall_of_etwf {A} (t : itree node (exc A)) mo Q : etwf t mo Q -> ctall t mo Q.
 Proof.
-  intros H. unfold ctall, etwf in *. apply (tall_antitone nstep); [intros; eapply nstep_cfg_sub; eassumption|].
+  intros H. unfold ctall, etwf in *.
   eapply tall_mono; [apply tall_of_twf; exact H|]. intros [|a] mo'; cbn; tauto.
 Qed.
 

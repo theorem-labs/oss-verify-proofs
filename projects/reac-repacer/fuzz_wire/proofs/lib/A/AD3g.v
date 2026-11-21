@@ -18,23 +18,23 @@
    Amendment 1 to this statement: md_takes carries positivity; the pre adds
    md_takes md (as_depot B + tlm_mu, 16) (the depot cells Create writes) and kHighMemBeg <= ly_stk_lo ly; Section
    hypothesis mod_stk_ge : 0 <= mod_stk. Discharge at Put's call site, from the at-main state:
-   - md_takes md (as_depot B + tlm_mu, 16): the cells are [0x582660, 0x582670) (TFIB_DEPOT 0x182658, AF0m.v:21, +
-     d_map1 - 8 = 0x400008), inside [TFIB_IMG_LO, TFIB_IMG_END) = [0x10000, 0x5f5000) (AF0x.v:27,39; YImgTop.v:8-9),
-     which img_cover ly (AF0x.v:56, a pre of tfib_depot_spec, AFl0.v:73) puts inside ly_img ly; ALedger's al_imgcov
+   - md_takes md (as_depot B + tlm_mu, 16): the cells are [0x582660, 0x582670) (TFIB_DEPOT 0x182658, AF0m.v:22, +
+     d_map1 - 8 = 0x400008), inside [TFIB_IMG_LO, TFIB_IMG_END) = [0x10000, 0x5f5000) (AF0x.v:28,39; YImgTop.v:8-9),
+     which img_cover ly (AF0x.v:57, a pre of tfib_depot_spec, AFl0.v:74) puts inside ly_img ly; ALedger's al_imgcov
      (YG0n.v:615-616) gives each such byte in segments_reserved segs = vm_reserved (m_vmmaps md) (al_reserved,
      YG0n.v:597); so the left disjunct of md_takes holds, with 0 < 16.
-   - kHighMemBeg <= ly_stk_lo ly: layout_ok's lo_top last conjunct (YG0f.v:441); a stack-only field, true at main.
+   - kHighMemBeg <= ly_stk_lo ly: layout_ok's lo_top last conjunct (YG0f.v:442); a stack-only field, true at main.
    - mod_stk_ge: a Theorem Labs lane's stack number for MmapOrDie is a byte count (>= 0).
    Amendment 6 to this statement: P5's frame also excludes the mutex word
    [DP + tlm_mu, DP + tlm_mu + 4) that Create writes (sc.w 0x726d4, sb 0x7274c); its final value stays stated by
    val_mem m' (DP + tlm_mu) 4 0. Written cells: the mutex word (final 0) and map1_[0] (final x) and X (final zero) are
    excluded from "unchanged" with their final values stated; the stack window [sp - TLM_STK, sp) below sp is scratch
-   (excluded, no value), as tfib_depot_spec's DEP_STK window (AFl0.v:85).
+   (excluded, no value), as tfib_depot_spec's DEP_STK window (AFl0.v:86).
    Amendment 8 to this statement:
    - S8: AD3h's mod_contract by name, closed by AD3h's mod_holds (Qed). md_takes and md_room come from lib/A/AD3d.v
      (their one home; AD3h Requires it), MOD_STK, mod_cells and mod_room from AD3h; this file's copies are gone.
      MOD_STK = 104 replaces mod_stk and mod_stk_ge; mod_cells replaces mnr_cells (same text); mod_room's budget is 2 * n.
-   - World: the grant is exposed by allow_expose (YG0b.v:421-427), so the post states w_A W' = (x, x + kNodesBlockSize)
+   - World: the grant is exposed by allow_expose (YG0b.v:422-428), so the post states w_A W' = (x, x + kNodesBlockSize)
      :: w_A W and w_H W' a = w_H W a outside X, in place of w_H W' = w_H W (false whenever W hides a byte of the granted
      range: P4 gives apresent (w_H W') mem' (x + i), i.e. w_H W' = false on X).
    - P2's in_app: from the model, as in anon_grant_facts' own proof (YG0j.v:308-327): 4096 <= x from AD3h's P2
@@ -76,13 +76,14 @@
    level-1 index is id >> 16 (srli a1,s1,0x10 at 0x7206c, kept in a1 to the Create call at 0x72114). StackDepotBase
    splits ids as kIdSizeLog = 31 = 15 + 16 (map1_ has 2^15 slots of 2^16 nodes; sanitizer_flat_map.h:143-155,
    sanitizer_stackdepotbase.h:27-30, llvm-20.1.8). knock's depot holds at most DEPOT_MAX = 4096 traces
-   (AFem.v:35-38 depot_len_bound over universe_ok; AFem.v:128 nD_range 0 <= nD <= 4096), so every id is
+   (AFem.v:36-39 depot_len_bound over universe_ok; AFem.v:129 nD_range 0 <= nD <= 4096), so every id is
    <= 4097 < 65536 = 2^16 and idx = 0 (discharged at Put by a Theorem Labs lane's one-block lemma depot_node_id_le, lib/A/AD3i.v on
-   its line 307); and 2^16 nodes x 16 bytes = 0x100000 = kNodesBlockSize (YG0f.v:35).
+   its line 307); and 2^16 nodes x 16 bytes = 0x100000 = kNodesBlockSize (YG0f.v:36).
    Create runs once: after it map1_[0] <> 0, and Put's ld at 0x72078 skips the call.
    the donor's proofs/libreac/fuzz_knock/lib/A/AD3g.v states Create's cells on fuzz_knock.asan, and yajl-ruby's projects/yajl-ruby/json_fuzzer/proofs/lib/A/AF_depot5.v:67 cr_A states the same
    cells on its binary; this file states them on fuzz_wire.asan's addresses (THE CODE listing above and the addresses marked as the donor's are fuzz_knock.asan's). *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/A/AD3g.v (donor image sha256 61768cf4739b), with its module paths changed, names TfibSyms -> WireSyms and its addresses moved to reac-repacer/fuzz_wire's ASan build. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -107,13 +108,13 @@ Section g. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 
 (* md_takes and md_room: lib/A/AD3d.v. MOD_STK, mod_cells, mod_room, mod_contract and mod_holds: lib/A/AD3h.v. *)
 
-(* a Theorem Labs lane's helper, the same text as lib/Reusable/YG0f.v:94-96. Encoding of "nodes block not yet
+(* a Theorem Labs lane's helper, the same text as lib/Reusable/YG0f.v:95-97. Encoding of "nodes block not yet
    mapped": ly_NB ly = 0. *)
 Definition set_ly_NB (ly : alayout) (nb : Z) : alayout :=
 ALayout (ly_prim ly) (ly_space ly) (ly_Q ly) (ly_T ly) (ly_C ly) (ly_F ly) nb (ly_SB ly) (ly_top ly)
 (ly_stk_lo ly) (ly_stk_hi ly) (ly_tsd ly) (ly_tr0 ly) (ly_extra ly) (ly_D ly) (ly_vis0 ly) (ly_img ly) (ly_sec ly).
 
-(* static_extents ly (YG0f.v:375-385) without the nodes block's own entry (ly_NB ly, kNodesBlockSize), and with the
+(* static_extents ly (YG0f.v:376-386) without the nodes block's own entry (ly_NB ly, kNodesBlockSize), and with the
    store block's entry only once it is mapped: Put creates the nodes block (0x72114) BEFORE StackStore creates the store
    block (Node::store 0x7209c -> Store -> Alloc -> BlockInfo::Create), so on this image's first Put ly_SB ly = 0 here too, and
    the entries (0, kNodesBlockSize), (0, kStoreBlockSize) are "not mapped" (a Theorem Labs lane's encoding), which no fact places. *)
@@ -123,7 +124,7 @@ Definition ext_but_NB (ly : alayout) : list (Z * Z) :=
    (ly_stk_lo ly, ly_stk_hi ly - ly_stk_lo ly); ly_img ly]
   ++ (if ly_SB ly =? 0 then [] else [(ly_SB ly, kStoreBlockSize)]).
 
-(* Cell offsets in StackDepotBase (as_depot B, YG0f.v:241): nodes = TwoLevelMap {mu_ (StaticSpinMutex byte, the
+(* Cell offsets in StackDepotBase (as_depot B, YG0f.v:242): nodes = TwoLevelMap {mu_ (StaticSpinMutex byte, the
    lock word's other bytes padding) at d_map1 - 8; map1_[] at d_map1}. *)
 Definition tlm_mu : Z := d_map1 - 8.
 
@@ -183,8 +184,8 @@ Definition tfib_tlm_create_nb_spec (B : asyms) : Prop :=
                (forall a, apresent H mem a -> apresent (w_H W') mem' a) /\ same_io md md' /\
       (* P6 *) layout_grow_kd ly (set_ly_NB ly x) /\
       (* P7 *) Forall (fun q => zdisjoint (x, kNodesBlockSize) (bv_unsigned (fst q), bv_unsigned (snd q))) (vm_maps (m_vmmaps md))).
-(* AD3h.v:104 md_takes md ((sp - 32) - MOD_STK, MOD_STK): from AD3g.v:160 (md_takes over ext_but_NB's stack extent, AD3g.v:123) and AD3g.v:158 (ly_stk_lo ly <= sp - TLM_STK, sp <= ly_stk_hi ly), by md_takes_sub. *)
-(* AD3h.v:103 TFIB_IMG_END <= (sp - 32) - MOD_STK: TFIB_IMG_END = IMG_TOP = 0x5f5000 (AF0x.v; YImgTop.v:9) < kHighMemBeg <= ly_stk_lo ly <= sp - TLM_STK (AD3g.v:158). *)
+(* AD3h.v:104 md_takes md ((sp - 32) - MOD_STK, MOD_STK): from AD3g.v:161 (md_takes over ext_but_NB's stack extent, AD3g.v:124) and AD3g.v:159 (ly_stk_lo ly <= sp - TLM_STK, sp <= ly_stk_hi ly), by md_takes_sub. *)
+(* AD3h.v:103 TFIB_IMG_END <= (sp - 32) - MOD_STK: TFIB_IMG_END = IMG_TOP = 0x5f5000 (AF0x.v; YImgTop.v:9) < kHighMemBeg <= ly_stk_lo ly <= sp - TLM_STK (AD3g.v:159). *)
 
 (* ---- The walk. Phase A: 0x7269c to MmapOrDie's entry (the run stops at the fetch of 0x65200, which tfibtbl_rtB does
    not cover); the call: AD3h's mod_holds through SRr_bind; phase B: 0x72740 to the ret at 0x72764. ---- *)

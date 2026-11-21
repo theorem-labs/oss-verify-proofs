@@ -1,7 +1,9 @@
 # The checker image: stock Rocq, the libraries the process model needs, and
-# the model itself, rocq-linux-process-semantics-core (with its elf-snapshot
-# tool).  Nothing else: `oft` runs from the checkout, and no proof automation
-# is installed.
+# the model itself, rocq-linux-process-semantics-core.  That package installs
+# the theory LinuxProcessSemantics, the model's two tools elf-snapshot and
+# gen-fd-lemmas, and the proof library LinuxProcessSemantics.Common with the
+# library's tactics.  Nothing else: `oft` runs from the checkout, and the
+# image holds no other proof automation.
 #
 #   docker build -f toolchain/checker.Dockerfile --build-context lps=<dir> toolchain/
 #
@@ -89,7 +91,7 @@ RUN --network=none \
     { ulimit -s unlimited || true; } && \
     opam install ${OPAM_PACKAGES:?}
 
-ARG LPS_TREE_SHA256=c69c38f381767a112d0b4d5692548369f65cbf3a73ba198f76f98310894dd4de
+ARG LPS_TREE_SHA256=3c00fedfece3a07062c75c74f116ead141858da6779015d2b5633c3fc10a247f
 COPY --from=lps --chown=opam:opam / lps/
 RUN cd "${HOME}/lps" && \
     got="$(find . -type f -printf '%P\n' | LC_ALL=C sort | xargs -d '\n' -r sha256sum | sha256sum | awk '{print $1}')" && \

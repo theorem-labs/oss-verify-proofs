@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the runtime site contract of __asan_stack_malloc_0 (FakeStack class 0) on
    fuzz_reply.asan at 0x3d168, YG0d.v's astack_malloc_realizes at class 0, which W_frame.v (palf_sm0) and the core
-   consume.  Relocated from libreac/fuzz_grant's walk of the same code, a working branch c8e8b0fa5ec
+   consume.  Relocated from libreac/fuzz_grant's walk of the same code, a working branch
    proofs/libreac/fuzz_grant/lib/A/Rt/StackMalloc0Tbl.v (module SM0Tbl below) and StackMalloc0.v (the rest),
    themselves ported from proofs/cgif/cgif_rgb_fuzzer/lib/YF9p.v + YF9q.v (trb_stack_malloc_0) into
    cgif_file_fuzzer's vocabulary.  fuzz_grant's 93 words at 0x3cda4 equal fuzz_reply's at 0x3d168 except the eight
@@ -15,26 +15,27 @@
    end 6266880 -> 6270976 (TFIB_IMG_END 0x5fb000) in the low-zone bounds, GrantSyms -> TfibSyms, module paths;
    the code table adds class 0's range on top of AF0r.tbl_fs, which (unlike fuzz_grant's) does not hold it. *)
 (* Modified by Theorem Labs, 2026-10-29: from lib/A/RT_asan_stack_malloc_0.v, as the module RT_asan_stack_malloc_0_x: cut to the walk tfib_stack_malloc_at (the code table SM0Tbl and the helper lemmas are used by Import) and restated over a generic allocator invariant ARx with the premise FCiface.fs_iface (tfib_stack_malloc_at_x, with img_cover_of_img, tfib_const_lookup_sym_c and rodata_ok_c); the corollaries stack_malloc0_contract_pres_x, stack_malloc0_contract_x, stack_malloc0_contract_of_x (stack_malloc0_contract's statement, unchanged), stack_malloc0_contract_cf and stack_malloc0_contract_pres_cf added. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/RT_asan_stack_malloc_0.v's runtime contract tfib_stack_malloc_at /
    stack_malloc0_contract (__asan_stack_malloc_0, FakeStack class 0) restated over a generic allocator invariant ARx
    with the ghost head set Hp threaded unchanged. RT_asan_stack_malloc_0.v is not edited; its code table (module
    SM0Tbl) and helper lemmas are used by Import.
    Measured: every AR read of the walk is one field of FCiface.fs_iface
-   (FCiface.v:130-174): am_wf's hints :508 (fi_hints), am_layout :512 (fi_layout), the ledger's image cover :513
+   (FCiface.v:131-175): am_wf's hints :508 (fi_hints), am_layout :512 (fi_layout), the ledger's image cover :513
    (fi_img), am_tsd :557 (fi_tsd), tfib_const_lookup_sym :559-571 and rodata_ok :617 (fi_const), am_cells on fs_cells
    :573 (fi_fs_cells), am_flags :675 (fi_flags), the two FakeStack items of am_areas :725 :730 (fi_area_F,
    fi_area_Fsh), astack_malloc_law_ok :918 (fi_malloc_law), al_stack :925 (fi_stack), own_free_frame_shadow /
    own_free_frame / own_F_low :954-959. So the premise is `fs_iface tfibsegs B ARx`, not RTx.rt_laws, and the
-   statement is FCiface.v:55's astack_malloc_realizes_x.
-   The walk tfib_stack_malloc_at_x also gives W_frame_x.v:763's image-presence conjunct (the walk only stores: each
+   statement is FCiface.v:56's astack_malloc_realizes_x.
+   The walk tfib_stack_malloc_at_x also gives W_frame_x.v:764's image-presence conjunct (the walk only stores: each
    stored window is present after the call (PW) and every other byte is unchanged (MEQ), so a byte present before the
    call is present after it). At the end: stack_malloc0_contract_pres_x (W_frame_x.astack_malloc_pres_x at class 0,
-   the form W8's frame seat consumes, W_frame_x.v:789 / :929); stack_malloc0_contract_x (FCiface.v:55
+   the form W8's frame seat consumes, W_frame_x.v:790 / :930); stack_malloc0_contract_x (FCiface.v:56
    astack_malloc_realizes_x, by W_frame_x.astack_malloc_pres_realizes_x); stack_malloc0_contract_of_x, whose
    statement is byte for byte the original stack_malloc0_contract, from the twin at FCiface.AR_nohp with
-   FCiface.fs_iface_AR (FCiface.v:184) and FCiface.astack_malloc_realizes_of_x (:208); and stack_malloc0_contract_cf
+   FCiface.fs_iface_AR (FCiface.v:185) and FCiface.astack_malloc_realizes_of_x (:208); and stack_malloc0_contract_cf
    / stack_malloc0_contract_pres_cf at ARx := ARcf tfibsegs B, with the fs_iface premise discharged from AR_laws_cf
-   by FCifaceCf.fs_iface_ARcf (lib/A/FCifaceCf.v, carried from fuzz_preset 01f3a73c8d7f). The _cf corollaries'
+   by FCifaceCf.fs_iface_ARcf (lib/A/FCifaceCf.v, carried from fuzz_preset). The _cf corollaries'
    premises are AR_laws_cf tfibsegs B and TfibSyms B; at the cf top (B := TfibB) both are closed theorems:
    AR_laws_ok_cf (Reusable/YG0lawscf.v) and AD2l.TfibB_syms. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
@@ -76,7 +77,7 @@ Unset Lia Cache. Unset Nia Cache.
 Local Set Warnings "-abstract-large-number".
 Open Scope bv_scope.
 Open Scope Z_scope.
-(* the original's walk ran with Zify's euclidean flag OFF (RT_asan_stack_malloc_0.v:479); the same here *)
+(* the original's walk ran with Zify's euclidean flag OFF (RT_asan_stack_malloc_0.v:480); the same here *)
 #[local] Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
 Module FCI := OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable.FCiface.
@@ -88,7 +89,7 @@ Module WFX := OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A.W_frame_x.
 
 Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 (* ---- the three AF0x / AE2y lemmas the walk used over ARm, restated over the fs_iface field they read
-   (the text from 70b3ab9e19e6; cfdriver-contract.md:50-51 (sha256 755e836f3a5b; internal record): a cgif lemma
+   (the text; cfdriver-contract.md:50-51 (sha256 755e836f3a5b; internal record): a cgif lemma
    without a twin gets one next to its first use, proved the same way) ---- *)
 (* AF0x.v:55 img_cover_of_ledger, from fi_img's segment cover in place of the ledger *)
 Lemma img_cover_of_img : forall ly, (forall sg, In sg tfibsegs ->
@@ -158,7 +159,7 @@ pose proof AF0x.Hwx_tfa as Hwx.
 destruct (stack_malloc_inv CID S pos S' Hpath) as (hint' & Hprobe & HS'eq).
 set (hints := fs_hint (st_fs S)) in *. set (live := fs_live (st_fs S)) in *. set (hint := znth 0 CID hints) in *.
 assert (HNN : fs_frames CID = FS_N) by exact fs_frames_cid. assert (HN : FS_N = 16384) by reflexivity.
-(* the fs_iface fields this walk reads (FCiface.v:130-174), in place of cgif's ARm part M := proj1 HAR *)
+(* the fs_iface fields this walk reads (FCiface.v:131-175), in place of cgif's ARm part M := proj1 HAR *)
 pose proof (FCI.fi_const _ _ _ FI ly S hps W mem md HAR) as CONST. pose proof (FCI.fi_fs_cells _ _ _ FI ly S hps W mem md HAR) as FSC.
 pose proof (FCI.fi_flags _ _ _ FI ly S hps W mem md HAR) as FLGS.
 pose proof (FCI.fi_area_F _ _ _ FI ly S hps W mem md HAR) as ARF. pose proof (FCI.fi_area_Fsh _ _ _ FI ly S hps W mem md HAR) as ARFsh.
@@ -622,7 +623,7 @@ apply (apresent_same H mem); [apply MEQ; rewrite unsigned_lit_small by exact Hr;
 Qed.
 End f.
 
-(* ---- the contract over ARx with the image-presence conjunct: W_frame_x.v:763 astack_malloc_pres_x at class 0 ---- *)
+(* ---- the contract over ARx with the image-presence conjunct: W_frame_x.v:764 astack_malloc_pres_x at class 0 ---- *)
 Corollary stack_malloc0_contract_pres_x : forall B
   (ARx : alayout -> astate -> list Z -> world tfibsegs -> (word -> option byte) -> Model -> Prop),
   FCI.fs_iface tfibsegs B ARx -> TfibSyms B -> WFX.astack_malloc_pres_x tfibsegs B ARx 0.
@@ -631,7 +632,7 @@ intros B ARx FI TB ly S Hp W regs mem md pos S' HPRE Hcnt Hpath. rewrite (ts_cod
 exact (tfib_stack_malloc_at_x B ARx FI TB ly S Hp W regs mem md pos S' HPRE Hcnt Hpath).
 Qed.
 
-(* ---- the contract over ARx: FCiface.v:55 astack_malloc_realizes_x at class 0 ---- *)
+(* ---- the contract over ARx: FCiface.v:56 astack_malloc_realizes_x at class 0 ---- *)
 Corollary stack_malloc0_contract_x : forall B
   (ARx : alayout -> astate -> list Z -> world tfibsegs -> (word -> option byte) -> Model -> Prop),
   FCI.fs_iface tfibsegs B ARx -> TfibSyms B -> FCI.astack_malloc_realizes_x tfibsegs B ARx 0.

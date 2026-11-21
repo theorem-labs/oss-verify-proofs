@@ -4,12 +4,13 @@
 (* Modified by Theorem Labs, 2026-10: made for libreac/fuzz_knock's ASan harness walk of LLVMFuzzerTestOneInput
    (fuzz_knock.asan, sha256 61768cf4739b7641c99c825dde45eddafc55b601d41109555be0272fc7ca4118): SEGMENT S6 CHECKS,
    pc 0x7f21c-0x7f24c (13 instructions), ends at ss_L (the back edge, 0x7f10c) or ss_X (the exit, 0x7f274).
-   Donor: proofs/cgif/cgif_file_fuzzer/lib/A/ACfe.v at c8557374ad2e --- :41-45 (rreg_tacG, copied), :67-140
+   Donor: proofs/cgif/cgif_file_fuzzer/lib/A/ACfe.v at theorem-labs/oss-verify-proofs@6b32741d849a --- :41-45 (rreg_tacG, copied), :67-140
    (rt_G3X_aux: run, branch split, hc_bool / hc_prop, the join to the exit state with ra_join_win / rebaseE /
    rt_handX and the invariant discharge), :340-352 (one st_ok_havoc_win of a word list with its ew_havoc_new
    equations), :383-388 (st_ok_facts_incl3 to drop facts) and :389-395 (the back edge: the loop counter moved
    to scratch slot 900 with add_atom_win and the register re-pinned with ws_pin, then the original slot written
    again and the register pinned back). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Knock changes: two undecidable branches split before the back edge (0x7f224 beqz s11 on d, whose two arms run
    in lock-step to the end, and the two aborts 0x7f220 / 0x7f23c killed from INV_C's inv_knock, U_snez_sll1 for
    the d = 0 arm's `snez; slli`); `addiw s10,s10,1` reads back as s10 = SOff 302 1 (the engine folds it over

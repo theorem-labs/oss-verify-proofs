@@ -5,8 +5,9 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 748 of its 797 lines of code are new or changed and 962 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F14.v, with its module paths, module names, addresses and numbers changed; 619 of its 695 lines of code are new or changed and 721 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F31F.v, with its module paths and module names changed; 23 of its 40 lines of code are new or changed and 678 lines of the source are left out. *)
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMss_memcmp_wrap_c.v at a working branch 5d8d8a15571, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
-(* lib/A/Prog/memcmp_wrap_c.v (a Theorem Labs lane's port, unchanged from a working branch affce6489c8) with the one change
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMss_memcmp_wrap_c.v at a working branch, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
+(* lib/A/Prog/memcmp_wrap_c.v (a Theorem Labs lane's port, unchanged from a working branch) with the one change
    of the local-shadow variant (FMss_shv.v): `shadow_rw m` becomes `shvis m L N /\ shvis m R N` for the two checked
    ranges, and the post's `shadow_rw m'` the same of m'.  The constants stay in the original module. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.

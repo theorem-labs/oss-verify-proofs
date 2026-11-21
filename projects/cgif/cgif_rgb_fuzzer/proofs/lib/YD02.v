@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the section and tra_AR_init are over YA02's run-input form, SINV0, argH0, E0 and wrap_mem over the run's ProcInput, mmap base and entry word, with valid_launch and the launch premise entry_launch_ok_va in place of entry_stack_fits and the uid and hwcap fields; the hand-off premise over the hand-off states computed from the run at the run's own CONFIG_RSEQ flag, YB00r.v, and the computed hand-off check over both flags' states; the fresh variables its data and proofs name are the computed hand-off states' own numbers in place of the recorded states' (109 to 518, and 391), read from this unit's hand-off probe). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -10,7 +11,7 @@ From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YD0g.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import
 YK11 YQ0b YK00 YK05 YA0i YA0l YK0h
 YK0d YK0e YK0f YK0g YK0a YA01 YA0c YA0e YA0d YA02 YA0j
-YB06 YB0l YB07 YB00
+YB06 YB0l YB07 YB00r
 YG00 YG01 YG0h YG10 YG0u YG0x YG0b YF90 YN05 YD04 YD03 YD14
 YD00 YD01.
 Import ListNotations.
@@ -19,31 +20,39 @@ Local Set Warnings "-abstract-large-number".
 Import AX2. Import AX2B. Import AX2S. Import APC. Import APG. Import APSG.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
 Open Scope Z_scope.
-Lemma tra_holes_imgsh : forallb (fun ch => kn_vis TRA ch (ELit 0) 0x7fffa000 0xbde00) HS_tra_list = true.
+Lemma tra_holes_imgsh : forallb (fun ch => kn_vis TRA ch (ELit 0) 0x7fffa000 0xbde00) HS_tra_list_all = true.
 Proof. vm_compute. reflexivity. Qed.
 Section c. Context {fx : YK11.FPState}.
 Section d.
 Variable B : asyms.
 Hypothesis HB : TraSyms B.
-Variables (sp : word) (rdraw : EntryDraw) (brk : word) (inp : ProcInput).
+Variables (sp : word) (rdraw : EntryDraw) (brk mbase : word) (inp : ProcInput).
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv (in_argv inp).
 Hypothesis Hve : valid_envp (in_envp inp).
-Hypothesis Hfit : entry_stack_fits sp (in_argv inp) (in_envp inp).
+(* #38: [entry_stack_fits] is gone from YA02's section - YA02.v:63-98 lists the
+   hypotheses it now has and that is not among them - and every layout fact is
+   taken off the launch instead, exactly as the ported donor YD03.v:267-271 and
+   the worked twin YD14.v:171-175 do it. *)
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) inp.
 Variable h : nat.
 Variables (ch : acs) (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model).
-Hypothesis Hch : HS_tra h = Some ch.
+Hypothesis Hch : HS_tra_r (APC.rseq_z (kb_rseq (in_kernel inp))) h = Some ch.
 #[local] Notation argv := (in_argv inp).
 #[local] Notation envp := (in_envp inp).
-#[local] Notation uid := (in_uid inp).
-#[local] Notation hw := (in_hwcap inp).
-#[local] Notation SINV := (YA02.SINV0 TPH sp rdraw brk argv envp uid hw).
-#[local] Notation argH := (YA02.argH0 TPH sp rdraw argv envp uid hw).
+(* #38: YA02's section is over the run's [inp] (YA02.v:47-56), so
+   [SINV0]/[argH0]/[E0] discharge as YD14.v:190-196 spells them - [SINV0 TRA TPH
+   sp rdraw brk mbase inp], [argH0 sp rdraw inp], [E0 sp rdraw brk inp] - and
+   [wrap_mem] takes the run, the mmap base and the entry word (arity at
+   YK11.v:2068).  [uid] and [hw] leave: they come off [inp] now. *)
+#[local] Notation SINV := (YA02.SINV0 TRA TPH sp rdraw brk mbase inp).
+#[local] Notation argH := (YA02.argH0 sp rdraw inp).
 #[local] Notation TOP := (YA02.TOP sp).
 #[local] Notation LIM := YA02.LIMIT.
 Hypothesis HC : cs_ok TSEGS TRA LIM TOP SINV argH (in_fs inp) E ch R FULL model.
-Hypothesis HE : forall n, (n < NX0G)%nat -> ev E n = ev (YA02.E0 TPH sp rdraw brk argv envp uid hw) n.
-Hypothesis HM : forall a, argH E a = true -> FULL a = wrap_mem TPH sp argv envp uid hw rdraw a.
+Hypothesis HE : forall n, (n < NX0G)%nat -> ev E n = ev (YA02.E0 sp rdraw brk inp) n.
+Hypothesis HM : forall a, argH E a = true -> FULL a = wrap_mem inp mbase TPH (Z_to_bv 64 (a_entry TRA)) sp rdraw a.
 Context {rc : YN05.RunCeil}.
 Hypothesis Hceil : YN05.ceil_of_top (bv_unsigned sp - stack_max_size).
 #[local] Notation MR := (Mr TRA TOP argH E ch model FULL).
@@ -57,8 +66,8 @@ Hypothesis Hceil : YN05.ceil_of_top (bv_unsigned sp - stack_max_size).
 #[local] Notation HS0 := (YD03.HS0 sp rdraw inp ch E model).
 #[local] Notation W0 := (YD14.W1 sp rdraw inp Hsp Hva ch E model).
 #[local] Notation H1 := (YD14.H1 sp rdraw inp ch E model).
-Ltac inst H := try specialize (H B); try specialize (H HB); try specialize (H sp); try specialize (H rdraw); try specialize (H brk); try specialize (H inp);
-try specialize (H Hsp); try specialize (H Hva); try specialize (H Hve); try specialize (H Hfit); try specialize (H h); try specialize (H ch);
+Ltac inst H := try specialize (H B); try specialize (H HB); try specialize (H sp); try specialize (H rdraw); try specialize (H brk); try specialize (H mbase); try specialize (H inp);
+try specialize (H Hsp); try specialize (H Hva); try specialize (H Hve); try specialize (H Hvl); try specialize (H Hlau); try specialize (H h); try specialize (H ch);
 try specialize (H E); try specialize (H R); try specialize (H FULL); try specialize (H model); try specialize (H Hch); try specialize (H HC);
 try specialize (H HE); try specialize (H HM); try specialize (H rc); try specialize (H Hceil).
 Ltac get L := let H := fresh "L" in pose proof L as H; inst H; exact H.
@@ -118,7 +127,7 @@ intros rb rk len i z Hk Hlen Hi -> Hb. apply (MR_present _ Hb).
 rewrite (ho_zero_range TSEGS TRA LIM TOP SINV argH (in_fs inp) E ch R FULL model HC rb rk len ltac:(lia) Hk i Hi). discriminate.
 Qed.
 Lemma IMGSH : kn_vis TRA ch (ELit 0) 0x7fffa000 0xbde00 = true.
-Proof. pose proof (proj1 (forallb_forall _ _) tra_holes_imgsh ch (HS_tra_In h ch Hch)) as H. exact H. Qed.
+Proof. pose proof (proj1 (forallb_forall _ _) tra_holes_imgsh ch (HS_tra_r_In _ h ch Hch)) as H. exact H. Qed.
 Lemma img_sh_present : forall z, 0x7fffa000 <= z < 0x7fffa000 + 0xbde00 -> FULL (w64 z) <> None.
 Proof.
 intros z Hz. apply MR_present; [unfold in_band_rw, kLowShadowBeg, kLowShadowEnd; left; lia|].
@@ -182,24 +191,24 @@ assert (PG : forall n len (z : Z * Z), p = (epg n, ELit len) -> 0 <= len < 2 ^ 6
 apply (VISZ p (u (epg n), zn) B12 Hz); rewrite Hpe; cbn [fst snd]; [lia|]. rewrite (uE_litv E len) by lia. lia. }
 destruct H13 as [<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[]]]]]]]]]]]]]].
 *   exfalso.
-eapply (PG 518%nat 4096 (wzp (dGV E)) eq_refl ltac:(lia)); [unfold VZ; apply in_app_iff; right; exact GV_extra | rewrite VGV; reflexivity | rewrite VGV; cbn [snd]; lia].
+eapply (PG 524%nat 4096 (wzp (dGV E)) eq_refl ltac:(lia)); [unfold VZ; apply in_app_iff; right; exact GV_extra | rewrite VGV; reflexivity | rewrite VGV; cbn [snd]; lia].
 *
-eapply (KZ _ 501%nat 8388608 1048576 B12 eq_refl HSBv ltac:(lia) (proj1 kz_facts)). reflexivity.
+eapply (KZ _ 507%nat 8388608 1048576 B12 eq_refl HSBv ltac:(lia) (proj1 kz_facts)). reflexivity.
 *
-eapply (KZ _ 500%nat 1048576 131072 B12 eq_refl HNB ltac:(lia) (proj1 (proj2 kz_facts))). reflexivity.
+eapply (KZ _ 506%nat 1048576 131072 B12 eq_refl HNB ltac:(lia) (proj1 (proj2 kz_facts))). reflexivity.
 *
-eapply (KZ _ 424%nat 11571200 1446400 B12 eq_refl HFv ltac:(lia) (proj2 (proj2 kz_facts))). reflexivity.
-*   exfalso. eapply (PG 357%nat 4096 (u eD, 4096) eq_refl ltac:(lia)); [unfold VZ; cbn; tauto | reflexivity | cbn [snd]; lia].
+eapply (KZ _ 430%nat 11571200 1446400 B12 eq_refl HFv ltac:(lia) (proj2 (proj2 kz_facts))). reflexivity.
+*   exfalso. eapply (PG 363%nat 4096 (u eD, 4096) eq_refl ltac:(lia)); [unfold VZ; cbn; tauto | reflexivity | cbn [snd]; lia].
 *   exfalso.
-eapply (PG 292%nat 4096 (wzp (d292 E)) eq_refl ltac:(lia)); [unfold VZ; apply in_app_iff; right; exact e292_extra | rewrite V292; reflexivity | rewrite V292; cbn [snd]; lia].
-*   exfalso. eapply (PG 275%nat 65536 (u eC, 65536) eq_refl ltac:(lia)); [unfold VZ; cbn; tauto | reflexivity | cbn [snd]; lia].
-*   exfalso. eapply (PG 274%nat 4096 (u eT, 4096) eq_refl ltac:(lia)); [unfold VZ; cbn; tauto | reflexivity | cbn [snd]; lia].
+eapply (PG 296%nat 4096 (wzp (d292 E)) eq_refl ltac:(lia)); [unfold VZ; apply in_app_iff; right; exact e292_extra | rewrite V292; reflexivity | rewrite V292; cbn [snd]; lia].
+*   exfalso. eapply (PG 279%nat 65536 (u eC, 65536) eq_refl ltac:(lia)); [unfold VZ; cbn; tauto | reflexivity | cbn [snd]; lia].
+*   exfalso. eapply (PG 278%nat 4096 (u eT, 4096) eq_refl ltac:(lia)); [unfold VZ; cbn; tauto | reflexivity | cbn [snd]; lia].
 *   exfalso. pose proof rinfo_val as (F1 & F2 & F3 & F4 & F5).
 apply (VISZ RINFO_P (u eSp + kRegionInfoOff, 4096) B12); [unfold VZ; cbn; tauto | cbn [fst snd]; rewrite F1; unfold kRegionInfoOff; lia | cbn [fst snd]; rewrite F1, F2; unfold kRegionInfoOff; lia].
 *   exfalso.
-eapply (PG 254%nat 3727360 (wzp (d254 E)) eq_refl ltac:(lia)); [unfold VZ; apply in_app_iff; right; exact e254_extra | rewrite V254; reflexivity | rewrite V254; cbn [snd]; lia].
+eapply (PG 258%nat 3727360 (wzp (d254 E)) eq_refl ltac:(lia)); [unfold VZ; apply in_app_iff; right; exact e254_extra | rewrite V254; reflexivity | rewrite V254; cbn [snd]; lia].
 *   exfalso.
-eapply (PG 109%nat 65536 (wzp (d109 E)) eq_refl ltac:(lia)); [unfold VZ; apply in_app_iff; right; exact e109_extra | rewrite V109; reflexivity | rewrite V109; cbn [snd]; lia].
+eapply (PG 113%nat 65536 (wzp (d109 E)) eq_refl ltac:(lia)); [unfold VZ; apply in_app_iff; right; exact e109_extra | rewrite V109; reflexivity | rewrite V109; cbn [snd]; lia].
 *
 unfold sh_lo, sh_hi, IMG_P in B1, B2. change (shadow_off TRA) with SHADOW_OFF in B1, B2. cbn [fst snd] in B1, B2.
 rewrite !uE_litv in B1 by lia. rewrite !uE_litv in B2 by lia. apply img_sh_present. unfold SHADOW_OFF in B1, B2.
@@ -251,21 +260,22 @@ unfold YD0g.top_ok. cbn [ly_top ly_stk_lo ly_stk_hi YD03.ly0].
 split; [lia|]. split; [reflexivity|]. split; [reflexivity | exact Hceil].
 Qed.
 End d.
-Theorem tra_AR_init : forall (B : asyms) (HB : TraSyms B) (sp : word) (rdraw : EntryDraw) (brk : word) (inp : ProcInput)
+Theorem tra_AR_init : forall (B : asyms) (HB : TraSyms B) (sp : word) (rdraw : EntryDraw) (brk mbase : word) (inp : ProcInput)
 (Hsp : valid_sp sp) (Hva : valid_argv (in_argv inp)),
-valid_envp (in_envp inp) -> entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+valid_envp (in_envp inp) -> valid_launch inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) inp ->
 forall (h : nat) (ch : acs) (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model),
-HS_tra h = Some ch ->
+HS_tra_r (APC.rseq_z (kb_rseq (in_kernel inp))) h = Some ch ->
 cs_ok TSEGS TRA YA02.LIMIT (YA02.TOP sp)
-(YA02.SINV0 TPH sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-(YA02.argH0 TPH sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model ->
-(forall n, (n < NX0G)%nat -> ev E n = ev (YA02.E0 TPH sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) n) ->
-(forall a, YA02.argH0 TPH sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) E a = true ->
-FULL a = wrap_mem TPH sp (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) rdraw a) ->
+(YA02.SINV0 TRA TPH sp rdraw brk mbase inp)
+(YA02.argH0 sp rdraw inp) (in_fs inp) E ch R FULL model ->
+(forall n, (n < NX0G)%nat -> ev E n = ev (YA02.E0 sp rdraw brk inp) n) ->
+(forall a, YA02.argH0 sp rdraw inp E a = true ->
+FULL a = wrap_mem inp mbase TPH (Z_to_bv 64 (a_entry TRA)) sp rdraw a) ->
 forall {rc : YN05.RunCeil}, YN05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
 exists ly, AR TSEGS B ly init_state (YD14.W1 sp rdraw inp Hsp Hva ch E model) FULL model /\ YD0g.top_ok (bv_unsigned sp) ly.
 Proof.
-intros B HB sp rdraw brk inp Hsp Hva Hve Hfit h ch E R FULL model Hch HC HE HM rc Hceil.
+intros B HB sp rdraw brk mbase inp Hsp Hva Hve Hvl Hlau h ch E R FULL model Hch HC HE HM rc Hceil.
 exists (YD03.ly0 ch E model). split.
 - eapply (tra_AR B HB); eassumption.
 - eapply tra_top_ok; eassumption.

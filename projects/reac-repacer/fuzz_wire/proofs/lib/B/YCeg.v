@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/ACeg.v at 25e3d17bdb50, with its module paths changed and its addresses moved to libreac/fuzz_grant's ASan build; the use-after-return flag at the address the target's GOT word holds, lib_const_addr empty (the target's program reads no GOT word of its own), and the image bounds from the unit's Reusable/YImgTop.v. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/ACeg.v at theorem-labs/oss-verify-proofs@6b32741d849a, with its module paths changed and its addresses moved to libreac/fuzz_grant's ASan build; the use-after-return flag at the address the target's GOT word holds, lib_const_addr empty (the target's program reads no GOT word of its own), and the image bounds from the unit's Reusable/YImgTop.v. *)
 (* Modified by Theorem Labs, 2026-10: grant A's file relocated to image B (fuzz_grant.asan-ubsan fde52226dc48) by port_core 53ec3af2afc9, A -> B; the numbers below are image B's unless a comment says image A. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/B/YCeg.v at 4f87de75d67 (donor image sha256 fde52226dc48), with its module paths changed and its addresses moved to reac-repacer/fuzz_wire's ASan+UBSan build. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/B/YCeg.v (donor image sha256 fde52226dc48), with its module paths changed and its addresses moved to reac-repacer/fuzz_wire's ASan+UBSan build. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.B Require Import YImgTop.
 From Stdlib Require Import ZArith NArith List Lia Bool.

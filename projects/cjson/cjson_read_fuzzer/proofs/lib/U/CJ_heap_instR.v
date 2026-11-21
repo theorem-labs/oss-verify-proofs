@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: rauxv_ok_munch destructs rauxv_ok's new witnesses (the launch auxv record, program headers, entry, uid, gid, hwcap and execfn pointer) in place of eight raw auxv values, and bounds the auxv list's length with length_auxv_list_le; lhd_frame and the realloc frame proof read the ceiling bound past those nine witnesses. *)
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -2232,11 +2233,11 @@ Lemma rauxv_ok_munch : forall W m m' B, munch W m m' -> wmono usegs m m' -> raux
   (forall lo hi, In (lo, hi) W -> lo < hi -> (alloc_ceiling <= lo /\ hi <= B) \/ (hi <= RLIBC /\ lo < alloc_ceiling) \/ (0x56000 <= lo /\ hi <= alloc_ceiling)) ->
   rauxv_ok m' B.
 Proof using .
-  intros W m m' B HM HW (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & H1 & H2 & H3 & H4) HWok.
-  exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. split; [|split; [|split; [|exact H4]]].
+  intros W m m' B HM HW (av & la & ph & ent & uid & gid & hw & xfn & rnd & H1 & H2 & H3 & H4) HWok.
+  exists av, la, ph, ent, uid, gid, hw, xfn, rnd. split; [|split; [|split; [|exact H4]]].
   - eapply rw_cells_munch; eauto. cbn [cells_size csize Nat.add]. unfold RAUXV_CELL. intros lo hi Hin Hlt.
     destruct (HWok lo hi Hin Hlt) as [D|[D|D]]; unfold alloc_ceiling, RLIBC in *; lia.
-  - eapply bytes_at_munch; eauto. intros lo hi Hin Hlt. rewrite u64s_length. unfold auxv_list. rewrite length_map. cbn [length Nat.mul Nat.add].
+  - eapply bytes_at_munch; eauto. intros lo hi Hin Hlt. rewrite u64s_length. pose proof (length_auxv_list_le la ph ent uid gid hw (wz rnd) xfn).
     destruct (HWok lo hi Hin Hlt) as [D|[D|D]]; unfold alloc_ceiling, RLIBC in *; lia.
   - eapply bytes_at_munch; eauto. intros lo hi Hin Hlt. rewrite length_le8. (* [comment removed for export] *)
     destruct (HWok lo hi Hin Hlt) as [D|[D|D]]; unfold alloc_ceiling, RLIBC in *; lia.
@@ -2247,7 +2248,7 @@ Lemma lhd_frame : forall SPB LB m m' mo W,
 Proof using .
   intros SPB LB m m' mo W (s & LBi & B & HR & -> & HO & HM & HA & HS) MU WM FW.
   pose proof (proj1 (Forall_forall _ _) FW) as FW'.
-  assert (HB : alloc_ceiling <= B) by ((nelim HA 15%nat; intros ? ? ? ? ? ? ? ? ? ? _ _ _ HB _); exact HB).
+  assert (HB : alloc_ceiling <= B) by ((nelim HA 14%nat; intros ? ? ? ? ? ? ? ? ? _ _ _ HB _); exact HB).
   exists s, LBi, B. splits; auto.
   - apply (RHEAP_frame_proof s LBi m m' (nonempty_ivs W) HR (munch_nonempty _ _ _ MU) WM).
     apply Forall_forall. intros [lo hi] Hin. unfold nonempty_ivs in Hin. apply List.filter_In in Hin as [Hin Hlt]. cbn [fst snd] in Hlt. apply Z.ltb_lt in Hlt.
@@ -3763,7 +3764,7 @@ Proof using A0 A1 AR AV BA BLK ERRm FRm HB Hin Hst LEN LO MIm MRP MUm N PERM SLO
   assert (ETP : bv_unsigned tp + -164 = RERRNO). { rewrite TP. unfold RATP, RERRNO. rewrite unsigned_lit by lia. reflexivity. }
   assert (HEAP : RHEAP s LB m). { exists st, LB0. split; [exact PERM|]. split; [exact Hst|]. split; [exact MRP|]. split; [exact BLK| exact AR]. }
   pose proof (RHEAP_block_range_proof s LB m (p, A, k) HEAP Hin) as BR. cbn [blk_addr blk_size fst snd] in BR. unfold rblock_range, alloc_ceiling in BR.
-  assert (ABx : alloc_ceiling <= Bx) by (pose proof AV as (? & ? & ? & ? & ? & ? & ? & ? & ? & ? & _ & _ & _ & AB & _); exact AB). unfold alloc_ceiling in ABx.
+  assert (ABx : alloc_ceiling <= Bx) by (pose proof AV as (? & ? & ? & ? & ? & ? & ? & ? & ? & _ & _ & _ & AB & _); exact AB). unfold alloc_ceiling in ABx.
   assert (HEAPm : RHEAP s LB mm).
   { eapply RHEAP_frame_proof; [exact HEAP| exact MUm| exact WMm|].
     constructor; [left; cbn [fst snd]; unfold alloc_ceiling; lia|].

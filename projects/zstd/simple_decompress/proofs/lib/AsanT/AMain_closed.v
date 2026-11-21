@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (bmain_open's facts read through keep_facts, the recorded lists as the main entry keeps them). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -43,7 +44,7 @@ Section Closed.
   Proof.
     intros en inp w V m ms mo HV HI HM HA. rewrite E. unfold H, AFake_arep.AH, LDRV.
     apply (aheapP_at_main ATsafeMain.A0 ATsafeMain.A0_init ATsafeMain.A0_ash UDRV UDRV_len UDRV_traces ASEC_of en inp w V m ms mo HV HI HM HA).
-    pose proof HM as (_ & _ & PIN & HMF & HPF & _ & _ & _ & SH0 & _). apply Forall_app in HMF as [HMF _]. apply Forall_app in HPF as [HPF _].
+    pose proof HM as (_ & _ & PIN & HMF0 & HPF0 & _ & _ & _ & _ & SH0 & _). destruct (keep_facts _ _ _ _ _ HMF0 HPF0) as (HMF & _ & HPF).
     assert (HAT : 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat - 8388608 = ATOP).
     { destruct PIN as (_ & _ & _ & USP & _). rewrite USP. exact HA. }
     apply (ASEC_of_init V w UDRV m HMF HPF); first [exact HAT | exact SH0 | unfold AUMAX; cbn; lia].
@@ -51,7 +52,7 @@ Section Closed.
 
   Lemma aresv_init : aresv_init_stmt.
   Proof.
-    intros en inp w V m ms mo _ _ HM. pose proof HM as (_ & _ & _ & _ & HPF & _). apply Forall_app in HPF as [HPF _].
+    intros en inp w V m ms mo _ _ HM. pose proof HM as (_ & _ & _ & HMF0 & HPF0 & _). destruct (keep_facts bsegs _ _ _ _ HMF0 HPF0) as (_ & _ & HPF).
     apply aresv_ok_handoff. exact HPF.
   Qed.
 
@@ -68,7 +69,7 @@ Section Closed.
   (* [comment removed for export] *)
   Lemma model_ok : progA_model_ok ATsafeMain.NMAX ATsafeMain.A0.
   Proof.
-    intros en inp w V m ms mo _ _ HM HA. pose proof HM as (_ & _ & PIN & _ & HP & _ & _ & _ & _ & HMOD). apply Forall_app in HP as [HP _].
+    intros en inp w V m ms mo _ _ HM HA. pose proof HM as (_ & _ & PIN & HMF0 & HPF0 & _ & _ & _ & _ & _ & HMOD). destruct (keep_facts _ _ _ _ _ HMF0 HPF0) as (_ & _ & HP).
     assert (HAT : a_usp0 V - 8388608 = ATOP).
     { unfold a_usp0. destruct PIN as (_ & _ & _ & USP & _). rewrite USP. exact HA. }
     rewrite <- HA. exact (progA_tsafe_open ASTAGE V (en_sp en) inp mo HP HAT HA HMOD).

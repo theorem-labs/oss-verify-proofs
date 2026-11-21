@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YP0n.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/Reusable/YP0n.v, with its module paths and module names changed; 1214 of its 1315 lines of code are new or changed and 1889 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image A' (#102 pins: asan sha256 1be0f53d96cb9d6c, unstripped twin bff8519bbe3ea0e4): the SHARED
    CONTRACT of the re-walk of check_no_overread (cno, entry A_prog_slot AS_check_no_overread = slot 201, 388
    instructions) against K0's text tcheck_no_overread_specX. Lane CnoA102r (h-rw-pre-5, #102 plan
@@ -56,7 +57,7 @@
    set at S is hlive_from of the entry's over E, and the same implication over E, where E is the run events made
    since the entry (the granted copies' HMal, then the readings made, each parse_evs at its grant o). The readings'
    grants o1 o2 o0 are the LAST parameters of the cuts after them; cn_rd ties each struct to its reading's model
-   outcome. The pieces and their spelling are the B' twin's (Cno102B_Base.v edf7c32cd661, cnb_ for cn_).
+   outcome. The pieces and their spelling are the B' twin's (Cno102B_Base.v, cnb_ for cn_).
    THE WILD BUDGET (the cut's text: wild_room .. [] 6 at entry, the post under fpostFbm .. (wbudget [] 6)): the three
    parse_noting texts each add at most 2 fresh wild traces (their cursor frees). So cn_J is the journal AT A BUDGET wk
    (exists WS, ajournal_xw .. WS /\ wbudget [] wk WS) and cn_base takes wk LAST; each cut passes its spent budget as a
@@ -125,7 +126,7 @@ Open Scope Z_scope.
 (* ---- the cut offsets: DERIVED byte offsets inside check_no_overread ---- *)
 (* cno's slot in the listing: DERIVED, = A_prog_slot AS_check_no_overread of lib/A/PAImg_prog.v (the cut's blob 505a51ff7d08)
    (A_entry_check_no_overread: sigma 0x81904, slot 201). PAImg_prog.v is NOT Required: its certificate checks the #102
-   image's bytes, which the cb base f65cfdd5cac0 does not carry (CawA102's Caw102A_Base.v :9-12, same reason); the
+   image's bytes, which the cb base does not carry (CawA102's Caw102A_Base.v :9-12, same reason); the
    image fact cni_entry below ties the slot to pa_sigma *)
 Definition CN_SLOT : nat := 201.
 Definition CN_OFF : Z := 4 * Z.of_nat CN_SLOT.
@@ -164,7 +165,7 @@ Definition cn_regsat (regs : bvmap 5 word) (l : list (bv 5 * Z)) : Prop :=
 (* ---- THE MALLOC LAW, a companion class over the same RL (lead's ruling (A) 16:52Z, on RowsCpy's counterexample:
    room_live_cf after a raw __wrap_malloc was UNPROVABLE from PrhRoomLive's two frame laws). It mirrors PRH_Base.v's
    PrhRoomFree (3004a98fe2d9 :306-311, unchanged in shape at Batch 2): the field is a Theorem Labs lane's RL_malloc_step shape (lib/Reusable/YGcfRoomLive.v
-   db11c2a5eb11 :1422-1424, the leaves2 blob of that lane's tip b902bb657c5c), so a walk that crosses a raw malloc
+   db11c2a5eb11 :1422-1424, the leaves2 blob of that lane's tip), so a walk that crosses a raw malloc
    takes {RM : PrhRoomMalloc} beside {RL : PrhRoomLive}. INTENDED HOME: the kit's lib/A/PRH_Base.v beside PrhRoomFree (the
    lead asked a Theorem Labs lane to adopt it, 16:5xZ); until the lane decides it lives here, stated in exactly RL_malloc_step's shape so
    that the move is a citation. No generic malloc law exists elsewhere (h-rw-pre-7's padded B' fixes RL :=
@@ -198,7 +199,7 @@ Record cn_img : Prop := {
   cni_entry : SIGMA AS_check_no_overread = BASE + CN_OFF;
   cni_own : VAL (A_OBJ 13) = pi_g_own_ran_out;
   (* the program statics are writable data, not read-only bytes: what carries arodata_okP across a call by the
-     journal (CawA102's WA4 finding, Caw102A_Base.v 3e9f97debfb cwi_pst_rw) *)
+     journal (CawA102's WA4 finding, Caw102A_Base.v cwi_pst_rw) *)
   cni_pst_rw : forall a, Exists (in_zr a) prh_pst -> ~ in_roP SEGS (@pa_relro_lo _ _ PA) (@pa_relro_hi _ _ PA) a;
   (* a program static is a SEGMENT byte (.bss / .data of a LOAD segment), so a load of it reads a value whatever the
      memory holds there (CnoA9's finding: the lbu of g_own_ran_out after a call; S1ImgA.v pst_img_b_A's form) *)
@@ -332,8 +333,8 @@ split.
 - intros S' U. exact (PresetHullBudget.hull_budget_app S S' [cn_hmal x] rest H U).
 Qed.
 
-(* ---- tcheck_no_overread_specX's premises at one record (PRH_FnCheck.v c40cf3fdcd2a :738-777, the kit cut
-   7cdbb61b5fa0), verbatim: no run-word list DW (K0-DW-SPLIT, prh_univ_closure CTX0); the wild-trace room for the three
+(* ---- tcheck_no_overread_specX's premises at one record (PRH_FnCheck.v c40cf3fdcd2a :738-777, the kit cut),
+   verbatim: no run-word list DW (K0-DW-SPLIT, prh_univ_closure CTX0); the wild-trace room for the three
    readings (prh_wk F_check_no_overread = 6); the room counts position-free (PresetRun.pkR along the all-granted
    events) ---- *)
 Definition cn_pre (CTX0 : list (list Z)) (D : cn_in) : Prop :=
@@ -669,7 +670,7 @@ Definition cn_res (D : cn_in) (ran rc : Z) (st : cn_st) : Prop :=
   end.
 (* ---- check_no_overread's RUN EVENTS, the pieces the cuts carry (the text's own list ck_cno_evs, PRH_FnCheck.v
    9ecd8eb167c6 :250-263, cut where each segment ends; cn_ck_cno_evs below is the equation). The B' twin's spelling
-   (Cno102B_Base.v edf7c32cd661, cnb_ for cn_), name for name. ---- *)
+   (Cno102B_Base.v, cnb_ for cn_), name for name. ---- *)
 (* the granted copies' __wrap_malloc (a refused copy makes no event) *)
 Definition cn_cevs (D : cn_in) (r1 r2 r3 : Z) : list PresetReqAt.hev :=
   map (fun _ => PresetReqAt.HMal (cn_size D + PresetReqAt.FUZZ_PAD)) (cn_cblks D r1 r2 r3).
@@ -724,7 +725,7 @@ Definition cn_rd (D : cn_in) (o : option nat) (st : cn_st) : Prop :=
   | Some (t, _) => fst (PjGrammar.jr_run ReaderRes.jr_strtod (ci_x D) (PresetRun.okof o)) = Some t
   | None => fst (PjGrammar.jr_run ReaderRes.jr_strtod (ci_x D) (PresetRun.okof o)) = None
   end.
-(* the structs against the readings' grants (the B' twin's packers, Cno102B_Base.v 053287f9420d): a reading made
+(* the structs against the readings' grants (the B' twin's packers, Cno102B_Base.v): a reading made
    matches its model outcome, a reading SKIPPED (one before it ran out) left the zero struct, so its pj_free makes no
    event *)
 Definition cn_rds2 (D : cn_in) (o1 o2 : option nat) (st1 st2 : cn_st) : Prop :=

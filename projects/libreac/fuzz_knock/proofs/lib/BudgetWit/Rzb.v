@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YK15.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from Reusable/YK15.v: the relation realizes without its cut and with a grant check at each node (rzb), its soundness for the budget premise, and YK15's node lemmas restated over rzb. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (node_ok's sys_rob conjunct and the faulting vDSO call of budget_refused_at, in node_not_refused, rzb_star_not_refused, rzb_exit; the walk lifted to the run's segment list as in plugin-hostd/fuzz_reply's mode-generic form of libreac/fuzz_scene's port of its copy of this file: added grant_ok_cwrom, grant_ok_app_tail, rzb_wrom, rzb_app_tail, rzb_run_init). *)
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence OmniEquivalence.
@@ -10,6 +11,8 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run OmniRun.
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require Import YK16 YK0n YK0i YK0v YK02 YK1i YK15.
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable.R Require Import Cfg.
+From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require Import RomBase.
+From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require RomStableK.
 Unset Lia Cache. Unset Nia Cache.
 Import ListNotations.
 Open Scope bv_scope.
@@ -35,9 +38,9 @@ Open Scope bv_scope.
 
     The rest of the file is YK15's lemmas that build a [realizes] node, restated
     over [rzb] with YK15's proofs: [rz_] is written [rzb_].  Each lemma that takes
-    a [node_ok] also takes [grant_ok] for the same configuration.  214, 216, 222
-    and 226 are the RISC-V Linux numbers of brk, mremap, mmap and mprotect
-    ([Run.alloc_mark_sysnos]). *)
+    a [node_ok] also takes [grant_ok] for the same configuration.  214, 215 (from
+    LPS 727298f3 on), 216, 222 and 226 are the RISC-V Linux numbers of brk, munmap,
+    mremap, mmap and mprotect ([Run.alloc_mark_sysnos]). *)
 
 Section g.
 Variable segs : list Segment.
@@ -119,15 +122,18 @@ Qed.
 Lemma node_not_refused : forall c I evs nx,
   @node_ok segs MayFail c I evs nx -> grant_ok segs c -> ~ budget_refused_at segs c.
 Proof.
-  intros [ms model] I evs nx [_ Hc] Hg [Hh Hb].
+  intros [ms model] I evs nx [_ [Hc _]] Hg [Hh Hb].
   assert (Herr : ~ sstep segs (mkCfg ms model) [] SError).
   { intros Hs.
     destruct (Hc [] SError (proj1 (sstep_cfg_may_fail segs _ [] SError) Hs)) as (i & _ & Hbad).
     discriminate Hbad. }
   cbn [cfg_ms cfg_model] in Hh, Hb.
-  destruct Hb as [(Hsvc & report & Hstep & Hmat)
+  (* 727298f3: the no-syscall branch of [Run.budget_refused_at] also holds a faulting vDSO call. *)
+  destruct Hb as [(Hsvc & [(report & Hstep & Hmat)
+                          | (Hun & fn & n & eff & model' & evs' & Hfn & Hn & Hspec & Hef & Hh' & Hmat)])
                  | (x8 & Hx8 & [Hgr | (eff & model' & evs' & Hspec & Hh' & Hmat)])].
   - exact (Herr (budget_fault_instr_sstep_error segs ms model report Hh Hsvc Hstep Hmat)).
+  - exact (Herr (budget_fault_vdso_sstep_error segs ms model fn n eff model' evs' Hh Hsvc Hun Hfn Hn Hspec Hef Hh' Hmat)).
   - pose proof (Hg x8 Hx8) as Hg'. cbn [cfg_ms cfg_model] in Hg'. congruence.
   - exact (Herr (budget_fault_syscall_sstep_error segs ms model x8 eff model' evs' Hh Hx8 Hspec Hh' Hmat)).
 Qed.
@@ -140,7 +146,7 @@ Proof.
   intros tr c' Hstar.
   - destruct (star_cases _ _ _ Hstar) as [-> | (e & c2 & tr2 & Hss & Hstar2)].
     + exact (node_not_refused c I evs nx Hnode Hg).
-    + destruct (proj2 Hnode e (SNext c2) (proj1 (sstep_cfg_may_fail segs c e (SNext c2)) Hss))
+    + destruct (proj1 (proj2 Hnode) e (SNext c2) (proj1 (sstep_cfg_may_fail segs c e (SNext c2)) Hss))
         as (i & _ & Heq2).
       injection Heq2 as ->. exact (IH i tr2 c' Hstar2).
   - destruct (star_cases _ _ _ Hstar) as [-> | (e & c2 & tr2 & Hss & Hstar2)].
@@ -149,7 +155,7 @@ Proof.
   - exact (IH tr c' Hstar).
   - destruct (star_cases _ _ _ Hstar) as [-> | (e & c2 & tr2 & Hss & Hstar2)].
     + exact (node_not_refused c I (fun _ => []) nx Hnode Hg).
-    + destruct (proj2 Hnode e (SNext c2) (proj1 (sstep_cfg_may_fail segs c e (SNext c2)) Hss))
+    + destruct (proj1 (proj2 Hnode) e (SNext c2) (proj1 (sstep_cfg_may_fail segs c e (SNext c2)) Hss))
         as (i & _ & Heq2).
       injection Heq2 as ->. exact (IH i tr2 c' Hstar2).
 Qed.
@@ -303,7 +309,7 @@ intros ms model x8 Hh Hsvc Hx8.
 set (code := bv_and (ms_gpr ms 0) (Z_to_bv 64 255)).
 unfold t_exit.
 eapply (rzb_emit1 (mkCfg ms model) (mkCfg ms (with_halted code model))).
-- apply node_ok_of_pnode; [eapply transparent_exit; eassumption|]. split.
+- apply node_ok_of_pnode; [eapply transparent_exit; eassumption | exact (sys_rob_exit segs ms model x8 Hsvc Hx8) |]. split.
 + intros []. cbn.
 replace [ExitEv code (m_fs model)]
 with ([] ++ [ExitEv code (m_fs (with_halted code model))]) by reflexivity.
@@ -321,3 +327,81 @@ exists tt. split; reflexivity.
 - apply rzb_halt. cbn. discriminate.
 Qed.
 End d2.
+
+(** ** The walk lifted to the run's segment list
+
+    At LPS 727298f3 [Run.run_scfg_budget_refused] reads the run against
+    [run_segments segs inp sp mbase] -- the binary's segments with the run's
+    vDSO pair appended -- from the start configuration over that list.  A walk
+    is built over the binary's own segments, so it is lifted as
+    [RomStableK.run_init] lifts a [YK15.realizes] walk: every node's [node_ok]
+    is RomStableK's, and [grant_ok] reads only the pending number, the
+    argument registers and the model ([Run.alloc_budget_refused_b]), which a
+    change of the read-only backing or of the segment list leaves as they are.
+    The lift of libreac/fuzz_scene's BudgetWit/Rzb.v, over this file's [grant_ok]
+    and mode-generic [rzb]. *)
+Lemma grant_ok_cwrom : forall segs c r, grant_ok segs c -> grant_ok segs (cwrom c r).
+Proof. intros segs [ms model] r H x8 Hx. exact (H x8 Hx). Qed.
+
+Lemma grant_ok_app_tail : forall segs tail c, grant_ok segs c -> grant_ok (segs ++ tail) c.
+Proof. intros segs tail [ms model] H x8 Hx. exact (H x8 Hx). Qed.
+
+Section RzbWrom.
+Variable segs : list Segment.
+Context {AM : AllocMode}.
+Hypothesis Hvi : vdso_image segs = None.
+Theorem rzb_wrom : forall c T, @rzb segs AM c T ->
+  forall r, rom_ext (ms_rom (cfg_ms c)) r -> @rzb segs AM (cwrom c r) T.
+Proof.
+  intros c T H;
+  induction H as [c I evs nx T i0 Hn Hg Hc IH | c Hh | c T T' H IH Heq | c I nx T i0 Hn Hg Hc IH];
+  intros r Hr.
+  - apply (rzb_node segs (cwrom c r) I evs (fun i => cwrom (nx i) r) T i0).
+    + exact (@RomStableK.node_wrom segs AM Hvi c I evs nx r Hn Hr).
+    + apply grant_ok_cwrom. exact Hg.
+    + intros i. apply IH. rewrite (@RomStableK.node_rom segs AM Hvi c I evs nx Hn i). exact Hr.
+  - apply rzb_halt. exact Hh.
+  - exact (rzb_conseq_m segs (cwrom c r) T T' (IH r Hr) Heq).
+  - apply (rzb_silent segs (cwrom c r) I (fun i => cwrom (nx i) r) T i0).
+    + exact (@RomStableK.node_wrom segs AM Hvi c I (fun _ => []) nx r Hn Hr).
+    + apply grant_ok_cwrom. exact Hg.
+    + intros i. apply IH. rewrite (@RomStableK.node_rom segs AM Hvi c I (fun _ => []) nx Hn i). exact Hr.
+Qed.
+End RzbWrom.
+
+Section RzbAppTail.
+Variables segs tail : list Segment.
+Context {AM : AllocMode}.
+Hypothesis Hnx : forall s, In s tail -> seg_executable s = false.
+Hypothesis Hnw : forall s, In s tail -> seg_writable s = false.
+Hypothesis Hvi : vdso_image segs = None.
+Theorem rzb_app_tail : forall c T, @rzb segs AM c T -> @rzb (segs ++ tail) AM c T.
+Proof.
+  intros c T H;
+  induction H as [c I evs nx T i0 Hn Hg Hc IH | c Hh | c T T' H IH Heq | c I nx T i0 Hn Hg Hc IH].
+  - apply (rzb_node (segs ++ tail) c I evs nx T i0); [| exact (grant_ok_app_tail segs tail c Hg) | exact IH].
+    exact (@RomStableK.node_ok_app_tail segs tail AM Hnx Hnw Hvi c I evs nx i0 Hn).
+  - apply rzb_halt. exact Hh.
+  - exact (rzb_conseq_m (segs ++ tail) c T T' IH Heq).
+  - apply (rzb_silent (segs ++ tail) c I nx T i0); [| exact (grant_ok_app_tail segs tail c Hg) | exact IH].
+    exact (@RomStableK.node_ok_app_tail segs tail AM Hnx Hnw Hvi c I (fun _ => []) nx i0 Hn).
+Qed.
+End RzbAppTail.
+
+(** A walk over the binary's own segments, from the binary's start, is a walk
+    of the run's start over the run's segment list. *)
+Theorem rzb_run_init {AM : AllocMode} : forall segs inp (sp mb : word) pc ph brk rnd lim T,
+  vdso_image segs = None ->
+  @rzb segs AM (init_config segs pc ph sp brk mb rnd lim inp) T ->
+  @rzb (run_segments segs inp sp mb) AM
+    (init_config (run_segments segs inp sp mb) pc ph sp brk mb rnd lim inp) T.
+Proof.
+  intros segs inp sp mb pc ph brk rnd lim T Hvi H.
+  rewrite RomStableK.init_config_run_segments. unfold run_segments at 1.
+  apply rzb_app_tail;
+    [ intros s Hs; exact (RomStableK.vdso_segments_nx _ _ _ s Hs)
+    | intros s Hs; exact (RomStableK.vdso_segments_nw _ _ _ s Hs)
+    | exact Hvi |].
+  apply (rzb_wrom segs Hvi); [exact H|].
+  rewrite RomStableK.init_config_rom. apply RomStableK.rom_ext_run_segments.
+Qed.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's CONFIG_RSEQ flag): changed R_auxp, R_auxv, mem_am0, F_sh, F_av, facts_am0, ss_am0, ss_i1 and 9 more; added AUXV_ALL, AUXV_ALL_span, AUXV_ALL_claimed, AUXV_ALL_OFF, AUXV_ALL_r, R_auxv_of, R_auxv_t, R_auxv_f and 13 more. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -72,10 +73,50 @@ mkChunk (CTX + 64) (CVal 8 (SOff 41 0)); mkChunk (CTX + 72) (CVal 8 (SOff 42 0))
 Definition R_ctxC : region :=
 mkRegion None (CTX + 920) (CTX + 928) (CTX + 920) (CTX + 928) [mkChunk (CTX + 920) (CVal 8 (SOff 43 0))].
 Definition R_auxp : region := mkRegion None (LIBC + 8) (LIBC + 16) 0 0 [mkChunk (LIBC + 8) (CVal 8 (SOff 44 0))].
-Definition R_auxv : region := mkRegion (Some 44%nat) 0 160 0 0
-[mkChunk 0 (CVal 8 (SLit 3)); mkChunk 16 (CVal 8 (SLit 4)); mkChunk 32 (CVal 8 (SLit 5)); mkChunk 48 (CVal 8 (SLit 16));
-mkChunk 64 (CVal 8 (SLit 6)); mkChunk 80 (CVal 8 (SLit 11)); mkChunk 96 (CVal 8 (SLit 12)); mkChunk 112 (CVal 8 (SLit 23));
-mkChunk 128 (CVal 8 (SLit 25)); mkChunk 136 (CVal 8 (SOff 45 0)); mkChunk 144 (CVal 8 (SLit 0))].
+(* EVERY pair's KEY word, pair index 0..28, in the order
+   [StackLayout.auxv_entries] lists them (LPS 75d69e00,
+   theories/LinuxProcessSem/StackLayout.v:231-262, read at [la_rseq = true]),
+   then AT_RANDOM's VALUE word, in ascending offset order.
+
+   WHY NOT THE CLAIM TABLE.  This was generated from [AUXV_CLAIMED] ([YO0d],
+   which takes it from [YK09.APC]) and that table is the nine pairs whose
+   VALUE a plan variable denotes, plus AT_NULL — a deliberate SUBSET of the
+   vector.  It covered the whole vector only by accident of the pre-revision
+   layout, where the vector WAS ten pairs spanning [0,160) with keys at
+   0,16,..,144 and AT_RANDOM's value at 136, so subset and vector coincided.
+   At the revision the vector is twenty-nine pairs ([auxv_count true = 29],
+   StackLayout.v:276) and nineteen of them are unclaimed, so nineteen key
+   words had no chunk.  musl's [get_random_secret] walks the vector from pair
+   0 and stops at the first zero key, reading every key on the way, so the
+   first unclaimed key is an unresolvable load: [run_am0] stopped with
+   [RS_stopped (SR_load (Some 44%nat) 0)] at pair 0 instead of reaching
+   [memcpy].  A KEY needs no plan variable — it is a literal of
+   [auxv_entries] — so claiming all twenty-nine costs nothing the plan has to
+   supply, and the VALUE words stay unclaimed exactly as before.
+
+   [AUXV_ALL_span] and [AUXV_ALL_claimed] are the drift guards: the first
+   fails if the vector's length stops agreeing with [AUXV_SPAN], the second
+   if a claimed pair's index or type stops agreeing with this list. *)
+Definition AUXV_ALL : list (Z * Z) :=
+[(0, 33); (1, 40); (2, 41); (3, 42); (4, 43); (5, 44); (6, 45); (7, 46); (8, 47); (9, 51);
+(10, 16); (11, 6); (12, 17); (13, 3); (14, 4); (15, 5); (16, 7); (17, 8); (18, 9);
+(19, 11); (20, 12); (21, 13); (22, 14); (23, 23); (24, 25); (25, 31); (26, 27); (27, 28); (28, 0)].
+Lemma AUXV_ALL_span : 16 * Z.of_nat (length AUXV_ALL) = AUXV_SPAN.
+Proof. rewrite auxv_span_val. vm_compute. reflexivity. Qed.
+Lemma AUXV_ALL_claimed :
+map (fun p => (fst p, nth (Z.to_nat (fst p)) (map snd AUXV_ALL) 0)) AUXV_CLAIMED = AUXV_CLAIMED.
+Proof. vm_compute. reflexivity. Qed.
+(* The rseq-off vector: pairs 0..25 as above, AT_NULL at 26 ([YO0d.AUXV_TYPES_OFF]). *)
+Definition AUXV_ALL_OFF : list (Z * Z) := firstn 26 AUXV_ALL ++ [(26, 0)].
+Definition AUXV_ALL_r (rs : bool) : list (Z * Z) := if rs then AUXV_ALL else AUXV_ALL_OFF.
+Definition R_auxv_of (rs : bool) : region :=
+mkRegion (Some 44%nat) 0 (AUXV_SPAN_r rs) 0 0
+(map (fun p => mkChunk (16 * fst p) (CVal 8 (SLit (snd p)))) (firstn 25 (AUXV_ALL_r rs))
+++ mkChunk AT_RANDOM_VOFF (CVal 8 (SOff 45 0))
+:: map (fun p => mkChunk (16 * fst p) (CVal 8 (SLit (snd p)))) (skipn 25 (AUXV_ALL_r rs))).
+Definition R_auxv_t : region := Eval vm_compute in R_auxv_of true.
+Definition R_auxv_f : region := Eval vm_compute in R_auxv_of false.
+Definition R_auxv (rs : bool) : region := if rs then R_auxv_t else R_auxv_f.
 Definition R_fh : region := mkRegion (Some 33%nat) 0 16 0 16 [mkChunk 0 (CVal 8 (SOff 35 0)); mkChunk 8 (CVal 8 (SOff 34 0))].
 Definition R_nx : region := mkRegion (Some 34%nat) 0 8 0 8 [].
 Definition R_pr : region := mkRegion (Some 35%nat) 8 16 8 16 [].
@@ -84,24 +125,40 @@ Definition R_tl : region := mkRegion (Some 41%nat) 8 16 8 16 [].
 Definition zregion (n : nat) (off len : Z) : region :=
 mkRegion (Some n) off (off + len) off (off + len) [mkChunk off (CZero len)].
 Definition mem_am1 : smem := [R_stack; R_got; R_guard; R_pgsz; R_ctxA true; R_ctxB; R_ctxC; R_errno].
-Definition mem_am0 : smem := [R_stack; R_got; R_guard; R_pgsz; R_ctxA false; R_ctxB; R_ctxC; R_errno; R_auxp; R_auxv].
+Definition mem_am0 (rs : bool) : smem := [R_stack; R_got; R_guard; R_pgsz; R_ctxA false; R_ctxB; R_ctxC; R_errno; R_auxp; R_auxv rs].
 Definition F_sp : afact := mkAF (CEIL_MIN + AMS) (2 ^ 63 - 1) 4.
 Definition F_sh : afact := mkAF 0 40 0.
-Definition F_av : afact := mkAF 4096 (2 ^ 63 - 160) 0.
+(* the auxv's whole extent at the run's flag.  [auxv_check] reads this as
+   [af_hi + AUXV_SPAN_r rs <=? 2 ^ 63], so the two are one number and
+   [F_av_hi_of_AUXV_SPAN] below fails if they stop being. *)
+Definition F_av (rs : bool) : afact := mkAF 4096 (2 ^ 63 - AUXV_SPAN_r rs) 0.
+Lemma F_av_hi_of_AUXV_SPAN : forall rs, af_hi (F_av rs) + AUXV_SPAN_r rs = 2 ^ 63.
+Proof. intros rs. unfold F_av. cbn [af_hi]. lia. Qed.
 Definition F_ar : afact := mkAF 4096 (2 ^ 63 - 16) 0.
 Definition F_pg : afact := mkAF 4096 (CEIL_MAX - 4096) 12.
 Definition facts_am1 : facts := mkFacts [ (2%nat, F_sp); (39%nat, F_sh) ] [] [].
-Definition facts_am0 : facts := mkFacts [ (2%nat, F_sp); (39%nat, F_sh); (44%nat, F_av); (45%nat, F_ar) ] [] [].
+Definition facts_am0 (rs : bool) : facts := mkFacts [ (2%nat, F_sp); (39%nat, F_sh); (44%nat, F_av rs); (45%nat, F_ar) ] [] [].
 Definition ss_am1 : sstate := mkSS ubs0_A_alloc_meta regs_am mem_am1 None facts_am1.
-Definition ss_am0 : sstate := mkSS ubs0_A_alloc_meta regs_am mem_am0 None facts_am0.
-Definition ss_i1 : sstate := Eval vm_compute in runto_ ubs0_A_memcpy ss_am0.
+Definition ss_am0 (rs : bool) : sstate := mkSS ubs0_A_alloc_meta regs_am (mem_am0 rs) None (facts_am0 rs).
+(* The walk to get_random_secret's memcpy reads every key of the vector, so it is one run
+   per flag; the two runs meet again at [ss_A2] ([merge_a2y]). *)
+Definition ss_i1_t : sstate := Eval vm_compute in runto_ ubs0_A_memcpy (ss_am0 true).
+Definition ss_i1_f : sstate := Eval vm_compute in runto_ ubs0_A_memcpy (ss_am0 false).
+Definition ss_i1 (rs : bool) : sstate := if rs then ss_i1_t else ss_i1_f.
 Definition MC_JUNK : list reg := [5; 6; 7; 11; 12; 13; 14; 15; 16; 17; 28]%bv.
-Definition mem_i2 : smem :=
-Eval vm_compute in match store_region (ss_mem ss_i1) (Some 2%nat) (-64) 8 (CVal 8 (SOff 0 0)) with Some rs => rs | None => [] end.
-Definition ss_i1' : sstate := setpc PC_MCRET (setmem mem_i2 ss_i1).
-Definition ss_i2 : sstate := Eval vm_compute in junk_regs MC_JUNK 46 ss_i1'.
+Definition mem_i2_of (ss : sstate) : smem :=
+match store_region (ss_mem ss) (Some 2%nat) (-64) 8 (CVal 8 (SOff 0 0)) with Some rs => rs | None => [] end.
+Definition mem_i2_t : smem := Eval vm_compute in mem_i2_of ss_i1_t.
+Definition mem_i2_f : smem := Eval vm_compute in mem_i2_of ss_i1_f.
+Definition mem_i2 (rs : bool) : smem := if rs then mem_i2_t else mem_i2_f.
+Definition ss_i1' (rs : bool) : sstate := setpc PC_MCRET (setmem (mem_i2 rs) (ss_i1 rs)).
+Definition ss_i2_t : sstate := Eval vm_compute in junk_regs MC_JUNK 46 (ss_i1' true).
+Definition ss_i2_f : sstate := Eval vm_compute in junk_regs MC_JUNK 46 (ss_i1' false).
+Definition ss_i2 (rs : bool) : sstate := if rs then ss_i2_t else ss_i2_f.
 Definition ss_a2x : sstate := Eval vm_compute in runto_ PC_A2 ss_am1.
-Definition ss_a2y : sstate := Eval vm_compute in runto_ PC_A2 ss_i2.
+Definition ss_a2y_t : sstate := Eval vm_compute in runto_ PC_A2 ss_i2_t.
+Definition ss_a2y_f : sstate := Eval vm_compute in runto_ PC_A2 ss_i2_f.
+Definition ss_a2y (rs : bool) : sstate := if rs then ss_a2y_t else ss_a2y_f.
 Definition A2_JUNK : list reg := [1; 5; 6; 7; 9; 10; 11; 12; 13; 14; 15; 16; 17; 20; 28]%bv.
 Definition ss_A2 : sstate := Eval vm_compute in junk_regs A2_JUNK 57 ss_a2x.
 Definition C_fh0 : acond := mkAC BC_EQ (SOff 33 0) (SLit 0).
@@ -191,12 +248,12 @@ Definition ss_o1 : sstate := Eval vm_compute in run_ ss_O.
 Definition ss_oE0 : sstate := Eval vm_compute in run_ (add_cond ss_o1 C_tl0).
 Definition ss_o2 : sstate := addR R_tl (add_cond ss_o1 C_tl1).
 Definition ss_oE1 : sstate := Eval vm_compute in run_ ss_o2.
-Lemma run_am0 : sym_run_toN ubs0segs ubs0tbl FUEL ubs0_A_memcpy ss_am0 = (ss_i1, RS_running).
-Proof using. vm_compute. reflexivity. Qed.
-Lemma store_i1 : store_region (ss_mem ss_i1) (Some 2%nat) (-64) 8 (CVal 8 (SOff 0 0)) = Some mem_i2.
-Proof using. vm_compute. reflexivity. Qed.
-Lemma run_i2 : sym_run_toN ubs0segs ubs0tbl FUEL PC_A2 ss_i2 = (ss_a2y, RS_running).
-Proof using. vm_compute. reflexivity. Qed.
+Lemma run_am0 : forall rs, sym_run_toN ubs0segs ubs0tbl FUEL ubs0_A_memcpy (ss_am0 rs) = (ss_i1 rs, RS_running).
+Proof using. intros [|]; vm_compute; reflexivity. Qed.
+Lemma store_i1 : forall rs, store_region (ss_mem (ss_i1 rs)) (Some 2%nat) (-64) 8 (CVal 8 (SOff 0 0)) = Some (mem_i2 rs).
+Proof using. intros [|]; vm_compute; reflexivity. Qed.
+Lemma run_i2 : forall rs, sym_run_toN ubs0segs ubs0tbl FUEL PC_A2 (ss_i2 rs) = (ss_a2y rs, RS_running).
+Proof using. intros [|]; vm_compute; reflexivity. Qed.
 Lemma run_am1 : sym_run_toN ubs0segs ubs0tbl FUEL PC_A2 ss_am1 = (ss_a2x, RS_running).
 Proof using. vm_compute. reflexivity. Qed.
 Lemma run_A2 : sym_runN ubs0segs ubs0tbl FUEL ss_A2 = (ss_fh, RS_stopped (SR_branch BC_EQ (SOff 33 0) (SLit 0))).
@@ -272,7 +329,7 @@ Proof using. vm_compute. reflexivity. Qed.
 Lemma run_o2 : sym_runN ubs0segs ubs0tbl FUEL ss_o2 = (ss_oE1, RS_stopped (SR_jalr (SOff 1 0))).
 Proof using. vm_compute. reflexivity. Qed.
 Lemma merge_a2x : mergeb ss_A2 (junk_regs A2_JUNK 57 ss_a2x) = true. Proof using. vm_compute. reflexivity. Qed.
-Lemma merge_a2y : mergeb ss_A2 (junk_regs A2_JUNK 57 ss_a2y) = true. Proof using. vm_compute. reflexivity. Qed.
+Lemma merge_a2y : forall rs, mergeb ss_A2 (junk_regs A2_JUNK 57 (ss_a2y rs)) = true. Proof using. intros [|]; vm_compute; reflexivity. Qed.
 Definition absO1 (ss : sstate) : sstate := junk_regs [9%bv] 95 ss.
 Definition absO2 (ss : sstate) : sstate := junk_regs O_JUNK 96 (absO1 ss).
 Definition absO3 (ss : sstate) : sstate := upd_chunk 5 (CTX + 40) (CVal 8 (SOff 108 0)) (absO2 ss).
@@ -288,7 +345,10 @@ Definition absV2 (ss : sstate) : sstate := upd_chunk 6 (CTX + 920) (CVal 8 (SLit
 Lemma merge_vBD : mergeb ss_V (setfacts facts_V (absV2 ss_vBD)) = true. Proof using. vm_compute. reflexivity. Qed.
 Lemma merge_vBN : mergeb ss_V (setfacts facts_V (absV1 ss_vBN)) = true. Proof using. vm_compute. reflexivity. Qed.
 Lemma merge_vBC : mergeb ss_V (setfacts facts_V (absV1 ss_vBC)) = true. Proof using. vm_compute. reflexivity. Qed.
-Lemma ss_i1_pc : ss_pc ss_i1 = ubs0_A_memcpy. Proof using. reflexivity. Qed.
+Lemma ss_i1_pc : forall rs, ss_pc (ss_i1 rs) = ubs0_A_memcpy. Proof using. intros [|]; reflexivity. Qed.
+Lemma ss_i1_r10 : forall rs, sr_get (ss_regs (ss_i1 rs)) 10%bv = SOff 2 (-64). Proof using. intros [|]; reflexivity. Qed.
+Lemma ss_i1_r11 : forall rs, sr_get (ss_regs (ss_i1 rs)) 11%bv = SOff 45 8. Proof using. intros [|]; reflexivity. Qed.
+Lemma ss_i2_eq : forall rs, junk_regs MC_JUNK 46 (ss_i1' rs) = ss_i2 rs. Proof using. intros [|]; vm_compute; reflexivity. Qed.
 Lemma ss_rK_pc : ss_pc ss_rK = ubs0_A_mprotect + 0x30. Proof using. reflexivity. Qed.
 Lemma ss_vK2_pc : ss_pc ss_vK2 = ubs0_A_mprotect + 0x30. Proof using. reflexivity. Qed.
 Lemma ss_vK_pc : ss_pc ss_vK = ubs0_A_mmap + 0xc4. Proof using. reflexivity. Qed.

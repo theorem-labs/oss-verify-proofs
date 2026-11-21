@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the new lemma needed_task: the mremap size stays within TASK_SIZE when n < 2^46; node_instr's added conjunct is set aside). *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -97,6 +98,15 @@ repeat split; try assumption.
 - unfold needed, page_round, PGSZ, UNIT, IB, MMAP_THRESHOLD in *.
 pose proof (Z.mul_div_le (n + 16 * fr_off fr + 16 + 4 + 4096 - 1) 4096 ltac:(lia)). lia.
 Qed.
+(* 08b1429: mremap's new size must not exceed TASK_SIZE (Checks/Sys/Mm/Mremap.v); fr_off <= 255 (frame_ok) *)
+Lemma needed_task : n < 2 ^ 46 -> needed <= TASK_SIZE.
+Proof.
+clear Hn Hn62 H63. intros Ht.
+pose proof (inv_groups HW g am Hu) as (_ & _ & Gsl & _). pose proof (Gsl 0 ltac:(rewrite Hlast; lia)) as (_ & _ & S3).
+rewrite Hfr in S3. destruct S3 as (_ & _ & (_ & F2 & _) & _).
+unfold needed, page_round, PGSZ, UNIT, IB, TASK_SIZE in *.
+pose proof (Z.mul_div_le (n + 16 * fr_off fr + 16 + 4 + 4096 - 1) 4096 ltac:(lia)). lia.
+Qed.
 
 
 End b.
@@ -109,7 +119,7 @@ SR segs (mkCfg ms model) Q -> SR segs (mkCfg ms' model) Q.
 Proof.
 intros ms model ms' Q Hh Hlz Hsvc Hstep H T HK.
 pose proof (H T HK) as R0.
-destruct (node_instr segs ms model ms' Hh Hlz Hsvc Hstep) as [Hcomp Hsound].
+destruct (node_instr segs ms model ms' Hh Hlz Hsvc Hstep) as [Hcomp [Hsound _]].
 pose proof (Hcomp tt) as Hss. cbn beta in Hss.
 destruct (realizes_step segs _ _ _ _ R0 Hss) as [T' R1].
 apply (rz_conseq segs _ T' T R1).

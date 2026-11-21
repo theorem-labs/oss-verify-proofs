@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6bC5.v at f3898085bda (the tail run of
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6bC5.v (the tail run of
    ent_build's case 5 and the chaining of its head, its __asan_memcpy call and its tail) for reac-pw/fuzz_headamp's
    image B: image B's own code and registers, its pointer-overflow test before the NUL store (decided from atom 34's
    interval), the call step cb_memcpy_at of lib/AU/HPgCaseB.v at __asan_memcpy 0x51d8c, the block post of

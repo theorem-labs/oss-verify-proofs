@@ -82,18 +82,18 @@
    Call site (provenance/evidence/image-tables/callsites.asan.tsv line 368): reac_segconf_declared 0x899f8 with a0 = c + 356 i (s6,
    advanced by 356 at 0x89a48), a1 = frame + 32 (s10), a2 = 16, a3 = frame + 64 (s11).
    image A: A_reac_declared_vlan_split = 0x89b8c; STK_reac_declared_vlan_split = 64 + 3 * ESTACK (INFERENCE: its
-   frame above the widest window it calls, row 3's 3 * ESTACK - RtSeg.astrtol0_realizes, accepted at
-   commit 80d098bd1905, keeps its template's window; row 11 asks 2 * ESTACK, row 16 ESTACK, the
+   frame above the widest window it calls, row 3's 3 * ESTACK - RtSeg.astrtol0_realizes, accepted,
+   keeps its template's window; row 11 asks 2 * ESTACK, row 16 ESTACK, the
    checked memcpy ESTACK, name_ok 64 + ESTACK); RLO RHI = image A's RELRO bounds; gotw =
    0xa36d8, guard = 0x5ff078.
    IMAGE-INDEPENDENT: no image module is Required; A_reac_declared_vlan_split, STK_reac_declared_vlan_split, RLO,
    RHI, gotw, guard and every other image cell are parameters (or fields of B).
    The WALK takes these runtime entries as Section hypotheses (the interceptor lane's interface
-   provenance/evidence/interceptors/INTERFACE-A-interceptors.md (commit 7068323e2626): rows 3 and 11 as at e45889d6935a,
-   row 16 in the accepted v1, 5e0b8a44fdc; at e45889d6935a strlen is that file's DECISION 2, option (b)):
-     RtSeg.astrrchr_realizes (pc) (row 11, lib/A/Rt/RtSeg.v:173 at commit 80d098bd1905), at the
+   provenance/evidence/interceptors/INTERFACE-A-interceptors.md: rows 3 and 11 as,
+   row 16 in the accepted v1; strlen is that file's DECISION 2, option (b)):
+     RtSeg.astrrchr_realizes (pc) (row 11, lib/A/Rt/RtSeg.v:173), at the
        strrchr trampoline (image A 0x43a2c);
-     RtSeg.astrtol0_realizes (pc gotw guard) (row 3, lib/A/Rt/RtSeg.v:226 at 80d098bd1905: the NULL end pointer
+     RtSeg.astrtol0_realizes (pc gotw guard) (row 3, lib/A/Rt/RtSeg.v:226: the NULL end pointer
        form, written for exactly this call site, 0x89c68 with a1 = 0; its template RtNumber.astrtol_realizes
        needs 0 < e), at the strtol trampoline (image A 0x43ab8);
      RtString.astrlen_realizes (row 16), at the strlen trampoline (image A 0x43a0c);

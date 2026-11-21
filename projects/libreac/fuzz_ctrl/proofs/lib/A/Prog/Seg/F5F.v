@@ -5,12 +5,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths and module names changed; 371 of its 396 lines of code are new or changed and 3828 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v, with its addresses and numbers changed; 1027 of its 1075 lines of code are new or changed and 348 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F5.v, with its module paths and module names changed; 205 of its 648 lines of code are new or changed and 632 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/F5.v e6ca704db8bc (the blob this tree had at release c5e779efe8c) at fdd2ed9f9d7.
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   FACTS, PAU pau-libreac-v190. Source: Seg/F5.v e6ca704db8bc (the blob this tree had at release).
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: each <r>_run corollary re-derives the plain lib.Lib Exec.evt run at ExecF.RNG_all. There is NO
    <r>_of_F_verbatim pin in this file, because F5.v states NO run lemma: its four runs are the `sl_run` argument
    inside the four Hat proofs (seg_F5_df0 :766, seg_F5 :927, seg_F5_e10 :1009, seg_F5_e0c :1111), so there is no
@@ -26,8 +27,8 @@
    consumes, from <seg>_run_F with RNG_all, through f5F_ul_of_lib (the UL form of lib.Lib's evt, as Seg/A5F.v's
    a5F_ul_of_lib does). F5.v itself is unchanged apart from comment text.
 
-   v1.9.0 (2026-10-28): this file replaces the v1.8 copy of the same name on the base (a working branch
-   fdd2ed9f9d7). The four runs, their premises and their post predicates are F5.v's v1.9 text, taken from the
+   v1.9.0 (2026-10-28): this file replaces the v1.8 copy of the same name on the base (a working branch).
+   The four runs, their premises and their post predicates are F5.v's v1.9 text, taken from the
    `sl_run` argument of each Hat proof; only the pcs moved: v1.8 0x81dec / 0x81df0 / 0x81e0c / 0x81e10 / 0x81e28 /
    0x81ebc -> v1.9 0x81e84 / 0x81e88 / 0x81ea4 / 0x81ea8 / 0x81ec0 / 0x81f54. *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.

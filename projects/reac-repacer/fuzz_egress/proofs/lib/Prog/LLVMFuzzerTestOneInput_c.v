@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
-(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/Prog/LLVMFuzzerTestOneInput_c.v at bc49657c087a; module path, this image's values, LLVM_K from check_inject. *)
+(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/Prog/LLVMFuzzerTestOneInput_c.v; module path, this image's values, LLVM_K from check_inject. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The harness entry contract of reac-repacer/fuzz_egress (fuzz_egress.c:143-165), the cut between the driver /
    start-up frame (lib/FrameAPI.v, lib/FrameProof.v) and this program's walk. The plain image's values:
    - LLVM_ENTRY 0x12c60: LLVMFuzzerTestOneInput in the unstripped image's .symtab; FrameAPI.ENTRY.

@@ -3,9 +3,10 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the ASan walk of sup_reply_code (plugin-hostd/fuzz_command, 0x89d6c, 20 instructions), in the form of proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v (pb_cmpPixel, a leaf that ends in a tail jump to a runtime entry) and A/ACh2.v (the step through a call and back). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/sup_reply_code.v, with its module paths and module names changed; 167 of its 229 lines of code are new or changed and 226 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The ASan+UBSan walk of sup_remove_all (plugin-hostd/fuzz_command, fuzz_command.asan-ubsan,
    BASE + AF_sup_remove_all = 0x8b434, 10 instructions), in the form of a Theorem Labs lane's A walk re-fitted to statement
-   passes 4 and 5 (lib/A/Prog/sup_remove_all_refit.v, a working branch e84227c9553): the executor over the position-abstract
+   passes 4 and 5 (lib/A/Prog/sup_remove_all_refit.v, a working branch): the executor over the position-abstract
    listing (lib/B/Prog/CmdPaLib.v), the call of record through the kit's cl_callS_pg (PaCallPg.v), and the tail
    jump `j answer` through sup_remove_all_s3.v's sra_tail.
 

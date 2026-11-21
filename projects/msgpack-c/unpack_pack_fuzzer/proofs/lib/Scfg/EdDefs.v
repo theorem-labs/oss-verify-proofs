@@ -1,9 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (vm_place_available, from Placement.linux_place_b, and its lemmas replace vm_gap_available: mmap_grant_refusable and mmap_reserve_refusable take the mmap hint and ask whether Linux's placement gives an address; imports Placement). *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap Mprotect.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement.
 Import ListNotations.
 
 Definition mmap_errnos_when (forced : bool) : list Z :=
@@ -164,12 +166,79 @@ Proof.
       (proj2 (Z.leb_le _ _) Htop), Hfree. reflexivity.
 Qed.
 
-Definition mmap_grant_refusable (flags : word) (m : Model) (nZ : Z) : bool :=
-  negb (mmap_noreserve_backed_ok flags m nZ)
-  || negb (vm_gap_available (m_vmmaps m) nZ).
+(** Does [Mmap.linux_place] give an address for this request?  At 08b1429
+    [mmap_spec]'s anonymous grant arms choose exactly Linux's address
+    ([Mmap.linux_place], decided by [Placement.linux_place_b]), so a grant
+    exists iff this holds (and, for a backed mapping, the budget admits it).
+    Same definition as glaze's [Common/AllocEd.v]. *)
+Definition vm_place_available (h : VmMaps) (thp : bool) (hint : word) (nZ : Z)
+    : bool :=
+  match linux_place_b h thp hint nZ with Some _ => true | None => false end.
 
-Definition mmap_reserve_refusable (m : Model) (nZ : Z) : bool :=
-  negb (vm_gap_available (m_vmmaps m) nZ).
+Lemma ed_page_round_up_aligned : forall z, (page_round_up_Z z mod page_size = 0)%Z.
+Proof. intros z. unfold page_round_up_Z. apply Z_mod_mult. Qed.
+
+Lemma vm_place_available_iff : forall h thp hint nZ,
+  (0 < nZ)%Z -> (nZ mod page_size = 0)%Z ->
+  vm_place_available h thp hint nZ = true
+  <-> exists a : word, linux_place h thp hint nZ (bv_unsigned a).
+Proof.
+  intros h thp hint nZ Hn Hnal. unfold vm_place_available. split.
+  - intros H. destruct (linux_place_b h thp hint nZ) as [p|] eqn:Hp; [|discriminate H].
+    pose proof (proj1 (proj1 (linux_place_b_spec h thp hint nZ Hn Hnal) p) Hp) as Hpl.
+    destruct (linux_place_admissible h thp hint nZ p Hn Hnal Hpl) as (_ & Hpos & Htop & _).
+    pose proof (alloc_top_room h) as Hroom. unfold two_pow_64, stack_max_size in Hroom.
+    exists (Z_to_bv 64 p). rewrite Z_to_bv_unsigned, bv_wrap_small; [exact Hpl|].
+    change (bv_modulus 64) with (2 ^ 64)%Z. clear Hnal. lia.
+  - intros (a & Ha). destruct (linux_place_b h thp hint nZ) eqn:Hp; [reflexivity|].
+    exfalso. exact (proj1 (proj2 (linux_place_b_spec h thp hint nZ Hn Hnal)) Hp _ Ha).
+Qed.
+
+Lemma vm_place_available_grant : forall h thp hint nZ,
+  (0 < nZ)%Z -> (nZ mod page_size = 0)%Z ->
+  vm_place_available h thp hint nZ = true ->
+  exists a : word, linux_place_is h thp hint nZ a = true.
+Proof.
+  intros h thp hint nZ Hn Hnal H.
+  destruct (proj1 (vm_place_available_iff h thp hint nZ Hn Hnal) H) as (a & Ha).
+  exists a. exact (proj2 (linux_place_is_iff h thp hint nZ a Hn Hnal) Ha).
+Qed.
+
+(** A free gap in either of Linux's windows makes the placement available
+    ([Placement.linux_place_exists]). *)
+Lemma vm_place_available_of_gap : forall h thp hint nZ,
+  (0 < nZ)%Z -> (nZ mod page_size = 0)%Z ->
+  (exists g, gap_fits (vm_reserved h ++ vm_maps h) page_size (mmap_top h) nZ g
+             \/ gap_fits (vm_reserved h ++ vm_maps h) task_unmapped_base (alloc_top h) nZ g) ->
+  vm_place_available h thp hint nZ = true.
+Proof.
+  intros h thp hint nZ Hn Hnal Hg.
+  destruct (linux_place_exists h thp hint nZ Hn Hnal Hg) as (a & Ha).
+  unfold vm_place_available. destruct (linux_place_b h thp hint nZ) eqn:Hp; [reflexivity|].
+  exfalso. exact (proj1 (proj2 (linux_place_b_spec h thp hint nZ Hn Hnal)) Hp a Ha).
+Qed.
+
+Lemma vm_place_available_intro : forall h thp hint nZ (a : word),
+  (0 < nZ)%Z -> (nZ mod page_size = 0)%Z ->
+  linux_place h thp hint nZ (bv_unsigned a) -> vm_place_available h thp hint nZ = true.
+Proof.
+  intros h thp hint nZ a Hn Hnal Ha. apply (proj2 (vm_place_available_iff h thp hint nZ Hn Hnal)).
+  exists a. exact Ha.
+Qed.
+
+Lemma linux_place_is_available : forall h thp hint nZ a,
+  linux_place_is h thp hint nZ a = true -> vm_place_available h thp hint nZ = true.
+Proof.
+  intros h thp hint nZ a H. unfold linux_place_is in H. unfold vm_place_available.
+  destruct (linux_place_b h thp hint nZ); [reflexivity | discriminate].
+Qed.
+
+Definition mmap_grant_refusable (flags hint : word) (m : Model) (nZ : Z) : bool :=
+  negb (mmap_noreserve_backed_ok flags m nZ)
+  || negb (vm_place_available (m_vmmaps m) (kb_thp (m_kernel m)) hint nZ).
+
+Definition mmap_reserve_refusable (hint : word) (m : Model) (nZ : Z) : bool :=
+  negb (vm_place_available (m_vmmaps m) (kb_thp (m_kernel m)) hint nZ).
 
 Definition mmap_fixed_fresh_refusable (flags : word) (m : Model) (nZ : Z)
     : bool :=

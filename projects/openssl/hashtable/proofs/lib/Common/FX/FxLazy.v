@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the interpreter declines the failing store-conditional). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From stdpp Require Import bitvector.
@@ -155,8 +156,8 @@ Proof.
       pose proof (fm_store_claimed _ _ _ _ _ _ Hmok Es) as Hcl. rewrite Ea', <- Hregs in Hcl.
       eapply Forall_impl; [|exact Hex]. intros r [E1 E2]. right. rewrite E1, E2. cbn [exec_addr exec_nbytes].
       destruct w0; exact Hcl.
-    + unfold resv_hit in Ehit.
-      rewrite (step_accesses_sc_fail segs ms w w0 _ _ _ _ _ 4 report Hf He Hd Eal Ehit Hacc). constructor.
+    + (* the interpreter declines a failing sc at this revision *)
+      discriminate H.
   - (* [comment removed for export] *)
     apply some_inj in Hc. subst fi. cbv beta iota zeta in H.
     destruct (aligned_for w0 (FxState.rget F (ireg rs1)) (f_mem F)) eqn:Eal; cbn [negb] in H; [|discriminate].

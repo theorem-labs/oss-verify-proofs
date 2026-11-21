@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/ProgWorldTlsApart.v (a working branch 75a3f0b4794,
+(* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/ProgWorldTlsApart.v (a working branch,
    blob 1f4f062c65a): the same lemma / definition / Ltac names, Sections and proof steps over image B (asan-ubsan), except one added step in img_cls's proof (unfold ASAN_GT).
    Differences from A: module paths (A.ProgWorld / A.ProgWorld_Fs / A.Prog.X / A.AsanRT / A.Img0 -> B.*; the core files
    A.AF0m / A.AB1v -> lib.Reusable.YF0m / YB1v; the doubled lib/Lib/Mem.v named lib.Lib.Mem, as lib/B/ProgWorld_Fs.v

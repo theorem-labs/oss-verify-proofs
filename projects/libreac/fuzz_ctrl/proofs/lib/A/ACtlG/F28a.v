@@ -82,7 +82,7 @@
    SHADOWED NAMES: getr / mkst / seg_rom / cfg_at only lib.Reusable.YK11 / A.Reusable.YK11 / Reusable.YG0d.  The
    blob of every frame-route file in the closure is in the commit message.
 
-   BUILD STATE: type-check on glue base 480cae342a7 (interim core), closure reaches no stand-in.  The base's
+   BUILD STATE: type-check on glue base (interim core), closure reaches no stand-in.  The base's
    planning-core files (AE2k, AF0m, AF0l, ACej, ACeh) carry no port_core_refused_<hex> name in code, so the build
    substitutes nothing.  Not "compiled of record".  No Axiom, no Parameter, no Admitted, no admit. *)
 

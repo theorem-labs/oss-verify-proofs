@@ -4,7 +4,7 @@
    THE KIT RELOCATES, THE WALKS DO NOT: this is a fresh walk over lib/B/W_listing.v, not a relocation of
    lib/A/W_list_free.v.  Image B does not inline list_drop (image A does): it CALLS it in a loop, and UBSan
    trap mode adds two inline trap branches.  Contract: lib/B/W_contract.v lf_spec / lf_spec_g (:314 / :499 of the
-   generated kit 67c07b3d6e6).
+   generated kit).
 
    B list_free (0x86678, 71 instructions, frame 48; b-list_free.s (sha256 f149a58aa07c; internal record)):
      0x86678..0x86694  prologue: sp -= 48; ra s0 s1 s2 s3 s4 at 40 32 24 16 8 0; s0 = LA
@@ -43,10 +43,10 @@
    - HG / HGR / HRO / GX_ROM / GX_W / GSHV : gx_prog G, the lane's side conditions on the program globals
      (a vm_compute at PB_fr for a concrete G); they also give gx_prog [(LA, 16)] for the callee.
    No callee-contract hypothesis: each list_drop call is lib/B/W_list_drop.v pb_list_drop_ro_x (a Theorem Labs lane's room form,
-   ROOM-6B 8aef363b876, of a Theorem Labs lane's pb_list_drop 345ecd33c8d), the kit's ldrop_spec_x (W_contract.v Section w1, :691; its
+   ROOM-6B, of a Theorem Labs lane's pb_list_drop), the kit's ldrop_spec_x (W_contract.v Section w1, :691; its
    post keeps errno's view), instantiated at the CALLEE's own globals G' = [(LA, 16)] (gx_prog G' gives its HG,
    GRT and, through rom_out, ROMS) and lifted to this walk's G with W_journal.v ajournal_gx_G_mono (W2's
-   convention, W_contract.v:739-744: there is no ldrop_spec_g, so the caller fixes G).
+   convention, W_contract.v:740-745: there is no ldrop_spec_g, so the caller fixes G).
    No MISSING PREMISE hypothesis: every premise of ldrop_spec comes from lf_spec's own pre.  LA mod 8 = 0 and
    LF_STK = 48 + LDROP_STK are in the kit's statement; the memmove premise AREC * (n - 1 - i) < 2 ^ 32 is 0 < 2 ^ 32
    at list_free's call, i = n - 1.
@@ -60,6 +60,7 @@
    Rule-24 lookup (lookup-list_free.txt (sha256 8b9ad78e83f5; internal record), CONFIRMED by a second agent): the released proofs of list_free
    are the plain (lib/Prog) and ubsan (lib/U/Prog) images only; no asan-ubsan proof, and no hit by the B
    addresses; so this is a fresh B walk. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -238,7 +239,7 @@ intros E n v H Hv. rewrite S_of_U, (U_atom E n v H) by lia. apply swrap64_id. un
 Qed.
 
 (* ---- THE WALK OVER THE GENERIC RELATION (a Theorem Labs lane's route (b), step 3; lib/A/W_list_free.v's template at
-   a working branch 16f29d9fe81): list_free over any ARx with its laws, stated as W_contract_x.lf_spec_x.  The
+   a working branch): list_free over any ARx with its laws, stated as W_contract_x.lf_spec_x.  The
    Section hypotheses beyond the AR walk's: PST / ARx / hl / LAWS (the generic relation), HP0 (the unit's hidden-head
    set is empty in every ARx state: a Theorem Labs lane's ruling; list_drop's walk, called here, reads block shadow through
    it), BLKN (W_kit_x.v Section g's: a live block's size is not negative, which alist_at's vector bound reads), PSTR (the ROM bytes are off the program statics PST: W_journal_x.ajournal_gx_rom_view_x's premise), and the

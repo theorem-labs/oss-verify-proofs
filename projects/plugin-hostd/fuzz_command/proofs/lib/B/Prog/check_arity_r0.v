@@ -3,10 +3,11 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the release of number's class-0 side-stack frame (0x8e5a0..0x8e618, cgif's exitRA in A/ACam.v) and number's return. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/numberR.v, with its module paths and module names changed; 84 of its 114 lines of code are new or changed and 186 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_arity on the ASan+UBSan build of plugin-hostd/fuzz_command (image fuzz_command.asan-ubsan, lib/B): ROW 0 of
    g_parsed (`add`, syntax "<uri> <instance> [own | pool:<name> | default] [client_name]" at 0x21240, (mn, mx) =
    (2, 4)), from the matched-row entry BASE + CA_SEG (0x87478) to `ret` (BASE + CA_RET, 0x87998). The port of
-   a Theorem Labs lane's A walk check_arity_r0.v (a working branch 192ee0f96d0), written with s7's
+   a Theorem Labs lane's A walk check_arity_r0.v (a working branch), written with s7's
    per-site tactic ca_site_ne as the r3 and r14 walks are (A's r0 had local ca0_* tactics).
 
    B facts the walk meets (the run computes them; listed here as the cross-check):
@@ -27,21 +28,21 @@
    (sym_runN_pi) decides each by computation; RUNC (SRr_run_pi_AJ_call, lib/B/Prog/PaCallRun.v:41) certifies a run
    that ends at a call, RUNP (SRr_run_pi_AJ, lib/B/Prog/PaLibF.v:424) the run that ends at `ret`. The runs stop at
    no branch but the `beqz a0` after each call (measured: (internal path)).
-   - 0x87654: refuted by RUNC at check_arity_r0.v:109, from the syntax pointer ca_syn_addr 0 = 0x21240, a literal
+   - 0x87654: refuted by RUNC at check_arity_r0.v:110, from the syntax pointer ca_syn_addr 0 = 0x21240, a literal
      of ca_ss (check_arity_s1.v) from cmd_ro_ok / cmd_val_objs.
-   - 0x876bc, 0x87720: refuted by RUNC at check_arity_r0.v:109 and :137, from the literal scan pointer (inside the
+   - 0x876bc, 0x87720: refuted by RUNC at check_arity_r0.v:110 and :138, from the literal scan pointer (inside the
      literal 0x21240).
-   - 0x8770c: refuted by RUNC at check_arity_r0.v:109 and :137, from the literal depth of the run (0 or 1).
-   - 0x87840: refuted by RUNC at check_arity_r0.v:109 and :137, from the literal ~item and len - 1 of the run.
-   - 0x87918: refuted by RUNC at check_arity_r0.v:109, from the literal min of the run (0 or 1).
-   - 0x87880: refuted by RUNC at check_arity_r0.v:109-147 (once per call), from the literal ~item reloaded from the
+   - 0x8770c: refuted by RUNC at check_arity_r0.v:110 and :138, from the literal depth of the run (0 or 1).
+   - 0x87840: refuted by RUNC at check_arity_r0.v:110 and :138, from the literal ~item and len - 1 of the run.
+   - 0x87918: refuted by RUNC at check_arity_r0.v:110, from the literal min of the run (0 or 1).
+   - 0x87880: refuted by RUNC at check_arity_r0.v:110-148 (once per call), from the literal ~item reloaded from the
      frame slot 0x20 (a chunk ca_bcmp_step keeps) and the literal i in s1 (callee-saved, kept by the step).
-   - 0x87954: refuted by RUNP at check_arity_r0.v:149, from the atom-32 fact [mn + 1, Z.min mx 63 + 1] = [3, 5] of
+   - 0x87954: refuted by RUNP at check_arity_r0.v:150, from the atom-32 fact [mn + 1, Z.min mx 63 + 1] = [3, 5] of
      ca_facts (check_arity_s1.v), seeded by ca_row_open (check_arity_s3.v) from ca_row_pre's
      `mn <= s3v - 1 <= mx /\ 1 <= s3v <= 64`.
    The arity tests 0x87958 / 0x8795c fall through by the same fact (the abort edge 0x87a94 is not reached).
 
-   Templates (read only, never imported): a working branch fd8e07f77cd lib/B/Prog/check_arity.v, the
+   Templates (read only, never imported): a working branch lib/B/Prog/check_arity.v, the
    old-route B walk in the abandoned lib/Lib `evt` / MState framework against the OLD check_arity_contract. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor raised to the 0x5D0000 bytes below sp that the launch guarantees ([STACK_GAP])). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -25,7 +26,7 @@ Section NDTK.
   Notation S := (f / 8 + 2147450880).
   Hypothesis ROOM : lo + NDCA_STACK <= SP.
   Hypothesis TOP : SP + 16 <= USTACK_TOP.
-  Hypothesis LOR : rt_sp0 RT Σ0 - STACK_WIN <= lo.
+  Hypothesis LOR : rt_sp0 RT Σ0 - STACK_WIN + STACK_GAP <= lo.
   Hypothesis EF : rt_frames RT Σ1 = (f, 4%nat) :: rt_frames RT Σ0.
   Hypothesis EL : rt_live RT Σ1 = rt_live RT Σ0.
   Hypothesis ES : rt_sp0 RT Σ1 = rt_sp0 RT Σ0.
@@ -78,7 +79,7 @@ Section NDTK.
     { eapply aclient_mono; [exact Ha| rewrite EL; auto| rewrite EF; intros e He; right; exact He| lia]. }
     pose proof (aclient_split_c RT AF Σ1 m1 SP a HA HA') as SPL. rewrite ES in SPL.
     split; [destruct SPL; [left; assumption| right; lia]|].
-    assert (LS : rt_sp0 RT Σ0 - STACK_WIN <= SP).
+    assert (LS : rt_sp0 RT Σ0 - STACK_WIN + STACK_GAP <= SP).
     { destruct SPL as [H|H]; [|]; pose proof (af_sp0_range RT AF Σ1 m1 HA) as R; rewrite ES in R; unfold NDCA_STACK, P5A_STACK, LMA_STACK, RT_STACK in *; lia. }
     destruct (NA LS Ha) as [N1 N2]. change (fs_size 4) with 1024 in N1, N2. unfold shad, SHB in N2.
     replace (f + 1024) with (f + 128 * 8) in N2 by lia. rewrite Z.div_add in N2 by lia.

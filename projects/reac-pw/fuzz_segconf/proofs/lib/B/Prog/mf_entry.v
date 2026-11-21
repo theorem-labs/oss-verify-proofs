@@ -3,8 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the first segment of check_reply's walk (fuzz_command.asan, 0x86d78), from the
    entry to the memchr call 0x86ef8 (cr_s1 : CR_MC_stmt -> CR_ENTRY_stmt, lib/A/Prog/check_reply_m.v), ported from
-   proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v (cgif_close) at
-   c8557374ad2e, with the class-1 side-stack frame steps of A/ACa2.v (cgif_raw_addframe) and A/AChf.v (flushFrame):
+   proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v (cgif_close),
+   with the class-1 side-stack frame steps of A/ACa2.v (cgif_raw_addframe) and A/AChf.v (flushFrame):
    the entry seed cr_entry (check_reply_k.v); a token run over the prologue to the call of __asan_stack_malloc_1; the
    call through aj_stack_malloc_atS; the state after it (the kept stack and GOT regions, the frame F as a0's atom 46,
    fresh atoms 58 = F's flag cell and 59 = F's shadow, the frame's header, tail and shadow, g_rec's GOT word and
@@ -12,6 +12,7 @@
    over the inline checks #1..#4 to 0x86ef8; there the registers and the regions' fields give cr_mid and cr_regs_at. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_reply_s1.v, with its module paths, module names and numbers changed; 492 of its 627 lines of code are new or changed and 392 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/mf_entry_1.v, with its module paths and module names changed; 14 of its 52 lines of code are new or changed and 589 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* m_file on fuzz_segconf.asan-ubsan (image B, pin sha256 c3796c0b38f3666f32a3ecff43c9fdb55ead356833af6013a07c404bd0254509,
    unstripped twin 80e82127e8ca; 0x86140, 3,608 bytes): the segment S_MF_ENTRY of its walk, `S_MF_ENTRY_ok`, against the
    fixed cut statements of lib/B/Prog/m_file_m.v (S_MF_ENTRY B = (forall n, MF_HEAD_F B n) -> MF_EXIT_F B ->
@@ -29,10 +30,10 @@
    The model and byte-encoding lemmas are lib/B/Prog/mf_entry_m.v; the snprintf call's premise bundle is
    lib/B/Prog/mf_entry_k.v.
 
-   ADAPTED from image A's lanes of the same segment by the image-A m_file-family lane (commit dab7f3ccb5c5,
-   lib/A/Prog/m_file_s_entry_m.v; commit 6019db533ca0, lib/A/Prog/m_file_s_entry_k.v) and from
+   ADAPTED from image A's lanes of the same segment by the image-A m_file-family lane (
+   lib/A/Prog/m_file_s_entry_m.v;, lib/A/Prog/m_file_s_entry_k.v) and from
    plugin-hostd/fuzz_command's released class-1 frame walk (lib/A/Prog/check_reply_k.v cr_entry, check_reply_s1.v,
-   check_reply_s4.v at origin/ossv/recipes 501c0d516c69); the snprintf step after the shared lib/B/Prog/m_file_sn.v.
+   check_reply_s4.v); the snprintf step after the shared lib/B/Prog/m_file_sn.v.
 
    UBSAN TRAP BRANCHES (both to the one `unimp` 0x86e84; the trap instruction is never executed):
      0x8626c `bnez a0` (a0 = c & 3, 0x86248): not taken. m_file_pre's `c mod 16 = 0` is the alignment fact

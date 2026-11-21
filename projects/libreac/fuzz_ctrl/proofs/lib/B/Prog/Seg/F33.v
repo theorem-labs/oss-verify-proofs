@@ -4,10 +4,11 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 3817 of its 3853 lines of code are new or changed and 212 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths and module names changed; 371 of its 396 lines of code are new or changed and 3828 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v, with its module paths, module names and addresses changed; 105 of its 141 lines of code are new or changed and 360 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment F33 of fuzz_ctrl LLVMFuzzerTestOneInput (asan-ubsan, image B, libreac v1.9.0): 0x82bcc-0x82bf0, the set-up
    and the head of row_of_block (row F33 (plan-asan-ubsan section 2 (a working note, not in this delivery)); ubsan twin W01; v1.8 0x82b68-0x82b8c, a Theorem Labs lane's
-   row S_F33 (v190-segment-table (a working note, not in this delivery)): IDENTICAL). Image-B port of the image-A lemma seg_F33 (lib/A/Prog/Seg/F33.v,
-   127a27ab2ec; image A v1.8 0x827b0-0x827bc).
+   row S_F33 (v190-segment-table (a working note, not in this delivery)): IDENTICAL). Image-B port of the image-A lemma seg_F33 (lib/A/Prog/Seg/F33.v,;
+   image A v1.8 0x827b0-0x827bc).
 
      0x82bcc  beqz a0,82c84     -- NOT taken: a0 = BOX_CATALOGUE = 0x9f620, the catalogue's result (F32).
      0x82bd0  mv s5,a0          -- s5 = T, the catalogue base.
@@ -135,7 +136,7 @@ Hypothesis FF : frame_facts B APIf LS SH SK ra empty.
    sum_ok), FTURN and IFS (S j) of the turn), exit Inv_B82bf4_at at row 0 (RL; s6 = 1, s8 = k and the spill
    [A + 272] = k; FTURN, IFS (S j)) and exit Inv_B82c84_at (not reached here). The run writes no memory and keeps
    s1, s6, s8 and s11, so every pass-through bundle moves by its register-9 / register-27 transporter alone.
-   The exit's [A + 248] conjunct is `True` on the bundle d2c4b19fac8 (v1.9.0 reads [A + 248] only at 0x81700 and
+   The exit's [A + 248] conjunct is `True` on the bundle (v1.9.0 reads [A + 248] only at 0x81700 and
    0x8246c, before the row loop; 0x82bdc `li s9,0` reuses s9 as the row counter). *)
 
 (* ===================== the segment lemma ===================== *)

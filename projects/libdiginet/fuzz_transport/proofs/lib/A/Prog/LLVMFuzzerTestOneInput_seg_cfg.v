@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs: the interface of the image-A walk of reac-repacer/fuzz_uci's LLVMFuzzerTestOneInput, in the form of proofs/libreac/fuzz_decode/lib/A/Prog/LLVMFuzzerTestOneInput_segs.v (the context record, a state predicate per cut point, one statement per segment, the composition by SRr_bind / SRr_mono and the srealizes entry of cgif's lib/A/ACfh.v): the cut points, the registers and the frame are fuzz_uci.asan's, the slot is the core's lib/A/ACfn.v tfib_lib_contract_x_all, and the loop of five turns is composed by an induction on the turn. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/A/Prog/LLVMFuzzerTestOneInput_segs.v, with its module paths and module names changed; 937 of its 976 lines of code are new or changed and 163 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_transport/lib/A/Prog/LLVMFuzzerTestOneInput_segs.v, with its module paths and module names changed; 7155 of its 7226 lines of code are new or changed and 905 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* LLVMFuzzerTestOneInput_seg_cfg: proves no function (kind: segment lemma of LLVMFuzzerTestOneInput's image-A walk).
    lc_cfg_ok : lc_rom_view_stmt -> lc_src_ro_stmt -> lc_cfg_stmt (lib/A/Prog/LLVMFuzzerTestOneInput_segs.v), the
    segment CFG of fuzz_transport.asan's LLVMFuzzerTestOneInput, from the return of diginet_session_config_default
@@ -302,7 +303,7 @@ Definition cf_rg_last : YP09.region := YP09.mkRegion (Some (A_HI 11)) (-1064) (-
 Definition cf_rg_in (k : nat) : YP09.region :=
   YP09.mkRegion (Some 19%nat) 0 (Z.of_nat k) 0 0
     (map (fun j => YP09.mkChunk (Z.of_nat j) (CVal 1 (SOff (32 + j) 0))) (seq 0 k)).
-(* The shadow byte of the cursor, named by an alias fact (the port of seg_hdr.v lh_rg_sp, 50e228257540:198). *)
+(* The shadow byte of the cursor, named by an alias fact (the port of seg_hdr.v lh_rg_sp:198). *)
 Definition cf_rg_sh : YP09.region :=
   YP09.mkRegion (Some 46%nat) 0 1 0 0 [YP09.mkChunk 0 (CVal 1 (SOff 47 0))].
 
@@ -371,7 +372,7 @@ Definition cf_wrun (cx : lcx) (a : Z) : Prop :=
   (lc_sp1 cx + 160 <= a < lc_sp1 cx + 168) \/ (lc_sp1 cx + 176 <= a < lc_sp1 cx + 184).
 
 (* lc_core without its journal: the walk keeps the journal it is given and carries the rest (the port of
-   lib/A/Prog/LLVMFuzzerTestOneInput_seg_hdr.v lh_rest, 50e228257540:506). *)
+   lib/A/Prog/LLVMFuzzerTestOneInput_seg_hdr.v lh_rest:506). *)
 Definition cf_rest (cx : lcx) (ly' : alayout) (S' : astate) (W' : world segs) (regs' : bvmap 5 word)
     (mem' : word -> option byte) : Prop :=
   frames S' = [(LF_CID, l_fpos cx)] /\ ly_F ly' = ly_F (l_ly cx) /\
@@ -549,7 +550,7 @@ intros n Hn. rewrite (H1 n ltac:(lia)). unfold cf_E. apply Eimg_low. unfold A_TE
 Qed.
 
 (* g_cfg's 60 bytes are addressable at every AR state: the shadow of its 7 whole granules is 0 and the shadow byte
-   of its last granule is 4 (the port of lib/A/Prog/diginet_session_config_default.v scfg_ra, f6acfcb0c1b8:305). *)
+   of its last granule is 4 (the port of lib/A/Prog/diginet_session_config_default.v scfg_ra:305). *)
 Lemma cf_cfg_ra : forall ly S (W : world segs) mem md,
   trans_scfg_cells B -> @AR rc segs B ly S W mem md ->
   range_addressable (aview segs (w_H W) mem) SHADOW_OFF TA_g_cfg 60.
@@ -578,7 +579,7 @@ destruct (Z_lt_le_dec x (SCFG_C + 56)) as [Hlt|Hge].
 Qed.
 
 (* The shadow hull of a range of g_cfg is visible: its shadow bytes are g_cfg's eight (the port of
-   diginet_session_config_default.v scfg_hull, f6acfcb0c1b8:331). *)
+   diginet_session_config_default.v scfg_hull:331). *)
 Lemma cf_cfg_hull : forall ly S (W : world segs) mem md a n,
   trans_scfg_cells B -> @AR rc segs B ly S W mem md ->
   TA_g_cfg <= a -> 0 < n -> a + n <= TA_g_cfg + 60 ->
@@ -1946,7 +1947,7 @@ pose proof (Z.mod_pos_bound v 8 ltac:(lia)). lia.
 Qed.
 
 (* `andi a1, s3, 7` of a cursor one past an eight-aligned block, against a shadow byte in (1, 8): the branch to the
-   report call 0x82b70 is not taken (the port of seg_hdr.v lh_bge, 50e228257540:229). *)
+   report call 0x82b70 is not taken (the port of seg_hdr.v lh_bge:229). *)
 Lemma cf_land7g : forall x, 0 <= x < 2 ^ 64 -> zalu64 ALU_AND x 7 = x mod 8.
 Proof.
 intros x Hx. unfold zalu64, zalu_raw, zcanon, M64.
@@ -1970,7 +1971,7 @@ assert (Hc : sb = 2 \/ sb = 3 \/ sb = 4 \/ sb = 5 \/ sb = 6 \/ sb = 7) by lia.
 destruct Hc as [-> | [-> | [-> | [-> | [-> | ->]]]]]; vm_compute; reflexivity.
 Qed.
 
-(* `beqz` of an atom holding v (the port of seg_hdr.v lh_beqz, 50e228257540:216). *)
+(* `beqz` of an atom holding v (the port of seg_hdr.v lh_beqz:216). *)
 Lemma cf_beqz : forall E (m : nat) v b, bv_unsigned (ew E m) = v -> 0 <= v < 2 ^ 64 ->
   branch_taken BC_EQ (sv_denot E (SOff m 0)) (sv_denot E (SLit 0)) = b -> (v =? 0) = b.
 Proof.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the M_loop invariant carries the model's channel reader, and init_M_loop takes the input's in_channel_reader). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -60,21 +61,23 @@ Proof. reflexivity. Qed.
 Definition M_loop (model : Model) : Prop :=
   fd_lookup (m_fds model) (Z_to_bv 64 0) = Some (FdChannel (Z_to_bv 64 0)) /\
   fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)) /\
+  m_channel_reader model = true /\
   m_halted model = None /\
   m_vm_lazy model = [].
 
 Lemma init_M_loop : forall reserved brk0 mb sp lim inp,
+  in_channel_reader inp = true ->
   M_loop (init_model reserved brk0 mb sp lim inp).
-Proof. intros reserved brk0 mb sp lim inp. repeat split. Qed.
+Proof. intros reserved brk0 mb sp lim inp Hr. repeat split; exact Hr. Qed.
 
 (* [comment removed for export] *)
 Lemma M_loop_take : forall k model,
   M_loop model ->
   M_loop (with_stdin (snd (stream_take (m_stdin model) k)) model).
-Proof. intros k model (H0 & H1 & Hh & Hlazy). repeat split; assumption. Qed.
+Proof. intros k model (H0 & H1 & Hr & Hh & Hlazy). repeat split; assumption. Qed.
 
 Lemma M_loop_fd1chan : forall model, M_loop model -> fd1chan model.
-Proof. intros model (H0 & H1 & Hh & Hlazy). exact H1. Qed.
+Proof. intros model (H0 & H1 & Hr & Hh & Hlazy). split; [exact H1 | exact Hr]. Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)

@@ -12,12 +12,13 @@
      scene_poison_shadow (at PS_ENTRY = 0x55be4). Both take AR_laws and TfibSyms B, so its premises are AR_laws and
      TfibSyms: facts about B's certificate.
    The conclusion is a Theorem Labs lane's: `astack_free_realizes tfibsegs B PC_STACK_FREE_8 CID8`. The glue states this row as
-   (a working branch c1b5da89d39 lib/AU/G_Close.v:182-183)
+   (a working branch lib/AU/G_Close.v:182-183)
    `StackFreeDef.astack_free_realizes SEGS B (SIGMA SS___asan_stack_free_8) 8`; the two are equal by conversion only:
    SEGS = pa_segs PI_scene = scene_segs = AsanUbsan.M.loaded_segments = tfibsegs (AU/YB1v.v:12); SIGMA = pa_sigma
    PI_scene = scene_sigma, and scene_sigma SS___asan_stack_free_8 = 0x3f5b4 = PC_STACK_FREE_8
-   (a working branch 82cb6676c06 lib/AU/Prog/SceneImg.v:61, SceneAddr.v:32); CID8 = 8
-   (StackMalloc8Tbl.v:66). *)
+   (a working branch lib/AU/Prog/SceneImg.v:62, SceneAddr.v:32); CID8 = 8
+   (StackMalloc8Tbl.v:67). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

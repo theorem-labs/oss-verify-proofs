@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: the loop segment of fuzz_reply's ASan send_line walk, in the form of the
    cgif donor's loop over concrete cut states (proofs/cgif/cgif_file_fuzzer/lib/A/AC8b.v tcbb_loopX), over a generic
    allocator relation (lib/A/W_send_line_loop.v is the AR walk). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The loop head L = 0x827c8 (A_sl_loop).  One round is one of
    - the EINTR round: g_send_eintr <> 0, cleared, errno := EINTR, back to L with the bound one smaller;
    - the dead round: g_send_dead <> 0, errno := EPIPE, g_client_broken := 1, out through the epilogue;
@@ -12,8 +13,8 @@
    Section c proves pb_sl_loop_cut_x, W_send_line_cx_x.v's sl_loop_stmt_x from W_send_line_datab_cx_x.v's
    sl_copy_stmt_x and W_send_line_grow_cx_x.v's sl_grow_stmt_x, over any allocator relation ARx with its laws and
    any room record RP.  Its Section header is W_send_line_cx_x.v's, verbatim.  The text is W7's stopped conversion of
-   W_send_line_loop.v (a working branch 7561b427559, 620439a617c) merged with the top's C3 peak re-fit
-   (76be6190eff / 475b8a2b569); W_send_line_loop.v is not edited, and its AR-free lemmas outside its Section c and
+   W_send_line_loop.v (a working branch) merged with the top's C3 peak re-fit;
+   W_send_line_loop.v is not edited, and its AR-free lemmas outside its Section c and
    its peak lemmas (sl_tr_peak_keep / sl_tr_peak_grow and the sl_max_run lemmas) are cited, not copied.  Against W7's text:
    - errno's addressability is W_contract_x.v azs_range_addressable_x at the header's azs-form HERRZ (no ZSAL);
    - the dead round's g_out block misses g_client_broken and errno by the laws' client-image field and HG (no
@@ -78,28 +79,28 @@ Context {hl : Z}.
 Hypothesis LAWS : AR_laws_x SEGS B ARx hl.
 (* a Theorem Labs lane's HP0 ruling: the generic relation holds at the empty ghost list only *)
 Hypothesis HP0 : forall ly S Hp W mem md, ARx ly S Hp W mem md -> Hp = [].
-(* a live block's request is below 2 ^ 30 (W_LLVMFuzzerTestOneInput_exit_x.v:236 BLKM's text; the top states it at ARX,
+(* a live block's request is below 2 ^ 30 (W_LLVMFuzzerTestOneInput_exit_x.v:237 BLKM's text; the top states it at ARX,
    top_x.v:972, from the cf instance's AR_blocks_law_cf): the memcpy at 0x82864 needs n < 2 ^ 32 (a Theorem Labs lane) *)
 Hypothesis BLKM : forall ly S Hp W mem md p n, ARx ly S Hp W mem md -> In (p, n) (ablocks B ly S) -> n < 2 ^ 30.
-(* W_send_line_cx.v:80-88, AR-free *)
+(* W_send_line_cx.v:81-89, AR-free *)
 Hypothesis HG : gx_ok SEGS B (G_SL B RG).
 Hypothesis HGR : forall a, inG (G_SL B RG) a -> ~ in_rom SEGS a.
 Hypothesis HROMO : rom_out SEGS B (G_SL B RG).
 Hypothesis HGO : gx_ok SEGS B [(rg_client RG, 4); (rg_send_dead RG, 1); (rg_send_max RG, 8)].
 Hypothesis MTL : ameter_laws MT.
 Hypothesis TL : PALib B.
-(* W_send_line_cx.v:90-92, the runtime and allocator sites over ARx *)
+(* W_send_line_cx.v:91-93, the runtime and allocator sites over ARx *)
 Hypothesis AERRNO : aerrno_realizes_x B ARx (SIGMA WS_errno_location).
 Hypothesis AMEMCPY : aintrin_realizes_x SEGS B ARx OCpy (SIGMA WS_asan_memcpy).
 (* The realloc site rule in its caller-context form (W_journal_x.v Section hc), as the top's ARE_x states it
    (CTX_AREALLOC, ACk0.v:45, holds [0x82844]); send_line hands the rule a cut chain (ch = []), so the trace is the
-   return address alone (W7's ccd62d4c6f6 form). *)
+   return address alone (W7's form). *)
 Variable CTX_R : list (list Z).
 Hypothesis AREALLOC : arealloc_cf_rule_c_x SEGS B PST ARx MT MMAX RP CTX_R (SIGMA WS_realloc).
 Hypothesis HCTX_slr : In [BASE + AF_fr_send_line + 0x110] CTX_R.   (* realloc returns to 0x82844 *)
-(* W_send_line_cx.v:94-122, AR-free *)
+(* W_send_line_cx.v:95-123, AR-free *)
 Hypothesis HERRNO : as_errno B = as_tp B - 164.
-(* errno's 4 bytes in an 8-aligned zero-shadow range (W_contract.azs; W_drain_cx_x.v:189's form): the loop's errno
+(* errno's 4 bytes in an 8-aligned zero-shadow range (W_contract.azs; W_drain_cx_x.v:190's form): the loop's errno
    stores need range_addressable of errno at an ARx state (W_contract_x.azs_range_addressable_x) *)
 Hypothesis HERRZ : azs B (as_errno B) 4.
 Hypothesis HERRW : forall i, 0 <= i < 4 -> writable_at SEGS (fun _ => None) (as_errno B + i).
@@ -124,7 +125,7 @@ Hypothesis HRGD : zpairwise_disjoint
  (rg_send_max RG, rg_send_max RG + 8); (rg_nout RG, rg_nout RG + 8);
  (rg_capout RG, rg_capout RG + 8); (rg_out RG, rg_out RG + 8);
  (as_errno B, as_errno B + 4)].
-(* W_send_line_cx.v:123-126, the run chain over the generic journal (W_journal_x.v Section g) *)
+(* W_send_line_cx.v:124-127, the run chain over the generic journal (W_journal_x.v Section g) *)
 Let RUN := paj_run_x_x B PST ARx LAWS (G_SL B RG) HG 0 [].
 Let RUNTO := paj_run_to_x_x B PST ARx LAWS (G_SL B RG) HG 0 [].
 Let BR := paj_branch (PI := PI).
@@ -2099,7 +2100,7 @@ destruct HI as (lyL & SL & HpL & kL & evL & capL & outL & spent & rest &
   HJ & Hsp & H3 & H4 & Hgp & Htp & HraE & HR & M8 & M16 & HSV & Hcl & Hbr & Hsent & Hei1 & Hei2 & Hdd1 & Hev &
   HOUT & HGL & Hline0 & Hline1 & HROM & HLOK & HLG & Hcapq & Hdd2 & HMM & HLM & HAPK & HMOK & HMLE & HCOST & Hspent0 &
   HPerm0 & HPerm1 & HFR & HRM1 & HRM2 & HCNT).
-(* W_send_line_loop_x.v:694 sl_exit_x at R *)
+(* W_send_line_loop_x.v:695 sl_exit_x at R *)
 Lemma sl_exit_xR : forall regsE ly S Hp W mem md c O mx no cap out Bl lyX SX HpX WX regsX memX mdX k out' rest kr,
 ajournal_gx_xR SEGS B PST ARx R (G_SL B RG) 0 [] SL_STK (spZ regsE) (ablocks_fp (aout_blks cap out)) ly S Hp W mem md [] lyX SX HpX WX memX mdX k ->
 spZ regsX = spZ regsE - SL_FRAME -> getr regsX 3 = getr regsE 3 -> getr regsX 4 = getr regsE 4 -> YK0s.ret_ok (getr regsE 1) ->
@@ -2131,7 +2132,7 @@ intros r _ a _. split.
 - exact (aview_eq_of SEGS (w_H WX) memX mem' a (Hm' _)).
 - unfold arm. apply writable_kept. intros HpA. exact (apresent_grows _ _ _ _ GRX HpA).
 Qed.
-(* W_send_line_loop_x.v:752 sl_arm_eintr_x at R *)
+(* W_send_line_loop_x.v:753 sl_arm_eintr_x at R *)
 Lemma sl_arm_eintr_xR : forall n, sl_loop_at_xR B PST ARx MT RP MMAX RG R n -> forall regsE ly S Hp W mem md c O mx no cap out line Bl WL regsL memL mdL sent eiL kr,
 SLI_xR B PST ARx MT RP MMAX RG R regsE ly S Hp W mem md c O mx no cap out line Bl WL regsL memL mdL sent eiL kr -> eiL <> 0 ->
 2 * (Z.of_nat (length Bl) - sent) + eiL <= Z.of_nat (Datatypes.S n) ->
@@ -2611,7 +2612,7 @@ psrr_branch_tok RUNG BRR HS SHOK LBspan.
     end.
     clear - Hc0 Hsent Hs0 Hlen1. apply Z.ltb_ge in Hc0. lia.
 Qed.
-(* W_send_line_loop_x.v:1301 sl_arm_dead_x at R *)
+(* W_send_line_loop_x.v:1302 sl_arm_dead_x at R *)
 Lemma sl_arm_dead_xR : forall regsE ly S Hp W mem md c O mx no cap out line Bl WL regsL memL mdL sent eiL kr,
 SLI_xR B PST ARx MT RP MMAX RG R regsE ly S Hp W mem md c O mx no cap out line Bl WL regsL memL mdL sent eiL kr -> eiL = 0 -> ct_dd c = 1 ->
 SRrG SEGS R WL (mkCfg (mkst regsL (Z_to_bv 64 (BASE + A_sl_loop)) memL (seg_rom SEGS)) mdL)
@@ -2933,7 +2934,7 @@ apply (sl_exit_xR regsE ly S Hp W mem md c O mx no cap out Bl lyL SL HpL WL (ms_
 - (* the room: a dead send keeps kr (SLI_xR), and the round made no allocating call *)
   exact (HRM2 Hdd).
 Qed.
-(* W_send_line_loop_x.v:1624 sl_arm_data_x at R *)
+(* W_send_line_loop_x.v:1625 sl_arm_data_x at R *)
 Lemma sl_arm_data_xR : sl_copy_stmt_xR B PST ARx MT RP MMAX RG R -> sl_grow_stmt_xR B PST ARx MT RP MMAX RG R -> forall n, sl_loop_at_xR B PST ARx MT RP MMAX RG R n -> forall regsE ly S Hp W mem md c O mx no cap out line Bl WL regsL memL mdL sent eiL kr,
 SLI_xR B PST ARx MT RP MMAX RG R regsE ly S Hp W mem md c O mx no cap out line Bl WL regsL memL mdL sent eiL kr -> eiL = 0 -> ct_dd c = 0 ->
 2 * (Z.of_nat (length Bl) - sent) + eiL <= Z.of_nat (Datatypes.S n) ->
@@ -3366,7 +3367,7 @@ psrr_branch_tok RUNG BRR HS SHOK LBspan.
       | intros m Hm; apply YN3v.ew_havoc_old; exact Hm
       | exact X38 | exact HSn | exact HJ | keep_chainW | pres_chain ].
 Qed.
-(* W_send_line_loop_x.v:2059 pb_sl_loop_cut_x at R *)
+(* W_send_line_loop_x.v:2060 pb_sl_loop_cut_x at R *)
 Theorem pb_sl_loop_cut_xR : sl_copy_stmt_xR B PST ARx MT RP MMAX RG R -> sl_grow_stmt_xR B PST ARx MT RP MMAX RG R ->
 sl_loop_stmt_xR B PST ARx MT RP MMAX RG R.
 Proof.

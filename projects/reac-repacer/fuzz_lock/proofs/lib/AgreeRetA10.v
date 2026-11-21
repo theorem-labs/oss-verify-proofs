@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs: the -1 twin of lib/U/Reusable/YL10_cfw.v (no licence line), on the -1 runs of lib/U/Reusable/YL10.v (the Copyright and SPDX lines) recomputed in lib/U/Prog/FrameRetA10.v, for a return value of the fuzz target of 0 or -1 *)
-(* Donor: reac-repacer/fuzz_lock, proofs/reac-repacer/fuzz_lock/lib/U/Reusable/YL10_cfw.v and U/Reusable/YL10.v at 901d1549395.
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Donor: reac-repacer/fuzz_lock, proofs/reac-repacer/fuzz_lock/lib/U/Reusable/YL10_cfw.v and U/Reusable/YL10.v.
    Module: OSSVerify.Proofs.reac_repacer.fuzz_lock.lib.AgreeRetA10. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

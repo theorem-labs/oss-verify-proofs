@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the read loop and close walk the run's segment list RSEGS ++ rt_tail; the stack floor follows the narrower mapped window below sp0; the refusal tail is lifted from the binary's segments and takes the channel-reader fact hx_krel_rdr). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -16,6 +17,7 @@ From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Ub Require Import MainDef
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Lib Require Import Mem Cells Arr Step Frame MState SysStep.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Ub Require Import USegs RMalloc_iface_stmt HeapSR_iface.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Spec Require Import Prog.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import RomBase RomStable RunTail.
 Import ListNotations.
 Import SymExec2.SX2. Import SymExec2Sound.SX2S.
 Import OSSVerify.Proofs.openssl.echconfiglist_parser.lib.PropExec.
@@ -62,6 +64,10 @@ Proof. apply (Forall_by_b _ _ (avoid_b STAGE (STAGE + STAGE_LEN)) (avoid_b_ok _ 
 
 Section Loop.
   Context {HCEIL : HeapCeil}.
+  (* the read loop and the close lie on main's path to the target call, so their walks are
+     over the run's list [VS]; the memory facts stay the binary's *)
+  Context {RT : RunTail}.
+  Local Notation VS := (RSEGS ++ rt_tail) (only parsing).
   Variable HS : hsr.
   Hypothesis HH : heap_sr_hyps HS.
   Hypothesis HX : heap_extra HS.
@@ -75,7 +81,11 @@ Section Loop.
   Let SPlo : 0x7fff80000000 <= bv_unsigned sp0 := proj1 Hvsp.
   Let SPhi : bv_unsigned sp0 <= 0x800000000000 := proj1 (proj2 Hvsp).
   Let spm : Z := bv_unsigned sp0 - 128.
-  Let lo : Z := bv_unsigned sp0 - 8388608.
+  (* The launch maps only [wok_lo sp0, sp0) below sp0 ([RefStartup.main_entry_win_mapped],
+     [MemSplit.v:122-123]: [wok_lo sp0 = sp0 + stack_window_reach - stack_max_size =
+     sp0 - 6144513]); [lo] is the page-aligned floor at or above it.  MainTop.v's [lo] is
+     the same term. *)
+  Let lo : Z := bv_unsigned sp0 - 6144512.
 
   (* [comment removed for export] *)
   Let KRELh : forall s mo, hs_KREL HS s mo -> m_halted mo = None /\ m_vm_lazy mo = [].
@@ -490,6 +500,8 @@ Section Loop.
 
   Lemma ECALL_2c166c : fetch_word RSEGS (Z_to_bv 64 0x2c16a8) = Some ECALLW.
   Proof. vm_compute. reflexivity. Qed.
+  Lemma ECALL_2c166c_rt : fetch_word VS (Z_to_bv 64 0x2c16a8) = Some ECALLW.
+  Proof. rewrite rt_fetch_word. exact ECALL_2c166c. Qed.
 
   Lemma firstn_app_read : forall (n : nat) (l : list byte) bs,
     bs = firstn (length bs) (skipn n l) -> firstn n l ++ bs = firstn (n + length bs) l.
@@ -568,16 +580,16 @@ Section Loop.
     RInv len cap A s p regs mem model ->
     (* [comment removed for export] *)
     (forall regs' mem' model' n, MInv len n cap A s p regs' mem' model' ->
-       realizes RSEGS (mkCfg (mkst regs' (Z_to_bv 64 0xe2374) mem' (seg_rom RSEGS)) model') K) ->
+       realizes VS (mkCfg (mkst regs' (Z_to_bv 64 0xe2374) mem' (seg_rom VS)) model') K) ->
     (* [comment removed for export] *)
     (len = Z.of_nat (length data) -> forall regs' mem' model', CInv cap A s p regs' mem' model' ->
-       realizes RSEGS (mkCfg (mkst regs' (Z_to_bv 64 0x2c16a8) mem' (seg_rom RSEGS)) model') K) ->
-    realizes RSEGS (mkCfg (mkst regs (Z_to_bv 64 0x2c16a8) mem (seg_rom RSEGS)) model) K.
+       realizes VS (mkCfg (mkst regs' (Z_to_bv 64 0x2c16a8) mem' (seg_rom VS)) model') K) ->
+    realizes VS (mkCfg (mkst regs (Z_to_bv 64 0x2c16a8) mem (seg_rom VS)) model) K.
   Proof.
     intros regs mem model s p A len cap K [RC [Hlen Hld] Hcap HPOW HBR HRH HKR HWR HDATA ST Hra Hfs Hfd3 Hfd1 Hfd2] KMORE KEOF.
     pose proof Htid as HtidPin.   (* [comment removed for export] *)
     pose proof SPlo as Hlo. pose proof SPhi as Hhi. hcb.
-    assert (Elo : lo = bv_unsigned sp0 - 8388608) by reflexivity. assert (Espm : spm = bv_unsigned sp0 - 128) by reflexivity.
+    assert (Elo : lo = bv_unsigned sp0 - 6144512) by reflexivity. assert (Espm : spm = bv_unsigned sp0 - 128) by reflexivity.
     set (cnt := Z.min (cap - len) 65536) in RC.
     destruct RC as (R1 & R2 & R4 & R8 & R9 & R10 & R11 & R12 & R17 & R18 & R19 & R20 & R21 & R22).
     pose proof HBR as (B1 & B2 & B3 & B4 & B5). clear B2.
@@ -586,12 +598,12 @@ Section Loop.
     destruct (file_read_next len cnt ltac:(lia) ltac:(lia) ltac:(lia)) as [FR FL].
     set (bs := file_read data (Z_to_bv 64 len) (Z_to_bv 64 cnt)) in *.
     assert (Lbs : Z.of_nat (length bs) <= STAGE_LEN) by (unfold STAGE_LEN; rewrite FL; lia).
-    eapply (rz_read_file RSEGS regs (Z_to_bv 64 0x2c16a8) mem model ECALLW (Z_to_bv 64 3) path (Z_to_bv 64 len) data cnt);
-      [ apply ECALL_2c166c | apply is_ecall_ECALLW | exact Hh | exact Hlazy | exact R17 | exact R10
+    eapply (rz_read_file VS regs (Z_to_bv 64 0x2c16a8) mem model ECALLW (Z_to_bv 64 3) path (Z_to_bv 64 len) data cnt);
+      [ apply ECALL_2c166c_rt | apply is_ecall_ECALLW | exact Hh | exact Hlazy | exact R17 | exact R10
       | rewrite u_small by lia; lia | exact Hfd3 | rewrite Hfs; exact Hdata | exact R12 | lia
       | unfold MAX_RW_COUNT; lia | lia
       | rewrite R11; unorm; unfold TASK_SIZE; lia
-      | rewrite R11; apply UbPrintfBufBase.data_store_ok; lia
+      | rewrite rt_store_ok, R11; apply UbPrintfBufBase.data_store_ok; lia
       | ].
     cbv zeta. rewrite R12, R11. fold bs. rewrite AgentLib.v_addi_lit by lia. change (0x2c16a8 + 4)%Z with 0x2c16ac%Z.
     change 0x323519 with STAGE.
@@ -664,10 +676,10 @@ Section Loop.
                 eapply (MainMem.wr_at_store_ok mem2 A cap len (Z.to_nat n)); [exact HWR2 | lia | lia | lia]
               | unorm; lia | unorm; lia | unorm; lia]. }
       assert (RET : ret_ok (Z_to_bv 64 0xe2374)) by (apply ret_ok_even; reflexivity).
-      destruct (ref_memcpy mem2 (Z_to_bv 64 (A + len)) (Z_to_bv 64 STAGE) n bs (seg_rom RSEGS) MC regs2 (Z_to_bv 64 0xe2374)
+      destruct (ref_memcpy mem2 (Z_to_bv 64 (A + len)) (Z_to_bv 64 STAGE) n bs (seg_rom VS) MC regs2 (Z_to_bv 64 0xe2374)
                   RET T1 T10 T11 T12) as (regs3 & RUN3 & KEPT3).
       lazymatch type of RUN3 with msteps _ (mkst _ ?pc3 _ _) _ => replace (Z_to_bv 64 0x2c04f0) with pc3 by (apply bv_eq; reflexivity) end.
-      eapply rz_msteps; [exact Hh' | exact Hlazy' | exact RUN3 |]. clear RUN3.
+      eapply rz_msteps; [exact Hh' | exact Hlazy' | exact (rt_msteps_sym _ _ _ RUN3) |]. clear RUN3.
       set (mem3 := wbytes mem2 (Z_to_bv 64 (A + len)) bs) in *.
       pose proof (KEPT3 2%bv ltac:(clear; cbn; first [in_bv | tauto])) as U2. pose proof (KEPT3 4%bv ltac:(clear; cbn; first [in_bv | tauto])) as U4.
       pose proof (KEPT3 8%bv ltac:(clear; cbn; first [in_bv | tauto])) as U8. pose proof (KEPT3 18%bv ltac:(clear; cbn; first [in_bv | tauto])) as U18.
@@ -708,14 +720,14 @@ Section Loop.
   Lemma close_step : forall regs mem model s p A cap K,
     CInv cap A s p regs mem model ->
     (forall regs' model', XInv cap A s p regs' mem model' ->
-       realizes RSEGS (mkCfg (mkst regs' (Z_to_bv 64 0x2c16ac) mem (seg_rom RSEGS)) model') K) ->
-    realizes RSEGS (mkCfg (mkst regs (Z_to_bv 64 0x2c16a8) mem (seg_rom RSEGS)) model) K.
+       realizes VS (mkCfg (mkst regs' (Z_to_bv 64 0x2c16ac) mem (seg_rom VS)) model') K) ->
+    realizes VS (mkCfg (mkst regs (Z_to_bv 64 0x2c16a8) mem (seg_rom VS)) model) K.
   Proof.
     intros regs mem model s p A cap K CI HK.
     destruct CI as [R1 R2 R4 R8 R9 R10 R17 R18 R19 R20 R21 Hcap Hlen HBR HRH HKR HWR HDATA ST Hra Hfs [e3 He3] Hfd1 Hfd2].
     destruct (KRELh s model HKR) as [Hh Hlazy].
-    eapply (rz_close RSEGS regs (Z_to_bv 64 0x2c16a8) mem model ECALLW (Z_to_bv 64 3) e3);
-      [ apply ECALL_2c166c | apply is_ecall_ECALLW | exact Hh | exact Hlazy | exact R17 | exact R10
+    eapply (rz_close VS regs (Z_to_bv 64 0x2c16a8) mem model ECALLW (Z_to_bv 64 3) e3);
+      [ apply ECALL_2c166c_rt | apply is_ecall_ECALLW | exact Hh | exact Hlazy | exact R17 | exact R10
       | rewrite u_small by lia; lia | exact He3 |].
     rewrite AgentLib.v_addi_lit by lia. change (0x2c16a8 + 4)%Z with 0x2c16ac%Z.
     apply HK. split; try assumption.
@@ -736,8 +748,8 @@ Section Loop.
   Lemma m_cont : forall regs mem model s p (A len n cap : Z) K,
     MInv len n cap A s p regs mem model -> len + n <> cap ->
     (forall regs' mem', RInv (len + n) cap A s p regs' mem' model ->
-       realizes RSEGS (mkCfg (mkst regs' (Z_to_bv 64 0x2c16a8) mem' (seg_rom RSEGS)) model) K) ->
-    realizes RSEGS (mkCfg (mkst regs (Z_to_bv 64 0xe2374) mem (seg_rom RSEGS)) model) K.
+       realizes VS (mkCfg (mkst regs' (Z_to_bv 64 0x2c16a8) mem' (seg_rom VS)) model) K) ->
+    realizes VS (mkCfg (mkst regs (Z_to_bv 64 0xe2374) mem (seg_rom VS)) model) K.
   Proof.
     intros regs mem model s p A len n cap K [MR Hlen Hcap HPOW HBR HRH HKR HWR HDATA ST Hfs Hfd3 Hfd1 Hfd2] Hne HK.
     pose proof SPlo. pose proof SPhi. hcb. destruct (KRELh s model HKR) as [Hh Hlazy].
@@ -763,7 +775,7 @@ Section Loop.
   (* [comment removed for export] *)
   Lemma m_refuse : forall regs mem model s p (A len n cap : Z),
     MInv len n cap A s p regs mem model -> len + n = cap -> MAX_INPUT <= cap ->
-    realizes RSEGS (mkCfg (mkst regs (Z_to_bv 64 0xe2374) mem (seg_rom RSEGS)) model) (t_die msg_refused fs0).
+    realizes VS (mkCfg (mkst regs (Z_to_bv 64 0xe2374) mem (seg_rom VS)) model) (t_die msg_refused fs0).
   Proof.
     intros regs mem model s p A len n cap [MR Hlen Hcap HPOW HBR HRH HKR HWR HDATA ST Hfs Hfd3 Hfd1 Hfd2] Hcapeq Hbig.
     pose proof SPlo. pose proof SPhi. hcb. destruct (KRELh s model HKR) as [Hh Hlazy]. unfold MAX_INPUT in Hbig.
@@ -779,7 +791,11 @@ Section Loop.
     assert (HRH2 : hs_RHEAP HS s [(p, A, cap)] mem2).
     { eapply heap_frame; [| exact FM2 | apply regL_w_hi]. eapply heap_frame; [exact HRH | exact FM1 | apply regL_w_hi]. }
     destruct (hx_statics HS HX _ _ _ HRH2) as (_ & _ & [can Hcan]).
-    rewrite <- Hfs. apply (ref_refused_tail sp0 [] model Hvsp Hh Hlazy Hfd2 tid can regs2 mem2 Q2 Q4).
+    rewrite <- Hfs.
+    (* the refusal message and exit never reach the target: a whole walk over the binary's
+       segments, lifted to the run's list *)
+    apply (realizes_lift_rt RSEGS vdso_image_RSEGS).
+    apply (ref_refused_tail sp0 [] model Hvsp Hh Hlazy Hfd2 (hx_krel_rdr HS HX _ _ HKR) tid can regs2 mem2 Q2 Q4).
     - eapply stk_stk_ok; [exact (st_stk mem2 ST2) | unfold UbReadErr_defs.RE_STK; rewrite u_small by lia; lia | rewrite u_small by lia; lia | unfold UbReadErr_defs.RE_STK; lia | lia].
     - apply mem_inv_ro_none. exact (st_inv mem2 ST2).
     - exact (st_cells mem2 ST2).
@@ -792,8 +808,8 @@ Section Loop.
   Lemma m_grow : forall regs mem model s p (A len n cap : Z) K,
     MInv len n cap A s p regs mem model -> len + n = cap -> cap < MAX_INPUT ->
     (forall regs' mem' model' A' s' p', RInv cap (2 * cap) A' s' p' regs' mem' model' ->
-       realizes RSEGS (mkCfg (mkst regs' (Z_to_bv 64 0x2c16a8) mem' (seg_rom RSEGS)) model') K) ->
-    realizes RSEGS (mkCfg (mkst regs (Z_to_bv 64 0xe2374) mem (seg_rom RSEGS)) model) K.
+       realizes VS (mkCfg (mkst regs' (Z_to_bv 64 0x2c16a8) mem' (seg_rom VS)) model') K) ->
+    realizes VS (mkCfg (mkst regs (Z_to_bv 64 0xe2374) mem (seg_rom VS)) model) K.
   Proof.
     intros regs mem model s p A len n cap K [MR Hlen Hcap [k [Hk HPOW]] HBR HRH HKR HWR HDATA ST Hfs Hfd3 Hfd1 Hfd2] Hcapeq Hsmall HK.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi. hcb. unfold MAX_INPUT in Hsmall.
@@ -802,7 +818,7 @@ Section Loop.
       pose proof (Z.pow_le_mono_r 2 10 k ltac:(lia) Hge). change (2 ^ 10) with 1024 in H. lia. }
     assert (Hcap2 : 2 * cap <= 67108864).
     { pose proof (Z.pow_le_mono_r 2 (k + 1) 10 ltac:(lia) ltac:(lia)). rewrite Z.pow_succ_r in H by lia. change (2 ^ 10) with 1024 in H. lia. }
-    assert (Elo : lo = bv_unsigned sp0 - 8388608) by reflexivity. assert (Espm : spm = bv_unsigned sp0 - 128) by reflexivity.
+    assert (Elo : lo = bv_unsigned sp0 - 6144512) by reflexivity. assert (Espm : spm = bv_unsigned sp0 - 128) by reflexivity.
     destruct (KRELh s model HKR) as [Hh Hlazy].
     pose proof HBR as (B1 & B2 & B3 & B4 & B5). clear B2.
     rewrite Hcapeq in HDATA, Hfd3.
@@ -877,10 +893,10 @@ Section Loop.
               eapply (MainMem.wr_at_store_ok mem3 A2 (2 * cap) 0 (Z.to_nat cap)); [exact HWR3 | lia | lia | lia]
             | unorm; lia | unorm; lia | unorm; lia]. }
     assert (RET : ret_ok (Z_to_bv 64 0xe23c0)) by (apply ret_ok_even; reflexivity).
-    destruct (ref_memcpy mem3 (Z_to_bv 64 A2) (Z_to_bv 64 A) cap bs (seg_rom RSEGS) MC regs3 (Z_to_bv 64 0xe23c0)
+    destruct (ref_memcpy mem3 (Z_to_bv 64 A2) (Z_to_bv 64 A) cap bs (seg_rom VS) MC regs3 (Z_to_bv 64 0xe23c0)
                 RET T1 T10 T11 T12) as (regs4 & RUN4 & KEPT4).
     lazymatch type of RUN4 with msteps _ (mkst _ ?pc4 _ _) _ => replace (Z_to_bv 64 0x2c04f0) with pc4 by (apply bv_eq; reflexivity) end.
-    eapply rz_msteps; [exact Hh2 | exact Hlazy2 | exact RUN4 |]. clear RUN4.
+    eapply rz_msteps; [exact Hh2 | exact Hlazy2 | exact (rt_msteps_sym _ _ _ RUN4) |]. clear RUN4.
     set (mem4 := wbytes mem3 (Z_to_bv 64 A2) bs) in *.
     assert (Emem4 : mem4 = wbytes mem3 (Z_to_bv 64 (A2 + 0)) bs) by (subst mem4; f_equal; f_equal; lia).
     assert (ST4 : statics mem4) by (rewrite Emem4; eapply statics_wblock; [exact ST3 | exact HBR2 | lia | rewrite Lbs; lia]).
@@ -969,9 +985,9 @@ Section Loop.
     Z.of_nat (length data) - len <= Z.of_nat n ->
     RInv len cap A s p regs mem model ->
     (forall cap' A' s' p' regs' mem' model', CInv cap' A' s' p' regs' mem' model' ->
-       realizes RSEGS (mkCfg (mkst regs' (Z_to_bv 64 0x2c16a8) mem' (seg_rom RSEGS)) model') K) ->
+       realizes VS (mkCfg (mkst regs' (Z_to_bv 64 0x2c16a8) mem' (seg_rom VS)) model') K) ->
     (MAX_INPUT <= Z.of_nat (length data) -> K = t_die msg_refused fs0) ->
-    realizes RSEGS (mkCfg (mkst regs (Z_to_bv 64 0x2c16a8) mem (seg_rom RSEGS)) model) K.
+    realizes VS (mkCfg (mkst regs (Z_to_bv 64 0x2c16a8) mem (seg_rom VS)) model) K.
   Proof.
     induction n as [|n IH]; intros len cap A s p regs mem model K Hn RI KEOF KREF.
     - (* [comment removed for export] *)

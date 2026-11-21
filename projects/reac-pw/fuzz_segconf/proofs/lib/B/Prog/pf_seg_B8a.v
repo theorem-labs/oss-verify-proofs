@@ -23,13 +23,14 @@
    achain_chain_pre of it. joined's new premises at its call: len's 8 bytes present (the journal's window), and
    (pass 5b) the stack from len - 16 present, from the statement's astack_pres kept by astack_pres_journal. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 683 of its 754 lines of code are new or changed and 4982 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca): segment B8a of
-   reac_segconf_parse_file's walk, the theorem pf_seg_B8a_holds : S_B8a B of lib/B/Prog/pf_pieces.v (the image-B piece-statement lane,
-   80a6c9c97a8b): SEG 0x88ca0 -> NEW 0x88e54 / FOUND 0x88eb0 / REFTL 0x887cc, the inlined seg_get search of
+   reac_segconf_parse_file's walk, the theorem pf_seg_B8a_holds : S_B8a B of lib/B/Prog/pf_pieces.v (the image-B piece-statement lane):
+   SEG 0x88ca0 -> NEW 0x88e54 / FOUND 0x88eb0 / REFTL 0x887cc, the inlined seg_get search of
    reac_segconf.c:103-118 (and :106-110, :199). The B8a segment lane of the image-B G3 walk owner, 2026-10-30.
    proves function reac_segconf_parse_file (segment B8a; reuse search and CONFIRM:
    the rule-24 lookup record, the rule-24 checker 2026-10-30T16:55:47Z; verdict: none released,
-   ADAPTED from the image-A G3 walk owner's image-A segment A8a (commit 61a728170142, lib/A/Prog/pf_a8a_k.v)
+   ADAPTED from the image-A G3 walk owner's image-A segment A8a (lib/A/Prog/pf_a8a_k.v)
    and the unit owner's UBSan piece walks (working branches, lib/U/Prog/pf_*.v), re-derived on
    image B's code).
    THE CODE (reac_segconf_parse_file.fuzz_segconf.asan-ubsan.s), 61 instructions:

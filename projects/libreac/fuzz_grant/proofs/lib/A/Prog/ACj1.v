@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/ACj1.v for libreac/fuzz_grant's program walk, over fuzz_grant's listing; module paths changed (cgif lib/YC44 is GrantFrame, lib/YC20 is GrantBase, lib/A/ACjr is GrantACjr). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -254,7 +255,7 @@ mkSS (ss_pc s) (ss_regs s) (ss_mem s) (ss_resv s) (mkFacts fa (f_conds (ss_facts
 End o.
 End g.
 (* Not Local on purpose: an extension point. lib/A/Prog/CheckGroupaWalk.v (which imports this file) calls `evalE AG`
-   and needs this redefinition; with `Local` its proof breaks at CheckGroupaWalk.v:631 (a Theorem Labs build of 96c83811859). *)
+   and needs this redefinition; with `Local` its proof breaks at CheckGroupaWalk.v:631 (a Theorem Labs build). *)
 Ltac evalE AG ::=
 cbn [ew ewset havoc Nat.eqb Nat.ltb Nat.leb nth Nat.sub]; rewrite ?ew_ewset_other by lia;
 repeat match goal with H : ew ?Ex ?n = Z_to_bv 64 _ |- context [ew ?Ex ?n] => rewrite H end;

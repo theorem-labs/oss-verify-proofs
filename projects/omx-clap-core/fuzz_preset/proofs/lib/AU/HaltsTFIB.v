@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: made from the TFIB_T definition of proofs/cgif/cgif_file_fuzzer/lib/YZ03.v:19-26 (asan-ubsan image), by way of proofs/libreac/fuzz_grant/lib/A/GrantTFIB.v (a working branch 0bed23e5b69) and fuzz_preset's lib/A/HaltsTFIB.v (a working branch 7837446fad0), for fuzz_preset's asan-ubsan image: TFIB_T_AU_H takes any trace set whose exits are 0 or 2, which is all that halts_budgets_of_srealizes (Reusable/HaltsKitB.v) asks; cgif's form, with the trace set SPECX at fuzz_preset's checksum_shape (lib/ZTraceSpec.v), is TFIB_T_AU_H_specx and gives TFIB_T_AU_H; module paths and the image changed. *)
+(* Modified by Theorem Labs, 2026-10: made from the TFIB_T definition of proofs/cgif/cgif_file_fuzzer/lib/YZ03.v:19-26 (asan-ubsan image), by way of proofs/libreac/fuzz_grant/lib/A/GrantTFIB.v (a working branch) and fuzz_preset's lib/A/HaltsTFIB.v (a working branch), for fuzz_preset's asan-ubsan image: TFIB_T_AU_H takes any trace set whose exits are 0 or 2, which is all that halts_budgets_of_srealizes (Reusable/HaltsKitB.v) asks; cgif's form, with the trace set SPECX at fuzz_preset's checksum_shape (lib/ZTraceSpec.v), is TFIB_T_AU_H_specx and gives TFIB_T_AU_H; module paths and the image changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises)). *)
 (* What the ASan side of fuzz_preset's asan_ubsan_halts must prove (lib/AU/HaltsTop.v takes TFIB_T_AU_H as its one
    hypothesis): from every valid start, the asan-ubsan build at the 512 GiB limit realizes, with no cut
    (lib/Reusable/YK18.v srealizes), some trace set in which every exit has status 0 or 2 and no trace is killed by a
@@ -34,6 +35,7 @@ Definition TFIB_T_AU_H : Prop :=
   forall sp brk mbase rnd inp,
     valid_sp sp -> valid_brk presetsegsAU brk -> valid_mmap_base mbase ->
     entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+    entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
     exists T,
       srealizes presetsegsAU
         (init_config presetsegsAU AsanUbsan.M.init_pc AsanUbsan.M.phdrs sp brk mbase rnd target_alloc_limit inp) T /\
@@ -44,6 +46,7 @@ Definition TFIB_T_AU_H_specx : Prop :=
   forall sp brk mbase rnd inp,
     valid_sp sp -> valid_brk presetsegsAU brk -> valid_mmap_base mbase ->
     entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+    entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
     srealizes presetsegsAU
       (init_config presetsegsAU AsanUbsan.M.init_pc AsanUbsan.M.phdrs sp brk mbase rnd target_alloc_limit inp)
       (SPECX (LS:=checksum_shape) inp).
@@ -53,7 +56,7 @@ Proof. intros inp. exact (checksum_SPECX_exits_allowed checksum_permitted inp). 
 
 Lemma TFIB_T_AU_H_of_specx : TFIB_T_AU_H_specx -> TFIB_T_AU_H.
 Proof.
-  intros H sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp.
+  intros H sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau.
   exists (SPECX (LS:=checksum_shape) inp).
-  exact (conj (H sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp) (presetAU_SPECX_shape_ok inp)).
+  exact (conj (H sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau) (presetAU_SPECX_shape_ok inp)).
 Qed.

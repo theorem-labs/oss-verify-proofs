@@ -18,8 +18,8 @@
    home; this file holds no copy of them. fa_ts_noswap and fa_ts_swap are new as statements (the
    U / sv form the FitA walk needs) and are four lines of plumbing over nx_asm_lo64 / nx_asm_sw64.
    fa_mm_list is new, no donor: searched 2026-10-29 03:12Z with proof-index w32le (index v5 of
-   01:50Z over main f4cc67298b, ossv/recipes 5121fb8693, ossv/candidates ee89628c99,
-   release/pau-projects-recipes b6a0088adc and an earlier delivery) and git grep of
+   01:50Z over main,
+   and an earlier delivery) and git grep of
    origin/ossv/recipes; the nearest released donor, mm_rec (lib/Prog/pcap_source_next_lib.v:577),
    states the same list on upd_bytes over list byte with `length B = n`, not pointwise over list Z. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.

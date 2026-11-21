@@ -172,8 +172,8 @@ Proof using SEGS LAWS.
     rewrite (ptr_addr_stable A L Lc p n HWA Hin HL) in H4, H5. pose proof alloc_ceiling_val as AC0.
     rewrite (munch_mbyte _ _ _ _ (ptr_addr L p + i) MU ltac:(lia) (HB p n i Hin Hg Hi)). exact (HKP p n i Hin Hg Hi). }
   split; [intros a Ha; apply WM; exact (HSC a Ha)|].
-  intros Hi. destruct (HAX Hi) as (av & ar & W1 & W2 & W3 & W4 & B1 & B2 & B3 & B4 & L1 & L2).
-  exists av, ar.
+  intros Hi. destruct (HAX Hi) as (rs & av & ar & W1 & W2 & W3 & W4 & B1 & B2 & B3 & B4 & L1 & L2).
+  exists rs, av, ar. pose proof (auxv_types_len_ge rs). unfold AUXV_RAND_K in *.
   assert (LIB : forall k, (k < 8)%nat -> 0 <= ms_libc B + 8 + Z.of_nat k < 2 ^ 64 /\ outside W (ms_libc B + 8 + Z.of_nat k)).
   { intros k Hk. assert (Ho : owned B Lc Ac (ms_libc B + 8 + Z.of_nat k)) by (right; unfold static_owned; lia).
     destruct (mr_owned_low B MR LAWS Lc Ac memc mdc _ HM Ho). pose proof alloc_ceiling_val as AC0.

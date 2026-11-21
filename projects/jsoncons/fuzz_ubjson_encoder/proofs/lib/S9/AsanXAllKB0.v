@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the SIGPIPE disposition as a launch variable; the new launch (process input, auxv, group id, exec file name); the CONFIG_RSEQ flag; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/AsanXAllKB0.v, lines 26-40, 46-67. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith List Lia Bool.
@@ -20,21 +20,55 @@ Variable scfg : SpuriousCfg.
   Variable rdraw : EntryDraw.
   Variables argv envp : list (list byte).
   Variables uid hw : word.
+  Variable rz : Z.
   Variable fs : Fs.Fs.
+  (* [AsanInitK]'s [Section Init] is parameterised by the full
+     [State.mkProcInput_full] field list, so [SINV0]/[argH0] discharge all
+     fifteen of [AsanInitK.inp]'s arguments plus [mbase] and [apc].  Same block
+     as the already-migrated [HandoffBridgeK.v:619-629]. *)
+  Variable mbase : word.
+  Variable stdin : InputStream.
+  Variable gid : word.
+  Variable groups : list word.
+  Variable net : NetQueue.
+  Variables nofile sigmask : word.
+  Variable abrt : bool.
+  Variable ur : InputStream.
+  Variable kb : KernelBuild.
+  Variable execfn : list byte.
+  Variable sdf : bool.
+  Variable apc : N.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
 
-  #[local] Notation SINV := (SINV0 APH0 sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 APH0 sp rdraw argv envp uid hw).
+  #[local] Notation INP :=
+    (AsanInitK.inp argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf).
+  (* [Run.valid_input]'s exec-name conjunct and [Run.valid_entry]'s launch
+     conjunct: [AsanNodesStartXAsanKB0]'s two scan nodes read the stack image
+     the launch wrote, so they are premises here too. *)
+  Hypothesis Hlaunch : valid_launch INP.
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) INP.
+  (* [rz] stays this Section's free variable -- [SumsAsanCloseKB0]'s providers
+     are uniform in it -- but [XPnScan] reads [e_str0 rz], so for the scan nodes
+     it must be the flag the run's own kernel build carries.  This equation is
+     what a caller discharges with [eq_refl]; it is not a restriction a proof
+     could avoid, since a wrong flag puts the strings at the wrong address. *)
+  Hypothesis Hrz : rz = rseq_z (kb_rseq (in_kernel INP)).
 
-  Theorem asan_X_ALL : forall x, x_stmt ASEGS0 scfg ASAN0 NX0 AsanInitK.LIMIT SINV argH fs x.
+  #[local] Notation SINV :=
+    (SINV0 APH0 sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf apc).
+  #[local] Notation argH :=
+    (argH0 sp rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf).
+
+  Theorem asan_X_ALL : forall x, x_stmt ASEGS0 scfg ASAN0 NX0 AsanInitK.LIMIT rz SINV argH fs x.
   Proof.
-    pose proof (argH0_high APH0 sp rdraw argv envp uid hw Hsp Hva) as AH.
-    pose proof (argH0_agree APH0 sp rdraw argv envp uid hw) as AA.
-    pose proof (SINV0_frame APH0 sp rdraw brk0 argv envp uid hw) as SF.
-    pose proof (SINV0_agree APH0 sp rdraw brk0 argv envp uid hw) as SA.
+    rewrite Hrz.
+    pose proof (argH0_high sp rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf apc Hsp Hva) as AH.
+    pose proof (argH0_agree sp rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf) as AA.
+    pose proof (SINV0_frame APH0 sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf apc) as SF.
+    pose proof (SINV0_agree APH0 sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf apc) as SA.
     pose proof e_sp0_init as EI.
     intros [ | | | | | | | | | | ].
     - eapply asan_node_x_sound_XIMemset; eassumption.

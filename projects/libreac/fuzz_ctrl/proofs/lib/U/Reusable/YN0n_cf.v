@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN0n.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed Zify). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -27,7 +28,6 @@ Unset Lia Cache. Unset Nia Cache.
 Open Scope Z_scope.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Section b. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
-Context {AM : AllocMode}.
 Record ntcall (fuel : nat) (L : layout) (A0 : astate) (g : sptr) (regs0 regs2 : bvmap 5 word)
 (mem0 mem2 : word -> option byte) (gv : Z) : Prop := {
 nc_ra : getr regs2 (nat_to_reg 1) = Z_to_bv 64 XJ;

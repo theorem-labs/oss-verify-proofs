@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (lane F2a, a working branch): the generic cf layer's Deallocate interface, the fields that
    read the model and the owned set (DGif0.di_inst, di_shape_n, di_shape, di_frame, di_stack, di_owned, di_owned_b,
    di_owned_i, di_owned_x) at the layer's walk relation YGcfInstBase.ARX_cf.  rule 24: no function proved (kind:
@@ -7,7 +8,7 @@
 
    The cf twins of c5's DGif1.v:1610-1691 (owned_cgif, owned_b_cgif, owned_i_cgif, owned_x_cgif), :744-819 (their
    helpers) and :2158-2205 (inst, shape, frame, stack), over YG0ncf.ARmcf / ARcf with YG0qcf / YG0scf / YG03cf's
-   _cf lemmas.  The shape proofs follow preset's YGcfDIface.v:107-131 (a Theorem Labs lane, a0fed4266a1b); the owned-set image
+   _cf lemmas.  The shape proofs follow preset's YGcfDIface.v:107-131 (a Theorem Labs lane); the owned-set image
    premises are the layer's YGcfDIface.DZONE_OWNED / IZONE_OWNED (one name per fact).  The instance tag: premise
    FM_INST_OK (the unit's IOK names an instance its DImg accepts).
    Generic over CfImg / CfParams / AImg / DImg; no numeral of any image; no event term. *)
@@ -276,8 +277,8 @@ intros [(k' & Hk' & Hst' & Ha') | (cp' & Hcp & Hcpa)].
 Qed.
 
 (* (di_lpost_d) qtight at the end of every granted path of the drain tree from the enqueued state X', from Wf_cf and
-   qtight at the entry state S (ARX_cf's Wf_cf; rpre's meter).  The proof is YGcfDIface.v:146-175's (a Theorem Labs lane,
-   a0fed4266a1b), which reads only the entry state's facts; X''s relation is not used. *)
+   qtight at the entry state S (ARX_cf's Wf_cf; rpre's meter).  The proof is YGcfDIface.v:147-176's (a Theorem Labs lane),
+   which reads only the entry state's facts; X''s relation is not used. *)
 Lemma di_lpost_d_cf : forall inst ly S W mem md p n tr k z nb X' (W' : world im_segs) (mem' : word -> option byte)
   (md' : Model) trc r,
 ARX inst ly S W mem md -> rpre S n -> In (p, n) (blocks S) -> U_cf B tr S ->

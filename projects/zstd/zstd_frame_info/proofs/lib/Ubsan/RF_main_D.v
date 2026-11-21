@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the section takes the launch values (launchT); the entry stack image with build_stack_bytes' new arguments (launch auxv, entry address, stack top, exec name, gid); free_return and phaseDE re-proved with the stack window's low end 6,144,513 bytes below the stack pointer, not 8 MiB; #[using] lists of free_return and phaseDE updated). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation Strings.String.
 From stdpp Require Import gmap.
@@ -21,7 +22,7 @@ Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.
 Ltac ua := idtac.
 Ltac rpc := apply ret_pc_even; [lia| reflexivity].
 
-Section CANSEC1. Context {rc : runConstT}.
+Section CANSEC1. Context {rc : runConstT} {lx : launchT}.
 Section D.
   Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (draw : EntryDraw) (arg0 arg1 : list byte) (TID : Z)
             (J8 : list byte) (S4 S5 S6 S7 S8 S9 S10 S11 : word).
@@ -42,7 +43,7 @@ Section D.
   Notation usp0 := (bv_unsigned sp0).
   Notation gpv := (Z_to_bv 64 0x10800).
   Notation tpv := (Z_to_bv 64 RATP).
-  Notation IMGB := (build_stack_bytes pph sp0 argv envp uid hw draw).
+  Notation IMGB := (build_stack_bytes L_LA pph (Z_to_bv 64 (Z.of_N u_init_pc)) sp0 L_TOP argv envp L_EXECFN uid L_GID hw draw).
   Notation LO' := (LO sp0).
   Notation BASE' := (BASE sp0 argv envp uid hw draw TID).
   Notation FRAME' mm := (MFRAME sp0 argv mm J8 S7 S6 S5 S4).
@@ -57,7 +58,7 @@ Section D.
     stk usegs mm LO' (usp0 + -128) /\ mem_inv usegs mm /\ RSTAT TID mm /\ rauxv_ok mm usp0 /\ stderr_file0 mm.
 
   (* [comment removed for export] *)
-  #[using="envp VSP HT FREE"] Lemma free_return : forall (code : Z) (s : PState) (bufp : bptr) (A cap : Z)
+  #[using="envp VSP HT FREE lx"] Lemma free_return : forall (code : Z) (s : PState) (bufp : bptr) (A cap : Z)
       x1 t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 x18 x19 x20 x21 x22 x23 t3 t4 t5 t6 (F : bvmap 5 word) (fc : bv 32) (mm : mem) (errv : word),
     RHEAP s [(bufp, A, cap)] mm -> FRAME' mm -> BASE2 mm -> stdout_file mm (ps_so s) -> rw_cells usegs mm RERRNO [C4 errv] ->
     implM usegs (raw_free bufp ;;; mret code) s RQEXIT
@@ -72,7 +73,7 @@ Section D.
     eapply implM_bind.
     { unfold rfree_stmt in FREE.
       Local Ltac2 Set LiaHints.tbl := fun () => "0080?11137728426.80 15706896144.80 19954088631.10549364486404.80 61249635161.10566026048179.10566026193812.80 67159604881.80 00000100200300700800<00@00ASSSS2SFSS2SFS2SFS".
-eapply FREE with (lo := usp0 - 8388608) (B := usp0) (p := bufp) (A := A) (n := cap); try reflexivity; unfold RATP;
+eapply FREE with (lo := usp0 - 6144513) (B := usp0) (p := bufp) (A := A) (n := cap); try reflexivity; unfold RATP;
         rewrite ?(unsigned_lit 188464) by lia; rewrite ?(unsigned_lit (usp0 + -128)) by lia;
         first [ exact P0 | left; reflexivity | exact AUX | exact ST | exact MI | exact ERR | unfold RFREE_STACK; lia | lia ]. }
     cbv beta. intros [] s2 ms2 PO.
@@ -83,7 +84,7 @@ eapply FREE with (lo := usp0 - 8388608) (B := usp0) (p := bufp) (A := A) (n := c
     apply implM_ret. change (RQEXIT code s2) with (pat_exit code s2).
     eapply (main_return sp0 argv envp TID VSP HT code s2).
     - unfold MFRAME. eapply rheap_pres_rw_cells; [exact HPR3| exact FR| left; cbn; lia].
-    - unfold LO. first [exact ST3| replace (usp0 - 8388608) with (usp0 + -8388608) by lia; exact ST3].
+    - unfold LO. first [exact ST3| replace (usp0 - 6144513) with (usp0 + -6144513) by lia; exact ST3].
     - eapply RSTAT_heap_pres; [exact HPR3| exact RS].
     - rewrite bptr_eqb_refl in HEAP3 || idtac. exact HEAP3.
     - rewrite SOE3. eapply stdout_file_heap_pres; [exact HPR3| exact SOF].
@@ -92,7 +93,7 @@ eapply FREE with (lo := usp0 - 8388608) (B := usp0) (p := bufp) (A := A) (n := c
   Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
 
   (* [comment removed for export] *)
-  #[using="VSP HT FREE TRUN"] Lemma phaseDE : forall bufp A cap DATA cw L cfg sc s ms,
+  #[using="VSP HT FREE TRUN lx"] Lemma phaseDE : forall bufp A cap DATA cw L cfg sc s ms,
     RUN0' bufp A cap DATA cw L cfg sc s ms ->
     implM usegs (main_tail bufp cw cfg (skipn (Z.to_nat (6 + L)) (map bv_unsigned DATA))) s RQEXIT ms.
   Proof.
@@ -110,7 +111,7 @@ eapply FREE with (lo := usp0 - 8388608) (B := usp0) (p := bufp) (A := A) (n := c
     lazymatch goal with |- impl _ _ (?tm _) _ ?msx => change (implM usegs tm s RQEXIT msx) end.
     eapply implM_bind.
     { Local Ltac2 Set LiaHints.tbl := fun () => "00H0?10237888770.13410532517288.10111139871162.10111597543158.1341274098377.101 15704848640.10115719478193.13134848519922.3  40223649585.13140887782655.1354792468082.101 49366599444.10150895322524.10153007035616.13454721685382.13456685145487.13559308628433.13659314923118.13566024050052.10166030389045.1317447421819.135 8818979016.101 9608759401.134 9986082271.101 00000600:00;00<00B00C00D00I00J00T00Z00^00b00h01301401801?01C01G01Q01R01V01\S4SPOSS2LRSSS4LENCSSS3S16SS3SCR4SNEGS4LEN6S2SFS2SFS4SNEGS2SF3BR12HaSS2K2S3SCR1KS2SFS2SFS3SCR4SPOSSS2HaS4CAPM".
-eapply TRUN with (lo := usp0 - 8388608) (AB := usp0) (p := bufp) (cap := cap);
+eapply TRUN with (lo := usp0 - 6144513) (AB := usp0) (p := bufp) (cap := cap);
         rewrite ?(unsigned_lit (usp0 + -128)) by lia.
       - exact PST0.
       - left; reflexivity.

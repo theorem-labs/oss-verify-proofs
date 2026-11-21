@@ -5,15 +5,16 @@
    module paths are this unit's, the image is the position-abstract one (pa_segs, BASE + AF_LLVMFuzzerTestOneInput),
    the library shape and every constant of the unit's relocated core are parameters of the Section, and the
    measured needs of this unit's entry (events, live bytes, stack) are stated beside it. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* LLVMFuzzerTestOneInput (fuzz_identity.asan 0x8070c = BASE + AF_LLVMFuzzerTestOneInput, 0x1e10 bytes, 1924 slots):
    the ASan-build contract of the harness entry, and the Section the walk is proved in.
 
-   The statement is the text of cgif lib/A/ACfn.v:33-69 (tfib_lib_pre_x, tfib_lib_post_x, tfib_lib_contract_x) on
-   origin/ossv/recipes c8557374ad2e, over the position-abstract image (pa_segs, BASE + AF_LLVMFuzzerTestOneInput)
+   The statement is the text of cgif lib/A/ACfn.v:33-69 (tfib_lib_pre_x, tfib_lib_post_x, tfib_lib_contract_x),
+   over the position-abstract image (pa_segs, BASE + AF_LLVMFuzzerTestOneInput)
    and at identity's library shape. Identity's relocated lib/A core (ACfn, AE2k, Reusable/YE00, YE01, YCbp) is in this
    unit (ACeh has no copy here); every name this file needs from it is a Section Variable or Hypothesis
    of exactly the type it has there (each cited file:line below). The one application of the walk's theorem is
-   lib/A/Prog/IdentEntryLink.v:758, at the link's own names; IdentTop.v:203-243 gives its Variables the core's names.
+   lib/A/Prog/IdentEntryLink.v:759, at the link's own names; IdentTop.v:203-243 gives its Variables the core's names.
 
    The link (the A closer is fuzz_grant's lib/A/AGrantT.v relocated; where AGrantT.v:40 assumes LIBX_ALL, it has the lemma
    `ident_lib_all : forall rc, @tfib_lib_contract_x_all rc identity_shape IdentB ameter_triv XL0 XL0 RLO RHI` with
@@ -319,19 +320,19 @@ Hypothesis ABCMP : abcmp_realizes SEGS B (SIGMA IS___interceptor_trampoline_bcmp
 Hypothesis AMEMCHR : amemchr_realizes SEGS B (SIGMA IS___interceptor_trampoline_memchr).
 Hypothesis ASTRLEN : astrlen_realizes SEGS B (SIGMA IS___interceptor_trampoline_strlen).
 Hypothesis ASTRCMP : astrcmp_realizes SEGS B (SIGMA IS___interceptor_trampoline_strcmp).
-(* The shadow-fill entry the frame release calls (lib/A/Rt/SetShadowDef.v:20). *)
+(* The shadow-fill entry the frame release calls (lib/A/Rt/SetShadowDef.v:21). *)
 Hypothesis ASSF5 : aset_shadow_realizes SEGS B (SIGMA IS___asan_set_shadow_f5) 0xf5.
 
 (* The two lemmas of identity's relocated lib/A/ACfh.v the walk uses, with cgif's statements. *)
-(* cgif ACfh.v:29-31 *)
+(* cgif ACfh.v:30-32 *)
 Hypothesis AJ_FP_NIL : forall STK sp0 FP ly S W mem md own ly' S' W' mem' md' k,
 ajournal SEGS B STK sp0 [] ly S W mem md own ly' S' W' mem' md' k ->
 ajournal SEGS B STK sp0 FP ly S W mem md own ly' S' W' mem' md' k.
-(* cgif ACfh.v:162-164 *)
+(* cgif ACfh.v:163-165 *)
 Hypothesis AJ_NIL_IO : forall STK sp0 ly S (W : world SEGS) mem md own ly' S' W' mem' md' k,
 ajournal SEGS B STK sp0 [] ly S W mem md own ly' S' W' mem' md' k ->
 m_fds md' = m_fds md /\ m_fs md' = m_fs md.
-(* cgif ACfh.v:47-49: a run that keeps the allocator's invariant realizes the trace set it ends in. *)
+(* cgif ACfh.v:48-50: a run that keeps the allocator's invariant realizes the trace set it ends in. *)
 Hypothesis SRZ_ENTER : forall (W : world SEGS) (c : config) (T : TSet),
 AI SEGS (w_H W) (w_A W) (cfg_model c) ->
 SRr SEGS W c (fun W' c' => AI SEGS (w_H W') (w_A W') (cfg_model c') -> srealizes SEGS c' T) ->

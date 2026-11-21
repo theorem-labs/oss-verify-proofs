@@ -1,53 +1,31 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: recorded proofs replaced by tactic proofs; the BMode context. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
-
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require Import PropExec CatExec CatSim SeqExec StoreOk SymExec.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require Import BMode.
-From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require KReplay.
-Ltac2 kr_t_AxSymExec3 () := "C47Corelib5Lists7ListDef3mapC47Corelib4Init9Datatypes3fstC46Stdlib5Lists4List:fold_rightK47Corelib7Numbers7BinNums8positive02K47Corelib7Numbers7BinNums1Z02K47Corelib4Init9Datatypes4list01I47Corelib4Init9Datatypes4list00K46Stdlib9micromega6VarMap1t01I46Stdlib9micromega6VarMap1t00I46Stdlib9micromega=RingMicromega7Formula00K46Stdlib9micromega7EnvRing5PExpr01K46Stdlib9micromega=RingMicromega7Formula01K46Stdlib9micromega5Tauto8GFormula04C46Stdlib9micromega5Tauto8BFormulaK47Corelib4Init5Logic2eq01C46Stdlib9micromega:ZMicromega=ZTautoCheckerI47Corelib4Init5Logic2eq00C46Stdlib9micromega6VarMap4findC46Stdlib9micromega:ZMicromegaCZTautoChecker_soundC56Stdlib6ZArith6BinInt1Z2leC56Stdlib6ZArith6BinInt1Z9land_onesI47Corelib7Numbers7BinNums1Z00K47Corelib7Numbers7BinNums8positive03I46Stdlib9micromega:ZMicromega;ZArithProof00C46Stdlib9micromega5Tauto5eKindI47Corelib4Init9Datatypes4unit00K46Stdlib9micromega5Tauto4kind01K47Corelib7Numbers7BinNums1Z01K46Stdlib9micromega=RingMicromega3Op203K47Corelib4Init9Datatypes4unit01I47Corelib4Init9Datatypes4bool00K47Corelib4Init9Datatypes4bool01C56Stdlib6ZArith6BinInt1Z3powC56Stdlib6ZArith6BinInt1Z6moduloK47Corelib7Numbers7BinNums8positive01C56Stdlib6ZArith6BinInt1Z3oppC56Stdlib6ZArith6BinInt1Z3lebC56Stdlib6ZArith6BinInt1Z3ltbC56Stdlib6ZArith6BinInt1Z3subC56Stdlib6ZArith6BinInt1Z>pow_pos_nonnegC56Stdlib6ZArith6BinInt1Z2ltC56Stdlib6ZArith6BinInt1Z:pow_nonnegK47Corelib7Numbers7BinNums1N02K46Stdlib9micromega7EnvRing5PExpr07C56Stdlib6ZArith6BinInt1Z=mod_pos_boundC56Stdlib6ZArith6BinInt1Z8leb_specI47Corelib4Init9Datatypes8BoolSpec00C56Stdlib6ZArith6BinInt1Z8ltb_specC46Stdlib9micromega9SatDivModCZ_mod_nonneg_nonnegC56Stdlib6ZArith6BinInt1Z7div_modC47Corelib4Init5Logic3notC56Stdlib6ZArith6BinInt1Z3divC56Stdlib6ZArith6BinInt1Z3mulC56Stdlib6ZArith6BinInt1Z3addC56Stdlib6ZArith6BinInt1Z=mod_neg_boundI47Corelib4Init5Logic3and00C56Stdlib5omega8PreOmega1Z;div_0_r_extC56Stdlib5omega8PreOmega1Z;mod_0_r_extK46Stdlib9micromega6VarMap1t02K46Stdlib9micromega7EnvRing5PExpr02K47Corelib4Init9Datatypes6option02K46Stdlib9micromega7EnvRing5PExpr04C56Stdlib6ZArith6BinInt1Z9mod_smallC47Corelib4Init5Logic8eq_ind_rK46Stdlib9micromega7EnvRing5PExpr06K46Stdlib9micromega7EnvRing5PExpr03K46Stdlib9micromega5Tauto8GFormula07C56Stdlib6ZArith6BinInt1Z7mod_addC47Corelib4Init5Logic6eq_indC47Corelib4Init5Logic6eq_symC56Stdlib6ZArith6BinInt1Z4landc89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX2=land_ones64z'C13~~~c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX25snormC13~~~c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX29snorm_refC13~~~K46Stdlib9micromega5Tauto8GFormula08K46Stdlib9micromega5Tauto8GFormula05K46Stdlib9micromega=RingMicromega3Op205K46Stdlib9micromega=RingMicromega3Op201K47Corelib4Init9Datatypes4bool02I47Corelib4Init5Logic4True00I47Corelib4Init5Logic5False00c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX27ones64zC13~~~c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX26zmod64C13~~~C56Stdlib6ZArith6BinInt1Z6shiftrC56Stdlib6ZArith6BinInt1Z9div_smallC56Stdlib6ZArith6BinInt1Z?shiftr_div_pow2c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX26zdiv64C13~~~c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX29zmod64_eqC13~~~c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX29zdiv64_eqC13~~~c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX2:all_factsbC13~~~c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX28is_factbC13~~~C47Corelib4Init5Logic9False_indC47Corelib4Init9Datatypes8list_indC46Stdlib5Lists4List6filterK47Corelib4Init9Datatypes4list02i89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX26kentry00C13~~~K47Corelib4Init5Logic4True01c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX2Aall_factsb_filterC13~~~c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX28facts_ofC13~~~c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX25sfactC13~~~C47Corelib4Init9Datatypes3appc89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX26pt_getC13~~~c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX26pt_setC13~~~i89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX25ptree00C13~~~I47Corelib4Init9Datatypes6option00K47Corelib4Init9Datatypes6option01k89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX25ptree01C13~~~k89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX25ptree02C13~~~C47Corelib7Numbers7BinNums<positive_indI47Corelib7Numbers7BinNums8positive00C47Corelib4Init5Logic8eq_transC47Corelib4Init5Logic7f_equalk89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX24expr01C13~~~c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX28expr_eqbC13~~~c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX26wrap64C13~~~k89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX24expr02C13~~~k89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX24expr03C13~~~c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX29evalS_defC13~~~c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX25evalSC13~~~c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX25zfastC13~~~k89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX24expr04C13~~~c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX26zfastwC13~~~k89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX24expr05C13~~~c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX26zfastmC13~~~k89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX24expr06C13~~~c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX24zmdwC13~~~k89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX24expr07C13~~~c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX29zext_fastC13~~~k89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX24expr08C13~~~c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX28expr_indC13~~~i89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX24expr00C13~~~I47Corelib4Init9Datatypes3nat00I4ELinuxProcessSemantics5Riscv5Instr5aluop00I4ELinuxProcessSemantics5Riscv5Instr5mulop00c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX28conc_tryC13~~~c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX2<conc_try_refC13~~~c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX27closedbC13~~~C47Corelib4Init9Datatypes4negbI47Corelib4Init9Datatypes4prod00c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX26erangeC13~~~c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX26probeSC13~~~C56Stdlib6ZArith6BinInt1Z6to_natc89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX2<all_eval_toSC13~~~c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX2>evalS_def_NoneC13~~~c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX2:conc_limitC13~~~c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX2:itab_soundC13~~~c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX2<mk_itab_fuelC13~~~c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX2:itab_entryC13~~~C56Stdlib6PArith6BinPos3Pos6eq_decI47Corelib4Init6Specif7sumbool00c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX26pt_gssC13~~~c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX26pt_gsoC13~~~K47Corelib7Numbers7BinNums1Z03c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX2;itab_lookupC13~~~K47Corelib4Init9Datatypes3nat02C47Corelib4Init9Datatypes7nat_indI4ELinuxProcessSemantics5Riscv5Instr5instr00c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX24itabC13~~~K47Corelib4Init9Datatypes3nat01c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX2;pt_get_leafC13~~~c89OSSVerify6Proofs8jsonconsCfuzz_ubjson_encoder3lib:AxSymExec33AX2Bmk_itab_fuel_soundC13~~~".
 Import ListNotations.
 Open Scope bv_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 Module AX2.
-Section FPX_1. Context {fx : PropExec.FPState}. Context {bmK : BMode}.   (* [comment removed for export] *)
-
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+Section FPX_1. Context {fx : PropExec.FPState}. Context {bmK : BMode}.
 
 Inductive expr : Type :=
-| ELit  (z : Z)                              (* [comment removed for export] *)
-| EVar  (n : nat)                            (* [comment removed for export] *)
-| EAlu  (op : aluop) (a b : expr)            (* [comment removed for export] *)
-| EAluw (op : aluop) (a b : expr)            (* [comment removed for export] *)
-| EMd   (op : mulop) (a b : expr)            (* [comment removed for export] *)
-| EMdw  (op : mulop) (a b : expr)            (* [comment removed for export] *)
-| EExt  (sx : bool) (lo n : nat) (e : expr)  (* [comment removed for export] *)
+| ELit  (z : Z)
+| EVar  (n : nat)
+| EAlu  (op : aluop) (a b : expr)
+| EAluw (op : aluop) (a b : expr)
+| EMd   (op : mulop) (a b : expr)
+| EMdw  (op : mulop) (a b : expr)
+| EExt  (sx : bool) (lo n : nat) (e : expr)
 | EBlob (sx : bool) (k : nat) (i : Z) (n : nat).
-                                             (* [comment removed for export] *)
 
-(* [comment removed for export] *)
 Record env : Type := Env { ev : nat -> word; eb : nat -> list byte }.
 
 Definition ext_Z (sx : bool) (lo n : nat) (z : Z) : Z :=
@@ -75,10 +53,6 @@ Fixpoint edenot (E : env) (e : expr) : word :=
   | EExt sx lo n a => ext_val sx lo n (edenot E a)
   | EBlob sx k i n => blob_val sx (eb E k) i n
   end.
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 
 Definition aluop_eqb (a b : aluop) : bool :=
   match a, b with
@@ -110,11 +84,6 @@ Fixpoint expr_eqb (x y : expr) : bool :=
   | _, _ => false
   end.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Definition zalu (op : aluop) (x y : Z) : Z :=
   bv_unsigned (alu64 op (Z_to_bv 64 x) (Z_to_bv 64 y)).
 Definition zaluw (op : aluop) (x y : Z) : Z :=
@@ -129,55 +98,62 @@ Definition zext_lit (sx : bool) (lo n : nat) (x : Z) : Z :=
 Definition is_lit (e : expr) : option Z :=
   match e with ELit z => Some z | _ => None end.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
-
 Definition two64z : Z := 2 ^ 64.
-Definition two64 : Z := 2 ^ 64.         (* [comment removed for export] *)
-Definition two64m1 : Z := two64 - 1.   (* [comment removed for export] *)
-(* [comment removed for export] *)
+Definition two64 : Z := 2 ^ 64.
+Definition two64m1 : Z := two64 - 1.
+
 Definition two63z : Z := 2 ^ 63.
 Definition mtwo63z : Z := - 2 ^ 63.
 Definition two32z : Z := 2 ^ 32.
 Definition two31z : Z := 2 ^ 31.
-Definition ones64z : Z := Z.ones 64.          (* [comment removed for export] *)
-(* [comment removed for export] *)
+Definition ones64z : Z := Z.ones 64.
+
 Definition snorm_ref (k : Z) : Z :=
   let m := (k mod two64z)%Z in if Z.leb (2 ^ 63) m then (m - two64z)%Z else m.
-(* [comment removed for export] *)
+
 Definition snorm (k : Z) : Z :=
   if (if Z.leb mtwo63z k then Z.ltb k two63z else false) then k
   else let m := Z.land k ones64z in if Z.leb two63z m then (m - two64z)%Z else m.
 Lemma land_ones64z' : forall a, Z.land a ones64z = (a mod 2 ^ 64)%Z.
-Proof.
-ltac2:(KReplay.run1 (kr_t_AxSymExec3 ()) ["FPX_1"] "h07__arithh14__ffh28__varmaph35__with41ap;1p;2p;4p;7p;3p-1R0p10000R1p4p710p8P0P1p4p7210p8P0p1000LR1p4p710p8P0P1p4p7210p8P0p1000ip4p7210p8g001Hj10Tg001mj1ATg002Kj13Tg002kj12Tg003Kj1@Tg003ij1:Tg004Gj14Tg0052j21Tg005Uj45Tg006@j76Tg006dj27Tg007Fj28Tg007`j29Tg008Lj3?Tg008fj3>Tg009Ej4;Tg00:7j2<Tg00:Sj3=Tg00;6R0f0R1g00;T#0#0#0#0#0#0#AR2g00<9R3#3%23%@0%:0%40R3g00<eg00=DR4P4g00=dR4P0g00>DR5,10g00>b1102C5g00?IF61734P1f2R4g00?iR3g00@IR6'81914=?36df19>05C;b1b2b31<52P1b03=W4o"). Qed.
+Proof. intros a. exact (Z.land_ones a 64 ltac:(lia)). Qed.
 Lemma snorm_eq : forall k, snorm k = snorm_ref k.
 Proof.
-ltac2:(KReplay.run1 (kr_t_AxSymExec3 ()) ["FPX_1"] "p'0h04__x1h11Hh27__arithh34__ffh48__varmaph55__with62H0h72H4h82H5h92H6h:2H7h;2H8h<6__sat4h=6__sat5h>6__sat6h?6__sat7h@6__sat8hA1qhB1rhC1bi001bhD2b0hE2H9hF2HahG1zhH2H1hI2H2hJ2H3hK1BhL6__sat0hM6__sat1hN1kp%0p;1p;2p;3p;4p;6p;7p;8g001Hj1<Tg001mj1BTg00@ij2TTg00AFj23Tg00Afj1@Tg00BKj1sTg00Bhj27Tg00CEj2HTg00Cbj28Tg00D?j2QTg00Dgj20Tg00ECj3\Tg002Kj1xTg002kj1wTg003Kj1rTg003ij1oTg004Gj1lTg0052j2UTg00Egj1RTg00FEj3YTg006dj2cTg007Fj2JTg007`j2bTg008Lj3ITg008fj3aTg009Ej4`Tg00Fhj3_j2OTg00GOj2ATg00:7j24Tg00H1R0j3>Tg00HUj2^Tg00I7j3Pj2WTg00Ihj2GTg00JIj1]Tg00Jbj2;Tg00K?j2FTg00K\j26Tg00L9j2NTg00L`R1j2DTg00M;j2MTg00Maj2KTg00NGj2vTg00Nej2qTg00OHj1pTg00Ojj3ZTg00PMj3[Tg00Q0j6VTg00QNj2jTg00R1j3iTg00RTj6hTg00S8j4kTg00SYj6STg00T5j4gTg00TQj2mTg00Toj1nTg00VFj1fTg00WUj1eTg005Uj4LTg006@j7dTg00Xhj8tTg00YLj7uTg00;6R2f1R3f0R43Ip=1g00>DR5/44p=2P2P3g00Z0P4CLp==P3g00<eR6g00=DR7P7g00=dR8P4g00?IFdp=5f2R91034'Dp=:AI245p=EP2P3g00>bP4CLp=CP2P3g00ZWP4CLp=?f3R:P6P7P7P8P9P3P4Gtp=9P9P6P7P7P8P3P4Fup=XP2g00;TR;#<R<#BR=%<<#<#<#<#<R<#BR>'TR?,34R@g00?iRAP2PAPA%@;#@#@#@#@RB#BRC,T=RD#sRE/73RF1H3Dg00[>RGn0100000020000P3PAP217D4184?P4n0100000020000RHn0100000020000PAP2133?RI,7D18I?PIn0100000020000'1XG21Q=>RI105=RJ%2>105?RK[[RL%2=RMg00[^RNA\=>3UWFR>%2?RO\N^FMRPg00<9RQ#xRR%wQRQ%r2S00%o2RS%l2RT1U25RU1U2=RV%R<5Y2R<'='51cT8RWP4P9g00@IRX,JA1b49=IAXdAa253C`RXb3b4b5PKP4b2bLbM9_4?%2@?:@?1AE314E3R@103E;>F17E9PAP014E:10:EPAP2PAPAP3f5RF/HDRYPGn0100000020000PFPAP213F?RG,7D18G?PGn0100000020000RGn0100000020000/1GP3f4RZ,4E1^FD10FD14DF;>Yf6/HDPAP0f7RY/0D14DYPAP2P3f9RYPAP213Y?RF,7D18F?PFn0100000020000RFn0100000020000/1FP3f8S01/0D1A5Y%2Y10Y5175Y3>f:,75PAP0f;RY#210Y5f=RYPAP213Y?R[,7D18[?P[n0100000020000'1P3f<S02#2P2PYf>R\/1HXG21ADY14DY10YD17DY3>17D\PAP0f?R],4D10]DfAR^PAP2P318^?P^n0100000020000'1P3f@R_,4DAP^?ZS03fBR`/3?#2\OS041Q=CRa%2C105D[\JRJA\=C3VNXFMRC%2D\N^FMRMPIPLP>PPfFRN/G?S05%E?R=#]RbfGRc1;c?Rd,F?13c?Re'6'1[S061Oc?S07fHRf/3?Rg#2?:g?\KRh1Nf?Ri10?5RjfIRk/3?Rl,0?14l5'D[Rm1Mk?RnfJRo/;?#E\=Rp1Ko?RqfKRr/3?/1r\=Rs1;r?RtP2fLRu/3?RvP2P1%24Rw104?RxfNRy18y?'1Pu%29Rz10:?R:PRPQ1v23R{PSPT%RB9Y2VRV1q2;RB'C,5T%p7R|PT1=BV,5TS08P|AZ2B<,?B,5TC9C9PWPXb3b4b5X0214D4103DR}189?,19[[^02P4fRR~P^PkO3b2WEW;P3P4O2n2001000000121000000bBbAb:b9b8b7b6b<b=b>b?b@W1P4O110_DQ03Q04PaPJPCPMPIPLP>PPQ05Q06Q07PhPiPmPnPpPqPsPtP2PvP2P1PwPx11yyPuPRPQP{PS1?BB,5TPWPXb3b4b5X021144^02P4P~O1b2XE:X;zP3P4O2n2001000000120000000bBbAb:b9b8b7b6b<b=b>b?b@W1P4O1n200210000000021100011000bDbCP[APY?413\?S07#2\OPaPJPCPMPIPLP>PP1G`?S06fCR~1;~?,F?13~?'6'1\bS051O~?R~fDRs/3?Rq#2S04?:q?\KRq1Ns?RsfERp/3?Rn,0?14n5'D\jRn1Mp?Rm1;N?#E\=Ri1KN?RN11ec\=RePdP2PgP2P1PwPx%2o?:o?PfPRPQP{PSPT1CUB,5TRhP|PTQ08P|1=B<,5T9XThC9C9PWPXb3b4b5X02A:z9?\}\w^02P4PyP^PpO3b2X;:X:zP3P4O2n2001000000121000000bBbAb9b8b7b6b1b<b=b>b?b@9[Y?EVWJP4O1Q02/05P2P[16Y?RpP2%B;S02/F?,6Y/3?16\?R\,14XG21WY?S08%2Y13]?#2\O[R;PaPJPCPMPIPLP>PPQ06Q05P~PqPsPnPmPiPNPePdP2PgP2P1PwPx16o?R}#2?:}?PfPRPQP{PSPT1=BU,5TP|PT1j2V/CB,5TS03P|Ai2B<R},CU,5T1=}<,5T5XTC9C9PWPXb3b4b5X021045169?Rh#2?:h?\@[^02P4PyP^PkO3b2X;:X:zP3P4O2n2001000000121000000bBbAb9b8b7b6b1b<b=b>b?b@9[p?P[PYQ02P?Q08P;PaPJPCPMPIPLP>PPQ06Q05P~PqPsPnPmPiPNPePdP2PgP2P1PwPxPbPfPRPQQ00PSPTP6P7P7P81?<U,5TEhPWPXb3b4b5g00\:\=P4b2X;:X:zP3P4O2n2001000000120000000bBbAb9b8b7b6b1b<b=b>b?b@CkESCg11p[P2P\11]HXG21AD\14D\10\D17D\3>16]?,7DPAP016_?R_,4D10_DPAP2P316`?RA/8?PAn0100000020000,1`P316^?RA,4D1W`?R_%2`Q04\O[ROPaPJPCPMPIPLP>PP1Gc?Rc1;f?,F?/6g,1f\bRb1Of?Rf%2l?:l?\KRK1Nk?Rk13o?Rl,0?14l5'D\jRj1Mo?Ro%Et\=Rt1Kr?Rr11vu\=R=1;u?RuP2fMRv/3?RlP2P1PwPxfOR5165?Rg/8?'1PvPRPQP{PSAZ2}<,?B,5TPWPXb3b4b5X02164?R</8?,14^02P4fSR?O1b2XE:X;zP3P4O2n2001000000120000000bBbAb:b9b8b7b6b<b=b>b?b@W1P4O110ADP_POPaPJPCPMPIPLP>PPPcPbPfPKPkPjPoPtPrP=PuP2PlP2P1PwPx115gPvPRPQP{PSPT1=}V,5TP|PTQ03P|1?B},5TC9C9PWPXb3b4b5X0210<D119h\@[^02P4P?P^PyO3b2XE:X;zP3P4O2n2001000000121000000bBbAb:b9b8b7b6b<b=b>b?b@W1P4O1n200210000000021100011000bDbCQ07P4ESb1WJP4O1n200210000000021100011000bDbCWIP4O1Q01,4D1J2FWIP4O1n200210000000021100010000bDbCWHP4O110ZE1J2GWHP4O1n200210000000021100010000bDbCbKg00\W,m4%n4EV%f4%e4'1eXN2o"). Qed.
+  intros k. cbv beta zeta delta [snorm snorm_ref mtwo63z two63z two64z]. rewrite land_ones64z'.
+  pose proof (Z.mod_pos_bound k (2 ^ 64) ltac:(lia)) as B.
+  destruct (Z.leb_spec (- 2 ^ 63) k) as [H1|H1]; [|reflexivity].
+  destruct (Z.ltb_spec k (2 ^ 63)) as [H2|H2]; [|reflexivity].
+  destruct (Z.leb_spec 0 k) as [H3|H3].
+  - rewrite (Z.mod_small k (2 ^ 64)) by lia.
+    destruct (Z.leb_spec (2 ^ 63) k); lia.
+  - replace (k mod 2 ^ 64)%Z with (k + 2 ^ 64)%Z.
+    + destruct (Z.leb_spec (2 ^ 63) (k + 2 ^ 64)); lia.
+    + symmetry. rewrite <- (Z.mod_add k 1 (2 ^ 64)) by lia. apply Z.mod_small. lia.
+Qed.
 
-(* [comment removed for export] *)
 Definition zmod64 (z : Z) : Z :=
   if (if Z.leb 0 z then Z.ltb z two64z else false) then z else Z.land z ones64z.
 Lemma zmod64_eq : forall z, zmod64 z = (z mod 2 ^ 64)%Z.
 Proof.
-ltac2:(KReplay.run1 (kr_t_AxSymExec3 ()) ["FPX_1"] "p'0h01Hh12H0h22Hah34__x1h41bi001bh52b0h61zh77__arithh84__ffh96__sat1h:6__sat2h;8__varmaph<5__witp;1p;2p;3p;4p;7p;6p;8g001Hj12Tg001mj1=Tg00@ij2HTg00AFj24Tg00Bhj2>Tg00CEj27Tg008Lj33Tg00GOj2GTg00Dgj20Tg00H1R0j3<Tg00HUj2@Tg00:7j25Tg00D?j2ZTg00ECj3VTg002Kj1UTg002kj1RTg00NGj2QTg003ij1LTg004Gj1KTg00Nej2JTg0052j2;Tg00Egj1FTg00FEj3ETg005Uj49Tg00OHj1DTg00YLj7ITg006dj2CTg007Fj26Tg007`j2BTg008fj3ATg009Ej4MTg00L`j2NTg00PMj3OTg00T5j4PTg00TQj2?Tg00Toj1STg00Q0j6TTg00]hj1YTg006@j7XTg00Xhj8WTg00>DR1f0R2'5p=1f1R3g00<eR4g00=DR5P5g00=dR6P2g00?IFXp=:f3R7P4P5P5P6f2R8P3P2GWp=8g00;6R9P9g00;TR:#2R;#=R<%2;#2#2#2#2R;#=R='HR>,42R?g00?iR@P9P@P@1>13RA173>g00[>RBn0100000020000P3P2n0100000020000143>539X691G12%1210211>123<PAP@P0%18RA1081P@P9P@P@P3f4RC/7>RDPBn0100000020000PC14C>RBn0100000020000=39BP3%171@C>10C>15>C;<Df5/7>P@P0f6R0/0>15>0P@P9P3f8R0140>RDn0100000020000=39DP3f7RC/0>P9PDP01Z<=101<%1=101>[[%1<REg00[^RFAV<=3UW2%1>\F^2Eg00<9RE#U%RE1Q93%L9%K9REP91J9:R:g00Z01;9<%F;5E9C9,:ER;%D5R<PEP91;91g00>bP:C9,:ER:P<PEP4P5P5P6P:P;FIC8C81CE6P2P8g00@IRE,6@1B28=3@EdAA913CMb8b;b<X39102>%13108>,NA[[^39P2f;P7PCO3b7b9b:9O0>CPW1P2O115>C169DW1P2O1n200210000000021100010000b5b4W0P2O11071169BW0P2O1n200210000000021100010000b5b4g00\W,?2%S2ET%Y2=39?eW6o"). Qed.
+  intros z. cbv beta iota delta [zmod64 two64z]. rewrite land_ones64z'.
+  destruct (Z.leb_spec 0 z); [|reflexivity]. destruct (Z.ltb_spec z (2 ^ 64)); [|reflexivity].
+  symmetry. apply Z.mod_small. lia.
+Qed.
 Definition zdiv64 (z : Z) : Z :=
   if (if Z.leb 0 z then Z.ltb z two64z else false) then 0 else Z.shiftr z 64.
 Lemma zdiv64_eq : forall z, zdiv64 z = (z / 2 ^ 64)%Z.
 Proof.
-ltac2:(KReplay.run1 (kr_t_AxSymExec3 ()) ["FPX_1"] "p'0h01Hh12H0h22Hah37__arithh44__ffh56__sat1h66__sat2h78__varmaph85__with94__x1h:1bi001bh;2b0h<1zp;2p;3p;1p;4p;7p;8g00GOj2ZTg00Dgj20Tg00Bhj2=Tg00H1R0j3?Tg001Hj12Tg001mj1<Tg00@ij2HTg00CEj29Tg00_8j2;Tg00Jbj25Tg008Lj33Tg00HUj2@Tg00:7j24Tg00D?j2VTg00ECj3UTg002Kj1TTg002kj1STg00NGj2NTg003ij1LTg004Gj1KTg00Nej2ITg0052j26Tg00Egj1GTg00FEj3FTg005Uj47Tg00OHj1ETg00YLj7DTg006dj2JTg007Fj2CTg007`j2BTg008fj3MTg009Ej4ATg00L`j2OTg00_Xj3PTg00T5j4QTg003Kj1RTg00`;j3>Tg00`dj1YTg006@j7XTg00Xhj8WTg00>DR1f0R2'4p=1f1R3g00<eR4g00=DR5P5g00=dR6P2g00?IFXp=8f3R7P4P5P5P6f2R8P3P2GWp=:g00;6R91Z12%1210211=123?1=13g00?iR:P0%18R;1081P:P9P:P:P3f4R<g00;TR=#2R>#<R?%2>#2#2#2#2R>#<R@'HRA'9RBg00[>n0100000020000P11;<@n010000002000015<A539P3%171@<A10<A14A<;?Bf5/9AP:P0f6R0/0A14A0P:P9P3P1f8R0/;@n0100000020000150ARB539P3f7RC/0AP9PBP11V?@RB101?%1@RD101A[[RE%1?RFg00[^RGAU?@3UW2RH%1A\G^2FRFg00<9RG#TRI%SGRG1N93%L9RJ%K9RKP91I9=R=g00Z0169?%G>5F9C7,8KR>%E5R?PKP91691RLg00>bRMP=C7,8KR=P?PKP4P5P5P6P=P>FDC:C:1JK6R6P2P8g00@IR>,C:1B28=3:>dAM913CAR>b4b7b8X99102A%13108A,O;[[^99P2f;P7PCO3b3b5b69P0ACQW1P2O114ACPBPEPHPFPIPG%R9PJP9PLPM169@C7,8KP6P>b4b7b8PDP2b3RDb5b69>0@W1P2O1n200210000000021100010000b;b:W0P2O11071A><@DW0P2O1n200210000000021100010000b;b:%Y2152A539eW<o"). Qed.
+  intros z. cbv beta iota delta [zdiv64 two64z].
+  destruct (Z.leb_spec 0 z); [|apply Z.shiftr_div_pow2; lia].
+  destruct (Z.ltb_spec z (2 ^ 64)); [|apply Z.shiftr_div_pow2; lia].
+  symmetry. apply Z.div_small. lia.
+Qed.
 
-(* [comment removed for export] *)
 Definition wrap64 (z : Z) : Z :=
   if (Z.leb 0 z && Z.ltb z two64)%bool then z else (z mod two64)%Z.
 
 Definition sx32 (r : Z) : Z :=
   if Z.ltb r 2147483648 then r else (r + 18446744069414584320)%Z.
 
-(* [comment removed for export] *)
 Definition ones32z : Z := Z.ones 32.
 Definition land64 (z : Z) : Z :=
   if (Z.leb 0 z && Z.ltb z two64)%bool then z else Z.land z ones64z.
@@ -212,7 +188,6 @@ Definition zfastm (op : mulop) (x y : Z) : Z :=
   | _ => zmd op x y
   end.
 
-(* [comment removed for export] *)
 Definition zext_fast (sx : bool) (lo n : nat) (x : Z) : Z :=
   let k := (8 * Z.of_nat n)%Z in
   let u := Z.land (Z.shiftr x (8 * Z.of_nat lo)) (Z.ones k) in
@@ -222,7 +197,6 @@ Definition zext_fast (sx : bool) (lo n : nat) (x : Z) : Z :=
              end
   else wrap64 u.
 
-(* [comment removed for export] *)
 Definition zalu_l (op : aluop) (x y : Z) : Z := zfast op (wrap64 x) (wrap64 y).
 Definition zaluw_l (op : aluop) (x y : Z) : Z := zfastw op (wrap64 x) (wrap64 y).
 Definition zmd_l (op : mulop) (x y : Z) : Z := zfastm op (wrap64 x) (wrap64 y).
@@ -268,7 +242,6 @@ Fixpoint expr_cmp (x y : expr) {struct x} : comparison :=
   | _, _ => Nat.compare (ctor_ix x) (ctor_ix y)
   end.
 
-(* [comment removed for export] *)
 Fixpoint lins (k : Z) (a : expr) (ts : list (Z * expr)) : list (Z * expr) :=
   match ts with
   | [] => if Z.eqb (snorm k) 0 then [] else [(snorm k, a)]
@@ -294,7 +267,6 @@ Fixpoint lscale_terms (m : Z) (ts : list (Z * expr)) : list (Z * expr) :=
 
 Definition lscale (m : Z) (x : lin) : lin := (snorm (m * fst x), lscale_terms m (snd x)).
 
-(* [comment removed for export] *)
 Fixpoint lin_of (e : expr) : lin :=
   match e with
   | ELit z => (snorm z, [])
@@ -322,7 +294,6 @@ Definition unlin (x : lin) : expr :=
   | _ => if Z.eqb (fst x) 0 then lterms (snd x) else EAlu ALU_ADD (lterms (snd x)) (ELit (fst x))
   end.
 
-(* [comment removed for export] *)
 Fixpoint coeffs_div (m : Z) (ts : list (Z * expr)) : bool :=
   match ts with
   | [] => true
@@ -333,14 +304,12 @@ Definition lin_lowbits (e : expr) (k : Z) : option Z :=
   let l := lin_of e in
   if coeffs_div (2 ^ k) (snd l) then Some ((fst l) mod 2 ^ k)%Z else None.
 
-(* [comment removed for export] *)
 Definition shamt_of (e : expr) (bits : Z) : option Z :=
   match e with
   | ELit s => Some (s mod 2 ^ bits)%Z
   | _ => lin_lowbits e bits
   end.
 
-(* [comment removed for export] *)
 Definition ext_slice (lo n : nat) (v : expr) : expr :=
   if (Nat.eqb lo 0 && Nat.eqb n 8)%bool then v else EExt false lo n v.
 Fixpoint ext_partner (c : Z) (lo n : nat) (v : expr) (ts : list (Z * expr)) : option (nat * list (Z * expr)) :=
@@ -356,7 +325,7 @@ Fixpoint ext_partner (c : Z) (lo n : nat) (v : expr) (ts : list (Z * expr)) : op
       | _ => match ext_partner c lo n v rest with Some (m, r) => Some (m, (c', a') :: r) | None => None end
       end
   end.
-(* [comment removed for export] *)
+
 Fixpoint ext_merge_step (pre ts : list (Z * expr)) : option (Z * expr * list (Z * expr)) :=
   match ts with
   | [] => None
@@ -372,7 +341,7 @@ Fixpoint ext_merge_step (pre ts : list (Z * expr)) : option (Z * expr * list (Z 
       | _ => ext_merge_step (pre ++ [(c, a)]) rest
       end
   end.
-(* [comment removed for export] *)
+
 Fixpoint lmerge_f (fuel : nat) (x : lin) : lin :=
   match fuel with
   | O => x
@@ -439,10 +408,9 @@ Definition mkMdw (op : mulop) (a b : expr) : expr :=
   | _, _ => EMdw op a b
   end.
 
-(* [comment removed for export] *)
 Definition mkExt (sx : bool) (lo n : nat) (e : expr) : expr :=
   match e with
-  | ELit x => ELit (zext_fast sx lo n (wrap64 x))   (* [comment removed for export] *)
+  | ELit x => ELit (zext_fast sx lo n (wrap64 x))
   | _ =>
     if (Nat.eqb lo 0 && Nat.eqb n 8)%bool then e
     else match e with
@@ -452,10 +420,6 @@ Definition mkExt (sx : bool) (lo n : nat) (e : expr) : expr :=
          | _ => EExt sx lo n e
          end
   end.
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 
 Definition ridx (r : reg) : nat := Z.to_nat (bv_unsigned r).
 
@@ -477,11 +441,6 @@ Definition sr_id : list expr :=
    EVar 16; EVar 17; EVar 18; EVar 19; EVar 20; EVar 21; EVar 22; EVar 23;
    EVar 24; EVar 25; EVar 26; EVar 27; EVar 28; EVar 29; EVar 30; EVar 31].
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Record saddr : Type := SA { a_base : expr; a_off : Z }.
 
 Definition split_lit (e : expr) : expr * Z :=
@@ -500,48 +459,42 @@ Definition adenot (E : env) (a : saddr) : word :=
 Definition saddr_eqb (a b : saddr) : bool :=
   expr_eqb (a_base a) (a_base b) && Z.eqb (a_off a) (a_off b).
 
-(* [comment removed for export] *)
 Record sentry : Type := SE { e_addr : saddr; e_width : nat; e_val : expr }.
 
-(* [comment removed for export] *)
 Inductive kentry : Type :=
-| KWord (a : saddr) (w : nat) (v : expr)      (* [comment removed for export] *)
-| KZero (a : saddr) (n : expr)                (* [comment removed for export] *)
-| KBlob (a : saddr) (n : expr) (k : nat)      (* [comment removed for export] *)
-| KImg  (lo hi : Z)                           (* [comment removed for export] *)
-| KAlign (e : expr) (m : Z)                   (* [comment removed for export] *)
-| KRange (e : expr) (lo hi : Z)               (* [comment removed for export] *)
-| KWr (a : saddr) (n : expr)                  (* [comment removed for export] *)
+| KWord (a : saddr) (w : nat) (v : expr)
+| KZero (a : saddr) (n : expr)
+| KBlob (a : saddr) (n : expr) (k : nat)
+| KImg  (lo hi : Z)
+| KAlign (e : expr) (m : Z)
+| KRange (e : expr) (lo hi : Z)
+| KWr (a : saddr) (n : expr)
 | KDisj (a1 : saddr) (n1 : expr) (a2 : saddr) (n2 : expr)
-                                              (* [comment removed for export] *)
-| KFill (a : saddr) (n : expr) (c : Z)        (* [comment removed for export] *)
-| KUnk (a : saddr) (n : expr).                 (* [comment removed for export] *)
 
-(* [comment removed for export] *)
+| KFill (a : saddr) (n : expr) (c : Z)
+| KUnk (a : saddr) (n : expr).
+
 Inductive sidecond : Type :=
 | SCBr       (taken : bool) (c : branch_cond) (a b : expr)
-| SCFlat     (a : saddr) (n : expr)                     (* [comment removed for export] *)
-| SCDisj     (a1 : saddr) (n1 : expr) (a2 : saddr) (n2 : expr)  (* [comment removed for export] *)
-| SCInside   (a1 : saddr) (n1 : expr) (a2 : saddr) (n2 : expr)  (* [comment removed for export] *)
-| SCStoreOk  (a : saddr) (n : nat)                      (* [comment removed for export] *)
-| SCReadBase (a : saddr) (n : nat) (sx : bool) (e : expr)  (* [comment removed for export] *)
-| SCEq       (a b : expr).                              (* [comment removed for export] *)
+| SCFlat     (a : saddr) (n : expr)
+| SCDisj     (a1 : saddr) (n1 : expr) (a2 : saddr) (n2 : expr)
+| SCInside   (a1 : saddr) (n1 : expr) (a2 : saddr) (n2 : expr)
+| SCStoreOk  (a : saddr) (n : nat)
+| SCReadBase (a : saddr) (n : nat) (sx : bool) (e : expr)
+| SCEq       (a b : expr).
 
 Record sym_state : Type := SSR {
   s_pc   : Z;
   s_regs : list expr;
-  s_log  : list sentry;       (* [comment removed for export] *)
+  s_log  : list sentry;
   s_know : list kentry;
-  s_next : nat;               (* [comment removed for export] *)
-  s_resv : option saddr       (* [comment removed for export] *)
+  s_next : nat;
+  s_resv : option saddr
 }.
 End FPX_1.
 
-
-(* [comment removed for export] *)
 Abbreviation SS p r l k n := (SSR p r l k n None).
-Section FPX_2. Context {fx : PropExec.FPState}. Context {bmK : BMode}.   (* [comment removed for export] *)
-
+Section FPX_2. Context {fx : PropExec.FPState}. Context {bmK : BMode}.
 
 Definition sset (ss : sym_state) (rd : reg) (e : expr) (npc : Z) : sym_state :=
   SSR npc (if bv_eqb rd 0 then s_regs ss else sr_upd (s_regs ss) (ridx rd) e)
@@ -550,20 +503,13 @@ Definition sset (ss : sym_state) (rd : reg) (e : expr) (npc : Z) : sym_state :=
 Definition sjump (ss : sym_state) (npc : Z) : sym_state :=
   SSR npc (s_regs ss) (s_log ss) (s_know ss) (s_next ss) (s_resv ss).
 
-(* [comment removed for export] *)
 Definition clr (ss : sym_state) : sym_state :=
   SSR (s_pc ss) (s_regs ss) (s_log ss) (s_know ss) (s_next ss) None.
 Definition s_clean (ss : sym_state) : bool :=
   match s_resv ss with None => true | Some _ => false end.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Inductive rangerel := RInside (delta : Z) | RDisjoint | RPartial | RUnknown.
 
-(* [comment removed for export] *)
 Definition rel_lit (rb : expr) (rk : Z) (rn : Z) (kb : expr) (kk : Z) (kn : Z) : rangerel :=
   if expr_eqb rb kb then
     if (Z.leb kk rk && Z.leb (rk + rn) (kk + kn))%bool then RInside (rk - kk)
@@ -573,8 +519,6 @@ Definition rel_lit (rb : expr) (rk : Z) (rn : Z) (kb : expr) (kk : Z) (kn : Z) :
 
 Definition elen (n : nat) : expr := ELit (Z.of_nat n).
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Definition lit_strip (e : expr) : expr * Z :=
   match e with
   | EAlu ALU_ADD v (ELit c) => (v, c)
@@ -599,7 +543,6 @@ Fixpoint find_range (kn : list kentry) (e : expr) : option (Z * Z) :=
   | _ :: rest => find_range rest e
   end.
 
-(* [comment removed for export] *)
 Fixpoint find_align (kn : list kentry) (e : expr) : option Z :=
   match kn with
   | [] => None
@@ -607,32 +550,20 @@ Fixpoint find_align (kn : list kentry) (e : expr) : option Z :=
   | _ :: rest => find_align rest e
   end.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
-Lemma zmod64_eq2 : forall z, zmod64 z = (z mod two64)%Z.
-Proof.
-ltac2:(KReplay.run1 (kr_t_AxSymExec3 ()) ["FPX_2"] "g00b4o"). Qed.
-Lemma zdiv64_eq2 : forall z, zdiv64 z = (z / two64)%Z.
-Proof.
-ltac2:(KReplay.run1 (kr_t_AxSymExec3 ()) ["FPX_2"] "g00cGo"). Qed.
+Lemma zmod64_eq2 : forall z, zmod64 z = (z mod two64)%Z. Proof. exact zmod64_eq. Qed.
+Lemma zdiv64_eq2 : forall z, zdiv64 z = (z / two64)%Z. Proof. exact zdiv64_eq. Qed.
 
 Definition clampi (r : Z * Z) : Z * Z :=
   let (lo, hi) := r in (Z.max lo 0, Z.min hi two64m1).
 
-(* [comment removed for export] *)
 Definition mask_cover (h : Z) : Z :=
   if Z.ltb h 0 then 0 else (2 ^ (Z.log2_up (h + 1)) - 1)%Z.
 
 Definition lit_shamt (e : expr) : option Z :=
   match e with ELit s => Some (s mod 64)%Z | _ => None end.
 
-(* [comment removed for export] *)
 Definition zsigned64 (v : Z) : Z := if Z.leb two63z v then (v - two64)%Z else v.
 
-(* [comment removed for export] *)
 Fixpoint lin_range (rng : expr -> option (Z * Z)) (c : Z) (ts : list (Z * expr)) : option (Z * Z) :=
   match ts with
   | [] => Some (c, c)
@@ -663,15 +594,15 @@ Fixpoint erange_f (fuel : nat) (kn : list kentry) (e : expr) {struct fuel} : opt
          if lin_trivial l then None
          else match lin_range (erange kn) (fst l) (snd l) with
               | Some (lo, hi) =>
-                  (* [comment removed for export] *)
-                  let q := zdiv64 lo in   (* [comment removed for export] *)
+
+                  let q := zdiv64 lo in
                   if Z.eqb q (zdiv64 hi) then Some ((lo - q * two64)%Z, (hi - q * two64)%Z) else None
               | None => None
               end) with
   | Some r => Some r
   | None =>
   match e with
-  | ELit z => let v := zmod64 z in Some (v, v)   (* [comment removed for export] *)
+  | ELit z => let v := zmod64 z in Some (v, v)
   | EVar _ => None
   | EAlu op a b =>
       match op with
@@ -692,7 +623,7 @@ Fixpoint erange_f (fuel : nat) (kn : list kentry) (e : expr) {struct fuel} : opt
           | _, _ => None
           end
       | ALU_AND =>
-          (* [comment removed for export] *)
+
           match (match b, erange kn a with
                  | ELit m, Some (al, ah) =>
                      let m' := (m mod two64)%Z in
@@ -850,37 +781,38 @@ Fixpoint erange_f (fuel : nat) (kn : list kentry) (e : expr) {struct fuel} : opt
         | _, _ => Some (0%Z, Z.min (w - 1) (two64 - 1))
         end
   | EBlob sx k i n =>
-      (* [comment removed for export] *)
+
       if sx then Some (0%Z, two64m1) else Some (0%Z, Z.min (2 ^ (8 * Z.of_nat n) - 1) (two64 - 1))%Z
   end
   end
   end
   end.
 
-(* [comment removed for export] *)
 Definition erange_fuel : nat := 64%nat.
 End FPX_2.
 
 Global Opaque erange_fuel.
-Section FPX_3. Context {fx : PropExec.FPState}. Context {bmK : BMode}.   (* [comment removed for export] *)
+Section FPX_3. Context {fx : PropExec.FPState}. Context {bmK : BMode}.
 
-(* [comment removed for export] *)
 Definition is_factb (K : kentry) : bool :=
   match K with KRange _ _ _ | KAlign _ _ | KDisj _ _ _ _ | KWr _ _ => true | _ => false end.
-(* [comment removed for export] *)
+
 Fixpoint all_factsb (kn : list kentry) : bool :=
   match kn with [] => true | K :: rest => if is_factb K then all_factsb rest else false end.
 Definition facts_of (kn : list kentry) : list kentry :=
   if all_factsb kn then kn else List.filter is_factb kn.
 Lemma all_factsb_filter : forall kn, all_factsb kn = true -> List.filter is_factb kn = kn.
 Proof.
-ltac2:(KReplay.run1 (kr_t_AxSymExec3 ()) ["FPX_3"] "p'0h01Hh12knh22H0h32IHh41Kh51bi001bh61eh71lh84restp;1p;3p;2p;6p;5g002kj1>Tg00dZj14Tg008Lj30Tg002Kj1;Tg007Fj25Tg00enR0j18Tg00Q0j67Tg00SYj66Tg00g@j29Tg00g_j5:Tg00hAj3=Tg00h\j3<Tg00?iR1f0R2g00@IR330p=2g00i<R4?=02p=3f1R0=<42p=1%>4R5P4%42#2%30=050[R6X15A0133%;4R7,55U%47#2%37=057[ef2R7#8P1P1P1P1P2f3R8#4g00[>R9n0100000020000#2P1P5P0f5R:f4R;#3R<'1P<n010000002000011:;R=505[P2%47#2P5P811:2=05=X7511;8,55%38P7P2O1E7W0A0193P1P9P1p-0P2g00\:R9g00[^n0110000020000X61g00jNP3P2E6P9A05<=/92b2W0n0110000020000b51170#4#21187R8#3=058[eX36X85X44P2D:W1o"). Qed.
+  induction kn as [|K rest IH]; cbn; [reflexivity|].
+  destruct (is_factb K); [|discriminate]. intros H. rewrite (IH H). reflexivity.
+Qed.
 Lemma facts_of_filter : forall kn, facts_of kn = List.filter is_factb kn.
 Proof.
-ltac2:(KReplay.run1 (kr_t_AxSymExec3 ()) ["FPX_3"] "p'0h01Eh11bi001bh22knp;1p;2p;3p;4g002kj18Tg00dZj11Tg007Fj23Tg008Lj30Tg00jjj27Tg00T5j46Tg00lEj14Tg00hAj35Tg00i<R0g00enf0R135p=2%80R0%11g00?iR21321f1R3#1=021P2f3R4#1=021P2P0P3f4R5%25R5n0100000020000=005]0P3f2#1R3g00@I502P0%24R5P41741C6W0g00[>90231305W0n0110000020000P1O1b0b1%41%21500eW2o"). Qed.
+  intros kn. unfold facts_of. destruct (all_factsb kn) eqn:E; [|reflexivity].
+  symmetry. apply all_factsb_filter. exact E.
+Qed.
 Definition erange0 (kn : list kentry) (e : expr) : option (Z * Z) := erange_f erange_fuel (facts_of kn) e.
 
-(* [comment removed for export] *)
 Fixpoint deand (e : expr) : expr * Z :=
   match e with
   | EAlu ALU_AND x (ELit m) =>
@@ -897,7 +829,7 @@ Definition erange (kn : list kentry) (e : expr) : option (Z * Z) :=
   let r := erange0 kn e in
   let '(e', s) := deand e in
   if Z.eqb s 0 then r else
-  match erange0 kn (unlin (lin_of e')) with     (* [comment removed for export] *)
+  match erange0 kn (unlin (lin_of e')) with
   | Some (lo', hi') =>
       if Z.leb s lo' then
         match r with
@@ -908,16 +840,9 @@ Definition erange (kn : list kentry) (e : expr) : option (Z * Z) :=
   | None => r
   end.
 
-
-(* [comment removed for export] *)
 Definition base_range (kn : list kentry) (e : expr) : option (Z * Z) :=
   match e with ELit z => let v := (z mod two64)%Z in Some (v, v) | _ => erange kn e end.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Fixpoint ctz_fuel (fuel : nat) (z : Z) : Z :=
   match fuel with
   | O => 0
@@ -925,7 +850,6 @@ Fixpoint ctz_fuel (fuel : nat) (z : Z) : Z :=
   end.
 Definition ctz64 (z : Z) : Z := ctz_fuel 64 z.
 
-(* [comment removed for export] *)
 Fixpoint ealign0 (kn : list kentry) (e : expr) {struct e} : Z :=
   match find_align kn e with
   | Some m => if Z.ltb 0 m then ctz64 m else 0%Z
@@ -946,9 +870,6 @@ Fixpoint ealign0 (kn : list kentry) (e : expr) {struct e} : Z :=
   end
   end.
 
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Fixpoint lins_e (k : Z) (a : expr) (ts : list (Z * expr)) : list (Z * expr) :=
   match ts with
   | [] => if Z.eqb k 0 then [] else [(k, a)]
@@ -960,8 +881,6 @@ Fixpoint lins_e (k : Z) (a : expr) (ts : list (Z * expr)) : list (Z * expr) :=
 Definition lsub_e (ts2 ts1 : list (Z * expr)) : list (Z * expr) :=
   fold_right (fun t acc => lins_e (- fst t)%Z (snd t) acc) ts2 ts1.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Fixpoint find_and_atom_k (sg : Z) (ts : list (Z * expr)) : option (expr * Z) :=
   match ts with
   | [] => None
@@ -987,7 +906,6 @@ Definition pageup_low_k (sg : Z) (e : expr) (m : Z) : option Z :=
   | None => None
   end.
 
-(* [comment removed for export] *)
 Definition pageup_low (e : expr) (m : Z) : option Z :=
   match pageup_low_k 1 e m with
   | Some r => Some r
@@ -1010,7 +928,6 @@ Definition pageup_align (e : expr) : Z :=
 
 Definition ealign (kn : list kentry) (e : expr) : Z := Z.max (ealign0 (facts_of kn) e) (pageup_align e).
 
-(* [comment removed for export] *)
 Definition lin_nowrap (kn : list kentry) (e : expr) : bool :=
   let l := lin_of e in
   match lin_range (erange kn) (fst l) (snd l) with
@@ -1018,10 +935,8 @@ Definition lin_nowrap (kn : list kentry) (e : expr) : bool :=
   | None => false
   end.
 
-(* [comment removed for export] *)
 Definition srl_rem (e : expr) (m : Z) : expr := EAlu ALU_AND e (ELit (m - 1)%Z).
 
-(* [comment removed for export] *)
 Definition highmask_s (mk : Z) : option Z :=
   let m' := (mk mod two64)%Z in
   let s := Z.log2 (two64 - m') in
@@ -1039,14 +954,14 @@ Fixpoint srl_expand (kn : list kentry) (ts : list (Z * expr)) : Z * list (Z * ex
           if (Z.eqb (k mod m)%Z 0%Z && lin_nowrap kn e)%bool then
             let q := (k / m)%Z in
             let le := lin_of e in
-            if Z.leb ((s mod two64) mod 64) (ealign kn e) then   (* [comment removed for export] *)
+            if Z.leb ((s mod two64) mod 64) (ealign kn e) then
               ((c + q * fst le)%Z, fold_right (fun t acc => lins_e (q * fst t)%Z (snd t) acc) ts' (snd le))
             else
             ((c + q * fst le)%Z,
              lins_e (- q)%Z (srl_rem e m) (fold_right (fun t acc => lins_e (q * fst t)%Z (snd t) acc) ts' (snd le)))
           else keep
       | EAlu ALU_AND e (ELit mk) =>
-          (* [comment removed for export] *)
+
           match highmask_s mk with
           | Some s =>
               if lin_nowrap kn e then
@@ -1060,18 +975,15 @@ Fixpoint srl_expand (kn : list kentry) (ts : list (Z * expr)) : Z * list (Z * ex
       end
   end.
 
-(* [comment removed for export] *)
 Fixpoint has_srl (ts : list (Z * expr)) : bool :=
   match ts with
   | [] => false
   | (_, EAlu ALU_SRL _ (ELit _)) :: _ => true
   | _ :: rest => has_srl rest
   end.
-(* [comment removed for export] *)
+
 Definition sfact : Type := (list (Z * expr) * (Z * Z))%type.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Definition sum_fact_x (allkn : list kentry) (ts : list (Z * expr)) (lo hi : Z) : list sfact :=
   let '(c2, ts2) := srl_expand allkn ts in
   match ts2 with
@@ -1079,7 +991,6 @@ Definition sum_fact_x (allkn : list kentry) (ts : list (Z * expr)) (lo hi : Z) :
   | [] => []
   end.
 
-(* [comment removed for export] *)
 Definition fact_nowrap (allkn : list kentry) (e : expr) (hi : Z) : bool :=
   let l := lin_of e in
   match lin_range (erange allkn) (fst l) (snd l) with
@@ -1104,14 +1015,12 @@ Fixpoint sum_facts (allkn kn : list kentry) : list sfact :=
   | _ :: rest => sum_facts allkn rest
   end.
 
-(* [comment removed for export] *)
 Fixpoint coef_of (a : expr) (ts : list (Z * expr)) : Z :=
   match ts with
   | [] => 0
   | (k, a') :: r => if expr_eqb a a' then k else coef_of a r
   end.
 
-(* [comment removed for export] *)
 Fixpoint fact_quot (fts ts : list (Z * expr)) (acc : option Z) : option Z :=
   match fts with
   | [] => acc
@@ -1130,7 +1039,6 @@ Fixpoint fact_quot (fts ts : list (Z * expr)) (acc : option Z) : option Z :=
 Definition sub_fact (q : Z) (fts ts : list (Z * expr)) : list (Z * expr) :=
   fold_right (fun t acc => lins_e (- (q * fst t))%Z (snd t) acc) ts fts.
 
-(* [comment removed for export] *)
 Fixpoint sum_subst (fs : list sfact) (ts : list (Z * expr)) (lo hi : Z) (hit : bool)
   : list (Z * expr) * (Z * Z) * bool :=
   match fs with
@@ -1165,7 +1073,6 @@ Definition lin_test (kn : list kentry) (c : Z) (ts : list (Z * expr)) (test : Z 
   | None => lin_test_rel kn c ts test
   end.
 
-(* [comment removed for export] *)
 Fixpoint srl_scale_need (ts : list (Z * expr)) : Z :=
   match ts with
   | [] => 0
@@ -1176,7 +1083,7 @@ Definition zcdiv (a b : Z) : Z := (- ((- a) / b))%Z.
 Definition lin_srange (kn : list kentry) (e : expr) : option (Z * Z) :=
   let l := lin_of e in
   let j := srl_scale_need (snd l) in
-  if (if Z.leb 0 j then Z.leb j 24 else false) then   (* [comment removed for export] *)
+  if (if Z.leb 0 j then Z.leb j 24 else false) then
     let sc := (2 ^ j)%Z in
     let ts := List.map (fun t => ((sc * fst t)%Z, snd t)) (snd l) in
     let '(c2, t2) := srl_expand kn ts in
@@ -1189,15 +1096,13 @@ Definition lin_srange (kn : list kentry) (e : expr) : option (Z * Z) :=
     end
   else None.
 
-(* [comment removed for export] *)
 Definition lin_nowrapR (kn : list kentry) (e : expr) : bool :=
   let l := lin_of e in
-  let '(c2, t2) := srl_expand kn (snd l) in            (* [comment removed for export] *)
+  let '(c2, t2) := srl_expand kn (snd l) in
   if lin_test kn (fst l + c2)%Z t2 (fun lo hi => (Z.leb 0 lo && Z.ltb hi two64)%bool) then true
-  else (* [comment removed for export] *)
+  else
     match lin_srange kn e with Some _ => true | None => false end.
 
-(* [comment removed for export] *)
 Fixpoint mentions_var (v : nat) (e : expr) : bool :=
   match e with
   | ELit _ => false
@@ -1222,11 +1127,10 @@ Fixpoint novars (e : expr) : bool :=
   | EExt _ _ _ a => novars a
   | EBlob _ _ _ _ => true
   end.
-(* [comment removed for export] *)
+
 Definition related (b1 b2 : expr) : bool :=
   if shares_var b1 b2 then true else novars b2.
 
-(* [comment removed for export] *)
 Definition lin_apart0 (kn : list kentry) (b1 : expr) (k1 n1 : Z) (b2 : expr) (k2 n2 : Z) : bool :=
   (lin_nowrapR kn b1 && lin_nowrapR kn b2 &&
    let l1 := lin_of b1 in let l2 := lin_of b2 in
@@ -1235,11 +1139,8 @@ Definition lin_apart0 (kn : list kentry) (b1 : expr) (k1 n1 : Z) (b2 : expr) (k2
 Definition lin_apart (kn : list kentry) (b1 : expr) (k1 n1 : Z) (b2 : expr) (k2 n2 : Z) : bool :=
   if shares_var b1 b2 then lin_apart0 kn b1 k1 n1 b2 k2 n2 else false.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Definition zlit64 (z : Z) : Z := if (Z.leb 0 z && Z.ltb z two64)%bool then z else (z mod two64)%Z.
 
-(* [comment removed for export] *)
 Definition lin_brange (kn : list kentry) (e : expr) : option (Z * Z) :=
   let l := lin_of e in
   match sum_facts kn kn with
@@ -1264,7 +1165,7 @@ Definition xlo (kn : list kentry) (e : expr) : option Z :=
          | Some (lo, _) => Some lo
          | None => match lin_brange kn e with
                    | Some (lo, _) => Some lo
-                   | None => match lin_srange kn e with Some (lo, _) => Some lo | None => None end   (* [comment removed for export] *)
+                   | None => match lin_srange kn e with Some (lo, _) => Some lo | None => None end
                    end
          end
   end.
@@ -1275,16 +1176,11 @@ Definition xhi (kn : list kentry) (e : expr) : option Z :=
          | Some (_, hi) => Some hi
          | None => match lin_brange kn e with
                    | Some (_, hi) => Some hi
-                   | None => match lin_srange kn e with Some (_, hi) => Some hi | None => None end   (* [comment removed for export] *)
+                   | None => match lin_srange kn e with Some (_, hi) => Some hi | None => None end
                    end
          end
   end.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Definition xterms := list (expr * Z).
 
 Fixpoint xt_nowrap (kn : list kentry) (ts : xterms) : bool :=
@@ -1294,7 +1190,6 @@ Fixpoint xt_const (ts : xterms) : Z :=
 Fixpoint xt_lin (ts : xterms) : list (Z * expr) :=
   match ts with [] => [] | (e, _) :: r => fold_right (fun t acc => lins_e (fst t) (snd t) acc) (xt_lin r) (snd (lin_of e)) end.
 
-(* [comment removed for export] *)
 Definition lin_ge0_scaled (kn : list kentry) (c : Z) (ts : list (Z * expr)) : bool :=
   let j := srl_scale_need ts in
   if (if Z.ltb 0 j then Z.leb j 24 else false) then
@@ -1305,25 +1200,23 @@ Definition lin_ge0_scaled (kn : list kentry) (c : Z) (ts : list (Z * expr)) : bo
     lin_test kn (sc * c + c2 + c3)%Z t3 (fun lo _ => Z.leb 0 lo)
   else false.
 
-(* [comment removed for export] *)
 Definition lin_ge0 (kn : list kentry) (pos neg : xterms) : bool :=
   (xt_nowrap kn pos && xt_nowrap kn neg &&
-   (* [comment removed for export] *)
+
    (if lin_test kn (xt_const pos - xt_const neg)%Z (lsub_e (xt_lin pos) (xt_lin neg)) (fun lo _ => Z.leb 0 lo) then true
     else let '(c2, t2) := srl_expand kn (lsub_e (xt_lin pos) (xt_lin neg)) in
          if lin_test kn (xt_const pos - xt_const neg + c2)%Z t2 (fun lo _ => Z.leb 0 lo) then true
-         else (* [comment removed for export] *)
+         else
          if (if has_srl t2 then
                let '(c3, t3) := srl_expand kn t2 in
                lin_test kn (xt_const pos - xt_const neg + c2 + c3)%Z t3 (fun lo _ => Z.leb 0 lo)
              else false) then true
-         else (* [comment removed for export] *)
+         else
            lin_ge0_scaled kn (xt_const pos - xt_const neg)%Z (lsub_e (xt_lin pos) (xt_lin neg))))%bool.
 
-(* [comment removed for export] *)
 Definition xinside0 (kn : list kentry) (b1 : expr) (k1 : Z) (n1 : expr) (b2 : expr) (k2 : Z) (n2 : expr) : bool :=
   if lin_ge0 kn [(b1, k1)] [(b2, k2)] then lin_ge0 kn [(b2, k2); (n2, 0%Z)] [(b1, k1); (n1, 0%Z)] else false.
-(* [comment removed for export] *)
+
 Definition xinside_num (kn : list kentry) (b1 : expr) (k1 : Z) (n1 : expr) (b2 : expr) (k2 : Z) (n2 : expr) : bool :=
   match xlo kn b2, xhi kn b2 with
   | Some lo2, Some hi2 =>
@@ -1339,17 +1232,14 @@ Definition xinside (kn : list kentry) (b1 : expr) (k1 : Z) (n1 : expr) (b2 : exp
   if shares_var b1 b2 then xinside0 kn b1 k1 n1 b2 k2 n2
   else if novars b2 then xinside_num kn b1 k1 n1 b2 k2 n2 else false.
 
-
-(* [comment removed for export] *)
 Definition sub_itv (allkn : list kentry) (b : expr) (k n : Z) (c : saddr) (m : expr) : bool :=
   if (if (expr_eqb b (a_base c) && Z.leb (a_off c) k)%bool then
         match xlo allkn m with Some ml => Z.leb (k + n) (a_off c + ml) | None => false end
       else false)
   then true
-  else (* [comment removed for export] *)
+  else
     if (Z.leb 0 n && Z.ltb n two64)%bool then xinside allkn b k (ELit n) (a_base c) (a_off c) m else false.
 
-(* [comment removed for export] *)
 Fixpoint kdisj_apart (allkn kn : list kentry) (b1 : expr) (k1 n1 : Z) (b2 : expr) (k2 n2 : Z) : bool :=
   match kn with
   | [] => false
@@ -1382,8 +1272,6 @@ Fixpoint kdisj_apart_x (allkn kn : list kentry) (b1 : expr) (k1 : Z) (n1 : expr)
   | _ :: rest => kdisj_apart_x allkn rest b1 k1 n1 b2 k2 n2
   end.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Definition end_hi (kn : list kentry) (b : expr) (k : Z) (n : expr) (lo1 hi1 h1 : Z) : option Z :=
   match n with
   | ELit _ => None
@@ -1402,7 +1290,7 @@ Definition ranges_apart_x (kn : list kentry) (b1 : expr) (k1 : Z) (n1 : expr) (b
     if (match base_range kn b1, base_range kn b2, xhi kn n1, xhi kn n2 with
         | Some (lo1, hi1), Some (lo2, hi2), Some h1, Some h2 =>
             if (Z.leb (hi1 + k1 + h1) (lo2 + k2) || Z.leb (hi2 + k2 + h2) (lo1 + k1))%bool then true
-            else (* [comment removed for export] *)
+            else
             if match end_hi kn b1 k1 n1 lo1 hi1 h1 with Some e1 => Z.leb e1 (lo2 + k2) | None => false end then true
             else match end_hi kn b2 k2 n2 lo2 hi2 h2 with Some e2 => Z.leb e2 (lo1 + k1) | None => false end
         | _, _, _, _ => false
@@ -1413,12 +1301,11 @@ Definition ranges_apart_x (kn : list kentry) (b1 : expr) (k1 : Z) (n1 : expr) (b
     else lin_ge0 kn [(b1, k1)] [(b2, k2); (n2, 0%Z)]
   end.
 
-(* [comment removed for export] *)
 Record sprep := SPrep {
-  sp_rng : option (Z * Z);          (* [comment removed for export] *)
-  sp_h1 : option Z;                 (* [comment removed for export] *)
-  sp_D : list (saddr * expr);       (* [comment removed for export] *)
-  sp_Dx : list (saddr * expr) }.    (* [comment removed for export] *)
+  sp_rng : option (Z * Z);
+  sp_h1 : option Z;
+  sp_D : list (saddr * expr);
+  sp_Dx : list (saddr * expr) }.
 
 Fixpoint disj_sides (allkn kn : list kentry) (b1 : expr) (k1 n1 : Z) : list (saddr * expr) :=
   match kn with
@@ -1457,7 +1344,6 @@ Definition mk_sprep (kn : list kentry) (b1 : expr) (k1 : Z) (n1 : expr) : sprep 
         (match n1 with ELit z1 => disj_sides kn kn b1 k1 (zlit64 z1) | _ => [] end)
         (disj_sides_x kn kn b1 k1 n1).
 
-(* [comment removed for export] *)
 Definition ranges_apart_p (kn : list kentry) (sp : sprep) (b1 : expr) (k1 : Z) (n1 : expr)
            (b2 : expr) (k2 : Z) (n2 : expr) : bool :=
   match n1, n2 with
@@ -1474,7 +1360,7 @@ Definition ranges_apart_p (kn : list kentry) (sp : sprep) (b1 : expr) (k1 : Z) (
     if (match sp_rng sp, base_range kn b2, sp_h1 sp, xhi kn n2 with
         | Some (lo1, hi1), Some (lo2, hi2), Some h1, Some h2 =>
             if (Z.leb (hi1 + k1 + h1) (lo2 + k2) || Z.leb (hi2 + k2 + h2) (lo1 + k1))%bool then true
-            else (* [comment removed for export] *)
+            else
             if match end_hi kn b1 k1 n1 lo1 hi1 h1 with Some e1 => Z.leb e1 (lo2 + k2) | None => false end then true
             else match end_hi kn b2 k2 n2 lo2 hi2 h2 with Some e2 => Z.leb e2 (lo1 + k1) | None => false end
         | _, _, _, _ => false
@@ -1485,14 +1371,11 @@ Definition ranges_apart_p (kn : list kentry) (sp : sprep) (b1 : expr) (k1 : Z) (
     else lin_ge0 kn [(b1, k1)] [(b2, k2); (n2, 0%Z)]
   end.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Inductive ptree (A : Type) : Type := PTLeaf | PTNode (l : ptree A) (o : option A) (r : ptree A).
 End FPX_3.
 
 Arguments PTLeaf {A}. Arguments PTNode {A} _ _ _.
-Section FPX_4. Context {fx : PropExec.FPState}. Context {bmK : BMode}.   (* [comment removed for export] *)
+Section FPX_4. Context {fx : PropExec.FPState}. Context {bmK : BMode}.
 
 Fixpoint pt_get {A} (t : ptree A) (k : positive) {struct k} : option A :=
   match t with
@@ -1513,25 +1396,18 @@ Fixpoint pt_set {A} (k : positive) (v : A) (t : ptree A) {struct k} : ptree A :=
                     end
   end.
 Lemma pt_gss : forall A (k : positive) (v : A) t, pt_get (pt_set k v t) k = Some v.
-Proof.
-ltac2:(KReplay.run1 (kr_t_AxSymExec3 ()) ["FPX_4"] "p'0h01kh11th21vh31oi001oh42t1h52t2h63IHkh71Ai011li021pi031rp;1p;2p;4p;5p;3p100mWp608000p100nfp4p710p8p200R0p100Q0p4p710p8P0g00oCR1p6081000p8P0g010SR2p6081000p8g011cR3j13Tg0134j11Tg013Vj22Tg00Afj15Tg0148j18Tg015Ij47Tg001Hj14Tg007Fj26Tg016Zj5<TP2j4;TP1j3:Tg008Lj39Tf7R1f6R2f5R4f4R5f3R6f2R7C;f1R83:f0R939p=0g017AR:%36%15R;P5P5P7P8P9P71258G0]1^27R<X0:%35R=P3P4%12R>P2P2%55R?P7P9P?1227R?G0P9P7P8%84R@O2RA%14RBP4P4%56RCP8P@PC1248RCG0ef8RD#3REf9RF#1RGf:#3RHPDP1P9O2f;RI#1RJPIPI%5FRKP1PIP7P8P9C7RLPK12I1RKG0eW5W3W4P7P8P9O3n10110200020030101100103W1X26X6<X0:P3P4P>P2P2%45R>P7P9P>P?G0P9PAPBP4P4%46R4P8P@P4PCG0ePDP1P7O2PJPIPI%4FRIP1PLPIPKG0eX5HX3GX4EP7P8P9O3n10110200020030101100103X1=X26X6<X0:%37P3P6P;P5P5g00;TR;P7P9P;1257G0P9%16R51268R3'6P5P6P6P;P8%86P;P3G0e%32%1112F1R2,6GPGPFPFP;P1PFP7P8P9C7P;P2G0eX5EW3W4P7P8P9O3n10110200020030101100103W1X28P9D<W0X70o"). Qed.
+Proof. induction k; destruct t; cbn; auto. Qed.
 Lemma pt_gso : forall A (k k' : positive) (v : A) t, k <> k' -> pt_get (pt_set k' v t) k = pt_get t k.
 Proof.
-ltac2:(KReplay.run1 (kr_t_AxSymExec3 ()) ["FPX_4"] "p'0h03IHkh11Hh21th31vh42k'h51kh61oi001oh72t1h82t2h93Heqh:2H0h;1fh<1Ai011li021pi031rp%0p;1p;4p;3p;2p;6p;5p200R0g00Q0R1p4p710p8P0g00oCR2p6081000p8P0g010SR3p6081000p8g011cR4j1;Tg0134j15TP3j42Tg00AfR3j16TP2j31Tg0148j1CTg00OHj1?Tg008Lj38Tg007Fj24Tg001HR2j17Tg00JIj1<Tg017fj6GTg00g@j2ITP1j6FTg015Ij4HTg013Vj2JTg016Zj5PTg018Dj6ETg017AR1f1R5f0R638#<p=0f6R7f5R8f4R9f3R:31f2R;?15638p=:A1:;5=896p=3g00;TR<=816p=@A156<p==A1;5<=8:6p=DA8156p=BP;P1P5P3P3P6EEp=OP1P1P3P;P5P6EEp=NA1;56989:p=MP9P:P;P5C2=18<=876p=>A816<#<p=9P;P<P5P6C2p=AP;P1P5P2P2P6EEp=LP1P1P2P;P5P6EEp=K%;9S0010:;R=%57R>P7P7P:P;P5C2S01P9P7P5P9F:[]2^3:^41R?X51P1%;7S02%68R@/0;f8RA#5RBPAPAP:P;P5C2S03%67RCA1A5CS04D3[]2^38P6f7RD#;REP4PA%6DRF%6:RG'0f:RH#5RIPHPH%69RJP:P5C2S05%6ARKA1H5KRLD3[P6%6;RM,0CRNf9RO#5RP%CORQ=1ODS06%?HS0798I6X6PS08P1f;RRf<RS#;f>RT#5PTPTP:P;P5C2P9PTP5P9F:\=]2]3^41RU%65RV/0@%5SRWPS%CSP;%?SD3RX]1]0PDf=RY#;RZ10G;R[f?R\#5R]P\P\P:P;P5C2R^PJP\P5PJF:[]2^3S^41R_%6VR`/0C%5YRa%?Y'4RbW1W0X51P6O1%7:Rc/0;RdP]P\P^%79R^P\P5P^F:[^2Z^3S^41Re%75Rf#6Rg/0CPbW1W0X51P6O1%;RRh%@;#<RiPaPYPYP:P;P5C2Rj1=Y5CD[]2^3H^41Rk%6<Rl/0J%5RS09%?R'4RmW1W0n011020003101021010200P7P6O2POP:P;PQC2=1ODS0:P7P:P;PQ1BD:RnP1PKPKPJP1\1RoP6POO1X;oS0;14o3R33OANA96EG1BKJg00\:P;P6O1'IRpb9W:%<nS0<eO4EFUPPPOPOPGP;PQC2S0=PFA1OQFS0>D3\Ne%6SRN/0KRqP]A1\5YRrf@Rs#5S0?P6PsP;PTDMX6]P1fARtfBRu#;fDRv#5PvPvP:P;P5C2P9PvP5P9F:\=]2]3^41S0@%6RRv,0V%5uS0AA1u9;Rw;8w]1]0PYfCRw#;RxfERy#5RzPyPyP:P;P5C2R{PJPyP5PJF:\[]2^3u^41S0B10`N%5wR|A1w8M'4W1W0X51P6O1PzPyP{P^PyP5P^F:\d^2x^3u^41S0C10gN%7;Rx91w8,4|W1W0X51P6O1%;tP|PwPwP:P;P51=w5F>\i]2^3s^41S0D%6HRy,0l%5tS0E1=t:'4W1W0n011020003101021010200PSP6O2P\POPAP5C2=1\YPSPOPAP51BYOR{P1%6TRzPzPyP6P\O1X;oR}=Oo3ANTH6EG1BzyPpb9W:%<{S0FeO4EFUP]P\P\%6OS0GPAP\P:P;P5CHRzC2S0H%6YR3A1\z3S0ID3\qeX8ZX6WX7hP;P5P6O3n10110200020131101100103W2X37X41P6O1P4PA10FcPIPHPHP^P:P5C2S0JPKPLD3[P610CxRLP1%78Rq,0VPX]1^0UPD%77R~,0`PbW1X0_X51P6O110g~PbW1X0eX51P6O110l^PmW1X0kn011020003101021010200P7P6O2UPPPOPOPcP;PQC2S0KPFQ0>D3\Le%7ARL,0NRN14]rUP]P\P\%7OS0>PAPzC2S0LP3Q0ID3\NeX8ZX6WX7hP;P5P6O3n10110200020130101100103X2EX37X41P6O1%;8RNP4P7%9@PBPAAAA:5S0IPCQ04D3[P6%9JR3P1%;HPWPSPSP:P;P5C2P9PSP5P9F:\=]2^3O^41R=%9VPIPH%CHP;Q07D3S07]1]0P8PaPYPjPJPYP5PJF:\[^2h^3H^41R[%9`PmW1W0X51P6O1PaPYPjP^PYP5P^F:\d^2h^3H^41Rd%9gPmW1W0X51P6O1%;ORgQ09PRPRP:P;P51=R5F>\i]2^3A^41Rj%9l%?O,4PS04W1W0n011020003101021010200P9P6O2U%5DRlPD%CDR`9AD;S0MP@PDP`P@F:\3e%9yRyA1Y5R,4aUPaPYPYP:P;P5CHR39AYAS0NPvPYP3PvF:\yeX8hX6IX7gP;P5P6O3n10110200020130101100103W2X39n011020003111021110201X41X0?X51P1Q0210q;PBPAQ03P~A1A5~S03D3[]2^38P6P4PA%7DRy/0GPIPHQ05PLA1H5LS05D3[P610~MRvP110f@PX]1^0UPD%7VRV/0CPbW1X0_X51P6O1%7fR@/0CPbW1X0eX51P6O1%7<RC/0JPmW1X0kn011020003101021010200P7P6O2UPPPOQ0=PyA1OQyS0=D3\ve%7SRv/0KRrA1\:YS02,4]UP]P\Q0H%7YRFA1\zFRzD3\reX8ZX6WX7hP;P5P6O3n10110200020130101100103X2EX37X41P6O1P4PA10ycPIPHQ0JPLQ05D3[P610~xRrPPQ06Q08P110fqPX]1^0UPD10V~PbW1X0_X51P6O110@~PbW1X0eX51P6O110C^PmW1X0kn011020003101021010200P7P6O2Q0:P7P:P;PQP1PLPLP^Q0;14o2R25LoAKA96EG1BL^Ppb9X:nQ0<eO4EFUPPPOQ0KPyQ0=D3\re10vLRrP]Q02Q0?P6PsP9PTDMX6]P1Q0@%7RRs,0fQ0AA1u7;Ru;8u]1]0PYQ0B10VvA1wDM,4|W1W0X51P6O1Q0C10@vA1wDx,4|W1W0X51P6O1Q0D%7HR|,0CQ0E1=t8'4W1W0n011020003101021010200PSP6O2P\POPAP:C2=1\YPSPOPAP:P1%7TRtPtP|ALo}2AKTH6EG1Bt|Ppb9X:{Q0FeO4EFUP]P\Q0LPFPzD3\reX8ZX6WX7hP;P5P6O3n10110200020131101100103X2EX37X41P6O1P4P7%9qPBPAQ0IP~Q03D3[P6%9^R~P1%9fQ07]1^0=P8%9VPmW1X0[X51P6O1%9@PmW1X0dX51P6O1%9CQ04W1X0jn011020003101021010200P9P6O2UPlPDQ0MPqPDP`PqF:\~e%9|R|A1Y:R,4aUPaPYQ0NPsPYP3PsF:\|eX8hX6IX7gP;P5P6O3n10110200020130101100103X2NX39n011020003111021110201X41X0?X51P1Q00P>P7Q011=75R?CD\i]2^3:P6P4P7%@G#<PBPAPAPJP:P51=A5RJF>[P6%@M#<RM%?D,4lRiUPlPDPDPGP;P`1=D`RGF>\Me%@K#<RK14a;RMUPaPYPYQ0GPAP31=Y3R|F>\KeX8hX6IX7gP;P5P6O3n10110200020030101100103X2NX39X41P6O1P4P7%@c#<PBPAPAP^P:P5PJF>[P6%@x#<RxPiUPlPDPDPcP;P`PGF>\xe%@L#<RLPMUPaPYPYQ0>PAP3P|F>\LeX8hX6IX7gP;P5P6O3n10110200020030101100103X2NX39X41P6O1%;:P4P9A81<<R9#<R4P>P7AA7:5P?CD[P6141<R<P91J7:%?758>P5P6O1R>'Ib9V4%58P8%C8R79A8;1=87CD\4eP<P91JSO=8W:/I>b9V4Q09PRPRP:P;P5CHR:9ARA1=R:CD\4eX8gX6BX7EP;P5P6O3n10110200020030101100103W2X3;n011020003101021010200X41P6DPX51X<0o"). Qed.
+  induction k; destruct k', t; cbn; intros; auto;
+    try (rewrite IHk by congruence); try (destruct k; reflexivity); try reflexivity; congruence.
+Qed.
 Lemma pt_get_leaf : forall A (k : positive), pt_get (@PTLeaf A) k = None.
-Proof.
-ltac2:(KReplay.run1 (kr_t_AxSymExec3 ()) ["FPX_4"] "p'0h01kh11Ai001pp;1p;3p;2p200R0p100Q0p4p710p8P0g00oCR1p6081000p8g0134j10Tg0148j15TP1j33Tg00OHj11Tg008Lj34Tg007Fj22Tg017AR1P1f2R2#0%52f0R3532%1234P3f3R2#0%12'2X01P3O1R3P3f1R3#0%13'2n011000003101001010000W0X10o"). Qed.
+Proof. destruct k; reflexivity. Qed.
 
-
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Inductive lres :=
 | LHit (v : expr) (scs : list sidecond) (hints : list bool)
-| LMiss (scs : list sidecond) (hints : list bool)     (* [comment removed for export] *)
+| LMiss (scs : list sidecond) (hints : list bool)
 | LStuck.
 
 Fixpoint zbytes_le_to_Z (bs : list Z) : Z :=
@@ -1543,7 +1419,6 @@ Fixpoint zbytes_le_to_Z (bs : list Z) : Z :=
 Definition lit_of_bytes (sx : bool) (n : nat) (bs : list Z) : expr :=
   ELit (let u := zbytes_le_to_Z bs in if sx then bv_swrap (8 * N.of_nat n) u else u).
 
-(* [comment removed for export] *)
 Fixpoint log_byte_lit (log : list sentry) (rb : expr) (rk : Z) : option Z :=
   match log with
   | [] => None
@@ -1558,7 +1433,6 @@ Fixpoint log_byte_lit (log : list sentry) (rb : expr) (rk : Z) : option Z :=
       end
   end.
 
-(* [comment removed for export] *)
 Fixpoint log_bytes_lit (log : list sentry) (rb : expr) (rk : Z) (n : nat) : option (list Z) :=
   match n with
   | O => Some []
@@ -1568,7 +1442,6 @@ Fixpoint log_bytes_lit (log : list sentry) (rb : expr) (rk : Z) (n : nat) : opti
             end
   end.
 
-(* [comment removed for export] *)
 Fixpoint log_lookup (kn : list kentry) (log : list sentry) (rb : expr) (rk : Z) (n : nat) (sx : bool)
          (hints : list bool) (acc : list sidecond) : lres :=
   match log with
@@ -1593,7 +1466,6 @@ Fixpoint log_lookup (kn : list kentry) (log : list sentry) (rb : expr) (rk : Z) 
       end
   end.
 
-(* [comment removed for export] *)
 Fixpoint img_bytes (segs : list Segment) (a : Z) (n : nat) : option (list Z) :=
   match n with
   | O => Some []
@@ -1607,11 +1479,9 @@ Fixpoint img_bytes (segs : list Segment) (a : Z) (n : nat) : option (list Z) :=
       end
   end.
 
-(* [comment removed for export] *)
 Definition fill_lit (sx : bool) (n : nat) (c : Z) : expr :=
   lit_of_bytes sx n (repeat (c mod 256)%Z n).
 
-(* [comment removed for export] *)
 Fixpoint know_byte_lit (segs : list Segment) (kn : list kentry) (rb : expr) (rk : Z) : option Z :=
   match kn with
   | [] => None
@@ -1638,7 +1508,7 @@ Fixpoint know_byte_lit (segs : list Segment) (kn : list kentry) (rb : expr) (rk 
               if (Z.leb lo rk && Z.ltb rk hi)%bool then
                 match seg_rom segs (Z_to_bv 64 rk) with
                 | Some b => Some (bv_unsigned b)
-                | None => None            (* [comment removed for export] *)
+                | None => None
                 end
               else know_byte_lit segs rest rb rk
           | _ => know_byte_lit segs rest rb rk
@@ -1647,7 +1517,6 @@ Fixpoint know_byte_lit (segs : list Segment) (kn : list kentry) (rb : expr) (rk 
       end
   end.
 
-(* [comment removed for export] *)
 Fixpoint know_bytes_lit (segs : list Segment) (kn : list kentry) (rb : expr) (rk : Z) (n : nat)
   : option (list Z) :=
   match n with
@@ -1658,7 +1527,6 @@ Fixpoint know_bytes_lit (segs : list Segment) (kn : list kentry) (rb : expr) (rk
             end
   end.
 
-(* [comment removed for export] *)
 Fixpoint know_lookupA0 (allkn : list kentry) (segs : list Segment) (kn : list kentry) (rb : expr) (rk : Z)
          (n : nat) (sx : bool) (hints : list bool) (acc : list sidecond) : lres :=
   let know_lookup := know_lookupA0 allkn in
@@ -1678,7 +1546,7 @@ Fixpoint know_lookupA0 (allkn : list kentry) (segs : list Segment) (kn : list ke
               | RInside _ => LHit (ELit 0) acc hints
               | RDisjoint | RPartial => know_lookup segs rest rb rk n sx hints acc
               | RUnknown =>
-                  (* [comment removed for export] *)
+
                   if xinside allkn rb rk (elen n) kb kk len then LHit (ELit 0) acc hints else
                   match hints with
                   | true :: hs => LHit (ELit 0) (SCInside (SA rb rk) (elen n) (SA kb kk) len :: acc) hs
@@ -1695,7 +1563,7 @@ Fixpoint know_lookupA0 (allkn : list kentry) (segs : list Segment) (kn : list ke
               end
           end
       | KFill (SA kb kk) len c =>
-          (* [comment removed for export] *)
+
           let hit := fill_lit sx n c in
           match len with
           | ELit l0 =>
@@ -1718,10 +1586,10 @@ Fixpoint know_lookupA0 (allkn : list kentry) (segs : list Segment) (kn : list ke
               | [] => know_lookup segs rest rb rk n sx [] acc
               end
           end
-      | KUnk _ _ => know_lookup segs rest rb rk n sx hints acc   (* [comment removed for export] *)
+      | KUnk _ _ => know_lookup segs rest rb rk n sx hints acc
       | KBlob (SA kb kk) len k =>
           if expr_eqb rb kb then
-            (* [comment removed for export] *)
+
             if Z.leb kk rk then
               match len with
               | ELit l0 =>
@@ -1730,8 +1598,8 @@ Fixpoint know_lookupA0 (allkn : list kentry) (segs : list Segment) (kn : list ke
                   else if Z.leb (kk + (l0 mod 2^64)%Z) rk then know_lookup segs rest rb rk n sx hints acc
                   else LStuck
               | _ =>
-                  (* [comment removed for export] *)
-                  if match erange allkn len with   (* [comment removed for export] *)
+
+                  if match erange allkn len with
                      | Some (lo, _) => Z.leb (rk + Z.of_nat n) (kk + lo)
                      | None => false
                      end
@@ -1764,7 +1632,6 @@ Fixpoint know_lookupA0 (allkn : list kentry) (segs : list Segment) (kn : list ke
       end
   end.
 
-(* [comment removed for export] *)
 Definition know_lookupA (allkn : list kentry) (segs : list Segment) (kn : list kentry) (rb : expr) (rk : Z)
          (n : nat) (sx : bool) (hints : list bool) (acc : list sidecond) : lres :=
   match know_lookupA0 allkn segs kn rb rk n sx hints acc with
@@ -1780,7 +1647,6 @@ Definition know_lookup (segs : list Segment) (kn : list kentry) (rb : expr) (rk 
          (n : nat) (sx : bool) (hints : list bool) (acc : list sidecond) : lres :=
   know_lookupA kn segs kn rb rk n sx hints acc.
 
-(* [comment removed for export] *)
 Fixpoint coeffs_divk (kn : list kentry) (m : Z) (ts : list (Z * expr)) : bool :=
   match ts with
   | [] => true
@@ -1790,16 +1656,14 @@ Fixpoint coeffs_divk (kn : list kentry) (m : Z) (ts : list (Z * expr)) : bool :=
 Definition lin_lowbits_kn (kn : list kentry) (e : expr) (k : Z) : option Z :=
   let l := lin_of e in
   if coeffs_divk kn (2 ^ k) (snd l) then Some ((fst l) mod 2 ^ k)%Z
-  else pageup_low e (2 ^ k).   (* [comment removed for export] *)
+  else pageup_low e (2 ^ k).
 
-(* [comment removed for export] *)
 Fixpoint ldiv_terms (m : Z) (ts : list (Z * expr)) : list (Z * expr) :=
   match ts with
   | [] => []
   | (k, a) :: rest => ((k / m)%Z, a) :: ldiv_terms m rest
   end.
 
-(* [comment removed for export] *)
 Fixpoint lsplit_divc (m : Z) (ts : list (Z * expr)) : list (Z * expr) * list (Z * expr) :=
   match ts with
   | [] => ([], [])
@@ -1808,7 +1672,6 @@ Fixpoint lsplit_divc (m : Z) (ts : list (Z * expr)) : list (Z * expr) * list (Z 
       if Z.eqb (k mod m) 0 then ((k, a) :: d, r) else (d, (k, a) :: r)
   end.
 
-(* [comment removed for export] *)
 Definition lin_nowrap_l (kn : list kentry) (c : Z) (ts : list (Z * expr)) : bool :=
   match lin_range (erange kn) c ts with
   | Some (lo, hi) => (Z.leb 0 lo && Z.ltb hi two64)%bool
@@ -1819,9 +1682,9 @@ Definition mkSrl (kn : list kentry) (a : expr) (s : Z) : expr :=
   let l := lin_of a in
   let m := (2 ^ s)%Z in
   if (negb (lin_trivial l) && coeffs_div m (snd l) && lin_nowrap kn a)%bool
-  then unlin ((fst l / m)%Z, ldiv_terms m (snd l))     (* [comment removed for export] *)
+  then unlin ((fst l / m)%Z, ldiv_terms m (snd l))
   else
-    (* [comment removed for export] *)
+
     match (if (negb (lin_trivial l) && lin_nowrap kn a)%bool then lsplit_divc m (snd l) else ([], [])) with
     | ((_ :: _) as dts, (_ :: _) as rts) =>
         match (if lin_nowrap_l kn (fst l) rts then erange kn (unlin (fst l, rts)) else None) with
@@ -1833,7 +1696,6 @@ Definition mkSrl (kn : list kentry) (a : expr) (s : Z) : expr :=
     | _ => mkAlu ALU_SRL a (ELit s)
     end.
 
-(* [comment removed for export] *)
 Fixpoint lowbits (kn : list kentry) (e : expr) (j : Z) {struct e} : option Z :=
   let m := (2 ^ j)%Z in
   let dflt := if Z.leb j (ealign kn e) then Some 0%Z else lin_lowbits_kn kn e j in
@@ -1856,7 +1718,6 @@ Fixpoint lowbits (kn : list kentry) (e : expr) (j : Z) {struct e} : option Z :=
   | _ => dflt
   end.
 
-(* [comment removed for export] *)
 Fixpoint lsplit_div (kn : list kentry) (m : Z) (ts : list (Z * expr)) : list (Z * expr) * list (Z * expr) :=
   match ts with
   | [] => ([], [])
@@ -1865,7 +1726,6 @@ Fixpoint lsplit_div (kn : list kentry) (m : Z) (ts : list (Z * expr)) : list (Z 
       if (Z.eqb (k mod m) 0 || Z.eqb ((k * 2 ^ ealign kn a) mod m) 0)%bool then ((k, a) :: d, r) else (d, (k, a) :: r)
   end.
 
-(* [comment removed for export] *)
 Definition and_high_split (kn : list kentry) (bk : expr) (j c : Z) (dts rts : list (Z * expr)) : expr :=
   let m := (2 ^ j)%Z in
   let cA := (c - c mod m)%Z in
@@ -1887,43 +1747,42 @@ Definition and_low_split (kn : list kentry) (bk : expr) (j c : Z) (rts : list (Z
   | None => mkAlu ALU_AND r bk
   end.
 
-(* [comment removed for export] *)
 Definition mkAnd0 (kn : list kentry) (a b : expr) : expr :=
   match b with
   | ELit k =>
       let k' := (k mod two64)%Z in
       let j := Z.log2 (two64 - k') in
       if (Z.eqb (two64 - k') (2 ^ j) && Z.ltb j 64)%bool then
-        (* [comment removed for export] *)
+
         (if Z.leb j (ealign kn a) then a
          else let l := lin_of a in
               if (negb (lin_trivial l) && coeffs_divk kn (2 ^ j) (snd l))%bool
               then unlin ((fst l - (fst l) mod 2 ^ j)%Z, snd l)
-              else (* [comment removed for export] *)
+              else
                 match (if lin_trivial l then ([], snd l) else lsplit_div kn (2 ^ j) (snd l)) with
                 | ((_ :: _) as dts, (_ :: _) as rts) => and_high_split kn b j (fst l) dts rts
-                | _ => (* [comment removed for export] *)
+                | _ =>
                        mkMd M_MUL (ELit (2 ^ j)%Z) (mkSrl kn a j)
                 end)
       else
         let j2 := Z.log2 (k' + 1) in
         if (Z.eqb (k' + 1) (2 ^ j2) && Z.ltb j2 64)%bool then
-          (* [comment removed for export] *)
+
           (if Z.leb j2 (ealign kn a) then ELit 0
-           else match lowbits kn a j2 with        (* [comment removed for export] *)
+           else match lowbits kn a j2 with
            | Some v => ELit v
            | None =>
            if lin_trivial (lin_of a) then mkAlu ALU_AND a b
            else match lin_lowbits_kn kn a j2 with
                 | Some v => ELit v
-                | None => (* [comment removed for export] *)
+                | None =>
                     match lsplit_div kn (2 ^ j2) (snd (lin_of a)) with
                     | (_ :: _, (_ :: _) as rts) => and_low_split kn b j2 (fst (lin_of a)) rts
                     | _ => mkAlu ALU_AND a b
                     end
                 end
            end)
-        else (* [comment removed for export] *)
+        else
           let j3 := (Z.log2 k' + 1)%Z in
           if (Z.ltb 0 k' && Z.leb j3 64 && negb (lin_trivial (lin_of a)))%bool then
             match lin_lowbits_kn kn a j3 with
@@ -1934,8 +1793,6 @@ Definition mkAnd0 (kn : list kentry) (a b : expr) : expr :=
   | _ => mkAlu ALU_AND a b
   end.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Definition narrow_mask (kn : list kentry) (a : expr) (k' : Z) : option Z :=
   let i := ctz64 k' in
   let m := (k' + 2 ^ i)%Z in
@@ -1961,14 +1818,13 @@ Definition mkAndK (kn : list kentry) (a b : expr) : expr :=
   match a, b with
   | EAlu ALU_AND x (ELit m1), ELit k => mkAnd kn x (ELit (Z.land (m1 mod two64) (k mod two64))%Z)
   | EMd M_MUL (ELit m) (EAlu ALU_SRL x (ELit i)), ELit k =>
-      (* [comment removed for export] *)
+
       let i' := ((i mod two64) mod 64)%Z in
       if Z.eqb (m mod two64) (2 ^ i') then mkAnd kn x (ELit (Z.land (two64 - 2 ^ i') (k mod two64))%Z)
       else mkAnd kn a b
   | _, _ => mkAnd kn a b
   end.
 
-(* [comment removed for export] *)
 Definition or_disjoint (kn : list kentry) (a b : expr) : bool :=
   match erange kn b with
   | Some (lo, hi) => (Z.leb 0 lo && Z.ltb hi (2 ^ (ealign kn a)))%bool
@@ -1981,7 +1837,7 @@ Definition mkOr (kn : list kentry) (a b : expr) : expr :=
   | _, _ =>
       if or_disjoint kn a b then mkAlu ALU_ADD a b
       else if or_disjoint kn b a then mkAlu ALU_ADD a b
-      else (* [comment removed for export] *)
+      else
            match b with
            | ELit c => mkAlu ALU_ADD (mkAndK kn a (ELit (Z.lnot (c mod two64)))) (ELit c)
            | _ => match a with
@@ -1990,12 +1846,6 @@ Definition mkOr (kn : list kentry) (a b : expr) : expr :=
                   end
            end
   end.
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 
 Fixpoint closedb (e : expr) : bool :=
   match e with
@@ -2017,7 +1867,6 @@ Fixpoint esubst (s r e : expr) : expr :=
   | _ => e
   end.
 
-(* [comment removed for export] *)
 Fixpoint eval_closed (e : expr) : option Z :=
   match e with
   | ELit z => Some (z mod two64)%Z
@@ -2035,7 +1884,6 @@ Fixpoint eval_closed (e : expr) : option Z :=
   | EBlob _ _ _ _ => None
   end.
 
-(* [comment removed for export] *)
 Fixpoint subexprs (e : expr) : list expr :=
   match e with
   | EAlu _ a b | EAluw _ a b | EMd _ a b | EMdw _ a b => subexprs a ++ subexprs b ++ [e]
@@ -2043,12 +1891,11 @@ Fixpoint subexprs (e : expr) : list expr :=
   | _ => [e]
   end.
 
-(* [comment removed for export] *)
 Fixpoint all_eval_to (s e : expr) (v lo : Z) (cnt : nat) : bool :=
   match cnt with
   | O => true
   | S c => match eval_closed (esubst s (ELit lo) e) with
-           | Some w => if Z.eqb w v then all_eval_to s e v (lo + 1) c else false   (* [comment removed for export] *)
+           | Some w => if Z.eqb w v then all_eval_to s e v (lo + 1) c else false
            | None => false
            end
   end.
@@ -2075,11 +1922,10 @@ Fixpoint evalS (s : expr) (z : Z) (e : expr) : option Z :=
                    | None => None
                    end
   | EExt sx lo n a => match evalS s z a with
-                      | Some x => Some (zext_fast sx lo n x) | None => None end   (* [comment removed for export] *)
+                      | Some x => Some (zext_fast sx lo n x) | None => None end
   | EBlob _ _ _ _ => None
   end.
 
-(* [comment removed for export] *)
 Fixpoint all_eval_toS (s e : expr) (v lo : Z) (cnt : nat) : bool :=
   match cnt with
   | O => true
@@ -2089,7 +1935,6 @@ Fixpoint all_eval_toS (s e : expr) (v lo : Z) (cnt : nat) : bool :=
            end
   end.
 
-(* [comment removed for export] *)
 Definition probeS (s e : expr) (v z : Z) : bool :=
   match evalS s (wrap64 z) e with Some w => Z.eqb w v | None => false end.
 
@@ -2105,7 +1950,6 @@ Definition nubE (l : list expr) : list expr := nubE_acc l [].
 
 Definition conc_limit : Z := 4096.
 
-(* [comment removed for export] *)
 Fixpoint evalS_def (s e : expr) : bool :=
   if expr_eqb e s then true else
   match e with
@@ -2139,7 +1983,6 @@ Fixpoint conc_try (kn : list kentry) (e : expr) (cands : list expr) : option Z :
       end
   end.
 
-(* [comment removed for export] *)
 Fixpoint conc_try_ref (kn : list kentry) (e : expr) (cands : list expr) : option Z :=
   match cands with
   | [] => None
@@ -2164,40 +2007,46 @@ Fixpoint conc_try_ref (kn : list kentry) (e : expr) (cands : list expr) : option
 
 Lemma evalS_def_None : forall s e z, evalS_def s e = false -> evalS s z e = None.
 Proof.
-ltac2:(KReplay.run1 (kr_t_AxSymExec3 ()) ["FPX_4"] "p'0h01Hh14IHe1h22E1h31bi001bh41oi011oh52H0h64IHe2h71eh82e1h92e2h:2oph;1nh<2sxh=2z0h>3IHeh?2e0h@1ihA1khB2lohC1shD1zi021zi031xi041yp;1p;2p;3p;6p;4p;:g0134R0j1NTg00OHj1MTg018aj1GTg01:1j28Tg01;Cj1LTg008Lj30Tg00g@j29Tg01<Sj1;Tg007Fj2:Tg01=cj3FTg01?3j27Tg01@Fj34Tg01AUj3CTg00Q0j66Tg01Bdj3@Tg01D4j3ATg01EDj3BTg01FTj3?Tg01Gdj3>Tg01I4j3ETg01JBj4=Tg01KRj4KTg01Lej4DTg01N5l:HTg013Vj2ITg00SYj6JTg00?iR1f1R2f0R3'7g00[>R430p=3f4R5f3R6f2R7;42;03p=2A0134p=5g00;6R8/I3p=1P1g00@IR9P2g00jNP4P3EJp=<g01OGR:1363%N8R;P5P7P2%M8R<D2[X7:%G3R=/86P1P1P1P1P3P9P9n0100000020000#5P1P;P2%15R>%L6#1R?n0100000020000=0;<[P3A0194R@P1p-0P3g00[^g00\:RAn0110000020000RBX71/<3RCPAA0;></93b5W0RDPCPAA0;?</93b5X0@n0110000020000b3136=P;P5P7%G2P<D2[eX=8g01PWR=%;3R?/86P1P1P1P1P3P9P4n0100000020000#5REP1P;P2P>P<n0100000020000=0;<[P3PDA0144RD1:;<R>W0RFn0110000020000b3136?P;P5P7%;2P<D2[eW;g01Q6R?1353P;f5RGP6P2P<D2[RHf6RI/33P;f7RJPGP2P<D2[RKAF562RL/8JP1P1P1P1P3P9P1P1f9RM/7GRN17M6ROP4n0100000020000n0100000020000#5RPP1P;P2f8RQ#1RRP0P8P;f:RS?4QIRTP0P8P;f;RU?4MGRVACM23#1P<n10110300021010400P<n10110300021010300n0100000020000=0;<[P3PCPAA0;R</93RWb5X0@RXP1P117Q517Q7RYP4n0100000020000#5RZPNP11:13R[17SI=013R\P1f<R]/7Q=013R^%52f>R_?4]SR`=0;<[RaP1P1P717_QP4n0100000020000#5RbP0P8P;f?f=Rc;4URdP0P8P;f@?4_SReAC_23#1RfP<n10110300021010400RgP<n10110300021010300=0;<]0]1]2P217UJRh=019RiP;PcPUPMP<D2RU\@Rj13cJRcP;P<P0P8P;PdP0P8P;P2PfP<n10110300021010400P<n10110300021010300=0;<X4;P`P;P0P8A0;2<\@P0P8P;P2P<P<n10110300021010300=0;<]1P3%12=0;<\@P>W1X=8P3O1A0;<<\@P>W1n10110100021010200P7O1b4RfA4_]QR]PJP3O1RkE6W0W1W2%5hRhPU\DRUP;P<P0P8P;P3PgP<n10110300021010300=0;<X4;P>P`P21:14O1R4E6X0DW1W2n0110000020000P3PIP7O3b2b3W0n0110000020001b313JLP;PQPIAFG57P<D2[eW6X9:W1X8:W:A@562RL/8JP1P1P1P;P2PRP0P8P;PTP0P8P;PVAAM23#1P<n10110300021010400P<n10110300021010300n0100000020000=0;<\PP3PXPNP1P[P\P1P0P8P;PdP0P8P;PeAA_23#1RgP<n10110300021010400RlP<n10110300021010300=0;<^0b^1a^2^P2P;P<P0P8P;PdP0P8P;P2PgP<n10110300021010400P<n10110300021010300=0;<X4;PfP]PkE6X0cX1jX2iP;P<P0P8P;P3PlP<n10110300021010300=0;<X4;P>P`P4E6X0DX1UX2hn0110000020000P3PIP7O3b2b3X0Zn0110000020001b313JLP;PQPIA@G57P<D2[eX6KX9:X1HX8:X:?g01QbR?AB562RL/8JP1P1P1P;P2PRP0P8P;PTP0P8P;PVA?M23#1P<n10110300021010400P<n10110300021010300n0100000020000=0;<\PP3PXPNP1P[P\P1P0P8P;PdP0P8P;PeA?_23#1RlP<n10110300021010400RgP<n10110300021010300=0;<^0b^1a^2^P2P;P<P0P8P;PdP0P8P;P2PlP<n10110300021010400P<n10110300021010300=0;<X4;PfP]PkE6X0cX1jX2iP;P<P0P8P;P3PgP<n10110300021010300=0;<X4;P>P`P4E6X0DX1UX2hn0110000020000P3PIP7O3b2b3X0Zn0110000020001b313JLP;PQPIABG57P<D2[eX6KX9:X1HX8:W:A>562RL/8JP1P1P1P;P2PRP0P8P;PTP0P8P;PVAEM23#1P<n10110300021010400P<n10110300021010300n0100000020000=0;<\PP3PXPNP1P[P\P1P0P8P;PdP0P8P;PeAE_23#1R_P<n10110300021010400ReP<n10110300021010300=0;<^0b^1a^2^P2P;P<P0P8P;PdP0P8P;P2P_P<n10110300021010400P<n10110300021010300=0;<X4;PfP]PkE6X0cX1jX2iP;P<P0P8P;P3PeP<n10110300021010300=0;<X4;P>P`P4E6X0DX1UX2hn0110000020000P3PIP7O3b2b3X0Zn0110000020001b313JLP;PQPIA>G57P<D2[eX6KX9:X1HX8:X:?P5P6P7P2C=R?/8JP1P1P1P1P3P9POn0100000020000#5P1P;P2PRP0P8P;A4SQ5PQPJPIP3CK#1RSP<n10110300021010300n0100000020000=0;<[P3PBX?1/<3PAPWb5X0@%5YP;P<P0P8P;P3PSP<n10110300021010300=0;<X4;P>A4MJ6P7P3O1E6W0n0110000020000b313J?P;PQPIPGP5P6P7C=P<D2[eX>KX7:X;=XB=X<1P6P7P2P3CDRK/8IP1P1P1P;P2%1JRQP<n0100000020000=0;<\EP3PCPAA0;Q</93b5X0@PFn0110000020000b313IKP;PJPGP5P6P7P2CDP<D2[eX;=X@8XA=X<1P2M:HXD8X7:WCo"). Qed.
+  intros s e z. induction e; cbn [evalS_def evalS]; destruct (expr_eqb _ s); intros H; try discriminate; try reflexivity;
+  try (destruct (evalS_def s e1) eqn:E1;
+       [ rewrite (IHe2 H); destruct (evalS s z e1); reflexivity
+       | rewrite (IHe1 eq_refl); reflexivity ]).
+  all: match goal with IH : _ -> ?ev = None |- _ => rewrite (IH H); reflexivity end.
+Qed.
 Lemma conc_try_eq : forall kn e cands, conc_try kn e cands = conc_try_ref kn e cands.
 Proof.
-ltac2:(KReplay.run1 (kr_t_AxSymExec3 ()) ["FPX_4"] "p'0h02Hdh11bi001bh21oi011oh35candsh42IHh51eh62hii022hih72knh82loi032loh91pi041ph:4resth;1si051vi061xi071zp;1p;3p;2p;4p;5p;6g002kj1?Tg0134R0j1DTg01RNj39Tg01S`j30Tg008Lj31Tg002Kj1LTg007Fj25Tg01U6j1<Tg01?3j28Tg01VGj16Tg01VeR1j2ETg01WEj27Tg00Cbj2;Tg00Bhj2CTg01;Cj1MTg01@Fj33Tg00CEj2@Tg01XUj42Tg001Hj1KTg001mj1>Tg00Jbj2ATg00K\j2:Tg01Yej1=Tg01ZEj54Tg013Vj2ITg00OHj1HTg01[[j4GTg00Q0j6BTg00h\j3FTg00g_j5JTg00i<#?g01OGR2%?2R3P2g00;6R4#DR5f3R6f2R7f0R839A067831X33f1R9%L2507,55f4R:?968A0:68515P5f5R;?0:9g00?iR<P5%<6R=P8P<P5186;R>#6P8P01E44R?P5f6R@/76RAP1P4P4P5P8P<P51;89g01]3RB'CRCP0P4P5%M9RDf8RE53@RFP<P5P<P<1@97RGg00@IRHP<P<f7RIf9RJP8P9C2PIPJP81;97RKg00;TRL#K#>RM'A,:7RNC2g00[>ROn0100000020000n0100000020000RPP<P5PIPJP8P7%>LRL,:K#=RQD4RR1I48RSP:n0100000020000P:n0100000020000P6n10110600021010500P6n0100000020000n2001104000120103102P8n10110600021010400n0100000020000n0100000020000P<P5P=A0@;7R=P0P?P5PAP1P4P4P5P8P<P5PCP0P4P5PFP<P5PPP<P5PRPSf:RR?0J@RPn0100000020000PPn0100000020000A0JE;RFn10110600021010500PFn0100000020000n2001104000120103102P=n10110600021010400n0100000020000515X25%<7P<P<P<P5P8A0I@6RAP<P518:@RT#6PAP0P?P517I:P1P4P4P5P8P<P5PCP0P4P5A3IDJP<P5P<P<PGPHP<P<PEPRP8P9C2PEPRP8PNC2POn0100000020000n0100000020000P<P5PEPRP8P7PQD4PSf;RU?0RIRVn0100000020000PVn0100000020000PPn10110600021010500PPn0100000020000n2001104000120103102PAn10110600021010400RWn0100000020000n0100000020000P<P5P8PAPWn0100000020000515P8155=P>P<15<8A1<T8P<18@E=1<8P<P5%69PPP0P?P517RIP1P4P4P5P8P<P5PCP0P4P5f<RT93RDP<P5P<P<PGPHP<P<PUf=R>P8P9C2PUP>P8PNC2POn0100000020000n0100000020000P<P5PUP>P8P7PQD4PSf>R=?0>RRWn0100000020000PWn0100000020000A0>TJRAn10110600021010500PAn0100000020000n2001104000120103102PPn10110600021010400RXn0100000020000=15X]0P918;IRX=1<HP0P?P517J@R@P1P4P4P5P8P<P5PCP0P4P5A3JDUP<P5P<P<PGPHP<P<PRPTP8P9C2PRPTP8PNC2POn0100000020000n0100000020000P<P5PRPTP8P7PQD4PSPAn0100000020000PAn0100000020000A0TUEREn10110600021010500PEn0100000020000n2001104000120103102PFn10110600021010400RE,55P<P5%6HPFPEn0100000020000=15EeW0A1<XOP@%D?P0P?P0P?P5P8P1P4P4P5P8P<P5PCP0P4P5A3UD>P<P5P<P<PGPHP<P<PTP=P8P9C2PTP=P8PNC2POn0100000020000n0100000020000P<P5PTP=P8P7PQD4PSf?R@?0=URUn0100000020000PUn0100000020000PWn10110600021010500PWn0100000020000n2001104000120103102PVn10110600021010400915VP8P1P4P4P1P4P4P5P8P<P5PCP0P4P5A3TD=P<P5P<P<PGPHP<P<P>P@P8P9C2P>P@P8PNC2POn0100000020000n0100000020000P<P5P>P@P8P7PQD4PSf@RQ?0@TRTn0100000020000PTn0100000020000PUn10110600021010500PUn0100000020000n2001104000120103102915AP8P5%H4fARA?0Q>RQP<P51CKBP0P4P5P8P<P5P<P<1@76PHP<P<P@PAP8P7C2P@PAP81;76RH/AM,:6C2POn0100000020000n0100000020000P<P5P@PAP8P61:HL#=D4PSfB?0A=RAn0100000020000PAn0100000020000PQn10110600021010500PQn0100000020000515X25PCP<P<P<P5P8PAPAn0100000020000915AP8155QRQPQn0110000020000b1A3>D@P>P@PDPICGEBX64X84P9P8O2n2001104000120107107X9?P8O1155Pn10110100021110400b2P<P5%6OPFPEn0100000020000=15EeW0n0110000020101P8O1b0b1n0110001020001b1A9;:9P8EBAF279R999;:A0;:9515eW4X:3X;2P8DJW3W5W7o"). Qed.
+  intros kn e cands. induction cands as [|s rest IH]; [reflexivity|]. cbn [conc_try conc_try_ref].
+  rewrite IH. destruct (closedb s); [reflexivity|].
+  destruct (evalS_def s e) eqn:Hd; cbn [negb]; [reflexivity|].
+  destruct (erange kn s) as [[lo hi]|]; [|reflexivity].
+  rewrite (evalS_def_None _ _ _ Hd). destruct (Z.leb (hi - lo) conc_limit); reflexivity.
+Qed.
 
 Definition concretize (kn : list kentry) (e : expr) : option Z :=
   if closedb e then eval_closed e else conc_try kn e (nubE (subexprs e)).
 
-(* [comment removed for export] *)
 Definition foldK (kn : list kentry) (e : expr) : expr :=
   match e with
   | ELit _ => e
   | _ => match erange kn e with
          | Some (lo, hi) => if Z.eqb lo hi then ELit lo
                             else match concretize kn e with Some v => ELit v | None => e end
-         | None => match concretize kn e with Some v => ELit v | None => e end   (* [comment removed for export] *)
+         | None => match concretize kn e with Some v => ELit v | None => e end
          end
   end.
 
 Definition lit_branch (c : branch_cond) (x y : Z) : bool :=
   branch_taken c (Z_to_bv 64 x) (Z_to_bv 64 y).
 
-(* [comment removed for export] *)
 Definition cond_on_eq (c : branch_cond) : bool :=
   match c with
   | BC_EQ => true | BC_NE => false | BC_LT => false | BC_GE => true
   | BC_LTU => false | BC_GEU => true
   end.
 
-(* [comment removed for export] *)
 Definition itv_ltu (al ah bl bh : Z) : option bool :=
   if Z.ltb ah bl then Some true else if Z.leb bh al then Some false else None.
 
-(* [comment removed for export] *)
 Definition itv_lts (al ah bl bh : Z) : option bool :=
   let h := (2 ^ 63)%Z in
   if ((Z.ltb ah h && Z.ltb bh h) || (Z.leb h al && Z.leb h bl))%bool then itv_ltu al ah bl bh
@@ -2219,8 +2068,6 @@ Definition range_branch (c : branch_cond) (al ah bl bh : Z) : option bool :=
   | BC_GE => option_map negb (itv_lts al ah bl bh)
   end.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Definition diff_branch (c : branch_cond) (a b : expr) : option bool :=
   match c with
   | BC_EQ | BC_NE =>
@@ -2231,7 +2078,6 @@ Definition diff_branch (c : branch_cond) (a b : expr) : option bool :=
   | _ => None
   end.
 
-(* [comment removed for export] *)
 Definition lin_branch (kn : list kentry) (c : branch_cond) (a b : expr) : option bool :=
   let ltu := if lin_ge0 kn [(b, (-1)%Z)] [(a, 0%Z)] then Some true
              else if lin_ge0 kn [(a, 0%Z)] [(b, 0%Z)] then Some false else None in
@@ -2247,11 +2093,11 @@ Definition lin_branch (kn : list kentry) (c : branch_cond) (a b : expr) : option
       | _, _ => None
       end
   | BC_EQ | BC_NE =>
-      (* [comment removed for export] *)
+
       if (lin_ge0 kn [(b, (-1)%Z)] [(a, 0%Z)] || lin_ge0 kn [(a, (-1)%Z)] [(b, 0%Z)])%bool
       then Some (match c with BC_EQ => false | _ => true end)
       else
-      (* [comment removed for export] *)
+
       if (if lin_ge0 kn [(a, 0%Z)] [(b, 0%Z)] then lin_ge0 kn [(b, 0%Z)] [(a, 0%Z)] else false)
       then Some (match c with BC_EQ => true | _ => false end)
       else None
@@ -2270,13 +2116,11 @@ Definition decide_branch (kn : list kentry) (c : branch_cond) (a b : expr) : opt
                     | _, _ => None
                     end) with
              | Some t => Some t
-             | None => lin_branch kn c a b      (* [comment removed for export] *)
+             | None => lin_branch kn c a b
              end
            end
   end.
 
-
-(* [comment removed for export] *)
 Definition mkSlt (kn : list kentry) (c : branch_cond) (op : aluop) (a b : expr) : expr :=
   match a, b with
   | ELit _, ELit _ => mkAlu op a b
@@ -2293,7 +2137,7 @@ Definition mkAluK0 (kn : list kentry) (op : aluop) (a b : expr) : expr :=
   | ALU_SLT => mkSlt kn BC_LT ALU_SLT a b
   | ALU_AND => match a, b with
                | ELit _, ELit _ => mkAnd kn a b
-               | ELit _, _ => mkAndK kn b a      (* [comment removed for export] *)
+               | ELit _, _ => mkAndK kn b a
                | _, _ => mkAndK kn a b
                end
   | ALU_OR => if expr_eqb a b then a else mkOr kn a b
@@ -2309,13 +2153,11 @@ Definition mkAluK0 (kn : list kentry) (op : aluop) (a b : expr) : expr :=
   | _ => mkAlu op a b
   end.
 
-(* [comment removed for export] *)
 Definition zsx32 (v : Z) : Z := ((bv_swrap 32 v) mod two64)%Z.
 
 Definition mkAluK (kn : list kentry) (op : aluop) (a b : expr) : expr :=
   foldK kn (mkAluK0 kn op a b).
 
-(* [comment removed for export] *)
 Definition pow2_log (m : Z) : option Z :=
   let m' := (m mod two64)%Z in
   let k := Z.log2 m' in
@@ -2336,11 +2178,9 @@ Definition mkMdK (kn : list kentry) (op : mulop) (a b : expr) : expr :=
   | _, _, _ => mkMd op a b
   end.
 
-(* [comment removed for export] *)
 Definition sx32_stable (lo hi : Z) : bool :=
   (Z.ltb hi (2 ^ 31) || Z.leb (two64 - 2 ^ 31) lo)%bool.
 
-(* [comment removed for export] *)
 Definition zband32 (kn : list kentry) (d : expr) : bool :=
   let l := lin_of d in
   match lin_range (erange kn) (fst l) (snd l) with
@@ -2365,7 +2205,6 @@ Definition mkAluwK0 (kn : list kentry) (op : aluop) (a b : expr) : expr :=
 Definition mkAluwK (kn : list kentry) (op : aluop) (a b : expr) : expr :=
   foldK kn (mkAluwK0 kn op a b).
 
-(* [comment removed for export] *)
 Definition extK0 (kn : list kentry) (v : expr) : expr :=
   match v with
   | EExt sx O n e =>
@@ -2383,7 +2222,6 @@ Definition extK (kn : list kentry) (v : expr) : expr := foldK kn (extK0 kn v).
 Definition msize_bytes (sz : msize) : nat :=
   match sz with SZ1 => 1 | SZ2 => 2 | SZ4 => 4 | SZ8 => 8 end.
 
-(* [comment removed for export] *)
 Definition flat_sc (kn : list kentry) (a : saddr) (n : nat) : list sidecond :=
   match base_range kn (a_base a) with
   | Some (lo, hi) =>
@@ -2392,7 +2230,6 @@ Definition flat_sc (kn : list kentry) (a : saddr) (n : nat) : list sidecond :=
   | None => [SCFlat a (elen n)]
   end.
 
-(* [comment removed for export] *)
 Fixpoint wr_covered (allkn kn : list kentry) (a : saddr) (n : nat) : bool :=
   match kn with
   | [] => false
@@ -2409,32 +2246,25 @@ Fixpoint wr_covered (allkn kn : list kentry) (a : saddr) (n : nat) : bool :=
 Definition storeok_sc (kn : list kentry) (a : saddr) (n : nat) : list sidecond :=
   if wr_covered kn kn a n then [] else [SCStoreOk a n].
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Record scripts : Type := SCR {
-  sc_dirs  : list bool;     (* [comment removed for export] *)
-  sc_reads : list expr;     (* [comment removed for export] *)
-  sc_hints : list bool      (* [comment removed for export] *)
+  sc_dirs  : list bool;
+  sc_reads : list expr;
+  sc_hints : list bool
 }.
 
 Inductive stepres :=
 | SOk (ss : sym_state) (scs : list sidecond) (scr : scripts)
 | SStop.
 
-(* [comment removed for export] *)
 Definition conc_expr (kn : list kentry) (e : expr) : expr :=
   match e with
   | ELit _ => e
   | _ => match concretize kn e with Some v => ELit v | None => e end
   end.
 
-(* [comment removed for export] *)
 Definition cond_probe (c : branch_cond) (a b : expr) : expr * bool :=
   match c with
-  | BC_EQ => (EAlu ALU_SLTU (EAlu ALU_SUB a b) (ELit 1%Z), true)    (* [comment removed for export] *)
+  | BC_EQ => (EAlu ALU_SLTU (EAlu ALU_SUB a b) (ELit 1%Z), true)
   | BC_NE => (EAlu ALU_SLTU (EAlu ALU_SUB a b) (ELit 1%Z), false)
   | BC_LT => (EAlu ALU_SLT a b, true)
   | BC_GE => (EAlu ALU_SLT a b, false)
@@ -2449,7 +2279,6 @@ Definition enum_branch (kn : list kentry) (c : branch_cond) (a b : expr) : optio
   | None => None
   end.
 
-(* [comment removed for export] *)
 Definition to_saddrK (kn : list kentry) (e : expr) (imm : Z) : saddr :=
   match split_lit e with
   | (ELit _, _) => to_saddr e imm
@@ -2459,23 +2288,16 @@ Definition to_saddrK (kn : list kentry) (e : expr) (imm : Z) : saddr :=
          end
   end.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Definition amo_sz (wd : awidth) : msize := match wd with AW => SZ4 | AD => SZ8 end.
-(* [comment removed for export] *)
+
 Definition amo_sx (wd : awidth) : bool := match wd with AW => true | AD => false end.
 
-(* [comment removed for export] *)
 Definition amo_alignedb (kn : list kentry) (e : expr) (wd : awidth) : bool :=
   match lin_lowbits_kn kn e (match wd with AW => 2 | AD => 3 end) with
   | Some r => Z.eqb r 0
   | None => false
   end.
 
-(* [comment removed for export] *)
 Definition resv_inval (r : option saddr) (a : saddr) : option (option saddr) :=
   match r with
   | None => Some None
@@ -2486,7 +2308,6 @@ Definition resv_inval (r : option saddr) (a : saddr) : option (option saddr) :=
            else None
   end.
 
-(* [comment removed for export] *)
 Definition amo_aluop (op : amoop) : option (option aluop) :=
   match op with
   | AMO_SWAP => Some None
@@ -2497,14 +2318,12 @@ Definition amo_aluop (op : amoop) : option (option aluop) :=
   | _ => None
   end.
 
-(* [comment removed for export] *)
 Definition amo_newval (kn : list kentry) (wd : awidth) (aop : option aluop) (old src : expr) : expr :=
   match aop with
   | None => src
   | Some o => match wd with AW => mkAluwK kn o old src | AD => mkAluK kn o old src end
   end.
 
-(* [comment removed for export] *)
 Definition sym_read (segs : list Segment) (ss : sym_state) (fk : list kentry) (scr : scripts)
            (a : saddr) (n : nat) (sx' : bool)
   : option (expr * list sidecond * scripts * nat) :=
@@ -2518,7 +2337,7 @@ Definition sym_read (segs : list Segment) (ss : sym_state) (fk : list kentry) (s
       | LHit v scs' hints' =>
           Some (extK fk v, flat_sc fk a n ++ scs', SCR (sc_dirs scr) (sc_reads scr) hints', s_next ss)
       | LMiss scs' hints' =>
-          (* [comment removed for export] *)
+
           let i := s_next ss in
           let rv := match sc_reads scr with [] => EVar i | e :: _ => e end in
           let reads' := match sc_reads scr with [] => [] | _ :: t => t end in
@@ -2529,7 +2348,7 @@ Definition sym_read (segs : list Segment) (ss : sym_state) (fk : list kentry) (s
 Definition sym_step (segs : list Segment) (i : instr) (ss : sym_state) (scr : scripts) : stepres :=
   let g r := sr_get (s_regs ss) r in
   let p := s_pc ss in
-  let fk := facts_of (s_know ss) in   (* [comment removed for export] *)
+  let fk := facts_of (s_know ss) in
   match i with
   | OpImm op rd rs imm => SOk (sset ss rd (mkAluK fk op (g rs) (ELit (bv_signed imm))) (p + 4)) [] scr
   | ShiftImm op rd rs sh => SOk (sset ss rd (mkAluK fk op (g rs) (ELit (bv_unsigned sh))) (p + 4)) [] scr
@@ -2570,7 +2389,7 @@ Definition sym_step (segs : list Segment) (i : instr) (ss : sym_state) (scr : sc
   | FenceI _ _ _ => SOk (sjump ss (p + 4)) [] scr
   | Load sz sx rd rs imm =>
       let n := msize_bytes sz in
-      (* [comment removed for export] *)
+
       let sx' := match sz with SZ8 => false | _ => sx end in
       let a := to_saddrK fk (g rs) (bv_signed imm) in
       match sym_read segs ss fk scr a n sx' with
@@ -2588,7 +2407,7 @@ Definition sym_step (segs : list Segment) (i : instr) (ss : sym_state) (scr : sc
           SOk (SSR (p + 4) (s_regs ss) (SE a n (g rs2) :: s_log ss) (s_know ss) (s_next ss) r')
               (flat_sc fk a n ++ storeok_sc fk a n) scr
       end
-  (* [comment removed for export] *)
+
   | Lr wd _ _ rd rs =>
       let n := msize_bytes (amo_sz wd) in
       let e := g rs in
@@ -2612,7 +2431,7 @@ Definition sym_step (segs : list Segment) (i : instr) (ss : sym_state) (scr : sc
               SOk (SSR (p + 4) (if bv_eqb rd 0 then s_regs ss else sr_upd (s_regs ss) (ridx rd) (ELit 0))
                        (SE a n (g rs2) :: s_log ss) (s_know ss) (s_next ss) None)
                   (flat_sc fk a n ++ storeok_sc fk a n) scr
-            else SStop   (* [comment removed for export] *)
+            else SStop
         | None => SStop
         end
       else SStop
@@ -2640,9 +2459,6 @@ Definition sym_step (segs : list Segment) (i : instr) (ss : sym_state) (scr : sc
   | _ => SStop
   end.
 
-
-
-(* [comment removed for export] *)
 Definition sidecond_eqb (x y : sidecond) : bool :=
   match x, y with
   | SCFlat a n, SCFlat a' n' => saddr_eqb a a' && expr_eqb n n'
@@ -2663,25 +2479,13 @@ Fixpoint sc_add (news acc : list sidecond) : list sidecond :=
   | x :: t => sc_add t (if sc_mem x acc then acc else x :: acc)
   end.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
 Definition itab : Type := ptree instr.
 Definition itab_lookup (t : itab) (pc : Z) : option instr :=
   match pc with Zpos p => pt_get t p | _ => None end.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
 Section WithSegs.
 Variable segs : list Segment.
 
-(* [comment removed for export] *)
 Definition itab_entry (pc : Z) : option instr :=
   match fetch_word segs (Z_to_bv 64 pc) with
   | None => None
@@ -2700,18 +2504,26 @@ Fixpoint mk_itab_fuel (n : nat) (pc : Z) (t : itab) : itab :=
              | _, _ => t
              end)
   end.
-(* [comment removed for export] *)
+
 Definition mk_itab (lo : Z) (n : nat) : itab := mk_itab_fuel n lo PTLeaf.
 Definition itab_sound (t : itab) : Prop :=
   forall pc i, itab_lookup t pc = Some i -> itab_entry pc = Some i.
 Lemma mk_itab_fuel_sound : forall n pc t, itab_sound t -> itab_sound (mk_itab_fuel n pc t).
 Proof.
-ltac2:(KReplay.run1 (kr_t_AxSymExec3 ()) ["FPX_4"; "WithSegs"] "p'0h01Eh11Hh22H0h31ei001eh41ni011nh51oi021oh62p'h72pci032pch81th92Hth:2i'h;1pi041ph<3Hneh=2IHh>1ii051ih?3pc'h@1si061si071xi081zp;1p;3p;2p;6p;4g01^Gj15Tg01_[j38Tg001Hj1<Tg001mj14Tg00K\j2MTg01a1j17Tg0134R0j1BTg007Fj2@Tg008Lj30Tg00OHj1>Tg00SYj6;Tg00g@j2=Tg01bEj2LTg00JIj1:Tg01bgR1j2KTg018Dj6ITg01cGj4HTg00Q0j69Tg01dWj6ATg01egj1CTg01fEj2DTg01gZj1ETg01h9j4FTg010Sj4GTg013Vj2?Tg00oCj3JTg01hZR2f2R3f1R4f0R5CGp=31?25p=1%74=035p=2AJ245p=6g01PWR6g00;6R7g01iFR8%55R9f3R:?834#5[]8]7R;X46P5g01jT?834#5eX99X88X77P:g00;T#<#<#4,M3P7P8P3P4P0P2P8%45#7R<A345:P3n10110700021010500P3n011030003001010410104P7P7P8P5P3P0P2P8P<f4R=9345P:n10110700021010500P:n011030003001010410104#5P3P5g017AR>P<%B2R<1@<5%44#7R?=0<5P0P2%4:R@#7RA=0<5P0P2P8P4f5RBf8RC735f7RDn10110700021010500#5]0P4%4=%15RE52<P7P7P<P5%>2RFf9RGf<RH73B/65PFn011030003001010410104%14RI50<%13RJ92<4[P4A0<FEP<PFP0P2p-0P5g00\:RKg00[^n10110200021000000X3<RLg00jNRMPIP5E;PKg00>D=2<J/=5b2W11L5GA0>5GRN%:N'KP1f:R190>4RN%:Nf;RNf>RO73D/63%1=RP50<%1BRQ90<A[P5A0>3NRAP>PHf=f@RR73G/65f6RS#1RT50<%1DRU90<?[X6>P<%1CR?A0<5TRV%4O=2<U[X5<A0<?QP<P2P0P2P2P5P5P1n10110200021010500X3<%1GPTP5EIA02GSA021DP2PN%4R=2<EX:2P1PCP5E;W1P5O1b2W1f?RR93HCRN/6HP2PHPCPRCHE9P:P5E9W3P5O1%:AP<16R:%4B=2<U\VX5<POP@PBO216N:P2P:PHPCPRP5EAE9W<P5O1n200110600021010010101b@X6>P5O1A0<FJP<PFPLPM%1:P5E;PK%C3=2<P/=5b2W1X6>P5O1n011080003001110410104A3D:1/D4=0<EA2<3I[eX:2X?7A3B4C#5eW0X>2P5O1%43=2<FPBW0n10110200021110500P5O1b0b5W;P5O1P3X;>P5O1n011080003001110410104O3%E=?834#5eX99X88X77X=;X46P5CFW4o"). Qed.
+  induction n as [|n IH]; intros pc t Ht; cbn; [exact Ht|].
+  apply IH. destruct pc as [|p|p]; try exact Ht.
+  destruct (itab_entry (Zpos p)) as [i|] eqn:E; [|exact Ht].
+  intros pc' i'. unfold itab_lookup. destruct pc' as [|p'|p']; try discriminate.
+  destruct (Pos.eq_dec p' p) as [->|Hne].
+  - rewrite pt_gss. intros H; injection H as <-. exact E.
+  - rewrite pt_gso by exact Hne. exact (Ht (Zpos p') i').
+Qed.
 Lemma mk_itab_sound : forall lo n, itab_sound (mk_itab lo n).
 Proof.
-ltac2:(KReplay.run1 (kr_t_AxSymExec3 ()) ["FPX_4"; "WithSegs"] "p'0h01Hh12H0h21pi001ph31eh41ih52loh61nh71oi011oh82pci022pci031zp;1p;3p;2p;6p;4g0148j1?Tg0134R0j1>Tg00OHj16Tg00oCj35Tg013Vj22Tg008Lj30Tg01a1j11Tg00SYj64Tg00g@j23Tg001mj17Tg01k3j28Tg00Q0j69Tg01egj1:Tg01fEj2=Tg01^Gj1<Tg01lHj4;Tg00;6R1g01PWf0R2f1R3g01hZR4#?R5P1%>4R6P1P6P2%64R7A5452R8P7n0110200030010100101001243R930%13f2R:,24R;506[P31242R<9067P6P7P0P4p-0P2g00\:R0g00[^n10110100021000000X36R=g00jNR>P9P2E4P0g00>D#1=06;/32b1W0g017AR?P6P7f3,24R@9062%7:#1f4,24RA506RB[X76A067;R;P6P7P=P>P@P2E4R@P013B2b1W0P81842E9W2P2O1P@P0%::#1=06A/32b1X0;X2?P2O1n0110300030010100101001=53=06<%1:=069[eX44X81%<5eC;W6W5o"). Qed.
+  intros lo n. apply mk_itab_fuel_sound. intros pc i. unfold itab_lookup.
+  destruct pc; try discriminate. rewrite pt_get_leaf. discriminate.
+Qed.
 
-(* [comment removed for export] *)
 Fixpoint sym_exec_go (fuel : nat) (first : bool) (stops : list Z) (scr : scripts)
                   (ss : sym_state) (acc : list sidecond)
                   (ck : sym_state * list sidecond * scripts)
@@ -2743,7 +2555,6 @@ Definition sym_exec (fuel : nat) (first : bool) (stops : list Z) (scr : scripts)
            (ss : sym_state) (acc : list sidecond) : sym_state * list sidecond * scripts :=
   sym_exec_go fuel first stops scr (clr ss) acc (clr ss, acc, scr).
 
-(* [comment removed for export] *)
 Definition scr_nil : scripts := SCR [] [] [].
 
 Fixpoint sym_execS_go (fuel : nat) (first : bool) (stops : list Z) (ss : sym_state) (ck : sym_state)
@@ -2771,7 +2582,6 @@ Fixpoint sym_execS_go (fuel : nat) (first : bool) (stops : list Z) (ss : sym_sta
 Definition sym_execS (fuel : nat) (first : bool) (stops : list Z) (ss : sym_state) : sym_state :=
   sym_execS_go fuel first stops (clr ss) (clr ss).
 
-(* [comment removed for export] *)
 Fixpoint sym_execT_go (t : itab) (fuel : nat) (first : bool) (stops : list Z) (ss : sym_state) (ck : sym_state)
   : sym_state :=
   match fuel with
@@ -2791,20 +2601,12 @@ Fixpoint sym_execT_go (t : itab) (fuel : nat) (first : bool) (stops : list Z) (s
 Definition sym_execT (t : itab) (fuel : nat) (first : bool) (stops : list Z) (ss : sym_state) : sym_state :=
   sym_execT_go t fuel first stops (clr ss) (clr ss).
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Definition zf_covers (allkn : list kentry) (rb : expr) (rk : Z) (n : nat) (kb : expr) (kk : Z) (len : expr) : bool :=
   (match len with
    | ELit l0 => match rel_lit rb rk (Z.of_nat n) kb kk (l0 mod 2 ^ 64)%Z with RInside _ => true | _ => false end
    | _ => false
    end) || xinside allkn rb rk (elen n) kb kk len.
 
-(* [comment removed for export] *)
 Definition kentry_overlay (allkn : list kentry) (rb : expr) (rk : Z) (n : nat) (K : kentry) : bool :=
   match K with
   | KUnk (SA kb kk) len | KZero (SA kb kk) len | KFill (SA kb kk) len _ | KBlob (SA kb kk) len _ =>
@@ -2812,7 +2614,6 @@ Definition kentry_overlay (allkn : list kentry) (rb : expr) (rk : Z) (n : nat) (
   | _ => false
   end.
 
-(* [comment removed for export] *)
 Definition segs_avoid (lo hi : Z) : bool :=
   forallb (fun s => Z.leb hi (Z.of_N (seg_base s)) || Z.leb (Z.of_N (seg_base s) + Z.of_N (seg_size s)) lo) segs.
 Definition kwr_offimage (allkn : list kentry) (kb : expr) (kk : Z) (len : expr) : bool :=
@@ -2821,7 +2622,6 @@ Definition kwr_offimage (allkn : list kentry) (kb : expr) (kk : Z) (len : expr) 
   | _, _ => false
   end.
 
-(* [comment removed for export] *)
 Definition kentry_readable (allkn : list kentry) (rb : expr) (rk : Z) (n : nat) (K : kentry) : bool :=
   match K with
   | KWord (SA kb kk) w _ =>
@@ -2830,7 +2630,6 @@ Definition kentry_readable (allkn : list kentry) (rb : expr) (rk : Z) (n : nat) 
   | _ => kentry_overlay allkn rb rk n K
   end.
 
-(* [comment removed for export] *)
 Fixpoint know_byte_cov (img : bool) (kn : list kentry) (rb : expr) (rk : Z) : bool :=
   match kn with
   | [] => false
@@ -2861,7 +2660,6 @@ Definition kn_readable (allkn kn : list kentry) (rb : expr) (rk : Z) (n : nat) :
 Definition kn_overlay (allkn kn : list kentry) (rb : expr) (rk : Z) (n : nat) : bool :=
   existsb (kentry_overlay allkn rb rk n) kn || know_bytes_cov false kn rb rk n.
 
-(* [comment removed for export] *)
 Fixpoint evars_lt (b : nat) (e : expr) : bool :=
   match e with
   | ELit _ | EBlob _ _ _ _ => true
@@ -2870,7 +2668,6 @@ Fixpoint evars_lt (b : nat) (e : expr) : bool :=
   | EExt _ _ _ x => evars_lt b x
   end.
 
-(* [comment removed for export] *)
 Fixpoint find_readbase (i : nat) (scs : list sidecond) : option (saddr * nat * bool) :=
   match scs with
   | [] => None
@@ -2878,7 +2675,6 @@ Fixpoint find_readbase (i : nat) (scs : list sidecond) : option (saddr * nat * b
   | _ :: rest => find_readbase i rest
   end.
 
-(* [comment removed for export] *)
 Definition x_dischargeable (ss ss' : sym_state) (rb : option (saddr * nat * bool)) (sc : sidecond) : bool :=
   let kn := s_know ss in
   let fk := facts_of kn in
@@ -2898,12 +2694,11 @@ Definition x_dischargeable (ss ss' : sym_state) (rb : option (saddr * nat * bool
 
 Definition x_filter (ss ss' : sym_state) (scs : list sidecond) : list sidecond :=
   match scs with
-  | [] => []          (* [comment removed for export] *)
+  | [] => []
   | _ => let rb := find_readbase (s_next ss) scs in
          List.filter (fun sc => negb (x_dischargeable ss ss' rb sc)) scs
   end.
 
-(* [comment removed for export] *)
 Fixpoint esize_budget (e : expr) (b : nat) {struct e} : option nat :=
   match b with
   | O => None
@@ -2918,7 +2713,6 @@ Fixpoint esize_budget (e : expr) (b : nat) {struct e} : option nat :=
 Definition esize_le (e : expr) (k : nat) : bool :=
   match esize_budget e k with Some _ => true | None => false end.
 
-(* [comment removed for export] *)
 Definition rd_of (i : instr) : option reg :=
   match i with
   | Lui rd _ | Auipc rd _ | Jal rd _ | Jalr rd _ _ | Load _ _ rd _ _
@@ -2927,7 +2721,6 @@ Definition rd_of (i : instr) : option reg :=
   | _ => None
   end.
 
-(* [comment removed for export] *)
 Definition cap_rd (K : nat) (i : instr) (ss : sym_state) : sym_state :=
   match K with
   | O => ss
@@ -2945,13 +2738,12 @@ Definition cap_rd (K : nat) (i : instr) (ss : sym_state) : sym_state :=
 Definition sym_stepX (K : nat) (i : instr) (ss : sym_state) (scr : scripts) : stepres :=
   match sym_step segs i ss scr with
   | SOk ss' scs scr' =>
-      if Nat.leb (s_next ss) (s_next ss')            (* [comment removed for export] *)
+      if Nat.leb (s_next ss) (s_next ss')
       then SOk (cap_rd K i ss') (x_filter ss ss' scs) scr'
       else SStop
   | SStop => SStop
   end.
 
-(* [comment removed for export] *)
 Fixpoint sym_execSX_go (K : nat) (fuel : nat) (first : bool) (stops : list Z) (ss : sym_state) (ck : sym_state)
   : sym_state :=
   match fuel with
@@ -2996,30 +2788,21 @@ Fixpoint sym_execTX_go (t : itab) (K : nat) (fuel : nat) (first : bool) (stops :
 Definition sym_execTX (t : itab) (K : nat) (fuel : nat) (first : bool) (stops : list Z) (ss : sym_state) : sym_state :=
   sym_execTX_go t K fuel first stops (clr ss) (clr ss).
 
-
-
 End WithSegs.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Definition kcut (mk : saddr -> expr -> kentry) (kn : list kentry) (wb : expr) (wk : Z) (wn : expr)
            (kb : expr) (kk : Z) (len : expr) : list kentry :=
   let ws := mkAlu ALU_ADD wb (ELit wk) in
   let ks := mkAlu ALU_ADD kb (ELit kk) in
-  (* [comment removed for export] *)
+
   let low :=
-    if (if lin_ge0 kn [(kb, kk)] [(wb, wk)] then false   (* [comment removed for export] *)
+    if (if lin_ge0 kn [(kb, kk)] [(wb, wk)] then false
         else if lin_ge0 kn [(wb, wk)] [(kb, kk)] then lin_ge0 kn [(kb, kk); (len, 0%Z)] [(wb, wk)] else false)
     then [mk (SA kb kk) (mkAlu ALU_SUB ws ks)] else [] in
   let high :=
-    if (if lin_ge0 kn [(kb, kk); (len, 0%Z)] [(wb, wk); (wn, 0%Z)]            (* [comment removed for export] *)
-        then if lin_ge0 kn [(wb, wk); (wn, 0%Z)] [(kb, kk)]                    (* [comment removed for export] *)
-             then lin_ge0 kn [(ELit 0, (two64 - 1)%Z)] [(kb, kk); (len, 0%Z)]  (* [comment removed for export] *)
+    if (if lin_ge0 kn [(kb, kk); (len, 0%Z)] [(wb, wk); (wn, 0%Z)]
+        then if lin_ge0 kn [(wb, wk); (wn, 0%Z)] [(kb, kk)]
+             then lin_ge0 kn [(ELit 0, (two64 - 1)%Z)] [(kb, kk); (len, 0%Z)]
              else false
         else false)
     then let we := mkAlu ALU_ADD ws wn in
@@ -3037,7 +2820,6 @@ Definition kfill_cut (c : Z) (kn : list kentry) (wb : expr) (wk : Z) (wn : expr)
 Definition kunk_cut (kn : list kentry) (wb : expr) (wk : Z) (wn : expr)
            (kb : expr) (kk : Z) (len : expr) : list kentry := kcut KUnk kn wb wk wn kb kk len.
 
-(* [comment removed for export] *)
 Definition ktrim (mk : saddr -> expr -> kentry) (kb : expr) (kk : Z) (l0 : Z) (k : Z) (w : nat) : list kentry :=
   let l := (l0 mod 2 ^ 64)%Z in
   let hi1 := Z.min k (kk + l) in
@@ -3046,13 +2828,12 @@ Definition ktrim (mk : saddr -> expr -> kentry) (kb : expr) (kk : Z) (l0 : Z) (k
   let r2 := if Z.ltb lo2 (kk + l) then [mk (SA kb lo2) (ELit (kk + l - lo2))] else [] in
   r1 ++ r2.
 
-(* [comment removed for export] *)
 Definition kword_cut (kb : expr) (kk : Z) (w' : nat) (v : expr) (k : Z) (w : nat) : list kentry :=
   match v with
   | ELit _ =>
-      let n1 := (k - kk)%Z in                                (* [comment removed for export] *)
+      let n1 := (k - kk)%Z in
       let r1 := if Z.ltb 0 n1 then [KWord (SA kb kk) (Z.to_nat n1) (mkExt false 0 (Z.to_nat n1) v)] else [] in
-      let d := (k + Z.of_nat w - kk)%Z in                    (* [comment removed for export] *)
+      let d := (k + Z.of_nat w - kk)%Z in
       let r2 := if Z.ltb d (Z.of_nat w')
                 then [KWord (SA kb (kk + d)) (w' - Z.to_nat d) (mkExt false (Z.to_nat d) (w' - Z.to_nat d) v)]
                 else [] in
@@ -3060,12 +2841,11 @@ Definition kword_cut (kb : expr) (kk : Z) (w' : nat) (v : expr) (k : Z) (w : nat
   | _ => []
   end.
 
-(* [comment removed for export] *)
 Definition prune_zf (mk : saddr -> expr -> kentry) (allkn : list kentry) (wb : expr) (k : Z) (w : nat)
            (K : kentry) (kb : expr) (kk : Z) (len : expr) (apart : unit -> bool) (hints : list bool)
            (diffbase : unit -> list kentry * list sidecond * list bool)
   : list kentry * list sidecond * list bool :=
-  (* [comment removed for export] *)
+
   if expr_eqb kb wb then
     match len with
     | ELit l0 => (ktrim mk kb kk l0 k w, [], hints)
@@ -3085,9 +2865,9 @@ Definition prune1 (allkn : list kentry) (wa : saddr) (w : nat) (wv : expr) (K : 
     let apart := ranges_apart_x allkn (a_base wa) k (elen w) (a_base ka) (a_off ka) kl in
     if apart then ([K], [], hints) else
     match hints with
-    | true :: hs => ([K], [SCDisj wa (elen w) ka kl], hs)   (* [comment removed for export] *)
-    | false :: hs => ([], [], hs)                          (* [comment removed for export] *)
-    | [] => ([], [], [])                                   (* [comment removed for export] *)
+    | true :: hs => ([K], [SCDisj wa (elen w) ka kl], hs)
+    | false :: hs => ([], [], hs)
+    | [] => ([], [], [])
     end in
   match K with
   | KAlign _ _ => ([K], [], hints)
@@ -3116,10 +2896,10 @@ Definition prune1 (allkn : list kentry) (wa : saddr) (w : nat) (wv : expr) (K : 
   | KWord (SA kb kk) w' v =>
       if expr_eqb kb (a_base wa) then
         (if (Z.leb (kk + Z.of_nat w') k || Z.leb (k + Z.of_nat w) kk)%bool
-         then ([K], [], hints) else (kword_cut kb kk w' v k w, [], hints))   (* [comment removed for export] *)
+         then ([K], [], hints) else (kword_cut kb kk w' v k w, [], hints))
       else if ranges_apart_x allkn (a_base wa) k (elen w) kb kk (elen w') then ([K], [], hints)
       else if (Nat.eqb w 1 && Nat.eqb w' 1 && expr_eqb wv v)%bool
-      then ([K], [], hints)   (* [comment removed for export] *)
+      then ([K], [], hints)
       else diffbase (SA kb kk) (elen w')
   | KBlob (SA kb kk) len bk =>
       if expr_eqb kb (a_base wa) then
@@ -3143,7 +2923,6 @@ Fixpoint prune (allkn : list kentry) (wa : saddr) (w : nat) (wv : expr) (kn : li
       (kept ++ r, scs1 ++ scs2, hs2)
   end.
 
-(* [comment removed for export] *)
 Definition prune1p (allkn : list kentry) (sp : sprep) (wa : saddr) (w : nat) (wv : expr) (K : kentry) (hints : list bool)
   : list kentry * list sidecond * list bool :=
   let k := a_off wa in
@@ -3151,9 +2930,9 @@ Definition prune1p (allkn : list kentry) (sp : sprep) (wa : saddr) (w : nat) (wv
     let apart := ranges_apart_p allkn sp (a_base wa) k (elen w) (a_base ka) (a_off ka) kl in
     if apart then ([K], [], hints) else
     match hints with
-    | true :: hs => ([K], [SCDisj wa (elen w) ka kl], hs)   (* [comment removed for export] *)
-    | false :: hs => ([], [], hs)                          (* [comment removed for export] *)
-    | [] => ([], [], [])                                   (* [comment removed for export] *)
+    | true :: hs => ([K], [SCDisj wa (elen w) ka kl], hs)
+    | false :: hs => ([], [], hs)
+    | [] => ([], [], [])
     end in
   match K with
   | KAlign _ _ => ([K], [], hints)
@@ -3182,10 +2961,10 @@ Definition prune1p (allkn : list kentry) (sp : sprep) (wa : saddr) (w : nat) (wv
   | KWord (SA kb kk) w' v =>
       if expr_eqb kb (a_base wa) then
         (if (Z.leb (kk + Z.of_nat w') k || Z.leb (k + Z.of_nat w) kk)%bool
-         then ([K], [], hints) else (kword_cut kb kk w' v k w, [], hints))   (* [comment removed for export] *)
+         then ([K], [], hints) else (kword_cut kb kk w' v k w, [], hints))
       else if ranges_apart_p allkn sp (a_base wa) k (elen w) kb kk (elen w') then ([K], [], hints)
       else if (Nat.eqb w 1 && Nat.eqb w' 1 && expr_eqb wv v)%bool
-      then ([K], [], hints)   (* [comment removed for export] *)
+      then ([K], [], hints)
       else diffbase (SA kb kk) (elen w')
   | KBlob (SA kb kk) len bk =>
       if expr_eqb kb (a_base wa) then
@@ -3209,7 +2988,6 @@ Fixpoint prunep (allkn : list kentry) (sp : sprep) (wa : saddr) (w : nat) (wv : 
       (kept ++ r, scs1 ++ scs2, hs2)
   end.
 
-(* [comment removed for export] *)
 Definition ranges_apart_pc (kn : list kentry) (sp : sprep) (b1 : expr) (k1 : Z) (n1 : expr)
            (br2 : option (Z * Z)) (b2 : expr) (k2 : Z) (n2 : expr) : bool :=
   match n1, n2 with
@@ -3226,7 +3004,7 @@ Definition ranges_apart_pc (kn : list kentry) (sp : sprep) (b1 : expr) (k1 : Z) 
     if (match sp_rng sp, br2, sp_h1 sp, xhi kn n2 with
         | Some (lo1, hi1), Some (lo2, hi2), Some h1, Some h2 =>
             if (Z.leb (hi1 + k1 + h1) (lo2 + k2) || Z.leb (hi2 + k2 + h2) (lo1 + k1))%bool then true
-            else (* [comment removed for export] *)
+            else
             if match end_hi kn b1 k1 n1 lo1 hi1 h1 with Some e1 => Z.leb e1 (lo2 + k2) | None => false end then true
             else match end_hi kn b2 k2 n2 lo2 hi2 h2 with Some e2 => Z.leb e2 (lo1 + k1) | None => false end
         | _, _, _, _ => false
@@ -3237,14 +3015,12 @@ Definition ranges_apart_pc (kn : list kentry) (sp : sprep) (b1 : expr) (k1 : Z) 
     else lin_ge0 kn [(b1, k1)] [(b2, k2); (n2, 0%Z)]
   end.
 
-(* [comment removed for export] *)
 Definition kbase (K : kentry) : option expr :=
   match K with
   | KZero (SA kb _) _ | KWord (SA kb _) _ _ | KBlob (SA kb _) _ _ | KFill (SA kb _) _ _ | KUnk (SA kb _) _ => Some kb
   | _ => None
   end.
 
-(* [comment removed for export] *)
 Definition prune1pc (allkn : list kentry) (sp : sprep) (wa : saddr) (w : nat) (wv : expr) (K : kentry) (hints : list bool)
   (br2 : option (Z * Z)) : list kentry * list sidecond * list bool :=
   let k := a_off wa in
@@ -3314,7 +3090,6 @@ Fixpoint prunepc (allkn : list kentry) (sp : sprep) (wa : saddr) (w : nat) (wv :
       (kept ++ r, scs1 ++ scs2, hs2)
   end.
 
-(* [comment removed for export] *)
 Fixpoint carry (log : list sentry) (kn : list kentry) (hints : list bool)
   : list kentry * list sidecond * list bool :=
   match log with
@@ -3322,13 +3097,9 @@ Fixpoint carry (log : list sentry) (kn : list kentry) (hints : list bool)
   | SE a w v :: older =>
       let '(kn1, scs1, hs1) := carry older kn hints in
       let fk := facts_of kn1 in
-      let '(kn2, scs2, hs2) := prunepc fk (mk_sprep fk (a_base a) (a_off a) (elen w)) a w v kn1 hs1 [] in   (* [comment removed for export] *)
+      let '(kn2, scs2, hs2) := prunepc fk (mk_sprep fk (a_base a) (a_off a) (elen w)) a w v kn1 hs1 [] in
       (KWord a w v :: kn2, scs1 ++ scs2, hs2)
   end.
 End FPX_4.
-
-
-
-
 
 End AX2.

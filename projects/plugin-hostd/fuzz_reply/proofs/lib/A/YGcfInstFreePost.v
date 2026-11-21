@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10 (lane F2a, a working branch): the generic cf layer's Deallocate interface, its POST
    fields (DGif0.di_post_n, di_post_c) over the cf relation ARcf.  rule 24: no function proved (kind: interface-instance
    discharge: the allocator relation re-established at Deallocate's return).
@@ -310,7 +311,7 @@ pose proof (region_in_prim ly kBatchClass (amc_layout _ _ _ _ _ M) ltac:(unfold 
 unfold kBatchBytes, kFreeArrayOffset in *. lia.
 Qed.
 
-(* hs_bounds (YFf0.v:151) *)
+(* hs_bounds (YFf0.v:152) *)
 Lemma g_hs_bounds : forall g, 4096 <= g -> g + 8 <= kHighMemEnd -> kLowShadowBeg <= shadow_addr g < kHighMemBeg.
 Proof.
 intros g H1 H2. unfold shadow_addr, SHADOW_OFF, kLowShadowBeg, kHighMemBeg, kHighMemEnd in *.
@@ -318,7 +319,7 @@ pose proof (Z.div_le_mono 4096 g 8 ltac:(lia) H1) as X. change (4096 / 8) with 5
 pose proof (Z.div_le_mono g (140737488355328 - 8) 8 ltac:(lia) ltac:(lia)) as Y. change ((140737488355328 - 8) / 8) with 17592186044415 in Y. lia.
 Qed.
 
-(* fa_poison_high (YFf0.v:139) *)
+(* fa_poison_high (YFf0.v:140) *)
 Lemma g_fa_poison_high : forall lo len g, In (lo, len) (fa_poison_ranges ly S) -> lo <= g < lo + len -> 4096 <= g /\ g < ASAN_CEIL.
 Proof.
 intros lo len g Hin Hg. pose proof (amc_layout _ _ _ _ _ M) as LO. pose proof (amc_wf _ _ _ _ _ M) as WF.

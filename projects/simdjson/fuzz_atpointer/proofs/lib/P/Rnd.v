@@ -1,16 +1,32 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch stated over the run's whole input); launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
-From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics StackLayout.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics StackLayout State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude.
 From OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.Lib Require Import MState Mem.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Local Open Scope bv_scope.
 
-Class RunRnd : Type := mkRunRnd { run_draw : EntryDraw ; run_hw : word }.
+(* The run's launch: the entry draw, the process input, the entry stack
+   pointer and the mmap base.  The stack image, the auxv and the zero window
+   under [sp] are functions of these ([Run.entry_stack_image],
+   [Run.launch_auxv]). *)
+Class RunRnd : Type := mkRunRnd { run_draw : EntryDraw ; run_inp : ProcInput ; run_sp : word ; run_mbase : word }.
+
+Notation run_hw := (in_hwcap run_inp).
+Notation run_gid := (in_gid run_inp).
+Notation run_execfn := (in_execfn run_inp).
+Notation run_top := (ed_top run_draw).
+Notation run_la := (launch_auxv run_inp run_sp run_mbase).
+(* The launch's auxv at a given entry stack pointer: [Run.launch_auxv] reads
+   [sp] (AT_SYSINFO_EHDR is the vDSO text base placed below it), and
+   [Run.entry_stack_image] lays the block with the auxv at the block's own
+   [sp].  A section that has its own stack pointer takes the auxv there. *)
+Notation run_la_at sp := (launch_auxv run_inp sp run_mbase).
 
 Definition run_rnd {RN__ : RunRnd} : bv 128 := ed_random run_draw.
 

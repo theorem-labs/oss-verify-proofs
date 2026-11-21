@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the proof takes the launch's ProcInput (argv, envp, uid and hwcap read from it), mmap base and brk, with valid_launch and the entry's launch check as hypotheses, and builds the launch values as the local instance lx0 (launch_of); the entry stack image (build_stack_bytes' new arguments, the auxv's entry, gid and exec-name values) in pat_main and pstartup_spec, pat_main's argv pointers at L_TOP with the exec name; the stack window from im_stack_depth below sp, not 8,388,608; psp_facts restated (image below 2^47, block below L_TOP, stack_window_lo bounds, image at most 2,101,782 bytes), pimg_len_bound removed; pstartup_spec starts from init_ms with the mmap base and the ProcInput; #[using] lists of psp_facts and pstartup_spec updated; 1 recorded proof replaced by a written proof (pstartup_spec); launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef)). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
@@ -15,7 +16,10 @@ Local Ltac footprint_after_store segs m a bs ::= footprint_after_store_fast segs
 Local Ltac mem_after_store ::= mem_after_store_fast.
 Local Ltac transport_after_call segs m m' MU WM ::= transport_after_call_fast segs m m' MU WM.
 Notation rsegs := UImg.usegs.
+(* The image's entry address, as the auxv publishes it (AT_ENTRY). *)
+Notation pentry := (Z_to_bv 64 (Z.of_N u_init_pc)) (only parsing).
 Section AtMain.
+  Context {lx : launchT}.
 Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (draw : EntryDraw) (c : word).
 Notation usp0 := (bv_unsigned sp0).
 Definition pcrt_written : list (Z * Z) :=
@@ -29,7 +33,7 @@ t0 t1 t2 (Z_to_bv 64 (usp0 + 8)) (Z_to_bv 64 (argc argv))
 (Z_to_bv 64 0x13088) (Z_to_bv 64 (envp_addr sp0 argv)) s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 bvmap_empty (Z_to_bv 64 0x13088) (Z_to_bv 32 0) None m' (seg_rom rsegs)
 /\ mem_inv rsegs m'
-/\ stk rsegs m' (usp0 - 8388608) (usp0 + -48)
+    /\ stk rsegs m' (usp0 - im_stack_depth) (usp0 + -48)
 /\ rw_cells rsegs m' 0x2ee68 [C8 (Z_to_bv 64 0x2ee68); C8 (Z_to_bv 64 0x2ee68); C8 (Z_to_bv 64 0x2ee68); C8 z64; C4 (Z_to_bv 64 t)]
 /\ rw_cells rsegs m' 0x2ee8c [C4 z64]
 /\ rw_cells rsegs m' 0x2ee90 [C4 (Z_to_bv 64 2); CB 76 (repeat (Z_to_bv 8 0) 76); C8 (Z_to_bv 64 0x2eee0);
@@ -65,9 +69,9 @@ C8 (Z_to_bv 64 4096); CB 48 (repeat (Z_to_bv 8 0) 48)]
 /\ rw_cells rsegs m' 0x4f5f0 [C8 z64]
 /\ stdout_file m' stdout_init
 /\ stderr_file m'
-/\ bytes_at rsegs m' usp0 (build_stack_bytes u_phdrs sp0 argv envp uid hw draw)
-/\ wr_at rsegs m' usp0 (Z.of_nat (length (build_stack_bytes u_phdrs sp0 argv envp uid hw draw)))
-/\ nth_error (argv_ptrs sp0 argv envp) 0 = Some (Z_to_bv 64 P0)
+    /\ bytes_at rsegs m' usp0 (build_stack_bytes L_LA u_phdrs pentry sp0 L_TOP argv envp L_EXECFN uid L_GID hw draw)
+    /\ wr_at rsegs m' usp0 (Z.of_nat (length (build_stack_bytes L_LA u_phdrs pentry sp0 L_TOP argv envp L_EXECFN uid L_GID hw draw)))
+    /\ nth_error (argv_ptrs L_TOP argv envp L_EXECFN) 0 = Some (Z_to_bv 64 P0)
 /\ (forall a : word, (0x1d000 <= bv_unsigned a < 0x50000)%Z -> outside pcrt_written (bv_unsigned a) -> m' a = None)
 /\ (0 < t < 4194304)%Z.
 End AtMain.
@@ -88,63 +92,83 @@ assert (H : rw_cells rsegs m A cs);
 | cbn; repeat split; exact I | vm_compute; reflexivity | reflexivity ]
 | ].
 Section Proof.
-Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (draw : EntryDraw).
+  Variables (inp : ProcInput) (mbase brk sp0 : word) (draw : EntryDraw).
+  Notation argv := (in_argv inp).
+  Notation envp := (in_envp inp).
+  Notation uid := (in_uid inp).
+  Notation hw := (in_hwcap inp).
 Hypothesis VSP : valid_sp sp0.
 Hypothesis VARGV : valid_argv argv.
 Hypothesis VENVP : valid_envp envp.
+  Hypothesis VLAUNCH : valid_launch inp.
+  Hypothesis VOK : entry_launch_ok_va Sv48 (mkEntry sp0 brk mbase draw) inp.
+  Local Instance lx0 : launchT := launch_of inp sp0 mbase draw.
 Notation ph := u_phdrs.
 Notation usp0 := (bv_unsigned sp0).
-Notation img := (build_stack_bytes u_phdrs sp0 argv envp uid hw draw).
-Notation simg := (entry_stack_image u_phdrs sp0 argv envp uid hw draw).
-#[using="VARGV VENVP"] Lemma pimg_len_bound : (Z.of_nat (length img) <= 2500000)%Z.
+  Notation img := (build_stack_bytes L_LA u_phdrs pentry sp0 L_TOP argv envp L_EXECFN uid L_GID hw draw).
+  Notation LOW := (stack_window_lo (in_kernel inp) mbase draw).
+  #[using="VSP VARGV VENVP VLAUNCH VOK"] Lemma psp_facts : (usp0 + Z.of_nat (length img) <= 2^47)%Z /\
+                    (usp0 + hsz (la_rseq L_LA) argv envp + lstr argv envp L_EXECFN + 8 <= bv_unsigned L_TOP)%Z /\
+                    (usp0 mod 16 = 0)%Z /\ (0x7fff80000000 <= usp0 <= 0x800000000000)%Z /\
+                    (LOW <= usp0 - im_stack_depth)%Z /\ (usp0 - 8388608 <= LOW)%Z /\
+                    (Z.of_nat (length img) <= 2101782)%Z.
 Proof.
-rewrite build_stack_bytes_length. destruct VARGV as (A1 & A2 & _). destruct VENVP as (E1 & E2 & _).
-pose proof (raw_len_nonneg argv envp). unfold raw_len, struct_size, argc, envc in *. Local Ltac2 Set LiaHints.tbl := fun () => "0010>59699364112.1400000?S2A12A22E12E21H".
-lia.
-Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
-#[using="VSP VARGV VENVP"] Lemma psp_facts : (stack_max_size <= usp0)%Z /\ (usp0 + Z.of_nat (length simg) <= 2^64)%Z /\
-(usp0 mod 16 = 0)%Z /\ (0x7fff80000000 <= usp0 <= 0x800000000000)%Z.
-Proof.
-destruct VSP as (L & H & M). unfold sp_window_lo, sp_window_hi, stack_max_size in *.
-pose proof pimg_len_bound. pose proof (length_simg_bound u_phdrs sp0 argv envp uid hw draw). Local Ltac2 Set LiaHints.tbl := fun () => "0010>17364011611.1400000=S1L1H1M2H02H1".
+    pose proof (launch_facts inp sp0 brk mbase draw VLAUNCH VOK) as (H16 & HP & HD & HT & HL1 & HL2).
+    pose proof (launch_image_length inp sp0 brk mbase ph pentry draw VLAUNCH VOK) as HLEN.
+    change (entry_stack_image inp mbase ph pentry sp0 draw) with img in HLEN.
+    destruct VSP as (L & H & M). unfold sp_window_lo, sp_window_hi in *.
+    split; [lia|]. split; [exact HP|]. split; [exact H16|]. split; [lia|]. split; [exact HL1|].
+    split; [unfold stack_max_size in HL2; lia|]. Local Ltac2 Set LiaHints.tbl := fun () => "0010>17364011611.1400000=S1L1H1M2H02H1".
 lia.
 Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
 Definition pcanary : word := canary_of (Z_to_bv 64 (draw_canary draw)).
-#[using="VSP VARGV VENVP"] Theorem pstartup_spec :
+  #[using="VSP VARGV VENVP VLAUNCH VOK"] Theorem pstartup_spec :
 impl rsegs (at_node rsegs) (enode NSetTid dec_set_tid) (epost (fun _ => pat_main sp0 argv envp uid hw draw pcanary))
-(init_ms rsegs u_init_pc u_phdrs sp0 argv envp uid hw draw).
+         (init_ms rsegs u_init_pc u_phdrs sp0 mbase draw inp).
 Proof.
-destruct psp_facts as (SPLO & IMGHI & SP16 & SPW).
-pose proof pimg_len_bound as IL. pose proof (length_simg_bound u_phdrs sp0 argv envp uid hw draw) as ILS.
-unfold init_ms, mkR_init. change (Z.of_N u_init_pc) with 0x12f3c%Z.
-set (m := wrap_mem ph sp0 argv envp uid hw draw).
+    destruct psp_facts as (IMGHI & PADOK & SP16 & SPW & LOWHI & LOWLO & IL).
+    pose proof LOWHI as LOWHI'. unfold im_stack_depth in LOWHI'.
+    unfold init_ms, mkR_init.
+    set (m := wrap_mem inp mbase ph pentry sp0 draw).
+    change (Z.of_N u_init_pc) with 0x12f3c%Z.
 assert (NONE : forall a : word, (bv_unsigned a < 0x50000)%Z -> m a = None).
-{ intros a Ha. apply init_none. unfold stack_max_size. Local Ltac2 Set LiaHints.tbl := fun () => "0330?10070414107.48 10248252334.56 10388827377.31 10637993098.79 10656864309.56 11113827900.80 11483769539.86 12385124117.85 12395247488.46 12664622354.88 13206176911.64 14394566956.80 15045343677.64 16075377781.64 17799843423.67 17811593679.46 18216447625.87 18496384439.44 18875603732.43 19372245699.88 19372245699.89 19621599171.73 19621599171.83 20668380775.78 20891375131.46 20902092430.85 2164407698.89  2166682268.45  21718101121.97 22707086531.76 22707086531.85 23031486095.43 23546943427.88 24374343941.63 24769663939.84 24885038966.90 25500707465.88 25630914020.43 265078479.90   27136713373.58 27630458514.91 2813090755.88  28697891979.90 29419089816.92 29588601993.52 29784364028.66 29784543482.79 30032995318.82 30510454375.84 30707906395.18 31012906773.63 31398085315.86 32101940251.90 32101940253.81 32600510915.87 32706278665.91 33848481433.82 34147624451.92 34263294510.80 35046270212.81 35632207290.79 35632518844.66 35993291285.47 36149829018.55 3673275331.89  3673275331.90  36952585843.76 37206732592.53 3745707623.88  38124880667.49 38256400657.50 39806217206.85 40253174032.90 40424375814.81 40796593913.81 40914699165.81 41201790582.85 42382893968.86 42554324245.83 44510515979.51 44682177565.84 45411169678.47 4559945606.84  46360778002.52 46487942930.87 46746329739.57 47013515907.93 47291585127.89 47472668807.96 48620102794.50 51134774028.54 51244920423.87 52354692483.97 52370152275.63 52513925490.10052526506853.45 52526506853.46 52526506853.47 52526506853.48 52526506853.49 52526506853.50 52526506853.51 52526506853.52 52526506853.53 52526506853.54 52526506853.55 52526506853.56 52526506853.57 52526506853.58 52526506853.59 52526506853.60 52526506853.82 52526506853.83 52526506853.84 52526506853.85 52526506853.86 52526506853.87 52526506853.88 52526506853.89 52526506853.90 52526506853.91 52526506853.92 52526506853.93 52526506853.94 52526506853.95 52566903287.79 53193183275.64 53699193447.86 53920826015.63 54275884647.88 54571412491.86 54590717134.77 54856257723.75 54856326432.64 55179078700.44 56044795708.79 56203865191.76 57227484418.82 57239504852.64 57465737899.53 57627976193.55 5777391462.77  5843300923.62  59315449551.76 59315449551.85 59548510311.73 5981763352.93  60310494835.90 61064364176.51 61357533030.76 61733728519.45 61735648777.89 61767467224.75 61821510595.78 61821510595.86 61892971191.80 62092207555.86 62092207555.87 62371883756.79 62577245174.90 64361010534.66 64793354502.58 65121514518.92 66051197543.88 66094744694.86 66165028624.57 66788317838.83 67167658112.48 67204360828.67 68056849040.64 68294959255.54 68498130535.86 71800583.79    7191075638.67  7428666775.67  8106088953.63  8190124262.80  8672338560.49  8793840459.100 8806420828.82  8806420828.83  8806420828.84  8806420828.85  8806420828.86  8806420828.87  8806420828.88  8806420828.89  8806420828.90  8806420828.91  8806420828.92  8806420828.93  8806420828.94  8806420828.95  9077079040.18  9397368423.86  00000500:00C00D00I00N00S00T00Y00Z00c00d00i01201:01H01I01N01S01X01]01b01g01l02102202302802>02C02H02M02R02[02`02a02b02i02n03303403903:03;03@03E03F03G03L03X03]03b03n04:04?04@04A04B04C04H04M04R04W04\04a04f04k05005505:05?05@05A05B05G05H05I05J05K05P05Q05V05W05\05]05b05c05h06006506:06?06E06O06S06W06[06_06c06g06k06o07307707;07?07C07G07K07O07S07W07[07_07c07g07k07o08308708;08?08C08G08K08T08]08b08n09309409909>09C09H09M09R09S09X09]09b09g0:;0:@0:E0:J0:K0:P0:U0:Z0:_0:`0:e0:j0:o0;00;50;:0;?0;@0;E0;J0;K0;P0;Q0;V0;W0;\0;a0;f0;k0<00<50<@0<I0<R0<W0<\0<m0=90=E0=Q0=]0=i0>50>A0>M0>Y0>e0?10?=0?I0?U0?^0?cS3ILSS3ILSS3ILS3VA1FS3ILSS3ILSS3ILSSS3ILSSS3SPW3ILSSS3ILSS3ILS3VA1S3ILS2HES3SPW3ILS1H2H0SS3ILSS3ILSS3ILSS3ILSS3ILSS3ILSS3ILSS3ILSSSS3ILSS4PC15S3ILSS3ILSS3ILSS3ILSS3SPW3ILSS3ILSSSS3ILS1HS3ILSS3ILSSS3ILSSSS3ILSS3ILSSSS3ILSS3SPW3ILS2HaS3ILSS3ILSS3ILS3VA12HCS3ILS3VA12HCS3ILSSSSFS3ILSS3ILSS3ILSS3ILSS3ILSS3ILSS3ILSS3ILSS3ILSS3ILSS3ILSS3ILSSSSS3ILSSSSSS3ILSSS3ILSSS3ILSSS3ILSSS3ILSS3ILS2HES3ILSS3ILSS3ILSS4POSTS3ILS4P0GES2HaS2HaS2HaS2HaS2HaS2HaS2HaS2HaS2HaS2HaS2HaS2HaS2HaS2HaS2HaS2HaS2HaS2HaS2HaS2HaS2HaS2HaS2HaS2HaS2HaS2HaS2HaS2HaS2HaS2HaS2HaS3SPW3ILSS3ILS3VA1S3ILSS3ILS3VA12HCS3ILSSS3ILSS3ILSS3ILSS3ILSS3ILSS3ILSSS3ILSS3ILSS3ILSS3ILSS3ILS3VA14P0LO2HC2HES3ILSS3ILSS3ILSSS3ILSS3ILSS3ILSS3ILSSS3ILSS3ILSS3ILSSS3ILSS3ILSS3ILSSS3ILSS3ILSSS3ILSSS3ILSSS3ILSS3ILSS3ILSS3ILSS3ILSS3ILSS3SPW3ILS1HS3ILS3VA1S3ILS3RLOS3ILSS3ILSS3SPW3ILS2Ha4HoutS3SPW3ILS2HaS3SPW3ILS2HaS3SPW3ILS2HaS3SPW3ILS2HaS3SPW3ILS2HaS3SPW3ILS2HaS3SPW3ILS2HaS3SPW3ILS2HaS3SPW3ILS2HaS3SPW3ILS2HaS3SPW3ILS2HaS3SPW3ILS2HaS3SPW3ILS2HaS3SPW3ILS2HaS3SPW3ILSS3ILS".
+    { intros a Ha. apply init_none; [lia|].
 lia. }
-pose proof (init_stk rsegs ph sp0 argv envp uid hw draw SPLO) as ST. fold m in ST.
-change stack_max_size with 8388608%Z in ST.
-pose proof (init_mem_inv' rsegs ph sp0 argv envp uid hw draw SPLO IMGHI ltac:(change (segs_top rsegs) with 0x50000%Z; unfold stack_max_size; lia)) as MI.
+    assert (ST0 : stk rsegs m LOW usp0) by (apply init_stk; lia).
+    assert (ST : stk rsegs m (usp0 - im_stack_depth) usp0).
+    { destruct ST0 as (A & B & C). unfold im_stack_depth in *. split; [lia|]. split; [lia|]. intros a Ha. apply C. lia. }
+    clear ST0.
+    (* the frame carves below read the stack's bottom, a constant lia does not unfold *)
+    assert (ISD : im_stack_depth = 6144513%Z) by reflexivity.
+    pose proof (init_mem_inv' rsegs inp mbase ph pentry sp0 draw ltac:(lia) ltac:(lia)
+                  ltac:(change (segs_top rsegs) with 0x50000%Z; lia)) as MI.
 fold m in MI.
-pose proof (init_stack_bytes rsegs ph sp0 argv envp uid hw draw SPLO IMGHI) as IMG. fold m in IMG.
-pose proof (init_wr rsegs ph sp0 argv envp uid hw draw SPLO IMGHI) as WR. fold m in WR. rewrite <- (build_stack_bytes_length ph sp0 argv envp uid hw draw) in WR.
-destruct (init_pieces rsegs ph sp0 argv envp uid hw draw SPLO IMGHI) as (ARGC & ARGV & ENVP & AUXW & _ & _ & RNDB). fold m in ARGC, ARGV, ENVP, AUXW, RNDB.
+    assert (IMG : bytes_at rsegs m usp0 img)
+      by (apply init_stack_bytes; change (entry_stack_image inp mbase ph pentry sp0 draw) with img; lia).
+    assert (WR : wr_at rsegs m usp0 (Z.of_nat (length img)))
+      by (apply init_stack_wr; change (entry_stack_image inp mbase ph pentry sp0 draw) with img; lia).
+    destruct (stack_pieces rsegs m L_LA ph pentry sp0 L_TOP argv envp L_EXECFN uid L_GID hw draw IMG PADOK)
+      as (ARGC & ARGV & ENVP & AUXW & RNDB & _ & _).
 destruct VARGV as (VA1 & VA2 & VA3 & VA4 & VA5).
 assert (Harg0 : exists arg0, nth_error argv 0 = Some arg0).
 { destruct argv as [|a ?]; [cbn in VA1; lia | exists a; reflexivity]. }
 destruct Harg0 as [arg0 Harg0].
-destruct (init_argv_string rsegs ph sp0 argv envp uid hw draw SPLO IMGHI 0 arg0 Harg0) as (P0 & HP0 & P0LO & P0HI & STR).
-fold m in STR.
+    destruct (init_argv_string rsegs m L_LA ph pentry sp0 L_TOP argv envp L_EXECFN uid L_GID hw draw IMG PADOK 0 arg0 Harg0)
+      as (P0 & HP0 & P0LO & P0HI & STR).
+    pose proof (layout_bounds L_LA sp0 L_TOP argv envp L_EXECFN PADOK) as (LB1 & LB2 & LB3 & LB4).
+    pose proof (hsz_eq (la_rseq L_LA) argv envp) as HSZ.
+    assert (AC : (27 <= auxv_count (la_rseq L_LA))%nat) by (destruct (la_rseq L_LA); cbv; lia).
 pose proof (proj1 (Forall_forall _ _) VA4 arg0 (nth_error_In _ _ Harg0)) as NONUL0. cbn beta in NONUL0.
 assert (NONUL : Forall (fun b : byte => bv_unsigned b <> 0%Z) arg0).
 { apply Forall_forall. intros b Hb E0. apply NONUL0. replace (Z_to_bv 8 0) with b; [exact Hb|]. apply bv_eq. rewrite E0. reflexivity. }
-assert (EPS : Forall (fun w : word => bv_unsigned w <> 0%Z) (envp_ptrs sp0 argv envp)).
+    assert (EPS : Forall (fun w : word => bv_unsigned w <> 0%Z) (envp_ptrs L_TOP argv envp L_EXECFN)).
 { apply Forall_forall. intros w Hw. destruct (In_nth_error _ _ Hw) as [i Hi].
-pose proof (envp_ptr_bounds ph sp0 argv envp uid hw draw IMGHI i w Hi).
-pose proof (raw_len_nonneg argv envp). unfold env_base, str_base, struct_size in *. lia. }
-assert (RND : bytes_at rsegs m (rnd_addr sp0 argv envp) (le8 (Z_to_bv 64 (draw_canary draw)))).
+      pose proof (envp_ptr_bounds L_LA sp0 L_TOP argv envp L_EXECFN PADOK i w Hi).
+      unfold argc, envc in HSZ. lia. }
+    assert (RND : bytes_at rsegs m (rnd_addr sp0 (la_rseq L_LA) argv envp) (le8 (Z_to_bv 64 (draw_canary draw)))).
 { rewrite rnd_bytes_split in RNDB. apply bytes_at_app in RNDB. exact (proj1 RNDB). }
-assert (RLO : (usp0 <= rnd_addr sp0 argv envp)%Z).
-{ pose proof (raw_len_nonneg argv envp). unfold rnd_addr, raw_len. lia. }
+    assert (RLO : (usp0 <= rnd_addr sp0 (la_rseq L_LA) argv envp)%Z).
+    { unfold rnd_addr. unfold argc, envc in HSZ. lia. }
 pimg_chunk NONE m 0x4f1b0%Z [C8 z64; C8 z64] G2.
 pimg_chunk NONE m 0x4f228%Z [C8 z64] HW.
 pimg_chunk NONE m 0x2ee60%Z [C8 z64] ENVC.
@@ -165,8 +189,8 @@ unfold libc_cells in LC. unfold td_cells in TDC.
 assert (HC : argc argv = Z.of_nat (length argv)) by reflexivity.
 assert (HE : envc envp = Z.of_nat (length envp)) by reflexivity.
 assert (P0GE : (usp0 + 184 <= P0)%Z).
-{ pose proof (raw_len_nonneg argv envp). unfold str_base, struct_size in P0LO. lia. }
-pose proof (munch_refl [(usp0 - 8388608, usp0); (0x1ede0, 0x1ede1); (0x2ee60, 0x2ee68); (0x2ee68, 0x2efb8); (0x4ef40, 0x4ef70);
+    { unfold argc, envc in HSZ. lia. }
+    pose proof (munch_refl [(usp0 - im_stack_depth, usp0); (0x1ede0, 0x1ede1); (0x2ee60, 0x2ee68); (0x2ee68, 0x2efb8); (0x4ef40, 0x4ef70);
 (0x4f1a0, 0x4f1a8); (0x4f1b0, 0x4f230)]%Z m) as MU.
 pose proof (wmono_refl rsegs m) as WM.
 clearbody m.
@@ -191,7 +215,9 @@ do 3 lstep.
 replace (Z_to_bv 64 (usp0 + 8 + Z.shiftl (argc argv) 3 + 8)) with (Z_to_bv 64 (envp_addr sp0 argv))
 by (unfold envp_addr; f_equal; rewrite Z.shiftl_mul_pow2 by lia; lia).
 assert (ENV : bytes_at rsegs m1 (envp_addr sp0 argv)
-(u64s (envp_ptrs sp0 argv envp) ++ le8 z64 ++ u64s (pauxv20 hw uid (Z_to_bv 64 (rnd_addr sp0 argv envp))))).
+                    (u64s (envp_ptrs L_TOP argv envp L_EXECFN) ++ le8 z64
+                     ++ u64s (pauxv L_LA pentry uid L_GID hw (Z_to_bv 64 (rnd_addr sp0 (la_rseq L_LA) argv envp))
+                                (Z_to_bv 64 (execfn_ptr L_TOP L_EXECFN))))).
 { rewrite u64s_app in ENVP. cbn [u64s] in ENVP. rewrite app_nil_r in ENVP.
 apply bytes_at_app in ENVP. destruct ENVP as [E1 E2]. rewrite u64s_length, envp_ptrs_length in E2.
 unfold envp_addr. apply bytes_at_app. split; [exact E1|]. apply bytes_at_app. split.
@@ -202,21 +228,22 @@ with (usp0 + 8 * (argc argv + envc envp + 3))%Z by lia.
 exact AUXW. }
 clear ENVP AUXW ARGC RNDB.
 lstep. name_sp sp0 (-32)%Z.
-icallk (rinit_libc_spec _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (usp0 - 8388608)%Z
-(envp_addr sp0 argv) (envp_ptrs sp0 argv envp) (rnd_addr sp0 argv envp) P0 arg0 _ _ _ _ uid hw (Z_to_bv 64 (draw_canary draw))).
+    icallk (rinit_libc_spec _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (usp0 - im_stack_depth)%Z
+              (envp_addr sp0 argv) (envp_ptrs L_TOP argv envp L_EXECFN) (rnd_addr sp0 (la_rseq L_LA) argv envp) P0 arg0 _ _ _ _ uid hw
+              (Z_to_bv 64 (draw_canary draw)) _ L_LA pentry L_GID (Z_to_bv 64 (execfn_ptr L_TOP L_EXECFN))).
 all: lazymatch goal with
 | |- forall _, _ => ipost rsegs; unname_sp
 | |- Forall _ _ => first [exact EPS | exact NONUL]
-| |- _ => unname_sp; first [ hyp_by_addr | reflexivity | unfold envp_addr; lia ]
+         | |- _ => unname_sp; first [ hyp_by_addr | reflexivity | unfold envp_addr, im_stack_depth; lia ]
 end.
 rename PC into ST.
 unfold td_cells, rtd_cells, libc_cells, envp_addr in *.
 repeat match goal with
 | H : bytes_at _ _ _ (u64s _ ++ _) |- _ => clear H
 | H : bytes_at _ _ P0 _ |- _ => clear H
-| H : bytes_at _ _ (rnd_addr _ _ _) _ |- _ => clear H
+           | H : bytes_at _ _ (rnd_addr _ _ _ _) _ |- _ => clear H
 end.
-clear EPS NONUL NONUL0 VA2 VA3 VA4 P0HI RLO.
+    clear EPS NONUL NONUL0 VA2 VA3 VA4 P0HI RLO LB1 LB2 LB3 LB4 HSZ AC.
 steps_to 0x14a20%Z. release_frame FR ST (bv_unsigned sp0). astep.
 carve_frame 48%nat ST. steps_to 0x14978%Z.
 carve_frame 32%nat ST. steps_to 0x12f84%Z.
@@ -227,11 +254,11 @@ replace (Z_to_bv 64 (usp0 + 8 + Z.shiftl (argc argv) 3 + 8)) with (Z_to_bv 64 (u
 by (f_equal; rewrite Z.shiftl_mul_pow2 by lia; lia).
 unfold id in IMG, WR.
 lazymatch type of MU with munch ?W m ?mf =>
-apply (bytes_at_transport rsegs W m mf usp0 img) in IMG; [| exact MU | cbn [disjoint_from]; lia];
+      apply (bytes_at_transport rsegs W m mf usp0 img) in IMG; [| exact MU | cbn [disjoint_from]; unfold im_stack_depth; lia];
 apply (wr_at_transport rsegs m mf) in WR; [| exact WM] end.
 lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mf _) =>
 assert (NONE' : forall a : word, (bv_unsigned a < 0x50000)%Z ->
-outside [(usp0 - 8388608, usp0); (0x1ede0, 0x1ede1); (0x2ee60, 0x2ee68); (0x2ee68, 0x2efb8); (0x4ef40, 0x4ef70);
+                outside [(usp0 - im_stack_depth, usp0); (0x1ede0, 0x1ede1); (0x2ee60, 0x2ee68); (0x2ee68, 0x2efb8); (0x4ef40, 0x4ef70);
 (0x4f1a0, 0x4f1a8); (0x4f1b0, 0x4f230)]%Z (bv_unsigned a) -> mf a = None)
 by (intros a Ha Ho; rewrite (MU a Ho); apply NONE; exact Ha);
 pimg_chunk' NONE' mf 0x1db60%Z [C8 (Z_to_bv 64 0x14e94); C8 z64] GCX;

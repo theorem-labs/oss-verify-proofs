@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the runtime site contract astrcmp_realizes (lib/A/W_sites.v) proved for
    fuzz_reply.asan-ubsan's strcmp interceptor, entered at the trampoline __wrap_strcmp 0x421f0. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/RT_strcmp.v at commit debcdf3fa6a, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (18 numerals; per-numeral report). *)
-(* Ported from: a working branch 3210d71ee38 proofs/omx-clap-core/fuzz_state/lib/A/FSstrcmp.v (the stop
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/RT_strcmp.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (18 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Ported from: a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSstrcmp.v (the stop
    index strcmp_k and strcmp_facts from a Theorem Labs lane's lib/A/Prog/strcmp_wrap{,_c}.v, bz_strcmp, fs_strcmp_realizesU).
    Changes: fuzz_reply.asan-ubsan's addresses (trampoline 0x421f0, ___interceptor_strcmp 0x42ac4, the
    weak hook 0x42ac0 a `ret` inside the walk, intercept_strcmp at common_flags + 0xfa = 0x138262); the premises are
@@ -79,7 +80,7 @@ Proof.
   split; [vm_compute; reflexivity|]. split; vm_compute; reflexivity.
 Qed.
 
-(* ---- the stop index (a Theorem Labs lane 840c4afa7e2 lib/A/Prog/strcmp_wrap_c.v strcmp_k, strcmp_wrap.v:20-84) ---- *)
+(* ---- the stop index (a Theorem Labs lane lib/A/Prog/strcmp_wrap_c.v strcmp_k, strcmp_wrap.v:20-84) ---- *)
 Fixpoint strcmp_k (x y : list byte) : nat :=
   match x, y with
   | a :: x', b :: y' => if bv_unsigned a =? bv_unsigned b then S (strcmp_k x' y') else O

@@ -3,13 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: the walk of reac_box_catalogue on fuzz_segconf.asan-ubsan (image B, pin sha256
    c3796c0b38f3, twin 80e82127e8ca; entry 0x8a8a0, 84 bytes, 21 instructions, a 16-byte frame, no side-stack
    frame): reac_box_catalogue_contract of lib/B/Prog/reac_box_catalogue_c.v (image B's copy of the image-A owner's FINAL
-   text at 6f783602b5e3) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
+   text) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
    entry, SRr of apost_base at the return, over `Context {PI : PAImg seg_listing}` of image B's listing,
    lib/B/Prog/SegPa.v).
-   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane, commit
-   434ade288123, both arms): the same entry seeds, token runs and return steps over image B's listing modules and
+   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane,
+    both arms): the same entry seeds, token runs and return steps over image B's listing modules and
    B's kit copies. The UBSan alignment check is read from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_catalogue.v
-   at origin/ossv/recipes 3abc3740de97 (the same image-B code but 4 pc-relative words; caller-journal form, not
+   (the same image-B code but 4 pc-relative words; caller-journal form, not
    copied), whose token run decides it the same way.
    Image B's code differs from image A's by two instructions: `andi a1,a0,7` (0x8a8ac) and `bnez a1,0x8a8ec`
    (0x8a8b0) to `unimp` (0x8a8ec), the UBSan alignment check of the 8-byte store through c.
@@ -37,11 +37,12 @@
    definitions (SegInstA's names at image B): SegInstB.STK_reac_box_catalogue and SegInstB.catA, tied to this walk
    by the lemmas STK_reac_box_catalogue_B (the value 16) and catA_B (listing object 77 of B's seg_objs). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/reac_box_catalogue.v, with its module paths and module names changed; 295 of its 348 lines of code are new or changed and 400 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image A (fuzz_segconf.asan): segment A11b of reac_segconf_parse_file's walk, the
    half LOWOUT 0x88774 -> TAIL 0x88068, and the transport that half and the KEXIT half share.
    Part of segment A11b's proof, by the G3 walk owner, 2026-10-30.
 
-   THE CODE (the unit's internal record, commit dfb49d6ad789, path records/segp/dis/
+   THE CODE (the unit's internal record, path records/segp/dis/
    reac_segconf_parse_file.fuzz_segconf.asan.s), four instructions:
      0x88774  sb a0,0x5c(s11)   a0 = -8, s11 = SH: the shadow cell of low146's first granule
      0x88778  sb a0,0x5d(s11)
@@ -61,7 +62,7 @@
    shadow cells, and gives back the SAME scope sc; it cannot serve a step that WRITES shadow cells, which is
    both halves of A11b. `x_base_sh` is its generalisation for a step that changes neither the world, the
    layout nor the allocator state: the frame's BYTES are kept, and the new `pf_fsh` at the new scope is a
-   premise. Its proof is pf_a6_k.v's a6_base_move (segment A6's proof, in the base at pf_a6_k.v:291-353) with the
+   premise. Its proof is pf_a6_k.v's a6_base_move (segment A6's proof, in the base at pf_a6_k.v:292-354) with the
    fourth keep clause split, and it reuses that file's a6_heap_addr / a6_heap_bounds / a6_lit_move /
    a6_cat_move / a6_sl_move / a6_PF_SL_offs rather than restating them.
 

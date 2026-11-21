@@ -45,7 +45,7 @@ imgfacts.py and run_light.sh differ from those copies only in comment and docstr
 
 ## What was run
 
-ROOT is the check's input directory: tree/cmd (ours, series head plugin-hostd/fuzz_command tree (git tree 86ee7833f146; internal record)), tree/cgif (the donor, c8557374ad2e),
+ROOT is the check's input directory: tree/cmd (ours, series head plugin-hostd/fuzz_command tree (git tree 86ee7833f146; internal record)), tree/cgif (the donor),
 img/ (the images above) and triage/ (the gate's generated-file rows).
 
 ```

@@ -26,6 +26,7 @@
      the G-coverage and image facts (HGs, HG_DR, HGlock, HG_GK, HERR_HI, DR_ROM_OUT, HZS, HAP), and
      the model obligations RI_* / LS_* (pure, over lmod and the plain records). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_LLVMFuzzerTestOneInput_drain.v, with its module paths and module names changed; 1631 of its 1751 lines of code are new or changed and 5267 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The ARx-generic entry composition of fuzz_reply.asan's LLVMFuzzerTestOneInput, AT THE cf INSTANCE (a Theorem Labs lane's
    route (b), step 8; the link ATopKeeper's driver bridge consumes): fr_contract_top_x is cut_x's
    fr_lib_contract_cf_x at
@@ -40,24 +41,24 @@
             ATopKeeper's bridge, after this post);
      G_fr := G_fr_c TfibB (_G.v), HG by c_gx_ok from k1's zz_HEV / zz_HOWN at TfibB_syms.
    The segments are Section hypotheses in cut_x's text at that instance (SEG_JT is walked inside cut_x); each is
-   replaced by its ARx proof as the arms convert (a Theorem Labs lane's step 7).  PLUGGED: SEG_LATCH (LatchX 06d592d632a, with
-   W1Verify's pb_check_bounded_x), ARM_close / eintr / sendmax / default (SmallX 28fb6f8ad6a), ARM_add (AddX
-   3937a0897a6, op_add by W2's pb_op_add_g_x), ARM_write (WriteX d4edf5e9938, list_push by W2's pb_list_push_g_x), ARM_event (SmallX def8de66efe), SEG_HEAD (HeadX 1ae64ddcacd), SEG_PRO (SmallX bc067575400, from
-   a Theorem Labs lane's lf_seg_pro 5c8023c8afd), ARM_drain (AddX 89264be9121, from a Theorem Labs lane's lf_arm_drain 129f255c729),
-   SEG_EXIT (LatchX, W_LLVMFuzzerTestOneInput_exit_x.v from a Theorem Labs lane's lf_seg_exit b86949b953d, with the kit's
-   YE01_x.v), ARM_remove (WriteX, W_LLVMFuzzerTestOneInput_remove_x.v from a Theorem Labs lane's lf_arm_remove 30d91cacb63
-   adapted at ddbe0ec6590, its .str.2 shadow facts by W_shadow_pin_x.v's ashp_str2_1_fr_cf), ARM_gone (SmallX,
-   W_LLVMFuzzerTestOneInput_gone_x.v 95a5de32ab2 from a Theorem Labs lane's lf_arm_gone 312c6aa4c95 adapted at 95cae0d4740).
+   replaced by its ARx proof as the arms convert (a Theorem Labs lane's step 7).  PLUGGED: SEG_LATCH (LatchX, with
+   W1Verify's pb_check_bounded_x), ARM_close / eintr / sendmax / default (SmallX), ARM_add (AddX,
+   op_add by W2's pb_op_add_g_x), ARM_write (WriteX, list_push by W2's pb_list_push_g_x), ARM_event (SmallX), SEG_HEAD (HeadX), SEG_PRO (SmallX, from
+   a Theorem Labs lane's lf_seg_pro), ARM_drain (AddX, from a Theorem Labs lane's lf_arm_drain),
+   SEG_EXIT (LatchX, W_LLVMFuzzerTestOneInput_exit_x.v from a Theorem Labs lane's lf_seg_exit, with the kit's
+   YE01_x.v), ARM_remove (WriteX, W_LLVMFuzzerTestOneInput_remove_x.v from a Theorem Labs lane's lf_arm_remove
+   adapted, its .str.2 shadow facts by W_shadow_pin_x.v's ashp_str2_1_fr_cf), ARM_gone (SmallX,
+   W_LLVMFuzzerTestOneInput_gone_x.v from a Theorem Labs lane's lf_arm_gone adapted).
    CSD_x / CNLR_x (TOPX-W3): built in the proof from W3's pb_check_shape_done_x / pb_check_no_loss_read_x (merged from
-   a working branch b591c7b0a70).  CSE_x / CSHE_x (TOPX-W3): built in the proof from W3's pb_check_shape_event_x /
+   a working branch).  CSE_x / CSHE_x (TOPX-W3): built in the proof from W3's pb_check_shape_event_x /
    pb_check_shape_ends_x, their callees by W1's pb_next_line_x / pb_list_find_x / alist_at_drop, bcmp / memchr /
-   memmove by a Theorem Labs lane's TopX_RT3.v (2987442b75b) and their placement premises by W_w3_place_fr.v.  CNL_x (TOPX-W3):
+   memmove by a Theorem Labs lane's TopX_RT3.v and their placement premises by W_w3_place_fr.v.  CNL_x (TOPX-W3):
    built in the proof from W3's pb_check_no_loss_x, gesture_model by W8Entry-2's pb_gesture_model_g_cf (room form,
-   W_gesture_model_g.v:185) with the caller-context list_drop pb_list_drop_ro_cx_x (room form, a Theorem Labs lane's
-   783a1c55991, W_list_drop_top.v:549).  Ported to the room texts from a Theorem Labs lane's TOPX-W3 (764bfe704f9): RPi after
+   W_gesture_model_g.v:185) with the caller-context list_drop pb_list_drop_ro_cx_x (room form, a Theorem Labs lane's,
+   W_list_drop_top.v:550).  Ported to the room texts from a Theorem Labs lane's TOPX-W3: RPi after
    MT in each room-form callee and in CSHE_x / CNL_x.
-   RR_x / RIG_x: built in the proof from pb_relay_remove_x / pb_relay_instance_gone_x (lib/A/W_relay_remove.v:149 /
-   lib/A/W_relay_instance_gone.v:140), their instance facts by lib/A/TopxRelayFacts.v, snprintf's literals' location by
+   RR_x / RIG_x: built in the proof from pb_relay_remove_x / pb_relay_instance_gone_x (lib/A/W_relay_remove.v:150 /
+   lib/A/W_relay_instance_gone.v:141), their instance facts by lib/A/TopxRelayFacts.v, snprintf's literals' location by
    SnpNarrowSites.v HLITGOT_PB_fr; relay_remove's to == from __asan_memcpy contract AMEMCPYS_x is a Theorem Labs lane's
    TopX_MEMCPYS.topx_AMEMCPYS_W (QMm W1 lift of a Theorem Labs lane's closed topx_AMEMCPYS), in the proof.
    THE ROOM ROUND'S TOP STEP (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) (d); TOPX-PLUGS.md (sha256 e0a351b05fe4; internal record)): NP is the cf instance's room
@@ -158,7 +159,7 @@ W_LLVMFuzzerTestOneInput_remove W_LLVMFuzzerTestOneInput_remove_x W_shadow_pin_x
    without Import, as SEG_EXIT's *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require
 W_sites W_LLVMFuzzerTestOneInput_gone_base W_LLVMFuzzerTestOneInput_gone W_LLVMFuzzerTestOneInput_gone_x.
-(* C1 (a Theorem Labs lane's 922a710cda0; relay_event re-proved by AddX's C3 88557c15170): relay_add's, relay_event's and
+(* C1 (a Theorem Labs lane; relay_event re-proved by AddX's C3): relay_add's, relay_event's and
    relay_finish's _x proofs, which build RA_x / RE_x / RF_x below; Require without Import *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require W_relay_add W_relay_event W_relay_finish_h.
 (* W3's check_shape_done and check_no_loss_read _x walks, which build CSD_x / CNLR_x below; Require without Import *)
@@ -243,7 +244,7 @@ Qed.
    (ARcf /\ Hp = []) is ARX's first two conjuncts: TopxImage.v, TopxDrainLit.v and TopxRelayFacts.v, W_shadow_pin_x.v's
    ashp_str2_1_fr_cf and W_w3_place_fr.v's check_shape_ends_HEND5S_fr state their facts there, each with the relation
    as a premise only, so ARX_rt_of carries them to ARX.  The lock / unlock / strlen rows at ARX_rtW: the W1 base
-   (a Theorem Labs lane, a164e396ab3d) adds the shared W1 names to TopX_RT.v but no lift of these three, so they are lifted here,
+   (a Theorem Labs lane) adds the shared W1 names to TopX_RT.v but no lift of these three, so they are lifted here,
    token for token as image B's TopX_RT_lock.v topx_ALOCK_W / topx_AUNLOCK_W and TopX_RT_B2.v topx_ASTRLEN_B_W
    (a working branch) lift theirs ---- *)
 Lemma ARX_rt_of : forall ly S Hp (W : world segs) mem md, ARX ly S Hp W mem md -> TopX_RT.ARX_rt ly S Hp W mem md.
@@ -309,9 +310,9 @@ Variable fr_surv : alayout -> astate -> world segs -> (word -> option byte) -> a
   (word -> option byte) -> Prop.
 Variable LIBROOM : astate -> Prop.
 (* the room round (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) (d) 5): the cut's room invariant NP is the cf instance's room_live_cf, and the
-   allocator rules' room record is a Theorem Labs lane's RP_cf (CfRBridgeRules.v:852; its rp_RM is fun S _ => room_live_cf S, its
+   allocator rules' room record is a Theorem Labs lane's RP_cf (CfRBridgeRules.v:853; its rp_RM is fun S _ => room_live_cf S, its
    counts ReplyCnt's Psec / P24 / Lsec / L24 / Pcls / LPRIM).  So the arms' RP_NP holds by iff_refl, their NPF is
-   room_live_set_fs (YGcfRoomLive.v:1236), and RMM / RPF are RP_cf's fields rp_RMM / rp_RPF *)
+   room_live_set_fs (YGcfRoomLive.v:1237), and RMM / RPF are RP_cf's fields rp_RMM / rp_RPF *)
 Local Notation NP := (YGcfRoomLive.room_live_cf (cp := CfParams_reply)).
 Local Notation RPi := CfRBridgeRules.RP_cf.
 Variable fr_FP : bvmap 5 word -> alayout -> astate -> world segs -> (word -> option byte) -> list (Z * Z).
@@ -325,7 +326,7 @@ Local Notation ID := (INV_D_x TfibB NP G fr_FP [] ARX LSx RINV).
 Local Notation IA := (INV_A_x TfibB NP G fr_FP [] ARX LSx RINV).
 Local Notation IK := (INV_K_x TfibB NP G fr_FP [] ARX LSx RINV).
 Local Notation IX := (INV_X_x TfibB NP G fr_FP [] ARX LSx RINV).
-(* qualified: W_contract_x.v:321 also defines an lf_post_x (list_find's post), imported after cut_x *)
+(* qualified: W_contract_x.v:322 also defines an lf_post_x (list_find's post), imported after cut_x *)
 Local Notation POST := (W_LLVMFuzzerTestOneInput_cut_x.lf_post_x TfibB MT XN_LIB fr_live_post fr_surv NP G fr_FP [] ARX).
 
 (* the pthread contracts of the default arm at ARX are topx_ALOCK_W / topx_AUNLOCK_W above (QMm W1 lifts of a Theorem Labs lane's
@@ -362,7 +363,7 @@ Hypothesis ARE_x : arealloc_cf_rule_c_x segs TfibB [] ARX MT CfParamsReply.fr_MM
   (@pa_sigma _ fr_prog_listing PB_fr WS_realloc).
 (* ---- relay_add's and relay_finish's premise at ARX that no lemma gives (RA_x / RF_x are built in the proof): the
    meter law that freeing a fake frame (set_fs, YG01) costs nothing (KF-COUNT #4, the text of W_relay_add.v /
-   W_relay_finish_h.v / the F6 walks since b1b31dd6b09 / 329fe7bd84a; the earlier `same blocks -> mo_le s s' 0` is
+   W_relay_finish_h.v / the F6 walks; the earlier `same blocks -> mo_le s s' 0` is
    false at a meter of secondary requests; MT is the driver's; discharged in the instance file, as MLAW).
    __asan_stack_malloc_0's and _1's contracts over ARX are a Theorem Labs lane's AsmTopX.asm0_pres_ARX / asm1_pres_ARX,
    __asan_memset's and __asan_memcpy's intrinsic contracts a Theorem Labs lane's TopX_INTRIN.topx_AMEMSET_x_W / topx_AMEMCPY_x_W,
@@ -411,8 +412,8 @@ Hypothesis LS_write_room : forall cx t m si h ly S,
   (lp_grow (hs_pending h) = true -> lp_vbytes (hs_pending h) < WR_MMAX) /\
   blocks_bytes S + (if lp_grow (hs_pending h) then lp_vbytes (hs_pending h) else 0) + (wr_n cx m + 1) <= LIVE_MAX /\
   mo_ok MT S (lp_cost MT (hs_pending h) (wr_n cx m)).
-(* W8Add's proposed text (commit f57b3e2d0ca, ReplyLS.v atop_LS_write_push_prop, proved at the
-   instance), adopted as the arm states it (a Theorem Labs lane 23184ff5c2a): lp_post's facts about the pushed list l' *)
+(* W8Add's proposed text (ReplyLS.v atop_LS_write_push_prop, proved at the
+   instance), adopted as the arm states it (a Theorem Labs lane): lp_post's facts about the pushed list l' *)
 Hypothesis LS_write_push : forall cx t m si h (l' : hlist) d ev ly S ly' S',
   LSx cx t m ly S -> wr_pick cx m si h -> 0 < wr_n cx m ->
   hl_recs l' = hl_recs (hs_pending h) ++ [(d, wr_x cx m)] ->
@@ -432,7 +433,7 @@ Hypothesis LS_cnt_write : forall cx t m si h ly S (W : world segs) mem,
   LSx cx t m ly S -> RINV cx t m -> wr_pick cx m si h -> 0 < wr_n cx m -> amodel_at TfibB ly S W mem m -> 0 <= t < OPS_MAX ->
   cnt_ok_pk RPi (lp_peak (hs_pending h) (wr_n cx m)) (ablocks TfibB ly S).
 
-(* ---- ARM_event's callee contracts at ARX (W_LLVMFuzzerTestOneInput_event_x.v, SmallX def8de66efe): the cf
+(* ---- ARM_event's callee contracts at ARX (W_LLVMFuzzerTestOneInput_event_x.v, SmallX): the cf
    instance's free rule at K0's CTX_AFREE, relay_event's _x spec (W5 kit twin; RE_x is built in the proof), and
    strnlen's realizes over ARX (event_x's et_strnlen_spec_x), which is a Theorem Labs lane's TopX_RT2.topx_ASTRNLEN_x_W (RTx.v's
    astrnlen_whole_realizesM_x, convertible by unfolding: TopX_RT2.v's header), in the proof.  Its CSE is built in the
@@ -464,7 +465,7 @@ Hypothesis LS_event_free : forall cx t m ly S (S1 S2 : astate) e,
   mo_le MT S S1 (mo_malloc MT (re_len e)) ->
   mo_le MT S1 S2 (sl_cost MT (lm_c m) (lm_mx m) (Z.of_nat (length (lm_O m))) (lm_cap m) (re_len e)) ->
   mo_ok MT S2 (mo_free MT).
-(* s5-r1d's text (fr_LS3c_event_step_p, commit 6d19e580568, lib/A/ReplyLS3cArms.v:91), LS -> LSx: the three states
+(* s5-r1d's text (fr_LS3c_event_step_p, lib/A/ReplyLS3cArms.v:92), LS -> LSx: the three states
    are tied to the calls' posts - S1 by the malloc rule's ablocks equation, S1 / S2 by relay_event's (send_line's)
    aout Permutations, S3 by the free's split with the event's block removed *)
 Hypothesis LS_event_step : forall cx t m ly S (S1 S2 S3 : astate) (ly3 : alayout) e v out' (ly1 ly2 : alayout) q,
@@ -481,7 +482,7 @@ Hypothesis LS_event_step : forall cx t m ly S (S1 S2 S3 : astate) (ly3 : alayout
   0 <= t < OPS_MAX ->
   LSx cx (t + 1) (ev_step cx m e v out') ly3 S3.
 (* the live counts at the arm's entry leave room for its peak (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) (c), CORRECTION 2; the row
-   fr_LS3cp_cnt_event, commit ba8e99b5bd2, lib/A/ReplyLScnt.v:265, with its peak pk_event e P = [P (re_len e)] + 2 and
+   fr_LS3cp_cnt_event, lib/A/ReplyLScnt.v:265, with its peak pk_event e P = [P (re_len e)] + 2 and
    its guards, msz_ok inline): malloc (re_len e) at the entry's counts, relay_event's count premise (re_pk = 2) at the
    entry's blocks plus the event's, free at relay_event's post (g_out replaced: at most one block more).  Stated over
    the room record's count fields; at the cf instance they are ReplyCnt's Psec / P24 / Lsec / L24 / Pcls / LPRIM *)
@@ -500,7 +501,7 @@ Hypothesis LS_cnt_event : forall cx t m ly S e,
      (ReplyCnt.acnt (rp_Pcls RPi c) (ablocks TfibB ly S) + ((if rp_Pcls RPi c (re_len e) then 1 else 0) + 2)
         <= rp_LPRIM RPi c)%nat).
 
-(* ---- SEG_HEAD's model rules (_head_x.v, HeadX 1ae64ddcacd), verbatim ---- *)
+(* ---- SEG_HEAD's model rules (_head_x.v, HeadX), verbatim ---- *)
 Hypothesis RI_head_nout : forall cx t m, RINV cx t m -> RINV cx t (lm_clear_O m).
 Hypothesis LS_head_nout : forall cx t m ly S, LSx cx t m ly S -> LSx cx t (lm_clear_O m) ly S.
 Hypothesis RI_head_skip : forall cx t m, 0 <= t < OPS_MAX -> 0 <= lm_k m < c_n cx -> lm_O m = [] ->
@@ -511,7 +512,7 @@ Hypothesis LS_head_skip : forall cx t m ly S, 0 <= t < OPS_MAX -> 0 <= lm_k m < 
   pick (lm_hs m) (hd_kb cx m) = None -> LSx cx t m ly S -> LSx cx (t + 1) (lm_set_k m (hd_k' cx m)) ly S.
 
 (* ---- SEG_PRO's instance fact at ARX that no lemma gives yet (W_LLVMFuzzerTestOneInput_pro_x.v's text at the
-   instance): the flag law over ARX (W_frame_x.v:71; YG0scf.v's AR_flag_law_ok_cf gives in_app, not ~ in_img /
+   instance): the flag law over ARX (W_frame_x.v:72; YG0scf.v's AR_flag_law_ok_cf gives in_app, not ~ in_img /
    zone2; no theorem concludes frame_flag_lawP_x at the cf instance).  The fake-stack fields of the symbol table are
    a6's TopxImage.topx_TLF and __asan_stack_malloc_1's contract a Theorem Labs lane's AsmTopX.asm1_pres_ARX, in the proof ---- *)
 Hypothesis FFL : frame_flag_lawP_x segs TfibB ARX.
@@ -531,12 +532,12 @@ Hypothesis RI_pro : forall cx Hp q T' pj c O cap out,
   (exists c0 mx0, aout_at TfibB fr_RG (c_ly cx) (c_S cx) (c_W cx) (c_mem cx) c0 O mx0 (Z.of_nat (length O)) cap out) ->
   ct_cl c = 3 -> ct_br c = 0 -> ct_dd c = 0 -> ct_ei c = 0 ->
   RINV cx 0 (pro_m q T' pj c O cap out).
-(* LS_pro at the PROPOSED text (a Theorem Labs lane 20:4xZ; W8Add's fr_LS_pro, commit f57b3e2d0ca,
+(* LS_pro at the PROPOSED text (a Theorem Labs lane 20:4xZ; W8Add's fr_LS_pro,
    lib/A/ReplyLS.v:571): the blocks after op_add are given with the entry's split at its table T0 (HFP_pro's first
    conjunct) and relay_add's two cases (T0 = 0: a new table T'; T0 <> 0: T' = T0), so LS's own rest can be built.
    The published premise (a bare disjunction of the two Permutations) gives no such split.  The room round's form (a):
-   the entry's xcnt_ok and HFH0 inside the existential, s5-r1d's TX_LS_pro_xok (66e5beebeaa,
-   lib/A/ReplyLS3cTopxPro.v:148) at B := TfibB *)
+   the entry's xcnt_ok and HFH0 inside the existential, s5-r1d's TX_LS_pro_xok (
+   lib/A/ReplyLS3cTopxPro.v:149) at B := TfibB *)
 Hypothesis LS_pro : forall cx Hp q T' pj c O cap out (S2 : astate) pos ly S,
   lf_base_x TfibB MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G ARX cx Hp ->
   (exists c0 mx0, aout_at TfibB fr_RG (c_ly cx) (c_S cx) (c_W cx) (c_mem cx) c0 O mx0 (Z.of_nat (length O)) cap out) ->
@@ -564,7 +565,7 @@ Hypothesis LS_cnt_pro : forall cx T0 cap out (S2 : astate),
    context ACej.CTX_strndup ---- *)
 Hypothesis ASTRNDUP_x : astrndup_cf_rule_c_x segs TfibB [] ARX MT CfParamsReply.fr_MMAX RPi ACej.CTX_strndup
   (@pa_sigma _ fr_prog_listing PB_fr WS_strndup).
-(* ---- ARM_drain's model rules (_drain_x.v, HeadX's 13a792ebbad), verbatim at the instance (B := TfibB, RP := RPi,
+(* ---- ARM_drain's model rules (_drain_x.v, HeadX), verbatim at the instance (B := TfibB, RP := RPi,
    MMAX := fr_MMAX, dr_cnl_pk := s5-r1d's ReplyTrPeakCnl.cnl_pk of the held list and the drained lines).  Its RI_gone
    is RI_event_live's text, word for word, so it is discharged by RI_event_live.  The rows at s5-r1d's TX texts:
    LS_drain_pre (TX_LS_drain_pre, peak form), LS_cnl_pre (TX_LS_cnl_pre), LS_drain_step (TX_LS_drain_step_t) ---- *)
@@ -630,7 +631,7 @@ Hypothesis RI_pair : forall cx t m si h j,
 (* ---- the allocator-state facts the two calls take, read off LSx; the instance discharges them ---- *)
 (* the peak form (a Theorem Labs lane's ROOM-ROUND row #19; dr_spec's byte premise is the drain trace's byte PEAK, C3): conjunct 5
    is s5-r1d's fr_LS_drain_pre_c5p (lib/A/ReplyTrPeak.v:927), and the three premises after re_eof are the ones its
-   rows take (fr_LS3_drain_pre_c4 ReplyLS3Arms.v:791, fr_LS_drain_pre_c5p): dc_regs' Ht, aentry_ok's |re_U| bound and
+   rows take (fr_LS3_drain_pre_c4 ReplyLS3Arms.v:792, fr_LS_drain_pre_c5p): dc_regs' Ht, aentry_ok's |re_U| bound and
    the drained blocks' sizes (dc_stB's HXP).  The sum form (tr_alloc) was FALSE at reachable states. *)
 Hypothesis LS_drain_pre : forall cx t m ly S si h j,
   LSx cx t m ly S -> RINV cx t m -> dr_at_op cx m -> dr_pick cx m si h ->
@@ -649,7 +650,7 @@ Hypothesis LS_drain_pre : forall cx t m ly S si h j,
     <= LIVE_MAX /\
   mo_ok MT S (dr_cost MT (lm_c m) (lm_mx m) (Z.of_nat (length (lm_O m))) (lm_cap m) (nth j (lm_es m) dr_e0) h).
 (* after the drain: what check_no_loss takes of the state it is called in.  A Theorem Labs lane's TX_LS_cnl_pre
-   (commit d0d75bf92db, lib/A/ReplyLS3cTopxPost.v:146; proved as ReplyLS3Arms.v:841 fr_LS3_cnl_pre_p), with
+   (lib/A/ReplyLS3cTopxPost.v:146; proved as ReplyLS3Arms.v:842 fr_LS3_cnl_pre_p), with
    CfParamsReply.fr_MMAX -> MMAX: the binders e' cap' out' and nine premises after the old ten, each held at
    dc_calls (dc_regs' Ht, dr_at_op's lm_O m = [], and dc_stB's dcB_out: the cut's entry and source at the call,
    dr_post's frame and its entry / source clauses) *)
@@ -685,10 +686,10 @@ Hypothesis LS_drain_skip : forall cx t m ly S,
   LSx cx t m ly S -> LSx cx (t + 1) (dr_skip m (dr_k' cx m)) ly S.
 (* the drain charges the meter dr_cost of the entry and source it was called with (S to S1), check_no_loss
    cnl_cost of the lists it was called with (S1 to S'); lock, unlock, check_no_loss_read and check_shape_done
-   keep the allocator state.  A Theorem Labs lane's TX_LS_drain_step (commit d0d75bf92db, lib/A/ReplyLS3cTopxPost.v:118;
-   proved as ReplyLS3cArms.v:119 fr_LS3c_drain_step_p): the binders ly1 h1 E' H' and twenty premises after the old
+   keep the allocator state.  A Theorem Labs lane's TX_LS_drain_step (lib/A/ReplyLS3cTopxPost.v:118;
+   proved as ReplyLS3cArms.v:120 fr_LS3c_drain_step_p): the binders ly1 h1 E' H' and twenty premises after the old
    five, each held at dc_calls (the drain's and check_no_loss's frames, dcB_out and dc_stE's exports); and, last,
-   dc_regs' `0 <= t < OPS_MAX`, as s5-r1d's TX_LS_drain_step_t (1318828167d lib/A/ReplyLSI.v:134, its LS instance's
+   dc_regs' `0 <= t < OPS_MAX`, as s5-r1d's TX_LS_drain_step_t (lib/A/ReplyLSI.v:135, its LS instance's
    lsi_LS_drain_step :509) *)
 Hypothesis LS_drain_step : forall cx t m ly S (S1 : astate) (ly' : alayout) (S' : astate)
     si h j h'' e' c' O' cap' out' (E H : hlist) (ly1 : alayout) (h1 : hsrc) (E' H' : hlist),
@@ -718,9 +719,9 @@ Hypothesis LS_drain_step : forall cx t m ly S (S1 : astate) (ly' : alayout) (S' 
   0 <= t < OPS_MAX ->
   LSx cx (t + 1) (dr_step m (dr_k' cx m) si h'' j e' c' O' cap' out') ly' S'.
 (* the live counts at the cut leave room for the arm's peak (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) (c), CORRECTION 2):
-   a Theorem Labs lane's row fr_LS3cp_cnt_drain (commit ba8e99b5bd2, lib/A/ReplyLScnt.v:371) with its guards, over the
+   a Theorem Labs lane's row fr_LS3cp_cnt_drain (lib/A/ReplyLScnt.v:371) with its guards, over the
    room record's count fields (at the cf instance they are ReplyCnt's Psec / P24 / Lsec / L24 / Pcls / LPRIM; the
-   top plugs it with ReplyLScntRP.v's lsc_rp_of_acnt).  Its peak is the row's pk_drain m h j (ReplyLScnt.v:151) with
+   top plugs it with ReplyLScntRP.v's lsc_rp_of_acnt).  Its peak is the row's pk_drain m h j (ReplyLScnt.v:152) with
    check_no_loss's part the parameter dr_cnl_pk (below): drain's trace peak + check_no_loss's peak over the drained
    lines + 2, which covers dr_spec's count premise (dr_pk) at the cut and cnl_spec's (cnl_pk) at the state the drain
    leaves (DR_CNT_grow, DR_CNT_cnl) *)
@@ -757,7 +758,7 @@ Hypothesis AFREE0_x : afree_null_cf_rule_c_x segs TfibB [] ARX MT RPi CTX_AFREE.
 (* ---- SEG_EXIT's model rules (_exit_x.v), verbatim at the instance, MMAX := fr_MMAX; the AR file's model functions
    qualified ---- *)
 (* LS_rf_room at s5-r1d's TX_LS_rf_room (ReplyLSI.v; plug lsi_LS_rf_room :611): on the room line the kit's ge_room
-   is the peak form and lib/A/W_LLVMFuzzerTestOneInput_exit.v's lx_rf_room threads `bb + gse_cap r - cap` (AddX's 9889b5a89d8), so lx_rf_room is
+   is the peak form and lib/A/W_LLVMFuzzerTestOneInput_exit.v's lx_rf_room threads `bb + gse_cap r - cap` (AddX), so lx_rf_room is
    s5's lx_rf_room_p; the row takes TX's `0 <= t <= OPS_MAX` *)
 Hypothesis LS_rf_room : forall cx t m ly S,
   LSx cx t m ly S -> 0 <= t <= OPS_MAX ->
@@ -795,7 +796,7 @@ Hypothesis LS_exit_end : forall cx t m ly3 S3 rest ly' S' (W' : world segs) mem'
   fr_surv (c_ly cx) (c_S cx) (c_W cx) (c_mem cx) ly' (stack_free_state 1 fpos S') W' mem' /\
   mo_le MT (c_S cx) (stack_free_state 1 fpos S') (XN_LIB (c_n cx)).
 (* the room round's two exit rules for the post's XCNT and CAPOUT conjuncts and the count row at X (_exit_x.v,
-   RiRestate's 5a9b16eac9e, at the instance; LS_cnt_exit is s5-r1d's fr_LS3cp_cnt_exit_c, ReplyLScntX.v:152, over
+   RiRestate, at the instance; LS_cnt_exit is s5-r1d's fr_LS3cp_cnt_exit_c, ReplyLScntX.v:152, over
    the closed range of lregs_X's t) *)
 Hypothesis LS_exit_cnt : forall cx t m ly3 S3 rest (ly' : alayout) (S' : astate) cap out,
   LSx cx t m ly3 S3 ->
@@ -810,7 +811,7 @@ Hypothesis LS_cnt_exit : forall cx t m ly S (W : world segs) mem,
   LSx cx t m ly S -> RINV cx t m -> amodel_at TfibB ly S W mem m -> 0 <= t <= OPS_MAX ->
   cnt_ok_pk RPi rf_pk (ablocks TfibB ly S).
 Hypothesis FP_SINK : forall cx Hp, BASEx cx Hp -> ~ YI16.sink_open_fp (lf_FP fr_FP cx).
-(* ---- ARM_remove's model rules (_remove_x.v, RiRestate's 6666490987b), verbatim at the instance (B := TfibB,
+(* ---- ARM_remove's model rules (_remove_x.v, RiRestate), verbatim at the instance (B := TfibB,
    RP := RPi, MMAX := fr_MMAX); the AR file's model functions and remove_x's rm_pk qualified.  Its RI_rm_rr_fds is
    ARM_drain's RI_fds, word for word, so it is discharged by RI_fds; its HT is TfibB_syms.  The rows at s5-r1d's TX
    texts: LS_rm_rr_pre (TX_LS_rm_rr_pre), LS_rm_cnl_pre (TX_LS_rm_cnl_pre), LS_rm_step (TX_LS_rm_step_t) ---- *)
@@ -825,7 +826,7 @@ Hypothesis RI_rm_rr_pair : forall cx t m si h j0,
    plain proof's pair_ok, Prog/SlotInv.v:253-263) *)
 Hypothesis RI_rm_src : forall cx t m si h j0,
   RINV cx t m -> W_LLVMFuzzerTestOneInput_remove.rm_at cx m si h j0 -> hl_recs (hs_expected h) = [].
-(* relay_remove's sizes and budget: a Theorem Labs lane's TX_LS_rm_rr_pre (lib/A/ReplyLS3Peak.v:152, commit 1318828167d)
+(* relay_remove's sizes and budget: a Theorem Labs lane's TX_LS_rm_rr_pre (lib/A/ReplyLS3Peak.v:152)
    in this Section's names (MMAX for CfParamsReply.fr_MMAX; its ent_capout_ok0 (c_W cx) (c_mem cx), ReplyLS3eCap.v:134,
    stated by its body: that file Requires the AR arms); conjuncts 3 and 6 in rr_spec_x's peak form *)
 Hypothesis LS_rm_rr_pre : forall cx t m ly S si h j0,
@@ -850,7 +851,7 @@ Hypothesis RI_rm_cnl_pre : forall cx t m si h j0 e1 h1 ev LB c2 O2 cap2,
   AREC * capb (hs_held h1) (hs_expected h1) < 2 ^ 32 /\ Z.of_nat (length O2) < 2 ^ 32 /\
   (lm_gn m = 0 -> exists rest, O2 = bstream (hs_expected h1) ++ rest).
 (* check_no_loss's allocator facts after relay_remove's charge: a Theorem Labs lane's TX_LS_rm_cnl_pre (lib/A/
-   ReplyLS3cTopxPost.v:178, commit d0d75bf92db) in this Section's names: the start model's block sizes (rm_mfacts) and
+   ReplyLS3cTopxPost.v:178) in this Section's names: the start model's block sizes (rm_mfacts) and
    the composed frame to the call's state (rm_fr).  LS_rm_cnl_pre, LS_rm_cshe_pre and LS_rm_sr_pre take, after rm_rr_ok,
    the arm's t bound (lregs_rmc) and the removed entry's partial-line bound (remove_x's rm3_pre); LS_rm_step takes the
    partial-line bound after LSx *)
@@ -914,8 +915,8 @@ Hypothesis LS_rm_step : forall cx t m ly0 S0 (ly : alayout) (S : astate)
    (exists r rs, hl_recs (hs_pending h) = r :: rs /\ 0 <= hs_off h < Z.of_nat (length (snd r)))) ->
   0 <= t < OPS_MAX ->
   LSx cx (t + 1) (W_LLVMFuzzerTestOneInput_remove.rm_mk cx m si None j0 (W_LLVMFuzzerTestOneInput_remove.rm_cev c2 ev5) O2 cap2 out2) ly S.
-(* the room round's count row (a Theorem Labs lane's ROOM-TEXTS (c); a Theorem Labs lane's lib/A/ReplyLScnt.v fr_LS3cp_cnt_rm at
-   commit ba8e99b5bd2): at the arm's start, the live counts plus the arm's peak rm_pk stay under RP's bounds.  The
+(* the room round's count row (a Theorem Labs lane's ROOM-TEXTS (c); a Theorem Labs lane's lib/A/ReplyLScnt.v fr_LS3cp_cnt_rm):
+   at the arm's start, the live counts plus the arm's peak rm_pk stay under RP's bounds.  The
    guards are the walk's facts there (the model's sizes come from amodel_at) *)
 Hypothesis LS_cnt_remove : forall cx t m ly S (W : world segs) mem si h j0,
   LSx cx t m ly S -> RINV cx t m -> W_LLVMFuzzerTestOneInput_remove.rm_at cx m si h j0 -> amodel_at TfibB ly S W mem m -> 0 <= t < OPS_MAX ->
@@ -953,8 +954,8 @@ Hypothesis SNP_x : asnprintf_realizes_x TfibB ARX (SIGMA WS_snprintf) W_sites.FR
    is discharged by RI_fds ---- *)
 Hypothesis RI_gone_read : W_LLVMFuzzerTestOneInput_gone_base.GN_RI_read RINV.
 Hypothesis RI_gone_pairs : W_LLVMFuzzerTestOneInput_gone_base.GN_RI_pairs RINV.
-(* LS_gone_rig at s5-r1d's adopted peak text TX_GN_LS_rig (1318828167d, ReplyLS3Peak.v; plug lsi_GN_LS_rig,
-   ReplyLSI.v:672), in W8's names (gone_base's gn_pairs / gn_op / gn_id; ReplyLS3eCap.v's ent_capout_ok0 inline) *)
+(* LS_gone_rig at s5-r1d's adopted peak text TX_GN_LS_rig (ReplyLS3Peak.v; plug lsi_GN_LS_rig,
+   ReplyLSI.v:673), in W8's names (gone_base's gn_pairs / gn_op / gn_id; ReplyLS3eCap.v's ent_capout_ok0 inline) *)
 Hypothesis LS_gone_rig : forall cx t m ly S hs,
   LSx cx t m ly S -> RINV cx t m -> W_LLVMFuzzerTestOneInput_gone_base.gn_pairs m hs ->
   W_LLVMFuzzerTestOneInput_gone_base.gn_op cx t m ->
@@ -972,8 +973,8 @@ Hypothesis LS_gone_rig : forall cx t m ly S hs,
 Hypothesis RI_gone_step : W_LLVMFuzzerTestOneInput_gone_base.GN_RI_step TfibB MT LSx RINV CfParamsReply.fr_MMAX.
 Hypothesis RI_gone_end : W_LLVMFuzzerTestOneInput_gone_base.GN_RI_end TfibB MT LSx RINV.
 (* ARM_gone's count rows (_gone_x.v CNTRIG / LSCNT / CNTSTEP at RP := RPi and the arm's peak gn_pk := s5-r1d's
-   ReplyLScnt.pk_gone; GoneRestate's 6e8e0f9f814): relay_instance_gone's premise peak and check_no_loss's inside the
-   arm's, and the cut's counts under it (s5's fr_LS3cp_cnt_gone, ReplyLScnt.v:586, at the instance) *)
+   ReplyLScnt.pk_gone; GoneRestate): relay_instance_gone's premise peak and check_no_loss's inside the
+   arm's, and the cut's counts under it (s5's fr_LS3cp_cnt_gone, ReplyLScnt.v:587, at the instance) *)
 Hypothesis CNT_gone_rig : W_LLVMFuzzerTestOneInput_gone_base.GN_CNT_rig ReplyLScnt.pk_gone (fun cx m hs =>
   rig_pk (rig_tr (lm_c m) (lm_mx m) (Z.of_nat (length (lm_O m))) (lm_cap m) (W_LLVMFuzzerTestOneInput_gone_base.gn_id cx m)
     (lm_es m) hs)).
@@ -1011,7 +1012,7 @@ Proof.
   (* the room round: the arms' RP_NP at RPi (rp_RM RP_cf S k is room_live_cf S) and NPF (room_live_set_fs) *)
   assert (RP_NP : forall S k, rp_RM RPi S k <-> NP S) by (intros S k; exact (iff_refl _)).
   assert (NPF : forall S f, NP S -> NP (set_fs f S)) by exact YGcfRoomLive.room_live_set_fs.
-  (* errno's law over ARX (a Theorem Labs lane's W_ERRL_x.v:93) *)
+  (* errno's law over ARX (a Theorem Labs lane's W_ERRL_x.v:94) *)
   assert (ERRL_x : errno_law_x TfibB ARX) by exact (W_ERRL_x.errno_law_x_holds TfibB TfibB_syms ARX).
   (* a6's image group (TopxImage.v): ad_G's shadow hulls, the symbol table's fake-stack fields, the "" literal's
      shadow, the GOT word of __stack_chk_guard and snprintf's two literals, each at the pre-W1 relation, carried to ARX
@@ -1045,7 +1046,7 @@ Proof.
   assert (AMEMCPYS_x : amemcpy_same_realizes_x TfibB ARX (SIGMA WS_asan_memcpy)) by exact TopX_MEMCPYS.topx_AMEMCPYS_W.
   assert (ASTRNLEN_x : et_strnlen_spec_x TfibB ARX 0x10350 0x10370 (SIGMA WS_strnlen))
     by (unfold et_strnlen_spec_x; exact TopX_RT2.topx_ASTRNLEN_x_W).
-  (* a Theorem Labs lane's route (b) ASM rows at top_x's relation (AsmTopX.v:162 / :169, ARX_asm is ARX over tfibsegs) *)
+  (* a Theorem Labs lane's route (b) ASM rows at top_x's relation (AsmTopX.v:163 / :170, ARX_asm is ARX over tfibsegs) *)
   assert (ASM0 : astack_malloc_pres_x segs TfibB ARX 0) by exact AsmTopX.asm0_pres_ARX.
   assert (ASM1 : astack_malloc_pres_x segs TfibB ARX 1) by exact AsmTopX.asm1_pres_ARX.
   (* check_shape_done and check_no_loss_read at ARX (ARM_drain, ARM_remove, ARM_gone, SEG_EXIT): W3's
@@ -1063,7 +1064,7 @@ Proof.
   { intros ly S Hp W mem md p n H Hin.
     destruct (YG0dcf.alc_blocks _ _ (AR_laws_ok_cf (cp := CfParams_reply) segs TfibB) ly S Hp W mem md p n (proj1 H) Hin)
       as (_ & _ & _ & _ & _ & _ & Hn). lia. }
-  (* SEG_PRO's HFP_pro: a2's TopxEntry.hfp_pro_x (TopxEntry.v:149) at the cf block bound arcf_blk (stated at the pre-W1
+  (* SEG_PRO's HFP_pro: a2's TopxEntry.hfp_pro_x (TopxEntry.v:150) at the cf block bound arcf_blk (stated at the pre-W1
      relation, carried to ARX by ARX_rt_of) and FPCOV *)
   pose proof (TopxEntry.hfp_pro_x TfibB MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G ARX fr_FP
     (fun ly S Hp W mem md p n H => TopxEntry.arcf_blk ly S Hp W mem md p n (ARX_rt_of ly S Hp W mem md H)) FPCOV)
@@ -1075,7 +1076,7 @@ Proof.
   assert (HPST : forall a, in_img segs a -> ~ Exists (in_zr a) ([] : list (Z * Z))) by (intros a _ H; inversion H).
   assert (HMMAX : APARTIAL < CfParamsReply.fr_MMAX) by (unfold APARTIAL; apply Z.ltb_lt; vm_compute; reflexivity).
   (* SEG_PRO's stack_malloc facts at ARX, from the cf laws: YGcallcf.v's owned-low and Wf laws (WFx := Wf_cf, ARX's
-     first projection), and YG05cf.v's stack_malloc progress and post (W_frame_x.v:1015 SMALLOC_AR's proof, cf form) *)
+     first projection), and YG05cf.v's stack_malloc progress and post (W_frame_x.v:1016 SMALLOC_AR's proof, cf form) *)
   assert (OWNLOW : ARx_owned_low_law segs TfibB ARX).
   { intros ly S Hp W mem md a H Ho.
     exact (ARx_owned_low_law_cf_x (cp := CfParams_reply) segs TfibB (AR_laws_ok_cf (cp := CfParams_reply) segs TfibB)
@@ -1127,12 +1128,12 @@ Proof.
     shadow_hull_vis (aview segs (w_H W) mem) a n).
   { intros ly S Hp W mem md a n H Hn Hx. apply (GSHV_x ly S Hp W mem md a n H Hn).
     intros x Hx'. unfold ad_G. cbn [app]. apply inG_cons. left. unfold in_zr. cbn [fst snd]. exact (Hx x Hx'). }
-  (* ---- C1 at the instance (a Theorem Labs lane's 922a710cda0; relay_event re-proved by AddX's C3 88557c15170): relay_add's,
+  (* ---- C1 at the instance (a Theorem Labs lane; relay_event re-proved by AddX's C3): relay_add's,
      relay_event's and relay_finish's _x proofs build RA_x / RE_x / RF_x.  Their premises come from the facts above,
      _G.v's deciders at fr_globals / PB_fr / TfibB (the placements, decided), and the Section hypotheses ASM0, MO_FR,
      AMEMSET_x, ASTRLEN_x, AFREE0_x (the callees and laws no _x proof gives yet) ---- *)
   pose proof (W_LLVMFuzzerTestOneInput_addI.zz_HOWN TfibB TfibB_syms) as HOWN.
-  (* source_reset at ARX (F1's walk, W_source_reset.v:2537 pb_source_reset_gc_x): the free rules at K0's CTX_AFREE,
+  (* source_reset at ARX (F1's walk, W_source_reset.v:2538 pb_source_reset_gc_x): the free rules at K0's CTX_AFREE,
      memset / memmove by a Theorem Labs lane's rows, its three free contexts rows of CTX_AFREE (decided) *)
   assert (SR_x : sr_spec_g_x TfibB [] ARX MT RPi (BASE + AF_fr_source_reset)).
   { refine (W_source_reset.pb_source_reset_gc_x (PI := PB_fr) TfibB [] ARX ARX_laws ARX_hp0 IMGC BLKN HPST TL MT RPi
@@ -1140,7 +1141,7 @@ Proof.
     - unfold CTX_AFREE. vm_compute. repeat (first [left; reflexivity | right]).
     - unfold CTX_AFREE. vm_compute. repeat (first [left; reflexivity | right]).
     - unfold CTX_AFREE. vm_compute. repeat (first [left; reflexivity | right]). }
-  (* gesture_end and gestures_end at ARX (F7's walks, W_gesture_end.v:755 pb_gesture_end_x and W_gestures_end_top.v:92
+  (* gesture_end and gestures_end at ARX (F7's walks, W_gesture_end.v:756 pb_gesture_end_x and W_gestures_end_top.v:93
      pb_gestures_end_closed_x): send_line by SL_x, strlen by TopX_RT's row, the " end\0" literal's shadow by
      W_shadow_pin_x.ashp_end5_5_fr_x, and their placement premises at fr_RG / PB_fr / TfibB, decided *)
   assert (HGSL : gx_ok segs TfibB (G_SL TfibB fr_RG)).
@@ -1203,7 +1204,7 @@ Proof.
         + exfalso. exact (Hne Ha). }
       split; [exact (c_img TfibB HEV a HGa)|].
       split; [intros Hr'; exact (c_rom_apart TfibB HEV a Hr' HGa) | exact (HOWN a HGa)]. }
-  (* relay_add (W_relay_add.v:638), at ra_spec_g_x's G *)
+  (* relay_add (W_relay_add.v:639), at ra_spec_g_x's G *)
   (* the room round (ide-15's F3): at RPi, its RPF / RMM laws by RP_cf's fields rp_RPF / rp_RMM *)
   assert (RA_x : ra_spec_g_x TfibB [] ARX MT RPi fr_globals CTX_AREALLOC (BASE + AF_fr_relay_add)).
   { intros Gc HGc _.
@@ -1234,7 +1235,7 @@ Proof.
       exact (W_LLVMFuzzerTestOneInput_add.ad_apart_ok (rg_wake fr_globals + 4) 4 Tfib_owned_static
         ltac:(vm_compute; reflexivity) _ Hex ltac:(lia)).
     - (* HSEPG *) c1_seps. }
-  (* relay_event (W_relay_event.v:230), at _event's own G et_GRE *)
+  (* relay_event (W_relay_event.v:231), at _event's own G et_GRE *)
   assert (RE_x : re_spec_x (PI := PB_fr) TfibB [] ARX MT RPi CfParamsReply.fr_MMAX (et_GRE TfibB) fr_RG
     (BASE + AF_fr_relay_event)).
   { refine (W_relay_event.pb_relay_event_x (PI := PB_fr) TfibB [] ARX MT RPi CfParamsReply.fr_MMAX (et_GRE TfibB) fr_RG
@@ -1248,7 +1249,7 @@ Proof.
     - (* HAOD *) intros a Ha. cbn [fr_RG fr_globals rg_lock rg_send_max rg_client rg_send_dead] in *. lia.
     - (* HAO3 *) cbn [fr_RG fr_globals rg_send_max rg_client rg_send_dead]. lia.
     - (* HLPST *) intros a _ H. inversion H. }
-  (* relay_finish (W_relay_finish_h.v:3671), at SEG_EXIT's G: RF_G and send_line's G *)
+  (* relay_finish (W_relay_finish_h.v:3672), at SEG_EXIT's G: RF_G and send_line's G *)
   assert (RF_x : rf_spec_x TfibB [] ARX MT RPi CfParamsReply.fr_MMAX (RF_G fr_RG AG_LISTEN ++ G_SL TfibB fr_RG) fr_RG
     AG_THREAD_UP AG_LISTEN CTX_AFREE (BASE + AF_fr_relay_finish)).
   { assert (HGRF : gx_ok segs TfibB (RF_G fr_RG AG_LISTEN ++ G_SL TfibB fr_RG)).
@@ -1342,7 +1343,7 @@ Proof.
     pose proof W_drain_pb.drain_HERRNO. pose proof W_drain_pb.drain_HGSZ.
     pose proof W_drain_pb.drain_PSTR. pose proof W_drain_pb.drain_PSTG. pose proof W_drain_pb.drain_PSTO.
     eapply W_drain_pb.pb_drain_x; eassumption. }
-  (* relay_remove at ARX (W_relay_remove.v:149 pb_relay_remove_x): the frame and law facts above (ASM0 its
+  (* relay_remove at ARX (W_relay_remove.v:150 pb_relay_remove_x): the frame and law facts above (ASM0 its
      __asan_stack_malloc_0), DR_x / GSE_x, the free rules AFREE_x / AFREE0_x, the runtime rows ALOCK / AUNLOCK /
      AMEMCPY_x and AMEMCPYS_x, TopxRelayFacts.v's instance facts, and PSTR / PSTG at PST = [] *)
   assert (RR_x : rr_spec_x TfibB [] ARX MT RPi CfParamsReply.fr_MMAX fr_RG CTX_AFREE (BASE + AF_fr_relay_remove)).
@@ -1352,7 +1353,7 @@ Proof.
     pose proof TopxRelayFacts.topx_HRGP. pose proof TopxRelayFacts.topx_HRGI. pose proof TopxRelayFacts.topx_HEND5L.
     eapply (W_relay_remove.pb_relay_remove_x (PI := PB_fr)); try eassumption;
       let h := fresh "Hpst" in intros ? _ h; inversion h. }
-  (* relay_instance_gone at ARX (W_relay_instance_gone.v:140 pb_relay_instance_gone_x): the same frame and law facts
+  (* relay_instance_gone at ARX (W_relay_instance_gone.v:141 pb_relay_instance_gone_x): the same frame and law facts
      (ASM1 its __asan_stack_malloc_1), DR_x / GE_x, AFREE_x, ALOCK / AUNLOCK, snprintf SNP_x with HGOTG_x, strlen
      ASTRLEN_x, strncmp TopX_RT4.topx_ASTRNCMP_W, the laws' granule tail W_drain_cx_x.alloc_tail_x, the literals'
      location SnpNarrowSites.HLITGOT_PB_fr, TopxRelayFacts.v's instance facts, and PSTR / PSTG at PST = [] *)
@@ -1459,7 +1460,7 @@ Proof.
       unfold writable_at, wview in *. destruct (m (Z_to_bv 64 a)); [discriminate | exact Hw]. }
     intros ly S Hp W mem md a n HAR Hn Hx. apply (XR_GSHV ly S Hp W mem md a n HAR Hn).
     intros x Hxr. exact (Hsub x (Hx x Hxr)). }
-  (* ARM_gone's FRMF (W_frame_x.v:105): a live fake frame's alignment, from YG0scf.v's frame_facts_cf on ARX's
+  (* ARM_gone's FRMF (W_frame_x.v:106): a live fake frame's alignment, from YG0scf.v's frame_facts_cf on ARX's
      ARcf (its ARmcf conjunct) *)
   assert (FRMF : forall ly S Hp (W : world segs) mem md cid pos, ARX ly S Hp W mem md -> In (cid, pos) (frames S) ->
     ly_F ly mod 4096 = 0 /\ fs_frame_off cid pos mod 64 = 0 /\ 64 <= fs_frame_bytes cid /\ fs_frame_bytes cid mod 64 = 0).
@@ -1469,7 +1470,7 @@ Proof.
     split; [exact Hpg|]. split; [exact Hoff|]. split; [exact H64 | exact Hb]. }
   (* ---- W3's check_shape_event and check_shape_ends at ARX (ARM_event; ARM_remove, ARM_gone, SEG_EXIT), with their
      callees at the instance ---- *)
-  (* next_line (W_next_line.v:384): W1's walk, memchr by topx_AMEMCHR_W (a Theorem Labs lane's TopX_RT3.v, QMm W1), the
+  (* next_line (W_next_line.v:385): W1's walk, memchr by topx_AMEMCHR_W (a Theorem Labs lane's TopX_RT3.v, QMm W1), the
      placement by W_w1_place.v *)
   assert (NL_x : nl_spec_x TfibB [] ARX (BASE + AF_fr_next_line))
     by exact (W_next_line.pb_next_line_x (PI := PB_fr) TfibB [] ARX ARX_laws TL W_w1_place.nl_objs_apart_fr
@@ -1496,7 +1497,7 @@ Proof.
   (* gesture_model at ARX (W_gesture_model_g.v:85 pb_gesture_model_g_x, room form; its _cf instance is stated at the
      pre-W1 relation, so the generic walk is applied at ARX): bcmp by topx_ABCMP_W, the three literals' shadow facts by
      W_shadow_pin_x, list_find by LFIND_x, list_push by LP (WR_MMAX is fr_MMAX), list_drop at every G with gx_ok / gx_rt
-     / rom_out by the caller-context walk (W_list_drop_top.v:907 pb_list_drop_ro_cx_x, room form) at K0's CTX_AFREE:
+     / rom_out by the caller-context walk (W_list_drop_top.v:908 pb_list_drop_ro_cx_x, room form) at K0's CTX_AFREE:
      its free context [list_drop + 0x60] is W_w3_place_fr.list_drop_HCTX_fr *)
   pose proof (W_list_drop_top.pb_list_drop_ro_cx_x (PI := PB_fr) TfibB [] ARX ARX_laws ARX_hp0 MT RPi CTX_AFREE
     W_w3_place_fr.list_drop_HCTX_fr TL AFREE_x TopX_RT3.topx_AMEMMOVE_W) as LDROP_RO.
@@ -1504,7 +1505,7 @@ Proof.
     ARX_hp0 TL MLAW TopX_RT3.topx_ABCMP_W (W_shadow_pin_x.ashp_gesture_13_fr_x TfibB TfibB_syms ARX ARX_laws)
     (W_shadow_pin_x.ashp_begin_5_fr_x TfibB TfibB_syms ARX ARX_laws)
     (W_shadow_pin_x.ashp_end_3_fr_x TfibB TfibB_syms ARX ARX_laws) (fun Gc _ _ => LFIND_x Gc) LP LDROP_RO) as GM_x.
-  (* check_no_loss (W_check_no_loss.v:3662) at every G with gx_ok / gx_rt (its gx_rt is not used): the sink head's
+  (* check_no_loss (W_check_no_loss.v:3663) at every G with gx_ok / gx_rt (its gx_rt is not used): the sink head's
      read-only clause by W_rom_place_fr.v, the free site's context and the placement by W_w3_place_fr.v *)
   assert (CNL_x : forall Gc, gx_ok segs TfibB Gc -> gx_rt TfibB Gc ->
     cnl_spec_x TfibB [] ARX MT RPi Gc CfParamsReply.fr_MMAX (BASE + AF_fr_check_no_loss)).
@@ -1627,12 +1628,12 @@ Hypothesis ARE_R : arealloc_cf_rule_c_xR segs TfibB [] ARX MT CfParamsReply.fr_M
   (@pa_sigma _ fr_prog_listing PB_fr WS_realloc).
 Hypothesis AFREE_R : afree_cf_rule_c_xR segs TfibB [] ARX MT RPi RO CTX_AFREE R.
 Hypothesis AFREE0_R : afree_null_cf_rule_c_xR segs TfibB [] ARX MT RPi RO CTX_AFREE R.
-(* ---- relay_remove's walk takes one fact of R itself (W_relay_remove.v:184 pb_relay_remove_xR, its R_IMG text): R
+(* ---- relay_remove's walk takes one fact of R itself (W_relay_remove.v:185 pb_relay_remove_xR, its R_IMG text): R
    hides no image byte that its first world shows ---- *)
-(* holds at R := wle' pa_segs RZ_cf: wle' hides a new byte only inside RZ_cf (YA0nH.v:151), which lies above the image *)
+(* holds at R := wle' pa_segs RZ_cf: wle' hides a new byte only inside RZ_cf (YA0nH.v:152), which lies above the image *)
 Hypothesis R_IMG : forall (W W' : world segs) (a : word), R W W' -> in_img segs (bv_unsigned a) -> w_H W' a = true ->
   w_H W a = true.
-(* ---- SEG_EXIT's model rule LS_exit_end at R (W_LLVMFuzzerTestOneInput_exit_x.v:5318 LS_exit_end_R): Section topx's
+(* ---- SEG_EXIT's model rule LS_exit_end at R (W_LLVMFuzzerTestOneInput_exit_x.v:5319 LS_exit_end_R): Section topx's
    LS_exit_end with the walk's journal from the entry at R (W_journal_x.ajournal_gx_xR .. R ..); every other premise and
    the conclusion verbatim ---- *)
 Hypothesis LS_exit_end_R : forall cx t m ly3 S3 rest ly' S' (W' : world segs) mem' md' fpos k' C cap out,
@@ -1884,20 +1885,20 @@ Proof.
   (* __asan_memset at R: the strict intrinsic contract (it frees nothing), lifted by WLE_R *)
   assert (AMEMSET_R : aintrin_realizes_xR segs TfibB ARX R OSet (SIGMA WS_asan_memset))
     by exact (aintrin_realizes_xR_of_x segs TfibB ARX WLE_R OSet (SIGMA WS_asan_memset) AMEMSET_x).
-  (* list_free at R (W_list_free.v:2744 pb_list_free_g_xR): the free rules at R at K0's CTX_AFREE, memmove strict, its
+  (* list_free at R (W_list_free.v:2745 pb_list_free_g_xR): the free rules at R at K0's CTX_AFREE, memmove strict, its
      two free contexts rows of CTX_AFREE (decided, as fr_contract_top_x's source_reset rows) *)
   assert (LF_R : W_contract_srlf_xR.lf_spec_g_xR TfibB [] ARX R MT RPi (BASE + AF_fr_list_free)).
   { refine (W_list_free.pb_list_free_g_xR (PI := PB_fr) TfibB [] ARX MT RPi ARX_laws ARX_hp0 IMGC BLKN
       (fun a _ H => ltac:(inversion H)) MLAW CTX_AFREE _ _ TL AMOVE R R_refl R_trans WLE_R RO RO_ARx AFREE_R AFREE0_R).
     - unfold CTX_AFREE. vm_compute. repeat (first [left; reflexivity | right]).
     - unfold CTX_AFREE. vm_compute. repeat (first [left; reflexivity | right]). }
-  (* source_reset at R (W_source_reset.v:2574 pb_source_reset_gc_xR): list_free at R, the free rules at R, memset at R,
+  (* source_reset at R (W_source_reset.v:2575 pb_source_reset_gc_xR): list_free at R, the free rules at R, memset at R,
      its free context a row of CTX_AFREE *)
   assert (SR_R : W_contract_srlf_xR.sr_spec_g_xR TfibB [] ARX R MT RPi (BASE + AF_fr_source_reset)).
   { refine (W_source_reset.pb_source_reset_gc_xR (PI := PB_fr) TfibB [] ARX R R_refl R_trans WLE_R ARX_laws BLKN HPST TL
       MT RPi MLAW RO RO_ARx LF_R CTX_AFREE AFREE_R AFREE0_R AMEMSET_R _).
     unfold CTX_AFREE. vm_compute. repeat (first [left; reflexivity | right]). }
-  (* relay_add at R (W_relay_add.v:685 pb_relay_add_xR), at ra_spec_g_xR's G as RA_x (no _g form exists): RA_x's
+  (* relay_add at R (W_relay_add.v:686 pb_relay_add_xR), at ra_spec_g_xR's G as RA_x (no _g form exists): RA_x's
      arguments without the strict realloc rule, then realloc at R (ARE_R) with its hull admission (HA_call; the walk's
      HA_ra also has 1 <= n, unused) *)
   assert (RA_R : W_contract_srlf_xR.ra_spec_g_xR TfibB [] ARX R MT RPi fr_globals CTX_AREALLOC (BASE + AF_fr_relay_add)).
@@ -1930,7 +1931,7 @@ Proof.
       exact (W_LLVMFuzzerTestOneInput_add.ad_apart_ok (rg_wake fr_globals + 4) 4 Tfib_owned_static
         ltac:(vm_compute; reflexivity) _ Hex ltac:(lia)).
     - (* HSEPG *) c1_seps. }
-  (* op_add at R (W_op_add.v:2981 pb_op_add_g_xR): malloc at R, source_reset at R, relay_add at R (RA_R); its image
+  (* op_add at R (W_op_add.v:2982 pb_op_add_g_xR): malloc at R, source_reset at R, relay_add at R (RA_R); its image
      facts and caller contexts as fr_contract_top_x's OA *)
   assert (OA_R : W_op_add.oa_spec_g_xR (PI := PB_fr) TfibB [] ARX R MT RPi (BASE + AF_fr_op_add)).
   { refine (pb_op_add_g_xR TfibB [] ARX R R_refl R_trans WLE_R _ MT RPi RO RO_ARx ARX_laws HPST TL MLAW
@@ -1961,7 +1962,7 @@ Proof.
       rewrite E. unfold CTX_AREALLOC. vm_compute. repeat (first [left; reflexivity | right]).
     - assert (E : [BASE + AF_fr_list_push + 0xd0] = [0x85160]) by (vm_compute; reflexivity).
       rewrite E. unfold CTX_AMALLOC. vm_compute. repeat (first [left; reflexivity | right]). }
-  (* list_drop at R at every G with gx_ok / gx_rt / rom_out (W_list_drop_top.v:923 pb_list_drop_ro_cx_xR), the free
+  (* list_drop at R at every G with gx_ok / gx_rt / rom_out (W_list_drop_top.v:924 pb_list_drop_ro_cx_xR), the free
      rule at R at K0's CTX_AFREE, memmove strict *)
   pose proof (W_list_drop_top.pb_list_drop_ro_cx_xR (PI := PB_fr) TfibB [] ARX ARX_laws ARX_hp0 MT RPi CTX_AFREE
     W_w3_place_fr.list_drop_HCTX_fr TL AMOVE R R_refl R_trans WLE_R RO RO_ARx AFREE_R) as LDROP_RO_R.
@@ -1974,7 +1975,7 @@ Proof.
       (W_shadow_pin_x.ashp_begin_5_fr_x TfibB TfibB_syms ARX ARX_laws)
       (W_shadow_pin_x.ashp_end_3_fr_x TfibB TfibB_syms ARX ARX_laws) (fun Gc _ _ => LFIND_x Gc)
       R R_refl R_trans WLE_R LP_R LDROP_RO_R).
-  (* check_no_loss at R at every G with gx_ok / gx_rt (W_check_no_loss.v:6031 pb_check_no_loss_xR): the free rule and
+  (* check_no_loss at R at every G with gx_ok / gx_rt (W_check_no_loss.v:6032 pb_check_no_loss_xR): the free rule and
      gesture_model at R; next_line, bcmp and memmove strict; placement and free context as fr_contract_top_x's CNL_x *)
   assert (CNL_R : forall Gc, gx_ok segs TfibB Gc -> gx_rt TfibB Gc ->
     W_contract_xR_g6.cnl_spec_xR TfibB [] ARX R MT RPi Gc CfParamsReply.fr_MMAX (BASE + AF_fr_check_no_loss)).
@@ -1987,7 +1988,7 @@ Proof.
   (* check_shape_done at R (W_check_shape_done.v:194 pb_check_shape_done_xR): the strict walk lifted by WLE_R *)
   assert (CSD_R : W_contract_srlf_xR.csd_spec_xR TfibB [] ARX R (BASE + AF_fr_check_shape_done))
     by exact (W_check_shape_done.pb_check_shape_done_xR (PI := PB_fr) TfibB [] ARX ARX_laws TL R WLE_R).
-  (* send_line at R (W_send_line_x.v:127 pb_send_line_xR): SL_x's arguments without the strict realloc rule, then
+  (* send_line at R (W_send_line_x.v:128 pb_send_line_xR): SL_x's arguments without the strict realloc rule, then
      realloc at R (ARE_R) with RO / HA *)
   assert (SL_R : W_send_line_xR.sl_spec_xR TfibB [] ARX R MT RPi CfParamsReply.fr_MMAX fr_RG (BASE + AF_fr_send_line)).
   { exact (W_send_line_x.pb_send_line_xR (PI := PB_fr) TfibB [] ARX MT RPi CfParamsReply.fr_MMAX fr_RG ARX_laws ARX_hp0
@@ -1998,7 +1999,7 @@ Proof.
       W_send_line_x_top.slx_HH19 W_send_line_x_top.slx_HH21 W_send_line_x_top.slx_HSM W_send_line_x_top.slx_HH22
       W_send_line_x_top.slx_HH23 W_send_line_x_top.slx_HH24 W_send_line_x_top.slx_HRGD
       R R_refl R_trans WLE_R RO HA RO_ARx HA_call ARE_R). }
-  (* gesture_end at R (W_gesture_end.v:363 pb_gesture_end_xR): GE_x's arguments without SL_x, then send_line at R *)
+  (* gesture_end at R (W_gesture_end.v:364 pb_gesture_end_xR): GE_x's arguments without SL_x, then send_line at R *)
   assert (GE_R : W_contract_xR.ge_spec_xR TfibB [] ARX R MT RPi CfParamsReply.fr_MMAX fr_RG (BASE + AF_fr_gesture_end)).
   { refine (W_gesture_end.pb_gesture_end_xR (PI := PB_fr) TfibB [] ARX MT RPi CfParamsReply.fr_MMAX fr_RG ARX_laws
       ARX_hp0 BLKN HGSL ASTRLEN_x HEND5I (W_shadow_pin_x.ashp_end5_5_fr_x TfibB TfibB_syms ARX ARX_laws)
@@ -2006,7 +2007,7 @@ Proof.
       SL_R).
     intros r Hr. unfold aout_fp in Hr. rewrite HEV in Hr. vm_compute in Hr.
     repeat (destruct Hr as [<- | Hr]; [cbn [fst snd]; lia |]). destruct Hr. }
-  (* gestures_end at R (W_gestures_end_top.v:116 pb_gestures_end_closed_xR): GSE_x's arguments without GE_x and the
+  (* gestures_end at R (W_gestures_end_top.v:117 pb_gestures_end_closed_xR): GSE_x's arguments without GE_x and the
      strict free rules, then gesture_end and the free rules at R *)
   assert (GSE_R : W_contract_xR.gse_spec_xR TfibB [] ARX R MT RPi CfParamsReply.fr_MMAX fr_RG
     (BASE + AF_fr_gestures_end)).
@@ -2034,7 +2035,7 @@ Proof.
         + exfalso. exact (Hne Ha). }
       split; [exact (c_img TfibB HEV a HGa)|].
       split; [intros Hr'; exact (c_rom_apart TfibB HEV a Hr' HGa) | exact (HOWN a HGa)]. }
-  (* relay_event at R (W_relay_event.v:250 pb_relay_event_xR), at _event's own G et_GRE: RE_x's arguments without
+  (* relay_event at R (W_relay_event.v:251 pb_relay_event_xR), at _event's own G et_GRE: RE_x's arguments without
      SL_x, then send_line at R *)
   assert (RE_R : W_contract_xR.re_spec_xR (PI := PB_fr) TfibB [] ARX R MT RPi CfParamsReply.fr_MMAX (et_GRE TfibB) fr_RG
     (BASE + AF_fr_relay_event)).
@@ -2050,7 +2051,7 @@ Proof.
     - (* HAOD *) intros a Ha. cbn [fr_RG fr_globals rg_lock rg_send_max rg_client rg_send_dead] in *. lia.
     - (* HAO3 *) cbn [fr_RG fr_globals rg_send_max rg_client rg_send_dead]. lia.
     - (* HLPST *) intros a _ H. inversion H. }
-  (* relay_finish at R (W_relay_finish_h.v:6560 pb_relay_finish_h_xR), at SEG_EXIT's G: RF_x's arguments without the
+  (* relay_finish at R (W_relay_finish_h.v:6561 pb_relay_finish_h_xR), at SEG_EXIT's G: RF_x's arguments without the
      strict free rules and GSE_x, then the free rules and gestures_end at R *)
   assert (RF_R : W_contract_xR.rf_spec_xR TfibB [] ARX R MT RPi CfParamsReply.fr_MMAX
     (RF_G fr_RG AG_LISTEN ++ G_SL TfibB fr_RG) fr_RG AG_THREAD_UP AG_LISTEN CTX_AFREE (BASE + AF_fr_relay_finish)).
@@ -2089,7 +2090,7 @@ Proof.
     - (* PSTR *) intros a _ H. inversion H.
     - (* PSTC *) intros a _ H. inversion H.
     - (* PSTO *) intros a _ H. inversion H. }
-  (* strndup's rule at R: Section topx's strict ASTRNDUP_x (strndup frees nothing) lifted by CfRBridgeRulesRh.v:174
+  (* strndup's rule at R: Section topx's strict ASTRNDUP_x (strndup frees nothing) lifted by CfRBridgeRulesRh.v:175
      astrndup_cf_rule_c_xR_lift over ARX's laws and the image's low bound (W_kit.v pa_segs_low) *)
   assert (ASTRNDUP_R : astrndup_cf_rule_c_xR segs TfibB [] ARX MT CfParamsReply.fr_MMAX RPi ACej.CTX_strndup R
     (SIGMA WS_strndup))
@@ -2117,7 +2118,7 @@ Proof.
     pose proof W_drain_pb.drain_HERRNO. pose proof W_drain_pb.drain_HGSZ.
     pose proof W_drain_pb.drain_PSTR. pose proof W_drain_pb.drain_PSTG. pose proof W_drain_pb.drain_PSTO.
     eapply W_drain_pb.pb_drain_xR; eassumption. }
-  (* relay_remove at R (W_relay_remove.v:184 pb_relay_remove_xR): RR_x's facts, then gestures_end at R, R_IMG, the
+  (* relay_remove at R (W_relay_remove.v:185 pb_relay_remove_xR): RR_x's facts, then gestures_end at R, R_IMG, the
      free rules at R and drain at R *)
   assert (RR_R : W_contract_xR_relay.rr_spec_xR TfibB [] ARX R MT RPi CfParamsReply.fr_MMAX fr_RG CTX_AFREE
     (BASE + AF_fr_relay_remove)).
@@ -2127,7 +2128,7 @@ Proof.
     pose proof TopxRelayFacts.topx_HRGP. pose proof TopxRelayFacts.topx_HRGI. pose proof TopxRelayFacts.topx_HEND5L.
     eapply (W_relay_remove.pb_relay_remove_xR (PI := PB_fr)); try eassumption;
       let h := fresh "Hpst" in intros ? _ h; inversion h. }
-  (* relay_instance_gone at R (W_relay_instance_gone.v:167 pb_relay_instance_gone_xR): RIG_x's facts, then the free
+  (* relay_instance_gone at R (W_relay_instance_gone.v:168 pb_relay_instance_gone_xR): RIG_x's facts, then the free
      rule, drain and gesture_end at R *)
   assert (RIG_R : W_contract_xR_relay.rig_spec_xR TfibB [] ARX R MT RPi CfParamsReply.fr_MMAX fr_RG CTX_AFREE
     (BASE + AF_fr_relay_instance_gone)).
@@ -2143,7 +2144,7 @@ Proof.
     eapply (W_relay_instance_gone.pb_relay_instance_gone_xR (PI := PB_fr)); try eassumption;
       let h := fresh "Hpst" in intros ? _ h; inversion h. }
   (* check_shape_ends at R at every G with gx_ok (W_cshe_top.v:417 pb_check_shape_ends_xR): CSHE_x's placement facts,
-     and its loops 2 and 3 at R (L2R / L3R) by a Theorem Labs lane's W_cshe_l2w.v:4424 cshe_l2_run_xR and W_cshe_l3.v:5350
+     and its loops 2 and 3 at R (L2R / L3R) by a Theorem Labs lane's W_cshe_l2w.v:4425 cshe_l2_run_xR and W_cshe_l3.v:5351
      cshe_l3_top_xR over the free rule at R at K0's CTX_AFREE *)
   assert (CSHE_R : forall Gc, gx_ok segs TfibB Gc ->
     W_contract_xR_g6.cshe_spec_xR TfibB [] ARX R MT RPi Gc (BASE + AF_fr_check_shape_ends)).
@@ -2233,19 +2234,19 @@ Proof.
 Qed.
 (* ---- fr_contract_top_xR's hypotheses: this Section's, each with what discharges it (texts above) ----
    R / R_refl / R_trans / WLE_R  the instance R := wle' pa_segs RZ_cf, by wle'_refl / wle'_trans / wle_wle'
-                                 (Reusable/YA0nH.v:156 / :159 / :164).
+                                 (Reusable/YA0nH.v:157 / :160 / :165).
    RO / RO_ARx                   RO := arodata_ok_cf segs TfibB (QMm W1); RO_ARx is ARX's third conjunct.
    HA / HA_call                  HA := fun _ Sc _ _ _ n => cf_hull_adm Sc n; HA_call at MT_sec by a Theorem Labs lane's
-                                 ReplyHullAdm.adm_charge_eq (a working branch 4668c68a7e7c), the step of its
+                                 ReplyHullAdm.adm_charge_eq (a working branch), the step of its
                                  hull_adm_of_mo_reply, whose extra premise 1 <= n HA_call does not give.
    AMA_R / ARE_R / AFREE_R /     TOPK at route R after part 3c: a Theorem Labs lane's malloc / realloc half (a working branch
-   AFREE0_R                      76a84b5b0b9f) and a Theorem Labs lane's free half (a working branch c9793e3d61f5),
+   AFREE0_R) and a Theorem Labs lane's free half (a working branch),
                                  one TOPK_rh header for both halves.
    R_IMG                         at R := wle' pa_segs RZ_cf: wle' W W' gives, for a byte hidden in W', that it is hidden in W
-                                 or RZ_cf holds of it (YA0nH.v:144-151 wle_in); an image byte is below 0x5fb000
-                                 (W_kit.v pa_img_range) and RZ_cf (A/YGcfRehidePost.v:158) starts at
+                                 or RZ_cf holds of it (YA0nH.v:145-152 wle_in); an image byte is below 0x5fb000
+                                 (W_kit.v pa_img_range) and RZ_cf (A/YGcfRehidePost.v:159) starts at
                                  shadow_addr 4096 - 4096 = 0x7fff7200, so the byte is hidden in W.
-   LS_exit_end_R                 s5-r1d's ReplyLSI.lsi_LS_exit_end_xR at the instance's LS (a35949e2022).
+   LS_exit_end_R                 s5-r1d's ReplyLSI.lsi_LS_exit_end_xR at the instance's LS.
    With them, the Section topx hypotheses the R twins and walks take at their strict texts (the RI_* / LS_* model rules
    and count rows, DR_CNT_* / RM_CNT_* / CNT_gone_*, MLAW, MO_FR, FFL, FPCOV, FP_SINK, SNP_x, and ASTRNDUP_x, which
    the proof lifts to R), discharged as for fr_contract_top_x; FFL, FP_SINK and SNP_x at ARX by their W1 lifts

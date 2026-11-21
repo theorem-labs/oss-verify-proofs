@@ -7,6 +7,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3b.v, with its module paths, module names and numbers changed; 884 of its 966 lines of code are new or changed and 1993 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/F13.v, with its module names changed; 426 of its 465 lines of code are new or changed and 927 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/R8.v, with its addresses and numbers changed; 234 of its 320 lines of code are new or changed and 379 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/R5.v -- GLUE for stage seg_R5 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput (lib/A/ACtl.v:487,
    `Hypothesis seg_R5 : forall POST, CF POST (ix_cut C_A815cc_at [Z.of_nat 0]) -> CF POST C_A81588`).  Written by
    a Theorem Labs lane's glue lane (piece W0/W1); single writer.  The pattern is
@@ -20,9 +21,9 @@
    into the spill block [A, A + 120) of the prologue save area ([A + 8] = mrow + 16, [A + 112] = mrow, [A] = mrow +
    20, [A + 104] = 0x21140, [A + 96] = 0x1234, [A + 64] = 0xe38f0000), s8 = 36, a0 = [A + 128] = fr + 544.
 
-   RULE 24 (released proofs first): proof-index LLVMFuzzerTestOneInput (index v5, built 2026-10-28 20:16:23Z
-   from e966c513ee6, ossv/recipes@a8831f7c5c), second-agent check a Theorem Labs lane 21:10Z CONFIRM: the released ASan
-   donor is cgif/cgif_file_fuzzer at origin/ossv/recipes c8557374ad2e; its walk lifts no outside-proved run, so this
+   RULE 24 (released proofs first): proof-index LLVMFuzzerTestOneInput (index v5, built 2026-10-28 20:16:23Z,
+   ossv/recipes), second-agent check a Theorem Labs lane 21:10Z CONFIRM: the released ASan
+   donor is cgif/cgif_file_fuzzer; its walk lifts no outside-proved run, so this
    glue has no donor counterpart.  Its pieces are the donor's SRr (YA0n) and ajournal (YCbq), a Theorem Labs lane's kit and
    bridge (YA0nR.SRr_xregs_eqv; ProgBridge; ProgWorldVisWin through KitMem), a Theorem Labs lane's ProgWorld
    (ajournal_of_fsteps, pws_fsteps_mem), the segment's footprint run, and the shared kits lib/A/ACtlG/Kit.v and

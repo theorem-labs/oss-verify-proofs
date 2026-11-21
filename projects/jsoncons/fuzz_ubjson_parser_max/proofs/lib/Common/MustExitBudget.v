@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: the budget-transfer proof now unfolds let-bindings and builds the initial config from run_segments segs inp sp mbase instead of raw segs, threading these segments through nref, init_config_okl, init_config_setlim and the transfer lemma. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs Run RiscvSemantics MemImageType StackLayout.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit.
@@ -51,13 +52,14 @@ must_exit_in_scfg cfg S img L2 en inp ->
 must_exit_in_scfg cfg S img L1 en inp.
 Proof.
 intros cfg S [segs pc ph] L1 L2 [sp brk0 mbase rnd] inp Hle Hme Hnr.
-unfold must_exit_in_scfg, run_scfg_budget_refused in *.
-set (c0 := init_config segs pc ph sp brk0 mbase rnd L1 inp) in *.
-assert (Hn : nref segs cfg c0).
+unfold must_exit_in_scfg, run_scfg_budget_refused in *. cbv zeta in *.
+set (vsegs := run_segments segs inp sp mbase) in *.
+set (c0 := init_config vsegs pc ph sp brk0 mbase rnd L1 inp) in *.
+assert (Hn : nref vsegs cfg c0).
 { intros tr c Hst Hb. apply Hnr. exists tr, c. split; assumption. }
-pose proof (init_config_okl segs pc ph sp brk0 mbase rnd L1 L2 inp Hle) as Hl. fold c0 in Hl.
-rewrite (init_config_setlim segs pc ph sp brk0 mbase rnd L1 L2 inp) in Hme. fold c0 in Hme.
-exact (must_exit_in_at_cfg_budget_transfer segs cfg L2 S _ Hme c0 eq_refl Hn Hl).
+pose proof (init_config_okl vsegs pc ph sp brk0 mbase rnd L1 L2 inp Hle) as Hl. fold c0 in Hl.
+rewrite (init_config_setlim vsegs pc ph sp brk0 mbase rnd L1 L2 inp) in Hme. fold c0 in Hme.
+exact (must_exit_in_at_cfg_budget_transfer vsegs cfg L2 S _ Hme c0 eq_refl Hn Hl).
 Qed.
 Corollary must_exit_in_scfg_of_larger_budget : forall cfg S img L1 L2 en inp,
 L1 <= L2 ->

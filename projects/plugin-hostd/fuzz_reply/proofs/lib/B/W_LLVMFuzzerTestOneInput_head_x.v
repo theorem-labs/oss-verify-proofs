@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: SEG_HEAD of the ASan+UBSan walk of fuzz_reply's LLVMFuzzerTestOneInput (image B,
    fuzz_reply.asan-ubsan) OVER ARx (a Theorem Labs lane's route (b)).  lf_seg_head_x is the text of
    lib/B/W_LLVMFuzzerTestOneInput_cut_x.v Section w's hypothesis SEG_HEAD, so lib/B/W_LLVMFuzzerTestOneInput_top_x.v
    takes it in place of that hypothesis.  It is the ARx conversion of image B's AR proof lf_seg_head_b
-   (lib/B/W_LLVMFuzzerTestOneInput_head.v, carried on a working branch fdb3ee1c6ffa), which is NOT edited;
+   (lib/B/W_LLVMFuzzerTestOneInput_head.v, carried on a working branch), which is NOT edited;
    the method is image A's lib/A/W_LLVMFuzzerTestOneInput_head_x.v (HeadX, a working branch).
    - The Section header is B cut_x's Section w header (B .. ARx, hl, LAWS, HP0, HG, LSx, RINV), then the AR file's own
      seven hypotheses, each text verbatim with LS named LSx: HGnout, HERRNO, HZS (instance facts: B _G.v's c_HGnout,
@@ -72,7 +73,7 @@ Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 Local Notation segs := (@pa_segs _ fr_prog_listing PB_fr).
 #[local] Notation VAL := (@pa_val _ fr_prog_listing PB_fr).
 #[local] Notation BASE := (@pa_val _ fr_prog_listing PB_fr A_TEXT).
-(* ---- B cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:199-244) ---- *)
+(* ---- B cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:200-245) ---- *)
 Variable B : asyms.
 Variable MT : ameter_ops.
 Variables XM_LIB XN_LIB : Z -> Z.
@@ -92,7 +93,7 @@ Hypothesis HP0 : forall ly S Hp (W : world segs) mem md, ARx ly S Hp W mem md ->
 Hypothesis HG : gx_ok segs B G_fr.
 Variable LSx : lfcx -> Z -> lmod -> alayout -> astate -> Prop.
 Variable RINV : lfcx -> Z -> lmod -> Prop.
-(* ---- the AR file's own hypotheses (W_LLVMFuzzerTestOneInput_head.v:260-283), verbatim with LS named LSx ---- *)
+(* ---- the AR file's own hypotheses (W_LLVMFuzzerTestOneInput_head.v:261-284), verbatim with LS named LSx ---- *)
 (* g_nout's 8 bytes are in G_fr (the store at 0x8461c); at the pin: B _G.v c_HGnout *)
 Hypothesis HGnout : forall a, rg_nout fr_RG <= a < rg_nout fr_RG + 8 -> inG G_fr a.
 (* errno's cell is apart from g_nout; at the pin: B _G.v c_HERRNO *)
@@ -124,7 +125,7 @@ Local Notation hb_lregs_P := (W_LLVMFuzzerTestOneInput_head.hb_lregs_P B).
 Local Notation hb_open_val := (W_LLVMFuzzerTestOneInput_head.hb_open_val B).
 
 (* ---- the store frame's block lemmas over ARx (A's head_x Section fo, B's AR text :330-452 with 0 <= n) ---- *)
-(* W_kit_x.v:47 blk_off_imgP_x's proof: IMGC is W_img_x.v's fr_img_cover_x (the laws' field 17), and BLKN's
+(* W_kit_x.v:48 blk_off_imgP_x's proof: IMGC is W_img_x.v's fr_img_cover_x (the laws' field 17), and BLKN's
    0 <= n is a premise for the one block *)
 Lemma hb_blk_imgP_x : forall ly S Hp (W : world segs) mem md p n,
   ARx ly S Hp W mem md -> In (p, n) (ablocks B ly S) -> 0 <= n ->
@@ -1113,7 +1114,7 @@ Proof.
   subst Hp. exact (lf_seg_head_nil_x cx t W c HB HH).
 Qed.
 
-(* ---- THE CHECK: B cut_x Section w's SEG_HEAD (W_LLVMFuzzerTestOneInput_cut_x.v:622), restated in its text at cut_x's
+(* ---- THE CHECK: B cut_x Section w's SEG_HEAD (W_LLVMFuzzerTestOneInput_cut_x.v:623), restated in its text at cut_x's
    names (the forms B top_x.v:123-128 uses) and closed by `exact` from lf_seg_head_x ---- *)
 Local Notation BASEx cx Hp := (lf_base_x B MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G_fr ARx cx Hp).
 Local Notation IH := (INV_H_x B NP G_fr fr_FP PST ARx LSx RINV).

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reservation a system-call return or a failing store-conditional clears and the m_channel_reader premise). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -63,6 +64,17 @@ Hypothesis Hnliov : no_lazy model iovp0 (iovp0 + 16 * cnt0).
 Hypothesis Hdfd : (f + 124 <= iovp0 \/ iovp0 + 16 * cnt0 <= f + 120)%Z.
 Hypothesis Htot0 : (1 <= tot0 <= 2 ^ 30)%Z.
 Hypothesis Hs6_0 : rg ms0 22 = Z_to_bv 64 tot0.
+(* NEW at this revision, appended LAST among the plain hypotheses so no earlier
+   positional argument moves.  The model's writev wraps its result in
+   `if negb (m_channel_reader model) then check_sigpipe_writev ...`
+   (LPS@75d69e00 Sys/Fs/ReadWrite.v:1708), so rzc_writev_wall_nl now carries
+   `m_channel_reader model = true` as its SECOND premise (AsanWWritev.v:251).  Without
+   it the two calls below handed `Hh : m_halted model = None` to the reader slot:
+   measured at :437 chars 10-12, "The term "Hh" has type "m_halted model = None" while
+   it is expected to have type "m_channel_reader model = true""
+   (measured on the farm).  It is DISCHARGED, not assumed: AxEntryS's init_rdr
+   proves it at the launch from this tree's own input. *)
+Hypothesis Hcr : m_channel_reader model = true.
 Hypothesis HK : forall ms', SWF ms0 ms' iovp0 (iovp0 + 16 * cnt0) -> ms_pc_val ms' = pcw b 0x94 ->
   rg ms' 10 = rg ms' 22 -> (1 <= bv_unsigned (rg ms' 10) <= tot0)%Z -> realizes_cfg segs cfg (mkCfg ms' model) K.
 
@@ -359,9 +371,15 @@ Proof.
         by (rewrite F7 by (cbn [In]; intuition discriminate); rgn; exact Hs6).
   all: assert (R18 : rg S2 18 = Z_to_bv 64 (Z.of_nat (length ents)))
         by (rewrite F7 by (cbn [In]; intuition discriminate); rgn; exact Hs2).
+  (* Both setx layers here come from `rewrite adv_latch` at :341, whose reservation slot
+     is now the literal `None` (advance_past_svc clears it, LPS@75d69e00 Run.v:221-227),
+     so SWF_setx's `r = ms_resv S` no longer closes by reflexivity: measured as
+     "Unable to unify "ms_resv S" with "None"" at chars 70-81, the inner call's third
+     argument.  SWF_setx_none (AsanWSw.v:101) is the same
+     lemma for that slot; the SWF record already carries the None disjunct. *)
   all: assert (HS2 : SWF ms0 S2 iovp0 (iovp0 + 16 * cnt0))
         by (eapply SWF_FR1; [| exact (conj F1 (conj F2 (conj F3 (conj F4 (conj F5 (conj F6 F7)))))) | cbn [In CLOB]; intros r [->|[]]; inclob];
-            eapply SWF_setx; [eapply SWF_setx; [exact Hswf | inclob | reflexivity | reflexivity] | inclob | reflexivity | reflexivity]).
+            eapply SWF_setx_none; [eapply SWF_setx_none; [exact Hswf | inclob | reflexivity] | inclob | reflexivity]).
     +
       assert (R19 : rg S2 19 = Z_to_bv 64 iovp).
       { rewrite F7 by (cbn [In]; intuition discriminate). rgn. exact Hs3. }
@@ -428,6 +446,7 @@ Proof.
                   | apply acc_ok_nil | ].
   eapply (rzc_writev_wall_nl segs cfg (latch S) (rg S 17) model fd (Z_to_bv 64 iovp) ents bss K).
   - cbn [latch ms_rom]. rewrite (swf_rom _ _ _ _ Hswf). exact Hrom0.
+  - exact Hcr.
   - exact Hh.
   - reflexivity.
   - exact Hfdm.
@@ -470,6 +489,7 @@ Proof.
                   | apply acc_ok_nil | ].
   eapply (rzc_writev_wall_nl segs cfg (latch ms0) (rg ms0 17) model fd (Z_to_bv 64 iovp0) ents0 bss0 K).
   - exact Hrom0.
+  - exact Hcr.
   - exact Hh.
   - reflexivity.
   - exact Hfdm.
@@ -505,6 +525,8 @@ Theorem stdio_write_loop :
          (ents : list (word * word)) (bss : list (list byte)),
   ms_svc_pending ms = None -> ms_rom ms = seg_rom segs -> ms_pc_val ms = pcw b 0x88 ->
   m_halted model = None ->
+  (* NEW, see the Hcr hypothesis of Section L at :66. *)
+  m_channel_reader model = true ->
   rg ms 17 = Z_to_bv 64 66 -> rg ms 10 = Z_to_bv 64 fd ->
   rg ms 11 = Z_to_bv 64 iovp -> rg ms 19 = Z_to_bv 64 iovp ->
   rg ms 12 = Z_to_bv 64 (Z.of_nat (length ents)) -> rg ms 18 = Z_to_bv 64 (Z.of_nat (length ents)) ->
@@ -529,7 +551,7 @@ Theorem stdio_write_loop :
   realizes_cfg segs cfg (mkCfg ms model) (t_emit (map (WriteEv (Z_to_bv 64 fd)) (concat bss)) K).
 Proof.
   intros segs cfg b sr wj1 wj2 ij1 ij2 HC ms model K fd f iovp ents bss
-         Hsvc Hrom Hpc Hh H17 H10 H11 H19 H12 H18 H22 H9 Hlen Htot Hfdm Hfdr Hmfd Hf0 Hf1 Hi0 Hi1
+         Hsvc Hrom Hpc Hh Hcr H17 H10 H11 H19 H12 H18 H22 H9 Hlen Htot Hfdm Hfdr Hmfd Hf0 Hf1 Hi0 Hi1
          Harr Hbufs Hbok Hsok Hdfd Hdisj Hnla Hnlf Hnlb HK.
   pose proof (u64_range (Z_to_bv 64 0)).
   apply (from_first_ecall segs cfg b sr wj1 wj2 ij1 ij2 HC model K ms fd f iovp (Z.of_nat (length ents))

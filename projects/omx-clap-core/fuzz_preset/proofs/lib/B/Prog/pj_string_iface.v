@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10-30: omx-clap-core/fuzz_preset, image B' (asan-ubsan, #102 pin B' d663f82d7f48, unstripped twin
    c90d4fa54d43): pj_string's B' result AT THE INTERFACE INSTANCE, the relation the B' composition uses
-   (PresetCfnB.iface_ARx, lib/AU/PresetCfnB.v:965: ARcf at CfParams_preset /\ xs_placed_cf, over the listing's
+   (PresetCfnB.iface_ARx, lib/AU/PresetCfnB.v:966: ARcf at CfParams_preset /\ xs_placed_cf, over the listing's
    segments), where the callee walks are stated (a Theorem Labs lane's FuzzStrdupB at its ARcfx, the same relation).
    tpj_string_B_preset_iface: the kit's tpj_string_specX (lib/A/PRH_FnPj.v) at CfParams_preset, prh_img_B,
    B_prog_listing, PI_prog_B, YD2l.TfibB and ARx := iface_ARx, for every CTX0; the callee premises MEMSET

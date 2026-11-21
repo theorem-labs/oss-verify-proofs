@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGif0cgif.v (cold/c-asan-nmax-param 86aa4177b94, file sha256 8734a86d60b3) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; its 6 image addresses moved by code-verified function pairs (8 port_addr_check 16f8a030c869 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGif0cgif.v (file sha256 8734a86d60b3) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; its 6 image addresses moved by code-verified function pairs (8 port_addr_check 16f8a030c869 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
 (* Modified by Theorem Labs, 2026-10: the low shadow band of the constant cells ends at 0x800b4000 (the page above fs's last constant shadow cell, which ends at 0x800b34c4; AF0m.v Tfib_const_shadow), as in fs's AFix.v / AFjb.v, instead of the donor's 0x80050000 (the relocation tool had moved it to 0x80050398). *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/omx-clap-core/fuzz_state/lib/A/AGif0cgif.v (donor image sha256 64b53ff86172), with its module paths changed and its addresses moved to reac-pw/fuzz_segconf's ASan build. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The cgif_file side of the primary Allocate interface AGif0n: cgif's machine-level predicates, the instance of the
    interface's image class ImgBaseAG.AGImg, and the lemmas that tie AGif0n to cgif_file's walk.
 

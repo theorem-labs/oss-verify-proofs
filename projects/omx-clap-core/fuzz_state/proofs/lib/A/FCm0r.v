@@ -9,7 +9,8 @@
 (* Identical-body witness (no proof text taken from it): bzip2_compress_target's asan build (sha256 95e0cb270eeaf7c3..),
    FDE [0x3ddac,0x3df20), 93/93 instructions equal to preset's _0 in opcode and registers (85 identical words; the rest
    pc-relative and call fields), measured by FDE-paired masked body match; the proof text follows cgif_rgb's YF9p. *)
-(* Modified by Theorem Labs, 2026-10: relocated from omx-clap-core/fuzz_preset (a working branch b120217aa206) to omx-clap-core/fuzz_state's ASan image A as the class-0 walk of fuzz_state's __asan_stack_malloc_0 at 0x3d484: module paths and the image numerals of A/FCimg.v (generated from fuzz_state.asan), nothing else. *)
+(* Modified by Theorem Labs, 2026-10: relocated from omx-clap-core/fuzz_preset (a working branch) to omx-clap-core/fuzz_state's ASan image A as the class-0 walk of fuzz_state's __asan_stack_malloc_0 at 0x3d484: module paths and the image numerals of A/FCimg.v (generated from fuzz_state.asan), nothing else. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

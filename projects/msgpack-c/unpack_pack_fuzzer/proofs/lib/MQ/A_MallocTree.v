@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (auxv_ok states the auxv the model now lays out, 27 or 29 pairs by the CONFIG_RSEQ flag with the tags moved: auxv_tags, auxv_list over a value list, AT_RANDOM at pair 24; length and walk lemmas for it, auxv_list_length, auxv_list_bytes_length, auxv_list_tag, auxv_list_val, auxv_list_null_tag, auxv_list_null_val and auxv_tags_random; auxv_ok_weaken and auxv_ok_frame take the new witnesses). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -83,22 +84,148 @@ Definition ptr_rel (p : optr) (r : option bptr) : Prop :=
 
 Definition AUXV_CELL : Z := LIBC + 8.
 
-Definition auxv_list (x3 x4 x5 x16 x6 x11 x12 x23 rnd : Z) : list word :=
-  map wz [3; x3; 4; x4; 5; x5; 16; x16; 6; x6; 11; x11; 12; x12; 23; x23; 25; rnd; 0; 0].
+(** The auxv as [StackLayout.auxv_entries] lists it at LPS 75d69e00: ten
+    launch pairs (AT_SYSINFO_EHDR, the eight cache words, AT_MINSIGSTKSZ),
+    then AT_HWCAP, AT_PAGESZ, AT_CLKTCK, the three [PhdrInfo] pairs,
+    AT_BASE, AT_FLAGS, AT_ENTRY, the four credential pairs, AT_SECURE,
+    AT_RANDOM and AT_EXECFN -- twenty-six pairs -- then the two CONFIG_RSEQ
+    pairs when the kernel build sets the flag, then AT_NULL.  So the vector
+    is [StackLayout.auxv_count r] = 27 or 29 pairs, which is the count
+    [lib/ALib/InitMem.v:436-438] states as [2 * auxv_count (la_rseq la)]
+    words.
+
+    The tags are what a walk READS, and f1006fe8 -> 75d69e00 moved every one
+    of them: AT_PHDR 3 -> 13, AT_PHENT 4 -> 14, AT_PHNUM 5 -> 15, AT_HWCAP
+    16 -> 10, AT_PAGESZ 6 -> 11, AT_UID 11 -> 19, AT_EUID 12 -> 20,
+    AT_RANDOM 25 -> 24.  This file carried a fixed TEN-pair list at the OLD
+    positions, which at this revision is a predicate no memory satisfies --
+    well-typed, so it compiled and no error count ever named it.  Only the
+    TAGS are pinned here; every value slot stays a variable, which is all
+    the allocator's frames read. *)
+Definition auxv_tags (r : bool) : list Z :=
+  [33; 40; 41; 42; 43; 44; 45; 46; 47; 51; 16; 6; 17; 3; 4; 5; 7; 8; 9; 11; 12; 13; 14; 23; 25; 31]
+  ++ (if r then [27; 28] else []).
+
+(** AT_NULL closes the vector and is APPENDED after the conditional pairs,
+    so it lands at pair [26 + 2 * r] and never at a fixed offset
+    ([lib/AS/AsanInit.v:44-52], [StackLayout.auxv_entries]).  The pair-flattening
+    is [lib/ALib/InitMem.v:323-327]'s. *)
+Definition auxv_list (r : bool) (vals : list Z) : list word :=
+  flat_map (fun e : Z * Z => [wz (fst e); wz (snd e)])
+           (combine (auxv_tags r) vals ++ [(0, 0)]).
+
+Lemma auxv_flat_length : forall es : list (Z * Z),
+  length (flat_map (fun e : Z * Z => [wz (fst e); wz (snd e)]) es) = (2 * length es)%nat.
+Proof.
+  induction es as [|e es IH]; [reflexivity|].
+  cbn [flat_map]. rewrite length_app, IH. cbn [length]. lia.
+Qed.
+
+Lemma auxv_tags_length : forall r, S (length (auxv_tags r)) = StackLayout.auxv_count r.
+Proof. destruct r; reflexivity. Qed.
+
+Lemma auxv_list_length : forall r vals, length vals = length (auxv_tags r) ->
+  length (auxv_list r vals) = (2 * StackLayout.auxv_count r)%nat.
+Proof.
+  intros r vals H. unfold auxv_list.
+  rewrite auxv_flat_length, length_app, length_combine, H, Nat.min_id.
+  pose proof (auxv_tags_length r). cbn [length]. lia.
+Qed.
+
+Lemma auxv_list_bytes_length : forall r vals, length vals = length (auxv_tags r) ->
+  length (u64s (auxv_list r vals)) = StackLayout.auxv_size r.
+Proof.
+  intros r vals H. rewrite u64s_length, (auxv_list_length r vals H).
+  unfold StackLayout.auxv_size. lia.
+Qed.
+
+(** What a WALK of the table reads.  A scan of the auxv (musl's
+    [__init_libc]) loads word [2*k] as the tag and word [2*k+1] as the
+    value, and stops at the AT_NULL pair.  With the vector's length now
+    carrying the CONFIG_RSEQ flag these are the three facts a walk needs,
+    and they replace the [eq_refl] that used to discharge
+    [nth_error ws (Z.to_nat i) = Some w] by computation on a fixed
+    twenty-word list.
+
+    [auxv_walk_nth] holds for every pair BELOW the terminator, so it covers
+    pairs 0..25 without ever splitting on [r]: [nth k (auxv_tags r) 0]
+    reduces through the twenty-six-element prefix and leaves the [if]
+    untouched.  Only the terminator's position moves with the flag, which
+    is what [auxv_walk_null] states. *)
+Lemma auxv_walk_nth : forall (ts vs : list Z) k,
+  length vs = length ts -> (k < length ts)%nat ->
+  nth_error (flat_map (fun e : Z * Z => [wz (fst e); wz (snd e)]) (combine ts vs ++ [(0, 0)])) (2 * k)
+    = Some (wz (nth k ts 0))
+  /\ nth_error (flat_map (fun e : Z * Z => [wz (fst e); wz (snd e)]) (combine ts vs ++ [(0, 0)])) (2 * k + 1)
+    = Some (wz (nth k vs 0)).
+Proof.
+  induction ts as [|t ts IH]; intros vs k HL Hk; [cbn [length] in Hk; lia|].
+  destruct vs as [|v vs]; [cbn [length] in HL; lia|].
+  cbn [combine app flat_map].
+  destruct k as [|k]; [split; reflexivity|].
+  cbn [length] in Hk, HL.
+  replace (2 * S k)%nat with (S (S (2 * k))) by lia.
+  replace (2 * S k + 1)%nat with (S (S (2 * k + 1))) by lia.
+  cbn [nth_error nth]. apply IH; lia.
+Qed.
+
+Lemma auxv_walk_null : forall (ts vs : list Z), length vs = length ts ->
+  nth_error (flat_map (fun e : Z * Z => [wz (fst e); wz (snd e)]) (combine ts vs ++ [(0, 0)])) (2 * length ts)
+    = Some (wz 0)
+  /\ nth_error (flat_map (fun e : Z * Z => [wz (fst e); wz (snd e)]) (combine ts vs ++ [(0, 0)])) (2 * length ts + 1)
+    = Some (wz 0).
+Proof.
+  induction ts as [|t ts IH]; intros vs HL.
+  - destruct vs as [|v vs]; [split; reflexivity| cbn [length] in HL; lia].
+  - destruct vs as [|v vs]; [cbn [length] in HL; lia|].
+    cbn [combine app flat_map length].
+    replace (2 * S (length ts))%nat with (S (S (2 * length ts))) by lia.
+    replace (2 * S (length ts) + 1)%nat with (S (S (2 * length ts + 1))) by lia.
+    cbn [nth_error]. apply IH. cbn [length] in HL. lia.
+Qed.
+
+Lemma auxv_list_tag : forall r vals k,
+  length vals = length (auxv_tags r) -> (k < length (auxv_tags r))%nat ->
+  nth_error (auxv_list r vals) (2 * k) = Some (wz (nth k (auxv_tags r) 0)).
+Proof. intros r vals k HL Hk. unfold auxv_list. exact (proj1 (auxv_walk_nth _ _ _ HL Hk)). Qed.
+
+Lemma auxv_list_val : forall r vals k,
+  length vals = length (auxv_tags r) -> (k < length (auxv_tags r))%nat ->
+  nth_error (auxv_list r vals) (2 * k + 1) = Some (wz (nth k vals 0)).
+Proof. intros r vals k HL Hk. unfold auxv_list. exact (proj2 (auxv_walk_nth _ _ _ HL Hk)). Qed.
+
+Lemma auxv_list_null_tag : forall r vals, length vals = length (auxv_tags r) ->
+  nth_error (auxv_list r vals) (2 * length (auxv_tags r)) = Some (wz 0).
+Proof. intros r vals HL. unfold auxv_list. exact (proj1 (auxv_walk_null _ _ HL)). Qed.
+
+Lemma auxv_list_null_val : forall r vals, length vals = length (auxv_tags r) ->
+  nth_error (auxv_list r vals) (2 * length (auxv_tags r) + 1) = Some (wz 0).
+Proof. intros r vals HL. unfold auxv_list. exact (proj2 (auxv_walk_null _ _ HL)). Qed.
+
+(** The AT_RANDOM pair's index, which moved 8 -> 24, and the terminator's,
+    which moved from the literal 9 to [26 + 2 * r]. *)
+Lemma auxv_tags_random : forall r, nth 24 (auxv_tags r) 0 = 25.
+Proof. destruct r; reflexivity. Qed.
+
+Lemma auxv_tags_len_eq : forall r, length (auxv_tags r) = (26 + 2 * Nat.b2n r)%nat.
+Proof. destruct r; reflexivity. Qed.
 
 Definition auxv_ok (m : mem) (B : Z) : Prop :=
-  exists av x3 x4 x5 x16 x6 x11 x12 x23 rnd,
+  exists (r : bool) (av : Z) (vals : list Z) (rnd : Z),
     rw_cells asegs m AUXV_CELL [C8 (wz av)]
-    /\ bytes_at asegs m av (u64s (auxv_list x3 x4 x5 x16 x6 x11 x12 x23 rnd))
+    /\ bytes_at asegs m av (u64s (auxv_list r vals))
     /\ bytes_at asegs m (rnd + 8) (le8 (wz ctx_secret))
-    /\ alloc_ceiling <= B /\ B <= av /\ av + 160 <= 2^64 /\ B <= rnd + 8 /\ rnd + 16 <= 2^64
-    /\ 0 <= x3 < 2^64 /\ 0 <= x4 < 2^64 /\ 0 <= x5 < 2^64 /\ 0 <= x16 < 2^64 /\ 0 <= x6 < 2^64
-    /\ 0 <= x11 < 2^64 /\ 0 <= x12 < 2^64 /\ 0 <= x23 < 2^64 /\ 0 <= rnd < 2^64.
+    /\ length vals = length (auxv_tags r)
+    /\ nth 24%nat vals 0 = rnd
+    /\ Forall (fun v : Z => 0 <= v < 2^64) vals
+    /\ alloc_ceiling <= B /\ B <= av
+    /\ av + Z.of_nat (StackLayout.auxv_size r) <= 2^64
+    /\ B <= rnd + 8 /\ rnd + 16 <= 2^64 /\ 0 <= rnd < 2^64.
 
 Lemma auxv_ok_weaken : forall m B B', auxv_ok m B -> alloc_ceiling <= B' <= B -> auxv_ok m B'.
 Proof.
-  intros m B B' (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & H) HB.
-  exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. repeat (split; [tauto|]). lia.
+  intros m B B' (r & av & vals & rnd & H) HB.
+  exists r, av, vals, rnd. repeat (split; [tauto|]). lia.
 Qed.
 
 Lemma Forall_disjoint_from : forall (P : Z * Z -> Prop) W a n,
@@ -112,8 +239,8 @@ Lemma auxv_ok_frame : forall m m' B W,
   Forall (fun iv : Z * Z => snd iv <= B /\ (snd iv <= AUXV_CELL \/ AUXV_CELL + 8 <= fst iv)) W ->
   auxv_ok m' B.
 Proof.
-  intros m m' B W (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & C & A1 & A2 & H) MU WM FW.
-  exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. split; [|split; [|split; [|exact H]]].
+  intros m m' B W (r & av & vals & rnd & C & A1 & A2 & H) MU WM FW.
+  exists r, av, vals, rnd. split; [|split; [|split; [|exact H]]].
   - eapply rw_cells_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [_ ?]. lia.
   - eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [? _]. lia.
   - eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [? _]. lia.

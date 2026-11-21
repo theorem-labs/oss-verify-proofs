@@ -38,11 +38,11 @@ Local Open Scope Z_scope.
 
 Definition GI (j : nat) (m : word -> option byte) : Prop := True.
 
-(* G_local_c (Contract.v:291): GI reads no byte, so a run that keeps frame_G's bytes keeps it. *)
+(* G_local_c (Contract.v:292): GI reads no byte, so a run that keeps frame_G's bytes keeps it. *)
 Lemma GI_local : forall B, G_local_c B frame_G GI.
 Proof. intros B j m m' _ _. exact I. Qed.
 
-(* G_img_c (Contract.v:294): GI holds of the image at call 0. *)
+(* G_img_c (Contract.v:295): GI holds of the image at call 0. *)
 Lemma GI_img : forall B mem, G_img_c B frame_G mem -> GI 0%nat mem.
 Proof. intros B mem _. exact I. Qed.
 
@@ -54,7 +54,7 @@ Proof.
   - intros H. exists W_BASE_PLAIN, W_LEN. split; [left; reflexivity | exact H].
 Qed.
 
-(* frame_plain's global clause (FrameAPI.v:45-46) for every B that has the frame's symbol values: the world is in the
+(* frame_plain's global clause (FrameAPI.v:46-47) for every B that has the frame's symbol values: the world is in the
    image (wmem_in_img, Prog/T/WMem.v), and below every allocator-static range, the malloc context and errno. *)
 Lemma frame_G_clause : forall B : malloc_syms,
   ms_segs B = rsegs -> ms_guard B = 0x62b20 -> ms_got_guard B = 0x214e0 ->

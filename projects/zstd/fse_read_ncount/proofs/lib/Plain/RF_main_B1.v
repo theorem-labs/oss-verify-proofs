@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the section takes the launch values (launchT); fprintf_exit's diag_args premise and both exits' proofs use the stack floor sp - 6,144,513 in place of sp - 8,388,608; #[using] lists of fprintf_exit and fwrite_exit updated). *)
 From Stdlib Require Import ZArith List Lia Bool Permutation Strings.String.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run.
@@ -27,7 +28,7 @@ change (Z_to_le_bytes 8 z) with (le8 (Z_to_bv 64 z)); mem_after_store
 | |- evt _ _ (MS _ _ _ _ _ (write_to_mem _ _ (Z_to_le_bytes 4 ?z)) _) =>
 change (Z_to_le_bytes 4 z) with (le4 (Z_to_bv 64 z)); mem_after_store
 end).
-Section CANSEC1. Context {rc : runConstT}.
+Section CANSEC1. Context {rc : runConstT} {lx : launchT}.
 Definition S_OOM : Z := 0x10509. Definition s_oom : list Z := (str "cli: out of memory"%string ++ [10])%list.
 Definition S_SHORT : Z := 0x10990. Definition s_short : list Z := (str "cli: input shorter than header"%string ++ [10])%list.
 Definition S_OVER : Z := 0x105a7. Definition s_over : list Z := (str "cli: config_len overruns input"%string ++ [10])%list.
@@ -155,9 +156,9 @@ if (length bs =? 0)%nat then mret (inr (RdDone (rd_buf st1) (rd_content st1)))
 else mret (inl (mkRd (rd_buf st1) (rd_cap st1) (rd_content st1 ++ u8s_of_bytes bs)))
 end end).
 Proof. intros. reflexivity. Qed.
-#[using="VSP HT FPR FWX SWF"] Lemma fprintf_exit : forall (d : diag_msg) {R} (K : M PState R) (Q : R -> PState -> machine_state -> Prop) (s : PState) (LB : list block)
+  #[using="VSP HT FPR FWX SWF lx"] Lemma fprintf_exit : forall (d : diag_msg) {R} (K : M PState R) (Q : R -> PState -> machine_state -> Prop) (s : PState) (LB : list block)
 x1 t0 t1 t2 x9 (a1v a2v : word) x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 t3 t4 t5 t6 (F : bvmap 5 word) (fc : bv 32) (mm : mem),
-diag_args d mm a1v a2v (usp0 - 8388608) (usp0 - 128) ->
+    diag_args d mm a1v a2v (usp0 - 6144513) (usp0 - 128) ->
 BASE' mm -> RHEAP s LB mm -> ps_so s = stdout_init -> frm0 fc ->
 (forall ms', pat_exit 2 s ms' -> implM psegs K s Q ms') ->
 implM psegs (s_diag d ;;; K) s Q
@@ -170,7 +171,7 @@ unfold implM. iprefix. zstep. apply evt_done.
 lazymatch goal with |- impl _ _ (?tm _) _ ?msx => change (implM psegs tm s Q msx) end.
 eapply implM_bind.
 { Local Ltac2 Set LiaHints.tbl := fun () => "00<0?16800608486.10624361825921.78 25546104465.78 4427527645.106 49364486404.10655404301650.78 56323174152.78 57614170466.10766026193812.10466026193812.78 6667549001.108 9263838736.104 00000100500600700;00<00@00G00K00O00S00TSS2SFSSS2SFSS2SFS2SF2HaS2SFS2SFS2HaS".
-eapply (FPR d) with (lo := usp0 - 8388608) (canary := CAN);
+eapply (FPR d) with (lo := usp0 - 6144513) (canary := CAN);
 [exact FWX| exact SWF| apply stderr_file0_wfile; exact SE| reflexivity| rewrite unsigned_lit by lia; replace (usp0 + -128) with (usp0 - 128) by lia; exact DA
 | rewrite unsigned_lit by lia; exact ST
 | rewrite unsigned_lit by lia; unfold FPRINTF_DEPTH; lia| unfold GLOBALS_TOP; lia| rewrite unsigned_lit by lia; lia
@@ -180,12 +181,12 @@ destruct PO as (u0 & u1 & u2 & b0 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & u3 & u4 &
 ua. rewrite !unsigned_lit in MUc by lia. rewrite !unsigned_lit in ST2 by lia.
 replace (ret_pc (Z_to_bv 64 0x132d0)) with (Z_to_bv 64 0x132d0) by (symmetry; rpc).
 pose proof (magree_of_munch psegs _ _ _ MUc WMc) as AG.
-assert (OUT2 : forall a, (0x10000 <= a < 0x50000 /\ ~ (0x1e908 <= a < 0x1e908 + 232)) -> (fun a0 : Z => outside [(usp0 - 8388608, usp0 + -128); (0x1e908, 0x1e908 + 232)] a0) a).
+assert (OUT2 : forall a, (0x10000 <= a < 0x50000 /\ ~ (0x1e908 <= a < 0x1e908 + 232)) -> (fun a0 : Z => outside [(usp0 - 6144513, usp0 + -128); (0x1e908, 0x1e908 + 232)] a0) a).
 { intros a Ha. cbn. lia. }
 eapply implM_evt; [| intros ms'' H; apply HK; exact H].
 zstep.
 eapply (exit2_tail sp0 argv envp TID VSP HT s LB).
-- unfold LO. replace (usp0 - 8388608) with (usp0 + -8388608) in ST2 by lia. first [exact ST2 | replace (usp0 + -8388608) with (usp0 - 8388608) in ST2 by lia; exact ST2].
+    - unfold LO. replace (usp0 - 6144513) with (usp0 + -6144513) in ST2 by lia. first [exact ST2 | replace (usp0 + -6144513) with (usp0 - 6144513) in ST2 by lia; exact ST2].
 - eapply (RSTAT_agree TID _ _ _ AG); [intros a Ha; apply OUT2; unfold rstat_addr in Ha; lia| exact RS].
 - eapply RMalloc_ifaceP.RHEAP_frame_proof; [exact HP| exact MUc| exact WMc|].
 constructor; [left; cbn [fst snd]; atop_facts; lia|]. constructor; [| constructor].
@@ -194,7 +195,7 @@ right; left. cbn [fst snd]. unfold RLIBC, RCTX, RSSP_GUARD, RGOT_SSP. lia.
 - apply stderr_wfile_file. exact SEW.
 - exact MI2.
 Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
-#[using="VSP HT FWR TOW"] Lemma fwrite_exit : forall {R} (K : M PState R) (Q : R -> PState -> machine_state -> Prop) (s : PState) (LB : list block)
+  #[using="VSP HT FWR TOW lx"] Lemma fwrite_exit : forall {R} (K : M PState R) (Q : R -> PState -> machine_state -> Prop) (s : PState) (LB : list block)
 x1 t0 t1 t2 x9 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 t3 t4 t5 t6 (F : bvmap 5 word) (fc : bv 32) (mm : mem),
 BASE' mm -> RHEAP s LB mm -> ps_so s = stdout_init ->
 (forall ms', pat_exit 2 s ms' -> implM psegs K s Q ms') ->
@@ -209,7 +210,7 @@ lazymatch goal with |- impl _ _ (?tm _) _ ?msx => change (implM psegs tm s Q msx
 cbn [s_diag]. change (concat pieces_oom) with s_oom.
 eapply implM_bind.
 { Local Ltac2 Set LiaHints.tbl := fun () => "00C0>13689906064.7216800608486.9623505450807.7223791932504.7224361825921.7231283991625.7232059271057.7242285058960.9442832693700.724427527645.96 49364486404.9653316968120.7253430912377.7256323174152.7257614170466.976580414904.72 66026193812.7266026193812.946667549001.98 00000100200300700;00<00=00>00?00@00D00E00F00J00Q00R00V00Z00^SSSS2SFS2SFSSSSSS2SFSSS2SFS2SF2HaSS2SFS2SFS2Ha".
-eapply (FWR) with (lo := usp0 - 8388608) (canary := CAN) (s := s_oom);
+eapply (FWR) with (lo := usp0 - 6144513) (canary := CAN) (s := s_oom);
 [exact TOW| apply stderr_file0_wfile0; exact SE| rewrite unsigned_lit by (unfold S_OOM; lia); apply rodata_bytes; [exact MI| apply s_oom_ro| unfold S_OOM; lia| unfold S_OOM, s_oom, zlength; cbn; lia]
 | apply str_range || (unfold s_oom; apply Forall_app; split; [apply str_range| constructor; [lia| constructor]])
 | unfold s_oom, zlength; cbn; lia| reflexivity| reflexivity| reflexivity
@@ -225,11 +226,11 @@ destruct PO as (u0 & u1 & u2 & b0 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & u3 & u4 &
 ua. rewrite !unsigned_lit in MUc by lia. rewrite !unsigned_lit in ST2 by lia.
 replace (ret_pc (Z_to_bv 64 0x132f4)) with (Z_to_bv 64 0x132f4) by (symmetry; rpc).
 pose proof (magree_of_munch psegs _ _ _ MUc WMc) as AG.
-assert (OUT2 : forall a, (0x10000 <= a < 0x50000 /\ ~ (0x1e908 <= a < 0x1e908 + 232)) -> (fun a0 : Z => outside [(usp0 - 8388608, usp0 + -128); (0x1e908, 0x1e908 + 232)] a0) a).
+assert (OUT2 : forall a, (0x10000 <= a < 0x50000 /\ ~ (0x1e908 <= a < 0x1e908 + 232)) -> (fun a0 : Z => outside [(usp0 - 6144513, usp0 + -128); (0x1e908, 0x1e908 + 232)] a0) a).
 { intros a Ha. cbn. lia. }
 eapply implM_evt; [| intros ms'' H; apply HK; exact H].
 eapply (exit2_tail sp0 argv envp TID VSP HT s LB).
-- unfold LO. replace (usp0 - 8388608) with (usp0 + -8388608) in ST2 by lia. first [exact ST2 | replace (usp0 + -8388608) with (usp0 - 8388608) in ST2 by lia; exact ST2].
+    - unfold LO. replace (usp0 - 6144513) with (usp0 + -6144513) in ST2 by lia. first [exact ST2 | replace (usp0 + -6144513) with (usp0 - 6144513) in ST2 by lia; exact ST2].
 - eapply (RSTAT_agree TID _ _ _ AG); [intros a Ha; apply OUT2; unfold rstat_addr in Ha; lia| exact RS].
 - eapply RMalloc_ifaceP.RHEAP_frame_proof; [exact HP| exact MUc| exact WMc|].
 constructor; [left; cbn [fst snd]; atop_facts; lia|]. constructor; [| constructor].

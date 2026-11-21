@@ -3,27 +3,28 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_ubjson_encoder/lib/S8/AsanAcct.v, with its module paths and module names changed; 403 of its 523 lines of code are new or changed and 1138 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/A/FMbz_clean.v, with its module paths and module names changed; 344 of its 386 lines of code are new or changed and 481 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: lib/A/HPgWrapNcmp.v's hd_strncmp_core (itself reac-pw/fuzz_pin's
-   lib/A/PPgWrapNcmp.v pin_strncmp_core at 90722657971) re-run with the caller's frame hole of lib/A/HPgHole.v
+   lib/A/PPgWrapNcmp.v pin_strncmp_core) re-run with the caller's frame hole of lib/A/HPgHole.v
    (ecall_preH in, the hole post out), as lib/A/Rt/FMrt_lift.v rt_post_roU_win re-runs rt_post_ro_win with
    lib/A/Rt/FMupoison.v ARU_frame: hd_rt_post_roH_win is rt_post_roU_win with HPgHole.ARH_frame in place of
    ARU_frame; the walk's premises that AR gives (the stack window, the runtime cells, the read-only views) are read
    off AR of the unpoisoned memory and carried to the memory itself, which agrees with it off the hole; the rest
    is pin's proof. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/A/HPgWrapNcmpH.v, with its module paths and module names changed; 174 of its 226 lines of code are new or changed and 334 lines of the source are left out. *)
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMrt_lift.v (cold/port-fm-rtprintf-param 3e35620c52e); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMrt_lift.table). *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMrt_lift.v at 2d2ff01bb6f2 relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMrt_lift.v; relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMrt_lift.table). *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMrt_lift.v relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
 (* fm's runtime contracts in the donor's form, the generic half (RtStr lane).
    - A walk proved over the machine state alone (lib/Lib `evt`, its registers written `mkR ...`) is
-     read at a donor call site (`SRr` from `cfg_at`, YG0d.v:213): the register map is moved with
+     read at a donor call site (`SRr` from `cfg_at`, YG0d.v:214): the register map is moved with
      lib/Lib/RegisterBridge.v (canonical_contract_transport), and each step of the walk is a step of
-     the donor's `msteps`, which `SRr_msteps` (YA0n.v:149) lifts.
+     the donor's `msteps`, which `SRr_msteps` (YA0n.v:150) lifts.
    - A walk that returns to ra with the callee-saved registers kept and changes nothing but a window
      of K <= STK bytes below sp gives the donor-form post `rt_post_ro` (FMH_Rt.v:88); AR is kept by
-     the donor's frame law (al_frame, YG0d.v:439), as cgif_file A/AE2j.v:142 keeps it.  Inside fm's
+     the donor's frame law (al_frame, YG0d.v:440), as cgif_file A/AE2j.v:142 keeps it.  Inside fm's
      user-poison window the same walk gives `rt_post_roU` (FMH_Rt.v:96), ARU kept by
      SnUpoison.ARU_frame.
    - A body walk of lib/A/Bz (its own copy of `evt`) is read the same way (srr_of_canon_bz). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/FMrt_lift.v at 71994ff034c7, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/FMrt_lift.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/FMrt_lift.v keeps its donor's comment text) is kept as lib/A/FMrt_lift.v writes it. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/FMrt_lift.v, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/FMrt_lift.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/FMrt_lift.v keeps its donor's comment text) is kept as lib/A/FMrt_lift.v writes it. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B' (asan-ubsan #102 pin d663f82d7f48, unstripped twin c90d4fa54d43), same:
    THE WALK AT THE INSTANCE OF RECORD. lib/B/Prog/SameB_walk.v's same_holds_B, the batch kit's text tsame_specX itself
-   (lib/A/PRH_FnEx.v :353 at the cut 7cdbb61b5fa0, with its GUARDED live-stack premise
+   (lib/A/PRH_FnEx.v :353 at the cut, with its GUARDED live-stack premise
    `spZ regs <= pa -> YGcallStackUp.astack_up_x segs ly W (spZ regs) mem` after fpre), at B := YD2l.TfibB,
    RL := prh_room_live_a8. PAL := PALibB.exvi_eh_palib; SMB_CF (ARx refines ARcf) the identity / proj1. Two tops:
    - same_holds_B_TfibBx at the relation of record ARxs = ARcf /\ xs_placed_cf (YGcallcf.ARxs; LAWS :=
@@ -10,8 +11,8 @@
    - same_holds_B_TfibB at plain ARcf (LAWS := PALibB.exvi_eh_laws).
    CONSUMER CHECK (fresh reviewer subagent SameCallSites, 2026-10-29 21:5xZ, read-only): every B' application of the
    same text discharges the GUARDED premise with no caller change, because each root is in a fake frame or a Lam
-   block, below YM05.alloc_ceiling <= the callee's sp, so the guard is false: Cno102B_R7.v:736 (cno102b-r
-   1db3315ff552 = dec-2-p102-R7-7 4526688622a1; check_no_overread's class-3 fake frame), Rtt102CKB.v:2046
+   block, below YM05.alloc_ceiling <= the callee's sp, so the guard is false: Cno102B_R7.v:737 (cno102b-r
+   = dec-2-p102-R7-7; check_no_overread's class-3 fake frame), Rtt102CKB.v:2047
    (h-aag-10-p102-R7; doc a caller's fake frame, back round_trip_text's class-1 fake frame), the SameB recursion
    (kids in Lam). No B' call site passes a root on the caller's own stack.
    What stays open, by name: the two runtime rows, MARKED TEXTS (strcmp: YGcallMxmn.astrcmp_realizes_xrom, OWNER
@@ -53,7 +54,7 @@ exact (@same_holds_B fx rc ci CP (@prh_room_live_a8 CP) TB ARI SK PALibB.exvi_eh
 Qed.
 
 (* ---- AT THE RELATION OF RECORD for the image-B TFIB closure: ARx := ARcfx = (ARcf rsegs TfibB /\ xs_placed_cf), the
-   relation consumers cite (as PItems_compose.v's pi_step_PI_TfibBx, cold/h-rw-pre-7-bp-parse_items 73f5e5156205).
+   relation consumers cite (as PItems_compose.v's pi_step_PI_TfibBx).
    LAWS by YGcallcf.AR_laws_x_xs rsegs TfibB (YG0lawscf.AR_laws_ok_cf rsegs TfibB), unconditional; PAL by
    PALibB.exvi_eh_palib (PALib does not mention ARx); SMB_CF by proj1. The two runtime rows stay MARKED TEXTS, now at
    ARcfx. ---- *)

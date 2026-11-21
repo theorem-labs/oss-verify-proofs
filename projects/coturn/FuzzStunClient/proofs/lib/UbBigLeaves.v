@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the section assumes the stderr writes' channel reader (a_channel_reader) and passes it to the out-of-memory and refused tails. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -71,6 +72,9 @@ Section BigLeaves.
   Variables (path : list byte) (stdin0 : InputStream) (fs0 : Fs).
   Hypothesis Hvsp : valid_sp sp0.
   Hypothesis W : world0 area (bv_unsigned gm) brkv mas (bv_unsigned tid) M0.
+  (* LPS 08b1429/75d69e00: the stderr write's channel reader (UbOomTail/UbRefused [Hrdr]); modelG's
+     reader is the Amb's (Amb.v:49, then Run.valid_input_channel_reader, [c0dd863a:theories/LinuxProcessSem/Run.v:5018], at the top). *)
+  Hypothesis Hrdr0 : a_channel_reader = true.
 
   Lemma leaf_facts : forall R M, oom_leaf sp0 M0 R M ->
     getr R 2 = Z_to_bv 64 (bv_unsigned sp0 - 128) /\ getr R 3 = Z_to_bv 64 0x10800 /\ getr R 4 = Z_to_bv 64 0x36c60
@@ -97,7 +101,7 @@ Section BigLeaves.
     intros R M off V HL.
     destruct (leaf_facts R M HL) as (Rsp & Rgp & Rtp & STK & IMG & Ctid & Htid & Cself & (cn & Ccan) & Cpg).
     change fs0 with (m_fs (modelG path stdin0 fs0 tid off V)).
-    apply (ref_oom_tail sp0 [] (modelG path stdin0 fs0 tid off V) Hvsp eq_refl eq_refl eq_refl (bv_unsigned tid) R M
+    apply (ref_oom_tail sp0 [] (modelG path stdin0 fs0 tid off V) Hvsp eq_refl eq_refl eq_refl Hrdr0 (bv_unsigned tid) R M
              Rsp Rgp Rtp STK IMG Ctid Htid Cself cn Ccan Cpg 0x13d28).
     left. reflexivity.
   Qed.
@@ -110,7 +114,7 @@ Section BigLeaves.
     intros R M off V HL.
     destruct (leaf_facts R M HL) as (Rsp & Rgp & Rtp & STK & IMG & Ctid & Htid & Cself & (cn & Ccan) & Cpg).
     change fs0 with (m_fs (modelG path stdin0 fs0 tid off V)).
-    apply (ref_refused_tail sp0 [] (modelG path stdin0 fs0 tid off V) Hvsp eq_refl eq_refl eq_refl (bv_unsigned tid) R M
+    apply (ref_refused_tail sp0 [] (modelG path stdin0 fs0 tid off V) Hvsp eq_refl eq_refl eq_refl Hrdr0 (bv_unsigned tid) R M
              Rsp Rgp Rtp STK IMG Ctid Htid Cself cn Ccan Cpg).
   Qed.
 End BigLeaves.

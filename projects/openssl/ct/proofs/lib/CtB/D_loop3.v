@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main-level stack floor STACK_WOK, the zero stack the entry state holds below sp0). *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.openssl.ct.lib.CtLib Require Import ImageCtA.
 (* [comment removed for export] *)
@@ -45,7 +46,7 @@ Hypothesis LIB_loc : fp_local LIB_FP LIB.
 Hypothesis IO_img : forall x, in_ranges IO_FP x -> client_static x /\ ~ drv_cell x /\ outside LIB_FP x.
 Hypothesis XENV_img : forall x, in_ranges XENV_FP x -> client_static x /\ ~ drv_cell x /\ outside IO_FP x /\ outside LIB_FP x.
 
-Local Ltac ul := unfold SEGTOP_A, STACK_WIN, USTACK_TOP, RT_STACK, g_read_stage in *; lia.
+Local Ltac ul := unfold SEGTOP_A, STACK_WIN, STACK_WOK, USTACK_TOP, RT_STACK, g_read_stage in *; lia.
 Local Notation CLXp := (CLX_pres OUT_rep ERR_rep IO_FP XENV XENV_FP LIB OUT_loc ERR_loc XENV_loc LIB_loc IO_img XENV_img).
 Local Notation CLXx := (CLX_pres_ex OUT_rep ERR_rep IO_FP XENV XENV_FP LIB OUT_loc ERR_loc XENV_loc LIB_loc IO_img XENV_img).
 
@@ -62,7 +63,7 @@ Proof using AF MAL FRE MCP OUT_loc ERR_loc XENV_loc LIB_loc IO_img XENV_img.
   pose proof (cap_ok_double cap HCAP Htop) as HCAP2. pose proof (cap_ok_range _ HCAP2) as CAPR2.
   assert (INB : In (buf, cap) (rt_live RT Σ)) by (rewrite LV; left; reflexivity).
   pose proof (af_live_range RT AF Σ m buf cap ART0 INB) as (PR1 & PR2 & PR3).
-  set (lo := rt_sp0 RT Σ - STACK_WIN) in *.
+  set (lo := rt_sp0 RT Σ - STACK_WOK) in *.
   assert (EU : bv_unsigned (Z_to_bv 64 (usp - 80)) = usp - 80) by (apply unsigned_lit; ul).
   (* [comment removed for export] *)
   apply (MAL Σ (PMfd (FD argvb cap) fs) (Z_to_bv 64 0x1eec78) (Z_to_bv 64 (usp - 80)) gp (Z_to_bv 64 TP_A) t0 t1 t2 (Z_to_bv 64 2)
@@ -116,7 +117,7 @@ Proof using AF MAL FRE MCP OUT_loc ERR_loc XENV_loc LIB_loc IO_img XENV_img.
     + ul.
     + ul.
     + lia.
-    + rewrite LBS. exact (checked_src_live RT AF Σ1 m1 _ lo buf cap buf cap ART1 INB1 ltac:(lia) ltac:(lia) ltac:(rewrite SP1; lia)).
+    + rewrite LBS. exact (checked_src_live RT AF Σ1 m1 _ lo buf cap buf cap ART1 INB1 ltac:(lia) ltac:(lia) ltac:(rewrite SP1; ul)).
     + rewrite LBS. exact (checked_dst_live RT AF Σ1 m1 _ nb (2 * cap) nb cap ART1 INN1 ltac:(lia) ltac:(lia) ltac:(lia)).
     + rewrite LBS. lia.
     + unfold call_ok. rewrite EU, SP1. split; [exact ST1|]. ul.

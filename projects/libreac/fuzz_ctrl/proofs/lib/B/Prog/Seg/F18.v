@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/reac_box_catalogue_match.v, with its module paths, module names, addresses and numbers changed; 2488 of its 3291 lines of code are new or changed and 2298 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_box_catalogue_match.v, with its module paths and module names changed; 2419 of its 2557 lines of code are new or changed and 3153 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/Tac_slot.v, with its module paths and module names changed; 756 of its 937 lines of code are new or changed and 2376 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment F18 of fuzz_ctrl LLVMFuzzerTestOneInput (asan-ubsan, image B, libreac v1.9.0): the range 0x82634-0x82648.
    ld a0,272(s1); beqz a0,82abc; li a2,6; ld a0,112(s1); mv a1,s2; jal wrapper_bcmp@0x82648; the run goes through the
    call to the return point 0x8264c. Entry cut Inv_B82634_at, exits Inv_B8264c_at (F19 entry) and Inv_B82abc_at (F30
@@ -15,7 +16,7 @@
    image B keeps Phi in s2 (reg 18), the kind k in s8 (reg 24), the sum flag in s9 (reg 25); the record pointer kp
    is the spill s1+280, the word tested by the beqz is at s1+272, the bcmp operands at s1+112 / s1+96, the record
    body pointer Phi+18 at s1+312, 1 - sum_ok at s1+248, and j at s1+240 (LK). The wrapper's instrumented check of
-   [s1+112] and s2 passes from their addressability. Adopt 6 (bc14aa7165): FTURN (the cursor spills
+   [s1+112] and s2 passes from their addressability. Adopt 6: FTURN (the cursor spills
    [s1+224] / [s1+232] and the frame's bytes at Phi) and IFS (S j) (the two frame records and the local `first` in
    the frame body) cross the call: the spills lie in [A, A + 448) at or above sp, Phi's bytes in its live block
    below stklo, the records and `first` in the frame, all outside the wrapper's scratch [sp - BCMP_WRAP_K, sp). *)
@@ -205,7 +206,7 @@ Qed.
 
 (* ---- The turn's two frame records keep fixed lengths (model): the fragment record t_FG j 72 bytes (fg_next keeps
    72 in every class) and the identity record t_ID j 38 bytes (every ingest keeps 38, RcIdentModel.ING_length).
-   Copied from prover a Theorem Labs lane's lib/B/Prog/Seg/F20.v (a working branch 81dc3c31079, its rl_ lemmas), which this file does not
+   Copied from prover a Theorem Labs lane's lib/B/Prog/Seg/F20.v (a working branch, its rl_ lemmas), which this file does not
    import. IFS's transport across the call needs both records inside the frame body. ---- *)
 Lemma f18_fg_n : forall len g, fg_fr len g = true -> 1 <= fg_n g <= 22.
 Proof.

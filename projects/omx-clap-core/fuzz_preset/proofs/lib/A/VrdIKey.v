@@ -5,16 +5,16 @@
    rule 24: no function proved
    rule 24: proves no function (kind: segment lemma). Every callee (parse_string, fuzz_free) is its record text,
    taken as a named Section hypothesis; every neighbouring segment is a boundary state of VrdIElem.v.
-   SET (history): written on a working branch over a working branch 9783bcadf88 and the record texts of
-   a working branch b0262503e74 (old pins, image A). NOW: relocated to image A' (asan 1be0f53d, lane
-   P102Reloc2, a working branch 43e0d7669c5b) and adapted to the kit reader text (PRH_FnParse.v
+   SET (history): written on a working branch over a working branch and the record texts of
+   a working branch (old pins, image A). NOW: relocated to image A' (asan 1be0f53d, lane
+   P102Reloc2, a working branch) and adapted to the kit reader text (PRH_FnParse.v
    94232293d483, PRH_FnReader.v fb7b12dfa169, PRH_Base.v ee2f5cd7ed35) by lane A2Step on a working branch.
-   RE-FIT onto the kit's cut 7cdbb61b5fa0 (lane RItems): the journal at the budget ie_CW E (runs from VrdIElem.vrd_ijrn_base,
+   RE-FIT onto the kit's cut (lane RItems): the journal at the budget ie_CW E (runs from VrdIElem.vrd_ijrn_base,
    back by vrd_ijrn_unbase), parse_string's budgeted post (VrdArm.vrd_call_Wb_P) and its cursor-set, wild-room and
    per-event live premises, and the batch kit's layer of the boundaries (vk_k1h before the call, vk_jfk after the key, the
    exits' free order).
    Build (route of record, pins102): the internal file zfb-targets.85055e6079bccb28.sh with PAU pau-preset-102 and facts
-   8f3e7e1a07f1 - never cb, whose facts predate the A' image.
+   - never cb, whose facts predate the A' image.
 
    THE TWO ARMS AT THE LOOP HEAD (row 108, `beqz s3, +0x198`, s3 = (o ? 1 : 0) by vrd_iregs):
    - ARRAY (o = false): the branch is taken straight to row 210 (slot 6142 = A_ISLOT_SLOT); nothing is read or
@@ -2397,7 +2397,7 @@ Proof.
   split; [rewrite En, Ec; exact Hnc|]. split; [exact Ho|]. split; [exact R10|].
   split.
   { unfold pj_cstrR. split; [rewrite EL; left; reflexivity|]. split; [lia|]. split; [|exact Hcb].
-    (* the new third conjunct (texts 265bfe65918): the granted request Q + 1 + cf_head is below cf_malloc_max
+    (* the new third conjunct (texts): the granted request Q + 1 + cf_head is below cf_malloc_max
        (rd_room at Pc, vk_room_head), which is below 2 ^ 30 (YG08cf.cf_malloc_max_bound), and length s <= Q *)
     pose proof M4 as HR4. rewrite Hcont, Ho, Ht' in HR4.
     destruct (vk_room_head (ip_S Pc) Q t' HR4) as (Hmx & _). unfold LIVE_parse_string in Hmx.
@@ -2457,7 +2457,7 @@ Ltac vk_pj := unfold vk_with; cbn [ip_fx ip_ly ip_S ip_Hp ip_W ip_regs ip_mem ip
 Ltac vk_retcfg := unfold vrd_cfg; cbn [ip_fx ip_regs ip_mem ip_md];
   change (w64 (A_IPC VK_RET_SLOT)) with (Z_to_bv 64 (BASE + 4 * Z.of_nat VK_RET_SLOT)); reflexivity.
 
-(* fpre's fourth conjunct at the parse_string call (kit 04388d628fb on): the jal's return pc, listing slot VK_RET_SLOT,
+(* fpre's fourth conjunct at the parse_string call (kit on): the jal's return pc, listing slot VK_RET_SLOT,
    is below the run's allocation ceiling - PRW_StepKit's ONE copy, in a CLOSED goal (S7bPjWrite: its vm_compute in a
    large proof context timed out; here it ran away for 40 min / 60 GB, measured 2026-10-29) *)
 Lemma vk_ret_slot_ceil : bv_unsigned (Z_to_bv 64 (BASE + 24324)) < YM05.alloc_ceiling.
@@ -2561,7 +2561,7 @@ Proof.
                 (ip_Lam P) (ip_peak P) (ip_cnt P) (ip_fail P) (ip_ran P)
                 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _).
       * split; [exact HPRE1|]. rewrite HM. split; [exact HROD|]. split; [rewrite Hsp; exact HTOP|].
-        (* fpre's fourth conjunct, kit 04388d628fb: the jal's return pc is listing slot VK_RET_SLOT; its fifth (the kit
+        (* fpre's fourth conjunct, kit: the jal's return pc is listing slot VK_RET_SLOT; its fifth (the kit
            reader text), the float state's frm_zero, is vrd_ijrn's *)
         unfold raZ. rewrite Q1. split; [exact vk_ret_slot_ceil|].
         pose proof HJN as (_ & _ & Hfz & _). exact Hfz.
@@ -4192,9 +4192,9 @@ Proof.
   intros W' c' _ ((P' & HWe & Hc & _ & HC) & _). exists P'. exact (conj HWe (conj Hc HC)).
 Qed.
 
-(* ---- CHECK 1 OF VERIFY 21:4xZ for the changed shared texts vk_w2 / vk_c3 (the a0 / a2 conjuncts of 1c1be792c3b4,
+(* ---- CHECK 1 OF VERIFY 21:4xZ for the changed shared texts vk_w2 / vk_c3 (the a0 / a2 conjuncts,
    which A2KeyB's VrdIKeyB.v consumes): the two register conjuncts make neither text vacuous. Any position that
-   satisfies the text as it stood before the change (the interface c9912d86b33f: the premises below) gives, with a0 / a2
+   satisfies the text as it stood before the change (the interface: the premises below) gives, with a0 / a2
    set to the key slot and its shadow address and NOTHING else changed, a position of the new text - no other conjunct
    reads a0 or a2 (vk_live omits them; vk_unseatK moves vk_key). ---- *)
 Definition vk_regs_slot (P : vrd_ipos) : bvmap 5 word :=

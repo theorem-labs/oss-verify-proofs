@@ -16,10 +16,10 @@
 
    Port-from: cgif origin/ossv/recipes proofs/cgif/cgif_file_fuzzer/lib/A/ACj6.v:42-90 (flcx, fl_base, fl_E, fl_post,
    fl_from) and lib/A/ACid.v:57-118 (fl_baseX, fl_EX, fl_postX, fl_fromX0): the shape only; the content is crt's
-   (FSH_Fn_crt.v) and the env layout is a Theorem Labs lane's crcs_extra (a working branch c4bfd3bc057,
+   (FSH_Fn_crt.v) and the env layout is a Theorem Labs lane's crcs_extra (a working branch,
    lib/A/FSH_check_reject_clean_starved.v:210-218). A new file: no licence lines (internal).
    rule 24: proves no function (kind: segment-walk interface of check_round_trip, build A), PORTED from
-   a working branch d25a984c903 proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_*.v - the
+   a working branch proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_*.v - the
    bespoke ASan proof of THIS function on the SAME fs.asan bytes (0x81a9c), Qed, Require closure 334 files with 0
    Admitted / Axiom / Parameter: its stage cuts (stdefs.v St0..St25), its carried invariant CR (calls.v:142, crt_shadow
    :96, crt_unsh :98, crt_fake :104) and its FP lemmas (sdglue.v) are the template for crt_base / crt_INV_* / crt_from;
@@ -232,7 +232,7 @@ Definition crt_base (cx : crt_cx) : Prop :=
 (* the post's Q over the record's fields, in the stream owner's restated count form (a Theorem Labs lane 23:58Z): g_count is
    bumped by allocations only, never by a free, so the increment is at most the released CRT_ALLOCS = 68
    (lib/Prog/check_round_trip_c.v:17, :54 `cnt <= cnt' <= cnt + CRT_ALLOCS`), not EV_check_round_trip = 78, which counts
-   the frees too. S0 carries that form since a working branch 88f2996f1ce, so crt_allocs IS FSH_Fn_crt.CRT_ALLOCS
+   the frees too. S0 carries that form since a working branch, so crt_allocs IS FSH_Fn_crt.CRT_ALLOCS
    and crt_post is check_round_trip_spec's post (crt_spec_of_base below). *)
 Definition crt_allocs : Z := CRT_ALLOCS.
 Definition crt_Q (cx : crt_cx) : alayout -> astate -> world tfibsegs -> bvmap 5 word -> (word -> option byte) -> Model -> Prop :=
@@ -257,7 +257,7 @@ Definition crt_from (ss : sstate) (INV : crt_inv) : Prop :=
   st_ok tfibsegs E ss (restrict (w_H W3) ms3) ->
   SRr tfibsegs W3 (mkCfg ms3 md3) (crt_post cx).
 
-(* crt_base / crt_post ARE check_round_trip_spec's premises and post (S0 88f2996f1ce): the walk's entry theorem is the
+(* crt_base / crt_post ARE check_round_trip_spec's premises and post (S0): the walk's entry theorem is the
    statement. The walk's picks are free in both. *)
 Lemma crt_spec_of_base :
   (forall cx, crt_base cx ->
@@ -351,7 +351,7 @@ Definition crt_INV_82068 : crt_inv :=
      blocks_bytes S3 <= blocks_bytes (c_S cx) + LIVE_82068 cx /\
      c_cnt cx <= cnt <= c_cnt cx + CNT_82068 cx /\ k <= K_82068 cx).
 
-(* ================= crt_INV_8212c, the lane boundary B1 -> B2 (a Theorem Labs lane's text, a working branch 20330e6b385 FSH_crt_segB.v:435-484) =================
+(* ================= crt_INV_8212c, the lane boundary B1 -> B2 (a Theorem Labs lane's text, a working branch FSH_crt_segB.v:435-484) =================
    0x8212c is the return of the second pj_object (0x82128). Since 0x82068: the second decode (0x82074) made `dec`, a
    live reader block of dec_size tb2 bytes holding bs (its head joins U), and wrote |bs| at F + 0x1c0; bcmp (0x82098)
    found dec = bd; segment 12's 29 shadow stores (0x820a0-0x82110) made the five frame objects addressable, s11 became
@@ -361,7 +361,7 @@ Definition crt_INV_82068 : crt_inv :=
    pj_object_spec's post gives `rtree v (JObj []) []`, and PjStruct.pj_node's JObj arm pins str, n, and (with D = [])
    cap, kids and keys to 0, but not num. Nothing else allocated or freed, so the block list, U and g_live are those
    of 0x82068 plus dec. The forms of the want / same blocks and of the n cell are crt_INV_821ac's, so B2's transport
-   is the identity on them. Ported from d25a984c903 lib/A/Prog/check_round_trip_stdefs.v St4 (:315, crt_obj_stage
+   is the identity on them. Ported from lib/A/Prog/check_round_trip_stdefs.v St4 (:315, crt_obj_stage
    at 0x8213c with (JObj []) (JObj []) [] [] []) and check_round_trip_sd3.v crt_obj_hdr (:693), restated over the S0
    predicates. a0 is not stated: pj_object returns void. *)
 Definition K_8212c (cx : crt_cx) : Z := K_82068 cx + FSH_Fn_writer.dec_ev (crt_es cx).
@@ -598,12 +598,12 @@ Definition crt_INV_822ac : crt_inv :=
 Definition crt_room_D1 (cx : crt_cx) : Prop :=
   K_822ac cx <= EV_check_round_trip /\
   LIVE_82268 cx + (FSH_Fn_writer.dec_size (WriterSpec.b64_enc (c_bs cx)) + HEAD) <= LIVE_check_round_trip.
-(* C2's room (a Theorem Labs lane, a working branch 0bdfefed3be FSH_crt_segC2.v Section roomC2, verbatim): the
+(* C2's room (a Theorem Labs lane, a working branch FSH_crt_segC2.v Section roomC2, verbatim): the
    by-trace pj_write count at 0x82224 and pj_parse's trace at 0x82244, over crt_wst / crt_TR (above). Its terms are
    WRITER's and READER's by-trace posts on S0, so no restatement is needed: lib/A/FSH_crt_room.v crt_room_C2_holds
    discharges a lane's `HROOM2 : forall cx, crt_base B cx -> crt_room_C2 cx`. *)
-(* clause 1 also carries the D groups' allowance, which C2 pays at 0x82268 into crt_INV_82268 (c2_chain, a working branch
-   ebb2a46b8f3): 15 doc blocks, length Dback <= length crt_TR by pj_parse's post. By trace the
+(* clause 1 also carries the D groups' allowance, which C2 pays at 0x82268 into crt_INV_82268 (c2_chain, a working branch):
+   15 doc blocks, length Dback <= length crt_TR by pj_parse's post. By trace the
    worst case is exactly 78 = EV_check_round_trip (tight at 18 text sizes, a Theorem Labs lane's measure) *)
 Definition crt_room_C2 (cx : crt_cx) : Prop :=
   K_82218 cx + FSH_Fn_writer.wev0 (crt_wst cx) + rd_ev (crt_TR cx) +
@@ -868,7 +868,7 @@ split; [exact H2|]. split; [exact H3|]. split; [exact H4|]. split; [exact H8|]. 
 intros j _. apply ew_Ereg_extra.
 Qed.
 
-(* ================= shared facts about crt's class-3 frame (from a Theorem Labs lane's FSH_crt_segC.v:61-128, by path) ========= *)
+(* ================= shared facts about crt's class-3 frame (from a Theorem Labs lane's FSH_crt_segC.v:62-129, by path) ========= *)
 Lemma crt_frame3 : fs_frame_bytes 3 = 512.
 Proof. reflexivity. Qed.
 (* the statics of FS_PSTAT_FP are image bytes (the last RW segment [0xa1000, 0x5fd000) of tfibsegs) *)
@@ -935,8 +935,8 @@ split.
 - intros a Ha. exists 3, pos. split; [left; reflexivity|]. left. unfold in_zr. cbn [fst snd].
   rewrite crt_frame3. fold F. lia.
 Qed.
-(* ================= the walk's program-call step and its helpers, from a Theorem Labs lane's FSH_crt_segC.v:128-218 and
-   :220-424 by path (a working branch head 17f9e8967d2), renamed crt_ -> crt_ so the four segment
+(* ================= the walk's program-call step and its helpers, from a Theorem Labs lane's FSH_crt_segC.v:129-219 and
+   :220-424 by path (a working branch head), renamed crt_ -> crt_ so the four segment
    files share one copy (owner decision 00:3xZ). Its proof route: FSW_K3.fsw_ajournal_sub4 for the journal,
    FSW_rres.fsw_resume_after_rtU_s0 for the state. ================= *)
 (* ---- a chunk whose value is an atom offset reads the same under two envs that agree on that atom ---- *)
@@ -1110,7 +1110,7 @@ assert (HE' : crt_E cx E').
     unfold crt_SF. lia. }
 assert (Hag : forall n, (32 <= n < 50)%nat -> ew E' n = ew E n) by exact (crt_env_agree cx E E' HE HE').
 (* the composed journal: FSW_K3.fsw_ajournal_sub5, whose FP relation is exactly fsw_fp_sub's five arms (the fifth, an
-   entry-frame byte, came with S0 b04db294041's kit update), so HFP fits as given *)
+   entry-frame byte, came with S0's kit update), so HFP fits as given *)
 assert (HJ2 : ajournal tfibsegs B STK_check_round_trip (spZ (c_regs cx)) FS_PSTAT_FP (c_ly cx) (c_S cx) (c_W cx)
     (unpoison (c_U cx) (c_mem cx)) (c_md cx) [(3, c_pos cx)] ly' S' W' (unpoison U' mem') md' (k + kc)).
 { eapply (fsw_ajournal_sub5 B STK_check_round_trip (spZ (c_regs cx)) FS_PSTAT_FP (c_ly cx) (c_S cx) (c_W cx)

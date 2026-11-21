@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: impl_run's new entry_launch_ok_va premise is discharged by MainEntryA.valid_entry_launch from VI and VE, in both calls, and valid_entry_fits takes the stack-fit conjunct of valid_entry, which entry_launch_ok_va now follows. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
@@ -17,6 +18,7 @@ From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.EquivA Require NodeSimX__EquivA. 
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.A3S Require StdioCompA.
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.Top Require Import EntryCeil.
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.A3D Require Drv_ifaceA. From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.A3D Require DrvKitA__A3D. From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.A3D Require ExitHeapA GStatKit StdioExitInstA ImplA. Import OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.A3D.Drv_ifaceA OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.A3D.DrvKitA__A3D.ExitA OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.A3D.ExitHeapA OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.A3D.GStatKit OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.A3D.StdioExitInstA OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.A3D.ImplA.
+From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.A3D Require MainEntryA__A3D.
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.Lib Require Import NDestr.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
@@ -111,7 +113,7 @@ Proof. intros tr H. unfold U_real. apply in_or_app. right. exact H. Qed.
 Lemma valid_entry_fits : forall img en inp, valid_input inp -> valid_entry img en inp -> entry_stack_fits (en_sp en) (in_argv inp) (in_envp inp).
 Proof.
   intros [segs pc ph] [sp brk0 mbase rnd] inp Hvi Hve.
-  apply (valid_entry_sv48 _ _ _ (valid_input_sv48 inp Hvi)) in Hve. cbn [en_sp]. exact (proj2 (proj2 (proj2 Hve))).
+  apply (valid_entry_sv48 _ _ _ (valid_input_sv48 inp Hvi)) in Hve. cbn [en_sp]. exact (proj1 (proj2 (proj2 (proj2 Hve)))).
 Qed.
 
 (* [comment removed for export] *)
@@ -142,7 +144,12 @@ Definition GIOA_run {rc : runConstT} {tlsI : ABase.atlsT} (en : ExecEntry) (inp 
       change (2^34) with 17179869184. exact Hr. }
     apply impl_A_shape. intros Q.
     exact (@impl_run rcH tlsH enT inp LIMIT w V m ms mo_ HO HAT HTLS U_real (m_vm_lazy (MX mo_ [])) (A0 V) U_real_len U_real_short
-             (A0_init V) ASH0 VI (valid_entry_sp _ _ _ VI VE) (valid_entry_fits _ _ _ VI VE)
+             (* [impl_run] gained [VE : entry_launch_ok_va Sv48 en inp] between [VI] and
+                [VSP] when [MainEntryA] dropped the vacuous `forall img, valid_entry … -> True`
+                and rerouted through [length_entry_stack_image_launch] (12b-WITHIN-SPAN).
+                Discharged here from the premises this lemma already has. *)
+             (A0_init V) ASH0 VI (MainEntryA__A3D.MainEntryA.valid_entry_launch _ _ _ VI VE)
+             (valid_entry_sp _ _ _ VI VE) (valid_entry_fits _ _ _ VI VE)
              CI_real CI_real_ok CI_real_rs CI_real_exit CI_real_harn CI_real_atx CI_real_st1 CI_real_st2 CI_real_env CI_real_loc stkA_real stkA_real_rs U_real_drv U_real_fuzz Q).
   Qed.
 
@@ -261,7 +268,7 @@ Proof. intros tr H. unfold U_real. apply in_or_app. right. exact H. Qed.
 Lemma valid_entry_fits : forall img en inp, valid_input inp -> valid_entry img en inp -> entry_stack_fits (en_sp en) (in_argv inp) (in_envp inp).
 Proof.
   intros [segs pc ph] [sp brk0 mbase rnd] inp Hvi Hve.
-  apply (valid_entry_sv48 _ _ _ (valid_input_sv48 inp Hvi)) in Hve. cbn [en_sp]. exact (proj2 (proj2 (proj2 Hve))).
+  apply (valid_entry_sv48 _ _ _ (valid_input_sv48 inp Hvi)) in Hve. cbn [en_sp]. exact (proj1 (proj2 (proj2 (proj2 Hve)))).
 Qed.
 
 (* [comment removed for export] *)
@@ -292,7 +299,9 @@ Definition GIOA_run {rc : runConstT} {tlsI : A3W.ABase.TwB.atlsT} (en : ExecEntr
       change (2^34) with 17179869184. exact Hr. }
     apply impl_A_shape. intros Q.
     exact (@impl_run rcH tlsH enT inp LIMIT w V m ms mo_ HO HAT HTLS U_real (m_vm_lazy (MX mo_ [])) (A0 V) U_real_len U_real_short
-             (A0_init V) ASH0 VI (valid_entry_sp _ _ _ VI VE) (valid_entry_fits _ _ _ VI VE)
+             (* twin of :149 -- [impl_run]'s new [VE] sits between [VI] and [VSP] *)
+             (A0_init V) ASH0 VI (MainEntryA__A3D.MainEntryA.valid_entry_launch _ _ _ VI VE)
+             (valid_entry_sp _ _ _ VI VE) (valid_entry_fits _ _ _ VI VE)
              CI_real CI_real_ok CI_real_rs CI_real_exit CI_real_harn CI_real_atx CI_real_st1 CI_real_st2 CI_real_env CI_real_loc stkA_real stkA_real_rs U_real_drv U_real_fuzz Q).
   Qed.
 End TwB.

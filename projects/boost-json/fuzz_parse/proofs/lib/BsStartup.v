@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: statements written out as text, the launch's channel reader. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -59,27 +60,36 @@ End FPX1.
 
 Section XAll.
   Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
+  (* LPS 727298f3 port: AsanInit's Section Init takes the run's launch pieces and the mmap base,
+     and its lemmas are generalised over them; the argument lists below are the ones the
+     the probe printed (notes/probe-boost-json__fuzz_parse.md).  Shape of
+     boost-beast/http_request's lib/As/AsStartup.v [Section XAll].  [Proof using All] fixes
+     this theorem's arguments to every variable below, in order. *)
   Variable sp : word.
-  Variable rdraw : ltac2:(zQ "10!ni3$0").
-  Variable brk0 : word.
-  Variable argv envp : list (list byte).
-  Variable FS0 : ltac2:(zQ "10!hkd$0").
-  Hypothesis Hsp : ltac2:(zQ "10!nj0@1$0?2sp").
-  Hypothesis Hva : ltac2:(zQ "10!njc@1$0?4argv").
-  Hypothesis Hve : ltac2:(zQ "10!nka@1$0?4envp").
-  Variables uid hw : word.
-  Hypothesis Hfit : ltac2:(zQ "10!nl8@3$0?2sp?4argv?4envp").
-  #[local] Notation SINV := (SINV0 APH sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 APH sp rdraw argv envp uid hw).
-  Let AH := argH0_high APH sp rdraw argv envp uid hw Hsp Hva.
-  Let AS := argH0_sp0 APH sp rdraw argv envp uid hw.
-  Let AA := argH0_agree APH sp rdraw argv envp uid hw.
-  Let SF := SINV0_frame APH sp rdraw brk0 argv envp uid hw.
-  Let SA := SINV0_agree APH sp rdraw brk0 argv envp uid hw.
+  Variable rdraw : EntryDraw.
+  Variables brk0 mbase : word.
+  Variables argv envp : list (list byte).
+  Variables (fs : Fs.Fs) (stdin : InputStream) (uid gid hw : word) (groups : list word) (net : NetQueue)
+            (nofile sigmask : word) (abterm : bool) (vasz : VaSize) (urnd : InputStream) (tmp : Fs.Fs)
+            (kern : KernelBuild) (execfn : list byte) (chrdr sigdfl sigterm : bool).
+  #[local] Notation INP := (AsanInit.inp argv envp fs stdin uid gid hw groups net nofile sigmask abterm vasz urnd tmp kern execfn chrdr sigdfl sigterm).
+  Variable FS0 : Fs.Fs.
+  Hypothesis Hsp : valid_sp sp.
+  Hypothesis Hva : valid_argv argv.
+  Hypothesis Hve : valid_envp envp.
+  Hypothesis Hfit : entry_stack_fits sp argv envp.
+  Hypothesis Hlaunch : valid_launch INP.
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) INP.
+  #[local] Notation SINV := (SINV0 APH sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abterm vasz urnd tmp kern execfn chrdr sigdfl sigterm AsanUbsan.M.init_pc).
+  #[local] Notation argH := (argH0 sp rdraw argv envp kern execfn).
+  Let AH := argH0_high sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abterm vasz urnd tmp kern execfn chrdr sigdfl sigterm AsanUbsan.M.init_pc Hsp Hva Hve Hlau.
+  Let AS := argH0_sp0 sp rdraw argv envp kern execfn.
+  Let AA := argH0_agree sp rdraw argv envp kern execfn.
+  Let SF := SINV0_frame APH sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abterm vasz urnd tmp kern execfn chrdr sigdfl sigterm AsanUbsan.M.init_pc.
+  Let SA := SINV0_agree APH sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abterm vasz urnd tmp kern execfn chrdr sigdfl sigterm AsanUbsan.M.init_pc.
 
-  (* [comment removed for export] *)
-  Theorem asan_node_x_sound_all : ltac2:(zQ "a0!jm5!jq7!jr0!jr9!js2!js7!jse!kh5!khf!ki8>1x$5@a$6?2fx$8$9$7$4$1@8$2$0?2sp?5rdraw?4brk0?4argv?4envp?3uid?2hw@7$3$0?2sp?5rdraw?4argv?4envp?3uid?2hw?3FS0^1").
-  Proof.
+  Theorem asan_node_x_sound_all : forall x, x_stmt ASEGS ASAN_H NX0 AsanInit.LIMIT SINV argH FS0 x.
+  Proof using All.
     intros [ | | | | | | | | | | | ].
     - exact (asan_node_x_sound_XIMemset NX0 AsanInit.LIMIT SINV argH AH E_SP0 AA SF SA FS0).
     - exact (asan_node_x_sound_XIMemcpy NX0 AsanInit.LIMIT SINV argH AH E_SP0 AA SF SA FS0).
@@ -92,7 +102,7 @@ Section XAll.
                 (fetch_lit _ _ _ _ eq_refl F_1907b8) (fetch_lit _ _ _ _ eq_refl F_1907bc) (fetch_lit _ _ _ _ eq_refl F_1907c0)
                 ltac:(repeat split; reflexivity)
                 D_1907b8 D_1907bc D_1907c0
-                sp rdraw brk0 argv envp FS0 Hsp Hva Hve uid hw Hfit SINV (fun E M H => H) SF).
+                sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abterm vasz urnd tmp kern execfn chrdr sigdfl sigterm AsanUbsan.M.init_pc FS0 Hsp Hva Hve Hlaunch Hlau SINV (fun E M H => H) SF).
     - eapply (init_x_sound_pnscan ASEGS ASAN_H APH asan_wx asan_in_hull asan_hull_ok
                 W_190874 W_190878 W_19087c W_190880 W_190884
                 ltac:(cbn [x_pnscan x_pnscan_k ASAN_H]; lia)
@@ -100,8 +110,8 @@ Section XAll.
                 (fetch_lit _ _ _ _ eq_refl F_190880) (fetch_lit _ _ _ _ eq_refl F_190884)
                 ltac:(repeat split; reflexivity)
                 D_190874 D_190878 D_19087c D_190880 D_190884
-                sp rdraw brk0 argv envp FS0 Hsp Hva Hve uid hw Hfit SINV (fun E M H => H) SF SA).
-    - apply (init_x_sound_layout ASEGS ASAN_H APH sp rdraw argv envp FS0 uid hw SINV).
+                sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abterm vasz urnd tmp kern execfn chrdr sigdfl sigterm AsanUbsan.M.init_pc FS0 Hsp Hva Hve Hlau SINV (fun E M H => H) SF SA).
+    - apply (init_x_sound_layout ASEGS ASAN_H sp rdraw argv envp kern execfn FS0 SINV).
     - exact (asan_node_x_sound_XIStrncpy NX0 AsanInit.LIMIT SINV argH AH E_SP0 AA SF SA FS0).
     - exact (asan_node_x_sound_XPopFree NX0 AsanInit.LIMIT SINV argH AH E_SP0 AA SF SA FS0).
     - (* [comment removed for export] *)
@@ -122,70 +132,68 @@ Definition level_certified : ltac2:(zQ "30!m2!m8!je>3KC0$0>5BFUEL$0>4FUEL$0>3HSs
 End FPX2.
 
 Section Startup.
-  (* [comment removed for export] *)
   Let fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState := OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.fx0.
   Local Existing Instance fx.
-  (* [comment removed for export] *)
+  (* LPS 727298f3 port: restated over AsanInit's Section Init at the revision (probe-read argument
+     lists, notes/probe-boost-json__fuzz_parse.md); [init_cs_ok] takes the mmap base fact and the
+     two launch facts.  Shape of boost-beast/http_request's lib/As/AsStartup.v [Section Startup]. *)
   Variable sp : word.
-  Variable rdraw : ltac2:(zQ "10!ni3$0").
+  Variable rdraw : EntryDraw.
   Variables brk0 mbase : word.
-  Variable argv envp : list (list byte).
-  Variable fs : ltac2:(zQ "10!hkd$0").
-  Variable stdin : ltac2:(zQ "10!nmd$0").
-  Variables uid gid hw : word.
-  Variable groups : ltac2:(zQ "30!lb!uc!hh0@1$0@1$2@1$1#k0").
-  Variable net : ltac2:(zQ "10!nnc$0").
-  Variables nofile sigmask : word.
-  Variable abterm : bool.
-  Variable vasz : ltac2:(zQ "10!no8$0").
-  Variables (urnd : InputStream) (tmp : Fs.Fs).   (* [comment removed for export] *)
-  Hypothesis Hsp : ltac2:(zQ "10!nj0@1$0?2sp").
-  Hypothesis Hbrk : ltac2:(zQ "20!np2!khf@2$0$1?4brk0").
-  Hypothesis Hva : ltac2:(zQ "10!njc@1$0?4argv").
-  Hypothesis Hve : ltac2:(zQ "10!nka@1$0?4envp").
-  Hypothesis Hfit : ltac2:(zQ "10!nl8@3$0?2sp?4argv?4envp").
-  Hypothesis Huid : ltac2:(zQ "10!npf@1$0?3uid").
-  Hypothesis Hhw : ltac2:(zQ "10!nqb@1$0?2hw").
+  Variables argv envp : list (list byte).
+  Variables (fs : Fs.Fs) (stdin : InputStream) (uid gid hw : word) (groups : list word) (net : NetQueue)
+            (nofile sigmask : word) (abterm : bool) (vasz : VaSize) (urnd : InputStream) (tmp : Fs.Fs)
+            (kern : KernelBuild) (execfn : list byte) (chrdr sigdfl sigterm : bool).
+  #[local] Notation INP := (AsanInit.inp argv envp fs stdin uid gid hw groups net nofile sigmask abterm vasz urnd tmp kern execfn chrdr sigdfl sigterm).
+  Hypothesis Hsp : valid_sp sp.
+  Hypothesis Hbrk : valid_brk ASEGS brk0.
+  Hypothesis Hmb : valid_mmap_base mbase.
+  Hypothesis Hva : valid_argv argv.
+  Hypothesis Hve : valid_envp envp.
+  Hypothesis Hfit : entry_stack_fits sp argv envp.
+  Hypothesis Huid : valid_id uid.
+  Hypothesis Hhw : valid_hwcap hw.
+  Hypothesis Hlaunch : valid_launch INP.
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) INP.
+  (* LPS 727298f3: the launch's channel reader, fed to [init_cs_ok] ([cs_ok]'s [co_rdr]) *)
+  Hypothesis Hrdr : in_channel_reader INP = true.
 
-  #[local] Notation SINV := (SINV0 APH sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 APH sp rdraw argv envp uid hw).
-  #[local] Notation E0a := (E0 APH sp rdraw brk0 argv envp uid hw).
+  #[local] Notation SINV := (SINV0 APH sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abterm vasz urnd tmp kern execfn chrdr sigdfl sigterm AsanUbsan.M.init_pc).
+  #[local] Notation argH := (argH0 sp rdraw argv envp kern execfn).
+  #[local] Notation E0a := (E0 sp rdraw brk0 argv envp uid gid hw kern execfn).
   #[local] Notation LIM := AsanInit.LIMIT.
-  #[local] Notation INP := (AsanInit.inp argv envp fs stdin uid gid hw groups net nofile sigmask abterm vasz urnd tmp).
-  (* [comment removed for export] *)
-  Variable fsr : ltac2:(zQ "10!hkd$0").
-  Hypothesis Hfsr : ltac2:(zQ "40!iv4!hkd!nra!mq3@3$0$1@1$2@f$3?4argv?4envp?2fs?5stdin?3uid?3gid?2hw?6groups?3net?6nofile?7sigmask?6abterm?4vasz?4urnd?3tmp?3fsr").
-
-  (* [comment removed for export] *)
+  Variable fsr : Fs.Fs.
+  Hypothesis Hfsr : in_fs INP = fsr.
   Variable RANGES : ltac2:(zQ "40!lb!m2!s0!u0@1$0@2$2$3$1").          (* [comment removed for export] *)
   Variables HS1 HSC HSA HSF : nat -> option acs.
   Variable plan1 : ltac2:(zQ "10!kjf$0").
   Variable shape1 : ltac2:(zQ "10!jg1$0").
   Variables KC0 BFUEL FUEL : nat.
   #[local] Notation IT := (mk_itab_ranges ASEGS RANGES).
-  Hypothesis cert1 : ltac2:(zQ "f0!khf!r9!iv4!jq7!kl3!js2!kl8!klf!km5!kme!kh5!ns3!kra!ks1!ks8@3$2$7@f$6$0@2$9$0?6RANGES$a$5$3$e$d$c?3HS1?3KC0?5BFUEL?4FUEL@1$1$8$b?5plan1@1$4?6shape1").
+  Hypothesis cert1 : check ASEGS IT ASAN_H NX0 LIM XN0 XE0 XB0 HS1 KC0 BFUEL FUEL None (hinit (rseq_z (kb_rseq kern))) plan1 = COk shape1.
   Hypothesis shape1_holes : ltac2:(zQ "40!hhb!iva!iv4!ksf@3$2$0@1$3?6shape1$1").
   #[local] Notation LEVEL := (level_certified KC0 BFUEL FUEL).
   Hypothesis cert2 : ltac2:(zQ "10!mkf@5$0?3KC0?5BFUEL?4FUEL?3HS1?3HSC").
   Hypothesis cert3 : ltac2:(zQ "10!mkf@5$0?3KC0?5BFUEL?4FUEL?3HSC?3HSA").
   Hypothesis cert4 : ltac2:(zQ "10!mkf@5$0?3KC0?5BFUEL?4FUEL?3HSA?3HSF").
-
-  (* [comment removed for export] *)
   Variable T : ltac2:(zQ "10!it8$0").
   Hypothesis T_nil : ltac2:(zQ "20!nsc!nt2@1?1T@1$0$1").
   Definition HOLES : ltac2:(zQ "40!m2!hkd!hh5!it8>1h$0>1E$2>4fsr'$1$3") := ltac2:(zQ "30!m2!hkd!hh5\1h$0\1E$2\4fsr'$1?1T").
-  Hypothesis HOLESF_sound : ltac2:(zQ "a0!jm5!jq7!jr0!jr9!lv1!kh5!khf!li1!lm5!ki8@a$4$8$6$9$5$1?3HSF@8$2$0?2sp?5rdraw?4brk0?4argv?4envp?3uid?2hw@7$3$0?2sp?5rdraw?4argv?4envp?3uid?2hw$7?3fsr").
+  Hypothesis HOLESF_sound : holes_stmt ASEGS ASAN_H LIM HSF SINV argH HOLES fsr.
 
-  Let AH := argH0_high APH sp rdraw argv envp uid hw Hsp Hva.
-  Let AS := argH0_sp0 APH sp rdraw argv envp uid hw.
-  Let AA := argH0_agree APH sp rdraw argv envp uid hw.
-  Let SF := SINV0_frame APH sp rdraw brk0 argv envp uid hw.
-  Let SA := SINV0_agree APH sp rdraw brk0 argv envp uid hw.
-  (* [comment removed for export] *)
-  Let SP := SINV0_pg APH sp rdraw brk0 argv envp Hsp Hva Hve uid hw Hfit SINV (fun E M H => H).
+  Let AH := argH0_high sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abterm vasz urnd tmp kern execfn chrdr sigdfl sigterm AsanUbsan.M.init_pc Hsp Hva Hve Hlau.
+  Let AS := argH0_sp0 sp rdraw argv envp kern execfn.
+  Let AA := argH0_agree sp rdraw argv envp kern execfn.
+  Let SF := SINV0_frame APH sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abterm vasz urnd tmp kern execfn chrdr sigdfl sigterm AsanUbsan.M.init_pc.
+  Let SA := SINV0_agree APH sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abterm vasz urnd tmp kern execfn chrdr sigdfl sigterm AsanUbsan.M.init_pc.
+  Let SP := SINV0_pg APH sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abterm vasz urnd tmp kern execfn chrdr sigdfl sigterm AsanUbsan.M.init_pc Hsp Hva Hve Hlau SINV (fun E M H => H).
 
-  (* [comment removed for export] *)
-  Lemma asan_check_sound : ltac2:(zQ "i92!khf!m2!uc!jm5!jq7!kh5!hh0!m8!jr0!jr9!je!li1!lm5!ki8!r9!lb!s0!iv4!u0!lpa!lq3!lt1!kl3!js2!kl8!klf!km5!kme!lta!kjf!jg1!lte!lu8!lv1!jg8!hh5!kra!ks1!ks8!lvf!mk2&@8$8$3?2sp?5rdraw?4brk0?4argv?4envp?3uid?2hw&@7$9$3?2sp?5rdraw?4argv?4envp?3uid?2hw>2RS@1$f@2$h0$h2$1>2HS>0$1@1$7$a>0@a$i1$c$0$d$5$4^1~0~1$b?3fsr>4fuel$1>5bfuel$1>1p$hd>2cs$a>1s$he>0@3$h1$h9@f$h8$0@2$hb$0^8$5$h7$4$i6$i5$i4^7?3KC0^4^5@1$e$ha^2^3@1$h6^1>1E$i3>1R@2$h5@1$2#5@1$6@1$2#k0>4FULL>0@1$6@1$2#k0@1$7@1$6@1$2#8>5model$h3>0@b$i0$0$5$4~0~1?3fsr^4^7^3^2^1@4$i8$0$d@6$hf$c$0^4@1$hc^8^3^2@5$i2$b$i7^5@1$h4^2^7").
+  Lemma asan_check_sound : forall RS HS,
+    holes_stmt ASEGS ASAN_H LIM HS SINV argH HOLES fsr ->
+    forall fuel bfuel p cs s,
+      check ASEGS (mk_itab_ranges ASEGS RS) ASAN_H NX0 LIM XN0 XE0 XB0 HS KC0 bfuel fuel None cs p = COk s ->
+      forall E R FULL model, cs_ok ASEGS ASAN_H LIM SINV argH fsr E cs R FULL model ->
+        srealizes ASEGS (cfg_of ASEGS R (pc cs) FULL model) (sd HOLES t_nil E (m_fs model) s).
   Proof.
     intros RS HS HS_sound fuel bfuel p cs s Hc E R FULL model HC.
     exact (check_sound ASEGS (mk_itab_ranges ASEGS RS) (itab_ranges_ok RS) ASAN_H NX0 LIM HS XN0 XE0 XB0
@@ -194,48 +202,50 @@ Section Startup.
               (AsanNodesMmB.node_sys_sound ASEGS ASAN_H NX0 LIM SINV argH fsr asan_res_len asan_hull_ok asan_shadow_ok AA SF SA AS E_SP0)
               (AsanNodesMmB.node_brk2_sound ASEGS ASAN_H NX0 LIM SINV argH fsr asan_in_hull asan_hull_ok asan_shadow_ok AH SF asan_res_len asan_res_cover AS)
               (node_mmap1_sound_OBL ASEGS ASAN_H NX0 LIM SINV argH fsr asan_in_hull asan_res_len asan_res_hull asan_res_cover asan_hull_ok asan_shadow_ok AH AS E_SP0 AA SF SA SP)
-              (node_mmapin1_sound_OBL ASEGS ASAN_H NX0 LIM SINV argH fsr asan_in_hull asan_res_len asan_res_hull asan_res_cover asan_hull_ok asan_shadow_ok AH AS SF)
-              (node_mprotect1_sound_OBL ASEGS ASAN_H NX0 LIM SINV argH fsr asan_in_hull asan_res_len asan_res_hull asan_res_cover asan_hull_ok asan_shadow_ok AH AS SF)
+              (node_mmapin1_sound_OBL ASEGS ASAN_H NX0 LIM SINV argH fsr asan_in_hull asan_res_len asan_res_cover asan_hull_ok asan_shadow_ok AH AS SF)
+              (node_mprotect1_sound_OBL ASEGS ASAN_H NX0 LIM SINV argH fsr asan_in_hull asan_res_len asan_res_cover asan_hull_ok asan_shadow_ok AH AS SF)
               (node_mmapgaps_sound_OBL ASEGS ASAN_H NX0 LIM SINV argH fsr asan_in_hull asan_res_len asan_res_cover asan_hull_ok asan_shadow_ok AH AS E_SP0 AA SF SA SP)
               (AsanNodesMmB.node_exit_sound ASEGS ASAN_H LIM SINV argH fsr)
-              (asan_node_x_sound_all sp rdraw brk0 argv envp fsr Hsp Hva Hve uid hw Hfit)
+              (asan_node_x_sound_all sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abterm vasz urnd tmp kern execfn chrdr sigdfl sigterm fsr Hsp Hva Hve Hfit Hlaunch Hlau)
               (node_join_sound ASEGS ASAN_H NX0 LIM SINV argH fsr)
               (XN0_sound _ _ _ _ _ _ _ _) (XE0_sound _ _ _ _ _ _ _ _) (XB0_sound _ _ _ _ _ _ _ _)
               HS_sound
-              (asan_node_fillfz_sound NX0 AsanInit.LIMIT SINV argH AH E_SP0 AA SF SA fsr)   (* [comment removed for export] *)
+              (* LPS 727298f3 port: [check_sound] takes the fill/zero-node soundness (probe: asan_node_fillfz_sound). *)
+              (asan_node_fillfz_sound NX0 LIM SINV argH AH E_SP0 AA SF SA fsr)
               fuel bfuel None p cs s Hc E R FULL model t_nil HC I eq_refl).
   Qed.
 
-  (* [comment removed for export] *)
-  Lemma level_sound : ltac2:(zQ "e2!jm5!m2!m8!jq7!jr0!jr9!je!lv1!kh5!khf!li1!lm5!ki8!mkf&@8$4$0?2sp?5rdraw?4brk0?4argv?4envp?3uid?2hw&@7$5$0?2sp?5rdraw?4argv?4envp?3uid?2hw>3HSs>0$1@1$2$6>3HSt>0$1@1$2$6>0@5$d?3KC0?5BFUEL?4FUEL^2^1>0@a$7$b$9$c$8$3^2~0~1$a?3fsr@a$7$b$9$c$8$3^4~0~1$a?3fsr").
+  Lemma level_sound : forall HSs HSt, level_certified KC0 BFUEL FUEL HSs HSt ->
+    holes_stmt ASEGS ASAN_H LIM HSt SINV argH HOLES fsr -> holes_stmt ASEGS ASAN_H LIM HSs SINV argH HOLES fsr.
   Proof.
     intros HSs HSt CERT HSt_sound h ch Hh E R FULL model HC. ndestruct (CERT h ch Hh) as (rs & p & s & Hc & Hho). unfold HOLES.
     eapply srz_conseq; [exact (asan_check_sound rs HSt HSt_sound FUEL BFUEL p ch s Hc E R FULL model HC)|].
     apply sd_holes_only; [intros; reflexivity | exact Hho].
   Qed.
 
-  Lemma HOLESA_sound : ltac2:(zQ "a0!jm5!jq7!jr0!jr9!lv1!kh5!khf!li1!lm5!ki8@a$4$8$6$9$5$1?3HSA@8$2$0?2sp?5rdraw?4brk0?4argv?4envp?3uid?2hw@7$3$0?2sp?5rdraw?4argv?4envp?3uid?2hw$7?3fsr").
+  Lemma HOLESA_sound : holes_stmt ASEGS ASAN_H LIM HSA SINV argH HOLES fsr.
   Proof. exact (level_sound HSA HSF cert4 HOLESF_sound). Qed.
-  Lemma HOLESC_sound : ltac2:(zQ "a0!jm5!jq7!jr0!jr9!lv1!kh5!khf!li1!lm5!ki8@a$4$8$6$9$5$1?3HSC@8$2$0?2sp?5rdraw?4brk0?4argv?4envp?3uid?2hw@7$3$0?2sp?5rdraw?4argv?4envp?3uid?2hw$7?3fsr").
+  Lemma HOLESC_sound : holes_stmt ASEGS ASAN_H LIM HSC SINV argH HOLES fsr.
   Proof. exact (level_sound HSC HSA cert3 HOLESA_sound). Qed.
-  Lemma HOLES1_sound : ltac2:(zQ "a0!jm5!jq7!jr0!jr9!lv1!kh5!khf!li1!lm5!ki8@a$4$8$6$9$5$1?3HS1@8$2$0?2sp?5rdraw?4brk0?4argv?4envp?3uid?2hw@7$3$0?2sp?5rdraw?4argv?4envp?3uid?2hw$7?3fsr").
+  Lemma HOLES1_sound : holes_stmt ASEGS ASAN_H LIM HS1 SINV argH HOLES fsr.
   Proof. exact (level_sound HS1 HSC cert2 HOLESC_sound). Qed.
 
-  Theorem as_startup_shape : ltac2:(zQ "c0!jm5!khf!moe!mpd!jq7!mq3!jg8!li1!ki8!lvf!mk2!mu4@4$a$1$8@9$2$1$b$0?2sp?4brk0?5mbase?5rdraw$4@f$5?4argv?4envp?2fs?5stdin?3uid?3gid?2hw?6groups?3net?6nofile?7sigmask?6abterm?4vasz?4urnd?3tmp@5$6$7$9@8$3$0?2sp?5rdraw?4brk0?4argv?4envp?3uid?2hw?3fsr?6shape1").
+  Theorem as_startup_shape :
+    srealizes ASEGS (init_config ASEGS AsanUbsan.M.init_pc APH sp brk0 mbase rdraw LIM INP) (sd HOLES t_nil E0a fsr shape1).
   Proof.
     pose proof asan_img_facts as IMG.
-    rewrite (init_cfg_eq ASEGS ASAN_H APH sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abterm vasz urnd tmp
-               AsanUbsan.M.init_pc eq_refl).
-    pose proof (init_cs_ok ASEGS ASAN_H APH sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abterm vasz urnd tmp
-                  IMG Hsp Hbrk Hva Hve Hfit Huid Hhw) as HC.
+    rewrite (init_cfg_eq ASEGS ASAN_H APH sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abterm vasz urnd tmp kern execfn chrdr sigdfl sigterm AsanUbsan.M.init_pc eq_refl).
+    pose proof (init_cs_ok ASEGS ASAN_H APH sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abterm vasz urnd tmp kern execfn chrdr sigdfl sigterm AsanUbsan.M.init_pc
+                  IMG Hsp Hbrk Hmb Hva Hve Huid Hhw eq_refl Hlaunch Hlau Hrdr) as HC.
     rewrite Hfsr in HC.
-    pose proof (asan_check_sound RANGES HS1 HOLES1_sound FUEL BFUEL plan1 hinit shape1 cert1 _ _ _ _ HC) as R.
-    replace (m_fs (model0 ASEGS sp brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abterm vasz urnd tmp)) with fsr in R by (symmetry; exact Hfsr).
+    pose proof (asan_check_sound RANGES HS1 HOLES1_sound FUEL BFUEL plan1 (hinit (rseq_z (kb_rseq kern))) shape1 cert1 _ _ _ _ HC) as R.
+    replace (m_fs (model0 ASEGS sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abterm vasz urnd tmp kern execfn chrdr sigdfl sigterm)) with fsr in R by (symmetry; exact Hfsr).
     exact R.
   Qed.
 
-  Theorem as_startup_T : ltac2:(zQ "80!khf!moe!jq7!mq3!jm5!ki8!mk2!mu4@4$6$0$5@9$1$0$7$4?2sp?4brk0?5mbase?5rdraw$2@f$3?4argv?4envp?2fs?5stdin?3uid?3gid?2hw?6groups?3net?6nofile?7sigmask?6abterm?4vasz?4urnd?3tmp?1T").
-  Proof.
+  Theorem as_startup_T :
+    srealizes ASEGS (init_config ASEGS AsanUbsan.M.init_pc APH sp brk0 mbase rdraw LIM INP) T.
+  Proof using All.
     eapply srz_conseq; [exact as_startup_shape|]. apply sd_holes_only; [intros; reflexivity | exact shape1_holes].
   Qed.
 End Startup.

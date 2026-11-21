@@ -3,7 +3,9 @@ project: wt
 harness: fuzz-css
 rocq: OSSVerify.wt.fuzz_css
 origin: upstream
-summary: No summary of this harness is recorded yet; its checks, if any, are listed below.
+summary: Copies the input (Size from 10 to 5120 bytes) into a string and parses it as a CSS style sheet
+  with Wt::Render::CssParser::parse on a new parser, and drops the returned style sheet. It returns -1
+  for an input with Size below 10 or above 5120.
 entry: LLVMFuzzerTestOneInput
 source:
   files:
@@ -12,7 +14,7 @@ source:
     repository: https://github.com/emweb/wt
     commit: 0ec92b6bfc41be037dcf3ddfc72664ca261821bd
     path: fuzz/fuzz-css.C
-  modified: false
+  modified: true
   licence: NOASSERTION
 library:
   repository: https://github.com/emweb/wt
@@ -23,11 +25,14 @@ modifications:
 - In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the program
   depends only on its input.
 - A small driver reads the input file, calls the harness one to four times and prints each return value.
+- 'The harness source is modified: source/fuzz-css.C is wt 0ec92b6b''s fuzz/fuzz-css.C with one Theorem
+  Labs change: its length check returns -1, not 1, for an input outside its limits (libFuzzer rejects
+  the input; the driver exits 0, not 78).'
 builds:
   plain:
     file: fuzz-css.plain
     bytes: 7972944
-    sha256: 4d0b3e5b666cf0ef43829c11f28d6f0d3b09a89cd7506d77240a9ccdc944b78c
+    sha256: a6bf7b7ae898051c0f33afd8452b649bdfebfdf5ab0c36a3711fd830a3d6d303
     segments:
     - 1
     - 1
@@ -61,7 +66,7 @@ builds:
   ubsan:
     file: fuzz-css.ubsan
     bytes: 8496744
-    sha256: d42694689352f3c9ec76868459f6906a5b5650526c060068b0a4f92d5e488bf8
+    sha256: 47b374c86cafb87c5d91de979a8ad3853853e006605a2f05401ddd6991d9afd9
     segments:
     - 1
     - 1
@@ -95,7 +100,7 @@ builds:
   asan:
     file: fuzz-css.asan
     bytes: 15630360
-    sha256: 7ff44abe6da8a675be85cc4e8a8718877f2984a4fbc5e2ba968a23d7f0abf60d
+    sha256: b5c1630f0d66e810a544853c5fef8afaa509dedc7d259d15e4c127f4066f73b3
     segments:
     - 1
     - 2
@@ -132,7 +137,7 @@ builds:
   asan-ubsan:
     file: fuzz-css.asan-ubsan
     bytes: 16096408
-    sha256: 34ca4b56c8ef896c714c21c02548ef73b9f5b73f9d3c943bf7af7c8678b1d72f
+    sha256: 2b9053e8537b93261b65d87cd83f47a4d9a988e9c2fd703d3ea699aebf82c1ef
     segments:
     - 1
     - 2
@@ -178,6 +183,7 @@ statements:
     budgets: asan
     abort: signal
     status: open
+    revision: 2
   ubsan_agrees:
     kind: agreement
     builds:
@@ -187,6 +193,7 @@ statements:
     budgets: standard
     abort: signal
     status: open
+    revision: 2
   asan_ubsan_agrees:
     kind: agreement
     builds:
@@ -196,6 +203,7 @@ statements:
     budgets: asan
     abort: signal
     status: open
+    revision: 2
   plain_halts:
     kind: halts
     builds:
@@ -206,6 +214,7 @@ statements:
     - 2
     binds_checks: false
     status: open
+    revision: 2
   asan_halts:
     kind: halts
     builds:
@@ -216,6 +225,7 @@ statements:
     - 2
     binds_checks: false
     status: open
+    revision: 2
   ubsan_halts:
     kind: halts
     builds:
@@ -226,6 +236,7 @@ statements:
     - 2
     binds_checks: false
     status: open
+    revision: 2
   asan_ubsan_halts:
     kind: halts
     builds:
@@ -236,3 +247,4 @@ statements:
     - 2
     binds_checks: false
     status: open
+    revision: 2

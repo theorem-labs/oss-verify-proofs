@@ -1,25 +1,19 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, place_in_model_linux and its grant and completeness lemmas tie this file's placement to the model's Linux placement (linux_place). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State.
+From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 From OSSVerify.Proofs.coturn.FuzzStunClient.lib.Common Require Import LiaFast.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Local Ltac Stdlib.micromega.Lia.lia ::= first [ flia2 | Zify.zify; xlia zchecker ].  (* [comment removed for export] *)
 Import ListNotations.
 Open Scope bv_scope.
-
-(* [comment removed for export] *)
-Definition no_higher_fit (maps : list (word * word)) (aZ nZ baseZ : Z)
-    : Prop :=
-  forall g : Z,
-    (g mod page_size = 0)%Z ->
-    (aZ + nZ <= g)%Z ->
-    (g + nZ <= baseZ)%Z ->
-    region_free maps (Z_to_bv 64 g) (Z_to_bv 64 nZ) = false.
 
 (* [comment removed for export] *)
 Definition fit_candidates (maps : list (word * word)) (aZ nZ : Z)
@@ -180,47 +174,6 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma higher_fit_b_sound : forall maps aZ nZ baseZ,
-  higher_fit_b maps aZ nZ baseZ = true ->
-  exists g, (g mod page_size = 0)%Z /\ (aZ + nZ <= g)%Z
-            /\ (g + nZ <= baseZ)%Z
-            /\ region_free maps (Z_to_bv 64 g) (Z_to_bv 64 nZ) = true.
-Proof.
-  intros maps aZ nZ baseZ H.
-  unfold higher_fit_b in H. apply existsb_exists in H as (g & _ & Hg).
-  apply andb_true_iff in Hg as [Hg Hfree].
-  apply andb_true_iff in Hg as [Hg Hhi].
-  apply andb_true_iff in Hg as [Hal Hlo].
-  exists g. repeat split.
-  - now apply Z.eqb_eq.
-  - now apply Z.leb_le.
-  - now apply Z.leb_le.
-  - exact Hfree.
-Qed.
-
-(* [comment removed for export] *)
-Lemma no_higher_fit_iff : forall maps aZ nZ baseZ,
-  (0 <= aZ)%Z -> (0 < nZ)%Z ->
-  (aZ mod page_size = 0)%Z -> (nZ mod page_size = 0)%Z ->
-  (baseZ < two_pow_64)%Z ->
-  (higher_fit_b maps aZ nZ baseZ = false <-> no_higher_fit maps aZ nZ baseZ).
-Proof.
-  intros maps aZ nZ baseZ HaPos HnPos HaAl HnAl Hbase. split.
-  - intros Hf g HgAl Hglo Hghi.
-    destruct (region_free maps (Z_to_bv 64 g) (Z_to_bv 64 nZ)) eqn:Hfree;
-      [|reflexivity].
-    exfalso.
-    rewrite (higher_fit_b_complete maps aZ nZ baseZ g
-               ltac:(lia) HnPos HaAl HnAl Hbase HgAl Hglo Hghi Hfree)
-      in Hf.
-    discriminate.
-  - intro H. destruct (higher_fit_b maps aZ nZ baseZ) eqn:Hf;
-      [|reflexivity].
-    exfalso. apply higher_fit_b_sound in Hf as (g & HgAl & Hglo & Hghi & Hfree).
-    rewrite (H g HgAl Hglo Hghi) in Hfree. discriminate.
-Qed.
-
-(* [comment removed for export] *)
 
 (* [comment removed for export] *)
 Definition search_candidates (maps : list (word * word)) (loZ : Z)
@@ -347,6 +300,41 @@ Proof.
   apply (place_complete _ _ _ _ g); try assumption.
   - unfold page_size. lia.
   - unfold page_size. reflexivity.
+  - exact (alloc_top_lt h).
+Qed.
+
+(* [comment removed for export] *)
+
+(* [comment removed for export] *)
+Definition place_in_model_linux (h : VmMaps) (nZ : Z) : option Z :=
+  place (vm_reserved h ++ vm_maps h) task_unmapped_base (alloc_top h) nZ.
+
+(* [comment removed for export] *)
+Lemma place_in_model_linux_grants : forall h thp hint nZ g,
+  (0 < nZ)%Z -> (nZ mod page_size = 0)%Z ->
+  place_in_model_linux h nZ = Some g ->
+  exists a, linux_place h thp hint nZ a.
+Proof.
+  intros h thp hint nZ g HnPos HnAl H. unfold place_in_model_linux in H.
+  destruct (place_sound _ _ _ _ _ H) as (Hal & Hlo & Hhi & Hfree).
+  apply (linux_place_exists h thp hint nZ HnPos HnAl).
+  exists g. right. unfold gap_fits. repeat split; assumption.
+Qed.
+
+(* [comment removed for export] *)
+Lemma place_in_model_linux_complete : forall h nZ g,
+  (0 < nZ)%Z -> (nZ mod page_size = 0)%Z ->
+  (g mod page_size = 0)%Z -> (task_unmapped_base <= g)%Z ->
+  (g + nZ <= alloc_top h)%Z ->
+  region_free (vm_reserved h ++ vm_maps h)
+    (Z_to_bv 64 g) (Z_to_bv 64 nZ) = true ->
+  exists a, place_in_model_linux h nZ = Some a.
+Proof.
+  intros h nZ g Hn Hnal HgAl Hglo Hghi Hfree.
+  unfold place_in_model_linux.
+  apply (place_complete _ _ _ _ g); try assumption.
+  - unfold task_unmapped_base. lia.
+  - unfold task_unmapped_base, page_size. reflexivity.
   - exact (alloc_top_lt h).
 Qed.
 

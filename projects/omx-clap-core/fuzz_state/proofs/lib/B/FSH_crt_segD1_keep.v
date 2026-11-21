@@ -1,6 +1,6 @@
-(* rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from 82a1d1bf3a6 lib/A/FSH_crt_segD1_keep.v)
-   Port source: a working branch 82a1d1bf3a6 proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segD1_keep.v (helper
-   lemmas of check_round_trip's D1 segment lemma), itself PORTED from a working branch d25a984c903
+(* rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from lib/A/FSH_crt_segD1_keep.v)
+   Port source: a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segD1_keep.v (helper
+   lemmas of check_round_trip's D1 segment lemma), itself PORTED from a working branch
    check_round_trip_sd16.v / sd17.v / sd18.v. Same Lemma names and statements as the A file, over image B (lib/B/YB1v.v
    tfibsegs, fs.asan-ubsan sha256 5ac5ce0954f8...), on the B interface (lib/B/FSH_crt_base.v's crt_pstat_img: B's
    statics FS_PSTAT_FP, lib/B/FSPstat.v, are image bytes of the RW segment [0xa1000, 0x5fd000)). A new file: no

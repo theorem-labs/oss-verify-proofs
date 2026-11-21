@@ -5,12 +5,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 2065 of its 2181 lines of code are new or changed and 895 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F3.v, with its module paths and module names changed; 1051 of its 1229 lines of code are new or changed and 2003 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F2.v; 339 of its 505 lines of code are new or changed and 1063 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/F2.v 26e353ed3a9f (the blob this tree had at release c5e779efe8c) at fdd2ed9f9d7.
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   FACTS, PAU pau-libreac-v190. Source: Seg/F2.v 26e353ed3a9f (the blob this tree had at release).
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: each <r>_of_F re-derives F2.<r> at ExecF.RNG_all; <r>_of_F_verbatim checks by constr_eq that its type is
    the type of F2.<r>. Mechanical re-run, route (a) (lead 22:15Z); input to the ported walk only. *)
 
@@ -44,8 +45,8 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Prog Require RcIdentModel.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import SlotModel SlotInv RcAsanFP RcAsanFPLib.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import asan_memcpy_c reac_ctrl_parse_c reac_ctrl_kind_name_c.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import asan_memcpy_cF asan_memcpyF.
-(* route (C) (f2_evt_F_on / f2_evt_of_F_on): the copy's region-restricted contracts and proof (a Theorem Labs lane 83ab88c3325,
-   taken by path) and the form (lib/A/ShadowRwOn.v, ShadowRwOnK.v; a Theorem Labs lane 9ec78006def) *)
+(* route (C) (f2_evt_F_on / f2_evt_of_F_on): the copy's region-restricted contracts and proof (a Theorem Labs lane,
+   taken by path) and the form (lib/A/ShadowRwOn.v, ShadowRwOnK.v; a Theorem Labs lane) *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import asan_memcpy_c_on asan_memcpy_cF_on.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require asan_memcpyF_on.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require A.ShadowRwOn A.ShadowRwOnK.

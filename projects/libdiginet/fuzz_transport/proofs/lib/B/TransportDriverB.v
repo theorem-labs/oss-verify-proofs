@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: made from proofs/libreac/fuzz_pcap/lib/B/PcapDriver.v (origin/ossv/recipes
-   198234fa4d3) for libdiginet/fuzz_transport's ASan+UBSan image, reduced to its G content: the driver obligation
+(* Modified by Theorem Labs, 2026-10: made from proofs/libreac/fuzz_pcap/lib/B/PcapDriver.v
+    for libdiginet/fuzz_transport's ASan+UBSan image, reduced to its G content: the driver obligation
    drv_mainX_stmt (lib/B/YD1q.v, which lib/B/YD1q.v tfib_srealizesX_of_main closes with the start-up part) holds from
    lib/B/YD1p.v tfib_drv_main with the program contract at the harness's globals, LIBX := tfib_lib_contract_x_all
    G_HARNESS_B ... (lib/B/YCfn.v, lib/B/TransportGB.v), as pcap's DRV_MAINX takes its LIBX at G_HARNESS_U. The slot keeps
@@ -10,6 +10,7 @@
    RO_IN), as in lib/B/YD1q.v. pcap's stdio / fopen parts (its sink head, source record, output shape and the
    start-up tables it names) are not ported. YK09, YA0c, YA0e, YA01 and YA02 are Required from lib/Reusable, where the
    run's placement table puts them (SHARED). rule 24: proves no function. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up hand-off states computed in the build per CONFIG_RSEQ flag ([YB01r])); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -18,7 +19,7 @@ BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.libdiginet.fuzz_transport.images Require Import AsanUbsan.
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YK11 YK15 YK18 YK0c YK0e YG0f YG00 YG01 YG0n YG0d YK04 YA0i YA0n YI16.
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YK09 YA0c YA0e YA01 YA02.
-From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.B Require Import YB12 YB1h YB01 YB1n.
+From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.B Require Import YB12 YB1h YB01r YB1n.
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YCbq YC5d YCbp.
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YO05 YO09 YO06 YO01.
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.A Require Import TransportShape.

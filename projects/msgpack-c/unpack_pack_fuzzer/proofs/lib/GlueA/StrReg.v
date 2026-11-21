@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (str_reg_ok_shape and str_reg_facts read the string-end bound 2^47 - 9, [StrRegC.TOP9], that the launch gives at this revision, where they read 2^47 - 16). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import PrimInt63 Uint63.
 From stdpp Require Import gmap.
@@ -72,7 +73,7 @@ Lemma str_reg_ok_shape : forall st wnl k rr j js, str_reg_ok st wnl k rr j js = 
     /\ CtrA.win_lookup wnl k = None
     /\ (exists ks offs rss, ActrA.sp_region st = Some (ks, offs, rss) /\ k <> ks)
     /\ known_leu (s_facts st) (sv_alu ALU_ADD az (VL (wlit 72%uint63))) (VP k wzero) = true
-    /\ known_leu (s_facts st) (sv_alu ALU_ADD (VP k wzero) (rg_hi rr)) (VL TOP16) = true.
+    /\ known_leu (s_facts st) (sv_alu ALU_ADD (VP k wzero) (rg_hi rr)) (VL TOP9) = true.
 Proof.
   intros st wnl k rr j js H. unfold str_reg_ok in H.
   destruct (find_op ZARG_ID (s_ops st)) as [[|az [|? ?]]|] eqn:FZ; try discriminate H.
@@ -123,7 +124,7 @@ Lemma str_reg_facts : forall E st ms mo r hargs wnl (L : alayout) (RNG : footpri
   0 <= o -> 0 <= len -> o + len <= hiZ E rr ->
   exists (RLO RHI : Z),
     let Sa := bv_unsigned (ev E k) + o in
-    bv_unsigned (ev E k) + hiZ E rr <= 2 ^ 47 - 16
+    bv_unsigned (ev E k) + hiZ E rr <= 2 ^ 47 - 9
     /\ ALib.Mem.bytes_at asegs (ms_mem ms) Sa (map (fun i => nth (Z.to_nat o + i)%nat (eb E j) (Z_to_bv 8 0)) (seq 0 (Z.to_nat len)))
     /\ sp <= Sa /\ Shadow.app_blk Sa (Sa + len) /\ 0 < Sa /\ Shadow.unpoisoned (ms_mem ms) Sa (Sa + len)
     /\ (RLO <= Sa /\ Sa + len <= RHI /\ RLO mod 64 = 0 /\ RHI mod 64 = 0 /\ 0 <= RLO /\ RHI <= Shadow.KEND)
@@ -173,7 +174,7 @@ Proof.
   pose proof (known_leu_sound_q E st ms mo _ _ HS Q) as KE. rewrite ValP.den_sv_alu in KE. cbn [alu64 alu] in KE. rewrite bv_add_unsigned in KE.
   assert (DV0 : bv_unsigned (den E (VP k wzero)) = Sa0).
   { rewrite ValP.den_VP. change (w2Zs wzero) with 0. rewrite Z.add_0_r. apply Z.mod_small. unfold two64. fold Sa0. lia. }
-  rewrite DV0 in KE. change (bv_unsigned (den E (rg_hi rr))) with hz in KE. change (bv_unsigned (den E (VL TOP16))) with (2 ^ 47 - 16) in KE.
+  rewrite DV0 in KE. change (bv_unsigned (den E (rg_hi rr))) with hz in KE. change (bv_unsigned (den E (VL TOP9))) with (2 ^ 47 - 9) in KE.
   rewrite bv_wrap_small in KE by (unfold bv_modulus; change (2 ^ Z.of_N 64) with (2 ^ 64); lia).
 
   pose proof (proj1 (Forall_forall _ _) (so_ops _ _ _ _ _ _ HS) _ (UnreggPre.find_op_In _ _ _ FZ)) as HO. cbn [op_id op_args map] in HO.
@@ -273,7 +274,7 @@ Lemma str_reg_ok_shape : forall st wnl k rr j js, str_reg_ok st wnl k rr j js = 
     /\ CtrA.win_lookup wnl k = None
     /\ (exists ks offs rss, ActrA.sp_region st = Some (ks, offs, rss) /\ k <> ks)
     /\ known_leu (s_facts st) (sv_alu ALU_ADD az (VL (wlit 72%uint63))) (VP k wzero) = true
-    /\ known_leu (s_facts st) (sv_alu ALU_ADD (VP k wzero) (rg_hi rr)) (VL TOP16) = true.
+    /\ known_leu (s_facts st) (sv_alu ALU_ADD (VP k wzero) (rg_hi rr)) (VL TOP9) = true.
 Proof.
   intros st wnl k rr j js H. unfold str_reg_ok in H.
   destruct (find_op ZARG_ID (s_ops st)) as [[|az [|? ?]]|] eqn:FZ; try discriminate H.
@@ -324,7 +325,7 @@ Lemma str_reg_facts : forall E st ms mo r hargs wnl (L : alayout) (RNG : footpri
   0 <= o -> 0 <= len -> o + len <= hiZ E rr ->
   exists (RLO RHI : Z),
     let Sa := bv_unsigned (ev E k) + o in
-    bv_unsigned (ev E k) + hiZ E rr <= 2 ^ 47 - 16
+    bv_unsigned (ev E k) + hiZ E rr <= 2 ^ 47 - 9
     /\ ALib.Mem.bytes_at bsegs (ms_mem ms) Sa (map (fun i => nth (Z.to_nat o + i)%nat (eb E j) (Z_to_bv 8 0)) (seq 0 (Z.to_nat len)))
     /\ sp <= Sa /\ Shadow.app_blk Sa (Sa + len) /\ 0 < Sa /\ Shadow.unpoisoned (ms_mem ms) Sa (Sa + len)
     /\ (RLO <= Sa /\ Sa + len <= RHI /\ RLO mod 64 = 0 /\ RHI mod 64 = 0 /\ 0 <= RLO /\ RHI <= Shadow.KEND)
@@ -374,7 +375,7 @@ Proof.
   pose proof (known_leu_sound_q E st ms mo _ _ HS Q) as KE. rewrite ValP.den_sv_alu in KE. cbn [alu64 alu] in KE. rewrite bv_add_unsigned in KE.
   assert (DV0 : bv_unsigned (den E (VP k wzero)) = Sa0).
   { rewrite ValP.den_VP. change (w2Zs wzero) with 0. rewrite Z.add_0_r. apply Z.mod_small. unfold two64. fold Sa0. lia. }
-  rewrite DV0 in KE. change (bv_unsigned (den E (rg_hi rr))) with hz in KE. change (bv_unsigned (den E (VL TOP16))) with (2 ^ 47 - 16) in KE.
+  rewrite DV0 in KE. change (bv_unsigned (den E (rg_hi rr))) with hz in KE. change (bv_unsigned (den E (VL TOP9))) with (2 ^ 47 - 9) in KE.
   rewrite bv_wrap_small in KE by (unfold bv_modulus; change (2 ^ Z.of_N 64) with (2 ^ 64); lia).
 
   pose proof (proj1 (Forall_forall _ _) (so_ops _ _ _ _ _ _ HS) _ (UnreggPre.TwinB.find_op_In _ _ _ FZ)) as HO. cbn [op_id op_args map] in HO.

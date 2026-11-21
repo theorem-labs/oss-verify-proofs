@@ -4,9 +4,10 @@
 (* Modified by Theorem Labs, 2026-10: made for libreac/fuzz_knock's ASan harness walk of LLVMFuzzerTestOneInput
    (fuzz_knock.asan, sha256 61768cf4739b7641c99c825dde45eddafc55b601d41109555be0272fc7ca4118): SEGMENT S3 LOOP,
    pc 0x7f10c-0x7f190, from the loop head ss_L (INV_L (S fuel)) to ss_T (INV_T fuel) at 0x7f194.
-   Donor model: proofs/cgif/cgif_file_fuzzer/lib/A/ACf1.v at c8557374ad2e --- rt_B_aux :410-497 (the header
+   Donor model: proofs/cgif/cgif_file_fuzzer/lib/A/ACf1.v at theorem-labs/oss-verify-proofs@6b32741d849a --- rt_B_aux :410-497 (the header
    bytes: one in_bytes :396-407, add_atom_win, in_region and rd_run per group of bytes, a br_go between groups) and
    pin_reg :268-280 (a register pinned to a fresh atom). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The knock changes:
    - the cursor moves: it is its own atom (cur = p + c, env slot 301), not the block base, so each byte region is
      based at atom 301 at offset 0 / 1 / 2 and its byte comes from PB_at_now at index c / c + 1 / c + 2;
@@ -90,7 +91,7 @@ first [ eassumption
 | lazymatch goal with |- inv_cursor _ _ _ _ =>
   unfold inv_cursor; cbn [c_p c_n]; repeat match goal with |- _ /\ _ => split end; lia end
 | lia ].
-(* in_region of lib/A/APgLoop0.v:211-225, except that each all_disjoint goal first runs zone_lia's second arm
+(* in_region of lib/A/APgLoop0.v:212-226, except that each all_disjoint goal first runs zone_lia's second arm
    `zones; req_lits; lia` after `keep`, a `clear -` that leaves only the bounds the goal uses, and runs zone_lia
    itself only if that fails.  zone_lia's lia reads the whole walk context, 0.2-3 s per goal, which made the
    three in_region calls 110 s of this file's 192 s; after the cut a goal takes ~0.02 s.  APgMain0.v and

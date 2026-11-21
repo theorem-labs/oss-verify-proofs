@@ -1,8 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed exec_cz, interp_eff_all, step_frm_zero. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import base.
 From stdpp.bitvector Require Import definitions.
@@ -15,14 +14,10 @@ Open Scope Z_scope.
 
 Module FrmInv.
 
-(* [comment removed for export] *)
 Definition fp_ok (fx : FPState) : Prop := frm_zero (@fp_csr fx).
 Lemma fp_ok_fx0 : fp_ok fx0.
 Proof. exact fp_frm_zero_fx0. Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Definition frm_bits0 (z : Z) : Prop := Z.testbit z 5 = false /\ Z.testbit z 6 = false /\ Z.testbit z 7 = false.
 
 Lemma frm_zero_bits : forall f : bv 32, frm_zero f <-> frm_bits0 (bv_unsigned f).
@@ -48,11 +43,9 @@ Proof. intros z i Hi. rewrite Z_to_bv_unsigned. apply bv_wrap_spec_low. lia. Qed
 Lemma u64_testbit : forall z i, 0 <= i < 64 -> Z.testbit (bv_unsigned (Z_to_bv 64 z)) i = Z.testbit z i.
 Proof. intros z i Hi. rewrite Z_to_bv_unsigned. apply bv_wrap_spec_low. lia. Qed.
 
-(* [comment removed for export] *)
 Lemma frm_zero_accrue : forall (f : bv 32) fl, frm_zero f -> frm_zero (Z_to_bv 32 (Z.lor (bv_unsigned f) (fflags_bits fl))).
 Proof. intros f fl H. apply fp_frm_zero_accrue; [apply fp_fflags_bits_range | exact H]. Qed.
 
-(* [comment removed for export] *)
 Lemma slice_set_bit : forall (f : bv 32) lo len (v : word) i, 0 <= i < 32 -> 0 <= lo -> 0 <= len ->
   Z.testbit (bv_unsigned (slice_set f lo len v)) i =
   if (Z.leb lo i && Z.ltb i (lo + len))%bool then Z.testbit (bv_unsigned v) (i - lo) else Z.testbit (bv_unsigned f) i.
@@ -79,17 +72,12 @@ Proof.
   destruct (Z.ltb_spec i len); [apply Z.ones_spec_low | apply Z.ones_spec_high]; lia.
 Qed.
 
-(* [comment removed for export] *)
 Lemma rc_bit : forall (old x : word) i, Z.testbit (bv_unsigned old) i = false -> 0 <= i < 64 ->
   Z.testbit (bv_unsigned (bv_and old (bv_not x))) i = false.
 Proof. intros old x i H Hi. rewrite bv_and_unsigned, Z.land_spec, H. reflexivity. Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Definition csr_frm (csr : bv 12) : bool := (Z.eqb (bv_unsigned csr) 2 || Z.eqb (bv_unsigned csr) 3)%bool.
 Definition op_sets (op : csrop) : bool := match op with CSR_RC => false | _ => true end.
-(* [comment removed for export] *)
 Definition frm_bad (i : instr) : bool :=
   match i with
   | Csr op _ rs1 csr => (csr_frm csr && op_sets op && match op with CSR_RW => true | _ => negb (is_x0 rs1) end)%bool
@@ -99,7 +87,6 @@ Definition frm_bad (i : instr) : bool :=
 
 Definition cz (c : core) : Prop := frm_zero (c_fcsr c).
 
-(* [comment removed for export] *)
 Inductive eff_all (P : core -> Prop) : eff -> Prop :=
 | EA_done : forall c, P c -> eff_all P (EDone c)
 | EA_ill : forall c, eff_all P (EIllegal c)
@@ -115,7 +102,7 @@ Lemma interp_eff_all : forall (segs : list Segment) P t m rep,
 Proof.
   intros segs P t m rep H. revert m rep. induction H; intros m rep E; cbn [interp_eff_accesses] in E; try discriminate.
   - injection E as <-. cbn. assumption.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|discriminate].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [| destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) m) as [r| |] eqn:E2; try discriminate.
     injection E as <-. cbn [access_value]. eapply H0. exact E2.
   - destruct (store_ok segs m a (width_bytes n)); [|discriminate].
@@ -123,7 +110,6 @@ Proof.
     injection E as <-. cbn [access_value]. eapply IHeff_all. exact E2.
 Qed.
 
-(* [comment removed for export] *)
 Lemma cz_rset : forall r v c, cz c -> cz (rset r v c).
 Proof. intros r v c H. unfold rset. destruct (is_x0 r); exact H. Qed.
 Lemma cz_fset : forall r v c, cz c -> cz (fset r v c).
@@ -148,10 +134,10 @@ Lemma exec_csr_cz : forall op rd operand (writes : bool) csr c,
 Proof.
   intros op rd operand writes csr c H Hb. unfold exec_csr, csr_slice. cbv zeta.
   destruct (Z.eqb_spec (bv_unsigned csr) 1) as [E1|N1].
-  { (* [comment removed for export] *)
+  {
     constructor. apply cz_rset. destruct writes; [|exact H]. unfold cz. cbn [c_fcsr with_fcsr]. apply fp_frm_zero_slice0_5. exact H. }
   destruct (Z.eqb_spec (bv_unsigned csr) 2) as [E2|N2].
-  { (* [comment removed for export] *)
+  {
     constructor. apply cz_rset. destruct writes; [|exact H]. unfold csr_frm in Hb. rewrite E2 in Hb. cbn in Hb. rewrite andb_true_r in Hb.
     destruct op; try discriminate. unfold cz in *. cbn [c_fcsr with_fcsr]. apply frm_zero_bits. apply frm_zero_bits in H. destruct H as (H5 & H6 & H7).
     assert (O : forall i, 0 <= i < 3 -> Z.testbit (bv_unsigned (bv_and (slice_get (c_fcsr c) 5 3) (bv_not operand))) i = false).
@@ -159,7 +145,7 @@ Proof.
       assert (i = 0 \/ i = 1 \/ i = 2) as [-> | [-> | ->]] by lia; cbn; assumption. }
     unfold frm_bits0. rewrite !slice_set_bit by lia. cbn. repeat split; apply O; lia. }
   destruct (Z.eqb_spec (bv_unsigned csr) 3) as [E3|N3]; [|constructor].
-  { (* [comment removed for export] *)
+  {
     constructor. apply cz_rset. destruct writes; [|exact H]. unfold csr_frm in Hb. rewrite E3 in Hb. cbn in Hb. rewrite andb_true_r in Hb.
     destruct op; try discriminate. unfold cz in *. cbn [c_fcsr with_fcsr]. apply frm_zero_bits. apply frm_zero_bits in H. destruct H as (H5 & H6 & H7).
     assert (O : forall i, 5 <= i < 8 -> Z.testbit (bv_unsigned (bv_and (slice_get (c_fcsr c) 0 8) (bv_not operand))) i = false).
@@ -173,37 +159,35 @@ Proof.
   intros sz i c Hb H.
   destruct i; cbn [exec frm_bad] in *;
     try (constructor; auto 6 with czdb; fail).
-  - (* [comment removed for export] *) unfold load_val. destruct sz0; constructor; intros; constructor; auto with czdb.
-  - (* [comment removed for export] *) unfold store_val. destruct sz0; constructor; constructor; auto with czdb.
-  - (* [comment removed for export] *) destruct (negb (amo_aligned w (rget c rs1))); [constructor|]. destruct w; constructor; intros; constructor; auto 6 with czdb.
-  - (* [comment removed for export] *) destruct (negb (amo_aligned w (rget c rs1))); [constructor|].
-    destruct (match c_resv c with Some r => _ | None => false end); [|constructor; auto 6 with czdb].
+  -   unfold load_val. destruct sz0; constructor; intros; constructor; auto with czdb.
+  -   unfold store_val. destruct sz0; constructor; constructor; auto with czdb.
+  -   destruct (negb (amo_aligned w (rget c rs1))); [constructor|]. destruct w; constructor; intros; constructor; auto 6 with czdb.
+  -   destruct (negb (amo_aligned w (rget c rs1))); [constructor|].
+    destruct (match c_resv c with Some r => _ | None => false end);
+      [|destruct w; constructor; intros; constructor; constructor; auto 6 with czdb].
     destruct w; constructor; constructor; auto 6 with czdb.
-  - (* [comment removed for export] *) destruct (negb (amo_aligned w (rget c rs1))); [constructor|].
+  -   destruct (negb (amo_aligned w (rget c rs1))); [constructor|].
     destruct w; constructor; intros; constructor; constructor; auto 6 with czdb.
-  - (* [comment removed for export] *) destruct (csr_write_illegal _ csr); [constructor|]. apply exec_csr_cz; [auto with czdb | exact Hb].
-  - (* [comment removed for export] *) destruct (csr_write_illegal _ csr); [constructor|]. apply exec_csr_cz; [auto with czdb | exact Hb].
-  - (* [comment removed for export] *) destruct fmt; constructor; intros; constructor; auto with czdb.
-  - (* [comment removed for export] *) destruct fmt; constructor; constructor; auto with czdb.
-  - (* [comment removed for export] *) destruct (resolve_rm rm _); [|constructor].
+  -   destruct (csr_write_illegal _ csr); [constructor|]. apply exec_csr_cz; [auto with czdb | exact Hb].
+  -   destruct (csr_write_illegal _ csr); [constructor|]. apply exec_csr_cz; [auto with czdb | exact Hb].
+  -   destruct fmt; constructor; intros; constructor; auto with czdb.
+  -   destruct fmt; constructor; constructor; auto with czdb.
+  -   destruct (resolve_rm rm _); [|constructor].
     destruct op; cbv zeta; match goal with |- context [fp_fma ?a ?b ?c ?d ?e] => destruct (fp_fma a b c d e) end; constructor; auto 6 with czdb.
-  - (* [comment removed for export] *) destruct (resolve_rm rm _); [|constructor].
+  -   destruct (resolve_rm rm _); [|constructor].
     destruct op; cbv zeta;
       match goal with |- context [let '(_, _) := ?X in _] => destruct X end; constructor; auto 6 with czdb.
-  - (* [comment removed for export] *) destruct (resolve_rm rm _); [|constructor].
+  -   destruct (resolve_rm rm _); [|constructor].
     match goal with |- context [let '(_, _) := ?X in _] => destruct X end; constructor; auto 6 with czdb.
-  - (* [comment removed for export] *) constructor. destruct fmt; auto with czdb.
-  - (* [comment removed for export] *) match goal with |- context [let '(_, _) := ?X in _] => destruct X end; constructor; auto 6 with czdb.
-  - (* [comment removed for export] *) destruct op; cbv zeta; match goal with |- context [let '(_, _) := ?X in _] => destruct X end; constructor; auto 6 with czdb.
-  - (* [comment removed for export] *) destruct (resolve_rm rm _); [|constructor]. cbv zeta.
+  -   constructor. destruct fmt; auto with czdb.
+  -   match goal with |- context [let '(_, _) := ?X in _] => destruct X end; constructor; auto 6 with czdb.
+  -   destruct op; cbv zeta; match goal with |- context [let '(_, _) := ?X in _] => destruct X end; constructor; auto 6 with czdb.
+  -   destruct (resolve_rm rm _); [|constructor]. cbv zeta.
     destruct dst, src; cbn; try constructor;
       try (match goal with |- context [let '(_, _) := ?X in _] => destruct X end; constructor); auto 6 with czdb.
-  - (* [comment removed for export] *) constructor. destruct dir, fmt; auto with czdb.
+  -   constructor. destruct dir, fmt; auto with czdb.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 Fixpoint range_all (f : Z -> bool) (a : Z) (n : positive) : bool :=
   match n with
   | xH => f a
@@ -228,20 +212,17 @@ Variable segs : list Segment.
 Definition word_ok (w : bv 32) : bool :=
   match decode_any w with Some (i, _) => negb (frm_bad i) | None => true end.
 
-(* [comment removed for export] *)
 Definition addr_ok (a : Z) : bool :=
   match fetch_word segs (Z_to_bv 64 a) with
   | Some w => word_ok w
   | None => match fetch_tail segs (Z_to_bv 64 a) with Some w => word_ok w | None => true end
   end.
 
-(* [comment removed for export] *)
 Definition text_safe : Prop :=
   forall s, In s segs -> seg_executable s = true ->
     seg_writable s = false /\
     forall a, Z.of_N (seg_base s) <= a < Z.of_N (seg_base s) + Z.of_N (seg_size s) -> addr_ok a = true.
 
-(* [comment removed for export] *)
 Definition seg_ok (s : Segment) : bool :=
   if seg_executable s then
     (negb (seg_writable s) &&
@@ -343,14 +324,13 @@ Proof.
   destruct (fetch_tail segs (ms_pc ms)) as [w|] eqn:F3.
   { destruct (decode_exec_accesses segs ms w) as [rep| |] eqn:E; try discriminate. injection H as <-.
     exact (decode_exec_frm ms w rep (fetch_tail_ok _ _ F1 F3) E Hz). }
-  unfold fetch_failure in H. destruct (negb _); [discriminate|].
-  match type of H with context [if ?b then _ else _] => destruct b end; discriminate.
+  unfold fetch_failure in H.
+  repeat match type of H with context [if ?b then _ else _] => destruct b end; discriminate.
 Qed.
 
 Theorem msteps_frm_zero : forall ms ms', msteps segs ms ms' -> frm_zero (ms_fcsr ms) -> frm_zero (ms_fcsr ms').
 Proof. intros ms ms' H. induction H; intros Hz; [exact Hz|]. apply IHmsteps. eapply step_frm_zero; eassumption. Qed.
 
-(* [comment removed for export] *)
 Theorem msteps_fp_ok : forall (fx fx' : FPState) R pc M rom R' pc' M' rom',
   msteps segs (@mkst fx R pc M rom) (@mkst fx' R' pc' M' rom') -> fp_ok fx -> fp_ok fx'.
 Proof. intros fx fx' R pc M rom R' pc' M' rom' H Hz. exact (msteps_frm_zero _ _ H Hz). Qed.

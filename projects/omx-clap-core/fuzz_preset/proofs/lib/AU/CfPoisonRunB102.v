@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the symbolic runs of __asan_poison_memory_region (p, 16) and
    __asan_unpoison_memory_region (p, 16) of omx-clap-core/fuzz_preset's ASan+UBSan image B' (the #102 pin: stripped
    fuzz_preset.asan-ubsan sha256 d663f82d7f488d30f8e8d7496cb814e595a2f3cbbf16bde81a65cb3ea9af0994, unstripped twin
    c90d4fa54d43160b, PAU pau-preset-102). The twin of lib/A/CfPoisonRun102.v for image B', and the RE-PIN of
-   lib/AU/CfPoisonRunB.v (the old pin B, f8f98a95 / twin 3b5e1a09). Same bodies: the shared tools repository 153d7bc1ad5
+   lib/AU/CfPoisonRunB.v (the old pin B, f8f98a95 / twin 3b5e1a09). Same bodies: the shared tools repository
    tools/bytecmp/8ed351b56fbe on the donor fuzz_manifest.asan vs B' gives poison EQUAL-mod-pcrel 17 / 0, unpoison
    19 / 0, musl memset EQUAL (the internal file RESULT-20261029.txt). The numerals below are
    ADDRESSES of image B', read from the twin and checked by the build (tbl_po through table_ok, every rodata cell by

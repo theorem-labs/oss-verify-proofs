@@ -1,0 +1,45 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11. *)
+From Stdlib Require Import ZArith.
+From Stdlib Require Import NArith.
+From Stdlib Require Import List.
+From Stdlib Require Import Lia.
+From Stdlib Require Import Bool.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_halts_any_exit.Z Require Import ZChkCrc.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_halts_any_exit.Z Require Import ListFacts.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_halts_any_exit.Z Require Import ZPropExecP.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_halts_any_exit.Z Require Import ZSeqExecP.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_halts_any_exit.Z Require Import ZChecksum.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_halts_any_exit.Z Require Import ZChkAdl.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_halts_any_exit.Z Require Import SymEx2Expr.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_halts_any_exit.Z Require Import MemRel.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_halts_any_exit.Z Require Import CrcBraid.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_halts_any_exit.Z Require Import CrcRod.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_halts_any_exit.Z Require Import ZIface.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_halts_any_exit.Z Require Import DeflateLz.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_halts_any_exit.Z Require Import RefCrcRod.
+Import ListNotations.
+Local Open Scope Z_scope.
+Local Set Warnings "-abstract-large-number".
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_halts_any_exit.Z Require Import RefCrc32Base.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+
+Section W.
+Variable P : Z.
+Hypothesis HP0 : 0 < P.
+
+
+Section Pro.
+Variable sp : Z.
+Variable crc : Z.
+Hypothesis Hsp : 80 <= sp <= 2 ^ 63.
+Hypothesis Hcrc : 0 <= crc < 2 ^ 64.
+End Pro.
+
+
+Section Glue.
+Variable spv : Z.
+Hypothesis Hspv : 0 <= spv /\ spv + 80 <= 2 ^ 63.
+End Glue.
+End W.

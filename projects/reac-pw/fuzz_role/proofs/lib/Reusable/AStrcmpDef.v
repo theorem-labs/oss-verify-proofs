@@ -12,10 +12,11 @@
    object). It subsumes the literal instance of libreac/fuzz_pcap lib/A/Rt/StrcmpDef.v (x = y, k = the literal's
    length, c1 = c2 = 0, result 0). *)
 (* Modified by Theorem Labs, 2026-10-29: taken by path from libreac/fuzz_grant lib/Reusable/AStrcmpDef.v
-   (origin/cold/h-rw-cmd-7-rt 97c611eec86, owner h-rw-cmd-7, the text of record for the strcmp trampoline contract in
+   (owner h-rw-cmd-7, the text of record for the strcmp trampoline contract in
    c-asan's registry). Only the module paths change (fuzz_grant -> fuzz_identity); the statement is identical. The
    walk is h-rw-cmd-7's lib/A/Rt/Strcmp.v, relocated to identity's addresses separately. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/Reusable/AStrcmpDef.v at origin/ossv/recipes 7cbe5270d908; module paths changed to reac_pw.fuzz_role only, the statement unchanged (the file states no image address). *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/Reusable/AStrcmpDef.v; module paths changed to reac_pw.fuzz_role only, the statement unchanged (the file states no image address). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_role.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

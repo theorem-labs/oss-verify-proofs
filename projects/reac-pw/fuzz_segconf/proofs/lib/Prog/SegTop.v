@@ -1,6 +1,6 @@
 (* plain_halts of reac-pw/fuzz_segconf (plain build): SegEnd.plain_halts_of_callees at the cut record
    CPseg, every premise discharged by a proved walk, and each walk's own callee contracts by the leaf proofs, as
-   reac-pw/fuzz_pin's Prog/PinTop.v (commit aa56e9780de) does for pin. No premise is left.
+   reac-pw/fuzz_pin's Prog/PinTop.v does for pin. No premise is left.
    The composition tree (each contract premise of a _holds discharged by another _holds):
    - segments: E01, M01, L01, L03, X01 by Prog/Seg/<SEG>.seg_<SEG>_holds, M02 and V01 by
      Prog/Seg/M02.seg_M02 and Prog/Seg/V01.seg_V01, L02 by Prog/Seg/L02T.seg_L02;

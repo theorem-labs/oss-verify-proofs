@@ -1,21 +1,22 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image A' (asan, harness fix #102, pin sha256
    1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44): SEGMENT S2 of the walk of parse_noting (row
    N10-PNA; cut table lib/A/Prog/PN102Cuts.v pn_seg_S2_stmt): from pn_cut_S2 (+0x28, fuzz_alloc_live returned) run
    +0x28 mv s1,a0; +0x2c mv a0,s3; +0x30 mv a1,s2; +0x34 mv a2,s0 and +0x38 jal pj_parse, close the call by the batch kit's text
-   tpj_parse_specX (lib/A/PRH_FnPj.v on the kit's cut 7cdbb61b5fa0, its cursor-set premise PRH_Base.prh_cw_pj as repaired on
-   a working branch f29626eb1667; the statement's premise, at the CW pn_cw X) at window 0 with every
+   tpj_parse_specX (lib/A/PRH_FnPj.v on the kit's cut, its cursor-set premise PRH_Base.prh_cw_pj as repaired on
+   a working branch; the statement's premise, at the CW pn_cw X) at window 0 with every
    premise discharged at the call state (prh_cw_pj by PN102Cuts.v pn_cw_pj), and establish pn_cut_S3 at the return
    site +0x3c at pj_parse's float state, the journal at the budget pn_cw X.
    rule 24: proves function parse_noting (reuse search: `proof-index parse_noting` exit 4 at 2026-10-30 07:2xZ,
    index v5 06:36:24Z: 0 named / 0 by address / 0 related / 0 released; the unreleased hits are this lane's own N10-PNA
-   files and the plain / UBSan / B' twins; R24Pna CONFIRM 2026-10-29 18:2xZ; own signed walk 13970867e0c9, its one
+   files and the plain / UBSan / B' twins; R24Pna CONFIRM 2026-10-29 18:2xZ; own signed walk, its one
    announced re-bind). This file: segment S2 of that walk.
-   THE BATCH KIT'S RE-BIND: a Theorem Labs lane's signed A' file of the same role (a working branch 13970867e0c9),
-   re-fit to the batch kit's cut (commit 7cdbb61b5fa0) as the B' twin was re-fit
-   (a working branch c7276d935095 lib/B/Prog/PN102B<same role>.v, read back at PI_prog_A / prh_img_A).
-   SHAPES: the call is lib/A/Prog/Ent102L2A.v l2_pno / l2_pno_post's (a working branch b1bc025047ea), the
+   THE BATCH KIT'S RE-BIND: a Theorem Labs lane's signed A' file of the same role (a working branch),
+   re-fit to the batch kit's cut as the B' twin was re-fit
+   (a working branch lib/B/Prog/PN102B<same role>.v, read back at PI_prog_A / prh_img_A).
+   SHAPES: the call is lib/A/Prog/Ent102L2A.v l2_pno / l2_pno_post's (a working branch), the
    slot steps PN102Help.v's, the frame across the steps and the call PN102Keep.v's, the call-state facts (the out
    node's slot, the text's bytes, shadow and ceiling, the grammar facts, the live requests, the requests within
    g_most, the reader's block sizes) PN102S2Help.v's.

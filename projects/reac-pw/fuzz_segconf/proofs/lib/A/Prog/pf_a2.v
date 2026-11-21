@@ -23,14 +23,15 @@
    achain_chain_pre of it. joined's new premises at its call: len's 8 bytes present (the journal's window), and
    (pass 5b) the stack from len - 16 present, from the statement's astack_pres kept by astack_pres_journal. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 413 of its 483 lines of code are new or changed and 4983 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image A (fuzz_segconf.asan): segment A2 of reac_segconf_parse_file's walk (0x87b24 ..
    0x87cc4, 104 instructions), the theorem pf_a2_holds : S_A2 B of lib/A/Prog/pf_pieces.v (FTAKEN -> FRAME).
    Segment A2's proof, 2026-10-30.
    proves function reac_segconf_parse_file (segment A2; reuse search and CONFIRM:
-   the unit's internal record, commit dfb49d6ad789, path records/segp/g3-lookup.md,
+   the unit's internal record, path records/segp/g3-lookup.md,
    the rule-24 check 2026-10-30T15:42:08Z; reuse verdict none).
-   The code (the excerpt reac_segconf_parse_file.fuzz_segconf.asan.s in the unit's internal record, commit
-   dfb49d6ad789, path records/segp/dis/):
+   The code (the excerpt reac_segconf_parse_file.fuzz_segconf.asan.s in the unit's internal record,
+    path records/segp/dis/):
      0x87b24 sd a0,0x88(s1) (slot 0x88 = F); 0x87b28 add s10,s8,s10 (s10 = c + 0x40e0); 0x87b2c sd s7,0xd0(s1);
      0x87b30 .. 0x87b5c the frame header F + 0 / 8 / 16 (the magic 0x41b58ab3, the description .rodata 0x17667,
      the pc 0x87a78); 0x87b3c / 0x87b64 s11 = (F >> 3) + s6 = SH; 0x87b68 .. 0x87b84 cells 0..7 (f8 f8 f2 f2 for

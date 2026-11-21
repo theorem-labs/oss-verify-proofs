@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (realizes_must_exit_in_at's induction names rz_node's RomBase.sys_rob premise). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -67,7 +68,7 @@ Lemma realizes_must_exit_in_at : forall S c T,
   m_halted (cfg_model c) = None ->
   must_exit_in_at_cfg fcfg segs S c.
 Proof using segs.
-  intros S c T H. induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+  intros S c T H. induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq];
     intros Honly Hrun.
   - destruct Hnode as [Hcomp Hsound].
     apply must_exit_in_at_cfg_running; [exact Hrun | | |].

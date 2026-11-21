@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: made for libreac/fuzz_pcap (v1.9.0, ASan build) from proofs/cgif/cgif_file_fuzzer/lib/A/ACef.v, A/AI12.v and A/ACbj.v (the listing's image instance, in the form libreac/fuzz_grant's lib/A/Prog/GrantImg.v gives it, a working branch) and A/ACfh.v, A/ACfj.v and A/ACfi.v (the bridge from the entry walk to the contract, in the form libreac/fuzz_grant's lib/A/Prog/GrantLibX.v gives it): the code table of fuzz_pcap.asan's program code (0x80738, 1521 words, the span of PcapList.pcap_listing), the value table over PcapAddr.v, the instance PI_pcap of PcapPa.PAImg with its named equalities, pe_base from the contract's pre, the composition of the harness walks into pe_start, and pe_post to the contract's post. The meta region at the end is a Theorem Labs lane's h_meta_gx (a working branch 4259db10ddc), restated over explicit premises. *)
+(* Modified by Theorem Labs, 2026-10: made for libreac/fuzz_pcap (v1.9.0, ASan build) from proofs/cgif/cgif_file_fuzzer/lib/A/ACef.v, A/AI12.v and A/ACbj.v (the listing's image instance, in the form libreac/fuzz_grant's lib/A/Prog/GrantImg.v gives it, a working branch) and A/ACfh.v, A/ACfj.v and A/ACfi.v (the bridge from the entry walk to the contract, in the form libreac/fuzz_grant's lib/A/Prog/GrantLibX.v gives it): the code table of fuzz_pcap.asan's program code (0x80738, 1521 words, the span of PcapList.pcap_listing), the value table over PcapAddr.v, the instance PI_pcap of PcapPa.PAImg with its named equalities, pe_base from the contract's pre, the composition of the harness walks into pe_start, and pe_post to the contract's post. The meta region at the end is a Theorem Labs lane's h_meta_gx (a working branch), restated over explicit premises. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_pcap/lib/A/Prog/PcapEntryTop.v; 280 of its 336 lines of code are new or changed and 273 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* fuzz_pcap's entry contract (row 11, the ASan build of libreac v1.9.0, image fuzz_pcap.asan sha256
    b7a91d9b1fb0017d...), composed: PcapEntryTop.pcap_entry_top with every walk hypothesis that is proved instantiated
@@ -12,21 +13,21 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    POST := pe_post is SYNTACTICALLY the top's hypothesis, with no conversion, and logs as `ARGS_FIT CONVERSION` each
    argument whose type is the lemma's premise only up to conversion):
      pe_E                             PcapHarnessPE.v
-     pe_A                             PcapHarnessPA.v:158 (a Theorem Labs lane, a working branch; on a working branch
-                                      29385b28245)
+     pe_A                             PcapHarnessPA.v:159 (a Theorem Labs lane, a working branch; on a working branch)
+                                      
      pe_B, pe_C                       PcapHarnessA.v    (a Theorem Labs lane, a working branch)
      tail_W, tail_R1 .. tail_R7,      PcapHarnessTail.v (a Theorem Labs lane, a working branch)
      tail_K12r, tail_leave, tail_ret
      pe_Walk                          PcapHarnessWalk.v, with its Section hypothesis
                                       WALKR := fun POST => PcapHarnessWalkR.pe_WalkR .. POST (a Theorem Labs lane,
                                       a working branch), itself checked by `fit` against pe_Walk's WALKR
-     pe_KR, pe_WalkR's KR             PcapHarnessWalkKR.v:3083 (a Theorem Labs lane, on a working branch 5f9b0299dc5)
+     pe_KR, pe_WalkR's KR             PcapHarnessWalkKR.v:3084 (a Theorem Labs lane, on a working branch)
    and the callee statements the walks take:
-     OPEN (fin_OPEN)                  PcapSourceOpen.v:811 pb_pcap_source_openX (a Theorem Labs lane, on a working branch c253ca9c73a)
-     NEXT (fin_NEXT)                  PcapSourceNext.v:146 pb_pcap_source_nextX (a Theorem Labs lane, on a working branch 29b85aab8d0)
-     FOPEN (fin_FOPEN), which OPEN takes   PcapFuzzFopen.v:217 pb_libreac_fuzz_fopenX (a Theorem Labs lane, on a working branch 29b85aab8d0)
-     CLOSE (fin_CLOSE)                PcapSourceClose.v:378 pb_pcap_source_closeX (a Theorem Labs lane, on a working branch
-                                      dcd4e33b7bd), general in B, K and MT like OPEN and NEXT
+     OPEN (fin_OPEN)                  PcapSourceOpen.v:812 pb_pcap_source_openX (a Theorem Labs lane, on a working branch)
+     NEXT (fin_NEXT)                  PcapSourceNext.v:146 pb_pcap_source_nextX (a Theorem Labs lane, on a working branch)
+     FOPEN (fin_FOPEN), which OPEN takes   PcapFuzzFopen.v:217 pb_libreac_fuzz_fopenX (a Theorem Labs lane, on a working branch)
+     CLOSE (fin_CLOSE)                PcapSourceClose.v:378 pb_pcap_source_closeX (a Theorem Labs lane, on a working branch),
+                                      general in B, K and MT like OPEN and NEXT
    and the frame give-back law ASF (fin_ASF): YG0t.v:474 astack_free_law_ok, general in the segments and B, no premise.
    HGLEN of pe_E, pe_B, tail_W and pe_WalkR is PcapEntryTop.pi_pcap_glen; pe_WalkR's HGX is fin_HGX, from
    pcap_G_harness_gx_ok and PcapEntryTop.pi_pcap_pe_G. The SMP of pb_pcap_source_openX and pb_pcap_source_nextX is
@@ -34,7 +35,7 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    fin_HGX_open (from pcap_G_harness_gx_ok and pcap_G_harness_pe_bytes).
    ASIL is passed BY CONVERSION (kernel-checked) to every lemma that takes it (a Theorem Labs lane ruling, 08:16Z): the file's
    ASIL is the top's, at Asan.M.loaded_segments; each lemma states it at pa_segs PI_pcap, which reduces to
-   Asan.M.loaded_segments by delta + iota (PcapEntryTop.v:140-141). Each such site carries a `conversion:` comment,
+   Asan.M.loaded_segments by delta + iota (PcapEntryTop.v:141-142). Each such site carries a `conversion:` comment,
    and the build log shows each one as an ARGS_FIT CONVERSION line.
    FOPEN is passed BY CONVERSION (kernel-checked) to pb_pcap_source_openX, at that one site (a Theorem Labs lane via a Theorem Labs lane,
    08:4xZ: the same class as ASIL): fin_FOPEN is pb_libreac_fuzz_fopenX's own conclusion, which names the Definitions
@@ -55,19 +56,19 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    sink-head argument is the Section variable SK) and shows that the plain build's src0_sink_head is not loaded at
    all. *)
 (* The premises of (6), (4b) and pcap_source_open's parameters: premise, type, DISCHARGER (a Theorem Labs lane, 06:16Z), source
-   file. Source files found by name on 2026-10-29 at the base branch c253ca9c73a (the core union 40f7f2e1839: the base branch + a working branch
-   429b6cb9055 + a working branch 727a1c84c2a + a working branch 2ce3f2d7b1c, plus a working branch f2f68949c4c), and where a file is not on the base branch,
-   at other working branches: 6c461415f47, 9700d736a50. NOT FOUND: no lemma with that
+   file. Source files found by name on 2026-10-29 at the base branch (the core union: the base branch + a working branch
+   + a working branch + a working branch, plus a working branch), and where a file is not on the base branch,
+   at other working branches:. NOT FOUND: no lemma with that
    conclusion on any of these refs. UNION: what the core union proves of it (06:43Z check); "none" = no lemma.
      LAWS   AR_laws SEGS B                  core: YG0d.AsanAPI's aa_laws     lib/Reusable/YG0d.v:531-532; the AsanAPI
                                                                              value at pcap's B NOT FOUND. UNION: none
-     TL     PALib B                         core: AF0m's PcapSyms            lib/A/AF0m.v:437 PcapSyms; PcapSyms B ->
+     TL     PALib B                         core: AF0m's PcapSyms            lib/A/AF0m.v:438 PcapSyms; PcapSyms B ->
                                                                              PALib B NOT FOUND. UNION: none
-     TLF    PALibF B                        core: AF0m's PcapSyms            lib/A/AF0m.v:437; PALibF in
+     TLF    PALibF B                        core: AF0m's PcapSyms            lib/A/AF0m.v:438; PALibF in
                                                                              lib/A/Prog/PcapFrame.v:96; lemma NOT FOUND.
                                                                              UNION: none
      ASM1   astack_malloc_realizes SEGS B 1 AF0s.stack_malloc1_contract via PcapSyms at the instance (a Theorem Labs lane)
-                                                                             lib/A/AF0s.v:520 stack_malloc1_contract.
+                                                                             lib/A/AF0s.v:521 stack_malloc1_contract.
                                                                              UNION: proves it at AB1v.tfibsegs, not at
                                                                              pa_segs PI_pcap (convertible, not
                                                                              syntactic), and from AF0m.PcapSyms B, which
@@ -89,12 +90,12 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
      MFSL   ameter_fs_laws MT               core: YCbp                       lib/Reusable/YCbp.v:23 ameter_triv_fs_laws
                                                                              (only at MT := ameter_triv). UNION: none
                                                                              at a general MT
-     RO     PcapBase.ro_below_ofl SEGS LO HI SK   the PcapRelro instance     lib/A/Prog/PcapRelro.v:23-24 (PCAP_RLO,
+     RO     PcapBase.ro_below_ofl SEGS LO HI SK   the PcapRelro instance     lib/A/Prog/PcapRelro.v:24-25 (PCAP_RLO,
                                                                              PCAP_RHI); the instance NOT FOUND. Its law
                                                                              needs SK := asan_sink_head
-                                                                             (lib/Reusable/PcapSinkHeads.v:30). UNION:
+                                                                             (lib/Reusable/PcapSinkHeads.v:31). UNION:
                                                                              none
-     KR     pe_KR at every FPState          a Theorem Labs lane              lib/A/Prog/PcapHarnessWalkKR.v:3084 pe_KR:
+     KR     pe_KR at every FPState          a Theorem Labs lane              lib/A/Prog/PcapHarnessWalkKR.v:3085 pe_KR:
                                                                              WIRED (fin_KR); its new premise ABCMP:
      ABCMP  abcmp_realizes SEGS B (SIGMA bcmp trampoline 0x41570), at every FPState
                                             a Theorem Labs lane's core: YG0d.AsanAPI's aa_bcmp   lib/Reusable/YG0d.v:543 (at
@@ -106,15 +107,15 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
                                                                              (ACeg / ACeh), not PcapBase.arodata_okP:
                                                                              the exact form NOT FOUND. UNION: none
      HPATH  AR .. -> range_addressable / shadow_hull_vis of object 3, 13 bytes   open side: AF0m   NOT FOUND (the open
-                                                                             lane, lib/A/Prog/PcapSourceOpen.v:158,
+                                                                             lane, lib/A/Prog/PcapSourceOpen.v:159,
                                                                              takes it as a hypothesis too). UNION: none
      FM_RA  Z                               open side                        lib/A/Stdio/PStdioImgA.v:46 FM_MALLOC_RA
                                                                              (0x8e90c), as the candidate value
      CTX    list (list Z)                   open side's instance facts       NOT FOUND
      HCTX   In [BASE + PP_K7; RA_LLVMF] CTX /\ In [BASE + PP_K7] CTX   open side's instance facts   NOT FOUND
      HFMU   the malloc-trace universe facts over FM_RA and CTX   open side: AF0m   NOT FOUND. UNION: none
-   (7) pb_pcap_source_openX's premises (PcapSourceOpen.v:111-163), new here; source files found by name at the base branch
-   c253ca9c73a, the tree's base:
+   (7) pb_pcap_source_openX's premises (PcapSourceOpen.v:112-164), new here; source files found by name at the base branch,
+   the tree's base:
      ro_chunk_addr  Z -> Prop (the bytes ROI reads)   a Theorem Labs lane's core: AE3i   lib/A/AE3i.v:26 img_ro_chunks (their
                                                                              addresses)
      ROIMG_KEPT  ROI kept when the ro_chunk_addr bytes are   a Theorem Labs lane's core: AE3i   lib/A/AE3i.v:93 ro_img_kept states
@@ -134,30 +135,30 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
                                                                              (kernel-checked), delta: PcapFuzzFopen.v:43-45,
                                                                              :68
      AFREAD PFreadISpec.afread_spec SK SEGS B pcap_KS (SIGMA fread trampoline), at every FPState
-                                            a Theorem Labs lane's rfread_contract   lib/A/Stdio/PFreadISpec.v:137-138 (the
+                                            a Theorem Labs lane's rfread_contract   lib/A/Stdio/PFreadISpec.v:138-139 (the
                                                                              statement); the lemma NOT FOUND
      ra_fc1, ra_fc2  Z (fclose's two return addresses)   a Theorem Labs lane            NOT FOUND
      AFCLOSE PFclose.afclose_source_spec SK SEGS B pcap_KS (SIGMA fclose trampoline) ra_fc1 ra_fc2 LO HI, at every
-            FPState                         a Theorem Labs lane's PFclose               lib/A/Stdio/PFclose.v:209 (the statement,
+            FPState                         a Theorem Labs lane's PFclose               lib/A/Stdio/PFclose.v:210 (the statement,
                                                                              still a stand-in); the lemma NOT FOUND
      HUfc1, HUfc2  In [pc_free_ra0 (as_code B); ra_fc1 / ra_fc2] (as_universe B)   a Theorem Labs lane / the trace universe
                                                                              (a Theorem Labs lane's ACej.Tfib_universe):
                                                                              NOT FOUND
-   (8) pb_pcap_source_nextX's premises (PcapSourceNext.v:73-89), new here; source files found by name at the base branch
-   29b85aab8d0, the tree's base after the merge:
+   (8) pb_pcap_source_nextX's premises (PcapSourceNext.v:73-89), new here; source files found by name at the base branch,
+   the tree's base after the merge:
      ASM0   astack_malloc_realizes SEGS B NX_CID (class 0), at every FPState
                                             StackMalloc0.stack_malloc0_contract via PcapSyms at the instance (a Theorem Labs lane)
-                                                                             lib/A/StackMalloc0.v:520: proved at
+                                                                             lib/A/StackMalloc0.v:521: proved at
                                                                              tfibsegs, class 0, from PcapSyms B, which
                                                                              this file does not have: NOT wired
      AMM    MemmoveDef.amemmove_realizes SEGS B (SIGMA __asan_memmove), at every FPState
                                             a Theorem Labs lane: Memmove.asan_memmove_contract via PcapSyms at the instance
-                                                                             lib/A/Rt/Memmove.v:147: proved at
+                                                                             lib/A/Rt/Memmove.v:148: proved at
                                                                              tfibsegs and 0x51bf0, from PcapSyms B: NOT
                                                                              wired
    (9) pb_libreac_fuzz_fopenX's premises (PcapFuzzFopen.v:70-98), new here; source files found by name on 2026-10-29
-   at a working branch 29b85aab8d0 (the tree's base) and, where not on the base branch, at another working branch
-   c5180b0bcf1:
+   at a working branch (the tree's base) and, where not on the base branch, at another working branch:
+   
      ROIMG_LOW  PcapFuzzFopenG.roimg_low SEGS ROI   a Theorem Labs lane's core: AE3i      lib/A/AE3i.v:61-62 ro_img over
                                                                              img_ro_region [IMG_RO_LO, IMG_RO_HI), below
                                                                              alloc_ceiling; the lemma NOT FOUND
@@ -170,7 +171,7 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
                                             the image instance               PcapFuzzFopen.v:496 fopen_img_tables
                                                                              (fi_sep's tables, by computation); fi_head
                                                                              needs SK := asan_sink_head
-                                                                             (lib/Reusable/PcapSinkHeads.v:30); the
+                                                                             (lib/Reusable/PcapSinkHeads.v:31); the
                                                                              record NOT FOUND
      STRCMP PcapFuzzFopenG.astrcmp_path_at SEGS B ROI (SIGMA strcmp trampoline) (VAL obj FO_PATH), at every FPState
                                             a Theorem Labs lane: StrcmpIcpt.strcmp_lit_contract via PcapSyms at the instance
@@ -183,8 +184,8 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
                                                                              on the base branch): at tfibsegs, FM_ENTRY,
                                                                              FM_MALLOC_RA, 0x10350 / 0x10370, from
                                                                              PcapSyms B and amalloc04_rule: NOT wired
-   (10) PcapHarnessPA.pe_A's premises (PcapHarnessPA.v:91-114), new here; source files found by name on 2026-10-29 at
-   a working branch 29385b28245 (the tree's base after the merge):
+   (10) PcapHarnessPA.pe_A's premises (PcapHarnessPA.v:92-115), new here; source files found by name on 2026-10-29 at
+   a working branch (the tree's base after the merge):
      HCPY   aintrin_realizes SEGS B OCpy (SIGMA __asan_memcpy), at every FPState
                                             a Theorem Labs lane's core: AD1o.ocpy_of_icpt via PcapSyms at the instance
                                                                              lib/A/AD1o.v:82: at tfibsegs and
@@ -198,7 +199,7 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
      HCTX_A In [BASE + PP_K2; RA_LLVMF] CTX /\ In [BASE + PP_K2] CTX (the lane's HCTX, at pe_A's landing PP_K2)
                                             the open side's instance facts   NOT FOUND
    (3) ASIL, the top's asource_img_laws SK SEGS B pcap_KS: by conversion (kernel-checked) at every walk, open and
-   next (pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:140-141). *)
+   next (pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:141-142). *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.A.Prog Require PcapEntry PcapEntryA PcapEntryDefs PcapEntryPhases.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.A.Prog Require PcapEntryTop PcapHarnessPE PcapHarnessA PcapHarnessPA
   PcapHarnessTail PcapHarnessWalk PcapHarnessWalkR PcapHarnessWalkKR PcapSourceOpen PcapFuzzFopenDefs PcapFuzzFopenG
@@ -307,7 +308,7 @@ Variable ROI : (word -> option byte) -> Prop.
 
 (* ---- (6): the other premises of the proved walks, NOT in PcapEntryTop's Section top (a Theorem Labs lane, 06:16Z: they stay
    here). Each carries its DISCHARGER; the header table gives the source files. ---- *)
-(* The allocator laws: all walks. DISCHARGER a Theorem Labs lane's core (YG0d.AsanAPI's aa_laws), via the base branch's merges of 429b6cb9055 and 727a1c84c2a. *)
+(* The allocator laws: all walks. DISCHARGER a Theorem Labs lane's core (YG0d.AsanAPI's aa_laws), via the base branch's merges. *)
 Hypothesis LAWS : @AR_laws rc SEGSp B.
 (* The listing's runtime symbols: pe_E, pe_B, tail_R5, tail_R6. DISCHARGER a Theorem Labs lane's core (AF0m's PcapSyms). *)
 Hypothesis TL : @PALib rc pcap_listing PIp B.
@@ -341,7 +342,7 @@ Hypothesis ML : model_laws (as_universe B).
 Hypothesis FFL : @frame_flag_lawP rc SEGSp B.
 Hypothesis MFSL : ameter_fs_laws MT.
 
-(* ---- (7): the premises of PcapSourceOpen.pb_pcap_source_openX (PcapSourceOpen.v:111-163) that (1)-(6) do not
+(* ---- (7): the premises of PcapSourceOpen.pb_pcap_source_openX (PcapSourceOpen.v:112-164) that (1)-(6) do not
    hold, in the lane's form at PI := PI_pcap, K := pcap_KS, ro_img := ROI. Each carries its DISCHARGER; the header
    table gives the source files. The lane's LAWS TL TLF ML ASM1 ASF FFL MLAW (MTL) MLAWF (MFSL) ASIL HPATH ROB (RO)
    are (1)-(6)'s; SMP, HMODE and HGX are derived below (fin_SMP, pi_pcap_obj12_mode, fin_HGX_open). ---- *)
@@ -359,12 +360,12 @@ Hypothesis HGRO : forall a, ro_chunk_addr a ->
 Hypothesis FM : @PSourceMeter.asrc_file_meter rc SK SEGSp B MT.
 (* libreac_fuzz_fopen: its statement is no longer a hypothesis: fin_FOPEN below is
    PcapFuzzFopen.pb_libreac_fuzz_fopenX, at the premises of (9). *)
-(* The fread wrapper. DISCHARGER a Theorem Labs lane's rfread_contract (lib/A/Stdio/PFreadISpec.v:137-138); the lemma NOT
+(* The fread wrapper. DISCHARGER a Theorem Labs lane's rfread_contract (lib/A/Stdio/PFreadISpec.v:138-139); the lemma NOT
    FOUND on the base branch. *)
 Hypothesis AFREAD : forall fx : YK11.FPState,
   @PFreadISpec.afread_spec fx rc SK SEGSp B pcap_KS (@pa_sigma rc pcap_listing PIp PS___interceptor_trampoline_fread).
 (* The fclose wrapper, at its two return addresses ra_fc1 / ra_fc2 and their trace-universe facts. DISCHARGER a Theorem Labs lane
-   (lib/A/Stdio/PFclose.v:209 afclose_source_spec, still a stand-in); the lemma and the two addresses NOT FOUND on
+   (lib/A/Stdio/PFclose.v:210 afclose_source_spec, still a stand-in); the lemma and the two addresses NOT FOUND on
    the base branch. *)
 Variables ra_fc1 ra_fc2 : Z.
 Hypothesis AFCLOSE : forall fx : YK11.FPState,
@@ -380,7 +381,7 @@ Hypothesis HUfc2 : In [pc_free_ra0 (as_code B); ra_fc2] (as_universe B).
    DISCHARGER StackMalloc0.stack_malloc0_contract via PcapSyms at the instance (a Theorem Labs lane) *)
 Hypothesis ASM0 : forall fx : YK11.FPState, @astack_malloc_realizes fx rc SEGSp B PcapSourceNextSpec.NX_CID.
 (* __asan_memmove's contract at its entry. DISCHARGER a Theorem Labs lane's Memmove.asan_memmove_contract
-   (lib/A/Rt/Memmove.v:147, at tfibsegs and 0x51bf0, from PcapSyms B) via PcapSyms at the instance. *)
+   (lib/A/Rt/Memmove.v:148, at tfibsegs and 0x51bf0, from PcapSyms B) via PcapSyms at the instance. *)
 Hypothesis AMM : forall fx : YK11.FPState,
   @MemmoveDef.amemmove_realizes fx rc SEGSp B (@pa_sigma rc pcap_listing PIp PS___asan_memmove).
 
@@ -398,7 +399,7 @@ Hypothesis MCONSTS : forall (W : world SEGSp) (mem : word -> option byte), ROI (
   aview SEGSp (w_H W) mem a = option_map (fun b : byte => bv_unsigned b) (seg_rom SEGSp (Z_to_bv 64 a)).
 (* The image facts of the two globals and of pcap_KS's stdio cells. DISCHARGER the image instance: fi_sep and
    fi_kimg by computation on PI_pcap (PcapFuzzFopen.v:496 fopen_img_tables computes fi_sep's tables), fi_head at the
-   ASan sink head (as RO's law, lib/Reusable/PcapSinkHeads.v:30). *)
+   ASan sink head (as RO's law, lib/Reusable/PcapSinkHeads.v:31). *)
 Hypothesis FI : PcapFuzzFopenG.FopenImg SK (VALp (A_OBJ PcapFuzzFopen.FO_LEN)) (VALp (A_OBJ PcapFuzzFopen.FO_FILE))
   pcap_KS.
 (* The strcmp wrapper at the listing's strcmp trampoline and object FO_PATH. DISCHARGER a Theorem Labs lane's
@@ -408,12 +409,12 @@ Hypothesis STRCMP : forall fx : YK11.FPState,
   @PcapFuzzFopenG.astrcmp_path_at fx rc SEGSp B ROI (@pa_sigma rc pcap_listing PIp PS___interceptor_trampoline_strcmp)
     (VALp (A_OBJ PcapFuzzFopen.FO_PATH)).
 (* The fmemopen wrapper. DISCHARGER a Theorem Labs lane's PFmemopenC.pcap_afmemopen_closed (lib/A/Stdio/PFmemopenC.v:23 on
-   a working branch c5180b0bcf1, at tfibsegs, from PcapSyms B and amalloc04_rule); not on the base branch. *)
+   a working branch, at tfibsegs, from PcapSyms B and amalloc04_rule); not on the base branch. *)
 Hypothesis AFMEMOPEN : forall fx : YK11.FPState,
   @PFmemopenISpec.afmemopen_spec fx rc SK SEGSp B pcap_KS MT CTX
     (@pa_sigma rc pcap_listing PIp PS___interceptor_trampoline_fmemopen) FM_RA mc_lo mc_hi.
 
-(* ---- (10): the premises of PcapHarnessPA.pe_A (PcapHarnessPA.v:91-114) that (1)-(9) do not hold, in the lane's form
+(* ---- (10): the premises of PcapHarnessPA.pe_A (PcapHarnessPA.v:92-115) that (1)-(9) do not hold, in the lane's form
    at PI := PI_pcap, KS := pcap_KS. Its LAWS MLAWS (MTL) ASIL HRO (RO) FM_RA CTX ROI HROI HPATH HFMU are (1)-(7)'s and
    its OPENS is fin_OPEN. Each carries its DISCHARGER; the header table gives the source files. ---- *)
 (* __asan_memcpy / __asan_memset at the listing's trampolines. DISCHARGER a Theorem Labs lane's core: AD1o.ocpy_of_icpt /
@@ -427,7 +428,7 @@ Hypothesis HSET : forall fx : YK11.FPState,
    at PP_K7. DISCHARGER the open side's instance facts (as HCTX). *)
 Hypothesis HCTX_A : In [VALp A_TEXT + PP_K2; RA_LLVMF] CTX /\ In [VALp A_TEXT + PP_K2] CTX.
 
-(* ---- (11): the premise of PcapHarnessWalkKR.pe_KR (PcapHarnessWalkKR.v:981-988) that (1)-(10) do not hold, in the
+(* ---- (11): the premise of PcapHarnessWalkKR.pe_KR (PcapHarnessWalkKR.v:982-989) that (1)-(10) do not hold, in the
    lane's form at PI := PI_pcap, KS := pcap_KS. Its LAWS MTL RO ASIL are (1)-(6)'s, its HGX is fin_HGX and its NEXT
    is fin_NEXT (its TL is unused). ---- *)
 (* The bcmp wrapper at the listing's bcmp trampoline (0x41570, PcapAddr.v:24). DISCHARGER a Theorem Labs lane's core:
@@ -436,7 +437,7 @@ Hypothesis HCTX_A : In [VALp A_TEXT + PP_K2; RA_LLVMF] CTX /\ In [VALp A_TEXT + 
 Hypothesis ABCMP : forall fx : YK11.FPState,
   @abcmp_realizes fx rc SEGSp B (@pa_sigma rc pcap_listing PIp PS___interceptor_trampoline_bcmp).
 
-(* pb_pcap_source_openX's SMP, from ML (YG0d.v:520 ml_stack_malloc_progress), as PcapHarnessPE.v:369 does. *)
+(* pb_pcap_source_openX's SMP, from ML (YG0d.v:520 ml_stack_malloc_progress), as PcapHarnessPE.v:370 does. *)
 Lemma fin_SMP : stack_malloc_progressP B.
 Proof. exact (fun s cid HW Hc Hn => ml_stack_malloc_progress _ ML s cid HW Hc Hn). Qed.
 
@@ -472,14 +473,14 @@ Proof.
     LAWS MTL FI (STRCMP fx) (AFMEMOPEN fx)).
 Qed.
 
-(* OPEN, the statement tail_R1 takes, from the pcap_source_open walk (PcapSourceOpen.v:812): the conclusion syntactically
+(* OPEN, the statement tail_R1 takes, from the pcap_source_open walk (PcapSourceOpen.v:813): the conclusion syntactically
    OPEN's type (fit). *)
 Lemma fin_OPEN : forall fx : YK11.FPState,
   @tpcap_source_open_specX fx rc SK SEGSp LOp HIp (VALp (A_OBJ 3)) (VALp (A_OBJ 4)) (VALp (A_OBJ 2)) ROI B pcap_KS MT
     FM_RA CTX (VALp A_TEXT + AF_pcap_source_open).
 Proof.
   intros fx.
-  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:140-141 *)
+  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:141-142 *)
   (* conversion: FOPEN at A_libreac_fuzz_fopenP = BASE + AF_libreac_fuzz_fopen, FO_PATH/LEN/FILE = 3/4/2
      (PcapFuzzFopen.v:43-45, :68) *)
   fit (@PcapSourceOpen.pb_pcap_source_openX fx rc SK PIp B pcap_KS MT FM_RA CTX ROI ro_chunk_addr ROIMG_KEPT LAWS
@@ -493,7 +494,7 @@ Lemma fin_NEXT : forall fx : YK11.FPState,
   @tpcap_source_next_specX fx rc SK SEGSp LOp HIp NX_STK B MT pcap_KS (VALp A_TEXT + AF_pcap_source_next).
 Proof.
   intros fx.
-  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:140-141 *)
+  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:141-142 *)
   fit (@PcapSourceNext.pb_pcap_source_nextX fx rc SK PIp B MT pcap_KS LAWS TL TLF ML MTL MFSL (ASM0 fx) fin_SMP fin_ASF
     FFL ASIL (AFREAD fx) (AMM fx)).
 Qed.
@@ -505,7 +506,7 @@ Lemma fin_CLOSE : forall fx : YK11.FPState,
   @tpcap_source_close_specX fx rc SK SEGSp LOp HIp B pcap_KS MT (VALp A_TEXT + AF_pcap_source_close).
 Proof.
   intros fx.
-  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:140-141 *)
+  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:141-142 *)
   fit (@PcapSourceClose.pb_pcap_source_closeX fx rc SK PIp B pcap_KS MT LAWS TL ra_fc1 ra_fc2 (AFCLOSE fx) HUfc1 HUfc2
     ASIL FM).
 Qed.
@@ -516,7 +517,7 @@ Lemma fin_pe_E : forall fx : YK11.FPState,
   PFROM fx (GIx (@GI_K1) fx) -> PFROM fx (GIx (@GI_leave) fx) -> @pe_start fx rc SK PIp B MT pcap_KS (POSTP fx).
 Proof.
   intros fx.
-  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:140-141 *)
+  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:141-142 *)
   fit (@PcapHarnessPE.pe_E fx rc SK PIp B MT pcap_KS LAWS TL TLF MTL MFSL ML (ASM1 fx) (AM fx) ASIL
          (@PcapEntryTop.pi_pcap_glen rc) (POSTP fx)).
 Qed.
@@ -524,7 +525,7 @@ Qed.
 Lemma fin_pe_A : forall fx : YK11.FPState, PFROM fx (GIx (@GI_K2) fx) -> PFROM fx (GIx (@GI_K1) fx).
 Proof.
   intros fx.
-  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:140-141 *)
+  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:141-142 *)
   fit (@PcapHarnessPA.pe_A fx rc SK PIp B MT pcap_KS (POSTP fx) LAWS MTL ASIL RO (HCPY fx) (HSET fx) FM_RA CTX ROI
          (fin_OPEN fx) HROI HPATH HCTX_A HFMU).
 Qed.
@@ -533,15 +534,15 @@ Lemma fin_pe_B : forall fx : YK11.FPState,
   PFROM fx (GIx (@GI_K3) fx) -> PFROM fx (GIx (@GI_K12r) fx) -> PFROM fx (GIx (@GI_K2) fx).
 Proof.
   intros fx.
-  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:140-141 *)
+  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:141-142 *)
   fit (@PcapHarnessA.pe_B fx rc SK PIp B MT pcap_KS LAWS TL MTL ASIL (AM fx) (AF fx) (@PcapEntryTop.pi_pcap_glen rc)
          (POSTP fx)).
 Qed.
 
-(* pe_C's RO is an explicit Section hypothesis at the source since a working branch 621e74e7e94: it is passed in its place. *)
+(* pe_C's RO is an explicit Section hypothesis at the source since a working branch: it is passed in its place. *)
 Lemma fin_pe_C : forall fx : YK11.FPState, PFROM fx (GIx (@GI_KD) fx) -> PFROM fx (GIx (@GI_K3) fx).
 Proof.
-  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:140-141 *)
+  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:141-142 *)
   intros fx. fit (@PcapHarnessA.pe_C fx rc SK PIp B MT pcap_KS LAWS MTL (fin_NEXT fx) RO ASIL (POSTP fx)).
 Qed.
 
@@ -549,14 +550,14 @@ Qed.
 Lemma fin_HGX : gx_ok SEGSp B (@pe_G rc PIp).
 Proof. rewrite (@PcapEntryTop.pi_pcap_pe_G rc). exact pcap_G_harness_gx_ok. Qed.
 
-(* KR, pe_WalkR's Section hypothesis, from a Theorem Labs lane's walk (PcapHarnessWalkKR.v:3084): the conclusion syntactically
+(* KR, pe_WalkR's Section hypothesis, from a Theorem Labs lane's walk (PcapHarnessWalkKR.v:3085): the conclusion syntactically
    KR's type (fit). *)
 Lemma fin_KR : forall fx : YK11.FPState, forall (POST : @ecx rc PIp -> world SEGSp -> config -> Prop) (n : nat),
   @PcapHarnessWalk.at_cut rc SK PIp B MT pcap_KS (GIx (@GI_KL2) fx) POST n ->
   @PcapHarnessWalk.at_cut rc SK PIp B MT pcap_KS (GIx (@GI_KR) fx) POST (S n).
 Proof.
   intros fx.
-  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:140-141 *)
+  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:141-142 *)
   fit (@PcapHarnessWalkKR.pe_KR fx rc SK PIp B MT pcap_KS LAWS MTL RO fin_HGX (fin_NEXT fx) (ABCMP fx) ASIL).
 Qed.
 
@@ -565,7 +566,7 @@ Lemma fin_WALKR : forall fx : YK11.FPState, forall POST : @ecx rc PIp -> world S
   @pe_from rc SK PIp B MT pcap_KS POST (GIx (@GI_K5) fx) -> @pe_from rc SK PIp B MT pcap_KS POST (GIx (@GI_K4) fx).
 Proof.
   intros fx POST.
-  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:140-141 *)
+  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:141-142 *)
   fit (@PcapHarnessWalkR.pe_WalkR fx rc SK PIp B MT pcap_KS LAWS fin_HGX (@PcapEntryTop.pi_pcap_glen rc) ASIL (fin_KR fx)
          POST).
 Qed.
@@ -573,7 +574,7 @@ Qed.
 Lemma fin_pe_Walk : forall fx : YK11.FPState, PFROM fx (GIx (@GI_K5) fx) -> PFROM fx (GIx (@GI_KD) fx).
 Proof.
   intros fx.
-  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:140-141 *)
+  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:141-142 *)
   (* fin_WALKR's type is syntactically pe_Walk's WALKR premise. *)
   lazymatch type of (@PcapHarnessWalk.pe_Walk fx rc SK PIp B MT pcap_KS LAWS ASIL) with
   | ?E -> _ => let T := type of (fin_WALKR fx) in constr_eq T E
@@ -584,7 +585,7 @@ Qed.
 Lemma fin_tail_W : forall fx : YK11.FPState, PFROM fx (GIx (@GI_K6) fx) -> PFROM fx (GIx (@GI_K5) fx).
 Proof.
   intros fx.
-  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:140-141 *)
+  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:141-142 *)
   fit (@PcapHarnessTail.tail_W fx rc SK PIp B MT pcap_KS (POSTP fx) LAWS MTL ASIL (fin_CLOSE fx)
          (@PcapEntryTop.pi_pcap_glen rc) RO).
 Qed.
@@ -592,57 +593,57 @@ Qed.
 Lemma fin_tail_R1 : forall fx : YK11.FPState, PFROM fx (GIx (@GI_K7) fx) -> PFROM fx (GIx (@GI_K6) fx).
 Proof.
   intros fx.
-  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:140-141 *)
+  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:141-142 *)
   fit (@PcapHarnessTail.tail_R1 fx rc SK PIp B MT pcap_KS (POSTP fx) LAWS MTL ASIL FM_RA CTX ROI (fin_OPEN fx) HROI
          HPATH HCTX HFMU RO).
 Qed.
 
 Lemma fin_tail_R2 : forall fx : YK11.FPState, PFROM fx (GIx (@GI_K8) fx) -> PFROM fx (GIx (@GI_K7) fx).
 Proof.
-  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:140-141 *)
+  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:141-142 *)
   intros fx. fit (@PcapHarnessTail.tail_R2 fx rc SK PIp B MT pcap_KS (POSTP fx) LAWS MTL ASIL (fin_NEXT fx) RO).
 Qed.
 
 Lemma fin_tail_R3 : forall fx : YK11.FPState, PFROM fx (GIx (@GI_K9) fx) -> PFROM fx (GIx (@GI_K8) fx).
 Proof.
-  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:140-141 *)
+  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:141-142 *)
   intros fx. fit (@PcapHarnessTail.tail_R3 fx rc SK PIp B MT pcap_KS (POSTP fx) LAWS MTL ASIL (fin_CLOSE fx) RO).
 Qed.
 
 Lemma fin_tail_R4 : forall fx : YK11.FPState, PFROM fx (GIx (@GI_K10) fx) -> PFROM fx (GIx (@GI_K9) fx).
 Proof.
-  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:140-141 *)
+  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:141-142 *)
   intros fx. fit (@PcapHarnessTail.tail_R4 fx rc SK PIp B MT pcap_KS (POSTP fx) LAWS MTL ASIL (fin_NEXT fx) RO).
 Qed.
 
 Lemma fin_tail_R5 : forall fx : YK11.FPState, PFROM fx (GIx (@GI_K11) fx) -> PFROM fx (GIx (@GI_K10) fx).
 Proof.
-  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:140-141 *)
+  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:141-142 *)
   intros fx. fit (@PcapHarnessTail.tail_R5 fx rc SK PIp B MT pcap_KS (POSTP fx) LAWS TL MTL ASIL (AF fx)).
 Qed.
 
 Lemma fin_tail_R6 : forall fx : YK11.FPState, PFROM fx (GIx (@GI_K12) fx) -> PFROM fx (GIx (@GI_K11) fx).
 Proof.
-  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:140-141 *)
+  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:141-142 *)
   intros fx. fit (@PcapHarnessTail.tail_R6 fx rc SK PIp B MT pcap_KS (POSTP fx) LAWS TL MTL ASIL (AF fx)).
 Qed.
 
 Lemma fin_tail_R7 : forall fx : YK11.FPState, PFROM fx (GIx (@GI_K12r) fx) -> PFROM fx (GIx (@GI_K12) fx).
 Proof.
-  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:140-141 *)
+  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:141-142 *)
   intros fx. fit (@PcapHarnessTail.tail_R7 fx rc SK PIp B MT pcap_KS (POSTP fx) LAWS ASIL).
 Qed.
 
 Lemma fin_tail_K12r : forall fx : YK11.FPState, PFROM fx (GIx (@GI_leave) fx) -> PFROM fx (GIx (@GI_K12r) fx).
 Proof.
-  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:140-141 *)
+  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:141-142 *)
   intros fx. fit (@PcapHarnessTail.tail_K12r fx rc SK PIp B MT pcap_KS (POSTP fx) LAWS ASIL).
 Qed.
 
 Lemma fin_tail_leave : forall fx : YK11.FPState,
   @pe_from_ret rc SK PIp B MT pcap_KS (POSTP fx) (GIx (@GI_ret) fx) -> PFROM fx (GIx (@GI_leave) fx).
 Proof.
-  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:140-141 *)
+  (* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:141-142 *)
   intros fx. fit (@PcapHarnessTail.tail_leave fx rc SK PIp B MT pcap_KS (POSTP fx) LAWS ASIL ML fin_ASF FFL MFSL).
 Qed.
 
@@ -666,7 +667,7 @@ Print Assumptions pcap_entry_final.
 
 (* Sink-head audit (a Theorem Labs lane, 06:03Z): each walk application above, printed in full, so that every sink-head
    argument in it can be read; each is the Section variable SK. *)
-(* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:140-141 (each Check passing ASIL) *)
+(* conversion: ASIL at pa_segs PI_pcap = Asan.M.loaded_segments, PcapEntryTop.v:141-142 (each Check passing ASIL) *)
 (* conversion: FOPEN at A_libreac_fuzz_fopenP = BASE + AF_libreac_fuzz_fopen, FO_PATH/LEN/FILE = 3/4/2
    (PcapFuzzFopen.v:43-45, :68) (the Check of pb_pcap_source_openX) *)
 Set Printing All.

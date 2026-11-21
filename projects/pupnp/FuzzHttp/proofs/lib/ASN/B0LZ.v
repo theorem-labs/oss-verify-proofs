@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model invariant's channel-reader conjunct, from bmodel's bm_rdr; the main-entry fact's argv[1] pointer and hidden-argument conjuncts). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -152,7 +153,8 @@ Section Frame.
     split. { intros k e H. destruct (fd_std_lookup k _ H) as (_ & ->). exact I. }
     split. { intros t Ht. exact (proj2 (bm_tid _ _ _ _ AM) t Ht). }
     split. { reflexivity. }
-    rewrite (bm_top _ _ _ _ AM). pose proof (bm_usp _ _ _ _ AM) as (U1 & U2 & _). unfold sp_window_lo, sp_window_hi. lia.
+    split; [rewrite (bm_top _ _ _ _ AM); pose proof (bm_usp _ _ _ _ AM) as (U1 & U2 & _); unfold sp_window_lo, sp_window_hi; lia|].
+    exact (bm_rdr _ _ _ _ AM).
   Qed.
 
   #[using="V sp fs AM"] Lemma b0_minvL : minvL mo.
@@ -199,7 +201,7 @@ Theorem b0_main_lz : forall en inp ms mo, bmain_at en inp ms mo ->
     /\ Forall (pfact_ok V) (both_pure_facts ++ both_pure_facts_w w)
     /\ bmodel V (en_sp en) (in_fs inp) mo.
 Proof.
-  intros en inp ms mo (w & V & m & Hms & VR & PINS & HMF & HPF & MI & STK & HARG & SH0 & HMFr & AM).
+  intros en inp ms mo (w & V & m & Hms & VR & PINS & HMF & HPF & MI & STK & HARG & HARG1 & HHID & SH0 & HMFr & AM).
   exists w, V, m. cbv zeta.
   split; [exact (b0_lzframe V _ _ mo AM)|].
   split. { intros a Ha Hz. rewrite Hms. cbn [ms_mem MS]. exact (b0_hzero_mem V mo m SH0 a Ha Hz). }

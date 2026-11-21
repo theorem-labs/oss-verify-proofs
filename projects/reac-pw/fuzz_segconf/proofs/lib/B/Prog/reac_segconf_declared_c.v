@@ -85,8 +85,8 @@
    IMAGE-INDEPENDENT: no image module is Required; A_reac_segconf_declared, STK_reac_segconf_declared, RLO, RHI,
    gotw, guard and every other image cell are parameters (or fields of B).
    The WALK takes these as Section hypotheses (none is the interceptor lane's: the side-stack classes 0, 1, 3 and
-   the kit laws are the image-A owner's frame, provenance/evidence/interceptors/INTERFACE-A-interceptors.md
-   (commit 7068323e2626), its Not in this layer paragraph, at e45889d6935a and in the accepted v1 5e0b8a44fdc):
+   the kit laws are the image-A owner's frame, provenance/evidence/interceptors/INTERFACE-A-interceptors.md,
+   its Not in this layer paragraph, and in the accepted v1):
      astack_malloc_realizes 1 (lib/Reusable/YG0d.v:293), at __asan_stack_malloc_1 (image A 0x3e6f0);
      stack_malloc_progressP (lib/Reusable/YCbq.v:1096); astack_free_law (YG0d.v:309); frame_flag_lawP
        (YCbq.v:1090);

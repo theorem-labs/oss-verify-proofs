@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made from plugin-hostd/fuzz_reply's lib/A/RT_IImgA.v (a Theorem Labs lane,
-   a working branch e51895d5655) for libreac/fuzz_boxreg's fuzz_boxreg.asan: module paths changed and every
+   a working branch) for libreac/fuzz_boxreg's fuzz_boxreg.asan: module paths changed and every
    address re-derived for this image by the same rules (generator: a Theorem Labs lane's genimga_box.py). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/A/RT_IImgA.v, with its module paths, addresses and numbers changed; 44 of its 83 lines of code are new or changed and 50 lines of the source are left out. *)
-(* Image B twin of lib/A/RT_IImgA.v at d49bd1db505: module paths lib.A -> lib.B, AB1v -> YB1v; 64 image numerals moved to fuzz_reply.asan-ubsan by symbol + offset, each checked against that image (CHAINB-numerals.tsv sha256 3cedf5e564f7; internal record). *) (* The RImg instance of the ASan printf core (lib/CJ/RL/GXA) on the pinned fuzz_reply.asan-ubsan.
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Image B twin of lib/A/RT_IImgA.v: module paths lib.A -> lib.B, AB1v -> YB1v; 64 image numerals moved to fuzz_reply.asan-ubsan by symbol + offset, each checked against that image (CHAINB-numerals.tsv sha256 3cedf5e564f7; internal record). *) (* The RImg instance of the ASan printf core (lib/CJ/RL/GXA) on the pinned fuzz_reply.asan-ubsan.
    GXA is general in the format (printf_core_a_stmt quantifies fmt and args) and proved (Qed,
    G_printf_core.v:1027 printf_core_a_proof, G_vfprintf_snf_closed.v:108 vfprintf_snf_a_closed),
    but it had no ASan instantiation in any unit on recipes.  This file is that instantiation.

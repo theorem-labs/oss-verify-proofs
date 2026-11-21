@@ -88,7 +88,19 @@ jobs:
             jq -r '.units[]' "$RUNNER_TEMP/all.json" > "$RUNNER_TEMP/units.txt"
           fi
           [ -s "$RUNNER_TEMP/units.txt" ] || { echo "::error::no harness to check: nothing examined"; exit 1; }
-          PYTHONPATH=tools python -m oft plan --units "$RUNNER_TEMP/units.txt" --max-jobs 32 > "$RUNNER_TEMP/plan.json"
+          # --hosted leaves out each unit whose measured check is longer than any hosted job may run
+          # (pack.SWEEP_TIMES against pack.HOSTED_CAP) and gives the plan a sentence about each, which
+          # the summary below carries: a reader sees which units this week did not check and how old the farm
+          # check that still stands for each is.
+          # 40 shards.  pack.jobs_needed says the units pack.SWEEP_TIMES times, less the three --hosted leaves
+          # out, need 35 jobs to keep every job holding more than one of them inside pack.CAP, 210 minutes, and
+          # the plan gives a job of its own to each proved unit no run ever saw finish as well: 1 of those in
+          # the public tree on 2026-11-09 and 3 here.  210 minutes is about 3.8 hours with a shard's own 8-13
+          # minutes of checkout, pip and image pull.  At 32 shards and no measured table, run 42556340137 lost
+          # two shards to the 6-hour limit and run 42597756616 lost seven.  The hosted runners available here
+          # are ubuntu-24.04-16core and ubuntu-24.04-4core, and up to 80 of the 16-core ones run at once.
+          PYTHONPATH=tools python -m oft plan --units "$RUNNER_TEMP/units.txt" --max-jobs 40 --hosted \
+            > "$RUNNER_TEMP/plan.json"
           # the determinism job's sample: the first job with published builds (a harness whose every build is
           # withheld has a finding to re-run, and no binary to snapshot), as two small values, since the plan's jobs
           # grow with the tree and an environment value may not exceed 131,072 bytes
@@ -100,6 +112,8 @@ jobs:
             echo "sample_projects=$(jq -r "$sample.projects // \"\"" "$RUNNER_TEMP/plan.json")"
           } >> "$GITHUB_OUTPUT"
           echo "harnesses: $(jq '.units | length' "$RUNNER_TEMP/plan.json") of $(jq '.units | length' "$RUNNER_TEMP/all.json")" >> "$GITHUB_STEP_SUMMARY"
+          # one line per unit no hosted job can check, with the farm check of record that still stands for it
+          jq -r '.skipped[]' "$RUNNER_TEMP/plan.json" | sed 's/^/- /' >> "$GITHUB_STEP_SUMMARY"
 
   sweep:
     needs: plan
@@ -107,10 +121,17 @@ jobs:
     # a proof check peaks at 14.5-19.4 GiB on 16 cores: the 16-core/64 GB GitHub-hosted larger runner
     # (pr.yml's check job)
     runs-on: ubuntu-24.04-16core
+    # GitHub cancels a hosted job here, with no result.  Planning holds a shard of several units well inside it
+    # (pack.CAP), and the plan leaves out a unit longer than any hosted job can be planned to check at all
+    # (pack.HOSTED_CAP, the plan step's --hosted): three units on 2026-11-09, the longest of them held to 11
+    # CPUs by its memory and still running at 347 minutes when the limit cancelled the job it had to itself.
+    # None can be split here, and the only hosted runners available are this one and ubuntu-24.04-4core, so
+    # where those three are checked instead is a decision this file does not make; the run summary names each,
+    # with the farm check of record that still stands for it, rather than this file naming any of them.
     timeout-minutes: 360
     strategy:
       fail-fast: false
-      max-parallel: 32
+      max-parallel: 40
       matrix:
         job: ${{ fromJSON(needs.plan.outputs.plan) }}
     steps:
@@ -250,7 +271,7 @@ jobs:
   weekly:
     needs: [plan, sweep, assets, determinism, determinism-compare]
     if: always()
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-slim
     timeout-minutes: 5
     permissions: {}
     steps:

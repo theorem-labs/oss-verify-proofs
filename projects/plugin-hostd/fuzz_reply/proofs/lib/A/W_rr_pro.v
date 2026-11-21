@@ -13,6 +13,7 @@
    seat is W_frame_x.v's aj_stack_malloc_pres_at_raw_x (S2 = set_fs f S), so RBASE's room budget reaches RHELD by
    RPF_of (the lock keeps S2) and its count fact by the blocks' equality; the fd < 0 arm's rr_post_x budget kr is
    RBASE's by RMM_of, kept across the seat (RPF_of) and the release (RPF_stack_free). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -140,7 +141,7 @@ Hypothesis HEND5L : forall k, (k < 5)%nat -> YG0d.in_rom SEGS (VAL A_lit_end5 + 
 Hypothesis PSTR : forall a, in_rom SEGS a -> ~ Exists (in_zr a) PST.
 Hypothesis PSTG : forall a, Exists (fun r => fst r <= a < snd r) (rr_gcells B RG) -> ~ Exists (in_zr a) PST.
 Let HBgot := pal_got_shadow B TL. Let HBcell := pal_cell B TL.
-(* the plain token runner on the donor journal ajournal_x (commit 3d17f490d56, lib/A/W_relay_finish_h.v's RUN0) *)
+(* the plain token runner on the donor journal ajournal_x (lib/A/W_relay_finish_h.v's RUN0) *)
 Let RUN0 := SRr_run_pi_tok_AJx (SK := SK) wsym SEGS B PST ARx LAWS pa_segs_low pa_wx (clookup pa_tbl) VAL SIGMA
 fr_prog_listing (@pl_tpi fr_prog_listing PL_fr) (@pl_tw fr_prog_listing PL_fr) pa_fetch_ok pa_cert pa_B_ok A_LIM
 A_LIM_text (@pl_lim fr_prog_listing PL_fr) (@pl_len fr_prog_listing PL_fr) (@pl_tpi_eq fr_prog_listing PL_fr)
@@ -151,7 +152,7 @@ Let RUNP := SRr_run_pi_AJ_x (PL := PL_fr) B PST ARx LAWS. Let RUNTOP := SRr_run_
 Let RUNC := SRr_run_pi_AJ_call_x (PL := PL_fr) B PST ARx LAWS.
 Let RUNF := aj_flag_store_pi_x (PL := PL_fr) B PST ARx LAWS ASF FFL WFx WFL SFREE.
 
-(* ---- The entry state (lib/A/W_relay_remove.v:70-157). ---- *)
+(* ---- The entry state (lib/A/W_relay_remove.v:71-158). ---- *)
 Definition Bx : sv := SOff 33 0.
 Definition Bspan : Z * Z := (SB, SB + 2 ^ 44 - 1).
 Definition rr_regions0 : smem :=
@@ -258,7 +259,7 @@ assert (Hb : In (p, n) (ablocks B ly S)) by (apply (Permutation_in _ (Permutatio
 destruct (alx_blocks _ _ _ LAWS _ _ _ _ _ _ p n HAR Hb) as (_ & H4096 & _). cbn [fst]. lia.
 Qed.
 
-(* YCbq.v:2602 region_kept_stack_aj over YCbqG.v's journal ajournal_x (no kit twin; commit 3d17f490d56,
+(* YCbq.v:2602 region_kept_stack_aj over YCbqG.v's journal ajournal_x (no kit twin;,
    lib/A/W_relay_finish_h.v rf_region_kept_stack_aj_x: the same proof, which reads only the journal's stack presence
    and stack geometry and the call's acall_kept frame clause) *)
 Lemma rr_region_kept_stack_aj_x : forall E lyc Sc W memc W2 mem2 slo shi (Er : Z -> Prop) n lo hi wlo whi cs sp0 sp
@@ -812,7 +813,7 @@ assert (U513 : bv_unsigned (ew Eb 513) = SB + F / 8) by (rewrite E513; apply uns
 pose proof (pa_obj_img 32 ltac:(lia)) as HcellR. pose proof (pa_obj_img 0 ltac:(lia)) as HgotR. pose proof (pa_obj_img 1 ltac:(lia)) as HguR.
 (* (palf_sep's zseps is not needed here: kept out of the context, whose lia calls it would make exponential) *)
 pose proof (pa_val_range (A_OBJ 0)) as PV0. pose proof (pa_val_range (A_OBJ 1)) as PV1. pose proof (pa_val_range (A_OBJ 32)) as PV32.
-(* the geometry facts in numerals, once: each region's lia then sees only what it reverts (W5's W_relay_add.v:940) *)
+(* the geometry facts in numerals, once: each region's lia then sees only what it reverts (W5's W_relay_add.v:941) *)
 unfold SB, zone2, off_img, in_app, kLowShadowBeg, kHighMemBeg, ASAN_CEIL in C1, C3, Hslo, Hshi, H47, Hceil, Hstk0,
 HcellR, HgotR, HguR, HuR, HFimg, HFapp, HF4096, HFceil, HFhigh, HFLapp, HFLimg, HFL4096, HFLc.
 pose proof (st_ok_pi_add_region Eb _ _ (fframe_region 38 512 0 []) HS eq_refl
@@ -1495,7 +1496,7 @@ assert (U513 : bv_unsigned (ew Eb 513) = SB + F / 8) by (rewrite E513; apply uns
 pose proof (pa_obj_img 32 ltac:(lia)) as HcellR. pose proof (pa_obj_img 0 ltac:(lia)) as HgotR. pose proof (pa_obj_img 1 ltac:(lia)) as HguR.
 (* (palf_sep's zseps is not needed here: kept out of the context, whose lia calls it would make exponential) *)
 pose proof (pa_val_range (A_OBJ 0)) as PV0. pose proof (pa_val_range (A_OBJ 1)) as PV1. pose proof (pa_val_range (A_OBJ 32)) as PV32.
-(* the geometry facts in numerals, once: each region's lia then sees only what it reverts (W5's W_relay_add.v:940) *)
+(* the geometry facts in numerals, once: each region's lia then sees only what it reverts (W5's W_relay_add.v:941) *)
 unfold SB, zone2, off_img, in_app, kLowShadowBeg, kHighMemBeg, ASAN_CEIL in C1, C3, Hslo, Hshi, H47, Hceil, Hstk0,
 HcellR, HgotR, HguR, HuR, HFimg, HFapp, HF4096, HFceil, HFhigh, HFLapp, HFLimg, HFL4096, HFLc.
 pose proof (st_ok_pi_add_region Eb _ _ (fframe_region 38 512 0 []) HS eq_refl

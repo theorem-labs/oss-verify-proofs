@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Taken by path from a working branch a0fed4266a1b, provisional. *)
+(* Taken by path from a working branch, provisional. *)
 (* Modified by Theorem Labs, 2026-10: module paths changed from fuzz_preset lib.Reusable to cgif_file_fuzzer lib; the text is otherwise unchanged. *)
 (* Modified by a Theorem Labs lane (ReallocPrimary.TkSecLink), 2026-10-30: the trace premise in the P'' form, `admits (as_universe B) tr S` (YG01.v), replacing the In-form. *)
-(* Modified by a Theorem Labs lane (ReallocPrimary.TkSecLink), 2026-10-30: a host path in a comment replaced by a name (the ship's lint refuses host paths); nmaxw_cf_ok's first conjunct is `cf_malloc_max + 4 * 4096 <= 2 ^ 30` (was 2 ^ 29), in lockstep with AGio / AGioE / AGioM's HNW weakening (a working branch 5ca1fbe20ff9); reply's 1,072,709,632 <= 1,073,741,824 holds, preset's 2 ^ 28 + 2 ^ 27 + 16384 holds either way. *)
+(* Modified by a Theorem Labs lane (ReallocPrimary.TkSecLink), 2026-10-30: a host path in a comment replaced by a name (the ship's lint refuses host paths); nmaxw_cf_ok's first conjunct is `cf_malloc_max + 4 * 4096 <= 2 ^ 30` (was 2 ^ 29), in lockstep with AGio / AGioE / AGioM's HNW weakening (a working branch); reply's 1,072,709,632 <= 1,073,741,824 holds, preset's 2 ^ 28 + 2 ^ 27 + 16384 holds either way. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset (a Theorem Labs lane): the named premises of the image-free malloc / free bridges
    (YGcfMallocCompose.v: amalloc_realizes_cf_of_parts :196, afree_realizes_cf_of_parts :369) taken from a Theorem Labs lane's
-   memnorm-kept contracts (MemnormT.v, cgif's at 29b7505aa27 by path, over ErrnoGcf.v), and the nmax premise
-   discharged at a Theorem Labs lane's widened bound (c5 fec848885a7).
-   - errno_kept_cf_of: ErrnoGcf.errno_kept is the text of errno_kept_cf (YGcfMallocCompose.v:80).
+   memnorm-kept contracts (MemnormT.v, cgif's by path, over ErrnoGcf.v), and the nmax premise
+   discharged at a Theorem Labs lane's widened bound (c5).
+   - errno_kept_cf_of: ErrnoGcf.errno_kept is the text of errno_kept_cf (YGcfMallocCompose.v:81).
    - aalloc_realizes_cf_em_m / aalloc_prim_realizes_cf_em_m / aalloc_sec_realizes_cf_em_m / adealloc_realizes_raw_cf_em_m:
      MemnormT.aalloc_realizes_em / aalloc_prim_realizes_em, AllocGtopM.aalloc_sec_realizes_em and
      MemnormT.adealloc_realizes_raw_em at the cf instance, every ghost set Hp, with the instance arguments of the
@@ -23,15 +24,15 @@
    - amalloc_realizes_cf_of_parts_m / afree_realizes_cf_of_parts_m: the bridges over the _em_m premises.
    - amalloc_realizes_cf_of_parts_mw: the malloc bridge at the widened bound nmax := cf_malloc_max, over the two
      cases, with no nmax premise.
-   - nmax_cf_ok_of_w, nmaxw_cf_ok: c5 fec848885a7 (NMAX-PARAM 095c06ebaaa) proves the secondary Allocate at a free
+   - nmax_cf_ok_of_w, nmaxw_cf_ok: c5 (NMAX-PARAM) proves the secondary Allocate at a free
      size bound NMAXW (AGif4.AIfaceSw NMAXW NOBW ROOMW; AGio.alloc_sec_w / AGioE.alloc_sec_w_e under the three
-     premises AGio.v:71-73 and nmax <= NMAXW).  At the cf instance NMAXW is the request bound cf_malloc_max, so
+     premises AGio.v:72-74 and nmax <= NMAXW).  At the cf instance NMAXW is the request bound cf_malloc_max, so
      Allocate's nmax is cf_malloc_max and nmax_cf_ok holds by reflexivity (no hypothesis).  nmaxw_cf_ok is
-     AGio.v:71-73 at NMAXW := cf_malloc_max; it holds by computation at preset's instance (lib/A/CfNmaxwPreset.v,
+     AGio.v:72-74 at NMAXW := cf_malloc_max; it holds by computation at preset's instance (lib/A/CfNmaxwPreset.v,
      nmaxw_preset_ok: cf_malloc_max = 2 ^ 28 + 2 ^ 27, NOBW = 2 ^ 29, ROOMW = 2 ^ 30, the values of a Theorem Labs lane's
      AGif5.sec_w_preset_room).  That instance witness is in lib/A, beside CfParams_preset, so that this file names no
      unit's CfParams value (YGcfNames.v's CfParams: "no shared lemma depends on a unit's value").
-   - KEPT ONLY FOR YGcfReallocCompose.v (A4), which cites them (:534-542, :801-807 at bbcf59ff92c1):
+   - KEPT ONLY FOR YGcfReallocCompose.v (A4), which cites them (:534-542, :801-807):
      aalloc_realizes_cf_e, adealloc_realizes_raw_cf_e, memnorm_keep_alloc, memnorm_keep_free,
      aalloc_realizes_cf_em_of_e, adealloc_realizes_raw_cf_em_of_e.  memnorm_keep_alloc / memnorm_keep_free are NOT
      satisfiable at preset: they quantify over every config that satisfies the plain AllocG / DeallocG leaf, and such
@@ -62,13 +63,13 @@ Section G. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : Cf
 
 (* ---------------------------------------------------------------------------- *)
 (* 0. The nmax premise at the widened bound (e).                                *)
-(* c5 fec848885a7's secondary Allocate takes its size bound NMAXW as a parameter (AGio.v:68, AIfaceSw :74), with
-   nmax <= NMAXW (AGio.v:77).  At the cf instance NMAXW := cf_malloc_max and Allocate's nmax := cf_malloc_max. *)
+(* c5's secondary Allocate takes its size bound NMAXW as a parameter (AGio.v:69, AIfaceSw :74), with
+   nmax <= NMAXW (AGio.v:78).  At the cf instance NMAXW := cf_malloc_max and Allocate's nmax := cf_malloc_max. *)
 Section N.
 Lemma nmax_cf_ok_of_w : nmax_cf_ok cf_malloc_max.
 Proof. unfold nmax_cf_ok. apply Z.le_refl. Qed.
 
-(* AGio.v:71-73 (HNW, HNOB, HROOM; HNW weakened to 2 ^ 30 by c-asan-hnw30 5ca1fbe20ff9) at NMAXW := cf_malloc_max, for the instance's grant bound NOBW and
+(* AGio.v:72-74 (HNW, HNOB, HROOM; HNW weakened to 2 ^ 30 by c-asan-hnw30) at NMAXW := cf_malloc_max, for the instance's grant bound NOBW and
    room ROOMW.  Preset's instance witness: lib/A/CfNmaxwPreset.v nmaxw_preset_ok. *)
 Definition nmaxw_cf_ok (NOBW ROOMW : Z) : Prop :=
 cf_malloc_max + 4 * 4096 <= 2 ^ 30 /\ cf_malloc_max + 4 * 4096 <= NOBW /\

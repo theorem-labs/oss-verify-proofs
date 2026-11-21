@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -31,7 +32,7 @@ Definition dbox_cpsB : Prop :=
   In (fN, kN) (rt_frames RT Σ) -> fN <= NB -> NB + 40 <= fN + fs_size kN - 8 -> NB mod 8 = 0 ->
   u8arr bsegs m NB nb -> length nb = 40%nat -> bytes_at bsegs m (shad NB) (repeat z8 5) -> 0 <= sg <= 1 ->
   rw_cells bsegs m (p + 8) [C4 c0; C4 c1] ->
-  ART RT Σ m -> mem_inv bsegs m -> stk bsegs m lo p -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + DBOX_STACK_B <= p ->
+  ART RT Σ m -> mem_inv bsegs m -> stk bsegs m lo p -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + DBOX_STACK_B <= p ->
   p + 48 <= USTACK_TOP -> p mod 16 = 0 -> frm0 fc ->
   Z.of_nat (length (rt_frames RT Σ)) + 1 <= FRAMES_TOT -> 1 <= rt_credit RT Σ ->
   (forall (Σ' : rts RT) (n e : Z) t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F' fc' m' (nb' : list byte),
@@ -53,7 +54,7 @@ Definition fmt_cpsB : Prop :=
   In (fN, kN) (rt_frames RT Σ) -> fN <= NB -> NB + 40 <= fN + fs_size kN - 8 -> NB mod 8 = 0 ->
   u8arr bsegs m NB nb -> length nb = 40%nat -> bytes_at bsegs m (shad NB) (repeat z8 5) -> 0 <= sg <= 1 ->
   1 <= n <= 20 -> SF_EMIN <= e <= SF_EMAX ->
-  ART RT Σ m -> mem_inv bsegs m -> stk bsegs m lo p -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + FMT_STACK_B <= p ->
+  ART RT Σ m -> mem_inv bsegs m -> stk bsegs m lo p -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + FMT_STACK_B <= p ->
   p + 48 <= USTACK_TOP -> p mod 16 = 0 ->
   (forall (e' : Z) t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F' m' (nb' : list byte),
      ART RT Σ m' -> mem_inv bsegs m' -> stk bsegs m' lo p ->

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's vDSO and vvar pages). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import Permutation.
@@ -230,9 +231,89 @@ Definition artm_sys (Σ : rtsA) (mo : Model) : Prop :=
   (* [comment removed for export] *)
   /\ NodesA_madv.noaccess_pos mo.
 
+(* LPS 08b1429: [init_model]'s reservation ledger is the image's reservations followed by the
+   launch's vDSO pair ([State.init_reserved], [vm_reserved_init_model]); the pair sits just under
+   [mmap_base].  [rx] is that suffix: at most two intervals, at most 20 pages, and met by no
+   positive-size mapping.  No syscall edits [vm_reserved]. *)
+Definition artm_res (mo : Model) : Prop :=
+  exists rx : list (word * word), vm_reserved (m_vmmaps mo) = segments_reserved asegs ++ rx
+    /\ (length rx <= 2)%nat /\ live_bytes rx <= 0x14000
+    /\ Forall (fun e => Forall (iv_apart e) rx) (List.filter vpos (vm_maps (m_vmmaps mo))).
+
+Lemma rf_app_l : forall l1 l2 (lo n : word), region_free (l1 ++ l2) lo n = true -> region_free l1 lo n = true.
+Proof.
+  induction l1 as [|[a s] l1 IH]; intros l2 lo n H; [reflexivity|]. cbn [app region_free] in *.
+  apply andb_true_iff in H as [Ha H]. rewrite Ha, (IH l2 lo n H). reflexivity.
+Qed.
+
+Lemma rf_app_true : forall l1 l2 (lo n : word), region_free l1 lo n = true -> region_free l2 lo n = true ->
+  region_free (l1 ++ l2) lo n = true.
+Proof.
+  induction l1 as [|[a s] l1 IH]; intros l2 lo n H1 H2; cbn [app region_free] in *; [exact H2|].
+  apply andb_true_iff in H1 as [Ha H1]. rewrite Ha, (IH l2 lo n H1 H2). reflexivity.
+Qed.
+
+Lemma rf_apart : forall l (lo n : word) iv, region_free l lo n = true -> In iv l -> iv_apart (lo, n) iv.
+Proof.
+  induction l as [|[a s] l IH]; intros lo n iv H Hin; [destruct Hin|]. cbn [region_free] in H.
+  apply andb_true_iff in H as [Ho H]. destruct Hin as [<-|Hin]; [|exact (IH lo n iv H Hin)].
+  apply negb_true_iff in Ho. unfold iv_overlap in Ho. unfold iv_apart. cbn [fst snd].
+  apply andb_false_iff in Ho as [Ho|Ho]; apply Z.ltb_ge in Ho; lia.
+Qed.
+
+Lemma rf_of_apart : forall l (lo n : word), (forall iv, In iv l -> iv_apart (lo, n) iv) -> region_free l lo n = true.
+Proof.
+  induction l as [|[a s] l IH]; intros lo n H; [reflexivity|]. cbn [region_free].
+  rewrite (IH lo n (fun iv Hiv => H iv (or_intror Hiv))), andb_true_r. apply negb_true_iff.
+  pose proof (H (a, s) (or_introl eq_refl)) as D. unfold iv_apart in D. cbn [fst snd] in D.
+  unfold iv_overlap. apply andb_false_iff. destruct D as [D|D]; [right|left]; apply Z.ltb_ge; lia.
+Qed.
+
+Lemma live_bytes_app_res : forall l1 l2, live_bytes (l1 ++ l2) = live_bytes l1 + live_bytes l2.
+Proof. induction l1 as [|[a s] l1 IH]; intros l2; cbn [app live_bytes]; [lia| rewrite IH; lia]. Qed.
+
+Lemma in_vpos : forall l e, In e l -> 0 < bv_unsigned (snd e) -> In e (List.filter vpos l).
+Proof. intros l e H P. apply List.filter_In. split; [exact H|]. unfold vpos. apply Z.ltb_lt. exact P. Qed.
+
+(* The ledger's size, for the gap count of a grant. *)
+Lemma artm_res_ledger : forall mo, artm_res mo ->
+  live_bytes (vm_reserved (m_vmmaps mo)) <= live_bytes (segments_reserved asegs) + 0x14000
+  /\ (length (vm_reserved (m_vmmaps mo)) <= length (segments_reserved asegs) + 2)%nat.
+Proof. intros mo (rx & Er & Hl & Hb & _). rewrite Er, live_bytes_app_res, length_app. lia. Qed.
+
+Lemma artm_res_seg : forall mo iv, artm_res mo -> In iv (segments_reserved asegs) -> In iv (vm_reserved (m_vmmaps mo)).
+Proof. intros mo iv (rx & Er & _) H. rewrite Er. apply in_or_app. left. exact H. Qed.
+
+(* A range inside a positive-size mapping meets no vDSO reservation; so it is free of the
+   ledger when it is free of the image's reservations. *)
+Lemma artm_res_free : forall mo e (lo n : word), artm_res mo -> region_free (segments_reserved asegs) lo n = true ->
+  In e (List.filter vpos (vm_maps (m_vmmaps mo))) ->
+  bv_unsigned (fst e) <= bv_unsigned lo -> bv_unsigned lo + bv_unsigned n <= bv_unsigned (fst e) + bv_unsigned (snd e) ->
+  region_free (vm_reserved (m_vmmaps mo)) lo n = true.
+Proof.
+  intros mo e lo n (rx & Er & _ & _ & Hd) Hs He H1 H2. rewrite Er. apply rf_app_true; [exact Hs|].
+  apply rf_of_apart. intros iv Hiv. pose proof (proj1 (Forall_forall _ _) (proj1 (Forall_forall _ _) Hd e He) iv Hiv) as D.
+  unfold iv_apart in *. cbn [fst snd]. lia.
+Qed.
+
+(* A step that keeps the ledger and adds only mappings free of it keeps [artm_res]. *)
+Lemma artm_res_step : forall mo mo', artm_res mo ->
+  vm_reserved (m_vmmaps mo') = vm_reserved (m_vmmaps mo) ->
+  (forall e, In e (List.filter vpos (vm_maps (m_vmmaps mo'))) ->
+     In e (List.filter vpos (vm_maps (m_vmmaps mo))) \/ region_free (vm_reserved (m_vmmaps mo)) (fst e) (snd e) = true) ->
+  artm_res mo'.
+Proof.
+  intros mo mo' (rx & Er & Hl & Hb & Hd) Er' Hs. exists rx. split; [rewrite Er'; exact Er|].
+  split; [exact Hl|]. split; [exact Hb|].
+  apply Forall_forall. intros e He. destruct (Hs e He) as [Ho|Hf].
+  - exact (proj1 (Forall_forall _ _) Hd e Ho).
+  - apply Forall_forall. intros iv Hiv. destruct e as [lo n]. rewrite Er in Hf.
+    exact (rf_apart _ lo n iv Hf (in_or_app _ _ _ (or_intror Hiv))).
+Qed.
+
 (* [comment removed for export] *)
 Definition ARTM_A (Σ : rtsA) (mo : Model) : Prop :=
-  Permutation (List.filter vpos (vm_maps (m_vmmaps mo))) (rt_maps Σ) /\ vm_reserved (m_vmmaps mo) = segments_reserved asegs
+  Permutation (List.filter vpos (vm_maps (m_vmmaps mo))) (rt_maps Σ) /\ artm_res mo
   /\ vm_limit (m_vmmaps mo) = VMLIMIT /\ eager_used mo <= E0_MAX + rt_eager Σ /\ artm_sys Σ mo.
 
 Definition RTA : rt_sig := mkRTS rtsA ART_A ARTM_A rtA_live rtA_frames rtA_allow rtA_sp0 rtA_credit.

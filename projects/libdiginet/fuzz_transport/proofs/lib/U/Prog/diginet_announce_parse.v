@@ -1,5 +1,5 @@
 (* proves diginet_announce_parse_contract from copy_strz_contract, the walk of diginet_announce_parse in fuzz_transport.ubsan. *)
-(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/diginet_announce_parse.v at 9bd29914ffdef650a37285056a472ff186b4331a to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/diginet_announce_parse.v to fuzz_transport's images *)
 (* Walk of diginet_announce_parse (src/diginet_frame.c:138-151 at 835f336c) in fuzz_transport.ubsan,
    0x18520..0x185dc, 32-byte frame. The two calls of copy_strz (0x185a4: version, 0x185c0: name)
    take copy_strz_contract (U/Prog/copy_strz_c.v): before each call the 40 bytes at ap are cut

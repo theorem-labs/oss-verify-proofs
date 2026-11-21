@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: journal step rules for the class-7 side-stack entries and the shadow-fill entries, after cgif_rgb_fuzzer's lib/YC05.v (aj_stack_malloc_sz_at, aj_set_shadow_at, aj_stack_free_at, ajournal_after_write_win), for answer's ASan+UBSan walk (plugin-hostd/fuzz_command, fuzz_command.asan-ubsan): lib/A/Prog/answer_s0.v of a working branch d28426fbb96 with the B kit's module paths (lib/B/Prog, lib/B/Rt; the kit files are A's with paths only changed) and without aj_snprintf_atS (B's snprintf contract is the shared one, RtPFCmd.asnprintf_sh; its step is answer_snp.v's). *)
+(* Modified by Theorem Labs, 2026-10: journal step rules for the class-7 side-stack entries and the shadow-fill entries, after cgif_rgb_fuzzer's lib/YC05.v (aj_stack_malloc_sz_at, aj_set_shadow_at, aj_stack_free_at, ajournal_after_write_win), for answer's ASan+UBSan walk (plugin-hostd/fuzz_command, fuzz_command.asan-ubsan): lib/A/Prog/answer_s0.v of a working branch with the B kit's module paths (lib/B/Prog, lib/B/Rt; the kit files are A's with paths only changed) and without aj_snprintf_atS (B's snprintf contract is the shared one, RtPFCmd.asnprintf_sh; its step is answer_snp.v's). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

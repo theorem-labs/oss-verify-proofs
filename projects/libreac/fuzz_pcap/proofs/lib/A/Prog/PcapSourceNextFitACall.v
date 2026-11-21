@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntrySchedSetupC), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v, proofs/cgif/cgif_file_fuzzer/lib/A/AD27.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_grant/lib/A/Prog/GrantEntrySchedSetupC.v, with its module paths and module names changed; 1421 of its 1480 lines of code are new or changed and 596 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_pcap/lib/B/Prog/PcapSourceNextSkip.v, with its module paths and module names changed; 362 of its 407 lines of code are new or changed and 1435 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* pcap_source_next (0x8181c) on the ASan build of libreac v1.9.0: the call transport of the fit-A
    phase across its __asan_memmove call.
 
@@ -29,22 +30,22 @@
 
    TAKEN FROM.
    - __asan_memmove: MemmoveDef.v amemmove_realizes (a Theorem Labs lane), applied by
-     PcapSourceNextFitAHelp.v aj_memmove_atS (a Theorem Labs lane, a2aabd0a676), Required, not copied.
-   - fa_mm_pre: the destination half follows lib/A's fa_call (PcapSourceNextFitA.v:504-545 on
-     a2aabd0a676) and a Theorem Labs lane's nx_fread_buf_pre (PcapSourceNextSkipDefs.v:233-299 on a5de09c4afc):
+     PcapSourceNextFitAHelp.v aj_memmove_atS (a Theorem Labs lane), Required, not copied.
+   - fa_mm_pre: the destination half follows lib/A's fa_call (PcapSourceNextFitA.v:504-545)
+     and a Theorem Labs lane's nx_fread_buf_pre (PcapSourceNextSkipDefs.v:233-299):
      awr_byte_weaken of nx_base's nx_wr_ok, amem_range_sub_app, range_addressable_of_block,
      shadow_hull_vis_of_block; the source half (src_ok) is new: al_blocks' presence clause with
      aview_some_of_apresent.
-   - fa_mm_buf: new; its list is PcapSourceNextFitABits.v fa_mm_list (b756f7b51d4), Required; the byte
+   - fa_mm_buf: new; its list is PcapSourceNextFitABits.v fa_mm_list, Required; the byte
      moves use YC88.garr8_aview (a Theorem Labs lane's YC88 family), as lib/B's fa_mm_bytes does
-     (lib/B/Prog/PcapSourceNextFitAKit.v on a working branch 18f2df02f64).
-   - fa_mmr_run: a Theorem Labs lane's ts_run (PcapSourceNextFitB.v:209-377 on a2aabd0a676): an all-atom seat with
+     (lib/B/Prog/PcapSourceNextFitAKit.v on a working branch).
+   - fa_mmr_run: a Theorem Labs lane's ts_run (PcapSourceNextFitB.v:209-377): an all-atom seat with
      no region (pa_entry_st_ok_full), paj_run_to_tok, regs_kept_of_st_ok_pi, kept_of_frame.
    - fa_mm_call: lib/A's fa_call (the SRr_bind of a callee's contract, then the continuation
      NEXT), lib/B's sk_body_call / sk_fread_buf_post (PcapSourceNextSkipCall.v on
-     a working branch 0aac3a54d6d) for the kept-bytes reasoning across the call, and
-     PcapSourceNextFitALand.v fa_land_ts (540230b0f44), PcapSourceNextFitAModel.v fa_rec_tagged
-     (d3292ab2561), PcapSourceNextFitAHelp.v fa_pres / fa_vm_kept / fa_garr8_kept, PaJournalFs.v
+     a working branch) for the kept-bytes reasoning across the call, and
+     PcapSourceNextFitALand.v fa_land_ts, PcapSourceNextFitAModel.v fa_rec_tagged,
+     PcapSourceNextFitAHelp.v fa_pres / fa_vm_kept / fa_garr8_kept, PaJournalFs.v
      same_but_materialized_fs, all Required.
 
    Every number is read from the pinned fuzz_pcap.asan image

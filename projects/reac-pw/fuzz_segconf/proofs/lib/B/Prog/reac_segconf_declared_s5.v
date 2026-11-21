@@ -1,4 +1,4 @@
-(* The image-B port of lib/A/Prog/reac_segconf_declared_s5.v (commit 29221b01c4cd): segment S5
+(* The image-B port of lib/A/Prog/reac_segconf_declared_s5.v: segment S5
    of the walk of reac_segconf_declared (fuzz_segconf.asan-ubsan, image B): from the cut KX (0x8a0fc) to the `ret`
    at 0x8a1d4, given INV_KX, reaching dc_post (reac_segconf_declared_d.v dc_S5P).
    The stretch: frame[0] = 0x45e0360e (0x8a108, the frame from 32(s1)); `beqz a1` at 0x8a110 not taken,

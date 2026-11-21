@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the secondary map's grant is the address Linux's bottom-up placement picks in the free gap, the grant check carries one more conjunct, and the pointer array's range is free of the reserved ledger by the ledger's own pointer-array fact, since the ledger now also holds the launch's vDSO pair). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -67,8 +68,15 @@ Context {Clg : Ceiling}.
                 ltac:(lia) MSA ltac:(pose proof NR as X; unfold kMaxPrimaryUser in X; pose proof (map_size_le n ltac:(lia)); lia))) as dR_2; dand6 dR_2 as g GA GP GH GT GF | destruct (grant_room A h ms W0 (ai_cover _ _ _ _ _ _ _ AI) (minv_nooverlap (ai_minv _ _ _ _ _ _ _ AI)) TOP
                 ltac:(lia) MSA ltac:(pose proof NR as X; unfold kMaxPrimaryUser in X; pose proof (map_size_le n ltac:(lia)); lia))
       as (g & GA & GP & GH & GT & GF) ]).
-    exists (wz g). rewrite grant_okf_plain. unfold grant_ok. rewrite VM1. rewrite !unsigned_lit by lia. unfold page_size.
-    rewrite (proj2 (Z.eqb_eq _ _) GA). rewrite (proj2 (Z.ltb_lt _ _) GP). rewrite (proj2 (Z.leb_le _ _) GT). rewrite GF. cbn [andb].
+    (* 08b1429: the free gap is above kHighMemBeg, so inside Linux's bottom-up window; the grant is
+       the one address Linux picks there. *)
+    assert (Hav : OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib.Acfg.vm_place_available (m_vmmaps md1) (kb_thp (m_kernel md1)) (wz 0) ms = true).
+    { apply (OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib.Acfg.vm_place_available_of_gap _ _ _ ms g ltac:(lia) ltac:(unfold page_size; exact MSA)).
+      unfold gap_fits. rewrite VM1. unfold page_size. split; [exact GA|].
+      split; [unfold task_unmapped_base; kung_all; lia|]. split; [exact GT | exact GF]. }
+    destruct (OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib.Acfg.vm_place_available_is _ _ _ ms ltac:(lia) ltac:(unfold page_size; exact MSA) Hav) as [a Ha].
+    exists a. apply grant_okf_intro; [lia | unfold page_size; exact MSA | exact Ha |].
+    unfold mmap_noreserve_backed_ok. rewrite mmap_noreserve_b_plain. cbv beta iota. rewrite VM1.
     apply Z.leb_le. rewrite LIMv.
     pose proof (MInv_backing_used_le _ _ _ _ HI1). pose proof (pa_budget_room A m md AI). unfold kBudgetRoom in *.
     change (aeager_of A) with (pa_eager A) in *. change (alhull_of AL_pboth A) with (pa_lhull A) in *. clear - H H0 MS31. lia.
@@ -84,7 +92,7 @@ Context {Clg : Ceiling}.
   Lemma g_facts : mb mod 4096 = 0 /\ 0 < mb /\ mb + ms <= alloc_ceiling /\
                   region_free (vm_reserved h ++ vm_maps h) mbw (wz ms) = true.
   Proof.
-    rewrite grant_okf_plain in GOK. unfold grant_ok in GOK. rewrite !andb_true_iff in GOK. destruct GOK as [[[[G1 G2] G3] G4] G5].
+    rewrite grant_okf_plain in GOK. unfold grant_ok in GOK. rewrite !andb_true_iff in GOK. destruct GOK as [[[[[_ G1] G2] G3] G4] G5].
     apply Z.eqb_eq in G1. apply Z.ltb_lt in G2. apply Z.leb_le in G3. rewrite VM1 in G3, G4. rewrite TOP in G3. unfold page_size in G1.
     exact (conj G1 (conj G2 (conj G3 G4))).
   Qed.
@@ -227,12 +235,15 @@ Context {Clg : Ceiling}.
   Lemma c_contained : region_free (vm_reserved (m_vmmaps md3)) paw blk = true /\ map_contains (vm_maps (m_vmmaps md3)) paw blk = true.
   Proof.
     rewrite V3. (first [ pose proof (g_vmmaps) as dR_18; dand3 dR_18 as V1 V2 _ | pose proof g_vmmaps as (V1 & V2 & _) ]). rewrite V1, V2.
-    destruct (ai_ledger _ _ _ _ _ _ _ AI) as (L1 & _).
+    destruct (ai_ledger _ _ _ _ _ _ _ AI) as (L1 & _ & L3 & _).
     assert (PA1 : 0x60a000 <= pa).
     { pose proof (place_facts A W0) as PF. cbv zeta in PF. (first [ dand13 PF as _ _ _ _ _ _ _ _ _ _ _ (PPA & _) _ | destruct PF as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & (PPA & _) & _) ]).
       apply app_facts in PPA. unfold kPtrArrayReserve in PPA. lia. }
     split.
-    - change (8 * kChunksBlockCount) with 0x20000. apply (pa_cover_reserved_free A m md pa 0x20000 AI); unfold kPtrArrayReserve in *; lia.
+    - (* LPS 727298f3: the ledger holds the launch's vDSO pair too; the range is inside the pointer
+         array's reserve, which the ledger keeps free of every reservation *)
+      apply (region_free_sub _ (wz pa) (wz kPtrArrayReserve) _ _ L3); rewrite ?PAW, ?BLW, ?unsigned_lit by (unfold kPtrArrayReserve in *; lia);
+        unfold kPtrArrayReserve in *; lia.
     - unfold map_contains. apply existsb_exists. exists (wz pa, wz kPtrArrayReserve). split.
       + right. apply L1. unfold big_maps_. cbn. tauto.
       + cbn [fst snd]. rewrite PAW, BLW, !unsigned_lit by (unfold kPtrArrayReserve in *; lia). apply andb_true_iff. split; apply Z.leb_le; unfold kPtrArrayReserve; lia.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack window fact is the launch's, 1500 whole pages below the stack pointer, not 8 MiB). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -302,8 +303,8 @@ Section HeaderK.
   Lemma stack_k : stack_writable M sp0.
   Proof.
     get_know extra Hlen HK.
-    pose proof (kf_wr _ _ _ HK (EVar 0) (-8388608) 8388608 ltac:(kin)) as W. kclean W.
-    intros d m Hd Hm. replace (bv_unsigned sp0 - 8388608 + d)%Z with (bv_unsigned sp0 + -8388608 + d)%Z by lia.
+    pose proof (kf_wr _ _ _ HK (EVar 0) (-6144000) 6144000 ltac:(kin)) as W. kclean W.
+    intros d m Hd Hm. replace (bv_unsigned sp0 - 6144000 + d)%Z with (bv_unsigned sp0 + -6144000 + d)%Z by lia.
     apply W; assumption.
   Qed.
 

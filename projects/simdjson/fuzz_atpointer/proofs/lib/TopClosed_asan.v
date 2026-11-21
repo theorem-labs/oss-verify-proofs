@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (comments brought up to date with the port). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -20,6 +21,23 @@ Proof. intros CE RN. exact (@OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.P.Z41.
 Theorem s3s_asan_closed : S3s_stmt_e Asan.M.loaded_segments Asan.M.init_pc Asan.M.phdrs.
 Proof. exact (s3s_asan client_atp client_atp_hs). Qed.
 
+
+(* SUPERSEDED 2026-11-06.  The old text here read:
+
+     (* The kernel pin (Main's ruling, 2026-11-04; TopLevel.v): until the model's retarget
+        proves [kernel_pinned] from [valid_input_either], it is this section's hypothesis. *)
+     Section Pinned.
+     Hypothesis Hkernel : kernel_pinned.
+     ... Theorem off_asan ... Theorem base_asan ...
+     End Pinned.
+
+   The 11-04 ruling predates the measurement that at 75d69e00 the published
+   statement quantifies over the five FREE kernel fields, so [kernel_pinned]
+   cannot be discharged at the top at all -- it is not that the retarget had
+   not landed yet, it is that the pin is false.  The section therefore shipped
+   [base_asan : kernel_pinned -> ...], which [Theorems.v:27] applies BARE; that
+   mismatch was the visible symptom.  No section and no hypothesis now: nothing
+   below [Theorems.v] carries a kernel premise. *)
 Theorem off_asan :
   strong_universal_error_free_T_scfg (mkSpuriousCfg false true true true true true)
     (mkImage Plain.M.loaded_segments Plain.M.init_pc Plain.M.phdrs)

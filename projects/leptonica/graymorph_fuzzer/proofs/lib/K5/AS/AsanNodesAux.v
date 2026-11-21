@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (PropExec qualified as K5.AS.PropExec where a twin module shadows it). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -11,7 +12,7 @@ From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem
 From OSSVerify.Proofs.leptonica.graymorph_fuzzer.lib.K5.AS Require Import PropExec CatExec CatSim SeqExec StoreOk StepTac ShapeAlg AgentLib Hoare RefLayout AsanAcct AsanAcctShape.
 From OSSVerify.Proofs.leptonica.graymorph_fuzzer.lib.K5.AS Require Import AxSymExec3 AxSymExec3Sound AxSymRun3 AsanPlan AsanPlanSound.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
-Local Instance asanreflect_fx : PropExec.FPState := PropExec.fx0.
+Local Instance asanreflect_fx : K5.AS.PropExec.FPState := K5.AS.PropExec.fx0.
 Import ListNotations.
 Import AX2. Import AX2S. Import AP. Import APS.
 Open Scope bv_scope.

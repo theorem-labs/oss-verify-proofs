@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mciZ's room after the printed string weakened from its length plus 16 bytes to its length plus 10, with facts_mci; facts_mciZ re-proved from that fact). *)
 (* [comment removed for export] *)
 Local Set Warnings "-require-in-module".
 (* [comment removed for export] *)
@@ -880,7 +881,7 @@ Variable r : valuation.
 Let XB := bv_unsigned (rw r 18). Let XL := bv_unsigned (rw r 19). Let XO := bv_unsigned (rw r 20).
 Let z := bv_unsigned (rw r 16). Let A := bv_unsigned (rw r 17). Let n := bv_unsigned (rw r 14).
 Definition mciZ : Prop := ltac2:(tb__ "0|2|
-S14S18S17Vz;Z10A2VA;A2S14S18VA;S19Z2M0Z3eA2M1A2S14S18S17VXO;VA;A2VXL;A2S14S18VXL;S19G0Z28A2A2S14S18S17VXB;VXL;A2S19G0Z2fA2A2S14S1aVz;Vn;A2S18Vn;G1A2A2A2A2A2A2A2").
+S14S18S17Vz;ZaA2VA;A2S14S18VA;S19Z2M0Z3eA2M1A2S14S18S17VXO;VA;A2VXL;A2S14S18VXL;S19G0Z28A2A2S14S18S17VXB;VXL;A2S19G0Z2fA2A2S14S1aVz;Vn;A2S18Vn;G1A2A2A2A2A2A2A2").
 Lemma two62_eq : two62 = 2 ^ 62. Proof. reflexivity. Qed.
 Lemma facts_mciZ : ltac2:(tb__ "0|0|
 S1eS1S3Vr;A1S36A3S42F_;").
@@ -897,7 +898,7 @@ Proof.
   pose proof (urange (rw r 19)). pose proof (urange (rw r 20)).
   unfold vXB, vXL, vXO in *.
   cbn [holds branch_taken eval] in F1, F2, F3, F4, F5, F11, F12, F13, F14, F15, F16, F17, F21. unfold bv_ltu in F1. apply Z.ltb_lt in F1.
-  rewrite add_lit_val in F21. change (snorm 16) with 16 in F21.
+  rewrite add_lit_val in F21. change (snorm 10) with 10 in F21.
   rewrite lit_unsigned in F15. rewrite lit_unsigned in F17. change ((2 ^ 47 - 64) mod 2 ^ 64) with (2 ^ 47 - 64) in F17.
   rewrite add_lit_val in F2. change (snorm 8) with 8 in F2.
   rewrite lit_unsigned in F3. change (8 mod 2 ^ 64) with 8 in F3.
@@ -911,9 +912,9 @@ Proof.
     exfalso. replace (bv_unsigned (rw r 16) + 8) with ((bv_unsigned (rw r 16) + 8 - 2 ^ 64) + 1 * 2 ^ 64) in F2 by lia.
     rewrite Z_mod_plus_full, Z.mod_small in F2 by lia. lia. }
   rewrite E2 in F2.
-  assert (E21 : (bv_unsigned (rw r 16) + 16) mod 2 ^ 64 = bv_unsigned (rw r 16) + 16).
-  { destruct (Z_lt_le_dec (bv_unsigned (rw r 16) + 16) (2 ^ 64)); [apply Z.mod_small; lia |].
-    exfalso. replace (bv_unsigned (rw r 16) + 16) with ((bv_unsigned (rw r 16) + 16 - 2 ^ 64) + 1 * 2 ^ 64) in F21 by lia.
+  assert (E21 : (bv_unsigned (rw r 16) + 10) mod 2 ^ 64 = bv_unsigned (rw r 16) + 10).
+  { destruct (Z_lt_le_dec (bv_unsigned (rw r 16) + 10) (2 ^ 64)); [apply Z.mod_small; lia |].
+    exfalso. replace (bv_unsigned (rw r 16) + 10) with ((bv_unsigned (rw r 16) + 10 - 2 ^ 64) + 1 * 2 ^ 64) in F21 by lia.
     rewrite Z_mod_plus_full, Z.mod_small in F21 by lia. lia. }
   rewrite E21 in F21.
   assert (E11 : (bv_unsigned (rw r 20) + bv_unsigned (rw r 17)) mod 2 ^ 64 = bv_unsigned (rw r 20) + bv_unsigned (rw r 17)) by (apply Z.mod_small; lia).

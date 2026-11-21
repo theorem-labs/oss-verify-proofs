@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: QI_init is passed the input's channel-reader fact (valid_input_either_reader) and its invariant is carried onto the initial model holding the entry's vDSO draw (QI_fds, minv_with_vdso). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -56,7 +57,11 @@ Proof.
   apply (mspecL_program LBUDGET (Qamb []) (prog_with rs (argv_Z (in_argv inp))) (fun _ _ _ => False)).
   - apply prog_with_Q.
   - unfold Qamb.      (* [comment removed for export] *)
-    apply QI_init; [exact Hbrk| exact Hpos| split; [exact HspL| exact HspH]| reflexivity| exact Hceil| exact Hfloor| exact Hresv| exact Hlim| exact PambP_nonneg| exact PambP_ok| exact PHI_PambP_budget].
+    (* [mo0] carries the entry's vDSO draw ([with_vdso]); the VM ledger, the fd table
+       and the halt flag are [init_model]'s. *)
+    eapply QI_fds;
+      [ apply QI_init; [exact Hbrk| exact Hpos| split; [exact HspL| exact HspH]| reflexivity| exact Hceil| exact Hfloor| exact Hresv| exact Hlim| exact PambP_nonneg| exact PambP_ok| exact PHI_PambP_budget| exact (valid_input_either_reader _ Hvi)]
+      | reflexivity | reflexivity | apply minv_with_vdso, minv_init; [split; [exact HspL| exact HspH] | exact (valid_input_either_reader _ Hvi)] | reflexivity ].
   - intros [].
 Qed.
 

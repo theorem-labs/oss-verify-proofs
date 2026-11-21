@@ -6,7 +6,8 @@
    453-455, 470-475, 477-486, 489-491, 502-505, 511-514, 1255-1258. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_name_seg_rel.v, with its module paths, module names and numbers changed; 848 of its 931 lines of code are new or changed and 1841 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_hp_kit.v, with its module paths and module names changed; 96 of its 152 lines of code are new or changed and 875 lines of the source are left out. *)
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_kitS.v at a working branch 0d38fb8ac64, relocated A->B by
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_kitS.v at a working branch, relocated A->B by
    Theorem Labs tools over the unstripped twins, every image numeral re-derived by symbol / section / string
    content and checked by revcheck (reports in (internal path)). Imports: lib.Reusable kernel kept;
    the per-image root files from lib.ReusableB; fm's own per-image files from lib.B; FMupoison shared from lib.A. *)

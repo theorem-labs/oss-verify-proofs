@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the munmap answers, munmap's maps_subtract cut). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State Specs Run.
@@ -33,11 +34,13 @@ Corollary backed_mmap_le : forall h (a n : word),
 Proof. intros h a n Hnw Han. apply (backed_cons_le h (vm_mmap a n h) a n); [reflexivity | reflexivity | exact Hnw | exact Han]. Qed.
 
 Corollary backed_brk_grow_le : forall h (req : word),
+  u (vm_brk h) mod 4096 = 0 -> u req mod 4096 = 0 -> u (vm_brk h) < u req ->
   maps_nw' (vm_maps h) -> u (vm_brk h) + u (req - vm_brk h)%bv <= 2^64 ->
   vm_backed_bytes (vm_brk_grow req h) <= vm_backed_bytes h + u (req - vm_brk h)%bv.
 Proof.
-  intros h req Hnw Han.
-  apply (backed_cons_le h (vm_brk_grow req h) (vm_brk h) (req - vm_brk h)%bv); [reflexivity | reflexivity | exact Hnw | exact Han].
+  intros h req Hb Hr Hlt Hnw Han.
+  apply (backed_cons_le h (vm_brk_grow req h) (vm_brk h) (req - vm_brk h)%bv);
+    [apply vm_brk_grow_maps; assumption | reflexivity | exact Hnw | exact Han].
 Qed.
 
 (* [comment removed for export] *)
@@ -91,23 +94,26 @@ Qed.
 
 Theorem backed_munmap_le : forall h (a n : word),
   maps_nw' (vm_maps h) -> maps_nw' (vm_noaccess h) -> maps_pw' (vm_maps h) ->
-  In (a, n) (vm_maps h) ->
+  In (a, n) (vm_maps h) -> munmap_exact (vm_maps h) a n ->
   vm_backed_bytes (vm_munmap a n h) <= vm_backed_bytes h.
 Proof.
-  intros h a n Hnw Hnwn Hpw Hin.
+  intros h a n Hnw Hnwn Hpw Hin Hx.
   pose proof (ivs_wf_of_nw _ Hnw) as Wm. pose proof (ivs_wf_of_nw _ Hnwn) as Wn.
   pose proof (u64_range n) as Rn.
-  assert (Wm' : BA.ivs_wf (map_remove (vm_maps h) a)) by (unfold map_remove; apply BA.ivs_wf_filter; exact Wm).
+  assert (Wm' : BA.ivs_wf (vm_maps (vm_munmap a n h)))
+    by (rewrite (vm_munmap_maps_exact _ _ _ Hx); unfold map_remove; apply BA.ivs_wf_filter; exact Wm).
   rewrite (backed_sem h Wm). rewrite (backed_sem (vm_munmap a n h)) by exact Wm'.
   cbn [vm_maps vm_noaccess vm_munmap].
+  (* munmap cuts with [maps_subtract] at 08b1429; on this exact ledger it is [map_remove] *)
+  rewrite (maps_subtract_exact_remove _ _ _ Hx).
   destruct (BA.maps_subtract_sem (vm_noaccess h) (u a) (u a + u n) Wn ltac:(lia)) as (_ & _ & Cv).
   eapply Z.le_trans; [| apply (sum_count_filter_le _ (fun p => negb (bv_eqb (fst p) a)) (vm_maps h))].
   unfold map_remove. apply Z.eq_le_incl. apply sum_count_ext_in.
   intros [b s] He. apply filter_In in He as [He Hb]. cbn [fst] in Hb. apply negb_true_iff in Hb.
   assert (Hne : b <> a) by (intros ->; rewrite bv_eqb_refl in Hb; discriminate).
   pose proof (pw_diff_base_disjoint (vm_maps h) b s a n Hpw He Hin Hne) as D.
-  unfold BA.iv_count. apply BA.zcount_ext. intros x Hx. unfold BA.B, BA.S in Hx. cbn [fst snd] in Hx.
-  pose proof (u64_range s). rewrite Z2Nat.id in Hx by lia. rewrite Cv.
+  unfold BA.iv_count. apply BA.zcount_ext. intros x Hx0. unfold BA.B, BA.S in Hx0. cbn [fst snd] in Hx0.
+  pose proof (u64_range s). rewrite Z2Nat.id in Hx0 by lia. rewrite Cv.
   replace (BA.in_rng (u a) (u a + u n) x) with false
     by (symmetry; unfold BA.in_rng; apply andb_false_iff; destruct D; [left; apply Z.leb_gt; lia | right; apply Z.ltb_ge; lia]).
   cbn [negb]. rewrite andb_true_r. reflexivity.

@@ -1,17 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: restates text of proofs/reac-pw/fuzz_role/lib/A/RPgX01.v at 9bffaa83ff88
+(* Modified by Theorem Labs, 2026-10: restates text of proofs/reac-pw/fuzz_role/lib/A/RPgX01.v
    [Apache-2.0] (rx_reg_atom / rx_reg_ext / rx_ew_reg / rx_st_region / rx_chunk_zero / rx_flag0_of, the saved-slot
    chunk list rx_sv_chunks, the numeral tactics z5 / z5g and the flag-store tactic rx_run_flag, which passes
-   aj_flag_store its sixteen journal arguments) and of proofs/reac-pw/fuzz_role/lib/A/RPgCheck.v at 77f59d02b018
+   aj_flag_store its sixteen journal arguments) and of proofs/reac-pw/fuzz_role/lib/A/RPgCheck.v
    [Apache-2.0] (the shape of a `ret` leaf into a callee post), for reac-pw/fuzz_rate's image A: the walk is
    check_csv's release and epilogue, the side-stack class is 2 instead of 3, and the post is RtPgCSpec.rt_cpost_o,
    whose owned-set conjunct is discharged from the cut's layout, chunk and frame equalities. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_rate/lib/A/RtPgCcsvS3.v, with its module paths and module names changed; 330 of its 360 lines of code are new or changed and 296 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgEnt0DigW.v at 21da95a5fcd3; image B's runs (P1 0x8152c -> 0x81540 with t0 = 4 pinned, the token runs 0x81540 -> 0x81608 with the cell R+0xd8, P2 0x81608 -> 0x8160c with s8 = -8 pinned), registers and class-4 frame, lib/AU/RtPgMemB.v's shadow rows and lib/AU/RtPgW7bBaseB.v's block post w7b_post; names rt7d_ -> rt7bd_, w7_ -> w7b_. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgEnt0DigW.v; image B's runs (P1 0x8152c -> 0x81540 with t0 = 4 pinned, the token runs 0x81540 -> 0x81608 with the cell R+0xd8, P2 0x81608 -> 0x8160c with s8 = -8 pinned), registers and class-4 frame, lib/AU/RtPgMemB.v's shadow rows and lib/AU/RtPgW7bBaseB.v's block post w7b_post; names rt7d_ -> rt7bd_, w7_ -> w7b_. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_rate/lib/AU/RtPgEnt0DigWB.v, with its module paths, module names, addresses and numbers changed; 182 of its 359 lines of code are new or changed and 183 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgEnt0DigW.v at 21da95a5fcd3; image B's runs (P1 0x8152c -> 0x81540 with t0 = 4 pinned, the token runs 0x81540 -> 0x81608 with the cell R+0xd8, P2 0x81608 -> 0x8160c with s8 = -8 pinned), registers and class-4 frame, lib/AU/RtPgMemB.v's shadow rows and lib/AU/RtPgW7bBaseB.v's block post w7b_post; names rt7d_ -> rt7bd_, w7_ -> w7b_. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgEnt0DigWB.v at cc5ce244897b for reac-pw/fuzz_role's image B (fuzz_role.asan-ubsan): module paths fuzz_rate -> fuzz_role, the segments lib/AU/Img0.v rsegs; role B's runs (P1 0x80ce8 -> 0x80cfc with &r in s5, the token runs 0x80cfc -> 0x80dc4 with the cell R+0xc8, the shadow offset in s11 and the multiplier in s7, P2 0x80dc4 -> 0x80dc8 with s10 = -8 pinned); lib/AU/RPgMem.v's shadow rows (rm_sh_r_in / rm_sh_r_out) and the frame row RPgSeg.rs_PG; names rt7bd_ -> r7bd_. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgEnt0DigW.v; image B's runs (P1 0x8152c -> 0x81540 with t0 = 4 pinned, the token runs 0x81540 -> 0x81608 with the cell R+0xd8, P2 0x81608 -> 0x8160c with s8 = -8 pinned), registers and class-4 frame, lib/AU/RtPgMemB.v's shadow rows and lib/AU/RtPgW7bBaseB.v's block post w7b_post; names rt7d_ -> rt7bd_, w7_ -> w7b_. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgEnt0DigWB.v for reac-pw/fuzz_role's image B (fuzz_role.asan-ubsan): module paths fuzz_rate -> fuzz_role, the segments lib/AU/Img0.v rsegs; role B's runs (P1 0x80ce8 -> 0x80cfc with &r in s5, the token runs 0x80cfc -> 0x80dc4 with the cell R+0xc8, the shadow offset in s11 and the multiplier in s7, P2 0x80dc4 -> 0x80dc8 with s10 = -8 pinned); lib/AU/RPgMem.v's shadow rows (rm_sh_r_in / rm_sh_r_out) and the frame row RPgSeg.rs_PG; names rt7bd_ -> r7bd_. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_role image B (fuzz_role.asan-ubsan, pinned sha256
    b255d4935da5af137a3967dbe33380ea43be8e78bfe05d1e356e0a2be8a69ff0; every address measured on the unstripped twin
    dc791783f32962615e18a5f5cffae758ba56eb5dc87f70913c3579b101b4406a, same loaded bytes): the walk of the DIG block of

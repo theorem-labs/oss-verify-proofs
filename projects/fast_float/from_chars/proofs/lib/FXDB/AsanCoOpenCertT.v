@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up stack layout (the strings above the random bytes, up to ed_top; the path's end bounded above sp through the launch's ed_top - sp bound)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List.
@@ -49,9 +50,13 @@ Definition LPATH : lin := hvar 17.
 (* [comment removed for export] *)
 Definition FV8C : fact := FRange PV 140735332483072 140737488355326.
 Definition FV8SPC : fact := FRange (lsub PV (sm_sp MMAIN)) 0 4194304.
-Definition FENDP0 : fact := FRange (ladd PV LPATH) 0x7fff7f800000 (0x800000000000 - 17).
-Definition FENDP2 : fact := FRange (lsub (ladd PV LPATH) (sm_sp MMAIN)) 0 4194304.
-Definition FRZP : fact := FRange (lsub (laddc RANDP16 (-16)) (ladd PV LPATH)) 1 4194304.
+(* 75d69e00: the path (argv[1]) ends at most at ed_top - 10 (its NUL, the exec name's NUL and the 8-byte slot sit
+   above it; StackLayout.launch_string_bytes) and ed_top <= 2^47 (Run.valid_stack_top_va), hence the [- 10];
+   the strings run up to ed_top = TOPS, above the random bytes *)
+Definition FENDP0 : fact := FRange (ladd PV LPATH) 0x7fff7f800000 (0x800000000000 - 10).
+(* the path ends at most 2101782 - 10 bytes above sp (FXGB/AsanErrT's FENDP2: ed_top - sp <= 2101782 at the launch) *)
+Definition FENDP2 : fact := FRange (lsub (ladd PV LPATH) (sm_sp MMAIN)) 0 (2101782 - 10).
+Definition FRZP : fact := FRange (lsub TOPS (ladd PV LPATH)) 1 4194304.
 Definition FPV0 : fact := FRange (lsub PV P0) 1 4194304.
 Definition FSC : list fact := [FV8C; FV8SPC; FENDP0; FENDP2; FRZP; FPV0].
 Definition TCT : sst := add_facts T0T FSC.

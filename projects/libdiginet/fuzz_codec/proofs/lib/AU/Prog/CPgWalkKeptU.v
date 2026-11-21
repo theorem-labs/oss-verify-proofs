@@ -4,9 +4,10 @@
    the image-A core modules are image B's (lib/AU), YImgTop is YImgTopU, the CA_ constants are CB_ ones with
    image B's values; lemma and tactic names unchanged. *)
 (* Modified by Theorem Labs, 2026-10: cw_fresh, cw_kept0, cw_kept_step and cw_kept_call are the text of
-   proofs/libreac/fuzz_identity/lib/A/Prog/sb_dec_A.v:63-153 (origin/ossv/recipes 4b6f0df50aa7: sbd_fresh,
+   proofs/libreac/fuzz_identity/lib/A/Prog/sb_dec_A.v:63-153 (sbd_fresh,
    sbd_kept0, sbd_kept_step, sbd_kept_call), with the segment list made image B's tfibsegs, the call's window a
    parameter and the world after the call generalized, for libdiginet/fuzz_codec's ASan build; cw_kept_cj is new. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -2,10 +2,11 @@
    request traces and on fr_RINV's pairs that the B proofs of LS_rm_rr_pre and GN_LS_rig read *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Copyright 2026 Theorem Labs *)
-(* Ported from A at a working branch 9f4cbd12a19 (A below), names and statements kept, over lib/B's
+(* Ported from A at a working branch (A below), names and statements kept, over lib/B's
    records (lib/B/W_rep.v, lib/B/W_contract.v, lib/B/W_LLVMFuzzerTestOneInput_cut.v of
-   a working branch 61e610e6176), fr_RINV from lib/B/ReplyRINVB.v, and the plain model files
+   a working branch), fr_RINV from lib/B/ReplyRINVB.v, and the plain model files
    lib/Prog/drain_b_c.v, send_line_b_c.v, gestures_end_b_c.v, RelayModel.v, RelayKeys.v, RelayCap.v, SlotReads.v,
    SlotInv.v, ListTr.v, RelayRunT.v, HarnessRep.v (byte-identical in both trees).
      A lib/A/ReplyRINV.v :232 RI_fds_obl, :597 fr_Forall2_comb, :605 fr_comb_inj, :619 fr_pair_of_open, :715

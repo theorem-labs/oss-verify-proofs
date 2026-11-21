@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_contract_x.v; 88 of its 244 lines of code are new or changed and 1856 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Route-R twins of the leaf contracts of lib/A/W_contract_x.v (a Theorem Labs lane, a Theorem Labs lane's route-R crew, group
    G7-leaf-AB, for a Theorem Labs lane's top_x at R): aleafx_post_x :117, nl_post_x :485, lfind_post_x :570, cnlr_spec_x :434, cb_spec_x :163, nl_spec_x :507, cse_spec_x :539, lfind_spec_x :583.
    aleaf_post_x / csd_spec_x's twins are a Theorem Labs lane's (W_contract_srlf_xR.v, NAMES.md); this file uses them.
@@ -67,7 +68,7 @@ Variable B : asyms.
 Variable PST : list (Z * Z).
 Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte) -> Model -> Prop.
 Variable R : world SEGS -> world SEGS -> Prop.
-(* W_contract_x.v:117 aleafx_post_x at R *)
+(* W_contract_x.v:118 aleafx_post_x at R *)
 Definition aleafx_post_xR (STK : Z) (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS)
 (mem : word -> option byte) (md : Model) (Pa0 : word -> Prop) : world SEGS -> config -> Prop :=
 fun W' c' => exists regs' mem' md',
@@ -78,7 +79,7 @@ aregs_preserved regs regs' /\ (forall a, apresent (w_H W) mem a -> apresent (w_H
    of check_bounded - it reads errno, the key slack and its globals again after the call; W_rep.v:199) *)
 (forall a, 0 <= a < 2 ^ 64 -> ~ (spZ regs - STK <= a < spZ regs) -> abyte_kept W mem W' mem' a) /\
 Pa0 (getr regs' 10).
-(* W_contract_x.v:485 nl_post_x at R *)
+(* W_contract_x.v:486 nl_post_x at R *)
 Definition nl_post_xR (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
 (XO PA PL PN A O OUT : Z) (ob : list byte) : world SEGS -> config -> Prop :=
 fun W' c' => exists regs' mem' md',
@@ -100,7 +101,7 @@ ob_at W' mem' OUT ob /\
   val_mem SEGS (mrestrict (w_H W') mem') PA 8 (A + Z.of_nat (length ln) + 1) /\
   val_mem SEGS (mrestrict (w_H W') mem') PL 8 (OUT + A) /\
   val_mem SEGS (mrestrict (w_H W') mem') PN 8 (Z.of_nat (length ln)))).
-(* W_contract_x.v:434 cnlr_spec_x at R *)
+(* W_contract_x.v:435 cnlr_spec_x at R *)
 Definition cnlr_spec_xR (pc : Z) : Prop :=
 forall W ly S Hp regs mem md ch p v,
 afn_pre_x SEGS B ARx CNLR_STK ly S Hp W regs mem md ch ->
@@ -113,7 +114,7 @@ val_mem SEGS (mrestrict (w_H W) mem) (p + 24) 4 v ->
 (* check_no_loss_read returns nothing: it leaves a0 holding the word it read, so the post claims
    nothing about a0. *)
 SRrG SEGS R W (cfg_at SEGS pc regs mem md) (aleaf_post_xR B PST ARx R CNLR_STK regs ly S Hp W mem md (fun _ => True)).
-(* W_contract_x.v:163 cb_spec_x at R *)
+(* W_contract_x.v:164 cb_spec_x at R *)
 Definition cb_spec_xR (pc : Z) : Prop :=
 forall W ly S Hp regs mem md ch n P N,
 afn_pre_x SEGS B ARx CB_STK ly S Hp W regs mem md ch ->
@@ -123,7 +124,7 @@ val_mem SEGS (mrestrict (w_H W) mem) (VAL A_g_src) 8 P -> 0 <= P < 2 ^ 64 ->
 (0 < n -> In (P, N) (ablocks B ly S) /\ 56 * n <= req_size N) ->
 (forall j, 0 <= j < n -> cb_entry_ok W mem P j) ->
 SRrG SEGS R W (cfg_at SEGS pc regs mem md) (aleafx_post_xR CB_STK regs ly S Hp W mem md (fun _ => True)).
-(* W_contract_x.v:507 nl_spec_x at R *)
+(* W_contract_x.v:508 nl_spec_x at R *)
 Definition nl_spec_xR (pc : Z) : Prop :=
 forall W ly S Hp regs mem md ch XO PA PL PN A O OUT ob,
 afn_pre_x SEGS B ARx NL_STK ly S Hp W regs mem md ch ->
@@ -150,7 +151,7 @@ Z.of_nat (length ob) = O -> ob_at W mem OUT ob ->
   range_addressable (aview SEGS (w_H W) mem) SHADOW_OFF OUT O /\ shadow_hull_vis (aview SEGS (w_H W) mem) OUT O /\
   rom_view SEGS W mem) ->
 SRrG SEGS R W (cfg_at SEGS pc regs mem md) (nl_post_xR regs ly S Hp W mem md XO PA PL PN A O OUT ob).
-(* W_contract_x.v:539 cse_spec_x at R *)
+(* W_contract_x.v:540 cse_spec_x at R *)
 Definition cse_spec_xR (pc : Z) : Prop :=
 forall W ly S Hp regs mem md ch EV e gone O OUT ob,
 afn_pre_x SEGS B ARx CSE_STK ly S Hp W regs mem md ch ->
@@ -175,7 +176,7 @@ Z.of_nat (length ob) = O -> ob_at W mem OUT ob ->
 SRrG SEGS R W (cfg_at SEGS pc regs mem md) (aleaf_post_xR B PST ARx R CSE_STK regs ly S Hp W mem md (fun _ => True)).
 Section wRG.
 Variable G : list (Z * Z).
-(* W_contract_x.v:570 lfind_post_x at R *)
+(* W_contract_x.v:571 lfind_post_x at R *)
 Definition lfind_post_xR (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
 (l : HarnessRep.hlist) (sb : list byte) : world SEGS -> config -> Prop :=
 fun W' c' => W' = W /\ exists regs' mem' md',
@@ -188,7 +189,7 @@ aregs_preserved regs regs' /\
 ((exists j, lfind_match l sb j /\ getr regs' 10 = w64 (Z.of_nat j)) \/
  ((forall k, (k < length (HarnessRep.hl_recs l))%nat -> snd (nth k (HarnessRep.hl_recs l) (0, [])) <> sb) /\
   getr regs' 10 = Z_to_bv 64 (-1))).
-(* W_contract_x.v:583 lfind_spec_x at R *)
+(* W_contract_x.v:584 lfind_spec_x at R *)
 Definition lfind_spec_xR (pc : Z) : Prop :=
 forall W ly S Hp regs mem md ch LA l lines src sb,
 afn_pre_x SEGS B ARx LFIND_STK ly S Hp W regs mem md ch ->

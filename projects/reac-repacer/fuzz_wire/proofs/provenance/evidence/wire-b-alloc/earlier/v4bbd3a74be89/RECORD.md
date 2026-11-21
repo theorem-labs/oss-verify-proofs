@@ -70,17 +70,17 @@ Alongside the kit, `tools/` holds the per-record helpers:
 
 ## Images (`commit/images.sha256`, `commit/twins.out`)
 
-Grant B's addresses are the ones the released donor names: grant `lib/B/YF0l.v:11-12` @ 4f87de75d67 gives
+Grant B's addresses are the ones the released donor names: grant `lib/B/YF0l.v:11-12` gives
 `pc_malloc := 0x530b0; pc_wrap_malloc := 0x52edc` and `pc_free := 0x52ee0; pc_wrap_free := 0x52ed8`. Wire B's
 roots, by its own symbol table (`commit/roots-syms.out`): 0x5226c / 0x52098 and 0x5209c / 0x52094.
 
 | token | file | sha256 | pin / twin check |
 |---|---|---|---|
-| `WIRE_B_PIN` | `fuzz_wire.asan-ubsan` | `af4534831a4528320c7dc74ca3f64bb96e8232ed2e313f01126d10879f3417d6` | index/binaries.tsv:7525 and `projects/reac-repacer/fuzz_wire/harness.yaml:64` @ f47e2a8927b9 |
+| `WIRE_B_PIN` | `fuzz_wire.asan-ubsan` | `af4534831a4528320c7dc74ca3f64bb96e8232ed2e313f01126d10879f3417d6` | index/binaries.tsv:7525 and `projects/reac-repacer/fuzz_wire/harness.yaml:64` |
 | `WIRE_B_TWIN` | `fuzz_wire.asan-ubsan`, unstripped | `51eb4bef24252e4df6e11baa89f653d20d74e38ae684f61bc94f4fb339ac97c3` | PT_LOAD equal to the pin (`twins.out`): 25 bytes differ, all in the ELF header / `.note.gnu.build-id` |
-| `GRANT_B_PIN` | `fuzz_grant.asan-ubsan` | `fde52226dc48de254681156061de9263409c123ca0a0d6c5010ded4e17f602df` | index/binaries.tsv:5591 @ 4f87de75d67 (released) and @ f47e2a8927b9 |
+| `GRANT_B_PIN` | `fuzz_grant.asan-ubsan` | `fde52226dc48de254681156061de9263409c123ca0a0d6c5010ded4e17f602df` | index/binaries.tsv:5591 (released) and |
 | `GRANT_B_TWIN` | `fuzz_grant.asan-ubsan`, unstripped | `5a5ee7c02b4e2a1d1653dc0c256182c9b65c33dde3a7ddc98b9de2afffe7a417` | PT_LOAD equal to the pin |
-| `IDENT_B_PIN` (control) | `fuzz_identity.asan-ubsan` | `baf1a4d065e02f55521d39f05d8c8d9ed763a0ef798c70cc3eabe5816ffb3f66` | index/binaries.tsv:5595 @ f47e2a8927b9 |
+| `IDENT_B_PIN` (control) | `fuzz_identity.asan-ubsan` | `baf1a4d065e02f55521d39f05d8c8d9ed763a0ef798c70cc3eabe5816ffb3f66` | index/binaries.tsv:5595 |
 | `IDENT_B_TWIN` (control) | `fuzz_identity.asan-ubsan`, unstripped | `43b44d50be8a5e68f626662181c9cc17c0e0fef138e55f3c8bab371987a9c064` | PT_LOAD equal to the pin |
 | `GRANT_B_{PIN,TWIN}_PLANTED_{CALL,RODATA}` and `GRANT_B_TWIN_PLANTED_DEBRUIJN` | planted copies | see "Controls" | written by `run.sh`; not committed |
 

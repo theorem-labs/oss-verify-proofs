@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed refill_eq; added detect_eq. *)
 (* Agreement of the twinned reference reader with the plain one. The twin copy declares fresh records and inductives
    (byte decoder state, control state, step result, action, reader state, event kind, encoder context); each is
    translated field by field or constructor by constructor to its namesake, and every function of the twin commutes
@@ -308,8 +309,22 @@ Lemma skip_whitespace_eq : forall c w, tp (U.skip_whitespace c w) = P.skip_white
 Proof. intros [] w. unfold U.skip_whitespace, P.skip_whitespace. norm. gop ltac:(nop). Qed.
 
 (* The chunked reader. *)
+(* The two byte-order-mark detectors are identified by a proved equation rather than by `pure`'s
+   `change`, and the rewrite below is what keeps `refill_eq` checkable. A `change` leaves no proof
+   in the term, so the kernel has to re-convert `U.detect` with `P.detect` at every node of the case
+   tree `go` builds under `r_bof = true` -- the one branch of `U.refill` that reaches `detect`. That
+   cost is invisible in the tactics (0.116 s for the whole lemma) and took over 30 GiB and ~50 s
+   inside `Qed.`, which is what made this file the single compile that OOM-killed the unit's rounds
+   at 24, 32 and 40 GiB. Proved once here, the identification is checked once; the rewrite then
+   leaves no `U.detect` for `pure` to change, and the same `Qed.` costs 0.006 s and 564 MiB.
+   Measured: a build round (branch 4 of 4 is the whole cost),
+   a build round (this proof builds; the same case without the identification at all
+   does not, so the identification is needed and only its FORM was wrong). *)
+Lemma detect_eq : forall s, U.detect s = P.detect s.
+Proof. reflexivity. Qed.
+
 Lemma refill_eq : forall rs, tz (U.refill rs) = P.refill (ts rs).
-Proof. intros [[] w rest bof eof]. unfold U.refill, P.refill. norm. go ltac:(nop). Qed.
+Proof. intros [[] w rest bof eof]. unfold U.refill, P.refill. rewrite ?detect_eq. norm. go ltac:(nop). Qed.
 
 Lemma sw_eq : forall rs, ts (U.sw rs) = P.sw (ts rs).
 Proof. intros rs. unfold U.sw, P.sw. push. rewrite <- skip_whitespace_eq. reflexivity. Qed.

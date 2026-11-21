@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset, the R form of lib/Prog/PvMain0.v's pv_fd_zero (:187) over lib/A/PRH_Reader.v's
    reader predicates: a zeroed node is freeable by pj_free to any depth with no block (the all-zero struct a skipped
    reading leaves; the tpj_free_specX `v <> 0` arm with D = [], PRH_FnPj.v blob 43642538e741 :327). #102 point 9
@@ -7,9 +8,9 @@
    rule 24: no function proved. rule 24: proves no function (kind: segment-kit lemma).
    THIS LEAF IS IMAGE-FREE: it Requires only lib.A.PRH_Reader (and Stdlib / LinuxProcessSemantics), states no image
    value, and runs no vm_compute over rsegs or any segment list. THE MOVE WAS FORCED, not chosen: the lemma was first
-   written in PvMain0.v (afdd7e86e67b), and a #102 file that Requires PvMain0.v cannot build on the new-pin route
+   written in PvMain0.v, and a #102 file that Requires PvMain0.v cannot build on the new-pin route
    #102 pins, because PvMain0.v:68 rsegs_in (a plain-image fact, `vm_compute` over rsegs) fails on the #102 binaries
-   (the #102 pins route, commit 9ee3c8f2403d, build log of 2026-10-29T13:37Z:
+   (the #102 pins route, build log of 2026-10-29T13:37Z:
    "Unable to unify true with false"). Moved here by a Theorem Labs lane's yes (13:43Z, relayed by the lead); deleted from
    PvMain0.v in the same commit.
    THE pj_rwR PREMISE: PRH_Reader.pj_zeroR is garr8 of 56 zero bytes ALONE (PRH_Reader.v blob 91d2dbd40054 :98), unlike

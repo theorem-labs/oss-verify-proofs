@@ -15,7 +15,7 @@ Import ListNotations.
 Local Open Scope Z_scope.
 
 (* Measured in the symtab of the #102 twin pau-preset-102/omx-clap-core/unstripped/fuzz_preset/fuzz_preset.plain (sha256
-   c8f4d6b8e567b0b1...), the unstripped twin of the pinned fuzz_preset.plain 805604bb0907ae1b... (facts 8f3e7e1a07f1):
+   c8f4d6b8e567b0b1...), the unstripped twin of the pinned fuzz_preset.plain 805604bb0907ae1b... (facts):
      check_reject_clean_starved FUNC LOCAL 0x13c08 size 592; frame 112 (addi sp, sp, -0x70), saves ra and s0-s5;
      g_own_ran_out OBJECT LOCAL 0x347a0 size 1 (LedgerCells.GL_OWN_RAN_OUT), read by `lbu a0, -0x510(s5)` after
      `auipc s5, 0x21` at 0x13cb0; g_ran_out 0x347a8 size 1 (fuzz_alloc_ran_out_c.G_RAN_OUT), read by fuzz_alloc_ran_out.

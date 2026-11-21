@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (HC, the MR notation and P_main_open are stated over AsanInitL's SINV0L and argH0 of the run's input; len_av takes the input); vr_stack bounds argc from valid_argv directly. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -10,7 +11,7 @@ From OSSVerify.openssl.echconfiglist_parser.images Require Import Asan.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Lib Require Import Mem Cells Step Frame Arr CellsX TacX.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.As Require Import ASegs AsShadow AsConst AsIface AsStack0.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import
-  PropExec AxSymExec3 AxSymExec3Sound AxSymExec3B AsanAcct AsanPlanCore AsanPlan AsanPlanSound AsanPlanSoundSums AsanInit AsanHexScan
+  PropExec AxSymExec3 AxSymExec3Sound AxSymExec3B AsanAcct AsanPlanCore AsanPlan AsanPlanSound AsanPlanSoundSums AsanInit AsanInitL AsanHexScan
   AsHSTab AsMainVM AsMainState AsMainFacts AsMainLazyChk AsMainLazy AsMainCells LazyRestrict LazySR.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.As Require Import AsMainSyms.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.AsCert Require Import AsImages AsPlanImages.
@@ -144,8 +145,8 @@ Section AT_MAIN.
   Hypothesis Vev : valid_envp (in_envp inp).
   Hypothesis Vfit : entry_stack_fits sp0 (in_argv inp) (in_envp inp).
   Hypothesis Hh : HSF_asan h = Some ch.
-  Hypothesis HC : cs_ok ASEGS ASAN_H AsanInit.LIMIT (SINV0 APH sp0 rdraw brk0 (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-                        (argH0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model.
+  Hypothesis HC : cs_ok ASEGS ASAN_H AsanInit.LIMIT (SINV0L APH Asan.M.init_pc sp0 rdraw brk0 inp)
+                        (argH0 sp0 rdraw inp) (in_fs inp) E ch R FULL model.
   #[local] Notation g := (hole_granted h).
   #[local] Notation cls := (hole_class h).
   Let X := Xof g E.
@@ -319,7 +320,7 @@ Section AT_MAIN.
   Lemma vr_stack : forall lo hi, sp0z - 0x800000 <= lo -> hi <= sp0z + 8 * argc + 16 -> vrange lo hi.
   Proof.
     intros lo hi Hlo Hhi z Hz. pose proof Vsp as [V1 [V2 _]]. unfold sp_window_lo, sp_window_hi in V1, V2.
-    pose proof (len_av APH sp0 rdraw _ (in_envp inp) (in_uid inp) (in_hwcap inp) Vav) as LA. pose proof pd_facts as PD. unfold sp0z, argc in *.
+    assert (LA : 1 <= Z.of_nat (length (in_argv inp)) <= 1024) by (pose proof (proj1 Vav) as LA0; lia). pose proof pd_facts as PD. unfold sp0z, argc in *.
     split; [apply vm_stack; unfold sp0z in *; lia | right; right; left; lia].
   Qed.
 
@@ -576,7 +577,7 @@ Section AT_MAIN.
     - destruct H as [<-|H]; [exists K; split; [left; reflexivity | exact HK]|]. destruct (IH iv H) as [K' [H1 H2]]. exists K'. split; [right; exact H1 | exact H2].
     - destruct (IH iv H) as [K' [H1 H2]]. exists K'. split; [right; exact H1 | exact H2].
   Qed.
-  #[local] Notation MR := (Mr ASAN_H (argH0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) E ch model FULL).
+  #[local] Notation MR := (Mr ASAN_H (argH0 sp0 rdraw inp) E ch model FULL).
   Lemma Mr_some' : forall a b, MR a = Some b -> FULL a = Some b.
   Proof. intros a b H. unfold Mr, mrestrict in H. destruct (hid _ _ _ _ _ a); [discriminate | exact H]. Qed.
   Lemma Mr_nonnull : forall a, MR a <> None -> exists b, FULL a = Some b.
@@ -687,8 +688,8 @@ Theorem P_main_open : forall (sp0 brk0 mbase : word) (rdraw : EntryDraw) (inp : 
   exists (h : nat) (ch : acs) (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model)
          (Vsp : valid_sp sp0) (Vbrk : valid_brk ASEGS brk0) (Vav : valid_argv (in_argv inp)) (Vev : valid_envp (in_envp inp))
          (Vfit : entry_stack_fits sp0 (in_argv inp) (in_envp inp)) (Hh : HSF_asan h = Some ch)
-         (HC : cs_ok ASEGS ASAN_H AsanInit.LIMIT (SINV0 APH sp0 rdraw brk0 (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-                     (argH0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model),
+         (HC : cs_ok ASEGS ASAN_H AsanInit.LIMIT (SINV0L APH Asan.M.init_pc sp0 rdraw brk0 inp)
+                     (argH0 sp0 rdraw inp) (in_fs inp) E ch R FULL model),
     c = cfg_of ASEGS R A_MAIN FULL model
     /\ ms_mem (cfg_ms c) = FULL
     /\ PM sp0 brk0 inp (Xof (hole_granted h) E) c

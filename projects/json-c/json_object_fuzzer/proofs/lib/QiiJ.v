@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: PE_STATIC_A's new conjunct for it, named HBTs or skipped where STC is destructed). *)
 
 
 From Stdlib Require Import ZArith List Lia Bool Permutation.
@@ -81,7 +82,7 @@ Hypothesis GA_pres : forall LB SP m m', heap_pres A4H LB SP m m' -> GA m -> GA m
 Hypothesis MAPP : memappend_A_stmt2 HIx.
 
 Ltac pe_openA STC INV :=
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
 destruct INV as [CORE REST];
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR);
 pose proof REST as (HP & LV & OBJ & ST & ERR & STR & PLEN & SBin & HPR & MDV & G & BUD).
@@ -114,7 +115,7 @@ AJ5 A4L HIx A T md
 (Z_to_bv 64 (pf_tk pf + 64)) t4 (Z_to_bv 64 (pf_tk pf / 8 + 2147450888)) t6 F fc m).
 Proof.
 intros until fc. intros STC INV Kout. pose proof INV as INV0.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 destruct INV as [CORE REST].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR).
 pose proof REST as (HP & _).
@@ -173,7 +174,7 @@ AJ5 A4L HIx A T md
 (Z_to_bv 64 (pf_tk pf + 64)) t4 (Z_to_bv 64 (pf_tk pf / 8 + 2147450888)) t6 F fc m).
 Proof.
 intros until fc. intros STC INV Hl Hst Kout. pose proof INV as INV0.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 destruct INV as [CORE REST].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR).
 pose proof REST as (HP & _).
@@ -271,7 +272,7 @@ Proof.
 induction n as [|n IH]; intros until fc; intros STC FL0 INV PBK CSTR Hl Hst Hco Hc Hnz ESP Hi HU Hn Ktail Kout.
 { exfalso. cbn in Hn. lia. }
 pose proof INV as INV0.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 destruct INV as [CORE REST].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR).
 pose proof REST as (HP & LV & OBJ & ST & ERR & STR & PLEN & SBin & HPR & MDV & G & BUD).
@@ -752,7 +753,7 @@ s3 (Z_to_bv 64 (pf_tk pf + 20)) s5 s6 (Z_to_bv 64 (pf_tk pf + 32)) (Z_to_bv 64 (
 (Z_to_bv 64 (pf_sb pf + t_co ts)) t3 t4 t5 t6 F fc m).
 Proof.
 intros until fc. intros STC BSL INV PBK Hroom BK Hu Kpop Kout. pose proof INV as INV0.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 destruct INV as [CORE REST].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR).
 pose proof REST as (HP & _).
@@ -960,7 +961,7 @@ s3 (Z_to_bv 64 (pf_tk pf + 20)) s5 s6 (Z_to_bv 64 (pf_tk pf + 32)) (Z_to_bv 64 (
 (Z_to_bv 64 (pf_sb pf + t_co ts)) t3 t4 t5 t6 F fc m).
 Proof.
 intros until fc. intros STC BSL INV PBK Hroom BK Hu Kpop Kout. pose proof INV as INV0.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 destruct INV as [CORE REST].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR).
 pose proof REST as (HP & _).
@@ -1184,7 +1185,7 @@ s3 (Z_to_bv 64 (pf_tk pf + 20)) s5 s6 (Z_to_bv 64 (pf_tk pf + 32)) (Z_to_bv 64 (
 (Z_to_bv 64 (pf_sb pf + t_co ts)) t3 t4 t5 t6 F fc m).
 Proof.
 intros until fc. intros STC BSL INV PBK Hroom BK Hu Kpop Kout. pose proof INV as INV0.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 destruct INV as [CORE REST].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR).
 pose proof REST as (HP & _).
@@ -1427,7 +1428,7 @@ s3 (Z_to_bv 64 (pf_tk pf + 20)) s5 s6 (Z_to_bv 64 (pf_tk pf + 32)) (Z_to_bv 64 (
 (Z_to_bv 64 (pf_sb pf + t_co ts)) t3 t4 t5 t6 F fc m).
 Proof.
 intros until fc. intros STC BSL INV PBK Hroom BK Hu Kpop Kout. pose proof INV as INV0.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 destruct INV as [CORE REST].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR).
 pose proof REST as (HP & _).
@@ -1678,7 +1679,7 @@ s3 (Z_to_bv 64 (pf_tk pf + 20)) s5 s6 (Z_to_bv 64 (pf_tk pf + 32)) (Z_to_bv 64 (
 (Z_to_bv 64 (pf_sb pf + t_co ts)) t3 t4 t5 t6 F fc m).
 Proof.
 intros until fc. intros STC BSL INV PBK Hroom BK UTF Kpop Kerr2. pose proof INV as INV0.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 destruct INV as [CORE REST].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR).
 pose proof REST as (HP & LV & OBJ & ST & ERR & STR & PLEN & SBin & HPR & MDV & G & BUD).
@@ -1779,7 +1780,7 @@ s3 (Z_to_bv 64 (pf_tk pf + 20)) s5 s6 (Z_to_bv 64 (pf_tk pf + 32)) (Z_to_bv 64 (
 (Z_to_bv 64 (pf_sb pf + t_co ts)) t3 t4 t5 t6 F fc m).
 Proof.
 intros until fc. intros STC BSL INV PBK Hroom BK UTF Kpop Kerr2. pose proof INV as INV0.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 destruct INV as [CORE REST].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR).
 pose proof REST as (HP & LV & OBJ & ST & ERR & STR & PLEN & SBin & HPR & MDV & G & BUD).
@@ -2022,7 +2023,7 @@ AJ5 A4L HIx A T md
 (Z_to_bv 64 (pf_sb pf + t_co ts)) t3 t4 t5 t6 F fc m).
 Proof.
 intros until fc. intros STC BSL INV PBK Hroom BK Hl Hst EU Hu Hn3 Hn4 UTF Kpop Khs Kout Kerr2. pose proof INV as INV0.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 destruct INV as [CORE REST].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR).
 pose proof REST as (HP & _).
@@ -2165,7 +2166,7 @@ s3 (Z_to_bv 64 (pf_tk pf + 20)) (Z_to_bv 64 (Z.of_nat (t_depth ts))) (Z_to_bv 64
 (Z_to_bv 64 (pf_sb pf + t_co ts)) (Z_to_bv 64 (pf_tk pf + 64)) (Z_to_bv 64 (pa_F pa + 64)) (Z_to_bv 64 (pf_tk pf / 8 + 2147450888)) (Z_to_bv 64 (pf_lenr pf)) F fc m).
 Proof.
 intros until fc. intros STC BSL INV PBK Hroom BK Hl Hst EU Hu Hzss UTF Kpop Khs Kout Kerr2. pose proof INV as INV0.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 destruct INV as [CORE REST].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR).
 pose proof REST as (HP & LV & _).
@@ -2437,7 +2438,7 @@ AJ5 A4L HIx A T md
 (Z_to_bv 64 (Z.of_nat (t_depth ts))) (Z_to_bv 64 q) (Z_to_bv 64 (pa_F pa + 64)) F fc m).
 Proof.
 intros until fc. intros STC BSL FL0 INV PBK K0 BK CSTR Hl Hst Hco Hc ESP HU Hzss UTF Kpop Khs Kout Kerr2. pose proof INV as INV0.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 destruct INV as [CORE REST].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR).
 pose proof REST as (HP & _).

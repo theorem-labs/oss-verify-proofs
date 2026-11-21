@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (cg_realloc and jrealloc_at bound the new size below 2^46 in place of 2^62, with a note that this bound is relative to alloc_ceiling). *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -34,7 +35,8 @@ ms_realloc B = Some pc ->
 journal B MR STK sp0 FP L A mem md Lc Ac memc mdc ->
 In (pa, nold) (blocks Lc Ac) ->
 getr regs_c 10 = Z_to_bv 64 pa -> getr regs_c 11 = Z_to_bv 64 n ->
-MMAP_THRESHOLD <= n -> MMAP_THRESHOLD < nold -> nold + PGSZ <= n < 2 ^ 62 ->
+(* 2^46 is alloc_ceiling-relative; see the note on realloc_realizes, YP0c.v. *)
+MMAP_THRESHOLD <= n -> MMAP_THRESHOLD < nold -> nold + PGSZ <= n < 2 ^ 46 ->
 YK0s.ret_ok (getr regs_c 1) -> spZ regs_c mod 16 = 0 ->
 sp0 - STK <= spZ regs_c - REALLOC_STACK -> spZ regs_c <= sp0 ->
 getr regs_c 4 = Z_to_bv 64 (ms_tp B) ->
@@ -133,7 +135,8 @@ st_ok segs E ss ms -> ss_pc ss = pc -> ss_resv ss = None ->
 journal B MR STK sp0 FP L A mem md Lc Ac (ms_mem ms) mdc ->
 In (pa, nold) (blocks Lc Ac) -> ~ In (pa, nold) (blocks L A) ->
 getr (ms_regs ms) 10 = Z_to_bv 64 pa -> getr (ms_regs ms) 11 = Z_to_bv 64 n ->
-MMAP_THRESHOLD <= n -> MMAP_THRESHOLD < nold -> nold + PGSZ <= n < 2 ^ 62 ->
+(* 2^46 is alloc_ceiling-relative; see the note on realloc_realizes, YP0c.v. *)
+MMAP_THRESHOLD <= n -> MMAP_THRESHOLD < nold -> nold + PGSZ <= n < 2 ^ 46 ->
 getr (ms_regs ms) 2 = Z_to_bv 64 spc -> 0 <= spc < 2 ^ 64 -> spc mod 16 = 0 ->
 sp0 - STK <= spc - REALLOC_STACK -> spc <= sp0 ->
 getr (ms_regs ms) 4 = Z_to_bv 64 (ms_tp B) ->

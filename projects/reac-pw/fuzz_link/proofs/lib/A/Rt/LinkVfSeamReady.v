@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/FMgxaSeamReadyX.v, with its module paths changed; 124 of its 256 lines of code are new or changed and 626 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_link, image A (fuzz_link.asan, pin 059dae63e07c): READINESS of the three interceptors (memcpy, memset,
    strnlen) for the GXA seam of musl vfprintf on link's memory FILE: LinkVfSeamGuard.seam_calls_ready_mf at link's
    three ready predicates (RT_gxa_calls_mem.copy_ready / set_ready, RT_gxa_strnlen.strn_ready), on the per-call
@@ -69,7 +70,7 @@ Module LSG := OSSVerify.Proofs.reac_pw.fuzz_link.lib.A.Rt.LinkVfSeamGuard.
 Module BSF := OSSVerify.Proofs.reac_pw.fuzz_link.lib.A.Bz.Spec.StrFun.
 Module CJF := OSSVerify.Proofs.reac_pw.fuzz_link.lib.CJ.Lib.Frame.
 Module GCA := OSSVerify.Proofs.reac_pw.fuzz_link.lib.CJ.RL.GXA.G_printf_core_common.G_printf_iface.
-(* strn_ready counts with the Bz tree's strnlen_res (RT_gxa_strnlen.v:100) *)
+(* strn_ready counts with the Bz tree's strnlen_res (RT_gxa_strnlen.v:101) *)
 #[local] Abbreviation strnlen_res := BSF.strnlen_res.
 
 #[local] Existing Instance N_img_asan_vf.

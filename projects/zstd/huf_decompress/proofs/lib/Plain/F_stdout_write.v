@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (7 recorded proofs replaced by written proofs (rw_cells_recast, C4_low32, rw_cells_C4_eq and 4 more)). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -46,16 +47,22 @@ Ltac rpc := apply ret_pc_even; [lia| reflexivity].
 Lemma rw_cells_recast : forall m A cs cs',
   rw_cells psegs m A cs -> cells_wf cs' -> cells_bytes cs' = cells_bytes cs -> cells_size cs' = cells_size cs ->
   rw_cells psegs m A cs'.
-Proof.
-ltac2:(KReplay.run1 (kr_t_F_stdout_write ()) [] "h01Hh11Ah22Ebh32Esh42Hbh52Hwh63Hwfh74Hwf'h82csh93cs'h:1lh;1mh<1np;1p;4p;3p;6p10000p4p7210g000\R0p4p710p8g001:j12Tg001_j1>Tg002=j1:Tg002`j1?Tg003Bj1=Tg003bj49Tg004Xj48Tg005Oj10Tg006Hj15Tg006hj46Tg007Zj13Tg008Qj11Tg009Kj34Tg009ej47TP0j6<Tg00:Zj4;Tg00;5#2#2#2R0#2#2#2#>#:%>0#:R0#?[g00;Zg00<8#=R1g00<mR2f3R3f2R4f1R5C9g00=bR6P2f4R7P3P4C8P2P7P3%04#5C6%34%=0R0%13%1734g00>=R8%07f5R9#034P2f8R:f7R;P9C9[[[f0R<P2f6R=P9P7C8P6%39P2P;P=%19C7P2P:P;%0=#5C6%3=%1;%1:R=540%0:f9R:#0R9548P2f<R6f;R>P:C9[[[[P<%3;P2f:R;P:P=C7P2P>P;%59C6%3:%1;%1>540%0>%06R>548P2f?R;f>R:P6C8P2P;P:%5>C6%36P2P;P:%16R6C7P4P0f=R4#1P2f@R:P;P<C7X:0P7P6P5E<C;P8%04P2P:P;%5<C6X<8P3P>P<E<C;W3W2W7W5W4W6P5P<O2n2001000000120000000W0P5P<O2n2001000000120000000W0X91W8W1W;o"). Qed.
+Proof. intros m A cs cs' [[Hwf Hb] Hw] Hwf' Eb Es. split; [split; [exact Hwf'| rewrite Eb; exact Hb] | rewrite Es; exact Hw]. Qed.
 Lemma C4_low32 : forall (a b : word) , bv_unsigned a mod 2^32 = bv_unsigned b mod 2^32 -> cbytes (C4 a) = cbytes (C4 b).
 Proof.
-ltac2:(KReplay.run1 (kr_t_F_stdout_write ()) [] "h01lh11Eh27__arithh34__ffh48__varmaph55__with61ah71bh81zp;1p;2p;3p;6p;4p;7g001:j11Tg001_j1BTg002=j1<Tg00>\j23Tg00?Fj16Tg00?dj2MTg00@Aj24Tg009Kj30Tg003Bj1=Tg00@aj15Tg00A@j22Tg00B=j29Tg000\j6CTg00BWj1PTg00C7j1OTg00CUj1NTg00D3j1LTg00D^j27Tg00EAj3KTg00Edj4JTg00FOj7ITg00G3j2HTg00GUj2GTg00HAj3FTg00H`j4ETg00IRj2@Tg00Ioj2;Tg006Hj1DTg00JKj4:Tg00KIj6?Tg00Kej1>Tg00LUj18Tg00MJj1ATg00;5#1R0#1R1#1R2#1#1R3#1#BR4#<R5g00;ZR6f1R7,34R8%60%63R3'MR0'4R9f0R:,34/4030%B2#<#=R;g00N?#5#5#5#5R<f2R=,34R>/40R?'2R@12<>RA90;:X0;P;12<9RBf3,34/40,2<=0;:X0;P6P912<:=0;@X8619;BP?P:EC12<8P<P8P3g00N^R8#P%=8%O6%N6%L6R8g00OJg00OiR?P?g00PIR?P6%62R2,76%61R1,765K6g00Pi1763CJg00QPFI1H8?P:P=g00R0R?g00RPR8'91G:==0?8dg00S0=F67CEb3b4b51@21/;3P:b2%D<,@2/;3eR2C:E?PAP<P>P3P2C:E?%>=%>750;e%8=#A%87#A50;eW1X75W6o"). Qed.
+  intros a b E. cbn [cbytes]. unfold le4.
+  rewrite <- (Z_to_le_bytes_mod 4 (bv_unsigned a) 32), <- (Z_to_le_bytes_mod 4 (bv_unsigned b) 32) by (cbn; lia).
+  rewrite E. reflexivity.
+Qed.
 Lemma rw_cells_C4_eq : forall m A pre (a b : word) post,
   bv_unsigned a mod 2^32 = bv_unsigned b mod 2^32 ->
   rw_cells psegs m A (pre ++ C4 a :: post) -> rw_cells psegs m A (pre ++ C4 b :: post).
 Proof.
-ltac2:(KReplay.run1 (kr_t_F_stdout_write ()) [] "h01ah11bh21Hh31lh43Hwfh51nh61Ah71Eh82H1h92H2h:2_Hh;3_H0h<1mh=4posth>3prep;1p;2p;3p;4p;6p;8g001:j18Tg001_j1LTg002=j1DTg002`j1OTg003Bj1KTg00>\j2ITg00?Fj1GTg00?dj2STg00@Aj2BTg009Kj36Tg00LUj12Tg003bj4MTg004Xj4JTg005Oj14Tg006Hj1?Tg006hj4>Tg007Zj10Tg008Qj11Tg009ej4FTg00=bR0j2;Tg00SNj2RTg00:Zj4QTg00TIj33Tg00MJj1HTg00B=j2ATg00Tfj3PTg000\j6:Tg00Uhj2@Tg00Vfj2<Tg00W=j2ETg00X:j8NTg00YCj3=Tg00<8R1f2R2f1R3f0R45=133p=5A=134p=7A3134p=9%23==14p=Cg00;5#8R5#8#8R6#8#8R7#8#LR8#DR9%L6#DR6#O[g00;ZR:%K1R11I82%G5%G7'SR7'B1I83/B756:g00<mR:f6R7f5R8f4R5f3R;#2R<;53CMf7R=P7%25R>/72R?,98R@17<2RA,98RBP4P0P:P=P7P@CJP:P=P7%4@RC#?C>17>;RD,97#0P4P:f9REf8RF%27=5=5CJP0%2==5F8RG#0P:f:RHPE%1GCFP:f;RGPH%2FRI=5E7#4#?C>A5HI=#0[P4%2E=5H=#0P:f=R=f<RI%2H=5GF#1CFP:f>R:P=%2G=5IE#4#?C>P01934#0%02RI%03RE';RF[RH%04,;E1923#0RE[RJ%0;/;I\E1R34REP3n2001000000120000000X11X01PH^11^01P4P:1C=GRGP;O3%0:%0G';P0PHPJ19;2#0\FPEP4n2001000000120000000X11X01PJ^11^01P4f@RJ1C:=P0%0Jf?#2R0/7=#0fAR=#0170:#0';P3fBR0#0%20R0/7J#0fD#0170=#0P3P4CQW9W8P3P4O2n2001000000120000000O3b2b4b2W;W:W4P3P4O2n2001000000121000000W2P3P4O2n2001000000121000000%K6R0%18R=%1A536RJ%28=57;R:#19604X30P0%1?936=RE%17RF%1D536=604X30P0%H<R<%H>R>%1;RH536936FA364H936F560X30%12936<936=,A0P>AP5;3E:A60JEe%1@1@8?E:%1B1@8AE:g00>=R@%48RE%4A'<%4:96@4X5@P@%4?,<ERE%47%4D'<=6@4X5@1A@EPC1E8?E:%4B1E8AE:GNW2W7X=1X19X09W>W6W<o"). Qed.
+  intros m A pre a b post E H. eapply rw_cells_recast; [exact H| | |].
+  - destruct H as [[Hwf _] _]. apply cells_wf_app in Hwf. apply cells_wf_app. destruct Hwf as [H1 H2]. split; [exact H1|]. exact H2.
+  - rewrite !cells_bytes_app. cbn [cells_bytes]. rewrite (C4_low32 a b E). reflexivity.
+  - rewrite !cells_size_app. reflexivity.
+Qed.
 (* [comment removed for export] *)
 Ltac fix_lbf FC :=
   lazymatch type of FC with rw_cells ?sg ?m' ?A ?cs =>
@@ -69,20 +76,30 @@ Ltac fix_lbf FC :=
 Lemma rw_cells_C4_CB4 : forall m A (v : word) cs,
   rw_cells psegs m A (C4 v :: cs) -> rw_cells psegs m A (CB 4 (le4 v) :: cs).
 Proof.
-ltac2:(KReplay.run1 (kr_t_F_stdout_write ()) [] "h01Hh11Ah21Bh31Rh41Wh52csh61mh71vp;1p;4p;2p;3g001:j11Tg001_j1ATg002=j1?Tg002`j1BTg003Bj1HTg003bj49Tg004Xj4=Tg005Oj13Tg006Hj12Tg006hj45Tg00@aj14Tg00Kej17Tg00Ycj2>Tg007Zj16Tg008Qj1:Tg009ej4<Tg00ZXj2GTg009Kj3FTg00[8j1ETg00[oj3DTg00:Zj48Tg00LUj1CTg00YCj3@Tg00<8R0f1R1#Cf0R23@p=0A@012p=;g00;5#1#1#1R3#1#1#1#A#?R4%A3#?R3#B[g00;Z%H0g00<mR0f3R5f2R61012C9g00=bR7P0f4R8P51061R9C=P0P8P5%39#2C5P0f5R9P8g00N?#4#4#4#4R:%75'>/;6C9P2P0f6R;P91085C=P71098R8#6P0f7R7P;%:8C<P0f8R8P710;9#3#2C5P0f9R9P8%77,>:/;;C9[P2107;#6P0f:R;P91087#:C<P0f;R7P;1098#3#2C5P0f<R8P7%7;R5,>:/;9R<C=P0P8P7%3<#2C5%6<R=P0P8P7%:<C<g00>=1G35;F:%69R9%E;g00\J?D96C8P=eP1C8P2C8W3W2W4P1P2O2n2001000000120000000W0P1P2O2n2001000000120000000W0W5X74W1W6o"). Qed.
+  intros m A v cs [[W B] R]. split; [split|].
+  - cbn [cells_wf cell_wf] in *. split; [apply length_le4| exact (proj2 W)].
+  - exact B.
+  - exact R.
+Qed.
 Lemma firstn1_le4 : forall v : word, firstn 1 (skipn 0 (le4 v)) = le1 v.
-Proof.
-ltac2:(KReplay.run1 (kr_t_F_stdout_write ()) [] "h01vp;1p;2g001:j10Tg001_j12Tg002=j11Tg003Bj13Tg00\fj15Tg00B=j24Tg00;5#0#0#0R0#0#0#0#2#1%20#1#3f0#5'4W0o"). Qed.
+Proof. intros v. reflexivity. Qed.
 
 Lemma flags_byte_and64 : forall flags : word,
   Z.land (bv_unsigned flags) 64 = 0 -> Z.land (bv_unsigned flags mod 256) 64 = 0.
 Proof.
-ltac2:(KReplay.run1 (kr_t_F_stdout_write ()) [] "h01zh11Hh27__arithh34__ffh48__varmaph55__with65flagsp;1p;2p;6p;4p;7p;3g001:j11Tg001_j1MTg002=j1ATg00>\j29Tg00?Fj15Tg00]Vj20Tg00^4j1@Tg00?dj2?Tg00@Aj24Tg00B=j26Tg000\j62Tg00BWj1=Tg003Bj1LTg00C7j1KTg00CUj1JTg00D3j1ITg00D^j2;Tg00Edj4HTg00FOj7GTg00G3j2FTg00GUj2BTg009Kj3:Tg00HAj3CTg00H`j4DTg00Ioj2ETg00^Rj37Tg00_5j28Tg00_Xj3>Tg00KIj6<Tg00;ZR0f0R1g00S0R23:p=3g00;5#1R3#1#1R4#1#1#1R5#MR6#A1961%55R5'0#3P0f1R7,96R6%54R4#@R8'0R91015#3X00R:P01086R;P:P01065R:,08R<%31X00R=P010:8R>P=P0%53/?4R3,4:P=P0P21413#3X001602P:P1E2P>g00N^R>#=%L>%K0%J0%I0R>g00OJg00OiR=P=g00PIR=P01;02g00Pi1;04CHg00QPFG1F>=P1f2R=g00R0R>g00RPR?'61B1==:>?dAC027CDb3b4b51E24P1b2R197:4E2P<188:E210;5A>865E<P91868E21463A7641E<W1W6o"). Qed.
+  intros flags H. change 256 with (2 ^ 8). rewrite <- Z.land_ones by lia.
+  rewrite (Z.land_comm _ (Z.ones 8)), <- Z.land_assoc, (Z.land_comm (Z.ones 8)), Z.land_ones by lia.
+  rewrite H. reflexivity.
+Qed.
 
 Lemma rw_cells_CB4_C4 : forall m A (v : word) cs,
   rw_cells psegs m A (CB 4 (le4 v) :: cs) -> rw_cells psegs m A (C4 v :: cs).
 Proof.
-ltac2:(KReplay.run1 (kr_t_F_stdout_write ()) [] "h01Hh11Ah21Bh31Rh41Wh52csh61mh71vp;1p;4p;2p;3g001:j11Tg001_j1ATg002=j1>Tg002`j1BTg003Bj1GTg00@aj16Tg003bj4:Tg004Xj48Tg005Oj14Tg006Hj12Tg006hj43Tg00LUj17Tg007Zj15Tg008Qj19Tg009ej4;Tg00Kej1@Tg00ZXj2FTg009Kj3ETg00[oj3DTg00:Zj4<Tg00Ycj2CTg00YCj3?Tg00<8R0f2R1f1R2#@'Cf0R33?p=0A?023p==g00;5#1#1#1R4#1#1#1#A#>R5%A4#>R4#B[g00;Z%G0g00<mR0f3R6P1g00N?#6#6#6#6R7?023C:g00=bR8P0f4R9P6A0712R:C8P0P9P6%4:#2C3P0f5R:P9%76/=1C:P3P0f6R;P:A0796C8P8A07:9R9#5P0f7R8P;%99C;P0f8R9P8A07;:#4#2C3P0f9R:P9%78/=;C:[P3A078;#5P0f:R;P:A0798#9C;P0f;R8P;A07:9#4#2C3P0f<R9P8%7;/=:R6C8P0P9P8%46#2C3%56R<P0P9P8%96C;g00\J%5:R:g00`<g00>=%@;,F4;E7?D:1C<P<eP2C<P3C<W3W2W4P2P3O2n2001000000120000000W0P2P3O2n2001000000120000000W0W5X75W1W6o"). Qed.
+  intros m A v cs [[W B] R]. split; [split|].
+  - cbn [cells_wf cell_wf] in *. split; [exact I| exact (proj2 W)].
+  - exact B.
+  - exact R.
+Qed.
 
 Section StdoutWrite.
   Context {St : Type} (get_so : St -> stdout_st) (set_so : stdout_st -> St -> St).

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (HNUM bounded by alloc_ceiling - MMAP_FLOOR). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -40,7 +41,7 @@ Section EMBED.
 Variables (B LENB RCMAX VMIN : Z).
 Hypothesis HB0 : 0 <= B.
 Hypothesis HLENB : 0 < LENB /\ LENB mod 4096 = 0.
-Hypothesis HNUM : LENB * (B / PGSZ + RCMAX + 1) <= alloc_ceiling - PGSZ.
+Hypothesis HNUM : LENB * (B / PGSZ + RCMAX + 1) <= alloc_ceiling - MMAP_FLOOR.
 Hypothesis HVM : B + LENB <= VMIN.
 
 (* [comment removed for export] *)

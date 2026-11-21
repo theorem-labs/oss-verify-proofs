@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the C-string read lemmas carry the TASK_SIZE bound read_cstr_aux now checks; nstep excludes the stream, eventfd, datagram and anonymous fd kinds). *)
 (* [comment removed for export] *)
 
 
@@ -134,33 +135,48 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
+(* At 08b1429 [State.read_cstr_aux] tests [access_okb a 1] at every byte it
+   steps (strncpy_from_user's TASK_SIZE clamp), so these lemmas carry the
+   model's bound (Common/FileSim.v [read_cstr_aux_of_rdn]): the last byte
+   the walk steps lies below [TASK_SIZE]. *)
 Lemma read_cstr_aux_bytes_in : forall str fuel mp a,
   (length str < fuel)%nat -> ~ In (Z_to_bv 8 0) str ->
+  a + Z.of_nat (length str) < TASK_SIZE ->
   bytes_in mp a (str ++ [Z_to_bv 8 0]) ->
   read_cstr_aux mp (wa a) fuel = CstrOk str.
 Proof.
-  induction str as [|b str IH]; intros fuel mp a Hf Hnz H.
-  - destruct fuel as [|fuel]; [cbn in Hf; lia|]. cbn [app] in H. apply bytes_in_cons in H as [Hb _].
-    cbn [read_cstr_aux]. rewrite Hb. reflexivity.
-  - destruct fuel as [|fuel]; [cbn in Hf; lia|]. cbn [app] in H. apply bytes_in_cons in H as [Hb H].
-    cbn [read_cstr_aux]. rewrite Hb.
+  induction str as [|b str IH]; intros fuel mp a Hf Hnz Hlo H.
+  - destruct fuel as [|fuel]; [cbn in Hf; lia|]. cbn [app] in H. pose proof (proj1 H) as Ha0.
+    apply bytes_in_cons in H as [Hb _]. cbn [length] in Hlo.
+    rewrite read_cstr_aux_accepted
+      by (rewrite access_okb_one, wa_unsigned by (unfold TASK_SIZE in *; lia); apply Z.ltb_lt; lia).
+    rewrite Hb. reflexivity.
+  - destruct fuel as [|fuel]; [cbn in Hf; lia|]. cbn [app] in H. pose proof (proj1 H) as Ha0.
+    apply bytes_in_cons in H as [Hb H]. cbn [length] in Hlo.
+    rewrite read_cstr_aux_accepted
+      by (rewrite access_okb_one, wa_unsigned by (unfold TASK_SIZE in *; lia); apply Z.ltb_lt; lia).
+    rewrite Hb.
     assert (Hne : bv_eqb b (Z_to_bv 8 0) = false).
     { destruct (bv_eqb b (Z_to_bv 8 0)) eqn:E; [|reflexivity]. apply bv_eqb_eq in E. exfalso. apply Hnz. left. congruence. }
-    rewrite Hne, wa_succ. rewrite (IH fuel mp (a + 1)); [reflexivity| cbn in Hf; lia | |exact H].
+    rewrite Hne, wa_succ. rewrite (IH fuel mp (a + 1)); [reflexivity| cbn in Hf; lia | | lia | exact H].
     intro Hin. apply Hnz. right. exact Hin.
 Qed.
 
 Lemma read_cstr_aux_toolong_bytes_in : forall fuel str mp a,
   (fuel <= length str)%nat -> ~ In (Z_to_bv 8 0) str ->
+  a + Z.of_nat fuel <= TASK_SIZE ->
   bytes_in mp a str ->
   read_cstr_aux mp (wa a) fuel = CstrTooLong.
 Proof.
-  induction fuel as [|fuel IH]; intros str mp a Hf Hnz H; [reflexivity|].
-  destruct str as [|b str]; [cbn in Hf; lia|]. apply bytes_in_cons in H as [Hb H].
-  cbn [read_cstr_aux]. rewrite Hb.
+  induction fuel as [|fuel IH]; intros str mp a Hf Hnz Hlo H; [reflexivity|].
+  destruct str as [|b str]; [cbn in Hf; lia|]. pose proof (proj1 H) as Ha0.
+  apply bytes_in_cons in H as [Hb H].
+  rewrite read_cstr_aux_accepted
+    by (rewrite access_okb_one, wa_unsigned by (unfold TASK_SIZE in *; lia); apply Z.ltb_lt; lia).
+  rewrite Hb.
   assert (Hne : bv_eqb b (Z_to_bv 8 0) = false).
   { destruct (bv_eqb b (Z_to_bv 8 0)) eqn:E; [|reflexivity]. apply bv_eqb_eq in E. exfalso. apply Hnz. left. congruence. }
-  rewrite Hne, wa_succ. rewrite (IH str mp (a + 1)); [reflexivity| cbn in Hf; lia | |exact H].
+  rewrite Hne, wa_succ. rewrite (IH str mp (a + 1)); [reflexivity| cbn in Hf; lia | | lia | exact H].
   intro Hin. apply Hnz. right. exact Hin.
 Qed.
 
@@ -413,7 +429,8 @@ Definition nstep (n : node) (mo : Model) (eff : resp) (mo' : Model) (evs : list 
               mo' = with_fds (fd_insert (m_fds mo) (Z_to_bv 64 fd) (FdFile p (off + len_word bs)%bv)) mo
           end
       | Some (FdChannel _) | Some (FdFileW _ _) | Some (FdSocket _) | Some (FdPipe _ _)
-      | Some (FdFileA _ _) | Some (FdFileRW _ _) | Some (FdDevNull _ _) | Some FdUrandom => False   (* [comment removed for export] *)
+      | Some (FdFileA _ _) | Some (FdFileRW _ _) | Some (FdDevNull _ _) | Some FdUrandom
+      | Some (FdStream _ _ _) | Some (FdEventfd _) | Some (FdDgram _) | Some (FdAnon _ _) => False   (* [comment removed for export] *)
       end
   | NClose fd =>
       evs = [] /\ 3 <= fd < 2^32 /\   (* [comment removed for export] *)

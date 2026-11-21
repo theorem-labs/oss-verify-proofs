@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: generated for reac-pw/fuzz_headamp image B by gen_ad2.py 3665ff2a7926 (the start-up tool set at f1417943331) from this image's 50 collected hand-off states (lib/AU/YB01.v), its atable (lib/AU/YB12.v) and Tfib_owned_static (lib/AU/YF0m.v), templates proofs/cgif/cgif_file_fuzzer/lib/YD2i.v / YD2j.v at c8557374ad2e; Requires placed in lib.Reusable / lib.AU by fuzz_knock's lib/AU at origin/ossv/recipes 88154566652 *)
+(* Modified by Theorem Labs, 2026-10: generated for reac-pw/fuzz_headamp image B by gen_ad2.py 3665ff2a7926 (the start-up tool set) from this image's 50 collected hand-off states (lib/AU/YB01.v), its atable (lib/AU/YB12.v) and Tfib_owned_static (lib/AU/YF0m.v), templates proofs/cgif/cgif_file_fuzzer/lib/YD2i.v / YD2j.v at theorem-labs/oss-verify-proofs@6b32741d849a; Requires placed in lib.Reusable / lib.AU by fuzz_knock's lib/AU *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_headamp.asan-ubsan (reac-pw/fuzz_headamp asan-ubsan) sha256 53edda9bdeeba1803865babfecb1af6732babe47ab83c64d38cc59a90d717a94; unstripped twin sha256 1674e30a0698f381704e66d2398d7906c881f4ba8fc619cb41b89fb97ad112ff *)
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List.

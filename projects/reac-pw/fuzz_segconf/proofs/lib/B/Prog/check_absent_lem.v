@@ -1,4 +1,4 @@
-(* the image-B port of lib/A/Prog/check_absent_lem.v (commit 5ed426e78b84): the helper
+(* the image-B port of lib/A/Prog/check_absent_lem.v: the helper
    lemmas of the image-B walk lib/B/Prog/check_absent.v (fuzz_segconf.asan-ubsan). The text is the image-A file's;
    only the Require lines change: the kit modules copied for image B (YA0n YG0f YG0n YG0s YG0d YCbq) and the contract
    base (SegPgBase SegABase reac_segconf_find_c) come from lib.B, the other kit modules stay lib.Reusable. No lemma

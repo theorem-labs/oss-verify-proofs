@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the m_channel_reader premise; the vDSO; the run's segments (RomBase.sys_rob)). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -119,6 +120,8 @@ Inductive to_wall : machine_state -> list byte -> (machine_state -> Prop) -> Pro
     bv_unsigned x8 = 64%Z ->
     ms_gpr ms 0 = fd ->
     ms_read_bytes ms (ms_gpr ms 1) (ms_gpr ms 2) = Some rest ->
+    (* the range [vfs_write]'s [access_ok] accepts; see [CatSim.write1_check_n] *)
+    access_okb (ms_gpr ms 1) (bv_unsigned (ms_gpr ms 2)) = true ->
     (1 <= length rest)%nat ->
     (forall n, (1 <= n)%nat -> (n <= length rest)%nat ->
        to_wall_tail (advance_past_svc (set_gpr0 ms (len_word (firstn n rest))))
@@ -186,9 +189,9 @@ Lemma sstep_to_wall_inv : forall ms rest k model evs st,
 Proof.
   intros ms rest k model evs st Hh Hlazy Hfdc Hbm Hw Hss.
   revert Hbm.
-  destruct Hw as [ms x8 rest k Hsvc Hno Hg Hr Hnb Hcont]. intro Hbm.
+  destruct Hw as [ms x8 rest k Hsvc Hno Hg Hr Hok Hnb Hcont]. intro Hbm.
   destruct (sstep_write_ch_inv segs fd ch Hfd32 ms model x8 rest evs st
-              Hh Hlazy Hfdc Hsvc Hno Hg Hr Hbm Hnb Hss) as (n & Hn1 & Hn2 & Hevs & Hst).
+              Hh Hlazy Hfdc Hsvc Hno Hg Hr Hok Hbm Hnb Hss) as (n & Hn1 & Hn2 & Hevs & Hst).
   exists n. repeat split; try assumption.
   apply (Hcont n Hn1 Hn2).
 Qed.
@@ -235,8 +238,8 @@ Proof.
        buf_modeled rest ->
        (forall ms', k ms' -> exists c, star segs (mkCfg ms' model) tr_k c) ->
        exists c, star segs (mkCfg ms model) (map (WriteEv ch) rest ++ tr_k) c)).
-  - (* [comment removed for export] *)
-    intros ms x8 rest k Hsvc Hno Hg Hr Hnb Hcont IH Hbm Hk.
+  - (* twl_write: deliver everything in one syscall *)
+    intros ms x8 rest k Hsvc Hno Hg Hr Hok Hnb Hcont IH Hbm Hk.
     destruct (IH (length rest) Hnb (Nat.le_refl _)
                 (buf_modeled_skipn (length rest) rest Hbm) Hk) as [c Hstar].
     exists c.
@@ -255,11 +258,11 @@ Proof.
       [exact Hh | exact Hsvc | | exact Hh |].
     eapply write_ch_ok_n; try eassumption. apply Nat.le_refl.
     rewrite (materialize_model_accesses_no_lazy model _ Hlazy). reflexivity.
-  - (* [comment removed for export] *)
+  - (* twt_done: hand off to the continuation *)
     intros ms k Hk Hbm Hcont. cbn [map app]. apply (Hcont ms Hk).
-  - (* [comment removed for export] *)
+  - (* twt_more *)
     intros ms rest k Hnb Hw IH Hbm Hk. exact (IH Hbm Hk).
-  - (* [comment removed for export] *)
+  - (* twt_step *)
     intros ms ms' rest k Hsvc Hstep Ht IH Hbm Hk.
     destruct (IH Hbm Hk) as [c Hstar].
     exists c.
@@ -330,22 +333,22 @@ Proof.
        (forall ms' tr c, k ms' -> star segs (mkCfg ms' model) tr c -> is_prefix tr T) ->
        forall tr c, star segs (mkCfg ms model) tr c ->
        is_prefix tr (map (WriteEv ch) rest ++ T))).
-  - (* [comment removed for export] *)
-    intros ms x8 rest k Hsvc Hno Hg Hr Hnb Hcont IH Hbm HK tr c Hstar.
+  - (* twl_write *)
+    intros ms x8 rest k Hsvc Hno Hg Hr Hok Hnb Hcont IH Hbm HK tr c Hstar.
     inversion Hstar as [|c1 evs c2 tr2 c3 Hss Hstar2]; subst.
     { apply is_prefix_nil. }
     destruct (sstep_write_ch_inv segs fd ch Hfd32 ms model x8 rest evs (SNext c2)
-                Hh Hlazy Hfdc Hsvc Hno Hg Hr Hbm Hnb Hss) as (n & Hn1 & Hn2 & Hevs & Hc2).
+                Hh Hlazy Hfdc Hsvc Hno Hg Hr Hok Hbm Hnb Hss) as (n & Hn1 & Hn2 & Hevs & Hc2).
     subst evs. inversion Hc2; subst c2.
     pose proof (IH n Hn1 Hn2 (buf_modeled_skipn n rest Hbm) HK tr2 c Hstar2) as Hp.
     rewrite <- (firstn_skipn n rest) at 2.
     rewrite map_app, <- app_assoc.
     apply is_prefix_app_mono. exact Hp.
-  - (* [comment removed for export] *)
+  - (* twt_done *)
     intros ms k Hk Hbm HK tr c Hstar. cbn [map app]. exact (HK ms tr c Hk Hstar).
-  - (* [comment removed for export] *)
+  - (* twt_more *)
     intros ms rest k Hnb Hw IH Hbm HK tr c Hstar. exact (IH Hbm HK tr c Hstar).
-  - (* [comment removed for export] *)
+  - (* twt_step *)
     intros ms ms' rest k Hsvc Hstep Ht IH Hbm HK tr c Hstar.
     inversion Hstar as [|c1 evs c2 tr2 c3 Hss Hstar2]; subst.
     { apply is_prefix_nil. }
@@ -382,6 +385,7 @@ Lemma twl_write_rec : forall (k : machine_state -> Prop) rest regs pc mem rom,
                    ms_svc_pending := Some (getr regs 17); ms_resv := None;
                    ms_fcsr := fp_csr; ms_mem := mem; ms_rom := rom |}
     (reg_get regs 11) (reg_get regs 12) = Some rest ->
+  access_okb (reg_get regs 11) (bv_unsigned (reg_get regs 12)) = true ->
   (1 <= length rest)%nat ->
   (forall n, (1 <= n)%nat -> (n <= length rest)%nat ->
      to_wall_tail (mkst (regupd regs 10 (len_word (firstn n rest)))
@@ -392,7 +396,7 @@ Lemma twl_write_rec : forall (k : machine_state -> Prop) rest regs pc mem rom,
              ms_fcsr := fp_csr; ms_mem := mem; ms_rom := rom |}
     rest k.
 Proof.
-  intros k rest regs pc mem rom H17 H10 Hr Hnb Hcont.
+  intros k rest regs pc mem rom H17 H10 Hr Hok Hnb Hcont.
   assert (E10 : Z_to_bv 5 (10 + Z.of_nat 0) = (10 : reg)) by (apply bv_eq; reflexivity).
   assert (E11 : Z_to_bv 5 (10 + Z.of_nat 1) = (11 : reg)) by (apply bv_eq; reflexivity).
   assert (E12 : Z_to_bv 5 (10 + Z.of_nat 2) = (12 : reg)) by (apply bv_eq; reflexivity).
@@ -401,6 +405,7 @@ Proof.
   - exact H17.
   - unfold ms_gpr. cbn [ms_regs]. rewrite E10. exact H10.
   - unfold ms_gpr. cbn [ms_regs]. rewrite E11, E12. exact Hr.
+  - unfold ms_gpr. cbn [ms_regs]. rewrite E11, E12. exact Hok.
   - exact Hnb.
   - intros n Hn1 Hn2. rewrite adv_set. exact (Hcont n Hn1 Hn2).
 Qed.
@@ -436,7 +441,7 @@ Proof.
   apply (to_wall_mutind
            (fun ms rest k => exists ms', k ms')
            (fun ms rest k => exists ms', k ms')).
-  - intros ms x8 rest k Hsvc Hno Hg Hr Hnb Hcont IH.
+  - intros ms x8 rest k Hsvc Hno Hg Hr Hok Hnb Hcont IH.
     exact (IH (length rest) Hnb (Nat.le_refl _)).
   - intros ms k Hk. exists ms. exact Hk.
   - intros ms rest k Hnb Hw IH. exact IH.
@@ -515,11 +520,11 @@ Proof.
        (forall ms', k ms' -> OmniRun.exec segs (mkCfg ms' model) Q) ->
        OmniRun.exec segs (mkCfg ms model)
          (fun tr o => exists tr', tr = map (WriteEv ch) rest ++ tr' /\ Q tr' o))).
-  - (* [comment removed for export] *)
-    intros ms x8 rest k Hsvc Hno Hg Hr Hnb Hcont IH Hbm HK.
+  - (* twl_write: every delivered length is a successor, each covered by the IH *)
+    intros ms x8 rest k Hsvc Hno Hg Hr Hok Hnb Hcont IH Hbm HK.
     assert (Hw : to_wall ms rest k) by (eapply twl_write; eassumption).
     apply exec_step; [exact Hh | | |].
-    + (* [comment removed for export] *)
+    + (* progress: deliver everything in one syscall *)
       eexists; eexists.
       apply (sstep_syscall segs ms model x8
                (with_copyins [(ms_gpr ms 1, length rest)]
@@ -540,13 +545,13 @@ Proof.
         [exact (IH n Hn1 Hn2 (buf_modeled_skipn n rest Hbm) HK) |].
       intros tr o (tr' & -> & HQ). exists tr'. split; [| exact HQ].
       rewrite <- (firstn_skipn n rest) at 3. rewrite map_app, <- app_assoc. reflexivity.
-  - (* [comment removed for export] *)
+  - (* twt_done: the continuation's own judgment *)
     intros ms k Hk Hbm HK.
     eapply exec_conseq; [exact (HK ms Hk) |].
     intros tr o HQ. exists tr. split; [reflexivity | exact HQ].
-  - (* [comment removed for export] *)
+  - (* twt_more *)
     intros ms rest k Hnb Hw IH Hbm HK. exact (IH Hbm HK).
-  - (* [comment removed for export] *)
+  - (* twt_step: one silent instruction *)
     intros ms ms' rest k Hsvc Hstep Ht IH Hbm HK.
     apply (exec_step_only segs _ _ [] (mkCfg ms' model)).
     + apply (sstep_instr segs ms model ms' model); [exact Hh | exact Hsvc |].
@@ -567,7 +572,7 @@ Proof.
   intros ms bufs code model Hh Hlazy Hte.
   induction Hte as
     [ms x8 Hsvc Hx8
-    | ms x8 buf bufs code Hsvc Hno Hg Hr Hnb Hcont IH
+    | ms x8 buf bufs code Hsvc Hno Hg Hr Hok Hnb Hcont IH
     | ms ms' bufs code Hsvc Hstep Hte IH]; intro Hbufs; [| discriminate Hbufs |].
   - apply (exec_step_only segs _ _
              [ExitEv (bv_and (ms_gpr ms 0) (Z_to_bv 64 255)) (m_fs model)]
@@ -755,28 +760,35 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
+Lemma fdchan_with_vdso : forall v m fd ch, fdchan fd ch m -> fdchan fd ch (with_vdso v m).
+Proof. intros v m fd ch H; exact H. Qed.
+
 Lemma wall_omni_run : forall fd ch, fd32 fd = fd ->
   forall segs pc ph sp brk0 mb rnd lim inp bufs code,
-  fdchan fd ch (init_model (segments_reserved segs) brk0 mb sp lim inp) ->
+  fdchan fd ch (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp) ->
   bufs_modeled bufs ->
-  to_wallexit segs fd bufs code (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
+  to_wallexit (run_segments segs inp sp mb) fd bufs code
+    (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp) ->
   omni_run (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp
     (fun tr o => tr = wevents_ch ch bufs ++ [ExitEv code (in_fs inp)]
                  /\ exits_with code tr o).
 Proof.
   intros fd ch Hfd32 segs pc ph sp brk0 mb rnd lim inp bufs code Hfdc Hbm Hw.
   cbn [omni_run]. unfold init_config.
-  exact (to_wallexit_exec segs fd ch Hfd32 bufs code _
-           (init_model (segments_reserved segs) brk0 mb sp lim inp)
-           eq_refl eq_refl Hfdc Hbm Hw).
+  exact (to_wallexit_exec (run_segments segs inp sp mb) fd ch Hfd32 bufs code _
+           (with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+              (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp))
+           eq_refl eq_refl (fdchan_with_vdso _ _ _ _ Hfdc) Hbm Hw).
 Qed.
 
 Lemma wall_obs_iff : forall fd ch, fd32 fd = fd ->
   forall segs pc ph sp brk0 mb rnd lim inp bufs code,
-  fdchan fd ch (init_model (segments_reserved segs) brk0 mb sp lim inp) ->
+  fdchan fd ch (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp) ->
   bufs_modeled bufs ->
-  to_wallexit segs fd bufs code (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
-  forall tr, obs_trace segs (init_config segs pc ph sp brk0 mb rnd lim inp) tr
+  to_wallexit (run_segments segs inp sp mb) fd bufs code
+    (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp) ->
+  forall tr, obs_trace (run_segments segs inp sp mb)
+               (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) tr
              <-> is_prefix tr (wevents_ch ch bufs ++ [ExitEv code (in_fs inp)]).
 Proof.
   intros fd ch Hfd32 segs pc ph sp brk0 mb rnd lim inp bufs code Hfdc Hbm Hw tr.
@@ -788,10 +800,12 @@ Qed.
 
 Lemma wall_no_error_run : forall fd ch, fd32 fd = fd ->
   forall segs pc ph sp brk0 mb rnd lim inp bufs code,
-  fdchan fd ch (init_model (segments_reserved segs) brk0 mb sp lim inp) ->
+  fdchan fd ch (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp) ->
   bufs_modeled bufs ->
-  to_wallexit segs fd bufs code (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
-  ~ reaches_error segs (init_config segs pc ph sp brk0 mb rnd lim inp).
+  to_wallexit (run_segments segs inp sp mb) fd bufs code
+    (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp) ->
+  ~ reaches_error (run_segments segs inp sp mb)
+      (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp).
 Proof.
   intros fd ch Hfd32 segs pc ph sp brk0 mb rnd lim inp bufs code Hfdc Hbm Hw. apply exec_no_error.
   eapply exec_conseq;
@@ -802,22 +816,23 @@ Qed.
 (* [comment removed for export] *)
 Lemma wall_omni_strong_equiv :
   forall source_segs rpc rph rsp rbrk rmb rrnd target_segs apc aph asp abrk amb arnd bufs code inp,
-  to_wallexit source_segs (Z_to_bv 64 1) bufs code
-    (init_machine_state source_segs rpc rph rsp rrnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
-  to_wallexit target_segs (Z_to_bv 64 1) bufs code
-    (init_machine_state target_segs apc aph asp arnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
+  to_wallexit (run_segments source_segs inp rsp rmb) (Z_to_bv 64 1) bufs code
+    (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp) ->
+  to_wallexit (run_segments target_segs inp asp amb) (Z_to_bv 64 1) bufs code
+    (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp) ->
   bufs_modeled bufs ->
+  in_channel_reader inp = true ->
   omni_strong_equiv (mkImage source_segs rpc rph) (mkImage target_segs apc aph)
                     (mkEntry rsp rbrk rmb rrnd) (mkEntry asp abrk amb arnd) inp.
 Proof.
   intros source_segs rpc rph rsp rbrk rmb rrnd target_segs apc aph asp abrk amb arnd bufs code inp
-    Hsource Htarget Hbm.
+    Hsource Htarget Hbm Hr.
   assert (HfdS : fdchan (Z_to_bv 64 1) (Z_to_bv 64 1)
-    (init_model (segments_reserved source_segs) rbrk rmb rsp source_alloc_limit inp))
-    by (split; reflexivity).
+    (init_model (segments_reserved (run_segments source_segs inp rsp rmb)) rbrk rmb rsp source_alloc_limit inp))
+    by (apply fd1chan_fdchan, init_model_fd1chan; exact Hr).
   assert (HfdT : fdchan (Z_to_bv 64 1) (Z_to_bv 64 1)
-    (init_model (segments_reserved target_segs) abrk amb asp target_alloc_limit inp))
-    by (split; reflexivity).
+    (init_model (segments_reserved (run_segments target_segs inp asp amb)) abrk amb asp target_alloc_limit inp))
+    by (apply fd1chan_fdchan, init_model_fd1chan; exact Hr).
   split.
   { cbn [img_segments].
     eapply coexec_conseq;
@@ -841,23 +856,24 @@ Qed.
 (* [comment removed for export] *)
 Lemma wall_strong_equiv :
   forall source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim bufs code inp,
-  to_wallexit source_segs (Z_to_bv 64 1) bufs code
-    (init_machine_state source_segs rpc rph rsp rrnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
-  to_wallexit target_segs (Z_to_bv 64 1) bufs code
-    (init_machine_state target_segs apc aph asp arnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
+  to_wallexit (run_segments source_segs inp rsp rmb) (Z_to_bv 64 1) bufs code
+    (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp) ->
+  to_wallexit (run_segments target_segs inp asp amb) (Z_to_bv 64 1) bufs code
+    (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp) ->
   bufs_modeled bufs ->
+  in_channel_reader inp = true ->
   Equivalence.modeled (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
   /\ Equivalence.equiv (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
                        (run (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp).
 Proof.
   intros source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim
-         bufs code inp Hsource Htarget Hbm.
+         bufs code inp Hsource Htarget Hbm Hr.
   assert (HfdS : fdchan (Z_to_bv 64 1) (Z_to_bv 64 1)
-    (init_model (segments_reserved source_segs) rbrk rmb rsp rlim inp))
-    by (split; reflexivity).
+    (init_model (segments_reserved (run_segments source_segs inp rsp rmb)) rbrk rmb rsp rlim inp))
+    by (apply fd1chan_fdchan, init_model_fd1chan; exact Hr).
   assert (HfdT : fdchan (Z_to_bv 64 1) (Z_to_bv 64 1)
-    (init_model (segments_reserved target_segs) abrk amb asp alim inp))
-    by (split; reflexivity).
+    (init_model (segments_reserved (run_segments target_segs inp asp amb)) abrk amb asp alim inp))
+    by (apply fd1chan_fdchan, init_model_fd1chan; exact Hr).
   split.
   { apply no_error_run_modeled.
     apply (wall_no_error_run (Z_to_bv 64 1) (Z_to_bv 64 1) fd32_1

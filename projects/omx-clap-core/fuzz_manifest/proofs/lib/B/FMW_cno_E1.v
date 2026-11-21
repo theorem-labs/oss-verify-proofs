@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_cno_E1.v at a working branch 31d1eb57a40. B's N2 .. F3 is
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_cno_E1.v at a working branch. B's N2 .. F3 is
    instruction-for-instruction A's (A 0x80d08 .. 0x80d24, B 0x80e3c .. 0x80e58); what changes: the pcs, free at 0x52e18
    (A 0x52db8), the frame (112, so the free's sp is sp0 - 112), u2 in s5 (A s7), and cno_core without A's s10 / s11
    facts (B saves both in the frame). No overflow check lies in this stretch. *)
@@ -29,8 +29,8 @@ Open Scope Z_scope.
 
 Section S. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 Variable B : asyms.
-Hypothesis FB : FmB B.                                   (* FMW_seg.v:37: code addresses, GOT/cell values, statics not owned *)
-Hypothesis HB : TfibSyms B.                              (* ReusableB/YF0m.v:658 *)
+Hypothesis FB : FmB B.                                   (* FMW_seg.v:38: code addresses, GOT/cell values, statics not owned *)
+Hypothesis HB : TfibSyms B.                              (* ReusableB/YF0m.v:659 *)
 Hypothesis IMG : fm_img_facts tfibsegs B.                (* FMH_Fn.v:61 *)
 Hypothesis UNIV : fm_univ B.                             (* FMH_Fn.v:71: incl Tfib_universe (as_universe B) *)
 Hypothesis AMALLOC4 : amalloc04_rule tfibsegs B ameter_triv.   (* YC5d.v:57; ameter_triv YCbp.v:17, mo_ok = True *)

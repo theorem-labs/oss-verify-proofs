@@ -5,6 +5,7 @@
    projects/cgif/cgif_file_fuzzer/proofs/lib/A/ACja.v:107-118, for libreac/fuzz_identity's ASan build (lib/A). The same text
    also appears in projects/cgif/cgif_file_fuzzer/proofs/lib/A/ACa2.v:141-143. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/LLVMFuzzerTestOneInput_A.v; 1812 of its 1890 lines of code are new or changed and 502 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Segment D2 of LLVMFuzzerTestOneInput's ASan walk: 0x80d04 to the four exits of the record switch.
    seg_D2 of lib/A/Prog/LLVMFuzzerTestOneInput_inv.v: from inv_D1_end (the third same_id compare has passed) to
    inv_caseV (0x80f20), inv_caseM (0x81170), inv_caseF (0x81208) or inv_tail (0x813b4).
@@ -368,7 +369,7 @@ Variable asink_none : list Segment -> asink_syms_T -> (word -> option byte) -> M
 Variable ameta_inv : list Segment -> asink_syms_T -> alayout -> (word -> option byte) -> Z -> Prop.
 Variable arodata_okS : list Segment -> asyms -> Z -> Z -> reader -> Prop.
 (* What the segment needs: the contract's window covers the bcmp interceptor's 2 ESTACK below the frame, the
-   allocator's laws, the bcmp interceptor's contract, and cgif ACfh.v:162-164 for the fds and files. *)
+   allocator's laws, the bcmp interceptor's contract, and cgif ACfh.v:163-165 for the fds and files. *)
 Hypothesis HSTK : STK_LLVMF <= LLVMF_STK.
 Hypothesis LAWS : AR_laws SEGS B.
 Hypothesis ABCMP : abcmp_realizes SEGS B (SIGMA IS___interceptor_trampoline_bcmp).

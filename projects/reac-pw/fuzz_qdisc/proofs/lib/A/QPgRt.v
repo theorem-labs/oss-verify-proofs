@@ -5,7 +5,7 @@
 (* Modified by Theorem Labs, 2026-10: made for reac-pw/fuzz_qdisc's ASan harness walk
    (LLVMFuzzerTestOneInput 0x7e68c, fuzz_qdisc.asan sha256
    980e2b8458528060633e6c98fff20d2f46b97738c06eae4307d09f59c82c890e) from
-   proofs/libreac/fuzz_knock/lib/A/APgRt.v at origin/ossv/recipes 6ebe35ba632, with its module paths changed
+   proofs/libreac/fuzz_knock/lib/A/APgRt.v, with its module paths changed
    (h-small-a3). rule 24 (reuse): no function is proved here; this is the walk's context record and its
    tactics.
 
@@ -24,6 +24,7 @@
       program never loads it (lib/A/ACeh.v:25), so rt_regions0 carries the stack, the .got slot of the
       shadow cell and the shadow cell only.
    Q5 EV_LIB = 0 and LLVMF_STK = 32768 are lib/A/ACfm.v's, as knock's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

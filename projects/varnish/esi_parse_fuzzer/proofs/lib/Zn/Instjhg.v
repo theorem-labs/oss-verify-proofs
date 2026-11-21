@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: minv also holds the vDSO ledger fact (VD), carried over by VD_transfer, and its first half is taken where only the lazy list is read. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -142,7 +143,7 @@ Proof.
 Qed.
 
 Lemma p0_lazy_nil A m md : p0_ainv A m md -> m_vm_lazy md = [] /\ m_halted md = None.
-Proof. ((first [ intro dR_15; dand3 dR_15 as _ [(L & _ & HK & _) _] _ | intros (_ & [(L & _ & HK & _) _] & _) ])). split; [exact (kl_minv _ _ _ HK)| exact (kl_halt _ _ _ HK)]. Qed.
+Proof. ((first [ intro dR_15; dand3 dR_15 as _ [(L & _ & HK & _) _] _ | intros (_ & [(L & _ & HK & _) _] & _) ])). split; [exact (proj1 (kl_minv _ _ _ HK))| exact (kl_halt _ _ _ HK)]. Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -153,7 +154,11 @@ Proof.
   assert (EM : m_vmmaps mo' = m_vmmaps mo) by (unfold m_vmmaps; rewrite EV; reflexivity).
   assert (EL : m_vm_lazy mo' = m_vm_lazy mo) by (unfold m_vm_lazy; rewrite EV; reflexivity).
   assert (EMT : m_vm_materialized mo' = m_vm_materialized mo) by (unfold m_vm_materialized; rewrite EV; reflexivity).
-  destruct K; constructor; unfold minv in *; rewrite ?EM, ?EL, ?EMT; auto.
+  assert (MI' : minv mo').
+  { destruct (kl_minv _ _ _ K) as [L0 V0]. split; [rewrite EL; exact L0|].
+    apply (VD_transfer mo mo' V0); [unfold m_kernel; rewrite EV; reflexivity | rewrite EM; reflexivity
+                                   | rewrite EM; reflexivity | rewrite EM; reflexivity]. }
+  destruct K; constructor; rewrite ?EM, ?EL, ?EMT; auto.
   (* [comment removed for export] *) all: unfold ceil_ok in *; rewrite ?EM; auto.
 Qed.
 

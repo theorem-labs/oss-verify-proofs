@@ -1,6 +1,6 @@
 (* ubsan_halts of reac-pw/fuzz_segconf (UBSan build) from the frame and the slot of LLVMFuzzerTestOneInput: reac-pw/fuzz_role's
-   Prog/RoleEnd.v (commit 52bb2f1ed35d; reac-pw/fuzz_pin's Prog/PinEnd.v, libreac/fuzz_ctrl's
-   released Prog/Seg/Segs.v + Prog/Seg/SlotLink.v, commit 25e3d17bdb50) for segconf's eight segments.
+   Prog/RoleEnd.v (reac-pw/fuzz_pin's Prog/PinEnd.v, libreac/fuzz_ctrl's
+   released Prog/Seg/Segs.v + Prog/Seg/SlotLink.v) for segconf's eight segments.
    - The segment lemmas, each as its segment file states it once its Section closes (Section hypotheses:
      FrameAPI.frame_facts_ubsan, then the contracts the segment consumes). The callee contracts of a segment's evt
      body are its premise K_<seg> (a Prop the walk states over the callees' contracts, instance-free as

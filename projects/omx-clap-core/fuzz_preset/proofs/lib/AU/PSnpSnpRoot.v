@@ -2,15 +2,15 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Theorem Labs, 2026-10: fuzz_preset image A, THE SNPRINTF ROOT (c-libc-stdio, keep group G3; c-omx-alloc 17:03Z
    ruling (b), parent c-libc-stdio 17:1xZ): the chain composed and stated as the engine's text
-   YGcallSnp.asnprintf_realizes_xrom (c-omx-alloc's row, engine s1b bb085d091bbe, YGcallSnp.v 5b6dc61efe87), which
-   h-mani-a8's field pa_snprintf_cf (origin/cold/h-mani-a8-preset-alloc fee5c13e19d0 lib/A/CfApiPreset.v) is at
+   YGcallSnp.asnprintf_realizes_xrom (c-omx-alloc's row, engine s1b, YGcallSnp.v 5b6dc61efe87), which
+   h-mani-a8's field pa_snprintf_cf (lib/A/CfApiPreset.v) is at
    ARx := ARcf tfibsegs B, FF := FF_preset, K := snp_K_A = 2608 + 5552, gc / gv := cf_got_stack_chk_guard /
    cf_stack_chk_guard = 0xa2758 / 0x5fd910, img := [cf_img_lo, cf_img_top) = [0x10000, 0x600000), cr := snp_cr
    tfibsegs (= PSnpPcom.PCM_CR by its body), pc := cf_pc_snprintf = 0x42cc4.
    The chain and its windows (each the least its callee asks):
      snp_ok (K) <- AVSNI  svsni_ok (KV = 8064 = 0x870 + Kvs) <- APCOMMON pcom_preset_x (Kpc = 2320),
                                                                 AVSN svsn_ok (Kvs = 5904 = 304 + Kvi)
-     svsn_ok <- AMEMSET RowsSet's prow_memset_icpt_xm_B_lit (origin/cold/c-libc-stdio-rows-set a6f4ebf35892,
+     svsn_ok <- AMEMSET RowsSet's prow_memset_icpt_xm_B_lit (
                          lib/A/PRowSet.v; YGcallMxmn.aintrin_realizes_xm at W_MEMSET = 0x52348),
                 AVFPI PSnpSeamI.svfi_ok_seam (Kvi = 5600 = 0x30 + VFA_DEPTH; L3 musl vfprintf through the GXA seam,
                       L1 printf_common at Kp = 2320)
@@ -20,10 +20,11 @@
    AR_laws_x (RowsSet's row takes it whole; every field the chain reads is its projection, stk_bounds_x is the engine
    lemma YCbqG.stk_bounds_x); the Section's only other hypotheses are TfibSyms and alx_band_pres (c-omx-alloc's field
    20, its text written out until the Definition lands); the world's w_H8 field is the world record's own, YA0n.w_H8
-   (YA0n.v:25), which PSnpSeamReady.v reads. The read-only premise arodata_okP of the text is not read.
+   (YA0n.v:26), which PSnpSeamReady.v reads. The read-only premise arodata_okP of the text is not read.
    rule 24: proves function snprintf (kind: composition of the chain's walks and leaves at preset image A). *)
-(* Modified by Theorem Labs, 2026-10: image B twin (fuzz_preset.asan-ubsan f8f98a95) of lib/A/PSnpSnpRoot.v, by the unit's image-B convention (lib/AU/FCxA.v's rule): the image record CJ.RL.I.IImgA.N_img -> CJ.RL.I.IImgB.N_img (rebuilt pin, by path from h-hpreset-7-pvN-B 16345363f93d via c-libc-str f697dea427f), lib/A/PSnpBz -> lib/AU/PSnpBz, the image-A core A<x> -> image B's Y<x> (lib/Reusable), the PSnp seam files lib/A -> lib/AU. Preset B's arguments: gc / gv = YE2p.A_GOT_canary / A_canary = 0xa2ff8 / 0x5fe1d0, pc = PSnpI.PC_snprintf = 0x42d48, W_MEMSET = 0x523cc (RowsSet's prow_memset_icpt_xm_B_lit, lib/AU/PRowSet.v), GLOBALS_TOP = 0x600000; the windows are A's (the frames are equal, lookups/snpr-CONFIRM.md A.2). Sentences above that name image A or fm describe the A twin. *)
-(* Modified by Theorem Labs, 2026-10: moved to the #102 pins, image B' (fuzz_preset.asan-ubsan d663f82d, unstripped c90d4fa5), from the old-pin donor origin/cold/c-libc-stdio-presetsnp-vfp ac1750cac8be: every code numeral by symbol + offset, checked equal to the B -> B' map of record (preset-F reloc102-maps bmap_b2bp.py 27b4c628bef6 over this file); B''s derived bounds from that map: the read-only top / writable start 0xa1000 -> 0xa2000, the image top 0x600000 -> 0x601000; kept as written: the IImg record keys, the instruction words and the segment sizes; audited by port_addr_check 0767e70e074a (only the record keys flag). Per-numeral table: c-libc-stdio scratch/p102/reloc/AU/PSnpSnpRoot.v.reloc.tsv. Comment numerals are as written. *)
+(* Modified by Theorem Labs, 2026-10: image B twin (fuzz_preset.asan-ubsan f8f98a95) of lib/A/PSnpSnpRoot.v, by the unit's image-B convention (lib/AU/FCxA.v's rule): the image record CJ.RL.I.IImgA.N_img -> CJ.RL.I.IImgB.N_img (rebuilt pin, by path from h-hpreset-7-pvN-B via c-libc-str), lib/A/PSnpBz -> lib/AU/PSnpBz, the image-A core A<x> -> image B's Y<x> (lib/Reusable), the PSnp seam files lib/A -> lib/AU. Preset B's arguments: gc / gv = YE2p.A_GOT_canary / A_canary = 0xa2ff8 / 0x5fe1d0, pc = PSnpI.PC_snprintf = 0x42d48, W_MEMSET = 0x523cc (RowsSet's prow_memset_icpt_xm_B_lit, lib/AU/PRowSet.v), GLOBALS_TOP = 0x600000; the windows are A's (the frames are equal, lookups/snpr-CONFIRM.md A.2). Sentences above that name image A or fm describe the A twin. *)
+(* Modified by Theorem Labs, 2026-10: moved to the #102 pins, image B' (fuzz_preset.asan-ubsan d663f82d, unstripped c90d4fa5), from the old-pin donor: every code numeral by symbol + offset, checked equal to the B -> B' map of record (preset-F reloc102-maps bmap_b2bp.py 27b4c628bef6 over this file); B''s derived bounds from that map: the read-only top / writable start 0xa1000 -> 0xa2000, the image top 0x600000 -> 0x601000; kept as written: the IImg record keys, the instruction words and the segment sizes; audited by port_addr_check 0767e70e074a (only the record keys flag). Per-numeral table: c-libc-stdio scratch/p102/reloc/AU/PSnpSnpRoot.v.reloc.tsv. Comment numerals are as written. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -62,7 +63,7 @@ Require OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU.PSnpL3.FMgxa_mem.
 Require OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU.PSnpL3.RT_gxa_strnlen.
 Import ListNotations.
 Local Open Scope Z_scope.
-(* the zify flag as the old-pin build saw it (PSnpGwrc exported `false` there; it is Local since #102 L1 e1ecbbc792f4) *)
+(* the zify flag as the old-pin build saw it (PSnpGwrc exported `false` there; it is Local since #102 L1) *)
 Local Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
 Module GXC := OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.CJ.RL.GX.G_printf_core_common.G_printf_iface.

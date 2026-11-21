@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (checked_src_stack's stack bound moves from USTACK_TOP - 16 to USTACK_TOP - 9; MAINCTX_agree and MAINCTX_agree_nw take the stack from rt_sp0 - STACK_WOK, the bottom of the stack the launch zero-maps). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -98,7 +99,7 @@ Proof using AF.
 Qed.
 
 (* [comment removed for export] *)
-Lemma checked_src_stack : forall Σ m sp lo s n, ART RT Σ m -> rt_sp0 RT Σ - STACK_WIN + 64 <= s -> s + n <= USTACK_TOP - 16 ->
+Lemma checked_src_stack : forall Σ m sp lo s n, ART RT Σ m -> rt_sp0 RT Σ - STACK_WIN + 64 <= s -> s + n <= USTACK_TOP - 9 ->
   bv_unsigned sp <= s -> checked_src RT Σ m sp lo s n.
 Proof using AF.
   intros Σ m sp lo s n HA H1 H2 H3. split.
@@ -169,7 +170,7 @@ Qed.
 (* [comment removed for export] *)
 Lemma MAINCTX_agree : forall Σ Σ' so so' usp ap c0 c1 c2 c3 c4 c5 c6 c7 m m',
   MAINCTX RT OUT_rep ERR_rep XENV LIB argvb Σ so usp ap c0 c1 c2 c3 c4 c5 c6 c7 m ->
-  ART RT Σ' m' -> mem_inv bsegs m' -> wmono bsegs m m' -> stk bsegs m' (rt_sp0 RT Σ - STACK_WIN) (usp - 80) ->
+  ART RT Σ' m' -> mem_inv bsegs m' -> wmono bsegs m m' -> stk bsegs m' (rt_sp0 RT Σ - STACK_WOK) (usp - 80) ->
   rt_sp0 RT Σ' = rt_sp0 RT Σ -> CLX OUT_rep ERR_rep XENV LIB so' m' ->
   agree_on (fun x => usp - 80 <= x < USTACK_TOP) m m' ->
   MAINCTX RT OUT_rep ERR_rep XENV LIB argvb Σ' so' usp ap c0 c1 c2 c3 c4 c5 c6 c7 m'.
@@ -212,7 +213,7 @@ Qed.
 
 Lemma MAINCTX_agree_nw : forall Σ Σ' so so' usp ap c0 c1 c2 c3 c4 c5 c6 c7 m m',
   MAINCTX RT OUT_rep ERR_rep XENV LIB argvb Σ so usp ap c0 c1 c2 c3 c4 c5 c6 c7 m ->
-  ART RT Σ' m' -> mem_inv bsegs m' -> stk bsegs m' (rt_sp0 RT Σ - STACK_WIN) (usp - 80) ->
+  ART RT Σ' m' -> mem_inv bsegs m' -> stk bsegs m' (rt_sp0 RT Σ - STACK_WOK) (usp - 80) ->
   rt_sp0 RT Σ' = rt_sp0 RT Σ -> CLX OUT_rep ERR_rep XENV LIB so' m' ->
   agree_on (fun x => usp - 80 <= x < USTACK_TOP) m m' ->
   MAINCTX RT OUT_rep ERR_rep XENV LIB argvb Σ' so' usp ap c0 c1 c2 c3 c4 c5 c6 c7 m'.

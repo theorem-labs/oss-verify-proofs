@@ -1,6 +1,6 @@
 (* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamFF.v; relocated to plugin-hostd/fuzz_command.asan by the GXA address relocator (target fuzz_command.asan): module paths changed; 0 address numerals moved (address checker 0767e70e074a, predict mode, fm.asan -> fuzz_command.asan, symbol + offset; the relocator's table for this file). *)
 (* What the format-generic chain asks of the seam's families: pf_family (FMsnprintfShared.v:92) and pf_family_ro
-   (FMgxaSeamDef.v:60) keep under a memory change inside the regions rs outside the shadow, asked at 64-bit addresses
+   (FMgxaSeamDef.v:61) keep under a memory change inside the regions rs outside the shadow, asked at 64-bit addresses
    only, and they keep when the regions shrink (ff_mono, FMsnprintfShared.v:107).
    The stable64 statements are the body of omx-clap-core/fuzz_manifest's ff_stable64 (FMsnprintfSx.v:21)
    with FF substituted; this tree does not carry that file, and a consumer

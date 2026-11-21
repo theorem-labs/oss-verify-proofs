@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD2k.v, with its module paths changed and its addresses moved to libreac/fuzz_scene's ASan build; the sink's path, mode, "rwa" and trailer strings are removed from finv_check and tfib_finv_handoff, with finv_img_garr8, which only they used, as fuzz_scene.asan-ubsan holds none of the strings; finv_check carries no kn_img conjunct for fuzz_scene's five registered globals either, as in fuzz_grant's adapted A/AD2k.v:27-33, because astdio_env no longer reads any string; the mmap page floor in the hand-off check is IMG_TOP / 4096 (1529 for fuzz_scene: image top 0x5f9000), where the released file states cgif_file's 1531; and the ofl head that tfib_finv_handoff reads is fuzz_scene's ofl_head (0x5f7190). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3, with libreac/fuzz_boxreg's port of its copy of this file (changed e254, finv_check, finv_check_all, hw, argH, LIM and 3 more; added inst; removed SINV); the start-up variables its driver data names renumbered by the map read from this unit's start-up and hand-off probes. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require Import YImgTop.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -9,7 +10,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
 From OSSVerify.libreac.fuzz_scene.images Require Import AsanUbsan.
-From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU Require Import YB12 YB1h YB13 YB01 YF0m YD1g YD2i.
+From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU Require Import YB12 YB1h YB13 YB01r YF0m YD1g YD2i.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require Import YK11 YP09 YK00 YK04 YA0i YA0n YK0g YK0c YK0d YK0e YK0f YK09 YA01 YA0c YA0e YA0d YA02 YA0j YG00 YG01 YG0f YG0v YG0n YG0r YG0b YM05 YD1h.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU Require Import YE01 YB1v YE2k.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require Import YG0d YI04 YI00 YE00.
@@ -19,15 +20,15 @@ Local Set Warnings "-abstract-large-number".
 Import AX2. Import AX2B. Import AX2S. Import APC. Import APG. Import APSG.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
 Open Scope Z_scope.
-Definition e254 : expr := EMd M_MUL (ELit 4096) (EVar 254).
+Definition e254 : expr := EMd M_MUL (ELit 4096) (EVar 258).
 Definition finv_check (ch : acs) : bool :=
 (match kn_read TSEGS ch (ELit 0) 0xa3340 8 with Some v => expr_eqb v (ELit 0xa3348) | _ => false end
 && match kn_read TSEGS ch (ELit 0) 0xa3348 8 with Some v => expr_eqb v e254 | _ => false end
 && kn_mem (KZero (SA e254 0) (ELit 3727360)) ch
-&& kn_mem (KRange (EVar 254) (IMG_TOP / 4096) 34359735410) ch
+&& kn_mem (KRange (EVar 258) (IMG_TOP / 4096) 34359735410) ch
 && kn_img ch 0x5f6d29 1 && kn_img ch 0x5f6d2b 1 && kn_img ch 0x5f7188 4 && kn_img ch 0x5f7190 8
 && match kn_read TSEGS ch (ELit 0) 0x5f6ad8 8 with Some _ => true | None => false end)%bool.
-Lemma finv_check_all : forallb finv_check HS_tfib_list = true.
+Lemma finv_check_all : forallb finv_check HS_tfib_list_all = true.
 Proof. vm_compute. reflexivity. Qed.
 Section c. Context {fx : YK11.FPState}.
 Section e.
@@ -36,22 +37,31 @@ Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv (in_argv inp).
 Variable h : nat.
 Variables (ch : acs) (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model).
-Hypothesis Hch : HS_tfib h = Some ch.
+Hypothesis Hch : HS_tfib_r (rseq_z (kb_rseq (in_kernel inp))) h = Some ch.
 #[local] Notation argv := (in_argv inp).
 #[local] Notation envp := (in_envp inp).
 #[local] Notation uid := (in_uid inp).
 #[local] Notation hw := (in_hwcap inp).
-#[local] Notation SINV := (YA02.SINV0 TPH sp rdraw brk argv envp uid hw).
-#[local] Notation argH := (YA02.argH0 TPH sp rdraw argv envp uid hw).
+(* The invariant abstract and the input's own fields, as B/YD2i.v. *)
+Variable SINV : env -> (word -> option byte) -> Prop.
+#[local] Notation argH := (YA02.argH0 sp rdraw argv envp
+  (in_image_fs inp) (in_stdin inp) uid (in_gid inp) hw (in_groups inp) (in_net inp)
+  (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp) (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp)).
 #[local] Notation TOP := (YA02.TOP sp).
 #[local] Notation LIM := YA02.LIMIT.
+Hypothesis SINV_sp0 : forall E' M, SINV E' M -> uE E' e_sp0 = TOP + 8388608.
 Hypothesis HC : cs_ok TSEGS TFIB LIM TOP SINV argH (in_fs inp) E ch R FULL model.
 Context {rc : YM05.RunCeil}.
 #[local] Notation MR := (Mr TFIB TOP argH E ch model FULL).
 #[local] Notation m1 := (mrestrict (YD2i.H1 sp rdraw inp ch E model) FULL).
 #[local] Notation u := (uE E).
-Let CHK : finv_check ch = true := proj1 (forallb_forall _ _) finv_check_all ch (HS_tfib_In h ch Hch).
+Let CHK : finv_check ch = true := proj1 (forallb_forall _ _) finv_check_all ch (HS_tfib_r_In _ h ch Hch).
 Let MRm1 := YD2i.mbyte_MR_m1 sp rdraw inp Hsp Hva ch E FULL model.
+(* B/AD1g's lemmas at this section's arguments, whatever subset each one takes. *)
+Ltac inst H := try specialize (H sp); try specialize (H rdraw); try specialize (H brk); try specialize (H inp);
+try specialize (H Hsp); try specialize (H Hva); try specialize (H h); try specialize (H ch);
+try specialize (H E); try specialize (H R); try specialize (H FULL); try specialize (H model); try specialize (H Hch);
+try specialize (H SINV); try specialize (H SINV_sp0); try specialize (H HC).
 Lemma finv_read_val : forall a n v, kn_read TSEGS ch (ELit 0) a n = Some v -> 0 <= a ->
 val_mem tfibsegs m1 a n (u v).
 Proof.
@@ -101,7 +111,7 @@ Proof.
 pose proof CHK as H. unfold finv_check in H.
 apply andb_prop in H as [H Kcan]. apply andb_prop in H as [H Kofh]. apply andb_prop in H as [H Kofl]. apply andb_prop in H as [H Knl].
 apply andb_prop in H as [H Kthr]. apply andb_prop in H as [H Krng]. apply andb_prop in H as [H Kzero]. apply andb_prop in H as [Kptr Kmem].
-destruct (YD1g.u254 sp rdraw brk inp h ch E R FULL model Hch HC) as [E254 R254]. change YD1g.e254 with e254 in E254, R254.
+pose proof (@YD1g.u254) as U254. inst U254. destruct U254 as [E254 R254]. change YD1g.e254 with e254 in E254, R254.
 set (M := u e254) in *.
 assert (ZC : forall a n, kn_img ch a (Z.of_nat n) = true -> 65536 <= a -> a + Z.of_nat n <= 6262784 ->
 (forall k, (k < n)%nat -> seg_rom tfibsegs (Z_to_bv 64 (a + Z.of_nat k)) = Some (Z_to_bv 8 0)) -> val_mem tfibsegs m1 a n 0).
@@ -115,7 +125,7 @@ cbn [YD1g.ly0 ly_extra]. unfold YD1g.extra.
 pose proof (YD1g.dm_vals E) as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & W254 & _). change YD1g.e254 with e254 in W254.
 replace (M, AMETA_SIZE) with (wzp (YD1g.d254 E)) by (rewrite W254; reflexivity).
 apply in_map. apply filter_In. split.
-* destruct (YD1g.vm_shape sp rdraw brk inp h ch E R FULL model Hch HC) as (fog & _ & _ & ->).
+* pose proof (@YD1g.vm_shape) as VMS. inst VMS. destruct VMS as (fog & _ & _ & ->).
 apply in_app_iff. right. apply in_app_iff. right. cbn. tauto.
 *
 destruct (YD1g.known E (YD1g.d254 E)) eqn:Hk; [|reflexivity]. exfalso.

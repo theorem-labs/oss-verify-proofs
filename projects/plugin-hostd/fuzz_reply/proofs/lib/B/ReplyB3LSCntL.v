@@ -1,12 +1,12 @@
 (* proves no function (kind: model and invariant lemmas): the counts over a block list for LS v3 at image B *)
 (* Theorem Labs, 2026-10: the image-B port of lib/A/ReplyLSCnt.v (sha256 7a7cb1f3cc6a; internal record) at
-   a working branch 1b1e21bdbd40.  A's file reads only lib/Reusable (YK11 YK0s YG00 YG0a YG01
+   a working branch.  A's file reads only lib/Reusable (YK11 YK0s YG00 YG0a YG01
    YG0f YG0n YG0d YM05) and lib/Spec/PresetRoom.v, which both images share (the allocator kit and its class map;
    lib/B/ReplyBTop.v loads the same lib/Reusable/YGcfRoomLive.v counts), so every definition, statement and proof is
    A's, unchanged; names are A's (module ReplyB3LSCntL). *)
 (* The count half of LS v3, part 1: the counts over a block list and their bridge to the allocator's counts
    (design: B1c's count design note, COUNTS-DESIGN in a Theorem Labs lane's B1c claim; a Theorem Labs lane's check 00:23Z).
-   A Theorem Labs lane's counts (cfdriver Reusable/YGcfRoomLive.v at 46f1762ad5a / a working branch 8071b92028b):
+   A Theorem Labs lane's counts (cfdriver Reusable/YGcfRoomLive.v / a working branch):
      sec_cnt S := length (filter rl_sec_req (map snd (blocks S))), rl_sec_req n := negb (PresetRoom.is_primary n)
        (:1172-1173);
      ccnt24 S := PresetRoom.ccnt kBatchClass (map snd (blocks S)) (:1145);

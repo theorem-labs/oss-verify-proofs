@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 2004 of its 2120 lines of code are new or changed and 895 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment F30 of fuzz_ctrl LLVMFuzzerTestOneInput (asan, image A): 0x8275c-0x82794, the call of
    reac_ctrl_classify_box_frame (plan-asan section 2 row F30, section 4 CLS). rule 24: no function proved.
    v1.9.0: moved onto a Theorem Labs lane's v1.9 cut bundle (a working branch, 2026-10-28); the commit messages name the
@@ -965,7 +966,7 @@ Qed.
    the eight bytes at C + 152 (owned, app memory) and the sixteen at T + 48 (owned, present).  This is the only
    place F30 reads the law.  It takes each part BY NAME from a Theorem Labs lane's field record fsf_thr_fields
    (Tac_fsfree.v, fsf_thread_fields matches every field to a conjunct by `eassumption`), so no position in the
-   law's conjunction is counted here; the statement types every part.  v1.9 (48004cf7bfc) had inserted
+   law's conjunction is counted here; the statement types every part.  v1.9 had inserted
    `word_mem (as_tp B - 88) RT_TSDMAIN` and the RT_TSDK bytes at positions 2 and 3, before `exists C T`. *)
 Lemma f30_thread : forall H mem md, AC.aa_AH AC.ASYMS AsanRTInv.RT (APIf rc) H mem md ->
   exists C T, word_mem rsegs mem RT_TSDMAIN C /\ 0 < C < 2 ^ 64 /\ 0 < T < 2 ^ 64 /\
@@ -2207,7 +2208,7 @@ Proof.
         + apply HWsh3;
             [ unfold app_mem; right; unfold HIGHMEM_BEG, APPMEM_END in *; lia | lia
             | unfold AF.SLOT_STACK, AC.FS_SIZE in *; lia | lia ].
-      - (* cf5ad0d7203: ent_kept's fifth part, the shadow of an entry block the target does not keep *)
+      - (*: ent_kept's fifth part, the shadow of an entry block the target does not keep *)
         destruct Hblks as (q & k & i & Hinq & Hni & Hi & ->).
         assert (Hinq' : In (q, k) (hb1 phi (AC.a_size (flen g j)) ++ g_H g))
           by (apply in_or_app; right; exact Hinq).

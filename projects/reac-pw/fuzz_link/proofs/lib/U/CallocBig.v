@@ -16,7 +16,7 @@ Open Scope Z_scope.
    left at the start of the block. The walk
    runs from calloc+0x64 (0x17b34) to the return of the tail-called memset, and ends in the same postcondition as
    CallocRun.run_clear (the arm below 4096 bytes).
-   Ported from mbedtls/fuzz_pkcs7 lib/U/HP_calloc.v on ossv/recipes 4b6f0df50aa (rcalloc_clear, rcc_outer,
+   Ported from mbedtls/fuzz_pkcs7 lib/U/HP_calloc.v (rcalloc_clear, rcc_outer,
    rcc_inner, rcc_final, rcc_after_memset, rblk_chunk, rblk_read8): link's calloc is the same 78 instructions
    (calloc at 0x3f960 there, 0x17ad0 here; memset at 0x46e44 there, 0x1f894 here). The writable block is carried as
    Frame.stk instead of wr_at plus a premise on the image, and memset is link's frame-v3 contract memset_ro_holds

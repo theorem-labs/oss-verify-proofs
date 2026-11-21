@@ -44,7 +44,7 @@ Qed.
 
 (* #102 frame of round_trip_text (ROUND_TRIP_TEXT 0x15334 in the ubsan twin 27566683): addi sp, sp, -0x70; ra s0 s1 s2 s3
    s4 s5 saved at [S-56, S) (sd at sp+0x68 .. sp+0x38); the locals in [S-112, S-56). Was -0x60 / [S-40, S) / [S-96, S-40).
-   The mirror of lib/Prog/RttA_Lib.v (plain, cold/h-drain-a1-p102-T1 57cb05617903). *)
+   The mirror of lib/Prog/RttA_Lib.v (plain). *)
 Lemma ra_mod8 : forall x, x mod 16 = 0 -> (x - 112) mod 8 = 0.
 Proof. intros x H. Z.div_mod_to_equations. lia. Qed.
 
@@ -123,8 +123,8 @@ Proof.
   rewrite E. exact (Hro a Ha).
 Qed.
 
-(* #102: struct text gains `int failed` at offset 24 (24 -> 32 bytes); CF tx_put_c's text_rec (cold/h-rw-pre-4-rw102-txp
-   f441f17d4895) = the three words + t + 28 <= 2 ^ 64 + failed = 0 (4 bytes at t + 24). *)
+(* #102: struct text gains `int failed` at offset 24 (24 -> 32 bytes); CF tx_put_c's text_rec
+    = the three words + t + 28 <= 2 ^ 64 + failed = 0 (4 bytes at t + 24). *)
 Lemma ra_rec : forall m t b len cap,
   LM.bytes_at (ms_segs B) m t (LM.le8 (Z_to_bv 64 b)) ->
   LM.bytes_at (ms_segs B) m (t + 8) (LM.le8 (Z_to_bv 64 len)) ->
@@ -411,7 +411,7 @@ Proof.
     pose proof (ra_blow L A mem md (a - 16) (n + 16) MRc Hblk). lia.
 Qed.
 
-(* #102 rtt_regs (CF RttBase, the mirror of plain RttBase 1a5309005128): sp = S-112, s0 = copy, s1 = regs0 a0,
+(* #102 rtt_regs (CF RttBase, the mirror of plain RttBase): sp = S-112, s0 = copy, s1 = regs0 a0,
    s2..s5 = s2v..s5v, gp / tp kept, s6..s11 kept. *)
 Lemma ra_regs_pres : forall regs0 regs1 regs2 copy s2v s3v s4v s5v,
   rtt_regs regs0 regs1 copy s2v s3v s4v s5v -> regs_preserved regs1 regs2 ->

@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image A' (asan, harness fix #102 pin sha256 1be0f53d96cb9d6c...): the PAListing tables
    of a Theorem Labs lane's whole-program listing A_prog_listing (lib/A/Listing_prog.v blob 1ab147923c5d,
-   a working branch d42e123915ae), WITHOUT the image half. The four definitions below are the
+   a working branch), WITHOUT the image half. The four definitions below are the
    generated lib/A/PAImg_prog.v 47eeb54e93be:177-181 with the names prefixed E102_ / PL_102_: the PAListing record
    reads only the listing (ptree_of_list, tw_of, the atom and length checks), so it is the same record. PAImg_prog.v
    itself imports the image (images Asan) and checks the listing against it, so it compiles only on a facts tree of

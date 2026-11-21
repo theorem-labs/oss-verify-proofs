@@ -6,13 +6,14 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segC.v, with its module names and addresses changed; 1881 of its 1980 lines of code are new or changed and 485 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segB2.v, with its module names changed; 283 of its 407 lines of code are new or changed and 1856 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segD2_s34.v, with its addresses changed; 63 of its 172 lines of code are new or changed and 298 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_round_trip (fs.asan 0x81a9c, build A), WALK LANE D2, SEGMENT 35: from the boundary crtD2_INV_35 (0x822b4,
    the return of pj_free (&back)) over `mv a0, s10` and `jal pj_free` (0x822b8, a0 = s10 = F + 0x20 = &doc) to the
    boundary crtD2_INV_36 (0x822bc, the return of pj_free (&doc)).
 
-   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from a working branch d25a984c903 proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_sd19.v .. sd24.v)
+   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from a working branch proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_sd19.v .. sd24.v)
    The function-level lookup is the one quoted in the lane head (internal path)
-   (checker a Theorem Labs lane, role check, CONFIRM). This file ports the CONTENT of d25a984c903's St20 step
+   (checker a Theorem Labs lane, role check, CONFIRM). This file ports the CONTENT of's St20 step
    (check_round_trip_sd20.v: pj_free frees the document's tree D20; text's and back's blocks and the frame survive) into
    S0's ajournal / ARU / U form, with the same kit as segment 34 (FSH_crt_segD2_s34.v): pj_free_spec at level 0,
    v = F + 0x20, D = Ddoc. The document is crt_doc tb2, an object of depth 2 (its one nested object holds strings

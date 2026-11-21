@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: put_stmtA, lh_delete_tail_A_stmt, duplocale_A_stmt, newlocale_A_stmt and freelocale_A_stmt take it after alloc_ceiling <= lo). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -526,7 +527,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 HEAPAx A (lh_blocks t tbl size es ++ LB) LM FRS B m md ->
 lh_open asegs A4F m t tbl size es svs ->
 nth_error es jf = Some ef -> (forall j x, (jf <= j)%nat -> nth_error es j = Some x -> le_v x = 0) ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 144 - 16 - 4096 ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 144 - 16 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] -> tp = Z_to_bv 64 A_TP -> bv_unsigned ra mod 2 = 0 ->
 a0 = Z_to_bv 64 t -> a1 = Z_to_bv 64 (ent_addr tbl (le_ix ef)) ->
@@ -600,7 +601,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 
 (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (md : config) (T : TSet)
 (A : ASA A4L HIx) (LB LM : list blk) (FRS : list frame) (B : bud) (lo : Z) (errv : word),
 HEAPAx A LB LM FRS B m md ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 16 - hl_stack A4H ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 16 - hl_stack A4H ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
 tp = Z_to_bv 64 A_TP -> bv_unsigned ra mod 2 = 0 ->
@@ -625,7 +626,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s1
 (A : ASA A4L HIx) (LB LM : list blk) (FRS : list frame) (B : bud) (lo d : Z) (junk : list byte) (errv : word),
 HEAPAx A LB LM FRS B m md -> In (d, 48) LM -> rw_cells asegs m d [CB 48 junk] ->
 rw_cells asegs m LOCALE_LOCK_A [C4 (Z_to_bv 64 0)] ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 496 ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 496 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
 tp = Z_to_bv 64 A_TP -> bv_unsigned ra mod 2 = 0 ->
@@ -648,7 +649,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 
 (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (md : config) (T : TSet)
 (A : ASA A4L HIx) (LB LM : list blk) (FRS : list frame) (B : bud) (lo d n : Z) (errv : word),
 HEAPAx A LB LM FRS B m md -> In (d, n) LM ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 16 - hl_stack A4H ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 16 - hl_stack A4H ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
 tp = Z_to_bv 64 A_TP -> bv_unsigned ra mod 2 = 0 ->
@@ -715,7 +716,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 HEAPA A4L HIx A (BS ++ LB) LM FRS B m md ->
 put_pre A4H A4F s m BS p rc ->
 a0 = Z_to_bv 64 p ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - put_stk ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - put_stk ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
 tp = Z_to_bv 64 A_TP ->
@@ -2230,7 +2231,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 HEAPAx A (lh_blocks t tbl size es ++ LB) LM FRS B m md ->
 lh_open asegs A4F m t tbl size es svs ->
 nth_error es jf = Some ef -> (forall j x, (jf <= j)%nat -> nth_error es j = Some x -> le_v x = 0) ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 144 - 16 - 4096 ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 144 - 16 - 4096 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] -> tp = Z_to_bv 64 A_TP -> bv_unsigned ra mod 2 = 0 ->
 a0 = Z_to_bv 64 t -> a1 = Z_to_bv 64 (ent_addr tbl (le_ix ef)) ->
@@ -2304,7 +2305,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 
 (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (md : config) (T : TSet)
 (A : ASA A4L HIx) (LB LM : list blk) (FRS : list frame) (B : bud) (lo : Z) (errv : word),
 HEAPAx A LB LM FRS B m md ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 16 - hl_stack A4H ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 16 - hl_stack A4H ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
 tp = Z_to_bv 64 A_TP -> bv_unsigned ra mod 2 = 0 ->
@@ -2329,7 +2330,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s1
 (A : ASA A4L HIx) (LB LM : list blk) (FRS : list frame) (B : bud) (lo d : Z) (junk : list byte) (errv : word),
 HEAPAx A LB LM FRS B m md -> In (d, 48) LM -> rw_cells asegs m d [CB 48 junk] ->
 rw_cells asegs m LOCALE_LOCK_A [C4 (Z_to_bv 64 0)] ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 496 ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 496 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
 tp = Z_to_bv 64 A_TP -> bv_unsigned ra mod 2 = 0 ->
@@ -2352,7 +2353,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 
 (F : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (md : config) (T : TSet)
 (A : ASA A4L HIx) (LB LM : list blk) (FRS : list frame) (B : bud) (lo d n : Z) (errv : word),
 HEAPAx A LB LM FRS B m md -> In (d, n) LM ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 16 - hl_stack A4H ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 16 - hl_stack A4H ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
 tp = Z_to_bv 64 A_TP -> bv_unsigned ra mod 2 = 0 ->
@@ -2417,7 +2418,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 HEAPA A4L HIx A (BS ++ LB) LM FRS B m md ->
 put_pre A4H A4F s m BS p rc ->
 a0 = Z_to_bv 64 p ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - put_stk ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - put_stk ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
 tp = Z_to_bv 64 A_TP ->

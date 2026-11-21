@@ -67,7 +67,7 @@ internal record, path startgen/runs/ifchk.AF0m-AB01.out, sha256 7e4bac087d61db4e
 
 ## gen_ad2 8a509576b937: lib/A/AD2i.v and lib/A/AD2j.v
 
-internal record, path startgen/runs/gen_ad2.cgif-pair.out, sha256 d2af4cd8608a20493ecfa3c5e74c7d6f86ef3a14983b4c691655d3ffcbf8142a (on cgif_file_fuzzer c8557374ad2e's AD2i / AD2j pair)
+internal record, path startgen/runs/gen_ad2.cgif-pair.out, sha256 d2af4cd8608a20493ecfa3c5e74c7d6f86ef3a14983b4c691655d3ffcbf8142a (on cgif_file_fuzzer's AD2i / AD2j pair)
 
 internal record, path startgen/runs/gen_ad2.pcap-AD2i.out, sha256 e35def8f3d101873808e8a3f13d0041e9feefd2c43171944aa696c401ca24800 (on libreac/fuzz_pcap's AD2i text; its AD2j output is not used)
 
@@ -88,13 +88,13 @@ internal record, path startgen/runs-30d/gen_ad2.AD2i-AWH8.out, sha256 82b1dfc7e1
 
 internal record, path startgen/runs-30d/gen_ad2.AD2i-AWH8.report.txt, sha256 a9fea049e53c6898f9d83d3313131e750f8d8d05003caf495fc0ed57d6b64b8b (its report: the output without the first two lines)
 
-internal record, path startgen/runs-30d/gen_ad2.cgif-pair.AD2j-check.out, sha256 e396d3eb46562f3f9e5d8a39e3683e1630e01dfc961c7737db775cea145c7323 (the same tool on cgif_file_fuzzer c8557374ad2e's AD2i / AD2j pair)
+internal record, path startgen/runs-30d/gen_ad2.cgif-pair.AD2j-check.out, sha256 e396d3eb46562f3f9e5d8a39e3683e1630e01dfc961c7737db775cea145c7323 (the same tool on cgif_file_fuzzer's AD2i / AD2j pair)
 
 internal record, path startgen/runs-30d/inputs-outputs.sha256, sha256 48e32b300099a2342ec2232178e24450aaff441712562cd1a799d34ade9fbb3f (the inputs and outputs)
 
 - Command: `gen_ad2.py --side A` through the set's `frozen-run.sh`, with `--month 2026-10`, `--states lib/A/AB01.v`,
   `--atable lib/A/AB12.v`, `--tsegs lib/A/AB1h.v`, `--owned provenance/startgen/AF0m.owned-with-bss-globals.v`, the image
-  and its twin, the templates (libreac/fuzz_pcap's AD2i text at 88154566652a, cgif_file_fuzzer's AD2j.v and image),
+  and its twin, the templates (libreac/fuzz_pcap's AD2i text, cgif_file_fuzzer's AD2j.v and image),
   `--world-core lib/Reusable/YA0n.v --wh8 --ad1g lib/A/AD1g.v --argh0 lib/Reusable/YA02.v`, and the module renames
   from libreac/fuzz_pcap and cgif_file_fuzzer to reac-pw/fuzz_link. Outputs: AD2i.v, AWH8.v and an AD2j that is not used.
 - Output: image sha256 059dae63e07ca2d80ae9227fa125d40586a02172c96d2b6884f8617ab912061d; states lib/A/AB01.v (HS_tfib,

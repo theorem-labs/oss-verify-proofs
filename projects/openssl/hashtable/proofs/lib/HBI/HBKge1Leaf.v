@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the state invariants take the launch record [LaunchX], and the argument area is read from it). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -18,9 +19,9 @@ Open Scope Z_scope.
 
 (* [comment removed for export] *)
 Definition hfi_stmt (fi_start : Z -> acs) : Prop :=
-  forall sp rdraw brk0 argv envp fs uid hw, valid_sp sp -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp argv envp ->
+  forall sp rdraw brk0 argv envp fs uid hw (L : LaunchX), valid_sp sp -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp argv envp ->
   forall k, 1 <= k <= 10 -> 2 ^ (15 + k) <= flen (content_of argv fs) <= 2 ^ (16 + k) - 1 ->
-  piece (SINVm HAPH sp rdraw brk0 argv envp uid hw (content_of argv fs)) (argH0 HAPH sp rdraw argv envp uid hw) (bv_unsigned sp) fs (fi_start k) TTK.
+  piece (SINVm HAPH sp rdraw brk0 argv envp uid hw L (content_of argv fs)) (argH0 sp rdraw argv envp (lx_kb L) (lx_execfn L)) (bv_unsigned sp) fs (fi_start k) TTK.
 
 (* [comment removed for export] *)
 Lemma kclass : forall n, 65536 <= n <= 2 ^ 26 - 1 -> exists k, 1 <= k <= 10 /\ 2 ^ (15 + k) <= n <= 2 ^ (16 + k) - 1.
@@ -36,15 +37,11 @@ Qed.
 Section Leaf.
   Variable sp : word.
   Variable rdraw : EntryDraw.
-  Variables brk0 mbase : word.
+  Variable brk0 : word.
   Variable lim : Z.
   Variables argv envp : list (list byte).
-  Variable fs : Fs.Fs.
-  Variable stdin : InStreams.
-  Variables uid gid hw : word.
-  Variable groups : list word.
-  Variable net : NetQueue.
-  Variables nofile sigmask : word.
+  Variables uid hw : word.
+  Variable L : LaunchX.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hbrk : valid_brk HASEGS brk0.
   Hypothesis Hlim : (AsanInit.LIMIT <= lim)%Z.
@@ -52,6 +49,8 @@ Section Leaf.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
   Hypothesis Huid : valid_id uid.
+  Hypothesis HLX : launchL HAT sp rdraw brk0 argv envp uid hw L.
+  Let fs := lx_fs L.
   Let c := content_of argv fs.
   Let argv1 := nth 1 argv [].
   Hypothesis Hargc : length argv = 2%nat.
@@ -65,8 +64,8 @@ Section Leaf.
   Lemma c_cont : c = cont.
   Proof. subst c argv1. destruct argv as [|a0 [|p [|q r]]]; try discriminate Hargc. cbn in Hlk |- *. rewrite Hlk. reflexivity. Qed.
   Lemma HF_c : 65536 <= flen c <= 2 ^ 26 - 1. Proof. rewrite c_cont. exact HK. Qed.
-  #[local] Notation SV := (SINVm HAPH sp rdraw brk0 argv envp uid hw c).
-  #[local] Notation PIECE := (piece SV (argH0 HAPH sp rdraw argv envp uid hw) (bv_unsigned sp) fs).
+  #[local] Notation SV := (SINVm HAPH sp rdraw brk0 argv envp uid hw L c).
+  #[local] Notation PIECE := (piece SV (argH0 sp rdraw argv envp (lx_kb L) (lx_execfn L)) (bv_unsigned sp) fs).
   Hypothesis HFI_A0 : forall k, 1 <= k <= 10 -> 2 ^ (15 + k) <= flen c <= 2 ^ (16 + k) - 1 -> PIECE (HBKge1A0.fi_start_a0 k) TTK.
   Hypothesis HFI_A2 : forall k, 1 <= k <= 10 -> 2 ^ (15 + k) <= flen c <= 2 ^ (16 + k) - 1 -> PIECE (HBKge1A2.fi_start_a2 k) TTK.
   Hypothesis HFI_A3 : forall k, 1 <= k <= 10 -> 2 ^ (15 + k) <= flen c <= 2 ^ (16 + k) - 1 -> PIECE (HBKge1A3.fi_start_a3 k) TTK.
@@ -75,16 +74,15 @@ Section Leaf.
   Hypothesis HFI_B2 : forall k, 1 <= k <= 10 -> 2 ^ (15 + k) <= flen c <= 2 ^ (16 + k) - 1 -> PIECE (HBKge1B2.fi_start_b2 k) TTK.
   Hypothesis HFI_B3 : forall k, 1 <= k <= 10 -> 2 ^ (15 + k) <= flen c <= 2 ^ (16 + k) - 1 -> PIECE (HBKge1B3.fi_start_b3 k) TTK.
   Hypothesis HFI_B1 : forall k, 1 <= k <= 10 -> 2 ^ (15 + k) <= flen c <= 2 ^ (16 + k) - 1 -> PIECE (HBKge1B1.fi_start_b1 k) TTK.
-  Lemma sv_init : SV (reblob (E0 HAPH sp rdraw brk0 argv envp uid hw) argv c) (FULL0 HAPH sp rdraw argv envp uid hw).
+  Lemma sv_init : SV (reblob (E0L sp rdraw brk0 argv envp uid hw L) argv c) (FULL0L HAPH sp rdraw argv envp uid hw L).
   Proof.
     apply SINVm_reblob.
-    exact (AsanPlanSound.APS.co_sinv _ _ _ _ _ _ _ _ _ _ _ _ (init_cs_ok HASEGS HAT HAPH sp rdraw brk0 mbase lim argv envp fs stdin uid gid hw groups net nofile sigmask
-                  ha_img_facts Hsp Hbrk Hlim Hva Hve Hfit Huid)).
+    exact (AsanPlanSound.APS.co_sinv _ _ _ _ _ _ _ _ _ _ _ _ (init_cs_okL HASEGS HAT HAPH sp rdraw brk0 lim argv envp uid hw L ha_img_facts Hsp Hbrk Hlim Hva Hve Hfit Huid HLX)).
   Qed.
-  Theorem kge1_leaf_sec : crz HASEGS (INITA sp rdraw brk0 mbase lim argv envp fs stdin uid gid hw groups net nofile sigmask) (T_file argv1 cont fs).
+  Theorem kge1_leaf_sec : crz HASEGS (INITA sp rdraw brk0 lim argv envp uid hw L) (T_file argv1 cont fs).
   Proof.
     destruct (kclass (flen cont) HK) as (k & Hk & HFk).
-    pose proof (HBKge1.kge1_leaf sp rdraw brk0 mbase lim argv envp fs stdin uid gid hw groups net nofile sigmask Hsp Hbrk Hlim Hva Hve Hfit Huid Hargc cont Hne Hsl Hdr Hln Hlk
+    pose proof (HBKge1.kge1_leaf sp rdraw brk0 lim argv envp uid hw L Hsp Hbrk Hlim Hva Hve Hfit Huid HLX Hargc cont Hne Hsl Hdr Hln Hlk
                   (BS6HoleKA0.s6_hole_ka0 sp rdraw brk0 argv envp fs uid hw Hsp Hva) (BFeHoleA0.fe_hole_a0 sp rdraw brk0 argv envp fs uid hw Hsp Hva) (BFeHoleOA0.fe_hole_oa0 sp rdraw brk0 argv envp fs uid hw Hsp Hva)
                   (BS6HoleKA2.s6_hole_ka2 sp rdraw brk0 argv envp fs uid hw Hsp Hva) (BFeHoleA2.fe_hole_a2 sp rdraw brk0 argv envp fs uid hw Hsp Hva) (BFeHoleOA2.fe_hole_oa2 sp rdraw brk0 argv envp fs uid hw Hsp Hva)
                   (BS6HoleKA3.s6_hole_ka3 sp rdraw brk0 argv envp fs uid hw Hsp Hva) (BFeHoleA3.fe_hole_a3 sp rdraw brk0 argv envp fs uid hw Hsp Hva) (BFeHoleOA3.fe_hole_oa3 sp rdraw brk0 argv envp fs uid hw Hsp Hva)
@@ -103,7 +101,7 @@ End Leaf.
 
 Theorem kge1_leaf_glue : hfi_stmt HBKge1A0.fi_start_a0 -> hfi_stmt HBKge1A2.fi_start_a2 -> hfi_stmt HBKge1A3.fi_start_a3 -> hfi_stmt HBKge1A1.fi_start_a1 -> hfi_stmt HBKge1B0.fi_start_b0 -> hfi_stmt HBKge1B2.fi_start_b2 -> hfi_stmt HBKge1B3.fi_start_b3 -> hfi_stmt HBKge1B1.fi_start_b1 -> file_leaf_stmt KGE1 T_file.
 Proof.
-  intros FA0 FA2 FA3 FA1 FB0 FB2 FB3 FB1 lim Hlim sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask Hsp Hbrk Hva Hve Hfit Huid Hargc cont Hne Hsl Hdr Hln Hlk HK.
-  exact (kge1_leaf_sec sp rdraw brk0 mbase lim argv envp fs stdin uid gid hw groups net nofile sigmask Hsp Hbrk Hlim Hva Hve Hfit Huid Hargc cont Hne Hsl Hdr Hln Hlk HK
-           (FA0 sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit) (FA2 sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit) (FA3 sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit) (FA1 sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit) (FB0 sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit) (FB2 sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit) (FB3 sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit) (FB1 sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit)).
+  intros FA0 FA2 FA3 FA1 FB0 FB2 FB3 FB1 lim Hlim sp rdraw brk0 argv envp uid hw L Hsp Hbrk Hva Hve Hfit Huid HLX Hargc cont Hne Hsl Hdr Hln Hlk HK.
+  exact (kge1_leaf_sec sp rdraw brk0 lim argv envp uid hw L Hsp Hbrk Hlim Hva Hve Hfit Huid HLX Hargc cont Hne Hsl Hdr Hln Hlk HK
+           (FA0 sp rdraw brk0 argv envp (lx_fs L) uid hw L Hsp Hva Hve Hfit) (FA2 sp rdraw brk0 argv envp (lx_fs L) uid hw L Hsp Hva Hve Hfit) (FA3 sp rdraw brk0 argv envp (lx_fs L) uid hw L Hsp Hva Hve Hfit) (FA1 sp rdraw brk0 argv envp (lx_fs L) uid hw L Hsp Hva Hve Hfit) (FB0 sp rdraw brk0 argv envp (lx_fs L) uid hw L Hsp Hva Hve Hfit) (FB2 sp rdraw brk0 argv envp (lx_fs L) uid hw L Hsp Hva Hve Hfit) (FB3 sp rdraw brk0 argv envp (lx_fs L) uid hw L Hsp Hva Hve Hfit) (FB1 sp rdraw brk0 argv envp (lx_fs L) uid hw L Hsp Hva Hve Hfit)).
 Qed.

@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/cgif/cgif_file_fuzzer/lib/A/AC8j.v at c8557374ad2e (st_ok_region_nth, field_of_region, as pa_i_region_nth over a restricted state and pa_i_field) and proofs/reac-pw/fuzz_role/lib/Reusable/YCbq.v at a0d3fb0309b (aj_intrin_at, as pa_i_memset_at: at OSet on rsegs, its post adds same_io from the contract's same_but_materialized); the rest of the file is new: the block lemma pa_int7 of LLVMFuzzerTestOneInput's shape-7 Int pod block and its helpers. *)
+(* Modified by Theorem Labs, 2026-10: proofs/cgif/cgif_file_fuzzer/lib/A/AC8j.v at theorem-labs/oss-verify-proofs@6b32741d849a (st_ok_region_nth, field_of_region, as pa_i_region_nth over a restricted state and pa_i_field) and proofs/reac-pw/fuzz_role/lib/Reusable/YCbq.v (aj_intrin_at, as pa_i_memset_at: at OSet on rsegs, its post adds same_io from the contract's same_but_materialized); the rest of the file is new: the block lemma pa_int7 of LLVMFuzzerTestOneInput's shape-7 Int pod block and its helpers. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_role/lib/A/RPgPropIntB.v, with its module paths and module names changed; 1062 of its 1144 lines of code are new or changed and 417 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgSteps.v at 6bdf633122fe for reac-pw/fuzz_rate's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgSteps.v for reac-pw/fuzz_rate's
    image A: module paths changed; the image is fuzz_rate.asan (images.Asan) instead of a lib/A/Img0 module; the jump
    table's site, table and targets and the fuzz_u32 sites are rate's (their registers: the cursor in s9, the shadow
    offset in s2, the original byte count in a5 / a7, no frame cell); the prefix rl_ becomes rts_; the image facts
    wx_segs_nowrap / segs-low and same_io_wvb are stated here instead of taken from a cfg walk file; the block-chaining
-   lemmas and helpers (from proofs/reac-pw/fuzz_role/lib/A/RPgW6aBase.v and RPgW6aHead.v at ef33766f272a), the
+   lemmas and helpers (from proofs/reac-pw/fuzz_role/lib/A/RPgW6aBase.v and RPgW6aHead.v), the
    intrinsic call adapter (RPgW6aHead.v w6h_intrin, for both OSet and OCpy), the generic ecall adapter, the class-3
    frame arithmetic and the frame write rights are added. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image A (fuzz_rate.asan, pinned sha256
    22bc8613d780c9a99353dc86368f9401311ef5c8358882651217836298529b6a; every address below is measured on its unstripped
    twin sha256 0d508f2c65c249840b6c8fe3c1960824f2548b175c23583632f06bb7956458c3, whose loaded bytes are the same): the

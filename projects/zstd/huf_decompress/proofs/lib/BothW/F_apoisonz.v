@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (1 recorded proof replaced by written proofs (poison_cells_highD)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -146,7 +147,11 @@ ltac2:(rds2_run [(constr:(6203920%Z), constr:(6345424%Z))] (kr_t_F_apoisonz ()) 
 (* [comment removed for export] *)
 Lemma poison_cells_highD : forall W m m', poison_cells m -> munch W m m' -> Forall (fun iv => AIMG_HI <= fst iv) W -> poison_cells m'.
 Proof.
-ltac2:(KReplay.run1 (kr_t_F_apoisonz ()) ["CANSEC1"] "p'0h07__arithh14__ffh28__varmaph35__with41Wh51Ah64__p1h74__x1h84__x2h94__x3h:4__x4h;1nh<1Dh=2H1h>2H2h?2HAh@2HWhA2IHhB2MUhC2PChD2hihE2ivhF1lhG2lohH1mhI2m'hJ1xi001pi011zp;1p;3p;2p;4p;6p;7p;<p;8p10000R0p4p710p1000gp4p710R1p8P0p4p7210P1p8p1001Ep4p710P1p8p1002:p4p7210P1p8g002fj1DTg003Fj11Tg003kj1GTg004Ij1OTg004lj1gTg005Nj1_Tg009Mj3\Tg00HLR1j2ZTg00Hlj2>Tg00IHj3ETg00:Aj3<Tg0075j1NTg00?@j3CTg00Iij4MTg00JIj2LTg00E;j1KTg00Jcj2BTg00KLj3JTg00L5j2]Tg00Laj2ITg00M?j1[Tg00M]j4HTg00N;j1YTg00NYj1XTg00ODj2@Tg007Uj17Tg00Ogj1WTg00PIj6VTg00Pmj7UTg00QQj2RTg00R3j2QTg00RMj2PTg00S9j3STg00SSj3TTg00T2j4jTg00>0j4iTg00Tdj7hTg008:j1?Tg00UGl<fTg00VPj3cTg00Vmj2bTg00WJj3aTg00Wmj4`Tg00XXj7dTg00Y<j8eTg00Y`j2^Tf0R0#1#1p=5g00ZCR2?c20p=Af2R3f1R4'b/>0p=4Aa240p=:P3g00ZaR5g00[@R6P6g00[`R7P2P4g00\@P0C`g00\gFdp=6f3R8P5P6P6P7P3P4P0Gep=F%10#7p=0%70#1p=3%10#1#1#1p==%70#7p=9%10#?p=81^20p=2%10#7#7#7p=;g00B@#Dg00C2R9#1R:#5R;#1R<#5#G#O%G;#O#g[R=%_4A\8341Z22R>g00]GR?%A0'>XE>R@f4RA3EA440?RBP>P@%D>RCA<083W4g00^?%N>?<34eP1P2P2%A4,>?AE>@4R@f7R1f6RD5<3AC>A8f8RE;<1[[[^FCP0P2P2P3P4CM#A,>?f:R1f95<3f;RFf5RG7411>AF'LA<8F1p-0RHg00^[RIg00GmRJ#KRK#K,B21B2K1B2J5J25J2g00_G']%NIRJ3C%DIRIP21I23P4P21I2AP8%[2RKCHCH%Y2RL%X2RM1@291@2:':RN%7:,@2R:56M%W6ROPM%79RP,@2RQ96M:POPMP5P6P6P7A6MNQPMP5P6P6P7PDEVFUCFCF1RM7R7P0P3g00`3R6g00`SR5'Q1P03=S65dg00CW=T24CjR5b1b2b3X72X82X92X:2W6A40481>A8A438A/LD[[^72^82^92^:2^6HP0f<RH,>GP?PDPFPHP1P8O7b0P0CiP2P2PGPACM=C>8?<F1eWAX>@W=X4CXD2XG2P4P0O2n2001100000121101101XJ>PEP8FhW?X;2X52A<E34\B^;2^52PDPGPAP8P3P0%09#3#0#=#3#5#9#5#8R3%1P#5RP#8R8PJPIPKPL%23%28':%79#=#;#3#5#=#=#8RA#2RG56MP7P5b1b2b3A438AP0b0O3P0%09#3#0#=#3#3#0#5#8R8%?;R;PJPIPKPL%28%2;R3':=6MGP7P5b1b2b3A48;AP0b0O3P0%09#3#;#9#9#0#=#8R8%?<R<PJPIPKPL%28%2<':=6MGP7P5b1b2b3A48<AP0b0O3P0%;9#0#5#0#;#9#5#8R<P;PJPIPKPL%2</:3=6MGP7P5b1b2b3A4<;AP0b0O3P0%;9#0#;#9#9#=#8R<%?PRPPJPIPKPL%2<%2P':=6MGP7P5b1b2b3A4<PAP0b0O3P0%;9#5#9#0#3#3#9#3#8RP%?9R<PJPIPKPL%2P%2<':=6MGP7P5b1b2b3A4P<AP0b0O3P0%19#3#0#;#9#0#0#=#8R9P;PJPIPKPL%29/:3=6MGP7P5b1b2b3A49;AP0b0O3M<fb<W@WBWCXI=WHW4o"). Qed.
+  intros W m m' PC MU HW.
+  assert (D : forall A n, A + n <= AIMG_HI -> disjoint_from W A n).
+  { intros A n HA. clear MU PC. induction HW as [|[lo hi] W H1 H2 IH]; cbn in *; [exact I|]. split; [lia| apply IH]. }
+  unfold AIMG_HI in D. eapply poison_cells_frameD; [exact PC | exact MU | ..]; apply D; lia.
+Qed.
 Lemma premap_cells_highD : forall W m m', premap_cells m -> munch W m m' ->
   Forall (fun iv => AIMG_HI <= fst iv /\ (snd iv <= 0x60d2d0 \/ 0x60d558 <= fst iv)) W -> premap_cells m'.
 Proof.

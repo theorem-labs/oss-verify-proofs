@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: made from lib/A/Prog/PaCall.v (cl_callS), PaNoChain.v (cl_callS_na, cl_callS_wide), PaCallPg.v (cl_callS_pg), PaArt.v (aj_art_at) and PaArtOwn.v (aj_art_own_at, aj_art_blk_at) for fuzz_command's program walk after statement pass 4 (CmdBase.v's apost_baseF): the relation fxrel between the FP state at a function's entry and the FP state a call returns (apost_baseF's two FP clauses), its reflexivity and transitivity and the rounding-mode-0 fact it carries; the lifts between apost_base and apost_baseF; the call rules for a callee whose post is apost_baseF and the steps through a runtime entry whose post is art_post at some FP state (with the bridge from the shared snprintf / sprintf post, lib/A/Rt/RtPFShared.v and RtPFCmd.v, to that form). Each proof is the original's with the FP-state existential added. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/Prog/PaFx.v (origin/ossv/recipes 501c0d516c69) for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths; csym -> ssym; CmdSyms, CmdPa -> SegSyms, SegPa; CmdBase -> SegPgBase SegBase. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/Prog/PaFx.v for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths; csym -> ssym; CmdSyms, CmdPa -> SegSyms, SegPa; CmdBase -> SegPgBase SegBase. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

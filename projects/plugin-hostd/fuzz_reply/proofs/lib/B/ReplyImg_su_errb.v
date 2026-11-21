@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises); the input-owned, top-anchored launch stack; the start-up certificate per CONFIG_RSEQ flag with states computed in the build); internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, for a Theorem Labs lane's cf layer at plugin-hostd/fuzz_reply). *)
 (* Pool row img-su-errb-B (REPLY-IMG-ROWS.md (sha256 a33a582e3ffd; internal record), row img-su-errb-B; CF-UNIT-HYPS.md:156 (sha256 77b3f94c95d2; internal record)): the error-message-buffer object and
    the per-class exhausted bytes read 0 at the start, at plugin-hostd/fuzz_reply's asan-ubsan image (reply B).
-   The B twin of row img-su-errb-A (a working branch debf290cef7, lib/A/ReplyImg_su_errb.v):
+   The B twin of row img-su-errb-A (a working branch, lib/A/ReplyImg_su_errb.v):
    the same statements over B's start-up certificate.  Proves no function (kind: start-up lemma).
    They are the start witnesses of the cf layer's errb_cells_cf / exh_cell_cf (a Theorem Labs lane's frame/ERRB-EXH-DRAFT.v), stated
    here UNFOLDED because the reply tree carries no cf layer yet:
@@ -25,7 +26,7 @@ BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
 From OSSVerify.plugin_hostd.fuzz_reply.images Require Import AsanUbsan.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YK11 YP09 YK00 YK04 YA0i YA0n YK0g YK0c YK0d YK0e YK0f YK09 YA01 YA0c YA0e YA0d YA02 YA0j.
-From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import YB12 YB1h YB13 YB01.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import YB12 YB1h YB13 YB01r.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YG00 YG01 YG0f YG0v YG0n YG0r YG0b.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import YF0m.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YM05 YD1h.
@@ -49,7 +50,7 @@ Definition RINFO_ZERO : kentry := KZero (SA YD1g.eSp1 137439019008) (ELit 4096).
 
 Definition su_errb_check (ch : acs) : bool :=
 (kn_img ch ERRB_OBJ ERRB_OBJ_LEN && kn_mem RINFO_ZERO ch)%bool.
-Lemma su_errb_check_all : forallb su_errb_check HS_tfib_list = true.
+Lemma su_errb_check_all : forallb su_errb_check HS_tfib_list_all = true.
 Proof. vm_compute. reflexivity. Qed.
 
 (* The object lies in the image's .bss: every byte's segment value is 0. *)
@@ -67,22 +68,31 @@ Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv (in_argv inp).
 Variable h : nat.
 Variables (ch : acs) (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model).
-Hypothesis Hch : HS_tfib h = Some ch.
+Hypothesis Hch : HS_tfib_r (rseq_z (kb_rseq (in_kernel inp))) h = Some ch.
 #[local] Notation argv := (in_argv inp).
 #[local] Notation envp := (in_envp inp).
 #[local] Notation uid := (in_uid inp).
 #[local] Notation hw := (in_hwcap inp).
-#[local] Notation SINV := (YA02.SINV0 TSEGS TPH sp rdraw brk argv envp uid hw).
-#[local] Notation argH := (YA02.argH0 TPH sp rdraw argv envp uid hw).
+(* LPS 727298f3: the invariant abstract and the input's own fields, as A/AD2k.v's Section e. *)
+Variable SINV : env -> (word -> option byte) -> Prop.
+#[local] Notation argH := (YA02.argH0 sp rdraw argv envp
+  (in_image_fs inp) (in_stdin inp) uid (in_gid inp) hw (in_groups inp) (in_net inp)
+  (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp) (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp)).
 #[local] Notation TOP := (YA02.TOP sp).
 #[local] Notation LIM := YA02.LIMIT.
+Hypothesis SINV_sp0 : forall E' M, SINV E' M -> uE E' e_sp0 = TOP + 8388608.
 Hypothesis HC : cs_ok TSEGS TFIB LIM TOP SINV argH (in_fs inp) E ch R FULL model.
 Context {rc : YM05.RunCeil}.
 #[local] Notation MR := (Mr TFIB TOP argH E ch model FULL).
 #[local] Notation m1 := (mrestrict (YD2i.H1 sp rdraw inp ch E model) FULL).
 #[local] Notation u := (uE E).
-Let CHK : su_errb_check ch = true := proj1 (forallb_forall _ _) su_errb_check_all ch (HS_tfib_In h ch Hch).
+Let CHK : su_errb_check ch = true := proj1 (forallb_forall _ _) su_errb_check_all ch (HS_tfib_r_In _ h ch Hch).
 Let MRm1 := YD2i.mbyte_MR_m1 sp rdraw inp Hsp Hva ch E FULL model.
+(* AD1g's lemmas at this section's arguments, whatever subset each one takes (A/AD2k.v's Section e). *)
+Ltac inst H := try specialize (H sp); try specialize (H rdraw); try specialize (H brk); try specialize (H inp);
+try specialize (H Hsp); try specialize (H Hva); try specialize (H h); try specialize (H ch);
+try specialize (H E); try specialize (H R); try specialize (H FULL); try specialize (H model); try specialize (H Hch);
+try specialize (H SINV); try specialize (H SINV_sp0); try specialize (H HC).
 
 (* errb_cells_cf's cells at the start: the 56 bytes of the error-message-buffer object read 0. *)
 Theorem errb_obj_zero_start : val_mem tfibsegs m1 ERRB_OBJ 56 0.
@@ -106,7 +116,7 @@ val_mem tfibsegs m1 (ly_space (YD1g.ly0 ch E model) + kRegionInfoOff + 128 * c +
 Proof.
 intros c Hc.
 pose proof CHK as H. unfold su_errb_check in H. apply andb_prop in H as [_ Kzero].
-pose proof (YD1g.uSp sp rdraw brk inp h ch E R FULL model Hch HC) as (S1 & _).
+pose proof (@YD1g.uSp) as US. inst US. destruct US as (S1 & _).
 intros k Hk. destruct k as [|k]; [|lia]. cbn [Z.of_nat]. rewrite Z.add_0_r.
 pose proof (ho_zero_at TSEGS TFIB LIM TOP SINV argH (in_fs inp) E ch R FULL model HC _ _ Kzero (128 * c + 68)) as Z0.
 unfold elenZ, estart in Z0. cbn [a_base a_off edenot] in Z0. rewrite u64_lit in Z0 by lia.

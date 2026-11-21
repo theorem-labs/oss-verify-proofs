@@ -6,12 +6,14 @@
    The run also keeps every hidden byte (fsteps_keeps_hidden; SRr_fevt_hid hands that fact to the continuation,
    in the form YCbq.ajournal_exec takes). And a world walk does not tell apart two register maps that agree on
    every register but x0 (SRr_xregs_eqv, from srealizes_cfg_eqv: lib/Lib/Regs6ss.v's step transport). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed SRr_fevt_hid, srealizes_cfg_eqv). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YK0i YK11 YK04 YK04R YA0n.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YK18.
+From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require RomBase.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require MState Regs6ss.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
@@ -77,6 +79,9 @@ End e.
 
 Section g.
 Variable segs : list Segment.
+(* 08b1429: the step transport holds over segments with no vDSO image (Regs6ss.NoVdso); a concrete image
+   closes it by computation through Regs6ss's global hint, so callers pass nothing new. *)
+Context `{Hnv : Regs6ss.NoVdso segs}.
 
 (* srealizes (YK18.v) cannot tell apart two configurations that are Regs6ss.cfg_eqv (same registers but x0, the
    rest equal): Regs6ss.sstep_xport moves each step to the other configuration, xport_round_trip moves it back. *)
@@ -87,17 +92,26 @@ Proof.
   induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c Hsp Hh | c T T' H IH Heq]; intros c' Heqv.
   - destruct c as [ms mo], c' as [ms' mo'], Heqv as [Hms Hmo].
     cbn [cfg_ms cfg_model] in Hms, Hmo. subst mo'.
-    destruct Hnode as [Hfwd Hexact].
+    destruct Hnode as [Hfwd [Hexact Hrob]].
     apply (YK18.srz_node segs (mkCfg ms' mo) I evs (fun i => Regs6ss.xport_cfg segs ms ms' (nx i)) T i0).
-    + split.
-      * intros i. exact (proj1 (Regs6ss.sstep_xport segs ms ms' mo (evs i) (SNext (nx i)) Hms (Hfwd i))).
+    + split; [|split].
+      * intros i. exact (proj1 (Regs6ss.sstep_xport segs Hnv ms ms' mo (evs i) (SNext (nx i)) Hms (Hfwd i))).
       * intros e st Hst.
-        destruct (Regs6ss.sstep_xport segs ms' ms mo e st (Regs6ss.ms_eqv_sym ms ms' Hms) Hst) as [Hst0 _].
+        destruct (Regs6ss.sstep_xport segs Hnv ms' ms mo e st (Regs6ss.ms_eqv_sym ms ms' Hms) Hst) as [Hst0 _].
         destruct (Hexact e _ Hst0) as (j & -> & Hj).
         exists j. split; [reflexivity|].
-        rewrite <- (Regs6ss.xport_round_trip segs ms ms' mo (evs j) st Hms Hst), Hj. reflexivity.
+        rewrite <- (Regs6ss.xport_round_trip segs Hnv ms ms' mo (evs j) st Hms Hst), Hj. reflexivity.
+      * (* sys_rob (Reusable/RomBase.v) moves along ms_eqv: same rom, same pending call, same input. *)
+        unfold RomBase.sys_rob. intros r x8 Hr Hsv o. cbn [cfg_ms cfg_model] in Hr, Hsv |- *.
+        pose proof Hms as (_ & _ & _ & Hsvc & _ & _ & _ & Hro).
+        assert (Hw : Regs6ss.ms_eqv (RomBase.wrom ms r) (RomBase.wrom ms' r)).
+        { clear - Hms. destruct ms as [R F pc svc rv fc m ro], ms' as [R' F' pc' svc' rv' fc' m' ro'].
+          destruct Hms as (HR & HF & Hpc & Hs & Hrv & Hfc & Hm & _). cbn in *.
+          unfold RomBase.wrom; cbn. repeat split; first [assumption | reflexivity]. }
+        rewrite <- (Regs6ss.sys_input_eqv segs _ _ x8 Hw), <- (Regs6ss.sys_input_eqv segs ms ms' x8 Hms).
+        exact (Hrob r x8 ltac:(cbn [cfg_ms]; rewrite Hro; exact Hr) ltac:(cbn [cfg_ms]; rewrite Hsvc; exact Hsv) o).
     + intros i. apply (IH i).
-      exact (proj2 (Regs6ss.sstep_xport segs ms ms' mo (evs i) (SNext (nx i)) Hms (Hfwd i))).
+      exact (proj2 (Regs6ss.sstep_xport segs Hnv ms ms' mo (evs i) (SNext (nx i)) Hms (Hfwd i))).
   - apply YK18.srz_halt. destruct Heqv as [_ Hmo]. rewrite <- Hmo. exact Hh.
   - destruct Hsp as [[] _].
   - exact (YK18.srz_conseq segs c' T T' (IH c' Heqv) Heq).

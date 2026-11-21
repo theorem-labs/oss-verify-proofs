@@ -1,5 +1,5 @@
 (* plain_halts of reac-pw/fuzz_pin from the frame and the slot of LLVMFuzzerTestOneInput: libreac/fuzz_ctrl's released
-   Prog/Seg/Segs.v + Prog/Seg/SlotLink.v (origin/ossv/recipes 25e3d17bdb50) for pin's three segments.
+   Prog/Seg/Segs.v + Prog/Seg/SlotLink.v for pin's three segments.
    - segs_holds: the segment lemmas (LLVMFuzzerTestOneInput_c.seg_lemmas) for every instance that satisfies
      FrameAPI.frame_facts_plain, from Seg/E01.v (memchr: the released leaf Prog/memchr.v), Seg/M01.v (pin_mid_contract,
      proved by Prog/pin_mid.v from memcpy and strlen (released leaves) and the contracts of pin's own callees) and

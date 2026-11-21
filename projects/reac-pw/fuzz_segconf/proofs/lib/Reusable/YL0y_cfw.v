@@ -4,6 +4,7 @@
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YL0y.v, with its module paths, addresses and numbers changed. *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/reac-pw/fuzz_rate/lib/Reusable/YL0y.v; 37 of its 146 lines of code are new or changed and 39 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/reac-pw/fuzz_rate/lib/Reusable/YL0y_cfw.v, with its module paths, addresses and numbers changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the auxv layout over the CONFIG_RSEQ flag; the launch's ProcInput). *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -25,34 +26,42 @@ Open Scope bv_scope.
 Open Scope Z_scope.
 Section b. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Section c.
+Local Set Default Proof Using "All".
 Variable sp : word.
-Variable argv envp : list (list byte).
+Variable inp : ProcInput.
+Variables mbase brk : word.
 Variable tid : word.
 Variable rnd : EntryDraw.
+Local Notation argv := (in_argv inp) (only parsing).
+Local Notation envp := (in_envp inp) (only parsing).
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp.
 Hypothesis Hfits : entry_stack_fits sp argv envp.
 Hypothesis Hargc : (length argv <> 2)%nat.
+Local Notation HvaI := Hva (only parsing).
 Theorem src0_usage_cf : forall ms model,
-st_ok src0segs (E_main sp argv envp tid rnd) (add_cond ss_main_f (mkAC BC_NE (SOff 3 0) (SLit 2))) ms ->
-runs_at (bv_unsigned sp) (ms_mem ms) (runs_main false sp argv envp rnd) ->
+st_ok src0segs (E_main sp inp tid rnd) (add_cond ss_main_f (mkAC BC_NE (SOff 3 0) (SLit 2))) ms ->
+runs_at (bv_unsigned sp) (ms_mem ms) (runs_main false sp inp rnd) ->
 m_halted model = None -> m_vm_lazy model = [] -> fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) model ->
 crealizes src0_msyms (mkCfg ms model) (diag (msg_usage (nth 0 argv [])) (m_fs model)).
-Proof using Hsp Hva Hve Hfits Hargc.
+Proof.
 intros ms model HS HR Hh Hlz Hfd2.
+pose proof (stack_tail_end src0segs Plain_phdrs inp mbase Plain_init_pc sp brk rnd Hsp HvaI Hve Hvl Hlau) as STE.
 unfold diag, wr, ex, ch_stderr. rewrite msg_usage_eq.
-pose proof (argc_bounds argv Hva) as HA.
-pose proof (layout_facts sp argv envp Hsp Hva Hve) as L. unfold SP_LO, SP_HI in L.
-pose proof (z_argv_bounds sp argv envp 0 ltac:(lia)) as B0.
-pose proof (argv_no_nul argv Hva 0 ltac:(lia)) as Hnul.
-pose proof (argv_str_len argv Hva 0 ltac:(lia)) as Hlen0.
-pose proof (ewm1 sp argv envp Hsp Hva Hve rnd tid) as H1.
-pose proof (ew0 sp argv envp (xw_main sp argv envp tid rnd) (xd_main rnd)) as H0.
-change (E0 _ _ _ _ _) with (E_main sp argv envp tid rnd) in H0.
-pose proof (ew3 sp argv envp Hva (xw_main sp argv envp tid rnd) (xd_main rnd)) as H3.
-change (E0 _ _ _ _ _) with (E_main sp argv envp tid rnd) in H3.
-pose proof (z_argv_fits sp argv envp Hfits 0 ltac:(lia)) as F0. unfold SP_HI in F0.
+pose proof (argc_bounds src0segs Plain_phdrs inp mbase Plain_init_pc sp brk rnd Hsp HvaI Hve Hvl Hlau) as HA.
+pose proof (layout_facts src0segs Plain_phdrs inp mbase Plain_init_pc sp brk rnd Hsp HvaI Hve Hvl Hlau) as L. pose proof (auxv_bytes_range (kb_rseq (in_kernel inp))) as ARL. unfold SP_LO, SP_HI in L.
+pose proof (z_argv_bounds src0segs Plain_phdrs inp mbase Plain_init_pc sp brk rnd Hsp HvaI Hve Hvl Hlau 0 ltac:(rewrite ?Hargv; cbn; lia)) as B0.
+pose proof (argv_no_nul src0segs Plain_phdrs inp mbase Plain_init_pc sp brk rnd Hsp HvaI Hve Hvl Hlau 0 ltac:(rewrite ?Hargv; cbn; lia)) as Hnul.
+pose proof (argv_str_len src0segs Plain_phdrs inp mbase Plain_init_pc sp brk rnd Hsp HvaI Hve Hvl Hlau 0 ltac:(rewrite ?Hargv; cbn; lia)) as Hlen0.
+pose proof (ewm1 inp mbase sp brk rnd Hsp HvaI Hve Hvl Hlau tid) as H1.
+pose proof (ew0 src0segs Plain_phdrs inp mbase Plain_init_pc sp brk rnd Hsp HvaI Hve Hvl Hlau 1 ltac:(lia) (xw_main inp rnd tid) (xd_main rnd)) as H0.
+change (E0 _ _ _ _ _ _ _ _) with (E_main sp inp tid rnd) in H0.
+pose proof (ew3 src0segs Plain_phdrs inp mbase Plain_init_pc sp brk rnd Hsp HvaI Hve Hvl Hlau 1 ltac:(lia) (xw_main inp rnd tid) (xd_main rnd)) as H3.
+change (E0 _ _ _ _ _ _ _ _) with (E_main sp inp tid rnd) in H3.
+pose proof (z_argv_fits src0segs Plain_phdrs inp mbase Plain_init_pc sp brk rnd Hsp HvaI Hve Hvl Hlau 0 ltac:(rewrite ?Hargv; cbn; lia)) as F0. unfold SP_HI in F0.
 sym_norm HS.
 csym_run_to_with src0tbl_ok HS 0x1e430.
 cfpf_memchr HS HR 1%nat 2%nat 1%nat 10%nat (nth 0 argv []).
@@ -145,8 +154,8 @@ csrc0_exit_tac HS. }
 Qed.
 End c.
 Theorem src0_usage_hyp_cf : usage_hyp_cf.
-Proof using.
-unfold usage_hyp_cf. intros sp argv envp tid rnd ms model Hsp Hva Hve Hfits Hargc HS HR Hh Hlz Hch.
-exact (src0_usage_cf sp argv envp tid rnd Hsp Hva Hve Hfits Hargc ms model HS HR Hh Hlz Hch).
+Proof.
+unfold usage_hyp_cf. intros sp inp mbase brk tid rnd ms model Hsp Hva Hve Hvl Hlau Hfits Hargc HS HR Hh Hlz Hch.
+exact (src0_usage_cf sp inp mbase brk tid rnd Hsp Hva Hve Hvl Hlau Hfits Hargc ms model HS HR Hh Hlz Hch).
 Qed.
 End b.

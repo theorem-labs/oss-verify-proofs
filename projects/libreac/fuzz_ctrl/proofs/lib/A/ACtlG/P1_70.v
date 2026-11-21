@@ -6,6 +6,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/R6.v, with its module names and numbers changed; 1086 of its 1232 lines of code are new or changed and 1651 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/R7tail.v; 1150 of its 1202 lines of code are new or changed and 1180 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/R7.v, with its module names changed; 329 of its 397 lines of code are new or changed and 1134 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/P1_70.v -- GLUE for stage seg_P1_70 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput
    (lib/A/ACtl.v:713):
      glue_seg_P1_70 : forall POST, CF POST C_A81b10 -> CF POST C_A81ac8
@@ -13,14 +14,14 @@
    seg_P1_70.  Written by a Theorem Labs lane's glue lane (piece W3a: P1, P1_70, P2, P4); single writer.
    rule 24: no function proved (stage glue of a walk).
 
-   THE SEGMENT (Seg/P1.v at U 6a74d5929d2, seg_P1_70 :728; v1.9 0x81ac8 -> 0x81b10): li s2,-8 ; fourteen one-byte
+   THE SEGMENT (Seg/P1.v at U, seg_P1_70 :728; v1.9 0x81ac8 -> 0x81b10): li s2,-8 ; fourteen one-byte
    stores `sb s2,K(s3)` into the frame shadow Sh = S(fr) (K = 272..276, 282..290) ; li a1,187 ; ld a0,152(s1) ;
    jal __asan_set_shadow_f8 (0x55008), return pc 0x81b10.  The callee fills [Q, Q + 187) of the frame shadow with
    0xf8 (Q is the [A + 152] spill, Sh <= Q, Q + 187 <= Sh + 328).
 
    THE RUN LIFTED, ONE PIECE (the split rule, a Theorem Labs lane 04:01Z / 04:3xZ: __asan_set_shadow_f8 has a PROVED footprint
    contract, so the stretch is consumed whole): a Theorem Labs lane's two ROUTE-(C) stretches of P1.p1_evt
-   (lib/A/Prog/Seg/P1F.v, a working branch e4cf770da9b, blob 1dc297b725a), p1_evt_pre_F_on (:322, 0x81ac8
+   (lib/A/Prog/Seg/P1F.v, a working branch, blob 1dc297b725a), p1_evt_pre_F_on (:322, 0x81ac8
    -> the callee entry) and p1_evt_post_F_on (:387, the return pc, no step), joined by a Theorem Labs lane's PROVED footprint
    contract asan_set_shadowF.asan_set_shadow_f8_holds_F (asan_set_shadowF.v:172) over memset.memset_holds, exactly
    as P1F's p1_evt_of_pre_post_on (:422) joins them with the plain contract.  The join runs on `normalize rsegs m`
@@ -50,13 +51,13 @@
          ctl_rt_C  AsanRTFacts.asan_cells_kept; cut_shadow and img_shadow through the run's keep conjunct; the
                    run's ro_agree.
 
-   CITED BY NAME: a Theorem Labs lane's PROVED A.ProgWorld.ajournal_of_fsteps (ProgWorld.v (at head lib/A/ProgWorld.v:1091; from a working branch 7f07ac65e7b))
+   CITED BY NAME: a Theorem Labs lane's PROVED A.ProgWorld.ajournal_of_fsteps (ProgWorld.v (at head lib/A/ProgWorld.v:1091; from a working branch))
    and a Theorem Labs lane's PROVED A.ACtlG.KitMem.kitmem_rng_frame_sh / kitmem_addressable_mrd / kitmem_mrd_munch
-   (a working branch 4a56e997c0f, merged).
+   (a working branch, merged).
    ALSO CITED: a Theorem Labs lane's PROVED, premise-free A.ProgWorld_Fs.ctl_frame_above_img (a live fake frame lies above
    the image; a Theorem Labs lane 07:4xZ: cited instead of the Section hypothesis kit_frame6_above_img).
    SECTION HYPOTHESES (exact text below)
-   (KitMem K3 is a Theorem Labs lane's PROVED A.ACtlG.KitMem.kitmem_input_apart, a working branch dcdc870e8ff.)
+   (KitMem K3 is a Theorem Labs lane's PROVED A.ACtlG.KitMem.kitmem_input_apart, a working branch.)
    - LAWS       : the core's AR laws (ACtl.v:183).
 
    CLOSURE: every Require is qualified; the six doubled Reusable modules and lib/Lib, lib/Prog are named by
@@ -111,10 +112,10 @@ Module LRngBytes := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.RngBytes.
 Local Notation segs := A.AB1v.tfibsegs.
 
 (* ---------------------------------------------------------------------------------------------------------
-   The composite run, ROUTE (C): a Theorem Labs lane's two `_on` stretches (written on a working branch e4cf770da9b) of P1.p1_evt (lib/A/Prog/Seg/P1F.v (an earlier version, blob 1dc297b725a, not in this delivery):
+   The composite run, ROUTE (C): a Theorem Labs lane's two `_on` stretches (written on a working branch) of P1.p1_evt (lib/A/Prog/Seg/P1F.v (an earlier version, blob 1dc297b725a, not in this delivery):
    p1_evt_pre_F_on :322 and p1_evt_post_F_on :387) joined
    by the PROVED footprint contract of __asan_set_shadow_f8, on the normalized memory, moved to the cut's memory
-   (ro_agree).  Its region premise is a Theorem Labs lane's P1.p1_evt_shadow_R Sh Q (Seg/P1.v b2bcfe72edf (the blob this tree had at release c5e779efe8c), :224): the 14
+   (ro_agree).  Its region premise is a Theorem Labs lane's P1.p1_evt_shadow_R Sh Q (Seg/P1.v b2bcfe72edf (the blob this tree had at release), :224): the 14
    frame-shadow store targets of stretch 1 and the callee's destination [Q, Q + 187), which p1_rw_of_shadow_on reads
    and needs writable.  Its post carries every region present and writable at entry (the keep form of route (C))
    where the old one carried the universal A.AsanRT.shadow_rw, which route (C)'s cut no longer has.  The callee's

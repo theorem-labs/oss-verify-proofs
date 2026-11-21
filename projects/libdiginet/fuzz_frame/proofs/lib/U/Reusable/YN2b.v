@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN2b.v, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/Reusable/YN2b.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_frame; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_frame.lib. *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/Reusable/YN2b.v for libdiginet/fuzz_frame; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_frame.lib. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (ledger_x_munmap); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_frame.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -164,7 +165,22 @@ assert (Hlen : 0 < rg_len rg).
 assert (Ebase : bv_unsigned (Z_to_bv 64 (ly_reg L r)) = ly_reg L r).
 { rewrite Z_to_bv_unsigned. apply bv_wrap_small. change (bv_modulus 64) with (2 ^ 64). lia. }
 assert (VM : vm_maps (m_vmmaps (munmap_model (Z_to_bv 64 (ly_reg L r)) (Z_to_bv 64 (rg_len rg)) md))
-= map_remove (vm_maps (m_vmmaps md)) (Z_to_bv 64 (ly_reg L r))) by reflexivity.
+= map_remove (vm_maps (m_vmmaps md)) (Z_to_bv 64 (ly_reg L r))).
+{ (* 08b1429: munmap_model cuts with maps_subtract; on an exact mapping disjoint from the others
+     that is map_remove (YK0v.maps_subtract_exact, the model's MmapSim helper). *)
+transitivity (maps_subtract (vm_maps (m_vmmaps md)) (bv_unsigned (Z_to_bv 64 (ly_reg L r)))
+(bv_unsigned (Z_to_bv 64 (ly_reg L r)) + bv_unsigned (Z_to_bv 64 (rg_len rg)))); [reflexivity|].
+apply maps_subtract_exact.
+- rewrite Elen. exact Hlen.
+- intros b s Hbs. exact (proj1 (lx_maps _ _ _ X _ Hbs)).
+- intros b s Hbs Eb. subst b.
+destruct (lx_disj _ _ _ X _ _ Hbs Hin) as [E|D]; [injection E as ->; reflexivity|].
+exfalso. unfold ranges_disjoint, iv_lo, iv_len in D. cbn [fst snd] in D.
+pose proof (proj1 (lx_maps _ _ _ X _ Hbs)) as Hs. unfold iv_len in Hs. cbn [snd] in Hs.
+rewrite Elen in D. lia.
+- intros b s Hbs Hne.
+destruct (lx_disj _ _ _ X _ _ Hbs Hin) as [E|D]; [injection E as -> _; exfalso; exact (Hne eq_refl)|].
+unfold ranges_disjoint, iv_lo, iv_len in D. cbn [fst snd] in D. rewrite Elen in D. lia. }
 split; rewrite ?VM.
 - intros r2 rg2 x Hr2 Hl2 Hx. rewrite HA' in Hr2.
 destruct (Nat.eqb_spec r2 r) as [->|Hne]; [injection Hr2 as <-; discriminate|].

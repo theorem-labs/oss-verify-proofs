@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* The proofs in this file are Anthropic's; the theorem statements were issued by the task authors and are reproduced as issued (see NOTICE). *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-11: the UBSan build's halting theorem and its allowed-exits module, copied in this file from OpensslBignumHaltsPlainExits and halts_allowed_openssl_bignum_halts_plain at 874e3397a35 with the UBSan image and TopBignumHaltsU.halts_bignum_ubsan, and the require of TopBignumHaltsU. *)
+(* Modified by Theorem Labs, 2026-11: the UBSan build's halting theorem and its allowed-exits module, copied in this file from OpensslBignumHaltsPlainExits and halts_allowed_openssl_bignum_halts_plain with the UBSan image and TopBignumHaltsU.halts_bignum_ubsan, and the require of TopBignumHaltsU. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import NArith List.

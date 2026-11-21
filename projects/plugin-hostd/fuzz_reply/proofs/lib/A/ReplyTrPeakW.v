@@ -1,5 +1,5 @@
 (* The count half of LS v3, part 2: the per-call count premise inside a callee, as a weighted peak over its trace.
-   room_live_call_keep (a Theorem Labs lane; cfdriver Reusable/YGcfRoomLive.v:1399) needs, at the PRE of every allocator call,
+   room_live_call_keep (a Theorem Labs lane; cfdriver Reusable/YGcfRoomLive.v:1400) needs, at the PRE of every allocator call,
    sec_cnt S <= 1,024 /\ ccnt24 S <= 2^15 /\ the per-class primary counts <= RL_PRIM c.  Inside a callee the state at
    its k-th call is the callee's start state plus the trace's first k events, so the callee's premise is
    `cnt S + tr_peak_w w tr <= LIM`, with w the event's count weight (1 when the request is secondary / in the class,

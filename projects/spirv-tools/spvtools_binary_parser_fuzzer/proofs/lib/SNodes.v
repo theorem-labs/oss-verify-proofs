@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's channel reader as a premise of the writes; path_at's bound below TASK_SIZE; the robustness of each node's system call over a larger read-only backing (RomBase.sys_rob), which the walk's nodes now ask, proved at each node). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool Classical.
@@ -12,6 +13,7 @@ From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC.
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Import Amb RelSpec
   SimInv ExitSim PropExec CatExec CatSim SeqExec StreamExec MmapSim AllocSim FileSim
   ShapeAlg Nodes StoreOk AgentLib AgentNodes PlacementGap RefNodes DivergeSim SRealizes.
+From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib.Common.Cfg Require RomBase RomWrite.
 #[global] Unset Lia Cache. #[global] Unset Nia Cache. #[global] Unset Nra Cache.
 Import ListNotations.
 Open Scope bv_scope.
@@ -39,13 +41,14 @@ Lemma srz_ret_only_silent : forall ms model x8 r m' T,
   ms_svc_pending ms = Some x8 ->
   alloc_sysno_b (bv_unsigned x8) = false ->
   (forall o, syscall_spec (sys_input segs ms x8) model o <-> o = Ok (mkEffect r [] []) m' []) ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   m_halted m' = None ->
   m_vm_lazy m' = [] ->
   srealizes segs (mkCfg (advance_past_svc (set_gpr0 ms r)) m') T ->
   srealizes segs (mkCfg ms model) T.
 Proof.
-  intros ms model x8 r m' T Hh Hsvc Hna Hchk Hh' Hlazy Hc.
-  eapply srz_silent1; [eapply node_ret_only; eassumption | exact Hc].
+  intros ms model x8 r m' T Hh Hsvc Hna Hchk Hrob Hh' Hlazy Hc.
+  eapply srz_silent1; [eapply node_ret_only; eassumption | exact Hrob | exact Hc].
 Qed.
 
 Lemma srz_ret_only_copyins_silent : forall ms model x8 reads r m' T,
@@ -54,13 +57,14 @@ Lemma srz_ret_only_copyins_silent : forall ms model x8 reads r m' T,
   alloc_sysno_b (bv_unsigned x8) = false ->
   (forall o, syscall_spec (sys_input segs ms x8) model o
              <-> o = Ok (with_copyins reads (mkEffect r [] [])) m' []) ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   m_halted m' = None ->
   m_vm_lazy m' = [] ->
   srealizes segs (mkCfg (advance_past_svc (set_gpr0 ms r)) m') T ->
   srealizes segs (mkCfg ms model) T.
 Proof.
-  intros ms model x8 reads r m' T Hh Hsvc Hna Hchk Hh' Hlazy Hc.
-  eapply srz_silent1; [eapply node_ret_only_copyins; eassumption | exact Hc].
+  intros ms model x8 reads r m' T Hh Hsvc Hna Hchk Hrob Hh' Hlazy Hc.
+  eapply srz_silent1; [eapply node_ret_only_copyins; eassumption | exact Hrob | exact Hc].
 Qed.
 
 Lemma srz_det : forall ms model x8 eff0 m0 T,
@@ -68,23 +72,25 @@ Lemma srz_det : forall ms model x8 eff0 m0 T,
   ms_svc_pending ms = Some x8 ->
   alloc_sysno_b (bv_unsigned x8) = false ->
   (forall o, syscall_spec (sys_input segs ms x8) model o <-> o = Ok eff0 m0 []) ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   m_halted m0 = None ->
   m_vm_lazy m0 = [] ->
   srealizes segs (mkCfg (advance_past_svc (apply_effect ms eff0)) m0) T ->
   srealizes segs (mkCfg ms model) T.
 Proof.
-  intros ms model x8 eff0 m0 T Hh Hsvc Hna Hchk Hh0 Hlazy0 Hc.
-  eapply srz_silent1; [eapply node_det; eassumption | exact Hc].
+  intros ms model x8 eff0 m0 T Hh Hsvc Hna Hchk Hrob Hh0 Hlazy0 Hc.
+  eapply srz_silent1; [eapply node_det; eassumption | exact Hrob | exact Hc].
 Qed.
 
 Lemma srz_cases : forall c (I : Type) (nx : I -> config) (T : I -> TSet) (i0 : I),
   node_ok segs c I (fun _ => []) nx ->
+  RomBase.sys_rob segs c ->
   (forall i, srealizes segs (nx i) (T i)) ->
   srealizes segs c (t_alt T).
 Proof.
-  intros c I nx T i0 Hnode Hc.
+  intros c I nx T i0 Hnode Hrob Hc.
   apply (srz_conseq segs c (t_alt (fun i => t_emit [] (T i)))).
-  - apply (srz_node segs c I (fun _ => []) nx T i0 Hnode Hc).
+  - apply (srz_node segs c I (fun _ => []) nx T i0 Hnode Hrob Hc).
   - intros tr. split.
     + intros [i Hi]. exists i.
       exact (proj1 (t_emit_nil_eq (T i) (srealizes_nonempty segs _ _ (Hc i)) tr) Hi).
@@ -98,6 +104,7 @@ Lemma srz_open : forall ms model x8 reads (mk : word -> Model) A B,
   ms_svc_pending ms = Some x8 ->
   alloc_sysno_b (bv_unsigned x8) = false ->
   (forall o, syscall_spec (sys_input segs ms x8) model o <-> open_out reads model mk o) ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   (forall fd, m_halted (mk fd) = None) ->
   (forall fd, m_vm_lazy (mk fd) = []) ->
   fd_lookup (m_fds model) (alloc_fd (m_fds model)) = None ->
@@ -107,10 +114,11 @@ Lemma srz_open : forall ms model x8 reads (mk : word -> Model) A B,
                        (mk (alloc_fd (m_fds model)))) B ->
   srealizes segs (mkCfg ms model) (t_alt2 A B).
 Proof.
-  intros ms model x8 reads mk A B Hh Hlazy Hsvc Hna Hchk Hmk Hmklazy Hfree HA HB.
+  intros ms model x8 reads mk A B Hh Hlazy Hsvc Hna Hchk Hrob Hmk Hmklazy Hfree HA HB.
   apply (srz_alt2 segs (mkCfg ms model) {e : Z | In e openat_errnos} unit
            (open_nx ms model mk) A B (exist _ ENOMEM ENOMEM_in_openat_errnos) tt).
   - eapply node_open; eassumption.
+  - exact Hrob.
   - intros [e He]. cbn [open_nx]. apply HA. exact He.
   - intros []. cbn [open_nx]. exact HB.
 Qed.
@@ -124,6 +132,15 @@ Lemma srz_sys : forall regs pc mem rom model w T,
 Proof.
   intros regs pc mem rom model w T Hh Hlazy HF HE Hc.
   eapply srz_step; [exact Hh | exact Hlazy | reflexivity | eapply step_ecall_epend; eassumption | exact Hc].
+Qed.
+
+(** LPS 08b1429: [RomBase.sys_rob] at a node whose syscall does not read [in_mem]. *)
+Lemma rob_memfree : forall ms model x8 n,
+  ms_svc_pending ms = Some x8 -> bv_unsigned x8 = n -> RomBase.memfree n ->
+  RomBase.sys_rob segs (mkCfg ms model).
+Proof.
+  intros ms model x8 n Hs Hn Hm. apply (RomBase.sys_rob_memfree segs ms model x8 Hs).
+  rewrite Hn. exact Hm.
 Qed.
 
 End Prim.
@@ -153,7 +170,8 @@ Proof.
   apply (srz_conseq segs _ (t_alt (fun _ : tid_I => K)));
     [| intros tr; split; [intros [_ Ht]; exact Ht | intros Ht; exists (exist _ (Z_to_bv 64 1) one_tid_ok); exact Ht]].
   eapply srz_cases; [exact (exist _ (Z_to_bv 64 1) one_tid_ok)
-                   | eapply node_set_tid; [exact Hh | exact Hlazy | reflexivity | rewrite H17; apply u64_lit; lia | exact Htid] |].
+                   | eapply node_set_tid; [exact Hh | exact Hlazy | reflexivity | rewrite H17; apply u64_lit; lia | exact Htid]
+                   | eapply (rob_memfree segs _ _ _ 96); [reflexivity | rewrite H17; apply u64_lit; lia | exact RomBase.memfree_96] |].
   intros [t Ht]. cbn [proj1_sig]. rewrite adv_set_epend. apply Hk. exact Ht.
 Qed.
 
@@ -184,7 +202,9 @@ Lemma srz_close : forall regs (pc : word) mem model w fd e K,
 Proof.
   intros regs pc mem model w fd e K HF HE Hh Hlazy H17 Hfd Hfd32 Hlk Hc.
   eapply srz_sys; [exact Hh | exact Hlazy | exact HF | exact HE |].
-  eapply srz_ret_only_silent; [exact Hh | reflexivity | nonalloc_tac | | | | rewrite adv_set_epend; exact Hc].
+  eapply srz_ret_only_silent; [exact Hh | reflexivity | nonalloc_tac |
+    | eapply (rob_memfree segs _ _ _ 57); [reflexivity | rewrite H17; apply u64_lit; lia | exact RomBase.memfree_57]
+    | | | rewrite adv_set_epend; exact Hc].
   - intros o. rewrite (syscall_spec_57 _ model o) by (rewrite in_sysno_si, H17; apply u64_lit; lia).
     rewrite in_arg0_si, ms_gpr_epend0, Hfd, (fd32_id fd Hfd32). exact (close_outcome fd _ model e o Hlk).
   - rewrite with_fds_halted'. exact Hh.
@@ -205,7 +225,10 @@ Lemma srz_ioctl_winsz : forall regs (pc : word) mem model w fd e K,
 Proof.
   intros regs pc mem model w fd e K HF HE Hh Hlazy H17 Hfd Hfd32 Hlk Hnd H11 Hc.
   eapply srz_sys; [exact Hh | exact Hlazy | exact HF | exact HE |].
-  eapply srz_ret_only_silent; [exact Hh | reflexivity | nonalloc_tac | | exact Hh | exact Hlazy | rewrite adv_set_epend; exact Hc].
+  eapply srz_ret_only_silent; [exact Hh | reflexivity | nonalloc_tac |
+    | eapply RomWrite.ioctl_tty_rob; [reflexivity | rewrite H17; apply u64_lit; lia
+                                     | rewrite ms_gpr_epend1, H11; vm_compute; reflexivity]
+    | exact Hh | exact Hlazy | rewrite adv_set_epend; exact Hc].
   intros o. rewrite (syscall_spec_29 _ model o) by (rewrite in_sysno_si, H17; apply u64_lit; lia).
   rewrite in_arg0_si, in_arg1_si, ms_gpr_epend0, ms_gpr_epend1, Hfd, (fd32_id fd Hfd32), H11.
   apply (ioctl_tty_outcome fd _ _ model e o Hlk Hnd). reflexivity.
@@ -223,7 +246,9 @@ Lemma srz_read_dir : forall regs (pc : word) mem model w fd K,
 Proof.
   intros regs pc mem model w fd K HF HE Hh Hlazy H17 Hfd Hfd32 Hlk Hdir Hc.
   eapply srz_sys; [exact Hh | exact Hlazy | exact HF | exact HE |].
-  eapply srz_ret_only_silent; [exact Hh | reflexivity | nonalloc_tac | | exact Hh | exact Hlazy | rewrite adv_set_epend; exact Hc].
+  eapply srz_ret_only_silent; [exact Hh | reflexivity | nonalloc_tac |
+    | eapply (rob_memfree segs _ _ _ 63); [reflexivity | rewrite H17; apply u64_lit; lia | exact RomBase.memfree_63]
+    | exact Hh | exact Hlazy | rewrite adv_set_epend; exact Hc].
   intros o. rewrite (syscall_spec_63 _ model o) by (rewrite in_sysno_si, H17; apply u64_lit; lia).
   rewrite in_arg0_si, in_arg1_si, in_arg2_si, ms_gpr_epend0, ms_gpr_epend1, ms_gpr_epend2, Hfd, (fd32_id fd Hfd32).
   apply (read_dir_outcome fd _ _ _ model o Hlk). apply access_okb_intro. exact Hdir.
@@ -265,6 +290,7 @@ Proof.
   eapply (srz_det segs _ model _ (mkEffect (len_word bs) (delivered_writes (getr regs 11) bs) [])
             (with_fds (fd_insert (m_fds model) fd (FdFile p (off + len_word bs))) model));
     [exact Hh | reflexivity | nonalloc_tac | exact Hchk
+    | eapply (rob_memfree segs _ _ _ 63); [reflexivity | exact Hno | exact RomBase.memfree_63]
     | rewrite with_fds_halted'; exact Hh | rewrite with_fds_lazy; exact Hlazy | ].
   destruct bs as [|b bsr]; cbn [delivered_writes].
   - unfold ms. rewrite adv_ret_epend. cbn [wbytes] in Hc. exact Hc.
@@ -306,25 +332,38 @@ Section Openat.
   Lemma open_flags_modeled : modeled_open_flags (getr regs 12) = true.
   Proof. exact (modeled_open_flags_rd _ Hfl). Qed.
 
+  (* LPS 08b1429: the node reads the path through [in_mem]; a path read that does not fault
+     answers the same over a larger backing ([RomWrite.openat_rob]). *)
+  Lemma open_rob : read_cstr (mrb segs mem) (getr regs 11) <> CstrFault ->
+    RomBase.sys_rob segs (mkCfg ms model).
+  Proof.
+    intros Hnf. apply (RomWrite.openat_rob segs ms model (getr regs 17) eq_refl Hno56).
+    cbv delta [ms]. rewrite ms_read_byte_epend, ms_gpr_epend1. exact Hnf.
+  Qed.
+
   Lemma srz_openat_toolong : forall bs K,
     rdn segs mem (getr regs 11) 4096 = Some bs -> ~ In (Z_to_bv 8 0) bs ->
+    (bv_unsigned (getr regs 11) + 4096 <= TASK_SIZE)%Z ->
     srealizes segs (mkCfg (post (errno_ret ENAMETOOLONG)) model) K ->
     srealizes segs (mkCfg (mkst regs pc mem (seg_rom segs)) model) K.
   Proof.
-    intros bs K Hrd Hnz Hc. cbv delta [post] in *.
-    pose proof (read_cstr_toolong_of_rdn segs mem (getr regs 11) bs (rdn_length _ _ _ _ _ Hrd) Hnz Hrd) as Hp.
+    intros bs K Hrd Hnz Hts Hc. cbv delta [post] in *.
+    pose proof (read_cstr_toolong_of_rdn segs mem (getr regs 11) bs (rdn_length _ _ _ _ _ Hrd) Hnz Hts Hrd) as Hp.
     eapply srz_sys; [exact Hh | exact Hlazy | exact HF | exact HE |].
-    eapply srz_ret_only_copyins_silent; [exact Hh | reflexivity | nonalloc_tac | | exact Hh | exact Hlazy | rewrite adv_set_epend; exact Hc].
+    eapply srz_ret_only_copyins_silent; [exact Hh | reflexivity | nonalloc_tac |
+      | exact (open_rob ltac:(rewrite Hp; discriminate))
+      | exact Hh | exact Hlazy | rewrite adv_set_epend; exact Hc].
     intros o. fold ms. rewrite openat_spec_head.
     apply (openat_toolong_outcome _ _ _ _ model open_flags_modeled). rewrite open_in_mem. exact Hp.
   Qed.
 
   Definition path_at (p : list byte) : Prop :=
     (length p <= 4095)%nat /\ ~ In (Z_to_bv 8 0) p
-    /\ rdn segs mem (getr regs 11) (length p + 1) = Some (p ++ [Z_to_bv 8 0]).
+    /\ rdn segs mem (getr regs 11) (length p + 1) = Some (p ++ [Z_to_bv 8 0])
+    /\ (bv_unsigned (getr regs 11) + Z.of_nat (length p) < TASK_SIZE)%Z.
 
   Lemma path_at_cstr : forall p, path_at p -> read_cstr (mrb segs mem) (getr regs 11) = CstrOk p.
-  Proof. intros p (H1 & H2 & H3). apply read_cstr_of_rdn; assumption. Qed.
+  Proof. intros p (H1 & H2 & H3 & H4). apply read_cstr_of_rdn; assumption. Qed.
 
   Lemma srz_openat_empty : forall K,
     path_at [] ->
@@ -333,7 +372,9 @@ Section Openat.
   Proof.
     intros K Hp Hc. cbv delta [post] in *.
     eapply srz_sys; [exact Hh | exact Hlazy | exact HF | exact HE |].
-    eapply srz_ret_only_copyins_silent; [exact Hh | reflexivity | nonalloc_tac | | exact Hh | exact Hlazy | rewrite adv_set_epend; exact Hc].
+    eapply srz_ret_only_copyins_silent; [exact Hh | reflexivity | nonalloc_tac |
+      | exact (open_rob ltac:(rewrite (path_at_cstr [] Hp); discriminate))
+      | exact Hh | exact Hlazy | rewrite adv_set_epend; exact Hc].
     intros o. fold ms. rewrite openat_spec_head.
     apply (openat_empty_outcome _ _ _ _ model open_flags_modeled). rewrite open_in_mem. exact (path_at_cstr [] Hp).
   Qed.
@@ -346,7 +387,9 @@ Section Openat.
   Proof.
     intros p K Hp Hne Hnd Hsl Hfs Hc. cbv delta [post] in *.
     eapply srz_sys; [exact Hh | exact Hlazy | exact HF | exact HE |].
-    eapply srz_ret_only_copyins_silent; [exact Hh | reflexivity | nonalloc_tac | | exact Hh | exact Hlazy | rewrite adv_set_epend; exact Hc].
+    eapply srz_ret_only_copyins_silent; [exact Hh | reflexivity | nonalloc_tac |
+      | exact (open_rob ltac:(rewrite (path_at_cstr p Hp); discriminate))
+      | exact Hh | exact Hlazy | rewrite adv_set_epend; exact Hc].
     intros o. fold ms. rewrite openat_spec_head.
     apply (openat_absent_outcome _ _ _ _ model open_flags_modeled eq_refl Hfl p);
       [rewrite open_in_mem; exact (path_at_cstr p Hp) | exact Hne | exact Hnd | exact Hsl | exact Hfs].
@@ -362,7 +405,8 @@ Section Openat.
   Proof.
     intros KA KB Hp HA HB. cbv delta [post] in *.
     eapply srz_sys; [exact Hh | exact Hlazy | exact HF | exact HE |].
-    eapply srz_open; [exact Hh | exact Hlazy | reflexivity | nonalloc_tac | | | | exact Hfree | |].
+    eapply srz_open; [exact Hh | exact Hlazy | reflexivity | nonalloc_tac |
+      | exact (open_rob ltac:(rewrite (path_at_cstr _ Hp); discriminate)) | | | exact Hfree | |].
     - intros o. fold ms. rewrite openat_spec_head.
       apply (openat_dot_outcome _ _ _ _ model open_flags_modeled eq_refl Hfl).
       rewrite open_in_mem. exact (path_at_cstr _ Hp).
@@ -382,7 +426,8 @@ Section Openat.
   Proof.
     intros p d KA KB Hp Hne Hnd Hsl Hfs HA HB. cbv delta [post] in *.
     eapply srz_sys; [exact Hh | exact Hlazy | exact HF | exact HE |].
-    eapply srz_open; [exact Hh | exact Hlazy | reflexivity | nonalloc_tac | | | | exact Hfree | |].
+    eapply srz_open; [exact Hh | exact Hlazy | reflexivity | nonalloc_tac |
+      | exact (open_rob ltac:(rewrite (path_at_cstr p Hp); discriminate)) | | | exact Hfree | |].
     - intros o. fold ms. rewrite openat_spec_head.
       apply (openat_file_outcome _ _ _ _ model open_flags_modeled eq_refl Hfl p d);
         [rewrite open_in_mem; exact (path_at_cstr p Hp) | exact Hne | exact Hnd | exact Hsl | exact Hfs].

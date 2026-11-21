@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the malloc invariant's added conjunct named in one destruct pattern). *)
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
 #[local] Ltac2 tbs__ () := ["@Corelib.Init.Datatypes"; "list"; "bool"; "true"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.Virt"; "paid"; "MI"; "@Stdlib.ZArith.BinInt.Z"; "le"; "add"; "lt"; "pow"; "@stdpp.bitvector.definitions"; "Z_to_bv"; "bv"; "bv_unsigned"; "@Corelib.Init.Logic"; "eq"; "and"; "@Corelib.Numbers.BinNums"; "Z"; "@LinuxProcessSemantics.LinuxProcessSem.MemImageType"; "Segment"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "Model"; "m_vmmaps"; "map_remove"; "region_free"; "vm_maps"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysSpec"; "munmap_model"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MmapFixedA"; "tp_forget"].
@@ -20,7 +21,7 @@ Lemma paid_munmap_le : ltac2:(tb__ "0|3|
 S0SfA1S10S0SaQ40M0A1M1A1G1G1S4R5R4R3A3ScS1S13S12S14S11R5A1A1R3A2R3R2A3S2A3S5S3S15R6R4R3A3S16SbG0R4A2M2S6G2SbG0R3A2A2R5A3A2S3R6R5A2A2F_;F_;Fn;Fa;Ftp;Fmd;Fsegs;").
 Proof.
   intros segs md tp a n HMI Hfree.
-  pose proof HMI as (HW & HT & Hmat & Hsub & HpaidMI & Hlc & Hivs & Hlm & Htm).
+  pose proof HMI as (HW & HT & Hmat & Hsub & HpaidMI & Hlc & Hivs & Hlm & Htm & Hrd).
   set (h' := munmap_vm (m_vmmaps md) a n).
   assert (Emd : munmap_model md a n = vm_forget_range (bv_unsigned a) (bv_unsigned a + bv_unsigned n) (with_vmmaps h' md)) by reflexivity.
   rewrite Emd.

@@ -2,7 +2,7 @@
 # reac-repacer/fuzz_wire image B (asan-ubsan): lib/B/YCej.v, the allocation-trace universe, and YCej.universe.json
 # (af0m's --universe input). Image-B twin of the fuzz_uci image-B run (its run.sh (sha256 7ce2eb0de04b) is not in the
 # published tree; a later version, with its host paths read from the environment, is reac-repacer/fuzz_uci's released
-# provenance/evidence/startup-B/scripts/acej/run.sh at recipes commit 0295462466b2), which is fuzz_decode's image-A
+# provenance/evidence/startup-B/scripts/acej/run.sh at recipes), which is fuzz_decode's image-A
 # method with fuzz_decode B's json step, ycej_json.py (sha256 c96a25b5daf9, not in the published tree). rule 24: no function proved;
 # no statement or contract text.
 # Differences from the fuzz_uci run (each also in REPORT.md): fuzz_wire image B's inputs (image, ipc, return

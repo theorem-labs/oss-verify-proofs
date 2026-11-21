@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's reservations with the vDSO pair; the model's m_kernel field). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool FunctionalExtensionality Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -618,7 +619,7 @@ Proof. LiaFast.lf_pins (fun (Hsegb : LiaFast.U) => LiaFast.u0).
       + revert Ha. destruct (sep_app2_b _ _ _ _ _ _ _) eqn:Hs1.
         * apply (sep_app2_sound E (s_facts S) (sm_maps M) model (sm_sp M) _ HF0 Hmaps Hpd Hgsh Hgtop Hsp (proj2 Hspok) i g (fst (fst g)) n (pseudo q) Hgi P2
                    ltac:(lia) ltac:(lia) ltac:(unfold two64 in *; lia) ltac:(rewrite Hrq; pose proof (uE_range E (snd q)); lia) ltac:(rewrite Hrq; cbn [pseudo rg_base]; lia) Hs1 w Hwq').
-        * rewrite <- Hres in Hsa.
+        * apply (sep_res_b_app _ (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model)))) in Hsa. rewrite <- Hres in Hsa.
           apply (sep_res_sound E (sm_maps M) model _ Hmaps Hgsh Hmres i g (fst (fst g)) n (pseudo q) Hgi P2 ltac:(lia) ltac:(lia) Hsa w Hwq').
       + revert Hs. rewrite Hue, Hse, Hgn. unfold SHz. intros Hs.
         apply (sep_pc_sound E (s_facts S) (sm_maps M) model (sm_sp M) _ HF0 Hmaps Hpd Hgsh Hgtop Hsp (proj2 Hspok) i g (fst (fst g)) n (pseudo q) Hgi P2

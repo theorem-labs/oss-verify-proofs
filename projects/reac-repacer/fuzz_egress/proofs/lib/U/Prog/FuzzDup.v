@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
-(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/U/Prog/FuzzDup.v at
-   bc49657c087aa7d6ab0af1ffb2cb67fa08b15de1; the shared fuzz.h text copied unchanged but for its module path (fuzz_egress). *)
+(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/U/Prog/FuzzDup.v;
+   the shared fuzz.h text copied unchanged but for its module path (fuzz_egress). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* New for reac-repacer. SHARED TEXT of the project: the fuzz.h idiom
 
      static inline uint8_t *fuzz_dup(const uint8_t *p, size_t n)

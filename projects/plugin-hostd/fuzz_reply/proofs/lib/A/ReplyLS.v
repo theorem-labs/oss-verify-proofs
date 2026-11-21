@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Copyright 2026 Theorem Labs *)
 (* fr_LS, the concrete live-state invariant LS of the entry walk of fuzz_reply's LLVMFuzzerTestOneInput
    (lib/A/W_LLVMFuzzerTestOneInput_cut.v, the Section variable `LS : lfcx -> Z -> lmod -> alayout -> astate -> Prop`
@@ -560,7 +561,7 @@ Proof.
   assert (HC : ACfn_cf.CALL_ROOM = 8589934592) by reflexivity.
   split; [| exact I]. rewrite Hbb. unfold APARTIAL, ATABLE. lia.
 Qed.
-(* the model at the first head (pro_m of lib/A/W_LLVMFuzzerTestOneInput_pro.v, a working branch fff279dd36e) *)
+(* the model at the first head (pro_m of lib/A/W_LLVMFuzzerTestOneInput_pro.v, a working branch) *)
 Definition ls_pro_m (q T' : Z) (pj : list byte) (c : ctl) (O : list byte) (cap out : Z) : lmod :=
   LM 0 [Some (oa_new_src 100 q pj); None; None; None] T' [ra_new 100] c O 0 cap out 0 1.
 (* LS at the first head, AT THE PROPOSED TEXT: the published premise

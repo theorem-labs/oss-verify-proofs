@@ -9,8 +9,8 @@
    transfer by induction. Everything is stated for an arbitrary [segs], and the file depends only on
    lib.Lib.Cells / Step / Frame and this engine's Cells / Step / Frame, so image-A and image-B
    segment files can both use it (image B has its own UL engine: lib/B/Tk/UL).
-   SOURCE: this file is a Theorem Labs lane's lib/B/Tk/UL/CellBridge.v 7761521b3b52 (the blob this tree had at release c5e779efe8c) at
-   a working branch 7cfcf43257e, with the module paths changed from lib.B.Tk.UL to
+   SOURCE: this file is a Theorem Labs lane's lib/B/Tk/UL/CellBridge.v 7761521b3b52 (the blob this tree had at release) at
+   a working branch, with the module paths changed from lib.B.Tk.UL to
    lib.A.Tk.UL; the names, the statements and the scripts are a Theorem Labs lane's, unchanged.
    Provenance: route (a) bridge input, lead 22:18Z; auditor a Theorem Labs lane ("A4: what would lift the
    refusal"). Image A = fuzz_ctrl.asan, libreac v1.9.0 (pau-libreac-v190), sha256

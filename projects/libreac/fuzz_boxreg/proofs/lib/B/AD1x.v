@@ -2,11 +2,12 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AD1x.v, with its module paths changed and its addresses moved to libreac/fuzz_boxreg's ASan build. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed ELV, fwrite_site_tfa, fprintf_s_site_tfa, refused_site_tfa, exit_site_tfa; its imports changed. *)
 From OSSVerify.Proofs.libreac.fuzz_boxreg.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
-From OSSVerify.Proofs.libreac.fuzz_boxreg.lib.Reusable Require Import YK11 YK15 YK18 YP0n YM02 YP0m YP09 YP0l YP06 YP08 YP03 YN3q YN3v YK04 YA0i YA0n YA0e YG00 YG0a YG01 YG0k YG0f YG0v YG0n YG0d YCe5 YL02.
+From OSSVerify.Proofs.libreac.fuzz_boxreg.lib.Reusable Require Import YK11 YK0i YK15 YK18 YP0n YM02 YP0m YP09 YP0l YP06 YP08 YP03 YN3q YN3v YK04 YA0i YA0n YA0e YG00 YG0a YG01 YG0k YG0f YG0v YG0n YG0d YCe5 YL02.
 From OSSVerify.Proofs.libreac.fuzz_boxreg.lib.B Require Import AB1v AF0m AD2j AD2i AD1t AD20 AD1v AD2h AD2f AD1w.
 From OSSVerify.Proofs.libreac.fuzz_boxreg.lib.Reusable Require Import YO05 YO09 YO06 YO01.
 From OSSVerify.Proofs.libreac.fuzz_boxreg.lib.Reusable Require Import YM05.
@@ -30,7 +31,8 @@ Definition A_exit : Z := 0x88d90.
 From OSSVerify.Proofs.libreac.fuzz_boxreg.lib.B Require Import AE2k AD1u.
 Section c. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {LS : lib_shape}.
 Variable B : asyms.
-#[local] Notation ELV sp a0 p inp xw xd := (YP08.E0 sp [a0; p] (in_envp inp) xw xd).
+#[local] Notation ELV sp rnd a0 p inp xw xd :=
+(YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd).
 Definition img_at (H : word -> bool) (m : word -> option byte) (lo hi : Z) : Prop :=
 forall a, lo <= a < hi -> aview tfibsegs H m a = option_map (fun b : byte => bv_unsigned b) (seg_rom tfibsegs (Z_to_bv 64 a)).
 Variable est : (word -> bool) -> (word -> option byte) -> Prop.
@@ -62,7 +64,7 @@ getr regs 10%bv = w64 p -> getr regs 11%bv = w64 len -> getr regs 12%bv = w64 1 
 Z.of_nat (length msg) = len -> 1 <= len <= 64 -> 0x10560 <= p -> p + len <= 0x20a50 -> (p + len <= 0x1cc2c \/ 0x1cc41 <= p) ->
 (forall i, (i < length msg)%nat -> seg_rom tfibsegs (Z_to_bv 64 (p + Z.of_nat i)) = Some (nth i msg NUL)) ->
 mem_ok tfibsegs E (mrestrict (w_H W) mem) IMG_REGIONS ->
-fd_lookup (m_fds md) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) md ->
 AI tfibsegs (w_H W) (w_A W) md ->
 icpt_post ly S W regs mem md 1 T ->
 srealizes tfibsegs (cfg_at tfibsegs A_icpt_fwrite regs mem md) (wr ch_stderr msg T).
@@ -76,7 +78,7 @@ spZ regs + 128 <= s -> s + Z.of_nat (length str) + 1 < kHighMemEnd ->
 YP03.bytes_at (mrestrict (w_H W) mem) s (str ++ [NUL]) ->
 (forall a, s + Z.of_nat (length str) < a < s + Z.of_nat (length str) - (s + Z.of_nat (length str)) mod 8 + 8 -> mrestrict (w_H W) mem (Z_to_bv 64 a) <> None) ->
 mem_ok tfibsegs E (mrestrict (w_H W) mem) IMG_REGIONS ->
-fd_lookup (m_fds md) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) md ->
 AI tfibsegs (w_H W) (w_A W) md ->
 icpt_post ly S W regs mem md (Z.of_nat (length lit1 + length str + length lit2)) T ->
 srealizes tfibsegs (cfg_at tfibsegs A_icpt_fprintf regs mem md) (wr ch_stderr (lit1 ++ str ++ lit2) T).
@@ -86,7 +88,7 @@ forall (ly : alayout) (S : astate) (W : world tfibsegs) (regs : bvmap 5 word) (m
 icpt_pre ly S W regs mem md ->
 getr regs 10%bv = w64 F_STDERR_LO -> getr regs 11%bv = w64 0x19639 -> getr regs 12%bv = w64 67108864 ->
 mem_ok tfibsegs E (mrestrict (w_H W) mem) IMG_REGIONS ->
-fd_lookup (m_fds md) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) md ->
 AI tfibsegs (w_H W) (w_A W) md ->
 icpt_post ly S W regs mem md (Z.of_nat (length msg_refused)) T ->
 srealizes tfibsegs (cfg_at tfibsegs A_icpt_fprintf regs mem md) (wr ch_stderr msg_refused T).
@@ -106,6 +108,7 @@ AI tfibsegs (w_H W) (w_A W) md -> AR tfibsegs B ly S W mem md -> top_ok usp ly -
 est (w_H W) mem ->
 ((k = 0%nat /\ stdout_img (w_H W) mem) \/ ((1 <= k)%nat /\ xst k (w_H W) mem)) ->
 ((1 <= k)%nat -> fd_lookup (m_fds md) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))) ->
+((1 <= k)%nat -> m_channel_reader md = true) ->
 m_fs md = fs ->
 srealizes tfibsegs (mkCfg (mkst regs (w64 A_exit) mem (seg_rom tfibsegs)) md) (wr ch_stdout (concat (repeat line0 (k - 1))) (ex code fs)).
 End c.

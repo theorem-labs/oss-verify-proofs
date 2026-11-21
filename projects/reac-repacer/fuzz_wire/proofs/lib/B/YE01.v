@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YE01.v, with its module paths changed; asink_img_laws states ail_env_static over the sink's own static cells (ak_owned) and has the law ail_owned_core (ak_owned holds the four cells astdio_env reads); the kept lemmas frame through aenv_of_core; asink_strs_kept keeps the file strings; and afopen_spec and aunlink_spec take asink_strs, which astdio_env no longer states. *)
 (* Modified by Theorem Labs, 2026-10: the trunk's lib/Reusable/YE01.v placed in image B's per-image directory lib/B, its per-image imports pointed at image B's copies. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/B/YE01.v at 4f87de75d67 (donor image sha256 fde52226dc48), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/B/YE01.v (donor image sha256 fde52226dc48), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import Sorting.Permutation.

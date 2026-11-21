@@ -18,7 +18,7 @@ Open Scope Z_scope.
 
 Definition RP_SLOT_READ : Z := 0x13acc.
 
-(* reac_braid_pos's byte map, copied from libreac/fuzz_decode lib/Prog/reac_decode_c.v:14 (recipes 25e3d17bdb5,
+(* reac_braid_pos's byte map, copied from libreac/fuzz_decode lib/Prog/reac_decode_c.v:14 (recipes,
    blob 1627341bfcc3, released): the offset of byte k (0 = lo, 1 = mid, 2 = hi) of time sample s of channel ch in
    an nch-wide braided audio block. *)
 Definition braid_pos (s ch nch k : Z) : Z :=

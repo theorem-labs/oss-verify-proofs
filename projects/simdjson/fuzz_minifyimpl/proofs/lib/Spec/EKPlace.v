@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the brk grant proof charges the page-rounded growth (brk_grow_bytes), the unused NULL-hint mmap intro lemma is removed (the model grants only Linux's placement), nstep_munmap_intro rebuilds the ledger with mmap_fixed_destroyed_next and discharges munmap's non-spurious part, and the mprotect gate lemmas take the page's apartness from the vDSO reservation. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -368,61 +369,17 @@ Proof.
   2:{ pose proof (Z_div_mod_eq_full req 4096). pose proof (Z_div_mod_eq_full (req+4096-1) 4096). pose proof (Z.mod_pos_bound (req+4096-1) 4096). nia. }
   replace (b <? req) with true by (symmetry; apply Z.ltb_lt; lia).
   rewrite (proj2 (Z.leb_le _ _) Hc). subst b. rewrite Z_to_bv_bv_unsigned, Hrf. cbn [andb].
-  assert (Hsub : bv_unsigned (Z_to_bv 64 req - vm_brk h)%bv = req - bv_unsigned (vm_brk h)).
-  { rewrite bv_sub_unsigned, unsigned_lit by lia. apply bv_wrap_small. unfold bv_modulus. lia. }
-  rewrite Hsub. apply Z.leb_le. exact Hl.
+  (* [brk_budget_ok] charges [brk_grow_bytes], the page-rounded growth; both ends are page-aligned here. *)
+  apply Z.leb_le. unfold brk_grow_bytes. fold h. rewrite ?unsigned_lit by lia.
+  assert (Hpr : forall x, x mod 4096 = 0 -> page_round_up_Z x = x).
+  { intros x Hx. unfold page_round_up_Z. rewrite page_size_eq.
+    pose proof (Z_div_mod_eq_full x 4096). pose proof (Z_div_mod_eq_full (x+4096-1) 4096). pose proof (Z.mod_pos_bound (x+4096-1) 4096). nia. }
+  rewrite !Hpr by assumption. lia.
 Qed.
 
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
-Lemma nstep_mmap_ok_intro : forall len prot mo a,
-  let h := m_vmmaps mo in let n := mmap_len len in
-  0 < len < 2^63 -> (prot = PROT_NONE \/ prot = PROT_RW) ->
-  0 < a -> a mod 4096 = 0 -> a + n <= alloc_top h ->
-  region_free (vm_reserved h ++ vm_maps h) (Z_to_bv 64 a) (Z_to_bv 64 n) = true ->
-  vm_backing_used mo + n <= vm_limit h ->
-  nstep (NMmap 0 len prot MAPF) mo
-        (mkEffectU (Z_to_bv 64 a) [] (if prot =? PROT_NONE then [] else [(Z_to_bv 64 a, Z_to_bv 64 n)])
-                                  (if prot =? PROT_NONE then [(Z_to_bv 64 a, Z_to_bv 64 n)] else []) [] [])
-        (with_vmmaps (mkVmMapsFull (vm_reserved h) ((Z_to_bv 64 a, Z_to_bv 64 n) :: vm_maps h)
-                        (if prot =? PROT_NONE then (Z_to_bv 64 a, Z_to_bv 64 n) :: vm_noaccess h else vm_noaccess h)
-                        (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h)) mo) [].
-Proof.
-  intros len prot mo a h n Hlen Hp Ha Hal Hc Hrf Hl. pose proof (alloc_top_lt h) as HT. unfold two_pow_64 in HT.
-  pose proof (mmap_len_ge len ltac:(lia)) as Hn. fold n in Hn.
-  apply nstep_mmap_of_ed; [reflexivity|]. unfold check_mmap_ed.
-  change (negb (mmap_off_aligned_b (Z_to_bv 64 0))) with false. change (negb (mmap_anon_b (Z_to_bv 64 MAPF))) with false. cbv iota.
-  rewrite w_is0_lit by lia. replace (len =? 0) with false by (symmetry; apply Z.eqb_neq; lia).
-  assert (Herr : forall b, errno_ret_in (mmap_errnos_when b) (Z_to_bv 64 a) = false).
-  { intros [|]; [|reflexivity]. cbn [mmap_errnos_when].
-    destruct (errno_ret_in mmap_errnos (Z_to_bv 64 a)) eqn:E; [|reflexivity]. apply errno_ret_in_true in E as (e & He & E).
-    cbn in He. destruct He as [<-|[]]. apply (f_equal bv_unsigned) in E. rewrite unsigned_lit in E by lia. rewrite errno_ret_unsigned in E by (unfold ENOMEM; lia). unfold two_pow_64, ENOMEM in E. lia. }
-  assert (TAIL : forall noacc,
-    (if (bv_unsigned (Z_to_bv 64 a) mod page_size =? 0) && (0 <? bv_unsigned (Z_to_bv 64 a)) && (bv_unsigned (Z_to_bv 64 a) + page_round_up_Z (bv_unsigned (Z_to_bv 64 len)) <=? alloc_top h)
-        && region_free (vm_reserved h ++ vm_maps h) (Z_to_bv 64 a) (Z_to_bv 64 (page_round_up_Z (bv_unsigned (Z_to_bv 64 len))))
-        && listNN_eqb [(Z_to_bv 64 a, Z_to_bv 64 (page_round_up_Z (bv_unsigned (Z_to_bv 64 len))))] [(Z_to_bv 64 a, Z_to_bv 64 (page_round_up_Z (bv_unsigned (Z_to_bv 64 len))))]
-     then CheckOk (with_mmap_backing (Z_to_bv 64 MAPF) (Z_to_bv 64 a) (Z_to_bv 64 (page_round_up_Z (bv_unsigned (Z_to_bv 64 len))))
-            (with_vmmaps (mkVmMapsFull (vm_reserved h) ((Z_to_bv 64 a, Z_to_bv 64 (page_round_up_Z (bv_unsigned (Z_to_bv 64 len)))) :: vm_maps h) noacc
-                            (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h)) mo)) []
-     else CheckReject)
-    = CheckOk (with_vmmaps (mkVmMapsFull (vm_reserved h) ((Z_to_bv 64 a, Z_to_bv 64 n) :: vm_maps h) noacc
-                             (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h)) mo) []).
-  { intros noacc. rewrite !unsigned_lit by lia. fold (mmap_len len). fold n. rewrite page_size_eq, Hal, Z.eqb_refl.
-    rewrite (proj2 (Z.ltb_lt 0 a) Ha). rewrite (proj2 (Z.leb_le _ _) Hc), Hrf, listNN_eqb_refl. cbn [andb].
-    rewrite with_mmap_backing_plain by reflexivity. reflexivity. }
-  assert (Hbud : mmap_noreserve_backed_ok (Z_to_bv 64 MAPF) mo (page_round_up_Z (bv_unsigned (Z_to_bv 64 len))) = true).
-  { rewrite mmap_noreserve_backed_ok_plain by reflexivity. rewrite unsigned_lit by lia. fold (mmap_len len) n h. apply Z.leb_le. exact Hl. }
-  destruct Hp as [-> | ->].
-  - change (mmap_modeled_b (Z_to_bv 64 PROT_NONE) (Z_to_bv 64 MAPF) (Z_to_bv 64 0)) with false.
-    change (mmap_noaccess_b (Z_to_bv 64 PROT_NONE) (Z_to_bv 64 MAPF) (Z_to_bv 64 0)) with true. cbv iota beta.
-    change (PROT_NONE =? PROT_NONE) with true. cbv iota. fold h. cbv zeta. rewrite Herr.
-    rewrite <- (TAIL ((Z_to_bv 64 a, Z_to_bv 64 n) :: vm_noaccess h)). rewrite !unsigned_lit by lia. reflexivity.
-  - change (mmap_modeled_b (Z_to_bv 64 PROT_RW) (Z_to_bv 64 MAPF) (Z_to_bv 64 0)) with true. cbv iota beta.
-    change (PROT_RW =? PROT_NONE) with false. cbv iota. fold h. cbv zeta. rewrite Herr. rewrite Hbud.
-    rewrite <- (TAIL (vm_noaccess h)). rewrite !unsigned_lit by lia. cbn [andb].
-    destruct ((a mod page_size =? 0) && (0 <? a) && (a + page_round_up_Z len <=? alloc_top h) && region_free (vm_reserved h ++ vm_maps h) (Z_to_bv 64 a) (Z_to_bv 64 (page_round_up_Z len))); reflexivity.
-Qed.
+(* LPS 727298f3: the NULL-hint mmap intro lemma for an arbitrary free address is removed: the
+   model's grant is Linux's placement ([Placement.linux_place_is]), so only that address is
+   granted, and nothing in this unit used the lemma. *)
 
 (* [comment removed for export] *)
 Section Fixed.
@@ -489,21 +446,24 @@ Definition munmap_h (h : VmMaps) (aw nw : word) : VmMaps :=
   mkVmMapsFull (vm_reserved h) (map_remove (vm_maps h) aw) (maps_subtract (vm_noaccess h) (bv_unsigned aw) (bv_unsigned aw + bv_unsigned nw))
                (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h).
 
-(* [comment removed for export] *)
+(* LPS 08b1429: the unmap rebuilds the ledger with [mmap_fixed_destroyed_next] ([maps_subtract]),
+   and the step carries the non-spurious conjunct, which ret 0 meets. *)
 Lemma nstep_munmap_intro : forall a len mo,
   let h := m_vmmaps mo in let n := mmap_len len in let aw := Z_to_bv 64 a in let nw := Z_to_bv 64 n in
   0 <= a -> a mod 4096 = 0 -> 0 < len -> a + n <= TASK_SIZE ->
   map_has (vm_maps h) aw nw = true ->
   nstep (NMunmap a len) mo (mkEffectU (Z_to_bv 64 0) [] [] [(aw, nw)] [] [])
-        (with_mmap_destroyed aw nw (munmap_h h aw nw) mo) [].
+        (with_mmap_destroyed aw nw (mmap_fixed_destroyed_next h aw nw) mo) [].
 Proof.
   intros a len mo h n aw nw Ha Hal Hlen Hb Hhas. pose proof (mmap_len_ge len Hlen) as Hn. fold n in Hn. pose proof TASK_SIZE_val as TS.
-  apply nstep_munmap_iff. unfold check_munmap. fold aw h.
+  apply nstep_munmap_iff. split; [|cbn [mm_ns node_input]; apply munmap_ret_not_spurious; cbn [eff_ret]; vm_compute; reflexivity].
+  unfold check_munmap. fold aw h.
   assert (Ua : bv_unsigned aw = a) by (subst aw; apply unsigned_lit; lia). rewrite Ua, page_size_eq, Hal.
   rewrite w_is0_lit by lia. replace (len =? 0) with false by (symmetry; apply Z.eqb_neq; lia). cbn [Z.eqb negb orb]. cbv zeta.
   rewrite (unsigned_lit len) by lia. fold (mmap_len len). fold n nw.
   replace (TASK_SIZE <? a + n) with false by (symmetry; apply Z.ltb_ge; lia).
-  rewrite Hhas. change (w_is0 (Z_to_bv 64 0)) with true. rewrite listNN_eqb_refl. cbn [andb]. unfold munmap_h. rewrite Ua. reflexivity.
+  rewrite Hhas. replace (errno_ret_in munmap_errnos (Z_to_bv 64 0)) with false by (vm_compute; reflexivity).
+  change (w_is0 (Z_to_bv 64 0)) with true. rewrite listNN_eqb_refl. cbn [andb]. reflexivity.
 Qed.
 
 Lemma m_vmmaps_munmap : forall aw nw h mo, m_vmmaps (with_mmap_destroyed aw nw (munmap_h h aw nw) mo) = munmap_h h aw nw.
@@ -520,6 +480,9 @@ Hypothesis Hb : a + PGSZ < 2^64.
 Hypothesis Hal : a mod 4096 = 0.
 Hypothesis Hcn : map_contains (vm_noaccess h) aw nw = true.
 Hypothesis Hcm : map_contains (vm_maps h) aw nw = true.
+(* LPS 727298f3: [check_mprotect_ed] answers Unmodeled on a range that meets the vDSO pair's
+   reservation, so the page lies apart from it. *)
+Hypothesis Hvd : region_free (vdso_reserved (m_kernel mo) (vdso_top h)) aw nw = true.
 
 Lemma check_mprotect_gate : forall eff,
   check_mprotect_ed aw nw (Z_to_bv 64 PROT_RW) eff mo =
@@ -538,7 +501,7 @@ Proof.
   assert (Ua : bv_unsigned aw = a) by (subst aw; apply unsigned_lit; unfold PGSZ in *; lia). rewrite Ua, page_size_eq, Hal.
   change (w_is0 nw) with false. cbv iota. cbn [Z.eqb negb].
   assert (Un : bv_unsigned nw = PGSZ) by (subst nw; apply unsigned_lit; unfold PGSZ; lia). rewrite Un. change (page_round_up_Z PGSZ) with PGSZ.
-  replace (two_pow_64 <=? a + PGSZ) with false by (symmetry; apply Z.leb_gt; unfold two_pow_64; lia). cbv zeta. fold nw h. rewrite Hcn, Hcm. reflexivity.
+  replace (two_pow_64 <=? a + PGSZ) with false by (symmetry; apply Z.leb_gt; unfold two_pow_64; lia). cbv zeta. fold nw h. rewrite Hvd, Hcn, Hcm. reflexivity.
 Qed.
 
 Lemma nstep_mprotect_ok_intro :

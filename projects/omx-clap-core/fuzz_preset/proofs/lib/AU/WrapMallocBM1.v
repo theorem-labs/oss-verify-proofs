@@ -1,16 +1,17 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: omx-clap-core/fuzz_preset image B (asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43; relocated from pin f8f98a95bc52 by alreloc c4338d099cfb8025): field
    wmk_call of the keep record wrap_malloc_walk_keep_cf (lib/Reusable/YGcfMallocComposeKeep.v:75-83) at image B, as
    WrapMallocBStmt.wmk_call_stmt (the field verbatim; wmk_call_of_record checks it), with
      segs := tfibsegs, nmax free, al := 8, atp := 1 (FROM_MALLOC), acf := 1 (can_fill),
-     ARX := YGcfInstBase.ARXq_cf B (fun i => i = as_inst B) (lib/Reusable/YGcfInstBase.v:480: ARX_cf /\ qtight, ARX_cf
+     ARX := YGcfInstBase.ARXq_cf B (fun i => i = as_inst B) (lib/Reusable/YGcfInstBase.v:481: ARX_cf /\ qtight, ARX_cf
      := IOK inst /\ ARcf /\ xs_mapped_cf, :67) at IM := AU/AGif2cgif.AImg_cgif (im_segs := tfibsegs), K := K_B below,
    and these premises: TfibSyms B; the unwinder's spec U1 (YFl0.v:24, the donors' named premise); cf_pc_allocate =
    0x326a4 (AU/CfImgB.v:36).
    The run is WrapMallocBCall.seg_call; this file reads no instruction.
    The relation at Allocate's entry is built by YGcfInstBase.ARXq_cf_intro / ARX_cf_start: IOK from TfibSyms
-   (ts_inst); ARcf after the segment by AR_frame_law_ok_cf (YG0qcf.v:802) on the segment's frame (the caller's stack
+   (ts_inst); ARcf after the segment by AR_frame_law_ok_cf (YG0qcf.v:803) on the segment's frame (the caller's stack
    window, which AR_stack_law_cf keeps unowned, and T + t_unwinding, which reads 0 again); xs_mapped_cf from that ARcf
    (YGcfXs.ARcf_xsm, YGcfXs.v:201); qtight from acall_pre_cf's qmeter_cf (YG0dcf.v:229; qmeter_cf := qtight /\
    mroom_cf, YG0ncf.v:443). The stack room ly_bot ly < spZ regsA at Allocate's entry (2144 below the caller's sp) is

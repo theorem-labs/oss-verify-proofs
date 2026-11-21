@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Does not rest on tex_word_specX or memnorm: EXV_HYP has neither field since b29a52d6b76b / 379ec9e4a7d5. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Does not rest on tex_word_specX or memnorm: EXV_HYP has neither field. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B, ex_value, segment CL (the items loop): the PURE facts its pieces take
    (ExvB_Loop_Stmt.v PURE_L_STEP / PURE_V_REST / PURE_NAME_REST / PURE_SUFFIX / PURE_PREF_CONS / PURE_PREF_LONG),
    proved closed. The grammar lemmas are the plain ex_value_m.v ones (run0_bind, run0_grow, run0_jr_string,

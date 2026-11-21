@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO; the THP flag of the mmap placement). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import decidable.
@@ -56,7 +57,7 @@ Lemma as_nested_piece {B} : forall (fuel' : nat) md (R : bvmap 5 word) mm rom (s
     (sp s7 pm sc m size cnt1 a4 : word)
     (K : word -> M B) (P : B -> mstate -> Prop) (L : B -> mstate -> TSet),
   aslot_at fuel' ->
-  md_pure md -> magree s mm -> minv s0 s ->
+  md_pure md -> magree s mm -> minv s0 s -> ms_thp s0 = kb_thp (m_kernel md) -> vdso_ok (with_vmmaps (ms_vm s0) md) ->
   getr R 2 = v_addi sp (-144) -> getr R 4 = A_TP ->
   getr R 23 = s7 -> getr R 21 = pm -> getr R 8 = sc -> getr R 9 = m -> getr R 24 = size ->
   getr R 19 = cnt1 -> getr R 14 = a4 -> getr R 22 = A_LOCK -> getr R 25 = A_SIZE_CLASSES ->
@@ -77,10 +78,10 @@ Lemma as_nested_piece {B} : forall (fuel' : nat) md (R : bvmap 5 word) mm rom (s
   realizes ml_segs (mkCfg (mkst R (pc+ PC_ALLOC_SLOT 0x310) mm rom) (with_vmmaps (ms_vm s) md))
            (tshape (MallocTree.mbind (as_nested fuel' (at_ sp (-144)) s7 pm sc m size cnt1 a4) K s) L).
 Proof.
-  intros fuel' md R mm rom s0 s sp s7 pm sc m size cnt1 a4 K P L REC Hp Hag HI H2 H4 H23 H21 H8 H9 H24 H19 H14 H22 H25
+  intros fuel' md R mm rom s0 s sp s7 pm sc m size cnt1 a4 K P L REC Hp Hag HI Hthp0 Hvdo0 H2 H4 H23 H21 H8 H9 H24 H19 H14 H22 H25
          Hcnt1 Hal Hlo Hhi Hstk HS HK.
   pose proof I as Hret. note_win HI. sys_hyps.
-  pose proof HI as HI0. destruct HI0 as (_ & _ & _ & Hlo0 & _ & Hhi64 & _).
+  pose proof HI as HI0. destruct HI0 as (_ & _ & _ & _ & Hlo0 & _ & Hhi64 & _).
   pose proof (alloc_slot_D_ge fuel') as HDge.
   pose proof (mwin_init s0 mm sp (alloc_slot_D fuel' + 144) Hstk) as HW.
   unfold as_nested, NESTED_WL in HS |- *. munf. mnorm HS.
@@ -141,7 +142,7 @@ Definition MM2_WL : list Z := [0;1;5;6;7;8;10;11;12;13;14;15;16;17;18;19;21;22;2
 Lemma as_mm2_piece {B} : forall md (R : bvmap 5 word) mm rom (s0 s : mstate) (sp : word) (DD : Z)
     (s7 pm sc req m size usage pg cnt1 a4 : word) (ns : bool) (sq : word)
     (K : word -> M B) (P : B -> mstate -> Prop) (L : B -> mstate -> TSet),
-  md_pure md -> magree s mm -> minv s0 s ->
+  md_pure md -> magree s mm -> minv s0 s -> ms_thp s0 = kb_thp (m_kernel md) -> vdso_ok (with_vmmaps (ms_vm s0) md) ->
   getr R 2 = v_addi sp (-144) -> getr R 4 = A_TP ->
   getr R 23 = s7 -> getr R 21 = pm -> getr R 8 = sc -> getr R 18 = req -> getr R 9 = m ->
   getr R 24 = size -> getr R 10 = usage -> getr R 11 = pg -> getr R 19 = cnt1 -> getr R 14 = a4 ->
@@ -164,11 +165,11 @@ Lemma as_mm2_piece {B} : forall md (R : bvmap 5 word) mm rom (s0 s : mstate) (sp
            (tshape (MallocTree.mbind (as_mm2 s7 pm sc req m size usage pg cnt1 a4 ns sq) K s) L).
 Proof.
   intros md R mm rom s0 s sp DD s7 pm sc req m size usage pg cnt1 a4 ns sq K P L
-         Hp Hag HI H2 H4 H23 H21 H8 H18 H9 H24 H10 H11 H19 H14 H12 H16 H22 Hns
+         Hp Hag HI Hthp0 Hvdo0 H2 H4 H23 H21 H8 H18 H9 H24 H10 H11 H19 H14 H12 H16 H22 Hns
          Hal HDD Hlo Hhi Hstk HS HK.
   subst ns.
   pose proof I as Hret. note_win HI. sys_hyps.
-  pose proof HI as HI0. destruct HI0 as (_ & _ & _ & Hlo0 & _ & Hhi64 & _).
+  pose proof HI as HI0. destruct HI0 as (_ & _ & _ & _ & Hlo0 & _ & Hhi64 & _).
   pose proof (mwin_init s0 mm sp DD Hstk) as HW.
   unfold as_mm2, MM2_WL in HS |- *. munf. lits64 HS. mnorm HS.
   (* [comment removed for export] *)

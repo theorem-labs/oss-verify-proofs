@@ -1,7 +1,8 @@
-(* copied from proofs/cgif/cgif_file_fuzzer/lib/YGcfNames.v @ 95e6f1d72b6 (c-asan, frozen), module paths changed only. *)
-(* prefix-only copy of proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfNames.v@6e9ff2e6573c487199f2990b43c5e19cce86e581, do not edit (single writer: h-mani-a8; send change requests to h-mani-a8 as diffs). *)
+(* copied from proofs/cgif/cgif_file_fuzzer/lib/YGcfNames.v (c-asan, frozen), module paths changed only. *)
+(* prefix-only copy of proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfNames.v, do not edit (single writer: h-mani-a8; send change requests to h-mani-a8 as diffs). *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the event-free SECOND allocator instance (suffix cf), shared side.
    ONE instance for two units, fuzz_preset and fuzz_reply: everything a unit fixes is a PARAMETER here
    (CfImg for the image, CfParams for the sizes and the class set), never baked into the shared text.
@@ -97,7 +98,7 @@ Class CfParams := MkCfParams {
      can start at p + cf_head (p is 16-aligned): preset 16, reply 0. *)
   cf_head_al : cf_head mod 8 = 0;
   cf_fs_classes_ok : Forall (fun c => 0 <= c <= 10) cf_fs_classes;
-  (* c-asan's LPS placement lemma (cold/c-asan-realloc-primary 820536849e5, SecGrantP.v):
+  (* c-asan's LPS placement lemma (SecGrantP.v):
      its NOB bounds and its counting condition at cf_place_limit. Preset: 2 ^ 29 with
      80,953 (80,954 fails); reply: 2 ^ 30 with 37,264. *)
   cf_nob_lo : 536870912 <= cf_nob;
@@ -109,7 +110,7 @@ Class CfParams := MkCfParams {
 
 (* Content constants, no address and no unit: ERRB_INIT is kErrorMessageBufferSize;
    exh_len1 / exh_len2 are the two Printf lengths of the class-full report
-   (msgpack Spec/AsanCtrl.v:335, :361, :362, at release ref b6a0088adc). *)
+   (msgpack Spec/AsanCtrl.v:335, :361, :362, at release ref). *)
 Definition ERRB_INIT : Z := 65536.
 Definition ndigits (z : Z) : Z :=
   if z <? 10 then 1 else if z <? 100 then 2 else if z <? 1000 then 3 else if z <? 10000 then 4 else 5.
@@ -324,7 +325,7 @@ Variable ahead_poison_law : Prop.
 Variable ahead_unpoison_law : Prop.
 Variable realloc_cf_hp_post_ok : Prop.
 Variable realloc_cf_hp_post_null : Prop.
-(* The realloc contract: the instances of c-asan's ReallocP.v P forms (91224afc3ad) at
+(* The realloc contract: the instances of c-asan's ReallocP.v P forms at
    mt := malloc_cf, cpre := acall_pre_cf at a fixed Hp, rpre := fun _ _ => True (no
    aregime), nmax := cf_malloc_max, lmax := LIVE_MAX, rleaf / mleaf := our leaves, with
    the Hp effects (d) / (e) in the post. arealloc_null_realizes_cf takes no B, as
@@ -332,7 +333,7 @@ Variable realloc_cf_hp_post_null : Prop.
 Variable arealloc_realizes_cf : Prop.
 Variable arealloc_null_realizes_cf : Prop.
 (* The harness's two shadow calls over ARcf, in port-fm's shape
-   (FMupoison.v at 8d043571f33: upoison_ok_one :202, ARU_poison_step :263,
+   (FMupoison.v: upoison_ok_one :202, ARU_poison_step :263,
    ARU_unpoison_step :333; its ARU_nil :37 is the precedent for shadow_ok_cf_nil).
    A poison of [p, p + cf_head) adds p to Hp, an unpoison removes it: laws (b) / (c).
    The pcs are per-image code-table fields, never literals here. *)

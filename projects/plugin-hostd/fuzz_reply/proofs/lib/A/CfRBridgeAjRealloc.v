@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: plugin-hostd/fuzz_reply.asan, the cf allocator bridge (a Theorem Labs lane R, new file): the
    journal-level CALL-SITE RULES for realloc(p, n) on a live block and for realloc(NULL, n), over the cf realloc
-   contracts (Reusable/YGcfRealloc.v:98-117 arealloc_realizes_cf / arealloc_null_realizes_cf, over
+   contracts (Reusable/YGcfRealloc.v:99-118 arealloc_realizes_cf / arealloc_null_realizes_cf, over
    Reusable/ReallocP.v:32-44 realloc_tree_with / realloc_null_tree_with). They are the twins of
-   Reusable/YGcallx.v:680-809 aj_malloc_at_x_ct (and, for the old block, :507-613 aj_free_at_x_ct), at the shared
-   shape of Reusable/YGcallcf.v:252-394: ARx := ARxs (ARcf /\ xs_placed_cf), QM := QM_cf, XS := xs_cf, with the
+   Reusable/YGcallx.v:681-810 aj_malloc_at_x_ct (and, for the old block, :507-613 aj_free_at_x_ct), at the shared
+   shape of Reusable/YGcallcf.v:253-395: ARx := ARxs (ARcf /\ xs_placed_cf), QM := QM_cf, XS := xs_cf, with the
    laws AR_laws_x_xs / ARx_owned_low_law_xs / ARx_wf_law_xs / ARx_xs_law_xs. Same steps as the template: the call's
    pre (acall_pre_x, YGcallx.v:964-973), amreal_SRr04 + SRr_mono with the model's safety / progress / no-spin facts,
    the model post on the granted path, acall_post_journal_xw (with the error-buffer write set and xs_cf), then
@@ -16,9 +17,9 @@
    2. The model facts. realloc(p, n): the inner free of the old block runs after the malloc, so its room at the
       post-malloc state is not a consequence of QM_cf; amx_realloc_rp RP states the facts as a premise (the
       weakest form the rule needs), and amx_realloc_rp_room proves it at the room form from
-      Reusable/YGcfAmx2.v:245 amx_realloc_cf (k = 0). realloc(NULL, n): the facts are proved here
+      Reusable/YGcfAmx2.v:246 amx_realloc_cf (k = 0). realloc(NULL, n): the facts are proved here
       (cfr_aj_null_atok, cfr_aj_amx_null) by composing the free(NULL) token (YG03dcf ml_free_cf, YGcfAmx2
-      ipost_free_null) with the malloc token (YG07cf malloc_ok_cf), as YGcfAmx2.v:138-195 realloc_cf_atok does.
+      ipost_free_null) with the malloc token (YG07cf malloc_ok_cf), as YGcfAmx2.v:139-196 realloc_cf_atok does.
    3. The rules aj_realloc_at_x_ct and aj_realloc_null_at_x_ct. The realloc post hands back the granted model path,
       the realloc leaf, the refusal witness on NULL, and realloc_hp_cf = Hpc (the base is not hidden at the call, so
       the ghost set after the call is the caller's); on success the old block's bytes are the call's footprint
@@ -65,7 +66,7 @@ Context {SK : YI16.sink_head}.
 
 (* ---------------------------------------------------------------------------- *)
 (* 1. The realizes form with a room predicate.                                    *)
-(* YGcfRealloc.v:98-109 arealloc_realizes_cf with `RP S ->` right after acall_pre_cf. *)
+(* YGcfRealloc.v:99-110 arealloc_realizes_cf with `RP S ->` right after acall_pre_cf. *)
 Definition arealloc_realizes_cf_rp (segs : list Segment) (B : asyms) (RP : astate -> Prop) (Hp : list Z) (pc : Z) : Prop :=
 forall ly S W regs mem md p n_old n ch,
 acall_pre_cf segs B ly S Hp W regs mem md ch -> RP S ->
@@ -86,7 +87,7 @@ Proof. intros segs B Hp pc H ly S W regs mem md p n_old n ch Hpre _. exact (H ly
 (* ---------------------------------------------------------------------------- *)
 (* 2. The model facts.                                                            *)
 (* realloc(p, n): what the rule reads off the model at a QM_cf state with room RP (YGcallx.v:349-356's four facts,
-   with YGcfAmx2.v:59 realloc_post_cf as the post). *)
+   with YGcfAmx2.v:60 realloc_post_cf as the post). *)
 Definition amx_realloc_rp (B : asyms) (RP : astate -> Prop) : Prop :=
 forall s p n_old n tr, Wf_cf (as_universe B) s -> QM_cf s -> RP s ->
 In (p, n_old) (blocks s) -> 1 <= n < cf_malloc_max -> blocks_bytes s + n <= LIVE_MAX -> admits (as_universe B) tr s ->
@@ -94,14 +95,14 @@ asafe (realloc_tree_with malloc_cf free_cf p n tr s) /\ agprog (realloc_tree_wit
 is_spin (realloc_tree_with malloc_cf free_cf p n tr s) = false /\
 (forall tr' r, apath (realloc_tree_with malloc_cf free_cf p n tr s) tr' r -> YGcfAmx2.realloc_post_cf s p n_old n r).
 
-(* At the room form: YGcfAmx2.v:245 amx_realloc_cf at k = 0 (qtight from qmeter_cf). *)
+(* At the room form: YGcfAmx2.v:246 amx_realloc_cf at k = 0 (qtight from qmeter_cf). *)
 Lemma amx_realloc_rp_room : forall B, universe_ok (as_universe B) -> amx_realloc_rp B (fun S => ROOM_cf_k S RK_realloc).
 Proof.
 intros B HU s p n_old n tr HW HQ HR Hp Hn Hl Ht.
 exact (YGcfAmx2.amx_realloc_cf B s p n_old n tr 0 HU HW (proj1 (proj1 HQ)) HR Hp Hn Hl Ht).
 Qed.
 
-(* realloc(NULL, n): free_cf PNull, then malloc_cf n (YGcfAmx2.v:146-169's first two steps). *)
+(* realloc(NULL, n): free_cf PNull, then malloc_cf n (YGcfAmx2.v:147-170's first two steps). *)
 Lemma cfr_aj_null_atok : forall U s n tr,
 universe_ok U -> Wf_cf U s -> ROOM_cf s -> 0 <= n < cf_malloc_max -> blocks_bytes s + n <= LIVE_MAX -> In tr U ->
 atok_cf true (realloc_null_tree_with malloc_cf free_cf n tr s) (fun _ r => malloc_post_x s n r).
@@ -150,7 +151,7 @@ Qed.
 
 (* ---------------------------------------------------------------------------- *)
 (* Small facts.                                                                   *)
-(* The ghost set after the call is the caller's when the base is not hidden (YGcfRealloc.v:47-51). *)
+(* The ghost set after the call is the caller's when the base is not hidden (YGcfRealloc.v:48-52). *)
 Lemma cfr_aj_hp_notin : forall B ly p q Hp, ~ In (sptr_addr B ly p) Hp -> realloc_hp_cf B ly p q Hp = Hp.
 Proof.
 intros B ly p q Hp H. unfold realloc_hp_cf.

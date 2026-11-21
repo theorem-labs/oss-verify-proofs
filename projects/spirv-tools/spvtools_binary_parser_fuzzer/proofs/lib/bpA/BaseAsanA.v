@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revised entry stack block, with the strings at its top, and the launch facts; the model's channel reader as a premise of the writes; the walk over the image's own segments lifted to the run's segment list (run_segments, with the vDSO pair)). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -19,7 +20,10 @@ Definition as_realizes_spec (tsegs : list Segment) (tpc : N) (tph : PhdrInfo) : 
   forall (en : ExecEntry) (inp : ProcInput),
     valid_entry (mkImage tsegs tpc tph) en inp ->
     valid_input_either inp ->
-    srealizes tsegs (init_config tsegs tpc tph (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) target_alloc_limit inp)
+    (* LPS 08b1429: the run reads the image against [run_segments] (its segments and the vDSO pair) *)
+    srealizes (run_segments tsegs inp (en_sp en) (en_mmap_base en))
+      (init_config (run_segments tsegs inp (en_sp en) (en_mmap_base en)) tpc tph (en_sp en) (en_brk en)
+         (en_mmap_base en) (en_draw en) target_alloc_limit inp)
       (spec (in_argv inp) (in_fs inp)).
 
 Theorem base_san_glue : forall tsegs tpc tph,
@@ -37,11 +41,13 @@ Proof.
   pose proof (valid_input_abort_va_size _ Hinp) as Hsv48.
   rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hvs.
   destruct en_s as [rsp rbrk rmb rrnd]. destruct en_t as [asp abrk amb arnd].
-  destruct Hvs as (Hsp1 & Hbrk1 & _ & Hfit1).
+  destruct Hvs as (Hsp1 & Hbrk1 & _ & Hfit1 & Hlau1).
+  assert (Hvl : valid_launch inp) by (clear - Hinp; red in Hinp; tauto).
+  assert (Hrd : in_channel_reader inp = true) by (clear - Hinp; red in Hinp; tauto).
   pose proof Hinp as Hv. destruct Hv as (Hva & Hve & _).
   unfold strong_equiv_error_free_budgets_scfg_abort.
   exact (spin_shape_strong_equiv_ef_abort _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (spec (in_argv inp) (in_fs inp)) inp
-           (s1_main_inst rsp rbrk rmb rrnd inp LIB Hsp1 Hbrk1 Hva Hve Hfit1) HA (spec_nokill _ _)).
+           (s1_main_run rsp rbrk rmb rrnd inp LIB Hsp1 Hbrk1 Hva Hve Hfit1 Hvl Hlau1 Hrd) HA (spec_nokill _ _)).
 Qed.
 
 Definition as_realizes_spec_A : Prop :=
@@ -85,10 +91,12 @@ Proof.
   pose proof (valid_input_va_size _ Hvalid) as Hsv48.
   rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen1.
   destruct en1 as [rsp rbrk rmb rrnd].
-  destruct Hen1 as (Hsp1 & Hbrk1 & _ & Hfit1).
+  destruct Hen1 as (Hsp1 & Hbrk1 & _ & Hfit1 & Hlau1).
+  assert (Hvl : valid_launch inp) by (clear - Hvalid; red in Hvalid; tauto).
+  assert (Hrd : in_channel_reader inp = true) by (clear - Hvalid; red in Hvalid; tauto).
   pose proof Hvalid as Hv. destruct Hv as (Hva & Hve & _).
   exists (spec (in_argv inp) (in_fs inp)). split; [|exact HA].
-  exact (s1_main_inst rsp rbrk rmb rrnd inp LIB Hsp1 Hbrk1 Hva Hve Hfit1).
+  exact (s1_main_run rsp rbrk rmb rrnd inp LIB Hsp1 Hbrk1 Hva Hve Hfit1 Hvl Hlau1 Hrd).
 Qed.
 
 Theorem base_asan_scfg : lib_contract_S1 -> as_realizes_spec_A ->

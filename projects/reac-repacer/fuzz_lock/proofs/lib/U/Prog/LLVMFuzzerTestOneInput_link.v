@@ -1,6 +1,6 @@
 (* fuzz_lock.ubsan's LLVMFuzzerTestOneInput with its callees' contracts discharged by their walks, in the form of
    the plain lib/Prog/LLVMFuzzerTestOneInput_link.v and of libreac/fuzz_decode's released
-   lib/Prog/LLVMFuzzerTestOneInput_link.v (25e3d17bdb50): the two harness functions meet the contracts
+   lib/Prog/LLVMFuzzerTestOneInput_link.v: the two harness functions meet the contracts
    Statement.v's checks_hold asks for, from check_no_overread_holds and check_lookup_holds and the libc walks
    (memcpy, strlen, memchr, bcmp, rp_lock_lookup), with check_lookup_exp_seg for check_lookup_exp's segment. *)
 From Stdlib Require Import ZArith List Bool Lia.

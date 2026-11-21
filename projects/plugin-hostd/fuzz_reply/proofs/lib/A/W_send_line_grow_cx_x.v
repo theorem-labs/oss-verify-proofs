@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx-GENERIC twin of lib/A/W_send_line_grow_cx.v, the growth half of send_line's data round
    from 0x82824 to the join (a Theorem Labs lane's step 1 of route (b), 2026-10-29), from its text at a working branch
-   a78a220dc8e (sha256 1766613f015b; internal record, W7's c98267ecbde; carried here by path). W_send_line_grow_cx.v is NOT edited.
+   (sha256 1766613f015b; internal record, W7; carried here by path). W_send_line_grow_cx.v is NOT edited.
    - The Section header is W_send_line_cx_x.v's (W_send_line_cx.v's over ARx, LAWS, PST).
    - SLN_x and sl_grow_stmt_x are the twins of SLN and sl_grow_stmt: the journal W_journal_x.ajournal_gx_x (the entry's
      Hp after S, the state's HpN an existential after SN), sl_line_ok_x, the continuation over
@@ -12,7 +13,7 @@
      sl_grow_stmt_x_AR0 / sl_grow_stmt_x_of_AR0).
    No statement difference is forced by ARx.
    THE ROOM FORM (a Theorem Labs lane, row A-SL_x, 2026-10-30), as W_send_line_cx_x.v's: `Variable RP : roomp` after MT, AREALLOC
-   (caller-context form, CTX_R / HCTX_slr) at RP, SLN_x with C3's peak (W_send_line_grow_cx.v SLN at 76be6190eff) and after frames the room budget of the
+   (caller-context form, CTX_R / HCTX_slr) at RP, SLN_x with C3's peak (W_send_line_grow_cx.v SLN) and after frames the room budget of the
    rounds from this one on (sl_cost_run at MT_rk, on top of kr) and the entry's cnt_ok_pk RP sl_pk; SLN_x and
    sl_grow_stmt_x take the post's kr after n. The bridges are at RP := RP_AR. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
@@ -78,12 +79,12 @@ Hypothesis AERRNO : aerrno_realizes_x B ARx (SIGMA WS_errno_location).
 Hypothesis AMEMCPY : aintrin_realizes_x SEGS B ARx OCpy (SIGMA WS_asan_memcpy).
 (* The realloc site rule in its caller-context form (W_journal_x.v Section hc), as the top's ARE_x states it
    (CTX_AREALLOC, ACk0.v:45, holds [0x82844]); send_line hands the rule a cut chain (ch = []), so the trace is the
-   return address alone (W7's ccd62d4c6f6 form). *)
+   return address alone (W7's form). *)
 Variable CTX_R : list (list Z).
 Hypothesis AREALLOC : arealloc_cf_rule_c_x SEGS B PST ARx MT MMAX RP CTX_R (SIGMA WS_realloc).
 Hypothesis HCTX_slr : In [BASE + AF_fr_send_line + 0x110] CTX_R.   (* realloc returns to 0x82844 *)
 Hypothesis HERRNO : as_errno B = as_tp B - 164.
-(* errno's 4 bytes in an 8-aligned zero-shadow range (W_contract.azs; W_drain_cx_x.v:189's form): the loop's errno
+(* errno's 4 bytes in an 8-aligned zero-shadow range (W_contract.azs; W_drain_cx_x.v:190's form): the loop's errno
    stores need range_addressable of errno at an ARx state (W_contract_x.azs_range_addressable_x) *)
 Hypothesis HERRZ : azs B (as_errno B) 4.
 Hypothesis HERRW : forall i, 0 <= i < 4 -> writable_at SEGS (fun _ => None) (as_errno B + i).
@@ -165,7 +166,7 @@ Variable HA : alayout -> astate -> bvmap 5 word -> list (Z * Z * Z) -> Z -> Z ->
 Hypothesis RO_ARx : forall ly S Hp (W : world SEGS) mem md, ARx ly S Hp W mem md -> RO mem.
 Hypothesis HA_call : forall lyc Sc regsT ch p n, mo_ok MT Sc (mo_malloc MT n + mo_free MT) -> HA lyc Sc regsT ch p n.
 Hypothesis AREALLOC_R : arealloc_cf_rule_c_xR SEGS B PST ARx MT MMAX RP RO HA CTX_R R (SIGMA WS_realloc).
-(* W_send_line_grow_cx_x.v:110 SLN_x at R *)
+(* W_send_line_grow_cx_x.v:111 SLN_x at R *)
 Definition SLN_xR (regsE : bvmap 5 word) ly S (Hp : list Z) W mem md (c : ctl) (O : list byte) (mx no cap out line : Z)
 (Bl : list byte) (WN : world SEGS) (regsN : bvmap 5 word) (memN : word -> option byte) (mdN : Model) (sent n : Z)
 (kr : nat) : Prop :=
@@ -196,7 +197,7 @@ Permutation (ablocks B ly S) (aout_blks cap out ++ rest) /\ Permutation (ablocks
 frames SN = frames S /\
 rp_RM RP SN (Z.to_nat (sl_cost_run MT_rk (Z.to_nat (len - sent)) mx (no + sent) capN (len - sent)) + kr) /\
 cnt_ok_pk RP sl_pk (ablocks B ly S).
-(* W_send_line_grow_cx_x.v:141 sl_grow_stmt_x at R *)
+(* W_send_line_grow_cx_x.v:142 sl_grow_stmt_x at R *)
 Definition sl_grow_stmt_xR : Prop :=
 forall regsE ly S Hp W mem md c O mx no cap out line Bl WN regsN memN mdN sent n kr,
 SLN_xR regsE ly S Hp W mem md c O mx no cap out line Bl WN regsN memN mdN sent n kr ->

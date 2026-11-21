@@ -3,9 +3,9 @@
 (* Modified by Theorem Labs, 2026-10: the second half of the GS-ADD arm of segment GS of the ASan+UBSan walk
    (image B, fuzz_reply.asan-ubsan) of fuzz_reply's drain (0x83c00 .. 0x83ca8, relay.c:115-118 inlined):
    gs_addb_stmt of lib/B/W_gsadd_cx.v.  Proves no function (kind: segment lemma of drain's image-B walk, GS piece
-   gs_add).  The structure is image A's lib/A/W_gsaddb.v (a working branch 0c06ccc287f); every pc,
+   gs_add).  The structure is image A's lib/A/W_gsaddb.v (a working branch); every pc,
    register, frame slot and trap below is image B's own (fuzz_reply.objdump.txt (sha256 17f5c434bf57; internal record) 0x83c00 .. 0x83ca8), and the
-   same-image geometry agrees with the old-framework walk a working branch 89040c52421
+   same-image geometry agrees with the old-framework walk a working branch
    lib/B/Prog/drain_p_seen_add_b.v / drain_p_seen_add_b2.v.
 
    GAR (0x83c00) -> DLN (S q) (0x839d4), in runs around one call:
@@ -31,6 +31,7 @@
    (res, the jj bytes of the line, []), the held keys gain firstn jj (dline s1 p q), and the meter is charged
    strndup's request RMalloc (jj + 1), the head of GARfut's owed trace.
    The Section header is lib/B/W_drain_gs.v's (= lib/B/W_drain_cx.v's), verbatim. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -1686,7 +1687,7 @@ End a.
 
 (* ============================================================================================================
    THE ARx-GENERIC TWIN of this file (image B's DR_x slice D, 2026-10-30; the B twin of lib/A/W_gsaddb.v's Section cx at
-   a working branch 50623273289): gs_addb_x proves lib/B/W_gsadd_cx.v's twin statement gs_addb_stmt_x over
+   a working branch): gs_addb_x proves lib/B/W_gsadd_cx.v's twin statement gs_addb_stmt_x over
    lib/B/W_drain_cx_x.v's Section variables (B PST ARx MT RP MMAX RG), the entry's ghost list Hp and budget kr after cx,
    a cut's own ghost list after its state (Hp1 at GAR, Hp2 after strndup).  Everything above this line is unchanged, so
    every AR statement of this file keeps its text and its Section list; the twin only adds names (the AR name with _x).
@@ -1699,13 +1700,13 @@ End a.
    request; the rule runs at kr := MT_rk's charge of tl2 plus the entry's kr, so its post's room is dbud_x's room at
    tl2; the count premise is gs_cnt_call, the counts after the call gs_cnt_malloc (the blocks are the old ones with
    (res, jj + 1) appended).
-   THE STRNDUP RULE's premises of lib/B/W_journal_x.v astrndup_cf_rule_c_x (a Theorem Labs lane's B twins a2a0be52faf of A's
-   fc7fca230b0 and c96258ef05e of A's b9052387bcb): the live source block is gb_src_blk_x (the source
+   THE STRNDUP RULE's premises of lib/B/W_journal_x.v astrndup_cf_rule_c_x (a Theorem Labs lane's B twins of A's
+   of A): the live source block is gb_src_blk_x (the source
    [e->buf + p, e->buf + p + jj) lies in the relay entry's buffer block (re_buf e, re_cap e)); frame0_ok is
    gb_frame0_x (the call's sp is DRAIN_FRAME = 352 below drain's entry sp, which the journal keeps below the layout's
    top); its stack-bottom premise
-   `ly_bot lyc + STRNDUP_FRAME_CF_x + MALLOC_BODY_FRAME_CF_x < spZ regsT` (the B kit c96258ef05e, the twin of A's
-   b9052387bcb) is gb_stk_bot_x (A's gb_stkbot_x, 72187c66685): the walk's journal at DRAIN_STK_x = 17008 leaves
+   `ly_bot lyc + STRNDUP_FRAME_CF_x + MALLOC_BODY_FRAME_CF_x < spZ regsT` (the B kit, the twin of A's)
+   is gb_stk_bot_x (A's gb_stkbot_x): the walk's journal at DRAIN_STK_x = 17008 leaves
    ly_bot + 4368 below the call, the premise needs 2160 + 2144 = 4304. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YCbqG.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YCe5x.
@@ -1734,9 +1735,9 @@ Variable RP : roomp.
 Variable MMAX : Z.
 Variable RG : rep_globals.
 Context {hl : Z}.
-(* lib/B/W_drain_cx_x.v:154 *)
+(* lib/B/W_drain_cx_x.v:155 *)
 Hypothesis LAWS : AR_laws_x SEGS B ARx hl.
-(* lib/B/W_drain_cx_x.v:156-216, the ones this file's proofs use, in that file's order and text *)
+(* lib/B/W_drain_cx_x.v:157-217, the ones this file's proofs use, in that file's order and text *)
 Hypothesis HG : gx_ok SEGS B (G_DR B RG).
 Hypothesis HGR : forall a, inG (G_DR B RG) a -> ~ in_rom SEGS a.
 Hypothesis HROMO : rom_out SEGS B (G_DR B RG).
@@ -1759,7 +1760,7 @@ Hypothesis HSM : 0x10000 <= rg_send_max RG /\ rg_send_max RG + 8 <= IMG_TOP.
 Hypothesis HP0 : forall ly S Hp W mem md, ARx ly S Hp W mem md -> Hp = [].
 Hypothesis BLKN : forall ly S Hp W mem md p n, ARx ly S Hp W mem md -> In (p, n) (ablocks B ly S) -> 0 <= n.
 Hypothesis PSTR : forall a, in_rom SEGS a -> ~ Exists (in_zr a) PST.
-(* strndup's site rule in its caller-context form over the generic journal (lib/B/W_drain_cx_x.v:219, :222, :226),
+(* strndup's site rule in its caller-context form over the generic journal (lib/B/W_drain_cx_x.v:220, :223, :227),
    with the one call-site fact this file uses (drain = 0x83278; jal strndup 0x83c08) *)
 Variable CTX_S : list (list Z).
 Hypothesis ASTRNDUP : astrndup_cf_rule_c_x SEGS B PST ARx MT MMAX RP CTX_S (SIGMA WS_strndup).
@@ -1848,9 +1849,9 @@ unfold zdisjoint in Hdj. cbn [fst snd] in Hdj. lia.
 Qed.
 
 (* ---- THE STRNDUP RULE's frame0_ok premise at this walk's call.  Mirrored text: lib/A/W_journal_x.v astrndup_cf_rule_c_x
-   at a working branch 50623273289 (W8's fc7fca230b0), after chain_pre:
+   at a working branch (W8), after chain_pre:
      frame0_ok lyc regsT = true ->
-   (B: lib/B/W_journal_x.v:992, a Theorem Labs lane's a2a0be52faf).  The call's sp = sp0 + o lies at least 16 below sp0,
+   (B: lib/B/W_journal_x.v:993, a Theorem Labs lane).  The call's sp = sp0 + o lies at least 16 below sp0,
    sp0 <= ly_top of the entry layout (the journal's astk_ok), and the journal keeps ly_top (its layout_le). ---- *)
 Lemma gb_frame0_xR : forall STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc (W : world SEGS) memT mdc k (o : Z)
   (regsT : bvmap 5 word),
@@ -1864,9 +1865,9 @@ unfold frame0_ok. apply Z.ltb_lt. rewrite Hsp, Etop. lia.
 Qed.
 
 (* ---- THE STRNDUP RULE's live-source premise at this walk's call.  Mirrored text: lib/A/W_journal_x.v
-   astrndup_cf_rule_c_x at a working branch 50623273289 (W8's fc7fca230b0), after shadow_hull_vis:
+   astrndup_cf_rule_c_x at a working branch (W8), after shadow_hull_vis:
      (exists p m, In (p, m) (ablocks B lyc Sc) /\ p <= x /\ x + n <= p + req_size m) ->
-   (B: lib/B/W_journal_x.v:986, a Theorem Labs lane's a2a0be52faf).  At drain's call the source is [e->buf + p, e->buf + p + jj),
+   (B: lib/B/W_journal_x.v:987, a Theorem Labs lane).  At drain's call the source is [e->buf + p, e->buf + p + jj),
    inside the relay entry's buffer block (re_buf e, re_cap e). ---- *)
 Lemma gb_src_blk_x : forall ly S e (p jj : nat),
 In (re_buf e, re_cap e) (ablocks B ly S) -> 0 < re_cap e -> Z.of_nat p + Z.of_nat jj <= re_cap e ->
@@ -1879,12 +1880,12 @@ split; [exact Hin|]. rewrite Hrq. lia.
 Qed.
 
 (* ---- THE STRNDUP RULE's third premise, the stack the strndup interceptor's inner malloc needs below the call.
-   Mirrored text: lib/A/W_journal_x.v astrndup_cf_rule_c_x at a working branch b9052387bcb
-   (:988), after the ACALL_PREFIX premise (B: lib/B/W_journal_x.v:989, the kit's c96258ef05e):
+   Mirrored text: lib/A/W_journal_x.v astrndup_cf_rule_c_x at a working branch
+   (:988), after the ACALL_PREFIX premise (B: lib/B/W_journal_x.v:990, the kit):
      ly_bot lyc + STRNDUP_FRAME_CF_x + MALLOC_BODY_FRAME_CF_x < spZ regsT ->
    with the Local constants STRNDUP_FRAME_CF_x := 2160 and MALLOC_BODY_FRAME_CF_x := 2144 (:46-47), left-nested, so the
    literal form below converts to it by delta.  The statement and proof are A's gb_stkbot_x (lib/A/W_gsaddb.v,
-   a working branch 72187c66685).  B's own frames: ___interceptor_strndup 0x427b0 `addi sp,sp,-2032`,
+   a working branch).  B's own frames: ___interceptor_strndup 0x427b0 `addi sp,sp,-2032`,
    0x427e0 `addi sp,sp,-128` (2160, as A's 0x42758); __interceptor_malloc 0x5401c `addi sp,sp,-2032`, 0x54040
    `addi sp,sp,-96` (as A's 0x53fc4).  The journal's astk_ok puts ly_bot + STK + ACALL_PREFIX - ASTACK below sp0, and
    the journal keeps ly_top, so a call at sp0 + o has ly_bot + 4304 below it once STK covers ASTACK - o + 4304 -

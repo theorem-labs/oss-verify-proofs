@@ -5,7 +5,7 @@
    program contract (A/AD1w_cf.v), whose call journal is YCbqG's ajournal_x with the program globals G_fr_c B as its PST
    and the footprint sink_token :: fr_FP (A/ACfn_cf.v) in place of the donor's YCbq.ajournal over [sink_token].
    - spares_ro_FP / spares_stdout_FP: the donor's two lemmas for any footprint tail (their proofs never read it); form of
-     omx-clap-core/fuzz_state's (a working branch e16cb210877).
+     omx-clap-core/fuzz_state's (a working branch).
    - G_fr_c_eq and gf_avoids: G_fr_c B is A/AD2f_fp.v's GF_RANGES at an image's errno, and no G_fr_c byte is in the
      read-only range, the stdout FILE or its buffer, the sink head, target_run.initialized (0x5d8710),
      oft_in_callback (0x5d8714) or the atexit table (0x5f94c0 .. 0x5f95f0); every G_fr_c byte is an image byte of
@@ -15,6 +15,7 @@
    - journal_regions_kept_x: the donor's journal_regions_kept over ajournal_x at any allocator invariant ARx with
      YCbqG's laws, for the driver's image regions that avoid G_fr_c (A/AD2f_fp.v region_gf_ok), with
      canary_got_kept_x (the GOT canary cell from the const-cell law). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

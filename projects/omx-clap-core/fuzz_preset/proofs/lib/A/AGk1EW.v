@@ -8,9 +8,10 @@
    twins' lemmas, and the imports of the W twins.  AGk1E.v is unchanged.  rule 24: no function proved (kind:
    re-statement of a proved miss walk over a wider refill window). *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGk1EW.v (a working branch 93127c74947, file sha256 10e5fa9576d0) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 f0d2e8d40c7e; pin d83eb25dbf0d); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-(* Modified by Theorem Labs, 2026-10: relocated from the old pin A (pinned fuzz_preset.asan d83eb25dbf0d, twin f0d2e8d40c7e; this file at 101e2afaa357) to A' (#102 pin 1be0f53d96cb, twin bff8519bbe3e) by the relocation route of record, frozen alreloc ced0368250cb6538 (a working branch b85bfdee67c4), --assume-source, --resolve the internal file resolve-102.txt (0 lines name this file); 0 numerals changed. *)
-(* Modified by Theorem Labs, 2026-10-30: a Theorem Labs lane M's field-round-3 delta to proofs/cgif/cgif_file_fuzzer/lib/AGk1EW.v (a working branch 62c4c0fcc77 -> 3295f3a9fd5, "lane M: field round 3 (refill callers carry memnorm / arodata_ok_cf / cf_hull_ok; Printf cells)", file sha256 32c1a2b45e1f) applied at A' by the 3-way merge of record (the internal file p2merge.sh: base = the 62c4c0fcc77 text relocated cgif -> A', theirs = the 3295f3a9fd5 text relocated the same way, ours = this file); 0 conflicts, no numeral in the delta. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGk1EW.v (a working branch, file sha256 10e5fa9576d0) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 f0d2e8d40c7e; pin d83eb25dbf0d); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: relocated from the old pin A (pinned fuzz_preset.asan d83eb25dbf0d, twin f0d2e8d40c7e; this file) to A' (#102 pin 1be0f53d96cb, twin bff8519bbe3e) by the relocation route of record, frozen alreloc ced0368250cb6538 (a working branch), --assume-source, --resolve the internal file resolve-102.txt (0 lines name this file); 0 numerals changed. *)
+(* Modified by Theorem Labs, 2026-10-30: a Theorem Labs lane M's field-round-3 delta to proofs/cgif/cgif_file_fuzzer/lib/AGk1EW.v (a working branch ->, "lane M: field round 3 (refill callers carry memnorm / arodata_ok_cf / cf_hull_ok; Printf cells)", file sha256 32c1a2b45e1f) applied at A' by the 3-way merge of record (the internal file p2merge.sh: base = the text relocated cgif -> A', theirs = the text relocated the same way, ours = this file); 0 conflicts, no numeral in the delta. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The errno-kept twin of the miss arms' shared OOM tail AGk1W.miss_oom_tail: the same tail, concluding
    ErrnoG.alloc_leaf_e (AllocG.alloc_leaf plus errno kept on the grant branch) in place of alloc_leaf.
 
@@ -177,7 +178,7 @@ Theorem miss_oom_tail_e : amreal tfibsegs (AGif0n.malloc_join_t stag n tr cl S')
 (fun r W'' c'' => (exists trc, apath (mt n tr S) trc r /\ gflag trc = true) ->
   alloc_leaf_e tfibsegs B mt ARX AOX lpost TFIB_OOM inst ly S W regsU mem0 md0 n tr r W'' c'').
 Proof.
-(* copy of AGk1.v:338-341, + errno *)
+(* copy of AGk1.v:339-342, + errno *)
 unfold AGif0n.malloc_join_t. rewrite bind_assoc_eq. eapply amreal_pure; [exact (pop_miss S' cl Hc0)|]. eapply amreal_pure; [reflexivity|].
 unfold AGif0n.malloc_K_t. cbn [amreal].
 replace (cfg_at tfibsegs A_REFILL_RET regsR memR mdR) with cR by (unfold cfg_at, cR, msR; rewrite with_vm_backing_id; reflexivity).

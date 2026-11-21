@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the syscall-frame obligation's new cases closed by RomBase's tactics). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -12,7 +13,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics 
 From LinuxProcessSemantics.LinuxProcessSem Require Import Fs Specs.
 From LinuxProcessSemantics.LinuxProcessSem.Sys Require Import Syscall Uapi Fs.File.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
-From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw Require Import Safety SysSpec SysStep.
+From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw Require Import Safety SysSpec SysStep RomBase.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3 Require Import
   SymState SymStep SymSoundA SymSoundB SymSoundV SymSoundI SymSoundL SymSoundM SymSoundR
   SymComplete SymFrame SymEntail SymSummary SymCall Glue3.
@@ -137,7 +138,7 @@ Proof using H10 H17 Hbuf Hcnt Hhi Hi Hll Hnob Hnohi Hnolo Hnorl Hnth Hoff Hov.
   intros tr ms md Hsp Hk. destruct (HJfd tr md Hk) as [Hfd Hfs].
   destruct (read_list_core tr ms md Hsp Hfd Hfs) as (x8 & wdst & Hp & H63 & Hh & Hfd' & Ewd & Hc2 & Hc3 & Hbs & Hsm').
   split.
-  - eapply Hokp; [exact Hk | exact Hp |]. exact (@read_file_only_ok segs ms md x8 p (Z_to_bv 64 off) data wdst Hh H63 Hfd' Hfs Ewd Hc2 Hc3).
+  - eapply Hokp; try exact Hk; try exact Hp; try (solve [RomBase.rob_auto | eapply RomBase.sys_rob_exit; eassumption]). exact (@read_file_only_ok segs ms md x8 p (Z_to_bv 64 off) data wdst Hh H63 Hfd' Hfs Ewd Hc2 Hc3).
   - intros w' Hst.
     pose proof (@wstep_read_file_inv segs tr ms md x8 p (Z_to_bv 64 off) data wdst w' Hp Hh H63 Hfd' Hfs Ewd Hc2 Hc3 Hst) as ->.
     cbn zeta. rewrite Hbs. split; [exact Hsm'|].

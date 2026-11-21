@@ -4,7 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/ACej.v; image A's file was copied from
    proofs/cgif/cgif_file_fuzzer/lib/A/ACej.v. The call contexts and allocation traces below are libreac/fuzz_grant's
    IMAGE B ones, read from fuzz_grant.asan-ubsan (bytes bin/ fde52226dc48, symbols unstripped/ 5a5ee7c02b4e, both
-   checked against the acceptance root's SHA256SUMS; FACTS f0e6eb38667): the calls of the malloc and
+   checked against the acceptance root's SHA256SUMS; FACTS): the calls of the malloc and
    free wrappers' 4-byte jumps (0x52edc, 0x52ed8) in main, target_run and LLVMFuzzerTestOneInput, the only functions
    that call them, each trace closed under prefixes. NOT ONE pc here is shared with image A's list: A's are
    0x52dec / 0x52c8c with returns 0x80264 / 0x802b8 / 0x80544 / 0x802dc / 0x8040c / 0x805d8 and the harness's
@@ -21,6 +21,7 @@
    two traces out: that cache is reached only from a report of an error, which the proof shows is not reached
    (on this image fast_unwind_on_malloc is 1 by CommonFlags::SetDefaults 0x61904, and ASAN_OPTIONS is never read,
    because __sanitizer::GetEnv 0x649dc returns NULL through the sealed GOT cell 0x9d710 = 1). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require Import YG00 YG01.
 Import ListNotations.

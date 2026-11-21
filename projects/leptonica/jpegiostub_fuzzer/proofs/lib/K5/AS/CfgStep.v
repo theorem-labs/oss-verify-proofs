@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (alloc_no_b gains munmap (215) to match alloc_mark_sysnos; the vDSO call step arms in sstep_cfg_next_iff, sstep_cfg_of_sstep_on and nonrefusal_outcome_of_child). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -33,7 +34,7 @@ Proof. repeat split. Qed.
 
 (* [comment removed for export] *)
 Definition alloc_no_b (n : Z) : bool :=
-  Z.eqb n 214 || Z.eqb n 216 || Z.eqb n 222 || Z.eqb n 226.
+  Z.eqb n 214 || Z.eqb n 215 || Z.eqb n 216 || Z.eqb n 222 || Z.eqb n 226.
 
 Lemma alloc_no_b_true_iff : forall n,
   alloc_no_b n = true <-> In n alloc_mark_sysnos.
@@ -239,6 +240,8 @@ Proof.
     inversion H; subst.
     + (* [comment removed for export] *)
       intros ((x8 & Hsvc & _) & _). cbn [cfg_ms] in Hsvc. congruence.
+    + (* a vDSO call carries no pending syscall, so no child of one is spurious *)
+      intros ((x8 & Hsvc & _) & _). cbn [cfg_ms] in Hsvc. congruence.
     + (* [comment removed for export] *)
       intros ((y8 & Hy & Hoff) & Hr & Hex). cbn [cfg_ms] in Hy.
       match goal with Hs : ms_svc_pending ms = Some ?x |- _ =>
@@ -262,6 +265,7 @@ Proof.
       eapply killed_halted; eassumption.
   - intros [H Hns]. inversion H; subst.
     + apply sstep_cfg_instr; assumption.
+    + eapply sstep_cfg_vdso_call; eassumption.
     + eapply sstep_cfg_syscall; try eassumption.
       intros (Hoff & Hr & (eff' & m' & evs' & Hspec & Hnr)). apply Hns.
       match goal with
@@ -284,6 +288,9 @@ Proof.
   - apply sstep_cfg_instr; assumption.
   - apply sstep_cfg_instr_fault; assumption.
   - apply sstep_cfg_instr_unmodeled; assumption.
+  - eapply sstep_cfg_vdso_call; eassumption.
+  - eapply sstep_cfg_vdso_materialization_fault; eassumption.
+  - eapply sstep_cfg_vdso_unmodeled; eassumption.
   - eapply sstep_cfg_syscall; try eassumption.
     apply spurious_refusal_family_on. apply (Hon x8). assumption.
   - eapply sstep_cfg_syscall_materialization_fault; try eassumption.
@@ -392,6 +399,8 @@ Lemma nonrefusal_outcome_of_child : forall c e c',
 Proof.
   intros c e c' H (y8 & Hy & _) Hh' Hr. inversion H; subst; cbn [cfg_ms cfg_model] in *.
   - congruence.
+  - (* a vDSO call: no syscall is pending, against pending_off *)
+    congruence.
   - match goal with
     | Hmat : materialize_model_accesses ?m' _ = Some ?m'', Hhm : m_halted ?m' = None |- _ =>
         pose proof (eq_trans (materialize_halted _ _ _ Hmat) Hhm) as Hh''

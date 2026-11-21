@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the auxv cells are read in the launch's layout (auxv_cells with the CONFIG_RSEQ flag's fact) and that fact is passed to the leaf lemmas. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp.bitvector Require Import definitions.
@@ -217,7 +218,7 @@ Proof.
   assert (R28_10: getr R28 (reg 10) = Z_to_bv 64 u28_10) by (unfold u28_10, U; symmetry; apply lit_of_word). clearbody u28_10.
   pose proof ES28 as (S_1 & S_2 & S_3 & S_4 & S_5 & S_6 & S_7 & S_8 & S_9 & S_10 & S_11 & S_12 & S_13 & S_14 & S_15 & S_16 & S_17 & S_18 & S_19 & S_20 & S_21 & S_22 & S_23 & S_24 & S_25).
   unfold EH_CAUGHT, EH_UNCAUGHT, SYSCAT_GUARD, UW_FLAGS, TD_LOCALE, LOCALE_MSGCAT, GLOBAL_LOCALE, CANARY, AUXVP in S_1, S_2, S_3, S_4, S_5, S_6, S_7, S_8, S_9, S_10, S_11, S_12, S_13, S_14.
-  pose proof (auxv_cells M28 av uid rnd hw S_18) as (X_0 & X_1 & X_2 & X_3 & X_4 & X_5 & X_6 & X_7 & X_8 & X_9 & X_10 & X_11 & X_12 & X_13 & X_14 & X_15 & X_16 & X_17 & X_18 & X_19).
+  pose proof (auxv_cells M28 av uid rnd hw S_18 ltac:(lia)) as (X_r & X_0 & X_1 & X_2 & X_3 & X_4 & X_5 & X_6).
   unshelve epose proof (e3p5cu_conc fx27 R28 M28 (S - 1008) (A + 128) u28_10 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)
     as (fx29 & R29 & M29 & MS29 & K29 & R29_2 & R29_8 & R29_10 & R29_11 & FR29 & GR29).
   { (* [comment removed for export] *) pr. }
@@ -333,14 +334,14 @@ Proof.
     exact GR29.
     constructor. apply L5PK.wr_scratch; lia.
     constructor. }
-  clear X_0 X_1 X_2 X_3 X_4 X_5 X_6 X_7 X_8 X_9 X_10 X_11 X_12 X_13 X_14 X_15 X_16 X_17 X_18 X_19 S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20 S_21 S_22 S_23 S_24 S_25. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
+  clear X_r X_0 X_1 X_2 X_3 X_4 X_5 X_6 S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20 S_21 S_22 S_23 S_24 S_25. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
   clear AG29 FR29 MS29. try clear STAT29. try clear K28.
   try clear c28_Sm72. try clear c28_Sm80. try clear c28_Sm88. try clear c28_Sm96. try clear c28_Sm104. try clear c28_Sm112. try clear c28_Sm120. try clear c28_Sm128. try clear c28_Sm136. try clear c28_Sm144. try clear c28_Sm152. try clear c28_Sm160. try clear c28_Sm168. try clear c28_Sm24. try clear c28_Sm32. try clear c28_Sm8. try clear c28_Sm16. try clear c28_Sm344w1. try clear c28_Sm280w1. try clear c28_Sm248w1. try clear c28_Sm224. try clear c28_Sm232. try clear c28_Sm200w1. try clear c28_Sm176. try clear c28_Sm184. try clear c28_Sm64w1. try clear c28_Om128z8. try clear c28_Om80z12. try clear c28_Op0. try clear c28_Op8. try clear c28_Fp24. try clear c28_Fp32. try clear c28_Fp40. try clear c28_Fp48. try clear c28_Fp56. try clear c28_Fp64w1. try clear c28_Fp65w1. try clear c28_Fp16w4. try clear c28_Fp8. try clear c28_Fp0. try clear c28_Om8. try clear c28_Om40. try clear c28_Om48. try clear c28_Om56. try clear c28_Om64. try clear c28_Om68w4. try clear c28_Om16. try clear c28_Om120. try clear c28_Om24. try clear c28_Om32. try clear c28_Om88. try clear c28_Om104. try clear c28_Om112. try clear c28_Om96. try clear R28_2. try clear R28_3. try clear R28_4. try clear R28_8. try clear R28_9. try clear R28_18. try clear R28_19. try clear R28_20. try clear R28_21. try clear R28_22. try clear R28_23. try clear R28_24. try clear R28_25. try clear R28_26. try clear R28_27. try clear R28_10. try clear DEF28. try clear HH28. try clear HQ28. try clear ES28. try clear DEFref_28. try clear DEFA_28.
   (* [comment removed for export] *)
   pose proof ES29 as (S_1 & S_2 & S_3 & S_4 & S_5 & S_6 & S_7 & S_8 & S_9 & S_10 & S_11 & S_12 & S_13 & S_14 & S_15 & S_16 & S_17 & S_18 & S_19 & S_20 & S_21 & S_22 & S_23 & S_24 & S_25).
   unfold EH_CAUGHT, EH_UNCAUGHT, SYSCAT_GUARD, UW_FLAGS, TD_LOCALE, LOCALE_MSGCAT, GLOBAL_LOCALE, CANARY, AUXVP in S_1, S_2, S_3, S_4, S_5, S_6, S_7, S_8, S_9, S_10, S_11, S_12, S_13, S_14.
-  pose proof (auxv_cells M29 av uid rnd hw S_18) as (X_0 & X_1 & X_2 & X_3 & X_4 & X_5 & X_6 & X_7 & X_8 & X_9 & X_10 & X_11 & X_12 & X_13 & X_14 & X_15 & X_16 & X_17 & X_18 & X_19).
-  unshelve epose proof (e3r5u_conc fx29 R29 M29 (S - 1008) (A + 128) av canary uid rnd hw (U R0 9) (U R0 18) (U R0 19) (U R0 20) (U R0 21) (U R0 22) (U R0 23) (U R0 24) (U R0 25) (U R0 26) (U R0 27) _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)
+  pose proof (auxv_cells M29 av uid rnd hw S_18 ltac:(lia)) as (X_r & X_0 & X_1 & X_2 & X_3 & X_4 & X_5 & X_6).
+  unshelve epose proof (e3r5u_conc X_r fx29 R29 M29 (S - 1008) (A + 128) av canary uid rnd hw (U R0 9) (U R0 18) (U R0 19) (U R0 20) (U R0 21) (U R0 22) (U R0 23) (U R0 24) (U R0 25) (U R0 26) (U R0 27) _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)
     as (fx30 & R30 & M30 & MS30 & K30 & R30_1 & R30_2 & R30_8 & R30_9 & R30_10 & R30_11 & R30_18 & R30_19 & R30_20 & R30_21 & R30_22 & R30_23 & R30_24 & R30_25 & R30_26 & R30_27 & FR30 & GR30).
   { (* [comment removed for export] *) pr. }
   { (* [comment removed for export] *) pr. }
@@ -382,20 +383,6 @@ Proof.
   { (* [comment removed for export] *) pr. }
   { (* [comment removed for export] *) pr. }
   { (* [comment removed for export] *) first [exact c29_Om16 | cellfix c29_Om16]. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
-  { (* [comment removed for export] *) pr. }
   { (* [comment removed for export] *) pr. }
   { (* [comment removed for export] *) pr. }
   { (* [comment removed for export] *) pr. }
@@ -518,7 +505,7 @@ Proof.
     exact GR30.
     constructor. apply L5PK.wr_scratch; lia.
     constructor. }
-  clear X_0 X_1 X_2 X_3 X_4 X_5 X_6 X_7 X_8 X_9 X_10 X_11 X_12 X_13 X_14 X_15 X_16 X_17 X_18 X_19 S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20 S_21 S_22 S_23 S_24 S_25. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
+  clear X_r X_0 X_1 X_2 X_3 X_4 X_5 X_6 S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20 S_21 S_22 S_23 S_24 S_25. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
   clear AG30 FR30 MS30. try clear STAT30. try clear K29.
   try clear c29_Sm72. try clear c29_Sm80. try clear c29_Sm88. try clear c29_Sm96. try clear c29_Sm104. try clear c29_Sm112. try clear c29_Sm120. try clear c29_Sm128. try clear c29_Sm136. try clear c29_Sm144. try clear c29_Sm152. try clear c29_Sm160. try clear c29_Sm168. try clear c29_Sm24. try clear c29_Sm32. try clear c29_Sm8. try clear c29_Sm16. try clear c29_Sm344w1. try clear c29_Sm280w1. try clear c29_Sm248w1. try clear c29_Sm224. try clear c29_Sm232. try clear c29_Sm200w1. try clear c29_Sm176. try clear c29_Sm184. try clear c29_Sm64w1. try clear c29_Om128z8. try clear c29_Om80z12. try clear c29_Op0. try clear c29_Op8. try clear c29_Fp24. try clear c29_Fp32. try clear c29_Fp40. try clear c29_Fp48. try clear c29_Fp56. try clear c29_Fp64w1. try clear c29_Fp65w1. try clear c29_Fp16w4. try clear c29_Fp8. try clear c29_Fp0. try clear c29_Om8. try clear c29_Om40. try clear c29_Om48. try clear c29_Om56. try clear c29_Om64. try clear c29_Om68w4. try clear c29_Om16. try clear c29_Om120. try clear c29_Om24. try clear c29_Om32. try clear c29_Om88. try clear c29_Om104. try clear c29_Om112. try clear c29_Om96. try clear R29_2. try clear R29_3. try clear R29_4. try clear R29_8. try clear R29_9. try clear R29_10. try clear R29_18. try clear R29_19. try clear R29_20. try clear R29_21. try clear R29_22. try clear R29_23. try clear R29_24. try clear R29_25. try clear R29_26. try clear R29_27. try clear DEF29. try clear HH29. try clear HQ29. try clear ES29. try clear DEFref_29. try clear DEFA_29.
   eapply (seg17 fx30 R0 R R30 M M30 model model28 K LB1 cr gd fl S av uid rnd canary hw d1 d2 d3 d4 w960 w976 w552 w568 w576 w584 w592 w600 w608 w616 w624 w632 fb808 fb744 fb712 fb664 fb528 fb472 fb344 fb280 fb248 fb200 fb64 A ref HK0 H02 H03 H04 A16 SLO SHI STOP AVTOP LBWF CR144 CR48 CR66 Hr_fb808 Hb_fb808 Hr_fb744 Hb_fb744 Hr_fb712 Hb_fb712 Hr_fb664 Hb_fb664 Hr_fb528 Hb_fb528 Hr_fb472 Hb_fb472 Hr_fb344 Hb_fb344 Hr_fb280 Hb_fb280 Hr_fb248 Hb_fb248 Hr_fb200 Hb_fb200 Hr_fb64 Hb_fb64 Ww960 Ww976 Ww552 Ww568 Ww576 Ww584 Ww592 Ww600 Ww608 Ww616 Ww624 Ww632 R30_1 R30_2 R30_3 R30_4 R30_8 R30_9 R30_10 R30_11 R30_18 R30_19 R30_20 R30_21 R30_22 R30_23 R30_24 R30_25 R30_26 R30_27 c30_Sm72 c30_Sm80 c30_Sm88 c30_Sm96 c30_Sm104 c30_Sm112 c30_Sm120 c30_Sm128 c30_Sm136 c30_Sm144 c30_Sm152 c30_Sm160 c30_Sm168 c30_Sm24 c30_Sm32 c30_Sm8 c30_Sm16 c30_Sm344w1 c30_Sm280w1 c30_Sm248w1 c30_Sm224 c30_Sm232 c30_Sm200w1 c30_Sm176 c30_Sm184 c30_Sm64w1 c30_Om128z8 c30_Om80z12 c30_Op0 c30_Op8 c30_Fp24 c30_Fp32 c30_Fp40 c30_Fp48 c30_Fp56 c30_Fp64w1 c30_Fp65w1 c30_Fp16w4 c30_Fp8 c30_Fp0 c30_Om8 c30_Om40 c30_Om48 c30_Om56 c30_Om64 c30_Om68w4 c30_Om16 c30_Om120 c30_Om24 c30_Om32 c30_Om88 c30_Om104 c30_Om112 c30_Om96 ES30 DEF30 DEFref_30 DEFA_30 BR_ref BR_A AP_ref_A FRSH_ref FRSH_A HH30 MOK28 MBV28 HQ30 KE).

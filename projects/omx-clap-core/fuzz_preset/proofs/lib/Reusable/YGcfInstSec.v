@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/YGcfInstSec.v, with its module paths and module names changed; 63 of its 3396 lines of code are new or changed and 71 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved-region ledger); internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (lane M of the generic cf instance layer, a working branch; integrator ReallocPrimary).
-   The cf twin of proofs/cgif/cgif_file_fuzzer/lib/AGif5.v and AGif5E.v at c5 30a1993588f: the SECONDARY Allocate
+   The cf twin of proofs/cgif/cgif_file_fuzzer/lib/AGif5.v and AGif5E.v at c5: the SECONDARY Allocate
    interfaces AGif4.AIfaceS, AGif4.AIfaceSw and ErrnoGS.AIfaceSE at the call-site relation YGcfInstBase.ARXq_cf,
    generic over CfImg / CfParams and the image classes ImgBase.AImg / ImgBaseAG.AGImg / ImgBaseAGS.AImgS.
    rule 24: no function proved (interface-instance discharge at a model relation; no machine walk is written).
 
    The fixed arguments are YGcfInstBase's: U := U_cf B, mt := malloc_cf, ARX := ARXq_cf B IOK Hp, AOX := AOX_cf B,
    rpre := rpre_cf B, nmax := cf_malloc_max, lmax := LIVE_MAX, lpost := qtight, dpost := YGcfInstHit.dpost_cf B,
-   mtag := cf_pc_malloc_max and stag := cf_pc_spin_shadow (the two labels malloc_cf uses, YG00cf.v:237 / :249).
+   mtag := cf_pc_malloc_max and stag := cf_pc_spin_shadow (the two labels malloc_cf uses, YG00cf.v:238 / :250).
    The widened form takes NMAXW := cf_malloc_max, NOBW := cf_nob and the room ROOMW as a Section variable.
 
    Field order and lemma names follow AGif5.v (view, shape, fresh, depot, mwf, room, ledger, grant, apart, oom,
@@ -202,13 +203,14 @@ Qed.
 (*     cf classes carry one length-0 sentinel hole, which covers no address).                                        *)
 Lemma anon_grant_facts_cf : forall segs U pp cc bb ly S md (a n : word),
 layout_ok ly -> WfP_cf U pp cc bb S -> sec_placed ly S -> ALedger_cf segs ly S md ->
-grant_ok_na_pin md a (bv_unsigned n) = true -> 0 < bv_unsigned n -> bv_unsigned n mod 4096 = 0 ->
+grant_ok_na_pin (Z_to_bv 64 0) md a (bv_unsigned n) = true -> 0 < bv_unsigned n -> bv_unsigned n mod 4096 = 0 ->
 page_aligned (bv_unsigned a) /\ in_app (bv_unsigned a) (bv_unsigned n) /\ bv_unsigned a + bv_unsigned n <= ASAN_CEIL /\
 Forall (zdisjoint (bv_unsigned a, bv_unsigned n)) (static_extents ly ++ sec_extents ly S ++ perm_maps ly ++ band_maps).
 Proof.
 intros segs U pp cc bb ly S md a n LO W PL L G Hn Hnal.
 pose proof (bv_unsigned_in_range 64 a) as Ra. pose proof (bv_unsigned_in_range 64 n) as Rn. unfold bv_modulus in Ra, Rn.
-unfold grant_ok_na_pin in G. apply andb_prop in G as [G G4]. apply andb_prop in G as [G G3]. apply andb_prop in G as [G1 G2].
+pose proof (YK13.grant_ok_na_pin_facts _ _ _ _ Hn ltac:(unfold page_size; exact Hnal) G) as G0. clear G. rename G0 into G.
+unfold YK13.grant_ok_na_pin_b in G. apply andb_prop in G as [G G4]. apply andb_prop in G as [G G3]. apply andb_prop in G as [G1 G2].
 apply Z.eqb_eq in G1. apply Z.ltb_lt in G2. apply Z.leb_le in G3. unfold page_size in G1.
 assert (Hn64 : Z_to_bv 64 (bv_unsigned n) = n) by (apply w64_uw). rewrite Hn64 in G4.
 set (lo := bv_unsigned a) in *. set (len := bv_unsigned n) in *.
@@ -258,7 +260,7 @@ assert (IMG : zdisjoint (lo, len) (ly_img ly)).
   destruct (Z_lt_le_dec (fst (ly_img ly)) (lo + len)) as [X2|X2]; [|left; zl]. exfalso.
   set (x := Z.max lo (fst (ly_img ly))).
   destruct (L14 x ltac:(unfold in_zr; subst x; zl)) as (e & He & E1).
-  pose proof (YK13.region_free_In _ a n (fst e) (snd e) G4 ltac:(apply in_app_iff; left; rewrite L3, <- surjective_pairing; exact He)) as D.
+  pose proof (YK13.region_free_In _ a n (fst e) (snd e) G4 ltac:(destruct L3 as (rx & L3e & _); apply in_app_iff; left; rewrite L3e, <- surjective_pairing; apply in_app_iff; left; exact He)) as D.
   subst lo len x. zl. }
 assert (PERM : Forall (zdisjoint (lo, len)) (perm_maps ly)).
 { apply Forall_forall. intros z Hz. pose proof (perm_facts ly 1 LO ltac:(zl) z Hz) as (Z1 & Z2 & Z3 & _).
@@ -291,7 +293,7 @@ Hypothesis PL : sec_placed ly S.
 Hypothesis L : ALedger_cf segs ly S md.
 Hypothesis HnZ : 0 < nZ < 2 ^ 40.
 Hypothesis HnZal : nZ mod 4096 = 0.
-Hypothesis HG : grant_ok_na_pin md a nZ = true.
+Hypothesis HG : grant_ok_na_pin (Z_to_bv 64 0) md a nZ = true.
 Let A : Z := bv_unsigned a.
 Lemma gf_word : bv_unsigned (Z_to_bv 64 nZ) = nZ.
 Proof. apply w64_unsigned. zl. Qed.
@@ -567,7 +569,7 @@ apply Z.leb_le. vm_compute. reflexivity.
 Qed.
 
 Lemma ledger_fld_cf : forall Hp inst ly S W mem md, ARXq_cf B IOK Hp inst ly S W mem md ->
-  vm_reserved (m_vmmaps md) = segments_reserved im_segs /\
+  (exists rx, vm_reserved (m_vmmaps md) = segments_reserved im_segs ++ rx /\ res_tail_ok ly rx) /\
   (forall sg, In sg im_segs -> 4096 <= Z.of_N (seg_base sg) /\ Z.of_N (seg_base sg) + Z.of_N (seg_size sg) <= kImgEnd) /\
   In (wiv (ly_Q ly, kPtrArrayResv)) (vm_maps (m_vmmaps md)) /\
   YM05.ceil_of_top (alloc_top (m_vmmaps md)).
@@ -619,7 +621,7 @@ Proof. intros Hp. exact (SecGrantW.ifs_grant_w_cf (ARXq_cf B IOK Hp) (fun ly S =
    shadow (AGif5.apart_AR's twin; YFia.grant_zone / grant_apart / grant_shadow_zero over ALedger_cf). *)
 Lemma apart_gen_cf : forall Hp inst ly S W mem md mat sz (a : word), ARXq_cf B IOK Hp inst ly S W mem md ->
   0 < sz < 2 ^ 40 -> sz mod 4096 = 0 ->
-  grant_ok_na_pin (with_vm_backing (m_vm_lazy md) mat md) a sz = true ->
+  grant_ok_na_pin (Z_to_bv 64 0) (with_vm_backing (m_vm_lazy md) mat md) a sz = true ->
   ims_zone3 (bv_unsigned a) sz /\
   Forall (zdisjoint (bv_unsigned a, sz)) (static_extents ly ++ vis0_zones ly ++ sec_extents ly S) /\
   (forall g, g mod 8 = 0 -> bv_unsigned a <= g -> g + 8 <= bv_unsigned a + sz ->
@@ -737,7 +739,7 @@ Qed.
 (*     image-free junk set below), then the tick (ARcf_tick_sec).                                                     *)
 
 (* The tick keeps ARcf: nothing in it reads the event counter except Wf_cf's event lower bounds, which the tick keeps
-   (WfP_cf_tick; the layer's YGcfInstRefill.ARcf_tick_cf at ad082add249, which d50ec3c8a93 removed). *)
+   (WfP_cf_tick; the layer's YGcfInstRefill.ARcf_tick_cf, which removed). *)
 Lemma ARcf_tick_sec : forall Hp ly S W mem md,
   ARcf im_segs B ly S Hp W mem md -> ARcf im_segs B ly (set_nev (st_nev S + 1) S) Hp W mem md.
 Proof.
@@ -1476,18 +1478,19 @@ Lemma shape_cf : forall n tr S, 64513 <= n < cf_malloc_max -> from_primary n = f
                       ob <- sec_alloc n ;; ImgBaseAGS.malloc_K_t cf_pc_spin_shadow n tr ob) S.
 Proof. intros n tr S _ FP. unfold malloc_cf, ImgBaseAGS.malloc_K_t. rewrite FP. reflexivity. Qed.
 
-(* ifs_grant at the obstacle bound NOB = 2 ^ 29 <= cf_nob (cf_nob_lo). *)
+(* ifs_grant at the obstacle bound NOB = 2 ^ 29 <= cf_nob (cf_nob_lo), at a page-aligned size. *)
 Lemma grant_cf : forall Hp inst ly S W mem md mat sz, ARXq_cf B IOK Hp inst ly S W mem md -> 0 < sz <= ImgBaseAGS.NOB ->
-  exists a, grant_ok_na_pin (with_vm_backing (m_vm_lazy md) mat md) a sz = true.
+  sz mod 4096 = 0 ->
+  exists a, grant_ok_na_pin (Z_to_bv 64 0) (with_vm_backing (m_vm_lazy md) mat md) a sz = true.
 Proof.
-intros Hp inst ly S W mem md mat sz H Hsz. pose proof cf_nob_lo as NL.
-apply (grant_w_cf Hp inst ly S W mem md mat sz H). unfold ImgBaseAGS.NOB in Hsz. zl.
+intros Hp inst ly S W mem md mat sz H Hsz Hal. pose proof cf_nob_lo as NL.
+apply (grant_w_cf Hp inst ly S W mem md mat sz H); [|exact Hal]. unfold ImgBaseAGS.NOB in Hsz. zl.
 Qed.
 
 (* ifs_apart / ifs_apart_w: every size they ask is below 2 ^ 40. *)
 Lemma apart_cf : forall Hp inst ly S W mem md mat sz (a : word), ARXq_cf B IOK Hp inst ly S W mem md ->
   0 < sz <= MALLOC_MAX + 4 * 4096 -> sz mod 4096 = 0 ->
-  grant_ok_na_pin (with_vm_backing (m_vm_lazy md) mat md) a sz = true ->
+  grant_ok_na_pin (Z_to_bv 64 0) (with_vm_backing (m_vm_lazy md) mat md) a sz = true ->
   ims_zone3 (bv_unsigned a) sz /\
   Forall (zdisjoint (bv_unsigned a, sz)) (static_extents ly ++ vis0_zones ly ++ sec_extents ly S) /\
   (forall g, g mod 8 = 0 -> bv_unsigned a <= g -> g + 8 <= bv_unsigned a + sz ->
@@ -1568,7 +1571,7 @@ Qed.
    also allows the errbuf slot and whose eager bound also adds its capacity). *)
 Lemma ALedger_anon_cf : forall ly S S' md (a nw : word) (r : nat) (av : Z),
   layout_ok ly -> Wf_cf (as_universe B) S -> sec_placed ly S -> amwf md -> ALedger_cf im_segs ly S md ->
-  grant_ok_na_pin md a (bv_unsigned nw) = true -> 0 < bv_unsigned nw < 2 ^ 40 -> bv_unsigned nw mod 4096 = 0 ->
+  grant_ok_na_pin (Z_to_bv 64 0) md a (bv_unsigned nw) = true -> 0 < bv_unsigned nw < 2 ^ 40 -> bv_unsigned nw mod 4096 = 0 ->
   (forall c, 1 <= c <= 31 -> reg S' c = reg S c) -> prim_committed S' = prim_committed S ->
   sec_extents (set_ly_sec ly r av) S' = sec_extents ly S ++ [(bv_unsigned a, bv_unsigned nw)] ->
   st_sec_reserved S' = st_sec_reserved S ->
@@ -1584,7 +1587,9 @@ assert (EP : ly_prim (set_ly_sec ly r av) = ly_prim ly) by reflexivity.
 assert (EQ : ly_Q (set_ly_sec ly r av) = ly_Q ly) by reflexivity.
 assert (EI : ly_img (set_ly_sec ly r av) = ly_img ly) by reflexivity.
 pose proof (bv_unsigned_in_range 64 a) as Ra. pose proof (bv_unsigned_in_range 64 nw) as Rn. unfold bv_modulus in Ra, Rn.
-pose proof G as G'. unfold grant_ok_na_pin in G. apply andb_prop in G as [G G4]. apply andb_prop in G as [G G3].
+pose proof G as G'.
+pose proof (YK13.grant_ok_na_pin_facts _ _ _ _ (proj1 Hn) ltac:(unfold page_size; exact Hal) G) as G0. clear G. rename G0 into G.
+unfold YK13.grant_ok_na_pin_b in G. apply andb_prop in G as [G G4]. apply andb_prop in G as [G G3].
 apply andb_prop in G as [G1 G2].
 assert (Hn64 : Z_to_bv 64 (bv_unsigned nw) = nw) by (apply w64_uw). rewrite Hn64 in G4.
 assert (VM' : vm_maps (m_vmmaps md') = (a, nw) :: vm_maps (m_vmmaps md)) by (subst md'; unfold mmap_model; mproj; reflexivity).
@@ -1751,7 +1756,7 @@ Hypothesis Nr : 64513 <= n < cf_malloc_max.
 Hypothesis Hgrow : grow = true <-> Z.of_nat (length (st_sec_arr S)) = st_sec_reserved S.
 Hypothesis WFF : Wf_cf (as_universe B) (AGif4.SFSz S n tr z grow).
 Hypothesis Hmbr : 0 <= mb < 2 ^ 64.
-Hypothesis GOK : grant_ok_na_pin (with_vm_backing (m_vm_lazy md0) mat md0) (w64 mb) (ImgBaseAGS.MSv n) = true.
+Hypothesis GOK : grant_ok_na_pin (Z_to_bv 64 0) (with_vm_backing (m_vm_lazy md0) mat md0) (w64 mb) (ImgBaseAGS.MSv n) = true.
 Hypothesis MON : forall x : word, w_H W x = false -> w_H Wz x = false.
 Hypothesis DP : dpost_cf B (as_inst B) ly S W tr z memD.
 Hypothesis PRD : forall a, ims_dzone ly a -> apresent (w_H Wz) mem0 a -> apresent (w_H Wz) memD a.
@@ -3173,7 +3178,8 @@ intros z0 Hz0. rewrite g_SEF_any in Hz0. apply in_app_iff in Hz0 as [Hz0|[<-|[]]
 - left. rewrite (sec_extents_le_cf ly lyF S _ _ _ _ g_le WF). exact Hz0.
 - right. rewrite (xs_cf_layout ly lyF S g_le).
   apply (xs_fresh_of_grant ly S (with_vm_backing (m_vm_lazy md0) mat md0) mb MSn XP
-    (xs_mapped_cf_wvb ly S md0 (m_vm_lazy md0) mat XSM) GOK); [zl | pose proof g_ms; zl | unfold ASAN_CEIL in MC; zl].
+    (xs_mapped_cf_wvb ly S md0 (m_vm_lazy md0) mat XSM) GOK ltac:(pose proof g_ms; zl) (proj1 (proj2 g_ms)));
+    [zl | pose proof g_ms; zl | unfold ASAN_CEIL in MC; zl].
 Qed.
 
 (* ---- the hidden-shadow facts (AGjy.ahs_final) ---- *)

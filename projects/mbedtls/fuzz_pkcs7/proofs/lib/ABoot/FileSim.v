@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (every encoded statement written out in plain text; the four read_cstr lemmas gain a premise that the name's bytes lie below TASK_SIZE, which the revision's walk now checks; read_argv_cstr_k and read_argv_prefix_k restated over the launch's process input and entry stack image; tfo_write_file gains, and tfo_write_rec narrows to, the access_ok premise; the run-level fout lemmas and spec_err_escape_equiv restated over run_segments with the initial model carrying the vDSO; the using attributes dropped; the comments blanked for export written back in full). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -21,28 +22,33 @@ Ltac2 gd_tbl_FileSim () : Init.string Init.list := ["LinuxProcessSemantics.Riscv
 Section WithFP1.
 Context {fx : FPState}.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* Model plumbing                                                            *)
+(* ========================================================================= *)
 
-#[using="Type"] Lemma with_fds_fs : forall f m, m_fs (with_fds f m) = m_fs m.
+Lemma with_fds_fs : forall f m, m_fs (with_fds f m) = m_fs m.
 Proof. reflexivity. Qed.
-#[using="Type"] Lemma with_fds_halted : forall f m, m_halted (with_fds f m) = m_halted m.
+Lemma with_fds_halted : forall f m, m_halted (with_fds f m) = m_halted m.
 Proof. reflexivity. Qed.
-#[using="Type"] Lemma with_fds_fds : forall f m, m_fds (with_fds f m) = f.
+Lemma with_fds_fds : forall f m, m_fds (with_fds f m) = f.
 Proof. reflexivity. Qed.
-#[using="Type"] Lemma with_fs_fs : forall f m, m_fs (with_fs f m) = f.
+Lemma with_fs_fs : forall f m, m_fs (with_fs f m) = f.
 Proof. reflexivity. Qed.
-#[using="Type"] Lemma with_fs_halted : forall f m, m_halted (with_fs f m) = m_halted m.
+Lemma with_fs_halted : forall f m, m_halted (with_fs f m) = m_halted m.
 Proof. reflexivity. Qed.
-#[using="Type"] Lemma with_fs_fds : forall f m, m_fds (with_fs f m) = m_fds m.
+Lemma with_fs_fds : forall f m, m_fds (with_fs f m) = m_fds m.
 Proof. reflexivity. Qed.
 
-(* [comment removed for export] *)
+(** The argument-register index lemmas [arg_reg_0/1/2] live in
+    [Common.PropExec] (imported above), so they are shared across the
+    Common sim/exec files and every FileSim-based example. *)
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma adv_eff_ret : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pregs,(0.&5.(1.&40.))Ppc,(1.&40.)Px8,(1.&40.)Pmem,P,(1.&40.)(2.(1.&8.))Prom,P,(1.&40.)(2.(1.&8.))Pr,(1.&40.)(3.$4.(5.(6.(7.R6.(8.Vfx,)R5.(9.(1.&40.)R4.)(:.(1.&40.))(;.Vfx,)R3.R2.)(<.R1.(=.(>.(1.&40.)(?.(1.&8.))))(=.(>.(1.&40.)(1.&40.)))(=.(>.(1.&40.)(1.&40.)))(=.$10.)(=.(>.(1.&40.)$11.)))))(12.Vfx,(13.R6.(14.&5.+:.$15.)R1.)(16.R5.+4.)R3.R2.))")
-(* [comment removed for export] *).
+(** advance-past-svc of a ret-only effect at the raw ecall record. *)
+Lemma adv_eff_ret : forall regs pc x8 mem rom r,
+  advance_past_svc (apply_effect
+    {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc; ms_svc_pending := Some x8;
+       ms_resv := None; ms_fcsr := fp_csr; ms_mem := mem; ms_rom := rom |} (mkEffect r [] []))
+  = mkst (regupd regs 10 r) (v_addi pc 4) mem rom.
 Proof.
   intros regs pc x8 mem rom r.
   unfold advance_past_svc, apply_effect, RiscvSemantics.set_reg, ms_pc.
@@ -54,44 +60,48 @@ Proof.
   rewrite b_npc4. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma adv_eff_ret_copyins : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pregs,(0.&5.(1.&40.))Ppc,(1.&40.)Px8,(1.&40.)Pmem,P,(1.&40.)(2.(1.&8.))Prom,P,(1.&40.)(2.(1.&8.))Pr,(1.&40.)Pcopyins,(?.(>.(1.&40.)$11.))(3.$4.(5.(6.(7.R7.(8.Vfx,)R6.(9.(1.&40.)R5.)(:.(1.&40.))(;.Vfx,)R4.R3.)(17.R1.(<.R2.(=.(>.(1.&40.)(?.(1.&8.))))(=.(>.(1.&40.)(1.&40.)))(=.(>.(1.&40.)(1.&40.)))(=.$10.)(=.(>.(1.&40.)$11.))))))(12.Vfx,(13.R7.(14.&5.+:.$15.)R2.)(16.R6.+4.)R4.R3.))")
-(* [comment removed for export] *).
+(** Copy-in provenance does not change the machine-state transition. *)
+Lemma adv_eff_ret_copyins : forall regs pc x8 mem rom r copyins,
+  advance_past_svc (apply_effect
+    {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc; ms_svc_pending := Some x8;
+       ms_resv := None; ms_fcsr := fp_csr; ms_mem := mem; ms_rom := rom |}
+    (with_copyins copyins (mkEffect r [] [])))
+  = mkst (regupd regs 10 r) (v_addi pc 4) mem rom.
 Proof.
   intros regs pc x8 mem rom r copyins.
   unfold with_copyins.
   apply adv_eff_ret.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* sys_input projections                                                     *)
+(* ========================================================================= *)
 
-#[using="Type"] Lemma in_sysno_si : forall segs ms x8, in_sysno (sys_input segs ms x8) = x8.
+Lemma in_sysno_si : forall segs ms x8, in_sysno (sys_input segs ms x8) = x8.
 Proof. reflexivity. Qed.
-#[using="Type"] Lemma in_arg0_si : forall segs ms x8, in_arg (sys_input segs ms x8) 0 = ms_gpr ms 0.
+Lemma in_arg0_si : forall segs ms x8, in_arg (sys_input segs ms x8) 0 = ms_gpr ms 0.
 Proof. reflexivity. Qed.
-#[using="Type"] Lemma in_arg1_si : forall segs ms x8, in_arg (sys_input segs ms x8) 1 = ms_gpr ms 1.
+Lemma in_arg1_si : forall segs ms x8, in_arg (sys_input segs ms x8) 1 = ms_gpr ms 1.
 Proof. reflexivity. Qed.
-#[using="Type"] Lemma in_arg2_si : forall segs ms x8, in_arg (sys_input segs ms x8) 2 = ms_gpr ms 2.
+Lemma in_arg2_si : forall segs ms x8, in_arg (sys_input segs ms x8) 2 = ms_gpr ms 2.
 Proof. reflexivity. Qed.
-#[using="Type"] Lemma in_mem_si : forall segs ms x8, in_mem (sys_input segs ms x8) = ms_read_byte ms.
+Lemma in_mem_si : forall segs ms x8, in_mem (sys_input segs ms x8) = ms_read_byte ms.
 Proof. reflexivity. Qed.
-#[using="Type"] Lemma in_wmem_si : forall segs ms x8,
+Lemma in_wmem_si : forall segs ms x8,
   in_wmem (sys_input segs ms x8) = ms_writable_byte segs ms.
 Proof. reflexivity. Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* fs algebra (fs_set / fs_lookup)                                           *)
+(* ========================================================================= *)
 
-#[using="Type"] Lemma path_eqb_neq : forall p q, p <> q -> path_eqb p q = false.
+Lemma path_eqb_neq : forall p q, p <> q -> path_eqb p q = false.
 Proof.
   intros p q Hne. destruct (path_eqb p q) eqn:E; [|reflexivity].
   apply path_eqb_eq in E. congruence.
 Qed.
 
-#[using="Type"] Lemma fs_lookup_set_eq : forall fs p d, fs_lookup (fs_set fs p d) p = Some d.
+Lemma fs_lookup_set_eq : forall fs p d, fs_lookup (fs_set fs p d) p = Some d.
 Proof.
   induction fs as [|[q dq] fs IH]; intros p d; cbn.
   - rewrite path_eqb_refl. reflexivity.
@@ -102,7 +112,7 @@ Proof.
       * rewrite E. apply IH.
 Qed.
 
-#[using="Type"] Lemma fs_lookup_set_neq : forall fs p d q, q <> p ->
+Lemma fs_lookup_set_neq : forall fs p d q, q <> p ->
   fs_lookup (fs_set fs p d) q = fs_lookup fs q.
 Proof.
   induction fs as [|[r dr] fs IH]; intros p d q Hne; cbn.
@@ -115,13 +125,13 @@ Proof.
       * destruct (path_eqb q r); [reflexivity | apply IH; exact Hne].
 Qed.
 
-#[using="Type"] Lemma path_ltb_irrefl : forall p, path_ltb p p = false.
+Lemma path_ltb_irrefl : forall p, path_ltb p p = false.
 Proof.
   induction p as [|a p IH]; cbn; [reflexivity|].
   unfold bv_ltu. rewrite Z.ltb_irrefl, bv_eqb_refl, IH. reflexivity.
 Qed.
 
-#[using="Type"] Lemma fs_set_set : forall fs p d d', fs_set (fs_set fs p d) p d' = fs_set fs p d'.
+Lemma fs_set_set : forall fs p d d', fs_set (fs_set fs p d) p d' = fs_set fs p d'.
 Proof.
   induction fs as [|[q dq] fs IH]; intros p d d'; cbn.
   - rewrite path_ltb_irrefl, path_eqb_refl. reflexivity.
@@ -132,21 +142,21 @@ Proof.
       * rewrite EL, EE, IH. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* fd-table algebra                                                          *)
+(* ========================================================================= *)
 
-#[using="Type"] Lemma fd_lookup_cons_eq : forall fds fd e, fd_lookup ((fd, e) :: fds) fd = Some e.
+Lemma fd_lookup_cons_eq : forall fds fd e, fd_lookup ((fd, e) :: fds) fd = Some e.
 Proof. intros. cbn. rewrite bv_eqb_refl. reflexivity. Qed.
 
-#[using="Type"] Lemma fd_lookup_cons_neq : forall fds k e fd, k <> fd ->
+Lemma fd_lookup_cons_neq : forall fds k e fd, k <> fd ->
   fd_lookup ((k, e) :: fds) fd = fd_lookup fds fd.
 Proof.
   intros fds k e fd Hne. cbn.
   rewrite (bv_eqb_neq k fd Hne). reflexivity.
 Qed.
 
-#[using="Type"] Lemma fd_lookup_cons_None : forall fds k e fd,
+Lemma fd_lookup_cons_None : forall fds k e fd,
   fd_lookup ((k, e) :: fds) fd = None -> k <> fd /\ fd_lookup fds fd = None.
 Proof.
   intros fds k e fd H. cbn in H.
@@ -155,8 +165,9 @@ Proof.
   intros ->. rewrite bv_eqb_refl in E. discriminate.
 Qed.
 
-#[using="Type"] Lemma fd_filter_id : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pfds,(?.(>.(1.&40.)$18.))Pfd,(1.&40.)P,(3.(2.$18.)(19.R2.R1.)(:.$18.))(3.(?.(>.(1.&40.)$18.))(1:.(>.(1.&40.)$18.)Lp,(>.(1.&40.)$18.)(1;.(1<.&40.(1=.(1.&40.)$18.R1.)R3.))R3.)R3.)")
-(* [comment removed for export] *).
+Lemma fd_filter_id : forall fds fd,
+  fd_lookup fds fd = None ->
+  List.filter (fun p => negb (bv_eqb (fst p) fd)) fds = fds.
 Proof.
   induction fds as [|[k e] fds IH]; intros fd H; [reflexivity|].
   apply fd_lookup_cons_None in H. destruct H as [Hne H].
@@ -164,15 +175,15 @@ Proof.
   rewrite IH by exact H. reflexivity.
 Qed.
 
-#[using="Type"] Lemma fd_insert_fresh : forall fds fd e,
+Lemma fd_insert_fresh : forall fds fd e,
   fd_lookup fds fd = None -> fd_insert fds fd e = (fd, e) :: fds.
 Proof.
   intros fds fd e H. unfold fd_insert. rewrite fd_filter_id by exact H.
   reflexivity.
 Qed.
 
-#[using="Type"] Lemma fd_lookup_filter_neq : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pfds,(?.(>.(1.&40.)$18.))Pfd,(1.&40.)Pfd',(1.&40.)P,(1>.(3.(1.&40.)R1.R2.))(3.(2.$18.)(19.(1:.(>.(1.&40.)$18.)Lp,(>.(1.&40.)$18.)(1;.(1<.&40.(1=.(1.&40.)$18.R1.)R4.))R4.)R2.)(19.R4.R2.))")
-(* [comment removed for export] *).
+Lemma fd_lookup_filter_neq : forall fds fd fd', fd' <> fd ->
+  fd_lookup (List.filter (fun p => negb (bv_eqb (fst p) fd)) fds) fd' = fd_lookup fds fd'.
 Proof.
   induction fds as [|[k e] fds IH]; intros fd fd' Hne; [reflexivity|].
   cbn [List.filter fst].
@@ -183,10 +194,10 @@ Proof.
   - cbn [negb fd_lookup]. destruct (bv_eqb k fd'); [reflexivity | apply IH; exact Hne].
 Qed.
 
-#[using="Type"] Lemma fd_lookup_insert_eq : forall fds fd e, fd_lookup (fd_insert fds fd e) fd = Some e.
+Lemma fd_lookup_insert_eq : forall fds fd e, fd_lookup (fd_insert fds fd e) fd = Some e.
 Proof. intros. unfold fd_insert. apply fd_lookup_cons_eq. Qed.
 
-#[using="Type"] Lemma fd_lookup_insert_neq : forall fds fd e fd', fd' <> fd ->
+Lemma fd_lookup_insert_neq : forall fds fd e fd', fd' <> fd ->
   fd_lookup (fd_insert fds fd e) fd' = fd_lookup fds fd'.
 Proof.
   intros fds fd e fd' Hne. unfold fd_insert.
@@ -194,17 +205,20 @@ Proof.
   apply fd_lookup_filter_neq. exact Hne.
 Qed.
 
-#[using="Type"] Lemma fd_lookup_remove_neq : forall fds fd fd', fd' <> fd ->
+Lemma fd_lookup_remove_neq : forall fds fd fd', fd' <> fd ->
   fd_lookup (fd_remove fds fd) fd' = fd_lookup fds fd'.
 Proof. intros. unfold fd_remove. apply fd_lookup_filter_neq. assumption. Qed.
 
-#[using="Type"] Lemma fd_lookup_some_none_neq : forall fds a b ea,
+Lemma fd_lookup_some_none_neq : forall fds a b ea,
   fd_lookup fds a = Some ea -> fd_lookup fds b = None -> a <> b.
 Proof. intros fds a b ea Ha Hb ->. congruence. Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma free_fd_after_open : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Px,$18.Py,$18.Pz,$18.Pfdin,(1.&40.)Pe,$18.(1?.(1.&40.)Lw,(1.&40.)(20.(3.(2.$18.)(19.(21.(22.(>.(1.&40.)$18.)(23.(1.&40.)$18.(24.&40.=)R6.)(22.(>.(1.&40.)$18.)(23.(1.&40.)$18.(24.&40.+1.)R5.)(22.(>.(1.&40.)$18.)(23.(1.&40.)$18.(24.&40.+2.)R4.)(=.(>.(1.&40.)$18.)))))R3.R2.)R1.)(:.$18.))(25.(26.&40.R1.)(27.+2.+1?.))))")
-(* [comment removed for export] *).
+(** A concrete free fd after one open over the three standard channels
+    (stdin/stdout/stderr already occupied). *)
+Lemma free_fd_after_open : forall x y z fdin e,
+  exists w, fd_lookup (fd_insert
+      [(Z_to_bv 64 0, x); (Z_to_bv 64 1, y); (Z_to_bv 64 2, z)] fdin e) w = None
+    /\ (bv_unsigned w < 2 ^ 31)%Z.
 Proof.
   intros x y z fdin e.
   destruct (decide (fdin = Z_to_bv 64 3)) as [->|Hne].
@@ -218,7 +232,7 @@ Proof.
     + change (bv_unsigned (Z_to_bv 64 3)) with 3%Z. lia.
 Qed.
 
-#[using="Type"] Lemma filter_fd_cons_keep : forall {B} (fds : list (word * B)) k (e : B) fd,
+Lemma filter_fd_cons_keep : forall {B} (fds : list (word * B)) k (e : B) fd,
   k <> fd ->
   List.filter (fun p => negb (bv_eqb (fst p) fd)) ((k, e) :: fds)
   = (k, e) :: List.filter (fun p => negb (bv_eqb (fst p) fd)) fds.
@@ -227,36 +241,37 @@ Proof.
   rewrite (bv_eqb_neq k fd Hne). reflexivity.
 Qed.
 
-#[using="Type"] Lemma filter_fd_cons_drop : forall {B} (fds : list (word * B)) fd (e : B),
+Lemma filter_fd_cons_drop : forall {B} (fds : list (word * B)) fd (e : B),
   List.filter (fun p => negb (bv_eqb (fst p) fd)) ((fd, e) :: fds)
   = List.filter (fun p => negb (bv_eqb (fst p) fd)) fds.
 Proof.
   intros B fds fd e. cbn [List.filter fst]. rewrite bv_eqb_refl. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* file_read / file_write arithmetic                                         *)
+(* ========================================================================= *)
 
-#[using="Type"] Lemma length_file_read : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pdata,(?.(1.&8.))Poff,(1.&40.)Pcount,(1.&40.)(3.$11.(28.(1.&8.)(29.R3.R2.R1.))(2:.(2;.R1.)(2<.(28.(1.&8.)R3.)(2;.R2.))))")
-(* [comment removed for export] *).
+Lemma length_file_read : forall data off count,
+  length (file_read data off count)
+  = Nat.min (word_to_nat count) (length data - word_to_nat off)%nat.
 Proof.
   intros data off count. rewrite file_read_unguarded.
   rewrite length_firstn, length_skipn. reflexivity.
 Qed.
 
-#[using="Type"] Lemma file_read_nil : forall data off count,
+Lemma file_read_nil : forall data off count,
   (length data <= word_to_nat off)%nat -> file_read data off count = [].
 Proof.
   intros data off count H. rewrite file_read_unguarded.
   rewrite skipn_all2 by exact H. apply firstn_nil.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma file_write_append : forall data off bs,
+(** Appending write: writing at exactly the end of the file. *)
+Lemma file_write_append : forall data off bs,
   word_to_nat off = length data -> file_write data off bs = data ++ bs.
 Proof.
-  intros data off bs Hoff. unfold file_write.
+  intros data off bs Hoff. unfold file_write, file_extend.
   destruct bs as [|b bs]; [now rewrite app_nil_r|]. cbv zeta.
   rewrite Hoff, Nat.sub_diag. cbn [repeat]. rewrite app_nil_r.
   rewrite firstn_all.
@@ -264,7 +279,7 @@ Proof.
   rewrite app_nil_r. reflexivity.
 Qed.
 
-#[using="Type"] Lemma firstn_add {A} : forall (l : list A) n m,
+Lemma firstn_add {A} : forall (l : list A) n m,
   firstn (n + m) l = firstn n l ++ firstn m (skipn n l).
 Proof.
   induction l as [|x l IH]; intros n m.
@@ -273,9 +288,13 @@ Proof.
     cbn [firstn skipn Nat.add app]. rewrite IH. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma copy_step : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pdata,(?.(1.&8.))Poff,(1.&40.)Pcount,(1.&40.)(3.(?.(1.&8.))(2=.(1.&8.)(2>.(1.&8.)(2;.R2.)R3.)(29.R3.R2.R1.))(2>.(1.&8.)(2?.(2;.R2.)(2:.(2;.R1.)(2<.(28.(1.&8.)R3.)(2;.R2.))))R3.))")
-(* [comment removed for export] *).
+(** One copy step: current content [firstn (word_to_nat off) data]
+    extended by the chunk just read at [off].  The fd offset is a [word],
+    and the equation is hypothesis-free. *)
+Lemma copy_step : forall data (off count : word),
+  firstn (word_to_nat off) data ++ file_read data off count
+  = firstn (word_to_nat off
+            + Nat.min (word_to_nat count) (length data - word_to_nat off)) data.
 Proof.
   intros data off count. rewrite file_read_unguarded.
   rewrite firstn_add. f_equal.
@@ -288,25 +307,28 @@ Proof.
     reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* read_cstr bridges (through the rdn merged view)                           *)
+(* ========================================================================= *)
 
-(* [comment removed for export] *)
+(** The merged read view [rdn] chains over — equal to [ms_read_byte] of a
+    state whose rom is [seg_rom segs]. *)
 Definition mrb (segs : list Segment) (mem : word -> option byte)
     : word -> option byte :=
   fun a => match mem a with Some b => Some b | None => seg_rom segs a end.
 
-#[using="Type"] Lemma ms_read_byte_mrb : forall segs regs pc mem,
+Lemma ms_read_byte_mrb : forall segs regs pc mem,
   ms_read_byte (mkst regs pc mem (seg_rom segs)) = mrb segs mem.
 Proof. reflexivity. Qed.
 
-#[using="Type"] Lemma ms_read_byte_rec_mrb : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Psegs,(?.$30.)Pregs,(0.&5.(1.&40.))Pfr,(0.&5.(1.&40.))Ppc,(1.&40.)Psv,(2.(1.&40.))Prv,(2.(1.&40.))Pfc,(1.&20.)Pmem,P,(1.&40.)(2.(1.&8.))(3.Paddr,(1.&40.)(2.(1.&8.))(31.(7.R7.R6.R5.R4.R3.R2.R1.(32.R8.)))(33.R8.R1.))")
-(* [comment removed for export] *).
+Lemma ms_read_byte_rec_mrb : forall segs regs fr pc sv rv fc mem,
+  ms_read_byte {| ms_regs := regs; ms_fregs := fr; ms_pc_val := pc; ms_svc_pending := sv;
+                  ms_resv := rv; ms_fcsr := fc; ms_mem := mem; ms_rom := seg_rom segs |}
+  = mrb segs mem.
 Proof. reflexivity. Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma mrb_first : forall segs mem a n b rest,
+(** The first byte read by [rdn] is exactly the [mrb] value at [a]. *)
+Lemma mrb_first : forall segs mem a n b rest,
   rdn segs mem a (S n) = Some (b :: rest) -> mrb segs mem a = Some b.
 Proof.
   intros segs mem a n b rest H. unfold mrb. cbn [rdn] in H.
@@ -316,9 +338,9 @@ Proof.
   injection H; intros; subst; congruence.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma rdn_tail : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Psegs,(?.$30.)Pmem,P,(1.&40.)(2.(1.&8.))Pa,(1.&40.)Pn,$11.Pb,(1.&8.)Prest,(?.(1.&8.))P,(3.(2.(?.(1.&8.)))(34.R6.R5.R4.(35.R3.))(9.(?.(1.&8.))(22.(1.&8.)R2.R1.)))(3.(2.(?.(1.&8.)))(34.R7.R6.(36.&40.R5.(14.&40.+1.$15.))R4.)(9.(?.(1.&8.))R2.))")
-(* [comment removed for export] *).
+(** The remaining bytes read by [rdn]. *)
+Lemma rdn_tail : forall segs mem a n b rest,
+  rdn segs mem a (S n) = Some (b :: rest) -> rdn segs mem (a + 1) n = Some rest.
 Proof.
   intros segs mem a n b rest H. cbn [rdn] in H.
   destruct (match mem a with Some b0 => Some b0 | None => seg_rom segs a end)
@@ -327,16 +349,35 @@ Proof.
   injection H; intros; subst; reflexivity.
 Qed.
 
-#[using="Type"] Lemma read_cstr_aux_of_rdn : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Psegs,(?.$30.)Pstr,(?.(1.&8.))Pfuel,$11.Pmem,P,(1.&40.)(2.(1.&8.))Pa,(1.&40.)P,(37.(28.(1.&8.)R4.)R3.)P,(1>.(38.(1.&8.)(24.&8.=)R5.))P,(3.(2.(?.(1.&8.)))(34.R7.R4.R3.(2?.(28.(1.&8.)R6.)#1.))(9.(?.(1.&8.))(2=.(1.&8.)R6.(22.(1.&8.)(24.&8.=)(=.(1.&8.))))))(3.$39.(3:.(33.R8.R5.)R4.R6.)(3;.R7.))")
-(* [comment removed for export] *).
+(** THE [TASK_SIZE] PREMISE on the four lemmas below is a repair, not a
+    weakening.  They were true of the unguarded walk.  [State.read_cstr_aux]
+    now tests [State.access_okb a 1] at every byte it steps, and they
+    are false of it exactly where a name's bytes sit at or above
+    [TASK_SIZE] — a range [strncpy_from_user] refuses
+    (lib/strncpy_from_user.c, [strncpy_from_user]: [max_addr =
+    TASK_SIZE_MAX], -EFAULT at or past it; [State.read_cstr_aux] says
+    the rest).  Each premise is the weakest that makes its lemma true:
+    the last byte the walk steps — the NUL, or the last of [fuel]
+    non-NUL bytes — lies below [TASK_SIZE].  Below [TASK_SIZE] the walk's
+    [a + 1] does not wrap, so that one bound puts every stepped byte
+    there; nothing is assumed about the rest of memory. *)
+Lemma read_cstr_aux_of_rdn : forall segs str fuel mem a,
+  (length str < fuel)%nat -> ~ In (Z_to_bv 8 0) str ->
+  (bv_unsigned a + Z.of_nat (length str) < TASK_SIZE)%Z ->
+  rdn segs mem a (length str + 1) = Some (str ++ [Z_to_bv 8 0]) ->
+  read_cstr_aux (mrb segs mem) a fuel = CstrOk str.
 Proof.
-  intros segs str; induction str as [|b str IH]; intros fuel mem a Hf Hnz Hr.
+  intros segs str; induction str as [|b str IH]; intros fuel mem a Hf Hnz Hlo Hr.
   - cbn [length] in *. destruct fuel as [|fuel]; [lia|].
     assert (Hb0 : mrb segs mem a = Some (Z_to_bv 8 0))
       by (apply (mrb_first segs mem a 0 (Z_to_bv 8 0) []); exact Hr).
-    cbn [read_cstr_aux]. rewrite Hb0. reflexivity.
+    rewrite read_cstr_aux_accepted
+      by (rewrite access_okb_one; apply Z.ltb_lt; lia).
+    rewrite Hb0. reflexivity.
   - cbn [length] in *. destruct fuel as [|fuel]; [lia|].
-    cbn [read_cstr_aux]. cbn [app] in Hr.
+    rewrite read_cstr_aux_accepted
+      by (rewrite access_okb_one; apply Z.ltb_lt; lia).
+    cbn [app] in Hr.
     assert (Hb : b <> Z_to_bv 8 0) by (intro; apply Hnz; left; auto).
     assert (Hfirst : mrb segs mem a = Some b)
       by (apply (mrb_first segs mem a (length str + 1) b (str ++ [Z_to_bv 8 0]));
@@ -345,90 +386,138 @@ Proof.
                     = Some (str ++ [Z_to_bv 8 0]))
       by (apply (rdn_tail segs mem a (length str + 1) b (str ++ [Z_to_bv 8 0]));
           exact Hr).
+    assert (Hu1 : bv_unsigned (a + 1) = (bv_unsigned a + 1)%Z)
+      by (apply bv_unsigned_succ_below_task_size; lia).
     rewrite Hfirst. rewrite (bv_eqb_neq b (Z_to_bv 8 0) Hb).
     rewrite (IH fuel mem (a + 1) ltac:(lia)
-               ltac:(intro; apply Hnz; right; assumption) Htail).
+               ltac:(intro; apply Hnz; right; assumption) ltac:(lia) Htail).
     reflexivity.
 Qed.
 
-#[using="Type"] Lemma read_cstr_of_rdn : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Psegs,(?.$30.)Pmem,P,(1.&40.)(2.(1.&8.))Pa,(1.&40.)Pstr,(?.(1.&8.))P,(3<.(28.(1.&8.)R1.)#???.)P,(1>.(38.(1.&8.)(24.&8.=)R2.))P,(3.(2.(?.(1.&8.)))(34.R6.R5.R4.(2?.(28.(1.&8.)R3.)#1.))(9.(?.(1.&8.))(2=.(1.&8.)R3.(22.(1.&8.)(24.&8.=)(=.(1.&8.))))))(3.$39.(3=.(33.R7.R6.)R5.)(3;.R4.))")
-(* [comment removed for export] *).
+Lemma read_cstr_of_rdn : forall segs mem a str,
+  (length str <= 4095)%nat -> ~ In (Z_to_bv 8 0) str ->
+  (bv_unsigned a + Z.of_nat (length str) < TASK_SIZE)%Z ->
+  rdn segs mem a (length str + 1) = Some (str ++ [Z_to_bv 8 0]) ->
+  read_cstr (mrb segs mem) a = CstrOk str.
 Proof.
-  intros segs mem a str Hlen Hnz Hr.
-  unfold read_cstr. apply read_cstr_aux_of_rdn; [|exact Hnz|exact Hr].
+  intros segs mem a str Hlen Hnz Hlo Hr.
+  unfold read_cstr. apply read_cstr_aux_of_rdn; [|exact Hnz|exact Hlo|exact Hr].
   change path_max with 4096%nat. lia.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma read_cstr_aux_toolong_of_rdn : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Psegs,(?.$30.)Pfuel,$11.Pbs,(?.(1.&8.))Pmem,P,(1.&40.)(2.(1.&8.))Pa,(1.&40.)P,(3.$11.(28.(1.&8.)R3.)R4.)P,(1>.(38.(1.&8.)(24.&8.=)R4.))P,(3.(2.(?.(1.&8.)))(34.R7.R4.R3.R6.)(9.(?.(1.&8.))R5.))(3.$39.(3:.(33.R8.R5.)R4.R7.)$3>.)")
-(* [comment removed for export] *).
+(** [fuel] readable non-NUL bytes: the scan runs out of bound, which is
+    [CstrTooLong] — the -ENAMETOOLONG case, NOT a fault.  The bound
+    premise is stated for [fuel <> 0] because at [fuel = 0] the walk
+    steps no byte and the lemma holds wherever [a] is. *)
+Lemma read_cstr_aux_toolong_of_rdn : forall segs fuel bs mem a,
+  length bs = fuel -> ~ In (Z_to_bv 8 0) bs ->
+  (fuel <> 0%nat -> (bv_unsigned a + Z.of_nat fuel <= TASK_SIZE)%Z) ->
+  rdn segs mem a fuel = Some bs ->
+  read_cstr_aux (mrb segs mem) a fuel = CstrTooLong.
 Proof.
-  intros segs fuel; induction fuel as [|fuel IH]; intros bs mem a Hlen Hnz Hr;
+  intros segs fuel; induction fuel as [|fuel IH]; intros bs mem a Hlen Hnz Hlo Hr;
     [reflexivity|].
+  specialize (Hlo ltac:(lia)).
   destruct bs as [|b bs]; [cbn in Hlen; lia|].
-  cbn [read_cstr_aux].
+  rewrite read_cstr_aux_accepted
+    by (rewrite access_okb_one; apply Z.ltb_lt; lia).
   assert (Hb : b <> Z_to_bv 8 0) by (intro; apply Hnz; left; auto).
   assert (Hfirst : mrb segs mem a = Some b)
     by (apply (mrb_first segs mem a fuel b bs); exact Hr).
   assert (Htail : rdn segs mem (a + 1) fuel = Some bs)
     by (apply (rdn_tail segs mem a fuel b bs); exact Hr).
+  assert (Hu1 : bv_unsigned (a + 1) = (bv_unsigned a + 1)%Z)
+    by (apply bv_unsigned_succ_below_task_size; lia).
   rewrite Hfirst. rewrite (bv_eqb_neq b (Z_to_bv 8 0) Hb).
   rewrite (IH bs mem (a + 1) ltac:(cbn in Hlen; lia)
-             ltac:(intro; apply Hnz; right; assumption) Htail).
+             ltac:(intro; apply Hnz; right; assumption)
+             ltac:(intro; lia) Htail).
   reflexivity.
 Qed.
 
-#[using="Type"] Lemma read_cstr_toolong_of_rdn : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Psegs,(?.$30.)Pmem,P,(1.&40.)(2.(1.&8.))Pa,(1.&40.)Pbs,(?.(1.&8.))P,(3.$11.(28.(1.&8.)R1.)#1000.)P,(1>.(38.(1.&8.)(24.&8.=)R2.))P,(3.(2.(?.(1.&8.)))(34.R6.R5.R4.#1000.)(9.(?.(1.&8.))R3.))(3.$39.(3=.(33.R7.R6.)R5.)$3>.)")
-(* [comment removed for export] *).
+Lemma read_cstr_toolong_of_rdn : forall segs mem a bs,
+  length bs = 4096%nat -> ~ In (Z_to_bv 8 0) bs ->
+  (bv_unsigned a + 4096 <= TASK_SIZE)%Z ->
+  rdn segs mem a 4096%nat = Some bs ->
+  read_cstr (mrb segs mem) a = CstrTooLong.
 Proof.
-  intros segs mem a bs Hlen Hnz Hr.
+  intros segs mem a bs Hlen Hnz Hlo Hr.
   unfold read_cstr. change path_max with 4096%nat.
-  eapply read_cstr_aux_toolong_of_rdn; eauto.
+  eapply read_cstr_aux_toolong_of_rdn; [exact Hlen|exact Hnz| |exact Hr].
+  intros _. change (Z.of_nat 4096) with 4096%Z. lia.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* argv strings as NUL-terminated byte runs and prefixes                     *)
+(* ========================================================================= *)
 
-#[using="Type"] Lemma read_argv_cstr_k : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pph,$3?.Psegs,(?.$30.)Psp,(1.&40.)Pav,(?.(?.(1.&8.)))Pev,(?.(?.(1.&8.)))Pk,$11.Puid,(1.&40.)Phw,(1.&40.)Prnd,$40.P,(37.R4.(28.(?.(1.&8.))R6.))P,(25.(41.(26.&40.R8.)(42.(28.(1.&8.)(43.R:.R8.R7.R6.R4.R3.R2.))))(27.+2.+40.))(3.(2.(?.(1.&8.)))(34.R:.(44.R9.(45.R;.R9.R8.R7.R5.R4.R3.))(46.R9.R8.R7.R6.)(2?.(28.(1.&8.)(47.(?.(1.&8.))R6.R8.(=.(1.&8.))))#1.))(9.(?.(1.&8.))(2=.(1.&8.)(47.(?.(1.&8.))R6.R8.(=.(1.&8.)))(22.(1.&8.)(24.&8.=)(=.(1.&8.))))))")
-(* [comment removed for export] *).
+Lemma read_argv_cstr_k :
+  forall v segs inp mbase ph entry (sp brk : word) draw k,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  (k < length (in_argv inp))%nat ->
+  rdn segs (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw))
+      (cat_argv_ptr (ed_top draw) (in_argv inp) (in_envp inp) (in_execfn inp) k)
+      (length (nth k (in_argv inp) []) + 1)
+  = Some (nth k (in_argv inp) [] ++ [Z_to_bv 8 0]).
 Proof.
-  intros ph segs sp av ev k uid hw rnd Hk Hnw.
-  destruct (bsb_byte_k ph sp av ev k uid hw rnd Hk) as [pre [post [E Hlen]]].
-  pose proof (read_at_offset_image segs ph sp av ev uid hw rnd
-    pre (nth k av [] ++ [Z_to_bv 8 0]) post (length (nth k av []) + 1)) as H.
+  intros v segs inp mbase ph entry sp brk draw k Hlaunch Hk.
+  pose proof (entry_stack_image_no_wrap v inp mbase ph entry sp brk draw Hlaunch)
+    as Hnw.
+  destruct (bsb_byte_k inp mbase ph entry sp draw k Hk) as [pre [post [E Hlen]]].
+  pose proof (read_at_offset_image segs inp mbase ph entry sp draw
+    pre (nth k (in_argv inp) [] ++ [Z_to_bv 8 0]) post
+    (length (nth k (in_argv inp) []) + 1)) as H.
   rewrite Hlen in H.
-  replace (cat_argv_ptr sp av ev k)
-    with (sp + nat_to_word (cat_struct_size av ev + total_arg_bytes_nat (firstn k av))).
-  2:{ rewrite (cat_argv_ptr_offset sp av ev k Hk). unfold cat_string_base.
+  replace (cat_argv_ptr (ed_top draw) (in_argv inp) (in_envp inp)
+             (in_execfn inp) k)
+    with (sp + nat_to_word
+                 (cat_string_off (kb_rseq (in_kernel inp)) sp (ed_top draw)
+                    (in_argv inp) (in_envp inp) (in_execfn inp)
+                  + total_arg_bytes_nat (firstn k (in_argv inp)))).
+  2:{ rewrite (cat_argv_ptr_offset _ _ _ _ k Hk),
+        (cat_string_base_offset v inp mbase sp brk draw Hlaunch).
       rewrite nat_to_word_add_merge. reflexivity. }
   apply H; [exact E | | exact Hnw].
   rewrite length_app. cbn [length]. lia.
 Qed.
 
-#[using="Type"] Lemma read_argv_prefix_k : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pph,$3?.Psegs,(?.$30.)Psp,(1.&40.)Pav,(?.(?.(1.&8.)))Pev,(?.(?.(1.&8.)))Pk,$11.Pn,$11.Puid,(1.&40.)Phw,(1.&40.)Prnd,$40.P,(37.R5.(28.(?.(1.&8.))R7.))P,(3<.R5.(28.(1.&8.)(47.(?.(1.&8.))R6.R8.(=.(1.&8.)))))P,(25.(41.(26.&40.R:.)(42.(28.(1.&8.)(43.R<.R:.R9.R8.R5.R4.R3.))))(27.+2.+40.))(3.(2.(?.(1.&8.)))(34.R<.(44.R;.(45.R=.R;.R:.R9.R6.R5.R4.))(46.R;.R:.R9.R8.)R7.)(9.(?.(1.&8.))(2>.(1.&8.)R7.(47.(?.(1.&8.))R8.R:.(=.(1.&8.))))))")
-(* [comment removed for export] *).
+Lemma read_argv_prefix_k :
+  forall v segs inp mbase ph entry (sp brk : word) draw k n,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  (k < length (in_argv inp))%nat ->
+  (n <= length (nth k (in_argv inp) []))%nat ->
+  rdn segs (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw))
+      (cat_argv_ptr (ed_top draw) (in_argv inp) (in_envp inp) (in_execfn inp) k) n
+  = Some (firstn n (nth k (in_argv inp) [])).
 Proof.
-  intros ph segs sp av ev k n uid hw rnd Hk Hn Hnw.
-  destruct (bsb_byte_k ph sp av ev k uid hw rnd Hk) as [pre [post [E Hlen]]].
-  pose proof (read_at_offset_image segs ph sp av ev uid hw rnd
-    pre (firstn n (nth k av []))
-    ((skipn n (nth k av []) ++ [Z_to_bv 8 0]) ++ post) n) as H.
+  intros v segs inp mbase ph entry sp brk draw k n Hlaunch Hk Hn.
+  pose proof (entry_stack_image_no_wrap v inp mbase ph entry sp brk draw Hlaunch)
+    as Hnw.
+  destruct (bsb_byte_k inp mbase ph entry sp draw k Hk) as [pre [post [E Hlen]]].
+  pose proof (read_at_offset_image segs inp mbase ph entry sp draw
+    pre (firstn n (nth k (in_argv inp) []))
+    ((skipn n (nth k (in_argv inp) []) ++ [Z_to_bv 8 0]) ++ post) n) as H.
   rewrite Hlen in H.
-  replace (cat_argv_ptr sp av ev k)
-    with (sp + nat_to_word (cat_struct_size av ev + total_arg_bytes_nat (firstn k av))).
-  2:{ rewrite (cat_argv_ptr_offset sp av ev k Hk). unfold cat_string_base.
+  replace (cat_argv_ptr (ed_top draw) (in_argv inp) (in_envp inp)
+             (in_execfn inp) k)
+    with (sp + nat_to_word
+                 (cat_string_off (kb_rseq (in_kernel inp)) sp (ed_top draw)
+                    (in_argv inp) (in_envp inp) (in_execfn inp)
+                  + total_arg_bytes_nat (firstn k (in_argv inp)))).
+  2:{ rewrite (cat_argv_ptr_offset _ _ _ _ k Hk),
+        (cat_string_base_offset v inp mbase sp brk draw Hlaunch).
       rewrite nat_to_word_add_merge. reflexivity. }
   apply H; [| |exact Hnw].
   - rewrite E. rewrite <- !app_assoc.
-    rewrite (app_assoc (firstn n (nth k av [])) (skipn n (nth k av []))).
+    rewrite (app_assoc (firstn n (nth k (in_argv inp) []))
+               (skipn n (nth k (in_argv inp) []))).
     rewrite firstn_skipn. reflexivity.
   - apply firstn_length_le. exact Hn.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* to_fout: the exact (exit code, final fs) outcome set                      *)
+(* ========================================================================= *)
 
 Definition fout_trace (o : word * Fs.Fs) : list event := [ExitEv (fst o) (snd o)].
 
@@ -465,16 +554,16 @@ Inductive to_fout : machine_state -> Model -> ((word * Fs.Fs) -> Prop) -> Prop :
           /\ T eff model' o)) ->
     to_fout ms model U.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma tfo_msteps : forall ms ms' model U,
+(** Prepend a deterministic instruction run. *)
+Lemma tfo_msteps : forall ms ms' model U,
   msteps segs ms ms' -> to_fout ms' model U -> to_fout ms model U.
 Proof.
   intros ms ms' model U H; induction H; [auto|].
   intro Ht. eapply tfo_step; eauto.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma tfo_equiv : forall ms model U V,
+(** Rewire the outcome set along an extensional equivalence. *)
+Lemma tfo_equiv : forall ms model U V,
   to_fout ms model U ->
   (forall o, V o <-> U o) ->
   to_fout ms model V.
@@ -493,8 +582,8 @@ Proof.
     intro o. rewrite (HV o). apply HU.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma to_fout_nonempty : forall ms model U,
+(** Every [to_fout] outcome set is inhabited. *)
+Lemma to_fout_nonempty : forall ms model U,
   to_fout ms model U -> exists o, U o.
 Proof.
   intros ms model U Hto.
@@ -510,13 +599,24 @@ Proof.
     exists o. apply HU. exists eff, model', evs. auto.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma sstep_fsys_inv : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pms,$4.Pmodel,$48.Px8,(1.&40.)Pevs,(?.$49.)Pst,$4:.P,(3.(2.(1.&40.))(4;.R4.)(:.(1.&40.)))P,(3.(?.(>.(1.&40.)(1.&40.)))(4<.R5.)(=.(>.(1.&40.)(1.&40.))))P,(3.(2.(1.&40.))(4=.R7.)(9.(1.&40.)R5.))P,(1>.(4>.(4?.Vsegs,R8.R6.)R7.(50.$51.)))P,Peff,$51.Pmodel',$48.Pevs',(?.$49.)P,(4>.(4?.Vsegs,R<.R:.)R;.(52.$51.R3.R2.R1.))(20.(3.(?.$49.)R2.(=.$49.))(20.(3.(2.(1.&40.))(4;.R3.)(:.(1.&40.)))(3.(?.(>.(1.&40.)(1.&40.)))(4<.R3.)(=.(>.(1.&40.)(1.&40.))))))P,(53.Vsegs,(54.R:.R9.)R7.R6.)(1?.$51.Leff,$51.(1?.$48.Lmodel',$48.(20.(4>.(4?.Vsegs,R=.R;.)R<.(52.$51.R2.R1.(=.$49.)))(20.(3.(?.$49.)R:.(=.$49.))(3.$4:.R9.(55.(54.(5.(6.R=.R2.))R1.)))))))")
-(* [comment removed for export] *).
+(** One-step inversion at a [tfo_sys] ecall. *)
+Lemma sstep_fsys_inv : forall ms model x8 evs st,
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  ms_svc_pending ms = Some x8 ->
+  ~ syscall_spec (sys_input segs ms x8) model Unmodeled ->
+  (forall eff model' evs',
+      syscall_spec (sys_input segs ms x8) model (Ok eff model' evs') ->
+      evs' = [] /\ m_halted model' = None /\ m_vm_lazy model' = []) ->
+  sstep segs (mkCfg ms model) evs st ->
+  exists eff model',
+    syscall_spec (sys_input segs ms x8) model (Ok eff model' []) /\
+    evs = [] /\
+    st = SNext (mkCfg (advance_past_svc (apply_effect ms eff)) model').
 Proof.
   intros ms model x8 evs st Hh Hlazy Hsvc Hne Hshape Hss.
   inversion Hss; subst; try congruence.
-  - (* [comment removed for export] *)
+  - (* sstep_syscall *)
     match goal with
     | H2 : ms_svc_pending ms = Some ?x,
       H3 : syscall_spec (sys_input segs ms ?x) model (Ok ?eff ?model' ?evs0) |- _ =>
@@ -530,7 +630,7 @@ Proof.
       end;
       exists eff, model'; auto
     end.
-  - (* [comment removed for export] *)
+  - (* sstep_syscall_materialization_fault *)
     exfalso.
     match goal with
     | H2 : ms_svc_pending ms = Some ?x,
@@ -541,7 +641,7 @@ Proof.
       rewrite (materialize_model_accesses_no_lazy model' _ Hlazy') in Hmat;
       discriminate
     end.
-  - (* [comment removed for export] *)
+  - (* sstep_exit: excluded by the never-halts shape *)
     exfalso.
     match goal with
     | H2 : ms_svc_pending ms = Some ?x,
@@ -551,7 +651,8 @@ Proof.
       destruct (Hshape eff model' evs0 H3) as (_ & Hm & _);
       congruence
     end.
-  - (* [comment removed for export] *)
+  - (* sstep_killed: the same shape excludes it, through
+       [State.m_killed_of_m_halted_none] *)
     exfalso.
     match goal with
     | H2 : ms_svc_pending ms = Some ?x,
@@ -564,16 +665,23 @@ Proof.
     end.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ------------------------------------------------------------------------- *)
+(* Trace characterization.                                                    *)
+(* ------------------------------------------------------------------------- *)
 
-(* [comment removed for export] *)
+(** The omni reading of a file-copying run: every execution halts with
+    one of the outcomes, having emitted exactly its exit event.  One
+    induction over [to_fout]; at a syscall node the successors are
+    exactly the admissible resolutions ([sstep_fsys_inv]), each covered
+    by the induction hypothesis at its post-model. *)
 Definition fout_post (U : (word * Fs.Fs) -> Prop) : post :=
   fun tr o => exists out, U out /\ tr = fout_trace out /\ exits_with (fst out) tr o.
 
-#[using="Type"] Lemma to_fout_exec : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pms,$4.Pmodel,$48.PU,P,(>.(1.&40.)$56.)SpP,(57.R3.R2.R1.)P,(3.(2.(1.&40.))(4;.R3.)(:.(1.&40.)))P,(3.(?.(>.(1.&40.)(1.&40.)))(4<.R4.)(=.(>.(1.&40.)(1.&40.))))(58.Vsegs,(54.R6.R5.)(59.R4.))")
-(* [comment removed for export] *).
+Lemma to_fout_exec : forall ms model U,
+  to_fout ms model U ->
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  OmniRun.exec segs (mkCfg ms model) (fout_post U).
 Proof.
   intros ms model U Hto.
   induction Hto as
@@ -581,7 +689,7 @@ Proof.
     | ms ms' model U Hsvc Hstep Hto IH
     | ms model x8 T U Hsvc Hne Hrec Hshape Hcont IH HU ];
     intros Hh Hlazy.
-  - (* [comment removed for export] *)
+  - (* tfo_exit *)
     apply (exec_step_only segs _ _
              [ExitEv (bv_and (ms_gpr ms 0) (Z_to_bv 64 255)) (m_fs model)]
              (mkCfg ms (with_halted (bv_and (ms_gpr ms 0) (Z_to_bv 64 255)) model))).
@@ -608,13 +716,13 @@ Proof.
         cbn [exits_with cfg_model fst]. split;
           [ rewrite m_halted_with_halted; reflexivity
           | apply m_killed_with_halted ].
-  - (* [comment removed for export] *)
+  - (* tfo_step *)
     apply (exec_step_only segs _ _ [] (mkCfg ms' model)).
     + apply (sstep_instr segs ms model ms' model); [exact Hh | exact Hsvc |].
       rewrite (mi_account_step_no_lazy segs ms model Hlazy), Hstep. reflexivity.
     + intros evs st Hss. exact (sstep_instr_inv segs ms model ms' evs st Hlazy Hsvc Hstep Hss).
     + eapply exec_conseq; [exact (IH Hh Hlazy) |]. intros tr o H. cbn [app]. exact H.
-  - (* [comment removed for export] *)
+  - (* tfo_sys: every admissible resolution is a successor *)
     apply exec_step; [exact Hh | | |].
     + destruct Hrec as (eff & model' & evs & Hspec).
       destruct (Hshape eff model' evs Hspec) as (-> & Hh' & Hlazy').
@@ -634,8 +742,12 @@ Proof.
       split; [cbn [app]; exact Heq | exact Hx].
 Qed.
 
-#[using="Type"] Lemma to_fout_star_only : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pms,$4.Pmodel,$48.PU,P,(>.(1.&40.)$56.)SpP,(57.R3.R2.R1.)P,(3.(2.(1.&40.))(4;.R3.)(:.(1.&40.)))P,(3.(?.(>.(1.&40.)(1.&40.)))(4<.R4.)(=.(>.(1.&40.)(1.&40.))))Ptr,(?.$49.)Pc,$5:.P,(5;.Vsegs,(54.R8.R7.)R2.R1.)(1?.(>.(1.&40.)$56.)Lo,(>.(1.&40.)$56.)(20.A1.R8.R1.(5<.$49.R4.(5=.R1.))))")
-(* [comment removed for export] *).
+Lemma to_fout_star_only : forall ms model U,
+  to_fout ms model U ->
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  forall tr c, star segs (mkCfg ms model) tr c ->
+    exists o, U o /\ is_prefix tr (fout_trace o).
 Proof.
   intros ms model U Hto Hh Hlazy tr c Hstar.
   destruct (exec_realizes _ _ _ (exec_star _ _ _ _ _ (to_fout_exec ms model U Hto Hh Hlazy) Hstar))
@@ -643,8 +755,12 @@ Proof.
   exists out. split; [exact Hout |]. rewrite <- Heq. apply is_prefix_app.
 Qed.
 
-#[using="Type"] Lemma to_fout_star_admits : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pms,$4.Pmodel,$48.PU,P,(>.(1.&40.)$56.)SpP,(57.R3.R2.R1.)P,(3.(2.(1.&40.))(4;.R3.)(:.(1.&40.)))P,(3.(?.(>.(1.&40.)(1.&40.)))(4<.R4.)(=.(>.(1.&40.)(1.&40.))))Po,(>.(1.&40.)$56.)P,A1.R5.R1.(1?.$5:.Lc,$5:.(5;.Vsegs,(54.R9.R8.)(5=.R3.)R1.))")
-(* [comment removed for export] *).
+Lemma to_fout_star_admits : forall ms model U,
+  to_fout ms model U ->
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  forall o, U o ->
+    exists c, star segs (mkCfg ms model) (fout_trace o) c.
 Proof.
   intros ms model U Hto.
   induction Hto as
@@ -652,7 +768,7 @@ Proof.
     | ms ms' model U Hsvc Hstep Hto IH
     | ms model x8 T U Hsvc Hne Hrec Hshape Hcont IH HU ];
     intros Hh Hlazy o Ho.
-  - (* [comment removed for export] *)
+  - (* tfo_exit *)
     apply HU in Ho. subst o. unfold fout_trace; cbn [fst snd].
     exists (mkCfg ms (with_halted (bv_and (ms_gpr ms 0) (Z_to_bv 64 255)) model)).
     apply star_one.
@@ -670,14 +786,14 @@ Proof.
       rewrite in_sysno_si. exact Hx8.
     + cbn. reflexivity.
     + apply m_killed_with_halted.
-  - (* [comment removed for export] *)
+  - (* tfo_step *)
     destruct (IH Hh Hlazy o Ho) as [c Hstar].
     exists c.
     replace (fout_trace o) with ([] ++ fout_trace o) by reflexivity.
     eapply star_step; [|exact Hstar].
     apply (sstep_instr segs ms model ms' model); try assumption.
     rewrite (mi_account_step_no_lazy segs ms model Hlazy), Hstep. reflexivity.
-  - (* [comment removed for export] *)
+  - (* tfo_sys *)
     apply HU in Ho.
     destruct Ho as (eff & model' & evs & Hspec & Ht).
     destruct (Hshape eff model' evs Hspec) as (He & Hh' & Hlazy'). subst evs.
@@ -689,12 +805,19 @@ Proof.
     rewrite (materialize_model_accesses_no_lazy model' _ Hlazy'). reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ------------------------------------------------------------------------- *)
+(* No-error characterization.                                                 *)
+(* ------------------------------------------------------------------------- *)
 
-#[using="Type"] Lemma to_fout_progress : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pms,$4.Pmodel,$48.PU,P,(>.(1.&40.)$56.)SpP,(57.R3.R2.R1.)P,(3.(2.(1.&40.))(4;.R3.)(:.(1.&40.)))P,(3.(?.(>.(1.&40.)(1.&40.)))(4<.R4.)(=.(>.(1.&40.)(1.&40.))))Pevs,(?.$49.)Pst,$4:.P,(53.Vsegs,(54.R8.R7.)R2.R1.)(1?.$4.Lms',$4.(1?.$48.Lmodel',$48.(20.(3.$4:.R4.(55.(54.R2.R1.)))(5>.(1>.(3.(2.(1.&40.))(4;.R1.)(:.(1.&40.))))(20.(3.(2.(1.&40.))(4;.R1.)(:.(1.&40.)))(20.(3.(?.(>.(1.&40.)(1.&40.)))(4<.R1.)(=.(>.(1.&40.)(1.&40.))))(1?.P,(>.(1.&40.)$56.)SpLU',P,(>.(1.&40.)$56.)Sp(57.R3.R2.R1.))))))))")
-(* [comment removed for export] *).
+Lemma to_fout_progress : forall ms model U,
+  to_fout ms model U ->
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  forall evs st, sstep segs (mkCfg ms model) evs st ->
+  exists ms' model', st = SNext (mkCfg ms' model') /\
+    (m_halted model' <> None \/
+     (m_halted model' = None /\ m_vm_lazy model' = [] /\
+      exists U', to_fout ms' model' U')).
 Proof.
   intros ms model U Hto Hh Hlazy evs st Hss.
   revert evs st Hss.
@@ -703,16 +826,16 @@ Proof.
     | ms ms' model U Hsvc Hstep Hto IH
     | ms model x8 T U Hsvc Hne Hrec Hshape Hcont IH HU ];
     intros evs st Hss.
-  - (* [comment removed for export] *)
+  - (* tfo_exit *)
     destruct (sstep_exit_inv segs ms model x8 evs st Hh Hsvc Hx8 Hss)
       as [_ Hst]. subst st.
     do 2 eexists. split; [reflexivity|]. left. cbn. discriminate.
-  - (* [comment removed for export] *)
+  - (* tfo_step *)
     destruct (sstep_instr_inv segs ms model ms' evs st Hlazy Hsvc Hstep Hss)
       as [_ Hst]. subst st.
     do 2 eexists. split; [reflexivity|]. right.
     repeat split; try assumption. exists U. exact Hto.
-  - (* [comment removed for export] *)
+  - (* tfo_sys *)
     destruct (sstep_fsys_inv ms model x8 evs st Hh Hlazy Hsvc Hne Hshape Hss)
       as (eff & model' & Hspec & _ & Hst). subst st.
     destruct (Hshape eff model' [] Hspec) as (_ & Hh' & Hlazy').
@@ -721,10 +844,13 @@ Proof.
     exists (T eff model'). exact (Hcont eff model' [] Hspec).
 Qed.
 
-Definition fon_path (c : config) : Prop := ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "(5>.(20.(3.(2.(1.&40.))(4;.(5?.O1.))(:.(1.&40.)))(20.(3.(?.(>.(1.&40.)(1.&40.)))(4<.(5?.O1.))(=.(>.(1.&40.)(1.&40.))))(1?.P,(>.(1.&40.)$56.)SpLU,P,(>.(1.&40.)$56.)Sp(57.(60.O1.)(5?.O1.)R1.))))(1>.(3.(2.(1.&40.))(4;.(5?.O1.))(:.(1.&40.)))))")
-(* [comment removed for export] *).
+Definition fon_path (c : config) : Prop :=
+  (m_halted (cfg_model c) = None
+   /\ m_vm_lazy (cfg_model c) = []
+   /\ exists U, to_fout (cfg_ms c) (cfg_model c) U)
+  \/ m_halted (cfg_model c) <> None.
 
-#[using="Type"] Lemma fon_path_step : forall c evs c',
+Lemma fon_path_step : forall c evs c',
   fon_path c -> sstep segs c evs (SNext c') -> fon_path c'.
 Proof.
   intros [ms model] evs [ms' model'] Hop Hss.
@@ -739,7 +865,7 @@ Proof.
   - exfalso. inversion Hss; subst; cbn in Hh; congruence.
 Qed.
 
-#[using="Type"] Lemma fon_path_no_error : forall c evs, fon_path c -> ~ sstep segs c evs SError.
+Lemma fon_path_no_error : forall c evs, fon_path c -> ~ sstep segs c evs SError.
 Proof.
   intros [ms model] evs Hop Hss.
   unfold fon_path in Hop; cbn in Hop.
@@ -749,24 +875,33 @@ Proof.
   - inversion Hss; subst; cbn in Hh; congruence.
 Qed.
 
-#[using="Type"] Lemma star_fon_path : forall c tr c',
+Lemma star_fon_path : forall c tr c',
   fon_path c -> star segs c tr c' -> fon_path c'.
 Proof. exact (star_inv segs fon_path fon_path_step). Qed.
 
-#[using="Type"] Lemma to_fout_no_error : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pms,$4.Pmodel,$48.PU,P,(>.(1.&40.)$56.)SpP,(57.R3.R2.R1.)P,(3.(2.(1.&40.))(4;.R3.)(:.(1.&40.)))P,(3.(?.(>.(1.&40.)(1.&40.)))(4<.R4.)(=.(>.(1.&40.)(1.&40.))))(1>.(61.Vsegs,(54.R6.R5.)))")
-(* [comment removed for export] *).
+Lemma to_fout_no_error : forall ms model U,
+  to_fout ms model U ->
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  ~ reaches_error segs (mkCfg ms model).
 Proof.
   intros ms model U Hto Hh Hlazy. apply exec_no_error.
   eapply exec_conseq; [exact (to_fout_exec ms model U Hto Hh Hlazy) |].
   intros tr o (out & _ & _ & Hx). exact (exits_with_never_errors _ _ _ Hx).
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ------------------------------------------------------------------------- *)
+(* Escape plumbing: reach a syscall-Unmodeled through a star with silent syscalls.  *)
+(* ------------------------------------------------------------------------- *)
 
-#[using="Type"] Lemma star_syscall_nil : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pms,$4.Pmodel,$48.Px8,(1.&40.)Peff,$51.Pmodel',$48.P,(3.(2.(1.&40.))(4;.R4.)(:.(1.&40.)))P,(3.(2.(1.&40.))(4=.R6.)(9.(1.&40.)R4.))P,(4>.(4?.Vsegs,R7.R5.)R6.(52.$51.R4.R3.(=.$49.)))P,(3.(2.(1.&40.))(4;.R4.)(:.(1.&40.)))P,(3.(?.(>.(1.&40.)(1.&40.)))(4<.R5.)(=.(>.(1.&40.)(1.&40.))))(5;.Vsegs,(54.R:.R9.)(=.$49.)(54.(5.(6.R:.R7.))R6.))")
-(* [comment removed for export] *).
+Lemma star_syscall_nil : forall ms model x8 eff model',
+  m_halted model = None ->
+  ms_svc_pending ms = Some x8 ->
+  syscall_spec (sys_input segs ms x8) model (Ok eff model' []) ->
+  m_halted model' = None ->
+  m_vm_lazy model' = [] ->
+  star segs (mkCfg ms model) []
+       (mkCfg (advance_past_svc (apply_effect ms eff)) model').
 Proof.
   intros ms model x8 eff model' Hh Hsvc Hspec Hh' Hlazy.
   apply star_one.
@@ -774,23 +909,31 @@ Proof.
   rewrite (materialize_model_accesses_no_lazy model' _ Hlazy). reflexivity.
 Qed.
 
-#[using="Type"] Lemma reaches_error_star : forall c tr c',
+Lemma reaches_error_star : forall c tr c',
   star segs c tr c' -> reaches_error segs c' -> reaches_error segs c.
 Proof.
   intros c tr c' Hstar (tr2 & c2 & evs & Hstar2 & Hss).
   exists (tr ++ tr2), c2, evs. split; [eapply star_trans; eauto | exact Hss].
 Qed.
 
-#[using="Type"] Lemma spec_err_error : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pms,$4.Pmodel,$48.Px8,(1.&40.)P,(3.(2.(1.&40.))(4;.R2.)(:.(1.&40.)))P,(3.(2.(1.&40.))(4=.R4.)(9.(1.&40.)R2.))P,(4>.(4?.Vsegs,R5.R3.)R4.(50.$51.))(61.Vsegs,(54.R6.R5.))")
-(* [comment removed for export] *).
+Lemma spec_err_error : forall ms model x8,
+  m_halted model = None ->
+  ms_svc_pending ms = Some x8 ->
+  syscall_spec (sys_input segs ms x8) model Unmodeled ->
+  reaches_error segs (mkCfg ms model).
 Proof.
   intros ms model x8 Hh Hsvc Hspec.
   exists [], (mkCfg ms model), []. split; [apply star_refl|].
   eapply sstep_syscall_unmodeled; eassumption.
 Qed.
 
-#[using="Type"] Lemma msteps_spec_err_error : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pms,$4.Pms',$4.Pmodel,$48.Px8,(1.&40.)P,(3.(2.(1.&40.))(4;.R2.)(:.(1.&40.)))P,(3.(?.(>.(1.&40.)(1.&40.)))(4<.R3.)(=.(>.(1.&40.)(1.&40.))))P,(62.Vsegs,R6.R5.)P,(3.(2.(1.&40.))(4=.R6.)(9.(1.&40.)R4.))P,(4>.(4?.Vsegs,R7.R5.)R6.(50.$51.))(61.Vsegs,(54.R9.R7.))")
-(* [comment removed for export] *).
+Lemma msteps_spec_err_error : forall ms ms' model x8,
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  msteps segs ms ms' ->
+  ms_svc_pending ms' = Some x8 ->
+  syscall_spec (sys_input segs ms' x8) model Unmodeled ->
+  reaches_error segs (mkCfg ms model).
 Proof.
   intros ms ms' model x8 Hh Hlazy Hm Hsvc Hspec.
   eapply reaches_error_star.
@@ -798,9 +941,15 @@ Proof.
   - eapply spec_err_error; eassumption.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma spec_err_all_traces_error : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pms,$4.Pmodel,$48.Px8,(1.&40.)P,(3.(2.(1.&40.))(4;.R2.)(:.(1.&40.)))P,(3.(2.(1.&40.))(4=.R4.)(9.(1.&40.)R2.))P,(4>.(4?.Vsegs,R5.R3.)R4.(50.$51.))(63.Vsegs,(54.R6.R5.))")
-(* [comment removed for export] *).
+(** A syscall configuration whose relational spec is [Unmodeled] has no
+    successful successor.  Completeness of the executable checker makes
+    that exclusion explicit: [CheckUnmodeled] for every proposed effect cannot
+    simultaneously be [CheckOk]. *)
+Lemma spec_err_all_traces_error : forall ms model x8,
+  m_halted model = None ->
+  ms_svc_pending ms = Some x8 ->
+  syscall_spec (sys_input segs ms x8) model Unmodeled ->
+  all_traces_error segs (mkCfg ms model).
 Proof.
   intros ms model x8 Hh Hsvc Hspec.
   assert (Hno_ok : forall eff model' events,
@@ -829,31 +978,52 @@ Proof.
       end.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma msteps_spec_err_all_traces_error : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pms,$4.Pms',$4.Pmodel,$48.Px8,(1.&40.)P,(3.(2.(1.&40.))(4;.R2.)(:.(1.&40.)))P,(3.(?.(>.(1.&40.)(1.&40.)))(4<.R3.)(=.(>.(1.&40.)(1.&40.))))P,(62.Vsegs,R6.R5.)P,(3.(2.(1.&40.))(4=.R6.)(9.(1.&40.)R4.))P,(4>.(4?.Vsegs,R7.R5.)R6.(50.$51.))(63.Vsegs,(54.R9.R7.))")
-(* [comment removed for export] *).
+(** Deterministic ordinary instructions followed by a syscall-spec Unmodeled
+    prove the universal source escape, not merely existential
+    reachability. *)
+Lemma msteps_spec_err_all_traces_error : forall ms ms' model x8,
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  msteps segs ms ms' ->
+  ms_svc_pending ms' = Some x8 ->
+  syscall_spec (sys_input segs ms' x8) model Unmodeled ->
+  all_traces_error segs (mkCfg ms model).
 Proof.
   intros ms ms' model x8 Hh Hlazy Hm Hsvc Hspec.
   eapply msteps_all_traces_error; [exact Hh | exact Hlazy | exact Hm |].
   eapply spec_err_all_traces_error; eassumption.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ------------------------------------------------------------------------- *)
+(* Ergonomic nodes.                                                           *)
+(* ------------------------------------------------------------------------- *)
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma tfo_exit_code : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pms,$4.Pmodel,$48.Px8,(1.&40.)Pcode,(1.&40.)P,(3.(2.(1.&40.))(4=.R4.)(9.(1.&40.)R2.))P,(64.R3.)P,(3.(1.&40.)(65.R6.#0.)R3.)P,(3.(1.&40.)(66.&40.R4.(24.&40.+??.))R4.)(57.R8.R7.Lo,(>.(1.&40.)$56.)(3.(>.(1.&40.)$56.)R1.(23.(1.&40.)$56.R6.(67.R8.))))")
-(* [comment removed for export] *).
+(** Exit leaf with a small literal code. *)
+Lemma tfo_exit_code : forall ms model x8 code,
+  ms_svc_pending ms = Some x8 ->
+  is_exit_no x8 ->
+  ms_gpr ms 0 = code ->
+  bv_and code (Z_to_bv 64 255) = code ->
+  to_fout ms model (fun o => o = (code, m_fs model)).
 Proof.
   intros ms model x8 code Hsvc Hx8 Hg Hland.
   apply (tfo_exit ms model x8); [exact Hsvc | exact Hx8 |].
   intro o. rewrite Hg, Hland. tauto.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma tfo_sys_det : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pms,$4.Pmodel,$48.Px8,(1.&40.)Peff,$51.Pmodel',$48.PU,P,(>.(1.&40.)$56.)SpP,(3.(2.(1.&40.))(4=.R6.)(9.(1.&40.)R4.))P,(4>.(4?.Vsegs,R7.R5.)R6.(52.$51.R4.R3.(=.$49.)))P,Peff2,$51.Pm2,$48.Pevs2,(?.$49.)P,(4>.(4?.Vsegs,R;.R9.)R:.(52.$51.R3.R2.R1.))(20.(3.$51.R4.R9.)(20.(3.$48.R3.R8.)(3.(?.$49.)R2.(=.$49.))))P,(1>.(4>.(4?.Vsegs,R9.R7.)R8.(50.$51.)))P,(3.(2.(1.&40.))(4;.R6.)(:.(1.&40.)))P,(3.(?.(>.(1.&40.)(1.&40.)))(4<.R7.)(=.(>.(1.&40.)(1.&40.))))P,(57.(5.(6.R<.R9.))R8.R7.)(57.R=.R<.R8.)")
-(* [comment removed for export] *).
+(** A syscall with a UNIQUE admissible outcome (file read/write, close,
+    open-ENOENT): sequential composition. *)
+Lemma tfo_sys_det : forall ms model x8 eff model' U,
+  ms_svc_pending ms = Some x8 ->
+  syscall_spec (sys_input segs ms x8) model (Ok eff model' []) ->
+  (forall eff2 m2 evs2,
+      syscall_spec (sys_input segs ms x8) model (Ok eff2 m2 evs2) ->
+      eff2 = eff /\ m2 = model' /\ evs2 = []) ->
+  ~ syscall_spec (sys_input segs ms x8) model Unmodeled ->
+  m_halted model' = None ->
+  m_vm_lazy model' = [] ->
+  to_fout (advance_past_svc (apply_effect ms eff)) model' U ->
+  to_fout ms model U.
 Proof.
   intros ms model x8 eff model' U Hsvc Hok Huniq Hne Hh' Hlazy' Hcont.
   apply (tfo_sys ms model x8 (fun _ _ => U) U); [exact Hsvc | exact Hne | | | |].
@@ -870,66 +1040,77 @@ Qed.
 
 End WithSegs.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* Syscall decoding through the verified checker                             *)
+(* ========================================================================= *)
 
-(* [comment removed for export] *)
+(* ----- dispatch (Z-characterized syscall numbers) ----- *)
 
-#[using="Type"] Lemma check_syscall_56 : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Psegs,(?.$30.)Pms,$4.Px8,(1.&40.)Peff,$51.Pm,$48.P,(3.$68.(26.&40.R3.)+38.)(3.$69.(6:.(4?.R6.R5.R4.)R3.R2.)(6;.(4?.R6.R5.R4.)(6<.(65.R5.#0.))(65.R5.#1.)(65.R5.#2.)R3.R2.))")
-(* [comment removed for export] *).
+Lemma check_syscall_56 : forall segs ms x8 eff m,
+  bv_unsigned x8 = 56%Z ->
+  check_syscall (sys_input segs ms x8) eff m
+  = check_openat (sys_input segs ms x8) (fd32 (ms_gpr ms 0)) (ms_gpr ms 1)
+                 (ms_gpr ms 2) eff m.
 Proof.
   intros segs ms x8 eff m Hno.
   unfold check_syscall. rewrite in_sysno_si, Hno. reflexivity.
 Qed.
 
-#[using="Type"] Lemma check_syscall_57 : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Psegs,(?.$30.)Pms,$4.Px8,(1.&40.)Peff,$51.Pm,$48.P,(3.$68.(26.&40.R3.)+39.)(3.$69.(6:.(4?.R6.R5.R4.)R3.R2.)(6=.(6<.(65.R5.#0.))R3.R2.))")
-(* [comment removed for export] *).
+Lemma check_syscall_57 : forall segs ms x8 eff m,
+  bv_unsigned x8 = 57%Z ->
+  check_syscall (sys_input segs ms x8) eff m
+  = check_close (fd32 (ms_gpr ms 0)) eff m.
 Proof.
   intros segs ms x8 eff m Hno.
   unfold check_syscall. rewrite in_sysno_si, Hno. reflexivity.
 Qed.
 
-#[using="Type"] Lemma check_syscall_63 : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Psegs,(?.$30.)Pms,$4.Px8,(1.&40.)Peff,$51.Pm,$48.P,(3.$68.(26.&40.R3.)+3?.)(3.$69.(6:.(4?.R6.R5.R4.)R3.R2.)(6>.(4?.R6.R5.R4.)(6<.(65.R5.#0.))(65.R5.#1.)(65.R5.#2.)R3.R2.))")
-(* [comment removed for export] *).
+Lemma check_syscall_63 : forall segs ms x8 eff m,
+  bv_unsigned x8 = 63%Z ->
+  check_syscall (sys_input segs ms x8) eff m
+  = check_read (sys_input segs ms x8) (fd32 (ms_gpr ms 0)) (ms_gpr ms 1)
+               (ms_gpr ms 2) eff m.
 Proof.
   intros segs ms x8 eff m Hno.
   unfold check_syscall. rewrite in_sysno_si, Hno. reflexivity.
 Qed.
 
-#[using="Type"] Lemma check_syscall_64 : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Psegs,(?.$30.)Pms,$4.Px8,(1.&40.)Peff,$51.Pm,$48.P,(3.$68.(26.&40.R3.)+40.)(3.$69.(6:.(4?.R6.R5.R4.)R3.R2.)(6?.(4?.R6.R5.R4.)(6<.(65.R5.#0.))(65.R5.#1.)(65.R5.#2.)R3.R2.))")
-(* [comment removed for export] *).
+Lemma check_syscall_64 : forall segs ms x8 eff m,
+  bv_unsigned x8 = 64%Z ->
+  check_syscall (sys_input segs ms x8) eff m
+  = check_write (sys_input segs ms x8) (fd32 (ms_gpr ms 0)) (ms_gpr ms 1)
+                (ms_gpr ms 2) eff m.
 Proof.
   intros segs ms x8 eff m Hno.
   unfold check_syscall. rewrite in_sysno_si, Hno. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
+(* ----- open-result algebra ----- *)
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma fd_not_error : forall fd : word,
+(** An in-range fd is never an error-encoded return. *)
+Lemma fd_not_error : forall fd : word,
   (bv_unsigned fd < 2 ^ 31)%Z -> addr_is_error_b fd = false.
 Proof.
   intros fd H. unfold addr_is_error_b, two_pow_64. apply Z.ltb_ge. lia.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma errno_ret_recover : forall e,
+(** Recover the errno from an errno-encoded return value. *)
+Lemma errno_ret_recover : forall e,
   (1 <= e)%Z -> (e <= 4095)%Z ->
   (two_pow_64 - bv_unsigned (errno_ret e))%Z = e.
 Proof.
   intros e H1 H2. rewrite (errno_ret_unsigned e H1 H2). lia.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma ENOMEM_in_openat_errnos : In ENOMEM openat_errnos.
+(** Membership and range facts for openat's injectable errno set. *)
+Lemma ENOMEM_in_openat_errnos : In ENOMEM openat_errnos.
 Proof. left. reflexivity. Qed.
 
-#[using="Type"] Lemma openat_errno_range : forall e,
+Lemma openat_errno_range : forall e,
   In e openat_errnos -> (1 <= e)%Z /\ (e <= 4095)%Z.
 Proof. intros e HIn. exact (errnos_ok_range openat_errnos e eq_refl HIn). Qed.
 
-#[using="Type"] Lemma check_open_result_never_unmodeled : forall eff m mk,
+Lemma check_open_result_never_unmodeled : forall eff m mk,
   check_open_result eff m mk <> CheckUnmodeled.
 Proof.
   intros [ret ws zs us cs copyins] m mk.
@@ -943,8 +1124,12 @@ Proof.
   destruct (bv_eqb ret (alloc_fd (m_fds m))); discriminate.
 Qed.
 
-#[using="Type"] Lemma check_open_result_ok_iff : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Peff,$51.Pm,$48.Pmk,P,(1.&40.)$48.Pm',$48.Pevs,(?.$49.)(70.(3.$69.(71.R5.R4.R3.)(72.R2.R1.))(5>.(1?.$68.Le,$68.(20.(38.$68.R1.$73.)(20.(3.$51.R6.(<.(74.R1.)(=.(>.(1.&40.)(?.(1.&8.))))(=.(>.(1.&40.)(1.&40.)))(=.(>.(1.&40.)(1.&40.)))(=.$10.)(=.(>.(1.&40.)$11.))))(20.(3.$48.R3.R5.)(3.(?.$49.)R2.(=.$49.))))))(1?.(1.&40.)Lfd,(1.&40.)(20.(3.(2.$18.)(19.(75.R5.)R1.)(:.$18.))(20.(3.(1.&40.)R1.(76.(75.R5.)))(20.(3.$51.R6.(<.R1.(=.(>.(1.&40.)(?.(1.&8.))))(=.(>.(1.&40.)(1.&40.)))(=.(>.(1.&40.)(1.&40.)))(=.$10.)(=.(>.(1.&40.)$11.))))(20.(3.$48.R3.A1.R4.R1.)(3.(?.$49.)R2.(=.$49.)))))))))")
-(* [comment removed for export] *).
+Lemma check_open_result_ok_iff : forall eff m (mk : word -> Model) m' evs,
+  check_open_result eff m mk = CheckOk m' evs <->
+  ((exists e, In e openat_errnos /\ eff = mkEffect (errno_ret e) [] []
+              /\ m' = m /\ evs = [])
+   \/ (exists fd, fd_lookup (m_fds m) fd = None /\ fd = alloc_fd (m_fds m)
+                  /\ eff = mkEffect fd [] [] /\ m' = mk fd /\ evs = [])).
 Proof.
   intros [ret ws zs us cs copyins] m mk m' evs.
   unfold check_open_result, check_new_fd_result. split.
@@ -981,8 +1166,9 @@ Definition check_open_result_copyins (reads : list (word * nat))
     (eff : SyscallEffect) (m : Model) (mk : word -> Model) : check_result :=
   check_copyins reads eff (check_open_result (clear_copyins eff) m mk).
 
-#[using="Type"] Lemma effect_from_copyins_and_clear : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Peff,$51.Preads,(?.(>.(1.&40.)$11.))Pcore,$51.P,(3.(?.(>.(1.&40.)$11.))(77.R3.)R2.)P,(3.$51.(78.R4.)R2.)(3.$51.R5.(17.R4.R3.))")
-(* [comment removed for export] *).
+Lemma effect_from_copyins_and_clear : forall eff reads core,
+  eff_copyins eff = reads -> clear_copyins eff = core ->
+  eff = with_copyins reads core.
 Proof.
   intros [ret ws zs us cs copyins] reads core Hreads Hcore.
   cbn [eff_copyins] in Hreads. subst copyins.
@@ -991,7 +1177,7 @@ Proof.
   inversion Hcore. reflexivity.
 Qed.
 
-#[using="Type"] Lemma check_open_result_copyins_never_unmodeled : forall reads eff m mk,
+Lemma check_open_result_copyins_never_unmodeled : forall reads eff m mk,
   check_open_result_copyins reads eff m mk <> CheckUnmodeled.
 Proof.
   intros reads eff m mk.
@@ -1000,8 +1186,16 @@ Proof.
     [apply check_open_result_never_unmodeled|discriminate].
 Qed.
 
-#[using="Type"] Lemma check_open_result_copyins_ok_iff : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Preads,(?.(>.(1.&40.)$11.))Peff,$51.Pm,$48.Pmk,P,(1.&40.)$48.Pm',$48.Pevs,(?.$49.)(70.(3.$69.(79.R6.R5.R4.R3.)(72.R2.R1.))(5>.(1?.$68.Le,$68.(20.(38.$68.R1.$73.)(20.(3.$51.R6.(17.R7.(<.(74.R1.)(=.(>.(1.&40.)(?.(1.&8.))))(=.(>.(1.&40.)(1.&40.)))(=.(>.(1.&40.)(1.&40.)))(=.$10.)(=.(>.(1.&40.)$11.)))))(20.(3.$48.R3.R5.)(3.(?.$49.)R2.(=.$49.))))))(1?.(1.&40.)Lfd,(1.&40.)(20.(3.(2.$18.)(19.(75.R5.)R1.)(:.$18.))(20.(3.(1.&40.)R1.(76.(75.R5.)))(20.(3.$51.R6.(17.R7.(<.R1.(=.(>.(1.&40.)(?.(1.&8.))))(=.(>.(1.&40.)(1.&40.)))(=.(>.(1.&40.)(1.&40.)))(=.$10.)(=.(>.(1.&40.)$11.)))))(20.(3.$48.R3.A1.R4.R1.)(3.(?.$49.)R2.(=.$49.)))))))))")
-(* [comment removed for export] *).
+Lemma check_open_result_copyins_ok_iff :
+  forall reads eff m (mk : word -> Model) m' evs,
+  check_open_result_copyins reads eff m mk = CheckOk m' evs <->
+  ((exists e, In e openat_errnos /\
+      eff = with_copyins reads (mkEffect (errno_ret e) [] []) /\
+      m' = m /\ evs = [])
+   \/ (exists fd, fd_lookup (m_fds m) fd = None /\
+      fd = alloc_fd (m_fds m) /\
+      eff = with_copyins reads (mkEffect fd [] []) /\
+      m' = mk fd /\ evs = [])).
 Proof.
   intros reads eff m mk m' evs.
   unfold check_open_result_copyins, check_copyins.
@@ -1028,8 +1222,10 @@ Proof.
       congruence.
 Qed.
 
-#[using="Type"] Lemma check_copyins_after_ret_only : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Preads,(?.(>.(1.&40.)$11.))Peff,$51.Pr,(1.&40.)Pm,$48.Pevs,(?.$49.)(3.$69.(7:.R5.R4.(7;.(78.R4.)R3.R2.R1.))(7<.R5.R4.R3.R2.R1.))")
-(* [comment removed for export] *).
+Lemma check_copyins_after_ret_only : forall reads eff r m evs,
+  Prelude.check_copyins_after reads eff
+      (check_ret_only (clear_copyins eff) r m evs) =
+  check_ret_only_copyins reads eff r m evs.
 Proof.
   intros reads eff r m evs.
   unfold Prelude.check_copyins_after, check_ret_only_copyins.
@@ -1040,9 +1236,21 @@ Proof.
   - exfalso. now apply check_ret_only_no_unmodeled in Hresult.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma openat_rd_check : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Psegs,(?.$30.)Pms,$4.Px8,(1.&40.)Pmodel,$48.Pp,(?.(1.&8.))Pd,(?.(1.&8.))P,(3.$68.(26.&40.R4.)+38.)P,(3.(1.&40.)(65.R6.#0.)$7=.)P,(3.$39.(3=.(31.R7.)(65.R7.#1.))(3;.R4.))P,(3.$7>.(7?.R5.(=.(1.&8.)))$80.)P,(3.$68.(81.(26.&40.(65.R9.#2.))$82.)=)P,(3.$7>.(83.R7.)$84.)P,(3.(2.(?.(1.&8.)))(85.(67.R9.)R8.)(9.(?.(1.&8.))R7.))Peff,$51.(3.$69.(6:.(4?.R>.R=.R<.)R1.R;.)(79.(86.R=.)R1.R;.Lfd,(1.&40.)(87.(21.(75.R<.)R1.(88.R;.(24.&40.=)))R<.)))")
-(* [comment removed for export] *).
+(** The two modeled open shapes reduce the checker to
+    [check_open_result] with the respective success-model builder. *)
+Lemma openat_rd_check : forall segs ms x8 model p d,
+  bv_unsigned x8 = 56%Z ->
+  ms_gpr ms 0 = AT_FDCWD ->
+  read_cstr (ms_read_byte ms) (ms_gpr ms 1) = CstrOk p ->
+  path_eqb p [] = false ->
+  Z.ldiff (bv_unsigned (ms_gpr ms 2)) open_ignored_flags = 0%Z ->
+  openat_plain_name p = true ->
+  fs_lookup (m_fs model) p = Some d ->
+  forall eff,
+    check_syscall (sys_input segs ms x8) eff model
+    = check_open_result_copyins (open_copyins ms) eff model
+        (fun fd => with_fds (fd_insert (m_fds model) fd
+                               (FdFile p (Z_to_bv 64 0))) model).
 Proof.
   intros segs ms x8 model p d Hno Hdirfd Hpath Hpe Hfl Hdot Hfs eff.
   pose proof (openat_plain_name_noslash _ Hdot) as Hunw.
@@ -1069,9 +1277,25 @@ Proof.
   - exfalso. now apply check_open_result_never_unmodeled in Hresult.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma openat_wr_check : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Psegs,(?.$30.)Pms,$4.Px8,(1.&40.)Pmodel,$48.Pp,(?.(1.&8.))P,(3.$68.(26.&40.R3.)+38.)P,(3.(1.&40.)(65.R5.#0.)$7=.)P,(3.$39.(3=.(31.R6.)(65.R6.#1.))(3;.R3.))P,(3.$7>.(7?.R4.(=.(1.&8.)))$80.)P,(3.$68.(81.(26.&40.(65.R8.#2.))$82.)$89.)P,(3.$7>.(83.R6.)$84.)P,(3.$7>.(8:.(67.R8.)R7.)$80.)Peff,$51.(3.$69.(6:.(4?.R=.R<.R;.)R1.R:.)(79.(86.R<.)R1.R:.Lfd,(1.&40.)(87.(21.(75.R;.)R1.(8;.R:.(24.&40.=)))(8<.(8=.(67.R;.)R:.(=.(1.&8.)))R;.))))")
-(* [comment removed for export] *).
+(** The write-create open of a plain name NOTHING LIVES UNDER: the
+    branch set of a create.  The [fs_under] premise is the image-side
+    half of what [openat_plain_name] says about the path: a plain name
+    some key lives under is an implied directory, and the create arm
+    answers it -EISDIR instead ([openat_wr_isdir_check] below). *)
+Lemma openat_wr_check : forall segs ms x8 model p,
+  bv_unsigned x8 = 56%Z ->
+  ms_gpr ms 0 = AT_FDCWD ->
+  read_cstr (ms_read_byte ms) (ms_gpr ms 1) = CstrOk p ->
+  path_eqb p [] = false ->
+  Z.ldiff (bv_unsigned (ms_gpr ms 2)) open_ignored_flags = wr_create_flags ->
+  openat_plain_name p = true ->
+  fs_under (m_fs model) p = false ->
+  forall eff,
+    check_syscall (sys_input segs ms x8) eff model
+    = check_open_result_copyins (open_copyins ms) eff model
+        (fun fd => with_fds (fd_insert (m_fds model) fd
+                               (FdFileW p (Z_to_bv 64 0)))
+                     (with_fs (fs_set (m_fs model) p []) model)).
 Proof.
   intros segs ms x8 model p Hno Hdirfd Hpath Hpe Hfl Hdot Hun eff.
   pose proof (openat_plain_name_noslash _ Hdot) as Hunw.
@@ -1101,9 +1325,24 @@ Proof.
   - exfalso. now apply check_open_result_never_unmodeled in Hresult.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma openat_wr_isdir_check : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Psegs,(?.$30.)Pms,$4.Px8,(1.&40.)Pmodel,$48.Pp,(?.(1.&8.))P,(3.$68.(26.&40.R3.)+38.)P,(3.(1.&40.)(65.R5.#0.)$7=.)P,(3.$39.(3=.(31.R6.)(65.R6.#1.))(3;.R3.))P,(3.$7>.(7?.R4.(=.(1.&8.)))$80.)P,(3.$68.(81.(26.&40.(65.R8.#2.))$82.)$89.)P,(3.$7>.(83.R6.)$84.)P,(3.$7>.(8:.(67.R8.)R7.)$84.)Peff,$51.(3.$69.(6:.(4?.R=.R<.R;.)R1.R:.)(7<.(86.R<.)R1.(74.$8>.)R:.(=.$49.)))")
-(* [comment removed for export] *).
+(** The write-create open of a plain name SOME KEY LIVES UNDER: the
+    checker reduces to the deterministic -EISDIR return, and the model
+    is untouched.  [Open.openat_create_spec] carries the derivation
+    ([do_open]'s [d_is_dir] on the positive dentry the lookup finds,
+    fs/namei.c, Linux v6.18.46); this is the proof-side handle on it,
+    the twin of [openat_wr_check] for the image the other cannot take. *)
+Lemma openat_wr_isdir_check : forall segs ms x8 model p,
+  bv_unsigned x8 = 56%Z ->
+  ms_gpr ms 0 = AT_FDCWD ->
+  read_cstr (ms_read_byte ms) (ms_gpr ms 1) = CstrOk p ->
+  path_eqb p [] = false ->
+  Z.ldiff (bv_unsigned (ms_gpr ms 2)) open_ignored_flags = wr_create_flags ->
+  openat_plain_name p = true ->
+  fs_under (m_fs model) p = true ->
+  forall eff,
+    check_syscall (sys_input segs ms x8) eff model
+    = check_ret_only_copyins (open_copyins ms) eff
+        (errno_ret EISDIR) model [].
 Proof.
   intros segs ms x8 model p Hno Hdirfd Hpath Hpe Hfl Hdot Hun eff.
   pose proof (openat_plain_name_noslash _ Hdot) as Hunw.
@@ -1124,9 +1363,21 @@ Proof.
   apply check_copyins_after_ret_only.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma openat_toolong_check : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Psegs,(?.$30.)Pms,$4.Px8,(1.&40.)Pmodel,$48.P,(3.$68.(26.&40.R2.)+38.)P,(3.$7>.(8?.(65.R4.#2.))$84.)P,(3.$39.(3=.(31.R5.)(65.R5.#1.))$3>.)Peff,$51.(3.$69.(6:.(4?.R8.R7.R6.)R1.R5.)(7<.(86.R7.)R1.(74.$90.)R5.(=.$49.)))")
-(* [comment removed for export] *).
+(** An over-PATH_MAX path reduces the checker to the deterministic
+    -ENAMETOOLONG return, with NO dirfd hypothesis: [openat_spec] fetches
+    the pathname before it resolves the dirfd, exactly as Linux's
+    [getname()] runs before [path_init]'s [fdget_raw].  The FLAG word is
+    still required, because [build_open_flags()] runs BEFORE [getname()]:
+    a combination the model does not interpret is declined before the
+    pathname is ever looked at. *)
+Lemma openat_toolong_check : forall segs ms x8 model,
+  bv_unsigned x8 = 56%Z ->
+  modeled_open_flags (ms_gpr ms 2) = true ->
+  read_cstr (ms_read_byte ms) (ms_gpr ms 1) = CstrTooLong ->
+  forall eff,
+    check_syscall (sys_input segs ms x8) eff model
+    = check_ret_only_copyins (open_copyins ms) eff
+        (errno_ret ENAMETOOLONG) model [].
 Proof.
   intros segs ms x8 model Hno Hfl Hpath eff.
   rewrite (check_syscall_56 segs ms x8 eff model Hno). unfold check_openat.
@@ -1148,9 +1399,30 @@ Qed.
 Section OpenNodes.
 Variable segs : list Segment.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma tfo_open_core : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pms,$4.Pmodel,$48.Pmk,P,(1.&40.)$48.Px8,(1.&40.)Preads,(?.(>.(1.&40.)$11.))PTe,P,$68.P,(>.(1.&40.)$56.)SpPTs,P,(1.&40.)P,(>.(1.&40.)$56.)SpPU,Px,(>.(1.&40.)$56.)SpP,(3.(2.(1.&40.))(4=.R8.)(9.(1.&40.)R5.))P,(3.(2.(1.&40.))(4;.R8.)(:.(1.&40.)))P,(3.(?.(>.(1.&40.)(1.&40.)))(4<.R9.)(=.(>.(1.&40.)(1.&40.))))P,Peff,$51.(3.$69.(6:.(4?.Vsegs,R<.R9.)R1.R;.)(79.R8.R1.R;.R:.))P,Pfd,(1.&40.)(20.(3.(2.(1.&40.))(4;.A1.R;.R1.)(:.(1.&40.)))(3.(?.(>.(1.&40.)(1.&40.)))(4<.A1.R;.R1.)(=.(>.(1.&40.)(1.&40.)))))P,Pe,$68.P,(38.$68.R1.$73.)(91.Vsegs,(5.(6.R?.(17.R;.(<.(74.R2.)(=.(>.(1.&40.)(?.(1.&8.))))(=.(>.(1.&40.)(1.&40.)))(=.(>.(1.&40.)(1.&40.)))(=.$10.)(=.(>.(1.&40.)$11.))))))R>.A1.R:.R2.)P,Pfd,(1.&40.)P,(3.(2.$18.)(19.(75.R>.)R1.)(:.$18.))P,(3.(1.&40.)R2.(76.(75.R?.)))(91.Vsegs,(5.(6.R11.(17.R=.(<.R3.(=.(>.(1.&40.)(?.(1.&8.))))(=.(>.(1.&40.)(1.&40.)))(=.(>.(1.&40.)(1.&40.)))(=.$10.)(=.(>.(1.&40.)$11.))))))A1.R?.R3.A1.R;.R3.)P,Po,(>.(1.&40.)$56.)(70.A1.R9.R1.(5>.(1?.$68.Le,$68.(20.(38.$68.R1.$73.)A2.R<.R1.R2.))(1?.(1.&40.)Lfd,(1.&40.)(20.(3.(2.$18.)(19.(75.R10.)R1.)(:.$18.))(20.(3.(1.&40.)R1.(76.(75.R10.)))A2.R;.R1.R2.)))))(91.Vsegs,R10.R?.R9.)")
-(* [comment removed for export] *).
+(** Core open node over an abstract success-model builder [mk].  Errnos
+    are [Z] ([Te : Z -> _]); fds are [word]s below [2^31]. *)
+Lemma tfo_open_core : forall ms model (mk : word -> Model) x8 reads
+    (Te : Z -> (word * Fs.Fs) -> Prop) (Ts : word -> (word * Fs.Fs) -> Prop) U,
+  ms_svc_pending ms = Some x8 ->
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  (forall eff, check_syscall (sys_input segs ms x8) eff model
+               = check_open_result_copyins reads eff model mk) ->
+  (forall fd, m_halted (mk fd) = None /\ m_vm_lazy (mk fd) = []) ->
+  (forall e, In e openat_errnos ->
+     to_fout segs (advance_past_svc
+                     (apply_effect ms
+                       (with_copyins reads (mkEffect (errno_ret e) [] []))))
+             model (Te e)) ->
+  (forall fd, fd_lookup (m_fds model) fd = None -> fd = alloc_fd (m_fds model) ->
+     to_fout segs (advance_past_svc
+                    (apply_effect ms (with_copyins reads (mkEffect fd [] []))))
+             (mk fd) (Ts fd)) ->
+  (forall o, U o <->
+     ((exists e, In e openat_errnos /\ Te e o)
+      \/ (exists fd, fd_lookup (m_fds model) fd = None
+                     /\ fd = alloc_fd (m_fds model) /\ Ts fd o))) ->
+  to_fout segs ms model U.
 Proof.
   intros ms model mk x8 reads Te Ts U Hsvc Hh Hlazy Hchk Hmk Herr Hok HU.
   apply (tfo_sys segs ms model x8
@@ -1158,18 +1430,18 @@ Proof.
        if addr_is_error_b (eff_ret eff)
        then Te ((two_pow_64 - bv_unsigned (eff_ret eff))%Z)
        else Ts (eff_ret eff)) U); [exact Hsvc | | | | |].
-  - (* [comment removed for export] *)
+  - (* no Unmodeled *)
     intro Hspec.
     apply (check_syscall_complete_unmodeled _ _ (mkEffect (Z_to_bv 64 0) [] []))
       in Hspec.
     rewrite Hchk in Hspec.
     exact (check_open_result_copyins_never_unmodeled _ _ _ _ Hspec).
-  - (* [comment removed for export] *)
+  - (* receptive: ENOMEM *)
     exists (with_copyins reads (mkEffect (errno_ret ENOMEM) [] [])), model, [].
     apply check_syscall_ok_iff. rewrite Hchk.
     apply check_open_result_copyins_ok_iff. left. exists ENOMEM.
     repeat split; try reflexivity. apply ENOMEM_in_openat_errnos.
-  - (* [comment removed for export] *)
+  - (* shape *)
     intros eff model' evs Hspec.
     apply check_syscall_ok_iff in Hspec. rewrite Hchk in Hspec.
     apply check_open_result_copyins_ok_iff in Hspec.
@@ -1177,7 +1449,7 @@ Proof.
                       | (fd & _ & _ & -> & -> & ->) ].
     + repeat split; assumption.
     + destruct (Hmk fd) as [Hhalt Hlazy']. repeat split; assumption.
-  - (* [comment removed for export] *)
+  - (* continuations *)
     intros eff model' evs Hspec.
     apply check_syscall_ok_iff in Hspec. rewrite Hchk in Hspec.
     apply check_open_result_copyins_ok_iff in Hspec.
@@ -1193,7 +1465,7 @@ Proof.
         by (rewrite Heq; apply alloc_fd_not_error_b).
       rewrite Hne.
       apply Hok; assumption.
-  - (* [comment removed for export] *)
+  - (* outcome set *)
     intro o. rewrite HU. split.
     + intros [ (e & HIn & Ht) | (fd & Hlk & Heq & Ht) ].
       * destruct (openat_errno_range e HIn) as [He1 He2].
@@ -1228,18 +1500,35 @@ Proof.
         right. exists fd. auto.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma open_ok_fd : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pms,$4.Pmodel,$48.Pmk,P,(1.&40.)$48.Px8,(1.&40.)Preads,(?.(>.(1.&40.)$11.))Pfd,(1.&40.)P,Peff,$51.(3.$69.(6:.(4?.Vsegs,R7.R4.)R1.R6.)(79.R3.R1.R6.R5.))P,(3.(2.$18.)(19.(75.R6.)R2.)(:.$18.))P,(3.(1.&40.)R3.(76.(75.R7.)))(4>.(4?.Vsegs,R9.R6.)R8.(52.$51.(17.R5.(<.R4.(=.(>.(1.&40.)(?.(1.&8.))))(=.(>.(1.&40.)(1.&40.)))(=.(>.(1.&40.)(1.&40.)))(=.$10.)(=.(>.(1.&40.)$11.))))A1.R7.R4.(=.$49.)))")
-(* [comment removed for export] *).
+(** A concrete successful open resolution (used by the escape path). *)
+Lemma open_ok_fd : forall ms model (mk : word -> Model) x8 reads fd,
+  (forall eff, check_syscall (sys_input segs ms x8) eff model
+               = check_open_result_copyins reads eff model mk) ->
+  fd_lookup (m_fds model) fd = None -> fd = alloc_fd (m_fds model) ->
+  syscall_spec (sys_input segs ms x8) model
+    (Ok (with_copyins reads (mkEffect fd [] [])) (mk fd) []).
 Proof.
   intros ms model mk x8 reads fd Hchk Hlk Hlt.
   apply check_syscall_ok_iff. rewrite Hchk.
   apply check_open_result_copyins_ok_iff. right. exists fd. auto.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma tfo_openat_toolong : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pms,$4.Pmodel,$48.Px8,(1.&40.)PU,P,(>.(1.&40.)$56.)SpP,(3.(2.(1.&40.))(4=.R4.)(9.(1.&40.)R2.))P,(3.$68.(26.&40.R3.)+38.)P,(3.$7>.(8?.(65.R6.#2.))$84.)P,(3.$39.(3=.(31.R7.)(65.R7.#1.))$3>.)P,(3.(2.(1.&40.))(4;.R7.)(:.(1.&40.)))P,(3.(?.(>.(1.&40.)(1.&40.)))(4<.R8.)(=.(>.(1.&40.)(1.&40.))))P,(91.Vsegs,(5.(6.R:.(17.(86.R:.)(<.(74.$90.)(=.(>.(1.&40.)(?.(1.&8.))))(=.(>.(1.&40.)(1.&40.)))(=.(>.(1.&40.)(1.&40.)))(=.$10.)(=.(>.(1.&40.)$11.))))))R9.R7.)(91.Vsegs,R;.R:.R8.)")
-(* [comment removed for export] *).
+(** An over-PATH_MAX pathname: deterministic -ENAMETOOLONG, whatever the
+    dirfd is, for any flag word the model interprets.  The model says what
+    Linux says. *)
+Lemma tfo_openat_toolong : forall ms model x8 U,
+  ms_svc_pending ms = Some x8 ->
+  bv_unsigned x8 = 56%Z ->
+  modeled_open_flags (ms_gpr ms 2) = true ->
+  read_cstr (ms_read_byte ms) (ms_gpr ms 1) = CstrTooLong ->
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  to_fout segs (advance_past_svc
+                  (apply_effect ms
+                    (with_copyins (open_copyins ms)
+                      (mkEffect (errno_ret ENAMETOOLONG) [] []))))
+          model U ->
+  to_fout segs ms model U.
 Proof.
   intros ms model x8 U Hsvc Hno Hfl Hpath Hh Hlazy Hcont.
   pose proof (openat_toolong_check segs ms x8 model Hno Hfl Hpath) as Hchk.
@@ -1258,9 +1547,23 @@ Proof.
     exact (check_ret_only_copyins_no_unmodeled _ _ _ _ _ Hs).
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma tfo_openat_enoent : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pms,$4.Pmodel,$48.Px8,(1.&40.)Pp,(?.(1.&8.))PU,P,(>.(1.&40.)$56.)SpP,(3.(2.(1.&40.))(4=.R5.)(9.(1.&40.)R3.))P,(3.$68.(26.&40.R4.)+38.)P,(3.(1.&40.)(65.R7.#0.)$7=.)P,(3.$39.(3=.(31.R8.)(65.R8.#1.))(3;.R5.))P,(3.$68.(81.(26.&40.(65.R9.#2.))$82.)=)P,(3.$7>.(83.R7.)$84.)P,(3.(2.(?.(1.&8.)))(85.(67.R:.)R8.)(:.(?.(1.&8.))))P,(3.(2.(1.&40.))(4;.R;.)(:.(1.&40.)))P,(3.(?.(>.(1.&40.)(1.&40.)))(4<.R<.)(=.(>.(1.&40.)(1.&40.))))P,(91.Vsegs,(5.(6.R>.(17.(86.R>.)(<.(74.$92.)(=.(>.(1.&40.)(?.(1.&8.))))(=.(>.(1.&40.)(1.&40.)))(=.(>.(1.&40.)(1.&40.)))(=.$10.)(=.(>.(1.&40.)$11.))))))R=.R:.)(91.Vsegs,R?.R>.R;.)")
-(* [comment removed for export] *).
+(** O_RDONLY open of an absent file: deterministic -ENOENT. *)
+Lemma tfo_openat_enoent : forall ms model x8 p U,
+  ms_svc_pending ms = Some x8 ->
+  bv_unsigned x8 = 56%Z ->
+  ms_gpr ms 0 = AT_FDCWD ->
+  read_cstr (ms_read_byte ms) (ms_gpr ms 1) = CstrOk p ->
+  Z.ldiff (bv_unsigned (ms_gpr ms 2)) open_ignored_flags = 0%Z ->
+  openat_plain_name p = true ->
+  fs_lookup (m_fs model) p = None ->
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  to_fout segs (advance_past_svc
+                  (apply_effect ms
+                    (with_copyins (open_copyins ms)
+                      (mkEffect (errno_ret ENOENT) [] []))))
+          model U ->
+  to_fout segs ms model U.
 Proof.
   intros ms model x8 p U Hsvc Hno Hdirfd Hpath Hfl Hdot Hfs Hh Hlazy Hcont.
   pose proof (openat_plain_name_noslash _ Hdot) as Hunw.
@@ -1273,7 +1576,7 @@ Proof.
     rewrite (modeled_open_flags_rd _ Hfl). cbn [negb]. cbv beta iota.
     unfold Prelude.check_copyins_after, Open.check_openat_body.
     rewrite in_mem_si, Hpath. cbv beta iota zeta.
-    (* [comment removed for export] *)
+    (* the empty path is -ENOENT by fiat, any other by the absent lookup *)
     destruct (path_eqb p []) eqn:Hpe; cbv beta iota.
     - apply check_copyins_after_ret_only.
     - rewrite Hdirfd; norm_fd32; rewrite bv_eqb_refl. cbn [negb]. cbv beta iota.
@@ -1297,10 +1600,33 @@ Proof.
     exact (check_ret_only_copyins_no_unmodeled _ _ _ _ _ Hs).
 Qed.
 
-(* [comment removed for export] *)
+(* ----- file read (63) ----- *)
 
-#[using="Type"] Lemma tfo_read_file : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pms,$4.Pmodel,$48.Px8,(1.&40.)Pp,$93.Poff,(1.&40.)Pdata,(?.(1.&8.))Pw,(?.(1.&8.))PU,P,(>.(1.&40.)$56.)SpP,(3.(2.(1.&40.))(4=.R8.)(9.(1.&40.)R6.))P,(3.$68.(26.&40.R7.)+3?.)P,(3.(2.$18.)(19.(75.R9.)(65.R:.#0.))(9.$18.(88.R7.R6.)))P,(3.(1.&40.)(6<.(65.R;.#0.))(65.R;.#0.))P,(3.(2.(?.(1.&8.)))(85.(67.R;.)R9.)(9.(?.(1.&8.))R7.))P,(3.(2.(?.(1.&8.)))(94.(95.Vsegs,R=.)(65.R=.#1.)(65.R=.#2.))(9.(?.(1.&8.))R7.))P,(96.(26.&40.(65.R>.#2.))$97.)P,(25.=(26.&40.(65.R?.#2.)))P,(3.$7>.(98.(65.R10.#1.)(26.&40.(65.R10.#2.)))$84.)P,(3.(2.(1.&40.))(4;.R10.)(:.(1.&40.)))P,(3.(?.(>.(1.&40.)(1.&40.)))(4<.R11.)(=.(>.(1.&40.)(1.&40.))))P,(91.Vsegs,(5.(6.R13.(<.(99.(1.&8.)(29.R>.R?.(65.R13.#2.)))(9:.(65.R13.#1.)(29.R>.R?.(65.R13.#2.)))(=.(>.(1.&40.)(1.&40.)))(=.(>.(1.&40.)(1.&40.)))(=.$10.)(=.(>.(1.&40.)$11.)))))(87.(21.(75.R12.)(65.R13.#0.)(88.R10.(36.&40.R?.(99.(1.&8.)(29.R>.R?.(65.R13.#2.))))))R12.)R<.)(91.Vsegs,R14.R13.R=.)")
-(* [comment removed for export] *).
+Lemma tfo_read_file : forall ms model x8 p off data w U,
+  ms_svc_pending ms = Some x8 ->
+  bv_unsigned x8 = 63%Z ->
+  fd_lookup (m_fds model) (ms_gpr ms 0) = Some (FdFile p off) ->
+  fd32 (ms_gpr ms 0) = ms_gpr ms 0 ->
+  fs_lookup (m_fs model) p = Some data ->
+  read_bytes_map (ms_writable_byte segs ms) (ms_gpr ms 1) (ms_gpr ms 2) = Some w ->
+  (bv_unsigned (ms_gpr ms 2) <= rw_bytes_max)%Z ->
+  (0 < bv_unsigned (ms_gpr ms 2))%Z ->
+  (* the range passes [access_ok]: [vfs_read] tests it before the file
+     is consulted *)
+  access_okb (ms_gpr ms 1) (bv_unsigned (ms_gpr ms 2)) = true ->
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  to_fout segs
+    (advance_past_svc (apply_effect ms
+       (mkEffect (len_word (file_read data off (ms_gpr ms 2)))
+                 (delivered_writes (ms_gpr ms 1)
+                    (file_read data off (ms_gpr ms 2))) [])))
+    (with_fds
+       (fd_insert (m_fds model) (ms_gpr ms 0)
+          (FdFile p (off + len_word (file_read data off (ms_gpr ms 2)))))
+       model)
+    U ->
+  to_fout segs ms model U.
 Proof.
   intros ms model x8 p off data w U Hsvc Hno Hfd Hfd32 Hfs Hw Hcnt Hpos Haok Hh Hlazy Hcont.
   set (bs := file_read data off (ms_gpr ms 2)).
@@ -1327,7 +1653,7 @@ Proof.
     rewrite (read_bytes_map_prefix _ _ _ _ _ HL Hw). cbv beta iota.
     unfold bs.
     destruct (file_read data off (ms_gpr ms 2)) as [|b bsr].
-    - (* [comment removed for export] *)
+    - (* zero-byte read (at or past end-of-file) *)
       cbv beta iota.
       rewrite check_ret_only_ok_iff. cbn [delivered_writes length].
       tauto.
@@ -1376,12 +1702,47 @@ Proof.
     + discriminate.
 Qed.
 
-(* [comment removed for export] *)
+(* ----- file write (64) ----- *)
 
-#[using="Type"] Lemma tfo_write_file : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pms,$4.Pmodel,$48.Px8,(1.&40.)Pp,$93.Poff,(1.&40.)Pdata,(?.(1.&8.))Pbs,(?.(1.&8.))PU,P,(>.(1.&40.)$56.)SpP,(3.(2.(1.&40.))(4=.R8.)(9.(1.&40.)R6.))P,(3.$68.(26.&40.R7.)+40.)P,(3.(2.$18.)(19.(75.R9.)(65.R:.#0.))(9.$18.(8;.R7.R6.)))P,(3.(1.&40.)(6<.(65.R;.#0.))(65.R;.#0.))P,(3.(2.(?.(1.&8.)))(94.(31.R<.)(65.R<.#1.)(65.R<.#2.))(9.(?.(1.&8.))R6.))P,(96.(26.&40.(65.R=.#2.))$97.)P,(3.(2.(?.(1.&8.)))(85.(67.R=.)R;.)(9.(?.(1.&8.))R9.))P,(3.$7>.(1;.(9;.R:.R;.R9.))$80.)P,(3.$7>.(9<.(65.R10.#2.))$80.)P,(3.(2.(1.&40.))(4;.R10.)(:.(1.&40.)))P,(3.(?.(>.(1.&40.)(1.&40.)))(4<.R11.)(=.(>.(1.&40.)(1.&40.))))P,(91.Vsegs,(5.(6.R13.(17.(22.(>.(1.&40.)$11.)(23.(1.&40.)$11.(65.R13.#1.)(28.(1.&8.)R=.))(=.(>.(1.&40.)$11.)))(<.(65.R13.#2.)(=.(>.(1.&40.)(?.(1.&8.))))(=.(>.(1.&40.)(1.&40.)))(=.(>.(1.&40.)(1.&40.)))(=.$10.)(=.(>.(1.&40.)$11.))))))(87.(21.(75.R12.)(65.R13.#0.)(8;.R10.(36.&40.R?.(65.R13.#2.))))(8<.(8=.(67.R12.)R10.(9=.R>.R?.R=.))R12.))R<.)(91.Vsegs,R14.R13.R=.)")
-(* [comment removed for export] *).
+Lemma tfo_write_file : forall ms model x8 p off data bs U,
+  ms_svc_pending ms = Some x8 ->
+  bv_unsigned x8 = 64%Z ->
+  fd_lookup (m_fds model) (ms_gpr ms 0) = Some (FdFileW p off) ->
+  fd32 (ms_gpr ms 0) = ms_gpr ms 0 ->
+  read_bytes_map (ms_read_byte ms) (ms_gpr ms 1) (ms_gpr ms 2) = Some bs ->
+  (* THE RANGE [vfs_write]'s [access_ok] ACCEPTS, a premise this lemma did
+     not used to carry.  The [FdFileW] arm now asks [access_ok] on the
+     named count before it reads the source, so the statement was true of
+     an arm that judged the write by a walk that could wrap at 2^64 and is
+     false of one that does not, exactly where the buffer leaves the user
+     address space: there the answer is -EFAULT and the file is not
+     written.  A repair of a statement that had become false, not a
+     weakening *)
+  access_okb (ms_gpr ms 1) (bv_unsigned (ms_gpr ms 2)) = true ->
+  (bv_unsigned (ms_gpr ms 2) <= rw_bytes_max)%Z ->
+  fs_lookup (m_fs model) p = Some data ->
+  (* the guard itself, not the inequality that implies it: a zero-length
+     write opens no hole and is judged at ANY offset ([modeled_file_gap]),
+     and this premise says exactly that much and no more *)
+  negb (modeled_file_gap data off bs) = false ->
+  (* a positive count really reads the buffer, so the copy-in ledger is the
+     singleton range the readable prefix came from.  A zero-length write
+     reads no user byte and carries an empty ledger instead; that is
+     [tfo_write_file_zero] *)
+  w_is0 (ms_gpr ms 2) = false ->
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  to_fout segs
+    (advance_past_svc (apply_effect ms
+      (with_copyins [(ms_gpr ms 1, length bs)]
+        (mkEffect (ms_gpr ms 2) [] []))))
+    (with_fds (fd_insert (m_fds model) (ms_gpr ms 0)
+                 (FdFileW p (off + ms_gpr ms 2)))
+       (with_fs (fs_set (m_fs model) p (file_write data off bs)) model))
+    U ->
+  to_fout segs ms model U.
 Proof.
-  intros ms model x8 p off data bs U Hsvc Hno Hfd Hfd32 Hrd Hcnt Hfs Hgap Hnz Hh Hlazy Hcont.
+  intros ms model x8 p off data bs U Hsvc Hno Hfd Hfd32 Hrd Hok Hcnt Hfs Hgap Hnz Hh Hlazy Hcont.
   assert (Hrb : read_bytes_map (in_mem (sys_input segs ms x8))
                   (ms_gpr ms 1) (ms_gpr ms 2) = Some bs).
   { rewrite in_mem_si. exact Hrd. }
@@ -1395,6 +1756,7 @@ Proof.
     rewrite (check_syscall_64 segs ms x8 eff model Hno). unfold check_write.
     rewrite Hfd32, Hfd. cbv beta iota.
     rewrite (rw_range_in_range _ _ Hcnt). cbv beta iota zeta.
+    rewrite Hok. cbn [negb]. cbv beta iota.
     rewrite (write_source_of_rw _ _ _ Hcnt), (readable_bytes_full _ _ _ _ Hrb).
     pose proof (read_bytes_map_length _ _ _ _ Hrb) as Hlen.
     assert (Hret : len_word bs = ms_gpr ms 2).
@@ -1430,9 +1792,32 @@ Proof.
     exact (check_ret_only_copyins_no_unmodeled _ _ _ _ _ Hs).
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma tfo_write_file_zero : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pms,$4.Pmodel,$48.Px8,(1.&40.)Pp,$93.Poff,(1.&40.)Pdata,(?.(1.&8.))Pbs,(?.(1.&8.))PU,P,(>.(1.&40.)$56.)SpP,(3.(2.(1.&40.))(4=.R8.)(9.(1.&40.)R6.))P,(3.$68.(26.&40.R7.)+40.)P,(3.(2.$18.)(19.(75.R9.)(65.R:.#0.))(9.$18.(8;.R7.R6.)))P,(3.(1.&40.)(6<.(65.R;.#0.))(65.R;.#0.))P,(3.(2.(?.(1.&8.)))(94.(31.R<.)(65.R<.#1.)(65.R<.#2.))(9.(?.(1.&8.))R6.))P,(96.(26.&40.(65.R=.#2.))$97.)P,(3.(2.(?.(1.&8.)))(85.(67.R=.)R;.)(9.(?.(1.&8.))R9.))P,(3.$7>.(1;.(9;.R:.R;.R9.))$80.)P,(3.$7>.(9<.(65.R10.#2.))$84.)P,(3.$7>.(98.(65.R11.#1.)(26.&40.(65.R11.#2.)))$84.)P,(3.(2.(1.&40.))(4;.R11.)(:.(1.&40.)))P,(3.(?.(>.(1.&40.)(1.&40.)))(4<.R12.)(=.(>.(1.&40.)(1.&40.))))P,(91.Vsegs,(5.(6.R14.(<.(65.R14.#2.)(=.(>.(1.&40.)(?.(1.&8.))))(=.(>.(1.&40.)(1.&40.)))(=.(>.(1.&40.)(1.&40.)))(=.$10.)(=.(>.(1.&40.)$11.)))))(87.(21.(75.R13.)(65.R14.#0.)(8;.R11.(36.&40.R10.(65.R14.#2.))))(8<.(8=.(67.R13.)R11.(9=.R?.R10.R>.))R13.))R=.)(91.Vsegs,R15.R14.R>.)")
-(* [comment removed for export] *).
+(** The [count = 0] half of [tfo_write_file]: no user byte is read, so the
+    effect carries no copy-in range at all (the checker rejects a singleton
+    zero-length one), and [access_ok]'s range verdict is the whole of what
+    the write does; see [Uaccess.access_ok_zero]. *)
+Lemma tfo_write_file_zero : forall ms model x8 p off data bs U,
+  ms_svc_pending ms = Some x8 ->
+  bv_unsigned x8 = 64%Z ->
+  fd_lookup (m_fds model) (ms_gpr ms 0) = Some (FdFileW p off) ->
+  fd32 (ms_gpr ms 0) = ms_gpr ms 0 ->
+  read_bytes_map (ms_read_byte ms) (ms_gpr ms 1) (ms_gpr ms 2) = Some bs ->
+  (bv_unsigned (ms_gpr ms 2) <= rw_bytes_max)%Z ->
+  fs_lookup (m_fs model) p = Some data ->
+  (* the guard itself, not the inequality that implies it: a zero-length
+     write opens no hole and is judged at ANY offset ([modeled_file_gap]) *)
+  negb (modeled_file_gap data off bs) = false ->
+  w_is0 (ms_gpr ms 2) = true ->
+  access_okb (ms_gpr ms 1) (bv_unsigned (ms_gpr ms 2)) = true ->
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  to_fout segs
+    (advance_past_svc (apply_effect ms (mkEffect (ms_gpr ms 2) [] [])))
+    (with_fds (fd_insert (m_fds model) (ms_gpr ms 0)
+                 (FdFileW p (off + ms_gpr ms 2)))
+       (with_fs (fs_set (m_fs model) p (file_write data off bs)) model))
+    U ->
+  to_fout segs ms model U.
 Proof.
   intros ms model x8 p off data bs U Hsvc Hno Hfd Hfd32 Hrd Hcnt Hfs Hgap Hz Hok Hh Hlazy Hcont.
   assert (Hrb : read_bytes_map (in_mem (sys_input segs ms x8))
@@ -1448,6 +1833,7 @@ Proof.
     rewrite (check_syscall_64 segs ms x8 eff model Hno). unfold check_write.
     rewrite Hfd32, Hfd. cbv beta iota.
     rewrite (rw_range_in_range _ _ Hcnt). cbv beta iota zeta.
+    rewrite Hok. cbn [negb]. cbv beta iota.
     rewrite (write_source_of_rw _ _ _ Hcnt), (readable_bytes_full _ _ _ _ Hrb).
     pose proof (read_bytes_map_length _ _ _ _ Hrb) as Hlen.
     assert (Hret : len_word bs = ms_gpr ms 2).
@@ -1477,10 +1863,20 @@ Proof.
     exact (check_ret_only_no_unmodeled _ _ _ _ Hs).
 Qed.
 
-(* [comment removed for export] *)
+(* ----- close (57) ----- *)
 
-#[using="Type"] Lemma tfo_close : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pms,$4.Pmodel,$48.Px8,(1.&40.)Pe,$18.PU,P,(>.(1.&40.)$56.)SpP,(3.(2.(1.&40.))(4=.R5.)(9.(1.&40.)R3.))P,(3.$68.(26.&40.R4.)+39.)P,(3.(2.$18.)(19.(75.R6.)(65.R7.#0.))(9.$18.R4.))P,(3.(1.&40.)(6<.(65.R8.#0.))(65.R8.#0.))P,(3.(2.(1.&40.))(4;.R8.)(:.(1.&40.)))P,(3.(?.(>.(1.&40.)(1.&40.)))(4<.R9.)(=.(>.(1.&40.)(1.&40.))))P,(91.Vsegs,(5.(6.R;.(<.(24.&40.=)(=.(>.(1.&40.)(?.(1.&8.))))(=.(>.(1.&40.)(1.&40.)))(=.(>.(1.&40.)(1.&40.)))(=.$10.)(=.(>.(1.&40.)$11.)))))(87.(9>.(75.R:.)(65.R;.#0.))R:.)R7.)(91.Vsegs,R<.R;.R8.)")
-(* [comment removed for export] *).
+Lemma tfo_close : forall ms model x8 e U,
+  ms_svc_pending ms = Some x8 ->
+  bv_unsigned x8 = 57%Z ->
+  fd_lookup (m_fds model) (ms_gpr ms 0) = Some e ->
+  fd32 (ms_gpr ms 0) = ms_gpr ms 0 ->
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  to_fout segs
+    (advance_past_svc (apply_effect ms (mkEffect (Z_to_bv 64 0) [] [])))
+    (with_fds (fd_remove (m_fds model) (ms_gpr ms 0)) model)
+    U ->
+  to_fout segs ms model U.
 Proof.
   intros ms model x8 e U Hsvc Hno Hfd Hfd32 Hh Hlazy Hcont.
   assert (Hchk : forall eff,
@@ -1504,24 +1900,32 @@ Proof.
     exact (check_ret_only_no_unmodeled _ _ _ _ Hs).
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* Ergonomic "at the raw ecall record" wrappers around the [tfo_*] core       *)
+(* nodes above: unpack a record's [ms_regs]/[ms_svc_pending] fields once      *)
+(* via [record_gpr], so per-binary proofs don't reprove the [ms_gpr]          *)
+(* projections at every fd/read/write/open/close/exit call site.  The        *)
+(* records carry the ecall post-state shape [step_ecall] leaves:             *)
+(* [ms_svc_pending := Some (getr regs 17)], [ms_resv := None]; register      *)
+(* hypotheses are [reg_get regs 10/11/12] (a0/a1/a2), and the syscall        *)
+(* number is Z-characterized ([bv_unsigned (getr regs 17) = ...%Z]).         *)
+(* ========================================================================= *)
 
-#[using="Type"] Lemma record_gpr : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pregs,(0.&5.(1.&40.))Pfr,(0.&5.(1.&40.))Ppc,(1.&40.)Psv,(2.(1.&40.))Prv,(2.(1.&40.))Pfc,(1.&20.)Pmem,P,(1.&40.)(2.(1.&8.))Prom,P,(1.&40.)(2.(1.&8.))Pk,$11.(3.(1.&40.)(65.(7.R9.R8.R7.R6.R5.R4.R3.R2.)R1.)(9?.R9.(24.&5.(41.+:.(42.R1.)))))")
-(* [comment removed for export] *).
+Lemma record_gpr : forall regs fr pc sv rv fc mem rom k,
+  ms_gpr {| ms_regs := regs; ms_fregs := fr; ms_pc_val := pc; ms_svc_pending := sv;
+            ms_resv := rv; ms_fcsr := fc; ms_mem := mem; ms_rom := rom |} k
+  = reg_get regs (Z_to_bv 5 (10 + Z.of_nat k)).
 Proof. reflexivity. Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma tfo_exit_rec : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pregs,(0.&5.(1.&40.))Ppc,(1.&40.)Pmem,P,(1.&40.)(2.(1.&8.))Prom,P,(1.&40.)(2.(1.&8.))Pmodel,$48.Pcode,(1.&40.)Pfsv,$56.P,(3.$68.(26.&40.(:0.R7.(14.&5.+11.$15.)))+5=.)P,(3.(1.&40.)(9?.R8.(14.&5.+:.$15.))R3.)P,(25.(26.&40.R4.)+100.)P,(3.$56.(67.R6.)R4.)(91.Vsegs,(7.R;.(8.Vfx,)R:.(9.(1.&40.)(:0.R;.(14.&5.+11.$15.)))(:.(1.&40.))(;.Vfx,)R9.R8.)R7.Lo,(>.(1.&40.)$56.)(3.(>.(1.&40.)$56.)R1.(23.(1.&40.)$56.R7.R6.)))")
-(* [comment removed for export] *).
+(** Exit leaf. *)
+Lemma tfo_exit_rec : forall regs pc mem rom model code fsv,
+  bv_unsigned (getr regs 17) = 93%Z ->
+  reg_get regs 10 = code -> (bv_unsigned code < 256)%Z ->
+  m_fs model = fsv ->
+  to_fout segs {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc;
+                  ms_svc_pending := Some (getr regs 17);
+                  ms_resv := None; ms_fcsr := fp_csr; ms_mem := mem; ms_rom := rom |}
+          model (fun o => o = (code, fsv)).
 Proof.
   intros regs pc mem rom model code fsv H17 H10 Hc Hfs.
   subst fsv.
@@ -1532,9 +1936,31 @@ Proof.
     rewrite H10, (land_255_small code Hc). tauto.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma tfo_read_rec : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pregs,(0.&5.(1.&40.))Ppc,(1.&40.)Pmem,P,(1.&40.)(2.(1.&8.))Prom,P,(1.&40.)(2.(1.&8.))Pmodel,$48.Pfdv,(1.&40.)Pp,$93.Poff,(1.&40.)Pdata,(?.(1.&8.))Pbuf,(1.&40.)Pcnt,(1.&40.)PU,P,(>.(1.&40.)$56.)SpP,(3.$68.(26.&40.(:0.R<.(14.&5.+11.$15.)))+3?.)P,(3.(1.&40.)(9?.R=.(14.&5.+:.$15.))R8.)P,(3.(1.&40.)(9?.R>.(14.&5.+;.$15.))R5.)P,(3.(1.&40.)(9?.R?.(14.&5.+<.$15.))R5.)P,(3.(2.$18.)(19.(75.R<.)R;.)(9.$18.(88.R:.R9.)))P,(3.(1.&40.)(6<.R<.)R<.)P,(3.(2.(?.(1.&8.)))(85.(67.R>.)R<.)(9.(?.(1.&8.))R:.))P,(3.$7>.(:1.Vsegs,R:.(2;.R9.))$84.)P,(96.(26.&40.R:.)$97.)P,(25.=(26.&40.R;.))P,(3.$7>.(98.R=.(26.&40.R<.))$84.)P,(3.(2.(1.&40.))(4;.R13.)(:.(1.&40.)))P,(3.(?.(>.(1.&40.)(1.&40.)))(4<.R14.)(=.(>.(1.&40.)(1.&40.))))P,(91.Vsegs,(12.Vfx,(13.R19.(14.&5.+:.$15.)(99.(1.&8.)(29.R11.R12.R?.)))(16.R18.+4.)(:2.R17.R10.(29.R11.R12.R?.))R16.)(87.(21.(75.R15.)R14.(88.R13.(36.&40.R12.(99.(1.&8.)(29.R11.R12.R?.)))))R15.)R>.)(91.Vsegs,(7.R1:.(8.Vfx,)R19.(9.(1.&40.)(:0.R1:.(14.&5.+11.$15.)))(:.(1.&40.))(;.Vfx,)R18.R17.)R16.R?.)")
-(* [comment removed for export] *).
+(** File read of [cnt] bytes: deterministic, fills the buffer, advances
+    the offset. *)
+Lemma tfo_read_rec : forall regs pc mem rom model fdv p off data buf cnt U,
+  bv_unsigned (getr regs 17) = 63%Z ->
+  reg_get regs 10 = fdv -> reg_get regs 11 = buf -> reg_get regs 12 = cnt ->
+  fd_lookup (m_fds model) fdv = Some (FdFile p off) ->
+  fd32 fdv = fdv ->
+  fs_lookup (m_fs model) p = Some data ->
+  wseg_ok segs buf (word_to_nat cnt) = true ->
+  (bv_unsigned cnt <= rw_bytes_max)%Z ->
+  (0 < bv_unsigned cnt)%Z ->
+  (* the range passes [access_ok]: passed straight through to
+     [tfo_read_file] *)
+  access_okb buf (bv_unsigned cnt) = true ->
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  to_fout segs
+    (mkst (regupd regs 10 (len_word (file_read data off cnt))) (v_addi pc 4)
+          (write_to_mem mem buf (file_read data off cnt)) rom)
+    (with_fds (fd_insert (m_fds model) fdv
+        (FdFile p (off + len_word (file_read data off cnt)))) model)
+    U ->
+  to_fout segs {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc;
+                  ms_svc_pending := Some (getr regs 17);
+                  ms_resv := None; ms_fcsr := fp_csr; ms_mem := mem; ms_rom := rom |} model U.
 Proof.
   intros regs pc mem rom model fdv p off data buf cnt U
     H17 H10 H11 H12 Hfd Hfd32 Hfs Hwseg Hcnt Hpos Haok Hh Hlazy Hcont.
@@ -1564,9 +1990,36 @@ Proof.
     rewrite adv_apply_delivered. exact Hcont.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma tfo_write_rec : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pregs,(0.&5.(1.&40.))Ppc,(1.&40.)Pmem,P,(1.&40.)(2.(1.&8.))Pmodel,$48.Pfdv,(1.&40.)Pp,$93.Poff,(1.&40.)Pdata,(?.(1.&8.))Pbs,(?.(1.&8.))Pbuf,(1.&40.)Pcnt,(1.&40.)PU,P,(>.(1.&40.)$56.)SpP,(3.$68.(26.&40.(:0.R<.(14.&5.+11.$15.)))+40.)P,(3.(1.&40.)(9?.R=.(14.&5.+:.$15.))R9.)P,(3.(1.&40.)(9?.R>.(14.&5.+;.$15.))R5.)P,(3.(1.&40.)(9?.R?.(14.&5.+<.$15.))R5.)P,(3.(2.$18.)(19.(75.R=.)R<.)(9.$18.(8;.R;.R:.)))P,(3.(1.&40.)(6<.R=.)R=.)P,(3.(2.(?.(1.&8.)))(34.Vsegs,R10.R9.(2;.R8.))(9.(?.(1.&8.))R:.))P,(96.(26.&40.R9.)$97.)P,(3.(2.(?.(1.&8.)))(85.(67.R11.)R?.)(9.(?.(1.&8.))R=.))P,(3.$7>.(1;.(9;.R>.R?.R=.))$80.)P,(5>.(3.$7>.(98.R=.(26.&40.R<.))$84.)(25.=(26.&40.R<.)))P,(3.(2.(1.&40.))(4;.R14.)(:.(1.&40.)))P,(3.(?.(>.(1.&40.)(1.&40.)))(4<.R15.)(=.(>.(1.&40.)(1.&40.))))P,(91.Vsegs,(12.Vfx,(13.R19.(14.&5.+:.$15.)R?.)(16.R18.+4.)R17.(32.Vsegs,))(87.(21.(75.R16.)R15.(8;.R14.(36.&40.R13.R?.)))(8<.(8=.(67.R16.)R14.(9=.R12.R13.R11.))R16.))R>.)(91.Vsegs,(7.R1:.(8.Vfx,)R19.(9.(1.&40.)(:0.R1:.(14.&5.+11.$15.)))(:.(1.&40.))(;.Vfx,)R18.(32.Vsegs,))R17.R?.)")
-(* [comment removed for export] *).
+(** File write: deterministic full write of the readable buffer bytes. *)
+Lemma tfo_write_rec : forall regs pc mem model fdv p off data bs buf cnt U,
+  bv_unsigned (getr regs 17) = 64%Z ->
+  reg_get regs 10 = fdv -> reg_get regs 11 = buf -> reg_get regs 12 = cnt ->
+  fd_lookup (m_fds model) fdv = Some (FdFileW p off) ->
+  fd32 fdv = fdv ->
+  rdn segs mem buf (word_to_nat cnt) = Some bs ->
+  (bv_unsigned cnt <= rw_bytes_max)%Z ->
+  fs_lookup (m_fs model) p = Some data ->
+  (* the guard itself, not the inequality that implies it: a zero-length
+     write opens no hole and is judged at ANY offset ([modeled_file_gap]),
+     and this premise says exactly that much and no more *)
+  negb (modeled_file_gap data off bs) = false ->
+  (* the range [vfs_write]'s [access_ok] accepts, on EVERY count.  This
+     premise used to be [access_okb buf (bv_unsigned cnt) = true \/
+     (0 < bv_unsigned cnt)%Z], on the argument that a positive-count write
+     needs no range premise because the mapping settles the copy.  That
+     argument held of a walk that could wrap at 2^64 and does not hold of
+     the [FdFileW] arm, which asks [access_ok] on the named count before
+     it reads a byte; see [tfo_write_file]. *)
+  access_okb buf (bv_unsigned cnt) = true ->
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  to_fout segs (mkst (regupd regs 10 cnt) (v_addi pc 4) mem (seg_rom segs))
+    (with_fds (fd_insert (m_fds model) fdv (FdFileW p (off + cnt)))
+       (with_fs (fs_set (m_fs model) p (file_write data off bs)) model)) U ->
+  to_fout segs {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc;
+                  ms_svc_pending := Some (getr regs 17);
+                  ms_resv := None; ms_fcsr := fp_csr; ms_mem := mem; ms_rom := seg_rom segs |}
+          model U.
 Proof.
   intros regs pc mem model fdv p off data bs buf cnt U
     H17 H10 H11 H12 Hfd Hfd32 Hrd Hcnt Hfs Hgap Hok Hh Hlazy Hcont.
@@ -1580,7 +2033,8 @@ Proof.
   assert (Hg2 : ms_gpr ms 2 = cnt)
     by (unfold ms; rewrite record_gpr, arg_reg_2; exact H12).
   destruct (w_is0 cnt) eqn:Hz.
-  - (* [comment removed for export] *)
+  - (* count = 0: no user byte is read, so the effect carries no copy-in
+       range and [access_ok]'s verdict is all that is checked *)
     apply (tfo_write_file_zero ms model (getr regs 17) p off data bs U).
     + unfold ms. cbn [ms_svc_pending]. reflexivity.
     + exact H17.
@@ -1594,15 +2048,12 @@ Proof.
     + exact Hfs.
     + exact Hgap.
     + rewrite Hg2. exact Hz.
-    + destruct Hok as [Hfl | Hp].
-      * rewrite Hg1, Hg2. exact Hfl.
-      * (* [comment removed for export] *)
-        rewrite (w_is0_pos cnt Hp) in Hz. discriminate.
+    + rewrite Hg1, Hg2. exact Hok.
     + exact Hh.
     + exact Hlazy.
     + rewrite Hg0, Hg2. unfold ms.
       rewrite adv_eff_ret. exact Hcont.
-  - (* [comment removed for export] *)
+  - (* positive count: the delivered bytes are the copy-in ledger *)
     apply (tfo_write_file ms model (getr regs 17) p off data bs U).
     + unfold ms. cbn [ms_svc_pending]. reflexivity.
     + exact H17.
@@ -1612,6 +2063,7 @@ Proof.
       rewrite read_bytes_map_read_byte.
       rewrite (ms_read_bytes_rdn segs ms) by reflexivity.
       exact Hrd.
+    + rewrite Hg1, Hg2. exact Hok.
     + rewrite Hg2. exact Hcnt.
     + exact Hfs.
     + exact Hgap.
@@ -1622,9 +2074,19 @@ Proof.
       rewrite adv_eff_ret_copyins. exact Hcont.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma tfo_close_rec : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pregs,(0.&5.(1.&40.))Ppc,(1.&40.)Pmem,P,(1.&40.)(2.(1.&8.))Prom,P,(1.&40.)(2.(1.&8.))Pmodel,$48.Pfdv,(1.&40.)Pe,$18.PU,P,(>.(1.&40.)$56.)SpP,(3.$68.(26.&40.(:0.R8.(14.&5.+11.$15.)))+39.)P,(3.(1.&40.)(9?.R9.(14.&5.+:.$15.))R4.)P,(3.(2.$18.)(19.(75.R6.)R5.)(9.$18.R4.))P,(3.(1.&40.)(6<.R6.)R6.)P,(3.(2.(1.&40.))(4;.R8.)(:.(1.&40.)))P,(3.(?.(>.(1.&40.)(1.&40.)))(4<.R9.)(=.(>.(1.&40.)(1.&40.))))P,(91.Vsegs,(12.Vfx,(13.R>.(14.&5.+:.$15.)(24.&40.=))(16.R=.+4.)R<.R;.)(87.(9>.(75.R:.)R9.)R:.)R7.)(91.Vsegs,(7.R?.(8.Vfx,)R>.(9.(1.&40.)(:0.R?.(14.&5.+11.$15.)))(:.(1.&40.))(;.Vfx,)R=.R<.)R;.R8.)")
-(* [comment removed for export] *).
+(** close: deterministic, removes the fd. *)
+Lemma tfo_close_rec : forall regs pc mem rom model fdv e U,
+  bv_unsigned (getr regs 17) = 57%Z ->
+  reg_get regs 10 = fdv ->
+  fd_lookup (m_fds model) fdv = Some e ->
+  fd32 fdv = fdv ->
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  to_fout segs (mkst (regupd regs 10 (Z_to_bv 64 0)) (v_addi pc 4) mem rom)
+    (with_fds (fd_remove (m_fds model) fdv) model) U ->
+  to_fout segs {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc;
+                  ms_svc_pending := Some (getr regs 17);
+                  ms_resv := None; ms_fcsr := fp_csr; ms_mem := mem; ms_rom := rom |} model U.
 Proof.
   intros regs pc mem rom model fdv e U H17 H10 Hfd Hfd32 Hh Hlazy Hcont.
   set (ms := {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc;
@@ -1642,9 +2104,22 @@ Proof.
   - rewrite Hg0. unfold ms. rewrite adv_eff_ret. exact Hcont.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma tfo_open_enoent_rec : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pregs,(0.&5.(1.&40.))Ppc,(1.&40.)Pmem,P,(1.&40.)(2.(1.&8.))Pmodel,$48.Pp,(?.(1.&8.))PU,P,(>.(1.&40.)$56.)SpP,(3.$68.(26.&40.(:0.R6.(14.&5.+11.$15.)))+38.)P,(3.(1.&40.)(9?.R7.(14.&5.+:.$15.))$7=.)P,(3.(1.&40.)(9?.R8.(14.&5.+<.$15.))(24.&40.=))P,(3.$39.(3=.(33.Vsegs,R7.)(9?.R9.(14.&5.+;.$15.)))(3;.R5.))P,(3.$7>.(83.R6.)$84.)P,(3.(2.(?.(1.&8.)))(85.(67.R8.)R7.)(:.(?.(1.&8.))))P,(3.(2.(1.&40.))(4;.R9.)(:.(1.&40.)))P,(3.(?.(>.(1.&40.)(1.&40.)))(4<.R:.)(=.(>.(1.&40.)(1.&40.))))P,(91.Vsegs,(12.Vfx,(13.R>.(14.&5.+:.$15.)(74.$92.))(16.R=.+4.)R<.(32.Vsegs,))R;.R9.)(91.Vsegs,(7.R?.(8.Vfx,)R>.(9.(1.&40.)(:0.R?.(14.&5.+11.$15.)))(:.(1.&40.))(;.Vfx,)R=.(32.Vsegs,))R<.R:.)")
-(* [comment removed for export] *).
+(** O_RDONLY openat of an absent file: deterministic -ENOENT. *)
+Lemma tfo_open_enoent_rec : forall regs pc mem model p U,
+  bv_unsigned (getr regs 17) = 56%Z ->
+  reg_get regs 10 = AT_FDCWD -> reg_get regs 12 = Z_to_bv 64 0 ->
+  read_cstr (mrb segs mem) (reg_get regs 11) = CstrOk p ->
+  openat_plain_name p = true ->
+  fs_lookup (m_fs model) p = None ->
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  to_fout segs (mkst (regupd regs 10 (errno_ret ENOENT)) (v_addi pc 4)
+                     mem (seg_rom segs))
+          model U ->
+  to_fout segs {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc;
+                  ms_svc_pending := Some (getr regs 17);
+                  ms_resv := None; ms_fcsr := fp_csr; ms_mem := mem; ms_rom := seg_rom segs |}
+          model U.
 Proof.
   intros regs pc mem model p U H17 H10 H12 Hpath Hdot Hfs Hh Hlazy Hcont.
   set (ms := {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc;
@@ -1665,9 +2140,34 @@ Proof.
   - unfold ms. rewrite adv_eff_ret_copyins. exact Hcont.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma tfo_open_rd_rec : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pregs,(0.&5.(1.&40.))Ppc,(1.&40.)Pmem,P,(1.&40.)(2.(1.&8.))Pmodel,$48.Pp,(?.(1.&8.))Pd,(?.(1.&8.))PTe,P,$68.P,(>.(1.&40.)$56.)SpPTs,P,(1.&40.)P,(>.(1.&40.)$56.)SpPU,Px,(>.(1.&40.)$56.)SpP,(3.$68.(26.&40.(:0.R9.(14.&5.+11.$15.)))+38.)P,(3.(1.&40.)(9?.R:.(14.&5.+:.$15.))$7=.)P,(3.(1.&40.)(9?.R;.(14.&5.+<.$15.))(24.&40.=))P,(3.$39.(3=.(33.Vsegs,R:.)(9?.R<.(14.&5.+;.$15.)))(3;.R8.))P,(3.$7>.(7?.R9.(=.(1.&8.)))$80.)P,(3.$7>.(83.R:.)$84.)P,(3.(2.(?.(1.&8.)))(85.(67.R<.)R;.)(9.(?.(1.&8.))R:.))P,(3.(2.(1.&40.))(4;.R=.)(:.(1.&40.)))P,(3.(?.(>.(1.&40.)(1.&40.)))(4<.R>.)(=.(>.(1.&40.)(1.&40.))))P,Pe,$68.P,(38.$68.R1.$73.)(91.Vsegs,(12.Vfx,(13.R14.(14.&5.+:.$15.)(74.R2.))(16.R13.+4.)R12.(32.Vsegs,))R11.A1.R>.R2.)P,Pfd,(1.&40.)P,(3.(2.$18.)(19.(75.R11.)R1.)(:.$18.))P,(3.(1.&40.)R2.(76.(75.R12.)))(91.Vsegs,(12.Vfx,(13.R16.(14.&5.+:.$15.)R3.)(16.R15.+4.)R14.(32.Vsegs,))(87.(21.(75.R13.)R3.(88.R12.(24.&40.=)))R13.)A1.R?.R3.)P,Po,(>.(1.&40.)$56.)(70.A1.R=.R1.(5>.(1?.$68.Le,$68.(20.(38.$68.R1.$73.)A2.R10.R1.R2.))(1?.(1.&40.)Lfd,(1.&40.)(20.(3.(2.$18.)(19.(75.R13.)R1.)(:.$18.))(20.(3.(1.&40.)R1.(76.(75.R13.)))A2.R?.R1.R2.)))))(91.Vsegs,(7.R15.(8.Vfx,)R14.(9.(1.&40.)(:0.R15.(14.&5.+11.$15.)))(:.(1.&40.))(;.Vfx,)R13.(32.Vsegs,))R12.R=.)")
-(* [comment removed for export] *).
+(** O_RDONLY openat of a present file: errno branch or the lowest free
+    fd. *)
+Lemma tfo_open_rd_rec : forall regs pc mem model p d
+    (Te : Z -> (word * Fs.Fs) -> Prop) (Ts : word -> (word * Fs.Fs) -> Prop) U,
+  bv_unsigned (getr regs 17) = 56%Z ->
+  reg_get regs 10 = AT_FDCWD -> reg_get regs 12 = Z_to_bv 64 0 ->
+  read_cstr (mrb segs mem) (reg_get regs 11) = CstrOk p ->
+  path_eqb p [] = false ->
+  openat_plain_name p = true ->
+  fs_lookup (m_fs model) p = Some d ->
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  (forall e, In e openat_errnos ->
+     to_fout segs (mkst (regupd regs 10 (errno_ret e)) (v_addi pc 4)
+                        mem (seg_rom segs))
+             model (Te e)) ->
+  (forall fd, fd_lookup (m_fds model) fd = None -> fd = alloc_fd (m_fds model) ->
+     to_fout segs (mkst (regupd regs 10 fd) (v_addi pc 4) mem (seg_rom segs))
+             (with_fds (fd_insert (m_fds model) fd
+                          (FdFile p (Z_to_bv 64 0))) model) (Ts fd)) ->
+  (forall o, U o <->
+     ((exists e, In e openat_errnos /\ Te e o)
+      \/ (exists fd, fd_lookup (m_fds model) fd = None
+                     /\ fd = alloc_fd (m_fds model) /\ Ts fd o))) ->
+  to_fout segs {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc;
+                  ms_svc_pending := Some (getr regs 17);
+                  ms_resv := None; ms_fcsr := fp_csr; ms_mem := mem; ms_rom := seg_rom segs |}
+          model U.
 Proof.
   intros regs pc mem model p d Te Ts U
     H17 H10 H12 Hpath Hpe Hdot Hfs Hh Hlazy Herr Hok HU.
@@ -1699,9 +2199,38 @@ Proof.
   - exact HU.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma tfo_open_wr_rec : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pregs,(0.&5.(1.&40.))Ppc,(1.&40.)Pmem,P,(1.&40.)(2.(1.&8.))Pmodel,$48.Pp,(?.(1.&8.))PTe,P,$68.P,(>.(1.&40.)$56.)SpPTs,P,(1.&40.)P,(>.(1.&40.)$56.)SpPU,Px,(>.(1.&40.)$56.)SpP,(3.$68.(26.&40.(:0.R8.(14.&5.+11.$15.)))+38.)P,(3.(1.&40.)(9?.R9.(14.&5.+:.$15.))$7=.)P,(3.(1.&40.)(9?.R:.(14.&5.+<.$15.))(24.&40.+241.))P,(3.$39.(3=.(33.Vsegs,R9.)(9?.R;.(14.&5.+;.$15.)))(3;.R7.))P,(3.$7>.(7?.R8.(=.(1.&8.)))$80.)P,(3.$7>.(83.R9.)$84.)P,(3.$7>.(8:.(67.R;.)R:.)$80.)P,(3.(2.(1.&40.))(4;.R<.)(:.(1.&40.)))P,(3.(?.(>.(1.&40.)(1.&40.)))(4<.R=.)(=.(>.(1.&40.)(1.&40.))))P,Pe,$68.P,(38.$68.R1.$73.)(91.Vsegs,(12.Vfx,(13.R13.(14.&5.+:.$15.)(74.R2.))(16.R12.+4.)R11.(32.Vsegs,))R10.A1.R>.R2.)P,Pfd,(1.&40.)P,(3.(2.$18.)(19.(75.R10.)R1.)(:.$18.))P,(3.(1.&40.)R2.(76.(75.R11.)))(91.Vsegs,(12.Vfx,(13.R15.(14.&5.+:.$15.)R3.)(16.R14.+4.)R13.(32.Vsegs,))(87.(21.(75.R12.)R3.(8;.R11.(24.&40.=)))(8<.(8=.(67.R12.)R11.(=.(1.&8.)))R12.))A1.R?.R3.)P,Po,(>.(1.&40.)$56.)(70.A1.R=.R1.(5>.(1?.$68.Le,$68.(20.(38.$68.R1.$73.)A2.R10.R1.R2.))(1?.(1.&40.)Lfd,(1.&40.)(20.(3.(2.$18.)(19.(75.R12.)R1.)(:.$18.))(20.(3.(1.&40.)R1.(76.(75.R12.)))A2.R?.R1.R2.)))))(91.Vsegs,(7.R14.(8.Vfx,)R13.(9.(1.&40.)(:0.R14.(14.&5.+11.$15.)))(:.(1.&40.))(;.Vfx,)R12.(32.Vsegs,))R11.R=.)")
-(* [comment removed for export] *).
+(** O_WRONLY|O_CREAT|O_TRUNC openat of a plain name nothing lives
+    under: errno branch or create-empty at the lowest free fd.  The
+    [fs_under] premise selects this node over [tfo_open_wr_isdir_rec]:
+    a proof that reaches a create on an argv-derived name splits on it,
+    because [Fs.valid_fs] admits an image whose keys live under that
+    name. *)
+Lemma tfo_open_wr_rec : forall regs pc mem model p
+    (Te : Z -> (word * Fs.Fs) -> Prop) (Ts : word -> (word * Fs.Fs) -> Prop) U,
+  bv_unsigned (getr regs 17) = 56%Z ->
+  reg_get regs 10 = AT_FDCWD -> reg_get regs 12 = Z_to_bv 64 577 ->
+  read_cstr (mrb segs mem) (reg_get regs 11) = CstrOk p ->
+  path_eqb p [] = false ->
+  openat_plain_name p = true ->
+  fs_under (m_fs model) p = false ->
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  (forall e, In e openat_errnos ->
+     to_fout segs (mkst (regupd regs 10 (errno_ret e)) (v_addi pc 4)
+                        mem (seg_rom segs))
+             model (Te e)) ->
+  (forall fd, fd_lookup (m_fds model) fd = None -> fd = alloc_fd (m_fds model) ->
+     to_fout segs (mkst (regupd regs 10 fd) (v_addi pc 4) mem (seg_rom segs))
+             (with_fds (fd_insert (m_fds model) fd (FdFileW p (Z_to_bv 64 0)))
+                (with_fs (fs_set (m_fs model) p []) model)) (Ts fd)) ->
+  (forall o, U o <->
+     ((exists e, In e openat_errnos /\ Te e o)
+      \/ (exists fd, fd_lookup (m_fds model) fd = None
+                     /\ fd = alloc_fd (m_fds model) /\ Ts fd o))) ->
+  to_fout segs {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc;
+                  ms_svc_pending := Some (getr regs 17);
+                  ms_resv := None; ms_fcsr := fp_csr; ms_mem := mem; ms_rom := seg_rom segs |}
+          model U.
 Proof.
   intros regs pc mem model p Te Ts U
     H17 H10 H12 Hpath Hpe Hdot Hun Hh Hlazy Herr Hok HU.
@@ -1736,9 +2265,26 @@ Proof.
   - exact HU.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma tfo_open_wr_isdir_rec : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pregs,(0.&5.(1.&40.))Ppc,(1.&40.)Pmem,P,(1.&40.)(2.(1.&8.))Pmodel,$48.Pp,(?.(1.&8.))PU,P,(>.(1.&40.)$56.)SpP,(3.$68.(26.&40.(:0.R6.(14.&5.+11.$15.)))+38.)P,(3.(1.&40.)(9?.R7.(14.&5.+:.$15.))$7=.)P,(3.(1.&40.)(9?.R8.(14.&5.+<.$15.))(24.&40.+241.))P,(3.$39.(3=.(33.Vsegs,R7.)(9?.R9.(14.&5.+;.$15.)))(3;.R5.))P,(3.$7>.(7?.R6.(=.(1.&8.)))$80.)P,(3.$7>.(83.R7.)$84.)P,(3.$7>.(8:.(67.R9.)R8.)$84.)P,(3.(2.(1.&40.))(4;.R:.)(:.(1.&40.)))P,(3.(?.(>.(1.&40.)(1.&40.)))(4<.R;.)(=.(>.(1.&40.)(1.&40.))))P,(91.Vsegs,(12.Vfx,(13.R?.(14.&5.+:.$15.)(74.$8>.))(16.R>.+4.)R=.(32.Vsegs,))R<.R:.)(91.Vsegs,(7.R10.(8.Vfx,)R?.(9.(1.&40.)(:0.R10.(14.&5.+11.$15.)))(:.(1.&40.))(;.Vfx,)R>.(32.Vsegs,))R=.R;.)")
-(* [comment removed for export] *).
+(** O_WRONLY|O_CREAT|O_TRUNC openat of a plain name SOME KEY LIVES
+    UNDER: the deterministic -EISDIR continuation, model untouched.
+    The lane [tfo_open_wr_rec]'s premise excludes; together they cover
+    every image [Fs.valid_fs] admits for a plain name. *)
+Lemma tfo_open_wr_isdir_rec : forall regs pc mem model p U,
+  bv_unsigned (getr regs 17) = 56%Z ->
+  reg_get regs 10 = AT_FDCWD -> reg_get regs 12 = Z_to_bv 64 577 ->
+  read_cstr (mrb segs mem) (reg_get regs 11) = CstrOk p ->
+  path_eqb p [] = false ->
+  openat_plain_name p = true ->
+  fs_under (m_fs model) p = true ->
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  to_fout segs (mkst (regupd regs 10 (errno_ret EISDIR)) (v_addi pc 4)
+                     mem (seg_rom segs))
+          model U ->
+  to_fout segs {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc;
+                  ms_svc_pending := Some (getr regs 17);
+                  ms_resv := None; ms_fcsr := fp_csr; ms_mem := mem; ms_rom := seg_rom segs |}
+          model U.
 Proof.
   intros regs pc mem model p U H17 H10 H12 Hpath Hpe Hdot Hun Hh Hlazy Hcont.
   set (ms := {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc;
@@ -1776,9 +2322,24 @@ Proof.
   - unfold ms. rewrite adv_eff_ret_copyins. exact Hcont.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma tfo_open_toolong_rec : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Pregs,(0.&5.(1.&40.))Ppc,(1.&40.)Pmem,P,(1.&40.)(2.(1.&8.))Pmodel,$48.PU,P,(>.(1.&40.)$56.)SpP,(3.$68.(26.&40.(:0.R5.(14.&5.+11.$15.)))+38.)P,(3.$7>.(8?.(9?.R6.(14.&5.+<.$15.)))$84.)P,(3.$39.(3=.(33.Vsegs,R5.)(9?.R7.(14.&5.+;.$15.)))$3>.)P,(3.(2.(1.&40.))(4;.R5.)(:.(1.&40.)))P,(3.(?.(>.(1.&40.)(1.&40.)))(4<.R6.)(=.(>.(1.&40.)(1.&40.))))P,(91.Vsegs,(12.Vfx,(13.R:.(14.&5.+:.$15.)(74.$90.))(16.R9.+4.)R8.(32.Vsegs,))R7.R6.)(91.Vsegs,(7.R;.(8.Vfx,)R:.(9.(1.&40.)(:0.R;.(14.&5.+11.$15.)))(:.(1.&40.))(;.Vfx,)R9.(32.Vsegs,))R8.R7.)")
-(* [comment removed for export] *).
+(** openat on a path with no NUL within PATH_MAX: -ENAMETOOLONG in a0,
+    independent of the dirfd, for any open mode the model interprets
+    ([modeled_open_flags] — the kernel validates the flags before it
+    fetches the pathname).  The record-shaped counterpart of
+    [tfo_openat_toolong], for the symbolic-execution scripts. *)
+Lemma tfo_open_toolong_rec : forall regs pc mem model U,
+  bv_unsigned (getr regs 17) = 56%Z ->
+  modeled_open_flags (reg_get regs 12) = true ->
+  read_cstr (mrb segs mem) (reg_get regs 11) = CstrTooLong ->
+  m_halted model = None ->
+  m_vm_lazy model = [] ->
+  to_fout segs (mkst (regupd regs 10 (errno_ret ENAMETOOLONG)) (v_addi pc 4)
+                     mem (seg_rom segs))
+          model U ->
+  to_fout segs {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc;
+                  ms_svc_pending := Some (getr regs 17);
+                  ms_resv := None; ms_fcsr := fp_csr; ms_mem := mem; ms_rom := seg_rom segs |}
+          model U.
 Proof.
   intros regs pc mem model U H17 Hfl Hpath Hh Hlazy Hcont.
   set (ms := {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc;
@@ -1797,50 +2358,79 @@ Qed.
 
 End OpenNodes.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* Run-level packaging and the equivalence glue                              *)
+(* ========================================================================= *)
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma fout_omni_run : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Psegs,(?.$30.)Ppc,$:3.Pph,$3?.Psp,(1.&40.)Pbrk0,(1.&40.)Pmb,(1.&40.)Prnd,$40.Plim,$68.Pinp,$:4.PU,P,(>.(1.&40.)$56.)SpP,(91.R:.(:5.R:.R9.R8.R7.R4.(:6.R2.)(:7.R2.)(:8.R2.)(:9.R2.))(::.(:;.R:.)R6.R5.R7.R3.R2.)R1.)(:<.(:=.R;.R:.R9.)R4.(:>.R8.R7.R6.R5.)R3.(:?.R2.))")
-(* [comment removed for export] *).
+(** The run-level omni judgment of a file-copying run. *)
+Lemma fout_omni_run : forall segs pc ph sp brk0 mb rnd lim inp U,
+  to_fout (run_segments segs inp sp mb)
+          (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp)
+          (with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+             (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp)) U ->
+  omni_run (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp (fout_post U).
 Proof.
   intros segs pc ph sp brk0 mb rnd lim inp U Hto.
   cbn [omni_run]. unfold init_config.
-  exact (to_fout_exec segs _ _ U Hto eq_refl eq_refl).
+  exact (to_fout_exec (run_segments segs inp sp mb) _ _ U Hto eq_refl eq_refl).
 Qed.
 
-#[using="Type"] Lemma fout_obs_iff : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Psegs,(?.$30.)Ppc,$:3.Pph,$3?.Psp,(1.&40.)Pbrk0,(1.&40.)Pmb,(1.&40.)Prnd,$40.Plim,$68.Pinp,$:4.PU,P,(>.(1.&40.)$56.)SpP,(91.R:.(:5.R:.R9.R8.R7.R4.(:6.R2.)(:7.R2.)(:8.R2.)(:9.R2.))(::.(:;.R:.)R6.R5.R7.R3.R2.)R1.)Ptr,(?.$49.)(70.(;0.R<.(;1.R<.R;.R:.R9.R8.R7.R6.R5.R4.)R1.)(1?.(>.(1.&40.)$56.)Lo,(>.(1.&40.)$56.)(20.A1.R4.R1.(5<.$49.R2.(5=.R1.)))))")
-(* [comment removed for export] *).
+Lemma fout_obs_iff : forall segs pc ph sp brk0 mb rnd lim inp U,
+  to_fout (run_segments segs inp sp mb)
+          (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp)
+          (with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+             (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp)) U ->
+  forall tr, obs_trace (run_segments segs inp sp mb)
+               (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) tr
+    <-> exists o, U o /\ is_prefix tr (fout_trace o).
 Proof.
   intros segs pc ph sp brk0 mb rnd lim inp U Hto tr.
   unfold init_config.
-  set (ms := init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) in *.
-  assert (Hh : m_halted (init_model (segments_reserved segs) brk0 mb sp lim inp) = None)
-    by reflexivity.
-  assert (Hlazy : m_vm_lazy (init_model (segments_reserved segs) brk0 mb sp lim inp) = [])
-    by reflexivity.
+  set (ms := init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp) in *.
+  set (m0 := with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+               (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp)) in *.
+  assert (Hh : m_halted m0 = None) by reflexivity.
+  assert (Hlazy : m_vm_lazy m0 = []) by reflexivity.
   split.
   - intros (tr' & c & Hstar & Hp).
-    destruct (to_fout_star_only segs ms _ U Hto Hh Hlazy tr' c Hstar)
+    destruct (to_fout_star_only (run_segments segs inp sp mb) ms _ U Hto Hh Hlazy tr' c Hstar)
       as (o & Ho & Hp').
     exists o. split; [exact Ho | eapply is_prefix_trans; eauto].
   - intros (o & Ho & Hp).
-    destruct (to_fout_star_admits segs ms _ U Hto Hh Hlazy o Ho) as [c Hstar].
+    destruct (to_fout_star_admits (run_segments segs inp sp mb) ms _ U Hto Hh Hlazy o Ho)
+      as [c Hstar].
     exists (fout_trace o), c. split; assumption.
 Qed.
 
-#[using="Type"] Lemma fout_no_error_run : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Psegs,(?.$30.)Ppc,$:3.Pph,$3?.Psp,(1.&40.)Pbrk0,(1.&40.)Pmb,(1.&40.)Prnd,$40.Plim,$68.Pinp,$:4.PU,P,(>.(1.&40.)$56.)SpP,(91.R:.(:5.R:.R9.R8.R7.R4.(:6.R2.)(:7.R2.)(:8.R2.)(:9.R2.))(::.(:;.R:.)R6.R5.R7.R3.R2.)R1.)(1>.(61.R;.(;1.R;.R:.R9.R8.R7.R6.R5.R4.R3.)))")
-(* [comment removed for export] *).
+Lemma fout_no_error_run : forall segs pc ph sp brk0 mb rnd lim inp U,
+  to_fout (run_segments segs inp sp mb)
+          (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp)
+          (with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+             (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp)) U ->
+  ~ reaches_error (run_segments segs inp sp mb)
+      (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp).
 Proof.
   intros segs pc ph sp brk0 mb rnd lim inp U Hto. apply exec_no_error.
   eapply exec_conseq; [exact (fout_omni_run segs pc ph sp brk0 mb rnd lim inp U Hto) |].
   intros tr o (out & _ & _ & Hx). exact (exits_with_never_errors _ _ _ Hx).
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma fout_omni_strong_equiv : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Psource_segs,(?.$30.)Prpc,$:3.Prph,$3?.Prsp,(1.&40.)Prbrk,(1.&40.)Prmb,(1.&40.)Prrnd,$40.Ptarget_segs,(?.$30.)Papc,$:3.Paph,$3?.Pasp,(1.&40.)Pabrk,(1.&40.)Pamb,(1.&40.)Parnd,$40.PU,P,(>.(1.&40.)$56.)SpPinp,$:4.P,(91.R10.(:5.R10.R?.R>.R=.R:.(:6.R1.)(:7.R1.)(:8.R1.)(:9.R1.))(::.(:;.R10.)R<.R;.R=.$;2.R1.)R2.)P,(91.R:.(:5.R:.R9.R8.R7.R4.(:6.R2.)(:7.R2.)(:8.R2.)(:9.R2.))(::.(:;.R:.)R6.R5.R7.$;3.R2.)R3.)(;4.(:=.R12.R11.R10.)(:=.R;.R:.R9.)(:>.R?.R>.R=.R<.)(:>.R8.R7.R6.R5.)R3.)")
-(* [comment removed for export] *).
+(** The omni equivalence for two file-copying binaries with the SAME
+    outcome set [U], at the two role budgets. *)
+Lemma fout_omni_strong_equiv :
+  forall source_segs rpc rph rsp rbrk rmb rrnd target_segs apc aph asp abrk amb arnd U inp,
+  to_fout (run_segments source_segs inp rsp rmb)
+    (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp)
+    (with_vdso (Vdso.vdso_run_init (ed_vdso rrnd))
+       (init_model (segments_reserved (run_segments source_segs inp rsp rmb)) rbrk rmb rsp
+          source_alloc_limit inp)) U ->
+  to_fout (run_segments target_segs inp asp amb)
+    (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp)
+    (with_vdso (Vdso.vdso_run_init (ed_vdso arnd))
+       (init_model (segments_reserved (run_segments target_segs inp asp amb)) abrk amb asp
+          target_alloc_limit inp)) U ->
+  omni_strong_equiv (mkImage source_segs rpc rph) (mkImage target_segs apc aph)
+                    (mkEntry rsp rbrk rmb rrnd) (mkEntry asp abrk amb arnd) inp.
 Proof.
   intros source_segs rpc rph rsp rbrk rmb rrnd target_segs apc aph asp abrk amb arnd U inp
     Hsource Htarget.
@@ -1860,9 +2450,23 @@ Proof.
     apply (fout_no_error_run target_segs apc aph asp abrk amb arnd target_alloc_limit inp U Htarget).
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma fout_strong_equiv : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Psource_segs,(?.$30.)Prpc,$:3.Prph,$3?.Prsp,(1.&40.)Prbrk,(1.&40.)Prmb,(1.&40.)Prrnd,$40.Prlim,$68.Ptarget_segs,(?.$30.)Papc,$:3.Paph,$3?.Pasp,(1.&40.)Pabrk,(1.&40.)Pamb,(1.&40.)Parnd,$40.Palim,$68.PU,P,(>.(1.&40.)$56.)SpPinp,$:4.P,(91.R12.(:5.R12.R11.R10.R?.R<.(:6.R1.)(:7.R1.)(:8.R1.)(:9.R1.))(::.(:;.R12.)R>.R=.R?.R;.R1.)R2.)P,(91.R;.(:5.R;.R:.R9.R8.R5.(:6.R2.)(:7.R2.)(:8.R2.)(:9.R2.))(::.(:;.R;.)R7.R6.R8.R4.R2.)R3.)(20.(;5.(;6.(:=.R14.R13.R12.)R=.(:>.R11.R10.R?.R>.)R3.))(;7.(;6.(:=.R14.R13.R12.)R=.(:>.R11.R10.R?.R>.)R3.)(;6.(:=.R<.R;.R:.)R5.(:>.R9.R8.R7.R6.)R3.)))")
-(* [comment removed for export] *).
+(** The [Equivalence]-level equivalence for two file-copying binaries with
+    the SAME outcome set [U]. *)
+Lemma fout_strong_equiv :
+  forall source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim U inp,
+  to_fout (run_segments source_segs inp rsp rmb)
+    (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp)
+    (with_vdso (Vdso.vdso_run_init (ed_vdso rrnd))
+       (init_model (segments_reserved (run_segments source_segs inp rsp rmb)) rbrk rmb rsp
+          rlim inp)) U ->
+  to_fout (run_segments target_segs inp asp amb)
+    (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp)
+    (with_vdso (Vdso.vdso_run_init (ed_vdso arnd))
+       (init_model (segments_reserved (run_segments target_segs inp asp amb)) abrk amb asp
+          alim inp)) U ->
+  Equivalence.modeled (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
+  /\ Equivalence.equiv (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
+                       (run (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp).
 Proof.
   intros source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim U inp
     Hsource Htarget.
@@ -1877,9 +2481,14 @@ Proof.
   - cbn. apply (fout_no_error_run target_segs apc aph asp abrk amb arnd alim inp U Htarget).
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma spec_err_escape_equiv : ltac2:(CDefT.buildp (gd_tbl_FileSim ()) "Psegs,(?.$30.)Ppc,$:3.Pph,$3?.Psp,(1.&40.)Pbrk0,(1.&40.)Pmb,(1.&40.)Prnd,$40.Plim,$68.Pinp,$:4.Ptarget,$;8.P,(63.R:.(;1.R:.R9.R8.R7.R6.R5.R4.R3.R2.))(;7.(;6.(:=.R;.R:.R9.)R4.(:>.R8.R7.R6.R5.)R3.)R2.)")
-(* [comment removed for export] *).
+(** SOURCE-ERROR ESCAPE at the Equivalence level.  The premise is
+    deliberately universal: a chosen [star]/[reaches_error] witness is
+    insufficient when another source resolution avoids error. *)
+Lemma spec_err_escape_equiv :
+  forall segs pc ph sp brk0 mb rnd lim inp (target : behavior),
+  all_traces_error (run_segments segs inp sp mb)
+    (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) ->
+  Equivalence.equiv (run (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp) target.
 Proof.
   intros segs pc ph sp brk0 mb rnd lim inp target Hall.
   left. exact Hall.

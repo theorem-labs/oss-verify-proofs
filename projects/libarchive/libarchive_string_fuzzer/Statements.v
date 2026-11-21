@@ -22,11 +22,18 @@
     WHAT THE HARNESS CHECKS.  First byte selects one of 10 string paths (set/get
     pathname, symlink, hardlink, uname, gname in MBS/WCS/UTF-8; copy_*;
     update_*_utf8; fflags text; ACL from_text in three types; mbstowcs + *_w
-    setters) on the rest of the input, then archive_entry_clone. The comment
-    says 'Clone and compare' but the clone is freed without any comparison; all
-    conversions' results discarded.  The harness makes no check of its own
-    beyond not crashing, so a statement about it says only that the code it
-    calls never crashes, hangs or trips a sanitizer.
+    setters) on the rest of the input, then archive_entry_clone. It returns
+    early when the input is under 4 bytes, archive_entry_new returns NULL or the
+    input's copy cannot be allocated, skips the mbstowcs path when its buffer
+    cannot be allocated, and frees the clone when not NULL; the comment says
+    'Clone and compare' but nothing is compared, and every other libarchive
+    result and mbstowcs's is dropped.  The harness makes no check of its own
+    beyond not crashing.  Its halts statements say only that the code it calls
+    never crashes, hangs or trips a sanitizer.  Its agreement statements say
+    only that the code never crashes or trips a sanitizer, and allow a run that
+    never ends.  Its bound statements say only how often its builds may
+    disagree.  Its decidability statements say only that some program decides
+    where its builds agree.
 
     Whether each statement is open, proved or known false is recorded in the
     harness README, not here: this file changes only when a statement does. *)

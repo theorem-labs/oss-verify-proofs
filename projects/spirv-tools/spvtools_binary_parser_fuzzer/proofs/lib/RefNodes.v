@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the mmap decline premise place_declined_b; path_at's bound below TASK_SIZE). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool Classical.
@@ -9,6 +10,8 @@ From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement.
+From LinuxProcessSemantics.LinuxProcessSem.Checks.Sys.Mm Require Mmap.
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Import Amb RelSpec
   SimInv ExitSim PropExec CatExec CatSim SeqExec StreamExec MmapSim AllocSim FileSim
   ShapeAlg Nodes StoreOk AgentLib AgentNodes PlacementGap.
@@ -126,10 +129,11 @@ Section Openat.
 
   Definition path_at (p : list byte) : Prop :=
     (length p <= 4095)%nat /\ ~ In (Z_to_bv 8 0) p
-    /\ rdn segs mem (getr regs 11) (length p + 1) = Some (p ++ [Z_to_bv 8 0]).
+    /\ rdn segs mem (getr regs 11) (length p + 1) = Some (p ++ [Z_to_bv 8 0])
+    /\ (bv_unsigned (getr regs 11) + Z.of_nat (length p) < TASK_SIZE)%Z.
 
   Lemma path_at_cstr : forall p, path_at p -> read_cstr (mrb segs mem) (getr regs 11) = CstrOk p.
-  Proof. intros p (H1 & H2 & H3). apply read_cstr_of_rdn; assumption. Qed.
+  Proof. intros p (H1 & H2 & H3 & H4). apply read_cstr_of_rdn; assumption. Qed.
 
   Hypothesis Hfree : fd_lookup fds (alloc_fd fds) = None.
 
@@ -221,10 +225,16 @@ Proof.
   unfold brk_model_next, brk_maps_next. fold b.
   rewrite (proj2 (Z.ltb_ge (bv_unsigned req) (bv_unsigned b))) by lia. rewrite andb_false_r.
   rewrite (brk_grants_grow req req b Hreq0 Hb0 Hlt), (brk_unmaps_grow req b) by lia.
+  rewrite (page_round_up_Z_aligned (bv_unsigned b)) by (first [lia | exact Hbal]).
+  rewrite Hureq.
+  rewrite (page_round_up_Z_aligned (bv_unsigned b + d))
+    by (first [lia | rewrite Zplus_mod, Hbal, Hdal; reflexivity]).
+  unfold brk_page_range. rewrite (proj2 (Z.ltb_lt (bv_unsigned b) (bv_unsigned b + d))) by lia.
   cbn [app maps_subtract_ranges fold_left].
-  replace (req - b) with (Z_to_bv 64 d); [reflexivity|].
-  apply bv_eq. rewrite bv_sub_unsigned, Hureq.
-  rewrite bv_wrap_small by (unfold bv_modulus; lia). rewrite u64_lit by lia. lia.
+  replace (Z_to_bv 64 (bv_unsigned b)) with b
+    by (apply bv_eq; rewrite u64_lit by lia; reflexivity).
+  replace (bv_unsigned b + d - bv_unsigned b)%Z with d by lia.
+  reflexivity.
 Qed.
 
 Definition noaccess_model (a n : word) (m : Model) : Model :=
@@ -234,8 +244,11 @@ Definition noaccess_model (a n : word) (m : Model) : Model :=
                  (vm_start_brk (m_vmmaps m)) (vm_brk (m_vmmaps m)) (vm_limit (m_vmmaps m))
                  (vm_mmap_base (m_vmmaps m)) (vm_init_sp (m_vmmaps m))) m.
 
+(* At the revision the first conjunct is the spec's placement rule, as in
+   the model's own [Common/RefNodes.grant_ok_na]. *)
 Definition grant_ok_na (hint : word) (m : Model) (a : word) (n : Z) : bool :=
-  (bv_unsigned a mod page_size =? 0)%Z && (0 <? bv_unsigned a)%Z
+  linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint n a
+  && (bv_unsigned a mod page_size =? 0)%Z && (0 <? bv_unsigned a)%Z
   && (bv_unsigned a + n <=? alloc_top (m_vmmaps m))%Z
   && region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 n).
 
@@ -246,27 +259,35 @@ Definition mmap_noaccess_args_ok (ms : machine_state) : Prop :=
 
 Lemma mmap_noaccess_outcome_si : forall ms x8 model,
   bv_unsigned x8 = 222%Z -> mmap_noaccess_args_ok ms ->
+  (* 727298f3 (#144, #146): the model declines a hinted call before the
+     [alt]; well-formed arguments alone do not establish that it does not
+     ([theories/Common/README.md]). *)
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   let n := page_round_up_Z (bv_unsigned (ms_gpr ms 1)) in
   forall o, syscall_spec (sys_input segs ms x8) model o <->
     (exists e, In e mmap_errnos /\ o = Ok (mkEffect (errno_ret e) [] []) model [])
     \/ (exists a, grant_ok_na (ms_gpr ms 0) model a n = true
          /\ o = Ok (mkEffectU a [] [] [(a, Z_to_bv 64 n)] [] []) (noaccess_model a (Z_to_bv 64 n) model) []).
 Proof.
-  intros ms x8 model Hno (H1 & H2 & H3 & H4 & H5) n o.
+  intros ms x8 model Hno (H1 & H2 & H3 & H4 & H5) Hdecl n o.
   rewrite (syscall_spec_222 _ model o) by (rewrite in_sysno_si; exact Hno).
   rewrite in_arg0_si, in_arg1_si, in_arg2_si, in_arg3_sys_input, in_arg4_sys_input, in_arg5_sys_input.
   rewrite H2, H3, H4, H5.
   assert (E1 : w_is0 (ms_gpr ms 1) = false) by (unfold w_is0; apply bv_eqb_neq; exact H1).
   rewrite (mmap_noaccess_outcome (ms_gpr ms 0) (ms_gpr ms 1) (Z_to_bv 64 0) (Z_to_bv 64 34)
              (Z_to_bv 64 (-1)) (Z_to_bv 64 0) (sys_input segs ms x8) model o E1
-             ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)).
+             ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity) Hdecl).
   unfold mmap_err_out, grant_ok_na, noaccess_model, with_mmap_backing.
   replace (mmap_noreserve_b (Z_to_bv 64 34)) with false by (vm_compute; reflexivity). fold n.
+  destruct (LinuxProcessSemantics.LinuxProcessSem.Checks.Sys.Mm.Mmap.mmap_grant_len_ok _ E1)
+    as [Hn0 Hnal]. fold n in Hn0, Hnal.
   split; (intros [H | (a & Hg & ->)]; [left; exact H | right; exists a; split; [|reflexivity]]).
-  - destruct Hg as (G1 & G2 & G3 & G4).
-    rewrite (proj2 (Z.eqb_eq _ _) G1), (proj2 (Z.ltb_lt _ _) G2), (proj2 (Z.leb_le _ _) G3), G4. reflexivity.
-  - rewrite !andb_true_iff in Hg. destruct Hg as [[[G1 G2] G3] G4].
-    apply Z.eqb_eq in G1. apply Z.ltb_lt in G2. apply Z.leb_le in G3. auto 10.
+  - pose proof (proj2 (linux_place_is_iff _ _ _ _ _ Hn0 Hnal) Hg) as Hpi.
+    destruct (linux_place_is_admissible _ _ _ _ _ Hn0 Hnal Hpi) as (G1 & G2 & G3 & G4).
+    rewrite Hpi, (proj2 (Z.eqb_eq _ _) G1), (proj2 (Z.ltb_lt _ _) G2), (proj2 (Z.leb_le _ _) G3), G4. reflexivity.
+  - rewrite !andb_true_iff in Hg. destruct Hg as [[[[Hp _] _] _] _].
+    exact (proj1 (linux_place_is_iff _ _ _ _ _ Hn0 Hnal) Hp).
 Qed.
 
 Definition mprotect_model (addr n : word) (m : Model) : Model :=
@@ -285,6 +306,9 @@ Lemma mprotect_outcome_si : forall ms x8 model (addr : word) (len : Z),
   (bv_unsigned addr + page_round_up_Z len < two_pow_64)%Z ->
   ms_gpr ms 2 = Z_to_bv 64 3 ->
   let n := Z_to_bv 64 (page_round_up_Z len) in
+  (* the revision's vDSO/vvar gate ([Mprotect.mprotect_spec]); the model's
+     own [Common/RefNodes.mprotect_check] takes the same premise *)
+  region_free (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) addr n = true ->
   map_contains (vm_noaccess (m_vmmaps model)) addr n = true ->
   map_contains (vm_maps (m_vmmaps model)) addr n = true ->
   forall o, syscall_spec (sys_input segs ms x8) model o <->
@@ -292,7 +316,7 @@ Lemma mprotect_outcome_si : forall ms x8 model (addr : word) (len : Z),
     \/ (mprotect_budget_ok model addr n = true
         /\ o = Ok (mkEffect (Z_to_bv 64 0) [] [(addr, n)]) (mprotect_model addr n model) []).
 Proof.
-  intros ms x8 model addr len Hno H0 Hal H1 Hlen Hnw H2 n Hna Hma o.
+  intros ms x8 model addr len Hno H0 Hal H1 Hlen Hnw H2 n Hvd Hna Hma o.
   assert (Hlen' : (len < two_pow_64)%Z).
   { pose proof (page_round_up_Z_bounds len ltac:(lia)). pose proof (u64_range addr). lia. }
   assert (Hu1 : bv_unsigned (ms_gpr ms 1) = len) by (rewrite H1; apply u64_lit; unfold two_pow_64 in Hlen'; lia).
@@ -301,7 +325,7 @@ Proof.
   rewrite <- mprotect_model_next_eq. subst n. rewrite <- Hu1.
   apply (mprotect_expose_outcome addr (ms_gpr ms 1) (Z_to_bv 64 3) _ model o);
     [vm_compute; reflexivity | exact Hal | | rewrite Hu1; exact Hnw | vm_compute; reflexivity
-    | rewrite Hu1; exact Hna | rewrite Hu1; exact Hma].
+    | rewrite Hu1; exact Hvd | rewrite Hu1; exact Hna | rewrite Hu1; exact Hma].
   unfold w_is0, bv_eqb. rewrite Hu1. change (bv_unsigned (Z_to_bv 64 0)) with 0%Z. apply Z.eqb_neq. lia.
 Qed.
 

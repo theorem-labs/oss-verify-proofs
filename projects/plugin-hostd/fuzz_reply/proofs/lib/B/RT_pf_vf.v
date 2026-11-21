@@ -1,4 +1,4 @@
-(* Image B twin of lib/A/RT_pf_vf.v at d49bd1db505: module paths lib.A -> lib.B; 8 image numerals moved to fuzz_reply.asan-ubsan by symbol + offset, each checked against that image (CHAINB-numerals.tsv sha256 3cedf5e564f7; internal record). *) (* The lower half of fuzz_reply.asan-ubsan's snprintf chain: ___interceptor_vfprintf as musl vsnprintf's `vfprintf`.
+(* Image B twin of lib/A/RT_pf_vf.v: module paths lib.A -> lib.B; 8 image numerals moved to fuzz_reply.asan-ubsan by symbol + offset, each checked against that image (CHAINB-numerals.tsv sha256 3cedf5e564f7; internal record). *) (* The lower half of fuzz_reply.asan-ubsan's snprintf chain: ___interceptor_vfprintf as musl vsnprintf's `vfprintf`.
 
    vf_icpt_ok (RT_pf_stmt.v vf_icpt_stmt): musl vsnprintf's `vfprintf` call does not land on musl vfprintf in an
    ASan build - it lands on __wrap_vfprintf 0x42228 (A_img_vsn's `sym 0x7f000400`), which runs
@@ -17,7 +17,7 @@
      the hypothesis VFB                   GXA's guarded body at A_img;
      I_vfprintfw.v:81  vfprintf_walkB     the epilogue, back to the caller.
 
-   THE TWO INSTANCES.  A_img and A_img_vsn (RT_IImgA.v:96, :107) differ in one symbol-map row (0x7f000400).
+   THE TWO INSTANCES.  A_img and A_img_vsn (RT_IImgA.v:97, :108) differ in one symbol-map row (0x7f000400).
    Letting Coq CONVERT `img_segs A_img_vsn` against `img_segs A_img` is catastrophic (measured: one `exact` on
    ssp_cells ran 16 minutes).  Every A_img_vsn fact below is first REWRITTEN to `asegs` with RT_pf_kit.v's
    segs_vsn, and every symbol application to its numeral, before it meets an A_img goal; `asegs` against

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (ledger_gap restated as place_gap for Linux's mmap placement; the reservation ledger, artm_res_ledger, artm_res_seg and artm_res_step; the channel-reader fact, mdl_mmap_rw_reader; the place_declined_b obligation of grant_node_ok, met by a NULL hint). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -86,32 +87,34 @@ Proof.
 Qed.
 
 Lemma ledger_gap : forall Σ mo len, rt_wf Σ -> ARTM_A Σ mo -> 0 < len -> len mod 4096 = 0 -> len <= 2 ^ 32 ->
-  exists a : word, (bv_unsigned a mod page_size = 0)%Z /\ (0 < bv_unsigned a)%Z
-    /\ (bv_unsigned a + len <= alloc_top (m_vmmaps mo))%Z
-    /\ region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 len) = true.
+  place_gap (m_vmmaps mo) len.
 Proof.
   intros Σ mo len HW HA Hlen Hal Hsz. pose proof HA as (Hperm & Eres & _ & _ & (_ & _ & _ & Hisp & _ & _ & Hzb)).
+  pose proof (artm_res_ledger mo Eres) as (Rb & Rn).
   unfold maps_zbound in Hzb.
   pose proof HW as (HL & _). pose proof (rt_wf_budget _ HW) as (_ & Heg). pose proof (rt_wf_nsec _ HW) as Hns.
   pose proof (maps0_bounds _ HL) as (Hn0 & Hb0). pose proof (secmaps_bytes _ HW) as Hsb.
   pose proof HL as HL'. unfold layout_ok in HL'. destruct HL' as ((Hsp1 & Hsp2) & _).
   set (h := m_vmmaps mo) in *. set (L := vm_reserved h ++ vm_maps h).
-  assert (HLb : live_bytes L <= 0x618000 + 2 ^ 38 + 2 ^ 45).
-  { unfold L. rewrite live_bytes_app', Eres, RT_init.live_bytes_sum_sizes, AsanPlanImages.asan_res_sizes.
+  assert (HLb : live_bytes L <= 0x618000 + 0x14000 + 2 ^ 38 + 2 ^ 45).
+  { unfold L. rewrite (RT_init.live_bytes_sum_sizes (segments_reserved asegs)), AsanPlanImages.asan_res_sizes in Rb.
+    rewrite live_bytes_app'.
     rewrite <- (live_bytes_filter_vpos (vm_maps h)).
     rewrite (live_bytes_perm _ _ Hperm). unfold rt_maps. rewrite live_bytes_app'. lia. }
-  assert (HLn : Z.of_nat (length L) <= 4 + SEC_MAX + 64 + 1).
-  { unfold L. rewrite length_app, Eres, AsanPlanImages.asan_res_len. cbn [AsanPlanCore.APC.n_res AsanTablesA.ASAN_A].
+  assert (HLn : Z.of_nat (length L) <= 4 + SEC_MAX + 64 + 1 + 2).
+  { unfold L. rewrite length_app. rewrite AsanPlanImages.asan_res_len in Rn. cbn [AsanPlanCore.APC.n_res AsanTablesA.ASAN_A] in Rn.
     rewrite (Permutation_length Hperm) in Hzb. unfold rt_maps in Hzb.
     rewrite length_app, length_map, length_rev in Hzb. lia. }
   assert (Htop : alloc_top h = l_sp0 (lay Σ) - 2 ^ 23) by (unfold alloc_top, stack_max_size; rewrite Hisp; lia).
   unfold sp_window_lo, sp_window_hi, SEC_MAX in *.
-  destruct (Unforced.gap_exists L len 4096 (alloc_top h) ltac:(lia) ltac:(lia) ltac:(rewrite Htop; lia)
-              ltac:(reflexivity) ltac:(rewrite Unforced.gap_weight_sizes; nia))
+  destruct (Unforced.gap_exists L len task_unmapped_base (alloc_top h) ltac:(lia)
+              ltac:(unfold task_unmapped_base; lia) ltac:(rewrite Htop; lia)
+              ltac:(reflexivity) ltac:(rewrite Unforced.gap_weight_sizes; unfold task_unmapped_base; nia))
     as (g & Hgal & HgF & Hgtop & Hgfree).
-  exists (Z_to_bv 64 g).
-  rewrite unsigned_lit by (rewrite Htop in Hgtop; lia).
-  split; [exact Hgal|]. split; [lia|]. split; [exact Hgtop|]. exact Hgfree.
+  (* LPS 08b1429 places an mmap by [linux_place]: a gap in its bottom-up window is what
+     [Placement.linux_place_exists] needs ([NodesA_mm.place_gap]). *)
+  unfold place_gap. exists g. right. unfold gap_fits.
+  split; [exact Hgal|]. split; [exact HgF|]. split; [exact Hgtop|]. exact Hgfree.
 Qed.
 
 (* [comment removed for export] *)
@@ -167,7 +170,7 @@ Proof using HW HA Hlen Hg.
     pose proof AsanPlanImages.asan_hull_cover as (_ & HC).
     cbn [AsanPlanCore.APC.img_lo AsanPlanCore.APC.img_hi AsanTablesA.ASAN_A] in HC. unfold SEGTOP_A in Y.
     destruct (HC (Z.max (bv_unsigned a) 0x10000) ltac:(lia)) as (iv & Hiv & Z1 & Z2).
-    pose proof (region_free_apart _ _ _ iv G4 ltac:(apply in_or_app; left; rewrite Eres; exact Hiv)) as D.
+    pose proof (region_free_apart _ _ _ iv G4 ltac:(apply in_or_app; left; exact (artm_res_seg mo _ Eres Hiv))) as D.
     rewrite unsigned_lit in D by lia. unfold apart in D. lia.
   - apply Forall_forall. intros e He. exact (grant_apart_maps e (artm_in_maps Σ mo e HA He)).
 Qed.
@@ -193,7 +196,7 @@ Proof.
              (fun a => sgrant_ok Σ (bv_unsigned a) len) (fun a => K (bv_unsigned a))
              (fun a mo => ARTM_A (Σ' (bv_unsigned a)) mo /\ PMc mo) len).
     + lia.
-    + intros ms HPm. destruct (Hm ms HPm) as (S1 & S2 & S3 & S4 & S5 & S6). repeat (split; [assumption|]).
+    + intros ms HPm. destruct (Hm ms HPm) as (S1 & S2 & S3 & S4 & S5 & S10 & S6). repeat (split; [assumption|]).
       intros a Ha. rewrite Hrd. pose proof (S6 (bv_unsigned a) Ha) as X. rewrite Z_to_bv_bv_unsigned in X. exact X.
     + intros mo (HA & HPc). pose proof HA as (Hperm & Eres & Elim & Heu & (Hwf & Hlz & Hsep & Hisp & Hcf & Hsl & Hzb & Hnp)).
       rewrite Hrd.
@@ -215,7 +218,11 @@ Proof.
           apply (Permutation_trans (l' := (a, Z_to_bv 64 len) :: rt_maps Σ)).
           - constructor. exact Hperm.
           - apply Permutation_sym. rewrite Z_to_bv_bv_unsigned in Hperm'. exact Hperm'. }
-        split; [rewrite mdl_mmap_rw_vmmaps; cbn [vm_reserved]; exact Eres|].
+        split.
+        { apply (artm_res_step mo _ Eres); [rewrite mdl_mmap_rw_vmmaps; reflexivity|].
+          intros e He. rewrite mdl_mmap_rw_vmmaps in He. cbn [vm_maps] in He.
+          rewrite filter_cons_pos in He by (cbn [snd]; rewrite Eul; lia).
+          destruct He as [<-|He]; [right; exact (rf_app_l _ _ _ _ (proj2 (proj2 (proj2 Hg))))| left; exact He]. }
         split; [rewrite mdl_mmap_rw_vmmaps; cbn [vm_limit]; exact Elim|].
         split.
         { pose proof (eager_used_mmap_rw_le mo a (Z_to_bv 64 len) (proj1 Hwf) Han) as Hle. rewrite Eul in Hle. lia. }
@@ -235,8 +242,12 @@ Proof.
         split; [|apply NodesA_madv.noaccess_pos_mmap_rw; exact Hnp].    (* [comment removed for export] *)
         unfold maps_zbound in Hzb |- *. rewrite mdl_mmap_rw_vmmaps. cbn [vm_maps].
         rewrite filter_cons_pos by (cbn [snd]; rewrite Eul; lia). cbn [length]. rewrite !Nat2Z.inj_succ. clear - Hzb. lia.
-      * apply (HPMc mo); [apply mdl_mmap_rw_fds| apply mdl_mmap_rw_fs| exact HPc].
+      * apply (HPMc mo); [apply mdl_mmap_rw_fds| apply mdl_mmap_rw_fs| apply mdl_mmap_rw_reader| exact HPc].
     + intros mo (HA & _). pose proof HA as (_ & _ & _ & _ & (_ & _ & _ & Hisp & _)). unfold alloc_top, stack_max_size. rewrite Hisp. lia.
+    + (* LPS 727298f3: [ast_mmap_anon_rw]'s declined-placement obligation.  This node
+         declares its hint is the literal NULL, and a NULL hint is never declined. *)
+      intros ms mo Hm' _. destruct (Hm ms Hm') as (_ & _ & _ & _ & _ & S10 & _).
+      rewrite S10. apply NodesA_mm.place_declined_b_null.
   - intros c Hc. exact Hc.
   - intros c (a & Ha & Hc). exists (bv_unsigned a). split; [exact Ha|]. rewrite (EA (bv_unsigned a)). exact Hc.
 Qed.

@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: kept_run and same_io_wvb of proofs/reac-pw/fuzz_role/lib/A/RPgCfgChanges.v at
-   5eaa5614305, awr_stk of proofs/reac-pw/fuzz_role/lib/A/RPgCheck.v at fb6520a9cda, U_sext32_small of
-   proofs/reac-pw/fuzz_qdisc/lib/A/QPgLoop0.v at b0f706c04a1 and U_sx32_eqb of proofs/libreac/fuzz_knock/lib/A/APgStep.v
-   at 6ebe35ba632, renamed (kept_run_pe, same_io_wvb_pe, pe_awr, pe_U_sx32, pe_U_sx32_eqb); pe_awr also reads sp's value
+(* Modified by Theorem Labs, 2026-10: kept_run and same_io_wvb of proofs/reac-pw/fuzz_role/lib/A/RPgCfgChanges.v,
+   awr_stk of proofs/reac-pw/fuzz_role/lib/A/RPgCheck.v, U_sext32_small of
+   proofs/reac-pw/fuzz_qdisc/lib/A/QPgLoop0.v and U_sx32_eqb of proofs/libreac/fuzz_knock/lib/A/APgStep.v,
+   renamed (kept_run_pe, same_io_wvb_pe, pe_awr, pe_U_sx32, pe_U_sx32_eqb); pe_awr also reads sp's value
    through the token atoms a run adds; everything else below is new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseE.v at afaa3cb55c1d; module paths and
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseE.v; module paths and
    names changed to fuzz_rate's (RtPg* files, rt_fxk, Rate.parse_model, Rate.harness_parse, reac_rate_prop_parse), the
    .got cell 0x9be70 and the shadow-offset cell 0xa4c38 of fuzz_rate.asan in e1_entry, the comments' pcs and branch
    targets fuzz_rate.asan's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_rate_prop_parse 0x8449c of reac-pw/fuzz_rate's ASan image A (fuzz_rate.asan, pinned sha256
    22bc8613d780c9a99353dc86368f9401311ef5c8358882651217836298529b6a): segments E1 and E2 of its walk, proving
    lib/A/RtPgParseBase.v's segE1_stmt and segE2_stmt on the concrete image rsegs.

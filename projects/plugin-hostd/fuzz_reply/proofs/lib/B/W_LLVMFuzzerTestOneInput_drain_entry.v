@@ -33,6 +33,7 @@
    the runner takes the fall-through of `beqz a0` and of the ALIGN8 trap edge, and the walk splits `bnez a0` (eof).
    Trap table of this stage (each trap edge decided by the runner from the seat, no W_traps.v lemma cited):
      0x8489c NONNULL (atom 21, lo 4096), 0x848a4 ALIGN8 (atom 21, al2 3), 0x848d4 ALIGN8 (atom 10, al2 3). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -76,7 +77,7 @@ Local Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(fa
 Open Scope bv_scope.
 Open Scope Z_scope.
 
-(* the cut's own Local Notation (lib/B/W_LLVMFuzzerTestOneInput_cut.v:161), which does not leave its file *)
+(* the cut's own Local Notation (lib/B/W_LLVMFuzzerTestOneInput_cut.v:162), which does not leave its file *)
 Local Notation LLVMF_STK := YCfn.LLVMF_STK.
 
 (* ------------------------------------------------------------------ the bytes of the relay's table (pure) *)
@@ -171,7 +172,7 @@ Variable LS : lfcx -> Z -> lmod -> alayout -> astate -> Prop.
 Variable RINV : lfcx -> Z -> lmod -> Prop.
 Variable MMAX : Z.
 Variable EV : dr_env B MT G_fr LS RINV MMAX.
-(* the cut's relay_source contract (lib/B/W_LLVMFuzzerTestOneInput_cut.v:884-894), verbatim *)
+(* the cut's relay_source contract (lib/B/W_LLVMFuzzerTestOneInput_cut.v:885-895), verbatim *)
 Hypothesis RSRC : forall W ly S (regs : bvmap 5 word) mem md ch T es fd,
   afn_pre segs B RSRC_STK ly S W regs mem md ch ->
   getr regs 10 = w64 fd -> 0 <= fd < 2 ^ 32 ->
@@ -185,7 +186,7 @@ Hypothesis RSRC : forall W ly S (regs : bvmap 5 word) mem md ch T es fd,
          ((forall e, In e es -> re_fd e <> fd) /\ a0 = w64 0))).
 
 (* ------------------------------------------------------------------ the transport kit (lib/B's SEG_LATCH twin,
-   a working branch ee519e5e2f5 Section kit / Section w, lt_ -> de_): every fact lcut states of memory
+   a working branch Section kit / Section w, lt_ -> de_): every fact lcut states of memory
    outside the function's own frame lies below alloc_ceiling + 8 *)
 Definition DE_CEIL8 : Z := alloc_ceiling + 8.
 Definition de_fp_low (fp : list (Z * Z)) : Prop := Forall (fun r => 0 <= fst r /\ snd r <= DE_CEIL8) fp.

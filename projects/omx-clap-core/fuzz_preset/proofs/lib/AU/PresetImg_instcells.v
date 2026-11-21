@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyImg_instcells.v (commit 4d286b2e618d, file sha256 b701b5915388) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 0 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyImg_instcells.v (file sha256 b701b5915388) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 0 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
 (* Modified by Theorem Labs, 2026-10-30 (a prior worker): the body of INST_CELLS_t from
-   proofs/cgif/cgif_file_fuzzer/lib/YGcfInstSec.v (commit b81e8b96881) stated unfolded at fuzz_reply image B's names, and
+   proofs/cgif/cgif_file_fuzzer/lib/YGcfInstSec.v stated unfolded at fuzz_reply image B's names, and
    proved by the cell lookup pattern of lib/B/AGif2.v (cell_holds_val_mem over as_const) against reply B's Tfib_const. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a prior worker; plugin-hostd/fuzz_reply, image B).
    rule 24: no function proved (kind: image fact, a const-cell table lookup at plugin-hostd/fuzz_reply image B).
 
    inst_cells_B is the cgif-layer image fact INST_CELLS_t of proofs/cgif/cgif_file_fuzzer/lib/YGcfInstSec.v
-   (lines 336-345 at commit b81e8b96881) at reply B's symbol table.  The reply tree does not carry YGcfInstSec, so the
+   (lines 336-345) at reply B's symbol table.  The reply tree does not carry YGcfInstSec, so the
    body of INST_CELLS_t B is stated UNFOLDED, verbatim, at the reply's names: im_segs is AGif2cgif.AImg_reply's
    (= tfibsegs, lib/B/YB1v.v), and the symbol table is any B with TfibSyms B (lib/B/YF0m.v).
 
@@ -39,7 +40,7 @@ Local Set Warnings "-abstract-large-number".
 Open Scope Z_scope.
 Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 
-(* = YGcfInstSec.INST_CELLS_t B (YGcfInstSec.v:336-345 at b81e8b96881), unfolded, for every B with TfibSyms B. *)
+(* = YGcfInstSec.INST_CELLS_t B (YGcfInstSec.v:335-344), unfolded, for every B with TfibSyms B. *)
 Lemma inst_cells_B : forall (B : asyms), TfibSyms B ->
   forall ly (H : word -> bool) (mem : word -> option byte), layout_ok ly -> ly_tsd ly = as_tsd B ->
   Forall (cell_holds B ly (aview im_segs H mem)) (as_const B ly) ->

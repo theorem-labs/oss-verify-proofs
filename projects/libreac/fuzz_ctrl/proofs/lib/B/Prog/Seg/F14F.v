@@ -4,14 +4,15 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 748 of its 797 lines of code are new or changed and 962 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F14.v; 49 of its 96 lines of code are new or changed and 750 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* rule 24: no function proved. *)
 (* Provenance (route (a) bridge input, lead 22:18Z; auditor a Theorem Labs lane):
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
    source runs: lib/B/Prog/Seg/F14.v f14_evt_10 (:234), f14_evt_0c_n (:263), f14_evt_0c (:361) at
-     a working branch 3803efccea0 (blob 5318e97101cdc5a7b50380c65df5a64b90c37315);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-     lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+     a working branch (blob 5318e97101cdc5a7b50380c65df5a64b90c37315);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+     lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    compare: f14_evt_10_of_F (evtF_evt + RNG_all) re-derives F14.f14_evt_10 verbatim (that run has no call and
      touches no memory). f14_evt_0c_pre_F is a split stretch (split rule, parent 23:50Z): it re-runs
      F14.v:306-310, the 7 steps 0x8235c -> the bcmp wrapper entry BCMP_WRAP = 0x42aac of BOTH f14_evt_0c_n

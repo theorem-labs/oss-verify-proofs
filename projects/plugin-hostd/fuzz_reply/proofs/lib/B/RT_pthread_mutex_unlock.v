@@ -8,7 +8,8 @@
    frame saves ra, s0-s9; waiters (A+8) = 0 and type (A) = 0 send the normal-mutex arm to 0x99398, where
    lr.w/sc.w on the lock word A+4 (16) store 0; with waiters 0 no futex wake is made; a0 = 0; the frame is
    restored and the function returns.  Every branch on the path is decided from the literals of the pre. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/RT_pthread_mutex_unlock.v at commit f1fb3bc1169, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (15 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/RT_pthread_mutex_unlock.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (15 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

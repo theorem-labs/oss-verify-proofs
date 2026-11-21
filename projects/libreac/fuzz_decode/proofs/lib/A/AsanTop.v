@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/A/AZ03.v and lib/Halts_tfib.v for fuzz_decode, by way of fuzz_grant's lib/A/AsanTop.v: the plain side is fuzz_decode's proved realization (built as its lib/AgreeFrame.v builds it for the ubsan agreement, with the plain slot contract of lib/Prog/LLVMFuzzerTestOneInput_gfr.v, at decode_shape), the halting corollary takes srealizes, module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3, with libreac/fuzz_boxreg's port of its copy of this file (changed decode_asan_agrees_of_tfib, decode_asan_halts_of_tfib, decode_asan_ubsan_agrees_of_tfib, decode_asan_ubsan_halts_of_tfib). *)
 (* fuzz_decode's four ASan statements from the ASan side TFIB_T and the ASan+UBSan side TFIB_TB (DecodeTFIB.v), in
    the form of proofs/cgif/cgif_file_fuzzer/lib/A/AZ03.v (agreement) and lib/Halts_tfib.v (halting):
    - asan_agrees, asan_ubsan_agrees: shape_strong_equiv_efs_relim (Reusable/YM09.v) over the plain build's proved
@@ -87,12 +88,12 @@ Proof.
   destruct en_s as [sp brk mb rnd].
   pose proof (valid_input_va_size _ Hinp) as Hsv48.
   unfold DIm.asan in Hent.
-  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent. destruct Hent as [Hsp' [Hbrk' [Hmb' Hfit']]].
+  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent. destruct Hent as [Hsp' [Hbrk' [Hmb' [Hfit' Hlau']]]].
   exact (shape_strong_equiv_efs_relim SanitizerBudgets.lim_source ShippedBudgets.lim_source SanitizerBudgets.lim_target
     DPl.M.loaded_segments DPl.M.init_pc DPl.M.phdrs sp brk mb rnd
     decodesegs0 DAs.M.init_pc DAs.M.phdrs sp' brk' mb' rnd'
     (SPECX (LS:=decode_shape) inp) (SPECX (LS:=decode_shape) inp) inp
-    asan_lim_source_le SWB HP (TFIB sp' brk' mb' rnd' inp Hsp' Hbrk' Hmb' Hfit' Hinp) (t_eq_refl _)).
+    asan_lim_source_le SWB HP (TFIB sp' brk' mb' rnd' inp Hsp' Hbrk' Hmb' Hfit' Hinp Hlau') (t_eq_refl _)).
 Qed.
 
 Theorem decode_asan_halts_of_tfib : DSt.asan_halts.
@@ -104,8 +105,8 @@ Proof.
     target_alloc_limit ShippedBudgets.lim_source lim_source_le_target (forced_only_cfg_least _)).
   intros sp brk mb rnd inp Hen Hinp. exists (SPECX (LS:=decode_shape) inp). split.
   - pose proof (valid_input_va_size _ Hinp) as Hsv48.
-    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb Hfit]]].
-    exact (TFIB sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hinp).
+    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb [Hfit Hlau]]]].
+    exact (TFIB sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau).
   - exact (SPECX_shape_ok inp).
 Qed.
 End a.
@@ -121,12 +122,12 @@ Proof.
   destruct en_s as [sp brk mb rnd].
   pose proof (valid_input_va_size _ Hinp) as Hsv48.
   unfold DIm.asan_ubsan in Hent.
-  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent. destruct Hent as [Hsp' [Hbrk' [Hmb' Hfit']]].
+  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent. destruct Hent as [Hsp' [Hbrk' [Hmb' [Hfit' Hlau']]]].
   exact (shape_strong_equiv_efs_relim SanitizerBudgets.lim_source ShippedBudgets.lim_source SanitizerBudgets.lim_target
     DPl.M.loaded_segments DPl.M.init_pc DPl.M.phdrs sp brk mb rnd
     decodesegsB0 DAU.M.init_pc DAU.M.phdrs sp' brk' mb' rnd'
     (SPECX (LS:=decode_shape) inp) (SPECX (LS:=decode_shape) inp) inp
-    asan_lim_source_le SWB HP (TFIBB sp' brk' mb' rnd' inp Hsp' Hbrk' Hmb' Hfit' Hinp) (t_eq_refl _)).
+    asan_lim_source_le SWB HP (TFIBB sp' brk' mb' rnd' inp Hsp' Hbrk' Hmb' Hfit' Hinp Hlau') (t_eq_refl _)).
 Qed.
 
 Theorem decode_asan_ubsan_halts_of_tfib : DSt.asan_ubsan_halts.
@@ -138,8 +139,8 @@ Proof.
     DAU.M.phdrs target_alloc_limit ShippedBudgets.lim_source lim_source_le_target (forced_only_cfg_least _)).
   intros sp brk mb rnd inp Hen Hinp. exists (SPECX (LS:=decode_shape) inp). split.
   - pose proof (valid_input_va_size _ Hinp) as Hsv48.
-    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb Hfit]]].
-    exact (TFIBB sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hinp).
+    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb [Hfit Hlau]]]].
+    exact (TFIBB sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau).
   - exact (SPECX_shape_ok inp).
 Qed.
 End b.

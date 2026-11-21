@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader fact, walks lifted to the run's segments): changed half_ok_of_srealizes, src11_half_big, src11_half_wb and 1 more; added via_argv, via_channel_reader, via_creds and 5 more. *)
 From Stdlib Require Import NArith ZArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -10,6 +11,7 @@ From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib Require Import ShapeAlg Dive
 From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib.CJ.Bridge Require PmHeapInst10.
 From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib Require Pm10DrvLibL Pm10HeapBridge PmFinal.
 From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib Require PropExec.
+From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib.Common.Cfg Require SRomStable.
 Import ListNotations.
 Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -32,8 +34,8 @@ Proof.
 Qed.
 
 Lemma half_ok_of_srealizes : forall scfg segs pc ph sp brk0 mb rnd lim inp T,
-  srealizes segs scfg (init_config segs pc ph sp brk0 mb rnd lim inp) T ->
-  Safe segs scfg (init_config segs pc ph sp brk0 mb rnd lim inp) ->
+  srealizes (run_segments segs inp sp mb) scfg (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) T ->
+  Safe (run_segments segs inp sp mb) scfg (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) ->
   kill_free T ->
   half_ok scfg (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp T.
 Proof.
@@ -41,6 +43,28 @@ Proof.
   - exact (srealizes_error_free_unkilled scfg segs pc ph sp brk0 mb rnd lim inp T Hs Hsafe HK).
   - intro tr. exact (srealizes_traces_iff scfg segs pc ph sp brk0 mb rnd lim inp T tr Hs Hsafe).
 Qed.
+
+(* [Run.valid_input_abort]'s conjuncts BY SHAPE, for the ones the model ships no
+   accessor for (it has [_va_size], [_abort_terminal], [_recorded_kernel]).  Each is
+   proved by [tauto] over the unfolded conjunction, so it names the conjunct by its
+   TYPE, not its position: inserting or reordering a conjunct cannot rebind it, and a
+   conjunct that disappears fails HERE, at its own name -- the Run.v:5540 idiom. *)
+Lemma via_argv : forall inp, valid_input_abort inp -> valid_argv (in_argv inp).
+Proof. intros inp H. red in H. tauto. Qed.
+Lemma via_envp : forall inp, valid_input_abort inp -> valid_envp (in_envp inp).
+Proof. intros inp H. red in H. tauto. Qed.
+Lemma via_fs : forall inp, valid_input_abort inp -> valid_fs (in_fs inp).
+Proof. intros inp H. red in H. tauto. Qed.
+Lemma via_creds : forall inp, valid_input_abort inp -> valid_creds inp.
+Proof. intros inp H. red in H. tauto. Qed.
+Lemma via_hwcap : forall inp, valid_input_abort inp -> valid_hwcap (in_hwcap inp).
+Proof. intros inp H. red in H. tauto. Qed.
+Lemma via_launch : forall inp, valid_input_abort inp -> valid_launch inp.
+Proof. intros inp H. red in H. tauto. Qed.
+Lemma via_channel_reader : forall inp, valid_input_abort inp -> in_channel_reader inp = true.
+Proof. intros inp H. red in H. tauto. Qed.
+Lemma via_sigpipe_terminal : forall inp, valid_input_abort inp -> in_sigpipe_terminal inp = false.
+Proof. intros inp H. red in H. tauto. Qed.
 
 Section FPX_1.
 #[local] Existing Instance PropExec.fx0.
@@ -65,9 +89,15 @@ Section Src.
     pose proof (Pm10HeapBridge.src0_realizes_spec_heap_lim PmFinal.cfg0 eq_refl eq_refl Lay0F LS0F DLL0 LIB0 LX0 BUD0 lim) as SRC.
     pose proof (valid_input_abort_va_size _ Hvalid) as Hsv48.
     rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen.
-    destruct Hen as [Hrsp [Hrbrk [Hrmb Hrfit]]].
-    destruct Hvalid as (Hargv & Henvp & Hfs & _ & Hcreds & _).
-    exact (SRC sp brk mb rnd inp Hrsp Hrbrk Hrmb Hrfit Hargv Henvp Hfs Hcreds).
+    (* OLD: [Hrsp [Hrbrk [Hrmb Hrfit]]], (Hargv & Henvp & Hfs & _ & Hcreds & _), and
+       SRC .. Hrfit Hargv Henvp Hfs Hcreds -- the pre-revision src_realizes_stmt2_lim.
+       NEW at 75d69e00: valid_entry's 5th conjunct (the launch, Run.valid_entry_sv48's
+       RHS order); valid_input_abort read BY SHAPE through the [via_*] accessors above;
+       and Pm10DrvMain's ported src_realizes_stmt2_lim (.. Hmb Hvl Hlau Hargv Henvp Hfs
+       Hcreds Hcr).  Pre-existing breakage, found while porting PmCasanFinal. *)
+    destruct Hen as [Hrsp [Hrbrk [Hrmb [_ Hrlau]]]].
+    exact (SRC sp brk mb rnd inp Hrsp Hrbrk Hrmb (via_launch _ Hvalid) Hrlau (via_argv _ Hvalid) (via_envp _ Hvalid)
+                 (via_fs _ Hvalid) (via_creds _ Hvalid) (via_channel_reader _ Hvalid)).
   Qed.
 
   Theorem src11_half_wb : forall lim en inp,
@@ -77,7 +107,11 @@ Section Src.
   Proof.
     intros lim [sp brk mb rnd] inp Hen Hvalid Hwb.
     apply half_ok_of_srealizes.
-    - exact (src11_srealizes_lim lim sp brk mb rnd inp Hen Hvalid).
+    - (* the run reads the binary's segments with the run's vDSO appended
+         ([Run.run_segments]); [SRomStable.srun_init] lifts the walk over the binary's own
+         segments ([vdso_image] of them is [None] by computation) *)
+      apply (SRomStable.srun_init PmFinal.cfg0 Plain.M.loaded_segments inp sp mb _ _ _ _ _ _ eq_refl).
+      exact (src11_srealizes_lim lim sp brk mb rnd inp Hen Hvalid).
     - apply Safe_init_within_budget. exact Hwb.
     - apply kill_free_spec.
   Qed.
@@ -89,7 +123,8 @@ Section Src.
   Proof.
     intros lim [sp brk mb rnd] inp Hen Hvalid Hbig.
     apply half_ok_of_srealizes.
-    - exact (src11_srealizes_lim lim sp brk mb rnd inp Hen Hvalid).
+    - apply (SRomStable.srun_init PmFinal.cfg0 Plain.M.loaded_segments inp sp mb _ _ _ _ _ _ eq_refl).
+      exact (src11_srealizes_lim lim sp brk mb rnd inp Hen Hvalid).
     - apply Safe_init_big. exact Hbig.
     - apply kill_free_spec.
   Qed.

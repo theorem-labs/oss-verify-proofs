@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepCompcf.v (commit f01d79f3fb5, cf refill round 3; file sha256 9bc9fe385954) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepCompcf.v (cf refill round 3; file sha256 9bc9fe385954) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, RepF1Arm2): step 3e of PopulateFreeArray's class-full report arm, the
    composition of the arm's pieces into the layer's refill_leaf_core_cf (YGcfInstRefill) at the entry state.
-   The section header is RepLeafcf.v's (YFkbcf.v:9-386 verbatim).
+   The section header is RepLeafcf.v's (YFkbcf.v:10-387 verbatim).
    [compose_core] takes Printf #1's post, the move to Printf #2's call (MEQK: only the stack moved), Printf #2's post and
    the tail's conclusion (RepTailcf.tail_cf), all unpacked, and gives refill_leaf_core_cf at (tt, S'').  The frames
    chain through [tail_step] (the tail's precise frame and the held lock word), the two posts' frames, and the call

@@ -11,11 +11,12 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/chain_words_exact.v, with its module paths and module names changed; 20 of its 39 lines of code are new or changed and 65 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/trim.v, with its module paths and module names changed; 44 of its 65 lines of code are new or changed and 18 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/cross_check_a.v, with its module names changed; 116 of its 142 lines of code are new or changed and 39 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment 3 of the walk of cross_check on reac-pw/fuzz_segconf's ASan+UBSan IMAGE B
    (fuzz_segconf.asan-ubsan, pin c3796c0b38f3; cross_check 0x897cc): the epilogue, 0x899fc
    (CC_EPI = AF_cross_check + 0x230) to the return at 0x89a34. ADAPTED from the image-A G3 walk owner's image-A
-   lib/A/Prog/cross_check_s3.v (commit 130284ff40f1), itself in the form of
-   plugin-hostd/fuzz_command's lib/A/Prog/check_reply_s8.v and numberR.v (origin/ossv/recipes 501c0d516c69): a
+   lib/A/Prog/cross_check_s3.v, itself in the form of
+   plugin-hostd/fuzz_command's lib/A/Prog/check_reply_s8.v and numberR.v: a
    symbolic state is seeded at the cut from INV_EPI, one plain run (PaLibF.v paj_run_sh) walks the 15
    instructions, and paj_ret_at gives the return configuration, whose post is apost_base lifted to apost_baseF by
    PaFx.v apost_baseF_of_base (the epilogue changes no FP state).

@@ -1,10 +1,10 @@
-(* rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from 82a1d1bf3a6 lib/A/FSH_crt_segD1_main.v)
-   rule 24: proves no function (kind: segment lemmas of check_round_trip's walk, PORTED from c159ab19cb1) - the base
-   v33 delta of a working branch c159ab19cb1 (HROOM dropped; segment 30 uses crt_room_D1_holds).
-   rule 24: proves no function (kind: segment lemmas of check_round_trip's walk, PORTED from 1ab57ca7ad7) - RT : CrtRt B
-   (not FsRt) (a working branch 1ab57ca7ad7).
-   PORT SOURCE: a working branch 82a1d1bf3a6 proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segD1_main.v (blob
-   c4a7ed4c7e1), itself PORTED from a working branch d25a984c903
+(* rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from lib/A/FSH_crt_segD1_main.v)
+   rule 24: proves no function (kind: segment lemmas of check_round_trip's walk, PORTED) - the base
+   v33 delta of a working branch (HROOM dropped; segment 30 uses crt_room_D1_holds).
+   rule 24: proves no function (kind: segment lemmas of check_round_trip's walk, PORTED) - RT : CrtRt B
+   (not FsRt) (a working branch).
+   PORT SOURCE: a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segD1_main.v (blob
+   c4a7ed4c7e1), itself PORTED from a working branch
    proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_sd16.v (the stretch from pj_parse's return through the
    second decode and the bcmp to fuzz_free, crt16_runA :392 / crt16_runB :541), check_round_trip_sd17.v and
    check_round_trip_sd18.v (the two fuzz_free stages St17 :521 / St18 :535 of check_round_trip_stdefs.v). The checker's

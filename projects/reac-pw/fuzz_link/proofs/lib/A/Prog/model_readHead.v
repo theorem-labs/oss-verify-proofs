@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: new walk for libreac/fuzz_pcap (a Theorem Labs lane). The generic helpers pe_land_m32,
    pe_denot_and_m32(_add0), pe_trim_* / pe_submem_to / pe_prreg_raw / pe_add_fact / pe_sregion are cgif_file_fuzzer
-   lib/A/ACer.v's (origin/ossv/recipes c8557374ad2e) as a Theorem Labs lane's lib/A/Prog/PcapSourceOpen.v restates them
-   (a working branch f0d76b020fe); pe_U_srl, pe_cbyte .. pe_word_at and pe_saved_of are
-   a Theorem Labs lane's lib/A/Prog/GrantEntryHead.v (a working branch b83b8251684) restated over PAImg pcap_listing. *)
+   lib/A/ACer.v's as a Theorem Labs lane's lib/A/Prog/PcapSourceOpen.v restates them
+   (a working branch); pe_U_srl, pe_cbyte .. pe_word_at and pe_saved_of are
+   a Theorem Labs lane's lib/A/Prog/GrantEntryHead.v (a working branch) restated over PAImg pcap_listing. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_pcap/lib/A/Prog/PcapHarnessPE.v, with its module paths and module names changed; 303 of its 358 lines of code are new or changed and 1252 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* model_read on image A: the head of its walk, from the entry (lib/A/Prog/model_read_c.v
    `model_read_acontract`) to the branch on kind at +0x120 (model_readDefs.v MR_AT120):
      +0x000 .. +0x07c  tok    -> the call of frame_alloc_1 at +0x080 (a0 = 0x60), LinkWalkSide.v aj_gx_stack_malloc_at

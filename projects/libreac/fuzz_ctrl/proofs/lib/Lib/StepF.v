@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: twin of lib/AZ/LibA/StepF.v over lib.Lib. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -455,7 +456,7 @@ Qed.
 
 (* A one-byte literal store in the 0..255 form: le1_lit_byte and the Z_to_le_bytes 1 case give [Z_to_bv 8 z] also
    for a negative z (ASan shadow values such as -15 or -8), while cell lists name those bytes 241 or 248.
-   norm_lit_byte_mod256 writes such a store with z mod 256 (moved here from a Theorem Labs lane's local repair 5addd7b47f2,
+   norm_lit_byte_mod256 writes such a store with z mod 256 (moved here from a Theorem Labs lane's local repair,
    fuzz_state lib/A/Prog/check_round_trip_runsF1.v, which is crt_norm8 of lib/B/Prog/check_round_trip_runsFb.v). *)
 Lemma Z_to_bv8_lit_mod256 : forall z, Z_to_bv 8 z = Z_to_bv 8 (z mod 256)%Z.
 Proof. intros z. apply Z_to_bv8_mod. change (2^8)%Z with 256%Z. rewrite Z.mod_mod by lia. reflexivity. Qed.

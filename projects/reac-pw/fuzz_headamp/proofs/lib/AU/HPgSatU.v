@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgSat.v at dd9ff534326, the image-B twin
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgSat.v, the image-B twin
    (fuzz_headamp.asan-ubsan): image B's segments read from lib/AU/Img0U.v (Img0U.rsegs, no local copy); the
    boolean checkers and their soundness lemmas are HPgSat.v's, used by name (no second copy); the descriptor
    check is restated over the table's two ends (HPgSat.global_chk names image A's); every measured fact is image

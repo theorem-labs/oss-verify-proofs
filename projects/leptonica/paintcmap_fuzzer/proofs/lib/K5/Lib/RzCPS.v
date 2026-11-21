@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the sys_rob premise of node_ok_single, ast_node_core, ast_node_core1 and ast_nodeI; names qualified (K5.AS.CatSim, ShapeAlg.node_ok); imports). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -8,6 +9,7 @@ From Stdlib Require Import FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Monad Specs Run.
 From OSSVerify.Proofs.leptonica.paintcmap_fuzzer.lib.K5.AS Require Import CfgStep CatSim ShapeAlg AsanAcct AsanAcctShape.
 From OSSVerify.Proofs.leptonica.paintcmap_fuzzer.lib.K5.Lib Require Import Exec.
+From OSSVerify.Proofs.leptonica.paintcmap_fuzzer.lib.Common.Cfg Require RomBase.
 Import ListNotations.
 
 (* [comment removed for export] *)
@@ -259,7 +261,7 @@ Proof.
   exact (lazy_cover_mkH (m_vm_lazy mo) A (m_vm_lazy mo) (incl_refl _) w Hl Hw).
 Qed.
 
-Lemma msteps_CatSim : forall ms ms', Exec.msteps segs ms ms' -> CatSim.msteps segs ms ms'.
+Lemma msteps_CatSim : forall ms ms', Exec.msteps segs ms ms' -> K5.AS.CatSim.msteps segs ms ms'.
 Proof.
   induction 1 as [ms|ms ms1 ms2 [Hsvc Hst] _ IH]; [apply mst_refl|]. eapply mst_step; [exact Hsvc| exact Hst| exact IH].
 Qed.
@@ -435,11 +437,12 @@ Proof.
 Qed.
 End SyscallNodeU.
 Lemma node_ok_single : forall segs c (evs : unit -> list event) (nx : unit -> config),
-  node_ok_u segs c unit evs nx -> m_halted (cfg_model (nx tt)) = None -> node_ok segs c unit evs nx.
+  node_ok_u segs c unit evs nx -> m_halted (cfg_model (nx tt)) = None -> RomBase.sys_rob segs c ->
+  ShapeAlg.node_ok segs c unit evs nx.
 Proof.
-  intros segs c evs nx Hu Hh. destruct (child_refusal_b segs c (nx tt)) eqn:E.
-  - apply node_ok_forced; [exact Hu| intros []; exact Hh| intros []; exact E].
-  - apply node_ok_no_refusals; [exact Hu| intros []; exact E].
+  intros segs c evs nx Hu Hh Hr. destruct (child_refusal_b segs c (nx tt)) eqn:E.
+  - apply node_ok_forced; [exact Hu| intros []; exact Hh| intros []; exact E| exact Hr].
+  - apply node_ok_no_refusals; [exact Hu| intros []; exact E| exact Hr].
 Qed.
 
 Section IONode.
@@ -503,6 +506,7 @@ Theorem ast_node_core : forall A Pm PM (I : Type) (evs : I -> list event)
     (eff : I -> SyscallEffect) (mdl : I -> Model),
   AST segtop A Pm PM (mkCfg ms mo) ->
   ms_svc_pending ms = Some x8 ->
+  RomBase.sys_rob segs (mkCfg ms mo) ->
   alloc_no_b (bv_unsigned x8) = false ->
   (forall i, syscall_spec (sys_input segs ms x8) mo (Ok (eff i) (mdl i) (evs i))) ->
   (forall r, syscall_spec (sys_input segs ms x8) mo r -> exists i, r = Ok (eff i) (mdl i) (evs i)) ->
@@ -512,23 +516,24 @@ Theorem ast_node_core : forall A Pm PM (I : Type) (evs : I -> list event)
   (forall i, K i (nretA (restrict (HID A mo) ms) (eff i))) ->
   (forall i, KM i (mdl i)) ->
   (forall i, mat_stable (KM i)) ->
-  exists nx : I -> config, node_ok segs (mkCfg ms mo) I evs nx /\ (forall i, AST segtop A (K i) (KM i) (nx i)).
+  exists nx : I -> config, ShapeAlg.node_ok segs (mkCfg ms mo) I evs nx /\ (forall i, AST segtop A (K i) (KM i) (nx i)).
 Proof.
-  intros A Pm PM I evs K KM ms mo x8 eff mdl Hc Hsvc Hnalloc Hsound Hcompl Hvm Hio Hav HK HKM Hms.
+  intros A Pm PM I evs K KM ms mo x8 eff mdl Hc Hsvc Hrob Hnalloc Hsound Hcompl Hvm Hio Hav HK HKM Hms.
   destruct (ast_node_core_u A Pm PM I evs K KM ms mo x8 eff mdl Hc Hsvc Hsound Hcompl Hvm Hio Hav HK HKM Hms)
     as (nx & Hnode & _ & _ & Hnx).
   exists nx. split; [|exact Hnx].
-  apply node_ok_of_u; [exact (kit_pending_on_sysno segs ms mo x8 _ Hsvc eq_refl Hnalloc)| exact Hnode].
+  apply node_ok_of_u; [exact (kit_pending_on_sysno segs ms mo x8 _ Hsvc eq_refl Hnalloc)| exact Hnode| exact Hrob].
 Qed.
 Theorem ast_node_core1 : forall A Pm PM (K : machine_state -> Prop) (KM : Model -> Prop) ms mo x8 eff mdl,
   AST segtop A Pm PM (mkCfg ms mo) ->
   ms_svc_pending ms = Some x8 ->
+  RomBase.sys_rob segs (mkCfg ms mo) ->
   (forall r, syscall_spec (sys_input segs ms x8) mo r <-> r = Ok eff mdl []) ->
   vm_same mo mdl -> io_eff eff -> ranges_avoid (HID A mo) (syscall_effect_accesses eff) ->
   K (nretA (restrict (HID A mo) ms) eff) -> KM mdl -> mat_stable KM ->
-  exists nx : unit -> config, node_ok segs (mkCfg ms mo) unit (fun _ => []) nx /\ AST segtop A K KM (nx tt).
+  exists nx : unit -> config, ShapeAlg.node_ok segs (mkCfg ms mo) unit (fun _ => []) nx /\ AST segtop A K KM (nx tt).
 Proof.
-  intros A Pm PM K KM ms mo x8 eff mdl Hc Hsvc Hchar Hvm Hio Hav HK HKMm HKM.
+  intros A Pm PM K KM ms mo x8 eff mdl Hc Hsvc Hrob Hchar Hvm Hio Hav HK HKMm HKM.
   destruct (ast_node_core_u A Pm PM unit (fun _ => []) (fun _ => K) (fun _ => KM) ms mo x8
              (fun _ => eff) (fun _ => mdl) Hc Hsvc) as (nx & Hnd & Hnh & _ & Hnx).
   - intros []. apply Hchar. reflexivity.
@@ -539,7 +544,7 @@ Proof.
   - intros []. exact HK.
   - intros []. exact HKMm.
   - intros []. exact HKM.
-  - exists nx. split; [exact (node_ok_single segs _ _ nx Hnd (Hnh tt))| exact (Hnx tt)].
+  - exists nx. split; [exact (node_ok_single segs _ _ nx Hnd (Hnh tt) Hrob)| exact (Hnx tt)].
 Qed.
 
 (* [comment removed for export] *)
@@ -548,6 +553,7 @@ Theorem ast_nodeI : forall A Pm PM (I : Type) (i0 : I) (evs : I -> list event)
     (eff : I -> SyscallEffect) (mdl : I -> Model),
   AST segtop A Pm PM (mkCfg ms mo) ->
   ms_svc_pending ms = Some x8 ->
+  RomBase.sys_rob segs (mkCfg ms mo) ->
   alloc_no_b (bv_unsigned x8) = false ->
   (forall i, syscall_spec (sys_input segs ms x8) mo (Ok (eff i) (mdl i) (evs i))) ->
   (forall r, syscall_spec (sys_input segs ms x8) mo r -> exists i, r = Ok (eff i) (mdl i) (evs i)) ->
@@ -560,8 +566,8 @@ Theorem ast_nodeI : forall A Pm PM (I : Type) (i0 : I) (evs : I -> list event)
   (forall i c', AST segtop A (K i) (KM i) c' -> realizes segs c' (T i)) ->
   realizes segs (mkCfg ms mo) (t_alt (fun i => t_emit (evs i) (T i))).
 Proof.
-  intros A Pm PM I i0 evs K KM T ms mo x8 eff mdl Hc Hsvc Hnalloc Hsound Hcompl Hvm Hio Hav HK HKM Hms Hk.
-  destruct (ast_node_core A Pm PM I evs K KM ms mo x8 eff mdl Hc Hsvc Hnalloc Hsound Hcompl Hvm Hio Hav HK HKM Hms)
+  intros A Pm PM I i0 evs K KM T ms mo x8 eff mdl Hc Hsvc Hrob Hnalloc Hsound Hcompl Hvm Hio Hav HK HKM Hms Hk.
+  destruct (ast_node_core A Pm PM I evs K KM ms mo x8 eff mdl Hc Hsvc Hrob Hnalloc Hsound Hcompl Hvm Hio Hav HK HKM Hms)
     as (nx & Hnode & Hnx).
   apply (rz_node segs _ I evs nx T i0 Hnode). intros i. exact (Hk i (nx i) (Hnx i)).
 Qed.

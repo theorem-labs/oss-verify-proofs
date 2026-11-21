@@ -5,7 +5,7 @@
    astrncmp_realizes, taken at the walk's fx), and the 18 passes of the loop by induction on the passes left, from a
    concrete invariant at the loop header, as cgif's tcbb_loopX does (lib/A/AC8b.v:50-255).
 
-   The B twin of lib/A/Prog/is_instance_verb.v (a working branch 1e4c7591b2d). B's 61
+   The B twin of lib/A/Prog/is_instance_verb.v (a working branch). B's 61
    instructions (a Theorem Labs lane's gen/dis/is_instance_verb.s, 0x8e340..0x8e434) are A's at the same offsets up to
    pc-relative immediates, with one codegen difference: before the strncmp call (0x8e3c8..0x8e3d0) B sets a2 from
    a0 (the strcspn value) where A sets it from s1 (the token's first-word length); both are equal on that path

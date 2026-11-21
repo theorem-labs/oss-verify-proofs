@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from projects/cgif/cgif_file_fuzzer/proofs/lib/YN0j.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed R_auxp, R_auxv, F_sh, F_av, ss_a2y, run_i2 and 1 more; added R_auxv_t, mem_am0_t, F_av_t, facts_am0_t, ss_am0_t, ss_i1_t and 8 more). *)
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -74,10 +75,51 @@ mkChunk (CTX + 64) (CVal 8 (SOff 41 0)); mkChunk (CTX + 72) (CVal 8 (SOff 42 0))
 Definition R_ctxC : region :=
 mkRegion None (CTX + 920) (CTX + 928) (CTX + 920) (CTX + 928) [mkChunk (CTX + 920) (CVal 8 (SOff 43 0))].
 Definition R_auxp : region := mkRegion None (LIBC + 8) (LIBC + 16) 0 0 [mkChunk (LIBC + 8) (CVal 8 (SOff 44 0))].
-Definition R_auxv : region := mkRegion (Some 44%nat) 0 160 0 0
-[mkChunk 0 (CVal 8 (SLit 3)); mkChunk 16 (CVal 8 (SLit 4)); mkChunk 32 (CVal 8 (SLit 5)); mkChunk 48 (CVal 8 (SLit 16));
-mkChunk 64 (CVal 8 (SLit 6)); mkChunk 80 (CVal 8 (SLit 11)); mkChunk 96 (CVal 8 (SLit 12)); mkChunk 112 (CVal 8 (SLit 23));
-mkChunk 128 (CVal 8 (SLit 25)); mkChunk 136 (CVal 8 (SOff 45 0)); mkChunk 144 (CVal 8 (SLit 0))].
+(** The auxv the alloc-meta entry sees.  OLD: [mkRegion (Some 44%nat) 0 160] over the ten-pair
+    [AUXV_TYPES = [3;4;5;16;6;11;12;23;25;0]], AT_RANDOM at pair 8, its value word at 136 and
+    AT_NULL at pair 9.  NEW: [YO0d.auxv_types false] in full -- the 26 pairs every launch carries,
+    AT_RANDOM at pair [AUXV_RAND_K] = 24 with its value word at 16*24+8 = 392, and AT_NULL at pair
+    26 -- extent 432 = 16*27.  Model: 75d69e00 theories/LinuxProcessSem/StackLayout.v:229-262
+    [auxv_entries] is 26 pairs ++ (if la_rseq then the two AT_RSEQ pairs) ++ [AT_NULL], so :276
+    [auxv_count rs] is 27 or 29 and :277 [auxv_size rs] is 432 or 464; [length (auxv_types rs)]
+    EQUALS [auxv_count rs], the terminator being inside both.
+    THE TERMINATOR IS NOT OPTIONAL AND THE COMPILER SAYS SO.  A 26-pair region ending at 416 was
+    tried and [run_i2] below failed with
+      sym_run_toN .. PC_A2 ss_i2 = (.., RS_stopped (SR_load (Some 44%nat) 416))
+    -- mallocng's secret read walks to AT_NULL (YO0d.v:74) rather than stopping at AT_RANDOM, so
+    it loads pair 26's type word.  With AT_NULL present the file compiles.
+    AT_NULL's PAIR INDEX IS rs-DEPENDENT (26 when la_rseq is false, 28 when true) and this state
+    is a closed term that [Eval vm_compute] must reduce, so it can encode exactly ONE layout.
+    This one is la_rseq = false.  See the premise note on [Hauxv] in YN0h_cf. *)
+Definition R_auxv : region := mkRegion (Some 44%nat) 0 432 0 0
+[mkChunk 0 (CVal 8 (SLit 33)); mkChunk 16 (CVal 8 (SLit 40)); mkChunk 32 (CVal 8 (SLit 41));
+mkChunk 48 (CVal 8 (SLit 42)); mkChunk 64 (CVal 8 (SLit 43)); mkChunk 80 (CVal 8 (SLit 44));
+mkChunk 96 (CVal 8 (SLit 45)); mkChunk 112 (CVal 8 (SLit 46)); mkChunk 128 (CVal 8 (SLit 47));
+mkChunk 144 (CVal 8 (SLit 51)); mkChunk 160 (CVal 8 (SLit 16)); mkChunk 176 (CVal 8 (SLit 6));
+mkChunk 192 (CVal 8 (SLit 17)); mkChunk 208 (CVal 8 (SLit 3)); mkChunk 224 (CVal 8 (SLit 4));
+mkChunk 240 (CVal 8 (SLit 5)); mkChunk 256 (CVal 8 (SLit 7)); mkChunk 272 (CVal 8 (SLit 8));
+mkChunk 288 (CVal 8 (SLit 9)); mkChunk 304 (CVal 8 (SLit 11)); mkChunk 320 (CVal 8 (SLit 12));
+mkChunk 336 (CVal 8 (SLit 13)); mkChunk 352 (CVal 8 (SLit 14)); mkChunk 368 (CVal 8 (SLit 23));
+mkChunk 384 (CVal 8 (SLit 25)); mkChunk 392 (CVal 8 (SOff 45 0)); mkChunk 400 (CVal 8 (SLit 31));
+mkChunk 416 (CVal 8 (SLit 0))].
+(** The SECOND closed instantiation, for [la_rseq = true], per rule 12 of
+    rules-broadcast-1835Z.txt: two closed instantiations where the layout is rseq-dependent, and
+    NEVER parameterise a [vm_compute] state on [rs].  [YO0d.auxv_types true] in full: the same 26
+    pairs, then AT_RSEQ_FEATURE_SIZE (27) at pair 26 and AT_RSEQ_ALIGN (28) at pair 27, then
+    AT_NULL at pair 28 -- so the extent is 464 = 16*29 = [auxv_size true] (model 75d69e00
+    theories/LinuxProcessSem/StackLayout.v:276-277) and AT_NULL's offset is 448, not 416.
+    AT_RANDOM is pair [AUXV_RAND_K] = 24 in BOTH layouts, so its value word stays at 392. *)
+Definition R_auxv_t : region := mkRegion (Some 44%nat) 0 464 0 0
+[mkChunk 0 (CVal 8 (SLit 33)); mkChunk 16 (CVal 8 (SLit 40)); mkChunk 32 (CVal 8 (SLit 41));
+mkChunk 48 (CVal 8 (SLit 42)); mkChunk 64 (CVal 8 (SLit 43)); mkChunk 80 (CVal 8 (SLit 44));
+mkChunk 96 (CVal 8 (SLit 45)); mkChunk 112 (CVal 8 (SLit 46)); mkChunk 128 (CVal 8 (SLit 47));
+mkChunk 144 (CVal 8 (SLit 51)); mkChunk 160 (CVal 8 (SLit 16)); mkChunk 176 (CVal 8 (SLit 6));
+mkChunk 192 (CVal 8 (SLit 17)); mkChunk 208 (CVal 8 (SLit 3)); mkChunk 224 (CVal 8 (SLit 4));
+mkChunk 240 (CVal 8 (SLit 5)); mkChunk 256 (CVal 8 (SLit 7)); mkChunk 272 (CVal 8 (SLit 8));
+mkChunk 288 (CVal 8 (SLit 9)); mkChunk 304 (CVal 8 (SLit 11)); mkChunk 320 (CVal 8 (SLit 12));
+mkChunk 336 (CVal 8 (SLit 13)); mkChunk 352 (CVal 8 (SLit 14)); mkChunk 368 (CVal 8 (SLit 23));
+mkChunk 384 (CVal 8 (SLit 25)); mkChunk 392 (CVal 8 (SOff 45 0)); mkChunk 400 (CVal 8 (SLit 31));
+mkChunk 416 (CVal 8 (SLit 27)); mkChunk 432 (CVal 8 (SLit 28)); mkChunk 448 (CVal 8 (SLit 0))].
 Definition R_fh : region := mkRegion (Some 33%nat) 0 16 0 16 [mkChunk 0 (CVal 8 (SOff 35 0)); mkChunk 8 (CVal 8 (SOff 34 0))].
 Definition R_nx : region := mkRegion (Some 34%nat) 0 8 0 8 [].
 Definition R_pr : region := mkRegion (Some 35%nat) 8 16 8 16 [].
@@ -87,15 +129,24 @@ Definition zregion (n : nat) (off len : Z) : region :=
 mkRegion (Some n) off (off + len) off (off + len) [mkChunk off (CZero len)].
 Definition mem_am1 : smem := [R_stack; R_got; R_guard; R_pgsz; R_ctxA true; R_ctxB; R_ctxC; R_errno] ++ vml_mem.
 Definition mem_am0 : smem := [R_stack; R_got; R_guard; R_pgsz; R_ctxA false; R_ctxB; R_ctxC; R_errno; R_auxp; R_auxv] ++ vml_mem.
+Definition mem_am0_t : smem := [R_stack; R_got; R_guard; R_pgsz; R_ctxA false; R_ctxB; R_ctxC; R_errno; R_auxp; R_auxv_t] ++ vml_mem.
 Definition F_sp : afact := mkAF (CEIL_MIN + AMS) (2 ^ 63 - 1) 4.
 Definition F_sh : afact := mkAF 0 40 0.
-Definition F_av : afact := mkAF 4096 (2 ^ 63 - 160) 0.
+(** OLD: [2 ^ 63 - 160], the old region's extent.  NEW: [2 ^ 63 - 432], the new one's.  Discharged
+    from [auxv_pre]'s own range conjunct through [YO0d.auxv_types_len_ge]: 27 <= length, so
+    av + 432 <= 2^63 exactly.  Strictly stronger than the old fact. *)
+Definition F_av : afact := mkAF 4096 (2 ^ 63 - 432) 0.
+(** [F_av]'s rseq=true counterpart: the extent is 464, so [2 ^ 63 - 464].  Discharged the same way,
+    from [auxv_pre]'s range conjunct and [YO0d.length_auxv_types true] = 29. *)
+Definition F_av_t : afact := mkAF 4096 (2 ^ 63 - 464) 0.
 Definition F_ar : afact := mkAF 4096 (2 ^ 63 - 16) 0.
 Definition F_pg : afact := mkAF 4096 (CEIL_MAX - 4096) 12.
 Definition facts_am1 : facts := mkFacts [ (2%nat, F_sp); (39%nat, F_sh) ] [] [].
 Definition facts_am0 : facts := mkFacts [ (2%nat, F_sp); (39%nat, F_sh); (44%nat, F_av); (45%nat, F_ar) ] [] [].
+Definition facts_am0_t : facts := mkFacts [ (2%nat, F_sp); (39%nat, F_sh); (44%nat, F_av_t); (45%nat, F_ar) ] [] [].
 Definition ss_am1 : sstate := mkSS src0_A_alloc_meta regs_am mem_am1 None facts_am1.
 Definition ss_am0 : sstate := mkSS src0_A_alloc_meta regs_am mem_am0 None facts_am0.
+Definition ss_am0_t : sstate := mkSS src0_A_alloc_meta regs_am mem_am0_t None facts_am0_t.
 Definition ss_i1 : sstate := Eval vm_compute in runto_ src0_A_memcpy ss_am0.
 Definition MC_JUNK : list reg := [5; 6; 7; 11; 12; 13; 14; 15; 16; 17; 28]%bv.
 Definition mem_i2 : smem :=
@@ -104,6 +155,16 @@ Definition ss_i1' : sstate := setpc PC_MCRET (setmem mem_i2 ss_i1).
 Definition ss_i2 : sstate := Eval vm_compute in junk_regs MC_JUNK 46 ss_i1'.
 Definition ss_a2x : sstate := Eval vm_compute in runto_ PC_A2 ss_am1.
 Definition ss_a2y : sstate := Eval vm_compute in runto_ PC_A2 ss_i2.
+(** The rseq=true prefix.  THESE FIVE STATES ARE THE WHOLE rs-DEPENDENT REGION OF THE PROOF: the
+    two paths REJOIN at [PC_A2], where [run_am1] carries [ss_am1] to [ss_a2x] and [run_i2] carries
+    [ss_i2] to [ss_a2y], and [ss_A2] is built from [ss_a2x] -- i.e. from [ss_am1], NOT from
+    [ss_am0].  So everything from [ss_fh] down (about 25 further states, including the whole
+    [ss_o*] family) is on the init_done = true path and is not auxv-dependent at all. *)
+Definition ss_i1_t : sstate := Eval vm_compute in runto_ src0_A_memcpy ss_am0_t.
+Definition mem_i2_t : smem := Eval vm_compute in match store_region (ss_mem ss_i1_t) (Some 2%nat) (-64) 8 (CVal 8 (SOff 0 0)) with Some rs => rs | None => [] end.
+Definition ss_i1'_t : sstate := setpc PC_MCRET (setmem mem_i2_t ss_i1_t).
+Definition ss_i2_t : sstate := Eval vm_compute in junk_regs MC_JUNK 46 ss_i1'_t.
+Definition ss_a2y_t : sstate := Eval vm_compute in runto_ PC_A2 ss_i2_t.
 Definition A2_JUNK : list reg := [1; 5; 6; 7; 9; 10; 11; 12; 13; 14; 15; 16; 17; 20; 28]%bv.
 Definition ss_A2 : sstate := Eval vm_compute in junk_regs A2_JUNK 57 ss_a2x.
 Definition C_fh0 : acond := mkAC BC_EQ (SOff 33 0) (SLit 0).
@@ -199,6 +260,15 @@ Lemma store_i1 : store_region (ss_mem ss_i1) (Some 2%nat) (-64) 8 (CVal 8 (SOff 
 Proof. vm_compute. reflexivity. Qed.
 Lemma run_i2 : sym_run_toN src0segs src0tbl FUEL PC_A2 ss_i2 = (ss_a2y, RS_running).
 Proof. vm_compute. reflexivity. Qed.
+(** The rseq=true prefix's three computed facts.  [run_i2_t] is the one that matters: it says the
+    walk REACHES PC_A2 under the 29-pair layout, i.e. that AT_NULL at pair 28 terminates it, the
+    same way [run_i2] says it for pair 26. *)
+Lemma run_am0_t : sym_run_toN src0segs src0tbl FUEL src0_A_memcpy ss_am0_t = (ss_i1_t, RS_running).
+Proof. vm_compute. reflexivity. Qed.
+Lemma store_i1_t : store_region (ss_mem ss_i1_t) (Some 2%nat) (-64) 8 (CVal 8 (SOff 0 0)) = Some mem_i2_t.
+Proof. vm_compute. reflexivity. Qed.
+Lemma run_i2_t : sym_run_toN src0segs src0tbl FUEL PC_A2 ss_i2_t = (ss_a2y_t, RS_running).
+Proof. vm_compute. reflexivity. Qed.
 Lemma run_am1 : sym_run_toN src0segs src0tbl FUEL PC_A2 ss_am1 = (ss_a2x, RS_running).
 Proof. vm_compute. reflexivity. Qed.
 Lemma run_A2 : sym_runN src0segs src0tbl FUEL ss_A2 = (ss_fh, RS_stopped (SR_branch BC_EQ (SOff 33 0) (SLit 0))).
@@ -275,6 +345,10 @@ Lemma run_o2 : sym_runN src0segs src0tbl FUEL ss_o2 = (ss_oE1, RS_stopped (SR_ja
 Proof. vm_compute. reflexivity. Qed.
 Lemma merge_a2x : mergeb ss_A2 (junk_regs A2_JUNK 57 ss_a2x) = true. Proof. vm_compute. reflexivity. Qed.
 Lemma merge_a2y : mergeb ss_A2 (junk_regs A2_JUNK 57 ss_a2y) = true. Proof. vm_compute. reflexivity. Qed.
+(** THE REJOIN, AND IT IS MEASURED RATHER THAN ASSUMED.  Both layouts merge into the SAME [ss_A2],
+    so everything below PC_A2 is shared: [merge_a2x] for the init_done path, [merge_a2y] for the
+    rseq=false auxv path, and this one for rseq=true. *)
+Lemma merge_a2y_t : mergeb ss_A2 (junk_regs A2_JUNK 57 ss_a2y_t) = true. Proof. vm_compute. reflexivity. Qed.
 Definition absO1 (ss : sstate) : sstate := junk_regs [9%bv] 95 ss.
 Definition absO2 (ss : sstate) : sstate := junk_regs O_JUNK 96 (absO1 ss).
 Definition absO3 (ss : sstate) : sstate := upd_chunk 5 (CTX + 40) (CVal 8 (SOff 108 0)) (absO2 ss).

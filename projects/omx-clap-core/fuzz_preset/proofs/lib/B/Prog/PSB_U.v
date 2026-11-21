@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/AE2y.v, with its module paths and module names changed; 2069 of its 2189 lines of code are new or changed and 584 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset lib/B, parse_string on image B (asan-ubsan build): the \u STRETCH of the walk, psb_u_holdsP / psb_u_holds.
    rule 24: proves no function (kind: segment lemma). psb_u_holdsP proves PSB_Base.v's psb_seg_uP (the \u escape at
    PSB_U) at an ABSTRACT memory invariant P with srr_inv_laws segs P and srr_inv_call segs P (the stretch crosses the kit-text
@@ -13,12 +14,12 @@
    PLAW);
    the read-only runs leave the memory as it was. The old psb_u_holds is kept, statement unchanged (it did not move: the
    callee keep is the texts', no premise was added), as the corollary at P := fun _ => True.
-   Base: the kit's cut 7cdbb61b5fa0 (PRH_FnReader.v f1ae32e3b2cd, PRH_Base.v ef7c8ca98529; this row's PS_Gen.v, PSB_Base.v,
+   Base: the kit's cut (PRH_FnReader.v f1ae32e3b2cd, PRH_Base.v ef7c8ca98529; this row's PS_Gen.v, PSB_Base.v,
    PSB_Src.v; YCbqG.v 219748197d6b, YCbqGcallW.v fb6aa11676a2, YC80x.v 14f84f225e8f, YC1fPx.v 7814b594066f,
    YSRrMemnorm.v 5ffa8525936b; PRW_StepKit.v 0df3991c13f4; B Listing_prog.v c97cc46b3e13 / PAImg_prog.v 15fab93fe702);
-   earlier a working branch 6225fcbb328 (the generic-P base + the OLD-PIN KIT OF RECORD a working branch
+   earlier a working branch (the generic-P base + the OLD-PIN KIT OF RECORD a working branch
    preset-tree-at-2026-10-29T13-54-32Z.tsv (sha256 14e543909afe; internal record): PRH_FnReader.v 66e11f202508, PRH_Base.v ee6c7a38d6b6; engine s1b preset-tree-at-2026-10-29T12-55-44Z.tsv (sha256 7967f42d1cd6; internal record)). Ported from
-   a working branch 8bd080be638 (base 8860ed3a414), where psb_u_holds was Qed first.
+   a working branch, where psb_u_holds was Qed first.
    Neutral listing (parse_string, B entry 0x87c0c): parse_string.fuzz_preset.asan-ubsan.s (sha256 549ddc2d23bf; internal record).
    THE CODE WALKED (offsets from parse_string's entry, DERIVED from the listing; names in PSB_Base / here):
      436 (PSB_U)  a0 = end - (r + 2) < 4 -> PSB_FREE (psu_dec_short_at); `jal hex4` at 456 (a0 = r + 2, a1 = sp + 36)

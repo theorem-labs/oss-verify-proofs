@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/varnish/esi_parse_fuzzer/lib/Lib/PropExec.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's own change in the StepFast lemmas and Inductives); internal commit ids in comments replaced by public commits or removed; launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef). *)
 (* [comment removed for export] *)
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Lib/PropExec.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_frame; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_frame.lib. *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Lib/PropExec.v for libdiginet/fuzz_frame; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_frame.lib. *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -1208,6 +1209,48 @@ Proof. reflexivity. Qed.
 Definition total_arg_bytes_nat (args : list (list byte)) : nat :=
   fold_right (fun a acc => length a + 1 + acc)%nat 0%nat args.
 
+Lemma entry_stack_image_block : forall inp mbase ph entry (sp : word) draw,
+  entry_stack_image inp mbase ph entry sp draw
+  = build_stack_bytes (launch_auxv inp sp mbase) ph entry sp (ed_top draw)
+      (in_argv inp) (in_envp inp) (in_execfn inp)
+      (in_uid inp) (in_gid inp) (in_hwcap inp) draw.
+Proof. reflexivity. Qed.
+Lemma la_rseq_launch_auxv : forall inp sp mbase,
+  la_rseq (launch_auxv inp sp mbase) = kb_rseq (in_kernel inp).
+Proof. reflexivity. Qed.
+Lemma length_entry_stack_image_launch :
+  forall v inp mbase ph entry (sp brk : word) draw,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw))
+  = (bv_unsigned (ed_top draw) - bv_unsigned sp)%Z.
+Proof.
+  intros v inp mbase ph entry sp brk draw Hok.
+  cbn [entry_launch_ok_va] in Hok.
+  destruct Hok as (_ & (_ & _ & Hhi) & _).
+  unfold entry_stack_image.
+  rewrite length_build_stack_bytes, la_rseq_launch_auxv.
+  unfold launch_sp_hi, align_down16 in Hhi.
+  pose proof (Z.mod_pos_bound
+    (bv_unsigned (ed_top draw) - 8
+     - Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp)
+                                     (in_execfn inp)))
+    16 ltac:(lia)) as Hm.
+  unfold block_pad_len.
+  rewrite !Nat2Z.inj_add.
+  rewrite Z2Nat.id by lia.
+  lia.
+Qed.
+Lemma entry_stack_image_no_wrap :
+  forall v inp mbase ph entry (sp brk : word) draw,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  (bv_unsigned sp
+   + Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw))
+     < 2 ^ 64)%Z.
+Proof.
+  intros v inp mbase ph entry sp brk draw Hok.
+  rewrite (length_entry_stack_image_launch v inp mbase ph entry sp brk draw Hok).
+  pose proof (u64_range (ed_top draw)) as Hr. lia.
+Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)

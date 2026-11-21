@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the old stack lemmas are gone). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -279,13 +280,6 @@ Lemma stk_ok_mem_denot : forall segs E mem log sp K,
   stk_ok segs mem sp K -> stk_ok segs (mem_denot E mem log) sp K.
 Proof. intros. eapply stk_ok_grows; [eassumption | apply mem_denot_grows]. Qed.
 
-(* [comment removed for export] *)
-Lemma stk_ok_init : forall segs ph sp argv envp uid hw rnd,
-  stk_ok segs (wrap_mem ph sp argv envp uid hw rnd) sp stack_max_size.
-Proof.
-  intros segs ph sp argv envp uid hw rnd a n H1 H2.
-  apply store_ok_wrap_window; assumption.
-Qed.
 
 Lemma kwr_of_stk_ok : forall segs E mem (e : expr) (sp : word) K,
   edenot E e = sp -> stk_ok segs mem sp K -> (0 <= K <= bv_unsigned sp)%Z ->
@@ -343,19 +337,6 @@ Proof.
   cbn [a_base a_off]. rewrite He, Hn, Hb. split; [lia|]. split; [reflexivity | exact Hz].
 Qed.
 
-(* [comment removed for export] *)
-Lemma wrap_mem_none_low : forall ph sp argv envp uid hw rnd (i : Z),
-  (0 <= i)%Z -> (i < bv_unsigned sp - stack_max_size)%Z ->
-  wrap_mem ph sp argv envp uid hw rnd (Z_to_bv 64 i) = None.
-Proof.
-  intros ph sp argv envp uid hw rnd i H0 Hi. unfold wrap_mem.
-  pose proof (u64_range sp) as Hsp.
-  assert (Hu : bv_unsigned (Z_to_bv 64 i) = i) by (apply u_small; unfold stack_max_size in Hi; lia).
-  unfold stack_to_mem. rewrite Hu.
-  replace (Z.leb (bv_unsigned sp) i) with false by (symmetry; apply Z.leb_gt; unfold stack_max_size in Hi; lia).
-  replace (Z.leb (bv_unsigned sp - stack_max_size) i) with false by (symmetry; apply Z.leb_gt; lia).
-  reflexivity.
-Qed.
 
 (* [comment removed for export] *)
 Lemma ext_val_zx_id : forall n (v : word),

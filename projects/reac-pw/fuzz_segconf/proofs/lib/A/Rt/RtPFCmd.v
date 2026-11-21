@@ -4,6 +4,7 @@
    journal at a reflexive and transitive world relation R (binders first; the call keeps the world, so no law of R is
    read); aj_snprintf_at_xrom keeps its statement and is the instance at wle. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcallSnp.v, with its module paths and module names changed; 226 of its 275 lines of code are new or changed and 213 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* plugin-hostd/fuzz_command's snprintf and sprintf contracts in the shared shape of
    omx-clap-core/fuzz_manifest's FMsnprintfShared.v, which this tree carries unchanged
    except module paths as RtPFShared.v, with RtPFPf.v (FMsnprintfPf.v), RtPFupoison.v (FMupoison.v) and RtPFSx.v
@@ -15,7 +16,7 @@
      say that RtPFPf's parser and renderer are printf_facts_c's on every piece. Since 2026-10-29 it has the shape of
      fuzz_manifest's FF_fm (lib/A/FMsnprintfFmI.v:31-36), the family the
      GXA route is proved for: the format is a nonempty literal of the image below the GOT word CMD_GOTW (GXA reads it
-     as image data, lib/CJ/RL/GXA/G_vfprintf_snf.v:210), and each string argument has its slack word and 8 bytes past
+     as image data, lib/CJ/RL/GXA/G_vfprintf_snf.v:211), and each string argument has its slack word and 8 bytes past
      its NUL in application memory (cmd_args_slack / cmd_args_amem, local copies of the route's pf_args_slack and
      pf_args_amem). At every snprintf / sprintf call of fuzz_command the format is a .rodata literal (0x210c0,
      0x218a0, 0x21b40, 0x21d00, 0x21ee0, 0x21f00) and no argument is a string (measured at each call site).
@@ -244,7 +245,7 @@ dest_ok segs B ly S W regs mem d (sp_len T) -> amem_range d (sp_len T) ->
 range_addressable (aview segs (w_H W) mem) SHADOW_OFF d (sp_len T) ->
 shadow_hull_vis (aview segs (w_H W) mem) d (sp_len T) ->
 (* dest_off_globals: the caller discharges it by measurement *) zdisjoint (d, sp_len T) (img_lo, img_hi - img_lo) ->
-(* frm0_entry: rounding mode 0 at entry (GXA VfprintfCall.v:37) *) Z.land (Z.shiftr (bv_unsigned (@fp_csr fx)) 5) 7 = 0 ->
+(* frm0_entry: rounding mode 0 at entry (GXA VfprintfCall.v:38) *) Z.land (Z.shiftr (bv_unsigned (@fp_csr fx)) 5) 7 = 0 ->
 (* the argument slots below 2^47 (the vsnprintf interceptor's GXA-route premise) *) spZ regs + 8 * Z.of_nat (length xs) <= 2 ^ 47 ->
 (* the destination's slack word (GXA's range check asks app_mem (D + i + 7)) *) amem_range d (sp_len T + 8) ->
 SRr segs W (cfg_at segs pc regs mem md)
@@ -281,7 +282,7 @@ dest_ok segs B ly S W regs mem d (sp_len T) -> amem_range d (sp_len T) ->
 range_addressable (aview segs (w_H W) mem) SHADOW_OFF d (sp_len T) ->
 shadow_hull_vis (aview segs (w_H W) mem) d (sp_len T) ->
 (* dest_off_globals: the caller discharges it by measurement *) zdisjoint (d, sp_len T) (img_lo, img_hi - img_lo) ->
-(* frm0_entry: rounding mode 0 at entry (GXA VfprintfCall.v:37) *) Z.land (Z.shiftr (bv_unsigned (@fp_csr fx)) 5) 7 = 0 ->
+(* frm0_entry: rounding mode 0 at entry (GXA VfprintfCall.v:38) *) Z.land (Z.shiftr (bv_unsigned (@fp_csr fx)) 5) 7 = 0 ->
 (* the argument slots below 2^47 (the vsnprintf interceptor's GXA-route premise) *) spZ regs + 8 * Z.of_nat (length xs) <= 2 ^ 47 ->
 (* the destination's slack word (GXA's range check asks app_mem (D + i + 7)) *) amem_range d (sp_len T + 8) ->
 SRr segs W (cfg_at segs pc regs mem md)
@@ -335,7 +336,7 @@ dest_ok segs B ly S W regs mem d (sn_len (n - 1) T) -> amem_range d (sn_len (n -
 range_addressable (aview segs (w_H W) mem) SHADOW_OFF d (sn_len (n - 1) T) ->
 shadow_hull_vis (aview segs (w_H W) mem) d (sn_len (n - 1) T) ->
 (* dest_off_globals: the caller discharges it by measurement *) zdisjoint (d, sn_len (n - 1) T) (img_lo, img_hi - img_lo) ->
-(* frm0_entry: rounding mode 0 at entry (GXA VfprintfCall.v:37) *) Z.land (Z.shiftr (bv_unsigned (@fp_csr fx)) 5) 7 = 0 ->
+(* frm0_entry: rounding mode 0 at entry (GXA VfprintfCall.v:38) *) Z.land (Z.shiftr (bv_unsigned (@fp_csr fx)) 5) 7 = 0 ->
 SRr segs W (cfg_at segs pc regs mem md)
 (fun W' c' => W' = W /\ exists (fx' : YK11.FPState) regs' mem' md',
 c' = @cfg_at fx' segs (raZ regs) regs' mem' md' /\

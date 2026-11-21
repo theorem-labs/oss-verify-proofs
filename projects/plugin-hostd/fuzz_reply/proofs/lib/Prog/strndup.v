@@ -228,8 +228,10 @@ Proof using SEGS MALLOC_PC ERRNO_LOW MALLOC SNLEN MEMCPY.
     split; [rewrite E1_4; exact HTP|].
     split; [intros a Ha; rewrite SEGS; apply WM1; apply HERR; exact Ha|].
     intros HI. specialize (HAUX HI). rewrite SP1.
-    destruct HAUX as (av & ar & W1 & W2 & W3 & W4 & B1 & B2 & B3 & B4 & L1 & L2).
-    exists av, ar.
+    (* 727298f3: [auxv_pre] also names the CONFIG_RSEQ flag [rs] its type table is for *)
+    destruct HAUX as (rs & av & ar & W1 & W2 & W3 & W4 & B1 & B2 & B3 & B4 & L1 & L2).
+    pose proof (auxv_types_len_ge rs). unfold AUXV_RAND_K in *.
+    exists rs, av, ar. unfold AUXV_RAND_K.
     split.
     { eapply word_mem_munch; [exact MU1 | | exact W1]. intros k Hk.
       assert (SO : owned B L A (ms_libc B + 8 + Z.of_nat k)) by (right; unfold static_owned; lia).

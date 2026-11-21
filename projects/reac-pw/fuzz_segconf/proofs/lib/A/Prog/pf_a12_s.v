@@ -3,13 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: the walk of reac_box_catalogue on fuzz_segconf.asan-ubsan (image B, pin sha256
    c3796c0b38f3, twin 80e82127e8ca; entry 0x8a8a0, 84 bytes, 21 instructions, a 16-byte frame, no side-stack
    frame): reac_box_catalogue_contract of lib/B/Prog/reac_box_catalogue_c.v (image B's copy of the image-A owner's FINAL
-   text at 6f783602b5e3) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
+   text) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
    entry, SRr of apost_base at the return, over `Context {PI : PAImg seg_listing}` of image B's listing,
    lib/B/Prog/SegPa.v).
-   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane, commit
-   434ade288123, both arms): the same entry seeds, token runs and return steps over image B's listing modules and
+   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane,
+    both arms): the same entry seeds, token runs and return steps over image B's listing modules and
    B's kit copies. The UBSan alignment check is read from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_catalogue.v
-   at origin/ossv/recipes 3abc3740de97 (the same image-B code but 4 pc-relative words; caller-journal form, not
+   (the same image-B code but 4 pc-relative words; caller-journal form, not
    copied), whose token run decides it the same way.
    Image B's code differs from image A's by two instructions: `andi a1,a0,7` (0x8a8ac) and `bnez a1,0x8a8ec`
    (0x8a8b0) to `unimp` (0x8a8ec), the UBSan alignment check of the 8-byte store through c.
@@ -37,12 +37,13 @@
    definitions (SegInstA's names at image B): SegInstB.STK_reac_box_catalogue and SegInstB.catA, tied to this walk
    by the lemmas STK_reac_box_catalogue_B (the value 16) and catA_B (listing object 77 of B's seg_objs). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/reac_box_catalogue.v, with its module paths and module names changed; 153 of its 187 lines of code are new or changed and 419 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image A (fuzz_segconf.asan): the call of refuse in segment A12 of
    reac_segconf_parse_file's walk (the ignore key, IGN 0x88364 -> RS3 / PROV2; pf_pieces.v S_A12), at 0x8842c
    (pf_a12_k.v's listing offset A12_REF), and the cut's facts back after it. Written 2026-10-30. No instruction is
    walked here.
 
-   The call (the unit's internal record, commit dfb49d6ad789, path records/segp/dis/reac_segconf_parse_file.fuzz_segconf.asan.s,
+   The call (the unit's internal record, path records/segp/dis/reac_segconf_parse_file.fuzz_segconf.asan.s,
    0x88414-0x88430): a2 = 0x21900 = seg_litA_rc
    F_badignore (auipc / addi 0x88414 / 0x88418), a0 = s8 = c, a1 = s10 = ln + 1, a3 = slot s1 + 0x50 = cur_name
    = pf_F v pos + PF_O_CN, a4 = s9 = vp (the value in buf); `jal refuse` 0x8842c, `j RS3` 0x88430. SegModel's
@@ -64,14 +65,14 @@
        takes cur_name's string as sa_str; a12s_nm_str gives it from the cut's pf_nm (seg_spec.cstr_enc 16);
      - rc_refused cf + 1 < 2 ^ 32 from pf_cnt cf 0; 0 <= ln + 1 <= 65535 from pf_mid's line account and the
        text bound of reader_pre (pf_a6_k.a6_cx).
-   The structure of the site lemma follows segment A7's pf_a7_s.v (a7_refuse_site_ok, commit
-   980fbe9c6015).
+   The structure of the site lemma follows segment A7's pf_a7_s.v (a7_refuse_site_ok).
+   
 
    a12_ref_after: the cut's facts at refuse's exit state, through segment A6's kit (pf_a6_k.v): a6_keeps_refuse
    (the agreements refuse's journal gives: its footprint refuse_W lies in the block c; the class-5 frame and its
    shadow by the journal's FRAMES clause), a6_base_move (pf_base rebuilt at the exit state: the shadow of the
    text and of the block c RE-DERIVED from AR there, a6_heap_addr), a6_nm_move (cur_name, in the frame).
-   Section hypotheses, taken for a12_ref_after ONLY (lib/A/Prog/reac_segconf_parse.v:132 / :137's shapes), both
+   Section hypotheses, taken for a12_ref_after ONLY (lib/A/Prog/reac_segconf_parse.v:133 / :138's shapes), both
    forced by pf_a6_k.a6_base_move (Section hypotheses of pf_a6_k.v's Section e): VRO (pf_a5_k.a5_ro_img, the
    read-only view's bytes are image bytes) and SSPX (sa_ssp at the exit state: the GOT word gotwA is an owned
    static the journal does not keep), until listing stage 2's SegRecCells.seg_rec_cells discharges them. *)
@@ -238,11 +239,11 @@ Qed.
 (* ---- the cut's facts after the call (piece A6's kit) ---- *)
 Section r.
 (* forced by pf_a6_k.a6_base_move (its pf_a5_k.a5_ro_img: the read-only view at the exit state is kept through the
-   image bytes, which needs the listing's relro range); reac_segconf_parse.v:132's shape *)
+   image bytes, which needs the listing's relro range); reac_segconf_parse.v:133's shape *)
 Hypothesis VRO : seg_val_relro (PI := PI).
 (* forced by pf_a6_k.a6_base_move (pf_obj's sa_ssp at the exit state: the GOT word gotwA is an owned static,
    which refuse's journal does not keep); the contract writer's route A, discharged by SegRecCells.seg_rec_cells
-   after listing stage 2; reac_segconf_parse.v:137's shape *)
+   after listing stage 2; reac_segconf_parse.v:138's shape *)
 Hypothesis SSPX : forall ly S (W : world SEGS) mem md, AR SEGS B ly S W mem md -> sa_ssp (rdW W mem) gotwA guardA.
 
 (* refuse returned (cl_callSF: at the FP state fx1, fxrel fx fx1) with its journal from the call state and parse_file's

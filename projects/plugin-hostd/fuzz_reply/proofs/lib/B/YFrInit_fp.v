@@ -1,5 +1,5 @@
 (* Modified by Theorem Labs, 2026-10: new file, the fuzz_reply.asan-ubsan twin of lib/A/AFrInit_fp.v (RelocA-2,
-   a working branch 50f0c528115). The cf driver's first-call fact about fuzz_reply's harness
+   a working branch). The cf driver's first-call fact about fuzz_reply's harness
    blocks: when every byte of the 20 program objects reads its start-up value gf_init (B/YD2d_fp.v sPE_gf_start /
    B/YD2e_fp.v PL_gf_start give this at the two first-call sites), the entry's harness blocks are none,
    fr_hblks_b W mem = [] (B/YCfn_cf.v): g_src (0x5d8d40), g_out (0x5d90c0) and g_capout (0x5d90a0) are .bss words

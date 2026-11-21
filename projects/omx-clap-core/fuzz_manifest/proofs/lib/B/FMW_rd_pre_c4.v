@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_rd_pre_c4.v (a working branch e2e59892bef),
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_rd_pre_c4.v (a working branch),
    re-walked on B: 0x81f2c .. 0x81f34 = A's same stretch + 0x290, uri_len in s1 (A s6); fuzz_free is called with
    s0 = rp = the entry sp, so its frame chain is one record (rdp_chain_rp), trace [0x81f38; 0x81e88] = B's CTX_fuzz_free. *)
 (* lv2_locate_manifest_readings, PRE piece c4 (FMW_rd_pre_cuts.v rdp_seg_C4). *)

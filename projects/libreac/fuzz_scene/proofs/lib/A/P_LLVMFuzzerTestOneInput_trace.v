@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the proof of proofs/cgif/cgif_file_fuzzer/lib/A/ACf5.v:155-165 rt_trace_in
-   (c8557374ad2e) for libreac/fuzz_scene's asan build, against the image-free statement
+   (theorem-labs/oss-verify-proofs@6b32741d849a) for libreac/fuzz_scene's asan build, against the image-free statement
    P_LLVMFuzzerTestOneInput_ctx.rt_trace_in_stmt (a Theorem Labs lane) and scene's trace universe lib/A/ACej.v.
    Numbers, all read from fuzz_scene.asan (pinned in projects/libreac/fuzz_scene/harness.yaml), each re-derived by
    verify_acej.py:
@@ -10,6 +10,7 @@
      PC_FREE_RA0   0x54e54  ___interceptor_free 0x54d1c + 0x138, ra of its GetCurrentPc call (0x54e50)
      malloc sites  0x82ba0 (body, call 0x82b9c), 0x82d94 (again, 0x82d90), 0x82eb8 (before, 0x82eb4)
      free sites    0x82eac (again, call 0x82ea8), 0x83028 (before, 0x83024), 0x83030 (body, 0x8302c) *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List Lia Bool.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.A Require Import P_LLVMFuzzerTestOneInput_ctx ACej.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require Import YG0d YG0f.

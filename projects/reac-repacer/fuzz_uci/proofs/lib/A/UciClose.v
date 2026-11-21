@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs: made for reac-repacer/fuzz_uci's ASan image from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/A/DecodeClose.v (the closing form: one named Section hypothesis per open part, the parts proved elsewhere applied as Lemmas of the hypotheses' names and statements, the program contract LIB_CONTRACT from the entry walk and its callees, the two statements from AsanTop; its About / Print Assumptions commands are left out, because on this image's core those commands for the three tops take about 13 minutes per build) and libreac/fuzz_grant proofs/libreac/fuzz_grant/lib/A/AGrantT.v (the driver step: the core arguments of tfib_srealizesX, the run ceiling and TFIB_T), with the sink guard of fuzz_grant's lib/A/GrantTop.v; names GrantB -> UciB, the library shape fuzz_uci's checksum_shape, fuzz_uci's own program statements and rows; module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch premises valid_launch and entry_launch_ok_va). *)
 (* The closing side of fuzz_uci's two ASan statements (this file is assembly: it proves no function).
 
    TFIB_T (lib/A/UciTFIB.v) is closed as fuzz_grant's lib/A/AGrantT.v closes it: the relocated core's
@@ -92,7 +93,7 @@ Lemma valid_sp_windowU : forall sp, valid_sp sp -> (sp_window_lo <= bv_unsigned 
 Proof. intros sp (H1 & H2 & _). split; [exact H1 | exact H2]. Qed.
 
 (* The image's data the parts are stated at. *)
-(* segs: image A's loaded segments (lib/A/UciTFIB.v; = lib/A/AB1v.v:13 tfibsegs = lib/A/AB1h.v:19 TSEGS). *)
+(* segs: image A's loaded segments (lib/A/UciTFIB.v; = lib/A/AB1v.v:14 tfibsegs = lib/A/AB1h.v:20 TSEGS). *)
 Local Abbreviation segs := ucisegs0.
 (* B: the image's symbol and trace record, lib/A/AD2l.v:16 UciB (UciB_syms : UciSyms UciB at :74). *)
 Local Abbreviation B := AD2l.UciB.
@@ -234,7 +235,7 @@ Lemma HB_PC_WRAP_FREE : pc_wrap_free (as_code B) = uci_sigma US___interceptor_tr
 Proof. reflexivity. Qed.
 Lemma HB_PC_STACK_MALLOC1 : pc_stack_malloc (as_code B) 1 = uci_sigma US___asan_stack_malloc_1.
 Proof. reflexivity. Qed.
-(* HB_UNIVERSE_OK / HB_MODEL_LAWS: lib/A/AF0m.v:386 ts_universe at UciB_syms; Reusable/YG05.v:140 model_laws_ok. *)
+(* HB_UNIVERSE_OK / HB_MODEL_LAWS: lib/A/AF0m.v:387 ts_universe at UciB_syms; Reusable/YG05.v:140 model_laws_ok. *)
 Lemma HB_UNIVERSE_OK : universe_ok (as_universe B).
 Proof. exact (ts_universe B UciB_syms). Qed.
 Lemma HB_MODEL_LAWS : model_laws (as_universe B).
@@ -440,23 +441,24 @@ Let EXS : exit_site_tfa B est xst := tfib_exit_site B HB LAWS.
 Lemma uci_srealizesX_rc : forall sp rdraw brk mb inp,
   valid_sp sp -> valid_brk segs brk -> valid_mmap_base mb ->
   entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
   YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
   srealizes segs (init_config segs UAs.M.init_pc UAs.M.phdrs sp brk mb rdraw target_alloc_limit inp)
     (SPECX (LS:=checksum_shape) inp).
 Proof.
-  intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil.
+  intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil.
   change target_alloc_limit with YA02.LIMIT.
   exact (tfib_srealizesX B HB AMALLOC AFREE AICPY ARDCHK MT XL XL RLO RHI MT_FREE RO_IN LIBX xst XFR PF1 PFN est ESTI
-    ESTF FWS RFS FPO FPR FPU EXS sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil).
+    ESTF FWS RFS FPO FPR FPU EXS sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil).
 Qed.
 End RC.
 
 (* fuzz_grant's AGrantT.v:75-84 grant_srealizesX_top and grant_TFIB_T_of_lib: the run ceiling of the start. *)
 Theorem uci_TFIB_T_of_parts : TFIB_T.
 Proof.
-  intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp.
-  exact (@uci_srealizesX_rc (YM05.RunCeilOf (bv_unsigned sp) (valid_sp_windowU sp Hsp)) sp rnd brk mbase inp
-    Hsp Hbrk Hmb Hfit Hinp (YM05.ceil_of_top_run _)).
+  intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau.
+  exact (@uci_srealizesX_rc (YM05.RunCeilOf (bv_unsigned sp) (valid_sp_windowU sp Hsp) target_alloc_limit) sp rnd brk mbase inp
+    Hsp Hbrk Hmb Hfit Hinp Hlau (YM05.ceil_of_top_run _)).
 Qed.
 
 (* The two ASan statements of record, given only the named parts above. *)

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the realloc frame proof reads the ceiling bound past rauxv_ok's nine launch-auxv witnesses. *)
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -1450,7 +1451,7 @@ Proof using A0 A1 AR AV BA BLK ERRm FRm HB Hin Hst LEN LO MIm MRP MUm N PERM SLO
   assert (ETP : bv_unsigned tp + -164 = RERRNO). { rewrite TP. unfold RATP, RERRNO. rewrite unsigned_lit by lia. reflexivity. }
   assert (HEAP : RHEAP s LB m). { exists st, LB0. split; [exact PERM|]. split; [exact Hst|]. split; [exact MRP|]. split; [exact BLK| exact AR]. }
   pose proof (RHEAP_block_range_proof s LB m (p, A, k) HEAP Hin) as BR. cbn [blk_addr blk_size fst snd] in BR. unfold rblock_range, alloc_ceiling in BR.
-  assert (ABx : alloc_ceiling <= Bx) by (pose proof AV as (? & ? & ? & ? & ? & ? & ? & ? & ? & ? & _ & _ & _ & AB & _); exact AB). unfold alloc_ceiling in ABx.
+  assert (ABx : alloc_ceiling <= Bx) by (pose proof AV as (? & ? & ? & ? & ? & ? & ? & ? & ? & _ & _ & _ & AB & _); exact AB). unfold alloc_ceiling in ABx.
   assert (HEAPm : RHEAP s LB mm).
   { eapply RHEAP_frame_proof; [exact HEAP| exact MUm| exact WMm|].
     constructor; [left; cbn [fst snd]; unfold alloc_ceiling; lia|].

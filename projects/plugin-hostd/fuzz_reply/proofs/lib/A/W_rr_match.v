@@ -5,12 +5,13 @@
    (lib/A/W_rr_match_cx.v rr_match_of_hops; W_rr_m_drain.v rr_m_drain, W_rr_m_ge.v rr_m_ge, W_rr_m_free.v rr_m_free,
    W_rr_m_cpy.v rr_m_cpy).
 
-   Ported from the retired lane form (commit 2ad36763b22, lib/A/Prog/relay_remove_p_c.v): rrA_stage_c_of_hops and
+   Ported from the retired lane form (lib/A/Prog/relay_remove_p_c.v): rrA_stage_c_of_hops and
    the hop chain DRAIN -> GE -> FREE -> TAIL; the W6 cuts and hops are new (see W_rr_match_cx.v's header).
 
    The Section block is W_relay_remove_cx.v's, verbatim. *)
 (* Modified by Theorem Labs, 2026-10: ROUTE (b), STEP 3 (a Theorem Labs lane, lane RR_x): MATCH over ARx in room form, from the
    four hops over the generic Section (rr_match_stmt B PST ARx MT RP MMAX RG CTX_AFREE). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

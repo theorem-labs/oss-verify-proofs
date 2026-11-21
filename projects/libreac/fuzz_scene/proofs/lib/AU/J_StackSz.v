@@ -5,8 +5,9 @@
    calls, for libreac/fuzz_scene, restated over cgif_file_fuzzer's journal. STATEMENTS ONLY (rule 24): each step is a
    Prop `<name>_stmt`; the lemma `<name> : <name>_stmt segs B` is proved in this Section under its hypotheses, as
    cgif_rgb_fuzzer proves it. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
-(*   Source text (c8557374ad2e, proofs/cgif/cgif_rgb_fuzzer/lib/):
+(*   Source text (proofs/cgif/cgif_rgb_fuzzer/lib/):
      - YC05.v:143-160 aj_stack_malloc_sz_at   -> aj_stack_malloc_sz_at_stmt
      - YC05.v:206-221 aj_set_shadow_at        -> aj_set_shadow_at_stmt
      - YC05.v:21-29   the Section context     -> Section h below (rgb's hypotheses, same names and order)
@@ -19,11 +20,11 @@
 
    THE THIRD STEP IS NOT HERE.  rgb YC05.v:260-276 aj_stack_free_at is, for this tree, lib/AU/StackFreeJournal.v,
    the asan-ubsan twin (Requires lib.AU.YCbq) of lib/Reusable/StackFreeJournal.v, which a Theorem Labs lane proved
-   (a working branch c3bfa00452c) and a Theorem Labs lane landed in this tree, over lib/Reusable/StackFreeDef.v
+   (a working branch) and a Theorem Labs lane landed in this tree, over lib/Reusable/StackFreeDef.v
    astack_free_realizes.  I diffed that lemma against the text this file used to carry
    (rgb YC05.v:260-276 over `st_nev`): the premises, the journal, the post's four clauses and the own-list head
    `(cid, pos) :: own'` are the same, and the two differences do not touch this walk:
-     - the released shadow span is `sf_span cid n` (StackFreeDef.v:16) in place of `n / 8`.  `sf_span cid n` is
+     - the released shadow span is `sf_span cid n` (StackFreeDef.v:17) in place of `n / 8`.  `sf_span cid n` is
        `fs_frame_bytes cid / 8` for cid <= 6 and `n / 8` above, so for scene's class 8 the two spans are equal.
      - the lemma takes no `frame_flag_law` hypothesis: it derives the flag byte's facts from `AR_laws`
        (al_flag, al_client_img).  The hypothesis below is therefore unused by the free step and is kept only
@@ -48,9 +49,9 @@ From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require Import YG00 YG0a Y
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU Require Import YCbq.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require Import YI16.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require Import YM05.
-(* A Theorem Labs lane: the size-dependent stack-malloc contract astack_malloc_sz_realizes (AsStackSz.v:30), which this file's malloc step consumes. *)
+(* A Theorem Labs lane: the size-dependent stack-malloc contract astack_malloc_sz_realizes (AsStackSz.v:31), which this file's malloc step consumes. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require Import AsStackSz.
-(* A Theorem Labs lane (at 798447a1772, proofs/libreac/fuzz_grant/lib/A/Rt/SetShadowDef.v:19) at scene's
+(* A Theorem Labs lane (at proofs/libreac/fuzz_grant/lib/A/Rt/SetShadowDef.v:19) at scene's
    relocated path: aset_shadow_realizes, which the set-shadow step below consumes. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require Import SetShadowDef.
 (* Proved by one Theorem Labs lane and landed through another: astack_free_realizes and its journal step aj_stack_free_at. *)

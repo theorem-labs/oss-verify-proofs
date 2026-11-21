@@ -103,6 +103,7 @@ Theorem zlib_walk_crealizes : forall (rc : RunCeil) (LS : lib_shape)
   forall sp brk mbase rnd lim inp,
   valid_sp sp -> valid_brk src0segs brk -> valid_mmap_base mbase ->
   entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
   valid_input inp -> SRC_LIM_MIN <= lim ->
   YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
   crealizes src0_msyms (init_config src0segs Ubsan_init_pc Ubsan_phdrs sp brk mbase rnd lim inp) (SPECX (LS:=LS) inp).
@@ -127,7 +128,7 @@ Theorem ubsan_crealizes_of_cg : forall (LS : lib_shape) (G : list (Z * Z)) (GI :
 Proof.
   intros LS G GI HROOM HG GIL GI0 H [sp brk0 mbase rnd] inp lim Hentry Hinput Hlim.
   apply (valid_entry_sv48 _ _ inp (valid_input_va_size inp Hinput)) in Hentry.
-  destruct Hentry as [Hsp [Hbrk [Hmb Hfits]]].
+  destruct Hentry as [Hsp [Hbrk [Hmb [Hfits Hlau]]]].
   set (rc := RunCeilOf (bv_unsigned sp) (valid_sp_window_for_ceil sp Hsp)).
   assert (HG' : forall a, in_globals G a -> in_globals src0_G a) by (intros a h; exact (frame_G_src0 a (HG a h))).
   change (crealizes src0_msyms (init_config src0segs Ubsan_init_pc Ubsan_phdrs sp brk0 mbase rnd lim inp)
@@ -137,6 +138,6 @@ Proof.
     (fun mem Hm => conj eq_refl (GI0 mem (G_img_mono src0segs G src0_G mem HG' Hm)))
     (lib_contract_x_Rc_all_of_cg src0_msyms (@zlib_API rc) (zlib_tables rc) G src0_G frame_RELRO src0_R GI
       LIBPC RA_LIB EMPTY LIB_STACK HG' frame_RELRO_src0 (H rc))
-    sp brk0 mbase rnd lim inp Hsp Hbrk Hmb Hfits Hinput Hlim).
+    sp brk0 mbase rnd lim inp Hsp Hbrk Hmb Hfits Hlau Hinput Hlim).
   unfold rc. apply ceil_of_top_run.
 Qed.

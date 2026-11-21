@@ -4,13 +4,14 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 3501 of its 3539 lines of code are new or changed and 210 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_ctrl_parseF.v, with its module paths, module names, addresses and numbers changed; 5648 of its 6995 lines of code are new or changed and 2192 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/reac_ctrl_parseF.v, with its module paths and module names changed; 15 of its 30 lines of code are new or changed and 6980 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* lib/B/Prog/C_reac_ctrl_parseOn.v -- fuzz_ctrl image B (asan-ubsan, libreac v1.9.0), route (C) (a Theorem Labs lane 09:20Z): the
    general lemmas that the re-based stretch of reac_ctrl_parse (lib/B/Prog/C_reac_ctrl_parseLib.v, Sections SetupFB and
    RoFB) uses with its shadow hypothesis `lib.B.ShadowRwOn.shadow_rw_on P m` in place of the universal form
    lib.B.AsanRT.shadow_rw (every shadow byte).  reac_ctrl_parseF.v (ctrl's accepted run) is unchanged apart from comment text; each
    lemma here is the shadow_rw_on twin of one of its general lemmas, with the region guard P carried through (the
    originals argue per address), or a small range fact about lib.B.Prog.sh_word_on.sh_word_on:
-     shadow_rw_on_mono_mem  <- lib.B.Prog.reac_ctrl_parseF.shadow_rw_mono (wmono + rd_mono, reac_ctrl_parseF.v:340)
+     shadow_rw_on_mono_mem  <- lib.B.Prog.reac_ctrl_parseF.shadow_rw_mono (wmono + rd_mono, reac_ctrl_parseF.v:341)
      shadow16_stk_on        <- lib.B.Prog.reac_ctrl_parseF.shadow16_stk (the frame's 16 shadow bytes, :695)
      sh_word_on_frame16     the 16 shadow bytes [fra / 8 + ASAN_K, + 16) of a 128-byte frame at fra are inside the
                             aligned shadow-word span sh_word_on fra 128.

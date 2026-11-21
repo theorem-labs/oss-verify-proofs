@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a node's new sys_rob premise, via RomBase; write's new `access_okb` premise; munmap's error arm in node_munmap and srz_munmap; the place_declined_b premise of mmap; spin_shape lemmas over the run's segment list `run_segments`). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -10,6 +11,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.openssl.bndiv.lib.AS Require Import
   SimInv ExitSim CatSim MmapSim ShapeAlg DivergeSim LazyFrame SymTac.
+From OSSVerify.Proofs.openssl.bndiv.lib.VCommon.Cfg Require RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope bv_scope.
@@ -40,7 +42,7 @@ Lemma srealizes_of_realizes : forall c T,
   realizes segs c T -> srealizes c T.
 Proof.
   intros c T H;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq].
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq].
   - exact (srz_node c I evs nx T i0 Hnode IH).
   - exact (srz_halt c Hh).
   - exact (srz_conseq c T T' IH Heq).
@@ -306,7 +308,7 @@ Lemma rz_step_disjoint : forall ms model ms' ranges T,
   realizes segs (mkCfg ms model) T.
 Proof.
   intros ms model ms' ranges T Hh Hsvc Hstep Hout Hc.
-  eapply rz_silent1; [eapply node_instr_disjoint; eassumption | exact Hc].
+  eapply rz_silent1; [eapply node_instr_disjoint; eassumption | apply RomBase.sys_rob_instr; exact Hsvc | exact Hc].
 Qed.
 
 Lemma srz_step_disjoint : forall ms model ms' ranges T,
@@ -331,6 +333,8 @@ Lemma srz_write1 : forall ms model x8 buf T,
   bv_unsigned x8 = 64%Z ->
   ms_gpr ms 0 = Z_to_bv 64 1 ->
   ms_read_bytes ms (ms_gpr ms 1) (ms_gpr ms 2) = Some buf ->
+  (* the range [vfs_write]'s [access_ok] accepts; see [CatSim.write1_check_n] *)
+  access_okb (ms_gpr ms 1) (bv_unsigned (ms_gpr ms 2)) = true ->
   buf_modeled buf ->
   (1 <= length buf)%nat ->
   (forall n, (1 <= n)%nat -> (n <= length buf)%nat ->
@@ -338,7 +342,7 @@ Lemma srz_write1 : forall ms model x8 buf T,
                          (set_gpr0 ms (len_word (firstn n buf)))) model) T) ->
   srealizes (mkCfg ms model) (t_write_ch (Z_to_bv 64 1) buf T).
 Proof.
-  intros ms model x8 buf T Hh Hlazy Hfd Hsvc Hno Hg Hr Hbm Hnb Hc.
+  intros ms model x8 buf T Hh Hlazy Hfd Hsvc Hno Hg Hr Hok Hbm Hnb Hc.
   unfold t_write_ch.
   apply (srz_node (mkCfg ms model) (wr_index buf)
            (fun i => map (WriteEv (Z_to_bv 64 1)) (firstn (proj1_sig i) buf))
@@ -363,6 +367,21 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
+Lemma srz_silent_all : forall c (I : Type) (nx : I -> config) (T : TSet) (i0 : I),
+  node_ok segs c I (fun _ => []) nx ->
+  (forall i, srealizes (nx i) T) ->
+  srealizes c T.
+Proof.
+  intros c I nx T i0 Hnode HT.
+  assert (HT0 : T []) by (eapply srealizes_nonempty; apply (HT i0)).
+  apply (srz_conseq c (t_alt (fun _ : I => t_emit [] T))).
+  - apply (srz_node c I (fun _ => []) nx (fun _ => T) i0 Hnode).
+    intros i; exact (HT i).
+  - intro tr. split.
+    + intros [i Hi]. exact (proj1 (t_emit_nil_eq T HT0 tr) Hi).
+    + intro H. exists i0. exact (proj2 (t_emit_nil_eq T HT0 tr) H).
+Qed.
+
 Lemma node_munmap : forall ms model x8,
   m_halted model = None ->
   m_vm_lazy model = [] ->
@@ -375,20 +394,54 @@ Lemma node_munmap : forall ms model x8,
                                   model)).
 Proof.
   intros ms model x8 Hh Hlazy Hsvc Hno Hargs.
-  apply node_ok_of0; [apply (transparent_no segs ms model x8 215 Hsvc Hno); reflexivity|]. split.
-  - intros []. apply (sstep_syscall segs ms model x8 (munmap_eff ms)
-                        (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model)
-                        (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) []).
-    + exact Hh.
-    + exact Hsvc.
-    + apply munmap_ok; assumption.
-    + rewrite munmap_model_halted; exact Hh.
-    + apply materialize_model_accesses_no_lazy.
-      exact (munmap_model_no_lazy _ _ _ Hlazy).
-  - intros e st Hss.
-    destruct (sstep_munmap_inv segs ms model x8 e st Hh Hlazy Hsvc Hno Hargs Hss)
-      as [-> ->].
-    exists tt. split; reflexivity.
+  (* LPS 08b1429: [alloc_mark_sysnos] gained 215
+     ([Run.v]: "Definition alloc_mark_sysnos : list Z := [214; 215; 216; 222; 226]%Z"),
+     put there by the [injected_table] entry
+     "(* munmap *) mkInjectedArm 215%Z FamAlloc munmap_errnos".  So munmap is an
+     injected allocation arm, [transparent_no] no longer applies to 215, and
+     [sstep_munmap_inv] now returns a disjunction: the step may answer one of
+     [munmap_errnos].  Under [ncfg] that answer is a spurious refusal, so the node
+     keeps only the success half and [node_ok_filter_in] ([AS/ShapeAlg.v]) asks the
+     forward step on that half alone.  The statement below is unchanged. *)
+  pose (nx0 := fun i : unit + {e : Z | In e munmap_errnos} =>
+              match i with
+              | inl _ =>
+                  mkCfg (advance_past_svc (apply_effect ms (munmap_eff ms)))
+                        (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1))
+                                      model)
+              | inr (exist _ e _) =>
+                  mkCfg (advance_past_svc (set_gpr0 ms (errno_ret e))) model
+              end).
+  assert (Hrefb : forall r, refusal_b (sys_input segs ms x8) model r
+                            = ret_in_errnos munmap_errnos r).
+  { intros r. unfold refusal_b. cbn [sys_input in_sysno]. rewrite Hno. reflexivity. }
+  assert (Hn : node_ok segs (mkCfg ms model) unit (fun _ => [])
+                       (fun g => nx0 (inl g))).
+  { apply (node_ok_filter_in segs ms model x8 unit {e : Z | In e munmap_errnos}
+             (fun _ => []) nx0 tt Hsvc).
+    - intros []. cbn [nx0].
+      apply (sstep_syscall segs ms model x8 (munmap_eff ms)
+               (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model)
+               (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) []).
+      + exact Hh.
+      + exact Hsvc.
+      + apply munmap_ok; assumption.
+      + rewrite munmap_model_halted; exact Hh.
+      + apply materialize_model_accesses_no_lazy.
+        exact (munmap_model_no_lazy _ _ _ Hlazy).
+    - intros e st Hss.
+      destruct (sstep_munmap_inv segs ms model x8 e st Hh Hlazy Hsvc Hno Hargs Hss)
+        as [-> [(er & Her & ->) | ->]].
+      + exists (inr (exist _ er Her)). split; reflexivity.
+      + exists (inl tt). split; reflexivity.
+    - unfold injected_family_off. cbn [sys_input in_sysno]. rewrite Hno. reflexivity.
+    - intros [[] | [e He]]; cbn [nx0 cfg_model]; [rewrite munmap_model_halted|]; exact Hh.
+    - intros []. cbn [nx0]. rewrite Hrefb, ret_of_apply_effect. reflexivity.
+    - intros [e He]. cbn [nx0]. rewrite Hrefb.
+      rewrite <- (apply_effect_no_write ms (errno_ret e)), ret_of_apply_effect.
+      cbn [eff_ret]. unfold ret_in_errnos. apply existsb_exists. exists e.
+      split; [exact He | apply bv_eqb_eq; reflexivity]. }
+  exact Hn.
 Qed.
 
 Lemma srz_munmap : forall ms model x8 T,
@@ -397,12 +450,23 @@ Lemma srz_munmap : forall ms model x8 T,
   ms_svc_pending ms = Some x8 ->
   bv_unsigned x8 = 215%Z ->
   munmap_args_ok ms model ->
+  (forall e, In e munmap_errnos ->
+     srealizes (mkCfg (advance_past_svc (set_gpr0 ms (errno_ret e))) model) T) ->
   srealizes (mkCfg (advance_past_svc (apply_effect ms (munmap_eff ms)))
                    (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model)) T ->
   srealizes (mkCfg ms model) T.
 Proof.
-  intros ms model x8 T Hh Hlazy Hsvc Hno Hargs Hc.
-  eapply srz_silent1; [apply (node_munmap ms model x8); assumption | exact Hc].
+  intros ms model x8 T Hh Hlazy Hsvc Hno Hargs Hfail Hc.
+  (* [Hfail] is no longer consumed: the [munmap_errnos] answer that
+     [sstep_munmap_inv] now allows is, under [ncfg], a spurious refusal, and
+     [node_munmap] already drops it (see the note there).  The premise is kept so
+     the statement is unchanged for callers. *)
+  apply (srz_silent_all (mkCfg ms model) unit
+           (fun _ => mkCfg (advance_past_svc (apply_effect ms (munmap_eff ms)))
+                           (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1))
+                                         model)) T tt);
+    [apply (node_munmap ms model x8); assumption |].
+  intros []. exact Hc.
 Qed.
 
 (* [comment removed for export] *)
@@ -416,6 +480,8 @@ Lemma srz_mmap : forall ms model x8 B,
   ms_svc_pending ms = Some x8 ->
   bv_unsigned x8 = 222%Z ->
   mmap_args_ok ms ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   (forall a, grant_ok (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true ->
      srealizes (mkCfg (advance_past_svc
                         (apply_effect ms (mkEffect a [] [(a, page_round_up (ms_gpr ms 1))])))
@@ -423,8 +489,8 @@ Lemma srz_mmap : forall ms model x8 B,
   (exists a, grant_ok (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true) ->
   srealizes (mkCfg ms model) B.
 Proof.
-  intros ms model x8 B Hh Hlazy Hsvc Hno Hargs HB Hex.
-  pose proof (node_mmap_grants segs ms model x8 Hh Hlazy Hsvc Hno Hargs Hex) as Hnode.
+  intros ms model x8 B Hh Hlazy Hsvc Hno Hargs Hdecl HB Hex.
+  pose proof (node_mmap_grants segs ms model x8 Hh Hlazy Hsvc Hno Hargs Hdecl Hex) as Hnode.
   destruct Hex as [a0 Ha0].
   assert (HB0 : B []) by (eapply srealizes_nonempty; apply (HB a0 Ha0)).
   eapply srz_conseq.
@@ -442,6 +508,8 @@ Lemma srz_mmap_spin : forall ms model x8 B,
   ms_svc_pending ms = Some x8 ->
   bv_unsigned x8 = 222%Z ->
   mmap_args_ok ms ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   (forall e, In e mmap_errnos ->
      to_spin segs (advance_past_svc (set_gpr0 ms (errno_ret e))) model) ->
   (forall a, grant_ok (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true ->
@@ -451,31 +519,51 @@ Lemma srz_mmap_spin : forall ms model x8 B,
   (exists a, grant_ok (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true) ->
   srealizes (mkCfg ms model) B.
 Proof.
-  intros ms model x8 B Hh Hlazy Hsvc Hno Hargs _ HB Hex.
-  exact (srz_mmap ms model x8 B Hh Hlazy Hsvc Hno Hargs HB Hex).
+  intros ms model x8 B Hh Hlazy Hsvc Hno Hargs Hdecl _ HB Hex.
+  exact (srz_mmap ms model x8 B Hh Hlazy Hsvc Hno Hargs Hdecl HB Hex).
 Qed.
 
 End WithSegs.
 
 (* [comment removed for export] *)
 
+(* LPS 08b1429: [run_scfg] reads the binary against the run's segment list ([run_segments]),
+   so the walk is over that list.  Same change, same shape, as THIS FILE'S SIBLING
+   [AS/ShapeAlg.shape_run_scfg] (:885-895), which is this lemma with [realizes] for
+   [srealizes], already carries the identical repair with this identical citation, and is
+   `ok` in a farm round -- the round in which this file reads `fail`.  So the
+   donor is in-unit, already green, and measured by the same instrument as the defect.
+   openssl/ct AS/SpinAlg.v:525-548 agrees independently (normalised floor 24 lines against
+   this file, i.e. near-identical twins).
+   This CHANGES THE HYPOTHESIS of a tree-local theorem and weakens nothing: the CONCLUSION
+   is untouched, and the premise moves from the binary's own segment list to the one
+   [run_scfg] actually walks, which is what the conclusion was always about.  The old form
+   was not a weaker statement but an unprovable one -- [cbn [run_scfg ...]] exposes
+   [init_config (run_segments segs inp sp mb) ...] and [srealizes_obs_iff] over bare [segs]
+   cannot meet it, which is exactly the measured error at :532.
+   Tree-local, checked rather than assumed: [spin_shape_run_scfg], [srealizes] and
+   [run_scfg] occur 0 times in projects/openssl/bndiv/Statements.v (firing control in the
+   same scan: plain_halts 5) and 0 times in any proofs/*/Proof.v. *)
 Theorem spin_shape_run_scfg :
   forall segs pc ph sp brk0 mb (rnd : EntryDraw) (lim : Z) (T : TSet) (inp : ProcInput),
-  srealizes segs (init_config segs pc ph sp brk0 mb rnd lim inp) T ->
+  srealizes (run_segments segs inp sp mb)
+            (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) T ->
   (forall tr, bh_traces (run_scfg ncfg (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp) tr <-> T tr)
   /\ ~ bh_errors (run_scfg ncfg (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp).
 Proof.
   intros segs pc ph sp brk0 mb rnd lim T inp H. cbn [run_scfg bh_traces bh_errors]. split.
-  - intros tr. exact (srealizes_obs_iff segs _ T H tr).
-  - exact (srealizes_no_error segs _ T H).
+  - intros tr. exact (srealizes_obs_iff _ _ T H tr).
+  - exact (srealizes_no_error _ _ T H).
 Qed.
 
 Theorem spin_shape_error_free_scfg :
   forall source_segs rpc rph rsp rbrk rmb (rrnd : EntryDraw) (rlim : Z)
          target_segs apc aph asp abrk amb (arnd : EntryDraw) (alim : Z)
          (T : TSet) (inp : ProcInput),
-  srealizes source_segs (init_config source_segs rpc rph rsp rbrk rmb rrnd rlim inp) T ->
-  srealizes target_segs (init_config target_segs apc aph asp abrk amb arnd alim inp) T ->
+  srealizes (run_segments source_segs inp rsp rmb)
+            (init_config (run_segments source_segs inp rsp rmb) rpc rph rsp rbrk rmb rrnd rlim inp) T ->
+  srealizes (run_segments target_segs inp asp amb)
+            (init_config (run_segments target_segs inp asp amb) apc aph asp abrk amb arnd alim inp) T ->
   Equivalence.error_free (run_scfg ncfg (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
   /\ Equivalence.error_free (run_scfg ncfg (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp)
   /\ Equivalence.trace_equiv
@@ -529,6 +617,8 @@ Corollary srz_spin_alloc_writes : forall segs ms0 ms model x8 bs cs,
   ms_svc_pending ms = Some x8 ->
   bv_unsigned x8 = 222%Z ->
   mmap_args_ok ms ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   (forall e, In e mmap_errnos ->
      to_spin segs (advance_past_svc (set_gpr0 ms (errno_ret e))) model) ->
   (forall a, grant_ok (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true ->
@@ -540,7 +630,7 @@ Corollary srz_spin_alloc_writes : forall segs ms0 ms model x8 bs cs,
   bufs_modeled bs ->
   srealizes segs (mkCfg ms0 model) (t_writes bs (t_exit cs (m_fs model))).
 Proof.
-  intros segs ms0 ms model x8 bs cs Hh Hlazy Hfd Hms Hsvc Hno Hargs
+  intros segs ms0 ms model x8 bs cs Hh Hlazy Hfd Hms Hsvc Hno Hargs Hdecl
     Hrefuse Hgrant Hex Hbs.
   eapply srz_msteps; [exact Hh | exact Hlazy | exact Hms |].
   eapply srz_mmap_spin; try eassumption.
@@ -568,6 +658,10 @@ Hypothesis Hfd : fd1chan model.
 Hypothesis Hsvc : ms_svc_pending ms = Some x8.
 Hypothesis Hno : bv_unsigned x8 = 222%Z.
 Hypothesis Hargs : mmap_args_ok ms.
+(* new at LPS 727298f3 (#144, #146): the walk may only claim a modeled outcome for a
+   hint the model does not decline.  Discharged where the walk pins the hint. *)
+Hypothesis Hdecl : place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+  (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false.
 (* [comment removed for export] *)
 Hypothesis Hrefuse : forall e, In e mmap_errnos ->
   to_spin segs (advance_past_svc (set_gpr0 ms (errno_ret e))) model.

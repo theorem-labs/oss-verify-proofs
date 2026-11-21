@@ -3,10 +3,11 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 409 of its 423 lines of code are new or changed and 234 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/reac_box_model_block_epi.v; 182 of its 261 lines of code are new or changed and 344 lines of the source are left out. *)
-(* Footprint (_F) re-run of reac_box_model_block.v at a working branch d69f7c708f6 (proved v1.9 run of
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Footprint (_F) re-run of reac_box_model_block.v at a working branch (proved v1.9 run of
    record) over lib/Lib/StepF, in three stretches cut at its two allocator events (main_pre_F, main_mid_F, main_post_F, below); reac_box_model_block_holds_of_F has a new proof.
    Image: fuzz_ctrl.asan (libreac v1.9.0), ELF sha256
-   78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd. FACTS ed6b6b7b0ab.
+   78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd. FACTS.
    Const cells checked against the v1.9.0 image bytes (file offsets from the LOAD headers of fuzz_ctrl.debug:
    vaddr 0x10000 at offset 0x0, vaddr 0x9e348 at offset 0x8c348, vaddr 0xa17c8 at offset 0x8e7c8):
      GOT_CELL_K 0x9fad0 (offset 0x8dad0): 78 88 0a 00 00 00 00 00  = 0xa8878 = CELL_K
@@ -24,7 +25,7 @@
       new proof obligation.
    2. The _F output feeds ONLY the ported cgif-form walk.  No W_cutfree_ok, no cut-free twin, no LSCPS join, no
       top-level claim.
-   3. The source runs are on ctrl's v1.9 record (FACTS ed6b6b7b0ab), with no stale AsanRT / off_img literal /
+   3. The source runs are on ctrl's v1.9 record (FACTS), with no stale AsanRT / off_img literal /
       wrong-image cell.  The re-run's const cells are checked against fuzz_ctrl's v1.9.0 image bytes.
    4. Every _F carries provenance in its header (image root, ELF sha256, tool version, which compare) and goes to
       the auditor a Theorem Labs lane, who signs it against its proved run before it counts.
@@ -65,7 +66,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import asan_memset_cF
   reac_box_model_block_cases0bF reac_box_model_block_cases0cF reac_box_model_block_cases0F
   reac_box_model_block_cases2aF reac_box_model_block_cases2bF reac_box_model_block_bodyF.
 (* Route (C): the narrowed shadow premise, the region it names, and the callees' `_on` contracts (a Theorem Labs lane's
-   text, carried by a Theorem Labs lane from a working branch f4423e55886 and a working branch). *)
+   text, carried by a Theorem Labs lane from a working branch and a working branch). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A Require Import ShadowRwOn.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import rng_asan sh_word_on asan_memset_c_on
   asan_memset_cF_on asan_memcpy_c_on asan_memcpy_cF_on reac_box_model_block_c_on.

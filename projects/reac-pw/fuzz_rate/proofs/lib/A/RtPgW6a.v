@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6a.v at 80bf14ccf117 for reac-pw/fuzz_rate's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6a.v for reac-pw/fuzz_rate's
    image A: module paths changed; the image is fuzz_rate.asan (images.Asan) instead of a lib/A/Img0 module; role's
    RPgSeg / RPgMem vocabulary (e_R, e_F, e_pp, rl_loc, rl_at, rl_xv, rl_inw, rm_, role_himg_A) becomes rate's (q_R,
    q_F, q_pp, rt_loc, rt_at, rt_xv, rt_inw, rtm_, rate_himg_A); the real frame is 0x1e0 bytes and the frame's shadow

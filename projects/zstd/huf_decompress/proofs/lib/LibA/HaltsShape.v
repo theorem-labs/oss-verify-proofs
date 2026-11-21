@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (sstep_into_halted gains the vDSO call arm; realizes_mreach's induction names rz_node's RomBase.sys_rob premise). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -26,7 +27,7 @@ Inductive mreach : config -> Prop :=
 
 Lemma realizes_mreach : forall c T, realizes segs c T -> mreach c.
 Proof using Type.
-  intros c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq].
+  intros c T H; induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq].
   - destruct Hnode as [Hcomp Hsound]. apply mr_run.
     + exists (evs i0), (SNext (nx i0)). apply Hcomp.
     + intros e st Hss. destruct (Hsound e st Hss) as (i & -> & ->). exists (nx i). reflexivity.
@@ -46,6 +47,10 @@ Proof using Type.
   - exfalso. apply Hh. match goal with Ha : mi_account_step _ _ _ = MachineOk _ |- _ =>
       destruct (mi_account_step_model_frame _ _ _ _ _ Ha) as (_ & _ & _ & _ & _ & Hp & _) end.
     unfold m_halted in *. rewrite Hp. assumption.
+  - (* LPS 727298f3: the vDSO call arm ([sstep_cfg_vdso_call]) leaves the process state alone *)
+    exfalso. apply Hh. match goal with Hm : materialize_model_accesses _ _ = Some _ |- _ =>
+      destruct (materialize_model_accesses_frame _ _ _ Hm) as (_ & _ & _ & _ & _ & Hp & _) end.
+    unfold m_halted in *. rewrite m_proc_with_vdso_bump, Hp. assumption.
   - exfalso. apply Hh. match goal with Hm : materialize_model_accesses _ _ = Some _ |- _ =>
       destruct (materialize_model_accesses_frame _ _ _ Hm) as (_ & _ & _ & _ & _ & Hp & _) end.
     unfold m_halted in *. rewrite Hp. assumption.

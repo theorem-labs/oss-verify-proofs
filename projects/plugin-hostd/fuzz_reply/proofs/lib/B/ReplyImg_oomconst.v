@@ -1,21 +1,22 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs: reply image row img-oomconst-B of the cf layer at plugin-hostd/fuzz_reply.
    rule 24: no function proved (kind: closed image fact over the constant-cell table of reply's image B,
    fuzz_reply.asan-ubsan, pin 10ffb5f9202a).
 
-   oom_const_img : oom_const_t, proofs/cgif/cgif_file_fuzzer/lib/YGcfInstMiss.v:312-314 (Definition) / :316 (Hypothesis)
-   @ 90854e46e5c, over its Section's Variable B under TS : im_syms B.  Reply does not carry YGcfInstMiss.v nor
+   oom_const_img : oom_const_t, proofs/cgif/cgif_file_fuzzer/lib/YGcfInstMiss.v:312-314 (Definition) / :316 (Hypothesis),
+   over its Section's Variable B under TS : im_syms B.  Reply does not carry YGcfInstMiss.v nor
    YGcfInstBase.v, so the Lemma states the body of oom_const_t VERBATIM at a B with image B's symbol facts (im_syms of
-   AImg_reply, B/AGif2reply.v:24, which is YF0m.TfibSyms), with the premise ly_img_ok B ly unfolded; ly_img_ok is
-   proofs/cgif/cgif_file_fuzzer/lib/YGcfInstBase.v:140-142 @ 90854e46e5c (= @ e73dee6cc107):
+   AImg_reply, B/AGif2reply.v:25, which is YF0m.TfibSyms), with the premise ly_img_ok B ly unfolded; ly_img_ok is
+   proofs/cgif/cgif_file_fuzzer/lib/YGcfInstBase.v:140-142 (=):
    ly_img_ok B ly := layout_ok ly /\ ly_tsd ly = as_tsd B /\
                      Forall (fun r => zr_sub r (ly_img ly)) (as_owned_static B ++ as_zero_shadow B).
-   Proof at image B: the SYM cells of Tfib_const_sym (B/YF0m.v:32-37) at AT / AC / AD lie in the owned extents
+   Proof at image B: the SYM cells of Tfib_const_sym (B/YF0m.v:33-38) at AT / AC / AD lie in the owned extents
    (ly_T, 4096), (ly_C, 256), (ly_D, 4096), which lo_disj keeps apart from ly_img, while an owned-static byte lies in
    ly_img (the third conjunct): no such cell has an owned-static byte.  ATsd 0 is TFIB_TSD's slot (the second conjunct
-   with ts_tsd); ATp / AInst are fixed by TfibSyms: all apart from TFIB_OOM = 0x1288a0 (B/YF0m.v:19).  The absolute and
-   shadow cells avoid TFIB_OOM by computation (YFi5.abs_cells_okJ, B/YFi5.v:348, cgif's discharge). *)
+   with ts_tsd); ATp / AInst are fixed by TfibSyms: all apart from TFIB_OOM = 0x1288a0 (B/YF0m.v:20).  The absolute and
+   shadow cells avoid TFIB_OOM by computation (YFi5.abs_cells_okJ, B/YFi5.v:349, cgif's discharge). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the allocator interface's invariant carries the model's channel reader, and its frame law the reader equality). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -133,6 +134,10 @@ Record MallocIface : Type := MALLOC_IFACE {
       big_bytes_f round_big BIG (live A) + round_big n <= bigcap A ->
       room_for A n;
   ai_mstd      : forall A M model, ainv A M model -> m_vm_lazy model = [];
+  (* LPS 727298f3: a write needs the far end's reader ([ReadWrite.writev_spec]), so an
+     instance's [ainv] carries the launch's reader bit; [mi_malloc_r], [mi_free_r] and
+     [ai_frame_k] keep it. *)
+  ai_rdr       : forall A M model, ainv A M model -> m_channel_reader model = true;
   ai_live_block : forall A M model p n, ainv A M model -> In (p, n) (live A) ->
       0 <= n /\ p mod 16 = 0 /\ 0 < p /\ p + n <= alloc_ceiling
       /\ (forall a, p <= a < p + n -> ~ owned A a /\ ~ in_ranges (ly_img L) a /\ M (Z_to_bv 64 a) <> None);
@@ -150,16 +155,23 @@ Record MallocIface : Type := MALLOC_IFACE {
   ai_static_cells_owned : forall A M model a bs i, ainv A M model -> In (a, bs) static_cells ->
       0 <= i < Z.of_nat (length bs) -> owned A (a + i);
 
-  ai_frame : forall A M M' model model', ainv A M model ->
+  (* LPS 727298f3: an instance's [ainv] may read [m_kernel] (the vDSO pair and the
+     placement's THP setting) and the reader bit ([ai_rdr]), so a frame to another model
+     needs both.  [ai_frame] below is the same-model frame every recorded proof applies. *)
+  ai_frame_k : forall A M M' model model', ainv A M model ->
       (forall a : word, owned A (bv_unsigned a) -> M' a = M a) ->
       (forall a : word, M a <> None -> M' a <> None) ->
       m_vmmaps model' = m_vmmaps model -> m_vm_lazy model' = m_vm_lazy model ->
+      m_kernel model' = m_kernel model -> m_channel_reader model' = m_channel_reader model ->
       ainv A M' model';
 
   may_fail : AS -> Z -> Prop;
   may_fail_big : forall A n, BIG <= n -> may_fail A n;
 
-  mi_malloc : forall (fx : FPState) A R M model (n sp ret : Z) (Ksucc : TSet),
+  (* LPS 727298f3: [mi_malloc_r] and [mi_free_r] also say the far end's reader bit
+     is unchanged ([vm_only]); [mi_malloc] and [mi_free] below are the earlier fields'
+     statements, derived, for each caller that does not read the bit. *)
+  mi_malloc_r : forall (fx : FPState) A R M model (n sp ret : Z) (Ksucc : TSet),
 
       ainv A M model -> mstd model -> img_ro_clear M ->
       call_regs R sp ret -> getr R 10%bv = Z_to_bv 64 n -> 0 <= n <= NMAX ->
@@ -170,6 +182,7 @@ Record MallocIface : Type := MALLOC_IFACE {
 
       (forall A' R' M' model' (p : Z),
           ainv A' M' model' -> mstd model' -> m_fs model' = m_fs model -> m_fds model' = m_fds model ->
+          m_channel_reader model' = m_channel_reader model ->
           kept R R' -> getr R' 10%bv = Z_to_bv 64 p -> 0 < p ->
           live_add p n (live A) (live A') -> caps A' = caps A -> bigcap A' = bigcap A ->
           (forall a, owned A' a -> owned A a \/ (~ in_ranges (ly_img L) a /\ M (Z_to_bv 64 a) = None)) ->
@@ -178,7 +191,7 @@ Record MallocIface : Type := MALLOC_IFACE {
           srealizes SEGS (cfg fx R' ret M' model') Ksucc) ->
       srealizes SEGS (cfg fx R (ly_malloc L) M model) Ksucc;
 
-  mi_free : forall (fx : FPState) A R M model (p n sp ret : Z) (K : TSet),
+  mi_free_r : forall (fx : FPState) A R M model (p n sp ret : Z) (K : TSet),
       ainv A M model -> mstd model -> img_ro_clear M ->
       call_regs R sp ret -> getr R 10%bv = Z_to_bv 64 p ->
       (p = 0 /\ n = 0 \/ In (p, n) (live A)) ->
@@ -187,6 +200,7 @@ Record MallocIface : Type := MALLOC_IFACE {
       (forall a, zwin (sp - MALLOC_STACK) sp a -> ~ owned A a) ->
       (forall A' R' M' model',
           ainv A' M' model' -> mstd model' -> m_fs model' = m_fs model -> m_fds model' = m_fds model ->
+          m_channel_reader model' = m_channel_reader model ->
           kept R R' ->
           live_del p (live A) (live A') -> caps A' = caps A -> bigcap A' = bigcap A ->
           (forall a, owned A' a -> owned A a \/ (p <= a < p + n)) ->
@@ -279,12 +293,12 @@ Arguments BIG {AC SEGS L} _.
 Arguments NMAX {AC SEGS L} _.
 Arguments round_big {AC SEGS L} _ _.
 Arguments MALLOC_STACK {AC SEGS L} _.
-Arguments mi_malloc {AC SEGS L} _.
-Arguments mi_free {AC SEGS L} _.
+Arguments mi_malloc_r {AC SEGS L} _.
+Arguments mi_free_r {AC SEGS L} _.
 Arguments may_fail_big {AC SEGS L} _.
 Arguments room_small {AC SEGS L} _.
 Arguments room_big {AC SEGS L} _.
-Arguments ai_frame {AC SEGS L} _.
+Arguments ai_frame_k {AC SEGS L} _.
 Arguments static_cells {AC SEGS L} _.
 Arguments ai_static_cells {AC SEGS L} _.
 Arguments ai_static_cells_owned {AC SEGS L} _.
@@ -298,6 +312,7 @@ Arguments ai_live_nodup {AC SEGS L} _.
 Arguments ai_owned_not_img_ro {AC SEGS L} _.
 Arguments ai_owned_below_ceiling {AC SEGS L} _.
 Arguments ai_mstd {AC SEGS L} _.
+Arguments ai_rdr {AC SEGS L} _.
 Arguments ai_big_pos {AC SEGS L} _.
 Arguments ai_nmax_bound {AC SEGS L} _.
 Arguments sx_frame {SEGS L} _.
@@ -317,4 +332,64 @@ Variable SEGS : list Segment.
 Variable L : Layout.
 Variable MI : MallocIface SEGS L.
 
+(* The frame within one model: [ai_frame_k] with [model' := model]. The binder [model']
+   and its two equations are kept (unused) so that each application written for the
+   earlier field, all of them at [model' = model], still has its argument list. *)
+Lemma ai_frame : forall A M M' model (model' : Model), ainv MI A M model ->
+    (forall a : word, owned MI A (bv_unsigned a) -> M' a = M a) ->
+    (forall a : word, M a <> None -> M' a <> None) ->
+    m_vmmaps model' = m_vmmaps model -> m_vm_lazy model' = m_vm_lazy model ->
+    ainv MI A M' model.
+Proof.
+  intros A M M' model model' AI OW DEF _ _.
+  exact (ai_frame_k MI A M M' model model AI OW DEF eq_refl eq_refl eq_refl eq_refl).
+Qed.
+
+Lemma mi_malloc : forall (fx : FPState) A R M model (n sp ret : Z) (Ksucc : TSet),
+    ainv MI A M model -> mstd model -> img_ro_clear L M ->
+    call_regs L R sp ret -> getr R 10%bv = Z_to_bv 64 n -> 0 <= n <= NMAX MI ->
+    alloc_ceiling + MALLOC_STACK MI <= sp ->
+    stack_room SEGS M sp (MALLOC_STACK MI) ->
+    (forall a, zwin (sp - MALLOC_STACK MI) sp a -> ~ owned MI A a) ->
+    room_for MI A n ->
+    (forall A' R' M' model' (p : Z),
+        ainv MI A' M' model' -> mstd model' -> m_fs model' = m_fs model -> m_fds model' = m_fds model ->
+        kept R R' -> getr R' 10%bv = Z_to_bv 64 p -> 0 < p ->
+        live_add p n (live MI A) (live MI A') -> caps MI A' = caps MI A -> bigcap MI A' = bigcap MI A ->
+        (forall a, owned MI A' a -> owned MI A a \/ (~ in_ranges (ly_img L) a /\ M (Z_to_bv 64 a) = None)) ->
+        frame_eq (fun a => owned MI A' a \/ (p <= a < p + n) \/ zwin (sp - MALLOC_STACK MI) sp a \/ errno_win L a) M M' ->
+        (forall a : word, M a <> None -> M' a <> None \/ owned MI A (bv_unsigned a) \/ errno_win L (bv_unsigned a)) ->
+        srealizes SEGS (mkCfg (@mkst fx R' (Z_to_bv 64 ret) M' (seg_rom SEGS)) model') Ksucc) ->
+    srealizes SEGS (mkCfg (@mkst fx R (Z_to_bv 64 (ly_malloc L)) M (seg_rom SEGS)) model) Ksucc.
+Proof.
+  intros fx A R M model n sp ret Ks AI SM RO CR A0 HN SPC SR SOW ROOM KS.
+  apply (mi_malloc_r MI fx A R M model n sp ret Ks AI SM RO CR A0 HN SPC SR SOW ROOM).
+  intros A' R' M' model' p AI' SM' FS FD _. exact (KS A' R' M' model' p AI' SM' FS FD).
+Qed.
+
+Lemma mi_free : forall (fx : FPState) A R M model (p n sp ret : Z) (K : TSet),
+    ainv MI A M model -> mstd model -> img_ro_clear L M ->
+    call_regs L R sp ret -> getr R 10%bv = Z_to_bv 64 p ->
+    (p = 0 /\ n = 0 \/ In (p, n) (live MI A)) ->
+    alloc_ceiling + MALLOC_STACK MI <= sp ->
+    stack_room SEGS M sp (MALLOC_STACK MI) ->
+    (forall a, zwin (sp - MALLOC_STACK MI) sp a -> ~ owned MI A a) ->
+    (forall A' R' M' model',
+        ainv MI A' M' model' -> mstd model' -> m_fs model' = m_fs model -> m_fds model' = m_fds model ->
+        kept R R' ->
+        live_del p (live MI A) (live MI A') -> caps MI A' = caps MI A -> bigcap MI A' = bigcap MI A ->
+        (forall a, owned MI A' a -> owned MI A a \/ (p <= a < p + n)) ->
+        frame_eq (fun a => owned MI A a \/ (p <= a < p + n) \/ zwin (sp - MALLOC_STACK MI) sp a \/ errno_win L a) M M' ->
+        (forall a : word, M a <> None -> M' a <> None \/ owned MI A (bv_unsigned a) \/ (p <= bv_unsigned a < p + n) \/ errno_win L (bv_unsigned a)) ->
+        srealizes SEGS (mkCfg (@mkst fx R' (Z_to_bv 64 ret) M' (seg_rom SEGS)) model') K) ->
+    srealizes SEGS (mkCfg (@mkst fx R (Z_to_bv 64 (ly_free L)) M (seg_rom SEGS)) model) K.
+Proof.
+  intros fx A R M model p n sp ret K AI SM RO CR A0 HP SPC SR SOW HK.
+  apply (mi_free_r MI fx A R M model p n sp ret K AI SM RO CR A0 HP SPC SR SOW).
+  intros A' R' M' model' AI' SM' FS FD _. exact (HK A' R' M' model' AI' SM' FS FD).
+Qed.
+
 End Compat.
+Arguments ai_frame {AC SEGS L} _.
+Arguments mi_malloc {AC SEGS L} _.
+Arguments mi_free {AC SEGS L} _.

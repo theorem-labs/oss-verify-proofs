@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the main top reads the launch's whole auxv (L5USA.auxv_okA from LibIface.auxv_launch). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -290,7 +291,11 @@ Proof.
   split. { pose proof (LOC 5%nat ltac:(Lia.lia)) as X. exact X. }
   split. exact (L5ATX.errno_readable M).
   split. exact GRD. split. exact AUX. split. exact AV8. split. clear - AVS SPT; Lia.lia. split. exact AVHI.
-  split. { intros j Hj. exact (AUXW j Hj). }
+  (* LPS 727298f3: the whole launch vector ([LibIface.auxv_launch] -> [L5USA.auxv_okA]) *)
+  split. { destruct AUXW as (la & ph & entry & gid & ae & P1 & P2 & P3 & B & W).
+           cbn [lib_view ll_phdr ll_phent ll_phnum lla_phdr lla_phent lla_phnum TopLayA] in P1, P2, P3.
+           exists la, ph, entry, gid, ae. split; [exact P1|]. split; [exact P2|]. split; [exact P3|]. split; [exact B|].
+           intros j Hj. exact (W j Hj). }
   split. clear - UIDR; Lia.lia. split. clear - RNDS RNDH SPT; Lia.lia. split. exact CANR. split. exact HWR.
   split. exact I1. split. exact I2. exact I3.
 Qed.

@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the start-up certificate lemma, written against the released model's checker and recorded hand-off states, is removed here (the certificate is now proved, per CONFIG_RSEQ flag, where its hand-off and join states are computed from the run), and the instruction table names the image's segments directly, so this data file no longer loads the start-up proof files. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -8,7 +9,8 @@
 From Stdlib Require Import ZArith List Bool.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require AxSyioe Asanz3l AsanPlan.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require AsanPlan.
-From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Asanqlm Bothny9 AsanInit.
+From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Asanqlm.
+From OSSVerify.varnish.esi_parse_fuzzer.images Require AsanUbsan.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Asanlzb.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Asanlzb Bothy0u.
 
@@ -624,7 +626,7 @@ Definition startup_plan_both_ranges : list (Z * nat) := [(0x35e38, 362%nat); (0x
 End Star1i1.
 
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Starazj.
-Import OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AxSyioe OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanz3l OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan.Asanfbz OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanqlm OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothny9 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanInit OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanlzb.Asankdu OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanlzb OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothy0u OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothjqf.Star1i1 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Starazj.
+Import OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AxSyioe OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanz3l OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan.Asanfbz OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanqlm OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanlzb.Asankdu OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanlzb OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothy0u OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothjqf.Star1i1 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Starazj.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Import Bootzb6.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations. Import AX2. Import APC. Import AP.
@@ -641,12 +643,9 @@ Definition KC0b : nat := 0.
 Definition FUELb : nat := 3000.
 
 (* [comment removed for export] *)
-Definition IT0b : itab := mk_itab_ranges BSEGS startup_plan_both_ranges.
-Lemma IT0b_ok : itab_sound BSEGS IT0b.
+(* The image's segments, [Bothny9.BSEGS] by definition. *)
+Definition IT0b : itab := mk_itab_ranges OSSVerify.varnish.esi_parse_fuzzer.images.AsanUbsan.M.loaded_segments startup_plan_both_ranges.
+Lemma IT0b_ok : itab_sound OSSVerify.varnish.esi_parse_fuzzer.images.AsanUbsan.M.loaded_segments IT0b.
 Proof. apply APS.mk_itab_ranges_sound. Qed.
 
 Definition startup_shape_both : shape := SCase (EVar 6) 10 (SCase (EVar 5) 524277 (SHole 0) (SHole 1)) (SCase (EVar 6) 1802 (SCase (EVar 5) 524277 (SHole 0) (SHole 1)) (SCase (EVar 5) 524277 (SHole 0) (SHole 1))).
-
-Lemma startup_cert_both :
-  check BSEGS IT0b BOTH NX0 AsanInit.LIMIT (XNb2 NX0) XE0 XB0 HS_both KC0b BFUELb FUELb None both_init startup_plan_both = COk startup_shape_both.
-Proof. ltac1:(cert_f). cert_refl constr:(COk startup_shape_both). Qed.

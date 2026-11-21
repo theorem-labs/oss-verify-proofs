@@ -1,10 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the mmap gap search counts the vDSO pair of reservations, the mmap check proofs unfold the fixed-overflow check, an anonymous mmap is granted at the address Linux's placement gives (a free range in its bottom-up window, the NULL hint never declined), and mprotect requests meeting the vDSO pair are excluded; taken in part from projects/simdjson/fuzz_atpointer/proofs/lib/Spec/Z11h.v, 91 lines within its lines 8-558. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Placement.
 From OSSVerify.Proofs.simdjson.fuzz_ondemand.lib.Lib Require Import PropExec MState ITree Nodes Decode Ceiling.
 From OSSVerify.Proofs.simdjson.fuzz_ondemand.lib.Spec Require Import Prelim Malloc Prog KInv KStep Relim.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -207,6 +209,9 @@ Proof.
   rewrite IH. destruct (negb (iv_overlap lo n a s)); reflexivity.
 Qed.
 
+Lemma gap_weight_app : forall nZ l1 l2, gap_weight nZ (l1 ++ l2) = gap_weight nZ l1 + gap_weight nZ l2.
+Proof. intros nZ l1 l2. induction l1 as [|[b s] l1 IH]; cbn [app gap_weight]; [lia| rewrite IH; lia]. Qed.
+
 Lemma gk_gap : forall {CE : Ceiling} L pbrk mo nZ,
   KL L pbrk mo -> GK (m_vmmaps mo) -> vm_live_bytes (m_vmmaps mo) <= KLIM ->
   0 < nZ -> nZ mod page_size = 0 ->
@@ -225,7 +230,13 @@ Proof.
   pose proof (live_bytes_nonneg (vm_maps h)) as HLV. fold LV in HLV.
   ceil_bounds.
 
-  assert (HW : F + nZ + gap_weight nZ (vm_maps h) <= alloc_top h).
+  (* The vDSO pair [rx] of the ledger ([kl_resv]) joins the maps in the gap
+     search: two entries of at most 20 pages in all, which the slack absorbs. *)
+  destruct (kl_resv _ _ _ HK) as (R0 & rx & ER & _ & HR0 & _ & LRX & BRX). fold h in ER, HR0. fold F in HR0.
+  assert (HWX : gap_weight nZ rx <= 0x14000 + 2 * (nZ + 4095)).
+  { rewrite gap_weight_sizes.
+    assert (Z.of_nat (length rx) * (nZ + 4095) <= 2 * (nZ + 4095)) by (apply Z.mul_le_mono_nonneg_r; lia). lia. }
+  assert (HW : F + nZ + gap_weight nZ (vm_maps h) + (0x14000 + 2 * (nZ + 4095)) <= alloc_top h).
   { rewrite gap_weight_sizes. fold N LV. rewrite Htop.
     assert (HNn : 0 <= N) by (unfold N; lia).
     unfold PGSZ, KLIM, SMALLREQ in *.
@@ -243,20 +254,82 @@ Proof.
       assert (E3 : (LV + nZ) * (LV + nZ) <= (43 * 2^25) * (43 * 2^25)) by (apply Z.mul_le_mono_nonneg; lia).
       set (P := N * nZ) in *. set (Q := LV * nZ) in *. set (SQ := (LV + nZ) * (LV + nZ)) in *.
       lia. }
-  destruct (gap_exists (vm_maps h) nZ F (alloc_top h) ltac:(lia) ltac:(unfold PGSZ in *; lia)
-              ltac:(rewrite Htop; lia) ltac:(rewrite page_size_eq; exact S2) HW)
+  destruct (gap_exists (vm_maps h ++ rx) nZ F (alloc_top h) ltac:(lia) ltac:(unfold PGSZ in *; lia)
+              ltac:(rewrite Htop; lia) ltac:(rewrite page_size_eq; exact S2) ltac:(rewrite gap_weight_app; lia))
     as (g & Hgal & HgF & Hgtop & Hgfree).
+  rewrite region_free_app_iff in Hgfree. apply andb_prop in Hgfree as [Hgm Hgx].
 
   apply (proj2 (vm_gap_available_iff h nZ)). exists (Z_to_bv 64 g).
   split; [|split; [|split]].
   - rewrite u64_lit' by lia. exact Hgal.
   - rewrite u64_lit' by lia. lia.
   - rewrite u64_lit' by lia. exact Hgtop.
-  - rewrite region_free_app_iff, Hgfree, Bool.andb_true_r.
+  - rewrite ER, !region_free_app_iff, Hgm, Hgx, !Bool.andb_true_r.
     apply region_free_intro. intros a sz Hin.
-    pose proof (kl_resv_top _ _ _ HK (a, sz) Hin) as Hr. fold h F in Hr. unfold ehi in Hr. cbn [fst snd] in Hr.
+    pose proof (HR0 (a, sz) Hin) as Hr. unfold ehi in Hr. cbn [fst snd] in Hr.
     unfold iv_overlap. rewrite u64_lit' by lia.
     apply andb_false_iff. left. apply Z.ltb_ge. lia.
+Qed.
+
+(* LPS 727298f3: an mmap grants the ONE address [linux_place] gives, so a step exists
+   when one of Linux's two windows has a free range ([Placement.linux_place_exists]).
+   The scan of [gk_gap], started at [task_unmapped_base] instead of [start_brk], finds
+   one in the bottom-up window [task_unmapped_base, alloc_top); the image's reservations
+   end at or below [start_brk <= 2^33], below that window. *)
+Lemma gk_place : forall {CE : Ceiling} L pbrk mo nZ thp,
+  KL L pbrk mo -> GK (m_vmmaps mo) -> vm_live_bytes (m_vmmaps mo) <= KLIM ->
+  0 < nZ -> nZ mod page_size = 0 ->
+  (nZ <= SMALLREQ \/ vm_live_bytes (m_vmmaps mo) + nZ <= KLIM) ->
+  exists a, linux_place (m_vmmaps mo) thp (Z_to_bv 64 0) nZ a.
+Proof.
+  intros CE L pbrk mo nZ thp HK (G1 & G2 & G3) Hlive HnZ HnAl Hreq.
+  set (h := m_vmmaps mo) in *.
+  pose proof (kl_start _ _ _ HK) as (S1 & S2 & S3 & S4). fold h in S1, S2, S3, S4.
+  pose proof (kl_top _ _ _ HK) as Htop. fold h in Htop.
+  set (F := bv_unsigned (vm_start_brk h)) in *.
+  pose proof (count_le_live (vm_maps h) G1) as Hcnt.
+  unfold vm_live_bytes in Hlive, Hreq.
+  set (N := Z.of_nat (length (vm_maps h))) in *.
+  set (LV := live_bytes (vm_maps h)) in *.
+  pose proof (live_bytes_nonneg (vm_maps h)) as HLV. fold LV in HLV.
+  ceil_bounds.
+  destruct (kl_resv _ _ _ HK) as (R0 & rx & ER & _ & HR0 & _ & LRX & BRX). fold h in ER, HR0. fold F in HR0.
+  assert (HWX : gap_weight nZ rx <= 0x14000 + 2 * (nZ + 4095)).
+  { rewrite gap_weight_sizes.
+    assert (Z.of_nat (length rx) * (nZ + 4095) <= 2 * (nZ + 4095)) by (apply Z.mul_le_mono_nonneg_r; lia). lia. }
+  assert (HW : task_unmapped_base + nZ + gap_weight nZ (vm_maps h) + (0x14000 + 2 * (nZ + 4095)) <= alloc_top h).
+  { rewrite gap_weight_sizes. fold N LV. rewrite Htop.
+    assert (HNn : 0 <= N) by (unfold N; lia).
+    unfold PGSZ, KLIM, SMALLREQ, task_unmapped_base in *.
+    rewrite Z.mul_add_distr_l.
+    assert (HN4 : N * 4095 <= LV) by lia.
+    destruct Hreq as [Hs|Hb].
+    -
+      assert (HN : N <= 2^19) by lia.
+      assert (HP : N * nZ <= 2^19 * 2^24) by (apply Z.mul_le_mono_nonneg; lia).
+      lia.
+    -
+      assert (E1 : (4096 * N) * nZ <= LV * nZ) by (apply Z.mul_le_mono_nonneg_r; lia).
+      rewrite <- Z.mul_assoc in E1.
+      pose proof (four_xy_le_sq LV nZ HLV ltac:(lia)) as E2.
+      assert (E3 : (LV + nZ) * (LV + nZ) <= (43 * 2^25) * (43 * 2^25)) by (apply Z.mul_le_mono_nonneg; lia).
+      set (P := N * nZ) in *. set (Q := LV * nZ) in *. set (SQ := (LV + nZ) * (LV + nZ)) in *.
+      lia. }
+  pose proof Placement.task_unmapped_base_aligned as HTal.
+  destruct (gap_exists (vm_maps h ++ rx) nZ task_unmapped_base (alloc_top h) ltac:(lia)
+              ltac:(unfold task_unmapped_base; lia)
+              ltac:(rewrite Htop; lia) HTal ltac:(rewrite gap_weight_app; lia))
+    as (g & Hgal & HgF & Hgtop & Hgfree).
+  rewrite region_free_app_iff in Hgfree. apply andb_prop in Hgfree as [Hgm Hgx].
+  apply (Placement.linux_place_exists h thp (Z_to_bv 64 0) nZ HnZ HnAl).
+  exists g. right.
+  unfold gap_fits. unfold task_unmapped_base in HgF.
+  split; [exact Hgal|]. split; [unfold task_unmapped_base; lia|]. split; [exact Hgtop|].
+  rewrite ER, !region_free_app_iff, Hgm, Hgx, !Bool.andb_true_r.
+  apply region_free_intro. intros a sz Hin.
+  pose proof (HR0 (a, sz) Hin) as Hr. unfold ehi in Hr. cbn [fst snd] in Hr.
+  unfold iv_overlap. rewrite u64_lit' by lia.
+  apply andb_false_iff. left. apply Z.ltb_ge. lia.
 Qed.
 
 Lemma gk_budget : forall mo nZ,
@@ -293,15 +366,26 @@ Lemma uf_anon_ok_top : forall len prot eff mo mo' evs,
 Proof.
   intros len prot eff mo mo' evs Hlen Hlen2 Hprot H Hr.
   pose proof (mmap_len_ge len Hlen) as Hb.
+  assert (Hn1 : 0 < page_round_up_Z len) by (try unfold mmap_len in Hb; lia).
+  assert (Hn2 : page_round_up_Z len mod page_size = 0)
+    by (unfold page_round_up_Z; apply Z_mod_mult).
   destruct (uf_anon_gates len ltac:(lia)) as (G1 & G2 & G3 & G4 & G5 & G6).
-  unfold check_mmap in H. rewrite G1, G2, G3 in H.
+  unfold check_mmap, check_mmap_fixed_overflow in H. rewrite G1, G2, G3 in H.
   destruct eff as [r ws zs us cs ci]. cbn [eff_ret] in Hr |- *. unfold mmap_len.
+  (* the decline is the arm's outermost test at LPS 727298f3 and H is an Ok
+     answer, so the declining branch dies; the grant test is linux_place_is,
+     whose admissibility facts give the bound (Placement.linux_place_is_admissible) *)
   destruct Hprot as [Ep | Ep]; subst prot; [rewrite G4, G5 in H | rewrite G6 in H];
     cbv beta iota zeta delta [negb] in H; rewrite unsigned_lit in H by lia;
+    (match type of H with context [place_declined_b ?a ?b ?c ?d] =>
+       destruct (place_declined_b a b c d); [discriminate H|] end);
     destruct ws, zs, us, cs, ci; try discriminate H;
     cbv beta iota in H; rewrite Hr in H; cbv beta iota in H;
     apply uf_if_ok in H; try discriminate;
-    rewrite !andb_true_iff in H; apply Z.leb_le; tauto.
+    rewrite !andb_true_iff in H;
+    repeat (match type of H with _ /\ _ => destruct H as [H _] end);
+    destruct (Placement.linux_place_is_admissible _ _ _ _ _ Hn1 Hn2 H) as (_ & _ & Hhi & _);
+    first [exact Hhi | lia].
 Qed.
 
 Lemma nstep_mmap_anon_noerr : forall {CE : Ceiling} len prot mo rsp mo' evs,
@@ -321,33 +405,39 @@ Qed.
 Lemma uf_lnn_self : forall l, listNN_eqb l l = true.
 Proof. intros l. apply listNN_eqb_eq. reflexivity. Qed.
 
-Lemma unforced_mmap_anon : forall {CE : Ceiling} len prot mo,
+(* LPS 727298f3: the grant is Linux's address [w] ([linux_place], tested by the
+   checker as [linux_place_is]), and the NULL hint is never declined
+   ([place_declined_b_null]). *)
+Lemma unforced_mmap_anon : forall {CE : Ceiling} len prot mo (w : word),
   0 < len -> mmap_len len < 2^64 -> prot = PROT_NONE \/ prot = PROT_RW ->
   (if prot =? PROT_NONE then mmap_reserve_refusable mo (mmap_len len)
    else mmap_grant_refusable (Z_to_bv 64 MAPF) mo (mmap_len len)) = false ->
+  linux_place (m_vmmaps mo) (kb_thp (m_kernel mo)) (Z_to_bv 64 0) (mmap_len len) (bv_unsigned w) ->
   unforced (NMmap 0 len prot MAPF) mo.
 Proof.
-  intros CE len prot mo Hlen Hn64 Hprot Href Hkp.
+  intros CE len prot mo w Hlen Hn64 Hprot Href Hpl Hkp.
   pose proof (mmap_len_ge len Hlen) as Hb.
   destruct (uf_anon_gates len ltac:(lia)) as (G1 & G2 & G3 & G4 & G5 & G6).
-  assert (Hg : vm_gap_available (m_vmmaps mo) (mmap_len len) = true).
-  { destruct Hprot as [Ep | Ep]; subst prot.
-    - exact (proj1 (mmap_reserve_refusable_false_iff mo (mmap_len len)) Href).
-    - exact (proj2 (proj1 (mmap_grant_refusable_false_iff (Z_to_bv 64 MAPF) mo (mmap_len len)) Href)). }
-  apply vm_gap_available_iff in Hg as (a & Hal & Hpos & Htop & Hfree).
-  pose proof (ret_in_errnos_ENOMEM_aligned a Hal : errno_ret_in mmap_errnos a = false) as Hna.
-  unfold mmap_len in Htop, Hfree. apply Z.eqb_eq in Hal. apply Z.ltb_lt in Hpos. apply Z.leb_le in Htop.
+  assert (Hn1 : 0 < mmap_len len) by lia.
+  assert (Hn2 : mmap_len len mod page_size = 0)
+    by (unfold mmap_len, page_round_up_Z; apply Z_mod_mult).
+  destruct (Placement.linux_place_admissible _ _ _ _ _ Hn1 Hn2 Hpl) as (Hal & _ & _ & _).
+  pose proof (proj2 (Placement.linux_place_is_iff _ _ _ _ w Hn1 Hn2) Hpl) as Hpi.
+  pose proof (ret_in_errnos_ENOMEM_aligned w Hal : errno_ret_in mmap_errnos w = false) as Hna.
+  unfold mmap_len in Hpi.
   destruct Hprot as [Ep | Ep]; subst prot.
-  - exists (mkEffectU a [] [] [(a, Z_to_bv 64 (page_round_up_Z len))] [] []). do 2 eexists.
+  - exists (mkEffectU w [] [] [(w, Z_to_bv 64 (page_round_up_Z len))] [] []). do 2 eexists.
     apply nstep_mmap_iff; [reflexivity|]. split; [|exact Hna].
-    unfold check_mmap. rewrite G1, G2, G3, G4, G5. cbv beta iota zeta delta [negb].
-    rewrite unsigned_lit by lia. rewrite Hna, Hal, Hpos, Htop, Hfree, uf_lnn_self. reflexivity.
+    unfold check_mmap, check_mmap_fixed_overflow. rewrite G1, G2, G3, G4, G5. cbv beta iota zeta delta [negb].
+    rewrite unsigned_lit by lia. rewrite place_declined_b_null. cbv beta iota.
+    rewrite Hna, Hpi, uf_lnn_self. reflexivity.
   - assert (Hbk : mmap_noreserve_backed_ok (Z_to_bv 64 MAPF) mo (page_round_up_Z len) = true)
       by exact (proj1 (proj1 (mmap_grant_refusable_false_iff (Z_to_bv 64 MAPF) mo (mmap_len len)) Href)).
-    exists (mkEffectU a [] [(a, Z_to_bv 64 (page_round_up_Z len))] [] [] []). do 2 eexists.
+    exists (mkEffectU w [] [(w, Z_to_bv 64 (page_round_up_Z len))] [] [] []). do 2 eexists.
     apply nstep_mmap_iff; [reflexivity|]. split; [|exact Hna].
-    unfold check_mmap. rewrite G1, G2, G3, G6. cbv beta iota zeta delta [negb].
-    rewrite unsigned_lit by lia. rewrite Hna, Hal, Hpos, Htop, Hfree, Hbk, uf_lnn_self. reflexivity.
+    unfold check_mmap, check_mmap_fixed_overflow. rewrite G1, G2, G3, G6. cbv beta iota zeta delta [negb].
+    rewrite unsigned_lit by lia. rewrite place_declined_b_null. cbv beta iota.
+    rewrite Hna, Hpi, Hbk, uf_lnn_self. reflexivity.
 Qed.
 
 Lemma gk_refusable_false : forall {CE : Ceiling} L pbrk mo len prot,
@@ -389,13 +479,24 @@ Lemma gk_mmap_unforced : forall {CE : Ceiling} L pbrk mo len prot,
 Proof.
   intros CE L pbrk mo len prot HK HG Hl Hlen Hprot Hreq.
   pose proof (gk_refusable_false L pbrk mo len prot HK HG Hl ltac:(lia) Hprot Hreq) as Hnr.
-  pose proof (mmap_len_ge len ltac:(lia)) as Hb.
-  exact (unforced_mmap_anon len prot mo ltac:(lia) ltac:(lia) Hprot Hnr).
+  pose proof (mmap_len_ge len ltac:(lia)) as Hb. pose proof (mmap_len_aligned len) as Hal.
+  assert (HnAl : mmap_len len mod page_size = 0) by (rewrite page_size_eq; exact Hal).
+  assert (HnPos : 0 < mmap_len len) by lia.
+  destruct (gk_place L pbrk mo (mmap_len len) (kb_thp (m_kernel mo)) HK HG Hl HnPos HnAl Hreq)
+    as (a & Hpl).
+  destruct (Placement.linux_place_admissible _ _ _ _ _ HnPos HnAl Hpl) as (_ & Hpos & Htop & _).
+  pose proof (Placement.alloc_top_lt_two_pow_64 (m_vmmaps mo)) as Hat. unfold two_pow_64 in Hat.
+  apply (unforced_mmap_anon len prot mo (Z_to_bv 64 a) ltac:(lia) ltac:(lia) Hprot Hnr).
+  rewrite unsigned_lit by lia. exact Hpl.
 Qed.
 
+(* LPS 727298f3: [check_mprotect] answers unmodeled for a request that meets the
+   vDSO pair ([region_free (vdso_reserved ..)]), ahead of the two arms. *)
 Lemma mprotect_page_rw_eq : forall addr eff m,
   0 <= addr -> addr + PGSZ < 2^64 -> addr mod PGSZ = 0 ->
   check_mprotect (Z_to_bv 64 addr) (Z_to_bv 64 PGSZ) (Z_to_bv 64 PROT_RW) eff m =
+  if negb (region_free (vdso_reserved (m_kernel m) (vdso_top (m_vmmaps m))) (Z_to_bv 64 addr) (Z_to_bv 64 PGSZ))
+  then CheckUnmodeled else
   if map_contains (vm_noaccess (m_vmmaps m)) (Z_to_bv 64 addr) (Z_to_bv 64 PGSZ)
      && map_contains (vm_maps (m_vmmaps m)) (Z_to_bv 64 addr) (Z_to_bv 64 PGSZ) then
     match eff with
@@ -435,6 +536,7 @@ Proof.
   destruct (w_is0 r) eqn:Ez.
   - apply errno_of_small. unfold w_is0 in Ez. apply bv_eqb_eq in Ez. rewrite Ez, u64_lit'; lia.
   - exfalso. change (ret_in_errnos mprotect_errnos r) with (errno_ret_in mprotect_errnos r) in Hnr.
+    destruct (negb (region_free _ _ _)); [discriminate Hck|].
     destruct (map_contains _ _ _ && map_contains _ _ _); [|destruct (map_contains _ _ _ && region_free _ _ _)];
       destruct ws, zs, us, cs, ci; cbv beta iota in Hck; try discriminate;
       rewrite ?Hnr, ?Ez, ?andb_false_r, ?andb_false_l in Hck; cbv beta iota in Hck; discriminate.
@@ -445,15 +547,16 @@ Lemma unforced_mprotect : forall {CE : Ceiling} addr mo,
   map_contains (vm_noaccess (m_vmmaps mo)) (Z_to_bv 64 addr) (Z_to_bv 64 PGSZ) = true ->
   map_contains (vm_maps (m_vmmaps mo)) (Z_to_bv 64 addr) (Z_to_bv 64 PGSZ) = true ->
   mprotect_budget_ok mo (Z_to_bv 64 addr) (Z_to_bv 64 PGSZ) = true ->
+  region_free (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo))) (Z_to_bv 64 addr) (Z_to_bv 64 PGSZ) = true ->
   unforced (NMprotect addr PGSZ PROT_RW) mo.
 Proof.
-  intros CE addr mo Ha0 Ha1 Hal Hcn Hcm Hbud. hnf.
+  intros CE addr mo Ha0 Ha1 Hal Hcn Hcm Hbud Hvd. hnf.
   assert (Hl : listNN_eqb [(Z_to_bv 64 addr, Z_to_bv 64 PGSZ)] [(Z_to_bv 64 addr, Z_to_bv 64 PGSZ)] = true)
     by (apply listNN_eqb_eq; reflexivity).
   exists (mkEffect (Z_to_bv 64 0) [] [(Z_to_bv 64 addr, Z_to_bv 64 PGSZ)]),
     (mprotect_model_next mo (Z_to_bv 64 addr) (Z_to_bv 64 PGSZ)), [].
   apply (proj2 (nstep_mprotect_iff _ _ _ _ _ _ _)). split; [|reflexivity].
-  rewrite mprotect_page_rw_eq by assumption. rewrite Hcn, Hcm, Hbud.
+  rewrite mprotect_page_rw_eq by assumption. rewrite Hvd. cbn [negb]. rewrite Hcn, Hcm, Hbud.
   cbv beta iota delta [andb]. rewrite Hl. reflexivity.
 Qed.
 

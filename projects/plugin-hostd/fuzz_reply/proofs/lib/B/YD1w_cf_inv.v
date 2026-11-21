@@ -1,4 +1,4 @@
-(* Image B's twin of lib/A/AD1w_cf_inv.v (a working branch 46f1762ad5a): the per-call invariant of the cf
+(* Image B's twin of lib/A/AD1w_cf_inv.v (a working branch): the per-call invariant of the cf
    driver loop (lib/B/YD1w_cf.v fr_LI = 0 <= ci <= 4 /\ W8's fr_gi) against the two statements YD1w_cf.v names for it,
    fr_lib_inv_stable and fr_lib_inv_init, both proved, at fr_gi's writability text (W8's ruling G4).  A's text and
    proofs with image B's modules and names (lib/B's W8 files, W_frame, YCfn / YCfn_cf's fr_FP_b, YE01 / YE2k from
@@ -309,7 +309,7 @@ Proof.
 Qed.
 
 (* ------------------------------------------------------------------ why fr_blk_ok *)
-(* YD1w_cf.v's fr_lib_inv_stable without fr_blk_ok (A's AD1w_cf.v at 3e82d89e10a): false at the real instance. *)
+(* YD1w_cf.v's fr_lib_inv_stable without fr_blk_ok (A's AD1w_cf.v): false at the real instance. *)
 Definition fr_lib_inv_stable_v0 : Prop :=
   forall ci0 regs ly S (W : world segs) mem ly' S' (W' : world segs) mem',
   fr_LI B ci0 ly S W mem ->

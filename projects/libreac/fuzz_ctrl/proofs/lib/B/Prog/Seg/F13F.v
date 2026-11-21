@@ -3,15 +3,15 @@
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
    source runs: lib/B/Prog/Seg/F13.v f13_evt_n (:1109), f13_evt (:1178) at a working branch
-     3803efccea0 (blob 7e3eed569c14334b0166d7ed1888d8289275645a);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-     lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+     (blob 7e3eed569c14334b0166d7ed1888d8289275645a);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+     lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    compare: split stretch, no <run>_of_F. f13_pre_F re-runs F13.v:1178-1190 (the segment's own 7 steps
      0x82340 -> the callee entry 0x859e4); the call of reac_ctrl_identity_fragment at 0x82358 returns to
      0x8235c, which IS the run's exit cut (B8235c_at), so there is no _post_F stretch. The walk
      (a Theorem Labs lane) composes the callee itself (split rule, parent 23:50Z), so the contract-composing
-     f13_evt_F / f13_evt_ro_F of dba073859bd are not published here.
-   The text of f13_pre_F is dba073859bd:proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F13F.v:25-46 (blob
+     f13_evt_F / f13_evt_ro_F are not published here.
+   The text of f13_pre_F is a commit:proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F13F.v:25-46 (blob
      4cda58e084cd24588e17666cc5964d8b57ac431a), re-checked against F13.v (blob unchanged between the two
      commits). *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.

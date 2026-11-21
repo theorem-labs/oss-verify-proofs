@@ -5,14 +5,15 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names and numbers changed; 1392 of its 1502 lines of code are new or changed and 901 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/R14.v, with its module paths, module names and addresses changed; 1437 of its 1585 lines of code are new or changed and 1354 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/R10B.v, with its module names changed; 93 of its 249 lines of code are new or changed and 1429 lines of the source are left out. *)
-(* lib/A/Prog/Seg/R10BFon.v -- route (C): the NARROWED twin of a Theorem Labs lane's R10BF.r10b_evt_F (Seg/R10BF.v:115), the
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* lib/A/Prog/Seg/R10BFon.v -- route (C): the NARROWED twin of a Theorem Labs lane's R10BF.r10b_evt_F (Seg/R10BF.v:116), the
    footprint run of both fragment arms (b = 6 and b = 5) of segment R10 of fuzz_ctrl image A (libreac v1.9.0), from
    0x81680 to the arm's exit pc.  Written by a Theorem Labs lane (a Theorem Labs lane's stage lane for seg_R10) under the Seg *F.v twin
    rule (a Theorem Labs lane 12:52Z, agreed): an ADDITIVE beside-file; this file edits no line of R10BF.v, which since the BASE below changed only by a proof-speed edit (the Local rs_hold / rs_hide pair, used in r10b_evt_F and r10b_evt_of_F) and in comment text.
    proves no function (kind: segment lemma).
 
-   BASE: a Theorem Labs lane's fold blob of R10BF.v at a working branch 4bae33fdf54, bef08c47c5a, which is also the
-   route (C) walk's blob (a working branch 1899bed1aee): no diff.
+   BASE: a Theorem Labs lane's fold blob of R10BF.v at a working branch, bef08c47c5a, which is also the
+   route (C) walk's blob (a working branch): no diff.
 
    WHY A TWIN: R10BF.r10b_evt_F's argument-load premise HPRE ends in R10B.r10b_pre (Seg/R10B.v:661), whose conjunct
    `shadow_rw m1` is the universal form; the route (C) walk's cut gives only ctl_rt_C (the cut's own shadow and the image's), so
@@ -25,7 +26,7 @@
                          (FGC.reac_ctrl_identity_fragment_shadow_R (fr + 2256) phi nb (fr + 2448) (fr + 2464)
                             (fr + 2496) st g) m1
    (r10b_pre_on below: R10B.r10b_pre with that one conjunct changed), and takes the callee in its _on form,
-   FGC.reac_ctrl_identity_fragment_contract_F_on (lib/A/Prog/reac_ctrl_identity_fragment_c.v 0359af7161a (the blob this tree had at release c5e779efe8c),
+   FGC.reac_ctrl_identity_fragment_contract_F_on (lib/A/Prog/reac_ctrl_identity_fragment_c.v 0359af7161a (the blob this tree had at release),
    a Theorem Labs lane, LANDED row 56 (a working note, not in this delivery)), in the place of R10BF's FRAGF.  Every other premise, the post (R10B.r10b_K, which
    names no shadow fact) and the proof script are R10BF.r10b_evt_F's; the script's two changed lines are the
    normalized shadow premise (A.ShadowRwOnT.shadow_rw_on_rel in the place of R10B.r10b_rel_sw) and the callee

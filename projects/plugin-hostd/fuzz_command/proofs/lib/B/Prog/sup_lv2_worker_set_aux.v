@@ -5,10 +5,11 @@
    (plugin-hostd/fuzz_command, fuzz_command.asan-ubsan, entry 0x8c0cc, 28 instructions): the call targets of
    record / arg_s / rec_shape_of / answer, the verb literal "lv2_worker_set" (.str.13, 0x21ee0, the listing's object
    A_OBJ 75) with the premise rec_shape_of's statement (lib/B/Prog/rec_shape_of_c.v:91-94) asks of it, and the model
-   step. After the ASan walk's lib/A/Prog/sup_lv2_worker_set_s2.v (a working branch 5c647899d9f:
+   step. After the ASan walk's lib/A/Prog/sup_lv2_worker_set_s2.v (a working branch:
    slw_verb, slw_verb_lit, slw_abytes_prefix, slw_unowned_rng and its rec_shape_of verb premise at :1409-1431), on
    B's astr_argA (lib/B/Prog/CmdRep.v): the read-only arm's checks cmd_addr_b, cmd_hull_b (lib/B/Prog/CmdChk.v) and
    the literal's end in cmd_ro_ends (lib/B/Prog/CmdRo.v) are closed computations. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

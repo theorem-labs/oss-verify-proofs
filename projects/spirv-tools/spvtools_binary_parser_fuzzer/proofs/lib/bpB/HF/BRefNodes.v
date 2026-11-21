@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (path_at's bound below TASK_SIZE). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Bef0Gc.
@@ -132,7 +133,8 @@ Section Openat.
 
   Definition path_at (p : list byte) : Prop :=
     (length p <= 4095)%nat /\ ~ In (Z_to_bv 8 0) p
-    /\ rdn segs mem (getr regs 11) (length p + 1) = Some (p ++ [Z_to_bv 8 0]).
+    /\ rdn segs mem (getr regs 11) (length p + 1) = Some (p ++ [Z_to_bv 8 0])
+    /\ (bv_unsigned (getr regs 11) + Z.of_nat (length p) < TASK_SIZE)%Z.
 
   Hypothesis Hfree : fd_lookup fds (alloc_fd fds) = None.
 
@@ -194,10 +196,16 @@ Proof.
   unfold brk_model_next, brk_maps_next. fold b.
   rewrite (proj2 (Z.ltb_ge (bv_unsigned req) (bv_unsigned b))) by lia. rewrite andb_false_r.
   rewrite (brk_grants_grow req req b Hreq0 Hb0 Hlt), (brk_unmaps_grow req b) by lia.
+  rewrite (page_round_up_Z_aligned (bv_unsigned b)) by (first [lia | exact Hbal]).
+  rewrite Hureq.
+  rewrite (page_round_up_Z_aligned (bv_unsigned b + d))
+    by (first [lia | rewrite Zplus_mod, Hbal, Hdal; reflexivity]).
+  unfold brk_page_range. rewrite (proj2 (Z.ltb_lt (bv_unsigned b) (bv_unsigned b + d))) by lia.
   cbn [app maps_subtract_ranges fold_left].
-  replace (req - b) with (Z_to_bv 64 d); [reflexivity|].
-  apply bv_eq. rewrite bv_sub_unsigned, Hureq.
-  rewrite bv_wrap_small by (unfold bv_modulus; lia). rewrite u64_lit by lia. lia.
+  replace (Z_to_bv 64 (bv_unsigned b)) with b
+    by (apply bv_eq; rewrite u64_lit by lia; reflexivity).
+  replace (bv_unsigned b + d - bv_unsigned b)%Z with d by lia.
+  reflexivity.
 Qed.
 
 Definition noaccess_model (a n : word) (m : Model) : Model :=

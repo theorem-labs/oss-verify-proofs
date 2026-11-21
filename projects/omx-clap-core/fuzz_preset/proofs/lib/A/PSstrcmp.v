@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-29 (PresetStrcmpA, c-libc-stdio lane): fuzz_preset.asan's strcmp interceptor, called at its
    trampoline __wrap_strcmp 0x42d20, in the contract of the second allocator instance:
    `ps_strcmp_realizes_cf : forall B, TfibSyms B -> astrcmp_realizes_cf tfibsegs B 0x42d20`
    (lib/Reusable/YGcfStr.v). Image A (fuzz_preset.asan) only.
-   2026-10-29 (pstr102, #102 pin A' asan 1be0f53d, twin bff8519b): presetstr-ro 45e489ec67c7's file (blob 59361db7ca8a)
+   2026-10-29 (pstr102, #102 pin A' asan 1be0f53d, twin bff8519b): presetstr-ro's file (blob 59361db7ca8a)
    with every image numeral moved from the old twin f0d2e8d4 to A' by symbol + offset (table in the commit),
    over the A' kit lib/K5/A10 (re-derived by tools/presetstr/presetstr_reloc.py); pc_strcmp_A cites CfImgA's
    cf_pc_strcmp by field name, as YGcfStr.v holds no pc any more.
@@ -19,7 +20,7 @@
    steps once into the body, so no separate statement at 0x432d4 is needed.
 
    DONORS
-   - the composition: origin/cold/port-state-rt-str 999a7102a6e (17818dd9abc an ancestor; the file is unchanged
+   - the composition: (an ancestor; the file is unchanged
      between them except its header), proofs/omx-clap-core/fuzz_state/lib/A/FSstrcmp.v, `fs_strcmp_realizesU`, Qed.
      Every lemma below names its donor lines FSstrcmp.v:N-M;
    - the infrastructure it composes, here taken from lib/A/PSstrlen.v (this tree's port of the donor's FSstrlen.v,
@@ -43,14 +44,14 @@
    `rom_view segs W mem`, in the place astrlen_realizes_cf has it. AStrcmpDef's own proof (fuzz_grant's symbolic
    walk) tracks each read, so it never needs rom_view; this route is the kit composition, whose normalisation
    MemNorm.evt_normalize_cj needs `ro_agree` of the whole store (lib/MemNorm.v:861-862), because the kit's mem_inv
-   forbids stored bytes at read-only addresses (lib/K5/Lib/Mem.v:106, :127-130) while data loads read the store
+   forbids stored bytes at read-only addresses (lib/K5/Lib/Mem.v:107, :128-131) while data loads read the store
    first (Mem.v:57); and ARcf has no read-only value clause. See YGcfStr.v's header.
 
    WHAT CHANGED, lemma by lemma (P = ported with paths changed; R = re-derived for preset A; S = swapped AR -> ARcf;
    N = new shape, forced by the target text; K = the K5 kit's copy of a K-kit lemma, needed because each kit has its
    OWN inductive `msteps` and its OWN inductive `cell` type, so those two are the only things in this file that
    cannot cross kits by conversion):
-     k5_msteps_bz, k5_evt_bz                        K  (no donor: PSstrlen.v:234-257's bz_msteps_l / bz_evt_l, between
+     k5_msteps_bz, k5_evt_bz                        K  (no donor: PSstrlen.v:235-258's bz_msteps_l / bz_evt_l, between
                                                        this tree's two kits instead of kit and lib/Lib)
      q_mbyte_mrd                                    K  PSbz_str.v mbyte_mrd in K5 names (both by reflexivity)
      nth_mk_slack, view_byte                        N  FSstrcmp.v:195-229 str_prefix_facts read the string out of
@@ -61,12 +62,12 @@
      meet_strings                                   N  FSstrcmp.v:91-116 strcmp_facts + :127-144 map_bv8_inj /
                                                        cstr_range: from str_meet, the two byte lists, their
                                                        bytes_at, the kit's strcmp_ok / strcmp_sz / strcmp_res
-     q_rw_of_ro, q_ro_c8_of_val_mem, q_ro_cons8,    K  PSstrlen.v:551-563, :583-603, :619-650 in K5 names
+     q_rw_of_ro, q_ro_c8_of_val_mem, q_ro_cons8,    K  PSstrlen.v:552-564, :584-604, :620-651 in K5 names
        q_c8_norm, q_c1_norm
      q_c1_of_z8                                     N  one byte of an 8-byte const cell: the K5 walk reads
                                                        0x13cadd and 0x13cae2, which AF0m pins inside the words at
                                                        0x13cad8 and 0x13cae0 (PSstrlen needed only whole cells)
-     q_ro_c8_of_k, chk_norm_q                       K  PSstrlen.v:417-427 chk_norm carried across the cell type
+     q_ro_c8_of_k, chk_norm_q                       K  PSstrlen.v:418-428 chk_norm carried across the cell type
      bz_strcmp                                      R  FSstrcmp.v:160-190 -> over istrcmp_wrap_closed (entry
                                                        0x42d20, depth 2272 = ISTRCMP_DEPTH); the kit's premises are
                                                        leptonica's: `kHighShadowEnd + 8 <= lo`
@@ -162,7 +163,7 @@ Lemma pc_strcmp_A : @cf_pc_strcmp CfImgA.CfImg_A = 0x42d20 /\ QEnt.e_wrap_strcmp
 Proof. split; reflexivity. Qed.
 
 (* ---- the two kits' runs are the same run (each kit has its OWN inductive `msteps`) ---- *)
-(* PSstrlen.v:234-239 between lib/K and lib/Lib; here between lib/K5 and lib/K *)
+(* PSstrlen.v:235-240 between lib/K and lib/Lib; here between lib/K5 and lib/K *)
 Lemma k5_msteps_bz : forall s s', QE.msteps QI.asegs s s' -> BE.msteps BI.asegs s s'.
 Proof.
   intros s s' H. induction H as [s|s s1 s2 Hs _ IH].
@@ -170,7 +171,7 @@ Proof.
   - eapply BE.msteps_cons; [exact Hs | exact IH].
 Qed.
 
-(* PSstrlen.v:242-243 *)
+(* PSstrlen.v:243-244 *)
 Lemma k5_evt_bz : forall (Q : machine_state -> Prop) ms, QE.evt QI.asegs Q ms -> BE.evt BI.asegs Q ms.
 Proof. intros Q ms (ms' & H & HQ). exists ms'. split; [exact (k5_msteps_bz ms ms' H) | exact HQ]. Qed.
 
@@ -278,7 +279,7 @@ Proof.
 Qed.
 
 (* ---- the cells, in the K5 kit's `cell` type (a different inductive from the K kit's) ---- *)
-(* PSstrlen.v:551-563 *)
+(* PSstrlen.v:552-564 *)
 Lemma q_rw_of_ro : forall m A cs, QSt.ro_cells QI.asegs m A cs ->
   forallb (fun i => negb (NM.cj_drop tfibsegs (Z_to_bv 64 (A + Z.of_nat i)))) (seq 0 (QC.cells_size cs)) = true ->
   length (QC.cells_bytes cs) = QC.cells_size cs ->
@@ -293,7 +294,7 @@ Proof.
   apply orb_false_iff in K as [K _]. exact K.
 Qed.
 
-(* PSstrlen.v:583-593 *)
+(* PSstrlen.v:584-594 *)
 Lemma q_ro_c8_of_val_mem : forall m A v, 0 <= A -> A + 8 <= 2 ^ 64 -> 0 <= v < 2 ^ 64 ->
   val_mem tfibsegs m A 8 v -> QSt.ro_cells QI.asegs m A [QC.C8 (Z_to_bv 64 v)].
 Proof.
@@ -306,7 +307,7 @@ Proof.
   rewrite QMS.unsigned_lit by lia. reflexivity.
 Qed.
 
-(* PSstrlen.v:596-603 *)
+(* PSstrlen.v:597-604 *)
 Lemma q_ro_cons8 : forall m A w cs, QSt.ro_cells QI.asegs m A [QC.C8 w] -> QSt.ro_cells QI.asegs m (A + 8) cs ->
   QSt.ro_cells QI.asegs m A (QC.C8 w :: cs).
 Proof.
@@ -316,7 +317,7 @@ Proof.
   assert (L : length (QM.le8 w) = 8%nat) by reflexivity. rewrite L. exact B2.
 Qed.
 
-(* PSstrlen.v:619-631 *)
+(* PSstrlen.v:620-632 *)
 Lemma q_c8_norm : forall B ly (W : world tfibsegs) mem a v,
   cell_holds B ly (aview tfibsegs (w_H W) mem) (z8 (ANum a) v) ->
   ((0 <=? a) && (a + 8 <=? 2 ^ 64) && (0 <=? v) && (v <? 2 ^ 64))%bool = true ->
@@ -331,7 +332,7 @@ Proof.
   - apply PSL.agree_cells. exact Hk.
 Qed.
 
-(* PSstrlen.v:634-650 *)
+(* PSstrlen.v:635-651 *)
 Lemma q_c1_norm : forall B ly (W : world tfibsegs) mem a v,
   cell_holds B ly (aview tfibsegs (w_H W) mem) (z1 (ANum a) v) ->
   ((0 <=? a) && (a + 1 <=? 2 ^ 64) && (0 <=? v) && (v <? 256))%bool = true ->
@@ -371,7 +372,7 @@ Qed.
 Lemma q_ro_c8_of_k : forall m A w, BSt.ro_cells BI.asegs m A [BC.C8 w] -> QSt.ro_cells QI.asegs m A [QC.C8 w].
 Proof. intros m A w (_ & HB). split; [cbn; tauto|]. exact HB. Qed.
 
-(* PSstrlen.v:417-427 chk_norm, carried across the cell type *)
+(* PSstrlen.v:418-428 chk_norm, carried across the cell type *)
 Lemma chk_norm_q : forall (H : word -> bool) mem x n,
   0 <= x -> 0 < n -> x + n <= 2 ^ 47 -> n <= 2 ^ 40 -> QK.region_in_mem x n ->
   range_addressable (aview tfibsegs H mem) SHADOW_OFF x n -> shadow_hull_vis (aview tfibsegs H mem) x n ->

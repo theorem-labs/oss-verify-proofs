@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the caller's stack floor, inside the stack window the launch maps, passed down to the buffer prepares and their wild free). *)
 From OSSVerify.Proofs.boost_beast.http_request.lib.Common Require KReplay.
 (* [comment removed for export] *)
 From OSSVerify.Proofs.boost_beast.http_request.lib.As Require TP_0Gc. (* [comment removed for export] *)
@@ -93,10 +94,11 @@ Scheme kc__1 := Elimination for Corelib.Init.Logic.and Sort Prop.
       (forall fp' ra', In (fp', ra') CH -> bv_unsigned sp + 16 <= fp') ->
       afuzz_tr_ok H ->
       hz_afuzz_cost N <= as_AL H s ->
+      hceil + 2244096 <= lo ->      (* LPS 727298f3: the stack floor the wild free (AsIface7) takes *)
       as_SR H (hz_post ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc s LB LF N lo B shi m mo) (mkCfg msF mo).
   Proof.
     intros until can. intros VIS A0 A1 SRC LEN NMAX DAL INB DEMP HP KREL BUD BUDC AUX SPB BHI SPAL ST CEIL LO SP47 ERR MI TP XI CAN HSm RAE FZ1 FZ2 AC ADN RF LF7 SK SHI
-           CHN PF CHB _ COST.
+           CHN PF CHB _ COST FLR.
     subst a0 a1 tp.
     pose proof (ah_costs H HH) as (CM0 & CMM & CF0 & CFM & CMS & CFS).
     assert (N0 : 0 <= N) by (clear - LEN; lia).
@@ -127,7 +129,7 @@ Scheme kc__1 := Elimination for Corelib.Init.Logic.and Sort Prop.
     eapply (ah_seq H HH).
     { eapply (hz_AO H HH H5 H5x H6 H6b H7 H8 ATR MA); [exact VIS| exact PU| exact SRC| exact LEN| exact HP| exact KREL| exact AUX| exact ST| exact ERR| exact MI| reflexivity
         | exact XI| exact CAN| exact HSm| exact FZ1| exact FZ2| exact AC| exact RF| exact SK| exact ADN| exact LF7| exact POT| exact MA0| exact CHN| exact CHB| exact TRK1
-        | clear - COST FIT L7 L9 L10; lia]. }
+        | clear - COST FIT L7 L9 L10; lia | exact FLR]. }
     intros [msF1 mo1] K1.
     (* [comment removed for export] *)
     eapply (ah_seq H HH). { eapply (hz_E8c H HH ATR MA); [exact PU| | exact K1]; clear - COST FIT L9 L10; lia. }

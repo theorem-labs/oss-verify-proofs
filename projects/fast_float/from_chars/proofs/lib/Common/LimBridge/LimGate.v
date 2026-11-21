@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's placement rule; the model's mremap). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs Run.
@@ -20,15 +21,22 @@ Proof.
   apply andb_false_iff in H. apply andb_false_iff. destruct H as [H | H]; [left; exact H | right; exact (leb_mono _ L L' Hle H)].
 Qed.
 
+Lemma room_relim : forall K m old old_n new_n oz nz,
+  mremap_inplace_room_b (m_relim K m) old old_n new_n oz nz = mremap_inplace_room_b m old old_n new_n oz nz.
+Proof. reflexivity. Qed.
+
+(* LPS 08b1429: the grow's mark reads ONE resolution, chosen by the room test: the in-place final
+   budget with room, the move charge without. Both are a single [negb (_ <=? L)]. *)
 Lemma mremap_gate_mono : forall L L' m old old_size new_size flags, (L <= L')%Z ->
   mremap_budget_refused_b old old_size new_size flags (m_relim L m) = false ->
   mremap_budget_refused_b old old_size new_size flags (m_relim L' m) = false.
 Proof.
   intros L L' m old old_size new_size flags Hle H. unfold mremap_budget_refused_b in *. cbv zeta in *.
   rewrite source_b_relim, uniform_relim, final_budget_relim, move_budget_relim in *.
+  rewrite ?room_relim in *.
   repeat match goal with |- (if ?c then _ else _) = false => destruct c; [first [reflexivity | exact H] |] end.
-  apply negb_false_iff in H. apply andb_true_iff in H. destruct H as [H1 H2]. apply Z.leb_le in H1, H2.
-  apply negb_false_iff. apply andb_true_iff. split; apply Z.leb_le; lia.
+  lazymatch goal with |- (if ?c then _ else _) = false =>
+    destruct c eqn:Ec; rewrite ?Ec in H; exact (leb_mono _ L L' Hle H) end.
 Qed.
 
 Lemma noreserve_backed_mono : forall L L' flags m nZ, (L <= L')%Z ->
@@ -101,6 +109,8 @@ Theorem gate_mono : forall L L' i m, (L <= L')%Z ->
 Proof.
   intros L L' i m Hle H. unfold alloc_budget_refused_b in *. cbv zeta in *.
   destruct (bv_unsigned (in_sysno i) =? 214)%Z; [exact (brk_gate_mono L L' m _ Hle H) |].
+  (* LPS 08b1429: munmap (215) is an alloc-family call, and its budget mark is [false] *)
+  destruct (bv_unsigned (in_sysno i) =? 215)%Z; [exact H |].
   destruct (bv_unsigned (in_sysno i) =? 216)%Z; [exact (mremap_gate_mono L L' m _ _ _ _ Hle H) |].
   destruct (bv_unsigned (in_sysno i) =? 222)%Z; [exact (mmap_gate_mono L L' m _ _ _ _ _ _ Hle H) |].
   destruct (bv_unsigned (in_sysno i) =? 226)%Z; [exact (mprotect_gate_mono L L' m _ _ _ Hle H) |].

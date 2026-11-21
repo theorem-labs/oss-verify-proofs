@@ -6,7 +6,7 @@
    (Section kf: replyb_AMA_x_kf / replyb_AFREE_x_kf / replyb_AFREE0_x_kf / replyb_ARE_x_kf; Section chk) are removed:
    the triv rules are deleted, the kf restatements quoted top_x's relation before the arodata conjunct
    (lib/B/CfRBridgeRulesB.v's Section TOPK now carries its own fit check of that relation), and nothing used them.
-   This mirrors lib/A/ReplyInstFacts.v, which keeps only reply_api_env since commit 454e7065c27.
+   This mirrors lib/A/ReplyInstFacts.v, which keeps only reply_api_env.
    proves no function (kind: segment lemma). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

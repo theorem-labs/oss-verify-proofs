@@ -9,11 +9,12 @@
      0x84848 lw a0,0(s4); 0x8484c beqz a0,84858; 0x84850 mv a0,s5; 0x84854 jal check_no_loss_read;
      0x84858 addi s4,s4,4; 0x8485c addi s5,s5,96; 0x84860 bne s4,s6,84848.
    The loop is gp4_loopX, by induction on the slots left: one trip is gp4_head (0x84848 -> 0x84858, the call or not)
-   and gp4_tail (0x84858 -> 0x84848 or 0x84864).  check_no_loss_read is taken by W3's contract (W_contract.v:483
-   cnlr_spec on the W8 lane head a3c72093c22: Section hypothesis CNLR), whose post aleaf_post keeps the donor
+   and gp4_tail (0x84858 -> 0x84848 or 0x84864).  check_no_loss_read is taken by W3's contract (W_contract.v:484
+   cnlr_spec on the W8 lane head: Section hypothesis CNLR), whose post aleaf_post keeps the donor
    journal's bytes, presence and errno's view; the loop's post keeps those bytes (gp4_kcls, gp4_keep), and gp4_c1_t0
    carries GC1's facts to GT0 with it (the model's cells through GN_HGcells, the read-only image through
    GN_ROM_PIN). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -374,7 +375,7 @@ Hypothesis HZS : GN_HZS B.
 Hypothesis RIR : GN_RI_read RINV.
 #[local] Notation VAL := (@pa_val _ fr_prog_listing PB_fr).
 #[local] Notation BASE := (@pa_val _ fr_prog_listing PB_fr A_TEXT).
-(* check_no_loss_read (0x85904): W_contract.v cnlr_spec (:454) on the W8 lane head a3c72093c22, verbatim
+(* check_no_loss_read (0x85904): W_contract.v cnlr_spec (:454) on the W8 lane head, verbatim
    (lf_arm_gone's CNLR; _remove.v:405 takes the same text) *)
 Hypothesis CNLR : cnlr_spec B (BASE + AF_fr_check_no_loss_read).
 (* what carries the model and the read-only image across that call, as p5 takes them (base :687-709): the model's
@@ -408,7 +409,7 @@ Definition gp4_jr (cx : lfcx) (fpos : Z) (ly : alayout) (S : astate) (W : world 
     (mem : word -> option byte) (md : Model) (kk : Z) : Prop :=
   ajournal_gx segs B G_fr 0 [] LLVMF_STK (spZ (c_regs cx)) (lf_FP fr_FP cx)
     (c_ly cx) (c_S cx) (c_W cx) (c_mem cx) (c_md cx) [(1, fpos)] ly S W mem md kk.
-(* the bytes check_no_loss_read's post keeps at its call sp = s1 (aleaf_post, W_contract.v:128: the donor journal's
+(* the bytes check_no_loss_read's post keeps at its call sp = s1 (aleaf_post, W_contract.v:129: the donor journal's
    view clauses, Reusable/YCbq.v:359-367, and errno's view): the stack from alloc_ceiling up but the callee's 16-byte
    frame below s1, every live block, the image bytes that are no allocator static, errno, and every frame of S with
    its shadow *)

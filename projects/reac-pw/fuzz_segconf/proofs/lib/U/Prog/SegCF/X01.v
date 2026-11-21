@@ -3,8 +3,9 @@
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/Prog/LLVMFuzzerTestOneInput_fr.v, with its module paths and module names changed; 457 of its 575 lines of code are new or changed and 409 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/U/Prog/SegCF/Tac_slot.v, with its module paths and module names changed; 225 of its 259 lines of code are new or changed and 541 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Cut-free (agreement) copy of lib/U/Prog/Seg/X01.v over U/Prog/SlotInvCF.v (SR := SRcf), as reac-pw/fuzz_pin's
-   U/Prog/SegCF/*.v copy its U/Prog/Seg/*.v (commit a2a7540da98): the same text with
+   U/Prog/SegCF/*.v copy its U/Prog/Seg/*.v: the same text with
    SlotInvCF imported after SlotFR / SlotInv, Seg -> SegCF for the slot's tactic files, frame_facts_ubsan ->
    SlotInvCF.frame_facts_cf and the allocator contracts in their cut-free forms (frame_allocator_cf,
    malloc_contract_cfg, free_contract_cf, calloc_contract_cfg); the closing theorem states SlotTopCF.seg_X01_cf_stmt.
@@ -22,7 +23,7 @@
    Then 0x1420c `mv a0,zero`, the thirteen restores ra, s0 .. s11 from [sp + 0x88, sp + 0xf0) = the saved bytes FR
    keeps at S - 104 (0x14210 .. 0x14240), 0x14244 `addi sp,sp,0xf0`, 0x14248 `ret`: Post by Tac_b8.b8_post_FR at the
    cut's FP state. No trap is reached in this stretch.
-   Template: reac-pw/fuzz_role's U/Prog/Seg/X01.v (commit cb8205fb6109; two frees there), with
+   Template: reac-pw/fuzz_role's U/Prog/Seg/X01.v (two frees there), with
    segconf's pcs, its four frees and frame 240.
    Part of the proof of LLVMFuzzerTestOneInput (segment X01 of its walk); no released proof of fuzz_segconf's
    LLVMFuzzerTestOneInput exists. *)

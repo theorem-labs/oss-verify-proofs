@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Theorem Labs, 2026-10: COPY (image-generic, unchanged) of lib/A/Prog/PRW_CallerJ.v at origin/cold/h-hpreset-7-walk-S7B 7819c4b4583 (blob e7aacedc91b5); the #102 base lacks it *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10: COPY (image-generic, unchanged) of lib/A/Prog/PRW_CallerJ.v (blob e7aacedc91b5); the #102 base lacks it *)
 (* fuzz_preset, program walks: the DISCHARGE KIT of the caller-window post (PRH_Base.v fwin / fpostW / fpostWF,
-   kit 5acdafdf5d6 :274-294), ONE copy for every lane (slice S4, sole writer). Statements and their proofs; no walk.
+   kit :274-294), ONE copy for every lane (slice S4, sole writer). Statements and their proofs; no walk.
    What a walk of a function in the caller-window form needs that fpostW itself does not give:
    - START: ajournal_x_init_W, the widened journal (STK + e) (sp + e) at the entry state, from afn_pre_x and fwin.
    - CALL of a callee in caller-window form: aj_call_xW (aj_call_x of c-omx-alloc's YCbqGcall.v with the callee's
-     post in fpostW form). It closed a gap of kit 5acdafdf5d6: that kit's ajournal_x_sub (on this tree YCbqG.v:1546, with fp_sub_x) asked the
+     post in fpostW form). It closed a gap of kit: that kit's ajournal_x_sub (on this tree YCbqG.v:1547, with fp_sub_x) asked the
      callee's FP inside the caller's FP-and-live-blocks or its new blocks, and fpostW's FP holds STACK cells.
      ajournal_x_sub_W widens that side condition by the caller's own window, and PROVES the widening sound (the
      side condition is used only on block bytes, frame bytes and the sink address 0, all below alloc_ceiling, while
@@ -20,7 +21,7 @@
    reflexivity), so a walk closes the text with `exact` after unfolding.
    Donor of cj_kept: cgif_file_fuzzer lib/YC20.v:311-325 tlzw_kept and lib/YC8n.v:272-287 tlzw_kept_of_journal
    (origin/release/pau-projects-recipes), generalised to ajournal_x's keep clauses; of ajournal_x_sub_W and aj_call_xW:
-   YCbqG.v:499-583 ajournal_x_sub / afn_pre_x_at and c-omx-alloc 09d7536b62b YCbqGcall.v aj_call_x.
+   YCbqG.v:500-584 ajournal_x_sub / afn_pre_x_at and c-omx-alloc YCbqGcall.v aj_call_x.
    No address literal; numerals are LENGTH (16, 4096, 2 ^ 64). No image constant. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -71,7 +72,7 @@ Definition fpostWF_x (STK d : Z) (FP : list (Z * Z)) (regs : bvmap 5 word) ly S 
     aregs_preserved regs regs' /\ Q ly' S' Hp' W' regs' mem' md'.
 
 (* ---- what a walk leaves relative to a state (lyc Sc W memc mdc) of its own, at a later state (ly2 S2 W2 mem2 md2):
-   ajournal_x's keep clauses (YCbqG.v:115-138), with the walker's own window [sp - STKf, sp) and its written cells OR
+   ajournal_x's keep clauses (YCbqG.v:116-139), with the walker's own window [sp - STKf, sp) and its written cells OR
    (the stack cells fpostW's FP names, or all of FP) exempted; FPc: the heap bytes (and sink) written in blocks live
    at the first state. Blocks allocated in between are free to write (they are not blocks of the first state). ---- *)
 Definition cj_kept (STKf sp : Z) (OR FPc : list (Z * Z))
@@ -132,7 +133,7 @@ intros a Hx He _. exact (F5 a Hx He).
 Qed.
 
 Section l.
-(* the head length of a harness block, the parameter of the journal's law record (YCbqG walks-new d15706bda36) *)
+(* the head length of a harness block, the parameter of the journal's law record (YCbqG walks-new) *)
 Variable HL : Z.
 Hypothesis LAWS : AR_laws_x segs B ARx HL.
 Hypothesis segs_low : forall a, in_img segs a -> 0 <= a < kLowMemEnd.
@@ -348,8 +349,8 @@ split; [intros a Ha; exfalso; lia | split; [exact HP | exact HQ]].
 Qed.
 
 (* ---- CALL of a caller-window callee (the gap G8). The side condition on the callee's footprint FP1, ONE shape for every
-   window-journal call rule: the first three disjuncts are the engine of record's ajournal_x_sub (YCbqG.v walks-new
-   ea24ad37a3c, :666-677, as c-omx-alloc f3963d079661 uses it): the caller's FP, a block the callee made and kept, a
+   window-journal call rule: the first three disjuncts are the engine of record's ajournal_x_sub (YCbqG.v walks-new,
+   :666-677, as c-omx-alloc uses it): the caller's FP, a block the callee made and kept, a
    frame the caller made since its entry (own); the FOURTH is this kit's: a byte of the caller's own window
    [sp0 - STK, sp0), which needs neither a block nor an entry in the caller's FP (hex4's out at parse_string's
    sp + 36; pj_parse's q at sp + 8). ---- *)
@@ -512,8 +513,8 @@ split; [| split; [exact HJ1 | split; [exact HX | split; [exact HP | exact HK]]]]
 change own with ([] ++ own). eapply ajournal_x_sub_W; [exact HJ | exact HJ1 | zlia | zlia | exact HF].
 Qed.
 (* the window AND float twin (check_as_written calling ex_value): the callee's text gives fpostWF_x; the continuation
-   runs at the callee's float state fx' (frm back to 0, fs0-fs11 kept), as c-omx-alloc's aj_call_xF (YCbqGcall.v:106,
-   0698be97255); a walk moves its st_ok there with YCbqGcall's st_ok_restrict_xfx. *)
+   runs at the callee's float state fx' (frm back to 0, fs0-fs11 kept), as c-omx-alloc's aj_call_xF (YCbqGcall.v:107);
+   a walk moves its st_ok there with YCbqGcall's st_ok_restrict_xfx. *)
 Lemma aj_call_xWF : forall W (regsc : bvmap 5 word) memc (pc : Z) STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k
   STK1 e1 FP1 (o : Z) raw ch1
   (K : alayout -> astate -> list Z -> world segs -> bvmap 5 word -> (word -> option byte) -> Model -> Prop),

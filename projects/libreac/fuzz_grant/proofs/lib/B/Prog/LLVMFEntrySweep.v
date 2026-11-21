@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: image-B walk segment; lines 47-55 follow the shape of cgif_file_fuzzer lib/A/AC8a.v:28 (licscan run). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The SWEEP phase of fuzz_grant's entry function on IMAGE B: its eight segments
    composed. `ge_sweep` is what the phase before it (the admission tests) applies, and
    it hands on to the phase that walks the hand-built allocation.
 
-   Adapted from lib/A/Prog/GrantEntrySweep.v (a working branch afd75724b5b, blob 2859b8cb4,
+   Adapted from lib/A/Prog/GrantEntrySweep.v (a working branch, blob 2859b8cb4,
    89 lines), which carries no licence header of its own.
    Image B's read-only tables come from one premise,
    `GrantBContracts.IMG_LLVMF_SWEEP`, which `hyps_LLVMFuzzerTestOneInput` holds, where

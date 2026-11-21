@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the shadow-fill entries __asan_set_shadow_00 (0x546bc) and __asan_set_shadow_f5 (0x547c4) of libreac/fuzz_grant, over the asan-state definitions and the musl memset walk of the cgif_file_fuzzer proof as libreac/fuzz_grant holds them; one image instead of the two-image selector; addresses; module names; tfxsegs and TfxSyms become tfibsegs and GrantSyms. *)
-(* Modified by Theorem Labs, 2026-10: copied from libreac/fuzz_grant's lib/A/Rt/SetShadow.v (a working branch 0ddaa6b5507) for libreac/fuzz_boxreg: only __asan_set_shadow_f5 (0x54060; boxreg's program never calls __asan_set_shadow_00), its GOT slot 0x98ed8 and _ZN14__interception11real_memsetE 0x9ad28 (-> memset 0x92588), all read from fuzz_boxreg.asan; GrantSyms becomes BoxregSyms; module names. *)
+(* Modified by Theorem Labs, 2026-10: copied from libreac/fuzz_grant's lib/A/Rt/SetShadow.v (a working branch) for libreac/fuzz_boxreg: only __asan_set_shadow_f5 (0x54060; boxreg's program never calls __asan_set_shadow_00), its GOT slot 0x98ed8 and _ZN14__interception11real_memsetE 0x9ad28 (-> memset 0x92588), all read from fuzz_boxreg.asan; GrantSyms becomes BoxregSyms; module names. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

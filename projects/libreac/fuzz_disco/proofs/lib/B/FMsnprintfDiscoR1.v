@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfR1.v
-   (a working branch 0ddf65fd8cc) for libreac/fuzz_disco's ASan+UBSan image (G9 row R9-Y-instance; the row text names
+   (a working branch) for libreac/fuzz_disco's ASan+UBSan image (G9 row R9-Y-instance; the row text names
    lib/B/RT_pf_disco_inst.v, the file name is a Theorem Labs lane's ruling). New file. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_disco's snprintf route at disco's own pieces pf_disco_piece = literals, %s, %d, %02x, %llu (lib/Rt/PfFacts.v:87),
    as FMsnprintfFmI.fm_snprintf_gxaP at PK = pf_disco_piece, every piece with its four arms (the three seam arms of
    FMgxaSeamPf.v and the printf_common arm of RT_pf_sh.v). Each arm is its row's lemma, taken by path:

@@ -17,8 +17,8 @@
    No instrumented access lies between CRT_LOOP_OUT and CRT_RET_BCMP (the ld's are stack slots): the only guard
    on this stretch is the `bnez a0` at CRT_RET_BCMP into the abort block, refuted by the next piece from a0 = 0.
 
-   The braid leaf is the Theorem Labs lane statement (lib/B/Prog/reac_braid_encode_cg.v, a working branch
-   77469213fc2): no mem_inv and no shadow_rw; its read-only premises (:70-73) over
+   The braid leaf is the Theorem Labs lane statement (lib/B/Prog/reac_braid_encode_cg.v, a working branch):
+   no mem_inv and no shadow_rw; its read-only premises (:70-73) over
    REAC_BRAID_ENCODE_RO_RD come from the cut's crtB_rom_on (crtB_ls_ro), the vm_computed fact that this set lies
    in a non-writable loaded segment (crtB_braid_ro_rom) and the stack window being above the image
    (crtB_ls_frame_off).  The piece is proved for any RO_RD holding REAC_BRAID_ENCODE_RO_RD (crtB_encbcmp_sub) and

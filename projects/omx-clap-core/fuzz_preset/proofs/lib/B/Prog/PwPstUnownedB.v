@@ -4,7 +4,7 @@
    pcc102_fuzz_alloc_peak_reset_of_walk): no byte of the seven harness statics of the kit's prh_pst (PRH_Base.v :448-451:
    alloc.c's g_live, g_peak, g_count, g_fail_at, g_ran_out, #102's g_most, and fuzz_preset.c's g_own_ran_out:
    prh_img_B's pi_g_<x> / pi_gz_<x>) is a byte of an owned static area of B.
-   RELOCATED AND RE-FIT 2026-10-29 from the old-pin file (a working branch 5f6a2b85e1b9, blob eb94eafd686c,
+   RELOCATED AND RE-FIT 2026-10-29 from the old-pin file (a working branch, blob eb94eafd686c,
    image f8f98a95, five statics over 91 owned rows): the code is unchanged; prh_pst now has seven cells and YF0m's
    Tfib_owned_static 93 rows, both generated for B' (lib/B/PRH_ImgB.v blob 3216eca68342, lib/Reusable/YF0m.v blob
    f82202ebccdf), and pst_off_owned_B decides the new lists. Section 2 gains the closed #102 record field at TfibB.

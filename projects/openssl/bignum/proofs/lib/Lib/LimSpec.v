@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mremap's grow and move, brk's page-granular ledger, the TASK_SIZE gates and the vDSO). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs Run.
@@ -58,8 +59,10 @@ Proof.
   constructor; [intros _; exact arm_94|].
   constructor; [intros _; exact arm_96|].
   constructor; [intros _; exact arm_98|].
+  constructor; [intros _; exact arm_99|].
   constructor; [intros _; exact arm_101|].
   constructor; [intros _; exact arm_113|].
+  constructor; [intros _; exact arm_114|].
   constructor; [intros _; exact arm_119|].
   constructor; [intros _; exact arm_123|].
   constructor; [intros _; exact arm_124|].
@@ -110,6 +113,7 @@ Proof.
   constructor; [intros _; exact arm_260|].
   constructor; [intros _; exact arm_261|].
   constructor; [intros _; exact arm_278|].
+  constructor; [intros _; exact arm_287|].
   constructor; [intros _; exact arm_435|].
   constructor; [intros _; exact arm_439|].
   constructor.
@@ -127,6 +131,8 @@ Proof.
   - exact (lim_blind_unmodeled i m o H).
 Qed.
 
+(* [comment removed for export] *)
+(* [comment removed for export] *)
 Lemma within_limit_up : forall L X, (mlim X <= L)%Z -> vm_backing_within_limit X = true -> vm_backing_within_limit (setL L X) = true.
 Proof.
   intros L X HL H. unfold vm_backing_within_limit in *. apply Z.leb_le in H. apply Z.leb_le.
@@ -146,7 +152,10 @@ Proof.
   cbn [andb] in *. apply negb_false_iff in H. apply negb_false_iff.
   unfold brk_budget_ok in *. cbv zeta in *. apply Z.leb_le in H. apply Z.leb_le.
   change (vm_backing_used (setL L m)) with (vm_backing_used m).
-  change (vm_brk (m_vmmaps (setL L m))) with (vm_brk (m_vmmaps m)).
+  (* LPS 08b1429: brk_budget_ok charges brk_grow_bytes (vm_maps) req, not req - vm_brk; setL
+     changes only vm_limit, which brk_grow_bytes does not read. *)
+  change (brk_grow_bytes (m_vmmaps (setL L m)) req) with (brk_grow_bytes (m_vmmaps m) req).
+  try change (vm_brk (m_vmmaps (setL L m))) with (vm_brk (m_vmmaps m)).
   change (vm_limit (m_vmmaps (setL L m))) with L. unfold mlim in HL. lia.
 Qed.
 
@@ -207,6 +216,10 @@ Proof.
   intros L m addr len prot HL. unfold mprotect_budget_refused_b. cbv zeta.
   change (vm_noaccess (m_vmmaps (setL L m))) with (vm_noaccess (m_vmmaps m)).
   change (vm_maps (m_vmmaps (setL L m))) with (vm_maps (m_vmmaps m)).
+  (* LPS 08b1429: the refusal first tests the vDSO/vvar pair; [setL] changes only vm_limit, so the
+     pair's position is the same on both sides and the two gates destruct together. *)
+  try change (m_kernel (setL L m)) with (m_kernel m).
+  try change (vdso_top (m_vmmaps (setL L m))) with (vdso_top (m_vmmaps m)).
   repeat match goal with
   | |- (if ?b then _ else _) = false -> (if ?b then _ else _) = false => destruct b; [try (intros _; reflexivity)|]
   end.
@@ -224,15 +237,19 @@ Proof.
   intros L m old old_size new_size flags HL. unfold mremap_budget_refused_b. cbv zeta.
   change (mremap_source_b (m_vmmaps (setL L m))) with (mremap_source_b (m_vmmaps m)).
   change (mremap_backing_uniform_b (setL L m)) with (mremap_backing_uniform_b m).
+  (* LPS 08b1429: the refusal is no longer negb (final && move); the room test picks ONE gate.
+     [setL] changes only vm_limit, which the room test does not read. *)
+  change (mremap_inplace_room_b (setL L m)) with (mremap_inplace_room_b m).
   repeat match goal with
   | |- (if ?b then _ else _) = false -> (if ?b then _ else _) = false => destruct b; [try (intros _; reflexivity)|]
   end.
   all: try (intros _; reflexivity).
-  intros H. apply negb_false_iff in H. apply negb_false_iff. apply andb_true_iff in H as [H1 H2]. apply andb_true_iff. split.
-  - apply mremap_final_budget_b_up; assumption.
-  - unfold mremap_move_budget_b in *. apply Z.leb_le in H2. apply Z.leb_le.
-    change (mremap_move_charge (setL L m)) with (mremap_move_charge m). change (vm_limit (m_vmmaps (setL L m))) with L.
-    unfold mlim in HL. lia.
+  all: intros H; apply negb_false_iff in H; apply negb_false_iff;
+    first [ apply mremap_final_budget_b_up; assumption
+          | unfold mremap_move_budget_b in *; apply Z.leb_le in H; apply Z.leb_le;
+            change (mremap_move_charge (setL L m)) with (mremap_move_charge m);
+            change (vm_limit (m_vmmaps (setL L m))) with L;
+            unfold mlim in HL; lia ].
 Qed.
 
 Lemma alloc_mark_up : forall L i m, (mlim m <= L)%Z ->
@@ -240,12 +257,20 @@ Lemma alloc_mark_up : forall L i m, (mlim m <= L)%Z ->
 Proof.
   intros L i m HL. unfold alloc_budget_refused_b. cbv zeta.
   destruct (bv_unsigned (in_sysno i) =? 214)%Z; [apply brk_mark_up; exact HL|].
+  (* LPS 08b1429: munmap (215) joined the allocation family; its budget never refuses
+     ([Mmap.munmap_budget_refused_b] is [false]). *)
+  destruct (bv_unsigned (in_sysno i) =? 215)%Z; [intros _; reflexivity|].
   destruct (bv_unsigned (in_sysno i) =? 216)%Z; [apply mremap_mark_up; exact HL|].
   destruct (bv_unsigned (in_sysno i) =? 222)%Z; [apply mmap_mark_up; exact HL|].
   destruct (bv_unsigned (in_sysno i) =? 226)%Z; [apply mprotect_mark_up; exact HL|].
   intros _. reflexivity.
 Qed.
 
+Lemma refusal_b_setL : forall L i m r, refusal_b i (setL L m) r = refusal_b i m r.
+Proof. reflexivity. Qed.
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
 Lemma lookup_214 : lookup_arm spec_table 214 = Some (mkSpecArm 214 (fun i => brk_spec (in_arg i 0) i)).
 Proof. reflexivity. Qed.
 Lemma lookup_215 : lookup_arm spec_table 215 = Some (mkSpecArm 215 (fun i => munmap_spec (in_arg i 0) (in_arg i 1) i)).
@@ -294,6 +319,7 @@ Lemma mark_226 : forall i m, bv_unsigned (in_sysno i) = 226%Z ->
   alloc_budget_refused_b i m = mprotect_budget_refused_b (in_arg i 0) (in_arg i 1) (in_arg i 2) m.
 Proof. intros i m Hn. unfold alloc_budget_refused_b. cbv zeta. rewrite Hn. reflexivity. Qed.
 
+(* [comment removed for export] *)
 Theorem syscall_spec_at : forall L i m,
   alloc_budget_refused_b i m = false ->
   alloc_budget_refused_b i (setL L m) = false ->
@@ -319,6 +345,7 @@ Proof.
   - destruct (syscall_spec_blind i m o E Ho) as [Ha Hb]. split; [apply Ha | exact Hb].
 Qed.
 
+(* [comment removed for export] *)
 Corollary syscall_spec_up : forall L i m o,
   (mlim m <= L)%Z -> alloc_budget_refused_b i m = false ->
   syscall_spec i m o -> syscall_spec i (setL L m) (omap L o) /\ opres m o.
@@ -327,6 +354,7 @@ Proof.
   exact (syscall_spec_at L i m R (alloc_mark_up L i m HL R) (fun _ => HL) o Ho).
 Qed.
 
+(* [comment removed for export] *)
 Corollary syscall_spec_down : forall L i m o,
   (L <= mlim m)%Z -> alloc_budget_refused_b i (setL L m) = false ->
   bv_unsigned (in_sysno i) <> 216%Z ->
@@ -338,15 +366,18 @@ Proof.
   exact (syscall_spec_at L i m R1 R (fun E => False_ind _ (Hn E)) o Ho).
 Qed.
 
+(* [comment removed for export] *)
 Lemma mremap_has_outcome : forall old old_size new_size flags i m, exists o, mremap_spec old old_size new_size flags i m o.
 Proof.
   intros old old_size new_size flags i m. unfold mremap_spec.
   destruct (negb (bv_unsigned flags =? MREMAP_MAYMOVE)%Z); [exists Unmodeled; reflexivity|].
   destruct (negb (bv_unsigned old mod page_size =? 0)%Z); [eexists; unfold err_ret, ret_only; reflexivity|].
   destruct (page_align_is0_b new_size); [eexists; unfold err_ret, ret_only; reflexivity|].
+  (* LPS 08b1429: a page-aligned new length over TASK_SIZE is -EINVAL before the old length is read *)
+  destruct (TASK_SIZE <? page_round_up_Z (bv_unsigned new_size))%Z; [eexists; unfold err_ret, ret_only; reflexivity|].
   destruct (page_align_is0_b old_size); [exists Unmodeled; reflexivity|].
   cbv zeta.
-  match goal with |- exists o, bind get_model ?k i m o =>
+  match goal with |- exists o, bind get_model ?k i m o => 
     assert (H : exists o, k m i m o); [| destruct H as [o H]; exists o; apply bind_get_model; exact H] end.
   cbv beta.
   match goal with |- context [if ?b then _ else _] => destruct b end; [exists Unmodeled; reflexivity|].

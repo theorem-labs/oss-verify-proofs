@@ -2,15 +2,16 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10-30 (a Theorem Labs lane, row G-BRE): the image-B (asan-ubsan) walk of plugin-hostd's
    relay_event in the `_x` + room form, pb_relay_event_x : re_spec_x B PST ARx MT RP MMAX G RG (BASE +
-   AF_fr_relay_event).  A three-way merge: base lib/A/W_relay_event.v at a working branch 26a1ccdf1c1 (the AR walk
-   lib/B/W_relay_event.v was ported from), one side lib/B/W_relay_event.v (image B's numerals, 01344381e6c), the
-   other lib/A/W_relay_event.v at 9f5567c9e80 (a Theorem Labs lane row C1: the walk over any allocator relation ARx with BLKM
+   AF_fr_relay_event).  A three-way merge: base lib/A/W_relay_event.v at a working branch (the AR walk
+   lib/B/W_relay_event.v was ported from), one side lib/B/W_relay_event.v (image B's numerals), the
+   other lib/A/W_relay_event.v (a Theorem Labs lane row C1: the walk over any allocator relation ARx with BLKM
    and HLPST; a Theorem Labs lane room round F3: RP after MT, re_spec_x's room premises kr / RM / the counts at relay_event's
    peak handed to send_line unchanged, the post's RM at S' send_line's).  Both originals are in the form of the cgif walks of
    proofs/cgif/cgif_file_fuzzer/lib/A/AC8h.v (runtime call sites) and lib/A/ACh2.v with lib/YC85.v cl_callS (the
    internal call), here over lib/B/W_journal_x.v's ajournal_gx_x.  This is the one generic walk: lib/B/W_relay_event.v's
    AR statement pb_relay_event is its corollary at ARx := ARi0, PST := [], RP := RP_AR (a Theorem Labs lane, Section cAR). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/W_relay_event_x.v, with its module names changed; 23 of its 71 lines of code are new or changed and 759 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Satisfiability at the real image B of the R contract texts (W_contract_xR.v), at R := wle' SEGS RZ_cf: each
    lemma derives the R form from the existing strict walk, under that walk's own Section hypotheses. The import block
    is the walk file's (W_relay_event_x.v), so each hypothesis reads as there. *)

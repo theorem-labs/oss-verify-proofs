@@ -11,17 +11,17 @@
    rule 24: no function proved
    rule 24: proves no function (kind: segment lemma). No walk, no machine state.
    Proofs from two sub-lanes, Qed in uncommitted files, gathered here unchanged but for the vl_
-   prefix. SET: a working branch on a working branch da5334ad793; texts a working branch
-   49745a1a153 (PRH_FnParse.v blob e21b8b02d69e), texts on walkkit-next 0afb3f76c28. A-only. No numeral is an
+   prefix. SET: a working branch on a working branch; texts a working branch
+   (PRH_FnParse.v blob e21b8b02d69e), texts on walkkit-next. A-only. No numeral is an
    address.
    A'LEDGER (a Theorem Labs lane, 2026-10-29), against the kit text PRH_FnParse.v blob 94232293d483 / PRH_Base.v blob
-   ee2f5cd7ed35 (a working branch 3ac20a5c9e30): rd_ledger_move takes g_most (most) and the call's
+   ee2f5cd7ed35 (a working branch): rd_ledger_move takes g_most (most) and the call's
    ALL-GRANTED trace gt, keys g_ran_out on prh_oks's per-call requests (prh_ev_reqs tr) against most, and adds the
    refusal peak prh_refused_peak over prh_ev_helds gt. vl_ledger_move_app composes a granted prefix tr1 (any gt1:
    with no refusal the refusal peak is 0) with the next call's move at its gt2 into the move at gt = tr1 ++ gt2;
    vl_oks_granted takes prh_oks's ns and most. The six pure trace helpers this file took from VrdIStep.v are proved
    here (Local), so the file no longer Requires VrdFrame / VrdIElem / VrdIStep and builds before them. *)
-(* The kit's CUT (lane RBase, a working branch 7cdbb61b5fa0, PRH_FnParse.v blob f0d92dcec7e9, PRH_Base.v blob
+(* The kit's CUT (lane RBase, a working branch, PRH_FnParse.v blob f0d92dcec7e9, PRH_Base.v blob
    ef7c8ca98529): rd_room's live conjunct is PER EVENT, PRH_Base.prh_live_evs S (rd_hevs gt) (FnParse:251; LIVE_rd is
    retired, a Theorem Labs lane's entry-sum ruling). vl_room_tail's statement moves for that reason only: the live room of the
    continuation is the tail of the per-event list from the state after the prefix, so its premises are the prefix's

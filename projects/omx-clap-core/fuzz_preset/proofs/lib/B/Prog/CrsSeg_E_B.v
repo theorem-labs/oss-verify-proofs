@@ -2,21 +2,22 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACem.v, with its module paths and module names changed; 884 of its 944 lines of code are new or changed and 391 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image B' (the #102 pins, asan-ubsan): SEGMENT E of the walk of check_reject_clean_starved against the kit's
    text tcheck_reject_clean_starved_specX, row E_B (a Theorem Labs lane's internal file BRIEF-crcs-Bprime-seg.md; family lead a Theorem Labs lane).
    rule 24: proves function check_reject_clean_starved on image B' (reuse search: `proof-index check_reject_clean_starved 0x82160`, the internal file
    index-crcs-Aprime.out, and an internal record of that lookup; CONFIRM by checker LookupCheckCrcsAp. At that search origin/ossv/recipes had no lib/A or lib/B, its
    released rows were lib/Prog (plain) and lib/U/Prog (ubsan) only, and no released asan Proof.v existed for check_reject_clean_starved).
-   DONOR: the A' segment lib/A/Prog/CrsSeg_E.v (blob c7928c832ea9, a working branch 80467ffbd3ed, kit
+   DONOR: the A' segment lib/A/Prog/CrsSeg_E.v (blob c7928c832ea9, a working branch, kit
    v4): the same lemmas, the same premise names and order, every kit name with the B' kit's `_B` / `cb_*` spelling.
    INPUTS.
-   - Pin: B' asan-ubsan sha256 d663f82d7f488d30 (harness.yaml of release/fuzz-preset-ran-out-pins 8f3e7e1a07f1).
+   - Pin: B' asan-ubsan sha256 d663f82d7f488d30 (harness.yaml).
    - Listing: lib/B/Listing_prog.v blob c97cc46b3e13 + lib/B/PAImg_prog.v blob 15fab93fe702 (listings v3). Entry
      0x820e0 = slot 645 (B_entry_check_reject_clean_starved); image record lib/B/PRH_ImgB.v blob 3216eca68342.
    - The kit text: tcheck_reject_clean_starved_specX in lib/A/PRH_FnCheck.v blob 9ecd8eb167c6, callee text
       tfuzz_alloc_live_specX in lib/A/PRH_FnAlloc.v blob 740f4d11d144, lib/A/PRH_Base.v blob fdb45545469b,
       at PI := prh_img_B, PA := PI_prog_B.
-   - Kit: lib/B/Prog/CrsKitBp.v blob 1dd89c0383ac at a working branch a179cedc95a7 (FROZEN, cited).
+   - Kit: lib/B/Prog/CrsKitBp.v blob 1dd89c0383ac at a working branch (FROZEN, cited).
    THE CLOSING LEMMA crs_seg_E_B: (forall p, crs_from_H1_B .. (crs_with_fpos_B C p)) -> crs_from_E_B .. C, premises in
    the A' order: HX_asmr (YGcallMxmn.astack_malloc_realizes_xm at class 1), HX_ownlow (ARx_owned_low_law), HX_pal
    (PALib at PI_prog_B; B' instance: lib/B/PALibB.v exvi_eh_palib), HX_pal_uar_img (the use-after-return cell in
@@ -92,7 +93,7 @@ Open Scope bv_scope.
 Open Scope Z_scope.
 
 (* ======================================================================================================== *)
-(* ---- S10 COPIES (origin/cold/h-hpreset-7-walk-s10 88b4aea723f), statement and proof verbatim ---- *)
+(* ---- S10 COPIES, statement and proof verbatim ---- *)
 
 (* YCem.v:101 rdword_of_val_mem *)
 Lemma ce_rdword_of_val_mem : forall {rc : YM05.RunCeil} segs H mem a v,

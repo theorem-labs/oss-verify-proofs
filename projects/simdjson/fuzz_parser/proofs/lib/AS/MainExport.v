@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: a new fact MDefS, defined bytes over a symbolic length, is read off a KUnk entry, with its meaning, its justification, its soundness case and its equality test. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -219,7 +220,10 @@ Inductive mfact : Type :=
 (* [comment removed for export] *)
 | MZeroS (a : zexp) (n : zexp)             (* [comment removed for export] *)
 | MWrS   (a : zexp) (n : zexp)             (* [comment removed for export] *)
-| MBlobD (a : zexp) (n : Z).               (* [comment removed for export] *)
+| MBlobD (a : zexp) (n : Z)                (* [comment removed for export] *)
+(* LPS 727298f3: defined bytes over a symbolic length, read off a [KUnk] (the block's head from the auxv
+   to argv[0], whose gap and pad lengths are launch variables) *)
+| MDefS  (a : zexp) (n : zexp).
 
 Inductive pfact : Type :=
 | PVar   (n : nat) (lo hi : Z)             (* [comment removed for export] *)
@@ -267,6 +271,7 @@ Definition mfact_ok (V : nat -> Z) (m : word -> option byte) (f : mfact) : Prop 
   | MZeroS a n => forall i, 0 <= i < zv V n -> m (wa (zv V a + i)) = Some (Z_to_bv 8 0)
   | MWrS a n => wr_at segs m (zv V a) (zv V n)
   | MBlobD a n => forall i, 0 <= i < n -> exists b, m (wa (zv V a + i)) = Some b
+  | MDefS a n => forall i, 0 <= i < zv V n -> exists b, m (wa (zv V a + i)) = Some b
   end.
 
 Definition pfact_ok (V : nat -> Z) (f : pfact) : Prop :=
@@ -316,6 +321,7 @@ Definition mjustify (kn : list kentry) (VR : vranges) (HLO HHI : Z) (f : mfact) 
     | MZeroS a n, KZero sa ne => sym_len VR ne n && addr_match VR sa a
     | MWrS a n, KWr sa ne => sym_len VR ne n && addr_match VR sa a
     | MBlobD a n, KBlob sa ne _ => lit_len ne n && addr_match VR sa a
+    | MDefS a n, KUnk sa ne => sym_len VR ne n && addr_match VR sa a
     | _, _ => false
     end) kn.
 
@@ -539,6 +545,12 @@ Proof.
     apply andb_prop in HKm as [HKm Ha]. apply lit_len_sound in HKm as [En Hn]. rewrite En in KOKK.
     pose proof (addr_match_sound _ _ Ha) as Ea. destruct KOKK as (Hfl & Hlen & Hb). rewrite Ea.
     intros i Hi. eexists. unfold wa. apply MR_some. exact (Hb i Hi).
+  - (* LPS 727298f3: a [KUnk] gives defined bytes *)
+    apply andb_prop in HKm as [HKm Ha]. apply sym_len_sound in HKm as [En Hn]. rewrite En in KOKK.
+    pose proof (addr_match_sound _ _ Ha) as Ea. destruct KOKK as (Hfl & Hu). rewrite Ea.
+    intros i Hi. specialize (Hu i Hi).
+    match type of Hu with ?X <> None => destruct X as [b|] eqn:Hm; [|congruence] end.
+    exists b. unfold wa. apply MR_some. exact Hm.
 Qed.
 
 Lemma pjustify_sound : forall f, pjustify KN (var_ranges KN) f = true -> pfact_ok V f.
@@ -597,6 +609,7 @@ Definition mfact_eqb (f g : mfact) : bool :=
   | MZeroS a n, MZeroS a' n' => zexp_eqb a a' && zexp_eqb n n'
   | MWrS a n, MWrS a' n' => zexp_eqb a a' && zexp_eqb n n'
   | MBlobD a n, MBlobD a' n' => zexp_eqb a a' && Z.eqb n n'
+  | MDefS a n, MDefS a' n' => zexp_eqb a a' && zexp_eqb n n'
   | _, _ => false
   end.
 

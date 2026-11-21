@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_rr_m_dcnt.v, with its module paths changed; 4 of its 421 lines of code are new or changed and 2 lines of the source are left out. *)
-(* Image B's twin of lib/A/W_rr_m_dcnt.v (a Theorem Labs lane, commit f4cd818e98d), over lib/B's kit: the text below is A's with
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Image B's twin of lib/A/W_rr_m_dcnt.v (a Theorem Labs lane), over lib/B's kit: the text below is A's with
    the lib/A imports read from lib/B (W_rep, W_contract, W_tr_peak, ReplyCnt, ReplyTrPeakW are mkbkit twins with the
    same names).  The W_tr_cnt.v items this file uses (tr_netP, tr_peakP_app, cphi, tc_chain, tc_send, ...) are the B
    kit twin lib/B/W_tr_cnt.v's (mkbkit, same names as image A's); it is Required with Export, because the image-B
@@ -12,7 +13,7 @@
    (ReplyCnt.acnt P) after drain is the count before plus the net count change of drain's trace (W_tr_cnt.v tr_netP),
    rmc_dr_cnt; so it is within the trace's count peak (rmc_dr_cnt_peak, with rmc_net_peak: tr_netP <= tr_peakP).
    A pure model lemma: no astate, no walk file.
-   - The method is the byte chain of commit 3d17f490d56, lib/A/W_rr_m_drain.v rmd_lw .. rmd_bsum_out and
+   - The method is the byte chain of lib/A/W_rr_m_drain.v rmd_lw .. rmd_bsum_out and
      rmd_dr_bytes, with a COUNT potential in place of the bytes: s->buf and g_out count cphi P cap (W_tr_cnt.v: 0 for
      cap 0, no block), the held array cphi P ka, the keys, the pending texts and the expected texts
      sum zb (P (|x| + 1)) (rmc_cw), the expected vector rmc_ephi P ecap.  Every model step moves the potential by

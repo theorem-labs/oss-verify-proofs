@@ -1,25 +1,26 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image B' (asan-ubsan, harness fix #102 pin sha256
    d663f82d7f488d30f8e8d7496cb814e595a2f3cbbf16bde81a65cb3ea9af0994, unstripped twin c90d4fa54d43160b): THE SECOND
    COMPOSED TOP of the B' driver. The first composed top Ent102DrvTopB.TFIB_T_closed_B_walked (lib/AU/Prog/Ent102DrvTopB.v,
    the driver of record lib/AU/PresetD2pBPf.v TFIB_T_closed_B_holds with the walk's slot) with four more of its Section
-   hypotheses DISCHARGED BY CITATION of theorems already proved (on the kit's cut 7cdbb61b5fa0, or on the named branch of a
+   hypotheses DISCHARGED BY CITATION of theorems already proved (on the kit's cut, or on the named branch of a
    file taken by path; nothing re-proved):
-     H_aintrin_realizes_xm_cpy_B      a Theorem Labs lane's PRowCpy.prow_memcpy_icpt_xm_B (lib/AU/PRowCpy.v:40) at B := TfibB,
+     H_aintrin_realizes_xm_cpy_B      a Theorem Labs lane's PRowCpy.prow_memcpy_icpt_xm_B (lib/AU/PRowCpy.v:41) at B := TfibB,
                                       ARx := ARcf tfibsegs TfibB, laws YGcallcf.AR_laws_x_cf of YG0lawscf.AR_laws_ok_cf;
-     H_aintrin_realizes_xm_set_B      a Theorem Labs lane's PRowSet.prow_memset_icpt_xm_B (lib/AU/PRowSet.v:4377), the same way;
+     H_aintrin_realizes_xm_set_B      a Theorem Labs lane's PRowSet.prow_memset_icpt_xm_B (lib/AU/PRowSet.v:4378), the same way;
      H_astack_malloc_realizes_cfm_B   a Theorem Labs lane's FCm01xm.stack_malloc0_contract_xm / stack_malloc1_contract_xm
                                       (lib/AU/FCm01xm.v:25, :33) and FCm3xm.stack_malloc3_contract_xm (lib/AU/FCm3xm.v:22),
                                       one per class of cf_fs_classes CfParams_preset = [0; 1; 3], fs_iface by
                                       FCifaceCf.fs_iface_ARcf (as lib/AU/FCxmCfxB.v:45-48 does);
      H_txt_parse_noting_B             a Theorem Labs lane's PN102BTop.tparse_noting_specX_TfibB (lib/B/Prog/PN102BTop.v:133,
                                       lib/B/Prog/PN102B*.v and PvB_Frees.v taken BY PATH from
-                                      a working branch c7276d935095) at CTX0 := iface_ctx0, its callee
+                                      a working branch) at CTX0 := iface_ctx0, its callee
                                       premises cited: HLIVE FuzzAllocAccInstB102.fuzz_alloc_live_holds_B_inst
                                       (lib/B/Prog/FuzzAllocAccInstB102.v:47), HRO the driver's
                                       PresetD2pBPf.txt_fuzz_alloc_ran_out_B_holds, HCRC
-                                      CrcBInstLive.check_reject_clean_holds_B_inst_live (lib/B/Prog/CrcBInstLive.v:44) at
+                                      CrcBInstLive.check_reject_clean_holds_B_inst_live (lib/B/Prog/CrcBInstLive.v:45) at
                                       the driver's PresetD2pBPf.crc_bcmp_B_holds and crc_img_shadow_vis_B_holds; its
                                       fourth, HPJ (the kit's tpj_parse_specX, no proof yet), is the NAMED Section hypothesis
                                       H_txt_pj_parse_B below, that text at the

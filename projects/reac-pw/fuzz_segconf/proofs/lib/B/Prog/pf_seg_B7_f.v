@@ -3,8 +3,8 @@
    0x887cc, CLR 0x885fc). No machine state, no image: every lemma is about SegModel's spine and the list functions.
    The B7 segment lane of the image-B G3 walk owner, 2026-10-30.
    ADAPTED (verbatim but for the a7_ -> b7_ prefix and the lib.B.Prog Require of pf_pieces) from the image-A G3 walk owner's
-   image-A A7 segment lane lib/A/Prog/pf_a7_f.v (commit f9f4d0fcc957), whose sections 1 and 2 are the unit owner's
-   plain lane pfB_p4_spine.v:19-127 at 16c6d72c0344 (p4_ -> a7_). Section 3 is that lane's facts about the header
+   image-A A7 segment lane lib/A/Prog/pf_a7_f.v, whose sections 1 and 2 are the unit owner's
+   plain lane pfB_p4_spine.v:19-127 (p4_ -> a7_). Section 3 is that lane's facts about the header
    line; section 4 is this lane's: the bridges from the interceptor contracts' answers (lib/B/Rt/RtSeg.v first_at,
    strncase_eq) to SegModel's strchr / strncasecmp. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
@@ -17,7 +17,7 @@ Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Open Scope Z_scope.
 
-(** ** 1. The spine (pfB_p4_spine.v:19-113 at 16c6d72c0344, p4_ -> b7_) *)
+(** ** 1. The spine (pfB_p4_spine.v:19-113, p4_ -> b7_) *)
 
 (** The header's body (R:174, after `*close = 0`) and its name (R:184). *)
 Definition b7_body (l : list Z) (ci : nat) : list Z := r_trim (slice 1 ci l).

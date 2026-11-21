@@ -1,7 +1,7 @@
-(* Build B (asan-ubsan) port of lib/A/Prog/asan_memsetF.v (commit 12ba3e8fb44, a working branch): the
+(* Build B (asan-ubsan) port of lib/A/Prog/asan_memsetF.v (a working branch): the
    namespace lib.A -> lib.B only; the proof script is build A's unchanged. Build A's file is itself ported from
-   proofs/libreac/fuzz_knock/lib/A/Prog/asan_memsetF.v (commit 9e04a304e70, a working branch), a route-1
-   port of omx-clap-core/fuzz_manifest d1fff804be0. The plain proof asan_memset_holds (lib/B/Prog/asan_memset.v)
+   proofs/libreac/fuzz_knock/lib/A/Prog/asan_memsetF.v (a working branch), a route-1
+   port of omx-clap-core/fuzz_manifest. The plain proof asan_memset_holds (lib/B/Prog/asan_memset.v)
    is lib/A/Prog/asan_memset.v modulo namespace. Every constant the script unfolds is build B's own:
    ASAN_MEMSET = 0x52600 and ASAN_MEMSET_K = 2208 (lib/B/Prog/asan_memset_c.v), IMG_LO = 0x10000 and
    IMG_HI = 0x5fe000 (lib/B/Prog/ImgBounds.v), RT_LO, RT_HI and the ASan layout (lib/B/AsanRT.v), the

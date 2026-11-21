@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: generated from proofs/cgif/cgif_file_fuzzer/lib/A/AB1k.v (commit 25e3d17bdb50), with its module paths changed and its GetMaxUserVirtualAddress addresses moved to that function in reac-repacer/fuzz_wire's asan image by gen_ab1hk.py (sha256 0f51cb9cdb18); every fetched word checked equal. *)
+(* Modified by Theorem Labs, 2026-10: generated from proofs/cgif/cgif_file_fuzzer/lib/A/AB1k.v (commit theorem-labs/oss-verify-proofs@6b32741d849a), with its module paths changed and its GetMaxUserVirtualAddress addresses moved to that function in reac-repacer/fuzz_wire's asan image by gen_ab1hk.py (sha256 0f51cb9cdb18); every fetched word checked equal. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_wire.asan (reac-repacer/fuzz_wire asan) sha256 2f8f8697cd4f99bd15999cce4963a6fcc39b308444bd58e2bf526ec7c1ad5fa1; unstripped twin sha256 d2f662a229626fd402f1018631498190e800834bad837fa4027204b79088b128 *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.

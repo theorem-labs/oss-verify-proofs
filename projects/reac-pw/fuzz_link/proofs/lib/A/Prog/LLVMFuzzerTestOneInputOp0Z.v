@@ -2,11 +2,12 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: new walk for libreac/fuzz_pcap (a Theorem Labs lane). The generic helpers pe_land_m32,
    pe_denot_and_m32(_add0), pe_trim_* / pe_submem_to / pe_prreg_raw / pe_add_fact / pe_sregion are cgif_file_fuzzer
-   lib/A/ACer.v's (origin/ossv/recipes c8557374ad2e) as a Theorem Labs lane's lib/A/Prog/PcapSourceOpen.v restates them
-   (a working branch f0d76b020fe); pe_U_srl, pe_cbyte .. pe_word_at and pe_saved_of are
-   a Theorem Labs lane's lib/A/Prog/GrantEntryHead.v (a working branch b83b8251684) restated over PAImg pcap_listing. *)
+   lib/A/ACer.v's as a Theorem Labs lane's lib/A/Prog/PcapSourceOpen.v restates them
+   (a working branch); pe_U_srl, pe_cbyte .. pe_word_at and pe_saved_of are
+   a Theorem Labs lane's lib/A/Prog/GrantEntryHead.v (a working branch) restated over PAImg pcap_listing. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_pcap/lib/A/Prog/PcapHarnessPE.v, with its module paths, module names and numbers changed; 1072 of its 1332 lines of code are new or changed and 1047 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_link/lib/A/Prog/LLVMFuzzerTestOneInputEntry.v, with its module paths and module names changed; 876 of its 941 lines of code are new or changed and 1267 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* LLVMFuzzerTestOneInput on image A, the op_read arm: the two frame objects wk (F + 0x2e0) and
    wa (F + 0x330) put in scope and zeroed (+0xe34 .. +0xe80: their shadow bytes := 0, checked_memset(wk, 0, 40) at
    0x8362c, checked_memset(wa, 0, 40) at 0x83654), then `opened := g_nl.opened` into the slot s1 + 0x70

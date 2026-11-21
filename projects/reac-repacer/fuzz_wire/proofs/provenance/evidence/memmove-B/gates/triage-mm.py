@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """triage-mm.py CHECK_TSV OUT_TSV WHY_TXT: the triage of a port_addr_check efa19b81e92b --fail-on-flags run over this
-row's five files (donor = fuzz_pcap's released lib/B/Rt/Memmove*.v at recipes 5098883da0b with module paths renamed;
+row's five files (donor = fuzz_pcap's released lib/B/Rt/Memmove*.v at recipes with module paths renamed;
 ported = the committed lib/B/Rt/{MemmoveDef,MemmoveIm,MemmoveK,MemmovePaths,Memmove}.v).
 
 1. Every FLAGGED or GENERATOR-FILL row needs a measured reason. The run of record has none, so this script accepts

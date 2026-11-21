@@ -1,12 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From stdpp Require Import bitvector.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Run Specs RiscvSemantics MemImageType.
 From LinuxProcessSemantics.LinuxProcessSem.Sys Require Import SyscallTable.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs VmMapsDisjoint.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Placement.
 From LinuxProcessSemantics.LinuxProcessSem.Checks.Sys Require Import Dispatch Mm.Mmap Mm.Mremap Mm.Mprotect.
 From OSSVerify.Proofs.boost_beast.http_request.lib.Common.LimSim Require Import LimSim LimSimMm LimSimMv.
 Import ListNotations.
@@ -21,15 +23,34 @@ Proof. intros a n P H HP. constructor; [unfold phi, plo, psz; cbn [fst snd]; exa
 Lemma brk_model_next_WF : forall m req r,
   brk_r_ok m req r = true -> nwr (vm_maps (m_vmmaps m)) -> nwr (vm_maps (brk_model_next (m_vmmaps m) req r)).
 Proof.
+  (* At the revision [brk_maps_next] cuts whole pages ([brk_unmap_cut]) on a
+     shrink and grants whole pages ([brk_page_range]) on a grow, both between
+     the page-rounded old and new breaks. *)
   intros m req r Hok Hwf. set (h := m_vmmaps m) in *.
   unfold brk_model_next, brk_maps_next. cbn [vm_maps].
-  pose proof (word_range r). pose proof (word_range (vm_brk h)).
+  pose proof (word_range r) as Rr. pose proof (word_range (vm_brk h)) as Rb.
+  assert (PUP : forall x, 0 <= x < 2 ^ 64 -> 0 <= page_round_up_Z x <= 2 ^ 64).
+  { intros x Hx. unfold page_round_up_Z, page_size.
+    assert (HQ : (2 ^ 64 + 4096 - 1) / 4096 = 2 ^ 52) by (vm_compute; reflexivity).
+    pose proof (Z.div_le_mono (x + 4096 - 1) (2 ^ 64 + 4096 - 1) 4096 ltac:(lia) ltac:(lia)).
+    pose proof (Z.div_pos (x + 4096 - 1) 4096 ltac:(lia) ltac:(lia)). lia. }
+  pose proof (PUP _ Rr) as PRr. pose proof (PUP _ Rb) as PRb.
+  set (pr := page_round_up_Z (bv_unsigned r)) in *.
+  set (pb := page_round_up_Z (bv_unsigned (vm_brk h))) in *.
   destruct (Z.ltb 0 (bv_unsigned (vm_brk h)) && Z.ltb (bv_unsigned r) (bv_unsigned (vm_brk h))) eqn:Eshrink.
-  - apply andb_true_iff in Eshrink as [_ Hlt]. apply Z.ltb_lt in Hlt. apply nwr_maps_subtract; try lia. exact Hwf.
-  - unfold brk_grants. destruct (brk_is_grow req r (vm_brk h)) eqn:Egrow; cbn [app]; [|exact Hwf].
-    unfold brk_is_grow in Egrow. apply andb_true_iff in Egrow as [Egrow Hlt]. apply Z.ltb_lt in Hlt.
-    apply nwr_cons; [|exact Hwf].
-    rewrite bv_sub_unsigned. rewrite bv_wrap_small; [lia|]. change (bv_modulus 64) with (2 ^ 64). lia.
+  - unfold brk_unmap_cut. cbv zeta. fold pr pb.
+    destruct (Z.ltb pr pb) eqn:Ecut; [|exact Hwf].
+    apply Z.ltb_lt in Ecut. unfold two_pow_64.
+    apply nwr_maps_subtract; [lia|lia|exact Hwf].
+  - unfold brk_grants. destruct (brk_is_grow req r (vm_brk h)); cbn [app]; [|exact Hwf].
+    unfold brk_page_range. fold pr pb.
+    destruct (Z.ltb pb pr) eqn:Eg; cbn [app]; [|exact Hwf].
+    apply Z.ltb_lt in Eg. apply nwr_cons; [|exact Hwf].
+    rewrite !Z_to_bv_unsigned. unfold bv_wrap. change (bv_modulus 64) with (2 ^ 64).
+    rewrite (Z.mod_small pb (2 ^ 64)) by lia.
+    destruct (Z.eq_dec (pr - pb) (2 ^ 64)) as [E|E].
+    + rewrite E, Z_mod_same_full. lia.
+    + rewrite (Z.mod_small (pr - pb) (2 ^ 64)) by lia. lia.
 Qed.
 
 Lemma check_brk_WF : forall req eff m m' evs,
@@ -58,11 +79,22 @@ Proof.
   dif H; [apply check_ret_only_model in H; subst m'; exact Hwf|].
   dif H; [apply check_ret_only_model in H; subst m'; exact Hwf|].
   dif H.
-  - destruct ws, zs, cs, ci; try discriminate.
+  - (* the revision's check accepts the injected errno (no unmap) before the unmap *)
+    destruct ws, zs, cs, ci; try discriminate.
+    dif H; [destruct us; [injection H as <- <-; exact Hwf | discriminate]|].
     dif H; [|discriminate]. injection H as <- <-.
-    unfold WF. rewrite vmm_mmap_destroyed. cbn [vm_maps].
-    now apply nwr_filter.
-  - dif H; [apply check_ret_only_model in H; subst m'; exact Hwf|discriminate].
+    unfold WF. rewrite vmm_mmap_destroyed. unfold mmap_fixed_destroyed_next. cbn [vm_maps].
+    pose proof (word_range addr). pose proof (word_range (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))).
+    apply nwr_maps_subtract; [lia|lia|exact Hwf].
+  - dif H; [apply check_ret_only_model in H; subst m'; exact Hwf|].
+    (* the revision's partial-cut arm ([munmap_cut_ok]), the same two answers *)
+    dif H; [|discriminate].
+    destruct ws, zs, cs, ci; try discriminate.
+    dif H; [destruct us; [injection H as <- <-; exact Hwf | discriminate]|].
+    dif H; [|discriminate]. injection H as <- <-.
+    unfold WF. rewrite vmm_mmap_destroyed. unfold mmap_fixed_destroyed_next. cbn [vm_maps].
+    pose proof (word_range addr). pose proof (word_range (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))).
+    apply nwr_maps_subtract; [lia|lia|exact Hwf].
 Qed.
 
 Lemma check_mprotect_WF : forall addr len prot eff m m' evs,
@@ -76,6 +108,7 @@ Proof.
   dif H; [apply check_ret_only_model in H; subst m'; exact Hwf|].
   dif H; [apply check_ret_only_model in H; subst m'; exact Hwf|].
   dif H; [discriminate|].
+  dif H; [discriminate|].   (* the revision's vDSO/vvar gate answers CheckUnmodeled *)
   dif H.
   - destruct ws, us, cs, ci; try discriminate.
     dif H.
@@ -97,9 +130,11 @@ Proof.
   pose proof (word_range len) as Hlenr.
   pose proof (word_range addr) as Haddrr.
   destruct (negb (mmap_off_aligned_b off)) eqn:Eoff.
-  { destruct (mmap_pglen_ok_b len); [|discriminate].
+  { apply check_ret_only_model in H; subst m'; exact Hwf. }
+  destruct (negb (mmap_anon_b flags)) eqn:Eanon.
+  { (* the revision answers EBADF for a closed fd, else declines *)
+    destruct (fd_lookup (m_fds m) (fd32 fd)); [discriminate|].
     apply check_ret_only_model in H; subst m'; exact Hwf. }
-  destruct (negb (mmap_anon_b flags)) eqn:Eanon; [discriminate|].
   destruct (w_is0 len) eqn:Elen.
   { destruct (mmap_plain_anon_b flags); [|discriminate].
     apply check_ret_only_model in H; subst m'; exact Hwf. }
@@ -108,35 +143,49 @@ Proof.
     by (apply page_round_up_pos; lia).
   (* [comment removed for export] *)
   destruct (mmap_modeled_b prot flags off) eqn:Emod.
-  { destruct ws, us, cs, ci; try discriminate.
+  { (* 727298f3 (#144/#146): [check_mmap]'s freely-placed arms test
+       [place_declined_b] BEFORE the outcome, and answer [CheckUnmodeled]
+       when it holds.  This hypothesis is a [CheckOk], a different
+       constructor, so the decline branch dies by discrimination and the
+       statement keeps its full strength -- no premise is owed.  Copied
+       from the model's own consumer, Checks/MapsFit.v:257-258 at
+       727298f3.  It must sit before the [destruct ws, us, cs, ci]. *)
+    destruct (place_declined_b (m_kernel m) (m_vmmaps m) addr
+                (page_round_up_Z (bv_unsigned len))) eqn:Edecl; [discriminate|].
+    destruct ws, us, cs, ci; try discriminate.
     destruct (errno_ret_in mmap_errnos ret).
     { destruct zs; [|discriminate]. injection H as <- <-. exact Hwf. }
     (* [comment removed for export] *)
     difn H E; [|discriminate]. injection H as <- <-.
     unfold WF. rewrite vmm_mmap_backing, vmm_vmmaps. cbn [vm_maps].
-    apply andb_true_iff in E as [E Hzs].
-    apply andb_true_iff in E as [E Hbud].
-    apply andb_true_iff in E as [E Hfree].
-    apply andb_true_iff in E as [E Hceil].
-    apply andb_true_iff in E as [Halign Hpos].
-    apply Z.leb_le in Hceil. apply Z.ltb_lt in Hpos.
+    (* the revision's grant is Linux's address ([linux_place_is]) *)
+    apply andb_true_iff in E as [E _]. apply andb_true_iff in E as [Hpl _].
+    pose proof (word_range ret) as Hrr.
+    destruct (Placement.linux_place_is_admissible _ _ _ _ _ HnZ (Placement.page_round_up_Z_aligned _) Hpl)
+      as (_ & _ & Htop & _).
     apply nwr_cons; [rewrite u64 by lia; lia | exact Hwf]. }
   destruct (mmap_noaccess_b prot flags off) eqn:Enoa.
-  { destruct ws, zs, cs, ci; try discriminate.
+  { (* the same decline, the noaccess arm: Checks/MapsFit.v:271-272. *)
+    destruct (place_declined_b (m_kernel m) (m_vmmaps m) addr
+                (page_round_up_Z (bv_unsigned len))) eqn:Edecl; [discriminate|].
+    destruct ws, zs, cs, ci; try discriminate.
     destruct (errno_ret_in mmap_errnos ret).
     { destruct us; [|discriminate]. injection H as <- <-. exact Hwf. }
     (* [comment removed for export] *)
     difn H E; [|discriminate]. injection H as <- <-.
     unfold WF. rewrite vmm_mmap_backing, vmm_vmmaps. cbn [vm_maps].
-    apply andb_true_iff in E as [E Hus].
-    apply andb_true_iff in E as [E Hfree].
-    apply andb_true_iff in E as [E Hceil].
-    apply andb_true_iff in E as [Halign Hpos].
-    apply Z.leb_le in Hceil. apply Z.ltb_lt in Hpos.
+    apply andb_true_iff in E as [Hpl _].
+    pose proof (word_range ret) as Hrr.
+    destruct (Placement.linux_place_is_admissible _ _ _ _ _ HnZ (Placement.page_round_up_Z_aligned _) Hpl)
+      as (_ & _ & Htop & _).
     apply nwr_cons; [rewrite u64 by lia; lia | exact Hwf]. }
   (* [comment removed for export] *)
   destruct (mmap_fixed_noaccess_b prot flags off) eqn:Efix.
-  { difn H Enomem; [apply check_ret_only_model in H; subst m'; exact Hwf|].
+  { (* 75d69e00 (#105): the [two_pow_64 <=? addr + nZ] test is UNCHANGED from 08b1429.
+       Only its TRUE branch's ANSWER moved, from [check_ret_only eff (errno_ret ENOMEM) m []]
+       to [check_mmap_fixed_overflow addr nZ eff m] — which leaves the model as it was
+       ([check_mmap_fixed_overflow_model], model Mmap.v:579).  No arm was added. *)
+    difn H Eovf; [apply check_mmap_fixed_overflow_model in H; subst m'; exact Hwf|].
     difn H Eceil; [discriminate|].
     difn H Ealign; [apply check_ret_only_model in H; subst m'; exact Hwf|].
     difn H Epos; [discriminate|].
@@ -177,7 +226,7 @@ Proof.
   2: {
     (* [comment removed for export] *)
     destruct (mmap_noreplace_noaccess_b prot flags off) eqn:Enrn.
-    { difn H Enomem; [apply check_ret_only_model in H; subst m'; exact Hwf|].
+    { difn H Eovf; [apply check_mmap_fixed_overflow_model in H; subst m'; exact Hwf|].
       difn H Eceil; [discriminate|].
       difn H Ealign; [apply check_ret_only_model in H; subst m'; exact Hwf|].
       difn H Epos; [discriminate|].
@@ -192,7 +241,7 @@ Proof.
       - destruct ws, zs, us, cs, ci; try discriminate.
         difn H Eerr; [|discriminate]. injection H as <- <-. exact Hwf. }
     destruct (mmap_noreplace_rw_b prot flags off) eqn:Enrr; [|discriminate].
-    difn H Enomem; [apply check_ret_only_model in H; subst m'; exact Hwf|].
+    difn H Eovf; [apply check_mmap_fixed_overflow_model in H; subst m'; exact Hwf|].
     difn H Eceil; [discriminate|].
     difn H Ealign; [apply check_ret_only_model in H; subst m'; exact Hwf|].
     difn H Epos; [discriminate|].
@@ -206,7 +255,7 @@ Proof.
         apply nwr_cons; [rewrite u64 by lia; lia | exact Hwf].
     - destruct ws, zs, us, cs, ci; try discriminate.
       difn H Eerr; [|discriminate]. injection H as <- <-. exact Hwf. }
-  difn H Enomem; [apply check_ret_only_model in H; subst m'; exact Hwf|].
+  difn H Eovf; [apply check_mmap_fixed_overflow_model in H; subst m'; exact Hwf|].
   difn H Eceil; [discriminate|].
   difn H Ealign; [apply check_ret_only_model in H; subst m'; exact Hwf|].
   difn H Epos; [discriminate|].
@@ -260,6 +309,8 @@ Proof.
   difn H Eflag; [discriminate|].
   difn H Ealign; [apply check_ret_only_model in H; subst m'; exact Hwf|].
   difn H Enew; [apply check_ret_only_model in H; subst m'; exact Hwf|].
+  (* the revision's TASK_SIZE gate on the new length *)
+  difn H Etask; [apply check_ret_only_model in H; subst m'; exact Hwf|].
   difn H Eold; [discriminate|].
   difn H Esrc; [discriminate|].
   difn H Eeq; [apply check_ret_only_model in H; subst m'; exact Hwf|].
@@ -281,6 +332,8 @@ Proof.
   apply Z.leb_le in Hoceil.
   assert (HoldZ : 0 <= page_round_up_Z (bv_unsigned old_size))
     by (apply page_round_up_Z_nonneg; lia).
+  pose proof (word_range (Z_to_bv 64 (page_round_up_Z (bv_unsigned old_size)))) as Honr.
+  (* the revision cuts the source range ([maps_subtract]) rather than [map_remove] *)
   destruct (errno_ret_in mremap_errnos ret).
   { destruct zs, us, cs; try discriminate. injection H as <- <-. exact Hwf. }
   destruct (bv_eqb ret old).
@@ -289,16 +342,17 @@ Proof.
       apply Z.ltb_lt in Eshrink.
       unfold WF. rewrite vmm_mremap_next.
       unfold mremap_maps_next. cbn [vm_maps].
-      apply nwr_cons; [rewrite u64 by lia; lia | unfold map_remove; now apply nwr_filter].
+      apply nwr_cons; [rewrite u64 by lia; lia | apply nwr_maps_subtract; [lia | lia | exact Hwf]].
     + difn H Egrow; [|discriminate].
       difn H Eok; [|discriminate]. injection H as <- <-.
       unfold WF. rewrite vmm_mremap_next.
       unfold mremap_maps_next. cbn [vm_maps].
-      unfold mremap_inplace_grow_b in Egrow. cbv zeta in Egrow.
+      unfold mremap_inplace_grow_b in Egrow.
       apply andb_true_iff in Egrow as [Egrow _].
+      unfold mremap_inplace_room_b in Egrow. cbv zeta in Egrow.
       apply andb_true_iff in Egrow as [Hgceil Hgfree].
       apply Z.leb_le in Hgceil.
-      apply nwr_cons; [rewrite u64 by lia; lia | now apply nwr_filter].
+      apply nwr_cons; [rewrite u64 by lia; lia | apply nwr_maps_subtract; [lia | lia | exact Hwf]].
   - difn H Emove; [|discriminate]. injection H as <- <-.
     unfold WF. rewrite vmm_mremap_next.
     unfold mremap_maps_next. cbn [vm_maps].
@@ -313,7 +367,7 @@ Proof.
     apply andb_true_iff in Hfresh as [Hfresh Hfceil].
     apply andb_true_iff in Hfresh as [_ Hfpos].
     apply Z.leb_le in Hfceil. apply Z.ltb_lt in Hfpos.
-    apply nwr_cons; [rewrite u64 by lia; lia | now apply nwr_filter].
+    apply nwr_cons; [rewrite u64 by lia; lia | apply nwr_maps_subtract; [lia | lia | exact Hwf]].
 Qed.
 
 (* [comment removed for export] *)
@@ -410,6 +464,9 @@ Proof.
     | erewrite check_epoll_create1_frame by eassumption; exact Hwf
     | erewrite check_epoll_ctl_frame by eassumption; exact Hwf
     | erewrite check_epoll_pwait_frame by eassumption; exact Hwf
+    | erewrite check_pwritev2_frame by eassumption; exact Hwf
+    | erewrite check_set_robust_list_frame by eassumption; exact Hwf
+    | erewrite check_clock_getres_frame by eassumption; exact Hwf
     | fail 1 "checked_table_preserves_WF has no case for this dispatcher arm: give the new checker a *_frame lemma (it leaves m_vmmaps alone) or a *_preserves one (it writes vm_maps), and add it to the list above" ].
 Qed.
 
@@ -433,12 +490,19 @@ Variable cfg : SpuriousCfg.
 Lemma sstep_cfg_WF : forall c evs c', sstep_cfg segs cfg c evs (SNext c') -> WF (cfg_model c) -> WF (cfg_model c').
 Proof.
   intros c evs c' Hs. remember (SNext c') as st eqn:Est.
-  destruct Hs as [ms0 mm ms' mm' Hh Hp Ha | ms0 mm Hh Hp Ha | ms0 mm Hh Hp Ha | ms0 mm x8 eff mm' mm'' evs0 Hh Hp Hsp Hnsp Hh' Hmat
+  (* the revision's sstep_cfg has the three vDSO arms *)
+  destruct Hs as [ms0 mm ms' mm' Hh Hp Ha | ms0 mm Hh Hp Ha | ms0 mm Hh Hp Ha Hv
+                 | ms0 mm fn n eff mm' mm'' evs0 Hh Hp Ha Hv Hn Hsp Hne Hh' Hmat
+                 | ms0 mm fn n eff mm' evs0 Hh Hp Ha Hv Hn Hsp Hne Hh' Hmat
+                 | ms0 mm fn Hh Hp Ha Hv Hu
+                 | ms0 mm x8 eff mm' mm'' evs0 Hh Hp Hsp Hnsp Hh' Hmat
                  | ms0 mm x8 eff mm' evs0 Hh Hp Hsp Hnsp Hh' Hmat | ms0 mm x8 eff mm' evs0 code Hh Hp Hsp Hh' Hk | ms0 mm x8 eff mm' evs0 sig Hh Hp Hsp Hk | ms0 mm x8 Hh Hp Hsp];
     try discriminate Est; injection Est as E; subst c'; cbn [cfg_model]; intros Hwf.
   - unfold mi_account_step in Ha. destruct (step_accesses segs ms0) as [report| |]; [|discriminate|discriminate].
     destruct (materialize_model_accesses mm (@accessed_ranges _ report)) as [m1|] eqn:Emat; [|discriminate]. injection Ha as <- <-.
     exact (materialize_WF _ _ _ Emat Hwf).
+  - unfold WF. rewrite m_vmmaps_with_vdso_bump.
+    exact (materialize_WF _ _ _ Hmat (syscall_spec_preserves_WF _ _ _ _ _ Hsp Hwf)).
   - exact (materialize_WF _ _ _ Hmat (syscall_spec_preserves_WF _ _ _ _ _ Hsp Hwf)).
   - exact (syscall_spec_preserves_WF _ _ _ _ _ Hsp Hwf).
   - exact (syscall_spec_preserves_WF _ _ _ _ _ Hsp Hwf).

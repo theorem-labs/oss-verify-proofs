@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the realized runs are over run_segments (the loaded segments and the vDSO tail). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import NArith List ZArith Lia Bool.
@@ -20,16 +21,16 @@ Module UBM := OSSVerify.coturn.FuzzStunClient.images.Ubsan.M.
 Definition ref_spec_stmt : Prop :=
   forall sp brk mb rnd inp,
     valid_entry (mkImage SRCM.loaded_segments SRCM.init_pc SRCM.phdrs) (mkEntry sp brk mb rnd) inp -> valid_input inp ->
-    realizes SRCM.loaded_segments
-      (init_config SRCM.loaded_segments SRCM.init_pc SRCM.phdrs sp brk mb rnd source_alloc_limit inp)
+    realizes (run_segments SRCM.loaded_segments inp sp mb)
+      (init_config (run_segments SRCM.loaded_segments inp sp mb) SRCM.init_pc SRCM.phdrs sp brk mb rnd source_alloc_limit inp)
       (spec (in_argv inp) (in_fs inp)).
 
 (* [comment removed for export] *)
 Definition ub_spec_stmt : Prop :=
   forall sp brk mb rnd inp,
     valid_entry (mkImage UBM.loaded_segments UBM.init_pc UBM.phdrs) (mkEntry sp brk mb rnd) inp -> valid_input inp ->
-    realizes UBM.loaded_segments
-      (init_config UBM.loaded_segments UBM.init_pc UBM.phdrs sp brk mb rnd target_alloc_limit inp)
+    realizes (run_segments UBM.loaded_segments inp sp mb)
+      (init_config (run_segments UBM.loaded_segments inp sp mb) UBM.init_pc UBM.phdrs sp brk mb rnd target_alloc_limit inp)
       (spec (in_argv inp) (in_fs inp)).
 
 Theorem ubsan_base_of_specs : ref_spec_stmt -> ub_spec_stmt ->

@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 3817 of its 3853 lines of code are new or changed and 212 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths changed; 166 of its 215 lines of code are new or changed and 3804 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Sem.
@@ -132,7 +133,7 @@ Ltac jb_tail X RX SH RDb m m1 MU WM WVS ST FR S :=
    (`auipc a3,0x1d` at 0x836bc, `ld a3,0x234(a3)`) and the cell it names; the check of the load of nb at p + 4;
    `bgeu`; the body path (T2) or the last path (T3-T5); the check of the load at ja; `lbu a0`; `ld ra`; `ret`.
    The GOT cell and the cell it names are GOT_CELL_K = 0xa08f0 and CELL_K = 0xa96b8 of lib/B/AsanRT.v (the v1.9.0
-   values, a Theorem Labs lane's regeneration 48004cf7bfc). *)
+   values, a Theorem Labs lane's regeneration). *)
 Theorem joined_byte_holds : joined_byte_contract.
 Proof.
   unfold joined_byte_contract, JOINED_BYTE, JOINED_BYTE_FRAME.

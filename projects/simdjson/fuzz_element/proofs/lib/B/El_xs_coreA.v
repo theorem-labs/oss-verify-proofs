@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -80,7 +81,7 @@ Let rom := seg_rom bsegs.
 #[local] Notation frames := (rt_frames RT Σ).
 
 Definition genvA (E : env) : Prop :=
-  rt_sp0 RT Σ - STACK_WIN + 64 <= uE E XSP + SPLO /\ lo + RT_STACK <= uE E XSP + SPLO /\ rt_sp0 RT Σ - STACK_WIN <= lo /\ 0 <= lo
+  rt_sp0 RT Σ - STACK_WIN + 64 <= uE E XSP + SPLO /\ lo + RT_STACK <= uE E XSP + SPLO /\ rt_sp0 RT Σ - STACK_SPAN <= lo /\ 0 <= lo
   /\ uE E XSP + SPTOP + 0xb0 <= rt_sp0 RT Σ /\ rt_sp0 RT Σ - (uE E XSP + SPLO) <= NORET_DEPTH /\ rt_sp0 RT Σ <= USTACK_TOP
   /\ uE E XSP mod 16 = 0 /\ SPLO <= 0 <= SPTOP
   /\ (forall (x : Z) (a : word), x <= uE E XSP + SPTOP -> Wd E CW a -> aclient live frames x (bv_unsigned a))

@@ -17,7 +17,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require Reusable.YG0f Reusable.YG0n 
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require A.AB1v A.AE2k A.AF0m A.AsanRT A.Img0.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Mem.
 Local Open Scope Z_scope.
-(* The core's sink_head instance (A/AE2k.v:44), named explicitly since A.AE2k is only Required (as ProgWorld.v:76). *)
+(* The core's sink_head instance (A/AE2k.v:45), named explicitly since A.AE2k is only Required (as ProgWorld.v:76). *)
 #[local] Existing Instance A.AE2k.tfib_sink_head.
 Local Notation segs := A.AB1v.tfibsegs (only parsing).
 

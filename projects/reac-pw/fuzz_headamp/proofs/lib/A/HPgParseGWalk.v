@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/U/Prog/Seg/ParseWalk.v at 3e9fc5c8969
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/U/Prog/Seg/ParseWalk.v
    (pw_nul_u, pw_ne_nul, pw_cmp_walk, pw_no_nul, pw_prefix_nonul, pw_prefix_len, pw_strncmp_prefix, pw_nth_firstn,
    pw_nth_skipn, pw_nul_idx_le, pw_nul_idx_bound, pw_cstr_nul, pw_cstr_nonul, pw_gs, pw_lor7, pw_inside,
    pw_inside_small) with module paths changed, the prefix hgw_ and strncmp's model taken from lib/Spec/StrFun.v
    (the model the strncmp wrapper's contract of lib/A/HPgHole.v reads); proofs/reac-pw/fuzz_role/lib/A/RPgParseL.v
-   at afaa3cb55c1 (U_off_of, U_subba, U_sext32, U_sext32_eqb, U_next, U_and3, U_s8: the arithmetic of the engine's
+   (U_off_of, U_subba, U_sext32, U_sext32_eqb, U_next, U_and3, U_s8: the arithmetic of the engine's
    forms of the pair loop's instructions, which both headamp images share) renamed hgw_U_*; the model steps between
    the cut states of lib/A/HPgParseBase.v and the key's string facts are new. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp: the IMAGE-INDEPENDENT facts the walks of reac_headamp_prop_parse_result's pair loop use
    in both ASan images (image A lib/A/HPgParseWalk.v, image B lib/AU/HPgParseW.v): the tests of the pair loop's head
    (spa_pod_is_inside, iter.h:31-37; spa_pod_get_string, body.h:224-237; strncmp(key, "reac.headamp.", 13)) in the

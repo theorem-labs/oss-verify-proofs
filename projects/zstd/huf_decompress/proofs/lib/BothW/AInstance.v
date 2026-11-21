@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (3 recorded proofs replaced by written proofs (AHI_eq, AHI_laws, AH_laws)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -22,14 +23,18 @@ Section CANSEC1. Context {rc : runConstT}.
 Definition AHI : aholes := mkAHoles AQUAR ASEC_of (ADEPOT adepot_iface) AFAKE.
 
 Lemma AHI_eq : AHI = AH adepot_iface AQUAR ASEC_of.
-Proof.
-ltac2:(KReplay.run1 (kr_t_AInstance ()) ["CANSEC1"] "p;1p;4p;2p-1p10000p4p710R0p9p1000Lp4p70P0p8g001Cj13Tg002Cj12Tg003:j40Tg0042j21Tg004Lp,2rcR0%30g005D%20C0'1o"). Qed.
+Proof. reflexivity. Qed.
 
 Theorem AHI_laws : ahole_laws AHI.
 Proof.
-ltac2:(KReplay.run1 (kr_t_AInstance ()) ["CANSEC1"] "h01Lh11mh21Wh32m'h42LBh52HFh63LB'h71Xh82X'h92sth:3st'h;2EQh<1Fh=2MUh>2UTh?2WMh@1ahA1chB2ivhC1np;1p;5p;3p;4p;2p;:p;7p-1p10000p4p710R0p9p1000Lp4p70P0p8g006:j11Tg006_j1<Tg007=j1;Tg007`j1ZTg008Bj1ATg008bj5=Tg009Yj3JTg00:Mj3ITg00;Aj3HTg00<Aj4GTg00=<j1ETg00>>j5BTg00?4j3YTg00@3j2UTg001Cj1TTg00@mj2RTg00Anj3>Tg00Bfj2QTg00CFj3NTg00Ccj28Tg00D?j3MTg00D\j27Tg00E8j24Tg00ESj10Tg00F8j16Tg00FVj1:Tg00Foj1KTg00Ghj2?Tg00HEj1FTg00I>j3LTg00I_j4@Tg00J[j2OTg00K[l:PTg00L]j49Tg00MTj1DTg00NMj3STg00OFj3CTg00O]j2XTg00P6j7WTg00Q9j7VTf0R0#1#1p=3%00#1p=5%10#1#1#1p=2p,2rcR1g00R7R2g00Rog00SlR3g00TfR4g00UaR5g00VXR6#1#3R7#1#3R8#<#;%<7#;#Z[R7g00W=#AR9P2f7R:f6R;f4R<f2R=D=f1R>f3R?;J=R@g00Wo?I<?RAf:RB?H:?PBf9RCf8RDP:CGP2f<REPBPDP;D=[[[[[]2^37]1^85]7^:4]9]0e%E1P2P:P;P<P=DBAY1B?1UBCP2PEPBPDP;DB[[\A\@[^29^37^17^85^75^:4^94^03e%T1,R1A>2?=g00XdR4/Q4R5AN44>/80AM44>,70'4%56#3#0#5#2#0#0#0#3#5#3#6/8>%16#0#0#5#0#0#0#2#0#2#0#2#6,7>'4#:%KCR6/8>%38#2#2#2R8#6,?6,7>'4#:%FCRC/8>%18#3#6,?C,7>'4#:'4'4[^@4XB5;L?f5R59>2:[\A\@[^29^37^17^03eg00YBRC#AR8P1P<P?P=C@1O:?R6P1PDP:P;P5P<P?P=P>P0M:PW>X?AX=@W5X29X37X17W4X03P2P<P?P=C9P2PDP:P5C9\6\A\@[^29^37^17^48^03eP1P?P=P0C@%D=?S>0R9=CC5ACC9;'X^C4^<4^A4R4P1P5P<P?P=P>P0FWW;W5X17X68X48X03P2P?P=P0C9P2P5P?P=C9\4[^17^68^48^03eFVo"). Qed.
+  constructor; cbn [AHI ah_quar ah_sec ah_depot ah_fake].
+  - exact AQUAR_frame.
+  - exact asec_hs_frame.
+  - exact (adi_frame adepot_iface).
+  - intros L LB m m' W HF MU WM UT. eapply afake_frame; [exact HF| exact MU| exact WM| exact UT].
+  - intros L LB LB' m HF EQ. eapply afake_blocks; [exact HF| exact EQ].
+Qed.
 
 Corollary AH_laws : ahole_laws (AH adepot_iface AQUAR ASEC_of).
-Proof.
-ltac2:(KReplay.run1 (kr_t_AInstance ()) ["CANSEC1"] "h01ap;2p;1p;4p;6p-1g0000R0p4p710R1p9p1000Lp4p70P1p8g00Z;j24Tg001Cj13Tg002Cj10Tg003:j41TP0j62Tg004LR0g00R7p,2rcR1f0'4X00g00[9P1%31g005D%01C1g00\6E2o"). Qed.
+Proof. rewrite <- AHI_eq. exact AHI_laws. Qed.
 End CANSEC1.

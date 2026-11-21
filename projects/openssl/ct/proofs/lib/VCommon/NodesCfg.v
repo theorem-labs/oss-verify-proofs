@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -11,6 +12,7 @@ From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC.
 From OSSVerify.Proofs.openssl.ct.lib.VCommon Require Import
   PropExec SimInv ExitSim CatSim CatExec SeqExec StreamExec FileSim ShapeAlg ShapeAlgCfg AgentLib AgentNodes.
+From OSSVerify.Proofs.openssl.ct.lib.VCommon.Cfg Require RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 Import ListNotations.
@@ -85,6 +87,7 @@ Lemma rzc_chk : forall ms model x8 (chk : SyscallEffect -> check_result) (I : Ty
     (E : I -> SyscallEffect) (M : I -> Model) (EV : I -> list event) (T : I -> TSet) (i0 : I),
   m_halted model = None ->
   ms_svc_pending ms = Some x8 ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   (forall eff, check_syscall (sys_input segs ms x8) eff model = chk eff) ->
   (forall i, chk (E i) = CheckOk (M i) (EV i)) ->
   (forall i, ~ spurious_refusal_cfg cfg (sys_input segs ms x8) model (E i)) ->
@@ -97,10 +100,11 @@ Lemma rzc_chk : forall ms model x8 (chk : SyscallEffect -> check_result) (I : Ty
   (forall i, realizes_cfg segs cfg (mkCfg (advance_past_svc (apply_effect ms (E i))) (M i)) (T i)) ->
   realizes_cfg segs cfg (mkCfg ms model) (t_alt (fun i => t_emit (EV i) (T i))).
 Proof.
-  intros ms model x8 chk I E M EV T i0 Hh Hsvc Hchk Hok Hns Hinv Hnh Hnu Hnl Hcont.
+  intros ms model x8 chk I E M EV T i0 Hh Hsvc Hrob Hchk Hok Hns Hinv Hnh Hnu Hnl Hcont.
   apply (rzc_node segs cfg (mkCfg ms model) I EV
            (fun i => mkCfg (advance_past_svc (apply_effect ms (E i))) (M i)) T i0).
   - eapply node_chk_cfg; eassumption.
+  - exact Hrob.
   - exact Hcont.
 Qed.
 
@@ -108,6 +112,7 @@ Qed.
 Lemma rzc_ret_chk : forall ms model x8 r m' evs T,
   m_halted model = None ->
   ms_svc_pending ms = Some x8 ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   (forall eff, check_syscall (sys_input segs ms x8) eff model = check_ret_only eff r m' evs) ->
   (~ spurious_refusal_cfg cfg (sys_input segs ms x8) model (mkEffect r [] [])) ->
   m_halted m' = None ->
@@ -115,11 +120,11 @@ Lemma rzc_ret_chk : forall ms model x8 r m' evs T,
   realizes_cfg segs cfg (mkCfg (advance_past_svc (apply_effect ms (mkEffect r [] []))) m') T ->
   realizes_cfg segs cfg (mkCfg ms model) (t_emit evs T).
 Proof.
-  intros ms model x8 r m' evs T Hh Hsvc Hchk Hns Hh' Hnl' Hcont.
+  intros ms model x8 r m' evs T Hh Hsvc Hrob Hchk Hns Hh' Hnl' Hcont.
   eapply rzc_conseq.
   - apply (rzc_chk ms model x8 (fun eff => check_ret_only eff r m' evs) unit
              (fun _ => mkEffect r [] []) (fun _ => m') (fun _ => evs) (fun _ => T) tt
-             Hh Hsvc Hchk).
+             Hh Hsvc Hrob Hchk).
     + intros []. apply check_ret_only_ok_iff. auto.
     + intros []. exact Hns.
     + intros eff m2 evs2 Hc _. apply check_ret_only_ok_iff in Hc.
@@ -171,6 +176,7 @@ Proof.
     + intros e st Hss.
       destruct (sstep_exit_inv segs ms model x8 e st Hh Hsvc Hx8 (sstep_cfg_sub segs cfg _ _ _ Hss)) as [-> ->].
       exists tt. split; reflexivity.
+  - exact (RomBase.sys_rob_exit segs ms model x8 Hsvc Hx8).
   - apply rzc_halt. cbn. discriminate.
 Qed.
 

@@ -1,6 +1,6 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMpfArmPlluSeam.v (a working branch 0ddf65fd8cc); relocated to libreac/fuzz_disco.asan by reloc.py (target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table: this file's rows in provenance/evidence/g9-gxa/g9tool/g9-table-disco-A.tsv). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMpfArmPlluSeam.v (a working branch); relocated to libreac/fuzz_disco.asan by reloc.py (target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table: this file's rows in provenance/evidence/g9-gxa/g9tool/g9-table-disco-A.tsv). *)
 (* R-1 W9 (a Theorem Labs lane): the conversion %llu (Pllu) at the seam, on W0's per-piece arms (FMgxaSeamPf.v :100-115). The
-   renderer equations are fuzz_disco's pt_pf_digits / pt_pf_udec (a working branch 5a2af4f2707
+   renderer equations are fuzz_disco's pt_pf_digits / pt_pf_udec (a working branch
    lib/A/FMgxaSeamPf.v Section CoveredD's preamble), copied; the three arms restate CoveredD's Pllu case in W0's form.
    The bytes arm uses pf_arg_fit's 0 <= u (pf_udec of a negative u is not a byte). New file; nothing else is edited. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.

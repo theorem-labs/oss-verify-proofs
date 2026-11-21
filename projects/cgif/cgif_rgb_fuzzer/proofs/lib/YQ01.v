@@ -1,11 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the mremap contract bounds the new size by TASK_SIZE, which the check refuses first, the move path asks that there be no room in place and for Linux's placement, mremap_maps_next takes the old length, the in-place grow reads the source cut with maps_subtract, and RomBase.sys_rob at the mremap node). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement.
 From LinuxProcessSemantics.LinuxProcessSem.Checks.Sys Require Import DispatchCompute.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import
 YK16 YK0o YK11 YK0j YK0i YK14 YK0v YK02 YK15 YQ0k.
@@ -53,6 +55,7 @@ ma_oldn_al : bv_unsigned (getr regs 11) mod page_size = 0;
 ma_newn_pos : 0 < bv_unsigned (getr regs 12);
 ma_newn_al : bv_unsigned (getr regs 12) mod page_size = 0;
 ma_newn_lt : bv_unsigned (getr regs 12) < 2 ^ 63;
+ma_newn_task : bv_unsigned (getr regs 12) <= TASK_SIZE;
 ma_neq : bv_unsigned (getr regs 11) <> bv_unsigned (getr regs 12);
 ma_ceiling : bv_unsigned (getr regs 10) + bv_unsigned (getr regs 11) <= alloc_top (m_vmmaps model);
 ma_reserved : region_free (vm_reserved (m_vmmaps model)) (getr regs 10) (getr regs 11) = true;
@@ -84,6 +87,8 @@ then CheckOk (mremap_model_next model old old_n old new_n) []
 else CheckReject
 else CheckReject
 else if (old_nZ <? new_nZ)
+&& negb (mremap_inplace_room_b model old old_n new_n old_nZ new_nZ)
+&& linux_place_is (m_vmmaps model) (kb_thp (m_kernel model)) (Z_to_bv 64 0) new_nZ r
 && mremap_fresh_b model old_nZ new_nZ old old_n r new_n
 && listNN_eqb zs (mremap_tail r old_n old_nZ new_nZ)
 && listNN_eqb us [(old, old_n)]
@@ -105,6 +110,8 @@ rewrite (proj2 (Z.eqb_eq _ _) ma_old_al0). cbn [negb].
 destruct (page_align_is0_b_false (getr regs 12) ma_newn_pos0 ma_newn_al0) as [-> Hr2].
 destruct (page_align_is0_b_false (getr regs 11) ma_oldn_pos0 ma_oldn_al0) as [-> Hr1].
 cbv zeta. rewrite Hr1, Hr2, !Z_to_bv_bv_unsigned.
+(* 08b1429: check_mremap refuses a new size above TASK_SIZE first (Checks/Sys/Mm/Mremap.v). *)
+rewrite (proj2 (Z.ltb_ge TASK_SIZE (bv_unsigned (getr regs 12))) ma_newn_task0).
 unfold mremap_backing_uniform_b. rewrite ma_lazy0. cbn [map_contains region_free existsb orb].
 unfold mremap_source_b. rewrite (proj2 (Z.leb_le _ _) ma_ceiling0), ma_reserved0, ma_has0, ma_noaccess0.
 cbn [andb negb].
@@ -157,7 +164,7 @@ Qed.
 
 Lemma mremap_next_with_vmmaps : forall m old old_n dst new_n,
 m_vm_lazy m = [] -> m_vm_materialized m = [] ->
-mremap_model_next m old old_n dst new_n = with_vmmaps (mremap_maps_next (m_vmmaps m) old dst new_n) m.
+mremap_model_next m old old_n dst new_n = with_vmmaps (mremap_maps_next (m_vmmaps m) old old_n dst new_n) m.
 Proof.
 intros m old old_n dst new_n H H'. unfold mremap_model_next, mremap_source_lazy_b, vm_resize_backing.
 rewrite with_vmmaps_lazy, with_vmmaps_materialized, H, H'. cbn [map_contains existsb maps_subtract filter app].
@@ -211,6 +218,8 @@ apply listNN_eqb_eq in Hzs. apply listNN_eqb_eq in Hus. apply listCopy_eqb_eq in
 cbn [andb] in Hk. injection Hk as <-. right. left.
 unfold mremap_tail. rewrite (proj2 (Z.ltb_lt _ _)) by lia. repeat split; try reflexivity. lia.
 + destruct (bv_unsigned old_n <? bv_unsigned new_n) eqn:Hlt; [|discriminate]. apply Z.ltb_lt in Hlt.
+destruct (mremap_inplace_room_b model old old_n new_n (bv_unsigned old_n) (bv_unsigned new_n)) eqn:Hroom; [discriminate|].
+destruct (linux_place_is (m_vmmaps model) (kb_thp (m_kernel model)) (Z_to_bv 64 0) (bv_unsigned new_n) r) eqn:Hpl; [|discriminate].
 destruct (mremap_fresh_b model (bv_unsigned old_n) (bv_unsigned new_n) old old_n r new_n) eqn:Hf; [|discriminate].
 destruct (listNN_eqb zs (mremap_tail r old_n (bv_unsigned old_n) (bv_unsigned new_n))) eqn:Hzs; [|discriminate].
 destruct (listNN_eqb us [(old, old_n)]) eqn:Hus; [|discriminate].
@@ -244,7 +253,7 @@ destruct (errno_ret_in mremap_errnos r).
 + destruct (bv_unsigned new_n <? bv_unsigned old_n).
 * destruct (_ && _ && _); congruence.
 * destruct (mremap_inplace_grow_b _ _ _ _ _ _); [|discriminate]. destruct (_ && _ && _); congruence.
-+ destruct (_ && _ && _ && _ && _); congruence.
++ destruct (_ && _ && _ && _ && _ && _ && _); congruence.
 Qed.
 Lemma node_mremap : forall regs pc mem rom model,
 m_halted model = None ->
@@ -265,6 +274,8 @@ exact (proj2 (mremap_ok_model _ _ _ _ _ _ Hne Hk) Hlz).
 - intros eff m' evs Hk. rewrite (mremap_chk regs pc mem rom model eff HA) in Hk.
 pose proof (mremap_chk_events _ _ _ _ _ _ _ Hk) as ->.
 exists (exist _ (eff, m') Hk). cbn [proj1_sig fst snd]. auto.
+- (* mremap's check reads registers only ([chk216]), so it is the same at every larger backing *)
+apply (sys_rob_pend segs). intros r _ eff. rewrite !chk216 by exact (ma_sysno _ _ HA). reflexivity.
 Qed.
 Definition mremap_post_mem (mem mem' : word -> option byte) (o on r nn : Z) : Prop :=
 (forall i, 0 <= i < Z.min on nn -> mem' (Z_to_bv 64 (r + i)) = mem (Z_to_bv 64 (o + i))) /\
@@ -358,10 +369,10 @@ Qed.
 Lemma mremap_inplace_grow_facts : forall model (old old_n new_n : word),
 mremap_inplace_grow_b model old old_n new_n (bv_unsigned old_n) (bv_unsigned new_n) = true ->
 bv_unsigned old + bv_unsigned new_n <= alloc_top (m_vmmaps model) /\
-region_free (vm_reserved (m_vmmaps model) ++ map_remove (vm_maps (m_vmmaps model)) old) old new_n = true /\
+region_free (vm_reserved (m_vmmaps model) ++ maps_subtract (vm_maps (m_vmmaps model)) (bv_unsigned old) (bv_unsigned old + bv_unsigned old_n)) old new_n = true /\
 mremap_final_budget_b model old old_n old new_n = true.
 Proof.
-intros model old old_n new_n H. unfold mremap_inplace_grow_b in H. cbv zeta in H.
+intros model old old_n new_n H. unfold mremap_inplace_grow_b, mremap_inplace_room_b in H. cbv zeta in H.
 apply andb_prop in H as [H H3]. apply andb_prop in H as [H1 H2]. apply Z.leb_le in H1. auto.
 Qed.
 Lemma mremap_fresh_facts : forall model (old old_n dst new_n : word),

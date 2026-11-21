@@ -2,9 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: segments FEED and FEEDS of the ASan walk of fuzz_reply's drain -
    reference_feed's byte loop (fuzz_reply.asan 0x8347c .. 0x83550, the call to list_push at 0x834f0) and
-   its composition.  The statements are W_drain_cx.v:805 dr_feed_stmt and :851 dr_feeds_stmt; the cut
-   predicates are W_drain_cx.v:601 DRB (the loop head, after k of the n bytes) and :619 DE (the loop left).
-   The Section header below is W_drain_top.v:44-102 verbatim, so that dr_feed_p / dr_feeds_p carry exactly
+   its composition.  The statements are W_drain_cx.v:806 dr_feed_stmt and :851 dr_feeds_stmt; the cut
+   predicates are W_drain_cx.v:602 DRB (the loop head, after k of the n bytes) and :619 DE (the loop left).
+   The Section header below is W_drain_top.v:45-103 verbatim, so that dr_feed_p / dr_feeds_p carry exactly
    the premises of that file's dr_feed / dr_feeds.
 
    THE LOOP, as the pinned listing holds it (W_listing.v; address a is entry (a - 0x822ec) / 4, line 41 +
@@ -76,9 +76,10 @@
    dr_feed_stmt, and the induction stops because DRB carries `Z.of_nat k < dnum s1`, so a DRB at S k with
    S k = dnum s1 is uninhabited. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_drain_feed.v; 66 of its 196 lines of code are new or changed and 6467 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The INTERFACE of the second half of fuzz_reply's drain TOP segment, so that the two halves are proved in
-   parallel.  Nothing is proved here.  The cut and the statement are a Theorem Labs lane's own (a working branch
-   ace6b76eb51, W_drain_top.v: DT2 at :492 and dt_tail at :1109), moved here verbatim so a second prover can take
+   parallel.  Nothing is proved here.  The cut and the statement are a Theorem Labs lane's own (a working branch,
+   W_drain_top.v: DT2 at :492 and dt_tail at :1109), moved here verbatim so a second prover can take
    the tail while b1 proves the growth and the source_of scan:
      half A (b1, W_drain_top.v): DI 0x831f8 -> NOGROW / GROW (realloc #1, 0x83248) -> DT1 0x8326c -> the
        source_of scan (0x83294 .. 0x832e8) -> DT2 0x83314;

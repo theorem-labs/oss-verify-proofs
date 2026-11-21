@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's mmap base). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -68,14 +69,20 @@ Qed.
 Section Facts.
   Context {AMB : Amb}.
   Variable sp0 : word.
-  Variables av ev : list (list byte).
+  (* LPS #38 (75d69e00): [D_main1] and [D8] take the run's whole input, so this
+     Section does too and projects argv/envp out of it rather than binding them
+     separately.  [Let], not [Variable], so the two names keep meaning exactly
+     [inp]'s fields and no caller can supply a different pair. *)
+  Variable inp : ProcInput.
+  Let av : list (list byte) := in_argv inp.
+  Let ev : list (list byte) := in_envp inp.
   Variable tid : word.
   Variable rdraw : EntryDraw.
   Hypothesis Hva : valid_argv av.
   Hypothesis Hlo : (0x7fff80000000 <= bv_unsigned sp0)%Z.
   Hypothesis Hhi : (bv_unsigned sp0 <= 0x800000000000)%Z.
 
-  Let D := D_main1 sp0 av ev a_hwcap tid rdraw.
+  Let D := D_main1 inp sp0 tid rdraw.
 
   Lemma len_av : (1 <= Z.of_nat (length av) <= 1024)%Z.
   Proof. destruct Hva as [[H1 H2] _]. lia. Qed.
@@ -84,8 +91,8 @@ Section Facts.
   Proof.
     intros i Hb. destruct (missb_parts i 1 Hb) as (H1 & H2 & H3 & H4). subst D.
     cbn [Z.of_nat Pos.of_succ_nat Pos.succ] in H2, H4.
-    rewrite (D_main1_clear_at sp0 av ev a_hwcap tid rdraw i 1 i H1) by (cbn [Z.of_nat Pos.of_succ_nat Pos.succ]; lia).
-    apply (D8_none sp0 rdraw av ev a_hwcap Hva). eapply range_miss_pt; [exact H2 | lia].
+    rewrite (D_main1_clear_at inp sp0 tid rdraw i 1 i H1) by (cbn [Z.of_nat Pos.of_succ_nat Pos.succ]; lia).
+    apply (D8_none inp sp0 rdraw Hva). eapply range_miss_pt; [exact H2 | lia].
   Qed.
 
   Ltac via_chain :=
@@ -118,7 +125,7 @@ Section Facts.
   Proof. intros segs. via_chain. apply rdn_wbytes_hit8. unorm; lia. Qed.
 
   Lemma D_main_auxv : forall segs,
-    rdn segs D (Z_to_bv 64 0x1226b0) 8 = Some (word_to_le_bytes 8 (auxv_w sp0 av ev)).
+    rdn segs D (Z_to_bv 64 0x1226b0) 8 = Some (word_to_le_bytes 8 (auxv_w inp sp0)).
   Proof. intros segs. via_chain. unfold auxv_w. apply rdn_wbytes_hit8. unorm; lia. Qed.
 
   Lemma D_main_cdt : forall segs,
@@ -140,21 +147,24 @@ Section Facts.
     rdn segs D (Z_to_bv 64 x) n = Some (map (Z_to_bv 8) zs).
   Proof. intros. subst D. apply D_main1_hit; assumption. Qed.
 
+  (* #38 folded argv/envp/uid/hwcap into [inp] and added the mmap base, so
+     [S1Start.main_entry] is [sp0 rdraw inp mbase tid regs mem]. *)
+  Variable mbase : word.
   Variable regs : bvmap 5 word.
   Variable mem : word -> option byte.
-  Hypothesis ME : main_entry sp0 rdraw av ev a_uid a_hwcap tid regs mem.
+  Hypothesis ME : main_entry sp0 rdraw inp mbase tid regs mem.
 
   Lemma main_entry_tid : forall segs,
     rdn segs mem (Z_to_bv 64 0x102370) 4 = Some (word_to_le_bytes 4 tid).
   Proof.
-    intros segs. rewrite (main_entry_rdn_data sp0 rdraw av ev a_uid a_hwcap tid regs mem ME)
+    intros segs. rewrite (main_entry_rdn_data sp0 rdraw inp mbase tid regs mem ME)
       by (rewrite stack_max_size_val; unorm; lia). apply D_main_tid.
   Qed.
 
   Lemma main_entry_guard : forall segs,
     rdn segs mem (Z_to_bv 64 0x122688) 8 = Some (word_to_le_bytes 8 (canary rdraw)).
   Proof.
-    intros segs. rewrite (main_entry_rdn_data sp0 rdraw av ev a_uid a_hwcap tid regs mem ME)
+    intros segs. rewrite (main_entry_rdn_data sp0 rdraw inp mbase tid regs mem ME)
       by (rewrite stack_max_size_val; unorm; lia). apply D_main_guard.
   Qed.
 
@@ -162,7 +172,7 @@ Section Facts.
     (0 <= a)%Z -> (a + Z.of_nat n <= 0x100000000)%Z ->
     rdn segs D (Z_to_bv 64 a) n = r -> rdn segs mem (Z_to_bv 64 a) n = r.
   Proof.
-    intros segs a n r Ha Hn H. rewrite (main_entry_rdn_data sp0 rdraw av ev a_uid a_hwcap tid regs mem ME)
+    intros segs a n r Ha Hn H. rewrite (main_entry_rdn_data sp0 rdraw inp mbase tid regs mem ME)
       by (rewrite stack_max_size_val; unorm; lia). exact H.
   Qed.
 
@@ -170,7 +180,7 @@ Section Facts.
     (0 <= x)%Z -> (x + Z.of_nat n <= 0x100000000)%Z -> lookup_runs D_CXX x n = Some zs ->
     rdn segs mem (Z_to_bv 64 x) n = Some (map (Z_to_bv 8) zs).
   Proof.
-    intros segs x n zs Hx Hn HL. rewrite (main_entry_rdn_data sp0 rdraw av ev a_uid a_hwcap tid regs mem ME)
+    intros segs x n zs Hx Hn HL. rewrite (main_entry_rdn_data sp0 rdraw inp mbase tid regs mem ME)
       by (rewrite stack_max_size_val; unorm; lia). apply D_main_cxx; [lia | lia | exact HL].
   Qed.
 End Facts.

@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: adapted from cgif's lib/A/ACgq.v and lib/A/ACk8.v (file header, walk tactic forms) for reac_ctrl_parse of libreac's fuzz_scene. *)
-(* Modified by Theorem Labs, 2026-10: ported to libreac/fuzz_scene from a Theorem Labs lane's proofs/libreac/fuzz_grant/lib/A/Prog/CtrlParseTail1.v at a working branch 7e98c198edd. fuzz_scene.asan's reac_ctrl_parse (sha256 43654a025fd0..., 0x83dd8, AF_reac_ctrl_parse = 0x1560) holds the same 616 instructions as fuzz_grant.asan's (0x82000), 52 pc-relative words apart, so every instruction offset and every branch outcome below is the donor's; only the module paths, the listing layer (Grant* -> Scene*, grant_listing -> scene_listing) and the printed pcs changed. *)
+(* Modified by Theorem Labs, 2026-10: ported to libreac/fuzz_scene from a Theorem Labs lane's proofs/libreac/fuzz_grant/lib/A/Prog/CtrlParseTail1.v at a working branch. fuzz_scene.asan's reac_ctrl_parse (sha256 43654a025fd0..., 0x83dd8, AF_reac_ctrl_parse = 0x1560) holds the same 616 instructions as fuzz_grant.asan's (0x82000), 52 pc-relative words apart, so every instruction offset and every branch outcome below is the donor's; only the module paths, the listing layer (Grant* -> Scene*, grant_listing -> scene_listing) and the printed pcs changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_ctrl_parse, the walk from cut B (0x83fa0) to cut J for the frames of class 1 (pz_P1):
    FILLER (1), MASTER_ANNOUNCE (4) and SPLIT_ANNOUNCE (8): frame type 00 00, cf ea or ce ea.
    From cut B the walk stores is_broadcast (out + 16), the counter (out + 20), link and segment (out + 22, 23),

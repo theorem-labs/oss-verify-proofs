@@ -8,9 +8,10 @@
    cmd_palib, SIGP is cmd_sig_prog_PB, IMG is cmd_img_facts_tfib. What remains is the statement's own hypothesis
    (sup_reply_code's contract at every FP state) and HB. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/CheckRefusalClosed.v, with its module paths and module names changed; 14 of its 35 lines of code are new or changed and 21 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The closing pattern of a Theorem Labs lane's PASS4-REFIT.md section F for check_words_add's ASan+UBSan walk
    (lib/B/Prog/check_words_add.v, tcheck_words_add_proof), the B twin of lib/A/Prog/CheckWordsAddClosed.v
-   (a working branch b50068435da): the per-binary record hypothesis the walk names besides HB is discharged at
+   (a working branch): the per-binary record hypothesis the walk names besides HB is discharged at
    the pinned image (lib/B/Prog/CmdImg.v's instance PB_cmd, whose segments are tfibsegs, and the sink head
    YE2k.tfib_sink_head). IMG is CmdRecImg.cmd_img_facts_tfib (lib/B/Prog/CmdRecImg.v:83). The walk takes no LAWS
    (it uses the core's AR_laws_ok itself), no TL, SIGP or PRW, and no MTL: it allocates nothing and its post has no

@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-29: fuzz_preset, image A' (asan, #102 pin 1be0f53d96cb, unstripped twin bff8519bbe3e): the
    walk of check_bounded_alloc (CheckBoundedAllocA.v check_bounded_alloc_holds_A, row N10-CBAA) at the #102 DRIVER'S
-   instance, so the driver's slot pcc_check_bounded_alloc (lib/A/PresetCfnA.v:996-997) is discharged by `exact`
-   (h-pre-b1's request, 19:52Z). Its A-side form follows h-rw-pre-5's image-B' file lib/B/Prog/CrcBInstLive.v
-   (origin/cold/h-rw-pre-5-r102-crcB 8f5bab31e565).
+   instance, so the driver's slot pcc_check_bounded_alloc (lib/A/PresetCfnA.v:997-998) is discharged by `exact`
+   (h-pre-b1's request, 19:52Z). Its A-side form follows h-rw-pre-5's image-B' file lib/B/Prog/CrcBInstLive.v.
+   
    rule 24: proves no function (kind: instance of an already-proved walk).
    check_bounded_alloc_holds_A_inst is check_bounded_alloc_holds_A at
    - B := AD2l.TfibB, PI := prh_img_A, L := A_prog_listing, PA := PI_prog_A, cp := CfParams_preset,

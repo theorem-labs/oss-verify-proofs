@@ -18,7 +18,7 @@ Local Set Warnings "-abstract-large-number".
 Open Scope Z_scope.
 
 (* The step tactics' hypothesis transport, extended with the facts this walk carries: cls_body, cls_wok,
-   addressable and mem_grows (image A's block, 91f8c40cf11 lib/A/Prog/check_latest_sent_seg_runs.v). Local, so a
+   addressable and mem_grows (image A's block, lib/A/Prog/check_latest_sent_seg_runs.v). Local, so a
    file that Requires this one keeps the library's own transport. *)
 Local Ltac footprint_after_store segs m a bs ::=
   repeat match goal with

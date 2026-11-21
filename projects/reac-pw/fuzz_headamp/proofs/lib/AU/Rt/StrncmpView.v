@@ -3,7 +3,7 @@
    proved here; image-generic (segs, B are parameters).
    - fm_rom_viewN_of_arodata: from arodata_okP segs rlo rhi B (aview segs (w_H W) mem) (lib/A/Prog/BoxBase.v:20),
      which every caller spec carries (ReacBoxregDeclare.v:127, Check.v:122) and every ajournal keeps
-     (arodata_ok_journalP). in_roP segs rlo rhi a is in_rom segs a (YG0d.v:380, the bytes of every segment without
+     (arodata_ok_journalP). in_roP segs rlo rhi a is in_rom segs a (YG0d.v:381, the bytes of every segment without
      write permission: text, .rodata, .eh_frame, .eh_frame_hdr) OR rlo <= a < rhi (RELRO); the left disjunct is in_rom
      word for word,
      so arodata_okP covers every byte fm_rom_viewN asks for and no extra premise is needed (RELRO bytes are covered as

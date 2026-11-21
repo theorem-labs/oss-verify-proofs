@@ -2,9 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ARM_gone of the ASan+UBSan walk of fuzz_reply's LLVMFuzzerTestOneInput on image B,
    PHASE 6: from GCSD at 0x84c84 to INV_K at the latch 0x84804 (fuzz_reply.c:654 and the arm's tail).  The image-B port
-   of lib/A/W_LLVMFuzzerTestOneInput_gone_p6.v (a working branch 32b23a20c3e), at B's addresses,
+   of lib/A/W_LLVMFuzzerTestOneInput_gone_p6.v (a working branch), at B's addresses,
    registers and frame (the objdump of the pinned binary fuzz_reply.asan-ubsan),
-   over the base lib/B/W_LLVMFuzzerTestOneInput_gone_base.v (85b530db754):
+   over the base lib/B/W_LLVMFuzzerTestOneInput_gone_base.v:
      0x84c84  ld a0,208(s1); jal check_shape_done      a0 = at = |O|, the value of g_nout (the abort is not reached)
      0x84c8c  ld s8,96(s1); li a0,-8; sb a0,4..9(s8)    prefix[48]'s six shadow bytes go back to 0xf8
      0x84cac  ld s4,16(s1); ld s10,24(s1); j 84da4      in.p, HI_G_NOUT
@@ -22,6 +22,7 @@
      re-poison, is the frame with the shadow poisoned again (fake_shadow), i.e. the cut's aframe_at (aframe_of_gframe).
    Section hypotheses beyond the cut's Section w context: TL : PALib B (the allocator instance, W_kit.v), for its
    api_env (as_errno B + 4 <= kLowMemEnd: errno is not one of the six shadow bytes). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

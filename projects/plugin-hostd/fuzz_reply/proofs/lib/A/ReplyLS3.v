@@ -2,16 +2,17 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyLS.v; 178 of its 501 lines of code are new or changed and 271 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* fr_LS3: fr_LS v3, PROPOSED beside fr_LS v2 (lib/A/ReplyLS.v, which stays as it is), for a Theorem Labs lane's FREE-PIECES row
    B1c (a Theorem Labs lane).  proves no function (kind: invariant lemma).
 
-   WHY.  fr_LS v2's potential PHI (ReplyLS.v:102) has no credit for
-   (a) the relay entry's line buffer: a fresh entry (ra_new, re_cap 0, W_contract.v:1127) has its buffer grown to 8192
+   WHY.  fr_LS v2's potential PHI (ReplyLS.v:103) has no credit for
+   (a) the relay entry's line buffer: a fresh entry (ra_new, re_cap 0, W_contract.v:1128) has its buffer grown to 8192
        by its first drain and to 16384 later (Prog/drain_b_c.v grow_tr :28-31; aentry_ok's re_cap clause, W_rep.v:124);
    (b) the relay's unfinished line re_U (up to APARTIAL bytes, W_rep.v:125): its pending credit is spent by the drain
        that reads it, and a later drain or remove sends it (send_line doubles g_out) and turns it into keys;
    (c) the per-list one-time cost of a vector's first allocation (list_push: 8 records, 128 bytes) and the held vector's
-       measure after check_no_loss, which bounds hl_cap H' only from above (cnl_post, W_contract.v:2025).
+       measure after check_no_loss, which bounds hl_cap H' only from above (cnl_post, W_contract.v:2026).
    So LS_drain_step and LS_rm_step closed at v2 only with the extra hypotheses Hpay (ReplyLSDrain3.v) and Hout
    (ReplyLSRemove3.v).
 
@@ -405,14 +406,14 @@ Proof.
 Qed.
 
 (* ------------------------------------------------------------------ the prologue *)
-(* LS_pro_oa does not name LS: fr_LS_pro_oa (ReplyLS.v:551) is the rule at v3 as it is; restated for the family *)
+(* LS_pro_oa does not name LS: fr_LS_pro_oa (ReplyLS.v:552) is the rule at v3 as it is; restated for the family *)
 Lemma fr_LS3_pro_oa : forall XM_LIB RLO RHI G_fr cx (S2 : astate) (pos : Z),
   lf_base B ameter_triv XM_LIB RLO RHI ACfn_cf.fr_live_pre G_fr cx ->
   ablocks B (c_ly cx) S2 = ablocks B (c_ly cx) (c_S cx) -> frames S2 = [(1, pos)] ->
   st_nev S2 = st_nev (c_S cx) -> blocks_bytes S2 = blocks_bytes (c_S cx) ->
   blocks_bytes S2 + APARTIAL + ATABLE <= LIVE_MAX /\ mo_ok ameter_triv S2 (oa_cost ameter_triv).
 Proof. exact (fr_LS_pro_oa B). Qed.
-(* LS at the first head, at the proposed text of fr_LS_pro (ReplyLS.v:571, the pro arm's text): the same premises;
+(* LS at the first head, at the proposed text of fr_LS_pro (ReplyLS.v:572, the pro arm's text): the same premises;
    ECRED is E_ENT for the fresh entry ra_new 100 and K0 for the one open source, the bound's W_OPEN for it *)
 Lemma fr_LS3_pro : forall XM_LIB RLO RHI G_fr cx q T' pj c O cap out ly S,
   lf_base B ameter_triv XM_LIB RLO RHI ACfn_cf.fr_live_pre G_fr cx ->

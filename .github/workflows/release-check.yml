@@ -149,8 +149,8 @@ env:
 
 jobs:
   plan:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    runs-on: ubuntu-slim
+    timeout-minutes: 15
     permissions:
       contents: read  # the checkout, and the pushed commits' parents
       actions: read   # pr.yml's merge queue runs of those commits
@@ -158,6 +158,18 @@ jobs:
       plan: ${{ steps.drafts.outputs.plan }}
       units: ${{ steps.plan.outputs.units }}
       full: ${{ steps.plan.outputs.full }}
+      # whether this commit touches release.yaml, toolchain/ or theories/: the lps_pin job runs, and holds it to the
+      # model and the checker and runner images release.yaml and toolchain/ pin (the lps_pin step); whether it
+      # touches theories/, which that job then compiles; whether images.checker, and whether images.runner, differs
+      # from main's before this run (the push's `before`; this commit's parent where there is none), when that job
+      # holds the image to this commit's build definition; and the commit whose tools' requirements.txt that job
+      # installs to read release.yaml, `base` (pr.yml's plan job gives its own base the same name, and the two jobs
+      # are one text)
+      lps_pin: ${{ steps.lps_pin.outputs.lps_pin }}
+      theories: ${{ steps.lps_pin.outputs.theories }}
+      checker_repin: ${{ steps.lps_pin.outputs.checker_repin }}
+      runner_repin: ${{ steps.lps_pin.outputs.runner_repin }}
+      base: ${{ steps.lps_pin.outputs.base }}
       draft_legs: ${{ steps.drafts.outputs.draft_legs }}
       # true when this push left parts to the publishing gate's run (the plan step says which and why), or, for the
       # tree main before the push pins with a deferred check, to the check of record that pin names (check_of_record)
@@ -535,6 +547,92 @@ jobs:
               echo "The corpus-wide check of this commit is the publishing gate's run on the release commit that contains it."
             fi
           } >> "$GITHUB_STEP_SUMMARY"
+      # The model and the checker and runner images a commit to release.yaml, toolchain/ or theories/ is held to, on
+      # the push path.  pr.yml's lps_pin job holds a pull request's change to them: the two pins of the model are one
+      # hash, each pinned image carries images.yml's attestation from main and, when its pin moved, was built from
+      # this tree's toolchain/, and theories/ compiles in the checker image.  This workflow is the status of main, and
+      # a commit can reach main without a pull request run of this repository (a ruleset bypass, a push, a release
+      # cut), so the same job runs here, and the verdict job fails when it did not pass (Dispatch issue OSSV-440).
+      # Whether the job runs, and whether theories/ is compiled, are pr.yml's reach step's answers over the paths
+      # this push changed.  The plan step above writes those paths when it has a base to compare with; it leaves
+      # that file unwritten where there is nothing to compare (a dispatch, a push that made the branch, a base the
+      # repository no longer has) and where it stops early, and then every path of the tree counts as changed, as
+      # the plan itself reads it.  Unwritten therefore means run the job, never skip it.
+      # Whether images.checker moved, and whether images.runner did, is read against the commit main stood at before
+      # this run's commits: on a push, the tip before it (EVENT_BASE, the push's `before`, above), since every commit
+      # the push brings reaches main by this run alone, and a repin in any of them is a repin of the image HEAD
+      # names; a push of a repin and a later commit, or a force push, must not compare HEAD with a parent the push
+      # itself brought.  Where there is no tip before (a run by hand, a push that made the branch), the commit's
+      # first parent stands for it.  A repin is HEAD's image differing from that commit's, or that commit's
+      # release.yaml not read, or no such commit at all.  A dispatched run of main and the push of the same lone
+      # commit then agree: after a toolchain/ change merged and before its repin, both find the image main pinned
+      # before it and verify its attestation alone, where a dispatch read as a repin would hold that image to a
+      # Dockerfile it cannot yet have been built from.  The checkout is one commit deep, so that commit is fetched as
+      # the plan step fetches its base, one commit deep, and its release.yaml read from it.
+      # `^"?theories/`: git quotes a path holding a '"', a '\' or a control character whatever core.quotePath
+      # says, and a quoted line that did not match would skip the job.  LC_ALL=C, as every other grep of this
+      # file: grep reads bytes, and under a UTF-8 locale it drops a line that is not valid UTF-8, which here
+      # would read as no theories/ change at all.
+      - name: whether this commit touches release.yaml, toolchain/ or theories/, and moves images.checker or images.runner, for the lps_pin job
+        id: lps_pin
+        run: |
+          set -euo pipefail
+          changed="$RUNNER_TEMP/changed.txt"
+          theories=false lps_pin=false checker_repin=false runner_repin=false base=
+          if [ ! -f "$changed" ]; then
+            theories=true lps_pin=true
+            echo "no list of changed paths (nothing to compare with, or the plan stopped early): every path is read as changed"
+          else
+            if LC_ALL=C grep -qE '^"?theories/' "$changed"; then
+              theories=true
+            fi
+            if [ "$theories" = true ] || LC_ALL=C grep -qE '^"?toolchain/|^release\.yaml$' "$changed"; then
+              lps_pin=true
+            fi
+          fi
+          if [ "$lps_pin" = true ]; then
+            checker_repin=true runner_repin=true
+            before="${EVENT_BASE:-}"
+            case "$before" in 0000000000000000000000000000000000000000) before= ;; esac
+            if [ -n "$before" ]; then
+              against="main before this push, $before"
+            else
+              # the first parent, from the commit itself: a commit names its parents even in a clone one commit deep
+              before=$(git cat-file -p HEAD | sed -n '1,/^$/s/^parent //p' | sed -n 1p)
+              against="this commit's parent, $before (no tip before this run)"
+            fi
+            if [ -z "$before" ]; then
+              against="nothing: no tip before this run, and this commit has no parent"
+            elif { git cat-file -e "$before^{commit}" 2> /dev/null || git fetch -q --no-tags --depth=1 origin "$before"; } &&
+                 git show "$before:release.yaml" > "$RUNNER_TEMP/before-release.yaml"; then
+              # whether this commit's images.<$1> is that commit's
+              same_image() {
+                python -c 'import sys, yaml
+          c = [str(yaml.safe_load(open(p, encoding="utf-8"))["images"][sys.argv[1]]) for p in sys.argv[2:]]
+          sys.exit(int(c[0] != c[1]))' "$1" release.yaml "$RUNNER_TEMP/before-release.yaml"
+              }
+              if same_image checker; then checker_repin=false; fi
+              if same_image runner; then runner_repin=false; fi
+            fi
+            echo "images.checker compared with $against: moved: $checker_repin"
+            echo "images.runner compared with $against: moved: $runner_repin"
+            # The commit whose tools' requirements.txt the lps_pin job installs: the one this commit is compared with
+            # above, fetched one commit deep where the repository does not hold it, and never this commit itself.  A
+            # commit with no parent and no tip before this run, or one that cannot be fetched, leaves `base` empty, and
+            # the lps_pin job then fails rather than read this commit's own requirements (its step says why).
+            if [ -n "$before" ] &&
+               { git cat-file -e "$before^{commit}" 2> /dev/null ||
+                 git fetch -q --no-tags --depth=1 origin "$before"; } &&
+               git cat-file -e "$before^{commit}" 2> /dev/null; then
+              base=$before
+              echo "the lps_pin job reads release.yaml with the requirements of $base"
+            else
+              echo "::warning::no commit before this one to take the lps_pin job's requirements from (compared with $against): that job fails"
+            fi
+          fi
+          { echo "lps_pin=$lps_pin"; echo "theories=$theories"; echo "checker_repin=$checker_repin"
+            echo "runner_repin=$runner_repin"; echo "base=$base"; } >> "$GITHUB_OUTPUT"
+          echo "release.yaml, toolchain/ or theories/ changed: $lps_pin; theories/ changed: $theories; images.checker moved: $checker_repin; images.runner moved: $runner_repin"
       - name: for each group of the plan, its binaries in a release this read-only token cannot see (a draft)
         id: drafts
         # a local action resolves in the workspace (`./`): the checkout of this workflow's own commit
@@ -578,12 +676,36 @@ jobs:
       matrix:
         job: ${{ fromJSON(needs.plan.outputs.plan) }}
     steps:
+      # The object store of main (.github/workflows/images.yml, git_objects), restored before the checkout below so
+      # that its fetch asks only for what the store lacks and not for the whole tree (474-575 s cold on this runner,
+      # job 134991036107).  pr.yml's check job does the same, and its lint job's two steps say what the store is and
+      # what a run that finds none does: it checks out as it always did.  The checkout is unchanged, so it still
+      # fetches this run's own commit by name, one commit deep.  The entry's version is a hash of its path, so the
+      # restore names head/.git as images.yml's save does, and the step after it moves the store to work/.git, where
+      # actions/checkout keeps a repository whose origin is this one.  Restore only: images.yml keeps main's one
+      # store, and every run of this workflow (a push to main, or a run by hand) may read main's cache.
+      - id: git_objects
+        uses: actions/cache/restore@5a3ec84eff668545956fd18022155c47e93e2684  # v4.2.3
+        with:
+          path: head/.git
+          key: git-objects-v1-
+          restore-keys: git-objects-v1-
+      - if: steps.git_objects.outputs.cache-matched-key != ''
+        name: the object store this checkout starts from
+        env:
+          STORE: ${{ steps.git_objects.outputs.cache-matched-key }}
+        run: |
+          set -euo pipefail
+          mkdir work
+          mv head/.git work/.git
+          rmdir head
+          echo "$STORE, $(du -sh work/.git | cut -f1), main at $(git -C work rev-parse refs/ossv-git-cache/base)"
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
         with:
           path: work
       # The job's token, which actions/checkout persisted in work/.git/config as an http extraheader.  No step of this
       # job fetches again, and the check below runs the code of the tree this checkout wrote, so the credential goes
-      # first.  pr.yml's check and lint jobs do the same.
+      # first.  pr.yml's check job does the same.
       - name: the job's token, out of the tree the check runs
         run: git -C work config --unset-all http.https://github.com/.extraheader 2> /dev/null || true
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
@@ -741,7 +863,17 @@ jobs:
             done
             # end of the log paths the failures name
             if [ "${#logs[@]}" -eq 0 ]; then
-              mapfile -t logs < <(grep -rlE --include='*.log' '^Error' -- "$CHECK_LOGS/tmp" | sort || true)
+              # The build names its own folders, and a folder's name can hold a line break: a list split on lines would
+              # read `<folder>\n/any/runner/file.log` as two paths, the second outside this run's log folder.  So the
+              # list is NUL-separated, and each path is read only when it resolves to itself, as a named path above is.
+              found=()
+              mapfile -d '' -t found < <(grep -rlZE --include='*.log' '^Error' -- "$CHECK_LOGS/tmp" | sort -z || true)
+              for held in ${found[@]+"${found[@]}"}; do
+                rel=${held#"$CHECK_LOGS/tmp/"}
+                if [ "$(realpath -e -- "$held" 2> /dev/null || true)" = "$root/$rel" ] && [ -f "$held" ]; then
+                  logs+=("$held")
+                fi
+              done
             fi
             for f in "${logs[@]}"; do
               echo "== the first errors of ${f#"$CHECK_LOGS/tmp/"} ($(wc -l < "$f") lines):"
@@ -800,10 +932,493 @@ jobs:
           path: ${{ runner.temp }}/assets
           key: release-check-assets-${{ steps.keys.outputs.assets }}
 
+  lps_pin:
+    # A commit that touches release.yaml, toolchain/ or theories/ against the model and the checker and runner images
+    # this repository pins, on the push path: the same job as pr.yml's, step for step, since a commit can reach main
+    # without a pull request run here (a ruleset bypass, a push, the release cut) and the status of main must say
+    # the same thing as the status of a pull request.  pr.yml's job comment says what the pins are, why a repin is
+    # held to this tree's build definition and an unchanged digest is not, and why a theories/ change no
+    # job compiled is a failure (Dispatch issue OSSV-440).  tools/oft/tests/test_workflow_verdicts.py holds these
+    # steps and pr.yml's to one text, so a change to either is a change to both.
+    # It runs on the public repository as every other job of this workflow does: the cut ships theories/,
+    # release.yaml and toolchain/, the model's repository is public, and the pinned checker image is the one the
+    # check jobs already pull there with this workflow's `packages: read`.  The images' attestations are not there:
+    # each attestation step says so and reads none.
+    needs: [plan]
+    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.lps_pin == 'true' }}
+    # the runner pr.yml's lps_pin takes, and for the same reason: the checker image beside a checkout needs the
+    # 4-core larger runner's disk
+    runs-on: ubuntu-24.04-4core
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: read       # the pinned checker image from ghcr.io
+      attestations: read   # images.yml's build attestations of the pinned checker and runner images
+    steps:
+      # theories/ with the dune-project that declares its package, and release.yaml and toolchain/ for the two pins.
+      # Not the tree: no other dune file takes part in `dune build @theories/default`, and the proof libraries are
+      # gigabytes.
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          path: head
+          persist-credentials: false   # theories/ is the change's own; the attestation step's fetch sends its own header
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /dune-project
+            /release.yaml
+            /theories/
+            /toolchain/
+      # The PyYAML that reads release.yaml, from the tools' requirements.txt of the commit the plan judges this change
+      # against (its `base`), never from the change's own.  This job judges the pins, and what it installs runs on its
+      # runner before it judges anything: the change writes its requirements' hashes itself, a source distribution
+      # among them runs its build hooks as the runner's user, and a wheel can install a .pth file that every later
+      # `python` runs, so the change's requirements could replace what every later step runs (gh, jq, docker, the
+      # Python they import) and the steps would no longer be this workflow's.  --only-binary :all: keeps the base's
+      # named pins to the wheels they list, which run nothing as they install.  The change's own requirements are
+      # installed where its own code runs: the tests and the controls (tools/oft/tests/test_workflow_verdicts.py,
+      # LpsPinVerifierTest).  With no commit before this change to take them from, the job fails (the step below):
+      # actions/checkout given no ref checks out this run's own commit, and there is no other trusted list.
+      - name: the plan named a commit before this change to take the verifier's requirements from (fail closed)
+        env:
+          BASE: ${{ needs.plan.outputs.base }}
+        run: |
+          set -euo pipefail
+          # pr.yml's plan names the merge commit's first parent, the merge queue group's base or main before the
+          # push, and this very commit for a run with no base to compare with (a push that made the branch, or one
+          # whose base cannot be fetched); release-check.yml's names main before the push, or the parent, and nothing
+          # where the repository holds neither.
+          [[ "$BASE" =~ ^[0-9a-f]{40}([0-9a-f]{24})?$ ]] || {
+            echo "::error::the plan named no commit before this change ('$BASE'): there are no requirements but the change's own to read release.yaml with, and this job runs none of the change's code before it judges the pins"
+            exit 1; }
+          head=$(git -C head rev-parse HEAD)
+          [ "$BASE" != "$head" ] || {
+            echo "::error::the plan's base is this run's own commit $head (no base to compare with): its requirements are the change's own, and this job runs none of the change's code before it judges the pins"
+            exit 1; }
+          echo "the verifier's requirements come from $BASE, the commit before this change ($head)"
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          path: verifier
+          ref: ${{ needs.plan.outputs.base }}
+          persist-credentials: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /tools/oft/requirements.txt
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
+        with:
+          python-version: "3.12"
+      - name: the base's tools' dependencies (PyYAML, idna), hash-pinned, wheels only
+        run: python -m pip install --quiet --require-hashes --only-binary ':all:' -r verifier/tools/oft/requirements.txt
+      - name: release.yaml's model and toolchain/checker.Dockerfile's LPS_TREE_SHA256 are one pin
+        id: pin
+        working-directory: head
+        run: |
+          set -euo pipefail
+          read -r repo commit < <(python -c 'import yaml; s = yaml.safe_load(open("release.yaml"))["semantics"]; print(s["repository"], s["commit"])')
+          [ "$repo" = https://github.com/theorem-labs/rocq-linux-process-semantics ] ||
+            { echo "::error::release.yaml's semantics.repository is '$repo'"; exit 1; }
+          [[ "$commit" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::release.yaml's semantics.commit is '$commit'"; exit 1; }
+          # One ARG LPS_TREE_SHA256 line, and it is a sha256: a second line, empty or continued, would be the
+          # argument the image build actually hashes against, and a check of the first would say nothing of it.
+          declared=$(grep -c '^ARG LPS_TREE_SHA256' toolchain/checker.Dockerfile || true)
+          [ "$declared" = 1 ] ||
+            { echo "::error::toolchain/checker.Dockerfile declares ARG LPS_TREE_SHA256 $declared time(s): the checker image pins one hash of the model's files"; exit 1; }
+          pin=$(sed -n 's/^ARG LPS_TREE_SHA256=\([0-9a-f]\{64\}\)$/\1/p' toolchain/checker.Dockerfile)
+          [ -n "$pin" ] ||
+            { echo "::error::toolchain/checker.Dockerfile's ARG LPS_TREE_SHA256 is not one sha256 of 64 hexadecimal characters"; exit 1; }
+          # The model as the image build takes it: the commit release.yaml names, cut to the pathspecs of
+          # toolchain/lps-core.paths by `git archive` (the `lps` build context, images.yml's step of the same
+          # words), hashed as toolchain/checker.Dockerfile hashes that context before it pins the package.
+          git init -q "$RUNNER_TEMP/lps-repo"
+          git -C "$RUNNER_TEMP/lps-repo" fetch -q --depth=1 "$repo" "$commit"
+          mkdir "$RUNNER_TEMP/lps"
+          grep -v -e '^#' -e '^$' toolchain/lps-core.paths |
+            xargs -d '\n' git -C "$RUNNER_TEMP/lps-repo" archive "$commit" -- | tar -x -C "$RUNNER_TEMP/lps"
+          files=$(find "$RUNNER_TEMP/lps" -type f | wc -l)
+          got=$(cd "$RUNNER_TEMP/lps" && find . -type f -printf '%P\n' | LC_ALL=C sort |
+            xargs -d '\n' -r sha256sum | sha256sum | cut -c1-64)
+          echo "release.yaml's semantics.commit $commit, cut to toolchain/lps-core.paths ($files files), hashes to $got"
+          echo "toolchain/checker.Dockerfile pins LPS_TREE_SHA256 $pin"
+          { echo "### the model this change's theories/ is compiled against"
+            echo "- release.yaml \`semantics.commit\` \`$commit\`, cut to \`toolchain/lps-core.paths\` ($files files), hashes to \`$got\`"
+            echo "- toolchain/checker.Dockerfile \`LPS_TREE_SHA256\`: \`$pin\`"; } >> "$GITHUB_STEP_SUMMARY"
+          [ "$got" = "$pin" ] || {
+            echo "::error::the two pins name different models: release.yaml's semantics.commit $commit hashes to $got, and toolchain/checker.Dockerfile pins LPS_TREE_SHA256 $pin"
+            echo "the two pins name different models: \`$got\` against \`$pin\`" >> "$GITHUB_STEP_SUMMARY"
+            exit 1; }
+          echo "the two pins are one model"
+          echo "pin=$pin" >> "$GITHUB_OUTPUT"
+      - name: the checker image release.yaml pins, by digest (fail closed)
+        id: image
+        working-directory: head
+        run: |
+          set -euo pipefail
+          img=$(python -c 'import yaml; print(yaml.safe_load(open("release.yaml"))["images"]["checker"])')
+          [[ "$img" =~ ^ghcr\.io/theorem-labs/oss-fuzz-theorems-checker@sha256:[0-9a-f]{64}$ ]] || {
+            echo "::error::release.yaml must name the checker image by digest in images.checker, got '$img'"; exit 1; }
+          echo "image=$img" >> "$GITHUB_OUTPUT"
+      # The image release.yaml names is one images.yml built and attested on main, verified with the command at the
+      # top of images.yml, with images.yml's signer and gh check (its image job's verify step says why each is as it
+      # is).  On a repin, the commit that attestation names must hold this change's toolchain/checker.Dockerfile and
+      # toolchain/lps-core.paths: the image was built from the definition this change is reviewed with, and from no
+      # older or other one.  The two files are compared by their git object ids, which are one for two files exactly
+      # when their bytes are one, so the attested commit is fetched one commit deep and without its blobs.  The
+      # fetch goes over git with the job's token in a header, never in a URL or an argument, and spends none of the
+      # token's API budget.  verify-pins in images.yml verifies the same digests daily, after the fact; this step
+      # verifies one before the change that pins it can merge.
+      - name: images.yml built and attested the pinned checker image on main, from this change's toolchain/ on a repin
+        working-directory: head
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IMAGE: ${{ steps.image.outputs.image }}
+          REPIN: ${{ needs.plan.outputs.checker_repin }}
+        run: |
+          set -euo pipefail
+          case "$REPIN" in true|false) ;; *)
+            echo "::error::the plan answered checker_repin '$REPIN', neither true nor false"; exit 1 ;; esac
+          # images.yml stores each attestation in the repository it ran in and does not push it beside the image,
+          # since it names that private repository; a token of the public repository reads none of them.  The
+          # public repository takes release.yaml from that repository's main, by a release, and this step holds
+          # images.checker there.
+          if [ "$GITHUB_REPOSITORY" = theorem-labs/oss-verify-proofs ]; then
+            echo "theorem-labs/oss-verify-proofs holds no attestation of $IMAGE: the repository whose images.yml built it verifies it"
+            echo "- the checker image's attestation: not read in theorem-labs/oss-verify-proofs, which holds none" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          gh_version=$(gh --version)
+          echo "$gh_version"
+          gh_version=${gh_version%%$'\n'*}
+          if ! [[ "$gh_version" =~ ^gh\ version\ ([0-9]+)\.([0-9]+)\. ]] ||
+             (( 10#${BASH_REMATCH[1]} < 2 || (10#${BASH_REMATCH[1]} == 2 && 10#${BASH_REMATCH[2]} < 67) )); then
+            echo "::error::gh 2.67 or newer is needed, not '$gh_version': gh 2.49 to 2.66 could exit 0 for a digest" \
+              "with no attestation of the predicate type asked for (CVE-2025-25204)"
+            exit 1
+          fi
+          identity="https://github.com/$GITHUB_REPOSITORY/.github/workflows/images.yml@refs/heads/main"
+          # three tries, 10 and 20 s apart, for a passing error of the API or the registry
+          verified=
+          for try in 1 2 3; do
+            if gh attestation verify "oci://$IMAGE" --repo "$GITHUB_REPOSITORY" --cert-identity "$identity" \
+                 --source-ref refs/heads/main --format json > "$RUNNER_TEMP/attestation.json"; then
+              verified=1
+              break
+            fi
+            [ "$try" = 3 ] || sleep $((try * 10))
+          done
+          [ -n "$verified" ] || {
+            echo "::error::gh attestation verify refused $IMAGE in 3 tries: release.yaml's images.checker is no image images.yml built and attested on main"
+            echo "- the checker image's attestation: refused" >> "$GITHUB_STEP_SUMMARY"
+            exit 1; }
+          # An unchanged images.checker: gh's exit status is the verdict, and nothing it printed is read.
+          if [ "$REPIN" = false ]; then
+            echo "attested: gh attestation verify passed $IMAGE, built by images.yml on refs/heads/main"
+            echo "- the checker image's attestation: verified, images.yml on refs/heads/main" >> "$GITHUB_STEP_SUMMARY"
+            echo "images.checker is unchanged by this change, and was held to its build definition when it was pinned: its attestation alone is verified here"
+            exit 0
+          fi
+          # The commit each attestation says images.yml built the image at: its signing certificate's source
+          # repository digest.  With --format json, gh prints a JSON array on stdout, one object per verified
+          # attestation, whose verificationResult is sigstore-go's VerificationResult; its signature.certificate is
+          # the certificate's summary, with the Fulcio extensions inline (cli/cli v2.103.3, the runner image's gh:
+          # pkg/cmd/attestation/verification/sigstore.go:28-31 and verify/verify.go:321, and its log lines go to
+          # stderr, and only to a terminal, io/handler.go:45-50; sigstore-go v1.3.0, which that gh builds with:
+          # pkg/verify/signed_entity.go:256 and 263, pkg/fulcio/certificate/summarize.go:26-30 and extensions.go:111).
+          # A build of the same files gives another digest each time (images.yml's header), so one image has one
+          # such commit; each one named is held to the same rule.
+          commits=$(jq -r '[.[].verificationResult.signature.certificate.sourceRepositoryDigest] | unique | .[]' \
+            "$RUNNER_TEMP/attestation.json") || commits=
+          [ -n "$commits" ] || {
+            echo "::error::gh attestation verify passed $IMAGE and named no commit images.yml built it at"; exit 1; }
+          for c in $commits; do
+            [[ "$c" =~ ^[0-9a-f]{40}$ ]] || {
+              echo "::error::the attestation of $IMAGE names '$c' as the commit images.yml built it at, not a commit"; exit 1; }
+          done
+          echo "attested: images.yml built $IMAGE on refs/heads/main at $commits"
+          echo "- the checker image's attestation: images.yml on refs/heads/main, at \`$commits\`" >> "$GITHUB_STEP_SUMMARY"
+          auth="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          built="$RUNNER_TEMP/built-from"
+          git init -q "$built"
+          git -C "$built" remote add origin "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git"
+          refused=0
+          for c in $commits; do
+            GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0="http.$GITHUB_SERVER_URL/.extraheader" GIT_CONFIG_VALUE_0="$auth" \
+              GIT_TERMINAL_PROMPT=0 git -C "$built" fetch -q --no-tags --depth=1 --filter=blob:none origin "$c" || {
+                echo "::error::$c, the commit images.yml built $IMAGE at, cannot be fetched from $GITHUB_REPOSITORY"
+                exit 1; }
+            for f in toolchain/checker.Dockerfile toolchain/lps-core.paths; do
+              there=$(git -C "$built" rev-parse -q --verify "$c:$f") || there="no such file"
+              here=$(git rev-parse -q --verify "HEAD:$f") || here="no such file"
+              if [ "$there" = "$here" ] && [ "$here" != "no such file" ]; then
+                echo "$f: the file images.yml built $IMAGE from at $c ($here)"
+              else
+                echo "::error::$IMAGE was built from another $f than this change's: images.yml built it at $c, whose $f is $there, and this change's is $here"
+                echo "- $f differs from the one the image was built from at \`$c\`" >> "$GITHUB_STEP_SUMMARY"
+                refused=1
+              fi
+            done
+          done
+          [ "$refused" = 0 ] || exit 1
+          echo "the repinned checker image was built from this change's toolchain/checker.Dockerfile and toolchain/lps-core.paths" |
+            tee -a "$GITHUB_STEP_SUMMARY"
+      - name: the runner image release.yaml pins, by digest (fail closed)
+        id: runner_image
+        working-directory: head
+        run: |
+          set -euo pipefail
+          img=$(python -c 'import yaml; print(yaml.safe_load(open("release.yaml"))["images"]["runner"])')
+          [[ "$img" =~ ^ghcr\.io/theorem-labs/oss-fuzz-theorems-runner@sha256:[0-9a-f]{64}$ ]] || {
+            echo "::error::release.yaml must name the runner image by digest in images.runner, got '$img'"; exit 1; }
+          echo "image=$img" >> "$GITHUB_OUTPUT"
+      # The runner image release.yaml names, which every counterexample and finding runs in, held as the checker's
+      # attestation step above holds the checker image: images.yml built and attested it on main, verified with the
+      # same command, signer and gh check, whether or not this change moves it.  On a repin (the plan's
+      # runner_repin), the commit that attestation names must hold this change's toolchain/runner.Dockerfile and
+      # tests/toy/, compared by git object id as there (a tree id for tests/toy/, which neither may lack unless both
+      # do): an image of an older or another runner definition is refused before the change that pins it can merge.
+      # tests/toy/ is the image's self-test, and is an input of the image although it is mounted and not copied in:
+      # the build runs its make_elf.py as root in the stage it ships, so a script there could rewrite qemu or
+      # anything else the image holds.  The build's arguments are the Dockerfile's own: images.yml's step `build and
+      # self-test (toolchain/<image>.Dockerfile)` gives the runner build its two build contexts and its labels and no
+      # --build-arg, so DEBIAN_BASE and DEBIAN_SNAPSHOT take the defaults the Dockerfile compared here sets.  That is
+      # images.yml as this change has it; the run that built the image ran images.yml at the commit it names.  The
+      # runner's last input, the `oft-tools` build context, is not compared here: the step after the sign-in says
+      # why, and what it reads instead.
+      - name: images.yml built and attested the pinned runner image on main, from this change's toolchain/runner.Dockerfile and tests/toy/ on a repin
+        working-directory: head
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IMAGE: ${{ steps.runner_image.outputs.image }}
+          REPIN: ${{ needs.plan.outputs.runner_repin }}
+        run: |
+          set -euo pipefail
+          case "$REPIN" in true|false) ;; *)
+            echo "::error::the plan answered runner_repin '$REPIN', neither true nor false"; exit 1 ;; esac
+          # As for the checker image: the public repository holds no attestation, and takes release.yaml from this
+          # repository's main, by a release, where this step holds images.runner.
+          if [ "$GITHUB_REPOSITORY" = theorem-labs/oss-verify-proofs ]; then
+            echo "theorem-labs/oss-verify-proofs holds no attestation of $IMAGE: the repository whose images.yml built it verifies it"
+            echo "- the runner image's attestation: not read in theorem-labs/oss-verify-proofs, which holds none" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          gh_version=$(gh --version)
+          echo "$gh_version"
+          gh_version=${gh_version%%$'\n'*}
+          if ! [[ "$gh_version" =~ ^gh\ version\ ([0-9]+)\.([0-9]+)\. ]] ||
+             (( 10#${BASH_REMATCH[1]} < 2 || (10#${BASH_REMATCH[1]} == 2 && 10#${BASH_REMATCH[2]} < 67) )); then
+            echo "::error::gh 2.67 or newer is needed, not '$gh_version': gh 2.49 to 2.66 could exit 0 for a digest" \
+              "with no attestation of the predicate type asked for (CVE-2025-25204)"
+            exit 1
+          fi
+          identity="https://github.com/$GITHUB_REPOSITORY/.github/workflows/images.yml@refs/heads/main"
+          # three tries, 10 and 20 s apart, for a passing error of the API or the registry
+          verified=
+          for try in 1 2 3; do
+            if gh attestation verify "oci://$IMAGE" --repo "$GITHUB_REPOSITORY" --cert-identity "$identity" \
+                 --source-ref refs/heads/main --format json > "$RUNNER_TEMP/runner-attestation.json"; then
+              verified=1
+              break
+            fi
+            [ "$try" = 3 ] || sleep $((try * 10))
+          done
+          [ -n "$verified" ] || {
+            echo "::error::gh attestation verify refused $IMAGE in 3 tries: release.yaml's images.runner is no image images.yml built and attested on main"
+            echo "- the runner image's attestation: refused" >> "$GITHUB_STEP_SUMMARY"
+            exit 1; }
+          # An unchanged images.runner: gh's exit status is the verdict, and nothing it printed is read.
+          if [ "$REPIN" = false ]; then
+            echo "attested: gh attestation verify passed $IMAGE, built by images.yml on refs/heads/main"
+            echo "- the runner image's attestation: verified, images.yml on refs/heads/main" >> "$GITHUB_STEP_SUMMARY"
+            echo "images.runner is unchanged by this change, and was held to its build definition when it was pinned: its attestation alone is verified here"
+            exit 0
+          fi
+          # The commit each attestation names, read as the checker's step reads it.
+          commits=$(jq -r '[.[].verificationResult.signature.certificate.sourceRepositoryDigest] | unique | .[]' \
+            "$RUNNER_TEMP/runner-attestation.json") || commits=
+          [ -n "$commits" ] || {
+            echo "::error::gh attestation verify passed $IMAGE and named no commit images.yml built it at"; exit 1; }
+          for c in $commits; do
+            [[ "$c" =~ ^[0-9a-f]{40}$ ]] || {
+              echo "::error::the attestation of $IMAGE names '$c' as the commit images.yml built it at, not a commit"; exit 1; }
+          done
+          echo "attested: images.yml built $IMAGE on refs/heads/main at $commits"
+          echo "- the runner image's attestation: images.yml on refs/heads/main, at \`$commits\`" >> "$GITHUB_STEP_SUMMARY"
+          auth="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          built="$RUNNER_TEMP/runner-built-from"
+          git init -q "$built"
+          git -C "$built" remote add origin "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git"
+          refused=0
+          for c in $commits; do
+            GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0="http.$GITHUB_SERVER_URL/.extraheader" GIT_CONFIG_VALUE_0="$auth" \
+              GIT_TERMINAL_PROMPT=0 git -C "$built" fetch -q --no-tags --depth=1 --filter=blob:none origin "$c" || {
+                echo "::error::$c, the commit images.yml built $IMAGE at, cannot be fetched from $GITHUB_REPOSITORY"
+                exit 1; }
+            # the Dockerfile's blob id, and tests/toy/'s tree id: the fetch above has every tree of the commit
+            for f in toolchain/runner.Dockerfile tests/toy; do
+              there=$(git -C "$built" rev-parse -q --verify "$c:$f") || there=none
+              here=$(git rev-parse -q --verify "HEAD:$f") || here=none
+              if [ "$there" = "$here" ] && { [ "$here" != none ] || [ "$f" = tests/toy ]; }; then
+                echo "$f: the one images.yml built $IMAGE from at $c ($here)"
+              else
+                echo "::error::$IMAGE was built from another $f than this change's: images.yml built it at $c, whose $f is $there, and this change's is $here"
+                echo "- $f differs from the one the image was built from at \`$c\`" >> "$GITHUB_STEP_SUMMARY"
+                refused=1
+              fi
+            done
+          done
+          [ "$refused" = 0 ] || exit 1
+          echo "the repinned runner image was built from this change's toolchain/runner.Dockerfile and tests/toy/" |
+            tee -a "$GITHUB_STEP_SUMMARY"
+      - name: sign in to ghcr.io, where the pinned images are
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: echo "$GH_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+      # The runner's `oft-tools` build context: the tools/oft of the public repository's main (images.yml's header),
+      # with the PyYAML its requirements.txt pins installed into /opt/oss-fuzz-theorems/pydeps/.  That input is bound
+      # to the public repository's main, which this repository's release process writes, and not to this change, so
+      # it is not compared here.  CI mounts the checkout's tools over the image's copy, but not over pydeps/, and the
+      # build ran the copy (`oft --help`, the tools' own tests) in the stages it ships.  images.yml labels each runner
+      # with the git tree of that tools/oft (oss-fuzz-theorems.tools.tree) and the public commit it took it from
+      # (oss-fuzz-theorems.tools.commit).  On a repin this step holds the image to naming a git tree there, read as
+      # images.yml's daily plan reads it, so that a later step can compare it with the tools/oft tree of the public
+      # release this change's tree is cut for, or with the one images.yml's plan finds on the public main.
+      - name: on a runner repin, the runner image names the git tree of the tools/oft it carries
+        env:
+          IMAGE: ${{ steps.runner_image.outputs.image }}
+          REPIN: ${{ needs.plan.outputs.runner_repin }}
+        run: |
+          set -euo pipefail
+          case "$REPIN" in
+            false)
+              echo "images.runner is unchanged by this change: its labels are not read here"
+              exit 0 ;;
+            true) ;;
+            *) echo "::error::the plan answered runner_repin '$REPIN', neither true nor false"; exit 1 ;;
+          esac
+          labels=$(docker buildx imagetools inspect "$IMAGE" --format '{{json .Image.Config.Labels}}') || {
+            echo "::error::the labels of the runner image $IMAGE cannot be read"; exit 1; }
+          tree=$(jq -r '."oss-fuzz-theorems.tools.tree" // "none"' <<< "$labels") || tree=none
+          [[ "$tree" =~ ^[0-9a-f]{40}$ ]] || {
+            echo "::error::the runner image $IMAGE names no git tree of the tools/oft it carries: its label oss-fuzz-theorems.tools.tree is '$tree'"
+            exit 1; }
+          echo "the runner image carries the tools/oft of git tree $tree (its label oss-fuzz-theorems.tools.tree)" |
+            tee -a "$GITHUB_STEP_SUMMARY"
+      # On a repin, the image holds the opam packages this change's toolchain/checker.Dockerfile pins, each at its
+      # version: Rocq, its libraries and dune, as OPAM_PACKAGES lists them.  The image's own opam answers, run as the
+      # image's user, whose switch the build installed into, with no network.  The checker's attestation step ties the
+      # image to the Dockerfile by images.yml's attestation; this one reads what the image holds, so a list the build
+      # did not install as written, or an argument given to the build in its place, is named here package by package.
+      - name: on a repin, the checker image holds each opam package toolchain/checker.Dockerfile pins, at its version
+        working-directory: head
+        env:
+          IMAGE: ${{ steps.image.outputs.image }}
+          REPIN: ${{ needs.plan.outputs.checker_repin }}
+        run: |
+          set -euo pipefail
+          case "$REPIN" in
+            false)
+              echo "images.checker is unchanged by this change, and was held to its build definition when it was pinned: its packages are not read here"
+              exit 0 ;;
+            true) ;;
+            *) echo "::error::the plan answered checker_repin '$REPIN', neither true nor false"; exit 1 ;;
+          esac
+          # One ARG OPAM_PACKAGES with a value: a second would be the list a stage of the image build installs, and
+          # a check of the first would say nothing of it.
+          declared=$(grep -c '^ARG OPAM_PACKAGES=' toolchain/checker.Dockerfile || true)
+          [ "$declared" = 1 ] || {
+            echo "::error::toolchain/checker.Dockerfile gives ARG OPAM_PACKAGES a value $declared time(s): the checker image pins one list of opam packages"
+            exit 1; }
+          read -r -a pinned <<< "$(sed -n 's/^ARG OPAM_PACKAGES="\([^"]*\)"$/\1/p' toolchain/checker.Dockerfile)"
+          [ "${#pinned[@]}" -gt 0 ] || {
+            echo "::error::toolchain/checker.Dockerfile's ARG OPAM_PACKAGES is not one quoted list of NAME.VERSION"; exit 1; }
+          docker pull --quiet "$IMAGE"
+          installed=$(docker run --rm --network none "$IMAGE" opam list --installed --short --columns=package) || {
+            echo "::error::opam cannot list the packages installed in the checker image $IMAGE"; exit 1; }
+          # `--short` prints no header, and `--columns=package` one NAME.VERSION per line, with no padding: opam pads
+          # every column but the last, and cuts a line only at a terminal's width, which this output is not (ocaml/opam
+          # 2.6.1 and 2.1.0, src/client/opamListCommand.ml's Package column and display, src/core/opamStd.ml's
+          # align_table and terminal_columns).  An opam package's name is letters, digits, '-', '_' and '+' (the opam
+          # manual), so NAME.VERSION splits at its first '.'.
+          declare -A have=()
+          while read -r line; do
+            if [ -n "$line" ]; then have["${line%%.*}"]=${line#*.}; fi
+          done <<< "$installed"
+          refused=0
+          for p in "${pinned[@]}"; do
+            name=${p%%.*} version=${p#*.}
+            if [ "$name" = "$p" ] || [ -z "$name" ] || [ -z "$version" ]; then
+              echo "::error::toolchain/checker.Dockerfile's OPAM_PACKAGES names '$p', not NAME.VERSION"
+              refused=1
+            elif [ -z "${have[$name]+set}" ]; then
+              echo "::error::the checker image $IMAGE holds no opam package $name, and toolchain/checker.Dockerfile pins $p"
+              refused=1
+            elif [ "${have[$name]}" != "$version" ]; then
+              echo "::error::the checker image $IMAGE holds $name.${have[$name]}, and toolchain/checker.Dockerfile pins $p"
+              refused=1
+            else
+              echo "$p: installed"
+            fi
+          done
+          [ "$refused" = 0 ] || {
+            echo "- the checker image's opam packages differ from toolchain/checker.Dockerfile's OPAM_PACKAGES" >> "$GITHUB_STEP_SUMMARY"
+            exit 1; }
+          echo "the checker image holds each of the ${#pinned[@]} opam packages toolchain/checker.Dockerfile pins, at its version" |
+            tee -a "$GITHUB_STEP_SUMMARY"
+      # The image's model, and this change's theories/ compiled in it, when theories/ changes or the image moves.  A
+      # change that does neither leaves both as the base had them: the image was held to the model when it was
+      # pinned, and theories/ compiled in it then.
+      - name: this change's theories/ compiles against the model the pin names
+        env:
+          IMAGE: ${{ steps.image.outputs.image }}
+          PIN: ${{ steps.pin.outputs.pin }}
+          THEORIES: ${{ needs.plan.outputs.theories }}
+          REPIN: ${{ needs.plan.outputs.checker_repin }}
+        run: |
+          set -euo pipefail
+          case "$THEORIES $REPIN" in
+            "false false")
+              echo "theories/ unchanged and images.checker unchanged by this change: the image's model and theories/ are as they were before it"
+              exit 0 ;;
+            "true true" | "true false" | "false true") ;;
+            *) echo "::error::the plan answered theories '$THEORIES' and checker_repin '$REPIN', each to be true or false"; exit 1 ;;
+          esac
+          [[ "$PIN" =~ ^[0-9a-f]{64}$ ]] || { echo "::error::the pin step gave no hash ('$PIN')"; exit 1; }
+          docker pull --quiet "$IMAGE"
+          # The image is pinned by digest and the pins agree, but a digest alone says nothing of the model inside
+          # it: a change could move semantics.commit and LPS_TREE_SHA256 together and leave images.checker at an
+          # image built from the model before them.  The image keeps the files it was built from, in ~opam/lps,
+          # and the build refused them unless they hashed to its LPS_TREE_SHA256, so hashing them here, the way
+          # that build does, ties the image to the commit release.yaml names.
+          got=$(docker run --rm --network none -u "$(id -u):$(id -g)" -e HOME=/tmp "$IMAGE" \
+            bash -c 'cd ~opam/lps && find . -type f -printf "%P\n" | LC_ALL=C sort |
+              xargs -d "\n" -r sha256sum | sha256sum | cut -c1-64') || {
+                echo "::error::the model's files cannot be read in the checker image $IMAGE"; exit 1; }
+          echo "the checker image's own model files hash to $got"
+          echo "- the checker image's own model files hash to \`$got\`" >> "$GITHUB_STEP_SUMMARY"
+          [ "$got" = "$PIN" ] || {
+            echo "::error::the checker image release.yaml pins was built from another model: its files hash to $got, and the pin is $PIN"
+            echo "the checker image was built from another model: \`$got\` against \`$PIN\`" >> "$GITHUB_STEP_SUMMARY"
+            exit 1; }
+          # The theory whole, not the changed files alone: a Rocq file compiles with its siblings or not at all.
+          # Every theories/*.v must leave its .vo: `dune build @theories/default` passes over a theories/ with no
+          # dune file, or over a file no stanza names, having compiled nothing, and on a draft this job is the
+          # only one that compiles theories/ at all.  No network, as every check of this repository compiles.
+          docker run --rm --network none -u "$(id -u):$(id -g)" -e HOME=/tmp \
+            -v "$GITHUB_WORKSPACE/head:/work" -w /work "$IMAGE" \
+            bash -c 'dune build --root . @theories/default &&
+              for v in theories/*.v; do
+                [ -f "_build/default/${v%.v}.vo" ] ||
+                  { echo "no _build/default/${v%.v}.vo: @theories/default compiled nothing for $v"; exit 1; }
+              done &&
+              echo "compiled: $(find _build/default/theories -name "*.vo" | wc -l) theory file(s)"' || {
+              echo "::error::this change's theories/ does not compile against the model release.yaml and toolchain/checker.Dockerfile pin (the hashes are in the step above): it is written for another model, or theories/ builds nothing"
+              echo "theories/ does not compile against the pinned model" >> "$GITHUB_STEP_SUMMARY"
+              exit 1; }
+          echo "theories/ compiles against the pinned model"
+          echo "theories/ compiles against the pinned model" >> "$GITHUB_STEP_SUMMARY"
+
   release-check:
-    needs: [plan, fetch-drafts, check]
+    needs: [plan, fetch-drafts, check, lps_pin]
     if: always()
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-slim
     timeout-minutes: 5
     steps:
       - name: every job green, and every planned harness checked
@@ -814,6 +1429,10 @@ jobs:
           CHECK_OF_RECORD: ${{ needs.plan.outputs.check_of_record }}
           DRAFTS_LISTED: ${{ needs.plan.outputs.draft_legs != '[]' }}
           QUEUE_RUNS: ${{ needs.plan.outputs.queue_runs }}
+          # whether this commit touches release.yaml, toolchain/ or theories/, and how the job that holds such a
+          # commit to the pinned model and checker and runner images ended (the lps_pin job)
+          LPS_PIN: ${{ needs.plan.outputs.lps_pin }}
+          LPS_PIN_RESULT: ${{ needs.lps_pin.result }}
           PLAN_RESULT: ${{ needs.plan.result }}
           DRAFTS_RESULT: ${{ needs.fetch-drafts.result }}
           CHECK_RESULT: ${{ needs.check.result }}
@@ -830,6 +1449,23 @@ jobs:
           case "$FULL" in true|false) ;; *) echo "::error::the plan answered full '$FULL', neither true nor false"; exit 1 ;; esac
           case "$DEFERRED" in true|false) ;; *)
             echo "::error::the plan answered deferred '$DEFERRED', neither true nor false"; exit 1 ;; esac
+          case "$LPS_PIN" in true|false) ;; *)
+            echo "::error::the plan answered lps_pin '$LPS_PIN', neither true nor false"; exit 1 ;; esac
+          # The model and the images a commit to release.yaml, toolchain/ or theories/ is held to.  A theories/
+          # change no job compiled is a failure here as it is on a pull request, never a pass with everything
+          # skipped (Dispatch issue OSSV-440): on this path no lint and no hold can skip the job, so the two answers
+          # are the job's own.
+          if [ "$LPS_PIN" = true ]; then
+            [ "$LPS_PIN_RESULT" = success ] || {
+              echo "::error::this commit touches release.yaml, toolchain/ or theories/, and the job that holds it to the pinned model and checker and runner images failed or did not run (lps_pin: $LPS_PIN_RESULT)"
+              echo "release.yaml, toolchain/ or theories/ changed and lps_pin did not pass ($LPS_PIN_RESULT)" >> "$GITHUB_STEP_SUMMARY"
+              exit 1; }
+            echo "release.yaml, toolchain/ or theories/ changed: lps_pin held the model's two pins to one hash and the checker and runner images to their attestations"
+          else
+            [ "$LPS_PIN_RESULT" = skipped ] || {
+              echo "::error::no release.yaml, toolchain/ or theories/ file changed, yet lps_pin ran ($LPS_PIN_RESULT)"; exit 1; }
+            echo "no release.yaml, toolchain/ or theories/ file changed: the LPS pin check did not run"
+          fi
           # A push that left parts to the publishing gate's run (the plan step): never a full plan, never a
           # push the merge queue checked
           if [ "$DEFERRED" = true ]; then

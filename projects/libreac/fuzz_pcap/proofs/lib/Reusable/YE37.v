@@ -4,36 +4,37 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YE37.v (247 lines), with its
    module paths changed, the name TfibSyms -> PcapSyms and its addresses moved to libreac/fuzz_pcap's ASan+UBSan
-   build; it is the asan-ubsan twin of lib/A/AE37.v at a working branch acbe70c5a8c, and carries the
+   build; it is the asan-ubsan twin of lib/A/AE37.v at a working branch, and carries the
    same changes that file carries over the donor.  This is the return realizer of the second atexit handler of the
    exit walk, X2_PC.
    STATEMENT PC (re-derived from the unstripped twin fuzz_pcap.asan-ubsan .symtab, sha256
    c969d83cdd59, not from the donor's text): X2_PC = 0x811b0 = asan.module_dtor+0 (size 48); it is stated in
-   lib/Reusable/YE23.v:35, and this file only uses it.  The walk leaves no other pc of its own: it runs tbl_x213
+   lib/Reusable/YE23.v:36, and this file only uses it.  The walk leaves no other pc of its own: it runs tbl_x213
    (lib/Reusable/YE3m.v) from X2_PC and stops at SR_jalr (SOff 1 0), the return to the caller's ra.
    TAKEN FROM (never hand-written from the donor's text, and never by a delta off the asan file):
-   - the four asan_globals descriptors of x2_rodata's (0x9dfd0, 256) region: lib/Reusable/YF0m.v:188-219 (M-DESC
+   - the four asan_globals descriptors of x2_rodata's (0x9dfd0, 256) region: lib/Reusable/YF0m.v:189-220 (M-DESC
      rows, a Theorem Labs lane's generator); the section is 0x9dfd0..0x9e0d0 by lib/Reusable/YB1w.v:17's
-     tfib_asan_globals_lo/hi, and YF0m.v:352 states the same 0x100 bytes as one owned range.  cgif has THREE
-     descriptors (donor YE37.v:35-40, 0xa2ae0, 192 bytes); fuzz_pcap has FOUR (g0 .str "<fuzz-input>" 0x20d00+0xd,
+     tfib_asan_globals_lo/hi, and YF0m.v:353 states the same 0x100 bytes as one owned range.  cgif has THREE
+     descriptors (donor YE37.v:36-41, 0xa2ae0, 192 bytes); fuzz_pcap has FOUR (g0 .str "<fuzz-input>" 0x20d00+0xd,
      g1 .str "rb" 0x20d40+3, g2 g_file_len .bss 0x5d3e40+8, g3 g_file .bss 0x5d3e60+8), so the region is 256 bytes
      and carries one descriptor block more; the per-descriptor offsets read are the donor's (0, 8, 16, 32, 40, 48,
      56 -- the name pointer at 24 is not read).  Key: section + offset (the descriptor words carry no symbol).
-   - the (globals_lo, globals_hi) pair the dtor loads: YF0m.v:114-115 z8 0x9a370 = 0x9dfd0, z8 0x9a378 = 0x9e0d0
+   - the (globals_lo, globals_hi) pair the dtor loads: YF0m.v:115-116 z8 0x9a370 = 0x9dfd0, z8 0x9a378 = 0x9e0d0
      (the donor's 0x9ee98 is not this image's cell; the asan twin is AE37.v's 0x9a4a8 = 0x9e100 / 0x9e200).
    - every other x2_rodata row: the YF0m.v Tfib_const cell of the same name/role, by its own address, not by a
      delta -- 0x103a0 (YF0m:141), the nine words at 0x996d8 (YF0m:172-180), 0x9b580 = memset 0x92e2c (YF0m:98),
      0x9efd0 (YF0m:69), 0x9f000 (YF0m:75), 0xa101c (YF0m:89), 0xa17b8 = SHADOW_OFF (YF0m:81), 0xa2498 (YF0m:83),
      0xa24a0..0xa24b0 (YF0m:85-87), 0x131260 (YF0m:94), 0x133360 (YF0m:47).
-   - every shadow byte of x2_shw / x2_shw_const: YF0m.v:299-344 (Tfib_const_shadow) and YF0m.v:347
+   - every shadow byte of x2_shw / x2_shw_const: YF0m.v:300-345 (Tfib_const_shadow) and YF0m.v:348
      (Tfib_zero_shadow).  The windows are the four globals' shadow plus the descriptor array's:
      0x7fffc1a0..a4, 0x7fffc1a8..ac, 0x800b27c8..cc, 0x800b27cc..d0 and 0x8000bbfa..0x8000bc1a (0x20 granules, the
-     donor's array is 0xc0 long = 0x18), exactly lib/Reusable/YE23.v:37-39's XW2.  Three of their first bytes
+     donor's array is 0xc0 long = 0x18), exactly lib/Reusable/YE23.v:38-40's XW2.  Three of their first bytes
      (0x7fffc1a0, 0x800b27c8, 0x800b27cc) are ZERO shadow, not constant cells, so they come from Tfib_zero_shadow
      rows 0, 3 and 4 -- the donor has one such byte, fuzz_pcap has three (its g2/g3 are 8-byte .bss globals with no
      partial granule).
-   - cellr 0x9e100 (___asan_globals_registered = 1) YF0m.v:116, cellr 0x9f070 (__asan mu_for_globals = 0)
-     YF0m.v:221, which lib/A/AD1j.v:80's twin passes in as MU0. *)
+   - cellr 0x9e100 (___asan_globals_registered = 1) YF0m.v:117, cellr 0x9f070 (__asan mu_for_globals = 0)
+     YF0m.v:222, which lib/A/AD1j.v:80's twin passes in as MU0. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -182,9 +183,9 @@ apply andb_prop in Hc as [Hc _]. apply andb_prop in Hc as [Hc _]. apply Z.eqb_eq
 pose proof (tfib_const_lookup B TB ly S H mem a 1 _ HM HL) as Hv.
 specialize (Hv 0%nat ltac:(lia)). rewrite Z.add_0_r in Hv. eexists. exact Hv.
 Qed.
-(* The donor has ONE zero-shadow byte in its windows (donor YE37.v:149-158, the first granule of
+(* The donor has ONE zero-shadow byte in its windows (donor YE37.v:150-159, the first granule of
    .str "<fuzz-input>"); fuzz_pcap has THREE: the data granule of each of g0, g2 and g3.  Each comes from the
-   Tfib_zero_shadow row (YF0m.v:347) that covers it: row 0 (0x10000, 0x20d08 - 0x10000) at index 8608, row 3
+   Tfib_zero_shadow row (YF0m.v:348) that covers it: row 0 (0x10000, 0x20d08 - 0x10000) at index 8608, row 3
    (0x9e0d0, 0x5d3e48 - 0x9e0d0) at index 682926, row 4 (0x5d3e60, 0x5d3e68 - 0x5d3e60) at index 0. *)
 Lemma shbyte0_present : forall ly S (H : word -> bool) mem,
 ARm B ly S (aview tfibsegs H mem) -> exists b, mbyte tfibsegs (mrestrict H mem) (symaddr ((Symbols.AsanUbsan.Sec.s_rodata + 68128) / 8 + 0x7fff8000)%Z) = Some b.

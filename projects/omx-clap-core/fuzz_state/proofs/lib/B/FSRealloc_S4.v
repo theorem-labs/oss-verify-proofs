@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSRealloc_S1.v, with its module paths and module names changed; 390 of its 466 lines of code are new or changed and 721 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_state image B: the thin realloc segment S4 (the NULL-return arm) of a Theorem Labs lane's realloc composition, i.e.
    RGtop's [seg_nret] at fs B's instance [FS_seg_nret] (lib/B/FSRealloc_inst.v), under fs's symbol fact [TfibSyms B]
    (B's errno cell is B's tp - 0xa4, see below; owner ruling a Theorem Labs lane 2026-10-29: the composition supplies
-   TfibSyms B).  The B twin of lib/A/FSRealloc_S4.v (a working branch d1c72686019), its TEMPLATE: the
+   TfibSyms B).  The B twin of lib/A/FSRealloc_S4.v (a working branch), its TEMPLATE: the
    same proof text, with B's addresses in the decode table, B's image module (AsanUbsan) and B's modules
    (B/YB1v, YB1h, YF0x, YF0m, FSRealloc_inst in place of A/AB1v, AB1h, AF0x, AF0m, FSRealloc_inst).
 
@@ -226,8 +227,8 @@ destruct k as [|[|[|[|[|[|[|[|k]]]]]]]]; [..|lia];
 - apply (LB _ (0) _ 7%nat ((bv_unsigned b0 + 256 * (bv_unsigned b1 + 256 * (bv_unsigned b2 + 256 * (bv_unsigned b3 + 256 * (bv_unsigned b4 + 256 * (bv_unsigned b5 + 256 * bv_unsigned b6)))))))); [lia | lia | lia | change (2 ^ (8 * Z.of_nat 7)) with 72057594037927936; lia | change (2 ^ (8 * Z.of_nat 7)) with 72057594037927936; lia | lia].
 Qed.
 
-(* The errno cell is in the image's writable part (AsanUbsan_segment_003, as B/YD1y.v:65 in_img_rw), and no owned
-   static range of fs B meets it (Tfib_owned_static, B/YF0m.v:897; the same gap 0x5daa90..0x5db3d8 as B/YD1y.v:17
+(* The errno cell is in the image's writable part (AsanUbsan_segment_003, as B/YD1y.v:66 in_img_rw), and no owned
+   static range of fs B meets it (Tfib_owned_static, B/YF0m.v:897; the same gap 0x5daa90..0x5db3d8 as B/YD1y.v:18
    DRV_IVS).  Checked against the table of record a Theorem Labs lane's startup/regenB/YF0m.new4.v:1145 too: its list differs
    from a working branch's only in the first range's end (0xa4198 vs 0xa4208) and an added (0xa41c8, 0x18), and neither meets
    [0x5db38c, 0x5db390). *)

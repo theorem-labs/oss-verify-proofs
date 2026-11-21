@@ -8,8 +8,8 @@
    (2) the elaborated statement of each landed slice's top lemma, so the reader sees what `fx` resolved to.
    It proves nothing and is read from the build log. Built through pins102 like every lane file.
 
-   Inputs of record: as Crt102Glue.v's header (contract texts fab331f29a65, PresetReqAt 379c33e9e482,
-   engine 459129c18903, listing v3 74dcda1eda12, route pins102). *)
+   Inputs of record: as Crt102Glue.v's header (contract texts, PresetReqAt 379c33e9e482,
+   engine, listing v3, route pins102). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A.Prog Require Crt102Glue Crt102Entry Crt102Arms Crt102Kit.
 

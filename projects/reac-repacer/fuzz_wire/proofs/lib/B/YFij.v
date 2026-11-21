@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFij.v at 25e3d17bdb50 into libreac/fuzz_knock, with its module paths changed, A/AWalkFw0 imported for A/AB1v and its addresses moved to libreac/fuzz_knock's ASan build; its proofs changed for fuzz_knock's depot model, whose StackDepot blocks are mapped at the first Put: the layout relation layout_grow and the StackDepot Put stated through AD3j; fuzz_knock derived its lib/AU/YFij.v from that file, with A -> AU module names and its addresses moved to its ASan+UBSan build. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/AU/YFij.v at 88154566652a (donor image sha256 f834165f5002), with its module paths changed, B/YB1v imported for AU/AWalkFw0, names TfibSyms -> WireSyms and its addresses moved to reac-repacer/fuzz_wire's ASan+UBSan build. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFij.v at theorem-labs/oss-verify-proofs@6b32741d849a into libreac/fuzz_knock, with its module paths changed, A/AWalkFw0 imported for A/AB1v and its addresses moved to libreac/fuzz_knock's ASan build; its proofs changed for fuzz_knock's depot model, whose StackDepot blocks are mapped at the first Put: the layout relation layout_grow and the StackDepot Put stated through AD3j; fuzz_knock derived its lib/AU/YFij.v from that file, with A -> AU module names and its addresses moved to its ASan+UBSan build. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/AU/YFij.v (donor image sha256 f834165f5002), with its module paths changed, B/YB1v imported for AU/AWalkFw0, names TfibSyms -> WireSyms and its addresses moved to reac-repacer/fuzz_wire's ASan+UBSan build. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

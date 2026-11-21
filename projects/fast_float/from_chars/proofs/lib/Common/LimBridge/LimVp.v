@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the SIGPIPE answer of a write to a reader-gone channel). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad.
@@ -54,6 +55,9 @@ Lemma vpres_raw_modify {A} (x : A) (f : Model -> Model) evs0 :
 Proof. intros Hf i m y m' evs H. injection H as _ -> _. apply Hf. Qed.
 
 
+(* [raise_sigpipe] (LPS 08b1429) keeps the maps only after case analysis; [lim_fin_pre] is keyed on it *)
+Ltac vm_fin_pre := lim_fin_pre.
+
 Ltac vpres_step :=
   lazymatch goal with
   | |- vpres (pure _) => apply vpres_pure
@@ -68,8 +72,8 @@ Ltac vpres_step :=
   | |- vpres get_vmmaps => apply vpres_get_vmmaps
   | |- vpres (alt _ _) => apply vpres_alt
   | |- vpres (bind _ _) => apply vpres_bind; [| intros ?x]
-  | |- vpres (modify _) => apply vpres_modify; intros ?m; reflexivity
-  | |- vpres (fun _ m o => o = Ok _ _ _) => apply vpres_raw_modify; intros ?m; reflexivity
+  | |- vpres (modify _) => apply vpres_modify; intros ?m; first [ reflexivity | vm_fin_pre ]
+  | |- vpres (fun _ m o => o = Ok _ _ _) => apply vpres_raw_modify; intros ?m; first [ reflexivity | vm_fin_pre ]
   | |- vpres (match ?s with _ => _ end) => split_on s
   | |- vpres (if ?s then _ else _) => split_on s
   | |- vpres (let _ := _ in _) => cbv zeta

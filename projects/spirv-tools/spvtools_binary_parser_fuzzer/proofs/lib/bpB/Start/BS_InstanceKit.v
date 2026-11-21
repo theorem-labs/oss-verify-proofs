@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the instance statement over the state at main with the launch conjunct). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -127,7 +128,7 @@ Section KIT.
     apply TR_bp_pf. cbn [map]. exact PPF.
   Qed.
 
-  Theorem as_instance_kit : as_instance_stmt P_main P.
+  Theorem as_instance_kit : as_instance_stmt P_mainL P.
   Proof.
     exact (instance_of_kit P KH KS0 KB kit_rt (fun k => @inst_driver_laws (KCEIL k) (kip k)) (fun k => KOWN (KCEIL k) (kip k)) (fun k => @BS_InstLawsTd.inst_td_law (KCEIL k) (kip k)) (fun k => @inst_live (KCEIL k) (kip k))
              kit_vis kit_krel kit_rfs kit_heap kit_aux kit_al kit_tr).

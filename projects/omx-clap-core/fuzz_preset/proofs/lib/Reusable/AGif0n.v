@@ -1,7 +1,8 @@
-(* copy of proofs/cgif/cgif_file_fuzzer/lib/AGif0n.v@84ee52cd012; do not edit. Only this line is added, and the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib is this unit's OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable. *)
+(* copy of proofs/cgif/cgif_file_fuzzer/lib/AGif0n.v; do not edit. Only this line is added, and the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib is this unit's OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The primary interface between the frame-generic Allocate walk (the AG* files) and an allocator model, over the image
    classes ImgBase.AImg / ImgBaseAG.AGImg (no image: cgif_file's values are in AGif2cgif.v and AGif0cgif.v): hview,
    hit_writes, wframe, at_RETw / at_RETkw, malloc_join_t, mview, rleaf, the records AIface / AIfaceK / AIfaceM and the

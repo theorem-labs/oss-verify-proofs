@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's vDSO and vvar pages; the start-up for each CONFIG_RSEQ value; the model's launch and its stack image; launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -93,9 +94,16 @@ End Canary.
 Section Defs.
 Context {fx : FPState}.   (* [comment removed for export] *)
   Variable sp0 : word.
-  Variables av ev : list (list byte).
-  Variable uid : word.
-  Variables (hw : word) (drw : EntryDraw).   (* [comment removed for export] *)
+  Variable inp : ProcInput.
+  Variable mbase : word.
+  Variable ent : word.   (* AT_ENTRY: the image's entry, as [Run.init_machine_state] hands it to the auxv *)
+  Variable drw : EntryDraw.   (* [comment removed for export] *)
+  Local Notation av := (in_argv inp) (only parsing).
+  Local Notation ev := (in_envp inp) (only parsing).
+  Local Notation uid := (in_uid inp) (only parsing).
+  Local Notation gid := (in_gid inp) (only parsing).
+  Local Notation hw := (in_hwcap inp) (only parsing).
+  Local Notation rseq := (kb_rseq (in_kernel inp)) (only parsing).
 
   (* [comment removed for export] *)
   Definition aux_base : word := Z_to_bv 64 (bv_unsigned sp0 - 368).
@@ -104,13 +112,16 @@ Context {fx : FPState}.   (* [comment removed for export] *)
   Definition envp_w : word := Z_to_bv 64 (bv_unsigned sp0 + 16 + 8 * Z.of_nat (length av)).
   Definition auxv_w : word :=
     Z_to_bv 64 (bv_unsigned sp0 + 24 + 8 * Z.of_nat (length av) + 8 * Z.of_nat (length ev)).
-  Definition argc_w : word := argcN av.
+  Definition argc_w : word := argcN inp.
   (* [comment removed for export] *)
-  Definition pn_w : word := cat_argv_ptr sp0 av ev 0.
+  Definition pn_w : word := cat_argv_ptr (ed_top drw) av ev (in_execfn inp) 0.
   Definition progname_w : word :=
     Z_to_bv 64 (bv_unsigned pn_w + Z.of_nat (progname_off (nth 0 av []))).
   (* [comment removed for export] *)
-  Definition rnd_w : word := at_random_ptr sp0 av ev.
+  Definition rnd_w : word := at_random_ptr sp0 rseq av ev.
+  (* AT_EXECFN's value, and AT_SYSINFO_EHDR's (the vDSO text base the launch computes from the mmap base) *)
+  Definition execfn_w : word := at_execfn_ptr (ed_top drw) (in_execfn inp).
+  Definition ehdr_w : word := la_sysinfo_ehdr (launch_auxv inp sp0 mbase).
 
   (* [comment removed for export] *)
   Definition D_libc : word -> option byte :=

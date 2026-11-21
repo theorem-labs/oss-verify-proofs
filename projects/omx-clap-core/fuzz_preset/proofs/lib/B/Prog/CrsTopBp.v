@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumA.v, with its module paths and module names changed; 366 of its 425 lines of code are new or changed and 719 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image B' (the #102 pins, asan-ubsan): THE TOP of the walk of check_reject_clean_starved against the kit's
    text tcheck_reject_clean_starved_specX. It discharges, at the B' instance, every premise of the segment lemmas that
    the instance decides (one lemma each: the engine's Section hypotheses HX_*, the image facts, the instance facts
@@ -8,11 +9,11 @@
    rule 24: proves function check_reject_clean_starved on image B' (reuse search: `proof-index check_reject_clean_starved 0x82160`, the internal file
    index-crcs-Aprime.out, and an internal record of that lookup; CONFIRM by checker LookupCheckCrcsAp. At that search origin/ossv/recipes had no lib/A or lib/B, its
    released rows were lib/Prog (plain) and lib/U/Prog (ubsan) only, and no released asan Proof.v existed for check_reject_clean_starved).
-   DONOR (rule 24, reuse): the A' top lib/A/Prog/CrsTopAp.v blob 016a8623041d (a working branch
-   196dd9974101): the same chaining and the same discharges, restated at the B' instance. What is B'-specific is
+   DONOR (rule 24, reuse): the A' top lib/A/Prog/CrsTopAp.v blob 016a8623041d (a working branch):
+   the same chaining and the same discharges, restated at the B' instance. What is B'-specific is
    listed under B' DIFFERENCES below.
    INPUTS.
-   - Pin B' asan-ubsan sha256 d663f82d7f488d30 (harness.yaml of release/fuzz-preset-ran-out-pins 8f3e7e1a07f1);
+   - Pin B' asan-ubsan sha256 d663f82d7f488d30 (harness.yaml);
      unstripped twin ELF sha256 c90d4fa54d43160baf62e5aa387211a798dddbad13d2619d85acbf37aee0c175.
    - Listing lib/B/Listing_prog.v blob c97cc46b3e13 + lib/B/PAImg_prog.v blob 15fab93fe702; entry 0x820e0 = slot 645
      (B_entry_check_reject_clean_starved); image record lib/B/PRH_ImgB.v blob 3216eca68342.
@@ -20,12 +21,12 @@
       lib/B/Prog/CrsKitBp.v blob
      451cf8792b39 and its crs_spec_B, with the kit's two bridges lib/B/Prog/CrsBridgeBp.v blob d8c134edef0d
      (crs_wexact_of_text_B, crs_free0_of_text_B) over CrsWexBp.v 0aa31ee7944a and CrsFree0Bp.v bf7db21783ca, and the
-     bound lib/B/Prog/CrsBoundBp.v blob 22e57ec2fb40 (crs_took_le_B) - all from a working branch fb124cd27931.
-   - THE SEGMENTS (B' heads, by path): CrsSeg_E_B.v fb487ba093fa + CrsWitBp.v 4d66862501cf (a working branch
-     692f01b8bd4a); CrsSeg_X1_B.v c636280dbc46 + CrsSeg_H1_B.v c091258ff809 (CRB-X1 eb01d000c4c5); CrsSeg_R_B.v
-     0cc17fcc2ec1 + CrsSeg_F_B.v 635f68fbee9e (CRB-R 72f76264fb95); CrsSeg_Z_B.v 70a2ee0adfb0 (CRB-Z 5e840d7b2a7e);
-     CrsSeg_W1_B.v 6a73ece4fa16 (CRB-W1 782c2a1a6d33); CrsSeg_X2_B.v 6f39b741c902 + CrsSeg_H2_B.v 1ba52277a0d2 (CRB-X2
-     e9413c31abc9); CrsSeg_X3_B.v 1a6fd8512cf0 + CrsSeg_H3_B.v 51991a814efd (CRB-X3 9543f01082ba).
+     bound lib/B/Prog/CrsBoundBp.v blob 22e57ec2fb40 (crs_took_le_B) - all from a working branch.
+   - THE SEGMENTS (B' heads, by path): CrsSeg_E_B.v fb487ba093fa + CrsWitBp.v 4d66862501cf (a working branch);
+     CrsSeg_X1_B.v c636280dbc46 + CrsSeg_H1_B.v c091258ff809 (CRB-X1); CrsSeg_R_B.v
+     0cc17fcc2ec1 + CrsSeg_F_B.v 635f68fbee9e (CRB-R); CrsSeg_Z_B.v 70a2ee0adfb0 (CRB-Z);
+     CrsSeg_W1_B.v 6a73ece4fa16 (CRB-W1); CrsSeg_X2_B.v 6f39b741c902 + CrsSeg_H2_B.v 1ba52277a0d2 (CRB-X2);
+     CrsSeg_X3_B.v 1a6fd8512cf0 + CrsSeg_H3_B.v 51991a814efd (CRB-X3).
    - THE INSTANCE: B := YD2l.TfibB (lib/Reusable/YD2l.v blob 95803a8b9493, the B' record PALibB's exvi_eh_palib is
      stated at), PA := PI_prog_B, PI := prh_img_B, cp := CfParamsPreset.CfParams_preset (lib/A/CfParamsPreset.v,
      image-free), ARx := crs_ARx_Bp below = YGcallcf.v's ARxs at TfibB (a Theorem Labs lane's ARcf with the message buffer

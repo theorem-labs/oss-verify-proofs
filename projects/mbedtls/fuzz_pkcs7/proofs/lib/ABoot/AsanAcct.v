@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (node_ok written out in plain text with its third conjunct, sys_rob; the vvar read-fault and vDSO fetch arms in the access proofs; node_syscall_restricted and materialized_succ removed; imports RomBase). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -12,6 +13,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.ABoot Require Import CatSim PropExec.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Common.Cfg Require RomBase.
 
 Local Instance asanreflect_fx : PropExec.FPState := PropExec.fx0.
 Import ListNotations.
@@ -413,7 +415,7 @@ Proof.
     apply ranges_avoid_nil.
   - (* [comment removed for export] *)
     destruct (ov_read_bytes segs (mrestrict H m) a (width_bytes n)) as [bs|] eqn:Hrd;
-      [|discriminate].
+      [| destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
     destruct (ov_read_bytes_restrict _ m a bs Hrd) as [Hfull Hav].
     rewrite Hfull.
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) (mrestrict H m))
@@ -486,6 +488,7 @@ Proof.
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|].
   { exact (decode_exec_accesses_restrict ms w msr' rs' Hs). }
   exfalso. unfold fetch_failure in Hs.
+  destruct (vdso_text_at segs (ms_pc ms)); [discriminate|].
   destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
   destruct (fetch_byte_traps segs (ms_pc ms) || fetch_byte_traps segs (ms_pc ms + 1)
             || match fetch_half_any segs (ms_mem ms) (ms_pc ms) with
@@ -535,12 +538,9 @@ Proof.
   destruct (fetch_word_ov segs (ms_mem ms) (ms_pc ms)) as [w|]; [exact (Hdec w Hs)|].
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|]; [exact (Hdec w Hs)|].
   exfalso. destruct (fetch_failure segs (ms_mem ms) (ms_pc ms)) eqn:Hf; try discriminate.
+  (* the revision's [fetch_failure] tests the vDSO text first; no arm is MachineOk *)
   unfold fetch_failure in Hf.
-  destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
-  destruct (fetch_byte_traps segs (ms_pc ms) || fetch_byte_traps segs (ms_pc ms + 1)
-            || match fetch_half_any segs (ms_mem ms) (ms_pc ms) with
-               | Some _ => fetch_byte_traps segs (ms_pc ms + 2) || fetch_byte_traps segs (ms_pc ms + 3)
-               | None => false end); discriminate.
+  repeat match type of Hf with context [if ?b then _ else _] => destruct b end; discriminate.
 Qed.
 
 End ISA.
@@ -908,9 +908,15 @@ Hypothesis HH : H_off_segments segs H.
 Hypothesis Hwx : wx_segs_nowrap segs.
 
 (* [comment removed for export] *)
+(* Was an encoded definition (CDefT.buildp) denoting ShapeAlg.node_ok's two conjuncts over
+   [sstep segs] (AsanAcctShape.node_ok_same is its reflexivity).  Replaced by explicit text, not
+   re-encoded, with the third conjunct [RomBase.sys_rob] that ShapeAlg.node_ok gained for the
+   run_segments bridge, so node_ok_same keeps holding by conversion. *)
 Definition node_ok (c : config) (I : Type)
-    (evs : I -> list event) (nx : I -> config) : Prop := ltac2:(CDefT.buildp (gd_tbl_AsanAcct ()) "(1?.Pi,O3.(81.Vsegs,O4.A1.O2.R1.(82.A1.O1.R1.))Pe,(1<.$83.)Pst,$84.P,(81.Vsegs,O4.R2.R1.)(37.O3.Li,O3.(1?.(=.(1<.$83.)R4.A1.O2.R1.)(=.$84.R3.(82.A1.O1.R1.)))))")
-(* [comment removed for export] *).
+    (evs : I -> list event) (nx : I -> config) : Prop :=
+  (forall i, sstep segs c (evs i) (SNext (nx i)))
+  /\ (forall e st, sstep segs c e st -> exists i, e = evs i /\ st = SNext (nx i))
+  /\ RomBase.sys_rob segs c.
 
 (* [comment removed for export] *)
 #[using="HH Hwx"] Theorem mi_account_step_restricted : ltac2:(CDefT.buildp (gd_tbl_AsanAcct ()) "PA,(1<.(32.$25.$25.))Pms,$39.Pmsr',$39.Pmodel,$51.P,(7;.VH,(5;.R1.)R4.)P,(72.R5.)P,(7>.R6.R3.)P,(=.(30.$39.)(3?.Vsegs,(3;.VH,R6.))(34.$39.R5.))(37.(1<.(1:.&40.))Lmat',(1<.(1:.&40.))(1?.(=.(30.(32.$39.$51.))(85.Vsegs,R8.R6.)(34.(32.$39.$51.)(36.$39.$51.(3<.VH,(8.R8.)R7.)(7?.(5;.R6.)R1.R6.))))(1?.(7>.R9.(7?.(5;.R6.)R1.R6.))(3=.VH,R7.))))")
@@ -947,10 +953,11 @@ Proof.
   exists (with_vm_backing (m_vm_lazy model) mat' model).
   split; [exact Hinv'|]. split; [apply with_vm_backing_same|]. split; [exact Hcl|].
   split; [exact Hacc|].
-  split.
+  split; [|split].
   - intros []. apply sstep_instr; [exact Hh | exact Hsvc | exact Hacc].
   - intros e st Hss. exists tt.
     exact (sstep_instr_det ms model _ _ e st Hsvc Hacc Hss).
+  - apply RomBase.sys_rob_instr. exact Hsvc.
 Qed.
 
 (* [comment removed for export] *)
@@ -1042,60 +1049,6 @@ Proof.
   rewrite with_vm_backing_id. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-Definition materialized_succ (m : Model) (accs : list (word * nat)) : Model :=
-  match materialize_model_accesses m accs with
-  | Some m' => m'
-  | None => m
-  end.
-
-Section SyscallNode.
-Variable segs : list Segment.
-Variable H : word -> bool.
-
-(* [comment removed for export] *)
-#[using="Type"] Theorem node_syscall_restricted : ltac2:(CDefT.buildp (gd_tbl_AsanAcct ()) "PA,(1<.(32.$25.$25.))Pms,$39.Pmodel,$51.Px8,(1:.&40.)PI,StPeff,P,R1.$8:.Pmdl,P,R2.$51.Pevs,P,R3.(1<.$83.)P,(72.R8.)P,(=.(1;.(1:.&40.))(6>.R7.)(27.(1:.&40.)))P,(=.(1;.(1:.&40.))(4.R9.)(1>.(1:.&40.)R7.))P,Pi,R7.(8;.(8<.Vsegs,R;.R9.)R:.(8=.$8:.A1.R7.R1.A1.R6.R1.A1.R5.R1.))P,Pr,(8>.$8:.)P,(8;.(8<.Vsegs,R<.R:.)R;.R1.)(37.R:.Li,R:.(=.(8>.$8:.)R3.(8=.$8:.A1.R:.R1.A1.R9.R1.A1.R8.R1.)))P,Pi,R9.(=.(1;.(1:.&40.))(6>.A1.R8.R1.)(27.(1:.&40.)))P,Pi,R:.(7;.VH,(5;.A1.R9.R1.)R?.)P,Pi,R;.(7>.R10.A1.R:.R1.)P,Pi,R<.(38.VH,(8?.A1.R<.R1.))(1?.Pi,R=.(1?.(7>.R12.(90.A1.R<.R1.(8?.A1.R=.R1.)))(56.A1.R<.R1.(90.A1.R<.R1.(8?.A1.R=.R1.))))(91.Vsegs,(86.R10.R?.)R=.R:.Li,R=.(86.(92.(93.R11.A1.R=.R1.))(90.A1.R<.R1.(8?.A1.R=.R1.)))))")
-(* [comment removed for export] *).
-Proof.
-  intros A ms model x8 I eff mdl evs Hwf Hh Hsvc Hsound Hcompl Hnh Hcov Hinv Hav.
-  assert (Hmat : forall i, exists mat',
-            materialize_model_accesses (mdl i) (syscall_effect_accesses (eff i))
-              = Some (with_vm_backing (m_vm_lazy (mdl i)) mat' (mdl i))
-            /\ MInv A (with_vm_backing (m_vm_lazy (mdl i)) mat' (mdl i))).
-  { intros i. exact (materialize_restricted H A (mdl i) _ (Hcov i) Hwf (Hinv i) (Hav i)). }
-  split.
-  - intros i. destruct (Hmat i) as (mat' & Hm & Hinv').
-    unfold materialized_succ. rewrite Hm. split; [exact Hinv' | apply with_vm_backing_same].
-  - split.
-    + intros i. destruct (Hmat i) as (mat' & Hm & Hinv').
-      unfold materialized_succ. rewrite Hm.
-      eapply sstep_syscall; [exact Hh | exact Hsvc | exact (Hsound i) | exact (Hnh i) | exact Hm].
-    + intros e st Hss. inversion Hss; subst;
-        match goal with
-        | Hp : ms_svc_pending ms = None |- _ => rewrite Hsvc in Hp; discriminate
-        | Hp : ms_svc_pending ms = Some ?x |- _ =>
-            rewrite Hsvc in Hp; injection Hp as <-
-        end;
-        match goal with
-        | Hsp : syscall_spec _ _ ?r |- _ =>
-            destruct (Hcompl _ Hsp) as [i Ei]; try discriminate Ei;
-            injection Ei as -> -> ->
-        end.
-      * (* [comment removed for export] *)
-        exists i. split; [reflexivity|].
-        unfold materialized_succ.
-        match goal with Hm : materialize_model_accesses _ _ = Some _ |- _ => rewrite Hm end.
-        reflexivity.
-      * (* [comment removed for export] *)
-        destruct (Hmat i) as (mat' & Hm & _).
-        match goal with Hn : materialize_model_accesses _ _ = None |- _ => rewrite Hm in Hn; discriminate end.
-      * (* [comment removed for export] *)
-        match goal with Hc : m_halted (mdl i) = Some _ |- _ => rewrite (Hnh i) in Hc; discriminate end.
-      * (* [comment removed for export] *)
-        match goal with Hk : m_killed (mdl i) = Some _ |- _ =>
-          rewrite (m_killed_of_m_halted_none _ (Hnh i)) in Hk; discriminate end.
-Qed.
-End SyscallNode.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)

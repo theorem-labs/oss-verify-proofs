@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgE01D.v at ba6d82f81177 for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgE01D.v for image B
    (fuzz_rate.asan-ubsan): image B's pcs, registers and frame class; the harness records of lib/AU/RtPgSegB.v
    (rhb_ names) and the frame shadow pattern rsb_P0 of 88 bytes. *)
 (* reac-pw/fuzz_rate image B (fuzz_rate.asan-ubsan, pinned sha256

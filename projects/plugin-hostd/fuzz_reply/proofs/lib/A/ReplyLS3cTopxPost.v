@@ -2,18 +2,19 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/W_LLVMFuzzerTestOneInput_top_x.v, with its module paths and module names changed; 171 of its 248 lines of code are new or changed and 1150 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* top_x's free-post-state LS rules in the restated texts top_x adopts (a Theorem Labs lane's ruling after a Theorem Labs lane's
-   vacuity finding, a working branch 2a368424fed lib/A/TopxVacuity.v topx_two_events_false).
+   vacuity finding, a working branch lib/A/TopxVacuity.v topx_two_events_false).
    proves no function (kind: invariant lemma).
-   - LS_event_step, LS_cnl_pre and LS_rm_cnl_pre: top_x (the TOP head 3d17f490d56) states them at this file's former
+   - LS_event_step, LS_cnl_pre and LS_rm_cnl_pre: top_x (the TOP head) states them at this file's former
      TX_ texts, so the TX_ definitions are gone; ReplyLSI.v's lsi_* plugs state top_x's text at its instance.
    - TX_LS_drain_step / TX_LS_exit_end / TX_LS_exit_end_d stay: top_x takes the drain row with `0 <= t < OPS_MAX`
      and the exit row with ReplyLS3e.v's premises (ReplyLSI.v states those texts).  Argument order after the Section:
        TX_LS_drain_step TfibB MT LSx RINV;
        TX_LS_exit_end TfibB MT XN_LIB fr_live_post fr_surv NP fr_FP LSx ARX G (and {SK : sink_head});
        TX_LS_exit_end_d the same without NP.
-     The drain rows name B1c's predicates dr3_epre / dr3_hpre / dr3_epost / dr3_hpost (ReplyLSDrain3.v:78-98) and
-     ls3_kh / ls3_hn / ls3_dpost / ls3_cpost (ReplyLS3Arms.v:305-326): W8 copies their texts with the rows.
+     The drain rows name B1c's predicates dr3_epre / dr3_hpre / dr3_epost / dr3_hpost (ReplyLSDrain3.v:79-99) and
+     ls3_kh / ls3_hn / ls3_dpost / ls3_cpost (ReplyLS3Arms.v:306-327): W8 copies their texts with the rows.
    - Plugs: tx_<row>_plug at MT := ameter_triv, LSx := fr_LS3c B, RINV := fr_RINV, TfibB := B.  LS_exit_end needs
      LS := fr_LS3c /\ fr_OUT (ReplyLS3o.v) and fr_live_post := fr_live_post3 OM, and concludes neither NP nor fr_surv
      (see TX_LS_exit_end_d).
@@ -92,7 +93,7 @@ Variable RINV : lfcx -> Z -> lmod -> Prop.
 Variable ARX : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop.
 Variable G : list (Z * Z).
 
-(* top_x :422 (riplug :433) LS_drain_step; added (ReplyLS3cArms.v:119 fr_LS3c_drain_step_p): binders ly1 h1 E' H'
+(* top_x :422 (riplug :433) LS_drain_step; added (ReplyLS3cArms.v:120 fr_LS3c_drain_step_p): binders ly1 h1 E' H'
    and the twenty premises after top_x's five *)
 Definition TX_LS_drain_step : Prop :=
   forall cx t m ly S (S1 : astate) (ly' : alayout) (S' : astate)
@@ -120,7 +121,7 @@ Definition TX_LS_drain_step : Prop :=
   dr3_epost (nth j (lm_es m) dr_e0) e' h -> dr3_hpost h h1 -> ls3_dpost m j h e' h1 -> ls3_cpost h1 E' H' ->
   LSx cx (t + 1) (dr_step m (dr_k' cx m) si h'' j e' c' O' cap' out') ly' S'.
 
-(* top_x :452 (riplug :465) LS_exit_end; added (ReplyLS3o.v:1062 LS_exit_end3_x): the three premises after top_x's
+(* top_x :452 (riplug :465) LS_exit_end; added (ReplyLS3o.v:1063 LS_exit_end3_x): the three premises after top_x's
    seven (relay_finish's final capacity, the loop's t bound, and fr_surv itself); its LS is fr_LS3c /\ fr_OUT *)
 Definition TX_LS_exit_end : Prop :=
   forall cx t m ly3 S3 rest ly' S' (W' : world segs) mem' md' fpos k' C cap out,
@@ -184,7 +185,7 @@ Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Variable B : asyms.
 Local Notation MT := ameter_triv.
 
-(* (a) a8's proof instantiates S1 := S (2a368424fed TopxVacuity.v:146); TX's malloc premise rules that out *)
+(* (a) a8's proof instantiates S1 := S (TopxVacuity.v:147); TX's malloc premise rules that out *)
 Lemma tx_a8_instance_blocked : forall ly ly1 (S : astate) q n, ablocks B ly1 S <> ablocks B ly S ++ [(q, n)].
 Proof.
   intros ly ly1 S q n H. apply (f_equal (@length _)) in H. unfold ablocks in H.
@@ -209,8 +210,8 @@ Proof.
   rewrite bsum_app. lia.
 Qed.
 
-(* (c) a8's two-events shape (2a368424fed TopxVacuity.v:122-141), byte for byte, with its LS_event_step replaced by
-   top_x's (3d17f490d56) LS_event_step text at TfibB := B *)
+(* (c) a8's two-events shape (TopxVacuity.v:123-142), byte for byte, with its LS_event_step replaced by
+   top_x's LS_event_step text at TfibB := B *)
 Definition tx_two_events_shape : Prop :=
   forall (LSx : lfcx -> Z -> lmod -> alayout -> astate -> Prop) (RINV : lfcx -> Z -> lmod -> Prop),
   (forall cx t m e v out',

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the new launch (process input, auxv, group id, exec file name); the channel-reader premise of writev; the model's access_ok checks; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Bo0DrvA.v, lines 73, 113, 126-127, 133-137, 160-162, 191. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
@@ -16,6 +17,7 @@ Open Scope Z_scope.
 Import SX2. Import SX2S.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
+(* [comment removed for export] *)
 Ltac drv_block_post HIok Hsp DL DI P0 bls Hbl HZ :=
   match goal with
   | EQM : mrestrict _ ?M' = mem_denot _ _ ?log, EQH : (forall a, _ = true -> ?M' a = _),
@@ -64,11 +66,11 @@ Section DrvA.
   Hypothesis Hsp : 0x7fff80000000 <= bv_unsigned sp0 <= 2 ^ 47.
   Hypothesis Hal : bv_unsigned sp0 mod 16 = 0.
   Hypothesis DL : drv_layoutA L ar IL sp0.
-
+  (* [comment removed for export] *)
   Variables a0s path : list byte.
   Variable fs0 : Fs.Fs.
   Variable fdata : list byte.
-  Variables p0 p1 can : word.
+  Variables auxvp p1 can : word.
   Variable M0 : word -> option byte.
   Hypothesis M0_def : defined M0 (bv_unsigned sp0) (ar_stack_top ar - bv_unsigned sp0).
   Hypothesis Hfile : fs_lookup fs0 path = Some fdata.
@@ -77,10 +79,10 @@ Section DrvA.
   Hypothesis Hfs : sc_fs scfg = true.
   Hypothesis Hplen : (length path <= 4095)%nat.
   Hypothesis Hnonul : ~ In (Z_to_bv 8 0) path.
-
+  (* [comment removed for export] *)
   Hypothesis P1lo : bv_unsigned sp0 <= bv_unsigned p1 /\ bv_unsigned p1 + Z.of_nat (length path) + 1 <= 2 ^ 47.
   Hypothesis P1str : rdn ASEGS M0 p1 (length path + 1) = Some (path ++ [Z_to_bv 8 0]).
-
+  (* [comment removed for export] *)
   Variable LK0 : list fframe.
   Variable cr0 : credit.
   Variable A0 : list (Z * Z).
@@ -88,12 +90,14 @@ Section DrvA.
 
   #[local] Notation dinvA := (dinv ar HI sp0 M0).
 
+  (* [comment removed for export] *)
   Definition ENVA (vals : list word) : env := Env (vals_ev vals) (blobs_ev [[]; []; []; []; fdata]).
 
   Definition fds0 : list (word * FdEntry) :=
     [(Z_to_bv 64 0, FdChannel (Z_to_bv 64 0)); (Z_to_bv 64 1, FdChannel (Z_to_bv 64 1)); (Z_to_bv 64 2, FdChannel (Z_to_bv 64 2))].
   Definition fds1 : list (word * FdEntry) := fd_insert fds0 (Z_to_bv 64 3) (FdFile path (Z_to_bv 64 0)).
 
+  (* [comment removed for export] *)
   Definition open_err_kA (KA : TSet) : Prop :=
     forall e vals R M (model : Model),
       1 <= e <= 4095 ->
@@ -103,9 +107,10 @@ Section DrvA.
       dinvA [] LK0 cr0 A0 M model -> m_fds model = fds0 -> m_fs model = fs0 ->
       srealizes ASEGS scfg (mkCfg (mkst R (Z_to_bv 64 0x130c0c) M (seg_rom ASEGS)) model) KA.
 
+  (* [comment removed for export] *)
   Definition file_kA (KF : TSet) : Prop :=
     forall vals R M (model : Model) A (A1 : Z),
-      length vals = 70%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 1 = p0 -> vals_ev vals 2 = p1 -> vals_ev vals 3 = can ->
+      length vals = 70%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 5 = auxvp -> vals_ev vals 2 = p1 -> vals_ev vals 3 = can ->
       vals_ev vals 48 = Z_to_bv 64 A1 ->
       regs_ok (ENVA vals) srC0 R -> know_ok ASEGS (ENVA vals) (mrestrict (ahid A model) M) knC0 ->
       dinvA [(A1, 65536)] LK0 (adebit L cr0 65536) A M model -> incl A0 A ->
@@ -114,33 +119,30 @@ Section DrvA.
       srealizes ASEGS scfg (mkCfg (mkst R (Z_to_bv 64 0xa8d04) M (seg_rom ASEGS)) model) KF.
 
   Lemma alu_add_w_litA : forall (x : word) k, alu64 ALU_ADD x (Z_to_bv 64 k) = Z_to_bv 64 (bv_unsigned x + k).
-  Proof.
+Proof.
     intros x k. rewrite alu_add. unfold v_add. apply bv_eq. rewrite !Z_to_bv_unsigned, !bv_wrap64_mod. rewrite Zplus_mod_idemp_r. reflexivity.
   Qed.
 
-  Theorem drv_openA : forall KA KF R (model : Model) (tid : word),
-    let vals := vals_mainA sp0 p0 p1 can tid R in
+  Theorem drv_openA : forall KA KF R (model : Model) (tid a0p : word),
+    let vals := vals_mainA sp0 a0p p1 can tid auxvp R in
     regs_ok (ENVA vals) sr_mainA R -> know_ok ASEGS (ENVA vals) (mrestrict (ahid A0 model) M0) kn_mainA ->
     dinvA [] LK0 cr0 A0 M0 model -> m_fds model = fds0 -> m_fs model = fs0 ->
     open_err_kA KA -> file_kA KF -> KF [] ->
     srealizes ASEGS scfg (mkCfg (mkst R (Z_to_bv 64 0xa8cb0) M0 (seg_rom ASEGS)) model) (t_alt2 KA KF).
   Proof.
-    intros KA KF R model tid vals HR HK DI Hfds Hfs0 HKA HKF HKF0.
+    intros KA KF R model tid a0p vals HR HK DI Hfds Hfs0 HKA HKF HKF0.
     pose proof Hsp as Hsp'. pose proof Hal as Hal'.
     assert (HL : length vals = 38%nat) by (subst vals; unfold vals_mainA; rewrite length_app, junk_vals_length; reflexivity).
     assert (P0 : vals_ev vals 0 = sp0) by reflexivity.
-    assert (P1 : vals_ev vals 1 = p0) by reflexivity.
+    assert (P1 : vals_ev vals 5 = auxvp) by reflexivity.
     assert (P2 : vals_ev vals 2 = p1) by reflexivity.
     assert (P3 : vals_ev vals 3 = can) by reflexivity.
     clearbody vals.
-
     drv_block0 HIok Hsp DL HR HK DI P0 scr0 38%nat.
     destruct (sbm_fds _ _ SBM) as (F1 & F2). rewrite Hfds in F1. rewrite Hfs0 in F2.
     clear EQM EQH SBM HR HK DI Hfds Hfs0. clear model.
-
     assert (Sr' : rdn ASEGS M p1 (length path + 1) = Some (path ++ [Z_to_bv 8 0])).
     { rewrite <- P1str. apply rdn_agree. intros j Hj. apply (di_above _ _ _ _ _ _ _ _ _ _ DI0). lia. }
-
     eapply (rz_openat_file_lz ASEGS scfg _ _ _ model0 ECALLW); try apply is_ecall_ECALLW.
     - vm_compute. reflexivity.
     - exact (di_halt _ _ _ _ _ _ _ _ _ _ DI0).
@@ -152,7 +154,9 @@ Section DrvA.
       apply (nolazy_of_inv scfg L ar C IL HI HIok sp0 Hsp DL _ _ _ _ _ _ _ _ _ (di_inv _ _ _ _ _ _ _ _ _ _ DI0)); [lia|].
       intros k Hk. right. left. lia.
     - rewrite F1. reflexivity.
-    - split; [exact Hplen|]. split; [exact Hnonul|].
+    - split; [exact Hplen|]. split; [exact Hnonul|]. split.
+      { regv HR0 (11%bv : reg). cbn [edenot ev ENVA]. rewrite P2.
+        unfold TASK_SIZE. pose proof (proj2 P1lo). lia. }
       regv HR0 (11%bv : reg). cbn [edenot ev ENVA]. rewrite P2. exact Sr'.
     - exact Hpne.
     - exact Hppl.
@@ -181,14 +185,13 @@ Section DrvA.
       rewrite F1. change (alloc_fd fds0) with (Z_to_bv 64 3).
       set (model1 := with_fds (fd_insert fds0 (Z_to_bv 64 3) (FdFile path (Z_to_bv 64 0))) model0).
       assert (DI1 : dinvA [] LK0 cr0 A0 M model1).
-      { apply (dinv_model scfg L ar C IL HI HIok sp0 Hsp DL M0 _ _ _ _ _ model0 model1 DI0); [apply with_fds_vm|].
+      { apply (dinv_model scfg L ar C IL HI HIok sp0 Hsp DL M0 _ _ _ _ _ model0 model1 DI0); [apply with_fds_vm| |apply with_fds_rdr].
         unfold model1. rewrite with_fds_halted'. exact (di_halt _ _ _ _ _ _ _ _ _ _ DI0). }
       assert (HK1 : know_ok ASEGS (ENVA vals) (mrestrict (ahid A0 model1) M) knA) by exact HK0.
       assert (G1 : m_fds model1 = fds1) by (unfold model1; apply with_fds_fds).
       assert (G2 : m_fs model1 = fs0) by (unfold model1; rewrite with_fds_fs; exact F2).
       pose proof (regs_set_a0 (ENVA vals) _ _ (Z_to_bv 64 3) (ELit 3) HR0 eq_refl) as HR1.
       clearbody model1. clear HR0 HK0 DI0 F1 F2. clear model0.
-
       drv_block0 HIok Hsp DL HR1 HK1 DI1 P0 scr0 38%nat.
       destruct (sbm_fds _ _ SBM) as (F1 & F2). rewrite G1 in F1. rewrite G2 in F2.
       clear EQM EQH SBM HR1 HK1 DI1 G1 G2 Sr'. clear model1.
@@ -214,7 +217,6 @@ Section DrvA.
         | intros v b Hf; discriminate
         | exact HKF0
         | ].
-
       intros R' M' model' A' u vals' E' HL' HA' HR' HK' DI' HRT HINC HBR HAP HSHB HAB HBLK HIMG. subst vals' E'.
       destruct (model_rt_fds _ _ HRT) as (G1 & G2). rewrite F1 in G1. rewrite F2 in G2.
       apply (HKF (vals ++ junk_vals R') R' M' model' A' u); try assumption.

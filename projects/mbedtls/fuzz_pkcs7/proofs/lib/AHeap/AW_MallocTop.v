@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the hypotheses T_node and T_store written out in plain text with the new placement premise ASys.placed_at, which depot_put_cfg now asks for; their old encoded statements kept as definitions, with lemmas proving them equal to the plain text without that premise). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -150,10 +151,54 @@ Section MallocTop.
   Hypothesis K_apart : ltac2:(CDefT.buildp (gd_tbl_AW_MallocTop ()) "Pnb,(3.$2.)Pbl,(3.$2.)Pmo,$22.Pa,(0.&40.)Pn,(0.&40.)P,A3.VK,R5.R4.R3.P,(19.$23.(24.(18.(13.(0.&40.)(0.&40.))(25.(26.R4.))(27.(26.R4.)))R3.R2.)$28.)P,(5.+10000.(29.&40.R3.))P,(5.(6.(29.&40.R5.)(29.&40.R4.))(2:.VhAR,))Px,$2.P,(8.A3.VCSf,R:.R9.R1.(;.(5.(2;.VAL,)R1.)(<.R1.(2<.VAL,))))(17.(;.(5.(29.&40.R8.)R2.)(<.R2.(6.(29.&40.R8.)(29.&40.R7.)))))")
 (* [comment removed for export] *).
   Variables (Gn Gs : list Z -> list Z -> Prop).   (* [comment removed for export] *)
-  Hypothesis T_node : ltac2:(CDefT.buildp (gd_tbl_AW_MallocTop ()) "Pnb,(3.$2.)Pbl,(3.$2.)Pmo,$22.Pa,(0.&40.)P,A2.VGn,R4.R3.P,A3.VK,R5.R4.R3.P,(19.$2.(2=.(29.&40.R3.)+1000.)=)P,(<.=(29.&40.R4.))P,(5.(6.(29.&40.R5.)(7.+2.+14.))(2:.VhAR,))P,(19.$23.(24.(18.(13.(0.&40.)(0.&40.))(25.(26.R7.))(27.(26.R7.)))R6.(2>.&40.(7.+2.+14.)))$28.)(;.A3.VK,(18.$2.R:.(12.$2.(29.&40.R7.)(15.$2.)))R9.(2?.+22.R7.(7.+2.+14.)R8.)(16.A2.VCSf,(18.$2.R:.(12.$2.(29.&40.R7.)(15.$2.)))R9.(29.&40.R7.)(7.+2.+14.)))")
-(* [comment removed for export] *).
-  Hypothesis T_store : ltac2:(CDefT.buildp (gd_tbl_AW_MallocTop ()) "Pnb,(3.$2.)Pbl,(3.$2.)Pmo,$22.Pa,(0.&40.)P,A2.VGs,R4.R3.P,A3.VK,R5.R4.R3.P,(19.$2.(2=.(29.&40.R3.)+1000.)=)P,(<.=(29.&40.R4.))P,(5.(6.(29.&40.R5.)(7.+2.+17.))(2:.VhAR,))P,(19.$23.(24.(18.(13.(0.&40.)(0.&40.))(25.(26.R7.))(27.(26.R7.)))R6.(2>.&40.(7.+2.+17.)))$28.)(;.A3.VK,R:.(18.$2.R9.(12.$2.(29.&40.R7.)(15.$2.)))(2?.+4022.R7.(7.+2.+17.)R8.)(16.A2.VCSf,R:.(18.$2.R9.(12.$2.(29.&40.R7.)(15.$2.)))(29.&40.R7.)(7.+2.+17.)))")
-(* [comment removed for export] *).
+  Definition ZZ_T_node_old : Prop := ltac2:(CDefT.buildp (gd_tbl_AW_MallocTop ()) "Pnb,(3.$2.)Pbl,(3.$2.)Pmo,$22.Pa,(0.&40.)P,A2.VGn,R4.R3.P,A3.VK,R5.R4.R3.P,(19.$2.(2=.(29.&40.R3.)+1000.)=)P,(<.=(29.&40.R4.))P,(5.(6.(29.&40.R5.)(7.+2.+14.))(2:.VhAR,))P,(19.$23.(24.(18.(13.(0.&40.)(0.&40.))(25.(26.R7.))(27.(26.R7.)))R6.(2>.&40.(7.+2.+14.)))$28.)(;.A3.VK,(18.$2.R:.(12.$2.(29.&40.R7.)(15.$2.)))R9.(2?.+22.R7.(7.+2.+14.)R8.)(16.A2.VCSf,(18.$2.R:.(12.$2.(29.&40.R7.)(15.$2.)))R9.(29.&40.R7.)(7.+2.+14.)))").
+  Lemma ZZ_T_node_faithful : ZZ_T_node_old =
+    (forall (nb bl : list Z) (mo : Model) (a : word),
+       Gn nb bl ->
+       K nb bl mo ->
+       bv_unsigned a mod 4096 = 0 ->
+       0 < bv_unsigned a ->
+       bv_unsigned a + 2 ^ 20 <= ACEIL ->
+       region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 20)) = true ->
+       K (nb ++ [bv_unsigned a]) bl (anon_grant 0x22 a (2 ^ 20) mo)
+       /\ crange (CSf (nb ++ [bv_unsigned a]) bl) (bv_unsigned a) (2 ^ 20)).
+  Proof. exact eq_refl. Qed.
+
+  Hypothesis T_node :
+    forall (nb bl : list Z) (mo : Model) (a : word),
+      Gn nb bl ->
+      K nb bl mo ->
+      bv_unsigned a mod 4096 = 0 ->
+      0 < bv_unsigned a ->
+      bv_unsigned a + 2 ^ 20 <= ACEIL ->
+      region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 20)) = true ->
+      ASys.placed_at (2 ^ 20) mo a ->
+      K (nb ++ [bv_unsigned a]) bl (anon_grant 0x22 a (2 ^ 20) mo)
+      /\ crange (CSf (nb ++ [bv_unsigned a]) bl) (bv_unsigned a) (2 ^ 20).
+  Definition ZZ_T_store_old : Prop := ltac2:(CDefT.buildp (gd_tbl_AW_MallocTop ()) "Pnb,(3.$2.)Pbl,(3.$2.)Pmo,$22.Pa,(0.&40.)P,A2.VGs,R4.R3.P,A3.VK,R5.R4.R3.P,(19.$2.(2=.(29.&40.R3.)+1000.)=)P,(<.=(29.&40.R4.))P,(5.(6.(29.&40.R5.)(7.+2.+17.))(2:.VhAR,))P,(19.$23.(24.(18.(13.(0.&40.)(0.&40.))(25.(26.R7.))(27.(26.R7.)))R6.(2>.&40.(7.+2.+17.)))$28.)(;.A3.VK,R:.(18.$2.R9.(12.$2.(29.&40.R7.)(15.$2.)))(2?.+4022.R7.(7.+2.+17.)R8.)(16.A2.VCSf,R:.(18.$2.R9.(12.$2.(29.&40.R7.)(15.$2.)))(29.&40.R7.)(7.+2.+17.)))").
+  Lemma ZZ_T_store_faithful : ZZ_T_store_old =
+    (forall (nb bl : list Z) (mo : Model) (a : word),
+       Gs nb bl ->
+       K nb bl mo ->
+       bv_unsigned a mod 4096 = 0 ->
+       0 < bv_unsigned a ->
+       bv_unsigned a + 2 ^ 23 <= ACEIL ->
+       region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 23)) = true ->
+       K nb (bl ++ [bv_unsigned a]) (anon_grant 0x4022 a (2 ^ 23) mo)
+       /\ crange (CSf nb (bl ++ [bv_unsigned a])) (bv_unsigned a) (2 ^ 23)).
+  Proof. exact eq_refl. Qed.
+
+  Hypothesis T_store :
+    forall (nb bl : list Z) (mo : Model) (a : word),
+      Gs nb bl ->
+      K nb bl mo ->
+      bv_unsigned a mod 4096 = 0 ->
+      0 < bv_unsigned a ->
+      bv_unsigned a + 2 ^ 23 <= ACEIL ->
+      region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 23)) = true ->
+      ASys.placed_at (2 ^ 23) mo a ->
+      K nb (bl ++ [bv_unsigned a]) (anon_grant 0x4022 a (2 ^ 23) mo)
+      /\ crange (CSf nb (bl ++ [bv_unsigned a])) (bv_unsigned a) (2 ^ 23).
   Hypothesis ROOM_n : forall nb bl mo, Gn nb bl -> K nb bl mo -> exists a, anon_grantable 0x22 (2^20) mo a.
   Hypothesis ROOM_s : forall nb bl mo, Gs nb bl -> K nb bl mo -> exists a, anon_grantable 0x4022 (2^23) mo a.
   Hypothesis CSf_noshadow : forall nb bl x, CSf nb bl x -> ~ (0x7fff8000 <= x < 0x10007fff8000).

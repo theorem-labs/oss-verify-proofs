@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 637 of its 652 lines of code are new or changed and 233 lines of the source are left out. *)
-(* GENERATED - do not edit.  C_reac_box_model_blockRB_case0F.v is the re-based copy of lib/B/Prog/reac_box_model_block_case0F.v at 20372bbcc3a
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* GENERATED - do not edit.  C_reac_box_model_blockRB_case0F.v is the re-based copy of lib/B/Prog/reac_box_model_block_case0F.v
    (source sha256 917e55a048e9d86172bfbbeb63b33c370660f1427baa82e6d6fab481802e5484) by gen_rb_modelblock.py
    (its sha256 is cited in the commit that adds this file); the substitutions are listed there.  Dropped here: nothing. *)
-(* This delivery then edited comment text only: the code is unchanged from release c5e779efe8c, the comments are not. *)
+(* This delivery then edited comment text only: the code is unchanged from release, the comments are not. *)
 (* The footprint twin of C_reac_box_model_blockRB_case0.v (image B, asan-ubsan; route 2): the case b = 0 of
    reac_box_model_block's body walk, from the target of the jump-table dispatch at 0x86714 to the frame release at
    0x86e14, as ExecF.evtF under a footprint RNG, by the scripts of the plain file over StepF's step.  Every definition
@@ -33,7 +34,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require Import name_field_c_o
 Import ListNotations.
 Open Scope Z_scope.
 
-(* Local copy of C_reac_box_model_blockRB.v:228's store hook: that file made it Local (a Theorem Labs lane; generator owner a Theorem Labs lane stopped, a Theorem Labs lane audits). *)
+(* Local copy of C_reac_box_model_blockRB.v:229's store hook: that file made it Local (a Theorem Labs lane; generator owner a Theorem Labs lane stopped, a Theorem Labs lane audits). *)
 Local Ltac footprint_after_store segs m a bs ::=
   repeat match goal with
   | MU : munch ?Wq ?mq m |- _ =>

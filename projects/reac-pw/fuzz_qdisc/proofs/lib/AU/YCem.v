@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/ACem.v at c8557374ad2e, with its module paths changed (AB1v's tfibsegs is A/AWalkFw0.v's) and the read-only range of line 89 relocated to libreac/fuzz_knock's asan image: cgif 0x9da38..0x9eca8 (.data.rel.ro start .. .got end) is knock's 0x96070..0x972c8, the range of ACeh.v's in_ro_tfa. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/ACem.v at theorem-labs/oss-verify-proofs@6b32741d849a, with its module paths changed (AB1v's tfibsegs is A/AWalkFw0.v's) and the read-only range of line 89 relocated to libreac/fuzz_knock's asan image: cgif 0x9da38..0x9eca8 (.data.rel.ro start .. .got end) is knock's 0x96070..0x972c8, the range of ACeh.v's in_ro_tfa. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/A/ACem.v (donor image sha256 61768cf4739b), with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-10: derived from lib/A/ACem.v of this library by derive_y.py: module names A.Axyz -> AU.Yxyz, addresses moved from reac-pw/fuzz_qdisc's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/ACem.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From Stdlib Require Import FunctionalExtensionality.

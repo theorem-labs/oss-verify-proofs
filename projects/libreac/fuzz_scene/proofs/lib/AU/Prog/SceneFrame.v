@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC44.v for libreac/fuzz_scene's program walk: the listing's names are ssym; uar_got_regionP is the side-stack flag's GOT slot, object 0; PALibF holds fuzz_scene.asan-ubsan's side-stack entries for frame classes 1, 2 and 8 and the separation of its two GOT slots (objects 1 and 0), the shadow-base cell (object 16) and the side-stack flag cell; palf_got_uar and palf_uar_img are lemmas from PALib (flag cell object 17, image end 0x5f9000) in place of fields; module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: copied by path from a Theorem Labs lane's proofs/libreac/fuzz_grant/lib/A/Prog/GrantFrame.v (a working branch acae397d926) for libreac/fuzz_scene's program walk; the module path and the listing's names changed. PALibF holds fuzz_scene.asan-ubsan (sha256 e98b1ed286c1aa5c3d558cb2069011d2413d58b2122f741531364382a528833f)'s side-stack entries for the frame classes 1, 2 and 8 (the classes its three fake-stack functions use: reac_ctrl_parse 1, check_step 2, LLVMFuzzerTestOneInput 8) in place of fuzz_grant's 0, 1, 2 and 4, and the separation of objects 1, 0, 16 and the flag cell. *)
+(* Modified by Theorem Labs, 2026-10: copied by path from a Theorem Labs lane's proofs/libreac/fuzz_grant/lib/A/Prog/GrantFrame.v (a working branch) for libreac/fuzz_scene's program walk; the module path and the listing's names changed. PALibF holds fuzz_scene.asan-ubsan (sha256 e98b1ed286c1aa5c3d558cb2069011d2413d58b2122f741531364382a528833f)'s side-stack entries for the frame classes 1, 2 and 8 (the classes its three fake-stack functions use: reac_ctrl_parse 1, check_step 2, LLVMFuzzerTestOneInput 8) in place of fuzz_grant's 0, 1, 2 and 4, and the separation of objects 1, 0, 16 and the flag cell. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From Stdlib Require Import FunctionalExtensionality.
@@ -24,7 +25,7 @@ From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU.Prog Require Import PaRun PaShad
 (* palf_sm8 binds the class-8 helper to a Theorem Labs lane's per-unit constant, not to the shared field
    pc_stack_malloc (as_code B) 8: scene's only Tfib_code (A/AF0l.v:12) has cid 8 = 0, so the field form makes
    PALibF unsatisfiable (a review ruling, 2026-10-29 00:47Z, option (a)). The value, 0x3f438 =
-   __asan_stack_malloc_8 in fuzz_scene.asan-ubsan, is measured in that file (lib/AU/Rt/StackMalloc8Tbl.v:67). *)
+   __asan_stack_malloc_8 in fuzz_scene.asan-ubsan, is measured in that file (lib/AU/Rt/StackMalloc8Tbl.v:68). *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU.Rt Require StackMalloc8Tbl.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.

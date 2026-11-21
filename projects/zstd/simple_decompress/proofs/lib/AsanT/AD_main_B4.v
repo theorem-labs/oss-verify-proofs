@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (open_spec's new TASK_SIZE premise discharged from the path argument's length). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -149,12 +150,14 @@ Section B4.
     remember READ_FUEL as rf eqn:Erf. clear Erf.
     apply evtF_done.
     replace (map (Z_to_bv 8) arg1) with (nth 1 argv []) by (symmetry; apply zbytes_map_unsigned').
+    assert (LENA1 : length (nth 1 argv []) = length arg1)
+      by (rewrite <- (length_map (Z_to_bv 8) arg1); f_equal; symmetry; apply zbytes_map_unsigned').
     eapply implMA_bind.
     { eapply implMA_msys.
       eapply (open_spec RNG) with (lo := LO) (errv := errv) (canary := canary);
         rewrite ?(unsigned_lit (usp + -128)) by lia; rewrite ?(unsigned_lit P1) by lia; rewrite ?errno_addr_ATP; unfold ATP; rewrite ?unsigned_lit by lia;
         first [ exact ST | exact STR1' | exact ERR | exact GSSP | exact GU | exact MI | reflexivity | exact A1NN | exact A1NOSL | exact RGimg | idtac ].
-      all: unfold got_ssp, ssp_guard, zlength in *; rewrite ?length_map in RGa1;
+      all: unfold got_ssp, ssp_guard, zlength in *; rewrite ?length_map in RGa1; rewrite ?length_map in *; rewrite ?LENA1; rewrite ?TASK_SIZE_val;
            first [ lia | eapply rng_sub'; [exact RGstk| lia] | eapply rng_sub'; [exact RGimg| lia] | eapply rng_sub'; [exact RGa1| lia] ]. }
     cbv beta. intros r s' RNG' ms' [-> [-> PO]].
     destruct PO as (u0 & u1 & u2 & b1' & b2 & b3 & b4 & b5 & b6 & b7 & u3 & u4 & u5 & u6 & m1 & -> & MUc & WMc & MI1 & ST1 & ERR1 & _ & _ & _ & FDR).

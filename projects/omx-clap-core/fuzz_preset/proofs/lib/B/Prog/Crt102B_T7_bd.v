@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths and module names changed; 996 of its 1069 lines of code are new or changed and 441 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/Crt102B_T7.v; 94 of its 144 lines of code are new or changed and 1019 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, walk of check_round_trip on the #102 pins, IMAGE B' (asan-ubsan
    d663f82d7f488d30, unstripped twin c90d4fa54d43160b), FREE-PIECES-102 Part 7a row T7 = CRT-B-CEXIT: THE ROW'S
    INTERNAL BOUNDARIES.
@@ -18,18 +19,18 @@
    T7_AT_C / T7_AT_FF / T7_AT_PF / T7_AT_E are `the run from that cut reaches QF` (the glue's CRT_B_AT_* shape);
    T7_AT_C is the glue's CRT_B_AT_C at the B instance.
 
-   crt_at_C_B carries the facts this row found missing (the row's seam fix, frozen bd1a4a7ce28e, block facts restated
-   to the PERMUTATION form eda8876a8e89): kw = last (wcaps (copy_set ms) true) 0, back's and copy's block sizes against
-   tblk up to permutation, copy's depth; and the two FREE ORDERS - back's (frozen 7281359fe8bc), which t7_at_PF
-   carries as t7_back_tie for pj_free (&back), and copy's (Crt102Glue.v at 275deb46b92d), which t7_at_PF and t7_at_E
+   crt_at_C_B carries the facts this row found missing (the row's seam fix, frozen, block facts restated
+   to the PERMUTATION form): kw = last (wcaps (copy_set ms) true) 0, back's and copy's block sizes against
+   tblk up to permutation, copy's depth; and the two FREE ORDERS - back's (frozen), which t7_at_PF
+   carries as t7_back_tie for pj_free (&back), and copy's (Crt102Glue.v), which t7_at_PF and t7_at_E
    carry as t7_copy_tie up to X, where crt_at_J_B asks for it.
 
    KB ROUND (the glue's wild budget, Crt102Glue.v G3 / G4): t7_at_PF and t7_at_E carry crt_live at kb = prh_wk
    F_check_round_trip (66), the budget of crt_at_C_B and crt_at_J_B; their text is unchanged, the notation liveB carries
    the budget. The T7_AT_* statements are unchanged.
 
-   INPUTS OF RECORD: this tree's Crt102Glue.v, Crt102Img.v, Crt102Model.v (the row's base was commit cbe6d10993c2, an
-   ancestor of this tree; the contract texts at the kit tip 3ac20a5c9e30); lib/Spec PresetReqAt.v / PresetReqAtNoMiss.v.
+   INPUTS OF RECORD: this tree's Crt102Glue.v, Crt102Img.v, Crt102Model.v (the row's base was, an
+   ancestor of this tree; the contract texts at the kit tip); lib/Spec PresetReqAt.v / PresetReqAtNoMiss.v.
 
    NUMERALS. LENGTH: 4 (one instruction). No ADDRESS literal. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
@@ -115,7 +116,7 @@ Variables (ly : alayout) (S : astate) (Hp : list Z) (W : world SEGS) (regs : bvm
 #[local] Notation tcB := (@crt_tc t).
 #[local] Notation treeJ := (crt_tree_J (t := t)).
 
-(* back's FREE ORDER, crt_at_C_B's conjunct (Crt102Glue.v at 7281359fe8bc) in the words t7_at_PF carries it in:
+(* back's FREE ORDER, crt_at_C_B's conjunct (Crt102Glue.v) in the words t7_at_PF carries it in:
    pj_free's order list Fb of back's tree has the model's requests fo crt_tc IN ORDER. pj_free (&back)'s text
    (PRH_FnPj.tpj_free_specX) moves the room position only for a run whose next events are prhPj_free_evs Fb. *)
 Definition t7_back_tie (Wc : world SEGS) (memc : word -> option byte) (Lamc : list (Z * Z)) (lyc : alayout)
@@ -124,7 +125,7 @@ Definition t7_back_tie (Wc : world SEGS) (memc : word -> option byte) (Lamc : li
       (frame_addr lyc CRT_CID pos + CRT_OFF_BACK) Dback Fb /\
     map (fun b => snd b + cf_head) Fb = PresetReqAt.fo tcB.
 
-(* copy's FREE ORDER, crt_at_C_B's other conjunct (Crt102Glue.v at 275deb46b92d, the same freeze on the copy side):
+(* copy's FREE ORDER, crt_at_C_B's other conjunct (Crt102Glue.v, the same freeze on the copy side):
    copy's order list Fc holds the model's requests fo crt_tree_J IN ORDER. T7 writes none of copy's blocks, so the
    cuts carry it from C to X (PRH_PjOrder.pj_foR_frame across each memory change), where crt_at_J_B asks for it. *)
 Definition t7_copy_tie (Wc : world SEGS) (memc : word -> option byte) (Lamc : list (Z * Z)) (lyc : alayout)

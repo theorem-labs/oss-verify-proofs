@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (init_kn_g takes the run's CONFIG_RSEQ flag, the hwcap variable moves to 10 and AT_HWCAP to auxv pair 10, AT_GID and AT_EGID (pairs 21 and 22) are the launch variable V_GID 11 claimed in init_kn_g and NX0G is 12, the initial ledger counts the vDSO pages, and fixed_args is bounded by resx_clear in place of KHI). *)
 From Stdlib Require Import ZArith List Bool FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YK11 YK0d YK0e YK0a.
@@ -257,7 +258,7 @@ if visible then vis_add A LIMIT cs1 a ne (kmem ++ kn cs1) else Some cs1.
 Definition mmap_fixed_free_g (cs : acs) (kind : mkind) (eager visible : bool) : option acs :=
 let k := kn cs in
 let a := reg cs 10 in
-match fixed_args A cs KHI with
+match fixed_args A cs (resx_clear cs) with
 | Some (b, off, ne, nlo, nhi) =>
 if (no_fog (a_maps cs)
 && forallb (fun m => ranges_apart_x k b off ne (am_base m) 0 (am_len m)) (a_maps cs)
@@ -706,16 +707,24 @@ end
 | _, _, _ => None
 end.
 End G.
-Definition V_HW : nat := 9.
-Definition NX0G : nat := 10.
-Definition init_kn_g (A : atable) : list kentry :=
-KRange e_atr8 0xFFFF0000001 0xFFFFFFFFFE7
-:: init_kn A ++ KRange (EVar V_HW) 0x112D 0x20112D :: auxw 3 16 (EVar V_HW).
+(* At 08b1429 the model's init_kn uses var 9 for the AT_RANDOM pad (V_G) and NX0 = 10, so the
+   hwcap variable moves to 10; AT_HWCAP is auxv pair 10 (StackLayout.v auxv_entries). *)
+Definition V_HW : nat := 10.
+(* AT_GID/AT_EGID (pairs 21, 22) are in the 727298f3 vector, and musl's [__init_libc]
+   compares [aux[AT_GID]] with [aux[AT_EGID]], so both values are the one launch variable
+   [V_GID], appended after [V_HW] (as cgif/cgif_file_fuzzer's YA01.v and bzip2's
+   [K/AS/AsanPlanCore.v] have it). *)
+Definition V_GID : nat := 11.
+Definition NX0G : nat := 12.
+Definition init_kn_g (r : Z) (A : atable) : list kentry :=
+init_kn r A ++ (KRange (EVar V_HW) 0x112D 0x20112D :: auxw 10 16 (EVar V_HW))
+++ auxw 21 13 (EVar V_GID) ++ auxw 22 14 (EVar V_GID).
 Definition STACK_VIS : Z := 0x80800000.
 Definition init_vis_g (A : atable) : list (expr * expr) :=
 [(ELit (img_lo A), ELit (img_hi A - img_lo A)); stack_side].
-Definition init_acs_of_g (A : atable) : acs :=
-ACS (mk_ss (a_entry A) init_regs (init_kn_g A) NX0G) [] (img_hi A - img_lo A) MBASE_MIN 0 (init_vis_g A) []
+(* The vDSO pages joined vm_reserved at 08b1429: the ledger counts resx_bytes (AsanPlanCore). *)
+Definition init_acs_of_g (r : Z) (A : atable) : acs :=
+ACS (mk_ss (a_entry A) init_regs (init_kn_g r A) NX0G) [] (img_hi A - img_lo A + resx_bytes A) (MBASE_MIN - resx_bytes A) 0 (init_vis_g A) []
 (vis_cost (img_hi A - img_lo A) + vis_cost STACK_VIS) (escale 4096 (EVar V_BRK)) FdStd false.
 Fixpoint cover_sweep (l : list (word * word)) (z hi : Z) (fuel : nat) : bool :=
 match fuel with

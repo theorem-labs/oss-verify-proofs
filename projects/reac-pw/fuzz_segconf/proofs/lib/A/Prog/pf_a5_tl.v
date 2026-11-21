@@ -23,11 +23,12 @@
    achain_chain_pre of it. joined's new premises at its call: len's 8 bytes present (the journal's window), and
    (pass 5b) the stack from len - 16 present, from the statement's astack_pres kept by astack_pres_journal. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 370 of its 431 lines of code are new or changed and 4992 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image A: segment A5 of reac_segconf_parse_file, the pieces TAIL and R6 of
    lib/A/Prog/pf_a5_d.v (segment A5's proof, 2026-10-30).
    proves no function (kind: segment lemma of reac_segconf_parse_file's image-A walk; the function's rule-24 record
-   is the unit's internal record, commit dfb49d6ad789, path records/segp/g3-lookup.md).
-   The code (the unit's internal record, commit dfb49d6ad789, path records/segp/dis/
+   is the unit's internal record, path records/segp/g3-lookup.md).
+   The code (the unit's internal record, path records/segp/dis/
    reac_segconf_parse_file.fuzz_segconf.asan.s):
      TAIL 0x88068 addi a1,zero,0x40; mv a0,s3 (s3 = SH + 8); 0x88070 jal meta_fill_f8 (__asan_set_shadow_f8 on buf's
         64 shadow cells: buf out of scope; return 0x88074 = R6).
@@ -39,7 +40,7 @@
    region is the text's byte at s5 (extra atom 32, trim_tr.v tt_entry's form), a run of the token executor (the
    inline check's obligation is the text's addressability, pf_obj's sa_addr), the branch on the byte, and the
    exits H_HEAD (pred n) (a byte left: o < |s|) and H_DONE (the text's NUL: o = |s|, no line left; the plain proof
-   is the plain-build walk owner's lib/Prog/pf_p2.v tail_holds at 04f2be60e018).
+   is the plain-build walk owner's lib/Prog/pf_p2.v tail_holds).
    Several helpers (tl_aview_mod, tl_vis_mod, tl_rg_keep, tl_rg_keep_pi, the tl_rreg / tl_atom / tl_atoms
    tactics) are copied from the sibling piece lib/A/Prog/pf_a5_r3.v, tl_after / tl_awr from
    lib/A/Prog/trim_tr.v (tt_after / tt_awr). The one Section hypothesis is pf_pieces.v's for this call:

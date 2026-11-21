@@ -1,5 +1,5 @@
 (* reac-pw/fuzz_segconf, image A: the harness contract's image premise seg_himg (lib/A/Prog/LLVMFuzzerTestOneInput_c.v,
-   contracts FINAL 6f783602b5e3) at lib/A/Prog/SegInstA.v's terms, at any allocator state of a record B with SegBSyms
+   contracts FINAL) at lib/A/Prog/SegInstA.v's terms, at any allocator state of a record B with SegBSyms
    (lib/A/AF0m.v) whose view keeps the read-only image (arodata_okP: the program interface's pre gives it at the call,
    ACfn's tfib_lib_pre_x, so the close's bridge lib/A/Prog/SegLibX.v applies seg_himg_at at the entry state).
    Where each conjunct comes from:

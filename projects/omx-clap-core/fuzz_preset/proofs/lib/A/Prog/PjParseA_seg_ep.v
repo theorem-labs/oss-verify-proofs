@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: two lemmas of pj_parse's image-A' walk (fuzz_preset asan, #102 pin 1be0f53d96cb, unstripped
-   twin bff8519bbe3e, A' 0x85e20; the cuts of lib/A/Prog/PjParseA_defs.v on the batch kit's cut 7cdbb61b5fa0).
+   twin bff8519bbe3e, A' 0x85e20; the cuts of lib/A/Prog/PjParseA_defs.v on the batch kit's cut).
    proves no function (kind: segment lemma).
    PORTED from the image-B' walk (the version pj_parse_seg_ep.v (sha256 a1f7f2b067f2; internal record) of
    lib/B/Prog/pj_parse_seg_ep.v): the namespace by a whole-identifier rename (the internal file port_names.py), then RE-WALKED at A': the epilogue has one

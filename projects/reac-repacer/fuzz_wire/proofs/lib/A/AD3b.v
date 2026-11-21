@@ -8,6 +8,7 @@
    Amendment 11 (a Theorem Labs lane): the first-use arm's last conjunct states X fresh against every map of Alloc's entry model md (Forall over vm_maps (m_vmmaps md)), from S3's new last conjunct P7 at Create's call; Alloc's steps before the call change the model only by with_vm_backing, which keeps m_vmmaps (m_vmmaps_wvb).
    rule 24: proves function StackStore::Alloc (reused from proofs/libreac/fuzz_knock/lib/A/AD3b.v, the copy note below). *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/A/AD3b.v (donor image sha256 61768cf4739b), with its module paths changed, names TfibSyms -> WireSyms and its addresses moved to reac-repacer/fuzz_wire's ASan build. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -26,7 +27,7 @@ Unset Lia Cache. Unset Nia Cache.
 Local Set Warnings "-abstract-large-number".
 Local Open Scope Z_scope.
 
-(* knock's Alloc (A image, sha256 61768cf4739b..., read from the packed base c8557374's Asan_seg_001.hex; the AU twin's
+(* knock's Alloc (A image, sha256 61768cf4739b..., read from the packed base's Asan_seg_001.hex; the AU twin's
    numbers come from AU's own tables, which differ from A's at least in the page-size GOT slot):
      0x6ea18  addi sp,sp,-16; sd ra,8(sp); sd s0,0(sp); a5 := count; a1 := this
      0x6ea2c  amoadd.d s0,a5,(a0)          start := s_total; s_total += count (BEFORE Create is called)
@@ -44,7 +45,7 @@ Local Open Scope Z_scope.
 Section g. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 
 Section kd.
-(* The layout step, as S3 states it (AD3c.v:164-168, amendment 8): the first Put's growth is the placeholder relation
+(* The layout step, as S3 states it (AD3c.v:165-169, amendment 8): the first Put's growth is the placeholder relation
    layout_grow_kd, which the closers instantiate with layout_grow (lib/A/AD3j.v, kd_inst). Satisfiable: fun _ _ => True. *)
 Variable layout_grow_kd : alayout -> alayout -> Prop.
 
@@ -154,7 +155,7 @@ End g.
 
 (* ===================== The proof of tfib_alloc_ok =====================
    The walk framework of AFem (the mapped-case depot proof this branch joins): the symbolic runner over the fetch table
-   tfibtbl_rtB (AB1q.v:19-20, which covers Store + Alloc 0x6f87c for 150 insns and Create 0x70388), seeds built with
+   tfibtbl_rtB (AB1q.v:20-21, which covers Store + Alloc 0x6f87c for 150 insns and Create 0x70388), seeds built with
    entry_st_ok_full, register pins between runs, and SRr_ret_at at the return. The statement above is closed before
    these imports, so they cannot change how its names resolve; the theorem is restated over the same Section
    variables and hypotheses in the same order (its closed type is unchanged). *)

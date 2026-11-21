@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the write-certified stack window). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -55,7 +56,7 @@ Hypothesis XENV_fp_ax : forall x, (0xbf6740 <= x < 0xbf6770 \/ 0xbf6860 <= x < 0
 Hypothesis LOCP : lib_local_d LIBP.
 Hypothesis CGH : cg_has CG FZ_SITES FZ_CALLS.
 
-Local Ltac ul := unfold SEGTOP_A, STACK_WIN, USTACK_TOP, RT_STACK, FUZZ_STACK, LIVE_MAX, CLI_MAX, FUZZ_LIVE, g_read_stage in *; lia.
+Local Ltac ul := pose proof STACK_WOK_val; unfold SEGTOP_A, STACK_WIN, USTACK_TOP, RT_STACK, FUZZ_STACK, LIVE_MAX, CLI_MAX, FUZZ_LIVE, g_read_stage in *; lia.
 
 Lemma outside_image_ranges : forall (W : list (Z * Z)), (forall x, in_ranges W x -> client_static x) ->
   forall x, SEGTOP_A <= x -> outside W x.
@@ -158,7 +159,7 @@ Proof using AF AF_DRV FUZZC VPR OUT_loc ERR_loc XENV_loc IO_img XENV_img LOCP CG
                   & F & fc & m & HA & HT & Hk14 & HCR).
   pose proof HT as (ART0 & MI0 & CLX0 & FR0 & TF0 & ST0 & B16 & ULO & USP0 & SPW & (LVP & LIBc & LVN & LVS & LCG) & FRS & PL & PB & BD & P0 & P1 & CAP0 & UT0).
   pose proof (af_sp0_range RT AF Σ m ART0) as SP0R.
-  set (lo := rt_sp0 RT Σ - STACK_WIN) in *.
+  set (lo := rt_sp0 RT Σ - STACK_WOK) in *.
   set (DRV := tr_live plen owned buf cap) in *.
   assert (EU : bv_unsigned (Z_to_bv 64 (usp - 160)) = usp - 160) by (apply unsigned_lit; ul).
   assert (INB : In (buf, cap) (rt_live RT Σ)).
@@ -212,7 +213,7 @@ Proof using AF AF_DRV FUZZC VPR OUT_loc ERR_loc XENV_loc IO_img XENV_img LOCP CG
     pose proof (af_live_range RT AF Σ m p n ART0 (DRVIN _ _ Hin)) as (R1 & R2 & R3). unfold TR_INCB. split; [destruct R3; ul| exact I]. }
   apply (FUZZC Σ (PMfd fds0 fs) (Z_to_bv 64 RA_FUZZ) (Z_to_bv 64 (usp - 160)) gp (Z_to_bv 64 TP_A) t0 t1 t2 (Z_to_bv 64 plen)
            (Z_to_bv 64 d) (Z_to_bv 64 d) (Z_to_bv 64 plen) a2 a3 a4 a5 a6 a7 (Z_to_bv 64 owned) s3 (Z_to_bv 64 TR_INIT)
-           (Z_to_bv 64 k) (Z_to_bv 64 0) (Z_to_bv 64 (-2)) s8 s9 s10 s11 t3 t4 t5 t6 F fc m0 d payload CL DRV lo); try reflexivity; try assumption.
+           (Z_to_bv 64 k) (Z_to_bv 64 0) (Z_to_bv 64 (-2)) s8 s9 s10 s11 t3 t4 t5 t6 F fc m0 d payload CL DRV lo); try reflexivity; try assumption; try exact (win_le_wok _).
   - apply PMfd_fdfs_only.
   - apply PMfd_mat_stable.
   - rewrite <- PL. reflexivity.
@@ -286,7 +287,7 @@ Proof using AF AF_DRV FUZZC VPR OUT_loc ERR_loc XENV_loc IO_img XENV_img LOCP CG
     apply (VPR Σ1 fds0 fs (Z_to_bv 64 0x1edfe8) (Z_to_bv 64 (usp - 160 - 80)) gp (Z_to_bv 64 TP_A) t0' t1' t2' (Z_to_bv 64 plen)
              (Z_to_bv 64 d) (Z_to_bv 64 FMT_emit) (Z_to_bv 64 (usp - 160 - 80 + 24)) a2' a3' a4' a5' a6' a7' (Z_to_bv 64 owned)
              (Z_to_bv 64 0) (Z_to_bv 64 TR_INIT) (Z_to_bv 64 k) (Z_to_bv 64 0) (Z_to_bv 64 (-2)) s8 s9 s10 s11 t3' t4' t5' t6' F' fc' m2 so
-             (usp - 160 - 80 + 24) lo); try reflexivity; try assumption.
+             (usp - 160 - 80 + 24) lo); try reflexivity; try assumption; try exact (win_le_wok _).
     + rewrite EU2. reflexivity.
     + destruct Hso as [->|(j & Hj & ->)]; [left; reflexivity| right; exists j; split; [lia| reflexivity]].
     + io_ssp_tac AF_DRV.

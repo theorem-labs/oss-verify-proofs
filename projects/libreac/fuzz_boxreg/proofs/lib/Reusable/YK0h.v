@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YK0h.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed wrap_mem_below, cat_struct_size, cat_string_base, cat_env_base, cat_argv_ptr, cat_argv_ptr_offset, cat_struct_prefix, length_cat_struct_prefix, bsb_argv_prefix, bsb_ptr_k and 7 more; added launch_string_base_arith, launch_sp_le_ed_top, total_arg_bytes_firstn_within, u_Z2bv_lt, word_add_nat_Z2bv, word_sub_nat, cat_string_off, u_cat_string_base, cat_string_base_offset, cat_block_head and 1 more; launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef). *)
 From OSSVerify.Proofs.libreac.fuzz_boxreg.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -127,21 +128,58 @@ rewrite b_addsext.
 rewrite Hok; cbv beta iota.
 rewrite write_to_mem_wbytes, b_npc4. reflexivity.
 Qed.
+Lemma launch_string_base_arith : forall v inp mbase (sp brk : word) draw,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  (bv_unsigned sp
+   + Z.of_nat (block_head_size (kb_rseq (in_kernel inp)) (in_argv inp)
+                 (in_envp inp))
+   + Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp)
+                 (in_execfn inp))
+   + 8 <= bv_unsigned (ed_top draw))%Z.
+Proof.
+  intros v inp mbase sp brk draw Hlaunch.
+  cbn [entry_launch_ok_va] in Hlaunch.
+  destruct Hlaunch as (_ & (_ & _ & Hhi) & _).
+  unfold launch_sp_hi, align_down16 in Hhi.
+  pose proof (Z.mod_pos_bound
+    (bv_unsigned (ed_top draw) - 8
+     - Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp)
+                   (in_execfn inp))) 16 ltac:(lia)).
+  lia.
+Qed.
+Lemma launch_sp_le_ed_top : forall v inp mbase (sp brk : word) draw,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  (bv_unsigned sp <= bv_unsigned (ed_top draw))%Z.
+Proof.
+  intros v inp mbase sp brk draw Hlaunch.
+  pose proof (launch_string_base_arith v inp mbase sp brk draw Hlaunch).
+  pose proof (Nat2Z.is_nonneg
+    (block_head_size (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp))).
+  pose proof (Nat2Z.is_nonneg
+    (launch_string_bytes (in_argv inp) (in_envp inp) (in_execfn inp))).
+  lia.
+Qed.
 Lemma stack_max_size_val : stack_max_size = 8388608%Z.
 Proof. vm_compute. reflexivity. Qed.
-Lemma wrap_mem_below : forall ph (sp : word) argv envp (addr : word) uid hw rnd,
-(bv_unsigned addr < bv_unsigned sp - stack_max_size)%Z ->
-wrap_mem ph sp argv envp uid hw rnd addr = None.
+Lemma wrap_mem_below :
+  forall v inp mbase ph entry (sp brk : word) draw (addr : word),
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  (bv_unsigned addr < bv_unsigned sp - stack_max_size)%Z ->
+  wrap_mem inp mbase ph entry sp draw addr = None.
 Proof.
-intros ph sp argv envp addr uid hw rnd Hlt.
-pose proof stack_max_size_val as Hsms.
-unfold wrap_mem, stack_to_mem.
-assert (Hsp : Z.leb (bv_unsigned sp) (bv_unsigned addr) = false)
-by (apply Z.leb_gt; lia).
-rewrite Hsp.
-assert (Hgate : Z.leb (bv_unsigned sp - stack_max_size) (bv_unsigned addr) = false)
-by (apply Z.leb_gt; lia).
-rewrite Hgate. reflexivity.
+  intros v inp mbase ph entry sp brk draw addr Hlau Hlt.
+  pose proof stack_max_size_val as Hsms.
+  pose proof (launch_sp_le_ed_top v inp mbase sp brk draw Hlau) as Htop.
+  pose proof (Z.le_max_l (bv_unsigned (ed_top draw) - stack_max_size)
+                (bv_unsigned mbase + stack_guard_gap_bytes (in_kernel inp))) as Hmax.
+  unfold wrap_mem, stack_to_mem.
+  assert (Hsp : Z.leb (bv_unsigned sp) (bv_unsigned addr) = false)
+    by (apply Z.leb_gt; lia).
+  rewrite Hsp.
+  assert (Hgate : Z.leb (stack_window_lo (in_kernel inp) mbase draw)
+                        (bv_unsigned addr) = false)
+    by (apply Z.leb_gt; unfold stack_window_lo in *; lia).
+  rewrite Hgate. reflexivity.
 Qed.
 Lemma flat_map_app' : forall {A B : Type} (f : A -> list B) l1 l2,
 flat_map f (l1 ++ l2) = flat_map f l1 ++ flat_map f l2.
@@ -188,20 +226,63 @@ induction k as [|k IH]; intros l.
 - destruct l as [|s rest]; [cbn; lia|].
 cbn [firstn]. rewrite !total_arg_bytes_cons. specialize (IH rest). lia.
 Qed.
+Lemma total_arg_bytes_firstn_within : forall (l : list (list byte)) k,
+  (k < length l)%nat ->
+  (total_arg_bytes_nat (firstn k l) + length (nth k l []) + 1
+   <= total_arg_bytes_nat l)%nat.
+Proof.
+  intros l. induction l as [|s rest IH]; intros k Hk; [cbn in Hk; lia|].
+  destruct k as [|k'].
+  - cbn [firstn nth]. change (total_arg_bytes_nat []) with 0%nat.
+    rewrite total_arg_bytes_cons. lia.
+  - cbn [firstn nth]. rewrite !total_arg_bytes_cons.
+    specialize (IH k' ltac:(cbn in Hk; lia)). lia.
+Qed.
 Lemma natN_le : forall n m, (n <= m)%nat -> (N.of_nat n <= N.of_nat m)%N.
 Proof. intros n m H. lia. Qed.
 Lemma of_nat_131071 : Z.of_nat 131071 = 131071%Z.
 Proof. vm_compute. reflexivity. Qed.
 Lemma of_nat_2097152 : Z.of_nat 2097152 = 2097152%Z.
 Proof. vm_compute. reflexivity. Qed.
+Lemma u_Z2bv_lt : forall z, (0 <= z)%Z -> (z < 2 ^ 64)%Z ->
+  bv_unsigned (Z_to_bv 64 z) = z.
+Proof.
+  intros z H0 H1. rewrite Z_to_bv_unsigned, bv_wrap64_mod.
+  apply Z.mod_small. lia.
+Qed.
+Lemma word_add_nat_Z2bv : forall (a : word) (n : nat),
+  a + nat_to_word n = Z_to_bv 64 (bv_unsigned a + Z.of_nat n).
+Proof.
+  intros a n. apply bv_eq. unfold nat_to_word.
+  rewrite bv_add_unsigned, !Z_to_bv_unsigned, !bv_wrap64_mod.
+  apply Zplus_mod_idemp_r.
+Qed.
+Lemma word_sub_nat : forall (a : word) (n : nat),
+  a - nat_to_word n = Z_to_bv 64 (bv_unsigned a - Z.of_nat n).
+Proof.
+  intros a n. apply bv_eq. unfold nat_to_word.
+  rewrite bv_sub_unsigned, !Z_to_bv_unsigned, !bv_wrap64_mod.
+  apply Zminus_mod_idemp_r.
+Qed.
 Definition cat_struct_size (av ev : list (list byte)) : nat :=
-(8 + (length av + 1) * 8 + (length ev + 1) * 8 + auxv_size)%nat.
-Definition cat_string_base (sp : word) (av ev : list (list byte)) : word :=
-sp + nat_to_word (cat_struct_size av ev).
-Definition cat_env_base (sp : word) (av ev : list (list byte)) : word :=
-cat_string_base sp av ev + nat_to_word (total_arg_bytes_nat av).
-Definition cat_argv_ptr (sp : word) (av ev : list (list byte)) (k : nat) : word :=
-nth k (fst (string_addrs (cat_string_base sp av ev) av)) (Z_to_bv 64 0).
+  (8 * block_items av ev)%nat.
+
+Definition cat_string_base (top : word) (av ev : list (list byte))
+    (execfn : list byte) : word :=
+  string_base_addr top av ev execfn.
+
+Definition cat_env_base (top : word) (av ev : list (list byte))
+    (execfn : list byte) : word :=
+  cat_string_base top av ev execfn + nat_to_word (total_arg_bytes_nat av).
+
+Definition cat_argv_ptr (top : word) (av ev : list (list byte))
+    (execfn : list byte) (k : nat) : word :=
+  nth k (fst (string_addrs (cat_string_base top av ev execfn) av)) (Z_to_bv 64 0).
+
+Definition cat_string_off (rseq : bool) (sp top : word)
+    (av ev : list (list byte)) (execfn : list byte) : nat :=
+  (block_head_size rseq av ev + block_pad_len rseq sp top av ev execfn)%nat.
+
 Lemma nth_string_addrs : forall strs (base : word) k, (k < length strs)%nat ->
 nth k (fst (string_addrs base strs)) (Z_to_bv 64 0)
 = base + nat_to_word (total_arg_bytes_nat (firstn k strs)).
@@ -216,127 +297,254 @@ cbn [firstn]. rewrite total_arg_bytes_cons.
 rewrite len_word_nat, word1_nat, !nat_to_word_add_merge.
 f_equal. f_equal. lia.
 Qed.
-Lemma cat_argv_ptr_offset : forall sp av ev k, (k < length av)%nat ->
-cat_argv_ptr sp av ev k
-= cat_string_base sp av ev + nat_to_word (total_arg_bytes_nat (firstn k av)).
+Lemma cat_argv_ptr_offset : forall top av ev execfn k, (k < length av)%nat ->
+  cat_argv_ptr top av ev execfn k
+  = cat_string_base top av ev execfn
+    + nat_to_word (total_arg_bytes_nat (firstn k av)).
 Proof. intros. unfold cat_argv_ptr. apply nth_string_addrs. assumption. Qed.
-Definition cat_struct_prefix (ph : PhdrInfo) (sp : word) (av ev : list (list byte))
-(uid : word) (hw : word) : list byte :=
-word_le8 (len_word av)
-++ flat_map word_le8 (fst (string_addrs (cat_string_base sp av ev) av))
-++ word_le8 (Z_to_bv 64 0)
-++ flat_map word_le8 (fst (string_addrs (cat_env_base sp av ev) ev))
-++ word_le8 (Z_to_bv 64 0) ++ auxv_bytes ph (at_random_ptr sp av ev) uid hw.
-Lemma length_cat_struct_prefix : forall ph sp av ev uid hw,
-length (cat_struct_prefix ph sp av ev uid hw) = cat_struct_size av ev.
+Lemma u_cat_string_base : forall v inp mbase (sp brk : word) draw,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  bv_unsigned (cat_string_base (ed_top draw) (in_argv inp) (in_envp inp)
+                 (in_execfn inp))
+  = (bv_unsigned (ed_top draw) - 8
+     - Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp)
+                   (in_execfn inp)))%Z.
 Proof.
-intros ph sp av ev uid hw. unfold cat_struct_prefix, cat_struct_size.
-rewrite !length_app, !length_flat_map_le8, !length_string_addrs_fst,
-!length_n_to_le_8, length_auxv_bytes.
-lia.
+  intros v inp mbase sp brk draw Hlaunch.
+  pose proof (launch_string_base_arith v inp mbase sp brk draw Hlaunch) as HA.
+  pose proof (u64_range sp). pose proof (u64_range (ed_top draw)).
+  pose proof (Nat2Z.is_nonneg
+    (block_head_size (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp))).
+  unfold cat_string_base, string_base_addr. rewrite word_sub_nat.
+  assert (Hz : (0 <= bv_unsigned (ed_top draw)
+                     - Z.of_nat (8 + launch_string_bytes (in_argv inp)
+                                       (in_envp inp) (in_execfn inp))
+                < 2 ^ 64)%Z).
+  { rewrite Nat2Z.inj_add. change (Z.of_nat 8) with 8%Z. lia. }
+  rewrite (u_Z2bv_lt _ (proj1 Hz) (proj2 Hz)).
+  rewrite Nat2Z.inj_add. change (Z.of_nat 8) with 8%Z. lia.
 Qed.
-Lemma bsb_argv_prefix : forall ph (sp : word) av ev uid hw rnd, exists tail,
-build_stack_bytes ph sp av ev uid hw rnd =
-word_le8 (len_word av)
-++ flat_map word_le8 (fst (string_addrs (cat_string_base sp av ev) av))
-++ tail.
+Lemma cat_string_base_offset : forall v inp mbase (sp brk : word) draw,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  cat_string_base (ed_top draw) (in_argv inp) (in_envp inp) (in_execfn inp)
+  = sp + nat_to_word (cat_string_off (kb_rseq (in_kernel inp)) sp (ed_top draw)
+                        (in_argv inp) (in_envp inp) (in_execfn inp)).
 Proof.
-intros ph sp av ev uid hw rnd. unfold build_stack_bytes.
-rewrite (string_addrs_pair av). cbv beta iota.
-rewrite (string_addrs_pair ev). cbv beta iota.
-eexists. rewrite <- !app_assoc. reflexivity.
+  intros v inp mbase sp brk draw Hlaunch.
+  pose proof (launch_string_base_arith v inp mbase sp brk draw Hlaunch) as HA.
+  pose proof (u_cat_string_base v inp mbase sp brk draw Hlaunch) as Hu.
+  pose proof (u64_range sp). pose proof (u64_range (ed_top draw)).
+  apply bv_eq. rewrite Hu, word_add_nat_Z2bv.
+  unfold cat_string_off, block_pad_len.
+  rewrite u_Z2bv_lt
+    by (rewrite Nat2Z.inj_add; rewrite Z2Nat.id by lia; lia).
+  rewrite Nat2Z.inj_add. rewrite Z2Nat.id by lia. lia.
 Qed.
-Lemma bsb_ptr_k : forall ph (sp : word) av ev k uid hw rnd, (k < length av)%nat -> exists post,
-build_stack_bytes ph sp av ev uid hw rnd =
-(word_le8 (len_word av)
-++ flat_map word_le8 (firstn k (fst (string_addrs (cat_string_base sp av ev) av))))
-++ word_le8 (nth k (fst (string_addrs (cat_string_base sp av ev) av)) (Z_to_bv 64 0))
-++ post.
+Definition cat_struct_prefix (top : word) (av ev : list (list byte))
+    (execfn : list byte) : list byte :=
+  word_le8 (len_word av)
+  ++ flat_map word_le8 (fst (string_addrs (cat_string_base top av ev execfn) av))
+  ++ word_le8 (Z_to_bv 64 0)
+  ++ flat_map word_le8 (fst (string_addrs (cat_env_base top av ev execfn) ev))
+  ++ word_le8 (Z_to_bv 64 0).
+
+Lemma length_cat_struct_prefix : forall top av ev execfn,
+  length (cat_struct_prefix top av ev execfn) = cat_struct_size av ev.
 Proof.
-intros ph sp av ev k uid hw rnd Hk.
-destruct (bsb_argv_prefix ph sp av ev uid hw rnd) as [tail E].
-assert (Hk' : (k < length (fst (string_addrs (cat_string_base sp av ev) av)))%nat)
-by (rewrite length_string_addrs_fst; exact Hk).
-rewrite (flat_map_le8_decomp _ k Hk') in E.
-eexists. rewrite E. rewrite <- !app_assoc. reflexivity.
+  intros top av ev execfn.
+  unfold cat_struct_prefix, cat_struct_size, block_items.
+  rewrite !length_app, !length_flat_map_le8, !length_string_addrs_fst,
+    !length_n_to_le_8.
+  lia.
 Qed.
-Lemma read_argv_ptr_k : forall ph segs (sp : word) av ev k uid hw rnd, (k < length av)%nat ->
-(bv_unsigned sp + Z.of_nat (length (build_stack_bytes ph sp av ev uid hw rnd)) < 2^64)%Z ->
-rdn segs (stack_to_mem sp (entry_stack_image ph sp av ev uid hw rnd))
-(sp + nat_to_word (8 + 8 * k)) 8%nat
-= Some (word_le8 (cat_argv_ptr sp av ev k)).
+Definition cat_block_head (la : LaunchAuxv) (ph : PhdrInfo)
+    (entry sp top : word) (av ev : list (list byte)) (execfn : list byte)
+    (uid gid hw : word) (draw : EntryDraw) : list byte :=
+  block_below_random la ph entry sp top av ev execfn uid gid hw
+  ++ at_random_bytes (ed_random draw)
+  ++ repeat (Z_to_bv 8 0) (block_pad_len (la_rseq la) sp top av ev execfn).
+
+Lemma length_cat_block_head :
+  forall la ph entry sp top av ev execfn uid gid hw draw,
+  length (cat_block_head la ph entry sp top av ev execfn uid gid hw draw)
+  = cat_string_off (la_rseq la) sp top av ev execfn.
 Proof.
-intros ph segs sp av ev k uid hw rnd Hk Hnw.
-destruct (bsb_ptr_k ph sp av ev k uid hw rnd Hk) as [post E].
-pose proof (read_at_offset_image segs ph sp av ev uid hw rnd
-(word_le8 (len_word av)
-++ flat_map word_le8 (firstn k (fst (string_addrs (cat_string_base sp av ev) av))))
-(word_le8 (nth k (fst (string_addrs (cat_string_base sp av ev) av)) (Z_to_bv 64 0)))
-post 8%nat E (length_n_to_le_8 _) Hnw) as H'.
-assert (Hlen : length (word_le8 (len_word av)
-++ flat_map word_le8 (firstn k (fst (string_addrs (cat_string_base sp av ev) av))))
-= (8 + 8 * k)%nat).
-{ rewrite length_app, length_n_to_le_8, length_flat_map_le8, firstn_length_le;
-[reflexivity | rewrite length_string_addrs_fst; lia]. }
-rewrite Hlen in H'.
-rewrite H'. unfold cat_argv_ptr. reflexivity.
+  intros la ph entry sp top av ev execfn uid gid hw draw.
+  unfold cat_block_head, block_below_random, cat_string_off. cbv zeta.
+  rewrite (string_addrs_pair av). cbv beta iota.
+  rewrite (string_addrs_pair ev). cbv beta iota.
+  rewrite !length_app, !repeat_length, !length_flat_map_le8,
+    !length_string_addrs_fst, length_auxv_bytes, length_at_random_bytes,
+    !length_n_to_le_8.
+  unfold block_head_size, block_items. lia.
 Qed.
-Lemma bsb_strings_split : forall ph (sp : word) av ev uid hw rnd, exists tail,
-build_stack_bytes ph sp av ev uid hw rnd = cat_struct_prefix ph sp av ev uid hw ++ flatten_strings av ++ tail.
+Lemma bsb_argv_prefix : forall inp mbase ph entry (sp : word) draw, exists tail,
+  entry_stack_image inp mbase ph entry sp draw =
+    word_le8 (len_word (in_argv inp))
+    ++ flat_map word_le8
+         (fst (string_addrs
+                 (cat_string_base (ed_top draw) (in_argv inp) (in_envp inp)
+                    (in_execfn inp))
+                 (in_argv inp)))
+    ++ tail.
 Proof.
-intros ph sp av ev uid hw rnd. unfold build_stack_bytes, cat_struct_prefix, cat_env_base, cat_string_base.
-rewrite (string_addrs_pair av). cbv beta iota.
-rewrite (string_addrs_pair ev). cbv beta iota.
-eexists. rewrite <- !app_assoc. reflexivity.
+  intros inp mbase ph entry sp draw.
+  rewrite entry_stack_image_block.
+  unfold build_stack_bytes, cat_string_base. cbv zeta.
+  rewrite (string_addrs_pair (in_argv inp)). cbv beta iota.
+  rewrite (string_addrs_pair (in_envp inp)). cbv beta iota.
+  eexists. rewrite <- !app_assoc. reflexivity.
 Qed.
-Lemma bsb_byte_k : forall ph (sp : word) av ev k uid hw rnd, (k < length av)%nat -> exists pre post,
-build_stack_bytes ph sp av ev uid hw rnd = pre ++ (nth k av [] ++ [Z_to_bv 8 0]) ++ post
-/\ length pre = (cat_struct_size av ev + total_arg_bytes_nat (firstn k av))%nat.
+Lemma bsb_ptr_k : forall inp mbase ph entry (sp : word) draw k,
+  (k < length (in_argv inp))%nat -> exists post,
+  entry_stack_image inp mbase ph entry sp draw =
+    (word_le8 (len_word (in_argv inp))
+      ++ flat_map word_le8
+           (firstn k (fst (string_addrs
+                             (cat_string_base (ed_top draw) (in_argv inp)
+                                (in_envp inp) (in_execfn inp))
+                             (in_argv inp)))))
+    ++ word_le8 (nth k (fst (string_addrs
+                               (cat_string_base (ed_top draw) (in_argv inp)
+                                  (in_envp inp) (in_execfn inp))
+                               (in_argv inp))) (Z_to_bv 64 0))
+    ++ post.
 Proof.
-intros ph sp av ev k uid hw rnd Hk.
-destruct (bsb_strings_split ph sp av ev uid hw rnd) as [tail E].
-rewrite (flatten_strings_decomp av k Hk) in E.
-exists (cat_struct_prefix ph sp av ev uid hw ++ flatten_strings (firstn k av)).
-eexists.
-split.
-- rewrite E. rewrite <- !app_assoc. reflexivity.
-- rewrite length_app, length_cat_struct_prefix, length_flatten_strings. reflexivity.
+  intros inp mbase ph entry sp draw k Hk.
+  destruct (bsb_argv_prefix inp mbase ph entry sp draw) as [tail E].
+  assert (Hk' : (k < length (fst (string_addrs
+                   (cat_string_base (ed_top draw) (in_argv inp) (in_envp inp)
+                      (in_execfn inp)) (in_argv inp))))%nat)
+    by (rewrite length_string_addrs_fst; exact Hk).
+  rewrite (flat_map_le8_decomp _ k Hk') in E.
+  eexists. rewrite E. rewrite <- !app_assoc. reflexivity.
 Qed.
-Lemma read_argv_byte_k : forall ph segs (sp : word) av ev k j uid hw rnd,
-(k < length av)%nat -> (j <= length (nth k av []))%nat ->
-(bv_unsigned sp + Z.of_nat (length (build_stack_bytes ph sp av ev uid hw rnd)) < 2^64)%Z ->
-rdn segs (stack_to_mem sp (entry_stack_image ph sp av ev uid hw rnd))
-(cat_argv_ptr sp av ev k + nat_to_word j) 1%nat
-= Some [nth j (nth k av [] ++ [Z_to_bv 8 0]) (Z_to_bv 8 0)].
+Lemma read_argv_ptr_k : forall segs inp mbase ph entry (sp : word) draw k,
+  (k < length (in_argv inp))%nat ->
+  (bv_unsigned sp
+   + Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw))
+     < 2 ^ 64)%Z ->
+  rdn segs (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw))
+      (sp + nat_to_word (8 + 8 * k)) 8%nat
+  = Some (word_le8 (cat_argv_ptr (ed_top draw) (in_argv inp) (in_envp inp)
+                      (in_execfn inp) k)).
 Proof.
-intros ph segs sp av ev k j uid hw rnd Hk Hj Hnw.
-destruct (bsb_byte_k ph sp av ev k uid hw rnd Hk) as [pre [post [E Hlen]]].
-pose proof (read_byte_at_image segs ph sp av ev uid hw rnd
-pre (nth k av [] ++ [Z_to_bv 8 0]) post j E) as H'.
-rewrite Hlen in H'.
-replace (cat_argv_ptr sp av ev k + nat_to_word j)
-with (sp + nat_to_word (cat_struct_size av ev + total_arg_bytes_nat (firstn k av) + j)).
-2:{ rewrite (cat_argv_ptr_offset sp av ev k Hk). unfold cat_string_base.
-rewrite !nat_to_word_add_merge. f_equal. f_equal. lia. }
-apply H'; [rewrite length_app; cbn [length]; lia | exact Hnw].
+  intros segs inp mbase ph entry sp draw k Hk Hnw.
+  destruct (bsb_ptr_k inp mbase ph entry sp draw k Hk) as [post E].
+  pose proof (read_at_offset_image segs inp mbase ph entry sp draw
+    (word_le8 (len_word (in_argv inp))
+      ++ flat_map word_le8
+           (firstn k (fst (string_addrs
+                             (cat_string_base (ed_top draw) (in_argv inp)
+                                (in_envp inp) (in_execfn inp))
+                             (in_argv inp)))))
+    (word_le8 (nth k (fst (string_addrs
+                             (cat_string_base (ed_top draw) (in_argv inp)
+                                (in_envp inp) (in_execfn inp))
+                             (in_argv inp))) (Z_to_bv 64 0)))
+    post 8%nat E (length_n_to_le_8 _) Hnw) as H'.
+  assert (Hlen : length (word_le8 (len_word (in_argv inp))
+      ++ flat_map word_le8
+           (firstn k (fst (string_addrs
+                             (cat_string_base (ed_top draw) (in_argv inp)
+                                (in_envp inp) (in_execfn inp))
+                             (in_argv inp)))))
+    = (8 + 8 * k)%nat).
+  { rewrite length_app, length_n_to_le_8, length_flat_map_le8, firstn_length_le;
+      [reflexivity | rewrite length_string_addrs_fst; lia]. }
+  rewrite Hlen in H'.
+  rewrite H'. unfold cat_argv_ptr. reflexivity.
 Qed.
-Lemma read_argv_str_k : forall ph segs (sp : word) av ev k uid hw rnd, (k < length av)%nat ->
-(bv_unsigned sp + Z.of_nat (length (build_stack_bytes ph sp av ev uid hw rnd)) < 2^64)%Z ->
-rdn segs (stack_to_mem sp (entry_stack_image ph sp av ev uid hw rnd)) (cat_argv_ptr sp av ev k)
-(length (nth k av []))
-= Some (nth k av []).
+Lemma bsb_strings_split : forall inp mbase ph entry (sp : word) draw, exists tail,
+  entry_stack_image inp mbase ph entry sp draw
+  = cat_block_head (launch_auxv inp sp mbase) ph entry sp (ed_top draw)
+      (in_argv inp) (in_envp inp) (in_execfn inp)
+      (in_uid inp) (in_gid inp) (in_hwcap inp) draw
+    ++ flatten_strings (in_argv inp) ++ tail.
 Proof.
-intros ph segs sp av ev k uid hw rnd Hk Hnw.
-destruct (bsb_byte_k ph sp av ev k uid hw rnd Hk) as [pre [post [E Hlen]]].
-pose proof (read_at_offset_image segs ph sp av ev uid hw rnd
-pre (nth k av []) ([Z_to_bv 8 0] ++ post) (length (nth k av []))) as H.
-rewrite Hlen in H.
-replace (cat_argv_ptr sp av ev k)
-with (sp + nat_to_word (cat_struct_size av ev + total_arg_bytes_nat (firstn k av))).
-2:{ rewrite (cat_argv_ptr_offset sp av ev k Hk). unfold cat_string_base.
-rewrite nat_to_word_add_merge. reflexivity. }
-apply H; [ | reflexivity | exact Hnw].
-rewrite E. rewrite <- !app_assoc. reflexivity.
+  intros inp mbase ph entry sp draw.
+  rewrite entry_stack_image_block, build_stack_bytes_split_random.
+  unfold cat_block_head, block_above_random.
+  eexists. rewrite <- !app_assoc. reflexivity.
+Qed.
+Lemma bsb_byte_k : forall inp mbase ph entry (sp : word) draw k,
+  (k < length (in_argv inp))%nat -> exists pre post,
+  entry_stack_image inp mbase ph entry sp draw
+  = pre ++ (nth k (in_argv inp) [] ++ [Z_to_bv 8 0]) ++ post
+  /\ length pre
+     = (cat_string_off (kb_rseq (in_kernel inp)) sp (ed_top draw)
+          (in_argv inp) (in_envp inp) (in_execfn inp)
+        + total_arg_bytes_nat (firstn k (in_argv inp)))%nat.
+Proof.
+  intros inp mbase ph entry sp draw k Hk.
+  destruct (bsb_strings_split inp mbase ph entry sp draw) as [tail E].
+  rewrite (flatten_strings_decomp (in_argv inp) k Hk) in E.
+  exists (cat_block_head (launch_auxv inp sp mbase) ph entry sp (ed_top draw)
+            (in_argv inp) (in_envp inp) (in_execfn inp)
+            (in_uid inp) (in_gid inp) (in_hwcap inp) draw
+          ++ flatten_strings (firstn k (in_argv inp))).
+  eexists.
+  split.
+  - rewrite E. rewrite <- !app_assoc. reflexivity.
+  - rewrite length_app, length_cat_block_head, length_flatten_strings.
+    reflexivity.
+Qed.
+Lemma read_argv_byte_k :
+  forall v segs inp mbase ph entry (sp brk : word) draw k j,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  (k < length (in_argv inp))%nat ->
+  (j <= length (nth k (in_argv inp) []))%nat ->
+  rdn segs (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw))
+      (cat_argv_ptr (ed_top draw) (in_argv inp) (in_envp inp) (in_execfn inp) k
+       + nat_to_word j) 1%nat
+  = Some [nth j (nth k (in_argv inp) [] ++ [Z_to_bv 8 0]) (Z_to_bv 8 0)].
+Proof.
+  intros v segs inp mbase ph entry sp brk draw k j Hlaunch Hk Hj.
+  pose proof (entry_stack_image_no_wrap v inp mbase ph entry sp brk draw Hlaunch)
+    as Hnw.
+  destruct (bsb_byte_k inp mbase ph entry sp draw k Hk) as [pre [post [E Hlen]]].
+  pose proof (read_byte_at_image segs inp mbase ph entry sp draw
+    pre (nth k (in_argv inp) [] ++ [Z_to_bv 8 0]) post j E) as H'.
+  rewrite Hlen in H'.
+  replace (cat_argv_ptr (ed_top draw) (in_argv inp) (in_envp inp)
+             (in_execfn inp) k + nat_to_word j)
+    with (sp + nat_to_word
+                 (cat_string_off (kb_rseq (in_kernel inp)) sp (ed_top draw)
+                    (in_argv inp) (in_envp inp) (in_execfn inp)
+                  + total_arg_bytes_nat (firstn k (in_argv inp)) + j)).
+  2:{ rewrite (cat_argv_ptr_offset _ _ _ _ k Hk),
+        (cat_string_base_offset v inp mbase sp brk draw Hlaunch).
+      rewrite !nat_to_word_add_merge. f_equal. f_equal. lia. }
+  apply H'; [rewrite length_app; cbn [length]; lia | exact Hnw].
+Qed.
+Lemma read_argv_str_k :
+  forall v segs inp mbase ph entry (sp brk : word) draw k,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  (k < length (in_argv inp))%nat ->
+  rdn segs (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw))
+      (cat_argv_ptr (ed_top draw) (in_argv inp) (in_envp inp) (in_execfn inp) k)
+      (length (nth k (in_argv inp) []))
+  = Some (nth k (in_argv inp) []).
+Proof.
+  intros v segs inp mbase ph entry sp brk draw k Hlaunch Hk.
+  pose proof (entry_stack_image_no_wrap v inp mbase ph entry sp brk draw Hlaunch)
+    as Hnw.
+  destruct (bsb_byte_k inp mbase ph entry sp draw k Hk) as [pre [post [E Hlen]]].
+  pose proof (read_at_offset_image segs inp mbase ph entry sp draw
+    pre (nth k (in_argv inp) []) ([Z_to_bv 8 0] ++ post)
+    (length (nth k (in_argv inp) []))) as H.
+  rewrite Hlen in H.
+  replace (cat_argv_ptr (ed_top draw) (in_argv inp) (in_envp inp)
+             (in_execfn inp) k)
+    with (sp + nat_to_word
+                 (cat_string_off (kb_rseq (in_kernel inp)) sp (ed_top draw)
+                    (in_argv inp) (in_envp inp) (in_execfn inp)
+                  + total_arg_bytes_nat (firstn k (in_argv inp)))).
+  2:{ rewrite (cat_argv_ptr_offset _ _ _ _ k Hk),
+        (cat_string_base_offset v inp mbase sp brk draw Hlaunch).
+      rewrite nat_to_word_add_merge. reflexivity. }
+  apply H; [ | reflexivity | exact Hnw].
+  rewrite E. rewrite <- !app_assoc. reflexivity.
 Qed.
 Definition byte_at (s : list byte) (k : nat) : byte :=
 nth k (s ++ [Z_to_bv 8 0]) (Z_to_bv 8 0).
@@ -424,19 +632,22 @@ unfold mkst, regupd.
 rewrite b_npc4. reflexivity.
 Qed.
 Lemma tw_write_gen : forall segs regs pc mem rom buf bufs code,
-ms_gpr (pend regs pc mem rom) 0 = Z_to_bv 64 1 ->
-ms_read_bytes (pend regs pc mem rom)
-(ms_gpr (pend regs pc mem rom) 1) (ms_gpr (pend regs pc mem rom) 2) = Some buf ->
-(1 <= length buf)%nat ->
-(forall n, (1 <= n)%nat -> (n <= length buf)%nat ->
-to_wexit segs (mkst (regupd regs 10 (len_word (firstn n buf)))
-(v_addi pc 4) mem rom) bufs code) ->
-to_wexit segs (pend regs pc mem rom) (buf :: bufs) code.
+  ms_gpr (pend regs pc mem rom) 0 = Z_to_bv 64 1 ->
+  ms_read_bytes (pend regs pc mem rom)
+    (ms_gpr (pend regs pc mem rom) 1) (ms_gpr (pend regs pc mem rom) 2) = Some buf ->
+  (* the range [vfs_write]'s [access_ok] accepts; see [CatSim.write1_check_n] *)
+  access_okb (ms_gpr (pend regs pc mem rom) 1)
+    (bv_unsigned (ms_gpr (pend regs pc mem rom) 2)) = true ->
+  (1 <= length buf)%nat ->
+  (forall n, (1 <= n)%nat -> (n <= length buf)%nat ->
+     to_wexit segs (mkst (regupd regs 10 (len_word (firstn n buf)))
+                         (v_addi pc 4) mem rom) bufs code) ->
+  to_wexit segs (pend regs pc mem rom) (buf :: bufs) code.
 Proof.
-intros segs regs pc mem rom buf bufs code Hg0 Hr Hnb Hcont.
-eapply tw_write;
-[reflexivity | reflexivity | exact Hg0 | exact Hr | exact Hnb | ].
-intros n Hn1 Hn2. unfold pend. rewrite adv_set. apply Hcont; assumption.
+  intros segs regs pc mem rom buf bufs code Hg0 Hr Hok Hnb Hcont.
+  eapply tw_write;
+    [reflexivity | reflexivity | exact Hg0 | exact Hr | exact Hok | exact Hnb | ].
+  intros n Hn1 Hn2. unfold pend. rewrite adv_set. apply Hcont; assumption.
 Qed.
 Lemma tw_exit0 : forall segs ms x8,
 ms_svc_pending ms = Some x8 -> is_exit_no x8 ->
@@ -450,29 +661,31 @@ rewrite bv_and_unsigned, !Z_to_bv_unsigned. reflexivity. }
 rewrite <- Hc. eapply tw_exit; eassumption.
 Qed.
 Lemma tw_write_rec : forall segs regs pc mem rom buf bufs code,
-bv_unsigned (getr regs 17) = 64%Z ->
-reg_get regs 10 = Z_to_bv 64 1 ->
-ms_read_bytes {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc;
-ms_svc_pending := Some (getr regs 17); ms_resv := None; ms_fcsr := fp_csr;
-ms_mem := mem; ms_rom := rom |}
-(reg_get regs 11) (reg_get regs 12) = Some buf ->
-(1 <= length buf)%nat ->
-(forall n, (1 <= n)%nat -> (n <= length buf)%nat ->
-to_wexit segs (mkst (regupd regs 10 (len_word (firstn n buf)))
-(v_addi pc 4) mem rom) bufs code) ->
-to_wexit segs {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc;
-ms_svc_pending := Some (getr regs 17); ms_resv := None; ms_fcsr := fp_csr;
-ms_mem := mem; ms_rom := rom |}
-(buf :: bufs) code.
+  bv_unsigned (getr regs 17) = 64%Z ->
+  reg_get regs 10 = Z_to_bv 64 1 ->
+  ms_read_bytes {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc;
+                   ms_svc_pending := Some (getr regs 17); ms_resv := None; ms_fcsr := fp_csr;
+                   ms_mem := mem; ms_rom := rom |}
+    (reg_get regs 11) (reg_get regs 12) = Some buf ->
+  access_okb (reg_get regs 11) (bv_unsigned (reg_get regs 12)) = true ->
+  (1 <= length buf)%nat ->
+  (forall n, (1 <= n)%nat -> (n <= length buf)%nat ->
+     to_wexit segs (mkst (regupd regs 10 (len_word (firstn n buf)))
+                         (v_addi pc 4) mem rom) bufs code) ->
+  to_wexit segs {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc;
+                   ms_svc_pending := Some (getr regs 17); ms_resv := None; ms_fcsr := fp_csr;
+                   ms_mem := mem; ms_rom := rom |}
+    (buf :: bufs) code.
 Proof.
-intros segs regs pc mem rom buf bufs code H17 H10 Hr Hnb Hcont.
-eapply tw_write.
-- cbn [ms_svc_pending]. reflexivity.
-- exact H17.
-- unfold ms_gpr. cbn [ms_regs]. rewrite arg_reg_0. exact H10.
-- unfold ms_gpr. cbn [ms_regs]. rewrite arg_reg_1, arg_reg_2. exact Hr.
-- exact Hnb.
-- intros n Hn1 Hn2. rewrite adv_set. apply Hcont; assumption.
+  intros segs regs pc mem rom buf bufs code H17 H10 Hr Hok Hnb Hcont.
+  eapply tw_write.
+  - cbn [ms_svc_pending]. reflexivity.
+  - exact H17.
+  - unfold ms_gpr. cbn [ms_regs]. rewrite arg_reg_0. exact H10.
+  - unfold ms_gpr. cbn [ms_regs]. rewrite arg_reg_1, arg_reg_2. exact Hr.
+  - unfold ms_gpr. cbn [ms_regs]. rewrite arg_reg_1, arg_reg_2. exact Hok.
+  - exact Hnb.
+  - intros n Hn1 Hn2. rewrite adv_set. apply Hcont; assumption.
 Qed.
 Lemma tw_exit_rec : forall segs regs pc mem rom,
 bv_unsigned (getr regs 17) = 93%Z ->

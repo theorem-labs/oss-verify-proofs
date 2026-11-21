@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: generated from proofs/cgif/cgif_file_fuzzer/lib/A/AB1k.v (origin/ossv/recipes c8557374ad2e), with its module paths changed and its GetMaxUserVirtualAddress addresses moved to that function in fuzz_knock's asan image (sha256 61768cf4739b...) by a Theorem Labs lane's gen_ab1hk.py; every fetched word checked equal. *)
+(* Modified by Theorem Labs, 2026-10: generated from proofs/cgif/cgif_file_fuzzer/lib/A/AB1k.v (theorem-labs/oss-verify-proofs@6b32741d849a), with its module paths changed and its GetMaxUserVirtualAddress addresses moved to that function in fuzz_knock's asan image (sha256 61768cf4739b...) by a Theorem Labs lane's gen_ab1hk.py; every fetched word checked equal. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

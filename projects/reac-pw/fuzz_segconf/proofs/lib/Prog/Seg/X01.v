@@ -3,6 +3,7 @@
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/Prog/LLVMFuzzerTestOneInput_fr.v, with its module paths and module names changed; 456 of its 574 lines of code are new or changed and 409 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/Prog/Seg/Tac_slot.v, with its module paths and module names changed; 223 of its 256 lines of code are new or changed and 541 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment X01 of reac-pw/fuzz_segconf LLVMFuzzerTestOneInput (plain, ELF 8dec0b814e6f): [0x13f40, 0x13f9c], the
    four frees and the epilogue. K13f40 -> RET (Prog/LLVMFuzzerTestOneInput_c.v's S_X01 at Seg/SegWalkMainA.v's CPseg).
    The cut is at its own FP state (Tac_b8.b8_cut_open): every step below runs at it. P_K13f40 (Prog/seg_cuts.v) gives
@@ -16,7 +17,7 @@
    Then 0x13f60 `mv a0,zero`, the thirteen restores ra, s0 .. s11 from [sp + 0x68, sp + 0xd0) = the saved bytes FR
    keeps at S - 104 (0x13f64 .. 0x13f94), 0x13f98 `addi sp,sp,0xd0`, 0x13f9c `ret`: Post by Tac_b8.b8_post_FR at the
    cut's FP state (FR with hb = [], a0 = 0; sp, gp, tp from FR, s0 .. s11 from the saved bytes; RES_END by resb_end).
-   Template: reac-pw/fuzz_role's Prog/Seg/X01.v (commit cb8205fb6109; two frees there), with
+   Template: reac-pw/fuzz_role's Prog/Seg/X01.v (two frees there), with
    segconf's pcs, its four frees and frame 208.
    Part of the proof of LLVMFuzzerTestOneInput (segment X01 of its walk); no released proof of fuzz_segconf's
    LLVMFuzzerTestOneInput exists. *)

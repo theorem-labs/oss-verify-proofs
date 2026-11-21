@@ -3,10 +3,11 @@
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/Prog/LLVMFuzzerTestOneInput_c.v, with its module paths changed; 150 of its 167 lines of code are new or changed and 50 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_lock/lib/Prog/FrameRet.v, with its module paths, module names and addresses changed; 286 of its 324 lines of code are new or changed and 129 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The cut-free (agreement) copy of the slot frame and cut invariants of reac-pw/fuzz_role LLVMFuzzerTestOneInput
    (UBSan, [0x12ec0, 0x14224)): lib/U/Prog/SlotFR.v and lib/U/Prog/SlotInv.v with SR := SRcf, in one file.
    Model: reac-pw/fuzz_pin's U/Prog/SlotInvCF.v, itself in the form of libreac/fuzz_ctrl's released
-   U/Prog/SlotInvCF.v (origin/ossv/recipes 25e3d17bdb50). The U segment files of the slot (U/Prog/Seg/*.v and
+   U/Prog/SlotInvCF.v. The U segment files of the slot (U/Prog/Seg/*.v and
    U/Prog/RoleSlot.v) are copied to U/Prog/SegCF/*.v over this file. Changes from U/Prog/SlotFR.v and
    U/Prog/SlotInv.v:
    - SR, its lemmas, evt_SR(_canon) and kb_run are redefined under the same names (ctrl's block, verbatim), so the

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (VmState's kernel and vDSO fields in the relim lemmas; the new checked arms set_robust_list, clock_getres and pwritev2; brk_grow_bytes; mprotect's vDSO gate; mmap placement through linux_place and place_declined_b; check_mmap's MAP_FIXED overflow arm). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -21,7 +22,7 @@ Definition vmrelim (L : Z) (h : VmMaps) : VmMaps :=
 
 Definition relim (L : Z) (m : Model) : Model :=
   mkModelOf (m_fd m)
-    (mkVmState (vmrelim L (m_vmmaps m)) (m_vm_lazy m) (m_vm_materialized m))
+    (mkVmState (vmrelim L (m_vmmaps m)) (m_vm_lazy m) (m_vm_materialized m) (m_kernel m) (m_vdso m))
     (m_io m) (m_fsys m) (m_proc m) (m_lim m) (m_time m).
 
 (* [comment removed for export] *)
@@ -53,7 +54,7 @@ Definition cr_map (f : Model -> Model) (r : check_result) : check_result :=
 
 
 Lemma relim_as_revs : forall L m,
-  relim L m = revs (mkVmState (vmrelim L (m_vmmaps m)) (m_vm_lazy m) (m_vm_materialized m)) m.
+  relim L m = revs (mkVmState (vmrelim L (m_vmmaps m)) (m_vm_lazy m) (m_vm_materialized m) (m_kernel m) (m_vdso m)) m.
 Proof. reflexivity. Qed.
 
 Lemma revs_self : forall m, revs (m_vm m) m = m.
@@ -153,6 +154,9 @@ with bm_matches F sl sr :=
      | check_result => bm_split F sl sr
      | option Model => bm_split F sl sr
      | _ => first [ bm_whd_side sl | bm_whd_side sr
+                  (* the same scrutinee on both sides (at 08b1429 e.g. the [VmState]
+                     a kernel/vDSO read projects from): case on it *)
+                  | (constr_eq sl sr; destruct sr)
                   | (idtac "bm_matches: stuck on a model-carrying scrutinee"; fail 100) ]
      end)
   else bm_split F sl sr
@@ -214,6 +218,11 @@ with bm_sync F :=
          else (apply bm_app_cong; bm_sync F))
       else
         (first [ bm_whd_side l | bm_whd_side r
+               (* 08b1429: unlinkat's fd map ([unlink_open_entry] over [anon_new_id] and
+                  [statpin_lookup]) is unfolded to a [fix] whose two sides differ only in
+                  the [m_vm] field of a record that [m_fds]/[m_statpins] never read; the
+                  sides are convertible, so close them by conversion *)
+               | reflexivity
                | (idtac "K3 stuck"; match goal with |- ?g => idtac g end; fail 100) ]; bm_sync F)
     end
   end.
@@ -232,15 +241,30 @@ Ltac bm_go_revs :=
   | |- _ = cr_map (revs ?S) _ => bm_sync (revs S)
   end.
 
+(* 08b1429 State.v: [VmState] carries [vmst_kernel] and [vmst_vdso], and arms read them
+   ([check_socketpair]'s AF_UNIX arm sizes its buffers from [m_kernel]). [revs S] replaces the
+   whole [VmState], so a [revs] frame lemma holds only for an [S] that keeps [m]'s kernel and
+   vDSO; that is the only [S] its one consumer ([relim_as_revs]) uses. *)
+Ltac bm_go_revs_kv Hk Hv :=
+  lazymatch type of Hk with
+  | vmst_kernel ?S = _ =>
+      is_var S;
+      let Sh := fresh "Sh" in let Sl := fresh "Sl" in let Sm := fresh "Sm" in
+      let Sk := fresh "Sk" in let Sv := fresh "Sv" in
+      destruct S as [Sh Sl Sm Sk Sv];
+      cbn [vmst_kernel vmst_vdso] in Hk, Hv; subst Sk Sv
+  end;
+  bm_go_revs.
+
 (* [comment removed for export] *)
 Ltac bm_go_relim :=
   lazymatch goal with
   | m : Model |- _ =>
     destruct m as [?fd [[?r ?mp ?na ?sb ?b ?lim ?mb ?isp] ?lz ?mat] ?io ?fs ?pr ?li ?ti];
     lazymatch goal with
-    | |- context [relim ?L (mkModelOf ?a (mkVmState (mkVmMapsFull ?x1 ?x2 ?x3 ?x4 ?x5 ?x6 ?x7 ?x8) ?y1 ?y2) ?c ?d ?e ?f ?g)] =>
-      change (relim L (mkModelOf a (mkVmState (mkVmMapsFull x1 x2 x3 x4 x5 x6 x7 x8) y1 y2) c d e f g))
-        with (mkModelOf a (mkVmState (mkVmMapsFull x1 x2 x3 x4 x5 L x7 x8) y1 y2) c d e f g)
+    | |- context [relim ?L (mkModelOf ?a (mkVmState (mkVmMapsFull ?x1 ?x2 ?x3 ?x4 ?x5 ?x6 ?x7 ?x8) ?y1 ?y2 ?y3 ?y4) ?c ?d ?e ?f ?g)] =>
+      change (relim L (mkModelOf a (mkVmState (mkVmMapsFull x1 x2 x3 x4 x5 x6 x7 x8) y1 y2 y3 y4) c d e f g))
+        with (mkModelOf a (mkVmState (mkVmMapsFull x1 x2 x3 x4 x5 L x7 x8) y1 y2 y3 y4) c d e f g)
     end
   end;
   lazymatch goal with
@@ -257,120 +281,149 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 
 Lemma revs_arm_getcwd : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_getcwd i eff (revs S m) = cr_map (revs S) (ca_check arm_getcwd i eff m).
-Proof. intros. rewrite !ca_check_arm_getcwd. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_getcwd. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_epoll_ctl : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_epoll_ctl i eff (revs S m) = cr_map (revs S) (ca_check arm_epoll_ctl i eff m).
-Proof. intros. rewrite !ca_check_arm_epoll_ctl. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_epoll_ctl. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_dup3 : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_dup3 i eff (revs S m) = cr_map (revs S) (ca_check arm_dup3 i eff m).
-Proof. intros. rewrite !ca_check_arm_dup3. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_dup3. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_flock : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_flock i eff (revs S m) = cr_map (revs S) (ca_check arm_flock i eff m).
-Proof. intros. rewrite !ca_check_arm_flock. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_flock. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_faccessat : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_faccessat i eff (revs S m) = cr_map (revs S) (ca_check arm_faccessat i eff m).
-Proof. intros. rewrite !ca_check_arm_faccessat. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_faccessat. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_pipe2 : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_pipe2 i eff (revs S m) = cr_map (revs S) (ca_check arm_pipe2 i eff m).
-Proof. intros. rewrite !ca_check_arm_pipe2. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_pipe2. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_read : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_read i eff (revs S m) = cr_map (revs S) (ca_check arm_read i eff m).
-Proof. intros. rewrite !ca_check_arm_read. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_read. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_writev : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_writev i eff (revs S m) = cr_map (revs S) (ca_check arm_writev i eff m).
-Proof. intros. rewrite !ca_check_arm_writev. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_writev. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_pselect6 : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_pselect6 i eff (revs S m) = cr_map (revs S) (ca_check arm_pselect6 i eff m).
-Proof. intros. rewrite !ca_check_arm_pselect6. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_pselect6. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_newfstatat : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_newfstatat i eff (revs S m) = cr_map (revs S) (ca_check arm_newfstatat i eff m).
-Proof. intros. rewrite !ca_check_arm_newfstatat. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_newfstatat. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_fdatasync : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_fdatasync i eff (revs S m) = cr_map (revs S) (ca_check arm_fdatasync i eff m).
-Proof. intros. rewrite !ca_check_arm_fdatasync. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_fdatasync. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_exit_group : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_exit_group i eff (revs S m) = cr_map (revs S) (ca_check arm_exit_group i eff m).
-Proof. intros. rewrite !ca_check_arm_exit_group. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_exit_group. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_nanosleep : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_nanosleep i eff (revs S m) = cr_map (revs S) (ca_check arm_nanosleep i eff m).
-Proof. intros. rewrite !ca_check_arm_nanosleep. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_nanosleep. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_sched_getaffinity : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_sched_getaffinity i eff (revs S m) = cr_map (revs S) (ca_check arm_sched_getaffinity i eff m).
-Proof. intros. rewrite !ca_check_arm_sched_getaffinity. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_sched_getaffinity. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_sched_yield : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_sched_yield i eff (revs S m) = cr_map (revs S) (ca_check arm_sched_yield i eff m).
-Proof. intros. rewrite !ca_check_arm_sched_yield. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_sched_yield. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_sigaltstack : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_sigaltstack i eff (revs S m) = cr_map (revs S) (ca_check arm_sigaltstack i eff m).
-Proof. intros. rewrite !ca_check_arm_sigaltstack. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_sigaltstack. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_setgid : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_setgid i eff (revs S m) = cr_map (revs S) (ca_check arm_setgid i eff m).
-Proof. intros. rewrite !ca_check_arm_setgid. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_setgid. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_setresgid : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_setresgid i eff (revs S m) = cr_map (revs S) (ca_check arm_setresgid i eff m).
-Proof. intros. rewrite !ca_check_arm_setresgid. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_setresgid. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_setgroups : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_setgroups i eff (revs S m) = cr_map (revs S) (ca_check arm_setgroups i eff m).
-Proof. intros. rewrite !ca_check_arm_setgroups. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_setgroups. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_gettimeofday : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_gettimeofday i eff (revs S m) = cr_map (revs S) (ca_check arm_gettimeofday i eff m).
-Proof. intros. rewrite !ca_check_arm_gettimeofday. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_gettimeofday. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_geteuid : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_geteuid i eff (revs S m) = cr_map (revs S) (ca_check arm_geteuid i eff m).
-Proof. intros. rewrite !ca_check_arm_geteuid. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_geteuid. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_gettid : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_gettid i eff (revs S m) = cr_map (revs S) (ca_check arm_gettid i eff m).
-Proof. intros. rewrite !ca_check_arm_gettid. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_gettid. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_bind : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_bind i eff (revs S m) = cr_map (revs S) (ca_check arm_bind i eff m).
-Proof. intros. rewrite !ca_check_arm_bind. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_bind. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_connect : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_connect i eff (revs S m) = cr_map (revs S) (ca_check arm_connect i eff m).
-Proof. intros. rewrite !ca_check_arm_connect. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_connect. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_sendto : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_sendto i eff (revs S m) = cr_map (revs S) (ca_check arm_sendto i eff m).
-Proof. intros. rewrite !ca_check_arm_sendto. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_sendto. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_getsockopt : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_getsockopt i eff (revs S m) = cr_map (revs S) (ca_check arm_getsockopt i eff m).
-Proof. intros. rewrite !ca_check_arm_getsockopt. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_getsockopt. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_recvmsg : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_recvmsg i eff (revs S m) = cr_map (revs S) (ca_check arm_recvmsg i eff m).
-Proof. intros. rewrite !ca_check_arm_recvmsg. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_recvmsg. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_wait4 : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_wait4 i eff (revs S m) = cr_map (revs S) (ca_check arm_wait4 i eff m).
-Proof. intros. rewrite !ca_check_arm_wait4. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_wait4. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_clone3 : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_clone3 i eff (revs S m) = cr_map (revs S) (ca_check arm_clone3 i eff m).
-Proof. intros. rewrite !ca_check_arm_clone3. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_clone3. bm_go_revs_kv Hk Hv. Qed.
 End BudgetMonoArmsA.
 Module BudgetMonoArmsB.
 (* [comment removed for export] *)
@@ -382,116 +435,144 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 
 Lemma revs_arm_eventfd2 : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_eventfd2 i eff (revs S m) = cr_map (revs S) (ca_check arm_eventfd2 i eff m).
-Proof. intros. rewrite !ca_check_arm_eventfd2. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_eventfd2. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_epoll_pwait : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_epoll_pwait i eff (revs S m) = cr_map (revs S) (ca_check arm_epoll_pwait i eff m).
-Proof. intros. rewrite !ca_check_arm_epoll_pwait. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_epoll_pwait. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_fcntl : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_fcntl i eff (revs S m) = cr_map (revs S) (ca_check arm_fcntl i eff m).
-Proof. intros. rewrite !ca_check_arm_fcntl. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_fcntl. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_unlinkat : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_unlinkat i eff (revs S m) = cr_map (revs S) (ca_check arm_unlinkat i eff m).
-Proof. intros. rewrite !ca_check_arm_unlinkat. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_unlinkat. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_openat : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_openat i eff (revs S m) = cr_map (revs S) (ca_check arm_openat i eff m).
-Proof. intros. rewrite !ca_check_arm_openat. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_openat. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_getdents64 : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_getdents64 i eff (revs S m) = cr_map (revs S) (ca_check arm_getdents64 i eff m).
-Proof. intros. rewrite !ca_check_arm_getdents64. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_getdents64. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_write : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_write i eff (revs S m) = cr_map (revs S) (ca_check arm_write i eff m).
-Proof. intros. rewrite !ca_check_arm_write. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_write. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_pread64 : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_pread64 i eff (revs S m) = cr_map (revs S) (ca_check arm_pread64 i eff m).
-Proof. intros. rewrite !ca_check_arm_pread64. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_pread64. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_ppoll : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_ppoll i eff (revs S m) = cr_map (revs S) (ca_check arm_ppoll i eff m).
-Proof. intros. rewrite !ca_check_arm_ppoll. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_ppoll. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_fstat : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_fstat i eff (revs S m) = cr_map (revs S) (ca_check arm_fstat i eff m).
-Proof. intros. rewrite !ca_check_arm_fstat. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_fstat. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_timerfd_create : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_timerfd_create i eff (revs S m) = cr_map (revs S) (ca_check arm_timerfd_create i eff m).
-Proof. intros. rewrite !ca_check_arm_timerfd_create. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_timerfd_create. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_set_tid_address : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_set_tid_address i eff (revs S m) = cr_map (revs S) (ca_check arm_set_tid_address i eff m).
-Proof. intros. rewrite !ca_check_arm_set_tid_address. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_set_tid_address. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_clock_gettime : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_clock_gettime i eff (revs S m) = cr_map (revs S) (ca_check arm_clock_gettime i eff m).
-Proof. intros. rewrite !ca_check_arm_clock_gettime. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_clock_gettime. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_tkill : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_tkill i eff (revs S m) = cr_map (revs S) (ca_check arm_tkill i eff m).
-Proof. intros. rewrite !ca_check_arm_tkill. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_tkill. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_rt_sigaction : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_rt_sigaction i eff (revs S m) = cr_map (revs S) (ca_check arm_rt_sigaction i eff m).
-Proof. intros. rewrite !ca_check_arm_rt_sigaction. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_rt_sigaction. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_setuid : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_setuid i eff (revs S m) = cr_map (revs S) (ca_check arm_setuid i eff m).
-Proof. intros. rewrite !ca_check_arm_setuid. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_setuid. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_setsid : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_setsid i eff (revs S m) = cr_map (revs S) (ca_check arm_setsid i eff m).
-Proof. intros. rewrite !ca_check_arm_setsid. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_setsid. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_uname : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_uname i eff (revs S m) = cr_map (revs S) (ca_check arm_uname i eff m).
-Proof. intros. rewrite !ca_check_arm_uname. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_uname. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_getpid : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_getpid i eff (revs S m) = cr_map (revs S) (ca_check arm_getpid i eff m).
-Proof. intros. rewrite !ca_check_arm_getpid. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_getpid. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_getgid : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_getgid i eff (revs S m) = cr_map (revs S) (ca_check arm_getgid i eff m).
-Proof. intros. rewrite !ca_check_arm_getgid. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_getgid. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_socket : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_socket i eff (revs S m) = cr_map (revs S) (ca_check arm_socket i eff m).
-Proof. intros. rewrite !ca_check_arm_socket. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_socket. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_listen : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_listen i eff (revs S m) = cr_map (revs S) (ca_check arm_listen i eff m).
-Proof. intros. rewrite !ca_check_arm_listen. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_listen. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_getsockname : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_getsockname i eff (revs S m) = cr_map (revs S) (ca_check arm_getsockname i eff m).
-Proof. intros. rewrite !ca_check_arm_getsockname. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_getsockname. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_recvfrom : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_recvfrom i eff (revs S m) = cr_map (revs S) (ca_check arm_recvfrom i eff m).
-Proof. intros. rewrite !ca_check_arm_recvfrom. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_recvfrom. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_shutdown : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_shutdown i eff (revs S m) = cr_map (revs S) (ca_check arm_shutdown i eff m).
-Proof. intros. rewrite !ca_check_arm_shutdown. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_shutdown. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_clone : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_clone i eff (revs S m) = cr_map (revs S) (ca_check arm_clone i eff m).
-Proof. intros. rewrite !ca_check_arm_clone. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_clone. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_prlimit64 : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_prlimit64 i eff (revs S m) = cr_map (revs S) (ca_check arm_prlimit64 i eff m).
-Proof. intros. rewrite !ca_check_arm_prlimit64. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_prlimit64. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_faccessat2 : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_faccessat2 i eff (revs S m) = cr_map (revs S) (ca_check arm_faccessat2 i eff m).
-Proof. intros. rewrite !ca_check_arm_faccessat2. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_faccessat2. bm_go_revs_kv Hk Hv. Qed.
 End BudgetMonoArmsB.
 Module BudgetMonoArmsC.
 (* [comment removed for export] *)
@@ -503,112 +584,157 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 
 Lemma revs_arm_epoll_create1 : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_epoll_create1 i eff (revs S m) = cr_map (revs S) (ca_check arm_epoll_create1 i eff m).
-Proof. intros. rewrite !ca_check_arm_epoll_create1. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_epoll_create1. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_dup : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_dup i eff (revs S m) = cr_map (revs S) (ca_check arm_dup i eff m).
-Proof. intros. rewrite !ca_check_arm_dup. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_dup. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_ioctl : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_ioctl i eff (revs S m) = cr_map (revs S) (ca_check arm_ioctl i eff m).
-Proof. intros. rewrite !ca_check_arm_ioctl. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_ioctl. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_ftruncate : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_ftruncate i eff (revs S m) = cr_map (revs S) (ca_check arm_ftruncate i eff m).
-Proof. intros. rewrite !ca_check_arm_ftruncate. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_ftruncate. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_close : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_close i eff (revs S m) = cr_map (revs S) (ca_check arm_close i eff m).
-Proof. intros. rewrite !ca_check_arm_close. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_close. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_lseek : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_lseek i eff (revs S m) = cr_map (revs S) (ca_check arm_lseek i eff m).
-Proof. intros. rewrite !ca_check_arm_lseek. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_lseek. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_readv : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_readv i eff (revs S m) = cr_map (revs S) (ca_check arm_readv i eff m).
-Proof. intros. rewrite !ca_check_arm_readv. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_readv. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_pwrite64 : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_pwrite64 i eff (revs S m) = cr_map (revs S) (ca_check arm_pwrite64 i eff m).
-Proof. intros. rewrite !ca_check_arm_pwrite64. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_pwrite64. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_readlinkat : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_readlinkat i eff (revs S m) = cr_map (revs S) (ca_check arm_readlinkat i eff m).
-Proof. intros. rewrite !ca_check_arm_readlinkat. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_readlinkat. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_fsync : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_fsync i eff (revs S m) = cr_map (revs S) (ca_check arm_fsync i eff m).
-Proof. intros. rewrite !ca_check_arm_fsync. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_fsync. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_exit : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_exit i eff (revs S m) = cr_map (revs S) (ca_check arm_exit i eff m).
-Proof. intros. rewrite !ca_check_arm_exit. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_exit. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_futex : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_futex i eff (revs S m) = cr_map (revs S) (ca_check arm_futex i eff m).
-Proof. intros. rewrite !ca_check_arm_futex. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_futex. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_sched_setscheduler : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_sched_setscheduler i eff (revs S m) = cr_map (revs S) (ca_check arm_sched_setscheduler i eff m).
-Proof. intros. rewrite !ca_check_arm_sched_setscheduler. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_sched_setscheduler. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_tgkill : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_tgkill i eff (revs S m) = cr_map (revs S) (ca_check arm_tgkill i eff m).
-Proof. intros. rewrite !ca_check_arm_tgkill. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_tgkill. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_rt_sigprocmask : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_rt_sigprocmask i eff (revs S m) = cr_map (revs S) (ca_check arm_rt_sigprocmask i eff m).
-Proof. intros. rewrite !ca_check_arm_rt_sigprocmask. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_rt_sigprocmask. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_setresuid : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_setresuid i eff (revs S m) = cr_map (revs S) (ca_check arm_setresuid i eff m).
-Proof. intros. rewrite !ca_check_arm_setresuid. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_setresuid. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_getgroups : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_getgroups i eff (revs S m) = cr_map (revs S) (ca_check arm_getgroups i eff m).
-Proof. intros. rewrite !ca_check_arm_getgroups. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_getgroups. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_prctl : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_prctl i eff (revs S m) = cr_map (revs S) (ca_check arm_prctl i eff m).
-Proof. intros. rewrite !ca_check_arm_prctl. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_prctl. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_getuid : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_getuid i eff (revs S m) = cr_map (revs S) (ca_check arm_getuid i eff m).
-Proof. intros. rewrite !ca_check_arm_getuid. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_getuid. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_getegid : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_getegid i eff (revs S m) = cr_map (revs S) (ca_check arm_getegid i eff m).
-Proof. intros. rewrite !ca_check_arm_getegid. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_getegid. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_socketpair : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_socketpair i eff (revs S m) = cr_map (revs S) (ca_check arm_socketpair i eff m).
-Proof. intros. rewrite !ca_check_arm_socketpair. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_socketpair. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_accept : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_accept i eff (revs S m) = cr_map (revs S) (ca_check arm_accept i eff m).
-Proof. intros. rewrite !ca_check_arm_accept. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_accept. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_getpeername : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_getpeername i eff (revs S m) = cr_map (revs S) (ca_check arm_getpeername i eff m).
-Proof. intros. rewrite !ca_check_arm_getpeername. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_getpeername. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_setsockopt : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_setsockopt i eff (revs S m) = cr_map (revs S) (ca_check arm_setsockopt i eff m).
-Proof. intros. rewrite !ca_check_arm_setsockopt. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_setsockopt. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_sendmsg : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_sendmsg i eff (revs S m) = cr_map (revs S) (ca_check arm_sendmsg i eff m).
-Proof. intros. rewrite !ca_check_arm_sendmsg. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_sendmsg. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_accept4 : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_accept4 i eff (revs S m) = cr_map (revs S) (ca_check arm_accept4 i eff m).
-Proof. intros. rewrite !ca_check_arm_accept4. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_accept4. bm_go_revs_kv Hk Hv. Qed.
 
 Lemma revs_arm_getrandom : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
   ca_check arm_getrandom i eff (revs S m) = cr_map (revs S) (ca_check arm_getrandom i eff m).
-Proof. intros. rewrite !ca_check_arm_getrandom. bm_go_revs. Qed.
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_getrandom. bm_go_revs_kv Hk Hv. Qed.
+
+(* 08b1429 Checks/Sys/Dispatch.v: [checked_table] gained set_robust_list (99), clock_getres
+   (114) and pwritev2 (287); BudgetMonoRoot's [checked_table_ok] walk takes one lemma per
+   row (recipes/dispatcher-arms.md). None touches [m_vm]. *)
+Lemma revs_arm_set_robust_list : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
+  ca_check arm_set_robust_list i eff (revs S m) = cr_map (revs S) (ca_check arm_set_robust_list i eff m).
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_set_robust_list. bm_go_revs_kv Hk Hv. Qed.
+
+Lemma revs_arm_clock_getres : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
+  ca_check arm_clock_getres i eff (revs S m) = cr_map (revs S) (ca_check arm_clock_getres i eff m).
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_clock_getres. bm_go_revs_kv Hk Hv. Qed.
+
+Lemma revs_arm_pwritev2 : forall i eff m S,
+  vmst_kernel S = m_kernel m -> vmst_vdso S = m_vdso m ->
+  ca_check arm_pwritev2 i eff (revs S m) = cr_map (revs S) (ca_check arm_pwritev2 i eff m).
+Proof. intros i eff m S Hk Hv. rewrite !ca_check_arm_pwritev2. bm_go_revs_kv Hk Hv. Qed.
 End BudgetMonoArmsC.
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
@@ -658,6 +784,10 @@ Proof.
   set (h := m_vmmaps m) in *.
   change (min_brk (vmrelim L h)) with (min_brk h) in *.
   change (alloc_top (vmrelim L h)) with (alloc_top h) in *.
+  (* 08b1429 Sys/Mm/Mmap.v: brk_budget_ok charges [brk_grow_bytes h r] (was
+     [bv_unsigned (r - vm_brk h)]); it reads only [vm_brk], so the relim form converts *)
+  try change (brk_grow_bytes (vmrelim L h) req) with (brk_grow_bytes h req) in *.
+  try change (brk_grow_bytes (vmrelim L h) r) with (brk_grow_bytes h r) in *.
   cbn [vmrelim vm_brk vm_reserved vm_maps vm_limit] in *.
   destruct (w_is0 req || (bv_unsigned req <? bv_unsigned (min_brk h))%Z) eqn:Eq;
     [reflexivity |].
@@ -670,7 +800,7 @@ Proof.
     cbn [andb] in Hmk.
     apply negb_false_iff in Hmk. rewrite Hmk.
     apply Z.leb_le in Hmk.
-    assert (Hb : (vm_backing_used m + bv_unsigned (req - vm_brk h) <=? vm_limit h)%Z = true)
+    assert (Hb : (vm_backing_used m + brk_grow_bytes h req <=? vm_limit h)%Z = true)
       by (apply Z.leb_le; lia).
     rewrite Hb. reflexivity.
   - cbn [orb].
@@ -748,6 +878,11 @@ Proof.
   unfold mprotect_budget_refused_b in Hmk.
   set (addr := in_arg i 0) in *. set (len := in_arg i 1) in *. set (prot := in_arg i 2) in *.
   cbv zeta in *.
+  (* 08b1429 Sys/Mm/Mprotect.v + Checks/Sys/Mm/Mprotect.v: a vDSO/vvar gate answers unmodeled
+     before the budget arm, and opens the mark too; it reads [m_kernel] and [vdso_top], which
+     [relim] keeps (recipes/limsim-arms.md parts 1 and 7) *)
+  try change (m_kernel (relim L m)) with (m_kernel m) in *.
+  try change (vdso_top (m_vmmaps (relim L m))) with (vdso_top (m_vmmaps m)) in *.
   rewrite !m_vmmaps_relim in *. bm_vm_proj.
   destruct (mprotect_grows_conflict_b prot); [bm_go_relim |].
   destruct (negb (bv_unsigned addr mod page_size =? 0)%Z); [bm_go_relim |].
@@ -756,6 +891,8 @@ Proof.
     [bm_go_relim |].
   destruct (mprotect_modeled_b prot); cbn [negb]; [| reflexivity].
   set (n := Z_to_bv 64 (page_round_up_Z (bv_unsigned len))) in *.
+  destruct (negb (region_free (vdso_reserved (m_kernel m) (vdso_top (m_vmmaps m))) addr n));
+    [reflexivity |].
   destruct (map_contains (vm_noaccess (m_vmmaps m)) addr n
             && map_contains (vm_maps (m_vmmaps m)) addr n).
   - apply negb_false_iff in Hmk.
@@ -769,8 +906,20 @@ Qed.
 Lemma alloc_top_vmrelim : forall L h, alloc_top (vmrelim L h) = alloc_top h.
 Proof. reflexivity. Qed.
 
-Lemma vm_gap_available_vmrelim : forall L h nZ,
-  vm_gap_available (vmrelim L h) nZ = vm_gap_available h nZ.
+(* 08b1429 Checks/Placement.v: mmap's fresh grants and mremap's move place through
+   [linux_place_is], which reads [vm_reserved], [vm_maps], [mmap_top] and [alloc_top], never
+   [vm_limit] (recipes/limsim-arms.md part 7). *)
+(* 727298f3 #146: [place_declined_b] reads [alloc_top h] and
+   [vm_reserved h ++ vm_maps h]; [vmrelim] rewrites [vm_limit] and nothing
+   else, so the decline is invariant under it, by the same argument and the
+   same proof as [linux_place_is_vmrelim] below. *)
+Lemma place_declined_b_vmrelim : forall kb L h hint nZ,
+  place_declined_b kb (vmrelim L h) hint nZ = place_declined_b kb h hint nZ.
+Proof. reflexivity. Qed.
+
+Lemma linux_place_is_vmrelim : forall L h thp hint nZ r,
+  LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is (vmrelim L h) thp hint nZ r
+  = LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is h thp hint nZ r.
 Proof. reflexivity. Qed.
 
 Lemma mmap_noreserve_backed_ok_mono : forall L m flags nZ,
@@ -825,22 +974,31 @@ Lemma relim_arm_mmap : forall i eff m L,
     (in_arg i 4) (in_arg i 5) (relim L m) = false ->
   ca_check arm_mmap i eff (relim L m) = cr_map (relim L) (ca_check arm_mmap i eff m).
 Proof.
-  intros i eff m L HL Hmk. rewrite !ca_check_arm_mmap. unfold check_mmap.
+  intros i eff m L HL Hmk. rewrite !ca_check_arm_mmap. unfold check_mmap, check_mmap_fixed_overflow.
   unfold mmap_budget_refused_b in Hmk.
   set (addr := in_arg i 0) in *. set (len := in_arg i 1) in *. set (prot := in_arg i 2) in *.
   set (flags := in_arg i 3) in *. set (off := in_arg i 5) in *.
   cbv zeta in *.
   rewrite !m_vmmaps_relim in *. rewrite !alloc_top_vmrelim in *.
+  (* 08b1429: the fresh-grant arms place through [linux_place_is] and read [m_kernel] *)
+  rewrite ?linux_place_is_vmrelim in *.
+  rewrite ?place_declined_b_vmrelim in *.
+  try change (m_kernel (relim L m)) with (m_kernel m) in *.
   bm_vm_proj.
   set (nZ := page_round_up_Z (bv_unsigned len)) in *.
   set (n := Z_to_bv 64 nZ) in *.
   destruct (negb (mmap_off_aligned_b off)); [bm_go_relim |].
-  destruct (negb (mmap_anon_b flags)); [reflexivity |].
+  (* 08b1429: a non-anonymous map answers EBADF on a closed fd, else unmodeled *)
+  destruct (negb (mmap_anon_b flags)); [bm_go_relim |].
   destruct (w_is0 len); [bm_go_relim |].
   destruct (mmap_modeled_b prot flags off).
-  { apply negb_false_iff in Hmk.
+  { (* 727298f3 #146: the decline sits ahead of the [alt] in both freely-placed
+       arms; [relim] touches neither the hint nor the ledger it reads. *)
+    destruct (place_declined_b (m_kernel m) (m_vmmaps m) addr nZ); [reflexivity |].
+    apply negb_false_iff in Hmk.
     rewrite Hmk, (mmap_noreserve_backed_ok_mono L m flags nZ HL Hmk). bm_go_relim. }
-  destruct (mmap_noaccess_b prot flags off); [bm_go_relim |].
+  destruct (mmap_noaccess_b prot flags off);
+    [destruct (place_declined_b (m_kernel m) (m_vmmaps m) addr nZ); [reflexivity | bm_go_relim] |].
   destruct (mmap_fixed_noaccess_b prot flags off); [bm_go_relim |].
   destruct (mmap_fixed_rw_b prot flags off).
   { destruct (two_pow_64 <=? bv_unsigned addr + nZ)%Z; [bm_go_relim |].

@@ -3,8 +3,9 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YFjy.v, with its module paths changed, names TfibSyms -> PcapSyms and its addresses moved to libreac/fuzz_pcap's ASan build. *)
-(* Modified by Theorem Labs, 2026-10: the case split over Tfib_zero_shadow is a Theorem Labs lane's arity-free form, as a Theorem Labs lane has it in lib/A/AFjy.v (omx-clap-core/fuzz_manifest 2c257ca7d7a); fuzz_pcap's asan-ubsan Tfib_zero_shadow (Reusable/YF0m.v) has six rows, the donor's five. *)
+(* Modified by Theorem Labs, 2026-10: the case split over Tfib_zero_shadow is a Theorem Labs lane's arity-free form, as a Theorem Labs lane has it in lib/A/AFjy.v (omx-clap-core/fuzz_manifest); fuzz_pcap's asan-ubsan Tfib_zero_shadow (Reusable/YF0m.v) has six rows, the donor's five. *)
 (* Modified by Theorem Labs, 2026-10: mapped user bounds come from YG06Free.mapped_user_le_free_array and the value of kFreeArrayOffset, in place of mapped_user_bound and the value of EV_MAX. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

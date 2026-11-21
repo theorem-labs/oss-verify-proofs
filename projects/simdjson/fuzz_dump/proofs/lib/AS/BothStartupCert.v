@@ -1,11 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the recorded start-up plan is renumbered by a map read from a probe run, and its join and hand-off states are computed in the build by the check itself, once per CONFIG_RSEQ value, instead of the recorded ones; taken in part from projects/simdjson/fuzz_ondemand/proofs/lib/AS/BothStartupCert.v, lines 6-12, 44-89. *)
 (* [comment removed for export] *)
-From Stdlib Require Import ZArith List Bool.
-From OSSVerify.Proofs.simdjson.fuzz_dump.lib.AS Require Import AxSymExec3 AsanPlanCore AsanPlan AsanPlanSound AsanTablesB AsanPlanImagesB AsanInit AsanStartup StartupPlanBoth StartupHSBoth.
+From Stdlib Require Import ZArith NArith List Bool.
+From OSSVerify.Proofs.simdjson.fuzz_dump.lib.AS Require Import AxSymExec3 AsanPlanCore AsanPlan AsanPlanSound AsanTablesB AsanPlanImagesB AsanInit AsanStartup StartupPlanBoth PlanRegen.
 Import ListNotations. Import AX2. Import AP.
 Open Scope Z_scope.
 From Ltac2 Require Import Ltac2 Constr Std Control.
+(* Ltac2 is imported for [cert_refl] only: the proofs below are Ltac1 and call it by [ltac2:(..)]. *)
+Set Default Proof Mode "Classic".
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Ltac2 cert_refl (rhs : constr) :=
   let g := Control.goal () in
@@ -19,8 +22,74 @@ Definition IT0 : itab := mk_itab_ranges ASEGS startup_plan_ranges.
 Lemma IT0_ok : itab_sound ASEGS IT0.
 Proof. apply APS.mk_itab_ranges_sound. Qed.
 
-Definition startup_shape : shape := (SHole 0).
+(* THE RECORDED PLAN, RENUMBERED AND RECHECKED AT 727298f3.  See the A twin in
+   AsanStartupCert.v for the design and for why this is two closed certificates and not one
+   r-parametric one.  [F_B] is the plan's variable map per compaction depth
+   ([PlanRegen.mapd]), every step read from a probe run of this check at the revision on THIS
+   unit's binaries, in both images and at both CONFIG_RSEQ values (the runs agree):
+   depth 0 (up to the first [PRename]): 2 higher from 10; 4 higher from 43 and 6 higher from
+   357, read from two cut runs -- with every variable 2 higher the plan refuses at the node
+   that names old 77, whose 65536-byte mapping the state holds at new 81, and with 77 raised
+   by 4 it refuses at the node that names old 357, whose 4096-byte mapping the state holds at
+   new 363.  Under that map the state just before the depth-0 [PRename] holds exactly the
+   sixteen variables that [PRename] renames (43 + 4, .., 292 + 4, 357 + 6, .., 390 + 6: no
+   source missing and no variable left over).
+   depth 1: [(10, 2); (26, 2)], the probe's own step list (just after the depth-0 [PRename]
+   the counter is 28, and the first fresh variable after it, the [PFresh] page, is 28 = 26 + 2);
+   depth 2: [(10, 2); (42, 2)] (the counter just after each depth-1 [PRename] is 44 = 42 + 2).
+   Each of those two is the map "2 higher from 10": a variable takes the offset of the last
+   threshold at or below it ([PlanRegen.bpd]) and both thresholds carry 2.  With this map the
+   whole check reaches [COk] in the probe at both flags in both images.
+   The plan has three [PRename] nodes and no deeper one, so no deeper depth is listed.  The
+   join states of the plan's [PVia] nodes and the hand-off states are computed below by
+   [PlanRegen.regen] from the run itself, once per CONFIG_RSEQ value.  Nothing here is a
+   recorded state: the certificate checks each again. *)
+Definition F_B : list (list (nat * nat)) := [[(10, 2); (43, 4); (357, 6)]; [(10, 2); (26, 2)]; [(10, 2); (42, 2)]]%nat.
 
-Lemma startup_cert :
-  check ASEGS IT0 ASAN_B NX0 AsanInit.LIMIT XN0 XE0 XB0 HS_both KC0 BFUEL FUEL None asan_b_init startup_plan = COk startup_shape.
-Proof. cert_refl constr:(COk startup_shape). Qed.
+Definition chk_B (r : Z) (HS : nat -> option acs) (lc : option loopctx) (cs : acs) (p : plan) : cres :=
+  check ASEGS IT0 ASAN_B NX0 AsanInit.LIMIT r XN0 XE0 XB0 HS KC0 BFUEL FUEL lc cs p.
+Definition run_B (r : Z) (VJ HL : list (nat * acs)) : cres :=
+  chk_B r (hlookup HL) None (asan_b_init r) (pshd F_B (hlookup VJ) 0 startup_plan).
+Definition arms_B (r : Z) (HL : list (nat * acs)) (j : nat) (js : acs) (lo : nat) (cs : acs) (ka : plan) : cres :=
+  chk_B r (hlookup HL) (Some (JC j js SNil (nxt cs) lo)) cs ka.
+
+Definition REGEN_B_0 : list (nat * acs) * list (nat * acs) * cres := Eval vm_compute in regen 30 (run_B 0) (arms_B 0) [] [].
+Definition REGEN_B_1 : list (nat * acs) * list (nat * acs) * cres := Eval vm_compute in regen 30 (run_B 1) (arms_B 1) [] [].
+
+Definition VJ_B (r : Z) : list (nat * acs) := if Z.eqb r 1 then fst (fst REGEN_B_1) else fst (fst REGEN_B_0).
+Definition HL_B (r : Z) : list (nat * acs) := if Z.eqb r 1 then snd (fst REGEN_B_1) else snd (fst REGEN_B_0).
+Definition HS_both (r : Z) : nat -> option acs := hlookup (HL_B r).
+Definition startup_plan_r (r : Z) : plan := pshd F_B (hlookup (VJ_B r)) 0 startup_plan.
+
+(* the result shape of each check: [regen]'s last answer is the check of the plan with the
+   states it computed ([COk] when they are complete) *)
+Definition startup_shape_0 : shape := match snd REGEN_B_0 with COk s => s | CErr _ _ _ => SNil end.
+Definition startup_shape_1 : shape := match snd REGEN_B_1 with COk s => s | CErr _ _ _ => SNil end.
+Definition startup_shape (r : Z) : shape := if Z.eqb r 1 then startup_shape_1 else startup_shape_0.
+
+(* TWO CLOSED CERTIFICATES, ONE PER [b : bool], joined by the [forall b] wrapper: [cert_refl]
+   casts an [eq_refl] through [vm_compute] (the kernel checks it at [Qed]), so each value of the
+   flag is checked closed.  Neither value is pinned. *)
+Lemma startup_cert_r0 :
+  check ASEGS IT0 ASAN_B NX0 AsanInit.LIMIT 0 XN0 XE0 XB0 (HS_both 0) KC0 BFUEL FUEL None (asan_b_init 0) (startup_plan_r 0) = COk (startup_shape 0).
+Proof. ltac2:(cert_refl constr:(COk (startup_shape 0))). Qed.
+
+Lemma startup_cert_r1 :
+  check ASEGS IT0 ASAN_B NX0 AsanInit.LIMIT 1 XN0 XE0 XB0 (HS_both 1) KC0 BFUEL FUEL None (asan_b_init 1) (startup_plan_r 1) = COk (startup_shape 1).
+Proof. ltac2:(cert_refl constr:(COk (startup_shape 1))). Qed.
+
+Lemma startup_cert : forall b : bool,
+  check ASEGS IT0 ASAN_B NX0 AsanInit.LIMIT (rseq_z b) XN0 XE0 XB0 (HS_both (rseq_z b)) KC0 BFUEL FUEL None
+        (asan_b_init (rseq_z b)) (startup_plan_r (rseq_z b)) = COk (startup_shape (rseq_z b)).
+Proof. intros [|]; [exact startup_cert_r1 | exact startup_cert_r0]. Qed.
+
+(* A fact of every computed hand-off state, from a boolean test of the list it is read from. *)
+Lemma HS_both_forall : forall (P : acs -> bool) (b : bool),
+  forallb (fun q => P (snd q)) (HL_B (rseq_z b)) = true ->
+  forall h ch, HS_both (rseq_z b) h = Some ch -> P ch = true.
+Proof.
+  intros P b Hall h ch. unfold HS_both, hlookup.
+  destruct (find (fun q => Nat.eqb (fst q) h) (HL_B (rseq_z b))) as [q|] eqn:Hf; [|discriminate].
+  intros Hq. injection Hq as <-. apply find_some in Hf as [Hin _].
+  exact (proj1 (forallb_forall _ _) Hall q Hin).
+Qed.

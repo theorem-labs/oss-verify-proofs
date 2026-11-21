@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/AllocG.v at
-   origin/cold/c-asan-realloc-primary b97c2fd1d44 (c-asan's milestone M1, the revision whose leaf gives
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/AllocG.v
+    (c-asan's milestone M1, the revision whose leaf gives
    apath + gflag instead of ireturns), with its module paths changed and the cgif_file instantiation at the end
    dropped: libreac/fuzz_decode instantiates the Section at its own image in lib/A/DecodeCalloc.v, and the cgif
    image files (YB1v, YB1q, YF0l, YF0m) that only the dropped instantiation needed are not imported. Statement
    only; no proof of it is on this branch (rule 24). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_decode/lib/Reusable/YGAlloc.v, with its module paths changed; 4 of its 82 lines of code are new or changed and 7 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/AllocG.v at 95e6f1d72b6 (sha256 9fd0d69116a5) into lib/Reusable (shared by both images), with its module paths changed; the M1 text of this file (10c1218e6df) is replaced, not kept beside it. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/AllocG.v (sha256 9fd0d69116a5) into lib/Reusable (shared by both images), with its module paths changed; the M1 text of this file is replaced, not kept beside it. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_decode/lib/Reusable/YGAlloc.v, with its module paths changed; 52 of its 98 lines of code are new or changed and 36 lines of the source are left out. *)
-(* copied from proofs/cgif/cgif_file_fuzzer/lib/DeallocG.v @ 2bd8ae006ef (a working branch; byte-identical at a Theorem Labs lane's buildable snapshot 478a815d97c, a working branch), module paths changed only. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* copied from proofs/cgif/cgif_file_fuzzer/lib/DeallocG.v (a working branch; byte-identical at a Theorem Labs lane's buildable snapshot, a working branch), module paths changed only. *)
 (* The frame-generic contract of __asan::Allocator::Deallocate.
 
    The run starts at Deallocate's first instruction [pcD] and ends at the [ret] that comes back to Deallocate's

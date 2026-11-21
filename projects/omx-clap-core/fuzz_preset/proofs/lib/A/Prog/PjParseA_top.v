@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: pj_parse of fuzz_preset's asan image A' (#102 pin 1be0f53d96cb, unstripped twin bff8519bbe3e;
-   A' 0x85e20, 60 instructions; preset_file.c :296-309) on the kit's cwpj-fix f29626eb1667: the kit's tpj_parse_specX
+   A' 0x85e20, 60 instructions; preset_file.c :296-309) on the kit's cwpj-fix: the kit's tpj_parse_specX
    (lib/A/PRH_FnPj.v blob 38a83863585f :592-738) VERBATIM at image A', composed from the segment files over the cuts
    of lib/A/Prog/PjParseA_defs.v. NO twin: the walk never reads the kit's cursor-set premise prh_cw_pj (PjParseA_defs.v's
    header; the one cursor lemma is pjp_cw_entry_A there), so the kit's repair of prh_cw_pj (PRH_Base.v blob ae260e28900e
@@ -22,7 +23,7 @@
    RL := prh_room_live_a8, PI := prh_img_A, PA := PI_prog_A): LAWS, pjp_g_vis and the callee rows by PjParseA_inst.v
    (the pjp_inst lemmas); prh_head16 by reflexivity; PALib by lib/A/PALibA.v palib_A; __asan_memset BY CITATION of
    lib/A/PRowSet.v prow_asan_memset_xm_A_lit; pj_free BY CITATION of the S6 A' walk
-   lib/A/Prog/S6PjFreeTop.v pj_free_holds (a Theorem Labs lane's S6 on the kit's cut, by path from 0bda57e5972c); the fuzz_free row
+   lib/A/Prog/S6PjFreeTop.v pj_free_holds (a Theorem Labs lane's S6 on the kit's cut, by path); the fuzz_free row
    pj_free takes BY CITATION of the cut's A' walk lib/A/Prog/FuzzFree.v fuzz_free_holds (PAL by palib_A, pal_pst_ok by
    lib/A/Prog/FuzzAllocAccInst102.v acc_pal_pst_ok_A, TB by AD2l.TfibB_syms). What remains are NAMED callee rows (the
    theorem's premises):

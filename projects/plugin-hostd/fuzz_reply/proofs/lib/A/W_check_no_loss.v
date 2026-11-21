@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: the ASan walk of fuzz_reply's check_no_loss, in the form of the cgif walks of
    proofs/cgif/cgif_file_fuzzer/lib/A/AC8h.v (call sites), lib/A/AC8b.v (a loop from its head), lib/A/ACh2.v
    (internal calls) and lib/A/ACbk.v (entry and return). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_no_loss(s, at) at 0x85958 (fuzz_reply.c:405-432) checks, for each line the source s still expects, that the
    controller saw it, and feeds it to the reference model: while s->expected.n > 0 it takes the first expected text;
    when g_gone is clear it reads the stream's next line with next_line (an internal call; cells at, &line, &len) and
@@ -192,7 +193,7 @@ replace (HarnessRep.hl_v l + Z.of_nat (16 * j)) with (HarnessRep.hl_v l + 16 * Z
 split; [exact H1|]. replace (HarnessRep.hl_v l + 16 * Z.of_nat j + 8) with (HarnessRep.hl_v l + 16 * Z.of_nat j + Z.of_nat 8) by lia.
 exact H2.
 Qed.
-(* W1's lib/A/W_list_drop.v helpers (a working branch 5bc6dd7b8b5), copied here because that file is not in
+(* W1's lib/A/W_list_drop.v helpers (a working branch), copied here because that file is not in
    this branch: writability across a call, a region chunk read back, two equal values give equal bytes. *)
 Lemma cnl_writable_kept_w : forall (W W' : world SEGS) (m m' : word -> option byte) a,
 (apresent (w_H W) m a -> apresent (w_H W') m' a) -> wle W W' ->
@@ -1446,7 +1447,7 @@ pose proof Hstk as (Hal16 & Hstk0 & Hceil & Hslo & Hshi & H47 & Hbot & Htop & Ht
 pose proof asan_consts as (AC & _).
 assert (WS : CNL_STK = 16656) by reflexivity. assert (WG : GM_STK = 16528) by reflexivity.
 destruct (cnl_ha HA j AHAE AJLT AGA) as (HAlo & HAhi & HA8 & HA16 & _ & _ & _).
-(* W4's gesture_model takes this premise once a working branch f58b3f26c80 is merged *)
+(* W4's gesture_model takes this premise once a working branch is merged *)
 assert (HA80 : (HA + 80) mod 8 = 0).
 { apply Z.mod_divide; [lia|]. apply Z.divide_add_r; [apply Z.mod_divide; [lia | exact HA8] | exists 10; reflexivity]. }
 assert (Hs1 : VAL A_g_s <= HA /\ HA + 96 <= VAL A_g_s + 384) by (rewrite AHAE; unfold ASRC; lia).
@@ -2617,7 +2618,7 @@ eapply SRr_bind.
   exists (hl_v EE), (AREC * hl_cap EE). split; [exact Hvin2 | rewrite HreqV; unfold AREC in *; lia].
 - intros HPRE2 HSC.
   (* the destination is a heap block, so no byte of it is an image byte (the premise W_sites.v's amemmove_realizes
-     gains in its proved form, pf-calls 84b1925e3d3 W_sites.v:197; W1's W_list_drop.v:1097-1099 proves it the same way) *)
+     gains in its proved form, pf-calls W_sites.v:198; W1's W_list_drop.v:1098-1100 proves it the same way) *)
   assert (MNIMG : forall a, hl_v EE <= a < hl_v EE + AREC * (Z.of_nat (length (r :: rs)) - 1) -> ~ in_img SEGS a).
   { intros a Ha. apply (blk_img_x SEGS B ARx LAWS ly2 S2 hp2 W2 (ms_mem ms0) _ (hl_v EE) (AREC * hl_cap EE) a HAR3 Hvin2).
     rewrite HreqV. unfold AREC in *. lia. }

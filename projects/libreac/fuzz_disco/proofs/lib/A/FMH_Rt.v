@@ -4,8 +4,8 @@
    a Theorem Labs lane's (strlen, strchr, strncmp, memchr), a Theorem Labs lane's (strstr, strncasecmp, isalnum) and a Theorem Labs lane's (snprintf);
    a sibling that proves its own donor-form Definition of the same name replaces the one here.
    bcmp: the donor's abcmp_realizes (YG0d.v:353) at PC_bcmp. Poison / unpoison: a Theorem Labs lane's tfib_poison16 /
-   tfib_unpoison16 (a working branch c2ebbe1a618 lane-files/f497c5c09ea6/POISON.md section 7). *)
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMH_Rt.v (a working branch 3e35620c52e) *)
+   tfib_unpoison16 (a working branch lane-files/f497c5c09ea6/POISON.md section 7). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMH_Rt.v (a working branch) *)
 (* Modified by Theorem Labs, 2026-10 (a Theorem Labs lane, G9 row P8-A-base): fuzz_disco.asan's SUBSET of fm's file, the two
    names the G9 snprintf route reads (FMbz_clean.v, FMrt_lift.v): rt_post_ro and
    rt_post_roU, fm's text, module paths changed (no numeral in them). Dropped: the pure answer models, fm's format

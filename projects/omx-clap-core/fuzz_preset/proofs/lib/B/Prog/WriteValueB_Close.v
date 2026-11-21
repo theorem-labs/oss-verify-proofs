@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset image B' (#102 asan-ubsan pin d663f82d), lane of write_value: THE CLOSE
    of write_value's container walk (wv_close): from the close state wv_clR (write_value + 4 * 173, old B 0x8710c, the ONE
    closing-bracket path of the empty and the non-empty container) at ANY current float state, to the container's final
@@ -23,7 +24,7 @@
    fpostWFR at the entry float state by WriteValueB_Defs.wv_fpostW_FR with wv_commonR's fregs_kept_x (wvc_postF). The
    closing bracket's piece completes the text: wv_clP X ++ [[93]] (or [[125]]) = WriterValue.wvpieces (wvc_pcs_arr /
    wvc_pcs_obj, from WriteValueB_Base.wv_arr_pieces / wv_obj_pieces).
-   PORTED (not cited) from the kit owner's image-A walk PRW_write_value.v (a working branch 7819c4b4583,
+   PORTED (not cited) from the kit owner's image-A walk PRW_write_value.v (a working branch,
    wv_cont's close :4262-4357, wv_post_P :3638-3652) and the image-A loop writer's scratch PRW_write_value_lp.v (wvl_seat,
    wvl_nfp, wvl_chain_one, wvl_tail_chain, wvl_tail_aregs, wvl_nowin_gen, wvl_seg_210): B's frame (192), B's ledger
    (most / own), B's join state wv_cl, the float state.

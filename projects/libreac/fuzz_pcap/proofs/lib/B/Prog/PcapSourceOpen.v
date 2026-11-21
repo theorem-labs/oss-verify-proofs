@@ -5,9 +5,9 @@
    BASE + AF_pcap_source_open, AF = 0xa58), proving lib/A's image-generic contract tpcap_source_open_specX
    (lib/A/Prog/PcapSourceOpenDefs.v) at SEGS = pa_segs, rlo / rhi = pa_relro_lo / pa_relro_hi,
    apath / alen / afile = VAL (A_OBJ 3) / VAL (A_OBJ 4) / VAL (A_OBJ 2) (0x20d00 "<fuzz-input>", g_file_len
-   0x5d3e40, g_file 0x5d3e60), with FM_RA and roimg as parameters. At ossv/recipes 25e3d17bdb50 (2026-10-29), there was no released proof of this function at
-   this image (rule 24 lookup, a Theorem Labs lane, 22:35Z): the v1.8 ubsan proof (lib/U/Prog/pcap_source_open.v at
-   origin/ossv/recipes c8557374ad2e) serves only as the template for the UBSan guards.
+   0x5d3e40, g_file 0x5d3e60), with FM_RA and roimg as parameters. At (2026-10-29), there was no released proof of this function at
+   this image (rule 24 lookup, a Theorem Labs lane, 22:35Z): the v1.8 ubsan proof (lib/U/Prog/pcap_source_open.v)
+   serves only as the template for the UBSan guards.
 
    The code. Up to the fopen call it is lib/A's ASan code byte for byte at
    other pcs (asan 0x8145c.. = asan-ubsan 0x811e0..): the prologue saves ra, s0 .. s9 (0x811e0..0x81210) and
@@ -39,8 +39,8 @@
    range_addressable, and op_fopen_ret's FILE-block footprint fact for the fclose of the tail.
 
    The callee hypotheses, used at this image as Section hypotheses: FOPEN : tlibreac_fuzz_fopen_specX
-   (lib/A/Prog/PcapFuzzFopenDefs.v), AFREAD : afread_spec (lib/A/Stdio/PFreadISpec.v:138), AFCLOSE :
-   afclose_source_spec (lib/A/Stdio/PFclose.v:209), ASM1 : astack_malloc_realizes (lib/Reusable/YG0d.v:285),
+   (lib/A/Prog/PcapFuzzFopenDefs.v), AFREAD : afread_spec (lib/A/Stdio/PFreadISpec.v:139), AFCLOSE :
+   afclose_source_spec (lib/A/Stdio/PFclose.v:210), ASM1 : astack_malloc_realizes (lib/Reusable/YG0d.v:285),
    ASF : astack_free_law (lib/Reusable/YG0d.v:301) and FFL : frame_flag_lawP (lib/Reusable/YCbq.v:797), the meter laws MLAW / MLAWF /
    FM, ASIL : asource_img_laws, and the kit's LAWS / TL / TLF / ML. Four instance obligations beyond the kit:
    ROK (roimg reads only image bytes outside the runtime's statics, errno and the open-file list head; applied at
@@ -48,8 +48,9 @@
    literal's shadow, as a law of every AR state: the frame request's kept clauses do not keep a global's shadow,
    YG0n.v:241 makes it aowned; discharged by the instance through AR_zshadow_law, YG0d.v:435-438), HGX (g_file_len
    and g_file are image bytes outside the runtime's statics and errno; the gx_ok shape of
-   lib/A/Prog/PcapEntryDefs.v:366, 395, discharged by the harness), and RO : ro_below_ofl (as
+   lib/A/Prog/PcapEntryDefs.v:367, 395, discharged by the harness), and RO : ro_below_ofl (as
    lib/A/Prog/PcapHarnessTail.v:37). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -126,7 +127,7 @@ rewrite Z.land_ones, Z.mod_small by lia.
 rewrite Z.ldiff_ones_r by lia. rewrite Z.shiftr_div_pow2, Z.shiftl_mul_pow2 by lia. change (2 ^ 5) with 32. lia.
 Qed.
 
-(* cgif_file_fuzzer lib/A/ACer.v:156-164 (origin/ossv/recipes c8557374ad2e). *)
+(* cgif_file_fuzzer lib/A/ACer.v:156-164 (theorem-labs/oss-verify-proofs@6b32741d849a). *)
 Lemma denot_and_m32 : forall E n v c, ew E n = Z_to_bv 64 v -> 0 <= v + c -> v + c < 2 ^ 64 -> 0 <= v < 2 ^ 64 ->
   sv_denot E (SAlu ALU_AND (SOff n c) (SLit (-32))) = Z_to_bv 64 (32 * ((v + c) / 32)).
 Proof.
@@ -271,7 +272,7 @@ Context {PI : PAImg pcap_listing}.
 #[local] Abbreviation BASE := (@pa_val _ pcap_listing PI A_TEXT).
 #[local] Abbreviation rdW W mem := (mrestrict (w_H W) mem).
 
-(* ---- what a byte-wise memory equality carries (lib/B/Prog/PcapSourceClose.v:86-109) ---- *)
+(* ---- what a byte-wise memory equality carries (lib/B/Prog/PcapSourceClose.v:87-110) ---- *)
 Lemma vm_frame : forall (m m' : word -> option byte) a n v,
   (forall x, a <= x < a + Z.of_nat n -> mbyte SEGS m' x = mbyte SEGS m x) ->
   val_mem SEGS m a n v -> val_mem SEGS m' a n v.
@@ -484,7 +485,7 @@ Hypothesis HPATH : forall ly S (W : world SEGS) mem md, AR SEGS B ly S W mem md 
   shadow_hull_vis (aview SEGS (w_H W) mem) (VAL (A_OBJ 3)) 13.
 (* The two globals the call reads through libreac_fuzz_fopen (object 4 = g_file_len 0x5d3e40, object 2 = g_file
    0x5d3e60) are image bytes that are not the runtime's own statics and not errno: the harness's contract states
-   the same of them (lib/A/Prog/PcapEntryDefs.v:366, 395 `gx_ok SEGS B pe_G` over G = 0x5d3f40.. / 0x5d3f60.. of
+   the same of them (lib/A/Prog/PcapEntryDefs.v:367, 395 `gx_ok SEGS B pe_G` over G = 0x5d3f40.. / 0x5d3f60.. of
    the ASan pin). Without it the frame request's kept clauses say nothing about them (ajournal's image clause and
    acall_kept's both exclude as_owned_static and errno). *)
 Hypothesis HGX : forall a, (VAL (A_OBJ 4) <= a < VAL (A_OBJ 4) + 8) \/ (VAL (A_OBJ 2) <= a < VAL (A_OBJ 2) + 8) ->
@@ -497,7 +498,7 @@ Context {RO : ro_below_ofl SEGS pa_relro_lo pa_relro_hi}.
 
 (* What the caller keeps across the head: the three steps before the call of libreac_fuzz_fopen, each already
    reduced to its three clauses (ceiling+ outside this call's window, the image, the caller's blocks and
-   frames), and then the callee's own journal. The shape follows lib/B/Prog/PcapSourceClose.v:332-396
+   frames), and then the callee's own journal. The shape follows lib/B/Prog/PcapSourceClose.v:333-397
    (tclose_kept_call). The written set is empty: up to the fopen return the walk writes only its own machine
    frame, its new frame F, F's shadow and the slot *(s1), never a byte of the caller's. *)
 Lemma topen_kept_call : forall lyc Sc (W : world SEGS) memc mdc S2 mem1 (mdq : Model)

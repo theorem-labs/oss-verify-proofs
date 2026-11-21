@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the proofs handle the vvar and vDSO-text cases (range_meets_vvar, vdso_text_at), and P_silent1 takes the pending-syscall fact that RomBase.sys_rob_instr needs. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -442,16 +443,16 @@ Lemma interp_eff_accesses_restrict : forall t m c mr' rs,
     /\ (forall x, H x = true -> mf' x = m x)
     /\ ranges_avoid H rs.
 Proof.
-  induction t as [c0 | c0 | c0 | c0 | c0 | c0 | n a k IH | n a v k IH]; (* [comment removed for export] *)
+  induction t as [c0 | c0 | c0 | c0 | c0 | c0 | n a k IH | n a v k IH];
     intros m c mr' rs Hi; cbn [interp_eff_accesses] in Hi |- *;
     try discriminate.
-  - (* [comment removed for export] *)
+  - (* EDone *)
     injection Hi as <- <- <-. exists m.
     split; [reflexivity|]. split; [reflexivity|]. split; [intros; reflexivity|].
     apply ranges_avoid_nil.
-  - (* [comment removed for export] *)
+  - (* ELoad *)
     destruct (ov_read_bytes segs (mrestrict H m) a (width_bytes n)) as [bs|] eqn:Hrd;
-      [|discriminate].
+      [| destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
     destruct (ov_read_bytes_restrict _ m a bs Hrd) as [Hfull Hav].
     rewrite Hfull.
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) (mrestrict H m))
@@ -461,7 +462,7 @@ Proof.
     rewrite Hint. cbn [access_value accessed_ranges].
     exists mf'. split; [reflexivity|]. split; [exact Hmr|]. split; [exact Hhid|].
     apply ranges_avoid_cons; assumption.
-  - (* [comment removed for export] *)
+  - (* EStore *)
     destruct (store_ok segs (mrestrict H m) a (width_bytes n)) eqn:Hso; [|discriminate].
     destruct (store_ok_restrict _ m a Hso) as [Hfull Hav]. rewrite Hfull.
     assert (Hlen : length (Z_to_le_bytes (width_bytes n) (bv_unsigned v)) = width_bytes n)
@@ -533,6 +534,7 @@ Proof.
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|].
   { exact (decode_exec_accesses_restrict ms w msr' rs' Hs). }
   exfalso. unfold fetch_failure in Hs.
+  destruct (vdso_text_at segs (ms_pc ms)); [discriminate|].
   destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
   destruct (fetch_byte_traps segs (ms_pc ms) || fetch_byte_traps segs (ms_pc ms + 1)
             || match fetch_half_any segs (ms_mem ms) (ms_pc ms) with
@@ -593,6 +595,7 @@ Proof.
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|]; [exact (Hdec w Hs)|].
   exfalso. destruct (fetch_failure segs (ms_mem ms) (ms_pc ms)) eqn:Hf; try discriminate.
   unfold fetch_failure in Hf.
+  destruct (vdso_text_at segs (ms_pc ms)); [discriminate|].
   destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
   destruct (fetch_byte_traps segs (ms_pc ms) || fetch_byte_traps segs (ms_pc ms + 1)
             || match fetch_half_any segs (ms_mem ms) (ms_pc ms) with
@@ -1105,7 +1108,7 @@ Qed.
 (* [comment removed for export] *)
 Variable P : config -> Prop.
 Hypothesis P_silent1 : forall c c',
-  node_ok c unit (fun _ => []) (fun _ => c') -> P c' -> P c.
+  node_ok c unit (fun _ => []) (fun _ => c') -> ms_svc_pending (cfg_ms c) = None -> P c' -> P c.
 
 Theorem rz_step_restricted : forall A ms msr' model,
   lazy_cover H (m_vm_lazy model) A -> A_wf A -> MInv A model ->
@@ -1119,7 +1122,7 @@ Proof.
   intros A ms msr' model Hcov Hwf Hinv Hh Hsvc Hs Hk.
   destruct (node_instr_restricted A ms msr' model Hcov Hwf Hinv Hh Hsvc Hs)
     as (model' & Hinv' & Hsame & _ & _ & Hnode).
-  exact (P_silent1 _ _ Hnode (Hk model' Hinv' Hsame)).
+  exact (P_silent1 _ _ Hnode Hsvc (Hk model' Hinv' Hsame)).
 Qed.
 
 Theorem rz_msteps_restricted : forall A msr0 msr',
@@ -1140,7 +1143,7 @@ Proof.
   - rewrite restrict_svc_pending in Hsvc.
     destruct (node_instr_restricted A ms msr1 model Hcov Hwf Hinv Hh Hsvc Hstep)
       as (model1 & Hinv1 & Hsame1 & Hcl1 & _ & Hnode).
-    apply (P_silent1 _ _ Hnode).
+    apply (P_silent1 _ _ Hnode Hsvc).
     pose proof (same_but_materialized_frame model model1 Hsame1) as Hfr.
     apply (IH (unrestrict H (ms_mem ms) msr1) model1).
     + symmetry. apply restrict_unrestrict_clean. exact Hcl1.

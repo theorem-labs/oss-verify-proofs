@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (treach over nstep_cfg acfg). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
-From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Lib Require Import ITree Nodes.
+From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Lib Require Import ITree Nodes NodesCfg.
 From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Spec Require Import Monad MSafe.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
@@ -17,7 +18,10 @@ Import ITree.Exc.
 Fixpoint treach {R : Type} (t : itree node R) (mo : Model) (P : R -> Model -> Prop) : Prop :=
   match t with
   | Ret r => P r mo
-  | Vis n k => exists rsp mo' evs, nstep n mo rsp mo' evs /\ treach (k rsp) mo' P
+  (* LPS 75d69e00: over [nstep_cfg acfg], matching [twf] in MSafe.v.  [treach] is an
+     EXISTENTIAL, so this strengthens it -- the witnessed step is non-spurious -- which
+     is what [treach_twf] needs to compose with [twf]'s weakened Vis clause. *)
+  | Vis n k => exists rsp mo' evs, nstep_cfg acfg n mo rsp mo' evs /\ treach (k rsp) mo' P
   end.
 
 Lemma treach_mono : forall {R} (t : itree node R) mo (P P' : R -> Model -> Prop),
@@ -99,7 +103,7 @@ Proof. intros s mo []. Qed.
 
 (* [comment removed for export] *)
 Lemma mreach_sys {A} (n : node) (dec : resp -> option A) (P : assn St) (Q : A -> assn St) :
-  (forall s mo, P s mo -> exists rsp mo' evs a, nstep n mo rsp mo' evs /\ dec rsp = Some a /\ Q a s mo') ->
+  (forall s mo, P s mo -> exists rsp mo' evs a, nstep_cfg acfg n mo rsp mo' evs /\ dec rsp = Some a /\ Q a s mo') ->
   mreach P (msys n dec) Q.
 Proof.
   intros H s mo HP. destruct (H s mo HP) as (rsp & mo' & evs & a & Hst & Hd & HQ).

@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: generated for fuzz_ctrl's asan image (sha256 aac16e1fe728..., symbols from its unstripped twin 78efaeda1de5...) in the form of proofs/cgif/cgif_file_fuzzer/lib/A/AB12.v (origin/ossv/recipes c8557374ad2e), by the atable emitter of a Theorem Labs lane (atable.py sha256 7b569be5151fa55d...). *)
+(* Modified by Theorem Labs, 2026-10: generated for fuzz_ctrl's asan image (sha256 aac16e1fe728..., symbols from its unstripped twin 78efaeda1de5...) in the form of proofs/cgif/cgif_file_fuzzer/lib/A/AB12.v (theorem-labs/oss-verify-proofs@6b32741d849a), by the atable emitter of a Theorem Labs lane (atable.py sha256 7b569be5151fa55d...). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YK09.

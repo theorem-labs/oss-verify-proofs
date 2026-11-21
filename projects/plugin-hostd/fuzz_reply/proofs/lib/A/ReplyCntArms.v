@@ -4,20 +4,21 @@
    the form of the cgif walks (lib/A/ACf5.v rt_from segments) over the cut invariants of
    W_LLVMFuzzerTestOneInput_cut.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_LLVMFuzzerTestOneInput_remove.v, with its module names changed; 321 of its 391 lines of code are new or changed and 5205 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The drain and remove arms' count rules (a Theorem Labs lane's piece A-CNT-arms): pure model rules for any count predicate
    P, in family form - each for every RINV, given the arm Section's own RI hypotheses as arguments - so each arm plugs
    its rule inside its Section by `exact`.  proves no function (kind: invariant lemma).
-   - cnt_dr_grow: lib/A/W_LLVMFuzzerTestOneInput_drain_x.v:489-508 DR_CNT_grow (drainarm 80da6149505).  Arguments:
+   - cnt_dr_grow: lib/A/W_LLVMFuzzerTestOneInput_drain_x.v:490-509 DR_CNT_grow (drainarm).  Arguments:
      drain_x's RI_src (:512) and RI_pair (:520).
    - cnt_dr_cnl: drain_x.v:638 DR_CNT_cnl at the top's dr_cnl_pk (ReplyTrPeakCnl.cnl_pk over the drained lines), from
      s5-r1d's ReplyLScntRP.lsc_cnl_W8.
-   - cnt_rm_cnl / cnt_rm_cshe / cnt_rm_sr: lib/A/W_LLVMFuzzerTestOneInput_remove_x.v:277-292 RM_CNT_cnl / _cshe / _sr
-     (rmexit 250502f7048), with its rm3_pre (:94-101).  Arguments: remove_x's RI_rm_rr_pair (:154), and for cshe / sr
+   - cnt_rm_cnl / cnt_rm_cshe / cnt_rm_sr: lib/A/W_LLVMFuzzerTestOneInput_remove_x.v:278-293 RM_CNT_cnl / _cshe / _sr
+     (rmexit), with its rm3_pre (:94-101).  Arguments: remove_x's RI_rm_rr_pair (:154), and for cshe / sr
      RI_rm_cnl_pre (:178).  The bound: relay_remove's model change is at most its trace's peak + 1 (cnt_rm_rr; the
      drain is a prefix of rr_tr, the removed entry only drops blocks, g_out's capacity after the key run adds at most
      1), check_no_loss's at most its trace's peak + 1 (cnt_rm_cnl_src; rm_cnl_ok bounds the held vector's capacity
      only), check_shape_ends only drops held records; rm_pk's + 4 covers the two 1s and cnl_pk's + 2.
-   The accounting is a Theorem Labs lane's lib/A/ReplyCntAcc.v (moved verbatim from its ReplyGnCnt.v, 1dc17932836),
+   The accounting is a Theorem Labs lane's lib/A/ReplyCntAcc.v (moved verbatim from its ReplyGnCnt.v),
    cited: acc_drain (a drain's model change is at most its trace's net), za / tz / ws and za_* (the P-counts of the
    blocks), acc_hpkh, acc_texts_lines, acc_za_out, acc_cnl_run, acc_cshe_src; also ReplyLScntRP.lsc_net_le_peak (a
    trace's net is at most its peak) and lsc_cnl_W8 / lsc_cnl_W8_empty (check_no_loss's peak over the drained lines),
@@ -184,7 +185,7 @@ Qed.
 End dr.
 
 (* ================================================================== the remove arm: RM_CNT_cnl / _cshe / _sr *)
-(* rm3_pre is remove_x.v:94-101's (RiRestate, 250502f7048), cited as RX.rm3_pre: the found entry's aentry_ok clauses
+(* rm3_pre is remove_x.v:94-101's (RiRestate), cited as RX.rm3_pre: the found entry's aentry_ok clauses
    (W_rep.v:121, :123, :124, :125, :131-132) and the slot's pending records (:91) *)
 
 Local Abbreviation zs := (fold_right Z.add 0).

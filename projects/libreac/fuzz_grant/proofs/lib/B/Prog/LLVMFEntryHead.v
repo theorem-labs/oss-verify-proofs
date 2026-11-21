@@ -3,9 +3,10 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntryHead), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v, proofs/cgif/cgif_file_fuzzer/lib/A/ACa2.v, proofs/cgif/cgif_file_fuzzer/lib/A/ACez.v, proofs/cgif/cgif_file_fuzzer/lib/A/AChf.v, proofs/cgif/cgif_file_fuzzer/lib/A/AChz.v. *)
 (* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/Prog/GrantEntryHead.v. *)
-(* Ported from lib/A/Prog/GrantEntryHead.v, blob 5c59cd15e8a, at a working branch 5651bf66924, whose lib/A/AB01.v is the
-   current 1e6f4323d1e; the same blob byte for byte is on a working branch 7c8c67da870, a working branch 552860c6366 and
-   a working branch 7d31e8f3534. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Ported from lib/A/Prog/GrantEntryHead.v, blob 5c59cd15e8a, at a working branch, whose lib/A/AB01.v is the
+   current 1e6f4323d1e; the same blob byte for byte is on a working branch, a working branch and
+   a working branch. *)
 (* The entry segment of fuzz_grant's entry function LLVMFuzzerTestOneInput on image B (0x80a3c, the ASan + UBSan
    build): the slots 0x80a3c .. 0x80d04 (GP_entry .. GP_hdr).
 

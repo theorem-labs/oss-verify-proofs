@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFg6.v, with its module paths changed, and its fuzz_reply.asan addresses relocated from cgif_file_fuzzer.asan (8 numerals; per-numeral report). *)
-(* Modified by a Theorem Labs lane (ReallocPrimary.CfW.ReplyEnqReloc), 2026-10-30: cgif_file's B3 premise weakening of the released Enqueue walk files (commit ba6af81cc6b, its lib/YFg6.v) applied 3-way to this image-A twin (a Theorem Labs lane's yes 10-30 05:35Z): only premises get weaker (fh_Hnn, the reg-41 class-24 offset atom / hit_ranges, fh_hit, fh_Hb, where this file states them) plus the proof-script lines they force; the fix de1e889fb0f touches no file here. *)
+(* Modified by a Theorem Labs lane (ReallocPrimary.CfW.ReplyEnqReloc), 2026-10-30: cgif_file's B3 premise weakening of the released Enqueue walk files (its lib/YFg6.v) applied 3-way to this image-A twin (a Theorem Labs lane's yes 10-30 05:35Z): only premises get weaker (fh_Hnn, the reg-41 class-24 offset atom / hit_ranges, fh_hit, fh_Hb, where this file states them) plus the proof-script lines they force; the fix touches no file here. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

@@ -3,8 +3,9 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the contract and walk of ctrl_lay_block on fuzz_grant.asan, written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8h.v, proofs/cgif/cgif_file_fuzzer/lib/A/AC8k.v, proofs/cgif/cgif_file_fuzzer/lib/A/AChz.v, proofs/cgif/cgif_file_fuzzer/lib/A/ACa2.v, proofs/cgif/cgif_file_fuzzer/lib/A/ACb8.v. *)
 (* Modified by Theorem Labs, 2026-10: the walk of ctrl_lay_block on image B (fuzz_grant.asan-ubsan), ported from
-   image A's closed walk lib/A/Prog/CtrlLayBlock.v (a working branch 5aae1e8a0ce), itself written with proof steps adapted
+   image A's closed walk lib/A/Prog/CtrlLayBlock.v (a working branch), itself written with proof steps adapted
    from proofs/cgif/cgif_file_fuzzer/lib/A/AC8h.v, AC8k.v, AChz.v, ACa2.v and ACb8.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* ctrl_lay_block (0x83bfc, 992 bytes) on image B, for the one call the program makes: reac_ctrl_stamp_headamp
    passes p, the row B_ROW = CTRL_FRAMES + 240 (0x9d4d0, byte +2 = 2 = BLOCK_TMPL), a null model pointer and
    g = its class-0 frame + 32.
@@ -34,12 +35,12 @@
    The 32 bytes [p + 18, p + 50) are client bytes of a live frame (cb, pb) of the caller's side stack for frames
    (not machine-stack bytes as on image A), so the walk runs over the caller's own journal (twr_ok gives the right
    to write them) and proves tcj_kept from the calls' kept-facts and the frames of the runs. *)
-(* PREMISE MAP. What tb_ctrl_lay_block_spec (GrantBContracts.v; its block is the same text at a22dd31ae27 and
-   4d7ced43548) adds over image A's tctrl_lay_block_spec (lib/A/Prog/CtrlLayBlockSpec.v, a working branch 5aae1e8a0ce),
+(* PREMISE MAP. What tb_ctrl_lay_block_spec (GrantBContracts.v; its block is the same text and)
+   adds over image A's tctrl_lay_block_spec (lib/A/Prog/CtrlLayBlockSpec.v, a working branch),
    from a diff of the two statement texts. "Used at" names the lines of this file that consume the premise. Every
    premise is discharged by the caller, reac_ctrl_stamp_headamp's walk (the image facts through IMG_CTRL_STAMP).
    1. TM (a new quantified variable) and `tmpl_place TM`. Image A: TM is a Section Variable of A's walk (A's
-      CtrlLayBlock.v:91), its range and in_zs Section hypotheses. tmpl_place: UNUSED (bound as HTp at :1180 and
+      CtrlLayBlock.v:92), its range and in_zs Section hypotheses. tmpl_place: UNUSED (bound as HTp at :1180 and
       dropped; the walk takes TM's place from IMG_CTRL_TMPL's own conjuncts).
    2. `IMG_CTRL_ROW_LAY TM`: the row's bytes +2 = 2, +8 = TM, +16 = 18, +17 = 3, in the image view. Why: the code reads
       them after the class-1 frame call 0x83c70 (at 0x83d5c / 0x83e1c / 0x83e98 / 0x83eb4), and that call keeps an

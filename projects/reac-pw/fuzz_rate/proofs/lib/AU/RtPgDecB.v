@@ -1,17 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02Tail.v at 57c6c35a3757 (the stage form of
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02Tail.v (the stage form of
    a walk with calls: a run to the `jal`, the callee's contract through SRr_bind, a fresh entry state at the return
    pc; tl_enter, tl_r234, tl_sp_of_cs) for reac-pw/fuzz_rate's image A: rate's pcs, registers, callees and contracts
    (lib/A/RtPgCSpec.v), the cut states of lib/A/RtPgSeg.v and the M02 seam of lib/A/RtPgM02Base.v; the asked[t]
    check, the two closed_list scans, the zone of the two .data.rel.ro tables and the latch of the decide loop are
    new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgDec.v at 25294b2cbc77 for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgDec.v for image B
    (fuzz_rate.asan-ubsan): image B's pcs, code table and callee addresses; the turn counter is s10 = t with the bound
    s9 = 2 (no turn flag), asked[t] is the real-frame cell R + 0x198 + 4 t read twice without a check (no asked[t]
    check, a second load before reac_rate_bit), the role is s5, cfg_decide's answer is held in s6 and the mask is
    reloaded into s6 from R + 0x148, closed_list is s2 and the shadow offset s4; the cuts are lib/AU/RtPgSegB.v's, the
    M02 seam lib/AU/RtPgM02BaseB.v's, the callees' walks lib/AU's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14; every address measured on the unstripped twin
    a1e5fa55ae27e657ea2719297ec4c037110f10fa9047c3ea7bb6ea7fcb358cb1, whose loaded code bytes are the pin's). Proves no

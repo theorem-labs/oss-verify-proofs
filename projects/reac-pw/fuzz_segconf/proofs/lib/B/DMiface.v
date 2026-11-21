@@ -1,4 +1,4 @@
-(* copied from proofs/cgif/cgif_file_fuzzer/lib/DMiface.v @ 86aa4177b94 (c-asan, cold/c-asan-nmax-param: F1 / F2 + NMAX-PARAM + EV_MAX value-independence; installs in c5 ~18:30Z), module paths changed only. *)
+(* copied from proofs/cgif/cgif_file_fuzzer/lib/DMiface.v (c-asan, cold/c-asan-nmax-param: F1 / F2 + NMAX-PARAM + EV_MAX value-independence; installs in c5 ~18:30Z), module paths changed only. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* The names the real-merge drain proof (DMdrain.v) reads the allocator relation by.
@@ -27,6 +27,7 @@
    instances AGif2cgif.AImg_cgif and DGif0cgif.DImg_cgif); transfer_g, DSTACK, plist_cells and puser are
    ImgBaseDG's copies of YFeu's. *)
 (* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/Reusable/DMiface.v, derived mechanically (bkit derive_b.py): its Require lines name the lib/B copies; nothing else differs. The comments are the A file's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -72,7 +73,7 @@ Definition bobj (ly : alayout) (b : batch) (a : Z) : Prop :=
 ly_space ly + b_self b <= a < ly_space ly + b_self b + kBatchBytes.
 (* The quarantine's words outside the batch objects: the mutex word (inst + o_quar + 152 .. 156) and the global
    header (+ 160 .. 192), the thread cache's header (T + t_qc .. + 32). Bytes + 156 .. 160 are outside it: cgif's ARm
-   keeps const cells there (YF0m.v:211-212; h-w6-2 03:14Z), as the released window YFgj.WINF does. *)
+   keeps const cells there (YF0m.v:212-213; h-w6-2 03:14Z), as the released window YFgj.WINF does. *)
 Definition qhdr (inst : Z) (ly : alayout) (a : Z) : Prop :=
 (inst + o_quar + 152 <= a < inst + o_quar + 156) \/ (inst + o_quar + 160 <= a < inst + o_quar + 192) \/
 (ly_T ly + t_qc <= a < ly_T ly + t_qc + 32).

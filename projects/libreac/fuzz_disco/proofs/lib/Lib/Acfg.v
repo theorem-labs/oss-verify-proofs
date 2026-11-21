@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: libreac/fuzz_boxreg's repair of this file, with this unit's module paths. *)
 From Stdlib Require Import ZArith NArith List Lia Bool Classical_Prop.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -56,7 +57,7 @@ Lemma acfg_family_off_no : forall i n,
 Proof.
   intros vi vn k1 k2. unfold injected_family_off. rewrite k1.
   cbn [alloc_mark_sysnos In] in k2.
-  destruct k2 as [<- | [<- | [<- | [<- | []]]]]; reflexivity.
+  destruct k2 as [<- | [<- | [<- | [<- | [<- | []]]]]]; reflexivity.
 Qed.
 
 Lemma acfg_nonspurious : forall i m eff,
@@ -390,6 +391,9 @@ Proof.
     [ vms vmodel vms' vmodel' k2 k3 k4
     | vms vmodel k2 k3 k4
     | vms vmodel k2 k3 k4
+    | vms vmodel vfn vn veff vmodel' vmodel'' vevs k2 k3 k4 kf1 kf2 kf3 kf4 kf5 kf6
+    | vms vmodel vfn vn veff vmodel' vevs k2 k3 k4 kg1 kg2 kg3 kg4 kg5 kg6
+    | vms vmodel vfn k2 k3 k4 kh1 kh2
     | vms vmodel vx8 veff vmodel' vmodel'' vevs k2 k3 k4 k5 k6
     | vms vmodel vx8 veff vmodel' vevs k2 k3 k4 k5 k6
     | vms vmodel vx8 veff vmodel' vevs vcode k2 k3 k4 k5 k6
@@ -398,7 +402,10 @@ Proof.
     intros k9; cbn [cfg_ms cfg_model] in k9.
   - exact (sstep_cfg_instr segs ACFG vms vmodel vms' vmodel' k2 k3 k4).
   - exact (sstep_cfg_instr_fault segs ACFG vms vmodel k2 k3 k4).
-  - exact (sstep_cfg_instr_unmodeled segs ACFG vms vmodel k2 k3 k4).
+  - eapply sstep_cfg_instr_unmodeled; eassumption.
+  - eapply sstep_cfg_vdso_call; eassumption.
+  - eapply sstep_cfg_vdso_materialization_fault; eassumption.
+  - eapply sstep_cfg_vdso_unmodeled; eassumption.
   - exact (sstep_cfg_syscall segs ACFG vms vmodel vx8 veff vmodel' vmodel'' vevs
              k2 k3 k4 (k9 vx8 veff vmodel' vevs k3 k4 k5) k5 k6).
   - exact (sstep_cfg_syscall_materialization_fault segs ACFG vms vmodel vx8 veff vmodel' vevs
@@ -503,6 +510,9 @@ Proof.
     [ vms2 vmodel2 vms' vmodel' k4 k5 k6
     | vms2 vmodel2 k4 k5 k6
     | vms2 vmodel2 k4 k5 k6
+    | vms2 vmodel2 vfn2 vn2 veff vmodel' vmodel'' vevs2 k4 k5 k6 kf1 kf2 kf3 kf4 kf5 kf6
+    | vms2 vmodel2 vfn2 vn2 veff vmodel' vevs2 k4 k5 k6 kg1 kg2 kg3 kg4 kg5 kg6
+    | vms2 vmodel2 vfn2 k4 k5 k6 kh1 kh2
     | vms2 vmodel2 vy veff vmodel' vmodel'' vevs2 k4 k5 k6 k7 k8 k9
     | vms2 vmodel2 vy veff vmodel' vevs2 k4 k5 k6 k7 k8 k9
     | vms2 vmodel2 vy veff vmodel' vevs2 vcode k4 k5 k6 k7 k8

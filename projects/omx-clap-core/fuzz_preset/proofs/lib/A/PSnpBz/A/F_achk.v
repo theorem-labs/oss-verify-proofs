@@ -1,9 +1,10 @@
-(* Modified by Theorem Labs, 2026-10: moved from image A (fuzz_preset.asan d83eb25d), commit 3244f5c71f6, to the #102 pin A' (fuzz_preset.asan 1be0f53d, unstripped bff8519b): 0 address numerals by the frozen alreloc (sha256 c4338d099cfb8025, commit d99acc3edd9, same-unit move, --assume-source), each by symbol + offset in both images, or for a .rodata string by its unique content in both; GXA keys and history lines kept (report and decisions: the relocation record, the internal file resolve-A-why.tsv). *)
+(* Modified by Theorem Labs, 2026-10: moved from image A (fuzz_preset.asan d83eb25d), to the #102 pin A' (fuzz_preset.asan 1be0f53d, unstripped bff8519b): 0 address numerals by the frozen alreloc (sha256 c4338d099cfb8025, same-unit move, --assume-source), each by symbol + offset in both images, or for a .rodata string by its unique content in both; GXA keys and history lines kept (report and decisions: the relocation record, the internal file resolve-A-why.tsv). *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: relocated onto omx-clap-core/fuzz_manifest.asan from commit 840c4afa7e2 proofs/omx-clap-core/fuzz_state/lib/A/Bz/A/F_achk.v: module paths and 0 address numerals by alreloc 7a60a01f65f446d8, each paired by object; the decided numerals are listed in the commit body. *)
-(* Modified by Theorem Labs, 2026-10: relocated onto omx-clap-core/fuzz_preset.asan (image A, d83eb25d) from commit 7e395de08f5 proofs/omx-clap-core/fuzz_manifest/lib/A/Bz/A/F_achk.v: module paths (lib/A/Bz -> lib/A/PSnpBz) and 0 address numerals by alreloc (sha256 c4338d099cfb8025, commit d99acc3edd97), each by symbol + offset in both images (per-numeral report: the relocation record, reloc-A). *)
+(* Modified by Theorem Labs, 2026-10: relocated onto omx-clap-core/fuzz_manifest.asan from proofs/omx-clap-core/fuzz_state/lib/A/Bz/A/F_achk.v: module paths and 0 address numerals by alreloc 7a60a01f65f446d8, each paired by object; the decided numerals are listed in the commit body. *)
+(* Modified by Theorem Labs, 2026-10: relocated onto omx-clap-core/fuzz_preset.asan (image A, d83eb25d) from proofs/omx-clap-core/fuzz_manifest/lib/A/Bz/A/F_achk.v: module paths (lib/A/Bz -> lib/A/PSnpBz) and 0 address numerals by alreloc (sha256 c4338d099cfb8025), each by symbol + offset in both images (per-numeral report: the relocation record, reloc-A). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A.PSnpBz Require BvWfKernel.
 (* [comment removed for export] *)
@@ -31,7 +32,7 @@ Proof.
   exists w1, w2. rewrite Z.add_0_r in W1. replace (p + (n - 1)) with (p + n - 1) in W2 by lia. split; assumption.
 Qed.
 
-(* Prefixes only (p' = p; ct: p <= p'): this tree's region_in_mem (I_consts.v:20-21) also bounds b + 7, which a
+(* Prefixes only (p' = p; ct: p <= p'): this tree's region_in_mem (I_consts.v:21-22) also bounds b + 7, which a
    later start p' does not keep. The one use (I_pcxchk2.v, the strnlen prefix of a %.Ns string) has p' = p. *)
 Lemma chkr_sub : forall m p n p' n', chkr m p n -> p' = p -> p' + n' <= p + n -> 0 <= n' -> chkr m p' n'.
 Proof.

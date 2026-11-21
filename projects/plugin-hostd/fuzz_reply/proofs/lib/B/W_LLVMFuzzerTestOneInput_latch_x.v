@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: SEG_LATCH of the ASan+UBSan walk of fuzz_reply's LLVMFuzzerTestOneInput (image B,
    fuzz_reply.asan-ubsan) over a generic allocator relation ARx (a Theorem Labs lane's route (b)): the ARx conversion of
-   lib/B/W_LLVMFuzzerTestOneInput_latch.v's lf_seg_latch (a Theorem Labs lane's, Qed at a working branch
-   ee519e5e2f5), stated as the Section hypothesis SEG_LATCH of lib/B/W_LLVMFuzzerTestOneInput_cut_x.v Section w.  The
-   AR file is NOT edited.  The template is image A's lib/A/W_LLVMFuzzerTestOneInput_latch_x.v (LatchX, 06d592d632a):
+   lib/B/W_LLVMFuzzerTestOneInput_latch.v's lf_seg_latch (a Theorem Labs lane's, Qed at a working branch),
+   stated as the Section hypothesis SEG_LATCH of lib/B/W_LLVMFuzzerTestOneInput_cut_x.v Section w.  The
+   AR file is NOT edited.  The template is image A's lib/A/W_LLVMFuzzerTestOneInput_latch_x.v (LatchX):
    B's AR file is A's with B's code (no `full` flag, s9 = t, the loop test at the head, fr_globals_b), and every
    conversion step below is that file's.
    - Cited from the AR file (they do not mention AR): the keep windows (lt_keep_lo, lt_keep_hi, lt_akept_of_low,
@@ -378,7 +379,7 @@ Hypothesis HP0 : forall ly S Hp (W : world segs) mem md, ARx ly S Hp W mem md ->
 Hypothesis HG : gx_ok segs B G_fr.
 Variable LSx : lfcx -> Z -> lmod -> alayout -> astate -> Prop.
 Variable RINV : lfcx -> Z -> lmod -> Prop.
-(* _latch.v:294 W1_check_bounded, converted: check_bounded's contract over ARx, B's W_contract_x.v:164 cb_spec_x
+(* _latch.v:294 W1_check_bounded, converted: check_bounded's contract over ARx, B's W_contract_x.v:165 cb_spec_x
    (the twin of the AR file's cb_spec; its post aleafx_post_x keeps every byte outside the callee's 16-byte frame) *)
 Hypothesis W1_check_bounded : cb_spec_x (PI := PB_fr) B PST ARx (BASE + AF_fr_check_bounded).
 (* _latch.v:296 ERRNO_LOW, verbatim (B _G.v c_ERRNO_LOW's text) *)
@@ -477,8 +478,8 @@ Proof.
     rewrite Hs0Z. left. split; [right; left; rewrite HTOPeq; exact Hge | reflexivity].
 Qed.
 
-(* :799 lf_seg_latch over ARx: cut_x Section w's SEG_LATCH (W_LLVMFuzzerTestOneInput_cut_x.v:437) *)
-(* :785 lf_seg_latch over ARx: B cut_x Section w's SEG_LATCH (W_LLVMFuzzerTestOneInput_cut_x.v:605) *)
+(* :799 lf_seg_latch over ARx: cut_x Section w's SEG_LATCH (W_LLVMFuzzerTestOneInput_cut_x.v:438) *)
+(* :785 lf_seg_latch over ARx: B cut_x Section w's SEG_LATCH (W_LLVMFuzzerTestOneInput_cut_x.v:606) *)
 Theorem lf_seg_latch_x : forall cx Hp t W c,
   lf_base_x B MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G_fr ARx cx Hp ->
   INV_K_x B NP G_fr fr_FP PST ARx LSx RINV cx Hp t W c ->
@@ -689,7 +690,7 @@ Proof.
     split; [reflexivity|]. split; [exact (lt_fin_regs regs regs2 _ KR2 RR)|]. exact HJ2.
 Qed.
 
-(* ---- THE CHECK: B cut_x Section w's SEG_LATCH (W_LLVMFuzzerTestOneInput_cut_x.v:605), restated in its text at
+(* ---- THE CHECK: B cut_x Section w's SEG_LATCH (W_LLVMFuzzerTestOneInput_cut_x.v:606), restated in its text at
    cut_x's names (the forms B lib/B/W_LLVMFuzzerTestOneInput_top_x.v uses) and closed by `exact` from lf_seg_latch_x ---- *)
 Local Notation BASEx cx Hp := (lf_base_x B MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G_fr ARx cx Hp).
 Local Notation IH := (INV_H_x B NP G_fr fr_FP PST ARx LSx RINV).

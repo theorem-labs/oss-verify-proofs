@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_decode/lib/B/Prog/LLVMFuzzerTestOneInput_segX_exit_td.v, with its module paths and module names changed; 233 of its 265 lines of code are new or changed and 320 lines of the source are left out. *)
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_fuzz_malloc_lem.v (a working branch 7a6aa01e779), relocated by
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_fuzz_malloc_lem.v (a working branch), relocated by
    b_reloc.py (mal; revcheck report (internal path)); the code table covers B's
    fuzz_malloc 0x81b88 and the outlined own 0x81bfc it tail-calls (one table, 91 words).
    Journal steps for the walk of fuzz_malloc (B/FMW_fuzz_malloc.v): a stretch of code that writes only the caller's

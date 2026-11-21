@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: for omx-clap-core/fuzz_preset, the CALLER-WINDOW call kit over YCbqG.v's journal
    ajournal_x (allocator invariant a parameter ARx, ghost head set Hp after S, program statics PST), generic: no image
-   class, no address, no ledger. Credit: WalkS4, lib/A/Prog/PRW_CallerJ.v at 85a188622c5 (statements and proofs taken
+   class, no address, no ledger. Credit: WalkS4, lib/A/Prog/PRW_CallerJ.v (statements and proofs taken
    from there; changes below). Donors there: cj_kept from cgif_file_fuzzer lib/YC20.v:311-325 tlzw_kept and
    lib/YC8n.v:272-287 tlzw_kept_of_journal (origin/release/pau-projects-recipes), generalised to ajournal_x's keep
    clauses; aj_call_xW from YCbqGcall.v aj_call_x (cgif YCbq.v:1845-1883 aj_call, origin/ossv/recipes).
@@ -14,10 +14,10 @@
    - START: ajournal_x_init_W, the widened journal (STK + e) (sp + e) at the entry state.
    - CALL of a caller-window callee: aj_call_xW / aj_call_xWF (callee state in mkst form), aj_call_xW_sp /
      aj_call_xWF_sp (the entry form of YCbqGcall.v's aj_call_x_sp: st_ok, ss_resv, the machine state ms).
-     The footprint side condition is YCbqG.v's own fp_sub_x (h-hpreset-7 9052c7a7d74 :688-691), whose fourth
+     The footprint side condition is YCbqG.v's own fp_sub_x (h-hpreset-7 :688-691), whose fourth
      disjunct `sp0 - STK <= a < sp0` is the caller's window: WalkS4's fp_sub_xW is that predicate, so this file
      no longer states one and ajournal_x_sub_W (the name WalkS4's callers use) is YCbqG's ajournal_x_sub.
-   - vrd_call_W: h-verbs-3's lib/A/VrdArm.v call rule (6d4cddbdff5), premise shape kept, as a corollary of
+   - vrd_call_W: h-verbs-3's lib/A/VrdArm.v call rule, premise shape kept, as a corollary of
      aj_call_xW_sp at e1 := - o.
    - aj_call_xWF_d: WalkH6's caller-window float call rule (h-walk-identity's S8aCallW.v aj_call_xWF), verbatim: no
      fwin_x for the callee and no window-kept clause on either side.
@@ -38,10 +38,11 @@
    fpostW_x_R_lift: a plain fpostW_x (journal at wle) is fpostW_xR at every R that contains wle. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YCbqGcallW.v, with its module names changed; 482 of its 526 lines of code are new or changed and 767 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S4_PsFree.v, with its module paths and module names changed; 218 of its 254 lines of code are new or changed and 490 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset lib/A, the #102 re-walk of check_as_written on image A' (ASan build): segment WA6 (lane CawA102,
    h-rw-pre-5), the epilogue and the return, from the cut CAW_PC_END (+300) to the text's float-form post.
    rule 24: no function proved. rule 24: proves no function (kind: segment lemma).
-   INT102-READY on the kit's cut 7cdbb61b5fa0 (prepared on the batch kit's tip e45217a4c7ba).
+   INT102-READY on the kit's cut (prepared on the batch kit's tip).
    PROVES caw_wa6_holds : caw_seg_WA6 (fx := fx) B SK CTX0 P for an ABSTRACT P with PLAW : srr_inv_laws segs P only
    (call-free: no srr_inv_call, no srr_inv_mn). P is never unfolded: the one engine run goes through the runner twin
    paj_run_x_inv (YC1fPx.v) at the state's float state fy with PLAW, premise the cut's P mem3; the return leaves the
@@ -55,7 +56,7 @@
    forced by the batch text tcheck_as_written_specX (PRH_FnCheck.v c40cf3fdcd2a :832-902):
    - the run-word list DW is gone (the text's binder and prh_univ_closure's argument): the Section variable DW is
      removed, so the statement is caw_seg_WA6 (fx := fx) B SK CTX0 P. This is the only statement change.
-   - caw_pre now has 27 conjuncts (Caw102A_Base.v:229-256: the room counts sec_cnt / ccnt24 follow room_live_cf, :862-863,
+   - caw_pre now has 27 conjuncts (Caw102A_Base.v:230-257: the room counts sec_cnt / ccnt24 follow room_live_cf, :862-863,
      then the hull budget and HPOS) and is read BY NAME: the positional destruct of caw_pre is replaced by the base's
      projection caw_pre_fpre (the one part this segment reads, fpre's afn_pre_x).
    - caw_at_END's r = 1 arm gains caw_dead D (the text's OUTCOME, :879-888): this segment does not read the arms (the
@@ -82,7 +83,7 @@
    lib/A/Listing_prog.v 7ed1529926bd, lib/Reusable/YPsym.v b6f5a85d234d; the engine set of the kit's cut
    (YCbqG.v, YGcallcf.v 8645fa6a514f, YC80x.v 14f84f225e8f, YC1fPx.v 7814b594066f, YSRrMemnorm.v
    5ffa8525936b, ...) as the base's header names them.
-   MODELS: origin/cold/h-hpreset-7-walk-H2H5 1934271f1f4 lib/A/Prog/H2CawR.v (the same epilogue on the old pin: caw_aregs,
+   MODELS: lib/A/Prog/H2CawR.v (the same epilogue on the old pin: caw_aregs,
    paj_ret_at, apost_base_xF's witnesses, ajournal_x_materialize), ported to the generic-P runner and this base.
    Numerals: 300 / 324 (DERIVED offsets, in CAW_PC_END), -32 / -24 / -16 / -8 (DERIVED: the ld offsets 48 / 56 / 64 / 72
    minus the frame 80), 8 (LENGTH: a word), 33 .. 36 (DERIVED: the Kit's atom numbering, 32 the shadow base),

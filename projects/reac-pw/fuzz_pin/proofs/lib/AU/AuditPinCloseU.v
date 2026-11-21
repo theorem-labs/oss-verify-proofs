@@ -12,7 +12,7 @@
    premises; their Print Assumptions shows axioms only, not those premises. The closed Statements.* come from the
    YD2o assembly, not from these conditional parts. *)
 (* Modified by Theorem Labs, 2026-10: taken for reac-pw/fuzz_pin image B (fuzz_pin.asan-ubsan) from
-   proofs/libreac/fuzz_knock/lib/AU/AuditKnockCloseU.v at origin/ossv/recipes 88154566652, in the form of this
+   proofs/libreac/fuzz_knock/lib/AU/AuditKnockCloseU.v, in the form of this
    library's lib/A/AuditPinClose.v: Print Assumptions of the two closed statements only. On fuzz_pin each print of a
    closed top takes 6 to 7 minutes (image A's audit: ASAN_T_closed 360 s, pin_asan_agrees_closed 410 s,
    pin_asan_halts_closed 358 s), so the file prints the two statements, whose dependency closure holds
@@ -21,6 +21,7 @@
    YD2l.TfibB (YD2o.pin_driver_TfibB_U). The conditional parts print in their own files (lib/A/PinAsanTop.v,
    lib/A/PinClose.v). About shows that no Section argument is left on the closed theorems. Names knock_* -> pin_*,
    module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.AU Require YD2o PPgLibX.
 Check YD2o.pin_asan_ubsan_agrees_closed.
 Print Assumptions YD2o.pin_asan_ubsan_agrees_closed.

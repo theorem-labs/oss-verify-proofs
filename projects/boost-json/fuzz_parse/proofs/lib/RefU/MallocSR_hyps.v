@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: statements written out as text, the launch's channel reader. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib.RefU Require RefU0Gc5. (* [comment removed for export] *)
@@ -85,19 +86,33 @@ Lemma hx_live_proof : ltac2:(zQ "60!od!iv8!ikf!ive!jgf!jhc@2$2@2$1@2$5+2+hf@1$4@
 Proof. cbn [HeapSR_iface.hs_LIVE_MAX HeapSR_iface.hs_LIVE_CNT_MAX HS]. unfold HBYTES, HCNT. lia. Qed.
 
 (* [comment removed for export] *)
-Lemma hx_krel_vm_proof : ltac2:(zQ "f0!ht9!imf!ita!ijf!igd!ji3!jif!jjc!jl2!jle!od!jm7!ik7!jn1!jr7>1s$e>2mo$4>3mo'$4>0@3$9@2$a?5HCEIL?4HSEC^3^2>0@3$0@1$b@1$2@1$1#k0@1$5^2@1$5^3>0@3$0@1$3@2$c@1$2@1$1#k0@1$2@1$1#k0@1$6^3@1$6^4>0@3$0@1$3@1$2@1$1#k0@1$7^4@1$7^5>0@3$0$d@1$8^5@1$8^6@3$9@2$a?5HCEIL?4HSEC^8^6").
+Lemma hx_krel_vm_proof : forall s mo mo', HeapSR_iface.hs_KREL (@HS HCEIL HSEC) s mo ->
+  m_halted mo' = m_halted mo -> m_vm_lazy mo' = m_vm_lazy mo ->
+  m_vm_materialized mo' = m_vm_materialized mo -> m_vmmaps mo' = m_vmmaps mo ->
+  m_kernel mo' = m_kernel mo -> m_channel_reader mo' = m_channel_reader mo ->
+  HeapSR_iface.hs_KREL (@HS HCEIL HSEC) s mo'.
+(* LPS 727298f3 port: restated with the two equalities [MainDefs.hx_krel_vm] now takes. *)
 Proof.
-  cbn [HeapSR_iface.hs_KREL HS]. intros s mo mo' K Hh Hl Hm Hv. apply (KM_vm s mo mo' K).
+  cbn [HeapSR_iface.hs_KREL HS]. intros s mo mo' K Hh Hl Hm Hv Hk Hr. apply (KM_vm s mo mo' K).
   - ndestruct K as (L & _ & KL & _). destruct (kb_minv _ _ _ KL) as [A1 A2]. split; [rewrite Hl; exact A1 | rewrite Hm; exact A2].
   - rewrite Hh. exact (proj1 (KM_halted_lazy s mo K)).
+  - exact Hk.
+  - exact Hr.
   - exact Hv.
 Qed.
 
-Lemma hm_krel_vm_proof : ltac2:(zQ "f0!ht9!imf!ita!ijf!igd!ji3!jif!jjc!jl2!kg5!kl0!jm7!ik7!jn1!jr7>1s$e>2mo$4>3mo'$4>0@3$9@2$a?5HCEIL?4HSEC^3^2>0@3$0@1$b@1$2@1$1#k0@1$5^2@1$5^3>0@3$0@1$3@2$c@1$2@1$1#k0@1$2@1$1#k0@1$6^3@1$6^4>0@3$0@1$3@1$2@1$1#k0@1$7^4@1$7^5>0@3$0$d@1$8^5@1$8^6@3$9@2$a?5HCEIL?4HSEC^8^6").
+Lemma hm_krel_vm_proof : forall s mo mo', HeapMF_iface.hs_KREL (@HMF HCEIL HSEC) s mo ->
+  m_halted mo' = m_halted mo -> m_vm_lazy mo' = m_vm_lazy mo ->
+  m_vm_materialized mo' = m_vm_materialized mo -> m_vmmaps mo' = m_vmmaps mo ->
+  m_kernel mo' = m_kernel mo -> m_channel_reader mo' = m_channel_reader mo ->
+  HeapMF_iface.hs_KREL (@HMF HCEIL HSEC) s mo'.
+(* LPS 727298f3 port: restated with the two equalities [MainDefs.hm_krel_vm] now takes. *)
 Proof.
-  cbn [HeapMF_iface.hs_KREL HMF]. intros s mo mo' K Hh Hl Hm Hv. apply (KMF_vm s mo mo' K).
+  cbn [HeapMF_iface.hs_KREL HMF]. intros s mo mo' K Hh Hl Hm Hv Hk Hr. apply (KMF_vm s mo mo' K).
   - ndestruct K as (L & _ & KL). destruct (km_minv _ _ _ KL) as [A1 A2]. split; [rewrite Hl; exact A1 | rewrite Hm; exact A2].
   - rewrite Hh. exact (proj1 (KMF_halted_lazy s mo K)).
+  - exact Hk.
+  - exact Hr.
   - exact Hv.
 Qed.
 

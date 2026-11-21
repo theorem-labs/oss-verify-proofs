@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed grant_exists_na_room. *)
 (* Address room from a byte sum and a mapping count. The kernel model may grant an mmap at any free page-aligned
    address below alloc_top (RefNodes.grant_ok_na), so the existing mappings can fragment the window; a gap of n
    bytes exists when the window exceeds the mapped bytes plus (count + 1) * (n + page). This is AsanPlacement's
@@ -7,6 +8,8 @@
    [bottomup_floor, alloc_ceiling). *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State Monad Specs Run.
+From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement.
 From OSSVerify.Proofs.jsoncons.fuzz_json_encoder.lib Require Import PlacementSearch RefNodes.
 Import ListNotations.
 Open Scope bv_scope.
@@ -159,24 +162,29 @@ Proof.
   rewrite IH, Nat2Z.inj_succ. lia.
 Qed.
 
-(* A null-hint anonymous mmap of n bytes finds an address when the window [page, alloc_top) exceeds the mapped
-   bytes B plus count * (n + 4095) plus n. *)
+(* A null-hint anonymous mmap of n bytes finds an address when the window [task_unmapped_base, alloc_top)
+   (task_unmapped_base = 0x2aaaaab000 = 183251939328, [Sys/Mm/Mmap.v]) exceeds the mapped bytes B plus
+   count * (n + 4095) plus n.  At LPS 727298f3 [grant_ok_na] leads with [Placement.linux_place_is]: the
+   free gap found here is a fit in the window Linux falls back to, so [Placement.linux_place_exists]
+   gives the address Linux picks (as RefNodes.grant_exists_na_gen). *)
 Theorem grant_exists_na_room : forall hint (m : Model) (n C B : Z),
-  0 <= n ->
+  0 < n -> n mod page_size = 0 ->
   Z.of_nat (length (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m))) <= C ->
   live_bytes (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) <= B ->
   alloc_top (m_vmmaps m) < 2 ^ 64 ->
-  page_size + n + B + C * (n + 4095) <= alloc_top (m_vmmaps m) ->
+  183251939328 + n + B + C * (n + 4095) <= alloc_top (m_vmmaps m) ->
   exists a, grant_ok_na hint m a n = true.
 Proof.
-  intros hint m n C B Hn HC HB Htop Hroom.
+  intros hint m n C B Hn Hnal HC HB Htop Hroom.
   set (l := vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) in *.
   assert (HC' : Z.of_nat (length l) * (n + 4095) <= C * (n + 4095)) by (apply Z.mul_le_mono_nonneg_r; lia).
-  destruct (ru_free_gap l n page_size (alloc_top (m_vmmaps m)) Hn ltac:(unfold page_size; lia) Htop
-              ltac:(unfold page_size; reflexivity) ltac:(rewrite ru_weight_live; lia)) as (g & Hal & Hlo & Hhi & Hfree).
-  exists (Z_to_bv 64 g). unfold grant_ok_na.
-  assert (Hg : bv_unsigned (Z_to_bv 64 g) = g) by (apply ru_u64_lit; unfold page_size in Hlo; lia).
-  rewrite Hg, Hal. fold l. rewrite Hfree.
-  rewrite (proj2 (Z.ltb_lt 0 g)) by (unfold page_size in Hlo; lia).
-  rewrite (proj2 (Z.leb_le (g + n) _)) by lia. reflexivity.
+  destruct (ru_free_gap l n 183251939328 (alloc_top (m_vmmaps m)) ltac:(lia) ltac:(lia) Htop
+              ltac:(unfold page_size; reflexivity)
+              ltac:(rewrite ru_weight_live; lia)) as (g & Hal & Hlo & Hhi & Hfree).
+  pose proof (conj Hal (conj Hlo (conj Hhi Hfree))) as Hgf.
+  destruct (linux_place_exists (m_vmmaps m) (kb_thp (m_kernel m)) hint n Hn Hnal
+              (ex_intro _ g (or_intror Hgf))) as [a Ha].
+  destruct (linux_place_admissible _ _ _ _ _ Hn Hnal Ha) as (Hal' & Hpos & Hhi' & Hfr).
+  exists (Z_to_bv 64 a). apply (grant_ok_na_of_place _ _ _ _ Hn Hnal).
+  apply (proj2 (linux_place_is_iff _ _ _ _ _ Hn Hnal)). rewrite ru_u64_lit by lia. exact Ha.
 Qed.

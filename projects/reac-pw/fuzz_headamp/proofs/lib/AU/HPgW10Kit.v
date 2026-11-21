@@ -1,24 +1,25 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPropKit.v at a529a88a618 (the plumbing of
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPropKit.v (the plumbing of
    the property loop's block lemmas: pa_chunk8, pa_keep, pa_kwr_ro, pa_run, pa_runb, pa_branch, pa_reg, pa_leaf),
-   proofs/reac-pw/fuzz_role/lib/A/RPgCfgChanges.v at a529a88a618 (kept_run) and proofs/reac-pw/fuzz_role/lib/A/RPgProp.v
-   at a529a88a618 (its section g and its tactics: the (location, value) facts of a cut, the journal-and-frame step,
+   proofs/reac-pw/fuzz_role/lib/A/RPgCfgChanges.v (kept_run) and proofs/reac-pw/fuzz_role/lib/A/RPgProp.v
+   (its section g and its tactics: the (location, value) facts of a cut, the journal-and-frame step,
    the segment's write set, the first block's bounds and pod_put, the model of a shape-7 property, the start facts
    and the input at a cut) for reac-pw/fuzz_headamp's image B: rs_ / rl_ / rm_ -> hsu_ / hd_ / hm_, role's image A
    record and code -> fuzz_headamp.asan-ubsan's (lib/AU/Img0U.v rsegs, HPgImgB.headamp_himg_B: class-4 frame of
    1024 bytes, real frame of 0x220 bytes, write set [F+0x20, F+0x278) / 116 shadow bytes / [R, R+0x198)), the block
    post HPgSteps.hdu_blk_postE in place of pa_post, one table over the four pieces of image B. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/AU/HPgPropKit.v; 486 of its 561 lines of code are new or changed and 336 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Prog/RoleBuild/Post.v at f3cc5e1ef75 (its image-
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Prog/RoleBuild/Post.v (its image-
    independent lemmas: the corruption step once its test is decided, the record the piece ends with, the block's
    image under the piece's writes) and lib/Prog/RoleBuild/Facts.v lines 25-92 at the same commit (overwrite_adj),
    restated over lib/Pod's Model / Layout for the ASan walk; the plain image's machine-state predicates are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPostK.v and lib/A/RPgW6cKit.v part 1 at
-   01f4363fe7d, for image B of reac-pw/fuzz_headamp: the w10_ prefix renamed to hw10_, rs_ -> hsu_ (the cut states of
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPostK.v and lib/A/RPgW6cKit.v part 1,
+   for image B of reac-pw/fuzz_headamp: the w10_ prefix renamed to hw10_, rs_ -> hsu_ (the cut states of
    lib/AU/HPgSeg.v), rm_ -> hm_, rl_ -> hd_, the code table and the shadow base moved to image B, the run's context
    read at image B's record (a class-4 frame of 1024 bytes, a real frame of 0x220 bytes, three write ranges), and
    the cells of the first block reached from one atom for its address. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image B (fuzz_headamp.asan-ubsan, pinned sha256
    53edda9bdeeba1803865babfecb1af6732babe47ab83c64d38cc59a90d717a94; every address measured on the unstripped twin
    1674e30a0698f381704e66d2398d7906c881f4ba8fc619cb41b89fb97ad112ff, same loaded bytes except .note.gnu.build-id): the kit of the image-B

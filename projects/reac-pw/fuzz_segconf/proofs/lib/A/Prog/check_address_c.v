@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC7z.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/Reusable/YC7z.v, with its module paths and module names changed; 18 of its 41 lines of code are new or changed and 50 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/reac_segconf_ignore_file_c.v; 19 of its 47 lines of code are new or changed and 13 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_address (fuzz_segconf.c:531-542; fuzz_segconf.asan 0x874b8, 80 bytes, 20 instructions; frame 32 bytes):
    the contract of the ASan build's code, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the entry, SRr
    of apost_base at the return). Functional content: the plain contract lib/Prog/check_address_c.v:10-44
@@ -22,11 +23,11 @@
      min n (length ws + 1) bytes, n = length ws).
    - sa_addr rd got (length gs + 1): the strncmp row's range of got (min n (length gs + 1) bytes).
    - amem_range got (length gs + 8) and amem_range want (length ws + 8): the strncmp row asks 8 bytes of band
-     room past each string (fuzz_command lib/A/Rt/RtString.v:121-137 at 501c0d516c69).
+     room past each string (fuzz_command lib/A/Rt/RtString.v:121-137).
    - got's tail: the strncmp row asks atail_vis of both strings, so got is stated with sa_str (sa_strz plus
      sa_tail) where the plain contract had cstrz_at; want had its slack already (cstr_at), here sa_str.
    - length + 1 < 2 ^ 32 for both strings: the rows' range check, aread_ok, asks it (fuzz_command
-     lib/A/Rt/RtDefs.v:35-36 at 501c0d516c69), and the strncmp row asks 0 <= n < 2 ^ 32 of n = length ws; sa_addr
+     lib/A/Rt/RtDefs.v:35-36), and the strncmp row asks 0 <= n < 2 ^ 32 of n = length ws; sa_addr
      bounds a length only by 2 ^ 63. (Both strings are fields of fixed size, c->refusal[i] char[200] and
      m->kept[i] char[112], so the caller has it from the encodings.)
    - sa_heap of both strings in place of the plain `apart _ _ lo sp`: got = c + 0x2e88 + 200 i lies in the reader's
@@ -47,8 +48,8 @@
    the strlen and strncmp rows ask).
    Call site: LLVMFuzzerTestOneInput 0x85648 (provenance/evidence/image-tables/callsites.asan.tsv).
    The WALK takes these runtime entries as Section hypotheses (the interceptor lane's interface
-   provenance/evidence/interceptors/INTERFACE-A-interceptors.md (commit 7068323e2626); rows 16-19 were added by the
-   accepted v1, 5e0b8a44fdc):
+   provenance/evidence/interceptors/INTERFACE-A-interceptors.md; rows 16-19 were added by the
+   accepted v1):
      RtString.astrlen_realizes (row 16) at the strlen trampoline (image A 0x43a0c),
      RtString.astrncmp_realizes (row 1) at the strncmp trampoline (image A 0x43a18).
    They are NOT premises of this contract: the statement does not mention them. *)

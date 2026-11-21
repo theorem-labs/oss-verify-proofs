@@ -3,8 +3,12 @@ project: libarchive
 harness: libarchive_cpio_fuzzer
 rocq: OSSVerify.libarchive.libarchive_cpio_fuzzer
 origin: upstream
-summary: Reads the input as a cpio archive (+ all filters); per entry calls pathname, size, mtime, mode,
-  uid, gid, ino, nlink, rdev, hardlink and drains archive_read_data. Every return value is discarded.
+summary: Reads the input as a cpio archive (+ all filters). It returns early if archive_read_new returns
+  NULL or archive_read_open does not return ARCHIVE_OK. While archive_read_next_header returns ARCHIVE_OK,
+  it calls pathname, size, mtime, mode, uid, gid, ino, nlink, rdev and hardlink, then reads the data while
+  archive_read_data returns more than 0. It drops every other result and the data read. If allocating
+  its data buffer throws std::bad_alloc, it frees the archive and returns 0. Each call first ignores SIGPIPE,
+  as bsdtar and bsdcpio do.
 entry: LLVMFuzzerTestOneInput
 source:
   files:
@@ -13,7 +17,7 @@ source:
     repository: https://github.com/libarchive/libarchive
     commit: 3670ecf7c59a6b12fe93e6255bbe4a1f3420edf8
     path: contrib/oss-fuzz/libarchive_cpio_fuzzer.cc
-  modified: false
+  modified: true
   licence: BSD-2-Clause
 library:
   repository: https://github.com/libarchive/libarchive
@@ -24,11 +28,15 @@ modifications:
 - In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the program
   depends only on its input.
 - A small driver reads the input file, calls the harness one to four times and prints each return value.
+- 'The harness source is modified: source/libarchive_cpio_fuzzer.cc is libarchive 3670ecf7''s contrib/oss-fuzz/libarchive_cpio_fuzzer.cc
+  with two Theorem Labs changes. On std::bad_alloc it frees any open archive and returns 0; the original
+  aborts. It ignores SIGPIPE, as bsdtar and bsdcpio do, so a write to a filter program that stopped reading
+  fails with EPIPE instead of killing the run.'
 builds:
   plain:
     file: libarchive_cpio_fuzzer.plain
-    bytes: 833104
-    sha256: e8e69bb3f10c62b9b258bf098276409f2a85cf8522c9908bd359312232ec5af3
+    bytes: 833992
+    sha256: fb12db3aa3cec905b5061e12a817270086c552dd2edfb8dfe52bc3240ccf2eec
     segments:
     - 1
     - 1
@@ -67,8 +75,8 @@ builds:
       sha256: 539ef9c90b070e1615db19d02ac34a1585c7cf3acdec41de6d789bc252701846
   ubsan:
     file: libarchive_cpio_fuzzer.ubsan
-    bytes: 856672
-    sha256: a9b6c6b6d998c21e017e743dc898975b53c7d23a4424d50a92c134572d326eb7
+    bytes: 857568
+    sha256: 20f9dc19e26a2965aaf255fccba5f3080d21ce40b22e36277ba31788ab45c957
     segments:
     - 1
     - 1
@@ -107,8 +115,8 @@ builds:
       sha256: 539ef9c90b070e1615db19d02ac34a1585c7cf3acdec41de6d789bc252701846
   asan:
     file: libarchive_cpio_fuzzer.asan
-    bytes: 1476760
-    sha256: 5268f66485e1416f0dd7d65de72ad555ab580b479fbafa79b6c0ddb75768b52e
+    bytes: 1478312
+    sha256: 93b3d8746ed388ee25d21326f7a66df83a6433bf59b5552455e57421da590059
     segments:
     - 1
     - 1
@@ -150,8 +158,8 @@ builds:
       sha256: 539ef9c90b070e1615db19d02ac34a1585c7cf3acdec41de6d789bc252701846
   asan-ubsan:
     file: libarchive_cpio_fuzzer.asan-ubsan
-    bytes: 1488184
-    sha256: 0ecf6cf66921235d48e22abb988c36baf7b216769472fc644931079530d76936
+    bytes: 1489736
+    sha256: 4696716a96e1832ea50ed1ed7a8bdb755d0508722f64cea49dfe64e5f14f5648
     segments:
     - 1
     - 1
@@ -209,6 +217,11 @@ distribution:
     missing_file: 1/50
     full_support: 3/50
   mass: '1'
+model_gap:
+- nonblocking-io
+- resource-limits
+- signal-handlers
+- threads
 statements:
   asan_agrees:
     kind: agreement
@@ -218,21 +231,24 @@ statements:
     reading: may-fail
     budgets: asan
     abort: signal
-    status: open
+    status: model-gap
+    revision: 2
   asan_disagrees_at_most:
     kind: bound
     builds:
     - plain
     - asan
     reading: may-fail
-    status: open
+    status: model-gap
+    revision: 2
   asan_agreement_decidable:
     kind: decidability
     builds:
     - plain
     - asan
     reading: may-fail
-    status: open
+    status: model-gap
+    revision: 2
   ubsan_agrees:
     kind: agreement
     builds:
@@ -241,21 +257,24 @@ statements:
     reading: may-fail
     budgets: standard
     abort: signal
-    status: open
+    status: model-gap
+    revision: 2
   ubsan_disagrees_at_most:
     kind: bound
     builds:
     - plain
     - ubsan
     reading: may-fail
-    status: open
+    status: model-gap
+    revision: 2
   ubsan_agreement_decidable:
     kind: decidability
     builds:
     - plain
     - ubsan
     reading: may-fail
-    status: open
+    status: model-gap
+    revision: 2
   asan_ubsan_agrees:
     kind: agreement
     builds:
@@ -264,21 +283,24 @@ statements:
     reading: may-fail
     budgets: asan
     abort: signal
-    status: open
+    status: model-gap
+    revision: 2
   asan_ubsan_disagrees_at_most:
     kind: bound
     builds:
     - plain
     - asan-ubsan
     reading: may-fail
-    status: open
+    status: model-gap
+    revision: 2
   asan_ubsan_agreement_decidable:
     kind: decidability
     builds:
     - plain
     - asan-ubsan
     reading: may-fail
-    status: open
+    status: model-gap
+    revision: 2
   plain_halts:
     kind: halts
     builds:
@@ -288,7 +310,8 @@ statements:
     - 0
     - 2
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2
   plain_halts_may_fail:
     kind: halts
     builds:
@@ -296,7 +319,8 @@ statements:
     reading: may-fail
     exits: any
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2
   asan_halts:
     kind: halts
     builds:
@@ -306,7 +330,8 @@ statements:
     - 0
     - 2
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2
   ubsan_halts:
     kind: halts
     builds:
@@ -316,7 +341,8 @@ statements:
     - 0
     - 2
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2
   ubsan_halts_may_fail:
     kind: halts
     builds:
@@ -324,7 +350,8 @@ statements:
     reading: may-fail
     exits: any
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2
   asan_ubsan_halts:
     kind: halts
     builds:
@@ -334,4 +361,5 @@ statements:
     - 0
     - 2
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2

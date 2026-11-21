@@ -6,8 +6,8 @@
    THE ONE EXTRA STEP, as lib/A/Prog/FuzzFreeNull.v: ff_p0 states the memnorm keep as the LAST conjunct of its Q, the
    text's fpostm puts it outside Q (PRH_Base.fQmn), so one SRr_mono re-associates the post. Unprimed: no SRr', no wle'.
    rule 24: reuses the walk of fuzz_free (lib/B/Prog/FuzzFreeB.v ff_p0, a Theorem Labs lane); no new walk.
-   Inputs: lib/A/PRH_FnAlloc.v at a working branch 199ce1959e69 (blob 9bdccdc2648e); lib/B/Prog/FuzzFreeB.v
-   at a working branch 0a79ffff7ef4. No numeral in this file. *)
+   Inputs: lib/A/PRH_FnAlloc.v at a working branch (blob 9bdccdc2648e); lib/B/Prog/FuzzFreeB.v
+   at a working branch. No numeral in this file. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

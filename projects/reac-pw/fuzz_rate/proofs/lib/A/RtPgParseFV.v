@@ -24,10 +24,10 @@ Local Set Warnings "-abstract-large-number".
 Open Scope bv_scope.
 Open Scope Z_scope.
 
-(* Modified by Theorem Labs, 2026-10: the exact flt.d / fcvt.d.wu steps of proofs/libreac/fuzz_disco/lib/Rt/FpStep.v at
-   origin/ossv/recipes a34e09bd40c1 (fp_step_flt_d, fp_step_fcvt_d_wu) restated for fle.d, fcvt.d.s, fadd.d, fcvt.l.d and
+(* Modified by Theorem Labs, 2026-10: the exact flt.d / fcvt.d.wu steps of proofs/libreac/fuzz_disco/lib/Rt/FpStep.v
+    (fp_step_flt_d, fp_step_fcvt_d_wu) restated for fle.d, fcvt.d.s, fadd.d, fcvt.l.d and
    fcvt.d.l. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseFV.v at afaa3cb55c1d; adapted to
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseFV.v; adapted to
    reac_rate_prop_parse of fuzz_rate.asan: rate's pcs, instruction words, immediates and auipc values; the extra
    0x84878 li a1,-1 (the second -1 return enters the epilogue at 0x84898); the 64-bit sub at 0x8488c (pc_sub); the
    answer an int (Rate.parse_model); ParseFP.rate_consts. *)

@@ -1,4 +1,4 @@
-(* Ported from: a working branch 840c4afa7e2 proofs/omx-clap-core/fuzz_state/lib/A/Bz/Lib/PropExec.v.
+(* Ported from: a working branch proofs/omx-clap-core/fuzz_state/lib/A/Bz/Lib/PropExec.v.
    Changes (R1Str, 2026-10-29): module path fuzz_state -> fuzz_reply; no address numerals. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A.Bz Require BvWfKernel.
 (* [comment removed for export] *)

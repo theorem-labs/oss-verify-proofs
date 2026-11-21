@@ -5,7 +5,7 @@
    This is `WriterSpec.b64_dec`'s `(pad <=? 2) && six_tail_ok six` (lib/Prog/WriterSpec.v:105-114).
    Ported from: donor proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v (token walk form) and a Theorem Labs lane
    proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_check_as_written.v (branch / run tactic shape), a working branch
-   42af91cff3b -> proofs/omx-clap-core/fuzz_state/lib/A/FSW_caw_tail.v. Control flow after fs's RELEASED plain proof
+   -> proofs/omx-clap-core/fuzz_state/lib/A/FSW_caw_tail.v. Control flow after fs's RELEASED plain proof
    lib/Prog/check_as_written.v:200.
    Section hypotheses: none (this segment calls nothing; it only runs instrumented program code). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.

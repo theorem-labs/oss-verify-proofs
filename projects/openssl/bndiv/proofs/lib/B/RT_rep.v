@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (ARTM_A's reserved clause now admits a tail of at most two regions kept apart from every tracked mapping; new lemmas artm_rf_apart, artm_res_free_in_maps, artm_res_cons and artm_res_incl for it); internal commit ids in comments replaced by public commits or removed. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import Permutation.
@@ -218,10 +219,102 @@ Definition artm_sys (Σ : rtsA) (mo : Model) : Prop :=
   (* [comment removed for export] *)
   /\ NodesA_madv.noaccess_pos mo.
 
-(* [comment removed for export] *)
+(* The reserved clause ADMITS A TAIL.  Measured on the A twin:
+   a farm round reports AxA/BridgeA.v:146 "The term M1
+   has type [exists rx, vm_reserved (m_vmmaps model) = segments_reserved asegs ++ rx
+   /\ ...] while it is expected to have type [... = segments_reserved asegs]", and
+   AxB/BridgeA.v:144 is the same error in this image.  [ex_misc] already returns the
+   revision's shape; this definition was the unported half.
+
+   ARTM_A is tree-local: named in no published file of this unit (0 hits in
+   Statements.v and in all thirteen proofs/*/Proof.v), so restating it surfaces
+   nothing.  Ported per hunk from bignum BgB/RT_rep.v, with the names checked at both
+   ends rather than sed'd. *)
 Definition ARTM_A (Σ : rtsA) (mo : Model) : Prop :=
-  Permutation (List.filter vpos (vm_maps (m_vmmaps mo))) (rt_maps Σ) /\ vm_reserved (m_vmmaps mo) = segments_reserved bsegs
+  Permutation (List.filter vpos (vm_maps (m_vmmaps mo))) (rt_maps Σ)
+  /\ (exists rx, vm_reserved (m_vmmaps mo) = segments_reserved bsegs ++ rx
+                 /\ (length rx <= 2)%nat
+                 /\ live_bytes rx <= 0x14000
+                 /\ Forall (fun e => Forall (iv_apart e) rx) (vm_maps (m_vmmaps mo)))
   /\ vm_limit (m_vmmaps mo) = VMLIMIT /\ eager_used mo <= E0_MAX + rt_eager Σ /\ artm_sys Σ mo.
+
+(* The three ways this cone uses the reserved clause, packaged so every consumer is a
+   single application.  PRIVATE copy of [region_free_apart]: the unit's own copy lives
+   in B/RT_sys_grant.v, DOWNSTREAM of this file. *)
+Lemma artm_rf_apart : forall l (lo n : word) e, region_free l lo n = true -> In e l ->
+  apart (bv_unsigned lo) (bv_unsigned n) (bv_unsigned (fst e)) (bv_unsigned (snd e)).
+Proof.
+  intros l lo n [b s] H Hin. pose proof (region_free_In _ _ _ _ _ H Hin) as X. unfold iv_overlap in X. cbn [fst snd].
+  unfold apart. apply andb_false_iff in X as [X|X]; apply Z.ltb_ge in X; lia.
+Qed.
+
+Lemma artm_res_free_in_maps : forall (mo : Model) (lo n : word) (e : word * word),
+  (exists rx, vm_reserved (m_vmmaps mo) = segments_reserved bsegs ++ rx
+              /\ (length rx <= 2)%nat
+              /\ live_bytes rx <= 0x14000
+              /\ Forall (fun q => Forall (iv_apart q) rx) (vm_maps (m_vmmaps mo))) ->
+  In e (vm_maps (m_vmmaps mo)) ->
+  bv_unsigned (fst e) <= bv_unsigned lo ->
+  bv_unsigned lo + bv_unsigned n <= bv_unsigned (fst e) + bv_unsigned (snd e) ->
+  region_free (segments_reserved bsegs) lo n = true ->
+  region_free (vm_reserved (m_vmmaps mo)) lo n = true.
+Proof.
+  intros mo lo n e (rx & Hres & _ & _ & Hme) He H1 H2 Himg.
+  rewrite Hres. apply region_free_intro. intros a sz Hin.
+  apply in_app_or in Hin as [Hin|Hin].
+  - exact (region_free_In _ _ _ a sz Himg Hin).
+  - pose proof (proj1 (Forall_forall _ _) (proj1 (Forall_forall _ _) Hme e He) (a, sz) Hin) as D.
+    unfold iv_apart in D. cbn [fst snd] in D.
+    unfold iv_overlap. apply andb_false_iff.
+    destruct D as [D|D]; [right | left]; apply Z.ltb_ge; lia.
+Qed.
+
+Lemma artm_res_cons : forall (R M : list (word * word)) (p : word * word),
+  (exists rx, R = segments_reserved bsegs ++ rx
+              /\ (length rx <= 2)%nat
+              /\ live_bytes rx <= 0x14000
+              /\ Forall (fun q => Forall (iv_apart q) rx) M) ->
+  region_free (R ++ M) (fst p) (snd p) = true ->
+  exists rx, R = segments_reserved bsegs ++ rx
+             /\ (length rx <= 2)%nat
+             /\ live_bytes rx <= 0x14000
+             /\ Forall (fun q => Forall (iv_apart q) rx) (p :: M).
+Proof.
+  intros R M p (rx & Hres & Hcnt & Hbyt & Hme) Hfp.
+  exists rx. split; [exact Hres|]. split; [exact Hcnt|]. split; [exact Hbyt|].
+  constructor; [|exact Hme].
+  apply Forall_forall. intros [b sz] Hq.
+  assert (Hin : In (b, sz) (R ++ M))
+    by (apply in_or_app; left; rewrite Hres; apply in_or_app; right; exact Hq).
+  pose proof (artm_rf_apart _ _ _ (b, sz) Hfp Hin) as X.
+  unfold apart in X. cbn [fst snd] in X. unfold iv_apart.
+  (* THE SAME DEFECT I ALREADY FIXED IN bignum, shipped here by my own, which
+     copied bignum's then-current helper text.  A farm round reports the
+     A twin at :298: [andb_false_iff] aimed at a hypothesis the preceding [unfold apart]
+     had already made a disjunction, over primitive-projection atoms.  Both halves of
+     bignum's cure land together. *)
+  destruct p as [pb psz]; cbn [fst snd] in X |- *;
+  destruct X as [X|X];
+    solve [ left; lia | right; lia
+          | apply andb_false_iff; left; apply Z.ltb_ge; lia
+          | apply andb_false_iff; right; apply Z.ltb_ge; lia ].
+Qed.
+
+Lemma artm_res_incl : forall (R M M' : list (word * word)),
+  (exists rx, R = segments_reserved bsegs ++ rx
+              /\ (length rx <= 2)%nat
+              /\ live_bytes rx <= 0x14000
+              /\ Forall (fun q => Forall (iv_apart q) rx) M) ->
+  (forall q, In q M' -> In q M) ->
+  exists rx, R = segments_reserved bsegs ++ rx
+             /\ (length rx <= 2)%nat
+             /\ live_bytes rx <= 0x14000
+             /\ Forall (fun q => Forall (iv_apart q) rx) M'.
+Proof.
+  intros R M M' (rx & Hres & Hcnt & Hbyt & Hme) Hsub.
+  exists rx. split; [exact Hres|]. split; [exact Hcnt|]. split; [exact Hbyt|].
+  apply Forall_forall. intros q Hq. exact (proj1 (Forall_forall _ _) Hme q (Hsub q Hq)).
+Qed.
 
 Definition RTA : rt_sig := mkRTS rtsA ART_A ARTM_A rtA_live rtA_frames rtA_allow rtA_sp0 rtA_credit.
 

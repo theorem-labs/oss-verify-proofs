@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: the start-up plan of libreac/fuzz_decode: the donor A/AB05.v at origin/ossv/recipes c8557374ad2e relocated onto fuzz_decode.asan (every PRun/PDiamond pc and PExt/PDropRange address by the binmatch identical-function and data-object map), startup_plan_tfib_ranges recomputed by tools/startup/itabranges.py (14 ranges, 68190 words), and the tail measured by tools/startup/plantail.py probef on this image *)
+(* Modified by Theorem Labs, 2026-10: the start-up plan of libreac/fuzz_decode: the donor A/AB05.v relocated onto fuzz_decode.asan (every PRun/PDiamond pc and PExt/PDropRange address by the binmatch identical-function and data-object map), startup_plan_tfib_ranges recomputed by tools/startup/itabranges.py (14 ranges, 68190 words), and the tail measured by tools/startup/plantail.py probef on this image *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_decode.asan (libreac/fuzz_decode asan) sha256 5973b76807d8d2e14b82dc6afde70a2c882923658406aeca43681719cb4e8036; unstripped twin sha256 4cb0a852e8262acb5ed0fa075a6bee7b1a25192189b168e777c760a4bfd65ae2 *)
 From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List.

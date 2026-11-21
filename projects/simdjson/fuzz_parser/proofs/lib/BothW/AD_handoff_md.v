@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the case splits over the main-entry fact kinds cover the new defined-span fact (MDefS). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -51,7 +52,7 @@ Proof. intros w v. do 9 (destruct w as [|w]; [reflexivity|]). reflexivity. Qed.
 Lemma f_iv_def : forall V (m : mem) f lo hi, mfact_ok bsegs V m f -> f_iv f = Some (lo, hi) ->
   forall x, lo <= x < hi -> exists b, mrd bsegs m (wa x) = Some b.
 Proof.
-  intros V m f lo hi OK E x Hx. destruct f as [a w v|a n|a w v|a n|a n c|l h|a n|a n|a n|a n]; cbn [f_iv] in E; try discriminate;
+  intros V m f lo hi OK E x Hx. destruct f as [a w v|a n|a w v|a n|a n c|l h|a n|a n|a n|a n|a n]; cbn [f_iv] in E; try discriminate;
     destruct a as [z| | | | |]; try discriminate; injection E as <- <-; cbn [mfact_ok zv] in OK.
   - eapply rw_cells_def; [exact OK|]. cbn [cells_size]. rewrite csize_cellw. lia.
   - eapply rw_cells_def; [exact OK|]. cbn [cells_size csize]. lia.
@@ -94,7 +95,7 @@ Definition wr_covb (l : list mfact) (A n : Z) : bool :=
   existsb (fun f => match f with MWr (ZLit a) k => (a <=? A) && (A + n <=? a + k) | _ => false end) l.
 Lemma wr_cov : forall V (m : mem) l A n, Forall (mfact_ok bsegs V m) l -> wr_covb l A n = true -> 0 <= n -> wr_at bsegs m A n.
 Proof.
-  intros V m l A n HF H Hn. apply existsb_exists in H as (f & Hf & E). destruct f as [| | | | | |a k| | |]; try discriminate.
+  intros V m l A n HF H Hn. apply existsb_exists in H as (f & Hf & E). destruct f as [| | | | | |a k| | | |]; try discriminate.
   destruct a as [z| | | | |]; try discriminate. apply andb_prop in E as [E1 E2]. apply Z.leb_le in E1. apply Z.leb_le in E2.
   pose proof (proj1 (Forall_forall _ _) HF _ Hf) as (W0 & W1 & W). cbn [zv] in *.
   split; [lia|]. split; [lia|]. intros i Hi. replace (A + i) with (z + (A - z + i)) by lia. apply W. lia.

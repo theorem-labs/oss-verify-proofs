@@ -7,8 +7,9 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_name_seg_rel.v, with its module paths, module names and numbers changed; 848 of its 931 lines of code are new or changed and 1841 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_hp_kit.v, with its module paths and module names changed; 305 of its 367 lines of code are new or changed and 869 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/B/FMW_ex_tok_base.v; 567 of its 633 lines of code are new or changed and 301 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* G4.ExDecl, IMAGE B (fm.asan-ubsan, pin ca61e5c9eabc0050): ex_seg_P (FMW_ex_base.v:191) cut into sub-segments.
-   B twin of lib/A/FMW_ex_decl_base.v at 06d82004dc3: the model lemmas (dm_*, dd_cstr_suffix, dd_byte_val) are A's
+   B twin of lib/A/FMW_ex_decl_base.v: the model lemmas (dm_*, dd_cstr_suffix, dd_byte_val) are A's
    unchanged; the cuts, the registers, the frame slots and the exits are read from B's own code
    (internal path). From EX_P (0x814cc: s5 = text + i, s7 = i, a0 = a1)
    the declaration body of expected (fuzz_manifest.c:145-170) runs three byte loops, strchr, strncmp and the program

@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/WrapMallocAM1.v, with its module paths changed; 12 of its 171 lines of code are new or changed and 6 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: omx-clap-core/fuzz_preset image A (asan, pin 1be0f53d96cb), field M1 of a Theorem Labs lane's Record
-   wrap_malloc_walk_cf (lib/Reusable/YGcfMallocCompose.v:153, blob e929a4c12d5b) as its CORRECTED twin
+   wrap_malloc_walk_cf (lib/Reusable/YGcfMallocCompose.v:154, blob e929a4c12d5b) as its CORRECTED twin
    wm_call_stmt_FIX_A (below: one premise added, and why), with
      segs := tfibsegs, al := 8, atp := 1 (FROM_MALLOC), acf := 1 (can_fill), ARX := ARXh_A B, K := K_A
      (lib/A/WrapMallocADefs.v),
    and the image facts as premises: TfibSyms B, the unwinder's spec U1 (AFl0.v:23, discharged by A's
    tfib_unwind_ok) and cf_pc_allocate = PC_ALLOCATE (A 0x325b8, CfImgA.v:40). The run is WrapMallocACall.seg_call;
    this file reads no instruction. The image-A twin of a Theorem Labs lane's lib/AU/WrapMallocBM1.v, same proof.
-   ARcf after the segment: AR_frame_law_ok_cf (YG0qcf.v:667) on the segment's frame (the caller's stack window,
+   ARcf after the segment: AR_frame_law_ok_cf (YG0qcf.v:668) on the segment's frame (the caller's stack window,
    which AR_stack_law_cf keeps unowned, and T + t_unwinding, which reads 0 again). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YGcfMallocComposeKeep.
@@ -71,12 +72,12 @@ forall ly S Hp W mem md, ARcf tfibsegs B ly S Hp W mem md -> xs_placed_cf ly S.
 
 (* ---------------------------------------------------------------------------- *)
 (* The corrected twin of the record's field M1 (function-proving section 4). The record's wm_call
-   (lib/Reusable/YGcfMallocCompose.v:153-161) is NOT provable as stated: its conclusion asks AllocG.alloc_pre at
-   Allocate's entry, whose conjunct `ly_bot ly < spZ regsA` (Reusable/AllocG.v:75) is about the sp AFTER the
+   (lib/Reusable/YGcfMallocCompose.v:154-162) is NOT provable as stated: its conclusion asks AllocG.alloc_pre at
+   Allocate's entry, whose conjunct `ly_bot ly < spZ regsA` (Reusable/AllocG.v:76) is about the sp AFTER the
    interceptor's 2032 + 96 bytes and asan_malloc's 16, i.e. spZ regs - 2144; the premises give only
    `ly_bot ly < spZ regs` (acall_pre_cf, YG0dcf.v:52) and `ly_stk_lo ly + ASTACK <= spZ regs`, and layout_ok gives
    only `ly_stk_lo ly <= ly_bot ly` (YG0f.v:322), so a caller sp with ly_bot ly = spZ regs - 1 meets every premise
-   and misses the conjunct. a Theorem Labs lane reached the same on image B (AU/WrapMallocBStmt.v:190-195 wm_call_stmt_FIX,
+   and misses the conjunct. a Theorem Labs lane reached the same on image B (AU/WrapMallocBStmt.v:191-196 wm_call_stmt_FIX,
    premise (2)). The added premise is stated EXACTLY as the coming engine fix gives it (a Theorem Labs lane 16:03Z, from
    a Theorem Labs lane 15:49Z): `ly_bot ly + ACALL_PREFIX < spZ regs` with ACALL_PREFIX := 4096, written here as the
    numeral, so that the swap is by lia. It suffices: alloc_pre asks ly_bot ly < spZ regsA = spZ regs - 2144, and

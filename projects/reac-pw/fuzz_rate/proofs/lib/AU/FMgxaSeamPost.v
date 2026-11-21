@@ -1,5 +1,5 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamPost.v (cold/port-fm-rtprintf-param 0ddf65fd8cc); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 5 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMgxaSeamPost.table); names: record RT_IImgA -> . *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMgxaSeamPost.v at 2d2ff01bb6f2 relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamPost.v; relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 5 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMgxaSeamPost.table); names: record RT_IImgA -> . *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMgxaSeamPost.v relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
 (* Step 3 of the evt -> SRr seam at musl vfprintf: GXA's post read as the harness's post, every
    piece of it except the final assembly (GxSeam does that).
 
@@ -11,13 +11,13 @@
    `munrestrict (w_H W) mem m'` (lib/Reusable/YK04.v:20).  This file reads those two facts as
    the harness's frame (win_view_out), its presence post (win_present), the destination bytes
    (view_of_bytes_at) and ARU (aru_of_window, by FMupoison.ARU_frame, the U form of the harness's
-   frame law AR_frame_law, lib/Reusable/YG0d.v:439).  The machine-state shapes the assembly needs
+   frame law AR_frame_law, lib/Reusable/YG0d.v:440).  The machine-state shapes the assembly needs
    are frm0_mkFP and cfg_of_ms.
 
    Two facts about fm.asan's four segments (tfibsegs) are checked by vm_compute: a writable segment
    is readable (so a writable byte is a byte the harness can read), and every segment lies in
    [0x10000, 0x5f7000) (0x5f7000 = sym 0x35000 = GXA's GLOBALS_TOP on A_img, RT_IImgA.v:73). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/FMgxaSeamPost.v at 71994ff034c7, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/FMgxaSeamPost.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/FMgxaSeamPost.v keeps its donor's comment text) is kept as lib/A/FMgxaSeamPost.v writes it. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/FMgxaSeamPost.v, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/FMgxaSeamPost.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/FMgxaSeamPost.v keeps its donor's comment text) is kept as lib/A/FMgxaSeamPost.v writes it. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

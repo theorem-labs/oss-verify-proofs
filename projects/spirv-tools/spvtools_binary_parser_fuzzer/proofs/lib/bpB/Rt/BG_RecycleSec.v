@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the ledger invariant's new entries_nonzero conjunct). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BW_0Gc.
@@ -193,8 +194,8 @@ Section RSStep.
       intros K. pose proof BND as B. pose proof ENT as (E1 & E2 & E3 & E4 & E5 & E6 & E7 & E8 & E9 & E10 & E11 & E12 & E13).
       pose proof (bv_unsigned_in_range _ sp) as SPR. change (bv_modulus 64) with (2^64) in SPR.
       destruct AX as [AWV FXR]. pose proof AMX as AMX'. destruct AMX' as [AM AK]. pose proof AM as AM'. destruct AM' as (AIL & ASV & AB0).
-      destruct AIL as (IL1 & IL2 & IL3 & NOV & NW & NWA).
-      pose proof AK as AK'. destruct AK' as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & K10 & _). destruct K10 as (_ & _ & K10c).
+      destruct AIL as (IL1 & IL2 & IL3 & NOV & NW & NWA & NZM).
+      pose proof (proj1 AK) as AK'. destruct AK' as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & K10 & _). destruct K10 as (_ & _ & K10c).
       placed. pose proof (SECP h HIN) as (Q1 & Q2 & Q3 & Q4 & Q5 & Q6 & Q7 & Q8 & Q9). pose proof (SECP lsth LIN) as (R1 & R2 & R3 & R4 & R5 & R6 & R7 & R8 & R9).
       fold a msz in Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q9. fold lst in R1, R2, R3, R4, R5, R6, R7, R8, R9.
       fold T CTX sb pa in S1, S2, S3, P1, P2, P3, T1, T2, T3, X1, X2, X3, D1, D2, D3, D4, D5, TCX, Q5, Q6, Q7, Q8, R5, R6, R7, R8.
@@ -306,7 +307,7 @@ Section RSStep.
       eapply (recycle_sec_sreach (a_L s) (a_S s) (a_Zr s) msF mo Q ra sp gp tp t0 t1 t2 s0 s1 (wz cb) a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m
                 lo a msz (sc_size h) (Z.of_nat idx) pa nres nch lst (nch - 1) ATSD CTX T sb (ch_used ch) actx chunks (b8 3) (b8 b1) sbs g b244
                 MI ST LO HI hSPA hAR hSBX hSBR hTPR hRNG hPLC hPAR hNCH hIDX hLNTH hLR hPLCL hLSTA hDISJ hSEN REN SB32 INST64 NRES SST MTX GST PA HDR hLSTC hCHDR TST SHD SHDL OK hVISE
-                NW NWA NOV (ak_zrsh2 s mo AK) (ak_shrf2 s mo AK) (ak_shmc2 s mo AK) (ak_shna s mo AK) hWIN hHAS hNOL hNOACC).
+                NW NWA NOV NZM (ak_zrsh2 s mo AK) (ak_shrf2 s mo AK) (ak_shmc2 s mo AK) (ak_shna s mo AK) hWIN hHAS hNOL hNOACC).
 
       cbv beta. intros msF' mo' P.
       destruct P as (y0 & y1 & y2 & ya0 & ya1 & ya2 & ya3 & ya4 & ya5 & ya6 & ya7 & y3 & y4 & y5 & y6 & m' & OK2 & VIS2 & MO2 & MU & WMO & MI2 & SEN2 & REN2 & ST2

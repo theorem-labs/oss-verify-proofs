@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, bytes_at_nil is removed: its users Src0HeapBridge.v and Ub0HeapBridge.v no longer need it. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -375,9 +376,6 @@ Proof.
     + rewrite nth_error_app1 by lia. apply H1. lia.
     + rewrite nth_error_app2 by lia. rewrite <- (H2 (i - length bs1)%nat) by lia. f_equal. f_equal. lia.
 Qed.
-
-Lemma bytes_at_nil : forall m a, (0 <= a <= 2^64)%Z -> bytes_at m a [].
-Proof. intros. split; [lia|]. split; [cbn; lia|]. intros i Hi; cbn in Hi; lia. Qed.
 
 Lemma bytes_at_bound : forall m a bs, bytes_at m a bs -> (0 <= a /\ a + Z.of_nat (length bs) <= 2^64)%Z.
 Proof. intros m a bs (Ha & Hl & _). lia. Qed.

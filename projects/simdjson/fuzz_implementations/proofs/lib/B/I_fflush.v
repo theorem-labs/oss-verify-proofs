@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -285,7 +286,7 @@ Ltac plia := first [lia | unfold MT_SIZE, STACK_WIN, SEGTOP_A in *; lia | match 
 Section IFflush.
 Variable sp0 : Z.
 #[local] Notation IX := (ixit_rt sp0).
-#[local] Notation XLO := (sp0 - STACK_WIN).
+#[local] Notation XLO := (sp0 - STACK_SPAN).
 
 Ltac icpt_tail sp lo T fp off BK TUP XL TLO :=
   step; [if_false|..];

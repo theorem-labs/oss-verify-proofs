@@ -1,4 +1,4 @@
-(* copied from proofs/cgif/cgif_file_fuzzer/lib/AGif0n.v @ 86aa4177b94 (c-asan, cold/c-asan-nmax-param: F1 / F2 + NMAX-PARAM + EV_MAX value-independence; installs in c5 ~18:30Z), module paths changed only. *)
+(* copied from proofs/cgif/cgif_file_fuzzer/lib/AGif0n.v (c-asan, cold/c-asan-nmax-param: F1 / F2 + NMAX-PARAM + EV_MAX value-independence; installs in c5 ~18:30Z), module paths changed only. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
@@ -7,6 +7,7 @@
    hit_writes, wframe, at_RETw / at_RETkw, malloc_join_t, mview, rleaf, the records AIface / AIfaceK / AIfaceM and the
    model lemmas the arms share.  It replaced AGif0.v, whose predicates over cgif's image moved to AGif0cgif.v. *)
 (* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/Reusable/AGif0n.v, derived mechanically (bkit derive_b.py): its Require lines name the lib/B copies; nothing else differs. The comments are the A file's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

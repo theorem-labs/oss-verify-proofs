@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/RepRelcf.v (commit 4d286b2e618d, file sha256 34663cd48b4e) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 1 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal, jump-table offsets and list indices by the same stage map), 1 list indices re-picked, and 4 addresses named in comments; facts preset already states are cited, not restated; comment references to people and refs dropped; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepRelcf.v (commit f01d79f3fb5, cf refill round 3; file sha256 e439fe804d10) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 1 image addresses moved by function pairs the comparison kit cmpkit 86da41d3ef68 calls the same code (strictcmp3 65688e94214a, by funcpair_reply 6963bc4a94fc on the cgif twin ce511d541cda; 1 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/RepRelcf.v (file sha256 34663cd48b4e) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 1 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal, jump-table offsets and list indices by the same stage map), 1 list indices re-picked, and 4 addresses named in comments; facts preset already states are cited, not restated; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepRelcf.v (cf refill round 3; file sha256 e439fe804d10) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 1 image addresses moved by function pairs the comparison kit cmpkit 86da41d3ef68 calls the same code (strictcmp3 65688e94214a, by funcpair_reply 6963bc4a94fc on the cgif twin ce511d541cda; 1 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved-region ledger). *)
 (* Theorem Labs, 2026-10-30 (a prior worker, RepF4Append's relation side): the MODEL-and-RELATION lemmas the walk of
    __asan::AppendToErrorMessageBuffer (0x55df8, RepIFcf.append_spec_cf) uses to rebuild RepIFcf.errb_call_pre across
    the error-message buffer's (re)map.  Pure Rocq over the existing model (YG00cf.v) and relation (YG0ncf.v,
@@ -109,7 +110,7 @@ Qed.
 
 (* ================================================================================================================ *)
 (* 2. The write sets: the object's 56 bytes are owned statically (Tfib_owned_static's (0xaaf50, 0x5cdd50 - 0xaaf50),
-   YF0m.v:280), and the buffer [data, data + cap) is the errbuf extent xs_cf ly S itself.                           *)
+   YF0m.v:281), and the buffer [data, data + cap) is the errbuf extent xs_cf ly S itself.                           *)
 Lemma errb_aox_obj : forall Hp ly S W mem md a,
   TfibSyms B -> cf_errbuf_obj = 0xaaf68 -> ARcf tfibsegs B ly S Hp W mem md ->
   cf_errbuf_obj <= a < cf_errbuf_obj + 56 -> AOXm_cf B ly S a.
@@ -160,7 +161,7 @@ Ltac rr_ceil := let H := fresh "CR" in let H2 := fresh "CR" in
 
 Lemma rr_grant_facts : forall (ly : alayout) (S : astate) (md : Model) (a n : word),
   layout_ok ly -> Wf_cf (as_universe B) S -> sec_placed ly S -> ALedger_cf tfibsegs ly S md ->
-  grant_ok_na_pin md a (bv_unsigned n) = true -> 0 < bv_unsigned n -> bv_unsigned n mod 4096 = 0 ->
+  grant_ok_na_pin (Z_to_bv 64 0) md a (bv_unsigned n) = true -> 0 < bv_unsigned n -> bv_unsigned n mod 4096 = 0 ->
   page_aligned (bv_unsigned a) /\ in_app (bv_unsigned a) (bv_unsigned n) /\
   bv_unsigned a + bv_unsigned n <= ASAN_CEIL /\
   Forall (zdisjoint (bv_unsigned a, bv_unsigned n))
@@ -168,7 +169,8 @@ Lemma rr_grant_facts : forall (ly : alayout) (S : astate) (md : Model) (a n : wo
 Proof.
 intros ly S md a n LO W PL L G Hn Hnal.
 pose proof (bv_unsigned_in_range 64 a) as Ra. pose proof (bv_unsigned_in_range 64 n) as Rn. unfold bv_modulus in Ra, Rn.
-unfold grant_ok_na_pin in G. apply andb_prop in G as [G G4]. apply andb_prop in G as [G G3]. apply andb_prop in G as [G1 G2].
+pose proof (YK13.grant_ok_na_pin_facts _ _ _ _ Hn ltac:(unfold page_size; exact Hnal) G) as G0. clear G. rename G0 into G.
+unfold YK13.grant_ok_na_pin_b in G. apply andb_prop in G as [G G4]. apply andb_prop in G as [G G3]. apply andb_prop in G as [G1 G2].
 apply Z.eqb_eq in G1. apply Z.ltb_lt in G2. apply Z.leb_le in G3. unfold page_size in G1.
 assert (Hn64 : Z_to_bv 64 (bv_unsigned n) = n) by (apply w64_uw). rewrite Hn64 in G4.
 set (lo := bv_unsigned a) in *. set (len := bv_unsigned n) in *.
@@ -214,7 +216,7 @@ destruct (Z_lt_le_dec lo (fst (ly_img ly) + snd (ly_img ly))) as [X1|X1]; [|righ
 destruct (Z_lt_le_dec (fst (ly_img ly)) (lo + len)) as [X2|X2]; [|left; lia]. exfalso.
 set (x := Z.max lo (fst (ly_img ly))).
 destruct (L14 x ltac:(unfold in_zr; subst x; lia)) as (e & He & E1).
-pose proof (YK13.region_free_In _ a n (fst e) (snd e) G4 ltac:(apply in_app_iff; left; rewrite L3, <- surjective_pairing; exact He)) as D.
+pose proof (YK13.region_free_In _ a n (fst e) (snd e) G4 ltac:(destruct L3 as (rx & L3e & _); apply in_app_iff; left; rewrite L3e, <- surjective_pairing; apply in_app_iff; left; exact He)) as D.
 subst lo len x. lia. }
 assert (PERM : Forall (zdisjoint (lo, len)) (perm_maps ly)).
 { apply Forall_forall. intros z Hz. pose proof (perm_facts ly 1 LO ltac:(lia) z Hz) as (Z1 & Z2 & Z3 & _). apply RFm; [lia | lia | lia | exact (L10 z Hz)]. }
@@ -237,7 +239,7 @@ unfold zdisjoint. cbn [fst snd]. left. unfold ASAN_CEIL in *. lia.
 Qed.
 
 (* ================================================================================================================ *)
-(* 4. The state steps that touch only st_secs (errb_frame, YG06bcf.v:67): every part of the relation except Wf_cf
+(* 4. The state steps that touch only st_secs (errb_frame, YG06bcf.v:68): every part of the relation except Wf_cf
    and the errbuf placement reads the state through st_chunks / st_regions / st_sec_arr / ... only.                 *)
 (* The eager-ledger bound of a Theorem Labs lane's layer fix (a prior worker 03:3xZ): alc_eager_x with the errbuf extent charged
    its eager bytes (inside the esec) instead of its raw capacity.  Until the layer lands it is a named premise of
@@ -317,7 +319,7 @@ Lemma rr_ahs_secs : forall ly S S1 H mem, errb_frame S S1 -> ahs B ly S H mem ->
 Proof. intros ly S S1 H mem EF A. unfold errb_frame in EF. rewrite EF. exact A. Qed.
 
 (* ================================================================================================================ *)
-(* 5. errb_set_size (YG00cf.v:91-96): the size entry is rewritten in place or appended.                            *)
+(* 5. errb_set_size (YG00cf.v:92-97): the size entry is rewritten in place or appended.                            *)
 Lemma rr_existsb_filter : forall l, existsb is_errb_cap l =
   match filter is_errb_cap l with [] => false | _ => true end.
 Proof.
@@ -1033,7 +1035,7 @@ Qed.
 (* 9. The grant at the call site, and the relation after the errbuf (re)map.                                         *)
 Lemma errb_grant_facts : forall Hp ly S (W : world tfibsegs) mem md (mat : list word) (a n : Z),
   ARcf tfibsegs B ly S Hp W mem md -> xs_mapped_cf ly S md ->
-  grant_ok_na_pin (with_vm_backing (m_vm_lazy md) mat md) (w64 a) n = true ->
+  grant_ok_na_pin (Z_to_bv 64 0) (with_vm_backing (m_vm_lazy md) mat md) (w64 a) n = true ->
   0 <= a < 2 ^ 64 -> 0 < n < 2 ^ 64 -> n mod 4096 = 0 ->
   page_aligned a /\ in_app a n /\ a + n <= ASAN_CEIL /\
   Forall (zdisjoint (a, n)) (static_extents ly ++ sec_extents ly S ++ perm_maps ly ++ band_maps ++ xs_cf ly S).
@@ -1049,7 +1051,7 @@ destruct (rr_grant_facts ly S md0 (w64 a) (w64 n) LO WF PL L0 ltac:(rewrite Un; 
   as (GA & GAPP & GCE & GFA).
 rewrite Ua in GA. rewrite Ua, Un in GAPP, GCE, GFA.
 pose proof alloc_ceiling_lt as CL. rr_ceil.
-pose proof (xs_fresh_of_grant ly S md0 a n XP (xs_mapped_cf_wvb ly S md _ mat XM) G ltac:(lia) ltac:(lia) ltac:(unfold ASAN_CEIL in *; lia)) as XF.
+pose proof (xs_fresh_of_grant ly S md0 a n XP (xs_mapped_cf_wvb ly S md _ mat XM) G ltac:(lia) Hal ltac:(lia) ltac:(lia) ltac:(unfold ASAN_CEIL in *; lia)) as XF.
 split; [exact GA|]. split; [exact GAPP|]. split; [exact GCE|].
 apply Forall_forall. intros z Hz. rewrite !in_app_iff in Hz. destruct Hz as [Hz|[Hz|[Hz|[Hz|Hz]]]];
   try (apply (proj1 (Forall_forall _ _) GFA); rewrite !in_app_iff; tauto).
@@ -1160,7 +1162,7 @@ Lemma errb_rel_map : forall Hp ly (S S1 : astate) (W : world tfibsegs) (mem : wo
   TfibSyms B -> img_cover ly ->
   ARcf tfibsegs B ly S Hp W mem md -> xs_mapped_cf ly S md -> ALEDGER_X ly S md -> errb_mapped_cf S = false ->
   0 <= a < 2 ^ 64 -> 0 < ncap < 2 ^ 64 -> ncap mod kPage = 0 ->
-  grant_ok_na_pin (with_vm_backing (m_vm_lazy md) mat md) (w64 a) ncap = true ->
+  grant_ok_na_pin (Z_to_bv 64 0) (with_vm_backing (m_vm_lazy md) mat md) (w64 a) ncap = true ->
   Wf_cf (as_universe B) S1 -> errb_frame S S1 ->
   st_secs S1 = map cfx_retire (st_secs S) ++ [mkSec ncap ERRB_CAP_TAG false] ->
   let md1 := with_mmap_backing (w64 34) (w64 a) (w64 ncap)
@@ -1191,7 +1193,8 @@ assert (Ua : bv_unsigned (w64 a) = a) by (apply w64_unsigned; lia).
 assert (Un : bv_unsigned (w64 ncap) = ncap) by (apply w64_unsigned; lia).
 pose proof alloc_ceiling_lt as CL. rr_ceil.
 assert (RF : forall q, In q (vm_maps (m_vmmaps md0)) -> a + ncap <= bv_unsigned (fst q) \/ bv_unsigned (fst q) + bv_unsigned (snd q) <= a).
-{ intros q Hq. pose proof G as G'. unfold grant_ok_na_pin in G'. apply andb_prop in G' as [_ G4].
+{ intros q Hq. pose proof (YK13.grant_ok_na_pin_facts _ _ _ _ (proj1 Hn) ltac:(unfold page_size, kPage in *; lia) G) as G'.
+  unfold YK13.grant_ok_na_pin_b in G'. apply andb_prop in G' as [_ G4].
   pose proof (YK13.region_free_In _ (w64 a) (Z_to_bv 64 ncap) (fst q) (snd q) G4 ltac:(apply in_app_iff; right; rewrite <- surjective_pairing; exact Hq)) as D.
   change (Z_to_bv 64 ncap) with (w64 ncap) in D. rewrite Ua, Un in D. exact D. }
 assert (MW0 : amwf md0) by exact (amwf_same md md0 eq_refl eq_refl MW).
@@ -1219,7 +1222,7 @@ Lemma errb_rel_remap : forall Hp ly (S S1 : astate) (W : world tfibsegs) (mem : 
   ARcf tfibsegs B ly S Hp W mem md -> xs_mapped_cf ly S md -> ALEDGER_X ly S md -> errb_mapped_cf S = true ->
   errb_cap_cf S <= ncap ->
   0 <= a < 2 ^ 64 -> 0 < ncap < 2 ^ 64 -> ncap mod kPage = 0 ->
-  grant_ok_na_pin (with_vm_backing (m_vm_lazy md) mat md) (w64 a) ncap = true ->
+  grant_ok_na_pin (Z_to_bv 64 0) (with_vm_backing (m_vm_lazy md) mat md) (w64 a) ncap = true ->
   Wf_cf (as_universe B) S1 -> errb_frame S S1 ->
   st_secs S1 = map cfx_retire (st_secs S) ++ [mkSec ncap ERRB_CAP_TAG false] ->
   let md1 := with_mmap_backing (w64 34) (w64 a) (w64 ncap)
@@ -1257,7 +1260,8 @@ pose proof alloc_ceiling_lt as CL. rr_ceil.
 assert (Ud : bv_unsigned (w64 d) = d) by (apply w64_unsigned; unfold ASAN_CEIL in *; lia).
 assert (Uo : bv_unsigned (w64 oc) = oc) by (apply w64_unsigned; unfold ASAN_CEIL in *; lia).
 assert (RF : forall q, In q (vm_maps (m_vmmaps md0)) -> a + ncap <= bv_unsigned (fst q) \/ bv_unsigned (fst q) + bv_unsigned (snd q) <= a).
-{ intros q Hq. pose proof G as G'. unfold grant_ok_na_pin in G'. apply andb_prop in G' as [_ G4].
+{ intros q Hq. pose proof (YK13.grant_ok_na_pin_facts _ _ _ _ (proj1 Hn) ltac:(unfold page_size, kPage in *; lia) G) as G'.
+  unfold YK13.grant_ok_na_pin_b in G'. apply andb_prop in G' as [_ G4].
   pose proof (YK13.region_free_In _ (w64 a) (Z_to_bv 64 ncap) (fst q) (snd q) G4 ltac:(apply in_app_iff; right; rewrite <- surjective_pairing; exact Hq)) as D.
   change (Z_to_bv 64 ncap) with (w64 ncap) in D. rewrite Ua, Un in D. exact D. }
 assert (MW0 : amwf md0) by exact (amwf_same md md0 eq_refl eq_refl MW).

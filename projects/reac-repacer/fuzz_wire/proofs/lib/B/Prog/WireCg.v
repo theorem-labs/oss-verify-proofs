@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs: the shared part of proofs/libreac/fuzz_decode/lib/A/Prog/check_round_trip_cg.v (origin/ossv/recipes 88154566652a: dec_utrace, the read-only reads and their two instance facts, the value-0 shadow granule of a table, the leaf instances dec_leaf_at / dec_leaf_wr_at and the runtime cells as constant cells of the record) for reac-repacer/fuzz_uci's image A: module paths changed, the image is the core's tfibsegs (lib/A/AB1v.v), the read-only reads and the cells are fuzz_uci.asan's, measured on the pinned image. *)
+(* Modified by Theorem Labs: the shared part of proofs/libreac/fuzz_decode/lib/A/Prog/check_round_trip_cg.v (dec_utrace, the read-only reads and their two instance facts, the value-0 shadow granule of a table, the leaf instances dec_leaf_at / dec_leaf_wr_at and the runtime cells as constant cells of the record) for reac-repacer/fuzz_uci's image A: module paths changed, the image is the core's tfibsegs (lib/A/AB1v.v), the read-only reads and the cells are fuzz_uci.asan's, measured on the pinned image. *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/reac-repacer/fuzz_uci/lib/A/Prog/UciCg.v, with its module paths changed. *)
-(* Modified by Theorem Labs: the shared part of proofs/libreac/fuzz_decode/lib/A/Prog/check_round_trip_cg.v (origin/ossv/recipes 88154566652a: dec_utrace, the read-only reads and their two instance facts, the value-0 shadow granule of a table, the leaf instances dec_leaf_at / dec_leaf_wr_at and the runtime cells as constant cells of the record) for reac-repacer/fuzz_uci's image A: module paths changed, the image is the core's tfibsegs (lib/A/AB1v.v), the read-only reads and the cells are fuzz_uci.asan's, measured on the pinned image. *)
+(* Modified by Theorem Labs: the shared part of proofs/libreac/fuzz_decode/lib/A/Prog/check_round_trip_cg.v (dec_utrace, the read-only reads and their two instance facts, the value-0 shadow granule of a table, the leaf instances dec_leaf_at / dec_leaf_wr_at and the runtime cells as constant cells of the record) for reac-repacer/fuzz_uci's image A: module paths changed, the image is the core's tfibsegs (lib/A/AB1v.v), the read-only reads and the cells are fuzz_uci.asan's, measured on the pinned image. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/A/Prog/UciCg.v, with its module paths and module names changed; 82 of its 158 lines of code are new or changed and 64 lines of the source are left out. *)
-(* Modified by Theorem Labs: copied from this unit's lib/A/Prog/UciCg.v (commit ba35beec1417; itself the shared part of proofs/libreac/fuzz_decode/lib/A/Prog/check_round_trip_cg.v at recipes commit 88154566652a) for reac-repacer/fuzz_uci's image B: module paths changed (the B core's tfibsegs lib/B/YB1v.v, its journal file lib/B/YCbq.v, lib/B/AsanCells.v); the read-only reads and the cells are fuzz_uci.asan-ubsan's, measured on the pinned image (MARGIN_MAX 0x20ca0 and musl memchr's window [0x10350, 0x10370) are at image A's addresses; the instruction addresses in the comments are image B's). *)
+(* Modified by Theorem Labs: copied from this unit's lib/A/Prog/UciCg.v (itself the shared part of proofs/libreac/fuzz_decode/lib/A/Prog/check_round_trip_cg.v at recipes) for reac-repacer/fuzz_uci's image B: module paths changed (the B core's tfibsegs lib/B/YB1v.v, its journal file lib/B/YCbq.v, lib/B/AsanCells.v); the read-only reads and the cells are fuzz_uci.asan-ubsan's, measured on the pinned image (MARGIN_MAX 0x20ca0 and musl memchr's window [0x10350, 0x10370) are at image A's addresses; the instruction addresses in the comments are image B's). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* WireCg: the definitions every program statement of fuzz_wire.asan-ubsan (lib/B/Prog/*_cg.v) shares. STATEMENTS and
    decided facts only: nothing here is a walk.
    - wire_utrace: the trace the allocator records at a call (decode's dec_utrace);
@@ -58,7 +59,7 @@ Proof. vm_compute. reflexivity. Qed.
                                  formed by auipc; lib/B/Prog/WirePAddr.v wire_obj 10, 11); neither lies in the record's
                                  owned statics (lib/B/YF0m.v Tfib_owned_static).
    The one other .rodata word a program function loads, 0x10328 (rp_frame_channels, `ld` at 0x813c4; wire_obj 9), is
-   an owned static (lib/B/YF0m.v:271) and a constant cell of the record (:253), so it reaches the walks as wire_cells'
+   an owned static (lib/B/YF0m.v:272) and a constant cell of the record (:253), so it reaches the walks as wire_cells'
    last row below. Both ranges lie in fuzz_wire.asan-ubsan's first PT_LOAD [0x10000, 0x2ef5c), which is read-only. *)
 Definition WIRE_RO_RD : list (Z * Z) := [(0x10300, 8); (0x103b0, 8)].
 Definition wire_in_ro_rd (a : Z) : Prop := Exists (in_zr a) WIRE_RO_RD.
@@ -155,7 +156,7 @@ Definition WIRE_RO_FCH_VAL : Z := 0xe38e38e38e38e38f.
 (* The runtime cells the program and its leaves read, as constant cells of the record B: as_const (YG0f.v) is
    re-read at every AR state (YG0n.v ARm am_const), so a walk reads them after any call. Rows 1-19 are
    AsanCells.asan_cells (lib/B/AsanCells.v), in its order and with its widths and values; row 20 is the owned .rodata
-   word WIRE_RO_FCH (lib/B/YF0m.v:253). Each is a row of the B core's record (lib/B/YF0m.v Tfib_const_abs).
+   word WIRE_RO_FCH (lib/B/YF0m.v:254). Each is a row of the B core's record (lib/B/YF0m.v Tfib_const_abs).
    LLVMFuzzerTestOneInput reads the shadow base through GOT_CELL_K (the `ld` at 0x7fc38). *)
 Definition wire_cells (B : asyms) : Prop :=
   forall ly,

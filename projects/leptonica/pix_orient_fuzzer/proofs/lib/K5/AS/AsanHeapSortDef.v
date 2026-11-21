@@ -1,12 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the recorded proof of ZT_eq replaced by plain proof). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC.
-From OSSVerify.Proofs.leptonica.pix_orient_fuzzer.lib Require KReplay.
-Ltac2 kr_t_AsanHeapSortDef () := "C47Corelib5Lists7ListDef3mapC47Corelib5Lists7ListDef6firstnI4ELinuxProcessSemantics5Riscv7Prelude4tree00K4ELinuxProcessSemantics5Riscv7Prelude4tree01K47Corelib7Numbers7BinNums8positive02K47Corelib7Numbers7BinNums8positive01k69OSSVerify5KrLib2K52AS?AsanHeapSortDef2zi04C1?~~~~~~~~~~~~~~~k69OSSVerify5KrLib2K52AS?AsanHeapSortDef2zi05C1?~~~~~~~~~~~~~~~K47Corelib7Numbers7BinNums1Z02k69OSSVerify5KrLib2K52AS?AsanHeapSortDef2zi02C1?~~~~~~~~~~~~~~~k69OSSVerify5KrLib2K52AS?AsanHeapSortDef2zi09C1?~~~~~~~~~~~~~~~K47Corelib7Numbers7BinNums1Z03k69OSSVerify5KrLib2K52AS?AsanHeapSortDef2zi06C1?~~~~~~~~~~~~~~~k69OSSVerify5KrLib2K52AS?AsanHeapSortDef2zi0<C1?~~~~~~~~~~~~~~~k69OSSVerify5KrLib2K52AS?AsanHeapSortDef2zi07C1?~~~~~~~~~~~~~~~k69OSSVerify5KrLib2K52AS?AsanHeapSortDef2zi08C1?~~~~~~~~~~~~~~~k69OSSVerify5KrLib2K52AS?AsanHeapSortDef2zi0:C1?~~~~~~~~~~~~~~~k69OSSVerify5KrLib2K52AS?AsanHeapSortDef2zi0=C1?~~~~~~~~~~~~~~~k69OSSVerify5KrLib2K52AS?AsanHeapSortDef2zi03C1?~~~~~~~~~~~~~~~k69OSSVerify5KrLib2K52AS?AsanHeapSortDef2zi0;C1?~~~~~~~~~~~~~~~k69OSSVerify5KrLib2K52AS?AsanHeapSortDef2zi0>C1?~~~~~~~~~~~~~~~K47Corelib4Init5Logic2eq01c69OSSVerify5KrLib2K52AS?AsanHeapSortDef4mkztC1?~~~~~~~~~~~~~~~I47Corelib4Init5Logic2eq00k69OSSVerify5KrLib2K52AS?AsanHeapSortDef2zi01C1?~~~~~~~~~~~~~~~K47Corelib4Init9Datatypes6option01K4ELinuxProcessSemantics5Riscv7Prelude4tree02i69OSSVerify5KrLib2K52AS?AsanHeapSortDef2zi00C1?~~~~~~~~~~~~~~~K47Corelib7Numbers7BinNums1Z01K47Corelib7Numbers7BinNums8positive03c69OSSVerify5KrLib2K52AS?AsanHeapSortDef2ZTC1?~~~~~~~~~~~~~~~I4ELinuxProcessSemantics5Riscv5Instr5instr00c69OSSVerify5KrLib2K52AS?AsanHeapSortDef4toziC1?~~~~~~~~~~~~~~~c69OSSVerify5KrLib2K52AS?AsanHeapSortDef7HS_CODEC1?~~~~~~~~~~~~~~~".
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope Z_scope.
@@ -163,9 +162,7 @@ Fixpoint mkzt (l : list zi) (k : positive) (t : tree zi) : tree zi :=
 
 (* [comment removed for export] *)
 Definition ZT : tree zi := Eval vm_compute in mkzt (map tozi HS_CODE) 1 TEmpty.
-Lemma ZT_eq : ZT = mkzt (map tozi HS_CODE) 1 TEmpty.
-Proof.
-ltac2:(KReplay.run1 (kr_t_AsanHeapSortDef ()) [] "p;1p;3p;2p;4p-1R0g0000R1p4p710p8P0p1000Lp4p710p8g000kj1VTg001Xj1UTg002Ej10Tg002jj11Tg003Oj3@Tg004Nj3BTg005Mj14Tg005kj3FTg006jj3=Tg007ij1CTg008Gj3DTg009Fj3MTg00:Ej3LTg00;Dj3KTg00<Cj3JTg00=Bj1GTg00>Aj3TTg00?@j3ITg00@?j2STg00A>j2RTP1j4QTg00AXj3OTg00BWj3PTg00C1j3HTg00D0j2:Tg00DRj45Tg00E?R1f2R0f1R2f0R33H':p=81:13p=2AK023,:1p=7P1P1f4R4f3R5P0C5P2P3C5p=;P1P1P1f6f5,:1P4C5P5P0C5P2P3C5p=9AF023,:1p=AAD023,:1p=?P1P01:12P3C5p=>P1P1P41:15P0C5P2P3C5p=3%03#0p=6P1P0P2P3C5p=NP1P1P4P5P0C51:12P3C5p=Eg00F>R09H23p=<%V1R3%U1R2g00F\R5#0R4#0R6#0R7#1R8%14R9#1R:;@8P2%15R;#0R<#1R=?850P2%1;R;?B<0#2P2%1;R>%07R?%47R@37P2%44RA98??RBP2D;F9%46RC9A>=RDP2%0;RE=F=CP2A7:?@P2%1ERF%16R6#0RG;?@ABGG0=>22RHF9%45RI98E5P2A=8G@P2A??E@P2D3A@G:G#2RJP2%0<RK%09R9#0RL#0#6#C5=EP2A@E:>#2P2D3%C5RM98?GP2AD8>0P2AA?=IP2A7<F@AN2B2F9D;D;%19#0#1#6#49=K=P2AB880P2A@E:E#2P2A?;<0P2A7=G@P2%6:R9#0#49ME=P2DEF9AB>>0P2AD?=0P2A7EG@P2AL<>0#21<8==>22F9A8==IP21<E?P2A?G:@P2D3A7G;0P2%1=#0#6#C9MK5P2PJP2D3AA<8CP2AK>?0P2PDP2%6G#C9=E?#2AF8EC=>22F9D;D3A8=5AP2PJP2AAEKCP2D;%C9R99J;>P2A7=80P2%6=#49=?KP2DEA@>:>#2RJP2A@=:=P2A7E80P2A7G;@A=EG@=>22F9D3%4K#GP21<?EP2A?8:0P2D3AB7GCP2A8KKMP2AAG8CP2D;AT8?I#2P2ADG>@P2A88?IP21<G8#2AJ?K9=>22F9D3A8=5IPHA?>E0P2AAGGCP21<=EP2%08#6#4#G#2P2D3D;1<G=AN2J2A8E50P2AL<7C1<E8=>22DE%16#1#0#6#49I=K#2P2%6E#49I?=P2A7:>0P2D3A?;<@P21S40P2ABEE0#2P2D3A@<:<P2AD?=@P2%4L9=8K#2P2%1K#6#C#G#2AFG?C=>22F9DED3D3D3'Rg00GAg00H>P1g00Hjg00IiCQ?O525P3do"). Qed.
+Lemma ZT_eq : ZT = mkzt (map tozi HS_CODE) 1 TEmpty. Proof. vm_compute. reflexivity. Qed.
 
 Record zst : Type := ZS { z_pc : Z; z_regs : tree Z; z_tbl : list (list Z) }.
 

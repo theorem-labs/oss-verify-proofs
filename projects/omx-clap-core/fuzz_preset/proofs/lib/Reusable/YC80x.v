@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: for omx-clap-core/fuzz_preset, the position-abstract-listing runner of
-   proofs/cgif/cgif_file_fuzzer/lib/YC80.v (origin/ossv/recipes c8557374ad2e :52-140) restated over YCbqG.v's journal
+   proofs/cgif/cgif_file_fuzzer/lib/YC80.v (theorem-labs/oss-verify-proofs@6b32741d849a :52-140) restated over YCbqG.v's journal
    ajournal_x (allocator invariant a parameter ARx, ghost head set Hp threaded as YCbqG.v's SRr_chain_tok_AJx does,
    program statics PST); plus mixed-write twins (suffix m) whose write premise also admits the program's own statics PST,
    from the journal lemma ajournal_x_exec_mixed below. Generic: no image class, no address, no ledger.
@@ -12,7 +12,7 @@
    part, moved here from YSRrMemnorm.v (which keeps P's memnorm instance over YAkMemnorm and srr_inv_laws_imp;
    YSRrMemnormJ.v holds the YAjMemnorm instance, YC1fPx.v the runners paj_run_*_inv and their tactics).
    rule 24: no function proved. rule 24: proves no function (kind: engine lemmas).
-   WHY: a walk proves an SRr goal (YA0n.v:35, CPS over srealizes), and SRr does not show the reached state, so
+   WHY: a walk proves an SRr goal (YA0n.v:36, CPS over srealizes), and SRr does not show the reached state, so
    SRr W c Q -> SRr W c (Q /\ P ..) has no generic proof. The runner reaches every end state through one primitive,
    YA0n.SRr_msteps (:149), whose continuation receives mkCfg (unrestrict (w_H W) (ms_mem ms) msr') model'.
    WHAT:
@@ -22,7 +22,7 @@
    - SRr_msteps_inv / SRr_step_inv: YA0n.SRr_msteps (:149) / SRr_step (:133, one hand step) with the premise
      P (ms_mem ms) and the continuation premise P on the end memory. Each applies the original, it does not re-prove
      it; one step is an msteps run of length one (YK0i.msteps_one), and `change` checks the two memory equalities.
-   - No twin of SRr_node / SRr_nodeI (YA0n.v:105-129): P on node_ok's nx i needs P kept by every silent sstep_cfg
+   - No twin of SRr_node / SRr_nodeI (YA0n.v:106-130): P on node_ok's nx i needs P kept by every silent sstep_cfg
      step (R/Cfg.v), the universal form avoided here; the walk states P of its own nx.
    - Section ei, inside Section e (its lemmas take Section e's binders, then P and its laws PLAW):
      run_post_pi_tok_AJx_inv, run_post_pi_tok_AJx with the premise P (ms_mem ms') after the journal, and the _inv
@@ -40,6 +40,7 @@
    SRrG_msteps / SRrG_step) and ajournal_x_exec_mixedR (over YCbqG.v's ajournal_x_execR / ajournal_x_pst_writeR) are
    the step and journal lemmas they rest on. Each plain lemma is its R form at wle (wle_refl / wle_trans); its
    statement is unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -198,7 +199,7 @@ Qed.
 (* YCbqG.v's ajournal_x_exec (:365) with a write set Wr that may also cover the program's own statics PST: a function's
    straight-line code writes its own frame and its statics between two calls. The memory change splits at an
    intermediate memory memi (memc' off PST, memc on PST): memc -> memi is ajournal_x_exec over Wr minus PST, and
-   memi -> memc' is ajournal_x_pst_write (YCbqG.v:402). No premise beyond ajournal_x_exec's and PST_ok. *)
+   memi -> memc' is ajournal_x_pst_write (YCbqG.v:403). No premise beyond ajournal_x_exec's and PST_ok. *)
 Lemma ajournal_x_exec_mixed : forall STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k memc' mdc' (Wr : Z -> Prop),
 ajournal_x segs B PST ARx STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k ->
 (forall x : word, ~ Wr (bv_unsigned x) -> mrestrict (w_H Wc) memc' x = mrestrict (w_H Wc) memc x) ->
@@ -239,7 +240,7 @@ Local Notation AJ := (ajournal_x segs B PST ARx).
 Local Notation AJR R := (ajournal_xR segs B PST ARx R).
 Local Notation img_env := (img_env val A_LIM).
 Local Notation st_ok_pi := (st_ok_pi segs val).
-(* cgif YC80.v:52-68 (origin/ossv/recipes) over ajournal_x, Hp after S and Hpc after Sc. *)
+(* cgif YC80.v:53-69 (origin/ossv/recipes) over ajournal_x, Hp after S and Hpc after Sc. *)
 Definition run_post_pi_tok_AJx (W : world segs) (E : env) (K : nat) (Bx : sv) (SH : list shent) (ss : sstate) (st' : shst)
 (r : ptrun_status psym)
 (ms : machine_state) (STK sp0 : Z) (FP : list (Z * Z)) ly S Hp W0 mem md own lyc Sc Hpc (mdc : Model) (k : Z)
@@ -359,7 +360,7 @@ apply (Hk ws (unrestrict (w_H W) (ms_mem ms) msr') (m_vm_materialized model') Hl
 - rewrite Hmm. exact Hfr.
 - rewrite Hmm. exact Hgr.
 Qed.
-(* cgif YC80.v:69-102 (origin/ossv/recipes) over ajournal_x; the journal step is YCbqG.v's ajournal_x_exec, the run
+(* cgif YC80.v:70-103 (origin/ossv/recipes) over ajournal_x; the journal step is YCbqG.v's ajournal_x_exec, the run
    step SRr_msteps_inv. *)
 Lemma SRr_chain_pi_tok_AJx_inv : forall W E K Bx SH ws ss (st' : shst) (r : ptrun_status psym) ms msr' STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q,
 msteps segs (restrict (w_H W) ms) msr' ->
@@ -400,7 +401,7 @@ HE HS Hsh Hchk Hrun Hobl) as (ws & msr' & Hlen & Hms & HE' & HP & Hsh' & _ & Hfr
 eapply (SRr_chain_pi_tok_AJx_invR R Rr Rt); [exact Hms | exact Hlen | exact HE' | | exact Hsh' | exact Hfr | exact HJ | exact HPm | exact Hwr | exact Hk].
 destruct r; cbn [ptok_post] in HP; first [exact HP | destruct HP].
 Qed.
-(* cgif YC80.v:103-121 (origin/ossv/recipes) over ajournal_x. *)
+(* cgif YC80.v:104-122 (origin/ossv/recipes) over ajournal_x. *)
 Lemma SRr_run_pi_tok_AJx_inv : forall W n E K Bx Bspan SH ss st' r ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q,
 (A_LIM <= K)%nat -> img_env E ->
 st_ok_pi E ss (restrict (w_H W) ms) ->
@@ -437,7 +438,7 @@ HE HS Hsh Hchk Hrun Hobl) as (ws & msr' & Hlen & Hms & HE' & HP & Hsh' & _ & Hfr
 eapply (SRr_chain_pi_tok_AJx_invR R Rr Rt); [exact Hms | exact Hlen | exact HE' | | exact Hsh' | exact Hfr | exact HJ | exact HPm | exact Hwr | exact Hk].
 destruct r; cbn [ptok_post] in HP; first [exact HP | destruct HP].
 Qed.
-(* cgif YC80.v:122-140 (origin/ossv/recipes) over ajournal_x. *)
+(* cgif YC80.v:123-141 (origin/ossv/recipes) over ajournal_x. *)
 Lemma SRr_run_to_pi_tok_AJx_inv : forall W n stop E K Bx Bspan SH ss st' r ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q,
 (A_LIM <= K)%nat -> img_env E ->
 st_ok_pi E ss (restrict (w_H W) ms) ->
@@ -492,7 +493,7 @@ apply (Hk ws (unrestrict (w_H W) (ms_mem ms) msr') (m_vm_materialized model') Hl
 Qed.
 (* Mixed-write twins: the straight-line stretch may write, besides the bytes awr_byte admits (its frame, its own
    blocks), the program's own statics PST. The journal step is ajournal_x_exec_mixed above; otherwise
-   cgif YC80.v:69-140 (origin/ossv/recipes) as the three lemmas above. *)
+   cgif YC80.v:70-141 (origin/ossv/recipes) as the three lemmas above. *)
 Lemma SRr_chain_pi_tok_AJxm_inv : forall W E K Bx SH ws ss (st' : shst) (r : ptrun_status psym) ms msr' STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q,
 msteps segs (restrict (w_H W) ms) msr' ->
 length ws = sh_j st' ->

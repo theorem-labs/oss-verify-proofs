@@ -14,7 +14,7 @@ Open Scope Z_scope.
 (* Footprint twin of reac_braid_encode_exact_contract (crt_braid_need.v, entry REAC_BRAID_ENCODE, frame
    REAC_BRAID_ENCODE_FRAME), and reac_braid_encode_exact_contract_of_F, which gives the plain contract back at the
    footprint RNG_all. A relocation of the fuzz_ctrl B statement (proofs/libreac/fuzz_ctrl/lib/B/Prog/
-   reac_braid_encode_exact_c.v of a working branch, commit f9a993b5ec8): the premises of the plain contract
+   reac_braid_encode_exact_c.v of a working branch): the premises of the plain contract
    unchanged, then one rng premise per region the run reads or writes, then evtF in place of evt. Every numeral was
    produced by a Theorem Labs lane's alreloc.py (--src libreac/fuzz_ctrl --build asan-ubsan), which reported 0 UNMAPPED, 0 KEPT-ADDR
    and needed no resolve line: its two derived image numerals (alreloc.py:576-577) are replaced by a citation of

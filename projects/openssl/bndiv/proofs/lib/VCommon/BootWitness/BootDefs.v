@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the new auxv layout: structZ and strs0Z take the auxv span from auxv_size of the CONFIG_RSEQ flag, kb_rseq, through the new auxvszZ instead of the literal 160; draw0 fills the entry draw's new stack-top and vDSO fields). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -23,9 +24,28 @@ Definition strbytesZ (inp : ProcInput) : Z :=
   Z.of_nat (length (flatten_strings (in_argv inp))
             + length (flatten_strings (in_envp inp))).
 
-(* [comment removed for export] *)
+(* LPS@75d69e00: the auxiliary vector's byte span is NOT a constant.  StackLayout.v:276-277
+   gives [auxv_count rseq := if rseq then 29%nat else 27%nat] and
+   [auxv_size rseq := (16 * auxv_count rseq)%nat], i.e. 464 bytes with CONFIG_RSEQ and 432
+   without, and [length_auxv_bytes] (:279-284) proves the serialized vector has exactly that
+   length.  [la_rseq] is, in the model's own words (:152-156), "the ONE fact that moves the
+   vector's length".  The literal 160 that stood here is 16 * 10 -- the pre-revision
+   ten-pair table -- and it occurred TWICE in this file, here and in [strs0Z]; a repair that
+   fixed only the [strs0Z] carrier would have left [structZ] (and through it [padZ] and
+   [sbZ]) on the old span.
+   The span is taken from the model's own [auxv_size] rather than written as a numeral, so
+   it cannot drift again and so nothing here pins the rseq flag: it is cased on
+   [kb_rseq (in_kernel inp)], the spelling this tree's own VCommon/Ax layer already uses
+   (VCommon/Ax/AsanWEb.v:284, :304, :488-491, where [auxv_size (kb_rseq (in_kernel inp))]
+   is already bounded by 464). *)
+Definition auxvszZ (inp : ProcInput) : Z :=
+  Z.of_nat (auxv_size (kb_rseq (in_kernel inp))).
+
+(* [structZ] is the model's [block_head_size] less the alignment gap and the sixteen
+   AT_RANDOM bytes: [8 * items + auxv_size], with [items = argc + envc + 3] so that
+   [8 * items = 8 + 8 * (argc + 1) + 8 * (envc + 1)] (StackLayout.v:385, :399-401). *)
 Definition structZ (inp : ProcInput) : Z :=
-  8 + 8 * (argcZ inp + 1) + 8 * (envcZ inp + 1) + 160.
+  8 + 8 * (argcZ inp + 1) + 8 * (envcZ inp + 1) + auxvszZ inp.
 
 (* [comment removed for export] *)
 Definition padZ (inp : ProcInput) : Z :=
@@ -35,7 +55,7 @@ Definition sbZ (inp : ProcInput) : Z := strbytesZ inp + padZ inp.
 (* [comment removed for export] *)
 Definition envp0Z (sp0 : Z) (inp : ProcInput) : Z := sp0 + 16 + 8 * argcZ inp.
 Definition auxv0Z (sp0 : Z) (inp : ProcInput) : Z := sp0 + 24 + 8 * argcZ inp + 8 * envcZ inp.
-Definition strs0Z (sp0 : Z) (inp : ProcInput) : Z := auxv0Z sp0 inp + 160.
+Definition strs0Z (sp0 : Z) (inp : ProcInput) : Z := auxv0Z sp0 inp + auxvszZ inp.
 Definition rand0Z (sp0 : Z) (inp : ProcInput) : Z := strs0Z sp0 inp + sbZ inp.
 
 (* [comment removed for export] *)
@@ -52,7 +72,7 @@ Definition argv0_of (inp : ProcInput) : list byte := nth 0 (in_argv inp) [].
 Definition pnoffZ (inp : ProcInput) : Z := Z.of_nat (pn_off (argv0_of inp)).
 
 (* [comment removed for export] *)
-Definition draw0 : EntryDraw := mkDraw (Z_to_bv 128 0) (fun _ => Z_to_bv 8 0).
+Definition draw0 : EntryDraw := mkDraw (Z_to_bv 128 0) (Z_to_bv 64 0) vdso_keeps_all.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)

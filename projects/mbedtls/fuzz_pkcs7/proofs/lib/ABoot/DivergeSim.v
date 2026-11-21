@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (imports Vdso; the test segment gains its loader kind; spin_img_to_spin written out from its encoded form and restated over the run's segment list, with the vDSO pair as an abstract tail and the vDSO-initialised model; the by-execution example takes the new entry draw and one shared process input; comments written out). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool String PrimString.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
-  BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+  BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Vdso Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.ABoot Require Import PropExec.
 Import ListNotations.
@@ -550,7 +551,8 @@ Definition spin_seg : Segment := {|
   seg_base := 0x10000;
   seg_size := 4;
   seg_perms := "r-x"%string;
-  seg_bytes := ["6f000000"%pstring]
+  seg_bytes := ["6f000000"%pstring];
+  seg_kind  := SegLoader
 |}.
 Definition spin_segs : list Segment := [spin_seg].
 Definition spin_img : Image :=
@@ -560,10 +562,19 @@ Example j_dot_decodes :
   decode_any (Z_to_bv 32 0x6f) = Some (Jal 0 (Z_to_bv 21 0), 4%Z).
 Proof. div_vm_refl. Qed.
 
-Lemma spin_img_to_spin : ltac2:(CDefT.buildp (gd_tbl_DivergeSim ()) "Psp,(10.&40.)Pbrk0,(10.&40.)Pmbase,(10.&40.)Prnd,$3=.Plim,$12.Pinp,$3>.(3?.$40.(41.$40.&10000.(42.&10040.&38.&6.)R6.R3.(43.R1.)(44.R1.)(45.R1.)(46.R1.))(47.(48.$40.)R5.R4.R6.R2.R1.))")
-(* [comment removed for export] *).
+(** Over the RUN's segment list: this image's own segment and the vDSO
+    pair [Run.run_segments] appends, with the pair an abstract tail so
+    that no computation here normalises the measured image.  The
+    spinning instruction is in the image's own segment, which comes
+    first, so the pair changes nothing. *)
+Lemma spin_img_to_spin : forall vt sp brk0 mbase (rnd : EntryDraw) lim inp,
+  to_spin (spin_segs ++ vt)
+    (init_machine_state (spin_segs ++ vt) 0x10000 (mkPhdrInfo 0x10040 56 6)
+       sp mbase rnd inp)
+    (with_vdso (vdso_run_init (ed_vdso rnd))
+       (init_model (segments_reserved (spin_segs ++ vt)) brk0 mbase sp lim inp)).
 Proof.
-  intros sp brk0 mbase rnd lim inp.
+  intros vt sp brk0 mbase rnd lim inp.
   eapply ts_spin_of_step_j with (w := Z_to_bv 32 0x6f).
   - reflexivity.
   - div_vm_refl.
@@ -603,16 +614,36 @@ Proof.
   - reflexivity.
 Qed.
 
-(* [comment removed for export] *)
+(** The executable path closes the same goal by computation when the
+    inputs are concrete.
+
+    [spin_exec_input] is the same [State.ProcInput] both sides take, so
+    the entry image and the model agree on argv, envp, the credentials
+    and the kernel build.
+
+    THE DRAW'S [ed_top] IS ONE PAGE ABOVE [sp], and it has to be.  The
+    block now runs from [sp] all the way to [ed_top], so the image is
+    [ed_top - sp] bytes and [vm_compute] builds every one of them; the
+    top of the Sv48 user stack would be a list of 2^47 bytes and the
+    checker is killed building it (measured).  This fixture's [sp] is
+    65536, far below any Linux stack, so it is not a launch
+    [Run.entry_launch_ok_va] admits and no lemma here asks it to be:
+    the goal is that a self-jump spins, which reads no stack byte.  One
+    page is what the model mapped here before the block grew, so the
+    computation costs what it always did. *)
+Definition spin_exec_input : ProcInput :=
+  mkProcInput [[]] [] [] IEof (Z_to_bv 64 1000) (Z_to_bv 64 1002) []
+    net_silent default_nofile (Z_to_bv 64 0) hwcap_rv64gc false Sv48.
+
 Example spin_img_to_spin_by_execution :
   to_spin spin_segs
     (init_machine_state spin_segs 0x10000 (mkPhdrInfo 0x10040 56 6)
-       (Z_to_bv 64 65536) (mkDraw (Z_to_bv 128 0) (fun _ => Z_to_bv 8 0))
-       [[]] [] (Z_to_bv 64 1000) hwcap_rv64gc)
+       (Z_to_bv 64 65536) (Z_to_bv 64 0x7fff7f800000)
+       (mkDraw (Z_to_bv 128 0) (Z_to_bv 64 69632) vdso_keeps_all)
+       spin_exec_input)
     (init_model (segments_reserved spin_segs) (Z_to_bv 64 1048576)
        (Z_to_bv 64 0x7fff7f800000) (Z_to_bv 64 65536) 0x40000000%Z
-       (mkProcInput [[]] [] [] IEof (Z_to_bv 64 1000) (Z_to_bv 64 1002) []
-          net_silent default_nofile (Z_to_bv 64 0) hwcap_rv64gc false Sv48)).
+       spin_exec_input).
 Proof. prove_to_spin 1%nat. Qed.
 
 End SelfJumpImage.

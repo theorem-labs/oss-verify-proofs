@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: removed, as no file uses them, Section MmapObj: the generic mmap triples triple1_mmap_rw_objJ and etriple_mmap_rw_objJ and the lemma with_vmmaps_idle' only they used; ported to LPS 727298f3 (grant_facts_A's ledger premise is the image's entries then the vDSO/vvar pair, written as plain text). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -64,17 +65,25 @@ Proof.
   unfold iv_overlap in H. apply Bool.andb_false_iff in H. destruct H as [H|H]; apply Z.ltb_ge in H; lia.
 Qed.
 
-Lemma grant_facts_A : ltac2:(tb__ "0|8|
-SaQ40M0A1M1G1S3aG1G1S64R5R4R3R2R1A5S3S19S1dG1G1A2M2A1S43S3cR4A1A1S6eS62A1A3S2S3S0S10S8G0R3A2M3Z1000A2Z0M4A3S2SdG4G3A2S2SbScG3S63R4A1A2S3fS3cR5A1A1A2S2S0S2SbS8G0R4A2M5R1A2SdR1ScG5S63R5A1A2A2A2S4S2SbZ10000R2A2SdR2Z643000A2A2A1F_;Fx;G1G1S4dG2S15G1G1R2R1A4S42S3cR7A1A1A3S0S2SbS8G0R7A2M6R1A2SdR1ScG6S63R8A1A2A2A2S4S2SbS8G0R5A2M7R2A2SdR2ScG7G5A2A2A2A1F_;Fx;F_;Fm;Fb;A2A2A2A2F_;F_;Fa;Flen;Fmd;Fflags;Faddr;").
+(* LPS 727298f3: the ledger premise is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v
+   [vdso_pair_ok]); the grant is free of the whole ledger, so of the image's entries.  Statement written
+   as plain text. *)
+Lemma grant_facts_A : forall (addr flags : word) (md : Model) (len a : word),
+  mmap_place_ok addr flags md len a ->
+  (exists V, vm_reserved (m_vmmaps md) = segments_reserved segsA ++ V /\ vdso_pair_ok V) ->
+  bv_unsigned a mod 4096 = 0 /\ 0 < bv_unsigned a /\ bv_unsigned a + mmap_nZ len <= alloc_top (m_vmmaps md) /\
+  (forall x : Z, bv_unsigned a <= x < bv_unsigned a + mmap_nZ len -> ~ (65536 <= x < 6565888)) /\
+  (forall b m : word, In (b, m) (vm_maps (m_vmmaps md)) ->
+     forall x : Z, bv_unsigned a <= x < bv_unsigned a + mmap_nZ len -> ~ (bv_unsigned b <= x < bv_unsigned b + bv_unsigned m)).
 Proof.
-  intros addr flags md len a (Hal & Hpos & Hceil & Hfree & _) Hres.
+  intros addr flags md len a (Hal & Hpos & Hceil & Hfree & _) (V & Hres & _).
   destruct (mmap_nw (m_vmmaps md) a len Hceil) as [En _].
   split; [exact Hal|]. split; [exact Hpos|]. split; [exact Hceil|].
   rewrite Hres, segments_reserved_A in Hfree.
   assert (Hsegs : forall x, bv_unsigned a <= x < bv_unsigned a + mmap_nZ len -> ~ (0x10000 <= x < 0x643000)).
   { intros x Hx Himg. rewrite <- En in Hx.
-    assert (R : forall b m, In (b, m) ([(Z_to_bv 64 0x10000, Z_to_bv 64 0x2b000); (Z_to_bv 64 0x3b000, Z_to_bv 64 0xa6000);
-                             (Z_to_bv 64 0xe1000, Z_to_bv 64 0x5000); (Z_to_bv 64 0xe6000, Z_to_bv 64 0x55d000)] ++ vm_maps (m_vmmaps md)) ->
+    assert (R : forall b m, In (b, m) (([(Z_to_bv 64 0x10000, Z_to_bv 64 0x2b000); (Z_to_bv 64 0x3b000, Z_to_bv 64 0xa6000);
+                             (Z_to_bv 64 0xe1000, Z_to_bv 64 0x5000); (Z_to_bv 64 0xe6000, Z_to_bv 64 0x55d000)] ++ V) ++ vm_maps (m_vmmaps md)) ->
                 ~ (bv_unsigned b <= x < bv_unsigned b + bv_unsigned m)).
     { intros b m Hin. exact (region_free_disj _ a (mmap_n len) b m Hfree Hin x Hx). }
     pose proof (R (Z_to_bv 64 0x10000) (Z_to_bv 64 0x2b000) (or_introl eq_refl)) as R1.
@@ -110,76 +119,6 @@ Proof.
     destruct c eqn:?C; [apply andb_prop in C as [?C1 ?C2]; apply Z.leb_le in C1; apply Z.leb_le in C2; lia | clear C] end.
   discriminate.
 Qed.
-
-Section MmapObj.
-Variable segs : list Segment.
-
-Lemma with_vmmaps_idle' : ltac2:(tb__ "0|0|
-S3eS3aS58R1A1S58S3dR3R2A2A1F_;Fmd;Fv;").
-Proof using . intros v md [H1 H2]. split; assumption. Qed.
-
-Theorem triple1_mmap_rw_objJ : ltac2:(tb__ "0|b|
-S57OF_;S51S51SaQ40M0A1M1S51F_;S2dS2eS0S54Vsegs;R7R6A3S61Vsegs;R8R7A3S3S16S55A1S67Vsegs;S32R5A1A2S1eS55S56A2A3S3S25S2aR6Z11A2S27ZdeA1A3S3S25S2aR7ZbA2S27R5A1A3S3S0S10R6Z1000A2Z0M2A3S2SdG2R7A2SdR7SfZ2Z3eA2A2A2S19S3bA1M3S39S3aS60Vsegs;RcRdS15G3S6cR3S6dR2R1A2A4A4R11RdR4R2A3S2S3S14S6fS38R4U2A2S38R4U3M4A2M5S38R4U5A2A3S1aA3S2S3S14S70G5A1S17A3S2R11ReR5R3A3G1S64S38R5U0A2S38R5G4A2R4S38R5U1M6A2R1A5S2S23S4dS23R1S28R12A1A3S24S26R12R2A2S15S0S0S8G0R4A2M7ScG7R11A2A4A2F_;Fo;S2G1S2SbS8G0R3A2M8S8G0R1A2M9A2SdG9ScG8R10A2A2A2S3S14S31Vsegs;R2A2S17A3F_;Fx;R12R2S5dR10S2cR11A1R2A3R7S3dS65S3cR5A1S38R6G6A2R2A3R5A2A4A2A2F_;Fa;A2A2A2F_;F_;Fmd;Fms;Ftr;S5cVsegs;RfS50Vsegs;ReRbRaA4S57S5S50Vsegs;ReS74RcS75A2RbR1A5S6G1G1S50Vsegs;ReR1A1S5eRdS29S2cRdA1MaA1S1fS23S28RdA1S1bS23S5fGaRbA2S1cS23A1A3A3S71GaA1A4S5dRcGaR1A3R2A5La;A2A2Lw;A4F_;F_;F_;F_;F_;F_;F_;F_;Fnlit;Frho;FS;FJo;FJf;FJ;Fok;").
-Proof using .
-  intros ok J Jf Jo S rho nlit Hokf Hokp Hi H17 H11 Hmod Hn HJ.
-  apply triple1_ecall_detJ; [exact Hokf | exact Hi |].
-  intros tr ms md Hsp Hk.
-  pose proof (smatch_pending_pending segs _ _ _ _ _ Hsp) as Hp. rewrite H17 in Hp. cbn [eval] in Hp.
-  pose proof (smatch_pending_halted segs _ _ _ _ _ Hsp) as Hh.
-  destruct (pending_args segs rho S tr ms md Hsp) as (G0 & G1 & G2 & G3 & G4 & G5).
-  rewrite H11 in G1. cbn [eval] in G1.
-  assert (Hlenv : bv_unsigned (ms_gpr ms 1) = nlit).
-  { rewrite G1, Z_to_bv_unsigned. apply bv_wrap_small. change (bv_modulus 64) with (2 ^ 64). lia. }
-  assert (Hlen : ms_gpr ms 1 <> Z_to_bv 64 0).
-  { intros E. rewrite E in Hlenv. rewrite Z_to_bv_unsigned in Hlenv. change (bv_wrap 64 0) with 0 in Hlenv. lia. }
-  assert (HnZ : mmap_nZ (ms_gpr ms 1) = nlit).
-  { unfold mmap_nZ, page_round_up_Z, page_size. rewrite Hlenv.
-    pose proof Hmod as Hmod'. apply Z.mod_divide in Hmod'; [|lia]. destruct Hmod' as [q Hq]. rewrite Hq.
-    replace (q * 4096 + 4096 - 1) with (4095 + q * 4096) by lia.
-    rewrite Z.div_add by lia. change (4095 / 4096) with 0. lia. }
-  destruct (HJ tr ms md Hsp Hk) as (Hmodb & Hnr & HJf & HOK).
-  assert (H222 : bv_unsigned (Z_to_bv 64 222) = 222%Z) by reflexivity.
-  split.
-  - eapply Hokp; [exact Hk | exact Hp |]. eapply (@mmap_only_ok segs); eassumption.
-  - intros w' Hw. destruct (wstep_mmap_inv Hp Hh H222 Hlen Hmodb Hnr Hw) as [-> | (a & Hpl & ->)].
-    + left. split; [|exact HJf]. unfold S_ret_lit, enomem_ret. eapply smatch_after_ret_lit; [exact Hsp | exact Hh].
-    + right. exists a. destruct (HOK a Hpl) as (Hdisj & Hnro & HJo).
-      pose proof Hpl as (_ & _ & Hceil & _). destruct (mmap_nw (m_vmmaps md) a (ms_gpr ms 1) Hceil) as [En Hnw].
-      rewrite HnZ in En. rewrite En in Hnw.
-      split.
-      * eapply (smatch_after_mmap segs rho S tr ms md); [exact Hsp | apply with_vmmaps_idle'; exact Hh | exact En | lia | exact Hnw | exact Hdisj | exact Hnro].
-      * cbn [w_tr w_cfg fst snd cfg_model]. exact HJo.
-Qed.
-
-Theorem etriple_mmap_rw_objJ : ltac2:(tb__ "0|b|
-S51SaQ40M0A1M1S51F_;S2dS2eS0S3S16S55A1S67Vsegs;S32R3A1A2S1eS55S56A2A3S3S25S2aR4Z11A2S27ZdeA1A3S3S25S2aR5ZbA2S27R3A1A3S3S0S10R4Z1000A2Z0M2A3S2SdG2R5A2SdR5SfZ2Z3eA2A2A2S19S3bA1M3S39S3aS60Vsegs;RaRbS15G3S6cR3S6dR2R1A2A4A4ReRbR4R2A3S2S3S14S6fS38R4U2A2S38R4U3M4A2M5S38R4U5A2A3S1aA3S2S3S14S70G5A1S17A3S6G1G1S2S64S38R5U0A2S38R5G4A2R4S38R5U1A2M6R1A5S2S23S4dS23R1S28RfA1A3S24S26RfR2A2S15S0S0S8G0R3A2M7ScG7ReA2A4A2F_;Fo;S2G1S2SbS8G0R2A2M8S8G0R1A2M9A2SdG9ScG8RdA2A2A2S3S14S31Vsegs;R2A2S17A3F_;Fx;RfR1S5dRdS2cReA1R1A3R6S3dS65S3cR4A1G6R1A3R4A2A4A2A2A2La;A2A2A2F_;F_;Fmd;Fms;Ftr;S5aVsegs;S50Vsegs;RbR9R8A4S57S6G1G1S50Vsegs;RcR1A1S5eRbS29S2cRbA1MaA1S1fS23S28RbA1S1bS23S5fGaR9A2S1cS23A1A3A3S71GaA1A4S5dRaGaR1A3R2A5La;A2Lw;A3F_;F_;F_;F_;F_;F_;Fnlit;Frho;FS;FJo;FJ;").
-Proof using .
-  intros J Jo S rho nlit Hi H17 H11 Hmod Hn HJ.
-  apply etriple_ecall_detJ; [exact Hi |].
-  intros tr ms md Hsp Hk.
-  pose proof (smatch_pending_pending segs _ _ _ _ _ Hsp) as Hp. rewrite H17 in Hp. cbn [eval] in Hp.
-  pose proof (smatch_pending_halted segs _ _ _ _ _ Hsp) as Hh.
-  destruct (pending_args segs rho S tr ms md Hsp) as (G0 & G1 & G2 & G3 & G4 & G5).
-  rewrite H11 in G1. cbn [eval] in G1.
-  assert (Hlenv : bv_unsigned (ms_gpr ms 1) = nlit).
-  { rewrite G1, Z_to_bv_unsigned. apply bv_wrap_small. change (bv_modulus 64) with (2 ^ 64). lia. }
-  assert (Hlen : ms_gpr ms 1 <> Z_to_bv 64 0).
-  { intros E. rewrite E in Hlenv. rewrite Z_to_bv_unsigned in Hlenv. change (bv_wrap 64 0) with 0 in Hlenv. lia. }
-  assert (HnZ : mmap_nZ (ms_gpr ms 1) = nlit).
-  { unfold mmap_nZ, page_round_up_Z, page_size. rewrite Hlenv.
-    pose proof Hmod as Hmod'. apply Z.mod_divide in Hmod'; [|lia]. destruct Hmod' as [q Hq]. rewrite Hq.
-    replace (q * 4096 + 4096 - 1) with (4095 + q * 4096) by lia.
-    rewrite Z.div_add by lia. change (4095 / 4096) with 0. lia. }
-  destruct (HJ tr ms md Hsp Hk) as (Hmodb & Hnr & a & Hpl & Hdisj & Hnro & HJo).
-  assert (H222 : bv_unsigned (Z_to_bv 64 222) = 222%Z) by reflexivity.
-  pose proof Hpl as (_ & _ & Hceil & _). destruct (mmap_nw (m_vmmaps md) a (ms_gpr ms 1) Hceil) as [En Hnw].
-  rewrite HnZ in En. rewrite En in Hnw.
-  eexists. split; [eapply (@wstep_mmap_intro_ok segs tr ms); eassumption|].
-  exists a. split.
-  - eapply (smatch_after_mmap segs rho S tr ms md); [exact Hsp | apply with_vmmaps_idle'; exact Hh | exact En | lia | exact Hnw | exact Hdisj | exact Hnro].
-  - cbn [w_tr w_cfg fst snd cfg_model]. exact HJo.
-Qed.
-End MmapObj.
 
 Definition lit_of (e : sv) : option Z := match e with SLit z => Some z | _ => None end.
 Definition var_of (e : sv) : option positive := match e with SVar i => Some i | _ => None end.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's validity hypotheses; the process input's new fields; the start-up taken per CONFIG_RSEQ value; the SIGPIPE disposition). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -54,14 +55,23 @@ Qed.
 
 (* [comment removed for export] *)
 Definition XALL_STMT (LINV : (word -> option byte) -> Prop) : Prop :=
-  forall (fx : FPState) (sp : word) (rdraw : EntryDraw) (brk0 : word) (argv envp : list (list byte)) (FS0 : Fs.Fs),
+  forall (fx : FPState) (sp : word) (rdraw : EntryDraw) (brk0 : word) (argv envp : list (list byte)) (FS0 : Fs.Fs)
+    (apc : N) (mbase : word) (fs : Fs.Fs) (stdin : InputStream) (gid : word) (groups : list word) (net : NetQueue) (ur : InputStream) (kern : KernelBuild) (execfn : list byte) (nofile sigmask : word) (abt sdf : bool),
     valid_sp sp -> valid_argv argv -> valid_envp envp ->
     forall uid hw : word, entry_stack_fits sp argv envp ->
+    in_kernel (inp argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf) = recorded_kernel (in_kernel (inp argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf)) ->
+    (* The XEnvScan/XPnScan generators take `valid_launch` then `entry_launch_ok_va` and no
+       recorded-kernel equation -- `About node_x_sound_XEnvScan_asan_gen` at
+       a probe run, transcribed in the handover.  `valid_launch inp` is a
+       premise of the published AsanTop statement (AsanTop.v:74, Hvl), so it is discharged at
+       the launch and not assumed here. *)
+    valid_launch (inp argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf) ->
+    entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) (inp argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf) ->
     forall SINV : env -> (word -> option byte) -> Prop,
-      (forall E M, SINV E M -> SINV0 APH sp rdraw brk0 argv envp uid hw E M) ->
-      (forall E M M', (forall a, argH0 APH sp rdraw argv envp uid hw E a = true -> M' a = M a) -> SINV E M -> SINV E M') ->
+      (forall E M, SINV E M -> SINV0 APH apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf E M) ->
+      (forall E M M', (forall a, argH0 sp rdraw argv envp kern execfn E a = true -> M' a = M a) -> SINV E M -> SINV E M') ->
       (forall E E' M, env_agree NX0 E E' -> SINV E M -> SINV E' M) ->
-      forall x, x_stmt ASEGS ASAN NX0 AsanInit.LIMIT SINV (argH0 APH sp rdraw argv envp uid hw) LINV FS0 x.
+      forall x, x_stmt ASEGS ASAN NX0 AsanInit.LIMIT SINV (argH0 sp rdraw argv envp kern execfn) LINV FS0 x.
 
 (* [comment removed for export] *)
 Definition XRP_STMT (LINV : (word -> option byte) -> Prop) : Prop :=
@@ -90,7 +100,7 @@ Section Startup.
   Variables uid gid : word.
   Variable hw : word.               (* [comment removed for export] *)
   Variables nofile sigmask : word.
-  Variable abt : bool.  (* [comment removed for export] *)  (* [comment removed for export] *)
+  Variables abt sdf : bool.  (* [comment removed for export] *)  (* [comment removed for export] *)
   Variable groups : list word.
   Variable net : NetQueue.
   Variable ur : InputStream.   
@@ -103,9 +113,21 @@ Section Startup.
   Hypothesis Huid : valid_id uid.
   Hypothesis Hhw : valid_hwcap hw.   (* [comment removed for export] *)
 
-  #[local] Notation SINV := (SINV0 APH sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 APH sp rdraw argv envp uid hw).
-  #[local] Notation E0a := (E0 APH sp rdraw brk0 argv envp uid hw).
+  Variable apc : N.
+  (* The entry pc the launch starts at.  [init_cfg_eq] needs it to be the atable's own
+     entry; before #38 that lemma took [apc] and this proof explicitly and the caller
+     passed [ImgA.M.init_pc eq_refl].  The port made [apc] a section variable of
+     [AsanInit], so the equation has to travel with it; [AsanTop] discharges it with
+     [eq_refl] at [ImgA.M.init_pc]. *)
+  Hypothesis Hapc : Z.of_N apc = a_entry ASAN.
+  Variable kern : KernelBuild.
+  Variable execfn : list byte.
+  Hypothesis Hkernel : in_kernel (inp argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf) = recorded_kernel (in_kernel (inp argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf)).
+  Hypothesis Hlaunch : valid_launch (inp argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf).
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) (inp argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf).
+  #[local] Notation SINV := (SINV0 APH apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf).
+  #[local] Notation argH := (argH0 sp rdraw argv envp kern execfn).
+  #[local] Notation E0a := (E0 sp rdraw brk0 argv envp uid gid hw kern execfn).
   #[local] Notation LIM := AsanInit.LIMIT.
 
   (* [comment removed for export] *)
@@ -113,13 +135,16 @@ Section Startup.
   Hypothesis IT0_ok : itab_sound ASEGS IT0.
   (* [comment removed for export] *)
   Variable HS_asan : nat -> option acs.     (* [comment removed for export] *)
-  Variable startup_plan : plan.
-  Variable startup_shape : shape.
+  (* LPS 727298f3 (the method of jsoncons/fuzz_bigint's start-up port): one start-up chain per CONFIG_RSEQ value [r]: the
+     plan, its check and its shape are per [r], from [asan_init_r r] (the chain at [r] hands off
+     at its own hole); the handoff states are shared. *)
+  Variable startup_plan : Z -> plan.
+  Variable startup_shape : Z -> shape.
   Variables KC0 BFUEL FUEL : nat.
   (* [comment removed for export] *)
   Variable TT0 : nat -> option (acs * plan * shape).
-  Hypothesis startup_cert :
-    check ASEGS IT0 ASAN NX0 LIM (RPN.xn ASEGS ASAN NX0 RPN.RP_ASAN) XE0 XB0 XL0 HS_asan HL0 TT0 KC0 BFUEL FUEL None asan_init startup_plan = COk startup_shape.
+  Hypothesis startup_cert : forall r, 0 <= r <= 1 ->
+    check ASEGS IT0 ASAN NX0 LIM (RPN.xn ASEGS ASAN NX0 RPN.RP_ASAN) XE0 XB0 XL0 HS_asan HL0 TT0 KC0 BFUEL FUEL None (asan_init_r r) (startup_plan r) = COk (startup_shape r).
   Hypothesis TT0_ok : AP.tails_ok0 ASEGS IT0 ASAN NX0 LIM TT0 KC0.   (* [comment removed for export] *)
 
   (* [comment removed for export] *)
@@ -130,33 +155,42 @@ Section Startup.
   Hypothesis HOLES_sound : forall (fx : FPState), frm_zero fx -> holes_stmt ASEGS ASAN LIM HS_asan SINV argH LINV HOLES fs.
 
   (* [comment removed for export] *)
-  Let AH := argH0_high APH sp rdraw argv envp uid hw Hsp Hva.
-  Let AA := argH0_agree APH sp rdraw argv envp uid hw.
-  Let AT := argH0_top APH sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit.   (* [comment removed for export] *)
-  Let SF := SINV0_frame APH sp rdraw brk0 argv envp uid hw.
-  Let SA := SINV0_agree APH sp rdraw brk0 argv envp uid hw.
+  Let AH := argH0_high apc sp rdraw argv envp kern execfn Hsp Hva.
+  Let AA := argH0_agree sp rdraw argv envp kern execfn.
+  Let AT := argH0_top APH apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net ur kern execfn Hsp Hva Hve Hfit nofile sigmask abt sdf Hlau.   (* [comment removed for export] *)
+  Let SF := SINV0_frame APH apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf.
+  Let SA := SINV0_agree APH apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf.
   Let NG : APS.nx0_ok NX0 := Nat.le_refl NX0.                                   (* [comment removed for export] *)
   Let LI := proj1 HLINV.
   Let LF := proj2 HLINV.
 
+
+  (* node_munmap2_sound's using-set grew and its FS0 moved to the tail:
+     `About` prints
+     SEGS A nx0 LIMIT SINV argH LINV | res_len hull shadow argH_agree argH_top nx0_ok
+     SINV_frame SINV_agree LINV_frame LFP_hull | FS0.  node_sys_sound still takes FS0 in
+     the first group, which is why only this one call was wrong. *)
   Theorem asan_startup :
-    srealizes ASEGS (init_config ASEGS ImgA.M.init_pc APH sp brk0 mbase rdraw LIM
-                                 (AsanInit.inp argv envp fs stdin uid gid hw groups net ur nofile sigmask abt))
-              (sd HOLES t_nil E0a fs startup_shape).
+    srealizes ASEGS (init_config ASEGS apc APH sp brk0 mbase rdraw LIM
+                                 (AsanInit.inp argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf))
+              (sd HOLES t_nil E0a fs (startup_shape (rseq_z (kb_rseq kern)))).
   Proof.
     pose proof asan_img_facts as IMG.
-    rewrite (init_cfg_eq ASEGS ASAN APH sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net ur nofile sigmask abt ImgA.M.init_pc eq_refl).
-    pose proof (init_cs_ok ASEGS ASAN APH sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net ur IMG Hsp Hbrk Hva Hve Hfit Huid Hhw LINV LI asan_lfp_hull nofile sigmask abt) as HC.
+    rewrite (init_cfg_eq ASEGS ASAN APH apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net ur kern execfn Hapc nofile sigmask abt sdf).
+    (* LPS 727298f3: the start state at the run's own CONFIG_RSEQ value ([AsanInit.init_r_cs_ok]) *)
+    pose proof (init_r_cs_ok ASEGS ASAN APH apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net ur kern execfn IMG Hapc Hsp Hbrk Hmb Hva Hve Hfit Huid Hhw LINV LI asan_lfp_hull nofile sigmask abt sdf Hkernel Hlaunch Hlau) as HC.
+    pose proof (rseq_z_range (kb_rseq kern)) as Hrz.
     pose proof (check_sound ASEGS IT0 IT0_ok ASAN NX0 LIM HS_asan HL0 (RPN.xn ASEGS ASAN NX0 RPN.RP_ASAN) XE0 XB0 XL0
               asan_wx asan_in_hull asan_hull_ok asan_shadow_ok SINV argH AH AA NG SF SA LINV LF
               HOLES HOLES_agree HOLES_nil (fun h1 h2 L E fs' _ _ => HOLES_lv h1 h2 E fs') fs KC0 TT0 (proj1 TT0_ok)
               (fun fx => AsanNodesMmB.node_sys_sound (fx:=fx) ASEGS ASAN NX0 LIM SINV argH LINV fs asan_res_len asan_hull_ok asan_shadow_ok AA AT NG SF SA LF asan_lfp_hull)
               (fun fx => AsanNodesMmB.node_brk2_sound (fx:=fx) ASEGS ASAN NX0 LIM SINV argH LINV fs asan_in_hull asan_hull_ok asan_shadow_ok AH AT SF LF asan_lfp_hull)
+              (fun fx => AsanNodesMmB.node_munmap2_sound (fx:=fx) ASEGS ASAN NX0 LIM SINV argH LINV asan_res_len asan_hull_ok asan_shadow_ok AA AT NG SF SA LF asan_lfp_hull fs)
               (fun fx => node_mmap2_sound_OBL (fx:=fx) ASEGS ASAN NX0 LIM SINV argH LINV fs asan_in_hull asan_res_len asan_res_hull asan_hull_ok asan_shadow_ok AH AA SF SA AT NG asan_res_chain LF asan_lfp_hull)
               (fun fx => node_mmapin_sound_OBL (fx:=fx) ASEGS ASAN NX0 LIM SINV argH LINV fs asan_in_hull asan_res_len asan_res_hull asan_hull_ok asan_shadow_ok AH AA SF SA AT NG asan_res_chain LF asan_lfp_hull)
               (fun fx => node_mprotect2_sound_OBL (fx:=fx) ASEGS ASAN NX0 LIM SINV argH LINV fs asan_in_hull asan_res_len asan_res_hull asan_hull_ok asan_shadow_ok AH AA SF SA AT NG asan_res_chain LF asan_lfp_hull)
               (fun fx => AsanNodesMmB.node_exit_sound (fx:=fx) ASEGS ASAN LIM SINV argH LINV fs)
-              (fun fx => XALL fx sp rdraw brk0 argv envp fs Hsp Hva Hve uid hw Hfit SINV (fun E M H => H) SF SA)
+              (fun fx => XALL fx sp rdraw brk0 argv envp fs apc mbase fs stdin gid groups net ur kern execfn nofile sigmask abt sdf Hsp Hva Hve uid hw Hfit Hkernel Hlaunch Hlau SINV (fun E M H => H) SF SA)
               (fun fx => node_join_sound (fx:=fx) ASEGS ASAN NX0 LIM SINV argH LINV fs)
               (AsanNodesMmLib.node_zones_sound ASEGS ASAN LIM SINV argH LINV fs asan_res_len asan_hull_ok asan_res_chain)   (* [comment removed for export] *)
               (AsanNodesMmLib.node_zonehull_sound ASEGS ASAN LIM SINV argH LINV fs asan_res_len asan_hull_ok asan_res_chain)   (* [comment removed for export] *)
@@ -164,7 +198,8 @@ Section Startup.
               (XL0_sound _ _ _ _ _ _ _ _)
               (fun fx => HOLES_sound fx)
               (fun fx _ t T p s Ht Hif => False_rect _ (eq_true_false_abs _ Hif (proj2 TT0_ok t T p s Ht)))   (* [comment removed for export] *)
-              FUEL BFUEL None startup_plan asan_init startup_shape startup_cert
+              FUEL BFUEL None (startup_plan (rseq_z (kb_rseq kern))) (asan_init_r (rseq_z (kb_rseq kern))) (startup_shape (rseq_z (kb_rseq kern)))
+              (startup_cert _ Hrz)
               fx0 frm_zero_fx0 _ _ _ _ t_nil HC I eq_refl) as R.
     exact R.
   Qed.

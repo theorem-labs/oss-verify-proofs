@@ -15,6 +15,7 @@
    The pure model lemmas dm_* that both halves need are proved here, so neither half copies them.
    The Section header below is W_drain_cx.v's, verbatim. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_drain_dropb_cx.v, with its module paths changed; 81 of its 383 lines of code are new or changed and 14 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* The INTERFACE between the two halves of the DROP segment of the ASan walk of fuzz_reply's drain
    Nothing about the walk is proved here: the file fixes the cut DDM at 0x83668 - the join of the two
    arms of the `pending_off == v[0].n` test at 0x83600, i.e. after the inlined list_drop and before
@@ -156,7 +157,7 @@ Proof. intros cx s. reflexivity. Qed.
 Lemma dm_dbound0 : forall s, dbound s 0.
 Proof. intros s. unfold dbound. split; [lia | left; reflexivity]. Qed.
 
-(* ---- The line loop's lines from the chunk the round added (plain drain_b.v:2797-2955 / W_drain_gs.v:74). ---- *)
+(* ---- The line loop's lines from the chunk the round added (plain drain_b.v:2797-2955 / W_drain_gs.v:75). ---- *)
 Lemma dm_scan_nz_app : forall u sk acc d, nozero u -> scan sk acc (u ++ d) = scan sk (acc ++ u) d.
 Proof.
   induction u as [|b u IH]; intros sk acc d Hz.
@@ -302,7 +303,7 @@ Proof. intros s a. unfold ddrop, tr_alloc, ListTr.list_drop_tra. destruct (dwhol
 Lemma dm_max_ddrop : forall s a, tr_max (ddrop s a) = 0.
 Proof. intros s a. unfold ddrop, tr_max, ListTr.list_drop_tra. destruct (dwhole s); reflexivity. Qed.
 
-(* ---- The meters over an append (W_drain_gs.v:738-761). ---- *)
+(* ---- The meters over an append (W_drain_gs.v:739-762). ---- *)
 Lemma dm_tr_cost_app : forall (t1 t2 : list (RelayRunT.rev YO0i.sptr)),
   tr_cost MT (t1 ++ t2) = tr_cost MT t1 + tr_cost MT t2.
 Proof.

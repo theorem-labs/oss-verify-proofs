@@ -48,7 +48,7 @@ Definition bcmp_wrap_contract : Prop :=
     (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
         F (Z_to_bv 64 BCMP_WRAP) fc None m (seg_rom rsegs)).
 
-(* Footprint form (re-walk (D), RECIPE.md step 1 (a working note, not in this delivery); text of a working branch 5ecd7d5585, with the image
+(* Footprint form (re-walk (D), RECIPE.md step 1 (a working note, not in this delivery); text of a working branch, with the image
    range of fuzz_ctrl A): the same run, every access inside the image, the wrapper's stack window and the string
    bytes with the aligned 8-byte shadow words of each string (the range check loads whole aligned shadow words).
    The proof is route 1 one level down (ROUTE1.md (a working note, not in this delivery); the Bz pieces of route 2 do not exist), whose last

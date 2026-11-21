@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (res_apart and res0_ok are added, l0_ok5 bounds the reserved ledger by res0_ok so that it may also hold the launch's vDSO/vvar pair above the high shadow, and l0_ok5_ext extends a ledger by such entries). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -262,14 +263,34 @@ Lemma resv_range_num : forall r0 rl, resv_range_ok r0 rl -> 0 <= rl ->
 Proof. intros r0 rl (_ & P & _) Hl. pose proof (placed_s_num r0 rl P Hl). destruct P as (_ & P2 & _). tauto. Qed.
 End ENV.
 
+(* LPS 08b1429: at main the reservation ledger is the image's reservations plus the launch's
+   vDSO/vvar pair (above the high shadow), which no mapping meets, so in particular it is apart
+   from the kernel's two regions. *)
+Definition res_apart (e m : word * word) : Prop := ehi e <= elo m \/ ehi m <= elo e.
+Definition res0_ok (E0 : aenv) (e : word * word) : Prop :=
+  (0x10000 <= elo e /\ ehi e <= 0x603000)
+  \/ (0x10007fff9000 <= elo e
+      /\ res_apart e (went (ae_resv_beg E0) kResvLen) /\ res_apart e (went (ae_ptr_array E0) kPtrArrayLen)).
+
 (* [comment removed for export] *)
 Definition l0_ok5 (E0 : aenv) (L0 RES0 : list (word * word)) : Prop :=
      In (Z_to_bv 64 0x7fff7000, Z_to_bv 64 (2^28)) L0                                   (* [comment removed for export] *)
   /\ In (Z_to_bv 64 0x8fff7000, Z_to_bv 64 (2^41)) L0                                   (* [comment removed for export] *)
   /\ In (Z_to_bv 64 0x2008fff7000, Z_to_bv 64 0xdfff0001000) L0                          (* [comment removed for export] *)
-  /\ Forall (fun e => 0x10000 <= elo e /\ ehi e <= 0x603000) RES0                         (* [comment removed for export] *)
+  /\ Forall (res0_ok E0) RES0                         (* [comment removed for export] *)
   /\ (forall x, 0x10000 <= x < 0x603000 -> exists e, In e RES0 /\ elo e <= x < ehi e)     (* [comment removed for export] *)
   /\ (forall rr x, In rr (ae_reserved E0) -> fst rr <= x < fst rr + snd rr ->
         (exists e, In e (RES0 ++ L0) /\ elo e <= x < ehi e) \/ alloc_ceiling <= x)         (* [comment removed for export] *)
   /\ Forall (fun rr => 0 < snd rr) (ae_reserved E0).                                     (* [comment removed for export] *)
+
+(* LPS 08b1429: extra ledger entries that satisfy res0_ok keep l0_ok5 (the launch's vDSO/vvar pair). *)
+Lemma l0_ok5_ext : forall E0 L0 RES0 rx, l0_ok5 E0 L0 RES0 -> Forall (res0_ok E0) rx -> l0_ok5 E0 L0 (RES0 ++ rx).
+Proof.
+  intros E0 L0 RES0 rx (H1 & H2 & H3 & H4 & H5 & H6 & H7) Hrx.
+  split; [exact H1|]. split; [exact H2|]. split; [exact H3|]. split; [apply Forall_app; split; assumption|].
+  split.
+  - intros x Hx. destruct (H5 x Hx) as (e & He & Hr). exists e. split; [apply in_app_iff; left; exact He| exact Hr].
+  - split; [| exact H7]. intros rr x Hrr Hx. destruct (H6 rr x Hrr Hx) as [(e & He & Hr)|Hc]; [left| right; exact Hc].
+    exists e. split; [| exact Hr]. rewrite <- app_assoc. apply in_app_iff in He as [He|He]; apply in_app_iff; [left; exact He| right; apply in_app_iff; right; exact He].
+Qed.
 End RC__2.

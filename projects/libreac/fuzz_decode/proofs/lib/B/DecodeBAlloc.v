@@ -1,5 +1,5 @@
 (* libreac/fuzz_decode image B (fuzz_decode.asan-ubsan): a Theorem Labs lane's CLOSED primary-size Allocate, relocated onto this
-   image (lib/B/AGtopcgifC.v and its Require closure, from a working branch 95e6f1d72b6; provenance in
+   image (lib/B/AGtopcgifC.v and its Require closure, from a working branch; provenance in
    provenance/alloc-reloc/B/), in the exact form decode's composition consumes: DecodeBClose.v's premise row
    H_CALLOC_ALLOCATE, `forall (fx : YK11.FPState) (rc : YM05.RunCeil), @decode_aalloc_B fx rc B`.
 

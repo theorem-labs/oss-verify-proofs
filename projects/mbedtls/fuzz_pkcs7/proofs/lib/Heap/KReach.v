@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the mmap outcome calls take the place_declined_b premise for a null hint, and the granted address is shown to be Linux's own placement, linux_place; kcan_mprotect_ok decoded to plain text with a new premise that the page is apart from the vDSO and vvar pair). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Specs Run.
@@ -147,9 +148,9 @@ Proof.
   intros Hlen Hprot. eapply (proj2 (nstep_mm_iff (NMmap 0 len prot MAPF_Z) _ mo _ _ _ eq_refl I)). split; [reflexivity|].
   sys_dispatch syscall_spec_222.
   destruct Hprot as [-> | ->].
-  - apply (proj2 (mmap_noaccess_outcome _ _ _ _ _ _ _ mo _ (w_is0_false len Hlen) mmap_off0 mmap_anon_MAPF mmap_modeled_none mmap_noaccess_none)).
+  - apply (proj2 (mmap_noaccess_outcome _ _ _ _ _ _ _ mo _ (w_is0_false len Hlen) mmap_off0 mmap_anon_MAPF mmap_modeled_none mmap_noaccess_none (place_declined_b_null _ _ _))).
     left. exists ENOMEM. split; [left; reflexivity| reflexivity].
-  - apply (proj2 (mmap_rw_outcome _ _ _ _ _ _ _ mo _ (w_is0_false len Hlen) mmap_off0 mmap_anon_MAPF mmap_modeled_rw)).
+  - apply (proj2 (mmap_rw_outcome _ _ _ _ _ _ _ mo _ (w_is0_false len Hlen) mmap_off0 mmap_anon_MAPF mmap_modeled_rw (place_declined_b_null _ _ _))).
     left. exists ENOMEM. split; [left; reflexivity| reflexivity].
 Qed.
 
@@ -172,9 +173,15 @@ Proof.
   intros Hlen Hlen35 Hprot Hlazy KR HB Htop.
   pose proof (mmap_len_bound len Hlen) as Hml.
   pose proof KR as [M L S B0 U].
-  destruct (grant_exists_big (Z_to_bv 64 0) mo (mmap_len len) ltac:(lia) S ltac:(unfold kmaps in L; lia) Htop
+  destruct (grant_exists_big (Z_to_bv 64 0) mo (mmap_len len) ltac:(lia)
+              ltac:(unfold mmap_len, page_round_up_Z; apply Z_mod_mult) S ltac:(unfold kmaps in L; lia) Htop
               ltac:(pose proof (vm_backing_used_le_live mo Hlazy M); lia)) as [a Hg].
   destruct (grant_ok_unpack _ _ _ _ Hg) as (Gal & Gpos & Gce & Grf & Gbud).
+  (* at the revision the spec's grant is Linux's own address ([Mmap.linux_place]) *)
+  assert (Gpl : linux_place (m_vmmaps mo) (kb_thp (m_kernel mo)) (Z_to_bv 64 0) (mmap_len len) (bv_unsigned a)).
+  { apply (proj1 (Placement.linux_place_is_iff (m_vmmaps mo) (kb_thp (m_kernel mo)) (Z_to_bv 64 0) (mmap_len len) a ltac:(lia)
+                    ltac:(unfold mmap_len, page_round_up_Z; apply Z_mod_mult))).
+    exact (grant_ok_place _ _ _ _ Hg). }
   set (n := Z_to_bv 64 (mmap_len len)).
   set (h' := fun noacc => mkVmMapsFull (vm_reserved (m_vmmaps mo)) ((a, n) :: vm_maps (m_vmmaps mo)) noacc
                  (vm_start_brk (m_vmmaps mo)) (vm_brk (m_vmmaps mo)) (vm_limit (m_vmmaps mo)) (vm_mmap_base (m_vmmaps mo)) (vm_init_sp (m_vmmaps mo))).
@@ -186,8 +193,8 @@ Proof.
     assert (ST : nstep (NMmap 0 len 0 MAPF_Z) mo (mkEffectU a [] [] [(a, n)] [] []) (with_vmmaps (h' ((a, n) :: vm_noaccess (m_vmmaps mo))) mo) []).
     { eapply (proj2 (nstep_mm_iff (NMmap 0 len 0 MAPF_Z) _ mo _ _ _ eq_refl I)). split; [reflexivity|].
       sys_dispatch syscall_spec_222.
-      apply (proj2 (mmap_noaccess_outcome _ _ _ _ _ _ _ mo _ (w_is0_false len ltac:(lia)) mmap_off0 mmap_anon_MAPF mmap_modeled_none mmap_noaccess_none)).
-      right. exists a. rewrite Hlenw. fold (mmap_len len). fold n. split; [repeat split; assumption|].
+      apply (proj2 (mmap_noaccess_outcome _ _ _ _ _ _ _ mo _ (w_is0_false len ltac:(lia)) mmap_off0 mmap_anon_MAPF mmap_modeled_none mmap_noaccess_none (place_declined_b_null _ _ _))).
+      right. exists a. rewrite Hlenw. fold (mmap_len len). fold n. split; [exact Gpl|].
       unfold with_mmap_backing. rewrite mmap_noreserve_MAPF. reflexivity. }
     cbn [Z.eqb]. split; [exact ST|]. split; [reflexivity|]. split; [exact Gpos|]. split; [exact Gce|].
     split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].
@@ -196,9 +203,9 @@ Proof.
     assert (ST : nstep (NMmap 0 len 3 MAPF_Z) mo (mkEffect a [] [(a, n)]) (with_vmmaps (h' (vm_noaccess (m_vmmaps mo))) mo) []).
     { eapply (proj2 (nstep_mm_iff (NMmap 0 len 3 MAPF_Z) _ mo _ _ _ eq_refl I)). split; [reflexivity|].
       sys_dispatch syscall_spec_222.
-      apply (proj2 (mmap_rw_outcome _ _ _ _ _ _ _ mo _ (w_is0_false len ltac:(lia)) mmap_off0 mmap_anon_MAPF mmap_modeled_rw)).
+      apply (proj2 (mmap_rw_outcome _ _ _ _ _ _ _ mo _ (w_is0_false len ltac:(lia)) mmap_off0 mmap_anon_MAPF mmap_modeled_rw (place_declined_b_null _ _ _))).
       right. exists a. rewrite Hlenw. fold (mmap_len len). fold n. split.
-      + repeat split; try assumption. unfold mmap_noreserve_backed_ok. rewrite mmap_noreserve_MAPF. apply Z.leb_le. exact Gbud.
+      + split; [exact Gpl|]. unfold mmap_noreserve_backed_ok. rewrite mmap_noreserve_MAPF. apply Z.leb_le. exact Gbud.
       + unfold with_mmap_backing. rewrite mmap_noreserve_MAPF. reflexivity. }
     cbn [Z.eqb]. split; [exact ST|]. split; [reflexivity|]. split; [exact Gpos|]. split; [exact Gce|].
     split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].
@@ -209,10 +216,24 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-Lemma kcan_mprotect_ok (a : Z) mo N B : ltac2:(CDefT.buildp (gd_tbl_KReach ()) "P,(11.=O4.)P,(0.$25.(2:.O4.+1000.)=)P,(1=.(2;.O4.+1000.)(13.+2.+40.))Zaw,(4.&40.)(21.&40.O4.)Znw,(4.&40.)(21.&40.+1000.)P,(0.$2<.(2=.(:.(2.O3.))R2.R1.)$2>.)P,(0.$2<.(2=.(9.(2.O3.))R3.R2.)$2>.)P,(0.(3.(15.(4.&40.)(4.&40.)))(1:.O3.)(22.(15.(4.&40.)(4.&40.))))P,(6.O2.O1.O3.)(2?.$30.Lmo',$30.(18.(1>.(31.O4.+1000.+3.)O3.(32.(21.&40.=)(22.(15.(4.&40.)(3.(4.&8.))))(14.(15.(4.&40.)(4.&40.))(16.(4.&40.)(4.&40.)R7.R6.)(22.(15.(4.&40.)(4.&40.))))(22.(15.(4.&40.)(4.&40.)))(22.$33.)(22.(15.(4.&40.)$34.)))R1.(22.$23.))(18.(0.$30.R1.(35.R7.R6.O3.))(18.(6.O2.O1.R1.)(18.(0.(3.(15.(4.&40.)(4.&40.)))(1:.R1.)(1:.O3.))(0.(1;.(4.&40.))(1<.R1.)(1<.O3.)))))))")
-(* [comment removed for export] *).
+(* At 08b1429 [Mprotect.mprotect_spec] answers [unmodeled] for a range that
+   meets the vDSO/vvar pair, so the page must be apart from it (the
+   [Hvd] premise; callers take it from the heap ledger [KInv.KL]). *)
+Lemma kcan_mprotect_ok (a : Z) mo N B :
+  0 <= a -> a mod 4096 = 0 -> a + 4096 < 2 ^ 64 ->
+  let aw := Z_to_bv 64 a in
+  let nw := Z_to_bv 64 4096 in
+  map_contains (vm_noaccess (m_vmmaps mo)) aw nw = true ->
+  map_contains (vm_maps (m_vmmaps mo)) aw nw = true ->
+  m_vm_lazy mo = [] ->
+  kres N B mo ->
+  region_free (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo))) aw nw = true ->
+  exists mo' : Model,
+    nstep (NMprotect a 4096 3) mo (mkEffectU (Z_to_bv 64 0) [] [(aw, nw)] [] [] []) mo' []
+    /\ mo' = mprotect_model aw nw mo /\ kres N B mo'
+    /\ m_vm_lazy mo' = m_vm_lazy mo /\ m_halted mo' = m_halted mo.
 Proof.
-  intros Ha Hal Hhi aw nw Hna Hma Hlazy KR. pose proof KR as [M L S B0 U].
+  intros Ha Hal Hhi aw nw Hna Hma Hlazy KR Hvd. pose proof KR as [M L S B0 U].
   assert (Ua : bv_unsigned aw = a) by (subst aw; apply unsigned_lit; lia).
   assert (Un : bv_unsigned nw = 4096) by (subst nw; apply unsigned_lit; lia).
   exists (mprotect_model aw nw mo).
@@ -223,7 +244,7 @@ Proof.
     apply (proj2 (mprotect_expose_outcome aw nw (Z_to_bv 64 3) _ mo _ ltac:(vm_compute; reflexivity)
              ltac:(rewrite Ua; unfold page_size; exact Hal) ltac:(subst nw; apply w_is0_false; lia)
              ltac:(rewrite Ua, Un; change (page_round_up_Z 4096) with 4096; unfold two_pow_64; lia)
-             ltac:(vm_compute; reflexivity) ltac:(rewrite E4; exact Hna) ltac:(rewrite E4; exact Hma))).
+             ltac:(vm_compute; reflexivity) ltac:(rewrite E4; exact Hvd) ltac:(rewrite E4; exact Hna) ltac:(rewrite E4; exact Hma))).
     right. rewrite E4, mprotect_model_next_eq. split; [| reflexivity].
     apply mprotect_budget_ok_intro; [exact Hlazy| exact M| lia].
   - constructor; unfold kmaps, mprotect_model in *; rewrite ?m_vmmaps_with_vmmaps; cbn [vm_reserved vm_maps vm_limit]; auto.

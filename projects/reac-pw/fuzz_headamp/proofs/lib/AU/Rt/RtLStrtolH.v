@@ -1,5 +1,5 @@
 (* Modified by Theorem Labs, 2026-10: the proof of cmd_strtol of proofs/plugin-hostd/fuzz_command/lib/A/Rt/RtLStrtol.v
-   and of art_post_clean of lib/A/Rt/RtBzAdaptP.v at origin/ossv/recipes 2d2ff01bb6f (ported to this unit as
+   and of art_post_clean of lib/A/Rt/RtBzAdaptP.v (ported to this unit as
    lib/A/Rt/RtLStrtol.v and RtBzAdaptP.v), re-run for the hole form of the strtol contract, lib/A/HPgHole.v
    hd_astrtol_hole; the frame step is HPgHole.v's ARH_frame argument (al_frame over the unpoisoned memories). *)
 (* Modified by Theorem Labs, 2026-10: derived from lib/A/Rt/RtLStrtolH.v of this library by derive_y.py b7b132fb12a7: module paths lib.A -> lib.AU, the image module Asan -> AsanUbsan and Img0 -> Img0U, addresses moved from fuzz_headamp's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/Rt/RtLStrtolH.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)

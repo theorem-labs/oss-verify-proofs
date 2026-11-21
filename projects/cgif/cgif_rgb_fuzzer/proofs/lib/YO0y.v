@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the realloc contract gains rc_task, n below 2^46, as mremap answers EINVAL above TASK_SIZE). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -68,7 +69,9 @@ rc_63 : am_sc am = 63;
 rc_last : am_last am = 0;
 rc_area : In a (st_areas A) /\ 0 <= ka < METAS_PER_AREA /\ g = padd a (AREA_HDR + META_SIZE * ka);
 rc_rg : region_of A (prid (am_mem am)) = Some rg /\ rg_kind rg = RkMap /\ rg_live rg = true /\
-0 <= poff (am_mem am) /\ poff (am_mem am) + group_extent am + IB <= rg_len rg }.
+0 <= poff (am_mem am) /\ poff (am_mem am) + group_extent am + IB <= rg_len rg;
+(* 08b1429: check_mremap answers EINVAL above TASK_SIZE (Checks/Sys/Mm/Mremap.v); the contract keeps n below 2^46 *)
+rc_task : n < 2 ^ 46 }.
 Section c.
 Hypothesis MALLOC : malloc_impl_realizes.
 Hypothesis FREE : free_impl_realizes.

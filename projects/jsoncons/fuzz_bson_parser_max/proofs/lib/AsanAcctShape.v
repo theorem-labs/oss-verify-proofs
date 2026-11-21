@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed P_of_silent1, SP_of_silent1; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/AsanAcctShape.v, lines 15, 40-41, 76-77. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -13,6 +14,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require Import CatSim.
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require Import ShapeAlg. (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require Import AsanAcct SpinAlg.
+From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib.Common.Cfg Require RomBase.
 Import ListNotations.
 Open Scope bv_scope.
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require PropExec.
@@ -38,7 +40,8 @@ Let P_of_silent1 (T : TSet) : forall c c',
     ms_svc_pending (cfg_ms c) = None ->
     AsanAcct.node_ok segs c unit (fun _ => []) (fun _ => c') ->
     P_of T c' -> P_of T c :=
-  fun c c' Hsvc Hn Hr => rz_silent1 segs scfg c c' T (node_ok_of_pnode_instr segs scfg c _ _ _ Hsvc Hn) Hr.
+  fun c c' Hsvc Hn Hr => rz_silent1 segs scfg c c' T (node_ok_of_pnode_instr segs scfg c _ _ _ Hsvc Hn)
+                          (RomBase.sys_rob_instr segs c Hsvc) Hr.
 
 Theorem rz_step_restricted_T : forall A ms msr' model T,
   lazy_cover H (m_vm_lazy model) A -> A_wf A -> MInv A model ->
@@ -73,7 +76,8 @@ Let SP_of_silent1 (T : TSet) : forall c c',
     ms_svc_pending (cfg_ms c) = None ->
     AsanAcct.node_ok segs c unit (fun _ => []) (fun _ => c') ->
     SP_of T c' -> SP_of T c :=
-  fun c c' Hsvc Hn Hr => srz_silent1 segs scfg c c' T (node_ok_of_pnode_instr segs scfg c _ _ _ Hsvc Hn) Hr.
+  fun c c' Hsvc Hn Hr => srz_silent1 segs scfg c c' T (node_ok_of_pnode_instr segs scfg c _ _ _ Hsvc Hn)
+                          (RomBase.sys_rob_instr segs c Hsvc) Hr.
 
 Theorem srz_step_restricted_T : forall A ms msr' model T,
   lazy_cover H (m_vm_lazy model) A -> A_wf A -> MInv A model ->

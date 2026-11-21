@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3; internal commit ids in comments replaced by public commits or removed. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -51,21 +52,42 @@ Qed.
 Section XAll.
   Variable sp : word.
   Variable rdraw : EntryDraw.
-  Variable brk0 : word.
-  Variable argv envp : list (list byte).
+  Variable brk0 mbase : word.
+  Variable inp : ProcInput.
   Variable FS0 : Fs.Fs.
+  (* #38: [AsanInit]'s Section takes the whole run as one [ProcInput], and takes the run's
+     mmap base under exactly two facts.  The four old Variables are (only parsing) notations
+     for [inp]'s projections, so every body below is unchanged text.  [mbase] and [Hlau] are
+     here and NOWHERE DOWNSTREAM: the producer-side exception G3b ruled and Main endorsed,
+     and [AsanInitL.SINV0L] binds the base existentially for every consumer past start-up.
+     Every argument list below is the arity the [About] probe PRINTED
+     (a source round on a NEVER-MERGE side ref), mirrored
+     from the As twin rather than retyped: these lemmas are Section-generalised, so their
+     explicit arguments are decided by an [eassumption] inside each proof and no reading of
+     the source gives them.  Note [SINV0_frame] takes NO leading [segs]/[A] while
+     [SINV0_agree] takes BOTH - the probe is what separates them. *)
+  #[local] Notation argv := (in_argv inp) (only parsing).
+  #[local] Notation envp := (in_envp inp) (only parsing).
+  #[local] Notation uid := (in_uid inp) (only parsing).
+  #[local] Notation hw := (in_hwcap inp) (only parsing).
   Hypothesis Hsp : valid_sp sp.
-  Hypothesis Hva : valid_argv argv.
-  Hypothesis Hve : valid_envp envp.
-  Variables uid hw : word.
-  Hypothesis Hfit : entry_stack_fits sp argv envp.
-  #[local] Notation SINV := (SINV0 BPH2 sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 BPH2 sp rdraw argv envp uid hw).
-  Let AH := argH0_high BPH2 sp rdraw argv envp uid hw Hsp Hva.
-  Let AS := argH0_sp0 BPH2 sp rdraw argv envp uid hw.
-  Let AA := argH0_agree BPH2 sp rdraw argv envp uid hw.
-  Let SF := SINV0_frame BPH2 sp rdraw brk0 argv envp uid hw.
-  Let SA := SINV0_agree BPH2 sp rdraw brk0 argv envp uid hw.
+  Hypothesis Hva : valid_argv (in_argv inp).
+  Hypothesis Hve : valid_envp (in_envp inp).
+  (* #38: [valid_launch] is a SECOND launch fact, distinct from [Hlau]'s
+     [entry_launch_ok_va], and AsanInit's Section generalises it BEFORE [Hfit].  The kernel
+     named it: with [Hfit] in this slot, a farm round reported
+     Bo/BoStartup.v:100 c.76-80, "Hfit has type entry_stack_fits sp (in_argv inp)
+     (in_envp inp) while it is expected to have type valid_launch inp". *)
+  Hypothesis Hlaunch : valid_launch inp.
+  Hypothesis Hfit : entry_stack_fits sp (in_argv inp) (in_envp inp).
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) inp.
+  #[local] Notation SINV := (SINV0 BPH2 AsanUbsan.M.init_pc sp rdraw brk0 mbase inp).
+  #[local] Notation argH := (argH0 sp rdraw inp).
+  Let AH := argH0_high BSEGS2 BOTH_H BPH2 AsanUbsan.M.init_pc sp rdraw brk0 mbase inp Hsp Hva Hve Hlau.
+  Let AS := argH0_sp0 sp rdraw inp.
+  Let AA := argH0_agree sp rdraw inp.
+  Let SF := SINV0_frame BPH2 AsanUbsan.M.init_pc sp rdraw brk0 mbase inp.
+  Let SA := SINV0_agree BSEGS2 BOTH_H BPH2 AsanUbsan.M.init_pc sp rdraw brk0 mbase inp.
 
   (* [comment removed for export] *)
   Theorem asan_node_x_sound_all : forall x, x_stmt BSEGS2 BOTH_H NX0 AsanInit.LIMIT SINV argH FS0 x.
@@ -82,7 +104,7 @@ Section XAll.
                 (fetch_lit _ _ _ _ eq_refl F_102c04) (fetch_lit _ _ _ _ eq_refl F_102c08) (fetch_lit _ _ _ _ eq_refl F_102c0c)
                 ltac:(repeat split; reflexivity)
                 D_102c04 D_102c08 D_102c0c
-                sp rdraw brk0 argv envp FS0 Hsp Hva Hve uid hw Hfit SINV (fun E M H => H) SF).
+                AsanUbsan.M.init_pc sp rdraw brk0 mbase inp FS0 Hsp Hva Hve Hlaunch Hlau SINV (fun E M H => H) SF).
     - eapply (init_x_sound_pnscan BSEGS2 BOTH_H BPH2 both_wx both_in_hull both_hull_ok
                 W_102cc0 W_102cc4 W_102cc8 W_102ccc W_102cd0
                 ltac:(cbn [x_pnscan x_pnscan_k BOTH_H]; lia)
@@ -90,8 +112,8 @@ Section XAll.
                 (fetch_lit _ _ _ _ eq_refl F_102ccc) (fetch_lit _ _ _ _ eq_refl F_102cd0)
                 ltac:(repeat split; reflexivity)
                 D_102cc0 D_102cc4 D_102cc8 D_102ccc D_102cd0
-                sp rdraw brk0 argv envp FS0 Hsp Hva Hve uid hw Hfit SINV (fun E M H => H) SF SA).
-    - apply (init_x_sound_layout BSEGS2 BOTH_H BPH2 sp rdraw argv envp FS0 uid hw SINV).
+                AsanUbsan.M.init_pc sp rdraw brk0 mbase inp FS0 Hsp Hva Hve Hlau SINV (fun E M H => H) SF SA).
+    - apply (init_x_sound_layout BSEGS2 BOTH_H sp rdraw inp FS0 SINV).
     - exact (both_node_x_sound_XIStrncpy NX0 AsanInit.LIMIT SINV argH AH E_SP0 AA SF SA FS0).
     - exact (both_node_x_sound_XPopFree NX0 AsanInit.LIMIT SINV argH AH E_SP0 AA SF SA FS0).
     - (* [comment removed for export] *)
@@ -118,31 +140,38 @@ Section Startup.
   Variable sp : word.
   Variable rdraw : EntryDraw.
   Variables brk0 mbase : word.
-  Variable argv envp : list (list byte).
-  Variable fs : Fs.Fs.
-  Variable stdin : InputStream.
-  Variables uid gid hw : word.
-  Variable groups : list word.
-  Variable net : NetQueue.
-  Variables nofile sigmask : word.
-  Variable abterm : bool.
-  Variable vasz : VaSize.
-  Variable urandom : InputStream.   (* [comment removed for export] *)
-  Variable tmp : Fs.Fs.             (* [comment removed for export] *)
+  (* #38: the fifteen launch pieces are one [ProcInput] now, and [AsanInit.inp] - the
+     definition that assembled them - is gone with them, so [INP] is the run itself.
+     Mirrors As/AsStartup.v:150-176 exactly; taking [inp] whole rather than rebuilding it
+     with [mkProcInput_full] also avoids naming the five fields after [in_tmp], whose types
+     this Section never had. *)
+  Variable inp : ProcInput.
+  #[local] Notation argv := (in_argv inp) (only parsing).
+  #[local] Notation envp := (in_envp inp) (only parsing).
+  #[local] Notation uid := (in_uid inp) (only parsing).
+  #[local] Notation hw := (in_hwcap inp) (only parsing).
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hbrk : valid_brk BSEGS2 brk0.
-  Hypothesis Hva : valid_argv argv.
-  Hypothesis Hve : valid_envp envp.
-  Hypothesis Hfit : entry_stack_fits sp argv envp.
-  Hypothesis Huid : valid_id uid.
-  Hypothesis Hhw : valid_hwcap hw.
+  Hypothesis Hmb : valid_mmap_base mbase.
+  Hypothesis Hva : valid_argv (in_argv inp).
+  Hypothesis Hve : valid_envp (in_envp inp).
+  Hypothesis Hfit : entry_stack_fits sp (in_argv inp) (in_envp inp).
+  Hypothesis Huid : valid_id (in_uid inp).
+  Hypothesis Hhw : valid_hwcap (in_hwcap inp).
+  (* [init_cs_ok]'s premise list at #38, from the probe, in order: img_facts, valid_sp,
+     valid_brk, valid_mmap_base, valid_argv, valid_envp, valid_id, valid_hwcap, valid_launch,
+     entry_launch_ok_va - and NO entry_stack_fits.  Hence these two. *)
+  Hypothesis Hlaunch : valid_launch inp.
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) inp.
+  (* [Run.valid_input_channel_reader]: [init_cs_ok]'s [co_rdr] (As/AsanInit.v:131) *)
+  Hypothesis Hrdr : in_channel_reader inp = true.
 
-  #[local] Notation SINV := (SINV0 BPH2 sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 BPH2 sp rdraw argv envp uid hw).
-  #[local] Notation E0a := (E0 BPH2 sp rdraw brk0 argv envp uid hw).
+  #[local] Notation SINV := (SINV0 BPH2 AsanUbsan.M.init_pc sp rdraw brk0 mbase inp).
+  #[local] Notation argH := (argH0 sp rdraw inp).
+  #[local] Notation E0a := (E0 sp rdraw brk0 inp).
   #[local] Notation LIM := AsanInit.LIMIT.
-  #[local] Notation INP := (AsanInit.inp argv envp fs stdin uid gid hw groups net nofile sigmask abterm vasz urandom tmp).
-  #[local] Notation FS := (fs_seed_tmp fs tmp).
+  #[local] Notation INP := inp.
+  #[local] Notation FS := (in_fs inp).
 
   (* [comment removed for export] *)
   Variable RANGES : list (Z * nat).          (* [comment removed for export] *)
@@ -151,7 +180,8 @@ Section Startup.
   Variable shape1 : shape.
   Variables KC0 BFUEL FUEL : nat.
   #[local] Notation IT := (mk_itab_ranges BSEGS2 RANGES).
-  Hypothesis cert1 : check BSEGS2 IT BOTH_H NX0 LIM XN0 XE0 XB0 HS1 KC0 BFUEL FUEL None bhinit plan1 = COk shape1.
+  (* LPS 727298f3: the start state of the run's own build ([BothImages.bhinit]) *)
+  Hypothesis cert1 : check BSEGS2 IT BOTH_H NX0 LIM XN0 XE0 XB0 HS1 KC0 BFUEL FUEL None (bhinit (rseq_z (kb_rseq (in_kernel inp)))) plan1 = COk shape1.
   Hypothesis shape1_holes : holes_only shape1 = true.
   #[local] Notation LEVEL := (level_certified KC0 BFUEL FUEL).
   Hypothesis cert2 : LEVEL HS1 HSC.
@@ -164,13 +194,13 @@ Section Startup.
   Definition HOLES (h : nat) (E : env) (fs' : Fs.Fs) : TSet := T.
   Hypothesis HOLESF_sound : holes_stmt BSEGS2 BOTH_H LIM HSF SINV argH HOLES FS.
 
-  Let AH := argH0_high BPH2 sp rdraw argv envp uid hw Hsp Hva.
-  Let AS := argH0_sp0 BPH2 sp rdraw argv envp uid hw.
-  Let AA := argH0_agree BPH2 sp rdraw argv envp uid hw.
-  Let SF := SINV0_frame BPH2 sp rdraw brk0 argv envp uid hw.
-  Let SA := SINV0_agree BPH2 sp rdraw brk0 argv envp uid hw.
+  Let AH := argH0_high BSEGS2 BOTH_H BPH2 AsanUbsan.M.init_pc sp rdraw brk0 mbase INP Hsp Hva Hve Hlau.
+  Let AS := argH0_sp0 sp rdraw INP.
+  Let AA := argH0_agree sp rdraw INP.
+  Let SF := SINV0_frame BPH2 AsanUbsan.M.init_pc sp rdraw brk0 mbase INP.
+  Let SA := SINV0_agree BSEGS2 BOTH_H BPH2 AsanUbsan.M.init_pc sp rdraw brk0 mbase INP.
   (* [comment removed for export] *)
-  Let SP := SINV0_pg BPH2 sp rdraw brk0 argv envp Hsp Hva Hve uid hw Hfit SINV (fun E M H => H).
+  Let SP := SINV0_pg BPH2 AsanUbsan.M.init_pc sp rdraw brk0 mbase INP Hsp Hva Hve Hlau SINV (fun E M H => H).
 
   (* [comment removed for export] *)
   Lemma both_check_sound : forall RS HS,
@@ -185,13 +215,35 @@ Section Startup.
               both_wx both_in_hull both_hull_ok both_shadow_ok SINV argH AH E_SP0 AA SF SA
               HOLES (fun _ _ _ _ _ => eq_refl) (fun _ _ _ => T_nil) (fun _ _ _ _ => eq_refl) FS KC0
               (AsanNodesMmB.node_sys_sound BSEGS2 BOTH_H NX0 LIM SINV argH FS both_res_len both_hull_ok both_shadow_ok AA SF SA AS E_SP0)
-              (AsanNodesMmB.node_brk2_sound BSEGS2 BOTH_H NX0 LIM SINV argH FS both_in_hull both_hull_ok both_shadow_ok AH SF both_res_len both_res_cover AS)
+              (* #38: [node_brk2_sound] now captures [RES_hull] too.  Step 4a on its own Section
+                 (As/AsanNodesMmB.v:241-263, Section SoundB) gives the hypothesis ORDER --
+                 SEGS_in_hull, RES_hull, HULL_ok, SHADOW_ok, argH_high, argH_agree, SINV_frame,
+                 SINV_agree, RES_len, RES_cover, argH_sp0, E_SP0 -- and this call passed a
+                 Section-ordered SUBSET of it missing exactly [RES_hull].  The kernel named the
+                 TYPE, not a sibling call: "expected Forall (fun iv => img_lo BOTH_H <= iv.1 /\
+                 iv.1 + iv.2 <= img_hi BOTH_H) (segments_reserved ...)", which is [both_res_hull]. *)
+              (AsanNodesMmB.node_brk2_sound BSEGS2 BOTH_H NX0 LIM SINV argH FS both_in_hull both_res_hull both_hull_ok both_shadow_ok AH SF both_res_len both_res_cover AS)
               (node_mmap1_sound_OBL BSEGS2 BOTH_H NX0 LIM SINV argH FS both_in_hull both_res_len both_res_hull both_res_cover both_hull_ok both_shadow_ok AH AS E_SP0 AA SF SA SP)
-              (node_mmapin1_sound_OBL BSEGS2 BOTH_H NX0 LIM SINV argH FS both_in_hull both_res_len both_res_hull both_res_cover both_hull_ok both_shadow_ok AH AS SF)
-              (node_mprotect1_sound_OBL BSEGS2 BOTH_H NX0 LIM SINV argH FS both_in_hull both_res_len both_res_hull both_res_cover both_hull_ok both_shadow_ok AH AS SF)
+              (* #38, from the About print (exit 0, all 8 signatures):
+                 node_mmapin1_sound_OBL and node_mprotect1_sound_OBL capture
+                 SEGS_in_hull RES_len RES_cover HULL_ok SHADOW_ok argH_high argH_sp0 SINV_frame
+                 and NOT RES_hull -- unlike node_mmap1_sound_OBL one line above, which does take it.
+                 These two were OVER-SUPPLYING it.  Note the direction: node_brk2_sound needed
+                 RES_hull ADDED and these two need it REMOVED, in adjacent lines of one term, so a
+                 sibling call would have been the wrong donor either way. *)
+              (node_mmapin1_sound_OBL BSEGS2 BOTH_H NX0 LIM SINV argH FS both_in_hull both_res_len both_res_cover both_hull_ok both_shadow_ok AH AS SF)
+              (node_mprotect1_sound_OBL BSEGS2 BOTH_H NX0 LIM SINV argH FS both_in_hull both_res_len both_res_cover both_hull_ok both_shadow_ok AH AS SF)
               (node_mmapgaps_sound_OBL BSEGS2 BOTH_H NX0 LIM SINV argH FS both_in_hull both_res_len both_res_cover both_hull_ok both_shadow_ok AH AS E_SP0 AA SF SA SP)
               (AsanNodesMmB.node_exit_sound BSEGS2 BOTH_H LIM SINV argH FS)
-              (asan_node_x_sound_all sp rdraw brk0 argv envp FS Hsp Hva Hve uid hw Hfit)
+              (* #38: Section XAll's capture, PRINTED rather than inferred -- probe
+                 run on a never-merge ref,
+                 hosted after End XAll, which elaborates before this line fails:
+                   sp rdraw brk0 mbase inp FS0 Hsp Hva Hve Hlaunch Hlau
+                 and NO Hfit.  That is a measurement of THIS Section, not an inheritance of the
+                 model-side entry_stack_fits claim that was promoted and withdrawn twice tonight:
+                 Hfit is still declared and still live for the consumers that take it, it is
+                 simply not in what this theorem captures. *)
+              (asan_node_x_sound_all sp rdraw brk0 mbase INP FS Hsp Hva Hve Hlaunch Hlau)
               (node_join_sound BSEGS2 BOTH_H NX0 LIM SINV argH FS)
               (XN0_sound _ _ _ _ _ _ _ _) (XE0_sound _ _ _ _ _ _ _ _) (XB0_sound _ _ _ _ _ _ _ _)
               HS_sound
@@ -219,12 +271,28 @@ Section Startup.
     srealizes BSEGS2 (init_config BSEGS2 AsanUbsan.M.init_pc BPH2 sp brk0 mbase rdraw LIM INP) (sd HOLES t_nil E0a FS shape1).
   Proof.
     pose proof both_img_facts as IMG.
-    rewrite (init_cfg_eq BSEGS2 BOTH_H BPH2 sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abterm vasz urandom tmp
-               AsanUbsan.M.init_pc eq_refl).
-    pose proof (init_cs_ok BSEGS2 BOTH_H BPH2 sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abterm vasz urandom tmp
-                  IMG Hsp Hbrk Hva Hve Hfit Huid Hhw) as HC.
-    pose proof (both_check_sound RANGES HS1 HOLES1_sound FUEL BFUEL plan1 bhinit shape1 cert1 _ _ _ _ HC) as R.
-    replace (m_fs (model0 BSEGS2 sp brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abterm vasz urandom tmp)) with FS in R by reflexivity.
+    (* #38: [init_cfg_eq], [init_cs_ok] and [model0] all take AsanInit's Section order
+       (segs A ph apc sp rdraw brk0 mbase inp), so [apc] moves in front of [sp] -- which is
+       what the kernel named at :270 c.44-46, "sp has type word, expected N" -- and the
+       fifteen launch components collapse to [INP].  [init_cs_ok]'s premise list is the one
+       As/AsStartup.v:165-167 records from its own About probe: img_facts, valid_sp,
+       valid_brk, valid_mmap_base, valid_argv, valid_envp, valid_id, valid_hwcap,
+       valid_launch, entry_launch_ok_va -- and NO entry_stack_fits.  The As twin's
+       as_startup_shape is still on the old form at this sha, so this is derived rather than
+       mirrored; if that lane's port differs, its print wins and I take the hunk. *)
+    rewrite (init_cfg_eq BSEGS2 BOTH_H BPH2 AsanUbsan.M.init_pc sp rdraw brk0 mbase INP eq_refl).
+    (* [init_cs_ok]'s proof now reads the entry word ([AsanInit.init_kn_with_ok], AT_ENTRY),
+       so it takes the Section's [Hapc] after [IMG]: [eq_refl], as at [init_cfg_eq] above. *)
+    pose proof (init_cs_ok BSEGS2 BOTH_H BPH2 AsanUbsan.M.init_pc sp rdraw brk0 mbase INP
+                  IMG eq_refl Hsp Hbrk Hmb Hva Hve Huid Hhw Hlaunch Hlau Hrdr) as HC.
+    pose proof (both_check_sound RANGES HS1 HOLES1_sound FUEL BFUEL plan1 (bhinit (rseq_z (kb_rseq (in_kernel inp)))) shape1 cert1 _ _ _ _ HC) as R.
+    (* #38: [model0 segs sp rdraw brk0 mbase inp] -- PRINTED by a probe round.
+       [rdraw] was ABSENT from this call rather than misplaced: the entry draw is part of the
+       run's initial model now, and an absent argument is the direction an error-at-a-time
+       cycle finds last.  The same 94 s probe confirmed the two calls above are already exact
+       -- [init_cfg_eq segs A ph apc sp rdraw brk0 mbase inp Hapc] and [init_cs_ok ... IMG Hsp
+       Hbrk Hmb Hva Hve Huid Hhw Hlaunch Hlau] -- so one round settled all three. *)
+    replace (m_fs (model0 BSEGS2 sp rdraw brk0 mbase INP)) with FS in R by reflexivity.
     exact R.
   Qed.
 

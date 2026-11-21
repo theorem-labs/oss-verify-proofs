@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: cw_fresh, cw_kept0, cw_kept_step and cw_kept_call are the text of
-   proofs/libreac/fuzz_identity/lib/A/Prog/sb_dec_A.v:63-153 (origin/ossv/recipes 4b6f0df50aa7: sbd_fresh,
+   proofs/libreac/fuzz_identity/lib/A/Prog/sb_dec_A.v:63-153 (sbd_fresh,
    sbd_kept0, sbd_kept_step, sbd_kept_call), with the segment list made image A's tfibsegs, the call's window a
    parameter and the world after the call generalized, for libdiginet/fuzz_codec's ASan build; cw_kept_cj is new. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_codec/lib/A/Prog/CPgWalkKept.v, with its module paths and module names changed; 766 of its 850 lines of code are new or changed and 134 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Image B: the cut of check_personality's walk (lib/AU/Prog/check_personality_B.v), image A's
    (lib/A/Prog/check_personality_A_cut.v) at image B's addresses: the function at 0x8391c (its instructions aligned
    with image A's; image B adds two 8-alignment checks of the personality pointers, which the engine decides on the

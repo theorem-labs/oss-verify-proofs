@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, no_higher_fit, higher_fit_b_sound and no_higher_fit_iff are removed: AsanCeil.v, their only user, no longer needs them. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith List Bool Lia.
@@ -13,15 +14,6 @@ Local Ltac el_goal_has_var := match goal with |- ?G => match G with context [?x]
 Local Ltac Lia.lia ::= tryif el_goal_has_var then el_lia_core else first [ solve [clear; el_lia_core] | el_lia_core ].
 Import ListNotations.
 Open Scope bv_scope.
-
-(* [comment removed for export] *)
-Definition no_higher_fit (maps : list (word * word)) (aZ nZ baseZ : Z)
-    : Prop :=
-  forall g : Z,
-    (g mod page_size = 0)%Z ->
-    (aZ + nZ <= g)%Z ->
-    (g + nZ <= baseZ)%Z ->
-    region_free maps (Z_to_bv 64 g) (Z_to_bv 64 nZ) = false.
 
 (* [comment removed for export] *)
 Definition fit_candidates (maps : list (word * word)) (aZ nZ : Z)
@@ -179,47 +171,6 @@ Proof.
   rewrite (proj2 (Z.leb_le _ _) Hlo).
   rewrite (proj2 (Z.leb_le _ _) Hg'base).
   reflexivity.
-Qed.
-
-(* [comment removed for export] *)
-Lemma higher_fit_b_sound : forall maps aZ nZ baseZ,
-  higher_fit_b maps aZ nZ baseZ = true ->
-  exists g, (g mod page_size = 0)%Z /\ (aZ + nZ <= g)%Z
-            /\ (g + nZ <= baseZ)%Z
-            /\ region_free maps (Z_to_bv 64 g) (Z_to_bv 64 nZ) = true.
-Proof.
-  intros maps aZ nZ baseZ H.
-  unfold higher_fit_b in H. apply existsb_exists in H as (g & _ & Hg).
-  apply andb_true_iff in Hg as [Hg Hfree].
-  apply andb_true_iff in Hg as [Hg Hhi].
-  apply andb_true_iff in Hg as [Hal Hlo].
-  exists g. repeat split.
-  - now apply Z.eqb_eq.
-  - now apply Z.leb_le.
-  - now apply Z.leb_le.
-  - exact Hfree.
-Qed.
-
-(* [comment removed for export] *)
-Lemma no_higher_fit_iff : forall maps aZ nZ baseZ,
-  (0 <= aZ)%Z -> (0 < nZ)%Z ->
-  (aZ mod page_size = 0)%Z -> (nZ mod page_size = 0)%Z ->
-  (baseZ < two_pow_64)%Z ->
-  (higher_fit_b maps aZ nZ baseZ = false <-> no_higher_fit maps aZ nZ baseZ).
-Proof.
-  intros maps aZ nZ baseZ HaPos HnPos HaAl HnAl Hbase. split.
-  - intros Hf g HgAl Hglo Hghi.
-    destruct (region_free maps (Z_to_bv 64 g) (Z_to_bv 64 nZ)) eqn:Hfree;
-      [|reflexivity].
-    exfalso.
-    rewrite (higher_fit_b_complete maps aZ nZ baseZ g
-               ltac:(lia) HnPos HaAl HnAl Hbase HgAl Hglo Hghi Hfree)
-      in Hf.
-    discriminate.
-  - intro H. destruct (higher_fit_b maps aZ nZ baseZ) eqn:Hf;
-      [|reflexivity].
-    exfalso. apply higher_fit_b_sound in Hf as (g & HgAl & Hglo & Hghi & Hfree).
-    rewrite (H g HgAl Hglo Hghi) in Hfree. discriminate.
 Qed.
 
 (* [comment removed for export] *)

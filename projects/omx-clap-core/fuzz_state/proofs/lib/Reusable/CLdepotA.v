@@ -1,13 +1,14 @@
-(* copied from proofs/cgif/cgif_file_fuzzer/lib/CLdepotA.v @ 86aa4177b94 (a working branch: F1 / F2 + NMAX-PARAM + EV_MAX value-independence; installs in c5 ~18:30Z), module paths changed only. *)
+(* copied from proofs/cgif/cgif_file_fuzzer/lib/CLdepotA.v (a working branch: F1 / F2 + NMAX-PARAM + EV_MAX value-independence; installs in c5 ~18:30Z), module paths changed only. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* CLdepot's depot field over an abstract trace admissibility [adm], image-free.
 
    CLdepot.depot_field_ok derives the interfaces' depot field (CLdepot.depot_field: AGif0n.if_depot / if_depot_miss,
    AGif4.ifs_depot, DGif0.di_depot) from the released machine-level depot contract.  CLdepot fixes that contract's trace
-   premise to cgif_file's [In tr (as_universe B)] (CLdepot.depot_spec_x, CLdepot.v:98) and the sub-interface's
-   [ds_univ] to give it (CLdepot.v:76).  An instance whose released contract admits a trace by another fact cannot use
+   premise to cgif_file's [In tr (as_universe B)] (CLdepot.depot_spec_x, CLdepot.v:99) and the sub-interface's
+   [ds_univ] to give it (CLdepot.v:77).  An instance whose released contract admits a trace by another fact cannot use
    CLdepot: fuzz_state's AFl0.tfib_depot_spec takes [areq_ok S (KDepot tr)] (the trace length, YG01.v:35), and its
    trace premise tr_admit gives that by YG01.tr_admit_len, not [In tr (as_universe B)].
 

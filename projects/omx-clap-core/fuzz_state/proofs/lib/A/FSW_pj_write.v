@@ -6,7 +6,7 @@
    __asan_memset (PC_memset 0x521bc, return PJW_MS_RET 0x83d30), calls write_value at level 0 with
    ot = sp - 16 (the first 16-aligned address above the object's end; FSH_Fn_FORM.md section 3a), then - when
    pretty - `put` of the final newline, and finally returns the buffer, or fuzz_free's it and returns NULL.
-   Addresses (generation-N proof of this function over the same image, commit 211ff3e9df0
+   Addresses (generation-N proof of this function over the same image,
    lib/A/Prog/pj_write_blocks.v:9-18, text only, not in this tree): PJ_WRITE 0x83d08, CHECKED_MEMSET 0x521bc,
    PJW_MS_RET 0x83d30, WRITE_VALUE 0x83d84, PJW_WV_RET 0x83d44, PUT 0x8418c, PJW_PUT_RET 0x83d5c,
    FUZZ_FREE 0x82d40, PJW_FREE_RET 0x83d6c, the epilogue 0x83d70, STR_NL 0x21040.
@@ -17,7 +17,7 @@
 
    Rule 24 (proof-index v5 built 2026-10-28T21:58:24Z, exit 0, read from a file, not a pipe; re-checked by
    a Theorem Labs lane 2026-10-28T22:32Z): pj_write has RELEASED proofs for fs's PLAIN and UBSAN builds only
-   (lib/Prog, lib/U/Prog, ossv/recipes@566eb6ffa5, release/pau-projects-recipes@b6a0088adc), none for an ASan
+   (lib/Prog, lib/U/Prog, ossv/recipes, release/pau-projects-recipes), none for an ASan
    build. Those plain contracts / proofs are templates here, not drop-ins. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -1371,7 +1371,7 @@ Qed.
    fp_spares FP; the read-only range is image bytes (pjw_j_roP_img), so the premise is fp_spares FP over it (a caller
    with ~ YI16.sink_open_fp FP, e.g. every FP whose ranges start above 0 (YCbq.sink_closed_pos), has it by
    YCbq.fp_spares_closed). Stated over the journal's own memories, then in the walk's raw-memory form. *)
-(* FP-keyed core (S0 400b2a240b3): the image clause spares an image byte that is not runtime-owned, not errno,
+(* FP-keyed core (S0): the image clause spares an image byte that is not runtime-owned, not errno,
    NOT in FP and fp_spares FP, so the caller states both FP premises over the read-only range. *)
 Lemma pjw_arodata_journal : forall STK sp0 FP ly S (W : world tfibsegs) mem md own ly' S' (W' : world tfibsegs) mem' md' k,
   ajournal tfibsegs B STK sp0 FP ly S W mem md own ly' S' W' mem' md' k ->
@@ -2282,7 +2282,7 @@ srr_branch_with fsw_wr_tbl_ok HS.
   + exact HGL3.
 Qed.
 
-(* stage 5, proved by a part agent of a Theorem Labs lane in its scratch tree over b6c5b22a453, pasted unchanged *)
+(* stage 5, proved by a part agent of a Theorem Labs lane in its scratch tree over, pasted unchanged *)
 (* ================= stage 5: the call of write_value at level 0 and its return =================
    The walk is at the callee's entry (pjw_to_write_value leaves it there). This is write_value's spec at level 0
    with its premises from pjw_wv_premises (stage 4), and its post composed back into pj_write's journal with

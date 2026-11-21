@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the munmap node of recycle_chunk's plumbing has munmap's refused -ENOMEM children beside the unmapping one, each a dead spin child proved from the walk's new spin conjunct through fo_dead_node and the munmap refusal facts). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -115,6 +116,15 @@ getr regsD 2 = getr regs 2 /\ (forall r' : bv 5, In r' YF2q.SREGS -> getr regsD 
 Definition POSTMUN (W' : world tfxsegs) (c' : config) : Prop :=
 exists regsD memD, LINKD regsD memD /\ YF2q.at_MUN W ly regsD memD md MAP LEN idx nA qi lst vra vs0 vs1 vs2 own W' c'.
 Hypothesis WALK : SRr tfxsegs W (cfg_at tfxsegs A_RChunk regs mem md) POSTMUN.
+(* 75d69e00 Sys/Mm/Munmap.v: [check_munmap] dispatches [errno_ret_in munmap_errnos] before the exact-unmap
+   arm, so the node this walk reaches at 0x64c94 carries the refusal children beside the unmapping one
+   (YF1h.v:37).  [aok s (KMunmapSec _ _) z := z = 1] (YG00.v:598) and [refusable (KMunmapSec _ _) = false]
+   (YG0d.v:150) shut both of [amreal]'s escapes, so each refusal child must be a SPIN child, and the fact
+   that makes it one is [YF2q.at_DIE], the last conjunct of [YF2q.at_MUN], which [POSTMUN] carries here.
+   It is a conjunct and not a premise of this file because the walk needs the symbolic state at the ecall:
+   [at_MUN] binds [mem1] with no memory invariant at all, so nothing about the walk is derivable here --
+   it is run in [YF2q.die_at_ecall], at the four ecall sites of [YF12.segGD] and [YF12a.segGD_f] where the
+   state still exists. *)
 Lemma val_mem_aview : forall H m a (w : nat) v kk, val_mem tfxsegs (mrestrict H m) a w v -> (kk < w)%nat ->
 aview tfxsegs H m (a + Z.of_nat kk) = Some (YG0h.le_byte v w kk).
 Proof.
@@ -336,8 +346,8 @@ Theorem plumbing : amreal tfxsegs (recycle_chunk k X) W (cfg_at tfxsegs A_RChunk
 Proof.
 pose proof MAP_facts as (P1 & P2 & P3 & INA & INV & MW). pose proof LEN_facts as [L1 L2].
 rewrite (recycle_chunk_sec k X r o sm i (proj2 (mem_chunk_spec _ _) Hk) Hb Hsm Hidx SMALL). cbn [amreal].
-eapply SRr_bind; [img_try (img_exact WALK)|]. intros W1 c1 _ (regsD & memD & LNK & HM).
-destruct HM as (-> & regs1 & mem1 & mat1 & -> & H17 & H10 & H11 & INNER). cbv zeta in INNER.
+eapply SRr_bind; [img_try (img_exact WALK)|]. intros W1 c1 _ HP. destruct HP as (regsD & memD & LNK & HM).
+destruct HM as (-> & regs1 & mem1 & mat1 & -> & H17 & H10 & H11 & INNER & DIE). cbv zeta in INNER.
 img_apply SRr_use_AI. cbn [cfg_model]. intros HAI. img_apply SRr_ret.
 set (md1 := with_vm_backing (m_vm_lazy md) mat1 md) in *.
 set (c2 := mkCfg (mkst (regupd regs1 10 (w64 0)) (w64 (0x64c98 + D_2c4)) (unfill (w64 MAP) (w64 LEN) mem1) (seg_rom tfxsegs)) (munmap_model (w64 MAP) (w64 LEN) md1)).
@@ -346,19 +356,34 @@ assert (UL : bv_unsigned (w64 LEN) = LEN) by (img_try (unfold w64; img_apply uns
 assert (MW1 : amwf md1) by (img_try (img_apply (amwf_same md md1); [img_try ((subst md1; cbv beta); img_apply m_vmmaps_wvb) | img_try ((subst md1; cbv beta); img_apply m_vm_lazy_wvb) | img_try (img_exact MW)])).
 assert (INV1 : In (w64 MAP, w64 LEN) (vm_maps (m_vmmaps md1))) by (img_try ((subst md1; cbv beta); rewrite m_vmmaps_wvb; img_exact INV)).
 destruct (in_split _ _ INV1) as (l1 & l2 & EVM).
-exists unit, (fun _ => c2), (fun _ => 1), (fun _ => false), tt.
-split.
-{ pose proof (munmap_node tfxsegs regs1 (w64 (0x64c94 + D_2c4)) mem1 (seg_rom tfxsegs) md1 (w64 MAP) LEN (AI_halted _ _ _ _ HAI) H17 H10
+assert (H215 : bv_unsigned (getr regs1 17) = 215) by (img_try (rewrite H17; img_refl)).
+assert (A0e : forall v : word, reg_get (regupd regs1 10 v) (Z_to_bv 5 10) = v).
+{ intros v. replace (Z_to_bv 5 10) with (10%bv : bv 5) by (img_try (img_apply bv_eq; img_refl)). img_apply regupd_same. }
+pose proof (munmap_node tfxsegs regs1 (w64 (0x64c94 + D_2c4)) mem1 (seg_rom tfxsegs) md1 (w64 MAP) LEN (AI_halted _ _ _ _ HAI) H17 H10
 ltac:(img_try (rewrite UM; unfold page_size; img_exact P3)) H11 ltac:(img_lia)
 ltac:(img_try (rewrite UM, (page_round_up_Z_aligned LEN) by img_lia; ceil; unfold zone3, TFX_IMG_LO, kLowShadowBeg, two_pow_64, TASK_SIZE, kHighMemBeg, ASAN_CEIL in *; img_lia))
 ltac:(img_try (rewrite (page_round_up_Z_aligned LEN) by img_lia; img_exact (map_has_In _ _ _ INV1)))) as ND.
-cbv zeta in ND. rewrite (page_round_up_Z_aligned LEN) in ND by img_lia. img_exact ND. }
-split. { intros [] _. cbn [cfg_model]. img_exact (munmap_AI tfxsegs (w_H W) (w_A W) md1 (w64 MAP, w64 LEN) l1 l2 HAI MW1 EVM ltac:(img_try (cbn [fst]; rewrite UM; unfold page_size; img_exact P3))
+cbv zeta in ND. rewrite (page_round_up_Z_aligned LEN) in ND by img_lia.
+exists ({e : Z | In e munmap_errnos} + unit)%type,
+(fun i => match i with
+| inl (exist _ e _) => mkCfg (mkst (regupd regs1 10 (errno_ret e)) (v_addi (w64 (0x64c94 + D_2c4)) 4) mem1 (seg_rom tfxsegs)) md1
+| inr _ => c2
+end), (fun _ => 1), (fun i => match i with inl _ => true | inr _ => false end), (inr tt).
+split; [img_try (img_exact ND)|].
+split. { intros [[e He]|[]] _; [img_try (img_exact HAI)|]. cbn [cfg_model]. img_exact (munmap_AI tfxsegs (w_H W) (w_A W) md1 (w64 MAP, w64 LEN) l1 l2 HAI MW1 EVM ltac:(img_try (cbn [fst]; rewrite UM; unfold page_size; img_exact P3))
 ltac:(img_try (cbn [fst snd]; rewrite UM, UL; ceil; unfold zone3, TFX_IMG_LO, kLowShadowBeg, kHighMemBeg, ASAN_CEIL in *; img_lia))). }
-split. { intros []. cbn [aok]. img_refl. }
-split; [img_refl|]. split; [img_refl|]. split; [img_try (intros XX; discriminate XX)|]. split; [img_try (intros [] XX; discriminate XX)|].
-split; [img_try (intros [] [XX|XX]; [discriminate XX | exfalso; exact (XX eq_refl)])|].
-intros [] _. cbn [Z.eqb Pos.eqb]. cbn [amreal].
+split. { intros ii. cbn [aok]. img_refl. }
+split; [img_refl|]. split; [img_refl|]. split; [img_try (intros XX; discriminate XX)|].
+split. { intros [[e He]|[]] XX; [|img_try (discriminate XX)]. intros HAIe. img_exact (DIE e He HAIe). }
+split. { intros [[e He]|[]] HD; [|img_try (destruct HD as [XX|XX]; [discriminate XX | exfalso; exact (XX eq_refl)])].
+clear HD. cbv beta iota.
+img_apply (fo_dead_node tfxsegs (pend_at regs1 (w64 (0x64c94 + D_2c4)) mem1 (seg_rom tfxsegs)) md1 (getr regs1 17)
+({e : Z | In e munmap_errnos} + unit)%type (fun _ => []) _ (inr tt) (inl (exist _ e He)) ND eq_refl (injected_family_off_munmap tfxsegs _ _ H215)).
+- img_refl.
+- cbn [cfg_ms ms_regs mkst]. rewrite (A0e (Z_to_bv 64 0)), (refusal_b_munmap tfxsegs _ _ md1 _ H215). img_refl.
+- img_refl.
+- cbn [cfg_ms ms_regs mkst]. rewrite (A0e (errno_ret e)), (refusal_b_munmap tfxsegs _ _ md1 _ H215). img_apply ret_in_errnos_errno. img_exact He. }
+intros [[e He]|[]] XX; [img_try (discriminate XX)|]. cbn [Z.eqb Pos.eqb]. cbn [amreal].
 eapply SRr_bind; [img_try (img_exact INNER)|]. intros W3 c3 _ HR. pose proof HR as (-> & regs' & mem' & mat' & Ec3 & _).
 img_apply SRr_use_AI. intros HAI3. rewrite Ec3 in HAI3 |- *. cbn [cfg_model] in HAI3.
 img_apply (SRr_world_le tfxsegs W W2).

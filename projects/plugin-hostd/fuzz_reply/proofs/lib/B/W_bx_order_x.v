@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: image B's (fuzz_reply.asan-ubsan) block `order` of SEG_EXIT of LLVMFuzzerTestOneInput
    (0x84e64 to the join 0x84f00 or to 0x84fe0: g_nsrc, `at` = 0, the order[] copy loop with its three UBSan traps to
    unimp 0x850fc - 0x84eac bltu, 0x84eb8 beqz, 0x84ebc beqz) over the GENERIC allocator relation ARx: lx_order_x, the
@@ -7,9 +8,9 @@
    CONVERTED: lib/B/W_bx_order.v (the AR proof of the same block, lx_order Qed), its lemmas whose statements or proofs
    name AR or the AR journal (lxk_blk, lxk_alist, lxk_asrc, lxk_aentry, lxk_arelay, lxk_aout, lxk_amodel_kept,
    lxk_ainput_kept, lxk_carry, lxk_flag_kept, lxo_loop, lx_order), each with an _x suffix.
-   RECIPE: image A's finished ARx conversion of the same block, e60b29a425a
-   lib/A/W_LLVMFuzzerTestOneInput_exit_x.v:344-1279 (lxk_blk_x :360-368, the lxk_*_x helpers :370-629, lxo_loop_x
-   :681-905, lx_order_x :908-1279), against its AR original b86949b953d lib/A/W_LLVMFuzzerTestOneInput_exit.v
+   RECIPE: image A's finished ARx conversion of the same block,
+   lib/A/W_LLVMFuzzerTestOneInput_exit_x.v:345-1280 (lxk_blk_x :360-368, the lxk_*_x helpers :370-629, lxo_loop_x
+   :681-905, lx_order_x :908-1279), against its AR original lib/A/W_LLVMFuzzerTestOneInput_exit.v
    :574-1816.
    What changes, and nothing else:
    - `AR segs B ly S W mem md` is `ARx ly S [] W mem md` (HP0: the ghost head list is [] in every ARx state); the
@@ -79,7 +80,7 @@ Local Notation A_LLVMF := YCfn.A_LLVMF.
 Local Notation RA_LLVMF := YCfn.RA_LLVMF.
 Local Notation LLVMF_STK := YCfn.LLVMF_STK.
 
-(* ---- cut_x's Section w header (lib/B/W_LLVMFuzzerTestOneInput_cut_x.v:199-244), verbatim ---- *)
+(* ---- cut_x's Section w header (lib/B/W_LLVMFuzzerTestOneInput_cut_x.v:200-245), verbatim ---- *)
 Variable B : asyms.
 Variable MT : ameter_ops.
 Variables XM_LIB XN_LIB : Z -> Z.
@@ -127,7 +128,7 @@ Ltac lxk_low :=
        rg_send_dead rg_gone rg_client rg_client_broken rg_lock rg_wake] in *;
   pose proof lxk_ceil_lo; lia.
 (* a live block: its bytes, and the 7 bytes of alignment slack a key's text may carry past them (B AR :209-217; the
-   size's lower bound is BLKN, as A-ARx's lxk_blk_x, e60b29a425a lib/A/W_LLVMFuzzerTestOneInput_exit_x.v:360-368) *)
+   size's lower bound is BLKN, as A-ARx's lxk_blk_x, lib/A/W_LLVMFuzzerTestOneInput_exit_x.v:361-369) *)
 Lemma lxk_blk_x : forall ly S (W : world segs) mem md p n,
   ARx ly S [] W mem md -> In (p, n) (ablocks B ly S) ->
   4096 <= p /\ p + req_size n <= alloc_ceiling /\ 0 <= n <= req_size n.
@@ -435,7 +436,7 @@ Ltac lxo_nowr U14 Hna :=
   destruct Hin.
 
 (* ================================================================== route R: the copy loop and the block at a world
-   relation R (the reply's shape, a working branch 7d2979ecc661 cut_x).  Each <name>R is <name> with the
+   relation R (the reply's shape, a working branch cut_x).  Each <name>R is <name> with the
    journal ajournal_gx_x segs B PST ARx -> ajournal_gx_xR segs B PST ARx R, SRr segs -> SRrG segs R and the statement
    lx_order_S_x -> lib/B/W_bx_defs_x.v lx_order_S_xR; the proofs are the strict ones, run over the R journal
    (lib/B/W_journal_x.v paj_run_x_xR / paj_run_to_x_xR) and lifted to R by SRr_SRrG (neither walk moves the world).
@@ -1087,8 +1088,8 @@ Lemma lxo_loop_x : forall (kn : nat) (i norder G F : Z) (es : list rentry)
 Proof. eapply (lxo_loop_xR (@wle segs)); wle_inst. Qed.
 
 (* ================================================================== the block (0x84e64)
-   B AR's lx_order (lib/B/W_bx_order.v:887-1234) over ARx; A-ARx's lx_order_x (e60b29a425a
-   lib/A/W_LLVMFuzzerTestOneInput_exit_x.v:907-1279) is the recipe. *)
+   B AR's lx_order (lib/B/W_bx_order.v:888-1235) over ARx; A-ARx's lx_order_x (
+   lib/A/W_LLVMFuzzerTestOneInput_exit_x.v:908-1280) is the recipe. *)
 Lemma lx_order_x : lx_order_S_x B MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G_fr fr_FP PST ARx.
 Proof. eapply (lx_order_xR (@wle segs)); wle_inst. Qed.
 

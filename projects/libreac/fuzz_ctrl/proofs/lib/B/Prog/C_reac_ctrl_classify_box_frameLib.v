@@ -1,17 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_ctrl_classify_box_frame, image B (fuzz_ctrl.asan-ubsan, libreac v1.9.0, entry 0x837c4): the stretch AFTER the
    call of reac_ctrl_parse (parse returns to 0x8380c), re-stated WITHOUT the side-stack premises, as input for the
    cgif-form glue lib/B/Prog/C_reac_ctrl_classify_box_frame.v.  It is the image-B twin of a Theorem Labs lane's image-A file
-   lib/A/Prog/reac_ctrl_classify_box_frame_Fs.v (not in this delivery) (a working branch 059fc3a33e3), route (a) of
+   lib/A/Prog/reac_ctrl_classify_box_frame_Fs.v (not in this delivery) (a working branch), route (a) of
    a Theorem Labs lane's ruling, confirmed for image B by two Theorem Labs lanes (2026-10-29 03:37Z / 03:4xZ).
 
    rule 24: no function proved here as a new claim.  Every lemma below is a COPY of ctrl's own proved image-B
-   footprint run lib/B/Prog/reac_ctrl_classify_box_frame_F.v (this worktree's blob 067b9cff36f, commit 9004a8e607b
+   footprint run lib/B/Prog/reac_ctrl_classify_box_frame_F.v (this worktree's blob 067b9cff36f,
    "WIP fuzz_ctrl image B split ... reac_ctrl_classify_box_frame_F pro_A"), with the changes listed below and nothing
    else.  Stretch A (0x837c4 .. the jal at 0x83808) is NOT copied: the glue applies that file's own `pro_A`
    (_F :1658-1698) qualified.
-   This delivery then edited comment text only: the code is unchanged from release c5e779efe8c, the comments are not.
+   This delivery then edited comment text only: the code is unchanged from release, the comments are not.
 
    COPIED VERBATIM, by source line range of reac_ctrl_classify_box_frame_F.v:
      :1-18    the Require / Import block and the scope (lib.Lib's vocabulary, image B's Img0 / AsanRT, the shared
@@ -53,7 +54,7 @@
    frame-route identifiers are allowed, qualified, only inside Qed proof-internal lemmas).
 
    ROUTE (C) (a Theorem Labs lane 16:05Z / 16:12Z; the callee shape of a Theorem Labs lane's image-A stretch
-   reac_ctrl_classify_box_frame_post_call_F_on, a working branch aaa83b256c6, lib/A/Prog/
+   reac_ctrl_classify_box_frame_post_call_F_on, a working branch, lib/A/Prog/
    reac_ctrl_classify_box_frame_Fs.v (not in this delivery)): the universal `shadow_rw` leaves this file. Each change is marked
    `route (C)`:
      - reac_ctrl_classify_box_frame_post_call_shadow_R n u o (A's region, B's names): the range-check words of the two
@@ -66,8 +67,8 @@
      - HBC is the bcmp wrapper's contract in its _on form (bcmp_wrap_c_on.bcmp_wrap_contract_F_on); d3 gives it its
        region from HSR by shadow_rw_on_mono.  It stays a Section hypothesis of this proof-internal file, so that the
        file's closure keeps the statement leaf only; the glue discharges it with the PROVED
-       bcmp_wrap_on.bcmp_wrap_holds_F_on (root-free text of a working branch
-       417f5c8e944);
+       bcmp_wrap_on.bcmp_wrap_holds_F_on (root-free text of a working branch);
+       
      - HCV is gone: d4 cites the PROVED reac_ctrl_checksum_verify_F.reac_ctrl_checksum_verify_F_holds_on
        (reac_ctrl_checksum_verify_contract_F_on, no shadow premise);
      - d1_B loses its premise `shadow_rw m` (HSR replaces it). *)

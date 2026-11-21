@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGgn.v (a working branch ced28ed2383, file sha256 05f88f77b737) onto omx-clap-core/fuzz_state's asan-ubsan image (fuzz_state.asan-ubsan, pinned sha256 5ac5ce0954f8; addresses read from its unstripped build b1566a1ca816); module paths changed; its 39 image addresses moved by code-verified function pairs (53 port_addr_check 16f8a030c869 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGgn.v (a working branch, file sha256 05f88f77b737) onto omx-clap-core/fuzz_state's asan-ubsan image (fuzz_state.asan-ubsan, pinned sha256 5ac5ce0954f8; addresses read from its unstripped build b1566a1ca816); module paths changed; its 39 image addresses moved by code-verified function pairs (53 port_addr_check 16f8a030c869 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
 (* Modified by Theorem Labs, 2026-10: relocation fix on image B: the instance word at TFIB_INST + 0x328 is the constant 0x100000 (1 MiB, not a data address), as in the source; the fh_Hinst comment names B's globals 0xa1a90 / 0xa5c60. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The seed and the frame facts of the frame-generic Deallocate walk, the NULL pointer (Deallocate returns at once)
    (the DG* files, generalized from YFgn / YFfx / YFh1 / YFg3: the same segment scripts with the
    caller's frame made abstract).

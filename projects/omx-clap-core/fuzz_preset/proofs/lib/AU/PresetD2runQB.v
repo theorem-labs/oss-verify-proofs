@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the closed RUNQ result of the post-read driver leaves, made from
    proofs/cgif/cgif_file_fuzzer/lib/YD2d.v:385 tfib_run_Q (relocated here as lib/Reusable/YD2d.v). For fuzz_preset's
-   asan-ubsan image (image B); the asan twin is lib/A/PresetD2runQA.v (lane CwRunqA, 345a4039cd2), and this file is
+   asan-ubsan image (image B); the asan twin is lib/A/PresetD2runQA.v (lane CwRunqA), and this file is
    its text through port/a2b.py (sha256 b9c3f16342596f93d7e64903139a40399c87c0b7440f92e288113ad664f5a77c, --lib):
    0 code lines differ. STATEMENT only: the proof is lib/AU/PresetD2runQBPf.v. It is apart
    from lib/AU/PresetD2runB.v (whose leaf type run_Q_tfa_cf it concludes) so that PresetD2runB.v does not depend on
@@ -12,10 +12,11 @@
    - lane CwLoopB's loop body PresetD1rB.loop_L_cf_B (lib/AU/PresetD1rB.v, a working branch), arguments
      B xst NR sm iface_room_np, stated at CfParams_preset for every FP state with zero rounding mode (frm_zero); so
      this result is stated there;
-   - lane CwRunqm's RUNQM leaf type PresetD2eB.run_QM_tfa_cf (lib/AU/PresetD2eB.v, a working branch
-     36ee02d9def), arguments B NP NR (no N_LLVMF any more).
+   - lane CwRunqm's RUNQM leaf type PresetD2eB.run_QM_tfa_cf (lib/AU/PresetD2eB.v, a working branch),
+     arguments B NP NR (no N_LLVMF any more).
    sm is the program interface's model size map (lib/AU/PresetCfnB.v Section Variable sm) and iface_room_np its
    non-primary room (Section Variable iface_room_np), both quantified here under those names. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

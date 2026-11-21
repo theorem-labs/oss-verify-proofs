@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_rd_pre.v (a working branch e2e59892bef), re-walked on
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_rd_pre.v (a working branch), re-walked on
    B's code (B-readings.lst lines 1-69). *)
 (* lv2_locate_manifest_readings, entry segment PRE (0x81e94 .. RD_L 0x81fa8 / RD_R 0x82374):
    rd_E_holds (FMW_rd_top.v SEG_E) from the pieces FMW_rd_pre_e (0x81e94 .. RD_C2), FMW_rd_pre_c2 (.. snprintf ..

@@ -6,6 +6,7 @@
    __asan_stack_malloc_7 (not 0: `bnez s2` skips the real-stack fallback), the frame's header and shadow, the two
    shadow fills, up to the BODY cut (answer_s1.v AN_BODY_stmt). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/answer_e.v, with its module paths, module names and numbers changed; 564 of its 744 lines of code are new or changed and 415 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* sup_remove's walk on the ASan+UBSan build of plugin-hostd/fuzz_command (fuzz_command.asan-ubsan,
    BASE + AF_sup_remove = 0x8b258), segment G1: from the entry to record()'s return 0x8b354 (SR_R), where
    sr_g2_stmt (sup_remove_s1.v) takes over.
@@ -23,7 +24,7 @@
    the walk ends in sr_g2_stmt.
 
    The walk tactics and the entry state follow sup_resp's A walk (an earlier version of
-   lib/A/Prog/sup_resp_s1.v and sup_resp.v:128-360); the block lemmas follow the B walk of sup_remove_all
+   lib/A/Prog/sup_resp_s1.v and sup_resp.v:129-361); the block lemmas follow the B walk of sup_remove_all
    (lib/B/Prog/sup_remove_all_s1.v, _s4.v). Record's frame chain is achain_push on afn_pre's chain (s0 = sp0, the
    saved ra and s0 at sp0 - 8 and sp0 - 16), or the empty chain when sp0 is within 16 bytes of the stack top.
 
@@ -449,7 +450,7 @@ assert (KEEP2 : forall a, 0 <= a < alloc_ceiling -> rdW W (ms_mem msB) a = rdW W
 clear HFr2.
 pmkst HS. collapse_md.
 prreg HS (1%bv : bv 5) R1. prreg HS (2%bv : bv 5) R2. prreg HS (3%bv : bv 5) R3. prreg HS (4%bv : bv 5) R4.
-(* the call of __asan_stack_malloc_0 (sup_resp's, A sup_resp.v:225-243) *)
+(* the call of __asan_stack_malloc_0 (sup_resp's, A sup_resp.v:226-244) *)
 pose proof (palf_sm B TLF 0 ltac:(cbn; tauto)) as HSM0. change (cs_stack_malloc 0) with CS___asan_stack_malloc_0 in HSM0.
 rewrite HSM0.
 pose proof (count_cid_le_length 0 (frames S)) as Hcnt.

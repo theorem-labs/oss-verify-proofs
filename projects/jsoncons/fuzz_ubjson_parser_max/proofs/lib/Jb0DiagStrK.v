@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: decoded the encoded statements of rdn_of_defined, str_cstr, str_hull and dgs_cell_vis into plain Rocq, and moved dgs_cell_vis and str_statics out of their Section SE blocks into plain lemmas with #[using] attributes and explicit intros; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Bo0DiagStrK.v, lines 21-22, 53-57, 81-84, 97. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -20,7 +21,8 @@ Local Ltac lia := L5FastLiaT.plia2.
 Open Scope Z_scope.
 Import SX2. Import SX2S.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
-Lemma rdn_of_defined : ltac2:(TCodec.tc2 tcn__Jb0DiagStrK "R4'R0yR0%211'9y8%511%311p051'7'A&Q=zr1%3221&Q;r2&Q@r3%211%5241&QA+2+QO%3221%>251'<&Q>r5%<11%32A1%52A1&?'=r7&QO%E28D%22Q31%411(1%11Q2%83Q231%:11p0<1pSBQ21'>'6%11Q9%Q<11&Q8&Q9%@2QAGr6%443C21(2%128Q:%G3831&5%12QDQ=%J3QB17%Q2241qS>>1%A2?1p0C1p0Q71p0QC1pS:QH1pSFQJ1pQDQL1").
+Lemma rdn_of_defined : forall (Mx : word -> option byte) (n : nat) a, 0 <= a -> a + Z.of_nat n <= 2 ^ 63 ->
+(forall i, 0 <= i < Z.of_nat n -> Mx (Z_to_bv 64 (a + i)) <> None) -> exists bs, rdn ASEGS Mx (Z_to_bv 64 a) n = Some bs /\ length bs = n.
 Proof.
 intros Mx n. induction n as [|n IH]; intros a Ha Hn Hd.
 - exists []. split; reflexivity.
@@ -47,7 +49,12 @@ Hypothesis Hdgs : incl DGS_CELLS (asc_cells C).
 Variable M0 : word -> option byte.
 #[local] Notation dinvA := (dinv ar HI sp0 M0).
 #[local] Notation usp := (bv_unsigned sp0).
-#[using="scfg L C IL HIok Hsp DL"] Lemma str_cstr : ltac2:(TCodec.tc2 tcn__Jb0DiagStrK "S@'6';'A%2211%411&O%611&K'R0yR0%211'9y8%511%311p051'F%A14'Q4vQEvBvQNvHr8r7r6r5r4r3%;::987654321&Q=&R1%12G;%22H5%4221&Q;%52K9&Q@&5%12J;%311%6251+1%8221+@%:221&QA+2+Q?%3221%D251'=%Q91Q3&Q8&Q9&@%B2Q;Mu1%3221%645Q5Q11(2&3(4&QOz%22QE1(8%11QF%63QG31%83QHQ:1%:2QE1%D3C<1&?&Q:%13QM9Q@%311&L%Q>2R4QE%Q82R1QE%Q:11%Q=21Q6%Q>21Q5%63QL51'>'Q2&J&Mr<r:%3221r;%6221r9%QN2RD1r1%;442R81qT6R?1%>2R@1p0@1p0H1p0M1p0QC1p0R41p0R:1pSJRG1pSHRO1pSDRJ1pQ@RL1p2S81pS@S61pQ:S81pQ8S;1").
+#[using="scfg L C IL HIok Hsp DL"] Lemma str_cstr : forall LB LK cr A M (model : Model) (p : word) (path : list byte),
+dinvA LB LK cr A M model ->
+usp <= bv_unsigned p -> bv_unsigned p + Z.of_nat (length path) + 1 + 9 <= 2 ^ 47 ->
+rdn ASEGS M0 p (length path + 1) = Some (path ++ [Z_to_bv 8 0]) -> ~ In (Z_to_bv 8 0) path ->
+defined M0 (bv_unsigned p) (Z.of_nat (length path) + 1 + 8) ->
+exists t8, Jb0DiagStrnlen.DSN.cstr (mrestrict (ahid A model) M) (bv_unsigned p) path t8.
 Proof.
 intros LB LK cr A M model p path D Hlo Hhi STR NONUL PDEF. pose proof Hsp as Hsp'.
 set (pz := bv_unsigned p) in *. set (n := length path) in *.
@@ -68,7 +75,11 @@ apply (di_above _ _ _ _ _ _ _ _ _ _ D). lia.
 replace (Z_to_bv 8 0) with (nth j path (Z_to_bv 8 0)); [apply nth_In; exact Hj|].
 apply bv_eq. rewrite Hz. reflexivity.
 Qed.
-#[using="L IL Hsp DL"] Lemma str_hull : ltac2:(TCodec.tc2 tcn__Jb0DiagStrK "S3'6';'A%2211%411&O%611&K'R0yR0%211'9y8%511%311p051'F'Q4vQEvBvQNvHr8r7r6r5r4r3%;::987654321&Q0&QB&N%11>+XPPP0%4221&QA+2+Q?%3221%9215%;3@61&Q=&R1%12Q2G%321Bz%521D'<&Q;&Q7&Q<+8%22M1%5241+7%I221r1%?2Q@1%A231&Q>&Q?%=2Q6Q5%<21;%?2>1%@21=+Q<%O2N1%C2B1%8241%:2<1%G2<1'=&J&Mr;r9%3221r:r2%73321(2&QO%12R6Q5%32R61%=3R651p0?1pT:R<1p0Q91p0Q<1p0QA1p0QN1pSFRI1pSLRJ1pSDR=1pQ@R?1p2RK1pS@RI1pQ:RK1pQ8RN1").
+#[using="L IL Hsp DL"] Lemma str_hull : forall LB LK cr A M (model : Model) (pz n : Z),
+dinvA LB LK cr A M model -> shadow_allowed A (ahl_ceil ar) (2 ^ 47 - ahl_ceil ar) ->
+usp <= pz -> 0 <= n ->
+forall x : word, Jb0RegionPoisoned.SB + pz / 8 - 7 <= bv_unsigned x < Z.min (Jb0RegionPoisoned.SB + (pz + n) / 8 + 8) (Jb0RegionPoisoned.SB + 2 ^ 44) ->
+mrestrict (ahid A model) M x = Some (Z_to_bv 8 0).
 Proof.
 intros LB LK cr A M model pz n D SAH Hlo Hn x Hx. pose proof Hsp as Hsp'.
 rewrite <- (Z_to_bv_bv_unsigned 64 x).
@@ -78,19 +89,10 @@ assert (Q1 : (usp - 8388608) / 8 + 1048576 <= pz / 8).
 { replace (usp - 8388608) with (usp + (-1048576) * 8) by lia. rewrite Z.div_add by lia. pose proof (Z.div_le_mono usp pz 8 ltac:(lia) Hlo). lia. }
 change ((2 ^ 47 - 1) / 8) with (2 ^ 44 - 1). lia.
 Qed.
-Section SE.
-Local Abbreviation SEC_T_dgs_cell_vis := (ltac2:(TCodec.tc2 tcn__Jb0DiagStrK "R8'6';'A%2211%411&O%611&K'R0yR0%211'9y8%511%311p051'F'Q4vQEvBvQNvHr9r8r7r6r5r4%;::987654321&Q:%M2KL(:r3%24OO61r2%44Q0Q121&3&Q6&Q5%33921%;3:51'=%Q:1M%Q011&Q8&Q9&J&M%12IG%321I&QO%12Q:I&QC%11J%:49531(2&E%72Q@I%2251%42A1%C3A61p0E1p0Q21pT8QM1pSFQN1pS:QO1pSDQB1pQ@QD1p2R01pS@QN1pQ:R01pQ8R31")) (only parsing).
-Variable LB : ltac:(sec_ty2 constr:(SEC_T_dgs_cell_vis) 0%nat 0%nat).
-Variable LK : ltac:(sec_ty2 constr:(SEC_T_dgs_cell_vis) 1%nat 0%nat).
-Variable cr : ltac:(sec_ty2 constr:(SEC_T_dgs_cell_vis) 2%nat 0%nat).
-Variable A : ltac:(sec_ty2 constr:(SEC_T_dgs_cell_vis) 3%nat 0%nat).
-Variable M : ltac:(sec_ty2 constr:(SEC_T_dgs_cell_vis) 4%nat 0%nat).
-Variable model : ltac:(sec_ty2 constr:(SEC_T_dgs_cell_vis) 5%nat 0%nat).
-Variable a : ltac:(sec_ty2 constr:(SEC_T_dgs_cell_vis) 6%nat 0%nat).
-Variable n : ltac:(sec_ty2 constr:(SEC_T_dgs_cell_vis) 7%nat 0%nat).
-Variable v : ltac:(sec_ty2 constr:(SEC_T_dgs_cell_vis) 8%nat 0%nat).
-Lemma dgs_cell_vis : ltac:(sec_stmt2 constr:(SEC_T_dgs_cell_vis) 9%nat 0%nat).
-Proof using scfg L C IL HIok DL Hdg Hdgs LB LK cr A M model a n v.
+#[using="scfg L C IL HIok DL Hdg Hdgs"] Lemma dgs_cell_vis : forall LB LK cr A M (model : Model) a n v, dinvA LB LK cr A M model -> In (a, n, v) (DG_CELLS ++ DGS_CELLS) ->
+rdn ASEGS (mrestrict (ahid A model) M) (Z_to_bv 64 a) (Z.to_nat n) = Some (word_to_le_bytes (Z.to_nat n) (Z_to_bv 64 v)).
+Proof.
+intros LB LK cr A M model a n v.
 intros D Hin.
 pose proof (di_inv _ _ _ _ _ _ _ _ _ _ D) as HH.
 destruct (aio_statics _ _ _ _ _ HIok _ _ _ _ _ _ _ HH) as (_ & CS). rewrite (dla_segs _ _ _ _ DL) in CS.
@@ -102,17 +104,9 @@ assert (B : 0 <= a /\ a + Z.of_nat (Z.to_nat n) <= 0x693000).
 { unfold DG_CELLS, DGS_CELLS in Hin. cbn [In app] in Hin. repeat (destruct Hin as [Hin|Hin]; [injection Hin as <- <- <-; cbn; lia|]). destruct Hin. }
 rewrite (u64_lit a) by lia. apply (vis_low scfg L ar C IL HI HIok sp0 DL M0 _ _ _ _ _ _ _ D). lia.
 Qed.
-End SE.
-Section SE.
-Local Abbreviation SEC_T_str_statics := (ltac2:(TCodec.tc2 tcn__Jb0DiagStrK "R0'6';'A%2211%411&O%611&K'R0yR0%211'9y8%511%311p051'F'Q4vQEvBvQNvHr6r5r4r3r2r1%;::987654321'<&Q=+RPP0%2215&Q>+QVhP0%2281%7241'=&J&M%12B@&QO%12Q1@%533D1(1%11Q0%93Q031p0;1pSBQ>1&Q3%;2KI%=21K%311&Q1%113%J231p081p0M1pSDQ:1pQ@Q<1p2QH1pS@QF1pQ:QH1pQ8QK1")) (only parsing).
-Variable LB : ltac:(sec_ty2 constr:(SEC_T_str_statics) 0%nat 0%nat).
-Variable LK : ltac:(sec_ty2 constr:(SEC_T_str_statics) 1%nat 0%nat).
-Variable cr : ltac:(sec_ty2 constr:(SEC_T_str_statics) 2%nat 0%nat).
-Variable A : ltac:(sec_ty2 constr:(SEC_T_str_statics) 3%nat 0%nat).
-Variable M : ltac:(sec_ty2 constr:(SEC_T_str_statics) 4%nat 0%nat).
-Variable model : ltac:(sec_ty2 constr:(SEC_T_str_statics) 5%nat 0%nat).
-Lemma str_statics : ltac:(sec_stmt2 constr:(SEC_T_str_statics) 6%nat 0%nat).
-Proof using scfg L C IL HIok Hsp DL Hdg Hdgs LB LK cr A M model.
+#[using="scfg L C IL HIok Hsp DL Hdg Hdgs"] Lemma str_statics : ltac2:(TCodec.tc2 tcn__Jb0DiagStrK "R0'6';'A%2211%411&O%611&K'R0yR0%211'9y8%511%311p051'F'Q4vQEvBvQNvHr6r5r4r3r2r1%;::987654321'<&Q=+RPP0%2215&Q>+QVhP0%2281%7241'=&J&M%12B@&QO%12Q1@%533D1(1%11Q0%93Q031p0;1pSBQ>1&Q3%;2KI%=21K%311&Q1%113%J231p081p0M1pSDQ:1pQ@Q<1p2QH1pS@QF1pQ:QH1pQ8QK1").
+Proof.
+intros LB LK cr A M model.
 intros D IMG.
 set (MV := mrestrict (ahid A model) M) in *.
 assert (STC : forall a n v, In (a, n, v) (DG_CELLS ++ DGS_CELLS) -> rdn ASEGS MV (Z_to_bv 64 a) (Z.to_nat n) = Some (word_to_le_bytes (Z.to_nat n) (Z_to_bv 64 v)))
@@ -148,6 +142,5 @@ split; [exact (IC 0x134f08 8%nat (word_to_le_bytes 8 (Z_to_bv 64 0x13d719)) ltac
 split; [exact (STC1 0x13d719 1 ltac:(unfold DG_CELLS, DGS_CELLS; cbn [In app]; tauto) eq_refl)|].
 exact (STC 0x1363a8 8 0x1267e4 ltac:(unfold DG_CELLS, DGS_CELLS; cbn [In app]; tauto)).
 Qed.
-End SE.
 End StrK.
 End FPX_1.

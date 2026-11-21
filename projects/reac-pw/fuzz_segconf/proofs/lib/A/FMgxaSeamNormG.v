@@ -175,7 +175,11 @@ Proof.
   - injection H as <-. eexists. split; [reflexivity|]. cbn [access_value fst snd].
     split; [reflexivity|]. split; [exact HR|]. intros x _. reflexivity.
   - revert H. destruct (ov_read_bytes segs m0 a (width_bytes n)) as [bs|] eqn:Eo; intros H;
-      cbn beta iota in H; [|discriminate H].
+      cbn beta iota in H;
+      (* 08b1429: a failed load answers MachineUnmodeled on the vvar pages and MachineFault
+         elsewhere, so the empty case needs that test split before it can be discriminated
+         (as lib/MemNorm.v) *)
+      [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate H].
     rewrite (gov_read_rel m m0 a _ bs HR Eo). cbn beta iota.
     revert H.
     lazymatch goal with

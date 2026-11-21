@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntryUnset), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v. *)
 (* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/Prog/GrantEntryUnset.v. *)
-(* Ported from lib/A/Prog/GrantEntryUnset.v at a working branch 5651bf66924, blob 6b0a9d01723 (the bytes first read; lib/A/AB01.v there is the current 1e6f4323d1e). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Ported from lib/A/Prog/GrantEntryUnset.v at a working branch, blob 6b0a9d01723 (the bytes first read; lib/A/AB01.v there is the current 1e6f4323d1e). *)
 (* The walk of LLVMFuzzerTestOneInput's phase UNSET on image B (fuzz_grant.asan-ubsan, entry 0x80a3c):
    slots 0x81224 (GP_unset0, offset 0x7e8) .. 0x81300 (GP_admit, offset 0x8c4). The block at 0x81224
    writes the bytes left (a2) and the input cursor (s7) and the address of every remaining object of

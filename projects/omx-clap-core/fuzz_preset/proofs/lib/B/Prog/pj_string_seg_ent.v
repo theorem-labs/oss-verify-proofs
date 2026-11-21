@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ENTRY segment of pj_string's image-B walk (fuzz_preset asan-ubsan; the cuts of
-   lib/B/Prog/pj_string_defs.v): from the kit's premises (pjs_pre, the kit's tip d607d12e4b0f) and
+   lib/B/Prog/pj_string_defs.v): from the kit's premises (pjs_pre, the kit's tip) and
    fuzz_strdup's live-set bounds (pjs_cnt, derived in the top) at the entry to the cut pjs_C1 at the
    `jal fuzz_strdup` (+0x68), then the C1 segment (pjs_seg_C1, a premise) to the walk's post pjs_FIN.
    proves no function (kind: segment lemma): pjs_seg_entry_holds is pjs_seg_entry from pjs_texts, pjs_g_lit and

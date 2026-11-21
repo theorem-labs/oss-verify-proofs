@@ -28,7 +28,7 @@
      SR   - source_reset, W2's sr_spec_g (lib/A/W_contract.v Section w2 / w2g);
      RFg  - relay_finish, W5's rf_spec (W_contract.v Section rfs) at its own G = RF_G ++ G_SL, over K0's free table
             CTX_AFREE (ACk0.v), the caller context of its free discharged from lx_afn_pre_at_sp's chain;
-     CSHE - check_shape_ends, W3's spec (a working branch f39635d8c8a W_check_shape_ends.v:144-201), not yet
+     CSHE - check_shape_ends, W3's spec (a working branch W_check_shape_ends.v:144-201), not yet
             published: restated here verbatim as lx_cshe_spec (G-generic) and marked STUB;
      the G-coverage and errno-place facts of the instance, the image facts of the two literals the block names,
      the model obligations at X (RI_exit_slots, RI_exit_ends, LS_rf_room, LS_rf_mok, LS_exit_budget, LS_exit_end)
@@ -36,6 +36,7 @@
    The five blocks are each one hand's development, pasted here with the hand's prefix on every helper name:
    lx_order (lxo_ / lxk_ / xo_), lx_rf_site (xrf_), lx_ends (xe_ / xm_ / xw_ / xc_), lx_reset (xr_),
    lx_ffexit (ffx_). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -129,7 +130,7 @@ Definition ss_ffexit : sstate := mkSS AX_ffexit sr_atoms ffx_regions None ffx_fa
 (* the program globals amodel_at reads (W_rep.v arelay_at / aout_at / agone_at / alock_at / awake_at, _cut.v
    amodel_at): g_s, g_src, g_nsrc, g_capsrc, g_send_max, g_nout, g_capout, g_out, g_client, g_client_broken,
    g_send_dead, g_send_eintr, g_gone, g_lock, g_wake[1], g_nfd, g_thread_up, g_listen; errno is not one of them
-   (XReset's text, a working branch 598bfe67783 W_xreset.v:57) *)
+   (XReset's text, a working branch W_xreset.v:57) *)
 Definition xr_GM : list (Z * Z) :=
   [(rg_s fr_RG, 4 * ASRC); (rg_src fr_RG, 8); (rg_nsrc fr_RG, 4); (rg_capsrc fr_RG, 4);
    (rg_send_max fr_RG, 8); (rg_nout fr_RG, 8); (rg_capout fr_RG, 8); (rg_out fr_RG, 8);
@@ -208,7 +209,7 @@ Fixpoint lx_rf_room (bb : Z) (c : ctl) (O : list byte) (mx no cap : Z) (es : lis
 Definition lx_rf_ctl (c : ctl) : ctl := CTL (-1) (ct_br c) (ct_dd c) (ct_ei c) (ct_ev c).
 
 (* STUB until W3 publishes: check_shape_ends' spec, verbatim from W3's
-   proofs/plugin-hostd/fuzz_reply/lib/A/W_check_shape_ends.v:144-201 at a working branch f39635d8c8a (the
+   proofs/plugin-hostd/fuzz_reply/lib/A/W_check_shape_ends.v:144-201 at a working branch (the
    stream clauses as cnl_spec states them), with its Section variables B MT instantiated at mine
    and the names prefixed lx_.  W3's G is a Section VARIABLE of their Section c, with `Hypothesis HG : gx_ok
    SEGS B G` and the premise `forall a, HA + 64 <= a < HA + 96 -> inG G a`; it is kept GENERIC here (XEnds,
@@ -217,7 +218,7 @@ Definition lx_rf_ctl (c : ctl) : ctl := CTL (-1) (ct_br c) (ct_dd c) (ct_ei c) (
    call.  This file takes it at the called slot's own G = [(HA + 64, 32)] and lifts the journal to G_fr with
    ajournal_gx_G_mono, as _cut's rule for a G-generic callee says. *)
 (* W3's ob_at (the controller's stream as the shape oracles read it); it IS on this branch
-   (lib/A/W_contract.v:541), and the stub below uses it under this name. *)
+   (lib/A/W_contract.v:542), and the stub below uses it under this name. *)
 Definition lx_ob_at (W : world segs) (mem : word -> option byte) (OUT : Z) (ob : list byte) : Prop :=
   forall i, 0 <= i < Z.of_nat (length ob) ->
     aview segs (w_H W) mem (OUT + i) = Some (bv_unsigned (nth (Z.to_nat i) ob (Z_to_bv 8 0))).
@@ -227,7 +228,7 @@ Definition lx_cshe_home (ly : alayout) (S : astate) (a : Z) : Prop :=
   alloc_ceiling <= a \/
   (in_img segs a /\ ~ Exists (in_zr a) (as_owned_static B) /\ ~ (as_errno B <= a < as_errno B + 4)) \/
   (exists cid pos, In (cid, pos) (frames S) /\ in_zr a (frame_rng ly (cid, pos))).
-(* W3's ashp (f39635d8c8a W_check_shape_ends.v:108-113), verbatim: the shadow of an image literal is a CONST cell
+(* W3's ashp (W_check_shape_ends.v:108-113), verbatim: the shadow of an image literal is a CONST cell
    of the instance (AF0m Tfib_const_shadow: 0x20ee0's shadow byte is 1, 0x20f00's is 5 - PARTIAL granules, not
    zero), and AR holds every as_const cell (am_const), so these facts hold in every allocator state. *)
 Definition lx_ashp (a n : Z) : Prop := forall ly S (W : world segs) mem md, AR segs B ly S W mem md ->
@@ -303,7 +304,7 @@ Definition lx_cshe_spec (pc : Z) : Prop :=
     (* the stream as cnl_spec states it: g_out is a live heap block apart from the source's blocks, so the
        inlined frees keep it, and its shadow facts follow from the block (YCbq.v range_addressable_of_block /
        shadow_hull_vis_of_block); O < 2 ^ 32 is next_line's memchr bound (nl_spec).  W3's text at
-       a working branch f39635d8c8a W_check_shape_ends.v:191-195; the OLD stub's lx_cshe_home premise on the
+       a working branch W_check_shape_ends.v:191-195; the OLD stub's lx_cshe_home premise on the
        stream bytes was measured false for a heap g_out. *)
     lx_ob_at W mem OUT ob -> Z.of_nat (length ob) = O -> O <= 2 ^ 40 -> (0 < O -> O < 2 ^ 32) ->
     amem_range OUT (O + 8) ->
@@ -318,7 +319,7 @@ Hypothesis CSHE : lx_cshe_spec (BASE + AF_fr_check_shape_ends).
    lcut now carries, beside RINV ---- *)
 Variable LS : lfcx -> Z -> lmod -> alayout -> astate -> Prop.
 
-(* ---- relay_finish at W5's published rf_spec (W_contract.v:1785) and the facts lx_rf_site takes (XRf, approved
+(* ---- relay_finish at W5's published rf_spec (W_contract.v:1786) and the facts lx_rf_site takes (XRf, approved
    by a Theorem Labs lane) ---- *)
 (* relay_finish: W5's published rf_spec (W_contract.v Section rfs) at its own G = RF_G ++ G_SL (W5's note), over K0's
    free table CTX_AFREE (ACk0.v; a Theorem Labs lane 20:04Z: one CTX per allocator entry - relay_finish's frees enter free) *)
@@ -581,11 +582,11 @@ Qed.
 (* ------------------------------------------------------------------ the five blocks
    Each is developed by one hand of this segment (its scratch file and branch named below) and pasted here with
    its development; the statements are the hands' own text, as agreed with the spine.
-     lx_order   0x84bf8 .. 0x84c6c / 0x84d44   (W8SegExit.XOrder,       W_xorder.v,  a working branch 9926c033c53)
-     lx_rf_site 0x84c6c / 0x84d44, two insns   (W8SegExit.XRelayFinish, W_xrf.v,     a working branch 5b50c9aba97)
-     lx_ends    0x84c74 .. 0x84d4c             (W8SegExit.XEnds,        W_xends.v,   a working branch bc1d2565a0b)
-     lx_reset   0x84d4c .. 0x84d7c             (W8SegExit.XReset,       W_xreset.v,  a working branch 598bfe67783)
-     lx_ffexit  0x84d7c .. the ret             (W8SegExit.XFfExit,      W_xffexit.v, a working branch 56d4e6281db) *)
+     lx_order   0x84bf8 .. 0x84c6c / 0x84d44   (W8SegExit.XOrder,       W_xorder.v,  a working branch)
+     lx_rf_site 0x84c6c / 0x84d44, two insns   (W8SegExit.XRelayFinish, W_xrf.v,     a working branch)
+     lx_ends    0x84c74 .. 0x84d4c             (W8SegExit.XEnds,        W_xends.v,   a working branch)
+     lx_reset   0x84d4c .. 0x84d7c             (W8SegExit.XReset,       W_xreset.v,  a working branch)
+     lx_ffexit  0x84d7c .. the ret             (W8SegExit.XFfExit,      W_xffexit.v, a working branch) *)
 (* the symbolic-run scaffolding every block's walk uses *)
 Let RUN := paj_run_x (PL := PL_fr) (PI := PB_fr) B LAWS G_fr HG 0 [].
 Let RUNTO := paj_run_to_x (PL := PL_fr) (PI := PB_fr) B LAWS G_fr HG 0 [].
@@ -3051,7 +3052,7 @@ Definition lx_ends_post (cx : lfcx) (t fpos : Z) (ly3 : alayout) (S3 : astate) (
     frames S' = frames S3 /\ mo_le MT S3 S' (lx_ends_cost (lm_hs m)).
 
 (* ============================================================ the pieces of the block ============== *)
-(* the three addresses inside the two loops the RT walk names (a working branch 38a6eaf28b2
+(* the three addresses inside the two loops the RT walk names (a working branch
    lib/A/Prog/SlotExitScan.v asc_setup / asc_head / asc_adv / asc_tail, SlotExitScanRun.v axe_scan_step) *)
 Definition AX_call : Z := AF_fr_LLVMFuzzerTestOneInput + 0xc40.  (* 0x84cf0 jal check_shape_ends *)
 Definition AX_adv : Z := AF_fr_LLVMFuzzerTestOneInput + 0xc44.   (* 0x84cf4 the inner loop's advance *)
@@ -3201,7 +3202,7 @@ Definition xe_regs_slot (cx : lfcx) (i : Z) (k : nat) (n : Z) (regs : bvmap 5 wo
   getr regs 25 = w64 (lf_F cx + AX_ORDER + 4 * i) /\ getr regs 27 = w64 n.
 
 (* ============================================================ XEWalk: the tools of the four runs ======== *)
-(* The run chain of W_journal.v:632-703 (SRr_chain_pi_tok_AJX / SRr_run_to_pi_tok_AJX) without the journal: the
+(* The run chain of W_journal.v:633-704 (SRr_chain_pi_tok_AJX / SRr_run_to_pi_tok_AJX) without the journal: the
    same symbolic engine (YP0c.v sym_run_pi_tok_sound / sym_run_to_pi_tok_sound) and the same post, minus the
    journal clause.  xe_head_run / xe_inner_run / xe_adv_run carry no journal, so their runs use these. *)
 Definition xw_post (W : world segs) (E : env) (K : nat) (Bx : sv) (SH : list shent) (ss : sstate) (st' : shst)
@@ -7737,7 +7738,7 @@ Qed.
 
 (* ================================================================== the spine (W8SegExit.XSpine)
    lf_seg_exit chains the five blocks in program order, as the donor's aexit_holds chains fin / scan / end
-   (a working branch 38a6eaf28b2 lib/A/Prog/SlotExit.v:78): lx_order; lx_rf_site at AX_noord (no relay entry)
+   (a working branch lib/A/Prog/SlotExit.v:78): lx_order; lx_rf_site at AX_noord (no relay entry)
    or at AX_join; on the join path lx_ends; then lx_reset, lx_ffexit, lx_end_of_ffexit and lx_post_of_end.
    LS and RINV are the loop's invariants and hold at X only (relay_finish empties the table), so each model fact a
    later block needs is read off them AT X (the obligations below) and carried through the blocks' posts: the meter
@@ -7752,7 +7753,7 @@ Definition lx_ord (m : lmod) (i : Z) : Z := re_fd (nth (Z.to_nat i) (lm_es m) lx
 Hypothesis RI_exit_slots : forall cx t m, RINV cx t m ->
   forall j, (j < 4)%nat -> lx_ends_slot_ok (nth j (lm_hs m) None).
 (* the shutdown check passes over relay_finish's output and consumes all of it (check_shape_done's at = g_nout).
-   Its last two premises are amodel_at's (W_LLVMFuzzerTestOneInput_cut.v:403), which the arm holds at X: g_gone is
+   Its last two premises are amodel_at's (W_LLVMFuzzerTestOneInput_cut.v:404), which the arm holds at X: g_gone is
    0 or 1 (agone_at, W_rep.v:193) and no held text has a NUL byte (asrc_at's held list, alist_at at lines = true,
    W_rep.v:90) *)
 Hypothesis RI_exit_ends : forall cx t m, RINV cx t m -> (0 < length (lm_es m))%nat ->

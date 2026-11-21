@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the stack window is LPS 727298f3's 6144513 bytes, was 8388608. *)
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase.
 From LinuxProcessSemantics.Riscv Require Import Instr.
@@ -58,7 +59,7 @@ Definition sr_T : list expr :=
 Definition kn_T0 : list kentry :=
   [KAlign (EVar 0) 16;
    KRange (EVar 0) 0x7fff80000000 0x800000000000;
-   KWr (SA (EVar 0) (-8388608)) (ELit 8388608);
+   KWr (SA (EVar 0) (-6144513)) (ELit 6144513);   (* LPS 08b1429: UbTargetPre.stack_writableZ's window *)
    KWord (SA (EVar 0) (-56)) 8 (ELit 0x1ba3c);
    KWord (SA (EVar 0) (-64)) 8 (EAlu ALU_ADD (EVar 0) (ELit 8));
    KWord (SA (EVar 0) (-72)) 8 (ELit 2);

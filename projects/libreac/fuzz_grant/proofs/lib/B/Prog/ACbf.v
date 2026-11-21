@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/ACbf.v (a working branch d98082bd58b): the same text over image B's listing and walk layer (lib/B/Prog); image A's file was made from proofs/cgif/cgif_file_fuzzer/lib/A/ACbf.v. *)
+(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/ACbf.v (a working branch): the same text over image B's listing and walk layer (lib/B/Prog); image A's file was made from proofs/cgif/cgif_file_fuzzer/lib/A/ACbf.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -36,7 +37,7 @@ unfold RAW_SIZE, CGIF_SIZE, FRAME_SIZE; change (req_size 96) with 96; change (re
 change (req_size 72) with 72; change (req_size 32) with 32.
 Ltac clear_disj := repeat match goal with H : _ \/ _ |- _ => clear H | H : off_img _ _ |- _ => clear H | H : in_app _ _ |- _ => clear H | H : zone2 _ _ |- _ => clear H end.
 Ltac lia_nd := solve [clear_disj; lia].
-(* relocated cgif tactic export, deliberate (cgif lib/A/ACbf.v:34): it redefines zone_lia (lib/B/Prog/YC81.v:24)
+(* relocated cgif tactic export, deliberate (cgif lib/A/ACbf.v:34): it redefines zone_lia (lib/B/Prog/YC81.v:25)
    for every file that Requires this one, as cgif's released copy does. Measured call sites on
    a working branch: CheckGroupa.v 18, CtrlLayBlock.v 4, this file 3; Local would hand those walks YC81's
    weaker version. The settings check (v5 94fd8aea1a50) lists it, as a relocated export, not as a setting this unit

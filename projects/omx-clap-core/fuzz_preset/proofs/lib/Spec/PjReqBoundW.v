@@ -5,8 +5,8 @@
    sizeof(struct pj) + sizeof(char * ) = 64) ONCE, from the input's size, and alloc.c refused(n) (:70-78) sets ran_out
    only for n <= g_most. So every allocator request of the checks that run after the parse - the writer's buffer, the
    read-back of the writer's text, the rewrite's pj_string / pj_set / pj_write / read-back - is judged against
-   PJ_ALLOC_BOUND(|x|), x the input, not against the bound of the text it reads. The terms below are a Theorem Labs lane's (kit
-   3438f3406f33, lib/A/PRH_FnCheck.v 37d8e4d0072e) with their bodies written out, sm for prh_jr_strtod:
+   PJ_ALLOC_BOUND(|x|), x the input, not against the bound of the text it reads. The terms below are a Theorem Labs lane's (kit,
+   lib/A/PRH_FnCheck.v 37d8e4d0072e) with their bodies written out, sm for prh_jr_strtod:
      RQW t p          = rqw t p                   (WriterSpec.newcap 0 (|wdoc t p| + 1))
      RQ_pj_parse tl   = rq_read prh_jr_strtod tl  (prh_maxreq (snd (jr_run prh_jr_strtod tl [])))
      RQA_rtt t p      = rqa_rtt prh_jr_strtod t p

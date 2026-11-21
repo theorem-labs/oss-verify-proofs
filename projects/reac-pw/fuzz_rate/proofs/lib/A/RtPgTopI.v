@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgTopI.v at ad0e022f7af7 for reac-pw/fuzz_rate
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgTopI.v for reac-pw/fuzz_rate
    image A: rate's read-only range (.data.rel.ro start 0x9b6e0 .. .got end 0x9cb68), rate's five segment statements
    (lib/A/RtPgSeg.v S_E01 .. S_X01 and the two malloc steps) and rate's three middle contracts closed from their
    pieces by lib/A/RtPgMainL.v. *)

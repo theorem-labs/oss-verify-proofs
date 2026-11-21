@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/AGhy.v at a working branch 95e6f1d72b6 (sha256 bdb890cdbeea) into lib/A (image A, fuzz_decode.asan), with its module paths changed, names TfibSyms -> GrantSyms; REGENERATED, not relocated: TAIL0G is decode A's own seed lib/A/AFhy.v REG0 less its stack region with the instance fields re-based at aINST (gen_aghy.py; control: the same rule on cgif's YFhy.v reproduces cgif's TAIL0G byte for byte), and A_Allocate is decode A's Allocator::Allocate 0x3124c (function pair, IDENTICAL-UP-TO-PCREL). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/AGhy.v at a working branch (sha256 bdb890cdbeea) into lib/A (image A, fuzz_decode.asan), with its module paths changed, names TfibSyms -> GrantSyms; REGENERATED, not relocated: TAIL0G is decode A's own seed lib/A/AFhy.v REG0 less its stack region with the instance fields re-based at aINST (gen_aghy.py; control: the same rule on cgif's YFhy.v reproduces cgif's TAIL0G byte for byte), and A_Allocate is decode A's Allocator::Allocate 0x3124c (function pair, IDENTICAL-UP-TO-PCREL). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The seeds of the frame-generic walk of Allocator::Allocate (the AG* files, generalized from YFhy-YFjg).
 
    The walk starts at Allocate's first instruction (A_Allocate) with the caller's frame abstract.  Over the

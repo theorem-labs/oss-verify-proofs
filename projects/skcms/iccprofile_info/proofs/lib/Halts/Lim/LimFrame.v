@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-11: copied from projects/openssl/bndiv/proofs/lib/Lib/LimFrame.v at commit c395a1e0dfa, whole, with the module path OSSVerify.Proofs.openssl.bndiv.lib.Lib changed to OSSVerify.Proofs.skcms.iccprofile_info.lib.Halts.Lim and nothing else. *)
+(* Modified by Theorem Labs, 2026-11: copied from projects/openssl/bndiv/proofs/lib/Lib/LimFrame.v at commit theorem-labs/oss-verify-proofs@c5665593c2d8, whole, with the module path OSSVerify.Proofs.openssl.bndiv.lib.Lib changed to OSSVerify.Proofs.skcms.iccprofile_info.lib.Halts.Lim and nothing else. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the frame lemma checked_table_frames_vm also covers the pwritev2, clock_getres and set_robust_list checks, and the cited source commit is named by its public id. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs.
@@ -103,6 +104,9 @@ Proof.
     | eapply check_unlinkat_frame; eassumption
     | eapply check_wait4_frame; eassumption
     | eapply check_write_frame; eassumption
+    | eapply check_pwritev2_frame; eassumption
+    | eapply check_clock_getres_frame; eassumption
+    | eapply check_set_robust_list_frame; eassumption
     | eapply check_writev_frame; eassumption
     | fail 1 "no frame lemma for this arm" ].
 Qed.

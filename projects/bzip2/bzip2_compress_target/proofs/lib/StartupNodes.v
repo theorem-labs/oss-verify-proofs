@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (RomBase.sys_rob at the set_tid_address node). *)
 (* [comment removed for export] *)
 From Stdlib Require Lia. Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -17,6 +18,7 @@ Open Scope bv_scope.
 (* [comment removed for export] *)
 From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Lib Require Import CpsOpen.
 From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Common Require Import CfgStep.
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Common.Cfg Require RomBase.
 
 Lemma su_with_tid_halted : forall t m, m_halted (with_tid t m) = m_halted m.
 Proof. intros t m. reflexivity. Qed.
@@ -103,7 +105,8 @@ Proof.
   apply (rz_conseq segs _ (t_alt (fun _ : su_tid_I => K)));
     [| intros tr; split; [intros [_ Ht]; exact Ht | intros Ht; exists (exist _ (Z_to_bv 64 1) su_one_tid_ok); exact Ht]].
   eapply rz_cases; [exact (exist _ (Z_to_bv 64 1) su_one_tid_ok)
-                   | eapply su_node_set_tid; [exact Hh | exact Hlazy | reflexivity | rewrite H17; apply u64_lit; lia | exact Htid] |].
+                   | eapply su_node_set_tid; [exact Hh | exact Hlazy | reflexivity | rewrite H17; apply u64_lit; lia | exact Htid]
+                   | eapply RomBase.sys_rob_memfree; [reflexivity | rewrite H17; rewrite u64_lit by lia; exact RomBase.memfree_96] |].
   intros [t Ht]. cbn [proj1_sig]. rewrite adv_set_epend. apply Hk. exact Ht.
 Qed.
 

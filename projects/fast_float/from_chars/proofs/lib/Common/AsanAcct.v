@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vvar answer of a memory read; the model's fetch_failure cases; the model's m_kernel field). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -216,12 +217,12 @@ Hypothesis HH : H_off_segments segs H.
 Hypothesis Hwx : wx_segs_nowrap segs.
 
 (* [comment removed for export] *)
-#[using="HH"] Lemma memory_read1_hidden : forall a, H a = true -> memory_read segs a 1 = None.
+Lemma memory_read1_hidden : forall a, H a = true -> memory_read segs a 1 = None.
 Proof. LiaFast.lf_pins (fun (HH : LiaFast.U) => LiaFast.u0).
   intros a Ha. unfold memory_read. cbn [Z.of_N]. rewrite (HH a Ha). reflexivity.
 Qed.
 
-#[using="HH"] Lemma ov_read_bytes_restrict : forall n m a bs,
+Lemma ov_read_bytes_restrict : forall n m a bs,
   ov_read_bytes segs (mrestrict H m) a n = Some bs ->
   ov_read_bytes segs m a n = Some bs /\ range_avoids H a n.
 Proof. LiaFast.lf_pins (fun (HH : LiaFast.U) => LiaFast.u0).
@@ -243,7 +244,7 @@ Proof. LiaFast.lf_pins (fun (HH : LiaFast.U) => LiaFast.u0).
       apply range_avoids_cons; assumption.
 Qed.
 
-#[using="HH"] Lemma wview_restrict : forall m a,
+Lemma wview_restrict : forall m a,
   wview segs (mrestrict H m) a =
     if H a then None else wview segs m a.
 Proof. LiaFast.lf_pins (fun (HH : LiaFast.U) => LiaFast.u0).
@@ -251,7 +252,7 @@ Proof. LiaFast.lf_pins (fun (HH : LiaFast.U) => LiaFast.u0).
   rewrite (HH a Ha). reflexivity.
 Qed.
 
-#[using="HH"] Lemma store_ok_restrict : forall n m a,
+Lemma store_ok_restrict : forall n m a,
   store_ok segs (mrestrict H m) a n = true ->
   store_ok segs m a n = true /\ range_avoids H a n.
 Proof. LiaFast.lf_pins (fun (HH : LiaFast.U) => LiaFast.u0).
@@ -265,7 +266,7 @@ Proof. LiaFast.lf_pins (fun (HH : LiaFast.U) => LiaFast.u0).
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma write_to_mem_restrict : forall bs m a,
+Lemma write_to_mem_restrict : forall bs m a,
   range_avoids H a (length bs) ->
   write_to_mem (mrestrict H m) a bs = mrestrict H (write_to_mem m a bs).
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -280,7 +281,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   rewrite Ha. reflexivity.
 Qed.
 
-#[using="Type"] Lemma write_to_mem_hidden : forall bs m a x,
+Lemma write_to_mem_hidden : forall bs m a x,
   range_avoids H a (length bs) -> H x = true ->
   write_to_mem m a bs x = m x.
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -295,11 +296,11 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma mrestrict_visible : forall (H0 : word -> bool) m a,
+Lemma mrestrict_visible : forall (H0 : word -> bool) m a,
   H0 a = false -> mrestrict H0 m a = m a.
 Proof. LiaFast.lf_pins LiaFast.u0. intros H0 m a Ha. unfold mrestrict. rewrite Ha. reflexivity. Qed.
 
-#[using="Type"] Lemma ov_read_bytes_mrestrict_eq : forall (H0 : word -> bool) n m a,
+Lemma ov_read_bytes_mrestrict_eq : forall (H0 : word -> bool) n m a,
   range_avoids H0 a n ->
   ov_read_bytes segs (mrestrict H0 m) a n = ov_read_bytes segs m a n.
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -308,18 +309,18 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   rewrite (IH m (a + 1) (range_avoids_tl H0 a n Hav)). reflexivity.
 Qed.
 
-#[using="Type"] Lemma rdn_mrestrict_eq : forall (H0 : word -> bool) n m a,
+Lemma rdn_mrestrict_eq : forall (H0 : word -> bool) n m a,
   range_avoids H0 a n ->
   rdn segs (mrestrict H0 m) a n = rdn segs m a n.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros H0 n m a Hav. rewrite <- !ov_rdn. apply ov_read_bytes_mrestrict_eq. exact Hav.
 Qed.
 
-#[using="Type"] Lemma wview_mrestrict_eq : forall (H0 : word -> bool) m a,
+Lemma wview_mrestrict_eq : forall (H0 : word -> bool) m a,
   H0 a = false -> wview segs (mrestrict H0 m) a = wview segs m a.
 Proof. LiaFast.lf_pins LiaFast.u0. intros H0 m a Ha. unfold wview, mrestrict. rewrite Ha. reflexivity. Qed.
 
-#[using="Type"] Lemma store_ok_mrestrict_eq : forall (H0 : word -> bool) n m a,
+Lemma store_ok_mrestrict_eq : forall (H0 : word -> bool) n m a,
   range_avoids H0 a n ->
   store_ok segs (mrestrict H0 m) a n = store_ok segs m a n.
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -331,7 +332,7 @@ Qed.
 
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma find_segment_some_spec : forall l addr n seg,
+Lemma find_segment_some_spec : forall l addr n seg,
   find_segment l addr n = Some seg ->
   In seg l /\ (Z.of_N (seg_base seg) <= addr)%Z
   /\ (addr + n <= Z.of_N (seg_base seg) + Z.of_N (seg_size seg))%Z.
@@ -346,7 +347,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     split; [right; exact Hin | split; assumption].
 Qed.
 
-#[using="Type"] Lemma find_segment_none_spec : forall l addr n,
+Lemma find_segment_none_spec : forall l addr n,
   find_segment l addr n = None ->
   forall seg, In seg l ->
     ~ ((Z.of_N (seg_base seg) <= addr)%Z
@@ -364,7 +365,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="HH"] Lemma in_segment_not_hidden : forall (x : word) seg,
+Lemma in_segment_not_hidden : forall (x : word) seg,
   In seg segs ->
   (Z.of_N (seg_base seg) <= bv_unsigned x)%Z ->
   (bv_unsigned x + 1 <= Z.of_N (seg_base seg) + Z.of_N (seg_size seg))%Z ->
@@ -374,7 +375,7 @@ Proof. LiaFast.lf_pins (fun (HH : LiaFast.U) => LiaFast.u0).
   exfalso. exact (find_segment_none_spec segs (bv_unsigned x) 1 (HH x Hx) seg Hin (conj H1 H2)).
 Qed.
 
-#[using="HH"] Lemma seg_ov_read_bytes_restrict : forall n m seg a,
+Lemma seg_ov_read_bytes_restrict : forall n m seg a,
   In seg segs ->
   (Z.of_N (seg_base seg) <= bv_unsigned a)%Z ->
   (bv_unsigned a + Z.of_nat n <= Z.of_N (seg_base seg) + Z.of_N (seg_size seg))%Z ->
@@ -395,7 +396,7 @@ Proof. LiaFast.lf_pins (fun (HH : LiaFast.U) => LiaFast.u0).
     rewrite (IH m seg (a + 1) Hin) by lia. reflexivity.
 Qed.
 
-#[using="HH Hwx"] Lemma code_read_ov_restrict : forall m a n,
+Lemma code_read_ov_restrict : forall m a n,
   code_read_ov segs (mrestrict H m) a n = code_read_ov segs m a n.
 Proof. LiaFast.lf_pins (fun (HH Hwx : LiaFast.U) => LiaFast.u0).
   intros m a n. unfold code_read_ov.
@@ -406,28 +407,28 @@ Proof. LiaFast.lf_pins (fun (HH Hwx : LiaFast.U) => LiaFast.u0).
   rewrite N_nat_Z. exact H2.
 Qed.
 
-#[using="HH Hwx"] Lemma fetch_word_ov_restrict : forall m a,
+Lemma fetch_word_ov_restrict : forall m a,
   fetch_word_ov segs (mrestrict H m) a = fetch_word_ov segs m a.
 Proof. LiaFast.lf_pins (fun (HH Hwx : LiaFast.U) => LiaFast.u0). intros m a. unfold fetch_word_ov. rewrite code_read_ov_restrict. reflexivity. Qed.
 
-#[using="HH Hwx"] Lemma fetch_half_ov_restrict : forall m a,
+Lemma fetch_half_ov_restrict : forall m a,
   fetch_half_ov segs (mrestrict H m) a = fetch_half_ov segs m a.
 Proof. LiaFast.lf_pins (fun (HH Hwx : LiaFast.U) => LiaFast.u0). intros m a. unfold fetch_half_ov. rewrite code_read_ov_restrict. reflexivity. Qed.
 
-#[using="HH Hwx"] Lemma fetch_half_any_restrict : forall m a,
+Lemma fetch_half_any_restrict : forall m a,
   fetch_half_any segs (mrestrict H m) a = fetch_half_any segs m a.
 Proof. LiaFast.lf_pins (fun (HH Hwx : LiaFast.U) => LiaFast.u0). intros m a. unfold fetch_half_any. rewrite fetch_half_ov_restrict. reflexivity. Qed.
 
-#[using="HH Hwx"] Lemma fetch_tail_any_restrict : forall m a,
+Lemma fetch_tail_any_restrict : forall m a,
   fetch_tail_any segs (mrestrict H m) a = fetch_tail_any segs m a.
 Proof. LiaFast.lf_pins (fun (HH Hwx : LiaFast.U) => LiaFast.u0). intros m a. unfold fetch_tail_any. rewrite !fetch_half_any_restrict. reflexivity. Qed.
 
-#[using="HH Hwx"] Lemma fetch_failure_restrict : forall m a,
+Lemma fetch_failure_restrict : forall m a,
   fetch_failure segs (mrestrict H m) a = fetch_failure segs m a.
 Proof. LiaFast.lf_pins (fun (HH Hwx : LiaFast.U) => LiaFast.u0). intros m a. unfold fetch_failure. rewrite fetch_half_any_restrict. reflexivity. Qed.
 
 (* [comment removed for export] *)
-#[using="HH"] Lemma interp_eff_accesses_restrict : forall t m c mr' rs,
+Lemma interp_eff_accesses_restrict : forall t m c mr' rs,
   interp_eff_accesses segs t (mrestrict H m)
     = MachineOk (@mkAccessReport _ (c, mr') rs) ->
   exists mf',
@@ -445,7 +446,7 @@ Proof. LiaFast.lf_pins (fun (HH : LiaFast.U) => LiaFast.u0).
     apply ranges_avoid_nil.
   - (* [comment removed for export] *)
     destruct (ov_read_bytes segs (mrestrict H m) a (width_bytes n)) as [bs|] eqn:Hrd;
-      [|discriminate].
+      [| destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
     destruct (ov_read_bytes_restrict _ m a bs Hrd) as [Hfull Hav].
     rewrite Hfull.
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) (mrestrict H m))
@@ -475,7 +476,7 @@ Proof. LiaFast.lf_pins (fun (HH : LiaFast.U) => LiaFast.u0).
 Qed.
 
 (* [comment removed for export] *)
-#[using="HH"] Lemma decode_exec_accesses_restrict : forall ms w msr' rs',
+Lemma decode_exec_accesses_restrict : forall ms w msr' rs',
   decode_exec_accesses segs (restrict H ms) w
     = MachineOk (@mkAccessReport _ msr' rs') ->
   decode_exec_accesses segs ms w
@@ -510,7 +511,7 @@ Proof. LiaFast.lf_pins (fun (HH : LiaFast.U) => LiaFast.u0).
     + intros x Hx. cbn. unfold mrestrict. rewrite Hx. reflexivity.
 Qed.
 
-#[using="HH Hwx"] Theorem step_accesses_restrict : forall ms msr' rs',
+Theorem step_accesses_restrict : forall ms msr' rs',
   step_accesses segs (restrict H ms) = MachineOk (@mkAccessReport _ msr' rs') ->
   step_accesses segs ms
     = MachineOk (@mkAccessReport _ (unrestrict H (ms_mem ms) msr') rs')
@@ -527,6 +528,7 @@ Proof. LiaFast.lf_pins (fun (HH Hwx : LiaFast.U) => LiaFast.u0).
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|].
   { exact (decode_exec_accesses_restrict ms w msr' rs' Hs). }
   exfalso. unfold fetch_failure in Hs.
+  destruct (vdso_text_at segs (ms_pc ms)); [discriminate|].
   destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
   destruct (fetch_byte_traps segs (ms_pc ms) || fetch_byte_traps segs (ms_pc ms + 1)
             || match fetch_half_any segs (ms_mem ms) (ms_pc ms) with
@@ -535,7 +537,7 @@ Proof. LiaFast.lf_pins (fun (HH Hwx : LiaFast.U) => LiaFast.u0).
 Qed.
 
 (* [comment removed for export] *)
-#[using="HH Hwx"] Theorem step_restrict_sound : forall ms msr',
+Theorem step_restrict_sound : forall ms msr',
   RiscvSemantics.step segs (restrict H ms) = MachineOk msr' ->
   exists rep,
     step_accesses segs ms = MachineOk rep
@@ -554,7 +556,7 @@ Proof. LiaFast.lf_pins (fun (HH Hwx : LiaFast.U) => LiaFast.u0).
 Qed.
 
 (* [comment removed for export] *)
-#[using="HH Hwx"] Corollary step_restrict_step : forall ms msr',
+Corollary step_restrict_step : forall ms msr',
   RiscvSemantics.step segs (restrict H ms) = MachineOk msr' ->
   RiscvSemantics.step segs ms = MachineOk (unrestrict H (ms_mem ms) msr').
 Proof. LiaFast.lf_pins (fun (HH Hwx : LiaFast.U) => LiaFast.u0).
@@ -564,7 +566,7 @@ Proof. LiaFast.lf_pins (fun (HH Hwx : LiaFast.U) => LiaFast.u0).
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma step_accesses_ecall_shape : forall ms msr' rs',
+Lemma step_accesses_ecall_shape : forall ms msr' rs',
   step_accesses segs ms = MachineOk (@mkAccessReport _ msr' rs') ->
   ms_svc_pending msr' <> None ->
   rs' = [] /\ ms_mem msr' = ms_mem ms /\ ms_regs msr' = ms_regs ms
@@ -587,6 +589,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|]; [exact (Hdec w Hs)|].
   exfalso. destruct (fetch_failure segs (ms_mem ms) (ms_pc ms)) eqn:Hf; try discriminate.
   unfold fetch_failure in Hf.
+  destruct (vdso_text_at segs (ms_pc ms)); [discriminate|].
   destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
   destruct (fetch_byte_traps segs (ms_pc ms) || fetch_byte_traps segs (ms_pc ms + 1)
             || match fetch_half_any segs (ms_mem ms) (ms_pc ms) with
@@ -679,6 +682,9 @@ Proof.
   intros m m' ->. destruct m as [fd [maps lazy mat] io fs proc lim tm].
   repeat split; reflexivity.
 Qed.
+Lemma same_but_materialized_kernel : forall m m',
+  same_but_materialized m m' -> m_kernel m' = m_kernel m.
+Proof. intros m m' ->. reflexivity. Qed.
 
 
 (* [comment removed for export] *)
@@ -1009,7 +1015,7 @@ Definition node_ok (c : config) (I : Type)
   /\ (forall e st, sstep segs c e st -> exists i, e = evs i /\ st = SNext (nx i)).
 
 (* [comment removed for export] *)
-#[using="HH Hwx"] Theorem mi_account_step_restricted : forall A ms msr' model,
+Theorem mi_account_step_restricted : forall A ms msr' model,
   lazy_cover H (m_vm_lazy model) A -> A_wf A -> MInv A model ->
   RiscvSemantics.step segs (restrict H ms) = MachineOk msr' ->
   exists mat',
@@ -1028,7 +1034,7 @@ Proof. LiaFast.lf_pins (fun (HH Hwx : LiaFast.U) => LiaFast.u0).
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma sstep_instr_det : forall ms model ms1 model1 e st,
+Lemma sstep_instr_det : forall ms model ms1 model1 e st,
   ms_svc_pending ms = None ->
   mi_account_step segs ms model = MachineOk (ms1, model1) ->
   sstep segs (mkCfg ms model) e st ->
@@ -1044,7 +1050,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="HH Hwx"] Theorem node_instr_restricted : forall A ms msr' model,
+Theorem node_instr_restricted : forall A ms msr' model,
   lazy_cover H (m_vm_lazy model) A -> A_wf A -> MInv A model ->
   m_halted model = None ->
   ms_svc_pending ms = None ->
@@ -1070,7 +1076,7 @@ Proof. LiaFast.lf_pins (fun (HH Hwx : LiaFast.U) => LiaFast.u0).
 Qed.
 
 (* [comment removed for export] *)
-#[using="HH Hwx"] Lemma step_hclean : forall ms ms',
+Lemma step_hclean : forall ms ms',
   hclean H ms ->
   RiscvSemantics.step segs ms = MachineOk ms' ->
   hclean H ms'.
@@ -1080,7 +1086,7 @@ Proof. LiaFast.lf_pins (fun (HH Hwx : LiaFast.U) => LiaFast.u0).
   exact Hcl.
 Qed.
 
-#[using="HH Hwx"] Lemma msteps_hclean : forall ms ms',
+Lemma msteps_hclean : forall ms ms',
   msteps segs ms ms' -> hclean H ms -> hclean H ms'.
 Proof. LiaFast.lf_pins (fun (HH Hwx : LiaFast.U) => LiaFast.u0).
   intros ms ms' Hms. induction Hms as [ms | ms ms1 ms2 Hsvc Hstep Hrest IH]; intros Hc.
@@ -1088,7 +1094,7 @@ Proof. LiaFast.lf_pins (fun (HH Hwx : LiaFast.U) => LiaFast.u0).
   - apply IH. exact (step_hclean ms ms1 Hc Hstep).
 Qed.
 
-#[using="Type"] Lemma unrestrict_munrestrict : forall f g ms',
+Lemma unrestrict_munrestrict : forall f g ms',
   unrestrict H (munrestrict H f g) ms' = unrestrict H f ms'.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros f g ms'. unfold unrestrict. f_equal.
@@ -1101,7 +1107,7 @@ Variable P : config -> Prop.
 Hypothesis P_silent1 : forall c c',
   node_ok c unit (fun _ => []) (fun _ => c') -> P c' -> P c.
 
-#[using="HH Hwx P_silent1"] Theorem rz_step_restricted : forall A ms msr' model,
+Theorem rz_step_restricted : forall A ms msr' model,
   lazy_cover H (m_vm_lazy model) A -> A_wf A -> MInv A model ->
   m_halted model = None ->
   ms_svc_pending ms = None ->
@@ -1116,7 +1122,7 @@ Proof. LiaFast.lf_pins (fun (HH Hwx P_silent1 : LiaFast.U) => LiaFast.u0).
   exact (P_silent1 _ _ Hnode (Hk model' Hinv' Hsame)).
 Qed.
 
-#[using="HH Hwx P_silent1"] Theorem rz_msteps_restricted : forall A msr0 msr',
+Theorem rz_msteps_restricted : forall A msr0 msr',
   msteps segs msr0 msr' ->
   forall ms model,
   msr0 = restrict H ms ->
@@ -1147,7 +1153,7 @@ Proof. LiaFast.lf_pins (fun (HH Hwx P_silent1 : LiaFast.U) => LiaFast.u0).
       apply Hk; [exact Hinv' | exact (same_but_materialized_trans _ _ _ Hsame1 Hsame')].
 Qed.
 (* [comment removed for export] *)
-#[using="HH Hwx P_silent1"] Theorem rz_msteps_restricted' : forall A ms msr' model,
+Theorem rz_msteps_restricted' : forall A ms msr' model,
   lazy_cover H (m_vm_lazy model) A -> A_wf A -> MInv A model ->
   m_halted model = None ->
   msteps segs (restrict H ms) msr' ->
@@ -1190,7 +1196,7 @@ Variable segs : list Segment.
 Variable H : word -> bool.
 
 (* [comment removed for export] *)
-#[using="Type"] Theorem node_syscall_restricted :
+Theorem node_syscall_restricted :
   forall A ms model x8 (I : Type)
          (eff : I -> SyscallEffect) (mdl : I -> Model) (evs : I -> list event),
   A_wf A ->
@@ -1291,13 +1297,13 @@ Proof.
 Qed.
 
 Definition segs_below_b (segs : list Segment) (top : Z) : bool :=
-  forallb (fun seg => (seg_top seg <=? top)%Z) segs.
+  forallb (fun seg => (seg_top seg <=? top)%Z && negb (seg_kernel_map seg)) segs.
 
 Lemma find_segment1_none_above : forall segs top x,
   segs_below_b segs top = true -> (top <= x)%Z -> find_segment segs x 1 = None.
 Proof.
   induction segs as [|s l IH]; intros top x Hb Hx; [reflexivity|].
-  cbn [segs_below_b forallb] in Hb. apply andb_true_iff in Hb as [Hs Hl].
+  cbn [segs_below_b forallb] in Hb. apply andb_true_iff in Hb as [Hs Hl]. apply andb_true_iff in Hs as [Hs _].
   apply Z.leb_le in Hs. unfold seg_top in Hs.
   cbn [find_segment].
   replace (Z.leb (Z.of_N (seg_base s)) x && Z.leb (x + 1) (Z.of_N (seg_base s) + Z.of_N (seg_size s)))%Z

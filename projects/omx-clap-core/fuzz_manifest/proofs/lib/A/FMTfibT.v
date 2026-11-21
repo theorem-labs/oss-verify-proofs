@@ -18,6 +18,8 @@ Definition TFIB_T : Prop :=
   forall sp brk mbase rnd inp,
     valid_sp sp -> valid_brk tfibsegs0 brk -> valid_mmap_base mbase ->
     entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+    (* LPS 727298f3: [Run.valid_entry]'s fifth conjunct, which the ASan start-up reads; the statements give it *)
+    entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
     srealizes tfibsegs0
       (init_config tfibsegs0 Asan.M.init_pc Asan.M.phdrs sp brk mbase rnd target_alloc_limit inp)
       (SPECX (LS:=checksum_shape) inp).

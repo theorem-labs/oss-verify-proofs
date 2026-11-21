@@ -1,6 +1,6 @@
 (* The AR -> ARU transfer of a Theorem Labs lane's FROZEN allocator interface (a Theorem Labs lane; brief L16-AruIfaceM).
 
-   a Theorem Labs lane's frame-generic Allocate / Deallocate walks (a working branch 95e6f1d72b6, frozen) take the
+   a Theorem Labs lane's frame-generic Allocate / Deallocate walks (a working branch, frozen) take the
    allocator invariant as a parameter [ARX : Z -> alayout -> astate -> world segs -> (word -> option byte) -> Model ->
    Prop] and read it only through interface RECORDS (lib/Reusable/AGif0n.v AIface / AIfaceK / AIfaceM, AGif4.v AIfaceS,
    DGif0.v DIface, DIfaceR.v DIfaceR).  cgif instantiates ARX with [inst = I /\ AR] ([ARX_AR] below); fuzz_state

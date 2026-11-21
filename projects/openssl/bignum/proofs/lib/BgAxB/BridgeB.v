@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (ARTM_A's reserved clause takes the ledger's tail, its apartness from mr_disj; the channel reader from mr_rdr; ex_layout_ok's fourth conjunct takes the launch's rseq flag; ex_mem_inv takes bdb_segs_nk, no segment a kernel mapping; fin_core checks the stack from sp0 - STACK_WOK, the entry state's zero region, instead of from the heap ceiling LB_ACEIL). *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.openssl.bignum.lib.BgLib Require Import ImageBgA.
 
@@ -38,7 +39,7 @@ Definition fin_core (F : bforms) (B : AST) : bool :=
   && lay_ok B (win_of B) JUNK F && stksh_ok B && atop_hi_ok B
   && reg_lit B 1 MAIN_RA && reg_form B 2 (laddc (bf_sp0 F) (- 48)) && reg_lit B 4 TP_A
   && reg_form B 10 (0, [(v_argc, 1)]) && reg_form B 11 (laddc (bf_sp0 F) 8)
-  && chk_stk B (win_of B) F SEGTOP_A (SA LB_ACEIL 0, SA LB_sp0 (- 48)).
+  && chk_stk B (win_of B) F SEGTOP_A (SA LB_sp0 (- STACK_WOK), SA LB_sp0 (- 48)).
 
 Section BridgeA.
 Variable OUT_rep : Stdio.stdout_st -> mem -> Prop.
@@ -83,7 +84,8 @@ Proof.
   apply andb_prop in Hcore as [Kfm Kfw].
   set (W := win_of B) in *. set (L := Lm ρ W JUNK F (vm_maps (m_vmmaps model))) in *.
   set (m := mM ρ ms model W JUNK F (vm_maps (m_vmmaps model))) in *.
-  destruct (ex_layout_ok fs0 _ ρ B ms model HR W JUNK F RES_B RES_B_ok eq_refl Klay) as (Hlay & Hat & Esp & Heb).
+  (* the fourth conjunct is existential now: [eb_facts] takes the launch's rseq flag *)
+  destruct (ex_layout_ok fs0 _ ρ B ms model HR W JUNK F RES_B RES_B_ok eq_refl Klay) as (Hlay & Hat & Esp & [rq Heb]).
   fold L in Hlay, Hat, Esp.
   destruct (lay_ok_parts B W JUNK F Klay) as [Hent Hwb].
   destruct (Hart fs0 ρ B ms model F HR Hcore0 Hfa Hlay) as [HART HCLX]. fold L in HART. fold m in HART, HCLX.
@@ -129,17 +131,36 @@ Proof.
       reflexivity.
     + split.
       *
+        (* [M1] is [ex_misc]'s first conjunct (AxA/AxExportM.v), which is [mr_res]
+           verbatim and supplies the first three facts ARTM_A's reserved clause now asks
+           for (BgB/RT_rep.v).  The fourth is NOT in ex_misc; it comes from [mr_res]'s
+           sibling [mr_disj] (VCommon/Ax/AxModelRel.v:62), which says exactly that a
+           tracked mapping is [iv_disj] from every reserved entry, and [iv_disj (bas p)
+           (bas p + bsz p) q] unfolds character for character to [iv_apart p q].
+           mr_res's floor [0x154500000000 <= bas q] is dropped on the way in: no consumer
+           in the BgA/BgB cone uses it.  This is the ONLY place ARTM_A's reserved clause
+           is established, so everything the ARTM layer needs of the pair comes through
+           here.  Shape taken from openssl/ct CtAxB/BridgeB.v:142-153. *)
         destruct (ex_misc bgbsegs fs0 _ ρ B ms model HR) as (M1 & M2 & _ & _).
         unfold ARTM_A. split; [unfold S0; rewrite Σ0_maps; change (l_maps0 L) with (vm_maps (m_vmmaps model));
                                rewrite (filter_vpos_id _ (ex_maps_pos bgbsegs fs0 _ ρ B ms model HR)); apply Permutation_refl|].
-        split; [exact M1|]. split; [exact M2|].
+        split.
+        { destruct M1 as (rx & Hres & Hcnt & Hbyt & _).
+          exists rx. split; [exact Hres|]. split; [exact Hcnt|]. split; [exact Hbyt|].
+          apply Forall_forall. intros e He. apply Forall_forall. intros q Hq.
+          assert (Hin : In q (vm_reserved (m_vmmaps model)))
+            by (rewrite Hres; apply in_or_app; right; exact Hq).
+          pose proof (mr_disj bgbsegs fs0 ρ _ model (r_model _ _ _ _ _ _ _ HR) e q He Hin) as D.
+          unfold iv_disj, bas, bsz in D. unfold iv_apart. exact D. }
+        split; [exact M2|].
         split; [pose proof (ex_eager bgbsegs fs0 _ ρ B ms model HR); pose proof (Σ0_eager L (h1_of F B)); unfold S0, E0_MAX, JUNK in *; lia|].
         exact (ex_artm_sys fs0 ρ B ms model HR F a_main Kfm Kfw Hlay Hat S0 (Σ0_lay L (h1_of F B))).
       *
         destruct (ex_fds bgbsegs fs0 _ ρ B ms model HR Efd) as [Hfds _]. destruct (ex_misc bgbsegs fs0 _ ρ B ms model HR) as (_ & _ & M3 & _).
-        split; [exact Hfds | exact M3].
+        (* the channel reader at the launch, carried by MR ([Run.valid_input_channel_reader]) *)
+        split; [exact Hfds | split; [exact M3 | exact (mr_rdr bgbsegs fs0 ρ _ model (r_model _ _ _ _ _ _ _ HR))]].
   -
-    exact (ex_mem_inv bgbsegs BDB_PC bdb_img_ok fs0 _ ρ B ms model HR _ Kath).
+    exact (ex_mem_inv bgbsegs BDB_PC bdb_img_ok bdb_segs_nk fs0 _ ρ B ms model HR _ Kath).
   -
     rewrite Esp. apply (ex_argv_rep fs0 _ ρ B ms model HR W JUNK (allow_main L)).
     + exact Hent.
@@ -147,7 +168,7 @@ Proof.
   -
     pose proof (chk_stk_sound bsegs_low fs0 _ ρ B ms model HR W JUNK F (vm_maps (m_vmmaps model)) HwL HwH ltac:(fold L; lia) SEGTOP_A _ Kstk) as Hs.
     unfold stk_fact in Hs. cbn [fst snd den_addr den_base] in Hs. fold L in Hs. fold m in Hs.
-    cbn [rt_sp0 RTA]. unfold rtA_sp0, S0. rewrite Σ0_lay. unfold usp. replace (l_sp0 L - STACK_WIN) with (l_ACEIL L + 0) by (unfold l_ACEIL; lia).
+    cbn [rt_sp0 RTA]. unfold rtA_sp0, S0. rewrite Σ0_lay. unfold usp. replace (l_sp0 L - STACK_WOK) with (l_sp0 L + - STACK_WOK) by lia.
     replace (l_sp0 L - 48) with (l_sp0 L + -48) by lia. exact Hs.
   -
     destruct (Σ0_live L (h1_of F B)) as (L1 & L2 & L3). unfold sigma0_ok. cbn [rt_live rt_frames rt_credit rt_sp0 RTA].
@@ -155,7 +176,7 @@ Proof.
   -
     unfold usp. destruct Hlay as (_ & H16 & _). clear - H16. Z.div_mod_to_equations. lia.
   - unfold usp. lia.
-  - cbn [rt_sp0 RTA]. unfold rtA_sp0, S0. rewrite Σ0_lay. unfold usp, STACK_WIN. lia.
+  - cbn [rt_sp0 RTA]. unfold rtA_sp0, S0. rewrite Σ0_lay. unfold usp, STACK_WOK. lia.
 Qed.
 
 End BridgeA.

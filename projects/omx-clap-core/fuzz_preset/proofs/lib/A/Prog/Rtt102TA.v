@@ -2,15 +2,16 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/pj_string_seg_ent.v, with its module names changed; 1582 of its 1646 lines of code are new or changed and 650 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/Rtt102EA.v, with its module names changed; 1674 of its 1781 lines of code are new or changed and 1539 lines of the source are left out. *)
-(* STATUS: stretch T of round_trip_text at image A' ON THE BATCH KIT'S CUT (the batch kit head 7cdbb61b5fa0, the
-   re-fitted shared layer 80a1d52c32c7) WITH the stack-premise text head 4b8f95c0455c (the text's appended premise
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* STATUS: stretch T of round_trip_text at image A' ON THE BATCH KIT'S CUT (the batch kit head, the
+   re-fitted shared layer) WITH the stack-premise text head (the text's appended premise
    astack_up_x), CONDITIONAL: rtt_seg_t_A_cond (end of file) proves Rtt102Cut.RTT_SEG_T from ONE tagged premise,
    RTT_T_TRACE_AT (C-TXTRACE: the tx realloc site's universe fact, owner a Theorem Labs lane / the image binding of B; the
    caller's stack above the entry sp is now rtt_pre's own, Rtt102Cut.rtt_pre_up), over the Section hypotheses listed
    at Section f (the KIT's two tx texts PRH_FnTx.ttx_put_specX / ttx_value_specX at the cut, the memnorm
    __asan_memset row, the engine laws, and the image stand-ins). K0-AMR8 is DISCHARGED by the engine (AR_laws_x's
    alx_blocks_hi).
-   R-FORM PORT (the stretch T port's head on the wave-0 contract 448ecd157e57, Step-2 draft tip 7ed43ad5685e): the
+   R-FORM PORT (the stretch T port's head on the wave-0 contract, Step-2 draft tip): the
    stretch is proved at YA0nH.SRr' SEGS YGcfRehidePost.RZ_cf and every journal is at RZW := YA0nH.wle' SEGS RZ_cf
    (CrtFit's WLE contract): the tx calls through YCbqGwild.aj_call_xWb_spR (the texts' posts are fpostWbmR at
    wle'), the memset row by aj_intrin_at_xmR lifted by YA0nH.SRr_SRr', the runs by the _invR runners. The tx texts'
@@ -214,7 +215,7 @@ Hypothesis HW : prh_head_wide.
    granule-aligned *)
 Hypothesis zs_aligned : Forall (fun r => fst r mod 8 = 0 /\ snd r mod 8 = 0) (as_zero_shadow B).
 (* the image's shadow is mapped at every ARx state. DISCHARGED at ARx := ARxs by the cf instance owner's
-   tfib_img_shadow_vis_cf (lib/A/AImgShadowVisCf.v:32 on the preset allocator branch at fee5c13e19d0,
+   tfib_img_shadow_vis_cf (lib/A/AImgShadowVisCf.v:33 on the preset allocator branch at
    YGcfAmx2.v:47's img_shadow_vis_cf) + the projection of ARcf, at ci := CfImg_A, the bounds IMG_LO / IMG_TOP =
    cf_img_lo / cf_img_top = 0x10000 / 0x600000 by reflexivity. It stays a NAMED hypothesis here because this
    file's ARx is the generic Variable, not ARxs, so there is no ARcf to project (WalkRtt102's ruling,
@@ -696,7 +697,7 @@ Qed.
 
 (* ---- the rendering's own run events, from the text's list: ck_rtt_evs = w_evs ++ r_evs ++ .., and the
    rendering's segment r_evs IS prhtx_evs 0 0 (ck_rtt_ns t p) - the kit's PRH_Supply.v prhtx_evs_r_evs, CITED (the file
-   is pin-free at blob d6e52752685a and in the lane base since the rtt102 walk lane f9eda666dd9; the
+   is pin-free at blob d6e52752685a and in the lane base since the rtt102 walk lane; the
    earlier explicit-argument form was the workaround for its old red closure through lib/Reusable/YCeh.v) ---- *)
 Lemma rtt_t_run_at_r :
   prh_run_at ReaderRes.jr_strtod (ri_x D) (ri_os D) (ri_i D + RT_K_W D)%nat
@@ -2041,8 +2042,8 @@ End g.
        CfImg.
    (S) THE CALLER'S STACK ABOVE THE ENTRY SP, for prhtx_trace's first half `forall a, rect - 16 <= a < ly_top ly ->
        aview .. <> None`: below the entry sp the journal's window clause gives it (rtt_t_trace_of), above it the
-       text's LAST PREMISE `YGcallStackUp.astack_up_x segs ly W (spZ regs) mem` (the stack-premise text head
-       4b8f95c0455c, the text owner's ruling 10:58Z) does, through Rtt102Cut.rtt_pre_up. Before that commit (S) was a
+       text's LAST PREMISE `YGcallStackUp.astack_up_x segs ly W (spZ regs) mem` (the stack-premise text head,
+       the text owner's ruling 10:58Z) does, through Rtt102Cut.rtt_pre_up. Before that commit (S) was a
        second conjunct of this premise, `forall D, rtt_pre D -> astack_up_x ..`, false at the instance (the
        statement was vacuous there); it is now rtt_pre's own, so this premise is (U) alone. ---- *)
 Definition RTT_T_TRACE_AT : Prop :=

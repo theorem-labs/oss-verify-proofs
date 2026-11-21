@@ -4,7 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: the fifth segment of check_reply's walk (fuzz_command.asan, 0x86d78), the
    strcmp call of the refusal path (0x86fb8) and the branch into the epilogue, ported from
    proofs/cgif/cgif_file_fuzzer/lib/A/ACh2.v (the step through a call and back) and A/ACh5.v (a segment that ends
-   in another segment's statement), at c8557374ad2e.
+   in another segment's statement).
 
    The code of the segment is
      0x86fb8  jal  wrapper_strcmp       a0 = g_rec.reply, a1 = s3 = F + 32, which holds "resp <code>"
@@ -17,6 +17,7 @@
    memory, so the engine's frame is empty and every byte the walk reads is the byte of the state the segment was
    entered in. The interceptor's own writes are the ones its contract allows, inside its scratch window below sp. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_reply_s5.v, with its module paths and module names changed; 652 of its 703 lines of code are new or changed and 361 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* sup_call's walk on the ASan+UBSan build of plugin-hostd/fuzz_command (fuzz_command.asan-ubsan), part b
    (sup_call_s3.v): 0x8b030 .. 0x8b058 and the snprintf wrapper's return 0x8b05c.
 
@@ -442,7 +443,7 @@ eapply (srr_after_artF SEGS Wc _ (getr regsT 1)).
          rewrite R13. unfold w64. apply RA.lit_mod32.
       -- exact (snt_text_d id).
       -- vm_compute. exact I.
-      -- (* the format's place in the image and no string argument (FR_cmd_intro's boolean check, 0934cb146c3) *)
+      -- (* the format's place in the image and no string argument (FR_cmd_intro's boolean check) *)
          vm_compute. reflexivity.
     * lia.
     * lia.

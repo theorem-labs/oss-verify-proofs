@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput: the sections take the input's fields and QpvH.launch_ok in place of entry_stack_fits; the CONFIG_RSEQ flag of the start-up layer: the cell checks and KZ_GRP_in over the four main-entry states of HSCLASS_S, with the per-value certificates; the ledger count 24 with the launch's vDSO pair). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -43,11 +44,15 @@ cells_check JO6SEGS (kn_view ch) (ELit 0) 0x6431e0 (CTXc w) = true /\ cells_chec
 /\ cells_check JO6SEGS (kn_view ch) (PGE (MV w)) 4096 (METAc w) = true /\ cells_check JO6SEGS (kn_view ch) (PGE (GV w)) 0 (GRPc w) = true
 /\ wr_check (kn_view ch) (PGE (MV w)) 4096 4096 = true /\ wr_check (kn_view ch) (PGE (GV w)) 0 4096 = true.
 Proof.
-intros [|] ch [-> | ->]; cbn [CTXc NLc PGSZc GOTSSPc SSPGc VMLc METAc GRPc MV GV].
+intros [|] ch [-> | [-> | [-> | ->]]]; cbn [CTXc NLc PGSZc GOTSSPc SSPGc VMLc METAc GRPc MV GV].
 - exact (conj CTX_HS2sA_1_ok (conj NL_HS2sA_1_ok (conj PGSZ_HS2sA_1_ok (conj GOTSSP_HS2sA_1_ok (conj SSPG_HS2sA_1_ok (conj VML_HS2sA_1_ok (conj META_HS2sA_1_ok (conj GRP_HS2sA_1_ok (conj METAW_HS2sA_1_ok GRPW_HS2sA_1_ok))))))))).
 - exact (conj CTX_HS2sA_2_ok (conj NL_HS2sA_2_ok (conj PGSZ_HS2sA_2_ok (conj GOTSSP_HS2sA_2_ok (conj SSPG_HS2sA_2_ok (conj VML_HS2sA_2_ok (conj META_HS2sA_2_ok (conj GRP_HS2sA_2_ok (conj METAW_HS2sA_2_ok GRPW_HS2sA_2_ok))))))))).
+- exact (conj CTX_HS2sA_1R_ok (conj NL_HS2sA_1R_ok (conj PGSZ_HS2sA_1R_ok (conj GOTSSP_HS2sA_1R_ok (conj SSPG_HS2sA_1R_ok (conj VML_HS2sA_1R_ok (conj META_HS2sA_1R_ok (conj GRP_HS2sA_1R_ok (conj METAW_HS2sA_1R_ok GRPW_HS2sA_1R_ok))))))))).
+- exact (conj CTX_HS2sA_2R_ok (conj NL_HS2sA_2R_ok (conj PGSZ_HS2sA_2R_ok (conj GOTSSP_HS2sA_2R_ok (conj SSPG_HS2sA_2R_ok (conj VML_HS2sA_2R_ok (conj META_HS2sA_2R_ok (conj GRP_HS2sA_2R_ok (conj METAW_HS2sA_2R_ok GRPW_HS2sA_2R_ok))))))))).
 - exact (conj CTX_HS2sB_3_ok (conj NL_HS2sB_3_ok (conj PGSZ_HS2sB_3_ok (conj GOTSSP_HS2sB_3_ok (conj SSPG_HS2sB_3_ok (conj VML_HS2sB_3_ok (conj META_HS2sB_3_ok (conj GRP_HS2sB_3_ok (conj METAW_HS2sB_3_ok GRPW_HS2sB_3_ok))))))))).
 - exact (conj CTX_HS2sB_4_ok (conj NL_HS2sB_4_ok (conj PGSZ_HS2sB_4_ok (conj GOTSSP_HS2sB_4_ok (conj SSPG_HS2sB_4_ok (conj VML_HS2sB_4_ok (conj META_HS2sB_4_ok (conj GRP_HS2sB_4_ok (conj METAW_HS2sB_4_ok GRPW_HS2sB_4_ok))))))))).
+- exact (conj CTX_HS2sB_3R_ok (conj NL_HS2sB_3R_ok (conj PGSZ_HS2sB_3R_ok (conj GOTSSP_HS2sB_3R_ok (conj SSPG_HS2sB_3R_ok (conj VML_HS2sB_3R_ok (conj META_HS2sB_3R_ok (conj GRP_HS2sB_3R_ok (conj METAW_HS2sB_3R_ok GRPW_HS2sB_3R_ok))))))))).
+- exact (conj CTX_HS2sB_4R_ok (conj NL_HS2sB_4R_ok (conj PGSZ_HS2sB_4R_ok (conj GOTSSP_HS2sB_4R_ok (conj SSPG_HS2sB_4R_ok (conj VML_HS2sB_4R_ok (conj META_HS2sB_4R_ok (conj GRP_HS2sB_4R_ok (conj METAW_HS2sB_4R_ok GRPW_HS2sB_4R_ok))))))))).
 Qed.
 
 Lemma SMALL_w : img_w_b JO6SEGS 0x6430f3 1 = true /\ img_w_b JO6SEGS 0x643120 8 = true /\ img_w_b JO6SEGS 0xe6b80 8 = true
@@ -61,18 +66,32 @@ Variable brk0 : word.
 Variable argv envp : list (list byte).
 Variable fs : Fs.Fs.
 Variables uid hw : word.
+Variable apc : N.
+Variable mbase : word.
+Variable ifs : Fs.Fs.
+Variable stdin : InputStream.
+Variable gid : word.
+Variable groups : list word.
+Variable net : NetQueue.
+Variables nofile sigmask : word.
+Variable abort_terminal : bool.
+Variable urnd : InputStream.
+Variable tmp : Fs.Fs.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variables rdr sgd sgt : bool.
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hfit : QpvH.launch_ok sp brk0 mbase rdraw (QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt).
 Variables (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (mo : Model).
 Variable w : bool.
 Variable ch : acs.
 Hypothesis HCL : HSCLASS_S w ch.
-Hypothesis CS : cs_ok JO6SEGS AJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JO6PH sp rdraw brk0 argv envp uid hw) (argH0 JO6PH sp rdraw argv envp uid hw) fs E ch R FULL mo.
+Hypothesis CS : cs_ok JO6SEGS AJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JO6PH apc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) (argH0 sp rdraw argv envp kb execfn) fs E ch R FULL mo.
 #[local] Notation LV := (LV_J E).
-#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw Hsp E R FULL mo w ch HCL CS) (only parsing).
-#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
 
 Definition mview : word -> option byte := view LV mo FULL.
 
@@ -173,11 +192,15 @@ cells_check JOB6SEGS (kn_view ch) (ELit 0) 0x6458a0 (CTXc w) = true /\ cells_che
 /\ cells_check JOB6SEGS (kn_view ch) (PGE (MV w)) 4096 (METAc w) = true /\ cells_check JOB6SEGS (kn_view ch) (PGE (GV w)) 0 (GRPc w) = true
 /\ wr_check (kn_view ch) (PGE (MV w)) 4096 4096 = true /\ wr_check (kn_view ch) (PGE (GV w)) 0 4096 = true.
 Proof.
-intros [|] ch [-> | ->]; cbn [CTXc NLc PGSZc GOTSSPc SSPGc VMLc METAc GRPc MV GV].
+intros [|] ch [-> | [-> | [-> | ->]]]; cbn [CTXc NLc PGSZc GOTSSPc SSPGc VMLc METAc GRPc MV GV].
 - exact (conj CTX_HS2sA_1_ok (conj NL_HS2sA_1_ok (conj PGSZ_HS2sA_1_ok (conj GOTSSP_HS2sA_1_ok (conj SSPG_HS2sA_1_ok (conj VML_HS2sA_1_ok (conj META_HS2sA_1_ok (conj GRP_HS2sA_1_ok (conj METAW_HS2sA_1_ok GRPW_HS2sA_1_ok))))))))).
 - exact (conj CTX_HS2sA_2_ok (conj NL_HS2sA_2_ok (conj PGSZ_HS2sA_2_ok (conj GOTSSP_HS2sA_2_ok (conj SSPG_HS2sA_2_ok (conj VML_HS2sA_2_ok (conj META_HS2sA_2_ok (conj GRP_HS2sA_2_ok (conj METAW_HS2sA_2_ok GRPW_HS2sA_2_ok))))))))).
+- exact (conj CTX_HS2sA_1R_ok (conj NL_HS2sA_1R_ok (conj PGSZ_HS2sA_1R_ok (conj GOTSSP_HS2sA_1R_ok (conj SSPG_HS2sA_1R_ok (conj VML_HS2sA_1R_ok (conj META_HS2sA_1R_ok (conj GRP_HS2sA_1R_ok (conj METAW_HS2sA_1R_ok GRPW_HS2sA_1R_ok))))))))).
+- exact (conj CTX_HS2sA_2R_ok (conj NL_HS2sA_2R_ok (conj PGSZ_HS2sA_2R_ok (conj GOTSSP_HS2sA_2R_ok (conj SSPG_HS2sA_2R_ok (conj VML_HS2sA_2R_ok (conj META_HS2sA_2R_ok (conj GRP_HS2sA_2R_ok (conj METAW_HS2sA_2R_ok GRPW_HS2sA_2R_ok))))))))).
 - exact (conj CTX_HS2sB_3_ok (conj NL_HS2sB_3_ok (conj PGSZ_HS2sB_3_ok (conj GOTSSP_HS2sB_3_ok (conj SSPG_HS2sB_3_ok (conj VML_HS2sB_3_ok (conj META_HS2sB_3_ok (conj GRP_HS2sB_3_ok (conj METAW_HS2sB_3_ok GRPW_HS2sB_3_ok))))))))).
 - exact (conj CTX_HS2sB_4_ok (conj NL_HS2sB_4_ok (conj PGSZ_HS2sB_4_ok (conj GOTSSP_HS2sB_4_ok (conj SSPG_HS2sB_4_ok (conj VML_HS2sB_4_ok (conj META_HS2sB_4_ok (conj GRP_HS2sB_4_ok (conj METAW_HS2sB_4_ok GRPW_HS2sB_4_ok))))))))).
+- exact (conj CTX_HS2sB_3R_ok (conj NL_HS2sB_3R_ok (conj PGSZ_HS2sB_3R_ok (conj GOTSSP_HS2sB_3R_ok (conj SSPG_HS2sB_3R_ok (conj VML_HS2sB_3R_ok (conj META_HS2sB_3R_ok (conj GRP_HS2sB_3R_ok (conj METAW_HS2sB_3R_ok GRPW_HS2sB_3R_ok))))))))).
+- exact (conj CTX_HS2sB_4R_ok (conj NL_HS2sB_4R_ok (conj PGSZ_HS2sB_4R_ok (conj GOTSSP_HS2sB_4R_ok (conj SSPG_HS2sB_4R_ok (conj VML_HS2sB_4R_ok (conj META_HS2sB_4R_ok (conj GRP_HS2sB_4R_ok (conj METAW_HS2sB_4R_ok GRPW_HS2sB_4R_ok))))))))).
 Qed.
 
 Lemma SMALL_w : img_w_b JOB6SEGS 0x6457b3 1 = true /\ img_w_b JOB6SEGS 0x6457e0 8 = true /\ img_w_b JOB6SEGS 0xe8f90 8 = true
@@ -191,18 +214,32 @@ Variable brk0 : word.
 Variable argv envp : list (list byte).
 Variable fs : Fs.Fs.
 Variables uid hw : word.
+Variable apc : N.
+Variable mbase : word.
+Variable ifs : Fs.Fs.
+Variable stdin : InputStream.
+Variable gid : word.
+Variable groups : list word.
+Variable net : NetQueue.
+Variables nofile sigmask : word.
+Variable abort_terminal : bool.
+Variable urnd : InputStream.
+Variable tmp : Fs.Fs.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variables rdr sgd sgt : bool.
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hfit : QpvH.launch_ok sp brk0 mbase rdraw (QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt).
 Variables (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (mo : Model).
 Variable w : bool.
 Variable ch : acs.
 Hypothesis HCL : HSCLASS_S w ch.
-Hypothesis CS : cs_ok JOB6SEGS BJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JOB6PH sp rdraw brk0 argv envp uid hw) (argH0 JOB6PH sp rdraw argv envp uid hw) fs E ch R FULL mo.
+Hypothesis CS : cs_ok JOB6SEGS BJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JOB6PH apc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) (argH0 sp rdraw argv envp kb execfn) fs E ch R FULL mo.
 #[local] Notation LV := (LV_J E).
-#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw Hsp E R FULL mo w ch HCL CS) (only parsing).
-#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
 
 Definition mview : word -> option byte := view LV mo FULL.
 
@@ -288,7 +325,7 @@ Set Default Proof Using "All".
 Definition KZ_GRP (w : bool) : kentry :=
 KZero (SA (EMd Instr.M_MUL (ELit 512) (EVar (fst (GRP_O w)))) 2147450880) (ELit 512).
 Lemma KZ_GRP_in : forall w ch, HSCLASS_S w ch -> In (KZ_GRP w) (kn_rest ch).
-Proof. intros w ch HCL. apply kn_mem_In. destruct w; destruct HCL as [-> | ->]; vm_compute; reflexivity. Qed.
+Proof. intros w ch HCL. apply kn_mem_In. destruct w; destruct HCL as [-> | [-> | [-> | ->]]]; vm_compute; reflexivity. Qed.
 
 Section Kla.
 Variable sp : word.
@@ -297,20 +334,34 @@ Variable brk0 : word.
 Variable argv envp : list (list byte).
 Variable fs : Fs.Fs.
 Variables uid hw : word.
+Variable apc : N.
+Variable mbase : word.
+Variable ifs : Fs.Fs.
+Variable stdin : InputStream.
+Variable gid : word.
+Variable groups : list word.
+Variable net : NetQueue.
+Variables nofile sigmask : word.
+Variable abort_terminal : bool.
+Variable urnd : InputStream.
+Variable tmp : Fs.Fs.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variables rdr sgd sgt : bool.
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hfit : QpvH.launch_ok sp brk0 mbase rdraw (QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt).
 Variables (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (mo : Model).
 Variable w : bool.
 Variable ch : acs.
 Hypothesis HCL : HSCLASS_S w ch.
-Hypothesis CS : cs_ok JOB6SEGS BJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JOB6PH sp rdraw brk0 argv envp uid hw) (argH0 JOB6PH sp rdraw argv envp uid hw) fs E ch R FULL mo.
+Hypothesis CS : cs_ok JOB6SEGS BJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JOB6PH apc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) (argH0 sp rdraw argv envp kb execfn) fs E ch R FULL mo.
 #[local] Notation h := (m_vmmaps mo).
 #[local] Notation LV := (LV_J E).
 #[local] Notation P f := (f _ _ _ _ _ _ _ _ _ _ _ _ CS) (only parsing).
-#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw Hsp E R FULL mo w ch HCL CS) (only parsing).
-#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
 #[local] Notation GB := (GRPB E w) (only parsing).
 #[local] Notation PERM0 := (PERM0_J E w) (only parsing).
 
@@ -400,7 +451,7 @@ ms_mem ms = FULL ->
 QNLn.Mq0.KV.ld_groups Lg0 = [(GB, 4096)] ->
 QvDJ.g_chunks g0 = [] -> 0 <= QvDJ.g_spent g0 ->
 (forall r, In r (QNLn.Mq0.oranges Lg0) -> QNLn.Mq0.ocov PERM0 h r) ->
-QNLn.Mq0.KLA LV PERM0 Qi08.TMAX_J Qi08.NMAX_J (fun _ => false) Lg0 g0 (mkCfg ms mo) (QNLn.Mq0.in_sh GB 4096) (view LV mo FULL) BC_J TOT_J 22.
+QNLn.Mq0.KLA LV PERM0 Qi08.TMAX_J Qi08.NMAX_J (fun _ => false) Lg0 g0 (mkCfg ms mo) (QNLn.Mq0.in_sh GB 4096) (view LV mo FULL) BC_J TOT_J 24.
 Proof.
 intros RC__ Lg0 g0 ms HRC Hms HG Hch Hsp0 HCOV.
 destruct grp_facts as (G1 & G2 & G3 & _).
@@ -471,7 +522,7 @@ Set Default Proof Using "All".
 Definition KZ_GRP (w : bool) : kentry :=
 KZero (SA (EMd Instr.M_MUL (ELit 512) (EVar (fst (GRP_O w)))) 2147450880) (ELit 512).
 Lemma KZ_GRP_in : forall w ch, HSCLASS_S w ch -> In (KZ_GRP w) (kn_rest ch).
-Proof. intros w ch HCL. apply kn_mem_In. destruct w; destruct HCL as [-> | ->]; vm_compute; reflexivity. Qed.
+Proof. intros w ch HCL. apply kn_mem_In. destruct w; destruct HCL as [-> | [-> | [-> | ->]]]; vm_compute; reflexivity. Qed.
 
 Section Kla.
 Variable sp : word.
@@ -480,20 +531,34 @@ Variable brk0 : word.
 Variable argv envp : list (list byte).
 Variable fs : Fs.Fs.
 Variables uid hw : word.
+Variable apc : N.
+Variable mbase : word.
+Variable ifs : Fs.Fs.
+Variable stdin : InputStream.
+Variable gid : word.
+Variable groups : list word.
+Variable net : NetQueue.
+Variables nofile sigmask : word.
+Variable abort_terminal : bool.
+Variable urnd : InputStream.
+Variable tmp : Fs.Fs.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variables rdr sgd sgt : bool.
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hfit : QpvH.launch_ok sp brk0 mbase rdraw (QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt).
 Variables (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (mo : Model).
 Variable w : bool.
 Variable ch : acs.
 Hypothesis HCL : HSCLASS_S w ch.
-Hypothesis CS : cs_ok JO6SEGS AJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JO6PH sp rdraw brk0 argv envp uid hw) (argH0 JO6PH sp rdraw argv envp uid hw) fs E ch R FULL mo.
+Hypothesis CS : cs_ok JO6SEGS AJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JO6PH apc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) (argH0 sp rdraw argv envp kb execfn) fs E ch R FULL mo.
 #[local] Notation h := (m_vmmaps mo).
 #[local] Notation LV := (LV_J E).
 #[local] Notation P f := (f _ _ _ _ _ _ _ _ _ _ _ _ CS) (only parsing).
-#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw Hsp E R FULL mo w ch HCL CS) (only parsing).
-#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
 #[local] Notation GB := (GRPB E w) (only parsing).
 #[local] Notation PERM0 := (PERM0_J E w) (only parsing).
 
@@ -583,7 +648,7 @@ ms_mem ms = FULL ->
 QNLn.Mq0.KV.ld_groups Lg0 = [(GB, 4096)] ->
 QvDJ.g_chunks g0 = [] -> 0 <= QvDJ.g_spent g0 ->
 (forall r, In r (QNLn.Mq0.oranges Lg0) -> QNLn.Mq0.ocov PERM0 h r) ->
-QNLn.Mq0.KLA LV PERM0 QVyC.TMAX_J QVyC.NMAX_J (fun _ => false) Lg0 g0 (mkCfg ms mo) (QNLn.Mq0.in_sh GB 4096) (view LV mo FULL) BC_J TOT_J 22.
+QNLn.Mq0.KLA LV PERM0 QVyC.TMAX_J QVyC.NMAX_J (fun _ => false) Lg0 g0 (mkCfg ms mo) (QNLn.Mq0.in_sh GB 4096) (view LV mo FULL) BC_J TOT_J 24.
 Proof.
 intros RC__ Lg0 g0 ms HRC Hms HG Hch Hsp0 HCOV.
 destruct grp_facts as (G1 & G2 & G3 & _).

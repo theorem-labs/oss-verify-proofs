@@ -1,18 +1,19 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset image B' (asan-ubsan, #102 pin d663f82d7f48, unstripped twin c90d4fa54d43), lane
    BCrs of h-rw-pre-5 (relocated to B' by lane CrcBp): the IMAGE-PREMISE REPAIR of lib/B/Prog/CrcB.v
-   (check_reject_clean_holds_B) and its instance witnesses, after the template of lib/A/Prog/S6PalLitRefute.v
-   (cold/h-hpreset-7-walk-S6 9b261c2b0c8). Every fact is a vm_compute of a CLOSED goal at the B' instance of this tree:
+   (check_reject_clean_holds_B) and its instance witnesses, after the template of lib/A/Prog/S6PalLitRefute.v.
+   Every fact is a vm_compute of a CLOSED goal at the B' instance of this tree:
    segments B/Img0.v rsegs (blob d17de1e3b380; = pa_segs PI_prog_B, PAImg_prog.v:405 `pa_segs := rsegs`) and asyms
    YD2l.TfibB (lib/Reusable/YD2l.v 95803a8b9493, whose as_owned_static is YF0m.Tfib_owned_static and as_errno
-   YF0m.TFIB_ERRNO, YD2l.v:34 / :23; YF0m.v f82202ebccdf).
+   YF0m.TFIB_ERRNO, YD2l.v:35 / :24; YF0m.v f82202ebccdf).
    (a) THE REFUTATION of the old premise in its own words at the B' instance: CrcB.v's stand-in pal_rom_ok (`forall a,
-       in_rom SEGS a -> ~ Exists (in_zr a) (as_owned_static B) /\ ~ (as_errno B <= a < as_errno B + 4)`, CrcB.v:251 at
+       in_rom SEGS a -> ~ Exists (in_zr a) (as_owned_static B) /\ ~ (as_errno B <= a < as_errno B + 4)`, CrcB.v:252 at
        the old-pin blob 10dc5869c48c) is FALSE: an owned-static range of positive size starts inside a read-only
        segment (the ASan redzones of .rodata globals). cr_pal_rom_ok_false_B.
-       AGREEMENT with g-ph-relay's #102 refutation pal_rom_ok_false_B102 (origin/cold/g-ph-relay-p102-N9-ROMVIEW-102Bp
-       0d0f7930f0a3, lib/ZZRomviewProbe102Bp.v:46-49, over the same blobs Img0 d17de1e3b380 / YF0m f82202ebccdf):
+       AGREEMENT with g-ph-relay's #102 refutation pal_rom_ok_false_B102 (
+       lib/ZZRomviewProbe102Bp.v:46-49, over the same blobs Img0 d17de1e3b380 / YF0m f82202ebccdf):
        cr_pal_rom_ok_txt_B102 shows the old text at TfibB IS relay's proposition (by conversion), and
        cr_pal_rom_ok_false_B102 restates relay's lemma verbatim from cr_pal_rom_ok_false_B. The Evals below print the
        same counts as relay's probe (:51-53).
@@ -120,7 +121,7 @@ Qed.
    (PALibB.v's ARI), with its static image premises DISCHARGED: LAWS by PALibB.exvi_eh_laws (blob 5baa19c890f7),
    EMPTY_RO by cr_empty_ro_B, EMPTY_ZS by cr_empty_zs_B. What stays a premise is what this walk does not own: the
    callee texts (fuzz_alloc_live's text, owner the accessor lane; the bcmp row in the keep form, owner
-   a Theorem Labs lane) and the image-shadow fact at ARcf (owner a Theorem Labs lane: tfib_img_shadow_vis_cf_B, AImgShadowVisCfB.v:48). *)
+   a Theorem Labs lane) and the image-shadow fact at ARcf (owner a Theorem Labs lane: tfib_img_shadow_vis_cf_B, AImgShadowVisCfB.v:49). *)
 Section inst. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {RL : PrhRoomLive}.
 (* the guard: CrcB.v's SEGS (pa_segs PI_prog_B) IS image B's segments, so every fact above is about the walk's image *)
 Lemma cr_segs_B : @pa_segs _ B_prog_listing PI_prog_B = SEGS_B.

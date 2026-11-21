@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a failing sc, which stores the word back). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.
@@ -2943,12 +2944,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
         -- intros x Hxo. cbn [ms_mem mks]. rewrite (HR ra).
            exact (store_at_frame_fr E _ _ _ _ _ _ (ms_mem ms) _ HG HD HF Hsa (length_Z_to_le_bytes _ _) x Hxo).
         -- split; [exact (store_at_shape _ _ _ _ _ _ Hsa) | split; [exact (store_at_rtm _ _ _ _ _ _ Hsa) | fp_tac]].
-    + destruct (sc_ok_sound E _ _ _ _ Hrsv Hsc) as [_ Hsc2]. pose proof (Hsc2 eq_refl) as Hfl. rewrite <- (HR ra) in Hfl.
-      injection Hstep as <-.
-      edestruct (res_sound_gen E s ms rd' (Some (lconst 1)) nofacts (s_pc s + 4) (Z_to_bv 64 1) (ms_fregs ms) (ms_fcsr ms) RNone None)
-        as (E' & Ha & Hn & Hs'); [exact Hden | | intros; constructor | exact Hfrm | intros; reflexivity |].
-      * intros E' Ha' HR' l Hl. injection Hl as <-. apply lden_lconst.
-      * eexists _, E'. split; [eapply g_sc_fail; eassumption|]. fin_st Hsvc Ha Hn Hs'.
+    + discriminate Hstep.
   (* [comment removed for export] *)
   - destruct (xl_amo _ _ _ _ _ _ _ Hxl) as (aq & rl & rd' & ra & rb & -> & -> & -> & -> & Hop).
     destruct (amo_al (s_facts s) wd (rget (s_regs s) (rkey ra))) eqn:Hal; [|discriminate].

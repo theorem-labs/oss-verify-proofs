@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the walk of rec_code_declared on fuzz_command.asan, in the shape of proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v (cmpPixel's leaf walk): a seed lemma at the entry, then the executor's run/branch loop to every return. *)
-(* Modified by Theorem Labs, 2026-10: ported from this harness's lib/A/Prog/rec_code_declared.v (971dac249c5) to the ASan+UBSan build (fuzz_command.asan-ubsan): module paths lib/A to lib/B, the allocator record lib/A/AF0m.v to its B twin lib/B/YF0m.v, and the B addresses (entry 0x89658, the shadow base's GOT word 0xa5f50 and cell 0xb0c38, the table rec_codes 0x21be0). B's instruction stream is A's with only the pc-relative offsets changed. *)
+(* Modified by Theorem Labs, 2026-10: ported from this harness's lib/A/Prog/rec_code_declared.v to the ASan+UBSan build (fuzz_command.asan-ubsan): module paths lib/A to lib/B, the allocator record lib/A/AF0m.v to its B twin lib/B/YF0m.v, and the B addresses (entry 0x89658, the shadow base's GOT word 0xa5f50 and cell 0xb0c38, the table rec_codes 0x21be0). B's instruction stream is A's with only the pc-relative offsets changed. *)
 (* Modified by Theorem Labs, 2026-10: the table's addressability is the kit's cmd_addressable_chk (lib/B/Prog/CmdRecBase.v), in place of a local lemma over CmdZsh's cmd_addressable_in. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -15,7 +15,7 @@ changes. `./run.sh` repeats every measurement, for either version. The committed
 
 This is the method of the image-B donor survey (repacer/B-DONORS.md): its "Method" section (lines 5-18) and its
 fuzz_wire `__asan_memmove` section (lines 254-280). bytecmp is switched to 1480ca2faea0 as in the UCI-B-MEMCPY record
-(commit 7af39d3f61c, `proofs/reac-repacer/fuzz_uci/provenance/evidence/uci-b-memcpy/RECORD.md`).
+(`proofs/reac-repacer/fuzz_uci/provenance/evidence/uci-b-memcpy/RECORD.md`).
 
 - **Roots:** compared with `drvcmp.py cmp`: bytecmp `cmp` plus the repin_check e5487165abb8 target pass. Two
   different named targets, or a name on one side only, are a target difference. A root counts as equal when it is
@@ -36,11 +36,11 @@ an `env.sh` that is not committed (variables `UNIT X_S X_U GR_S GR_U ID_S ID_U`)
 
 | script | copy sha256 | original sha256 | source |
 |---|---|---|---|
-| `bytecmp-1480ca2faea0.py` | `145447a50bb2…` | `1480ca2faea0…` | tool registry commit 797e8971d27d, `tools/bytecmp/1480ca2faea0/bytecmp.py` (it carries insnflow a36c2b82eb44, lines 39-151) |
-| `repin_check-e5487165abb8.py` | `7a69dadf5169…` | `e5487165abb8…` | tool registry commit f69e6d74ebe, `tools/repin_check/e5487165abb8/repin_check.py` (supersedes 9cbc3553c09e) |
-| `drvcmp.py` | `1b13206c79dd…` | `27f7a0e92bb9…` | commit 7af39d3f61c, `…/evidence/uci-b-memcpy/drvcmp.py`: the image-B donor survey's drvcmp.py with bytecmp switched to 1480ca2faea0 |
+| `bytecmp-1480ca2faea0.py` | `145447a50bb2…` | `1480ca2faea0…` | tool registry, `tools/bytecmp/1480ca2faea0/bytecmp.py` (it carries insnflow a36c2b82eb44, lines 39-151) |
+| `repin_check-e5487165abb8.py` | `7a69dadf5169…` | `e5487165abb8…` | tool registry, `tools/repin_check/e5487165abb8/repin_check.py` (supersedes 9cbc3553c09e) |
+| `drvcmp.py` | `1b13206c79dd…` | `27f7a0e92bb9…` |, `…/evidence/uci-b-memcpy/drvcmp.py`: the image-B donor survey's drvcmp.py with bytecmp switched to 1480ca2faea0 |
 | `jtcheck.py` | `f95cc8e243d1…` | `2e2f9c2126b2…` | image-B donor survey scripts, with the one-line fail-closed patch |
-| `paircl.py` | `a88c2822a0f2…` | the same | tool registry commit b73d10eb732, `tools/paircl/a88c2822a0f2/paircl.py` (supersedes 16e1466be22d, the image-B donor survey's paircl.py) |
+| `paircl.py` | `a88c2822a0f2…` | the same | tool registry, `tools/paircl/a88c2822a0f2/paircl.py` (supersedes 16e1466be22d, the image-B donor survey's paircl.py) |
 | `closure.py` | `b50998fb3bd3…` | the same | image-B donor survey scripts |
 | `pairtable.py` | `f5760dd50c20…` | - | written for these records; it now passes Y's unstripped twin to paircl.py |
 | `cietable.py` | `c82414f4b6d7…` | - | written for these records |
@@ -65,7 +65,7 @@ an `env.sh` that is not committed (variables `UNIT X_S X_U GR_S GR_U ID_S ID_U`)
   content compare and no pairing. Its docstring states the rule.
 
 **Earlier run, in `v9cbc3553c09e/tools/`** (its own `DIFFS.md`): the tools of the run before the fixes. It holds
-`repin_check-9cbc3553c09e.py` (copy `a406b7c1b76e…` of `9cbc3553c09e…`, tool registry commit 797e8971d27d), the
+`repin_check-9cbc3553c09e.py` (copy `a406b7c1b76e…` of `9cbc3553c09e…`, tool registry), the
 drvcmp.py that loads it (`a4c8056e896a…`), the unchanged `jtcheck.py` (`2e2f9c2126b2…`) and `paircl.py`
 (`16e1466be22d…`), and pairtable.py `1429e829dbe6…`. The other four measurement scripts are the same as above.
 
@@ -75,18 +75,18 @@ The raw outputs name each image by a token. `images.sha256` defines each token b
 
 | token | file | sha256 | pin / twin check |
 |---|---|---|---|
-| `WIRE_B_PIN` | `fuzz_wire.asan-ubsan` | `af4534831a4528320c7dc74ca3f64bb96e8232ed2e313f01126d10879f3417d6` | index/binaries.tsv:7525 and `projects/reac-repacer/fuzz_wire/harness.yaml:64` @ f47e2a8927b9 and @ recipes 6d085644782c |
+| `WIRE_B_PIN` | `fuzz_wire.asan-ubsan` | `af4534831a4528320c7dc74ca3f64bb96e8232ed2e313f01126d10879f3417d6` | index/binaries.tsv:7525 and `projects/reac-repacer/fuzz_wire/harness.yaml:64` and @ recipes |
 | `WIRE_B_TWIN` | `fuzz_wire.asan-ubsan`, unstripped | `51eb4bef24252e4df6e11baa89f653d20d74e38ae684f61bc94f4fb339ac97c3` | PT_LOAD equal to the pin: 25 bytes differ, all in the ELF header / `.note.gnu.build-id`. Measured here; B-DONORS.md:7 had not checked it. |
-| `GRANT_B_PIN` | `fuzz_grant.asan-ubsan` | `fde52226dc48de254681156061de9263409c123ca0a0d6c5010ded4e17f602df` | index/binaries.tsv:5591 @ 4f87de75d67 (released) and @ 6d085644782c |
+| `GRANT_B_PIN` | `fuzz_grant.asan-ubsan` | `fde52226dc48de254681156061de9263409c123ca0a0d6c5010ded4e17f602df` | index/binaries.tsv:5591 (released) and |
 | `GRANT_B_TWIN` | `fuzz_grant.asan-ubsan`, unstripped | `5a5ee7c02b4e2a1d1653dc0c256182c9b65c33dde3a7ddc98b9de2afffe7a417` | PT_LOAD equal to the pin |
-| `IDENT_B_PIN` (control) | `fuzz_identity.asan-ubsan` | `baf1a4d065e02f55521d39f05d8c8d9ed763a0ef798c70cc3eabe5816ffb3f66` | index/binaries.tsv:5595 @ f47e2a8927b9 and @ 6d085644782c |
+| `IDENT_B_PIN` (control) | `fuzz_identity.asan-ubsan` | `baf1a4d065e02f55521d39f05d8c8d9ed763a0ef798c70cc3eabe5816ffb3f66` | index/binaries.tsv:5595 and |
 | `IDENT_B_TWIN` (control) | `fuzz_identity.asan-ubsan`, unstripped | `43b44d50be8a5e68f626662181c9cc17c0e0fef138e55f3c8bab371987a9c064` | PT_LOAD equal to the pin |
 | `GRANT_B_{PIN,TWIN}_PLANTED_{ROOT,CALL,RODATA}` | the planted copies | see "Controls" | written by `run.sh`; not committed |
 
 ## Roots (`roots-syms.out`, `roots.tsv`)
 
 The wire addresses of B-DONORS.md:157-162 are confirmed by wire's own symbol table. Grant's addresses are those
-of the UCI-B-ALLOC record (grant `lib/B/YF0l.v:11-12` @ 4f87de75d67).
+of the UCI-B-ALLOC record (grant `lib/B/YF0l.v:11-12`).
 
 | root | wire B | grant B | size | verdict | pcrel | real | unmeasured | target-differ |
 |---|---|---|---|---|---|---|---|---|
@@ -220,7 +220,7 @@ a target difference, and their contents are never compared. Before the fixes, th
   - a `.got`, `.data` or `.data.rel.ro` target is not compared at all (`:77-78`).
 
   So two different named .rodata objects with the same compared bytes count as equal. The rodata copy shows it. The
-  fix is paircl a88c2822a0f2, registered at tool registry commit b73d10eb732 (`tools/paircl.py:39, 68-72`). It takes
+  fix is paircl a88c2822a0f2, registered at tool registry (`tools/paircl.py:39, 68-72`). It takes
   Y's unstripped twin and names every target pair first (a `.got` cell by the symbol it holds). A name difference
   becomes a target difference with no content compare and no pairing.
 

@@ -125,7 +125,7 @@ Qed.
 End hb.
 
 (* ================================================================================================
-   THE LIVE REQUESTS and THE LIVE COUNTS, f97c8b2f046b's other two halves (kit walkkit-next; the kit's
+   THE LIVE REQUESTS and THE LIVE COUNTS, a commit's other two halves (kit walkkit-next; the kit's
    tparse_items_specX 105eb463e190). The entry premise is a PEAK of a count along the ALL-GRANTED events of the
    whole call; the post states the live requests as the entry's moved by the events the instance MADE. A block of
    the walk carries pi_live s sc tr0 (its own prefix trace tr0), and derives a callee's peak premise from the
@@ -216,7 +216,7 @@ exact (pi_lc_perm f _ _ E2 b Hl (pi_lc_tail f s E1 E2 b H)).
 Qed.
 
 (* ================================================================================================
-   THE LIVE BYTES PER EVENT (the batch kit tip c23331281d07: rd_room's live conjunct and tgrow_specX's premise become
+   THE LIVE BYTES PER EVENT (the batch kit tip: rd_room's live conjunct and tgrow_specX's premise become
    rd_room's live conjunct and tgrow_specX's premise become PRH_Base.prh_live_evs S E := forall j e, nth_error E j = Some e ->
      fold_right Z.add 0 (hlive_from (rs_live (room_of_cf S)) (firstn j E)) + prh_ev_req e <= LIVE_MAX).
    Stated here over its unfolded body (s the live list, req the request of an event, b the bound), so it carries

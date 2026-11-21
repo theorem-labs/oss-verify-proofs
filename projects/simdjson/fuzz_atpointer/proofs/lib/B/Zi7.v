@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor raised to the 0x5D0000 bytes below sp that the launch guarantees, bridged to the runtime's own floor). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -22,12 +23,12 @@ Theorem rta_art_facts : art_facts RTA.
 Proof.
   apply mkAF.
   - exact rta_client_consts.
-  - exact ART_client_frame_vis.
+  - intros Σ m m' sp HA Hsp. refine (ART_client_frame_vis Σ m m' sp HA _). cbn [rt_sp0 RTA] in Hsp. lia.
   - exact rta_with_fds.
   - exact rta_mat_stable.
   - intros Σ m p n HA Hin. exact (rta_acc_live Σ m HA p n Hin).
   - intros Σ m p n HA Hin. exact (rta_live_slack Σ m HA p n Hin).
-  - intros Σ m a n HA H1 H2. exact (rta_acc_stack Σ m HA a n H1 H2).
+  - intros Σ m a n HA H1 H2. refine (rta_acc_stack Σ m HA a n _ H2). cbn [rt_sp0 RTA] in H1. unfold rtA_sp0 in H1. unfold l_ACEIL. lia.
   - exact rta_acc_static.
   - intros Σ m p n HA Hin. exact (rta_live_range_vis Σ m HA p n Hin).
   - intros Σ m p1 n1 p2 n2 l1 l2 HA E Hin. exact (rta_live_disj Σ m HA p1 n1 p2 n2 l1 l2 E Hin).

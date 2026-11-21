@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACf1.v, with its module paths and module names changed; 688 of its 740 lines of code are new or changed and 447 lines of the source are left out. *)
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_fuzz_free.v at a working branch 0d38fb8ac64, relocated A->B by
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_fuzz_free.v at a working branch, relocated A->B by
    Theorem Labs tools over the unstripped twins, every image numeral re-derived by symbol / section / string
    content and checked by revcheck (reports in (internal path)). Imports: lib.Reusable kernel kept;
    the per-image root files from lib.ReusableB; fm's own per-image files from lib.B; FMupoison / FMpoisonS (image-generic)

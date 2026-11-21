@@ -1,6 +1,7 @@
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcSecWalkM_fhi.v (a working branch 5ad50e61fc6a, file sha256 c0ed2c603e1d) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53); module paths changed; its 21 image addresses moved by code-verified function pairs (17 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 4 code pcs the tool read as sizes, by the internal file funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcSecWalkM_fhi.v (a working branch, file sha256 c0ed2c603e1d) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53); module paths changed; its 21 image addresses moved by code-verified function pairs (17 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 4 code pcs the tool read as sizes, by the internal file funcpair.py); no other numeral changed. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, slice H4, row srrm-walk; integrator a Theorem Labs lane): the f_hi arm of the secondary
    recycle walk (DMrcSecWalk.segGD_f_hi: own = false, small = true, kLowMemEnd <= map) re-run on the materialized-page
    (M) engine (YA0pM: srr_run_shM / srr_run_to_shM / SRr_ret_atM), so the post also bounds the materialized pages

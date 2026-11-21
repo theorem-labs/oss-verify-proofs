@@ -111,6 +111,18 @@ crash. In the second, the run refuses nothing: given one input file, the build
 exits with a status that its halts statement does not allow, or a UBSan check
 traps.
 
+The page counts the refused request among the run's memory requests that back
+an allocation, in order: each `brk` that asks for new pages, each anonymous
+`mmap` without `MAP_FIXED`, and each `mremap`, as [facts.md](facts.md) defines
+them. So the position the page gives is not a count of the run's system calls.
+
+`oft lint` refuses a witness that cannot refute its statement: one for a bound
+or a decidability statement, which no single run refutes; one that refuses a
+memory request, for a statement that lets the environment refuse memory only
+when the process's state forces it (`budget`, `alloc-forced-only`); and one
+that ends in an exit, for a statement other than a halts statement or with a
+status that the statement allows.
+
 Withheld statements and builds carry their reason. **Waits for its source
 bundle**: the binary links a library under a GPL or LGPL licence, and is
 attached only together with its complete corresponding source, which this

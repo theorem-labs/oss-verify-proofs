@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Does not rest on tex_word_specX or memnorm: EXV_HYP has neither field since b29a52d6b76b / 379ec9e4a7d5. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Does not rest on tex_word_specX or memnorm: EXV_HYP has neither field. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B, ex_value, segment CL (the items loop, B 0x83a60 = exv_pc 0x534 to the
    back edge B 0x83d28, the closer B 0x83ef0-0x83f20 into CC, failures into CX): the INTERNAL CUTS of the segment and
    the loop-only facts its pieces take, stated before the pieces are proved (ExvLoop, 2026-10-29). Statements only.
-   The pieces and the cuts they go between (ExvB_Stmt.v's cuts at f1b992c2f6d, this file's LK / LR):
+   The pieces and the cuts they go between (ExvB_Stmt.v's cuts, this file's LK / LR):
      A1 kid fetch  CL (exv_pc 0x534, B 0x83a60) -> LK (exv_pc 0x5f0, B 0x83b1c): vv = 152(s1), count, kids,
                    s4 = the kid (0: none), s8 = the no-node flag, in->differs := 1 when the node has no item i
      A2 key path   LK -> LR (exv_pc 0x760, B 0x83c8c) or CX: for an object ex_ws, the opening quote, ex_string, the

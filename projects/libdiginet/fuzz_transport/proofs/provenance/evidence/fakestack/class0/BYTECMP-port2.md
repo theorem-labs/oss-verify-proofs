@@ -12,7 +12,7 @@ of sha256(SHA256SUMS)); strictcmp3 is the one compare, drvcmp proves the twins. 
 
 Scripts (this directory; class4/ uses the same ones):
 - smcmp.py: class5cmp.py with the donor, class, code tables, relocated files and model constants as arguments; same
-  steps, kit and resolve rules. Regression: given class 5's arguments (fuzz_command at 781f46bc05cd, image A) it writes
+  steps, kit and resolve rules. Regression: given class 5's arguments (fuzz_command, image A) it writes
   class5/out-port2/resolve-A.txt line for line and class5-A.tsv's columns 2-16 unchanged.
 - smrun.sh: class5/run.sh driven by a configuration (class0-A.conf, class0-B.conf, ../class4/class4.conf): pins,
   twins, smcmp, the two controls, alreloc (--dry unless --write), checkrep, and with --write the header / record /
@@ -23,7 +23,7 @@ Scripts (this directory; class4/ uses the same ones):
 
 ## Rule 24: every released donor of class 0, compared before the choice
 
-Lookup (rule24-grep.txt): origin/ossv/recipes 9b0ac6f0e678, one path-scoped `git grep -lE
+Lookup (rule24-grep.txt):, one path-scoped `git grep -lE
 '__asan_stack_malloc_(0|4)\b|Definition CID : Z := (0|4)\.'` per released unit with an ASan proof tree (36 units),
 one at a time. Files that state `astack_malloc_realizes tfibsegs B 0` (the statement fuzz_transport takes):
 libreac/fuzz_{decode,ctrl,grant,identity,pcap} A and B, fuzz_disco A, plugin-hostd/fuzz_command A and B (RtSM0),
@@ -31,8 +31,8 @@ reac-pw/fuzz_pin A and AU. Not candidates: omx-clap-core/fuzz_{state,preset} FCm
 `astack_malloc_realizes_x ... ARx 0` over fs_iface (another statement); fuzz_ctrl B Prog/asan_stack_malloc_0F.v is a
 footprint contract. The libdiginet frame trunk is not released (no projects/libdiginet/*/proofs/lib/{A,B}).
 
-Every file is read at e10f488c53fc, the last origin/ossv/recipes commit with proofs/<P/H>/lib (the next first-parent
-commit, 4c4e829bbe9c, moves proofs to projects/<P/H>/proofs/lib; alreloc reads only the old layout); each file read
+Every file is read, the last origin/ossv/recipes commit with proofs/<P/H>/lib (the next first-parent
+commit, moves proofs to projects/<P/H>/proofs/lib; alreloc reads only the old layout); each file read
 there has the same blob at the tip (column `layout move` of rule24-0.tsv). fuzz_pin was released after the move: read
 at the tip (compared only; alreloc a5c53bb2bed4 could not read it).
 
@@ -66,11 +66,11 @@ differing targets, then their pc-relative words.
 
 - Image A: ctrl 38 walked, whole 0 differing targets / 55; disco 38, whole 1 / 281 (its table walks 2 words of
   RegisterCommonFlags, whose whole compare has a differing target at + 0x1218, data-differs); fuzz_pin 41; decode 44;
-  pcap 49; grant 62. Chosen: **libreac/fuzz_ctrl** lib/A/Rt/StackMalloc0Tbl.v + StackMalloc0.v + StackRawKept.v at
-  e10f488c53fc (last changed by 75ff9552daad; image asan aac16e1fe728 in libreac-v190 s/, twin 78efaeda1de5 in
+  pcap 49; grant 62. Chosen: **libreac/fuzz_ctrl** lib/A/Rt/StackMalloc0Tbl.v + StackMalloc0.v + StackRawKept.v
+   (last changed; image asan aac16e1fe728 in libreac-v190 s/, twin 78efaeda1de5 in
   x/unstripped/).
 - Image B: ctrl 40, whole 0 / 54; fuzz_pin 43; decode 44; pcap 51. Chosen: **libreac/fuzz_ctrl** lib/B/Rt/
-  StackMalloc0Tbl.v + StackMalloc0.v + StackRawKept.v at e10f488c53fc (87c5184fb26e, 41bbb1385d8a; image asan-ubsan
+  StackMalloc0Tbl.v + StackMalloc0.v + StackRawKept.v (image asan-ubsan
   12136677c5cf in s/, twin ee07e2c38d94 in x/unstripped/; its __asan_stack_malloc_0 is at 0x3d6f4 as transport B's).
 
 The result is the same donor on both images (ctrl's B files are its A files relocated, per their own notices); the

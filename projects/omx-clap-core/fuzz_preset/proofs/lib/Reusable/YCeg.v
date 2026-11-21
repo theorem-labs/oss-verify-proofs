@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YCeg.v, with its module paths changed; relocated to fuzz_preset asan-ubsan (pin f8f98a95bc52), map sha256 69a6a2e91fb7, checker port_addr_check.py 39e67a7eb166. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.
@@ -32,7 +33,7 @@ Lemma SB_SHADOW_OFF : SB = SHADOW_OFF. Proof. reflexivity. Qed.
    measured (lane CwCfiA, 22:53Z) that nothing on preset's path reaches it: the only field that reads
    lib_const_addr is tl_lib_consts, whose only use is arodata_val8 (Reusable/YCem.v), and arodata_val8 has no
    use anywhere in the tree. The empty window keeps the Record's shape, so nothing that names the field breaks.
-   h-pre-b1 DECISION 01:48Z; A twin dafffb8a3cb. *)
+   h-pre-b1 DECISION 01:48Z; A twin. *)
 Definition lib_const_addr (a : Z) : Prop := False.
 Record TfibLib (B : asyms) : Prop := {
 tl_code : as_code B = Tfib_code;

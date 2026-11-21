@@ -15,14 +15,15 @@
    dr_top_of composes the two halves: the tail's EINTR continuation at dclr sg is dr_top_stmt's at
    dclr (dgrow s1), because ds_eintr (dgrow s1) reduces to ds_eintr s1. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/W_drain_tophead.v, with its module paths and module names changed; 2374 of its 2506 lines of code are new or changed and 4077 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, read_members on the #102 pins, image A' (asan, bin/fuzz_preset/fuzz_preset.asan
    sha256 1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44, the #102 pin A' of the pau-preset-102
    SHA256SUMS): the walk of read_members (entry
    pa_sigma AS_read_members, 158 slots of lib/A/Listing_prog.v) against the text tread_members_specX
-   (lib/A/PRH_FnCheck.v of the #102 kit of record decff67d721f).
-   PIN SHAS: proof base ed6e9a1a2e98 (the kit tip at the brief); kit of record decff67d721f; listing v3
-   lib/A/Listing_prog.v 7ed1529926bd and lib/A/PAImg_prog.v 505a51ff7d08 (commit
-   74dcda1eda12); the text blob lib/A/PRH_FnCheck.v 4cb899514e6c; callee texts lib/A/PRH_FnPj.v a21e5a5cb897.
+   (lib/A/PRH_FnCheck.v of the #102 kit of record).
+   PIN SHAS: proof base (the kit tip at the brief); kit of record; listing v3
+   lib/A/Listing_prog.v 7ed1529926bd and lib/A/PAImg_prog.v 505a51ff7d08;
+   the text blob lib/A/PRH_FnCheck.v 4cb899514e6c; callee texts lib/A/PRH_FnPj.v a21e5a5cb897.
    PARAMETRIC over {PA : PAImg A_prog_listing} (owner's rule, 12:48Z): at the concrete PI_prog_A the kernel's
    Qed of even the entry seat does not finish (it re-checks conversions against the 7264-slot table); the image
    facts are the Section's Hent / Hobj_lo / PAB / PAH / Hlits / Htop_ptr / Hpst_ro, each decided at PI_prog_A by
@@ -163,7 +164,7 @@ Variable SK : YI16.sink_head.
    field 14 (alx_hshadow) is a harness block's user-bytes shadow, field 22 (alx_hhead) its head poison *)
 Hypothesis LAWS : AR_laws_x SEGS B ARx cf_head.
 Hypothesis TL : PALib (PI := PA) B.
-(* the callee texts, K0's kit of record origin/cold/h-hpreset-7-walkkit-next decff67d721f (PRH_FnPj.v a21e5a5cb897) *)
+(* the callee texts, K0's kit of record (PRH_FnPj.v a21e5a5cb897) *)
 Hypothesis PJ_GET : PRH_FnPj.tpj_get_specX (PI := prh_img_A) (PA := PA) B ARx SK.
 Hypothesis PJ_GET_STR : PRH_FnPj.tpj_get_str_specX (PI := prh_img_A) (PA := PA) B ARx SK.
 Hypothesis RM_IMG : (forall k n, In (k, n) (rm_keys (PA := PA)) -> kept_img (PA := PA) B k (n + 1) /\

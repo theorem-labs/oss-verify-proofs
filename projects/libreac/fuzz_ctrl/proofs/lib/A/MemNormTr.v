@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_ctrl image A, the twin of lib/B/MemNormTr.v (same lemma names, on A's Img0 / AsanRT / MemNorm / ImgBounds;
    no BzBridge, see rsegs_below_img): the caller-side transports of the MemNorm route. A caller holds `ro_agree rsegs m` (each
    read-only byte that m holds equals the rom byte, lib/A/MemNorm.v); a callee contract takes `mem_inv rsegs m`, which
@@ -229,7 +230,7 @@ Qed.
 (* ---- The side-stack premise packs of the asan callees (lib/A/Prog/RcAsanFP.v fp, lib/A/Prog/asan_stack_malloc_c.v
    asan_tls_cells and fs_place) on normalize m, and the tls disjointness every A <fn>_tls premise is. Generic forms for
    the A callee lanes; fp_transport and asan_tls_cells_transport are a Theorem Labs lane's cmRB_fp_tr / cmRB_tls_tr
-   (lib/B/Prog/C_reac_box_catalogue_matchLib.v (a version not in this delivery; written on a working branch c48dda1461f)) with
+   (lib/B/Prog/C_reac_box_catalogue_matchLib.v (a version not in this delivery; written on a working branch)) with
    the proofs copied; cmRB_fs_above_img becomes fp_FS_above_img. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import asan_stack_malloc_c RcAsanFP.
 

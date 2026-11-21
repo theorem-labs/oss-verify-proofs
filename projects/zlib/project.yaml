@@ -9,9 +9,56 @@ status: available
 library:
   name: zlib
   repository: https://github.com/madler/zlib
-  commit: 51b7f2abdade71cd9bb0e7a373ef2610ec6f9daf
-  version: 1.3.1
+  commit: 99623ef7097352da7993ba614161fd6a311e046e
+  version: '1.4'
   licence: Zlib
+  patch_count: 8
+patches:
+- id: zlib-checksum-fuzzer-0001-inflate-memerr-totals
+  summary: The public inflate fix of zlib pull request 1390, in the zlib tree that every fuzz target except gzio_fuzzer
+    links.
+  file: zlib-checksum_fuzzer.0001-inflate-memerr-totals.patch
+  upstream: reported
+  url: https://github.com/madler/zlib/pull/1390
+- id: zlib-gzio-fuzzer-0001-inflate-memerr-totals
+  summary: The public inflate fix of zlib pull request 1390, in the zlib tree of gzio_fuzzer.
+  file: zlib-gzio_fuzzer.0001-inflate-memerr-totals.patch
+  upstream: reported
+  url: https://github.com/madler/zlib/pull/1390
+- id: zlib-gzio-fuzzer-0002-gzseek-after-pushback
+  summary: The public gzseek fix of zlib pull request 1361 (gzseek after a gzungetc at the start of a file), in the zlib
+    tree of gzio_fuzzer.
+  file: zlib-gzio_fuzzer.0002-gzseek-after-pushback.patch
+  upstream: reported
+  url: https://github.com/madler/zlib/pull/1361
+- id: zlib-compress-fuzzer-0001-oss-fuzz-16582
+  summary: A fix to OSS-Fuzz's compress_fuzzer.c (the fuzz target, not zlib), offered as google/oss-fuzz pull request
+    16582.
+  file: zlib-compress_fuzzer.0001-oss-fuzz-16582.patch
+  upstream: fixed-upstream
+  url: https://github.com/google/oss-fuzz/pull/16582
+- id: zlib-gzio-fuzzer-0003-oss-fuzz-16316
+  summary: A fix to OSS-Fuzz's gzio_fuzzer.c (the fuzz target, not zlib), offered as google/oss-fuzz pull request 16316.
+  file: zlib-gzio_fuzzer.0003-oss-fuzz-16316.patch
+  upstream: reported
+  url: https://github.com/google/oss-fuzz/pull/16316
+- id: zlib-gzio-fuzzer-0004-oss-fuzz-16411
+  summary: A fix to OSS-Fuzz's gzio_fuzzer.c (the fuzz target, not zlib), offered as google/oss-fuzz pull request 16411.
+  file: zlib-gzio_fuzzer.0004-oss-fuzz-16411.patch
+  upstream: reported
+  url: https://github.com/google/oss-fuzz/pull/16411
+- id: zlib-minigzip-fuzzer-0002-oss-fuzz-16428
+  summary: A fix to OSS-Fuzz's minigzip_fuzzer.c (the fuzz target, not zlib), offered as google/oss-fuzz pull request
+    16428.
+  file: zlib-minigzip_fuzzer.0002-oss-fuzz-16428.patch
+  upstream: reported
+  url: https://github.com/google/oss-fuzz/pull/16428
+- id: zlib-minigzip-fuzzer-0003-oss-fuzz-16429
+  summary: A fix to OSS-Fuzz's minigzip_fuzzer.c (the fuzz target, not zlib), offered as google/oss-fuzz pull request
+    16429.
+  file: zlib-minigzip_fuzzer.0003-oss-fuzz-16429.patch
+  upstream: reported
+  url: https://github.com/google/oss-fuzz/pull/16429
 harnesses:
 - name: api-driver
   status: not-included
@@ -44,24 +91,28 @@ build:
   system: cmake
   clang: 20.1.8
   builder: ghcr.io/theorem-labs/oss-fuzz-theorems-toolchain@sha256:6a6b4816865c7ec61801ae0fcab6d9c81a599ffcb20616576a9c668abd8b0a7b
+  oss_verify:
+    repository: theorem-labs/oss-verify
+    commit: 23e806fe4e4217abcc7fab4419f665f5277a602c
+    path: projects/zlib
 assets:
   bin:
-    release: v2026.10.0
+    release: v2026.11.3
     file: zlib-bin.tar.zst
-    bytes: 1337668
-    sha256: 1af18eafec750790695d4e4ef17b623f2c6e56926b1f6871af65db0ae0da9667
-    recipe:
-      release: v2026.10.0-src
-      file: recipe.tar.zst
-      bytes: 938459
-      sha256: 0339bf3221b15cd39513d46abe99062bac9cce874ed7ba5947753f75b6219ae5
+    bytes: 1912423
+    sha256: 07ea992e0d07e50314b8f4feefb6c594efa43fc927ad25e5411013a54a34211e
   src:
-    release: v2026.10.0-src
+    release: v2026.11.3-src
     file: zlib-src.tar.zst
-    bytes: 1320828
-    sha256: 99d558c6f2e223d2296def27d78ba641ff575f9857cc037dfdb58f8d7a56e240
+    bytes: 1344591
+    sha256: b75e2eae62532dad6e1bee4c2a1688dbfa340fdf4e976741070b0015f032beb5
   src_manifest:
-    release: v2026.10.0-src
+    release: v2026.11.3-src
     file: zlib-src.MANIFEST.tsv
-    bytes: 3956
-    sha256: 5fc442775de141002f34c00f983ab98f3a046f88f689b5c42aebd268591ccd11
+    bytes: 25166
+    sha256: 254b6846d2d4faa362bbb3101cc9b14e7cc2dc7e74fbc0bab26aa9a399aa28e3
+  port:
+    release: v2026.11.3-src
+    file: zlib-port.tar.zst
+    bytes: 819355
+    sha256: 14f04792d8797c4e96dd7a7326100e52ae4a0dddb340cba86124f09c457c87c0

@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths and module names changed; 104 of its 139 lines of code are new or changed and 479 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/Crt102B_T5.v, with its module names changed; 60 of its 103 lines of code are new or changed and 96 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* On the Step-1 contract texts (the re-hiding move): statements unchanged in text
    (CRT_B_SEG_T5 / CRT_B_SEG_T6 now at YA0nH.SRr' SEGS YGcfRehidePost.RZ_cf); Step 1's YG0ncf.ARcf takes {ci : CfImg},
    named here at the fixed image, ci := CfImgB.CfImg_B. *)
@@ -13,7 +14,7 @@
 
    THE INSTANCE. B := YD2l.TfibB (the B' asyms of record) and ARx := YG0ncf.ARcf SEGS TfibB, the ARc that
    the libc B' strcmp row asks. ASTRCMP (both rows' Section hypothesis, unchanged in their files) is given by
-   PSstrRo.ps_strcmp_xrom_B (lib/AU/PSstrRo.v:67, blob 45e63604063e: astrcmp_realizes_xrom at YB1v.tfibsegs, ARc, any
+   PSstrRo.ps_strcmp_xrom_B (lib/AU/PSstrRo.v:68, blob 45e63604063e: astrcmp_realizes_xrom at YB1v.tfibsegs, ARc, any
    rlo / rhi, pc CfImgB's cf_pc_strcmp) at TS := YD2l.TfibB_syms and rlo / rhi := PI_prog_B's relro bounds. Two facts
    carry that row to ASTRCMP's text: the pc (crt56_pc_strcmp: CfImgB's cf_pc_strcmp IS PI_prog_B's pa_sigma
    AS___wrap_strcmp, both __wrap_strcmp, by vm_compute) and the segs (YB1v.tfibsegs and PI_prog_B's pa_segs are both
@@ -23,7 +24,7 @@
    WHY A SEPARATE FILE, not the end of Crt102B_T5.v / Crt102B_T6.v: lib/AU/PSstrRo.v's closure loads
    lib/K/Lib/LiaTuning.v and lib/K5/Lib/LiaTuning.v, whose GLOBAL `Ltac lia ::=` replaces the lia (CJ/Lib/LiaTuning.v's)
    of every file that loads them after. Measured in a build that Requires it: Required from Crt102B_T6.v, it adds HMN to
-   crtB_T6's arguments and to Crt102B_T5_bd.v ct5_live_run / ct5_pre_run / ct5_core_run's, so Crt102B_T5_L2.v:372
+   crtB_T6's arguments and to Crt102B_T5_bd.v ct5_live_run / ct5_pre_run / ct5_core_run's, so Crt102B_T5_L2.v:373
    fails. No file loads this one, so no other file's lia changes. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

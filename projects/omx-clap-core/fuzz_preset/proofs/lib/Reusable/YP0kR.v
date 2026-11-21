@@ -96,7 +96,11 @@ cbn [access_value accessed_ranges] in Hsa.
   rewrite ?HR, Haddr in Hsa. subst b.
   destruct sz; cbn [nbytes Z.of_nat] in Hhi;
   cbv beta iota zeta delta [interp_eff_accesses RiscvSemantics.width_bytes] in Hsa;
-  (destruct (ov_read_bytes segs mem (Z_to_bv 64 (base_val E (r_base r) + off)) _) as [bs|]; [|discriminate]);
+  (lazymatch type of Hsa with
+   | context [ov_read_bytes ?sg ?m ?a ?n] =>
+     destruct (ov_read_bytes sg m a n) as [bs|];
+     [|destruct (range_meets_vvar sg a n); discriminate Hsa]
+   end);
   cbn [access_value accessed_ranges] in Hsa; injection Hsa as <-; cbn [accessed_ranges];
   (eapply accs_in_rrange_hit; [exact Hmem | exact Hin | exact Hlo | cbn; lia]).
 - destruct (ss_resv ss) as [rv0|] eqn:Hrv; [discriminate|]. cbn in Hresv. subst resv.
@@ -136,7 +140,11 @@ cbn [access_value accessed_ranges] in Hsa.
   rewrite ?HR in Hsa. rewrite Hamo in Hsa. cbn [negb] in Hsa. rewrite Haddr in Hsa. subst b.
   destruct w; cbn [amo_sz nbytes Z.of_nat] in Hhi;
   cbv beta iota zeta delta [interp_eff_accesses RiscvSemantics.width_bytes] in Hsa;
-  (destruct (ov_read_bytes segs mem (Z_to_bv 64 (base_val E (r_base r) + off)) _) as [bs|]; [|discriminate]);
+  (lazymatch type of Hsa with
+   | context [ov_read_bytes ?sg ?m ?a ?n] =>
+     destruct (ov_read_bytes sg m a n) as [bs|];
+     [|destruct (range_meets_vvar sg a n); discriminate Hsa]
+   end);
   cbn [access_value accessed_ranges] in Hsa; injection Hsa as <-; cbn [accessed_ranges];
   (eapply accs_in_rrange_hit; [exact Hmem | exact Hin | exact Hlo | cbn; lia]).
 - destruct (aligned_dec (ss_facts ss) (sr_get (ss_regs ss) rs1) (amo_bytes_of w)) eqn:Hal;
@@ -159,7 +167,7 @@ cbn [access_value accessed_ranges] in Hsa.
     (destruct (store_ok segs mem (Z_to_bv 64 (base_val E (r_base r) + off)) _); [|discriminate]);
     cbn [access_value accessed_ranges] in Hsa; injection Hsa as <-; cbn [accessed_ranges];
     (eapply accs_in_rrange_hit; [exact Hmem | exact Hin | exact Hlo | cbn; lia]).
-  + nil_arm Hsa.
+  + discriminate H.
 Qed.
 
 Theorem sym_step_soundR : forall E ss ss' ms,

@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: ported from a working branch edc3e948664 fuzz_grant/lib/B/Prog/CtrlParseTail4c.v (fuzz_grant image B, the asan-ubsan walk of the same code: relocated, Y pc = grant B pc + 0x4d30). *)
-(* Modified by Theorem Labs, 2026-10: the asan-ubsan twin, for fuzz_disco.asan-ubsan (lib_both3_0_listing, entry 0x874a4), over lib/Y/Prog/CtrlParseCut.v; fuzz_disco's plumbing (the memory clause pz_kept, off_img o 36, the frame f's premises under 50 <= n, the run entries at fx := fq) from a working branch 54cdaba9d04 lib/A/Prog/CtrlParseTail4c.v. *)
+(* Modified by Theorem Labs, 2026-10: ported from a working branch fuzz_grant/lib/B/Prog/CtrlParseTail4c.v (fuzz_grant image B, the asan-ubsan walk of the same code: relocated, Y pc = grant B pc + 0x4d30). *)
+(* Modified by Theorem Labs, 2026-10: the asan-ubsan twin, for fuzz_disco.asan-ubsan (lib_both3_0_listing, entry 0x874a4), over lib/Y/Prog/CtrlParseCut.v; fuzz_disco's plumbing (the memory clause pz_kept, off_img o 36, the frame f's premises under 50 <= n, the run entries at fx := fq) from a working branch lib/A/Prog/CtrlParseTail4c.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_ctrl_parse, the walk from cut B (0x876a0) to cut J for the class-4 frames of the other records (seg = 3, not cp_amp): GRANT (5)
    (pz_P4c; a second attack on CtrlParseTail4.v). The asan-ubsan build's extra UBSan guards (to the trap pad 0x87ca0) and the
    shadow checks (to the report calls) are decided by the engine from the atom facts. *)

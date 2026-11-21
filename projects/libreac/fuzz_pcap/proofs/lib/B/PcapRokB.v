@@ -14,10 +14,11 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
      YF0m.Tfib_owned_static (= as_owned_static PcapB; rokB_chunks_avoid_owned below, by computation, the same fact
      YE3i.img_ro_complement_ok states as a complement), and lies below errno (0x5d46ec) and below AOFL_HEAD. So ROK's
      premise gives aview equality at a, lib/Reusable/YCbq.v mbyte_of_aview gives mbyte equality, and the chunk step is
-     lib/A/PcapRoBridges.v pcap_roimg_kept's (itself cgif c8557374ad2e lib/A/AE3i.v:72-81 ro_img_kept).
+     lib/A/PcapRoBridges.v pcap_roimg_kept's (itself cgif lib/A/AE3i.v:72-81 ro_img_kept).
    This file does not Require lib/B/Prog/PcapSourceOpen.v (that file is built by another lane); the Check at the end
    has the kernel compare pcap_rok_B's type with ROK's text, copied token for token from PcapSourceOpen.v:465-468,
    at the instance. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -103,7 +104,7 @@ Proof.
 Qed.
 End rok.
 
-(* The type of the hypothesis ROK of lib/B/Prog/PcapSourceOpen.v:465-468, as that file's Section e elaborates it:
+(* The type of the hypothesis ROK of lib/B/Prog/PcapSourceOpen.v:466-469, as that file's Section e elaborates it:
    the same Section shape (SK as an implicit Context, so AOFL_HEAD's implicit sink_head is the Section's SK; SEGS,
    B and roimg as Variables), and the text copied token for token. *)
 Section rok_stmt.

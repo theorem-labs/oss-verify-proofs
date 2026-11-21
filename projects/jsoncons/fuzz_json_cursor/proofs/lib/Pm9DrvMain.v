@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the nine-byte string read-ahead): changed as0_drv_main, drv_main_on, drv_pathA. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -120,12 +121,15 @@ Record drv_ctxA (L : asan_layout) (C : asan_statics_cells) (IL : icpt_layout) (a
   dc_m0 : defined M0 (bv_unsigned sp0) (ar_stack_top ar - bv_unsigned sp0)
 }.
 
+(* SLACK 16 -> 9, old beside new: dp_lo/dp_def (and drv_main_on's two premises below) were
+   [+ 1 + 16]; sixteen past argv[1]'s NUL is false at the revision (Pm9DrvEntryK.ent_str_hi).
+   lia margin downstream UNCHECKED. *)
 Record drv_pathA (sp0 : word) (M0 : word -> option byte) (p1 : word) (path : list byte) : Prop := DRV_PATHA {
-  dp_lo : bv_unsigned sp0 <= bv_unsigned p1 /\ bv_unsigned p1 + Z.of_nat (length path) + 1 + 16 <= 2 ^ 47;
+  dp_lo : bv_unsigned sp0 <= bv_unsigned p1 /\ bv_unsigned p1 + Z.of_nat (length path) + 1 + 9 <= 2 ^ 47;
   dp_str : rdn ASEGS M0 p1 (length path + 1) = Some (path ++ [Z_to_bv 8 0]);
   dp_nonul : ~ In (Z_to_bv 8 0) path;
   dp_len : Z.of_nat (length path) <= 131071;
-  dp_def : defined M0 (bv_unsigned p1) (Z.of_nat (length path) + 1 + 16)
+  dp_def : defined M0 (bv_unsigned p1) (Z.of_nat (length path) + 1 + 8)
 }.
 
 Definition dg_openerr_stmt (L : asan_layout) (C : asan_statics_cells) (IL : icpt_layout) : Prop :=
@@ -157,14 +161,15 @@ Definition drv_main_on (P : list byte -> Fs.Fs -> Prop) (KP : list byte -> Fs.Fs
     asan_iface_ok L ar C scfg HI -> afree_null_spec L ar scfg HI -> aicpt_ok L ar IL scfg HI -> lib_iface_okD Lay ar scfg HI (LSt ar) -> drv_layoutA L ar IL sp ->
     SX2S.regs_ok (env_mainA sp p0 p1 can tid R) sr_mainA R ->
     SX2S.know_ok ASEGS (env_mainA sp p0 p1 can tid R) (mrestrict (ahid A0 model) M0) kn_mainA ->
-    auxv_atA sp p0 M0 ->
+    (* DROPPED, old beside new: [auxv_atA sp p0 M0 ->] -- the ten-pair auxv at [p0 - 160],
+       false at LPS 75d69e00 and read by no consumer (see LibIface.lib_init_facts). *)
     dinv ar HI sp M0 [] [] cr0 A0 M0 model ->
     defined M0 (bv_unsigned sp) (ar_stack_top ar - bv_unsigned sp) ->
     m_fds model = APSK.fds_std -> m_fs model = fs ->
     rdn ASEGS (mrestrict (ahid A0 model) M0) p1 (length path + 1) = Some (path ++ [Z_to_bv 8 0]) ->
-    bv_unsigned sp <= bv_unsigned p1 /\ bv_unsigned p1 + Z.of_nat (length path) + 1 + 16 <= 2 ^ 47 ->
+    bv_unsigned sp <= bv_unsigned p1 /\ bv_unsigned p1 + Z.of_nat (length path) + 1 + 9 <= 2 ^ 47 ->
     cr0 = (8192, 2 ^ 34) ->
-    defined M0 (bv_unsigned p1) (Z.of_nat (length path) + 1 + 16) ->
+    defined M0 (bv_unsigned p1) (Z.of_nat (length path) + 1 + 8) ->
     shadow_allowed A0 (ahl_ceil ar) (2 ^ 47 - ahl_ceil ar) ->
     srealizes ASEGS scfg (mkCfg (mkst R (Z_to_bv 64 0xaf0a4) M0 (seg_rom ASEGS)) model) (KP path fs).
 
@@ -185,20 +190,20 @@ Theorem as0_drv_main : forall (L : asan_layout) (C : asan_statics_cells) (IL : i
 Proof.
   intros L C IL Lay LSt DLL DLC HBUD DG_OPENERR DG_SHORT DG_OVERRUN DG_REFUSE DG_NOFILE DG_DOT.
   unfold drv_main_stmt.
-  intros Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs ar HI p0 p1 can tid A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK AUXV DI M0def FDS EFS STR PLO Ecr PDEF SAH.
+  intros Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs ar HI p0 p1 can tid A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK DI M0def FDS EFS STR PLO Ecr PDEF SAH.
   cbn [spec].
   destruct (Nat.leb_spec0 4096 (length path)) as [Hlong|Hshort].
-  { exact (DG_NOFILE Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs (or_introl Hlong) ar HI p0 p1 can tid A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK AUXV DI M0def FDS EFS STR PLO Ecr PDEF SAH). }
+  { exact (DG_NOFILE Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs (or_introl Hlong) ar HI p0 p1 can tid A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK DI M0def FDS EFS STR PLO Ecr PDEF SAH). }
   destruct (list_byte_eqb path []) eqn:Hemp.
   { apply list_byte_eqb_iffA in Hemp.
-    exact (DG_NOFILE Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs (or_intror (or_introl Hemp)) ar HI p0 p1 can tid A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK AUXV DI M0def FDS EFS STR PLO Ecr PDEF SAH). }
+    exact (DG_NOFILE Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs (or_intror (or_introl Hemp)) ar HI p0 p1 can tid A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK DI M0def FDS EFS STR PLO Ecr PDEF SAH). }
   assert (Hne : path <> []) by (intros E; apply list_byte_eqb_iffA in E; rewrite E in Hemp; discriminate).
   destruct (list_byte_eqb path dot_path) eqn:Hdot.
   { apply list_byte_eqb_iffA in Hdot.
-    exact (DG_DOT Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs Hdot ar HI p0 p1 can tid A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK AUXV DI M0def FDS EFS STR PLO Ecr PDEF SAH). }
+    exact (DG_DOT Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs Hdot ar HI p0 p1 can tid A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK DI M0def FDS EFS STR PLO Ecr PDEF SAH). }
   assert (Hnd : path <> dot_path) by (intros E; apply list_byte_eqb_iffA in E; rewrite E in Hdot; discriminate).
   destruct (fs_lookup fs path) as [fdata|] eqn:Hlk.
-  2:{ exact (DG_NOFILE Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs (or_intror (or_intror (conj Hnd Hlk))) ar HI p0 p1 can tid A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK AUXV DI M0def FDS EFS STR PLO
+  2:{ exact (DG_NOFILE Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs (or_intror (or_intror (conj Hnd Hlk))) ar HI p0 p1 can tid A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK DI M0def FDS EFS STR PLO
                Ecr PDEF SAH). }
 
   assert (Hsp : 0x7fff80000000 <= bv_unsigned sp <= 2 ^ 47) by (destruct Hvsp as (H1 & H2 & H3); unfold sp_window_lo, sp_window_hi in H1, H2; lia).
@@ -246,7 +251,7 @@ Proof.
       assert (HPLeq : PLA fdata = PLv) by (unfold PLv, PLA; pose proof (CFGA_range sp fdata); lia).
       apply (@drv_targetA PropExec.fx0 scfg L ar C IL HI HIok ICok sp Hsp Hal DL fs fdata p0 p1 can M0 M0def [] A0 CAP HCAP crC HltC Hok); [ | | apply t_emit_has_nil | exact FPSteps.fp_frm_zero_fx0].
       * intros HPLp. unfold acredit_ok. rewrite HPLeq. lia.
-      * apply (@drv_loopA scfg L ar C IL HI HIok ICok sp Hsp Hal DL fs fdata p0 p1 can M0 M0def A0 CAP HCAP HltC Lay (LSt ar) ILY HPR DLL DLC LSAx LIok [] crC AUXV).
+      * apply (@drv_loopA scfg L ar C IL HI HIok ICok sp Hsp Hal DL fs fdata p0 p1 can M0 M0def A0 CAP HCAP HltC Lay (LSt ar) ILY HPR DLL DLC LSAx LIok [] crC).
         --
            pose proof (CALLSA_range sp fdata) as HCL.
            unfold Pm9DrvE.lib_roomA, Pm9DrvE.credit_scaleA, credit_le, cr1A. rewrite HPLeq. cbn [fst snd].

@@ -4,11 +4,12 @@
    projects/cgif/cgif_file_fuzzer/proofs/lib/A/AC9z.v:176-178; projects/cgif/cgif_file_fuzzer/proofs/lib/A/AChd.v:180-183, 357-361,
    for libreac/fuzz_identity's ASan build (lib/A). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_catalogue.v, with its module paths and numbers changed; 207 of its 258 lines of code are new or changed and 318 lines of the source are left out. *)
-(* the image-B port of lib/A/Prog/check_ignore.v (commit abff6ebfc45c): the walk of check_ignore
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* the image-B port of lib/A/Prog/check_ignore.v: the walk of check_ignore
    on reac-pw/fuzz_segconf's image B (fuzz_segconf.asan-ubsan, entry 0x87210 = BASE + AF_check_ignore, BASE =
    seg_text 0x84dc0, AF_check_ignore 0x2450; 26 instructions, one instrumented check, no call on the path that
-   returns), against image B's copy of check_ignore_contract (lib/B/Prog/check_ignore_c.v, the text of the FINAL contract
-   6f783602b5e3) at A_check_ignore := BASE + AF_check_ignore and STK_check_ignore := SegInstB.STK_check_ignore (16,
+   returns), against image B's copy of check_ignore_contract (lib/B/Prog/check_ignore_c.v, the text of the FINAL contract)
+   at A_check_ignore := BASE + AF_check_ignore and STK_check_ignore := SegInstB.STK_check_ignore (16,
    the frame; image B's instance file lib/B/Prog/SegInstB.v).
 
    Image B's code is image A's with the addresses moved and two added UBSan pieces

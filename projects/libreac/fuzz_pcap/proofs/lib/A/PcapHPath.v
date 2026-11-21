@@ -1,8 +1,8 @@
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AE2m.v (origin/ossv/recipes
-   c8557374ad2e, tfib_trailer_shadow) for libreac/fuzz_pcap, with its module paths changed, TfibSyms -> PcapSyms,
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AE2m.v (
+   theorem-labs/oss-verify-proofs@6b32741d849a, tfib_trailer_shadow) for libreac/fuzz_pcap, with its module paths changed, TfibSyms -> PcapSyms,
    the object moved to fuzz_pcap's "<fuzz-input>" literal, and the statement general in segs (its proof never uses
    segs). The image-global shadow fact of HPATH (lib/A/Prog/PcapSourceOpen.v, PcapEntryInst.v): under
    AR, the 13 bytes of the listing's object 3 (PcapFuzzFopen.FO_PATH, the path passed to fopen) are range_addressable
@@ -23,6 +23,7 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    The same eight shadow bytes in every one of the 50 at-main states AF0m was generated from (the HSDUMP of the side-A
    pass-2 log, sha256 fd2fb3eca6b5f04d...): KZero [0x7fffa000, 0x7fffc1a1), KWord 0x7fffc1a1 1 = 5,
    KFill 0x7fffc1a2 2 = 249, KZero [0x7fffc1a4, 0x7fffc1a8). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State.

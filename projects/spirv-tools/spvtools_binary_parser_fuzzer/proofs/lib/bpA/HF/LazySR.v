@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the robustness of each node's system call over a larger read-only backing (RomBase.sys_rob), which the walk's nodes now ask, proved at each node). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -9,6 +10,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Import Scfg HPropExec HCatSim HShapeAlg SReach LazyRestrict LazyRestrictRun LazyRestrictAlg.
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require HExec HMState HMem.
+From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib.Common.Cfg Require RomBase.
 Import ListNotations.
 Open Scope bv_scope.
 #[global] Unset Lia Cache. #[global] Unset Nia Cache. #[global] Unset Nra Cache.
@@ -111,7 +113,8 @@ Lemma sreach_dsteps : forall c c' (Q : config -> Prop),
   dsteps segs c c' -> sreach segs Q c' -> sreach segs Q c.
 Proof.
   intros c c' Q H; induction H as [c | ms model ms' model' c3 Hh Hsvc Hacc H IH]; intros HQ; [exact HQ|].
-  eapply sreach_silent1; [apply node_account; [exact Hh | exact Hsvc | exact Hacc] | apply IH; exact HQ].
+  eapply sreach_silent1; [apply node_account; [exact Hh | exact Hsvc | exact Hacc]
+                         | apply RomBase.sys_rob_instr; exact Hsvc | apply IH; exact HQ].
 Qed.
 
 Section WithLazy.

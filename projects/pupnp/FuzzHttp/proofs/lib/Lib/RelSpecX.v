@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the TASK_SIZE bound of the user-memory reads; mremap's new outcomes). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs.
@@ -76,7 +77,8 @@ Proof.
   - intros ->. eexists _, _, _, _. split; [reflexivity|]. rewrite Hlk. split; reflexivity.
 Qed.
 
-Definition mremap_out (m : Model) (old old_size new_size : word)
+(* The outcome of a call whose page-rounded new length is at most TASK_SIZE. *)
+Definition mremap_out_ts (m : Model) (old old_size new_size : word)
     (o : outcome SyscallEffect) : Prop :=
   let old_nZ := page_round_up_Z (bv_unsigned old_size) in
   let new_nZ := page_round_up_Z (bv_unsigned new_size) in
@@ -88,22 +90,27 @@ Definition mremap_out (m : Model) (old old_size new_size : word)
       /\ o = Ok (mremap_inplace_effect old old_n new_n old_nZ new_nZ) (mremap_model_next m old old_n old new_n) [])
   \/ ((old_nZ < new_nZ)%Z /\ mremap_inplace_grow_b m old old_n new_n old_nZ new_nZ = true
       /\ o = Ok (mremap_inplace_effect old old_n new_n old_nZ new_nZ) (mremap_model_next m old old_n old new_n) [])
-  \/ ((old_nZ < new_nZ)%Z /\ exists dst, mremap_fresh_b m old_nZ new_nZ old old_n dst new_n = true
+  (* LPS 727298f3: without room above the source the grow moves to Linux's address
+     ([mremap_dst_ok] = [linux_place] /\ [mremap_fresh_b]) *)
+  \/ ((old_nZ < new_nZ)%Z /\ mremap_inplace_room_b m old old_n new_n old_nZ new_nZ = false
+      /\ exists dst, mremap_dst_ok m old_nZ new_nZ old old_n dst new_n
       /\ o = Ok (mremap_move_effect old old_n dst old_nZ new_nZ) (mremap_model_next m old old_n dst new_n) []).
 
-Lemma mremap_outcome : forall old old_size new_size flags i m o,
+Lemma mremap_outcome_ts : forall old old_size new_size flags i m o,
   bv_unsigned flags = MREMAP_MAYMOVE ->
   (bv_unsigned old mod page_size = 0)%Z ->
   page_align_is0_b new_size = false ->
+  (* LPS 727298f3: a page-rounded new length above TASK_SIZE is a deterministic EINVAL *)
+  (page_round_up_Z (bv_unsigned new_size) <= TASK_SIZE)%Z ->
   page_align_is0_b old_size = false ->
   let old_nZ := page_round_up_Z (bv_unsigned old_size) in
   mremap_source_b (m_vmmaps m) old (Z_to_bv 64 old_nZ) old_nZ = true ->
   mremap_backing_uniform_b m old (Z_to_bv 64 old_nZ) = true ->
-  mremap_spec old old_size new_size flags i m o <-> mremap_out m old old_size new_size o.
+  mremap_spec old old_size new_size flags i m o <-> mremap_out_ts m old old_size new_size o.
 Proof.
-  intros old old_size new_size flags i m o Hfl Hal Hnew Hold. cbv zeta. intros Hsrc Huni.
-  unfold mremap_spec, mremap_out.
-  rewrite Hfl, Z.eqb_refl, (proj2 (Z.eqb_eq _ _) Hal), Hnew, Hold. cbn [negb].
+  intros old old_size new_size flags i m o Hfl Hal Hnew Hts Hold. cbv zeta. intros Hsrc Huni.
+  unfold mremap_spec, mremap_out_ts.
+  rewrite Hfl, Z.eqb_refl, (proj2 (Z.eqb_eq _ _) Hal), Hnew, (proj2 (Z.ltb_ge _ _) Hts), Hold. cbn [negb].
   set (old_nZ := page_round_up_Z (bv_unsigned old_size)) in *.
   set (new_nZ := page_round_up_Z (bv_unsigned new_size)) in *.
   destruct (Z.eqb_spec old_nZ new_nZ) as [E|NE].
@@ -123,27 +130,78 @@ Proof.
         eexists _, _, _, _; (split; [reflexivity|]); rewrite Hsrc, Huni; cbn [andb negb]; (split; [|reflexivity]).
       + left. eexists _, _, _, _. split; [exists e; split; [exact He|reflexivity]|]. split; reflexivity.
       + right. eexists _, _, _, _. split; [reflexivity|]. split; reflexivity. }
-  {
+  (* GROW: with room above the source the call expands there and only the charge can refuse it;
+     without room it moves to Linux's address (structure of cjson_read_fuzzer's Lib/NodesSound.v) *)
+  assert (Hgt : (old_nZ < new_nZ)%Z) by lia.
+  destruct (mremap_inplace_room_b m old (Z_to_bv 64 old_nZ) (Z_to_bv 64 new_nZ) old_nZ new_nZ) eqn:Hroom.
+  - destruct (mremap_final_budget_b m old (Z_to_bv 64 old_nZ) old (Z_to_bv 64 new_nZ)) eqn:Hbud.
+    + assert (Hig : mremap_inplace_grow_b m old (Z_to_bv 64 old_nZ) (Z_to_bv 64 new_nZ) old_nZ new_nZ = true)
+        by (unfold mremap_inplace_grow_b; rewrite Hroom, Hbud; reflexivity).
+      sys_unfold. split.
+      * destruct o as [x m' evs|]; intros H; inv_sys; rewrite ?Hsrc, ?Huni in *; cbn [andb negb] in *; inv_sys;
+          rewrite ?Hroom, ?Hbud in *; try inv_sys.
+        all: first [ right; left; split; [exact NE|]; eexists; split; [eassumption|reflexivity]
+                   | right; right; right; left; split; [exact Hgt|]; split; [exact Hig|reflexivity] ].
+      * intros [(E & _)|[(_ & e & He & ->)|[(Hc & _)|[(_ & _ & ->)|(_ & Hc & _)]]]]; [exfalso; lia| |exfalso; lia| |congruence].
+        -- eexists _, _, _, _. split; [reflexivity|]. rewrite Hsrc, Huni. cbn [andb negb]. split; [|reflexivity].
+           left. eexists _, _, _, _. split; [exists e; split; [exact He|reflexivity]|]. split; reflexivity.
+        -- eexists _, _, _, _. split; [reflexivity|]. rewrite Hsrc, Huni. cbn [andb negb]. split; [|reflexivity].
+           right. rewrite Hroom. eexists _, _, _, _. split; [exists tt; split; [exact Hbud|reflexivity]|].
+           split; [|reflexivity]. eexists _, _, _, _. repeat split; reflexivity.
+    + assert (Hig : mremap_inplace_grow_b m old (Z_to_bv 64 old_nZ) (Z_to_bv 64 new_nZ) old_nZ new_nZ = false)
+        by (unfold mremap_inplace_grow_b; rewrite Hroom, Hbud; reflexivity).
+      sys_unfold. split.
+      * destruct o as [x m' evs|]; intros H; inv_sys; rewrite ?Hsrc, ?Huni in *; cbn [andb negb] in *; inv_sys;
+          rewrite ?Hroom, ?Hbud in *; try inv_sys.
+        all: try congruence.
+        all: right; left; split; [exact NE|]; eexists; split; [eassumption|reflexivity].
+      * intros [(E & _)|[(_ & e & He & ->)|[(Hc & _)|[(_ & Hc & _)|(_ & Hc & _)]]]]; [exfalso; lia| |exfalso; lia|congruence|congruence].
+        eexists _, _, _, _. split; [reflexivity|]. rewrite Hsrc, Huni. cbn [andb negb]. split; [|reflexivity].
+        left. eexists _, _, _, _. split; [exists e; split; [exact He|reflexivity]|]. split; reflexivity.
+  - assert (Hig : mremap_inplace_grow_b m old (Z_to_bv 64 old_nZ) (Z_to_bv 64 new_nZ) old_nZ new_nZ = false)
+      by (unfold mremap_inplace_grow_b; rewrite Hroom; reflexivity).
     sys_unfold. split.
-    - destruct o as [x m' evs|]; intros H; inv_sys; rewrite ?Hsrc, ?Huni in *; cbn [andb negb] in *; inv_sys;
-        try (destruct (mremap_inplace_grow_b m old (Z_to_bv 64 old_nZ) (Z_to_bv 64 new_nZ) old_nZ new_nZ) eqn:G; inv_sys).
-      all: match goal with
-        | He : In ?e mremap_errnos |- _ =>
-            right; left; split; [exact NE|]; exists e; split; [exact He|reflexivity]
-        | Hd : mremap_fresh_b _ _ _ _ _ ?d _ = true |- _ =>
-            do 4 right; split; [lia|]; exists d; split; [exact Hd|reflexivity]
-        | G : mremap_inplace_grow_b _ _ _ _ _ _ = true |- _ =>
-            right; right; right; left; split; [lia|]; split; [first [exact G|reflexivity]|reflexivity]
-        end.
-    - intros [(E & _)|[(_ & e & He & ->)|[(L & _)|[(L & G & ->)|(L & dst & Hd & ->)]]]]; try (exfalso; lia);
-        eexists _, _, _, _; (split; [reflexivity|]); rewrite Hsrc, Huni; cbn [andb negb]; (split; [|reflexivity]).
-      + left. eexists _, _, _, _. split; [exists e; split; [exact He|reflexivity]|]. split; reflexivity.
-      + right. rewrite G. left. eexists _, _, _, _. split; [reflexivity|]. split; reflexivity.
-      + right. destruct (mremap_inplace_grow_b m old (Z_to_bv 64 old_nZ) (Z_to_bv 64 new_nZ) old_nZ new_nZ).
-        * right. eexists _, _, _, _. split; [exists dst; split; [exact Hd|reflexivity]|].
-          split; [|reflexivity]. eexists _, _, _, _. split; [reflexivity|]. split; reflexivity.
-        * eexists _, _, _, _. split; [exists dst; split; [exact Hd|reflexivity]|].
-          split; [|reflexivity]. eexists _, _, _, _. split; [reflexivity|]. split; reflexivity. }
+    + destruct o as [x m' evs|]; intros H; inv_sys; rewrite ?Hsrc, ?Huni in *; cbn [andb negb] in *; inv_sys;
+        rewrite ?Hroom in *; try inv_sys.
+      all: first [ right; left; split; [exact NE|]; eexists; split; [eassumption|reflexivity]
+                 | do 4 right; split; [exact Hgt|]; split; [first [exact Hroom | reflexivity]|];
+                   eexists; split; [eassumption | reflexivity] ].
+    + intros [(E & _)|[(_ & e & He & ->)|[(Hc & _)|[(_ & Hc & _)|(_ & _ & dst & Hd & ->)]]]]; [exfalso; lia| |exfalso; lia|congruence|].
+      * eexists _, _, _, _. split; [reflexivity|]. rewrite Hsrc, Huni. cbn [andb negb]. split; [|reflexivity].
+        left. eexists _, _, _, _. split; [exists e; split; [exact He|reflexivity]|]. split; reflexivity.
+      * eexists _, _, _, _. split; [reflexivity|]. rewrite Hsrc, Huni. cbn [andb negb]. split; [|reflexivity].
+        right. rewrite Hroom. eexists _, _, _, _. split; [exists dst; split; [exact Hd|reflexivity]|].
+        split; [|reflexivity]. eexists _, _, _, _. repeat split; reflexivity.
+Qed.
+
+(* LPS 727298f3: a page-rounded new length above TASK_SIZE is a deterministic EINVAL
+   ([check_mremap_params]); every other call answers as [mremap_out_ts]. *)
+Definition mremap_out (m : Model) (old old_size new_size : word)
+    (o : outcome SyscallEffect) : Prop :=
+  ((TASK_SIZE < page_round_up_Z (bv_unsigned new_size))%Z /\ o = Ok (mkEffect (errno_ret EINVAL) [] []) m [])
+  \/ ((page_round_up_Z (bv_unsigned new_size) <= TASK_SIZE)%Z /\ mremap_out_ts m old old_size new_size o).
+
+Lemma mremap_outcome : forall old old_size new_size flags i m o,
+  bv_unsigned flags = MREMAP_MAYMOVE ->
+  (bv_unsigned old mod page_size = 0)%Z ->
+  page_align_is0_b new_size = false ->
+  page_align_is0_b old_size = false ->
+  let old_nZ := page_round_up_Z (bv_unsigned old_size) in
+  mremap_source_b (m_vmmaps m) old (Z_to_bv 64 old_nZ) old_nZ = true ->
+  mremap_backing_uniform_b m old (Z_to_bv 64 old_nZ) = true ->
+  mremap_spec old old_size new_size flags i m o <-> mremap_out m old old_size new_size o.
+Proof.
+  intros old old_size new_size flags i m o Hfl Hal Hnew Hold. cbv zeta. intros Hsrc Huni.
+  destruct (Z.ltb_spec TASK_SIZE (page_round_up_Z (bv_unsigned new_size))) as [Hts|Hts].
+  - unfold mremap_spec, mremap_out.
+    rewrite Hfl, Z.eqb_refl, (proj2 (Z.eqb_eq _ _) Hal), Hnew, (proj2 (Z.ltb_lt _ _) Hts). cbn [negb].
+    sys_unfold. split.
+    + intros H. left. split; [exact Hts|exact H].
+    + intros [(_ & H)|(T & _)]; [exact H|exfalso; lia].
+  - transitivity (mremap_out_ts m old old_size new_size o).
+    + exact (mremap_outcome_ts old old_size new_size flags i m o Hfl Hal Hnew Hts Hold Hsrc Huni).
+    + unfold mremap_out. split; [intros H; right; split; [exact Hts|exact H]|].
+      intros [(T & _)|(_ & H)]; [exfalso; lia|exact H].
 Qed.
 
 Lemma syscall_spec_35 : forall i m o,

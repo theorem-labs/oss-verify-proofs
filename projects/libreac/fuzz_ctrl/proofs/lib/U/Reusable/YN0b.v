@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN0b.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3, with libreac/fuzz_knock's port of its copy of this file (changed SST2_shape; added ss_post_ecall_e, SST2e, free_tail2e_run_ok, free_tail2e_run, SST2e_err, SST2e_stk and 1 more). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -368,5 +369,30 @@ Lemma SST2_shape :
 ss_pc SST2 = FREE_RET /\ ss_resv SST2 = None /\ callee_view SST2 = callee_view0 /\
 ss_mem SST2 = [reg_lock; mkRegion (Some aTP) (-164) (-160) (-164) (-160) SST2_err;
 mkRegion (Some aSP) (-8192) 0 (-8192) 0 SST2_stk] ++ vml_mem.
+Proof. vm_compute. repeat split; reflexivity. Qed.
+(* munmap's ENOMEM answer (the exact arm of [munmap_spec] at 727298f3, under may-fail): the same
+   post-ecall state with a0 = -ENOMEM, the literal [YN0g.ss_refused] uses for mmap's.  musl's
+   __syscall_ret stores errno and free ignores the -1, so the run reaches [FREE_RET] with its own
+   errno chunk. *)
+Definition ss_post_ecall_e : sstate := resume SST1 (SLit (2 ^ 64 - 12)) (ss_mem SST1) (ss_facts SST1).
+Definition SST2e : sstate := fst (sym_run_toN src0segs src0tbl FUEL FREE_RET ss_post_ecall_e).
+Lemma free_tail2e_run_ok : run_to_ok FREE_RET ss_post_ecall_e SST2e.
+Proof. split; vm_compute; reflexivity. Qed.
+Theorem free_tail2e_run : forall E ms model,
+st_ok src0segs E ss_post_ecall_e ms -> m_halted model = None -> m_vm_lazy model = [] ->
+SR src0segs (mkCfg ms model)
+(fun c' => exists ms1, c' = mkCfg ms1 model /\ st_ok src0segs E SST2e ms1 /\
+frame_of E (ss_mem ss_post_ecall_e) (ms_mem ms) (ms_mem ms1)).
+Proof.
+intros E ms model HS Hh Hlz.
+eapply SR_mono; [eapply (SR_run_to FREE_RET); [exact HS | apply free_tail2e_run_ok | exact Hh | exact Hlz]|].
+intros c' (ms1 & -> & HS1 & HF). exists ms1. split; [reflexivity|]. split; [exact HS1 | exact HF].
+Qed.
+Definition SST2e_err : list chunk := Eval vm_compute in r_chunks (nth 1 (ss_mem SST2e) reg_errno).
+Definition SST2e_stk : list chunk := Eval vm_compute in r_chunks (nth 2 (ss_mem SST2e) reg_stk).
+Lemma SST2e_shape :
+ss_pc SST2e = FREE_RET /\ ss_resv SST2e = None /\ callee_view SST2e = callee_view0 /\
+ss_mem SST2e = [reg_lock; mkRegion (Some aTP) (-164) (-160) (-164) (-160) SST2e_err;
+mkRegion (Some aSP) (-8192) 0 (-8192) 0 SST2e_stk] ++ vml_mem.
 Proof. vm_compute. repeat split; reflexivity. Qed.
 End a.

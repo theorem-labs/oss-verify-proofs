@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v at 1d255703e887 (the shared layer
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v (the shared layer
    of the match half of fuzz_role's image-A segment M02) for reac-pw/fuzz_rate image A: role's pcs become rate's, the
    code table covers rate's four blocks (the key compare, the two readers, the two checks and their five slow
    blocks), the shadow base moves from role's s7 to rate's s2 (atom 18), the frame cell the half reads is rate's hz
@@ -12,6 +12,7 @@
    is carried, not ten. The generic plumbing role's file takes from its lib/A/RPgCheck.v (the entry state's register
    overrides, the kept-run lemma and the write-range tactics) is taken here from lib/A/RtPgCheck.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_rate/lib/A/RtPgM02Base.v, with its addresses changed; 91 of its 162 lines of code are new or changed and 339 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image A (fuzz_rate.asan, pinned sha256
    22bc8613d780c9a99353dc86368f9401311ef5c8358882651217836298529b6a; every address measured on the unstripped twin
    0d508f2c65c249840b6c8fe3c1960824f2548b175c23583632f06bb7956458c3, which holds the same loaded bytes): what the two

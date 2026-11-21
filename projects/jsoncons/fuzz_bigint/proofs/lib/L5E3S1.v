@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the auxv cells, which these steps do not use, are no longer read (auxv_cells). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp.bitvector Require Import definitions.
@@ -223,7 +224,6 @@ Proof.
   (* [comment removed for export] *)
   pose proof ES0 as (S_1 & S_2 & S_3 & S_4 & S_5 & S_6 & S_7 & S_8 & S_9 & S_10 & S_11 & S_12 & S_13 & S_14 & S_15 & S_16 & S_17 & S_18 & S_19 & S_20).
   unfold EH_CAUGHT, EH_UNCAUGHT, SYSCAT_GUARD, UW_FLAGS, TD_LOCALE, LOCALE_MSGCAT, GLOBAL_LOCALE, CANARY, AUXVP in S_1, S_2, S_3, S_4, S_5, S_6, S_7, S_8, S_9.
-  pose proof (auxv_cells M av uid rnd hw S_13) as (X_0 & X_1 & X_2 & X_3 & X_4 & X_5 & X_6 & X_7 & X_8 & X_9 & X_10 & X_11 & X_12 & X_13 & X_14 & X_15 & X_16 & X_17 & X_18 & X_19).
   assert (WUW: L5.writable RSEGS M 459617 6). { apply (writable_img M UW_FLAGS 6 wseg_uwflags); unfold UW_FLAGS; kl. }
   assert (WUC: L5.writable RSEGS M 456960 4). { apply (writable_img M EH_UNCAUGHT 4 wseg_uncaught); unfold EH_UNCAUGHT; kl. }
   unshelve epose proof (e3a1_conc fx R M (S - 896) (S - 1168) _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)
@@ -349,7 +349,7 @@ Proof.
     exact GR1.
     constructor. apply L5PK.wr_scratch; lia.
     constructor. }
-  clear X_0 X_1 X_2 X_3 X_4 X_5 X_6 X_7 X_8 X_9 X_10 X_11 X_12 X_13 X_14 X_15 X_16 X_17 X_18 X_19 S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
+  clear S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
   assert (R1_9: getr R1 (reg 9) = Z_to_bv 64 u0_9) by (kin K1 9%nat; exact R0_9).
   clear AG1 FR1 MS1. try clear STAT1.
   try clear c0_Sm840. try clear c0_Sm848. try clear c0_Sm856. try clear c0_Sm864. try clear c0_Sm872. try clear c0_Sm776. try clear c0_Sm784. try clear c0_Sm792. try clear c0_Sm800. try clear c0_Sm472. try clear c0_Sm480. try clear c0_Sm488. try clear c0_Sm496. try clear c0_Sm504. try clear c0_Sm512. try clear c0_Sm520. try clear c0_Sm528. try clear c0_Sm536. try clear c0_Sm544. try clear c0_Sm552. try clear c0_Sm560. try clear c0_Sm568. try clear c0_Sm424. try clear c0_Sm432. try clear c0_Sm360. try clear c0_Sm368. try clear c0_Sm376. try clear c0_Sm56. try clear c0_Sm64. try clear c0_Sm72. try clear c0_Sm80. try clear c0_Sm88. try clear c0_Sm96. try clear c0_Sm104. try clear c0_Sm112. try clear c0_Sm120. try clear c0_Sm128. try clear c0_Sm136. try clear c0_Sm144. try clear c0_Sm152. try clear c0_Sm8. try clear c0_Sm16. try clear c0_Sm696w1. try clear c0_Sm664w1. try clear c0_Sm640. try clear c0_Sm648. try clear c0_Sm632w1. try clear c0_Sm608. try clear c0_Sm616. try clear c0_Sm600w1. try clear c0_Sm464w1. try clear c0_Sm408w1. try clear c0_Sm280w1. try clear c0_Sm248w1. try clear c0_Sm216w1. try clear c0_Sm192. try clear c0_Sm200. try clear c0_Sm184w1. try clear c0_Sm160. try clear c0_Sm168. try clear c0_Sm48w1. try clear R0_2. try clear R0_3. try clear R0_4. try clear R0_10. try clear R0_8. try clear R0_20. try clear R0_9. try clear DEF0. try clear HH0. try clear HQ0. try clear ES0. try clear DEFd1_0. try clear DEFd2_0. try clear DEFd3_0. try clear DEFd4_0.

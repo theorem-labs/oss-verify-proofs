@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: a string argument's end plus 9 (was its end plus 16) is at most 2^47, what the launch's entry block gives for an argv string (the NUL that ends execfn and the 8-byte slot come after it, below ed_top <= 2^47). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -120,7 +121,7 @@ Section FprintfIcpt.
     pcommon_s_stmt fa ->
     sh_zero m alloc_ceiling (2^47) ->
     bytes_at asegs m (bv_unsigned a2) (str ++ Z_to_bv 8 0 :: slack) -> ~ In (Z_to_bv 8 0) str ->
-    bv_unsigned sp <= bv_unsigned a2 -> bv_unsigned a2 + Z.of_nat (length str) + 1 + 16 <= 2^47 -> Z.of_nat (length str) <= 2^20 ->
+    bv_unsigned sp <= bv_unsigned a2 -> bv_unsigned a2 + Z.of_nat (length str) + 1 + 9 <= 2^47 -> Z.of_nat (length str) <= 2^20 ->
     fprintf_icpt_K a2 a3 a4 a5 a6 a7 Q ->
     evt asegs Q
       (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 strm (Z_to_bv 64 fa) a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)

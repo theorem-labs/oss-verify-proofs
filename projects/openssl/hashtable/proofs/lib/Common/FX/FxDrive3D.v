@@ -1,12 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the ledger counts the launch's reserved pair; memfree reads go through the read-only backing). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From stdpp Require Import bitvector.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType RiscvSemantics State Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap Mprotect.
+From OSSVerify.Proofs.openssl.hashtable.lib.Common.Cfg Require Import RomBase.
 From OSSVerify.Proofs.openssl.hashtable.lib.Common.Cfg Require Import
   ShapeAlgBase ShapeCfg NodesCfg LedgerCfg AllocCfg LazyCfg LazyAccCfg AllocLazyCfg EagerCfg CountCfg.
 From OSSVerify.Proofs.openssl.hashtable.lib.Common.FX Require Import
@@ -52,8 +54,10 @@ Definition drive_sys_own3 (F : fstate) (L3 : fledger3) (n : int) : option dres3 
       match conc (rget F 11), conc (rget F 12), conc (rget F 13), conc (rget F 15) with
       | Some len, Some prot, Some flags, Some o =>
           if negb (o =? 0) then None
-          else if (prot =? 3) && (flags =? 34) then sys_grant3p Rb Rc Lim shp false F L3 n len
-          else if (prot =? 3) && (flags =? 16418) then sys_grant3p Rb Rc Lim shp true F L3 n len
+          else if (prot =? 3) && (flags =? 34) then
+            (if hint_null F then sys_grant3p Rb Rc Lim shp false F L3 n len else None)
+          else if (prot =? 3) && (flags =? 16418) then
+            (if hint_null F then sys_grant3p Rb Rc Lim shp true F L3 n len else None)
           else if (prot =? 3) && (flags =? 50) then
             match ptr (rget F 10) with
             | Some (t, off) => sys_commit3 Lim keep F L3 n t off len
@@ -126,8 +130,8 @@ Hypothesis Hcode : code_ok segs code.
 Hypothesis Halloc : sc_alloc cfg = false.
 Variable R0 : list (word * word).
 Variable Rb Rc Lim : Z.
-Hypothesis HRb : live_bytes R0 <= Rb.
-Hypothesis HRc : Z.of_nat (length R0) <= Rc.
+Hypothesis HRb : res_cost R0 <= Rb.
+Hypothesis HRc : Z.of_nat (res_count R0) <= Rc.
 Variable keep : list int.
 Variable mem0 : word -> option byte.
 Variable XI : (int -> word) -> Model -> Prop.
@@ -196,12 +200,20 @@ Proof.
     apply eqb_lit in Eo. rewrite Eo, to_Z_0 in Ha5.
     destruct ((prot =? 3)%uint63 && (flags =? 34)%uint63) eqn:Eg.
     { apply andb_true_iff in Eg as [Ep Ef]. apply eqb_lit in Ep, Ef. rewrite Ep in Ha2. rewrite Ef in Ha3.
+      destruct (hint_null F) eqn:Hhn; cbv iota in Hsys; [|discriminate].
+      unfold hint_null in Hhn. destruct (conc (FxState.rget F 10)) as [h0|] eqn:H10; [|discriminate].
+      apply eqb_lit in Hhn. destruct (conc_sound R0 rho _ _ H0 H10) as [_ Hnull].
+      rewrite <- (pend_gpr0 segs IM rho F ms HR) in Hnull. rewrite Hhn, to_Z_0 in Hnull.
       exact (sys_grant3p_sound cfg segs IM Halloc R0 Rb Rc Lim HRb HRc keep mem0 XI xtags XI_rho XI_vm fr0 fc0 rom0 hi wb0 na0 lz0 brk0 A0 shp
-               n rho F L3 ms m false len res Hsys HD Hat Hstep Hx8 Ha1 Ha2 Ha3 Ha5). }
+               n rho F L3 ms m false len res Hsys HD Hat Hstep Hx8 Ha1 Ha2 Ha3 Ha5 Hnull). }
     destruct ((prot =? 3)%uint63 && (flags =? 16418)%uint63) eqn:Enr.
     { apply andb_true_iff in Enr as [Ep Ef]. apply eqb_lit in Ep, Ef. rewrite Ep in Ha2. rewrite Ef in Ha3.
+      destruct (hint_null F) eqn:Hhn; cbv iota in Hsys; [|discriminate].
+      unfold hint_null in Hhn. destruct (conc (FxState.rget F 10)) as [h0|] eqn:H10; [|discriminate].
+      apply eqb_lit in Hhn. destruct (conc_sound R0 rho _ _ H0 H10) as [_ Hnull].
+      rewrite <- (pend_gpr0 segs IM rho F ms HR) in Hnull. rewrite Hhn, to_Z_0 in Hnull.
       exact (sys_grant3p_sound cfg segs IM Halloc R0 Rb Rc Lim HRb HRc keep mem0 XI xtags XI_rho XI_vm fr0 fc0 rom0 hi wb0 na0 lz0 brk0 A0 shp
-               n rho F L3 ms m true len res Hsys HD Hat Hstep Hx8 Ha1 Ha2 Ha3 Ha5). }
+               n rho F L3 ms m true len res Hsys HD Hat Hstep Hx8 Ha1 Ha2 Ha3 Ha5 Hnull). }
     destruct ((prot =? 3)%uint63 && (flags =? 50)%uint63) eqn:Ecm; [|discriminate].
     apply andb_true_iff in Ecm as [Ep Ef]. apply eqb_lit in Ep, Ef. rewrite Ep in Ha2. rewrite Ef in Ha3.
     destruct (ptr (FxState.rget F 10)) as [[t off]|] eqn:H10; [|discriminate].
@@ -214,7 +226,7 @@ Proof.
   destruct (conc (FxState.rget F 11)) as [len|] eqn:H11; [|discriminate].
   pose proof (ptr_sound rho _ _ _ H10) as Ha0. rewrite <- (pend_gpr0 segs IM rho F ms HR) in Ha0.
   destruct (conc_sound R0 rho _ _ H0 H11) as [_ Ha1]. rewrite <- (pend_gpr1 segs IM rho F ms HR) in Ha1.
-  exact (sys_unmap3p_sound cfg segs IM R0 Lim keep mem0 XI xtags XI_vm fr0 fc0 rom0 hi wb0 na0 lz0 brk0 A0 shp
+  exact (sys_unmap3p_sound cfg segs IM Halloc R0 Lim keep mem0 XI xtags XI_vm fr0 fc0 rom0 hi wb0 na0 lz0 brk0 A0 shp
            n rho F L3 ms m t off len res Hsys HD Hat Hstep Hx8 Ha0 Ha1).
 Qed.
 
@@ -283,9 +295,10 @@ Proof.
         pose proof (ptrans _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ Hext1
                       (pext_frame n rho F1 L3 ms1 m1 F1 ms1 m2 Hfr2 (mfr_refl IM rho F1 L3 ms1 n))) as Hext2.
         destruct (drive_sys3_sound n rho F1 L3 ms1 m2 res Hsys HD2 (Hec eq_refl))
-          as (I & i0 & nx & Hiff & Hsucc).
+          as [(I & i0 & nx & Hiff & Hsucc) Hmf].
         apply (rzc_cases_same cfg segs _ I nx T i0).
         { apply node_ok_cfg_of_step_iff. exact Hiff. }
+        { exact (sys_rob_memfree segs (ms_pend ms1) m2 (ms_reg ms1 17) eq_refl Hmf). }
         intros i. destruct (Hsucc i) as (F' & L3' & n' & rho' & Hin & HD' & Hdx).
         destruct (nx i) as [msi mi]. cbn [cfg_ms cfg_model] in HD', Hdx.
         apply (IH n' rho' F' L3' msi mi HD' (ptrans _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ Hext2 Hdx)).
@@ -345,7 +358,7 @@ Proof.
           as [_ (m2 & Hfr2 & HD2 & Hstar2)].
         pose proof (pext_frame n rho F1 L3 ms1 m1 F1 ms1 m2 Hfr2 (mfr_refl IM rho F1 L3 ms1 n)) as Hext2.
         destruct (drive_sys3_sound n rho F1 L3 ms1 m2 res Hsys HD2 (Hec eq_refl))
-          as (I & i0 & nx & Hiff & Hsucc).
+          as [(I & i0 & nx & Hiff & Hsucc) _].
         destruct (Hsucc i0) as (F2 & L2 & n2 & rho2 & Hin & HD3 & Hdx).
         assert (Hstep : sstep_cfg segs cfg (mkCfg (ms_pend ms1) m2) [] (SNext (nx i0))).
         { apply Hiff. exists i0. split; reflexivity. }

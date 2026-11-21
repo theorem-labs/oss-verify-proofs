@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC85.v for libreac/fuzz_boxreg's program walk (as fuzz_identity's lib/A/Prog/YC85.v, ea5560a967b, carries it): the listing's names are bsym; module paths changed. No image numeral occurs in this file. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC85.v for libreac/fuzz_boxreg's program walk (as fuzz_identity's lib/A/Prog/YC85.v, carries it): the listing's names are bsym; module paths changed. No image numeral occurs in this file. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/A/Prog/YC85.v, with its module paths and module names changed; 313 of its 404 lines of code are new or changed and 320 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_link/lib/A/Prog/LLVMFuzzerTestOneInputFree.v, with its module paths and module names changed; 306 of its 362 lines of code are new or changed and 348 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* LLVMFuzzerTestOneInput on image A: the premises of text_of's contract (lib/A/Prog/text_of_c.v,
    `text_of_acontract`, link_amem.v's aleaf_alloc_rd at TEXT_OF_AK = 16448, EV 1, SIDE []) at the body's three
    text_of sites, built from what the walk's interface carries (lib/A/Prog/LLVMFuzzerTestOneInputDefs.v). The sites
@@ -27,8 +28,8 @@
      eleven entries by computation over the pin (Kpre.v kp_img_b), each with the W3 clause below.
 
    Named Section hypotheses:
-   - TXO_RO: text_of_ro of each texts entry, its string and NUL (|s| + 1 bytes, text_of_c.v since W3's fix
-     3d6bbe064f03): true of the image, the instance discharges it by computation.
+   - TXO_RO: text_of_ro of each texts entry, its string and NUL (|s| + 1 bytes, text_of_c.v since W3's fix):
+     true of the image, the instance discharges it by computation.
    - TXO_TR: text_of_traces B, the malloc trace's wild prefix in the universe (lib/A/ACejUniv.v Tfib_univ_wild at
      the instance).
    - LAWS, TB, HSEGS: the image instance (AR_laws, PcapSyms B, pa_segs = tfibsegs), as Kpre.v takes them.
@@ -134,7 +135,7 @@ Hypothesis TXO_C : forall fy : YK11.FPState, text_of_acontract (fx := fy) SK SEG
     (c_ly cx) (c_S cx) (c_W cx) (c_mem cx) (c_md cx) [(LF_CID, fp)] ly S W mem mdl k).
 
 (* The real-stack row's shadow is zero at every AR state (YG0n.v zero_shadow_ranges, first row), so the shadow
-   hull of a stack range is visible: text_of asks it of *own (help bb9e0a6c020c: its check +0x264 runs after the
+   hull of a stack range is visible: text_of asks it of *own (help: its check +0x264 runs after the
    malloc at +0x22c). *)
 Lemma txo_stack_hull : forall ly S rd p n, ARm B ly S rd -> ly_stk_lo ly <= p -> 0 < n -> p + n <= ly_stk_hi ly ->
   shadow_hull_vis rd p n.
@@ -152,7 +153,7 @@ Proof.
 Qed.
 
 (* a range of the real stack below 2^47 is application memory (high memory): text_of asks it of the cursor and
-   of *own (help bb9e0a6c020c, amem_range for each instrumented check's shadow entry) *)
+   of *own (help, amem_range for each instrumented check's shadow entry) *)
 Lemma txo_stack_amem : forall ly S rd p n, ARm B ly S rd -> ly_stk_lo ly <= p -> p + n <= kHighMemEnd - 1 ->
   amem_range p n.
 Proof.

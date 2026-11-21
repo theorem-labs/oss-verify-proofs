@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/boost-beast/http_request/lib/Lib/Step.v; 317 of its 350 lines of code are new or changed and 668 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/Prog/RcBraidLib.v, with its module paths, module names and numbers changed; 642 of its 674 lines of code are new or changed and 318 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_decode/lib/B/Prog/reac_braid_encode_exact.v, with its module paths and module names changed; 222 of its 665 lines of code are new or changed and 231 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Sem Fpu.
@@ -19,7 +20,7 @@ Open Scope Z_scope.
 
 (* Footprint twin of reac_braid_encode_exact_holds (reac_braid_encode_exact.v): reac_braid_encode_exact_holds_F
    proves reac_braid_encode_exact_contract_F (reac_braid_encode_F_c.v). A relocation of the fuzz_ctrl B proof
-   (proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_braid_encode_exact_F.v of a working branch, commit f9a993b5ec8) by
+   (proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_braid_encode_exact_F.v of a working branch) by
    a Theorem Labs lane's alreloc.py, which reported 0 UNMAPPED, 0 KEPT-ADDR and needed no resolve line: the three pc numerals and
    CELL_K by its symbol map, the image premise RIMG by a citation of lib/Reusable/YImgTop.v. No numeral was set by hand;
    this file differs from alreloc's output only in its import line (the twin's statement lives in

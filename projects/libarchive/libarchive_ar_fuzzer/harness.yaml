@@ -3,8 +3,11 @@ project: libarchive
 harness: libarchive_ar_fuzzer
 rocq: OSSVerify.libarchive.libarchive_ar_fuzzer
 origin: upstream
-summary: Reads the input as an ar archive (+ all filters); per entry calls pathname, size, mtime, mode,
-  uid, gid and drains archive_read_data. Every return value is discarded.
+summary: Reads the input as an ar archive (+ all filters). It returns early if archive_read_new returns
+  NULL or archive_read_open does not return ARCHIVE_OK. While archive_read_next_header returns ARCHIVE_OK,
+  it calls pathname, size, mtime, mode, uid and gid, then reads the data while archive_read_data returns
+  more than 0. It drops every other result and the data read. If allocating its data buffer throws std::bad_alloc,
+  it frees the archive and returns 0. Each call first ignores SIGPIPE, as bsdtar and bsdcpio do.
 entry: LLVMFuzzerTestOneInput
 source:
   files:
@@ -13,7 +16,7 @@ source:
     repository: https://github.com/libarchive/libarchive
     commit: 3670ecf7c59a6b12fe93e6255bbe4a1f3420edf8
     path: contrib/oss-fuzz/libarchive_ar_fuzzer.cc
-  modified: false
+  modified: true
   licence: BSD-2-Clause
 library:
   repository: https://github.com/libarchive/libarchive
@@ -24,11 +27,15 @@ modifications:
 - In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the program
   depends only on its input.
 - A small driver reads the input file, calls the harness one to four times and prints each return value.
+- 'The harness source is modified: source/libarchive_ar_fuzzer.cc is libarchive 3670ecf7''s contrib/oss-fuzz/libarchive_ar_fuzzer.cc
+  with two Theorem Labs changes. On std::bad_alloc it frees any open archive and returns 0; the original
+  aborts. It ignores SIGPIPE, as bsdtar and bsdcpio do, so a write to a filter program that stopped reading
+  fails with EPIPE instead of killing the run.'
 builds:
   plain:
     file: libarchive_ar_fuzzer.plain
-    bytes: 810384
-    sha256: 798dd30c4b4727dcc94c1fe163be5a3cee2697ff046b087eadb99d97be7de6ed
+    bytes: 811280
+    sha256: 13d360ee44ec7ad183cc90382d84dcd74de3ee41883547cfbfd26e23125e0d87
     segments:
     - 1
     - 1
@@ -67,8 +74,8 @@ builds:
       sha256: 539ef9c90b070e1615db19d02ac34a1585c7cf3acdec41de6d789bc252701846
   ubsan:
     file: libarchive_ar_fuzzer.ubsan
-    bytes: 823440
-    sha256: 08d9518b8d7cf9ad5f332022d95eb2899713f89649d63d03c9c20141211b0fdd
+    bytes: 824336
+    sha256: 900e59cfbc38ba6bb5ead943a9ec088376ec1de40d36901a473193555b0a0214
     segments:
     - 1
     - 1
@@ -107,8 +114,8 @@ builds:
       sha256: 539ef9c90b070e1615db19d02ac34a1585c7cf3acdec41de6d789bc252701846
   asan:
     file: libarchive_ar_fuzzer.asan
-    bytes: 1430552
-    sha256: 5682f6e3b8c4a61b637dbf7df0b61600f1b93db76c5a29bddddf20240b63f1a9
+    bytes: 1432104
+    sha256: 4a0fb11996906c3a1ecf0954e7f6b085f000a7ea53ee8f2e67eb98b77be7871b
     segments:
     - 1
     - 1
@@ -150,8 +157,8 @@ builds:
       sha256: 539ef9c90b070e1615db19d02ac34a1585c7cf3acdec41de6d789bc252701846
   asan-ubsan:
     file: libarchive_ar_fuzzer.asan-ubsan
-    bytes: 1438424
-    sha256: 86ed720a538db96884ca77c6e246230c868376db673c17378bef1715f2e38afb
+    bytes: 1439976
+    sha256: 5c8a862cd78db7941d573823b6a4fb8ac101e84718836039067a5ceba7ff39d4
     segments:
     - 1
     - 1
@@ -209,6 +216,11 @@ distribution:
     missing_file: 1/50
     full_support: 3/50
   mass: '1'
+model_gap:
+- nonblocking-io
+- resource-limits
+- signal-handlers
+- threads
 statements:
   asan_agrees:
     kind: agreement
@@ -218,21 +230,24 @@ statements:
     reading: may-fail
     budgets: asan
     abort: signal
-    status: open
+    status: model-gap
+    revision: 2
   asan_disagrees_at_most:
     kind: bound
     builds:
     - plain
     - asan
     reading: may-fail
-    status: open
+    status: model-gap
+    revision: 2
   asan_agreement_decidable:
     kind: decidability
     builds:
     - plain
     - asan
     reading: may-fail
-    status: open
+    status: model-gap
+    revision: 2
   ubsan_agrees:
     kind: agreement
     builds:
@@ -241,21 +256,24 @@ statements:
     reading: may-fail
     budgets: standard
     abort: signal
-    status: open
+    status: model-gap
+    revision: 2
   ubsan_disagrees_at_most:
     kind: bound
     builds:
     - plain
     - ubsan
     reading: may-fail
-    status: open
+    status: model-gap
+    revision: 2
   ubsan_agreement_decidable:
     kind: decidability
     builds:
     - plain
     - ubsan
     reading: may-fail
-    status: open
+    status: model-gap
+    revision: 2
   asan_ubsan_agrees:
     kind: agreement
     builds:
@@ -264,21 +282,24 @@ statements:
     reading: may-fail
     budgets: asan
     abort: signal
-    status: open
+    status: model-gap
+    revision: 2
   asan_ubsan_disagrees_at_most:
     kind: bound
     builds:
     - plain
     - asan-ubsan
     reading: may-fail
-    status: open
+    status: model-gap
+    revision: 2
   asan_ubsan_agreement_decidable:
     kind: decidability
     builds:
     - plain
     - asan-ubsan
     reading: may-fail
-    status: open
+    status: model-gap
+    revision: 2
   plain_halts:
     kind: halts
     builds:
@@ -288,7 +309,8 @@ statements:
     - 0
     - 2
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2
   plain_halts_may_fail:
     kind: halts
     builds:
@@ -296,7 +318,8 @@ statements:
     reading: may-fail
     exits: any
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2
   asan_halts:
     kind: halts
     builds:
@@ -306,7 +329,8 @@ statements:
     - 0
     - 2
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2
   ubsan_halts:
     kind: halts
     builds:
@@ -316,7 +340,8 @@ statements:
     - 0
     - 2
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2
   ubsan_halts_may_fail:
     kind: halts
     builds:
@@ -324,7 +349,8 @@ statements:
     reading: may-fail
     exits: any
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2
   asan_ubsan_halts:
     kind: halts
     builds:
@@ -334,4 +360,5 @@ statements:
     - 0
     - 2
     binds_checks: false
-    status: open
+    status: model-gap
+    revision: 2

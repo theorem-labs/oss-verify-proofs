@@ -1,5 +1,5 @@
 (* lib/A/ACtlG/F29.v -- GLUE for stage seg_F29 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput (lib/A/ACtl.v,
-   `Hypothesis seg_F29`, :643 at a working branch 5f2b9fab28a).  Written by a Theorem Labs lane, one
+   `Hypothesis seg_F29`, :643 at a working branch).  Written by a Theorem Labs lane, one
    writer.  Pattern: glue-pattern.md steps G1-G5 (a working note, not in this delivery) (its section 4 form for a run
    that writes memory), worked example lib/A/ACtlG/A5.v.  rule 24: no function proved (stage glue of a walk).
 

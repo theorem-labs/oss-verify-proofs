@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up facts stated over the launch's ProcInput). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation.
 From stdpp Require Import gmap.
@@ -110,7 +111,7 @@ Definition pemC : cli_sig := mkCli pem_cli0 pem_cli pem_cli0_stable pem_cli_stab
 
 Theorem pem_cli0_at_main : cli0_at_main pemC.
 Proof.
-  unfold cli0_at_main. intros sp0 argv envp uid R F pc fc rv m ro AM. cbn [CLI0 pemC].
+  unfold cli0_at_main. intros sp0 inp mbase R F pc fc rv m ro AM. cbn [CLI0 pemC].
   destruct AM as (t0 & t1 & t2 & a3 & a4 & a5 & a6 & a7 & s4 & s5 & s6 & s7 & s8 & s9 & s10 & s11 & t3 & t4 & t5 & t6 & t & P0 & pg & m' & EMS & AM).
   injection EMS as _ _ _ _ _ Em _. subst m'.
   destruct AM as (MI & ST & PTH & ERRNO & PTH2 & REST).

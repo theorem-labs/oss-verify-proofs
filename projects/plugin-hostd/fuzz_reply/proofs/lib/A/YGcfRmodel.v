@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* CARRIED from commit 0deb5310273b0d538ec2a1697f391a1c8ad21c34,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YGcfRmodel.v, sha256 bf58f1888240282196dbac88eb4ce83e0d073c4157cb1191884767c8a5f6c2a1 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the Require lines only:
    the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
@@ -9,12 +9,13 @@
    YGcfRehidePost / YGcfRecStep, and the per-image cf files of this carry) name lib/A; a sentence is split at a directory
    change, the module order kept.
 *)
-(* Taken by path from a working branch a0fed4266a1b, provisional. *)
+(* Taken by path from a working branch, provisional. *)
 (* Modified by Theorem Labs, 2026-10: module paths changed from fuzz_preset lib.Reusable to cgif_file_fuzzer lib; the text is otherwise unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the event-free second allocator instance (suffix cf), the model obligations of
    c-asan's realloc composition.
-   The obligations are a Theorem Labs lane's RGtop.rmodel_ok itself (RGtop.v:228, the c5 form; RGtop.v is a by-path copy of
-   478a815d97c). Its section closes over the variables its body uses, in their declaration order: U mt ft AOX rpre
+   The obligations are a Theorem Labs lane's RGtop.rmodel_ok itself (RGtop.v:229, the c5 form; RGtop.v is a by-path copy).
+   Its section closes over the variables its body uses, in their declaration order: U mt ft AOX rpre
    nmax lmax rU rpreA rpreD. gflag is YG0d.gflag, as in RGtop.
    The instance: U := rU := admits (as_universe B) (the P'' trace premise, YG01.v:156; a Theorem Labs lane 22:05Z), mt := malloc_cf,
    ft := free_cf, nmax := cf_malloc_max, lmax := LIVE_MAX, AOX := cgif's aowned (YG0n.v:236-242) or the live

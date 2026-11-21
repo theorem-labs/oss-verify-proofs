@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved ledger, module paths qualified against the K5 twins). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import Permutation.
@@ -25,7 +26,7 @@ Import ListNotations.
 Import AX2. Import AX2S. Import AP.
 Open Scope Z_scope.
 
-Local Instance ri_fx : PropExec.FPState := PropExec.fx0.
+Local Instance ri_fx : K5.AS.PropExec.FPState := K5.AS.PropExec.fx0.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -549,9 +550,21 @@ Qed.
 Lemma seps_FOP : forall l, APS.seps l -> ForallOrdPairs iv_apart l.
 Proof. intros l H. induction H as [|p l Hf Hs IH]; constructor; [exact Hf | exact IH]. Qed.
 
+(* LPS 08b1429: the ledger's vDSO suffix, from the plan's packed [co_res]. *)
+Lemma ri_artm_res : artm_res model.
+Proof.
+  destruct (APS.co_resx _ _ _ _ _ _ _ _ _ _ _ _ HC) as (rx & Er & _ & Hn & Hb).
+  pose proof (APS.co_mres _ _ _ _ _ _ _ _ _ _ _ _ HC) as Hm.
+  exists rx. split; [exact Er|]. split; [exact Hn|].
+  split; [rewrite live_bytes_sum_sizes; eapply Z.le_trans; [exact Hb| vm_compute; congruence]|].
+  apply Forall_forall. intros e He. apply List.filter_In in He as [He _].
+  pose proof (proj1 (Forall_forall _ _) Hm e He) as X. cbv beta in X. rewrite Er in X.
+  apply Forall_app in X as [_ X]. exact X.
+Qed.
+
 Lemma ri_artm : LIMIT = VMLIMIT -> ARTM_A (sigma0 A E ch model) model.
 Proof.
-  intros Hlim. unfold ARTM_A. split; [exact (Permutation_refl _)|]. split; [exact (APS.co_res _ _ _ _ _ _ _ _ _ _ _ _ HC)|].
+  intros Hlim. unfold ARTM_A. split; [exact (Permutation_refl _)|]. split; [exact ri_artm_res|].
   split; [rewrite (APS.co_limit _ _ _ _ _ _ _ _ _ _ _ _ HC); exact Hlim|].
   split.
   { pose proof (APS.co_eager _ _ _ _ _ _ _ _ _ _ _ _ HC) as He. pose proof ri_test as (_ & _ & _ & Hea & _).

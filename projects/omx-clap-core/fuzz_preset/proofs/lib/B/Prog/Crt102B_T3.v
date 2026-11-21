@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths and module names changed; 141 of its 177 lines of code are new or changed and 478 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, walk of check_round_trip on the #102 pins, IMAGE B' (asan-ubsan
    d663f82d7f488d30, unstripped twin c90d4fa54d43160b), FREE-PIECES-102 Part 7a row T3 (CRT-B-UGKO1): THE SEGMENT
    LEMMA of U, G, K, O1 = B' entry + 0x1ec -> + 0x2a4 (round_trip_rewrite inlined, fuzz_preset.c new:719-734).
@@ -14,7 +15,7 @@
    (index v5 built 16:10:25Z), the rule-24 lookup: 0 released. none: written
    new.
 
-   THE STATEMENT (crt102b_seg_T3): from crt_at_U_B (Crt102Glue.v at the crt head 71a8716672850d3, frozen) at the cut U
+   THE STATEMENT (crt102b_seg_T3): from crt_at_U_B (Crt102Glue.v at the crt head, frozen) at the cut U
    (+0x1ec) the run of check_round_trip reaches QF, given the two boundaries this segment could end in - crt_at_X_B at
    X (+0x30c; CRT3_X = the glue's CRT_B_AT_X at the B' offsets, checked below) and crt_at_W_B at W (+0x2a4; row T4's
    pre, frozen in the glue) - each in the boundary form `the run from this configuration reaches QF`. At this head
@@ -92,7 +93,7 @@ Context {RL : PrhRoomLive} {SK : YI16.sink_head} {PA : PAImg B_prog_listing}.
 #[local] Notation PST := (@prh_pst prh_img_B).
 #[local] Notation STKC := (@STK_check_round_trip prh_img_B).
 #[local] Notation PL := PL_B102.
-(* THE IMAGE: Crt102Img.v's Section b hypotheses, verbatim (B' values in Crt102Img.v:1002-1013). Owner: the image-B
+(* THE IMAGE: Crt102Img.v's Section b hypotheses, verbatim (B' values in Crt102Img.v:1003-1014). Owner: the image-B
    instance; each is a vm_compute at PI_prog_B once lib/B/PAImg_prog.v builds (its :160 waits for the instance
    owner's IMG_TOP_B = 0x601000). *)
 Hypothesis HB_base : BASE = B_prog_base.
@@ -107,9 +108,9 @@ Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte
 #[local] Notation AJ := (ajournal_xR (SK := SK) SEGS B PST ARx (YA0nH.wle' SEGS YGcfRehidePost.RZ_cf)).
 (* the allocator's engine laws at hl = cf_head (at the instance: AR_laws_x_cf of the instance owner's ARcf) *)
 Hypothesis LAWS : AR_laws_x SEGS B ARx cf_head.
-(* the two image facts walk S4's lanes carry (S4_PsSrc.v:116-119): the image's zero-shadow ranges are granule-aligned
+(* the two image facts walk S4's lanes carry (S4_PsSrc.v:117-120): the image's zero-shadow ranges are granule-aligned
    (asyms_ok's aso_zshadow, YG0f.v:191), and IMAGE B's shadow bytes are present: Crt102B_T3Base.crt3_img_shadow_vis_B,
-   the instance owner's YGcfAmx2.img_shadow_vis_cf (YGcfAmx2.v:47-49) at image B's CfImgB.CfImg_B, over
+   the instance owner's YGcfAmx2.img_shadow_vis_cf (YGcfAmx2.v:48-50) at image B's CfImgB.CfImg_B, over
    [IMG_LO_B, IMG_TOP_B), with ARcf -> ARx (crt3_img_shadow_vis_B_a8: at ARx := ARcf (ci := CfImg_B) it is the
    instance owner's definition). Never image A's IMG_LO / IMG_TOP. Owner: the instance owner (the instance's
    supply of img_shadow_vis_cf at CfImg_B). *)
@@ -147,7 +148,7 @@ Variables (ly : alayout) (S : astate) (Hp : list Z) (W : world SEGS) (regs : bvm
   (Lam : list (Z * Z)) (peak cnt ran most : Z).
 #[local] Notation sp0 := (spZ regs).
 #[local] Notation sp1 := (CRT_sp1 (regs := regs)).
-(* crt_side / crt_live take no rp_* since 11c39f7e88b7 (the position is crt_pos, on the r = 0 path only) *)
+(* crt_side / crt_live take no rp_* (the position is crt_pos, on the r = 0 path only) *)
 #[local] Notation liveB := (crt_live (rc := rc) (PI := prh_img_B) (RL := RL) (SK := SK) (L := B_prog_listing)
   (PA := PA) (B := B) (ARx := ARx)
   (ly := ly) (S := S) (Hp := Hp) (W := W) (regs := regs) (mem := mem) (md := md) (doc := doc) (t := t) (D := D)
@@ -241,8 +242,8 @@ Lemma crt102b_T3_X_is_glue : STMT_X =
     (CRT_X_OFF := CRT_X_OFF_B).
 Proof. reflexivity. Qed.
 
-(* THE SEGMENT LEMMA. The two WAITS of the re-fit (2026-10-30) are CLOSED at the crt head
-   71a8716672850d3, which carries the kit cut (PRH_FnPj 5aca5cbe2cfb):
+(* THE SEGMENT LEMMA. The two WAITS of the re-fit (2026-10-30) are CLOSED at the crt head,
+   which carries the kit cut (PRH_FnPj 5aca5cbe2cfb):
    - DEAD-PJSTRING / -PJSET: the C4a exit (a refusal in pj_string / pj_set, then r = 1 at X) is unreachable AT ITS
      SOURCE by the callee texts' own clauses `(cnt <> fail -> a <> 0)` (tpj_string_specX) and `(fail < cnt \/ cnt +
      |trace| <= fail) -> res = 0` (tpj_set_specX) at fail = SIZE_MAXZ; O1 is reached only granted (crt_at_O1_3:

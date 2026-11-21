@@ -29,10 +29,10 @@
    every byte outside the three write windows is kept (the 13 saves, the flag pointer word F + 0x1f8, the input).
    Then the continuation e01_from_hd is applied at 0x808e4.
 
-   Templates (read and ported by hand): lib/A/RtPgRoute808.v at 8dd4e3acf3cb (rate's own engine set-up over Ereg,
-   region and alias facts); proofs/reac-pw/fuzz_role/lib/A/RPgX01.v at 9bffaa83ff88 (rx_reg_atom / rx_reg_ext, the
-   frame facts of rx_ffacts, aj runs under the harness journal); proofs/reac-pw/fuzz_role/lib/A/RPgW3a.v at
-   926d8cf4a759 (w3_lit_at, w3_keep_run); proofs/libreac/fuzz_boxreg/lib/A/Prog/BoxLxEntry.v at ee71d1fd3fcf
+   Templates (read and ported by hand): lib/A/RtPgRoute808.v (rate's own engine set-up over Ereg,
+   region and alias facts); proofs/reac-pw/fuzz_role/lib/A/RPgX01.v (rx_reg_atom / rx_reg_ext, the
+   frame facts of rx_ffacts, aj runs under the harness journal); proofs/reac-pw/fuzz_role/lib/A/RPgW3a.v
+    (w3_lit_at, w3_keep_run); proofs/libreac/fuzz_boxreg/lib/A/Prog/BoxLxEntry.v
    (gb_entry_m: the same frame header, shadow and size test in its own layer; eb_srl26). *)
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

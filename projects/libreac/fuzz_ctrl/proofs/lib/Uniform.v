@@ -3,6 +3,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType State Monad Specs Run.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require RoomShapesDraft AgreeLim.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable.R Require Import Cfg.
+From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require RomBase RomStableK YK15.
 Import ListNotations.
 
 Ltac sys_outcome_cases H :=
@@ -42,7 +43,17 @@ Proof.
       assert (Hm : mmap_spec (in_arg i 0) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (in_arg i 5)
           i m (Ok eff m' evs)).
       { revert Hs. unfold syscall_spec, dispatch. cbv beta. rewrite E. intro H. exact H. }
-      clear Hs. unfold mmap_spec in Hm. sys_outcome_cases Hm; (split; [reflexivity | proc_kept FR]).
+      (* mmap_fixed_overflow must be unfolded here or sys_outcome_cases enumerates
+         nothing on that branch and evs stays free, giving "Unable to unify [] with
+         evs".  Measured at the shas rather than inferred: mmap_spec's BODY mentions
+         mmap_fixed_overflow 5 times at 75d69e00 and 0 times at f1006fe8, while
+         err_ret in that body drops 26 -> 21 - the revision SUBSTITUTED the new
+         definition for four err_ret ENOMEM arms.  (A bare grep for the name at
+         f1006fe8 returns two hits; both are the Example names
+         mmap_fixed_overflowing_len_*, a prefix collision, not the definition.)
+         Diagnosis and cure from RepairG1Injected, which found the same line in
+         nine trees; the cause above is re-measured here. *)
+      clear Hs. unfold mmap_spec, mmap_fixed_overflow in Hm. sys_outcome_cases Hm; (split; [reflexivity | proc_kept FR]).
     - destruct (Z.eqb_spec (bv_unsigned (in_sysno i)) 216) as [E|_].
       + intros _ Hs.
         assert (Hm : mremap_spec (in_arg i 0) (in_arg i 1) (in_arg i 2) (in_arg i 3) i m (Ok eff m' evs)).
@@ -80,8 +91,17 @@ Definition place_uniform (c : config) : Prop :=
   forall e1 c1 e2 c2, sstep_cfg segs ACFG c e1 (SNext c1) -> sstep_cfg segs ACFG c e2 (SNext c2) ->
     e1 = e2 /\ (forall tr, obs_trace_cfg segs ACFG c1 tr <-> obs_trace_cfg segs ACFG c2 tr).
 
+(* POLICY-PINNED-TO-MODEL (Main, 2026-11-07).  [RoomShapesDraft.policy_pinned]
+   is a CONJUNCT of the predicate every producer of [canon_fit_at] already
+   builds, not a free-standing hypothesis: #38's [linux_place_is] pins the
+   address and [linux_place_unique] makes it the only one, so the old form --
+   quantified over every [policy_ok] policy with nothing tying it to the
+   model -- was FALSE, not merely unproved.  The producers only ever
+   ESTABLISH [canon_fit_at], so the obligation moves inward to them and no
+   published file gains a premise. *)
 Definition canon_fit_at (c : config) : Prop :=
   forall p s st, RoomShapesDraft.policy_ok p ->
+  RoomShapesDraft.policy_pinned p s (cfg_model c) ->
   (page_round_down_Z (alloc_top (m_vmmaps (cfg_model c))) <= st)%Z ->
   (vm_limit (m_vmmaps (cfg_model c)) <= AgreeLim.LIM_AG)%Z ->
   forall x8 len, RoomShapesDraft.placement_at segs c x8 len ->
@@ -125,7 +145,7 @@ Proof. intros c Hn x8 len Hp. exfalso. exact (Hn x8 len Hp). Qed.
 
 Lemma canon_fit_at_nonplacement : forall c,
   (forall x8 len, ~ RoomShapesDraft.placement_at segs c x8 len) -> canon_fit_at c.
-Proof. intros c Hn p s st _ _ _ x8 len Hp. exfalso. exact (Hn x8 len Hp). Qed.
+Proof. intros c Hn p s st _ _ _ _ x8 len Hp. exfalso. exact (Hn x8 len Hp). Qed.
 
 Lemma uniform_nonplacement : forall c,
   (forall x8 len, ~ RoomShapesDraft.placement_at segs c x8 len) ->
@@ -164,3 +184,233 @@ Proof.
 Qed.
 
 End Uniform.
+
+(* ------------------------------------------------------------------ *)
+(* LPS 08b1429: the run reads [run_segments segs inp sp mb] from
+   [init_config (run_segments ..) ..], so [AgreeCanon]'s canon half needs [uniform] there, while
+   the walks stay over the binary's own segments.  [uniform] quantifies over every reachable
+   configuration, so it is not a node-by-node lift: the walk bounds the reachable set, exactly as
+   [RomStableK.cut_free_wrom] does, and at each node the two trace sets agree because both are the
+   walk's own [T] ([YK15.realizes_obs_iff] on each side). *)
+Section UniformRun.
+Import RomBase RomStableK.
+
+Lemma placement_at_wrom : forall segs c r x8 len,
+  RoomShapesDraft.placement_at segs (cwrom c r) x8 len <-> RoomShapesDraft.placement_at segs c x8 len.
+Proof.
+  intros segs [ms m] r x8 len. unfold RoomShapesDraft.placement_at.
+  cbn [cfg_ms cfg_model cwrom wrom ms_svc_pending].
+  rewrite sys_input_wrom. unfold RoomShapesDraft.placement_len, with_mem, in_arg, in_sysno.
+  cbn [in_args]. reflexivity.
+Qed.
+
+(** [placement_at] reads the input's number and arguments and the model, never its memory, and
+    those come from the machine alone: the segment list does not enter. *)
+Lemma placement_at_app : forall segs tail c x8 len,
+  RoomShapesDraft.placement_at (segs ++ tail) c x8 len <-> RoomShapesDraft.placement_at segs c x8 len.
+Proof.
+  intros segs tail [ms m] x8 len. unfold RoomShapesDraft.placement_at.
+  cbn [cfg_ms cfg_model]. unfold RoomShapesDraft.placement_len, in_sysno, in_arg, sys_input.
+  cbn [in_args]. reflexivity.
+Qed.
+
+(** [canonical_ret] reads the input's number and arguments, the model and the specification of
+    the answer, never [in_mem]'s bytes. *)
+Lemma canonical_ret_wm_fwd : forall p s st i mp m ret,
+  (forall o, syscall_spec (with_mem i mp) m o <-> syscall_spec i m o) ->
+  RoomShapesDraft.canonical_ret p s st i m ret -> RoomShapesDraft.canonical_ret p s st (with_mem i mp) m ret.
+Proof.
+  intros p s st i mp m ret Hs H.
+  assert (Hm : RoomShapesDraft.mremap_in_place p s (with_mem i mp) m <-> RoomShapesDraft.mremap_in_place p s i m).
+  { unfold RoomShapesDraft.mremap_in_place. split.
+    - intros [(eff & m' & evs & H1 & H2) H3].
+      split; [exists eff, m', evs; split; [exact (proj1 (Hs _) H1) | exact H2] | exact H3].
+    - intros [(eff & m' & evs & H1 & H2) H3].
+      split; [exists eff, m', evs; split; [exact (proj2 (Hs _) H1) | exact H2] | exact H3]. }
+  unfold RoomShapesDraft.canonical_ret in *.
+  destruct H as [H | [H | [(E & [(Er & Hip) | (Hnip & Hf)]) | H]]].
+  - left. exact H.
+  - right. left. exact H.
+  - right. right. left. split; [exact E|]. left. split; [exact Er | exact (proj2 Hm Hip)].
+  - right. right. left. split; [exact E|]. right.
+    split; [intros Hip; exact (Hnip (proj1 Hm Hip)) | exact Hf].
+  - right. right. right. exact H.
+Qed.
+
+(** A canonical step of a node over its own segments is one over the run's segment list and
+    backing: its system call reads the same specification over the larger backing ([sys_rob],
+    node_ok's third conjunct), and [apply_effect_wrom] carries the backing through the answer. *)
+Lemma canonical_step_lift : forall segs tail,
+  (forall s, In s tail -> seg_writable s = false) ->
+  forall p s st c c2 r, sys_rob segs c -> rom_ext (ms_rom (cfg_ms c)) r ->
+  RoomShapesDraft.canonical_step p s st segs c c2 ->
+  RoomShapesDraft.canonical_step p s st (segs ++ tail) (cwrom c r) (cwrom c2 r).
+Proof.
+  intros segs tail Hnw p s st [ms m] c2 r Hrob Hr Hc x8 len Hpl.
+  apply (proj1 (placement_at_app segs tail (cwrom (mkCfg ms m) r) x8 len)) in Hpl.
+  apply (proj1 (placement_at_wrom segs (mkCfg ms m) r x8 len)) in Hpl.
+  pose proof Hpl as [_ [Hsvc _]]. cbn [cfg_ms cfg_model] in Hsvc, Hr.
+  destruct (Hc x8 len Hpl) as (eff & m' & evs & m'' & Hs & -> & Hret).
+  cbn [cfg_ms cfg_model] in Hs, Hret.
+  pose proof (fun o => Hrob r x8 Hr Hsvc o) as HS. cbn [cfg_ms cfg_model] in HS.
+  exists eff, m', evs, m''. unfold cwrom. cbn [cfg_ms cfg_model].
+  rewrite (sys_input_app_nw segs tail) by exact Hnw.
+  split; [exact (proj2 (HS _) Hs)|].
+  split; [first [reflexivity | rewrite apply_effect_wrom; reflexivity]|].
+  exact (canonical_ret_wm_fwd p s st (sys_input segs ms x8) (ms_read_byte (wrom ms r)) m (eff_ret eff) HS Hret).
+Qed.
+
+(** The walk's nodes bound what the run can reach, so [uniform] carries to the run's segment list
+    and backing together.  [T] is the walk's trace set on both sides. *)
+Theorem uniform_lift : forall segs tail,
+  (forall s, In s tail -> seg_executable s = false) ->
+  (forall s, In s tail -> seg_writable s = false) ->
+  vdso_image segs = None ->
+  forall c T, @YK15.realizes segs AcfgMode c T -> YK15.cut_free segs c -> uniform segs c ->
+  forall r, rom_ext (ms_rom (cfg_ms c)) r -> uniform (segs ++ tail) (cwrom c r).
+Proof.
+  intros segs tail Hnx Hnw Hvi c T H.
+  induction H as [c I evs nx T i0 Hn Hc IH | c Hh | c T T' H IH Heq
+                  | c I nx T i0 Hn Hc IH | c T Hb Hrb];
+    intros NR HU r Hr.
+  - apply uniform_intro.
+    + intros x8 len Hpl e1 c1 e2 c2 H1 H2.
+      pose proof (@node_ok_app_tail segs tail AcfgMode Hnx Hnw Hvi
+                    (cwrom c r) I evs (fun i => cwrom (nx i) r) i0
+                    (@node_wrom segs AcfgMode Hvi c I evs nx r Hn Hr)) as HN.
+      destruct (proj1 (proj2 HN) e1 (SNext c1) H1) as (i & -> & Ei).
+      destruct (proj1 (proj2 HN) e2 (SNext c2) H2) as (j & -> & Ej).
+      injection Ei as ->. injection Ej as ->.
+      assert (Hpl0 : RoomShapesDraft.placement_at segs c x8 len).
+      { apply (proj1 (placement_at_wrom segs c r x8 len)).
+        exact (proj1 (placement_at_app segs tail (cwrom c r) x8 len) Hpl). }
+      destruct (uniform_here segs c HU x8 len Hpl0 (evs i) (nx i) (evs j) (nx j)
+                  (proj1 Hn i) (proj1 Hn j)) as (Ee & Hobs).
+      split; [exact Ee|].
+      intros tr.
+      assert (Ri : forall k, @YK15.realizes (segs ++ tail) AcfgMode (cwrom (nx k) r) (T k)).
+      { intros k. apply (@realizes_app_tail segs tail AcfgMode Hnx Hnw Hvi).
+        apply (@realizes_wrom segs AcfgMode Hvi _ (T k) (Hc k)).
+        rewrite (@node_rom segs AcfgMode Hvi c I evs nx Hn k). exact Hr. }
+      assert (Ci : forall k, YK15.cut_free (segs ++ tail) (cwrom (nx k) r)).
+      { intros k.
+        pose proof (YK15.cut_free_step segs c (evs k) (nx k) NR (proj1 Hn k)) as NRk.
+        apply (@cut_free_app_tail segs tail Hnx Hnw Hvi _ (T k));
+          [ apply (@realizes_wrom segs AcfgMode Hvi _ (T k) (Hc k));
+            rewrite (@node_rom segs AcfgMode Hvi c I evs nx Hn k); exact Hr
+          | apply (@cut_free_wrom segs Hvi _ (T k) (Hc k) NRk);
+            rewrite (@node_rom segs AcfgMode Hvi c I evs nx Hn k); exact Hr ]. }
+      rewrite (YK15.realizes_obs_iff (segs ++ tail) _ (T i) (Ri i) (Ci i) tr).
+      rewrite (YK15.realizes_obs_iff (segs ++ tail) _ (T j) (Ri j) (Ci j) tr).
+      rewrite <- (YK15.realizes_obs_iff segs (nx i) (T i) (Hc i)
+                   (YK15.cut_free_step segs c (evs i) (nx i) NR (proj1 Hn i)) tr).
+      rewrite <- (YK15.realizes_obs_iff segs (nx j) (T j) (Hc j)
+                   (YK15.cut_free_step segs c (evs j) (nx j) NR (proj1 Hn j)) tr).
+      exact (Hobs tr).
+    + (* [canon_fit_at]: the node's canonical step over its own segments ([uniform_fit_here]) is
+         one of the run's ([canonical_step_lift]); its step is the node's own over the run. *)
+      intros p s st Hp Hpin Hst Hlim x8 len Hpl _.
+      assert (Hpl0 : RoomShapesDraft.placement_at segs c x8 len).
+      { apply (proj1 (placement_at_wrom segs c r x8 len)).
+        exact (proj1 (placement_at_app segs tail (cwrom c r) x8 len) Hpl). }
+      destruct (uniform_fit_here segs c HU p s st Hp Hpin Hst Hlim x8 len Hpl0
+                  (ex_intro _ (evs i0) (ex_intro _ (nx i0) (proj1 Hn i0)))) as (e & c2 & Hs & Hcs).
+      destruct (proj1 (proj2 Hn) e (SNext c2) Hs) as (i & -> & Ei). injection Ei as ->.
+      pose proof (@node_ok_app_tail segs tail AcfgMode Hnx Hnw Hvi
+                    (cwrom c r) I evs (fun i => cwrom (nx i) r) i0
+                    (@node_wrom segs AcfgMode Hvi c I evs nx r Hn Hr)) as HN.
+      exists (evs i), (cwrom (nx i) r). split; [exact (proj1 HN i)|].
+      exact (canonical_step_lift segs tail Hnw p s st c (nx i) r (proj2 (proj2 Hn)) Hr Hcs).
+    + intros e c' Hs.
+      pose proof (@node_ok_app_tail segs tail AcfgMode Hnx Hnw Hvi
+                    (cwrom c r) I evs (fun i => cwrom (nx i) r) i0
+                    (@node_wrom segs AcfgMode Hvi c I evs nx r Hn Hr)) as HN.
+      destruct (proj1 (proj2 HN) e (SNext c') Hs) as (i & -> & Ei). injection Ei as ->.
+      apply (IH i (YK15.cut_free_step segs c (evs i) (nx i) NR (proj1 Hn i))
+                 (uniform_step segs c (evs i) (nx i) HU (proj1 Hn i))).
+      rewrite (@node_rom segs AcfgMode Hvi c I evs nx Hn i). exact Hr.
+  (* [cwrom c r] is [mkCfg (wrom (cfg_ms c) r) (cfg_model c)] (Reusable/RomBase.v:25), so
+     [cfg_model (cwrom c r)] is [cfg_model c] by conversion and Hh is already the premise.
+     RomStableK.v:311 closes the same rz_halt obligation the same way. *)
+  - apply uniform_halted. exact Hh.
+  - exact (IH NR HU r Hr).
+  - apply uniform_intro.
+    + intros x8 len Hpl e1 c1 e2 c2 H1 H2.
+      pose proof (@node_ok_app_tail segs tail AcfgMode Hnx Hnw Hvi
+                    (cwrom c r) I (fun _ => []) (fun i => cwrom (nx i) r) i0
+                    (@node_wrom segs AcfgMode Hvi c I (fun _ => []) nx r Hn Hr)) as HN.
+      destruct (proj1 (proj2 HN) e1 (SNext c1) H1) as (i & -> & Ei).
+      destruct (proj1 (proj2 HN) e2 (SNext c2) H2) as (j & -> & Ej).
+      injection Ei as ->. injection Ej as ->.
+      assert (Hpl0 : RoomShapesDraft.placement_at segs c x8 len).
+      { apply (proj1 (placement_at_wrom segs c r x8 len)).
+        exact (proj1 (placement_at_app segs tail (cwrom c r) x8 len) Hpl). }
+      destruct (uniform_here segs c HU x8 len Hpl0 [] (nx i) [] (nx j)
+                  (proj1 Hn i) (proj1 Hn j)) as (_ & Hobs).
+      split; [reflexivity|].
+      intros tr.
+      assert (Ri : forall k, @YK15.realizes (segs ++ tail) AcfgMode (cwrom (nx k) r) (T k)).
+      { intros k. apply (@realizes_app_tail segs tail AcfgMode Hnx Hnw Hvi).
+        apply (@realizes_wrom segs AcfgMode Hvi _ (T k) (Hc k)).
+        rewrite (@node_rom segs AcfgMode Hvi c I (fun _ => []) nx Hn k). exact Hr. }
+      assert (Ci : forall k, YK15.cut_free (segs ++ tail) (cwrom (nx k) r)).
+      { intros k.
+        pose proof (YK15.cut_free_step segs c [] (nx k) NR (proj1 Hn k)) as NRk.
+        apply (@cut_free_app_tail segs tail Hnx Hnw Hvi _ (T k));
+          [ apply (@realizes_wrom segs AcfgMode Hvi _ (T k) (Hc k));
+            rewrite (@node_rom segs AcfgMode Hvi c I (fun _ => []) nx Hn k); exact Hr
+          | apply (@cut_free_wrom segs Hvi _ (T k) (Hc k) NRk);
+            rewrite (@node_rom segs AcfgMode Hvi c I (fun _ => []) nx Hn k); exact Hr ]. }
+      rewrite (YK15.realizes_obs_iff (segs ++ tail) _ (T i) (Ri i) (Ci i) tr).
+      rewrite (YK15.realizes_obs_iff (segs ++ tail) _ (T j) (Ri j) (Ci j) tr).
+      rewrite <- (YK15.realizes_obs_iff segs (nx i) (T i) (Hc i)
+                   (YK15.cut_free_step segs c [] (nx i) NR (proj1 Hn i)) tr).
+      rewrite <- (YK15.realizes_obs_iff segs (nx j) (T j) (Hc j)
+                   (YK15.cut_free_step segs c [] (nx j) NR (proj1 Hn j)) tr).
+      exact (Hobs tr).
+    + intros p s st Hp Hpin Hst Hlim x8 len Hpl _.
+      assert (Hpl0 : RoomShapesDraft.placement_at segs c x8 len).
+      { apply (proj1 (placement_at_wrom segs c r x8 len)).
+        exact (proj1 (placement_at_app segs tail (cwrom c r) x8 len) Hpl). }
+      destruct (uniform_fit_here segs c HU p s st Hp Hpin Hst Hlim x8 len Hpl0
+                  (ex_intro _ [] (ex_intro _ (nx i0) (proj1 Hn i0)))) as (e & c2 & Hs & Hcs).
+      destruct (proj1 (proj2 Hn) e (SNext c2) Hs) as (i & -> & Ei). injection Ei as ->.
+      pose proof (@node_ok_app_tail segs tail AcfgMode Hnx Hnw Hvi
+                    (cwrom c r) I (fun _ => []) (fun i => cwrom (nx i) r) i0
+                    (@node_wrom segs AcfgMode Hvi c I (fun _ => []) nx r Hn Hr)) as HN.
+      exists [], (cwrom (nx i) r). split; [exact (proj1 HN i)|].
+      exact (canonical_step_lift segs tail Hnw p s st c (nx i) r (proj2 (proj2 Hn)) Hr Hcs).
+    + intros e c' Hs.
+      pose proof (@node_ok_app_tail segs tail AcfgMode Hnx Hnw Hvi
+                    (cwrom c r) I (fun _ => []) (fun i => cwrom (nx i) r) i0
+                    (@node_wrom segs AcfgMode Hvi c I (fun _ => []) nx r Hn Hr)) as HN.
+      destruct (proj1 (proj2 HN) e (SNext c') Hs) as (i & -> & Ei). injection Ei as ->.
+      apply (IH i (YK15.cut_free_step segs c [] (nx i) NR (proj1 Hn i))
+                 (uniform_step segs c [] (nx i) HU (proj1 Hn i))).
+      rewrite (@node_rom segs AcfgMode Hvi c I (fun _ => []) nx Hn i). exact Hr.
+  - exfalso. exact (YK15.cut_free_here segs c NR Hb).
+Qed.
+
+(** The run's own start.  [AgreeCanon.canon_spec_of_rz] needs one more lift of the same shape
+    before it can use this: its [canon_fit] premise gives [fit_from p segs ..], and the goal after
+    [run_init] is over [run_segments ..].  [fit_from] quantifies over [canon_reach], so it takes the
+    same walk-bounded induction as [uniform_lift] (NOT a change to [canon_fit], which would shift
+    an obligation rather than discharge it). *)
+Theorem uniform_run_init : forall segs inp (sp mb : word) pc ph brk rnd lim T,
+  vdso_image segs = None ->
+  @YK15.realizes segs AcfgMode (init_config segs pc ph sp brk mb rnd lim inp) T ->
+  YK15.cut_free segs (init_config segs pc ph sp brk mb rnd lim inp) ->
+  uniform segs (init_config segs pc ph sp brk mb rnd lim inp) ->
+  uniform (run_segments segs inp sp mb)
+    (init_config (run_segments segs inp sp mb) pc ph sp brk mb rnd lim inp).
+Proof.
+  intros segs inp sp mb pc ph brk rnd lim T Hvi H HC HU.
+  assert (Hr : rom_ext (ms_rom (cfg_ms (init_config segs pc ph sp brk mb rnd lim inp)))
+                 (seg_rom1 (run_segments segs inp sp mb)))
+    by (rewrite init_config_rom; apply rom_ext_run_segments).
+  rewrite init_config_run_segments. unfold run_segments at 1.
+  apply (uniform_lift segs (vdso_segments (in_kernel inp) sp mb)
+           (fun s Hs => vdso_segments_nx _ _ _ s Hs) (fun s Hs => vdso_segments_nw _ _ _ s Hs)
+           Hvi _ T H HC HU _ Hr).
+Qed.
+End UniformRun.

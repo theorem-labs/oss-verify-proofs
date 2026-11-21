@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the auxv cells are read in the launch's layout (auxv_cells with the CONFIG_RSEQ flag's fact) and that fact is passed to the leaf lemmas. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -99,7 +100,7 @@ Proof.
   assert (OBJ16: (A + 128) mod 16 = 0). { replace (A + 128) with (A + 8 * 16) by alia. rewrite Z_mod_plus_full. exact BR2. }
   pose proof ES10 as (S1 & S2 & S3 & S4 & S5 & S6 & S7 & S8 & S9 & S10 & S11 & S12 & S13 & S14 & S15 & S16 & S17 & S18 & S19 & S20).
   unfold EH_CAUGHT, EH_UNCAUGHT, SYSCAT_GUARD, UW_FLAGS, TD_LOCALE, LOCALE_MSGCAT, GLOBAL_LOCALE, CANARY, AUXVP in S1, S2, S3, S4, S5, S6, S7, S8, S9.
-  pose proof (auxv_cells M10 av uid rnd hw S13) as (X0 & X1 & X2 & X3 & X4 & X5 & X6 & X7 & X8 & X9 & X10 & X11 & X12 & X13 & X14 & X15 & X16 & X17 & X18 & X19).
+  pose proof (auxv_cells M10 av uid rnd hw S13 ltac:(lia)) as (Xr & X0 & X1 & X2 & X3 & X4 & X5 & X6).
   pose proof F10 as (F56 & F64 & F72 & F80 & F88 & F96 & F104 & F112 & F120 & F128 & F136 & F144 & F152 & F184 & F48).
   pose proof FT10 as (F32 & F24 & F16 & F8). unfold DIV_RET in F56. unfold OPMOD1_RET in F8. unfold OPEQ_RET in F24.
   assert (WUW: L5.writable RSEGS M10 462433 6). { apply (writable_img M10 UW_FLAGS 6 wseg_uwflags); unfold UW_FLAGS; alia. }
@@ -142,21 +143,7 @@ Proof.
   { destruct fl.
     - destruct S5 as (U0 & U1 & U2 & U3 & U4 & U5).
       (* [comment removed for export] *)
-      unshelve epose proof (e2tu_v1_conc fx10 R10 M10 (S - 416) (A + 128) av canary uid rnd hw (U R0 27) (U R0 26) (U R0 25) (U R0 24) (U R0 23) (U R0 22) (U R0 21) (U R0 20) (U R0 19) (U R0 18) (U R0 9) (S + 64) (S + 96) (U R0 8) _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _) as (fx11 & R11 & M11 & MS11 & K11 & REST).
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
+      unshelve epose proof (e2tu_v1_conc Xr fx10 R10 M10 (S - 416) (A + 128) av canary uid rnd hw (U R0 27) (U R0 26) (U R0 25) (U R0 24) (U R0 23) (U R0 22) (U R0 21) (U R0 20) (U R0 19) (U R0 18) (U R0 9) (S + 64) (S + 96) (U R0 8) _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _) as (fx11 & R11 & M11 & MS11 & K11 & REST).
       { (* [comment removed for export] *) pr. }
       { (* [comment removed for export] *) pr. }
       { (* [comment removed for export] *) pr. }
@@ -237,21 +224,7 @@ Proof.
       decompose [and] REST. repeat split; assumption.
     - destruct S5 as (U0 & U2 & U4).
       (* [comment removed for export] *)
-      unshelve epose proof (e2tu_v0_conc fx10 R10 M10 (S - 416) (A + 128) av canary uid rnd hw (U R0 27) (U R0 26) (U R0 25) (U R0 24) (U R0 23) (U R0 22) (U R0 21) (U R0 20) (U R0 19) (U R0 18) (U R0 9) (S + 64) (S + 96) (U R0 8) _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _) as (fx11 & R11 & M11 & MS11 & K11 & REST).
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
-      { (* [comment removed for export] *) pr. }
+      unshelve epose proof (e2tu_v0_conc Xr fx10 R10 M10 (S - 416) (A + 128) av canary uid rnd hw (U R0 27) (U R0 26) (U R0 25) (U R0 24) (U R0 23) (U R0 22) (U R0 21) (U R0 20) (U R0 19) (U R0 18) (U R0 9) (S + 64) (S + 96) (U R0 8) _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _) as (fx11 & R11 & M11 & MS11 & K11 & REST).
       { (* [comment removed for export] *) pr. }
       { (* [comment removed for export] *) pr. }
       { (* [comment removed for export] *) pr. }
@@ -326,7 +299,7 @@ Proof.
       { (* [comment removed for export] *) pr. }
       { (* [comment removed for export] *) pr. }
       exists fx11, R11, M11. split. exact MS11. split. exact K11. exact REST. }
-  clear X0 X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 X12 X13 X14 X15 X16 X17 X18 X19.
+  clear Xr X0 X1 X2 X3 X4 X5 X6.
   destruct STEPT as (fx11 & R11 & M11 & MS11 & K11 & R11_1 & R11_2 & R11_9 & R11_10 & R11_11 & R11_12 & T8 & T40 & T48 & T56 & T64 & T68 & V244 & V243 & V246 & V245
                      & T16 & V242 & V241 & T120 & T24 & T32 & T88 & T104 & T112 & T96 & VUC & FR11 & GR11).
   eapply (L5.cps_of_msteps RSEGS). exact Mh. exact Ml. exact MS11.
@@ -352,7 +325,7 @@ Proof.
     split. exact V241. split. exact V242. split. exact V243. split. exact V244. split. exact V245. split. exact V246.
     split. c64 AG11. split. c64 AG11. split. c64 AG11. split. c64 AG11.
     split. exact S10. split. exact S11. split. exact S12.
-    split. { intros j Hj. eapply (L5C.u64_at_agree RSEGS M10 M11). apply AG11; alia. alia. alia. apply S13. exact Hj. }
+    split. { apply (L5PSU.auxv_ok_agree M10 M11 av uid rnd hw S13); [alia |]. intros i Hi. assert (AGi : L5C.agree_on M10 M11 i 1) by (apply AG11; alia). exact (AGi i ltac:(alia)). }
     split. exact S14. split. exact S15. split. exact S16. split. exact S17.
     assert (AGI: L5C.agree_on M10 M11 65536 (393568 - 65536)) by (apply AG11; alia).
     split. { intros i Hi. rewrite (AGI i) by alia. apply S18. exact Hi. }

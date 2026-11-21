@@ -22,7 +22,7 @@
    so no `trap_<shape>` lemma of lib/B/W_traps.v is cited here and the runner decides every branch it meets.
 
    ------------------------------------------------------------------ what this walk carries, and B's differences
-   from image A's twin lib/A/W_LLVMFuzzerTestOneInput_drain.v (a86c2788a94, dc_stA..dc_stF / dc_calls), whose
+   from image A's twin lib/A/W_LLVMFuzzerTestOneInput_drain.v (dc_stA..dc_stF / dc_calls), whose
    structure this file ports:
      - &g_lock lives in s7 (reg 23), not in the frame cell F+40: dc_regs carries `getr regs 23 = w64 s7v` with
        s7v = rg_lock fr_RG before 0x84910 and s7v = 1 after it (`li s7,1`), which is what lregs_common asks of
@@ -32,9 +32,9 @@
        frame's 128 bytes.
      - the arm has no join block: 0x84934 jumps straight to the latch, s9 (= t, reg 25) and s4 (= the cursor,
        reg 20) are never reloaded, so dc_stF lands on INV_K itself.
-     - check_no_loss is the kit's cnl_spec, lib/B/W_contract.v:2054 (cnl_post :1967, CNL_STK :1966 = 16640,
+     - check_no_loss is the kit's cnl_spec, lib/B/W_contract.v:2055 (cnl_post :1967, CNL_STK :1966 = 16640,
        Section w3n), taken at G = [(HA + 64, 32)], the drained slot's two list headers.
-     - drain's aothers_at compares the fds modulo 2 ^ 32 (lib/B/W_contract.v:969, the machine's `beq a1,a4`),
+     - drain's aothers_at compares the fds modulo 2 ^ 32 (lib/B/W_contract.v:970, the machine's `beq a1,a4`),
        where image A compares them outright.
      - ablocks_sep's second clause is over the block's REQUEST size already (lib/B/W_LLVMFuzzerTestOneInput_cut.v
        :412-416), so no widening step (image A's FP_REQ) appears at the two calls that name a footprint.
@@ -42,6 +42,7 @@
    Every address, frame cell, register, global and shadow fact below is B's own.  The interface this file builds
    on is lib/B/W_LLVMFuzzerTestOneInput_drain_defs.v (the arm's addresses, DLK, dr_env and the model notions);
    the arm's first stage (0x8489c-0x84900) and the closing file are other lanes'. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -356,7 +357,7 @@ Qed.
 Lemma dcE_inG_mem : forall G x n a, In (x, n) G -> x <= a < x + n -> inG G a.
 Proof. intros G x n a Hin Ha. unfold inG. apply Exists_exists. exists (x, n). split; [exact Hin | unfold in_zr; cbn; lia]. Qed.
 
-(* the cut's own Local Notation, which does not leave its file (lib/B/W_LLVMFuzzerTestOneInput_cut.v:161) *)
+(* the cut's own Local Notation, which does not leave its file (lib/B/W_LLVMFuzzerTestOneInput_cut.v:162) *)
 Local Notation LLVMF_STK := YCfn.LLVMF_STK.
 
 Section dr.
@@ -1508,7 +1509,7 @@ Proof.
   exact HCH.
 Qed.
 (* the caller's stack is readable from the arm's frame base up to ly_top, at any state the arm's journal reaches:
-   the kit's cnl_spec asks it at the check_no_loss call (lib/B/W_contract.v:2087, sp = F).  [F, sp0) is the
+   the kit's cnl_spec asks it at the check_no_loss call (lib/B/W_contract.v:2088, sp = F).  [F, sp0) is the
    function's own window, present at the end of the journal (dcF_pres); [sp0, ly_top) is the cut's STKR at the
    entry (fr_lib_pre_cf's 18th conjunct, before HB), kept to here because the journal changes no byte above its window
    (aview_above_of_journal) and no stack byte is a G_fr byte (inG_low: G_fr lies in the image). *)
@@ -1525,7 +1526,7 @@ Proof.
     by (unfold fr_lib_pre_cf in HPRE; tauto).
   pose proof HPREE as (_ & _ & _ & _ & _ & Hstk0 & _).
   pose proof Hstk0 as (_ & _ & _ & _ & _ & H47 & _ & _ & Htop2).
-  (* STKR, the 18th conjunct of the cut's fr_lib_pre_cf (lib/B/W_LLVMFuzzerTestOneInput_cut.v:293); HB follows it as the
+  (* STKR, the 18th conjunct of the cut's fr_lib_pre_cf (lib/B/W_LLVMFuzzerTestOneInput_cut.v:294); HB follows it as the
      19th and last (:282), so an explicit destruct, not a repeat that would also open HB *)
   assert (HSTKR : forall x, spZ (c_regs cx) <= x < ly_top (c_ly cx) ->
                     aview segs (w_H (c_W cx)) (c_mem cx) x <> None).
@@ -1670,8 +1671,8 @@ Ltac dr_meq HF Em := lazymatch type of HF with frame_of ?E ?rs ?m ?m' =>
 
 (* ================================================================== the six calls, one stage each *)
 (* ---- stage A: 0x84900 jal pthread_mutex_lock -> 0x84904.
-   Contract: lib/B/W_sites.v:90 alock_realizes at SIGMA WS_pthread_mutex_lock (the interface's dre_ALOCK);
-   journal composition: lib/B/W_sites.v:392 aj_gx_entry_at. ---- *)
+   Contract: lib/B/W_sites.v:91 alock_realizes at SIGMA WS_pthread_mutex_lock (the interface's dre_ALOCK);
+   journal composition: lib/B/W_sites.v:393 aj_gx_entry_at. ---- *)
 Lemma dc_stA : forall cx t m j si h fpos ly3 S3 k W c,
   lf_base B MT XM_LIB RLO RHI fr_live_pre G_fr cx ->
   DLK B G_fr fr_FP LS RINV cx t m j si h fpos ly3 S3 k W c ->
@@ -1748,8 +1749,8 @@ Proof.
 Qed.
 
 (* ---- stage C: 0x8490c mv a0,s7 ; li s7,1 ; jal pthread_mutex_unlock -> 0x84918.
-   Contract: lib/B/W_sites.v:105 aunlock_realizes at SIGMA WS_pthread_mutex_unlock (dre_AUNLOCK);
-   journal composition: lib/B/W_sites.v:392 aj_gx_entry_at.  s7 leaves holding 1 (what lregs_common asks at
+   Contract: lib/B/W_sites.v:106 aunlock_realizes at SIGMA WS_pthread_mutex_unlock (dre_AUNLOCK);
+   journal composition: lib/B/W_sites.v:393 aj_gx_entry_at.  s7 leaves holding 1 (what lregs_common asks at
    the latch); image A reloads &g_lock from the frame cell F+40 here, B has it in s7 already. ---- *)
 Lemma dc_stC : forall cx t m j si fpos FF ly S mc W c,
   lf_base B MT XM_LIB RLO RHI fr_live_pre G_fr cx ->
@@ -1847,7 +1848,7 @@ Proof.
 Qed.
 
 (* ---- stage D: 0x84918 mv a0,s5 ; jal check_no_loss_read -> 0x84920.
-   Contract: lib/B/W_contract.v:484 cnlr_spec at BASE + AF_fr_check_no_loss_read (dre_CNLR); its aleaf_post gained
+   Contract: lib/B/W_contract.v:485 cnlr_spec at BASE + AF_fr_check_no_loss_read (dre_CNLR); its aleaf_post gained
    errno's view as its last conjunct (:112), which this stage does not need;
    journal composition: dr_callZ above (W_journal.v ajournal_gx_sub). ---- *)
 Lemma dc_stD : forall cx t m j si fpos FF ly S mc h1 W c,
@@ -2240,7 +2241,7 @@ Ltac dcB_gk H := left; unfold inG, DR_GK;
   repeat (first [apply Exists_cons_hd; unfold in_zr; cbn [fst snd]; clear - H; lia | apply Exists_cons_tl]).
 
 (* ---- stage B: 0x84904 mv a0,s6 ; jal drain -> 0x8490c.
-   Contract: lib/B/W_contract.v:1027 dr_spec at BASE + AF_fr_drain (dre_DRAIN);
+   Contract: lib/B/W_contract.v:1028 dr_spec at BASE + AF_fr_drain (dre_DRAIN);
    journal composition: dr_callZ above (W_journal.v ajournal_gx_sub, then ajournal_gx_G_mono from drain's
    G_DR to the entry's G_fr in dcB_post_of). ---- *)
 Lemma dc_stB : forall cx t m j si h fpos FF ly S W c,
@@ -2303,7 +2304,7 @@ Proof.
   destruct (dr_blk ly S W mem md (lm_G m) ATABLE HAR HGin) as (HG4096 & HGceil & _).
   assert (HSA : lm_G m <= lm_G m + AENT * Z.of_nat j /\ lm_G m + AENT * Z.of_nat j + AENT <= lm_G m + ATABLE)
     by (unfold AENT, ATABLE; lia).
-  (* dr_spec's entry-pointer alignment (lib/B/W_contract.v:1035, cand11): the table is a live block, so 16-aligned
+  (* dr_spec's entry-pointer alignment (lib/B/W_contract.v:1036, cand11): the table is a live block, so 16-aligned
      (al_blocks), and AENT = 56 is a multiple of 8 - the derivation of _drain_entry.v's HSA8 *)
   assert (HSA8 : (lm_G m + AENT * Z.of_nat j) mod 8 = 0).
   { destruct (al_blocks _ _ LAWS ly S W mem md (lm_G m) ATABLE HAR HGin) as (HG16 & _).
@@ -3012,7 +3013,7 @@ Proof.
 Qed.
 
 (* ---- stage E: 0x84920 addi a1,s1,192 ; mv a0,s5 ; jal check_no_loss -> 0x8492c.
-   Contract: the kit's cnl_spec, lib/B/W_contract.v:2054 (cnl_post :1967, CNL_STK :1966 = 16640, Section w3n), at
+   Contract: the kit's cnl_spec, lib/B/W_contract.v:2055 (cnl_post :1967, CNL_STK :1966 = 16640, Section w3n), at
    BASE + AF_fr_check_no_loss, taken through dre_CNL at G = [(HA + 64, 32)], the drained slot's two list headers
    (gx_ok from dre_HGs / HG, gx_rt from dre_HGs / dre_HERR_HI / dre_HAP, rom_out from dre_ROM_OUT); its memmove
    bound `AREC * capb .. < 2 ^ 32` (:2018) from dcE_capb above; its last premise, the caller's stack readable from
@@ -3205,7 +3206,7 @@ Proof.
   pose proof (dcE_lit W mem _ _ HRV (proj1 (proj2 dcE_lits))) as L2.
   pose proof (dcE_lit W mem _ _ HRV (proj2 (proj2 dcE_lits))) as L3.
   assert (P20 : 0 <= 0 <= Z.of_nat (length (lm_O mc))) by lia.
-  (* cnl_spec's last premise (W_contract.v:2087): the stack readable from sp = F up to ly_top *)
+  (* cnl_spec's last premise (W_contract.v:2088): the stack readable from sp = F up to ly_top *)
   assert (HSTK : forall a, spZ regsc <= a < ly_top ly -> aview segs (w_H W) mem a <> None).
   { intros a Ha. rewrite Hspc in Ha. exact (dcF_stk_rd cx ly S fpos W mem mdc k HB HJ a Ha). }
   (* ---- the call ---- *)
@@ -3241,7 +3242,7 @@ Proof.
           HPREc ltac:(lia) eq_refl P4 P5 Rc10 Rc11 P8 Hsi HF8 P11 P12 HSRC P14 HZc
           HND HnE HnH SAT P20 P21 P22 P23 P24 HOBAT eq_refl HNO40 HNO32 HMR HOB0 HOB HRV L1 L2 L3 HROOM HMO
           HCAPB HSTK). }
-      (* the kit's cnl_post carries errno's view after apres_kept (W_contract.v:2032); this stage re-reads errno *)
+      (* the kit's cnl_post carries errno's view after apres_kept (W_contract.v:2033); this stage re-reads errno *)
       cbv beta. intros W2 c2 _ (ly2 & S2 & regs2 & mem2 & md2 & kk & E' & H' & -> & JC & HPR & HPK & _ & HSRC2 & ER &
         EV' & EC & HNDH & HTX & HCAPH & MAT & MGN & MNO & MOUT & HOB2 & HPERM & HFRS & HMO2 & _ & _).
       exists ly2, S2, regs2, mem2, md2, kk. split; [reflexivity|].
@@ -3379,7 +3380,7 @@ Proof.
 Qed.
 
 (* ---- stage F: 0x8492c ld a0,192(s1) ; jal check_shape_done -> 0x84934 ; j 84804 (the latch).
-   Contract: lib/B/W_contract.v:157 csd_spec at BASE + AF_fr_check_shape_done (dre_CSD) - aleaf_post, whose
+   Contract: lib/B/W_contract.v:158 csd_spec at BASE + AF_fr_check_shape_done (dre_CSD) - aleaf_post, whose
    errno-view conjunct (:112) this stage does not need;
    journal composition: dr_callZ above (ajournal_gx_sub), then the plain run of `j 84804` (W_journal.v
    paj_run_to_x).  B's arm has no join block: s9 = t and s4 = the cursor are already the latch's (image A

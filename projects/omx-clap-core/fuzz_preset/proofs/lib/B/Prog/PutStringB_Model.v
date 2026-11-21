@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3; internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: COPY, unchanged below this line, of lane WriteValueB's lib/B/Prog/WriteValueB_Model.v (blob 65202a3fe569,
    worktree h-rw-pre-7-bp-write-value, 2026-10-29 18:4xZ): the one #102 port of S7a_WriterRet + S7a_WriterLive both B' writer
    walks compose. *)
 (* Theorem Labs, 2026-10: fuzz_preset image B' (#102 asan-ubsan pin d663f82d, twin c90d4fa54d43), lane WriteValueB
    (h-rw-pre-7): the PURE writer-model lemmas the image-B' write_value walk composes, over K0's #102 writer texts
-   (walkkit-next decff67d721f, lib/A/PRH_FnWriter.v blob 2b497bc72172, PRH_Base.v blob 3004a98fe2d9). No machine
+   (walkkit-next, lib/A/PRH_FnWriter.v blob 2b497bc72172, PRH_Base.v blob 3004a98fe2d9). No machine
    state is stepped and no image is named here.
-   PORTED from h-rw-pre-5's WalkS7a files on origin/cold/h-hpreset-7-walk-S7B 7819c4b4583 (neither file is on this
-   lane's base int102 318474716583, and the lane adds only lib/B/Prog/WriteValueB*.v):
+   PORTED from h-rw-pre-5's WalkS7a files (neither file is on this
+   lane's base int102, and the lane adds only lib/B/Prog/WriteValueB*.v):
    - lib/A/Prog/S7a_WriterRet.v (blob 29e79f90789a), whole: the model's steps and the room count, the composition of
      prhWriter_ret along a run of puts (prhWriter_blk, prhWriter_ret_app), the run events (prhW_evs_len,
      prhWriter_ev_at), the position along a run (prhWriter_put_pos, prhWriter_ret_pos, _nil, _step);
@@ -18,10 +19,10 @@
      own o buf ..): the Section c lemmas take `most own` after `ran` and pass them through unchanged (no put moves
      them: the prhWriter_ret_ok keeps both);
    - prhWriter_put_pos names tput_specX's per-arm position post, whose NULL arm is keyed on `f' = 1` since kit-oldpin
-     7176c4125950 (decff keeps it); prhWriter_ret_pos_step's proof is unchanged (its NULL arm shows f' = 1 from
+     (decff keeps it); prhWriter_ret_pos_step's proof is unchanged (its NULL arm shows f' = 1 from
      failed = 1).
    Numerals: 2 ^ 64 (WORD range). No ADDRESS (the capacity grid's 4096 / 51 / 2 ^ 28 left with the batch kit removals below).
-   The batch kit's REBIND (a Theorem Labs lane, 2026-10-30, the cut 7cdbb61b5fa0, PRH_FnWriter.v / PRH_Base.v of
+   The batch kit's REBIND (a Theorem Labs lane, 2026-10-30, the cut, PRH_FnWriter.v / PRH_Base.v of
    that commit): prh_oks has the run's requests ns and the ledger's most (PRH_Base.prh_oks .. k ns most ran ran');
    prhWriter_ret_ok has a third blocks arm (a REFUSED grow) and the refusal peak prhWriter_rpeak; put's post states
    prh_granted (K0-DEAD-PUT), and put_string's post states it too (K0-DEAD-PUTSTRING). So the walk composes ONLY
@@ -806,7 +807,7 @@ Proof.
     assert (Hin : In (fst a) (map fst L)) by (rewrite EL; apply in_map; apply in_elt).
     cbn [map] in Hnd. inversion Hnd; subst.
     match goal with Hn : ~ _ |- _ => apply Hn end.
-    first [ exact Hin | apply list_elem_of_In; exact Hin | apply elem_of_list_In; exact Hin ].
+    first [ exact Hin | apply list_elem_of_In; exact Hin | apply list_elem_of_In; exact Hin ].
 Qed.
 
 Section c. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : CfParams} {PI : PrhImg}.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (vdso_ok_md0 added, the launch's reserved vDSO pair, for the pristine start PRvm0, its top as the launch writes it at LPS c0dd863a, equal to vdso_top by the model's page_round_down_Z_min_r; the launch model's channel reader, LPS 08b1429, passed to the driver context and to the main driver's safety and existence proofs; the existence spine's room X0 lowered below 2 ^ 29, RoomS's bound, and HX0's margin over init_cost with it from 2 ^ 29 to 2 ^ 28, HXS's; malloc's entry state taken at the run's CONFIG_RSEQ; the image's reservation over a ledger of the image's entries followed by any tail, the vDSO pair, at LPS c0dd863a; the start rooms vm_roomS0 and vm_room0 over that ledger, through ledger_room_P, vm_roomS_init_Pv and vm_room_init_Pv: two entries more, of at most twenty pages, keep the count and total bounds). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -50,8 +51,9 @@ S5S4S56Vri;A1ScQ40S51Vdraw;A1A2A3"). Proof using . reflexivity. Qed.
 Lemma Htop : ltac2:(tb__ "0|0|
 S5S4S57Vri;A1S31ScQ40Vsp;A2Z800000A2A3"). Proof using . reflexivity. Qed.
 
-Lemma img_reserved_P : ltac2:(tb__ "0|1|
-S25S5SdSfSbQ40A1M0G0A2A1S2bR1A1S65S72A1A3S4eS4dR2A2F_;Fvmz;").
+(* LPS c0dd863a: the launch's ledger is the image's entries then the vDSO pair ([init_reserved]); the
+   image's entries come first, so any tail [tl] after them leaves the image reserved. *)
+Lemma img_reserved_P (tl : list (word * word)) : forall vmz : VmMaps, vm_reserved vmz = segments_reserved segsP ++ tl -> img_reserved C_P vmz.
 Proof using md0.
   intros vmz E. unfold img_reserved. rewrite E. cbn [mc_img_lo mc_img_hi C_P]. intros x Hx.
   assert (M : map (fun e => (bv_unsigned (fst e), bv_unsigned (snd e))) (segments_reserved segsP) = [(65536, 12288); (77824, 86016); (163840, 4096); (167936, 204800)]) by (vm_compute; reflexivity).
@@ -63,13 +65,81 @@ Proof using md0.
   exists e4; split; [cbn; tauto | lia].
 Qed.
 
+(* LPS c0dd863a: after the image's entries the launch's ledger holds the vDSO pair ([init_reserved]):
+   at most two entries, of four vvar pages and at most sixteen text pages (State.v
+   [vdso_text_pages_le]), so the ledger still has at most eight entries of at most 2 ^ 20 bytes,
+   the count and total that RoomS's [vm_roomS_init] and ContractDrv's [vm_room_init] ask. *)
+Lemma ledger_room_P (kb : KernelBuild) (top : Z) :
+  (length (segments_reserved segsP ++ vdso_reserved kb top) <= 8)%nat
+  /\ FreeGap.total (map FreeGap.zpair (segments_reserved segsP ++ vdso_reserved kb top)) <= 2 ^ 20.
+Proof using .
+  assert (L : (length (segments_reserved segsP) <= 6)%nat) by (vm_compute; repeat constructor).
+  assert (T : (FreeGap.total (map FreeGap.zpair (segments_reserved segsP)) <=? 2 ^ 20 - 20 * 4096) = true)
+    by (vm_cast_no_check (@eq_refl bool true)).
+  apply Z.leb_le in T.
+  pose proof (vdso_text_pages_pos kb) as P1. pose proof (vdso_text_pages_le kb) as P2.
+  assert (VL : (length (vdso_reserved kb top) <= 2)%nat).
+  { unfold vdso_reserved. cbv zeta. destruct (_ <? _); cbn [length]; lia. }
+  assert (VT : FreeGap.total (map FreeGap.zpair (vdso_reserved kb top)) <= 20 * 4096).
+  { unfold vdso_reserved. cbv zeta. destruct (_ <? _); cbn [map FreeGap.total fold_right FreeGap.zpair fst snd]; [lia|].
+    rewrite (bv_unsigned_Z_to_bv_u64 (vdso_vvar_pages * page_size)) by (unfold vdso_vvar_pages, page_size, two_pow_64; lia).
+    rewrite (bv_unsigned_Z_to_bv_u64 (vdso_text_pages kb * page_size)) by (unfold page_size, two_pow_64; lia).
+    unfold vdso_vvar_pages, page_size. lia. }
+  rewrite length_app, map_app, FreeGap.total_app. split; lia.
+Qed.
+
+(* [vm_roomS_init_P] and [vm_room_init_P] over the launch's ledger: the image's entries, then the pair. *)
+Lemma vm_roomS_init_Pv (kb : KernelBuild) (top : Z) : forall (md : Model) (X : Z),
+  vm_reserved (m_vmmaps md) = segments_reserved segsP ++ vdso_reserved kb top ->
+  vm_maps (m_vmmaps md) = [] -> m_vm_materialized md = [] ->
+  0 <= X -> X + 2 ^ 20 <= vm_limit (m_vmmaps md) -> vm_limit (m_vmmaps md) <= 2 ^ 40 ->
+  X + 2 ^ 16 <= ROOMC ->
+  sp_window_lo <= bv_unsigned (vm_init_sp (m_vmmaps md)) ->
+  vm_roomS md X.
+Proof using .
+  intros md X Hres Hmaps Hmat HX Hlim Hlim' HXC Hsp. apply vm_roomS_init; auto.
+  - rewrite Hres. exact (proj1 (ledger_room_P kb top)).
+  - rewrite Hres. exact (proj2 (ledger_room_P kb top)).
+  - unfold alloc_top, stack_max_size, sp_window_lo in *. lia.
+Qed.
+
+Lemma vm_room_init_Pv (kb : KernelBuild) (top : Z) : forall (md : Model) (X : Z),
+  vm_reserved (m_vmmaps md) = segments_reserved segsP ++ vdso_reserved kb top ->
+  vm_maps (m_vmmaps md) = [] -> m_vm_materialized md = [] ->
+  0 <= X -> X + 2 ^ 20 <= vm_limit (m_vmmaps md) -> vm_limit (m_vmmaps md) <= 2 ^ 40 ->
+  X + 2 ^ 16 <= 2 ^ 29 ->
+  sp_window_lo <= bv_unsigned (vm_init_sp (m_vmmaps md)) ->
+  vm_room md X.
+Proof using .
+  intros md X Hres Hmaps Hmat HX Hlim Hlim' HXC Hsp. apply vm_room_init; auto.
+  - rewrite Hres. exact (proj1 (ledger_room_P kb top)).
+  - rewrite Hres. exact (proj2 (ledger_room_P kb top)).
+  - unfold alloc_top, stack_max_size, sp_window_lo in *. lia.
+Qed.
+
+(* LPS 727298f3: the launch reserves the vdso/vvar pair (State.v [vm_reserved_init_model]); no
+   setter on the way to [md0] writes the kernel build or the reserved ledger. *)
+Lemma vdso_ok_md0 (tid : word) : vdso_ok (md0 tid).
+Proof using .
+  split.
+  - intros e He. unfold md0, Top.md_main, c0P, init_config in *. cbn [cfg_model] in *.
+    autorewrite with model in *.
+    try rewrite vm_reserved_init_model.
+    autorewrite with model in *.
+    (* LPS c0dd863a: the launch writes the pair's top as [page_round_down_Z (Z.min mb (sp - stack_max_size))];
+       [vdso_top] rounds [sp - stack_max_size] first (State.v [page_round_down_Z_min_r]: the same value). *)
+    apply in_or_app. right. rewrite <- page_round_down_Z_min_r. exact He.
+  - (* the launch tracks no mapping *)
+    intros e He. unfold md0, Top.md_main, c0P, init_config in He. cbn in He. destruct He.
+Qed.
+
 Lemma PRvm0 : ltac2:(tb__ "0|0|
 SbQ40A1S69S4dVri;Vmd0;R1A1A3Ftid;").
 Proof using Hent inp lim.
   intros tid. destruct Hent as (Hsp & Hbrk & Hmb & Hfits). destruct Hbrk as (B1 & B2 & B3). pose proof (bv_urange (rnd1 draw)) as UR.
   unfold PRvm, md0, Top.md_main. autorewrite with model. cbn -[Z.le Z.lt Z.add Z.sub Z.modulo alloc_top].
   split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|]. split; [exact B3|].
-  split; [|split; [| apply img_reserved_P; reflexivity]].
+  split; [|split; [| split; [apply (img_reserved_P (vdso_reserved (in_kernel inp) (page_round_down_Z (Z.min (bv_unsigned mb) (bv_unsigned sp - stack_max_size))))); reflexivity | exact (vdso_ok_md0 tid)]]].
   - unfold alloc_top. replace (bv_unsigned (vm_init_sp _)) with (bv_unsigned sp) by reflexivity.
     unfold valid_sp, sp_window_lo, sp_window_hi in Hsp. unfold stack_max_size. lia.
   - assert (RT : 0 < reserved_top (segments_reserved segsP) <= 0x5b000) by (vm_compute; split; [reflexivity | discriminate]).
@@ -120,7 +190,8 @@ Lemma vm_roomS0 : ltac2:(tb__ "0|0|
 SbQ40A1S6dVmd0;R1A1S3dA2Ftid;").
 Proof using Hent Hlim brk inp mb sp.
   intros tid. pose proof (proj1 Hent) as Hsp. unfold valid_sp, sp_window_hi in Hsp.
-  unfold md0, Top.md_main. apply vm_roomS_init_P; autorewrite with model; try reflexivity; unfold XS; [lia| | |unfold ROOMC; lia|].
+  unfold md0, Top.md_main. apply (vm_roomS_init_Pv (in_kernel inp) (page_round_down_Z (Z.min (bv_unsigned mb) (bv_unsigned sp - stack_max_size))));
+    autorewrite with model; try reflexivity; unfold XS; [lia| | |unfold ROOMC; lia|].
   - replace (vm_limit _) with lim by reflexivity. lia.
   - replace (vm_limit _) with lim by reflexivity. lia.
   - replace (bv_unsigned (vm_init_sp _)) with (bv_unsigned sp) by reflexivity. unfold sp_window_lo in *. lia.
@@ -173,7 +244,7 @@ Theorem spine_safe : ltac2:(tb__ "0|0|
 S75Vsp;Vbrk;Vmb;Vdraw;Vlim;Vinp;A6").
 Proof using DOT FDS FSUM Hlim MBS MCs MIS MPS.
   intros tid ok Htid HokK HokP Hokh Hargc Hmay rho HJM.
-  apply (P.Drv_m__G1.Drv_m.m_safe_S sp brk mb draw inp Hent Hinp Hargc (md0 tid) (Top.md_main_fds sp brk mb draw lim inp tid) (Top.md_main_fs sp brk mb draw lim inp tid)
+  apply (P.Drv_m__G1.Drv_m.m_safe_S sp brk mb draw inp Hent Hinp Hargc (md0 tid) (Top.md_main_fds sp brk mb draw lim inp tid) (Top.md_main_fs sp brk mb draw lim inp tid) (Top.md_main_rdr sp brk mb draw lim inp Hinp tid)
            ok HokK HokP Hokh ri Hsec Htop Hmay (PRvm0 tid) MIS XS (vm_roomS0 tid) HXS'); [|exact HJM].
   intros r0 rho' HP0.
   destruct path_cases as [Hdot|Hnd].
@@ -181,7 +252,7 @@ Proof using DOT FDS FSUM Hlim MBS MCs MIS MPS.
     intros w [Hsm HJ]. split; [exact Hsm|]. exact (JGD_mono segs C_P 31 _ r0 _ _ (P.Drv_m__G1.Drv_m.DokS XS) DTrue _ _ _ (fun _ _ _ => I) HJ).
   - destruct Hmay as (Hlen & Hne & [Hd|Hl]); [exfalso; exact (Hnd Hd)|].
     destruct (fs_lookup fs argv1) as [F|] eqn:HF; [|exfalso; exact (Hl HF)].
-    exact (file_safe (mkFctx sp brk mb draw inp Hent Hinp Hargc (md0 tid) (Top.md_main_fds sp brk mb draw lim inp tid) (Top.md_main_fs sp brk mb draw lim inp tid)
+    exact (file_safe (mkFctx sp brk mb draw inp Hent Hinp Hargc (md0 tid) (Top.md_main_fds sp brk mb draw lim inp tid) (Top.md_main_fs sp brk mb draw lim inp tid) (Top.md_main_rdr sp brk mb draw lim inp Hinp tid)
                         ok HokK HokP Hokh (conj Hlen (conj Hne (or_intror Hl))) F HF Hnd) r0 rho' HP0).
 Qed.
 End Safe.
@@ -200,18 +271,21 @@ Let DOTX : dot_ex_stmt := dot_ex_ok.
 Hypothesis Hlim : ltac2:(tb__ "0|1|
 S6S2cS2eZ2M0Z1eA2Vlim;A2S2cVlim;S2eG0Z28A2A2A2").
 
-Definition X0 : Z := 2 ^ 30 - 2 ^ 20.
+(* LPS 727298f3: the existence room is RoomS's ([Malloc/RoomK.v] [vm_room_S]), whose count bound
+   caps it below [2 ^ 29], so the existence spine starts from the safety spine's [XS]. *)
+Definition X0 : Z := 2 ^ 29 - 2 ^ 20.
 Lemma vm_room0 : ltac2:(tb__ "0|0|
 SbQ40A1S53Vmd0;R1A1S23A2Ftid;").
 Proof using Hent Hlim brk inp mb sp.
   intros tid. pose proof (proj1 Hent) as Hsp. unfold valid_sp, sp_window_hi in Hsp.
-  unfold md0, Top.md_main. apply vm_room_init_P; autorewrite with model; try reflexivity; unfold X0; [lia| | |].
+  unfold md0, Top.md_main. apply (vm_room_init_Pv (in_kernel inp) (page_round_down_Z (Z.min (bv_unsigned mb) (bv_unsigned sp - stack_max_size))));
+    autorewrite with model; try reflexivity; unfold X0; [lia| | |lia|].
   - replace (vm_limit _) with lim by reflexivity. lia.
   - replace (vm_limit _) with lim by reflexivity. lia.
   - replace (bv_unsigned (vm_init_sp _)) with (bv_unsigned sp) by reflexivity. lia.
 Qed.
 Lemma HX0 : ltac2:(tb__ "0|0|
-S2cS2fS52S2eZ2Z1dA2A2S23A2"). Proof using . unfold X0, init_cost. lia. Qed.
+S2cS2fS52S2eZ2Z1cA2A2S23A2"). Proof using . unfold X0, init_cost. lia. Qed.
 Lemma HX0' : init_cost <= X0. Proof using . unfold X0, init_cost. lia. Qed.
 
 Section File.
@@ -300,8 +374,8 @@ Proof using DOTX FCX FDX FSUMX Hlim MBX MIX MPX.
   {
     assert (GO : forall Q : world -> Prop,
               (forall r0 rho', P.Drv_m__G1.Drv_m.P0 sp draw inp r0 -> etriple segs (SPJ segs (P.Drv_m__G1.Drv_m.JD sp draw inp (P.Drv_m__G1.Drv_m.Kd0 inp (md0 tid)) r0 P.Drv_r__G1.Drv_r.tv0 (Dok X0)) T_ok rho') Q) ->
-              etriple segs (SP segs (Kx [] (md_open (md0 tid) argv1)) S_M rho) Q).
-    { intros Q H. exact (P.Drv_m__G1.Drv_m.m_exists_ok sp brk mb draw inp Hent Hinp Hargc (md0 tid) (Top.md_main_fs sp brk mb draw lim inp tid)
+              etriple segs (SP segs (Kx [] (md_open (md0 tid) argv1)) (S_M (kb_rseq (in_kernel inp))) rho) Q).
+    { intros Q H. exact (P.Drv_m__G1.Drv_m.m_exists_ok sp brk mb draw inp Hent Hinp Hargc (md0 tid) (Top.md_main_fs sp brk mb draw lim inp tid) (Top.md_main_rdr sp brk mb draw lim inp Hinp tid)
                              ri Hsec Htop (PRvm0 tid) MIX X0 (vm_room0 tid) HX0' Q H rho HJM). }
     destruct path_cases as [Hdot|Hnd].
     +
@@ -314,7 +388,7 @@ Proof using DOTX FCX FDX FSUMX Hlim MBX MIX MPX.
       unfold is_dot in Hin. destruct (path_eqb argv1 dot_path) eqn:E; [exfalso; apply Hnd, path_eqb_eq; exact E|].
       destruct Hmay as (Hlen & Hne & [Hd|Hl]); [exfalso; exact (Hnd Hd)|].
       destruct (fs_lookup fs argv1) as [F|] eqn:HF; [|exfalso; exact (Hl HF)].
-      set (cx := mkFctx sp brk mb draw inp Hent Hinp Hargc (md0 tid) (Top.md_main_fds sp brk mb draw lim inp tid) (Top.md_main_fs sp brk mb draw lim inp tid)
+      set (cx := mkFctx sp brk mb draw inp Hent Hinp Hargc (md0 tid) (Top.md_main_fds sp brk mb draw lim inp tid) (Top.md_main_fs sp brk mb draw lim inp tid) (Top.md_main_rdr sp brk mb draw lim inp Hinp tid)
                         (ok_tgt segs (Spec inp)) (Top.HokK inp) (Top.HokP inp) (Top.Hokh inp)
                         (conj Hlen (conj Hne (or_intror Hl))) F HF Hnd).
       apply GO. intros r0 rho' HP0.

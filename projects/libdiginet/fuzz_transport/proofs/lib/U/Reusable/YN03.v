@@ -2,14 +2,16 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/YN03.v, with its module paths and numbers changed; 1 of its 535 lines of code are new or changed and 2 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/Reusable/YN03.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_transport; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_transport.lib. *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/Reusable/YN03.v for libdiginet/fuzz_transport; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_transport.lib. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the ledger_ok record's vDSO, free-region, floor and brk-window obligations; the Checks.Placement imports and the ledger-preservation obligations; the vDSO-aware reserved-pair capacity, native brk guards, kernel identity ledger transports and new-brk mmap-base callers); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement.
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.U.Reusable Require Import YK11 YK0h YK15 YM06 YM02 YP09 YO0d.
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.U.Reusable Require Import YO0i YO0f YO0x YO10 YO0s YO0u YO15.
-From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.U.Reusable Require Import YM05.
+From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.U.Reusable Require Import YM05 YM01 YM00.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Local Open Scope Z_scope.
@@ -93,9 +95,45 @@ st_guard : exists g, word_mem segs mem (ms_guard B) g;
 st_tables : forall a, table_addr a -> mbyte segs mem a = seg_rom segs (w64 a);
 st_vmlock : forall i, 0 <= i < vml_len B -> mbyte segs mem (vml_lo B + i) = Some (Z_to_bv 8 0)
 }.
+Lemma rfree_in : forall l (lo n a sz : word),
+region_free l lo n = true -> In (a, sz) l -> iv_overlap lo n a sz = false.
+Proof.
+induction l as [|[b s] l IH]; intros lo n a sz H Hin; [destruct Hin|].
+cbn [region_free] in H. apply andb_prop in H as [H1 H2].
+destruct Hin as [E|Hin].
+- injection E as E1 E2. subst b s. apply negb_true_iff. exact H1.
+- exact (IH lo n a sz H2 Hin).
+Qed.
+Lemma rfree_incl : forall l1 l2 (lo n : word),
+incl l1 l2 -> region_free l2 lo n = true -> region_free l1 lo n = true.
+Proof.
+induction l1 as [|[a sz] l1 IH]; intros l2 lo n Hi H; [reflexivity|].
+cbn [region_free]. rewrite (rfree_in l2 lo n a sz H (Hi (a, sz) (or_introl eq_refl))). cbn [negb andb].
+apply (IH l2); [intros x Hx; apply Hi; right; exact Hx | exact H].
+Qed.
+Lemma rfree_sub : forall l (lo n lo' n' : word),
+region_free l lo n = true -> bv_unsigned lo <= bv_unsigned lo' ->
+bv_unsigned lo' + bv_unsigned n' <= bv_unsigned lo + bv_unsigned n ->
+region_free l lo' n' = true.
+Proof.
+induction l as [|[a sz] l IH]; intros lo n lo' n' H Hlo Hhi; [reflexivity|].
+cbn [region_free] in *. apply andb_prop in H as [H1 H2].
+rewrite (IH lo n lo' n' H2 Hlo Hhi), andb_true_r.
+unfold iv_overlap in *. apply negb_true_iff in H1. apply negb_true_iff.
+apply andb_false_iff in H1. apply andb_false_iff.
+destruct H1 as [H1|H1]; [left|right]; apply Z.ltb_ge in H1; apply Z.ltb_ge; lia.
+Qed.
+Lemma rfree_app_l : forall l1 l2 (lo n : word),
+region_free (l1 ++ l2) lo n = true -> region_free l1 lo n = true.
+Proof.
+induction l1 as [|[a sz] l1 IH]; intros l2 lo n H; [reflexivity|].
+cbn [region_free app] in *. apply andb_prop in H as [H1 H2].
+rewrite H1. cbn [andb]. exact (IH l2 lo n H2).
+Qed.
 Record ledger_ok (L : layout) (A : astate) (md : Model) : Prop := {
-lg_reserved : vm_reserved (m_vmmaps md) = segments_reserved segs;
+lg_reserved : vm_reserved (m_vmmaps md) = segments_reserved segs ++ vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md));
 lg_limit : SRC_LIM_MIN <= vm_limit (m_vmmaps md);
+lg_rclim : vm_limit (m_vmmaps md) = rc_lim;
 lg_maps : forall r rg, region_of A r = Some rg -> rg_live rg = true -> rg_kind rg <> RkBrk ->
 In (w64 (ly_reg L r), w64 (rg_len rg)) (vm_maps (m_vmmaps md));
 lg_noaccess : forall r rg off, region_of A r = Some rg -> rg_live rg = true -> rg_kind rg = RkMetaRes ->
@@ -116,8 +154,81 @@ ly_reg L r mod PGSZ = 0 /\ 4096 <= ly_reg L r /\ ly_reg L r + rg_len rg <= alloc
 lg_count : Z.of_nat (length (vm_maps (m_vmmaps md))) <= nslots A;
 lg_sizes : Forall (fun p => bv_unsigned (snd p) <= live_bytes A) (vm_maps (m_vmmaps md));
 lg_backing : vm_backing_used md <= live_bytes A;
-lg_ceil : YM05.ceil_of_top (alloc_top (m_vmmaps md))
+lg_ceil : YM05.ceil_of_top (alloc_top (m_vmmaps md));
+lg_vdso : incl (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) (vm_reserved (m_vmmaps md));
+lg_rfree : forall r rg, region_of A r = Some rg -> rg_live rg = true -> rg_kind rg <> RkBrk ->
+region_free (vm_reserved (m_vmmaps md)) (w64 (ly_reg L r)) (w64 (rg_len rg)) = true;
+lg_vdso_lo : mmap_base_min <= vdso_top (m_vmmaps md);
+lg_brk0_hi : ly_brk0 L <= reserved_top (segments_reserved segs) + brk_aslr_max
 }.
+Lemma lg_in_reserved : forall L A md e,
+ledger_ok L A md -> In e (segments_reserved segs) -> In e (vm_reserved (m_vmmaps md)).
+Proof.
+intros L A md e G He. rewrite (lg_reserved _ _ _ G). apply in_or_app. left. exact He.
+Qed.
+Lemma vdso_top_ext : forall h h',
+vm_mmap_base h' = vm_mmap_base h -> alloc_top h' = alloc_top h -> vdso_top h' = vdso_top h.
+Proof.
+intros h h' H1 H2. unfold vdso_top, mmap_top. rewrite H1, H2. reflexivity.
+Qed.
+Lemma vdso_top_u64 : forall h, vdso_top h < 2 ^ 64.
+Proof.
+intros h. unfold vdso_top, mmap_top.
+eapply Z.le_lt_trans; [apply page_round_down_Z_le|].
+eapply Z.le_lt_trans; [apply Z.le_min_l|exact (proj2 (u64_range (vm_mmap_base h)))].
+Qed.
+Lemma rfree_vdso_low : forall kb h lo n,
+mmap_base_min <= vdso_top h ->
+bv_unsigned lo + bv_unsigned n <= mmap_base_min - 20 * page_size ->
+region_free (vdso_reserved kb (vdso_top h)) lo n = true.
+Proof.
+intros kb h lo n Hfloor Hlow. apply region_free_intro. intros a sz Hin.
+pose proof (vdso_reserved_above kb (vdso_top h) a sz
+  ltac:(unfold two_pow_64; apply vdso_top_u64) Hin) as [Ha _].
+pose proof (vdso_len_bounds kb) as HB.
+assert (Hsep : bv_unsigned lo + bv_unsigned n <= bv_unsigned a) by lia.
+unfold iv_overlap. rewrite (proj2 (Z.ltb_ge _ _) Hsep), andb_false_r. reflexivity.
+Qed.
+Lemma vdso_reserved_len : forall kb top, (length (vdso_reserved kb top) <= 2)%nat.
+Proof.
+intros kb top. unfold vdso_reserved. cbv zeta.
+destruct (_ <? _)%Z; cbn [length]; lia.
+Qed.
+Lemma vdso_reserved_bytes : forall kb top, ivs_bytes (vdso_reserved kb top) <= 20 * page_size.
+Proof.
+intros kb top. pose proof (vdso_len_bounds kb) as HB.
+pose proof (vdso_text_pages_pos kb) as HP. pose proof (vdso_text_pages_le kb) as HL.
+unfold vdso_reserved. cbv zeta.
+destruct (_ <? _)%Z; cbn [ivs_bytes snd]; [unfold page_size; lia|].
+rewrite !Z_to_bv64_small by (unfold page_size, vdso_vvar_pages in *; lia).
+unfold vdso_len, page_size, vdso_vvar_pages in *. lia.
+Qed.
+Lemma linux_pick_of_free : forall h thp hint n a,
+0 < n <= 2 ^ 30 -> n mod page_size = 0 -> mmap_base_min <= vdso_top h ->
+bv_unsigned a mod page_size = 0 -> 0 < bv_unsigned a ->
+bv_unsigned a + n <= alloc_top h ->
+region_free (vm_reserved h ++ vm_maps h) a (Z_to_bv 64 n) = true ->
+exists b, Placement.linux_place_is h thp hint n b = true.
+Proof.
+intros h thp hint n a Hn Hnal Hfloor Hal Hpos Hhi Hfree.
+destruct (Placement.linux_place_exists h thp hint n (proj1 Hn) Hnal) as (z & Hz).
+{ exists (bv_unsigned a). destruct (Z_le_dec task_unmapped_base (bv_unsigned a)).
+  - right. unfold gap_fits. rewrite Z_to_bv_bv_unsigned. repeat split; assumption.
+  - left. unfold gap_fits. rewrite Z_to_bv_bv_unsigned.
+    repeat split; try assumption.
+    + unfold page_size in Hal |- *. apply Z.mod_divide in Hal; [|lia].
+      destruct Hal as [q Hq]. lia.
+    + pose proof (page_round_down_Z_le (mmap_top h)).
+      change (mmap_base_min <= page_round_down_Z (mmap_top h)) in Hfloor.
+      unfold mmap_base_min, task_unmapped_base in *. lia. }
+pose proof (Placement.linux_place_admissible h thp hint n z (proj1 Hn) Hnal Hz)
+  as (_ & Hzpos & Hzhi & _).
+assert (Hz64 : 0 <= z < 2 ^ 64).
+{ pose proof (alloc_top_lt h). unfold two_pow_64 in *. lia. }
+exists (Z_to_bv 64 z).
+apply (proj2 (Placement.linux_place_is_iff h thp hint n (Z_to_bv 64 z) (proj1 Hn) Hnal)).
+rewrite Z_to_bv64_small by exact Hz64. exact Hz.
+Qed.
 Record MRc (L : layout) (A : astate) (mem : word -> option byte) (md : Model) : Prop := {
 mc_syms : syms_ok B;
 mc_wf : WF A;
@@ -347,7 +458,7 @@ MRc B (layout0 (bv_unsigned (vm_brk (m_vmmaps md))) sec) init_state mem md.
 Proof.
 intros mem md sec SO HP Hsec.
 destruct (hp_vm _ _ _ HP) as (Hmaps & Hna & Hbrk & Hvalid & Hceil & Hres & Hlim & Hback).
-destruct Hvalid as (Hrt & _ & Hal).
+destruct Hvalid as (Hrt & Hbrkhi & Hal).
 split.
 - exact SO.
 - apply wf_init.
@@ -379,6 +490,7 @@ intros k Hk. rewrite le_byte_0. rewrite <- Z.add_assoc. apply (hp_ctx _ _ _ HP).
 -   split; cbn [layout0 ly_brk0 ly_reg st_brk init_state].
 + exact Hres.
 + exact Hlim.
++ exact (hp_rclim _ _ _ HP).
 + intros r rg Hr. unfold region_of in Hr. cbn in Hr. destruct r; discriminate.
 + intros r rg off Hr. unfold region_of in Hr. cbn in Hr. destruct r; discriminate.
 + pose proof (so_rtop _ SO). unfold PGSZ, page_size in *. rewrite Hbrk in *. repeat split; lia.
@@ -388,6 +500,10 @@ intros k Hk. rewrite le_byte_0. rewrite <- Z.add_assoc. apply (hp_ctx _ _ _ HP).
 + rewrite Hmaps. constructor.
 + cbn. lia.
 +   exact (hp_ceil _ _ _ HP).
++ exact (hp_vdso _ _ _ HP).
++ intros r rg Hr. unfold region_of in Hr. cbn in Hr. destruct r; discriminate.
++ exact (hp_vdso_lo _ _ _ HP).
++ exact Hbrkhi.
 - exact (hp_model _ _ _ HP).
 Qed.
 Corollary MRc_init_ex : forall mem md sec,

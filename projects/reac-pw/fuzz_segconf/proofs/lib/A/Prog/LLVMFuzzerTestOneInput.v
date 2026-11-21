@@ -24,13 +24,14 @@
    (pass 5b) the stack from len - 16 present, from the statement's astack_pres kept by astack_pres_journal. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 4505 of its 4800 lines of code are new or changed and 4758 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_s15.v, with its module paths and module names changed; 188 of its 244 lines of code are new or changed and 4744 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan image A (fuzz_segconf.asan, pin sha256 48c5355bdacb): the walk of the test harness's
    entry function LLVMFuzzerTestOneInput (0x84d34, 4,488 bytes, 1,122 instructions) composed from its segment lemmas
    into LLVMFuzzerTestOneInput_contract at image A's instance (the entry BASE + AF_LLVMFuzzerTestOneInput, the window
    STK_LLVMFuzzerTestOneInput and SegInstA's pure parameters, exactly as lt_adapter in LLVMFuzzerTestOneInput_s02.v
    states it). This is the theorem the image-A owner's close consumes.
 
-   THE FORM: plugin-hostd/fuzz_command's lib/A/Prog/LLVMFuzzerTestOneInput.v:40-109 (origin/ossv/recipes 501c0d516c69):
+   THE FORM: plugin-hostd/fuzz_command's lib/A/Prog/LLVMFuzzerTestOneInput.v:40-109:
    each segment lemma at every FP state (lt_close closes each of its premises from this Section), the chain by
    LLVMFuzzerTestOneInput_s02.v's lt_assemble (the two loops by downward induction inside it), and the entry
    statement adapted to the contract by lt_adapter.

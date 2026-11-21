@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainTA.v (commit 9259077395a9, Quarantine::Drain walk set; file sha256 cddc145d0869) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainTA.v at commit 257c1d78b5c, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainTA.v (Quarantine::Drain walk set; file sha256 cddc145d0869) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainTA.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, WalkB1): the TRANSFERRED quarantine's cells at a drain cut - the second
-   clause of DMiface.dmem_q (DMiface.v:121) at DMdrainM.sxf X, where the thread cache is empty and the global
+   clause of DMiface.dmem_q (DMiface.v:122) at DMdrainM.sxf X, where the thread cache is empty and the global
    cache is the two lists joined.  Both the return arm (YFgj.at_RETD) and the no-merge arm (YFgj.at_L0) leave
    exactly these values, so the lemma is stated over them and used twice.
    rule 24: no function proved (kind: the cells of a cut after segments already walked; the lane's reuse search

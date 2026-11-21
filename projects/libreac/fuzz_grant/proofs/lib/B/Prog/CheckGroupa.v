@@ -4,7 +4,8 @@
 (* Modified by Theorem Labs, 2026-10: the walk of check_groupa on fuzz_grant.asan, written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8h.v, proofs/cgif/cgif_file_fuzzer/lib/A/ACa2.v, proofs/cgif/cgif_file_fuzzer/lib/A/ACam.v, proofs/cgif/cgif_file_fuzzer/lib/A/ACb8.v, proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v, proofs/cgif/cgif_file_fuzzer/lib/A/AChf.v. *)
 (* Modified by Theorem Labs, 2026-10: the contract of check_groupa on fuzz_grant.asan, written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/ACe6.v. *)
 (* Modified by Theorem Labs, 2026-10: the walk of check_groupa on image B (fuzz_grant.asan-ubsan, bin fde52226dc48, symbols 5a5ee7c02b4e), over image B's walk layer lib/B/Prog and its contract walk_check_groupa (lib/B/Prog/GrantBContracts.v), with image B's slots, objects, copy length, frame bounds and the B-only trap guard 0x821f4. *)
-(* Ported from lib/A/Prog/CheckGroupaWalk.v at a working branch 5aae1e8a0ce (from a working branch 1611e16025b). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Ported from lib/A/Prog/CheckGroupaWalk.v at a working branch (from a working branch). *)
 (* check_groupa (fuzz_grant.c:116, 0x82074 in fuzz_grant.asan-ubsan, BASE + AF_check_groupa = BASE + 0x1638): the
    walk on the position-abstract listing that proves its contract (walk_check_groupa, GrantBContracts.v).
 

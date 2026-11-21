@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (as_refused takes the channel-reader premise). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -32,9 +33,10 @@ Section Tails.
     getr regs 4 = Z_to_bv 64 0xbe1c90 ->
     lzok RSEGS L S Zr (mkCfg msF mo) -> restrict L S msF = mkst regs (Z_to_bv 64 0x1eef6c) mem (seg_rom RSEGS) ->
     fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+    m_channel_reader mo = true ->
     realizes RSEGS (mkCfg msF mo) (t_die msg_refused (m_fs mo)).
   Proof.
-    intros regs mem msF mo sp can tid ro wpw PH XH R4 OK RS Hfd2. unfold t_die.
+    intros regs mem msF mo sp can tid ro wpw PH XH R4 OK RS Hfd2 Hrd2. unfold t_die.
     apply (as_refused_k L S Zr regs mem msF mo sp can); try assumption; [apply t_exit_has_nil|].
     intros regs' mem' msF' mo' PO OK' SB' HS' RS'.
     rewrite <- (same_but_materialized_fs _ _ SB').

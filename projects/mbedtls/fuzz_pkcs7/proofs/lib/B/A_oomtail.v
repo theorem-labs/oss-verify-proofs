@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (new section hypothesis Hrdr, the channel reader the revision's writev reads, after the fd one; oom_tailA lists it after Hfd2 and passes it to fwrite_errA). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -136,6 +137,8 @@ Section OomTail.
   Hypothesis SPal : (bv_unsigned sp0 mod 16 = 0)%Z.
   Hypothesis HKI : KI model.
   Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  (* the revision's writev reads the channel reader *)
+  Hypothesis Hrdr : m_channel_reader model = true.
   Hypothesis WCS : crange CS (bv_unsigned sp0 - 4096) 4096.
   Hypothesis MCS : crange CS 0x156c0 147.
 
@@ -155,7 +158,7 @@ Section OomTail.
 (* [comment removed for export] *).
   Proof. intros. zstep. zstep. apply evtA_done. reflexivity. Qed.
 
-  #[using="AL CS KI IMG ALWF CSOK ASB IMGCS K_halted K_mat K_vmonly sp0 SPlo SPhi SPal HKI Hfd2 WCS MCS can tid wp0 rp0 wp1 rp1 G1 G2 G3 G4 G10 G11 G12 G13 TM"] Theorem oom_tailA : ltac2:(CDefT.buildp (gd_tbl_A_oomtail ()) "(22.$1:.(23.(24.$25.VR,(1>.&40.+58714.)VM,(21.$1:.))Vmodel,)(26.$27.(28.Vmodel,)))")
+  #[using="AL CS KI IMG ALWF CSOK ASB IMGCS K_halted K_mat K_vmonly sp0 SPlo SPhi SPal HKI Hfd2 Hrdr WCS MCS can tid wp0 rp0 wp1 rp1 G1 G2 G3 G4 G10 G11 G12 G13 TM"] Theorem oom_tailA : ltac2:(CDefT.buildp (gd_tbl_A_oomtail ()) "(22.$1:.(23.(24.$25.VR,(1>.&40.+58714.)VM,(21.$1:.))Vmodel,)(26.$27.(28.Vmodel,)))")
 (* [comment removed for export] *).
   Proof.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
@@ -165,7 +168,7 @@ Section OomTail.
     { rewrite <- oom_img. apply rdn_agree. intros j Hj. rewrite u_small by lia. apply RO. lia. }
     unfold t_die.
     eapply (fwrite_errA AL CS KI IMG ASB K_halted K_mat K_vmonly sp0 model SPlo SPhi SPal HKI WCS MCS R M can
-              G1 G2 G3 G4 G10 G11 G12 G13 FWM msg_oom eq_refl HMSG Hfd2).
+              G1 G2 G3 G4 G10 G11 G12 G13 FWM msg_oom eq_refl HMSG Hfd2 Hrdr).
     { apply t_emit_has_nil. }
     intros t0 t1 t2 b0 b1 b2 b3 b4 b5 b6 b7 t3 t4 t5 t6 M' mo' POST HKI' MM'.
     (* [comment removed for export] *)

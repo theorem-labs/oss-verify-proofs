@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made from the TFIB_T definition of proofs/cgif/cgif_file_fuzzer/lib/A/AZ03.v for fuzz_decode's ASan image (TFIB_T) and ASan+UBSan image (TFIB_TB, the form of cgif_file's lib/Halts_tfib.v image) and decode_shape; module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed TFIB_TB). *)
 (* image-B half of lib/A/DecodeTFIB.v (moved verbatim; owner's ruling, 02:06Z). *)
 (* What the ASan side of fuzz_decode's ASan statements proves: from every valid start, the ASan build realizes
    the same trace set SPECX as the plain build (lib/Reusable/YK18.v srealizes, no cut). TFIB_TB is the same for the
@@ -21,6 +22,8 @@ Definition TFIB_TB : Prop :=
 forall sp brk mbase rnd inp,
 valid_sp sp -> valid_brk decodesegsB0 brk -> valid_mmap_base mbase ->
 entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+(* LPS 727298f3: [Run.valid_entry]'s fifth conjunct, which the ASan start-up reads; the statements give it *)
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 srealizes decodesegsB0
 (init_config decodesegsB0 DAU.M.init_pc DAU.M.phdrs sp brk mbase rnd target_alloc_limit inp)
 (SPECX (LS:=decode_shape) inp).

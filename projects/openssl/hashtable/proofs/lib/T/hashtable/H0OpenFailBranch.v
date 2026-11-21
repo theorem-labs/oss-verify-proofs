@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the open-failure branch takes the process input, the entry point, the thread id's bound and the output channel's reader). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.openssl.hashtable.lib Require Import ModelAmb.
@@ -33,6 +34,8 @@ Section Branch.
   Variable envv : list (list byte).
   Variables uid hw : word.
   Variable rdraw : EntryDraw.
+  Variable inp : ProcInput.
+  Variable entry : word.
   Variable tid : word.
   Variable regs0 : bvmap 5 word.
   Variable mem0 : word -> option byte.
@@ -46,24 +49,29 @@ Section Branch.
   Hypothesis Hvsp : valid_sp sp0.
   Hypothesis Hfits : entry_stack_fits sp0 [a0s; path] envv.
   Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-  Hypothesis ME : main_entry sp0 [a0s; path] envv uid hw rdraw tid regs0 mem0.
+  Hypothesis ME : main_entry inp mbase entry sp0 [a0s; path] envv uid hw rdraw tid regs0 mem0.
+  (* LPS 08b1429: see H0OpenFail's Section OpenFail. *)
+  Hypothesis Hrdr : ia_channel_reader stdin0 = true.
 
   Theorem open_err_branch_cannot_open :
-    H0PilotOOM.open_err_branch sp0 a0s path envv rdraw tid mem0 brk mbase fs0 stdin0 lim (t_die (msg_cannot_open path) fs0).
+    H0PilotOOM.open_err_branch sp0 a0s path envv rdraw inp tid mem0 brk mbase fs0 stdin0 lim (t_die (msg_cannot_open path) fs0).
   Proof.
     intros e vals R M He HL P0 P41 P1 P2 P5 HR HK Habove.
-    apply (H0OpenFail.ref_open_fail_errno sp0 a0s path envv uid hw rdraw tid regs0 mem0 brk mbase fs0 stdin0 lim Hva Hve Hvsp Hfits ME
+    apply (H0OpenFail.ref_open_fail_errno sp0 a0s path envv uid hw rdraw inp entry tid regs0 mem0 brk mbase fs0 stdin0 lim Hva Hve Hvsp Hfits Htid ME Hrdr
              e vals R M (openat_errnos_range e He) HL P0 P41 P2 HR HK Habove).
   Qed.
 End Branch.
 
 (* [comment removed for export] *)
 Corollary cannot_open_branch : forall (sp0 : word) (a0s : list byte) (envv : list (list byte)) (uid hw : word)
-    (rdraw : EntryDraw) (tid : word) (regs0 : bvmap 5 word) (mem0 : word -> option byte) (brk mbase : word) (fs0 : Fs) (stdin0 : AmbIn) (lim : Z),
+    (rdraw : EntryDraw) (inp : ProcInput) (entry : word) (tid : word) (regs0 : bvmap 5 word) (mem0 : word -> option byte)
+    (brk mbase : word) (fs0 : Fs) (stdin0 : AmbIn) (lim : Z),
   valid_argv [a0s; dot_path] -> valid_envp envv -> valid_sp sp0 -> entry_stack_fits sp0 [a0s; dot_path] envv ->
-  main_entry sp0 [a0s; dot_path] envv uid hw rdraw tid regs0 mem0 ->
-  open_err_branch sp0 a0s dot_path envv rdraw tid mem0 brk mbase fs0 stdin0 lim (t_die (msg_cannot_open dot_path) fs0).
+  (0 < bv_unsigned tid < 2 ^ 22)%Z ->
+  main_entry inp mbase entry sp0 [a0s; dot_path] envv uid hw rdraw tid regs0 mem0 ->
+  ia_channel_reader stdin0 = true ->
+  open_err_branch sp0 a0s dot_path envv rdraw inp tid mem0 brk mbase fs0 stdin0 lim (t_die (msg_cannot_open dot_path) fs0).
 Proof.
-  intros sp0 a0s envv uid hw rdraw tid regs0 mem0 brk mbase fs0 stdin0 lim Hva Hve Hvsp Hfits ME.
-  exact (open_err_branch_cannot_open sp0 a0s dot_path envv uid hw rdraw tid regs0 mem0 brk mbase fs0 stdin0 lim Hva Hve Hvsp Hfits ME).
+  intros sp0 a0s envv uid hw rdraw inp entry tid regs0 mem0 brk mbase fs0 stdin0 lim Hva Hve Hvsp Hfits Htid ME Hrdr.
+  apply (open_err_branch_cannot_open sp0 a0s dot_path envv uid hw rdraw inp entry tid regs0 mem0 brk mbase fs0 stdin0 lim); try assumption.
 Qed.

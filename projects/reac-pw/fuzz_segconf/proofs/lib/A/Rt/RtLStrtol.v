@@ -10,7 +10,7 @@
      its eight bytes lie outside the image (the contract's ly_img premise), so no segment supplies them and
      awrite_ok's writable_at makes each one a byte of the store; the cleaned store keeps them (Dc is false there).
      The errno cell: the walk names it tp - 164, our contract as_errno B; SegBSyms gives as_tp B = TFIB_TP and
-     as_errno B = TFIB_ERRNO = TFIB_TP - 164 (A/AF0m.v:13,18), and ecall_pre gives tp = as_tp B. The interceptor's
+     as_errno B = TFIB_ERRNO = TFIB_TP - 164 (A/AF0m.v:14,18), and ecall_pre gives tp = as_tp B. The interceptor's
      fixed cells (the slots 0xa8288 and 0xa63e8, the flag byte 0xae8b8 + 29, the asan-inited byte 0xb1d98 and
      I_strtolfix.v icells_sx) are read from the record's constant table, as RtLStrncmp.v reads the strncmp
      interceptor's.

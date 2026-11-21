@@ -1,12 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (#[using] attributes dropped from 3 lemmas; imports Mmap and Placement). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State Monad Specs.
+From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement.
 From OSSVerify.Proofs.zstd.zstd_frame_info.lib.AS Require Import PlacementSearch.  (* [comment removed for export] *)
 (* [comment removed for export] *)
 Unset Lia Cache.
@@ -133,7 +136,7 @@ Section Gap.
     c mod page_size = 0 /\ bottomup_floor <= c /\ c + nZ <= alloc_ceiling
     /\ region_free L (Z_to_bv 64 c) (Z_to_bv 64 nZ) = true.
 
-  #[using="HnZ bottomup_floor_val fg_alloc_ceiling_val"] Lemma scan_ok_or_step : forall c, scan_inv c ->
+  Lemma scan_ok_or_step : forall c, scan_inv c ->
     gap_at c
     \/ exists c', scan_inv c'
          /\ (length (List.filter (live_at c') L) < length (List.filter (live_at c) L))%nat.
@@ -164,7 +167,7 @@ Section Gap.
       split; lia.
   Qed.
 
-  #[using="HnZ bottomup_floor_val fg_alloc_ceiling_val"] Lemma scan : forall k c, (length (List.filter (live_at c) L) <= k)%nat -> scan_inv c ->
+  Lemma scan : forall k c, (length (List.filter (live_at c) L) <= k)%nat -> scan_inv c ->
     exists g, gap_at g.
   Proof.
     induction k as [|k IH]; intros c Hk Hinv.
@@ -176,7 +179,7 @@ Section Gap.
   Qed.
 
   (* [comment removed for export] *)
-  #[using="HnZ bottomup_floor_val fg_alloc_ceiling_val"] Theorem free_gap_of_slack :
+  Theorem free_gap_of_slack :
     bottomup_floor + nZ + gap_weight nZ L <= alloc_ceiling ->
     exists g, g mod page_size = 0 /\ bottomup_floor <= g /\ g + nZ <= alloc_ceiling
               /\ region_free L (Z_to_bv 64 g) (Z_to_bv 64 nZ) = true.

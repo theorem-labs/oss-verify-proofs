@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: omx-clap-core/fuzz_preset image B (asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43; relocated from pin f8f98a95bc52 by alreloc c4338d099cfb8025), the
    RETURN SEGMENT of the free interceptor: ___interceptor_free's epilogue from Deallocate's return
    (+0x1a8, B 0x539d4, after its `jal asan_free` at +0x1a4; asan_free tail-jumps to Deallocate, so Deallocate returns
@@ -10,7 +11,7 @@
    Ported BY STATEMENT from the tail of lib/Reusable/YFh1.v:336-370 segN (the same epilogue, run there from +0x194 on
    the NULL arm: srr_run_to_sh to B_INTERCEPTOR_FREE_PC_OFF_1CC, SRr_ret_at, the callee-saved cases), with a seed of
    its own at +0x1a8: one region over the saved registers, valued by seven atoms (32 .. 38) of the caller's
-   registers, as lib/AU/DGh1.v:121-146 runs Deallocate's NULL arm from an abstract frame.
+   registers, as lib/AU/DGh1.v:122-147 runs Deallocate's NULL arm from an abstract frame.
    Code read: the runtime decode table YB1t.tfibtbl_rtF. No Admitted / Axiom. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YImgCellsB.

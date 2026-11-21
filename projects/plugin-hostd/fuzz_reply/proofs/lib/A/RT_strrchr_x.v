@@ -3,18 +3,19 @@
 (* Modified by Theorem Labs, 2026-10: the runtime site contract astrrchr_realizes (lib/A/W_sites.v) proved for
    fuzz_reply.asan's strrchr interceptor, entered at the trampoline __interceptor_trampoline_strrchr 0x421a4. *)
 (* Modified by Theorem Labs, 2026-10-30: from lib/A/RT_strrchr.v, as the module RT_strrchr_x: cut to the proof of rt_strrchr (the helper lemmas are used by Import) and restated over a generic allocator invariant ARx under lib/Rt/RTx.v's rt_laws (rt_strrchr_x_cells over RT_kit.FrRtCells_x; rt_strrchr_x with no cell premise, the cells from rt_laws and TfibSyms by RT_kit_cells_x.FrRtCells_x_of_syms); the corollaries rt_strrchr_of_x (rt_strrchr's statement, unchanged) and rt_strrchr_cf added. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/RT_strrchr.v's runtime contract rt_strrchr restated over a generic
    allocator invariant ARx (ghost head set Hp threaded) under the five-law record rt_laws of lib/Rt/RTx.v
    (a Theorem Labs lane's, the one record for both images: rtl_frame, rtl_stack, rtl_const, rtl_layout, rtl_const_cells).
    RT_strrchr.v is not edited; its helper lemmas are used by Import. The statement is W_sites_x.v's
    astrrchr_realizes_x; the proof of rt_strrchr_x is RT_strrchr.v's with AR -> ARx (am_layout of proj1 HAR ->
    rtl_layout, al_frame / al_stack -> rtl_frame / rtl_stack, RT_kit / RT_post's AR lemmas -> their _x forms there).
-   Measured (lines at a working branch 9b1367c7fe1): the original reads AR through
+   Measured (lines at a working branch): the original reads AR through
    al_const (through RT_kit.walk_cells, :204; RT_kit.walk_rest :206 uses FrRtCells only), al_frame / al_stack
-   (through RT_post.aentry_post_of_walk, :272) and the ARm field am_layout (:199 and RT_post.v:249), the layout law
+   (through RT_post.aentry_post_of_walk, :272) and the ARm field am_layout (:199 and RT_post.v:250), the layout law
    here; the three-law note (RESUME.md:116-122 sha256 704eb9d3afa6; internal record) did not count the ARm fields, hence the record's rtl_layout
    and rtl_const_cells.
-   The original's named premise FrRtCells (RT_kit.v:230) becomes RT_kit.FrRtCells_x over ARx in rt_strrchr_x_cells
+   The original's named premise FrRtCells (RT_kit.v:231) becomes RT_kit.FrRtCells_x over ARx in rt_strrchr_x_cells
    (the walk reads conjuncts 1-10 through RT_kit.walk_cells_x and 13-14 through RT_kit.walk_rest_x). The twin
    rt_strrchr_x has no cell premise: all 14 conjuncts come from rt_laws + TfibSyms (the const-cells law,
    RT_kit_cells_x.FrRtCells_x_of_syms), the cell 0x9f710 (REAL(strrchr) = 0x96e8c; the walk loads it and jumps to

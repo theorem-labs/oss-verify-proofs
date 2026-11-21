@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Does not rest on tex_word_specX or memnorm: EXV_HYP has neither field since b29a52d6b76b / 379ec9e4a7d5. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Does not rest on tex_word_specX or memnorm: EXV_HYP has neither field. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B, ex_value, segment CI (container open, B entry + 0x374): the PURE
    facts the segment needs, over ExvB_Stmt.v's model names (exv_V = prhex_V dep (exv_X E); exv_L = the plain ex_L
    shape over PjGrammar.jrl). The grammar's jr_cont (PjGrammar.v:254-263) is what the code does at '{' / '[': the depth

@@ -1,7 +1,7 @@
 (* Modified by Theorem Labs, 2026-10: the image-B CSE row's runtime piece at the B top's W1 ARX (QMm W1, a Theorem Labs lane's
    B W1 rows, 2026-10-31). lib/B/W_LLVMFuzzerTestOneInput_top_x.v's Section hypothesis
      Hypothesis CSE_x : cse_spec_x (PI := PB_fr) TfibB [] ARX (BASE + AF_fr_check_shape_event).
-   is built, as on image A (lib/A/W_LLVMFuzzerTestOneInput_top_x.v:1531), by W_check_shape_event.pb_check_shape_event_x at
+   is built, as on image A (lib/A/W_LLVMFuzzerTestOneInput_top_x.v:1532), by W_check_shape_event.pb_check_shape_event_x at
    top_x's ARX, whose bcmp premise is ABCMP : abcmp_realizes_x SEGS B ARx (SIGMA WS_bcmp). Image B proves bcmp only at
    ARX_B (TopX_RT_B.topx_ABCMP_B, ARcf /\ Hp = []); top_x's ARX is TopX_RT_lock.ARX_rtW (the same plus arodata_ok_cf).
      topx_ABCMP_W : abcmp_realizes_x segs TfibB TRL.ARX_rtW (SIGMA WS_bcmp)
@@ -75,7 +75,7 @@ End topx_cse.
 (* ---- the CSE row, closed: check_shape_event's walk at top_x's ARX (TRL.ARX_rtW), as image A's top_x.v:1452 builds it.
    Its premises at ARX_rtW: the laws (lib/B/W_LLVMFuzzerTestOneInput_top_x.v ARX_laws, that proof verbatim at ARX_rtW, the same body), HP0, strlen
    (TopX_RT_B2.topx_ASTRLEN_B_W), bcmp (topx_ABCMP_W above), next_line (W_next_line.pb_next_line_x over ARx, from
-   a Theorem Labs lane's working branch 712a17060d24, with memchr TopX_RT3.topx_AMEMCHR_W), check_shape_done
+   a Theorem Labs lane's working branch, with memchr TopX_RT3.topx_AMEMCHR_W), check_shape_done
    (W_check_shape_done.pb_check_shape_done_x) and PALib TfibB (W_palib.pb_palib_tfib, as ReplyBTop closes TL). ---- *)
 Section topx_cse_w. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 Local Notation segs := (@pa_segs _ fr_prog_listing PB_fr).

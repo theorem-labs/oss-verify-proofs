@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/openssl/bndiv/lib/Lib/MState.v, with its module paths changed; 1 of its 130 lines of code is new or changed. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/Bz/Lib/MState.v at 2d2ff01bb6f2 relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/Bz/Lib/MState.v at 71994ff034c7, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/Bz/Lib/MState.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/Bz/Lib/MState.v keeps its donor's comment text) is kept as lib/A/Bz/Lib/MState.v writes it. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/Bz/Lib/MState.v relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/Bz/Lib/MState.v, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/Bz/Lib/MState.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/Bz/Lib/MState.v keeps its donor's comment text) is kept as lib/A/Bz/Lib/MState.v writes it. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vvar answer of a failed load); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.AU.Bz Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -47,7 +48,7 @@ Fixpoint interp_eff (segs : list Segment) (t : eff) (m : word -> option byte)
   | ELoad n a k =>
       match ov_read_bytes segs m a (width_bytes n) with
       | Some bs => interp_eff segs (k (bv_extract 0 n (le_bytes_to_word bs))) m
-      | None => MachineFault
+      | None => if range_meets_vvar segs a (width_bytes n) then MachineUnmodeled else MachineFault
       end
   | EStore n a v k =>
       if store_ok segs m a (width_bytes n)
@@ -60,7 +61,7 @@ Lemma interp_eff_spec : forall segs t m,
 Proof.
   intros segs t. unfold RiscvSemantics.interp_eff.
   induction t as [c|c|c|c|c|c|n a k IH|n a v k IH]; intros m; cbn [interp_eff interp_eff_accesses drop_access_report]; try reflexivity.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|reflexivity].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|destruct (range_meets_vvar segs a (width_bytes n)); reflexivity].
     rewrite <- IH. destruct (interp_eff_accesses segs (k _) m) as [r| |]; reflexivity.
   - destruct (store_ok segs m a (width_bytes n)); [|reflexivity].
     rewrite <- IH. destruct (interp_eff_accesses segs k _) as [r| |]; reflexivity.

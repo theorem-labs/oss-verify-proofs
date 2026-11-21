@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: omx-clap-core/fuzz_preset (asan image A), a Theorem Labs lane MnPrefix: the named premise
    H_memnorm_drv_A of the driver loop (lib/A/PresetD1rA.v:80, the loop's three runner segments vp_run / br_run /
    l2_run with memnorm on the full overlay at both ends), PROVED. Each conjunct is the memnorm twin of the core segment

@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGif1dq.v (a working branch ced28ed2383, file sha256 dc55271604eb) onto omx-clap-core/fuzz_state's asan-ubsan image (fuzz_state.asan-ubsan, pinned sha256 5ac5ce0954f8; addresses read from its unstripped build b1566a1ca816); module paths changed; its 3 image addresses moved by code-verified function pairs (13 port_addr_check 16f8a030c869 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGif1dq.v (a working branch, file sha256 dc55271604eb) onto omx-clap-core/fuzz_state's asan-ubsan image (fuzz_state.asan-ubsan, pinned sha256 5ac5ce0954f8; addresses read from its unstripped build b1566a1ca816); module paths changed; its 3 image addresses moved by code-verified function pairs (13 port_addr_check 16f8a030c869 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
 (* Modified by Theorem Labs, 2026-10: the released drain's re-establishment of AR at its cuts (YFet.FIN_a / YFet.DRPRE
    over YFey.drain_fin_ARm) restated from the cut memory relation DMiface.dmem_q instead of the walk's frame: the
    changed bytes outside YFey's window D (the batch cells) are shown unchanged by value, from the entry state's cells and
    the cut state's cells. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* AR at a drain cut, for cgif_file (DGif1d's di_requar_x / di_requar_r).
 
    The cut state is YFey.S' X P R (the transfer, then the batches P dequeued, R kept); the memory [mem'] at the cut is

@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: ported from this harness's lib/A/Prog/check_reply_sd.v (the ASan walk, a working branch 91059853ab1) to the ASan+UBSan build fuzz_command.asan-ubsan (lib/B, entry 0x86e64): B's addresses (a Theorem Labs lane's pairing, a Theorem Labs lane's reloc). *)
+(* Modified by Theorem Labs, 2026-10: ported from this harness's lib/A/Prog/check_reply_sd.v (the ASan walk, a working branch) to the ASan+UBSan build fuzz_command.asan-ubsan (lib/B, entry 0x86e64): B's addresses (a Theorem Labs lane's pairing, a Theorem Labs lane's reloc). *)
 (* Modified by Theorem Labs, 2026-10: the mid-walk seed of check_reply (fuzz_command.asan-ubsan), after
    proofs/cgif/cgif_file_fuzzer/lib/A/AChc.v cl_seed: from the mid-walk invariant cr_mid and the registers cr_regs_at
    (check_reply_m.v), the symbolic state at any program point after the frame call.
@@ -16,6 +16,7 @@
    frame's header [0, 32) (written by the epilogue), its tail [64, 128) with the flag pointer at 120, and its shadow
    [0, 16) with refusal[32]'s shadow bytes 4..7 at 0, writable only for the epilogue's plain run (a writable region
    inside the shadow span is outside what the token engine's sh_static_ok allows). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

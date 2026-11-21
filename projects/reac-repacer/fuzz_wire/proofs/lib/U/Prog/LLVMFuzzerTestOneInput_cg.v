@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Copyright 2026 Theorem Labs *)
 (* New for reac-repacer/fuzz_wire: the cut-free (SRcf) walk of fuzz_wire's LLVMFuzzerTestOneInput on the UBSan image,
    against lib/U/Prog/LLVMFuzzerTestOneInput_cfb.v's LLVMFuzzerTestOneInput_sr_contract_cf:
    LLVMFuzzerTestOneInput_holds_of_cf, as libreac/fuzz_decode's released lib/U/Prog/LLVMFuzzerTestOneInput_cg.v (with
-   its fd_*_cg files, 25e3d17bdb5) and reac-repacer/fuzz_uci's (ddb6d58bbed) are to their U walks. Sections G and M
+   its fd_*_cg files) and reac-repacer/fuzz_uci's are to their U walks. Sections G and M
    are lib/U/Prog/LLVMFuzzerTestOneInput.v's with SR replaced by SRcf (SRcf_bind / SRcf_ret, llvm_run_norm_cf),
    malloc and free taken at the kit's agree contracts (malloc_contract_ag at room_ag, free_contract_cf), check_copy at
    its cf contract (check_copy_ccf.v, room cc_room_cf), the room of each from llvm_room_cf, and the early exit by

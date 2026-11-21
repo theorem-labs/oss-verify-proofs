@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader fact): changed of_segFG4, of_segG3, of_segH3 and 2 more; added Hrdr; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/U/Pm10OpenFail_tail2_u.v, 8 lines within its lines 70-410. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -76,7 +77,7 @@ Variable scfg : SpuriousCfg.
 
 
 Section Tail2.
-  Context {RE : RunEnv}.
+  Context {RE : RunEnv}. Context {RO : ReaderOn}.
   Variable sp0 : word.
   Variable BL : list (list byte).
   Variable model : Model.
@@ -84,6 +85,8 @@ Section Tail2.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  (* 08b1429: writev_spec reads [m_channel_reader] *)
+  Hypothesis Hrdr : m_channel_reader model = true.
 
   Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
   Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
@@ -112,17 +115,17 @@ Section Tail2.
   Proof.
     intros vals R M HL P0 HR HK.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
-    (* [comment removed for export] *)
+
     run_blk scr0 231%nat.
     apply (srz_conseq RSEGS scfg _ (t_emit (map (WriteEv (Z_to_bv 64 2)) ([] ++ [])) (t_exit (exit_code 2) (m_fs model)))).
     2:{ cbn [map app]. apply t_eq_sym. apply t_emit_nil_exit. }
     pose proof itinerary_63_64 as (_ & _ & _ & _ & _ & SC & _).
     lazymatch goal with |- srealizes _ _ (mkCfg (mkst ?Rc _ ?Mc _) _) _ =>
     apply (stdio_call_sound scfg vals (blobs_ev BL) srH3 knH3 Rc Mc model scH3 [] []
-             (t_exit (exit_code 2) (m_fs model)) HR HK (eq_trans (f_equal (fun n => stdio_call n srH3 knH3) HL) SC));
+             (t_exit (exit_code 2) (m_fs model)) ltac:(rdr) HR HK (eq_trans (f_equal (fun n => stdio_call n srH3 knH3) HL) SC));
       cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn scH3 length Z.of_nat] end.
     - lia.
-    - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0). unorm. lia.  (* [comment removed for export] *)
+    - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0). unorm. lia.
     - lia.
     - cbn [edenot]. apply u_small. lia.
     - lia.
@@ -142,15 +145,14 @@ Section Tail2.
         | exact HR | exact HK ].
   Qed.
 
-  (* [comment removed for export] *)
   Lemma of_segG3 : forall (path : list byte), Z.of_nat (length path) = 63%Z ->
     atG0 scfg sp0 BL model path 63 (t_emit (W 2 (msg_cannot_open path)) (t_exit (exit_code 2) (m_fs model))).
   Proof.
     intros path HP vals R M HL P0 P113 HR HK SBp.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
-    (* [comment removed for export] *)
+
     run_blk_keep scrG3 199%nat.
-    { (* [comment removed for export] *)
+    {
       unfold sc_denot. cbn [branch_taken]. ed_lin ltac:(cbn [ev ENV]; rewrite ?P0, ?P113).
       replace (-1 * 63 + 63)%Z with 0%Z by lia.
       rewrite ltu_ZZ by lia. reflexivity. }
@@ -178,16 +180,16 @@ Section Tail2.
     assert (Hnl : rdn RSEGS M' (Z_to_bv 64 0x12e07) 1 = Some [Z_to_bv 8 10]).
     { rewrite (kimg_rdn RSEGS (ENV BL vals) _ knG3 ltac:(let i := kidx knG3 (is_kimg_cov 0x12e07 1) in exact i)
                  _ _ 0x12e07 1 HK eq_refl) by (cbn; lia). apply nl_img. }
-    (* [comment removed for export] *)
+
     unfold msg_cannot_open. change (s2b _) with PRE17. rewrite app_assoc. unfold W.
     pose proof itinerary_63_64 as (_ & SC & _).
     lazymatch goal with |- srealizes _ _ (mkCfg (mkst ?Rc _ ?Mc _) _) _ =>
     apply (stdio_call_sound scfg vals (blobs_ev BL) srG3 knG3 Rc Mc model scG3 (PRE17 ++ path) [Z_to_bv 8 10]
-             (t_exit (exit_code 2) (m_fs model)) HR HK (eq_trans (f_equal (fun n => stdio_call n srG3 knG3) HL) SC));
+             (t_exit (exit_code 2) (m_fs model)) ltac:(rdr) HR HK (eq_trans (f_equal (fun n => stdio_call n srG3 knG3) HL) SC));
       cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn scG3];
       rewrite ?length_app, ?PRE17_len end.
     - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0, ?P113). unorm. lia.
-    - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0, ?P113). unorm. lia.  (* [comment removed for export] *)
+    - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0, ?P113). unorm. lia.
     - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0, ?P113). unorm. lia.
     - cbn [edenot length]. apply u_small. lia.
     - cbn [length Z.of_nat]. lia.
@@ -201,18 +203,13 @@ Section Tail2.
     - exact Hh.
     - exact Hlazy.
     - apply t_exit_has_nil.
-    - (* [comment removed for export] *)
+    -
       clear HR HK. intros R2 M2 HR HK.
       eapply (of_segH3 (vals ++ junk_vals R2));
         [ rewrite length_app, junk_vals_length, HL; reflexivity
         | rewrite vals_ev_app_l by (rewrite HL; lia); exact P0
         | exact HR | exact HK ].
   Qed.
-
-  (* [comment removed for export] *)
-  (* [comment removed for export] *)
-  (* [comment removed for export] *)
-  (* [comment removed for export] *)
 
   Lemma NL_word : word_to_le_bytes 1 (Z_to_bv 64 10) = [Z_to_bv 8 10].
   Proof. vm_compute. repeat (apply (f_equal2 cons); [apply bv_eq; reflexivity|]). reflexivity. Qed.
@@ -237,7 +234,7 @@ Section Tail2.
   Proof.
     intros vals R M HL P0 HR HK.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
-    (* [comment removed for export] *)
+
     run_blk scr0 231%nat.
     krdv HK 0%nat (-560)%Z 1%nat Hb. { apply flat_intro; cbn [edenot ev ENV]; rewrite ?P0; lia. }
     rewrite NL_word in Hb.
@@ -246,10 +243,10 @@ Section Tail2.
     pose proof itinerary_63_64 as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & SC & _).
     lazymatch goal with |- srealizes _ _ (mkCfg (mkst ?Rc _ ?Mc _) _) _ =>
     apply (stdio_call_sound scfg vals (blobs_ev BL) srH4 knH4 Rc Mc model scH4 [Z_to_bv 8 10] []
-             (t_exit (exit_code 2) (m_fs model)) HR HK (eq_trans (f_equal (fun n => stdio_call n srH4 knH4) HL) SC));
+             (t_exit (exit_code 2) (m_fs model)) ltac:(rdr) HR HK (eq_trans (f_equal (fun n => stdio_call n srH4 knH4) HL) SC));
       cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn scH4 length Z.of_nat] end.
     - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0). unorm. lia.
-    - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0). unorm. lia.  (* [comment removed for export] *)
+    - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0). unorm. lia.
     - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0). unorm. lia.
     - cbn [edenot]. apply u_small. lia.
     - lia.
@@ -270,12 +267,11 @@ Section Tail2.
         | exact HR | exact HK ].
   Qed.
 
-  (* [comment removed for export] *)
   Lemma of_segFG4 : forall (path : list byte) (pp : word) (P : Z) vals R M,
     Z.of_nat (length path) = P -> (64 <= P <= 131071)%Z ->
     length vals = 167%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = pp -> vals_ev vals 113 = Z_to_bv 64 P ->
     (bv_unsigned sp0 <= bv_unsigned pp)%Z -> (bv_unsigned pp + P + 8 <= bv_unsigned sp0 + 4194304)%Z ->
-    (bv_unsigned pp + P + 8 <= 0x800000000000)%Z ->     (* [comment removed for export] *)
+    (bv_unsigned pp + P + 8 <= 0x800000000000)%Z ->
     regs_ok (ENV BL vals) srF0 R -> know_ok RSEGS (ENV BL vals) M knE ->
     rdn RSEGS M pp (length path + 1) = Some (path ++ [Z_to_bv 8 0]) ->
     srealizes RSEGS scfg (mkCfg (mkst R (Z_to_bv 64 0xb3394) M (seg_rom RSEGS)) model)
@@ -285,12 +281,12 @@ Section Tail2.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi. pose proof (u64_range pp) as Hppr.
     assert (Psmall : (bv_unsigned (edenot (ENV BL vals) (EVar 113)) < 2 ^ 31)%Z).
     { cbn [edenot ev ENV]. rewrite P113, u_small by lia. lia. }
-    (* [comment removed for export] *)
+
     run_blk_keep scrF4 167%nat.
-    { (* [comment removed for export] *)
+    {
       unfold sc_denot. cbn [branch_taken]. ed_lin ltac:(cbn [ev ENV]; rewrite ?P113).
       rewrite ltu_ZZ by lia. rewrite (proj2 (Z.ltb_lt _ _)) by lia. reflexivity. }
-    { (* [comment removed for export] *)
+    {
       unfold sc_denot. cbn [branch_taken].
       rewrite (edenot_exts4 _ _ Psmall), !(edenot_addw0_r _ _) by (rewrite ?edenot_addw0_r by exact Psmall; exact Psmall).
       unfold bv_lts. rewrite Z.ltb_irrefl. reflexivity. }
@@ -315,7 +311,7 @@ Section Tail2.
       apply rdn_app_Z; [ | | lia | lia].
       + replace (bv_unsigned sp0 + -560 + Z.of_nat 8)%Z with (bv_unsigned sp0 + -552)%Z by lia. exact Hw1.
       + replace (bv_unsigned sp0 + -560 + Z.of_nat 8 + Z.of_nat 8)%Z with (bv_unsigned sp0 + -544)%Z by lia. exact Hw2. }
-    (* [comment removed for export] *)
+
     apply (srz_conseq RSEGS scfg _ (t_emit (W 2 (PRE17 ++ path)) (t_emit (W 2 [Z_to_bv 8 10]) (t_exit (exit_code 2) (m_fs model))))).
     2:{ unfold msg_cannot_open. change (s2b _) with PRE17. rewrite app_assoc. unfold W. rewrite (map_app _ (PRE17 ++ path)).
         apply t_eq_sym. apply t_emit_app. }
@@ -323,12 +319,12 @@ Section Tail2.
     pose proof itinerary_63_64 as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & SC & _).
     lazymatch goal with |- srealizes _ _ (mkCfg (mkst ?Rc _ ?Mc _) _) _ =>
     apply (stdio_call_sound scfg vals (blobs_ev BL) srF4 knF4 Rc Mc model scF4 PRE17 path
-             (t_emit (W 2 [Z_to_bv 8 10]) (t_exit (exit_code 2) (m_fs model))) HR HK
+             (t_emit (W 2 [Z_to_bv 8 10]) (t_exit (exit_code 2) (m_fs model))) ltac:(rdr) HR HK
              (eq_trans (f_equal (fun n => stdio_call n srF4 knF4) HL) SC));
       cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn scF4];
       rewrite ?PRE17_len end.
     - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0). unorm. lia.
-    - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0). unorm. lia.  (* [comment removed for export] *)
+    - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0). unorm. lia.
     - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0). unorm. lia.
     - cbn [edenot ev ENV PX]. rewrite P113. rewrite u_small by lia. lia.
     - cbn [length Z.of_nat]. lia.
@@ -342,7 +338,7 @@ Section Tail2.
     - exact Hh.
     - exact Hlazy.
     - apply t_emit_has_nil.
-    - (* [comment removed for export] *)
+    -
       clear HR HK. intros R1 M1 HR HK.
       clear Hstr' Hsrc Hw0 Hw1 Hw2 H17 Psmall.
       lazymatch type of HK with know_ok _ _ _ ?k => change k with knG40 in HK end.
@@ -355,7 +351,7 @@ Section Tail2.
       change (Env (vals_ev vals1) (blobs_ev BL)) with (ENV BL vals1) in HR, HK.
       run_blk scr0 199%nat.
       lazymatch goal with |- srealizes _ _ (mkCfg (mkst _ _ ?Mc _) _) _ => rename Mc into MG end.
-      (* [comment removed for export] *)
+
       set (dst := Z_to_bv 64 (bv_unsigned sp0 - 560)).
       assert (Hnl : rdn RSEGS MG (Z_to_bv 64 0x12e07) 1 = Some [Z_to_bv 8 10]).
       { rewrite (kimg_rdn RSEGS (ENV BL vals1) _ knG4 ltac:(let i := kidx knG4 (is_kimg_cov 0x12e07 1) in exact i)
@@ -386,7 +382,7 @@ Section Tail2.
         pose proof (regs_after_keeps vals1 (blobs_ev BL) sr Rc R2 callee_kept
                       ltac:(rewrite HL; vm_compute; reflexivity) HR Hkeep callee_kept_no0) as HR2 end.
       rewrite HL in HR2. clear HR Hkeep. rename HR2 into HR.
-      (* [comment removed for export] *)
+
       pose proof (know_after_store RSEGS (ENV BL vals1) MG knG4 (SA (EVar 0) (-560)) 1 (ELit 10) [Z_to_bv 8 10]
                     knH40 [] [] ltac:(vm_compute; reflexivity) eq_refl HK ltac:(lia)
                     ltac:(apply flat_intro; cbn [edenot ev ENV]; rewrite ?P0; lia)
@@ -405,10 +401,6 @@ Section Tail2.
       change (Env (vals_ev vals2) (blobs_ev BL)) with (ENV BL vals2) in HR, HK.
       eapply (of_segH4 vals2); [exact HL2 | exact Q0 | exact HR | exact HK].
   Qed.
-
-  (* [comment removed for export] *)
-  (* [comment removed for export] *)
-  (* [comment removed for export] *)
 
   Theorem of_tail : forall (path : list byte) (pp : word) (t8 : list byte) vals R M,
     ~ In (Z_to_bv 8 0) path -> (Z.of_nat (length path) <= 131071)%Z ->
@@ -429,7 +421,7 @@ Section Tail2.
       try eassumption; try lia.
     intros vals' R' M' HL' Q0 Q2 Q113 HR' HK' Hstr'.
     destruct (Z.le_gt_cases (Z.of_nat (length path)) 62) as [Hle | Hgt].
-    - eapply (of_segF scfg sp0 BL model Hvsp Hh Hlazy Hfd2 path pp _ vals'); try eassumption; lia.
+    - eapply (of_segF scfg sp0 BL model Hvsp Hh Hlazy Hfd2 Hrdr path pp _ vals'); try eassumption; lia.
     - destruct (Z.le_gt_cases (Z.of_nat (length path)) 63) as [Hle2 | Hgt2].
       + assert (E63 : Z.of_nat (length path) = 63%Z) by lia. rewrite E63 in Q113.
         eapply (of_segF_gen scfg sp0 BL model Hvsp Hh Hlazy path pp 63 _ vals'); try eassumption; try lia.

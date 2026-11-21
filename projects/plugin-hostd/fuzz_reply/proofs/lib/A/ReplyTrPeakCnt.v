@@ -684,7 +684,7 @@ Proof.
   pose proof (NoDup_incl_length HNDs I) as L. rewrite length_seq in L. exact L.
 Qed.
 
-(* the facts of the drained pair the walk needs, from fr_RINV and the pick (fr_pair_ok, ReplyRINV.v:153-172) *)
+(* the facts of the drained pair the walk needs, from fr_RINV and the pick (fr_pair_ok, ReplyRINV.v:154-173) *)
 Lemma tc_dr_facts : forall cx t m si h j,
   fr_RINV cx t m -> dr_pick cx m si h -> (j < length (lm_es m))%nat ->
   re_fd (nth j (lm_es m) dr_e0) = hs_fd h -> re_eof (nth j (lm_es m) dr_e0) = 0 ->

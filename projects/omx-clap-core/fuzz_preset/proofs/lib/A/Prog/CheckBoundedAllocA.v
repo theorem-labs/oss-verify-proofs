@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-29: omx-clap-core/fuzz_preset, image A' (the #102 asan image of the #102 pins route): the walk
    of fuzz_preset.c's check_bounded_alloc (:511-517) against the text tcheck_bounded_alloc_specX, proved VERBATIM at
    the WHOLE-PROGRAM listing instance PI_prog_A (row N10-CBAA; lead a Theorem Labs session, pool a Theorem Labs pool).
-   Statement: lib/A/PRH_FnCheck.v:465, blob 4cb899514e6c - the text of RECORD, the kit cold/h-hpreset-7-walkkit-next
-   decff67d721 that h-rw-pre-4 bound int102 to at 18:09Z (base head 318474716583; checked by git hash-object).
+   Statement: lib/A/PRH_FnCheck.v:465, blob 4cb899514e6c - the text of RECORD, the kit
+    that h-rw-pre-4 bound int102 to at 18:09Z (base head; checked by git hash-object).
    THE CODE (A' slots 619-629 of lib/A/Listing_prog.v, entry A_prog_sigma AS_check_bounded_alloc = 0x81f8c, 9 words
    and a 2-word abort tail; no address is typed here - the entry is computed from the generated instance):
      0x81f8c addi sp,sp,-16   0x81f90 sd ra,8(sp)   0x81f94 slli a1,a1,0x8   0x81f98 lui a2,0x5
@@ -20,8 +21,8 @@
    DONORS (rule 24, output a Theorem Labs lane's internal file rule24-cbaa.txt): no RELEASED proof of this
    statement exists (0 by name, 0 by address, 0 in an earlier delivery; the released check_bounded_alloc walks are the
    plain / ubsan images' lib/Prog/check_bounded_alloc_c.v, a different image). Two unreleased templates were read:
-   image B's walk commit ba1c537ab3d lib/B/Prog/CheckBoundedAllocB.v (same engine, PI_prog_B; this file
-   follows its skeleton) and image A's stand-in twin at commit e97cd4228957
+   image B's walk lib/B/Prog/CheckBoundedAllocB.v (same engine, PI_prog_B; this file
+   follows its skeleton) and image A's stand-in twin at
    lib/A/Prog/Wcheck_bounded_alloc.v (same text but under the MARKED STAND-IN s911_img, on the OLD pin's 0x81f10,
    so nothing of it instantiates at PI_prog_A).
    REUSED: paj_run_x / paj_branch / paj_ret_at / pa_entry_st_ok_full (YC1fPx, YC1fP), ajournal_x_init /
@@ -53,7 +54,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A.Prog Require Import S1Ledg
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Prog Require Ledger.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YI5b.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YAkMemnormFr.
-(* the PLAIN build's sink head must never fill SK here (YC1fP.v:23-33 does the same; repeated so this file is safe
+(* the PLAIN build's sink head must never fill SK here (YC1fP.v:24-34 does the same; repeated so this file is safe
    on its own): every SK below is passed explicitly *)
 #[global] Remove Hints YI5b.src0_sink_head : typeclass_instances.
 Import ListNotations.
@@ -102,7 +103,7 @@ Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {cp : CfParams} {RL :
 Definition CBA_EI (regs : bvmap 5 word) : env :=
   Eimg (L := A_prog_listing) (PI := PI_prog_A) (Ereg regs (map (Z_to_bv 64) [SHADOW_OFF])).
 
-(* c-omx-alloc OwnB.v ob_aview_frame (8b6f0ad380f): a run's frame keeps the reader's view off its write windows *)
+(* c-omx-alloc OwnB.v ob_aview_frame: a run's frame keeps the reader's view off its write windows *)
 Lemma cba_aview_frame : forall E rs (H : word -> bool) (m m' : word -> option byte) a,
   frame_of E rs (mrestrict H m) (mrestrict H m') -> 0 <= a < 2 ^ 64 -> ~ in_wrange E rs a ->
   aview SEGS H m' a = aview SEGS H m a.
@@ -251,7 +252,7 @@ psrr_branch_tok RUN BR HS SHOK CBA_Bspan.
     split; [reflexivity|]. split; [intros Hr; exact Hr|]. exact HLn. }
   (* the memory stays normal: this walk's only writes are its own 16-byte frame, which lies in the stack
      (2 ^ 46 <= sp <= 2 ^ 47), where no image segment lies - pa_segs_low puts every segment below kLowMemEnd.
-     The engine's lib/Reusable/YAkMemnormFr.v memnorm_frame_two (c-omx-alloc s1b 6cde231dceed; this row's lemma,
+     The engine's lib/Reusable/YAkMemnormFr.v memnorm_frame_two (c-omx-alloc s1b; this row's lemma,
      lifted) composes the two runs' FULL-overlay frames. *)
   intros Hmn.
   refine (YAkMemnormFr.memnorm_frame_two SEGS _ _ _ mem _ mF (spZ regs - 16) (spZ regs) HF1 HF2 _ _ _ Hmn).

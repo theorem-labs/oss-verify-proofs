@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGif1dI.v (a working branch ced28ed2383, file sha256 d346f5a87fc0) onto omx-clap-core/fuzz_state's asan-ubsan image (fuzz_state.asan-ubsan, pinned sha256 5ac5ce0954f8; addresses read from its unstripped build b1566a1ca816); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGif1dI.v (a working branch, file sha256 d346f5a87fc0) onto omx-clap-core/fuzz_state's asan-ubsan image (fuzz_state.asan-ubsan, pinned sha256 5ac5ce0954f8; addresses read from its unstripped build b1566a1ca816); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
 (* Modified by Theorem Labs, 2026-10: cgif_file's instance of the re-quarantine, Recycle and CacheDealloc fields of
    DGif0.DIface (DMiface.v types) and DIfaceR (DIfaceR.v types), restated from the released drain / DoRecycle walks
    (YFeu, YFey, YFhh): the facts DoRecycle reads from AR's ARm are exported over ARX_cgif and the recycle invariant
-   DGif1dr.DRq_cgif.  Taken from DGif1d.v of a working branch cfc1ac03823; the drain fields (di_drain,
+   DGif1dr.DRq_cgif.  Taken from DGif1d.v of a working branch; the drain fields (di_drain,
    dr_drain) stay in DGif1d.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* cgif_file's instance of the re-quarantine and recycle-side fields of the generic Deallocate interface
    (DGif0.DIface, DIfaceR), at the agreed instantiation ARX := ARXr := AllocGcgif.ARX_cgif B, AOX := aowned B,
    DRq := DGif1dr.DRq_cgif B (the same body as DGif1.DRq_cgif), QB := qloose.

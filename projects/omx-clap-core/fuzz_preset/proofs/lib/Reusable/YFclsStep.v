@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the fclass.d single step, in YK0o.v's fp_pipeline style (the sibling of YK0o.v's
    fp_step_fsd), for the one F instruction YK0o has no single-step lemma for. LPS Sem.v:651-652 (Fclass writes an
    INTEGER register) and Fpu.v:586-598 (the fclass bit mask). Proved first in fuzz_preset ex_value piece 5, lane D
-   (lib/A/Prog/S8aNumD.v:253, cold/h-s8a-number-d 18f7e2272a9, built rc=0), moved here verbatim so parse_value's
+   (lib/A/Prog/S8aNumD.v:253, built rc=0), moved here verbatim so parse_value's
    number arm and the writer chain Require it without the piece; WalkKitK0 adopts it into the kit as fp_step_fclass.
    No image constant; no numeral other than the register/format WORDs of the decode and the pc step 4 (LENGTH).
    SPELLING: `fmt_double` (Fpu.v) is THE one spelling of the double format in this family; `Fclass FMT_D` in the

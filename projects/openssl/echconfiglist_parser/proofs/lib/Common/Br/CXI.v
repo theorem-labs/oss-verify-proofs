@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (co_res becomes co_resx, the image's reservations plus the launch's vDSO/vvar pair; new co_mres, co_vdso and co_res_in). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType RiscvSemantics Fs State Run.
@@ -45,7 +46,23 @@ Lemma co_halt : m_halted model = None.                                          
 Lemma co_fds : fds_ok E (a_fd cs) model.                                           Proof. exact (APS.co_fds _ _ _ _ _ _ _ _ _ _ _ H). Qed.
 Lemma co_fs : m_fs model = FS0.                                                    Proof. exact (APS.co_fs _ _ _ _ _ _ _ _ _ _ _ H). Qed.
 Lemma co_tid : a_tidset cs = false -> m_tid model = None.                          Proof. exact (APS.co_tid _ _ _ _ _ _ _ _ _ _ _ H). Qed.
-Lemma co_res : vm_reserved (m_vmmaps model) = segments_reserved segs.              Proof. exact (APS.co_res _ _ _ _ _ _ _ _ _ _ _ H). Qed.
+(* 08b1429: the reserved ledger is the image's reservations plus the launch's extra
+   intervals (the vDSO/vvar pair, [State.vdso_reserved]); see [APS.co_res]. *)
+Lemma co_resx : exists rx : list (word * word),
+    vm_reserved (m_vmmaps model) = segments_reserved segs ++ rx
+    /\ Forall (APS.resx_entry_ok A) rx /\ (length rx <= n_resx A)%nat /\ sum_sizes rx <= resx_bytes A.
+Proof. exact (APS.co_resx _ _ _ _ _ _ _ _ _ _ _ H). Qed.
+Lemma co_mres : Forall (fun iv => Forall (APS.iv_disjoint iv) (vm_reserved (m_vmmaps model))) (vm_maps (m_vmmaps model)).
+Proof. exact (APS.co_mres _ _ _ _ _ _ _ _ _ _ _ H). Qed.
+Lemma co_vdso : incl (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) (vm_reserved (m_vmmaps model)).
+Proof. exact (APS.co_vdso _ _ _ _ _ _ _ _ _ _ _ H). Qed.
+(* LPS c0dd863a: AT_SYSINFO_EHDR's launch variable is the text base of the model's vDSO pair *)
+Lemma co_ehdr : ev E V_EHDR = Z_to_bv 64 (vdso_top (m_vmmaps model) - vdso_text_pages (m_kernel model) * page_size).
+Proof. exact (APS.co_ehdr _ _ _ _ _ _ _ _ _ _ _ H). Qed.
+Lemma co_res_in : forall p, In p (segments_reserved segs) -> In p (vm_reserved (m_vmmaps model)).
+Proof.
+  intros p Hp. destruct co_resx as (rx & Erx & _). rewrite Erx. apply in_or_app. left. exact Hp.
+Qed.
 Lemma co_limit_eq : vm_limit (m_vmmaps model) = Lim.                               Proof. exact (APS.co_limit _ _ _ _ _ _ _ _ _ _ _ H). Qed.
 Lemma co_limit : Lim <= vm_limit (m_vmmaps model).                                 Proof. rewrite co_limit_eq. apply Z.le_refl. Qed.
 Lemma co_maps : maps_match E (a_maps cs) (vm_maps (m_vmmaps model)).               Proof. exact (APS.co_maps _ _ _ _ _ _ _ _ _ _ _ H). Qed.
@@ -111,11 +128,12 @@ Lemma cs_ok_agree (segs : list Segment) (A : atable) (nx0 : nat) (Lim : Z)
   (SINV : env -> (word -> option byte) -> Prop) (argH : env -> word -> bool) (ISP : Z)
   (argH_agree : forall E E' (a : word), AxSymRun3.env_agree nx0 E E' -> argH E a = argH E' a)
   (SINV_agree : forall E E' M, AxSymRun3.env_agree nx0 E E' -> SINV E M -> SINV E' M)
+  (EHDR_lt : (V_EHDR < nx0)%nat)
   (FS0 : Fs.Fs) (E E' : env) (cs : acs) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model) :
   AxSymRun3.env_agree (nxt cs) E E' -> fresh_ok nx0 cs = true ->
   cs_ok segs A Lim SINV argH ISP FS0 E cs R FULL model -> cs_ok segs A Lim SINV argH ISP FS0 E' cs R FULL model.
 Proof.
   intros Hag Hf [HC HI]. split; [|exact HI].
-  exact (APS.cs_ok_agree segs A nx0 Lim SINV argH NX0_spw argH_agree SINV_agree FS0 E E' cs R FULL model Hag Hf HC).
+  exact (APS.cs_ok_agree segs A nx0 Lim SINV argH NX0_spw argH_agree SINV_agree EHDR_lt FS0 E E' cs R FULL model Hag Hf HC).
 Qed.
 End CXI.

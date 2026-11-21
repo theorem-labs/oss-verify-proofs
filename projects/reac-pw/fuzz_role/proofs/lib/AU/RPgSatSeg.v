@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgSatSeg.v at 0b7b3db186d; the same witness at
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgSatSeg.v; the same witness at
    I = lib/AU/RPgImgA.v's role_himg_B on lib/AU/Img0.v's rsegs: image B's 49 descriptors at 0x9f380, its two
    application spans, its class-4 frame (1024 bytes), its real frame of 0x200 bytes, the checked real-frame range
    R+0x178 .. R+0x187, its 41 strings, its 38 read-only cells and its read-only range 0x9a3c0 .. 0x9b7c8. *)

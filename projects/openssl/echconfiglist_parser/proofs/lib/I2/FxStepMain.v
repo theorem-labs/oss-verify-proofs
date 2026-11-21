@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the failing sc case is re-proved through its store-permission probe, a load and a store back of the same bytes). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From stdpp Require Import bitvector bitvector.tactics.
@@ -412,8 +413,28 @@ Proof.
         apply R_after_sc; try reflexivity; [exact HR | rewrite (dv_conc rho Hrho0); apply wbv_w_zero | exact Hm'].
       * rewrite (interp_store segs 64 _ _ _ _ Hok). eexists. split; [reflexivity|]. apply (post_store F ms _ _ a' SZ8 (FxState.rget F (ireg rs2)) M' HR Es); [reflexivity | cbn [ms_mem ms_of]; rewrite Ea', !Hregs; reflexivity | reflexivity | shape_tac | shape_tac |].
         apply R_after_sc; try reflexivity; [exact HR | rewrite (dv_conc rho Hrho0); apply wbv_w_zero | exact Hm'].
-    + injection H as <-. eexists. split; [reflexivity|]. apply post_same; [reflexivity | reflexivity | reflexivity | shape_tac | shape_tac |].
-      apply R_after_sc; try reflexivity; [exact HR | rewrite (dv_conc rho Hrho0); apply wbv_w_one | exact (R_mem _ _ _ _ _ HR)].
+    + (* [comment removed for export] *)
+      destruct (fm_load_abs IM (f_mem F) (FxState.rget F (ireg rs1)) (awidth_sz w0) true) as [old|] eqn:El0; [|discriminate].
+      destruct (fm_load_abs_inv rho Hrho0 IM _ _ _ _ _ HM El0) as (al & Eld & El). clear El0.
+      destruct (fm_load_sound segs IM rho Hrho0 _ _ _ _ _ _ (R_mem _ _ _ _ _ HR) El) as (bs & Hbs & Hres).
+      rewrite Eld in Hbs.
+      destruct (fm_store_abs IM RO (f_mem F) (FxState.rget F (ireg rs1)) (awidth_sz w0) old) as [M'|] eqn:Es0; [|discriminate].
+      destruct (fm_store_abs_inv rho Hrho0 IM RO _ _ _ _ _ HM Es0) as (a' & Ea' & Es). clear Es0.
+      injection H as <-.
+      destruct (fm_store_sound segs IM rho Hrho0 _ _ _ _ _ _ (R_mem _ _ _ _ _ HR) Es) as (Hok & Hm').
+      rewrite Ea' in Hok, Hm'.
+      repeat rewrite <- Hregs in Hbs. repeat rewrite <- Hregs in Hok. repeat rewrite <- Hregs in Hm'.
+      destruct w0; cbn [awidth_sz msz_nat store_bytes_of load_result] in Hbs, Hok, Hm', Hres.
+      * rewrite (interp_load segs 32 _ _ _ bs Hbs).
+        assert (Eold : low32 (dvr old) = bv_extract 0 32 (le_bytes_to_word bs)).
+        { rewrite <- Hres. rewrite low32_sext64. apply sext32_id. }
+        rewrite (interp_store segs 32 _ _ _ _ Hok). eexists. split; [reflexivity|].
+        apply (post_store F ms _ _ a' SZ4 old M' HR Es); [reflexivity | cbn [ms_mem ms_of store_bytes_of]; rewrite Eold, Ea', !Hregs; reflexivity | reflexivity | shape_tac | shape_tac |].
+        apply R_after_sc; try reflexivity; [exact HR | rewrite (dv_conc rho Hrho0); apply wbv_w_one | rewrite Eold in Hm'; exact Hm'].
+      * rewrite (interp_load segs 64 _ _ _ bs Hbs).
+        rewrite (interp_store segs 64 _ _ _ _ Hok). eexists. split; [reflexivity|].
+        apply (post_store F ms _ _ a' SZ8 old M' HR Es); [reflexivity | cbn [ms_mem ms_of store_bytes_of]; rewrite Hres, Ea', !Hregs; reflexivity | reflexivity | shape_tac | shape_tac |].
+        apply R_after_sc; try reflexivity; [exact HR | rewrite (dv_conc rho Hrho0); apply wbv_w_one | first [exact Hm' | rewrite Hres; exact Hm']].
   - (* [comment removed for export] *)
     apply some_inj in Hc. subst fi. cbv beta iota zeta in H.
     destruct (aligned_for w0 (FxState.rget F (ireg rs1)) (f_mem F)) eqn:Eal; cbn [negb] in H; [|discriminate].

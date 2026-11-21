@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/EnqGmiss.v (a working branch 384adc62265, file sha256 d7e7597570eb) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53; pin f8f98a95bc52); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: relocated from the old pin B (pinned fuzz_preset.asan-ubsan f8f98a95bc52, twin 3b5e1a099b53; this file at 74f20580f552) to B' (#102 pin d663f82d7f48, twin c90d4fa54d43) by the relocation route of record, frozen alreloc a5c53bb2bed4ad03 (a Theorem Labs lane's internal file alreloc.py.frozen-a5c53bb2bed4ad03), --assume-source, --resolve resolve-B102.txt (sha256 5cd2316e3413; internal record) (0 lines name this file); 1 numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/EnqGmiss.v (a working branch, file sha256 d7e7597570eb) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53; pin f8f98a95bc52); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: relocated from the old pin B (pinned fuzz_preset.asan-ubsan f8f98a95bc52, twin 3b5e1a099b53; this file) to B' (#102 pin d663f82d7f48, twin c90d4fa54d43) by the relocation route of record, frozen alreloc a5c53bb2bed4ad03 (a Theorem Labs lane's internal file alreloc.py.frozen-a5c53bb2bed4ad03), --assume-source, --resolve resolve-B102.txt (sha256 5cd2316e3413; internal record) (0 lines name this file); 1 numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B2; integrator ReallocPrimary).
    rule 24: proves function __sanitizer::QuarantineCache<__asan::QuarantineCallback>::Enqueue (the MISS arm: a new
    batch is needed and the class-24 cache is EMPTY, so Enqueue calls the internal allocator's Refill in the middle
@@ -117,13 +118,13 @@ Record EnqIfaceMiss : Prop := {
      chunk_ok_cf, through the Wf_cf conjunct of enq_pre_cf), as for ir_nmax / ih_nmax (fresh reviewer, 01:1xZ). *)
   im_nmax : forall inst ly X W regs mem md k, EPRE inst ly X W regs mem md k -> 1 <= ck_n k < NMAXD;
 
-  (* RMAXD's window, in DMwalkIF's form (cgif/cgif_file_fuzzer lib/DMwalkIF.v (file sha256 0b0918eebd50; donor not released) :307 rmaxd_ok), as EnqGbase.v:201 [ih_rmaxd_ok]: a
+  (* RMAXD's window, in DMwalkIF's form (cgif/cgif_file_fuzzer lib/DMwalkIF.v (file sha256 0b0918eebd50; donor not released) :307 rmaxd_ok), as EnqGbase.v:202 [ih_rmaxd_ok]: a
      field, not a Section hypothesis, so that it is a compiled lemma at each instance. *)
   im_rmaxd_ok : 2 ^ 31 <= RMAXD <= kFreeArrayOffset;
 
   (* the class-24 region's mapped-user bound of this instance, AT THE REFILLED STATE X1: that is where the tail walk
      reads it.  cgif_file: YFf2.nb_geom's fifth conjunct at X1.  At cf, batch_room_cf ALONE does not give it:
-     batch_room_cf (YG00cf.v:349-350, `rg_mapped_user + kUserMapSize <= kFreeArrayOffset`) holds at the PRE-state X
+     batch_room_cf (YG00cf.v:350-351, `rg_mapped_user + kUserMapSize <= kFreeArrayOffset`) holds at the PRE-state X
      (an enq_pre_cf conjunct), and regs_only X X1 (im_apostg) says nothing about [reg X1].  The cf instance closes it
      by carrying, in its own RLEAF, the refill's mapped-user growth `rg_mapped_user (reg X1 c) <= rg_mapped_user
      (reg X c) + kUserMapSize`; that growth is exactly the slack batch_room_cf reserves (fresh reviewer, 01:1xZ). *)

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a third pass of the linear test pins the stack's string-length terms). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -1192,10 +1193,13 @@ Fixpoint sum_subst (fs : list sfact) (ts : list (Z * expr)) (lo hi : Z) (hit : b
 Lemma L_AX2L_sum_subst : @sum_subst = @AX2.sum_subst.
 Proof. unfold sum_subst. rewrite ?L_AX2L_sfact, ?L_AX2L_fact_quot, ?L_AX2L_sub_fact. reflexivity. Qed.
 
+(* LPS c0dd863a: the same three passes as [AX2.lin_test_rel], the second over [AX2.sf_bylen], the third
+   over [AX2.sf_bylen] with the form's pinned terms replaced by their value *)
 Definition lin_test_rel (kn : list kentry) (c : Z) (ts : list (Z * expr)) (test : Z -> Z -> bool) : bool :=
   match sum_facts kn kn with
   | [] => false
   | fs =>
+      if
       match sum_subst fs ts 0 0 false with
       | (ts', (lo0, hi0), true) =>
           match lin_range (erange kn) c ts' with
@@ -1204,9 +1208,34 @@ Definition lin_test_rel (kn : list kentry) (c : Z) (ts : list (Z * expr)) (test 
           end
       | _ => false
       end
+      then true
+      else
+      if
+      match sum_subst (AX2.sf_bylen fs) ts 0 0 false with
+      | (ts', (lo0, hi0), true) =>
+          match lin_range (erange kn) c ts' with
+          | Some (lo, hi) => test (lo + lo0)%Z (hi + hi0)%Z
+          | None => false
+          end
+      | _ => false
+      end
+      then true
+      else
+      match pin_terms kn ts 0 0 with
+      | (tsp, (p0, _), true) =>
+          match sum_subst (AX2.sf_bylen fs) tsp 0 0 false with
+          | (ts', (lo0, hi0), true) =>
+              match lin_range (erange kn) (c - p0)%Z ts' with
+              | Some (lo, hi) => test (lo + lo0)%Z (hi + hi0)%Z
+              | None => false
+              end
+          | _ => false
+          end
+      | _ => false
+      end
   end.
 Lemma L_AX2L_lin_test_rel : @lin_test_rel = @AX2.lin_test_rel.
-Proof. unfold lin_test_rel. rewrite ?L_AX2L_lin_range, ?L_AX2L_erange, ?L_AX2L_sum_facts, ?L_AX2L_sum_subst. reflexivity. Qed.
+Proof. unfold lin_test_rel. rewrite ?L_AX2L_lin_range, ?L_AX2L_erange, ?L_AX2L_sum_facts, ?L_AX2L_sum_subst, ?L_AX2L_pin_terms. reflexivity. Qed.
 
 Definition lin_test (kn : list kentry) (c : Z) (ts : list (Z * expr)) (test : Z -> Z -> bool) : bool :=
   match lin_range (erange kn) c ts with

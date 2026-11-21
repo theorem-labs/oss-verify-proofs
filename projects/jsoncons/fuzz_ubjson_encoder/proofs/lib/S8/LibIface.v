@@ -1,10 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the new launch (process input, auxv, group id, exec file name); the CONFIG_RSEQ flag; imports; new lemmas; unused lemmas removed; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/LibIface.v, lines 7, 45-48, 55-60, 73. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.LinuxProcessSem Require StackLayout.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S8 Require Import PropExec StoreOk ShapeAlg SpinAlg HeapIface.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S8 Require Import BMode.
 Import ListNotations.
@@ -37,8 +39,17 @@ Definition in_initc (Lay : lib_layout) (a : Z) : Prop :=
 Definition cellz (segs : list Segment) (M : word -> option byte) (a : Z) (n : nat) (v : Z) : Prop :=
   rdn segs M (Z_to_bv 64 a) n = Some (word_to_le_bytes n (Z_to_bv 64 v)).
 
-Definition auxv_words (Lay : lib_layout) (uid rnd hw : Z) : list Z :=
-  [3; ll_phdr Lay; 4; ll_phent Lay; 5; ll_phnum Lay; 16; hw; 6; 4096; 11; uid; 12; uid; 23; 0; 25; rnd; 0; 0].
+Definition auxv_vec (la : StackLayout.LaunchAuxv) (ph : PhdrInfo) (entry gid ae : word) (uid rnd hw : Z) : list Z :=
+  map (fun w : word => bv_unsigned w)
+    (flat_map (fun e : word * word => [fst e; snd e])
+       (StackLayout.auxv_entries la ph entry (Z_to_bv 64 uid) gid (Z_to_bv 64 hw) (Z_to_bv 64 rnd) ae)).
+
+Definition auxv_launch (segs : list Segment) (M : word -> option byte) (Lay : lib_layout) (av uid rnd hw : Z) : Prop :=
+  exists (la : StackLayout.LaunchAuxv) (ph : PhdrInfo) (entry gid ae : word),
+    Z.of_N (ph_addr ph) = ll_phdr Lay /\ Z.of_N (ph_ent ph) = ll_phent Lay /\ Z.of_N (ph_num ph) = ll_phnum Lay
+    /\ av + 16 * Z.of_nat (StackLayout.auxv_count (StackLayout.la_rseq la)) <= 2 ^ 47
+    /\ (forall j, (j < 2 * StackLayout.auxv_count (StackLayout.la_rseq la))%nat ->
+          cellz segs M (av + 8 * Z.of_nat j) 8 (nth j (auxv_vec la ph entry gid ae uid rnd hw) 0)).
 
 Definition lib_init_facts (Lay : lib_layout) (av uid rnd tid canary hw : Z) (M : word -> option byte) : Prop :=
   let segs := hl_segs (ll_heap Lay) in let sptop := hl_sptop (ll_heap Lay) in
@@ -50,7 +61,7 @@ Definition lib_init_facts (Lay : lib_layout) (av uid rnd tid canary hw : Z) (M :
   /\ cellz segs M (ll_td_canary Lay) 8 canary
   /\ cellz segs M (ll_guard Lay) 8 canary /\ 0 <= canary < 2 ^ 64
   /\ cellz segs M (ll_auxvp Lay) 8 av /\ sptop <= av /\ av + 160 <= 2 ^ 47 /\ av mod 8 = 0
-  /\ (forall j, (j < 20)%nat -> cellz segs M (av + 8 * Z.of_nat j) 8 (nth j (auxv_words Lay uid rnd hw) 0))
+  /\ auxv_launch segs M Lay av uid rnd hw
   /\ 0 <= uid < 2 ^ 32 /\ 0 <= hw < 2 ^ 64
   /\ sptop <= rnd /\ rnd + 16 <= 2 ^ 64
   /\ Forall (fun c : Z * Z * Z => cellz segs M (fst (fst c)) (Z.to_nat (snd (fst c))) (snd c)) (ll_init_cells Lay).

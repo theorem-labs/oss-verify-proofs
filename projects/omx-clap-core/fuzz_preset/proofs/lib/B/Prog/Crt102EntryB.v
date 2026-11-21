@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumA.v, with its module paths and module names changed; 881 of its 941 lines of code are new or changed and 718 lines of the source are left out. *)
-(* kb round (the kb Glue c580eb0fe37c, the B' twin of lib/A/Prog/Crt102Entry.v at the A' kb head a54cc6d36c2c): the
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* kb round (the kb Glue, the B' twin of lib/A/Prog/Crt102Entry.v at the A' kb head): the
    continuation at M takes crt_live at kb = 0 (the entry -> M stretch makes no wild call: the frame call and
    __asan_memset have old posts, so the journal's budget is [], wbudget [] 0 []). *)
 (* fuzz_preset, row CRT-B-ENTRY of FREE-PIECES-102 (7a; was T1), image B' (asan-ubsan
@@ -10,7 +11,7 @@
    where a0 / a1 / a2 are loaded for the first round_trip_text). It ESTABLISHES Crt102Glue's crt_live with the B'
    register form crt_dregs_B.
 
-   TEMPLATE: the A' slice lib/A/Prog/Crt102Entry.v, commit 97896f27cf5e (pins102
+   TEMPLATE: the A' slice lib/A/Prog/Crt102Entry.v, (pins102
    rc=0, every lemma Qed). Its cuts, its symbolic states, its tactics and its Section hypotheses (PAL, pal_uar_img,
    pal_stack_malloc3, pal_pst_static, ASM3, OWNLOW, AMS) are ported here with the B' registers; nothing is re-derived.
 
@@ -19,9 +20,9 @@
    Crt102Img.v crt_regs_B). B' keeps the shadow base in s11 (+0x5c `ld s11, 0(a1)`),
    doc in s6 (+0x60), the frame-call result in s7 (+0x70), F in s3 (+0x7c `mv s3, s7`), -8 in s9 (+0xb8). Counterexample
    to A''s crt_dregs at B': any B' run at M with F <> 2^64 - 8 falsifies getr 23 = w64 (2^64 - 8). The post here is the
-   FROZEN B' twin crt_dregs_B (Crt102Glue.v, frozen at commit eeb8862a0608; read at the base).
+   FROZEN B' twin crt_dregs_B (Crt102Glue.v, frozen; read at the base).
 
-   RE-POINTED AT THE LANDING CUT (7cdbb61b5fa0): the specified keying change,
+   RE-POINTED AT THE LANDING CUT: the specified keying change,
    applied unchanged. The cut's tcheck_round_trip_specX keys its run on ReaderRes.jr_strtod (PRH_FnCheck.v:1330 / :1360)
    with no rp_sm binder and no `rp_sm = ReaderRes.jr_strtod` premise, so neither is here: ReaderRes.jr_strtod stands in
    prh_run_at, iface_room_pos and prh_cons_from, in the glue's QF / crt_pos (rp_sm := ReaderRes.jr_strtod), and the
@@ -30,22 +31,22 @@
 
    INPUTS OF RECORD:
    - pins: A' asan 1be0f53d96cb9d6c (twin bff8519bbe3ea0e4), B' asan-ubsan d663f82d7f488d30 (twin c90d4fa54d43160b).
-   - base: commit 100c8e45583c (the contract texts with tcheck_round_trip_specX's
+   - base: (the contract texts with tcheck_round_trip_specX's
      entry premises prh_ledger .. SIZE_MAXZ ran most 0, prh_run_at .. rp_i (round_trip rp_sm t), rp_sm = jr_strtod and
      prh_cons_from; the allocator engine's whole set; S10Env.v; Crt102Glue.v d65f66b784a1 with the glue predicates as
      Records, read here by projection and built by named literal; CfParamsPreset.v b60d0f63c926; Crt102Img.v with the
      B' names; the template lib/A/Prog/Crt102Entry.v 6cd098c3ba17). It carries, at the same blobs,
-     the files first taken BY PATH for the close: lib/Reusable/YImgTop.v d2a97d3111ce (IMG_TOP_B = 0x601000, from
-     commit a9548e31002a) and lib/B/Prog/CrtImgB102.v e07deaef6b0d (the T9 row,
-     commit bf711a38160f: Crt102Img's Section b hypotheses closed at PI_prog_B).
-   - listings of record: commit d42e123915ae (lib/B/Listing_prog.v 8bcc2c9e7809,
+     the files first taken BY PATH for the close: lib/Reusable/YImgTop.v d2a97d3111ce (IMG_TOP_B = 0x601000,)
+     and lib/B/Prog/CrtImgB102.v e07deaef6b0d (the T9 row,:
+     Crt102Img's Section b hypotheses closed at PI_prog_B).
+   - listings of record: (lib/B/Listing_prog.v 8bcc2c9e7809,
      lib/Reusable/YPsym.v b6f5a85d234d); the cut: DESIGN.md (sha256 d05697dd088c; internal record) (E, P, H, M are
      at the same offsets on A' and B': Crt102ImgB.crt_offs_AB).
    - Two forms. crt102_entry_B is over any {PA : PAImg B_prog_listing}, with the three B instance facts it reads as
      explicit premises (R1_IMG_SIGMA, R1_IMG_PST, R1_IMG_HI; see there). crt102_entry_B_cf (at the end) is the close at
      PA := PI_prog_B, with the three discharged by computation. The continuation at M is exactly the premise list of
-     T2's crtb_rrt (lib/A/Prog/Crt102B_RRT.v, f4b4f2dba93:1859-1865).
-   - build route pins102: the internal file zfb-targets.dc6f8f60073340be.sh, FACTS 8f3e7e1a07f1,
+     T2's crtb_rrt (lib/A/Prog/Crt102B_RRT.v:1860-1866).
+   - build route pins102: the internal file zfb-targets.dc6f8f60073340be.sh, FACTS,
      PAU pau-preset-102.
    - rule 24: no function proved (proof-index check_round_trip, exit 0, and by the B' addresses 0x82828 /
      0x829bc, the T1 lookups pidx-*.txt): the released proofs are plain
@@ -1055,7 +1056,7 @@ End w.
                     = B_prog_base + 4 * 1111);
      R1_IMG_PST   : CrtImgB102.crt_pst_img_B_cf;
      R1_IMG_HI    : CrtImgB102.crt_pa_hi_B_cf (pa_hi = IMG_TOP_B = 0x601000 <= 2 ^ 31).
-   CrtImgB102 is the T9 row's file (commit bf711a38160f), which closes Crt102Img's Section b
+   CrtImgB102 is the T9 row's file, which closes Crt102Img's Section b
    hypotheses at PI_prog_B. The Section hypotheses of the template stay as they are there (B's PALib binding, the frame
    class, the owned-low law, the memset row). ---- *)
 Section cf. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.

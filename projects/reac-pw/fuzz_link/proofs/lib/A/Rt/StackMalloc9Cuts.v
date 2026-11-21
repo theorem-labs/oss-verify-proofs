@@ -9,7 +9,7 @@
 
    This file holds NO literal address: every address and class constant is a name of lib/A/Rt/StackMalloc8Tbl.v,
    which also re-exports the two image-free callee summaries of lib/Reusable/AsStackLeaf.v. Same Tbl / walk split
-   as a Theorem Labs lane's lib/A/Rt/StackMalloc4Tbl.v + StackMalloc4.v (libreac/fuzz_grant at 798447a1772) and a Theorem Labs lane's
+   as a Theorem Labs lane's lib/A/Rt/StackMalloc4Tbl.v + StackMalloc4.v (libreac/fuzz_grant) and a Theorem Labs lane's
    class 3. These cuts are tied to the ASAN image: every Prop is stated over `tfibsegs` (lib/A/AB1v.v, the asan
    segment list) and over this asan Tbl's pcs. So the asan-ubsan side needs its own copy of this file over its
    own segment list and lib/AU/Rt/StackMalloc8Tbl.v (a Theorem Labs lane's review), not a Tbl twin alone.
@@ -35,6 +35,7 @@
 
    The start-up tables of the Theorem Labs lane dry run are unsatisfiable (porter), so nothing here depends on
    them: no A/AB01, A/AB03, A/AD2j, A/AD1k, A/AF0m, nor their Y twins, in this file or in its imports. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Class 9 (reac-pw/fuzz_link, asan pin 059dae63e07c): the four segment cuts of frame_alloc_9 (0x3e15c, 94
    instructions) and their composition `m9_of_segs` into `astack_malloc_sz_realizes tfibsegs B PC_STACK_MALLOC_9 CID9`
    (lib/A/Rt/StackSide9.v's frame_alloc_9 contract). It is the class-8 file above with the class-8 names replaced by

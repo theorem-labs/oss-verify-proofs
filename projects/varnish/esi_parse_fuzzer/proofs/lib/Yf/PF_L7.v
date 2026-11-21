@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the write steps take the channel-reader premise (m_channel_reader) the model's new write arms read and carry it through page materialisation (sbm_reader). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -376,7 +377,8 @@ Section Leaves.
     pose proof (as_minv LPA A m1 md1 AINV1) as [_ HH1].
     pose proof (sbm_io md md1 SBM) as (FS1 & FDS1 & _).
     eapply (HKONT m1 md1 _ AINV1).
-    { split; [| split; [| exact HH1]]. rewrite FS1; reflexivity. rewrite FDS1; reflexivity. }
+    { split; [| split; [| split; [exact HH1 |]]]. rewrite FS1; reflexivity. rewrite FDS1; reflexivity.
+      exact (sbm_reader _ _ SBM). }   (* 08b1429: channel-reader-premise *)
     { exists mo, (skipn 1 junk'). split; [| split].
       - lazymatch type of FILE6 with file_at _ _ ?fr => replace (stdout_buffered mo (p ++ [Z_to_bv 8 48; Z_to_bv 8 10])) with fr; [exact FILE6|] end.
         unfold stdout_buffered. cbn_mf. rewrite length_app. cbn [length]. f_equal. f_equal. unfold STDOUT_BUF. lia.
@@ -398,7 +400,7 @@ Section Leaves.
   Lemma vprintf_first_ok : vprintf_first_stmt.
   Proof.
     unfold vprintf_first_stmt. intros until K. cbv zeta.
-    intros AINV MI TP A0 A1 VAB VALO VAHI SPVA RNGC ZSH SOUT FDL [g CAN] GOT ST LO CEIL SP16 HK HKONT.
+    intros AINV MI TP A0 A1 VAB VALO VAHI SPVA RNGC ZSH SOUT FDL RDR [g CAN] GOT ST LO CEIL SP16 HK HKONT.
     destruct SOUT as [FILE [junk BUFS]].
     unfold VPRINTF_ICPT_STACK, FMT_D in *. subst a0 a1.
     pose proof (zr_word sp) as SPR; unfold inr64 in SPR. pose proof alloc_ceiling_val as CV.
@@ -536,6 +538,7 @@ Section Leaves.
                           | exact BJ
                           | unfold STDOUT_BUF, STDOUT_F; cbn_mf; cbn [length Z.of_nat]; first [ reflexivity | f_equal; lia | lia ]
                           | rewrite FDS1; exact FDL
+                          | rewrite (sbm_reader _ _ SBM); exact RDR   (* 08b1429: channel-reader-premise *)
                           | apply fmtd_nl; assumption
                           | eexists; eassumption
                           | lazymatch goal with |- memcpy_icpt_cells _ => exact (proj1 SF3) end
@@ -549,7 +552,7 @@ Section Leaves.
     unfold FWRITEX_STACK, STDOUT_F, STDOUT_BUF in MU2, ST5, FILE5, BUF5. rewrite ?unsigned_lit in MU2 by lia. rewrite ?unsigned_lit in ST5 by lia.
     cbn_mf_in FILE5.
     transport_after_call rsegs (aview A m1) (aview A m2) MU2 WM2. clear MI3 MU2 WM2.
-    destruct IO2 as (FS2 & FDS2 & _).
+    destruct IO2 as (FS2 & FDS2 & _ & RDR2).
     (* [comment removed for export] *)
     pose proof (munch_refl [(bv_unsigned sp - 8192, bv_unsigned sp); (0xada18, 0xada18 + 152)] (aview A m2)) as MU3.
     pose proof (wmono_refl rsegs (aview A m2)) as WM3.
@@ -597,7 +600,8 @@ Section Leaves.
     pose proof (as_minv LPA A m3 md3 AINV3) as [_ HH3].
     pose proof (sbm_io md2 md3 SBM0) as (FS3 & FDS3 & _).
     eapply (HKONT m3 md3 _ AINV3).
-    { split; [| split; [| exact HH3]]. rewrite FS3, FS2, FS1; reflexivity. rewrite FDS3, FDS2, FDS1; reflexivity. }
+    { split; [| split; [| split; [exact HH3 |]]]. rewrite FS3, FS2, FS1; reflexivity. rewrite FDS3, FDS2, FDS1; reflexivity.
+      rewrite (sbm_reader _ _ SBM0), RDR2; exact (sbm_reader _ _ SBM). }   (* 08b1429: channel-reader-premise *)
     { lazymatch type of FILE6 with file_at _ _ ?fr => exists (mf_mode fr) end.
       lazymatch goal with H : rw_cells rsegs (aview A m3) 0x608ae8 [CB 1024%nat ?bj] |- _ => exists bj end.
       split; [| split].

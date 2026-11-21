@@ -1,12 +1,19 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the ledger counts the launch's reserved pair; memfree reads go through the read-only backing). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From stdpp Require Import bitvector.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType RiscvSemantics State Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap Mprotect.
+(* [memfree_222] at :651 lives in Cfg/RomBase.v, and `Require Import` does not re-export names.
+   FxDrive3C.v, which uses memfree_lit from that same file, imports it on its own line and
+   compiles; this file did not, and a compile round named it as "The variable
+   memfree_222 was not found in the current environment" -- a not-found that reads like a removal
+   and is a missing import. *)
+From OSSVerify.Proofs.openssl.hashtable.lib.Common.Cfg Require Import RomBase.
 From OSSVerify.Proofs.openssl.hashtable.lib.Common.Cfg Require Import
   ShapeAlgBase ShapeCfg NodesCfg LedgerCfg AllocCfg LazyCfg LazyAccCfg AllocLazyCfg EagerCfg.
 From OSSVerify.Proofs.openssl.hashtable.lib.Common.FX Require Import
@@ -149,8 +156,8 @@ Hypothesis Hcode : code_ok segs code.
 Hypothesis Halloc : sc_alloc cfg = false.
 Variable R0 : list (word * word).
 Variable Rb Rc Lim : Z.
-Hypothesis HRb : live_bytes R0 <= Rb.
-Hypothesis HRc : Z.of_nat (length R0) <= Rc.
+Hypothesis HRb : res_cost R0 <= Rb.
+Hypothesis HRc : Z.of_nat (res_count R0) <= Rc.
 Variable keep : list int.
 Variable mem0 : word -> option byte.
 Variable XI : (int -> word) -> Model -> Prop.
@@ -624,14 +631,15 @@ Theorem sys_grant3p_sound n rho F L3 ms m nr len res :
   bv_unsigned (ms_gpr (ms_pend ms) 2) = 3 ->
   bv_unsigned (ms_gpr (ms_pend ms) 3) = (if nr then 16418 else 34) ->
   bv_unsigned (ms_gpr (ms_pend ms) 5) = 0 ->
+  bv_unsigned (ms_gpr (ms_pend ms) 0) = 0 ->
   SOK n rho F L3 res ms m.
 Proof.
-  intros Hsys HD Hat Hstep Hx8 Ha1 Ha2 Ha3 Ha5. unfold sys_grant3p in Hsys.
+  intros Hsys HD Hat Hstep Hx8 Ha1 Ha2 Ha3 Ha5 Hnull. unfold sys_grant3p in Hsys.
   destruct (sys_grant3 Rb Rc Lim nr F L3 n len) as [[F1 L31 n1|]|] eqn:Hg3; try discriminate.
   destruct (shp (pg_up len)) eqn:Hshp.
   2:{ injection Hsys as <-.
       exact (sys_grant3_sound cfg segs IM Halloc R0 Rb Rc Lim HRb HRc keep mem0 XI xtags XI_rho XI_vm fr0 fc0 rom0 hi wb0 na0 lz0 brk0 A0
-               n rho F L3 ms m nr len _ Hg3 HD Hat Hstep Hx8 Ha1 Ha2 Ha3 Ha5). }
+               n rho F L3 ms m nr len _ Hg3 HD Hat Hstep Hx8 Ha1 Ha2 Ha3 Ha5 Hnull). }
   match type of Hsys with (if ?c then _ else _) = _ => destruct c eqn:Hchk; [|discriminate] end.
   injection Hsys as <-. apply andb_true_iff in Hchk as [Hn1 Hacct2].
   apply ltb_spec in Hn1. change (to_Z 1152921504606846975) with (2 ^ 60 - 1) in Hn1.
@@ -645,8 +653,10 @@ Proof.
   apply regions_lt_b_ok in Hlt.
   pose proof (to_Z_succ61 R0 n Hn60) as Hn1s.
   destruct (grant3_steps cfg segs IM Halloc R0 Rb Rc Lim HRb HRc keep mem0 XI xtags fr0 fc0 rom0 hi wb0 na0 lz0 brk0 A0
-              n rho F L3 ms m nr len _ Hg3 HD Hstep Hx8 Ha1 Ha2 Ha3 Ha5) as (I & i0 & aof & Hiff & Hadm).
+              n rho F L3 ms m nr len _ Hg3 HD Hstep Hx8 Ha1 Ha2 Ha3 Ha5 Hnull) as (I & i0 & aof & Hiff & Hadm).
   set (nZ := page_round_up_Z (to_Z len)) in *. set (nZi := pg_up len) in *.
+  (* sys_ok3 = sys_ok30 /\ memfree (the mmap syscall number reads no memory) *)
+  split; [| rewrite Hx8; exact memfree_222].
   exists I, i0, (fun i => mkCfg (sysret (ms_pend ms) (aof i) (apply_zeros (ms_mem (ms_pend ms)) [(aof i, Z_to_bv 64 nZ)]))
                          (grant_model3 nr (aof i) nZ m)).
   split; [exact Hiff|].
@@ -768,7 +778,7 @@ Qed.
 Lemma sys_ok3_pre n rho F F0 L3 res ms m :
   mfr IM rho F L3 ms n rho F0 L3 ms -> SOK n rho F0 L3 res ms m -> SOK n rho F L3 res ms m.
 Proof.
-  intros Hm (I & i0 & nx & Hiff & Hsucc). exists I, i0, nx. split; [exact Hiff|].
+  intros Hm [(I & i0 & nx & Hiff & Hsucc) Hmf]. split; [|exact Hmf]. exists I, i0, nx. split; [exact Hiff|].
   intros i. destruct (Hsucc i) as (F' & L3' & n' & rho' & Hin & HD' & [Hdx Hmx]).
   exists F', L3', n', rho'. split; [exact Hin|]. split; [exact HD'|]. split; [exact Hdx|].
   destruct Hdx as (Hn & Hrho & _). exact (mfr_trans IM _ _ _ _ _ _ _ _ _ _ _ _ _ _ Hn Hrho Hm Hmx).
@@ -934,9 +944,9 @@ Proof.
       repeat match type of Hcl with (_ && _ = true) => apply andb_true_iff in Hcl as [Hcl _] end.
       destruct (iget pn (rg_pages rg)) as [p|] eqn:Ep; [|reflexivity].
       pose proof (proj1 (iall_spec _ _) Hcl pn p Ep). discriminate. }
-    exact (sys_unmap3_sound cfg segs IM R0 Lim keep mem0 XI xtags XI_vm fr0 fc0 rom0 hi wb0 na0 lz0 brk0 A0
+    exact (sys_unmap3_sound cfg segs IM Halloc R0 Lim keep mem0 XI xtags XI_vm fr0 fc0 rom0 hi wb0 na0 lz0 brk0 A0
              n rho (drop_region F (t + 1)%uint63) L3 ms m t off len res Hsys HD0 Hat Hstep Hx8 Ha0 Ha1).
-  - exact (sys_unmap3_sound cfg segs IM R0 Lim keep mem0 XI xtags XI_vm fr0 fc0 rom0 hi wb0 na0 lz0 brk0 A0
+  - exact (sys_unmap3_sound cfg segs IM Halloc R0 Lim keep mem0 XI xtags XI_vm fr0 fc0 rom0 hi wb0 na0 lz0 brk0 A0
              n rho F L3 ms m t off len res Hsys HD Hat Hstep Hx8 Ha0 Ha1).
 Qed.
 
@@ -974,7 +984,7 @@ Proof.
   - destruct HS as [Hz Hcov Hsp Hexc]. constructor; [| exact Hcov | | exact Hexc].
     + intros x Hx Hno Hnex. apply (Hz x Hx); [|exact Hnex]. exact (no_region_shape' rho _ _ _ Hshape Hno).
     + intros t' rg' Hg'. destruct (same_shape_get _ _ _ _ Hshape Hg') as (rg0 & Hg0 & _).
-      exact (span_ok_shape R0 rho _ _ t' rg0 rg' Hshape Hkinds Hg0 Hg' (Hsp t' rg0 Hg0)).
+      exact (span_ok_shape segs R0 rho _ _ t' rg0 rg' Hshape Hkinds Hg0 Hg' (Hsp t' rg0 Hg0)).
   - destruct HX as (X1 & X2 & X3 & X4 & X5). split; [exact X1|]. split; [exact X2|]. split; [exact X3|].
     split; [|exact X5].
     intros x Hx. destruct (X4 x Hx) as (Hta & Hno & Hm). split; [exact Hta|]. split; [|exact Hm].

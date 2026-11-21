@@ -2,7 +2,7 @@
    reac_segconf_parse_file's walk (the ignore key, reac_segconf.c:271-280 with parse_bool R:88-99 inlined), part of
    segment A12's proof, by the G3 walk owner, 2026-10-30. No instruction is walked here.
 
-   The four calls differ only in the literal (excerpt in the unit's internal record, commit dfb49d6ad789, path records/segp/dis/reac_segconf_parse_file.fuzz_segconf.asan.s):
+   The four calls differ only in the literal (excerpt in the unit's internal record, path records/segp/dis/reac_segconf_parse_file.fuzz_segconf.asan.s):
      0x88370 strcasecmp(val, "yes"   0x21b80)    0x88388 strcasecmp(val, "true"  0x21ba0)
      0x883d4 strcasecmp(val, "no"    0x21bc0)    0x883e8 strcasecmp(val, "false" 0x21be0)
    each with a0 = s9 = the value in buf, a1 = the literal's address, sp = pf_s1 v, through the trampoline
@@ -21,8 +21,8 @@
                       [sp0 - STK, s1) (STK_reac_segconf_parse_file = 12800, sp0 - 352 <= s1).
 
    The shapes of a12_astr_of_sa, of the value's and the literal's read facts and of the ecall_pre_stk step are
-   segment A7's proof's (lib/A/Prog/pf_a7_r.v at commit
-   ebe0b30cca65: a7_astr_of_sa, a7_str_some, a7_read_ok_of_addr, a7_tail_vis_buf, a7_ecall_pre_buf,
+   segment A7's proof's (lib/A/Prog/pf_a7_r.v:
+   a7_astr_of_sa, a7_str_some, a7_read_ok_of_addr, a7_tail_vis_buf, a7_ecall_pre_buf,
    a7_lit_read), restated over pf_base in place of A7's a7_st.
 
    Section hypotheses: ASC only (B is the symbols). No SSPX, no VRO, no ROMV. *)

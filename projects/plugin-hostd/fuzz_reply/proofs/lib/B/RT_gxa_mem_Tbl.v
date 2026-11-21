@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: REGENERATED for libreac/fuzz_boxreg's asan from plugin-hostd/fuzz_reply's
-   lib/A/RT_gxa_mem_Tbl.v (a working branch 86b50358d34): the four entries and the build identity
+   lib/A/RT_gxa_mem_Tbl.v (a working branch): the four entries and the build identity
    re-read from fuzz_boxreg.asan (nm + bytes); the rest of the file is the donor's form. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/A/RT_gxa_mem_Tbl.v, with its module paths and addresses changed; 2 lines of the source are left out. *)
-(* Image B twin of lib/A/RT_gxa_mem_Tbl.v at d49bd1db505: module paths lib.A -> lib.B; 15 image numerals moved to fuzz_reply.asan-ubsan by symbol + offset, each checked against that image (CHAINB-numerals.tsv sha256 3cedf5e564f7; internal record). *) (* fuzz_reply.asan-ubsan numerals of GXA's memcpy and memset call contracts (RT_gxa_calls_mem.v): the image B twin of
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Image B twin of lib/A/RT_gxa_mem_Tbl.v: module paths lib.A -> lib.B; 15 image numerals moved to fuzz_reply.asan-ubsan by symbol + offset, each checked against that image (CHAINB-numerals.tsv sha256 3cedf5e564f7; internal record). *) (* fuzz_reply.asan-ubsan numerals of GXA's memcpy and memset call contracts (RT_gxa_calls_mem.v): the image B twin of
    lib/A/RT_gxa_mem_Tbl.v.  lib/A/RT_gxa_mem_Tbl.v's header records how the image A values were paired, by code
-   bytes, with a working branch 840c4afa7e2 (fuzz_state.asan) for the eighteen files those contracts
+   bytes, with a working branch (fuzz_state.asan) for the eighteen files those contracts
    compose: lib/{A,B}/Bz/A/{I_memcpyw, I_memcpyw2, I_amemcpyw, I_amemcpyw2, I_amemcpy, I_memcpy, I_memsetw, F_memset,
    I_imemset}.v, lib/{A,B}/Prog/{memcpy_c, memcpy, memcpy_same_c, memcpy_same, memset_c, memset}.v,
    lib/{A,B}/R_memset.v, lib/{A,B}/Strw/{STRW_tac, STRWaj3}.v.
@@ -50,7 +51,7 @@ Definition MS_TRAMP : Z := 0x52778.   (* __interceptor_trampoline_memset: `j 0x5
 Definition MS_ICPT : Z := 0x531cc.    (* ___interceptor_memset: imemset_spec's entry (I_imemset.v) *)
 
 (* Build identity: this is fuzz_reply.asan-ubsan.  The first words of main 0x81ea4 and LLVMFuzzerTestOneInput 0x84408
-   (as RT_asan_memmove.v:63-67), the two trampolines' `j` words, the first word of each interceptor
+   (as RT_asan_memmove.v:64-68), the two trampolines' `j` words, the first word of each interceptor
    (`addi sp, sp, -2032`), and the first word of musl memcpy 0x96a4c (`andi a3, a1, 3`) and of musl memset 0x96e80
    (`beqz a2, +0xf4`), the REAL() targets the walks call. *)
 Lemma rt_gxa_mem_build_identity :

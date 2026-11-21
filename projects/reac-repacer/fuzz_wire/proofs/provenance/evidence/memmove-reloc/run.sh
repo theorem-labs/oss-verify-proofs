@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # The route of fuzz_wire's ASan __asan_memmove contract, one image per run: libreac/fuzz_pcap's released lib/<IMG>/Rt/
-# Memmove{Def,Im,K,Paths,}.v (origin/ossv/recipes 5098883da0b) -> alreloc (frozen a5c53bb2bed4ad03, with the measured
+# Memmove{Def,Im,K,Paths,}.v -> alreloc (frozen a5c53bb2bed4ad03, with the measured
 # resolutions asan-resolve-<IMG>.txt) -> adapt_memmove.py (module layout, symbol record, image end, the added notice).
 # The donor's notice lines stay byte for byte; the comment scrub of the unit runs later, on the whole unit tree.
 # usage: run.sh A|B WORKTREE        Environment: ALRELOC, WIRE_BIN (fuzz_wire pins + twins), PCAP_TWIN (fuzz_pcap's

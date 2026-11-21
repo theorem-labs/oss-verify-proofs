@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: mm_add_map_LOK takes the grant's region free of the whole reserved ledger, and FRONTR_placeable the length's page alignment. *)
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -1401,7 +1402,7 @@ Lemma LOK_mo1 : LOK bsegs mo1.
 Proof.
   pose proof HNB1 as X. destruct X as [(_ & _ & E & _)|(a & _ & _ & _ & (GA & GP & GC & GF) & E & _)]; rewrite E; [exact HOK|].
   apply mm_add_map_LOK; [exact HOK| rewrite unsigned_lit by lia; exact GC|].
-  rewrite region_free_app in GF. apply andb_true_iff in GF as [_ GF]. exact GF.
+  exact GF.
 Qed.
 Lemma SHBAND_mo1 : SHBAND mo1.
 Proof. apply (shband_mono mo mo1 maps_mo1). exact (shband_of_model st mo HM). Qed.
@@ -2056,7 +2057,7 @@ Proof.
     { intros a1 GR. pose proof (FRONTR_grant mo R a1 1048576 HFR ltac:(unfold FR_MINGRANT; lia) ltac:(reflexivity) ltac:(lia)) as F1.
       pose proof (ablk_img _ _ (grant_ablk_b mo a1 1048576 HOK (shband_of_model st mo HM) ltac:(lia) GR)) as F2. unfold KHIGHMEM_BEG, AIMG_HI in F2.
       split; [exact F1|]. split; [lia|]. (nelim GR 4%nat; intros _ _ GC GF). apply mm_add_map_LOK; [exact HOK| rewrite unsigned_lit by lia; exact GC|].
-      rewrite region_free_app in GF. apply andb_true_iff in GF as [_ GF]. exact GF. }
+      exact GF. }
     eapply put_insert_spec with (T := d_T dd) (n := zlen tr) (P := P) (p := A_DEPOT + 4 * b) (v := v) (h := h) (U := U) (k := (U + 1) / 65536) (lo := lo)
                                 (sbl := d_sblocks dd) (nbl := d_nblocks dd) (tr := tr) (nj := nj) (mo := mo) (R := R).
     all: lazymatch goal with
@@ -2071,7 +2072,7 @@ Proof.
          | |- rw_cells _ _ (A_DEPOT + 4 * _) _ => unfold A_DEPOT; apply TAB; lia
          | |- rw_cells _ _ 5814424 _ => exact NIDS1
          | |- rw_cells _ _ (5814440 + _) _ => apply MAP1s; lia
-         | |- mmap_placeable _ 1048576 => apply (FRONTR_placeable mo R); [exact HOK| exact HFR| lia| unfold FR_NMAX; lia]
+         | |- mmap_placeable _ 1048576 => apply (FRONTR_placeable mo R); [exact HOK| exact HFR| lia| reflexivity| unfold FR_NMAX; lia]
          | |- _ => idtac
          end.
     { rewrite ESP. lia. }
@@ -2092,8 +2093,8 @@ Proof.
         pose proof (ablk_img _ _ (grant_ablk_b _ a 8388608 L1 (shband_add_map mo a1 _ (shband_of_model st mo HM)) ltac:(lia) GR)) as X. unfold AIMG_HI in X. lia. }
     { lia. }
     { intros mo1 HMO. destruct HMO as [->|(a1 & G1 & ->)].
-      - apply (FRONTR_placeable mo R); [exact HOK| exact HFR| lia| unfold FR_NMAX; lia].
-      - (nelim (F1M a1 G1) 3%nat; intros F1 _ L1). apply (FRONTR_placeable _ (R - 1048576)); [exact L1| exact F1| lia| unfold FR_NMAX; lia]. }
+      - apply (FRONTR_placeable mo R); [exact HOK| exact HFR| lia| reflexivity| unfold FR_NMAX; lia].
+      - (nelim (F1M a1 G1) 3%nat; intros F1 _ L1). apply (FRONTR_placeable _ (R - 1048576)); [exact L1| exact F1| lia| reflexivity| unfold FR_NMAX; lia]. }
     (* [comment removed for export] *)
     intros nbl' nb1 mo1 R1 start sbl' nb2 m' mo' G' R' lj x5 x6 x7 x11' x12' x13 x14' x15' x16' x17 x28 x29 x30 x31.
     intros HNB1 HS1 HS2 SSR' SSW' HBF HALT NVIS' NODE' TAB' NIDS' MAP1' MI' MUp WMp STp.

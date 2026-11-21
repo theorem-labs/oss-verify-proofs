@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/tx_put.v, with its module paths and module names changed; 3018 of its 3112 lines of code are new or changed and 934 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW4e1.v, with its module paths and module names changed; 507 of its 559 lines of code are new or changed and 3060 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtl.v, with its addresses and numbers changed; 121 of its 137 lines of code are new or changed and 543 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/R15.v -- GLUE for stage seg_R15 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput (lib/A/ACtl.v:694):
      glue_seg_R15 : forall POST (b : nat),
        CF POST (ix_cut C_A81924_at [Z.of_nat b]) -> CF POST (ix_cut C_A817c8_at [Z.of_nat b])
@@ -40,8 +41,8 @@
    lib/Lib's Regs6ss / Mem / Step / Cells / Frame through the aliases LR6 / LMem / LStep / LCells / LFrame (lib/A/Bz/Lib
    twins are in the closure).
 
-   BUILD STATE (route (C), type-check): rc=0 on a working branch (a working branch 1899bed1aee merged) through
-   cb (BASE row 23b918fe0c2e, a build machine), no substitution; the build of record
+   BUILD STATE (route (C), type-check): rc=0 on a working branch (a working branch merged) through
+   cb (BASE row, a build machine), no substitution; the build of record
    (cbrec) is named in the commit.  Print Assumptions glue_seg_R15 = Rocq primitives + functional_extensionality_dep.
    No Axiom, no Parameter, no Admitted, no admit. *)
 

@@ -3,7 +3,7 @@
    the alloc.c ledger. GENERIC in the image (any {L : ptable asym} {PA : PAImg L}), in the allocator relation ARx with
    its laws, in the statics PST and in the sink head SK; image A's walk (lib/A/Prog/PwGrow.v) and image B's twin
    (image B's twin) both import it and write only their own run lemmas.
-   the kit's text of grow is tgrow_specX (lib/A/PRH_FnReader.v, blob f1ae32e3b2cd at the kit's cut 7cdbb61b5fa0); its callee's
+   the kit's text of grow is tgrow_specX (lib/A/PRH_FnReader.v, blob f1ae32e3b2cd at the kit's cut); its callee's
    text is tfuzz_realloc_specX (lib/A/PRH_FnAlloc.v, blob 4d8aeba047e5 at the cut), a STATED HYPOTHESIS until S1's walk
    lands. The harness-block shadow law is AR_laws_x field 15 (alx_hshadow, YCbqG blob 219748197d6b at the cut), at
    hl := cf_head.
@@ -310,7 +310,7 @@ destruct HAt as [(a & k & Hin & H1 & H2) | [(b & m & Hin & Hnot & H1 & H2) | [(c
   f_equal; lia.
 Qed.
 
-(* ---- the walk's bookkeeping, written for image B's walk (129171025fa,
+(* ---- the walk's bookkeeping, written for image B's walk (
    lib/B/Prog/PwGrowB.v:205-416) and moved here with the frame FR and the stack STK as parameters, so that both images
    use one copy. The statics are image bytes (HPST: at each instance by computation). ---- *)
 Hypothesis HPST : forall a, Exists (in_zr a) PST -> in_img segs a.
@@ -530,10 +530,10 @@ cbn [map] in HN. inversion HN as [|? ? Hnin HN']; subst.
 destruct H1 as [Hq | H1], H2 as [Hq' | H2].
 - injection Hq as <- <-. injection Hq' as <-. reflexivity.
 - injection Hq as <- <-. exfalso. apply Hnin.
-  first [apply (proj2 (list_elem_of_In _ _)) | apply (proj2 (elem_of_list_In _ _))].
+  first [apply (proj2 (list_elem_of_In _ _)) | apply (proj2 (list_elem_of_In _ _))].
   apply in_map_iff. exists (x, c). split; [reflexivity | exact H2].
 - injection Hq' as <- <-. exfalso. apply Hnin.
-  first [apply (proj2 (list_elem_of_In _ _)) | apply (proj2 (elem_of_list_In _ _))].
+  first [apply (proj2 (list_elem_of_In _ _)) | apply (proj2 (list_elem_of_In _ _))].
   apply in_map_iff. exists (x, b). split; [reflexivity | exact H1].
 - exact (IH a b c HN' H1 H2).
 Qed.
@@ -988,7 +988,7 @@ cbn in P. destruct P as [F P]. destruct Hin as [<- | Hin].
 - exact (IH y tl P Hin).
 Qed.
 
-(* the conclusion of the kit's lemma prh_alloc_fresh_append (lib/A/PRH_FnAlloc.v:255 at the cut 7cdbb61b5fa0), which
+(* the conclusion of the kit's lemma prh_alloc_fresh_append (lib/A/PRH_FnAlloc.v:255 at the cut), which
    takes NoDup of the post blocks' addresses; here from the allocator relation's laws instead. The APPEND equality of prh_alloc_post's SUCCESS arm (PRH_FnAlloc.v:234)
    would put the new block twice in the post state's block list if it were live before; the post state's blocks are
    pairwise disjoint (alx_sep) and the new one is at least one byte long (n is the request, 0 <= n). *)
@@ -1330,7 +1330,7 @@ pose proof (PresetRun.pkR_prefix f E (RSL S) j). lia.
 Qed.
 
 (* ---- list facts the realloc arms need (image A's statements, lib/A/Prog/PwGrow.v :793-821 at
-   r102-growA 07e5ec3b321e, moved here so A' and B' share one copy) ---- *)
+   r102-growA, moved here so A' and B' share one copy) ---- *)
 (* a hidden head set without repeats loses one element up to order *)
 Lemma perm_remove_nodup : forall (l : list Z) x, List.NoDup l -> In x l ->
   Permutation l (x :: remove Z.eq_dec x l).

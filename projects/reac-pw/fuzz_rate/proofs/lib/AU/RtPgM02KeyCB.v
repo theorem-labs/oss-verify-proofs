@@ -1,15 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02KeyBase.v, RPgM02KeyI.v and RPgM02KeyV.v
-   at 595d8c5dd1b5 (the value language of the value entry's address and of a `lw`, the expect_value cases, the
+   (the value language of the value entry's address and of a `lw`, the expect_value cases, the
    shadow entry over the value entry, the value dispatch, the Int arm and the value tail),
-   proofs/reac-pw/fuzz_role/lib/A/RPgM02KeyF.v at 7e8cf15c304a (the Float arm: the size test, the `flw` and
-   pod_nearest) and proofs/reac-pw/fuzz_rate/lib/A/RtPgScanF.v at 22306b8175e6 (the pairs of the scan across a
+   proofs/reac-pw/fuzz_role/lib/A/RPgM02KeyF.v (the Float arm: the size test, the `flw` and
+   pod_nearest) and proofs/reac-pw/fuzz_rate/lib/A/RtPgScanF.v (the pairs of the scan across a
    key) for reac-pw/fuzz_rate image A: role's pcs become rate's, the shadow base is rate's s2 (atom 18), role's Role
    answers become Rate.expect_value / Rate.rate_of_pairs, role's value tail (a bound test and check_role) becomes
    rate's check_rate on the hz cell, the out cell is R+0x158, the `flw` is stepped by YA0n.SRr_step, and the key
    compare (the spills, the strcmp wrapper, the mismatch exit to O) is new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgM02Key.v at 48d3cf0d8e40 (the key compare:
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgM02Key.v (the key compare:
    the helpers m2kc_* and the lemmas m2kc_key_str, m2kc_tail, m2k_key) for image B (fuzz_rate.asan-ubsan): image B's
    pcs (KM 0x82c40, the call 0x82c64 of the strcmp wrapper 0x421f4, the tail 0x82c68, O 0x82b48, KV 0x82c98); the
    cuts are lib/AU/RtPgSegB.v's (rs_ -> rsb_) and the interfaces lib/AU/RtPgM02KitB.v's (m2k_ -> m2kb_); the cut's
@@ -20,6 +20,7 @@
    the call as a callee-saved register and is the scan's a2 at O; the tail's two trap branches 0x82c88 and 0x82c90
    are decided by the engine from closed atom bounds on s6, s8 and s11, and the flags byte is reloaded from R+0x50
    into s7 before KV; &ent[v] is `add a0,s2,s8` (image A's mulhu form is dropped). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate, image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14; every address measured on the unstripped twin
    a1e5fa55ae27e657ea2719297ec4c037110f10fa9047c3ea7bb6ea7fcb358cb1, whose loaded code bytes are the pin's). Proves no

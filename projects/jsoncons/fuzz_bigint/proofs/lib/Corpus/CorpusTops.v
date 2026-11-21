@@ -1,8 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* The proofs in this file are Anthropic's; the theorem statements were issued by the task authors and are reproduced as issued (see NOTICE). *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-11: the halts half of projects/jsoncons/fuzz_json_cursor/proofs/lib/Theorems.v at c395a1e0dfa (its four halts_allowed_jsoncons_fuzz_json_cursor_halts_* theorems and the HaltsCfgForcedOnly and *Exits modules they use), with fuzz_json_cursor renamed to fuzz_bigint, the four theorems renamed, and each proof term replaced by the matching theorem of Corpus.CorpusHalts{P,U,A,B}; the equivalence theorems of that file are not carried over, since fuzz_bigint already proves its own in lib/Theorems.v. *)
+(* Modified by Theorem Labs, 2026-11: the halts half of projects/jsoncons/fuzz_json_cursor/proofs/lib/Theorems.v at theorem-labs/oss-verify-proofs@c5665593c2d8 (its four halts_allowed_jsoncons_fuzz_json_cursor_halts_* theorems and the HaltsCfgForcedOnly and *Exits modules they use), with fuzz_json_cursor renamed to fuzz_bigint, the four theorems renamed, and each proof term replaced by the matching theorem of Corpus.CorpusHalts{P,U,A,B}; the equivalence theorems of that file are not carried over, since fuzz_bigint already proves its own in lib/Theorems.v. *)
 (* Modified by Theorem Labs, 2026-11: taken from ossv175b/bigint at b5b2fc487168, with the asan and both theorems removed together with their Require lines for Corpus.CorpusHaltsA, Corpus.CorpusHaltsB, images.Asan and images.AsanUbsan. Those two images contain self-jump words, so the premise ~ spin_site_present that Corpus/CorpusSpin.v now needs has no proof for them; asan_halts and asan_ubsan_halts stay open (tracked internally). *)
+(* Modified by Theorem Labs, 2026-11: the cited source commit is named by its public id, theorem-labs/oss-verify-proofs@c5665593c2d8; asan_halts and asan_ubsan_halts no longer stay open: Corpus/CorpusTopsA.v proves them. *)
 
 From Stdlib Require Import NArith List.
 Require LinuxProcessSemantics.EquivalenceDefinition.Equivalence.

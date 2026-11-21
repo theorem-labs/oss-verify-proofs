@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, a string ends at least 9 bytes below 2 ^ 47, was 16 (strlen's eight-byte read-ahead and one byte for ASan's high end), so its pointer is at most 2 ^ 47 - 10, was 2 ^ 47 - 17. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -33,7 +34,7 @@ Section UA.
   Hypothesis HW : L5.writable RSEGS M (S - 5440) 5440.
   Hypothesis HD : L5.defined M (S - 5440) 5440.
   Hypothesis HIMG : L5.img_clear M 65536 884736.
-  Hypothesis Hp : S <= p /\ p + n + 1 + 16 <= 2 ^ 47.
+  Hypothesis Hp : S <= p /\ p + n + 1 + 9 <= 2 ^ 47.
   Hypothesis Hn : n <= 131071.
   Hypothesis HSTR : cstr M p bs t8.
   Hypothesis HSH : forall x : word, SB + p / 8 - 7 <= bv_unsigned x < Z.min (SB + (p + n) / 8 + 8) (SB + 2 ^ 44) -> M x = Some (Z_to_bv 8 0).
@@ -176,7 +177,7 @@ Section UA.
     destruct HMF as (MF72 & MF64 & MF56 & MF48 & MF40 & MF32 & MF24 & MF16 & MF8).
     pose proof HC as (C1 & C2 & C3 & C4 & C5 & C6 & C7 & F1 & F2 & F3 & F4 & F5 & F6 & F7 & F8 & FW).
     pose proof (u64_of_zeros M 2147462120 HFMT ltac:(lia) ltac:(lia)) as HFMT64.
-    assert (Pr : 140735332552704 <= p <= 140737488355311) by lia.
+    assert (Pr : 140735332552704 <= p <= 140737488355318) by lia.
     assert (Nr : 0 <= n <= 131071) by lia.
     (* [comment removed for export] *)
     pose proof (duA_conc fx R M (fun j => match j with 2%nat => S | 33%nat => p | 34%nat => n | _ => 0 end)) as P. cbn beta iota in P.

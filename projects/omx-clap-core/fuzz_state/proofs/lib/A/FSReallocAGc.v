@@ -21,7 +21,7 @@
        dpostD CLdepot.dpost_x tfibsegs   dbody AFeu.drain_body   L24 16385   QB qloose   DRq DGif1.DRq_cgif
      the 5 instance records:
        H_if AGif1.iface_cgif     H_ifk AGif1k.iface_cgif_k   H_ifm AGif1m.iface_cgif_m   H_ifs AGif5.ifaceS_cgif
-       H_dif  DGif1.diface_cgif at L24 := 16385 with its six drain-side premises discharged as DGtopcgifC.v:31-41 does
+       H_dif  DGif1.diface_cgif at L24 := 16385 with its six drain-side premises discharged as DGtopcgifC.v:32-42 does
               (DGif1d.di_drain_cgif, DGif1dI.di_requar_x/r/e_cgif, DGif1dI.di_rchunk_cgif, DGif1dI.di_cdealloc_cgif)
      B TS HDH   the generic theorem's own premises
      H_refill_U H_difR_U   this file's two Section hypotheses, at B and TS
@@ -82,11 +82,11 @@ Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 
 (* ---- the two ARU callee lifts: FSReallocAG.v:287-288 and :290-292 at the instance values ---- *)
 
-(* if_refill at ARU (the ARU twin of AGif1m.refill_cgif, AGif1m.v:157) *)
+(* if_refill at ARU (the ARU twin of AGif1m.refill_cgif, AGif1m.v:158) *)
 Hypothesis H_refill_U : forall B : asyms, TfibSyms B -> forall Up,
   FSupoisonARXmA.if_refill_t B (FSupoisonARXm.ARX_ARU tfibsegs B AF0m.TFIB_INST Up) (aowned B)
     FSRealloc_rmodel.FS_rpreA qtight refill_tree.
-(* DIfaceR at ARU (the ARU twin of DIfaceRcgif.diface_r_cgif, DIfaceRcgif.v:42) *)
+(* DIfaceR at ARU (the ARU twin of DIfaceRcgif.diface_r_cgif, DIfaceRcgif.v:43) *)
 Hypothesis H_difR_U : forall B : asyms, TfibSyms B -> forall Up,
   DIfaceR B (FSReallocAGg.UA B) (FSupoisonARXm.ARX_ARU tfibsegs B AF0m.TFIB_INST Up)
     (FSupoisonARXm.ARX_ARU tfibsegs B AF0m.TFIB_INST Up) (aowned B) FSRealloc_rmodel.FS_rpreD qtight

@@ -1,6 +1,3 @@
-(* Copyright 2026 Anthropic PBC *)
-(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Trevor Hansen, 2026-11: ubsan_base is made from top_ubsan_shipped of U/TopUbsan and ubsan_assembled_shipped of U/FinalU, at source_alloc_limit; asan_ubsan_base applies top_both of B/TopBoth to both_boot and both_main of B/FinalBoth; the four ubsan and asan_ubsan theorems follow the asan theorems of this file. *)
 From Stdlib Require Import ZArith NArith List QArith String PrimString.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType RiscvSemantics State Run OmniRun.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Examples Omni SpuriousCfg.
@@ -9,19 +6,15 @@ From OSSVerify.Core Require Import Images Shapes.
 Require OSSVerify.mbedtls.fuzz_pkcs7.Images.
 Require OSSVerify.mbedtls.fuzz_pkcs7.Statements.
 Require OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.FinalAsan.
-Require OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.FinalP.
-Require OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.U.U_top.
-Require OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.U.TopUbsan.
-Require OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.U.FinalU.
-Require OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.B.TopBoth.
-Require OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.B.FinalBoth.
+Require OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.SanBase.
 Import ListNotations.
 
 Definition accept_segment : Segment := {|
   seg_base := 65536%N;
   seg_size := 132%N;
   seg_perms := "r-x"%string;
-  seg_bytes := ["7f454c460201010000000000000000000200f30001000000780001000000000040000000000000000000000000000000040000004000380001004000000000000100000005000000000000000000000000000100000000000000010000000000840000000000000084000000000000000010000000000000130500009308e00573000000"%pstring]
+  seg_bytes := ["7f454c460201010000000000000000000200f30001000000780001000000000040000000000000000000000000000000040000004000380001004000000000000100000005000000000000000000000000000100000000000000010000000000840000000000000084000000000000000010000000000000130500009308e00573000000"%pstring];
+  seg_kind := SegLoader
 |}.
 Definition accept_segments : list Segment := [accept_segment].
 Definition accept_phdrs : PhdrInfo := mkPhdrInfo 65600%N 56%N 1%N.
@@ -30,14 +23,16 @@ Definition accept_image : Image := mkImage accept_segments 65656%N accept_phdrs.
 Lemma accept_image_wf : image_wf accept_image.
 Proof. check_image_wf. Qed.
 
-Lemma accept_exits_c : forall sp rnd argv envp uid hw,
-  exits_c accept_segments verdict_accept 8
-    (init_machine_state accept_segments 65656%N accept_phdrs sp rnd argv envp uid hw)
+Lemma accept_exits_c : forall sp mbase draw inp,
+  exits_c (run_segments accept_segments inp sp mbase) verdict_accept 8
+    (init_machine_state (run_segments accept_segments inp sp mbase) 65656%N accept_phdrs sp
+       mbase draw inp)
   = true.
 Proof.
-  intros. rewrite (with_mem_eta (init_machine_state _ _ _ _ _ _ _ _ _)).
-  generalize (ms_mem (init_machine_state accept_segments 65656%N accept_phdrs sp rnd argv envp uid hw)).
-  intros mem. vm_compute. reflexivity.
+  intros. rewrite (with_mem_eta (init_machine_state _ _ _ _ _ _ _)).
+  generalize (ms_mem (init_machine_state (run_segments accept_segments inp sp mbase) 65656%N
+                        accept_phdrs sp mbase draw inp)).
+  intros mem. unfold run_segments. vm_compute. reflexivity.
 Qed.
 
 Lemma accept_must_exit : forall inp en,
@@ -93,31 +88,14 @@ Proof. exact (disagrees_at_most_0 _ _ _ _ asan_base). Qed.
 Theorem asan_decidable : OSSVerify.mbedtls.fuzz_pkcs7.Statements.asan_agreement_decidable.
 Proof. exact (agreement_decidable_of_base _ _ asan_base). Qed.
 
-Lemma ubsan_base :
-  strong_universal_error_free_T OSSVerify.mbedtls.fuzz_pkcs7.Images.plain OSSVerify.mbedtls.fuzz_pkcs7.Images.ubsan.
-Proof.
-  intros en_s en_t inp Hs Ht Hv.
-  exact (OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.U.TopUbsan.top_ubsan_lim
-           (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.U.U_top.U_realizes_spec_lim OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.U.FinalU.SIU OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.U.FinalU.SIU_fp OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.U.FinalU.PF_U)
-           OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.FinalP.SIP OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.FinalP.SIP_fp OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.FinalP.PF_P
-           source_alloc_limit ltac:(apply Z.leb_le; vm_compute; reflexivity) en_s en_t inp Hs Ht Hv).
-Qed.
-
-Lemma asan_ubsan_base :
-  strong_universal_error_free_T OSSVerify.mbedtls.fuzz_pkcs7.Images.plain OSSVerify.mbedtls.fuzz_pkcs7.Images.asan_ubsan.
-Proof.
-  exact (OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.B.TopBoth.top_both OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.FinalP.SIP OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.FinalP.SIP_fp OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.FinalP.PF_P
-           (OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.B.TopBoth.both_side_of_parts _ OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.B.FinalBoth.both_boot OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.B.FinalBoth.both_main)).
-Qed.
-
 Theorem ubsan_bound_0 : OSSVerify.mbedtls.fuzz_pkcs7.Statements.ubsan_disagrees_at_most 0.
-Proof. exact (disagrees_at_most_0 _ _ _ _ ubsan_base). Qed.
+Proof. exact (disagrees_at_most_0 _ _ _ _ OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.SanBase.ubsan_base). Qed.
 
 Theorem ubsan_decidable : OSSVerify.mbedtls.fuzz_pkcs7.Statements.ubsan_agreement_decidable.
-Proof. exact (agreement_decidable_of_base _ _ ubsan_base). Qed.
+Proof. exact (agreement_decidable_of_base _ _ OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.SanBase.ubsan_base). Qed.
 
 Theorem asan_ubsan_bound_0 : OSSVerify.mbedtls.fuzz_pkcs7.Statements.asan_ubsan_disagrees_at_most 0.
-Proof. exact (disagrees_at_most_0 _ _ _ _ asan_ubsan_base). Qed.
+Proof. exact (disagrees_at_most_0 _ _ _ _ OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.SanBase.asan_ubsan_base). Qed.
 
 Theorem asan_ubsan_decidable : OSSVerify.mbedtls.fuzz_pkcs7.Statements.asan_ubsan_agreement_decidable.
-Proof. exact (agreement_decidable_of_base _ _ asan_ubsan_base). Qed.
+Proof. exact (agreement_decidable_of_base _ _ OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.SanBase.asan_ubsan_base). Qed.

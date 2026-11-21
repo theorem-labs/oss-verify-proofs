@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the auxv region is 464 bytes, was 160, and the auxv fact carries over memory that agrees on it (auxv_ok_agree). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp.bitvector Require Import definitions.
@@ -136,13 +137,14 @@ Proof.
   decompose [and] ST.
   assert (AG: forall a n, (forall i, a <= i < a + n -> (456952 <= i < 456952 + 12) \/ (457504 <= i < 457504 + 2) \/ (459617 <= i < 459617 + 6) \/
      (459784 <= i < 459784 + 8) \/ (591656 <= i < 591656 + 8) \/ (591528 <= i < 591528 + 8) \/ (591568 <= i < 591568 + 8) \/
-     (av <= i < av + 160) \/ (0x10000 <= i < 0x5f608) \/ (0x5f630 <= i < 0x5f650) \/ (0x5f660 <= i < 0x5f668)) -> L5C.agree_on M M' a n).
+     (av <= i < av + 464) \/ (0x10000 <= i < 0x5f608) \/ (0x5f630 <= i < 0x5f650) \/ (0x5f660 <= i < 0x5f668)) -> L5C.agree_on M M' a n).
   { intros a n Hn i Hi. apply K. apply Hn. exact Hi. }
   repeat match goal with |- _ /\ _ => split end;
   first [ eapply (L5C.u64_at_agree RSEGS); [apply AG; intros; lia | lia | lia | assumption]
         | eapply L5US.u32_at_agree; [apply AG; intros; lia | lia | lia | assumption]
         | eapply (L5C.u8_at_agree RSEGS); [apply AG; intros; lia | lia | lia | assumption]
         | assumption
+        | eapply auxv_ok_agree; [eassumption | lia | intros i Hi; apply K; lia]
         | intros j Hj; eapply (L5C.u64_at_agree RSEGS); [apply AG; intros; lia | lia | lia | auto]
         | intros i Hi; rewrite K by lia; auto ].
 Qed.

@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 823 of its 864 lines of code are new or changed and 970 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F3F.v, with its module names changed; 207 of its 257 lines of code are new or changed and 814 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/B/Prog/reac_ctrl_identity_reply_c_on.v -- route (C) (a Theorem Labs lane 09:20Z; form of record lib/B/ShadowRwOn.v; wave lead
    a Theorem Labs lane; stream lead a Theorem Labs lane 11:13Z, route (C) phase 2 for the image-B reply run, writer a Theorem Labs lane): the ADDITIVE
    `_on` twins of lib/B/Prog/reac_ctrl_identity_reply_c.v's two contracts, with the three bridge lemmas of the image-B
@@ -16,7 +17,7 @@
    `forall P, shadow_rw_on P m -> shadow_rw_on P m'`.
    The run that proves reac_ctrl_identity_reply_contract_F_on is lib/B/Prog/reac_ctrl_identity_replyF_on.v (not in this delivery).
    rule 24: proof-index reac_ctrl_identity_reply reac_ctrl_identity_reply_contract_F (recorded in the lane's
-   lookup-reac_ctrl_identity_reply.txt (a working note, not in this delivery); checker's verdict CONFIRM, lookup-check.md (a working note, not in this delivery)): At ossv/recipes c5e779efe8c (2026-10-31), no released
+   lookup-reac_ctrl_identity_reply.txt (a working note, not in this delivery); checker's verdict CONFIRM, lookup-check.md (a working note, not in this delivery)): At (2026-10-31), no released
    proof outside this unit; this file proves no function (statement text and bridge lemmas between statements only). *)
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -209,7 +210,7 @@ Definition reac_ctrl_identity_reply_contract_F_on : Prop :=
    shadow_rw m' by the `_on` post at P := fun _ => True and shadow_rw_of_on_all (Lib/Exec.v evt_mono, ExecF.evtF_mono
    weaken the post); and the `_on` pair's reac_ctrl_identity_reply_contract_of_F (its proof, unchanged: the region
    premise and the post pass through). Names and shapes as a Theorem Labs lane's image-B twins (lib/B/Prog/ctrl_lay_block_c.v,
-   a working branch 1d3f3f868d5): _contract_of_on, _contract_F_of_F_on, _contract_on_of_F_on. *)
+   a working branch): _contract_of_on, _contract_F_of_F_on, _contract_on_of_F_on. *)
 Lemma reac_ctrl_identity_reply_contract_of_on :
   reac_ctrl_identity_reply_contract_on -> reac_ctrl_identity_reply_contract.
 Proof.

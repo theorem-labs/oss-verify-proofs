@@ -2,31 +2,32 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk (image B, fuzz_reply.asan-ubsan) of fuzz_reply's
    relay_finish, a NEW walk over lib/B/W_listing.v (B's body is not A's up to relocation: VERDICT.md (sha256 810ca1df9ca9; internal record)),
-   after lib/A/W_relay_finish_h.v (a working branch a3987bff22c: its loop rf_loop and its tail rf_tail), in the
-   form of the B walks lib/B/W_check_bounded.v (a working branch 7e062bb9b9c) and lib/B/W_gse_loop.v
-   (a working branch bb5ed8a0689). *)
+   after lib/A/W_relay_finish_h.v (a working branch: its loop rf_loop and its tail rf_tail), in the
+   form of the B walks lib/B/W_check_bounded.v (a working branch) and lib/B/W_gse_loop.v
+   (a working branch). *)
 (* Modified by Theorem Labs, 2026-10: the room `_x` form (a Theorem Labs lane, RoomRFB): the walk is pb_relay_finish_x,
    stated over any allocator relation ARx with its laws as W_contract_x.v rf_spec_x (Section c below: PST / ARx / hl /
    LAWS / HP0 / BLKN, the callees' and the allocator rules' `_x` twins, PSTR / PSTC), and it threads rf_spec_x's room
    round: the budget rp_RM RP (each round: the free's 1, then gestures_end's charge) and the count premise
    cnt_ok_pk RP rf_pk (rf_pk = 5) to the free (cnt_ok) and to gestures_end (gse_pk = 4); the round's room bound follows
    rf_room's `- cap` threading (the round frees the old g_out block).  The room argument is lib/A/W_relay_finish_h.v's
-   (a working branch 9e4f84a8fb9), the ARx form that of lib/B/W_list_free.v / W_source_reset.v
-   (a working branch dfa1a225350).
+   (a working branch), the ARx form that of lib/B/W_list_free.v / W_source_reset.v
+   (a working branch).
    B's relay_finish sets no frame pointer and calls no __asan_stack_malloc, so A's fake-frame seat, its set_fs step and rp_RPF across the seat do not apply.
    pb_relay_finish keeps its statement, byte-identical, and its Section hypotheses (the same terms in the same order;
    HPLAIN / HWSEG write rf_cells as rf_cells RG GTU GL): it is re-derived from pb_relay_finish_x at ARx := ARi0,
    PST := [], RP := RP_AR (Section cAR); pb_relay_finish_fr / _fr_tfib are unchanged. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/W_relay_finish.v, with its module paths, module names and numbers changed; 548 of its 618 lines of code are new or changed and 4273 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, the #102 walk of alloc.c's own on image B' (asan-ubsan, pinned d663f82d; merged alloc.c own :48-56;
    B' 0x85dbc, 62 instructions, frame 32, out of line: fuzz_malloc B' tail-calls it, fuzz_realloc B' calls it), slot
-   B_prog_slot AS_own of a Theorem Labs lane's #102 whole-program listing lib/B/Listing_prog.v / PAImg_prog.v (d42e123915ae),
+   B_prog_slot AS_own of a Theorem Labs lane's #102 whole-program listing lib/B/Listing_prog.v / PAImg_prog.v,
    against the text town_specX (lib/A/PRH_FnAlloc.v blob 83fe93bc86e2, the #102 kit of record:
-   decff67d721f on AL base ef3d561e39e1; the m-form post fpostm, the ledger with g_most / g_own_ran_out as FIELDS
+   on AL base; the m-form post fpostm, the ledger with g_most / g_own_ran_out as FIELDS
    (PRH_Base.v 3004a98fe2d9), errno kept), at preset's second allocator relation
    ARcfx = ARcf pa_segs B /\ xs_placed_cf (a Theorem Labs lane's YG0ncf.v; a Theorem Labs lane's YGcallcf.v) and cp := CfParams_preset,
    image B' numbers prh_img_B (lib/B/PRH_ImgB.v, generated on the unstripped twin c90d4fa5). Ported from S1's old-pin
-   walk lib/B/Prog/OwnB.v (s1b 8a01e111a410, blob 7e1d0878b2af; c-omx-alloc's): the same proof script, re-run on the
+   walk lib/B/Prog/OwnB.v (s1b, blob 7e1d0878b2af; c-omx-alloc's): the same proof script, re-run on the
    d42e listing (the internal file REWALK-102-PLAN.md section 2's "all 62 instructions equal" is a hint; the evidence is this walk).
    The runner YC80x / YC1fPx over YCbqG's ajournal_x in its memnorm-carrying form (YSRrMemnorm.srr_inv_laws_imp),
    the poison call by YGcallMxmn.aj_poison_x_m (Q5's memnorm call rule).
@@ -77,7 +78,7 @@ Local Set Warnings "-abstract-large-number".
 Open Scope bv_scope.
 Open Scope Z_scope.
 
-(* the two alloc.c statics own writes, BY NAME (the internal file pins102.json objects[k], a working branch 5472bf2e7a82;
+(* the two alloc.c statics own writes, BY NAME (the internal file pins102.json objects[k], a working branch;
    the d42e listing keeps v4's numbers 9 / 10) *)
 Definition OBJ_g_live : nat := A_OBJ 9.
 Definition OBJ_g_peak : nat := A_OBJ 10.

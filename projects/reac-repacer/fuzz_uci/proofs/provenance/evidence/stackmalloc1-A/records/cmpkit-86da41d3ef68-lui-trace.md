@@ -2,8 +2,8 @@
 
 Why: luiscan 9ae61e4a0e01 (records/cmpkit-86da41d3ef68-luiscan.out) cleared every lui row of this record on `memfed 0`
 and the section test. In both images every row has insec 0, memfed 0, luiconst 0, exposure 0; TryAsanInitFromRtl's
-value 0x10000 lies in the first PT_LOAD (the ELF header) but in no section (`inload 1`). The tool set's README at commit
-6d8ff128a01 records a known limit of cmpkit 86da41d3ef68: rule 8's dataflow follows a lui value through addi / ld / sd /
+value 0x10000 lies in the first PT_LOAD (the ELF header) but in no section (`inload 1`). The tool set's README
+ records a known limit of cmpkit 86da41d3ef68: rule 8's dataflow follows a lui value through addi / ld / sd /
 jalr only, not through add / sub / sh*add, so `memfed 0` is not proof that the value never reaches an address. This file
 traces each lui by hand.
 
@@ -20,7 +20,7 @@ words and named by .symtab in each image. Listing columns: offset, address in G,
 and U hold the same word there), the text, and the targets (G ; U). Every word that differs between G and U is an
 auipc, its lo12 partner or a jal, which the kit compared.
 
-Ops followed (the tool set's README at commit 797c750bbb0: a `lui-const (dataflow)` settlement is not evidence when the lui register feeds a register-register or logical op): every instruction that reads a traced register and writes a register was followed to that register's next write, namely every register-register op (OP / OP-32: add, sub, sh1add / sh2add / sh3add, sll, srl, sra, slt, sltu, and, or, xor, mul and the other M ops, and the *w forms incl. negw) and every register-immediate op (OP-IMM / OP-IMM-32: addi incl. mv, andi, ori, xori incl. not, slti, sltiu, slli, srli, srai, addiw incl. sext.w, slliw, srliw, sraiw), plus loads / stores (base and data), branches, AMO / LR / SC, calls (arguments, return) and sp-relative spills / reloads; no traced value enters an FP register or a CSR. The logical ops a lui value passes are TryAsanInitFromRtl +0x4c / +0x50 / +0x54 (xor, and, xor: into the sc.w data) and AsyncSignalSafeLazyInitFakeStack +0x124 / +0x12c / +0x134 / +0x144 / +0x160 / +0x18c (and, and, and, and, xori, and: into the table index 0..63), both traced below; insec is 0 for every row in both images, so no row of this record is `lui-const (dataflow)`. No row changes.
+Ops followed (the tool set's README: a `lui-const (dataflow)` settlement is not evidence when the lui register feeds a register-register or logical op): every instruction that reads a traced register and writes a register was followed to that register's next write, namely every register-register op (OP / OP-32: add, sub, sh1add / sh2add / sh3add, sll, srl, sra, slt, sltu, and, or, xor, mul and the other M ops, and the *w forms incl. negw) and every register-immediate op (OP-IMM / OP-IMM-32: addi incl. mv, andi, ori, xori incl. not, slti, sltiu, slli, srli, srai, addiw incl. sext.w, slliw, srliw, sraiw), plus loads / stores (base and data), branches, AMO / LR / SC, calls (arguments, return) and sp-relative spills / reloads; no traced value enters an FP register or a CSR. The logical ops a lui value passes are TryAsanInitFromRtl +0x4c / +0x50 / +0x54 (xor, and, xor: into the sc.w data) and AsyncSignalSafeLazyInitFakeStack +0x124 / +0x12c / +0x134 / +0x144 / +0x160 / +0x18c (and, and, and, and, xori, and: into the table index 0..63), both traced below; insec is 0 for every row in both images, so no row of this record is `lui-const (dataflow)`. No row changes.
 
 ## Result: 10 lui per image, none forms a static address, no verdict changes
 

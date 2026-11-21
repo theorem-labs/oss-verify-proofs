@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mremap's new outcomes). *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs.
 From LinuxProcessSemantics.LinuxProcessSem Require Import Sys.SyscallTable.
@@ -32,7 +33,7 @@ Qed.
 Lemma brk_r_ok_setlim : ltac2:(TCodec.tc2 tcn__Common_BudgetBridgeMm "Q2'7'9'R=yR0%211'6'1&Hr3r2%3221(2%73621&QD&F&?r4%211%411r5%7221&I&QAr6%2215%4319A%537:B%F3E21p081p0A1pTDJ1pTFK1pT4O1pBQ11").
 Proof.
 intros L m req r Hmk Hle.
-unfold brk_r_ok, brk_grow_ok, brk_budget_ok, brk_budget_refused_b in *.
+unfold brk_r_ok, brk_grow_ok, brk_budget_ok, brk_budget_refused_b, brk_grow_bytes in *.
 rewrite vm_backing_used_setlim, m_vmmaps_setlim.
 set (h := m_vmmaps m) in *.
 cbn [setlimh vm_brk vm_reserved vm_maps vm_limit vm_start_brk vm_init_sp min_brk alloc_top].
@@ -46,7 +47,7 @@ destruct ((0 <? bv_unsigned (vm_brk h)) && (bv_unsigned (vm_brk h) <? bv_unsigne
 [|reflexivity].
 apply orb_true_iff in E3. destruct E3 as [E3 | E3]; apply bv_eqb_eq in E3; subst r.
 - apply andb_true_iff in E4. destruct E4 as [E4a E4b].
-rewrite ?E1, ?E4a, ?E4b in Hmk. unfold brk_budget_ok in Hmk. cbn [negb andb] in Hmk.
+rewrite ?E1, ?E4a, ?E4b in Hmk. unfold brk_budget_ok, brk_grow_bytes in Hmk. cbn [negb andb] in Hmk.
 apply negb_false_iff in Hmk. fold h in Hmk. rewrite Hmk.
 apply Z.leb_le in Hmk. replace (_ <=? L) with true by (symmetry; apply Z.leb_le; lia).
 reflexivity.
@@ -234,28 +235,62 @@ match goal with
 |- mremap_inplace_grow_b (setlim ?L ?m) _ _ _ _ _ = _ =>
 exact (mremap_inplace_grow_setlim L m _ _ _ _ _ Hle HA)
 end.
+(* LPS 08b1429 Sys/Mm/Mremap.v: the grow path splits on [mremap_inplace_room_b].  With room
+   the only non-errno answer is in place, behind a [choose] on [mremap_final_budget_b];
+   without room it is the move, whose destination is [mremap_dst_ok] ([linux_place] /\
+   [mremap_fresh_b]).  [mremap_budget_refused_b] splits the same way, so the mark is no
+   longer one [&&] to split: [hmk_simp] reduces it along the scrutinees [sim1_auto] has
+   already destructed, leaving the one budget conjunct of the branch the goal is in.
+   [linux_place] never reads [vm_limit], so it transfers across [setlim] by conversion. *)
+Ltac hmk_simp Hmk :=
+try match goal with
+| H1 : (?n2 <? ?n1) = false, H2 : (?n1 =? ?n2) = false |- _ =>
+lazymatch type of Hmk with context [n2 <=? n1] => idtac end;
+let Hgt := fresh "Hgt" in
+assert (Hgt : (n2 <=? n1) = false)
+by (apply Z.leb_gt; apply Z.ltb_ge in H1; apply Z.eqb_neq in H2; lia);
+rewrite Hgt in Hmk; clear Hgt
+end;
+repeat match goal with
+| H : ?b = ?v |- _ =>
+tryif constr_eq H Hmk then fail else idtac;
+lazymatch v with true => idtac | false => idtac end;
+lazymatch b with true => fail | false => fail | _ => idtac end;
+lazymatch type of Hmk with context [b] => idtac end;
+rewrite H in Hmk
+end;
+cbv beta iota in Hmk.
 Ltac gate_tac ::=
+lazymatch goal with
+| Hm : mremap_budget_refused_b _ _ _ _ _ = false |- _ =>
+let Hmk := fresh "Hmk" in
+pose proof Hm as Hmk; unfold mremap_budget_refused_b in Hmk; cbv zeta in Hmk;
+hmk_simp Hmk
+end;
 match goal with
-| HB : mremap_move_budget_b ?m ?o ?on (Z_to_bv 64 ?nZ) = true, Hle : vm_limit (m_vmmaps ?m) <= ?L,
+| Hmk : negb (mremap_final_budget_b ?m ?o ?on ?d ?nn) = false, Hle : vm_limit (m_vmmaps ?m) <= ?L
+|- (mremap_final_budget_b (setlim ?L ?m) ?o ?on ?d ?nn = true) <-> _ =>
+let G := fresh "G" in
+pose proof (proj1 (negb_false_iff _) Hmk) as G;
+split; intros _; [exact G | exact (mremap_final_budget_mono L m o on d nn Hle G)]
+| Hmk : negb (mremap_move_budget_b ?m ?o ?on (Z_to_bv 64 ?nZ)) = false, Hle : vm_limit (m_vmmaps ?m) <= ?L,
 Hb : maps_bounded (vm_maps (m_vmmaps ?m))
-|- (mremap_fresh_b (setlim ?L ?m) _ ?nZ _ _ _ _ = true) <-> _ =>
-rewrite (mremap_fresh_setlim L m _ nZ _ _ _ Hb Hle); [reflexivity | | | | exact HB];
-[ apply page_round_up_Z_nonneg'; apply bv_unsigned_nonneg
+|- mremap_dst_ok (setlim ?L ?m) _ ?nZ _ _ _ _ <-> _ =>
+let HB := fresh "HB" in
+pose proof (proj1 (negb_false_iff _) Hmk) as HB;
+unfold mremap_dst_ok;
+rewrite (mremap_fresh_setlim L m _ nZ _ _ _ Hb Hle);
+[ let Hp := fresh "Hp" in let Hf := fresh "Hf" in
+split; intros [Hp Hf]; (split; [exact Hp | exact Hf])
+| apply page_round_up_Z_nonneg'; apply bv_unsigned_nonneg
 | apply page_round_up_Z_mod'
-| apply page_align_is0_b_false_pos; assumption ]
+| apply page_align_is0_b_false_pos; assumption
+| exact HB ]
 end.
 Lemma mremap_nat : ltac2:(TCodec.tc2 tcn__Common_BudgetBridgeMm "QC'7';'9'6'1&Q8&>r2(0%3221u1%5241u2%7261u3%9281r1%<586421(2%@3?21&QD&F&?%11@%311r4%6221&QC&Gr3%811%311%511&Q@r6':qU21D&Q>r5%Q121O%Q222N%Q323M%Q424L%644321%;8:998116Cp0=1p0D1p0L1pT4Q>1pSNQ@1pBQB1").
 Proof.
-intros L i m Hmk Hle Hb. unfold mremap_budget_refused_b in Hmk. cbv zeta in Hmk.
+intros L i m Hmk Hle Hb.
 unfold mremap_spec.
-sim1_auto.
-match goal with
-| H1 : (?n2 <? ?n1) = false, H2 : (?n1 =? ?n2) = false |- _ =>
-assert (Hgt : (n2 <=? n1) = false)
-by (apply Z.leb_gt; apply Z.ltb_ge in H1; apply Z.eqb_neq in H2; lia)
-end.
-rewrite Hgt in Hmk. cbv beta iota in Hmk.
-apply negb_false_iff, andb_true_iff in Hmk. destruct Hmk as [HA HB].
 sim1_auto.
 Qed.
 End Mremap.

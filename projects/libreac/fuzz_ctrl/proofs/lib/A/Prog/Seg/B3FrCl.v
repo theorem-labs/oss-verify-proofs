@@ -4,11 +4,12 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 3817 of its 3853 lines of code are new or changed and 212 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths and module names changed; 371 of its 396 lines of code are new or changed and 3828 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v; 153 of its 180 lines of code are new or changed and 369 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Batch-B3 helper for the asan slot segment lemmas of fuzz_ctrl LLVMFuzzerTestOneInput: b3_fr_cl, the FRA transport
    across a callee run whose write set W is app + rt_disjoint and avoids the FRA-read cells (low image [0,6283264),
    frame header [fr,fr+24), the fr spill [A+304,A+312), the fr reload and selector spills [A+16,A+32), the saved caller registers
    [S-104,S), and the 392 frame shadow bytes [Sfr,Sfr+392)), but MAY touch the frame body [fr+24,fr+3136) and the
-   callee's stack slice [sp-K,sp).  It is Tac_slot_b2.sl_fr_cl restated against the push-5 FRA (b6dbb4eafee):
+   callee's stack slice [sp-K,sp).  It is Tac_slot_b2.sl_fr_cl restated against the push-5 FRA:
    the stack window is entry-anchored [S - SLOT_STACK, S) (kept by rd_mono + wmono), the new conjuncts fr + 3136 <= A,
    S - 4096 < sp, S < APPMEM_END are pure, the side-arm FS separation reads the tp word (low image, kept), and the
    frame_AG globals stay addressable (W is app memory, so no shadow byte changes: sl_addr_keep).  The spill-base

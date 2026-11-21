@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch stated over the run's whole input). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
 From stdpp Require Import gmap.
@@ -74,18 +75,21 @@ Theorem QI_init : forall P segs brk0 mbase sp lim inp,
   bv_unsigned sp - stack_max_size = alloc_ceiling ->
   (forall c, 0 <= P c) -> PHI P <= LBUDGET ->
   reserved_top (segments_reserved segs) + brk_aslr_max <= 2 ^ 33 -> KLIM + SMALLREQ <= lim ->
+  mmap_base_min <= bv_unsigned mbase ->
   QI [] P (ps_init (reservedZ segs)) (init_model (segments_reserved segs) brk0 mbase sp lim inp).
 Proof.
-  intros P segs brk0 mbase sp lim inp (Hlo & Hhi & Hal) Hpos Hceil Htop HP HPHI Hlow Hroom. split; [| unfold R63X, zsum; cbn; lia].
+  intros P segs brk0 mbase sp lim inp (Hlo & Hhi & Hal) Hpos Hceil Htop HP HPHI Hlow Hroom Hmb. split; [| unfold R63X, zsum; cbn; lia].
+  pose proof (KL_resv_init segs brk0 mbase sp lim inp (conj Hlo (conj Hhi Hal)) Hlow Hmb Htop) as [KR KT].
   exists (minit 0 (reservedZ segs)), (led_init (reservedZ segs)), [], (fun _ => []).
   split; [reflexivity|]. split; [apply INVL_init; lia|]. split; [apply SINV_minit|]. split; [apply AQ_minit; exact HP|].
+  pose proof (KL_vin_init (segments_reserved segs) brk0 mbase sp lim inp) as KV.
   split; [| split; [| apply Permutation_refl]].
   - constructor; rewrite ?m_vmmaps_init_model, ?m_halted_init_model; cbn -[Z.pow Z.mul Z.add].
     + apply minv_init.
     + reflexivity.
     + split; [intros e []| apply pwdisj_nil].
-    + reflexivity.
-    + intros e Hin. pose proof (reserved_top_ge' _ _ Hin). unfold ehi. lia.
+    + exact KR.
+    + exact KT.
     + unfold PGSZ in *. unfold page_size in Hal. lia.
     + intros b l [].
     + intros b l k [].
@@ -93,6 +97,9 @@ Proof.
     + intros b l H. discriminate.
     + split; reflexivity.
     + exact Htop.
+    + intros e [].
+    + first [ exact KV
+            | (rewrite ?m_vmmaps_init_model in KV; cbn -[Z.pow Z.mul Z.add] in KV; exact KV) ].
   - split.
     + unfold gm, BB. rewrite m_vmmaps_init_model. cbn. lia.
     +

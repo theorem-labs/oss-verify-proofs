@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -65,7 +66,7 @@ Proof.
   intros segs C Q R F pc fc rv m ro i sz ms1 Hp Hg Hx Hq.
   destruct (@ctf_ok segs C pc i sz Hp Hg) as (w & Hf & He & Hd).
   eapply evt_step; [|exact Hq]. split; [reflexivity|].
-  rewrite (step_gen segs R F (Z_to_bv 64 pc) fc rv m ro w i sz Hf He Hd). exact Hx.
+  exact (step_gen_ok _ _ _ _ _ _ _ _ _ _ _ _ Hf He Hd Hx).
 Qed.
 
 (* [comment removed for export] *)

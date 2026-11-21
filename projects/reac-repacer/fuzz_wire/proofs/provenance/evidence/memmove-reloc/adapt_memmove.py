@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Adapt libreac/fuzz_pcap's released ASan memmove files (lib/{A,B}/Rt/Memmove{Def,Im,K,Paths,}.v, commit
-5098883da0b), AFTER alreloc (frozen a5c53bb2bed4ad03) has moved their numerals to fuzz_wire, to fuzz_wire's module layout.
+"""Adapt libreac/fuzz_pcap's released ASan memmove files (lib/{A,B}/Rt/Memmove{Def,Im,K,Paths,}.v),
+AFTER alreloc (frozen a5c53bb2bed4ad03) has moved their numerals to fuzz_wire, to fuzz_wire's module layout.
 alreloc maps addresses and the unit namespace only; this script makes the changes it does not, each counted:
   1. body comments that name the donor's build (`of libreac/fuzz_pcap's v1.9.0 <build> build`) name fuzz_wire's, because
      the numerals beside them are fuzz_wire's now;

@@ -2,12 +2,13 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: lines 18-46 of proofs/libreac/fuzz_knock/lib/A/APgBase.v
-   (origin/ossv/recipes 4b6f0df50aa7: in_roP, arodata_okP, ro_below_ofl, ro_spares, arodata_ok_journalP), in the
+   (in_roP, arodata_okP, ro_below_ofl, ro_spares, arodata_ok_journalP), in the
    form projects/reac-pw/fuzz_qdisc/proofs/lib/A/QPgBase.v states them, for libdiginet/fuzz_codec's ASan builds; knock's
    afobj / apost_base are not carried (codec hands its callees objects that are 4-aligned, so the contracts use
    the caller-journal shapes of lib/A/Prog/CodecCJ.v instead). The rest of this file is codec's own. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_codec/lib/A/Prog/CPgBase.v, with its module paths and module names changed; 10 of its 28 lines of code are new or changed and 222 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgHarn.v at 3c7e900fc63 (its lines 218-231, rh_static_law) for reac-pw/fuzz_headamp image A; module paths changed, rh_ renamed to hq_, the facts are those of lib/A/HPgCSpec.v hd_seg_pre's static conjuncts at lib/A/HPgImgA.v headamp_himg_A (headamp's strings in hd_cstr form and the stack-guard pair musl's strtol reads, which role's program has not); role's cut states and segment statements (lines 1-216) are not taken: headamp's are stated in lib/A/HPgE01D.v (C1, E01), lib/A/HPgSegC23.v (C2, C3, the malloc(pod) step), lib/A/HPgM24Out.v (C4, the malloc(out) step) and lib/A/HPgSegM.v (C5 .. C9, the retirement join J, the return, the malloc(first) step and X01's two parts). *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgHarn.v (its lines 218-231, rh_static_law) for reac-pw/fuzz_headamp image A; module paths changed, rh_ renamed to hq_, the facts are those of lib/A/HPgCSpec.v hd_seg_pre's static conjuncts at lib/A/HPgImgA.v headamp_himg_A (headamp's strings in hd_cstr form and the stack-guard pair musl's strtol reads, which role's program has not); role's cut states and segment statements (lines 1-216) are not taken: headamp's are stated in lib/A/HPgE01D.v (C1, E01), lib/A/HPgSegC23.v (C2, C3, the malloc(pod) step), lib/A/HPgM24Out.v (C4, the malloc(out) step) and lib/A/HPgSegM.v (C5 .. C9, the retirement join J, the return, the malloc(first) step and X01's two parts). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image A (fuzz_headamp.asan, pinned sha256
    f3e0669d2819724922df0556b11c2dcd22d1e16fe7e0fe1535ce784b34436c47; every address measured on the unstripped twin
    b5f352154c54a97c66fd92dfa228e8a854498f6cd313dba0107900546b043f9a, same loaded bytes except .note.gnu.build-id): THE STATIC FACTS the walk

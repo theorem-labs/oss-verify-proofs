@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* CARRIED from this tree's proofs/plugin-hostd/fuzz_reply/lib/Reusable/YCbqG.v, sha256 de3111f26f2df4eafc0a493d427e4bd7eb6ed1469e4a15139c5fe4d423130ab4
-   (that file is carried from commit a0fed4266a1b18b1453af093bfe2ee477dcbe241, proofs/omx-clap-core/fuzz_preset/lib/Reusable/YCbqG.v).
+   (that file is carried from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YCbqG.v).
    Re-pointed for lib/B (fuzz_reply.asan-ubsan): each Require of a module that lib/B instantiates now names lib/B's
    module (lib/B/YCbq.v, the instance whose off_img cites YImgTop.IMG_TOP_B).
    The exact changes (`lib.` is OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.; each source line is replaced
@@ -11,13 +11,14 @@
    The Unset Lia Cache / Unset Nia Cache line is made Local: a new file carries only Local settings.
    Nothing else changes: below this comment the bytes are the source's.
    DO NOT EDIT: change the source file on its branch, carry it again, and re-point it again. *)
-(* reply-own since route R (a Theorem Labs lane 16:55Z); lineage: carried from preset a0fed4266a1b18b1453af093bfe2ee477dcbe241,
+(* reply-own since route R (a Theorem Labs lane 16:55Z); lineage: carried from preset,
    proofs/omx-clap-core/fuzz_preset/lib/Reusable/YCbqG.v, sha256 c72125eb2b187a4f934f230c8e3be2e2feed984fa60935492b62d2fd32b69355,
    with the module prefix OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.
    QMm W0' (a Theorem Labs lane, a Theorem Labs lane 2026-10-30 20:48Z, option Q): kept_x (the image's as_kept ranges outside the owned statics;
    reply: the non-owned RELRO, written only at start-up); ARx_frame_law keeps them. *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: for omx-clap-core/fuzz_preset, the per-function frame of proofs/cgif/cgif_file_fuzzer/lib/YCbq.v (:210-216, :335-342, :349-371, :384-393, :419-458, :480-671, :724-791, :1809-1825) and lib/YC20.v:90-96, with three changes: the allocator invariant is a parameter ARx, and the YG0d.v:435-507 / YG0p.v:20-27 laws the lemmas use are the record AR_laws_x over it (AR_laws_x_of_AR below instantiates it at cgif's AR); Hp (the ghost poisoned-head set of YGcfNames.v:346-351) threaded as YGcfNames.v:489-499 orders it, with cgif's relative event count k kept as YGcfNames.v:481-485 decides; the image clause exempts the program's own written statics PST (a Theorem Labs lane's FM_PSTAT form). No address literal. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -141,7 +142,7 @@ Definition ARx_zshadow_byte_law : Prop :=
 forall ly S Hp W mem md a,
 ARx ly S Hp W mem md -> ly_stk_lo ly <= a < ly_stk_hi ly ->
 aview segs (w_H W) mem (SHADOW_OFF + a / 8) = Some 0.
-(* FIELD 14: the harness-block shadow law (WalkS7b's PRW_HShadow.v text, d9e14d9927a): a block whose base is in Hp
+(* FIELD 14: the harness-block shadow law (WalkS7b's PRW_HShadow.v text): a block whose base is in Hp
    has its hidden head first, then a block shadow over its user range (b + hl, req_size n - hl). *)
 Definition ARx_hshadow_law (hl0 : Z) : Prop :=
 forall ly S Hp W mem md b n,
@@ -188,7 +189,7 @@ ARx ly S Hp W mem md ->
 (forall cid pos, In (cid, pos) (frames S) ->
    fst (ly_img ly) + snd (ly_img ly) <= frame_addr ly cid pos).
 (* FIELD 18: THE LAYOUT IS WELL FORMED. The layout of every ARx state is layout_ok (YG0f.v), as at both instances
-   (cgif's AR: ARm's am_layout, as FCiface.v:184; ARcf: ARmcf's amc_layout, as FCifaceCf.v:135). Not derivable
+   (cgif's AR: ARm's am_layout, as FCiface.v:185; ARcf: ARmcf's amc_layout, as FCifaceCf.v:136). Not derivable
    from fields 1-17: none bounds ly_stk_lo / ly_stk_hi absolutely. Named ARx_layout_ok_law, not ARx_layout_law
    (field 7, the layout_le monotonicity law). Section l derives the stack bounds stk_bounds_x and the stack
    alignment stk_aligned_x from it. *)
@@ -997,8 +998,8 @@ same_but_materialized mdc mdc' ->
 (forall a, Wr a -> awr_byte STK sp0 FP (ablocks B ly S) (ablocks B lyc Sc) lyc own a \/ wr_fp_frame FP S lyc a) ->
 ajournal_x STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc' mdc' k.
 Proof. exact (@ajournal_x_exec_frR (@wle segs)). Qed.
-(* THE callee-footprint side condition of a call, one name for every caller (WalkS4's fp_sub_xW, PRW_CallerJ.v at
-   origin/cold/h-hpreset-7-walk-S4 85a188622c5): a byte the callee's footprint names is the caller's footprint, a
+(* THE callee-footprint side condition of a call, one name for every caller (WalkS4's fp_sub_xW, PRW_CallerJ.v):
+   a byte the callee's footprint names is the caller's footprint, a
    temporary block, a slot of a frame the caller took since its entry, or a byte of the caller's own stack window.
    The fourth case needs no `alloc_ceiling <= a`: the caller's journal carries astk_ok, so its window lies at or above
    alloc_ceiling and the block, frame and sink clauses refute the case themselves. *)
@@ -1733,7 +1734,7 @@ exact (conj H1 (conj H2 (conj H3 (conj H4 (conj H5 H6))))).
   destruct (al_shadow _ _ L ly S W mem md b n HAR Hin) as [H1 H2]. split; [exact H1 | intros _; exact H2].
 - intros ly S Hp W mem md p n a HAR Hin Ha. exact (Ltail ly S W mem md p n a HAR Hin Ha).
 - intros ly S Hp W mem md HAR. exact (Lconst ly S W mem md HAR).
-- (* field 17: ly_img covers every segment (ALedger's al_img, as FCiface.v:185), and a live fake frame lies at or
+- (* field 17: ly_img covers every segment (ALedger's al_img, as FCiface.v:186), and a live fake frame lies at or
      above the image's top: the fake stack is disjoint from ly_img (YG0s.frame_facts), starts at or above 4096
      and is longer than kImgLo (= fst (ly_img ly), layout_ok's lo_img), so it cannot start below the image's end *)
   intros ly S Hp W mem md HAR. pose proof HAR as (M & LG & _). split.
@@ -1746,6 +1747,6 @@ exact (conj H1 (conj H2 (conj H3 (conj H4 (conj H5 H6))))).
       unfold kImgLo, kFakeStackSize in *. split; [lia | left; lia]. }
     pose proof (Z.mul_nonneg_nonneg cid (2 ^ 20) ltac:(lia) ltac:(lia)) as CN.
     unfold frame_addr, kFakeFramesOff in *. lia.
-- (* field 18: the layout is layout_ok, ARm's am_layout (as FCiface.v:184) *)
+- (* field 18: the layout is layout_ok, ARm's am_layout (as FCiface.v:185) *)
   intros ly S Hp W mem md HAR. exact (am_layout _ _ _ _ (proj1 HAR)).
 Qed.

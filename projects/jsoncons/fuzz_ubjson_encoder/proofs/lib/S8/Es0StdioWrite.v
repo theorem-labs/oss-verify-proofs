@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the channel-reader premise of writev; new lemmas. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
@@ -17,19 +18,16 @@ Open Scope bv_scope.
 
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Require OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S8.RdnPeelKit.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Import ListNotations.
+Open Scope bv_scope.
 
-Local Ltac rdn_side_fast := rewrite ?length_N_to_le_bytes; cbn [Z.of_nat Pos.of_succ_nat Pos.succ length]; lia_fast.
-Local Ltac rdn_solve_fast :=
-  lazymatch goal with
-  | |- rdn _ (wbytes _ ?a _) ?b _ = _ =>
-      tryif constr_eq a b then (apply rdn_wbytes_hit8; zsimp; lia)
-      else (first [ RdnPeelKit.rdn_peel_many ltac:(idtac; rdn_side_fast) | rdn_peel1 ]; rdn_solve_fast)
-  | |- _ => rdn_hyp
-  end.
-Local Ltac rdn_solve ::= rdn_solve_fast.
+Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
 Section FPX_1. Context {fx : PropExec.FPState}. Context {bmK : BMode}.
 Variable scfg : SpuriousCfg.
 
+
+(* [comment removed for export] *)
 #[using="Type"] Lemma rz_emit_nil : forall c K, srealizes RSEGS scfg c K -> srealizes RSEGS scfg c (t_emit [] K).
 Proof.
   intros c K H. eapply srz_conseq; [exact H|].
@@ -48,6 +46,7 @@ Proof.
   intros A k l1 l2 Hk. rewrite skipn_app. rewrite (proj1 (skipn_all_iff k l1) Hk). reflexivity.
 Qed.
 
+(* [comment removed for export] *)
 #[using="Type"] Lemma u_at_le : forall (b : word) (k : Z), (0 <= k)%Z -> (bv_unsigned b + k <= 2 ^ 64)%Z ->
   bv_unsigned (at_ b k) = (bv_unsigned b + k)%Z
   \/ (bv_unsigned (at_ b k) = 0 /\ bv_unsigned b + k = 2 ^ 64)%Z.
@@ -71,6 +70,8 @@ Section Loop.
   Hypothesis Fhi : (f + 232 <= 0xeb2b0)%Z.
   Hypothesis FD : (0 < fd < 2147483648)%Z.
   Hypothesis Hfd : fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)).
+  (* 08b1429: writev_spec reads [m_channel_reader] (recipes/channel-reader-premise.md) *)
+  Hypothesis Hrdr : m_channel_reader model = true.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hret : ret_ok ret.
@@ -90,9 +91,11 @@ Section Loop.
   Hypothesis Mbsz : rdn RSEGS mem1 (Z_to_bv 64 (f + 96)) 8%nat = Some (word_to_le_bytes 8 bufsz).
   Hypothesis Mfd : rdn RSEGS mem1 (Z_to_bv 64 (f + 120)) 4%nat = Some (word_to_le_bytes 4 (Z_to_bv 64 fd)).
 
+  (* [comment removed for export] *)
   Definition LM (m : word -> option byte) : Prop :=
     (forall x : word, ~ (su - 104 <= bv_unsigned x < su - 72)%Z -> m x = mem1 x) /\ mem_grows mem1 m.
 
+  (* [comment removed for export] *)
   Hypothesis HK : forall regs' m,
      getr regs' 10 = l -> getr regs' 2 = Z_to_bv 64 su -> getr regs' 1 = ret ->
      getr regs' 8 = e8 -> getr regs' 9 = e9 ->
@@ -103,6 +106,7 @@ Section Loop.
      LM m ->
      srealizes RSEGS scfg (mkCfg (mkst regs' ret (mem_sw2 m f bufp bufsz) (seg_rom RSEGS)) model) K.
 
+  (* [comment removed for export] *)
   Definition RI (regs : bvmap 5 word) : Prop :=
     getr regs 2 = Z_to_bv 64 (su - 112) /\ getr regs 8 = l /\ getr regs 9 = Z_to_bv 64 f
     /\ getr regs 21 = Z_to_bv 64 0xeb2b0 /\ getr regs 3 = g3 /\ getr regs 4 = g4
@@ -146,6 +150,7 @@ Section Loop.
     - eapply mem_grows_trans; [exact G | apply wbytes_grows].
   Qed.
 
+  (* [comment removed for export] *)
   #[using="bufp bufsz can ret e8 e9 e18 e19 e20 e21 e22 SUlo SUhi Flo Fhi Hh Hlazy Hret M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz HK"] Lemma finish : forall regs m,
     RI regs -> LM m ->
     srealizes RSEGS scfg (mkCfg (mkst regs (0xa1090 : word) m (seg_rom RSEGS)) model) K.
@@ -172,10 +177,13 @@ Section Loop.
     srealizes RSEGS scfg (mkCfg (mkst regs (0xa1090 : word) m (seg_rom RSEGS)) model) (t_emit [] K).
   Proof. intros. apply rz_emit_nil. apply finish; assumption. Qed.
 
-  #[using="Type"] Lemma pc_a1074 : v_addi (0xa110c : word) 4 = (0xa1110 : word).
+
+  (* [comment removed for export] *)
+  Lemma pc_4e208 : v_addi (0xa110c : word) 4 = (0xa1110 : word).
   Proof. apply bv_eq; vm_compute; reflexivity. Qed.
 
-  #[using="bufp bufsz can ret e8 e9 e18 e19 e20 e21 e22 SUlo SUhi Flo Fhi FD Hfd Hh Hlazy Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK"] Lemma loop1 : forall n regs m (k : nat) (b : word) (bs : list byte),
+  (* [comment removed for export] *)
+  #[using="bufp bufsz can ret e8 e9 e18 e19 e20 e21 e22 SUlo SUhi Flo Fhi FD Hfd Hrdr Hh Hlazy Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK"] Lemma loop1 : forall n regs m (k : nat) (b : word) (bs : list byte),
     (length bs <= n)%nat ->
     RI regs -> LM m ->
     getr regs 10 = Z_to_bv 64 (Z.of_nat k) ->
@@ -196,7 +204,7 @@ Section Loop.
     pose proof RIr as RIr'.
     destruct RIr as (R2 & R8 & R9 & R21 & R3 & R4 & R23 & R24 & R25 & R26 & R27).
     pose proof (u64_range b) as Hb.
-
+    (* [comment removed for export] *)
     destruct (sw_retry_a regs m (seg_rom RSEGS) su f fd (su - 88) 1 (Z.of_nat k)
                 (Z.of_nat (length bs)) (Z.of_nat (length bs)) b)
       as (regs1 & RUN & Q17 & Q10 & Q11 & Q12 & Q18 & Q19 & Q20 & Q22 & QB); try assumption; try lia.
@@ -209,11 +217,11 @@ Section Loop.
     assert (LMm' : LM m').
     { subst m'. apply LM_wbytes8; [apply LM_wbytes8; [exact LMm| lia | lia] | lia | lia]. }
     assert (RI1 : RI regs1) by (eapply RI_but; [exact RIr' | exact QB]).
-
+    (* [comment removed for export] *)
     eapply (rz_writev1_wallX RSEGS scfg regs1 (0xa110c : word) m' model W_a10c0 fd
               (Z_to_bv 64 (su - 88)) (Z_to_bv 64 (bv_unsigned b + Z.of_nat k))
               (Z_to_bv 64 (Z.of_nat (length bs) - Z.of_nat k)) (skipn k bs) K);
-      [ exact F_a10c0 | exact E_a10c0 | exact Hh | exact Hlazy | exact Hfd | exact FD
+      [ exact F_a10c0 | exact E_a10c0 | exact Hh | exact Hlazy | exact Hfd | exact Hrdr | exact FD
       | exact Q17 | exact Q10 | exact Q11 | exact Q12 | | | | | | | | exact HKnil | ].
     - subst m'. rdn_solve.
     - subst m'. u_norm. replace (su - 88 + 8)%Z with (su - 80)%Z by lia. rdn_solve.
@@ -227,10 +235,10 @@ Section Loop.
     - unfold TASK_SIZE. u_norm. lia.
     - u_norm. lia.
     - u_norm. lia.
-    -
-      intros k' K1 K2. rewrite pc_a1074. rewrite length_skipn in K2.
+    - (* [comment removed for export] *)
+      intros k' K1 K2. rewrite pc_4e208. rewrite length_skipn in K2.
       destruct (Nat.eq_dec k' (length bs - k)) as [EQ|NE].
-      +
+      + (* [comment removed for export] *)
         destruct (sw_c2_eq (regupd regs1 10 (Z_to_bv 64 (Z.of_nat k'))) m' (seg_rom RSEGS) (Z.of_nat k'))
           as (regs2 & RUN2 & P10 & P19 & P20 & P18 & P22 & PB).
         { gres. reflexivity. }
@@ -241,7 +249,7 @@ Section Loop.
         apply finish_nil; [| exact LMm'].
         eapply RI_but; [exact RI1|].
         revert PB. unfold sw_regs_but. gres. intros PB. exact PB.
-      +
+      + (* [comment removed for export] *)
         destruct (sw_c2_ne (regupd regs1 10 (Z_to_bv 64 (Z.of_nat k'))) m' (seg_rom RSEGS) (Z.of_nat k')
                     (Z.of_nat (length bs) - Z.of_nat k))
           as (regs2 & RUN2 & P10 & P19 & P20 & P18 & P22 & PB).
@@ -269,7 +277,9 @@ Section Loop.
         * rewrite length_skipn. lia.
   Qed.
 
-  #[using="bufp bufsz can ret e8 e9 e18 e19 e20 e21 e22 SUlo SUhi Flo Fhi FD Hfd Hh Hlazy Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK"] Lemma loop2 : forall n regs m (k : nat) (b0 : word) (bs0 : list byte) (b1 : word) (bs1 : list byte),
+
+  (* [comment removed for export] *)
+  #[using="bufp bufsz can ret e8 e9 e18 e19 e20 e21 e22 SUlo SUhi Flo Fhi FD Hfd Hrdr Hh Hlazy Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK"] Lemma loop2 : forall n regs m (k : nat) (b0 : word) (bs0 : list byte) (b1 : word) (bs1 : list byte),
     (length bs0 + length bs1 <= n)%nat ->
     RI regs -> LM m ->
     getr regs 10 = Z_to_bv 64 (Z.of_nat k) ->
@@ -297,7 +307,7 @@ Section Loop.
     destruct RIr as (R2 & R8 & R9 & R21 & R3 & R4 & R23 & R24 & R25 & R26 & R27).
     pose proof (u64_range b0) as Hb0. pose proof (u64_range b1) as Hb1.
     destruct (Nat.le_gt_cases k (length bs0)) as [LE|GT].
-    -
+    - (* [comment removed for export] *)
       destruct (sw_retry_a regs m (seg_rom RSEGS) su f fd (su - 104) 2 (Z.of_nat k)
                   (Z.of_nat (length bs0)) (Z.of_nat (length bs0) + Z.of_nat (length bs1)) b0)
         as (regs1 & RUN & Q17 & Q10 & Q11 & Q12 & Q18 & Q19 & Q20 & Q22 & QB); try assumption; try lia.
@@ -315,7 +325,7 @@ Section Loop.
                 (Z_to_bv 64 (su - 104)) (Z_to_bv 64 (bv_unsigned b0 + Z.of_nat k))
                 (Z_to_bv 64 (Z.of_nat (length bs0) - Z.of_nat k))
                 b1 (Z_to_bv 64 (Z.of_nat (length bs1))) (skipn k bs0) bs1 K);
-        [ exact F_a10c0 | exact E_a10c0 | exact Hh | exact Hlazy | exact Hfd | exact FD
+        [ exact F_a10c0 | exact E_a10c0 | exact Hh | exact Hlazy | exact Hfd | exact Hrdr | exact FD
         | exact Q17 | exact Q10 | exact Q11 | exact Q12 | | | | | | | | | | | | exact HKnil | ].
       + subst m'. rdn_solve.
       + subst m'. u_norm. replace (su - 104 + 8)%Z with (su - 96)%Z by lia. rdn_solve.
@@ -338,7 +348,7 @@ Section Loop.
       + unfold TASK_SIZE. u_norm. lia.
       + u_norm. lia.
       + u_norm. lia.
-      + intros k' K1 K2. rewrite pc_a1074. rewrite length_app, length_skipn in K2.
+      + intros k' K1 K2. rewrite pc_4e208. rewrite length_app, length_skipn in K2.
         destruct (Nat.eq_dec k' (length bs0 - k + length bs1)) as [EQ|NE].
         * destruct (sw_c2_eq (regupd regs1 10 (Z_to_bv 64 (Z.of_nat k'))) m' (seg_rom RSEGS) (Z.of_nat k'))
             as (regs2 & RUN2 & P10 & P19 & P20 & P18 & P22 & PB).
@@ -380,7 +390,7 @@ Section Loop.
           -- exact DISJ1.
           -- exact NW1.
           -- rewrite length_skipn. lia.
-    -
+    - (* [comment removed for export] *)
       destruct (sw_retry_b regs m (seg_rom RSEGS) su f fd (su - 104) (Z.of_nat k)
                   (Z.of_nat (length bs0)) (Z.of_nat (length bs1))
                   (Z.of_nat (length bs0) + Z.of_nat (length bs1)) b1)
@@ -403,7 +413,7 @@ Section Loop.
                 (Z_to_bv 64 (su - 88)) (Z_to_bv 64 (bv_unsigned b1 + Z.of_nat (k - length bs0)))
                 (Z_to_bv 64 (Z.of_nat (length bs1) - Z.of_nat (k - length bs0)))
                 (skipn (k - length bs0) bs1) K);
-        [ exact F_a10c0 | exact E_a10c0 | exact Hh | exact Hlazy | exact Hfd | exact FD
+        [ exact F_a10c0 | exact E_a10c0 | exact Hh | exact Hlazy | exact Hfd | exact Hrdr | exact FD
         | exact Q17 | exact Q10 | exact Q11 | exact Q12 | | | | | | | | exact HKnil | ].
       + subst m'. rdn_solve.
       + subst m'. u_norm. replace (su - 88 + 8)%Z with (su - 80)%Z by lia. rdn_solve.
@@ -417,7 +427,7 @@ Section Loop.
       + unfold TASK_SIZE. u_norm. lia.
       + u_norm. lia.
       + u_norm. lia.
-      + intros k' K1 K2. rewrite pc_a1074. rewrite length_skipn in K2.
+      + intros k' K1 K2. rewrite pc_4e208. rewrite length_skipn in K2.
         destruct (Nat.eq_dec k' (length bs1 - (k - length bs0))) as [EQ|NE].
         * destruct (sw_c2_eq (regupd regs1 10 (Z_to_bv 64 (Z.of_nat k'))) m' (seg_rom RSEGS) (Z.of_nat k'))
             as (regs2 & RUN2 & P10 & P19 & P20 & P18 & P22 & PB).
@@ -461,12 +471,18 @@ Section Loop.
 End Loop.
 End FPX_1.
 
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
 Ltac wout1 :=
   rewrite wbytes_outside;
   [ | unfold in_rng; rewrite length_N_to_le_bytes; cbn [Z.of_nat Pos.of_succ_nat Pos.succ]; u_norm; lia
     | rewrite length_N_to_le_bytes; cbn [Z.of_nat Pos.of_succ_nat Pos.succ]; u_norm; lia ].
 Section FPX_2. Context {fx : PropExec.FPState}. Context {bmK : BMode}.
 Variable scfg : SpuriousCfg.
+
 
 #[using="Type"] Lemma sw_post_of_LM : forall mem m (su f : Z) (ra s0 s1 s2 s3 s4 s5 s6 can : word) (wb n : Z) (s l bufp bufsz : word),
   (4294967296 + 112 <= su)%Z -> (su <= 0x800000000000)%Z ->
@@ -489,10 +505,10 @@ Proof.
   - unfold mem_sw2. rdn_solve.
 Qed.
 
-#[using="Type"] Lemma pc_a0fec : v_addi (0xa1084 : word) 4 = (0xa1088 : word).
+Lemma pc_4e180 : v_addi (0xa1084 : word) 4 = (0xa1088 : word).
 Proof. apply bv_eq; vm_compute; reflexivity. Qed.
 
-#[using="Type"] Theorem ref_stdio_write :
+Theorem ref_stdio_write :
   forall regs mem model (su f wb wp fd : Z) (s l bufp bufsz can ret : word)
          (pending extra : list byte) (K : TSet),
   getr regs 2 = Z_to_bv 64 su -> getr regs 10 = Z_to_bv 64 f ->
@@ -504,6 +520,7 @@ Proof. apply bv_eq; vm_compute; reflexivity. Qed.
   ssp_cells mem can ->
   (0 < fd < 2147483648)%Z ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  m_channel_reader model = true ->
   m_halted model = None -> m_vm_lazy model = [] ->
   (0 <= wb <= wp)%Z -> (wp <= 2 ^ 47)%Z ->
   (wp - wb = Z.of_nat (length pending))%Z ->
@@ -529,7 +546,7 @@ Proof. apply bv_eq; vm_compute; reflexivity. Qed.
            (t_emit (map (WriteEv (Z_to_bv 64 fd)) (pending ++ extra)) K).
 Proof.
   intros regs mem model su f wb wp fd s l bufp bufsz can ret pending extra K
-         Hsp Ha0 Ha1 Ha2 Hra SUlo SUhi SOK Flo Fhi SWF SSP FD Hfd Hh Hlazy WBP WPhi
+         Hsp Ha0 Ha1 Ha2 Hra SUlo SUhi SOK Flo Fhi SWF SSP FD Hfd Hrdr Hh Hlazy WBP WPhi
          LENP LENE M30 DISJP DISJE SNW RDP RDE Hret HKnil HK.
   pose proof (u64_range s) as Hs. pose proof (u64_range l) as Hl.
   pose proof SWF as SWF'. pose proof SSP as SSP'.
@@ -537,7 +554,7 @@ Proof.
   zaddr Fwp; zaddr Fwb; zaddr Ffd; zaddr Fbuf; zaddr Fbsz.
   assert (HlZ : l = Z_to_bv 64 (Z.of_nat (length extra))).
   { rewrite <- LENE. symmetry. apply u64_roundtrip'. }
-
+  (* [comment removed for export] *)
   set (mem1 := mem_sw1 mem su ret (getr regs 8) (getr regs 9) (getr regs 18) (getr regs 19)
                        (getr regs 20) (getr regs 21) (getr regs 22) can wb (wp - wb) s l).
   assert (SOK1 : store_ok RSEGS mem1 (Z_to_bv 64 (su - 112)) 112%nat = true).
@@ -563,7 +580,7 @@ Proof.
   { subst mem1; unfold mem_sw1. repeat rdn_peel1. exact RDP. }
   assert (Be : rdn RSEGS mem1 s (length extra) = Some extra).
   { subst mem1; unfold mem_sw1. repeat rdn_peel1. exact RDE. }
-
+  (* [comment removed for export] *)
   assert (HK' : forall regs' m,
      getr regs' 10 = l -> getr regs' 2 = Z_to_bv 64 su -> getr regs' 1 = ret ->
      getr regs' 8 = getr regs 8 -> getr regs' 9 = getr regs 9 ->
@@ -583,14 +600,14 @@ Proof.
   pose proof (loop1 scfg su f fd l bufp bufsz can ret (getr regs 8) (getr regs 9) (getr regs 18) (getr regs 19)
                 (getr regs 20) (getr regs 21) (getr regs 22) (getr regs 3) (getr regs 4) (getr regs 23)
                 (getr regs 24) (getr regs 25) (getr regs 26) (getr regs 27) mem1 model K
-                SUlo SUhi Flo Fhi FD Hfd Hh Hlazy Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK') as L1.
+                SUlo SUhi Flo Fhi FD Hfd Hrdr Hh Hlazy Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK') as L1.
   pose proof (loop2 scfg su f fd l bufp bufsz can ret (getr regs 8) (getr regs 9) (getr regs 18) (getr regs 19)
                 (getr regs 20) (getr regs 21) (getr regs 22) (getr regs 3) (getr regs 4) (getr regs 23)
                 (getr regs 24) (getr regs 25) (getr regs 26) (getr regs 27) mem1 model K
-                SUlo SUhi Flo Fhi FD Hfd Hh Hlazy Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK') as L2.
+                SUlo SUhi Flo Fhi FD Hfd Hrdr Hh Hlazy Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK') as L2.
   pose proof (LM_refl su mem1) as LM1.
   destruct (Z.eq_dec wb wp) as [EQ|NEQ].
-  -
+  - (* [comment removed for export] *)
     destruct pending as [|p0 pending']; [| cbn [length] in LENP; lia]. cbn [app].
     subst wb.
     destruct (sw_enter_eq regs mem (seg_rom RSEGS) su f wp fd s l bufp bufsz can ret)
@@ -604,13 +621,13 @@ Proof.
                      (getr regs 26) (getr regs 27) regs1).
     { unfold RI. repeat split; assumption. }
     destruct extra as [|x0 extra'].
-    +
+    + (* [comment removed for export] *)
       cbn [length] in HlZ. change (Z.of_nat 0) with 0%Z in HlZ. cbn [map].
       eapply (rz_writev1_zeroX RSEGS scfg regs1 (0xa1084 : word) mem1 model W_a1038 fd (Z_to_bv 64 (su - 88)) s (t_emit [] K));
-        [ exact F_a1038 | exact E_a1038 | exact Hh | exact Hlazy | exact Hfd | exact FD
+        [ exact F_a1038 | exact E_a1038 | exact Hh | exact Hlazy | exact Hfd | exact Hrdr | exact FD
         | exact R17 | exact R10 | exact R11 | exact R12 | exact M88 | | unfold TASK_SIZE; u_norm; lia | unfold TASK_SIZE; u_norm; lia | ].
       { u_norm. replace (su - 88 + 8)%Z with (su - 80)%Z by lia. rewrite <- HlZ. exact M80. }
-      rewrite pc_a0fec.
+      rewrite pc_4e180.
       destruct (sw_c1_eq (regupd regs1 10 (Z_to_bv 64 0)) mem1 (seg_rom RSEGS) 0)
         as (regs2 & RUN2 & P10 & P19 & P20 & P18 & P22 & PB).
       { gres. reflexivity. }
@@ -619,10 +636,10 @@ Proof.
       eapply srz_msteps; [exact Hh | exact Hlazy | exact RUN2 |]. clear RUN2.
       apply FIN; [|exact LM1].
       eapply RI_but; [exact RI1|]. revert PB. unfold sw_regs_but. gres. intros PB. exact PB.
-    +
+    + (* [comment removed for export] *)
       eapply (rz_writev1_wallX RSEGS scfg regs1 (0xa1084 : word) mem1 model W_a1038 fd
                 (Z_to_bv 64 (su - 88)) s l (x0 :: extra') K);
-        [ exact F_a1038 | exact E_a1038 | exact Hh | exact Hlazy | exact Hfd | exact FD
+        [ exact F_a1038 | exact E_a1038 | exact Hh | exact Hlazy | exact Hfd | exact Hrdr | exact FD
         | exact R17 | exact R10 | exact R11 | exact R12 | exact M88 | | | | | | | exact HKnil | ].
       * u_norm. replace (su - 88 + 8)%Z with (su - 80)%Z by lia. exact M80.
       * unfold word_to_nat. rewrite LENE, Nat2Z.id. exact Be.
@@ -630,7 +647,7 @@ Proof.
       * unfold TASK_SIZE. u_norm. lia.
       * cbn [length] in LENE. lia.
       * lia.
-      * intros k K1 K2. rewrite pc_a0fec.
+      * intros k K1 K2. rewrite pc_4e180.
         destruct (Nat.eq_dec k (length (x0 :: extra'))) as [EK|NK].
         -- destruct (sw_c1_eq (regupd regs1 10 (Z_to_bv 64 (Z.of_nat k))) mem1 (seg_rom RSEGS) (Z.of_nat k))
              as (regs2 & RUN2 & P10 & P19 & P20 & P18 & P22 & PB).
@@ -660,7 +677,7 @@ Proof.
            ++ exact M88.
            ++ rewrite <- HlZ. exact M80.
            ++ exact Be.
-  -
+  - (* [comment removed for export] *)
     destruct (sw_enter regs mem (seg_rom RSEGS) su f wb wp fd s l bufp bufsz can ret)
       as (regs1 & RUN1 & R17 & R10 & R11 & R12 & R2 & R8 & R9 & R18 & R19 & R21 & R22 & R3 & R4 & R23 & R24 & R25 & R26 & R27);
       try assumption; try lia.
@@ -670,7 +687,7 @@ Proof.
     { unfold RI. repeat split; assumption. }
     eapply (rz_writev2_wallX RSEGS scfg regs1 (0xa1084 : word) mem1 model W_a1038 fd
               (Z_to_bv 64 (su - 104)) (Z_to_bv 64 wb) (Z_to_bv 64 (wp - wb)) s l pending extra K);
-      [ exact F_a1038 | exact E_a1038 | exact Hh | exact Hlazy | exact Hfd | exact FD
+      [ exact F_a1038 | exact E_a1038 | exact Hh | exact Hlazy | exact Hfd | exact Hrdr | exact FD
       | exact R17 | exact R10 | exact R11 | exact R12 | exact M104 | | | | | | | | | | | exact HKnil | ].
     + u_norm. replace (su - 104 + 8)%Z with (su - 96)%Z by lia. exact M96.
     + u_norm. replace (su - 104 + 16)%Z with (su - 88)%Z by lia. exact M88.
@@ -682,7 +699,7 @@ Proof.
     + unfold TASK_SIZE. u_norm. lia.
     + u_norm. lia.
     + u_norm. lia.
-    + intros k K1 K2. rewrite pc_a0fec. rewrite length_app in K2.
+    + intros k K1 K2. rewrite pc_4e180. rewrite length_app in K2.
       destruct (Nat.eq_dec k (length pending + length extra)) as [EK|NK].
       * destruct (sw_c1_eq (regupd regs1 10 (Z_to_bv 64 (Z.of_nat k))) mem1 (seg_rom RSEGS) (Z.of_nat k))
           as (regs2 & RUN2 & P10 & P19 & P20 & P18 & P22 & PB).
@@ -719,5 +736,6 @@ Proof.
         -- u_norm. lia.
 Qed.
 End FPX_2.
+
 
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).

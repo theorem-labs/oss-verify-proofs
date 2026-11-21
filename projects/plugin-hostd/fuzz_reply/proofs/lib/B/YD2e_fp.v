@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: new file, the fuzz_reply.asan-ubsan twin of lib/A/AD2e_fp.v (RelocA-2,
-   a working branch 50f0c528115), on B/YD2f_fp.v's clipped views and B/YD2d_fp.v; text copied from
+   a working branch), on B/YD2f_fp.v's clipped views and B/YD2d_fp.v; text copied from
    B/YD2e.v as AD2e_fp copies A/AD2e.v; no image-specific numeral besides those of the files it imports. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

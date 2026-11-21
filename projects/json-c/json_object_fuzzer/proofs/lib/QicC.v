@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: the esc_specA_al proofs name it and pass it to the escape loop; the stack_malloc_full calls discharge it). *)
 
 From Stdlib Require ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -39,7 +40,7 @@ Hypothesis SNP_U : isnprintf_u00cc_stmt PFRT PFLO.
 
 Theorem json_escape_str_A_0 : esc_specA_al HIx 0.
 Proof.
-unfold esc_specA_al. intros until errv. intros D32 HP PB INs Hs1 Hs2 SRC SRCL Hn CAP TXT NEED FL FRSN ST LO LOS SPA HT ERR JHX TP' RA FRM A0 A1 A2 A3 K.
+unfold esc_specA_al. intros until errv. intros D32 HP PB INs Hs1 Hs2 SRC SRCL Hn CAP TXT NEED FL FRSN ST LO HBT LOS SPA HT ERR JHX TP' RA FRM A0 A1 A2 A3 K.
 subst a0 a1 a2 a3 tp.
 unfold AESCAPE, AESC_STACK in *.
 word_range sp SPR.
@@ -82,6 +83,7 @@ all: rewrite ?unsigned_lit by lia.
 1: lia.
 1: exact ST.
 1: exact LO.
+1: first [assumption | lia].
 1: cbn [hl_stack_A A4L]; lia.
 1: clear - D32; Z.div_mod_to_equations; lia.
 1: lia.
@@ -231,7 +233,7 @@ split; [lia|]. split; [unfold ser_capb; lia|]. split; lia. }
 evt_done5.
 pose proof (QtyQ.Mq0.esc_loopA HIx OBL_REALLOC_NF ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB LM FRS B pb lo bpos cap Sa n sa sk src T
 (bv_unsigned sp + -224) 0 Fr ltac:(left; reflexivity) ltac:(lia) ltac:(clear - D32; Z.div_mod_to_equations; lia)
-LO LOS HT CAP TXT NEED JHX0 INs Hs1 Hs2 SRC0 SRCL ltac:(lia) PFRT PFLO OBL_PFRT OBL_PFLO SNP_U K (Z.to_nat n)) as LOOP.
+LO HBT LOS HT CAP TXT NEED JHX0 INs Hs1 Hs2 SRC0 SRCL ltac:(lia) PFRT PFLO OBL_PFRT OBL_PFLO SNP_U K (Z.to_nat n)) as LOOP.
 unfold loopKA in LOOP.
 eapply (LOOP _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc mL md1 A1 0 0 0); [exact INVL | apply fsaved_refl | exact FRM | lia | lia | lia | lia].
 Qed.
@@ -317,7 +319,7 @@ Hypothesis SNP_U : isnprintf_u00cc_stmt PFRT PFLO.
 
 Theorem json_escape_str_A_0 : esc_specA_al HIx 0.
 Proof.
-unfold esc_specA_al. intros until errv. intros D32 HP PB INs Hs1 Hs2 SRC SRCL Hn CAP TXT NEED FL FRSN ST LO LOS SPA HT ERR JHX TP' RA FRM A0 A1 A2 A3 K.
+unfold esc_specA_al. intros until errv. intros D32 HP PB INs Hs1 Hs2 SRC SRCL Hn CAP TXT NEED FL FRSN ST LO HBT LOS SPA HT ERR JHX TP' RA FRM A0 A1 A2 A3 K.
 subst a0 a1 a2 a3 tp.
 unfold AESCAPE, AESC_STACK in *.
 word_range sp SPR.
@@ -360,6 +362,7 @@ all: rewrite ?unsigned_lit by lia.
 1: lia.
 1: exact ST.
 1: exact LO.
+1: first [assumption | lia].
 1: cbn [hl_stack_A A4L]; lia.
 1: clear - D32; Z.div_mod_to_equations; lia.
 1: lia.
@@ -515,7 +518,7 @@ split; [lia|]. split; [unfold ser_capb; lia|]. split; lia. }
 evt_done5.
 pose proof (QtyQ.Mq8.esc_loopA HIx OBL_REALLOC_NF ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc m md LB LM FRS B pb lo bpos cap Sa n sa sk src T
 (bv_unsigned sp + -224) 0 Fr ltac:(left; reflexivity) ltac:(lia) ltac:(clear - D32; Z.div_mod_to_equations; lia)
-LO LOS HT CAP TXT NEED JHX0 INs Hs1 Hs2 SRC0 SRCL ltac:(lia) PFRT PFLO OBL_PFRT OBL_PFLO SNP_U K (Z.to_nat n)) as LOOP.
+LO HBT LOS HT CAP TXT NEED JHX0 INs Hs1 Hs2 SRC0 SRCL ltac:(lia) PFRT PFLO OBL_PFRT OBL_PFLO SNP_U K (Z.to_nat n)) as LOOP.
 unfold loopKA, st_escA in LOOP.
 
 epose proof (LOOP _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc mL md1 A1 0 0 0 INVL (fsaved_refl _) FRM ltac:(lia) ltac:(lia) ltac:(lia) ltac:(lia)) as LP.

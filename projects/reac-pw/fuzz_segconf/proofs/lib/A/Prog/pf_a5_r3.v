@@ -23,11 +23,12 @@
    achain_chain_pre of it. joined's new premises at its call: len's 8 bytes present (the journal's window), and
    (pass 5b) the stack from len - 16 present, from the statement's astack_pres kept by astack_pres_journal. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 618 of its 695 lines of code are new or changed and 4976 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image A: segment A5 of reac_segconf_parse_file, the pieces Q3 / R3 / R4 of
    lib/A/Prog/pf_a5_d.v (segment A5's proof, 2026-10-30).
    proves no function (kind: segment lemma of reac_segconf_parse_file's image-A walk; the function's rule-24 record
-   is the unit's internal record, commit dfb49d6ad789, path records/segp/g3-lookup.md).
-   The code (the unit's internal record, commit dfb49d6ad789, path records/segp/dis/
+   is the unit's internal record, path records/segp/g3-lookup.md).
+   The code (the unit's internal record, path records/segp/dis/
    reac_segconf_parse_file.fuzz_segconf.asan.s):
      Q3 0x87e14 addiw s10,s10,1; addi a1,zero,0x40; mv a0,s3 (s3 = SH + 8); 0x87e20 jal meta_fill_00
         (__asan_set_shadow_00 on buf's 64 shadow cells; return 0x87e24 = R3).

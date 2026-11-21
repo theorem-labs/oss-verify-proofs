@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B (asan-ubsan, rebuilt pin f8f98a95bc52, unstripped twin 3b5e1a099b53),
    ex_value (B 0x8352c, 850 instructions, 31 UBSan checks, recursive, class-1 fake frame): the STATEMENTS of its
    walk. Text of record: the draft's tex_value_specX (lib/A/PRH_FnEx.v),
@@ -107,7 +108,7 @@ Definition exv_i1 (E : exv_e) : Z := exv_len E - Z.of_nat (length (PjGrammar.ski
 (* the cut pcs *)
 Definition exv_pc (off : Z) : Z := B_prog_sigma AS_ex_value + off.
 
-(* ---- the allocator-state and memory relation ex_value keeps from its entry to a cut (the kit 4f18c75d4900's post:
+(* ---- the allocator-state and memory relation ex_value keeps from its entry to a cut (the kit's post:
    the non-primary room, the run position iface_room_pos and the m-form's memnorm keep; the draft's tex_value_specX
    adds, at PRH_FnEx.v:335, the hull use with no events, both secondary-map meters kept), as ONE conjunct of EXB, so no positional destruct of EXB moves. ex_value
    makes no allocator call: S changes only by the fake frame's take (set_fs) and release (stack_free_state), which
@@ -184,7 +185,7 @@ Definition EXV_PRE (E : exv_e) : Prop :=
       ~ (scr <= z < scr + len + 1) /\ ~ (q <= z < q + 40) /\ ~ (spZ regs - exv_STK E <= z < spZ regs) /\
       ~ (as_errno B <= z < as_errno B + 4))) /\
   prh_ledger B ly S Hp W mem (e_Lam E) (e_peak E) (e_cnt E) (e_fail E) (e_ran E) (e_most E) (e_own E) /\
-  (* kit 4f18c75d4900: the memory is normal at entry (YAkMemnorm.memnorm over the full overlay) *)
+  (* kit: the memory is normal at entry (YAkMemnorm.memnorm over the full overlay) *)
   YAkMemnorm.memnorm rsegs mem.
 
 (* the functional part of the post, at a state (W', mem') with result r *)
@@ -351,12 +352,12 @@ Variable B : asyms.
 Variable ARx : alayout -> astate -> list Z -> world rsegs -> (word -> option byte) -> Model -> Prop.
 Variable SK : YI16.sink_head.
 Record EXV_HYP : Prop := {
-  (* The B text of ex_string (a Theorem Labs lane). ex_word's text is NOT a field: the tex_word_specX at a3bdeca3920 is
+  (* The B text of ex_string (a Theorem Labs lane). ex_word's text is NOT a field: the tex_word_specX is
      false on both images (owner ruling 09:19Z, a Theorem Labs lane's counterexamples); only the word arm takes it, as its own
      premise EHW (ExvB_Disp_word.v / ExvB_Disp.v), WITHDRAWN, PENDING the kit *)
   eh_string : forall fx : YK11.FPState, tex_string_specX (fx := fx) (PA := PI_prog_B) B ARx SK;
   (* the runtime texts over ARx (YGcallMx.v; the rows are c-libc-stdio's / c-asan's) *)
-  (* the strcmp / strlen rows in the read-only-premise m-form, engine home YGcallMxmn.v (s1b 459129c18903, blob
+  (* the strcmp / strlen rows in the read-only-premise m-form, engine home YGcallMxmn.v (s1b, blob
      2b01e06e3fc4; c-libc-stdio 11:46Z): MARKED TEXTS, owner c-libc-stdio *)
   eh_strcmp : forall fx : YK11.FPState,
     YGcallMxmn.astrcmp_realizes_xrom (fx := fx) rsegs B ARx B_prog_relro_lo B_prog_relro_hi (B_prog_sigma AS___wrap_strcmp);
@@ -365,7 +366,7 @@ Record EXV_HYP : Prop := {
   eh_bcmp : forall fx : YK11.FPState, YGcallMxmn.abcmp_realizes_xm (fx := fx) rsegs B ARx (B_prog_sigma AS___wrap_bcmp);
   eh_memcpy : forall fx : YK11.FPState, YGcallMxmn.aintrin_realizes_xm (fx := fx) rsegs B ARx OCpy (B_prog_sigma AS___asan_memcpy);
   (* musl strtod: the image facts the strtod row owner's B' row needs (lib/B/Prog/strtod_row.v strtod_row_aj_B, strtod_c.v's
-     B' constants; cold/h-verbs-1-strtod102 84b0603ea373); errno at YF0m.TFIB_ERRNO (= STRTOD_ERRNO, the same number) *)
+     B' constants); errno at YF0m.TFIB_ERRNO (= STRTOD_ERRNO, the same number) *)
   eh_tp : as_tp B = STRTOD_TP;
   eh_errno_B : as_errno B = YF0m.TFIB_ERRNO;
   (* strtod's GOT guard cell is one of B's const cells, so alx_const_cells gives its view (strtod_site_x at exv_pc 0x8d0) *)
@@ -378,12 +379,12 @@ Record EXV_HYP : Prop := {
      32-bit length premise (ExvNum; image A's CUTFIX_blk32) *)
   eh_blk32 : forall ly S Hp W mem md p n, ARx ly S Hp W mem md -> In (p, n) (ablocks B ly S) -> n < 2 ^ 32;
   (* a live block's prefixes lie in the runtime's 8-byte-margin application range (ExvNum's strcmp premise); at the
-     instance this is the allocator-model owner's PROVED block_amem_range8_cf (lib/Reusable/YGcfBlockRange.v:46, commit 6c9f248bed97), in
+     instance this is the allocator-model owner's PROVED block_amem_range8_cf (lib/Reusable/YGcfBlockRange.v:46), in
      its k-form; not marked *)
   eh_blk_amem8 : forall ly S Hp W mem md p n k, ARx ly S Hp W mem md -> In (p, n) (ablocks B ly S) -> 0 <= k <= n ->
     YGcallMx.amem_range8 p (k + 1);
   (* image facts of B's start-up tables (the kit's gap EX-LIT-SHADOW, closed, PRH_FnEx.v:48-50; the internal file B-STARTUP-FACTS.md rows 7.5-7.6;
-     discharged at the instance by alx_const_cells / alx_zshadow, ExvB_ImgFacts.v:268 exvi_eh_litsh): the literals' shadow,
+     discharged at the instance by alx_const_cells / alx_zshadow, ExvB_ImgFacts.v:269 exvi_eh_litsh): the literals' shadow,
      for ex_word's cstr_ok (ExvDisp) *)
   eh_litsh : forall ly S Hp W mem md, ARx ly S Hp W mem md -> forall c w ty wl u, exvd_lit c w ty wl u ->
     range_addressable (aview rsegs (w_H W) mem) SHADOW_OFF w (Z.of_nat (length wl) + 1) /\
@@ -411,7 +412,7 @@ Record EXV_HYP : Prop := {
   eh_frame_hull : forall ly S Hp W mem md cid pos x n, ARx ly S Hp W mem md -> In (cid, pos) (frames S) ->
     frame_addr ly cid pos <= x -> x + n <= frame_addr ly cid pos + fs_frame_bytes cid -> 0 < n ->
     shadow_hull_vis (aview rsegs (w_H W) mem) x n;
-  (* MARKED, owner: the allocator-model owner (at ARcf the second conjunct of frame_facts_cf, lib/Reusable/YG0scf.v:322): a live fake
+  (* MARKED, owner: the allocator-model owner (at ARcf the second conjunct of frame_facts_cf, lib/Reusable/YG0scf.v:323): a live fake
      frame's position is in range, so the frame lies above the image (strtod_site_x's si_globals_top <= e at B 0x83dfc;
      ExvNum) *)
   eh_fpos : forall ly S Hp W mem md cid pos, ARx ly S Hp W mem md -> In (cid, pos) (frames S) -> 0 <= pos < fs_frames cid;
@@ -457,7 +458,7 @@ Record EXV_HYP : Prop := {
   eh_got_uar : as_got_uar B = B_prog_val (A_OBJ 1)
 }.
 
-(* ex_ws: the PROVED B' walk (int102 2dfa8b73a537, lib/B/Prog/ex_ws_x.v blob 1da1e4be3773, ex_ws_holds_x on the kit's
+(* ex_ws: the PROVED B' walk (int102, lib/B/Prog/ex_ws_x.v blob 1da1e4be3773, ex_ws_holds_x on the kit's
    tex_ws_specX), at any float state, from EXV_HYP's laws and PALib's GOT-shadow facts *)
 Lemma exv_ws : forall (HYP : EXV_HYP) (fx : YK11.FPState),
   tex_ws_specX (fx := fx) (PI := prh_img_B) (L := B_prog_listing) (PA := PI_prog_B) B ARx SK.
@@ -466,8 +467,8 @@ intros HYP fx.
 exact (ex_ws_x.ex_ws_holds_x SK B ARx (eh_laws HYP) (YC1fP.pal_got_shadow _ (eh_palib HYP)) (YC1fP.pal_cell _ (eh_palib HYP))).
 Qed.
 
-(* the frame room laws: no longer hypotheses, the class PrhRoomLive's own fields (kit a3bdeca3920; at the preset instance
-   prh_room_live_a8 they are a Theorem Labs lane's PROVED room_live_set_fs / room_live_stack_free, YGcfRoomLive.v 9f8646ff07c0); kept
+(* the frame room laws: no longer hypotheses, the class PrhRoomLive's own fields (kit; at the preset instance
+   prh_room_live_a8 they are a Theorem Labs lane's PROVED room_live_set_fs / room_live_stack_free, YGcfRoomLive.v); kept
    under the old names with the EXV_HYP argument so the segment files' citations stand *)
 Lemma room_live_set_fs : forall (HYP : EXV_HYP) S f, room_live_cf S -> room_live_cf (set_fs f S).
 Proof. intros _. exact RL_set_fs. Qed.

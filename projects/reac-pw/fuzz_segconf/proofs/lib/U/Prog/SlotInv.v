@@ -4,8 +4,8 @@
    cut_preds carries one predicate per cut, which the contracts state over the spine's models (their
    Prog/seg_cuts.v: P_K13984, P_K139e4, P_K13aac, P_K13c34, P_K13c3c, P_K13e90, P_K141ec). Statement text: no
    function is proved here.
-   The form is reac-pw/fuzz_role's Prog/SlotInv.v (commit 52bb2f1ed35d; reac-pw/fuzz_pin's and
-   libreac/fuzz_ctrl's released Prog/SlotInv.v, commit 25e3d17bdb50), with segconf's cuts and blocks
+   The form is reac-pw/fuzz_role's Prog/SlotInv.v (reac-pw/fuzz_pin's and
+   libreac/fuzz_ctrl's released Prog/SlotInv.v), with segconf's cuts and blocks
    (ELF afc060e3cc9c):
    - c = malloc(16616) (0x1396c, struct reac_segconf), m = calloc(1, 9236) (0x13980, struct mconf); per file turn
      f < nfiles <= 4: text = malloc(n + 1) (0x13aa8), free(text) (0x13c34); tab = calloc(cap + 1, 18) (0x13e7c),

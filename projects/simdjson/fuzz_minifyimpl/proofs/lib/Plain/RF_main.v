@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the section also takes the run's launch class (runLaunchT). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation Strings.String.
 From stdpp Require Import gmap.
@@ -20,7 +21,7 @@ Open Scope Z_scope.
 Open Scope mspec_scope.
 Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.
 
-Section CANSEC1. Context {rc : runConstT}.
+Section CANSEC1. Context {rc : runConstT} {rl : runLaunchT}.
 Section Main.
   Hypothesis MALLOC : rmalloc_stmt.
   Hypothesis FREE : rfree_stmt.

@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's vDSO and vvar pages). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -47,7 +48,9 @@ Definition fuzz_call_contract : Prop :=
          (dptr : word) (size : Z) (payload : list byte) (ret sp0 : word) (argv envp : list (list byte)) (S : TSet),
     (* [comment removed for export] *)
     frm_zero (@fp_csr fx) ->
-    ainv A m (m_vmmaps md) -> md_pure md -> al_env sp0 argv envp m ->
+    ainv A m (m_vmmaps md) -> md_pure md ->
+    incl (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) (vm_reserved (m_vmmaps md)) ->
+    al_env sp0 argv envp m ->
     (* [comment removed for export] *)
     getr regs 10 = dptr -> getr regs 11 = Z_to_bv 64 size -> size = Z.of_nat (length payload) -> size < 2 ^ 26 ->
     (0 < size -> live A dptr = Some size) ->
@@ -88,6 +91,7 @@ Definition fuzz_call_contract : Prop :=
                           \/ m' a <> None) ->
         vm_limit vm' = vm_limit (m_vmmaps md) -> alloc_top vm' = alloc_top (m_vmmaps md) ->
         vm_init_sp vm' = vm_init_sp (m_vmmaps md) -> vm_reserved vm' = vm_reserved (m_vmmaps md) ->
+        vm_mmap_base vm' = vm_mmap_base (m_vmmaps md) ->
         aroom A' vm' (k - FUZZ_CALLS) (b - fuzz_margin size) ->
         realizes al_segs (mkCfg (@mkst fx' regs' ret m' al_rom) (with_vmmaps vm' md)) S) ->
     realizes al_segs (mkCfg (@mkst fx regs (Z_to_bv 64 PC_FUZZ) m al_rom) md) S.

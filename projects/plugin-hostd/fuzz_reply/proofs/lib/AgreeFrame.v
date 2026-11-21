@@ -20,7 +20,7 @@ Theorem ubsan_agrees_of_slots : forall (LS : lib_shape)
   G_local_c src0_msyms G GI ->
   (forall mem, G_img_c src0_msyms G mem -> GI 0%nat mem) ->
   (forall (rc : RunCeil) (fx : FPState) (j : nat), (j < 4)%nat ->
-     @lib_contract_g fx rc LS src0_msyms (@zlib_API rc) src0_sink_head src0_sink
+     @lib_contract_g fx rc LS src0_msyms _ (@zlib_API rc) src0_sink_head src0_sink
        G frame_RELRO GI j ENTRY RA_LIB EMPTY SLOT_STACK) ->
   (forall data, @room_calls LS (payload_len data) (calls data) U.AgreeZlib.SBD_AG) ->
   (forall a, U.Reusable.YL0g.in_globals Gu a -> U.Reusable.YL0g.in_globals U.FrameAPI.frame_G a) ->
@@ -63,7 +63,7 @@ Theorem ubsan_agrees_of_slots_lim : forall (LS : lib_shape)
   G_local_c src0_msyms G GI ->
   (forall mem, G_img_c src0_msyms G mem -> GI 0%nat mem) ->
   (forall (rc : RunCeil) (fx : FPState) (j : nat), (j < 4)%nat ->
-     @lib_contract_g fx rc LS src0_msyms (@zlib_API rc) src0_sink_head src0_sink
+     @lib_contract_g fx rc LS src0_msyms _ (@zlib_API rc) src0_sink_head src0_sink
        G frame_RELRO GI j ENTRY RA_LIB EMPTY SLOT_STACK) ->
   (forall data, @room_calls LS (payload_len data) (calls data) U.AgreeZlib.SBD_AG) ->
   (forall a, U.Reusable.YL0g.in_globals Gu a -> U.Reusable.YL0g.in_globals U.FrameAPI.frame_G a) ->

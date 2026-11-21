@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/CLenqcgif.v (a working branch ced28ed2383, file sha256 8c333c505470) onto omx-clap-core/fuzz_state's asan-ubsan image (fuzz_state.asan-ubsan, pinned sha256 5ac5ce0954f8; addresses read from its unstripped build b1566a1ca816); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/CLenqcgif.v (a working branch, file sha256 8c333c505470) onto omx-clap-core/fuzz_state's asan-ubsan image (fuzz_state.asan-ubsan, pinned sha256 5ac5ce0954f8; addresses read from its unstripped build b1566a1ca816); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
 (* Modified by Theorem Labs, 2026-10: omx-clap-core fuzz_state image B (fs.asan-ubsan): fs C5 - enq_bridge, di_enqueue_cgif and di_enqueue_ok take the instance's trace premise tr_admit (as_universe B) S tr instead of In tr (as_universe B) (as YFfl.v); the proofs pass it through unchanged. Image A's text (a Theorem Labs lane's DgC5-s1a.patch), mirrored. *)
-(* Modified by Theorem Labs, 2026-10: moved from ced28ed2383 to a Theorem Labs lane's c5 install head a working branch 57e82b93d43 (cgif file sha256 933f12ff32f3; the errno-kept twins of ad994c27165, additive). By 3-way merge (base = agreloc of ced28ed2383, theirs = agreloc of 57e82b93d43 with port_addr_check 16f8a030c869 PREDICT rows for it, ours = this file's image-B rows and L edits). *)
+(* Modified by Theorem Labs, 2026-10: moved to a Theorem Labs lane's c5 install head a working branch (cgif file sha256 933f12ff32f3; the errno-kept twins, additive). By 3-way merge (base = agreloc, theirs = agreloc with port_addr_check 16f8a030c869 PREDICT rows for it, ours = this file's image-B rows and L edits). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* cgif_file's instance of the generic Enqueue contract (CLenq.enqueue_spec_x).
 
    The released contract (YFew.tfib_enqueue_spec_nb) is proved arm by arm in YFg4 (the last batch has room),

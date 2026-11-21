@@ -8,6 +8,7 @@
    allocator relation ARx (route (b), step 3; CONVERSION.md (sha256 1015972e02a9; internal record)) as pb_gestures_end_x : gse_spec_x, with the
    cut points' generic forms GSE_LOOP_X / GSE_TAIL_X; pb_gestures_end, the AR statement, is re-derived from it at ARi0
    (Section cAR). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -977,7 +978,7 @@ End c.
 
 (* ---- THE AR JOURNAL HELPERS, kept under their AR names for the files that cite them (W_rig_top.v: gse_callS /
    gse_keep_img / gse_pres / gse_keep_high / gse_nodup at `B LAWS` / `B`).  The ARx conversion above proves their _x
-   twins (gse_callS_x ..); these five are the AR statements and proofs of commit b4343cabfa9's W_gestures_end.v
+   twins (gse_callS_x ..); these five are the AR statements and proofs of a commit's W_gestures_end.v
    (:97-139, :153-181, :202-214), word for word, over the AR journal and AR_laws. ---- *)
 Section ark.
 Variable B : asyms.

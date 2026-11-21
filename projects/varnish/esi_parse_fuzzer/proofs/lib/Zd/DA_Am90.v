@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (amd_frame_reader: a frame step keeps m_channel_reader, for the channel-reader premise). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -31,6 +32,13 @@ Notation wz z := (Z_to_bv 64 z) (only parsing).
 Lemma amd_frame_io : forall md md', amd_frame md md' -> m_fs md' = m_fs md /\ m_fds md' = m_fds md /\ m_halted md' = None.
 Proof.
   (intros md md'; (first [ intro dR_1; dand11 dR_1 as Hfd _ Hfs _ _ _ _ _ _ _ Hh | intros (Hfd & _ & Hfs & _ & _ & _ & _ & _ & _ & _ & Hh) ])). unfold m_fs, m_fds. rewrite Hfd, Hfs. OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib.AndN.rsplit; auto.
+Qed.
+
+(* LPS 727298f3: channel-reader premise; a frame step leaves m_proc, hence the reader, alone. *)
+Lemma amd_frame_reader : forall md md', amd_frame md md' -> m_channel_reader md' = m_channel_reader md.
+Proof.
+  intros md md' MDF. unfold m_channel_reader.
+  rewrite (proj1 (proj2 (proj2 (proj2 MDF)))). reflexivity.
 Qed.
 
 

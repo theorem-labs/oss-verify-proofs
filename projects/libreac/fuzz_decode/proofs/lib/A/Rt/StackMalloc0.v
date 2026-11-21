@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the walk of stack_malloc_0 at 0x3cda4 of libreac/fuzz_grant: class-0 frame constants (64-byte frames, 8 shadow bytes, hint at +0, flags at +0x1000, frames at +0x9000), the registers of its probe loop, image numbers; module names; TfibSyms renamed GrantSyms. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/Rt/StackMalloc0.v of a working branch 8595c26c630 (donor image sha256 c2c7559b29bd) as the walk of __asan_stack_malloc_0 of libreac/fuzz_decode's ASan build, with its module paths changed and its addresses and image end moved by port_core.py 718254b3f4dd (provenance/core-reloc/A/StackMalloc0.md). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/Rt/StackMalloc0.v of a working branch (donor image sha256 c2c7559b29bd) as the walk of __asan_stack_malloc_0 of libreac/fuzz_decode's ASan build, with its module paths changed and its addresses and image end moved by port_core.py 718254b3f4dd (provenance/core-reloc/A/StackMalloc0.md). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

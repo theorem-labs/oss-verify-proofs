@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/DMrcSecCf.v (commit ce1a656b52b7, file sha256 b0db9ca68c79) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 1 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 8 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcSecCf.v (commit 3d8ad2aeb77e, H4 cf instance set (reply-rccf); file sha256 032d151bfde9) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMrcSecCf.v at commit 2c35faeeaec, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (3 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/DMrcSecCf.v (file sha256 b0db9ca68c79) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 1 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 8 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcSecCf.v (H4 cf instance set (reply-rccf); file sha256 032d151bfde9) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMrcSecCf.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (3 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, slice H4): H4's secondary step field DMrcSecReads.rc_sec_step_g at cgif's image
    over the loosened post relation, and its flag-free form DMrcSecNf.rc_sec_step_nf_g, from the cf layer's secondary
    step with its budget loosened, YGcfInstRcSec.rc_sec_step_sl_cf (F1 row R3, re-hide twin).
@@ -17,7 +18,7 @@
    laws take).
    [rc_sec_step_nf_sl_of_cf]: for every B with TfibSyms B and every IOK, Hp, the row ERRB_QAPART and REC_LE give the
    flag-free field DMrcSecNf.rc_sec_step_nf_g B at pre relation ARXr_cf B IOK Hp, post relation ARXsl_cf B IOK Hp and
-   AOX := aowned B (the owned set the cf instance gives H4's fields, YGcfInstRcPrim.v:12): the post holds at the
+   AOX := aowned B (the owned set the cf instance gives H4's fields, YGcfInstRcPrim.v:13): the post holds at the
    recycled slot's slack rh_hi MAP LEN - rh_lo MAP.  [rc_sec_step_sl_of_cf]: the same at DMrcSecReads.rc_sec_step_g
    (rcc_pre_x), through DMiface.rcc_pre_sec_of_x, its post's flag the pre's (X2v keeps st_cache_inited by computation).
 

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -66,7 +67,7 @@ Proof using AF AFV AFG.
   change (fs_size 3) with 512 in *. rewrite SP0 in FR1', SHT.
   assert (SHF : shad (F + 512) = shad F + 64) by (unfold shad; clear - F64; Z.div_mod_to_equations; lia).
   rewrite SHF in *. unfold shad, SHB in SHB0, SHT, FSELF, FSL.
-  assert (LOWC : rt_sp0 RT ΣC - STACK_WIN <= lo) by (rewrite SP0; exact LOW).
+  assert (LOWC : rt_sp0 RT ΣC - STACK_SPAN <= lo) by (rewrite SP0; exact LOW).
   assert (INS : In (IA, 1024) (rt_live RT ΣC) /\ In (OC, 8192) (rt_live RT ΣC) /\ In (IDX, sc_idx L) (rt_live RT ΣC) /\ In (IMPL, 96) (rt_live RT ΣC)
                 /\ In (SB, OD_SBUF L) (rt_live RT ΣC) /\ In (COPY, len0 + 64) (rt_live RT ΣC)).
   { rewrite LV. cbn [app]. split; [left; reflexivity|]. split; [right; left; reflexivity|]. split; [do 2 right; left; reflexivity|]. split; [do 3 right; left; reflexivity|].

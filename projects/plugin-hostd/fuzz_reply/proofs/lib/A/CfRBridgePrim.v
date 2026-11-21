@@ -1,21 +1,22 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: plugin-hostd/fuzz_reply.asan, the cf allocator bridge (a Theorem Labs lane R, new file), part 2: the
    PRIMARY-CLASS ROOM of the `_x` rules' count premise, rl_prim_ok (design:
    REPLY-CLASS-PEAK.md (sha256 17339ef5a8b7; internal record) section 5), and the one fact it buys: a malloc_cf whose every kernel answer is granted
    returns a block, never NULL, at a state with Wf_cf, qtight and rl_prim_ok.
    - ccnt_c c S: the live requests of class c at S (PresetRoom.room_ok's argument, R/Spec/PresetRoom.v:156-157, at
-     rs_live (room_of_cf S) = map snd (blocks S), Reusable/YGcfRoom.v:54-55);
+     rs_live (room_of_cf S) = map snd (blocks S), Reusable/YGcfRoom.v:55-56);
    - rl_prim_ok S: every primary class c (1 <= c <= 30) holds at most RL_PRIM c live requests, RL_PRIM :=
      ReplyCnt.RL_PRIM (2 ^ 31 / PresetRoom.size_of_class c; the one definition, as acnt);
    - rl_prim_room: the 30 closed facts room_ok c (RL_PRIM c), checked by computation as ONE boolean equation (hazard
      #50: the term is evaluated by `eval vm_compute` and replaced, never a vm_compute on an open goal);
    - malloc_cf_granted_not_null: the chain rl_of_acall_pre_cf's ingredients (Wf_cf, qtight) -> a granted path ->
-     malloc_cf_null_full (Reusable/YGcfRoom.v:1355: a granted NULL is a full class) -> quar_bytes_ok_cf (:600: the
+     malloc_cf_null_full (Reusable/YGcfRoom.v:1356: a granted NULL is a full class) -> quar_bytes_ok_cf (:600: the
      quarantine side, no program premise) -> PresetRoom.not_full_of_room (:185) at c := chunk_class n; a granted NULL
      is primary (YGcfPath.malloc_cf_null_path_full :519);
    - the count premise of record at Sc, rl_count_ok Lsec L24 S := rl_sec_ok Lsec S /\ ccnt24 S <= L24 /\
-     rl_b24_ok (L24 + 1) S /\ rl_prim_ok S (Reusable/YGcfRoomLive.v:1217-1219 and this file), and its SATISFIABILITY
+     rl_b24_ok (L24 + 1) S /\ rl_prim_ok S (Reusable/YGcfRoomLive.v:1218-1220 and this file), and its SATISFIABILITY
      WITNESSES at reply's CfParams: at the start state init_state (no block), and at a long-input model state with
      72,687 gesture begins held three times (the relayed line, the held entry and the relay's copy: 218,061 live
      requests of 24 bytes, class 2), at top_x's Lsec := 1024 and L24 := 2 ^ 15;
@@ -233,7 +234,7 @@ Qed.
 Theorem rl_count_long : @rl_count_ok CfParams_reply RL_LSEC RL_L24 long_state.
 Proof. exact (rl_count_okb_spec RL_LSEC RL_L24 long_state rl_count_long_b). Qed.
 
-(* room_live_cf at both states: it reads st_sec_arr, st_secs and st_regions only (YGcfRoomLive.v:1210-1213, :1236), so
+(* room_live_cf at both states: it reads st_sec_arr, st_secs and st_regions only (YGcfRoomLive.v:1211-1214, :1237), so
    long_state has init_state's (room_live_cf_init_gen at reply_rl_param_ok). *)
 Theorem room_live_init_reply : @room_live_cf CfParams_reply init_state.
 Proof. exact (@room_live_cf_init_gen CfParams_reply reply_rl_param_ok). Qed.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -21,7 +22,7 @@ Lemma sm_finish_x : forall (X : Z -> mem -> Prop) (Σ : rtsA) PMc (ra sp gp tp s
   ART_A Σ m -> (k = 5 \/ k = 0 \/ k = 4 \/ k = 1 \/ k = 3 \/ k = 2)%nat -> 0 <= j < NF (Z.of_nat k) ->
   nth (Z.to_nat ((fss_hint (fs_of Σ k) + j) mod NF (Z.of_nat k))) (fss_flags (fs_of Σ k)) 1 = 0 ->
   1 <= credit Σ -> fs_room k (frames Σ) ->
-  rtA_sp0 Σ - STACK_WIN <= lo -> lo + RT_STACK <= bv_unsigned sp -> bv_unsigned sp + 16 <= USTACK_TOP ->
+  rtA_sp0 Σ - STACK_SPAN <= lo -> lo + RT_STACK <= bv_unsigned sp -> bv_unsigned sp + 16 <= USTACK_TOP ->
   AST SEGTOP_A (rtA_allow Σ) Pm (fun mo => ARTM RTA Σ mo /\ PMc mo) c1 ->
   (forall ms, Pm ms -> exists m',
      ret_stF fc ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11

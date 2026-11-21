@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the section takes the mmap base, break and entry draw with valid_launch and the launch premise entry_launch_ok_va; E0 takes the entry draw's top, the run's CONFIG_RSEQ flag and the execfn string, and runs_main_tfa the entry draw's top and the execfn string; slot 6's bound is proved from the new layout's ew6 equation; the rd0 file and directory interfaces, tra_file_arm and tra_dir_arm carry the launch facts; the launch's channel-reader flag, which fdchan asks for at the revision, carried over the malloc site's same_io step into the read arms and the out-of-memory leaf). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
@@ -52,23 +53,29 @@ Hypothesis MSITE : malloc_site_tfa B.
 Hypothesis OOM : oom_leaf_tfa B.
 Hypothesis RDF : rd0_file_tfa B.
 Hypothesis RDD : rd0_dir_tfa B.
-Variables (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte).
+Variables (sp : word) (inp : ProcInput) (mbase brk : word) (rnd : EntryDraw) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte).
 Hypothesis Hargv : in_argv inp = [a0; p].
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv [a0; p].
 Hypothesis Hve : valid_envp (in_envp inp).
 Hypothesis Hfit : entry_stack_fits sp [a0; p] (in_envp inp).
 Hypothesis RUNIV : forall data, fs_lookup (in_fs inp) p = Some data -> rrfc_universe B (payload_len data).
+(* #38: valid_launch and entry_launch_ok_va are what the retabled YQ0a layout
+   lemmas are proved from, and the rd0_* interfaces now carry both; the caller
+   already holds them (valid_input's launch conjunct and valid_entry's). *)
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp.
 #[local] Notation envp := (in_envp inp).
-#[local] Notation EL := (YQ0a.E0 sp [a0; p] (in_envp inp) xw xd).
+#[local] Notation EL := (YQ0a.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd).
 #[local] Notation usp := (bv_unsigned sp).
 Let HWXi : wx_segs_nowrap trasegs := Hwx_tfa.
 Lemma EL0 : bv_unsigned (ew EL 0) = usp. Proof. reflexivity. Qed.
 Lemma EL6 : usp <= bv_unsigned (ew EL 6).
 Proof.
-change (ew EL 6) with (Z_to_bv 64 (z_rand usp [a0; p] envp)).
-pose proof (YQ0a.z_rand_end sp [a0; p] envp Hsp Hva Hve) as Hz. pose proof (u64_range sp).
-unfold z_rand in *. rewrite u64_lit by lia. lia.
+rewrite <- Hargv.
+rewrite YQ0a.ew6 with (mbase := mbase) (brk := brk) by eassumption.
+pose proof (YQ0a.hs_eq inp). pose proof (YQ0a.aux_size inp).
+unfold z_rand. lia.
 Qed.
 Lemma usp_facts : sp_window_lo <= usp <= sp_window_hi /\ usp mod 16 = 0.
 Proof. destruct Hsp as (A & B0 & C). auto. Qed.
@@ -132,7 +139,7 @@ Qed.
 Section g.
 Variables (W : world trasegs) (ms : machine_state) (md : Model) (ly : alayout) (e : FdEntry).
 Hypothesis HS1 : st_ok trasegs EL ss_m1 (restrict (w_H W) ms).
-Hypothesis HR1 : runs_at usp (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp [a0; p] envp).
+Hypothesis HR1 : runs_at usp (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp (ed_top rnd) [a0; p] envp (in_execfn inp)).
 Hypothesis HAI1 : AI trasegs (w_H W) (w_A W) md.
 Hypothesis HAR1 : AR trasegs B ly init_state W (ms_mem ms) md.
 Hypothesis HTOP1 : top_ok usp ly.
@@ -140,22 +147,26 @@ Hypothesis Hfs1 : m_fs md = in_fs inp.
 Hypothesis Hfds1 : m_fds md = APSG.fds3 e.
 Lemma same_io_fs_fds : forall m m', same_io m m' -> m_fs m' = m_fs m /\ m_fds m' = m_fds m.
 Proof. intros m m' (H1 & _ & H3 & _). unfold m_fs, m_fds. rewrite H1, H3. split; reflexivity. Qed.
+(* LPS 727298f3: [same_io] keeps the process record (YG0d.v:33-34), and
+   [m_channel_reader] is one of its fields, so it travels with the rest. *)
+Lemma same_io_channel_reader : forall m m', same_io m m' -> m_channel_reader m' = m_channel_reader m.
+Proof. intros m m' (_ & _ & _ & H4). unfold m_channel_reader. rewrite H4. reflexivity. Qed.
 Lemma wvb_fs' : forall l mat (m : Model), m_fs (with_vm_backing l mat m) = m_fs m.
 Proof. intros l mat m. destruct m; reflexivity. Qed.
 Lemma wvb_fds' : forall l mat (m : Model), m_fds (with_vm_backing l mat m) = m_fds m.
 Proof. intros l mat m. destruct m; reflexivity. Qed.
-Theorem m1_common : forall KB : TSet,
+Theorem m1_common : m_channel_reader md = true -> forall KB : TSet,
 (forall ws (W' : world trasegs) ms1 md1 ly' S' (pb : sptr),
 st_ok trasegs (havoc EL K_M1 ws) ss_rd0 (restrict (w_H W') ms1) ->
-runs_at usp (mrestrict (w_H W') (ms_mem ms1)) (runs_main_tfa true sp [a0; p] envp) ->
+runs_at usp (mrestrict (w_H W') (ms_mem ms1)) (runs_main_tfa true sp (ed_top rnd) [a0; p] envp (in_execfn inp)) ->
 AI trasegs (w_H W') (w_A W') md1 -> AR trasegs B ly' S' W' (ms_mem ms1) md1 -> top_ok usp ly' ->
 blocks S' = [(pb, 65536)] -> pb <> PNull -> sptr_addr B ly' pb = bv_unsigned (ew (havoc EL K_M1 ws) A_BUF) -> dev S' <= 1 ->
 prim_pristine_except S' [] -> quar_bytes S' = 0 -> frames S' = [] -> qtightB S' ->
-m_fs md1 = in_fs inp -> m_fds md1 = APSG.fds3 e ->
+m_fs md1 = in_fs inp -> m_fds md1 = APSG.fds3 e -> m_channel_reader md1 = true ->
 srealizes trasegs (mkCfg ms1 md1) KB) ->
 srealizes trasegs (mkCfg ms md) (t_alt2 (diag msg_oom (in_fs inp)) KB).
 Proof.
-intros KB CONT.
+intros Hcr0 KB CONT.
 pose proof usp_facts as [[Ulo Uhi] U16]. pose proof (u64_range sp) as Usp. pose proof asan_consts as (C1 & C2 & C3 & C4 & C5).
 pose proof m1_checks as (CK1 & CK2 & CK3 & CK4 & CK5). pose proof (top_ok_ceil _ _ HTOP1) as HCT.
 apply (SRr_srealizes trasegs W (mkCfg ms md) (at_m1c W ms md) _ (m1c_run W ms md HS1) HAI1).
@@ -175,7 +186,7 @@ assert (Hra : raZ regs = 0x80b60) by (unfold raZ; rewrite R1; apply u64_lit; lia
 pose proof (st_ok_mem_ok trasegs EL ss_m1c _ HS) as HM. cbn [restrict ms_mem] in HM. fold mem in HM.
 assert (Hwin : forall a, usp - 65536 <= a < usp -> apresent (w_H W) mem a).
 { intros a Ha. eapply (win_present EL (w_H W) mem (ss_mem ss_m1c)); [exact HM | left; reflexivity | exact EL0 | lia | lia | cbn; lia]. }
-assert (HR : runs_at usp (mrestrict (w_H W) mem) (runs_main_tfa true sp [a0; p] envp)).
+assert (HR : runs_at usp (mrestrict (w_H W) mem) (runs_main_tfa true sp (ed_top rnd) [a0; p] envp (in_execfn inp))).
 { eapply (runs_at_frame EL (ss_facts ss_m1c) (ss_mem ss_m1)); [exact (st_ok_facts_ok trasegs EL ss_m1c _ HS) | exact wbs_m1c | exact HFr | rewrite EL0; lia | exact HR1]. }
 assert (HAR : AR trasegs B ly init_state W mem md').
 { apply (AR_after_run B HB ARL ly init_state W EL (ss_mem ss_m1) (ms_mem ms) mem md mat HAR1 ss_m1_win_ok); [rewrite EL0; exact Ulo | rewrite EL0; exact HCT | exact HF |].
@@ -247,7 +258,8 @@ rewrite E2_0. intros a Ha. destruct (Z.lt_ge_cases a (usp - 128)).
 * apply (apresent_some (w_H W')). eapply (win_present E2 (w_H W') (ms_mem ms3) (ss_mem ss_oom1)); [exact HM3 | right; left; reflexivity | exact E2_0 | lia | lia | cbn; lia].
 + exact (top_ok_le _ _ _ _ Hlyle HTOP1).
 + drv_lia.
-+ rewrite wvb_fds', Efds. subst md'. rewrite wvb_fds', Hfds1. reflexivity.
++ split; [rewrite wvb_fds', Efds; subst md'; rewrite wvb_fds', Hfds1; reflexivity | split; [reflexivity |
+rewrite YK05.wvb_channel_reader, (same_io_channel_reader _ _ Hio); subst md'; rewrite YK05.wvb_channel_reader; exact Hcr0]].
 + rewrite wvb_fs', Efs. subst md'. rewrite wvb_fs', Hfs1. reflexivity.
 -
 intros ly' S' W' regs' mem' md2 trc tr pb Hnn Htrc Hpath HPOST Ha0 Hwle HAI2.
@@ -323,47 +335,48 @@ rewrite E2_0. intros a Ha. destruct (Z.lt_ge_cases a (usp - 128)).
 + exact (HQT' qtightB_init).
 + rewrite wvb_fs', Efs. subst md'. rewrite wvb_fs', Hfs1. reflexivity.
 + rewrite wvb_fds', Efds. subst md'. rewrite wvb_fds', Hfds1. reflexivity.
++ rewrite YK05.wvb_channel_reader, (same_io_channel_reader _ _ Hio). subst md'. rewrite YK05.wvb_channel_reader. exact Hcr0.
 Qed.
 End g.
 Theorem tra_file_arm_at : forall (W : world trasegs) ms md ly data,
 valid_fs (in_fs inp) -> (length p < 4096)%nat -> p <> [] -> p <> dot_path -> fs_lookup (in_fs inp) p = Some data ->
 st_ok trasegs EL ss_m1 (restrict (w_H W) ms) ->
-runs_at usp (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp [a0; p] envp) ->
+runs_at usp (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp (ed_top rnd) [a0; p] envp (in_execfn inp)) ->
 AI trasegs (w_H W) (w_A W) md -> AR trasegs B ly init_state W (ms_mem ms) md -> top_ok usp ly ->
-m_fs md = in_fs inp -> m_fds md = APSG.fds3 (FdFile p (Z_to_bv 64 0)) ->
+m_fs md = in_fs inp -> m_fds md = APSG.fds3 (FdFile p (Z_to_bv 64 0)) -> m_channel_reader md = true ->
 srealizes trasegs (mkCfg ms md) (CLOSED_loaded data (in_fs inp)).
 Proof.
-intros W ms md ly data Hvfs Hlen Hne Hnd Hlk HS HR HAI HAR HTOP Hfs Hfds.
+intros W ms md ly data Hvfs Hlen Hne Hnd Hlk HS HR HAI HAR HTOP Hfs Hfds Hcr.
 apply (srz_conseq trasegs (mkCfg ms md) (t_alt2 (diag msg_oom (in_fs inp)) (RP data (in_fs inp) READ_FUEL CAP0)));
 [| exact (RP_closed data (in_fs inp))].
-apply (m1_common W ms md ly _ HS HR HAI HAR HTOP Hfs Hfds).
-intros ws W' ms1 md1 ly' S' pb HS1 HR1 HAI1 HAR1 HTOP1 Hbl Hnn Hpb Hnev HP1 HQ1 HF1 HT1 Hfs1 Hfds1.
-exact (RDF sp inp xw xd ws W' ms1 md1 ly' S' a0 p data pb Hargv Hsp Hva Hve Hvfs Hlen Hne Hnd Hlk (RUNIV data Hlk) HS1 HR1 HAI1 HAR1 HTOP1 Hbl Hnn Hpb Hnev HP1 HQ1 HF1 HT1 Hfs1 Hfds1).
+apply (m1_common W ms md ly _ HS HR HAI HAR HTOP Hfs Hfds Hcr).
+intros ws W' ms1 md1 ly' S' pb HS1 HR1 HAI1 HAR1 HTOP1 Hbl Hnn Hpb Hnev HP1 HQ1 HF1 HT1 Hfs1 Hfds1 Hcr1.
+exact (RDF sp inp mbase brk rnd xw xd ws W' ms1 md1 ly' S' a0 p data pb Hargv Hsp Hva Hve Hvfs Hvl Hlau Hlen Hne Hnd Hlk (RUNIV data Hlk) HS1 HR1 HAI1 HAR1 HTOP1 Hbl Hnn Hpb Hnev HP1 HQ1 HF1 HT1 Hfs1 Hfds1 Hcr1).
 Qed.
 Theorem tra_dir_arm_at : forall (W : world trasegs) ms md ly,
 p = dot_path ->
 st_ok trasegs EL ss_m1 (restrict (w_H W) ms) ->
-runs_at usp (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp [a0; p] envp) ->
+runs_at usp (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp (ed_top rnd) [a0; p] envp (in_execfn inp)) ->
 AI trasegs (w_H W) (w_A W) md -> AR trasegs B ly init_state W (ms_mem ms) md -> top_ok usp ly ->
-m_fs md = in_fs inp -> m_fds md = APSG.fds3 FdDir ->
+m_fs md = in_fs inp -> m_fds md = APSG.fds3 FdDir -> m_channel_reader md = true ->
 srealizes trasegs (mkCfg ms md) (CLOSED_dir p (in_fs inp)).
 Proof.
-intros W ms md ly Hdot HS HR HAI HAR HTOP Hfs Hfds. unfold CLOSED_dir.
-apply (m1_common W ms md ly _ HS HR HAI HAR HTOP Hfs Hfds).
-intros ws W' ms1 md1 ly' S' pb HS1 HR1 HAI1 HAR1 HTOP1 Hbl Hnn Hpb Hnev _ _ _ _ Hfs1 Hfds1.
-exact (RDD sp inp xw xd ws W' ms1 md1 ly' S' a0 p pb Hargv Hsp Hva Hve Hfit Hdot HS1 HR1 HAI1 HAR1 HTOP1 Hbl Hpb Hnev Hfs1 Hfds1).
+intros W ms md ly Hdot HS HR HAI HAR HTOP Hfs Hfds Hcr. unfold CLOSED_dir.
+apply (m1_common W ms md ly _ HS HR HAI HAR HTOP Hfs Hfds Hcr).
+intros ws W' ms1 md1 ly' S' pb HS1 HR1 HAI1 HAR1 HTOP1 Hbl Hnn Hpb Hnev _ _ _ _ Hfs1 Hfds1 Hcr1.
+exact (RDD sp inp mbase brk rnd xw xd ws W' ms1 md1 ly' S' a0 p pb Hargv Hsp Hva Hve Hfit Hvl Hlau Hdot HS1 HR1 HAI1 HAR1 HTOP1 Hbl Hpb Hnev Hfs1 Hfds1 Hcr1).
 Qed.
 End M1.
 Theorem tra_file_arm (B : asyms) (HB : TraSyms B) (ARL : AR_laws trasegs B) (ML : model_laws (as_universe B))
 (MSITE : malloc_site_tfa B) (OOM : oom_leaf_tfa B) (RDF : rd0_file_tfa B) : file_arm_tfa B.
 Proof.
-intros sp inp xw xd W ms md ly a0 p data Hargv Hsp Hva Hve Hvfs Hlen Hne Hnd Hlk HRU HS HR HAI HAR HTOP Hfs Hfds.
-exact (tra_file_arm_at B HB ARL ML MSITE OOM RDF sp inp xw xd a0 p Hargv Hsp Hva Hve ltac:(intros d Hd; rewrite Hlk in Hd; injection Hd as <-; exact HRU) W ms md ly data Hvfs Hlen Hne Hnd Hlk HS HR HAI HAR HTOP Hfs Hfds).
+intros sp inp mbase brk rnd xw xd W ms md ly a0 p data Hargv Hsp Hva Hve Hvfs Hvl Hlau Hlen Hne Hnd Hlk HRU HS HR HAI HAR HTOP Hfs Hfds Hcr.
+exact (tra_file_arm_at B HB ARL ML MSITE OOM RDF sp inp mbase brk rnd xw xd a0 p Hargv Hsp Hva Hve ltac:(intros d Hd; rewrite Hlk in Hd; injection Hd as <-; exact HRU) Hvl Hlau W ms md ly data Hvfs Hlen Hne Hnd Hlk HS HR HAI HAR HTOP Hfs Hfds Hcr).
 Qed.
 Theorem tra_dir_arm (B : asyms) (HB : TraSyms B) (ARL : AR_laws trasegs B) (ML : model_laws (as_universe B))
 (MSITE : malloc_site_tfa B) (OOM : oom_leaf_tfa B) (RDD : rd0_dir_tfa B) : dir_arm_tfa B.
 Proof.
-intros sp inp xw xd W ms md ly a0 p Hargv Hsp Hva Hve Hfit Hdot HS HR HAI HAR HTOP Hfs Hfds.
-exact (tra_dir_arm_at B HB ARL ML MSITE OOM RDD sp inp xw xd a0 p Hargv Hsp Hva Hve Hfit W ms md ly Hdot HS HR HAI HAR HTOP Hfs Hfds).
+intros sp inp mbase brk rnd xw xd W ms md ly a0 p Hargv Hsp Hva Hve Hfit Hvl Hlau Hdot HS HR HAI HAR HTOP Hfs Hfds Hcr.
+exact (tra_dir_arm_at B HB ARL ML MSITE OOM RDD sp inp mbase brk rnd xw xd a0 p Hargv Hsp Hva Hve Hfit Hvl Hlau W ms md ly Hdot HS HR HAI HAR HTOP Hfs Hfds Hcr).
 Qed.
 End c.

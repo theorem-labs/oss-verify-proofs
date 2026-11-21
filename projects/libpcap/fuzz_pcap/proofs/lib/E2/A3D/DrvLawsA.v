@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: in both sections, IN_ARGS and the args_mobjA step span the entry image's length less 8 bytes (was 16). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
@@ -50,7 +51,7 @@ Section DrvLaws.
   Variable cs : list gcomp.
   Hypothesis CSOK : Forall (gcomp_ok AI) cs.
   Hypothesis CI_RS : exists iv, In iv (aci AI) /\ fst iv <= READ_STAGE /\ READ_STAGE + 65537 <= snd iv.
-  Hypothesis IN_ARGS : In (args_comp USP (Z.of_nat (length SB) - 16)) cs.
+  Hypothesis IN_ARGS : In (args_comp USP (Z.of_nat (length SB) - 8)) cs.
   Hypothesis IN_UNP : In unp_comp cs.
   #[local] Notation GIOA := (GIOA_real AI (GSTAT_of cs)).
 
@@ -64,8 +65,8 @@ Section DrvLaws.
       split; [apply (relro_word m _ _ RO); first [unfold ARELRO_LO, ARELRO_HI; lia | vm_compute; reflexivity]|].
       apply c8_any; [exact ssp_ok| lia| lia].
     - intros L RNG s CL FB FL m (_ & _ & _ & _ & _ & _ & (_ & GC)).
-      assert (H1 : 0 <= Z.of_nat (length SB) - 16) by lia. assert (H2 : USP + (Z.of_nat (length SB) - 16) + 8 <= 2^47) by lia.
-      exact (args_mobjA USP (Z.of_nat (length SB) - 16) USP_lo H1 H2 L RNG s FB m (gconj_In _ _ _ _ _ _ _ GC IN_ARGS)).
+      assert (H1 : 0 <= Z.of_nat (length SB) - 8) by lia. assert (H2 : USP + (Z.of_nat (length SB) - 8) + 8 <= 2^47) by lia.
+      exact (args_mobjA USP (Z.of_nat (length SB) - 8) USP_lo H1 H2 L RNG s FB m (gconj_In _ _ _ _ _ _ _ GC IN_ARGS)).
     - intros L RNG s CL FB FL m (_ & _ & _ & _ & _ & _ & (_ & GC)). exact (gconj_In _ _ _ _ _ _ _ GC IN_UNP).
     - intros L RNG s CL FB FL m m' W G MU WM FW. eapply (gd_frame_real AI AF); eassumption.
     - intros L RNG s CL FB FL m m' W e G MU WM FW HE. eapply (gd_frame_errno_real AI AF); eassumption.
@@ -125,7 +126,7 @@ Section DrvLaws.
   Variable cs : list gcomp.
   Hypothesis CSOK : Forall (gcomp_ok AI) cs.
   Hypothesis CI_RS : exists iv, In iv (aci AI) /\ fst iv <= READ_STAGE /\ READ_STAGE + 65537 <= snd iv.
-  Hypothesis IN_ARGS : In (args_comp USP (Z.of_nat (length SB) - 16)) cs.
+  Hypothesis IN_ARGS : In (args_comp USP (Z.of_nat (length SB) - 8)) cs.
   Hypothesis IN_UNP : In unp_comp cs.
   #[local] Notation GIOA := (GIOA_real AI (GSTAT_of cs)).
 
@@ -139,8 +140,8 @@ Section DrvLaws.
       split; [apply (relro_word m _ _ RO); first [unfold ARELRO_LO, ARELRO_HI; lia | vm_compute; reflexivity]|].
       apply c8_any; [exact ssp_ok| lia| lia].
     - intros L RNG s CL FB FL m (_ & _ & _ & _ & _ & _ & (_ & GC)).
-      assert (H1 : 0 <= Z.of_nat (length SB) - 16) by lia. assert (H2 : USP + (Z.of_nat (length SB) - 16) + 8 <= 2^47) by lia.
-      exact (args_mobjA USP (Z.of_nat (length SB) - 16) USP_lo H1 H2 L RNG s FB m (gconj_In _ _ _ _ _ _ _ GC IN_ARGS)).
+      assert (H1 : 0 <= Z.of_nat (length SB) - 8) by lia. assert (H2 : USP + (Z.of_nat (length SB) - 8) + 8 <= 2^47) by lia.
+      exact (args_mobjA USP (Z.of_nat (length SB) - 8) USP_lo H1 H2 L RNG s FB m (gconj_In _ _ _ _ _ _ _ GC IN_ARGS)).
     - intros L RNG s CL FB FL m (_ & _ & _ & _ & _ & _ & (_ & GC)). exact (gconj_In _ _ _ _ _ _ _ GC IN_UNP).
     - intros L RNG s CL FB FL m m' W G MU WM FW. eapply (gd_frame_real AI AF); eassumption.
     - intros L RNG s CL FB FL m m' W e G MU WM FW HE. eapply (gd_frame_errno_real AI AF); eassumption.

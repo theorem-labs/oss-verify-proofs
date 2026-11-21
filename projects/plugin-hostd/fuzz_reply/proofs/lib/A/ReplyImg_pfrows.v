@@ -2,7 +2,7 @@
    rule 24: no function proved (kind: image rows; closed facts about reply's image A, fuzz_reply.asan, pin sha256
    42c58610e125, unstripped twin d751b179ea49; no function walk).
 
-   Two unit rows that round 3's ARcf_nil_init (Reusable/YGcfNilInit.v:100-101) takes at the image's symbol facts:
+   Two unit rows that round 3's ARcf_nil_init (Reusable/YGcfNilInit.v:101-102) takes at the image's symbol facts:
    - errb_ial_apart_reply_A: the third conjunct of its image-rows premise, the layer's errb_ial_apart_t
      (Reusable/YG0ncf.v:160): the error-message-buffer object [cf_errbuf_obj, + 56) lies below the internal
      allocator's arena (TFIB_IAL_LO) and so outside the arena and its flag (TFIB_IAL_FLAG).

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by gabelogan195, 2026-11: copied from projects/openssl/bndiv/proofs/lib/Lib/LimMremap.v at commit f92feaf8b7, whole, with the module path OSSVerify.Proofs.openssl.bndiv.lib.Lib changed to OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.Halts.Lim and nothing else. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the mremap budget proofs follow the TASK_SIZE gate and the in-place answer when there is room (mremap_inplace_room_b), with a comment on each, and the comments on the shrink and grow branches of mremap_at_up are left out. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs.
@@ -38,6 +39,9 @@ Proof.
   destruct (negb (bv_unsigned flags =? MREMAP_MAYMOVE)%Z); [intros _; at_auto|].
   destruct (negb (bv_unsigned old mod page_size =? 0)%Z); [intros _; at_auto|].
   destruct (page_align_is0_b new_size); [intros _; at_auto|].
+  (* LPS 08b1429: a page-aligned new length over TASK_SIZE is EINVAL before any VMA
+     is looked up, in the spec and in the mark alike. *)
+  destruct (TASK_SIZE <? new_nZ)%Z; [intros _; at_auto|].
   destruct (page_align_is0_b old_size); [intros _; at_auto|].
   intros R1. apply at_get_model. cbv beta zeta.
   change (mremap_source_b (m_vmmaps (setL L m)) old old_n old_nZ) with (mremap_source_b (m_vmmaps m) old old_n old_nZ).
@@ -47,34 +51,36 @@ Proof.
   destruct (old_nZ =? new_nZ)%Z eqn:Eeq; [intros _; at_auto|].
   intros R1. apply at_alt; [at_auto|].
   destruct (new_nZ <? old_nZ)%Z eqn:Elt.
-  - (* [comment removed for export] *)
+  -
     apply at_bind; [apply at_modify; reflexivity | intros [] ? ? _; at_auto].
-  - (* [comment removed for export] *)
+  -
     assert (Hle : (new_nZ <=? old_nZ)%Z = false) by (apply Z.leb_gt; apply Z.ltb_ge in Elt; apply Z.eqb_neq in Eeq; lia).
-    rewrite Hle in R1. apply negb_false_iff in R1. apply andb_true_iff in R1 as [Rf Rm].
-    assert (MOVE : lim_at L i m
-              (dst <- choose (fun dst => mremap_fresh_b m old_nZ new_nZ old old_n dst new_n = true) ;;
-               modify (fun _ => mremap_model_next m old old_n dst new_n) ;;
-               pure (mremap_move_effect old old_n dst old_nZ new_nZ))
-              (dst <- choose (fun dst => mremap_fresh_b (setL L m) old_nZ new_nZ old old_n dst new_n = true) ;;
-               modify (fun _ => mremap_model_next (setL L m) old old_n dst new_n) ;;
-               pure (mremap_move_effect old old_n dst old_nZ new_nZ))).
-    { apply at_bind.
-      - apply at_choose. intros dst Hd. unfold mremap_fresh_b in *. cbv zeta in *.
-        apply andb_true_iff in Hd as [Hd Hb]. apply andb_true_iff. split; [exact Hd|].
-        apply mremap_final_budget_b_up; assumption.
-      - intros dst m1 ev Hc. apply choose_inv in Hc as (_ & -> & ->).
-        apply at_bind; [apply at_modify; reflexivity | intros [] ? ? _; at_auto]. }
-    assert (IG : mremap_inplace_grow_b (setL L m) old old_n new_n old_nZ new_nZ = mremap_inplace_grow_b m old old_n new_n old_nZ new_nZ).
-    { unfold mremap_inplace_grow_b. cbv zeta.
+    rewrite Hle in R1.
+    (* LPS 08b1429: with room the only non-errno answer is the in-place one, gated by
+       [mremap_final_budget_b]; without room it is the move, whose destination predicate
+       is [mremap_dst_ok]. [setL] changes only [vm_limit], which neither the room test
+       nor [linux_place] reads. *)
+    assert (IR : mremap_inplace_room_b (setL L m) old old_n new_n old_nZ new_nZ
+                 = mremap_inplace_room_b m old old_n new_n old_nZ new_nZ).
+    { unfold mremap_inplace_room_b. cbv zeta.
       change (m_vmmaps (setL L m)) with (setvl L (m_vmmaps m)).
       change (alloc_top (setvl L (m_vmmaps m))) with (alloc_top (m_vmmaps m)).
       change (vm_reserved (setvl L (m_vmmaps m))) with (vm_reserved (m_vmmaps m)).
       change (vm_maps (setvl L (m_vmmaps m))) with (vm_maps (m_vmmaps m)).
-      rewrite Rf. rewrite (mremap_final_budget_b_up L m old old_n old new_n HL Rf). reflexivity. }
-    rewrite IG.
-    destruct (mremap_inplace_grow_b m old old_n new_n old_nZ new_nZ).
-    + apply at_alt; [| exact MOVE].
-      apply at_bind; [apply at_modify; reflexivity | intros [] ? ? _; at_auto].
-    + exact MOVE.
+      reflexivity. }
+    rewrite IR. revert R1.
+    destruct (mremap_inplace_room_b m old old_n new_n old_nZ new_nZ) eqn:Eroom; intros R1.
+    +
+      apply at_bind.
+      * apply at_choose. intros [] Hd. apply mremap_final_budget_b_up; assumption.
+      * intros [] m1 ev Hc. apply choose_inv in Hc as (_ & -> & ->).
+        apply at_bind; [apply at_modify; reflexivity | intros [] ? ? _; at_auto].
+    +
+      apply at_bind.
+      * apply at_choose. intros dst Hd. unfold mremap_dst_ok in *. destruct Hd as [Hp Hf].
+        split; [exact Hp|]. unfold mremap_fresh_b in *. cbv zeta in *.
+        apply andb_true_iff in Hf as [Hf Hb]. apply andb_true_iff. split; [exact Hf|].
+        apply mremap_final_budget_b_up; assumption.
+      * intros dst m1 ev Hc. apply choose_inv in Hc as (_ & -> & ->).
+        apply at_bind; [apply at_modify; reflexivity | intros [] ? ? _; at_auto].
 Qed.

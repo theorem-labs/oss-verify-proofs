@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the transparent-huge-page flag ms_thp of mstate: upd_ext takes ms_thp s' = ms_thp s, read from enframe_post). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -22,8 +23,10 @@ Context {ML : MallocLayout} {MLok : MallocLayoutOk ML} {HT : HeapTop}.
 
 Local Notation u := bv_unsigned (only parsing).
 
-Lemma upd_ext : forall s s', ms_vm s' = ms_vm s -> ms_lo s' = ms_lo s -> ms_hi s' = ms_hi s -> s' = upd s (ms_mem s') (ms_vm s).
-Proof. intros [m h lo hi] [m' h' lo' hi']; cbn; intros -> -> ->; reflexivity. Qed.
+(* LPS 727298f3: [mstate] carries [ms_thp], which [upd] copies, so it is equal too *)
+Lemma upd_ext : forall s s', ms_vm s' = ms_vm s -> ms_lo s' = ms_lo s -> ms_hi s' = ms_hi s -> ms_thp s' = ms_thp s ->
+  s' = upd s (ms_mem s') (ms_vm s).
+Proof. intros [m h lo hi t] [m' h' lo' hi' t']; cbn; intros -> -> -> ->; reflexivity. Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -99,12 +102,12 @@ Section EnframeII.
   Proof.
     intros k P HK. pose proof (ii_is HII) as HI. pose proof HI as [HW HR HC HWIN HE HG]. pose proof (envok_rodata _ _ _ _ HE) as HRO.
     apply (enframe_ok A s g mt aib slots i nn ctr HW HR HWIN HRO Hg Hr Hi Hi0 Hnn k P).
-    intros off s' Hoff. cbv zeta. intros HW' HR' HWIN' Hvm Hlo Hhi HRO' Hfr Hpay.
+    intros off s' Hoff. cbv zeta. intros HW' HR' HWIN' Hvm Hlo Hhi Hthp HRO' Hfr Hpay.
     set (p := mt_mem mt + 16 + i * mt_stride mt + 16 * off) in *.
     set (A' := slot_set A g i (SLive off nn) (lupd (a_live A) p (Some nn))) in *.
     change (mt_mem mt + 16 + i * mt_stride mt) with (slot_start mt i) in *.
     change (slot_start mt i + mt_stride mt - 4) with (slot_end mt i) in *.
-    pose proof (upd_ext s s' Hvm Hlo Hhi) as Es.
+    pose proof (upd_ext s s' Hvm Hlo Hhi Hthp) as Es.
     assert (Gd : forall x, slot_start mt i - 4 <= x < slot_end mt i + 4 -> dom A x).
     { intros x Hx. destruct (wf_grp A HW g mt aib slots Hg Hr) as (Hw32 & _ & Hsc & Hlen & _). pose proof (stride_ge16 mt ltac:(lia) Hsc) as HS.
       assert (Hilt : (Z.to_nat i < length slots)%nat) by (apply (proj1 (nth_error_Some _ _)); rewrite Hi; discriminate).

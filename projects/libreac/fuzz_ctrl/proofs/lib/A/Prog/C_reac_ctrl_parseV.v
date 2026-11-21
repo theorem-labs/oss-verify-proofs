@@ -2,7 +2,7 @@
    pb_reac_ctrl_parse (lib/A/Prog/C_reac_ctrl_parseP.v), at a state the core's AR describes: the premises of the
    stretches' Sections (reac_ctrl_parseF_pre.PreFOn at the entry, reac_ctrl_parseF_rpost.RPostFOn after
    __asan_stack_malloc_1) and of the acall_kept composition.
-   Sections 1-2 are ported from a Theorem Labs lane's lib/B/Prog/C_reac_ctrl_parseW.v @ 258208c7d59, image A addresses
+   Sections 1-2 are ported from a Theorem Labs lane's lib/B/Prog/C_reac_ctrl_parseW.v, image A addresses
    (B name -> A name): rcpW_shk / rcpW_shc / rcpW_ceil / rcpW_img_lt / rcpW_img_end / rcpW_fgeo / rcpW_block_above /
    rcpW_bytes_nth / rcpW_cover / rcpW_frame (W1) / rcpW_apart_block (W2) / rcpW_apart_frame (W3) / rcpW_apart_img (W4)
    / rcpW_in_frame (W5) / rcpW_block (W6) / rcpW_vis_win (W7) / rcpW_vis_block (W8) / rcpW_vis_frame (W9) / rcpW_win

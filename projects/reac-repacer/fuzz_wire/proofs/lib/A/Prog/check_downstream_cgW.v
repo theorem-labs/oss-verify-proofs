@@ -4,10 +4,11 @@
 (* Modified by Theorem Labs, 2026-10: the entry segment of the image-A walk of libreac/fuzz_decode's LLVMFuzzerTestOneInput, with proof steps adapted from proofs/libreac/fuzz_grant/lib/A/Prog/CtrlStampHeadamp.v (pb_reac_ctrl_stamp_headamp's prologue and its class-0 stack malloc, origin/cold/pg-prog), proofs/libreac/fuzz_grant/lib/A/Prog/GrantACja.v (land_m32, denot_and_m32, sp1_facts), proofs/libreac/fuzz_grant/lib/A/Prog/GrantFrame.v (val_mem_of_rd32, rdword_of_val_mem, val_mem_moved), lib/Reusable/YCbq.v (call_effect_journal) and lib/A/Prog/YC85.v (aj_stack_malloc_atS); module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_transport/lib/A/Prog/CanKit.v, with its module paths and module names changed; 1161 of its 1364 lines of code are new or changed and 321 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_wire/lib/B/Prog/check_meter_cgW.v, with its module paths and module names changed; 408 of its 581 lines of code are new or changed and 1191 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_downstream_cgW: wire_check_downstream_cg (wire_sigma WS_check_downstream) at image A (fuzz_wire.asan,
    check_downstream at 0x801fc; objdump of record sha256 2f8f8697cd4f) from the callee contract the statement names,
    proving the frozen statement lib/A/Prog/check_downstream_cg.v wire_check_downstream_holds_stmt. In the walk style
-   of reac-repacer/fuzz_uci's lib/A/Prog/check_value_cgW.v (recipes commit 0295462466b2; its image-free helpers
+   of reac-repacer/fuzz_uci's lib/A/Prog/check_value_cgW.v (recipes; its image-free helpers
    copied under the prefix cdw_): the body runs as footprint runs (lib/A/Prog/WireCdsSegs.v) carried into SRr by
    lib/A/Prog/LeafCgFacts.v bridge_evtF_stmt_YA0n, an inner journal over the call's stack window, and the one call,
    of the leaf rp_ds_accept, cut by its leaf contract through the kit's lib/A/Prog/WireCcLeafb.v wcc_leafb_journal.

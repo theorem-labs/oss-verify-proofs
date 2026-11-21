@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the SIGPIPE disposition as a launch variable; the new launch (process input, auxv, group id, exec file name); the read-only-backing form of the system-call steps; the run over the run's segments; the channel-reader premise of writev; the BMode context; imports. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
@@ -14,6 +15,7 @@ From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S8 Require Import PmModel
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require Import PeCLayout PeCLayoutA.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S8 Require Import PeCSinkA PeCSpecsA PeCSpecsAa PeCStaticsA PeTopAL PeTopALChkA PeCTopA PeCTopAsmA PeALayFacts PeAExitCells UbjEncPmAsanLib.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S8 Require Import BMode ShapeAlg SpinAlg Spec BigintSpec KillFree HaltsKit UbjEncShapes FrmInit AsanInitK Ea0DefsK.
+From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S8 Require SRomStable.
 Import ListNotations.
 Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -77,37 +79,54 @@ Lemma LIBAh : lib_ok_stmtFX (@PECASMA.fam_ok ScfgP_cfg0 art_L art_C art_IL art_L
 Proof. exact (lib_okFX_SA art_L art_C art_IL art_LR art_pma_layout art_IL_ok EarIfaceMcmp.art_mcmp_cells). Qed.
 
 Theorem ea0_run_on : forall sp brk0 mbase (rdraw : EntryDraw) (argv envp : list (list byte)) (fs : Fs.Fs) (stdin : InputStream) (uid gid hw : word) (groups : list word)
-                         (net : NetQueue) (nofile sigmask : word) (abrt : bool) (ur : InputStream),
-  valid_sp sp -> valid_brk EA.loaded_segments brk0 -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp argv envp -> valid_id uid -> valid_hwcap hw -> valid_fs fs ->
+                         (net : NetQueue) (nofile sigmask : word) (abrt : bool) (ur : InputStream) (kb : KernelBuild) (execfn : list byte) (sdf : bool),
+  valid_sp sp -> valid_brk EA.loaded_segments brk0 -> valid_mmap_base mbase -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp argv envp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) (AsanInitK.inp argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf) ->
+  valid_launch (AsanInitK.inp argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf) ->
+  valid_id uid -> valid_hwcap hw -> valid_fs fs ->
   srealizes EA.loaded_segments cfg0 (init_config EA.loaded_segments EA.init_pc EA.phdrs sp brk0 mbase rdraw AsanInitK.LIMIT
-                                         (AsanInitK.inp argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur))
+                                         (AsanInitK.inp argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf))
             (spec argv fs).
 Proof.
-  intros sp brk0 mbase rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur Hsp Hbrk Hva Hve Hfit Huid Hhw Hvfs.
-  assert (HPO : ue_reach_ok PTrue (AsanInitK.inp argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur)) by (intros a0s path fdata _ _ _ _ _ _; exact I).
-  exact (as0_realizes_spec_run cfg0 eq_refl eq_refl art_L art_C art_IL (PECASMA.LayA art_L P_SA) (fun _ => PECASMA.TopLSA) PMA.EXT BUDGET0 BUDGET0_lo40 BUDGET0_hi
-           ea0_inst ea0_free_null ea0_h4e ea0_icpt ea0_ext ea0_gap PTrue PTrue
-           (@PECASMA.fam_ok ScfgP_cfg0 art_L art_C art_IL art_LR) LIBAh ea0_fam ea0_dla ea0_consts ea0_drv ea0_usage ea0_lsxfa
-           sp brk0 mbase rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur Hsp Hbrk Hva Hve Hfit Huid Hhw Hvfs HPO).
+  intros sp brk0 mbase rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf
+         Hsp Hbrk Hmb Hva Hve Hfit Hlau Hvl Huid Hhw Hvfs.
+  assert (HPO : ue_reach_ok PTrue (AsanInitK.inp argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf))
+    by (intros a0s path fdata _ _ _ _ _ _; exact I).
+  (* the main phase's section binds the CONFIG_RSEQ flag [r] and ties it by [HRZ]; the run's own flag discharges it *)
+  eapply (as0_realizes_spec_run cfg0 eq_refl eq_refl art_L art_C art_IL (PECASMA.LayA art_L P_SA) (fun _ => PECASMA.TopLSA) PMA.EXT BUDGET0 BUDGET0_lo40 BUDGET0_hi
+            ea0_inst ea0_free_null ea0_h4e ea0_icpt ea0_ext ea0_gap PTrue PTrue
+            (@PECASMA.fam_ok ScfgP_cfg0 art_L art_C art_IL art_LR) LIBAh ea0_fam ea0_dla ea0_consts ea0_drv ea0_usage ea0_lsxfa);
+    first [eassumption | reflexivity].
 Qed.
 
 Theorem ue_halts_asan :
   halts_allowed_T_scfg_budgets forced_only_cfg ShippedBudgets.lim_source codes02 (mkImage EA.loaded_segments EA.init_pc EA.phdrs).
 Proof.
   intros [sp brk mb rnd] inp Hen Hvalid Hsw.
+  (* LPS 727298f3: [valid_entry]'s fifth conjunct is the launch; the input facts are read through the
+     model's named accessors, never by position *)
   pose proof (valid_input_va_size _ Hvalid) as Hsv48.
   rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen.
-  destruct Hen as [Hsp [Hbrk [Hmb Hfit]]].
-  destruct Hvalid as (Hargv & Henvp & Hfs & _ & Hcreds & _ & _ & Hhw & _ & Hva & _).
-  destruct inp as [argv envp fs0 stdin0 uid gid groups net nofile sigmask hw abt va ur tmp].
-  cbn [in_argv in_envp in_uid in_hwcap in_va_size] in *. subst va.
+  destruct Hen as [Hsp [Hbrk [Hmb [Hfit Hlau]]]].
+  pose proof (valid_input_argv _ Hvalid) as Hargv. pose proof (valid_input_envp _ Hvalid) as Henvp.
+  pose proof (valid_input_fs _ Hvalid) as Hfs. pose proof (valid_input_creds _ Hvalid) as Hcreds.
+  pose proof (valid_input_hwcap _ Hvalid) as Hhw. pose proof (valid_input_launch _ Hvalid) as Hvl.
+  pose proof (valid_input_channel_reader _ Hvalid) as Hrd. pose proof (valid_input_sigpipe_terminal _ Hvalid) as Hspt.
+  pose proof (valid_input_recorded_kernel _ Hvalid) as Hker. clear Hvalid.
+  destruct inp as [argv envp fs0 stdin0 uid gid groups net nofile sigmask hw abt va ur tmp kb exfn chrd spd spt].
+  cbn [in_argv in_envp in_uid in_hwcap in_va_size in_fs in_image_fs in_tmp in_kernel
+       in_channel_reader in_sigpipe_default in_sigpipe_terminal] in *.
+  subst va chrd spt.
   destruct Hcreds as [Hu _]. cbn [in_uid] in Hu.
-  pose proof (ea0_run_on sp brk mb rnd argv envp (in_fs (mkProcInput_full argv envp fs0 stdin0 uid gid groups net nofile sigmask hw abt Sv48 ur tmp))
-                stdin0 uid gid hw groups net nofile sigmask abt ur Hsp Hbrk Hargv Henvp Hfit Hu Hhw Hfs) as RUN.
-  pose proof (top_of_guarded (bmK := bm_on_inst) _ _ _ _ _ _ _ _ _ _ _ frm_safe_Ma0 RUN) as RUN0.
-
-  set (inp' := AsanInitK.inp argv envp (in_fs (mkProcInput_full argv envp fs0 stdin0 uid gid groups net nofile sigmask hw abt Sv48 ur tmp))
-                             stdin0 uid gid hw groups net nofile sigmask abt ur) in *.
+  (* the kernel of record is the sixteenth field [AsanInitK.inp] writes; the SIGPIPE disposition [spd]
+     is free and is the launch's [sdf] *)
+  rewrite Hker in Hlau, Hvl, Hsw |- *.
+  pose proof (ea0_run_on sp brk mb rnd argv envp (fs_seed_tmp fs0 tmp) stdin0 uid gid hw groups net nofile sigmask abt ur kb exfn spd
+                Hsp Hbrk Hmb Hargv Henvp Hfit Hlau Hvl Hu Hhw Hfs) as RUN.
+  set (inp' := AsanInitK.inp argv envp (fs_seed_tmp fs0 tmp) stdin0 uid gid hw groups net nofile sigmask abt ur kb exfn spd) in *.
+  (* the run reads the binary's segments with the run's vDSO appended ([Run.run_segments]) *)
+  pose proof (SRomStable.srun_init cfg0 EA.loaded_segments inp' sp mb _ _ _ _ _ _ eq_refl RUN) as RUNr.
+  pose proof (top_of_guarded (bmK := bm_on_inst) _ _ _ _ _ _ _ _ _ _ _ (SRomStable.frm_safe_run_segments _ inp' sp mb frm_safe_Ma0) RUNr) as RUN0.
   change (must_exit_in_scfg forced_only_cfg codes02 (mkImage EA.loaded_segments EA.init_pc EA.phdrs) AsanInitK.LIMIT (mkEntry sp brk mb rnd) inp').
   change (~ run_scfg_budget_refused forced_only_cfg (mkImage EA.loaded_segments EA.init_pc EA.phdrs) AsanInitK.LIMIT (mkEntry sp brk mb rnd) inp') in Hsw.
   eapply (srealizes_init_must_exit (bmK := bm_on_inst) eq_refl cfg0).

@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs: the secondary-request count of drain's request trace (drain_b_c.drain_tr, W_contract.dr_tr). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyKfTr.v, with its module paths changed; 10 of its 324 lines of code are new or changed and 8 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* KF-COUNT row #5, drain: the count nsec_tr (ReplyKfNsec.v) of the requests one drain makes, in the form agreed for
    the drains: the bytes the drain consumes pay for its begins.  proves no function (kind: segment lemma).
    - A drain's secondary requests are of three kinds (Prog/drain_b_c.v):
@@ -391,7 +392,7 @@ Proof.
   unfold W_rep.APARTIAL in HU6. split; [exact HC | lia].
 Qed.
 
-(* kf_dr from dr_spec_x's own premises (W_contract_x.v:763-771): asrc_at, aentry_ok, tr_max (dr_tr ..) < MMAX, and
+(* kf_dr from dr_spec_x's own premises (W_contract_x.v:764-772): asrc_at, aentry_ok, tr_max (dr_tr ..) < MMAX, and
    MMAX <= 2 ^ 30 (CfParamsReply.reply_HMMAX at fr_MMAX) *)
 Lemma kf_dr_at : forall ly S W mem HA c mx no cap e h MMAX,
   W_rep.asrc_at B ly S W mem HA h -> W_rep.aentry_ok B ly S W mem e ->

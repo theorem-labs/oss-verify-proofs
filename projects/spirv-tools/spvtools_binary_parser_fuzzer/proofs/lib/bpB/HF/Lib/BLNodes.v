@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's new descriptor kinds in the descriptor case split). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -183,7 +184,8 @@ Definition nstep (n : node) (mo : Model) (eff : resp) (mo' : Model) (evs : list 
               mo' = with_fds (fd_insert (m_fds mo) (Z_to_bv 64 fd) (FdFile p (off + len_word bs)%bv)) mo
           end
       | Some (FdChannel _) | Some (FdFileW _ _) | Some (FdSocket _) | Some (FdPipe _ _)
-      | Some (FdFileA _ _) | Some (FdFileRW _ _) | Some (FdDevNull _ _) | Some FdUrandom => False
+      | Some (FdFileA _ _) | Some (FdFileRW _ _) | Some (FdDevNull _ _) | Some FdUrandom
+      | Some (FdStream _ _ _) | Some (FdEventfd _) | Some (FdDgram _) | Some (FdAnon _ _) => False
       end
   | NClose fd =>
       evs = [] /\ 3 <= fd < 2^32 /\

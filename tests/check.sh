@@ -30,8 +30,12 @@
 # tests/negative/ must be refused, at the step and for the reason its
 # claim.yaml names; a negative control refused for any other reason is a
 # broken control and fails this script.  So does a run that checked nothing.
-# Last, tests/mutate.py makes each statement kind of theories/Shapes.v vacuous
-# in a scratch copy and requires the build of the controls to fail on it.
+# Each instance control under tests/instances/ is checked as oft check checks
+# a statement's instance: one with no claim.yaml must pass, and one with a
+# claim.yaml must be refused at the step and for the reason it names.
+# Last, tests/mutate.py makes each statement kind of theories/Shapes.v, and
+# each shape of theories/ClassifierShapes.v, vacuous in a scratch copy and
+# requires the build of the controls to fail on it.
 set -euo pipefail
 
 FULL=0; ROCQCHK=0
@@ -233,8 +237,49 @@ for dir in "${NEG[@]}"; do
   fi
 done
 
-# The mutation controls (tests/mutate.py): each statement kind of Shapes.v,
-# made vacuous in a scratch copy, must fail the build of the controls.
+# The instance controls (tests/instances/).  Each directory holds an
+# instance.yaml (a statement of the toys, its fields, argv0 and input_file,
+# the instance record, and a project and a `required` list that stand in for
+# tools/oft/shapes.py's REQUIRED), the instance file and the lemma,
+# Instances/<statement>.v, or none, with any other .v file of the proof library
+# that the lemma loads.  `python3 -m oft.check --instance-control`
+# checks it as oft check checks a statement's instance (tools/oft/check.py,
+# check_instance and audit_instance).  A directory with no claim.yaml must
+# pass; one with a claim.yaml must be refused at the step it names
+# (refused_at), with its `because` in the check's output.  oft check needs the
+# packages tools/oft/requirements.txt pins, which the checker image does not
+# hold: give them on PYTHONPATH, which this keeps behind tools/.
+mapfile -t INST < <(find "$ROOT/tests/instances" -mindepth 1 -maxdepth 1 -type d | LC_ALL=C sort)
+[ "${#INST[@]}" -gt 0 ] || { echo "check.sh: no instance controls found"; exit 1; }
+instances=0
+for dir in "${INST[@]}"; do
+  name="$(basename -- "$dir")"; log="$WORK/instance_$name.log"; rc=0
+  PYTHONPATH="$ROOT/tools${PYTHONPATH:+:$PYTHONPATH}" python3 -m oft.check --root "$ROOT" --instance-control "$dir" \
+    > "$log" 2>&1 || rc=$?
+  if [ ! -e "$dir/claim.yaml" ]; then
+    if [ "$rc" = 0 ]; then
+      instances=$((instances + 1)); echo "PASS    instances/$name: $(grep -m1 ': instance of ' "$log" || true)"
+    else
+      fail=1; echo "FAIL    instances/$name: $(grep -m1 '^FAIL ' "$log" || true); see $log"
+      tail -n 30 -- "$log" | sed 's/^/  | /'
+    fi
+    continue
+  fi
+  want="$(yaml_field "$dir/claim.yaml" refused_at)"; why="$(yaml_field "$dir/claim.yaml" because)"
+  got="$(sed -n 's/^FAIL [^ ]*: refused at \([a-z]*\): .*/\1/p' "$log" | head -1)"
+  if [ "$rc" != 0 ] && [ "$got" = "$want" ] && grep -qF -- "$why" "$log"; then
+    instances=$((instances + 1)); echo "REFUSED instances/$name at $got ($why)"
+  elif [ "$rc" = 0 ]; then
+    fail=1; echo "FAIL    instances/$name was ACCEPTED; see $log"
+  else
+    fail=1; echo "BROKEN  instances/$name refused at ${got:-?}, expected $want because '$why'; see $log"
+    tail -n 30 -- "$log" | sed 's/^/  | /'
+  fi
+done
+
+# The mutation controls (tests/mutate.py): each statement kind of Shapes.v and
+# each shape of ClassifierShapes.v, made vacuous in a scratch copy, must fail
+# the build of the controls.
 mutations=caught
 python3 "$ROOT/tests/mutate.py" || { fail=1; mutations=FAILED; }
 
@@ -262,7 +307,7 @@ if [ "$FULL" = 1 ]; then
   fi
 fi
 
-echo "positive controls passed: $passed of ${#POS[@]}; negative controls refused as claimed: $refused of ${#NEG[@]}; mutation controls: $mutations"
-[ "$passed" -eq "${#POS[@]}" ] && [ "$refused" -eq "${#NEG[@]}" ] || fail=1
+echo "positive controls passed: $passed of ${#POS[@]}; negative controls refused as claimed: $refused of ${#NEG[@]}; instance controls as claimed: $instances of ${#INST[@]}; mutation controls: $mutations"
+[ "$passed" -eq "${#POS[@]}" ] && [ "$refused" -eq "${#NEG[@]}" ] && [ "$instances" -eq "${#INST[@]}" ] || fail=1
 [ "$fail" = 0 ] && echo "check.sh: all controls behave" || echo "check.sh: FAILED (work files kept in $WORK)"
 exit "$fail"

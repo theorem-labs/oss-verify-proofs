@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the TAIL segment of fuzz_reply's gestures_end walk on IMAGE B (asan-ubsan),
    lane W4, from the frozen cut point 0x82754 of lib/B/W_gse_cut.v (gse_tail_at).  Image A's twin is
-   lib/A/W_gse_tail.v (a working branch 30b59638978, cut point 0x82638); this file is its text with B's
+   lib/A/W_gse_tail.v (a working branch, cut point 0x82638); this file is its text with B's
    register map (s4 = s1 >> 3 kept from the prologue; s8 saved at sp+0, so ten frame slots) and B's numbers. *)
-(* STRUCTURE PORTED FROM the same run at halts level, a working branch 38a6eaf28b2
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* STRUCTURE PORTED FROM the same run at halts level, a working branch
    lib/A/Prog/gestures_end_b.v:
      - `gse_tail` (:905): the whole stretch after the loop -> ret.  Its step order is this file's:
        (ag_run :941) the cut point -> the free trampoline, with the load8 check of s->held and no store;

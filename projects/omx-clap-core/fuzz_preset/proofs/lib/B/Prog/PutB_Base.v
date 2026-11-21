@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset image B' (asan-ubsan #102 pin d663f82d7f48, unstripped twin c90d4fa54d43), the
    program walk of put (preset_file.c :454-477; B' entry B_prog_sigma AS_put, 153 instructions of the whole-program
    listing lib/B/Listing_prog.v c97cc46b3e13 / PAImg_prog.v 15fab93fe702), toward the kit's text tput_specX of the batch kit's
-   cut 7cdbb61b5fa0 (lib/A/PRH_FnWriter.v d89d3c67b78, tput_specX :410-499), generic
+   cut (lib/A/PRH_FnWriter.v d89d3c67b78, tput_specX :410-499), generic
    :410-499), generic in the image instance (Context PAImg B_prog_listing) and in the allocator relation ARx (its laws AR_laws_x).
    THIS FILE: the walk's names, its ONE bundle of Section premises (putb_env, each field with its owner and its
    witness at the instance), and the walk's run-free lemmas (memory transfer, ledger, model, the entry and seat
@@ -170,7 +171,7 @@ Record putb_env (B : asyms) (ARx : alayout -> astate -> list Z -> world SEGS -> 
   pe_ent : SIGMA AS_put = BASE + PUT_K;
   (* the GOT word (A_OBJ 0) and the shadow cell (A_OBJ 12) lie in the image's segments (at PI_prog_B: B_prog_obj_img) *)
   pe_obj : forall i, 0 <= i < 8 -> in_img SEGS (VAL (A_OBJ 0) + i) /\ in_img SEGS (VAL (A_OBJ 12) + i);
-  (* CALLEE TEXT, owner the fuzz_realloc B' lane (the kit's text at the batch kit's cut 7cdbb61b5fa0, lib/A/PRH_FnAlloc.v
+  (* CALLEE TEXT, owner the fuzz_realloc B' lane (the kit's text at the batch kit's cut, lib/A/PRH_FnAlloc.v
      preset-tree-at-2026-10-30T04-57-22Z.tsv (sha256 652fe98064b9; internal record), lib/A/PRH_FnAlloc.v (sha256 295647182d69; internal record) :412-509) *)
   pe_real : tfuzz_realloc_specX (PI := prh_img_B) (L := B_prog_listing) (PA := PA) B ARx SK;
   (* THE HULL BUDGET of pe_real (route (b)): at a position of a run of at most 4 calls, room for one call's event of

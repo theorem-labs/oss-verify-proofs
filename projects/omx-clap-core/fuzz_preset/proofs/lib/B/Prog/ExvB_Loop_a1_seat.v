@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Does not rest on tex_word_specX or memnorm: EXV_HYP has neither field since b29a52d6b76b / 379ec9e4a7d5. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Does not rest on tex_word_specX or memnorm: EXV_HYP has neither field. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B, ex_value, segment CL piece A1 (the kid fetch, B 0x83a60 = exv_pc 0x534
    to LK, B 0x83b1c = exv_pc 0x5f0): the SYMBOLIC STATES the piece runs the table engine from (one per arm of the
    fetch: vv = 0; vv <> 0 with i >= count; vv <> 0 with i < count). Definitions only.

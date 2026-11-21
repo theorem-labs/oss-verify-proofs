@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YA0nR.v at commit d0377850faab (the cf layer of record, field round 3 + the hull round + pf_ial_apart_t), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YA0nR.v (the cf layer of record, field round 3 + the hull round + pf_ial_apart_t), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
 (* The re-hide step of a secondary recycle. After the madvise_dontneed of the dead shadow hull's interior [PB, PE),
    with no page of it materialized, the walk continues in the world wrehide W h PB PE: [PB, PE) hidden, and in the
    allowance the hull h replaced by its two edges [fst h, PB) and [PE, snd h). The map itself stays in the allowance
@@ -139,7 +139,7 @@ Proof.
     + pose proof (A_bytes_rehide A h PB PE WF Hin SH). lia.
 Qed.
 
-(* The re-hidden world. Preset's world carries the field w_H8 (YA0n.v:25), so the re-hidden world takes its proof
+(* The re-hidden world. Preset's world carries the field w_H8 (YA0n.v:26), so the re-hidden world takes its proof
    H8 as a further argument, built by H_rehide_H8 above from w_H8 W and 8-aligned PB / PE (preset-side hunk). *)
 Definition wrehide (W : world segs) (h : Z * Z) (PB PE : Z)
     (HO : H_off_segments segs (H_rehide (w_H W) PB PE)) (HA : A_wf (A_rehide (w_A W) h PB PE))

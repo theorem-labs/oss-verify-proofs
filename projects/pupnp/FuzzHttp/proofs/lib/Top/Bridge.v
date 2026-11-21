@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (walks lifted to the run's segment list). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit.
@@ -8,7 +9,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Lib Require Import Cfg.
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Lib Require Import PropExec MState Mem Exec ITree.
-From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Top Require Import Realize SafeReach.
+From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Top Require Import RomBase Realize SafeReach.
 Import ListNotations.
 Import ITree.Exc.
 
@@ -110,6 +111,7 @@ Proof.
           as [(rsp & mo' & -> & Hst) | (code & mo' & -> & Hex & _)]; [| exfalso; exact (Hnx _ _ Hex)].
         destruct (Hwk _ _ _ Hst) as [-> _].
         exists (exist _ (rsp, mo') Hst). cbn. auto.
+    + exact (ns_rob _ _ _ _ _ _ _ _ NS n ms1 mo Hat Hh Hm Hsafe).
     + intros [[rsp mo'] Hst]. cbn.
       destruct (Hwk _ _ _ Hst) as [_ Hwf'].
       destruct (ns_sound _ _ _ _ _ _ _ _ NS n ms1 mo rsp mo' [] Hat Hh Hm Hsafe Hst) as (Hh' & Hm' & _).
@@ -162,6 +164,7 @@ Proof.
           as [(rsp & mo' & -> & Hst) | (code & mo' & -> & Hex & _)]; [| exfalso; exact (Hnx _ _ Hex)].
         destruct (Hwk _ _ _ Hst) as [-> _].
         exists (exist _ (rsp, mo') Hst). cbn. auto.
+    + exact (ns_rob _ _ _ _ _ _ _ _ NS n ms1 mo Hat Hh Hm Hsafe).
     + intros [[rsp mo'] Hst]. cbn.
       destruct (Hwk _ _ _ Hst) as (_ & HR & Hwf').
       destruct (ns_sound _ _ _ _ _ _ _ _ NS n ms1 mo rsp mo' [] Hat Hh Hm Hsafe Hst) as (Hh' & Hm' & _).
@@ -266,6 +269,7 @@ Proof.
           as [(rsp & mo' & -> & Hst) | (code & mo' & -> & Hex & ->)].
         -- exists (inl (exist _ (rsp, mo', e) Hst)). cbn. auto.
         -- exists (inr (exist _ (code, mo') Hex)). cbn. auto. }
+    assert (Hrob : sys_rob segs (mkCfg ms1 mo)) by exact (ns_rob _ _ _ _ _ _ _ _ NS n ms1 mo Hat Hh Hm Hsafe).
     assert (Hcont : forall i, realizes segs (nx i) (TT i)).
     { intros [[[[rsp mo'] evs] Hst] | [[code mo'] Hex]]; cbn.
       * destruct (ns_sound _ _ _ _ _ _ _ _ NS n ms1 mo rsp mo' evs Hat Hh Hm Hsafe Hst) as (Hh' & Hm' & _).
@@ -274,8 +278,8 @@ Proof.
         apply rz_halt. cbn. rewrite Hh'. discriminate. }
     change (realizes segs (mkCfg ms1 mo) (t_alt (fun i : nindex n mo => t_emit (ni_evs n mo i) (TT i)))).
     destruct (ns_progress _ _ _ _ _ _ _ _ NS n ms1 mo Hat Hh Hm Hsafe) as [(rsp0 & mo0 & evs0 & Hst0) | (code & mo' & Hex)].
-    + exact (rz_node segs _ (nindex n mo) (ni_evs n mo) nx TT (inl (exist _ (rsp0, mo0, evs0) Hst0)) Hnode Hcont).
-    + exact (rz_node segs _ (nindex n mo) (ni_evs n mo) nx TT (inr (exist _ (code, mo') Hex)) Hnode Hcont).
+    + exact (rz_node segs _ (nindex n mo) (ni_evs n mo) nx TT (inl (exist _ (rsp0, mo0, evs0) Hst0)) Hnode Hrob Hcont).
+    + exact (rz_node segs _ (nindex n mo) (ni_evs n mo) nx TT (inr (exist _ (code, mo') Hex)) Hnode Hrob Hcont).
 Qed.
 
 End BridgeRz.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO run state). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -102,7 +103,7 @@ Proof. LiaFast.lf_pins (fun (Hwx : LiaFast.U) => LiaFast.u0).
   - exact Hanz.
   - rewrite (AM_agree (s_next S) model0 E E' M Hwf Ha). exact Hinv'.
   - rewrite HH. exact Hhoff.
-  - rewrite Hvm. exact Hres.
+  - rewrite Hvm, (same_but_materialized_kernel _ _ Hsb'). exact Hres.
   - rewrite Hvm. exact Hlim.
   - rewrite Hvm, Hsp. symmetry. exact (lden_agree_wf _ E E' _ Hwsp Ha).
   - rewrite Hvm. exact Hspok.
@@ -144,6 +145,7 @@ Proof. LiaFast.lf_pins (fun (Hwx : LiaFast.U) => LiaFast.u0).
     assert (Hw0 : uE E (fst q) <= w < uE E (fst q) + uE E (snd q)) by (unfold uE in *; rewrite <- (lden_agree_wf _ E E' _ Hf1 Ha), <- (lden_agree_wf _ E E' _ Hf2 Ha); exact Hw).
     destruct (Hown q Hq w Hw0) as [Hv Hm]. split; [rewrite HH; exact Hv|]. intros _. reflexivity.
   - apply (blob_ok_agree (s_next S) E E' M model model' _ Hwf Ha); [rewrite Hvm; reflexivity | exact Hblob].
+  - rewrite Hvm, (same_but_materialized_kernel _ _ Hsb'). vdso_keep_tac.
 Qed.
 End SegW.
 

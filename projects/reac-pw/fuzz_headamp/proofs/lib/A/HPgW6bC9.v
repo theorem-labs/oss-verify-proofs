@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6bC9.v at f3898085bda (c9_model, the
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6bC9.v (c9_model, the
    register helpers, blocks A and C with their entry states), with the block post w7_post / w7_post_of_run of
    proofs/reac-pw/fuzz_role/lib/A/RPgW7bBase.v and kept_run of proofs/reac-pw/fuzz_role/lib/A/RPgCfgChanges.v at
    the same commit (the licence lines above are theirs), for reac-pw/fuzz_headamp's image B: image B's pcs, the
@@ -8,7 +8,8 @@
    pointer-overflow tests of the head, s7 set in the head, the tail's moves into t1, s4, a3 and s2, and image B's
    code table HPgW6bBase.hb_tbl. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/AU/HPgW6bC9a.v, with its module paths, module names, addresses and numbers changed; 515 of its 635 lines of code are new or changed and 195 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6bC9.v at f3898085bda; for reac-pw/fuzz_headamp image A: module paths and the rm_ / rl_ prefixes renamed, every pc moved by the code's uniform shift +0xd20 over [0x80a80, 0x81af0), __asan_memcpy 0x51d0c, the real-frame cells by the plan's slot map (&e.body[8] R+0x20 -> R+0x48, &e R+0xf0 -> R+0x110, vb R+0xb0 -> R+0xd0, in.n R+0xf8 -> R+0x118) with the two R-based regions re-cut ([R+0x48, R+0x118) for [R+0x20, R+0xf8); [R+0xd0, R+0x120) for [R+0xb0, R+0x100)), the frame for locals of class 4 (1024 bytes), w6b_s_ok as headamp's hd_cstr (a tenth conjunct), RPgCfgChanges' lemmas -> HPgSteps' and HPgW7bBase.kept_run. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6bC9.v; for reac-pw/fuzz_headamp image A: module paths and the rm_ / rl_ prefixes renamed, every pc moved by the code's uniform shift +0xd20 over [0x80a80, 0x81af0), __asan_memcpy 0x51d0c, the real-frame cells by the plan's slot map (&e.body[8] R+0x20 -> R+0x48, &e R+0xf0 -> R+0x110, vb R+0xb0 -> R+0xd0, in.n R+0xf8 -> R+0x118) with the two R-based regions re-cut ([R+0x48, R+0x118) for [R+0x20, R+0xf8); [R+0xd0, R+0x120) for [R+0xb0, R+0x100)), the frame for locals of class 4 (1024 bytes), w6b_s_ok as headamp's hd_cstr (a tenth conjunct), RPgCfgChanges' lemmas -> HPgSteps' and HPgW7bBase.kept_run. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image A (fuzz_headamp.asan, pinned sha256
    f3e0669d2819724922df0556b11c2dcd22d1e16fe7e0fe1535ce784b34436c47; every address measured on the unstripped twin
    b5f352154c54a97c66fd92dfa228e8a854498f6cd313dba0107900546b043f9a, same loaded bytes except .note.gnu.build-id): the block lemma w6b_c9 of

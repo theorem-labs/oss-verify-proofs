@@ -1,3 +1,4 @@
+// Modified by Theorem Labs, 2026-11-14: return -1, not 1, for an input outside the length limits.
 /** @file
 
   fuzzing mgmt/rpc/jsonrpc
@@ -62,7 +63,7 @@ extern "C" int
 LLVMFuzzerTestOneInput(const uint8_t *input_data, size_t size_data)
 {
   if (size_data < kMinInputLength || size_data > kMaxInputLength) {
-    return 1;
+    return -1;
   }
 
   std::string input(reinterpret_cast<const char *>(input_data), size_data);

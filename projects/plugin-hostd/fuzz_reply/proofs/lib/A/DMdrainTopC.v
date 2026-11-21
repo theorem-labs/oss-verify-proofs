@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainTopC.v (commit 2a6a4e688066bfacd01258860b3c510ab6da38ad, drain top, CacheDealloc closed; file sha256 03c228236fc2) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainTopC.v (drain top, CacheDealloc closed; file sha256 03c228236fc2) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, WalkB1): the lane's top with CacheDealloc CLOSED - DMdrainTop.drain_ok with
    its MnRecycle.de_cdealloc_m_t premise discharged by H3's walk, DMcdF.cdealloc_m_of_reads,
    from H3's read fields DMcdR.cd_reads and the recycle invariant's bookkeeping DMwalkIF.drq_cd, both of which the

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Does not rest on tex_word_specX or memnorm: EXV_HYP has neither field since b29a52d6b76b / 379ec9e4a7d5. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Does not rest on tex_word_specX or memnorm: EXV_HYP has neither field. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B (asan-ubsan, rebuilt pin f8f98a95bc52, unstripped twin 3b5e1a099b53),
    ex_value's PROLOGUE: the symbolic run from ex_value's entry (B_prog_sigma AS_ex_value, listing slot 1944) to the
    `jal frame_alloc_1` (slot 1972, `PCall AS___asan_stack_malloc_1`), in continuation form (exve_run1), for ExvEntry's
@@ -157,7 +158,7 @@ Hypothesis HSM1PC : B_prog_sigma AS___asan_stack_malloc_1 = pc_stack_malloc (as_
 Definition exve_s1 (spe : Z) : Z := Z.land (spe - 288) (-32).
 
 (* P is a memory invariant the run carries (YC80x.srr_inv_laws; YSRrMemnorm.v: ex_value takes P m := memnorm (e_mem E) ->
-   memnorm m, the m-form keep of kit 4f18c75d4900); YC1fPx's _inv runner moves it across the run *)
+   memnorm m, the m-form keep of kit); YC1fPx's _inv runner moves it across the run *)
 Lemma exve_run1 : forall (W : world rsegs) (regs : bvmap 5 word) memc mdc
     STK sp0 FP ly S Hp W0 mem0 md0 own lyc Sc Hpc k (spe q v : Z) (Q : world rsegs -> config -> Prop)
     (P : (word -> option byte) -> Prop),

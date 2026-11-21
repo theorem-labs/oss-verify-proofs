@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: generated from proofs/cgif/cgif_file_fuzzer/lib/YB1h.v (origin/ossv/recipes c8557374ad2e), with its module paths changed and its image constants (segments_reserved, their sum, segment 2/3 sizes, rw window) recomputed from fuzz_decode's asan-ubsan image (sha256 5d05689fd5b1...) by provenance/startup-gen/B/gen_ab1hk.py (sha256 0f51cb9cdb18) through provenance/startup-gen/B/dec_ab1hk_drive.py; every fetched word checked equal. *)
+(* Modified by Theorem Labs, 2026-10: generated from proofs/cgif/cgif_file_fuzzer/lib/YB1h.v (theorem-labs/oss-verify-proofs@6b32741d849a), with its module paths changed and its image constants (segments_reserved, their sum, segment 2/3 sizes, rw window) recomputed from fuzz_decode's asan-ubsan image (sha256 5d05689fd5b1...) by provenance/startup-gen/B/gen_ab1hk.py (sha256 0f51cb9cdb18) through provenance/startup-gen/B/dec_ab1hk_drive.py; every fetched word checked equal. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

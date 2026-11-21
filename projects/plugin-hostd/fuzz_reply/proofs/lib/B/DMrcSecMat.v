@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcSecMat.v (commit 237eb205ab7b, H4 srrm M walk (image-specific files); file sha256 f5aea1b9cc6b) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 2 image addresses moved by code-verified function pairs (2 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMrcSecMat.v at commit c83cc72b041, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (2 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcSecMat.v (H4 srrm M walk (image-specific files); file sha256 f5aea1b9cc6b) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 2 image addresses moved by code-verified function pairs (2 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMrcSecMat.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (2 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, slice H4, row srrm-walk of the SRr_stepM engine rows; integrator a Theorem Labs lane):
    the MATERIALIZED-PAGE facts of the secondary recycle walk, form F2 (a Theorem Labs lane 06:07Z), and the posts that carry them.
    rule 24: no function proved here (kind: statement heads; the walks are DMrcSecWalkM*.v, the prefix DMrcSecF7M.v).
@@ -39,7 +40,7 @@ Import ListNotations.
 Open Scope Z_scope.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* The madvised interior of the dead map's shadow (DMrcSecWalk.v:364: PB = round_up (SHAv map), PE = round_down (SHEv
+(* The madvised interior of the dead map's shadow (DMrcSecWalk.v:365: PB = round_up (SHAv map), PE = round_down (SHEv
    map len)) and the shadow window itself (DMrcSecGv.WINS). *)
 Definition PBv (map : Z) : Z := DMrcSecGv.SHAv map + 4095 - (DMrcSecGv.SHAv map + 4095) mod 4096.
 Definition PEv (map len : Z) : Z := DMrcSecGv.SHEv map len - DMrcSecGv.SHEv map len mod 4096.

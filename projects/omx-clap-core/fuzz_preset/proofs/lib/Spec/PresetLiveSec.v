@@ -676,8 +676,8 @@ Proof.
   pose proof (live_sec sm x os i Hx). unfold DRV. lia.
 Qed.
 
-(* h-pre-b1's side condition, Lsec + QSEC_MAX < cf_sec_live_max, at the values of the cf instance (read at
-   cold/h-mani-a8-preset-alloc 107dece8291d): QSEC_MAX = (kQuarantineMax + kQuarantineCacheMax) / 64513 = 4,177
+(* h-pre-b1's side condition, Lsec + QSEC_MAX < cf_sec_live_max, at the values of the cf instance (read):
+   QSEC_MAX = (kQuarantineMax + kQuarantineCacheMax) / 64513 = 4,177
    (YGcfSecBound.QSEC_MAX / QSEC_MAX_value, the same Q_MAX + Q_CACHE = QT as PresetRoom's), cf_sec_live_max = 16,000
    (lib/A/CfParamsPreset.v, CfParams_preset's fourth argument). *)
 Lemma QSEC_of_QT : QT / 64513 = 4177.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (an allocation's ledger membership is proved under its non-zero size, as amaps_in_ledger now asks). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -120,8 +121,8 @@ Section ModelAfterLarge.
         split.
         { intros mp Hin K1 K2 K3 K4. rewrite VM2. apply in_app_iff in Hin. destruct Hin as [Hin|Hin].
           - exfalso. destruct (nch =? nres); [| destruct Hin]. destruct Hin as [<-|[]]. exact (K3 eq_refl).
-          - destruct Hin as [<-|Hin]; [split; [left; reflexivity| cbn [mp_base]; clear - B1 B2 B3; acb; lia]|].
-            destruct (A1 mp Hin K1 K2 K3 K4) as [X Y]. exact (conj (or_intror X) Y). }   (* [comment removed for export] *)
+          - destruct Hin as [<-|Hin]; [split; [intros _; left; reflexivity| cbn [mp_base]; clear - B1 B2 B3; acb; lia]|].
+            destruct (A1 mp Hin K1 K2 K3 K4) as [X Y]. exact (conj (fun P => or_intror (X P)) Y). }   (* [comment removed for export] *)
         split.
         { intros mp Hin KK x Hx. apply in_app_iff in Hin. destruct Hin as [Hin|Hin].
           - (* [comment removed for export] *)

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (proofs and definitions restated for the model's changed definitions). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -31,5 +32,5 @@ Definition bytes_at (M : word -> option byte) (a : Z) (bs : list byte) : Prop :=
 
 (* [comment removed for export] *)
 Definition stack_writable (M : word -> option byte) (sp0 : word) : Prop :=
-  forall d m, 0 <= d -> d + Z.of_nat m <= 8388608 ->
-    store_ok RSEGS M (Z_to_bv 64 (bv_unsigned sp0 - 8388608 + d)) m = true.
+  forall d m, 0 <= d -> d + Z.of_nat m <= 6144513 ->
+    store_ok RSEGS M (Z_to_bv 64 (bv_unsigned sp0 - 6144513 + d)) m = true.

@@ -59,7 +59,7 @@ Proof.
 Qed.
 
 (* #102: RTT_F 112 (addi sp, sp, -0x70 at round_trip_text 0x14d88) and RTT_K = RTT_F + parse_noting_c.PN_K
-   (round_trip_text_c at cold/h-rw-pre-4-rw102-rtt 683b0b9349d6): 112 + (48 + max PJ_PARSE_K 16) = 112 + 13696. *)
+   (round_trip_text_c): 112 + (48 + max PJ_PARSE_K 16) = 112 + 13696. *)
 Lemma rc_rttk : RTT_K = 13808 /\ ALLOC_STACK = 8192 /\
   forall d, (d <= 32)%nat -> 0 <= PJ_FREE_K d /\ RTT_F + PJ_FREE_K d <= RTT_K.
 Proof.
@@ -72,7 +72,7 @@ Qed.
 Lemma rc_stat_rng : forall a, alloc_statics a -> GL_FAIL <= a < GL_COUNT + 8.
 Proof. intros a Ha. unfold alloc_statics, G_LIVE, G_PEAK, G_COUNT, G_FAIL in Ha. unfold GL_FAIL, GL_COUNT. lia. Qed.
 
-(* #102 rtt_regs (RttBase at cold/h-rw-pre-4-rw102-rtt 133613731c31): sp = S-112, s0 = copy, s1 = regs0 a0,
+(* #102 rtt_regs (RttBase): sp = S-112, s0 = copy, s1 = regs0 a0,
    s2..s5 = s2v..s5v, gp / tp kept, s6..s11 kept. *)
 Lemma rc_pres : forall regs0 r1 r2 copy s2v s3v s4v s5v, regs_preserved r1 r2 ->
   rtt_regs regs0 r1 copy s2v s3v s4v s5v -> rtt_regs regs0 r2 copy s2v s3v s4v s5v.

@@ -2,13 +2,14 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by a Theorem Labs lane (DeallocNmaxA), 2026-10-30: rk_free_inner's restated tree takes free_cf's size test; its recycle side from rk_rchunk_fr; statement of rk_free unchanged. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfRoomStep.v, with its module paths changed; 433 of its 650 lines of code are new or changed and 791 lines of the source are left out. *)
-(* CARRIED from commit 0deb5310273b0d538ec2a1697f391a1c8ad21c34,
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YGcfSecsStep.v, sha256 8c21e650f2ea681f7c8c92abb0992ce6486cb1fe7e507ba5c6bf2d5cfe46eba4 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the Require lines only:
    the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
    (lib.Spec -> fuzz_reply.lib.Spec).
 *)
-(* Taken by path from a working branch 459411b31098 (proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfSecsStep.v).
+(* Taken by path from a working branch (proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfSecsStep.v).
    Modified by Theorem Labs, 2026-10: module paths changed from fuzz_preset lib.Reusable to cgif_file_fuzzer lib; the
    local nsec_cf / sec_T_cf and the local test ss_real are dropped for the layer's nsec_cf / sec_T_cf (YG0ncf.v, Z-valued) and
    sec_user_cf (YGcfNames.v), so secs_step / secs_same carry no Z.of_nat and the two bridges nsec_cf_def /
@@ -33,12 +34,12 @@
      exactly one entry, mkSec (sec_map_size n) (needed_size n) true (YG00.v:358; secs_sec_alloc_entry): its sm_len
      is sec_map_size n itself, with no overhead;
    - with a block and a primary request: d = 0, t = 0. A primary call's only st_secs writes are the class-full
-     report's (map_more_user_cf, YG00cf.v:176), and those are errbuf entries.
+     report's (map_more_user_cf, YG00cf.v:177), and those are errbuf entries.
    free_cf (any pointer, so also the realloc tree's free of the old block) keeps both counts (secs_same): sec_dealloc
    rewrites the entry in place with the same sm_len and sm_size (YG00.v:493), on both sides of free_cf's size test
    (enqueue, or recycle_chunk at once). free_cf PNull keeps st_secs itself.
-   The errbuf steps (errb_map_cf's append at YG00cf.v:126 after errb_retire, errb_set_size's in-place update at
-   YG00cf.v:93 or append at :94, errb_append_cf, errb_report_cf) keep both counts.
+   The errbuf steps (errb_map_cf's append at YG00cf.v:127 after errb_retire, errb_set_size's in-place update at
+   YG00cf.v:94 or append at :94, errb_append_cf, errb_report_cf) keep both counts.
    secs_steps_cf bundles the call steps as one closed Prop; secs_steps_cf_holds proves it.
    The ordering: section 1 the counts and the rule, section 2 the list facts, section 3 the errbuf, section 4
    malloc_cf, section 5 free_cf, section 6 the realloc forms, section 7 the apath forms and the bundle. *)
@@ -106,7 +107,7 @@ Proof. induction l1 as [|x t IH]; intros l2; cbn [app]; [reflexivity|]. rewrite 
 Lemma sum_len_one : forall x, sum_len [x] = sm_len x.
 Proof. intros x. unfold sum_len. cbn [fold_right]. lia. Qed.
 
-(* errb_retire's map (YG00cf.v:98) *)
+(* errb_retire's map (YG00cf.v:99) *)
 Definition ss_retire (sm : secmap) : secmap := if is_errb_cap sm then mkSec (sm_len sm) ERRB_DEAD_TAG false else sm.
 Lemma ss_retire_cap : forall sm, is_errb_cap sm = true -> ss_retire sm = mkSec (sm_len sm) ERRB_DEAD_TAG false.
 Proof. intros sm H. unfold ss_retire. rewrite H. reflexivity. Qed.
@@ -183,7 +184,7 @@ Section SS. Context {ci : CfImg}.
 
 (* ---------------------------------------------------------------------------- *)
 (* 3. The errbuf: no step of it changes either count.                            *)
-(* The append of a capacity entry (YG00cf.v:126), after errb_retire. *)
+(* The append of a capacity entry (YG00cf.v:127), after errb_retire. *)
 Lemma secs_errb_map : forall w s, ipost (errb_map_cf w s) (fun r => secs_same s (snd r)).
 Proof.
 intros w s. unfold errb_map_cf. cbv zeta. apply rk_bind. apply rk_tick. cbn [fst snd].
@@ -194,7 +195,7 @@ apply secs_same_of_filter. cbn [st_secs set_secs set_nev].
 rewrite ss_filter_app_ctl by reflexivity. exact (ss_filter_retire (st_secs s)).
 Qed.
 
-(* The size entry (YG00cf.v:93-94): an in-place update of an errbuf entry, or an append. *)
+(* The size entry (YG00cf.v:94-95): an in-place update of an errbuf entry, or an append. *)
 Lemma secs_errb_set : forall ns s, ipost (errb_set_size ns s) (fun r => secs_same s (snd r)).
 Proof.
 intros ns s. unfold errb_set_size. apply rk_modify. cbn [snd].
@@ -323,7 +324,7 @@ destruct (pc_chunks (cache s2 c)) as [|x l]; cbv beta iota zeta.
 - apply rk_bind. apply rk_set_pc. cbn [fst snd]. apply rk_ret. cbn [snd st_secs set_cache]. congruence.
 Qed.
 
-(* The cf chain (YG00cf.v:158-233): the class-full report writes only errbuf entries. *)
+(* The cf chain (YG00cf.v:159-234): the class-full report writes only errbuf entries. *)
 Lemma ss_mmu : forall c need s, ipost (map_more_user_cf c need s) (fun r => secs_same s (snd r)).
 Proof.
 intros c need s. unfold map_more_user_cf. destruct (Z.eqb_spec c kBatchClass) as [E|_]; cbv beta iota zeta.
@@ -718,9 +719,9 @@ intros ci. split; [|split; [|split; [|split]]].
 - exact secs_refused_step.
 Qed.
 
-(* From a Theorem Labs lane (01a18c1f), envoy 2026-10-30T11:50:05Z. All Qed; Print Assumptions closed; checked against af140f9f320 appended after YGcfSecsStep.v (its box: wt/hwd-rep.logs/build-20261030T114310Z.log rc=0). For AbudgetRestate: append at the END of YGcfSecsStep.v (drop the Require block, which repeats the file's own :35-41 plus YGcfSecsStep itself). *)
+(* From a Theorem Labs lane (01a18c1f), envoy 2026-10-30T11:50:05Z. All Qed; Print Assumptions closed; checked appended after YGcfSecsStep.v (its box: wt/hwd-rep.logs/build-20261030T114310Z.log rc=0). For AbudgetRestate: append at the END of YGcfSecsStep.v (drop the Require block, which repeats the file's own :35-41 plus YGcfSecsStep itself). *)
 
-(* errb_map_cf's st_secs step (YG00cf.v:124-128: errb_retire, then the new capacity entry): a secs_errb_grow. *)
+(* errb_map_cf's st_secs step (YG00cf.v:125-129: errb_retire, then the new capacity entry): a secs_errb_grow. *)
 Lemma secs_grow_remap : forall l ncap, 0 <= ncap ->
   secs_errb_grow l (map ss_retire l ++ [mkSec ncap ERRB_CAP_TAG false]).
 Proof.
@@ -738,7 +739,7 @@ intros l ncap Hn. split; [|split].
   + destruct k; discriminate H.
 Qed.
 
-(* errb_set_size's st_secs step (YG00cf.v:93-98: the size entry rewritten in place or appended): a secs_errb_grow
+(* errb_set_size's st_secs step (YG00cf.v:94-99: the size entry rewritten in place or appended): a secs_errb_grow
    when the size does not shrink (errb_size_cf s <= ns) and is non-negative. *)
 Lemma secs_grow_setsize : forall s ns, errb_size_cf s <= ns -> 0 <= ns ->
   secs_errb_grow (st_secs s) (st_secs (match find_sz (st_secs s) 0 with

@@ -2,17 +2,18 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_wire/lib/U/Prog/LLVMFuzzerTestOneInput_cfb.v, with its module paths changed; 532 of its 580 lines of code are new or changed and 97 lines of the source are left out. *)
-(* Modified by Theorem Labs: reac-repacer/fuzz_uci's lib/Prog/LLVMFuzzerTestOneInput_fr.v (6874bc78b1f) at fuzz_wire's
+(* Modified by Theorem Labs: reac-repacer/fuzz_uci's lib/Prog/LLVMFuzzerTestOneInput_fr.v at fuzz_wire's
    module paths; lf_guard_img reads this image's __stack_chk_guard GOT slot 0x1cef0; lf_fr_call_x is new. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_wire/lib/Prog/LLVMFuzzerTestOneInput_fr.v, with its module paths and module names changed; 455 of its 574 lines of code are new or changed and 461 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_role/lib/U/Prog/Seg/Tac_slot.v, with its module paths and module names changed; 501 of its 599 lines of code are new or changed and 476 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Frame helpers of the segments of reac-pw/fuzz_role LLVMFuzzerTestOneInput (UBSan): opening and closing cuts at
    any FP state with rounding mode 0 (b8_cut_open, b8_cut_close), straight runs (b8_run_to, b8_run_ex), runs through
    a Kind A callee on the normalized memory (b8_mid), FR across a window-only change (b8_FR_frame), Post from FR
    (b8_post_FR), and the free call of a live harness block in any position of hb (b8_free_call: libreac/fuzz_ctrl's
    released Prog/Seg/Tac_b3.v b3_free_call statement on fuzz_pin's one-block proof, without ctrl's 1 <= n).
    The plain file (lib/Prog/Seg/Tac_b8.v) with the UBSan numbers below. Taken from reac-pw/fuzz_pin's U/Prog/Seg/Tac_b8.v, itself libreac/fuzz_ctrl's released Prog/Seg/Tac_b8.v
-   (origin/ossv/recipes 25e3d17bdb50) adapted (ctrl's cut-bundle transports FT / VCm / IFS / CC7 / OURb / M7 and its
+   adapted (ctrl's cut-bundle transports FT / VCm / IFS / CC7 / OURb / M7 and its
    Tac_b8m model facts are not here), with role's UBSan numbers: frame 544 bytes, saved registers [S - 104, S), free at
    0x15fac, errno at 0x2f610 - 164, frame_RELRO's first block (0x1e0f0, 424), the sink symbols 0x4f8a1 / 0x4fcc8 /
    0x4fcd0 (frame_facts_ubsan's fields, read through Tac_slot's accessors). CUTST and Post take the FP state of their
@@ -556,7 +557,7 @@ Proof.
 Qed.
 
 (* free of a live harness block (p, n) in any position of hb, n >= 0: FR with hb1 ++ (p, n) :: hb2 becomes FR with
-   hb1 ++ hb2 (libreac/fuzz_ctrl's released Prog/Seg/Tac_b3.v b3_FR_free, origin/ossv/recipes 25e3d17bdb50, on
+   hb1 ++ hb2 (libreac/fuzz_ctrl's released Prog/Seg/Tac_b3.v b3_FR_free, on
    fuzz_pin's b8_FR_free proof: the other blocks keep their bytes because block starts are distinct, blocks_nodup,
    so 1 <= n is not needed). The bytes from the frame's sp up are unchanged. *)
 Lemma b8_FR_free : forall g hb1 hb2 L A regs mem md regs_c p n L' A' regs' mem' md' b1 b2,

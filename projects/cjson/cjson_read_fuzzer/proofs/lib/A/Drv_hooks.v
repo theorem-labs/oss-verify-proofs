@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: DMOD_vm_only carries DMOD's new channel-reader field across a vm-only step. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Run.
@@ -30,8 +31,8 @@ Qed.
 
 Lemma DMOD_vm_only : forall fs F mo mo', DMOD fs F mo -> vm_only mo mo' -> DMOD fs F mo'.
 Proof.
-  intros fs F mo mo' [HF HS HH] (Vfd & _ & Vfs & Vpr & _). unfold m_fds, m_fs, m_halted in *.
-  split; unfold m_fds, m_fs, m_halted; rewrite ?Vfd, ?Vfs, ?Vpr; assumption.
+  intros fs F mo mo' [HF HS HH HR] (Vfd & _ & Vfs & Vpr & _). unfold m_fds, m_fs, m_halted, m_channel_reader in *.
+  split; unfold m_fds, m_fs, m_halted, m_channel_reader; rewrite ?Vfd, ?Vfs, ?Vpr; assumption.
 Qed.
 
 Section S.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: recorded proofs written out as text, statements written out as text, lemmas added for the revision. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -362,7 +363,9 @@ ltac2:(KReplay.run1z (kr_t_LazyLedger ()) ["ModelOps"] "##&?p'0h01ah11bi001bh25f
 
 Lemma with_mmap_backing_nonvm : ltac2:(zQ "h20!tc!kj4!s7!hi4!hk7!kma!kn2!knc!ko4!kod!kp7!kq1!kqc!kr7!ks2!ji1!kse!ktb>5flags@1$4@1$3#k0>1a@1$4@1$3#k0>1n@1$4@1$3#k0>1m$f@2$2@3$0$b@1$5@4$1^4^3^2^1@1$5^1@2$2@3$0$d@1$7@4$1^4^3^2^1@1$7^1@2$2@3$0$c@1$6@4$1^4^3^2^1@1$6^1@2$2@3$0$h0@1$9@4$1^4^3^2^1@1$9^1@2$2@3$0$e@1$8@4$1^4^3^2^1@1$8^1@3$0$h1@1$a@4$1^4^3^2^1@1$a^1").
 Proof.
-ltac2:(KReplay.run1z (kr_t_LazyLedger ()) ["ModelOps"] "##7,p'0h01ah11bi001bh22fdh35flagsh42fsh52ioh64lazyh73limh81mi011mh96m_fsysi02!s0&h:4m_ioi03!s-$h;5m_limi04!s/%h<6m_proci05!s0&h=6m_timei06!s0&h>4m_vmi07!s-$h?4mapsh@3mathA1nhB4!s`$C2tmi084m_fdi091vi0:9vmst_lazyi0;!s3%mapsi0<A!s3&terializedp;1p;4p;2p;7p;3g00ADj1>Tg00jfj1NTg00kDj1KTg02flj4CTg02l\j17Tg02mOj13Tg02nBj12Tg02o7j15!s/$lj16Tg030`j14Tg004Vj20Tg031Uj7B!t$$gj2MTg007Xj1JTg02b[j1LTg02dZj2GTg032Kj3DTg02@Sj1FTg01IVj3ETg02h2j1HTg033Cj3ITg0051j2?Tg01:oj4ATg00;Pj3@Tg034AR0f1R1f0R23@p=;g0359R3?@12p=:g0361R4!s4%9g036iR5!s4%8g037cR6!s4%=g038\R7!s4%<f2R81012'0p=1g00M`#>!s$-N#KR9g02E7R:P:f4R;f3R<P8P2CCR=#7%72';%3=%32':%2=%22'9%5=%52'8%6=%62'=%4=%42'<'03131P2g039VR=P=fBfAf@f7R=f5R>P;P<P8P1P2FBR?CCR@#7%7?';%3@%3?':%2@%2?'9%5@%5?'8%6@%6?'=%4@%4?!t-'^=7^;6^<5^94^:3P2g02ke1M99R?#J%J9fGR@#Lg00L4RAPAPAP:P2fH/G@f>f9f8R:;D=f6RAP!ta&FBRB#F5E?%HB;IBPBn010!s#$20000RC#7%7B';%3C%3B':%2C%2B'9%5C%5B'8%6C%6B'=%4C%4B!u~,f=RB/;B1:>>RC19;;RD18<<RE1=88RF1<11RG'0RH'0RI'0RJ'01?0BPCPJ1?3>PDPI1?4;PEPH1?5<PFPG1?681?71CA!s$'RGfFRF,G@PBAD:=!uK+P1FBR:!uM&:;I:R?#7%7:R!u?$?%3:RH':%2?%2:RE'9%5?%5:RI'8%6?%6:RD'=%4?%4:R:!uI'ePG1;BB1:HH19EE18II1=DD1<::!sG&n0110001020101b1P@PFfEf<AD=A!xo1=CCRF#7%7=';%3F%3=':%2F%2='9%5F%5='8%6F%6='=%4F%4=!tT+XC7X76XB5X44X53W@W6W?!t#%O3!tP$900013110;10:10<W>X20P!v:-P2O7!sP$!t|$71108107103102105104106W8XA9X09W3o"). Qed.
+  intros flags a n [fd [maps lazy mat] io fs proc lim tm]. unfold with_mmap_backing, vm_add_lazy.
+  destruct (mmap_noreserve_b flags); cbn; repeat split; reflexivity.
+Qed.
 
 (* [comment removed for export] *)
 
@@ -426,7 +429,10 @@ ltac2:(KReplay.run1 (kr_t_LazyLedger ()) ["ModelOps"] "h01lh14addrh25flagsh31mh4
 
 Lemma commit_model_nonvm : ltac2:(zQ "h30!tc!lrb!s7!hi4!hk7!kma!kn2!knc!ko4!kod!kp7!j4!kq1!kqc!kr7!ks2!ji1!kse!ktb>5flags@1$4@1$3#k0>4addr@1$4@1$3#k0>1n@1$4@1$3#k0>2na$b>1m$h0@2$2@3$0$c@1$5@5$1^5^4^3^2^1@1$5^1@2$2@3$0$e@1$7@5$1^5^4^3^2^1@1$7^1@2$2@3$0$d@1$6@5$1^5^4^3^2^1@1$6^1@2$2@3$0$h1@1$9@5$1^5^4^3^2^1@1$9^1@2$2@3$0$f@1$8@5$1^5^4^3^2^1@1$8^1@3$0$h2@1$a@5$1^5^4^3^2^1@1$a^1").
 Proof.
-ltac2:(KReplay.run1z (kr_t_LazyLedger ()) ["ModelOps"] "##9Up'0h04addrh11bi001bh22fdh35flagsh42fsh52ioh64lazyh73limh81mi011mh96m_fsysi02!s0&h:4m_ioi03!s-$h;5m_limi04!s/%h<6m_proci05!s0&h=6m_timei06!s0&h>4m_vmi07!s-$h?4mapsh@3mathA1nhB2nahC4!se$D2tmi084m_fdi091vi0:9vmst_lazyi0;!s3%mapsi0<A!s3&terializedp;1p;5p;2p;7p;3p;4g00ADj1?Tg00jfj1VTg00kDj1STg03Onj5GTg02l\j17Tg02mOj16Tg02nBj15Tg02o7j14!s/$lj11Tg030`j12Tg004Vj20Tg031Uj7E!t$$gj2UTg007Xj1RTg02b[j1TTg02dZj2QTg032Kj3HTg02=lj1PTg03Q9j4OTg03;Yj2NTg02@Sj1CTg00o<j2FTg00>Dj2MTg020>j3LTg03V6j2KTg02h2j1BTg02P\j3JTg033Cj3DTg01IVj3ITg0051j2>Tg01:oj4ATg00;Pj3@Tg034AR0f1R1f0R23@p=;g0359R3?@12p=:g0361R4!s4%9g036iR5!s4%8g037cR6!s4%=g038\R7!s4%<f2R81012'0p=3g00M`#?!s$-VR9#SR:g00L4R;g02E7R<P<f5R=f4R>f3R?P8P2DGR@#7%72';%6@%62':%5@%52'9%4@%42'8%1@%12'=%2@%22'<'03333P2g039VR@P@fCfBfAf@f7R@P=P>P?P8P1P2FERADGRB#7%7A';%6B%6A':%5B%5A'9%4B%4A'8%1B%1A'=%2B%2A!t-'^=7^;6^<5^94^:!t=$2ke1U::RA#R%R:fHRB#TP;!s$$<P2fIR</QBf>f9f8R;;H@f6RC!t^'FERD#PP<PBfGRECO/NDRF#C1F9<R<1F9BRG,M<RH3L1K<H%BF5J:;DFRF#C5IA%BF;DFPFn010!s#$20100RF#7%7D';%6F%6D':%5F%5D'9%4F%4D'8%1F%1D'=%2F%2D!vX,f=RDAH;@!tl+P1FER;#PPBPEfFRFCO/N;RH#7/;D%6H/:=R<%5H/9>RI%4H/8?RJ%1H/=8RK%2H/<1RL'0RM'0RN'0RO'01>0DP<PO1>3=PIPN1>4>PJPM1>5?PKPL1>681>71CA!s$'RL1QBE%CH1F9E,MGR97LG1KG9%BH!v'$HRH!v'&H;DHRA#7%7;R9';%6A%6;RG':%5A%5;RK'9%4A%4;RM'8%1A%1;RJ'=%2A%2;R;!v#'ePL%7H/;9!uY$G!uW$K!uU$M!uS$J!uQ$;!sS&n0110001!wB$1b1PBPEPFfEf<AH@C!z51@DG!wc%@!wc&@!wc&@!wc&@!wc&@!wc&@!tb+XD7X76XC5X44X53W@W6W!t#&O3!tR$900013110;10:10<W>X20P!x:-P2O7!sP$!t~$71108107103102105104106W8WBXA:X0:W3o"). Qed.
+  intros flags addr n na [fd [maps lazy mat] io fs proc lim tm].
+  unfold commit_model, with_mmap_replacement, with_mmap_backing, vm_add_lazy, vm_forget_range.
+  destruct (mmap_noreserve_b flags); cbn; repeat split; reflexivity.
+Qed.
 
 Lemma cuts_commit : ltac2:(zQ "hb2!hi4!hk7!j4!imc!hv6!hgd!hkd!jt2!ilb!jl4!hg5!hn9!ii5!ik0!tc!h9!ji1!jta!jia!jga!jj7!khf!lrb!hmf!hn4!jm1!hrf&@4$3@1$1@1$0#k0@1$1@1$0#k0^7^6&@2$6@1$1@1$0#k0@1$1@1$0#k0>5flags@1$1@1$0#k0>4addr@1$1@1$0#k0>1n@1$1@1$0#k0>2na$2>1m$h0>1x$f>0@1$8@1$h4@1$h3^2>0@1$8@1$h2^3@3$e$2@2$4@1$7@5$h6^8^7^6^5^4^3@2$5@2$5M2\2na$2$2^5@2$ha^3~0$a@2$4M2\0$2@1$b~1@1$h5^8@2$h1^7^6@1$d~1^3@2$9@2$4@1$7^4^3@1$c@3$h9@1$h8~0@1$h7~0^3").
 Proof.
@@ -444,30 +450,178 @@ ltac2:(KReplay.run1z (kr_t_LazyLedger ()) ["ModelOps"] "##BSp'0h01bi001bh11Hh21E
 
 (* [comment removed for export] *)
 
-Definition munmap_vmmaps : ltac2:(zQ "30!hi4!km0!hk7>1h$1>1a@1$2@1$0#k0>1n@1$2@1$0#k0$1") := ltac2:(zQ "h00!hi4!hla!hk7!km0!jm8!it5!ku8!kv8!lg2!lh0!jh6!lhc!jj7!lic!ljb!t6\1h$3\1a@1$2@1$0#k0\1n@1$2@1$0#k0@8$6@1$d^3@2$4@1$a^3^2@3$5@1$c^3@2$1@1$0#k0^2@2$f@2$1@1$0#k0^2@2$1@1$0#k0^1@1$e^3@1$7^3@1$9^3@1$b^3@1$8^3").
+(* 08b1429: a successful munmap CUTS the range out of the ledger
+   ([Mmap.mmap_fixed_destroyed_next], the model's own Common/MmapSim.munmap_model).
+   On a ledger with no overlap that holds (a, n), the cut is [map_remove] less the
+   zero-size entries based at a + n, which carry no byte (recipes/lazyledger-munmap.md). *)
+Definition nz_at (z : Z) (e : word * word) : bool :=
+  negb ((bv_unsigned (snd e) =? 0) && (bv_unsigned (fst e) =? z)).
+
+Definition ms_cond (a n : word) (e : word * word) : Prop :=
+  (fst e = a /\ (snd e = n \/ bv_unsigned (snd e) = 0))
+  \/ (fst e <> a /\ (hi e <= lo (a, n) \/ hi (a, n) <= lo e)).
+
+Lemma ll_iv_subtract_outside : forall (b s : word) l h,
+  0 < bv_unsigned s -> l < h ->
+  (bv_unsigned b + bv_unsigned s <= l \/ h <= bv_unsigned b) ->
+  iv_subtract b s l h = [(b, s)].
+Proof.
+  intros b s l h Hs Hlh Hd. unfold iv_subtract. cbv zeta.
+  destruct Hd as [Hd|Hd].
+  - rewrite (proj2 (Z.ltb_lt (bv_unsigned b) l)) by lia.
+    rewrite (proj2 (Z.ltb_ge h (bv_unsigned b + bv_unsigned s))) by lia.
+    rewrite Z.min_l by lia. rewrite Z_to_bv_bv_unsigned. reflexivity.
+  - rewrite (proj2 (Z.ltb_ge (bv_unsigned b) l)) by lia.
+    rewrite (proj2 (Z.ltb_lt h (bv_unsigned b + bv_unsigned s))) by lia.
+    rewrite Z.max_l by lia.
+    replace (bv_unsigned b + bv_unsigned s - bv_unsigned b) with (bv_unsigned s) by lia.
+    rewrite !Z_to_bv_bv_unsigned. reflexivity.
+Qed.
+
+Lemma iv_subtract_entry : forall (a n b s : word),
+  0 < bv_unsigned n -> ms_cond a n (b, s) ->
+  iv_subtract b s (bv_unsigned a) (bv_unsigned a + bv_unsigned n)
+  = if negb (bv_eqb b a) && nz_at (bv_unsigned a + bv_unsigned n) (b, s) then [(b, s)] else [].
+Proof.
+  intros a n b s Hn Hc. unfold ms_cond, lo, hi in Hc. cbn [fst snd] in Hc.
+  pose proof (bv_unsigned_in_range _ a) as Ra. pose proof (bv_unsigned_in_range _ b) as Rb.
+  pose proof (bv_unsigned_in_range _ s) as Rs.
+  destruct Hc as [(-> & Hs) | (Hne & Hd)].
+  - assert (E : bv_eqb a a = true) by (unfold bv_eqb; apply Z.eqb_refl). rewrite E. cbn [negb andb].
+    unfold iv_subtract. cbv zeta. rewrite Z.ltb_irrefl.
+    destruct Hs as [-> | Hs].
+    + rewrite Z.ltb_irrefl. reflexivity.
+    + rewrite (proj2 (Z.ltb_ge (bv_unsigned a + bv_unsigned n) (bv_unsigned a + bv_unsigned s))) by lia. reflexivity.
+  - assert (Hu : bv_unsigned b <> bv_unsigned a) by (intros Hu; apply Hne; apply bv_eq; exact Hu).
+    assert (E : bv_eqb b a = false) by (unfold bv_eqb; apply Z.eqb_neq; exact Hu). rewrite E. cbn [negb andb].
+    unfold nz_at. cbn [fst snd].
+    destruct (Z.eqb_spec (bv_unsigned s) 0) as [S0|S0]; cbn [andb negb].
+    + destruct (Z.eqb_spec (bv_unsigned b) (bv_unsigned a + bv_unsigned n)) as [BE|BE]; cbn [negb].
+      * unfold iv_subtract. cbv zeta.
+        rewrite (proj2 (Z.ltb_ge (bv_unsigned b) (bv_unsigned a))) by lia.
+        rewrite (proj2 (Z.ltb_ge (bv_unsigned a + bv_unsigned n) (bv_unsigned b + bv_unsigned s))) by lia.
+        reflexivity.
+      * unfold iv_subtract. cbv zeta.
+        destruct Hd as [Hd|Hd].
+        -- rewrite (proj2 (Z.ltb_lt (bv_unsigned b) (bv_unsigned a))) by lia.
+           rewrite (proj2 (Z.ltb_ge (bv_unsigned a + bv_unsigned n) (bv_unsigned b + bv_unsigned s))) by lia.
+           rewrite Z.min_l by lia. rewrite Z_to_bv_bv_unsigned. reflexivity.
+        -- rewrite (proj2 (Z.ltb_ge (bv_unsigned b) (bv_unsigned a))) by lia.
+           rewrite (proj2 (Z.ltb_lt (bv_unsigned a + bv_unsigned n) (bv_unsigned b + bv_unsigned s))) by lia.
+           rewrite Z.max_l by lia.
+           replace (bv_unsigned b + bv_unsigned s - bv_unsigned b) with (bv_unsigned s) by lia.
+           rewrite !Z_to_bv_bv_unsigned. reflexivity.
+    + apply ll_iv_subtract_outside; [lia | lia | lia].
+Qed.
+
+Lemma maps_subtract_rm_nz_gen : forall X (a n : word),
+  0 < bv_unsigned n -> (forall e, In e X -> ms_cond a n e) ->
+  maps_subtract X (bv_unsigned a) (bv_unsigned a + bv_unsigned n)
+  = List.filter (nz_at (bv_unsigned a + bv_unsigned n)) (map_remove X a).
+Proof.
+  induction X as [|[b s] X IH]; intros a n Hn HC; [reflexivity|].
+  cbn [maps_subtract].
+  rewrite (iv_subtract_entry a n b s Hn (HC _ (or_introl eq_refl))).
+  rewrite (IH a n Hn (fun e He => HC e (or_intror He))).
+  unfold map_remove. cbn [List.filter fst].
+  destruct (negb (bv_eqb b a)); cbn [andb List.filter app];
+    destruct (nz_at (bv_unsigned a + bv_unsigned n) (b, s)); reflexivity.
+Qed.
+
+Lemma ll_nooverlap_In : forall X e e',
+  nooverlap X -> In e X -> In e' X -> e = e' \/ hi e <= lo e' \/ hi e' <= lo e.
+Proof.
+  induction X as [|x X IH]; intros e e' H He He'; [destruct He|].
+  destruct H as [H1 H2]. destruct He as [<-|He], He' as [<-|He'].
+  - left; reflexivity.
+  - right. destruct (H1 _ He') as [D|D]; [left|right]; exact D.
+  - right. destruct (H1 _ He) as [D|D]; [right|left]; exact D.
+  - exact (IH _ _ H2 He He').
+Qed.
+
+Lemma maps_subtract_rm_nz : forall X (a n : word),
+  0 < bv_unsigned n -> nooverlap X -> In (a, n) X ->
+  maps_subtract X (bv_unsigned a) (bv_unsigned a + bv_unsigned n)
+  = List.filter (nz_at (bv_unsigned a + bv_unsigned n)) (map_remove X a).
+Proof.
+  intros X a n Hn Hno Hin. apply maps_subtract_rm_nz_gen; [exact Hn|].
+  intros [b s] He. unfold ms_cond. cbn [fst snd].
+  pose proof (bv_unsigned_in_range _ s) as Rs.
+  destruct (ll_nooverlap_In X (b, s) (a, n) Hno He Hin) as [E | D].
+  - injection E as -> ->. left. split; [reflexivity | left; reflexivity].
+  - destruct (Z.eq_dec (bv_unsigned b) (bv_unsigned a)) as [Eu | Hu].
+    + assert (Eb : b = a) by (apply bv_eq; exact Eu). subst b.
+      left. split; [reflexivity|]. right. unfold lo, hi in D. cbn [fst snd] in D. lia.
+    + right. split; [intros Eb; apply Hu; rewrite Eb; reflexivity|]. destruct D as [D|D]; [left|right]; exact D.
+Qed.
+
+Lemma eagerZ_filter_le : forall f X C, eagerZ (List.filter f X) C <= eagerZ X C.
+Proof.
+  intros f X. induction X as [|e X IH]; intros C; cbn [List.filter eagerZ]; [lia|].
+  pose proof (rem_bounds e C) as RB. pose proof (IH C) as IC.
+  destruct (f e); cbn [eagerZ]; lia.
+Qed.
+
+Lemma entries_nowrap_filter : forall f X, entries_nowrap X -> entries_nowrap (List.filter f X).
+Proof. intros f X H p Hp. apply filter_In in Hp. apply H. exact (proj1 Hp). Qed.
+
+Definition munmap_vmmaps (h : VmMaps) (a n : word) : VmMaps :=
+  mkVmMapsFull (vm_reserved h) (maps_subtract (vm_maps h) (bv_unsigned a) (bv_unsigned a + bv_unsigned n))
+    (maps_subtract (vm_noaccess h) (bv_unsigned a) (bv_unsigned a + bv_unsigned n))
+    (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h).
 
 Definition munmap_modelL : ltac2:(zQ "30!hi4!ji1!hk7>1a@1$2@1$0#k0>1n@1$2@1$0#k0>1m$1$1") := ltac2:(zQ "60!hi4!hk7!ji1!jga!lu2!lva\1a@1$1@1$0#k0\1n@1$1@1$0#k0\1m$2@4$4^3^2@3$5@1$3^1^3^2^1").
 
 Lemma munmap_modelL_vmmaps : ltac2:(zQ "80!hi4!jga!hk7!tc!ji1!km0!mgb!lva>1a@1$2@1$0#k0>1n@1$2@1$0#k0>1m$4@3$3$5@1$1@3$6^3^2^1@3$7@1$1^1^3^2").
-Proof.
-ltac2:(KReplay.run1 (kr_t_LazyLedger ()) ["ModelOps"] "h01ah11mh21nh31vp;1p;3p;2p;6g00ADj10Tg00jfj1=Tg00kDj18Tg02=lj11Tg03_lj34Tg03;Yj2;Tg00;Pj32Tg03<Sj27Tg00o<j23Tg00>Dj26Tg03REj35Tg03SCj39Tg00O=j6:Tg03a8j3<Tg00M`#0#0#0#0#0#0#=R0#8R1g02E7g02keR2f0R3#1f2R4f1R534R6/;3R7#1%15f3;449223X3217631304R81305,68R0;57#1A9807E:A<453#1=226eW1X21W0o"). Qed.
+Proof. intros. unfold munmap_modelL, with_mmap_destroyed. rewrite m_vmmaps_vm_forget_range. apply m_vmmaps_with_vmmaps. Qed.
 
 Lemma munmap_modelL_lazy : ltac2:(zQ "b0!hi4!hk7!hla!jia!hn9!hkd!tc!ji1!it5!mgb!t6>1a@1$1@1$0#k0>1n@1$1@1$0#k0>1m$7@3$6@1$4@2$5@1$1@1$0#k0@1$1@1$0#k0@1$3@3$9^3^2^1@3$8@1$3^1@2$2@1$0#k0^3@2$a@2$2@1$0#k0^3@2$2@1$0#k0^2").
-Proof.
-ltac2:(KReplay.run1 (kr_t_LazyLedger ()) ["ModelOps"] "h01lh11ah21mh31np;1p;2p;3p;6g00ADj10Tg00jfj1BTg00kDj19Tg00kgj27Tg007Xj1ATg02=lj1;Tg03_lj3:Tg03;Yj28Tg02@Sj11Tg00o<j23Tg00>Dj25Tg020>j32Tg00;Pj34Tg0051j2@Tg03@Ij2?Tg00O=j66Tg03REj3<Tg03T\j3=Tg03a8j3>Tg00M`#0#0#0#0#0#0#BR0#9R1g02E71711#AR2f0R3#;f2R4f1R53:R6/83R7#1R81304R91305,59R:32%15f3,30R01509R;32R<9423X02P2%13R=A230;=42<X02A2=9:R=,@2P81?63E6A<9:7#1A=9:7E6A>453#1=42=eW2X31W1o"). Qed.
+Proof. intros. unfold munmap_modelL, with_mmap_destroyed. rewrite m_vm_lazy_vm_forget_range, m_vm_lazy_with_vmmaps. reflexivity. Qed.
 
 Lemma munmap_modelL_materialized : ltac2:(zQ "b0!hi4!hk7!hla!kka!hn9!tc!ji1!lsb!mgb!jo2!t6>1a@1$1@1$0#k0>1n@1$1@1$0#k0>1m$6@3$5@1$4@1$1@1$0#k0@1$3@3$8^3^2^1@3$9@1$1@1$0#k0@2$7@2$2@1$0#k0^3@2$a@2$2@1$0#k0^3@2$2@1$0#k0^2@1$3^1").
-Proof.
-ltac2:(KReplay.run1 (kr_t_LazyLedger ()) ["ModelOps"] "h01lh11ah21mh31np;1p;2p;3p;6g00ADj10Tg00jfj1BTg00kDj1<Tg007Xj18Tg00o<j24Tg00>Dj26Tg03V6j25Tg02=lj1;Tg03_lj3:Tg03;Yj29Tg02h2j11Tg02P\j32Tg00;Pj33Tg0051j2ATg03C4j2@Tg00O=j67Tg03REj3=Tg03W7j3>Tg03a8j3?Tg00M`#0#0#0#0#0#0#BR0#<R1g02E7%81R2f2R3,40R4f1R5,40,64R6'5R7f0R8#;?:35R9/98R:#1R;521f3,40R01604'5R0%15521R<9328X02P2%18R=A2108=32<X02A217=R=,A2P;1@98E7A=46:#1A>46:E7A?358#1=32=eW2X31W1o"). Qed.
+Proof. intros. unfold munmap_modelL, with_mmap_destroyed. rewrite m_vm_materialized_vm_forget_range, m_vm_materialized_with_vmmaps. reflexivity. Qed.
 
 Lemma munmap_modelL_nonvm : ltac2:(zQ "h20!tc!mgb!s7!hi4!kma!kn2!knc!ko4!kod!kp7!hk7!kq1!kqc!kr7!ks2!ji1!kse!ktb>1a@1$a@1$3#k0>1n@1$a@1$3#k0>1m$f@2$2@3$0$b@1$4@3$1^3^2^1@1$4^1@2$2@3$0$d@1$6@3$1^3^2^1@1$6^1@2$2@3$0$c@1$5@3$1^3^2^1@1$5^1@2$2@3$0$h0@1$8@3$1^3^2^1@1$8^1@2$2@3$0$e@1$7@3$1^3^2^1@1$7^1@3$0$h1@1$9@3$1^3^2^1@1$9^1").
-Proof.
-ltac2:(KReplay.run1z (kr_t_LazyLedger ()) ["ModelOps"] "##33p'0h01ah12fdh22fsh32ioh44lazyh53limh61mi001mh76m_fsysi01!s0&h84m_ioi02!s-$h95m_limi03!s/%h:6m_proci04!s0&h;6m_timei05!s0&h<4m_vmi06!s-$h=4mapsh>3math?1nh@4!s`$A2tmi074m_fdi081vi099vmst_lazyi0:!s3%mapsi0;A!s3&terializedp;1p;3p;7p;2p;4g00ADj1:Tg00jfj1FTg00kDj1@Tg03a8j3=Tg02l\j16Tg02mOj17Tg02nBj13Tg02o7j12!s/$lj15Tg030`j11Tg00;Pj30Tg031Uj7?!t$$gj2ETg007Xj1>Tg032Kj3DTg02=lj1CTg03_lj3BTg03;Yj2ATg004Vj24Tg0051j29Tg01:oj4;Tf3R0f2R1f1R230f0R3'4p=<f6R4f5R5f4R630A0012/4!sA$8g00M`#:!s$-F#@R7g02E7R8P8g034AR8A=013R9#6%63g0359R:%79%73g0361R;%39%3!s3$iR<%29%23g037cR=%59%53g038\R>%19%1330C<F8F8P3g039VR9P9P8fAf@f7R9P5P6P0P1P2P3F?R?3=R@#6%6?P:%7@%7?P;%3@%3?P<%2@%2?P=%5@%5?%1@%1?50>!t'%^;>^9=^:<^7;^8:P3g02ke1E77#>%>7f<R?AD94!t<19#CfFR@fERA3B/A9RB#6=08?%7B=0:6RC%3B=0;0RD%2B=0<1RE%5B=0=2RF%1B=0>3RB'4RG'4RH'4RI'4198?PCPI19:6PDPH19;0PEPG19<1PFPB19=219>3C;!s$'P8A=@A9RA#6%69P:%7A%79P;%3A%39P<%2A%29P=%5A%59%1A%19!um+eXA>X5=X@<X2;X3:W>W4W=!uW%O3n0110800013110:10910;W<X18P4!w?/O7!sP$0000171107106102101104103105W6X?7W0o"). Qed.
+Proof. intros a n [fd [maps lazy mat] io fs proc lim tm]. cbn. repeat split; reflexivity. Qed.
 
 (* [comment removed for export] *)
-Lemma eager_used_munmap_le : ltac2:(zQ "h20!hi4!hk7!jga!jh6!ilb!imc!jk6!hkd!ji1!jia!jj7!jt2!mgb!jn6!ij5!hve!t6!q8>1a@1$1@1$0#k0>1n@1$1@1$0#k0>1m$8>0@1$4@1$3@1$2^1>0@1$4@1$a@1$2^2>0@1$4@1$9^3>0@1$d@1$3@1$2^4>0@3$f@2$7@1$1@1$0#k0@1$1@1$0#k0@4$5@1$1@1$0#k0@1$1@1$0#k0^7^6@1$3@1$2^5@2$h1@2$h0@1$6@3$c^8^7^6@2$e@4$5@1$1@1$0#k0@1$1@1$0#k0^8^7@1$b^6@1$6^6").
+Lemma eager_used_munmap_le : forall a n m,
+  entries_nowrap (vm_maps (m_vmmaps m)) ->
+  entries_nowrap (vm_noaccess (m_vmmaps m)) -> entries_nowrap (m_vm_lazy m) ->
+  nooverlap (vm_maps (m_vmmaps m)) -> In (a, n) (vm_maps (m_vmmaps m)) -> 0 < bv_unsigned n ->
+  eager_used (munmap_modelL a n m) + rem (a, n) (cuts m) <= eager_used m.
 Proof.
-ltac2:(KReplay.run1z (kr_t_LazyLedger ()) ["ModelOps"] "##n\p'0h03Hinh12Heh24__x1h34__x2h44__x3h54__p1h61Hh72IHh81bi001bh91ph:4__x4h;5Hdisjh<7__arithh=4__ffh>8__varmaph?5__with@1lhA1ehB2H1hC2HdhD4__p2hE4__p3hF2e'hG3HnehH2HxhI1ahJ1vhK1xhL1zhM1EhN1XhO2e1hP1hhQ2H0hR2H2hS2HLhT3HNAhU2HXhV3HlehW3HxrhX4Hxr'hY1mhZ1np%0p&0p;1p;2p;4p;3p;6p;7p;8p;9g00ADj1TTg00jfk10STg00kDk10BTg01[gj1]Tg02=lj1ETg02?Yj1JTg02@Sj1LTg02Thj1P!s]$gk20;Tg010Oj43Tg01>^j31Tg03a8j3[Tg02>cj1WTg03Eoj1!sS$J3j25Tg01K8j28Tg00>Dj27Tg02Clj1kTg004:j20Tg03_lj3cTg02Ocj2gTg007Xj1s!tC$oj3STg02P\j3G!sA$8j1qTg00[lj3CTg00;Pj32Tg00o<j2KTg02RBk209!s0$_k106Tg01FHj4oTg02QUj3lTg01L\j1VTg03bDk30!sh$?ej2mTg008Vj1~Tg0094k10RTg00@aj2^Tg00P>k10QTg00Aik10!vE$BKj3\Tg00:Bk20NTg0051j2n!s9$dk20K!tx$jk30JTg00<Ik40I!st$cj6zk70:Tg00O=j6Hk708m90?Tg02`Fk20GTg011Lj3y!vU$VR0j2<!tt$8k10F!v|$aj1wTg00YEj2iTg00ZWj3v!vF$@k20E!uB$_k20D!uq$:k60Ak807Tg00lGj14Tg00mHj16Tg00S0j2FTg02SAk40@Tg01Dfj1MTg01Cbj2=Tg020>j3ZTg01e;k10>Tg01NHk10=Tg00TSj2ITg02Emj3XTg014Gj2OTg02Hjk30!u6$WlR1j2!zS%Mj3pTg00DYj4fTg03cWj1|Tg03XYj7tTg02N[j3uTg03d6k305Tg03eGj3xTg03fZk404Tg03HCj2{Tg03gkk303!x%$Ck40HTg00EDj7}Tg00FLk80LTg00^Zk60M!sC$hk701Tg01IVk300Tg00\ok70OTf0R2#E#Wp=Df3R3f2R4'5f1R5'7/02p=:Al452#Vp=>g00GmR6P4P5P2H0Hp=QP4g00IQR7g00J0R8P8g00JPR9P6P5g00HjP2Cfg00K0R:F}p=AP3P7P8P8P9!sn%L0Lp=?1745!t=$jP5!sF+2J0Mp=hP4!s8+5P2K01p=Y1752,04p>0Cg00L4R;?252p=@B00345/=2p=N%42,05p=`g00T3R<92;2p=e1045/B2p=d%64/0!s2%9%45,04!s2$Rf4R=/03!sO&'Bp=b!tS3Op=_%6!u&%a!u&/P!u]$rP;P=P3!uY%EHp=Ug00M`R:#TR7#TR>#T!s$%$0SR?$0BR@g02E7%D2#]%E5#J#]%L4#]%D3#P20;@@RAP@P@f6RBf5RCC3%D=31P6f7RD?[BCRE#ES00#W%;ES01'5!sT$8RFPDC3RG%;BRH'8RI,72RJ%kB'0XL6P6%ECRK#WRL%;CRM'5S02A[FDBRN#D%;NRNPIP2C:XL6g02keROAcKDBS03%W2S04PNPI%DB/5HRHC:XJOP61gLDRI/5MRN10JHXL6PL%sARHP!u7%9RJPFC3=1A2AS@@2RKf;RP5>?X9ARQ=GA5%;FRR!sR$:RSPJC3RT/8RRU155RC:]0X@H%qARV91AGg01H=RGAGAQVPRPU15VRC:P2n010!s#%W0A1AT2f<RT9>?KX9A!t2%J!t2%PPPSC3RU/8R!t-'ACA45RR91AUP1!sJ$TPPC3RU92A3A1AU4P;PHAS@@=RQf=RW5>?f>RX!t,,3RY9CA=PY!tU+20000%;PRY!sw$WPTC3RZ/8Y18=Y153Y'7C:P2A2A=Z!vG%PXPWC3R[P;PHf?R\9>?KR]f@R^!t6,CR_9CA2P_!t63WR`!sj$\PXC3Ra/8`Rb182`15C`Rc'7C:XAAP;1K?XRd009dg00M@Re&06dCoAl?XX92;eRdePdP;PeP;PH%V2Rd!s|$^P\C3RffARg!tZ,BRh5CAPh!tY3XRh18fhRi15Bh,7iC:X8;B02C\`1gC\/5`/0cg00LTRi#qRj%siRk1m64S051m63Rl7Q5%~6Rm&0R6Rn1^6:Ro&0Q:S06,^6R:5An&0P8R81^67R79\6oRpA\67:Rq5AnC?20Nn9R9P2P41n;e20K24=2;edg00G0Rr>0J65H0IRsb=b>b?X26X36X4610241754Rt1743Ru'0[^26^36^46P2%;\Rv,5DRw!v4$gP^C3Rx/8vRyfBRz!v9,DR{/5vR|P5O4b<bV!vl%eACAa_!x&3P`Pb17bcC:eAl?\\P2Ezb6!z/'[=>?XP]!s}%=R]9CA[P]!w93TRc18[cR[15=cRb,7[C:ePCP2EHW6P2O1A1AZ3P3P2O1P]PcP[PbC:20GB`18B`R`,0rAy@@B,K?,0`'<AS@@DR`=>?^P;!s$$HP2fCRb!uZ,FR[9CAJP[!t[3^Rc!v=$zPgC3/8cR]18JcRZ15FcR_!{]%PjPk1m6=&0F6Ra7Q4?Q5lS07PmPn1^6>R>9AnqP8A\6p:A\6o>!xF$P9P!wx3X:610t3175=9jt3!wu,^:6P2P_P]15[cRcPZP3O5b<ACAF{PvPy18Fv/7wRwC:ep-0Rvg00HKR{#wR[#w,i61i6[1i6{5v65v6g00_k+0E=CijS08PkQ!t|%20D6r=An:1hnBRi5YnP8PnAAnp>!u5$:>9AnpC?!u3;W510r4/<=10t=B0Cu=C[!u;0^5vP2Ay@@J!wc$ZP_PZ!x2$4P3O7b<Aj|ywen0110001020101b8b6b7W0P2O1n20!wg%102!sJ%1000A>?KWX9AACA34RK5GA%;SRw18Uw15KwC:eW0W7XNHXAAP2P5J0Ab@!xE$DPBC3/8MS09Q025jNeQ01,5IPIPMQ01%DD/gJ91A5%44RM/05%64RI,F5'<%DJRNPPP3P5H0@A1A3NAS@@3=2@P#M'<P0%DS91A=A2@QT#M1=Y=A[WTP#;/=='@P2%DT91ABA2@`\#MPO%EXS0:?c^\S0;PA%E\R`#J%L\PFCNRYPA%J2A[g^\#LPFCN'@XJOPH%LXS0<1K?^RQ1K?\,7Q3ZS0=PAAc`g^#JP2PFCN,@YX@H&0>f1`rf&0=x%4x%6x'0%E^#JRx/=JRr%L^Rf/=JRY'IPA%Eg#JR`1K?b!t&$zRN,7QRw3Z%LgRU?ZQwR|PSCN,@2X8;1K?g,7NR?9ZxNS0>/=JS0?AZfN?S0@!s4$A'I1=`SR`1=USRU'IRy/!sb$AXN?JS0B#VRc,Or1=|S,I2,@yX8;1OYcAXQwSS0C#V,O`/!s@'P;Q0BP<P0AX452#e1035S0D1F54S0E'<#MRc[1042S0F1F25'<#MAX345#e[RYAX=34#e\cB0<452P2!yt+001!~^$000XK6XP6X@6PY^K6^P6^@6P2PQPwPS10QS1FSw'<S0G%EzS0H#WPHPA%P2!#6U$fGRQfFRYC3Rc=1A5A1A^4%6gS0I!sE$IR|fHRrC3R]#4S0J%6]S0K%4gS0L'0S0MA2Ag]S0N'B3dRZ]1]0];X@H%PV!z~$YfES0OC3RY=1AVA1A\VPGPZ!#?$/1W0W;!sT$rPQC3RZ!tW&g4%6zS0P!tW$JRVP|C3R_%4zS0QA2Az_59_3R]1]0^;w%PRA1A]KACA=391AzP0A1A2C%45R0%65R]/`D59D[^FA%P=fDRK!s~$LRRfKS0RC3Rw#4S0S%6wS0TA2AKw7RK39P4A1A2D1`]J99J0!sf%DP1A2AJQA1AQF!sn$PRQfORwC3Ru#4%4rA2Aru59u59rP=A2ASrPAPP%P!uD%SRufRRtC3Rp=1ATS0UA1A4W!sB$US0VfTR{C3R[#4Rq%6[R}A2A3[7R3593!w&%P]%4pS0W%6pS0XP0A2A5pDb]7XAA%PS!vm$tfQS0YC3Rt=1APS0ZA1AWT%6XS0[!sG${Pu!u#%S0\'0R{%6uS0]%4XS0^'0R~A2AXuS0_'BS0`'B!tH&1A2ATtS0aQ0ZQ0WQ0XA2AWpS0b7RW59WPFQ0bQ0`Q0_=p~25p{WMP2O1Q0UPBPuP2O21B{~P3PBO1A1A[XS0bA1A^\Q!z4&WR~fVS0`C3R{#4S0_%6{S0WQ0LA2Ag{Db]1Rg]0P2P4O1PgPj!#8o'AAno7RgAAn:>R>5_nP8A_n>i9_ngS0X!#8f:X5v1025S0c1043Ru'BP5P4P3P=PCDbS0d!#8s4!tw$XP~C3R~92AzQ0Q%6~S0Q%4~S0eQ0PP3O6b<b7b7b6!#8l10!#8l-W7P|P2PJK0:!#>~'rJ!#GB$Q0YPQC3S0Y92APQ0Y=1AS%4t%4VA2AVt59t59VPDQ0aPAPpA1A2X10]M9dI!zi$fMRpA2Ap[9R}p79q]BXOAA1A2W10]q9d}!sL$P2PRP3O2Q0]Q0\,aR7RRPWPBO1Q0bfN=1A\Q0_Q0WA2Aw{7Rw59wRw]1]0!tr%`Q0VC3=1A\R{P5P2PBO2WIPw^I{!wb/_n>gP8Q!wM@Q0c,BuQ!w87A2AQ~%4QQ0QQ0e%6Q!w#0BPWP2PCK08!z+'ZPPP=!y:$3!wE;!#4-$!wa>RWBP5P2O!#6y01!#4h-!#=O$OAP2P\PXPBL07!#=S%KPbC3RH#4%4TA2ATH59H59TP5!vT%OPK!sE%/0T%6H,FT'<P1Q0[/`YQ0^A2AXY59YPGP5%4c,a\Q08PkAQa5lQ057Q3PmPnQ06#T,^6RY=An71hnCRT!#AM+:YP8PnP6P7g00SLRHP:Cf,rn9YniP81hnDR:C?!#Af:5vXDvXEvQ0F/<31F43,<BPF[\u!wc-5v^Dv^EvP2PGQ0L/0^Q0K,F^Q0JQ0IP^P3P5PXO9b<WCP2O1%4\A2A\c59cP1%4^,aZA2A^ZPGP2Q0M!uZ'4l?Q5aPm!u4%PHPY!u/'T!uR&Yo!s/$YngiP8P!u=HE,<3Q0D1<uBPF[[!u<:%6b,Fz!wj%RPVC3RV#4/0z%6VPz%4bPCP5P^!uH,Q0NPAP_%D|9!#S|%5=2@R#M10MK1FKI'<PG]H]G]1XAA%Dr91A_AS@@VQ0R52@#MQ0S/0bQ0T,Fb'<P51n@pO1WHWGW1PzP2PPPSP\N90?!t@%!zk:6!sB=bXbCWWQ0G#MeO4b6CoQ0B92;<P;P<Q0H#J/=PRS%Lz/=PRP'IRz1OSd1OPd'I'@X8;P`%V<,OP,I2,@zX8;PU1IS!s2&1n;y1OUe%|UDU1O`e%|`DUQ0C!#Mv$Q0APfPNP?PJPWP5P2FtDUQ0?Px!s;&X!s;'PAQ0>Q0@PJCN!s0%;uJDUPAPxPfPJCNAuxfJDUbBbQPAQ0:#JQ0<PDCNPAQ0;#JQ0=PDCN'@eA[^\XRf#LB05^\XEH%EfAx!s0$1=hD%;f/=D'@e!w'$!~B<b1WHW1XK6XAAH04EHQ03#WRAQ01Q09Q02C:eQ00AxDBCRBEH%kC1{C=EH%kEPOQ03Q04#]XJOB03LD=%]AeQ00PBEH,{EEHW0W;WSWTWUWYXZ@WIo"). Qed.
+  intros a n m HX HNA HL Hdisj Hin Hn.
+  pose proof (maps_subtract_rm_nz _ a n Hn Hdisj Hin) as EQ.
+  rewrite (eager_used_cuts (munmap_modelL a n m))
+    by (rewrite munmap_modelL_vmmaps; cbn [vm_maps munmap_vmmaps]; rewrite EQ;
+        apply entries_nowrap_filter; apply entries_nowrap_map_remove; exact HX).
+  rewrite (eager_used_cuts m HX), munmap_modelL_vmmaps. cbn [vm_maps munmap_vmmaps]. rewrite EQ.
+  eapply Z.le_trans; [apply Z.add_le_mono_r; apply eagerZ_filter_le|].
+  rewrite (eagerZ_cuts_ext_on (map_remove (vm_maps (m_vmmaps m)) a) (cuts m) (cuts (munmap_modelL a n m))).
+  2:{ intros e x He Hx. apply map_remove_In in He. destruct He as [He Hne].
+      unfold cuts. rewrite munmap_modelL_vmmaps, munmap_modelL_lazy. cbn [vm_noaccess munmap_vmmaps].
+      pose proof (lo_nonneg (a, n)) as H0. pose proof (lo_hi (a, n)) as H1. unfold lo, hi in H0, H1. cbn [fst snd] in H0, H1.
+      rewrite !zcovb_app, !zcovb_maps_subtract by assumption.
+      replace (zinb (bv_unsigned a) (bv_unsigned a + bv_unsigned n) x) with false.
+      2:{ symmetry. apply zinb_false. intros Hxr.
+          assert (Hd : hi e <= lo (a, n) \/ hi (a, n) <= lo e \/ e = (a, n)).
+          { clear - Hdisj He Hin. induction (vm_maps (m_vmmaps m)) as [|e1 X IH]; [destruct He|].
+            destruct Hdisj as [H1 H2]. destruct He as [<- | He], Hin as [E | Hin].
+            - right; right; exact E.
+            - pose proof (H1 _ Hin); lia.
+            - subst e1. pose proof (H1 _ He); lia.
+            - exact (IH H2 Hin He). }
+          assert (Hxr' : lo (a, n) <= x < hi (a, n)) by exact Hxr.
+          destruct Hd as [Hd | [Hd | Hd]]; [lia | lia | subst e; cbn in Hne; exact (Hne eq_refl)]. }
+      rewrite !andb_true_r. reflexivity. }
+  unfold map_remove. clear - Hin. induction (vm_maps (m_vmmaps m)) as [|e X IH]; [destruct Hin|].
+  cbn [List.filter eagerZ]. destruct Hin as [-> | Hin].
+  - cbn [fst]. replace (bv_eqb a a) with true by (unfold bv_eqb; symmetry; apply Z.eqb_refl). cbn [negb].
+    pose proof (eagerZ_map_remove_le X a (cuts m)) as Hle. unfold map_remove in Hle. lia.
+  - specialize (IH Hin). pose proof (rem_bounds e (cuts m)).
+    destruct (negb (bv_eqb (fst e) a)); cbn [eagerZ]; lia.
+Qed.
 
 (* [comment removed for export] *)
 

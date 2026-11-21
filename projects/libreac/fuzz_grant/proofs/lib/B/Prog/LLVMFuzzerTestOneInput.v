@@ -4,14 +4,15 @@
 (* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACfh.v (srz_enter, the journal over a token list), ACk2.v (the file system a closed journal keeps), ACfj.v (tfib_lib_x) and ACfi.v (tfib_lib_x_all) for libreac/fuzz_grant: module paths, GrantB, the library shape grant_shape, and the entry function's phase machine of lib/A/Prog/GrantEntryDefs.v in place of cgif's. *)
 (* Modified by Theorem Labs, 2026-10: the call chain `gch` taken from proofs/cgif/cgif_file_fuzzer/lib/A/ACf5.v's `rt_ch`, with fuzz_grant's module paths, for the phases of libreac/fuzz_grant's entry function LLVMFuzzerTestOneInput; the rest of the file is new. *)
 (* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/Prog/GrantEntryChain.v and lib/A/Prog/GrantLibX.v, over the phase definitions of lib/A/Prog/GrantEntryDefs.v. *)
-(* Ported from lib/A/Prog/GrantEntryChain.v at a working branch 5651bf66924 (blob 6650b8120af) and the closing half of lib/A/Prog/GrantLibX.v at a working branch 552860c636687 (blob 79cffc88c05; the GrantLibX.v beside the first file differs). Both heads carry lib/A/AB01.v 1e6f4323d1e, the current start-up-table generation. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Ported from lib/A/Prog/GrantEntryChain.v at a working branch (blob 6650b8120af) and the closing half of lib/A/Prog/GrantLibX.v at a working branch (blob 79cffc88c05; the GrantLibX.v beside the first file differs). Both heads carry lib/A/AB01.v 1e6f4323d1e, the current start-up-table generation. *)
 (* The walk of image B's entry function LLVMFuzzerTestOneInput (fuzz_grant.asan-ubsan
    0x80a3c, 1422 instructions): the phase machine chained into the whole call, and that
    call turned into the contract `tb_LLVMFuzzerTestOneInput_spec` of
    lib/B/Prog/GrantBContracts.v.
 
    The phases are cut as image A's walk cuts them (lib/A/Prog/GrantEntryDefs.v of
-   a working branch 5651bf66924; this file is the image-B twin of lib/A/Prog/GrantEntryChain.v and of
+   a working branch; this file is the image-B twin of lib/A/Prog/GrantEntryChain.v and of
    the closing half of lib/A/Prog/GrantLibX.v), with image B's own cut addresses:
 
      0x80a3c entry -> 0x80d04 GI_hdr -> 0x80db0 GI_mallocT -> 0x80ef8 GI_set (loop)
@@ -184,10 +185,10 @@ Qed.
 Theorem pb_LLVMFuzzerTestOneInput : walk_LLVMFuzzerTestOneInput B.
 Proof.
   unfold walk_LLVMFuzzerTestOneInput, hyps_LLVMFuzzerTestOneInput.
-  (* The conjuncts in the order GrantBContracts.v states them at a working branch
-     4d7ced43548: the runtime laws, then IMG_RO_BELOW (a walk that reads an image byte
+  (* The conjuncts in the order GrantBContracts.v states them at a working branch:
+     the runtime laws, then IMG_RO_BELOW (a walk that reads an image byte
      through arodata_okP after its own side-stack call needs ro_below_ofl to transport
-     it, PaBase.v:38 arodata_ok_journalP), IMG_LLVMF_TRACES, and IMG_LLVMF_SWEEP (the
+     it, PaBase.v:39 arodata_ok_journalP), IMG_LLVMF_TRACES, and IMG_LLVMF_SWEEP (the
      bytes, GRANT_GLOBS_B entries and image bounds of the four read-only tables the
      sweep compares with __wrap_bcmp: HEAD_ACK object 4, HEAD_MARK object 5, POLL object
      6, GRANT_GROUPB object 19). *)

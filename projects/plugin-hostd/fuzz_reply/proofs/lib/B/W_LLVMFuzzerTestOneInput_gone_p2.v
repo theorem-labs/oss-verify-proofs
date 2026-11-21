@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ARM_gone of the ASan+UBSan walk of fuzz_reply's LLVMFuzzerTestOneInput on image B,
    PHASE p2 (lib/B/W_LLVMFuzzerTestOneInput_gone.v's GP2): the reads[] loop 0x84af8 -> 0x84b40
    (fuzz_reply.c:640-641 `reads[k] = g_s[k].open && relay_reads(&g_s[k])`), the image-B twin of
-   lib/A/W_LLVMFuzzerTestOneInput_gone_p2.v (a working branch 32b23a20c3e), read from B's objdump:
+   lib/A/W_LLVMFuzzerTestOneInput_gone_p2.v (a working branch), read from B's objdump:
      0x84af8  lb   a0,0(s9)           the shadow byte of g_s[q].open (s9 = SB + (g_s + 4) / 8 + 12q)
      0x84afc  bnez a0,84b30           the slow path (not reached: g_s lies in the instance's zero-shadow ranges,
                                       the base's GN_HZS, so the shadow byte is 0 and the report 0x85134 is dead)
@@ -15,13 +15,14 @@
      0x84b14-0x84b24  s7--, s8 += 4, s6 += 96, s4 += 96, s9 += 12
      0x84b28  bnez s7,84af8           / 0x84b2c j 84b40
    B CALLS relay_reads where A inlines relay_reads / relay_source (the cut's difference (1)): the call is cited
-   through the cut's RRDS (lib/B/W_LLVMFuzzerTestOneInput_cut.v:707 at 61da015af91), taken here as the Section hypothesis RRDS with
+   through the cut's RRDS (lib/B/W_LLVMFuzzerTestOneInput_cut.v:707), taken here as the Section hypothesis RRDS with
    the cut's text verbatim.  Its aleafx_post keeps every byte outside [F - RRDS_STK, F), which the arm's transport kit
    (W_LLVMFuzzerTestOneInput_gone_tk.v, gk_amodel_kept / gk_gframe_kept / gk_ainput_kept / gk_rom_kept / gk_jt_kept)
    turns into the cut's facts at 0x84b40; its a0 is matched with the base's gn_find / gn_src / gn_reads
    (g2_reads_of_post below).  The call pattern (afn_pre at sp = F through the base's gn_afn_pre, SRr_bind,
    ajournal_gx_G_mono + ajournal_gx_sub, the new entry state at the return pc) is B's latch walk's,
-   lib/B/W_LLVMFuzzerTestOneInput_latch.v:785-990 at a working branch ee519e5e2f5. *)
+   lib/B/W_LLVMFuzzerTestOneInput_latch.v:786-991 at a working branch. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -298,7 +299,7 @@ Variable RINV : lfcx -> Z -> lmod -> Prop.
 Hypothesis HZS : GN_HZS B.
 (* errno's place: the base's model obligation, verbatim (amodel_at's aout_at reads errno across the call) *)
 Hypothesis HERR : GN_ERRNO_LOW B.
-(* relay_reads (0x864e8): the cut's RRDS (lib/B/W_LLVMFuzzerTestOneInput_cut.v:707 at 61da015af91), text verbatim *)
+(* relay_reads (0x864e8): the cut's RRDS (lib/B/W_LLVMFuzzerTestOneInput_cut.v:707), text verbatim *)
 Hypothesis RRDS : forall W ly S (regs : bvmap 5 word) mem md ch T es HA h,
   afn_pre segs B RRDS_STK ly S W regs mem md ch ->
   getr regs 10 = w64 HA -> 0 < HA -> HA mod 8 = 0 -> azs B HA 4 ->
@@ -369,7 +370,7 @@ Proof.
   assert (Hopen01 : 0 <= open <= 1) by (unfold open, g2_sopen; destruct (nth q (lm_hs m) None); lia).
   assert (HZSA : azs B (rg_s fr_RG + ASRC * Z.of_nat q + 4) 8)
     by (apply (g2_azs_sub B (rg_s fr_RG) (4 * ASRC)); [exact HZS | lia | lia]).
-  (* RRDS's shadow premise (cut 61da015af91): g_s[q]'s first four bytes, a sub-range of GN_HZS *)
+  (* RRDS's shadow premise (cut): g_s[q]'s first four bytes, a sub-range of GN_HZS *)
   assert (HZS4 : azs B (rg_s fr_RG + ASRC * Z.of_nat q) 4)
     by (apply (g2_azs_sub B (rg_s fr_RG) (4 * ASRC)); [exact HZS | lia | lia]).
   assert (HSH : (rg_s fr_RG + 4) / 8 + 12 * Z.of_nat q = (rg_s fr_RG + ASRC * Z.of_nat q + 4) / 8)

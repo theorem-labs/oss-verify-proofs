@@ -6,22 +6,23 @@
    the instances at wle. aj_poison_at_xR, aj_unpoison_at_xR, aj_poison_xR and aj_unpoison_xR are the four call rules
    over a journal at a reflexive and transitive R (binders first; no law of R is read); the old names are their
    instances at wle. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the harness's two shadow calls, __asan_poison_memory_region and
    __asan_unpoison_memory_region, GENERIC over the allocator invariant ARx of YCbqG.v (Section Variables
    segs B PST ARx) and a head length hd (preset instantiates hd := cf_head, which is 16 at CfParams_preset).
    No allocator instance, no image class, no address and no ledger is named here.
 
    1. THE TEXTS (Section px): apoison_realizes_x / aunpoison_realizes_x are h-rw-man-5's cf contracts
-      apoison_realizes_cf / aunpoison_realizes_cf (YGcfHp.v:127-153, h-mani-a8 a17a5c82661) word for word with
+      apoison_realizes_cf / aunpoison_realizes_cf (YGcfHp.v:128-154, h-mani-a8) word for word with
       ARcf segs B -> ARx, cf_head -> hd, cf_pc_poison / cf_pc_unpoison -> the parameter pc, ecall_pre_cf ->
       ecall_pre_x (FCiface.v, the x twin of YG0d.v:278-284), and ONE difference: the size premise is
-      `hd <= req_size n`, where YGcfHp.v:131 / :145 has `cf_head < req_size n`, so that a harness block of user
+      `hd <= req_size n`, where YGcfHp.v:132 / :146 has `cf_head < req_size n`, so that a harness block of user
       size 0 (one head of 16 bytes and nothing after it) is covered; PresetS1 asked h-rw-man-5 to relax the cf
       texts to `<=`. Until that lands the walks take these texts as STAND-INs for the relaxed cf texts;
       YGcallPcf.v proves each generic text implies its cf text (the cf text is the generic one with the size
       premise narrowed), and becomes the equation by reflexivity once the cf texts read `<=`. Their shape is
-      port-fm's (FMupoison.v at
-      origin/cold/port-fm-poison 52efd1c871f: ARU_poison_step :263, ARU_unpoison_step :333): a poison of
+      port-fm's (FMupoison.v:
+      ARU_poison_step :263, ARU_unpoison_step :333): a poison of
       [p, p + hd) for p the base of a live block of more than hd bytes returns with ARx at p :: Hp and the head's
       hd / 8 shadow bytes 0xf7 (YGcfNames.shUserPoison); an unpoison of p in Hp returns with ARx at
       remove Z.eq_dec p Hp and those bytes 0. The post is cgif's aintrin_realizes (YG0d.v:318-336): W unchanged,
@@ -83,7 +84,7 @@ unfold SHADOW_OFF, kHighShadowEnd in Ha. lia.
 Qed.
 
 (* ---------------------------------------------------------------------------- *)
-(* 1. The texts: YGcfHp.v:127-153 over ARx, hd and pc, with `hd <= req_size n` (YGcallPcf.v). *)
+(* 1. The texts: YGcfHp.v:128-154 over ARx, hd and pc, with `hd <= req_size n` (YGcallPcf.v). *)
 Definition apoison_realizes_x (pc : Z) : Prop :=
 forall ly S Hp (W : world segs) regs mem md p n,
 ecall_pre_x segs B ARx ly S Hp W regs mem md ->

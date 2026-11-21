@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (HC is stated over AsanInitL's SINV0L and argH0 of the run's input, and cs_range takes fewer arguments). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Run.
 From OSSVerify.openssl.echconfiglist_parser.images Require Import Asan.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import
-  PropExec AxSymExec3 AxSymExec3Sound AxSymExec3B AsanAcct AsanPlanCore AsanPlan AsanPlanSound AsanInit
+  PropExec AxSymExec3 AxSymExec3Sound AxSymExec3B AsanAcct AsanPlanCore AsanPlan AsanPlanSound AsanInit AsanInitL
   AsHSTab AsMainVM AsMainState AsMainFacts AsMainLazyChk LazyRestrict LazySR.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.AsCert Require Import AsImages AsPlanImages.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.As Require Import ASegs AsMainSyms PerfLia.
@@ -63,8 +64,8 @@ Section LZ.
   Hypothesis Vav : valid_argv (in_argv inp).
   Hypothesis Vev : valid_envp (in_envp inp).
   Hypothesis Hh : HSF_asan h = Some ch.
-  Hypothesis HC : cs_ok ASEGS ASAN_H AsanInit.LIMIT (SINV0 APH sp0 rdraw brk0 (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-                        (argH0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model.
+  Hypothesis HC : cs_ok ASEGS ASAN_H AsanInit.LIMIT (SINV0L APH Asan.M.init_pc sp0 rdraw brk0 inp)
+                        (argH0 sp0 rdraw inp) (in_fs inp) E ch R FULL model.
   #[local] Notation g := (hole_granted h).
   #[local] Notation cls := (hole_class h).
   Let X := Xof g E.
@@ -196,7 +197,7 @@ Section LZ.
     - unfold pm_space_beg, X, Xof. cbn [ps_b06]. pose proof (Z.div_mod (4096 * vE E K_B06) 65536 ltac:(lia)) as H. rewrite REL in H.
       split; [lia|]. replace (4096 * vE E K_B06 / 65536 * 65536 + 65536) with ((4096 * vE E K_B06 / 65536 + 1) * 65536) by lia. apply Z_mod_mult.
     - intros Hg. unfold X, Xof in Hg. cbn [ps_granted] in Hg. specialize (G5 Hg).
-      pose proof (cs_range _ _ _ _ _ _ _ _ _ _ _ _ _ HC _ _ _ G5) as R5. rewrite uE_var in R5. rewrite <- (BRKg Hg). unfold ALOWSH_LO. split; [lia|].
+      pose proof (cs_range _ _ _ _ _ _ _ _ _ _ HC _ _ _ G5) as R5. rewrite uE_var in R5. rewrite <- (BRKg Hg). unfold ALOWSH_LO. split; [lia|].
       rewrite Hg in AP. cbn [map app] in AP. unfold sivZ in AP. cbn [fst snd] in AP.
       replace (lden E (pg 5)) with (4096 * vE E 5) in AP by (unfold pg, lden; cbn [fst snd tden]; rewrite ?uE_var; lia).
       replace (lden E (pgo 8192 5)) with (8192 + 4096 * vE E 5) in AP by (unfold pgo, lden; cbn [fst snd tden]; rewrite ?uE_var; lia).
@@ -622,7 +623,7 @@ Section LZ.
         repeat split; assumption. }
     destruct lzc_parts as (_ & _ & _ & G5 & _).
     assert (BRK5 : g = true -> 12386304 <= brk0z /\ brk0z + 12288 <= 2147446784).
-    { intros Hg. specialize (G5 Hg). pose proof (cs_range _ _ _ _ _ _ _ _ _ _ _ _ _ HC _ _ _ G5) as R5. rewrite uE_var in R5.
+    { intros Hg. specialize (G5 Hg). pose proof (cs_range _ _ _ _ _ _ _ _ _ _ HC _ _ _ G5) as R5. rewrite uE_var in R5.
       destruct (PB Hg) as [PB1 _]. unfold ALOWSH_LO in PB1. unfold brk0z in *. lia. }
     unfold VISZ, VISZ0, GHZ. rewrite (RI_lin X (4096 * vE E K_B06) (vE E K_R06) eq_refl REL).
     Ltac kb KBp := left; refine (KBp _ _); unfold pm_kernel_placed, GHZ, X, Xof;

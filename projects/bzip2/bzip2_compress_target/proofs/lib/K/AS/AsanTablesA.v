@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch-extra reservation bounds and one initial state per CONFIG_RSEQ value). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -13,7 +14,7 @@ Import APC.
 
 (* [comment removed for export] *)
 Definition ASAN_A : atable :=
-  {| img_lo := 0x10000; img_hi := 0x61e000; n_res := 4; shadow_off := 0x7fff8000;
+  {| img_lo := 0x10000; img_hi := 0x61e000; n_res := 4; n_resx := 2; p_resx := 20; shadow_off := 0x7fff8000;
      a_entry := 0x317e4; rw_lo := 0xbf000; rw_len := 0x55f000; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 11;
      x_imemset := 0x64d90; x_imemcpy := 0x64d14; x_memset := 0xb9188; x_memcpy := 0xb8d84; x_memiszero := 0x652c0;
      x_istrncpy := 0x651bc; x_sealed := 0x11871; x_popfree := 0x37bd0;
@@ -25,4 +26,5 @@ Definition ASAN_A : atable :=
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
-Definition asan_a_init : acs := init_acs_of ASAN_A.
+(** #108: one initial state per value of the run's CONFIG_RSEQ flag [r] ([AsanPlanCore.AUXSZ]) *)
+Definition asan_a_init (r : Z) : acs := init_acs_of r ASAN_A.

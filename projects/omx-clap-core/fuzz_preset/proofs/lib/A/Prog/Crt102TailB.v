@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumA.v, with its module paths and module names changed; 1138 of its 1209 lines of code are new or changed and 707 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* On the Step-1 contract texts (the re-hiding move; the wle' contract, the internal file WLE-CONTRACT.md):
    every journal of this file is at RZW := YA0nH.wle' SEGS YGcfRehidePost.RZ_cf (ajournal_xR / ajournal_xwR; so ct_bd's
    journal too) and every stretch statement concludes YA0nH.SRr' SEGS YGcfRehidePost.RZ_cf (crt102_tail_B, ct_J_call,
@@ -9,7 +10,7 @@
    HOS4 : (length rp_os <= 4)%nat (the text's own premise) through Crt102HullPos.hull_budget_nil_of_room_pos. The inline
    release and __asan_set_shadow_f5 cross by the engine's R rules YGcallSx.aj_flag_store_xR and
    YGcallMxmn.aj_set_shadow_at_xmR (the engine lemmas are cited; no local copy of them is kept in a Section). *)
-(* kb round (the Glue at c580eb0fe37c, the B' twin of lib/A/Prog/Crt102Tail.v at the A' kb head a54cc6d36c2c):
+(* kb round (the Glue, the B' twin of lib/A/Prog/Crt102Tail.v at the A' kb head):
    crt_at_J_B's live state is at kb = prh_wk F_check_round_trip (66), its journal at a budget WS with wbudget [] 66 WS;
    the tail's calls (pj_free, __asan_set_shadow_f5, the inline release) store no wild trace, so the journal stays at WS
    to the `ret` (ct_bd carries it), and QF is the text's budgeted post at that WS (ct_at_F). *)
@@ -23,11 +24,11 @@
    and copy's ORDERED free list Fc with `map (snd + cf_head) Fc = fo crt_tree_J`. Every piece is its own Qed lemma
    (ct_J_call, ct_r0_end, ct_at_Z, ct_at_F, ct_qt_keep, ct_qt_of0 and the helpers). The B' twin of Crt102Tail.v
    (crt102_tail, blob d38ea142ecbc on the base): the same design at the B' registers, offsets, spill constants and
-   listing. Written new from the earlier T8 walk at commit 09469fb2a29b (its symbolic states, image
+   listing. Written new from the earlier T8 walk (its symbolic states, image
    facts, ct_qt / ct_qt_keep / ct_at_Z / ct_at_F kept; its ct_J_tail and the r = 0-only export crt102_tail_B_r0
    retired), every glue Record read and built by its NAMED FIELDS.
 
-   INPUTS OF RECORD (by path, at commit 8d79ced8f66f; blobs by `git rev-parse --short=12`):
+   INPUTS OF RECORD (by path; blobs by `git rev-parse --short=12`):
    - pins: B' asan-ubsan sha256 d663f82d7f488d30f8e8d7496cb814e595a2f3cbbf16bde81a65cb3ea9af0994, its unstripped twin
      sha256 c90d4fa54d43160baf62e5aa387211a798dddbad13d2619d85acbf37aee0c175; this file is image B' only.
    - the glue lib/A/Prog/Crt102Glue.v 918720d3a7b6 (the Records re-cut): crt_at_J_B (fields crt_at_J_B_live / _frm_zero
@@ -53,7 +54,7 @@
      aj_set_shadow_at_xm, memnorm_frame_of), YGcfRoomLive db11c2a5eb11; Spec PresetLiveBounds f78da450d5f6.
    - rule 24: proves function check_round_trip (B' J -> ret) - proof-index check_round_trip by name: the released
      proofs are plain/ubsan only (address lookups are no evidence: no symbol table); second-agent check CONFIRM, released-branch git grep exit=1
-     (recorded in the commit message of 09469fb2a29b; the record
+     (recorded in the commit message; the record
      RULE24.md (sha256 96ef6f3404f0; internal record): no #102 walk of check_round_trip outside this one).
      Written new. Model walks read, not cited: S10TxString.v ts_G_entry / ts_at_G, H5CrtS7.v.
 
@@ -514,7 +515,7 @@ Definition ct_qt (ly' : alayout) (S' : astate) (Hp' : list Z) (W' : world SEGS) 
   prh_ledger B ly' S' Hp' W' mem' Lam' peak' cnt' SIZE_MAXZ ran' most own' /\
   pj_nodeR SEGS (mrestrict (w_H W') mem') (prh_lin Lam') doc t D /\ (forall bk, In bk D -> In bk Lam') /\
   (* QT's `r = 0` (Crt102Glue.v 918720d3a7b6): THE r = 1 ARM IS DEAD, killed by tround_trip_text_specX's entry
-     premise prh_cons_from (kit tip 6557b95928b5, PRH_FnCheck 0b6f7b597757); crt_at_J_B states it too *)
+     premise prh_cons_from (kit tip, PRH_FnCheck 0b6f7b597757); crt_at_J_B states it too *)
   r = 0 /\
   ((r = 1 /\ (own' = 1 \/ ran' = 1) /\ cnt <= cnt' <= cnt + ck_crt_count t cset) \/
    (r = 0 /\ own' = 0 /\ cnt' = cnt + ck_crt_count t cset /\ ran' = ran /\ ct_pos_end S')).

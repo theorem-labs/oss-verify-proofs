@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Rares Buhai, 2026-10: made from proofs/varnish/esi_parse_fuzzer/lib/BWorld.v: keeps its imports (its lines 4-6) and its generic budget definitions (lines 699-846), with the module path changed, and leaves out its instruction certificates (lines 8-698). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the munmap arm of alloc_budget_refused_b). *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -148,6 +149,10 @@ Lemma abr_other : forall i m,
   bv_unsigned (in_sysno i) <> 222 -> bv_unsigned (in_sysno i) <> 226 ->
   alloc_budget_refused_b i m = false.
 Proof.
-  intros i m H1 H2 H3 H4. apply alloc_budget_refused_b_outside.
-  cbn [alloc_mark_sysnos In]. intros [E|[E|[E|[E|[]]]]]; congruence.
+  intros i m H1 H2 H3 H4. unfold alloc_budget_refused_b. cbv zeta.
+  rewrite (proj2 (Z.eqb_neq _ _) H1).
+  destruct (Z.eqb (bv_unsigned (in_sysno i)) 215) eqn:E215;
+    [ reflexivity
+    | rewrite (proj2 (Z.eqb_neq _ _) H2), (proj2 (Z.eqb_neq _ _) H3),
+              (proj2 (Z.eqb_neq _ _) H4); reflexivity ].
 Qed.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (1 recorded proof replaced by written proofs (PSTAGE_LEN_Z)). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith Lia.
 From OSSVerify.Proofs.zstd.huf_decompress.lib.Common Require Export RunDraw.
@@ -27,8 +28,7 @@ Proof.
 ltac2:(KReplay.run1 (kr_t_RunDraw ()) [] "h01nh11mh21Hp;1p;3p;2p;4g0000j1;Tg000Pj19Tg000nj32Tg001Hj1:Tg001hj24Tg002Ej21Tg002aj28Tg003Aj27Tg003[j26Tg0049j45Tg004Uj13Tf0R0#3#3p=0g005:R1g005YR2%;0g0067#0#0#0#0#0#0#0#0#9R332X01%:3g006\g0077R1f1R4/40g007WR532f2R6/14[R711401464=215R8[f3/16\81840P4n2001000000120000000X12X02P7^12^02P0g0087P31715O3b2,63C5o"). Qed.
 Definition PSTAGE_LEN : nat := proj1_sig pstage_len_sig.
 Lemma PSTAGE_LEN_Z : Z.of_nat PSTAGE_LEN = 65536.
-Proof.
-ltac2:(KReplay.run1 (kr_t_RunDraw ()) [] "h01np;1p;3g0000j15Tg000Pj13Tg000nj32Tg008Uj34Tg004Uj11Tf0R0#1#1p=0g005:R1g005Y%50g0067#0#0#0#0#0#0#0#0#332X01g009534o"). Qed.
+Proof. exact (proj2_sig pstage_len_sig). Qed.
 Ltac stage_facts :=
   lazymatch goal with
   | _ : Z.of_nat PSTAGE_LEN = 65536 |- _ => idtac

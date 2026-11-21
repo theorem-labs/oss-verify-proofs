@@ -1,13 +1,13 @@
 (* fs program part, build B: the ASan contract of fs.asan-ubsan's LLVMFuzzerTestOneInput, the same name and form as
-   lib/A/FSH_Harness.v. The pre and post are restated here (A's go through A/ACfn.v:33-58, whose tfibsegs are
+   lib/A/FSH_Harness.v. The pre and post are restated here (A's go through A/ACfn.v:34-59, whose tfibsegs are
    fs.asan's segments), word for word over fs.asan-ubsan's segments and lib/B/FSH_Base.v's FS_LLVMF 0x80f8c, FS_RA_LLVMF 0x80e88,
    FS_EMPTY 0x5daaa0, FS_EV_LIB 2000; the build's sink / meta cells (cgif's A/AE2k.v:50 tfib_K in build A) are the Section
    variable K and the build's sink head the context SK, which RELOC's build-B core instantiates.
    2026-10-29 (a Theorem Labs lane's finding, a Theorem Labs lane 04:51Z): the policy constants now come from lib/B's own YCfn, not
    lib/A/ACfn, so this file's closure no longer reaches image A's AE2k cells (the content test of record); and the
-   post journals `(sink_token :: FS_PSTAT_FP)` as A's post has since S0 c5cce359917 and as lib/B/YCfn.v:52 does,
-   instead of the pre-c5cce359917 `[sink_token]`.
-   Statement only. Port-from: lib/A/FSH_Harness.v (this branch) and cgif_file lib/A/ACfn.v:20-69. *)
+   post journals `(sink_token :: FS_PSTAT_FP)` as A's post has since S0 and as lib/B/YCfn.v:53 does,
+   instead of the pre `[sink_token]`.
+   Statement only. Port-from: lib/A/FSH_Harness.v (this branch) and cgif_file lib/A/ACfn.v:21-70. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -45,7 +45,7 @@ Variable K : asink_syms.
 #[local] Abbreviation segs := fsbsegs.
 #[local] Abbreviation rd W mem := (mrestrict (w_H W) mem).
 
-(* A/ACfn.v:33-46 at build B *)
+(* A/ACfn.v:34-47 at build B *)
 Definition fs_lib_pre_x (regs : bvmap 5 word) (ly : alayout) (S : astate) (W : world segs) (mem : word -> option byte)
   (md : Model) (p n : Z) (pl : list byte) (M : Z) : Prop :=
   afn_pre segs B YCfn.LLVMF_STK ly S W regs mem md [] /\
@@ -60,7 +60,7 @@ Definition fs_lib_pre_x (regs : bvmap 5 word) (ly : alayout) (S : astate) (W : w
   Fs.fs_sorted (m_fs md) = true /\
   ameta_inv segs K ly (rd W mem) M /\
   mo_ok MT S (XM_LIB n).
-(* A/ACfn.v:47-58 at build B *)
+(* A/ACfn.v:48-59 at build B *)
 Definition fs_lib_post_x (regs : bvmap 5 word) (ly : alayout) (S : astate) (W : world segs) (mem : word -> option byte)
   (md : Model) (p n : Z) (M : Z) (l : lleaf)
   (ly' : alayout) (S' : astate) (W' : world segs) (regs' : bvmap 5 word) (mem' : word -> option byte) (md' : Model)

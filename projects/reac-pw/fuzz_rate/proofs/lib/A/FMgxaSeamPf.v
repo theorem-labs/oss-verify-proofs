@@ -1,11 +1,11 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamPf.v (cold/port-fm-rtprintf-param 0ddf65fd8cc); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMgxaSeamPf.table). *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMgxaSeamPf.v at 2d2ff01bb6f2 relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamPf.v; relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMgxaSeamPf.table). *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMgxaSeamPf.v relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
 (* Step 2 of the evt -> SRr seam at musl vfprintf: MODEL AGREEMENT.
 
    The shared snprintf contract (FMsnprintfShared.v, RtPrintf.Param) states what a run prints with
    lib/A/FMsnprintfPf.v's parser and renderer (pf_parse / pf_text over pf_piece / pf_arg), copied
    from fuzz_disco lib/Rt/PfFacts.v.  GXA's musl vfprintf statement
-   (lib/CJ/RL/GXA/G_vfprintf_snf.v:206) asks instead for
+   (lib/CJ/RL/GXA/G_vfprintf_snf.v:207) asks instead for
      printf_model (OUT_snf OM) OUTFP_snf fmt args [] = ITree.Ret (Ok (r, o)).
 
    The released GXA tree already proves the agreement for ITS OWN copy of the parser and renderer:

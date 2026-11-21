@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput; the launch premises valid_launch and entry_launch_ok_va; the channel-reader premise of writev; the model's m_kernel field). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool String.
@@ -68,18 +69,27 @@ Proof.
 Qed.
 
 Section T1.
-Variable sp0 : word.
-Variables av ev : list (list byte).
-Variables uid tid hw : word.
+(* LPS 08b1429: the section takes the launch ([inp], [mbase], [entry], [brk], with
+   [Hvl] and [Hlau]) as UDrvMain's Handoff section does; argv/envp are fields of
+   [inp] and the argv strings sit below the draw's [ed_top]. [Hfits] is kept so the
+   statement is unchanged, now stated over the [av]/[ev] notations. *)
+Variable inp : ProcInput.
+Variables mbase entry : word.
+Variables sp0 brk : word.
+Variable tid : word.
 Variable rdraw : EntryDraw.
 Variable regs : bvmap 5 word.
 Variable mem : word -> option byte.
+Local Notation av := (in_argv inp) (only parsing).
+Local Notation ev := (in_envp inp) (only parsing).
 Hypothesis Hsp : valid_sp sp0.
 Hypothesis Hva : valid_argv av.
 Hypothesis Hve : valid_envp ev.
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp0 brk mbase rdraw) inp.
 Hypothesis Hfits : entry_stack_fits sp0 av ev.
 Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-Hypothesis ME : main_entry sp0 av ev uid tid hw rdraw regs mem.
+Hypothesis ME : main_entry inp mbase entry sp0 rdraw tid regs mem.
 Hypothesis Hargc2 : length av = 2%nat.
 Variables IMG_LO IMG_END HTOP : Z.
 Variable STATIC : list ivl.
@@ -93,15 +103,15 @@ Hypothesis HCELL : forall hs m m' md, hi_Heap HI hs m md -> munch CELLS_NE m m' 
   (forall a, 0x65b58 <= a < 0x65b60 \/ 0x97c00 <= a < 0x97c08 -> mrd PSEGS m' (Z_to_bv 64 a) = mrd PSEGS m (Z_to_bv 64 a)) -> hi_Heap HI hs m' md.
 Hypothesis HNL : forall hs m md, hi_Heap HI hs m md -> NL m.
 Hypothesis HSTATI : forall x, ~ ioutside IMGIV x -> ioutside (CELLS_NE ++ ERRC) x -> ioutside STATIC x.
-Hypothesis HMV : forall hs m md md', hi_Heap HI hs m md -> m_vmmaps md' = m_vmmaps md -> m_halted md' = None -> m_vm_lazy md' = [] -> hi_Heap HI hs m md'.
+Hypothesis HMV : forall hs m md md', hi_Heap HI hs m md -> m_vmmaps md' = m_vmmaps md -> m_kernel md' = m_kernel md -> m_halted md' = None -> m_vm_lazy md' = [] -> hi_Heap HI hs m md'.
 Hypothesis HSTATR : forall x, RSX x -> ioutside STATIC x.
 Variable data : list byte.
 Variable fs0 : Fs.Fs.
 Hypothesis Hlk : fs_lookup fs0 (nth 1 av []) = Some data.
 
-Let E := E_main sp0 av ev tid (canary rdraw) regs.
-Local Notation MFXR' := (MFXR sp0 av ev tid rdraw regs mem IMG_LO IMG_END HTOP STATIC).
-Local Notation TRHEAD' := (TRHEAD sp0 av ev tid rdraw regs mem IMG_LO IMG_END HTOP STATIC HI data fs0).
+Let E := E_main inp sp0 (ed_top rdraw) tid (canary rdraw) regs.
+Local Notation MFXR' := (MFXR inp sp0 tid rdraw regs mem IMG_LO IMG_END HTOP STATIC).
+Local Notation TRHEAD' := (TRHEAD inp sp0 tid rdraw regs mem IMG_LO IMG_END HTOP STATIC HI data fs0).
 Local Notation CL := (Z.of_nat (config_len data)).
 Local Notation CALLS := (Z.of_nat (n_calls data)).
 
@@ -113,14 +123,14 @@ Definition JHEAD (J : sst) (n0 : bool) (E4 : valu) (ms : machine_state) (md : Mo
   agree 200 E E4 /\ sden PSEGS E4 J ms /\ ms_rom ms = seg_rom PSEGS /\ E4 N0 = Z_to_bv 64 len /\ E4 BUF = Z_to_bv 64 buf /\
   E4 CLV = Z_to_bv 64 CL /\ E4 RV = Z_to_bv 64 CALLS /\
   MFXR' (ms_mem ms) /\ hi_Heap HI hs (ms_mem ms) md /\ m_halted md = None /\ m_vm_lazy md = [] /\
-  m_fds md = FDS0 /\ m_fs md = fs0 /\ In (buf, cap) (hi_blocks HI hs) /\
+  m_fds md = FDS0 /\ m_fs md = fs0 /\ m_channel_reader md = true /\ In (buf, cap) (hi_blocks HI hs) /\
   len = Z.of_nat (length data) /\ 6 + CL <= len < cap /\ CAPOKU cap md /\
   (if n0 then len = 6 + CL else 6 + CL < len).
 
 #[using="Type"] Lemma n_calls_cl0 : config_len data = 0%nat -> n_calls data = 1%nat.
 Proof. LiaFast.lf_pins LiaFast.u0. intros H. unfold n_calls. rewrite H. reflexivity. Qed.
-#[using="av Hargc2"] Lemma n_calls_cl1 : config_len data <> 0%nat -> Z.of_nat (n_calls data) = bv_unsigned (nth 2 data (Z_to_bv 8 0)) mod 4 + 1.
-Proof. LiaFast.lf_pins (fun (av Hargc2 : LiaFast.U) => LiaFast.u0).
+#[using="inp Hargc2"] Lemma n_calls_cl1 : config_len data <> 0%nat -> Z.of_nat (n_calls data) = bv_unsigned (nth 2 data (Z_to_bv 8 0)) mod 4 + 1.
+Proof. LiaFast.lf_pins (fun (inp Hargc2 : LiaFast.U) => LiaFast.u0).
   intros H. unfold n_calls. destruct (config_len data) as [|k]; [exfalso; exact (H eq_refl)|].
   pose proof (Z.mod_pos_bound (bv_unsigned (nth 2 data (Z_to_bv 8 0))) 4 ltac:(lia)). rewrite Nat2Z.inj_succ, Z2Nat.id by lia. lia.
 Qed.
@@ -130,29 +140,29 @@ Definition TRLK (E3 : valu) (ms : machine_state) (md : Model) (hs : hi_HS HI) (l
   agree 200 E E3 /\ sden PSEGS E3 U_lk ms /\ ms_rom ms = seg_rom PSEGS /\ E3 N0 = Z_to_bv 64 len /\ E3 BUF = Z_to_bv 64 buf /\
   E3 CLV = Z_to_bv 64 CL /\
   MFXR' (ms_mem ms) /\ hi_Heap HI hs (ms_mem ms) md /\ m_halted md = None /\ m_vm_lazy md = [] /\
-  m_fds md = FDS0 /\ m_fs md = fs0 /\ In (buf, cap) (hi_blocks HI hs) /\
+  m_fds md = FDS0 /\ m_fs md = fs0 /\ m_channel_reader md = true /\ In (buf, cap) (hi_blocks HI hs) /\
   (config_len data <> 0%nat -> mrd PSEGS (ms_mem ms) (Z_to_bv 64 (buf + 2)) = Some (nth 2 data (Z_to_bv 8 0))) /\
   len = Z.of_nat (length data) /\ 6 + CL <= len < cap /\ CAPOKU cap md.
 
 (* [comment removed for export] *)
-#[using="uid hw Hsp Hva Hve ME Hargc2 HTOPB HIMG HOK HERR HCELL HNL HSTATI"] Lemma tr_lock : forall E3 ms md hs len cap buf T,
+#[using="mbase entry brk Hsp Hva Hve Hvl Hlau ME Hargc2 HTOPB HIMG HOK HERR HCELL HNL HSTATI"] Lemma tr_lock : forall E3 ms md hs len cap buf T,
   TRHEAD' E3 ms md hs len cap buf ->
   (forall E5 ms5, TRLK E5 ms5 md hs len cap buf -> realizes PSEGS (mkCfg ms5 md) T) ->
   realizes PSEGS (mkCfg ms md) T.
-Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve ME Hargc2 HTOPB HIMG HOK HERR HCELL HNL HSTATI : LiaFast.U) => LiaFast.u0).
-  intros E3 ms md hs len cap buf T (Ha3 & Hd3 & Hrom3 & HN3 & HB3 & HCLV3 & Hm3 & Hh3 & Hhd & Hld & Hfd & Hfs & Hblk & Hd2b & HL & Hlen & Hcap) K.
+Proof. LiaFast.lf_pins (fun (mbase entry brk Hsp Hva Hve Hvl Hlau ME Hargc2 HTOPB HIMG HOK HERR HCELL HNL HSTATI : LiaFast.U) => LiaFast.u0).
+  intros E3 ms md hs len cap buf T (Ha3 & Hd3 & Hrom3 & HN3 & HB3 & HCLV3 & Hm3 & Hh3 & Hhd & Hld & Hfd & Hfs & Hrd & Hblk & Hd2b & HL & Hlen & Hcap) K.
   pose proof (capoku_bounds cap md Hcap) as Hcb. pose proof (sp0_lo sp0 Hsp) as SL. pose proof (sp0_hi sp0 Hsp) as SH.
   destruct HIMG as [HI1 HI2].
   pose proof HOK as ((HB1' & HB2') & _ & _ & _ & HBLK).
   destruct (HBLK hs (ms_mem ms) md Hh3) as (HBL & _). destruct (HBL buf cap Hblk) as (Hcap1 & Hbr & Hstk & _ & _).
   assert (Hbr' : 16 <= buf /\ buf + cap <= HTOP) by (destruct Hbr as [Hbr|Hbr]; lia).
   assert (HO2 : outside E3 (s_rgs Ltr) (Z_to_bv 64 (buf + 2))).
-  { apply (blk_out av Hargc2 IMG_LO IMG_END HTOP STATIC (conj HI1 HI2) HI HOK E3 (s_rgs Ltr) hs (ms_mem ms) md buf cap); [| exact Hh3 | exact Hblk |].
-    - exact (avoid_m2 sp0 av ev uid tid hw rdraw regs mem Hsp Hva Hve ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB (conj HI1 HI2) HSTATI E3 (s_rgs Ltr) Ha3 ltac:(vm_compute; reflexivity)).
+  { apply (blk_out inp Hargc2 IMG_LO IMG_END HTOP STATIC (conj HI1 HI2) HI HOK E3 (s_rgs Ltr) hs (ms_mem ms) md buf cap); [| exact Hh3 | exact Hblk |].
+    - exact (avoid_m2 inp mbase entry sp0 brk tid rdraw regs mem Hsp Hva Hve Hvl Hlau ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB (conj HI1 HI2) HSTATI E3 (s_rgs Ltr) Ha3 ltac:(vm_compute; reflexivity)).
     - rewrite u_small64 by (unfold two64; lia). lia. }
   apply (rzc_fx_explore_fg PSEGS DCFG TBL_P IMG_P 4000 STGL Ltr LT0 E3 ms md _ TBL_P_ok IMG_P_ok cert_LT0 Hd3 ltac:(vm_compute; reflexivity) Hhd Hld).
   intros L E4 ms4 HIn Hd4 Ha34 Hrom4 Hfr4 Hgr4. rewrite LT0_eq in HIn. destruct HIn as [<-|[]].
-  destruct (seg_xfer sp0 av ev uid tid hw rdraw regs mem Hsp Hva Hve ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB (conj HI1 HI2) HI HOK HERR HCELL HSTATI
+  destruct (seg_xfer inp mbase entry sp0 brk tid rdraw regs mem Hsp Hva Hve Hvl Hlau ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB (conj HI1 HI2) HI HOK HERR HCELL HSTATI
               E3 E4 Ltr Llk ms ms4 hs md buf [] Ha3 Ha34 ltac:(vm_compute; congruence)
               ltac:(vm_compute; reflexivity) Hd3 Hd4 ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity) Hfr4 Hgr4 Hm3 Hh3
               ltac:(exists cap; split; [exact Hblk | cbn; lia]) ltac:(split; [lia | split; [cbn; lia | intros i Hi; cbn in Hi; lia]]))
@@ -169,19 +179,19 @@ Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve ME Hargc2 HTOPB HIMG HOK HERR HC
   split; [rewrite HE53 by (vm_compute; reflexivity); exact HB3|].
   split; [rewrite HE53 by (vm_compute; reflexivity); exact HCLV3|].
   rewrite Hmem5.
-  split; [exact Hm4|]. split; [exact Hh4|]. split; [exact Hhd|]. split; [exact Hld|]. split; [exact Hfd|]. split; [exact Hfs|].
+  split; [exact Hm4|]. split; [exact Hh4|]. split; [exact Hhd|]. split; [exact Hld|]. split; [exact Hfd|]. split; [exact Hfs|]. split; [exact Hrd|].
   split; [exact Hblk|]. split; [| split; [exact HL | split; [exact Hlen | exact Hcap]]].
   intros HCL1. unfold mrd. rewrite (Hfr4 _ HO2). exact (Hd2b HCL1).
 Qed.
 
 (* [comment removed for export] *)
-#[using="uid hw Hsp Hva Hve ME Hargc2 HTOPB HIMG HOK HERR HCELL HSTATI"] Lemma tr_front_lk : forall E3 ms md hs len cap buf T,
+#[using="mbase entry brk Hsp Hva Hve Hvl Hlau ME Hargc2 HTOPB HIMG HOK HERR HCELL HSTATI"] Lemma tr_front_lk : forall E3 ms md hs len cap buf T,
   TRLK E3 ms md hs len cap buf ->
   (forall E4 ms4, JHEAD J0 true E4 ms4 md hs len cap buf -> realizes PSEGS (mkCfg ms4 md) T) ->
   (forall E4 ms4, JHEAD J1 false E4 ms4 md hs len cap buf -> realizes PSEGS (mkCfg ms4 md) T) ->
   realizes PSEGS (mkCfg ms md) T.
-Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve ME Hargc2 HTOPB HIMG HOK HERR HCELL HSTATI : LiaFast.U) => LiaFast.u0).
-  intros E3 ms md hs len cap buf T (Ha3 & Hd3 & Hrom3 & HN3 & HB3 & HCLV3 & Hm3 & Hh3 & Hhd & Hld & Hfd & Hfs & Hblk & Hd2b & HL & Hlen & Hcap) K0 K1.
+Proof. LiaFast.lf_pins (fun (mbase entry brk Hsp Hva Hve Hvl Hlau ME Hargc2 HTOPB HIMG HOK HERR HCELL HSTATI : LiaFast.U) => LiaFast.u0).
+  intros E3 ms md hs len cap buf T (Ha3 & Hd3 & Hrom3 & HN3 & HB3 & HCLV3 & Hm3 & Hh3 & Hhd & Hld & Hfd & Hfs & Hrd & Hblk & Hd2b & HL & Hlen & Hcap) K0 K1.
   pose proof (capoku_bounds cap md Hcap) as Hcb. pose proof (sp0_lo sp0 Hsp) as SL. pose proof (sp0_hi sp0 Hsp) as SH.
   destruct HIMG as [HI1 HI2].
   pose proof HOK as ((HB1' & HB2') & _ & _ & _ & HBLK).
@@ -190,7 +200,7 @@ Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve ME Hargc2 HTOPB HIMG HOK HERR HC
   apply (rzc_fx_explore_fg PSEGS DCFG TBL_P IMG_P 4000 STG U_lk LT1 E3 ms md _ TBL_P_ok IMG_P_ok cert_LT1 Hd3 ltac:(vm_compute; reflexivity) Hhd Hld).
   intros L E4 ms4 HIn Hd4 Ha34 Hrom4 Hfr4 Hgr4.
   assert (HLc : cells_tmpl L = true) by (rewrite LT1_eq in HIn; destruct HIn as [<-|[<-|[<-|[]]]]; vm_compute; reflexivity).
-  destruct (seg_xfer sp0 av ev uid tid hw rdraw regs mem Hsp Hva Hve ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB (conj HI1 HI2) HI HOK HERR HCELL HSTATI
+  destruct (seg_xfer inp mbase entry sp0 brk tid rdraw regs mem Hsp Hva Hve Hvl Hlau ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB (conj HI1 HI2) HI HOK HERR HCELL HSTATI
               E3 E4 U_lk L ms ms4 hs md buf [] Ha3 Ha34 ltac:(vm_compute; congruence)
               ltac:(vm_compute; reflexivity) Hd3 Hd4 ltac:(vm_compute; reflexivity) HLc Hfr4 Hgr4 Hm3 Hh3
               ltac:(exists cap; split; [exact Hblk | cbn; lia]) ltac:(split; [lia | split; [cbn; lia | intros i Hi; cbn in Hi; lia]]))
@@ -216,7 +226,7 @@ Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve ME Hargc2 HTOPB HIMG HOK HERR HC
     split; [rewrite <- (Ha78 BUF) by (vm_compute; reflexivity); exact HB7|].
     split; [rewrite <- (Ha78 CLV) by (vm_compute; reflexivity); exact HC7|].
     split; [unfold ecomp; exact HR7|]. split; [exact Hm7|]. split; [exact Hh7|]. split; [exact Hhd|]. split; [exact Hld|].
-    split; [exact Hfd|]. split; [exact Hfs|]. split; [exact Hblk|]. split; [exact HL|]. split; [lia|]. split; [exact Hcap | exact Hn0]. }
+    split; [exact Hfd|]. split; [exact Hfs|]. split; [exact Hrd|]. split; [exact Hblk|]. split; [exact HL|]. split; [lia|]. split; [exact Hcap | exact Hn0]. }
   rewrite LT1_eq in HIn. destruct HIn as [<-|[<-|[<-|[]]]].
   - (* [comment removed for export] *)
     pose proof (sden_fact PSEGS E4 Lcf ms4 _ Hd4 FC_cf_in) as HF. rewrite FC_cf_eq in HF. cbn [fact_ok branch_taken] in HF.
@@ -226,8 +236,8 @@ Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve ME Hargc2 HTOPB HIMG HOK HERR HC
     set (d2 := nth 2 data (Z_to_bv 8 0)) in *. set (u2 := bv_unsigned d2) in *.
     assert (Hu2 : 0 <= u2 < 256) by (pose proof (bv_unsigned_in_range _ d2) as R; unfold bv_modulus in R; exact R).
     assert (HO2 : outside E3 (s_rgs U_lk) (Z_to_bv 64 (buf + 2))).
-    { apply (blk_out av Hargc2 IMG_LO IMG_END HTOP STATIC (conj HI1 HI2) HI HOK E3 (s_rgs U_lk) hs (ms_mem ms) md buf cap); [| exact Hh3 | exact Hblk |].
-      - exact (avoid_m2 sp0 av ev uid tid hw rdraw regs mem Hsp Hva Hve ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB (conj HI1 HI2) HSTATI E3 (s_rgs U_lk) Ha3 ltac:(vm_compute; reflexivity)).
+    { apply (blk_out inp Hargc2 IMG_LO IMG_END HTOP STATIC (conj HI1 HI2) HI HOK E3 (s_rgs U_lk) hs (ms_mem ms) md buf cap); [| exact Hh3 | exact Hblk |].
+      - exact (avoid_m2 inp mbase entry sp0 brk tid rdraw regs mem Hsp Hva Hve Hvl Hlau ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB (conj HI1 HI2) HSTATI E3 (s_rgs U_lk) Ha3 ltac:(vm_compute; reflexivity)).
       - rewrite u_small64 by (unfold two64; lia). lia. }
     assert (HD2 : mrd PSEGS (ms_mem ms4) (Z_to_bv 64 (buf + 2)) = Some d2).
     { unfold mrd. rewrite (Hfr4 _ HO2). exact (Hd2b HCL1). }
@@ -273,8 +283,8 @@ Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve ME Hargc2 HTOPB HIMG HOK HERR HC
         apply rg_disj_bytes; [rewrite (csz_rsz E6 R') by lia; lia | unfold CFGR; rsz_simpl; lia |].
         intros j Hj. unfold CFGR in Hj. rsz_simpl_in Hj. unfold CFGR. cbn [RGz rg_base]. rewrite UB6.
         assert (HO : outside E6 (s_rgs Lcf) (Z_to_bv 64 (buf + 2 + j))).
-        { apply (blk_out av Hargc2 IMG_LO IMG_END HTOP STATIC (conj HI1 HI2) HI HOK E6 (s_rgs Lcf) hs (ms_mem ms) md buf cap); [| exact Hh3 | exact Hblk |].
-          - exact (avoid_m2 sp0 av ev uid tid hw rdraw regs mem Hsp Hva Hve ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB (conj HI1 HI2) HSTATI E6 (s_rgs Lcf) Ha6 ltac:(vm_compute; reflexivity)).
+        { apply (blk_out inp Hargc2 IMG_LO IMG_END HTOP STATIC (conj HI1 HI2) HI HOK E6 (s_rgs Lcf) hs (ms_mem ms) md buf cap); [| exact Hh3 | exact Hblk |].
+          - exact (avoid_m2 inp mbase entry sp0 brk tid rdraw regs mem Hsp Hva Hve Hvl Hlau ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB (conj HI1 HI2) HSTATI E6 (s_rgs Lcf) Ha6 ltac:(vm_compute; reflexivity)).
           - rewrite u_small64 by (unfold two64; lia). lia. }
         pose proof (outside_nth E6 _ _ i R' HO Hi) as X. rewrite u_small64 in X by (unfold two64; lia). exact X. }
     (* [comment removed for export] *)
@@ -293,11 +303,11 @@ Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve ME Hargc2 HTOPB HIMG HOK HERR HC
       exists buf, cap. split; [exact Hblk | lia]. }
     assert (S21 : shape21 (s_rgs U_cf)) by (vm_compute; reflexivity).
     assert (Hh7 : hi_Heap HI hs (ms_mem ms7) md).
-    { apply (heap_fx_g sp0 av ev uid tid hw rdraw regs mem Hsp Hva Hve ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB (conj HI1 HI2) HI HOK HERR HCELL HSTATI
+    { apply (heap_fx_g inp mbase entry sp0 brk tid rdraw regs mem Hsp Hva Hve Hvl Hlau ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB (conj HI1 HI2) HI HOK HERR HCELL HSTATI
                E6 E7 U_cf L ms4 ms7 hs md Ha6 Ha7 S21 XB Hd7 Hd8 ltac:(vm_compute; reflexivity)); [| exact Hfr7 | exact Hgr7 | exact Hh4].
       rewrite LCF_eq in HIn. destruct HIn as [<-|[<-|[]]]; vm_compute; reflexivity. }
     assert (Hm7 : MFXR' (ms_mem ms7)).
-    { apply (mfxr_fx_g sp0 av ev tid rdraw regs mem IMG_LO IMG_END HTOP STATIC HI HOK E6 U_cf hs (ms_mem ms4) md (ms_mem ms4) (ms_mem ms7) Ha6 S21 XB Hh4 Hfr7 Hm4). }
+    { apply (mfxr_fx_g inp sp0 tid rdraw regs mem IMG_LO IMG_END HTOP STATIC HI HOK E6 U_cf hs (ms_mem ms4) md (ms_mem ms4) (ms_mem ms7) Ha6 S21 XB Hh4 Hfr7 Hm4). }
     rewrite Hrom4 in Hrom7.
     assert (HRV : forall σ, svar σ RV = laddc (lvar JV) 1 -> lden E7 (svar σ RV) = Z_to_bv 64 CALLS).
     { intros σ Hσ. rewrite Hσ, lden_laddc, lden_lvar, HJ7, HNC. rewrite u_small64 by (unfold two64; pose proof (Z.mod_pos_bound u2 4); lia). reflexivity. }
@@ -343,12 +353,12 @@ Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve ME Hargc2 HTOPB HIMG HOK HERR HC
 Qed.
 
 (* [comment removed for export] *)
-#[using="uid hw Hsp Hva Hve ME Hargc2 HTOPB HIMG HOK HERR HCELL HNL HSTATI"] Theorem tr_front : forall E3 ms md hs len cap buf T,
+#[using="mbase entry brk Hsp Hva Hve Hvl Hlau ME Hargc2 HTOPB HIMG HOK HERR HCELL HNL HSTATI"] Theorem tr_front : forall E3 ms md hs len cap buf T,
   TRHEAD' E3 ms md hs len cap buf ->
   (forall E4 ms4, JHEAD J0 true E4 ms4 md hs len cap buf -> realizes PSEGS (mkCfg ms4 md) T) ->
   (forall E4 ms4, JHEAD J1 false E4 ms4 md hs len cap buf -> realizes PSEGS (mkCfg ms4 md) T) ->
   realizes PSEGS (mkCfg ms md) T.
-Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve ME Hargc2 HTOPB HIMG HOK HERR HCELL HNL HSTATI : LiaFast.U) => LiaFast.u0).
+Proof. LiaFast.lf_pins (fun (mbase entry brk Hsp Hva Hve Hvl Hlau ME Hargc2 HTOPB HIMG HOK HERR HCELL HNL HSTATI : LiaFast.U) => LiaFast.u0).
   intros E3 ms md hs len cap buf T HT K0 K1. apply (tr_lock E3 ms md hs len cap buf T HT).
   intros E5 ms5 HT5. exact (tr_front_lk E5 ms5 md hs len cap buf T HT5 K0 K1).
 Qed.

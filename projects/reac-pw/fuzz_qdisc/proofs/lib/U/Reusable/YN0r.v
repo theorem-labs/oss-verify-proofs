@@ -2,7 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN0r.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the allocation mode the allocator record carries (a refused munmap leaves a leaked map)). *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.U.Reusable Require YZ00.
+From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.U.Reusable.R Require Import Cfg.
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -16,6 +18,7 @@ Unset Lia Cache. Unset Nia Cache.
 Local Open Scope Z_scope.
 Notation B1 := src0_msyms.
 Section b. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {AM : AllocMode}.
 Definition kept_regs : list nat := [3; 4; 20; 21; 22; 23; 24; 25; 26; 27]%nat.
 Record ntmid (Xz : list sptr) (fuel : nat) (L : layout) (A0 s : astate) (g : sptr)
 (regs0 regs1 : bvmap 5 word) (mem0 mem1 : word -> option byte) (md : Model) (gv : Z) : Prop := {

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor raised to the 0x5D0000 bytes below sp that the launch guarantees ([STACK_GAP])). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -62,7 +63,7 @@ Definition fp_ok (Σ : rts RT) (lo : Z) (W : list (Z * Z)) : Prop :=
                    \/ (exists f c, In (f, c) (rt_frames RT Σ) /\ f <= fst r /\ snd r <= f + fs_size c - 8)
                    \/ (exists f c, In (f, c) (rt_frames RT Σ) /\ shad f <= fst r /\ snd r <= shad (f + fs_size c))) W.
 
-Lemma art_of_munch : forall Σ (m m' : mem) lo W, ART RT Σ m -> rt_sp0 RT Σ - STACK_WIN <= lo -> fp_ok Σ lo W ->
+Lemma art_of_munch : forall Σ (m m' : mem) lo W, ART RT Σ m -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= lo -> fp_ok Σ lo W ->
   munch W m m' -> wmono asegs m m' -> ART RT Σ m'.
 Proof using AF.
   intros Σ m m' lo W HA LO FP MU WM. apply (art_client_write RT AF Σ m m' lo HA LO); [| exact WM].
@@ -75,7 +76,7 @@ Proof using AF.
   - right; right; right; right. exists f, c. split; [exact Hf| lia].
 Qed.
 
-Lemma shzp_live : forall Σ (m0 : mem) lo W p n, ART RT Σ m0 -> rt_sp0 RT Σ - STACK_WIN <= lo -> fp_ok Σ lo W ->
+Lemma shzp_live : forall Σ (m0 : mem) lo W p n, ART RT Σ m0 -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= lo -> fp_ok Σ lo W ->
   In (p, n) (rt_live RT Σ) -> p mod 8 = 0 ->
   forall m', munch W m0 m' -> wmono asegs m0 m' -> shz m' p (8 * (n / 8)).
 Proof using AF.
@@ -83,22 +84,22 @@ Proof using AF.
   exact (shz_live RT AF Σ m' p n (art_of_munch Σ m0 m' lo W HA LO FP MU WM) Hin P8).
 Qed.
 
-Lemma shz_stack : forall Σ (m : mem) a n, ART RT Σ m -> rt_sp0 RT Σ - STACK_WIN <= a -> a + n <= USTACK_TOP -> a mod 8 = 0 ->
+Lemma shz_stack : forall Σ (m : mem) a n, ART RT Σ m -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= a -> a + n <= USTACK_TOP -> a mod 8 = 0 ->
   shz m a (8 * (n / 8)).
 Proof using AF.
   intros Σ m a n HA A1 A2 A8. pose proof (af_sp0_range RT AF Σ m HA) as SPR.
   apply shz_of_acc; [exact (af_acc_stack RT AF Σ m a n HA A1 A2)| exact A8| ul].
 Qed.
 
-Lemma shzp_stack : forall Σ (m0 : mem) lo W a n, ART RT Σ m0 -> rt_sp0 RT Σ - STACK_WIN <= lo -> fp_ok Σ lo W ->
-  rt_sp0 RT Σ - STACK_WIN <= a -> a + n <= USTACK_TOP -> a mod 8 = 0 ->
+Lemma shzp_stack : forall Σ (m0 : mem) lo W a n, ART RT Σ m0 -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= lo -> fp_ok Σ lo W ->
+  rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= a -> a + n <= USTACK_TOP -> a mod 8 = 0 ->
   forall m', munch W m0 m' -> wmono asegs m0 m' -> shz m' a (8 * (n / 8)).
 Proof using AF.
   intros Σ m0 lo W a n HA LO FP A1 A2 A8 m' MU WM.
   exact (shz_stack Σ m' a n (art_of_munch Σ m0 m' lo W HA LO FP MU WM) A1 A2 A8).
 Qed.
 
-Lemma shzp_lits : forall Σ (m0 : mem) lo W a n, num_lits_acc RT -> ART RT Σ m0 -> rt_sp0 RT Σ - STACK_WIN <= lo -> fp_ok Σ lo W ->
+Lemma shzp_lits : forall Σ (m0 : mem) lo W a n, num_lits_acc RT -> ART RT Σ m0 -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= lo -> fp_ok Σ lo W ->
   In (a, n) NUM_LITS ->
   forall m', munch W m0 m' -> wmono asegs m0 m' -> shz m' a (8 * (n / 8)).
 Proof using AF.

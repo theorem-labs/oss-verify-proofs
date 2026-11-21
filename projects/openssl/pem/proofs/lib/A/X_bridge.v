@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a system call's reads over the larger read-only backing). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -141,7 +142,9 @@ Proof using Hwx Hsegs.
   { rewrite (iovs_total_ok _ _ _ Hok), Hnb. reflexivity. }
   set (CA := import_iovecs_accesses (in_mem i) (areg ms 11) (iovcnt32 (Z_to_bv 64 (Z.of_nat (length iovs))))).
   exists (Z_to_bv 64 66), (with_copyins CA (mkEffect (Z_to_bv 64 0) [] [])), mo.
-  split; [exact Hsvc|]. split.
+  split; [exact Hsvc|].
+  split; [exact (writev_rob_gen segs ms mo fd bufs _ Hat' Hfdl Hw (proj2 (proj2 (proj2 (proj2 (proj2 Hmc))))))|].
+  split.
   { intros o. change (sys_input segs ms (Z_to_bv 64 66)) with i. rewrite Hsp. exact (writev_chan_zero_outcome _ _ _ i mo o (Z_to_bv 64 fd) iovs Hfdl Hw Himp Htotal). }
   split; [apply vm_same_refl|]. split; [apply io_eff_copyins, io_eff_mkEffect|].
   split.

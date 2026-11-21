@@ -7,7 +7,8 @@
    `python3 yb1o_find.py` (sha256 07b47f19b9a5..), which matches each whole run of words
    against the two pinned fuzz_knock binaries (asan, asan-ubsan) and maps the hit through the PT_LOAD headers.
    The W_<addr> NAMES are cgif's addresses, kept as names only; no knock address is stated in this file. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YB1o.v at origin/ossv/recipes 4b6f0df50aa7 (fuzz_knock's released ASan tree); module paths changed to libdiginet/fuzz_codec. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YB1o.v (fuzz_knock's released ASan tree); module paths changed to libdiginet/fuzz_codec. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.

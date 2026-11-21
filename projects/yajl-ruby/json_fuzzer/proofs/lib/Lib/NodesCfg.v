@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap 215 and write 64 in the injected table with their refusal errnos, and nsc_rob from at_node_rob). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -24,8 +25,9 @@ Abbreviation acfg := (alloc_only_cfg false).
 
 Definition node_off (cfg : SpuriousCfg) (n : node) : bool :=
   match n with
-  | NBrk _ | NMmap _ _ _ _ | NMprotect _ _ _ | NMremap _ _ _ _ => negb (sc_alloc cfg)
-  | NOpen _ => negb (sc_fs cfg)
+  (* LPS 08b1429: munmap (215, FamAlloc) and write (64, FamFs) joined the injected table *)
+  | NBrk _ | NMmap _ _ _ _ | NMprotect _ _ _ | NMremap _ _ _ _ | NMunmap _ _ => negb (sc_alloc cfg)
+  | NOpen _ | NWrite _ _ => negb (sc_fs cfg)
   | _ => false
   end.
 
@@ -36,6 +38,8 @@ Definition node_refusal (n : node) (mo : Model) (r : word) : bool :=
   | NMremap _ _ _ _ => ret_in_errnos mremap_errnos r
   | NMprotect _ _ _ => ret_in_errnos mprotect_errnos r
   | NOpen _ => ret_in_errnos openat_errnos r
+  | NMunmap _ _ => ret_in_errnos munmap_errnos r
+  | NWrite _ _ => ret_in_errnos write_errnos r
   | _ => false
   end.
 
@@ -117,7 +121,7 @@ Proof. intros cfg n mo eff mo' evs Hl Hm Hh H. eapply minv_preserved; eauto usin
 
 (* [comment removed for export] *)
 Definition alloc_node (n : node) : bool :=
-  match n with NBrk _ | NMmap _ _ _ _ | NMprotect _ _ _ | NMremap _ _ _ _ => true | _ => false end.
+  match n with NBrk _ | NMmap _ _ _ _ | NMprotect _ _ _ | NMremap _ _ _ _ | NMunmap _ _ => true | _ => false end.
 
 Lemma node_off_acfg : forall n, node_off acfg n = alloc_node n.
 Proof. intros n; destruct n; reflexivity. Qed.
@@ -150,6 +154,8 @@ Lemma at_node_svc : forall n ms, at_node segs n ms ->
         | NMremap _ _ _ _ => Some (mkInjectedArm 216 FamAlloc mremap_errnos)
         | NMprotect _ _ _ => Some (mkInjectedArm 226 FamAlloc mprotect_errnos)
         | NOpen _ => Some (mkInjectedArm 56 FamFs openat_errnos)
+        | NMunmap _ _ => Some (mkInjectedArm 215 FamAlloc munmap_errnos)
+        | NWrite _ _ => Some (mkInjectedArm 64 FamFs write_errnos)
         | _ => None end
       /\ bv_unsigned (Z_to_bv 64 K) = K /\ (K = 214 <-> exists req, n = NBrk req))).
 Proof.
@@ -294,6 +300,8 @@ Proof.
         destruct (node_refusal n mo (eff_ret rsp')) eqn:E; [| reflexivity]. exfalso. apply NF. intros _. reflexivity.
     + exists rsp, mo', evs. apply nstep_cfg_nonrefusal; assumption.
   - (* [comment removed for export] *) exact (ns_lazy _ _ _ _ _ _ _ NS).
+  - (* LPS 08b1429: [Nodes.at_node_rob] *)
+    intros n ms mo Hat Hminv. exact (at_node_rob segs n ms mo Hat (minv_io_of_minv mo Hminv)).
 Qed.
 
 End Link.

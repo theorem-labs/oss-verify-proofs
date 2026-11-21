@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AD1p.v, with its module paths changed and its addresses moved to omx-clap-core/fuzz_state's ASan build. *)
-(* Modified by Theorem Labs, 2026-10: the driver takes the library contract with its invariant LI (tfib_lib_contract_xI) and the two assumptions on LI (lib_inv_stable, lib_inv_init, A/AD1w.v) (ported from: a working branch 4e5e8a3dde1 A/AD1p.v). *)
+(* Modified by Theorem Labs, 2026-10: the driver takes the library contract with its invariant LI (tfib_lib_contract_xI) and the two assumptions on LI (lib_inv_stable, lib_inv_init, A/AD1w.v) (ported from: a working branch A/AD1p.v). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises); the input-owned, top-anchored launch stack; the start-up certificate per CONFIG_RSEQ flag with states computed in the build; the model's channel reader that fdchan asks for beside the descriptor (cs_ok's co_rdr, proved at the launch)). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -10,7 +11,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.omx_clap_core.fuzz_state.images Require Import Asan.
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require Import YK11 YK15 YK18 YK0c YK0e YK09 YA0c YA0e YA01 YA02 YA00.
-From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.A Require Import AB12 AB1h AB01 AB1n.
+From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.A Require Import AB12 AB1h AB01r AB1n.
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require Import YG0f YG00 YG01 YG0n.
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.A Require Import AF0m.
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require Import YP0m YP09 YP0l YP08 YP03 YN3q YK04 YA0i YA0n YA0o YA0p.
@@ -86,25 +87,53 @@ Let RDD : rd0_dir_tfa B := tfib_rd0_dir B HB ARL RDERR.
 Let RDF : rd0_file_tfa B := tfib_rd0_file B HB ARL ML MSITE RCHK MCPY FREE REFUSED HDR.
 Let HFILE : file_arm_tfa B := tfib_file_arm B HB ARL ML MSITE RDF.
 Let HDIR : dir_arm_tfa B := tfib_dir_arm B HB ARL ML MSITE RDD.
-Theorem tfib_drv_main : forall (sp : word) (rdraw : EntryDraw) (brk : word) (inp : ProcInput) (h : nat) (ch : acs) (E : env) (R : bvmap 5 word)
-(FULL : word -> option byte) (model : Model),
+(* LPS 727298f3: the hand-off comes from [AB01r.HS_tfib_r] at the run's CONFIG_RSEQ flag, the
+   start-up invariant is abstract ([SINV], with the stack-top fact [SINV_sp0] the drivers read),
+   the launch facts are [valid_input]'s [valid_launch] and the entry's [entry_launch_ok_va], and
+   the driver lemmas are applied through their sections' binders ([instP], a tactic local to the
+   proof: a top-level [Ltac] resolves each name it uses where it is defined, and these names exist
+   only after the proof's [intros]). *)
+Theorem tfib_drv_main :
+forall (sp : word) (rdraw : EntryDraw) (brk mbase : word) (inp : ProcInput) (h : nat) (ch : acs) (E : env) (R : bvmap 5 word)
+(FULL : word -> option byte) (model : Model) (SINV : env -> (word -> option byte) -> Prop),
 valid_sp sp -> valid_brk TSEGS brk -> entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) inp ->
 YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
-HS_tfib h = Some ch ->
-cs_ok TSEGS TFIB YA02.LIMIT (YA02.TOP sp)
-(YA02.SINV0 TPH sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-(YA02.argH0 TPH sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model ->
-(forall n, (n < NX0G)%nat -> ev E n = ev (YA02.E0 TPH sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) n) ->
-(forall a, YA02.argH0 TPH sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) E a = true ->
-FULL a = wrap_mem TPH sp (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) rdraw a) ->
+HS_tfib_r (rseq_z (kb_rseq (in_kernel inp))) h = Some ch ->
+(forall E' M, SINV E' M -> uE E' e_sp0 = YA02.TOP sp + 8388608) ->
+cs_ok TSEGS TFIB YA02.LIMIT (YA02.TOP sp) SINV
+(YA02.argH0 sp rdraw (in_argv inp) (in_envp inp) (in_image_fs inp) (in_stdin inp) (in_uid inp) (in_gid inp) (in_hwcap inp)
+  (in_groups inp) (in_net inp) (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp) (in_kernel inp)
+  (in_execfn inp) (in_sigpipe_default inp)) (in_fs inp) E ch R FULL model ->
+(forall n, (n < NX0G)%nat -> ev E n = ev (YA02.E0 sp rdraw brk (in_argv inp) (in_envp inp) (in_image_fs inp) (in_stdin inp)
+  (in_uid inp) (in_gid inp) (in_hwcap inp) (in_groups inp) (in_net inp) (in_nofile inp) (in_sigmask inp) (in_urandom inp)
+  (in_tmp inp) (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp)) n) ->
+(forall a, YA02.argH0 sp rdraw (in_argv inp) (in_envp inp) (in_image_fs inp) (in_stdin inp) (in_uid inp) (in_gid inp) (in_hwcap inp)
+  (in_groups inp) (in_net inp) (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp) (in_kernel inp)
+  (in_execfn inp) (in_sigpipe_default inp) E a = true ->
+FULL a = wrap_mem inp mbase TPH (Z_to_bv 64 (Z.of_N Asan.M.init_pc)) sp rdraw a) ->
 srealizes TSEGS (cfg_of TSEGS R (pc ch) FULL model) (CLOSEDX inp).
 Proof.
-intros sp rdraw brk inp h ch E R FULL model Hsp Hbrk Hfit (Hva & Hve & Hvfs & _) Hceil Hch HC HE HM.
-pose proof (tfib_main_entry sp rdraw brk inp Hsp Hva Hve Hfit h ch E R FULL model Hch HC HE HM (sliver_allowed sp rdraw brk inp Hsp Hva Hve Hfit h ch E R FULL model Hch HC Hceil)    ) as (Hpc & HST & HAI & Hfs & Hfds & _).
-set (ly := AD1g.ly0 ch E model).
-assert (HAR : AR TSEGS B ly init_state (W1 sp rdraw inp Hsp Hva ch E model) FULL model) by (eapply (tfib_AR B HB); eassumption).
-assert (HTOP : AD1v.top_ok (bv_unsigned sp) ly) by (eapply tfib_top_ok; eassumption).
-assert (HFI : FINV ly (w_H (W1 sp rdraw inp Hsp Hva ch E model)) FULL) by exact (tfib_finv_handoff sp rdraw brk inp Hsp Hva h ch E R FULL model Hch HC).
+intros sp rdraw brk mbase inp h ch E R FULL model SINV Hsp Hbrk Hfit Hvi Hlau Hceil Hch SINV_sp0 HC HE HM.
+pose proof Hvi as (Hva & Hve & Hvfs & _ & _ & _ & _ & _ & _ & _ & _ & _ & Hvl & _).
+let instP H := (try specialize (H YK11.fx0); try specialize (H B); try specialize (H HB);
+  try specialize (H sp); try specialize (H rdraw); try specialize (H brk); try specialize (H mbase); try specialize (H inp);
+  try specialize (H Hsp); try specialize (H Hva); try specialize (H Hve); try specialize (H Hfit);
+  try specialize (H Hvl); try specialize (H Hlau); try specialize (H Hvi); try specialize (H h); try specialize (H ch);
+  try specialize (H E); try specialize (H R); try specialize (H FULL); try specialize (H model); try specialize (H Hch);
+  try specialize (H SINV); try specialize (H SINV_sp0); try specialize (H HC);
+  try specialize (H HE); try specialize (H HM); try specialize (H SL_allowed); try specialize (H rc); try specialize (H Hceil)) in
+(pose proof (@AD1g.sliver_allowed) as SL_allowed; instP SL_allowed;
+ pose proof (@tfib_main_entry) as ME; instP ME;
+ destruct ME as (Hpc & HST & HAI & Hfs & Hfds & _);
+ (* The hand-off model's channel reader, which [fdchan] asks for at LPS 727298f3 beside the
+    descriptor: [cs_ok]'s [co_rdr], proved at the launch ([YA02.model0_channel_reader]).  The arms carry it to their sites. *)
+ assert (Hcr : m_channel_reader model = true) by (eapply co_rdr; exact HC);
+ set (ly := AD1g.ly0 ch E model);
+ set (W1 := AD2i.W1 sp rdraw inp Hsp Hva ch E model);
+ assert (HAR : AR TSEGS B ly init_state W1 FULL model) by (let L := fresh in pose proof (@tfib_AR) as L; instP L; exact L);
+ assert (HTOP : AD1v.top_ok (bv_unsigned sp) ly) by (let L := fresh in pose proof (@tfib_top_ok) as L; instP L; exact L);
+ assert (HFI : FINV ly (w_H W1) FULL) by (let L := fresh in pose proof (@tfib_finv_handoff) as L; instP L; exact L)).
 rewrite Hpc. change (cfg_of TSEGS R TFIB_MAIN FULL model) with (mkCfg (mkst R (Z_to_bv 64 TFIB_MAIN) FULL (seg_rom tfibsegs)) model).
 change TSEGS with tfibsegs in HST, HAI, HAR |- *. unfold CLOSEDX.
 destruct (Nat.eq_dec (length (in_argv inp)) 2) as [Hlen|Hlen].
@@ -113,14 +142,11 @@ destruct (Nat.eq_dec (length (in_argv inp)) 2) as [Hlen|Hlen].
 destruct Hargv as (a0 & p & Hargv).
 destruct (HST true ltac:(unfold two_ok; rewrite Hargv; cbn; lia)) as [HS HR].
 replace (CLOSEDX_args (in_argv inp) (in_fs inp)) with (CLOSEDX_args [a0; p] (in_fs inp)) by (rewrite Hargv; reflexivity).
-exact (tfib_arm_argv2 B HB ARL HCO HFILE HDIR sp inp (xwE E R) (xdE inp)
-(W1 sp rdraw inp Hsp Hva ch E model) (mkst R (Z_to_bv 64 TFIB_MAIN) FULL (seg_rom tfibsegs)) model ly a0 p
-Hargv Hsp Hva Hve Hfit Hvfs HS HR HAI HAR HTOP HFI Hfs Hfds).
+eapply (tfib_arm_argv2 B HB ARL HCO HFILE HDIR sp brk mbase inp rdraw); eassumption.
 - destruct (HST false I) as [HS HR].
 replace (CLOSEDX_args (in_argv inp) (in_fs inp)) with (diag (msg_usage (nth 0 (in_argv inp) [])) (in_fs inp)).
 2:{ clear -Hlen. unfold CLOSEDX_args. destruct (in_argv inp) as [|x [|y [|z r]]]; try reflexivity. cbn in Hlen. lia. }
-exact (tfib_usage B HB ARL xst est XFR ESTF FPU EXS sp inp (xwE E R) (xdE inp) (W1 sp rdraw inp Hsp Hva ch E model) (mkst R (Z_to_bv 64 TFIB_MAIN) FULL (seg_rom tfibsegs))
-model ly Hsp Hva Hve Hfit Hlen HS HR HAI HAR HTOP Hfs Hfds).
+eapply (tfib_usage B HB ARL xst est XFR ESTF FPU EXS sp brk mbase inp rdraw); eassumption.
 Qed.
 End c.
 End b.

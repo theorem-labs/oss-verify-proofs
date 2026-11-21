@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (LIBMID_xfs's vdso_func cell holds hvdso, the vDSO's clock_gettime entry, not 0, once resolved). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import Sorting.Permutation.
@@ -147,7 +148,7 @@ Section K.
     as_RHEAP H s LBx m0 ->
     LIBMID LIB m M -> mid_ctx M = CtxReady x -> xpres H LBx SP X m m' ->
     (forall b, In b LIB -> In b LBx) -> (forall b, In b (mid_errblocks M) -> In b LBx) -> Forall fswin X ->
-    MEMFLAG m' f' -> rw_cells asegs m' A_vdso_func [C8 (wz (if v' then 0 else P_cgt_init))] ->
+    MEMFLAG m' f' -> rw_cells asegs m' A_vdso_func [C8 (wz (if v' then hvdso else P_cgt_init))] ->
     LIBMID LIB m' (mkMID f' (mid_ctx M) (mid_err M) (mid_E M) v').
   Proof.
     intros s m0 LIB LBx SP X m m' M x f' v' HP LM CX XP SUBL SUBE FW MF' VD'.

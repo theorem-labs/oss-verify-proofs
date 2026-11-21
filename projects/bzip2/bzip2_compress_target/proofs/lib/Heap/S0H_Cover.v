@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the munmap step's well-formedness premise). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -1173,7 +1174,7 @@ Proof.
     assert (MM : mmap_len (mmap_len l0) = mmap_len l0) by (apply mmap_len_of_aligned; [lia| exact MA]).
     assert (HAS : map_has (vm_maps (m_vmmaps MD)) (Z_to_bv 64 a) (Z_to_bv 64 (mmap_len (mmap_len l0))) = true).
     { rewrite MM. unfold map_has. apply existsb_exists. exists (went a (mmap_len l0)). split; [exact A5|]. unfold went, wz. cbn [fst snd]. rewrite !bv_eqb_refl. reflexivity. }
-    cps_pose (nstep_munmap_exact a (mmap_len l0) MD rsp mo4 tr7 ltac:(lia) ltac:(unfold PGSZ in A3; exact A3) ltac:(lia) ltac:(rewrite MM; unfold TASK_SIZE; lia) HAS NS)
+    cps_pose (nstep_munmap_exact a (mmap_len l0) MD rsp mo4 tr7 ltac:(lia) ltac:(unfold PGSZ in A3; exact A3) ltac:(lia) ltac:(rewrite MM; unfold TASK_SIZE; lia) (kl_wf _ _ _ HK) HAS NS)
       as (-> & VO & LZ & HH & MAT & DX & VM4).
     rewrite DX in ER. injection ER as -> ->.
     apply tpath_ret_inv in H8 as (E8 & -> & ->). injection E8 as E8a E8b. subst z s2.

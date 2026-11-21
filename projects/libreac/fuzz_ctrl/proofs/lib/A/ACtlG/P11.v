@@ -7,9 +7,9 @@
    0 released, the delivered package 0; declared only on this branch (a working branch). seg_P11: 0 released; no match in the
    delivered proofs; its working-branch hits are the stage hypothesis (ACtl.v) and source lemma
    (Seg/P11.v, image B twin) this file builds on.  Written new.
-   At ossv/recipes c5e779efe8c (2026-10-31), glue_seg_P11 and seg_P11 are defined only in this unit (glue_seg_P11 in
-   this file; seg_P11 at the stage hypotheses lib/A/ACtl.v:733 and lib/B/ACtl.v:508, the source lemmas lib/A/Prog/Seg/P11.v:231 and
-   lib/B/Prog/Seg/P11.v:184, and image B's lib/B/ACtlW3b.v:2022).
+   At (2026-10-31), glue_seg_P11 and seg_P11 are defined only in this unit (glue_seg_P11 in
+   this file; seg_P11 at the stage hypotheses lib/A/ACtl.v:733 and lib/B/ACtl.v:509, the source lemmas lib/A/Prog/Seg/P11.v:232 and
+   lib/B/Prog/Seg/P11.v:184, and image B's lib/B/ACtlW3b.v:2023).
 
    WHAT IT PROVES
      glue_seg_P11 : forall POST, CF POST C_A81c84 -> CF POST C_A81c60
@@ -40,7 +40,7 @@
        (YCbq.v:362); the kind-name strings from ctl_rt_C's ro_agree (Seg/P11.v:116 p11_strings); the callee
        stack window's presence (stk) from the journal's presence conjunct (YCbq.v:368); addressable of the
        table from the zero shadow (ARm's am_zshadow at B's as_zero_shadow row (0x20ec0, 0xa4380 - 0x20ec0),
-       AF0m.v:280 through TFIB_SYMS's ts_zsh).  Footprints: ProgBridge.img_vis_W (the image range),
+       AF0m.v:281 through TFIB_SYMS's ts_zsh).  Footprints: ProgBridge.img_vis_W (the image range),
        ProgWorldVisWin.win_vis (the two stack ranges), ProgWorldVisFrame.frame_vis (the code byte in the
        class-6 frame) and the zero shadow again (the 14 shadow bytes of the table).
        All numeric bounds come from VISIBLE state: 4096 <= fr and the frame's ceiling from
@@ -70,7 +70,7 @@
      al_blocks, the visibility lemmas).
    - TFIB_SYMS : A.AF0m.CtrlTSyms B, ACtl.v:191's own hypothesis (ts_zsh for the zero-shadow row,
      ts_owned / ts_errno for the journal's image conjunct).
-  - RELRO_KIND_NAME : ACtl.v's own hypothesis (ACtl.v:204 at d36efc6152d, same name and text): the kind-name table
+  - RELRO_KIND_NAME : ACtl.v's own hypothesis (ACtl.v:204, same name and text): the kind-name table
     [0x9e760, 0x9e760 + 112) lies in the core pre's read-only span [RLO, RHI).  (This lane's RELRO_KN before Batch3.)
 
    FROM THE SHARED KIT lib/A/ACtlG/Kit.v (Required, never copied): kit_wx (SRr_fevt_hid's premise) and
@@ -83,13 +83,13 @@
    ASan-side copies (lib/A/Reusable/YP09, YK04 ..., lib/A/Bz/Lib/Mem, Frame ...) through Seg/P11F.v, so a
    partial name such as Reusable.YP09.mbyte or Lib.Mem.wa resolves to the WRONG copy (measured: it did, at
    this lane's builds 3-11; porter a Theorem Labs lane 04:24Z / 04:33Z for the six twins).  Measured closure (a Theorem Labs lane's
-   fclosure.py at e42c431c851): 577 files; no lib/AZ/AsanW (not in this delivery), no W6, no SegCF / *_cfw file, not lib/A/AD2l.v;
+   fclosure.py): 577 files; no lib/AZ/AsanW (not in this delivery), no W6, no SegCF / *_cfw file, not lib/A/AD2l.v;
    its lib/AZ files are AZ/Lib/{Cells,Exec,FP,Frame,LiaHints,LiaOrc,LiaTuning,MState,Mem,PropExec,Step,StepDiet,
    ZBridge,ZifyLit} (not in this delivery) (the frame route's, reached through Seg/P11F.v, closure rule 1), AZ/LibA/AcctCore and
    AZ/Spec/{AsanCtrl,AsanCtrlProps,STree}.  The frame-route blobs are the v1.9 blobs of record (listed in the
-   commit message of f13e09aa792).
+   commit message).
    NOT USED, because they do not compile on this base (core errors, reported): lib/A/ACeg.v:24
-   (port_core_refused_103b0 undefined, not in the workspace patch list) and lib/A/AB1h.v:50 (its segment
+   (port_core_refused_103b0 undefined, not in the workspace patch list) and lib/A/AB1h.v:51 (its segment
    table says 0x9e000 has size 8192; the image's is 12288).  ProgWorld.v / ProgWorldShadow.v are not on
    this base; the two facts this file needs from them (aview at a visible address is mrd; the zero shadow of
    an as_zero_shadow row or a constant shadow cell is addressable) are proved locally below (p11g_aview_mrd,
@@ -97,9 +97,9 @@
    comes from the first zero-shadow row of A.AF0m.Tfib_zero_shadow that covers it, or from a constant shadow
    cell z1 (ANum (shadow_addr a)) v of A.AF0m.Tfib_const with shadow_ok a v (p11g_shb, decided by vm_compute).
    On the planning list the kind-name table and QMARK lie in the row (0x20ec0, 0xa4380 - 0x20ec0); on a Theorem Labs lane's
-   record list (a working branch e56483f863b, AF0m.v:2955-2964) the table lies in
+   record list (a working branch, AF0m.v:2956-2965) the table lies in
    (0x21aa0, 0x9e7d0 - 0x21aa0) and QMARK in NO zero row: its granule's shadow is the constant cell
-   z1 (ANum 0x7fffc23c) 0x2 (AF0m.v:2179 there).  The same proof checks on both.
+   z1 (ANum 0x7fffc23c) 0x2 (AF0m.v:2180 there).  The same proof checks on both.
    FRAC AT THE NEW MEMORY (the only place this file re-establishes FRAC / FRAHC: the exit body, after the
    kind_name call) is a generic conjunct walk (p11g_walk): a register or arithmetic conjunct is carried
    unchanged, a byte conjunct moves across the callee's window by Frame.bytes_at_transport; it needs no edit
@@ -109,7 +109,7 @@
    SHADOWED NAMES: getr / mkst / seg_rom / cfg_at are lib.Reusable.YK11 / lib.Reusable.YG0d-qualified.
 
    BUILD STATE (honest): TYPE-CHECK WITH WORKSPACE STAND-INS (provisional): gbuild.sh on a build machine workspace
-   (internal path) (FACTS ed6b6b7b0ab + PAU pau-libreac-v190), base a working branch 46eb24cd4b3
+   (internal path) (FACTS + PAU pau-libreac-v190), base a working branch
    merged; the closure reaches lib/A/AE2k.v, lib/A/AF0l.v and lib/A/AF0m.v, whose port_core_refused_* names the workspace
    patches.  Print Assumptions glue_seg_P11: Rocq primitives (PrimInt63, PrimString, PrimArray) and
    functional_extensionality_dep only; no CtrlB_syms (AD2l is not in the closure).  No Axiom, no

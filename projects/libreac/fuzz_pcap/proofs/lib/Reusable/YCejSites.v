@@ -62,11 +62,11 @@ Lemma fmemopen_malloc_chain_in : forall (ra sp s0 : Z) (ch : list (Z * Z * Z)), 
 In (map (fun r => snd (fst r)) ch) CTX_pcap_source_open ->
 In (unwind_of_chain (symaddr (Symbols.AsanUbsan.s___interceptor_malloc + 0xc8)%Z) ((sp, ra, s0) :: ch)) Tfib_universe.
 Proof. intros ra sp s0 ch Hra Hc. rewrite unwind_of_chain_spine. exact (fmemopen_malloc_ctx_in ra _ Hra Hc). Qed.
-(* musl fclose's two frees (+0xa0, +0xa8; s0 is the FILE pointer): the premises of afclose_spec (YE01.v:201). *)
+(* musl fclose's two frees (+0xa0, +0xa8; s0 is the FILE pointer): the premises of afclose_spec (YE01.v:202). *)
 Lemma fclose_free_in : In [(symaddr (Symbols.AsanUbsan.s___interceptor_free + 0x138)%Z); (symaddr (Symbols.AsanUbsan.s_fclose + 0xa4)%Z)] Tfib_universe /\ In [(symaddr (Symbols.AsanUbsan.s___interceptor_free + 0x138)%Z); (symaddr (Symbols.AsanUbsan.s_fclose + 0xac)%Z)] Tfib_universe.
 Proof. split; apply memZL_In; vm_compute; reflexivity. Qed.
 (* musl __fdopen's malloc (+0x48, from fopen, never made by the harness; s0 is the mode string): the premise of
-   afopen_spec (YE01.v:217). *)
+   afopen_spec (YE01.v:218). *)
 Lemma fdopen_malloc_in : In [(symaddr (Symbols.AsanUbsan.s___interceptor_malloc + 0xc8)%Z); (symaddr (Symbols.AsanUbsan.s_fdopen + 0x4c)%Z)] Tfib_universe.
 Proof. apply memZL_In. vm_compute. reflexivity. Qed.
 (* Every row of the universe is the trace of one of the calls above. *)

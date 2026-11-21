@@ -5,12 +5,13 @@
    for libreac/fuzz_identity's ASan build (lib/A). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_catalogue.v, with its module paths and numbers changed; 204 of its 254 lines of code are new or changed and 319 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/check_ignore.v, with its module paths and module names changed; 229 of its 263 lines of code are new or changed and 220 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* trim's image-B walk, the leading-blank loop (0x89680 .. 0x896b4): tr_lead_ok : TR_AFTER_stmt -> TR_LEAD_stmt
    (lib/B/Prog/trim_k.v), by strong induction on lead - i, the blanks still before s0 = p + i. Written for image B on
-   the pattern of the image-A G3 walk owner's image-A trailing loop lib/A/Prog/trim_tr.v (commit 07dedd5b93c6;
+   the pattern of the image-A G3 walk owner's image-A trailing loop lib/A/Prog/trim_tr.v (
    image A's leading loop was not pushed when this was written) and of fuzz_command's answer_l.v (a loop with inline
-   checks, re-seeded at each iteration); the plain proof of the same loop is the unit owner's lib/Prog/trim.v LOOP1 at
-   db8c4beebf62, the UBSan one lib/U/Prog/trim.v:159-190 (commit 523c6a205596). One iteration:
+   checks, re-seeded at each iteration); the plain proof of the same loop is the unit owner's lib/Prog/trim.v LOOP1,
+   the UBSan one lib/U/Prog/trim.v:159-190. One iteration:
      check 1 (0x89680-0x8968c, slow arm 0x896b8-0x896bc, error call 0x896c0 errpath_load1, load1 at a0 = s0 = p + i):
        the obligation that p + i is addressable, from trim_pre's sa_addr p (|s| + 1);
      the byte c = s[i] (0x89690 `lbu a4,0(s0)`), `bltu a1,a4` (0x20 < c) and bit c of the mask (0x89698-0x896a0): c not

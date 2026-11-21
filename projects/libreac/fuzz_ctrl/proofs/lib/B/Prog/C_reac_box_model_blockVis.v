@@ -14,7 +14,7 @@
      the row, the name             garr8 over mrestrict (w_H W) and shadow_hull_vis (the spec's own premises)
      o                             apresent and shadow_hull_vis (the spec's own premises)
      the JOIN shadow covers        am_zshadow rows (0x219e0, 0x60) / (0x21a60, 0x20) and the four redzone const rows
-                                   0x7fffc348 .. 0x7fffc34b of B's bundle (YF0m.v:2371-2374, 2961-2962)
+                                   0x7fffc348 .. 0x7fffc34b of B's bundle (YF0m.v:2372-2375, 2961-2962)
      RngBytes.rng_bytes            ProgBridge.rng_bytes_RNG_W
    The shadow consequences shcov / shspan / shkov come from the 8-aligned covers by reac_box_model_blockF.v's
    mbF_cov0 / mbF_span0 / mbF_kov0.
@@ -189,7 +189,7 @@ Ltac mbV_row W m V :=
 Section Vis.
 Context {fx : lib.Reusable.YK11.FPState} {rc : lib.Reusable.YM05.RunCeil} {SK : lib.Reusable.YI16.sink_head}.
 Variable B : lib.Reusable.YG0f.asyms.
-(* Core: B's symbol facts and its const / zero-shadow rows (lib/Reusable/YF0m.v:2985-3009); the top Section of
+(* Core: B's symbol facts and its const / zero-shadow rows (lib/Reusable/YF0m.v:2986-3010); the top Section of
    pb_reac_box_model_block carries it (plan, "Named hypotheses": CtrlTSyms B). *)
 Hypothesis CTS : lib.Reusable.YF0m.CtrlTSyms B.
 

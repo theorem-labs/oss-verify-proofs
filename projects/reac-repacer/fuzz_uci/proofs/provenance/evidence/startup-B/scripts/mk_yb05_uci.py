@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""mk_yb05_uci.py DONOR_YB05 TAIL_PLAN OUT -- fuzz_uci image-B YB05.v by fuzz_decode B's mk_yb05.py rule (commit 7eb81ddb186
+"""mk_yb05_uci.py DONOR_YB05 TAIL_PLAN OUT -- fuzz_uci image-B YB05.v by fuzz_decode B's mk_yb05.py rule (
 proofs/libreac/fuzz_decode/provenance/startup-gen/B/mk_yb05.py): the frozen hsform's header of the donor plan (hsform.header, a93ebaea058f, one --modified
 line; donor module paths kept, nsB.py rewrites them) followed by the body of the plan the collected pass 2 ran
 (the donor plan relocated by the plan-relocation tool + itabranges, with plantail.py's measured tail inserted:

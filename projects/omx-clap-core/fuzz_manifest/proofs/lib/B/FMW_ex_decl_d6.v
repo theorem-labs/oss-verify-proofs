@@ -8,8 +8,9 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_hp_kit.v, with its module paths and module names changed; 305 of its 367 lines of code are new or changed and 869 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/B/FMW_ex_tok_base.v; 567 of its 633 lines of code are new or changed and 301 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/B/FMW_ex_decl_base.v; 183 of its 234 lines of code are new or changed and 582 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* G4.ExDecl, IMAGE B: dseg_D6 (FMW_ex_decl_base.v), expected 0x816c0..0x816dc (fuzz_manifest.c:162-166) on
-   fm.asan-ubsan, after plain (uri + nl2) returned a0. B twin of lib/A/FMW_ex_decl_d6.v (06d82004dc3); B's code
+   fm.asan-ubsan, after plain (uri + nl2) returned a0. B twin of lib/A/FMW_ex_decl_d6.v; B's code
    (fm_b_expected_iface.out lines 265-294, 432-433): 0x816c0 `beqz a0`:
    - a0 = 0 (plain_name false): 0x81668..0x8167c a6 = ld F+0x78 = text, a7 = 6, t0 = ':', t1 = ld F+0x70 = the
      mask, a1 = ld F+0x40 = text + close -> EX_JUMP (the declaration does not match; dseg_J);

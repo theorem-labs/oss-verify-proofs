@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: top_x group RT (port-reply's TOPX-OWNERS.md, owner g-ph-verbs): three runtime
-   hypotheses of A's top_x (W_LLVMFuzzerTestOneInput_top_x.v at integ bb9dae5d905) PROVED at the instance
+   hypotheses of A's top_x (W_LLVMFuzzerTestOneInput_top_x.v at integ) PROVED at the instance
      ALOCK     (top_x.v:166) : alock_realizes_x   TfibB ARX (SIGMA WS_pthread_mutex_lock)
      AUNLOCK   (top_x.v:167) : aunlock_realizes_x TfibB ARX (SIGMA WS_pthread_mutex_unlock)
      ASTRLEN_x (top_x.v:268) : astrlen_realizes_x TfibB ARX (SIGMA WS_strlen)
@@ -15,8 +15,9 @@
    W_palib_fr.palib_tfib TfibB TfibB_syms, TfibSyms by AD2l.TfibB_syms.  No premise is left: every lemma here is
    closed.  The other two rows of the group (ASTRNLEN_x, SNP_x) have no twin yet and are not in this file. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/TopX_RT.v, with its module paths changed; 52 of its 107 lines of code are new or changed and 14 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* top_x group RT (TOPX-OWNERS.md (sha256 bb821fae800d; internal record)): three runtime
-   hypotheses of A's top_x (W_LLVMFuzzerTestOneInput_top_x.v at integ bb9dae5d905) PROVED at the instance
+   hypotheses of A's top_x (W_LLVMFuzzerTestOneInput_top_x.v at integ) PROVED at the instance
      ALOCK     (top_x.v:166) : alock_realizes_x   TfibB ARX (SIGMA WS_pthread_mutex_lock)
      AUNLOCK   (top_x.v:167) : aunlock_realizes_x TfibB ARX (SIGMA WS_pthread_mutex_unlock)
      ASTRLEN_x (top_x.v:268) : astrlen_realizes_x TfibB ARX (SIGMA WS_strlen)
@@ -103,7 +104,7 @@ Proof.
 Qed.
 
 (* ---- QMm W1 LIFTS, image A (a Theorem Labs lane, 2026-10-31; token for token the image-B text of a Theorem Labs lane's
-   B/TopX_RT_lock.v at cf82ea55a740, with CfImg_B -> CfImg_A, ReplyKeptAroB.relro_kept_B -> ReplyKeptAroA.relro_kept_A,
+   B/TopX_RT_lock.v, with CfImg_B -> CfImg_A, ReplyKeptAroB.relro_kept_B -> ReplyKeptAroA.relro_kept_A,
    ReplyRelroGeoB.relro_seg_reply_B -> ReplyRelroGeoA.relro_seg_reply_A). top_x's ARX carries arodata_ok_cf as its
    last conjunct (lib/A/W_LLVMFuzzerTestOneInput_top_x.v ARX); the runtime contracts above are proved at ARX_rt (its first
    two conjuncts), which keeps its text and name so that no file citing it changes. A contract's post keeps every view

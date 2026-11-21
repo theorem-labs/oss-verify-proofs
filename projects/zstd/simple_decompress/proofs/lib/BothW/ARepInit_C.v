@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main entry's recorded facts read as the main entry keeps them: BMKN, BPKN). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -23,8 +24,8 @@ Open Scope Z_scope.
 Section CANSEC1. Context {rc : runConstT}.
 Section C.
   Variables (V : nat -> Z) (w : bool) (U : list (list Z)) (m : amem).
-  Hypothesis HM : Forall (mfact_ok bsegs V m) both_mem_facts.
-  Hypothesis HP : Forall (pfact_ok V) both_pure_facts.
+  Hypothesis HM : Forall (mfact_ok bsegs V m) BMKN.
+  Hypothesis HP : Forall (pfact_ok V) BPKN.
   Hypothesis HU : (length U <= Z.to_nat AUMAX)%nat.
   Hypothesis HAT : 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat - 8388608 = ATOP.   (* [comment removed for export] *)
   Let L := mkALayout (LV V) w U.

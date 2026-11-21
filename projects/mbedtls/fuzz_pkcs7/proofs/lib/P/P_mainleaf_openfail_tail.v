@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a section premise that the channel has a reader, added to the using lists of of_segH, of_segG and of_segF and supplied to the exit write). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -40,6 +41,8 @@ Section Tail.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  (* 08b1429: writev reads the channel reader (recipes/channel-reader-premise.md) *)
+  Hypothesis Hrdr : m_channel_reader model = true.
 
   Definition ENV (vals : list word) : env := Env (vals_ev vals) (blobs_ev BL).
 
@@ -116,7 +119,7 @@ Section Tail.
   Proof. vm_compute. repeat (apply (f_equal2 cons); [apply bv_eq; reflexivity|]). reflexivity. Qed.
 
   Local Ltac2 Set LiaOrc.tbl := fun () => "00g0?L12245466970.29L14418071291.30L15045278903.35L15634797243.35L16639375087.35L20824379164.35L20923401285.35L2133530424.32 L24134822011.32L25278098835.29L25278098835.30L27836886250.35L30226912948.37L30452499962.31L30452506865.32L30467067489.28L32857128880.28L32858771744.32L32858780715.31L32861317660.35L33656270521.28L33671292192.29L3651887136.35 L37803532303.32L38478037260.31L38884559273.29L38948788060.35L40465950858.35L41231950618.31L41493492207.35L41506071619.28L44247534562.32L44247543529.31L44911943466.30L4826696077.35 L48269158559.29L49702778536.31L50040071339.35L51702320857.30L53089041842.35L53178551987.31L5933052733.29 L5933052733.30 L5933052733.31 L622633325.35  L6384997240.29 L64149391721.35L65473109180.35L65903738011.29L67396173106.30L68056979096.30L68446033860.29L7213634117.30 L8534631579.30 L9359554572.28 00000G00^01001P01k02F02X03703N03\03j04<04N04e05<05S05j06A06X07307A07O07k08=08O08f09809S09e0:@0:W0:n0;E0;\0<70<S0<j0=@0=W0>20>@0>N0>\0>j0?I0?`0@60@V0@h0A@0AN0Ai0BA0Bd0C@S3sp04SPhi4path4vals2HLS3sp04SPhi4path4vals2HLS4path4vals2HL3LENS3sp04path1P4vals3HPr2HL3Hhi3LENS3sp04SPhi4path4vals2HL3LENS3sp04SPlo4path4vals2HL3LENS4path4vals2HL3LENS3sp04path1P4vals2HP3HPr2HL3HhiS3sp04path1P4vals2HP2HLS4path4vals2HLS4path4vals2HLS4path4vals2HL3LENS4path4vals2HL3LENS3sp04SPhi4path4vals2HLS3sp04SPhi4path4vals2HLS3sp04SPhi4path4vals2HLS3sp04SPlo4path4vals2HLS3sp04SPlo4path4vals2HLS3sp04SPlo4path4vals2HLS3sp04SPlo4path4vals2HL3LENS4path4vals2HLS4path4vals2HLS3sp04path1P4vals3HPr2HL3LENS3sp04path4vals2HLS3sp04path4vals2HLS3sp04SPlo4path4vals2HLS4path4vals2HL3LENS3sp04path1P4vals2HP2HL3LENS3sp04path4vals2HLS3sp04SPhi4path4vals2HL3LENS3sp04SPhi4path4vals2HLS3sp04SPlo4path4vals2HLS3sp04SPlo4path4vals2HLS3sp04SPlo4path4vals2HLS4path1P4vals2HP3HPr2HL3LENS3sp04SPlo4SPhi4path4vals2HLS3sp04SPhi4path4vals2HLS3sp04path4vals2HL3LENS3sp04SPhi4path4vals2HLS3sp04SPlo4path4vals2HL3LENS4path4vals2HLS4path4vals2HLS4path4vals2HLS4path4vals2HLS3sp04path1P4vals2HP2HL3Hlo3LENS3sp04SPhi4path4vals2HLS3sp04path4vals2HL3LENS3sp04path1P4vals3HPr2HL3Hhi3LENS3sp04path4vals2HLS3sp04path1P4vals3HPr2HLS4path4vals2HLS3sp04path1P4vals2HP3HPr2HLS3sp04path1P4vals3HPr2HLS3sp04path1P4vals2HP3HPr2HL3Hlo3HhiS3sp04SPlo4SPhi4path4vals2HL". (* [comment removed for export] *)
-  #[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma of_segH : ltac2:(CDefT.buildp (gd_tbl_P_mainleaf_openfail_tail ()) "Ppath,(0.(1.&8.))PP,$1:.Pvals,(0.(1.&40.))PR,(2.&5.(1.&40.))PM,P,(1.&40.)(3.(1.&8.))P,(4.$1:.(1;.(6.(1.&8.)R5.))R4.)P,(1<.(1=.=R5.)(1=.R5.+3>.))P,(4.$5.(6.(1.&40.)R5.)#>7.)P,(4.(1.&40.)(7.R6.#0.)Vsp0,)P,(4.(1.&40.)(7.R7.#71.)(12.&40.R8.))P,(8.(9.R8.)$1>.R7.)P,(;.$<.(9.R9.)R7.$1?.)P,(4.(3.(0.(1.&8.)))(20.$<.R8.(12.&40.(21.(22.&40.Vsp0,)+21?.))(6.(1.&8.)R<.))(23.(0.(1.&8.))R<.))P,(4.(3.(0.(1.&8.)))(20.$<.R9.(12.&40.(24.(21.(22.&40.Vsp0,)+21?.)R<.))#1.)(23.(0.(1.&8.))(25.(1.&8.)(12.&8.+:.)(26.(1.&8.)))))(>.$<.(?.(10.$11.R;.(12.&40.+3>66<.)R:.(13.$<.))Vmodel,)(27.(28.+2.(29.R>.))(14.(15.+2.)(16.Vmodel,))))")
+  #[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma of_segH : ltac2:(CDefT.buildp (gd_tbl_P_mainleaf_openfail_tail ()) "Ppath,(0.(1.&8.))PP,$1:.Pvals,(0.(1.&40.))PR,(2.&5.(1.&40.))PM,P,(1.&40.)(3.(1.&8.))P,(4.$1:.(1;.(6.(1.&8.)R5.))R4.)P,(1<.(1=.=R5.)(1=.R5.+3>.))P,(4.$5.(6.(1.&40.)R5.)#>7.)P,(4.(1.&40.)(7.R6.#0.)Vsp0,)P,(4.(1.&40.)(7.R7.#71.)(12.&40.R8.))P,(8.(9.R8.)$1>.R7.)P,(;.$<.(9.R9.)R7.$1?.)P,(4.(3.(0.(1.&8.)))(20.$<.R8.(12.&40.(21.(22.&40.Vsp0,)+21?.))(6.(1.&8.)R<.))(23.(0.(1.&8.))R<.))P,(4.(3.(0.(1.&8.)))(20.$<.R9.(12.&40.(24.(21.(22.&40.Vsp0,)+21?.)R<.))#1.)(23.(0.(1.&8.))(25.(1.&8.)(12.&8.+:.)(26.(1.&8.)))))(>.$<.(?.(10.$11.R;.(12.&40.+3>66<.)R:.(13.$<.))Vmodel,)(27.(28.+2.(29.R>.))(14.(15.+2.)(16.Vmodel,))))")
 (* [comment removed for export] *).
   Proof.
     intros path P vals R M HP HPr HL P0 P113 HR HK SBp SBn.
@@ -178,6 +181,9 @@ Section Tail.
       replace (bv_unsigned sp0 + -560)%Z with (bv_unsigned sp0 + -560)%Z in MSG by lia. exact MSG.
     - reflexivity.
     - exact Hfd2.
+
+    - exact Hrdr.
+
     - exact Hh.
     - exact Hlazy.
     - apply t_exit_has_nil.
@@ -198,7 +204,7 @@ Section Tail.
   Proof. vm_compute. reflexivity. Qed.
 
   Local Ltac2 Set LiaOrc.tbl := fun () => "00U0?L16264749317.29L16970013023.35L16974067588.36L22039677358.28L22915966606.28L26823884495.29L29809534340.29L30224815626.33L32714571052.29L37787127474.35L38844734437.24L39110999443.31L40637660828.35L48269158559.28L48283867559.35L49282067897.31L50497024192.24L52516262761.24L52526751222.29L54441417064.34L55371345329.29L60358885047.29L62550700534.29L63308151236.29L65903738011.28L68446033860.28L6875801538.29 L7200670590.31 L79974662.24   L8530357212.36 L8530359712.31 L8534550086.29 L8534656263.35 L9152800632.31 L9317012995.29 L9359554572.27 L9361438865.32 00000D00j01P01^01l01m02;02P02d03E03Y03m04V05205X06006@06N06\07107207@07N07b08408O08j09B09V0:C0:f0;I0<60<M0<i0=E0=aS4path1P4vals3HPr2HLS3sp04path1P4vals3HPr2HL3Hhi5vals13HL1S3sp04path1P4vals3HPr2HL3Hhi5vals13HL1S4path4vals2HLS4path4vals2HLFS4path4vals2HLS4path4vals2HL2R23HL1S3sp04path1P4vals2HLS3sp04path1P4vals2HP2HL5vals13HL1S4path1P4vals3HPr2HLS3sp04path1P4vals2HLS3sp04path1P4vals2HP3HPr2HL3Hhi5vals13HL1S3sp04SPlo4SPhi4path4vals2HLS3sp04SPlo4SPhi4path4vals2HL5vals13HL1S3sp04path1P4vals3HPr2HLS4path1P4vals2HLS4path4vals2HLS4path4vals2HLS4path4vals2HL2R23HL1FS4path4vals2HLS4path4vals2HLS4path1P4vals3HPr2HLS3sp04path4vals2HLS3sp04path1P4vals2HP3HPr2HLS3sp04path1P4vals2HP2HL3HloS3sp04path1P4vals3HPr2HLS4path1P4vals3HPr2HLS3sp04path1P4vals2HP3HPr2HL3Hlo3Hhi5vals13HL1S3sp04path1P4vals2HP3HPr2HL3Hlo3HhiS3sp04path1P4vals2HP3HPr2HL3Hlo3HhiS3sp04path1P4vals2HP3HPr2HL3Hlo3Hhi5vals13HL1S3sp04SPhi4path4vals2HLS3sp04path1P4vals3HPr2HL3HhiS3sp04SPlo4SPhi4path4vals2HLS3sp04SPlo4SPhi4path4vals2HL". (* [comment removed for export] *)
-  #[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma of_segG : ltac2:(CDefT.buildp (gd_tbl_P_mainleaf_openfail_tail ()) "Ppath,(0.(1.&8.))PP,$1:.Pvals,(0.(1.&40.))PR,(2.&5.(1.&40.))PM,P,(1.&40.)(3.(1.&8.))P,(4.$1:.(1;.(6.(1.&8.)R5.))R4.)P,(1<.(1=.=R5.)(1=.R5.+3>.))P,(4.$5.(6.(1.&40.)R5.)#<7.)P,(4.(1.&40.)(7.R6.#0.)Vsp0,)P,(4.(1.&40.)(7.R7.#71.)(12.&40.R8.))P,(8.(9.R8.)$2:.R7.)P,(;.$<.(9.R9.)R7.$2;.)P,(4.(3.(0.(1.&8.)))(20.$<.R8.(12.&40.(21.(22.&40.Vsp0,)+21?.))(6.(1.&8.)R<.))(23.(0.(1.&8.))R<.))(>.$<.(?.(10.$11.R:.(12.&40.+3>66<.)R9.(13.$<.))Vmodel,)(27.(28.+2.(29.R=.))(14.(15.+2.)(16.Vmodel,))))")
+  #[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma of_segG : ltac2:(CDefT.buildp (gd_tbl_P_mainleaf_openfail_tail ()) "Ppath,(0.(1.&8.))PP,$1:.Pvals,(0.(1.&40.))PR,(2.&5.(1.&40.))PM,P,(1.&40.)(3.(1.&8.))P,(4.$1:.(1;.(6.(1.&8.)R5.))R4.)P,(1<.(1=.=R5.)(1=.R5.+3>.))P,(4.$5.(6.(1.&40.)R5.)#<7.)P,(4.(1.&40.)(7.R6.#0.)Vsp0,)P,(4.(1.&40.)(7.R7.#71.)(12.&40.R8.))P,(8.(9.R8.)$2:.R7.)P,(;.$<.(9.R9.)R7.$2;.)P,(4.(3.(0.(1.&8.)))(20.$<.R8.(12.&40.(21.(22.&40.Vsp0,)+21?.))(6.(1.&8.)R<.))(23.(0.(1.&8.))R<.))(>.$<.(?.(10.$11.R:.(12.&40.+3>66<.)R9.(13.$<.))Vmodel,)(27.(28.+2.(29.R=.))(14.(15.+2.)(16.Vmodel,))))")
 (* [comment removed for export] *).
   Proof.
     intros path P vals R M HP HPr HL P0 P113 HR HK SBp.
@@ -364,7 +370,7 @@ Section Tail.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
   Local Ltac2 Set LiaOrc.tbl := fun () => "0010?L66345289113.2600000DS4path1P4vals3HPr2HL". (* [comment removed for export] *)
-  #[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma of_segF : ltac2:(CDefT.buildp (gd_tbl_P_mainleaf_openfail_tail ()) "Ppath,(0.(1.&8.))Ppp,(1.&40.)PP,$1:.Pvals,(0.(1.&40.))PR,(2.&5.(1.&40.))PM,P,(1.&40.)(3.(1.&8.))P,(4.$1:.(1;.(6.(1.&8.)R6.))R4.)P,(1<.(1=.=R5.)(1=.R5.+3>.))P,(4.$5.(6.(1.&40.)R5.)#:7.)P,(4.(1.&40.)(7.R6.#0.)Vsp0,)P,(4.(1.&40.)(7.R7.#2.)R9.)P,(4.(1.&40.)(7.R8.#71.)(12.&40.R9.))P,(1=.(22.&40.Vsp0,)(22.&40.R;.))P,(1=.(24.(24.(22.&40.R<.)R;.)+8.)(24.(22.&40.Vsp0,)+400000.))P,(8.(9.R;.)$2=.R:.)P,(;.$<.(9.R<.)R:.$2>.)P,(4.(3.(0.(1.&8.)))(20.$<.R;.R?.(2?.(6.(1.&8.)R10.)#1.))(23.(0.(1.&8.))(17.(1.&8.)R10.(25.(1.&8.)(12.&8.=)(26.(1.&8.))))))(>.$<.(?.(10.$11.R=.(12.&40.+3>66<.)R<.(13.$<.))Vmodel,)(27.(28.+2.(29.R11.))(14.(15.+2.)(16.Vmodel,))))")
+  #[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma of_segF : ltac2:(CDefT.buildp (gd_tbl_P_mainleaf_openfail_tail ()) "Ppath,(0.(1.&8.))Ppp,(1.&40.)PP,$1:.Pvals,(0.(1.&40.))PR,(2.&5.(1.&40.))PM,P,(1.&40.)(3.(1.&8.))P,(4.$1:.(1;.(6.(1.&8.)R6.))R4.)P,(1<.(1=.=R5.)(1=.R5.+3>.))P,(4.$5.(6.(1.&40.)R5.)#:7.)P,(4.(1.&40.)(7.R6.#0.)Vsp0,)P,(4.(1.&40.)(7.R7.#2.)R9.)P,(4.(1.&40.)(7.R8.#71.)(12.&40.R9.))P,(1=.(22.&40.Vsp0,)(22.&40.R;.))P,(1=.(24.(24.(22.&40.R<.)R;.)+8.)(24.(22.&40.Vsp0,)+400000.))P,(8.(9.R;.)$2=.R:.)P,(;.$<.(9.R<.)R:.$2>.)P,(4.(3.(0.(1.&8.)))(20.$<.R;.R?.(2?.(6.(1.&8.)R10.)#1.))(23.(0.(1.&8.))(17.(1.&8.)R10.(25.(1.&8.)(12.&8.=)(26.(1.&8.))))))(>.$<.(?.(10.$11.R=.(12.&40.+3>66<.)R<.(13.$<.))Vmodel,)(27.(28.+2.(29.R11.))(14.(15.+2.)(16.Vmodel,))))")
 (* [comment removed for export] *).
   Proof.
     intros path pp P vals R M HP HPr HL P0 P2 P113 Hpp1 Hpp2 HR HK Hstr.

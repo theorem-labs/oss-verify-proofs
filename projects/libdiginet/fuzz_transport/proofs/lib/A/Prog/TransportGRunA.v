@@ -2,12 +2,13 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC1f.v for libreac/fuzz_grant's program walk: the listing's names are gsym, PALib names fuzz_grant.asan's objects and the wrappers' 4-byte jumps, and fuzz_grant's image bound; module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: taken by path from port-grant's copy (origin/cold/pg-prog cb6eddd4032, proofs/libreac/fuzz_grant/lib/A/Prog/GrantPaLib.v) for libreac/fuzz_decode's
+(* Modified by Theorem Labs, 2026-10: taken by path from port-grant's copy (proofs/libreac/fuzz_grant/lib/A/Prog/GrantPaLib.v) for libreac/fuzz_decode's
    program walk: module paths and the listing's names (gsym -> dsym) changed; PALib names fuzz_decode.asan's objects
    of lib/A/Prog/DecodeAddr.v (the shadow-base GOT slot is object 1 and its cell object 13, the side-stack flag's GOT
    slot object 0 and its cell object 14); the image bounds are lib/Reusable/YImgTop.v's IMG_LO / IMG_TOP, which
    blk_off_imgP reads through IMG_LO_val / IMG_TOP_val (lia cannot see into the computed definitions). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_transport/lib/A/Prog/DgnTransportPaLib.v; 11 of its 34 lines of code are new or changed and 479 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* TransportGRunA: the symbolic runs of lib/A/Prog/PaShadow.v taken over the G journal (lib/A/W_journalG.v
    ajournal_gx G XO OUT), at image A's listing: W_journalG.v's run chain SRr_run_pi_tok_AJX / SRr_run_to_pi_tok_AJX
    instantiated at the listing's PAListing / PAImg (lib/A/Prog/DgnTransportPa.v), as libreac/fuzz_pcap's

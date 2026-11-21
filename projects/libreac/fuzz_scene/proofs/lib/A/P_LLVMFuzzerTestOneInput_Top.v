@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the TOP COMPOSITION of the ASan walk of libreac/fuzz_scene's
    LLVMFuzzerTestOneInput.  Two theorems, both Qed, below. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 
 (*     llvmf_compose : forall segs B MT WK IM, llvmf_compose_stmt segs B MT WK IM
        -- the seven segment statements of lib/A/P_LLVMFuzzerTestOneInput_seg.v compose into scene's entry contract
@@ -46,7 +47,7 @@
    FILE ORDER.  lib/A/P_LLVMFuzzerTestOneInput.v is Required only AFTER `llvmf_compose` is closed.  It pulls in
    lib/A/SceneAsanTop.v, which pulls in the released lib/U/Reusable twins of YI16 and YO09; those twins capture the
    short names `YI16.sink_head`, `lib_shape`, `LIBK` and `LL`, which Section d below has to write.  The statement
-   file hit exactly this and had to fully qualify its sink head (P_LLVMFuzzerTestOneInput.v:145-149); here the
+   file hit exactly this and had to fully qualify its sink head (P_LLVMFuzzerTestOneInput.v:146-150); here the
    Require is simply placed after the section that needs the short names, and the second section names none of
    them. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require YZ00.
@@ -72,9 +73,9 @@ Open Scope Z_scope.
 
 (* ---- scene's segment list, meter and walk constants, resolved HERE, where the short names are the ones of
    lib/Reusable and lib/A/Prog (see FILE ORDER above).  `scene_walk` takes the entry constants as arguments: the
-   instance file binds them (P_LLVMFuzzerTestOneInput.v:168), this file must not.  The section is over RunCeil
+   instance file binds them (P_LLVMFuzzerTestOneInput.v:169), this file must not.  The section is over RunCeil
    alone: `pa_segs` / `pa_relro_lo` / `pa_relro_hi` of PI_scene need it, as the statement file's own SEGS / RLO /
-   RHI notations do (P_LLVMFuzzerTestOneInput.v:151-156, inside its Section d). ---- *)
+   RHI notations do (P_LLVMFuzzerTestOneInput.v:152-157, inside its Section d). ---- *)
 Section c. Context {rc : YM05.RunCeil}.
 Definition scene_segs : list Segment := @pa_segs _ scene_listing PI_scene.
 Definition scene_mt : ameter_ops := ameter_triv.
@@ -134,11 +135,11 @@ Qed.
 End d.
 
 (* ---- scene's closed sink head: musl's ofl_head of this image, 0x5f6e90 (MEASURED in the unstripped twin's
-   .symtab; P_LLVMFuzzerTestOneInput.v:23 and :150-151, a Theorem Labs lane's G_Top.v:111 asan_sink_head, a Theorem Labs lane's
+   .symtab; P_LLVMFuzzerTestOneInput.v:24 and :151-152, a Theorem Labs lane's G_Top.v:111 asan_sink_head, a Theorem Labs lane's
    SCENE-TABLES.md (sha256 47d0f838a659; internal record), line 350).  WHY A LOCAL COPY IS NEEDED.  The seven `seg_*_stmt` applications of Section t have
    an implicit `sink_head` to resolve (the cuts' return post, seg.v:526, passes it to scene_tfib_lib_post_x), and
    gate 6h forbids a GLOBAL sink-head instance: the statement file's own head is `#[local]`
-   (P_LLVMFuzzerTestOneInput.v:145-151), so its name does not leave that file, and lib/Reusable/SinkGuard.v
+   (P_LLVMFuzzerTestOneInput.v:146-152), so its name does not leave that file, and lib/Reusable/SinkGuard.v
    removes the released src0 ones.  A Theorem Labs lane's glue meets the same wall and answers it the same way (G_Top.v:90-93:
    "both are passed by name, and neither is an instance here").  This is the SAME record value, so every hypothesis
    below is convertible with the lanes' own statements and with the head scene_llvmf_stmt names; the `refine` in
@@ -150,7 +151,7 @@ End d.
    SCENE'S INSTANCE.  From here on lib/A/SceneAsanTop.v's released lib/U/Reusable twins are in scope, so the short
    names YI16.sink_head, lib_shape, LIBK and LL must not be written; the section below writes none of them.  The
    shape is resolved by unification against `scene_llvmf_stmt`, which names scene's own
-   (P_LLVMFuzzerTestOneInput.v:150, :279).
+   (P_LLVMFuzzerTestOneInput.v:151, :280).
    ================================================================================================================ *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.A Require Import P_LLVMFuzzerTestOneInput.
 

@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_rd_pp.v (a working branch e2e59892bef), re-walked
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_rd_pp.v (a working branch), re-walked
    for B's code (B-readings.lst 0x82060 .. 0x82098 and CONT 0x81ffc .. 0x82010). *)
 (* lv2_locate_manifest_readings on fm.asan-ubsan, segment PP (rd_seg_P of lib/B/FMW_rd_cuts.v): P's own stretch from
    0x82060 (lv2_locate.c:115) -- s6 = p0 = at + s11, the shadow check of p0, the byte there, the two isspace branches --

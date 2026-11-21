@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/openssl/bndiv/lib/Lib/Image.v, with its module paths changed; 1 of its 57 lines of code is new or changed. *)
-(* copied by path from a working branch 51f06361767, unchanged *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* copied by path from a working branch, unchanged *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.A.Bz Require BvWfKernel.
 (* [comment removed for export] *)
 

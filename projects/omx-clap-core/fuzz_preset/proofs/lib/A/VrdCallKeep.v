@@ -19,12 +19,12 @@
       aview (w_H (ie_W E)) (ie_mem E);
    3. vrd_ijrn's arodata_okP at P2 - P2's reader view;
    4. vrd_ijrn's chain at P2 - P2's layout and reader view, at the loop's sp; by IelemE's vrd_chain_keep_w (VrdIElem.v,
-      a working branch 2e1d73b494d) at ly' := ip_ly P2, with layout_le's ly_top conjunct of the callee's journal;
+      a working branch) at ly' := ip_ly P2, with layout_le's ly_top conjunct of the callee's journal;
    5. when every block of P is still a block of P2: rd_keep from P's restricted view rdW (ip_W P) (ip_mem P) to P2's
       (byte values AND write permission) over the node's 56 bytes and the bytes of P's blocks ip_D P, off FP1 - the
       bytes VrdFrame's keep lemmas need for vrd_inode's header, elements, members and free slots;
    WHAT IT DOES NOT GIVE, by design (a Theorem Labs lane's split, 2026-10-29): the shadow facts no journal clause keeps and the
-   text's bytes and home. Those are IelemE's lemmas in lib/A/VrdIStep.v (a working branch da5334ad793, Section S),
+   text's bytes and home. Those are IelemE's lemmas in lib/A/VrdIStep.v (a working branch, Section S),
    stated for ANY later state the entry's journal reaches, about THAT state's view, derived there from the ARx shadow
    laws: vrd_icur_after_call (src_rd of the text, prhReader_home, range_addressable q 24), vrd_node_ra_after_call
    (range_addressable v 56), vrd_lam_shadow (a ledger block's range_addressable and shadow_hull_vis: the kids / keys
@@ -42,8 +42,8 @@
    ONE SECTION HYPOTHESIS besides the engine laws, an image fact: H_pst_ro (alloc.c's statics are not read-only
    bytes; IelemE's VrdIStep.v carries the same fact under the same name; discharged at prh_img_A by S1ImgA.v
    pst_not_ro_A).
-   SET: a working branch on a working branch da5334ad793 (VrdIElem.v blob b128cf8b1fb1); record texts
-   a working branch 49745a1a153 (PRH_FnParse.v blob e21b8b02d69e), texts on walkkit-next 0afb3f76c28
+   SET: a working branch on a working branch (VrdIElem.v blob b128cf8b1fb1); record texts
+   a working branch (PRH_FnParse.v blob e21b8b02d69e), texts on walkkit-next
    (PRH_Base.v blob 438b875ec3ce, PRH_FnReader.v blob ba3a5407e12b), YCbqG.v blob 83da015952be. Nothing here reads the
    position pass: the file uses only VrdIElem.v, PRH_Base / PRH_FnParse / PRH_FnReader definitions and the engine
    (ajournal_x, AR_laws_x). A-only: B sites not measured.
@@ -51,7 +51,7 @@
    cursor cells), 4096 / 2 ^ 47 / 2 ^ 64 (LENGTH: bounds). No ADDRESS literal.
    A'LEDGER (a Theorem Labs lane, 2026-10-29): the one ledger site takes prh_ledger's g_most / g_own_ran_out fields (kit
    PRH_Base.v blob ee2f5cd7ed35, S1Ledger.prh_ledger_hblock's most own after a k); no statement here changed.
-   The kit's CUT (lane RBase, a working branch 7cdbb61b5fa0: PRH_Base.v ef7c8ca98529, PRH_FnParse.v
+   The kit's CUT (lane RBase, a working branch: PRH_Base.v ef7c8ca98529, PRH_FnParse.v
    f0d92dcec7e9, PRH_FnReader.v f1ae32e3b2cd). DW is gone: the lemmas take the cursor set CW where they took DW. The
    cut's callee posts are BUDGETED (parse_value / parse_string at wbudget CW 0, fuzz_free at wbudget [tr] 0), so
    vrd_call_keep takes the callee's journal at ANY budget WS1 (ajournal_xw; ajournal_x is its WS1 = [] case, so the
@@ -315,7 +315,7 @@ Lemma vrd_reader_call_pre : forall CTX CTX0 CW E P (regs : bvmap 5 word),
   vrd_ient_ok B ARx CTX CTX0 CW E -> vrd_iframe E P -> vrd_ijrn B ARx SK E P ->
   spZ regs = spZ (ie_regs E) - 144 ->
   (* s0 holds the cursor at the call (both call sites: vrd_iregs' s0 = q); the entry-cut case of prh_cur_entry's
-     HC0 at the call state (PRH_Base.v, the kit's preview 2d523216ac5) *)
+     HC0 at the call state (PRH_Base.v, the kit's preview) *)
   getr regs 8 = w64 (ie_q E) ->
   (forall F, prh_cursor F ->
      prh_cw_ok B CW (ip_W P) (ip_mem P) F (ie_q E) /\ prh_cur_low (ip_W P) (ip_mem P) F (ie_q E)) /\
@@ -378,7 +378,7 @@ Proof.
     intros w Hw. apply Hlo. apply Hwe; [lia | | exact Hw]. lia. }
   split; [exact Hcur|]. split.
   { split; [split|].
-    { (* the Forall-over-chains conjunct (PRH_Base.v, kit 04388d628fb), by prh_cur_entry_cases at the call's own
+    { (* the Forall-over-chains conjunct (PRH_Base.v, kit), by prh_cur_entry_cases at the call's own
          registers: case 2, s0 = q and the word at q - 16 is the entry's cut word (P's view agrees with the entry's
          prh_word_entry there, Hwe) *)
       apply (prh_cur_entry_cases (ip_W P) (ip_mem P) regs (ie_q E) ltac:(lia)).

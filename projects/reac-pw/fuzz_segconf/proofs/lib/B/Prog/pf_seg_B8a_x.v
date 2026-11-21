@@ -8,8 +8,8 @@
      REFTL 0x887cc  b8_reftl_ok  from `j` 0x88d64 (32 entries, none has the name): c->overflow + 1 stored (0x88d54),
                                  a2 = F_bound's literal (0x88d58 / 0x88d5c), a4 = 32, s7 = the name (0x88d2c)
    Each holds when the state's journal goes on from parse_file's entry and its memory agrees with SEG's off B8a's
-   write set (pf_seg_B8a_m.v b8_W). The structure is the image-A G3 walk owner's A8a kit's (lib/A/Prog/pf_a8a_k.v a8c / a8c_keep,
-   commit 61a728170142): INV_SEG's facts less the registers the segment overwrites. *)
+   write set (pf_seg_B8a_m.v b8_W). The structure is the image-A G3 walk owner's A8a kit's (lib/A/Prog/pf_a8a_k.v a8c / a8c_keep):
+   INV_SEG's facts less the registers the segment overwrites. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image B' (asan-ubsan, harness fix #102, pin sha256
    d663f82d7f488d30f8e8d7496cb814e595a2f3cbbf16bde81a65cb3ea9af0994): SEGMENT S6 of the walk of parse_noting (the B' twin of row
    N10-PNA; cut table lib/B/Prog/PN102BCuts.v): from the join pn_cut_S6 (+0x58) to the post of the batch kit's text pn_post.
@@ -7,7 +8,7 @@
    +0x5c .. +0x6c ld ra,40(sp) / s0,32 / s1,24 / s2,16 / s3,8; +0x70 addi sp,sp,48; +0x74 ret.
    rule 24: proves function parse_noting (fuzz_preset, image B') (preparation; proof-index 03:20Z 0 named / 0 by
    address / 0 released; the rule-24 parse_noting check CONFIRM 03:25Z; PORT of a Theorem Labs lane's image-A' file of the same role,
-   a working branch 41f83d5b57f8, at PI_prog_B / prh_img_B). This file: segment S6 of that walk.
+   a working branch, at PI_prog_B / prh_img_B). This file: segment S6 of that walk.
    FORM: eight CONCRETE steps (PN102BHelp.v pn_step_addi / pn_step_ret, and pn6_step_ld here: pn_step_addi's form over
    YK11.v step_ld, the eight bytes read by PN102BHelp.v pn_rd64_val and YN01.v word_mem_ld). The steps leave memory and
    the world alone and only materialize the model, so the cut's journal (at the budget pn_cw X and at the relation
@@ -16,7 +17,7 @@
    back the entry ra, s0 .. s3 from the cut's saved words, the addi the entry sp, and the `ret` jumps to the entry ra
    (its ret_ok from pp_fpre). The batch kit's post is budgeted (fpostFbm (wbudget [] (prh_wk F_parse_noting))): its budget is
    pn_cw X, two traces (PN102BKeep.v pn_cw_budget).
-   SHAPES TAKEN: pn6_aregs is lib/A/Prog/Ent102L6A.v l6_aregs (a working branch b1bc025047ea), renamed;
+   SHAPES TAKEN: pn6_aregs is lib/A/Prog/Ent102L6A.v l6_aregs (a working branch), renamed;
    pn6_fd is lib/A/Prog/Ent102L3ASteps.v l3_fd (same branch) at PL_prog_B.
    NUMERALS: 4 (an instruction), 8 (a word), 48 (the frame), 8 .. 40 (the save slots), 2 ^ 40 / 2 ^ 64 (the engine's
    code-span and word ranges), the instruction offsets 0x58 .. 0x74 (LENGTH). No ADDRESS. *)

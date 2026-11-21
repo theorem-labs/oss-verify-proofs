@@ -4,7 +4,7 @@
    ly, len = min (req_size n_old) n, the old header's UsedSize) and [K2_fs].
 
    Rule 24 (released-proof lookup): a Theorem Labs lane (internal path; ossv proof
-   index v5, 2026-10-28T21:58:24Z, ossv/recipes@566eb6ffa5df) answered CONFIRM for fuzz_state's ASan realloc chain:
+   index v5, 2026-10-28T21:58:24Z, ossv/recipes) answered CONFIRM for fuzz_state's ASan realloc chain:
    no released ASan-image proof of any fuzz_state function.  The released DONOR of this segment is cgif_rgb's
    lib/YF78.v:179-280 (pa2 / blkP / blkQ / blkDISJ / hdr_facts / mid_regs / c1_at_mid) over YF67.v:156-261
    (c1_copy); fs's Reallocate is byte-identical to cgif_rgb's modulo pc-relative fields, so the machine walk is
@@ -96,8 +96,8 @@ apply (AF0x.val_mem_ext (mrestrict H m) (mrestrict H' m') a w v); [|exact HV].
 intros k Hk. apply mbyte_eq_of_aview. apply HE. lia.
 Qed.
 
-(* AFex.v:18 / AFfl.v:19 pairwise_nth, inlined: lib/A/AFex.v does not compile in this tree
-   (batch_geom, AFex.v:244), so it must not be a dependency of this file. *)
+(* AFex.v:19 / AFfl.v:20 pairwise_nth, inlined: lib/A/AFex.v does not compile in this tree
+   (batch_geom, AFex.v:245), so it must not be a dependency of this file. *)
 Lemma pairwise_nth_loc {X} (R : X -> X -> Prop) : forall (l : list X) i j x y,
   pairwise R l -> nth_error l i = Some x -> nth_error l j = Some y -> (i < j)%nat -> R x y.
 Proof.

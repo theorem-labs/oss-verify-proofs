@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the ASan walk of fuzz_reply's list_free, in the form of the cgif walks of
    proofs/cgif/cgif_file_fuzzer/lib/A/AC8h.v (free sites) and lib/A/AC8b.v (loops). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -110,7 +111,7 @@ Proof.
 intros x y b1 b2 l1 -> Hin Hne. apply in_app_or in Hin as [H | [H | H]];
 [apply in_or_app; left; exact H | exfalso; apply Hne; symmetry; exact H | apply in_or_app; right; exact H].
 Qed.
-(* the room round (W_contract_x.v lf_spec_x at 475b8a2b569): a free keeps the live counts under their bounds (one
+(* the room round (W_contract_x.v lf_spec_x): a free keeps the live counts under their bounds (one
    block fewer, W_journal_x.v acnt_del_le); list_free's room budget is one free per text and one for the vector *)
 Lemma lf_cnt_del : forall RP0 l1 (x : Z * Z) l2, cnt_ok RP0 (l1 ++ x :: l2) -> cnt_ok RP0 (l1 ++ l2).
 Proof.

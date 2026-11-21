@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainUC.v (commit 67fc7ef5787c2195464dbe4d4f7905278328dc0c, drain recycle tail; file sha256 9a8264f9c8c9) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainUC.v at commit 2e76ed2595c, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainUC.v (drain recycle tail; file sha256 9a8264f9c8c9) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainUC.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, WalkB1): the recycle cut's memory AGAINST THE DRAIN'S ENTRY, in the
    leaf's terms.  Everything the walk changes up to Recycle's call of DoRecycle - stage 1 (written set F1)
    and the dequeue loop (DMdeq.DW) - lies in the cut's window DMiface.dwin_q, and that window is Drain's
    scratch (its stack window) or OWNED at the entry state: the quarantine header and the batch cells
-   (DMiface.di_qowned, DMiface.v:175-177; the cut lists' batches are X's objects, DMdrainU9.recyc_cut_in).
+   (DMiface.di_qowned, DMiface.v:176-178; the cut lists' batches are X's objects, DMdrainU9.recyc_cut_in).
    So:
    - [dwin_split]: a word of the cut's window is Drain's scratch or owned at X;
    - [cut_raw]: off X's owned set and Drain's scratch the cut's memory is the entry's (DMdrainUB's HRAW, first

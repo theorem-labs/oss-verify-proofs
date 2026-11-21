@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the member loop of sup_chain's image-B walk (plugin-hostd/fuzz_command,
-   fuzz_command.asan-ubsan, a Theorem Labs lane's lib/B/Prog/sup_chain_c.v `tsup_chain_spec`, statement from a Theorem Labs lane f490061c104):
+   fuzz_command.asan-ubsan, a Theorem Labs lane's lib/B/Prog/sup_chain_c.v `tsup_chain_spec`, statement from a Theorem Labs lane):
    from the loop head 0x8c3d0 (BASE + SCB_LOOP) to the loop exit 0x8c444 (BASE + SCB_LEXIT), against the interface
    lib/B/Prog/sup_chain_d.v (scb_lctx, scb_inv), in the shape of the ASan walk's lib/A/Prog/sup_chain_s5.v: one pass
    from a loop head with scb_inv k (k < n) to the next head or the exit, and an induction on the passes left.
@@ -15,6 +15,7 @@
    FR_cmd); then the counters and the back edge 0x8c428 `bne s11,s10`, or 0x8c42c `j 0x8c444`.
    The sprintf contract returns at some FP state fx' (rounding mode 0, f registers kept but f10), so the part after
    the call (scl_post) is stated per FP state and applied at fx'. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -334,11 +335,11 @@ End g.
 Section e.
 Variable B : asyms.
 Variable MT : ameter_ops.
-(* the statement's sprintf contract (sup_chain_c.v, a Theorem Labs lane f490061c104), at every FP state *)
+(* the statement's sprintf contract (sup_chain_c.v, a Theorem Labs lane), at every FP state *)
 Hypothesis ASPRINTF : forall fx0 : YK11.FPState,
   @asprintf_realizes fx0 rc SEGS B (SIG CS___interceptor_trampoline_sprintf) 0xa6bf8 0x604158.
 Hypothesis HB : YF0m.CmdBSyms B.
-(* the per-binary image facts, as a Theorem Labs lane's walks take them (sup_reset.v:307-335) *)
+(* the per-binary image facts, as a Theorem Labs lane's walks take them (sup_reset.v:308-336) *)
 Hypothesis cmd_img_facts_tfib : forall B0, CmdBSyms B0 -> @cmd_img_facts SK SEGS B0.
 Let LAWS : AR_laws SEGS B := AR_laws_ok SEGS B.
 Let IMG : @cmd_img_facts SK SEGS B := cmd_img_facts_tfib B HB.

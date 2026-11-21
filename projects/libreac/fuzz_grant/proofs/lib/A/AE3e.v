@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AE3e.v, with its module paths changed and its addresses moved to libreac/fuzz_grant's ASan build. *)
 (* Modified by Theorem Labs, 2026-10: instruction words read from fuzz_grant.asan: the calls of __syscall_ret at 0x917b0 and 0x91838 (their jal offsets) and the words at 0x9180c, 0x9183c and 0x91858, which the address move had changed; wl_done uses realizes_emit_nil, as fuzz_grant's realizes has no realizes_nonempty. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3, with libreac/fuzz_boxreg's port of its copy of this file (changed rz_writev_dep). *)
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -101,6 +102,7 @@ assert (Hr : (1 <= Z.to_nat (bv_unsigned ret))%nat /\ (Z.to_nat (bv_unsigned ret
 exists (exist _ (Z.to_nat (bv_unsigned ret)) Hr). unfold ef, writev_eff; cbn [proj1_sig].
 rewrite Z2Nat.id by lia. rewrite Z_to_bv_bv_unsigned, Hci. auto.
 + exact (fun _ => acfg_nonspurious_no _ _ _ _ _ _ Hno eq_refl).
++ exact (writev_rob_pend segs regs pc mem rom model fd ch iovs bs Hno Hfdc H32 Hfd Hcnt Hmax Himp Hiok Hbok Hg Htot Hnb).
 - intros [n [Hn1 Hn2]]. unfold ef; cbn [proj1_sig]. rewrite adv_pend.
 rewrite effmem_writev_eff. unfold writev_eff; cbn [eff_ret]. apply Hc; assumption.
 Qed.

@@ -4,7 +4,7 @@
    file is assembly). It discharges five Section hypotheses of lib/A/DecodeClose.v at the core's concrete symbol record
    GrantB (lib/A/AD2l.v GrantB, GrantB_syms). Each lemma states its hypothesis with DecodeClose.v's text at B := GrantB:
    - dec_rt_stack_malloc0 = H_RT_STACK_MALLOC0 (DecodeClose.v:244): lib/A/Rt/StackMalloc0.v stack_malloc0_contract,
-     a Theorem Labs lane's class-0 walk (a working branch 8595c26c630 proofs/libreac/fuzz_grant/lib/A/Rt/StackMalloc0.v; SHARED-WALKS
+     a Theorem Labs lane's class-0 walk (a working branch proofs/libreac/fuzz_grant/lib/A/Rt/StackMalloc0.v; SHARED-WALKS
      row 'stack_malloc 0 (cgif-AR units)') relocated to fuzz_decode.asan, at Reusable/YG0q.v AR_laws_ok and GrantB_syms;
    - dec_pc_stack_malloc0 = HB_PC_STACK_MALLOC0 (:320): by computation. lib/A/AF0l.v Tfib_code's pc_stack_malloc 0 and
      lib/A/Prog/DecodeAddr.v decode_sigma DS___asan_stack_malloc_0 are both __asan_stack_malloc_0 (size 372) of
@@ -14,7 +14,8 @@
    - dec_ffl = HB_FFL (:356): AR_laws's al_flag and al_client_img with the image cover lib/A/ACeg.v tfib_img_cover; the
      proof is cgif lib/A/ACfi.v link_FFL's, unchanged. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_decode/lib/A/DecodeARtStackMalloc.v, with its module paths and module names changed; 213 of its 232 lines of code are new or changed and 40 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/Prog/CmdRecRest.v (origin/ossv/recipes 501c0d516c69) for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths; Cmd*/cmd_* -> Seg*/seg_*, PB_cmd -> PB_seg (CmdRep -> SegRep: the contract side's file for aval_mem); the program statics are fuzz_segconf's one range, LLVMFuzzerTestOneInput.longl [0x5de680, 0x5de6f9); the use-after-return flag cell 0xb10c0 -> 0xac000 and its .got word 0xa6448 -> 0xa2aa8 (listing object 1); the side-stack classes 0, 1, 3, 5 (fuzz_command: 0, 1, 3, 4, 5, 7); palf_uar_img's bound is YG0f.kImgEnd. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/Prog/CmdRecRest.v for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths; Cmd*/cmd_* -> Seg*/seg_*, PB_cmd -> PB_seg (CmdRep -> SegRep: the contract side's file for aval_mem); the program statics are fuzz_segconf's one range, LLVMFuzzerTestOneInput.longl [0x5de680, 0x5de6f9); the use-after-return flag cell 0xb10c0 -> 0xac000 and its .got word 0xa6448 -> 0xa2aa8 (listing object 1); the side-stack classes 0, 1, 3, 5 (fuzz_command: 0, 1, 3, 4, 5, 7); palf_uar_img's bound is YG0f.kImgEnd. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The remaining per-binary facts of fuzz_command.asan: the whole of aread_ok for an image range (cmd_aread_ok_img),
    the read-only bytes apart from the program's statics (cmd_ro_prog_apart, cmd_prog_img), facts kept across a
    callee (cmd_ro_kept, cmd_atail_kept, cmd_rodata_kept: the names the recorder-B walks carry), the
@@ -152,7 +153,7 @@ Lemma crf_errno_img : crf_img_rangeb tfibsegs (TFIB_ERRNO, 4) = true.
 Proof. vm_compute. reflexivity. Qed.
 (* the program's statics (g_rec, record.spill, g_quitting) are readable through the image's rom at tfibsegs
    (LLVMFuzzerTestOneInput's entry builds rec_repA from GI_cmdA's zeros, an earlier version of
-   lib/A/Prog/LLVMFuzzerTestOneInput_s10.v:234), from AB13.v's tfib_rom_all over [0x10000, 0x606000) *)
+   lib/A/Prog/LLVMFuzzerTestOneInput_s10.v:235), from AB13.v's tfib_rom_all over [0x10000, 0x606000) *)
 Lemma seg_prog_rom : forall a, inFP seg_PG a -> seg_rom tfibsegs (Z_to_bv 64 a) <> None.
 Proof.
 intros a (r & Hr & Ha). apply tfib_rom_all. unfold seg_PG, A_LONGL in Hr.

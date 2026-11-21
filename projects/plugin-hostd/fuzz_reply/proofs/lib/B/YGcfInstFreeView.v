@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (lane F2a, a working branch): the generic cf layer's Deallocate interface, its VIEW
    fields (DGif0.di_view_n, di_view; and the big arm's DGbigIF.dbg_view) over the cf relation ARcf.  rule 24: no
    function proved (kind: interface-instance discharge: facts of the allocator relation at the cf instance).
@@ -16,7 +17,7 @@
    The geometry the cgif proofs take from YF* image files (YFf0 / YFfl / YFfu) is re-proved here over ARmcf and the
    model's constants; the class bound is YG01cf.mapped_bound_cf (kFreeArrayOffset), never an event bound.
    The block size: free_cf's size test (YG00cf.free_cf) splits the blocks at kQuarantineMax; [view_cf] gives
-   DGif0.dview (dv_zone's bound is kQuarantineMax's value, a working branch 002b8cc32f7) on the enqueue side,
+   DGif0.dview (dv_zone's bound is kQuarantineMax's value, a working branch) on the enqueue side,
    [view_big_cf] gives DGbigIF.dview_big (kQuarantineMax < req_size n, req_size n + 15 <= 2 ^ 30 by
    YG08cf.cf_malloc_max_bound) on the recycle side.
    Generic over CfImg / CfParams / AImg / DImg; no numeral of any image; no event term. *)

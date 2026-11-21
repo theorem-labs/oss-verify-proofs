@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGg1.v (commit 84ee52cd012, file sha256 2b6258d6474c) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53); module paths changed; its 24 image addresses moved by code-verified function pairs (24 port_addr_check 0767e70e074a MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py; 3 the tool cannot place or places wrongly, read out of image B itself), and 5 pcs named in comments; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10-30: field round 3 part 3 (MP) from proofs/cgif/cgif_file_fuzzer/lib/DGg1.v applied by 3-way (base commit 5034424e29db, theirs e8a7dd66acf2; preset-side hunks kept), module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGg1.v (file sha256 2b6258d6474c) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53); module paths changed; its 24 image addresses moved by code-verified function pairs (24 port_addr_check 0767e70e074a MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py; 3 the tool cannot place or places wrongly, read out of image B itself), and 5 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-30: field round 3 part 3 (MP) from proofs/cgif/cgif_file_fuzzer/lib/DGg1.v applied by 3-way (base, theirs; preset-side hunks kept), module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The seed of the frame-generic Deallocate walk, arms mid and drain (DGgm.free_hyps), from the generic precondition
    DeallocG.dealloc_pre and the interface view DGif0.dview.
 

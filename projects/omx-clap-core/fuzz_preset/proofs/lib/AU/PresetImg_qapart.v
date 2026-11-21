@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyImg_qapart.v (commit ce1a656b52b7, file sha256 a8977984c075) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 1 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyImg_qapart.v (file sha256 a8977984c075) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 1 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs: reply image row img-constapart-B (its IMG_QAPART half) of the cf layer at plugin-hostd/fuzz_reply.
    rule 24: no function proved (kind: closed image fact over the symbol table of reply's image B, fuzz_reply.asan-ubsan,
    pin 10ffb5f9202a).
 
-   IMG_QAPART, proofs/cgif/cgif_file_fuzzer/lib/YGcfInstDrainX.v:65-68 @ 8b12df2b772 (four clauses), with qhdr_inst
-   (YGcfInstDrainX.v:62-63 @ 8b12df2b772) unfolded:
+   IMG_QAPART, proofs/cgif/cgif_file_fuzzer/lib/YGcfInstDrainX.v:65-68 (four clauses), with qhdr_inst
+   (YGcfInstDrainX.v:62-63) unfolded:
    qhdr_inst B a := (as_inst B + o_quar + 152 <= a < as_inst B + o_quar + 156) \/
                     (as_inst B + o_quar + 160 <= a < as_inst B + o_quar + 192).
    The layer states IMG_QAPART over the image class (Context {IM : AImg}).  Reply does not carry YGcfInstDrainX.v, so the
@@ -32,7 +33,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import ImgB
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU Require Import AGif2cgif.
 Open Scope Z_scope.
 
-(* IMG_QAPART at image B: YGcfInstDrainX.v:65-68 @ 8b12df2b772, qhdr_inst unfolded, at IM := AImg_cgif. *)
+(* IMG_QAPART at image B: YGcfInstDrainX.v:65-68, qhdr_inst unfolded, at IM := AImg_cgif. *)
 Lemma IMG_QAPART_B : forall B, @im_syms AImg_cgif B -> forall a,
   ((as_inst B + o_quar + 152 <= a < as_inst B + o_quar + 156) \/ (as_inst B + o_quar + 160 <= a < as_inst B + o_quar + 192)) ->
   ~ (as_depot B <= a < as_depot B + 4 * 2 ^ 20 + 32) /\ ~ (as_store B <= a < as_store B + 32) /\

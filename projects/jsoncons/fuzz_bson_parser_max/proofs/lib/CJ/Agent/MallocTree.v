@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: adds flat_pairs, last_assoc and their lemmas (flat_pairs_app, length_flat_pairs, last_assoc_In, flat_pairs_nth_key/val/end, length_auxv_words) for an auxv of any layout, as in fuzz_bigint's copy; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/CJ/Agent/MallocTree.v, lines 383-446. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -381,6 +382,71 @@ Definition auxv_list (x3 x4 x5 hw x6 x11 x12 x23 rnd : Z) : list word :=
   map wz [3; x3; 4; x4; 5; x5; 16; hw; 6; x6; 11; x11; 12; x12; 23; x23; 25; rnd; 0; 0].
 (* [comment removed for export] *)
 (* [comment removed for export] *)
+
+(* The auxv as mallocng's [__malloc_init] scan sees it, for ANY layout: a
+   list [L] of (key, value) pairs before AT_NULL, flattened into words
+   ([flat_pairs L ++ [0; 0]]). [last_assoc k L] is the value of the LAST
+   pair with key [k] (musl's loop has no break, so the last AT_RANDOM wins). *)
+Fixpoint flat_pairs (L : list (Z * Z)) : list Z :=
+  match L with [] => [] | (k, v) :: L' => k :: v :: flat_pairs L' end.
+
+Fixpoint last_assoc (k : Z) (L : list (Z * Z)) : option Z :=
+  match L with
+  | [] => None
+  | (k', v) :: L' =>
+      match last_assoc k L' with Some r => Some r | None => if Z.eqb k' k then Some v else None end
+  end.
+
+Lemma flat_pairs_app : forall A B, flat_pairs (A ++ B) = flat_pairs A ++ flat_pairs B.
+Proof. induction A as [|[k v] A IH]; intros B; cbn [flat_pairs app]; [reflexivity| rewrite IH; reflexivity]. Qed.
+
+Lemma length_flat_pairs : forall L, length (flat_pairs L) = (2 * length L)%nat.
+Proof. induction L as [|[k v] L IH]; cbn [flat_pairs length]; [reflexivity| rewrite IH; lia]. Qed.
+
+Lemma last_assoc_In : forall k L v, last_assoc k L = Some v -> In (k, v) L.
+Proof.
+  intros k L. induction L as [|[k' v'] L IH]; intros v H; cbn [last_assoc] in H; [discriminate H|].
+  (* [remember] replaces [last_assoc k L] in IH as well, and [destruct o] then turns IH into
+     [forall v, Some r = Some v -> In (k, v) L]; so [apply IH] leaves [Some r = Some r], closed
+     by [reflexivity] ([Eo : Some r = last_assoc k L] no longer matches that goal). *)
+  revert H. remember (last_assoc k L) as o eqn:Eo. destruct o as [r|]; intros H.
+  - injection H as <-. right. apply IH. reflexivity.
+  - revert H. destruct (Z.eqb k' k) eqn:Ek; intros H; [|discriminate H].
+    apply Z.eqb_eq in Ek. subst k'. injection H as <-. left. reflexivity.
+Qed.
+
+Lemma flat_pairs_nth_key : forall L pre k v post, L = pre ++ (k, v) :: post ->
+  nth_error (map wz (flat_pairs L ++ [0; 0])) (Z.to_nat (2 * Z.of_nat (length pre))) = Some (wz k).
+Proof.
+  intros L pre k v post ->.
+  replace (Z.to_nat (2 * Z.of_nat (length pre))) with (length (map wz (flat_pairs pre)))
+    by (rewrite length_map, length_flat_pairs; lia).
+  rewrite flat_pairs_app, <- app_assoc, map_app, nth_error_app2 by lia.
+  rewrite Nat.sub_diag. reflexivity.
+Qed.
+
+Lemma flat_pairs_nth_val : forall L pre k v post, L = pre ++ (k, v) :: post ->
+  nth_error (map wz (flat_pairs L ++ [0; 0])) (Z.to_nat (2 * Z.of_nat (length pre) + 1)) = Some (wz v).
+Proof.
+  intros L pre k v post ->.
+  replace (Z.to_nat (2 * Z.of_nat (length pre) + 1)) with (length (map wz (flat_pairs pre)) + 1)%nat
+    by (rewrite length_map, length_flat_pairs; lia).
+  rewrite flat_pairs_app, <- app_assoc, map_app, nth_error_app2 by lia.
+  replace (length (map wz (flat_pairs pre)) + 1 - length (map wz (flat_pairs pre)))%nat with 1%nat by lia.
+  reflexivity.
+Qed.
+
+Lemma flat_pairs_nth_end : forall L,
+  nth_error (map wz (flat_pairs L ++ [0; 0])) (Z.to_nat (2 * Z.of_nat (length L))) = Some (wz 0).
+Proof.
+  intros L.
+  replace (Z.to_nat (2 * Z.of_nat (length L))) with (length (map wz (flat_pairs L)))
+    by (rewrite length_map, length_flat_pairs; lia).
+  rewrite map_app, nth_error_app2 by lia. rewrite Nat.sub_diag. reflexivity.
+Qed.
+
+Lemma length_auxv_words : forall L, length (map wz (flat_pairs L ++ [0; 0])) = (2 * length L + 2)%nat.
+Proof. intros L. rewrite length_map, length_app, length_flat_pairs. reflexivity. Qed.
 
 Lemma Forall_disjoint_from : forall (P : Z * Z -> Prop) W a n,
   Forall P W -> (forall lo hi, P (lo, hi) -> a + n <= lo \/ hi <= a) -> disjoint_from W a n.

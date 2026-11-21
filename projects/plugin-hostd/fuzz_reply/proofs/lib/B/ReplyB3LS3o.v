@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyLS.v, with its module paths and module names changed; 559 of its 679 lines of code are new or changed and 474 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the image-B (fuzz_reply.asan-ubsan) port of the rules of lib/A/ReplyLS3o.v (sha256
-   385bcddd64a1; internal record) at d9e8f914caaf (the same blob as at 1b1e21bdbd40),
+   385bcddd64a1; internal record) (the same blob as),
    row G-BLS3-port, over lib/B/ReplyLSBo.v's fr_OUT (B has ONE fr_OUT: `fr_OUT OM cx t m ly S`, ReplyLSBo.v :138).
    proves no function (kind: invariant lemma).
    WHAT IS ALREADY AT B (not restated here), A name -> lib/B name:

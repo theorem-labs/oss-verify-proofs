@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B' (#102 pin d663f82d7f48, asan-ubsan; unstripped twin c90d4fa54d43),
    ex_value: THE WALK AT THE INSTANCE. ExvB_Final.ex_value_holds_B_final at
      B   := YD2l.TfibB (the B'-generated record, blob 95803a8b9493),
@@ -43,7 +44,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.B.Prog Require ExvB_Final Ex
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YD2l YG0ncf YG0lawscf YGcallcf YGcallScf.
 (* the four callee rows of record (c-libc-stdio rows102), cited in ex_value_holds_B_rows *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU Require PRowCmp PRowCpy PSstrRo CfImgB.
-(* the class-1 frame-area row of record (c-omx-alloc FrameXm102 07210922d952), cited in ex_value_holds_B_closed *)
+(* the class-1 frame-area row of record (c-omx-alloc FrameXm102), cited in ex_value_holds_B_closed *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU Require FCxmCfxB.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require CfParamsPreset.
 From Stdlib Require Import List.
@@ -128,7 +129,7 @@ Unset Printing Implicit. Set Printing Notations.
 Print Assumptions ex_value_holds_B_inst.
 
 (* ---- ex_value_holds_B_rows: four of the five callee premises DISCHARGED by citation of c-libc-stdio's B' rows of
-   record (rows102 407ddab4a12a, in int102 c059d3a151e0), at ARXS with LAWS := YGcallcf.AR_laws_x_xs (HL := cf_head)
+   record (rows102, in int102), at ARXS with LAWS := YGcallcf.AR_laws_x_xs (HL := cf_head)
    and TfibSyms := YD2l.TfibB_syms:
    - HSTRCMP by lib/AU/PSstrRo.v ps_strcmp_xrom_xs_B (ARcx = ARXS, rlo / rhi := B_prog_relro_lo / _hi),
    - HSTRLEN by lib/AU/PSstrRo.v ps_strlen_xrom_xs_B,
@@ -167,7 +168,7 @@ Unset Printing Implicit. Set Printing Notations.
 Print Assumptions ex_value_holds_B_rows.
 
 (* ---- ex_value_holds_B_closed: the LAST premise HSM1 discharged by c-omx-alloc's class-1 row of record,
-   lib/AU/FCxmCfxB.v stack_malloc1_contract_xm_cfx_B (FrameXm102 07210922d952). No premise left.
+   lib/AU/FCxmCfxB.v stack_malloc1_contract_xm_cfx_B (FrameXm102). No premise left.
    Rule 24: proves function ex_value (image B') at the instance of record. No numeral. ---- *)
 Theorem ex_value_holds_B_closed : forall {rc : YM05.RunCeil} {ci : CfImg} {RL : PrhRoomLive} (SK : YI16.sink_head)
   n (fx : YK11.FPState),

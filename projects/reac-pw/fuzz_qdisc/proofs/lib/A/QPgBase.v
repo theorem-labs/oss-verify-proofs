@@ -3,12 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem
    statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: made for reac-pw/fuzz_qdisc image A from
-   proofs/libreac/fuzz_knock/lib/A/APgBase.v at origin/ossv/recipes 6ebe35ba632, with its module paths changed:
+   proofs/libreac/fuzz_knock/lib/A/APgBase.v, with its module paths changed:
    lines 18-46 are taken as they stand (in_roP, arodata_okP, ro_below_ofl, ro_spares, arodata_ok_journalP);
    lines 47-63 (afobj and apost_base) are left out, because fuzz_qdisc's harness takes no fake-stack frame and
    hands its callees no object -- its two callees take their arguments in registers only (h-small-a3).
    rule 24 (reuse): no function is proved here; this file carries the image-independent read-only-data
    predicate the three qdisc contracts are stated over. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

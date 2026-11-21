@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: group IMAGE of A top_x's hypotheses (TOPX-OWNERS.md (sha256 bb821fae800d; internal record);
-   W_LLVMFuzzerTestOneInput_top_x.v, line numbers at integ b4343cabfa9): six image facts, each stated as the top_x
+   W_LLVMFuzzerTestOneInput_top_x.v, line numbers at integ): six image facts, each stated as the top_x
    Section hypothesis at the instance ARX := ARcf (cp := CfParams_reply) segs TfibB /\ Hp = [] (lib/A/W_LLVMFuzzerTestOneInput_top_x.v Definition
    ARX, written here as the same relation, as W_shadow_pin_x.v's ashp_str2_1_fr_cf does), B := TfibB, CfParams_reply:
      topx_GSHV_x     top_x.v:210 GSHV_x      ad_G's shadow hulls are visible (lib/A/W_LLVMFuzzerTestOneInput_addI.v zz_GSHV over ARX)
-     topx_TLF        top_x.v:326 TLF         PALibF TfibB (W_frame.v:175), decided over TfibB (AD2l.v)
+     topx_TLF        top_x.v:326 TLF         PALibF TfibB (W_frame.v:176), decided over TfibB (AD2l.v)
      topx_XE_LIT_S_x top_x.v:451 XE_LIT_S_x  "" (.str.2, AX_lit_empty = A_OBJ 28): W_shadow_pin_x.v ashp_str2_1_fr_cf
      topx_FP_SINK    top_x.v:475 FP_SINK     at fr_FP := ACfn_cf.fr_FP, the driver's footprint
      topx_HGOTG_x    top_x.v:561 HGOTG_x     the GOT word 0x9e658 holds &__stack_chk_guard = 0x5f94b0
@@ -17,12 +18,12 @@
    FP_SINK: top_x keeps fr_FP a Variable; the driver instantiates it with ACfn_cf.v's fr_FP (a Theorem Labs lane's file; the
    COMPOSE-A file ReplyATopX.v states FP_SINK at `Local Notation fr_FP := ACfn_cf.fr_FP`), and this lemma names that
    definition.  The footprint is g_src's table (G, G + ATABLE) when g_src reads G <> 0 and g_out's buffer (o, o + c)
-   when g_capout reads c <> 0; both are harness blocks (cut.v fr_hblks), which the pre's HB clause (lib/A/W_LLVMFuzzerTestOneInput_cut_x.v:103) makes
+   when g_capout reads c <> 0; both are harness blocks (cut.v fr_hblks), which the pre's HB clause (lib/A/W_LLVMFuzzerTestOneInput_cut_x.v:104) makes
    live blocks, so each range starts at or above 4096 and none holds address 0 (YI16.v:71 sink_open_fp FP :=
    in_fp FP 0).
    SATISFIABILITY (VERIFY rule 10), at the real instance: ARX holds at the start-up hand-off state - the driver's
    AD1pcf.v:145-146 (tfib_drv_main; B := TfibB by ReplyTFIBcf.v:47, cp := CfParams_reply by ReplyDriverCf.v's
-   reply_tfib_of_top_x_triv) proves ARcf TSEGS B ly init_state [] W1 FULL model by Reusable/YGcfNilInit.v:41
+   reply_tfib_of_top_x_triv) proves ARcf TSEGS B ly init_state [] W1 FULL model by Reusable/YGcfNilInit.v:42
    ARcf_nil_init from the start-up AR, with Hp = [] - so the ARX premise of GSHV_x, XE_LIT_S_x (inside ashp_x),
    HGOTG_x and GN_LITS_x is met there; GSHV_x's other premises hold at a := 0x5d88e0 (g_s), n := 384, ad_G's first
    range, the use top_x.v:673 makes.  FP_SINK's BASEx is the driver's pre at every call at the driver's meter
@@ -155,7 +156,7 @@ Proof.
 Qed.
 
 (* ================================================================ XE_LIT_S_x (top_x.v:451) *)
-(* AX_lit_empty is A_OBJ 28 (_exit.v:97), .str.2 "" at 0x20ee0: W_shadow_pin_x.v:139 at the same relation *)
+(* AX_lit_empty is A_OBJ 28 (_exit.v:97), .str.2 "" at 0x20ee0: W_shadow_pin_x.v:140 at the same relation *)
 Lemma topx_XE_LIT_S_x : ashp_x ARX (VAL W_LLVMFuzzerTestOneInput_exit.AX_lit_empty) 1.
 Proof. exact W_shadow_pin_x.ashp_str2_1_fr_cf. Qed.
 
@@ -227,7 +228,7 @@ Qed.
 (* ================================================================ GN_LITS_x (top_x.v:563) *)
 (* the two .rodata literals snprintf checks: .str.8 "%s %d " (A_OBJ 20, 0x20f80, 7 bytes with the NUL; shadow
    0x7fffc1f0 = 7) and .str.5 "param_gesture" (A_OBJ 21, 0x20f20, 14 bytes; shadow 0x7fffc1e4 = 0 in the zero-shadow
-   range (0x20f20, 8), 0x7fffc1e5 = 6); both checks decided over AF0m's tables by W_shadow_pin_x.v:95 tfib_shp_x *)
+   range (0x20f20, 8), 0x7fffc1e5 = 6); both checks decided over AF0m's tables by W_shadow_pin_x.v:96 tfib_shp_x *)
 Lemma topx_GN_LITS_x : forall ly S Hp (W : world segs) mem md, ARX ly S Hp W mem md ->
   range_addressable (aview segs (w_H W) mem) SHADOW_OFF (VAL (A_OBJ 20)) 7 /\
   shadow_hull_vis (aview segs (w_H W) mem) (VAL (A_OBJ 20)) 7 /\

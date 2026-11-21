@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the segment runs on the states B/StartRegenS.v computes per CONFIG_RSEQ, a section flag, with the run and check lemmas of B/StartRegen.v, its statements written as plain text; the NULL-hint mmap witnesses are Linux's own address, place_ok_linux, written as plain text; the reserved ledger is the image's entries then the vDSO/vvar pair). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -23,42 +24,35 @@ Import OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.n8.StartALib.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A Require Import SysStartA.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B Require n1.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B Require n0.
-Import OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.n1.StartNodes OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.n0.Start2States OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.n0.Start3States.
+From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B Require StartRegenS StartRegen.
+Import OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.n1.StartNodes.
+(* LPS 727298f3: this segment's states are those B/StartRegenS.v computes per CONFIG_RSEQ
+   (Start2R's exit [E_s3 r], Start3R's states), and its runs and check those B/StartRegen.v
+   proves of them for both values. *)
+Import OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.StartRegenS.Start1R OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.StartRegenS.Start2R OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.StartRegenS.Start3R OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.StartRegen.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib Require LiaFast.
 Require OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.
 Import ListNotations.
 Close Scope bv_scope.
 Open Scope Z_scope.
 
-Definition ECALL_MMAP : Z := 0x706a0.
-Definition HMCUT : Z := 0x71554.
-Definition SPIN_MMAPORDIE : Z := 0x6bf18.
-
-Lemma S_s3x_eq : S_s3x = eager_ok E_s3 0x38e000 29%positive.
-Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
-
-Definition S_s3fail : axst := ltac2:(tb__ "0|0|
-S1fS4cS1cS2cA1S4dA2S1S4S16S16A2A1S18S48A1A3").
-Lemma runF_s3 : ltac2:(tb__ "0|1|
-SbS8S3S1aA1M0A1S1dS0U190S2SfS3aS1SfA1A3S3bS5A5S6G0S2S1aS1bS30S42A2S1S1aA1A3A2A3").
-Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
-Lemma spin6 : ltac2:(tb__ "0|1|
-SbS8S3S1aA1M0A1S1dS0U2S2SfS3aS1SfA1A3S30S5A5S6G0S2S1aS1bS30S42A2S1S1aA1A3A2A3").
-Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
-
-Definition FUEL3 : nat := (160 * 1000)%nat.
-Definition G3 : positive := 29%positive.
-Lemma check3 : ltac2:(tb__ "0|0|
-SbS7S49S3dS2SfS40S2SfS3cS1SfA1A3A3S3eS32S31A5S5A3").
-Proof. vm_cast_no_check (@eq_refl bool true). Qed.
+(* [S_s3x r] is [E_s3 r]'s grant (B/StartRegenS.v, Start3R). *)
+Lemma S_s3x_eq : forall r, S_s3x r = eager_ok (E_s3 r) 0x38e000 29%positive.
+Proof. intros [|]; reflexivity. Qed.
 
 Definition G3l : list (sv * Z) := ltac2:(tb__ "0|1|
 S2S4S16SfA2M0S9S16SfS19P1bA1Z10000A4S1G0A1A3").
 
 Section Seg3.
 Variables (m : Model) (a1 : word) (B : Z).
-Hypothesis Hres : ltac2:(tb__ "0|1|
-SbS3S4S11Q40A1M0G0A2A1S25S20Vm;A1A1S44S0A1A3").
+(* LPS 727298f3: the start state is made per CONFIG_RSEQ (StartStates.v), and with it every state
+   of this segment (B/StartRegenS.v); [rq] is this run's value, the launch's
+   [kb_rseq (in_kernel inp)] (StartMain.v).  A computation over a state destructs [rq] first. *)
+Variable rq : bool.
+Ltac rvmc := destruct rq; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc.
+Ltac rrefl := destruct rq; reflexivity.
+(* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v [vdso_pair_ok]). *)
+Hypothesis Hres : exists V, vm_reserved (m_vmmaps m) = segments_reserved segsA ++ V /\ vdso_pair_ok V.
 Hypothesis Ha1 : ltac2:(tb__ "0|2|
 S4fS4S11Q40M0A1M1G1A2S9G1G1Va1;S13G0Z10000A2A4S24S20Vm;A1A1A3").
 Hypothesis Htop : init_sp_ok (m_vmmaps m).
@@ -76,26 +70,34 @@ S28S14S3S11Q40A1A1S3S21A1M0S22R5R4R3R2R1A4SbG0R3S1S21A1A3F_;Fmd;Ftr;Ftp;Frho;S4e
 Definition n6 : word := Z_to_bv 64 0x38e000.
 Definition m6 (a : word) : Model := eager_model 0x38e000 m a.
 
-Definition Post3 (rho : valuation) : assn := ltac2:(tb__ "0|2|
-S33ScS11Q40M0A1M1G1ScS14S14SdS37S13G0Z0A2Vm;S2dR2A4SdS17P1dS41Vrho;P1cR2A3R1A3S27S0S2bS2fR2A1S38VB;Z38e000A2A2S31R1S1G1A1R3A6A2A2Lrho';A2La;A2Lw;").
+Definition Post3 (rho : valuation) : assn :=
+  fun w : world => exists (a : bv 64) (rho' : valuation),
+    mmap_place_ok_none (Z_to_bv 64 0) m n6 a /\ agree_below 29%positive (rho_set_rw rho 28%positive a) rho' /\
+    SPA segsA (KxA (m6 a) (B + 3727360)) (E_k7 rq) rho' [] w.
 
 Lemma OKFx : ltac2:(tb__ "0|0|
 S22SfS29S0Vok;S2bR2R1A2A3FBB;Fmm;").
 Proof using OKF. intros. apply OKF. intros; eapply KxA_nil; eassumption. Qed.
 
-Lemma clear_s3 : ltac2:(tb__ "0|0|
-SbS7S4aS3fS1cS2cA1A2S5A3").
-Proof. OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
+Lemma clear_s3 : objs_clear_e G3l (ax_S (E_s3 rq)) = true.
+Proof. rvmc. Qed.
 
-Lemma node_s3 : ltac2:(tb__ "0|5|
-S14SbS11Q40M0A1M1S15R1P1bA2Va1;A3SbSfS12G0S15R2P1A2A2S12G0S23S20Vm;A1A1A2A3S36S0Vok;S27S0S2bVm;VB;A2M2S2cR3S1G1A1M3A5S33SeS27S0G2S3bR4G3R1A6ScG1G1SdS37S13G0Z0A2Vm;S2dR1A4S27S0S2bS2fR1A1S38VB;Z38e000M4A2A2S4bS2cG4P1dA3S41R5P1cR1A3G3R2A6A2La;A2A2Lw;A4F_;F_;Frho;").
+(* The grant's variable is the next variable of [E_s3 rq] (28 for both values, B/StartRegen.v
+   [next_E_s3]), left as [ss_next] here, where the node lemma puts it. *)
+Lemma node_s3 : forall rho : valuation,
+  rw rho 27%positive = a1 ->
+  bv_unsigned (rw rho 1%positive) = bv_unsigned (vm_init_sp (m_vmmaps m)) ->
+  triple1 segsA ok (SPA segsA (KxA m B) (E_s3 rq) rho [])
+    (fun w : world => SPA segsA (KxA m B) (S_s3fail rq) rho [] w \/
+       exists a : bv 64, mmap_place_ok_none (Z_to_bv 64 0) m n6 a /\
+         SPA segsA (KxA (m6 a) (B + 3727360)) (eager_ok (E_s3 rq) 3727360 29%positive) (rho_set_rw rho (ss_next (ax_S (E_s3 rq))) a) [] w).
 Proof using HBlim Hband Hres Htop Ha1 OKF OKP.
   intros rho H27 Hv1.
-  apply (eager_rw_node ok OKF OKP E_s3 0x38e000 m B G3l 29%positive);
-    [ reflexivity | reflexivity | OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc
-    | OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc | OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc | OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc | OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc
-    | OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc | OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc | OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc
-    | reflexivity | reflexivity | lia | cbv; reflexivity
+  apply (eager_rw_node ok OKF OKP (E_s3 rq) 0x38e000 m B G3l 29%positive);
+    [ rrefl | rrefl | rvmc
+    | rvmc | rvmc | rvmc | rvmc
+    | rvmc | rvmc | rvmc
+    | reflexivity | reflexivity | lia | destruct rq; cbv; reflexivity
     | exact clear_s3 | exact Hres | exact Htop | exact Hband | exact HBlim
     | intros e sz [[= <- <-]|[]]; left; exists a1, (Z_to_bv 64 0x10000); split; [exact Ha1|]; cbn [eval]; rewrite H27, u64_of_lit by lia; lia
     | exact Hv1 ].
@@ -105,44 +107,50 @@ Lemma LQA1_SPA : ltac2:(tb__ "0|1|
 S28S10S14S1eS33S2aS0R5R4R3S1S11Q40A1A1M0S2S1aS1bR2S43A2S1S1aA1A3R1A7ScS14S14SdS17R6R5R1A3S27S0R7R4R1G0R3A6A2Lrho';A2F_;Fw;FE;Frho;Fn;FJ;").
 Proof. intros J n rho E w (L & rho' & [<-|[]] & Hag & Hsm & Hk). exists rho'. split; [exact Hag | split; [exact Hsm | exact Hk]]. Qed.
 
-Theorem start3_sum_A : ltac2:(tb__ "0|2|
-S14SbS11Q40M0A1M1S15R1P1bA2Va1;A3SbSfS12G0S15R2P1A2A2S12G0S23S20Vm;A1A1A2A3S35S0Vok;S27S0S2bVm;VB;A2S2cR3S1G1A1A5S2eR3A1A4F_;F_;Frho;").
+Theorem start3_sum_A : forall rho : valuation,
+  rw rho 27%positive = a1 ->
+  bv_unsigned (rw rho 1%positive) = bv_unsigned (vm_init_sp (m_vmmaps m)) ->
+  triple segsA ok (SPA segsA (KxA m B) (E_s3 rq) rho []) (Post3 rho).
 Proof using HBlim Hband Hres Htop Ha1 OKF OKP.
   intros rho H27 Hv1.
   eapply triple_seq; [apply triple1_triple; apply (node_s3 rho H27 Hv1)|].
   apply triple_disj.
-  - eapply (fail_arm_safe ok (KxA m B) (OKFx _ _) (fun n => stableA_KxA segsA n m B) S_s3fail SPIN6 400%nat SPIN_MMAPORDIE);
-      [ reflexivity | reflexivity | reflexivity | exact runF_s3 | exact spin6 ].
+  - eapply (fail_arm_safe ok (KxA m B) (OKFx _ _) (fun n => stableA_KxA segsA n m B) (S_s3fail rq) (SPIN6 rq) 400%nat SPIN_MMAPORDIE);
+      [ rrefl | rrefl | rrefl | exact (runF_s3 rq) | exact (spin6 rq) ].
   - apply triple_ex; intros a. apply triple_pure; intros Hpl.
+    rewrite (next_E_s3 rq).
     set (rho' := rho_set_rw rho 28%positive a). set (J6 := KxA (m6 a) (B + 0x38e000)).
-    change (eager_model 0x38e000 m a) with (m6 a). change (KxA (m6 a) (B + 0x38e000)) with J6. rewrite <- S_s3x_eq.
-    eapply triple_conseq; [intros w Hw; exact Hw | | apply (run_cfg1 ok J6 FUEL3 [HMCUT; ECALL_MMAP] G3 S_s3x E_k7 _ [] (OKFx _ _) (fun n => stableA_KxA segsA n _ _) check3)].
-    intros w Hw. destruct (LQA1_SPA J6 G3 rho' E_k7 w Hw) as (rho3 & Hag3 & Hsp3).
+    change (eager_model 0x38e000 m a) with (m6 a). change (KxA (m6 a) (B + 0x38e000)) with J6. rewrite <- (S_s3x_eq rq).
+    eapply triple_conseq; [intros w Hw; exact Hw | | apply (run_cfg1 ok J6 FUEL3 [HMCUT; ECALL_MMAP] G3 (S_s3x rq) (E_k7 rq) _ [] (OKFx _ _) (fun n => stableA_KxA segsA n _ _) (check3 rq))].
+    intros w Hw. destruct (LQA1_SPA J6 G3 rho' (E_k7 rq) w Hw) as (rho3 & Hag3 & Hsp3).
     exists a, rho3. split; [exact Hpl|]. split; [exact Hag3 | exact Hsp3].
 Qed.
 
-Hypothesis Hwit : ltac2:(tb__ "0|2|
-ScS11Q40M0A1M1G1S37S13G0Z0A2Vm;S2dR1A4La;A2").
+(* LPS 727298f3: the witness is Linux's own address ([place_ok_linux], Fw/SysSpec.v), where a granted NULL-hint mmap now goes; written as plain text. *)
+Hypothesis Hwit : (exists a : stdpp.bitvector.definitions.bv 64, OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysSpec.place_ok_linux m OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.Start3.Seg3.n6 a).
 
-Theorem start3_sum_ex_A : ltac2:(tb__ "0|2|
-S14SbS11Q40M0A1M1S15R1P1bA2Va1;A3SbSfS12G0S15R2P1A2A2S12G0S23S20Vm;A1A1A2A3S34S0S27S0S2bVm;VB;A2S2cR3S1G1A1A5S2eR3A1A3F_;F_;Frho;").
+Theorem start3_sum_ex_A : forall rho : valuation,
+  rw rho 27%positive = a1 ->
+  bv_unsigned (rw rho 1%positive) = bv_unsigned (vm_init_sp (m_vmmaps m)) ->
+  etriple segsA (SPA segsA (KxA m B) (E_s3 rq) rho []) (Post3 rho).
 Proof using HBlim Hband Hres Htop Ha1 Hwit.
   intros rho H27 Hv1.
   eapply etriple_seq.
-  { apply (eager_rw_enode E_s3 0x38e000 m B G3l 29%positive);
-      [ reflexivity | reflexivity | OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc
-      | OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc | OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc | OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc | OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc
-      | OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc | OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc | OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc
-      | reflexivity | reflexivity | lia | cbv; reflexivity
+  { apply (eager_rw_enode (E_s3 rq) 0x38e000 m B G3l 29%positive);
+      [ rrefl | rrefl | rvmc
+      | rvmc | rvmc | rvmc | rvmc
+      | rvmc | rvmc | rvmc
+      | reflexivity | reflexivity | lia | destruct rq; cbv; reflexivity
       | exact clear_s3 | exact Hres | exact Htop | exact Hband | exact HBlim | exact Hwit
       | intros e sz [[= <- <-]|[]]; left; exists a1, (Z_to_bv 64 0x10000); split; [exact Ha1|]; cbn [eval]; rewrite H27, u64_of_lit by lia; lia
       | exact Hv1 ]. }
   apply etriple_ex; intros a. intros w [Hpl Hsp]. revert w Hsp.
+  rewrite (next_E_s3 rq).
   set (rho' := rho_set_rw rho 28%positive a). set (J6 := KxA (m6 a) (B + 0x38e000)).
-  change (eager_model 0x38e000 m a) with (m6 a). change (KxA (m6 a) (B + 0x38e000)) with J6. rewrite <- S_s3x_eq.
-  change (etriple segsA (SPA segsA J6 S_s3x rho' []) (Post3 rho)).
-  eapply etriple_conseq; [intros w Hw; exact Hw | | apply (erun_cfg1 J6 FUEL3 [HMCUT; ECALL_MMAP] G3 S_s3x E_k7 _ [] (fun n => stableA_KxA segsA n _ _) check3)].
-  intros w Hw. destruct (LQA1_SPA J6 G3 rho' E_k7 w Hw) as (rho3 & Hag3 & Hsp3).
+  change (eager_model 0x38e000 m a) with (m6 a). change (KxA (m6 a) (B + 0x38e000)) with J6. rewrite <- (S_s3x_eq rq).
+  change (etriple segsA (SPA segsA J6 (S_s3x rq) rho' []) (Post3 rho)).
+  eapply etriple_conseq; [intros w Hw; exact Hw | | apply (erun_cfg1 J6 FUEL3 [HMCUT; ECALL_MMAP] G3 (S_s3x rq) (E_k7 rq) _ [] (fun n => stableA_KxA segsA n _ _) (check3 rq))].
+  intros w Hw. destruct (LQA1_SPA J6 G3 rho' (E_k7 rq) w Hw) as (rho3 & Hag3 & Hsp3).
   exists a, rho3. split; [exact Hpl|]. split; [exact Hag3 | exact Hsp3].
 Qed.
 End Seg3.

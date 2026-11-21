@@ -3,21 +3,22 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFfi.v, with its module paths changed and its addresses moved to libreac/fuzz_disco's ASan build. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_disco/lib/A/AFfi.v, with its module paths and module names changed; 392 of its 466 lines of code are new or changed and 398 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_state image A: the thin realloc segment S4 (the NULL-return arm) of a Theorem Labs lane's realloc composition, i.e.
    RGtop's [seg_nret] at fs's instance [FS_seg_nret] (lib/A/FSRealloc_inst.v), under fs's symbol fact [TfibSyms B]
    (the errno cell is tp - 0xa4, see below; owner ruling a Theorem Labs lane 2026-10-29: the composition supplies TfibSyms B).
 
    Rule 24 (released-proof lookup): a Theorem Labs lane (internal path; ossv proof
-   index v5, ossv/recipes@566eb6ffa5df) answered CONFIRM: no released ASan-image proof of any fuzz_state function.
+   index v5, ossv/recipes) answered CONFIRM: no released ASan-image proof of any fuzz_state function.
    Ported from the released donor walk of the same machine code, cgif_rgb_fuzzer's NULL-return arm
    proofs/cgif/cgif_rgb_fuzzer/lib/YF68.v:104 (c_null; composed at YF78.v:553), in the form a Theorem Labs lane's fuzz_reply port
    gives it on the cgif_file core that fuzz_state shares (worktree (internal path)): committed
-   f26e0262fc2 proofs/plugin-hostd/fuzz_reply/lib/RT/RTm2.v:217 (m4) with RTm2.v:34-108 and :176-197 (frames,
+   proofs/plugin-hostd/fuzz_reply/lib/RT/RTm2.v:217 (m4) with RTm2.v:34-108 and :176-197 (frames,
    chunk8_atom / chunk8_lit / vm_vis, ret_post, ifr_chunks, MRerr, vis_keep) and RTm.v:37-55 (c8, val_mem_addr,
    apresent_wr, rw_wr); uncommitted RT/RTs.v:47-83 there (val_mem_xfer, apresent_vis, vis_apresent_hi, w64_unsigned,
    ap_get, ap_mk).  New here: the decode table, the start state at fs's frames, [cs15] (the callee-saved case split),
-   [word_of_present] generalised from fs's A/AFfi.v:255, [errno_in_img] after fs's A/AD1y.v:65 and
-   [errno_not_static] after A/AD1y.v:19, and the segment theorem.  Addresses moved to fuzz_state.asan (sha256
+   [word_of_present] generalised from fs's A/AFfi.v:255, [errno_in_img] after fs's A/AD1y.v:66 and
+   [errno_not_static] after A/AD1y.v:20, and the segment theorem.  Addresses moved to fuzz_state.asan (sha256
    64b53ff86172bb07...).  No file is copied; no generated-class file (AF0m's tables, AB01 / AB03 / AB05, AD2j, ACej)
    is relocated; the walk reads no .bss cell (it reads the stack frames and writes errno).
 
@@ -215,7 +216,7 @@ destruct k as [|[|[|[|[|[|[|[|k]]]]]]]]; [..|lia];
 Qed.
 
 (* The errno cell is in the image's writable part, and no owned static range of fs meets it (Tfib_owned_static,
-   AF0m.v:281; the same gap 0x5da590..0x5daed8 as AD1y.v:17 DRV_IVS). *)
+   AF0m.v:281; the same gap 0x5da590..0x5daed8 as AD1y.v:18 DRV_IVS). *)
 Lemma errno_in_img : forall a, TFIB_ERRNO <= a < TFIB_ERRNO + 4 -> in_img tfibsegs a.
 Proof.
 intros a Ha. unfold TFIB_ERRNO in Ha. unfold in_img.

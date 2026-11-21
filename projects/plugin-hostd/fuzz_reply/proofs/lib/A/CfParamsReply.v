@@ -2,22 +2,23 @@
    fuzz_preset's per-unit file (a working branch fuzz_preset/lib/A/CfParamsPreset.v).  PER-UNIT
    file, not in the shared set.  A Definition, NOT an exported Instance, so a consumer names it and inference can never
    pick another unit's parameters.
-   It also PINS MMAX, the request bound every live-state rule and walk takes as a Section variable (W_journal.v:766,
+   It also PINS MMAX, the request bound every live-state rule and walk takes as a Section variable (W_journal.v:767,
    W_contract.v lp_spec / gm_spec / sl / dr / re, HMMAX : 0 < MMAX <= 2 ^ 30 in the drain files): the composition
    sets MMAX := fr_MMAX = @cf_malloc_max CfParams_reply, and reply_HMMAX discharges HMMAX at that value.
    Values and where each comes from:
-   - cf_malloc_max = 2 ^ 30 - 2 ^ 20: the value agreed with the instance's author (W_journal.v:746, :766-769).  The
+   - cf_malloc_max = 2 ^ 30 - 2 ^ 20: the value agreed with the instance's author (W_journal.v:747, :767-770).  The
      harness's largest request is the expected list's vector at 2 ^ 25 entries of 16 bytes = 2 ^ 29 bytes
      (REPLY-INSTANCE-REQUIREMENTS.md (sha256 f19868a5803c; internal record) item 8, s1.2), above cgif's MALLOC_MAX = 2 ^ 28 and below this bound.
    - cf_nob = 2 ^ 30: the secondary map size cap that admits that bound (YGcfNames.v's class comment: 2 ^ 30 - 2 ^ 20
      fits under 2 ^ 30, 2 ^ 30 would overshoot); reply_sizes_ok shows every admissible request maps under it.
-   - cf_place_limit = 37,264: a Theorem Labs lane's LPS placement counting limit at NOB = 2 ^ 30 (YGcfNames.v's class comment;
-     reply_place_ok shows the counting condition, and 37,265 fails it).
+   - cf_place_limit = 37,262: a Theorem Labs lane's LPS placement counting limit at NOB = 2 ^ 30 (YGcfNames.v's class comment;
+     37,264 before 727298f3, less the two entries of the reservation tail; reply_place_ok shows the counting
+     condition, and 37,263 fails it).
    - cf_sec_live_max = 8,192: the bound counts the secondary-array entries, which are the live secondary blocks PLUS
      the ones held in quarantine.  A Theorem Labs lane's room_live_cf (a working branch
      Reusable/YGcfRoomLive.v, rl_param_ok :1206) needs QSEC_MAX + 6 < cf_sec_live_max, and its live-set premise needs
      Lsec + QSEC_MAX + 3 < cf_sec_live_max, with QSEC_MAX = (kQuarantineMax + kQuarantineCacheMax) / 64513 = 4,177
-     (Reusable/YGcfSecBound.v:37).  fuzz_reply's peak live secondary blocks is 513 at K = 511 (the drain's start:
+     (Reusable/YGcfSecBound.v:38).  fuzz_reply's peak live secondary blocks is 513 at K = 511 (the drain's start:
      511 pending copies + the expected vector + g_out), EXTRAPOLATED from measurements at K <= 3 where it is K + 2
      (REPLY-INSTANCE-REQUIREMENTS.md (sha256 f19868a5803c; internal record) s1.1-1.2, item 9); the source derivation gives 514 for an instant, because
      ASan's realloc grants the new block before it frees the old (expected's 32,768 -> 65,536 step).  So Lsec = 514
@@ -27,7 +28,7 @@
    - cf_fs_classes = [0; 1]: the fake-stack size classes this unit's frames use, read from the images: the only
      __asan_stack_malloc_<c> calls are to classes 0 and 1 (A: 3 calls to _0, 2 to _1; B: 1 to _0, 2 to _1;
      the objdumps of the pinned fuzz_reply.asan, sha256 42c58610e125e0b47770217f7175ffe2f23ed5ee1399b3e81539eff364611d5a, and fuzz_reply.asan-ubsan, sha256
-     10ffb5f9202ae2bdb01b7a49df9866843a6a6a0e0c50bc67cdba6ce2f6d3cf2c), as W_journal.v:746 says.
+     10ffb5f9202ae2bdb01b7a49df9866843a6a6a0e0c50bc67cdba6ce2f6d3cf2c), as W_journal.v:747 says.
    - cf_head = 0: fuzz_reply's harness calls plain malloc / free / realloc and hides no head (source/fuzz_reply.c has
      no allocator wrapper).  Nothing here may assume preset's `8 <= cf_head` (CfParamsPreset.v preset_head_wide): no
      file of this unit states it.
@@ -65,7 +66,7 @@ Proof. lia. Qed.
 Lemma reply_sec_live_nonneg : 0 <= 8192.
 Proof. lia. Qed.
 
-Lemma reply_sec_live_ok : 8192 <= 37264.
+Lemma reply_sec_live_ok : 8192 <= 37262.
 Proof. lia. Qed.
 
 Lemma reply_nob_sec_len : SEC_LEN_MAX <= 2 ^ 30.
@@ -89,9 +90,10 @@ Proof. apply Z.leb_le. reflexivity. Qed.
 Lemma reply_nob_al : 2 ^ 30 mod 4096 = 0.
 Proof. reflexivity. Qed.
 
-(* a Theorem Labs lane's counting condition at NOB = 2 ^ 30 and limit 37,264: the left side is 140,733,664,948,224 against
-   0x7fff7f800000 = 140,735,332,483,072, a margin of 1,667,534,848 < 2 * 2 ^ 30, so 37,265 fails. *)
-Lemma reply_place_ok : 0x2aaaaaaab000 + (257 * 25 + 37264) * (2 * 2 ^ 30) + 2 ^ 30 <= 0x7fff7f800000.
+(* a Theorem Labs lane's counting condition at NOB = 2 ^ 30, with the two entries of the reservation tail that
+   727298f3 adds (SecGrantP.v), at limit 37,262: the left side is 140,733,664,948,224 against
+   0x7fff7f800000 = 140,735,332,483,072, a margin of 1,667,534,848 < 2 * 2 ^ 30, so 37,263 fails. *)
+Lemma reply_place_ok : 0x2aaaaaaab000 + (257 * 25 + 37262 + 2) * (2 * 2 ^ 30) + 2 ^ 30 <= 0x7fff7f800000.
 Proof. apply Z.leb_le. vm_compute. reflexivity. Qed.
 
 Lemma reply_sec_live_pos : 0 < 8192.
@@ -106,8 +108,8 @@ Lemma reply_kmax_ok : 0 <= reply_kmax <= 2 ^ 24.
 Proof. unfold reply_kmax. split; apply Z.leb_le; reflexivity. Qed.
 
 (* cf_sec_live_place_lt (YGcfNames.v CfParams): this image's secondary live bound 8,192 lies below its placement limit
-   37,264; proved once for this image. *)
-Lemma reply_sec_live_place_lt : 8192 < 37264.
+   37,262; proved once for this image. *)
+Lemma reply_sec_live_place_lt : 8192 < 37262.
 Proof. lia. Qed.
 
 Lemma reply_T_max_ok : 0 <= 0 <= 2 ^ 38.
@@ -120,7 +122,7 @@ Proof. unfold reply_kmax, CF_HULL_MAX. apply Z.leb_le. vm_compute. reflexivity. 
 Definition CfParams_reply : CfParams := {|
   cf_malloc_max := 2 ^ 30 - 2 ^ 20;
   cf_nob := 2 ^ 30;
-  cf_place_limit := 37264;
+  cf_place_limit := 37262;
   cf_sec_live_max := 8192;
   cf_fs_classes := [0; 1];
   cf_head := 0;
@@ -166,7 +168,7 @@ Definition CfParams_reply : CfParams := {|
 Example cf_hull_ok_conv_reply S : @cf_hull_ok CfParams_reply S <-> nsec_cf S <= @cf_kmax CfParams_reply :=
 conj (fun h => h) (fun h => h).
 
-(* room_live_cf's parameter condition (a8's rl_param_ok, YGcfRoomLive.v:1206: QSEC_MAX + 6 < cf_sec_live_max), and
+(* room_live_cf's parameter condition (a8's rl_param_ok, YGcfRoomLive.v:1207: QSEC_MAX + 6 < cf_sec_live_max), and
    the room its live-set premise needs at fuzz_reply's extrapolated peak of 513 live secondary blocks *)
 Lemma reply_rl_param_ok : QSEC_MAX + 6 < @cf_sec_live_max CfParams_reply.
 Proof. cbn. unfold QSEC_MAX, kQuarantineMax, kQuarantineCacheMax. apply Z.ltb_lt. vm_compute. reflexivity. Qed.

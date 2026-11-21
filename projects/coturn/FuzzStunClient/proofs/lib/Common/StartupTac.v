@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, region_side unfolds the new stack-window bounds (wok_lo, stack_window_reach), and a placeholder comment is removed. *)
 
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -42,7 +42,9 @@ Ltac zlit :=
 
 (* [comment removed for export] *)
 Ltac region_side :=
-  unfold win_lo; rewrite ?stack_max_size_val, ?length_N_to_le_bytes, ?length_zeros, ?repeat_length;
+  unfold win_lo, wok_lo; rewrite ?stack_max_size_val;
+  unfold stack_window_reach;
+  rewrite ?length_N_to_le_bytes, ?length_zeros, ?repeat_length;
   cbn [length Z.of_nat Pos.of_succ_nat Pos.succ Nat.add Nat.mul]; imm_norm; unorm; lia.
 
 (* [comment removed for export] *)

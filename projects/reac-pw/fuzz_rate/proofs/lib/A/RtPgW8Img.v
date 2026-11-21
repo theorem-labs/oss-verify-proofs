@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW5Seg.v at 164759458cdd; w5_img_gen's method (an image rebuilt from its parts) written new for rate's pod step: buf grown by x, len, and the entry area and n_ent when the step records an entry. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW5Seg.v; w5_img_gen's method (an image rebuilt from its parts) written new for rate's pod step: buf grown by x, len, and the entry area and n_ent when the step records an entry. *)
 (* reac-pw/fuzz_rate image A (fuzz_rate.asan, pinned sha256
    22bc8613d780c9a99353dc86368f9401311ef5c8358882651217836298529b6a): the bytes of the first block after one pod
    of the params Struct is written (pod_put of its bytes, the len store) and, when the Struct is the first params

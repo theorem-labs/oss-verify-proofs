@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (sym_load guarded by segs_novvar, since a load that misses on the vvar page is MachineUnmodeled, with find_segment_in and range_meets_vvar_novvar added; sym_step stops at an sc with no reservation (sc_unres_b)). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -1321,6 +1322,30 @@ S31S30S0S2cA2M0A1S6Lx;SebVfacts;S8cS49Voff;S17Vo;A1A3Vesz;A3G0G0S6Lp;R1S0S2cS31S
 Definition obj_store_d (facts : list sprop) (o : sobj) (off : sv) (k : Z) (v : sv) : sobj := ltac2:(tb__ "0|1|
 S145Vfacts;Vo;Voff;Vk;Vv;A5S5S6S5Lx;SdVo;A1R1R1R1S2dR2Ll;M0G0S2cS0S36S30S2cS2cA2A1S36SbA1S1fS1bR5A1S17R5A1S20R5A1S16R5A1S112Vfacts;Vo;Voff;Vk;Vv;R4R3R2R1A9A5Ltmpl;Lflds;Lcnt;Lesz;X6x6To1;").
 
+(* LPS 08b1429: no segment of [segs] is the vDSO's vvar data page. *)
+Definition segs_novvar (segs : list Segment) : bool :=
+  forallb (fun s => negb (seg_vdso_vvar s)) segs.
+
+Lemma find_segment_in : forall segs a n s,
+  RiscvSemantics.find_segment segs a n = Some s -> In s segs.
+Proof.
+  induction segs as [|x r IH]; intros a n s H; cbn in H; [discriminate|].
+  match type of H with context [if ?c then _ else _] => destruct c end.
+  - injection H as <-. left. reflexivity.
+  - right. exact (IH _ _ _ H).
+Qed.
+
+Lemma range_meets_vvar_novvar : forall segs a n,
+  segs_novvar segs = true -> RiscvSemantics.range_meets_vvar segs a n = false.
+Proof.
+  intros segs a n H. revert a. induction n as [|n IH]; intros a; [reflexivity|].
+  cbn [RiscvSemantics.range_meets_vvar]. rewrite IH, orb_false_r.
+  unfold RiscvSemantics.vvar_byte_at.
+  destruct (RiscvSemantics.find_segment segs (bv_unsigned a) 1) as [s|] eqn:E; [|reflexivity].
+  apply find_segment_in in E. unfold segs_novvar in H. rewrite forallb_forall in H.
+  specialize (H s E). destruct (seg_vdso_vvar s); [discriminate|reflexivity].
+Qed.
+
 Section WithImage.
   Variable segs : list Segment.
 
@@ -1363,8 +1388,15 @@ S7VS;A1S36S1A1S31S30S0S2cA2M0A1S177Lx;SebR1S8cS49Voff;S17Vo;A1M1A3Vesz;A3G0G0S17
   Definition load_dflt (S : sstate) (n : nat) (o : sobj) (off : sv) (k : Z) (sgn : bool) (w : N) : load_res := ltac2:(tb__ "0|2|
 S6S177Lx;SdVo;A1S17bVS;Vn;Vo;Voff;Vk;Vsgn;Vw;A7M0G0G0S2dG0Ll;M1G1S2cS0S36S30S2cS2cA2A1S36SbA1S18aVS;Vn;Vo;Voff;Vk;Vsgn;Vw;R4R3R2R1AbLtmpl;Lflds;Lcnt;Lesz;X6x6").
 
-  Definition sym_load (S : sstate) (ae : sv) (k : Z) (sgn : bool) : load_res := ltac2:(tb__ "0|18|
+  Definition sym_load0 (S : sstate) (ae : sv) (k : Z) (sgn : bool) : load_res := ltac2:(tb__ "0|18|
 S1b5Q8S6eVk;A1A2S2eS7VS;A1S36S1A1S0S31S2cA1M0Lae;Vae;S2cS19bS63R1S61Z2Z40A2A2M1S6cVk;A1M2A2La;S2dS3aS2cA1M3Li;S43S0S0G3Lb;La;M4Lop;M5G5S44G4Lop;M6G6S2fS2eS0G3La;Lw0;Lsgn0;S2dS0S2cG3Lk0;Li;Ll;X0x8G0G0S177Lro;R1S2cS179S84Vsgn;R4S2R1A1M7A3VS;A2Lz;S31S30S30S3cS5A2M8S0A2M9A1S177Lx;SdeScVS;A1R2Vae;Vk;U0A5G9G9S177Lp;R1G8S0G8S177Lp0;R2S3cS5Sa8S177Lx;SfaR7S16R1A1MaR3Vk;Sd3A5S0S179Sc9R8Vsgn;R9R1A4VS;A2Lv;S0S2cS179Sc9R9Vsgn;RaS8cS59R2S2S66Z8R1A2A1A3A4VS;A2Lsh;Lv;S6S177Lx;SdR1A1S17bVS;R2R1R3Vk;Vsgn;R8A7S179S2Z0MbA1VS;A2S0S177Lx;S1bR1A1S2cS2cS177Lz;R1S0S177Loff;R4S2cG0S177Lx;S197G1G2A2S2cS179S84Vsgn;RbG7A3VS;A2Lz;S181X31x2Lzo;S2dS17bVS;R4R3R5Vk;Vsgn;RaA7McLi;S43S0S0S17bVS;R6R5R7Vk;Vsgn;RcA7MdLb;La;MeLop;MfGfS44GeLop;M10G10S2fS2eS0GdLa;Lw0;Lsgn0;S2dS0S2cGdLk0;Li;Ll;X0x8S2dGcLp;M11G11X2cx3Lz;S2dS17bVS;R3R2R4Vk;Vsgn;R9A7Li;S43S0S0S17bVS;R5R4R6Vk;Vsgn;RbA7M12Lb;La;M13Lop;M14G14S44G13Lop;M15G15S2fS2eS0G12La;Lw0;Lsgn0;S2dS0S2cG12Lk0;Li;Ll;X0x8S2dS179Sc9R8Vsgn;R9S21R1S95R8S49R4S17R2A1A4Vk;A3A4VS;A2Ll;M16G16S2cS0S36S30S2cS2cA2A1S36SbA1S18aVS;R6R5R7Vk;Vsgn;RcR4R3R2R1AbLtmpl;Lflds;Lcnt;Lesz;X6x6S31S0A1S177Lx;S16fU9S12fR7GaR3Vk;A4GbVk;A4S0S179S84Vsgn;R9R1A3VS;A2Lv;S199VS;R2R1R3Vk;Vsgn;R8A7M17X31x2G17Xa8x5Lo;Ln;X30x1Loff;Lp0;X30x1Lp;S2fS177L_;S2fS2fL_;SeVS;A1S39S19cR2Vae;Vk;A3X2fx2S30S0S3A2S177Lx;S99VS;A1S0S3S179S84Vsgn;R5R2A3R1A2LS1;Lx;X30x1S181X2fx2X31x2X31x2Tro;Tfacts;Tw;").
+
+  (* LPS 08b1429: a load that misses every segment is MachineUnmodeled, not MachineFault, when it
+     meets the vvar page (interp_eff_accesses' ELoad arm). The engine's lenient fault leaf claims
+     MachineFault, so it only runs over an image with no vvar segment: the binary's own segments,
+     before Run.run_segments appends the vDSO pair. *)
+  Definition sym_load (S : sstate) (ae : sv) (k : Z) (sgn : bool) : load_res :=
+    if segs_novvar segs then sym_load0 S ae k sgn else LRFail.
 
   Definition sym_store (S : sstate) (ae : sv) (k : Z) (v : sv) : option sstate := ltac2:(tb__ "0|6|
 S31S30S30S3cS5A2M0S0A2M1A1S31S3A1M2Lx;SdeScVS;A1M3S7VS;A1M4Vae;Vk;U0A5G1G1G2Lp;R1G0S0G0G2Lp0;R2S3cS5S2fG2L_;S25SdR1A1A1S35S3SfdVS;S12dS5G3R2S5S146G4R1R4Vk;Vv;A5Lo;A4A2A2S3aS3A1M5X2fx2Lo;Ln;X30x1Loff;Lp0;X30x1Lp;G5X31x2").
@@ -1437,9 +1469,21 @@ S48S2fLt;Vt;S32S32S32S32S39S39X48x6").
   Definition fcvt_ity (t : fcvt_ty) : bool := ltac2:(tb__ "0|0|
 S48S2fLt;Vt;S39S39S39S39S32S32X48x6").
 
-  Definition sym_step (S : sstate) : step_out := ltac2:(tb__ "0|33|
+  Definition sym_step0 (S : sstate) : step_out := ltac2:(tb__ "0|33|
 S8VS;A1S2cS31S47A1S178Lx;S11eVsegs;R1A2S47S3S17aS87R1S5eR3Z4M0A2A2A1LS';S3S178FS';S47S178Li;R2S19eQ5M1A1M2S19eQ14M3A1M4R3S7dVS;R2S9dS1b2Q20M5Q40S1a2G5G3QcM6R1S19fG6Z0M7A2A5M8A3A1A3A1Limm;Lrd;G2G4R3S7dVS;R2S2S63S5eR5S1a1G5G8A2A2S61Z2Z40A2M9A2A1A3A1Limm;Lrd;G2S19eQ15MaA1S17aS87S7dVS;R2S2S63S5eR5G0A2G9A2A1A3S63S5eR5S1a1GaR1A2A2G9A2A2A1Limm;Lrd;G2G2S19eG6A1MbS0S178Lx;S8bSc1VS;R2A2McS198R1A1MdA2MeS2cS63S6bR1S72Z1MfA1A2G9A2S2cS17aS87S7dVS;R5S2S63S5eR8G0A2G9A2A1A3R1A2A1Ttgt;Lt;S2dS17cS191A1M10Li0;S43S0S0G10Lb;La;M11Lop;M12G12S44G11Lop;M13G13S2fS2eS0G10La;Lw;Lsgn;S2dS0S2cG10Lk;Li0;Ll;X0x8Limm;Lrs1;Lrd;S45G2G2S19eQdM14A1Sc1VS;R3A2M15S0G15S0S63S5eR9S1a1G14R3A2A2G9A2S2cS7aS178Lx;S193VS;R7R3R2A4S17aS87VS;R1A2A1S17aS87VS;S5eRaG0A2M16A2A1S192S87Sb7VS;S14R7R3R2A3M17A2R1A2S87Sb7VS;S1dG17A1A2G16A2A2X7ax3Ttpc;Tb;Ta;Limm;Lrs2;Lrs1;Lc;S4eS2fG2G2GbGeS0S177S178Lx;M18S17dVS;R1S18cR6A1R5A4S0S3R9S7dR1R6R2A3A1LS';Lv;S17cS18fA1M19X177x2Tae;Limm;Lrs1;Lrd;Lsgn;Lsz;S4eG2G2GbS8bG15GdA2M1aS0S31S0A1S178Lx;M1bS13VS;A1M1cS0S17cS182A1M1dLs;M1eS31S3A1S178Lx;M1fS180VS;R1S18cR5A1G15A4S3R7R1A1LS';M20G19X31x2X31x2Tae;Limm;Lrs2;Lrs1;Lsz;S43G2G2GbR5S7dVS;R3ScaS7VS;A1M21R4GcS2S63GdG9A2A1M22A4A3A1Limm;Lrs1;Lrd;Lop;S43G2G2S19eQ6M23A1R5S7dVS;R3ScaG21R4GcS2S1a0G23R1A2A1A4A3A1Lsh;Lrs1;Lrd;Lop;S43G2G2G2R5S7dVS;R3S13bG21R4GcSc1VS;R1A2M24A4A3A1Lrs2;Lrs1;Lrd;Lop;G2G2GbR4S7dVS;R3Sc8G21S4bGcG22A4A3A1Limm;Lrs1;Lrd;S43G2G2G2R5S7dVS;R3Sc7R4GcS2S1a0G1R1A2A1A3A3A1Lsh;Lrs1;Lrd;Lop;S43G2G2G2R5S7dVS;R3S13cG21R4GcG24A4A3A1Lrs2;Lrs1;Lrd;Lop;S19eQ4A1M25G25G25G2G2R6VS;A1Lrs1;Lrd;Lsucc;Lpred;Lfm;G2G2GbR4VS;A1Limm;Lrs1;Lrd;S17cS18eA1G1dS44G2G2G2R5S7dVS;R3S137G21R4GcG24A4A3A1Lrs2;Lrs1;Lrd;Lop;S44G2G2G2R5S7dVS;R3S13aG21R4GcG24A4A3A1Lrs2;Lrs1;Lrd;Lop;S4cS2fS2fG2G2G24S0S2fS178L_;M26S3dS183G21R1S186R6A1A3A1G1dG18S17dVS;R1S185R6A1S39A4S0S3R9SfeS7dR1R5R2A3S35S0R3A2A2A1LS';Lv;G19X177x2X2fx2Tae;Lrs1;Lrd;Lrl;Laq;Lwd;S4cS2fS2fG2G2G2GcS0G26S3dS183G21R1S186R7A1A3A1G1dG1bG1cS0G26S4R1R2A2G1fS180SfeVS;S3aS0A1A2R2S185R8A1G15A4S3RaS7dR1R6S2G7A1A3A1LS';G19X31x2G1dX2fx2Le;R8S7dVS;R4S2GfA1A3A1X31x2X2fx2Tae;Lrs2;Lrs1;Lrd;Lrl;Laq;Lwd;S53S4cS2fS2fG2G2G2G1dLrs2;Lrs1;Lrd;Lrl;Laq;Lw;Lop;S4aG2G2GbS18dVS;R4R3S4aS2fLop;M27R4S39S3dS1b0R2A1A1M28G28X4ax3R1A5Lcsr;Lrs1;Lrd;Lop;S4aG2G2GbS18dVS;R4R3G27R4S39S3dS62S1a0G1R2A2G7A2A1M29G29X4ax3R1A5Lcsr;Luimm;Lrd;Lop;S46G2G2GbGeS0S46S178Lfmt;M2aR5G18S17dVS;R1G0S32A4S0S3R8Sa4R1R6S18bR2A1A3A1LS';Lv;G19X177x2G18S17dVS;R1Z8M2bS39A4S0S3R8Sa4R1R6R2A3A1LS';Lv;G19X177x2X46x2Tae;Limm;Lrs1;Lrd;Lfmt;S46G2G2GbG1aS0G1bG1cG1eG1fS180VS;R1S46S2cLfmt;R5G0G2bX46x2Se1VS;R3A2A4G20G19X31x2X31x2Tae;Limm;Lrs2;Lrs1;Lfmt;S56S46G2G2G2G2S19eQ3A1M2cG26S19aVS;R1A2M2dS17eVS;R5A2G1dX2fx2Lrm;Lrs3;Lrs2;Lrs1;Lrd;Lfmt;Lop;S54S46G2G2G2G2cG26G2dS17eVS;R4A2G1dX2fx2Lrm;Lrs2;Lrs1;Lrd;Lfmt;Lop;S46G2G2G2cG26G2dS17eVS;R3A2M2eG1dX2fx2Lrm;Lrs1;Lrd;Lfmt;S58S46G2G2G2G26S195VS;A1M2fG2eG1dX2fx2Lrs2;Lrs1;Lrd;Lfmt;M30Lop;S57G30Lop;S55S46G2G2G2G26G2fS196VS;R3A2G1dX2fx2Lrs2;Lrs1;Lrd;Lfmt;Lop;S48S48G2G2G2cG26S3dG2dA1G1dG26S34S187R5A1S3fS187R4A1M31S188R4A1A2A2
 G2eG26S34S188R5A1G31A2S189VS;R3A2G1dX2fx2X2fx2X2fx2Lrm;Lrs1;Lrd;Lsrc;Ldst;S4dS46G2G2S4dS178Ldir;R4G2aR3R5S7dVS;R2S84S39G5Se1VS;R1A2M32A3A3A1R5S7dVS;R2G32A3A1X46x2G2aR3R5Sa4VS;R2S18bS84S32G5G24A3A1A3A1R5Sa4VS;R2G24A3A1X46x2X4dx2Lrs1;Lrd;Lfmt;Ldir;S46G2G2G26G2fS189VS;R2A2G1dX2fx2Lrs1;Lrd;Lfmt;X47x23Tnx;Li;S17cS190A1X31x2Tpc;").
+
+  (* LPS 08b1429: a failing sc is a load and a store back of the same bytes (Riscv/Sem.v's Sc arm),
+     not a register write. The engine stops at an sc with no reservation, as cgif's and bignum's
+     analyzers do; every walk here reaches sc only after its lr, so no walk stops there. *)
+  Definition sc_unres_b (S : sstate) : bool :=
+    match instr_at segs (ss_pc S) with
+    | Some (Sc _ _ _ _ _ _) => match ss_resv S with None => true | Some _ => false end
+    | _ => false
+    end.
+
+  Definition sym_step (S : sstate) : step_out :=
+    if sc_unres_b S then StStop RsUnsupported else sym_step0 S.
 
   Record leaf := mkLeaf { lf_state : sstate; lf_reason : stop_reason }.
 

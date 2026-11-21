@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/tx_put.v, with its module paths and module names changed; 2422 of its 2466 lines of code are new or changed and 984 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3a.v, with its module names changed; 1977 of its 2075 lines of code are new or changed and 2368 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3b.v, with its module names changed; 391 of its 424 lines of code are new or changed and 2042 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/F5_df0.v -- GLUE for stage seg_F5_df0 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput
    (lib/A/ACtl.v:753), plus the four shared lemmas of the F5 glue lanes that this lane owns (the contract of
    f5-glue-context.md (a working note, not in this delivery)).  Written by a Theorem Labs lane;
@@ -105,7 +106,7 @@
    parts by A.ShadowRwOnK.fl_shadow_rw_on).  No VIS0 / OWNED_RO / AR_VIS0 / AR_OWNED_RO hypothesis and no
    stage-level ctlrt_of_AR.  The run's contract takes no mem_inv premise.
 
-   BUILD STATE: type-check with cb build --fresh (BASE 23b918fe0c2e) on a working branch 1899bed1aee merged with
+   BUILD STATE: type-check with cb build --fresh (BASE) on a working branch merged with
    a working branch; the lane report names the cbrec record (.prov), the .vo mtime and Print Assumptions of
    glue_seg_F5_df0, f5g_ctl_rt_C_keep, f5g_frac_keep and f5g_frame_below (Rocq primitives and
    functional_extensionality_dep only).  No Axiom, no Parameter, no Admitted, no admit; LAWS stays a Section

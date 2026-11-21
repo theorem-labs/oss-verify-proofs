@@ -140,7 +140,7 @@ Proof.
 Qed.
 
 (* ---- the shape of a run's final state, and that a run only grows memory ---- *)
-(* Port of a working branch 9391072eea4 lib/B/Prog/LeafCgGlue.v eqv_MS_mkst
+(* Port of a working branch lib/B/Prog/LeafCgGlue.v eqv_MS_mkst
    (that file is not on this branch): a state register-equivalent to decode's MS form is cgif's mkst state of its
    own register map, at the float state the run left. *)
 Lemma crtB_eqv_mkst : forall R F pc fc m ro ms,

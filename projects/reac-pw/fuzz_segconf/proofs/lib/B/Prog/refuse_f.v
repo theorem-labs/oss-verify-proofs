@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10-30: copied for image B (fuzz_segconf.asan-ubsan) from lib/A/Prog/refuse_f.v at commit 781e28832d34 (a sub-lane, commit 31d252516fb7) by the image-B refuse walk lane of the image-B G3 walk owner: Require paths only: image B's kit copies lib/B/YG0f, YG0n and contract base lib/B/Prog/SegABase.v (the unit owner 694f3575dda2, name map the B-kit name map); the file names no image number. *)
+(* Modified by Theorem Labs, 2026-10-30: copied for image B (fuzz_segconf.asan-ubsan) from lib/A/Prog/refuse_f.v (a sub-lane) by the image-B refuse walk lane of the image-B G3 walk owner: Require paths only: image B's kit copies lib/B/YG0f, YG0n and contract base lib/B/Prog/SegABase.v (the unit owner, name map the B-kit name map); the file names no image number. *)
 (* reac-pw/fuzz_segconf, ASan image A: the functional lemmas of refuse's walk (a sub-lane of the image-A refuse walk lane,
    the image-A G3 walk owner, 2026-10-30). Proves no function of the binary: these are facts of the model (lib/Spec/SegModel.v
    refuse, r_where, r_addr_fmt, r_addr_args, fmt) and of the encoding (lib/Prog/seg_spec.v rconf_enc, cstr_enc,

@@ -1,4 +1,4 @@
-(* CARRIED from commit feb36b594af6a0c0013ffa13916ea68f15baf41c,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YGcfInstDrainQ.v, sha256 3863436edef07c81f55ec26235552b1d1034940c64b0dd83d47de9de9259cb4d (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the Require lines only:
    the module prefix cgif_file_fuzzer.lib -> fuzz_reply.lib.Reusable, except ImgBaseDG / DMiface / DMspec / YGcfInstBase /
@@ -6,6 +6,7 @@
    change, the module order kept. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the generic cf instance layer, lane F2b: the read fields of DMiface over
    the drain's cut relation, at the cf instance (ARXr := YGcfInstDrainR.ARXr_cf B IOK Hp, AOX := aowned B,
    DRq := YGcfInstDrainR.DRq_cf B).
@@ -18,7 +19,7 @@
      YGcfInstDrainR.ARcf_of_ARXr_end;
    - [di_rview_cf] (di_rview : DMiface.di_rview_t B ARXr DRq): the space-base word, the pending chunks' headers and the
      pending batch objects at every cut; the cf twin of cgif's DGif1.rview_cgif (DGif1.v:2222-2247) with YFhl.item_facts /
-     sb_cell and YFhf.slot_carved / slot_vs_chunk restated over ARmcfR (YFhf.v:70-129, YFhl.v:95-123).
+     sb_cell and YFhf.slot_carved / slot_vs_chunk restated over ARmcfR (YFhf.v:70-129, YFhl.v:96-124).
    Image premises (named, over ImgBase.AImg's fields only): [SB_CONST], the space-base word is a constant cell of the
    image (cgif: in Tfib_const, YFhl.sb_cell); [IOK_inst], the unit's instance predicate names the symbol table's instance
    object (preset's IOK is that equation).  Image-free otherwise and event-free (no event-count term, no event regime,
@@ -182,9 +183,9 @@ split; [|split].
   intros k a Hk Ha. exact (slot_vs_chunk_cf ly X _ z k M SZ (IT k Hk) a Ha).
 Qed.
 
-(* The requar view field as WalkB1 states it (DMwalkIF.di_rview_x_t @ 215f6356933): di_rview_t and the batch class's
+(* The requar view field as WalkB1 states it (DMwalkIF.di_rview_x_t): di_rview_t and the batch class's
    allocated bound.  RMAXD_cf is kFreeArrayOffset: the class's free array begins there, so nothing above it is user
-   memory (DMwalkIF.v:304-308), and the invariant keeps every class's mapped user part inside it.  RMAXD_cf and its
+   memory (DMwalkIF.v:305-309), and the invariant keeps every class's mapped user part inside it.  RMAXD_cf and its
    bound are YGcfInstDrainR's, one text for the three walk constants. *)
 Lemma di_rview_alloc_cf : forall inst ly X W mem md its zs, ARXr inst ly X W mem md -> DRq_cf B kQuarantineMax X its zs ->
 rg_alloc_user (reg X kBatchClass) <= RMAXD_cf.

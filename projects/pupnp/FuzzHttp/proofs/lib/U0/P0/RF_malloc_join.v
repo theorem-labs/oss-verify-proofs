@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's auxv witness: its layout, entry, ids and hwcap values). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
@@ -113,7 +114,7 @@ Lemma rauxv_ok_malloc_fp {HGW : HasGuard} {HCEIL : HasCeiling} st st2 lo sp m0 m
 Proof.
   intros MR0 MR2 AUX PE CLO SB. eapply rauxv_ok_pres; [exact AUX| exact PE| |].
   - intros a Ha Hfp. destruct (rmalloc_fp_cases st st2 lo sp m0 m2 a MR0 MR2 Hfp); [lia|].
-    destruct AUX as (av & x3 & x4 & x5 & hw & x6 & x11 & x12 & x23 & rnd & _ & _ & _ & HH). ceil_facts. lia.
+    destruct AUX as (av & rnd & xla & xph & xen & xuid & xgid & xhw & xefn & _ & _ & _ & HH). ceil_facts. lia.
   - intros a Ha Hfp. unfold RAUXV_CELL, RLIBC in Ha.
     destruct (rmalloc_fp_image st st2 lo sp m0 m2 a MR0 MR2 Hfp CLO ltac:(lia)) as [X|X]; unfold RCTX in X; lia.
 Qed.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the four DMOD destructurings of the usage paths take its new channel-reader field. *)
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -81,7 +82,7 @@ Section S.
                (t_emit (W 1 (to_bytes (so_buf so))) (t_exit (wz code) fs)).
   Proof.
     intros until ph. intros DM HFD -> CODE -> FR ST LO GT SPH DS TID LC SOF SOB SEF [SSP1 SSP2] MI.
-    pose proof DM as [MOK' _ HFS]. destruct (DMOD_chan _ _ _ DM HFD) as [CH1 CH2].
+    pose proof DM as [MOK' _ HFS _]. destruct (DMOD_chan _ _ _ DM HFD) as [CH1 CH2].
     destruct DS as (D1 & D2 & D3 & D4 & D5 & D6 & D7 & D8 & D9 & D10 & D11 & D12 & D13 & D14 & D15 & D16). unfold PDSO, PINCB, PCXAFIN in *.
     pose proof ST as LNN; destruct LNN as (LNN & _ & _).
     unfold wz, PSTAGE2_RET in *.
@@ -120,7 +121,7 @@ Section S.
                (t_emit (W 1 (to_bytes (so_buf so))) (t_exit (wz 2) fs)).
   Proof.
     intros until ph. intros DM HFD -> ST LO GT DS TID LC SOF SOB SEF [SSP1 SSP2] MI.
-    pose proof DM as [MOK' _ HFS]. destruct (DMOD_chan _ _ _ DM HFD) as [CH1 CH2].
+    pose proof DM as [MOK' _ HFS _]. destruct (DMOD_chan _ _ _ DM HFD) as [CH1 CH2].
     destruct DS as (D1 & D2 & D3 & D4 & D5 & D6 & D7 & D8 & D9 & D10 & D11 & D12 & D13 & D14 & D15 & D16). unfold PDSO, PINCB, PCXAFIN in *.
     unfold wz in *.
     eapply rz_step_evt; [exact MOK'|].
@@ -214,7 +215,7 @@ Section S.
   Local Ltac prep PRE :=
     pose proof PRE as (ST & MI & DS & LC & SSP & SOF & SEF);
     pose proof DS as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & G1 & G2 & _); unfold wz in G1, G2;
-    pose proof DM as [MOK' _ HFS]; destruct (DMOD_chan _ _ _ DM HFD) as [CH1 CH2];
+    pose proof DM as [MOK' _ HFS _]; destruct (DMOD_chan _ _ _ DM HFD) as [CH1 CH2];
     unfold GLOBALS_TOP in GT; unfold wz, PSTAGE2_RET.
 
   (* [comment removed for export] *)
@@ -398,7 +399,7 @@ Section S.
                (t_die (msg_usage argv0) fs).
   Proof.
     intros until tm1. intros DM RA TP -> -> ARG ARG2 ST LO GT SPH MI FRM DS TID LC SSP SOF SEF AV BY NONUL SLK LEN PUS.
-    pose proof DM as [MOK' _ HFS]. destruct (DMOD_chan _ _ _ DM ltac:(left; reflexivity)) as [CH1 CH2].
+    pose proof DM as [MOK' _ HFS _]. destruct (DMOD_chan _ _ _ DM ltac:(left; reflexivity)) as [CH1 CH2].
     pose proof (bytes_at_bound _ _ _ _ BY) as BB. rewrite length_app in BB. cbn [length] in BB.
     unfold GLOBALS_TOP in GT. unfold wz, PMAIN in *.
     apply rz_die.

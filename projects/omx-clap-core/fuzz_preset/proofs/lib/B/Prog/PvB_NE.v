@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset image B (asan-ubsan), parse_value 0x8637c, SEGMENT N (the number arm), sub-piece
    E of lib/B/Prog/PvB_NCut.v: R (0x8681c, strtod's return site) -> T (0x8688c) | C (0x86864), over h-verbs-1's ONE
    image-B program listing (lib/B/Listing_prog.v, PL_prog_B). It proves pnE_stmt (PvB_NCut.v).
@@ -8,7 +9,7 @@
    unpiped, index built 2026-10-29T04:26:29Z): "parse_value: 14 file(s) named for it, 35 file(s) use its address, 0
    related; in an earlier delivery 58 named for it and 794 name(s) that hold it, in 68 tree(s)"; second-agent CONFIRM
    (ParseValueLookupConfirm 04:21Z): no released srealizes-form proof of this program's parse_value; new proof
-   justified. Image A's number arm of ex_value (lib/A/Prog/S8aNumD.v at cold/h-s8a-number-d 18f7e2272a9) is the
+   justified. Image A's number arm of ex_value (lib/A/Prog/S8aNumD.v) is the
    template of the hand steps and of the pure lemmas, which are image independent and are ported here, not Required.
 
    THE CODE (the neutral listing, the internal file parse_value.fuzz_preset.asan-ubsan.s; listing offset = B pc - 0x816cc):

@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the entry segment of the image-A walk of libreac/fuzz_decode's LLVMFuzzerTestOneInput, with proof steps adapted from proofs/libreac/fuzz_grant/lib/A/Prog/CtrlStampHeadamp.v (pb_reac_ctrl_stamp_headamp's prologue and its class-0 stack malloc, origin/cold/pg-prog), proofs/libreac/fuzz_grant/lib/A/Prog/GrantACja.v (land_m32, denot_and_m32, sp1_facts), proofs/libreac/fuzz_grant/lib/A/Prog/GrantFrame.v (val_mem_of_rd32, rdword_of_val_mem, val_mem_moved), lib/Reusable/YCbq.v (call_effect_journal) and lib/A/Prog/YC85.v (aj_stack_malloc_atS); module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_transport/lib/A/Prog/CanKit.v; 227 of its 308 lines of code are new or changed and 443 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* TransportGFrame: the side-stack frame kit of the G-form caller-journal walks of image A (lib/A/W_journalG.v
    ajournal_gx with XO = 0 and OUT = [], over the call kit lib/A/Prog/TransportGCg.v). A walk that takes a side-stack
    frame of its own holds its caller's G journal with (cid, pos) :: own while the frame is live. Nothing here names a
@@ -24,8 +25,8 @@
      range, so they serve a walk whose written range holds bytes of G (TransportGCg.v dk_kept_own_g asks
      dkg_in_frames of it, which G bytes, image bytes outside every frame, cannot meet).
    - tw_kept_nf_g: a step that changes only the own frame keeps tw_at T over any table T whose rows are ranges of G.
-   dk_kept_nf_gw, dk_kept_nfz_gw and tw_kept_nf_g are h-hreply-s5-p7's (row AW59: MonRelKit.v at ecd10181ef3b,
-   MonNtcKit.v at 39e1ef73279e), moved here so the G walks with a frame of their own Require one copy. *)
+   dk_kept_nf_gw, dk_kept_nfz_gw and tw_kept_nf_g are h-hreply-s5-p7's (row AW59: MonRelKit.v at
+   MonNtcKit.v), moved here so the G walks with a frame of their own Require one copy. *)
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* fuzz_state image A, realloc segment S1 (RtS1, 2026-10-29).
    The register / frame checks at Allocate's entry (PAREGS, PAFRAMES, PAST_top, pachk_ok) and the prefix leaf pa_leaf.
-   Port of cgif_rgb_fuzzer lib/YF6q.v + YF6v.v (released donor of the realloc prefix; commit 102d6008296,
+   Port of cgif_rgb_fuzzer lib/YF6q.v + YF6v.v (released donor of the realloc prefix; commit theorem-labs/oss-verify-proofs@6b32741d849a,
    byte-equal to h-state-a5/realloc-thin/donor/), translated by h-state-a5/realloc-thin/s1/translate_rgb_to_fs.py:
    module names mapped to fs's (the map checked on cgif_rgb YF2w / YF2i / YF1y against fs's A/AFh1 / AFgn / AFg3),
    img_* tactics to plain ones, (addr + D_xxx) to fs.asan addresses (fs-addr-map.tsv (sha256 87fed8dc5c4b; internal record); 0x54230 = return pc
@@ -12,9 +12,10 @@
    of 0x32644; pa_leaf states fs's allocator relation FSupoison.ARU (the any-user-poison form, FSRealloc_inst.FS_ARX)
    instead of AR *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/omx-clap-core/fuzz_state/lib/A/FSRealloc_S1_pa.v (commit ddc081c1a03, fuzz_state's realloc segment S1; file sha256 cc58866f4da0) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 9 image addresses moved by code-verified function pairs (3 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair_fs.py; 6 code pcs the tool read as sizes, by funcpair_fs.py), and 8 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/omx-clap-core/fuzz_state/lib/A/FSRealloc_S1_pa.v (fuzz_state's realloc segment S1; file sha256 cc58866f4da0) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 9 image addresses moved by code-verified function pairs (3 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair_fs.py; 6 code pcs the tool read as sizes, by funcpair_fs.py), and 8 pcs named in comments; no other numeral changed. *)
 (* Provenance: in the header prose, the donor checkout's host path named by its commit (1); 1 instruction immediate quoted in the prose (jal / auipc / lw) restated from fuzz_reply.asan's own instruction words. *)
-(* Modified by Theorem Labs, 2026-10: preset A5's statement edits (commit d0fcb396eee, proofs/omx-clap-core/fuzz_preset/lib/A/FSRealloc_S1_pa.v) taken at the same places: pa_leaf takes the post-state relation R as a parameter in place of FSupoison.ARU (and its Up), and also states errno's four bytes kept and the memnorm form kept (YAkMemnorm.memnorm); it Requires YAkMemnorm in place of FSupoison; no other change. *)
+(* Modified by Theorem Labs, 2026-10: preset A5's statement edits (proofs/omx-clap-core/fuzz_preset/lib/A/FSRealloc_S1_pa.v) taken at the same places: pa_leaf takes the post-state relation R as a parameter in place of FSupoison.ARU (and its Up), and also states errno's four bytes kept and the memnorm form kept (YAkMemnorm.memnorm); it Requires YAkMemnorm in place of FSupoison; no other change. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -165,7 +166,7 @@ c' = cfg_at tfibsegs 0x31bd8 regs' mem' md' /\
 (R (snd r) W' mem' md' /\ wle W W' /\ same_io md md' /\
 (forall a, 0 <= a < 2 ^ 64 -> ~ aowned B ly S a -> ~ aowned B ly (snd r) a -> ~ ascratch B ASTACK regs a ->
 aview tfibsegs (w_H W') mem' a = aview tfibsegs (w_H W) mem a) /\
-(* the same frame on the raw memory (c5's seg_pre post, RGtop.v:255) *)
+(* the same frame on the raw memory (c5's seg_pre post, RGtop.v:256) *)
 (forall x : word, ~ aowned B ly S (bv_unsigned x) -> ~ ascratch B ASTACK regs (bv_unsigned x) -> mem' x = mem x) /\
 (forall a, spZ regs - ASTACK <= a < spZ regs -> apresent (w_H W') mem' a)) /\
 PAST_top regs (Z.of_nat (length tr)) (w_H W') regs' mem' /\

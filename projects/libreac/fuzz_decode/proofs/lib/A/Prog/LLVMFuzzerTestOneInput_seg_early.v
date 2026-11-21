@@ -3,11 +3,12 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the entry segment of the image-A walk of libreac/fuzz_decode's LLVMFuzzerTestOneInput, with proof steps adapted from proofs/libreac/fuzz_grant/lib/A/Prog/CtrlStampHeadamp.v (pb_reac_ctrl_stamp_headamp's prologue and its class-0 stack malloc, a working branch), proofs/libreac/fuzz_grant/lib/A/Prog/GrantACja.v (land_m32, denot_and_m32, sp1_facts), proofs/libreac/fuzz_grant/lib/A/Prog/GrantFrame.v (val_mem_of_rd32, rdword_of_val_mem, val_mem_moved), lib/Reusable/YCbq.v (call_effect_journal) and lib/A/Prog/YC85.v (aj_stack_malloc_atS); module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_decode/lib/A/Prog/LLVMFuzzerTestOneInput_seg_entry.v, with its module names changed; 1124 of its 1192 lines of code are new or changed and 513 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* LLVMFuzzerTestOneInput_seg_early: the segment llvm_a_early of the image-A walk of libreac/fuzz_decode's
    LLVMFuzzerTestOneInput (lib/A/Prog/LLVMFuzzerTestOneInput_segs.v llvm_a_early_stmt), offsets +0x074 .. +0x230 of
    the audited listing lib/A/Prog/DecodeList.v, stepped through the Pa engine (lib/A/Prog/PaRun.v, PaShadow.v,
    PaJournal.v, DecodePaLib.v) in the idiom of libreac/fuzz_boxreg's lib/A/Prog/ReadName.v (pb_read_name at
-   a working branch 1d92330b7ad).
+   a working branch).
 
    What the code does from the return of __asan_stack_malloc_0 (+0x074). a0 is the fake frame F (4096 <= F), so
    `bnez s3` at +0x084 is decided by the engine and the real-frame arm with its probe loop (+0x088 .. +0x0a0) is

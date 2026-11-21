@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACf1.v, with its module paths and module names changed; 666 of its 714 lines of code are new or changed and 451 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs ASan+UBSan (build B), group ALLOC: the walk of fuzz_free (B 0x82dbc, alloc.c:107-116 with disown() :51-59 inlined),
    proving fuzz_free_spec of lib/B/FSH_Fn_alloc.v over fs.asan-ubsan (image tfibsegs = lib/B/YB1v.v's
    AsanUbsan.M.loaded_segments, the same term as lib/B/FSH_Harness.v's fsbsegs).
@@ -40,9 +41,9 @@
    Kit rules R1 (per-goal `first [solve ..]`, computing alternatives guarded by goal shape) and R2 are followed.
 
    TEMPLATES (no import): the A walk of the same C code, lib/A/FSW_fuzz_free.v on a working branch
-   ce056b8b106 (its lemmas ff_lor_shl .. ff_awr_ret_hd and the walk, ported with B's addresses: entry 0x82dbc, call
+   (its lemmas ff_lor_shl .. ff_awr_ret_hd and the walk, ported with B's addresses: entry 0x82dbc, call
    0x82e00 -> 0x54aa4 with ra 0x82e04, tail 0x82ea8 -> 0x530e0, shadow-base cells 0x9fc10 / 0xa8438; plus B's two
-   UBSan branches and the two runs they cut); the bespoke B walk a working branch 7c4897eaa4b
+   UBSan branches and the two runs they cut); the bespoke B walk a working branch
    lib/B/Prog/fuzz_free.v (its segment cut at the unpoison call). Relocated files: none. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -73,7 +74,7 @@ Fail Definition probe_SH : Reusable.YI14.sink_syms := _.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
 (* The head's 8 bytes, read back by 8 `lbu` and or-ed together (0x82e28 .. 0x82e84), as the walk computes them, and  *)
-(* their value. Ported from: a Theorem Labs lane's FMW_fuzz_free.v ffb0 .. ff_U_live (8ff81300fd2), head atom 33 -> 41, g_live atom   *)
+(* their value. Ported from: a Theorem Labs lane's FMW_fuzz_free.v ffb0 .. ff_U_live, head atom 33 -> 41, g_live atom   *)
 (* 34 -> 35; proofs unchanged.                                                                                       *)
 (* ---------------------------------------------------------------------------------------------------------------- *)
 
@@ -210,7 +211,7 @@ Qed.
 (* ---------------------------------------------------------------------------------------------------------------- *)
 
 (* awr_ok sees a region list only through its skeleton (base and write window). Ported from: a Theorem Labs lane's
-   fm_awr_skel (a working branch 1e530cd69f6 lib/A/FSW_fuzz_malloc.v), same statement and proof. *)
+   fm_awr_skel (a working branch lib/A/FSW_fuzz_malloc.v), same statement and proof. *)
 Lemma ff_awr_skel : forall segs B E rs rs' STK sp0 FP bl0 blc ly own fr0,
   skeleton rs' = skeleton rs ->
   awr_ok segs B E rs STK sp0 FP bl0 blc ly own fr0 -> awr_ok segs B E rs' STK sp0 FP bl0 blc ly own fr0.

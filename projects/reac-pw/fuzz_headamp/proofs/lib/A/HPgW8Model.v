@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW8Model.v at 888d1ffb4c3; module paths fuzz_role -> fuzz_headamp (the Pod model is the same file in both units). *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW8Model.v; module paths fuzz_role -> fuzz_headamp (the Pod model is the same file in both units). *)
 From Stdlib Require Import ZArith List Lia Bool.
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Pod Require Import Cursor Model Layout.
 Import ListNotations.

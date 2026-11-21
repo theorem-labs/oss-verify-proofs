@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 3060 of its 3101 lines of code are new or changed and 207 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Sem.
@@ -15,7 +16,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import RcAsanRT asan_
   reac_box_catalogue_match_c reac_box_catalogue_match_lib.
 Import ListNotations.
 Open Scope Z_scope.
-(* The store hook this file's proofs use: also transport rd_mono across a store. Text of lib/A/Prog/MemMono.v (a version not in this delivery; written on a working branch 8bac67328ab),
+(* The store hook this file's proofs use: also transport rd_mono across a store. Text of lib/A/Prog/MemMono.v (a version not in this delivery; written on a working branch),
    whose redefinition is Local there; Local
    here too (a Theorem Labs lane 11:28Z). *)
 Local Ltac footprint_after_store segs m a bs ::=
@@ -95,7 +96,7 @@ Proof.
 Qed.
 
 (* Three class-footprint lemmas this proof uses, file-local: the text of the image-A RcAsanFPLib.v this proof was written
-   against (a working branch 82b481fc405, lines 413-439); the RcAsanFPLib.v of this tree does not have them. *)
+   against (a working branch, lines 413-439); the RcAsanFPLib.v of this tree does not have them. *)
 (* fp_w for a single class is a sublist of fp_w for a class list that contains it. *)
 Lemma fp_w_incl : forall c cs FS, In c cs -> incl (fp_w [c] FS) (fp_w cs FS).
 Proof.

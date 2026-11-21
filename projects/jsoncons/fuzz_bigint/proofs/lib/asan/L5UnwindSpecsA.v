@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the auxv fact is the launch's whole vector of 27 or 29 pairs (auxv_okA) in place of the ten-pair auxv20A, kept over memory that agrees on it (auxv_okA_agree), and the auxv sits at least 16 bytes above the stack top. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp.bitvector Require Import definitions.
@@ -79,8 +80,29 @@ Definition as0_unw_layout (L : asan_layout) : Prop :=
 Record XS : Type := mkXS { xs_gd : bool; xs_fl : bool; xs_av : Z; xs_uid : Z; xs_rnd : Z; xs_canary : Z; xs_hw : Z }.
 Definition xs_of (gd fl : bool) (av uid rnd canary hw : Z) : XS := mkXS gd fl av uid rnd canary hw.
 
-(* [comment removed for export] *)
-Definition auxv20A (uid rnd hw : Z) : list Z := [3; 0x10040; 4; 56; 5; 11; 16; hw; 6; 4096; 11; uid; 12; uid; 23; 0; 25; rnd; 0; 0].
+(* The auxiliary vector at [av] (the value of [__auxv]), as the LPS 727298f3
+   launch writes it: [LibIface.auxv_vec], i.e. [StackLayout.auxv_entries]
+   flattened, 27 pairs or 29 under CONFIG_RSEQ, with this image's program
+   headers (0x10040, 56, 11).  At parity with [L5ParseSpecs.auxv_ok]. *)
+Definition auxv_okA (M : word -> option byte) (av uid rnd hw : Z) : Prop :=
+  exists (la : StackLayout.LaunchAuxv) (ph : PhdrInfo) (entry gid ae : word),
+    Z.of_N (ph_addr ph) = 0x10040 /\ Z.of_N (ph_ent ph) = 56 /\ Z.of_N (ph_num ph) = 11
+    /\ av + 16 * Z.of_nat (StackLayout.auxv_count (StackLayout.la_rseq la)) <= 2 ^ 47
+    /\ (forall j, (j < 2 * StackLayout.auxv_count (StackLayout.la_rseq la))%nat ->
+          L5.u64_at RSEGS M (av + 8 * Z.of_nat j) (nth j (auxv_vec la ph entry gid ae uid rnd hw) 0)).
+
+Lemma auxv_okA_agree M M' av uid rnd hw :
+  auxv_okA M av uid rnd hw -> 0 <= av ->
+  (forall i, av <= i < 2 ^ 47 -> i < av + 464 -> M' (Z_to_bv 64 i) = M (Z_to_bv 64 i)) ->
+  auxv_okA M' av uid rnd hw.
+Proof.
+  intros (la & ph & entry & gid & ae & P1 & P2 & P3 & B & W) Hav K.
+  exists la, ph, entry, gid, ae. do 4 (split; [assumption|]).
+  assert (Hc : (StackLayout.auxv_count (StackLayout.la_rseq la) <= 29)%nat)
+    by (unfold StackLayout.auxv_count; destruct (StackLayout.la_rseq la); cbn; Lia.lia).
+  intros j Hj. eapply (L5C.u64_at_agree RSEGS); [| Lia.lia | Lia.lia | apply W; exact Hj].
+  intros i Hi. apply K; Lia.lia.
+Qed.
 
 Definition uw_flags (M : word -> option byte) (fl : bool) : Prop :=
   if fl then L5.u8_at RSEGS M UW_FLAGS 1 /\ L5.u8_at RSEGS M (UW_FLAGS + 1) 0 /\ L5.u8_at RSEGS M (UW_FLAGS + 2) 1
@@ -94,7 +116,7 @@ Definition statics_const (M : word -> option byte) (av uid rnd canary hw : Z) : 
      L5.u64_at RSEGS M TD_LOCALE GLOBAL_LOCALE /\ L5.u64_at RSEGS M LOCALE_MSGCAT 0
   /\ (exists e, L5.u32_at RSEGS M ERRNO e /\ 0 <= e < 2 ^ 64)      (* [comment removed for export] *)
   /\ L5.u64_at RSEGS M CANARY canary /\ L5.u64_at RSEGS M AUXVP av /\ av mod 8 = 0 /\ 2 ^ 40 <= av /\ av + 160 <= 2 ^ 47
-  /\ (forall j, (j < 20)%nat -> L5.u64_at RSEGS M (av + 8 * Z.of_nat j) (nth j (auxv20A uid rnd hw) 0))
+  /\ auxv_okA M av uid rnd hw
   /\ 0 <= uid < 2 ^ 64 /\ 0 <= rnd < 2 ^ 64 /\ 0 <= canary < 2 ^ 64 /\ 0 <= hw < 2 ^ 64
   /\ L5.img_clear M 0x10000 0xd7000 /\ L5.img_clear M 0xd9f40 0xd9f60 /\ L5.img_clear M SYSCAT_OBJ (SYSCAT_OBJ + 8).
 
@@ -104,8 +126,12 @@ Definition e1_staticsA (M : word -> option byte) (gd fl : bool) (av uid rnd cana
   /\ syscat_guard M gd /\ uw_flags M fl
   /\ statics_const M av uid rnd canary hw.
 (* [comment removed for export] *)
+(* [+ 16]: at LPS 727298f3 the auxv words do not refute an unwinder frame at [av] or
+   [av - 8], so the friend-frame sites ([L5BE2Top], [L5BE3Top], [L5BOpMod], [L5BOpModE3]) take
+   [Sp + 16 <= av] from this conjunct; the launch puts [__auxv] 24+ bytes above sp
+   ([LibIface.lib_init_facts]' [sptop + 16 <= av]). *)
 Definition xs_pre (ar : asan_run) (st : XS) (M : word -> option byte) : Prop :=
-  e1_staticsA M (xs_gd st) (xs_fl st) (xs_av st) (xs_uid st) (xs_rnd st) (xs_canary st) (xs_hw st) /\ ar_sptop ar <= xs_av st.
+  e1_staticsA M (xs_gd st) (xs_fl st) (xs_av st) (xs_uid st) (xs_rnd st) (xs_canary st) (xs_hw st) /\ ar_sptop ar + 16 <= xs_av st.
 
 (* [comment removed for export] *)
 Definition xs_foot : list L5.range := [(EH_UNCAUGHT, 4); (UW_FLAGS, 6)].
@@ -292,7 +318,7 @@ End WithLayout.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Lemma xs_pre_e1 ar gd fl av uid rnd canary hw M :
-  xs_pre ar (xs_of gd fl av uid rnd canary hw) M <-> e1_staticsA M gd fl av uid rnd canary hw /\ ar_sptop ar <= av.
+  xs_pre ar (xs_of gd fl av uid rnd canary hw) M <-> e1_staticsA M gd fl av uid rnd canary hw /\ ar_sptop ar + 16 <= av.
 Proof. unfold xs_pre, xs_of. cbn. tauto. Qed.
 
 (* [comment removed for export] *)

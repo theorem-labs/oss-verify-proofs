@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the reservation ledger is the image's reservations followed by the vdso/vvar pair, and mremap's next maps take the source length and cut the source range out of vm_maps (maps_subtract). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -107,13 +108,13 @@ Qed.
 Definition img_avoid : list (Z * Z) := [(0x10000, 0x64000)].
 
 (* [comment removed for export] *)
-Lemma resv_avoid (l : list (word * word)) (dst : word) ND :
-  map wwZ l = p0_reserved -> 0 < ND < 2^64 -> region_free l dst (Z_to_bv 64 ND) = true ->
+Lemma resv_avoid (l : list (word * word)) (dst : word) ND rx :
+  map wwZ l = p0_reserved ++ rx ->   (* 08b1429: the vdso pair follows the image's reservations *) 0 < ND < 2^64 -> region_free l dst (Z_to_bv 64 ND) = true ->
   bv_unsigned dst + ND <= 0x10000 \/ 0x64000 <= bv_unsigned dst.
 Proof.
   intros HM HND RF.
-  destruct l as [|e1 [|e2 [|e3 [|e4 [|e5 l]]]]]; try discriminate HM.
-  cbn [map] in HM. unfold p0_reserved, wwZ in HM. injection HM as E1 E2 E3 E4 E5 E6 E7 E8.
+  destruct l as [|e1 [|e2 [|e3 [|e4 l]]]]; try discriminate HM.
+  cbn [map app] in HM. unfold p0_reserved, wwZ in HM. cbn [app] in HM. injection HM as E1 E2 E3 E4 E5 E6 E7 E8 _.
   pose proof (region_free_disj _ _ _ e1 RF ltac:(cbn; auto)) as D1.
   pose proof (region_free_disj _ _ _ e2 RF ltac:(cbn; auto)) as D2.
   pose proof (region_free_disj _ _ _ e3 RF ltac:(cbn; auto 10)) as D3.
@@ -128,21 +129,22 @@ Definition remap_leaf (md : Model) (B OL ND : Z) (z : Z) (md' : Model) : Prop :=
     \/ (exists dst : word, z = bv_unsigned dst /\
          let NB := bv_unsigned dst in let h := m_vmmaps md in
          0 < NB /\ NB mod 4096 = 0 /\ NB + ND <= alloc_ceiling
-         /\ m_vmmaps md' = mremap_maps_next h (Z_to_bv 64 B) dst (Z_to_bv 64 ND) /\ minv md' /\ m_halted md' = None /\ m_vm_lazy md' = [] /\ m_vm_materialized md' = []
-         /\ ((dst = Z_to_bv 64 B /\ (ND < OL \/ region_free (vm_reserved h ++ map_remove (vm_maps h) (Z_to_bv 64 B)) (Z_to_bv 64 B) (Z_to_bv 64 ND) = true))
+         /\ m_vmmaps md' = mremap_maps_next h (Z_to_bv 64 B) (Z_to_bv 64 OL) dst (Z_to_bv 64 ND) /\ minv md' /\ m_halted md' = None /\ m_vm_lazy md' = [] /\ m_vm_materialized md' = []
+         /\ ((dst = Z_to_bv 64 B /\ (ND < OL \/ region_free (vm_reserved h ++ maps_subtract (vm_maps h) B (B + OL)) (Z_to_bv 64 B) (Z_to_bv 64 ND) = true))
              \/ (dst <> Z_to_bv 64 B /\ OL < ND /\ region_free (vm_reserved h ++ vm_maps h) dst (Z_to_bv 64 ND) = true))
          /\ (NB + ND <= 0x10000 \/ 0x64000 <= NB)) ).
 
 Lemma remap_node_twf md (B OL ND : Z) :
   minv md -> m_halted md = None -> m_vm_lazy md = [] -> m_vm_materialized md = [] -> ceil_ok md ->
   nsafe (NMremap B OL ND 1) md ->
-  map wwZ (vm_reserved (m_vmmaps md)) = p0_reserved ->
+  (exists rx, map wwZ (vm_reserved (m_vmmaps md)) = p0_reserved ++ rx /\ resv_x rx) ->
   0 < B -> B mod 4096 = 0 -> 4096 <= OL -> OL mod 4096 = 0 -> B + OL <= alloc_ceiling -> (B + OL <= 0x10000 \/ 0x64000 <= B) ->
   4096 <= ND -> ND mod 4096 = 0 -> ND <= alloc_ceiling -> ND <> OL ->
   twf (enode (NMremap B OL ND 1) (dec_mremap img_avoid B OL ND)) md
       (fun r md' => match r with Unr => False | Ok z => remap_leaf md B OL ND z md' end).
 Proof.
   intros MINV MH ML MMT CEILMD NS RESV B0 BA OL0 OLA BC BI ND0 NDA NDC NE.
+  destruct RESV as (rx & RESV & _).
   pose proof alloc_ceiling_val as ACV.
   unfold enode. cbn [twf]. split; [exact NS|].
   intros eff md' ST _.   (* [comment removed for export] *)
@@ -165,9 +167,9 @@ Proof.
     assert (NBI : bv_unsigned dst + ND <= 0x10000 \/ 0x64000 <= bv_unsigned dst).
     { destruct CASE as [(-> & [LT|[LT RF]] & _)|(NEd & LT & RF & _)].
       - rewrite unsigned_lit by lia. lia.
-      - pose proof (resv_avoid (vm_reserved (m_vmmaps md)) (Z_to_bv 64 B) ND RESV ltac:(lia) (region_free_app_l _ _ _ _ RF)) as X.
+      - pose proof (resv_avoid (vm_reserved (m_vmmaps md)) (Z_to_bv 64 B) ND _ RESV ltac:(lia) (region_free_app_l _ _ _ _ RF)) as X.
         rewrite unsigned_lit in X by lia. rewrite unsigned_lit by lia. exact X.
-      - exact (resv_avoid (vm_reserved (m_vmmaps md)) dst ND RESV ltac:(lia) (region_free_app_l _ _ _ _ RF)). }
+      - exact (resv_avoid (vm_reserved (m_vmmaps md)) dst ND _ RESV ltac:(lia) (region_free_app_l _ _ _ _ RF)). }
     assert (EXP : eff = mremap_expected B OL ND dst /\ eff_ret eff = dst).
     { unfold mremap_expected. rewrite MOL, MND. rewrite (proj2 (Z.eqb_neq OL ND)) by lia.
       unfold mw, mwlen. rewrite MOL, MND.
@@ -388,8 +390,8 @@ Proof.
     let NB := bv_unsigned dst in
     ( (ND = OL /\ NB = B /\ md' = md)
       \/ (ND <> OL /\ 0 < NB /\ NB mod 4096 = 0 /\ NB + ND <= alloc_ceiling
-          /\ m_vmmaps md' = mremap_maps_next (m_vmmaps md) (wz B) dst (wz ND) /\ minv md' /\ m_halted md' = None /\ m_vm_lazy md' = [] /\ m_vm_materialized md' = []
-          /\ ((dst = wz B /\ (ND < OL \/ region_free (vm_reserved (m_vmmaps md) ++ map_remove (vm_maps (m_vmmaps md)) (wz B)) (wz B) (wz ND) = true))
+          /\ m_vmmaps md' = mremap_maps_next (m_vmmaps md) (wz B) (wz OL) dst (wz ND) /\ minv md' /\ m_halted md' = None /\ m_vm_lazy md' = [] /\ m_vm_materialized md' = []
+          /\ ((dst = wz B /\ (ND < OL \/ region_free (vm_reserved (m_vmmaps md) ++ maps_subtract (vm_maps (m_vmmaps md)) B (B + OL)) (wz B) (wz ND) = true))
               \/ (dst <> wz B /\ region_free (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) dst (wz ND) = true))) ) ->
     (forall o, 0 <= o < Z.min OL ND -> mK (wz (NB + o)) = m1 (wz (B + o))) ->
     (forall o, 0 <= o < ND -> mK (wz (NB + o)) <> None) ->

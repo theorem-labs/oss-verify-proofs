@@ -2,11 +2,12 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by a Theorem Labs lane (DeallocNmaxA), 2026-10-30: di_shape_cf takes the premise req_size n <= kQuarantineMax (free_cf's enqueue side); the larger blocks take the big arm. *)
 (* Modified by a Theorem Labs lane (DeallocNmaxA), 2026-10-30: di_shape_cf takes the premise req_size n <= kQuarantineMax (free_cf's enqueue side); the larger blocks take the big arm. A change request to a Theorem Labs lane. *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfDIface.v at commit d0377850faab (the cf layer of record, field round 3 + the hull round + pf_ial_apart_t), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfDIface.v (the cf layer of record, field round 3 + the hull round + pf_ial_apart_t), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset's event-free allocator instance (suffix cf), the MODEL-LEVEL fields of c-asan's
-   Deallocate interface DIface (lib/Reusable/DGif0.v:271-387; cgif lib/DGif0.v:266-381 at aa322d8bb0b) at the instance
+   Deallocate interface DIface (lib/Reusable/DGif0.v:271-387; cgif lib/DGif0.v:266-381) at the instance
      ft := free_cf, ARX := ARXs_cf B im_segs Hp, AOX := aowned B, rpre := rpre_dealloc_cf B, fpre := fpre_cf Hp,
-     lpost := qtight, dbody := drain_body_cf (DMspec), U := admits (as_universe B) (P'', YG01.v:158; a Theorem Labs lane 22:05Z),
+     lpost := qtight, dbody := drain_body_cf (DMspec), U := admits (as_universe B) (P'', YG01.v:159; a Theorem Labs lane 22:05Z),
    for EVERY ghost set Hp: a malloc / free call keeps the caller's Hp (YG0dcf.v:13), so the instance fixes it per call
    and the post's ARcf is at that same Hp (Main, 2026-10-29: no `exists Hp`). AOX is cgif's aowned, as DGtop.v's cgif
    corollaries take it, and not aowned-or-xs_cf: free_leaf_cf's exception set has no errbuf extent (YG0dcf.v:431-445).
@@ -15,7 +16,7 @@
    THE FILE NAMES NO IMAGE. The field types are c-asan's image-free ones: DGif0 / DMspec / DMiface state them over
    ImgBase.AImg (the segments im_segs, the image window im_img_cover) and ImgBaseDG.DImg (the zones dg_dzone /
    dg_izone and the internal allocator's cells dg_ial_post), taken here as [Context {IM : AImg} {DI : DImg}]. Those
-   five files are byte copies of aa322d8bb0b in lib/Reusable (each says so on its first line). A unit instantiates the
+   five files are byte copies in lib/Reusable (each says so on its first line). A unit instantiates the
    two classes at its image: image A (preset's ASan binary) is A/ADIfaceA.v (AImg_A, DImg_A), which also discharges the
    image premises below with A's named facts.
    Premises a field needs from the image are named, over the class fields only: IMG_COVER (di_view_n part (a)),
@@ -78,13 +79,13 @@ Definition ARXs_cf (segs : list Segment) (Hp : list Z) (inst : Z) (ly : alayout)
 inst = as_inst B /\ ARcf segs B ly S Hp W mem md /\
 qmeter_cf S /\ Z.of_nat (length (st_sec_arr S)) < cf_sec_live_max /\ ERRB_ROOM S /\
 abudget_cf S + FA_GROW_MAX + FA_GROW_MAX / 8 <= CF_MAX /\ batch_room_cf S.
-(* rpre: cgif's rpre_dealloc_cgif (DeallocGcgif.v:23 at 3f2fdc5b787: aregime S /\ qmeter S /\ st_internal_inited S
+(* rpre: cgif's rpre_dealloc_cgif (DeallocGcgif.v:23: aregime S /\ qmeter S /\ st_internal_inited S
    = true) restated at the instance: the realloc composition's Deallocate premise rpreD_cfr (universe_ok and Wf_cf,
-   YGcfRmodel.v:71, in place of the event regime, which the event-free model drops as acall_pre_cf does), qmeter_cf
+   YGcfRmodel.v:72, in place of the event regime, which the event-free model drops as acall_pre_cf does), qmeter_cf
    for qmeter, and the internal allocator initialized. *)
 Definition rpre_dealloc_cf (S : astate) (n : Z) : Prop := rpreD_cfr B S n /\ qmeter_cf S /\ st_internal_inited S = true.
 (* fpre: the freed base is not a hidden head (afree_realizes_cf's premise, YG0dcf.v:451); without it ARcf at Hp
-   after the free fails amc_hp_live (YG0ncf.v:234-235). cgif's fpre_cgif is True (projects/omx-clap-core/fuzz_state/proofs/lib/A/DeallocGcgif.v:26-27; cgif lib/DeallocGcgif.v:24-25 at 3f2fdc5b787). *)
+   after the free fails amc_hp_live (YG0ncf.v:234-235). cgif's fpre_cgif is True (projects/omx-clap-core/fuzz_state/proofs/lib/A/DeallocGcgif.v:26-27; cgif lib/DeallocGcgif.v:24-25). *)
 Definition fpre_cf (Hp : list Z) (ly : alayout) (S : astate) (W : world im_segs) (mem : word -> option byte) (p : sptr)
 (n : Z) : Prop :=
 ~ In (sptr_addr B ly p) Hp.
@@ -305,7 +306,7 @@ destruct (from_primary (ck_req k)) eqn:Hfp.
   unfold needed_primary in S1. lia.
 Qed.
 
-(* The bytes of a chunk's extent past its user bytes are owned (own_meta_cf's argument, YG0qcf.v:204). *)
+(* The bytes of a chunk's extent past its user bytes are owned (own_meta_cf's argument, YG0qcf.v:205). *)
 Lemma own_slack_cf : forall ly S Hp rd k a, ARmcf B ly S Hp rd -> In k (st_chunks S) ->
 ck_base B ly k + ck_rz k + req_size (ck_req k) <= a < ck_base B ly k + ck_extent k -> aowned B ly S a.
 Proof.
@@ -387,7 +388,7 @@ unfold dwrites in Hw. destruct Hw as [Hw|[Hw|[Hw|[Hw|Hw]]]].
 Qed.
 
 (* The 8 bytes after a batch object are owned: they are the next class-kBatchClass slot's header room, or no
-   chunk's user bytes (own_batch_cf's argument, YG0qcf.v:238). *)
+   chunk's user bytes (own_batch_cf's argument, YG0qcf.v:239). *)
 Lemma own_after_batch_cf : forall ly S Hp rd b a, ARmcf B ly S Hp rd -> In b (all_batches S) ->
 ly_space ly + b_self b + kBatchBytes <= a < ly_space ly + b_self b + kBatchBytes + 8 -> aowned B ly S a.
 Proof.

@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AE6o.v (donor image sha256 7093581aab04), with its module paths changed and its addresses moved to plugin-hostd/fuzz_reply's ASan build. *)
-(* Modified by Theorem Labs, 2026-10: ARx port of lib/A/AE6o.v (that file is unchanged) over AE2y.icpt_laws_x, following SitesCf's conversion of AE74.v (12f0abbb2be): AR_laws -> ARx with WL : icpt_laws_x, the ghost set Hpx after S, ecall_pre -> ecall_pre_ix, AR -> ARx, the cited chain modules -> their _x files; proof steps unchanged except the law names. *)
+(* Modified by Theorem Labs, 2026-10: ARx port of lib/A/AE6o.v (that file is unchanged) over AE2y.icpt_laws_x, following SitesCf's conversion of AE74.v: AR_laws -> ARx with WL : icpt_laws_x, the ghost set Hpx after S, ecall_pre -> ecall_pre_ix, AR -> ARx, the cited chain modules -> their _x files; proof steps unchanged except the law names. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

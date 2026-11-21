@@ -6,6 +6,7 @@
    whole-run contract taken as one hypothesis, fuzz_boxreg.asan's read-only range and fprintf strings, and the
    after-call parts given at every float state with a zero rounding mode (the relocated core's lib/A/AD1q.v
    tfib_srealizesX, fx-slot form). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed box_srealizesX_rc, box_TFIB_T_of_lib; its imports changed. *)
 (* The relocated core's closed walk of fuzz_boxreg.asan at the image's asyms record (rule 24: no function proved;
    this file is assembly). box_TFIB_T_of_lib is lib/A/Prog/BoxClose.v's coreA_srz: from the whole-run contract of
    LLVMFuzzerTestOneInput (lib/A/ACfn.v tfib_lib_contract_x_all, the instance of lib/A/Prog/BoxLibX.v's statement with
@@ -83,19 +84,20 @@ Let EXS : forall fx : YK11.FPState, frm_zero (@fp_csr fx) -> exit_site_tfa (fx :
 Lemma box_srealizesX_rc : forall sp rdraw brk mb inp,
   valid_sp sp -> valid_brk TSEGS brk -> valid_mmap_base mb ->
   entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
   YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
   srealizes TSEGS (init_config TSEGS Asan.M.init_pc TPH sp brk mb rdraw target_alloc_limit inp) (SPECX inp).
 Proof.
-intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil.
+intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil.
 change target_alloc_limit with YA02.LIMIT.
 exact (tfib_srealizesX B HB AMALLOC AFREE AICPY ARDCHK ameter_triv (fun _ => 0) (fun _ => 0) 0x98958 0x99bb0 MT_FREE
-  RO_IN LIBX xst XFR PF1 PFN est ESTI ESTF FWS RFS FPO FPR FPU EXS sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil).
+  RO_IN LIBX xst XFR PF1 PFN est ESTI ESTF FWS RFS FPO FPR FPU EXS sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil).
 Qed.
 End RC.
 Theorem box_TFIB_T_of_lib : TFIB_T.
 Proof.
-intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp.
+intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau.
 exact (@box_srealizesX_rc (YM05.RunCeilOf (bv_unsigned sp) (ZComplete.valid_sp_window_for_ceil sp Hsp))
-  sp rnd brk mbase inp Hsp Hbrk Hmb Hfit Hinp (YM05.ceil_of_top_run _)).
+  sp rnd brk mbase inp Hsp Hbrk Hmb Hfit Hinp Hlau (YM05.ceil_of_top_run _)).
 Qed.
 End b.

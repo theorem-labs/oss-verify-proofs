@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's reservations with the vDSO pair). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation.
@@ -293,7 +294,8 @@ Proof.
   assert (Hc1 : covered (vm_maps (m_vmmaps model)) x = true).
   { apply (grant_covered E _ M model g (dn_maps _ _ _ _ _ _ _ _ _ Hd) (dn_gsh _ _ _ _ _ _ _ _ _ Hd) Hg Hgm). unfold x. lia. }
   pose proof (dn_mres _ _ _ _ _ _ _ _ _ Hd x Hc1) as Hc2. rewrite (dn_res _ _ _ _ _ _ _ _ _ Hd) in Hc2.
-  rewrite (res_cov x ltac:(unfold x; lia)) in Hc2. discriminate.
+  (* the launch ledger is the segments' then the vDSO pair's ([dn_res]) *)
+  rewrite FxBacking.covered_app, (res_cov x ltac:(unfold x; lia)) in Hc2. cbn [orb] in Hc2. discriminate.
 Qed.
 
 (* [comment removed for export] *)
@@ -526,8 +528,9 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   { intros R HR Hck. destruct (HSZ R (In6 R HR)) as [Hz Hr].
     destruct (pri_sep_f_sound E (s_facts S) (sm_maps M) model (sm_sp M) _ HF0 (dn_maps _ _ _ _ _ _ _ _ _ Hd) (dn_pd _ _ _ _ _ _ _ _ _ Hd)
                 (dn_gsh _ _ _ _ _ _ _ _ _ Hd) (dn_gtop _ _ _ _ _ _ _ _ _ Hd) (dn_sp _ _ _ _ _ _ _ _ _ Hd) (proj2 (dn_spok _ _ _ _ _ _ _ _ _ Hd))
-                (proj1 (dn_spok _ _ _ _ _ _ _ _ _ Hd)) (dn_mres _ _ _ _ _ _ _ _ _ Hd) ASEGSR (dn_res _ _ _ _ _ _ _ _ _ Hd) gq_res a1 mzero HIf jP jT _ _
-                HgP eq_refl eq_refl HgT eq_refl eq_refl ltac:(intros p Hp; rewrite Hx1 in Hp; destruct Hp) R Hz Hr Hck) as [Hs|(c & Hc & Hl)]; [exact Hs|].
+                (proj1 (dn_spok _ _ _ _ _ _ _ _ _ Hd)) (dn_mres _ _ _ _ _ _ _ _ _ Hd) (ASEGSR ++ vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model)))
+                (dn_res _ _ _ _ _ _ _ _ _ Hd) (FxChSep.in_res_b_app _ _ _ _ gq_res) a1 mzero HIf jP jT _ _
+                HgP eq_refl eq_refl HgT eq_refl eq_refl ltac:(intros p Hp; rewrite Hx1 in Hp; destruct Hp) R Hz Hr (pri_sep_f_app _ _ _ _ _ _ _ _ _ Hck)) as [Hs|(c & Hc & Hl)]; [exact Hs|].
     exfalso. destruct (HRL R (In6 R HR)) as [Hpos _].
     assert (Zj : z_j (pden E a1) c = 0) by (rewrite Epz; unfold z_j, zn; apply nth_virgin; lia).
     rewrite Zj in Hl. destruct Hl as [(L1 & L2 & _)|(L1 & L2 & _)]; lia. }

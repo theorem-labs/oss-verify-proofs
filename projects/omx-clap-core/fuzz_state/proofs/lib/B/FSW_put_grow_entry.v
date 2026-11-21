@@ -7,6 +7,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/LLVMFuzzerTestOneInput_L.v, with its module paths, module names and numbers changed; 1266 of its 1332 lines of code are new or changed and 1014 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_dec_E.v, with its module paths, module names and numbers changed; 1247 of its 1346 lines of code are new or changed and 1233 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/FSW_put.v; 214 of its 336 lines of code are new or changed and 1224 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs WRITER walk, image B (fs.asan-ubsan): the ENTRY segment of put's GROW arm (preset_file.c:454-476, A_put 0x8449c),
    the case `failed = 0 /\ cap < len + n + 1`, the image-B twin of lib/A/FSW_put_grow_entry.v. From the entry pc to
    the doubling-loop head 0x84564 (542052): the prologue, UBSan's alignment check of o (0x844d8 / 0x844dc), the inline
@@ -27,8 +28,8 @@
      sides. So the route, the two candidates and the re-seat are A's; only the pcs, the code table and the
      registers (B's s3 / s4 swap and need in a0) differ, and they live in the state definitions.
 
-   TAKEN FROM: lib/A/FSW_put_grow_entry.v at a working branch 860b2fb1188 (the same blob is on
-   a working branch f0e2574c33c): fsw_pge_ss0, fsw_pge_class_le, fsw_pge_U_sll, fsw_pge_seat and
+   TAKEN FROM: lib/A/FSW_put_grow_entry.v at a working branch (the same blob is on
+   a working branch): fsw_pge_ss0, fsw_pge_class_le, fsw_pge_U_sll, fsw_pge_seat and
    fsw_pg_entry_run unchanged in form (B's table fsw_put_tbl_ok for A's fsw_wr_tbl_ok).
 
    RULE-24: proves function put (omx-clap-core/fuzz_state, image B = asan-ubsan, entry 0x8449c; the GROW arm)
@@ -85,7 +86,7 @@ Qed.
 
 Section w. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 (* the loop head's re-seat: s6 (reg 22) holding the candidate c becomes the fresh atom 36, a1 (reg 11) holding 2 * c
-   is re-pinned to `c << 1`, and the facts are replaced by the head's (FSW_K.v:839-857 fsw_reseat_atom's steps) *)
+   is re-pinned to `c << 1`, and the facts are replaced by the head's (FSW_K.v:840-858 fsw_reseat_atom's steps) *)
 Lemma fsw_pge_seat : forall E ss ms c G,
   st_ok tfibsegs E ss ms -> ss_atoms_lt 36 ss = true ->
   getr (ms_regs ms) 22%bv = Z_to_bv 64 c -> getr (ms_regs ms) 11%bv = Z_to_bv 64 (2 * c) ->

@@ -3,7 +3,7 @@
 Proves no function (kind: measurement). SUPERSEDED by BYTECMP-cmpkit.md: this record was made with strictcmp
 77daee258b95, a comparison version found faulty; the kit of record (cmpkit 4bbd3a74be89) re-run is there.
 
-Donor: plugin-hostd/fuzz_command, origin/ossv/recipes 781f46bc05cd, lib/{A,B}/Rt/RtSM5T.v (`fs_ranges`, the class-5
+Donor: plugin-hostd/fuzz_command, lib/{A,B}/Rt/RtSM5T.v (`fs_ranges`, the class-5
 code table) and lib/{A,B}/Rt/RtSF5.v (`sf_ranges`), closed by RtClosed.cmd_stack_malloc5_contract_closed /
 cmd_stack_free5_contract_closed and used at lib/{A,B}/Prog/CmdProgClosed.v r_sm5 / r_sf5.
 

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: star_mmap_grant takes a place_declined_b = false premise on its hint and passes it to mmap_succ_ok. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -276,12 +277,13 @@ Qed.
   getr regs 11 = Z_to_bv 64 len -> 0 < len < 2 ^ 64 ->
   getr regs 12 = Z_to_bv 64 3 -> getr regs 13 = Z_to_bv 64 34 ->
   getr regs 14 = Z_to_bv 64 (-1) -> getr regs 15 = Z_to_bv 64 0 ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (getr regs 10) (page_round_up_Z len) = false ->
   grant_ok (getr regs 10) model a (page_round_up_Z len) = true ->
   star_cfg segs CFG (mkCfg (mkst regs pc mem rom) model) []
        (mkCfg (mkst (regupd regs 10 a) (v_addi pc 4) (zfill a (Z_to_bv 64 (page_round_up_Z len)) mem) rom)
               (mmap_model a (Z_to_bv 64 (page_round_up_Z len)) model)).
 Proof.
-  intros regs pc mem rom model w len a HF HE Hh Hlazy H17 H11 Hlen H12 H13 H14 H15 Hg.
+  intros regs pc mem rom model w len a HF HE Hh Hlazy H17 H11 Hlen H12 H13 H14 H15 Hdecl Hg.
   eapply star_trans_nil; [eapply star_ecall; eassumption|].
   set (ms := epend regs pc mem rom (getr regs 17)).
   assert (Hu1 : bv_unsigned (ms_gpr ms 1) = len).
@@ -304,7 +306,8 @@ Proof.
            (mmap_model a (page_round_up (ms_gpr ms 1)) model) (mmap_model a (page_round_up (ms_gpr ms 1)) model) []).
   - exact Hh.
   - reflexivity.
-  - apply mmap_succ_ok; [rewrite H17; apply u_small; lia | exact Hargs | rewrite H0, Hu1; exact Hg].
+  - apply mmap_succ_ok; [rewrite H17; apply u_small; lia | exact Hargs | rewrite H0, Hu1; exact Hdecl
+                        | rewrite H0, Hu1; exact Hg].
   - (* [comment removed for export] *)
     apply spurious_refusal_not_refusal. cbn [eff_ret].
     apply (grant_not_refusal segs ms (getr regs 17) model a (page_round_up_Z len) (getr regs 10));

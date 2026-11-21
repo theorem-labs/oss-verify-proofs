@@ -13,7 +13,7 @@ No summary of this harness is recorded yet; its checks, if any, are listed below
 - This copy of the harness could not be matched to an upstream file at a pinned commit, so it is marked modified; it is the file as built.
 
 ## What the harness checks
-The harness makes no check of its own beyond not crashing, so a statement about it says only that the code it calls never crashes, hangs or trips a sanitizer.
+The harness makes no check of its own beyond not crashing. Its halts statements say only that the code it calls never crashes, hangs or trips a sanitizer. Its agreement statements say only that the code never crashes or trips a sanitizer, and allow a run that never ends.
 
 ## Statements ([Statements.v](Statements.v))
 

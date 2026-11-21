@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanHead.v at cdde2c4d95b for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanHead.v for
    reac-pw/fuzz_headamp image A: its block A (hd_c3 / hd_c3_of, hd_bounds, hd_A: the start facts, the bounds and
    the run from C3 through the __asan_memcpy call) and its helpers hd_getr_z, hd_reg_atom, hd_reg_is,
    hd_frame_nil, hd_frame_ro, hd_aview_some, renamed to the h2_ prefix and moved to headamp's addresses,
@@ -8,7 +8,8 @@
    of the donor's own hd_memcpy; the donor's blocks B and C (the parse and its exits) are not taken; the run from
    the call's return to C4 and the segment's post are new. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/A/HPgM02.v, with its module paths and module names changed; 16 of its 35 lines of code are new or changed and 425 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgEnt0.v at 97ea9c9eafa; for reac-pw/fuzz_headamp image A: module paths, the rs_ / rl_ / rm_ / RS_ / RM_ prefixes renamed to hs_ / hd_ / hm_ / HS_ / HM_; __asan_memcpy 0x510d4 -> 0x51d0c. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgEnt0.v; for reac-pw/fuzz_headamp image A: module paths, the rs_ / rl_ / rm_ / RS_ / RM_ prefixes renamed to hs_ / hd_ / hm_ / HS_ / HM_; __asan_memcpy 0x510d4 -> 0x51d0c. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image A (fuzz_headamp.asan, pinned sha256
    f3e0669d2819724922df0556b11c2dcd22d1e16fe7e0fe1535ce784b34436c47): the piece lemma of ent_build's case 0 up to
    the parts loop, HPgSeg.hs_piece_W7a_stmt, from the three block lemmas of the piece.
@@ -20,8 +21,8 @@
    two inner cuts are lib/A/HPgEnt0Def.v. Nothing is restated here: the piece is the three in a row.
 
    The two hypotheses are the runtime contracts the table arm calls: the strlen wrapper's at its image-A
-   trampoline STRLEN_ENTRY_A 0x41b98 (its text lib/A/Rt/StrlenDef.v:40 astrlen_realizes) and
-   __asan_memcpy's (the kernel's aintrin_realizes, lib/Reusable/YG0d.v:328). The allocator invariant's laws are the
+   trampoline STRLEN_ENTRY_A 0x41b98 (its text lib/A/Rt/StrlenDef.v:41 astrlen_realizes) and
+   __asan_memcpy's (the kernel's aintrin_realizes, lib/Reusable/YG0d.v:329). The allocator invariant's laws are the
    kernel theorem AR_laws_ok, not a hypothesis. *)
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

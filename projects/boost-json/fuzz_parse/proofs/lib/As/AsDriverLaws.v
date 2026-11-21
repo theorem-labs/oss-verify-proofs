@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the launch's channel reader. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -38,6 +39,16 @@ Record asan_driver_laws (H : asr) : Prop := ADL {
   adl_mpres : forall mo mo', as_MPRES H mo mo' -> m_fs mo' = m_fs mo /\ m_fds mo' = m_fds mo /\ m_halted mo' = m_halted mo;
   (* [comment removed for export] *)
   adl_sb : forall mo mo', same_but_materialized mo mo' -> as_MPRES H mo mo';
+  (* [comment removed for export] *)
+  (* LPS 75d69e00, the channel reader.  [adl_mpres] preserves only [m_fs], [m_fds] and
+     [m_halted], so a step model carries no reader fact and the stdio chain's new
+     [m_channel_reader mo = true] premise cannot be transported to it.  The instance's
+     [as_MPRES] is [SecLazy.nonvm_same], which equates [m_proc]; [m_halted] (State.v:4902)
+     and [m_channel_reader] (State.v:4924) are both projections of [m_proc], so this law
+     costs the instance exactly the rewrite [adl_mpres]'s third conjunct already does.
+     Last field on purpose: every consumer of this record uses named projections, and the
+     only application of [ADL] is AS_InstLaws1.inst_driver_laws, which is plain bullets. *)
+  adl_rdr : forall mo mo', as_MPRES H mo mo' -> m_channel_reader mo' = m_channel_reader mo;
   (* [comment removed for export] *)
   adl_live : ADRV_LIVE <= as_LIVE_MAX H /\ ADRV_CNT <= as_LIVE_CNT_MAX H }.
 

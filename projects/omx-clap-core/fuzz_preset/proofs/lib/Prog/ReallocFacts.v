@@ -125,15 +125,22 @@ Let segs := ms_segs B.
 Let MR := aa_MR API.
 
 Lemma rf_ro_in_img : forall C, img_check B C = true -> C + 4096 <= 2 ^ 64 ->
+  forallb (fun s => negb (seg_kernel_map s)) segs = true ->
   forall x : word, Mem.ro_addr segs x = true -> in_img B (bv_unsigned x).
 Proof.
-  intros C H HC x Hx. unfold img_check in H. apply andb_prop in H as [H1 _]. rewrite forallb_forall in H1.
+  intros C H HC HK x Hx. unfold img_check in H. apply andb_prop in H as [H1 _]. rewrite forallb_forall in H1, HK.
   unfold Mem.ro_addr in Hx. destruct (find_segment segs (bv_unsigned x) 1) as [seg|] eqn:F; [|discriminate].
   destruct (kb_find_segment segs _ _ _ F) as (Hin & Hlo & Hhi).
   specialize (H1 seg Hin). apply Z.leb_le in H1.
   change segs with (ms_segs B) in Hin.
   split; [intros E; rewrite E in Hin; destruct Hin|].
-  exists (segment_reservation seg). split; [unfold segments_reserved; apply in_map; exact Hin|].
+  exists (segment_reservation seg). split;
+    (* segments_reserved uses stdpp's proposition-valued filter. *)
+    [unfold segments_reserved; apply in_map;
+     apply (proj1 (stdpp.base.list_elem_of_In _ _));
+     apply (proj2 (stdpp.list_basics.list.list_elem_of_filter _ _ _));
+     split; [rewrite (HK seg Hin); exact I |
+             apply (proj2 (stdpp.base.list_elem_of_In _ _)); exact Hin]|].
   pose proof (N2Z.is_nonneg (seg_base seg)). pose proof (N2Z.is_nonneg (seg_size seg)).
   unfold segment_reservation, page_round_down_Z, page_round_up_Z, page_size. cbn [fst snd].
   rewrite !MState.unsigned_lit by (Z.div_mod_to_equations; lia).
@@ -325,7 +332,9 @@ Qed.
 Lemma rf_ro_false_notimg : forall a, 0 <= a < 2 ^ 64 -> ~ in_img B a -> Mem.ro_addr (ms_segs B) (Z_to_bv 64 a) = false.
 Proof.
   intros a Ha Hn. destruct (Mem.ro_addr (ms_segs B) (Z_to_bv 64 a)) eqn:E; [|reflexivity].
-  exfalso. apply Hn. pose proof (rf_ro_in_img B 140735332483072 rf_check ltac:(lia) _ E) as H.
+  assert (HK : forallb (fun s => negb (seg_kernel_map s)) (ms_segs B) = true)
+    by (rewrite HSEG; reflexivity).
+  exfalso. apply Hn. pose proof (rf_ro_in_img B 140735332483072 rf_check ltac:(lia) HK _ E) as H.
   rewrite MState.unsigned_lit in H by lia. exact H.
 Qed.
 

@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/TraceHaltingB.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_frame; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_frame.lib. *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/TraceHaltingB.v for libdiginet/fuzz_frame; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_frame.lib. *)
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -7,6 +7,7 @@ From OSSVerify.Core Require Import Shapes.
 From OSSVerify.Proofs.libdiginet.fuzz_frame.lib.Reusable Require Import YK15.
 From OSSVerify.Proofs.libdiginet.fuzz_frame.lib Require Import TraceHalting.
 From OSSVerify.Proofs.libdiginet.fuzz_frame.lib.Reusable.R Require Import Cfg.
+From OSSVerify.Proofs.libdiginet.fuzz_frame.lib.Reusable Require Import RomStableK.
 Import ListNotations.
 
 Lemma not_budget_refused_step : forall segs cfg c evs c',
@@ -60,9 +61,9 @@ Theorem realizes_must_exit_forced_cut : forall segs c T,
 Proof.
   intros segs c T H.
   induction H as [c I evs nx T i0 Hnode Hcont IH | c Hhalt | c T T' H IH Heq
-                 | c I nx T i0 Hnode Hcont IH | c T Hb];
+                 | c I nx T i0 Hnode Hcont IH | c T Hb Hrb];
     intros allowed HH HT NR.
-  - destruct Hnode as [Hcomp Hsound].
+  - destruct Hnode as [Hcomp [Hsound _]].
     apply must_exit_in_at_cfg_running.
     + exact (sstep_cfg_not_halted _ _ _ _ _ (Hcomp i0)).
     + exact (forced_progress segs c (evs i0) (SNext (nx i0)) (Hcomp i0)).
@@ -87,7 +88,7 @@ Proof.
     eapply must_exit_in_at_cfg_halted; eassumption.
   - apply (IH allowed); [exact HH | | exact NR].
     intros tr Htr. apply HT. apply Heq. exact Htr.
-  - destruct Hnode as [Hcomp Hsound].
+  - destruct Hnode as [Hcomp [Hsound _]].
     apply must_exit_in_at_cfg_running.
     + exact (sstep_cfg_not_halted _ _ _ _ _ (Hcomp i0)).
     + exact (forced_progress segs c [] (SNext (nx i0)) (Hcomp i0)).
@@ -116,7 +117,11 @@ Proof.
   unfold permitted_halt. rewrite Hh. exact I.
 Qed.
 
-Corollary halts_budgets_of_realizes : forall (lim : Z) (allowed : list word) segs pc ph,
+(* LPS 08b1429: the run reads [run_segments segs ..] from [init_config (run_segments ..) ..]; the
+   walk over the binary's own segments is lifted by [RomStableK.run_init], for an image with no vDSO
+   text of its own ([NoVdso], by computation on a concrete image). *)
+Corollary halts_budgets_of_realizes (lim : Z) (allowed : list word) segs pc ph
+  {Hv : NoVdso (mkImage segs pc ph)} :
   (forall sp brk0 mbase rnd inp,
     valid_entry (mkImage segs pc ph) (mkEntry sp brk0 mbase rnd) inp ->
     valid_input inp ->
@@ -124,17 +129,19 @@ Corollary halts_budgets_of_realizes : forall (lim : Z) (allowed : list word) seg
               /\ permitted_traces allowed T) ->
   halts_allowed_T_scfg_budgets forced_only_cfg lim allowed (mkImage segs pc ph).
 Proof.
-  intros lim allowed segs pc ph HR. unfold halts_allowed_T_scfg_budgets.
+  intros HR. unfold halts_allowed_T_scfg_budgets.
   intros [sp brk0 mbase rnd] inp Hen Hinp Hbud.
   destruct (HR sp brk0 mbase rnd inp Hen Hinp) as (T & HRz & HT).
-  change (must_exit_in_at_cfg forced_only_cfg segs allowed
-    (init_config segs pc ph sp brk0 mbase rnd lim inp)).
-  apply (realizes_must_exit_forced_budget segs _ T allowed HRz HT).
+  pose proof (run_init segs inp sp mbase pc ph brk0 rnd lim T Hv HRz) as HRz'.
+  change (must_exit_in_at_cfg forced_only_cfg (run_segments segs inp sp mbase) allowed
+    (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp)).
+  apply (realizes_must_exit_forced_budget _ _ T allowed HRz' HT).
   - reflexivity.
   - exact Hbud.
 Qed.
 
-Corollary halts_within_budget_of_realizes : forall (lim : Z) (allowed : list word) segs pc ph,
+Corollary halts_within_budget_of_realizes (lim : Z) (allowed : list word) segs pc ph
+  {Hv : NoVdso (mkImage segs pc ph)} :
   (forall sp brk0 mbase rnd inp,
     valid_entry (mkImage segs pc ph) (mkEntry sp brk0 mbase rnd) inp ->
     valid_input inp ->
@@ -142,7 +149,7 @@ Corollary halts_within_budget_of_realizes : forall (lim : Z) (allowed : list wor
               /\ permitted_traces allowed T) ->
   halts_within_budget lim allowed (mkImage segs pc ph).
 Proof.
-  intros lim allowed segs pc ph HR.
+  intros HR.
   rewrite halts_within_budget_is_lps.
   exact (halts_budgets_of_realizes lim allowed segs pc ph HR).
 Qed.

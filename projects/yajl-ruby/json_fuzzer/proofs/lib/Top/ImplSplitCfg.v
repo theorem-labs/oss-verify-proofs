@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (at_node_rob at each node). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -83,6 +84,7 @@ Proof.
                          end)
                (inl (exist _ (rsp0, mo0, evs0) H0))).
       * apply (node_ok_at_cfg acfg node segs (at_node segs) (nstep_cfg acfg) nexit minv nsafe NS); assumption.
+      * exact (at_node_rob segs n ms1 mo Hat (minv_io_of_minv mo Hmi)).
       * intros [[[[rsp mo'] evs] Hst] | [[code mo'] Hxt]]; cbn.
         -- destruct (nsc_sound _ _ _ _ _ _ _ _ NS n ms1 mo rsp mo' evs Hat Hh Hmi Hsafe Hst) as (Hh' & Hmi' & _).
            destruct (Hk rsp mo' evs Hst) as [_ Hsil'].
@@ -133,6 +135,7 @@ Proof.
     apply (rz_node_cfg acfg segs (mkCfg ms1 mo) (ans_idx node (nstep_cfg acfg) nexit n mo) (ans_evs node (nstep_cfg acfg) nexit n mo)
              (nxcfg node (nstep_cfg acfg) nexit n mo ms1) TT i0).
     + apply (node_ok_at_cfg acfg node segs (at_node segs) (nstep_cfg acfg) nexit minv nsafe NS); assumption.
+    + exact (at_node_rob segs n ms1 mo Hat (minv_io_of_minv mo Hmi)).
     + intros [[[[rsp mo'] evs] Hst] | [[code mo'] Hxt]]; cbn.
       * destruct (nsc_sound _ _ _ _ _ _ _ _ NS n ms1 mo rsp mo' evs Hat Hh Hmi Hsafe Hst) as (Hh' & Hmi' & _).
         apply (IH rsp mo' evs Hst (nret ms1 rsp) (Hcont rsp) Hh' Hmi').

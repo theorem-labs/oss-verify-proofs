@@ -5,7 +5,8 @@
 (* Modified by Theorem Labs, 2026-10: the image-A form of lib/Prog/diginet_personality_of_c.v for fuzz_decode.asan, in the form of projects/libreac/fuzz_decode/proofs/lib/A/Prog/reac_upstream_channels_c.v (a leaf with no stack frame), with the image's own table address. *)
 (* Modified by Theorem Labs, 2026-10: relocated from proofs/libdiginet/fuzz_decode/lib/A/Prog/diginet_personality_of_c.v (fuzz_decode.asan, image A, a code-identical twin) to fuzz_codec.asan, image A: entry 0x84888 and the personalities table 0x9d920, the image segments lib/A/AWalkFw0.v tfibsegs, module paths changed; the premise on desk widened from -2^31 <= desk < 2^31 to 0 <= desk < 2^64 (any 64-bit a0: the code compares the whole register with 1 and 2). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_codec/lib/A/Prog/diginet_personality_of_c.v, with its module paths and addresses changed; 9 of its 25 lines of code are new or changed and 7 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: the image-B (fuzz_decode.asan-ubsan) text of lib/A/Prog/diginet_personality_of_F_c.v, in the leaf form of proofs/libreac/fuzz_decode/lib/B/Prog/check_braid_F_c.v at recipes commit 88154566652a, with this image's entry and table address. *)
+(* Modified by Theorem Labs, 2026-10: the image-B (fuzz_decode.asan-ubsan) text of lib/A/Prog/diginet_personality_of_F_c.v, in the leaf form of proofs/libreac/fuzz_decode/lib/B/Prog/check_braid_F_c.v at recipes, with this image's entry and table address. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Footprint form of the contract of diginet_personality_of on fuzz_decode.asan-ubsan (image B): entry 0x82938,
    56 bytes (13 instructions and the UBSan trap word at 0x8296c), no call, no stack frame.
 

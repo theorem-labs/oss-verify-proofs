@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFek.v at 25e3d17bdb50 into libreac/fuzz_knock, with its module paths changed, A/AWalkFw0 imported for A/AB1v and its addresses moved to libreac/fuzz_knock's ASan build; tfib_dhash_tr0 removed and DF_fixed's aTOT field started at 1, for fuzz_knock's empty start-up depot. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/A/AFek.v at 88154566652a (donor image sha256 61768cf4739b), with its module paths changed, A/AB1v imported for A/AWalkFw0 and its addresses moved to reac-repacer/fuzz_wire's ASan build. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFek.v at theorem-labs/oss-verify-proofs@6b32741d849a into libreac/fuzz_knock, with its module paths changed, A/AWalkFw0 imported for A/AB1v and its addresses moved to libreac/fuzz_knock's ASan build; tfib_dhash_tr0 removed and DF_fixed's aTOT field started at 1, for fuzz_knock's empty start-up depot. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/A/AFek.v (donor image sha256 61768cf4739b), with its module paths changed, A/AB1v imported for A/AWalkFw0 and its addresses moved to reac-repacer/fuzz_wire's ASan build. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require Import YG0f.

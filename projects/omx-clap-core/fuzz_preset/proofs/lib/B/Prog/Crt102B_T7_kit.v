@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths and module names changed; 142 of its 184 lines of code are new or changed and 472 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* On the Step-1 contract texts (the re-hiding move): cb7k_call at the wle' contract
    (the internal file WLE-CONTRACT.md), as Crt102Kit.crt102rw_call_ch: the journals at R := YA0nH.wle' SEGS
    YGcfRehidePost.RZ_cf (notations AJ / AJW), the callee's text in SRr' with apost_base_xFR at R (PRH_Base's fpostF;
@@ -16,7 +17,7 @@
    proves no function (kind: segment lemma support).
 
    INPUTS OF RECORD:
-   - base commit 1ec37cdf5c5 (Crt102Glue.v; the contract texts at the kit tip 3ac20a5c9e30).
+   - base (Crt102Glue.v; the contract texts at the kit tip).
    - the A' originals: lib/A/Prog/Crt102Kit.v blob fe9d87b61d62 (crt102rw_mr_of_aview :690, crt102rw_agree_of_aview
      :700, crt102rw_ret :777, crt102rw_call :790), ported, not imported.
    - the image-B kit this file cites and does not restate: lib/B/Prog/Crt102KitB.v
@@ -24,14 +25,14 @@
      chain at sp1), cb4_fb; cb4_rdword_of_val_mem / cb4_fpchain_keep / cb4_live_call are there too, so they are not
      written here.
    - engine: YCbqGcall.v aj_call_xF (the call rule this one specialises), YC1fP.v ret_ok_codeptr_v.
-   - build route pins102: FACTS 8f3e7e1a07f1, PAU pau-preset-102 (the #102 pins' agent directory).
+   - build route pins102: FACTS, PAU pau-preset-102 (the #102 pins' agent directory).
 
    WHAT THE B' PORT CHANGES BEYOND THE RENAME (prh_img_A -> prh_img_B, PI_prog_A -> PI_prog_B, A_prog_listing ->
    B_prog_listing, CRT_PC_A -> CRT_PC_B, crt_bregs -> crt_bregs_B, the prefix crt102rw_ -> cb4_ or cb7k_):
    1. THE RETURN OFFSETS. The A' text bounds a return offset by 2048 (A' body: 466 instructions, to +0x744). The B' body
       is 544 instructions, to +0x87c (the row's brief :77, not in this tree), and T7's own return sites are +0x800
       (fuzz_free) and +0x808 (pj_free), both >= 2048. So cb7k_ret / cb7k_call take 0 <= off < 4096.
-   2. THE FUNCTION'S SLOT. crt102rw_ret rewrote CRT_PC_A to the numeral 4752; here CRT_PC_B (Crt102Img.v:699,
+   2. THE FUNCTION'S SLOT. crt102rw_ret rewrote CRT_PC_A to the numeral 4752; here CRT_PC_B (Crt102Img.v:700,
       4 * CRT_SLOT_B) is only BOUNDED (0 <= CRT_PC_B < 2 ^ 16, even), by vm_compute, and no numeral of it is typed.
    3. THE STACK. cb4_sp gives sp0 - 255 <= sp1 (A': sp0 - 240 <= sp1). cb7k_call KEEPS the A' budget premise
       STK1 + 240 <= STKC: the A' bound is derived again from cb4_sp's own facts, sp0 mod 16 = 0 and sp1 mod 32 = 0,

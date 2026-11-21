@@ -1,4 +1,4 @@
-(* CARRIED from commit fa123bc2baab5eec7dd2568431a33b03bf9325d2,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YGcfRecStep.v, sha256 af95e86b27482133225a53fe49f1fb08de27b3866e073cc780b4d4dc2d59b803 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the Require lines only:
    the module prefix cgif_file_fuzzer.lib -> fuzz_reply.lib.Reusable, except ImgBaseDG / DMspec / AllocG / DeallocG and the

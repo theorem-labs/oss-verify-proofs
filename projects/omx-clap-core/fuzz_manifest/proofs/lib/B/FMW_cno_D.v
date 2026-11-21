@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_cno_D.v at a working branch 31d1eb57a40.
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_cno_D.v at a working branch.
    check_no_overread 0x80bd4, the reader segments: R4 0x80e04 (the UBSan overflow check of t2 + tn + 17, the shadow
    check and NUL store at t2 + tn + 17, then names (t1, u1), back at N1 0x80e2c) and N1 (s1 := the answer,
    names (t2, u2), back at N2 0x80e3c).
@@ -46,8 +46,8 @@ Definition cnoD_SH : list shent := [mkSHE 10 0 1].
 
 Section S. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 Variable B : asyms.
-Hypothesis FB : FmB B.                                   (* FMW_seg.v:37: code addresses, GOT/cell values, statics not owned *)
-Hypothesis HB : TfibSyms B.                              (* YF0m.v:658 *)
+Hypothesis FB : FmB B.                                   (* FMW_seg.v:38: code addresses, GOT/cell values, statics not owned *)
+Hypothesis HB : TfibSyms B.                              (* YF0m.v:659 *)
 Hypothesis IMG : fm_img_facts tfibsegs B.                (* FMH_Fn.v:61 *)
 Hypothesis UNIV : fm_univ B.                             (* FMH_Fn.v:71: incl Tfib_universe (as_universe B) *)
 Hypothesis AMALLOC4 : amalloc04_rule tfibsegs B ameter_triv.   (* YC5d.v:57; ameter_triv YCbp.v:17, mo_ok = True *)
@@ -191,7 +191,7 @@ Qed.
 (* the reader's peak after a second call with the same URI is the first's *)
 Lemma cnoD_rt_peak_idem : forall u live peak, rt_peak u live (rt_peak u live peak) = rt_peak u live peak.
 Proof. intros [|c u] live peak; cbn [rt_peak]; [reflexivity | lia]. Qed.
-(* B only: names_spec asks spZ < ly_top at the call (B4b 620968d59c7); the journal's stack facts give sp0 <= ly_top at
+(* B only: names_spec asks spZ < ly_top at the call (B4b); the journal's stack facts give sp0 <= ly_top at
    any point (lib/B/FMW_as_ruled.v g5_sp_top), and the call's sp is sp0 - 112 *)
 Lemma cnoD_sp_top : forall STK sp0 FP ly S0 W mem md own ly' S' W' mem' md' k,
   ajournal tfibsegs B STK sp0 FP ly S0 W mem md own ly' S' W' mem' md' k -> sp0 <= ly_top ly'.

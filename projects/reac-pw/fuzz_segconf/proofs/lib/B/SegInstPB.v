@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/fast_float/from_chars/lib/MAX/AXF_dec63z.v, with its module paths and module names changed; 100 of its 140 lines of code are new or changed and 4021 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin sha256 c3796c0b38f3): the rewrites from the walks'
    listing terms to SegInstB's image-B terms at image B's instance SegImg.PB_seg (lib/B/Prog/SegImg.v). The twin of
-   image A's lib/A/SegInstPB.v (commit 6f7a1561a103): every lemma name is the
+   image A's lib/A/SegInstPB.v: every lemma name is the
    image-A file's; the Require lines take lib/B/Prog's listing and SegInstB; image B adds the entries of strip and fold
    (UBSan outlines them; image A inlines them into m_file). Walks state entries and call targets as listing terms under
    `Context {PI : PAImg seg_listing}` (pa_val A_TEXT + AF_<F>, pa_sigma SS_<x>); the close instantiates PI with

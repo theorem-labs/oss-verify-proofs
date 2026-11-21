@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the writev channel-reader flag). *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.openssl.ct.lib.CtLib Require Import ImageCtA.
 (* [comment removed for export] *)
@@ -199,14 +200,15 @@ Proof using AF.
   assert (RZ : realizes ctbsegs c (TT ((stdout_exit_flush so_id so_set : @M stdout_st unit) so) (fun _ => t_emit [] T))).
   { apply (impl_realizes ctbsegs SEGTOP_A asegs_wx asegs_below [1] _ (rt_allow RT Σ) (fun mo => ARTM RT Σ mo /\ PMfd F0 fs0 mo) Qfin
              (fun _ => t_emit [] T) ms0 c
-             (ASTA_PM_mat_stable RT AF Σ F0 fs0)); [| exact (tok_exit_flush so (proj1 SOK) (proj2 SOK))| exact Hc| exact IMPL|].
+             (ASTA_PM_mat_stable RT AF Σ F0 fs0)); [| | exact (tok_exit_flush so (proj1 SOK) (proj2 SOK))| exact Hc| exact IMPL|].
     - intros mo fd (HAR & HF & _) Hin. cbn in Hin. destruct Hin as [<-|[]]. rewrite HF. exact HFD.
+    - intros mo (_ & _ & _ & HRD). exact HRD.
     - intros x ms' c' (HS & HA0) Hc'.
       assert (R : realizes ctbsegs c' T).
       { apply Hk.
         exists (rt_allow RT Σ), (eq ms'), (fun mo => ARTM RT Σ mo /\ PMfd F0 fs0 mo). split; [exact Hc'|]. split.
         + intros ms <-. split; [right; exact HS| exact HA0].
-        + intros mo (_ & _ & HFS). exact HFS. }
+        + intros mo (_ & _ & HFS & _). exact HFS. }
       eapply rz_conseq; [exact R|]. apply t_eq_sym, t_emit_nil_eq. exact (realizes_nonempty ctbsegs _ _ R). }
   eapply rz_conseq; [exact RZ|].
   eapply t_eq_trans; [apply TT_exit_flush; [exact (proj1 SOK)| exact (proj2 SOK)| apply t_emit_has_nil]|].

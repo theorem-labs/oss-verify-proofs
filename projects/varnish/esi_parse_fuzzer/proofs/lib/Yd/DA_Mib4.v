@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the main-entry view reads the launch's argument layout and keeps 8 bytes of slack after each argument string. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -143,7 +144,7 @@ Lemma img_atexit_fin : image_bytes rsegs ATEXIT 1 <> None. Proof. vm_compute. di
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Section S.
-  Context {Clg : Ceiling} {AI : AsanAlloc LPA}.   (* [comment removed for export] *)
+  Context {Clg : Ceiling} {AI : AsanAlloc LPA} {LAY : ArgLayout}.   (* [comment removed for export] *)
   Variable usp : Z.
   Variables argv envp : list (list byte).
   Variable fs : Fs.
@@ -170,11 +171,11 @@ Section S.
     mv_argv1p : 2 <= argc -> bytes_at rsegs (aview A0 m) (usp + 16) (le8 (wz p1a));
     mv_argv0 : bytes_at rsegs (aview A0 m) p0a (nth 0 argv [] ++ [Z_to_bv 8 0]);
     mv_argv1 : 2 <= argc -> bytes_at rsegs (aview A0 m) p1a (nth 1 argv [] ++ [Z_to_bv 8 0]);
-    mv_str0  : usp + 24 <= p0a /\ p0a + e_L0 argv + 1 + 16 <= usp + span;
-    mv_str1  : 2 <= argc -> p1a + e_L1 argv + 1 + 16 <= usp + span;
+    mv_str0  : usp + 24 <= p0a /\ p0a + e_L0 argv + 1 + 8 <= usp + span;
+    mv_str1  : 2 <= argc -> p1a + e_L1 argv + 1 + 8 <= usp + span;
     (* [comment removed for export] *)
-    mv_slack0 : exists sl, length sl = 16%nat /\ bytes_at rsegs (aview A0 m) (p0a + e_L0 argv + 1) sl;
-    mv_slack1 : 2 <= argc -> exists sl, length sl = 16%nat /\ bytes_at rsegs (aview A0 m) (p1a + e_L1 argv + 1) sl;
+    mv_slack0 : exists sl, length sl = 8%nat /\ bytes_at rsegs (aview A0 m) (p0a + e_L0 argv + 1) sl;
+    mv_slack1 : 2 <= argc -> exists sl, length sl = 8%nat /\ bytes_at rsegs (aview A0 m) (p1a + e_L1 argv + 1) sl;
     (* [comment removed for export] *)
     mv_A0    : entry_A0 usp span A0
   }.

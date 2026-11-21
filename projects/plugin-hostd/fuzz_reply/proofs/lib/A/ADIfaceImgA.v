@@ -1,6 +1,7 @@
-(* Modified by a Theorem Labs lane (ReallocPrimary.RealSegA), 2026-10-30: relocated from proofs/omx-clap-core/fuzz_preset/lib/A/ADIfaceImgA.v (commit d0fcb396eeeb, sha256 a5a02a1a4b7de2d0; preset image p102: unstripped fuzz_preset.asan sha256 bff8519bbe3e, pin 1be0f53d96cb) to plugin-hostd/fuzz_reply's asan image A (unstripped fuzz_reply.asan sha256 d751b179ea49, pin 42c58610e125) by a Theorem Labs lane's alreloc.py (frozen-ced0368250cb6538): module paths changed, every image numeral moved by symbol + offset (hand-check table in the commit); preset lib.Reusable -> reply lib.A for: none. *)
+(* Modified by a Theorem Labs lane (ReallocPrimary.RealSegA), 2026-10-30: relocated from proofs/omx-clap-core/fuzz_preset/lib/A/ADIfaceImgA.v (sha256 a5a02a1a4b7de2d0; preset image p102: unstripped fuzz_preset.asan sha256 bff8519bbe3e, pin 1be0f53d96cb) to plugin-hostd/fuzz_reply's asan image A (unstripped fuzz_reply.asan sha256 d751b179ea49, pin 42c58610e125) by a Theorem Labs lane's alreloc.py (frozen-ced0368250cb6538): module paths changed, every image numeral moved by symbol + offset (hand-check table in the commit); preset lib.Reusable -> reply lib.A for: none. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the by-value cover check of an owned static table: some area of the table covers all of
    [lo, hi), decided over the whole table (an existsb decision, covers_b), never by the area's row, so a table that
    gains rows, in any order, keeps every proof that uses it. Users: A/ADIfaceA.v (the depot zone and the internal

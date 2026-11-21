@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor raised to the 0x5D0000 bytes below sp that the launch guarantees ([STACK_GAP])). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -82,7 +83,7 @@ Proof using AF.
 Qed.
 
 Lemma checked_src_live : forall Σ m sp lo p k s n, ART RT Σ m -> In (p, k) (rt_live RT Σ) -> p <= s -> s + n <= p + k ->
-  rt_sp0 RT Σ - STACK_WIN <= lo -> checked_src RT Σ m sp lo s n.
+  rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= lo -> checked_src RT Σ m sp lo s n.
 Proof using AF.
   intros Σ m sp lo p k s n HA Hin H1 H2 Hlo. destruct (af_acc_live RT AF Σ m p k HA Hin) as [WR AC].
   pose proof (af_live_range RT AF Σ m p k HA Hin) as (R1 & R2 & R3). split.
@@ -90,7 +91,7 @@ Proof using AF.
   - left. lia.
 Qed.
 
-Lemma checked_src_stack : forall Σ m sp lo s n, ART RT Σ m -> rt_sp0 RT Σ - STACK_WIN + 64 <= s -> s + n <= USTACK_TOP - 16 ->
+Lemma checked_src_stack : forall Σ m sp lo s n, ART RT Σ m -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP + 64 <= s -> s + n <= USTACK_TOP - 9 ->
   bv_unsigned sp <= s -> checked_src RT Σ m sp lo s n.
 Proof using AF.
   intros Σ m sp lo s n HA H1 H2 H3. split.
@@ -157,7 +158,7 @@ Qed.
 
 Lemma MAINCTX_agree : forall Σ Σ' so so' usp ap c0 c1 c2 c3 c4 c5 c6 c7 m m',
   MAINCTX RT OUT_rep ERR_rep XENV LIB argvb Σ so usp ap c0 c1 c2 c3 c4 c5 c6 c7 m ->
-  ART RT Σ' m' -> mem_inv asegs m' -> wmono asegs m m' -> stk asegs m' (rt_sp0 RT Σ - STACK_WIN) (usp - 80) ->
+  ART RT Σ' m' -> mem_inv asegs m' -> wmono asegs m m' -> stk asegs m' (rt_sp0 RT Σ - STACK_WIN + STACK_GAP) (usp - 80) ->
   rt_sp0 RT Σ' = rt_sp0 RT Σ -> CLX OUT_rep ERR_rep XENV LIB so' m' ->
   agree_on (fun x => usp - 80 <= x < USTACK_TOP) m m' ->
   MAINCTX RT OUT_rep ERR_rep XENV LIB argvb Σ' so' usp ap c0 c1 c2 c3 c4 c5 c6 c7 m'.
@@ -199,7 +200,7 @@ Qed.
 
 Lemma MAINCTX_agree_nw : forall Σ Σ' so so' usp ap c0 c1 c2 c3 c4 c5 c6 c7 m m',
   MAINCTX RT OUT_rep ERR_rep XENV LIB argvb Σ so usp ap c0 c1 c2 c3 c4 c5 c6 c7 m ->
-  ART RT Σ' m' -> mem_inv asegs m' -> stk asegs m' (rt_sp0 RT Σ - STACK_WIN) (usp - 80) ->
+  ART RT Σ' m' -> mem_inv asegs m' -> stk asegs m' (rt_sp0 RT Σ - STACK_WIN + STACK_GAP) (usp - 80) ->
   rt_sp0 RT Σ' = rt_sp0 RT Σ -> CLX OUT_rep ERR_rep XENV LIB so' m' ->
   agree_on (fun x => usp - 80 <= x < USTACK_TOP) m m' ->
   MAINCTX RT OUT_rep ERR_rep XENV LIB argvb Σ' so' usp ap c0 c1 c2 c3 c4 c5 c6 c7 m'.

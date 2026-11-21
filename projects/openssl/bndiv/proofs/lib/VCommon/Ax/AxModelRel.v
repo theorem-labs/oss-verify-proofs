@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (MR's reserved clause admits the vDSO tail; new fields mr_vdso, the vDSO pair in the reserved ledger, and mr_rdr, the channel reader; placement bounds grow for the tail; new MR_place_exists for Linux's placement); internal commit ids in comments replaced by public commits or removed. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
@@ -9,6 +10,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType Fs
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap.
 From OSSVerify.Proofs.openssl.bndiv.lib.VCommon.Ax Require Import AxLin AxVal AxSys AxOcc AxAcct AxMeasure AxSysMmap AxPack.
 From OSSVerify.Proofs.openssl.bndiv.lib.VCommon.Ax Require Import AxFd AxLz.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement.
 Import ListNotations.
 
 Local Open Scope Z_scope.
@@ -30,7 +32,24 @@ Variable segs : list Segment.
 Variable fs0 : Fs.Fs.
 
 Record MR (ρ : valuation) (am : amodel) (m : Model) : Prop := {
-  mr_res : vm_reserved (m_vmmaps m) = segments_reserved segs;
+  (* WAS, and the revision made it FALSE:
+       mr_res : vm_reserved (m_vmmaps m) = segments_reserved segs
+     The model this tree is related to is built over `run_segments segs inp sp mb`
+     (AxA/RzBridge.v:116-118), not over the unit's ELF image, and at the revision that
+     list carries the vDSO's kernel-mapped segments.  segments_reserved therefore
+     gained `filter (fun s => negb (seg_kernel_map s))` (LPS@75d69e00 Run.v:253-254) to
+     keep them out of reservations, and init_reserved adds the vDSO reservation back,
+     so the equality on the nose is false at entry.  rx is empty only on the
+     `top - vdso_len < page_size` branch.
+     The four conjuncts are exactly what AxEntryS's init_res_ok PROVES from the tree's
+     own launch facts -- discharged, never assumed, no kernel field pinned.  Carried in
+     the field because two consumers need them: AxModelRel's own live_bytes/length_app
+     sum, and AxSysNorep's norep_free.  Every other consumer uses membership only, which
+     in_or_app supplies.  Ported per hunk from openssl/bignum. *)
+  mr_res : exists rx, vm_reserved (m_vmmaps m) = segments_reserved segs ++ rx
+                      /\ (length rx <= 2)%nat
+                      /\ live_bytes rx <= 0x14000
+                      /\ Forall (fun q => 0x154500000000 <= bas q) rx;
   mr_maps : vm_maps (m_vmmaps m) = map (ent_val ρ) (am_maps am);
   mr_ents : Forall (ent_ok ρ) (am_maps am);
   mr_brk0 : bv_unsigned (vm_start_brk (m_vmmaps m)) = leval ρ (am_brk0 am);
@@ -54,8 +73,48 @@ Record MR (ρ : valuation) (am : amodel) (m : Model) : Prop := {
               In (ent_val ρ e) (vm_noaccess (m_vmmaps m));
   mr_lazy_res : forall p q, In p (m_vm_lazy m) -> In q (vm_reserved (m_vmmaps m)) -> iv_disj (bas p) (bas p + bsz p) q;
   (* [comment removed for export] *)
-  mr_lz : LZr ρ (am_maps am) (m_vm_lazy m) (vm_noaccess (m_vmmaps m))
+  mr_lz : LZr ρ (am_maps am) (m_vm_lazy m) (vm_noaccess (m_vmmaps m));
+  (* NEW at this revision, APPENDED so that every existing bullet list keeps its
+     order and gains one goal at the end.  The model's mprotect gate asks whether a
+     request meets the vDSO/vvar pair (AxSysProt0.v:49-57's pg_vdso), and nothing in
+     MR said the pair is part of the reserved ledger, so that obligation could not be
+     discharged from mr_disj alone.  It is true at the launch by construction --
+     init_reserved is `reserved ++ vdso_reserved kb (vdso_top of the ledger it builds)`
+     (LPS@75d69e00 State.v:7716-7722, with vm_reserved_init_model at :7844-7852 saying
+     the written-out top IS vdso_top) -- and it survives every step, because vdso_top
+     reads only vm_mmap_base and vm_init_sp (State.v:3466-3483 and :3393-3394, via
+     alloc_top), which are immutable for the whole run.  No kernel field is named or
+     pinned: kb stays `m_kernel m`. *)
+  mr_vdso : incl (vdso_reserved (m_kernel m) (vdso_top (m_vmmaps m))) (vm_reserved (m_vmmaps m));
+  (* NEW at this revision, APPENDED LAST after mr_vdso so every existing bullet list
+     keeps its order and gains one more goal at the end.  The model's writev wraps its
+     result in `if negb (m_channel_reader m) then check_sigpipe_writev ...`
+     (LPS@75d69e00 Sys/Fs/ReadWrite.v:1708), so every writev lemma from LibWritevCfg up
+     to AsanWStdio's stdio_write_loop now needs `m_channel_reader m = true`, and the
+     bit is FREE: valid_input constrains neither value (State.v:4921-4923) and it is
+     not derivable from fd_lookup.  MR is this tree's model predicate, so the bit
+     enters here, exactly as mr_vdso above.  DISCHARGED, never assumed: AxEntryS's
+     init_rdr (:646) proves it at the launch from this tree's own input, and no step
+     moves it -- m_channel_reader reads procst_channel_reader (m_proc m)
+     (State.v:4924) and every model transformer in this file keeps m_proc. *)
+  mr_rdr : m_channel_reader m = true
 }.
+
+(* The workhorse for the field above: a step that keeps the reserved ledger, the
+   kernel build, the mmap base and the allocation top keeps mr_vdso, because those
+   four are everything vdso_reserved and vdso_top read (State.v:3466-3483).  Keyed to
+   alloc_top rather than to vm_init_sp because that is the equality the grant and fix
+   lemmas below already carry. *)
+Lemma vdso_incl_keep (m m' : Model) :
+  m_kernel m' = m_kernel m -> vm_reserved (m_vmmaps m') = vm_reserved (m_vmmaps m) ->
+  vm_mmap_base (m_vmmaps m') = vm_mmap_base (m_vmmaps m) ->
+  alloc_top (m_vmmaps m') = alloc_top (m_vmmaps m) ->
+  incl (vdso_reserved (m_kernel m) (vdso_top (m_vmmaps m))) (vm_reserved (m_vmmaps m)) ->
+  incl (vdso_reserved (m_kernel m') (vdso_top (m_vmmaps m'))) (vm_reserved (m_vmmaps m')).
+Proof.
+  intros Ek Er Eb Ea H. unfold vdso_top, mmap_top.
+  rewrite Ek, Er, Eb, Ea. exact H.
+Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -120,7 +179,7 @@ Lemma MR_mat (ρ : valuation) (am : amodel) (m : Model) (pages : list word) :
   MR ρ am m -> MR ρ am (with_vm_backing (m_vm_lazy m) pages m).
 Proof.
   destruct m as [fd [maps lazy mat] io fs proc lim tm].
-  intros [H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 H16 H17 H18 H19 H20 H21]. constructor; assumption.
+  intros [H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 H16 H17 H18 H19 H20 H21 H22 H23]. constructor; assumption.
 Qed.
 
 Lemma MR_materialize (ρ : valuation) (am : amodel) (m m' : Model) (acc : list (word * nat)) :
@@ -135,14 +194,14 @@ Qed.
 Lemma MR_next (ρ : valuation) (am : amodel) (m : Model) (nx : int) :
   MR ρ am m -> MR ρ (AM (am_maps am) (am_brk0 am) (am_brk am) (am_tid am) (am_shadow am) nx (am_atop am) (am_out am) (am_exp am) (am_fd am)) m.
 Proof.
-  intros [H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 H16 H17 H18 H19 H20 H21].
+  intros [H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 H16 H17 H18 H19 H20 H21 H22 H23].
   constructor; cbn [am_maps am_brk0 am_brk am_tid am_shadow am_next am_atop am_out am_exp am_fd]; assumption.
 Qed.
 
 Lemma MR_out (ρ : valuation) (am : amodel) (m : Model) (o : list piece) :
   MR ρ am m -> MR ρ (AM (am_maps am) (am_brk0 am) (am_brk am) (am_tid am) (am_shadow am) (am_next am) (am_atop am) o (am_exp am) (am_fd am)) m.
 Proof.
-  intros [H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 H16 H17 H18 H19 H20 H21].
+  intros [H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 H16 H17 H18 H19 H20 H21 H22 H23].
   constructor; cbn [am_maps am_brk0 am_brk am_tid am_shadow am_next am_atop am_out am_exp am_fd]; assumption.
 Qed.
 
@@ -152,7 +211,7 @@ Lemma MR_tid (ρ : valuation) (am : amodel) (m : Model) (t : xv) (y : word) (nx 
   MR ρ (AM (am_maps am) (am_brk0 am) (am_brk am) (Some t) (am_shadow am) nx (am_atop am) (am_out am) (am_exp am) (am_fd am)) (with_tid y m).
 Proof.
   destruct m as [fd [maps lazy mat] io fs proc lim tm].
-  intros [H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 H16 H17 H18 H19 H20 H21] Hv.
+  intros [H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 H16 H17 H18 H19 H20 H21 H22 H23] Hv.
   constructor; cbn [am_maps am_brk0 am_brk am_tid am_shadow am_next am_atop am_out am_exp am_fd]; try assumption.
   exists y. split; [reflexivity | exact Hv].
 Qed.
@@ -164,7 +223,7 @@ Qed.
 Lemma MR_agree (v : int) (ρ ρ' : valuation) (am : amodel) (m : Model) :
   (forall x, x <> v -> ρ' x = ρ x) -> model_occ v am = false -> MR ρ am m -> MR ρ' am m.
 Proof.
-  intros Hag Ho [H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 H16 H17 H18 H19 H20 H21].
+  intros Hag Ho [H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 H16 H17 H18 H19 H20 H21 H22 H23].
   destruct (model_occ_parts v am Ho) as (Ofd & Omaps & Obrk0 & Obrk & Oatop & Otid & Oexp & _).
   assert (Hent : forall e, In e (am_maps am) -> leval ρ' (ae_base e) = leval ρ (ae_base e)).
   { intros e He. apply (leval_agree v ρ ρ' Hag). destruct (ts_occ v (snd (ae_base e))) eqn:E; [|reflexivity].
@@ -269,11 +328,20 @@ Lemma MR_grant_gen (m' : Model) (na' : list (word * word)) (b : lin) :
   Forall pos_al na' -> Forall pos_al (m_vm_lazy m') ->
   (lzfull e = true -> forall x : word, bv_unsigned a <= bv_unsigned x < bv_unsigned a + nZ ->
      page_in_ranges (page_base x) (m_vm_lazy m') = true /\ ~ inl na' (bv_unsigned x)) ->
+  (* NEW, APPENDED, with mr_vdso: vdso_top reads the mmap base and the allocation top
+     and nothing else, and the allocation top is already fixed by Eat above.  Every
+     caller builds m' with a concrete setter that touches neither. *)
+  m_kernel m' = m_kernel m -> vm_mmap_base (m_vmmaps m') = vm_mmap_base h ->
+  (* NEW, APPENDED, with mr_rdr: the reader bit is a Model field this lemma's abstract
+     successor m' does not otherwise constrain, so the trailing goal is not closed by
+     the `try assumption` above.  Every caller builds m' with a concrete setter that
+     keeps m_proc, so this closes by reflexivity at each one. *)
+  m_channel_reader m' = m_channel_reader m ->
   MR ρ (AM (e :: am_maps am) (am_brk0 am) b (am_tid am) (am_shadow am) nx (am_atop am) (am_out am) (am_exp am) (am_fd am)) m'.
 Proof.
-  intros Er Em Ena Esb Eat Eb Et Ef Efs Hlz Hnw Hsub Hsup Hin Hnew Hlzb Hlzm Hnapos Hlzpos Hfull.
+  intros Er Em Ena Esb Eat Eb Et Ef Efs Hlz Hnw Hsub Hsup Hin Hnew Hlzb Hlzm Hnapos Hlzpos Hfull Ekn Emb Erd.
   destruct grant_bounds as (B1 & B2 & B3 & B4).
-  pose proof HM as [H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 H16 H17 H18 H19 H20 H21].
+  pose proof HM as [H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 H16 H17 H18 H19 H20 H21 H22 H23].
   constructor; cbn [am_maps am_brk0 am_brk am_tid am_shadow am_next am_atop am_out am_exp am_fd];
     rewrite ?Er, ?Em, ?Ena, ?Esb, ?Eat, ?Et, ?Ef, ?Efs; try assumption.
   - (* [comment removed for export] *) cbn [map]. rewrite grant_ent_val, H2. reflexivity.
@@ -296,6 +364,11 @@ Proof.
     intros e' He'. pose proof (grant_free_maps (ent_val ρ e') (MR_ent_in ρ am m e' HM He')) as D.
       pose proof (MR_ent ρ am m e' HM He') as Hok'. unfold iv_disj in D. rewrite (ent_val_bas ρ e' Hok'), (ent_val_bsz ρ e' Hok') in D.
       unfold ent_lo, ent_hi. lia.
+  - (* mr_vdso.  `rewrite ?Er` above has already turned the right-hand side into
+       vm_reserved h; put it back and the keep-lemma matches. *)
+    rewrite <- ?Er. exact (vdso_incl_keep m m' Ekn Er Emb Eat H22).
+  - (* mr_rdr: m' keeps the reader bit by Erd, and HM carries it for m. *)
+    rewrite Erd. exact H23.
 Qed.
 
 Lemma grant_lazy (m0 : Model) : m_vm_lazy m0 = m_vm_lazy m ->
@@ -359,7 +432,11 @@ Theorem MR_grant_rw : ae_na e = false -> MR ρ (am_grant am e nx) (null_rw_model
 Proof.
   intros Hna. unfold null_rw_model.
   destruct (with_mmap_backing_fields flags a n (with_vmmaps (grant_maps m a n (vm_noaccess h)) m)) as (Ev & _ & Ef & Efs & Et & _).
-  apply (MR_grant_gen _ (vm_noaccess h) (am_brk am)); rewrite ?Ev; try assumption; try reflexivity.
+  (* The last two goals are mr_vdso's: m_kernel and vm_mmap_base are untouched here,
+     but with_mmap_backing is an `if mmap_noreserve_b flags` (LPS@75d69e00
+     Sys/Mm/Mmap.v:760-761), so reflexivity needs the branch split first. *)
+  apply (MR_grant_gen _ (vm_noaccess h) (am_brk am)); rewrite ?Ev; try assumption; try reflexivity;
+    try (unfold with_mmap_backing; destruct (mmap_noreserve_b flags); reflexivity).
   - exact (mr_brk ρ am m HM).
   - apply grant_lazy. reflexivity.
   - exact (mr_na ρ am m HM).
@@ -379,7 +456,8 @@ Theorem MR_grant_na : lzfull e = false -> nZ mod 4096 = 0 -> MR ρ (am_grant am 
 Proof.
   intros Hnfull Hnal. unfold null_na_model. destruct grant_bounds as (B1 & B2 & B3 & B4).
   destruct (with_mmap_backing_fields flags a n (with_vmmaps (grant_maps m a n ((a, n) :: vm_noaccess h)) m)) as (Ev & _ & Ef & Efs & Et & _).
-  apply (MR_grant_gen _ ((a, n) :: vm_noaccess h) (am_brk am)); rewrite ?Ev; try assumption; try reflexivity.
+  apply (MR_grant_gen _ ((a, n) :: vm_noaccess h) (am_brk am)); rewrite ?Ev; try assumption; try reflexivity;
+    try (unfold with_mmap_backing; destruct (mmap_noreserve_b flags); reflexivity).
   - exact (mr_brk ρ am m HM).
   - apply grant_lazy. reflexivity.
   - apply nowrap_cons; [unfold bas, bsz; cbn [fst snd]; lia | exact (mr_na ρ am m HM)].
@@ -399,9 +477,12 @@ Qed.
 Theorem MR_brk_grow (H' : VmMaps) (b : lin) :
   ae_na e = false -> lzfull e = false -> vm_reserved H' = vm_reserved h -> vm_maps H' = (a, n) :: vm_maps h -> vm_noaccess H' = vm_noaccess h ->
   vm_start_brk H' = vm_start_brk h -> vm_init_sp H' = vm_init_sp h -> bv_unsigned (vm_brk H') = leval ρ b ->
+  (* NEW with mr_vdso: vdso_top reads vm_mmap_base beside the allocation top, and a brk
+     grow moves neither. *)
+  vm_mmap_base H' = vm_mmap_base h ->
   MR ρ (am_brk_grow am e b nx) (with_vmmaps H' m).
 Proof.
-  intros Hna Hnfull Er Em Ena Esb Esp Eb. unfold am_brk_grow.
+  intros Hna Hnfull Er Em Ena Esb Esp Eb Emb. unfold am_brk_grow.
   apply (MR_grant_gen (with_vmmaps H' m) (vm_noaccess h) b); try assumption; try reflexivity.
   - unfold alloc_top. change (m_vmmaps (with_vmmaps H' m)) with H'. rewrite Esp. reflexivity.
   - intros p Hp. left. exact Hp.
@@ -427,17 +508,81 @@ Qed.
 
 Lemma MR_grant_exists (ρ : valuation) (am : amodel) (m : Model) (nZ : Z) :
   MR ρ am m -> 0 < nZ ->
-  4096 + (live_bytes (segments_reserved segs) + ents_total (am_maps am))
+  (* GROWN BY THE vDSO TAIL, like MR_place_exists below and pack_ok (AxSys.v:391).
+     WAS: 4096 + (live_bytes (segments_reserved segs) + ents_total (am_maps am))
+          + Z.of_nat (length (segments_reserved segs) + length (am_maps am))
+            * (nZ + 4096) + nZ <= leval ρ (am_atop am).
+     mr_res's append form makes live_bytes l and length l pick up rx; the field's own
+     conjuncts bound those by 0x14000 = 81920 and 2 entries. *)
+  4096 + 81920 + 2 * (nZ + 4096)
+  + (live_bytes (segments_reserved segs) + ents_total (am_maps am))
   + Z.of_nat (length (segments_reserved segs) + length (am_maps am)) * (nZ + 4096) + nZ <= leval ρ (am_atop am) ->
   exists a, null_ok m nZ a.
 Proof.
   intros HM Hn Hb. pose proof (alloc_top_lt (m_vmmaps m)) as Ht. change two_pow_64 with two64 in Ht.
   destruct (grant_exists (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) nZ (alloc_top (m_vmmaps m)) Hn ltac:(lia)) as [a (A1 & A2 & A3 & A4)].
-  - rewrite live_bytes_app, length_app, (mr_res ρ am m HM), (mr_maps ρ am m HM), length_map, (MR_live ρ _ (mr_ents ρ am m HM)), (mr_atop ρ am m HM). exact Hb.
+  - (* mr_res is an existential now, so it cannot be rewritten with directly -- that is
+       the measured "Cannot find a homogeneous relation to rewrite" at this line.
+       Destructure it, rewrite with its equation, and let the two bounds absorb rx. *)
+    destruct (mr_res ρ am m HM) as [rx [Hrx [Hrxlen [Hrxlive _]]]].
+    rewrite live_bytes_app, length_app, Hrx, !live_bytes_app, !length_app,
+      (mr_maps ρ am m HM), length_map, (MR_live ρ _ (mr_ents ρ am m HM)),
+      (mr_atop ρ am m HM).
+    (* `lia` alone reports "Cannot find witness" here and the reason is NONLINEARITY,
+       not a missing bound: the goal carries Z.of_nat (length rx) * (nZ + 4096) with
+       both factors unknown, so lia cannot multiply `length rx <= 2` through.  Split
+       the Z.of_nat of a nat sum, distribute the product over it, and hand lia the one
+       product bound it cannot derive. *)
+    rewrite !Nat2Z.inj_add, !Z.mul_add_distr_r in Hb |- *.
+    assert (Hp : Z.of_nat (length rx) * (nZ + 4096) <= 2 * (nZ + 4096))
+      by (apply Z.mul_le_mono_nonneg_r; lia).
+    lia.
   - exists a. repeat split; assumption.
 Qed.
 
 (* [comment removed for export] *)
+Lemma MR_place_exists (ρ : valuation) (am : amodel) (m : Model) (nZ : Z) (hint : word) :
+  MR ρ am m -> 0 < nZ -> nZ mod page_size = 0 ->
+  (* GROWN BY THE vDSO TAIL, matching pack_ok (AxSys.v:376) exactly.  WAS:
+       183251939328 + (live_bytes (segments_reserved segs) + ents_total (am_maps am))
+       + Z.of_nat (length (segments_reserved segs) + length (am_maps am)) * (nZ + 4096)
+       + nZ <= leval ρ (am_atop am).
+     mr_res's append form makes live_bytes l and length l pick up rx; the field's own
+     conjuncts bound that by 0x14000 = 81920 and 2 entries respectively. *)
+  183251939328 + 81920 + 2 * (nZ + 4096)
+  + (live_bytes (segments_reserved segs) + ents_total (am_maps am))
+  + Z.of_nat (length (segments_reserved segs) + length (am_maps am)) * (nZ + 4096) + nZ <= leval ρ (am_atop am) ->
+  exists a, null_ok m nZ a /\ linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint nZ a = true.
+Proof.
+  intros HM Hn Hal Hb. pose proof (alloc_top_lt (m_vmmaps m)) as Ht. change two_pow_64 with two64 in Ht.
+  set (l := vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)).
+  assert (Hb' : 183251939328 + live_bytes l + Z.of_nat (length l) * (nZ + 4096) + nZ <= alloc_top (m_vmmaps m)).
+  { (* Same shape as MR_grant_exists above, which this run proved green: mr_res is an
+       existential, so it cannot be rewritten with; and after Hrx the product
+       Z.of_nat (length rx) * (nZ + 4096) has two unknown factors, which is why `lia`
+       alone reports "Cannot find witness" rather than a missing bound. *)
+    unfold l. destruct (mr_res ρ am m HM) as [rx [Hrx [Hrxlen [Hrxlive _]]]].
+    rewrite live_bytes_app, length_app, Hrx, !live_bytes_app, !length_app,
+      (mr_maps ρ am m HM), length_map,
+      (MR_live ρ _ (mr_ents ρ am m HM)), (mr_atop ρ am m HM).
+    rewrite !Nat2Z.inj_add, !Z.mul_add_distr_r in Hb |- *.
+    assert (Hp : Z.of_nat (length rx) * (nZ + 4096) <= 2 * (nZ + 4096))
+      by (apply Z.mul_le_mono_nonneg_r; lia).
+    lia. }
+  destruct (pack_free l nZ 183251939328 (alloc_top (m_vmmaps m)) Hn eq_refl Hb') as [g (G1 & G2 & G3 & G4)].
+  assert (Hgap : gap_fits l task_unmapped_base (alloc_top (m_vmmaps m)) nZ g).
+  { assert (Hr : 0 <= g < two64) by lia.
+    unfold gap_fits, task_unmapped_base, page_size. repeat split; [exact G2 | lia | lia |].
+    apply region_free_disj. intros q Hq. rewrite (u_Z_to_bv g Hr), (u_Z_to_bv nZ) by lia. exact (G4 q Hq). }
+  destruct (linux_place_exists (m_vmmaps m) (kb_thp (m_kernel m)) hint nZ Hn Hal (ex_intro _ g (or_intror Hgap)))
+    as [a Ha].
+  destruct (linux_place_admissible _ _ _ _ _ Hn Hal Ha) as (A1 & A2 & A3 & A4).
+  assert (Hr : 0 <= a < two64) by lia.
+  exists (Z_to_bv 64 a). split.
+  - unfold null_ok. rewrite (u_Z_to_bv a Hr). repeat split; assumption.
+  - apply (linux_place_is_iff _ _ _ _ _ Hn Hal). rewrite (u_Z_to_bv a Hr). exact Ha.
+Qed.
+
 Lemma lit_ent_val (ρ : valuation) (c n : Z) (b : bool) : 0 <= c < two64 -> 0 <= n < two64 ->
   bas (ent_val ρ (AE (c, []) n b)) = c /\ bsz (ent_val ρ (AE (c, []) n b)) = n.
 Proof.
@@ -466,7 +611,7 @@ Lemma MR_shadow_on (ρ : valuation) (am : amodel) (m : Model) :
   MR ρ am m -> In ls_ent (am_maps am) -> In gap_ent (am_maps am) -> In hs_ent (am_maps am) ->
   (forall e, In e (am_maps am) -> var_ent e = false) -> MR ρ (am_shadow_on am) m.
 Proof.
-  intros [H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 H16 H17 H18 H19 H20 H21] S1 S2 S3 Hlit.
+  intros [H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 H16 H17 H18 H19 H20 H21 H22 H23] S1 S2 S3 Hlit.
   constructor; unfold am_shadow_on; cbn [am_maps am_brk0 am_brk am_tid am_shadow am_next am_atop am_out am_exp am_fd]; try assumption.
   - intros _. repeat split; assumption.
   - intros _ e0 He0 Hv. rewrite (Hlit e0 He0) in Hv. discriminate Hv.

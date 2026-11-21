@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumC.v, with its module paths and module names changed; 584 of its 656 lines of code are new or changed and 856 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/CrsSeg_H1.v, with its numbers changed; 224 of its 709 lines of code are new or changed and 171 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image A' (#102 pins): segment H3 of the walk of check_reject_clean_starved (row CR-H3, h-w6u-rep's
    subagent CrsX3H3). Closing lemma crs_seg_H3 : the kit's crs_from_H3 (A' +1004 = 0x8254c .. +1092 = 0x825a4 = X3),
    from fuzz_alloc_count's text (HT_fuzz_alloc_count), the kit's transport record (HK : CrsKeep) and the continuation
@@ -16,15 +17,15 @@
    the call: the bytes by CrsSeg_X3.x3_bytes_keep, the shadow by the kit's kp_home_sh at the reader's home moved by
    kp_home_move (the home is below alloc_ceiling: h3_home_ceil).
    THE HAND-STEP KIT (section d below, the h_ and hw_ lemmas) is restated from lane CrsX1H1's lib/A/Prog/CrsSeg_H1.v
-   (cold/h-w6u-rep-p102-CR-X1 1c8cfa6aba13, :74-178, :191-381, :391-439), itself after lane CnoA102fA's
-   lib/A/Prog/Cno102A_FA.v cfa_step and the cfa_hs_ steps (cold/h-rw-pre-5-cno102a-f 574c27759c8).
+   (74-178, :191-381, :391-439), itself after lane CnoA102fA's
+   lib/A/Prog/Cno102A_FA.v cfa_step and the cfa_hs_ steps.
    rule 24: proves function check_reject_clean_starved (reuse search: `proof-index check_reject_clean_starved 0x82160`, the internal file
    index-crcs-Aprime.out, and an internal record of that lookup; CONFIRM by checker LookupCheckCrcsAp. At that search origin/ossv/recipes had no lib/A or lib/B,
    its released rows were lib/Prog (plain) and lib/U/Prog (ubsan) only, and no released asan Proof.v existed for check_reject_clean_starved).
-   INPUTS: pin A' asan sha256 1be0f53d96cb9d6c (harness.yaml of release/fuzz-preset-ran-out-pins 8f3e7e1a07f1);
+   INPUTS: pin A' asan sha256 1be0f53d96cb9d6c (harness.yaml);
    listing lib/A/Listing_prog.v + lib/A/PAImg_prog.v (listings v3 of kit v2); the texts tfuzz_alloc_count_specX
-   (lib/A/PRH_FnAlloc.v) and tcheck_reject_clean_starved_specX (lib/A/PRH_FnCheck.v blob 0d50b048d570, kit
-   8f227302a137, then f97c8b2f046b by path in kit v4); kit lib/A/Prog/CrsKitAp.v v4 (kit commit 3adfdcc651aa:
+   (lib/A/PRH_FnAlloc.v) and tcheck_reject_clean_starved_specX (lib/A/PRH_FnCheck.v blob 0d50b048d570, kit,
+   then by path in kit v4); kit lib/A/Prog/CrsKitAp.v v4 (kit:
    the ledger carries g_most and g_own_ran_out; crs_from_* conclude crs_post; fpre's frm_zero is
    supplied at fuzz_alloc_count's call by CrsSeg_X3.x3_call from crs_baseR).
    THE WORLD RELATION. Every boundary of H3 is after a free or a realloc: the kit's crs_from_H3 / crs_from_X3 take

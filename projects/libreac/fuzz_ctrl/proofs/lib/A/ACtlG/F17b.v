@@ -7,27 +7,27 @@
    output reuse-F17b.txt): glue_seg_F17b: 0 named, 0 by address,
    0 related, 0 released, the delivered package 0; declared only on this branch (a working branch). seg_F17b: 0 released, the delivered package 0;
    its hits are the stage hypothesis (ACtl.v) and source lemma (Seg/F17.v, image B twin) this file builds on.  Written new.
-   At ossv/recipes c5e779efe8c (2026-10-31), glue_seg_F17b and seg_F17b are defined only in this unit (glue_seg_F17b
-   in this file; seg_F17b at the stage hypotheses lib/A/ACtl.v:803 and lib/B/ACtl.v:580, the source lemmas lib/A/Prog/Seg/F17.v:1383 and
-   lib/B/Prog/Seg/F17b.v:706, and image B's lib/B/ACtlW4d.v:811).
+   At (2026-10-31), glue_seg_F17b and seg_F17b are defined only in this unit (glue_seg_F17b
+   in this file; seg_F17b at the stage hypotheses lib/A/ACtl.v:803 and lib/B/ACtl.v:581, the source lemmas lib/A/Prog/Seg/F17.v:1384 and
+   lib/B/Prog/Seg/F17b.v:707, and image B's lib/B/ACtlW4d.v:812).
 
    WHAT IT PROVES
      glue_seg_F17b : forall POST (j : nat),
        CF POST (ix_cut C_A823e8_at [Z.of_nat j]) -> CF POST (ix_cut C_A822a0_at [Z.of_nat j])
    with ACtl.v's own CF notation (SK := A.AE2k.tfib_sink_head, FP := []), i.e. exactly ACtl.v's seg_F17b.  The ENTRY
    is C_A822a0_at at turn j, the EXIT C_A823e8_at at the same turn.  Segment F17b is the opens_record body
-   0x822a0 -> 0x823e8 of a Theorem Labs lane's v1.9 proof (Seg/F17.v seg_F17b :1383-2001 at db985828094, blob 2530d1eeed7 (the blob this tree had at release c5e779efe8c)):
+   0x822a0 -> 0x823e8 of a Theorem Labs lane's v1.9 proof (Seg/F17.v seg_F17b :1383-2001, blob 2530d1eeed7 (the blob this tree had at release)):
    the length / sum guard, nine instrumented record-byte checks, and, when they all pass, the copy of the first
    fragment's body into the frame object first.sroa.7 by `jal __asan_memcpy` (0x823d4) and the two spill stores
    [A+104] = 1, [A+112] = gg[26]; every arm leaves through the join `ld s9,176(s1)` to 0x823e8.
 
-   THE RUN.  lib/A/Prog/Seg/F17bFs.v (this lane, on a working branch since c8dd30be050): since the route (C)
+   THE RUN.  lib/A/Prog/Seg/F17bFs.v (this lane, on a working branch): since the route (C)
    switch, PF.seg_F17b_run_F_on, the route (C) twin of PF.seg_F17b_run_F (the footprint extraction of seg_F17b's
    inline run; the tail composed from a Theorem Labs lane's F17F.v stretches and PF.f17_mc_F_on), whose callee premise
    asan_memcpy_contract_F_on is discharged here by a Theorem Labs lane's proved closed
    A.Prog.asan_memcpyF_on.asan_memcpy_holds_F_on (the same route as before with the region form: a Theorem Labs lane's
    split-rule correction, 04:39Z via a Theorem Labs lane: a LIFTED callee's contract_F premise is discharged by its proved closed
-   theorem, no split, the run consumed whole).  So Seg/F17.v:486's plain Hypothesis HMC is used by nothing and NO callee
+   theorem, no split, the run consumed whole).  So Seg/F17.v:487's plain Hypothesis HMC is used by nothing and NO callee
    hypothesis stays open.  F17bFs.v's source tie seg_F17b_src (`type of @F17.seg_F17b`) is the pin of the extraction
    (of seg_F17b_run_F, whose script seg_F17b_run_F_on repeats with the call's region premise).
 
@@ -75,7 +75,7 @@
    are Required by their full logical path and cited as lib.Reusable.<X> (core) or through the module alias CK
    (porter 04:24Z / 04:33Z).  Measured closure and frame-route blobs: commit message.
 
-   BUILD STATE: type-check only, WITH WORKSPACE STAND-INS (gbuild.sh (internal path) on a build machine, FACTS ed6b6b7b0ab +
+   BUILD STATE: type-check only, WITH WORKSPACE STAND-INS (gbuild.sh (internal path) on a build machine, FACTS +
    PAU pau-libreac-v190; the planning core's port_core_refused_<hex> names patched to numerals in the workspace
    only; of the stand-in files this file's closure reaches lib/A/AE2k.v alone, through ACtlCut) - provisional. *)
 

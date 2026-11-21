@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the transparent-huge-page flag ms_thp of mstate: enframe_post's continuation and the INV1/INV2 invariants of enframe_ok keep it). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -125,6 +126,7 @@ Section Enframe.
       let A' := slot_set A ma i (SLive off nn) (lupd (a_live A) (p0 + 16 * off) (Some nn)) in
       WF A' -> Rep A' (ms_mem s') ->
       WIN s' -> ms_vm s' = ms_vm s -> ms_lo s' = ms_lo s -> ms_hi s' = ms_hi s ->
+      ms_thp s' = ms_thp s ->
       rodata_clear (ms_mem s') ->
       (forall a : word, bv_unsigned a < p0 - 3 \/ e <= bv_unsigned a -> ms_mem s' a = ms_mem s a) ->
       (* [comment removed for export] *)
@@ -251,6 +253,7 @@ Section Enframe.
     replace (Mb + S * i + 16) with p0 by llia.
     set (INV1 := fun (s1 : mstate) =>
       Rep A (ms_mem s1) /\ WIN s1 /\ ms_vm s1 = ms_vm s /\ ms_lo s1 = ms_lo s /\ ms_hi s1 = ms_hi s /\
+      ms_thp s1 = ms_thp s /\
       rodata_clear (ms_mem s1) /\
       (forall a : word, bv_unsigned a < p0 - 3 \/ e <= bv_unsigned a -> ms_mem s1 a = ms_mem s a) /\
       (forall a : word, Pp <= bv_unsigned a < Pp + nn -> ms_mem s1 a = ms_mem s a) /\
@@ -261,6 +264,7 @@ Section Enframe.
       - apply Z.eqb_eq in EO. cbn. split; [f_equal; apply f_equal; unfold Pp; llia|].
         subst INV1. cbn beta.
         split; [exact HR|]. split; [exact HWIN|]. split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].
+        split; [reflexivity|].
         split; [exact HRO|]. split; [intros; reflexivity|]. split; [intros; reflexivity|]. intros HO. llia.
       - apply Z.eqb_neq in EO.
         assert (HPp16 : p0 + 16 <= Pp) by (unfold Pp; llia).
@@ -284,6 +288,7 @@ Section Enframe.
         pose proof (dom_addr A HW (p0 - 4) ltac:(apply Hspan; llia)) as Hlo4.
         pose proof (dom_addr A HW e ltac:(apply Hspan; llia)) as Hhie. ceil.
         split; [exact HR3|]. split; [apply WIN_upd; exact HWIN|]. split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].
+        split; [reflexivity|].
         pose proof (grp_heap A ma mt aib slots HW Hma Hr) as Hheap. unfold gext_lo, gext_hi in Hheap. fold Mb S in Hheap.
         split.
         { apply rodata_clear_wbytes; [| llia | rewrite Hlen3; cbn [Z.of_nat]; llia | rewrite Hlen3; cbn [Z.of_nat]; llia].
@@ -314,7 +319,7 @@ Section Enframe.
         + replace (Pp - 4) with (Pp - 4 + 0) at 2 by llia. rewrite mbyte_store_in by (cbn [Z.of_nat]; llia).
           rewrite byte_of_0. reflexivity. }
     intros r s1 (-> & HI1).
-    destruct HI1 as (HR1 & HWIN1 & Hvm1 & Hlo1 & Hhi1 & HRO1 & Hfr1 & Hpay1 & Hhdr1).
+    destruct HI1 as (HR1 & HWIN1 & Hvm1 & Hlo1 & Hhi1 & Hthp1 & HRO1 & Hfr1 & Hpay1 & Hhdr1).
     cbv iota beta.
     pose proof (grp_heap A ma mt aib slots HW Hma Hr) as Hheap. unfold gext_lo, gext_hi in Hheap. fold Mb S in Hheap.
     ceil.
@@ -350,6 +355,7 @@ Section Enframe.
     (* [comment removed for export] *)
     set (INV2 := fun (s2 : mstate) =>
       Rep A (ms_mem s2) /\ WIN s2 /\ ms_vm s2 = ms_vm s /\ ms_lo s2 = ms_lo s /\ ms_hi s2 = ms_hi s /\
+      ms_thp s2 = ms_thp s /\
       rodata_clear (ms_mem s2) /\
       (forall a : word, bv_unsigned a < p0 - 3 \/ e <= bv_unsigned a -> ms_mem s2 a = ms_mem s a) /\
       (forall a : word, Pp <= bv_unsigned a < Pp + nn -> ms_mem s2 a = ms_mem s a) /\
@@ -390,6 +396,7 @@ Section Enframe.
               INV2 (upd s1 m2 (ms_vm s1))).
     { intros m2 HRm2 HROm2 Hmb2 Hfr2 Hz2 Hf2. subst INV2. cbn beta. cbn [ms_mem ms_vm ms_lo ms_hi upd].
       split; [exact HRm2|]. split; [apply WIN_upd; exact HWIN1|]. split; [exact Hvm1|]. split; [exact Hlo1|]. split; [exact Hhi1|].
+      split; [exact Hthp1|].
       split; [exact HROm2|].
       split. { intros a Ha. rewrite Hfr2 by llia. rewrite Hm3fr by llia. apply Hfr1. exact Ha. }
       split. { intros a Ha. rewrite Hfr2 by llia. rewrite Hm3fr by llia. apply Hpay1. exact Ha. }
@@ -438,10 +445,10 @@ Section Enframe.
                replace (e - 5) with (e - 5 + 0) at 2 by llia. rewrite mbyte_store_in by (cbn [Z.of_nat]; llia). rewrite byte_of_0. reflexivity.
             -- intros kk Hkk. rewrite mbyte_store_in by (cbn [Z.of_nat Pos.to_nat]; llia). rewrite uZ by llia. reflexivity. }
     intros cw s2 (-> & HI2).
-    destruct HI2 as (HRb & HWINb & Hvmb & Hlob & Hhib & HROb & Hfrb & Hpayb & Hhdrb & Hbi & Hbo0 & Hbo1 & Hbz & Hbf).
+    destruct HI2 as (HRb & HWINb & Hvmb & Hlob & Hhib & Hthpb & HROb & Hfrb & Hpayb & Hhdrb & Hbi & Hbo0 & Hbo1 & Hbz & Hbf).
     eapply (enframe_tail A s s2 ma mt aib slots i nn S Mb p0 e OFF Pp RSV OFU (Z.min RSV 5));
       try eassumption; try reflexivity; try llia.
-    intros s' W' R' WIN' V' L' H' RO' FR' PAY'. apply (HK OFF s'); auto.
+    intros s' W' R' WIN' V' L' H' T' RO' FR' PAY'. apply (HK OFF s'); auto.
   Qed.
 End Enframe.
 

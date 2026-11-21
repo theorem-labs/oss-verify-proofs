@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/A/AZ03.v and lib/Halts_tfib.v for fuzz_grant: the plain side is fuzz_grant's proved realization (built as its lib/Prog/AgreeGrant.v and lib/AgreeFrame.v build it, at grant_shape), the halting corollary takes srealizes, module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_grant/lib/A/AsanTop.v, with its module paths changed; 20 of its 44 lines of code are new or changed and 90 lines of the source are left out. *)
 (* Modified by Theorem Labs: the twin of lib/FrameProof.v frame_plain_holds (no licence line) for a return value of the fuzz target of 0 or -1 *)
-(* Donor: reac-repacer/fuzz_lock, proofs/reac-repacer/fuzz_lock/lib/FrameProof.v at 901d1549395.
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Donor: reac-repacer/fuzz_lock, proofs/reac-repacer/fuzz_lock/lib/FrameProof.v.
    Module: OSSVerify.Proofs.reac_repacer.fuzz_lock.lib.Prog.FrameRetOk. *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Trevor Hansen, 2026-11: module names. *)
+(* Modified by Theorem Labs, 2026-11: ported toward LPS 727298f3 by the change of the same file of cgif/cgif_rgb_fuzzer, its addresses relocated to this unit's binaries, and the three-part node_ok of YK15. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Classical_Prop.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -84,7 +85,7 @@ Lemma fo_progress : forall c (I : Type) (evs : I -> list event) (nx : I -> confi
   node_ok segs c I evs nx ->
   exists e st, sstep_cfg segs forced_only_cfg c e st.
 Proof.
-  intros c I evs nx i0 [Hcomp Hsound].
+  intros c I evs nx i0 [Hcomp [Hsound _]].
   pose proof (Hcomp i0) as Hss.
   assert (NOERR : forall e, ~ sstep segs c e SError).
   { intros e He. destruct (Hsound e SError He) as (i & _ & Hbad). discriminate Hbad. }
@@ -93,6 +94,9 @@ Proof.
   - eexists _, _. eapply sstep_cfg_instr; eassumption.
   - eexists _, _. eapply sstep_cfg_instr_fault; eassumption.
   - eexists _, _. eapply sstep_cfg_instr_unmodeled; eassumption.
+  - eexists _, _. eapply sstep_cfg_vdso_call; eassumption.
+  - eexists _, _. eapply sstep_cfg_vdso_materialization_fault; eassumption.
+  - eexists _, _. eapply sstep_cfg_vdso_unmodeled; eassumption.
   - destruct (classic (spurious_refusal_cfg forced_only_cfg (sys_input segs ms x8) model eff)) as [Hsp | Hns].
     + destruct Hsp as (_ & _ & eff' & m' & evs' & Hspec' & Hnr').
       assert (Hns' : ~ spurious_refusal_cfg forced_only_cfg (sys_input segs ms x8) model eff').
@@ -121,10 +125,10 @@ Lemma fo_node : forall c (I : Type) (evs : I -> list event) (nx : I -> config) (
   fo_exits c (t_alt (fun i => t_emit (evs i) (T i))).
 Proof.
   intros c I evs nx T i0 dead Hnode Hdead Hlive Hne S HS Hrun.
-  destruct Hnode as [Hcomp Hsound].
+  pose proof Hnode as Hnode0. destruct Hnode as [Hcomp [Hsound _]].
   apply must_exit_in_at_cfg_running.
   - exact Hrun.
-  - exact (fo_progress c I evs nx i0 (conj Hcomp Hsound)).
+  - exact (fo_progress c I evs nx i0 Hnode0).
   - intros e Hss. apply sstep_cfg_sub in Hss. destruct (Hsound e SError Hss) as (i & _ & Hbad). discriminate Hbad.
   - intros e c' Hss.
     pose proof (sstep_cfg_sub _ _ _ _ _ Hss) as Hss'.
@@ -193,6 +197,7 @@ Proof.
   intros ms model x8 c' Hsvc Hoff Hex Hsvc' Href e Hstep.
   inversion Hstep; subst.
   - (* [comment removed for export] *) congruence.
+  - congruence.
   - (* [comment removed for export] *)
     match goal with
     | [ H : ~ spurious_refusal_cfg _ _ _ ?eff, H8 : ms_svc_pending ms = Some ?y |- _ ] =>
@@ -236,6 +241,14 @@ Proof. intros ms x8 model r H. unfold refusal_b. rewrite in_sysno_sys_input, H. 
 Lemma refusal_b_mprotect : forall ms x8 model r,
   bv_unsigned x8 = 226%Z ->
   refusal_b (sys_input segs ms x8) model r = ret_in_errnos mprotect_errnos r.
+Proof. intros ms x8 model r H. unfold refusal_b. rewrite in_sysno_sys_input, H. reflexivity. Qed.
+(* 08b1429: munmap (215) is in the injected allocation family ([Run.injected_table]). *)
+Lemma injected_family_off_munmap : forall ms x8,
+  bv_unsigned x8 = 215%Z -> injected_family_off forced_only_cfg (sys_input segs ms x8) = true.
+Proof. intros ms x8 H. unfold injected_family_off. rewrite in_sysno_sys_input, H. reflexivity. Qed.
+Lemma refusal_b_munmap : forall ms x8 model r,
+  bv_unsigned x8 = 215%Z ->
+  refusal_b (sys_input segs ms x8) model r = ret_in_errnos munmap_errnos r.
 Proof. intros ms x8 model r H. unfold refusal_b. rewrite in_sysno_sys_input, H. reflexivity. Qed.
 
 Lemma ret_in_errnos_errno : forall es e, In e es -> ret_in_errnos es (errno_ret e) = true.

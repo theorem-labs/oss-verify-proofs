@@ -10,7 +10,7 @@ Built from utf8proc (commit `0075ed7d`).
 ## At a glance
 | harness | what it does | checks beyond "does not crash" | statements |
 |---|---|---|---|
-| [utf8proc_fuzzer](utf8proc_fuzzer/) | Iterates codepoints of the NUL-terminated input calling case/category/width/grapheme-break queries, then NFD/NFC/NFKD/NFKC/NFKC_Casefold and five utf8proc_map option sets; every return value is ignored. | none | 15 |
+| [utf8proc_fuzzer](utf8proc_fuzzer/) | Takes only an input of 1 byte to 64 KiB ending in NUL and iterates its codepoints up to the first NUL with utf8proc_iterate, stopping at a result <= 0 and otherwise advancing by it, calling case/category/width/validity/grapheme-break queries on each; then, for an input under 4 bytes when malloc succeeds, six utf8proc_normalize_utf32 calls on 0 codepoints; then NFD/NFC/NFKD/NFKC/NFKC_Casefold and five utf8proc_map option sets. It drops the queries', normalize_utf32's and utf8proc_map's results, and only frees the NFD-to-Casefold results and the map outputs. | none | 15 |
 
 Not included: **api-driver** (held from this release).
 

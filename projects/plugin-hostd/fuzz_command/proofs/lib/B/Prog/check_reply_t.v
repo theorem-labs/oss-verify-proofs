@@ -1,13 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: ported from this harness's lib/A/Prog/check_reply_t.v (the ASan walk, a working branch 91059853ab1) to the ASan+UBSan build fuzz_command.asan-ubsan (lib/B, entry 0x86e64): B's addresses; astr_argA's read-only arm in lib/B/Prog/CmdRep.v's form (range_addressable and shadow_hull_vis, from the allocator record's zero-shadow ranges and const shadow cells by computation: lit_addr_okb, lit_hull_okb; lib/B has no CmdChk.v); the words' facts carry `ww mod 8 = 0`. *)
-(* Modified by Theorem Labs, 2026-10: onto a working branch 917ca7ac6b1: astr_argA's read-only arm in that CmdRep.v's form (lib/B/Prog/CmdChk.v's cmd_addr_b and cmd_hull_b, and the string's end in lib/B/Prog/CmdRo.v's cmd_ro_ends), so cr_ro_arg asks those three checks, each by computation for "resp 0". *)
-(* Modified by Theorem Labs, 2026-10: onto a working branch f490061c104: the record facts are the kit's at IMG (CmdRecCells' cmd_rec_cells, CmdRecImg's cmd_prog_unowned, cmd_rom_view_on and cmd_heap_tail_vis), so this file's copies (rt_rom_view_of_aro, atail_vis_of_block, and the shadow checks shb / lit_addr_okb / lit_hull_okb with cr_lit_addressable / cr_lit_hull, now CmdRecBase's cmd_byte / cmd_addressable_chk / cmd_hull_vis_chk) are gone. *)
+(* Modified by Theorem Labs, 2026-10: ported from this harness's lib/A/Prog/check_reply_t.v (the ASan walk, a working branch) to the ASan+UBSan build fuzz_command.asan-ubsan (lib/B, entry 0x86e64): B's addresses; astr_argA's read-only arm in lib/B/Prog/CmdRep.v's form (range_addressable and shadow_hull_vis, from the allocator record's zero-shadow ranges and const shadow cells by computation: lit_addr_okb, lit_hull_okb; lib/B has no CmdChk.v); the words' facts carry `ww mod 8 = 0`. *)
+(* Modified by Theorem Labs, 2026-10: onto a working branch: astr_argA's read-only arm in that CmdRep.v's form (lib/B/Prog/CmdChk.v's cmd_addr_b and cmd_hull_b, and the string's end in lib/B/Prog/CmdRo.v's cmd_ro_ends), so cr_ro_arg asks those three checks, each by computation for "resp 0". *)
+(* Modified by Theorem Labs, 2026-10: onto a working branch: the record facts are the kit's at IMG (CmdRecCells' cmd_rec_cells, CmdRecImg's cmd_prog_unowned, cmd_rom_view_on and cmd_heap_tail_vis), so this file's copies (rt_rom_view_of_aro, atail_vis_of_block, and the shadow checks shb / lit_addr_okb / lit_hull_okb with cr_lit_addressable / cr_lit_hull, now CmdRecBase's cmd_byte / cmd_addressable_chk / cmd_hull_vis_chk) are gone. *)
 (* Modified by Theorem Labs, 2026-10: the facts a segment of check_reply's walk (fuzz_command.asan-ubsan, 0x86e64) reads at
    a mid-walk state, carried from the entry bundle `cr_cx` and the mid-walk invariant `cr_mid` of
    lib/B/Prog/check_reply_m.v, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v
-   (c8557374ad2e: the facts a cgif_close segment reads at a call, from the entry facts and the journal).
+   (the facts a cgif_close segment reads at a call, from the entry facts and the journal).
 
    The journal of cr_mid has the footprint [], so it keeps: every byte above the entry's sp (the harness's words
    w->w and w->n), every byte of a block live at the entry and now (the reply, the answer, the recorded strings and
@@ -16,6 +16,7 @@
    invariant AR at the current state gives the shadow of the stack window, of g_rec and of the literals, the
    runtime's cells, and the bytes after a block's last byte up to the end of its 8-byte word (CmdRecImg's
    cmd_heap_tail_vis); the runtime's read-only view is CmdRecImg's cmd_rom_view_on. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

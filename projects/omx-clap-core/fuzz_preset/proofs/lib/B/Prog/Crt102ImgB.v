@@ -3,15 +3,16 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN1k.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/Reusable/YN1k.v, with its module paths and module names changed; 305 of its 371 lines of code are new or changed and 439 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, file Crt102ImgB: the B' IMAGE FACTS of check_round_trip on the
    harness-fix #102 pins, section 6 of lib/A/Prog/Crt102Img.v: what the B listing and prh_img_B decide, and Section b
    over {PA : PAImg B_prog_listing} with the hypotheses HB_base / HB_entry / HB_segs / HB_relro / HB_hi (each closed
    at PI_prog_B by lib/B/Prog/CrtImgB102.v), and crt_offs_AB.
 
-   MOVED, NOT WRITTEN: everything below CRT_STAMP_OFF_B is lib/A/Prog/Crt102Img.v lines 693-1082 (blob 64be5eda3b56 at
-   commit 1cbd49de8e51) byte for byte, except the bodies of CRT_MOD_AT_B / CRT_STAMP_B, which read the B' twins
+   MOVED, NOT WRITTEN: everything below CRT_STAMP_OFF_B is lib/A/Prog/Crt102Img.v lines 694-1083 (blob 64be5eda3b56)
+   byte for byte, except the bodies of CRT_MOD_AT_B / CRT_STAMP_B, which read the B' twins
    CRT_MOD_AT_OFF_B / CRT_STAMP_OFF_B where they read Crt102Img.v's CRT_MOD_AT_OFF / CRT_STAMP_OFF. It was split out so
-   that no A-tree file Requires lib.B (the shipping pool's shadow audit of the push head ab9f645e60d6; the unit owner's
+   that no A-tree file Requires lib.B (the shipping pool's shadow audit of the push head; the unit owner's
    06:40Z ruling: split, no allow rows). The two twins follow the file's own pattern, a _B twin for every B' offset
    also where its value equals A's (CRT_E_OFF_B = CRT_E_OFF = 0); without them the moved text read two asan address
    constants of Crt102Img.v (shadow audit REF; the unit owner's 08:24Z ruling: B' twins read off the B listing).
@@ -23,7 +24,7 @@
    there.
    NUMERALS: CRT_MOD_AT_OFF_B 0x110c0 / CRT_STAMP_OFF_B 0x11380 are DERIVED (the B listing's PAddHi payloads, below).
    - rule 24: as Crt102Img.v (no function proved); nothing here is new text but the two twins.
-   - build route pins102: the internal file zfb-targets.85055e6079bccb28.sh, FACTS 8f3e7e1a07f1, PAU the #102 pin set
+   - build route pins102: the internal file zfb-targets.85055e6079bccb28.sh, FACTS, PAU the #102 pin set
      (pau-preset-102). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -48,16 +49,16 @@ Open Scope Z_scope.
 
 (* ---- the B' twins of Crt102Img.v's CRT_MOD_AT_OFF / CRT_STAMP_OFF: the two strings' offsets from pa_val (A_OBJ 2),
    read off the B listing. They are its PAddHi payloads at the five string sites, and no other line of it carries
-   them: lib/B/Listing_prog.v:1274 (STAMP1, 0x11380), :1283 (MODAT1, 0x110c0), :1440 (MODAT2, 0x110c0), :1596 (MODAT3,
+   them: lib/B/Listing_prog.v:1275 (STAMP1, 0x11380), :1283 (MODAT1, 0x110c0), :1440 (MODAT2, 0x110c0), :1596 (MODAT3,
    0x110c0), :1633 (STAMP2, 0x11380); crt_str_lst_B below checks all five. the internal file crt.B.s agrees: its five auipc / addi pairs
-   compute 0x21380 / 0x210c0 / 0x210c0 / 0x210c0 / 0x21380, and B_prog_val (A_OBJ 2) is 0x10000 (B/PAImg_prog.v:193). *)
+   compute 0x21380 / 0x210c0 / 0x210c0 / 0x210c0 / 0x21380, and B_prog_val (A_OBJ 2) is 0x10000 (B/PAImg_prog.v:194). *)
 Definition CRT_MOD_AT_OFF_B : Z := 0x110c0.
 Definition CRT_STAMP_OFF_B : Z := 0x11380.
 
 (* ======================================================================================================== *)
 (* 6. image B': everything the B listing and prh_img_B decide, PA-free                                       *)
 
-(* the function's slot in B_prog_listing: (0x82828 - B_prog_base) / 4 (the internal file crt.B.s line 1; B/Listing_prog.v:12) *)
+(* the function's slot in B_prog_listing: (0x82828 - B_prog_base) / 4 (the internal file crt.B.s line 1; B/Listing_prog.v:13) *)
 Definition CRT_SLOT_B : nat := 1111.
 Definition CRT_PC_B : Z := 4 * Z.of_nat CRT_SLOT_B.
 Definition CRT_E_OFF_B : Z := 0x0.  (* 0x82828: prologue: addi sp,sp,-0xe0; 13 saves; s0 = sp0; andi sp,sp,-0x20; GOT loads; flag test *)
@@ -364,15 +365,15 @@ Section b. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {PA : PAImg B_prog_li
 #[local] Notation AT o := (BASE + (CRT_PC_B + o)).
 (* B' value: pa_val A_TEXT = B_prog_val A_TEXT = B_prog_base (0x816cc), as A's PAImg_prog.v:381 / :404 *)
 Hypothesis HB_base : BASE = B_prog_base.
-(* B' value: pa_sigma AS_check_round_trip = B_prog_sigma AS_check_round_trip = 0x82828 (B/PAImg_prog.v:28; the internal file crt.B.s
+(* B' value: pa_sigma AS_check_round_trip = B_prog_sigma AS_check_round_trip = 0x82828 (B/PAImg_prog.v:29; the internal file crt.B.s
    line 1) = B_prog_base + 0x115c; crt_pc_hdr_B is the listing's own word for it *)
 Hypothesis HB_entry : SIGMA AS_check_round_trip = B_prog_base + CRT_PC_B.
 (* B' value: pa_segs = rsegs of lib/B/Img0.v (images.AsanUbsan), as A's PAImg_prog.v:404 *)
 Hypothesis HB_segs : SEGS = B.Img0.rsegs.
-(* B' value: relro [0xa2240, 0xa4000) (B/PAImg_prog.v:162-163); prh_img_B's statics are 0x5ddd80 .. 0x5dde08,
+(* B' value: relro [0xa2240, 0xa4000) (B/PAImg_prog.v:163-164); prh_img_B's statics are 0x5ddd80 .. 0x5dde08,
    0xa6e00 and 0xa6e20, outside it *)
 Hypothesis HB_relro : forall a, Exists (in_zr a) PST -> ~ (RLO <= a < RHI).
-(* B' value: pa_hi = IMG_TOP_B = 0x601000 (B/PAImg_prog.v:407; lib/Reusable/YImgTop.v:23) *)
+(* B' value: pa_hi = IMG_TOP_B = 0x601000 (B/PAImg_prog.v:408; lib/Reusable/YImgTop.v:23) *)
 Hypothesis HB_hi : @pa_hi _ B_prog_listing PA <= 2 ^ 31.
 
 Lemma crt_pc_B : BASE + CRT_PC_B = SIGMA AS_check_round_trip.

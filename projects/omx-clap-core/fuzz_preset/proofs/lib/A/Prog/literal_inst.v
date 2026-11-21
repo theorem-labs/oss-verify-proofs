@@ -1,18 +1,19 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Theorem Labs, 2026-10: fuzz_preset literal, image A' (#102 asan pin 1be0f53d96cb, unstripped twin bff8519bbe3e; facts
-   8f3e7e1a07f1): literal_bridge.literal_holds (lib/A/Prog/literal_bridge.v) at the image instance. No new walk.
-   #102: relocated from the old-pin instance (origin/cold/h-verbs-1-lit-bridgeb 34b0f96319c6, pin d83eb25dbf0d) by the
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10: fuzz_preset literal, image A' (#102 asan pin 1be0f53d96cb, unstripped twin bff8519bbe3e; facts):
+   literal_bridge.literal_holds (lib/A/Prog/literal_bridge.v) at the image instance. No new walk.
+   #102: relocated from the old-pin instance (pin d83eb25dbf0d) by the
    alreloc of record c4338d099cfb8025 (moved: one comment numeral below, by a resolve line; the row is in the commit).
-   The instance: B := AD2l.TfibB (image A's generated record, lib/A/AD2l.v eb321db7a357 at this tree's base
-   origin/cold/h-verbs-1-leaves102 6240a87c3eb7), ARx := YG0ncf.ARcf (cp := CfParams_preset) rsegs TfibB (h-mani-a8's
+   The instance: B := AD2l.TfibB (image A's generated record, lib/A/AD2l.v eb321db7a357 at this tree's base),
+   ARx := YG0ncf.ARcf (cp := CfParams_preset) rsegs TfibB (h-mani-a8's
    second allocator instance), HL := cf_head CfParams_preset. The instance facts are h-rw-man-5's lib/A/PALibA.v (blob
-   88c72c8175cf, = origin/cold/h-rw-man-5-palib102i d00dd1234426's, the A' twin; at the base): LAWS :=
+   88c72c8175cf, = a commit's, the A' twin; at the base): LAWS :=
    PALibA.palib_laws_A, PAL := PALibA.palib_A, each closed there (palib_A field by field by vm_compute at the A' record
    and the #102 listing PI_prog_A; palib_laws_A by YG0lawscf.AR_laws_ok_cf). These are the INSTANCE WITNESSES of the two
    image-fact premises of literal_holds (LAWS, PAL); no other image fact is a premise.
    READ-ONLY MEMORY (2026-10-29): no instance premise. literal_holds no longer takes pal_rom_ok (in_rom a -> a in no
-   as_owned_static range and not an errno byte), which 68059ec877b proved FALSE on the old pin; at A' too as_owned_static
+   as_owned_static range and not an errno byte), which proved FALSE on the old pin; at A' too as_owned_static
    TfibB (lib/A/AF0m.v Tfib_owned_static) has rows inside the read-only segment [65536, 200704), e.g. (66280, 8) and
    (118373, 21). The leaf takes the fpre conjunct arodata_okP (owned-static and errno bytes excluded) as it is
    (lib/Prog/literal_xs.v).

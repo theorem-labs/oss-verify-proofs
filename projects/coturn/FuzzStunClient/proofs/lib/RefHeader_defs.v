@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the stack window is LPS 727298f3's 6144513 bytes, was 8388608. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State.
@@ -61,7 +62,7 @@ Definition SECv : expr := EVar 42.
 (* [comment removed for export] *)
 Definition kn_Hstack : list kentry :=
   [KAlign (EVar 0) 16; KRange (EVar 0) 0x7fff80000000 0x800000000000;
-   KWr (SA (EVar 0) (-8388608)) 8388608;
+   KWr (SA (EVar 0) (-6144513)) 6144513;   (* LPS 08b1429: RefReadBase.stack_writable's window *)
    KWord (SA (EVar 0) (-56)) 8 (ELit 0x1b594);
    KWord (SA (EVar 0) (-64)) 8 (spx 8); KWord (SA (EVar 0) (-72)) 8 (ELit 2);
    KWord (SA (EVar 0) (-80)) 8 (ELit 0x139e0); KWord (SA (EVar 0) (-88)) 8 (spx 32);

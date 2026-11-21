@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (rauxv_ok over any auxv pair list whose AT_RANDOM pairs point at the secret, as jsoncons/fuzz_json_cursor's CJ/Pm10/RMallocTree.v states it, in place of the fixed ten-pair auxv_list; rauxv_ok_weaken and rauxv_ok_frame for it). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -313,19 +314,26 @@ Qed.
 (* [comment removed for export] *)
 
 
+(* LPS 08b1429: the auxv mallocng's [__malloc_init] reads, for any layout: [L] is the list
+   of pairs before AT_NULL; every AT_RANDOM (25) pair points at [rnd], whose bytes
+   [rnd+8, rnd+16) hold the secret (jsoncons/fuzz_json_cursor's CJ/Pm10/RMallocTree.v).
+   [av + 160 <= 2^64]: the vector lies on the entry stack, far below the top of memory
+   (the parse loop's frame bounds read it). *)
 Definition rauxv_ok (m : mem) (B : Z) : Prop :=
-  exists av x3 x4 x5 x16 x6 x11 x12 x23 rnd,
+  exists av (L : list (Z * Z)) rnd,
     rw_cells rsegs m RAUXV_CELL [C8 (wz av)]
-    /\ bytes_at rsegs m av (u64s (auxv_list x3 x4 x5 x16 x6 x11 x12 x23 rnd))
+    /\ bytes_at rsegs m av (u64s (map wz (flat_pairs L ++ [0; 0])))
     /\ bytes_at rsegs m (rnd + 8) (le8 (wz rc_secret))
-    /\ alloc_ceiling <= B /\ B <= av /\ av + 160 <= 2^64 /\ B <= rnd + 8 /\ rnd + 16 <= 2^64
-    /\ 0 <= x3 < 2^64 /\ 0 <= x4 < 2^64 /\ 0 <= x5 < 2^64 /\ 0 <= x16 < 2^64 /\ 0 <= x6 < 2^64
-    /\ 0 <= x11 < 2^64 /\ 0 <= x12 < 2^64 /\ 0 <= x23 < 2^64 /\ 0 <= rnd < 2^64.
+    /\ (alloc_ceiling <= B /\ B <= av /\ av + 16 * (Z.of_nat (length L) + 1) <= 2^64 /\ B <= rnd + 8
+        /\ rnd + 16 <= 2^64 /\ 0 <= rnd < 2^64 /\ av + 160 <= 2^64)
+    /\ Forall (fun p => fst p <> 0) L /\ last_assoc 25 L = Some rnd
+    /\ Forall (fun p => fst p = 25 -> snd p = rnd) L
+    /\ Forall (fun p => 0 <= fst p < 2^64 /\ 0 <= snd p < 2^64) L.
 
 Lemma rauxv_ok_weaken : forall m B B', rauxv_ok m B -> alloc_ceiling <= B' <= B -> rauxv_ok m B'.
 Proof.
-  intros m B B' (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & H) HB.
-  exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. repeat (split; [tauto|]). lia.
+  intros m B B' (av & L & rnd & C & A1 & A2 & HB & HL) HB'.
+  exists av, L, rnd. split; [exact C|]. split; [exact A1|]. split; [exact A2|]. split; [lia| exact HL].
 Qed.
 
 Lemma rauxv_ok_frame : forall m m' B W,
@@ -333,8 +341,8 @@ Lemma rauxv_ok_frame : forall m m' B W,
   Forall (fun iv : Z * Z => snd iv <= B /\ (snd iv <= RAUXV_CELL \/ RAUXV_CELL + 8 <= fst iv)) W ->
   rauxv_ok m' B.
 Proof.
-  intros m m' B W (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & C & A1 & A2 & H) MU WM FW.
-  exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. split; [|split; [|split; [|exact H]]].
+  intros m m' B W (av & vs & rnd & C & A1 & A2 & H & HL) MU WM FW.
+  exists av, vs, rnd. split; [|split; [|split; [|exact (conj H HL)]]].
   - eapply rw_cells_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [_ ?]. lia.
   - eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [? _]. lia.
   - eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [? _]. lia.

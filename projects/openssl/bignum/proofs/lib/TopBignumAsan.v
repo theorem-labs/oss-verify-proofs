@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the CONFIG_RSEQ flag and the new auxv layout). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit FinInput Classifier.
@@ -63,8 +64,16 @@ Section Debt.
     exact (main_rta rta_contracts_all rta_io (LIBA RTA) INIT FUZZ (liba_frameA RTA) (liba_exitA RTA) argv fs Hva c HS).
   Qed.
 
+  (* The two kernel fields the ASan start-up witness reads (the auxv's cache words and
+     AT_MINSIGSTKSZ) come from the model's own per-field accessors, Run.valid_input_cache_words
+     and Run.valid_input_min_sigframe_size.  rseq, aslr, guard, rnd_bits and thp are NOT read
+     as fixed values. *)
   Lemma side_asan : side_canon_off ncfg Tc imgA target_alloc_limit.
-  Proof. intros en inp He Hi. exact (target_canon_A_main main_asan en inp He Hi). Qed.
+  Proof.
+    intros en inp He Hi.
+    exact (target_canon_A_main main_asan en inp He Hi
+             (valid_input_cache_words inp Hi) (valid_input_min_sigframe_size inp (in_hwcap inp) Hi)).
+  Qed.
 
   Theorem base_bignum_asan :
     strong_universal_error_free_T_scfg_budgets (mkSpuriousCfg false true true true true true)

@@ -3,13 +3,14 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntrySweepS1), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v. *)
 (* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/Prog/GrantEntrySweepS1.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment 1 of the sweep phase of fuzz_grant's entry function on IMAGE B:
    0x81804 .. 0x8181c — `mv a0,s11` and free(sweep) at 0x81808, then the four spill
    slots the code reads back (the table, the input cursor, the address of `ch` and the
    bytes of input left), which is the state 0x8181c asks for. The ground this walk
    stands on is LLVMFEntrySweepS1c.v.
 
-   Adapted from lib/A/Prog/GrantEntrySweepS1.v (a working branch afd75724b5b, blob
+   Adapted from lib/A/Prog/GrantEntrySweepS1.v (a working branch, blob
    fcdbb2eff, 391 lines), which carries no licence header of its own.
    Image B hands the buffer to free from the
    callee-saved register s11, where image A reloads it from spill slot 64, and reads

@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgDcsvBody.v at 693242f63d54 for image B (fuzz_rate.asan-ubsan): image B's pcs, cells, registers and block boundaries against lib/AU/RtPgDcsvDefsB.v; the B-only steps (s4 := ~tmp, a2 from s9, the two pointer-overflow trap branches 0x84508 and 0x84520, decided by the engine from atom range facts) added to blocks C1, C2 and C3. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgDcsvBody.v for image B (fuzz_rate.asan-ubsan): image B's pcs, cells, registers and block boundaries against lib/AU/RtPgDcsvDefsB.v; the B-only steps (s4 := ~tmp, a2 from s9, the two pointer-overflow trap branches 0x84508 and 0x84520, decided by the engine from atom range facts) added to blocks C1, C2 and C3. *)
 (* reac-pw/fuzz_rate image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14; every address below is measured on its
    unstripped twin sha256 a1e5fa55ae27e657ea2719297ec4c037110f10fa9047c3ea7bb6ea7fcb358cb1, whose loaded bytes are

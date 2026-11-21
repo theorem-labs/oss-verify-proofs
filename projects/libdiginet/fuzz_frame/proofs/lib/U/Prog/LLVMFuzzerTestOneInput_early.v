@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/Prog/LLVMFuzzerTestOneInput_early.v, with its module paths, addresses and numbers changed; 13 of its 121 lines of code are new or changed and 9 lines of the source are left out. *)
-(* ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Prog/LLVMFuzzerTestOneInput_early.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_frame: the return at once of an input of 2 ^ 26 bytes or more, fuzz_frame.plain 0x12c84-0x12ca0 (frame of 176 bytes, ra, s0, s1, s2 saved; srli a1, a1, 0x1a; bnez) then 0x12e84-0x12e9c (a0 = 0, the saved registers back, ret); module path OSSVerify.Proofs.libdiginet.fuzz_frame.lib. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Prog/LLVMFuzzerTestOneInput_early.v for libdiginet/fuzz_frame: the return at once of an input of 2 ^ 26 bytes or more, fuzz_frame.plain 0x12c84-0x12ca0 (frame of 176 bytes, ra, s0, s1, s2 saved; srli a1, a1, 0x1a; bnez) then 0x12e84-0x12e9c (a0 = 0, the saved registers back, ret); module path OSSVerify.Proofs.libdiginet.fuzz_frame.lib. *)
 (* the UBSan twin for fuzz_frame.ubsan, the return at once at 0x12d48-0x12d64 then 0x12fdc-0x12ff4, with the modules of lib/U. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

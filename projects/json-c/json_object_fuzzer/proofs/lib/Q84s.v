@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: json_tokener_new_A_cps takes it after alloc_ceiling <= lo, and its tok_reset_level_B_cps call discharges it). *)
 
 From Stdlib Require ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -87,7 +88,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 (A : ASA A4L HIx) (LB LM : list blk) (FRS : list frame) (B : bud) (lo : Z) (errv : word) (u : uwd),
 HEAPAx A LB LM FRS B m md ->
 uw_at (hiA_top A4L HIx) m (bv_unsigned sp) (bv_unsigned s0) u -> uw_ok A4L (hl_calloc A4H) (Z_to_bv 64 0x92b10) u ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - put_stk_A - 96 ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - put_stk_A - 96 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
 tp = Z_to_bv 64 A_TP -> bv_unsigned ra mod 2 = 0 ->
@@ -99,7 +100,7 @@ AJ5 A4L HIx A T md
 (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 json_tokener_new_A_entry) fc None m (seg_rom asegs)).
 Proof.
-intros until u. intros HP UW UWK ST LO LOS SPA HT ERR TP RA A0 BB BD K. subst a0.
+intros until u. intros HP UW UWK ST LO HBT LOS SPA HT ERR TP RA A0 BB BD K. subst a0.
 unfold_consts. unfold toknew_costB, pbnew_costB in BB. unfold put_stk_A in LOS. unfold A_SB, A_TP, A_ERRNO, json_tokener_new_A_entry in *.
 word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
@@ -573,7 +574,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 (A : ASA A4L HIx) (LB LM : list blk) (FRS : list frame) (B : bud) (lo : Z) (errv : word) (u : uwd),
 HEAPAx A LB LM FRS B m md ->
 uw_at (hiA_top A4L HIx) m (bv_unsigned sp) (bv_unsigned s0) u -> uw_ok A4L (hl_calloc A4H) (Z_to_bv 64 0x932fc) u ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - put_stk_A - 128 ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - put_stk_A - 128 ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
 tp = Z_to_bv 64 A_TP -> bv_unsigned ra mod 2 = 0 ->
@@ -585,7 +586,7 @@ AJ5 A4L HIx A T md
 (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 json_tokener_new_A_entry) fc None m (seg_rom asegs)).
 Proof.
-intros until u. intros HP UW UWK ST LO LOS SPA HT ERR TP RA A0 BB BD K. subst a0.
+intros until u. intros HP UW UWK ST LO HBT LOS SPA HT ERR TP RA A0 BB BD K. subst a0.
 unfold_consts. unfold toknew_costB, pbnew_costB in BB. unfold put_stk_A in LOS. unfold A_SB, A_TP, A_ERRNO, json_tokener_new_A_entry in *.
 word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
@@ -843,7 +844,7 @@ eapply (tok_reset_level_B_cps HIx PUT) with (i := 0%nat) (l := lvl_zero) (levels
 | left; split; reflexivity
 | exact TSc
 | unfold tok_cells_g; cbn [ts_isd ts_stpos ts_choff ts_err ts_ucs ts_high ts_quote]; eassumption
-| rewrite unsigned_lit by lia; eassumption | exact LO | rewrite unsigned_lit by lia; unfold put_stk_A; lia
+| rewrite unsigned_lit by lia; eassumption | exact LO | first [assumption | lia] | rewrite unsigned_lit by lia; unfold put_stk_A; lia
 | rewrite unsigned_lit by lia; clear - SPA SPR; Z.div_mod_to_equations; lia
 | rewrite unsigned_lit by lia; lia
 | apply heap_pres_refl | eassumption

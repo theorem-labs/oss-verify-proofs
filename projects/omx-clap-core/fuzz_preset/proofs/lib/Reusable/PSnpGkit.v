@@ -1,7 +1,7 @@
 (* fm's snprintf glue, kit: the code table of the walks above printf_core, their run and return steps, dropping and
    adding a region of a symbolic state, and the frame bookkeeping of FMsnprintfI's snk_frame across runs and calls.
    New file. *)
-(* Modified by Theorem Labs, 2026-10: the image-free half of origin/cold/port-fm-rtprintf-param 7e395de08f5
+(* Modified by Theorem Labs, 2026-10: the image-free half of
    proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfGk.v for the chain restated over ARx (route (a), c-omx-hpreset
    10:51Z): the register / slot reads (:74-88) and the region kit (:91-119), with `tfibsegs` a Section variable segs
    (no image numeral). The code table and its run / return steps (:27-71) are image-bearing and live in

@@ -13,31 +13,32 @@
    and the walked stages proved so far, applied the same way over the Section hypotheses of
    lib/B/W_drain_cx.v (which therefore become pb_drain_of's own premises, those a stage uses):
      dr_feed   lib/B/W_drain_feed.v    FEED 0x836fc .. 0x8389c -> DRB (S k) / DE  (a Theorem Labs lane,
-                                       a working branch f02afb993d6)
+                                       a working branch)
      dr_pro    lib/B/W_drain_pro.v     PRO  0x83278 .. 0x833bc -> DI           (a Theorem Labs lane,
-                                       a working branch 814e1b83f19)
+                                       a working branch)
      dr_epi    lib/B/W_drain_epi.v     EPI  0x83fc8 .. 0x84000                 (a Theorem Labs lane,
-     dr_end    lib/B/W_drain_epi.v     END  0x83e94 .. 0x83fc4                  a working branch 1072b214260)
+     dr_end    lib/B/W_drain_epi.v     END  0x83e94 .. 0x83fc4                  a working branch)
      pb_dr_gs  lib/B/W_drain_gs_top.v  GS   0x83aa4 .. 0x83d98 -> DLN (S q)    (a Theorem Labs lane,
-                                       a working branch 63e7043187e)
+                                       a working branch)
      dr_next   lib/B/W_drain_next.v    NEXT 0x839d4 .. -> DLL p q / DLR p     (a Theorem Labs lane,
-     dr_rest   lib/B/W_drain_rest.v    REST 0x83e34 .. 0x83e90 -> DI          a working branch 6670c18e144)
+     dr_rest   lib/B/W_drain_rest.v    REST 0x83e34 .. 0x83e90 -> DI          a working branch)
      dr_linea  lib/B/W_drain_linea.v   LINEA 0x8399c .. 0x839f4 -> DLN (S q) / DLS (a Theorem Labs lane,
-     dr_lineb  lib/B/W_drain_lineb.v   DLS  0x839f4 .. 0x83aa0 -> DLN (S q) / DGS   a working branch
-                                       81eebc35a0b); dr_linea takes dr_lineb as its LINEB.  Both are Required, not
+     dr_lineb  lib/B/W_drain_lineb.v   DLS  0x839f4 .. 0x83aa0 -> DLN (S q) / DGS   a working branch);
+                                       dr_linea takes dr_lineb as its LINEB.  Both are Required, not
                                        Imported: dr_linea's W_drain_tr.v and the GS stage's W_drain_gs_aux.v define
                                        some of the same names, so their names are used qualified here.
      dr_toptail lib/B/W_drain_topb.v   TOP tail 0x83524 .. 0x836f8 -> DI (EINTR) / DEND / DRB 0 (a Theorem Labs lane,
-                                       a working branch 01c09263227); Required, not Imported.
+                                       a working branch); Required, not Imported.
      dr_drop   lib/B/W_drain_drop.v    DROP 0x838a0 .. 0x83998 -> DLL 0 q / DLR 0, list_drop called at 0x83914 through
-                                       W_list_drop.v pb_list_drop_ro_c (a Theorem Labs lane, a working branch
-                                       d76927ef99b); Required, not Imported.
+                                       W_list_drop.v pb_list_drop_ro_c (a Theorem Labs lane, a working branch);
+                                       Required, not Imported.
      TOP head, by dr_tophead_of from dt_nogrow and dt_grow (lib/B/W_drain_tophead.v; dt_grow is the growth arm,
                realloc #1, 0x833ec .. 0x83434) and dt_scan_of over dt_scan_entry / dt_scan_step
                (lib/B/W_drain_topscan.v, this lane's scan sub-walk), so TOP's head is proved in full.
    The walk owes nothing more: pb_drain_of has no statement premise (dr_sa_align, the entry address's
    8-alignment, is closed: the kit's dr_spec states it, W_drain_cx.v FINDING 1).
    Print Assumptions pb_drain_of: the engine's primitives and functional_extensionality_dep only. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

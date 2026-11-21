@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO premise Hvd of lept_fuzz_call and the mmap-base conjunct of its continuation). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -169,7 +170,7 @@ Hypothesis H_rb : forall w h cm, (1 <= w <= 20000)%Z -> (1 <= h <= 20000)%Z -> (
 Theorem lept_fuzz_call : @fuzz_call_contract AL CL ASR.
 Proof using H_rb H_rk H_stk H_oc RB_oc RK_oc OC_STACK P16 PINS.
   unfold fuzz_call_contract.
-  intros fx A m md regs dptr size pl ret sp0 argv envp S Hz Hinv Hpure Henv Ha0 Ha1 Hsz Hsz26 Hlive Hpl Hempty Hal16 Hra Hret H3 H4 Hsp16 Htop Hsp0 Hsp0hi Hisw Hwin Hsev Hpmm Hbc Hhdl Hgot kR bR Hrm Hrk Hrb K.
+  intros fx A m md regs dptr size pl ret sp0 argv envp S Hz Hinv Hpure Hvd Henv Ha0 Ha1 Hsz Hsz26 Hlive Hpl Hempty Hal16 Hra Hret H3 H4 Hsp16 Htop Hsp0 Hsp0hi Hisw Hwin Hsev Hpmm Hbc Hhdl Hgot kR bR Hrm Hrk Hrb K.
   destruct fx as [fr0 cs0].
   pose proof fuzz_calls_nonneg as FZc.
   pose proof (fuzz_margin_bound size ltac:(lia)) as FZm.
@@ -211,7 +212,7 @@ Proof using H_rb H_rk H_stk H_oc RB_oc RK_oc OC_STACK P16 PINS.
     - intros a _ _ _ _ NW. apply OUT1. lia.
     - intros q k i L Hi. apply OUT1. destruct (BLK q k i L Hi) as [_ X]. lia.
     - intros a Hx. right; right. exact (proj1 RI a Hx).
-    - reflexivity. - reflexivity. - reflexivity. - reflexivity.
+    - reflexivity. - reflexivity. - reflexivity. - reflexivity. - reflexivity.
     - apply (aroom_mono _ _ _ _ _ _ Hrm); lia. }
   apply (rz_reach _ _ md _ S Hpure (fz_big1 al_rom (mkFP fr0 cs0) regs m s size dp ltac:(lia) ltac:(lia) ltac:(lia) SOK H2 Ha0 Ha1)).
   intros fin (r1 & M1 & -> & RI1 & S8 & S16 & S24 & Q1 & Q2 & Q10 & Q8 & Q9 & AG1).
@@ -236,7 +237,8 @@ Proof using H_rb H_rk H_stk H_oc RB_oc RK_oc OC_STACK P16 PINS.
       all: destruct (Z_lt_ge_dec (u a) 1211496); [exfalso; apply NE; apply OUT2; lia|].
       all: destruct (Z_lt_ge_dec (u a) (1211496 + 8)); [right; unfold hcell; cbn; lia | exfalso; apply NE; apply OUT2; lia].
     - intros a Hx. exact (proj1 RI2 a (proj1 RI1 a Hx)).
-    - rewrite p16_segs. cbn [ll_hcell ll_devnull LLU16]. rewrite HD. unfold word_to_le_bytes. rewrite u_Z2bv by lia. reflexivity. }
+    - rewrite p16_segs. cbn [ll_hcell ll_devnull LLU16]. rewrite HD. unfold word_to_le_bytes. rewrite u_Z2bv by lia. reflexivity.
+    - exact Hvd. }
   assert (Ldp : live A (Z_to_bv 64 dp) = Some size) by (apply Hlive; lia).
   destruct (blk_range C A M2 md (Z_to_bv 64 dp) size CK HW1 Ldp ltac:(lia)) as [Gdp Tdp]. rewrite u_Z2bv in Gdp, Tdp by lia. rewrite ?Evm in Tdp.
   assert (PLD : O23LeptDeser.payload C dp pl).
@@ -256,6 +258,7 @@ Proof using H_rb H_rk H_stk H_oc RB_oc RK_oc OC_STACK P16 PINS.
     - destruct (w_vm _ _ _ _ HWf) as (V1 & V2 & V3 & V4). rewrite with_vmmaps_vmmaps in V2. exact V2.
     - destruct (w_vm _ _ _ _ HWf) as (V1 & V2 & V3 & V4). rewrite with_vmmaps_vmmaps in V3. exact V3.
     - destruct (w_vm _ _ _ _ HWf) as (V1 & V2 & V3 & V4). rewrite with_vmmaps_vmmaps in V4. exact V4.
+    - pose proof (w_mb _ _ _ _ HWf) as VM. rewrite with_vmmaps_vmmaps in VM. exact VM.
     - apply (aroom_mono _ _ _ _ _ _ HRf); lia. }
   assert (Q4 : getr r3 4 = Z_to_bv 64 1278416) by (csr; reflexivity).
   assert (RKd : (RK_deser <= kR)%Z) by lia.

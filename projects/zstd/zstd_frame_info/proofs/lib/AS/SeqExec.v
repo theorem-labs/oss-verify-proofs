@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (write's buffer access check: an access_okb premise on tw_write_ret; argv_ptr_bounds restated over the launch values, an entry_launch_ok_va premise replacing valid_argv, valid_envp and the argv_layout_slack bound, pointers measured from ed_top; argv_layout_slack and its four argv_*_arith helpers removed; #[using] attributes dropped from 58 lemmas). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -30,7 +31,7 @@ Definition v_jalr (x : word) (imm : Z) : word := Z_to_bv 64 (jalr_tgtZ x imm).
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma step_jal_link : forall segs regs pc mem rom w rd (imm : bv 21),
+Lemma step_jal_link : forall segs regs pc mem rom w rd (imm : bv 21),
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Jal rd imm, 4%Z) ->
   RiscvSemantics.step segs (mkst regs pc mem rom) =
@@ -45,7 +46,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma step_jalr : forall segs regs pc mem rom w rd rs1 (imm : bv 12),
+Lemma step_jalr : forall segs regs pc mem rom w rd rs1 (imm : bv 12),
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Jalr rd rs1 imm, 4%Z) ->
   RiscvSemantics.step segs (mkst regs pc mem rom) =
@@ -61,7 +62,7 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma step_sd_val : forall segs regs pc mem rom w (rs1 rs2 : reg) (imm : bv 12),
+Lemma step_sd_val : forall segs regs pc mem rom w (rs1 rs2 : reg) (imm : bv 12),
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Store SZ8 rs1 rs2 imm, 4%Z) ->
   RiscvSemantics.store_ok segs mem
@@ -82,7 +83,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma step_sd_at : forall segs regs pc mem rom w (rs1 rs2 : reg) (imm : bv 12) (a v : word),
+Lemma step_sd_at : forall segs regs pc mem rom w (rs1 rs2 : reg) (imm : bv 12) (a v : word),
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Store SZ8 rs1 rs2 imm, 4%Z) ->
   v_addi (getr regs rs1) (bv_signed imm) = a ->
@@ -98,7 +99,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma step_addi_at : forall segs regs pc mem rom w rd rs (imm : bv 12) v,
+Lemma step_addi_at : forall segs regs pc mem rom w rd rs (imm : bv 12) v,
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (OpImm ALU_ADD rd rs imm, 4%Z) ->
   bv_eqb rd 0 = false ->
@@ -112,7 +113,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma step_add_at : forall segs regs pc mem rom w rd rs1 rs2 v,
+Lemma step_add_at : forall segs regs pc mem rom w rd rs1 rs2 v,
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Op ALU_ADD rd rs1 rs2, 4%Z) ->
   bv_eqb rd 0 = false ->
@@ -125,7 +126,7 @@ Proof.
   rewrite Hrd, Hv. reflexivity.
 Qed.
 
-#[using="Type"] Lemma step_sub_at : forall segs regs pc mem rom w rd rs1 rs2 v,
+Lemma step_sub_at : forall segs regs pc mem rom w rd rs1 rs2 v,
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Op ALU_SUB rd rs1 rs2, 4%Z) ->
   bv_eqb rd 0 = false ->
@@ -138,7 +139,7 @@ Proof.
   rewrite Hrd, Hv. reflexivity.
 Qed.
 
-#[using="Type"] Lemma step_lui_at : forall segs regs pc mem rom w rd (imm : bv 20) v,
+Lemma step_lui_at : forall segs regs pc mem rom w rd (imm : bv 20) v,
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Lui rd imm, 4%Z) ->
   bv_eqb rd 0 = false ->
@@ -151,7 +152,7 @@ Proof.
   rewrite Hrd, Hv. reflexivity.
 Qed.
 
-#[using="Type"] Lemma step_auipc_at : forall segs regs pc mem rom w rd (imm : bv 20) v,
+Lemma step_auipc_at : forall segs regs pc mem rom w rd (imm : bv 20) v,
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Auipc rd imm, 4%Z) ->
   bv_eqb rd 0 = false ->
@@ -164,7 +165,7 @@ Proof.
   rewrite Hrd, Hv. reflexivity.
 Qed.
 
-#[using="Type"] Lemma step_addiw_at : forall segs regs pc mem rom w rd rs (imm : bv 12) v,
+Lemma step_addiw_at : forall segs regs pc mem rom w rd rs (imm : bv 12) v,
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (OpImm32 rd rs imm, 4%Z) ->
   bv_eqb rd 0 = false ->
@@ -177,7 +178,7 @@ Proof.
   rewrite Hrd, Hv. reflexivity.
 Qed.
 
-#[using="Type"] Lemma step_sltiu_at : forall segs regs pc mem rom w rd rs (imm : bv 12) v,
+Lemma step_sltiu_at : forall segs regs pc mem rom w rd rs (imm : bv 12) v,
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (OpImm ALU_SLTU rd rs imm, 4%Z) ->
   bv_eqb rd 0 = false ->
@@ -190,7 +191,7 @@ Proof.
   rewrite Hrd, Hv. reflexivity.
 Qed.
 
-#[using="Type"] Lemma step_xori_at : forall segs regs pc mem rom w rd rs (imm : bv 12) v,
+Lemma step_xori_at : forall segs regs pc mem rom w rd rs (imm : bv 12) v,
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (OpImm ALU_XOR rd rs imm, 4%Z) ->
   bv_eqb rd 0 = false ->
@@ -203,7 +204,7 @@ Proof.
   rewrite Hrd, Hv. reflexivity.
 Qed.
 
-#[using="Type"] Lemma step_mul_at : forall segs regs pc mem rom w rd rs1 rs2 v,
+Lemma step_mul_at : forall segs regs pc mem rom w rd rs1 rs2 v,
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Mul M_MUL rd rs1 rs2, 4%Z) ->
   bv_eqb rd 0 = false ->
@@ -216,7 +217,7 @@ Proof.
   rewrite Hrd, Hv. reflexivity.
 Qed.
 
-#[using="Type"] Lemma step_andi_at : forall segs regs pc mem rom w rd rs (imm : bv 12) v,
+Lemma step_andi_at : forall segs regs pc mem rom w rd rs (imm : bv 12) v,
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (OpImm ALU_AND rd rs imm, 4%Z) ->
   bv_eqb rd 0 = false ->
@@ -229,7 +230,7 @@ Proof.
   rewrite Hrd, Hv. reflexivity.
 Qed.
 
-#[using="Type"] Lemma step_ori_at : forall segs regs pc mem rom w rd rs (imm : bv 12) v,
+Lemma step_ori_at : forall segs regs pc mem rom w rd rs (imm : bv 12) v,
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (OpImm ALU_OR rd rs imm, 4%Z) ->
   bv_eqb rd 0 = false ->
@@ -242,7 +243,7 @@ Proof.
   rewrite Hrd, Hv. reflexivity.
 Qed.
 
-#[using="Type"] Lemma step_slli_at : forall segs regs pc mem rom w rd rs (sh : bv 6) v,
+Lemma step_slli_at : forall segs regs pc mem rom w rd rs (sh : bv 6) v,
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (ShiftImm ALU_SLL rd rs sh, 4%Z) ->
   bv_eqb rd 0 = false ->
@@ -255,7 +256,7 @@ Proof.
   rewrite Hrd, Hv. reflexivity.
 Qed.
 
-#[using="Type"] Lemma step_srli_at : forall segs regs pc mem rom w rd rs (sh : bv 6) v,
+Lemma step_srli_at : forall segs regs pc mem rom w rd rs (sh : bv 6) v,
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (ShiftImm ALU_SRL rd rs sh, 4%Z) ->
   bv_eqb rd 0 = false ->
@@ -268,7 +269,7 @@ Proof.
   rewrite Hrd, Hv. reflexivity.
 Qed.
 
-#[using="Type"] Lemma step_srai_at : forall segs regs pc mem rom w rd rs (sh : bv 6) v,
+Lemma step_srai_at : forall segs regs pc mem rom w rd rs (sh : bv 6) v,
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (ShiftImm ALU_SRA rd rs sh, 4%Z) ->
   bv_eqb rd 0 = false ->
@@ -286,7 +287,7 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma rdn_wbytes_hit : forall segs bs m (a : word),
+Lemma rdn_wbytes_hit : forall segs bs m (a : word),
   (bv_unsigned a + Z.of_nat (length bs) <= 2^64)%Z ->
   rdn segs (wbytes m a bs) a (length bs) = Some bs.
 Proof.
@@ -311,7 +312,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma rdn_wbytes_hit8 : forall segs m (a v : word),
+Lemma rdn_wbytes_hit8 : forall segs m (a v : word),
   (bv_unsigned a + 8 <= 2^64)%Z ->
   rdn segs (wbytes m a (word_to_le_bytes 8 v)) a 8%nat = Some (word_to_le_bytes 8 v).
 Proof.
@@ -321,7 +322,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma bytes_le_to_Z_8 : forall v : word,
+Lemma bytes_le_to_Z_8 : forall v : word,
   bytes_le_to_Z (word_to_le_bytes 8 v) = bv_unsigned v.
 Proof.
   intro v. rewrite bytes_le_N.
@@ -334,11 +335,11 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma c_ltu_ltb : forall x y : word,
+Lemma c_ltu_ltb : forall x y : word,
   c_ltu x y = (bv_unsigned x <? bv_unsigned y)%Z.
 Proof. reflexivity. Qed.
 
-#[using="Type"] Lemma v_addiw_small : forall (x : word) imm,
+Lemma v_addiw_small : forall (x : word) imm,
   (0 <= bv_unsigned x + imm)%Z -> (bv_unsigned x + imm < 2^31)%Z -> (0 <= imm)%Z ->
   bv_unsigned (v_addiw x imm) = (bv_unsigned x + imm)%Z.
 Proof.
@@ -349,7 +350,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma v_addiw_id : forall x : word, (bv_unsigned x < 2^31)%Z -> v_addiw x 0 = x.
+Lemma v_addiw_id : forall x : word, (bv_unsigned x < 2^31)%Z -> v_addiw x 0 = x.
 Proof.
   intros x Hx. apply bv_eq.
   rewrite (v_addiw_small x 0); [lia | pose proof (u64_range x); lia .. ].
@@ -358,7 +359,7 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma land_255_small : forall c : word, (bv_unsigned c < 256)%Z ->
+Lemma land_255_small : forall c : word, (bv_unsigned c < 256)%Z ->
   bv_and c (Z_to_bv 64 255) = c.
 Proof.
   intros c Hc. apply bv_eq.
@@ -374,13 +375,15 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma tw_write_ret : forall segs regs pc mem rom buf bufs code,
+Lemma tw_write_ret : forall segs regs pc mem rom buf bufs code,
   bv_unsigned (getr regs 17) = 64%Z ->
   reg_get regs 10 = Z_to_bv 64 1 ->
   ms_read_bytes {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc;
                    ms_svc_pending := Some (getr regs 17); ms_resv := None; ms_fcsr := fp_csr;
                    ms_mem := mem; ms_rom := rom |}
     (reg_get regs 11) (reg_get regs 12) = Some buf ->
+  (* [comment removed for export] *)
+  access_okb (reg_get regs 11) (bv_unsigned (reg_get regs 12)) = true ->
   (1 <= length buf)%nat ->
   (forall n, (1 <= n)%nat -> (n <= length buf)%nat ->
      to_wexit segs (mkst (regupd regs 10 (len_word (firstn n buf)))
@@ -390,18 +393,19 @@ Qed.
                    ms_mem := mem; ms_rom := rom |}
     (buf :: bufs) code.
 Proof.
-  intros segs regs pc mem rom buf bufs code H17 H10 Hr Hnb Hcont.
+  intros segs regs pc mem rom buf bufs code H17 H10 Hr Hok Hnb Hcont.
   eapply tw_write.
   - cbn [ms_svc_pending]. reflexivity.
   - exact H17.
   - unfold ms_gpr. cbn [ms_regs]. rewrite arg_reg_0. exact H10.
   - unfold ms_gpr. cbn [ms_regs]. rewrite arg_reg_1, arg_reg_2. exact Hr.
+  - unfold ms_gpr. cbn [ms_regs]. rewrite arg_reg_1, arg_reg_2. exact Hok.
   - exact Hnb.
   - intros n Hn1 Hn2. rewrite adv_set. apply Hcont; assumption.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma tw_exit_coden : forall segs regs pc mem rom (c : word),
+Lemma tw_exit_coden : forall segs regs pc mem rom (c : word),
   bv_unsigned (getr regs 17) = 93%Z ->
   reg_get regs 10 = c -> (bv_unsigned c < 256)%Z ->
   to_wexit segs {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc;
@@ -426,74 +430,40 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-Definition argv_layout_slack : Z := 4300000%Z.
-
-(* [comment removed for export] *)
-
-#[using="Type"] Local Lemma argv_struct_arith : forall a e : Z,
-  (0 <= a)%Z -> (a <= 1024)%Z -> (0 <= e)%Z -> (e <= 256)%Z ->
-  (8 + (a + 1) * 8 + (e + 1) * 8 + 160 <= 10424)%Z.
-Proof. intros. lia. Qed.
-
-#[using="Type"] Local Lemma argv_sum_arith : forall a b : Z,
-  (a <= 10424)%Z -> (b <= 2097152)%Z -> (a + b <= 2107576)%Z.
-Proof. intros. lia. Qed.
-
-#[using="Type"] Local Lemma argv_mod_arith : forall s m : Z,
-  (0 <= s)%Z -> (0 <= m)%Z -> (m <= 2107576)%Z -> (s + 4300000 < 2^64)%Z ->
-  (0 <= s + m < 2^64)%Z.
-Proof. intros. lia. Qed.
-
-#[using="Type"] Local Lemma argv_final_arith : forall s m l : Z,
-  (0 <= m)%Z -> (0 <= l)%Z -> (m <= 2107576)%Z -> (l <= 131071)%Z ->
-  (s + 4300000 < 2^64)%Z ->
-  (s <= s + m)%Z /\ (s + m + l + 1 < 2^64)%Z.
-Proof. intros. lia. Qed.
-
-#[using="Type"] Lemma argv_ptr_bounds : forall (sp : word) av ev k,
-  valid_argv av -> valid_envp ev -> (k < length av)%nat ->
-  (bv_unsigned sp + argv_layout_slack < 2^64)%Z ->
-  (bv_unsigned sp <= bv_unsigned (cat_argv_ptr sp av ev k))%Z /\
-  (bv_unsigned (cat_argv_ptr sp av ev k) + Z.of_nat (length (nth k av [])) + 1 < 2^64)%Z.
+Lemma argv_ptr_bounds : forall v inp mbase (sp brk : word) draw k,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  (k < length (in_argv inp))%nat ->
+  (bv_unsigned sp
+   <= bv_unsigned (cat_argv_ptr (ed_top draw) (in_argv inp) (in_envp inp)
+                     (in_execfn inp) k))%Z
+  /\ (bv_unsigned (cat_argv_ptr (ed_top draw) (in_argv inp) (in_envp inp)
+                     (in_execfn inp) k)
+      + Z.of_nat (length (nth k (in_argv inp) [])) + 1 < 2 ^ 64)%Z.
 Proof.
-  intros sp av ev k Hva Hve Hk Hsp.
-  pose proof (valid_argv_len av Hva) as HavZ.
-  pose proof (valid_argv_str_len av k Hva Hk) as HnthZ.
-  destruct Hva as [Hlen [Htot [Hstr Hnz]]].
-  destruct Hve as [Helen _].
-  assert (HevZ : (Z.of_nat (length ev) <= 256)%Z) by exact Helen.
-  assert (HtotZ : (Z.of_nat (total_arg_bytes_nat (firstn k av)) <= 2097152)%Z).
-  { rewrite total_arg_bytes_Z in Htot.
-    pose proof (total_arg_bytes_firstn_le k av). lia. }
-  assert (HA : (Z.of_nat (cat_struct_size av ev) <= 10424)%Z).
-  { unfold cat_struct_size, auxv_size.
-    repeat (rewrite !Nat2Z.inj_add || rewrite !Nat2Z.inj_mul).
-    change (Z.of_nat 8) with 8%Z. change (Z.of_nat 1) with 1%Z.
-    change (Z.of_nat 160) with 160%Z.
-    apply argv_struct_arith;
-      solve [ exact HavZ | exact HevZ | apply Nat2Z.is_nonneg ]. }
-  assert (Hptr : cat_argv_ptr sp av ev k
-    = sp + nat_to_word (cat_struct_size av ev + total_arg_bytes_nat (firstn k av))).
-  { rewrite (cat_argv_ptr_offset sp av ev k Hk). unfold cat_string_base.
-    rewrite nat_to_word_add_merge. reflexivity. }
-  set (n := (cat_struct_size av ev + total_arg_bytes_nat (firstn k av))%nat) in *.
-  assert (HnZ : (Z.of_nat n <= 2107576)%Z)
-    by (unfold n; rewrite Nat2Z.inj_add; exact (argv_sum_arith _ _ HA HtotZ)).
-  assert (Hu : bv_unsigned (sp + nat_to_word n) = (bv_unsigned sp + Z.of_nat n)%Z).
-  { unfold nat_to_word. rewrite bv_add_unsigned, Z_to_bv_unsigned.
-    rewrite bv_wrap_add_idemp_r, bv_wrap64_mod.
-    apply Z.mod_small.
-    pose proof (u64_range sp) as Hu64.
-    unfold argv_layout_slack in Hsp.
-    exact (argv_mod_arith _ _ (proj1 Hu64) (Nat2Z.is_nonneg n) HnZ Hsp). }
-  rewrite Hptr, Hu.
-  unfold argv_layout_slack in Hsp.
-  exact (argv_final_arith _ _ _ (Nat2Z.is_nonneg n)
-           (Nat2Z.is_nonneg (length (nth k av []))) HnZ HnthZ Hsp).
+  intros v inp mbase sp brk draw k Hlaunch Hk.
+  pose proof (launch_string_base_arith v inp mbase sp brk draw Hlaunch) as HA.
+  pose proof (u_cat_string_base v inp mbase sp brk draw Hlaunch) as Hu.
+  pose proof (u64_range sp). pose proof (u64_range (ed_top draw)).
+  pose proof (Nat2Z.is_nonneg
+    (block_head_size (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp))).
+  pose proof (Nat2Z.is_nonneg
+    (total_arg_bytes_nat (firstn k (in_argv inp)))).
+  assert (Hstr : (Z.of_nat (total_arg_bytes_nat (firstn k (in_argv inp)))
+                  + Z.of_nat (length (nth k (in_argv inp) [])) + 1
+                  <= Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp)
+                                 (in_execfn inp)))%Z).
+  { pose proof (total_arg_bytes_firstn_within (in_argv inp) k Hk) as Hw.
+    unfold launch_string_bytes. rewrite length_flatten_strings.
+    pose proof (Nat2Z.is_nonneg (length (flatten_strings (in_envp inp)))).
+    pose proof (Nat2Z.is_nonneg (length (in_execfn inp))).
+    lia. }
+  rewrite (cat_argv_ptr_offset _ _ _ _ k Hk), word_add_nat_Z2bv, Hu.
+  rewrite u_Z2bv_lt by lia.
+  split; lia.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma step_jalr_x0 : forall segs regs pc mem rom w rs1 (imm : bv 12) tgt,
+Lemma step_jalr_x0 : forall segs regs pc mem rom w rs1 (imm : bv 12) tgt,
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Jalr 0 rs1 imm, 4%Z) ->
   getr regs rs1 = tgt ->
@@ -506,7 +476,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma step_jalr_link : forall segs regs pc mem rom w rd rs1 (imm : bv 12) tgt,
+Lemma step_jalr_link : forall segs regs pc mem rom w rd rs1 (imm : bv 12) tgt,
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Jalr rd rs1 imm, 4%Z) ->
   bv_eqb rd 0 = false ->
@@ -523,7 +493,7 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma getr_zero : forall regs, getr regs 0 = Z_to_bv 64 0.
+Lemma getr_zero : forall regs, getr regs 0 = Z_to_bv 64 0.
 Proof. reflexivity. Qed.
 
 (* [comment removed for export] *)
@@ -575,7 +545,7 @@ Definition v_remu (x y : word) : word :=
   Z_to_bv 64 (bv_unsigned x mod bv_unsigned y).
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma m_divu : forall a b : word, (bv_unsigned b <> 0)%Z ->
+Lemma m_divu : forall a b : word, (bv_unsigned b <> 0)%Z ->
   mul_div M_DIVU a b = v_divu a b.
 Proof.
   intros a b Hb.
@@ -592,7 +562,7 @@ Proof.
   apply Z.div_le_upper_bound; nia.
 Qed.
 
-#[using="Type"] Lemma m_remu : forall a b : word, (bv_unsigned b <> 0)%Z ->
+Lemma m_remu : forall a b : word, (bv_unsigned b <> 0)%Z ->
   mul_div M_REMU a b = v_remu a b.
 Proof.
   intros a b Hb.
@@ -608,7 +578,7 @@ Proof.
   lia.
 Qed.
 
-#[using="Type"] Lemma step_divu : forall segs regs pc mem rom w rd rs1 rs2,
+Lemma step_divu : forall segs regs pc mem rom w rd rs1 rs2,
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Mul M_DIVU rd rs1 rs2, 4%Z) ->
   (bv_unsigned (getr regs rs2) <> 0)%Z ->
@@ -622,7 +592,7 @@ Proof.
   rewrite m_divu by exact Hnz. reflexivity.
 Qed.
 
-#[using="Type"] Lemma step_remu : forall segs regs pc mem rom w rd rs1 rs2,
+Lemma step_remu : forall segs regs pc mem rom w rd rs1 rs2,
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Mul M_REMU rd rs1 rs2, 4%Z) ->
   (bv_unsigned (getr regs rs2) <> 0)%Z ->
@@ -636,7 +606,7 @@ Proof.
   rewrite m_remu by exact Hnz. reflexivity.
 Qed.
 
-#[using="Type"] Lemma step_lw_zero : forall segs regs pc mem rom w rd rs (imm : bv 12),
+Lemma step_lw_zero : forall segs regs pc mem rom w rd rs (imm : bv 12),
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Load SZ4 true rd rs imm, 4%Z) ->
   bv_eqb rd 0 = false ->
@@ -659,7 +629,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma step_sb : forall segs regs pc mem rom w (rs1 rs2 : reg) (imm : bv 12),
+Lemma step_sb : forall segs regs pc mem rom w (rs1 rs2 : reg) (imm : bv 12),
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Store SZ1 rs1 rs2 imm, 4%Z) ->
   RiscvSemantics.store_ok segs mem
@@ -686,7 +656,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma step_sb256 : forall segs regs pc mem rom w (rs1 rs2 : reg) (imm : bv 12),
+Lemma step_sb256 : forall segs regs pc mem rom w (rs1 rs2 : reg) (imm : bv 12),
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Store SZ1 rs1 rs2 imm, 4%Z) ->
   RiscvSemantics.store_ok segs mem
@@ -698,12 +668,12 @@ Qed.
 Proof. exact step_sb. Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma N_to_le_bytes_1_small : forall v : word,
+Lemma N_to_le_bytes_1_small : forall v : word,
   word_to_le_bytes 1 v = [Z_to_bv 8 (bv_unsigned v)].
 Proof. reflexivity. Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma Zmod_pow2_div8 : forall z m, (8 <= m)%Z ->
+Lemma Zmod_pow2_div8 : forall z m, (8 <= m)%Z ->
   ((z mod 2^m) / 2^8)%Z = ((z / 2^8) mod 2^(m-8))%Z.
 Proof.
   intros z m Hm.
@@ -716,7 +686,7 @@ Proof.
   - rewrite !Z.mod_pow2_bits_high by lia. reflexivity.
 Qed.
 
-#[using="Type"] Lemma Z_to_le_bytes_wrap : forall n (m : N) z,
+Lemma Z_to_le_bytes_wrap : forall n (m : N) z,
   (8 * Z.of_nat n <= Z.of_N m)%Z ->
   Z_to_le_bytes n (bv_wrap m z) = Z_to_le_bytes n z.
 Proof.
@@ -733,7 +703,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma store_bytes_low16 : forall u : word,
+Lemma store_bytes_low16 : forall u : word,
   Z_to_le_bytes 2 (bv_unsigned (bv_extract 0 16 u)) = word_to_le_bytes 2 u.
 Proof.
   intro u. unfold word_to_le_bytes.
@@ -742,7 +712,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma store_bytes_low32 : forall u : word,
+Lemma store_bytes_low32 : forall u : word,
   Z_to_le_bytes 4 (bv_unsigned (low32 u)) = word_to_le_bytes 4 u.
 Proof.
   intro u. unfold low32, word_to_le_bytes.
@@ -751,7 +721,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma step_sw_val : forall segs regs pc mem rom w (rs1 rs2 : reg) (imm : bv 12),
+Lemma step_sw_val : forall segs regs pc mem rom w (rs1 rs2 : reg) (imm : bv 12),
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Store SZ4 rs1 rs2 imm, 4%Z) ->
   RiscvSemantics.store_ok segs mem
@@ -772,7 +742,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma step_sw_at : forall segs regs pc mem rom w (rs1 rs2 : reg) (imm : bv 12) (a v : word),
+Lemma step_sw_at : forall segs regs pc mem rom w (rs1 rs2 : reg) (imm : bv 12) (a v : word),
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Store SZ4 rs1 rs2 imm, 4%Z) ->
   v_addi (getr regs rs1) (bv_signed imm) = a ->
@@ -788,7 +758,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma step_sh_val : forall segs regs pc mem rom w (rs1 rs2 : reg) (imm : bv 12),
+Lemma step_sh_val : forall segs regs pc mem rom w (rs1 rs2 : reg) (imm : bv 12),
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Store SZ2 rs1 rs2 imm, 4%Z) ->
   RiscvSemantics.store_ok segs mem
@@ -809,7 +779,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma step_sh_at : forall segs regs pc mem rom w (rs1 rs2 : reg) (imm : bv 12) (a v : word),
+Lemma step_sh_at : forall segs regs pc mem rom w (rs1 rs2 : reg) (imm : bv 12) (a v : word),
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Store SZ2 rs1 rs2 imm, 4%Z) ->
   v_addi (getr regs rs1) (bv_signed imm) = a ->
@@ -827,7 +797,7 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma v_divu_small : forall x y : word, (0 < bv_unsigned y)%Z ->
+Lemma v_divu_small : forall x y : word, (0 < bv_unsigned y)%Z ->
   bv_unsigned (v_divu x y) = (bv_unsigned x / bv_unsigned y)%Z.
 Proof.
   intros x y Hy. unfold v_divu.
@@ -839,7 +809,7 @@ Proof.
   apply Z.div_le_upper_bound; nia.
 Qed.
 
-#[using="Type"] Lemma v_remu_small : forall x y : word, (0 < bv_unsigned y)%Z ->
+Lemma v_remu_small : forall x y : word, (0 < bv_unsigned y)%Z ->
   bv_unsigned (v_remu x y) = (bv_unsigned x mod bv_unsigned y)%Z.
 Proof.
   intros x y Hy. unfold v_remu.
@@ -850,7 +820,7 @@ Proof.
   lia.
 Qed.
 
-#[using="Type"] Lemma v_subw_small : forall x y : word,
+Lemma v_subw_small : forall x y : word,
   (bv_unsigned y <= bv_unsigned x)%Z ->
   (bv_unsigned x - bv_unsigned y < 2^31)%Z ->
   bv_unsigned (v_subw x y) = (bv_unsigned x - bv_unsigned y)%Z.
@@ -861,7 +831,7 @@ Proof.
   apply bv_wrap_small. change (bv_modulus 64) with (2^64)%Z. lia.
 Qed.
 
-#[using="Type"] Lemma land_d48 : forall d : Z, (0 <= d)%Z -> (d < 16)%Z -> Z.land d 48 = 0%Z.
+Lemma land_d48 : forall d : Z, (0 <= d)%Z -> (d < 16)%Z -> Z.land d 48 = 0%Z.
 Proof.
   intros d Hd0 Hd. apply Z.bits_inj'. intros i Hi.
   rewrite Z.land_spec, Z.bits_0.
@@ -871,7 +841,7 @@ Proof.
   - rewrite (Z_testbit_high 4 d i) by lia. reflexivity.
 Qed.
 
-#[using="Type"] Lemma lor_small_add : forall d : Z, (0 <= d)%Z -> (d < 16)%Z ->
+Lemma lor_small_add : forall d : Z, (0 <= d)%Z -> (d < 16)%Z ->
   Z.lor d 48 = (d + 48)%Z.
 Proof.
   intros d Hd0 Hd.
@@ -880,7 +850,7 @@ Proof.
   reflexivity.
 Qed.
 
-#[using="Type"] Lemma v_ori_lor : forall d : word, (bv_unsigned d < 16)%Z ->
+Lemma v_ori_lor : forall d : word, (bv_unsigned d < 16)%Z ->
   v_ori d 48 = Z_to_bv 64 (bv_unsigned d + 48).
 Proof.
   intros d Hd. unfold v_ori.
@@ -892,7 +862,7 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma rdn_app : forall segs mem n1 n2 (a : word) bs1 bs2,
+Lemma rdn_app : forall segs mem n1 n2 (a : word) bs1 bs2,
   rdn segs mem a n1 = Some bs1 ->
   rdn segs mem (a + nat_to_word n1) n2 = Some bs2 ->
   rdn segs mem a (n1 + n2)%nat = Some (bs1 ++ bs2).
@@ -912,7 +882,7 @@ Proof.
     exact H2.
 Qed.
 
-#[using="Type"] Lemma rdn_nth : forall segs mem n (a : word) bs j,
+Lemma rdn_nth : forall segs mem n (a : word) bs j,
   rdn segs mem a n = Some bs -> (j < n)%nat ->
   rdn segs mem (a + nat_to_word j) 1%nat = Some [nth j bs (Z_to_bv 8 0)].
 Proof.
@@ -931,12 +901,12 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma v_addi_m : forall (x : word) (k : Z),
+Lemma v_addi_m : forall (x : word) (k : Z),
   (k <= bv_unsigned x)%Z -> (0 < k)%Z ->
   v_addi x (- k) = Z_to_bv 64 (bv_unsigned x - k).
 Proof. intros x k _ _. reflexivity. Qed.
 
-#[using="Type"] Lemma rdn_skipn : forall segs mem n (a : word) bs k,
+Lemma rdn_skipn : forall segs mem n (a : word) bs k,
   rdn segs mem a n = Some bs -> (k <= n)%nat ->
   rdn segs mem (a + nat_to_word k) (n - k)%nat = Some (skipn k bs).
 Proof.
@@ -956,7 +926,7 @@ Proof.
       apply (IH (a+1) rest k Er). lia.
 Qed.
 
-#[using="Type"] Lemma rdn_firstn : forall segs mem n (a : word) bs k,
+Lemma rdn_firstn : forall segs mem n (a : word) bs k,
   rdn segs mem a n = Some bs -> (k <= n)%nat ->
   rdn segs mem a k = Some (firstn k bs).
 Proof.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's validity hypotheses; the SIGPIPE disposition). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -15,8 +16,10 @@ Open Scope Z_scope.
 
 Theorem xarg_sound_B : forall LINV : (word -> option byte) -> Prop, LINV_STMT_B LINV -> XARG_STMT_B LINV.
 Proof.
-  intros LINV [HL0 HLf] fx sp rdraw brk0 argv envp FS0 Hsp Hva Hve uid hw Hfit SV HSV HSf HSa.
+  intros LINV [HL0 HLf] fx sp rdraw brk0 argv envp FS0 apc mbase fs stdin gid groups net ur kern execfn nofile sigmask abt sdf Hsp Hva Hve uid hw Hfit Hkernel Hlau SV HSV HSf HSa.
   split.
-  - exact (both_ext_sound sp rdraw brk0 argv envp Hsp Hva Hve uid hw Hfit FS0 SV HSV HSf HSa LINV HLf).
-  - exact (both_emit_sound sp rdraw brk0 argv envp Hsp Hva Hve uid hw Hfit FS0 SV HSV HSf HSa LINV HLf).
+  (* LPS 727298f3: the section's argument list now takes [Hfit] (AsanNodesArgBoth.v:78); the
+     arguments are found by unification, every hypothesis is in context. *)
+  - eapply both_ext_sound; eassumption.
+  - eapply both_emit_sound; eassumption.
 Qed.

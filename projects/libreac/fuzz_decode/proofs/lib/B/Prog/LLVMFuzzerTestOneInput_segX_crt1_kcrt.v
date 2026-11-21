@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* LLVMFuzzerTestOneInput_segX_crt1_kcrt: the call of check_round_trip at +0x68c of image B's
    LLVMFuzzerTestOneInput segment crt1, then the run +0x690 .. +0x6bc up to the call of check_braid:
    c1k_crt proves lib/B/Prog/LLVMFuzzerTestOneInput_segX_crt1_defs.v c1_K_crt from c1_K_braid.
@@ -60,7 +61,7 @@ Local Ltac Lia.nia ::= Zify.zify; xnia zchecker.
 (* ---- the meter and the events of one check_round_trip call, in an empty context ---- *)
 
 (* This call's three allocations are at most the largest geometry the ladder charges
-   (LLVMFuzzerTestOneInput_cg.v:211-212 dec_crt_cost_max: 4 * 480, 8 * 127 and 3 * 480 bytes). *)
+   (LLVMFuzzerTestOneInput_cg.v:212-213 dec_crt_cost_max: 4 * 480, 8 * 127 and 3 * 480 bytes). *)
 Lemma c1k_cost_le : forall (MT : ameter_ops) (nch ns : Z),
   ameter_laws MT -> 0 < nch <= 127 -> 0 < ns -> nch * ns <= 480 ->
   dec_crt_cost MT nch ns <= dec_crt_cost_max MT.

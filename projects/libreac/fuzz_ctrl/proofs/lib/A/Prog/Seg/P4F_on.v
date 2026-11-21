@@ -5,12 +5,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths and module names changed; 371 of its 396 lines of code are new or changed and 3828 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v, with its addresses and numbers changed; 554 of its 653 lines of code are new or changed and 297 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P4.v; 138 of its 266 lines of code are new or changed and 525 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE. Image A = fuzz_ctrl.asan, libreac v1.9.0 (the binary of Seg/P4F.v's header). Route (C) twin of
    Seg/P4F.v (an earlier version, blob f0603ec57bb, not in this delivery) (UNCHANGED; this file only adds), written by a Theorem Labs lane (slice P4).
 
    Sources: Seg/P4F.v (an earlier version, blob f0603ec57bb, not in this delivery) (p4_evt_F, p4_evt_of_F, p4_evt_ro_F, p4_evt_ro_of_F and their scripts);
    a Theorem Labs lane's Seg/P4.v (an earlier version, blob 1a1be5f1321, not in this delivery) (p4_evt_shadow_R :89, p4_evt_on :91, p4_evt_ro_shadow_R :341,
-   p4_evt_ro_on :344); a Theorem Labs lane's lib/A/Prog/asan_memset_cF_on.v 6137e3c5f10 (the blob this tree had at release c5e779efe8c) (asan_memset_contract_F_on, proved
+   p4_evt_ro_on :344); a Theorem Labs lane's lib/A/Prog/asan_memset_cF_on.v 6137e3c5f10 (the blob this tree had at release) (asan_memset_contract_F_on, proved
    by asan_memsetF_on.v blob 34752af7b24 asan_memset_holds_F_on).
    rule 24: no function proved
 
@@ -44,7 +45,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Import ExecF StepF RngBy
 Import ListNotations.
 Open Scope Z_scope.
 
-(* ---- p4_evt_F (P4F.v:35) with the region premise: P4.p4_evt_on (P4.v:91) under a footprint RNG. ---- *)
+(* ---- p4_evt_F (P4F.v:36) with the region premise: P4.p4_evt_on (P4.v:91) under a footprint RNG. ---- *)
 Lemma p4_evt_F_on : asan_memset_contract_F_on ->
   forall (RNG : ExecF.footprint)
          (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
@@ -162,7 +163,7 @@ Proof.
   - apply sh_word_rng_all; unfold ASAN_MEMSET_K, HIGHMEM_BEG, APPMEM_END in *; lia.
 Qed.
 
-(* ---- p4_evt_ro_F (P4F.v:164) with the region premise: p4_evt_F_on on the normalized memory, moved back by
+(* ---- p4_evt_ro_F (P4F.v:165) with the region premise: p4_evt_F_on on the normalized memory, moved back by
    MemNormF.evtF_normalize_ro.  From here on `getr` is YK11's, as it is in P4.v from its second import block on. ---- *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Reusable Require YK11.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A Require Import MemNorm.

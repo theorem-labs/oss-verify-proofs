@@ -22,7 +22,8 @@
      cdealloc_regions_off_ush / rchunk_prim_regions_off_ush put them off U: application memory (stack, thread
      object, thread context, region info, free array, the chunk's extent, the image) and, for recycle_chunk, the
      shadow of the recycled chunk's user granules, which no live block meets. *)
-(* Modified by Theorem Labs, 2026-10: the image-B port (fuzz_state.asan-ubsan) of lib/A/FSupoisonAllocFcd.v at 5cc58921ee2: each lib/A donor is its lib/B twin (AFxx -> YFxx, ABxx -> YBxx, AExx -> YExx), every statement is over B's tfibsegs (lib/B/YB1v.v), the kit is lib/B/FSupoisonAllocR / Rf / Rt. *)
+(* Modified by Theorem Labs, 2026-10: the image-B port (fuzz_state.asan-ubsan) of lib/A/FSupoisonAllocFcd.v: each lib/A donor is its lib/B twin (AFxx -> YFxx, ABxx -> YBxx, AExx -> YExx), every statement is over B's tfibsegs (lib/B/YB1v.v), the kit is lib/B/FSupoisonAllocR / Rf / Rt. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -389,7 +390,7 @@ Qed.
 (*PART2*)
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* 4. The two walks (the donor arms lib/B/YFg0.v:288 and lib/B/YFg7.v:292, with the U steps above).                  *)
+(* 4. The two walks (the donor arms lib/B/YFg0.v:289 and lib/B/YFg7.v:292, with the U steps above).                  *)
 (* ---------------------------------------------------------------------------------------------------------------- *)
 Theorem tfib_cdealloc_okU : forall B, AR_laws tfibsegs B -> TfibSyms B -> forall ly X c off UP W regs mem md,
   FK.cd_preU B ly X c off UP W regs mem md -> ly_tsd ly = TFIB_TSD ->

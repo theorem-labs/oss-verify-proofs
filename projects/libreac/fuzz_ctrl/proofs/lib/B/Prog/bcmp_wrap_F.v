@@ -1,7 +1,7 @@
 (* The footprint proof of the bcmp wrapper of image B. ORIGINAL AUTHOR a Theorem Labs lane, taken BY PATH from
-   a working branch dba073859bd lib/B/Prog/bcmp_wrap_F.v (that ref's own bcmp_wrap_c.v,
+   a working branch lib/B/Prog/bcmp_wrap_F.v (that ref's own bcmp_wrap_c.v,
    blob 5704c00631d, is NOT taken: the published statement of this branch, lib/B/Prog/bcmp_wrap_c.v blob
-   28990b512f7 (the blob this tree had at release c5e779efe8c) of F5 2ec9a4d28bf, stays as it is, because three B proofs depend on it).
+   28990b512f7 (the blob this tree had at release) of F5, stays as it is, because three B proofs depend on it).
    RE-FIT to that published statement, mechanically and in two places only: where the proof consumes the
    contract's two shadow-cover premises RSL and RSR, the published text writes the cover as
    `shadow_addr p / 8 * 8 .. shadow_addr (p + n - 1) / 8 * 8 + 8`, while this file's own sh_lo / sh_hi (and so

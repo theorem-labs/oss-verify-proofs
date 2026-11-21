@@ -34,7 +34,7 @@
    - the journal, gp/tp, ret_ok (apre): the frame stores +0x04..+0x24 (inside [sp - K, sp)); each strcmp call
      takes the premises of the strcmp wrapper's contract at sp' = sp - 80, which the walk derives from the journal.
      That contract on link is lib/A/Rt/RtString.v `astrcmp_realizes` (the libc port of plugin-hostd/
-     fuzz_command's, on the form branch since f961453c8093; pcap's Reusable/AStrcmpDef.v is the same statement
+     fuzz_command's, on the form branch; pcap's Reusable/AStrcmpDef.v is the same statement
      without the tail clause); no journal lift of it exists yet (pcap's aj_strcmp_at, A/Prog/PcapFuzzFopen.v:109-125,
      is the model); +0xe8 ret.
    - K = 80 + 2 * ESTACK = 8272: the 80-byte frame, then the strcmp wrapper's window [sp' - 2 * ESTACK, sp') (astrcmp_realizes:

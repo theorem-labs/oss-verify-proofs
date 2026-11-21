@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN0p.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap's refusal under a may-fail allocator). *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -27,6 +28,7 @@ Open Scope Z_scope.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Context {AM : AllocMode}.
+Context {AMF : Forced AM}.
 Section f.
 Variables (X : list sptr) (R : option (sptr * Z)) (U : Z -> Z) (L : layout) (A : astate).
 Variables (mem : word -> option byte) (md : Model).

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: replaced the TCodec-encoded statements and name table with plain Rocq statements for evt_ecall, nret_MSsvc, apply_mem_*, rw_cells/ro_cells, zeros/unmaps memory-effect lemmas and errno/sign-extension lemmas, dropping the TCodec import; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/CJ/Lib/SysStep.v, 69 lines within its lines 20-533. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -11,9 +12,10 @@ From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.CJ.Lib Require Export 
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope bv_scope.
-From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require TCodec.
-Ltac2 tcn__CJ_Lib_SysStep () := ([""; "Corelib.Init.Datatypes."; "Corelib.Init.Logic."; "Corelib.Init.Nat."; "Corelib.Init.Peano."; "Corelib.Lists.ListDef."; "Corelib.Numbers.BinNums."; "LinuxProcessSemantics.LinuxProcessSem.MemImageType."; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics."; "LinuxProcessSemantics.LinuxProcessSem.Run."; "LinuxProcessSemantics.LinuxProcessSem.State."; "LinuxProcessSemantics.LinuxProcessSem.Sys.Uaccess."; "LinuxProcessSemantics.Riscv.Prelude."; "LinuxProcessSemantics.Riscv.Sem."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.CJ.Lib.Cells."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.CJ.Lib.Decode."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.CJ.Lib.Exec."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.CJ.Lib.Frame."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.CJ.Lib.ITree."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.CJ.Lib.MState."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.CJ.Lib.Mem."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.CJ.Lib.Step."; "Stdlib.ZArith.BinInt.Z."; "stdpp.bitvector.definitions."], [["0A"; "1None"; "1Some"; "1bool"; "1cons"; "1false"; "1length"; "1list"; "1nat"; "1nil"; "1option"; "1pair"; "1prod"; "1true"; "2I"; "2and"]; ["2eq"; "2not"; "2or"; "3sub"; "4le"; "5repeat"; "5skipn"; "6Z"; "0F"; "7Segment"; "8fetch_word"; "8is_ecall"; "8machine_state"; "8store_ok"; "8write_to_mem"; "8wview"]; ["9apply_unmaps"; "9apply_writes"; "9apply_zeros"; ":MemCopy"; ":errno_ret"; ":mkEffectU"; ";delivered_writes"; "<bvmap"; "<bvmap_set"; "=reg_get"; "0Q"; "0R"; ">CB"; ">cell"; ">cells_bytes"; ">cells_size"]; ["?errno_of"; "@evt"; "Ainside"; "Aivl"; "AmkR"; "Amunch"; "Astk"; "Awmono"; "Bnret"; "CMS"; "CMSsvc"; "Dbytes_at"; "Dmem_inv"; "Dro_addr"; "Dwa"; "Dwr_at"]; ["Ero_cells"; "Erw_cells"; "Fadd"; "Fle"; "Flt"; "Fof_nat"; "Fopp"; "Fpow"; "Fsub"; "Fto_nat"; "0W"; "0a"; "0bs"; "0ci"; "0cs"; "0e"]; ["0fc"; "0hi"; "0junk"; "0k"; "0lo"; "0m"; "0m'"; "0m0"; "0n"; "0pc"; "0r"; "0ro"; "0rv"; "0segs"; "GBV"; "GZ_to_bv"]; ["Gbv"; "Gbv_add"; "Gbv_swrap"; "Gbv_unsigned"; "0u"; "0us"; "0v"; "0w"; "0ws"; "0x"; "0x1"; "0x10"; "0x11"; "0x12"; "0x13"; "0x14"]; ["0x15"; "0x16"; "0x17"; "0x18"; "0x19"; "0x2"; "0x20"; "0x21"; "0x22"; "0x23"; "0x24"; "0x25"; "0x26"; "0x27"; "0x28"; "0x29"]; ["0x3"; "0x30"; "0x31"; "0x4"; "0x5"; "0x6"; "0x7"; "0x8"; "0x9"; "0z"; "0zs"]]).
-Lemma evt_ecall : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "R;'7'I%211'L!p021&Q7y5'S0yR0%211%5241'GyQ0%611':%116y8%:11%411p0:1'@%718&Jr:&ROr6%22B1%5241(2r1%22A1%;3:41'3&Kr2%211(=%A3521r;&QJr9r8%B2Q21&Q9(RN+A(>%33Q921%52I1r7r5r4%=8M<:43K21%?11&QAr=r<&QI%Q22QBB%27EQ41B:Q29%63541p081p0I1p0Q01pV@QC1pUHQ>1pU<Q?1pUJQD1pU2QG1pUDQJ1pQBQL1pRHQM1pRFR41pULR81").
+Lemma evt_ecall : forall segs (Q : machine_state -> Prop) R F pc fc rv m ro w,
+fetch_word segs (Z_to_bv 64 pc) = Some w -> is_ecall w = true ->
+Q (MSsvc R F (Z_to_bv 64 pc) (reg_get R 17) fc rv m ro) ->
+evt segs Q (MS R F (Z_to_bv 64 pc) fc rv m ro).
 Proof.
 intros segs Q R F pc fc rv m ro w Hf He HQ.
 eapply evt_step; [|apply evt_done; exact HQ].
@@ -30,15 +32,20 @@ apply (evt_ecall segs Q R F pc fc rv m ro w);
 | None => fail "no instruction at" pc
 end
 end.
-Lemma nret_MSsvc : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "RA&Q7y5'S0yR0%211%5241yQ0%511':%115y8%911%411p091'7'<%215%22=1%411%42??%611'8%72B1%911'@'L&QH&QJr=r<r;r:r9r8r7r6%9887654321(Q5r5r4r3r2(9'Q3%211r1%96876521%E2;1&QI&Q8(RN+:(>%33QD21%55QEQB1@J&S1&RO+4%22QG1%43QHM1&Q1&Q2&Q0%12MF%321H%521J%B7<Q57Q2Q11O%Q;3Q:D1pTLQ=1pV<QA1pXFQB1pVBQE1pUFR41pUHQL1pU<QM1pUJR21pU2R51pX@R91pUDR:1pQBR:1pRHR;1").
+Lemma nret_MSsvc : forall R F pc x8 fc rv m ro r ws zs us ci,
+nret (MSsvc R F pc x8 fc rv m ro) (mkEffectU r ws zs us [] ci)
+= MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4) fc None (apply_writes (apply_zeros (apply_unmaps m us) zs) ws) ro.
 Proof. reflexivity. Qed.
-Lemma mkR_set_a0 : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "RA'S0yR0%211'@&Q7y5%2214&Q8(RN+:(>%33621r1&QDrQ0rOrNrMrLrKrJrIrHrGrFrErDrCrBrAr@r?r>r=r<r;r:r9r8r7r6r5r4r3r2%Q0OONMLKJIHGFEDCBA@?>=<;:987654321%Q75Q9Q<Q3Q21%Q2OQ1Q0ONMLKJIQ3GFEDCBA@?>=<;:9876543%Q=3Q:21pV>Q?1pX6Q@1pX4QA1pX0QB1pWNQC1pWLQD1pWJQE1pWHQF1pWFQG1pWDQH1pWBQI1pW@QJ1pW>QK1pW:QL1pW8QM1pW6QN1pW4QO1pW2R01pW0R11pVNR21pVLR31pVJR41pVHR51pXBR61pX@R71pX>R81pX<R91pX:R:1pX8R;1pX2R<1pW<R=1pVFR>1").
+Lemma mkR_set_a0 : forall x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31 v,
+bvmap_set 10 v (mkR x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31)
+= mkR x1 x2 x3 x4 x5 x6 x7 x8 x9 v x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31.
 Proof. reflexivity. Qed.
-Lemma apply_mem_none : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "J'S0yR0%211':y8%511%311p051'@&Q1&Q2&Q0r1(9'<%12==%311%6251%8212'7%11?%72C1%911%>251%@3A1<pU<B1").
+Lemma apply_mem_none : forall m, apply_writes (apply_zeros (apply_unmaps m []) []) [] = m.
 Proof. reflexivity. Qed.
-Lemma apply_mem_write : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "Q4'S0yR0%211':y8%511%311p051'7%114'@&Q1&Q2&Q0r3(9'<%12??%311%6251%8212(4%62D=(;r2r1%34HA21%<15%73621%B291&N%13A76%F3I31pTJH1pTHQ01pU<L1").
+Lemma apply_mem_write : forall m a bs, apply_writes (apply_zeros (apply_unmaps m []) []) [(a, bs)] = write_to_mem m a bs.
 Proof. reflexivity. Qed.
-Lemma apply_mem_delivered : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "Q0'S0yR0%211':y8%511%311p051'7%114'@&Q1&Q2&Q0r3(9'<%12??%311%6251%8212&Q6r2r1%3221%>251&N%13=54%B3E31pTJD1pTHL1pU<H1").
+Lemma apply_mem_delivered : forall m a bs,
+apply_writes (apply_zeros (apply_unmaps m []) []) (delivered_writes a bs) = write_to_mem m a bs.
 Proof. intros m a [|b bs]; reflexivity. Qed.
 Definition in_range (a n : Z) (x : word) : bool :=
 (a <=? bv_unsigned x)%Z && (bv_unsigned x <? a + n)%Z.
@@ -56,7 +63,9 @@ rewrite wa_unsigned by lia. rewrite unsigned_lit by lia. rewrite orb_false_r. re
 Qed.
 Section MemEffects.
 Variable segs : list Segment.
-Lemma rw_cells_CB_prefix_write : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "QE'S0yR0%211':y8%511%311p051'G'8'7%116&R1vRMr5r4(4'Q=(Q<r3r2%3221(9%116%83731%=4<;:1'D&6%12G8%321>&Nr7&QNr6%211%5341@%92OA%C21B&C%12I3&F%13Q45J%H231%K3J1D%L3K71%Q14Q0:<1p0A1p0F1pTJQ51pU6Q61pUBQ91p2Q;1pU<Q=1").
+Lemma rw_cells_CB_prefix_write : forall m A n junk bs,
+rw_cells segs m A [CB n junk] -> (length bs <= n)%nat ->
+rw_cells segs (write_to_mem m (wa A) bs) A [CB (length bs) bs; CB (n - length bs) (skipn (length bs) junk)].
 Proof.
 intros m A n junk bs [[Hwf Hb] Hw] Hlen. cbn in Hwf. destruct Hwf as [Hj _].
 cbn [cells_bytes cbytes] in Hb. rewrite app_nil_r in Hb.
@@ -68,12 +77,15 @@ rewrite Z.add_0_r in W. unfold upd_bytes in W. cbn [firstn app Nat.add] in W. ex
 - cbn [cells_size csize]. cbn [cells_size csize] in Hw. replace (length bs + (n - length bs + 0))%nat with (n + 0)%nat by lia.
 apply wr_at_write. exact Hw.
 Qed.
-Lemma rw_cells_CB_store_ok : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "Q='S0yR0%211':y8%511%311p051'G'8'7%116&R1vRMr5r4(4'Q=(Q<r3r2%3221(9%116%83731%=4<;:1'D%127<'@'3&Mr7&QNr6%211%54F41@(=%93821p0;1p0>1pU8O1pU6N1pUBQ11p2Q31pU<Q51").
+Lemma rw_cells_CB_store_ok : forall m A n junk k,
+rw_cells segs m A [CB n junk] -> (k <= n)%nat -> store_ok segs m (wa A) k = true.
 Proof.
 intros m A n junk k [_ Hw] Hk. cbn [cells_size csize] in Hw.
 rewrite <- (Z.add_0_r A). apply (wr_at_store_ok segs m A (Z.of_nat (n + 0))); [exact Hw|lia|lia].
 Qed.
-Lemma mem_inv_syswrite : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "Q?'S0yR0%211':y8%511%311p051'G'8'7%116&QLvRMr5%3221&R1r6(4'Q=(Q<r4r3%3221(9%116%83731%;4>:=1'D&6%12I8%321A&Nr8&QNr7%211%5341@%J2I1p081p0=1p0J1pTJO1pU6Q01pUBQ31p2Q51pU<Q71").
+Lemma mem_inv_syswrite : forall m A n junk bs,
+mem_inv segs m -> rw_cells segs m A [CB n junk] -> (length bs <= n)%nat ->
+mem_inv segs (write_to_mem m (wa A) bs).
 Proof.
 intros. apply mem_inv_store; [assumption|]. eapply rw_cells_CB_store_ok; eauto.
 Qed.
@@ -83,47 +95,50 @@ Hypothesis Ha : (0 <= a < 2^64)%Z.
 Hypothesis Hn : (0 <= n < 2^64)%Z.
 Hypothesis Han : (a + n <= 2^64)%Z.
 Let m' := apply_zeros m [(wa a, Z_to_bv 64 n)].
-Lemma zeros_outside : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "M'S0yR0%211'B&R4&S3r1%2261vR;%5221&R3&R2vRH%2251%4217%<261'@':y8%C11%311vRFr2%211vRE%113%:3631p0<1pVDJ1").
+Lemma zeros_outside : forall x, (bv_unsigned x < a \/ a + n <= bv_unsigned x)%Z -> m' x = m x.
 Proof.
 intros x Hx. unfold m'. rewrite apply_zeros_spec by assumption. unfold in_range.
 destruct (Z.leb_spec0 a (bv_unsigned x)); destruct (Z.ltb_spec0 (bv_unsigned x) (a + n)); cbn [andb]; try reflexivity. lia.
 Qed.
-Lemma zeros_inside : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "Q0'S0yR0%211'?&R3vR;&S3r1%2271%5241&R4&R2vRH%2281%4261%<261'@':y8%C11%311vRFr2%211(2&ROz%2291%4291%=3961p0?1pVDM1").
+Lemma zeros_inside : forall x, (a <= bv_unsigned x < a + n)%Z -> m' x = Some (Z_to_bv 8 0).
 Proof.
 intros x Hx. unfold m'. rewrite apply_zeros_spec by assumption. unfold in_range.
 destruct (Z.leb_spec0 a (bv_unsigned x)); destruct (Z.ltb_spec0 (bv_unsigned x) (a + n)); cbn [andb]; try reflexivity; lia.
 Qed.
-Lemma wview_zeros_mono : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "I'S0yR0%211&A'@':y8%711%311&OvRMvREr1%43321(1%118%<3831%>11vRFr2%;3:21%A3=16%C11p061pVDF1").
+Lemma wview_zeros_mono : forall x, wview segs m x <> None -> wview segs m' x <> None.
 Proof.
 intros x Hx. unfold wview in *. unfold m'. rewrite apply_zeros_spec by assumption.
 destruct (in_range a n x); [discriminate| exact Hx].
 Qed.
-Lemma bytes_at_zeros_other : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "Q2'G'7'S0y8%211%411&QKvRMvREr2r1%544321'B&R3&R2r3&R5&6%12>9%311%6251vR;%9221vRH%:231%<21:%>241vRFr4%G4F21>p041p0D1pTJK1p2Q11").
+Lemma bytes_at_zeros_other : forall A bs,
+bytes_at segs m A bs -> (A + Z.of_nat (length bs) <= a \/ a + n <= A)%Z -> bytes_at segs m' A bs.
 Proof.
 intros A bs (H0 & H1 & H) Hd. split; [lia|]. split; [lia|]. intros i Hi.
 unfold mrd. rewrite zeros_outside. { apply H. exact Hi. } rewrite wa_unsigned by lia. lia.
 Qed.
-Lemma wr_at_zeros : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "='G&QOvRMvREr2r1%544321vRFr3%847215p041pU8;1p2<1").
+Lemma wr_at_zeros : forall A k, wr_at segs m A k -> wr_at segs m' A k.
 Proof. intros A k (H0 & H1 & H). split; [lia|]. split; [lia|]. intros i Hi. apply wview_zeros_mono, H, Hi. Qed.
-Lemma rw_cells_zeros_other : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "Q0'G'7'Q=%211&R1vRMvREr2r1%544321'B&R3&R2r3&R5&Q?%119%311%6251vR;%9221vRH%:231%<21:%>241vRFr4%G4F21>p041p0D1pTNK1p2O1").
+Lemma rw_cells_zeros_other : forall A cs,
+rw_cells segs m A cs -> (A + Z.of_nat (cells_size cs) <= a \/ a + n <= A)%Z -> rw_cells segs m' A cs.
 Proof.
 intros A cs [[Hwf Hb] Hw] Hd. split; [split; [exact Hwf|]|].
 - apply bytes_at_zeros_other; [exact Hb|]. rewrite cells_bytes_length by assumption. exact Hd.
 - apply wr_at_zeros. exact Hw.
 Qed.
-Lemma ro_cells_zeros_other : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "Q0'G'7'Q=%211&R0vRMvREr2r1%544321'B&R3&R2r3&R5&Q?%119%311%6251vR;%9221vRH%:231%<21:%>241vRFr4%G4F21>p041p0D1pTNK1p2O1").
+Lemma ro_cells_zeros_other : forall A cs,
+ro_cells segs m A cs -> (A + Z.of_nat (cells_size cs) <= a \/ a + n <= A)%Z -> ro_cells segs m' A cs.
 Proof.
 intros A cs [Hwf Hb] Hd. split; [exact Hwf|].
 apply bytes_at_zeros_other; [exact Hb|]. rewrite cells_bytes_length by assumption. exact Hd.
 Qed.
-Lemma stk_zeros : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "='G&QFvRMvREr2r1%544321vRFr3%847215p041pU4;1pU:<1").
+Lemma stk_zeros : forall lo hi, stk segs m lo hi -> stk segs m' lo hi.
 Proof.
 intros lo hi (H0 & H1 & H). split; [lia|]. split; [lia|]. intros x Hx.
 destruct (H x Hx) as [Hw (b & Hb)]. split; [apply wview_zeros_mono; exact Hw|].
 unfold mrd in *. unfold m'. rewrite apply_zeros_spec by assumption.
 destruct (in_range a n (wa x)); [eexists; reflexivity|]. exists b. exact Hb.
 Qed.
-Lemma munch_zeros : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "L'7&QC%211'S0yR0%211':y8%511%311p051&QEr2r1vRE%43321&QBr3vR;vRH%43321r4vRF%<3261p041p0:1pU@@1pTFI1").
+Lemma munch_zeros : forall W m0, munch W m0 m -> inside W a n -> munch W m0 m'.
 Proof.
 intros W m0 H Hin x Hx. pose proof (bv_unsigned_in_range 64 x).
 rewrite zeros_outside. { apply H. exact Hx. }
@@ -131,9 +146,9 @@ destruct (Z.ltb_spec0 (bv_unsigned x) a); [lia|].
 destruct (Z.leb_spec0 (a + n) (bv_unsigned x)); [lia|].
 exfalso. eapply (inside_not_outside W a n (bv_unsigned x) Hin); [lia| exact Hx].
 Qed.
-Lemma wmono_zeros : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "B'S0yR0%211':y8%511%311p051&QGvRMr1vRE%43321r2vRF%73621p041pU@:1").
+Lemma wmono_zeros : forall m0, wmono segs m0 m -> wmono segs m0 m'.
 Proof. intros m0 H x Hx. apply wview_zeros_mono, H, Hx. Qed.
-Lemma mem_inv_zeros : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "Q1&QLvRMvRE%3221'S0yR0%211'?&R3vR;&S3r1%2271%5241&R4&R2vRH%2281%4261%<261'@'3&QMr2%22G1(5%63521p081pVDF1vRF%N2M1p031p0M1").
+Lemma mem_inv_zeros : mem_inv segs m -> (forall x : word, (a <= bv_unsigned x < a + n)%Z -> ro_addr segs x = false) -> mem_inv segs m'.
 Proof.
 intros Hinv Hro x b Hx. unfold m' in Hx. rewrite apply_zeros_spec in Hx by assumption.
 unfold in_range in Hx.
@@ -141,18 +156,18 @@ destruct (Z.leb_spec0 a (bv_unsigned x)); destruct (Z.ltb_spec0 (bv_unsigned x) 
 try exact (Hinv _ _ Hx).
 apply Hro. lia.
 Qed.
-Lemma bytes_at_zeros_new : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "@&QKvRMvRFvR;&E'S0y8%211&ROz%2241&R9vRH%211%:3741%?4>=<1").
+Lemma bytes_at_zeros_new : bytes_at segs m' a (repeat (Z_to_bv 8 0) (Z.to_nat n)).
 Proof.
 split; [lia|]. rewrite repeat_length. split; [lia|]. intros i Hi.
 unfold mrd. rewrite zeros_inside. 2:{ rewrite wa_unsigned by lia. lia. }
 symmetry. apply nth_error_repeat. exact Hi.
 Qed.
-Lemma wr_at_zeros_new : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "6&QOvRMvRFvR;vRH%544321").
+Lemma wr_at_zeros_new : wr_at segs m' a n.
 Proof.
 split; [lia|]. split; [lia|]. intros i Hi. unfold wview. rewrite zeros_inside; [discriminate|].
 rewrite wa_unsigned by lia. lia.
 Qed.
-Lemma rw_cells_zeros_new : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "G&R1vRMvRFvR;(4'Q=(Q<&R9vRH%211&E'S0y8%211&ROz%2241%73418%<291(9%11?%A3@31%F4EDC1").
+Lemma rw_cells_zeros_new : rw_cells segs m' a [CB (Z.to_nat n) (repeat (Z_to_bv 8 0) (Z.to_nat n))].
 Proof.
 split; [split|].
 - cbn. split; [apply repeat_length| exact I].
@@ -166,40 +181,44 @@ Hypothesis Ha : (0 <= a < 2^64)%Z.
 Hypothesis Hn : (0 <= n < 2^64)%Z.
 Hypothesis Han : (a + n <= 2^64)%Z.
 Let m' := apply_unmaps m [(wa a, Z_to_bv 64 n)].
-Lemma unmaps_outside : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "M'S0yR0%211'B&R4&S3r1%2261vR;%5221&R3&R2vRH%2251%4217%<261'@':y8%C11%311vRFr2%211vRE%113%:3631p0<1pVDJ1").
+Lemma unmaps_outside : forall x, (bv_unsigned x < a \/ a + n <= bv_unsigned x)%Z -> m' x = m x.
 Proof.
 intros x Hx. unfold m'. rewrite apply_unmaps_spec by assumption. unfold in_range.
 destruct (Z.leb_spec0 a (bv_unsigned x)); destruct (Z.ltb_spec0 (bv_unsigned x) (a + n)); cbn [andb]; try reflexivity. lia.
 Qed.
-Lemma bytes_at_unmaps_other : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "Q2'G'7'S0y8%211%411&QKvRMvREr2r1%544321'B&R3&R2r3&R5&6%12>9%311%6251vR;%9221vRH%:231%<21:%>241vRFr4%G4F21>p041p0D1pTJK1p2Q11").
+Lemma bytes_at_unmaps_other : forall A bs,
+bytes_at segs m A bs -> (A + Z.of_nat (length bs) <= a \/ a + n <= A)%Z -> bytes_at segs m' A bs.
 Proof.
 intros A bs (H0 & H1 & H) Hd. split; [lia|]. split; [lia|]. intros i Hi.
 unfold mrd. rewrite unmaps_outside. { apply H. exact Hi. } rewrite wa_unsigned by lia. lia.
 Qed.
-Lemma wr_at_unmaps_other : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "I'G&QOvRMvREr2r1%544321'B&R3&R2r3%2217vR;%5221vRH%6231%8216%:241vRFr4%C4B21:p041p0@1pU8G1p2H1").
+Lemma wr_at_unmaps_other : forall A k,
+wr_at segs m A k -> (A + k <= a \/ a + n <= A)%Z -> wr_at segs m' A k.
 Proof.
 intros A k (H0 & H1 & H) Hd. split; [lia|]. split; [lia|]. intros i Hi.
 unfold wview. rewrite unmaps_outside. { apply H. exact Hi. } rewrite wa_unsigned by lia. lia.
 Qed.
-Lemma rw_cells_unmaps_other : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "Q0'G'7'Q=%211&R1vRMvREr2r1%544321'B&R3&R2r3&R5&Q?%119%311%6251vR;%9221vRH%:231%<21:%>241vRFr4%G4F21>p041p0D1pTNK1p2O1").
+Lemma rw_cells_unmaps_other : forall A cs,
+rw_cells segs m A cs -> (A + Z.of_nat (cells_size cs) <= a \/ a + n <= A)%Z -> rw_cells segs m' A cs.
 Proof.
 intros A cs [[Hwf Hb] Hw] Hd. split; [split; [exact Hwf|]|].
 - apply bytes_at_unmaps_other; [exact Hb|]. rewrite cells_bytes_length by assumption. exact Hd.
 - apply wr_at_unmaps_other; [exact Hw| exact Hd].
 Qed.
-Lemma ro_cells_unmaps_other : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "Q0'G'7'Q=%211&R0vRMvREr2r1%544321'B&R3&R2r3&R5&Q?%119%311%6251vR;%9221vRH%:231%<21:%>241vRFr4%G4F21>p041p0D1pTNK1p2O1").
+Lemma ro_cells_unmaps_other : forall A cs,
+ro_cells segs m A cs -> (A + Z.of_nat (cells_size cs) <= a \/ a + n <= A)%Z -> ro_cells segs m' A cs.
 Proof.
 intros A cs [Hwf Hb] Hd. split; [exact Hwf|].
 apply bytes_at_unmaps_other; [exact Hb|]. rewrite cells_bytes_length by assumption. exact Hd.
 Qed.
-Lemma stk_unmaps_other : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "H'G&QFvRMvREr2r1%544321'B&R3vR;%2261&R2vRH%2241r3%7221%9261vRFr4%B4A215p041p0?1pU4F1pU:G1").
+Lemma stk_unmaps_other : forall lo hi, stk segs m lo hi -> (hi <= a \/ a + n <= lo)%Z -> stk segs m' lo hi.
 Proof.
 intros lo hi (H0 & H1 & H) Hd. split; [lia|]. split; [lia|]. intros x Hx.
 destruct (H x Hx) as [Hw (b & Hb)].
 assert (E : m' (wa x) = m (wa x)). { apply unmaps_outside. rewrite wa_unsigned by lia. lia. }
 split. { unfold wview in *. rewrite E. exact Hw. } exists b. unfold mrd in *. rewrite E. exact Hb.
 Qed.
-Lemma munch_unmaps : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "L'7&QC%211'S0yR0%211':y8%511%311p051&QEr2r1vRE%43321&QBr3vR;vRH%43321r4vRF%<3261p041p0:1pU@@1pTFI1").
+Lemma munch_unmaps : forall W m0, munch W m0 m -> inside W a n -> munch W m0 m'.
 Proof.
 intros W m0 H Hin x Hx. pose proof (bv_unsigned_in_range 64 x).
 rewrite unmaps_outside. { apply H. exact Hx. }
@@ -207,18 +226,19 @@ destruct (Z.ltb_spec0 (bv_unsigned x) a); [lia|].
 destruct (Z.leb_spec0 (a + n) (bv_unsigned x)); [lia|].
 exfalso. eapply (inside_not_outside W a n (bv_unsigned x) Hin); [lia| exact Hx].
 Qed.
-Lemma mem_inv_unmaps : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "7&QLvRMvRE%3221vRF%5241p031").
+Lemma mem_inv_unmaps : mem_inv segs m -> mem_inv segs m'.
 Proof.
 intros Hinv x b Hx. unfold m' in Hx. rewrite apply_unmaps_spec in Hx by assumption.
 destruct (in_range a n x); [discriminate|]. exact (Hinv _ _ Hx).
 Qed.
 End Unmaps.
 End MemEffects.
-Lemma rw_cells_wr_at : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "Q5'7'I%211'S0yR0%211':y8%511%311p051'G'Q=%=11&R1r5r4r3r2%544321&R3&R5&Q?%116%311%5271&QOr7r6%3421><p051p0<1pUBE1pTND1p2G1pU<I1pULQ21").
+Lemma rw_cells_wr_at : forall segs m A cs n,
+rw_cells segs m A cs -> (n <= Z.of_nat (cells_size cs))%Z -> wr_at segs m A n.
 Proof. intros segs m A cs n [_ (H0 & H1 & H)] Hn. split; [lia|]. split; [lia|]. intros i Hi. apply H. lia. Qed.
-Lemma rw_cells_bytes_at : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "N'7'I%211'S0yR0%211':y8%511%311p051'G'Q=%=11&R1r4r3r2r1%544321&QKr5&Q>%116%443981p061pTN=1p2@1pU<B1pULK1").
+Lemma rw_cells_bytes_at : forall segs m A cs, rw_cells segs m A cs -> bytes_at segs m A (cells_bytes cs).
 Proof. intros segs m A cs [[_ H] _]. exact H. Qed.
-Lemma ro_cells_bytes_at : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "N'7'I%211'S0yR0%211':y8%511%311p051'G'Q=%=11&R0r4r3r2r1%544321&QKr5&Q>%116%443981p061pTN=1p2@1pU<B1pULK1").
+Lemma ro_cells_bytes_at : forall segs m A cs, ro_cells segs m A cs -> bytes_at segs m A (cells_bytes cs).
 Proof. intros segs m A cs [_ H]. exact H. Qed.
 Ltac at_node_solve :=
 at_node_red; split_spine;
@@ -263,9 +283,9 @@ clear Heqm; clear HB; try clear m; rename H' into H
 | _ => fail "sys_mem_write: no hypothesis rw_cells" segs m B "[CB _ _]"
 end
 end.
-Lemma apply_mem_zeros : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "O'S0yR0%211':y8%511%311p051'<%1277'@&Q1&Q2&Q0r2(9%117%4231(4r1%23;14%9241'7%11B%@2F1%:11%?251%?2=7%B3E21pXDD1pU<G1").
+Lemma apply_mem_zeros : forall m z, apply_writes (apply_zeros (apply_unmaps m []) [z]) [] = apply_zeros m [z].
 Proof. reflexivity. Qed.
-Lemma apply_mem_unmaps : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "N'S0yR0%211':y8%511%311p051'<%1277'@&Q1&Q2&Q0r2(4r1(9%119%43:31%7261%9213'7%11B%@2F1%811%?251%A3D17pV:C1pU<F1").
+Lemma apply_mem_unmaps : forall m u, apply_writes (apply_zeros (apply_unmaps m [u]) []) [] = apply_unmaps m [u].
 Proof. reflexivity. Qed.
 Ltac transport_zeros segs m a n Ha Hn Han :=
 repeat match goal with
@@ -362,47 +382,49 @@ Definition sysret_val (r : word) : word :=
 match errno_of r with Some _ => Z_to_bv 64 (-1) | None => r end.
 Definition sysret_errno (r errv : word) : word :=
 match errno_of r with Some e => Z_to_bv 64 e | None => errv end.
-Lemma errno_of_big : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "M'S0yR0%211&R4&R8&R7+2+R0%3221+TP0%6221&S3r1%22<1%;241'@':'G%211&Q@r2%211(2%<2F3%D2@1%3281%;3851p0=1pUFJ1").
+Lemma errno_of_big : forall r, (2^64 - 4096 < bv_unsigned r)%Z -> errno_of r = Some (2^64 - bv_unsigned r)%Z.
 Proof. intros r H. unfold errno_of. destruct (Z.leb_spec0 (2^64 - 4095) (bv_unsigned r)); [reflexivity|lia]. Qed.
-Lemma negw_errno : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "I'G'?&R4&R8&R7+2+R0%3221+TP0%6221r1%9221%:225%<221'@&S2yQ0zr2%@221%5241%B2>3%83F21p0:1pV:H1").
+Lemma negw_errno : forall u, (2^64 - 4096 < u < 2^64)%Z -> bv_swrap 32 (0 - u) = (2^64 - u)%Z.
 Proof.
 intros u Hu. unfold bv_swrap, bv_wrap, bv_half_modulus, bv_modulus.
 change (2 ^ Z.of_N 32)%Z with (2^32)%Z. change (2 ^ 32 `div` 2)%Z with (2^31)%Z.
 replace (0 - u + 2^31)%Z with ((2^64 - u + 2^31) + (- 2^32) * 2^32)%Z by lia.
 rewrite Z.mod_add by lia. rewrite Z.mod_small by lia. lia.
 Qed.
-Lemma swrap32_small : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "F'G'?&R3&R6&R7+2+O%3221%511r1%8221&R4%1235%<231'@&S2yQ0r2%3221%53C12p071pXDE1").
+Lemma swrap32_small : forall z, (-2^31 <= z < 2^31)%Z -> bv_swrap 32 z = z.
 Proof.
 intros z Hz. unfold bv_swrap, bv_wrap, bv_half_modulus, bv_modulus.
 change (2 ^ Z.of_N 32)%Z with (2^32)%Z. change (2 ^ 32 `div` 2)%Z with (2^31)%Z.
 rewrite Z.mod_small by lia. lia.
 Qed.
-Lemma swrap32_high : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "I'G'?&R3&R8&R7+2+R0%3221+O%5241%7231r1%:221&R4%1237%>231'@&S2yQ0r2%3221%B22>%63F21p081pV:H1").
+Lemma swrap32_high : forall u, (2^64 - 2^31 <= u < 2^64)%Z -> bv_swrap 32 u = (u - 2^64)%Z.
 Proof.
 intros u Hu. unfold bv_swrap, bv_wrap, bv_half_modulus, bv_modulus.
 change (2 ^ Z.of_N 32)%Z with (2^32)%Z. change (2 ^ 32 `div` 2)%Z with (2^31)%Z.
 replace (u + 2^31)%Z with ((u - 2^64 + 2^31) + 2^32 * 2^32)%Z by lia.
 rewrite Z.mod_add by lia. rewrite Z.mod_small by lia. lia.
 Qed.
-Lemma unsigned_errno_ret : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "I'G'?&R3+1r1%3221+SoO%5231%7231'@&S3yR0&Q4r2%211%5241&R8&R7+2+R0%3221%5218%=3F71p0?1pU0H1").
+Lemma unsigned_errno_ret : forall e, (1 <= e <= 4095)%Z -> bv_unsigned (errno_ret e) = (2^64 - e)%Z.
 Proof. intros. rewrite errno_ret_unsigned by lia. reflexivity. Qed.
-Lemma Z_to_bv_minus_mod : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "A'G'@'S0yR0%211&RO&R8r1&R7+2+R0%3221%6251%82:1%92;7%>3;21pXD@1").
+Lemma Z_to_bv_minus_mod : forall z, Z_to_bv 64 (z - 2^64) = Z_to_bv 64 z.
 Proof.
 intros. apply bv_eq. rewrite !Z_to_bv_unsigned. unfold bv_wrap, bv_modulus. change (2 ^ Z.of_N 64)%Z with (2^64)%Z.
 replace (z - 2^64)%Z with (z + (-1) * 2^64)%Z by lia. apply Z.mod_add. lia.
 Qed.
-Lemma errno_ret_fold : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep ">'G'@'S0yR0%211&RO&R6r1%211%4261&Q4%114%;3831pU0=1").
+Lemma errno_ret_fold : forall e, Z_to_bv 64 (- e) = errno_ret e.
 Proof. reflexivity. Qed.
-Lemma sextw_errno : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "Q0'G'?&R3+1r1%3221&R7+2+O%3221%8261%:261'@'S0yR0%211&RO&S2yQ0&R2&S3&Q4r2%211%42:1z%7221%:291%<2>1%A3>16p0C1pU0O1").
+Lemma sextw_errno : forall e, (1 <= e <= 2^31)%Z ->
+Z_to_bv 64 (bv_swrap 32 (bv_unsigned (errno_ret e) + 0)) = errno_ret e.
 Proof.
 intros e He. unfold errno_ret. rewrite unsigned_lit_wrap.
 replace ((- e) mod 2^64)%Z with (2^64 - e)%Z.
 2:{ replace (-e)%Z with ((2^64 - e) + (-1) * 2^64)%Z by lia. rewrite Z.mod_add; [|lia]. rewrite Z.mod_small; [reflexivity|lia]. }
 rewrite Z.add_0_r, swrap32_high by lia. f_equal. lia.
 Qed.
-Lemma sextw_small : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "O'G'?&R3zr1%3221&R4&R7+2+O%3221%5271%;271'@'S0yR0%211&RO&S2yQ0&R2&S3r2%6281%3291%521F%8271%:2<1%?3<15p0A1pXDN1").
+Lemma sextw_small : forall z, (0 <= z < 2^31)%Z ->
+Z_to_bv 64 (bv_swrap 32 (bv_unsigned (Z_to_bv 64 z) + 0)) = Z_to_bv 64 z.
 Proof. intros z Hz. rewrite unsigned_lit by lia. rewrite Z.add_0_r, swrap32_small by lia. reflexivity. Qed.
-Lemma stk_lo_nonneg : ltac2:(TCodec.tc2 tcn__CJ_Lib_SysStep "J'7'I%211'S0yR0%211':y8%511%311p051'G&QFr4r3r2r1%544321&R3z%2216p041pU4;1pU:<1pU<>1pULG1").
+Lemma stk_lo_nonneg : forall segs m lo hi, stk segs m lo hi -> (0 <= lo)%Z.
 Proof. intros segs m lo hi (H & _). exact H. Qed.
 Ltac name_sp sp k :=
 let sp1 := fresh "sp" in let E := fresh "Esp" in let H := fresh "Hsp" in

@@ -1,4 +1,4 @@
-(* The image-B port of lib/A/Prog/reac_segconf_ignore_file_lem.v (commit 62181ed287a7): the
+(* The image-B port of lib/A/Prog/reac_segconf_ignore_file_lem.v: the
    reader-level facts of the walk of reac_segconf_ignore_file on fuzz_segconf.asan-ubsan (image B, 0x89d60).
    Module paths and the image-B addresses in comments: the kit modules copied for image B (lib/B, image end 0x602000)
    and the contract bases (lib.B.Prog SegPgBase, SegABase, reac_segconf_find_c); every statement is the image-A

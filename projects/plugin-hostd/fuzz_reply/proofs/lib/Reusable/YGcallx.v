@@ -1,9 +1,9 @@
-(* CARRIED from commit a0fed4266a1b18b1453af093bfe2ee477dcbe241,
+(* CARRIED from
    proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcallx.v, sha256 c531b4318cac5569505a2813069e2cb68d8635cecac08335eca0c755f51e456d.
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change
    made here is the module prefix OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.
-   Plus acall_pre_x's stack-bottom conjunct `ly_bot ly + ACALL_PREFIX < spZ regs` (was `ly_bot ly < spZ regs`), fuzz_preset 116f6c4dab1's own line (its YGcallx.v:212), so acall_pre_x at ARcf stays acall_pre_cf (YG0dcf.v:61, layer 519d4dea489a).
-   Plus the realizes texts' and model laws' trace premise `admits (as_universe B) tr s` (was `In tr (as_universe B)`; fuzz_preset 42ea57b7fc3's lines for amalloc_realizes_x / afree_realizes_x / amx_malloc / amx_free), so YGcallcf's realizes_cf_x stay reflexivity over the layer's P'' realizes texts; the rules keep their `In` premise and convert it inside by admits_fix from one Section hypothesis UOK : universe_ok (as_universe B) (reply's route E2; preset's own rules take admits directly). *)
+   Plus acall_pre_x's stack-bottom conjunct `ly_bot ly + ACALL_PREFIX < spZ regs` (was `ly_bot ly < spZ regs`), fuzz_preset's own line (its YGcallx.v:213), so acall_pre_x at ARcf stays acall_pre_cf (YG0dcf.v:61, layer).
+   Plus the realizes texts' and model laws' trace premise `admits (as_universe B) tr s` (was `In tr (as_universe B)`; fuzz_preset's lines for amalloc_realizes_x / afree_realizes_x / amx_malloc / amx_free), so YGcallcf's realizes_cf_x stay reflexivity over the layer's P'' realizes texts; the rules keep their `In` premise and convert it inside by admits_fix from one Section hypothesis UOK : universe_ok (as_universe B) (reply's route E2; preset's own rules take admits directly). *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10-30 (a Theorem Labs lane, round 6g; a Theorem Labs lane's approval (B'')): acall_pre_x's last conjunct is
@@ -12,6 +12,7 @@
    laws (alloc_model_laws_x) and the rules; Hypothesis QMQ : QMm S mem -> QM S beside AMX links them. The eight rules
    that BUILD the callee's acall_pre_x take `QMm Sc <call memory>` instead of `QM Sc`. Non-cf instances take
    QMm := fun S _ => QM S and QMQ := fun _ _ H => H. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the allocator CALL FORMS and the malloc / free CALL-SITE RULES, GENERIC over the allocator
    invariant ARx of YCbqG.v (Section Variables segs B PST ARx). No allocator instance, no image class, no address and
    no ledger is named here; YGcallcf.v shows that the cf instance's forms (YG0dcf.v) are these at ARx := ARcf.
@@ -288,7 +289,7 @@ amreal segs (ft p (call_trace ly (pc_free_ra0 code) regs ch) S) W
 (* afree_realizes_x keeps its body, for the proofs that unfold it; afree_realizes_x_wle checks that it is afree_realizes_xR at wle *)
 Lemma afree_realizes_x_wle : afree_realizes_x = afree_realizes_xR (@wle segs). Proof. reflexivity. Qed.
 (* route R: a post / leaf / realization at wle is one at any R that contains wle (the realization by amreal_amrealG,
-   Reusable/YG0dH.v:165, and amrealG_mono); a RE-HIDING realization is not of this form (its frame also excludes the dead
+   Reusable/YG0dH.v:166, and amrealG_mono); a RE-HIDING realization is not of this form (its frame also excludes the dead
    set): its crossing goes through call_effect_journal_rh_cf (lib/A|B/AjxCallRh.v) *)
 Lemma acall_post_xR_of_x {R : world segs -> world segs -> Prop} (WLE_R : forall W W', wle W W' -> R W W') :
   forall stk ly S Hp W regs mem md E ly' S' W' regs' mem' md',

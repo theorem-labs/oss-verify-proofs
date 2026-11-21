@@ -2,20 +2,21 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YG0d.v, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: P'' (the Univ trace carrier) delta of commit 94ab015e127b for cgif/cgif_file_fuzzer/lib/YG0d.v, taken 3-way (its base d94d29d53c8). *)
+(* Modified by Theorem Labs, 2026-10: P'' (the Univ trace carrier) delta for cgif/cgif_file_fuzzer/lib/YG0d.v, taken 3-way. *)
 (* Modified by Theorem Labs, 2026-10-29: from lib/Reusable/YG0d.v, as the new module IcptRealizesX: only amemcmp_realizes and abcmp_realizes, with lib/Rt/MemchrDef.v's amemchr_realizes / amemchr_realizesM and lib/Rt/StrnlenDef.v's astrnlen_whole_realizes / astrnlen_whole_realizesM (their restatements of YG0d.v's amemchr0_realizes / astrnlen_realizes), each restated as <name>_x over a generic allocator invariant ARx at tfibsegs (ecall_pre -> ecall_pre_ix B ARx with the ghost head set Hp, AR -> ARx), with the lemmas <name>_of_x at ARx := AR_x B. *)
 (* Modified by Theorem Labs, 2026-10-30: copied from lib/A/IcptRealizesX.v to image B (fuzz_reply.asan-ubsan): cut to amemcmp_realizes_x, abcmp_realizes_x and their _of_x lemmas (the memchr / strnlen texts and lemmas removed), with the image modules AB1v / AE2y -> YB1v / YE2y. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The runtime contract texts that image B's interceptor walks YE2z / YE2s / Rt/Strnlen / Rt/Bcmp state over a
    generic allocator invariant ARx (third argument: the ghost head set Hp, threaded unchanged), in the vocabulary of
    YE2y.v's Section ix (ecall_pre_ix, icpt_laws_x, AR_x).  The image-B twin of lib/A/IcptRealizesX.v
-   (a working branch 6b4f6082575): first cut to the two texts the bcmp chain states, then given back A's
+   (a working branch): first cut to the two texts the bcmp chain states, then given back A's
    strnlen texts and lemmas, verbatim, when image B's Rt/Strnlen* were made generic in place by A's hunks.  A's memchr
    texts and lemmas are not restated here: image B's generic memchr contract is lib/B/Rt/Memchr_x.v's
    amemchr_realizesM_x / memchr_icpt_realizesM_x, and Rt/StrnlenMusl.v / Rt/Strnlen.v cite those names.
    Each _x text is its original with `ecall_pre segs B ly S W` -> `ecall_pre_ix B ARx ly S Hp W` and
    `AR segs B ly S W mem' md'` -> `ARx ly S Hp W mem' md'`, at segs := tfibsegs:
    amemcmp_realizes_x / abcmp_realizes_x are YG0d.v's amemcmp_realizes / abcmp_realizes; astrnlen_whole_realizes_x /
-   astrnlen_whole_realizesM_x are Rt/StrnlenDef.v:22 / :38.  Rt/RTx.v states the last two over FCiface.ecall_pre_x for
+   astrnlen_whole_realizesM_x are Rt/StrnlenDef.v:23 / :39.  Rt/RTx.v states the last two over FCiface.ecall_pre_x for
    any segs; they are restated here, not imported, for YE2y.v's reason: the walk files must not Require FCiface or
    YCbqG (global Zify / lia redefinitions).  abcmp_realizes_x is lib/B/W_sites_x.v's abcmp_realizes_x at tfibsegs by
    conversion (lib/B/TopX_RT_B.v states that); lib/B/RTxIcpt.v shows each strnlen text here equal to its RTx.v twin.
@@ -74,7 +75,7 @@ getr regs' 10 = v /\
 (v = w64 0 <-> forall i, 0 <= i < n -> aview tfibsegs (w_H W) mem (x + i) = aview tfibsegs (w_H W) mem (y + i)) /\
 (forall a, 0 <= a < 2 ^ 64 -> ~ (spZ regs - 2 * ESTACK <= a < spZ regs) -> aview tfibsegs (w_H W) mem' a = aview tfibsegs (w_H W) mem a) /\
 (forall a, apresent (w_H W) mem a -> apresent (w_H W) mem' a)).
-(* Rt/StrnlenDef.v:22 astrnlen_whole_realizes *)
+(* Rt/StrnlenDef.v:23 astrnlen_whole_realizes *)
 Definition astrnlen_whole_realizes_x (pc : Z) : Prop :=
 forall ly S Hp W regs mem md x n,
 ecall_pre_ix B ARx ly S Hp W regs mem md ->
@@ -91,7 +92,7 @@ ARx ly S Hp W mem' md' /\ aregs_preserved regs regs' /\ same_but_materialized md
 (exists k, first_byte tfibsegs W mem x n 0 k /\ getr regs' 10 = w64 k) /\
 (forall a, 0 <= a < 2 ^ 64 -> ~ (spZ regs - 2 * ESTACK <= a < spZ regs) -> aview tfibsegs (w_H W) mem' a = aview tfibsegs (w_H W) mem a) /\
 (forall a, apresent (w_H W) mem a -> apresent (w_H W) mem' a)).
-(* Rt/StrnlenDef.v:38 astrnlen_whole_realizesM *)
+(* Rt/StrnlenDef.v:39 astrnlen_whole_realizesM *)
 Definition astrnlen_whole_realizesM_x (lo hi pc : Z) : Prop :=
 forall ly S Hp W regs mem md x n,
 ecall_pre_ix B ARx ly S Hp W regs mem md ->

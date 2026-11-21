@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the channel-reader premise of writev; new lemmas; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Src0Exit.v, lines 73, 80-84, 113-118, 156. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
@@ -17,20 +18,20 @@ Open Scope bv_scope.
 
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Require OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S8.RdnPeelKit.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Import ListNotations.
+Open Scope bv_scope.
 
-Local Ltac rdn_side_fast := rewrite ?length_N_to_le_bytes; cbn [Z.of_nat Pos.of_succ_nat Pos.succ length]; lia_fast.
-Local Ltac rdn_solve_fast :=
-  lazymatch goal with
-  | |- rdn _ (wbytes _ ?a _) ?b _ = _ =>
-      tryif constr_eq a b then (apply rdn_wbytes_hit8; zsimp; lia)
-      else (first [ RdnPeelKit.rdn_peel_many ltac:(idtac; rdn_side_fast) | rdn_peel1 ]; rdn_solve_fast)
-  | |- _ => rdn_hyp
-  end.
-Local Ltac rdn_solve ::= rdn_solve_fast.
+Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
 
 Ltac zaddr_rec H := zaddr H.
 Section FPX_1. Context {fx : PropExec.FPState}. Context {bmK : BMode}.
 Variable scfg : SpuriousCfg.
+
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
 
 #[using="Type"] Theorem ref_exit_clean :
   forall regs mem model (sp tp code : word) (tid : Z) (wp2 rp2 wp1 rp1 : word),
@@ -69,29 +70,34 @@ Proof.
   eapply rz_exit_at; [exact F_9babc | exact E_9babc | exact Hh | exact Hlazy | left; exact R3a7 | exact R3a0].
 Qed.
 
-#[using="Type"] Theorem ref_exit_flush :
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
+Theorem ref_exit_flush :
   forall regs mem model (sp tp code : word) (tid : Z) (wp2 rp2 : word)
          (wb wp : Z) (bufp bufsz rp1 can : word) (pending : list byte),
   exit_common regs mem sp tp code tid wp2 rp2 ->
   stdout_pending mem wb wp bufp bufsz rp1 can pending ->
   m_halted model = None -> m_vm_lazy model = [] ->
   fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)) ->
+  m_channel_reader model = true ->
   srealizes RSEGS scfg (mkCfg (mkst regs (0x9bdf8 : word) mem (seg_rom RSEGS)) model)
            (t_emit (W 1 pending) (t_exit (bv_and code (Z_to_bv 64 255)) (m_fs model))).
 Proof.
-  intros regs mem model sp tp code tid wp2 rp2 wb wp bufp bufsz rp1 can pending EC SP Hh Hlazy Hfd.
+  intros regs mem model sp tp code tid wp2 rp2 wb wp bufp bufsz rp1 can pending EC SP Hh Hlazy Hfd Hrdr.
   destruct EC. destruct ec_ax as [ax AX]. destruct SP as [P1l P1wp P1wb P1wr P1buf P1bsz P1fd P1rp P1re RANGE LEN PMAX BYTES [Ggot Gcan]].
   zaddr P1l; zaddr P1wp; zaddr P1wb; zaddr P1wr; zaddr P1buf; zaddr P1bsz; zaddr P1fd; zaddr P1rp; zaddr P1re.
-
+  (* [comment removed for export] *)
   destruct (w1 ax regs mem (seg_rom RSEGS) sp tp code tid) as (regs1 & RUN1 & R1sp & R1s0 & R1ra & R1tp & R1gp & R1s1);
     try assumption.
   eapply srz_msteps; [exact Hh | exact Hlazy | exact RUN1 |]. clear RUN1.
-
+  (* [comment removed for export] *)
   destruct (w2 regs1 (mem_w1 ax mem sp (getr regs 1) (getr regs 8) tid code (getr regs 9) (getr regs 18) (getr regs 19)) (seg_rom RSEGS) sp code (getr regs1 9))
     as (regs2 & RUN2 & R2sp & R2s0 & R2ra & R2s1 & R2tp & R2gp); try assumption; try reflexivity.
   all: try (unfold mem_w1, ax_writes; destruct ax; first [store_ok_peel; exact ec_sok | rdn_solve]).
   eapply srz_msteps; [exact Hh | exact Hlazy | exact RUN2 |]. clear RUN2.
-
+  (* [comment removed for export] *)
   destruct ec_glob as (Gnl & Gofl & Gin & Gout & Gerr).
   destruct (w3b1 regs2 (mem_w2 (mem_w1 ax mem sp (getr regs 1) (getr regs 8) tid code (getr regs 9) (getr regs 18) (getr regs 19)) sp code (getr regs1 9))
               (seg_rom RSEGS) sp code wb wp)
@@ -100,7 +106,7 @@ Proof.
   1:{ repeat split; [zaddr Gnl|zaddr Gofl|zaddr Gin|zaddr Gout|zaddr Gerr]; unfold mem_w2, mem_w1, ax_writes; destruct ax; rdn_solve. }
   1:{ repeat split; unfold mem_w2, mem_w1, ax_writes; destruct ax; zaddr_goal; rdn_solve. }
   eapply srz_msteps; [exact Hh | exact Hlazy | exact RUN3 |]. clear RUN3.
-
+  (* [comment removed for export] *)
   replace (Z_to_bv 64 0xa154c) with (0xa154c : word) in R3ra by (apply bv_eq; reflexivity).
   unfold W. rewrite <- (app_nil_r pending).
   set (mem3 := mem_w3a (mem_w2 (mem_w1 ax mem sp (getr regs 1) (getr regs 8) tid code (getr regs 9) (getr regs 18) (getr regs 19)) sp code (getr regs1 9)) sp code).
@@ -108,12 +114,12 @@ Proof.
             (Z_to_bv 64 0) (Z_to_bv 64 0) bufp bufsz can (0xa154c : word) pending []);
     [ exact R3sp | exact R3a0 | exact R3a1 | exact R3a2 | exact R3ra
     | lia | lia
-    |
+    | (* [comment removed for export] *)
       subst mem3; unfold mem_w3a, mem_w2, mem_w1, ax_writes; destruct ax; sok_stack ec_sok
     | lia | lia
-    |   split; subst mem3; unfold mem_w3a, mem_w2, mem_w1, ax_writes; destruct ax; zaddr_goal; rdn_solve
-    |   split; subst mem3; unfold mem_w3a, mem_w2, mem_w1, ax_writes; destruct ax; rdn_solve
-    | lia | exact Hfd | exact Hh | exact Hlazy
+    | (* [comment removed for export] *) split; subst mem3; unfold mem_w3a, mem_w2, mem_w1, ax_writes; destruct ax; zaddr_goal; rdn_solve
+    | (* [comment removed for export] *) split; subst mem3; unfold mem_w3a, mem_w2, mem_w1, ax_writes; destruct ax; rdn_solve
+    | lia | exact Hfd | exact Hrdr | exact Hh | exact Hlazy
     | lia | lia | exact LEN
     | cbn [length]; u_norm; reflexivity
     | cbn [length]; lia
@@ -134,6 +140,11 @@ Proof.
     eapply rz_exit_at; [exact F_9babc | exact E_9babc | exact Hh | exact Hlazy | left; exact R5a7 | exact R5a0].
 Qed.
 
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
+(* [comment removed for export] *)
 #[using="Type"] Lemma t_emit_nil_exit : forall code fs, t_eq (t_exit code fs) (t_emit [] (t_exit code fs)).
 Proof.
   intros code fs. apply t_eq_sym. apply t_emit_nil_eq.
@@ -146,12 +157,13 @@ Qed.
            (t_emit (W 1 pending) (t_exit (bv_and code (Z_to_bv 64 255)) (m_fs model))).
 Proof.
   intros regs mem model code pending (sp & tp & tid & wp2 & rp2 & EC & Hh & Hlazy & CASES).
-  destruct CASES as [(-> & wp1 & rp1 & F1) | (wb & wp & bufp & bufsz & rp1 & can & SP & Hfd)].
+  destruct CASES as [(-> & wp1 & rp1 & F1) | (wb & wp & bufp & bufsz & rp1 & can & SP & Hfd & Hrdr)].
   - eapply srz_conseq; [ | apply t_emit_nil_exit ].
     eapply ref_exit_clean; eassumption.
   - eapply ref_exit_flush; eassumption.
 Qed.
 
+(* [comment removed for export] *)
 #[using="Type"] Corollary ref_exit_Z : forall regs mem model code pending,
   exit_pre regs mem model code pending ->
   srealizes RSEGS scfg (mkCfg (mkst regs (Z_to_bv 64 0x9bdf8) mem (seg_rom RSEGS)) model)
@@ -161,5 +173,6 @@ Proof.
   apply ref_exit; assumption.
 Qed.
 End FPX_1.
+
 
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).

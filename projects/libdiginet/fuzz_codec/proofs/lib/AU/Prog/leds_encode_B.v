@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: made for reac-pw/fuzz_pin's ASan harness walk (LLVMFuzzerTestOneInput 0x806b4,
    fuzz_pin.asan sha256 3e4859aed23f78a6eb028120d664abda29bcb8a3bfdea5d6ee5b32b646de9d16) from
-   proofs/libreac/fuzz_knock/lib/A/APgMain0.v at origin/ossv/recipes 6ebe35ba632, with its module paths changed.
+   proofs/libreac/fuzz_knock/lib/A/APgMain0.v, with its module paths changed.
    rule 24: no function proved here alone; this is segment S0 of LLVMFuzzerTestOneInput's walk, whose top claim is
    lib/A/PPgMain.v.
 
@@ -28,6 +28,7 @@
    - the join into ss_H (window 400) and the hand-off to the rest of the walk (RB).
    Section hypotheses: MTL TL LAWS ML ASM1 SMP FFL MTF and RB : rt_from B MT FP POST ss_H (INV_0 B MT 0). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_pin/lib/A/PPgMain0.v, with its module paths, module names and numbers changed; 800 of its 866 lines of code are new or changed and 221 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* leds_encode (diginet_codec.c:235-245) at image B 0x86248, 145 instructions, against its image-B contract
    cdcU_leds_specX (lib/AU/Prog/CPgEncU.v). Real frame 96 and sp realigned to 32 (atom 70 = sp1); the class-0
    side-stack frame F (atom 75, its flag address atom 87, its shadow SB + F / 8 atom 88) taken at 0x862b8; the

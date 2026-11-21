@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: threads launch-record variables (stdin, groups, kernel build, execfn, mbase, rseq size rz) and launch hypotheses through SINV and argH so asan_X_ALL is stated with the rseq parameter, as in fuzz_bigint's copy; the launch input takes its SIGPIPE disposition as a variable sdf; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/AsanXAllKB0.v, lines 30-40, 46, 51-52, 58-67. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Run.
@@ -18,19 +19,40 @@ Variable sp brk0 : word.
 Variable rdraw : EntryDraw.
 Variables argv envp : list (list byte).
 Variables uid hw : word.
+Variable rz : Z.
 Variable fs : Fs.Fs.
+Variable mbase : word.
+Variable stdin : InputStream.
+Variable gid : word.
+Variable groups : list word.
+Variable net : NetQueue.
+Variables nofile sigmask : word.
+Variable abrt : bool.
+Variable ur : InputStream.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variable sdf : bool.
+Variable apc : N.
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
 Hypothesis Hfit : entry_stack_fits sp argv envp.
-#[local] Notation SINV := (SINV0 APH0 sp rdraw brk0 argv envp uid hw).
-#[local] Notation argH := (argH0 APH0 sp rdraw argv envp uid hw).
-Theorem asan_X_ALL : forall x, x_stmt ASEGS0 scfg ASAN0 NX0 AsanInitK.LIMIT SINV argH fs x.
+#[local] Notation INP :=
+(AsanInitK.inp argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf).
+Hypothesis Hlaunch : valid_launch INP.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) INP.
+Hypothesis Hrz : rz = rseq_z (kb_rseq (in_kernel INP)).
+#[local] Notation SINV :=
+(SINV0 APH0 sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf apc).
+#[local] Notation argH :=
+(argH0 sp rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf).
+Theorem asan_X_ALL : forall x, x_stmt ASEGS0 scfg ASAN0 NX0 AsanInitK.LIMIT rz SINV argH fs x.
 Proof.
-pose proof (argH0_high APH0 sp rdraw argv envp uid hw Hsp Hva) as AH.
-pose proof (argH0_agree APH0 sp rdraw argv envp uid hw) as AA.
-pose proof (SINV0_frame APH0 sp rdraw brk0 argv envp uid hw) as SF.
-pose proof (SINV0_agree APH0 sp rdraw brk0 argv envp uid hw) as SA.
+rewrite Hrz.
+pose proof (argH0_high sp rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf apc Hsp Hva) as AH.
+pose proof (argH0_agree sp rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf) as AA.
+pose proof (SINV0_frame APH0 sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf apc) as SF.
+pose proof (SINV0_agree APH0 sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abrt ur kb execfn sdf apc) as SA.
 pose proof e_sp0_init as EI.
 intros [ | | | | | | | | | | ].
 - eapply asan_node_x_sound_XIMemset; eassumption.

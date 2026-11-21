@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3; internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset image B' (#102 asan-ubsan pin d663f82d, unstripped twin c90d4fa54d43), lane
    of write_value, under a Theorem Labs session: the BASE of the walk of write_value (B' 0x87348, 291 instructions, self-recursive) over the
    ONE image-B' program listing (lib/B/Listing_prog.v c97cc46b3e13, PAImg_prog.v 15fab93fe702), generic in the image
@@ -12,7 +13,7 @@
    0x87348, 1164 bytes both, words EQUAL-mod-pcrel (pcrel 25, real 0, unmeasured 0); 2 targets settled by measurement:
    the jump table +0x90 (7 entries, same symbol + offset), .str.1 +0x2fc (a name only): old-B and B' slots alike.
    TEMPLATE (ported, not cited): the kit owner's image-A walk lib/A/Prog/PRW_write_value.v on a working branch
-   7819c4b4583 (blob 051bfb4b3368), its Sections d / f / h up to wv_ret_pos_app, restated at B's listing:
+   (blob 051bfb4b3368), its Sections d / f / h up to wv_ret_pos_app, restated at B's listing:
    - B's frame is 192 bytes (`addi sp, sp, -192`, slot 0; A's is 176), its jump table the PAddHi at slot 36 and its
      `jr a1` at slot 40, its case labels and its ten literals at B's own slots (wv_lits); A's item-loop head state
      is not here (B's is measured on B's listing, in WriteValueB_Cont);
@@ -1377,7 +1378,7 @@ intros ly S Lam peak buf st lyc Sc Lam1 peak1 buf1 st1 Hnd
   rewrite EL in Hnd |- *. split; [right; exact Hin'|].
   intros Ea. subst a. cbn [map] in Hnd. inversion Hnd as [|? ? Hni _]. apply Hni.
   apply (in_map fst) in Hin'. cbn [fst] in Hin'.
-  first [ exact Hin' | apply list_elem_of_In; exact Hin' | apply elem_of_list_In; exact Hin' ].
+  first [ exact Hin' | apply list_elem_of_In; exact Hin' | apply list_elem_of_In; exact Hin' ].
 Qed.
 
 (* the current buffer's footprint is the entry's or a block the run made: a callee's FP fits the caller's *)
@@ -1602,7 +1603,7 @@ Lemma wv_tvis_cur : forall ly S Hp W mem md Lam buf D STK sp0 o cap lyc Sc Hpc W
   prhWriter_tree_vis Wc memc D.
 Proof. exact (wv_tvis_curR (@wle SEGS)). Qed.
 
-(* ---- THE MODEL-RUN POSITION (kit-oldpin b501d43ce5af: PRH_FnWriter 5f7cd294e4b6, PRH_Base 819d870ee0f7). Every
+(* ---- THE MODEL-RUN POSITION (kit-oldpin: PRH_FnWriter 5f7cd294e4b6, PRH_Base 819d870ee0f7). Every
    writer text takes its run events as an ENTRY premise (prh_run_at over prhWriter_evs [] st P) and posts the EXACT
    advance rp_i + length (prhWriter_evs ok st P); put posts it per arm (S7a_WriterRet's prhWriter_put_pos). The three
    lemmas below are the ONE place this walk composes positions: the first put's event from an entry list

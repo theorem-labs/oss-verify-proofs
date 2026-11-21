@@ -1,10 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (stk_idx_of finds the launch's zero window by its size at the revision, StoreOk.stack_window_depth rounded down to a page, in place of the 8 MiB block). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude.
 From OSSVerify.Proofs.fast_float.from_chars.lib.Common Require Import FxLin FxCore FxFacts FxPlan FxEnt.
+From OSSVerify.Proofs.fast_float.from_chars.lib.Common Require StoreOk.
 From OSSVerify.Proofs.fast_float.from_chars.lib.HXH Require Import HxBaseH HxPay.
 From OSSVerify.Proofs.fast_float.from_chars.lib.FXC Require Import FxChDen FxChain FxChMain.
 From OSSVerify.Proofs.fast_float.from_chars.lib.AAC Require Import AcAst AcSteps AcFam AcFam2.
@@ -46,8 +48,11 @@ Definition USE_I_MID (j : nat) (nb : positive) (next : MCH) : MCH :=
   USEJ_MID j nb 2 0x9028c 0x90298 (SITE_SW 0x902a0 0x902bc 0x9c180 2 (CALLSITEI 2 OSSVerify.Proofs.fast_float.from_chars.lib.M4A_kfn.M4A_fci.P0 cs_specs_i (tb_sso 22)) (INITPREP (STASH_S 2 22 MEnd)))
                                (SITE_H 0x902bc 0x9c180 (CALLSITE0_H 2 OSSVerify.Proofs.fast_float.from_chars.lib.M4A_kfn.M4A_fci.P0 cs_specs_ih (tb_heap 22)) (INITPREP (STASH_HK 2 22 MEnd))) 0x902bc next.
 (* [comment removed for export] *)
+(* the launch's zero window below sp: at 727298f3 its size is [StoreOk.stack_window_depth] rounded down to a page
+   (FXG/AsanEntry.WIN), no longer the 8 MiB block *)
+Definition STK_WIN : Z := StoreOk.stack_window_depth / 4096 * 4096.
 Definition stk_idx_of (S : sst) : nat :=
-  match List.filter (fun '(i, R) => (terms_eqb (l_t (rg_base R)) SP0T4 && match is_const (rg_size R) with Some z => Z.eqb z 8388608 | None => false end)%bool)
+  match List.filter (fun '(i, R) => (terms_eqb (l_t (rg_base R)) SP0T4 && match is_const (rg_size R) with Some z => Z.eqb z STK_WIN | None => false end)%bool)
                     (List.combine (List.seq 0 (List.length (s_rgs S))) (s_rgs S)) with
   | [(i, _)] => i | _ => O end.
 Definition FIN_MID : MCH := MSegK 20 P_T (KCons 0x90444 0 (REGROUP (EXIT7 (MSegK 20 P_T (KCons 0x8fe64 0 MEnd KNil)))) KNil).

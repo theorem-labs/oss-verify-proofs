@@ -1,4 +1,4 @@
-# baseshapes (kit known fail-opens, registry 7f2e3c70626): X 51eb4bef2425, Y twin c969d83cdd59, Y pin 9e66f771f22a
+# baseshapes (kit known fail-opens, registry): X 51eb4bef2425, Y twin c969d83cdd59, Y pin 9e66f771f22a
 # function pairs scanned 1729; memory / jump bases 43587; functions with 2-byte parcels 0 (c.lui words 0)
 # shapes: (a) IMM 31865; (b) ADDI 26824; (c) LOGICAL 3669; (e) JT-ARM 386; (f) INFN-CALL 2314; (h) NO-LUI 8009; (none: a plain lo12 pair or a pointer) 6010; (not analysed: no fixpoint) 2
 # verdicts: ADDRESS-EQUAL 3435; OFFSET-ON-POINTER 21731; RUNTIME 13828; TERM-EQUAL 2042; UNNAMED 2551

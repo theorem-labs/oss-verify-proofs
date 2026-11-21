@@ -1,4 +1,4 @@
-# --override rows for reac-repacer/fuzz_wire image B (asan-ubsan), DONOR = fuzz_grant released lib/B (recipes 4f87de75d67,
+# --override rows for reac-repacer/fuzz_wire image B (asan-ubsan), DONOR = fuzz_grant released lib/B (recipes,
 # normalised by mkdon.sh), port_core 7a74e72920e6. file<TAB>donor-line<TAB>old<TAB>new[<TAB>OCCURRENCE].
 # Every value is measured on the pinned images (fuzz_wire.asan-ubsan af4534831a45, twin 51eb4bef2425; control = the same rule
 # on fuzz_grant.asan-ubsan fde52226dc48 / twin 5a5ee7c02b4e gives the donor's own value): measure-B.py, measure-B.out.

@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/pj_parse_defs.v, with its module paths, module names and numbers changed; 33 of its 339 lines of code are new or changed and 24 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the CUTS of pj_parse's image-A' walk (fuzz_preset asan, #102 pin 1be0f53d96cb, unstripped twin
-   bff8519bbe3e; A' 0x85e20, 60 instructions; preset_file.c :296-309) on the batch kit's CUT 7cdbb61b5fa0. STATEMENTS ONLY (and
+   bff8519bbe3e; A' 0x85e20, 60 instructions; preset_file.c :296-309) on the batch kit's CUT. STATEMENTS ONLY (and
    the one cursor-word lemma pjp_cw_entry_A, and pjp_invR's two one-line lemmas): the entry record, the walk's final
    post (the kit's tpj_parse_specX post, by its kit name), the cut states, the segment statements (each proved by its own
    file) and the keep statements the segments share. lib/A/Prog/PjParseA_top.v composes them. proves no function
@@ -24,7 +25,7 @@
      +0xc0..+0xc4  reload p, beq p, end                          taken -> +0xe8 (a0 := 0, j +0xd4)
      +0xc8..+0xd0  a0 := s0, pj_free, a0 := -1                   CUT pjp_C2ref at +0xc8
      +0xd4..+0xe4  ld ra, ld s0, ld s1, sp += 48, ret            CUT pjp_C3 at +0xd4
-   TEXTS: the batch kit's cut (lib/A/PRH_FnPj.v blob 5aca5cbe2cfb, PRH_FnParse.v, PRH_FnReader.v, PRH_Base.v at 7cdbb61b5fa0).
+   TEXTS: the batch kit's cut (lib/A/PRH_FnPj.v blob 5aca5cbe2cfb, PRH_FnParse.v, PRH_FnReader.v, PRH_Base.v).
    TARGET: the kit's tpj_parse_specX ITSELF (no twin): on A' the walk never reads the cursor set's premise prh_cw_pj. The
    one place that touches the cursor set is pjp_cw_entry_A below: parse_value's entry premise prh_cw_entry at q = sp
    holds by its second disjunct, because on A' both cursor functions have pi_s0cur = Some 0, so the word they read is

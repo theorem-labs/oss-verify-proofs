@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 712 of its 727 lines of code are new or changed and 233 lines of the source are left out. *)
-(* GENERATED - do not edit.  C_reac_box_model_blockRB_case34F.v is the re-based copy of lib/B/Prog/reac_box_model_block_case34F.v at 20372bbcc3a
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* GENERATED - do not edit.  C_reac_box_model_blockRB_case34F.v is the re-based copy of lib/B/Prog/reac_box_model_block_case34F.v
    (source sha256 85c0716a4509309c881445024666ae2bd624d66abab79adca332ffe098b9ea61) by gen_rb_modelblock.py
    (its sha256 is cited in the commit that adds this file); the substitutions are listed there.  Dropped here: nothing. *)
-(* This delivery then edited comment text only: the code is unchanged from release c5e779efe8c, the comments are not. *)
+(* This delivery then edited comment text only: the code is unchanged from release, the comments are not. *)
 (* The footprint twin of C_reac_box_model_blockRB_case34.v (image B, asan-ubsan; route 2): cases b = 3 and b = 4 of
    reac_box_model_block as ExecF.evtF runs under the footprint RNG, by the plain file's scripts over StepF's step.
    The pure lemmas of the plain file (c34_chk, c34_sub_post, c34_geo, c34_out, c34_addr, c34_mod8) are reused from
@@ -30,7 +31,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require Import asan_stack_mal
 Import ListNotations.
 Open Scope Z_scope.
 
-(* Local copy of C_reac_box_model_blockRB.v:228's store hook: that file made it Local (a Theorem Labs lane; generator owner a Theorem Labs lane stopped, a Theorem Labs lane audits). *)
+(* Local copy of C_reac_box_model_blockRB.v:229's store hook: that file made it Local (a Theorem Labs lane; generator owner a Theorem Labs lane stopped, a Theorem Labs lane audits). *)
 Local Ltac footprint_after_store segs m a bs ::=
   repeat match goal with
   | MU : munch ?Wq ?mq m |- _ =>
@@ -390,7 +391,7 @@ Section Case34F.
         - rewrite (unsigned_lit (fr + 32)), (unsigned_lit 4) by lia.
           right. replace (fr + 32 + 7) with (fr + 39) by lia. apply FAP. lia.
         - rewrite (unsigned_lit o) by lia. exact AOrt.
-        (* the footprint (build_dt1_single_contract_F of a Theorem Labs lane 6faf362962e: rng_bytes, the image range, the
+        (* the footprint (build_dt1_single_contract_F of a Theorem Labs lane: rng_bytes, the image range, the
            callee's window and its 8-aligned shadow cover, the runtime words, o and its shadow, the digits and
            their shadow) *)
         - exact RBY.
@@ -701,7 +702,7 @@ Section Case34F.
       - rewrite (unsigned_lit (A + 35)), (unsigned_lit 8) by lia.
         right. replace (A + 35 + 7) with (A + 42) by lia. exact AP42.
       - rewrite (unsigned_lit o) by lia. exact AOrt.
-      (* the footprint (build_dt1_single_contract_F of a Theorem Labs lane 6faf362962e: rng_bytes, the image range, the
+      (* the footprint (build_dt1_single_contract_F of a Theorem Labs lane: rng_bytes, the image range, the
          callee's window and its 8-aligned shadow cover, the runtime words, o and its shadow, the rvb bytes and
          their shadow) *)
       - exact RBY.

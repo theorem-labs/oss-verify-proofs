@@ -1,5 +1,5 @@
 (* proves copy_strz_contract, the walk of copy_strz in fuzz_transport.ubsan. *)
-(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/copy_strz.v at 9bd29914ffdef650a37285056a472ff186b4331a to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/copy_strz.v to fuzz_transport's images *)
 (* Walk of copy_strz (src/diginet_frame.c:130-136 at 835f336c) in fuzz_transport.ubsan, 0x185e0..0x18640.
    The loop at 0x185ec copies the bytes of s at src to the field at dst up to the first NUL, at
    most 9 of them; 0x18630 writes the NUL. CS_INV is the state of memory at each loop head: the

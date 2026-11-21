@@ -3,8 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: the SCAN and SCANS segments of the image-B walk of fuzz_reply's relay_remove
    over W6's frozen cut file lib/B/W_relay_remove_cx.v (rr_scan_stmt, rr_scans_stmt): the scan loop
    0x8426c -> {0x842d8 | 0x843c0} of fuzz_reply.asan-ubsan.  Ported from lib/A/W_rr_scan.v
-   (a working branch 57901ca62d8), which ports the retired lane form (commit 2ad36763b22,
-   lib/A/Prog/relay_remove_*.v); this file's first B text was 8f74202634d (over a draft cut file).
+   (a working branch), which ports the retired lane form (
+   lib/A/Prog/relay_remove_*.v); this file's first B text was (over a draft cut file).
 
    Where each part comes from:
    - rrs_nth_le_bytes, rrs_concat_split, rrs_eb_len, rrs_concat_len, rrs_garr8_le, rrs_fd_cell: lib/A/W_rr_scan.v,
@@ -25,13 +25,14 @@
                                    a3 xor 0; cited trap_null_xor_folded (a3 = atom 13 = 1, R3);
      0x84280  beqz a4              BASE ALIGNED+NON-NULL flag: the runner decides it from a4's seat fact
                                    mkAF 1 1 0 (R3), no branch case. *)
-(* Modified by Theorem Labs, 2026-10: ROUTE (b), STEP 3 (lane RRX, the image-A twin a Theorem Labs lane f4cd818e98d
+(* Modified by Theorem Labs, 2026-10: ROUTE (b), STEP 3 (lane RRX, the image-A twin a Theorem Labs lane
    lib/A/W_rr_scan.v): SCAN / SCANS over the generic relation ARx, IN PLACE (the AR proofs are replaced; Section c is
    W_relay_remove_cx.v's generic block, verbatim); the cut predicates carry the head set Hp1 after S1.  The scan writes
    nothing and calls nothing, so RHELD (with its room budget rp_RM and its count fact cnt_ok_pk) passes through
    unchanged.  al_blocks -> alx_blocks, ajournal_gx_AR -> ajournal_gx_AR_x, the table block's shadow fact
    range_addressable_of_block -> range_addressable_of_block_hp0_x (under HP0), RUN / RUNTO over paj_run_x_x /
    paj_run_to_x_x with paj_run_tok_x / paj_run_to_tok_x.  The rrs_* helpers keep their statements. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

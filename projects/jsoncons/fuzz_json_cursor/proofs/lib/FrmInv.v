@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed exec_cz, interp_eff_all, step_frm_zero. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import base.
 From stdpp.bitvector Require Import definitions.
@@ -102,7 +103,7 @@ Lemma interp_eff_all : forall (segs : list Segment) P t m rep,
 Proof.
   intros segs P t m rep H. revert m rep. induction H; intros m rep E; cbn [interp_eff_accesses] in E; try discriminate.
   - injection E as <-. cbn. assumption.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|discriminate].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [| destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) m) as [r| |] eqn:E2; try discriminate.
     injection E as <-. cbn [access_value]. eapply H0. exact E2.
   - destruct (store_ok segs m a (width_bytes n)); [|discriminate].
@@ -163,7 +164,8 @@ Proof.
   -   unfold store_val. destruct sz0; constructor; constructor; auto with czdb.
   -   destruct (negb (amo_aligned w (rget c rs1))); [constructor|]. destruct w; constructor; intros; constructor; auto 6 with czdb.
   -   destruct (negb (amo_aligned w (rget c rs1))); [constructor|].
-    destruct (match c_resv c with Some r => _ | None => false end); [|constructor; auto 6 with czdb].
+    destruct (match c_resv c with Some r => _ | None => false end);
+      [|destruct w; constructor; intros; constructor; constructor; auto 6 with czdb].
     destruct w; constructor; constructor; auto 6 with czdb.
   -   destruct (negb (amo_aligned w (rget c rs1))); [constructor|].
     destruct w; constructor; intros; constructor; constructor; auto 6 with czdb.
@@ -323,8 +325,8 @@ Proof.
   destruct (fetch_tail segs (ms_pc ms)) as [w|] eqn:F3.
   { destruct (decode_exec_accesses segs ms w) as [rep| |] eqn:E; try discriminate. injection H as <-.
     exact (decode_exec_frm ms w rep (fetch_tail_ok _ _ F1 F3) E Hz). }
-  unfold fetch_failure in H. destruct (negb _); [discriminate|].
-  match type of H with context [if ?b then _ else _] => destruct b end; discriminate.
+  unfold fetch_failure in H.
+  repeat match type of H with context [if ?b then _ else _] => destruct b end; discriminate.
 Qed.
 
 Theorem msteps_frm_zero : forall ms ms', msteps segs ms ms' -> frm_zero (ms_fcsr ms) -> frm_zero (ms_fcsr ms').

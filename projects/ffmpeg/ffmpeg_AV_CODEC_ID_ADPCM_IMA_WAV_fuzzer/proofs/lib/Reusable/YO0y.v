@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YO0y.v, with its module paths changed. *)
 (* Modified by Trevor Hansen, 2026-11: copied from projects/zlib/checksum_fuzzer/proofs/lib/Reusable/YO0y.v for ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the refused munmap branch keeps the region). *)
 From Stdlib Require Import ZArith List Bool Lia.
 From OSSVerify.Proofs.ffmpeg.ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.lib.Reusable Require Import
 YO0i YO0f YO0g YO0h YO0w YO0s
@@ -72,7 +73,10 @@ apply Forall_forall. intros [q a] Hin Hml. cbn [snd] in *.
 apply (used_metas_iff s3 q a (proj1 (inv_keys HI3))) in Hin.
 assert (Hu : usedX [] s q a) by (apply EU2, EU3; exact Hin).
 pose proof (FRESH q a Hu). lia. }
-intros z' _. msimp. mbinds. eapply upd_region_kill_spec; [exact HI3 | apply Erg3; [exact Hr2 | reflexivity] | reflexivity | |].
+intros z' _. msimp. destruct (z' =? 0); cbn [negb].
+{ msimp. apply itok_ret. apply HQ. split; [exact HI3|]. cbn [fst snd].
+  eapply ub_same_trans; [| exact UB3]. apply ub_same_metas. rewrite Em2, Es1. reflexivity. }
+msimp. mbinds. eapply upd_region_kill_spec; [exact HI3 | apply Erg3; [exact Hr2 | reflexivity] | reflexivity | |].
 { intros q a Hu _. apply EU3, EU2 in Hu. pose proof (FRESH q a Hu). lia. }
 intros s4 HI4 Em4 _. msimp. apply itok_ret. apply HQ. split; [exact HI4 |]. cbn [fst snd].
 eapply ub_same_trans; [| apply ub_same_metas; exact Em4]. eapply ub_same_trans; [| exact UB3].

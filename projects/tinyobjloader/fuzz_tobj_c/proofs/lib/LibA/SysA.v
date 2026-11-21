@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the syscall-frame obligation's new read-only-backing premise, LPS 75d69e00, closed by openat_rd_rob, writev2_rob, writev1_rob, writev01_rob, RomBase's tactics and, for ioctl, sys_rob_of_check; the writev steps take the channel reader from MI by MI_rdr, LPS 08b1429; RomBase imported). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -11,7 +12,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys Require Import Uaccess Uapi Syscall.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
-From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw Require Import Safety SysSpec SysStep.
+From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw Require Import Safety SysSpec SysStep RomBase.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3 Require Import
   SymState SymStep SymSoundA SymSoundB SymSoundV SymSoundI SymSoundL SymSoundM SymSoundW
   SymSoundF SymSoundR SymComplete SymCall SymEntail SymExit SymFrame SymBytes Glue3.
@@ -75,7 +76,14 @@ Proof using .
   pose proof (Hpath tr ms md Hsp Hk) as Hav.
   pose proof (HNS tr ms md Hsp Hk) as Hns. rewrite <- G1 in Hns.
   split.
-  - eapply Hokp; [exact Hk | exact Hp |]. eapply openat_rd_only_okA; [exact Hh | exact HMI | exact H56 | exact Hfl | exact Hdir | exact Hns | exact Hav].
+  (* LPS 75d69e00: as at Lib/SysOpen.v -- 56 reads [in_mem], so the fourth premise is
+     [SysOpen.openat_rd_rob]'s, on the concrete [ms]. *)
+  - eapply Hokp;
+      first
+        [ solve [ exact Hk ]
+        | solve [ exact Hp ]
+        | solve [ eapply openat_rd_only_okA; [exact Hh | exact HMI | exact H56 | exact Hfl | exact Hdir | exact Hns | exact Hav] ]
+        | solve [ eapply openat_rd_rob; [exact Hp | exact H56 | exact Hfl | exact Hns] ] ].
   - intros w' Hw.
     destruct (wstep_openat_rd_invA segs tp tr ms md _ w' Hp Hh HMI H56 Hfl Hdir Hns Hav Hw) as (r & md' & Hpost & ->).
     assert (Hag : agree_below (ss_next (ax_S A)) rho (rho_set_rw rho (ss_next (ax_S A)) r)) by (apply agree_below_set_rw; lia).
@@ -277,6 +285,8 @@ Lemma ranges_avoid_app : ltac2:(tb__ "0|3|
 S15Q40A1M0ScF_;S9SfG0SbA2M1A1M2G2S6fR3R2A2S6fR4R2A2S6fR5S12G1R4R3A3A2F_;F_;Fl2;Fl1;FH;").
 Proof using . intros H l1 l2 A1 A2 a n Hin. apply in_app_or in Hin as [Hin|Hin]; [exact (A1 a n Hin) | exact (A2 a n Hin)]. Qed.
 
+(* LPS 08b1429: a nonempty writev needs the channel's reader ([writev_spec]'s SIGPIPE arm). The ASan
+   world's model invariant [MI] carries it ([MI_rdr]), so these triples need no premise for it. *)
 Lemma triple1_writev2A : forall (ok : world -> Prop) (J J' : jpredA) A rho tp ch bs1 bs2 e,
   ok_frameA segs ok J -> ok_pframeA segs ok J -> stableA segs (ss_next (ax_S A)) J ->
   stableA segs (Pos.succ (ss_next (ax_S A))) J' ->
@@ -336,10 +346,18 @@ Proof using .
   { rewrite G0, fd32_lit by lia. exact Hlk. }
   assert (Hch0 : Z_to_bv 64 ch <> Z_to_bv 64 0) by (apply Z_to_bv64_neq; lia).
   split.
-  - eapply Hokp; [exact Hk | exact Hp |].
-    eapply writev2_only_okA; [exact Hh | exact HMI | exact H66 | exact Hfd' | exact Hch0 | exact G2 | exact R1' | exact R2' | exact R3' | exact R4' | exact B1' | exact B2' | exact Hiok | exact Hok1 | exact Hok2 | exact Hlen | exact Hav].
+  (* LPS 75d69e00: [ok_pframe]'s fourth premise.  66 is NOT in [RomBase.memfree_lit] and must
+     not be -- [memfree 66] is FALSE, writev reads the iovec array out of [in_mem].  The
+     obligation is about the CONCRETE [ms], so [SysStep.writev2_rob] takes the already-lifted
+     [R1' .. B2']. *)
+  - eapply Hokp;
+      first
+        [ solve [ exact Hk ]
+        | solve [ exact Hp ]
+        | solve [ eapply writev2_only_okA; [exact Hh | exact HMI | exact H66 | exact Hfd' | exact Hch0 | exact G2 | exact R1' | exact R2' | exact R3' | exact R4' | exact B1' | exact B2' | exact Hiok | exact Hok1 | exact Hok2 | exact Hlen | exact (MI_rdr segs _ _ HMI) | exact Hav] ]
+        | solve [ eapply writev2_rob; [exact Hp | exact H66 | exact Hfd' | exact Hch0 | exact G2 | exact R1' | exact R2' | exact R3' | exact R4' | exact B1' | exact B2' | exact Hiok | exact Hok1 | exact Hok2 | exact Hlen | exact (MI_rdr segs _ _ HMI)] ] ].
   - intros w' Hw.
-    destruct (wstep_writev2_invA segs tp tr ms md _ _ _ _ _ _ _ _ w' Hp Hh HMI H66 Hfd' Hch0 G2 R1' R2' R3' R4' B1' B2' Hiok Hok1 Hok2 Hlen Hav Hw) as (k & Hk1 & ->).
+    destruct (wstep_writev2_invA segs tp tr ms md _ _ _ _ _ _ _ _ w' Hp Hh HMI H66 Hfd' Hch0 G2 R1' R2' R3' R4' B1' B2' Hiok Hok1 Hok2 Hlen (MI_rdr segs _ _ HMI) Hav Hw) as (k & Hk1 & ->).
     assert (Hag : agree_below (ss_next (ax_S A)) rho (rho_set_rw rho (ss_next (ax_S A)) (Z_to_bv 64 (Z.of_nat k)))) by (apply agree_below_set_rw; lia).
     exists (rho_set_rw rho (ss_next (ax_S A)) (Z_to_bv 64 (Z.of_nat k))). split; [exact Hag|].
     destruct (md_after_props segs tp md _ HMI (Hav k)) as (Hme & _).
@@ -520,7 +538,7 @@ Proof using H10 H17 Hbuf Hcells Hcnt Hhi Hi Hlo Hnth Hoff Hov.
   destruct (read_buf_coreA tr ms md HspA Hfd Hfs) as (x8 & wdst & Hp & H63 & Hh & HMI & Hfd' & Ewd & Hc2 & Hc3 & Hbs & G1 & G0 & Hav).
   rewrite <- Hbs in Hav.
   split.
-  - eapply Hokp; [exact Hk | exact Hp |]. exact (@read_file_only_okA segs tp ms md x8 p (Z_to_bv 64 off) data wdst Hh HMI H63 Hfd' Hfs Ewd Hc2 Hc3 Hav).
+  - eapply Hokp; try exact Hk; try exact Hp; try (solve [RomBase.rob_auto | eapply RomBase.sys_rob_exit; eassumption]). exact (@read_file_only_okA segs tp ms md x8 p (Z_to_bv 64 off) data wdst Hh HMI H63 Hfd' Hfs Ewd Hc2 Hc3 Hav).
   - intros w' Hw.
     pose proof (@wstep_read_file_invA segs tp tr ms md x8 p (Z_to_bv 64 off) data wdst w' Hp Hh HMI H63 Hfd' Hfs Ewd Hc2 Hc3 Hav Hw) as ->.
     cbn zeta. rewrite Hbs, G0. fold (rbA_md' md).
@@ -569,7 +587,7 @@ Proof using H10 H17 Hbuf Hcells Hcells0 Hcnt Hhi Hi Hlo Hnth Hoff Hwoff Hov.
   destruct (read_buf_coreA tr ms md HspA Hfd Hfs) as (x8 & wdst & Hp & H63 & Hh & HMI & Hfd' & Ewd & Hc2 & Hc3 & Hbs & G1 & G0 & Hav).
   rewrite <- Hbs in Hav.
   split.
-  - eapply Hokp; [exact Hk | exact Hp |]. exact (@read_file_only_okA segs tp ms md x8 p (Z_to_bv 64 off) data wdst Hh HMI H63 Hfd' Hfs Ewd Hc2 Hc3 Hav).
+  - eapply Hokp; try exact Hk; try exact Hp; try (solve [RomBase.rob_auto | eapply RomBase.sys_rob_exit; eassumption]). exact (@read_file_only_okA segs tp ms md x8 p (Z_to_bv 64 off) data wdst Hh HMI H63 Hfd' Hfs Ewd Hc2 Hc3 Hav).
   - intros w' Hw.
     pose proof (@wstep_read_file_invA segs tp tr ms md x8 p (Z_to_bv 64 off) data wdst w' Hp Hh HMI H63 Hfd' Hfs Ewd Hc2 Hc3 Hav Hw) as ->.
     cbn zeta. rewrite Hbs, G0. fold (rbA_md' md).
@@ -665,7 +683,7 @@ Proof using .
   { rewrite G0, fd32_lit by lia. exact Hlk. }
   assert (Hch0 : Z_to_bv 64 ch <> Z_to_bv 64 0) by (apply Z_to_bv64_neq; lia).
   eexists. split.
-  { exact (wstep_writev2_intro_prefixA segs tp tr ms md _ _ _ _ _ _ _ _ n Hp Hh HMI H66 Hfd' Hch0 G2 R1' R2' R3' R4' B1' B2' Hiok Hok1 Hok2 Hlen ltac:(lia) (Hav n)). }
+  { exact (wstep_writev2_intro_prefixA segs tp tr ms md _ _ _ _ _ _ _ _ n Hp Hh HMI H66 Hfd' Hch0 G2 R1' R2' R3' R4' B1' B2' Hiok Hok1 Hok2 Hlen (MI_rdr segs _ _ HMI) ltac:(lia) (Hav n)). }
   exists (rho_set_rw rho (ss_next (ax_S A)) (Z_to_bv 64 (Z.of_nat n))). split; [exact Hag|].
   split; [apply rho_set_rw_at|].
   destruct (md_after_props segs tp md _ HMI (Hav n)) as (Hme & _).
@@ -727,10 +745,15 @@ Proof using .
   { rewrite G0, fd32_lit by lia. exact Hlk. }
   assert (Hch0 : Z_to_bv 64 ch <> Z_to_bv 64 0) by (apply Z_to_bv64_neq; lia).
   split.
-  - eapply Hokp; [exact Hk | exact Hp |].
-    eapply writev1_only_okA; [exact Hh | exact HMI | exact H66 | exact Hfd' | exact Hch0 | exact G2 | exact R1' | exact R2' | exact B1' | exact Hiok | exact Hok1 | exact Hlen | exact Hav].
+  (* LPS 75d69e00: as at :341 -- [SysStep.writev1_rob] on the concrete [ms]. *)
+  - eapply Hokp;
+      first
+        [ solve [ exact Hk ]
+        | solve [ exact Hp ]
+        | solve [ eapply writev1_only_okA; [exact Hh | exact HMI | exact H66 | exact Hfd' | exact Hch0 | exact G2 | exact R1' | exact R2' | exact B1' | exact Hiok | exact Hok1 | exact Hlen | exact (MI_rdr segs _ _ HMI) | exact Hav] ]
+        | solve [ eapply writev1_rob; [exact Hp | exact H66 | exact Hfd' | exact Hch0 | exact G2 | exact R1' | exact R2' | exact B1' | exact Hiok | exact Hok1 | exact Hlen | exact (MI_rdr segs _ _ HMI)] ] ].
   - intros w' Hw.
-    destruct (wstep_writev1_invA segs tp tr ms md _ _ _ _ _ w' Hp Hh HMI H66 Hfd' Hch0 G2 R1' R2' B1' Hiok Hok1 Hlen Hav Hw) as (k & Hk1 & ->).
+    destruct (wstep_writev1_invA segs tp tr ms md _ _ _ _ _ w' Hp Hh HMI H66 Hfd' Hch0 G2 R1' R2' B1' Hiok Hok1 Hlen (MI_rdr segs _ _ HMI) Hav Hw) as (k & Hk1 & ->).
     assert (Hag : agree_below (ss_next (ax_S A)) rho (rho_set_rw rho (ss_next (ax_S A)) (Z_to_bv 64 (Z.of_nat k)))) by (apply agree_below_set_rw; lia).
     exists (rho_set_rw rho (ss_next (ax_S A)) (Z_to_bv 64 (Z.of_nat k))). split; [exact Hag|].
     destruct (md_after_props segs tp md _ HMI (Hav k)) as (Hme & _).
@@ -795,7 +818,7 @@ Proof using .
   { rewrite G0, fd32_lit by lia. exact Hlk. }
   assert (Hch0 : Z_to_bv 64 ch <> Z_to_bv 64 0) by (apply Z_to_bv64_neq; lia).
   eexists. split.
-  { exact (wstep_writev1_intro_prefixA segs tp tr ms md _ _ _ _ _ n Hp Hh HMI H66 Hfd' Hch0 G2 R1' R2' B1' Hiok Hok1 Hlen ltac:(lia) (Hav n)). }
+  { exact (wstep_writev1_intro_prefixA segs tp tr ms md _ _ _ _ _ n Hp Hh HMI H66 Hfd' Hch0 G2 R1' R2' B1' Hiok Hok1 Hlen (MI_rdr segs _ _ HMI) ltac:(lia) (Hav n)). }
   exists (rho_set_rw rho (ss_next (ax_S A)) (Z_to_bv 64 (Z.of_nat n))). split; [exact Hag|].
   split; [apply rho_set_rw_at|].
   destruct (md_after_props segs tp md _ HMI (Hav n)) as (Hme & _).
@@ -839,7 +862,13 @@ Proof using .
   { rewrite G0, fd32_lit by lia. exact (HJ rho tp tr md Hk). }
   assert (Hch0 : Z_to_bv 64 ch <> Z_to_bv 64 0) by (apply Z_to_bv64_neq; lia).
   split.
-  - eapply Hokp; [exact Hk | exact Hp |]. eapply writev01_only_okA; [exact Hh | exact HMI | exact H66 | exact Hfd' | exact Hch0 | exact G2 | exact R1' | exact R2' | exact Hiok | exact Hbok | exact Hav].
+  (* LPS 75d69e00: as at :341 -- [SysExtra.writev01_rob] on the concrete [ms]. *)
+  - eapply Hokp;
+      first
+        [ solve [ exact Hk ]
+        | solve [ exact Hp ]
+        | solve [ eapply writev01_only_okA; [exact Hh | exact HMI | exact H66 | exact Hfd' | exact Hch0 | exact G2 | exact R1' | exact R2' | exact Hiok | exact Hbok | exact Hav] ]
+        | solve [ eapply writev01_rob; [exact Hp | exact H66 | exact Hfd' | exact Hch0 | exact G2 | exact R1' | exact R2' | exact Hiok | exact Hbok] ] ].
   - intros w' Hw. rewrite (wstep_writev01_invA segs tp tr ms md _ _ b w' Hp Hh HMI H66 Hfd' Hch0 G2 R1' R2' Hiok Hbok Hav Hw).
     destruct (md_after_props segs tp md _ HMI Hav) as (Hme & _).
     split.
@@ -929,7 +958,7 @@ Proof using H10 H17 Hi Hov.
   intros tr ms md HspA Hk.
   destruct (read_dir_coreA tr ms md HspA (HJfd tr md Hk)) as (x8 & Hp & H63 & Hh & Hfd' & Hc3 & Hsm').
   split.
-  - eapply Hokp; [exact Hk | exact Hp |]. exact (@read_dir_only_okA segs ms md x8 H63 Hfd' Hc3).
+  - eapply Hokp; try exact Hk; try exact Hp; try (solve [RomBase.rob_auto | eapply RomBase.sys_rob_exit; eassumption]). exact (@read_dir_only_okA segs ms md x8 H63 Hfd' Hc3).
   - intros w' Hw.
     pose proof (@wstep_read_dir_invA segs tr ms md x8 w' Hp Hh H63 Hfd' Hc3 Hw) as ->.
     split; [exact Hsm' | apply HK; exact Hk].
@@ -982,7 +1011,7 @@ Proof using H10 H17 Hi.
   intros tr ms md HspA Hk. destruct (HJfd tr md Hk) as [e Hfd].
   destruct (close_coreA tr ms md e HspA Hfd) as (x8 & Hp & H57 & Hh & Hfd' & Hcm & Hsm').
   split.
-  - eapply Hokp; [exact Hk | exact Hp |]. exact (@close_only_okA segs ms md x8 e H57 Hfd').
+  - eapply Hokp; try exact Hk; try exact Hp; try (solve [RomBase.rob_auto | eapply RomBase.sys_rob_exit; eassumption]). exact (@close_only_okA segs ms md x8 e H57 Hfd').
   - intros w' Hw.
     pose proof (@wstep_close_invA segs tr ms md x8 e w' Hp Hh H57 Hfd' Hw) as ->. rewrite Hcm.
     split; [exact Hsm' | apply HK; exact Hk].
@@ -1041,7 +1070,27 @@ Proof using H10 H11 H17 Hfd Hi.
   intros tr ms md HspA Hk. destruct (HJfd tr md Hk) as [e Hlk].
   destruct (ioctl_coreA tr ms md e HspA Hlk) as (x8 & Hp & H29 & Hh & Hfd' & Hc & Hsm').
   split.
-  - eapply Hokp; [exact Hk | exact Hp |]. exact (@ioctl_only_okA segs ms md x8 e H29 Hfd' Hc).
+  (* ioctl is 29 and 29 is NOT in [RomBase.memfree_lit], so [rob_auto] cannot close the
+     fourth goal here and must not be made to: [memfree 29] is FALSE -- [check_ioctl]'s
+     FdDgram + SIOCGIFINDEX arm reads [in_mem] through [copy_bytes_map]
+     (75d69e00:theories/LinuxProcessSem/Checks/Sys/Fs/Ioctl.v:118, 192-195).  The A-side twin
+     of the route Fw3/SymCall.v:1094 uses: under [Hfd'] (the fd is a channel) and [Hc] (the
+     request is TIOCGWINSZ), [ioctl_check_open] (Fw/SysSpec.v:401) sends [check_syscall] to
+     [check_ret_only eff (errno_ret ENOTTY) md []], whose right-hand side mentions NO input,
+     so the larger backing and the original give the same check.  Its statement was read by
+     decoding the blob, not inferred:
+       forall i m, bv_unsigned (in_sysno i) = 29 -> forall ch eff,
+         fd_lookup (m_fds m) (fd32 (in_arg i 0)) = Some (FdChannel ch) ->
+         cmd32 (in_arg i 1) = TIOCGWINSZ ->
+         check_syscall i eff m = check_ret_only eff (errno_ret ENOTTY) m [] *)
+  - eapply Hokp;
+      first
+        [ solve [ exact Hk ]
+        | solve [ exact Hp ]
+        | solve [ exact (@ioctl_only_okA segs ms md x8 e H29 Hfd' Hc) ]
+        | solve [ apply RomBase.sys_rob_of_check; intros r x8' Hr Hs' eff;
+                  rewrite Hp in Hs'; injection Hs' as <-;
+                  erewrite !ioctl_check_open by eauto; reflexivity ] ].
   - intros w' Hw.
     pose proof (@wstep_ioctl_invA segs tr ms md x8 e w' Hp Hh H29 Hfd' Hc Hw) as ->.
     split; [exact Hsm' | apply HK; exact Hk].

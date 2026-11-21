@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: made from a Theorem Labs lane's proofs/libreac/fuzz_grant/lib/A/AsanTop.v (a working branch
-   0bed23e5b69, itself from proofs/cgif/cgif_file_fuzzer/lib/A/AZ03.v) for fuzz_ctrl: the plain side at fuzz_ctrl's agreement
+(* Modified by Theorem Labs, 2026-10: made from a Theorem Labs lane's proofs/libreac/fuzz_grant/lib/A/AsanTop.v (a working branch,
+   itself from proofs/cgif/cgif_file_fuzzer/lib/A/AZ03.v) for fuzz_ctrl: the plain side at fuzz_ctrl's agreement
    shape ag_shape checksum_shape, built as lib/CtrlAgree.v and lib/AgreeFrame.v build it for the ubsan agreement. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed ctrl_plain_rz). *)
 (* The plain build's proved realization of SPECX at 2^34 for fuzz_ctrl's ASan agreements: AgreeTop.plain_rz_of_contracts_R
    fed by the plain entry-function contract, which is the closed plain slot of the ubsan agreement
    (Prog/Seg/Slot.v slot_of_lemmas over Prog/Seg/Segs.v segs_holds at the frame facts plain_frame_facts_a). *)
@@ -50,7 +51,7 @@ Lemma ctrl_plain_rz : forall en inp, valid_entry Images.plain en inp -> valid_in
   rz_run Images.plain Budgets.Standard.lim_source en inp (SPECX (LS:=AGS) inp).
 Proof.
   assert (Hp : forall (rc : RunCeil) (fx : FPState) (j : nat), (j < 4)%nat ->
-    @lib_contract_g fx rc AGS src0_msyms (@zlib_API rc) src0_sink_head src0_sink
+    @lib_contract_g fx rc AGS src0_msyms _ (@zlib_API rc) src0_sink_head src0_sink
       [] frame_RELRO (fun _ _ => True) j ENTRY RA_LIB EMPTY SLOT_STACK).
   { intros rc fx j Hj.
     exact (@OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Prog.Seg.Slot.slot_of_lemmas fx rc src0_msyms (@zlib_API) AGS

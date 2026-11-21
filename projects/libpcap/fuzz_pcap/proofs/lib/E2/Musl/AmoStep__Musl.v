@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the EntryImage section is restated over the launch's (inp, mb, ph, entry, sp, rnd), esi_app says the image is the kernel's block with no slack, init_block_bytes takes the stack_window_lo floor, and entry_bounds takes entry_launch_ok_va and a break; and launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef). *)
 (* [comment removed for export] *)
 From Stdlib Require Lia.
 (* [comment removed for export] *)
@@ -171,33 +172,77 @@ Proof. intros rnd. rewrite msecret_of_rnd. apply Z_to_bv_bv_unsigned. Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
+(* PROVENANCE (rule 23c).  [Section EntryImage] below is this file's
+   pre-revision entry-image section re-threaded onto LPS 75d69e00.  WHAT
+   MOVED, with the model file:line that shows it:
+     1. ARITY.  [Run.entry_stack_image] (75d69e00:theories/LinuxProcessSem/Run.v:1344)
+        is now [(inp mbase ph entry sp draw)] -- six arguments, the launch's
+        own -- and it is [StackLayout.build_stack_bytes (launch_auxv inp sp mbase)
+        ph entry sp (ed_top draw) (in_argv inp) (in_envp inp) (in_execfn inp)
+        (in_uid inp) (in_gid inp) (in_hwcap inp) draw], twelve arguments with a
+        leading [LaunchAuxv].  [PropExec.wrap_mem] follows the image's order.
+        The old seven-argument [(ph sp argv envp uid hw rnd)] shape is gone:
+        the inputs now carry the kernel build, the gid and the exec file name.
+     2. THE IMAGE IS THE BLOCK.  [ed_slack] and [entry_slack] are DELETED
+        (Run.v:1332, StackLayout.v:331): the model used to lay a block SHORTER
+        than the kernel's and draw the bytes above it; now the block IS the
+        whole image.  So [esi_app] is the conversion [esi = bsb] -- it is kept,
+        rather than collapsed away, because it is exactly the revision's
+        content and because [bsb_le_esi] and [init_block_bytes] are stated
+        against the block and consumed by name elsewhere in the unit.
+     3. THE FLOOR.  [init_stack_bytes]' window floor is
+        [Run.stack_window_lo (in_kernel inp) mb rnd] (Run.v:1379), not the
+        constant [stack_max_size <= bv_unsigned sp]; [init_block_bytes] takes
+        the donor's [SPLO] instead (InitMem.v:142-144, :164-168, :210-226).
+     4. THE TOP.  [entry_stack_image_top] NO LONGER EXISTS (zero rows at
+        75d69e00; control [entry_page_top] = 11 rows, Run.v:1341).  The
+        surviving route is the pair vendored in E2/Lib/PropExec.v from
+        75d69e00:theories/Common/PropExec.v, which the checker image excludes:
+        [length_entry_stack_image_launch] (:2449, model :2534) gives the image's
+        length as [ed_top - sp] EXACTLY, and [entry_page_top_within_window]
+        (:2620, model :2740) bounds [entry_page_top] by [va_stack_top].  Both
+        consume [Run.entry_launch_ok_va] (Run.v:3723), so [entry_bounds] GAINS
+        that premise and an existential [brk]; [entry_stack_fits] alone no
+        longer bounds the image, because the kernel's block can outrun
+        [entry_stack_span] (E2/Lib/PropExec.v:2431).  [va_stack_top Sv48] is
+        [sp_window_hi] (State.v:494), so the conclusion is unchanged.
+     5. No premise added to a published statement and nothing weakened: every
+        declaration below is tree-local, under proofs/lib/. *)
 Section EntryImage.
   Variable segs : list Segment.
-  Variables (ph : PhdrInfo) (sp : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw).
-  Notation bsb := (build_stack_bytes ph sp argv envp uid hw rnd).
-  Notation esi := (entry_stack_image ph sp argv envp uid hw rnd).
+  Variables (inp : ProcInput) (mb : word) (ph : PhdrInfo) (entry : word)
+            (sp : word) (rnd : EntryDraw).
+  Notation bsb := (build_stack_bytes (launch_auxv inp sp mb) ph entry sp (ed_top rnd)
+                     (in_argv inp) (in_envp inp) (in_execfn inp)
+                     (in_uid inp) (in_gid inp) (in_hwcap inp) rnd).
+  Notation esi := (entry_stack_image inp mb ph entry sp rnd).
+  (* the zero-filled window's floor, exactly [wrap_mem]'s own guard *)
+  Notation wlo := (stack_window_lo (in_kernel inp) mb rnd).
 
-  #[using="Type"] Lemma esi_app : esi = bsb ++ entry_slack sp bsb (ed_slack rnd).
-  Proof. reflexivity. Qed.
+  #[using="Type"] Lemma esi_app : esi = bsb.
+  Proof. exact (entry_stack_image_block inp mb ph entry sp rnd). Qed.
 
   #[using="Type"] Lemma bsb_le_esi : (length bsb <= length esi)%nat.
-  Proof. rewrite esi_app, length_app. lia. Qed.
+  Proof. rewrite esi_app. lia. Qed.
 
   #[using="Type"] Lemma init_block_bytes :
-    (stack_max_size <= bv_unsigned sp)%Z -> (bv_unsigned sp + Z.of_nat (length esi) <= 2^64)%Z ->
-    bytes_at segs (wrap_mem ph sp argv envp uid hw rnd) (bv_unsigned sp) bsb.
+    (wlo <= bv_unsigned sp)%Z -> (bv_unsigned sp + Z.of_nat (length esi) <= 2^64)%Z ->
+    bytes_at segs (wrap_mem inp mb ph entry sp rnd) (bv_unsigned sp) bsb.
   Proof.
-    intros SPLO IMGHI. pose proof (init_stack_bytes segs ph sp argv envp uid hw rnd SPLO IMGHI) as B.
-    rewrite esi_app in B. apply bytes_at_app in B. exact (proj1 B).
+    intros SPLO IMGHI.
+    exact (init_stack_bytes segs inp mb ph entry sp rnd SPLO IMGHI).
   Qed.
 
   (* [comment removed for export] *)
-  #[using="Type"] Lemma entry_bounds : valid_sp sp -> entry_stack_fits sp argv envp ->
+  #[using="Type"] Lemma entry_bounds : forall brk : word,
+    valid_sp sp -> entry_launch_ok_va Sv48 (mkEntry sp brk mb rnd) inp ->
     (stack_max_size <= bv_unsigned sp)%Z /\ (bv_unsigned sp + Z.of_nat (length esi) <= sp_window_hi)%Z.
   Proof.
-    intros (L & H & _) F. rewrite entry_stack_image_top. split.
+    intros brk (L & _ & _) LAUNCH. split.
     - unfold sp_window_lo, stack_max_size in *. lia.
-    - apply entry_page_top_within_window. exact F.
+    - rewrite (length_entry_stack_image_launch Sv48 inp mb ph entry sp brk rnd LAUNCH).
+      pose proof (entry_page_top_within_window Sv48 inp mb sp brk rnd LAUNCH) as T.
+      unfold entry_page_top in T. cbn [va_stack_top] in T. lia.
   Qed.
 End EntryImage.
 End EntryRnd.

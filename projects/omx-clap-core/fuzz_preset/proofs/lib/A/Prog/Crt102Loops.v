@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumA.v, with its module paths and module names changed; 4902 of its 4996 lines of code are new or changed and 684 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* On the Step-1 contract texts (the re-hiding move): every journal of this slice is at
    R := YA0nH.wle' SEGS YGcfRehidePost.RZ_cf (the wle' contract, Crt102Glue / Crt102Kit), every stretch statement
    concludes YA0nH.SRr' SEGS YGcfRehidePost.RZ_cf. The calls: same's text is plain (Crt102Kit.crt102rw_lift_x),
    fuzz_free's (fpostbm) and pj_free's (fpostWmR) are at wle'; strcmp's rule over R is the engine's
    YGcallMxmn.aj_strcmp_at_xromR.
    The two free calls' hull budgets are paid from the run position under HOS4 (Crt102HullPos / PresetHullPay). *)
-(* base: commit 2fdcfd7be069 (post-landing line). kb round (brief
+(* base: (post-landing line). kb round (brief
    the internal file wild-budget-kb-reshape.md): every state of this slice carries crt_live at
    kb = prh_wk F_check_round_trip (the notation livea) and its journal at a budget WS with wbudget [] (prh_wk
    F_check_round_trip) WS; the runs keep WS (Crt102Kit's AJW runners), strcmp keeps it (rebase / unbase around its
@@ -21,14 +22,14 @@
    X seam KX (from every crt_at_X state, QF: Crt102Top.v's crt102_top_X, by Crt102Kit.crt102rw_at_X of the J seam).
 
    INPUTS OF RECORD (taken by path):
-   - base commit 6bb495fd9c56 (the glue Records, every walk file re-pointed; lib/A/Prog/Crt102Glue.v,
+   - base (the glue Records, every walk file re-pointed; lib/A/Prog/Crt102Glue.v,
      Crt102Kit.v, Crt102Model.v, Crt102Img.v, S10Env.v, S1Ledger.v
      consumed unchanged).
    - the contract texts at the base: PRH_FnCheck.v (tcheck_round_trip_specX's premises), PRH_FnEx.v (tsame_specX),
      PRH_FnAlloc.v (tfuzz_free_specX), PRH_FnPj.v (tpj_free_specX), PRH_Base.v, PRH_Reader.v, PRH_PjOrder.v.
    - cut table: DESIGN.md (sha256 d05697dd088c; internal record); listing, the internal file crt.A.s (A').
    - source: src-102/new/fuzz_preset.c (sha256 c7b4007bba7bab3e), new:740-768.
-   - build route pins102: the internal file zfb-targets.dc6f8f60073340be.sh, FACTS 8f3e7e1a07f1,
+   - build route pins102: the internal file zfb-targets.dc6f8f60073340be.sh, FACTS,
      PAU pau-preset-102.
    - rule 24: no function proved (proof-index check_round_trip, exit 0,
      an internal record of that lookup): only plain and ubsan proofs, concluding in SR. Written new.
@@ -461,10 +462,10 @@ Hypothesis LAWS : AR_laws_x SEGS B ARx cf_head.
 Hypothesis STRCMP : forall fxq : YK11.FPState,
   @YGcallMxmn.astrcmp_realizes_xrom fxq SEGS B ARx RLO RHI (SIGMA AS___wrap_strcmp).
 (* MARKED STAND-IN (the unit's image binding of B; owner: the contract texts; ARcf gives it by amc_syms / aso_zshadow,
-   YG0f.v:191). Verbatim S10TxState.v:141, as at Crt102Kit.v:583; consumed only through Crt102Kit.v's crt_cstr_modat_A. *)
+   YG0f.v:191). Verbatim S10TxState.v:141, as at Crt102Kit.v:584; consumed only through Crt102Kit.v's crt_cstr_modat_A. *)
 Hypothesis zs_aligned : Forall (fun r => fst r mod 8 = 0 /\ snd r mod 8 = 0) (as_zero_shadow B).
 (* MARKED STAND-IN (owner: the image row; FuzzStrdup.v's img_shadow_vis_cf restated over ARx). Verbatim
-   S10TxState.v:143, as Crt102Kit.v:586 takes it; consumed only through Crt102Kit.v's crt_cstr_modat_A. *)
+   S10TxState.v:143, as Crt102Kit.v:587 takes it; consumed only through Crt102Kit.v's crt_cstr_modat_A. *)
 Hypothesis img_shadow_vis_x : forall ly S Hp W mem md a, ARx ly S Hp W mem md -> IMG_LO <= a < IMG_TOP ->
   aview SEGS (w_H W) mem (shadow_addr a) <> None.
 (* THE CALLEES' CONTRACT TEXTS, at every float state (their walks are generic in fx; Crt102Rewrite.v takes FFREE the
@@ -4771,7 +4772,7 @@ refine (crt102rw_call_ch LAWS HPRE fxk (@STK_fuzz_free prh_img_A) (if p =? 0 the
   destruct (crt102rw_fresh LAWS lyc Sc Hpc Wc (ms_mem ms) mdc Dx p n HARc HPb Hin Hn0) as (Hab' & Hnot).
   exists (p - cf_head), (n + cf_head). split; [exact Hab'|]. split; [exact Hnot|].
   destruct Ha as (r & Hr & Ha). destruct Hr as [<- | []]. cbn [fst snd] in Ha. exact Ha.
-- (* the callee: the tfuzz_free_specX text at the landing cut (7cdbb61b5fa0). Its trace premise is `admits ..` and its
+- (* the callee: the tfuzz_free_specX text at the landing cut. Its trace premise is `admits ..` and its
      post is budgeted at its own trace (PRH_FnAlloc.v:340, :352-353); the trace is a FIXED one of the universe (the
      return site's prh_trace at the observed context, crt102rw_free_trace), so it is admitted at every state
      (YCbqG.admits_ct_fix) and the budgeted post gives the plain one back (PRH_Base.fpost_of_fpostb_fix, at wle': the

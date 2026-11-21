@@ -1,0 +1,27 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AD1u.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: cgif_file's sink strings (A_PATH, A_WB, A_RWA, A_TRAILER) are gone from tfib_K (Reusable/YE00.v): tfib_AIL, FINV_IVS and finv_img_ivs drop their four intervals, and tfib_icells has four cells (no fopen/fclose). *)
+(* Modified by Theorem Labs, 2026-11: made from A/AD1u.v for the ASan run at the 16 GiB limit (lib/BudgetWit/AW), with the modules it imports from that set renamed to their twins (suffix _w). *)
+(* Theorem Labs, 2026-11: cut to the declarations the usage path at 16 GiB uses. *)
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
+From OSSVerify.plugin_hostd.fuzz_reply.images Require Import Asan.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YK11 YK00 YK0s YK15.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.BudgetWit.AW Require Import YK18_w.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YP0m YP09 YI04 YI00 YI16.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YK04 YA0i.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.BudgetWit.AW Require Import YA0n_w.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YG00 YG0a YG01 YG0f.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.BudgetWit.AW Require Import YG0n_w YG0d_w.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.BudgetWit.AW Require Import AE2k_w.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import AB1v AF0m.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.BudgetWit.AW Require Import AD1y_w.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YM05.
+Import ListNotations.
+Unset Lia Cache. Unset Nia Cache.
+Local Set Warnings "-abstract-large-number".
+Local Open Scope Z_scope.

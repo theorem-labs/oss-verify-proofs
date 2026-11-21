@@ -1,39 +1,39 @@
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* fuzz_pcap's entry contract (row 11, the ASan build of libreac v1.9.0, image fuzz_pcap.asan sha256
    b7a91d9b1fb0017d...) at the instance: PcapEntryFinal.pcap_entry_final at SK := PcapSinkHeads.asan_sink_head (the
-   ASan image's ofl_head 0x5f4f88, lib/Reusable/PcapSinkHeads.v:37, passed BY NAME at every sink-head position, as
+   ASan image's ofl_head 0x5f4f88, lib/Reusable/PcapSinkHeads.v:38, passed BY NAME at every sink-head position, as
    cgif's released instance passes tfib_sink_head, cgif lib/A/ACee.v:56), B := AD2l.PcapB (the core's concrete
    asyms), MT := YCbp.ameter_triv and XM_LIB = XN_LIB := fun _ => 0, in the form of cgif_file_fuzzer's released
-   lib/A/ACed.v:102-104 (tfibX_AMALLOC4 / tfibX_AFREE4 / tfibX_AFREEN4) and lib/A/ACee.v (origin/ossv/recipes
-   c8557374ad2e). pcap_entry_final stays general in SK; only this instance fixes it (a Theorem Labs lane, 11:32Z).
+   lib/A/ACed.v:102-104 (tfibX_AMALLOC4 / tfibX_AFREE4 / tfibX_AFREEN4) and lib/A/ACee.v (
+   theorem-labs/oss-verify-proofs@6b32741d849a). pcap_entry_final stays general in SK; only this instance fixes it (a Theorem Labs lane, 11:32Z).
 
    Discharges (each by `fit`, which demands that the lemma's conclusion is SYNTACTICALLY the premise and logs as
    `ARGS_FIT CONVERSION` each argument whose type is its premise only up to conversion; `fitc` is `fit` that also
    accepts a conclusion that is the goal only up to conversion and logs it as a `CONCL_FIT CONVERSION` line; `fitc`
    is used only at the ruled conversions below):
      MTL      YCbp.ameter_triv_laws                    lib/Reusable/YCbp.v:21                      constr_eq
-     HXM      PcapEntryDefs.pe_need_triv_budget        lib/A/Prog/PcapEntryDefs.v:568              constr_eq
+     HXM      PcapEntryDefs.pe_need_triv_budget        lib/A/Prog/PcapEntryDefs.v:569              constr_eq
      HXMN     inst_HXMN (lia)                          this file                                    constr_eq
      HMRA     inst_HMRA (computation: as_code PcapB = Tfib_code, AD2l.v:19)   this file           constr_eq
      HFRA     inst_HFRA (the same)                     this file                                    constr_eq
      HUNIV    AD2l.PcapB_universe                      lib/A/AD2l.v:43                              constr_eq
      MFSL     YCbp.ameter_triv_fs_laws                 lib/Reusable/YCbp.v:23                       constr_eq
-     ML       PcapBFacts.PcapB_ML                      lib/A/PcapBFacts.v:53                        constr_eq
-     LAWS     inst_LAWS: PcapBFacts.PcapB_LAWS         lib/A/PcapBFacts.v:57                        conversion
-     AM       inst_AM: PcapBFacts.PcapB_AMALLOC4       lib/A/PcapBFacts.v:60                        conversion
-     AF       inst_AF: PcapBFacts.PcapB_AFREE4         lib/A/PcapBFacts.v:62                        conversion
+     ML       PcapBFacts.PcapB_ML                      lib/A/PcapBFacts.v:54                        constr_eq
+     LAWS     inst_LAWS: PcapBFacts.PcapB_LAWS         lib/A/PcapBFacts.v:58                        conversion
+     AM       inst_AM: PcapBFacts.PcapB_AMALLOC4       lib/A/PcapBFacts.v:61                        conversion
+     AF       inst_AF: PcapBFacts.PcapB_AFREE4         lib/A/PcapBFacts.v:63                        conversion
      ASM1     inst_ASM1: AF0s.stack_malloc1_contract at PcapB with PcapB_LAWS and AD2l.PcapB_syms
-                                                       lib/A/AF0s.v:520                             conversion
+                                                       lib/A/AF0s.v:521                             conversion
      pcap_G_harness_gx_ok     inst_gx_ok: PcapGHarness.pcap_G_harness_gx_ok PcapB PcapB_syms
-                                                       lib/A/PcapGHarness.v:97                      conversion
+                                                       lib/A/PcapGHarness.v:98                      conversion
      pcap_G_harness_pe_bytes  inst_pe_bytes: PcapGHarness.pcap_G_harness_pe_bytes PcapB PcapB_syms
-                                                       lib/A/PcapGHarness.v:109                     conversion
+                                                       lib/A/PcapGHarness.v:110                     conversion
      ASM0     inst_ASM0: StackMalloc0.stack_malloc0_contract at PcapB with PcapB_LAWS and AD2l.PcapB_syms
-                                                       lib/A/StackMalloc0.v:520                     conversion
+                                                       lib/A/StackMalloc0.v:521                     conversion
      AMM      inst_AMM: Memmove.asan_memmove_contract at PcapB with PcapB_LAWS and AD2l.PcapB_syms
-                                                       lib/A/Rt/Memmove.v:147                       conversion
+                                                       lib/A/Rt/Memmove.v:148                       conversion
      HGRO     inst_HGRO: PcapGHarness.pcap_hg_ro PcapB PcapB_syms, at ro_chunk_addr := PcapGHarness.ro_chunk_addr
-                                                       lib/A/PcapGHarness.v:140                     conversion
+                                                       lib/A/PcapGHarness.v:141                     conversion
      HROI     inst_HROI: AD1o.ro_img_of_arodata PcapB (w_H W) mem PcapB_syms, at ROI := AE3i.ro_img
                                                        lib/A/AD1o.v:49                              conversion
      HCPY     inst_HCPY: AE2q.asan_memcpy_realizes PcapB PcapB_LAWS PcapB_syms (__asan_memcpy, 0x51514)
@@ -43,11 +43,11 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
               (YG0d.v:322) and OSet's `True` premise (YG0d.v:324-327) dropped
                                                        lib/A/AE2r.v:568                             conversion
      ASIL     inst_ASIL: AD1u.tfib_ASIL at SK := asan_sink_head, with inst_pcap_head (sk_ofl_head asan_sink_head
-              = 0x5f4f88, AD1u.v:54, by computation on the closed term)
-                                                       lib/A/AD1u.v:86                              conversion
+              = 0x5f4f88, AD1u.v:55, by computation on the closed term)
+                                                       lib/A/AD1u.v:87                              conversion
      RO       inst_RO: the read-only segments of Asan.M.loaded_segments end below 0x5f4f88 (vm_compute) and the
               RELRO window PCAP_RLO .. PCAP_RHI = 0x992d0 .. 0x9a528 lies below it (the A image's form of lib/B's
-              pcap_ro_below, a working branch 08efd9be8f0 lib/B/Prog/PcapEntryTop.v:285)
+              pcap_ro_below, a working branch lib/B/Prog/PcapEntryTop.v:286)
                                                        this file                                    conversion
      FI       inst_FI: fi_sep = PcapFuzzFopen.fopen_img_tables's third conjunct (PcapFuzzFopen.v:496); fi_head
               and fi_kimg by computation at SK := asan_sink_head and pcap_KS
@@ -60,19 +60,19 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
                                                        lib/A/AE2s.v:712                             conversion
      HPATH    inst_HPATH: PcapHPath.pcap_path_addressable at PcapB with AD2l.PcapB_syms, segs := pa_segs PI_pcap (the
               13 bytes of the listing's object 3 = 0x20d00, "<fuzz-input>" and its NUL)
-                                                       lib/A/PcapHPath.v:38                         conversion
-     TL       PcapInstLib.PcapB_PALib                  lib/A/Prog/PcapInstLib.v:37                  constr_eq
-     TLF      PcapInstLib.PcapB_PALibF                 lib/A/Prog/PcapInstLib.v:52                  constr_eq
-     FFL      PcapInstLib.PcapB_FFL                    lib/A/Prog/PcapInstLib.v:62                  constr_eq
+                                                       lib/A/PcapHPath.v:39                         conversion
+     TL       PcapInstLib.PcapB_PALib                  lib/A/Prog/PcapInstLib.v:38                  constr_eq
+     TLF      PcapInstLib.PcapB_PALibF                 lib/A/Prog/PcapInstLib.v:53                  constr_eq
+     FFL      PcapInstLib.PcapB_FFL                    lib/A/Prog/PcapInstLib.v:63                  constr_eq
      ROIMG_KEPT  inst_ROIMG_KEPT: PcapRoBridges.pcap_roimg_kept
-                                                       lib/A/PcapRoBridges.v:38                     conversion
+                                                       lib/A/PcapRoBridges.v:39                     conversion
      ROIMG_LOW   inst_ROIMG_LOW: PcapRoBridges.pcap_roimg_low
-                                                       lib/A/PcapRoBridges.v:48                     conversion
-     FM       PFcloseInst.inst_FM                      lib/A/Stdio/PFcloseInst.v:109                constr_eq
+                                                       lib/A/PcapRoBridges.v:49                     conversion
+     FM       PFcloseInst.inst_FM                      lib/A/Stdio/PFcloseInst.v:110                constr_eq
      AFCLOSE  PFcloseInst.inst_AFCLOSE, at ra_fc1 / ra_fc2 := WFcloseI.WFI_FREE1 / WFcloseI.WFI_JOIN
-                                                       lib/A/Stdio/PFcloseInst.v:130                constr_eq
-     HUfc1    PFcloseInst.inst_HUfc1                   lib/A/Stdio/PFcloseInst.v:148                constr_eq
-     HUfc2    PFcloseInst.inst_HUfc2                   lib/A/Stdio/PFcloseInst.v:153                constr_eq
+                                                       lib/A/Stdio/PFcloseInst.v:131                constr_eq
+     HUfc1    PFcloseInst.inst_HUfc1                   lib/A/Stdio/PFcloseInst.v:149                constr_eq
+     HUfc2    PFcloseInst.inst_HUfc2                   lib/A/Stdio/PFcloseInst.v:154                constr_eq
      STRCMP   inst_STRCMP: StrcmpPath.astrcmp_path_at_of_syms at PcapB, segs := pa_segs PI_pcap, ROI := AE3i.ro_img,
               pc := the strcmp trampoline, x := object FO_PATH, with PcapB_LAWS, AD2l.PcapB_syms, the ROI premise
               fun m H => H and the three equations by eq_refl
@@ -80,29 +80,29 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
                                                                                          conclusion, conversion at
                                                                                          the three equations
    The parameters ROI, ro_chunk_addr, mc_lo, mc_hi, ra_fc1 and ra_fc2 are values: AE3i.ro_img (lib/A/AE3i.v:76),
-   PcapGHarness.ro_chunk_addr (lib/A/PcapGHarness.v:127, the bytes of AE3i's img_ro_chunks), AE39.MC_LO and
+   PcapGHarness.ro_chunk_addr (lib/A/PcapGHarness.v:128, the bytes of AE3i's img_ro_chunks), AE39.MC_LO and
    AE39.MC_HI (lib/A/AE39.v:27-28, the window of __strchrnul's constants; a Theorem Labs lane's pcap_afmemopen_closed,
-   a working branch c5180b0bcf1 lib/A/Stdio/PFmemopenC.v:23, states the same window, so AFMEMOPEN
-   stays a hypothesis at these values), WFcloseI.WFI_FREE1 and WFcloseI.WFI_JOIN (lib/A/Stdio/WFcloseI.v:87-88,
+   a working branch lib/A/Stdio/PFmemopenC.v:23, states the same window, so AFMEMOPEN
+   stays a hypothesis at these values), WFcloseI.WFI_FREE1 and WFcloseI.WFI_JOIN (lib/A/Stdio/WFcloseI.v:88-89,
    0x8e2b8 / 0x8e2c0: the return pcs of musl fclose's two free calls, the rows of ACej.TRACES_fclose, ACej.v:73-75;
    the values PFcloseInst.inst_AFCLOSE, inst_HUfc1 and inst_HUfc2 state).
    CLOSE (pb_pcap_source_closeX) and ASF (YG0t.astack_free_law_ok) are discharged inside pcap_entry_final, general in B.
    pcap_entry_final has no afree_null04_rule premise, so PcapBFacts.PcapB_AFREEN4 is not used. Each lemma that takes
    a sink head gets asan_sink_head by name (the @ form or a named argument): no instance search picks one.
    Every conversion is delta (with iota) of named Definitions only, the class a Theorem Labs lane ruled for ASIL (08:16Z) and
-   FOPEN (08:4xZ): AB1v.tfibsegs := Asan.M.loaded_segments (lib/A/AB1v.v:13) and pa_segs PI_pcap :=
-   Asan.M.loaded_segments (lib/A/Prog/PcapEntryTop.v:140-141) at every site; at ASM0 also NX_CID := 0
-   (PcapSourceNextSpec.v:47), at AMM also pa_sigma PI_pcap PS___asan_memmove = 0x51bf0 (PcapAddr.v:41) (a Theorem Labs lane,
-   10:2xZ); at HGRO and HROI also pa_relro_lo / pa_relro_hi PI_pcap := PCAP_RLO / PCAP_RHI (PcapEntryTop.v:154-155),
+   FOPEN (08:4xZ): AB1v.tfibsegs := Asan.M.loaded_segments (lib/A/AB1v.v:14) and pa_segs PI_pcap :=
+   Asan.M.loaded_segments (lib/A/Prog/PcapEntryTop.v:141-142) at every site; at ASM0 also NX_CID := 0
+   (PcapSourceNextSpec.v:48), at AMM also pa_sigma PI_pcap PS___asan_memmove = 0x51bf0 (PcapAddr.v:41) (a Theorem Labs lane,
+   10:2xZ); at HGRO and HROI also pa_relro_lo / pa_relro_hi PI_pcap := PCAP_RLO / PCAP_RHI (PcapEntryTop.v:155-156),
    and at HROI ACeg's arodata_ok / in_ro_tfa = PcapBase's arodata_okP / in_roP at tfibsegs, PCAP_RLO, PCAP_RHI
    (ACeg.v:60-65, PcapBase.v:17-22); at HCPY also aintrin_realizes OCpy (YG0d.v:318-336, with its match on the
    memop), which the lemma states unfolded, and pa_sigma PI_pcap PS___asan_memcpy = 0x51514 (PcapAddr.v:19); at HSET
    the same with OSet and pa_sigma PI_pcap PS___asan_memset = 0x519b0 (PcapAddr.v:20); at RO also sk_ofl_head
-   asan_sink_head = 0x5f4f88 (PcapSinkHeads.v:37); at FI pa_val PI_pcap = PcapEntryTop.pcap_val (PcapEntryTop.v:67,
+   asan_sink_head = 0x5f4f88 (PcapSinkHeads.v:38); at FI pa_val PI_pcap = PcapEntryTop.pcap_val (PcapEntryTop.v:68,
    :144) on the objects FO_LEN / FO_FILE; at MCONSTS mconsts_view (AE39.v:29-30), stated at tfibsegs; at ABCMP also
-   pa_sigma PI_pcap PS___interceptor_trampoline_bcmp = 0x41570 (PcapEntryTop.v:145, PcapAddr.v:24); at HPATH pa_val
-   PI_pcap (A_OBJ 3) = pcap_val (A_OBJ 3) = pcap_obj 3 = 0x20d00 (PcapEntryTop.v:67-68, :144, PcapAddr.v:49); at
-   ROIMG_LOW also PcapFuzzFopenG.roimg_low (PcapFuzzFopenG.v:44-46); at STRCMP the three equations of
+   pa_sigma PI_pcap PS___interceptor_trampoline_bcmp = 0x41570 (PcapEntryTop.v:146, PcapAddr.v:24); at HPATH pa_val
+   PI_pcap (A_OBJ 3) = pcap_val (A_OBJ 3) = pcap_obj 3 = 0x20d00 (PcapEntryTop.v:68-69, :145, PcapAddr.v:49); at
+   ROIMG_LOW also PcapFuzzFopenG.roimg_low (PcapFuzzFopenG.v:45-47); at STRCMP the three equations of
    astrcmp_path_at_of_syms: pa_segs PI_pcap = tfibsegs, pa_sigma PI_pcap PS___interceptor_trampoline_strcmp = 0x41564
    = StrcmpDef.SM_ENTRY (PcapAddr.v:14, StrcmpDef.v:35) and pa_val PI_pcap (A_OBJ FO_PATH) = pcap_obj 3 = 0x20d00 =
    StrcmpDef.A_FUZZ_PATH (PcapFuzzFopen.FO_PATH := 3, PcapAddr.v:49, StrcmpDef.v:36). Each site carries a
@@ -165,7 +165,7 @@ Ltac fitc L :=
 
 Section inst.
 Context {rc : YM05.RunCeil}.
-(* The ASan image's sink head, by name (lib/Reusable/PcapSinkHeads.v:37: sk_ofl_head = 0x5f4f88, checked against the
+(* The ASan image's sink head, by name (lib/Reusable/PcapSinkHeads.v:38: sk_ofl_head = 0x5f4f88, checked against the
    code by lib/A/PcapSinkHeadCheck.v); a Theorem Labs lane 11:32Z, as cgif's released instance (lib/A/ACee.v:56). *)
 Local Notation SK := PcapSinkHeads.asan_sink_head.
 Local Notation B := AD2l.PcapB.
@@ -188,29 +188,29 @@ Variable CTX : list (list Z).
    ROIMG_LOW and STRCMP are proved at it below (inst_HROI, inst_ROIMG_KEPT, inst_ROIMG_LOW, inst_STRCMP). *)
 Local Notation ROI := AE3i.ro_img.
 (* TL, TLF: discharged in the instance application by a Theorem Labs lane's PcapInstLib.PcapB_PALib / PcapB_PALibF
-   (lib/A/Prog/PcapInstLib.v:37, :52). RO: discharged below (inst_RO). HPATH: discharged below (inst_HPATH). *)
+   (lib/A/Prog/PcapInstLib.v:38, :53). RO: discharged below (inst_RO). HPATH: discharged below (inst_HPATH). *)
 (* OWNER: a Theorem Labs lane *)
 Hypothesis HCTX : In [VALp A_TEXT + PP_K7; RA_LLVMF] CTX /\ In [VALp A_TEXT + PP_K7] CTX.
 (* OWNER: a Theorem Labs lane *)
 Hypothesis HFMU : In [pc_malloc_ra0 (as_code B)] (as_universe B) /\
   (forall c, In c CTX -> In (firstn kUnwindMax (pc_malloc_ra0 (as_code B) ::
      flat_map (fun r => if r =? pc_malloc_ra0 (as_code B) then [] else [r]) (FM_RA :: c))) (as_universe B)).
-(* FFL: discharged in the instance application by a Theorem Labs lane's PcapInstLib.PcapB_FFL (lib/A/Prog/PcapInstLib.v:62). *)
-(* ro_chunk_addr := a Theorem Labs lane's PcapGHarness.ro_chunk_addr (lib/A/PcapGHarness.v:127, the bytes of AE3i's img_ro_chunks);
+(* FFL: discharged in the instance application by a Theorem Labs lane's PcapInstLib.PcapB_FFL (lib/A/Prog/PcapInstLib.v:63). *)
+(* ro_chunk_addr := a Theorem Labs lane's PcapGHarness.ro_chunk_addr (lib/A/PcapGHarness.v:128, the bytes of AE3i's img_ro_chunks);
    HGRO and ROIMG_KEPT are proved at it below (inst_HGRO, inst_ROIMG_KEPT). *)
 Local Notation ro_chunk_addr := PcapGHarness.ro_chunk_addr.
-(* FM: discharged in the instance application by a Theorem Labs lane's PFcloseInst.inst_FM (lib/A/Stdio/PFcloseInst.v:109). *)
-(* OWNER: a Theorem Labs lane. PROVED, NOT WIRED: PFreadC.pcap_afread_closed (a working branch 9d450c6144e,
-   lib/A/Stdio/PFreadC.v:32; in this tree at lib/A/Stdio/PFreadC.v:33); wired after a Theorem Labs lane's musl-file split lands (a Theorem Labs lane, 11:21Z). *)
+(* FM: discharged in the instance application by a Theorem Labs lane's PFcloseInst.inst_FM (lib/A/Stdio/PFcloseInst.v:110). *)
+(* OWNER: a Theorem Labs lane. PROVED, NOT WIRED: PFreadC.pcap_afread_closed (a working branch,
+   lib/A/Stdio/PFreadC.v:33; in this tree at lib/A/Stdio/PFreadC.v:34); wired after a Theorem Labs lane's musl-file split lands (a Theorem Labs lane, 11:21Z). *)
 Hypothesis AFREAD : forall fx : YK11.FPState,
   @PFreadISpec.afread_spec fx rc SK SEGSp B pcap_KS (@pa_sigma rc pcap_listing PIp PS___interceptor_trampoline_fread).
-(* ra_fc1 / ra_fc2 := WFcloseI.WFI_FREE1 / WFcloseI.WFI_JOIN (lib/A/Stdio/WFcloseI.v:87-88; 0x8e2b8 / 0x8e2c0, the
+(* ra_fc1 / ra_fc2 := WFcloseI.WFI_FREE1 / WFcloseI.WFI_JOIN (lib/A/Stdio/WFcloseI.v:88-89; 0x8e2b8 / 0x8e2c0, the
    return pcs of musl fclose's two free calls, the rows of ACej.TRACES_fclose, lib/A/ACej.v:73-75), the values
    PFcloseInst.inst_AFCLOSE, inst_HUfc1 and inst_HUfc2 state. *)
 Local Notation ra_fc1 := WFcloseI.WFI_FREE1.
 Local Notation ra_fc2 := WFcloseI.WFI_JOIN.
 (* AFCLOSE, HUfc1, HUfc2: discharged in the instance application by a Theorem Labs lane's PFcloseInst.inst_AFCLOSE,
-   inst_HUfc1 and inst_HUfc2 (lib/A/Stdio/PFcloseInst.v:130, :148, :153). *)
+   inst_HUfc1 and inst_HUfc2 (lib/A/Stdio/PFcloseInst.v:131, :149, :154). *)
 (* ASM0 and AMM: discharged below (inst_ASM0, inst_AMM). ROIMG_LOW: discharged below (inst_ROIMG_LOW). *)
 (* mc_lo / mc_hi := AE39.MC_LO / AE39.MC_HI (lib/A/AE39.v:27-28; 0x10350 / 0x10370 by AE39.v:31 mc_bounds), the
    window of __strchrnul's constants that AE39.mconsts_view names; MCONSTS is proved at it below (inst_MCONSTS).
@@ -218,8 +218,8 @@ Local Notation ra_fc2 := WFcloseI.WFI_JOIN.
 Local Notation mc_lo := AE39.MC_LO.
 Local Notation mc_hi := AE39.MC_HI.
 (* MCONSTS, FI: discharged below (inst_MCONSTS, inst_FI). STRCMP: discharged below (inst_STRCMP). *)
-(* OWNER: a Theorem Labs lane. PROVED, NOT WIRED: PFmemopenC.pcap_afmemopen_closed (a working branch
-   c5180b0bcf1, lib/A/Stdio/PFmemopenC.v:23, at FM_ENTRY, FM_MALLOC_RA, 0x10350, 0x10370; in this tree at the same line). *)
+(* OWNER: a Theorem Labs lane. PROVED, NOT WIRED: PFmemopenC.pcap_afmemopen_closed (a working branch,
+   lib/A/Stdio/PFmemopenC.v:23, at FM_ENTRY, FM_MALLOC_RA, 0x10350, 0x10370; in this tree at the same line). *)
 Hypothesis AFMEMOPEN : forall fx : YK11.FPState,
   @PFmemopenISpec.afmemopen_spec fx rc SK SEGSp B pcap_KS MT CTX
     (@pa_sigma rc pcap_listing PIp PS___interceptor_trampoline_fmemopen) FM_RA mc_lo mc_hi.
@@ -240,38 +240,38 @@ Proof. reflexivity. Qed.
 Set Printing All.
 Lemma inst_LAWS : @AR_laws rc SEGSp B.
 Proof.
-  (* conversion: tfibsegs = Asan.M.loaded_segments (AB1v.v:13), pa_segs PI_pcap = Asan.M.loaded_segments
-     (PcapEntryTop.v:140-141) *)
+  (* conversion: tfibsegs = Asan.M.loaded_segments (AB1v.v:14), pa_segs PI_pcap = Asan.M.loaded_segments
+     (PcapEntryTop.v:141-142) *)
   fitc (@PcapBFacts.PcapB_LAWS rc).
 Qed.
 
 Lemma inst_AM : forall fx : YK11.FPState, @amalloc04_rule fx rc SK SEGSp B MT.
 Proof.
   intros fx.
-  (* conversion: tfibsegs = Asan.M.loaded_segments (AB1v.v:13), pa_segs PI_pcap = Asan.M.loaded_segments
-     (PcapEntryTop.v:140-141) *)
+  (* conversion: tfibsegs = Asan.M.loaded_segments (AB1v.v:14), pa_segs PI_pcap = Asan.M.loaded_segments
+     (PcapEntryTop.v:141-142) *)
   fitc (@PcapBFacts.PcapB_AMALLOC4 fx rc SK).
 Qed.
 
 Lemma inst_AF : forall fx : YK11.FPState, @afree04_rule fx rc SK SEGSp B MT.
 Proof.
   intros fx.
-  (* conversion: tfibsegs = Asan.M.loaded_segments (AB1v.v:13), pa_segs PI_pcap = Asan.M.loaded_segments
-     (PcapEntryTop.v:140-141) *)
+  (* conversion: tfibsegs = Asan.M.loaded_segments (AB1v.v:14), pa_segs PI_pcap = Asan.M.loaded_segments
+     (PcapEntryTop.v:141-142) *)
   fitc (@PcapBFacts.PcapB_AFREE4 fx rc SK).
 Qed.
 
 Lemma inst_ASM1 : forall fx : YK11.FPState, @astack_malloc_realizes fx rc SEGSp B 1.
 Proof.
   intros fx.
-  (* conversion: tfibsegs = Asan.M.loaded_segments (AB1v.v:13), pa_segs PI_pcap = Asan.M.loaded_segments
-     (PcapEntryTop.v:140-141) *)
+  (* conversion: tfibsegs = Asan.M.loaded_segments (AB1v.v:14), pa_segs PI_pcap = Asan.M.loaded_segments
+     (PcapEntryTop.v:141-142) *)
   fitc (@AF0s.stack_malloc1_contract fx rc B (@PcapBFacts.PcapB_LAWS rc) AD2l.PcapB_syms).
 Qed.
 
 Lemma inst_gx_ok : gx_ok SEGS B G_HARNESS.
 Proof.
-  (* conversion: tfibsegs = Asan.M.loaded_segments (AB1v.v:13) *)
+  (* conversion: tfibsegs = Asan.M.loaded_segments (AB1v.v:14) *)
   fitc (PcapGHarness.pcap_G_harness_gx_ok B AD2l.PcapB_syms).
 Qed.
 
@@ -279,15 +279,15 @@ Lemma inst_pe_bytes : forall a, inG G_HARNESS a ->
   ~ in_roP SEGS PCAP_RLO PCAP_RHI a /\ ~ (as_meta_mem pcap_KS <= a < as_meta_mem pcap_KS + 8) /\
   ~ (as_errno B <= a < as_errno B + 4).
 Proof.
-  (* conversion: tfibsegs = Asan.M.loaded_segments (AB1v.v:13) *)
+  (* conversion: tfibsegs = Asan.M.loaded_segments (AB1v.v:14) *)
   fitc (PcapGHarness.pcap_G_harness_pe_bytes B AD2l.PcapB_syms).
 Qed.
 
 Lemma inst_ASM0 : forall fx : YK11.FPState, @astack_malloc_realizes fx rc SEGSp B PcapSourceNextSpec.NX_CID.
 Proof.
   intros fx.
-  (* conversion: tfibsegs = Asan.M.loaded_segments (AB1v.v:13), pa_segs PI_pcap = Asan.M.loaded_segments
-     (PcapEntryTop.v:140-141), and NX_CID := 0 (PcapSourceNextSpec.v:47) *)
+  (* conversion: tfibsegs = Asan.M.loaded_segments (AB1v.v:14), pa_segs PI_pcap = Asan.M.loaded_segments
+     (PcapEntryTop.v:141-142), and NX_CID := 0 (PcapSourceNextSpec.v:48) *)
   fitc (@StackMalloc0.stack_malloc0_contract fx rc B (@PcapBFacts.PcapB_LAWS rc) AD2l.PcapB_syms).
 Qed.
 
@@ -295,16 +295,16 @@ Lemma inst_AMM : forall fx : YK11.FPState,
   @MemmoveDef.amemmove_realizes fx rc SEGSp B (@pa_sigma rc pcap_listing PIp PS___asan_memmove).
 Proof.
   intros fx.
-  (* conversion: tfibsegs = Asan.M.loaded_segments (AB1v.v:13), pa_segs PI_pcap = Asan.M.loaded_segments
-     (PcapEntryTop.v:140-141), and pa_sigma PI_pcap PS___asan_memmove = 0x51bf0 (PcapAddr.v:41) *)
+  (* conversion: tfibsegs = Asan.M.loaded_segments (AB1v.v:14), pa_segs PI_pcap = Asan.M.loaded_segments
+     (PcapEntryTop.v:141-142), and pa_sigma PI_pcap PS___asan_memmove = 0x51bf0 (PcapAddr.v:41) *)
   fitc (@Memmove.asan_memmove_contract fx rc B (@PcapBFacts.PcapB_LAWS rc) AD2l.PcapB_syms).
 Qed.
 
 Lemma inst_HGRO : forall a, ro_chunk_addr a ->
   in_roP SEGSp LOp HIp a /\ ~ Exists (in_zr a) (as_owned_static B) /\ ~ (as_errno B <= a < as_errno B + 4).
 Proof.
-  (* conversion: tfibsegs = Asan.M.loaded_segments (AB1v.v:13), pa_segs PI_pcap = Asan.M.loaded_segments and
-     pa_relro_lo / pa_relro_hi PI_pcap = PCAP_RLO / PCAP_RHI (PcapEntryTop.v:140-141, :154-155) *)
+  (* conversion: tfibsegs = Asan.M.loaded_segments (AB1v.v:14), pa_segs PI_pcap = Asan.M.loaded_segments and
+     pa_relro_lo / pa_relro_hi PI_pcap = PCAP_RLO / PCAP_RHI (PcapEntryTop.v:141-142, :155-156) *)
   fitc (PcapGHarness.pcap_hg_ro B AD2l.PcapB_syms).
 Qed.
 
@@ -314,7 +314,7 @@ Proof.
   intros W mem HRO.
   (* conversion: arodata_okP (pa_segs PI_pcap) (pa_relro_lo PI_pcap) (pa_relro_hi PI_pcap) PcapB at aview (pa_segs
      PI_pcap) = ACeg's arodata_ok PcapB at aview tfibsegs: pa_segs / pa_relro_lo / pa_relro_hi PI_pcap
-     (PcapEntryTop.v:140-141, :154-155), tfibsegs (AB1v.v:13), in_roP = in_ro_tfa (PcapBase.v:17-22, ACeg.v:60-65) *)
+     (PcapEntryTop.v:141-142, :155-156), tfibsegs (AB1v.v:14), in_roP = in_ro_tfa (PcapBase.v:17-22, ACeg.v:60-65) *)
   fitc (AD1o.ro_img_of_arodata B (w_H W) mem AD2l.PcapB_syms HRO).
 Qed.
 
@@ -323,7 +323,7 @@ Lemma inst_HCPY : forall fx : YK11.FPState,
 Proof.
   intros fx.
   (* conversion: aintrin_realizes OCpy (YG0d.v:318-336, its match on OCpy) at tfibsegs = Asan.M.loaded_segments
-     (AB1v.v:13), pa_segs PI_pcap = Asan.M.loaded_segments (PcapEntryTop.v:140-141) and pa_sigma PI_pcap
+     (AB1v.v:14), pa_segs PI_pcap = Asan.M.loaded_segments (PcapEntryTop.v:141-142) and pa_sigma PI_pcap
      PS___asan_memcpy = 0x51514 (PcapAddr.v:19): the lemma states the unfolded body at 0x51514 *)
   fitc (@AE2q.asan_memcpy_realizes fx rc B (@PcapBFacts.PcapB_LAWS rc) AD2l.PcapB_syms).
 Qed.
@@ -337,31 +337,31 @@ Lemma inst_HSET : forall fx : YK11.FPState,
 Proof.
   intros fx ly S W regs mem md d x n HPRE G10 G11 G12 Hn Hd Hdn HDST HAM HRA HHULL _.
   (* conversion: aintrin_realizes OSet's post (YG0d.v:328-336, its match on OSet) and premises at tfibsegs =
-     Asan.M.loaded_segments (AB1v.v:13), pa_segs PI_pcap = Asan.M.loaded_segments (PcapEntryTop.v:140-141) and
+     Asan.M.loaded_segments (AB1v.v:14), pa_segs PI_pcap = Asan.M.loaded_segments (PcapEntryTop.v:141-142) and
      pa_sigma PI_pcap PS___asan_memset = 0x519b0 (PcapAddr.v:20) *)
   fitc (AE2r.asan_memset_realizes B (@PcapBFacts.PcapB_LAWS rc) AD2l.PcapB_syms
           ly S W regs mem md d x n HPRE G10 G11 G12 Hn Hd Hdn HDST HRA HHULL HAM).
 Qed.
 
-(* AD1u's class premise at the instance's sink head: sk_ofl_head asan_sink_head = 0x5f4f88 (PcapSinkHeads.v:37,
-   AD1u.v:54), by computation on the closed term, as lib/A/PcapDriver.v:47 pcap_drv_head (which is #[local]). *)
+(* AD1u's class premise at the instance's sink head: sk_ofl_head asan_sink_head = 0x5f4f88 (PcapSinkHeads.v:38,
+   AD1u.v:55), by computation on the closed term, as lib/A/PcapDriver.v:47 pcap_drv_head (which is #[local]). *)
 Lemma inst_pcap_head : @AD1u.pcap_head SK.
 Proof. exact eq_refl. Qed.
 
 Lemma inst_ASIL : asource_img_laws SK SEGS B pcap_KS.
 Proof.
-  (* conversion: tfibsegs = Asan.M.loaded_segments (AB1v.v:13) *)
+  (* conversion: tfibsegs = Asan.M.loaded_segments (AB1v.v:14) *)
   fitc (AD1u.tfib_ASIL (SK := PcapSinkHeads.asan_sink_head) (PH := inst_pcap_head) B AD2l.PcapB_syms).
 Qed.
 
-(* RO at the A image (the form of lib/B's pcap_ro_below, a working branch 08efd9be8f0
-   lib/B/Prog/PcapEntryTop.v:285): every read-only segment of Asan.M.loaded_segments ends at or below 0x5f4f88
-   (vm_compute), and the RELRO window PCAP_RLO .. PCAP_RHI = 0x992d0 .. 0x9a528 (PcapRelro.v:23-24) lies below it. *)
+(* RO at the A image (the form of lib/B's pcap_ro_below, a working branch
+   lib/B/Prog/PcapEntryTop.v:286): every read-only segment of Asan.M.loaded_segments ends at or below 0x5f4f88
+   (vm_compute), and the RELRO window PCAP_RLO .. PCAP_RHI = 0x992d0 .. 0x9a528 (PcapRelro.v:24-25) lies below it. *)
 Lemma inst_RO : @ro_below_ofl SEGSp LOp HIp SK.
 Proof.
   intros a Hro.
   (* conversion: pa_segs / pa_relro_lo / pa_relro_hi PI_pcap = Asan.M.loaded_segments / PCAP_RLO / PCAP_RHI
-     (PcapEntryTop.v:140-141, :154-155), sk_ofl_head asan_sink_head = 0x5f4f88 (PcapSinkHeads.v:37) *)
+     (PcapEntryTop.v:141-142, :155-156), sk_ofl_head asan_sink_head = 0x5f4f88 (PcapSinkHeads.v:38) *)
   change (in_roP SEGS PCAP_RLO PCAP_RHI a) in Hro. change (a < (symaddr Symbols.Asan.s_ofl_head)).
   assert (HC : forallb (fun s => seg_writable s || (Z.of_N (seg_base s) + Z.of_N (seg_size s) <=? (symaddr Symbols.Asan.s_ofl_head)))
                  SEGS = true)
@@ -379,7 +379,7 @@ Lemma inst_FI : PcapFuzzFopenG.FopenImg SK (VALp (A_OBJ PcapFuzzFopen.FO_LEN)) (
   pcap_KS.
 Proof.
   constructor.
-  - (* conversion: pa_val PI_pcap = PcapEntryTop.pcap_val (PcapEntryTop.v:67, :144), which is pcap_obj on the
+  - (* conversion: pa_val PI_pcap = PcapEntryTop.pcap_val (PcapEntryTop.v:68, :145), which is pcap_obj on the
        objects FO_LEN / FO_FILE *)
     fitc (proj2 (proj2 PcapFuzzFopen.fopen_img_tables)).
   - reflexivity.
@@ -399,8 +399,8 @@ Lemma inst_MCONSTS : forall (W : world SEGSp) (mem : word -> option byte), ROI (
   aview SEGSp (w_H W) mem a = option_map (fun b : byte => bv_unsigned b) (seg_rom SEGSp (Z_to_bv 64 a)).
 Proof.
   intros W mem HRO.
-  (* conversion: mconsts_view W mem (AE39.v:29-30) at tfibsegs = Asan.M.loaded_segments (AB1v.v:13) and pa_segs
-     PI_pcap = Asan.M.loaded_segments (PcapEntryTop.v:140-141); W and HRO at tfibsegs likewise *)
+  (* conversion: mconsts_view W mem (AE39.v:29-30) at tfibsegs = Asan.M.loaded_segments (AB1v.v:14) and pa_segs
+     PI_pcap = Asan.M.loaded_segments (PcapEntryTop.v:141-142); W and HRO at tfibsegs likewise *)
   PcapEntryFinal.args_fit (AE2j.strchr_lit_ro_of_img W mem HRO).
   fitc (proj2 (AE2j.strchr_lit_ro_of_img W mem HRO)).
 Qed.
@@ -411,21 +411,21 @@ Lemma inst_ABCMP : forall fx : YK11.FPState,
   @abcmp_realizes fx rc SEGSp B (@pa_sigma rc pcap_listing PIp PS___interceptor_trampoline_bcmp).
 Proof.
   intros fx.
-  (* conversion: tfibsegs = Asan.M.loaded_segments (AB1v.v:13), pa_segs PI_pcap = Asan.M.loaded_segments
-     (PcapEntryTop.v:140-141), and pa_sigma PI_pcap PS___interceptor_trampoline_bcmp = pcap_sigma .. = 0x41570
-     (PcapEntryTop.v:145, PcapAddr.v:24) *)
+  (* conversion: tfibsegs = Asan.M.loaded_segments (AB1v.v:14), pa_segs PI_pcap = Asan.M.loaded_segments
+     (PcapEntryTop.v:141-142), and pa_sigma PI_pcap PS___interceptor_trampoline_bcmp = pcap_sigma .. = 0x41570
+     (PcapEntryTop.v:146, PcapAddr.v:24) *)
   fitc (@AE2s.bcmp_icpt_contract fx rc AD2l.PcapB (@PcapBFacts.PcapB_LAWS rc) AD2l.PcapB_syms).
 Qed.
 
-(* HPATH: the core's PcapHPath.pcap_path_addressable (PcapHPath.v:38), general in segs: under AR the 13 bytes of the
+(* HPATH: the core's PcapHPath.pcap_path_addressable (PcapHPath.v:39), general in segs: under AR the 13 bytes of the
    listing's object 3 (0x20d00, "<fuzz-input>" and its NUL) are range_addressable and their shadow hull is visible;
    at PcapB with AD2l.PcapB_syms and segs := pa_segs PI_pcap. *)
 Lemma inst_HPATH : forall ly S (W : world SEGSp) mem md, @AR rc SEGSp B ly S W mem md ->
   range_addressable (aview SEGSp (w_H W) mem) SHADOW_OFF (VALp (A_OBJ 3)) 13 /\
   shadow_hull_vis (aview SEGSp (w_H W) mem) (VALp (A_OBJ 3)) 13.
 Proof.
-  (* conversion: pa_val PI_pcap = pcap_val (PcapEntryTop.v:144) and pcap_val (A_OBJ 3) = pcap_obj 3 = 0x20d00
-     (PcapEntryTop.v:67-68, PcapAddr.v:49) *)
+  (* conversion: pa_val PI_pcap = pcap_val (PcapEntryTop.v:145) and pcap_val (A_OBJ 3) = pcap_obj 3 = 0x20d00
+     (PcapEntryTop.v:68-69, PcapAddr.v:49) *)
   fitc (@PcapHPath.pcap_path_addressable rc AD2l.PcapB AD2l.PcapB_syms SEGSp).
 Qed.
 
@@ -433,16 +433,16 @@ Qed.
 Lemma inst_ROIMG_KEPT : forall m m' : word -> option byte,
   (forall a, ro_chunk_addr a -> mbyte SEGSp m' a = mbyte SEGSp m a) -> ROI m -> ROI m'.
 Proof.
-  (* conversion: tfibsegs = Asan.M.loaded_segments (AB1v.v:13), pa_segs PI_pcap = Asan.M.loaded_segments
-     (PcapEntryTop.v:140-141) *)
+  (* conversion: tfibsegs = Asan.M.loaded_segments (AB1v.v:14), pa_segs PI_pcap = Asan.M.loaded_segments
+     (PcapEntryTop.v:141-142) *)
   fitc (@PcapRoBridges.pcap_roimg_kept).
 Qed.
 
 (* ROIMG_LOW: the core's PcapRoBridges.pcap_roimg_low (PcapRoBridges.v:48), roimg_low tfibsegs ro_img unfolded. *)
 Lemma inst_ROIMG_LOW : @PcapFuzzFopenG.roimg_low rc SEGSp ROI.
 Proof.
-  (* conversion: PcapFuzzFopenG.roimg_low (PcapFuzzFopenG.v:44-46), a named Definition, unfolded; tfibsegs =
-     Asan.M.loaded_segments (AB1v.v:13), pa_segs PI_pcap = Asan.M.loaded_segments (PcapEntryTop.v:140-141) *)
+  (* conversion: PcapFuzzFopenG.roimg_low (PcapFuzzFopenG.v:45-47), a named Definition, unfolded; tfibsegs =
+     Asan.M.loaded_segments (AB1v.v:14), pa_segs PI_pcap = Asan.M.loaded_segments (PcapEntryTop.v:141-142) *)
   fitc (@PcapRoBridges.pcap_roimg_low rc).
 Qed.
 
@@ -454,10 +454,10 @@ Lemma inst_STRCMP : forall fx : YK11.FPState,
     (VALp (A_OBJ PcapFuzzFopen.FO_PATH)).
 Proof.
   intros fx.
-  (* conversion: at the three equations (arguments): pa_segs PI_pcap = Asan.M.loaded_segments (PcapEntryTop.v:140-141)
-     = tfibsegs (AB1v.v:13); pa_sigma PI_pcap PS___interceptor_trampoline_strcmp = pcap_sigma .. = 0x41564 =
-     StrcmpDef.SM_ENTRY (PcapEntryTop.v:145, PcapAddr.v:14, StrcmpDef.v:35); pa_val PI_pcap (A_OBJ FO_PATH) = pcap_val
-     (A_OBJ 3) = pcap_obj 3 = 0x20d00 = StrcmpDef.A_FUZZ_PATH (PcapEntryTop.v:67-68, :144, PcapFuzzFopen.FO_PATH := 3,
+  (* conversion: at the three equations (arguments): pa_segs PI_pcap = Asan.M.loaded_segments (PcapEntryTop.v:141-142)
+     = tfibsegs (AB1v.v:14); pa_sigma PI_pcap PS___interceptor_trampoline_strcmp = pcap_sigma .. = 0x41564 =
+     StrcmpDef.SM_ENTRY (PcapEntryTop.v:146, PcapAddr.v:14, StrcmpDef.v:35); pa_val PI_pcap (A_OBJ FO_PATH) = pcap_val
+     (A_OBJ 3) = pcap_obj 3 = 0x20d00 = StrcmpDef.A_FUZZ_PATH (PcapEntryTop.v:68-69, :145, PcapFuzzFopen.FO_PATH := 3,
      PcapAddr.v:49, StrcmpDef.v:36) *)
   fitc (@StrcmpPath.astrcmp_path_at_of_syms fx rc AD2l.PcapB SEGSp ROI
           (@pa_sigma rc pcap_listing PIp PS___interceptor_trampoline_strcmp) (VALp (A_OBJ PcapFuzzFopen.FO_PATH))
@@ -517,7 +517,7 @@ Check @pcap_entry_inst.
 Unset Printing All.
 
 (* The plain build's sink head (Reusable/YI5b.v src0_sink_head) is loaded with PcapSinkHeads.v (its Require of YI5b,
-   PcapSinkHeads.v:14), which removes it from the typeclass hints (PcapSinkHeads.v:33); no statement used or proved
+   PcapSinkHeads.v:15), which removes it from the typeclass hints (PcapSinkHeads.v:34); no statement used or proved
    here names it: the Checks above show asan_sink_head at every sink-head position. *)
 Locate src0_sink_head.
 Locate sink_head.

@@ -3,9 +3,10 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntrySchedTurnB), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/ACa1.v. *)
 (* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/Prog/GrantEntrySchedTurnB.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The image-B (UBSan) walk of the frame-loop turn's segment B,
    over image B's own addresses, registers, spill slots and UBSan guards; the shape is image A's.
-   Ported from proofs/libreac/fuzz_grant/lib/A/Prog/GrantEntrySchedTurnB.v at e6bd82f51c9. *)
+   Ported from proofs/libreac/fuzz_grant/lib/A/Prog/GrantEntrySchedTurnB.v. *)
 (* The frame-loop turn of LLVMFuzzerTestOneInput (0x80a3c) on the ASan+UBSan build, segment B:
    0x81bdc (GP_nx), the return of reac_headamp_tx_next, .. 0x81d5c (GP_end, no record: the cut
    TF) or 0x81c18 (GP_eff, a record: the answer, the channel, the parameter and the value

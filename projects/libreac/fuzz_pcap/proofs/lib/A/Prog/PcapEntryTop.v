@@ -2,7 +2,8 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: made for libreac/fuzz_pcap (v1.9.0, ASan build) from proofs/cgif/cgif_file_fuzzer/lib/A/ACef.v, A/AI12.v and A/ACbj.v (the listing's image instance, in the form libreac/fuzz_grant's lib/A/Prog/GrantImg.v gives it, a working branch) and A/ACfh.v, A/ACfj.v and A/ACfi.v (the bridge from the entry walk to the contract, in the form libreac/fuzz_grant's lib/A/Prog/GrantLibX.v gives it): the code table of fuzz_pcap.asan's program code (0x80738, 1521 words, the span of PcapList.pcap_listing), the value table over PcapAddr.v, the instance PI_pcap of PcapPa.PAImg with its named equalities, pe_base from the contract's pre, the composition of the harness walks into pe_start, and pe_post to the contract's post. The meta region at the end is a Theorem Labs lane's h_meta_gx (a working branch 4259db10ddc), restated over explicit premises. *)
+(* Modified by Theorem Labs, 2026-10: made for libreac/fuzz_pcap (v1.9.0, ASan build) from proofs/cgif/cgif_file_fuzzer/lib/A/ACef.v, A/AI12.v and A/ACbj.v (the listing's image instance, in the form libreac/fuzz_grant's lib/A/Prog/GrantImg.v gives it, a working branch) and A/ACfh.v, A/ACfj.v and A/ACfi.v (the bridge from the entry walk to the contract, in the form libreac/fuzz_grant's lib/A/Prog/GrantLibX.v gives it): the code table of fuzz_pcap.asan's program code (0x80738, 1521 words, the span of PcapList.pcap_listing), the value table over PcapAddr.v, the instance PI_pcap of PcapPa.PAImg with its named equalities, pe_base from the contract's pre, the composition of the harness walks into pe_start, and pe_post to the contract's post. The meta region at the end is a Theorem Labs lane's h_meta_gx (a working branch), restated over explicit premises. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The ASan build's entry contract for fuzz_pcap, row 11: PcapEntryA.tfib_lib_contract_x_all_A, proved from the walks of
    LLVMFuzzerTestOneInput (0x807c8) phase by phase.
 
@@ -14,7 +15,7 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    names those premises (a Theorem Labs lane, 2026-10-29: the open / fopen / next statement files diverged across branches when this
    file was written; CLOSE is treated the same way for uniformity).
 
-   Discharges: a Theorem Labs lane's two lemmas are on a working branch 4e35129c9d1 (a working branch 3c32fe5f906 is retired), lib/A/PcapGHarness.v
+   Discharges: a Theorem Labs lane's two lemmas are on a working branch (a working branch is retired), lib/A/PcapGHarness.v
    (pcap_G_harness_gx_ok B TB, pcap_G_harness_pe_bytes B TB, from PcapSyms B, A/AF0m.v); its third, pcap_hg_img_laws,
    discharges two premises of lib/A/Prog/PcapSourceOpen.v (HGRO and HGX, the fields hg_ro and hg_glob of the hg_img_laws record that pcap_hg_img_laws proves) and enters through pe_A / tail_R1. The instance equality pi_pcap_glen is the
    harness lanes' HGLEN. *)
@@ -226,8 +227,8 @@ Hypothesis HXM : forall n, pe_need MT n <= XM_LIB n.
 Hypothesis HXMN : forall n, XM_LIB n <= XN_LIB n.
 
 (* (2) The core's B (a Theorem Labs lane). pcap_G_harness_gx_ok and pcap_G_harness_pe_bytes: a working branch
-       4e35129c9d1 lib/A/PcapGHarness.v, at B with PcapSyms B (A/AF0m.v), tfibsegs = Asan.M.loaded_segments; discharged at
-       the instance (lib/A/Prog/PcapEntryInst.v, B := PcapB), with PcapB's facts from core's lib/A/PcapBFacts.v (e4f3f52f52b).
+       lib/A/PcapGHarness.v, at B with PcapSyms B (A/AF0m.v), tfibsegs = Asan.M.loaded_segments; discharged at
+       the instance (lib/A/Prog/PcapEntryInst.v, B := PcapB), with PcapB's facts from core's lib/A/PcapBFacts.v.
        HMRA / HFRA / HUNIV: B's allocator trace starts and its trace universe (the core's B; a Theorem Labs lane's
        ACej.Tfib_universe, a working branch). *)
 Hypothesis pcap_G_harness_gx_ok : gx_ok SEGS B G_HARNESS.
@@ -255,7 +256,7 @@ Hypothesis ASIL : asource_img_laws SK SEGS B pcap_KS.
 
 (* a Theorem Labs lane (entry, E, EARLY): from PP_entry, the frame on the side stack (0x80838) and either the copy of
    the file (malloc 0x80940, NULL test 0x8094c) to PP_K1, or the early return of a 2^26+ input (0x808f0) to PP_leave.
-   Not written yet: provisional name and form, not found in a working branch (4259db10ddc + worktree) at
+   Not written yet: provisional name and form, not found in a working branch (+ worktree) at
    2026-10-29T02:30Z. Expected premises: astack_malloc_realizes 1, amalloc04_rule, LAWS, TL. *)
 Hypothesis pe_E : forall fx : YK11.FPState,
   PFROM fx (GIx (@GI_K1) fx) -> PFROM fx (GIx (@GI_leave) fx) -> @pe_start fx rc SK PIp B MT pcap_KS (POSTP fx).
@@ -266,14 +267,14 @@ Hypothesis pe_A : forall fx : YK11.FPState, PFROM fx (GIx (@GI_K2) fx) -> PFROM 
    Not written yet (provisional, as above). Expected premises: amalloc04_rule, afree04_rule. *)
 Hypothesis pe_B : forall fx : YK11.FPState,
   PFROM fx (GIx (@GI_K3) fx) -> PFROM fx (GIx (@GI_K12r) fx) -> PFROM fx (GIx (@GI_K2) fx).
-(* a Theorem Labs lane (C): pe_C, a working branch 4259db10ddc lib/A/Prog/PcapHarnessA.v:832.
+(* a Theorem Labs lane (C): pe_C, a working branch lib/A/Prog/PcapHarnessA.v:833.
    Its Section premises: LAWS, TL, MTL, NEXT, RO, ASIL. *)
 Hypothesis pe_C : forall fx : YK11.FPState, PFROM fx (GIx (@GI_KD) fx) -> PFROM fx (GIx (@GI_K3) fx).
 (* a Theorem Labs lane (Walk): PP_KD -> PP_K5 through PP_K4, PP_KR, PP_KL2 (bcmp 0x80d8c / 0x80da8 / 0x80e08, next
    0x80fa0). Its loop lemma pe_KL2_at is in a working branch's uncommitted PcapHarnessWalk.v; the phase lemma
    is not written yet (provisional name). Its draft Section premises: LAWS, TL, HGX (gx_ok of pe_G), NEXT (draft). *)
 Hypothesis pe_Walk : forall fx : YK11.FPState, PFROM fx (GIx (@GI_K5) fx) -> PFROM fx (GIx (@GI_KD) fx).
-(* a Theorem Labs lane (W, R1 .. R7, BT): a working branch 33a8d8aa2c3 lib/A/Prog/PcapHarnessTail.v.
+(* a Theorem Labs lane (W, R1 .. R7, BT): a working branch lib/A/Prog/PcapHarnessTail.v.
    Its Section premises: LAWS, TL, MLAWS (ameter_laws MT), ASIL, AFREE (afree04_rule), CLOSE, HRO (RO),
    ML (model_laws (as_universe B)), ASF (astack_free_law), FFL (frame_flag_lawP), MFSL (ameter_fs_laws MT).
    tail_W, tail_R1, tail_R2, tail_R4 are not written yet (provisional names; W needs CLOSE, R1 OPEN, R2 / R4 NEXT). *)
@@ -370,8 +371,8 @@ Lemma top_notG : forall a, 0 <= a < 2 ^ 64 -> ~ inG G_HARNESS a -> inGb G_HARNES
 Proof. intros a Ha Hn. rewrite unsigned_lit_small by lia. apply inGb_false. exact Hn. Qed.
 
 (* The meta region at the end of a gx journal: PSourceMeta.asrc_meta_inv_kept's argument, from the caller's memory
-   through the journal's start memory memS (a Theorem Labs lane's h_meta_gx, a working branch 4259db10ddc
-   lib/A/Prog/PcapHarnessA.v:176-204, over these premises instead of pe_base). *)
+   through the journal's start memory memS (a Theorem Labs lane's h_meta_gx, a working branch
+   lib/A/Prog/PcapHarnessA.v:177-205, over these premises instead of pe_base). *)
 Lemma top_meta_end : forall (W : world SEGS) mem memS ly S md own ly' S' W' mem' md' k STK sp0 FP M,
   asrc_meta_inv SEGS pcap_KS ly (mrestrict (w_H W) mem) M ->
   ajournal SEGS B STK sp0 FP ly S W memS md own ly' S' W' mem' md' k ->

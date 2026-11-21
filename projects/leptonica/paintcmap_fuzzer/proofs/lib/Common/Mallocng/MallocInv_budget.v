@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mprot_ok_vm_intro proves the ledger test and rewrites with it, instead of matching mprot_ok_vm's shape). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State Specs Run.
@@ -125,7 +126,14 @@ Corollary mprot_ok_vm_intro : forall h (p n b sz : word),
   vm_backed_bytes h + u n <= vm_limit h ->
   mprot_ok_vm h p n = true.
 Proof.
-  intros h p n b sz Hnw Hnwn Hpw Hin H1 H2 Hb. unfold mprot_ok_vm. apply Z.leb_le.
-  pose proof (backed_unprotect_le h p n b sz Hnw Hnwn Hpw Hin H1 H2).
-  replace (vm_limit h) with (vm_limit (vm_unprotect p n h)) in Hb by reflexivity. cbn [vm_limit vm_unprotect] in *. lia.
+  intros h p n b sz Hnw Hnwn Hpw Hin H1 H2 Hb.
+  (* [mprot_ok_vm] is this one test in a tree whose ledger has no small-limit
+     escape and the same test ORed with that escape in a tree that has one, so
+     prove the test and rewrite with it instead of matching the Boolean's shape *)
+  assert (Hle : (vm_backed_bytes (vm_unprotect p n h) <=? vm_limit h)%Z = true).
+  { apply Z.leb_le.
+    pose proof (backed_unprotect_le h p n b sz Hnw Hnwn Hpw Hin H1 H2).
+    replace (vm_limit h) with (vm_limit (vm_unprotect p n h)) in Hb by reflexivity.
+    cbn [vm_limit vm_unprotect] in *. lia. }
+  unfold mprot_ok_vm. rewrite Hle. reflexivity.
 Qed.

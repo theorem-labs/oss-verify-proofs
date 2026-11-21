@@ -1,9 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (P_main_H is stated over AsanInitL's SINV0L and argH0 of the run's input). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Run.
-From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import PropExec Scfg AxSymExec3 AsanPlanCore AsanPlan AsanPlanSound AsanInit AsHSTab.
+From OSSVerify.openssl.echconfiglist_parser.images Require Import AsanUbsan.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import PropExec Scfg AxSymExec3 AsanPlanCore AsanPlan AsanPlanSound AsanInit AsanInitL AsHSTab.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.AsCert Require Import AsImages AsPlanImages EAsS6State.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.AsHole Require Import ES6End0 ES6End1 ES6End2 ES6End3 ES6End4 ES6End5 EAsChain.
 Import ListNotations. Import AX2. Import AP. Import APS.
@@ -35,8 +37,8 @@ Lemma P_main_H : forall sp0 brk0 mbase rdraw inp c, P_main sp0 brk0 mbase rdraw 
     HSF_asan h = Some ch /\ pc ch = A_MAIN /\
     c = cfg_of ASEGS R A_MAIN FULL model /\
     cs_ok ASEGS ASAN_H AsanInit.LIMIT
-          (SINV0 APH sp0 rdraw brk0 (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-          (argH0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
+          (SINV0L APH AsanUbsan.M.init_pc sp0 rdraw brk0 inp)
+          (argH0 sp0 rdraw inp)
           (in_fs inp) E ch R FULL model.
 Proof.
   intros sp0 brk0 mbase rdraw inp c [V (h & ch & E & R & FULL & model & Hh & Hpc & Hc & HC & _)].

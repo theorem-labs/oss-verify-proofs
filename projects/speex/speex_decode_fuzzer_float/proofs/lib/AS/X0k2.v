@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the access-restriction lemmas take the vvar-read and vDSO-text fetch cases, and P_silent1 is assumed at instruction nodes only). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -402,50 +403,50 @@ fetch_failure segs (mrestrict H m) a = fetch_failure segs m a.
 Proof. intros m a. unfold fetch_failure. rewrite fetch_half_any_restrict. reflexivity. Qed.
 
 Lemma interp_eff_accesses_restrict : forall t m c mr' rs,
-interp_eff_accesses segs t (mrestrict H m)
-= MachineOk (@mkAccessReport _ (c, mr') rs) ->
-exists mf',
-interp_eff_accesses segs t m = MachineOk (@mkAccessReport _ (c, mf') rs)
-/\ mr' = mrestrict H mf'
-/\ (forall x, H x = true -> mf' x = m x)
-/\ ranges_avoid H rs.
+  interp_eff_accesses segs t (mrestrict H m)
+    = MachineOk (@mkAccessReport _ (c, mr') rs) ->
+  exists mf',
+    interp_eff_accesses segs t m = MachineOk (@mkAccessReport _ (c, mf') rs)
+    /\ mr' = mrestrict H mf'
+    /\ (forall x, H x = true -> mf' x = m x)
+    /\ ranges_avoid H rs.
 Proof.
-induction t as [c0 | c0 | c0 | c0 | c0 | c0 | n a k IH | n a v k IH];
-intros m c mr' rs Hi; cbn [interp_eff_accesses] in Hi |- *;
-try discriminate.
--
-injection Hi as <- <- <-. exists m.
-split; [reflexivity|]. split; [reflexivity|]. split; [intros; reflexivity|].
-apply ranges_avoid_nil.
--
-destruct (ov_read_bytes segs (mrestrict H m) a (width_bytes n)) as [bs|] eqn:Hrd;
-[|discriminate].
-destruct (ov_read_bytes_restrict _ m a bs Hrd) as [Hfull Hav].
-rewrite Hfull.
-destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) (mrestrict H m))
-as [[[c1 m1] rs1]| |] eqn:Hk; try discriminate.
-cbn [access_value accessed_ranges] in Hi. injection Hi as <- <- <-.
-destruct (IH _ m c1 m1 rs1 Hk) as (mf' & Hint & Hmr & Hhid & Hrs).
-rewrite Hint. cbn [access_value accessed_ranges].
-exists mf'. split; [reflexivity|]. split; [exact Hmr|]. split; [exact Hhid|].
-apply ranges_avoid_cons; assumption.
--
-destruct (store_ok segs (mrestrict H m) a (width_bytes n)) eqn:Hso; [|discriminate].
-destruct (store_ok_restrict _ m a Hso) as [Hfull Hav]. rewrite Hfull.
-assert (Hlen : length (Z_to_le_bytes (width_bytes n) (bv_unsigned v)) = width_bytes n)
-by apply length_Z_to_le_bytes.
-rewrite (write_to_mem_restrict (Z_to_le_bytes (width_bytes n) (bv_unsigned v)) m a)
-in Hi by (rewrite Hlen; exact Hav).
-destruct (interp_eff_accesses segs k
-(mrestrict H (write_to_mem m a (Z_to_le_bytes (width_bytes n) (bv_unsigned v)))))
-as [[[c1 m1] rs1]| |] eqn:Hk; try discriminate.
-cbn [access_value accessed_ranges] in Hi. injection Hi as <- <- <-.
-destruct (IH _ c1 m1 rs1 Hk) as (mf' & Hint & Hmr & Hhid & Hrs).
-rewrite Hint. cbn [access_value accessed_ranges].
-exists mf'. split; [reflexivity|]. split; [exact Hmr|]. split.
-+ intros x Hx. rewrite (Hhid x Hx).
-apply (write_to_mem_hidden _ m a x); [rewrite Hlen; exact Hav | exact Hx].
-+ apply ranges_avoid_cons; assumption.
+  induction t as [c0 | c0 | c0 | c0 | c0 | c0 | n a k IH | n a v k IH];
+    intros m c mr' rs Hi; cbn [interp_eff_accesses] in Hi |- *;
+    try discriminate.
+  - (* EDone *)
+    injection Hi as <- <- <-. exists m.
+    split; [reflexivity|]. split; [reflexivity|]. split; [intros; reflexivity|].
+    apply ranges_avoid_nil.
+  - (* ELoad *)
+    destruct (ov_read_bytes segs (mrestrict H m) a (width_bytes n)) as [bs|] eqn:Hrd;
+      [| destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
+    destruct (ov_read_bytes_restrict _ m a bs Hrd) as [Hfull Hav].
+    rewrite Hfull.
+    destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) (mrestrict H m))
+      as [[[c1 m1] rs1]| |] eqn:Hk; try discriminate.
+    cbn [access_value accessed_ranges] in Hi. injection Hi as <- <- <-.
+    destruct (IH _ m c1 m1 rs1 Hk) as (mf' & Hint & Hmr & Hhid & Hrs).
+    rewrite Hint. cbn [access_value accessed_ranges].
+    exists mf'. split; [reflexivity|]. split; [exact Hmr|]. split; [exact Hhid|].
+    apply ranges_avoid_cons; assumption.
+  - (* EStore *)
+    destruct (store_ok segs (mrestrict H m) a (width_bytes n)) eqn:Hso; [|discriminate].
+    destruct (store_ok_restrict _ m a Hso) as [Hfull Hav]. rewrite Hfull.
+    assert (Hlen : length (Z_to_le_bytes (width_bytes n) (bv_unsigned v)) = width_bytes n)
+      by apply length_Z_to_le_bytes.
+    rewrite (write_to_mem_restrict (Z_to_le_bytes (width_bytes n) (bv_unsigned v)) m a)
+      in Hi by (rewrite Hlen; exact Hav).
+    destruct (interp_eff_accesses segs k
+                (mrestrict H (write_to_mem m a (Z_to_le_bytes (width_bytes n) (bv_unsigned v)))))
+      as [[[c1 m1] rs1]| |] eqn:Hk; try discriminate.
+    cbn [access_value accessed_ranges] in Hi. injection Hi as <- <- <-.
+    destruct (IH _ c1 m1 rs1 Hk) as (mf' & Hint & Hmr & Hhid & Hrs).
+    rewrite Hint. cbn [access_value accessed_ranges].
+    exists mf'. split; [reflexivity|]. split; [exact Hmr|]. split.
+    + intros x Hx. rewrite (Hhid x Hx).
+      apply (write_to_mem_hidden _ m a x); [rewrite Hlen; exact Hav | exact Hx].
+    + apply ranges_avoid_cons; assumption.
 Qed.
 
 Lemma decode_exec_accesses_restrict : forall ms w msr' rs',
@@ -484,27 +485,28 @@ destruct (H x) eqn:Hx; [exact (Hhid x Hx) | reflexivity].
 Qed.
 
 Theorem step_accesses_restrict : forall ms msr' rs',
-step_accesses segs (restrict H ms) = MachineOk (@mkAccessReport _ msr' rs') ->
-step_accesses segs ms
-= MachineOk (@mkAccessReport _ (unrestrict H (ms_mem ms) msr') rs')
-/\ ranges_avoid H rs'
-/\ hclean H msr'.
+  step_accesses segs (restrict H ms) = MachineOk (@mkAccessReport _ msr' rs') ->
+  step_accesses segs ms
+    = MachineOk (@mkAccessReport _ (unrestrict H (ms_mem ms) msr') rs')
+  /\ ranges_avoid H rs'
+  /\ hclean H msr'.
 Proof.
-intros ms msr' rs' Hs. unfold step_accesses in Hs |- *.
-rewrite restrict_pc in Hs. cbn [ms_mem restrict] in Hs.
-rewrite fetch_word_ov_restrict, fetch_tail_any_restrict, fetch_failure_restrict in Hs.
-destruct (fetch_word segs (ms_pc ms)) as [w|].
-{ exact (decode_exec_accesses_restrict ms w msr' rs' Hs). }
-destruct (fetch_word_ov segs (ms_mem ms) (ms_pc ms)) as [w|].
-{ exact (decode_exec_accesses_restrict ms w msr' rs' Hs). }
-destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|].
-{ exact (decode_exec_accesses_restrict ms w msr' rs' Hs). }
-exfalso. unfold fetch_failure in Hs.
-destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
-destruct (fetch_byte_traps segs (ms_pc ms) || fetch_byte_traps segs (ms_pc ms + 1)
-|| match fetch_half_any segs (ms_mem ms) (ms_pc ms) with
-| Some _ => fetch_byte_traps segs (ms_pc ms + 2) || fetch_byte_traps segs (ms_pc ms + 3)
-| None => false end); discriminate.
+  intros ms msr' rs' Hs. unfold step_accesses in Hs |- *.
+  rewrite restrict_pc in Hs. cbn [ms_mem restrict] in Hs.
+  rewrite fetch_word_ov_restrict, fetch_tail_any_restrict, fetch_failure_restrict in Hs.
+  destruct (fetch_word segs (ms_pc ms)) as [w|].
+  { exact (decode_exec_accesses_restrict ms w msr' rs' Hs). }
+  destruct (fetch_word_ov segs (ms_mem ms) (ms_pc ms)) as [w|].
+  { exact (decode_exec_accesses_restrict ms w msr' rs' Hs). }
+  destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|].
+  { exact (decode_exec_accesses_restrict ms w msr' rs' Hs). }
+  exfalso. unfold fetch_failure in Hs.
+  destruct (vdso_text_at segs (ms_pc ms)); [discriminate|].
+  destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
+  destruct (fetch_byte_traps segs (ms_pc ms) || fetch_byte_traps segs (ms_pc ms + 1)
+            || match fetch_half_any segs (ms_mem ms) (ms_pc ms) with
+               | Some _ => fetch_byte_traps segs (ms_pc ms + 2) || fetch_byte_traps segs (ms_pc ms + 3)
+               | None => false end); discriminate.
 Qed.
 
 Theorem step_restrict_sound : forall ms msr',
@@ -535,33 +537,34 @@ unfold RiscvSemantics.step, drop_access_report. rewrite Hsa, Hv. reflexivity.
 Qed.
 
 Lemma step_accesses_ecall_shape : forall ms msr' rs',
-step_accesses segs ms = MachineOk (@mkAccessReport _ msr' rs') ->
-ms_svc_pending msr' <> None ->
-rs' = [] /\ ms_mem msr' = ms_mem ms /\ ms_regs msr' = ms_regs ms
-/\ ms_svc_pending msr' = Some (ms_reg ms 17).
+  step_accesses segs ms = MachineOk (@mkAccessReport _ msr' rs') ->
+  ms_svc_pending msr' <> None ->
+  rs' = [] /\ ms_mem msr' = ms_mem ms /\ ms_regs msr' = ms_regs ms
+  /\ ms_svc_pending msr' = Some (ms_reg ms 17).
 Proof.
-intros ms msr' rs' Hs Hsvc.
-assert (Hdec : forall w, decode_exec_accesses segs ms w = MachineOk (@mkAccessReport _ msr' rs') ->
-rs' = [] /\ ms_mem msr' = ms_mem ms /\ ms_regs msr' = ms_regs ms
-/\ ms_svc_pending msr' = Some (ms_reg ms 17)).
-{ intros w Hd. unfold decode_exec_accesses in Hd.
-destruct (is_ecall w).
-- injection Hd as <- <-. cbn. repeat split; reflexivity.
-- destruct (decode_any w) as [[i isz]|]; [|destruct (is_defined_illegal w); discriminate].
-destruct (interp_eff_accesses segs _ _) as [[[c1 m1] rs1]| |]; try discriminate.
-cbn [access_value accessed_ranges] in Hd. injection Hd as <- <-. cbn in Hsvc.
-exfalso. apply Hsvc. reflexivity. }
-unfold step_accesses in Hs.
-destruct (fetch_word segs (ms_pc ms)) as [w|]; [exact (Hdec w Hs)|].
-destruct (fetch_word_ov segs (ms_mem ms) (ms_pc ms)) as [w|]; [exact (Hdec w Hs)|].
-destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|]; [exact (Hdec w Hs)|].
-exfalso. destruct (fetch_failure segs (ms_mem ms) (ms_pc ms)) eqn:Hf; try discriminate.
-unfold fetch_failure in Hf.
-destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
-destruct (fetch_byte_traps segs (ms_pc ms) || fetch_byte_traps segs (ms_pc ms + 1)
-|| match fetch_half_any segs (ms_mem ms) (ms_pc ms) with
-| Some _ => fetch_byte_traps segs (ms_pc ms + 2) || fetch_byte_traps segs (ms_pc ms + 3)
-| None => false end); discriminate.
+  intros ms msr' rs' Hs Hsvc.
+  assert (Hdec : forall w, decode_exec_accesses segs ms w = MachineOk (@mkAccessReport _ msr' rs') ->
+            rs' = [] /\ ms_mem msr' = ms_mem ms /\ ms_regs msr' = ms_regs ms
+            /\ ms_svc_pending msr' = Some (ms_reg ms 17)).
+  { intros w Hd. unfold decode_exec_accesses in Hd.
+    destruct (is_ecall w).
+    - injection Hd as <- <-. cbn. repeat split; reflexivity.
+    - destruct (decode_any w) as [[i isz]|]; [|destruct (is_defined_illegal w); discriminate].
+      destruct (interp_eff_accesses segs _ _) as [[[c1 m1] rs1]| |]; try discriminate.
+      cbn [access_value accessed_ranges] in Hd. injection Hd as <- <-. cbn in Hsvc.
+      exfalso. apply Hsvc. reflexivity. }
+  unfold step_accesses in Hs.
+  destruct (fetch_word segs (ms_pc ms)) as [w|]; [exact (Hdec w Hs)|].
+  destruct (fetch_word_ov segs (ms_mem ms) (ms_pc ms)) as [w|]; [exact (Hdec w Hs)|].
+  destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|]; [exact (Hdec w Hs)|].
+  exfalso. destruct (fetch_failure segs (ms_mem ms) (ms_pc ms)) eqn:Hf; try discriminate.
+  unfold fetch_failure in Hf.
+  destruct (vdso_text_at segs (ms_pc ms)); [discriminate|].
+  destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
+  destruct (fetch_byte_traps segs (ms_pc ms) || fetch_byte_traps segs (ms_pc ms + 1)
+            || match fetch_half_any segs (ms_mem ms) (ms_pc ms) with
+               | Some _ => fetch_byte_traps segs (ms_pc ms + 2) || fetch_byte_traps segs (ms_pc ms + 3)
+               | None => false end); discriminate.
 Qed.
 
 End ISA.
@@ -1033,7 +1036,7 @@ destruct (H x); reflexivity.
 Qed.
 
 Variable P : config -> Prop.
-Hypothesis P_silent1 : forall c c',
+Hypothesis P_silent1 : forall c c', ms_svc_pending (cfg_ms c) = None ->   (* an instruction node *)
 node_ok c unit (fun _ => []) (fun _ => c') -> P c' -> P c.
 
 Theorem rz_step_restricted : forall A ms msr' model,
@@ -1048,7 +1051,7 @@ Proof.
 intros A ms msr' model Hcov Hwf Hinv Hh Hsvc Hs Hk.
 destruct (node_instr_restricted A ms msr' model Hcov Hwf Hinv Hh Hsvc Hs)
 as (model' & Hinv' & Hsame & _ & _ & Hnode).
-exact (P_silent1 _ _ Hnode (Hk model' Hinv' Hsame)).
+exact (P_silent1 (mkCfg ms model) _ Hsvc Hnode (Hk model' Hinv' Hsame)).
 Qed.
 
 Theorem rz_msteps_restricted : forall A msr0 msr',
@@ -1069,7 +1072,7 @@ rewrite unrestrict_restrict in Hk. exact Hk.
 - rewrite restrict_svc_pending in Hsvc.
 destruct (node_instr_restricted A ms msr1 model Hcov Hwf Hinv Hh Hsvc Hstep)
 as (model1 & Hinv1 & Hsame1 & Hcl1 & _ & Hnode).
-apply (P_silent1 _ _ Hnode).
+apply (P_silent1 (mkCfg ms model) _ Hsvc Hnode).
 pose proof (same_but_materialized_frame model model1 Hsame1) as Hfr.
 apply (IH (unrestrict H (ms_mem ms) msr1) model1).
 + symmetry. apply restrict_unrestrict_clean. exact Hcl1.

@@ -1,10 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: proofs/cgif/cgif_file_fuzzer/lib/A/AC8j.v at c8557374ad2e (st_ok_region_nth, field_of_region, awr_ok_cons_gen, as w7_region_nth, w7_field, w7_awr_cons) for reac-pw/fuzz_role's image A; the rest of the file is new: the block-post shape, the code table and the helpers of the walk of LLVMFuzzerTestOneInput from 0x80d14 to 0x8165c. *)
+(* Modified by Theorem Labs, 2026-10: proofs/cgif/cgif_file_fuzzer/lib/A/AC8j.v at theorem-labs/oss-verify-proofs@6b32741d849a (st_ok_region_nth, field_of_region, awr_ok_cons_gen, as w7_region_nth, w7_field, w7_awr_cons) for reac-pw/fuzz_role's image A; the rest of the file is new: the block-post shape, the code table and the helpers of the walk of LLVMFuzzerTestOneInput from 0x80d14 to 0x8165c. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_role/lib/A/RPgW7bBase.v, with its module paths and module names changed; 1922 of its 1971 lines of code are new or changed and 78 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgSteps.v at a58a6fc257b (parts 1, 2) and
-   a6c23b42ca2 (part 3); ported to
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgSteps.v (parts 1, 2) and
+   (part 3); ported to
    reac-pw/fuzz_headamp image A: module paths fuzz_role -> fuzz_headamp, RPgBase / RPgCSpec -> HPgBase / HPgCSpec, the
    rl_ prefix -> hd_; every image address relocated from role's image A to headamp's (the jump table 0x20e94 ->
    0x20e9c with its nine entries and targets measured from headamp's pinned bytes, the dispatch block 0x80b1c ->
@@ -16,6 +16,7 @@
    role-object pair replaced by headamp's res and x sites, the run 0x82578 stated with the value it leaves in a1
    (hd_scope_stmtAx, hd_inc_a1, sv_addiw1), role's unused fsh_ss2 dropped, fsh_pts added for the 17-granule x
    sites. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image A (fuzz_headamp.asan, pinned sha256
    f3e0669d2819724922df0556b11c2dcd22d1e16fe7e0fe1535ce784b34436c47; every address below is measured on its unstripped
    twin sha256 b5f352154c54a97c66fd92dfa228e8a854498f6cd313dba0107900546b043f9a): the step kit of the image-A walk of
@@ -1100,7 +1101,7 @@ Print Assumptions hd_u32_block3.
    the token layer's cells_safe_b would ask the shadow of the shadow row, which is not addressable. What the block
    needs instead is the right to write there, and the kit's journal already grants it: awr_byte's in_frames case
    covers [shadow_addr F, shadow_addr F + fs_frame_bytes cid / 8) for a frame the walk owns (YCbq.v:348-351), and
-   the frames law gives those bytes present (YG0d.v:463-465). *)
+   the frames law gives those bytes present (YG0d.v:464-466). *)
 
 Section fsh. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Context {SK : YI16.sink_head}.

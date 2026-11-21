@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfRefillTick.v (a working branch 6ffa5fd37e27, file sha256 dc3436c09eaa), the cf refill lane's tick step (a Theorem Labs lane refill-b2 head, on the round-3 cf layer d0377850faab of round6f); module paths changed only: 32 modules to this unit's lib/Reusable. No other edit; no image numeral is stated here. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfRefillTick.v (a working branch, file sha256 dc3436c09eaa), the cf refill lane's tick step (a Theorem Labs lane refill-b2 head, on the round-3 cf layer of round6f); module paths changed only: 32 modules to this unit's lib/Reusable. No other edit; no image numeral is stated here. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30: the TICK transport of the cf refill walk,
    written once for both halves.
    YGcfInstRefill.refill_walk_cf (and MnRefillSeamcf.refill_case_cf) run refill_tree_cf from the TICKED entry state

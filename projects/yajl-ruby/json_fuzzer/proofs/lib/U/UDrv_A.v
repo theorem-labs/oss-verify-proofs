@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (zpair and the auxv_pairs lemmas, copied from jsoncons/fuzz_json_cursor's Pm10HeapBridge.v; rauxv_ok_init from the launch's own auxv_entries for either CONFIG_RSEQ layout; the launchT context; the entry block as UIMG_ok; argv pointers from ed_top and the exec name; the stack window from usp0 - 6,144,513 in place of the 8 MiB below sp). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -63,8 +64,56 @@ Ltac rz_seg Hh Hl :=
       [ | exact Hh | exact Hl | let X := fresh in intros ? X; exact X ]
   end.
 
+(* LPS 08b1429: the launch's auxv as the pair list [rauxv_ok] takes, [auxv_entries] minus its
+   AT_NULL, for either CONFIG_RSEQ case (26 or 28 pairs); copied from
+   jsoncons/fuzz_json_cursor's Pm10HeapBridge.v (recipe rauxv-layout section 4). *)
+Definition zpair (e : word * word) : Z * Z := (bv_unsigned (fst e), bv_unsigned (snd e)).
+
+Lemma map_wz_flat_pairs_zpair : forall es : list (word * word),
+  map wz (flat_pairs (map zpair es)) = flat_map (fun e : word * word => [fst e; snd e]) es.
+Proof.
+  induction es as [|[a b] es IH]; [reflexivity|]. cbn [map flat_pairs zpair flat_map fst snd app].
+  rewrite IH. unfold wz. rewrite !Z_to_bv_bv_unsigned. reflexivity.
+Qed.
+
+Lemma auxv_pairs_words : forall la ph entry uid gid hw r x,
+  map wz (flat_pairs (map zpair (removelast (auxv_entries la ph entry uid gid hw r x))) ++ [0; 0])
+  = flat_map (fun e : word * word => [fst e; snd e]) (auxv_entries la ph entry uid gid hw r x).
+Proof.
+  intros. remember (auxv_entries la ph entry uid gid hw r x) as es eqn:Ees.
+  assert (E : es = removelast es ++ [(AT_NULL, Z_to_bv 64 0)])
+    by (subst es; unfold auxv_entries; destruct (la_rseq la); reflexivity).
+  rewrite E at 2. rewrite flat_map_app, map_app, map_wz_flat_pairs_zpair. reflexivity.
+Qed.
+
+Lemma auxv_pairs_length : forall la ph entry uid gid hw r x,
+  (length (map zpair (removelast (auxv_entries la ph entry uid gid hw r x))) + 1 = auxv_count (la_rseq la))%nat.
+Proof. intros. rewrite length_map. unfold auxv_entries, auxv_count. destruct (la_rseq la); reflexivity. Qed.
+
+Lemma auxv_pairs_facts : forall la ph entry uid gid hw r x,
+  let L := map zpair (removelast (auxv_entries la ph entry uid gid hw r x)) in
+  Forall (fun p => fst p <> 0) L /\ last_assoc 25 L = Some (bv_unsigned r)
+  /\ Forall (fun p => fst p = 25 -> snd p = bv_unsigned r) L
+  /\ Forall (fun p => 0 <= fst p < 2^64 /\ 0 <= snd p < 2^64) L.
+Proof.
+  intros. subst L.
+  assert (RG : forall w : word, 0 <= bv_unsigned w < 2^64)
+    by (intros w; pose proof (bv_unsigned_in_range 64 w) as R; unfold bv_modulus in R; cbn in R; lia).
+  unfold auxv_entries; destruct (la_rseq la); cbn [removelast map app]; unfold zpair; cbn [fst snd];
+    unfold AT_SYSINFO_EHDR, AT_L1I_CACHESIZE, AT_L1I_CACHEGEOMETRY, AT_L1D_CACHESIZE, AT_L1D_CACHEGEOMETRY,
+      AT_L2_CACHESIZE, AT_L2_CACHEGEOMETRY, AT_L3_CACHESIZE, AT_L3_CACHEGEOMETRY, AT_MINSIGSTKSZ, AT_HWCAP,
+      AT_PAGESZ, AT_CLKTCK, AT_PHDR, AT_PHENT, AT_PHNUM, AT_BASE, AT_FLAGS, AT_ENTRY, AT_UID, AT_EUID, AT_GID,
+      AT_EGID, AT_SECURE, AT_RANDOM, AT_EXECFN, AT_RSEQ_FEATURE_SIZE, AT_RSEQ_ALIGN;
+    (split; [repeat (apply Forall_cons; [cbn [fst snd]; rewrite unsigned_lit by lia; lia|]); apply Forall_nil|]);
+    (split; [reflexivity|]);
+    (split; [repeat (apply Forall_cons; [cbn [fst snd]; intros HK; first [reflexivity | rewrite unsigned_lit in HK by lia; lia]|]);
+             apply Forall_nil|]);
+    repeat (apply Forall_cons; [cbn [fst snd]; split; [rewrite unsigned_lit by lia; lia| apply RG]|]); apply Forall_nil.
+Qed.
+
 Section A.
   Context {RC__ : OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Lib.RunCeiling.RunCeiling}.
+  Context {LT : launchT}.
   Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw) (TID : Z).
   Hypothesis VSP : valid_sp sp0.
   Hypothesis RCSP : rc_sp = bv_unsigned sp0.          (* [comment removed for export] *)
@@ -76,7 +125,6 @@ Section A.
   Notation usp0 := (bv_unsigned sp0).
   Notation gpv := (Z_to_bv 64 0x10800).
   Notation tpv := (Z_to_bv 64 RATP).
-  Notation IMGB := (build_stack_bytes rph sp0 argv envp uid hw rnd).
   Notation LO' := (LO sp0).
 
   (* [comment removed for export] *)
@@ -178,27 +226,39 @@ Section A.
     Variable m : mem.
     Hypothesis AUXC : rw_cells usegs m RAUXV_CELL [C8 (Z_to_bv 64 (auxv_addr sp0 argv envp))].
     Hypothesis MI : mem_inv usegs m.
-    Hypothesis IMG : bytes_at usegs m usp0 IMGB.
+    Hypothesis IMG : UIMG_ok sp0 argv envp uid hw rnd m.
 
     (* [comment removed for export] *)
+    (* LPS 08b1429: the pair list is the launch's own [auxv_entries] less AT_NULL, for either
+       CONFIG_RSEQ case; the bounds come from the block ([UIMG_ok]). *)
     Lemma rauxv_ok_init : rauxv_ok m usp0.
     Proof.
-      destruct (stack_pieces sp0 argv envp uid hw rnd m IMG) as (_ & _ & _ & AUXW & _ & _ & RND).
-      pose proof (build_stack_bytes_length rph sp0 argv envp uid hw rnd) as BL. pose proof (raw_len_nonneg rph sp0 argv envp uid hw rnd) as RLN.
-      pose proof (bytes_at_bound _ _ _ _ IMG) as IB. pose proof (sp_facts sp0 VSP RCSP) as SF. unfold LO in SF.
-      pose proof (bv_unsigned_in_range 64 uid) as RU. unfold bv_modulus in RU. cbn in RU.
-      pose proof (bv_unsigned_in_range 64 hw) as RH. unfold bv_modulus in RH. cbn in RH.
-      exists (auxv_addr sp0 argv envp), (Z.of_N (ph_addr rph)), (Z.of_N (ph_ent rph)), (Z.of_N (ph_num rph)), (bv_unsigned hw), 4096,
-             (bv_unsigned uid), (bv_unsigned uid), 0, (rnd_addr sp0 argv envp).
+      destruct (stack_pieces sp0 argv envp uid hw rnd m IMG) as (_ & _ & _ & AUXW & RND).
+      pose proof IMG as (_ & PADOK & TS & TOP).
+      pose proof (sp_facts sp0 VSP RCSP) as SF. unfold LO in SF.
+      pose proof (hsz_eq (la_rseq L_LA) argv envp) as HS. pose proof (lstr_eq argv envp L_EXECFN) as HL.
+      pose proof (total_arg_bytes_nonneg argv). pose proof (total_arg_bytes_nonneg envp).
+      pose proof (Nat2Z.is_nonneg (length L_EXECFN)).
+      assert (RU : bv_unsigned (Z_to_bv 64 (rnd_addr sp0 (la_rseq L_LA) argv envp)) = rnd_addr sp0 (la_rseq L_LA) argv envp).
+      { apply unsigned_lit. unfold rnd_addr. unfold argc, envc in HS. lia. }
+      pose proof (auxv_pairs_length L_LA rph (Z_to_bv 64 (Z.of_N u_init_pc)) uid L_GID hw
+                    (Z_to_bv 64 (rnd_addr sp0 (la_rseq L_LA) argv envp)) (Z_to_bv 64 (execfn_ptr (ed_top rnd) L_EXECFN))) as PL.
+      destruct (auxv_pairs_facts L_LA rph (Z_to_bv 64 (Z.of_N u_init_pc)) uid L_GID hw
+                  (Z_to_bv 64 (rnd_addr sp0 (la_rseq L_LA) argv envp)) (Z_to_bv 64 (execfn_ptr (ed_top rnd) L_EXECFN)))
+        as (NZ & LA & R25 & RNG).
+      rewrite RU in LA, R25.
+      exists (auxv_addr sp0 argv envp),
+        (map zpair (removelast (auxv_entries L_LA rph (Z_to_bv 64 (Z.of_N u_init_pc)) uid L_GID hw
+                                  (Z_to_bv 64 (rnd_addr sp0 (la_rseq L_LA) argv envp)) (Z_to_bv 64 (execfn_ptr (ed_top rnd) L_EXECFN))))),
+        (rnd_addr sp0 (la_rseq L_LA) argv envp).
       split; [exact AUXC|].
-      split. { unfold auxv_addr. replace (auxv_list _ _ _ _ _ _ _ _ _) with (auxv_words rph sp0 argv envp uid hw). { exact AUXW. }
-               unfold auxv_list, auxv_words, wz. cbn [map]. rewrite !Z_to_bv_bv_unsigned. reflexivity. }
-      split. { rewrite at_random_bytes_split in RND. apply bytes_at_app in RND. destruct RND as [_ R].
+      split. { rewrite auxv_pairs_words. unfold auxv_addr. exact AUXW. }
+      split. { unfold rnd_bytes in RND. rewrite at_random_bytes_split in RND. apply bytes_at_app in RND. destruct RND as [_ R].
                rewrite length_firstn, length_at_random_bytes in R. cbn [Nat.min Z.of_nat Pos.of_succ_nat Pos.succ] in R.
                replace (le8 (wz rc_secret)) with (secret_bytes (at_random_bytes (ed_random rnd))). { exact R. }
                rewrite RCS. unfold wz. rewrite Z_to_bv_bv_unsigned. symmetry. apply le8_secret_of. rewrite length_at_random_bytes. lia. }
-      unfold auxv_addr, rnd_addr, raw_len, struct_size, argc, envc, alloc_ceiling, sp_window_lo, stack_max_size in *.
-      pose proof (flatten_strings_length argv). pose proof (flatten_strings_length envp).
+      split; [| exact (conj NZ (conj LA (conj R25 RNG)))].
+      unfold auxv_addr, rnd_addr, argc, envc, alloc_ceiling in *.
       repeat split; lia.
     Qed.
   End InitFacts.
@@ -207,6 +267,7 @@ End A.
 
 Section A2.
   Context {RC__ : OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Lib.RunCeiling.RunCeiling}.
+  Context {LT : launchT}.
   Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw).
   Hypothesis VSP : valid_sp sp0.
   Hypothesis RCSP : rc_sp = bv_unsigned sp0.          (* [comment removed for export] *)
@@ -217,7 +278,6 @@ Section A2.
   Notation usp0 := (bv_unsigned sp0).
   Notation gpv := (Z_to_bv 64 0x10800).
   Notation tpv := (Z_to_bv 64 RATP).
-  Notation IMGB := (build_stack_bytes rph sp0 argv envp uid hw rnd).
   Notation LO' := (LO sp0).
   Variable HK : HK_T.
   Hypothesis HKS : HK_run_stmt HK.
@@ -264,9 +324,9 @@ Section A2.
   Proof.
     intros ms Q AM K.
     destruct AM as (t0 & t1 & t2 & a3 & a4 & a5 & a6 & a7 & s4 & s5 & s6 & s7 & s8 & s9 & s10 & s11 & t3 & t4 & t5 & t6 & t & P0 & pg & m
-                    & -> & MI & ST & TD & ERR & TLS & LIBC1 & LIBC2 & MTLS & SYSI & PROG & HWCAP & ENV & DSS & GUARD & GOT0 & GOTM & GCX & G78 & G88 & GA0 & GOTG & GF & IA & FA & GD0 & INI & FIN & EXL & SOU & SEU & SIN & OFL & SOF & SEF & IMG & IMGW & HP0 & NONE & Ht).
+                    & -> & MI & ST & TD & ERR & TLS & LIBC1 & LIBC2 & MTLS & SYSI & PROG & HWCAP & ENV & DSS & GUARD & GOT0 & GOTM & GCX & G78 & G88 & GA0 & GOTG & GF & IA & FA & GD0 & INI & FIN & EXL & SOU & SEU & SIN & OFL & SOF & SEF & IMG & HP0 & NONE & Ht).
     pose proof (sp_facts sp0 VSP RCSP) as SF. pose proof (IMGB_len sp0 argv envp uid hw rnd VSP VARGV VENVP) as IL. pose proof (IMGB_ts sp0 argv envp uid hw rnd EFIT) as ITS. unfold LO in *.
-    pose proof (bytes_at_bound _ _ _ _ IMG) as IMGBD.
+    pose proof (bytes_at_bound _ _ _ _ (proj1 IMG)) as IMGBD.
     destruct (HKI m) as [HK0 AUXC]; [intros a Ha; apply NONE; [lia| cbn; lia] | exact LIBC1 | exact LIBC2 | exact GOTG | exact GUARD | exact MI |].
     pose proof (rauxv_ok_init sp0 argv envp uid hw rnd VSP RCSP RCS m AUXC IMG) as AI.
     pose proof (stderr_wfile0_init m NONE) as SE.
@@ -291,20 +351,20 @@ Section A2.
     clear AT1 AT2 AT3.
     assert (RSG : RSTG m (repeat (Z_to_bv 8 0) (Z.to_nat STAGE))).
     { apply RSTG_image0. intros a Ha. pose proof STAGE_val. unfold RSTAGE in Ha. apply NONE; [lia| cbn [outside rcrt_written]; lia]. }
-    clear TLS MTLS SYSI PROG HWCAP ENV DSS GOT0 GOTM IA INI IMGW HP0 Y1 Y2 Y3 T1 T2.
-    replace (usp0 - 8388608) with (usp0 + -8388608) in ST by lia.
-    eapply (main_prologue sp0 VSP RCSP); [unfold LO; replace (usp0 - 8388608) with (usp0 + -8388608) by lia; exact ST| exact MI|].
+    clear TLS MTLS SYSI PROG HWCAP ENV DSS GOT0 GOTM IA INI HP0 Y1 Y2 Y3 T1 T2.
+    replace (usp0 - 6144513) with (usp0 + -6144513) in ST by lia.
+    eapply (main_prologue sp0 VSP RCSP); [unfold LO; replace (usp0 - 6144513) with (usp0 + -6144513) by lia; exact ST| exact MI|].
     intros m1 pad FR ST1 MU WM MI1. unfold LO in ST1.
     pose proof (agree_on_of_munch _ _ _ MU WM) as AG.
     assert (OUT : forall a, (a < usp0 - 128 \/ usp0 - 48 <= a) -> (fun a0 : Z => outside [(usp0 - 128, usp0 - 48)] a0) a) by (intros a Ha; cbn; lia).
     apply (K t t0 t1 t2 a3 a4 a5 a6 a7 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 m1 pad Ht).
     - exact FR.
-    - split; [unfold LO; replace (usp0 - 8388608) with (usp0 + -8388608) by lia; exact ST1|]. split; [exact MI1|].
+    - split; [unfold LO; replace (usp0 - 6144513) with (usp0 + -6144513) by lia; exact ST1|]. split; [exact MI1|].
       split. { eapply (RSTAT_agree t _ _ _ AG); [intros a Ha; apply OUT; unfold rstat_addr in Ha; lia|].
                unfold RSTAT. split; [split; [exact TD| exact ATX0]|]. split; [exact EXL|]. split; [exact GF|]. split; [exact FA|]. split; [exact FIN|]. split; [exact GCX|].
                split; [exact OFL|]. split; [exact SIN|]. split; [exact SOU|]. split; [exact SEU|]. split; [exact G78| exact GD0]. }
       split. { eapply rauxv_ok_frame; [exact AI| exact MU| exact WM|]. constructor; [| constructor]. unfold RAUXV_CELL. cbn [fst snd]. lia. }
-      split. { eapply bytes_at_agree; [exact AG| exact IMG| intros a Ha; apply OUT; lia]. }
+      split. { eapply UIMG_ok_agree; [exact AG| intros a Ha; apply OUT; lia| exact IMG]. }
       split. { eapply (stderr_wfile0_agree _ _ _ AG); [intros a Ha; apply OUT; unfold stderr_addr in Ha; lia| exact SE]. }
       split. { eapply (stdout_file_agree _ _ _ _ AG); [intros a Ha; apply OUT; unfold stdout_addr in Ha; lia| exact SOF]. }
       split. { eapply (YST_agree _ _ _ AG); [intros a Ha; apply OUT; unfold ytr_addr in Ha; lia| exact YS0]. }
@@ -335,20 +395,20 @@ Section A2.
     destruct argv as [|arg0 argv'] eqn:EARGV; [cbn in ARGC; lia|]. rewrite <- EARGV in *.
     (* [comment removed for export] *)
     destruct (argv_cstring sp0 argv envp uid hw rnd mm IMG 0 arg0 ltac:(rewrite EARGV; reflexivity) ltac:(clear -SF; Z.div_mod_to_equations; lia))
-      as (p0 & slack0 & HP0 & P0LO & P0HI & STR0 & SLK0). unfold str_base, struct_size, argc, envc in P0LO.
+      as (p0 & slack0 & HP0 & P0LO & P0HI & STR0 & SLK0 & TOP0).
     destruct (stack_pieces sp0 argv envp uid hw rnd mm IMG) as (_ & ARGVP & _).
     assert (A0NN : ~ In (Z_to_bv 8 0) arg0) by (rewrite EARGV in NONUL; inversion NONUL; assumption).
     assert (A0LEN : Z.of_nat (length arg0) <= 131071) by (rewrite EARGV in ARGLEN; inversion ARGLEN; assumption).
     unfold argc. zstep. if_cases K0; zify_cond K0; try (exfalso; lia). clear K0.
     (* [comment removed for export] *)
     zstep. zstep. zstep.
-    pose proof (u64ro_read mm (usp0 + 8) (argv_ptrs sp0 argv envp ++ [Z_to_bv 64 0]) 0 (Z_to_bv 64 p0) (Z_to_bv 64 (usp0 + 8))
+    pose proof (u64ro_read mm (usp0 + 8) (argv_ptrs (ed_top rnd) argv envp L_EXECFN ++ [Z_to_bv 64 0]) 0 (Z_to_bv 64 p0) (Z_to_bv 64 (usp0 + 8))
                   ARGVP ltac:(rewrite nth_error_app1 by (rewrite argv_ptrs_length, EARGV; cbn; lia); exact HP0) ltac:(lia) ltac:(unfold wa; f_equal; lia)) as RD.
     zstep. clear RD. zstep. zstep. zstep.
     (* [comment removed for export] *)
     apply evt_done.
     rewrite EARGV. cbn [hd].
-    eapply (rz_fprintf_diag (DUsage (map bv_unsigned arg0))) with (lo := usp0 - 8388608) (canary := rc_guard) (st := ps0);
+    eapply (rz_fprintf_diag (DUsage (map bv_unsigned arg0))) with (lo := usp0 - 6144513) (canary := rc_guard) (st := ps0);
       [ apply ShapeAlg.t_emit_has_nil | exact Hmi | exact Hh
       | apply stderr_wfile0_wfile; exact SE | reflexivity | | rewrite unsigned_lit by lia; exact ST
       | rewrite unsigned_lit by lia; unfold FPRINTF_DEPTH; lia | unfold GLOBALS_TOP; lia | rewrite unsigned_lit by lia; lia
@@ -364,9 +424,9 @@ Section A2.
     rewrite !unsigned_lit in MUc by lia.
     replace (ret_pc (Z_to_bv 64 0x136b4)) with (Z_to_bv 64 0x136b4) by (symmetry; rpc).
     pose proof (agree_on_of_munch _ _ _ MUc WMc) as AG.
-    assert (OUT : forall a, (usp0 - 128 <= a /\ ~ (0x25368 <= a < 0x25368 + 232)) -> (fun a0 : Z => outside [(usp0 - 8388608, usp0 + -128); (0x25368, 0x25368 + 232)] a0) a).
+    assert (OUT : forall a, (usp0 - 128 <= a /\ ~ (0x25368 <= a < 0x25368 + 232)) -> (fun a0 : Z => outside [(usp0 - 6144513, usp0 + -128); (0x25368, 0x25368 + 232)] a0) a).
     { intros a Ha. cbn. lia. }
-    assert (OUT2 : forall a, (0x10000 <= a < 0x57000 /\ ~ (0x25368 <= a < 0x25368 + 232)) -> (fun a0 : Z => outside [(usp0 - 8388608, usp0 + -128); (0x25368, 0x25368 + 232)] a0) a).
+    assert (OUT2 : forall a, (0x10000 <= a < 0x57000 /\ ~ (0x25368 <= a < 0x25368 + 232)) -> (fun a0 : Z => outside [(usp0 - 6144513, usp0 + -128); (0x25368, 0x25368 + 232)] a0) a).
     { intros a Ha. cbn. lia. }
     unfold MFRAME in FR.
     apply (rw_cells_agree _ _ _ _ _ AG) in FR; [| intros a Ha; apply OUT; cbn in Ha; lia].

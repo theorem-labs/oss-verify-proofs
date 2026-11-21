@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the section assumes the stderr write's channel reader (m_channel_reader), which ref_stdio_write now asks. *)
 From OSSVerify.Proofs.skcms.iccprofile_info.lib.H Require GcFlushY13.  (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require ZArith NArith List Lia Bool String.
@@ -291,6 +292,10 @@ Section Tail.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+(* LPS #38 (in 727298f3): the stderr write goes through [ref_stdio_write], which asks
+   for the reader; declared right after [Hfd2], the order [RefStdioWrite]'s own
+   section uses (RefStdioWrite.v:728-729). *)
+Hypothesis Hrdr : m_channel_reader model = true.
 
   Definition ENV (vals : list word) : env := Env (vals_ev vals) (blobs_ev BL).
 
@@ -442,6 +447,7 @@ Section Tail.
       replace (bv_unsigned sp0 + -560)%Z with (bv_unsigned sp0 + -560)%Z in MSG by lia. exact MSG.
     - reflexivity.
     - exact Hfd2.
+    - exact Hrdr.
     - exact Hh.
     - exact Hlazy.
     - apply t_exit_has_nil.

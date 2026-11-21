@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: the ASan walk of fuzz_reply's send_line, in the form of the cgif walks of
    proofs/cgif/cgif_file_fuzzer/lib/A/AC8h.v (call sites), lib/A/AC8b.v (a loop over concrete cut states) and
    lib/A/ACfj.v (segments joined at cut points). *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* send_line (line, len) at 0x82734 (relay.c:66-86, fuzz_send inlined from fuzz_reply.c:278-313), 135 instructions.
    Three segments, each a lemma from a concrete machine state at a cut point:
    - the epilogue X (0x828f8): the 13 saved registers back from the frame, the return;
@@ -22,7 +23,7 @@
    fixed by stating the fact and discharging it at the pinned placement by vm_compute, never by weakening):
    - sl_line_ok's image disjunct (W_contract.v) and HROMO / HGO here (SlLoop, sl_arm_data's growth round, the realloc
      at 0x82840 then the memcpy from the line): arealloc_cf_rule keeps an image byte only off the allocator's statics
-     (acall_kept, YCbq.v:830; W_journal.v:846-872), and nothing said that an image line, or g_client / g_send_dead /
+     (acall_kept, YCbq.v:830; W_journal.v:847-873), and nothing said that an image line, or g_client / g_send_dead /
      g_send_max, is off them.  Counter-case: an image line in as_zero_shadow whose bytes are an allocator static is
      allowed by the old text and can change across the realloc.  Now an image line is stated off as_owned_static
      (directly, not through rom_out: W1 found rom_out's owned-static conjunct false against AF0m's

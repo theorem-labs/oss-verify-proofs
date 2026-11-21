@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (model_ivs_wf_with_vmmaps and model_ivs_wf_init written out in plain text from their encoded (CDefT) statements, each with one premise added for the heap's mmap base: vm_mmap_base carried over, and valid_mmap_base). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -616,9 +617,15 @@ Lemma model_ivs_wf_intro : ltac2:(CDefT.buildp (gd_tbl_BackingAlgebra ()) "Pm,$1
 (* [comment removed for export] *).
 Proof. intros; repeat split; assumption. Qed.
 
-Lemma model_ivs_wf_with_vmmaps : ltac2:(CDefT.buildp (gd_tbl_BackingAlgebra ()) "Ph,$30.Pm,$1>.P,(2?.R1.)P,(1<.(23.R3.))P,(1<.(25.R4.))P,(8.(?.&40.)(3=.R5.)(3=.(24.R4.)))(2?.(31.R6.R5.))")
-(* [comment removed for export] *).
-Proof. intros h m (_ & _ & Wl & Wsp) Hm Hn Hsp. unfold model_ivs_wf. model_proj. repeat split; try assumption. eapply init_sp_ok_same; eassumption. Qed.
+(* Was an encoded statement (CDefT.buildp); written out from its decode (cdeft_print.py), not
+   re-encoded, with one premise added: the new ledger copies [vm_mmap_base] too
+   ([AsanCeil.init_sp_ok]'s second conjunct, the heap's mmap-base floor). *)
+Lemma model_ivs_wf_with_vmmaps : forall (h : VmMaps) (m : Model),
+  model_ivs_wf m -> ivs_wf (vm_maps h) -> ivs_wf (vm_noaccess h) ->
+  vm_init_sp h = vm_init_sp (m_vmmaps m) ->
+  vm_mmap_base h = vm_mmap_base (m_vmmaps m) ->
+  model_ivs_wf (with_vmmaps h m).
+Proof. intros h m (_ & _ & Wl & Wsp) Hm Hn Hsp Hmb. unfold model_ivs_wf. model_proj. repeat split; try assumption. eapply init_sp_ok_same; eassumption. Qed.
 
 Lemma model_ivs_wf_vm_forget_range : forall lo hi m,
   lo <= hi -> model_ivs_wf m -> model_ivs_wf (vm_forget_range lo hi m).
@@ -650,6 +657,8 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma model_ivs_wf_init : ltac2:(CDefT.buildp (gd_tbl_BackingAlgebra ()) "Preserved,(=.(>.(?.&40.)(?.&40.)))Pbrk0,(?.&40.)Pmbase,(?.&40.)Psp,(?.&40.)Plim,$0.Pinp,$40.P,(41.R3.)(2?.(42.R7.R6.R5.R4.R3.R2.))")
-(* [comment removed for export] *).
+(* Was an encoded statement (CDefT.buildp); written out from its decode, not re-encoded, with one
+   premise added, [valid_mmap_base mbase] ([AsanCeil.init_sp_ok]'s second conjunct).  No consumer. *)
+Lemma model_ivs_wf_init : forall (reserved : list (word * word)) (brk0 mbase sp : word) (lim : Z) (inp : ProcInput),
+  valid_sp sp -> valid_mmap_base mbase -> model_ivs_wf (init_model reserved brk0 mbase sp lim inp).
 Proof. intros. repeat split; try (intros q Hq; cbn in Hq; contradiction). apply init_sp_ok_init_model; assumption. Qed.

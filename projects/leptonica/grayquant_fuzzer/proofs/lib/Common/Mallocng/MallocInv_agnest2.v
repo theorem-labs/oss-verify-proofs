@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the THP flag of the mmap placement; the THP flag ms_thp of the malloc state, kept by enframe). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -124,14 +125,14 @@ Section NestRest2.
     replace (v_addi (v_slli (Z_to_bv 64 (size_class j)) 4) (-4)) with (Z_to_bv 64 NN)
       by (rewrite v_slli_Z, v_addi_Z by lia; f_equal; unfold nn; change (2^4) with 16; lia).
     eapply (enframe_ok A1 s1 gj mt aib slots idx NN _ HW1 HRp HWIN HRO Hmt Hrl Hslot ltac:(lia) ltac:(split; [lia | split; lia])).
-    unfold enframe_post. cbv zeta. intros off s2 Hoff HW2 HR2 HWIN2 Hvm2 Hlo2 Hhi2 HRO2 Hfr2 Hpay2.
+    unfold enframe_post. cbv zeta. intros off s2 Hoff HW2 HR2 HWIN2 Hvm2 Hlo2 Hhi2 Hthp2 HRO2 Hfr2 Hpay2.
     assert (Hoff0 : off = 0) by (rewrite N4 in Hoff; lia). subst off.
     rewrite Ep0 in *. rewrite Z.mul_0_r, Z.add_0_r in *.
     pose proof (nA2_eq A1 j gj mt aib slots idx Hmt Hrl) as E2. unfold nL2 in E2. rewrite E2 in HW2, HR2. clear E2.
     rewrite Ene in Hfr2.
     pose proof (Rep_nA3 (ms_mem s2) HR2) as R3.
-    destruct s2 as [m2 vm2 lo2 hi2]. cbn [ms_mem ms_vm ms_lo ms_hi] in *. subst vm2 lo2 hi2.
-    set (s2 := {| ms_mem := m2; ms_vm := ms_vm s1; ms_lo := ms_lo s1; ms_hi := ms_hi s1 |}) in *.
+    destruct s2 as [m2 vm2 lo2 hi2 thp2]. cbn [ms_mem ms_vm ms_lo ms_hi ms_thp] in *. subst vm2 lo2 hi2 thp2.
+    set (s2 := {| ms_mem := m2; ms_vm := ms_vm s1; ms_lo := ms_lo s1; ms_hi := ms_hi s1; ms_thp := ms_thp s1 |}) in *.
     assert (HWIN2' : WIN s2) by exact HWIN2.
     (* [comment removed for export] *)
     reassoc. rewrite (at_Z m 32). change (Z_to_bv 64 (m + 32)) with (Z_to_bv 64 (m + moff FW32)) at 1.

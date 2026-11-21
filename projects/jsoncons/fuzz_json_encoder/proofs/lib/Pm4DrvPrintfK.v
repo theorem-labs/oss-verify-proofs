@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the 6144513-byte zero-filled stack window): changed printf2_run, printf3_run, printf4_run; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/Pm8DrvPrintfK.v, lines 60-61, 90-91, 149, 178-179, 237, 266-267. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -63,7 +64,8 @@ Section PrintfK.
     let MV := mrestrict (ahid A model) M in
     usp - 4096 <= S -> S + 32 <= usp -> S mod 16 = 0 -> 0 <= canz < 2 ^ 64 ->
     getr R 1%bv = Z_to_bv 64 722244 -> getr R 2%bv = Z_to_bv 64 S -> getr R 10%bv = Z_to_bv 64 86575 -> getr R 11%bv = Z_to_bv 64 (S + 24) ->
-    (forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true) ->
+    (* WINDOW, old beside new, here and at the two lemmas below: was [usp - 8388608 <= a]; DRV_ZWIN. *)
+    (forall a n, usp - DRV_ZWIN <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true) ->
     (forall i, 65536 <= i < 1449984 -> MV (Z_to_bv 64 i) = None) ->
     rdn ASEGS MV (Z_to_bv 64 7069712) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 canz)) ->
     rdn ASEGS MV (Z_to_bv 64 (S + 24)) 4 = Some (word_to_le_bytes 4 (Z_to_bv 64 0)) ->
@@ -92,18 +94,18 @@ Section PrintfK.
     all: cbn [V].
     all: try assumption.
     all: try (clear - Hsp' HS1 HS2 Hcan; lia).
-    - (* [comment removed for export] *) intros d k Hd Hk. apply (WIN (S - 3232) 3232); lia.
-    - (* [comment removed for export] *) intros i Hi. apply (store_ok_defined sp0); [lia|]. apply (WIN (S - 3232) 3232); lia.
-    - (* [comment removed for export] *)
+    -   intros d k Hd Hk. apply (WIN (S - 3232) 3232); lia.
+    -   intros i Hi. apply (store_ok_defined sp0); [lia|]. apply (WIN (S - 3232) 3232); lia.
+    -
       intros i Hi. apply (stk_sh0 scfg L ar C IL HI HIok sp0 Hsp DL M0 _ _ _ _ _ _ _ D).
       Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
       clear - Hsp' Hal HS1 HS2 HS16 Hi. lia.
       Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
-    - (* [comment removed for export] *)
+    -
       apply Pm4ArtFsInv.cell_zero_bytes; [right; reflexivity | lia | lia |]. intros j Hj. unfold byte_at.
       apply (img_sh0 scfg L ar IL HI ICok sp0 DL M0 _ _ _ _ _ _ 0x151fc 64 _ D); [lia | lia | lia | | lia].
       rewrite (aicl_poison IL ILY). repeat (apply Forall_cons; [cbn [fst snd]; lia|]). apply Forall_nil.
-    - (* [comment removed for export] *)
+    -
       apply Pm4ArtFsInv.cell_zero_bytes; [right; reflexivity | lia | lia |]. intros j Hj. unfold byte_at.
       apply (img_sh0 scfg L ar IL HI ICok sp0 DL M0 _ _ _ _ _ _ 0x6be7c0 64 _ D); [lia | lia | lia | | lia].
       rewrite (aicl_poison IL ILY). repeat (apply Forall_cons; [cbn [fst snd]; lia|]). apply Forall_nil.
@@ -119,7 +121,7 @@ Section PrintfK.
     - apply P1; [unfold PR_CELLS; cbn [In]; tauto | lia].
     - exact (PC 0x162c48 8 0x152aa0 ltac:(unfold PR_CELLS; cbn [In]; tauto)).
     - exact (PC 0x162c50 8 0x152ea4 ltac:(unfold PR_CELLS; cbn [In]; tauto)).
-    - (* [comment removed for export] *)
+    -
       unfold V in FRZ, MS; cbn beta iota in FRZ, MS.
       assert (FRW : forall a, 0 <= a < 2 ^ 64 -> ~ Wpf S 0 a -> MV' (Z_to_bv 64 a) = MV (Z_to_bv 64 a)).
       { intros a Ha Hn. apply FRZ; [exact Ha | | | | |]; intros X; apply Hn; unfold Wpf, SOBUF; lia. }
@@ -151,7 +153,7 @@ Section PrintfK.
     let MV := mrestrict (ahid A model) M in
     usp - 4096 <= S -> S + 32 <= usp -> S mod 16 = 0 -> 0 <= canz < 2 ^ 64 ->
     getr R 1%bv = Z_to_bv 64 722244 -> getr R 2%bv = Z_to_bv 64 S -> getr R 10%bv = Z_to_bv 64 86575 -> getr R 11%bv = Z_to_bv 64 (S + 24) ->
-    (forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true) ->
+    (forall a n, usp - DRV_ZWIN <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true) ->
     (forall i, 65536 <= i < 1449984 -> MV (Z_to_bv 64 i) = None) ->
     rdn ASEGS MV (Z_to_bv 64 7069712) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 canz)) ->
     rdn ASEGS MV (Z_to_bv 64 (S + 24)) 4 = Some (word_to_le_bytes 4 (Z_to_bv 64 0)) ->
@@ -180,18 +182,18 @@ Section PrintfK.
     all: cbn [V].
     all: try assumption.
     all: try (clear - Hsp' HS1 HS2 Hcan; lia).
-    - (* [comment removed for export] *) intros d k Hd Hk. apply (WIN (S - 3232) 3232); lia.
-    - (* [comment removed for export] *) intros i Hi. apply (store_ok_defined sp0); [lia|]. apply (WIN (S - 3232) 3232); lia.
-    - (* [comment removed for export] *)
+    -   intros d k Hd Hk. apply (WIN (S - 3232) 3232); lia.
+    -   intros i Hi. apply (store_ok_defined sp0); [lia|]. apply (WIN (S - 3232) 3232); lia.
+    -
       intros i Hi. apply (stk_sh0 scfg L ar C IL HI HIok sp0 Hsp DL M0 _ _ _ _ _ _ _ D).
       Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
       clear - Hsp' Hal HS1 HS2 HS16 Hi. lia.
       Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
-    - (* [comment removed for export] *)
+    -
       apply Pm4ArtFsInv.cell_zero_bytes; [right; reflexivity | lia | lia |]. intros j Hj. unfold byte_at.
       apply (img_sh0 scfg L ar IL HI ICok sp0 DL M0 _ _ _ _ _ _ 0x151fc 64 _ D); [lia | lia | lia | | lia].
       rewrite (aicl_poison IL ILY). repeat (apply Forall_cons; [cbn [fst snd]; lia|]). apply Forall_nil.
-    - (* [comment removed for export] *)
+    -
       apply Pm4ArtFsInv.cell_zero_bytes; [right; reflexivity | lia | lia |]. intros j Hj. unfold byte_at.
       apply (img_sh0 scfg L ar IL HI ICok sp0 DL M0 _ _ _ _ _ _ 0x6be7c0 64 _ D); [lia | lia | lia | | lia].
       rewrite (aicl_poison IL ILY). repeat (apply Forall_cons; [cbn [fst snd]; lia|]). apply Forall_nil.
@@ -207,7 +209,7 @@ Section PrintfK.
     - apply P1; [unfold PR_CELLS; cbn [In]; tauto | lia].
     - exact (PC 0x162c48 8 0x152aa0 ltac:(unfold PR_CELLS; cbn [In]; tauto)).
     - exact (PC 0x162c50 8 0x152ea4 ltac:(unfold PR_CELLS; cbn [In]; tauto)).
-    - (* [comment removed for export] *)
+    -
       unfold V in FRZ, MS; cbn beta iota in FRZ, MS.
       assert (FRW : forall a, 0 <= a < 2 ^ 64 -> ~ Wpf S 1 a -> MV' (Z_to_bv 64 a) = MV (Z_to_bv 64 a)).
       { intros a Ha Hn. apply FRZ; [exact Ha | | | | |]; intros X; apply Hn; unfold Wpf, SOBUF; lia. }
@@ -239,7 +241,7 @@ Section PrintfK.
     let MV := mrestrict (ahid A model) M in
     usp - 4096 <= S -> S + 32 <= usp -> S mod 16 = 0 -> 0 <= canz < 2 ^ 64 ->
     getr R 1%bv = Z_to_bv 64 722244 -> getr R 2%bv = Z_to_bv 64 S -> getr R 10%bv = Z_to_bv 64 86575 -> getr R 11%bv = Z_to_bv 64 (S + 24) ->
-    (forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true) ->
+    (forall a n, usp - DRV_ZWIN <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true) ->
     (forall i, 65536 <= i < 1449984 -> MV (Z_to_bv 64 i) = None) ->
     rdn ASEGS MV (Z_to_bv 64 7069712) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 canz)) ->
     rdn ASEGS MV (Z_to_bv 64 (S + 24)) 4 = Some (word_to_le_bytes 4 (Z_to_bv 64 0)) ->
@@ -268,18 +270,18 @@ Section PrintfK.
     all: cbn [V].
     all: try assumption.
     all: try (clear - Hsp' HS1 HS2 Hcan; lia).
-    - (* [comment removed for export] *) intros d k Hd Hk. apply (WIN (S - 3232) 3232); lia.
-    - (* [comment removed for export] *) intros i Hi. apply (store_ok_defined sp0); [lia|]. apply (WIN (S - 3232) 3232); lia.
-    - (* [comment removed for export] *)
+    -   intros d k Hd Hk. apply (WIN (S - 3232) 3232); lia.
+    -   intros i Hi. apply (store_ok_defined sp0); [lia|]. apply (WIN (S - 3232) 3232); lia.
+    -
       intros i Hi. apply (stk_sh0 scfg L ar C IL HI HIok sp0 Hsp DL M0 _ _ _ _ _ _ _ D).
       Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
       clear - Hsp' Hal HS1 HS2 HS16 Hi. lia.
       Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
-    - (* [comment removed for export] *)
+    -
       apply Pm4ArtFsInv.cell_zero_bytes; [right; reflexivity | lia | lia |]. intros j Hj. unfold byte_at.
       apply (img_sh0 scfg L ar IL HI ICok sp0 DL M0 _ _ _ _ _ _ 0x151fc 64 _ D); [lia | lia | lia | | lia].
       rewrite (aicl_poison IL ILY). repeat (apply Forall_cons; [cbn [fst snd]; lia|]). apply Forall_nil.
-    - (* [comment removed for export] *)
+    -
       apply Pm4ArtFsInv.cell_zero_bytes; [right; reflexivity | lia | lia |]. intros j Hj. unfold byte_at.
       apply (img_sh0 scfg L ar IL HI ICok sp0 DL M0 _ _ _ _ _ _ 0x6be7c0 64 _ D); [lia | lia | lia | | lia].
       rewrite (aicl_poison IL ILY). repeat (apply Forall_cons; [cbn [fst snd]; lia|]). apply Forall_nil.
@@ -295,7 +297,7 @@ Section PrintfK.
     - apply P1; [unfold PR_CELLS; cbn [In]; tauto | lia].
     - exact (PC 0x162c48 8 0x152aa0 ltac:(unfold PR_CELLS; cbn [In]; tauto)).
     - exact (PC 0x162c50 8 0x152ea4 ltac:(unfold PR_CELLS; cbn [In]; tauto)).
-    - (* [comment removed for export] *)
+    -
       unfold V in FRZ, MS; cbn beta iota in FRZ, MS.
       assert (FRW : forall a, 0 <= a < 2 ^ 64 -> ~ Wpf S 2 a -> MV' (Z_to_bv 64 a) = MV (Z_to_bv 64 a)).
       { intros a Ha Hn. apply FRZ; [exact Ha | | | | |]; intros X; apply Hn; unfold Wpf, SOBUF; lia. }

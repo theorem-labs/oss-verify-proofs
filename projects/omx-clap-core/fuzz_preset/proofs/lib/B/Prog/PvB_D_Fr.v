@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: for omx-clap-core/fuzz_preset, the position-abstract-listing runner of
-   proofs/cgif/cgif_file_fuzzer/lib/YC80.v (origin/ossv/recipes c8557374ad2e :52-140), as YC80x.v restates it over
+   proofs/cgif/cgif_file_fuzzer/lib/YC80.v (theorem-labs/oss-verify-proofs@6b32741d849a :52-140), as YC80x.v restates it over
    YCbqG.v's journal ajournal_x, for a straight-line stretch that also writes an output through a caller's pointer into
    a frame of the journal's entry state S that the footprint names (YCbqG.v wr_fp_frame):
    - f twins (SRr_*_pi_tok_AJxf): write premise YCbqG.v's awr_ok_fr (awr_byte \/ wr_fp_frame), journal step YCbqG.v's
@@ -32,6 +32,7 @@
    paj_run_xmfR / paj_run_to_xmfR applied to them have the plain runner's binders in the plain order, and YC1fPx.v's
    paj_run_tok_xR / paj_run_to_tok_xR drive them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YC80xf.v; 99 of its 287 lines of code are new or changed and 343 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset image B (asan-ubsan), parse_value 0x8637c (segment D helper): the PA-listing runner of
    YC80x.v / YC1fPx.v with the CALLER-FRAME write premise. parse_value's string arm stores the node's type word
    (`sw a0, 0(s3)`, B 0x86554) through its caller's pointer v, and rd_pre's prhReader_at lets v lie in a fake frame of

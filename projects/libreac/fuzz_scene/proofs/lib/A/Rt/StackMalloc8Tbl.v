@@ -4,9 +4,10 @@
 (* Modified by Theorem Labs, 2026-10: new file for libreac/fuzz_scene (asan). The tables of
    __asan_stack_malloc_8 at 0x3f40c: EVERY scene address and class constant the class-8 segment cuts name, and
    nothing image-free. The cuts themselves are in lib/A/Rt/StackMalloc8Cuts.v and hold no literal address; they
-   use the names below. Same split as a Theorem Labs lane's lib/A/Rt/StackMalloc4Tbl.v + StackMalloc4.v (libreac/fuzz_grant
-   at 798447a1772) and a Theorem Labs lane's class 3 (StackMalloc3Tbl.v + StackMalloc3.v).
+   use the names below. Same split as a Theorem Labs lane's lib/A/Rt/StackMalloc4Tbl.v + StackMalloc4.v (libreac/fuzz_grant)
+   and a Theorem Labs lane's class 3 (StackMalloc3Tbl.v + StackMalloc3.v).
    The asan-ubsan side is a twin of THIS file only (lib/AU/Rt/StackMalloc8Tbl.v); the cuts serve both images. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (*   Addresses, MEASURED from the pinned image's unstripped twin (.symtab) and its disassembly
    (dis-__asan_stack_malloc_8-asan.txt (sha256 b91f9c1b8451; internal record)). The asan-ubsan column is
@@ -113,7 +114,7 @@ Definition SM8_GOT_DTLS : Z := 0x9c408.
 Definition SM8_DTLS_TPOFF : Z := 8.
 (* [T + 48] and [T + 56], the main thread's static-TLS bounds that __interceptor___tls_get_addr loads at
    0x48cb4 / 0x48cb8 and passes to DTLS_on_tls_get_addr. The values are those of the staged start-up table
-   (A/AF0m.v:24, z8 (AT 48) / z8 (AT 56)), taken by the walk as a Section hypothesis. *)
+   (A/AF0m.v:25, z8 (AT 48) / z8 (AT 56)), taken by the walk as a Section hypothesis. *)
 Definition SM8_T_TLS_BEG : Z := 0x5d6ed0.
 Definition SM8_T_TLS_END : Z := 0x5d6fac.
 (* The image's extent: the first PT_LOAD's start and the last PT_LOAD's page end (A/AF0x.v:25/:37). *)

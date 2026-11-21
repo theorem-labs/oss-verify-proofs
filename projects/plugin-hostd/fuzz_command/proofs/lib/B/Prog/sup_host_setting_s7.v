@@ -4,7 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: the fifth segment of check_reply's walk (fuzz_command.asan, 0x86d78), the
    strcmp call of the refusal path (0x86fb8) and the branch into the epilogue, ported from
    proofs/cgif/cgif_file_fuzzer/lib/A/ACh2.v (the step through a call and back) and A/ACh5.v (a segment that ends
-   in another segment's statement), at c8557374ad2e.
+   in another segment's statement).
 
    The code of the segment is
      0x86fb8  jal  wrapper_strcmp       a0 = g_rec.reply, a1 = s3 = F + 32, which holds "resp <code>"
@@ -17,6 +17,7 @@
    memory, so the engine's frame is empty and every byte the walk reads is the byte of the state the segment was
    entered in. The interceptor's own writes are the ones its contract allows, inside its scratch window below sp. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_reply_s5.v, with its module paths and module names changed; 658 of its 699 lines of code are new or changed and 371 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The last three segment lemmas of sup_host_setting's ASan+UBSan walk (plugin-hostd/fuzz_command,
    fuzz_command.asan-ubsan), on the points and statements of sup_host_setting_s0.v:
    - hs_seg_as2: from AS2 (0x8b804, back from arg_s(c, words)) `mv a0,s6`, the call of the free wrapper (0x589cc, at
@@ -28,7 +29,7 @@
      shadow := f5, the frame's flag byte := 0 (`ld a0,0x38(s3); sb zero,0(a0)`: the release, aj_flag_store_pi), the
      epilogue (the 13 saved registers reloaded from the 160-byte frame at s0 = sp0), the return (paj_ret_at), and
      the post hs_post.
-   The B twin of the ASan walk's sup_host_setting_s7.v (a working branch e323bbe76d2), with the B
+   The B twin of the ASan walk's sup_host_setting_s7.v (a working branch), with the B
    frame release of lib/A/Prog/answer_code.v's epilogue. The segment has no ASan report edge and no UBSan trap:
    0x8b82c `beqz s3` (s3 = F) is decided by the symbolic executor from the fact 4096 <= F (hsb7_fMIX). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.

@@ -5,11 +5,12 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module names changed; 85 of its 151 lines of code are new or changed and 3787 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/reac_box_catalogue_match_lib.v, with its module paths and module names changed; 717 of its 758 lines of code are new or changed and 110 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F31.v, with its module names and numbers changed; 139 of its 189 lines of code are new or changed and 708 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment F33 of fuzz_ctrl LLVMFuzzerTestOneInput (asan, image A): 0x8285c-0x82868, the head of row_of_block
    (plan-asan section 2 row F33; ubsan twin W01).
    rule 24: no function proved.
    v1.9 STATUS (2026-10-28): UNVERIFIED.  No build without probes has checked this file on v1.9.0.  It closed only
-   in an ITERATION-ONLY build on the v1.9 bytes (FACTS 0bfe9aa0d452) with lib/A/Tk/AW/SmLeaf.v's walks admitted.
+   in an ITERATION-ONLY build on the v1.9 bytes (FACTS) with lib/A/Tk/AW/SmLeaf.v's walks admitted.
    It waits for lib/A/Tk/AW Sm* on v1.9 and for Seg/Tac_slot.v / Tac_fsfree.v re-fit to the regenerated Contract.v
    and FrameAPI.v.
 
@@ -19,7 +20,7 @@
      0x82868  mv s4,a0        -- s4 = BOX_CATALOGUE, the row pointer of row 0.
 
    Cuts: all three are SlotInv.v's official bodies (push 6c, kept through push 14E, v1.9 names and pcs of
-   a working branch 0a1d413d7c3).  The entry Inv_A8285c_at is
+   a working branch).  The entry Inv_A8285c_at is
    F32's exit term for term: the frame-loop skeleton written out (exists phi, CUTST g 0x8285c (hb1 phi
    (AC.a_size (flen g j))) with FLSI) with LK, the pass-through bundle FLSX, t_rowsel = true, the
    catalogue's result a0 / s8 / count word and the hand-on bundle LT.  The exit Inv_A8286c_at (the row loop head

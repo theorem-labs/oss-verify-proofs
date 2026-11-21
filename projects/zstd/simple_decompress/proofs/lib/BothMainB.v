@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (imports MainBridgeBoth, where both_side_ok now lives; side_ok_of_tree_ok's image-top bound for the plain images; the pure facts read through keep_facts). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -11,7 +12,7 @@ From OSSVerify.Proofs.zstd.simple_decompress.lib.LibA Require Import ExecF AcctC
 From OSSVerify.Proofs.zstd.simple_decompress.lib.LibA Require TopLevelGenB.
 From OSSVerify.Proofs.zstd.simple_decompress.lib.Spec Require ImgFacts.
 From OSSVerify.Proofs.zstd.simple_decompress.lib.AS Require ShapeAlg SpinAlg.
-From OSSVerify.Proofs.zstd.simple_decompress.lib.AS Require Import MainExport MainFactsBoth MainEntryBoth.
+From OSSVerify.Proofs.zstd.simple_decompress.lib.AS Require Import MainExport MainFactsBoth MainEntryBoth MainBridgeBoth.
 From OSSVerify.Proofs.zstd.simple_decompress.lib.Spec Require Import Prog ProgA EquivPA AsanProgDeps AsanOK AsanHandoffBoth ModelOK.
 From OSSVerify.Proofs.zstd.simple_decompress.lib.Plain Require Import PImg.
 From OSSVerify.Proofs.zstd.simple_decompress.lib.AsanW Require Import AProto.
@@ -33,7 +34,7 @@ Proof.
 Qed.
 
 Lemma plain_side_ok : side_ok psegs p_init_pc p_phdrs source_alloc_limit TP.
-Proof. exact (side_ok_of_tree_ok _ _ _ _ _ _ plain_tree_ok). Qed.
+Proof. exact (side_ok_of_tree_ok _ _ _ _ _ _ plain_tree_ok ltac:(segs_top_low)). Qed.
 
 Lemma plain_no_kill : tfam_no_kill TP.
 Proof. exact (tfam_no_kill_tree psegs source_alloc_limit (Prog.prog psegs PREAD_STAGE)). Qed.
@@ -50,8 +51,8 @@ Section Assembly.
       apply Htr. rewrite run_init_config. cbn [bh_traces]. apply CfgRun.obs_trace_cfg_nil.
     - intros ms mo HM.
       apply bmain_at_open in HM as (w & V & m & HM).
-      pose proof HM as (_ & _ & _ & _ & HP & _ & _ & _ & _ & HMOD).
-      apply Forall_app in HP as [HP _].
+      pose proof HM as (_ & _ & _ & HMF & HPF & _ & _ & _ & _ & _ & HMOD).
+      destruct (keep_facts _ _ _ _ _ HMF HPF) as (_ & _ & HP).
       destruct (both_impl en inp w V m ms mo Hv Hi HM) as (NMAX & RNG & A & Q & HT).
       eapply SpinAlg.srz_conseq.
       + exact (implF_srealizes bsegs (at_nodeA bsegs) nstepA nexitA minvA (nsafeA NMAX) fstepS NMAX (nodesA_sound bsegs NMAX) _ RNG A Q ms (MX mo []) mo HT).
@@ -73,7 +74,7 @@ Section Assembly.
   Definition TPs : tfam := fun inp en => tree_traces (prog psegs PREAD_STAGE inp en) (mo0 psegs sanitizer_source_limit en inp).
 
   Lemma plain_side_ok_san : side_ok psegs p_init_pc p_phdrs sanitizer_source_limit TPs.
-  Proof. exact (side_ok_of_tree_ok _ _ _ _ _ _ plain_tree_ok_san). Qed.
+  Proof. exact (side_ok_of_tree_ok _ _ _ _ _ _ plain_tree_ok_san ltac:(segs_top_low)). Qed.
 
   Theorem base_both :
     strong_universal_error_free_T_scfg_budgets ACFG SanitizerBudgets.lim_source SanitizerBudgets.lim_target

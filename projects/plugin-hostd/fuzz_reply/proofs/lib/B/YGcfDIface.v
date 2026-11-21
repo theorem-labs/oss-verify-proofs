@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Taken by path from a working branch a0fed4266a1b, provisional. *)
+(* Taken by path from a working branch, provisional. *)
 (* Modified by a Theorem Labs lane, 2026-10-30: di_shape_cf takes the premise req_size n <= kQuarantineMax (free_cf's enqueue side); the larger blocks take the big arm. A change request to a Theorem Labs lane. *)
 (* Modified by Theorem Labs, 2026-10: module paths changed from fuzz_preset lib.Reusable to cgif_file_fuzzer lib; the text is otherwise unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset's event-free allocator instance (suffix cf), the MODEL-LEVEL fields of c-asan's
-   Deallocate interface DIface (proofs/cgif/cgif_file_fuzzer/lib/DGif0.v:266-381 at aa322d8bb0b) at the instance
+   Deallocate interface DIface (proofs/cgif/cgif_file_fuzzer/lib/DGif0.v:266-381) at the instance
      ft := free_cf, ARX := ARXs_cf B im_segs Hp, AOX := aowned B, rpre := rpre_dealloc_cf B, fpre := fpre_cf Hp,
      lpost := qtight, dbody := drain_body_cf (DMspec), U := admits (as_universe B) (P'', YG01.v:156; a Theorem Labs lane 22:05Z),
    for EVERY ghost set Hp: a malloc / free call keeps the caller's Hp (YG0dcf.v:9), so the instance fixes it per call
@@ -15,7 +16,7 @@
    THE FILE NAMES NO IMAGE. The field types are c-asan's image-free ones: DGif0 / DMspec / DMiface state them over
    ImgBase.AImg (the segments im_segs, the image window im_img_cover) and ImgBaseDG.DImg (the zones dg_dzone /
    dg_izone and the internal allocator's cells dg_ial_post), taken here as [Context {IM : AImg} {DI : DImg}]. Those
-   five files are byte copies of aa322d8bb0b in lib/Reusable (each says so on its first line). A unit instantiates the
+   five files are byte copies in lib/Reusable (each says so on its first line). A unit instantiates the
    two classes at its image: image A (preset's ASan binary) is A/ADIfaceA.v (AImg_A, DImg_A), which also discharges the
    image premises below with A's named facts.
    Premises a field needs from the image are named, over the class fields only: IMG_COVER (di_view_n part (a)),
@@ -79,9 +80,9 @@ Definition ARXs_cf (segs : list Segment) (Hp : list Z) (inst : Z) (ly : alayout)
 inst = as_inst B /\ ARcf segs B ly S Hp W mem md /\
 qmeter_cf S /\ Z.of_nat (length (st_sec_arr S)) < cf_sec_live_max /\ ERRB_ROOM S /\
 abudget_cf S + FA_GROW_MAX + FA_GROW_MAX / 8 <= CF_MAX /\ batch_room_cf S.
-(* rpre: cgif's rpre_dealloc_cgif (DeallocGcgif.v:23 at 3f2fdc5b787: aregime S /\ qmeter S /\ st_internal_inited S
+(* rpre: cgif's rpre_dealloc_cgif (DeallocGcgif.v:23: aregime S /\ qmeter S /\ st_internal_inited S
    = true) restated at the instance: the realloc composition's Deallocate premise rpreD_cfr (universe_ok and Wf_cf,
-   YGcfRmodel.v:81, in place of the event regime, which the event-free model drops as acall_pre_cf does), qmeter_cf
+   YGcfRmodel.v:82, in place of the event regime, which the event-free model drops as acall_pre_cf does), qmeter_cf
    for qmeter, and the internal allocator initialized. *)
 Definition rpre_dealloc_cf (S : astate) (n : Z) : Prop := rpreD_cfr B S n /\ qmeter_cf S /\ st_internal_inited S = true.
 (* fpre: the freed base is not a hidden head (afree_realizes_cf's premise, YG0dcf.v:453); without it ARcf at Hp
@@ -288,7 +289,7 @@ Qed.
 (* ================================================================================================================ *)
 (* (owned) di_owned, di_owned_b, di_owned_i.                                                                        *)
 (* Image premises: the depot zone is the symbol table's owned static areas plus the nodes and store blocks, and the *)
-(* internal allocator's zone is its area or owned static bytes (cgif's DImg: DGgi.v:514-516; image A's: ADIfaceA). *)
+(* internal allocator's zone is its area or owned static bytes (cgif's DImg: DGgi.v:515-517; image A's: ADIfaceA). *)
 Definition DZONE_OWNED : Prop := forall ly a, dg_dzone ly a ->
 Exists (in_zr a) (as_owned_static B) \/ (ly_NB ly <= a < ly_NB ly + kNodesBlockSize) \/ (ly_SB ly <= a < ly_SB ly + kStoreBlockSize).
 Definition IZONE_OWNED : Prop := forall a, dg_izone a ->
@@ -306,7 +307,7 @@ destruct (from_primary (ck_req k)) eqn:Hfp.
   unfold needed_primary in S1. lia.
 Qed.
 
-(* The bytes of a chunk's extent past its user bytes are owned (own_meta_cf's argument, YG0qcf.v:205). *)
+(* The bytes of a chunk's extent past its user bytes are owned (own_meta_cf's argument, YG0qcf.v:206). *)
 Lemma own_slack_cf : forall ly S Hp rd k a, ARmcf B ly S Hp rd -> In k (st_chunks S) ->
 ck_base B ly k + ck_rz k + req_size (ck_req k) <= a < ck_base B ly k + ck_extent k -> aowned B ly S a.
 Proof.
@@ -388,7 +389,7 @@ unfold dwrites in Hw. destruct Hw as [Hw|[Hw|[Hw|[Hw|Hw]]]].
 Qed.
 
 (* The 8 bytes after a batch object are owned: they are the next class-kBatchClass slot's header room, or no
-   chunk's user bytes (own_batch_cf's argument, YG0qcf.v:239). *)
+   chunk's user bytes (own_batch_cf's argument, YG0qcf.v:240). *)
 Lemma own_after_batch_cf : forall ly S Hp rd b a, ARmcf B ly S Hp rd -> In b (all_batches S) ->
 ly_space ly + b_self b + kBatchBytes <= a < ly_space ly + b_self b + kBatchBytes + 8 -> aowned B ly S a.
 Proof.

@@ -1,9 +1,9 @@
-(* The image-B port of lib/A/Prog/reac_segconf_declared.v (commit 6121a10279e4): the walk of
+(* The image-B port of lib/A/Prog/reac_segconf_declared.v: the walk of
    reac_segconf_declared on the ASan+UBSan build of reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin
    sha256 c3796c0b38f3666f32a3ecff43c9fdb55ead356833af6013a07c404bd0254509; entry 0x89e7c =
    BASE + AF_reac_segconf_declared, 924 bytes, 231 instructions, side-stack frame class 1): it proves the contract
-   reac_segconf_declared_contract of lib/B/Prog/reac_segconf_declared_c.v (image B's copy of the FINAL contract text,
-   6f783602b5e3) at this image's numbers, from the five segments reac_segconf_declared_s1.v .. _s5.v chained by
+   reac_segconf_declared_contract of lib/B/Prog/reac_segconf_declared_c.v (image B's copy of the FINAL contract text)
+   at this image's numbers, from the five segments reac_segconf_declared_s1.v .. _s5.v chained by
    reac_segconf_declared_a.v, in the form of plugin-hostd/fuzz_command's lib/B/Prog/chain_words.v.
    Image B's code is image A's with UBSan's four tests before uses, each a branch to the one `unimp` at 0x8a1f8, and
    each refuted at its branch from a premise of the contract: c & 7 at 0x89fa4 (S1: declared_pre's c mod 16 = 0),

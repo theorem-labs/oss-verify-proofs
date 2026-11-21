@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumD.v, with its module paths and module names changed; 1378 of its 1493 lines of code are new or changed and 601 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, slice S5b, lane WalkNumEnd (worker a Theorem Labs lane, for a Theorem Labs lane): parse_value's NUMBER ARM, its LAST
    SEGMENT in image A - listing rows 299..328 of the neutral per-function listing of the pinned rebuilt image A
    (the internal file neutral_dis.py omx-clap-core-preset-ranout/asan/fuzz_preset parse_value; image sha256 d83eb25dbf0df6d5...,
@@ -23,7 +24,7 @@
    - rows 326..328: VrdRefJoinP.vrd_ref_join_P (both exits pass it), at strtod's float state fx2.
    Every run is a P twin: YC80xf_inv.paj_run_xf_inv / paj_run_to_xf_inv (rows 299..326) and YSRrMemnorm.paj_run_to_x_inv
    inside vrd_ref_join_P (rows 326..328). Rows 299..328 make no call.
-   THE ENTRY is VnumF's boundary vrd_num299_a (lib/A/VrdNumTail.v, a working branch c27f0ef31e6, taken by merge).
+   THE ENTRY is VnumF's boundary vrd_num299_a (lib/A/VrdNumTail.v, a working branch, taken by merge).
    THE CONCLUSION, vrd_num_end_stmt (the form VnumF / VnumG's vrd_num_tail binds): the shared join at row 225
    (VrdNum.vrd_epi_a with the entry float state pinned (fx := fx), the arm's result VrdNum.vrd_pv_post) AND the memory
    invariant P at the join, from P at row 299. GENERIC in P with its laws srr_inv_laws (YSRrMemnorm.v), a Theorem Labs lane's
@@ -37,16 +38,16 @@
    (PRH_Base.prh_head_wide, 8 <= cf_head: a harness head word lies apart from the node; a Theorem Labs lane's preset_head_wide,
    lib/A/CfParamsPreset.v:95, discharges it), H_pst_img (alloc.c's statics are image bytes: S1ImgA.pst_in_img_A).
    FILES TAKEN BY PATH: lib/Reusable/YAkMemnorm.v (blob 96c72061b4d4) and YSRrMemnorm.v (blob a1c1ece77b14) from
-   a working branch a7b940285d0 / 161f89a71b4d; YC80xf_inv.v (blob 082f0c430210) from a working branch
-   1941d76deca. Cited: VrdRefJoinP.vrd_ref_join_P (this branch, 3227e8d9d8a), VrdLedgerEv.vle_alloc (the S3 walk).
-   BUILD SET: a working branch c27f0ef31e6 (base b2db994e5ff: record texts ee649e1b39d on walkkit-next 2d523216ac5
-   preview, vpro 4d24e888b31, ielem 6372b90e841) + a working branch 6b77d4d5bc9 + a working branch
+   a working branch; YC80xf_inv.v (blob 082f0c430210) from a working branch.
+   Cited: VrdRefJoinP.vrd_ref_join_P (this branch), VrdLedgerEv.vle_alloc (the S3 walk).
+   BUILD SET: a working branch (base: record texts on walkkit-next
+   preview, vpro, ielem) + a working branch + a working branch
    preset-tree-at-2026-10-29T09-43-08Z.tsv (sha256 cbbadb85ecdb; internal record) (its VrdCallKeep.v reset to the vnumt copy). Numerals: the listing rows (LENGTH: slot offsets via
    vrd_row), 8 16 24 56 64 (LENGTH: the node's words, the class-0 frame), 104 (LENGTH: the 13 saved words), 224 512
    (LENGTH: the texts' peak bounds), 897 1024 2047 52 (WORD / LENGTH: the fclass mask and binary64's fields), 3 (WORD:
    tag JNum), 2 ^ 64 2 ^ 47 2 ^ 32 2 ^ 30 2 ^ 23 4096 (LENGTH: address and length ranges). No ADDRESS.
-   THE KIT-TEXT ADAPTATION (lane A'End, worker a Theorem Labs lane, base 6b723d760c66: the kit's
-   post-implication reader text by path from a working branch 3ac20a5c9e30, PRH_FnParse.v 94232293d483,
+   THE KIT-TEXT ADAPTATION (lane A'End, worker a Theorem Labs lane, base: the kit's
+   post-implication reader text by path from a working branch, PRH_FnParse.v 94232293d483,
    PRH_Base.v ee2f5cd7ed35). STATEMENTS MOVED, each forced by a text: vne_sep and vrd_num_end_stmt take the ledger
    FIELDS `most own` after `ran` (PRH_Base.prh_ledger); vrd_num_end_stmt drops the six rp_* parameters (the boundary
    vrd_num299_a and the result vrd_pv_post state the room position as the post-implication transfer from S0). No
@@ -85,7 +86,7 @@ Local Open Scope Z_scope.
 (* ---- pure facts the walk's branches read ---- *)
 
 (* the byte at end = res + cc of txt ++ [0] is zero iff strtod consumed the whole token (transcribed from
-   a working branch da73e1570f8 lib/A/Prog/S8aNumD.v:206-218 evD_end_byte) *)
+   a working branch lib/A/Prog/S8aNumD.v:206-218 evD_end_byte) *)
 Lemma vne_end_byte : forall (txt : list Z) (cn : Z),
   Forall (fun z => numch z = true) txt -> 0 <= cn <= Z.of_nat (length txt) ->
   (nth (Z.to_nat cn) (txt ++ [0]) 0 =? 0) = (cn =? Z.of_nat (length txt)).
@@ -287,7 +288,7 @@ Variable P : (word -> option byte) -> Prop.
 Hypothesis PLAW : srr_inv_laws segs P.
 
 (* ---- one store of a byte list through the restricted view (transcribed from a working branch
-   da73e1570f8 lib/A/Prog/S8aNumD.v:259-333, evD_store_ok .. evD_aview_out; that file is not in this build set) ---- *)
+   lib/A/Prog/S8aNumD.v:259-333, evD_store_ok .. evD_aview_out; that file is not in this build set) ---- *)
 Lemma vne_store_ok : forall (m : word -> option byte) (n : nat) (a : Z),
   (forall i, 0 <= i < Z.of_nat n -> m (Z_to_bv 64 (a + i)) <> None) -> 0 <= a -> a + Z.of_nat n <= 2 ^ 64 ->
   store_ok segs m (Z_to_bv 64 a) n = true.

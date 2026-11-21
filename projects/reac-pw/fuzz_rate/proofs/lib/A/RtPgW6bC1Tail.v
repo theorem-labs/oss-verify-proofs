@@ -1,6 +1,6 @@
 (* Modified by Theorem Labs, 2026-10: the shadow entry over e and the regions based at F follow
-   proofs/reac-pw/fuzz_role/lib/A/RPgEntBKit.v at 1fdaf126acfb (eb_SH, eb_shok, eb_rE), and reading a
-   stored value back out of a final region follows proofs/reac-pw/fuzz_role/lib/A/RPgW6aTail.v at e261793226b4 (tl_val_at), for
+   proofs/reac-pw/fuzz_role/lib/A/RPgEntBKit.v (eb_SH, eb_shok, eb_rE), and reading a
+   stored value back out of a final region follows proofs/reac-pw/fuzz_role/lib/A/RPgW6aTail.v (tl_val_at), for
    reac-pw/fuzz_rate's image A: rate's pcs, registers and cells; e is two written regions (the header and the three
    bytes after the copied string). *)
 (* reac-pw/fuzz_rate image A (fuzz_rate.asan, pinned sha256

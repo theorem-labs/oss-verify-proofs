@@ -16,7 +16,7 @@
    BC_MAX c is K_FREEARR_OFF minus the other three terms (ClassConsDef.v:136).
 
    in_class_a_size, in_class_not_0_5_31 and ctrl_req_slot_le are carried word for word from a Theorem Labs lane's
-   CtrlClassLive.v (not in this delivery) (a working branch 61aba11640, all Qed there), because that file Requires
+   CtrlClassLive.v (not in this delivery) (a working branch, all Qed there), because that file Requires
    SlotInvCF, whose AZ/AS dependencies do not build on the v1.9 FACTS yet; BC_ctrl is SlotInv.v's (the same body).
 
    Image A's allocator set (Contract.v ASYMS): malloc wrapper 0x5337c and free wrapper 0x53378 only (calloc and

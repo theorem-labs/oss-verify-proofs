@@ -1,10 +1,11 @@
-(* CARRIED from a working branch 3dd49fa29fa14b99e3c465cacbfe79a09756bb26,
+(* CARRIED from a working branch,
    proofs/omx-clap-core/fuzz_preset/lib/Reusable/YG0ucf.v, sha256 91c66c55e992eb9e5752e2b2d518d7f77f3637b0e9beb45bddeeddf1770378c0.
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change
    made here is the module prefix OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.
-   Plus fuzz_preset's P'' delta of commit 116f6c4dab1 for omx-clap-core/fuzz_preset/lib/Reusable/YG0ucf.v (its base a0fed4266a1b), taken 3-way. *)
+   Plus fuzz_preset's P'' delta for omx-clap-core/fuzz_preset/lib/Reusable/YG0ucf.v, taken 3-way. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset's second allocator instance (suffix cf), the MODEL LAWS record.
    cgif's YG0u.v exports malloc_gen_ns (:21) and malloc_ok_ns (:199), and cgif's model_laws record
    (YG0d.v:514-529) is assembled in YG05.v (model_laws_ok :139). Their cf forms:

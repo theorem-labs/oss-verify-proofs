@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/PItems_final.v; 44 of its 66 lines of code are new or changed and 17 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: THE CLOSED PAIR parse_value / parse_items on image B' (the 21:2xZ job; re-closed on the kit
-   21:2xZ job; re-closed on the batch kit tip 03fcabb582d0, 04:3xZ). The batch kit's record texts tparse_value_specX and
+   21:2xZ job; re-closed on the batch kit tip, 04:3xZ). The batch kit's record texts tparse_value_specX and
    tparse_items_specX (lib/A/PRH_FnParse.v (sha256 54c89f77d32e; internal record), with the cursor set CW) at the relation: B := YD2l.TfibB, ARx := ARcfx = ARcf /\ xs_placed_cf,
    RL := prh_room_live_a8, the B' listing B_prog_listing / PI_prog_B, CfImg_B, CfParams_preset, prh_img_B.
    The mutual recursion closes by the kit's lib/A/VrdUnit.v vrd_unit_closed (downward induction on MAXD - d):

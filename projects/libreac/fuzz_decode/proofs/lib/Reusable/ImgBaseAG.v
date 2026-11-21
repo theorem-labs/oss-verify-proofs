@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/ImgBaseAG.v at 95e6f1d72b6 (sha256 2cba3ca83d61) into lib/Reusable (shared by both images), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/ImgBaseAG.v (sha256 2cba3ca83d61) into lib/Reusable (shared by both images), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The image facts of the PRIMARY Allocate interface (AGif0n), and the image-free geometry it borrows.
 
    [AGImg] holds what AGif0n's statements say about the image beyond [AImg] (ImgBase.v): the allocator instance's

@@ -4,7 +4,7 @@
    conjunct goes through the three axis steps of AD1w_cf_fp.v: ajournal_x_degag (the G overlay, with the five
    placement facts named here as premises), ajournal_x_pst_weaken (subsumed: degag lands at any PST' containing PST)
    and ajournal_x_add_sink (footprint).  W8's journal conjunct is taken UNPACKED, as ajournal_gx_x unfolds at
-   XO = 0 / OUT = [] (W_journal_x.v:116: `0 <= STK /\ 0 <= 0 /\ (exists memS, ajournal_x .. W memS .. /\
+   XO = 0 / OUT = [] (W_journal_x.v:117: `0 <= STK /\ 0 <= 0 /\ (exists memS, ajournal_x .. W memS .. /\
    gagree G (w_H W) mem memS) /\ ..`), so this file needs no kitx file; the two-line unpacking happens at the
    composition, where cut_x is present.  W8's post must carry, after its header round (a Theorem Labs lane's announcement),
    NP S' and fr_surv in the memory-named form (ACfn_cf.v); this lemma takes them in exactly those forms. *)

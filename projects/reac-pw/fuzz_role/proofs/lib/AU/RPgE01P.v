@@ -1,9 +1,9 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgE01P.v at ba6d82f81177 for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgE01P.v for image B
    (fuzz_rate.asan-ubsan): image B's code 0x807e0 .. 0x809bc and its pcs; the class-4 frame (1024 bytes, 128 shadow
    bytes, the flag pointer word at F + 0x3f8); the real frame's cell R + 0x190; F in s9 (x25), the shadow address in
    s3 (x19), the shadow offset in s4 (x20, the alias fact's register), the size test in a3; the 88 shadow stores and
    rsb_P0; the records of lib/AU/RtPgSegB.v and lib/AU/RtPgE01DB.v; the stack bound 0x230. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgE01PB.v at 48db065d2b9c; for reac-pw/fuzz_role
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgE01PB.v; for reac-pw/fuzz_role
    image B (fuzz_role.asan-ubsan): module paths fuzz_rate -> fuzz_role; role B's code 0x80094 .. 0x80270 and its
    pcs; the real frame's cell R + 0x170; F in s7 (x23) and s10 (x26), the shadow offset in s11 (x27, the alias fact's
    register), n in s2 (x18, the size test's source); the 88 shadow stores and hi_shA role_himg_B; the records of

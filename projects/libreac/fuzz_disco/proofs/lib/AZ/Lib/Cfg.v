@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to the model changes up to LPS 727298f3. *)
 From Stdlib Require Import ZArith NArith List Lia Bool Classical_Prop.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -53,7 +54,7 @@ Lemma alloc_no_b_false (sysnum : Z) (test_false : alloc_no_b sysnum = false) :
   ~ In sysnum alloc_mark_sysnos.
 Proof.
   unfold alloc_mark_sysnos. cbn [In].
-  intros [<- | [<- | [<- | [<- | []]]]];
+  intros [<- | [<- | [<- | [<- | [<- | []]]]]];
     vm_compute in test_false; discriminate test_false.
 Qed.
 
@@ -266,6 +267,9 @@ Proof.
   - apply sstep_cfg_instr; assumption.
   - apply sstep_cfg_instr_fault; assumption.
   - apply sstep_cfg_instr_unmodeled; assumption.
+  - eapply sstep_cfg_vdso_call; eassumption.
+  - eapply sstep_cfg_vdso_materialization_fault; eassumption.
+  - eapply sstep_cfg_vdso_unmodeled; eassumption.
 Qed.
 
 (* With the pending syscall's family on, nothing is spurious, so each
@@ -282,7 +286,7 @@ Proof.
     rewrite svc_is in pending_is. injection pending_is as <-.
     exact (spurious_refusal_family_on ACFG _ kmod any_out fam_free). }
   inversion unfiltered; subst; try congruence; clear svc_is fam_free;
-    [ econstructor 4 | econstructor 5 | econstructor 6 | econstructor 7 | econstructor 8 ];
+    [ econstructor 7 | econstructor 8 | econstructor 9 | econstructor 10 | econstructor 11 ];
     eauto.
 Qed.
 

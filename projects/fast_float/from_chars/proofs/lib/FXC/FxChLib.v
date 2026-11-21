@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO run state; the launch's reservations with the vDSO pair). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool FunctionalExtensionality.
-From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run Specs.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run Specs Vdso.
 From OSSVerify.Proofs.fast_float.from_chars.lib.Common Require Import PropExec ShapeSet RealizesCfg AsanAcct PlacementCount AllocNodesCfg SysNodesCfg.
 From OSSVerify.Proofs.fast_float.from_chars.lib.Common Require FxLin FxCore.
 From OSSVerify.Proofs.fast_float.from_chars.lib.Common Require FxSound.
@@ -111,7 +112,7 @@ Proof. intros H ms. destruct ms. unfold unrestrict, svc_set, restrict. cbn. rewr
 
 Lemma restrict_adv_eff : forall H ms v zs us ci pcz, ms_pc_val ms = Z_to_bv 64 pcz ->
   restrict H (advance_past_svc (apply_effect (svc_set ms) (mkEffectU v [] zs us [] ci))) =
-  mks (ms_fregs ms) (ms_fcsr ms) (rupd (ms_regs ms) a0r v) (Z_to_bv 64 (pcz + 4)) (ms_resv ms)
+  mks (ms_fregs ms) (ms_fcsr ms) (rupd (ms_regs ms) a0r v) (Z_to_bv 64 (pcz + 4)) None
       (mrestrict H (apply_zeros (apply_unmaps (ms_mem ms) us) zs)) (ms_rom ms).
 Proof.
   intros H ms v zs us ci pcz Hpc. destruct ms as [rg fr pcv sv rv fc mem rom]. cbn in Hpc. subst pcv.
@@ -496,36 +497,59 @@ Proof.
   injection H as <-. apply Z.leb_le in E1, E2. split; [left; reflexivity | lia].
 Qed.
 
+(* [segments_reserved] keeps the segments that are not kernel maps.  At LPS 08b1429 it is
+   [map segment_reservation (filter (fun s => negb (seg_kernel_map s)) segs)] (Run.v:253)
+   with stdpp's list [filter] (stdpp base.v [list_filter], a fix over [decide]; the
+   unfolded term is not List.filter, locally observed), so membership is by induction on
+   that computation, naming no stdpp lemma. *)
+Lemma In_segments_reserved : forall segs seg,
+  In seg segs -> negb (seg_kernel_map seg) = true ->
+  In (segment_reservation seg) (segments_reserved segs).
+Proof.
+  intros segs seg Hin Hk. unfold segments_reserved.
+  induction segs as [|s l IH]; [destruct Hin|].
+  cbn. destruct Hin as [-> | Hin].
+  - match goal with |- context [match ?c with left _ => _ | right _ => _ end] => destruct c as [Hd|Hd] end;
+      [left; reflexivity | exfalso; apply Hd; rewrite Hk; exact I].
+  - match goal with |- context [match ?c with left _ => _ | right _ => _ end] => destruct c end;
+      [right; exact (IH Hin) | exact (IH Hin)].
+Qed.
+
 Lemma seg_covered : forall segs x, segs_below_b segs 0x800000000000 = true -> 0 <= x ->
   find_segment segs x 1 <> None -> covered (segments_reserved segs) x = true.
 Proof.
   intros segs x Hb Hx Hf. destruct (find_segment segs x 1) as [seg|] eqn:Hs; [|congruence].
   destruct (find_segment_In _ _ _ _ Hs) as (Hin & H1 & H2).
-  unfold segs_below_b in Hb. rewrite forallb_forall in Hb. specialize (Hb seg Hin). apply Z.leb_le in Hb.
+  unfold segs_below_b in Hb. rewrite forallb_forall in Hb. specialize (Hb seg Hin). apply andb_true_iff in Hb as [Hb Hk].
+  apply Z.leb_le in Hb.
   unfold seg_top in Hb.
-  unfold covered. apply existsb_exists. exists (segment_reservation seg). split; [apply in_map; exact Hin|].
+  unfold covered. apply existsb_exists. exists (segment_reservation seg).
+  (* [segments_reserved]'s filter: stdpp's (list_elem_of_* names at LPS 08b1429's stdpp) or List.filter *)
+  split; [exact (In_segments_reserved segs seg Hin Hk) |].
   unfold segment_reservation, in_iv, in_rng, B, S, page_round_down_Z, page_round_up_Z, page_size. cbn [fst snd].
   set (b := Z.of_N (seg_base seg)) in *. set (k := Z.of_N (seg_size seg)) in *.
-  assert (Hk : 0 <= k) by apply N2Z.is_nonneg. assert (Hb0 : 0 <= b) by apply N2Z.is_nonneg.
+  assert (Hk0 : 0 <= k) by apply N2Z.is_nonneg. assert (Hb0 : 0 <= b) by apply N2Z.is_nonneg.
   pose proof (Z.mod_pos_bound b 4096 ltac:(lia)). pose proof (Z.div_mod b 4096 ltac:(lia)).
   pose proof (Z.mod_pos_bound (b + k + 4096 - 1) 4096 ltac:(lia)). pose proof (Z.div_mod (b + k + 4096 - 1) 4096 ltac:(lia)).
   rewrite !fg64' by (unfold two64; lia). apply andb_true_intro. split; [apply Z.leb_le | apply Z.ltb_lt]; lia.
 Qed.
 
 (* [comment removed for export] *)
-Lemma hoff_of : forall segs (L : list (word * word)) A (maps res : list (word * word)),
-  segs_below_b segs 0x800000000000 = true -> res = segments_reserved segs ->
+(* the reserved ledger is the image's segments followed by anything (at 75d69e00, the vDSO/vvar pair) *)
+Lemma hoff_of : forall segs (L : list (word * word)) A (maps res : list (word * word)) {tl : list (word * word)},
+  segs_below_b segs 0x800000000000 = true -> res = segments_reserved segs ++ tl ->
   (forall x, covered L x = true -> covered maps x = true) ->
   (forall x, covered maps x = true -> covered res x = false) ->
   H_off_segments segs (mkH L A).
 Proof.
-  intros segs L A maps res Hb Hres HL Hm w Hw. unfold mkH in Hw. apply andb_prop in Hw as [Hp _].
+  intros segs L A maps res tl Hb Hres HL Hm w Hw. unfold mkH in Hw. apply andb_prop in Hw as [Hp _].
   destruct (pb_bounds w) as [Hpb _].
   assert (Hc : covered L (bv_unsigned w) = true) by exact (page_in_covered _ _ _ Hp Hpb).
   destruct (find_segment segs (bv_unsigned w) 1) as [seg|] eqn:Hs; [|reflexivity]. exfalso.
   assert (Hcr : covered (segments_reserved segs) (bv_unsigned w) = true).
   { apply seg_covered; [exact Hb | apply bv_unsigned_in_range | congruence]. }
-  rewrite <- Hres in Hcr. rewrite (Hm _ (HL _ Hc)) in Hcr. discriminate.
+  assert (Hcr' : covered res (bv_unsigned w) = true) by (rewrite Hres, covered_app, Hcr; reflexivity).
+  rewrite (Hm _ (HL _ Hc)) in Hcr'. discriminate.
 Qed.
 
 (* [comment removed for export] *)
@@ -541,6 +565,49 @@ Proof. reflexivity. Qed.
 
 Lemma in_iv_word : forall (a n : word) x, in_iv (a, n) x = ((bv_unsigned a <=? x) && (x <? bv_unsigned a + bv_unsigned n))%bool.
 Proof. reflexivity. Qed.
+
+(* LPS 08b1429: a request none of whose bytes the vDSO/vvar pair covers is free of the
+   pair ([Mprotect.mprotect_spec]'s gate). The text entry may be empty: then it sits
+   at the vvar entry's end, and a request meeting that point meets the vvar entry. *)
+Lemma region_free_vdso_of_uncovered : forall kb top (lo n : word),
+  (top < 2 ^ 64)%Z -> (0 < bv_unsigned n)%Z ->
+  (forall x, (bv_unsigned lo <= x < bv_unsigned lo + bv_unsigned n)%Z ->
+     covered (vdso_reserved kb top) x = false) ->
+  region_free (vdso_reserved kb top) lo n = true.
+Proof.
+  intros kb top lo n Htop Hn H. unfold vdso_reserved in *. cbv zeta in *.
+  destruct (top - vdso_len kb <? page_size)%Z eqn:Eb; [reflexivity|]. apply Z.ltb_ge in Eb.
+  unfold vdso_len, vdso_text_pages, vdso_vvar_pages, page_size in *.
+  pose proof (N2Z.is_nonneg (vi_pages (vdso_image_of kb))) as Hp.
+  set (tp := Z.of_N (vi_pages (vdso_image_of kb))) in *.
+  assert (U : forall z, (0 <= z < 2 ^ 64)%Z -> bv_unsigned (Z_to_bv 64 z) = z).
+  { intros z Hz. rewrite Z_to_bv_unsigned. apply bv_wrap_small. unfold bv_modulus. lia. }
+  pose proof (bv_unsigned_in_range 64 lo) as Rl. pose proof (bv_unsigned_in_range 64 n) as Rn.
+  unfold bv_modulus in Rl, Rn.
+  cbn [region_free]. rewrite andb_true_r.
+  assert (B1 : bv_unsigned (Z_to_bv 64 (top - (4 + tp) * 4096)) = top - (4 + tp) * 4096) by (apply U; lia).
+  assert (S1 : bv_unsigned (Z_to_bv 64 (4 * 4096)) = 4 * 4096) by (apply U; lia).
+  assert (B2 : bv_unsigned (Z_to_bv 64 (top - (4 + tp) * 4096 + 4 * 4096)) = top - (4 + tp) * 4096 + 4 * 4096) by (apply U; lia).
+  assert (S2 : bv_unsigned (Z_to_bv 64 (tp * 4096)) = tp * 4096) by (apply U; lia).
+  assert (Hc : forall x, (bv_unsigned lo <= x < bv_unsigned lo + bv_unsigned n)%Z ->
+                 ~ (top - (4 + tp) * 4096 <= x < top - (4 + tp) * 4096 + 4 * 4096)%Z
+                 /\ ~ (top - (4 + tp) * 4096 + 4 * 4096 <= x < top - (4 + tp) * 4096 + 4 * 4096 + tp * 4096)%Z).
+  { intros x Hx. specialize (H x Hx). unfold covered in H. cbn [existsb] in H.
+    rewrite !orb_false_iff in H. destruct H as (H1 & H2 & _).
+    unfold in_iv, in_rng, B, S in H1, H2. cbn [fst snd] in H1, H2.
+    rewrite B1, S1 in H1. rewrite B2, S2 in H2.
+    split; intros [Ha Hb];
+      [ apply andb_false_iff in H1 as [H1|H1] | apply andb_false_iff in H2 as [H2|H2] ];
+      first [apply Z.leb_gt in H1 | apply Z.ltb_ge in H1 | apply Z.leb_gt in H2 | apply Z.ltb_ge in H2]; lia. }
+  apply andb_true_intro. split; apply negb_true_iff; unfold iv_overlap;
+    rewrite ?B1, ?S1, ?B2, ?S2; apply not_true_iff_false; intros He;
+    apply andb_prop in He as [E1 E2]; apply Z.ltb_lt in E1, E2.
+  - destruct (Hc (Z.max (bv_unsigned lo) (top - (4 + tp) * 4096)) ltac:(lia)) as [C _]. apply C. lia.
+  - destruct (Z.eq_dec tp 0) as [E0|E0].
+    + (* an empty text entry: the request contains the last vvar byte *)
+      destruct (Hc (top - (4 + tp) * 4096 + 4 * 4096 - 1) ltac:(lia)) as [C _]. apply C. lia.
+    + destruct (Hc (Z.max (bv_unsigned lo) (top - (4 + tp) * 4096 + 4 * 4096)) ltac:(lia)) as [_ C]. apply C. lia.
+Qed.
 
 Lemma page_allowedb_app_r : forall A1 A2 p, page_allowedb A2 p = true -> page_allowedb (A1 ++ A2) p = true.
 Proof. intros A1 A2 p H. unfold page_allowedb in *. rewrite existsb_app, H, orb_true_r. reflexivity. Qed.

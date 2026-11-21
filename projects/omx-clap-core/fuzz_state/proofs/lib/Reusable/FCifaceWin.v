@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the window-exempt set_shadow contract over the frame-area interface, image-free.
    FCiface.aset_shadow_realizes_x is the STRICT form (cgif_rgb YG0e.v:48: no byte outside [q, q + n) changes).
    aset_shadow_realizes_xw below exempts the callee's own stack window [sp - ESTACK, sp) from that frame clause, as
-   fuzz_state's SetShadowDefU.aset_shadow_realizesU does (10ffef27396). The strict form implies the exempt one
+   fuzz_state's SetShadowDefU.aset_shadow_realizesU does. The strict form implies the exempt one
    (aset_shadow_realizes_xw_of_x); the converse does not hold, so the strict form is the statement of record and a
    consumer that cites the exempt form takes it through this corollary. Both forms end with the presence-growth
    conjunct `forall a, apresent (w_H W) mem a -> apresent (w_H W) mem' a` (see FCiface.v's header for why it is a

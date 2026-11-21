@@ -2,13 +2,14 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN0c.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the CONFIG_RSEQ auxv layout; the vvar/vDSO pages; the reserved ledger with the vvar/vDSO pair; munmap's refusal under a may-fail allocator). *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.U.Reusable Require Import
-YO0i YO0f YO0g YO0x YO0z YO0y YO0d.
+YO0i YO0f YO0g YO0x YO0z YO0y YO0q YO0d.
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.U.Reusable Require Import
 YK11 YK0s YK0h YK0i YK14 YK1b YK1a YK15 YK0n YK0v YK02 YP0n YM06 YM02 YM00.
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.U.Reusable Require Import
@@ -259,16 +260,22 @@ apply (overlap_pins_slot b s j nZ); try lia.
 * intro Hin. apply Hnotin. cbn [map]. right. exact Hin.
 Qed.
 Lemma src0_reserved_small :
-Forall (fun p => bv_unsigned (snd p) <= 2 ^ 39) (segments_reserved src0segs) /\ (length (segments_reserved src0segs) <= 8)%nat.
+Forall (fun p => bv_unsigned (snd p) <= 2 ^ 39) (segments_reserved src0segs) /\ (length (segments_reserved src0segs) <= 6)%nat.
 Proof.
 split.
 - assert (H : forallb (fun p : word * word => bv_unsigned (snd p) <=? 2 ^ 39) (segments_reserved src0segs) = true) by (vm_compute; reflexivity).
 rewrite forallb_forall in H. apply Forall_forall. intros p Hp. apply Z.leb_le. apply H. exact Hp.
 - vm_compute. lia.
 Qed.
-Lemma src0_reserved_bytes : ivs_bytes (segments_reserved src0segs) <= 2 ^ 30.
+(* The byte budget [region_free_exists_cap] gets is SLOT_BYTES = 2^45 + 2^30, sized as
+   MG_LIVE (2^45) + this bound.  Since 08b1429 the reserved list also carries the vvar/vDSO
+   pair, worth at most [vdso_reserved_bytes] = 20 * page_size, so this bound gives that pair
+   its room — the same move [src0_reserved_small] already makes for the COUNT (8 -> 6, with
+   [vdso_reserved_len] <= 2 taking the two it gave up).  The image's own value is orders of
+   magnitude below either figure; the [vm_compute] decides it. *)
+Lemma src0_reserved_bytes : ivs_bytes (segments_reserved src0segs) <= 2 ^ 30 - 20 * page_size.
 Proof.
-assert (H : (ivs_bytes (segments_reserved src0segs) <=? 2 ^ 30) = true) by (vm_compute; reflexivity).
+assert (H : (ivs_bytes (segments_reserved src0segs) <=? 2 ^ 30 - 20 * page_size) = true) by (vm_compute; reflexivity).
 apply Z.leb_le. exact H.
 Qed.
 Lemma live_bytes_nonneg : forall A, WF A -> 0 <= live_bytes A.
@@ -285,11 +292,13 @@ destruct (rg_live r); lia. }
 apply G. exact Hnn.
 Qed.
 Lemma direct_grant_exists : forall L A mem md len,
+(* 08b1429: the ledger bounds below hold only when no refusal is injected (YN03.ledger_ok). *)
+@amf AM = false ->
 MRx B L A mem md -> mgrant A (KMmapRW len) -> 0 < len ->
 vm_backing_used md + page_round len <= vm_limit (m_vmmaps md) ->
 exists a, grant_ok (Z_to_bv 64 0) md a (page_round len) = true.
 Proof using.
-intros L A mem md len MX (Hpos & Hlive & Hsl & Hreq) Hlen Hbud. pose proof (MRx_MRc _ _ _ _ _ MX) as M.
+intros L A mem md len Eaf MX (Hpos & Hlive & Hsl & Hreq) Hlen Hbud. pose proof (MRx_MRc _ _ _ _ _ MX) as M.
 pose proof (mc_ledger _ _ _ _ _ M) as G. pose proof (MRx_ledger_x _ _ _ _ _ MX) as LX.
 unfold req_len in Hpos, Hlive, Hsl, Hreq.
 assert (Hsc : nslots A + KRES <= slot_cap (page_round len)).
@@ -299,17 +308,17 @@ pose proof (live_bytes_nonneg A (mc_wf _ _ _ _ _ M)) as Hlb.
 destruct src0_reserved_small as [RS RL]. pose proof src0_reserved_bytes as RB.
 destruct (region_free_exists_cap (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) (page_round len) (page_round len)) as (a & Ha1 & Ha2 & Ha3 & Ha4).
 - lia.
-- rewrite length_app. rewrite (lg_reserved _ _ _ _ G). pose proof (lg_count _ _ _ _ G). change (ms_segs B) with src0segs. unfold KRES in Hsc. lia.
-- rewrite ivs_bytes_app, (lg_reserved _ _ _ _ G). change (ms_segs B) with src0segs.
-rewrite (ivs_bytes_live_bytes (vm_maps (m_vmmaps md))). pose proof (lx_lb _ _ _ LX). unfold SLOT_BYTES. lia.
-- exists a. unfold grant_ok.
-rewrite (proj2 (Z.eqb_eq _ _) Ha1), (proj2 (Z.ltb_lt 0 _)) by lia.
-pose proof (YM05.ceil_le_top _ (lg_ceil _ _ _ _ G)) as Htop.
-assert (Ha3' : bv_unsigned a + page_round len <= alloc_top (m_vmmaps md)) by lia.
-rewrite (proj2 (Z.leb_le _ _) Ha3'), Ha4.
-rewrite (proj2 (Z.leb_le _ _)).
-2:{ exact Hbud. }
-reflexivity.
+- rewrite length_app, (lg_reserved _ _ _ _ G), length_app.
+pose proof (lg_count _ _ _ _ G Eaf). pose proof (vdso_reserved_len (m_kernel md) (vdso_top (m_vmmaps md))).
+change (ms_segs B) with src0segs. unfold KRES in Hsc. lia.
+- rewrite ivs_bytes_app, (lg_reserved _ _ _ _ G), ivs_bytes_app. change (ms_segs B) with src0segs.
+pose proof (vdso_reserved_bytes (m_kernel md) (vdso_top (m_vmmaps md))).
+rewrite (ivs_bytes_live_bytes (vm_maps (m_vmmaps md))). pose proof (lx_lb _ _ _ LX Eaf). unfold SLOT_BYTES, page_size in *. lia.
+- pose proof (YM05.ceil_le_top _ (lg_ceil _ _ _ _ G)) as Htop.
+assert (Hnal : page_round len mod page_size = 0) by (exact (page_round_mod len)).
+destruct (linux_pick_of_free (m_vmmaps md) (kb_thp (m_kernel md)) (Z_to_bv 64 0)
+  (page_round len) a ltac:(lia) Hnal (lg_vdso_lo _ _ _ _ G) Ha1 Ha2 ltac:(lia) Ha4) as [b Hb].
+exists b. apply grant_ok_intro; assumption.
 Qed.
 Lemma in_wrange_list : forall E rs x,
 in_wrange E rs x ->
@@ -399,8 +408,9 @@ Lemma auxv_pre_ext : forall sec lo m m',
 (forall x, ms_libc B + 8 <= x < ms_libc B + 16 -> mbyte (ms_segs B) m' x = mbyte (ms_segs B) m x) ->
 auxv_pre B sec lo m -> auxv_pre B sec lo m'.
 Proof.
-intros sec lo m m' Hhi Hlibc (av & ar & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10).
-exists av, ar. repeat split; try assumption.
+intros sec lo m m' Hhi Hlibc (rs & av & ar & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10).
+exists rs, av, ar. pose proof (auxv_types_len_ge rs) as Hlen. unfold AUXV_RAND_K in *.
+repeat split; try assumption.
 - intros k Hk. rewrite Hlibc by lia. apply H1. exact Hk.
 - intros k Hk j Hj. rewrite Hhi by lia. apply H2; assumption.
 - intros k Hk. rewrite Hhi by lia. apply H3. exact Hk.

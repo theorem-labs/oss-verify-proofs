@@ -2,19 +2,20 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/A/AD2o.v, AD2p.v and AD1q.v
-   (ossv/recipes c8557374ad2) for fuzz_disco, in the form of fuzz_pcap's closing file lib/A/PcapClose.v
-   (a working branch fe3d720b4c7): the closing of lib/A/DiscoAsanTop.v ASAN_T from named parts; module paths
+   (theorem-labs/oss-verify-proofs@6b32741d849a) for fuzz_disco, in the form of fuzz_pcap's closing file lib/A/PcapClose.v
+   (a working branch): the closing of lib/A/DiscoAsanTop.v ASAN_T from named parts; module paths
    changed, shape DiscoAsanTop.disco_shape, fuzz_disco's asan image, ONE program part (LLVMFuzzerTestOneInput's
    contract) in place of cgif_file_fuzzer's three (TNEWGIFX / TADDFX / TCLOSEX and their wfn). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The closing side of fuzz_disco's two asan statements (rule 24: no function proved; this file is assembly).
 
-   The split is fuzz_grant's (a working branch 7d31e8f3534: lib/A/AGrantT.v below lib/A/GrantTop.v). The lower file,
-   lib/A/DiscoAsanT.v, applies lib/A/AD1q.v tfib_srealizesX over the landed core (a working branch f0d1f4eacff):
+   The split is fuzz_grant's (a working branch: lib/A/AGrantT.v below lib/A/GrantTop.v). The lower file,
+   lib/A/DiscoAsanT.v, applies lib/A/AD1q.v tfib_srealizesX over the landed core (a working branch):
    the start-up (AB1n.v tfib_startup_T1 over AB01.v HS_tfib / AB12.v TFIB), the symbol table (AD2l.v TfibB /
    TfibB_syms), both allocator realizes (AF0w.v, AF0q.v), the memcpy interceptor and the read check (AD2m.v) and the
    driver's stdio sites (AD1k.v, AD1o.v, AD1l.v, AD1j.v), every one a proved lemma. Its TFIB_T_of_lib takes only the
    program contract and the read-only facts that contract's walks use. This file keeps exactly those two as Section
-   hypotheses, each with the lane that supplies it (the obligation list is proofs/libreac/fuzz_disco/lib/A/OBLIGATIONS.md at a working branch 37e11e67676d), and
+   hypotheses, each with the lane that supplies it (the obligation list is proofs/libreac/fuzz_disco/lib/A/OBLIGATIONS.md at a working branch), and
    closes the two statements. de_hroA (row P12) uses the base's lib/A/Prog/DiscoBase.v arodata_okP and
    lib/A/Prog/DiscoImg.v's PAImg instance PB_disco. *)
 From Stdlib Require Import ZArith NArith List Lia Bool String.
@@ -60,7 +61,7 @@ Hypothesis H_PROG_LIBX :
 
 Section RC. Context {rc : YM05.RunCeil}.
 (* Row P12 of OBLIGATIONS.md: the part's premise de_hro (S5's dentry_env field, lib/A/Prog/DiscoEntryShapes.v:57 at
-   a working branch 01f9fabd121) at PI := DiscoImg.PB_disco and RLO / RHI := disco_relro_lo / hi. The two
+   a working branch) at PI := DiscoImg.PB_disco and RLO / RHI := disco_relro_lo / hi. The two
    sides are one predicate: YE01.arodata_okS and DiscoBase.arodata_okP have the same body, and PB_disco's pa_segs /
    pa_relro_lo / pa_relro_hi are disco_segs (= the asan image's loaded segments) / disco_relro_lo / disco_relro_hi. *)
 Lemma de_hroA : forall rd,

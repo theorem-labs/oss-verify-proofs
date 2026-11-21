@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN2c.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed new_disjoint_img, ledger_ok_A2, ledger_x_A2). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -11,10 +12,12 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.U.Reusable Require Import
 YO0i YO0f YO0g YO0x YO0z YO0s YO0v YO10 YO0d.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.U.Reusable Require Import YN03 YN2b YN2e.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.U.Reusable Require Import YM05.
+From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.U.Reusable.R Require Import Cfg.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Local Open Scope Z_scope.
 Section h. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {AM : AllocMode}.
 Lemma live_bytes_app : forall l1 l2, State.live_bytes (l1 ++ l2) = State.live_bytes l1 + State.live_bytes l2.
 Proof. induction l1 as [|[a n] l1 IH]; intros l2; cbn; [reflexivity|]. rewrite IH. lia. Qed.
 Lemma live_bytes_nonneg_maps : forall l, 0 <= State.live_bytes l.
@@ -182,7 +185,8 @@ Qed.
 Lemma new_disjoint_img : forall x, in_img B x -> ~ (bv_unsigned a <= x < bv_unsigned a + len).
 Proof.
 intros x [_ (sg & Hsg & Hx)] Hin. pose proof grant_facts as (_ & _ & _ & RF & _).
-rewrite <- (lg_reserved _ _ _ _ G) in Hsg.
+destruct (lg_reserved _ _ _ _ G) as (rx & Erx & _).
+assert (Hsg' : In sg (vm_reserved (m_vmmaps md))) by (rewrite Erx; apply in_or_app; left; exact Hsg). clear Hsg. rename Hsg' into Hsg.
 pose proof (region_free_In _ a (Z_to_bv 64 len) sg RF ltac:(apply in_app_iff; left; exact Hsg) ltac:(rewrite len_u; lia) ltac:(lia)) as D.
 rewrite len_u in D. unfold ranges_disjoint in D. cbn [fst snd] in D. lia.
 Qed.
@@ -275,13 +279,16 @@ destruct (Nat.ltb_spec k r0).
 + destruct (Nat.eqb_spec k r0); [|discriminate]. injection Hk as <-. subst k. rewrite L1_new. cbn [rgn rg_len].
 split; [exact Hal|]. split; [unfold PGSZ in Hal; apply Z.mod_divide in Hal; [destruct Hal as [q Hq]; lia | lia]|].
 split; [exact Hceil|]. intros x Hx Himg. exact (new_disjoint_img x Himg Hx).
-- cbn [length]. rewrite nslots_A2. pose proof (lg_count _ _ _ _ G). lia.
-- rewrite live_bytes_A2. constructor.
+- intros Eaf. cbn [length]. rewrite nslots_A2. pose proof (lg_count _ _ _ _ G Eaf). lia.
+- intros Eaf. rewrite live_bytes_A2. constructor.
 + cbn [snd]. rewrite len_u. pose proof live_bytes_nonneg. lia.
-+ apply Forall_forall. intros e He. pose proof (proj1 (Forall_forall _ _) (lg_sizes _ _ _ _ G) e He). cbn beta in *. lia.
-- rewrite live_bytes_A2. unfold md1. pose proof (vm_backing_used_mmap a (Z_to_bv 64 len) md). rewrite len_u in *.
-pose proof (lg_backing _ _ _ _ G). lia.
++ apply Forall_forall. intros e He. pose proof (proj1 (Forall_forall _ _) (lg_sizes _ _ _ _ G Eaf) e He). cbn beta in *. lia.
+- intros Eaf. rewrite live_bytes_A2. unfold md1. pose proof (vm_backing_used_mmap a (Z_to_bv 64 len) md). rewrite len_u in *.
+pose proof (lg_backing _ _ _ _ G Eaf). lia.
 -   exact (lg_ceil _ _ _ _ G).
+-   exact (mres_cons_free (m_vmmaps md) (m_vmmaps md1) a (Z_to_bv 64 len) eq_refl eq_refl
+      (region_free_app_l _ _ _ _ RF) (lg_mres _ _ _ _ G)).
+-   exact (lg_vin _ _ _ _ G).
 Qed.
 Lemma ledger_x_A2 : ledger_x L1 A2 md1.
 Proof.
@@ -310,12 +317,12 @@ cbn [rgn reg_lo rg_kind rg_len] in *. unfold ranges_disjoint; cbn [fst snd].
 pose proof (new_disjoint_region k2 rg2 (ly_reg L k2 + reg_lo rg2) H2 Hl2 ltac:(lia)).
 pose proof (new_disjoint_region k2 rg2 (bv_unsigned a) H2 Hl2). pose proof (proj1 Hlen). lia.
 + destruct (Nat.eqb_spec k1 r0); [|discriminate]. destruct (Nat.eqb_spec k2 r0); [|discriminate]. exfalso. apply Hne. lia.
-- intros e [<- | He].
+- intros Eaf e [<- | He].
 + exists r0, rgn. rewrite region_of_A2. rewrite Nat.ltb_irrefl, Nat.eqb_refl. split; [reflexivity|]. split; [reflexivity|].
 rewrite L1_new. unfold iv_lo, iv_len; cbn [fst snd rgn rg_len]. rewrite len_u. lia.
-+ destruct (lx_in _ _ _ X e He) as (k & rg & Hk & Hl & G1 & G2). exists k, rg.
++ destruct (lx_in _ _ _ X Eaf e He) as (k & rg & Hk & Hl & G1 & G2). exists k, rg.
 rewrite region_of_A2. rewrite (proj2 (Nat.ltb_lt _ _) (region_of_A_lt k rg Hk)). rewrite (L1_old k rg Hk). auto.
-- rewrite live_bytes_A2. cbn [State.live_bytes]. rewrite len_u. pose proof (lx_lb _ _ _ X). lia.
+- intros Eaf. rewrite live_bytes_A2. cbn [State.live_bytes]. rewrite len_u. pose proof (lx_lb _ _ _ X Eaf). lia.
 -
 intros e He. change (vm_noaccess (m_vmmaps md1)) with (vm_noaccess (m_vmmaps md)) in He.
 destruct (lx_noacc _ _ _ X e He) as (E & HE & G1 & G2 & HR). exists E. split; [right; exact HE|].

@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer's trace facts for libreac/fuzz_knock's ASan
-(* Modified by Theorem Labs, 2026-10: derived from lib/A/ACejTfib.v of this library by derive_y.py: module names A.Axyz -> AU.Yxyz, addresses moved from reac-pw/fuzz_role's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/ACejTfib.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
-   image, in the form fuzz_pcap's lib/A/ACejTfib.v (cold/port-pcap-comp fe3d720b4c7) states them. *)
+   image, in the form fuzz_pcap's lib/A/ACejTfib.v states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/A/ACejTfib.v (donor image sha256 61768cf4739b), with its module paths changed and its addresses moved to reac-pw/fuzz_role's ASan build. *)
+(* Modified by Theorem Labs, 2026-10: derived from lib/A/ACejTfib.v of this library by derive_y.py: module names A.Axyz -> AU.Yxyz, addresses moved from reac-pw/fuzz_role's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/ACejTfib.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* libreac/fuzz_knock, fuzz_knock.asan (pin sha256 61768cf4739b...): the facts about the allocation-trace universe
    (lib/A/YCej.v Tfib_universe, regenerated from that image) that cgif_file_fuzzer's TFIB_T closing takes at its entry
    points:

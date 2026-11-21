@@ -4,9 +4,10 @@
 (* Modified by Theorem Labs, 2026-10: the asan-ubsan twin of lib/A/APgMain0.v of this library (segment S0 ENTRY,
    knock_lib_A_seg), for fuzz_knock's ASan-UBSan image (fuzz_knock.asan-ubsan, sha256
    f834165f5002e65398e68d514ab2a5a5b10e53144f0b41b93ebbc6f895290e82), made the way
-   proofs/cgif/cgif_file_fuzzer/lib/YCez.v is made from lib/A/ACez.v at c8557374ad2e: the walk framework imports move
+   proofs/cgif/cgif_file_fuzzer/lib/YCez.v is made from lib/A/ACez.v: the walk framework imports move
    to the asan-ubsan twins (lib/AU) and every address is re-derived on the asan-ubsan bytes. rule 24: no function
    proved (a twin of a port of the released cgif_file_fuzzer harness walk). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* SEGMENT S0 ENTRY of LLVMFuzzerTestOneInput (0x7eed0, 0x578 bytes in this image): pc 0x7eed0-0x7f000 (77
    instructions), ends at ss_H, pc 0x7f004. Every address below was read from the pinned asan-ubsan bytes (capstone
@@ -45,7 +46,7 @@
    The stack_malloc call is the lemma aj_stack_malloc_atS of lib/Reusable/YC85.v, as in lib/A/APgMain0.v.
    lib/AU/APgRt.v (a Theorem Labs lane's asan-ubsan twin of lib/A/APgRt.v) now holds the context record, so the names this
    file takes from it are that file's definitions, imported, not Section Variables with equation hypotheses:
-     rtcx, mkRTCX and the projections c_ly .. c_T (the record, APgRt.v:37-40); rt_base (:43-55, whose last conjunct
+     rtcx, mkRTCX and the projections c_ly .. c_T (the record, APgRt.v:38-41); rt_base (:43-55, whose last conjunct
      is ACC0 <= c_T cx and whose rt_base_eq writes ACC0 as its value 0); rt_F, rt_FL, rt_E (:57-61); rt_from
      (:64-74); INV_0 (:75-76); rt_extra, rt_regions0, rt_atoms0, ss_rt0 (:31-36); and the lemma rt_entry (:158-218).
      RTBx / RTBspan (:29-30) are written as their bodies at their uses, and the Ltac awrRT_rec / awrRT / keptRT

@@ -15,8 +15,8 @@ Open Scope Z_scope.
 
 (** * refuse's two printf calls, as callee premises
 
-    The printf contracts snprintf_contract and vsnprintf_contract (Prog/snprintf_c.v, Prog/vsnprintf_c.v, commit
-    585d8ec7a43b) at refuse's call shapes, stated in seg_env's terms: printf_env for the
+    The printf contracts snprintf_contract and vsnprintf_contract (Prog/snprintf_c.v, Prog/vsnprintf_c.v)
+    at refuse's call shapes, stated in seg_env's terms: printf_env for the
     machine, stack_ok for printf's stack, the format in .rodata, the arguments as seg_spec.va_args_ok, the text as
     SegModel.fmt (Spec/SegPrintfBridge.v relates printf_model to it), and the post as seg_env.ret_post_fp.
     Prog/refuse_pf.v proves both from the printf contracts: va_arg_ok's bounds (a string of at most 65535 bytes, an

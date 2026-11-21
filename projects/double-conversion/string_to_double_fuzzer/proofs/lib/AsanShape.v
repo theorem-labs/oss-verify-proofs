@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the process input's new fields). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -461,8 +462,10 @@ Section ShapeSound.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
-  Variable uid : word.
+  Variables uid gid : word.   (* LPS 727298f3: [AsanInit.E0] takes gid ([V_GID]) *)
   Variable hw : word.   (* [comment removed for export] *)
+  Variable kern : KernelBuild.
+  Variable execfn : list byte.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
 
   Let c := content_of argv fs.
@@ -474,12 +477,14 @@ Section ShapeSound.
     destruct (cfglen c =? 0); destruct (128 <=? bz 1 c); destruct E4 as [-> |[-> |[-> | ->]]]; cbn; tauto.
   Qed.
 
+(* qval_bounds now carries only the variables its proof uses (AsanMainLib.v:564-597). *)
+
   Lemma variant_consistent : forall C, in_class C argv fs = true -> vconsistent C (variant_of c) = true.
   Proof.
     intros C HC. unfold vconsistent, variant_of, v_cfg0, v_cmod, v_cnt. cbn [fst snd].
-    pose proof (cbounds_sound C QCfgLen argv fs HC (qval_bounds ph sp rdraw argv envp fs uid hw Hva Hfit QCfgLen)) as B1.
-    pose proof (cbounds_sound C QCmod argv fs HC (qval_bounds ph sp rdraw argv envp fs uid hw Hva Hfit QCmod)) as B2.
-    pose proof (cbounds_sound C QCnt argv fs HC (qval_bounds ph sp rdraw argv envp fs uid hw Hva Hfit QCnt)) as B3.
+    pose proof (cbounds_sound C QCfgLen argv fs HC (qval_bounds argv fs Hva QCfgLen)) as B1.
+    pose proof (cbounds_sound C QCmod argv fs HC (qval_bounds argv fs Hva QCmod)) as B2.
+    pose proof (cbounds_sound C QCnt argv fs HC (qval_bounds argv fs Hva QCnt)) as B3.
     cbn [qval] in B1, B2, B3. fold c in B1, B2, B3. pose proof (cfglen_range c). rewrite cmod_eq in B2. pose proof (bz_range 1 c) as R1.
     apply andb_true_intro; split; [apply andb_true_intro; split; [apply andb_true_intro; split|]|]; try (apply Z.leb_le; lia).
     - destruct (Z.eqb_spec (cfglen c) 0); apply Z.leb_le; lia.
@@ -495,7 +500,7 @@ Section ShapeSound.
     t_eq (sd HOLES D E fs (shape_of_tgt (tv x (variant_of c')))) (t_body c' fs).
   Proof.
     intros C x E HOLES D a0 p c' HC HT Hargv Hq Hlk.
-    pose proof (qval_bounds ph sp rdraw argv envp fs uid hw Hva Hfit) as QB.
+    pose proof (qval_bounds argv fs Hva) as QB.
     assert (HLK : look_of C = qlook argv fs \/ look_of C = -1).
     { unfold look_of. destruct (Z.eqb_spec (fst (cbounds C QLook)) (snd (cbounds C QLook))); [|right; reflexivity].
       left. pose proof (cbounds_sound C QLook argv fs HC (QB QLook)) as BL. cbn [qval] in BL. lia. }
@@ -563,7 +568,7 @@ Section ShapeSound.
     /\ t_eq (t_body c' fs) (t_alt2 (sd HOLES D E fs (SExit (if v_cnt (variant_of c') then 0 else 2))) (t_paid c' fs)).
   Proof.
     intros C cd y E HOLES D a0 p c' HC HT Hargv Hq Hlk.
-    pose proof (qval_bounds ph sp rdraw argv envp fs uid hw Hva Hfit) as QB.
+    pose proof (qval_bounds argv fs Hva) as QB.
     assert (HLK : look_of C = qlook argv fs \/ look_of C = -1).
     { unfold look_of. destruct (Z.eqb_spec (fst (cbounds C QLook)) (snd (cbounds C QLook))); [|right; reflexivity].
       left. pose proof (cbounds_sound C QLook argv fs HC (QB QLook)) as BL. cbn [qval] in BL. lia. }
@@ -609,7 +614,7 @@ Section ShapeSound.
     t_eq (sd HOLES D E fs (shape_of_tgt (tv t (variant_of c)))) (spec argv fs).
   Proof.
     intros C t E HOLES D HC HT HB1 HB2.
-    pose proof (qval_bounds ph sp rdraw argv envp fs uid hw Hva Hfit) as QB.
+    pose proof (qval_bounds argv fs Hva) as QB.
     assert (HLK : look_of C = qlook argv fs \/ look_of C = -1).
     { unfold look_of. destruct (Z.eqb_spec (fst (cbounds C QLook)) (snd (cbounds C QLook))); [|right; reflexivity].
       left. pose proof (cbounds_sound C QLook argv fs HC (QB QLook)) as BL. cbn [qval] in BL. lia. }
@@ -665,7 +670,7 @@ Section ShapeSound.
   (* [comment removed for export] *)
   Theorem class_shape_sound : forall SEGS C s E M HOLES D,
     in_class C argv fs = true -> class_shape_ok C s = true ->
-    (forall n, (n < 8)%nat -> ev E n = ev (E0 ph sp rdraw brk0 argv envp uid hw) n) ->
+    (forall n, (n < 8)%nat -> ev E n = ev (E0 sp rdraw brk0 argv envp uid gid hw kern execfn) n) ->
     eb E 1%nat = nth 0 argv [] -> eb E 2%nat = nth 1 argv [] ->
     know_ok SEGS E M (vfacts (variant_of c)) ->
     t_eq (sd HOLES D E fs s) (spec argv fs).
@@ -1032,8 +1037,10 @@ Section LevelSound.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
-  Variable uid : word.
+  Variables uid gid : word.   (* LPS 727298f3: [AsanInit.E0] takes gid ([V_GID]) *)
   Variable hw : word.   (* [comment removed for export] *)
+  Variable kern : KernelBuild.
+  Variable execfn : list byte.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
 
   (* [comment removed for export] *)
@@ -1042,7 +1049,7 @@ Section LevelSound.
                     fs_lookup fs p = Some c' /\ content_of argv fs = c' /\ qlook argv fs = 4.
   Proof.
     intros C HC HL.
-    pose proof (look_of_sound ph sp rdraw argv envp fs uid hw Hva Hfit C HC ltac:(lia)) as HLK. rewrite HL in HLK.
+    pose proof (look_of_sound argv fs Hva C HC ltac:(lia)) as HLK. rewrite HL in HLK.   (* look_of_sound depends on argv, fs and Hva only *)
     pose proof (qlook_cases argv fs) as Q. clear Hva Hfit.
     destruct argv as [|a0 [|p [|x r]]]; try (rewrite Q in HLK; discriminate).
     destruct Q as [[Hq _]|[[Hq _]|[[Hq _]|[Hq (Hne & Hnd & Hl & c' & Hlk & Hc)]]]]; try (rewrite Hq in HLK; discriminate).
@@ -1071,7 +1078,7 @@ Section LevelSound.
   (* [comment removed for export] *)
   Theorem class_pay_sound : forall SEGS L C s E M HOLES D,
     in_class C argv fs = true -> class_pay_ok L C s = true ->
-    (forall n, (n < 8)%nat -> ev E n = ev (E0 ph sp rdraw brk0 argv envp uid hw) n) ->
+    (forall n, (n < 8)%nat -> ev E n = ev (E0 sp rdraw brk0 argv envp uid gid hw kern execfn) n) ->
     eb E 1%nat = nth 0 argv [] -> eb E 2%nat = nth 1 argv [] ->
     know_ok SEGS E M (vfacts (variant_of (content_of argv fs))) ->
     t_eq (sd HOLES D E fs s) (t_res L argv fs).
@@ -1083,7 +1090,7 @@ Section LevelSound.
     destruct (target_of C) as [t|] eqn:HT; [|discriminate].
     destruct (target4_form C t HL HT) as [x ->].
     destruct (look4_input C HC HL) as (a0 & p & c' & Hargv & Hl & Hne & Hnd & Hlk & Hc & Hq).
-    pose proof (target4_sound ph sp rdraw argv envp fs Hva uid hw Hfit C x E HOLES D a0 p c' HC HT Hargv Hq Hlk) as T4.
+    pose proof (target4_sound argv fs Hva C x E HOLES D a0 p c' HC HT Hargv Hq Hlk) as T4.
     assert (HF : know_ok SEGS E M (vfacts (variant_of (content_of argv fs)) ++ facts_of_class C)).
     { apply Forall_app. split; [exact HV | eapply facts_of_class_sound; eassumption]. }
     rewrite Hc in HF.
@@ -1093,7 +1100,7 @@ Section LevelSound.
               t_eq (sd HOLES D E fs s) (sd HOLES D E fs (shape_of_tgt (tv y (variant_of c'))))).
     { intros y _ HS'. rewrite forallb_forall in HS'. specialize (HS' (variant_of c')).
       rewrite <- Hc in HS'. specialize (HS' (variant_in argv fs)).
-      rewrite (variant_consistent ph sp rdraw argv envp fs Hva uid hw Hfit C HC) in HS'. cbn [negb orb] in HS'. rewrite Hc in HS'.
+      rewrite (variant_consistent argv fs Hva C HC) in HS'. cbn [negb orb] in HS'. rewrite Hc in HS'.
       destruct (sresolve (vfacts (variant_of c') ++ facts_of_class C) s) as [s'|] eqn:HR; [|discriminate].
       eapply t_eq_trans; [exact (sresolve_sound SEGS E M _ HF HOLES D fs s s' HR)|].
       exact (shape_equiv_sound HOLES D E fs s' _ (sresolve_nocase _ _ _ HR) (shape_of_tgt_nocase _) HS'). }
@@ -1106,7 +1113,7 @@ Section LevelSound.
       eapply t_eq_trans; [exact (RS _ eq_refl HS)|]. cbn [t_res]. rewrite Hargv, Hlk. exact T4.
     - (* [comment removed for export] *)
       destruct x as [ps|n|x'|x'|cd y]; try discriminate HS.
-      destruct (target4_pay_sound ph sp rdraw argv envp fs Hva uid hw Hfit C cd y E HOLES D a0 p c' HC HT Hargv Hq Hlk) as [P1 _].
+      destruct (target4_pay_sound argv fs Hva C cd y E HOLES D a0 p c' HC HT Hargv Hq Hlk) as [P1 _].
       eapply t_eq_trans; [exact (RS _ eq_refl HS)|]. cbn [t_res]. rewrite Hargv, Hlk. exact P1.
     - destruct x as [ps|n|x'|x'|cd y]; discriminate HS.
   Qed.
@@ -1114,7 +1121,7 @@ Section LevelSound.
   (* [comment removed for export] *)
   Theorem class_seg_sound : forall SEGS lv L C s E M HOLES D,
     in_class C argv fs = true -> class_seg_ok lv L C s = true ->
-    (forall n, (n < 8)%nat -> ev E n = ev (E0 ph sp rdraw brk0 argv envp uid hw) n) ->
+    (forall n, (n < 8)%nat -> ev E n = ev (E0 sp rdraw brk0 argv envp uid gid hw kern execfn) n) ->
     eb E 1%nat = nth 0 argv [] -> eb E 2%nat = nth 1 argv [] ->
     know_ok SEGS E M (vfacts (variant_of (content_of argv fs))) ->
     (forall h L', lv h = Some L' -> exists L'', (L <= L'')%nat /\ (L'' <= L')%nat /\ t_eq (HOLES h E fs) (t_res L'' argv fs)) ->
@@ -1123,7 +1130,7 @@ Section LevelSound.
     intros SEGS lv L C s E M HOLES D HC HS Hev HB1 HB2 HV HH.
     unfold class_seg_ok in HS. apply andb_prop in HS as [HL HS]. apply Z.eqb_eq in HL.
     rewrite forallb_forall in HS. specialize (HS (variant_of (content_of argv fs)) (variant_in argv fs)).
-    rewrite (variant_consistent ph sp rdraw argv envp fs Hva uid hw Hfit C HC) in HS. cbn [negb orb] in HS.
+    rewrite (variant_consistent argv fs Hva C HC) in HS. cbn [negb orb] in HS.
     assert (HF : know_ok SEGS E M (vfacts (variant_of (content_of argv fs)) ++ facts_of_class C)).
     { apply Forall_app. split; [exact HV | eapply facts_of_class_sound; eassumption]. }
     destruct (look4_input C HC HL) as (a0 & p & c' & Hargv & Hl & Hne & Hnd & Hlk & Hc & Hq).
@@ -1149,7 +1156,7 @@ Section LevelSound.
         destruct t as [ps|n|t1|t1|cd0 y0]; try (cbn in HL1; lia).
         destruct t1 as [ps|n|t2|t2|cd0 y0]; try (cbn in HL1; lia).
         destruct t2 as [ps|n|t3|t3|cd y]; try (cbn in HL1; lia).
-        destruct (target4_pay_sound ph sp rdraw argv envp fs Hva uid hw Hfit C cd y E HOLES D a0 p c' HC HT Hargv Hq Hlk) as [_ P2].
+        destruct (target4_pay_sound argv fs Hva C cd y E HOLES D a0 p c' HC HT Hargv Hq Hlk) as [_ P2].
         rewrite <- Hargv. rewrite Hc. exact P2.
   Qed.
 End LevelSound.

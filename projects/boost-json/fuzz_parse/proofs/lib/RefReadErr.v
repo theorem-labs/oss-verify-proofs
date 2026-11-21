@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the launch's channel reader. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -34,6 +35,9 @@ Section ReadErr.
   Hypothesis Hh : ltac2:(zQ "60!h9!jc!li7!hg0!nd!lie@3$4@1$3@1$1@1$0#k0@1$5?5model@1$2@1$1@1$0#k0").
   Hypothesis Hlazy : ltac2:(zQ "71!h9!jc!lja!l9!ig0!nd!lk1&@2$2@1$1@1$0#k0@1$1@1$0#k0@3$5@1$3~0@1$6?5model@1$4~0").
   Hypothesis Hfd2 : ltac2:(zQ "90!h9!lke!v6!hh7!hg0!nd!ll9!lm6!ln3@3$5@1$4$1@2$7@1$8?5model@2$2@1$0#k0+2@2$3$1@1$6@2$2@1$0#k0+2").
+  (* LPS 75d69e00: the launch's channel reader, constant over the run; re_segF
+     (RefReadErr_tail) needs it for the stderr write and the exit flush. *)
+  Hypothesis Hrdr : m_channel_reader model = true.
 
   Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
   Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
@@ -47,7 +51,7 @@ Section ReadErr.
     eapply (re_segBC sp0 BL model Hvsp Hh Hlazy path pp (Z.of_nat (length path)) _ t8 vals);
       try eassumption; try lia.
     intros vals' R' M' HL' Q0 Q2 Q113 HR' HK' Hstr'.
-    eapply (re_segF sp0 BL model Hvsp Hh Hlazy Hfd2 path pp _ vals'); try eassumption; lia.
+    eapply (re_segF sp0 BL model Hvsp Hh Hlazy Hfd2 Hrdr path pp _ vals'); try eassumption; lia.
   Qed.
 
   (* [comment removed for export] *)

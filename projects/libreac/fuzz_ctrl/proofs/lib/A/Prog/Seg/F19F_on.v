@@ -4,12 +4,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module names changed; 615 of its 727 lines of code are new or changed and 899 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F35.v, with its module paths, module names and numbers changed; 139 of its 234 lines of code are new or changed and 632 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/Prog/Seg/F19F_on.v -- route (C), a Theorem Labs lane (owner a Theorem Labs lane): the `_on` twins of Seg/F19F.v's (not in this delivery) two footprint
-   runs (F19F.v (an earlier version, blob badcc8f71c7, not in this delivery) from a working branch 9e63d6e1607). This file edits no line of F19F.v (not in this delivery), whose later versions differ from the twin's base only in module qualification; this file adds
+   runs (F19F.v (an earlier version, blob badcc8f71c7, not in this delivery) from a working branch). This file edits no line of F19F.v (not in this delivery), whose later versions differ from the twin's base only in module qualification; this file adds
    lemmas only. Proves no function (kind: segment run). rule 24: no function proved.
 
-     f19_evt_F_on    <- F19F.f19_evt_F    (F19F.v:72)
-     f19_evt_ro_F_on <- F19F.f19_evt_ro_F (F19F.v:241)
+     f19_evt_F_on    <- F19F.f19_evt_F    (F19F.v:73)
+     f19_evt_ro_F_on <- F19F.f19_evt_ro_F (F19F.v:242)
 
    Each statement is the original's text with ONLY these edits:
    - PRE: `shadow_rw m` -> `shadow_rw_on (bcmp_wrap_shadow_R L (R + 6) 6) m` (A.ShadowRwOn.shadow_rw_on,
@@ -21,8 +22,8 @@
    Where it comes from: the run (0x82400 ld s4,200(s1); bnez a0; addi a1,s7,6; li a2,6; ld a0,64(s1);
    jal wrapper_bcmp) loads only the spills A+200 and A+64, no shadow byte. The original proofs use the shadow
    premise HSW once each:
-   - f19_evt_F: `exact HSW` (F19F.v:161), the shadow premise of the wrapper call, at the call's registers
-     a0 = [A+64] = Z_to_bv 64 L, a1 = s7 + 6 = Z_to_bv 64 (R + 6), a2 = Z_to_bv 64 6 (EL / ER6 / E6, F19F.v:137-139).
+   - f19_evt_F: `exact HSW` (F19F.v:162), the shadow premise of the wrapper call, at the call's registers
+     a0 = [A+64] = Z_to_bv 64 L, a1 = s7 + 6 = Z_to_bv 64 (R + 6), a2 = Z_to_bv 64 6 (EL / ER6 / E6, F19F.v:138-140).
      Here that premise is bcmp_wrap_contract_F_on's (bcmp_wrap_c_on.v:73)
      `shadow_rw_on (bcmp_wrap_shadow_R L R N) m` at L := L, R := R + 6, N := 6. Its disjuncts:
        sh_word_on L 6        : the aligned shadow words of [L, L+6), the ASan range check of the first string
@@ -32,10 +33,10 @@
      The contract is discharged by bcmp_wrap_on.bcmp_wrap_holds_F_on (bcmp_wrap_on.v:168) in place of
      bcmp_wrap_F.bcmp_wrap_holds_F; its post bcmp_wrap_post_on (bcmp_wrap_c_on.v:31) already carries the
      forall-P shadow conjunct, over the call's memory, which is m (the run before the call only loads).
-   - f19_evt_ro_F: `F18.shadow_rw_rel m _ REL HSW` (F19F.v:298), the premise of f19_evt_F on normalize rsegs m.
+   - f19_evt_ro_F: `F18.shadow_rw_rel m _ REL HSW` (F19F.v:299), the premise of f19_evt_F on normalize rsegs m.
      Here it is A.ShadowRwOnT.shadow_rw_on_rel (ShadowRwOnT.v:27) into f19_evt_F_on's premise, same R
      (normalizing changes no shadow byte).
-   Template: the plain-form twins F19.f19_evt_on / f19_evt_ro_on (a Theorem Labs lane, Seg/F19.v (not in this delivery; from a working branch aef5855f4dd)),
+   Template: the plain-form twins F19.f19_evt_on / f19_evt_ro_on (a Theorem Labs lane, Seg/F19.v (not in this delivery; from a working branch)),
    same R. The scripts are F19F's, with these three changes: the contract lemma, the transport, and f19_evt_F_on
    in place of f19_evt_F. *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.

@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the asan instance of musl's fread walk inside libreac/fuzz_pcap (libreac
    v1.9.0). The walk frd_walk is image-free, in lib/A/Stdio/PFreadMW.v; this file applies it to the
    asan image at PFREAD = 0x8ee5c, with the callee entries PTOREAD / TRAMP_MEMCPY (all from
    lib/A/Stdio/PStdioImgA.v, the single home of pcap's asan stdio pcs; none is declared here). The
    asan-ubsan instance is in lib/B/Stdio/PFreadMWB.v. Moved unchanged from PFreadMW.v
-   (a working branch 6e255f97e0c). rule 24: no function proved (split of a proved file). *)
+   (a working branch). rule 24: no function proved (split of a proved file). *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

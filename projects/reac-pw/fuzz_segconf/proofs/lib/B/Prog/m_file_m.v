@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the shape join of check_reply's walk (fuzz_command.asan, 0x86fcc .. 0x86ff8),
    ported from proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v (cgif_close's segments and
-   their program calls, cl_callS then a fresh seed at the return) at c8557374ad2e.
+   their program calls, cl_callS then a fresh seed at the return).
 
    From CR_JOIN (a0 = the shape string q) the code re-checks the shadow of g_rec.reply, loads the reply into s3 and
    calls syntax_reply_matches(q, reply) (0x86fdc). A match goes to the epilogue CR_EPI; otherwise it calls
@@ -12,12 +12,13 @@
    (check_reply_sd.v cr_seed) with the frame header read-only, so the run changes no byte the walk reads. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_reply_s7.v, with its module paths and module names changed; 1313 of its 1367 lines of code are new or changed and 489 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/m_file_k.v, with its module paths, module names and numbers changed; 326 of its 365 lines of code are new or changed and 1328 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* m_file on fuzz_segconf.asan-ubsan (image B, pin c3796c0b38f3, twin 80e82127e8ca; 0x86140, 3,608 bytes, 902
    instructions, 26 UBSan trap branches to the one `unimp` 0x86e84, 30 instrumented checks, strip and fold called):
    the segment statements of its walk, one MF_<cut>_stmt per cut of the image-B m_file cut map (sha256
-   f0e97728f090), the image-B twin of the image-A m_file-family lane's lib/A/Prog/m_file_m.v (commit dd4bb5fb2f90,
-   its version 3) in the same form (plugin-hostd/fuzz_command's lib/A/Prog/check_reply_m.v, origin/ossv/recipes
-   501c0d516c69; the walk-form survey 2.9): the bundle of the contract's variables (mfv), the entry facts (mf_cx), the post
+   f0e97728f090), the image-B twin of the image-A m_file-family lane's lib/A/Prog/m_file_m.v (
+   its version 3) in the same form (plugin-hostd/fuzz_command's lib/A/Prog/check_reply_m.v,;
+   the walk-form survey 2.9): the bundle of the contract's variables (mfv), the entry facts (mf_cx), the post
    (MF_POST), the mid-walk invariant (mf_core, mf_cells), the registers at a program point (mf_regs_at, and
    mf_regs_ex at EXIT), and the configuration at BASE + pc realizing the post (mf_at). Statement text and the logic
    that chains the segments (no instruction is executed here). A walk lane of the image-B m_file-family owner's G2B
@@ -27,7 +28,7 @@
      mh_find, mk_disp, mk_kv, MF_POST, the model equation of every cut); registers, frame cells and cut pcs are
      image B's (the image-B m_file cut map table C.1 and the cut map); what differs in shape from A is listed under DIFFERENCES.
 
-   IMAGE B'S PURE PARAMETERS come from lib/B/Prog/SegInstB.v (the image-B harness lane, 1f771e2f2066; SegInstA's names, every
+   IMAGE B'S PURE PARAMETERS come from lib/B/Prog/SegInstB.v (the image-B harness lane; SegInstA's names, every
    value measured on B's pin): SegInstB.STK_m_file (= 320 + 16 + max STK_fuzz_catalogue_row STK_m_find = 8,592),
    RLO_A, RHI_A, seg_litA_fz, wordsA (0xa2040), rolesA (0x211e0), catA (0xa20a0), gotwA (0xa3e98), guardA
    (0x5ff838), named in this file by the local notations MF_STK, RLO, RHI, lit, WORDS, ROLES, CAT, GOTW, GUARD.
@@ -38,8 +39,8 @@
    and lib/Prog/mf_cuts.v H_MF_LONG / HDR / KEY / HFIND / KAT restated over the reader; the line loop's invariant
    m_file_loop as mf_loop; the post fixed by the bundle, each cut stating the plain post's model as an equation with
    mf_final v = SegModel.m_file mc s lab). The line terms mf_line / mf_rest / mf_next / mf_fin and mh_find / mk_disp
-   / mk_kv are image A's text word for word (the segconf porter's lib/Prog/mfu_facts.v:228-271, mf_cuts.v:168-170 at
-   dec616e11c2f).
+   / mk_kv are image A's text word for word (the segconf porter's lib/Prog/mfu_facts.v:228-271, mf_cuts.v:168-170).
+   
 
    THE CUTS (B pc; listing offset = AF_m_file + (pc - 0x86140), AF_m_file = 0x1380 in lib/B/Prog/SegList.v:12, so
    BASE + AF_m_file = 0x84dc0 + 0x1380 = 0x86140; the entries into each, the image-B m_file cut map):
@@ -154,7 +155,7 @@ Definition mf_cur_ok (mc : mconf) (cur : option nat) : Prop :=
   match cur with Some i => (i < length (mc_seg mc))%nat | None => True end.
 
 (* ============================ the line and the partial model steps ============================ *)
-(* Image A's text (the segconf porter's lib/Prog/mfu_facts.v:228-271 at dec616e11c2f). At the head the text left is rest at
+(* Image A's text (the segconf porter's lib/Prog/mfu_facts.v:228-271). At the head the text left is rest at
    p; the line is the bytes before its first '\n' (or all of rest), the text after it is mf_rest rest, at
    mf_next p rest (nl + 1, or the NUL when there is no '\n'). *)
 Definition mf_line (rest : list Z) : list Z := fst (break_nl rest).

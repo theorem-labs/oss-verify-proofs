@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Copyright 2026 Theorem Labs *)
 (* New for reac-repacer/fuzz_egress: the cut-free (SRcf) contract of check_inject on the UBSan image, for the agree
-   chain, as reac-repacer/fuzz_uci's lib/U/Prog/check_no_overread_ccf.v (at bc49657c087a) is to its
+   chain, as reac-repacer/fuzz_uci's lib/U/Prog/check_no_overread_ccf.v is to its
    check_no_overread_c.v: the premises and the post of lib/U/Prog/check_inject_c.v, with SR replaced by SRcf and the
    room taken at the agree bounds (at most CAP_AG slots, at least 128, bytes within 2^29). *)
 From Stdlib Require Import ZArith List Bool Lia.

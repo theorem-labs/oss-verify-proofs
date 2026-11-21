@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the auxv region is 464 bytes, was 160, and the auxv fact is the launch's vector (auxv_ok) in place of the ten-pair auxv20, carried over memory that agrees on it (auxv_ok_agree). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp.bitvector Require Import definitions.
@@ -58,7 +59,7 @@ Definition TopLS (L : heap_layout) : lib_statics :=
 Definition e1_dom (av a : Z) : Prop :=
   ((0x10000 <= a < 0x60100) \/ (0x60128 <= a < 0x60148) \/ (0x60158 <= a < 0x60160)) \/ (0x703f8 <= a < 0x70404) \/ (0x70620 <= a < 0x70622) \/ (0x70e61 <= a < 0x70e67)
   \/ (0x70f08 <= a < 0x70f10) \/ (0x911a8 <= a < 0x911b0) \/ (0x911d0 <= a < 0x911d8) \/ (0x91228 <= a < 0x91230)
-  \/ (av <= a < av + 160).
+  \/ (av <= a < av + 464).
 
 Lemma u32_at_agree : forall M M' a v, L5C.agree_on M M' a 4 -> 0 <= a -> a + 4 <= 2 ^ 64 -> L5.u32_at RSEGS M a v -> L5.u32_at RSEGS M' a v.
 Proof. intros M M' a v AG Ha H4 H. unfold L5.u32_at in *. rewrite (L5C.rdn_agree RSEGS M M' 4 a Ha H4 AG). exact H. Qed.
@@ -90,7 +91,7 @@ Proof.
   - apply A8; [exact CA| intros; lia| lia| lia].
   - apply A8; [exact AX| intros; lia| lia| lia].
   - exact AV8. - exact AVlo. - exact AVhi.
-  - intros j Hj. apply A8; [apply AW; exact Hj| intros; lia| lia| lia].
+  - apply (L5PSU.auxv_ok_agree M M' av uid rnd hw AW); [lia | intros i Hi; apply AG; try unfold e1_dom; lia].
   - lia. - lia. - lia. - lia. - lia. - lia. - lia. - lia.
   - intros i Hi. rewrite AG by lia. apply I1. exact Hi.
   - intros i Hi. rewrite AG by lia. apply I2. exact Hi.
@@ -105,7 +106,7 @@ Definition statics_landed (M : word -> option byte) (gd : bool) (av uid rnd cana
       /\ L5.u8_at RSEGS M (L5PSU.UW_FLAGS + 3) 0 /\ L5.u8_at RSEGS M (L5PSU.UW_FLAGS + 4) 1 /\ L5.u8_at RSEGS M (L5PSU.UW_FLAGS + 5) 0)
   /\ L5.u64_at RSEGS M L5PSU.TD_LOCALE L5PSU.GLOBAL_LOCALE /\ L5.u64_at RSEGS M L5PSU.LOCALE_MSGCAT 0
   /\ L5.u64_at RSEGS M L5PSU.CANARY canary /\ L5.u64_at RSEGS M L5PSU.AUXVP av /\ av mod 8 = 0 /\ 2 ^ 40 <= av /\ av + 160 <= 2 ^ 47
-  /\ (forall j, (j < 20)%nat -> L5.u64_at RSEGS M (av + 8 * Z.of_nat j) (nth j (L5PSU.auxv20 uid rnd hw) 0))
+  /\ L5PSU.auxv_ok M av uid rnd hw
   /\ 0 <= uid < 2 ^ 64 /\ 0 <= rnd < 2 ^ 64 /\ 0 <= canary < 2 ^ 64 /\ 0 <= hw < 2 ^ 64
   /\ L5.img_clear M 0x10000 0x60100 /\ L5.img_clear M 0x60128 0x60148 /\ L5.img_clear M 0x60158 0x60160.
 
@@ -150,7 +151,7 @@ Proof.
   - apply A8; [exact MC| intros; lia| lia| lia].
   - apply A8; [exact CA| intros; lia| lia| lia].
   - apply A8; [exact AX| intros; lia| lia| lia].
-  - intros j Hj. apply A8; [apply AW; exact Hj| intros; lia| lia| lia].
+  - apply (L5PSU.auxv_ok_agree M M' av uid rnd hw AW); [lia | intros i Hi; apply AG; try unfold e1_dom; lia].
   - intros i Hi. rewrite AG by lia. apply I1. exact Hi.
   - intros i Hi. rewrite AG by lia. apply I2. exact Hi.
   - intros i Hi. rewrite AG by lia. apply I3. exact Hi.
@@ -187,7 +188,7 @@ Proof.
   - apply A8; [exact MC| intros; lia| lia| lia].
   - apply A8; [exact CA| intros; lia| lia| lia].
   - apply A8; [exact AX| intros; lia| lia| lia].
-  - intros j Hj. apply A8; [apply AW; exact Hj| intros; lia| lia| lia].
+  - apply (L5PSU.auxv_ok_agree M M' av uid rnd hw AW); [lia | intros i Hi; apply AG; try unfold e1_dom', e1_dom; lia].
   - intros i Hi. rewrite AG by lia. apply I1. exact Hi.
   - intros i Hi. rewrite AG by lia. apply I2. exact Hi.
   - intros i Hi. rewrite AG by lia. apply I3. exact Hi.
@@ -2666,7 +2667,8 @@ Proof.
   pose proof (tly_sptop TLY_) as SPT.
   assert (CLR : forall i, (0x10000 <= i < 0x60368 \/ 0x703c5 <= i < 0x70e68 \/ 0x90f40 <= i < 0x90f60) -> M (Z_to_bv 64 i) = None).
   { intros i [Hi|[Hi|Hi]]; [eapply (IMG (0x10000, 0x60368))| eapply (IMG (0x703c5, 0x70e68))| eapply (IMG (0x90f40, 0x90f60))]; cbn; auto; lia. }
-  exists av, uid, rnd, canary, hw. split; [exact AVS|]. cbn [fst snd].
+  exists av, uid, rnd, canary, hw.
+  split; [refine (Z.le_trans _ _ _ _ AVS); first [lia | lazymatch goal with |- _ <= ?x + 16 => change (x <= x + 16); lia end]|]. cbn [fst snd].
   unfold L5PSU.e1_statics, L5PSU.EH_CAUGHT, L5PSU.EH_UNCAUGHT, L5PSU.SYSCAT_GUARD, L5PSU.UW_FLAGS, L5PSU.TD_LOCALE, L5PSU.GLOBAL_LOCALE,
     L5PSU.LOCALE_MSGCAT, L5PSU.CANARY, L5PSU.AUXVP.
   repeat split; try lia.
@@ -2681,8 +2683,10 @@ Proof.
   - exact (GL 5%nat ltac:(lia)).
   - exact GRD.
   - exact AXP.
-  - intros j Hj. unfold L5.u64_at. rewrite (AW j ltac:(lia)). cbn [ll_phdr ll_phent ll_phnum TopLay auxv_words L5PSU.auxv20].
-    do 20 (destruct j as [|j]; [reflexivity|]). lia.
+  - destruct AW as (la & ph & entry & gid & ae & P1 & P2 & P3 & B & W).
+    cbn [ll_phdr ll_phent ll_phnum TopLay] in P1, P2, P3.
+    exists la, ph, entry, gid, ae. split; [exact P1|]. split; [exact P2|]. split; [exact P3|]. split; [exact B|].
+    intros j Hj. exact (W j Hj).
   - intros i Hi. apply CLR. lia.
   - intros i Hi. apply CLR. lia.
   - intros i Hi. apply CLR. lia.

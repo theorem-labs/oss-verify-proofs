@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (MInvIR's vDSO conjunct carried from the call's invariant; MInvIR taken apart by minvir_dest; auxv_ok_of_init and auxv_init_frame proved by the malloc contract's shared auxv lemmas, which read the launch's auxv for either CONFIG_RSEQ value). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -1141,47 +1142,11 @@ Qed.
 
 Lemma auxv_ok_of_init Ly r : ltac2:(tb__ "0|1|
 S11fS66Sb9VLy;Vr;A4SaSbSbaVLy;A1Z8A2S65Q40M0S32Vr;PaA2A2A2SbeSb9VLy;SbbS19eS66S37Vr;A1A2S63G0A1S21L_;A2A3F_;F_;").
-Proof.
-  intros (av & q & R1 & R2 & R3 & R4 & R5 & M1 & M2 & S1 & S2 & S3 & S4 & REST) Hsp.
-  pose proof (topL_range Ly) as TR.
-  exists av, q, 8. unfold mc_auxv in *.
-  split; [apply am_reads_holds; [cbn; lia | cbn; lia | exact R1]|].
-  split; [apply am_reads_holds; [lia | change (Z.of_nat 8) with 8; lia | exact (R2 8%nat ltac:(lia))]|].
-  split; [replace (av + 16 * 8 + 8) with (av + 136) by lia; apply am_reads_holds; [lia | change (Z.of_nat 8) with 8; lia | exact R4]|].
-  split; [apply am_reads_holds; [lia | change (Z.of_nat 8) with 8; lia | exact R5]|].
-  split.
-  { intros i Hi. destruct (R3 (Z.to_nat i) ltac:(lia)) as [v Rv]. rewrite Z2Nat.id in Rv by lia.
-    exists (nth (Z.to_nat i) am_auxv_keys 0), v.
-    pose proof (R2 (Z.to_nat i) ltac:(lia)) as Rk. rewrite Z2Nat.id in Rk by lia.
-    destruct (auxv_keys_early (Z.to_nat i) ltac:(lia)) as [K0 K25]. change auxv_keys with am_auxv_keys in K0, K25.
-    split; [apply am_reads_holds; [lia | change (Z.of_nat 8) with 8; lia | exact Rk]|].
-    split; [exact K0|]. split; [apply am_reads_holds; [lia | change (Z.of_nat 8) with 8; lia | exact Rv]|].
-    intros E. exfalso. exact (K25 E). }
-  split.
-  { exists 9. split; [lia|]. split; [apply am_reads_holds; [lia | change (Z.of_nat 8) with 8; lia | exact (R2 9%nat ltac:(lia))]|].
-    intros i Hi. lia. }
-  lia.
-Qed.
+Proof. exact (auxv_ok_of_init_gen segsU C_U Ly r ltac:(unfold mc_auxv; split; cbn; lia)). Qed.
 
 Lemma auxv_init_frame Ly (r r' : valuation) lo : ltac2:(tb__ "0|4|
 S11fS66Sb9VLy;Vr;A4SaSbSc1Sb9A1Z8A2Vlo;A2S63Q40M0A1S3ScS65G0R1A2M1Vlo;A2SaS65G0S32Vr;PaM2A2A2M3G1A2A2S0S23S63Q8A1A1S37Vr';R2A2S37Vr;R2A2A3F_;Fa;SaS65G0S32Vr';G2A2A2G3A2S11fS66Sb9VLy;Vr';A4F_;F_;F_;F_;").
-Proof.
-  intros (av & q & R1 & R2 & R3 & R4 & R5 & M1 & M2 & S1 & S2 & S3 & S4 & REST) Hlo AG Hsp.
-  pose proof (urange (rw r 10%positive)) as U10.
-  set (sp := bv_unsigned (rw r 10%positive)) in *.
-  assert (TR : forall a w v, (a + Z.of_nat w <= lo \/ sp <= a) -> 0 <= a -> a + Z.of_nat w <= 2 ^ 64 ->
-               am_reads segsU (rm r) a w v -> am_reads segsU (rm r') a w v).
-  { intros a w v Hr Ha Hw H k Hk. rewrite <- (H k Hk). apply rd_of_mem. apply AG.
-    unfold wz. rewrite u64 by lia. lia. }
-  top_ranges.
-  exists av, q. unfold mc_auxv in *.
-  split; [apply TR; [left; cbn in *; lia | cbn; lia | cbn; lia | exact R1]|].
-  split; [intros j Hj; apply TR; [right; lia | lia | change (Z.of_nat 8) with 8; lia | exact (R2 j Hj)]|].
-  split; [intros j Hj; destruct (R3 j Hj) as [v Hv]; exists v; apply TR; [right; lia | lia | change (Z.of_nat 8) with 8; lia | exact Hv]|].
-  split; [apply TR; [right; lia | lia | change (Z.of_nat 8) with 8; lia | exact R4]|].
-  split; [apply TR; [right; lia | lia | change (Z.of_nat 8) with 8; lia | exact R5]|].
-  repeat (split; [first [assumption | lia]|]). destruct REST as [? ?]. lia.
-Qed.
+Proof. exact (auxv_init_frame_gen segsU C_U Ly r r' lo ltac:(unfold mc_auxv; split; cbn; lia)). Qed.
 
 Lemma toS64_add_small u c : ltac2:(tb__ "0|6|
 S1SaZ0M0Vu;A2ScVu;SdZ2M1Z40M2A2M3A2A2S1SaG0Vc;A2ScVc;SdG1Z3fA2M4A2A2ScSbS68G2Vu;A2Vc;A2M5G4A2S0S6S68G2SeSbVu;Vc;A2G3A2A2G5A3F_;F_;F_;").
@@ -1449,7 +1414,7 @@ S1c7S111Vtr;Vmd;A3").
 Proof using HJC Hn HsmC0 HsmE.
   pose proof sc_range as [R1 R2]. pose proof C_sp as (_ & _ & _ & D1 & _).
   split; [|split; [exact E_a0 | exact E_a1]].
-  split; [exact MI_call|]. split; [exact (Zones2.xraw_nil s0)|]. split; [exact JC_kc|].
+  split; [exact (conj MI_call (proj2 JC_minv))|]. split; [exact (Zones2.xraw_nil s0)|]. split; [exact JC_kc|].
   split.
   - cbn zeta. rewrite E_a0, E_a1. change (bv_unsigned (rw rho1 V_DEPTH)) with (bv_unsigned (rw rho1 15%positive)). rewrite E_depth1.
     split; [exact R1|]. split; [lia|]. split; [exact R2|].
@@ -1541,7 +1506,7 @@ Proof using Hlink. unfold rhoP, rho_patch. cbn [rl]. exact (call_linkP_rl _ _ _ 
 Lemma MI_patch R2 md2 : ltac2:(tb__ "0|1|
 S120S66Sb9S25S97A1M0VR2;S127VA2;VrhoL;Vmd2;A8S0S1eS9cS193VA2;A1A1S21A3S120S66Sb9G0VR2;S127VA2;S1adVmd2;A8F_;F_;").
 Proof using HJC Hkept HtopA2 Hlink Hn HsmC0 sc.
-  destruct A2 as [s2 L2]. cbn [ma_s]. intros HM Hinit1. unfold MInvIR, MInvI in *. cbn [ma_s ma_L] in *.
+  destruct A2 as [s2 L2]. cbn [ma_s]. intros HM Hinit1. minvir_dest HM. minvir_split. unfold MInvI in *. cbn [ma_s ma_L] in *.
   pose proof C_sp as (S1 & S2 & SH & D1 & D2 & U10). top_ranges.
   apply (minvG_frame_core C_U [] R2 U0 s2 L2 _ _ _ _ (m_vmmaps md2) inFrm HM (Zones2.xraw_nil s2)).
   - intros a Ha NF.
@@ -2801,7 +2766,7 @@ S28S19bS1b5Vsc;A1R1A2S2S20S1fS9dS6A2A1M0G0S129S1fS6S98A2S9bR3Vsc;Vn;Vs0;A4R1S22S
 Lemma lock_bytes0 : ltac2:(tb__ "0|4|
 S28S19aR1U4A2S1S0S1eS10cS66S37VrhoK;A1M0S64Q40SbZ5a3c8S14R2A1A2A2M1A3S21A3S0S23S63Q8M2A1M3A1S10bS66G0G1A3S24G3S64G2Z0A2A2A3A2F_;Fkk;").
 Proof using HM2 Hn sc u10 u15.
-  intros kk Hk. pose proof (mig_statics HM2) as (_ & _ & _ & LK & _). unfold holds in LK. cbn [mc_lock C_U] in LK.
+  intros kk Hk. pose proof (mig_statics (proj1 HM2)) as (_ & _ & _ & LK & _). unfold holds in LK. cbn [mc_lock C_U] in LK.
   rewrite rd_of_CG, wok_of_CG in LK. specialize (LK kk Hk).
   destruct (byteview_of_Some _ _ _ _ LK) as (_ & W & b & Hb & E). split; [exact W|]. rewrite Hb. f_equal.
   rewrite <- (Z_to_bv_bv_unsigned 8 b). rewrite <- E. unfold le_byte. rewrite Z.mod_0_l, Z.shiftr_0_l by (apply Z.pow_nonzero; lia). reflexivity.
@@ -2915,7 +2880,7 @@ S19fS66Sb9VA2;S1b7VmdK;A5").
 Proof using ASR HM2 Hext2 Hinit2 Hkept2 Hn HsmL Hsp Hy2.
   apply (proj2 (MInvR_IR segsU C_U A2 rhoN mdK)). split.
   - pose proof HM2 as HM. assert (EA : A2 = mkMA (ma_s A2) (ma_L A2)) by (destruct A2; reflexivity).
-    rewrite EA in HM. rewrite EA. unfold MInvIR, MInvI in HM |- *. cbn [ma_s ma_L rhoN rm] in HM |- *.
+    rewrite EA in HM. rewrite EA. minvir_dest HM; minvir_split; unfold MInvI in HM |- *. cbn [ma_s ma_L rhoN rm] in HM |- *.
     apply (minvG_frame_core C_U [] None U0 (ma_s A2) (ma_L A2) _ _ _ _ (m_vmmaps mdK) (fun _ => False) HM (Zones2.xraw_nil (ma_s A2))).
     + intros a Ha _. exact (mN_views a Ha).
     + intros a F. destruct F.

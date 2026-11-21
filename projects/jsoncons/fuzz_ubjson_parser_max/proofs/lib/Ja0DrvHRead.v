@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: aread_dir_site moved out of its Section SE into a closed encoded lemma with intros for its former section variables, and its dinv_frame call gains a read-only-region obligation discharged via sbm_rdrA; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/As0DrvHRead.v, line 177. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -43,27 +44,9 @@ Variable M0 : word -> option byte.
 #[local] Abbreviation dinvA := (dinv ar HI sp0 M0).
 Lemma wseg_errno : ltac2:(TCodec.tc2 tcn__Ja0DrvHRead "<'='4&QK&R8&S3yR0+V]kVL%3221u4%73621(:%;3:21").
 Proof. vm_compute. reflexivity. Qed.
-Section SE.
-Local Abbreviation SEC_T_aread_dir_site := (ltac2:(TCodec.tc2 tcn__Ja0DrvHRead "[9'6'S4yR0%211%411'7y8%611%811p041'R0%;11'R1%=11&Q3y5%221='8%11;p0@1'O'9'C%2211%H11&Q=%J11&Q;%72G6%M11&QI'QO(QN&R7rA%211r@%5221&R4r1r>%33251&R3&R8r2&Q9&Q<r9r=%3221%521:%94871?'='4&R6&5rD%22QF1rB%5221(:%93821&R5rE%92QM1%3217%>3=16'@u1rF%?2R31%4231rG(1%Q9221vS0%H3R921&QB%11?%K3J1C&QF(S2+2(;%33R521%52F1&S3&R9&S5%12RG>%321Q:%52RI1%Q83RI71'<&R:&R=&R>+F%22@1%411%621QLz%82QN1%:231&R<r?+@%3221%QH3RF17rH+4%N3S01L%Q0231&Q?%L2S@1%QO3S@31rI+:%Q53S71Q3%Q7231+3%Q32SG1%R63SG31rJ+;%Q<3S>1Q:%Q>231&QD%Q:2SN1%R=3SN31rK+<%QC3SE1QA%QE231%Q@2T4R>%RC3T421+1%Q;21R:+RPP0%Q=2R<1%Q?231rM%QM3SO6QK%QO221%QJ2T>RF%RM3T>21rC%QE2Q>1&R;+R0%QF2R41%3251%QK251%QA2S1R7%S63T41QE'QAvRAvFvQ6rLrOrN%7:65RG4E3Q0Q721'N%TC11&Q0&Q1%117%321Q?(2(M%2281%SH3841%TL1TG&Q:%12T3Q=%72TJT9%SM3421&Ar3rQ9%SN2UB1%4231&QCvHrQ2%TI267%S32UI1%554Q031T@%S0271p0=1pUJU91pUBUK1rQ:%T;2UO1%A2@1%U323A%S=2V31%S821TJ%S:241p0G1pU6UC1pV>V51&3rQ;&QL%11K%43V<31%U?1U9%UA215%TK2V?U6&?rQ=%TN2VB1uQ0%4221%U43VC61rQ>%U32VG1u:%9221%UL2Q:1+_oooooooooooO%T92VM1%U<3VM31&QM&B%W21VD&R2&QE%443W121rQ?%UA2W51%83E31r7%V53QH21r4rQ6r6%V1221%V3216&Q@rQ4rQ3%3421QKQ0%V;4V:951rQ8rQ7r8%RN:RMRLU>RKQHR5321?%W52WGRG%WK11%RF14rQ<%RH11%V;3431&K&Q2%11VC%21Q?%V@3421%U72U0VN%SB2VOS@%U:221&>&R?%UC2UAR9+RTH%3221%U?21W1%SJ2W24%UB221%811&Q>%UD21RO%UL22U5%T02S11%UH231%>11%V12XEQ;%U?11rQC%113%W73X931p061p0=1p0G1pU2X91'QJvRN(L&QGvRG%V?2Y3QHr<&QH%11WM%655WI431r;%9221rQ5%=4X2<21p0?1p0Q;1p0QA1p0QH1p0QM1p0R81p0RD1p0RM1tQ<XGS51tVBYCS81pUHY41pR<Y61pRBY:1+\ZaH%W62YJ1%J5IA1R;E%L21R;%O4XDN1V;p061p0SG1p0T21p0TG1p0U21p0U;1p0U>1p0UF1p0UL1p0V21p0V91p0VA1p0VI1p0W11p0W71p0WC1p0X11p0X51p0X;1p0XA1p0XG1p0Y21p0Y=1tQ:YHYB1pQ@YJ1pULZ31pVDYM1pU8YN1pV0Z61pU:Z71p2Z61pU<Z41pQFZ61pQDZ91pUFZ>1pR:Z@1pR@ZD1pUDZH1pV4ZK1pU>ZN1pV@[41")) (only parsing).
-Variable vals : ltac:(sec_ty2 constr:(SEC_T_aread_dir_site) 0%nat 0%nat).
-Variable ebs : ltac:(sec_ty2 constr:(SEC_T_aread_dir_site) 1%nat 0%nat).
-Variable sr : ltac:(sec_ty2 constr:(SEC_T_aread_dir_site) 2%nat 0%nat).
-Variable kn : ltac:(sec_ty2 constr:(SEC_T_aread_dir_site) 3%nat 0%nat).
-Variable R : ltac:(sec_ty2 constr:(SEC_T_aread_dir_site) 4%nat 0%nat).
-Variable M : ltac:(sec_ty2 constr:(SEC_T_aread_dir_site) 5%nat 0%nat).
-Variable model : ltac:(sec_ty2 constr:(SEC_T_aread_dir_site) 6%nat 0%nat).
-Variable LB : ltac:(sec_ty2 constr:(SEC_T_aread_dir_site) 7%nat 0%nat).
-Variable LK : ltac:(sec_ty2 constr:(SEC_T_aread_dir_site) 8%nat 0%nat).
-Variable cr : ltac:(sec_ty2 constr:(SEC_T_aread_dir_site) 9%nat 0%nat).
-Variable A : ltac:(sec_ty2 constr:(SEC_T_aread_dir_site) 10%nat 0%nat).
-Variable cnt : ltac:(sec_ty2 constr:(SEC_T_aread_dir_site) 11%nat 0%nat).
-Variable so : ltac:(sec_ty2 constr:(SEC_T_aread_dir_site) 12%nat 0%nat).
-Variable bls : ltac:(sec_ty2 constr:(SEC_T_aread_dir_site) 13%nat 0%nat).
-Variable vbnd : ltac:(sec_ty2 constr:(SEC_T_aread_dir_site) 14%nat 0%nat).
-Variable ra : ltac:(sec_ty2 constr:(SEC_T_aread_dir_site) 15%nat 0%nat).
-Variable K : ltac:(sec_ty2 constr:(SEC_T_aread_dir_site) 16%nat 0%nat).
-Lemma aread_dir_site : ltac:(sec_stmt2 constr:(SEC_T_aread_dir_site) 17%nat 0%nat).
+Lemma aread_dir_site : ltac2:(TCodec.tc2 tcn__Ja0DrvHRead "[9'6'S4yR0%211%411'7y8%611%811p041'R0%;11'R1%=11&Q3y5%221='8%11;p0@1'O'9'C%2211%H11&Q=%J11&Q;%72G6%M11&QI'QO(QN&R7rA%211r@%5221&R4r1r>%33251&R3&R8r2&Q9&Q<r9r=%3221%521:%94871?'='4&R6&5rD%22QF1rB%5221(:%93821&R5rE%92QM1%3217%>3=16'@u1rF%?2R31%4231rG(1%Q9221vS0%H3R921&QB%11?%K3J1C&QF(S2+2(;%33R521%52F1&S3&R9&S5%12RG>%321Q:%52RI1%Q83RI71'<&R:&R=&R>+F%22@1%411%621QLz%82QN1%:231&R<r?+@%3221%QH3RF17rH+4%N3S01L%Q0231&Q?%L2S@1%QO3S@31rI+:%Q53S71Q3%Q7231+3%Q32SG1%R63SG31rJ+;%Q<3S>1Q:%Q>231&QD%Q:2SN1%R=3SN31rK+<%QC3SE1QA%QE231%Q@2T4R>%RC3T421+1%Q;21R:+RPP0%Q=2R<1%Q?231rM%QM3SO6QK%QO221%QJ2T>RF%RM3T>21rC%QE2Q>1&R;+R0%QF2R41%3251%QK251%QA2S1R7%S63T41QE'QAvRAvFvQ6rLrOrN%7:65RG4E3Q0Q721'N%TC11&Q0&Q1%117%321Q?(2(M%2281%SH3841%TL1TG&Q:%12T3Q=%72TJT9%SM3421&Ar3rQ9%SN2UB1%4231&QCvHrQ2%TI267%S32UI1%554Q031T@%S0271p0=1pUJU91pUBUK1rQ:%T;2UO1%A2@1%U323A%S=2V31%S821TJ%S:241p0G1pU6UC1pV>V51&3rQ;&QL%11K%43V<31%U?1U9%UA215%TK2V?U6&?rQ=%TN2VB1uQ0%4221%U43VC61rQ>%U32VG1u:%9221%UL2Q:1+_oooooooooooO%T92VM1%U<3VM31&QM&B%W21VD&R2&QE%443W121rQ?%UA2W51%83E31r7%V53QH21r4rQ6r6%V1221%V3216&Q@rQ4rQ3%3421QKQ0%V;4V:951rQ8rQ7r8%RN:RMRLU>RKQHR5321?%W52WGRG%WK11%RF14rQ<%RH11%V;3431&K&Q2%11VC%21Q?%V@3421%U72U0VN%SB2VOS@%U:221&>&R?%UC2UAR9+RTH%3221%U?21W1%SJ2W24%UB221%811&Q>%UD21RO%UL22U5%T02S11%UH231%>11%V12XEQ;%U?11rQC%113%W73X931p061p0=1p0G1pU2X91'QJvRN(L&QGvRG%V?2Y3QHr<&QH%11WM%655WI431r;%9221rQ5%=4X2<21p0?1p0Q;1p0QA1p0QH1p0QM1p0R81p0RD1p0RM1tQ<XGS51tVBYCS81pUHY41pR<Y61pRBY:1+\ZaH%W62YJ1%J5IA1R;E%L21R;%O4XDN1V;p061p0SG1p0T21p0TG1p0U21p0U;1p0U>1p0UF1p0UL1p0V21p0V91p0VA1p0VI1p0W11p0W71p0WC1p0X11p0X51p0X;1p0XA1p0XG1p0Y21p0Y=1tQ:YHYB1pQ@YJ1pULZ31pVDYM1pU8YN1pV0Z61pU:Z71p2Z61pU<Z41pQFZ61pQDZ91pUFZ>1pR:Z@1pR@ZD1pUDZH1pV4ZK1pU>ZN1pV@[41").
 Proof.
+intros vals ebs sr kn R M model LB LK cr A cnt so bls vbnd ra K.
 intros E HR HK Hsv Hkv HL1 P0 Hiw
 R2 Hso Hsoal R4 R10 R11 R12 Hcnt R1 Hra Hra2 DI Hfd Hbl Hvb CONT.
 pose proof Hsp as Hsp'. unfold STAGE, TP_A, ERRNO_A in *.
@@ -160,7 +143,7 @@ assert (EV3 : vml_of model3 = vml_of model) by (rewrite (sbm_vml _ _ SBM3); exac
 assert (Hh3 : m_halted model3 = None) by (rewrite (sbm_halted_eq _ _ SBM3); exact Hh1).
 assert (EH3 : ahid A model3 = H) by (rewrite (ahid_sbm A model1 model3 SBM3); exact EH1).
 assert (DI3 : dinvA LB LK cr A M3 model3).
-{ apply (dinv_frame scfg L ar C IL HI HIok sp0 Hsp DL M0 LB LK cr A M M3 model model3 DI); [ | exact GRW | exact EV3 | exact MI3 | exact Hh3].
+{ apply (dinv_frame scfg L ar C IL HI HIok sp0 Hsp DL M0 LB LK cr A M M3 model model3 DI); [ | exact GRW | exact EV3 | exact MI3 | exact Hh3 | rewrite (sbm_rdrA _ _ SBM3); exact (sbm_rdrA _ _ SBM1)].
 intros a Ha NC. apply FRM; [exact Ha | |]; intros Hr; apply NC; unfold CWA.
 - right. left. unfold s in Hr. lia.
 - right. right. exists 0x65d350, 0x66ed28. split; [unfold IMG_W_A; cbn [In]; tauto | lia]. }
@@ -224,6 +207,5 @@ apply GRW. apply (window_defined sp0 Hsp vals ebs H M kn HK Hiw P0). unfold s in
 + rewrite (proj2 (sbm_fds _ _ SBM3)). exact F2.
 + exact FRM.
 Qed.
-End SE.
 End DrvReadDir.
 End FPX_1.

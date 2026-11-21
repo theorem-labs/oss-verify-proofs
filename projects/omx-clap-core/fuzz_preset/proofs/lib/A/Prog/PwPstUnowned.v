@@ -14,14 +14,14 @@
    0x5dd560, g_peak 0x5dd580, g_count 0x5dd5a0, g_ran_out 0x5dd5c0 and g_most 0xa65e0 (an owned row ends exactly at
    its first byte), 40 for g_fail_at 0xa65c0 and 65584 for g_own_ran_out 0x5dd540. THE MARGIN IS ZERO BY
    CONSTRUCTION, so ANY regeneration of AF0m's Tfib_owned_static or of PRH_Img's statics MUST re-run pst_off_owned_A's
-   vm_compute: there is no slack. Image B is no different (h-pre-b1's lib/B/Prog/PwPstUnownedB.v,
-   origin/cold/h-pre-b1-bridgeb cbf7b06fc3c).
+   vm_compute: there is no slack. Image B is no different (h-pre-b1's lib/B/Prog/PwPstUnownedB.v).
+   
    THE FINAL INSTANCE: B := AD2l.TfibB (lib/A/AD2l.v blob eb321db7a357), whose TfibSyms is AD2l.TfibB_syms (Qed), so the
    premise is satisfiable (the generic lemma is not vacuous) and the entries close at TfibB with no open hypothesis
    (section 2). The bridge's entries are unchanged: section 2 applies them at every RL : PrhRoomLive (Section w's
    Context, as B's twin PwPstUnownedB.v does); the #102 slot field pcc_fuzz_alloc_peak_reset is at RL :=
    prh_room_live_a8 (cp := CfParams_preset) (PRH_Base.v, a Definition, not an Instance, so it is passed explicitly).
-   THE #102 RE-CUT (from commit 1faacee1304, blob 578ac794944c): section 1 is unchanged
+   THE #102 RE-CUT (blob 578ac794944c): section 1 is unchanged
    in text (prh_pst has seven cells on #102; the computation covers them); section 2 follows the bridge's #102 re-cut:
    pcc_fuzz_alloc_peak_reset_of_walk_TfibB states the slot field (the text at iface_ARx), the former afn_spec_cf
    entry is afn_fuzz_alloc_peak_reset_of_walk_TfibB, and afn_fuzz_alloc_fail_of_walk_TfibB is unchanged.

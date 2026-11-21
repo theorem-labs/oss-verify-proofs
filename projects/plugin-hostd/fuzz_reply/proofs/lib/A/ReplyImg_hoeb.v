@@ -4,12 +4,12 @@
    42c58610e125).
 
    HOEB is the cf layer's unit premise `Hypothesis HOEB : ~ (cf_errbuf_obj <= as_oom_byte B < cf_errbuf_obj + 56)`
-   (YGcfInstMiss.v Section b, a working branch aa87040fb59: the out-of-memory tail writes the OOM byte, and ARmcf's
+   (YGcfInstMiss.v Section b, a working branch: the out-of-memory tail writes the OOM byte, and ARmcf's
    errbuf cells survive it because the byte is not in the errbuf object), taken under `Hypothesis TS : im_syms B`. hoeb_A
    states that text at reply's image class instance AImg_reply (A/AGif2reply.v, im_syms := TfibSyms) and CfImg_A
    (A/CfImgA.v:34, cf_errbuf_obj := 0xa5928, __asan::error_message_buffer), with TS as its premise; a consumer closes HOEB
    with `exact (hoeb_A B TS)`. The discharge is cgif's (YGcfInstMisscgif.HOEB_cgif: cf_errbuf_obj_cgif + ts_oom, one lia):
-   reply A's TfibSyms field ts_oom (A/AF0m.v:875) with TFIB_OOM = 0x128320 (A/AF0m.v:20). *)
+   reply A's TfibSyms field ts_oom (A/AF0m.v:876) with TFIB_OOM = 0x128320 (A/AF0m.v:21). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

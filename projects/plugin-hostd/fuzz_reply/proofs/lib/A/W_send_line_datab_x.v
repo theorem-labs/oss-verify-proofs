@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the ARx-generic twin of lib/A/W_send_line_datab.v's sl_copy (the copy half of a
-   data round of fuzz_reply's ASan send_line loop), from W7's stopped conversion d12b637bb01; W_send_line_datab.v is
+   data round of fuzz_reply's ASan send_line loop), from W7's stopped conversion; W_send_line_datab.v is
    NOT edited. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* From the join A_sl_join = 0x82850 (W_send_line_datab_cx.v SLM) to the loop head or the epilogue:
      0x82850 ld a0,892(s4)  (g_out)          0x82854 ld s3,260(s10)  (g_nout = no + sent)
      0x82858 add a1,s1,s6   (line + sent)    0x8285c add a0,a0,s3    (g_out + no + sent)
@@ -102,7 +103,7 @@ Context {hl : Z}.
 Hypothesis LAWS : AR_laws_x SEGS B ARx hl.
 (* a Theorem Labs lane's HP0 ruling: the generic relation holds at the empty ghost list only *)
 Hypothesis HP0 : forall ly S Hp W mem md, ARx ly S Hp W mem md -> Hp = [].
-(* a live block's request is below 2 ^ 30 (W_LLVMFuzzerTestOneInput_exit_x.v:236 BLKM's text; the top states it at ARX,
+(* a live block's request is below 2 ^ 30 (W_LLVMFuzzerTestOneInput_exit_x.v:237 BLKM's text; the top states it at ARX,
    top_x.v:972, from the cf instance's AR_blocks_law_cf): the memcpy at 0x82864 needs n < 2 ^ 32 (a Theorem Labs lane) *)
 Hypothesis BLKM : forall ly S Hp W mem md p n, ARx ly S Hp W mem md -> In (p, n) (ablocks B ly S) -> n < 2 ^ 30.
 (* W_send_line_cx_x.v's header (W_send_line_datab_cx.v's is W_send_line_cx.v's) *)
@@ -116,12 +117,12 @@ Hypothesis AERRNO : aerrno_realizes_x B ARx (SIGMA WS_errno_location).
 Hypothesis AMEMCPY : aintrin_realizes_x SEGS B ARx OCpy (SIGMA WS_asan_memcpy).
 (* The realloc site rule in its caller-context form (W_journal_x.v Section hc), as the top's ARE_x states it
    (CTX_AREALLOC, ACk0.v:45, holds [0x82844]); send_line hands the rule a cut chain (ch = []), so the trace is the
-   return address alone (W7's ccd62d4c6f6 form). *)
+   return address alone (W7's form). *)
 Variable CTX_R : list (list Z).
 Hypothesis AREALLOC : arealloc_cf_rule_c_x SEGS B PST ARx MT MMAX RP CTX_R (SIGMA WS_realloc).
 Hypothesis HCTX_slr : In [BASE + AF_fr_send_line + 0x110] CTX_R.   (* realloc returns to 0x82844 *)
 Hypothesis HERRNO : as_errno B = as_tp B - 164.
-(* errno's 4 bytes in an 8-aligned zero-shadow range (W_contract.azs; W_drain_cx_x.v:189's form): the loop's errno
+(* errno's 4 bytes in an 8-aligned zero-shadow range (W_contract.azs; W_drain_cx_x.v:190's form): the loop's errno
    stores need range_addressable of errno at an ARx state (W_contract_x.azs_range_addressable_x) *)
 Hypothesis HERRZ : azs B (as_errno B) 4.
 Hypothesis HERRW : forall i, 0 <= i < 4 -> writable_at SEGS (fun _ => None) (as_errno B + i).
@@ -1081,7 +1082,7 @@ Hypothesis AREALLOC_R : arealloc_cf_rule_c_xR SEGS B PST ARx MT MMAX RP RO HA CT
 Let RUNG := paj_run_x_xG B PST ARx LAWS R (G_SL B RG) HG 0 [].
 Let RUNTOG := paj_run_to_x_xG B PST ARx LAWS R (G_SL B RG) HG 0 [].
 Let BRR := paj_branch_xR (PI := PI) (R := R).
-(* W_send_line_datab_x.v:591 sc_exit_x at R *)
+(* W_send_line_datab_x.v:592 sc_exit_x at R *)
 Lemma sc_exit_xR : forall regsE ly S Hp W mem md c O mx no cap out Bl lyX SX HpX WX regsX memX mdX k out' rest kr,
 ajournal_gx_xR SEGS B PST ARx R (G_SL B RG) 0 [] SL_STK (spZ regsE) (ablocks_fp (aout_blks cap out)) ly S Hp W mem md []
   lyX SX HpX WX memX mdX k ->
@@ -1115,7 +1116,7 @@ intros r _ a _. split.
 - exact (aview_eq_of SEGS (w_H WX) memX mem' a (Hm' _)).
 - unfold arm. apply writable_kept. intros Hpa. exact (apresent_grows _ _ _ _ GRX Hpa).
 Qed.
-(* W_send_line_datab_x.v:633 sl_copy_x at R *)
+(* W_send_line_datab_x.v:634 sl_copy_x at R *)
 Theorem sl_copy_xR : sl_copy_stmt_xR B PST ARx MT RP MMAX RG R.
 Proof.
 intros n0 regsE ly S Hp W mem md c O mx no cap out line Bl WM regsM memM mdM sent n kr IH HM Hb.

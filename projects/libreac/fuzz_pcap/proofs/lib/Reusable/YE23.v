@@ -3,6 +3,7 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YE23.v, with its module paths changed, names TfibSyms -> PcapSyms and its addresses moved to libreac/fuzz_pcap's ASan build. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -38,7 +39,7 @@ Definition XW1 (a : Z) : Prop := False.
 Definition XW2 (a : Z) : Prop := ((symaddr Symbols.AsanUbsan.s____asan_globals_registered) <= a < (symaddr Symbols.AsanUbsan.s___do_init___initialized)) \/ ((symaddr Symbols.AsanUbsan.s__ZN6__asanL14mu_for_globalsE) <= a < (symaddr (Symbols.AsanUbsan.s__ZN6__asanL14mu_for_globalsE + 0x8)%Z)) \/
 ((symaddr ((Symbols.AsanUbsan.Sec.s_rodata + 68128) / 8 + 0x7fff8000)%Z) <= a < (symaddr ((Symbols.AsanUbsan.Sec.s_rodata + 68160) / 8 + 0x7fff8000)%Z)) \/ ((symaddr ((Symbols.AsanUbsan.Sec.s_rodata + 68192) / 8 + 0x7fff8000)%Z) <= a < (symaddr ((Symbols.AsanUbsan.Sec.s_rodata + 68224) / 8 + 0x7fff8000)%Z)) \/ ((symaddr ((Symbols.AsanUbsan.s_g_file_len) / 8 + 0x7fff8000)%Z) <= a < (symaddr ((Symbols.AsanUbsan.s_g_file) / 8 + 0x7fff8000)%Z)) \/
 ((symaddr ((Symbols.AsanUbsan.s_g_file) / 8 + 0x7fff8000)%Z) <= a < (symaddr ((Symbols.AsanUbsan.s__ZN9libunwind13DwarfFDECacheINS_17LocalAddressSpaceEE5_lockE) / 8 + 0x7fff8000)%Z)) \/ ((symaddr ((Symbols.AsanUbsan.Sec.s_asan_globals) / 8 + 0x7fff8000)%Z) <= a < (symaddr ((Symbols.AsanUbsan.Sec.s_asan_globals + Symbols.AsanUbsan.Sec.Size.s_asan_globals) / 8 + 0x7fff8000)%Z)).
-(* the shadow __asan_unregister_globals writes, from fuzz_pcap's four descriptors at 0x9dfd0 (Reusable/YF0m.v:188-219,
+(* the shadow __asan_unregister_globals writes, from fuzz_pcap's four descriptors at 0x9dfd0 (Reusable/YF0m.v:189-220,
    section bounds Reusable/YB1w.v:17): g0 0x20d00+0xd rz to 0x20d20 -> 0x7fffc1a0..0x7fffc1a4; g1 0x20d40+3 rz to
    0x20d60 -> 0x7fffc1a8..0x7fffc1ac; g2 0x5d3e40+8 rz to 0x5d3e60 -> 0x800b27c8..0x800b27cc; g3 (g_file)
    0x5d3e60+8 rz to 0x5d3e80 -> 0x800b27cc..0x800b27d0; and the descriptor array itself 0x9dfd0..0x9e0d0 ->

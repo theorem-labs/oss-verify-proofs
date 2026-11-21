@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the co_rdr goals at the post models, from nmodel's channel-reader conjunct; the reader passed to the malloc spec). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 #[local] Ltac Zify.zify ::= WdZS.wd_zs_stock.   (* [comment removed for export] *)
@@ -617,7 +618,7 @@ Proof. pose proof sfloor_ge as SFG_.
   intros stk entry cs ret nlo nhi mh E fx R M model fx' R' M' mdl' p Hstk HC Hco Hnlo Hn1 Nhi HnN Nmh HKc Hnv.
   pose proof (call_ok_stk_top_ok _ _ _ _ Hco) as Htok.
   node_alloc_core_prologue HC Hco Hnlo Hstk stk entry cs ret nlo E fx R M model.
-  intros (HFX' & Hkept & Ha0 & Hpal & Hblk & Hal2k & Hdisj & Hpdisj & Hdef & Hshk & Hshw & Hfr & Herrk & Hscr & HAINV' & (Hh' & Hfs' & Hfds')).
+  intros (HFX' & Hkept & Ha0 & Hpal & Hblk & Hal2k & Hdisj & Hpdisj & Hdef & Hshk & Hshw & Hfr & Herrk & Hscr & HAINV' & (Hh' & Hfs' & Hfds' & Hrdr')).
   pose proof AINV_if as IFA. destruct AINV_if as (AINV_facts & AINV_nolazy & AINV_perm_nolazy & AINV_top & PERM_vsh & PERM_bnd & AINV_zone).
   set (v := nxt cs) in *.
   set (E1 := ext1 E v p).
@@ -829,6 +830,9 @@ Proof. pose proof sfloor_ge as SFG_.
     * rewrite HMT. clear - Nmh HKc Nhi GKCAP_le Hnr. unfold kcost in *. unfold n, uE in *. lia.
     * rewrite (uE_agree v E E' (a_fbud cs) Hag Ffb). exact (co_fbud HC).
     * eapply GPS.floor_sem_agree; [exact Hag | exact Fbrk | exact Fmaps | exact (co_floor HC)].
+    * (* [co_rdr] (AzGPS.v:244) at the POST model: [nmodel]'s new last conjunct
+         (AzNSpec.v:92) transports the caller's own reader. *)
+      rewrite Hrdr'. exact (co_rdr HC).
 Qed.
 
 (* [comment removed for export] *)
@@ -990,7 +994,7 @@ Proof.
   (* [comment removed for export] *)
   pose proof (xlo_sound SEGS E (Mr E cs model M) (kn cs) (a_fbud cs) fb (co_know HC) Hfbl) as FB. pose proof (co_fbud HC) as CF.
   assert (HLF : Z.of_nat (length (blocks_den E (a_fake cs))) + 1 <= FTOPc) by (unfold blocks_den; rewrite length_map; unfold uE in *; lia).
-  apply (MS fx R M model _ _ _ _ _ ret _ _ T PRE (opnew_kn_sound E cs fx R M model HC Hkn) HFDS HLF HT0).
+  apply (MS fx R M model _ _ _ _ _ ret _ _ T PRE (opnew_kn_sound E cs fx R M model HC Hkn) HFDS HLF HT0 (co_rdr HC)).
   intros fx' R' M' mdl' p POST.
   destruct (node_alloc_ok_sound MSTK_N false (g_opnew G) cs cs' ret E fx R M model fx' R' M' mdl' p Hstk HC Hco Hn POST) as (E' & Hag & HC' & Hpc' & Hfs').
   rewrite <- Hpc'. exact (Hk E' fx' R' M' mdl' Hag HC' Hfs').
@@ -1074,7 +1078,7 @@ Proof. pose proof sfloor_ge as SFG_.
       unfold mcost, MCNT, uE, AzIface.MBLK, GPS.MBLK, KFREE, EVT, GKCAP in *.
       split; [reflexivity|]. split; [reflexivity|]. unfold bcount in *. cbn [length] in *. repeat split; lia.
   - (* [comment removed for export] *)
-    intros fx' R' M' mdl' HFX' Hkept Hfr Herrk Hscr HAINV' (Hh' & Hfs' & Hfds').
+    intros fx' R' M' mdl' HFX' Hkept Hfr Herrk Hscr HAINV' (Hh' & Hfs' & Hfds' & Hrdr').
     set (E' := ext_call E v R').
     assert (Hag : env_agree v E E') by apply ext_call_agree.
     assert (HLc : blocks_den E' (a_vis cs) = Lc) by (unfold Lc; eapply blocks_den_agree; [exact Hag | exact (pairs_vars_lt_app_l _ _ _ Fallow)]).
@@ -1152,6 +1156,9 @@ Proof. pose proof sfloor_ge as SFG_.
         -- pose proof (xhi_sound SEGS E MR (kn cs) (a_meter cs) mh HK Hmh) as Nmh. unfold uE in *. lia.
       * rewrite (uE_agree v E E' (a_fbud cs) Hag Ffb). exact (co_fbud HC).
       * eapply GPS.floor_sem_agree; [exact Hag | exact Fbrk | exact Fmaps | exact (co_floor HC)].
+      * (* [co_rdr] (AzGPS.v:244) at the POST model: [nmodel]'s new last conjunct
+           (AzNSpec.v:92) transports the caller's own reader. *)
+        rewrite Hrdr'. exact (co_rdr HC).
     + exact Hfs'.
 Qed.
 
@@ -1230,7 +1237,7 @@ Proof. pose proof sfloor_ge as SFG_.
     split; [exact Hal|]. split; [exact Hsplo|]. split; [exact Hsptop|]. split; [exact Hsphi|]. split; [exact R4|]. intros a Ha. apply Hstkw. exact Ha.
   - unfold Lf, blocks_den. rewrite length_map. pose proof (co_fbud HC). unfold uE in *. lia.
   - (* [comment removed for export] *)
-    intros fx' R' M' mdl' f flag HFX' Hkept Ha0' Hfal Hblk Hdisj Hpdisj Hdef Hlast Hsh0 Hshw Hfr Herrk Hscr HAINV' (Hh' & Hfs' & Hfds').
+    intros fx' R' M' mdl' f flag HFX' Hkept Ha0' Hfal Hblk Hdisj Hpdisj Hdef Hlast Hsh0 Hshw Hfr Herrk Hscr HAINV' (Hh' & Hfs' & Hfds' & Hrdr').
     set (v := nxt cs) in *.
     set (E1 := ext1 E v f).
     set (E' := ext_call E1 (S v) R').
@@ -1458,6 +1465,9 @@ Proof. pose proof sfloor_ge as SFG_.
       * rewrite (uE_agree v E E' (a_meter cs) Hag Fmt). exact (co_kcap HC).
       * rewrite HFB'. cbn [length]. pose proof (co_fbud HC). lia.
       * eapply GPS.floor_sem_agree; [exact Hag | exact Fbrk | exact Fmaps | exact (co_floor HC)].
+      * (* [co_rdr] (AzGPS.v:244) at the POST model: [nmodel]'s new last conjunct
+           (AzNSpec.v:92) transports the caller's own reader. *)
+        rewrite Hrdr'. exact (co_rdr HC).
     + exact Hfs'.
 Qed.
 
@@ -1611,7 +1621,7 @@ Proof.
   - lia.
   - lia.
   - (* [comment removed for export] *)
-    intros M' mdl' Hfr Herrk HAINV' (Hh' & Hfs' & Hfds').
+    intros M' mdl' Hfr Herrk HAINV' (Hh' & Hfs' & Hfds' & Hrdr').
     set (E' := ext1 E v val).
     assert (Hag : env_agree v E E') by apply ext1_agree.
     assert (Hpv : edenot E' (EVar v) = val) by (cbn [edenot]; unfold E'; apply ext1_at).
@@ -1697,6 +1707,9 @@ Proof.
       * rewrite (uE_agree v E E' (a_meter cs) Hag Fmt). exact (co_kcap HC).
       * rewrite HFB'. pose proof (co_fbud HC) as CF. rewrite HFK in CF. rewrite !length_app in *. cbn [length] in CF. lia.
       * eapply GPS.floor_sem_agree; [exact Hag | exact Fbrk | exact Fmaps | exact (co_floor HC)].
+      * (* [co_rdr] (AzGPS.v:244) at the POST model: [nmodel]'s new last conjunct
+           (AzNSpec.v:92) transports the caller's own reader. *)
+        rewrite Hrdr'. first [ rewrite (APS.rdr_sbm _ _ Hsame) | rewrite <- (APS.rdr_sbm _ _ Hsame) ]. exact (co_rdr HC).
     + rewrite Hfs', Hfs1. reflexivity.
 Qed.
 

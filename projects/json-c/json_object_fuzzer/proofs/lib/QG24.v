@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise on the stderr writes of the read-error and cannot-open tails). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Equivalence.
@@ -77,7 +78,7 @@ exists (Z_to_bv 64 0), (Z_to_bv 64 0); repeat split; krd_solve HK ]
 end
 end.
 
-Ltac oom_stdio_exit HL P0 RES_EQ FD2 MFS :=
+Ltac oom_stdio_exit HL P0 RES_EQ FD2 RDR MFS :=
 
 lazymatch goal with
 | HR : regs_ok ?E _ _, HK : know_ok _ _ _ _ |- _ =>
@@ -112,6 +113,7 @@ rewrite (kimg_rdn RSEGS E _ kn ltac:(let i := kidx kn (is_kimg_cov 0x10d1d 19) i
 _ _ 0x10d1d 19 HK eq_refl) by (cbn; lia);
 apply msg_oom_img
 | apply FD2
+| apply RDR
 | first [reflexivity | assumption]
 | first [reflexivity | assumption]
 | apply t_exit_has_nil
@@ -169,6 +171,8 @@ Hypothesis Hvsp : valid_sp sp0.
 Hypothesis Hh : m_halted model = None.
 Hypothesis Hlazy : m_vm_lazy model = [].
 Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+(* LPS 727298f3: writev to fd 2 needs a reader at the far end ([State.m_channel_reader]) *)
+Hypothesis Hrdr : m_channel_reader model = true.
 
 Definition ENV (vals : list word) : env := Env (vals_ev vals) (blobs_ev BL).
 
@@ -238,7 +242,7 @@ word_to_le_bytes 8 (Z_to_bv 64 7018141077071293539)
 ++ word_to_le_bytes 1 (Z_to_bv 64 32) = PRE19.
 Proof. vm_compute. repeat (apply (f_equal2 cons); [apply bv_eq; reflexivity|]). reflexivity. Qed.
 
-#[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma re_segH : forall (path : list byte) (P : Z) vals R M,
+#[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma re_segH : forall (path : list byte) (P : Z) vals R M,
 Z.of_nat (length path) = P -> (0 <= P <= 60)%Z ->
 length vals = 231%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 113 = Z_to_bv 64 P ->
 regs_ok (ENV vals) srH0 R -> know_ok RSEGS (ENV vals) M knH0 ->
@@ -309,6 +313,7 @@ cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn 
 replace (bv_unsigned sp0 + -560)%Z with (bv_unsigned sp0 + -560)%Z in MSG by lia. exact MSG.
 - reflexivity.
 - exact Hfd2.
+- exact Hrdr.
 - exact Hh.
 - exact Hlazy.
 - apply t_exit_has_nil.
@@ -323,7 +328,7 @@ Qed.
 #[using="Type"] Lemma re_nl_img : rdn RSEGS (fun _ => None) (Z_to_bv 64 0x129a1) 1 = Some [Z_to_bv 8 10].
 Proof. vm_compute. reflexivity. Qed.
 
-#[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma re_segG : forall (path : list byte) (P : Z) vals R M,
+#[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma re_segG : forall (path : list byte) (P : Z) vals R M,
 Z.of_nat (length path) = P -> (0 <= P <= 60)%Z ->
 length vals = 199%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 113 = Z_to_bv 64 P ->
 regs_ok (ENV vals) srG0 R -> know_ok RSEGS (ENV vals) M knG0 ->
@@ -494,7 +499,7 @@ pose proof (rdn_wbytes_hit RSEGS path M' (Z_to_bv 64 (bv_unsigned sp0 - 541))) a
 apply Hc. rewrite u_small by lia. lia.
 Qed.
 
-#[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma re_segF : forall (path : list byte) (pp : word) (P : Z) vals R M,
+#[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma re_segF : forall (path : list byte) (pp : word) (P : Z) vals R M,
 Z.of_nat (length path) = P -> (0 <= P <= 60)%Z ->
 length vals = 167%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = pp -> vals_ev vals 113 = Z_to_bv 64 P ->
 (bv_unsigned sp0 <= bv_unsigned pp)%Z -> (bv_unsigned pp + P + 8 <= bv_unsigned sp0 + 4194304)%Z ->
@@ -1169,6 +1174,8 @@ Hypothesis Hvsp : valid_sp sp0.
 Hypothesis Hh : m_halted model = None.
 Hypothesis Hlazy : m_vm_lazy model = [].
 Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+(* LPS 727298f3: writev to fd 2 needs a reader at the far end ([State.m_channel_reader]) *)
+Hypothesis Hrdr : m_channel_reader model = true.
 
 Definition ENV (vals : list word) : env := Env (vals_ev vals) (blobs_ev BL).
 
@@ -1237,7 +1244,7 @@ word_to_le_bytes 8 (Z_to_bv 64 7953747406983097443)
 ++ word_to_le_bytes 1 (Z_to_bv 64 32) = PRE17.
 Proof. vm_compute. repeat (apply (f_equal2 cons); [apply bv_eq; reflexivity|]). reflexivity. Qed.
 
-#[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma of_segH : forall (path : list byte) (P : Z) vals R M,
+#[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma of_segH : forall (path : list byte) (P : Z) vals R M,
 Z.of_nat (length path) = P -> (0 <= P <= 62)%Z ->
 length vals = 232%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 114 = Z_to_bv 64 P ->
 regs_ok (ENV vals) srH0 R -> know_ok RSEGS (ENV vals) M knH0 ->
@@ -1304,6 +1311,7 @@ cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn 
 replace (bv_unsigned sp0 + -560)%Z with (bv_unsigned sp0 + -560)%Z in MSG by lia. exact MSG.
 - reflexivity.
 - exact Hfd2.
+- exact Hrdr.
 - exact Hh.
 - exact Hlazy.
 - apply t_exit_has_nil.
@@ -1318,7 +1326,7 @@ Qed.
 #[using="Type"] Lemma nl_img : rdn RSEGS (fun _ => None) (Z_to_bv 64 0x1298a) 1 = Some [Z_to_bv 8 10].
 Proof. vm_compute. reflexivity. Qed.
 
-#[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma of_segG : forall (path : list byte) (P : Z) vals R M,
+#[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma of_segG : forall (path : list byte) (P : Z) vals R M,
 Z.of_nat (length path) = P -> (0 <= P <= 62)%Z ->
 length vals = 200%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 114 = Z_to_bv 64 P ->
 regs_ok (ENV vals) srG0 R -> know_ok RSEGS (ENV vals) M knG0 ->
@@ -1489,7 +1497,7 @@ pose proof (rdn_wbytes_hit RSEGS path M' (Z_to_bv 64 (bv_unsigned sp0 - 543))) a
 apply Hc. rewrite u_small by lia. lia.
 Qed.
 
-#[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma of_segF : forall (path : list byte) (pp : word) (P : Z) vals R M,
+#[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma of_segF : forall (path : list byte) (pp : word) (P : Z) vals R M,
 Z.of_nat (length path) = P -> (0 <= P <= 62)%Z ->
 length vals = 168%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = pp -> vals_ev vals 114 = Z_to_bv 64 P ->
 (bv_unsigned sp0 <= bv_unsigned pp)%Z -> (bv_unsigned pp + P + 8 <= bv_unsigned sp0 + 4194304)%Z ->

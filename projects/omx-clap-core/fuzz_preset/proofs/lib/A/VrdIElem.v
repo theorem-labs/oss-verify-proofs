@@ -48,7 +48,7 @@
    is over the GRANTED continuation trace snd (fst (ip_cont P [])).
 
    THE POST-IMPLICATION RESTATEMENT (lane A'Ipro, a Theorem Labs lane's approval 2026-10-29, against the kit text
-   a working branch 3ac20a5c9e30: PRH_FnParse.v 94232293d483, PRH_FnReader.v fb7b12dfa169, PRH_Base.v
+   a working branch: PRH_FnParse.v 94232293d483, PRH_FnReader.v fb7b12dfa169, PRH_Base.v
    ee2f5cd7ed35, PRH_FnAlloc.v 95e26ff95e63). The call data gains the text's most / own (ie_most, ie_own) and loses
    the six room-position fields of the entry-keyed form: the text has no entry position, its post quantifies the
    model run and position itself. vrd_ient_ok mirrors the text's premises (the memnorm and live-count premises in
@@ -57,7 +57,7 @@
    entry state over the events made so far (rd_hevs (ip_tr P)); the exit also carries the text's OUTCOME clause.
    The epilogue's conclusion is the text's post body, vrd_items_q, verbatim.
 
-   THE REBIND ON THE KIT'S CUT (lane RBase, a working branch 7cdbb61b5fa0: PRH_FnParse.v f0d92dcec7e9,
+   THE REBIND ON THE KIT'S CUT (lane RBase, a working branch: PRH_FnParse.v f0d92dcec7e9,
    PRH_Base.v ef7c8ca98529, PRH_FnReader.v f1ae32e3b2cd, PRH_FnAlloc.v 4d8aeba047e5, PRH_Reader.v 4266e709561a). Each
    statement moved ONLY where a cut text forces it:
    - DW is GONE (tparse_items_specX's fourth parameter is the cursor set CW : list (list Z)): the Props take CW;
@@ -71,7 +71,7 @@
      epilogue's conclusion is fpostWFb at wbudget CW 0 (the m-keep stays the top's, as before).
    - THE POST GAINED THE FREE ORDER (both arms) AND pj_ncapR (Some arm) (FREEORD-NONE, CAP): vrd_items_q carries
      them verbatim, vrd_iexit_a's answer appends them, and each loop boundary appends the invariants that make them
-     provable (the batch kit's layer, after a Theorem Labs lane's B' twin a working branch 34d46afa0965
+     provable (the batch kit's layer, after a Theorem Labs lane's B' twin a working branch
      lib/B/Prog/PItems_defs.v pi_ncaps / pi_forder / pi_fl_eq / pi_fl_eqB / pi_fl_eqV): the container's cap is
      PresetReqAt.ncap of its count (vrd_ielem_a / vrd_islot_a: ncap (S n), after the grow; vrd_icomma_a: ncap n), the
      members' caps (vrd_incaps), the completed slots' order list against an accumulator af (vrd_iforder), and the
@@ -180,7 +180,7 @@ Qed.
 
 (* ---- the model's FREE LIST at the same positions (FREEORD-NONE): PresetReqAt.jfl (PresetReqAt.v:273-294), VERBATIM
    pieces of its body as vrd_jtail / vrd_jval are of jrl's (a Theorem Labs lane's B' twins PItems_defs.v pi_jfb / pi_jfv_k at
-   a working branch 34d46afa0965, same bodies). jfl threads the accumulator af of the completed slots'
+   a working branch, same bodies). jfl threads the accumulator af of the completed slots'
    blocks (each slot: its value's list, then its key's) and ends in af ++ the container's arrays. ---- *)
 
 (* jfl's body after a granted grow (the loop head) *)
@@ -390,7 +390,7 @@ Record vrd_ient : Type := MkIEnt {
      not a frame pointer, and rd_pre puts q between the entry sp and sp + e, so q is above alloc_ceiling, below
      ly_top - 16 and 8-aligned: achain's CUT disjunct is refuted at s0 = q and the entry chain ie_ch does not
      serve. ie_ch2 is the spine of the chain achain admits there; vrd_ijrn carries a chain with that spine at each
-     position's own view (the plain form of record text e8db3183ba3), at the LOOP's sp (sp0 - 144), which is the
+     position's own view (the plain form of record text), at the LOOP's sp (sp0 - 144), which is the
      WEAKEST place to state it (achain's Forall over the records only gets easier as sp falls). *)
   ie_ch2 : list (Z * Z * Z);
   (* NO ROOM-POSITION FIELDS: the text is in the POST-IMPLICATION form (no entry position premise; the post
@@ -525,7 +525,7 @@ Definition vrd_ijrn (E : vrd_ient) (P : vrd_ipos) : Prop :=
   arodata_okP SEGS pa_relro_lo pa_relro_hi B (aview SEGS (w_H (ip_W P)) (ip_mem P)) /\
   rd_blocks_move B (ie_ly E) (ie_S E) (ip_ly P) (ip_S P) (ip_D P) (ip_tr P)
     (rest_atR (ie_tb E) (ie_text E) (ie_p E)) (ie_d E) /\
-  (* the chain of the loop's own calls, PLAINLY at this position's view (record text e8db3183ba3, PRH_FnParse.v
+  (* the chain of the loop's own calls, PLAINLY at this position's view (record text, PRH_FnParse.v
      blob e31806f7bdb0: the rd'-quantified per-reader form is REFUTED, PItemsB / PValueB on image B): a chain at
      (sp, q) with the spine the call contexts (vrd_ient_ok) are about *)
   (exists ch', achain (ip_ly P) (aview SEGS (w_H (ip_W P)) (ip_mem P)) (spZ (ie_regs E) - 144) (ie_q E) ch' /\
@@ -548,8 +548,8 @@ Definition vrd_ijrn (E : vrd_ient) (P : vrd_ipos) : Prop :=
    blocks_bytes bound and pj_fdR of the partly built node follow from no other conjunct here: the user bytes held
    since the call's entry (PRH_Charge.prh_held: heads counted), and the depth of the elements read so far
    (cont_depth's own loop invariant, PjGrammar.v:1475), which VrdFrame.vrd_node_fd turns into pj_fdR. Then
-   Ledger.lsum (ip_D P) = held (ip_tr P) (IelemD's composition finding; a Theorem Labs lane's ruling, record text
-   35c30929451): composing rd_ledger_move across a call re-associates the peak only when the blocks the position
+   Ledger.lsum (ip_D P) = held (ip_tr P) (IelemD's composition finding; a Theorem Labs lane's ruling, record text):
+   composing rd_ledger_move across a call re-associates the peak only when the blocks the position
    owns hold exactly the user bytes its trace holds.
    THE LEDGER MOVE IS THE TEXT'S (#102's refusal rule, kit PRH_FnParse.v blob 94232293d483): it takes most and the
    ALL-GRANTED trace gt, here the WHOLE call's, prhPi_gtrace at the entry cursor - the one the post states, so the
@@ -597,7 +597,7 @@ Definition vrd_imodel (E : vrd_ient) (P : vrd_ipos) : Prop :=
    Some arm asks pj_ncapR of the container's tree and, with its None arm, pj_free's ORDER LIST of what the call leaves in
    the node against the model's prhPi_frees. No other conjunct of a boundary gives either (pj_nodeR / pj_fdR give
    neither the caps nor an order), so each boundary carries them, as a Theorem Labs lane's B' twin does (PItems_defs.v
-   pi_ncaps / pi_forder, a working branch 34d46afa0965). They are SEPARATE conjuncts, appended last, so
+   pi_ncaps / pi_forder, a working branch). They are SEPARATE conjuncts, appended last, so
    vrd_inode and its frame lemmas are untouched. ---- *)
 
 (* the members' capacities: each member read so far (rev (ip_acc P), in slot order, member i at kids + 56 i) is a
@@ -893,7 +893,7 @@ Definition tvrd_iexit_a (CTX CTX0 : list (list Z)) (CW : list (list Z)) : Prop :
    invariant must be in the step's statement; the generic SRr_memnorm was measured not provable (a Theorem Labs lane), so it
    cannot be added afterwards. Without it parse_value's memnorm entry premise at row 231 has no source: memnorm of the
    entry memory (vrd_ient_ok) says nothing of the memory at the call (the Ival walk's counterexample, VrdIVal.v:32-40 on
-   a working branch c913e10deeb, with its overlay byte added after the entry), and fpostWFm's keep cannot
+   a working branch, with its overlay byte added after the entry), and fpostWFm's keep cannot
    cross the loop. Each Prop takes Pm of the start memory and gives Pm of the reached one; a prover proves its Prop
    for every Pm with the laws its _G form below names: srr_inv_laws SEGS Pm (all four), srr_inv_call SEGS Pm (ikey,
    ival, igrow: they cross calls) and srr_inv_mn SEGS Pm (ival: parse_value's entry premise). The top instantiates Pm
@@ -1044,7 +1044,7 @@ Proof.
   - lia.
 Qed.
 
-(* the chain grow's text asks at parse_items' call (kit walkkit a3bdeca3920, PRH_FnReader.v blob 4e74cfa4213d:
+(* the chain grow's text asks at parse_items' call (kit walkkit, PRH_FnReader.v blob 4e74cfa4213d:
    grow keeps s0 = v + pi_s0cur F_grow, 48 on both pins): its START v + 48 is below alloc_ceiling (vrd_node_low), so
    achain's cut disjunct holds with the empty chain, at any layout, view and sp *)
 Lemma vrd_node_chain : forall HL (LAWS : AR_laws_x SEGS B ARx HL) CTX CTX0 CW E (ly : alayout) (rd : reader) (sp : Z),

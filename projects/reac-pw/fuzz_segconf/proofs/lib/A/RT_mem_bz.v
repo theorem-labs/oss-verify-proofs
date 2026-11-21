@@ -10,9 +10,9 @@
 
    This file proves no new function.  Every lemma is copied unchanged from
    proofs/omx-clap-core/fuzz_manifest/lib (itself ported unchanged from the shared ASan runtime proofs):
-     lib/A/BzBridge.v:41-64       seg_tops_below, rsegs_below_task, find_segment_below, seg_addr_below
-     lib/A/BzCallBridge.v:18-148  msteps_bz .. rw_cells_CB0_ours, memset_callZ_of_contract (:110)
-     lib/A/Prog/asan_memcpy.v:36-108  msteps_to_bz, evt_to_bz, bytes_at_same, mc_post, mc_proof (:88)
+     lib/A/BzBridge.v:42-65       seg_tops_below, rsegs_below_task, find_segment_below, seg_addr_below
+     lib/A/BzCallBridge.v:19-149  msteps_bz .. rw_cells_CB0_ours, memset_callZ_of_contract (:110)
+     lib/A/Prog/asan_memcpy.v:37-109  msteps_to_bz, evt_to_bz, bytes_at_same, mc_post, mc_proof (:88)
    (BzCallBridge.v's ro_c8/c1/c4_to_bz, bytes_at_cat8 and m2s_cells_normalize are left out: none of the lemmas below
    uses them, and m2s_cells_normalize rests on AsanRT.v's asan_cells.)  The file layout, the selection and
    ms_callZ_proof follow plugin-hostd/fuzz_reply's twin,
@@ -22,6 +22,7 @@
    lemmas below uses.
    No address numeral occurs here. *)
 (* Modified by Theorem Labs, 2026-10: the lemmas of proofs/omx-clap-core/fuzz_manifest/lib/A/{BzBridge.v:41-64, BzCallBridge.v:18-148, Prog/asan_memcpy.v:36-108} copied unchanged into one file without their AsanRT.v / AsanRTFacts.v / MemNorm.v imports, in the layout of proofs/plugin-hostd/fuzz_reply/lib/A/RT_mem_bz.v (module path fuzz_reply -> fuzz_manifest). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Lib Require Import PropExec MState Mem Exec Frame Cells Step.
@@ -55,7 +56,7 @@ Module MCp := OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.A.Prog.RtG_memcpy.
 Module MCs := OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.A.Prog.RtG_memcpy_same.
 Module MSp := OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.A.Prog.RtG_memset.
 
-(* ---- lib/A/BzBridge.v:40-63 ---- *)
+(* ---- lib/A/BzBridge.v:41-64 ---- *)
 Definition seg_tops_below (segs : list Segment) (top : Z) : bool :=
   forallb (fun s => Z.of_N (seg_base s) + Z.of_N (seg_size s) <=? top) segs.
 

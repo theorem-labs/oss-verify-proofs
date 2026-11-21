@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YP0j.v, with its module paths changed; its addresses are still cgif_file_fuzzer.asan's. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs.
@@ -1268,7 +1269,10 @@ Proof.
 intros regs pc mem w sz sx rd rs imm ms' Hfetch Hecall Hdecode.
 step_pipeline Hfetch Hecall Hdecode.
 destruct sz; cbv beta iota;
-match goal with |- context [ov_read_bytes ?a ?b ?c ?d] => destruct (ov_read_bytes a b c d) end;
+match goal with |- context [ov_read_bytes ?sg ?m ?a ?n] =>
+  destruct (ov_read_bytes sg m a n);
+  [|destruct (range_meets_vvar sg a n); cbv beta iota; intros Hs; discriminate Hs]
+end;
 cbv beta iota; intros Hs; try discriminate Hs; injection Hs as <-;
 destruct (is_x0 rd); cbv beta iota; rewrite b_npc4;
 first [exists (Z_to_bv 64 0); reflexivity | eexists; reflexivity].

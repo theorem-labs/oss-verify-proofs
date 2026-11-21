@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: proofs/cgif/cgif_file_fuzzer/lib/A/AB05.v at c8557374ad2e; the plan is relocated to reac-pw/fuzz_role's fuzz_role.asan (sha256 614cffc0864c) by remap.py (asan-kit 2d846496640d) with port_core 0e4e065eab9f's elfmap map, its itab ranges set by itabranges.py --rule text to the image's .text whole ((0x30634, 107180)), and each registration arm's tail measured on this image by plantail.py probef and written by plantail.py insert --replace-tail --from-probe (all 50 arms [XMemset*50], no PMmap: 49 asan globals, none with an ODR indicator); module paths changed *)
+(* Modified by Theorem Labs, 2026-10: proofs/cgif/cgif_file_fuzzer/lib/A/AB05.v at theorem-labs/oss-verify-proofs@6b32741d849a; the plan is relocated to reac-pw/fuzz_role's fuzz_role.asan (sha256 614cffc0864c) by remap.py (asan-kit 2d846496640d) with port_core 0e4e065eab9f's elfmap map, its itab ranges set by itabranges.py --rule text to the image's .text whole ((0x30634, 107180)), and each registration arm's tail measured on this image by plantail.py probef and written by plantail.py insert --replace-tail --from-probe (all 50 arms [XMemset*50], no PMmap: 49 asan globals, none with an ODR indicator); module paths changed *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_role.asan (reac-pw/fuzz_role asan) sha256 614cffc0864cc31d9d1ced61322c4efd567b64bc89fe09a227a05b5126e0debb; unstripped twin sha256 6da77bafc5c050954dd89149e1e55a24064c2211e3cbd351822d1c0a20900ad6 *)
 From OSSVerify.Proofs.reac_pw.fuzz_role.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: the jo_get_num_A_stmt proofs name jo_preA's conjunct, and their PI64 calls discharge it). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run Fs.
@@ -148,7 +149,7 @@ Definition GI_STK_A : Z := 96 + PI64_STK_A.
 
 Lemma get_int_A : jo_get_num_A_stmt HIx 0x9c460 GI_STK_A.
 Proof.
-unfold jo_get_num_A_stmt. intros until errv. intros (HP & ST & LO & LOS & SPA16 & HT & ERR & TP & RA) JO FRN SPA FRM A0 K.
+unfold jo_get_num_A_stmt. intros until errv. intros (HP & ST & LO & HBT & LOS & SPA16 & HT & ERR & TP & RA) JO FRN SPA FRM A0 K.
 unfold GI_STK_A, PI64_STK_A in LOS. subst a0 tp.
 pose proof (bv_unsigned_in_range 64 sp) as SPR. change (bv_modulus 64) with (2^64) in SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
@@ -177,6 +178,7 @@ all: rewrite ?unsigned_lit by lia.
 1: lia.
 1: exact ST.
 1: exact LO.
+1: first [assumption | lia].
 1: cbn [hl_stack_A A4L]; lia.
 1: clear - SPA; Z.div_mod_to_equations; lia.
 1: lia.
@@ -463,7 +465,7 @@ lazymatch type of SHB with bytes_at _ _ _ ?wb => eapply (unpoisoned_gran8 asegs 
 - replace (((Fr + 32) / 8 + A_SB) mod 8) with 4 by (unfold A_SB; clear - HFal; Z.div_mod_to_equations; lia). reflexivity. }
 evt_done5.
 eapply PI64 with (LB := BS ++ LB) (LM := LM) (FRS := (Fr, 0) :: FRS) (B := B) (str := str0) (SA := TX) (R := Fr + 32) (lo := lo);
-[ exact HPc | rewrite unsigned_lit by lia; eassumption | exact LO | unfold PI64_STK_A; rewrite unsigned_lit by lia; lia
+[ exact HPc | rewrite unsigned_lit by lia; eassumption | exact LO | first [assumption | lia] | unfold PI64_STK_A; rewrite unsigned_lit by lia; lia
 | rewrite unsigned_lit by lia; clear - SPA; Z.div_mod_to_equations; lia | rewrite unsigned_lit by lia; lia
 | unfold A_ERRNO, A_TP; eassumption | reflexivity | rewrite unsigned_lit by lia; reflexivity
 | reflexivity | reflexivity | exact BY | exact NIN
@@ -727,7 +729,7 @@ Definition GI_STK_A : Z := 96 + PI64_STK_A.
 
 Lemma get_int_A : jo_get_num_A_stmt HIx 0x9dd50 GI_STK_A.
 Proof.
-unfold jo_get_num_A_stmt. intros until errv. intros (HP & ST & LO & LOS & SPA16 & HT & ERR & TP & RA) JO FRN SPA FRM A0 K.
+unfold jo_get_num_A_stmt. intros until errv. intros (HP & ST & LO & HBT & LOS & SPA16 & HT & ERR & TP & RA) JO FRN SPA FRM A0 K.
 unfold GI_STK_A, PI64_STK_A in LOS. subst a0 tp.
 pose proof (bv_unsigned_in_range 64 sp) as SPR. change (bv_modulus 64) with (2^64) in SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
@@ -756,6 +758,7 @@ all: rewrite ?unsigned_lit by lia.
 1: lia.
 1: exact ST.
 1: exact LO.
+1: first [assumption | lia].
 1: cbn [hl_stack_A A4L]; lia.
 1: clear - SPA; Z.div_mod_to_equations; lia.
 1: lia.
@@ -1071,7 +1074,7 @@ lazymatch type of SHB with bytes_at _ _ _ ?wb => eapply (unpoisoned_gran8 asegs 
 - replace (((Fr + 32) / 8 + A_SB) mod 8) with 4 by (unfold A_SB; clear - HFal; Z.div_mod_to_equations; lia). reflexivity. }
 evt_done5.
 eapply PI64 with (LB := BS ++ LB) (LM := LM) (FRS := (Fr, 0) :: FRS) (B := B) (str := str0) (SA := TX) (R := Fr + 32) (lo := lo);
-[ exact HPc | rewrite unsigned_lit by lia; eassumption | exact LO | unfold PI64_STK_A; rewrite unsigned_lit by lia; lia
+[ exact HPc | rewrite unsigned_lit by lia; eassumption | exact LO | first [assumption | lia] | unfold PI64_STK_A; rewrite unsigned_lit by lia; lia
 | rewrite unsigned_lit by lia; clear - SPA; Z.div_mod_to_equations; lia | rewrite unsigned_lit by lia; lia
 | unfold A_ERRNO, A_TP; eassumption | reflexivity | rewrite unsigned_lit by lia; reflexivity
 | reflexivity | reflexivity | exact BY | exact NIN

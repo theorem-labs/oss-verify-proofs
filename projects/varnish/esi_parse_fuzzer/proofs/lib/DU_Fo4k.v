@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the section's write step takes the channel-reader premise (m_channel_reader) the model's new write arms read. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -649,6 +650,7 @@ Section Run.
   Hypothesis R2 : getr R 2 = sp.
   Hypothesis R11 : getr R 11 = Z_to_bv 64 0.
   Hypothesis Hfd1 : fd_lookup (m_fds md) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)).
+  Hypothesis Hrdr1 : m_channel_reader md = true.   (* 08b1429: channel-reader-premise *)
   Hypothesis Hh : m_halted md = None.
   Hypothesis Hlazy : m_vm_lazy md = [].
 
@@ -752,6 +754,7 @@ Section Run.
                    _ _ 0x10ac6 1 HK eq_refl) by (cbn; lia).
         apply nl_img.
       + exact Hfd1.
+      + exact Hrdr1.
       + exact Hh.
       + exact Hlazy.
       + exact HKnil.

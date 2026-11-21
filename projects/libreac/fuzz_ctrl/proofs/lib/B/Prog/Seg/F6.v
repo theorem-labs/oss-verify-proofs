@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 1665 of its 1776 lines of code are new or changed and 900 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F5.v, with its addresses and numbers changed; 477 of its 613 lines of code are new or changed and 1640 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment F6 of fuzz_ctrl LLVMFuzzerTestOneInput (asan-ubsan build of libreac v1.9.0, image B), frame-loop turn j:
    the 32-byte block sum of a long record (0x82098-0x820c4, back edge 0x820c4), the two instrumented byte checks of
    the record's bytes 16 and 17, the abort compare of 0x82138 and the second reac_ctrl_parse call. rule 24: no
@@ -44,12 +45,12 @@
    REUSE. The parse call 0x8214c-0x82158 is F5's seg_c (the join cut Inv_B8214c_join is F5's, internal to that
    unit; F5 and F6 compose through it), and every memory / register transport is one of F5's c_* lemmas. The
    loop induction follows image A's donor lib/A/Prog/Seg/F6.v (f6_loop, f6_e28_evt, seg_F6_e28 on
-   a working branch 37567279f57): same model facts (f6_tf is the donor's f6_s9, f6_tfill / f6_sum /
+   a working branch): same model facts (f6_tf is the donor's f6_s9, f6_tfill / f6_sum /
    f6_8819_eq are its f6_tfill / f6_sum / f6_8819_eq), same per-turn shadow-check shape. Image B adds the ubsan
    tests (0x8209c, 0x820e0 and 0x8210c) the donor has not, and keeps the flags in the save area.
 
-   CUTS. seg_F6 is S_F6 of a Theorem Labs lane's forms-asan-ubsan-v190.md (a working note, not in this delivery) over the official cuts of SlotInv.v (
-   217aa9d4cd9): Inv_B82098_at is FCUTP at 0x82098 with 50 <= flen g j, s8 = t_k j, a0 = a2 = t0 = Phi + 18,
+   CUTS. seg_F6 is S_F6 of a Theorem Labs lane's forms-asan-ubsan-v190.md (a working note, not in this delivery) over the official cuts of SlotInv.v:
+   Inv_B82098_at is FCUTP at 0x82098 with 50 <= flen g j, s8 = t_k j, a0 = a2 = t0 = Phi + 18,
    a1 = 0, a3 = -(Phi + 18), a4 = a7 = 32, and Inv_B8215c_at is the parse return point. No cut text is defined
    here. *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.

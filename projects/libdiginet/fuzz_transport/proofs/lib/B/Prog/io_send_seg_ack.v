@@ -7,6 +7,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_name_seg_rel.v, with its module paths, module names and numbers changed; 706 of its 765 lines of code are new or changed and 1865 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_transport/lib/A/Prog/on_announce_seg_tail.v, with its module paths and module names changed; 821 of its 896 lines of code are new or changed and 690 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_transport/lib/B/Prog/io_send_seg_rty.v, with its module names changed; 1285 of its 1425 lines of code are new or changed and 756 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* io_send's image-B ASan walk (libdiginet/fuzz_transport, fuzz_transport.asan-ubsan 41113a03c82f, entry 0x82ffc =
    TImgB.v ti_io_send timg_B; the frozen statement is lib/B/Prog/io_send_cg.v transport_io_send_cg_holds_stmt):
    the segment from the cut IOS_CSF (0x83064, the return of check_sent_frame) through the dispatch on f.cmd and the
@@ -32,7 +33,7 @@
    counters are bytes of G in iosend_wr; each leaf call goes through TransportGCg.v gx_call_leaf and
    DgnTransportBLeafb.v decode_leafb_journal. The two branches to the trap word are refuted by the model:
    io_send_segs.v ios_arm_ack / ios_arm_e3 give int_inc of the counter = Some _, so it is not INT_MAX and the 32-bit
-   add does not wrap (lib/B/Prog/m_set_cgW.v of f1aee3563f32, run 3a). *)
+   add does not wrap (lib/B/Prog/m_set_cgW.v, run 3a). *)
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

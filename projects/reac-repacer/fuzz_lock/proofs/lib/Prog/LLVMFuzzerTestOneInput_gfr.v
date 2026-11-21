@@ -1,6 +1,6 @@
 (* fuzz_lock's slot contract of LLVMFuzzerTestOneInput (FrameRet.v lib_contract_gr with the return lock_ret) at the
    image's own allocator and sink (src0_msyms, zlib_API, src0_sink_head, src0_sink), in the form of
-   libreac/fuzz_decode's lib/Prog/LLVMFuzzerTestOneInput_gfr.v (release 25e3d17bdb50). Written by Theorem Labs.
+   libreac/fuzz_decode's lib/Prog/LLVMFuzzerTestOneInput_gfr.v (release). Written by Theorem Labs.
    *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

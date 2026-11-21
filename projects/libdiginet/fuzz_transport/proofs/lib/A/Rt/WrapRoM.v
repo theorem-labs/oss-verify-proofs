@@ -1,4 +1,4 @@
-(* Relocated from libreac/fuzz_identity's released proofs/lib/A/Rt/WrapRoM.v (c3777b3715d0) to libdiginet/fuzz_transport's
+(* Relocated from libreac/fuzz_identity's released proofs/lib/A/Rt/WrapRoM.v to libdiginet/fuzz_transport's
    image A, fuzz_transport.asan e89be137db17 (unstripped twin 86efc3a80314).
    The walked functions (the trampoline, ___interceptor_strlen, __asan_region_is_poisoned,
    __asan::TryAsanInitFromRtl, __sanitizer::mem_is_zero, 0xb58 above the donor's; musl strlen, 0x8bfc above)

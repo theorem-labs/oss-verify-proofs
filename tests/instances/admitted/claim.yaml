@@ -1,0 +1,3 @@
+claims: toy/exit0/plain_halts
+refused_at: axioms
+because: Control.admitted.Instances.plain_halts.plain_halts_instance

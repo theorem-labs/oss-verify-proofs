@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_rd_ret.v on a working branch e2e59892bef: relocated A->B by symbol (b_reloc.py), the result read from s9. *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_rd_ret.v on a working branch: relocated A->B by symbol (b_reloc.py), the result read from s9. *)
 (* lv2_locate_manifest_readings: the shared return at 0x82374 (mv a0, s9; restore ra, s0..s11 from the frame;
    addi sp, sp, 208; ret): rd_seg_R. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require YZ00.

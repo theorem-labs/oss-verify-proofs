@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 2004 of its 2120 lines of code are new or changed and 895 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F30.v, with its module paths, addresses and numbers changed; 450 of its 544 lines of code are new or changed and 2026 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment F29 of fuzz_ctrl LLVMFuzzerTestOneInput (asan-ubsan, libreac v1.9.0 image B): the join 0x82aa4-0x82ab8
    (slot-plan-asan-ubsan section 2 row F29, no call, no branch, no instrumented check). With s3 = S(fr) (the shadow
    byte of the frame base, FRA reg 19), the six instructions
@@ -15,7 +16,7 @@
      0x82ab8  ld s8,272(s1)      s8 := [A+272] = k = t_k (reloaded into s8)
    fall through to 0x82abc (F30's entry). No FRA register (sp 2, gp 3, tp 4, s0 8, s1 9, s3 19, s10 26) changes; the
    three shadow stores stay inside the frame's FRAME_SHADOW = 392 shadow bytes [S(fr), S(fr)+392). The v1.9.0 move
-   of the patched-image seg_F29 (a working branch 4131ff88f40): v1.9.0 inserts `addi s6,zero,1` and moves the
+   of the patched-image seg_F29 (a working branch): v1.9.0 inserts `addi s6,zero,1` and moves the
    sum flag through s8 -> s9 where the patched image moved the fill flag s8 -> s5 and fr + 176 s5 -> s6.
 
    Entry cut: the official Inv_B82aa4_at of lib/B/Prog/SlotInv.v (v1.9 pc 0x82aa4; FCUTP: s2 = phi, s4 = len,
@@ -51,7 +52,7 @@ Module AF := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.FrameAPI.
 Module LE := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.Exec.
 Module LFr := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.Frame.
 
-(* ---- Pure helpers (bytes, shadow arithmetic), from a Theorem Labs lane's image-B F29 (18fad27a160) and the image-A twin
+(* ---- Pure helpers (bytes, shadow arithmetic), from a Theorem Labs lane's image-B F29 and the image-A twin
    lib/A/Prog/Seg/F29.v. *)
 
 Lemma le1_byte : forall v : word, le1 v = [Z_to_bv 8 (bv_unsigned v)].

@@ -4,13 +4,14 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 2004 of its 2120 lines of code are new or changed and 895 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F30.v, with its module paths, module names and addresses changed; 91 of its 111 lines of code are new or changed and 2100 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment R13 of fuzz_ctrl LLVMFuzzerTestOneInput (asan, image A): S_R13, Inv_A81924_at -> Inv_A81734_at, on the
    official cuts of aslot push 13 (Inv_A81734_at carries PRO, RXS and X81734: a0 = 1, s8 = phi, RB at the
    turn-(S b) records).
    0x81734 `li a1,1` and 0x81738 `beq a0,a1,8191c`: a0 is the reac_identity_ingest result 1, so the branch is taken
    and 0x8173c (`j 82bf4`, the abort pair) is NOT reached. At 0x8191c `mv a0,s8 ; jal wrapper_free` releases the
    harness buffer (phi, rnb g b): that run, the free contract and the rebuild of the official exit cut
-   Inv_A81924_at (hb = []) are R15.r_free_cont (a working branch 7f03eba472d), which R15 / R16 /
+   Inv_A81924_at (hb = []) are R15.r_free_cont (a working branch), which R15 / R16 /
    R20 use for the same call; RXS and PRO reach it by R15.r15_rxs_keep / R15.r15_pro_keep (the li / beq write
    only a1). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.

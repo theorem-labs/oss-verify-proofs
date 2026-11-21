@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: relocated from omx-clap-core/fuzz_manifest lib/A/FMsnprintfSvsni.v (a working branch 3e35620c52e) to libreac/fuzz_boxreg.asan: module paths changed; 0 address numerals relocated (port_addr_check 5033540ba83b predict mode, symbol + offset); name TfibSyms -> BoxregSyms (2x; boxreg's lib/A/AF0m.v record); re-pointed Requires: FMsnprintfShared, FMsnprintfPf, FMsnprintfSx, FMupoison -> lib.A.Rt; FMH_Base -> lib.A.Rt.SnprintfFmh. *)
+(* Modified by Theorem Labs, 2026-10: relocated from omx-clap-core/fuzz_manifest lib/A/FMsnprintfSvsni.v (a working branch) to libreac/fuzz_boxreg.asan: module paths changed; 0 address numerals relocated (port_addr_check 5033540ba83b predict mode, symbol + offset); name TfibSyms -> BoxregSyms (2x; boxreg's lib/A/AF0m.v record); re-pointed Requires: FMsnprintfShared, FMsnprintfPf, FMsnprintfSx, FMupoison -> lib.A.Rt; FMH_Base -> lib.A.Rt.SnprintfFmh. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: fm.asan's __interceptor_vsnprintf 0x458a0 over the GXA-route contract
@@ -16,6 +16,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/A/Rt/FMsnprintfSvsni.v, with its module paths and module names changed; 736 of its 804 lines of code are new or changed and 863 lines of the source are left out. *)
 (* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfSvsn.v; relocated to plugin-hostd/fuzz_command.asan by the GXA address relocator (target fuzz_command.asan): module paths changed; 3 address numerals moved (address checker 0767e70e074a, predict mode, fm.asan -> fuzz_command.asan, symbol + offset; the relocator's table for this file). *)
 (* Modified by Theorem Labs, 2026-10: relocated from lib/A/<same path> to fuzz_command.asan-ubsan by the image-B address relocator (the A-to-B address map, keyed by the image maps' symbol names and by code; GXA symbol keys kept), whose check table lists every changed numeral *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* musl vsnprintf 0x91f0c (fm.asan) over the shared contracts in their GXA-route form: FMsnprintfSx's
    sh_avsnprintf_realizesUa (and its interceptor twin) from __wrap_memset's aintrin_realizesU and the vfprintf
    interceptor's sh_avfprintf_icpt_realizesUx, proved in the kit's vocabulary (FMsnprintfSk.v sn_walkA,

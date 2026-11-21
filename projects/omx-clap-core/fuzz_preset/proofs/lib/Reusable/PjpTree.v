@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset, the tree facts of PRH_Reader's restated predicates, IMAGE-FREE (no image
    instance, no Require of an image file): a represented tree is freeable to its depth (pjg_node_fd), and freeable is
    monotone in the depth (pjg_fd_succ, pjg_fd_mono), with the item / member lemmas they use. Transcribed from preset's
    plain lib/Prog/PjStruct.v:412-572 (pf_items_mono, pj_fshape_mono, pj_fd_succ, pj_fd_mono, pj_items_pf, pj_mems_pf,
    pj_node_fd) over lib/A/PRH_Reader.v's predicates; no plain lemma is cited. Moved verbatim from module PjpTree of
-   lib/B/Prog/pj_parse_glue.v (cold/h-rw-pre-7-b-pj_parse 175b3601c4e6, :44-196), so that other walks (pj_set) can
+   lib/B/Prog/pj_parse_glue.v (44-196), so that other walks (pj_set) can
    Require it without pj_parse's image-B files. Names are unchanged: PjpTree.pjg_fd_mono, PjpTree.pjg_node_fd, ...
    rule 24: proves no function (kind: glue lemma). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.

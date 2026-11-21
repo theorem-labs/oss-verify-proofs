@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (MInvR, which gained the vDSO conjunct, built by minvr_split and taken apart by minvr_dest; the vDSO fact a section hypothesis for the post's MInvR, found by instance search from the fact the caller's minvr_dest holds). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -231,6 +232,7 @@ Local Abbreviation vo_cases := (@P.Mal_malloc__G3.Mal_malloc_fastD.vo_cases s n 
 Local Notation "§9§ h__" := (h__ s L n g am rho b3 b16 HW HC HP12 Hb3 Hb16 Hhdr rd0 wok0 vm HMI Hsp Hdepth Hsp_high ok K HK mW) (at level 10, h__ global).
 Local Abbreviation chain := (§9§ P.Mal_malloc__G3.Mal_malloc_fastD.chain).
 Variables (tr : list event) (md : Model) (ms' : machine_state) (rhoF : valuation).
+Context {Hvd : OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.vdso_ok md}.
 Hypothesis EmW : ltac2:(tb__ "0|0|
 S4SfQ40A1S3aSfQ8A1A1F_;VmW;S30Vrho;A1A3").
 Hypothesis Em0 : ltac2:(tb__ "0|0|
@@ -543,7 +545,7 @@ SfQ40A1M0S3aSfQ8A1A1F_;S4G0S3dF_;S22S0R1A2S4fS0R1A2A3Fm;"). Proof using . reflex
 
 Theorem post_ok : ltac2:(tb__ "0|1|
 S3bS46A1M0S47OF_;F_;R1Vtr;Vmd;A2S50S0S1Vrho;S16S0SbS13S5cR2A5S3cG0S74Vtr;S75Vms';Vmd;A2A4A5F_;FKc;").
-Proof using Em0 EmW Erd Evm Ewok HC HLok HMI HP12 HW HagF Hb16 Hb3 Hdepth Hhdr Hm0_ctz Hm0_sct Hsm Hsm0 HsmF Hsp Hsp_high.
+Proof using Em0 EmW Erd Evm Ewok HC HLok HMI HP12 HW HagF Hb16 Hb3 Hdepth Hhdr Hm0_ctz Hm0_sct Hsm Hsm0 HsmF Hsp Hsp_high Hvd.
   intros Kc HKc. exists (L_malloc_ok EC_P), (JL_malloc_ok segsP C_P A0 Kc), rho'.
   split; [right; left; reflexivity|].
   split; [exact agree_vals_rho'|].
@@ -551,10 +553,10 @@ Proof using Em0 EmW Erd Evm Ewok HC HLok HMI HP12 HW HagF Hb16 Hb3 Hdepth Hhdr H
   cbn [w_tr w_cfg cfg_model cfg_ms fst snd].
   destruct blocks' as (l1 & l2 & E1 & E2).
   exists A', l1, l2.
-  split; [unfold MInvR; cbn [rm P.Mal_malloc__G3.Mal_malloc_fastG.rho']; rewrite (rd_of_CG m'), (wok_of_CG m'); exact minv'|].
+  split; [minvr_split; cbn [rm P.Mal_malloc__G3.Mal_malloc_fastG.rho']; rewrite (rd_of_CG m'), (wok_of_CG m'); exact minv'|].
   split; [cbn [rw P.Mal_malloc__G3.Mal_malloc_fastG.rho']; unfold V_RES; rewrite u110, HP12; exact E1|].
   split; [exact E2|].
-  split; [cbn [rm P.Mal_malloc__G3.Mal_malloc_fastG.rho']; refine (mem_kept_weaken segsP C_P _ _ rho md rho' md _ _ client_addr_not_owned_P _ _ kept); [exact HMI_rho | unfold MInvR; cbn [rm P.Mal_malloc__G3.Mal_malloc_fastG.rho']; rewrite (rd_of_CG m'), (wok_of_CG m'); exact minv']|].
+  split; [cbn [rm P.Mal_malloc__G3.Mal_malloc_fastG.rho']; refine (mem_kept_weaken segsP C_P _ _ rho md rho' md _ _ client_addr_not_owned_P _ _ kept); [minvr_split; exact HMI_rho | minvr_split; cbn [rm P.Mal_malloc__G3.Mal_malloc_fastG.rho']; rewrite (rd_of_CG m'), (wok_of_CG m'); exact minv']|].
   split; [split; [intros Hi; exact Hi | reflexivity]|].
   exact HKc.
 Qed.
@@ -577,7 +579,7 @@ S4bOF_;S61S3bS46A1S47OF_;F_;S2eS67S66S17S0R6R4A3S76S60R6A1S10Q40S2dR4PcA2A2R3R2A
 Proof.
   intros ok [s L] Kc rho g am (HokF & HokP & Hvm) HC. cbn [ma_s] in HC.
   intros nq Hg [tr [ms md]] [Hsm HJ]. cbn [w_tr w_cfg cfg_model cfg_ms fst snd] in HJ.
-  destruct HJ as (HMI & HKc & Htp & Hini & HTV). unfold MInvR in HMI. cbn [ma_s ma_L] in HMI.
+  destruct HJ as (HMI & HKc & Htp & Hini & HTV). minvr_dest HMI. cbn [ma_s ma_L] in HMI.
   pose proof (top_high_pre (mkMA s L) rho _ Hsm HTV) as Htop.
   set (n := bv_unsigned (rw rho 12%positive)) in *.
   destruct (instantiate s L n g am rho tr ms md Hsm HMI HC eq_refl Htop) as (b3 & b16 & IH & Hsm0).
@@ -879,7 +881,7 @@ S61S3bS46A1S47OF_;F_;S2eS67S66S76S60R5A1S10Q40S2dR3PcA2A2R2R1A4S4aS0S5eS0S15S0Sb
 Proof.
   intros [s L] Kc rho g am HC. cbn [ma_s] in HC.
   intros [tr [ms md]] [Hsm HJ]. cbn [w_tr w_cfg cfg_model cfg_ms fst snd] in HJ.
-  destruct HJ as (HMI & HKc & Htp & Hini & HTV). unfold MInvR in HMI. cbn [ma_s ma_L] in HMI.
+  destruct HJ as (HMI & HKc & Htp & Hini & HTV). minvr_dest HMI. cbn [ma_s ma_L] in HMI.
   pose proof (top_high_pre (mkMA s L) rho _ Hsm HTV) as Htop.
   set (n := bv_unsigned (rw rho 12%positive)) in *.
   destruct (instantiate s L n g am rho tr ms md Hsm HMI HC eq_refl Htop) as (b3 & b16 & IH & Hsm0).
@@ -942,7 +944,7 @@ Qed.
 Lemma J_alloc_pre_WF A Kc rho tr md : ltac2:(tb__ "0|1|
 S15S0SbVA;VKc;Vrho;Vtr;Vmd;A7S5S8dS60VA;A1M0A1S98G0A1A2F_;").
 Proof.
-  intros (HMI & _). unfold MInvR in HMI. apply MInv_MInvI in HMI as [HI HR]. split; [exact (mig_I HI) | exact HR].
+  intros (HMI & _). minvr_dest HMI. apply MInv_MInvI in HMI as [HI HR]. split; [exact (mig_I HI) | exact HR].
 Qed.
 
 Definition alloc_slot_sumI0_P : Prop := ltac2:(tb__ "0|0|

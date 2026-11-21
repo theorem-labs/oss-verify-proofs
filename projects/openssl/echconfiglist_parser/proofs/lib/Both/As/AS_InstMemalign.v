@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: posix_memalign is proved at the instance AS_InstX.KHX for every kernel-relation conjunct a heap call keeps (inst_memalign_stmt_X), and inst_memalign_stmt is that theorem at the conjunct that always holds. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FMapPositive.
@@ -13,7 +14,7 @@ From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import AsanAllocM
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.As Require Import ASegs AsShadow AsConst AsIface AsDriverLaws AsSR AsChain AsUnwind FakeStackRep
      AllocWf AllocKit AllocBudget AllocRep AllocRepFacts AllocRepX SecLazy SecGap AsDepotInv AsDepotHash
      AG_WFHit AG_MallocModel AG_Frame AG_WriteSet AW_MallocBase AG_Malloc2 AG_MallocCold AG_MallocLarge3 AG_MallocAll
-     AS_InstDefs AS_InstChain AS_InstLaws1 AS_InstLaws2 AS_InstLaws3 AS_InstHeap AsWalk CidBits AW_AllocBaseAl AW_Memalign AG_Memalign2 AG_MemalignCold AG_MemalignTop AsIfaceMemalign AllocWalkKit.
+     AS_InstDefs AS_InstX AS_InstChain AS_InstLaws1 AS_InstLaws2 AS_InstLaws3 AS_InstHeap AsWalk CidBits AW_AllocBaseAl AW_Memalign AG_Memalign2 AG_MemalignCold AG_MemalignTop AsIfaceMemalign AllocWalkKit.
 Import ListNotations.
 Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -58,11 +59,17 @@ Section Memalign.
     eapply rw_cells_recell; [| | exact R]; [cbn -[le4]; change (cells_bytes [C4 v]) with (le4 v ++ []); rewrite Ev; reflexivity| cbn; repeat split; reflexivity].
   Qed.
 
-  Theorem inst_memalign_stmt : memalign_stmt (KHp p) APOSIX_MEMALIGN_STUB APC0_POSIX_MEMALIGN.
+  (* posix_memalign at [KHX p X] for every [X] a heap call keeps; [inst_memalign_stmt] below is the
+     case of an [X] that always holds *)
+  Theorem inst_memalign_stmt_X : forall (Iv : config -> Prop) (Xk : ist -> config -> Prop),
+    ikeep Iv -> (forall x c, Xk x c -> Iv c) -> XKEEP Iv Xk ->
+    memalign_stmt (KHX p Xk) APOSIX_MEMALIGN_STUB APC0_POSIX_MEMALIGN.
   Proof.
-    unfold memalign_stmt. cbn [as_VIS as_RHEAP as_AKREL as_alloc_ok as_Cm as_AL as_rauxv_ok as_SR as_MPRES as_chain as_TR as_St KHp].
+    intros Iv Xk IKP XI XK.
+    unfold memalign_stmt. cbn [as_VIS as_RHEAP as_AKREL as_alloc_ok as_Cm as_AL as_rauxv_ok as_SR as_MPRES as_chain as_TR as_St KHX KHp].
     intros ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc msF m x LB MP al n lo B errv mo CH pjunk.
     intros VIS HP K AOK CM AUX SPB ST CEIL LO ERR MI TP SP16 AC HCH TR A0 MP8 PW CW ACW MPOFF A1 AL64 A2 SZP.
+    destruct K as [K XPRE].
     destruct x as [s d]. cbn [i_s i_d] in *.
     unfold AsSR.VIS in VIS. unfold AsSR.AKREL in K. cbn [i_s cfg_model] in VIS, K. destruct K as [OK IKx]. destruct IKx as (AMX & DCOV & DTV).
     unfold Ialloc_ok, ILIVE_MAX, ILIVE_CNT_MAX, ADRV_CNT in AOK. destruct AOK as [AOK1 AOK2]. unfold Irauxv_ok in AUX. unfold AMALLOC_STACK in LO.
@@ -72,6 +79,8 @@ Section Memalign.
     pose proof (nalloc_le_blocks s (lbp LB) m HR) as NAL. unfold lbp in NAL. rewrite zlen_map in NAL. unfold zlen in NAL.
     (* [comment removed for export] *)
     unfold AsSR.SR.
+    (* the invariant [Iv] holds where the reach ends *)
+    apply (sr_keep_imp Iv _ _ IKP (XI _ _ XPRE)).
     eapply (evt_sreach_lazy_at asegs (a_L s) (a_S s) (a_Zr s) _ msF _ mo _ OK VIS); [apply memalign_stub_evt; exact MI|].
     cbv beta. intros msF1 mo1 OK1 SBM1 _ E1.
     pose proof (AMODELX_mat s mo mo1 AMX SBM1) as AMX1. pose proof (depot_cov_mat d mo mo1 DCOV SBM1) as DCOV1.
@@ -87,14 +96,14 @@ Section Memalign.
     { destruct (mneeded_primary n ltac:(lia) PR) as (MN & RP & HC). unfold mneeded in MN, HC. apply (ROOM_of_PINV (a_st s) _ W PI HC). rewrite MN. exact (mused_class_pos n ltac:(lia) RP). }
     (* [comment removed for export] *)
     assert (MPC : forall a, MP <= a < MP + 8 -> aclient s (lbp LB) (bv_unsigned sp) a \/ aceil <= a < lo).
-    { intros a Ha. unfold AsIface.aclient_write_ok in CW. cbn [fst snd as_FSB KHp] in CW. unfold aclient.
+    { intros a Ha. unfold AsIface.aclient_write_ok in CW. cbn [fst snd as_FSB KHX KHp] in CW. unfold aclient.
       destruct CW as [C|[C|[(b & Hb & B1 & B2)|[(b & Hb & B1 & B2)|[C|[C|C]]]]]]; cbn [fst snd] in *.
       - destruct MPOFF as [M|M]; [right; clear - C M Ha CEIL; lia| left; left; clear - M Ha; lia].
       - left. right. left. unfold aimg_client_w, ATLS_PRIV_LO, ATLS_PRIV_HI, ALIBC_PGSZ, ATSD0, AsIface.ATP in C. clear - C Ha. lia.
       - left. right. right. left. exists (blk_addr b), (blk_size b). split; [unfold lbp; apply in_map_iff; exists b; split; [reflexivity| exact Hb]| clear - B1 B2 Ha; lia].
       - left. do 3 right. left. exists (blk_addr b), (blk_size b). split; [unfold lbp; apply in_map_iff; exists b; split; [reflexivity| exact Hb]| clear - B1 B2 Ha; lia].
-      - left. do 4 right. left. rewrite EF. unfold AsIface.AFS_SIZE, AllocRep.AFS_SIZE in *. cbn [as_FSB KHp] in C. clear - C Ha. lia.
-      - left. do 5 right. left. rewrite EF. unfold AsIface.AFS_SIZE, AllocRep.AFS_SIZE in *. cbn [as_FSB KHp] in C. clear - C Ha. lia.
+      - left. do 4 right. left. rewrite EF. unfold AsIface.AFS_SIZE, AllocRep.AFS_SIZE in *. cbn [as_FSB KHX KHp] in C. clear - C Ha. lia.
+      - left. do 5 right. left. rewrite EF. unfold AsIface.AFS_SIZE, AllocRep.AFS_SIZE in *. cbn [as_FSB KHX KHp] in C. clear - C Ha. lia.
       - left. do 6 right. clear - C Ha. lia. }
     assert (MPR : 0 <= MP /\ MP + 8 <= 2^64) by (pose proof (rw_cells_bound _ _ _ _ PW) as BB; cbn in BB; clear - BB; lia).
     eapply (memalign_arep_prim ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m msF1 mo1 _ s (lbp LB) d lo n CHg
@@ -166,7 +175,7 @@ Section Memalign.
     (* [comment removed for export] *)
     (* [comment removed for export] *)
     assert (CW' : AsIface.aclient_write_ok (KHp p) ((U, U, n) :: LB) (MP, MP + 8)).
-    { unfold AsIface.aclient_write_ok in CW |- *. cbn [fst snd as_FSB KHp] in CW |- *.
+    { unfold AsIface.aclient_write_ok in CW |- *. cbn [fst snd as_FSB KHX KHp] in CW |- *.
       destruct CW as [C|[C|[(b & Hb & B1 & B2)|[(b & Hb & B1 & B2)|[C|[C|C]]]]]].
       - left; exact C. - right; left; exact C.
       - right; right; left. exists b. split; [right; exact Hb| exact (conj B1 B2)].
@@ -228,13 +237,26 @@ Section Memalign.
           exfalso. apply nth_error_None in N. rewrite LEN8 in N. clear - N Ea Eb. lia.
         + exists b. exact Hb. }
     (* [comment removed for export] *)
-    apply sreach_done. unfold memalign_post.
+    apply sreach_done. intros IPOST. unfold memalign_post.
     exists t0', t1', t2', a1', a2', a3', a4', a5', a6', a7', t3', t4', t5', t6', m', errv', U, junk4, U, (IST s' d').
-    cbn [as_VIS as_RHEAP as_AKREL as_alloc_ok as_Cm as_AL as_rauxv_ok as_SR as_MPRES as_chain as_TR as_St as_FSB KHp i_s i_d].
+    cbn [as_VIS as_RHEAP as_AKREL as_alloc_ok as_Cm as_AL as_rauxv_ok as_SR as_MPRES as_chain as_TR as_St as_FSB KHX KHp i_s i_d].
     split; [unfold AsSR.VIS; cbn [i_s]; exact VIS'|].
-    split. { unfold AsSR.AKREL. cbn [i_s i_d cfg_model cfg_ms]. split; [exact OK'|]. split; [exact AMX'|]. split; [exact DCOV'|].
-             intros x Hx. destruct (proj1 (AVX' x (DTV1 x Hx))) as [C|(sc & INs & _ & Rx)]; [exact C| exfalso].
-             pose proof (DSEC sc INs) as DS. clear - DS Rx Hx. unfold disj, kPageSize in *. lia. }
+    split. { split.
+             { unfold AsSR.AKREL. cbn [i_s i_d cfg_model cfg_ms]. split; [exact OK'|]. split; [exact AMX'|]. split; [exact DCOV'|].
+               intros x Hx. destruct (proj1 (AVX' x (DTV1 x Hx))) as [C|(sc & INs & _ & Rx)]; [exact C| exfalso].
+               pose proof (DSEC sc INs) as DS. clear - DS Rx Hx. unfold disj, kPageSize in *. lia. }
+             (* [Xk] of the new state, from [Xk] of the caller's and the write set: the call's own
+                writes ([CP']) and the result cell, which was writable before ([PW]) *)
+             { exact (XK s s' d d' msF mo msF' mo' m m' lo (bv_unsigned sp) XPRE IPOST AMX AWV PL DPL
+                         ltac:(rewrite VIS; reflexivity) AMX'
+                         ltac:(destruct RH4 as (_ & _ & _ & AW4 & _); exact AW4)
+                         PL' ltac:(rewrite VIS'; reflexivity)
+                         ltac:(rewrite EQM;
+                               exact (awkeep_write s s' d lo (bv_unsigned sp) m m1 MP (le8 (wz U)) CP' (proj1 MPR)
+                                        ltac:(rewrite LEN8; lia)
+                                        ltac:(intros i Hi; rewrite LEN8 in Hi; destruct PW as [_ (_ & _ & WW)]; apply WW;
+                                              cbn [cells_size csize Nat.add Z.of_nat Pos.of_succ_nat Pos.succ length]; lia)))
+                         CEIL). } }
     split; [exact (nonvm_same_trans _ _ _ (nonvm_same_mat mo mo1 SBM1) NV')|].
     split; [exact MI4|]. split; [exact ST4|].
     split; [exact ERR4|].
@@ -242,7 +264,7 @@ Section Memalign.
     split. { (* [comment removed for export] *)
              intros a Ha CL.
              assert (CLa : aclient s (lbp LB) (bv_unsigned sp) a).
-             { unfold aclient_addr in CL. unfold aclient. cbn [as_FSB KHp] in CL.
+             { unfold aclient_addr in CL. unfold aclient. cbn [as_FSB KHX KHp] in CL.
                destruct CL as [C|[C|[C|[C|[C|[C|C]]]]]]; [left; exact C| right; left; exact C| | | | |].
                - right; right; left. destruct C as (b & Hb & Rb). exists (blk_addr b), (blk_size b). split; [| exact Rb].
                  unfold lbp. apply in_map_iff. exists b. split; [reflexivity| exact Hb].
@@ -271,5 +293,11 @@ Section Memalign.
     split; [exact AC4|].
     (* [comment removed for export] *)
     pose proof (proj1 (inst_cost_laws p) (n + al) ltac:(lia)) as CM0. cbn [as_Cm KHp] in CM0 |- *. clear - AL CM0. lia.
+  Qed.
+
+  Theorem inst_memalign_stmt : memalign_stmt (KHp p) APOSIX_MEMALIGN_STUB APC0_POSIX_MEMALIGN.
+  Proof.
+    exact (memalign_of_X p (fun _ _ => True) APOSIX_MEMALIGN_STUB APC0_POSIX_MEMALIGN (fun _ _ => I)
+             (inst_memalign_stmt_X (fun _ => True) (fun _ _ => True) ikeep_true (fun _ _ _ => I) xkeep_true)).
   Qed.
 End Memalign.

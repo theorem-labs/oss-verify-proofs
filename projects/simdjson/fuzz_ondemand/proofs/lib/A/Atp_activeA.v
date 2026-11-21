@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -54,7 +55,7 @@ Definition getact_cps : Prop :=
          F fc (m : mem) (lo : Z),
   fdfs_only PMc -> mat_stable PMc -> sj_lib m ->
   ART RT Σ m -> mem_inv asegs m ->
-  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + 32 <= bv_unsigned sp -> bv_unsigned sp <= USTACK_TOP -> frm0 fc ->
+  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + 32 <= bv_unsigned sp -> bv_unsigned sp <= USTACK_TOP -> frm0 fc ->
   cps_f (ASTA RT Σ PMc (eq (entry_st ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11
                                        t3 t4 t5 t6 F fc e_getact m)))
     (ASTA RT Σ PMc (fun ms => exists m', ret_st ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 (Z_to_bv 64 SJ_ACTIVE) m' ms

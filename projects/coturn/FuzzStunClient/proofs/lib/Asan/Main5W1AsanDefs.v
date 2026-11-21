@@ -1,6 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the recorded node shapes of the r-free W1 certificates are removed with those certificates, and the hole tables stay for the released tree that the per-layout W1 trees are collected from. *)
+(* The hole tables of the W1 tree W1TreeA.v, from which the per-r W1 trees are collected. *)
 From Stdlib Require Import ZArith NArith List Bool.
 From OSSVerify.Proofs.coturn.FuzzStunClient.lib.Asan Require Import AxSymExec3 AsanPlan AsanPlanSound AsanMainLib AsanShape MainGlueDefs MainGlue  ItabAsan W0States1 W1St1 W1St2 W1St3 W1St4 W1St5 W1St6 W1St7 W1St8 W1St9 W1St10 W1St11 W1St12 W1St13 W1Plans.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -65,81 +67,3 @@ Definition HT_54 : list (nat * (nat * acs)) := [(119%nat, (2%nat, ST_c_s10))].
 Definition HT_55 : list (nat * (nat * acs)) := [(140%nat, (2%nat, ST_c_f10))].
 Definition HT_56 : list (nat * (nat * acs)) := [(14%nat, (2%nat, ST_t10_cont))].
 Definition HR_57 : list (nat * (shape * acs)) := [(2350%nat, (rsh_1, T_d2x)); (1000%nat, (rsh_2, ST_t10_arm_h1000))].
-Definition s_62 : shape := SAlt2 (SEmitP 2 [SPLit [99; 108; 105; 58; 32; 111; 117; 116; 32; 111; 102; 32; 109; 101; 109; 111; 114; 121; 10]] (SExit 2)) (SHole 101).
-Definition s_70 : shape := SHole 131.
-Definition s_81 : shape := SCase (EAlu Instr.ALU_OR (EAlu Instr.ALU_SRL (EMd Instr.M_MUL (ELit 144115188075855872) (EBlob true 8 1 1)) (ELit 49)) (EBlob false 8 0 1)) 0 (SHole 14) (SHole 14).
-Definition s_88 : shape := (SAlt2 (SAlt2 (SHole 2520) (SHole 1001)) (SHole 1003)).
-Definition s_95 : shape := SHole 2530.
-Definition s_103 : shape := SCase (EBlob true 8 1 1) 9223372036854775807 (SCase (EBlob true 8 1 1) 9223372036854775807 (SExit 2) (SExit 0)) (SCase (EBlob true 8 1 1) 9223372036854775807 (SExit 2) (SExit 0)).
-Definition s_109 : shape := SHole 2530.
-Definition s_115 : shape := SHole 2530.
-Definition s_121 : shape := SEmitP 1 [SPLit [48]; SPLit [10]] (SCase (EAlu Instr.ALU_OR (EAlu Instr.ALU_SRL (EMd Instr.M_MUL (ELit 144115188075855872) (EBlob true 8 1 1)) (ELit 49)) (EBlob false 8 0 1)) 0 (SCase (EAlu Instr.ALU_OR (EAlu Instr.ALU_SRL (EMd Instr.M_MUL (ELit 144115188075855872) (EBlob true 8 1 1)) (ELit 49)) (EBlob false 8 0 1)) 0 (SExit 0) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 0 (SExit 0) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 1 (SEmitP 1 [SPLit [48; 10]] (SExit 0)) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 2 (SEmitP 1 [SPLit [48; 10; 48; 10]] (SExit 0)) (SEmitP 1 [SPLit [48; 10; 48; 10; 48; 10]] (SExit 0)))))) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 0 (SCase (EAlu Instr.ALU_OR (EAlu Instr.ALU_SRL (EMd Instr.M_MUL (ELit 144115188075855872) (EBlob true 8 1 1)) (ELit 49)) (EBlob false 8 0 1)) 0 (SExit 0) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 0 (SExit 0) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 1 (SEmitP 1 [SPLit [48; 10]] (SExit 0)) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 2 (SEmitP 1 [SPLit [48; 10; 48; 10]] (SExit 0)) (SEmitP 1 [SPLit [48; 10; 48; 10; 48; 10]] (SExit 0)))))) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 1 (SCase (EAlu Instr.ALU_OR (EAlu Instr.ALU_SRL (EMd Instr.M_MUL (ELit 144115188075855872) (EBlob true 8 1 1)) (ELit 49)) (EBlob false 8 0 1)) 0 (SExit 0) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 0 (SExit 0) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 1 (SEmitP 1 [SPLit [48; 10]] (SExit 0)) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 2 (SEmitP 1 [SPLit [48; 10; 48; 10]] (SExit 0)) (SEmitP 1 [SPLit [48; 10; 48; 10; 48; 10]] (SExit 0)))))) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 2 (SCase (EAlu Instr.ALU_OR (EAlu Instr.ALU_SRL (EMd Instr.M_MUL (ELit 144115188075855872) (EBlob true 8 1 1)) (ELit 49)) (EBlob false 8 0 1)) 0 (SExit 0) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 0 (SExit 0) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 1 (SEmitP 1 [SPLit [48; 10]] (SExit 0)) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 2 (SEmitP 1 [SPLit [48; 10; 48; 10]] (SExit 0)) (SEmitP 1 [SPLit [48; 10; 48; 10; 48; 10]] (SExit 0)))))) (SCase (EAlu Instr.ALU_OR (EAlu Instr.ALU_SRL (EMd Instr.M_MUL (ELit 144115188075855872) (EBlob true 8 1 1)) (ELit 49)) (EBlob false 8 0 1)) 0 (SExit 0) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 0 (SExit 0) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 1 (SEmitP 1 [SPLit [48; 10]] (SExit 0)) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 2 (SEmitP 1 [SPLit [48; 10; 48; 10]] (SExit 0)) (SEmitP 1 [SPLit [48; 10; 48; 10; 48; 10]] (SExit 0)))))))))).
-Definition s_129 : shape := (SAlt2 (SAlt2 (SHole 2520) (SHole 1001)) (SHole 1003)).
-Definition s_135 : shape := SHole 2530.
-Definition s_141 : shape := SHole 2530.
-Definition s_147 : shape := SHole 2530.
-Definition s_153 : shape := SAlt2 (SHole 1000) (SHole 2600).
-Definition s_159 : shape := SHole 2410.
-Definition s_166 : shape := SCase (EBlob true 8 1 1) 9223372036854775807 (SCase (EBlob true 8 1 1) 9223372036854775807 (SExit 2) (SExit 0)) (SCase (EBlob true 8 1 1) 9223372036854775807 (SExit 2) (SExit 0)).
-Definition s_173 : shape := SEmitP 1 [SPLit [48]; SPLit [10]] (SCase (EAlu Instr.ALU_OR (EAlu Instr.ALU_SRL (EMd Instr.M_MUL (ELit 144115188075855872) (EBlob true 8 1 1)) (ELit 49)) (EBlob false 8 0 1)) 0 (SCase (EAlu Instr.ALU_OR (EAlu Instr.ALU_SRL (EMd Instr.M_MUL (ELit 144115188075855872) (EBlob true 8 1 1)) (ELit 49)) (EBlob false 8 0 1)) 0 (SExit 0) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 0 (SExit 0) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 1 (SEmitP 1 [SPLit [48; 10]] (SExit 0)) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 2 (SEmitP 1 [SPLit [48; 10; 48; 10]] (SExit 0)) (SEmitP 1 [SPLit [48; 10; 48; 10; 48; 10]] (SExit 0)))))) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 0 (SCase (EAlu Instr.ALU_OR (EAlu Instr.ALU_SRL (EMd Instr.M_MUL (ELit 144115188075855872) (EBlob true 8 1 1)) (ELit 49)) (EBlob false 8 0 1)) 0 (SExit 0) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 0 (SExit 0) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 1 (SEmitP 1 [SPLit [48; 10]] (SExit 0)) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 2 (SEmitP 1 [SPLit [48; 10; 48; 10]] (SExit 0)) (SEmitP 1 [SPLit [48; 10; 48; 10; 48; 10]] (SExit 0)))))) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 1 (SCase (EAlu Instr.ALU_OR (EAlu Instr.ALU_SRL (EMd Instr.M_MUL (ELit 144115188075855872) (EBlob true 8 1 1)) (ELit 49)) (EBlob false 8 0 1)) 0 (SExit 0) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 0 (SExit 0) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 1 (SEmitP 1 [SPLit [48; 10]] (SExit 0)) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 2 (SEmitP 1 [SPLit [48; 10; 48; 10]] (SExit 0)) (SEmitP 1 [SPLit [48; 10; 48; 10; 48; 10]] (SExit 0)))))) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 2 (SCase (EAlu Instr.ALU_OR (EAlu Instr.ALU_SRL (EMd Instr.M_MUL (ELit 144115188075855872) (EBlob true 8 1 1)) (ELit 49)) (EBlob false 8 0 1)) 0 (SExit 0) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 0 (SExit 0) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 1 (SEmitP 1 [SPLit [48; 10]] (SExit 0)) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 2 (SEmitP 1 [SPLit [48; 10; 48; 10]] (SExit 0)) (SEmitP 1 [SPLit [48; 10; 48; 10; 48; 10]] (SExit 0)))))) (SCase (EAlu Instr.ALU_OR (EAlu Instr.ALU_SRL (EMd Instr.M_MUL (ELit 144115188075855872) (EBlob true 8 1 1)) (ELit 49)) (EBlob false 8 0 1)) 0 (SExit 0) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 0 (SExit 0) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 1 (SEmitP 1 [SPLit [48; 10]] (SExit 0)) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 2 (SEmitP 1 [SPLit [48; 10; 48; 10]] (SExit 0)) (SEmitP 1 [SPLit [48; 10; 48; 10; 48; 10]] (SExit 0)))))))))).
-Definition s_184 : shape := SHole 102.
-Definition s_189 : shape := SAlt2 (SEmitP 2 [SPLit [99; 108; 105; 58; 32; 111; 117; 116; 32; 111; 102; 32; 109; 101; 109; 111; 114; 121; 10]] (SExit 2)) (SHole 103).
-Definition s_197 : shape := SHole 132.
-Definition s_208 : shape := SCase (EAlu Instr.ALU_OR (EAlu Instr.ALU_SRL (EMd Instr.M_MUL (ELit 144115188075855872) (EBlob true 8 1 1)) (ELit 49)) (EBlob false 8 0 1)) 0 (SHole 14) (SHole 14).
-Definition s_213 : shape := SAlt2 (SHole 1000) (SHole 2600).
-Definition s_220 : shape := SHole 2410.
-Definition s_236 : shape := SHole 104.
-Definition s_241 : shape := SAlt2 (SEmitP 2 [SPLit [99; 108; 105; 58; 32; 111; 117; 116; 32; 111; 102; 32; 109; 101; 109; 111; 114; 121; 10]] (SExit 2)) (SHole 105).
-Definition s_249 : shape := SHole 133.
-Definition s_260 : shape := SCase (EAlu Instr.ALU_OR (EAlu Instr.ALU_SRL (EMd Instr.M_MUL (ELit 144115188075855872) (EBlob true 8 1 1)) (ELit 49)) (EBlob false 8 0 1)) 0 (SHole 14) (SHole 14).
-Definition s_265 : shape := SAlt2 (SHole 1000) (SHole 2600).
-Definition s_272 : shape := SCase (EBlob true 8 1 1) 9223372036854775807 (SCase (EBlob true 8 1 1) 9223372036854775807 (SExit 2) (SExit 0)) (SCase (EBlob true 8 1 1) 9223372036854775807 (SExit 2) (SExit 0)).
-Definition s_285 : shape := SHole 106.
-Definition s_290 : shape := SAlt2 (SEmitP 2 [SPLit [99; 108; 105; 58; 32; 111; 117; 116; 32; 111; 102; 32; 109; 101; 109; 111; 114; 121; 10]] (SExit 2)) (SHole 107).
-Definition s_298 : shape := SHole 134.
-Definition s_309 : shape := SCase (EAlu Instr.ALU_OR (EAlu Instr.ALU_SRL (EMd Instr.M_MUL (ELit 144115188075855872) (EBlob true 8 1 1)) (ELit 49)) (EBlob false 8 0 1)) 0 (SHole 14) (SHole 14).
-Definition s_316 : shape := SAlt2 (SHole 1000) (SHole 2600).
-Definition s_323 : shape := SHole 2510.
-Definition s_330 : shape := SCase (EBlob true 8 1 1) 9223372036854775807 (SCase (EBlob true 8 1 1) 9223372036854775807 (SExit 2) (SExit 0)) (SCase (EBlob true 8 1 1) 9223372036854775807 (SExit 2) (SExit 0)).
-Definition s_338 : shape := SAlt2 (SHole 1000) (SHole 2600).
-Definition s_344 : shape := SHole 2510.
-Definition s_356 : shape := SHole 108.
-Definition s_361 : shape := SAlt2 (SEmitP 2 [SPLit [99; 108; 105; 58; 32; 111; 117; 116; 32; 111; 102; 32; 109; 101; 109; 111; 114; 121; 10]] (SExit 2)) (SHole 109).
-Definition s_369 : shape := SHole 135.
-Definition s_380 : shape := SCase (EAlu Instr.ALU_OR (EAlu Instr.ALU_SRL (EMd Instr.M_MUL (ELit 144115188075855872) (EBlob true 8 1 1)) (ELit 49)) (EBlob false 8 0 1)) 0 (SHole 14) (SHole 14).
-Definition s_385 : shape := SAlt2 (SHole 1000) (SHole 2350).
-Definition s_392 : shape := SHole 2310.
-Definition s_399 : shape := SCase (EBlob true 8 1 1) 9223372036854775807 (SCase (EBlob true 8 1 1) 9223372036854775807 (SExit 2) (SExit 0)) (SCase (EBlob true 8 1 1) 9223372036854775807 (SExit 2) (SExit 0)).
-Definition s_406 : shape := SHole 900.
-Definition s_413 : shape := SEmitP 1 [SPLit [48]; SPLit [10]] (SCase (EAlu Instr.ALU_OR (EAlu Instr.ALU_SRL (EMd Instr.M_MUL (ELit 144115188075855872) (EBlob true 8 1 1)) (ELit 49)) (EBlob false 8 0 1)) 0 (SCase (EAlu Instr.ALU_OR (EAlu Instr.ALU_SRL (EMd Instr.M_MUL (ELit 144115188075855872) (EBlob true 8 1 1)) (ELit 49)) (EBlob false 8 0 1)) 0 (SExit 0) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 0 (SExit 0) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 1 (SEmitP 1 [SPLit [48; 10]] (SExit 0)) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 2 (SEmitP 1 [SPLit [48; 10; 48; 10]] (SExit 0)) (SEmitP 1 [SPLit [48; 10; 48; 10; 48; 10]] (SExit 0)))))) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 0 (SCase (EAlu Instr.ALU_OR (EAlu Instr.ALU_SRL (EMd Instr.M_MUL (ELit 144115188075855872) (EBlob true 8 1 1)) (ELit 49)) (EBlob false 8 0 1)) 0 (SExit 0) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 0 (SExit 0) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 1 (SEmitP 1 [SPLit [48; 10]] (SExit 0)) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 2 (SEmitP 1 [SPLit [48; 10; 48; 10]] (SExit 0)) (SEmitP 1 [SPLit [48; 10; 48; 10; 48; 10]] (SExit 0)))))) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 1 (SCase (EAlu Instr.ALU_OR (EAlu Instr.ALU_SRL (EMd Instr.M_MUL (ELit 144115188075855872) (EBlob true 8 1 1)) (ELit 49)) (EBlob false 8 0 1)) 0 (SExit 0) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 0 (SExit 0) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 1 (SEmitP 1 [SPLit [48; 10]] (SExit 0)) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 2 (SEmitP 1 [SPLit [48; 10; 48; 10]] (SExit 0)) (SEmitP 1 [SPLit [48; 10; 48; 10; 48; 10]] (SExit 0)))))) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 2 (SCase (EAlu Instr.ALU_OR (EAlu Instr.ALU_SRL (EMd Instr.M_MUL (ELit 144115188075855872) (EBlob true 8 1 1)) (ELit 49)) (EBlob false 8 0 1)) 0 (SExit 0) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 0 (SExit 0) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 1 (SEmitP 1 [SPLit [48; 10]] (SExit 0)) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 2 (SEmitP 1 [SPLit [48; 10; 48; 10]] (SExit 0)) (SEmitP 1 [SPLit [48; 10; 48; 10; 48; 10]] (SExit 0)))))) (SCase (EAlu Instr.ALU_OR (EAlu Instr.ALU_SRL (EMd Instr.M_MUL (ELit 144115188075855872) (EBlob true 8 1 1)) (ELit 49)) (EBlob false 8 0 1)) 0 (SExit 0) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 0 (SExit 0) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 1 (SEmitP 1 [SPLit [48; 10]] (SExit 0)) (SCase (EAlu Instr.ALU_AND (EBlob false 8 2 1) (ELit 3)) 2 (SEmitP 1 [SPLit [48; 10; 48; 10]] (SExit 0)) (SEmitP 1 [SPLit [48; 10; 48; 10; 48; 10]] (SExit 0)))))))))).
-Definition s_425 : shape := SHole 110.
-Definition s_430 : shape := SAlt2 (SEmitP 2 [SPLit [99; 108; 105; 58; 32; 111; 117; 116; 32; 111; 102; 32; 109; 101; 109; 111; 114; 121; 10]] (SExit 2)) (SHole 111).
-Definition s_438 : shape := SHole 136.
-Definition s_449 : shape := SCase (EAlu Instr.ALU_OR (EAlu Instr.ALU_SRL (EMd Instr.M_MUL (ELit 144115188075855872) (EBlob true 8 1 1)) (ELit 49)) (EBlob false 8 0 1)) 0 (SHole 14) (SHole 14).
-Definition s_454 : shape := SAlt2 (SHole 1000) (SHole 2350).
-Definition s_461 : shape := SHole 2310.
-Definition s_477 : shape := SHole 112.
-Definition s_482 : shape := SAlt2 (SEmitP 2 [SPLit [99; 108; 105; 58; 32; 111; 117; 116; 32; 111; 102; 32; 109; 101; 109; 111; 114; 121; 10]] (SExit 2)) (SHole 113).
-Definition s_490 : shape := SHole 137.
-Definition s_501 : shape := SCase (EAlu Instr.ALU_OR (EAlu Instr.ALU_SRL (EMd Instr.M_MUL (ELit 144115188075855872) (EBlob true 8 1 1)) (ELit 49)) (EBlob false 8 0 1)) 0 (SHole 14) (SHole 14).
-Definition s_506 : shape := SAlt2 (SHole 1000) (SHole 2350).
-Definition s_513 : shape := SHole 2310.
-Definition s_529 : shape := SHole 114.
-Definition s_534 : shape := SAlt2 (SEmitP 2 [SPLit [99; 108; 105; 58; 32; 111; 117; 116; 32; 111; 102; 32; 109; 101; 109; 111; 114; 121; 10]] (SExit 2)) (SHole 115).
-Definition s_542 : shape := SHole 138.
-Definition s_553 : shape := SCase (EAlu Instr.ALU_OR (EAlu Instr.ALU_SRL (EMd Instr.M_MUL (ELit 144115188075855872) (EBlob true 8 1 1)) (ELit 49)) (EBlob false 8 0 1)) 0 (SHole 14) (SHole 14).
-Definition s_558 : shape := SAlt2 (SHole 1000) (SHole 2350).
-Definition s_565 : shape := SHole 2310.
-Definition s_581 : shape := SHole 116.
-Definition s_586 : shape := SAlt2 (SEmitP 2 [SPLit [99; 108; 105; 58; 32; 111; 117; 116; 32; 111; 102; 32; 109; 101; 109; 111; 114; 121; 10]] (SExit 2)) (SHole 117).
-Definition s_594 : shape := SHole 139.
-Definition s_605 : shape := SCase (EAlu Instr.ALU_OR (EAlu Instr.ALU_SRL (EMd Instr.M_MUL (ELit 144115188075855872) (EBlob true 8 1 1)) (ELit 49)) (EBlob false 8 0 1)) 0 (SHole 14) (SHole 14).
-Definition s_610 : shape := SAlt2 (SHole 1000) (SHole 2350).
-Definition s_617 : shape := SHole 2310.
-Definition s_633 : shape := SHole 118.
-Definition s_638 : shape := SAlt2 (SEmitP 2 [SPLit [99; 108; 105; 58; 32; 111; 117; 116; 32; 111; 102; 32; 109; 101; 109; 111; 114; 121; 10]] (SExit 2)) (SHole 119).
-Definition s_646 : shape := SHole 140.
-Definition s_657 : shape := SCase (EAlu Instr.ALU_OR (EAlu Instr.ALU_SRL (EMd Instr.M_MUL (ELit 144115188075855872) (EBlob true 8 1 1)) (ELit 49)) (EBlob false 8 0 1)) 0 (SHole 14) (SHole 14).
-Definition s_662 : shape := SAlt2 (SHole 1000) (SHole 2350).
-Definition s_669 : shape := SHole 2310.
-Definition s_685 : shape := SEmitP 2 [SPLit [99; 108; 105; 58; 32; 105; 110; 112; 117; 116; 32; 62; 61; 32; 54; 55; 49; 48; 56; 56; 54; 52; 32; 98; 121; 116; 101; 115; 44; 32; 114; 101; 102; 117; 115; 101; 100; 10]] (SExit 2).

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stream read takes the caller's stack floor, inside the stack window the launch maps, as its last premise). *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.boost_beast.http_request.lib.As Require TP_0Gc. (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -102,6 +103,7 @@ Section HCW.
       ACONST m -> stack0 m lo shi ->
       accessible m P PARSER_SIZE -> accessible m E 24 -> shvis m E (E + 24) -> accessible m bs 32 -> accessible m fb 48 ->
       (1 <= N -> shvis m A (A + N)) ->
+      hceil + 2244096 <= lo ->      (* LPS 727298f3: the stack floor the wild free (AsIface7) takes *)
       as_SR H (sro_post ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc s LBin LF bs fb P E ioc N lo B shi stb implb A
                         pad7 pad2 j13 j32a j8a j32b j8b mb MX CX MA MR m mo)
         (mkCfg msF mo).

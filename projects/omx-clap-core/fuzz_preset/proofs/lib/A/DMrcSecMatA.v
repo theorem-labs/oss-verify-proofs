@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcSecMat.v (commit 5ad50e61fc6a, file sha256 f5aea1b9cc6b) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; #102 pin 1be0f53d96cb); module paths changed; its 2 image addresses moved by code-verified function pairs (2 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcSecMat.v (file sha256 f5aea1b9cc6b) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; #102 pin 1be0f53d96cb); module paths changed; its 2 image addresses moved by code-verified function pairs (2 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, slice H4, row srrm-walk of the SRr_stepM engine rows; integrator a Theorem Labs lane):
    the MATERIALIZED-PAGE facts of the secondary recycle walk, form F2 (a Theorem Labs lane 06:07Z), and the posts that carry them.
    rule 24: no function proved here (kind: statement heads; the walks are DMrcSecWalkM*.v, the prefix DMrcSecF7M.v).
@@ -38,7 +39,7 @@ Import ListNotations.
 Open Scope Z_scope.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* The madvised interior of the dead map's shadow (DMrcSecWalk.v:364: PB = round_up (SHAv map), PE = round_down (SHEv
+(* The madvised interior of the dead map's shadow (DMrcSecWalk.v:365: PB = round_up (SHAv map), PE = round_down (SHEv
    map len)) and the shadow window itself (DMrcSecGvA.WINS). *)
 Definition PBv (map : Z) : Z := DMrcSecGvA.SHAv map + 4095 - (DMrcSecGvA.SHAv map + 4095) mod 4096.
 Definition PEv (map len : Z) : Z := DMrcSecGvA.SHEv map len - DMrcSecGvA.SHEv map len mod 4096.

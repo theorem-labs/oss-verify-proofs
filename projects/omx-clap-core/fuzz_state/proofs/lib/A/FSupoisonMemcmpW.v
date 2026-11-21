@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AE2z.v, with its module paths changed and its addresses moved to omx-clap-core/fuzz_state's ASan build. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/AE2z.v; 90 of its 623 lines of code are new or changed and 176 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_state image A: the memcmp interceptor walk under ARU (lib/A/FSupoison.v), for ANY set U of user-poisoned
    ranges (POISON-U lane, a Theorem Labs lane; the statement is lib/A/FSupoisonU.v:266 amemcmp_realizesU). ARU
    (any-user-poison) form, published as the shared one; two Theorem Labs lanes hold the U = [] form at their own
@@ -11,13 +12,13 @@
    PORT-FROM: proofs/cgif/cgif_file_fuzzer/lib/A/AE2z.v:156-711 (mc_tail, mc_icpt_srr, mc_icpt_realizes: the released
    memcmp interceptor walk at the donor's pc_wrap_memcmp 0x41900), donor text kept. Its AR-free half (constants,
    tables, symbolic runs, shapes: AE2z.v:1-156) and its musl memcmp leaf tfib_memcmp (AE3b.v) are not copied: this
-   file Requires RELOC's relocations lib/A/AE2z.v and lib/A/AE3b.v (a working branch, 685a0e62747)
+   file Requires RELOC's relocations lib/A/AE2z.v and lib/A/AE3b.v (a working branch)
    and uses their text. The two range checks it calls are the released AE6z.v / AE70.v ported over ARU by the bcmp
    lane as lib/A/FSupoisonMcmpChkX.v (mcmpx_check_srr) and lib/A/FSupoisonMcmpChkY.v (mcmpy_check_srr), imported
    here unchanged.
    Step references (cross-check only, no import, no bridge into ARU): cgif's A/AE2s.v (the bcmp walk, the same
    structure step for step) and the released jsoncons proof proofs/jsoncons/fuzz_json_cursor/lib/Pm8MemcmpIcptI.v:337
-   wrap_memcmp_pk (ossv/recipes 566eb6ffa5; used at Pm8ArtWrapMemcmp.v:269), which runs the same steps of the same
+   wrap_memcmp_pk (used at Pm8ArtWrapMemcmp.v:269), which runs the same steps of the same
    compiler-rt functions in its own image (interceptor prologue, the asan-inited check, MemcmpInterceptorCommon with its
    2240-byte frame and the s - 2312 scratch bound, REAL(memcmp) as a callee) in a different interface (amemcmp_spec_at /
    asan_layout).

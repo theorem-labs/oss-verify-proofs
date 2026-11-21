@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the proof of hull_sub_not_free names the heap invariant's new fifteenth conjunct, the heap mark, when it destructs the invariant). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State.
@@ -176,7 +177,7 @@ Section InstPop.
 (* [comment removed for export] *).
   Proof.
     intros v mo U K HHv U0 U1 F0 RF.
-    dpose K as (_ & _ & _ & _ & _ & _ & _ & _ & TBL & _ & _ & _ & VW & AT).
+    dpose K as (_ & _ & _ & _ & _ & _ & _ & _ & TBL & _ & _ & _ & VW & AT & MK).
     dpose VW as (_ & _ & HWF & _). pose proof (proj1 (Forall_forall _ _) HWF H HHv) as (W0 & W1 & W2 & W3 & W4 & W5).
     aceilb. 
     rewrite region_free_app in RF. apply andb_prop in RF. destruct RF as [_ RF].

@@ -1,9 +1,10 @@
-(* CARRIED from a working branch 3dd49fa29fa14b99e3c465cacbfe79a09756bb26,
+(* CARRIED from a working branch,
    proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfSecBound.v, sha256 0d584353e9a08b3333481cc1f9fa39ef8ad668c5d4474d3bfbf7227f1b18186e.
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change
    made here is the module prefix OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset's event-free allocator instance (suffix cf), a STATE bound on the
    secondary count. st_sec_arr holds the live AND the quarantined secondaries (an entry leaves it only at the
    quarantine recycle), so a walk must not count it by steps: fuzz_reply makes about 1.59M secondary mallocs

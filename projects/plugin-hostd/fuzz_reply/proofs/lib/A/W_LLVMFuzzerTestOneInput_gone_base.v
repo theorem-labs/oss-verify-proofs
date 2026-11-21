@@ -20,6 +20,7 @@
      relation gn_run), the G each check_* call is taken at (gn_Gs) and the texts of the model obligations
      (GN_RI_*, GN_LS_rig, GN_HG* and the rest), so that every phase file names the same Prop.  The callee
      contracts are W_contract.v's own (lf_arm_gone's Section hypotheses); none is restated here. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -443,7 +444,7 @@ Definition gn_after_rig (cx : lfcx) (m : lmod) (hs : list (hsrc * nat)) (qs : li
    entry_keys / geik of every entry), its length, and the model clauses of aentry_ok (W_rep.v:120-135) that
    rig_post's arelay_at gives of every entry of map fst qs, with the table's distinct fds.  Without it
    gn_after_rig leaves qs FREE, and GN_RI_read / GN_RI_step / GN_RI_end are false against every RINV
-   (ATopKeeper, commit 382a1a20fb6, lib/A/ReplyRINV.v:540-579). *)
+   (ATopKeeper, lib/A/ReplyRINV.v:540-579). *)
 Definition gn_entry_model (e : rentry) : Prop :=
   (re_eof e = 0 \/ re_eof e = 1) /\ (re_skip e = 0 \/ re_skip e = 1) /\
   length (re_pad1 e) = 4%nat /\ length (re_pad2 e) = 4%nat /\ 0 <= re_fd e < 2 ^ 31 /\
@@ -455,7 +456,7 @@ Definition gn_rig_ok (cx : lfcx) (m : lmod) (hs : list (hsrc * nat)) (qs : list 
   length qs = length (lm_es m) /\
   Forall gn_entry_model (map fst qs) /\ NoDup (map re_fd (map fst qs)).
 (* check_no_loss's functional half, as cnl_post leaves the source; the last two conjuncts are cnl_post's last two (the
-   held list's capacity never shrinks, and its EXACT capacity law, W_contract.v:2037-2041) *)
+   held list's capacity never shrinks, and its EXACT capacity law, W_contract.v:2038-2042) *)
 Definition gn_cnl_ok (h h' : hsrc) (E' H' : hlist) : Prop :=
   h' = set_exp_held h E' H' /\
   hl_recs E' = [] /\ hl_v E' = hl_v (hs_expected h) /\ hl_cap E' = hl_cap (hs_expected h) /\
@@ -537,12 +538,12 @@ Variable MMAX : Z.                                   (* W6's / W7's request boun
 (* relay_instance_gone, W6: W_contract.v's rig_spec, with its placement premise rg_place, verbatim.
    snprintf: W_sites.v's asnprintf_realizes at the interceptor's entry, with aguard_ok at the image's two
    stack-protector cells.
-   W3's four checks are W_contract.v's own texts on the W8 lane head (a3c72093c22): cnl_spec (:1968),
+   W3's four checks are W_contract.v's own texts on the W8 lane head: cnl_spec (:1968),
    cshe_spec (:1812), cnlr_spec (:454) and csd_spec (:130).  lf_arm_gone takes each as a Section hypothesis
    (W_LLVMFuzzerTestOneInput_gone.v); this file restates none of them. *)
 (* The G each of the two calls is taken at: the 32 bytes of slot j's two lists (expected at +64, held at
    +80), which is exactly what the spec's own premise `forall a, HA + 64 <= a < HA + 96 -> inG G a` asks.
-   NOT [(g_s, 384)]: a journal at G lets the callee change any byte of G (gagree, W_journal.v:214), so a
+   NOT [(g_s, 384)]: a journal at G lets the callee change any byte of G (gagree, W_journal.v:215), so a
    G covering all four slots would lose the other three slots' amodel_at at every call.  W3's theorems are
    G-generic, and GN_HG_sub G_fr (gn_Gs j) follows from GN_HGs.  (p5's reading, 2026-10-29.) *)
 Definition gn_Gs (j : nat) : list (Z * Z) := [(rg_s fr_RG + ASRC * Z.of_nat j + 64, 32)].
@@ -569,7 +570,7 @@ Definition GN_HGcells : Prop := forall a, inG gn_cells a -> inG G_fr a.
    relay_instance_gone call asks it of four cells.  An errno hypothesis: proved for the concrete instance
    (as_errno B = 0x5d93cc) as lib/A/W_LLVMFuzzerTestOneInput_G.v's c_CELLS_ERRNO.  (p5 / p3, 2026-10-29.) *)
 Definition GN_CELLS_ERRNO : Prop := forall a, inG gn_cells a -> ~ (as_errno B <= a < as_errno B + 4).
-(* The read-only bytes the allocator owns are pinned in every AR state (W_journal.v:373-381): what
+(* The read-only bytes the allocator owns are pinned in every AR state (W_journal.v:374-382): what
    ajournal_gx_rom_view's rom_out side needs to carry the cut's rom_view across a call.  This is the
    second half of W3's ROMNS; it is an instance fact, not derivable in the piece.  (p5, 2026-10-29.) *)
 Definition GN_ROM_PIN : Prop :=
@@ -583,7 +584,7 @@ Definition GN_HAP : Prop :=
 (* errno's place (the shape of W_LLVMFuzzerTestOneInput_latch.v's ERRNO_LOW) *)
 Definition GN_ERRNO_LOW : Prop := 0 <= as_errno B /\ as_errno B + 4 <= alloc_ceiling + 8.
 (* NO GN_GUARD HERE, on purpose.  snprintf's interceptor reads two stack-protector cells, the GOT word
-   FR_GOT_GUARD = 0x9e658 and __stack_chk_guard FR_GUARD = 0x5f94b0 (W_sites.v:271,299-300), and two
+   FR_GOT_GUARD = 0x9e658 and __stack_chk_guard FR_GUARD = 0x5f94b0 (W_sites.v:272,299-300), and two
    texts for them were tried and MEASURED FALSE at the pin on 2026-10-29:
      (1) `rom_view segs W mem -> aguard_ok W mem FR_GOT_GUARD FR_GUARD` is false - vm_compute over
          pa_segs at PB_fr gives inrom(0x9e658) = false and inrom(0x5f94b0) = false (both cells lie in
@@ -619,7 +620,7 @@ Definition GN_RI_read : Prop := forall cx t m hs qs c2 O2 cap2 out2 m1 k h,
   hl_recs (hs_pending h) = [] /\ hs_off h = 0.
 (* what check_no_loss and check_shape_ends take of the state the table-order loop calls them in.  Sx / lyx are the
    loop's state; the premise after mo_le is the callee posts' block relation, composed from relay_instance_gone's
-   rig_post (W_contract.v:1436-1441) through every check_no_loss / check_shape_ends post (:1978-1979, :1823): the
+   rig_post (W_contract.v:1437-1442) through every check_no_loss / check_shape_ends post (:1978-1979, :1823): the
    live blocks are the input's, the model's and the same rest as at the operation's LS state (LS_rm_step's shape).
    Without it Sx is free at MT := ameter_triv and cnl_room's blocks_bytes bound is false.
    KF-COUNT: cst is no longer free.  The loop's state is reached from the LS state at most at relay_instance_gone's
@@ -653,7 +654,7 @@ Definition GN_RI_step : Prop :=
   hl_n (hs_held h) + Z.of_nat (count_begin (texts (hs_expected h))) < 2 ^ 22 /\
   0 <= A <= Z.of_nat (length (lm_O mc)) /\
   (* the stream's length fits next_line's memchr bound (both check_* specs ask NO <= 2 ^ 40 and
-     0 < NO -> NO < 2 ^ 32); one operation sends at most 33,488,385 bytes (W_contract.v:594-595).  The
+     0 < NO -> NO < 2 ^ 32); one operation sends at most 33,488,385 bytes (W_contract.v:595-596).  The
      model's, like the size bounds above; aout_at alone bounds it only by the allocator's MALLOC_MAX.  (p5) *)
   Z.of_nat (length (lm_O mc)) < 2 ^ 32 /\
   (lm_gn m1 = 0 -> exists rest, skipn (Z.to_nat A) (lm_O mc) = bstream (hs_expected h) ++ rest) /\
@@ -697,8 +698,8 @@ Definition GN_RI_end : Prop :=
   A = Z.of_nat (length (lm_O mc)) /\ RINV cx (t + 1) mc /\ LS cx (t + 1) mc lyx Sx.
 (* relay_instance_gone's budget, read off LS: rig_spec's three room premises (the room round's C3 peak form; the sum
    form and the g_capout premises are gone from rig_spec).  The text is s5-r1d's adopted TX_GN_LS_rig token for token
-   (commit 1318828167d, lib/A/ReplyLS3Peak.v:171, with LS for LSx), so top_x plugs it by exact:
-   - gn_op is this file's (:358), whose body ReplyLS3cTopxGoneF.gn_op copies (same commit, ReplyLS3cTopxGoneF.v:65);
+   (lib/A/ReplyLS3Peak.v:171, with LS for LSx), so top_x plugs it by exact:
+   - gn_op is this file's (:358), whose body ReplyLS3cTopxGoneF.gn_op copies (same commit, ReplyLS3cTopxGoneF.v:66);
    - the g_capout clause is ReplyLS3eCap.ent_capout_ok0 (same commit, ReplyLS3eCap.v:134) at the entry's world and
      memory, written out: that file Requires the AR arms, which this one must not.  It is the cut's CAPOUT clause
      (_cut.v:212-213), the last conjunct of the entry's pre;
@@ -721,7 +722,7 @@ Definition GN_LS_rig : Prop := forall cx t m ly S hs,
   lm_cap m < MMAX /\
   blocks_bytes S + tr_peak tr + 4 * Z.max (lm_cap m) (tr_max tr) <= LIVE_MAX.
 (* ---- the count rules (the room round).  Each callee call asks `cnt_ok_pk RP pk (ablocks B ly S)` at its own state;
-   the LS state's count bound is LS_cnt's, at the arm's peak gn_pk (a Theorem Labs lane's pk_gone, commit ba8e99b5bd2,
+   the LS state's count bound is LS_cnt's, at the arm's peak gn_pk (a Theorem Labs lane's pk_gone,
    lib/A/ReplyLScnt.v:476, at the instance).  The walk's block relation (gn_tie) makes a call's live blocks the input,
    the model's blocks at the call and the LS state's rest, so what a call needs beyond LS_cnt is a fact of the MODEL
    alone: the model's count at the call plus the callee's premise peak stays under the LS state's model count plus
@@ -731,7 +732,7 @@ Variable gn_pk : lfcx -> lmod -> list (hsrc * nat) -> (Z -> bool) -> nat.
    (W_contract_x.v rig_pk at its rig_tr) and check_no_loss's (cnl_pk of the slot's two lists).  They are PARAMETERS
    here, not W_contract_x's names: this file is AR-side and must not Require the _x kit (that kit's global zify flag
    reaches every file that Requires it, and breaks lia in the AR phases).  The _x arm passes W_contract_x's names;
-   check_shape_ends' peak is the constant 0 (cshe_pk, W_contract_x.v:279), written out *)
+   check_shape_ends' peak is the constant 0 (cshe_pk, W_contract_x.v:280), written out *)
 Variable gn_rig_pk : lfcx -> lmod -> list (hsrc * nat) -> (Z -> bool) -> nat.
 Variable gn_cnl_pk : hsrc -> (Z -> bool) -> nat.
 (* relay_instance_gone is called at the LS state itself (GRG holds LS at the call's state), so its premise peak
@@ -741,7 +742,7 @@ Definition GN_CNT_rig : Prop := forall cx m hs (P : Z -> bool),
 (* check_no_loss on slot k of the table-order loop, at the loop model mc that relay_instance_gone and the earlier
    check_no_loss / check_shape_ends calls left; then check_shape_ends on the source check_no_loss left.  The premises
    are GN_RI_step's (the walk holds them at both calls), the model blocks' sizes not negative, and the representation
-   clause of the table relay_instance_gone leaves (rig_post_x's arelay_at .. (map fst qs), W_contract_x.v:960 ->
+   clause of the table relay_instance_gone leaves (rig_post_x's arelay_at .. (map fst qs), W_contract_x.v:961 ->
    aentry_ok W_rep.v:131-132) *)
 Definition GN_CNT_step : Prop :=
   forall cx t m hs qs c2 O2 cap2 out2 m1 mc A i k h (P : Z -> bool),

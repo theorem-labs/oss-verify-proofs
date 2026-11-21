@@ -4,12 +4,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/openssl/bignum/lib/BnP/BnKit2.v, with its module paths and module names changed; 1014 of its 1028 lines of code are new or changed and 33 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/tx_put.v, with its module paths and module names changed; 2422 of its 2466 lines of code are new or changed and 984 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3a.v, with its module names and addresses changed; 898 of its 975 lines of code are new or changed and 2389 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/B/ACtlW5.v -- piece W5 (the tail: S_X1, S_X2, S_Jrel, S_Y1, S_Y3) of fuzz_ctrl image B's (asan-ubsan) walk
    of LLVMFuzzerTestOneInput in the released cgif_file_fuzzer form.  One writer: a Theorem Labs lane (proof pass).
    rule 24: no function proved (stage glue of a walk).
 
    WHAT THIS FILE PROVES: one stage lemma per walked cut of W5, in the donor's continuation shape
-   (rt_A2 A/ACf0.v:173 .. rt_D A/ACf3.v:311 at c8557374ad2e), over lib/B/ACtlCut.v's ctl_from and
+   (rt_A2 A/ACf0.v:173 .. rt_D A/ACf3.v:311 at theorem-labs/oss-verify-proofs@6b32741d849a), over lib/B/ACtlCut.v's ctl_from and
    lib/B/ACtlCutP.v's records.  No index, no loop.  All five are closed by Qed over the named Section hypotheses below.
      B82eac (0x82eac, own6) --S_X1--> B82ecc (memchr arm) | Jrel (byte 20 of the identity record = 0)
      B82ecc (0x82ecc, own6) --S_X2--> Jrel
@@ -41,15 +42,15 @@
      (VIS0 / OWNED_RO are gone: route (C), AR_states_vis0_shadow is false at an AR state.)
    - AIL: Reusable.YE01.asink_img_laws at the core's sink head and tfib_K (seg_Y3's asink_none / ameta_inv); the
      core proves it as Reusable.YD1u.tfib_AIL, not cited because YD1u's closure has lib/Reusable/YE2y.v, which does
-     not compile on the walk line adc9b58a03c (YE2y.v:75).
+     not compile on the walk line (YE2y.v:75).
    - HMOLE: the trivial meter's mo_le (the top's MT is Reusable.YCbp.ameter_triv, mo_le True).
    - ML: the core's model_laws over B's universe (aj_stack_free_at's Section hypothesis; AsanAPI aa_model).
    - HMEMCHR_ENTRY: B_memchr_tramp_entry = 0x42ab0 (where X12F.x12_a_pre_F runs to).
    - AMEMCHR (with Variable B_memchr_tramp_entry, intended 0x42ab0): `__interceptor_trampoline_memchr` @0x82ec8, ctrl's
      call fuzz_ctrl.c:711 memchr(id.model_name, 0, 17).  The shared text is a Theorem Labs lane's `amemchr_realizes`
-     (MemchrDef.v:21, a Theorem Labs lane's 23:53Z ruling; moving to lib/Reusable/MemchrDef.v on a working branch), by that exact name and
+     (MemchrDef.v:22, a Theorem Labs lane's 23:53Z ruling; moving to lib/Reusable/MemchrDef.v on a working branch), by that exact name and
      argument order (segs B pc): any byte c, n < 2^32, a found or not-found result, the whole [x, x + n) addressable.
-     It is PROVED for disco (a Theorem Labs lane 23:56Z: a working branch 3b8a77d146c
+     It is PROVED for disco (a Theorem Labs lane 23:56Z: a working branch
      proofs/libreac/fuzz_disco/lib/Y/Rt/Memchr.v:566 `memchr_icpt_realizes`, no Admitted, no Axiom; disco's trampoline
      is 0x42a54) and reaches ctrl by relocation; until the relocated instance lands it is this Section hypothesis, with
      the entry a Variable, never the literal (the porter's trampoline rule, 23:17Z).  ctrl's copy of the definition
@@ -58,21 +59,21 @@
      class-6 release (a Theorem Labs lane 22:53Z, a Theorem Labs lane's final word): `astack_free_realizes tfibsegs B 0x3dd30 6`, a Theorem Labs lane's
      lib/Reusable/StackFreeDef.v form (explicit pc; premises include a1 = n with 8 <= n <= fs_frame_bytes 6 = 4096 and
      n mod 8 = 0, so a1 = 3136 fits; its 0xf5 pattern cell is 0x10338, a core constant, a Theorem Labs lane 23:07Z), by path in
-     lib/Reusable/StackFreeDef.v from a working branch fa349ffc195.  Its premise on the frame's trailer word
-     comes from the shell's FRAHC trailer conjunct (a218ac85be5).
+     lib/Reusable/StackFreeDef.v from a working branch.  Its premise on the frame's trailer word
+     comes from the shell's FRAHC trailer conjunct.
    - ITEM 23 (the final ProgWorld form), the two conversions this piece uses, pasted below from the walk's shared
      RtPost text (lib/B/RTPOST-SHARED-B.txt) as named Section hypotheses.  Both are PROVED in this tree in
      lib/B/ProgWorld.v (owner a Theorem Labs lane): aview_vis_mrd as B.ProgWorld.aview_vis_mrd (ProgWorld.v:587) and
      ctl_post_memchr as B.ProgWorld.ctl_post_memchr (ProgWorld.v:659).  They stay here as RTPOST NOTE rows until the
      owner swap.  SOURCE of that block: a Theorem Labs lane's lib/A/ProgWorld.v
-     (at head lib/A/ProgWorld.v:546-559, :564-567 and :625-629; written on a working branch c03ce1627b6), twinned for image B.
+     (at head lib/A/ProgWorld.v:546-559, :564-567 and :625-629; written on a working branch), twinned for image B.
      ctl_post_memchr is a Theorem Labs lane's window statement at K := ESTACK: munch_vis / wmono_vis in the mrd vocabulary at
      visible addresses outside the CALLEE WINDOW [sp - ESTACK, sp), the whole written range of the memchr call; its
      premise rt_post_frame (aview clause + apresent clause) is exactly amemchr_realizes' post (seg_X1).
      aview_vis_mrd is item 23's one primitive: at a VISIBLE address the core's aview is lib/Lib's mrd read (seg_X1's
      shadow and model_name reads, seg_Y1's trailer word and its saved bytes after the release).  A raw `mem x`
      equality is claimed nowhere in this file: it is not derivable from a view post.
-   `_F` LEMMAS (a working branch 4d6ca903c00; texts in
+   `_F` LEMMAS (a working branch; texts in
    (internal path){X12F,YTailF}.md; module
    OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog.Seg.<File>F, Required qualified, never Imported, a Theorem Labs lane 23:38Z;
    split at EVERY call, and a call whose return pc is the next cut has no `_post_F`):
@@ -89,7 +90,7 @@
    - YTailF.y3_evt_F       (Seg/YTail.v:66; 0x82f5c -> ret: `li a0,0`, the 13 reloads from [S - 104, S), sp = S,
                             `ret` to ra = RA_LLVMF)
    PROVENANCE: cut table rows 86-91; plan 2.3 rows 85-90, 2.6 (Y1 row), 6.2 (no trap on W5 paths); ctrl's runs at
-   a working branch 3803efccea0 (Seg/X12.v, Seg/YTail.v); objdump L85730-L85812.
+   a working branch (Seg/X12.v, Seg/YTail.v); objdump L85730-L85812.
 
    ABORT-SINK / TRAP OBLIGATIONS ON W5 (objdump 0x82eac-0x82fa0, all 164 branches into 0x82fa4 / 0x82fa0 listed by
    one awk over the listing): exactly ONE, 0x82ecc `beqz a0,0x82fa4` (L85760), in S_X2's run (seg_X2). No UBSan
@@ -113,7 +114,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require Reusable.YE00 Reusable.YE01 
    kept read-only view (Reusable.APostBase.arodata_ok_journalP, B.ProgWorld.arodata_okP_of_S). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require Reusable.APostBase B.ProgWorld.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B Require ACtlRtC ProgWorldCtlRtC.
-(* a Theorem Labs lane's StackFreeDef (text of record, by path from a working branch fa349ffc195) and its journal rule
+(* a Theorem Labs lane's StackFreeDef (text of record, by path from a working branch) and its journal rule
    StackFreeJournal (aj_stack_free_at, ajournal_after_write_win), a Theorem Labs lane's MemchrDef. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require Reusable.StackFreeDef Reusable.StackFreeJournal.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require Reusable.MemchrDef.
@@ -145,7 +146,7 @@ Local Notation segs := Reusable.YB1v.tfibsegs.
    argument lists here and nowhere else.  a Theorem Labs lane 22:4xZ (d): ctl_base / ctl_post take only the variables they use
    (tfib_lib_pre_x B MT XM_LIB RLO RHI, tfib_lib_post_x B MT XN_LIB); ctl_from adds the journal's FP. ---- *)
 Local Notation ctl_from := (ACtlCut.ctl_from B MT XM_LIB RLO RHI FP).
-(* lib/B/ACtl.v's ctl_post_leaf (ACtl.v:285-292), the exit post the top consumes, by name (gate note on c80d46e98f9:
+(* lib/B/ACtl.v's ctl_post_leaf (ACtl.v:286-293), the exit post the top consumes, by name (gate note:
    ACtl.v Requires no stage file, so Requiring it here is no cycle). *)
 Local Notation post_leaf := (B.ACtl.ctl_post_leaf B MT XN_LIB).
 Local Notation C_B82eac := (ACtlCutP.C_B82eac B).
@@ -177,11 +178,11 @@ Context {RO_OFL : Reusable.APostBase.ro_below_ofl segs RLO RHI}.
    YE01.asink_none_kept / ameta_inv_kept, which seg_Y3 uses for the exit post's asink_none / ameta_inv).  The core
    proves it as Reusable.YD1u.tfib_AIL from CtrlTSyms B and AR_laws (YD1u.v:42); the top discharges this hypothesis
    with `Reusable.YD1u.tfib_AIL B TFIB_SYMS LAWS`.  Not cited here because YD1u's closure has
-   lib/Reusable/YE2y.v, which does not compile on the walk line adc9b58a03c (YE2y.v:75, `Unable to unify "true" with
+   lib/Reusable/YE2y.v, which does not compile on the walk line (YE2y.v:75, `Unable to unify "true" with
    "false"`; build (internal path) 20261029T054547Z). *)
 Hypothesis AIL : Reusable.YE01.asink_img_laws (SK := Reusable.YE2k.tfib_sink_head) segs B Reusable.YE2k.tfib_K.
 
-(* The trivial meter: the top instantiates MT := Reusable.YCbp.ameter_triv (lib/B/ACtl.v:917), whose mo_le is True
+(* The trivial meter: the top instantiates MT := Reusable.YCbp.ameter_triv (lib/B/ACtl.v:918), whose mo_le is True
    (YCbp.v:16).  The exit post's mo_le conjunct is this fact; no cut carries a meter relation (ACtlCut.v section 5). *)
 Hypothesis HMOLE : forall (S S' : Reusable.YG00.astate) (m : Z), Reusable.YC5d.mo_le MT S S' m.
 
@@ -199,7 +200,7 @@ Hypothesis stack_free6_contract : Reusable.StackFreeDef.astack_free_realizes seg
 
 (* The core's allocator-model laws over B's trace universe (YG0d.v:514 model_laws; the AsanAPI field aa_model,
    YG0d.v:533), the premise of the free-6 journal rule StackFreeJournal.aj_stack_free_at (its Section hypothesis ML,
-   StackFreeJournal.v:164).  Supplied by the core's api_of_core. *)
+   StackFreeJournal.v:165).  Supplied by the core's api_of_core. *)
 Hypothesis ML : Reusable.YG0d.model_laws (Reusable.YG0f.as_universe B).
 
 (* The freed-block list is the empty one: the top runs the walk with FP := [] (lib/B/ACtl.v's CF notation) and
@@ -209,7 +210,7 @@ Hypothesis FP_nil : FP = [].
 
 (* ---- RtPost, image B: the shared text of record of this walk (RTPOST-SHARED-B.txt (not in this delivery), author a Theorem Labs lane for
    a Theorem Labs lane), pasted token for token; only the members this file uses are here.  SOURCE: a Theorem Labs lane's
-   lib/A/ProgWorld.v (at head lib/A/ProgWorld.v:546-559, :564-567 and :625-629; written on a working branch c03ce1627b6), with
+   lib/A/ProgWorld.v (at head lib/A/ProgWorld.v:546-559, :564-567 and :625-629; written on a working branch), with
    lib.Reusable -> Reusable, Lib. -> lib.Lib. and A.Img0 -> B.Img0 and nothing else; a Theorem Labs lane's Definitions are Local Notations here and
    its PROVED lemmas named Section hypotheses, as RTPOST-SHARED-B.txt (a working note, not in this delivery) states them.  lib/B/ProgWorld.v (owner
    a Theorem Labs lane) is in this tree and proves both members over its own Definitions munch_vis / wmono_vis /
@@ -217,7 +218,7 @@ Hypothesis FP_nil : FP = [].
    stay here as RTPOST NOTE rows until the owner swap.  The earlier placeholder, which concluded wmono_vis from an
    aview clause with no apresent premise, is gone.
    SITE: the memchr trampoline 0x82ec8 (return 0x82ecc = the cut B82ecc); rt_post_frame's two clauses are
-   amemchr_realizes' post (MemchrDef.v:20: the view outside the callee window and the presence clause; seg_X1).
+   amemchr_realizes' post (MemchrDef.v:21: the view outside the callee window and the presence clause; seg_X1).
    The stack-free release at 0x82f48 is a world-form call too: its view post reaches the cut body through
    aview_vis_mrd (seg_Y1). ---- *)
 Local Notation munch_vis H WR m m' :=
@@ -232,13 +233,13 @@ Local Notation rt_post_frame W mem mem' WR :=
    (forall a, Reusable.YG0n.apresent (Reusable.YA0n.w_H W) mem a ->
       Reusable.YG0n.apresent (Reusable.YA0n.w_H W) mem' a)).
 
-(* aview_vis_mrd: lib/A/ProgWorld.v (at head lib/A/ProgWorld.v:564-567; written on a working branch c03ce1627b6); PROVED in this tree as B.ProgWorld.aview_vis_mrd (ProgWorld.v:587). *)
+(* aview_vis_mrd: lib/A/ProgWorld.v (at head lib/A/ProgWorld.v:564-567; written on a working branch); PROVED in this tree as B.ProgWorld.aview_vis_mrd (ProgWorld.v:587). *)
 Hypothesis aview_vis_mrd : forall (W : Reusable.YA0n.world segs) (mem : word -> option byte) (a : Z),
   Reusable.YA0n.w_H W (Z_to_bv 64 a) = false ->
   Reusable.YG0n.aview segs (Reusable.YA0n.w_H W) mem a =
   option_map (fun b : byte => bv_unsigned b) (lib.Lib.Mem.mrd B.Img0.rsegs mem (Z_to_bv 64 a)).
 
-(* ctl_post_memchr: lib/A/ProgWorld.v (at head lib/A/ProgWorld.v:625-629; written on a working branch c03ce1627b6), ctl_post_window_stmt at K = ESTACK; PROVED in this tree as B.ProgWorld.ctl_post_memchr
+(* ctl_post_memchr: lib/A/ProgWorld.v (at head lib/A/ProgWorld.v:625-629; written on a working branch), ctl_post_window_stmt at K = ESTACK; PROVED in this tree as B.ProgWorld.ctl_post_memchr
    (ProgWorld.v:659). *)
 Hypothesis ctl_post_memchr :
   forall (W : Reusable.YA0n.world segs) (mem mem' : word -> option byte) (sp : Z),

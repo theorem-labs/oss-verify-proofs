@@ -16,12 +16,13 @@
      0x89fb4 and 0x89fec (a + 56i < a, b + 56i < b unsigned) and 0x8a064, 0x8a068 (~(a[i].args) < 8k, ~(b[i].args) < 8k)
      are refuted at the branch from the values of their operands. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/rec_calls_equal.v, with its module paths and module names changed; 459 of its 542 lines of code are new or changed and 1509 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_declared_vlan_add on fuzz_segconf.asan-ubsan (image B), segment 2 of the walk of
    lib/B/Prog/reac_declared_vlan_add_c.v: the search loop. It ports the loop-head seed, the latch seed and the latch
-   of image A's lib/A/Prog/reac_declared_vlan_add_s0.v (commit fcd2fa03dd27: vad_lh_seed,
+   of image A's lib/A/Prog/reac_declared_vlan_add_s0.v (vad_lh_seed,
    vad_lt_seed, vad_latch) and the loop body with the strcmp wrapper call of image A's lib/A/Prog/check_declared.v
-   (commit 68125773e710: cd_loop_step, cd_loop_seed, cd_str_call, cd_rom_at), with image B's
-   UBSan tests refuted as image B's check_segments walk refutes its own (commit 165b110a4242).
+   (cd_loop_step, cd_loop_seed, cd_str_call, cd_rom_at), with image B's
+   UBSan tests refuted as image B's check_segments walk refutes its own.
    - vad_loop_step, the loop head 0x8a5b8 at entry i (cut vad_LHc i of segment 0): `beqz s2` (decided by the
      executor: s2 = tab + 18 i >= 4096), `bltu s2,s7` to the UBSan trap 0x8a760 (refuted: tab + 18 i does not wrap
      below tab), `bnez s10` (decided: s10 = tab & 1 = 0), check 2 (removed by the token of [tab + 18 i, + 18)),

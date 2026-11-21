@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack window below sp starts at the start state's floor, 6000 KiB + 513 bytes below sp, as the remade start-up run reads it). *)
 From Stdlib Require Import ZArith Bool List Lia.
 From Stdlib Require Import PrimInt63 Uint63.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
@@ -168,7 +169,9 @@ Qed.
 Lemma inZ_app : forall L1 L2 a, inZ (L1 ++ L2) a -> inZ L1 a \/ inZ L2 a.
 Proof. intros L1 L2 a H. unfold inZ in H. apply Exists_app in H. exact H. Qed.
 
-Definition WOFF : Z := 8388608.
+(* the start state's region 1 starts 6144513 bytes below sp at LPS 727298f3 (the remade start-up run's floor,
+   [Regen.floor_of] of [C_S3.T_MAIN2 b] at both CONFIG_RSEQ values); it was 8 MiB in the released model *)
+Definition WOFF : Z := 6144513.
 Definition WLEN : Z := 140737488355328.
 Definition HMAX : Z := 4294967296.
 Definition SPLO : Z := 8589934592.
@@ -268,7 +271,7 @@ Definition apart_chk (D : sstate) : bool :=
 Lemma wlo_val : forall E, SPLO <= bv_unsigned (ev E 1%uint63) <= WLEN -> wlo E = bv_unsigned (ev E 1%uint63) - WOFF.
 Proof.
   intros E H. unfold wlo. rewrite den_VP_w2Z, WNOFF_val. unfold SPLO, WLEN, WOFF, two64 in *.
-  replace (bv_unsigned (ev E 1%uint63) + (18446744073709551616 - 8388608)) with ((bv_unsigned (ev E 1%uint63) - 8388608) + 1 * 18446744073709551616) by lia.
+  replace (bv_unsigned (ev E 1%uint63) + (18446744073709551616 - 6144513)) with ((bv_unsigned (ev E 1%uint63) - 6144513) + 1 * 18446744073709551616) by lia.
   rewrite Z.mod_add by lia. apply Z.mod_small. lia.
 Qed.
 

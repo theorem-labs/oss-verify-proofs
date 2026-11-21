@@ -5,9 +5,10 @@
    for libreac/fuzz_identity's ASan build (lib/A). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_catalogue.v, with its module paths and numbers changed; 204 of its 254 lines of code are new or changed and 319 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/check_ignore.v, with its module paths and module names changed; 235 of its 272 lines of code are new or changed and 217 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* trim's image-B walk, the store and the return (0x89740 .. 0x8976c), the cut statement TR_FIN_stmt of
-   lib/B/Prog/trim_k.v: tr_fin_ok. ADAPTED from the image-A G3 walk owner's image-A segment lib/A/Prog/trim_t.v
-   (commit 07dedd5b93c6), re-derived on image B's code: the shadow base is s1 (atom 9; image A's
+   lib/B/Prog/trim_k.v: tr_fin_ok. ADAPTED from the image-A G3 walk owner's image-A segment lib/A/Prog/trim_t.v,
+   re-derived on image B's code: the shadow base is s1 (atom 9; image A's
    is s2), the cut is at 0x89740 (listing offset 0x4980), and the seed, the shadow entry and the return are A's.
    The segment re-seeds a symbolic state from tr_mid / tr_regs (fuzz_command's answer_l.v al_entry form) and runs the
    token executor (lib/B/Prog/SegPaLib.v paj_run_tok), which decides the inline check:

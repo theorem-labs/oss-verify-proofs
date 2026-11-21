@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB; taken in part from projects/simdjson/fuzz_dump/proofs/lib/B/El_np_intA.v, line 567. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Specs Run.
@@ -564,7 +565,7 @@ Definition np_cpsA (ENTRY FL W : Z) (VOKP : Z -> Prop) : Prop :=
   rw_cells bsegs m (OS + 128) [C8 (Z_to_bv 64 0x173250)] -> rw_cells bsegs m (OS + 136) (ios_cellsX OS 0x173278 FL W fill j148 j284) ->
   bytes_at bsegs m (shad OS) (repeat z8 36) -> (0 <= fill < 256)%Z -> VOKP v ->
   el_tploc m -> io_ssp m -> frm0 fc -> LOCBA m ->
-  ART RT Σ m -> mem_inv bsegs m -> stk bsegs m lo q -> (rt_sp0 RT Σ - STACK_WIN <= lo)%Z -> (lo + EL_NP_STACK_A <= q)%Z ->
+  ART RT Σ m -> mem_inv bsegs m -> stk bsegs m lo q -> (rt_sp0 RT Σ - STACK_SPAN <= lo)%Z -> (lo + EL_NP_STACK_A <= q)%Z ->
   (q + 16 <= USTACK_TOP)%Z -> (q mod 16 = 0)%Z ->
   (Z.of_nat (length (rt_frames RT Σ)) + 1 <= FRAMES_TOT)%Z -> (1 <= rt_credit RT Σ)%Z ->
   (forall (Σ' : rts RT) t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' (F' : bvmap 5 word) (fc' : bv 32) m' (pb' : word) (pp' ep' : Z) (dum' : list byte),

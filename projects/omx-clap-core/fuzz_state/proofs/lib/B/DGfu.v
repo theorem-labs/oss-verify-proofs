@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGfu.v (a working branch ced28ed2383, file sha256 e60eb686f429) onto omx-clap-core/fuzz_state's asan-ubsan image (fuzz_state.asan-ubsan, pinned sha256 5ac5ce0954f8; addresses read from its unstripped build b1566a1ca816); module paths changed; its 3 image addresses moved by code-verified function pairs (14 port_addr_check 16f8a030c869 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGfu.v (a working branch, file sha256 e60eb686f429) onto omx-clap-core/fuzz_state's asan-ubsan image (fuzz_state.asan-ubsan, pinned sha256 5ac5ce0954f8; addresses read from its unstripped build b1566a1ca816); module paths changed; its 3 image addresses moved by code-verified function pairs (14 port_addr_check 16f8a030c869 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
 (* Modified by Theorem Labs, 2026-10: relocation fix on image B: the thread pointer literal is B's TFIB_TP 6140976 (0x5db430, YF0m.v:14), not cgif's 6132240. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The seed of the frame-generic Deallocate walk, arm "the last batch has room" (DGgi): DGgi.free_hyps holds at
    Deallocate's entry (A_Deallocate) from the generic precondition DeallocG.dealloc_pre (segs = tfibsegs, atp = 1)
    and the interface view DGif0.dview.  The virtual register file of the walk is

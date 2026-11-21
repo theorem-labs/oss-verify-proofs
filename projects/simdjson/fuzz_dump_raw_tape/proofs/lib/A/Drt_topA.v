@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -32,7 +33,7 @@ Definition fuzz_one_cps_drt : Prop :=
   (bv_unsigned s0 < bv_unsigned sp \/ bv_unsigned s0 mod 8 <> 0 \/ 2^63 <= bv_unsigned s0) ->
   LIB m -> io_ssp m -> libc_nl m -> el_xdataA m -> el_auxvA (bv_unsigned sp) m -> rt_sp0 RT Σ <= bv_unsigned sp + FUZZ_SP0GAP ->
   ART RT Σ m -> mem_inv asegs m ->
-  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + FUZZ_STACK <= bv_unsigned sp ->
+  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + FUZZ_STACK <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 -> bv_unsigned sp + 0xa0 <= rt_sp0 RT Σ -> frm0 fc ->
   cps asegs (fun c => ASTA RT Σ PMc (eq (entry_st ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11
                                          t3 t4 t5 t6 F fc e_fuzz m)) c /\ frm0 (ms_fcsr (cfg_ms c)))
@@ -104,7 +105,7 @@ Lemma drt_tail : forall (Σ0 Σx : rts RT) (K : config -> Prop) (usp sp' f lo : 
 
   0 < f -> f mod 64 = 0 -> f + 512 <= rt_sp0 RT Σ0 - STACK_WIN -> SEGTOP_A <= f -> 0 <= shad f ->
   (f + 512 <= shad f \/ shad f + 64 <= f) -> SHB <= shad f -> shad f + 64 + 1 <= rt_sp0 RT Σ0 - STACK_WIN ->
-  rt_sp0 RT Σ0 - STACK_WIN <= lo -> lo + FUZZ_STACK <= usp -> usp + 16 <= USTACK_TOP -> usp - 144 <= sp' <= usp - 128 -> sp' mod 32 = 0 ->
+  rt_sp0 RT Σ0 - STACK_SPAN <= lo -> lo + FUZZ_STACK <= usp -> usp + 16 <= USTACK_TOP -> usp - 144 <= sp' <= usp - 128 -> sp' mod 32 = 0 ->
 
   ART RT Σx m -> mem_inv asegs m -> rt_frames RT Σx = [(f, 3%nat)] -> (forall e, In e (rt_live RT Σ0) -> In e (rt_live RT Σx)) -> rt_sp0 RT Σx = rt_sp0 RT Σ0 -> cb <= rt_credit RT Σx ->
   PDONE Σx m (f + 32) (rt_live RT Σ0) ->

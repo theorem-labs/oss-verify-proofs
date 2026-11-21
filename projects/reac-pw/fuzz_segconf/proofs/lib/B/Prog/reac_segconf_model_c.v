@@ -39,10 +39,11 @@
    every image cell are parameters (or fields of B).
    The WALK takes as Section hypotheses: reac_segconf_find_contract (lib/A/Prog/reac_segconf_find_c.v) at find's
    entry and stack. It calls no runtime entry itself (find's walk takes RtString.astrcmp_realizes, row 17 of
-   provenance/evidence/interceptors/INTERFACE-A-interceptors.md (commit 7068323e2626), accepted v1 5e0b8a44fdc;
-   at e45889d6935a strcmp is that file's DECISION 2, option (b)). They are NOT premises of this contract: the
+   provenance/evidence/interceptors/INTERFACE-A-interceptors.md, accepted v1;
+   strcmp is that file's DECISION 2, option (b)). They are NOT premises of this contract: the
    statement does not mention them. *)
 (* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/A/Prog/reac_segconf_model_c.v, derived mechanically (bkit derive_b.py): its Require lines name the lib/B copies; nothing else differs. The comments are the A file's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

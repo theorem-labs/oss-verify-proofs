@@ -9,8 +9,9 @@
    variable K instead of decode's CRT_STACK, and with cr_frame_call generalised from decode's fixed frame cell list
    to any (base, cells): so fuzz_uci's check_no_overread and check_value, whose frames differ, share one copy. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/Prog/CheckGlue.v, with its module paths changed; 187 of its 423 lines of code are new or changed and 255 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Glue between check_copy's instruction-level segments (Lib Exec evt, cc_segs.v) and its allocator-level SR run
-   (check_copy.v). Ported from libreac/fuzz_decode lib/Prog/crt_glue.v (recipes 25e3d17bdb5, released), crt_ -> ccg_;
+   (check_copy.v). Ported from libreac/fuzz_decode lib/Prog/crt_glue.v (recipes, released), crt_ -> ccg_;
    ccg_pw_two, ccg_in_del, ccg_blk_stk and ccg_bytes_mb are new. cc_mid / cc_of_kb / cc_seq / cc_drop / cc_tail are
    KindBGlue.v's kb_mid and kb_mid_tail and crt_glue.v's crt_seq / crt_drop with the bytes of the entry blocks whose
    address is `gone` released: check_copy rewrites the block c in place (rp_copy_untag's memmove). *)

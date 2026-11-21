@@ -4,10 +4,11 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 3817 of its 3853 lines of code are new or changed and 212 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths and module names changed; 371 of its 396 lines of code are new or changed and 3828 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v, with its module paths and module names changed; 761 of its 797 lines of code are new or changed and 360 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment F29 of fuzz_ctrl LLVMFuzzerTestOneInput (asan, image A): the join 0x82750-0x82758 (plan-asan section 2
    row F29, no call, no check). rule 24: no function proved.
    v1.9 STATUS (2026-10-28): UNVERIFIED.  No build without probes has checked this file on v1.9.0.  It closed only
-   in an ITERATION-ONLY build on the v1.9 bytes (FACTS 0bfe9aa0d452) with probes in Seg/Tac_slot.v and
+   in an ITERATION-ONLY build on the v1.9 bytes (FACTS) with probes in Seg/Tac_slot.v and
    Seg/Tac_fsfree.v.  It waits for Seg/Tac_slot.v / Tac_fsfree.v re-fit to the regenerated Contract.v and FrameAPI.v.
    With s3 = S(fr) (the shadow byte of the frame base) the three instructions
      0x82750  sb s11,16(s3)
@@ -27,7 +28,7 @@
    block), none of which
    is S(fr)+16 .. S(fr)+20; the transports are the *_keep lemmas below, which F30 uses too.
    The pattern of f29_fra_meta is a Theorem Labs lane's F37.v (f37_fra_meta). A Theorem Labs lane independently re-fitted this
-   segment on a working branch 0d49ba5949 (lemma AG_below for the frame_AG ranges below GT; ag_bound here plays
+   segment on a working branch (lemma AG_below for the frame_AG ranges below GT; ag_bound here plays
    that role). *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

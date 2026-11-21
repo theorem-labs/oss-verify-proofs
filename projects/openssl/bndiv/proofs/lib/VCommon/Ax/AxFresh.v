@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (RRegion_agree follows KEntry's new rseq flag; placeholder comments dropped). *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
 From Stdlib Require Import Uint63.
@@ -17,10 +17,6 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 #[local] Arguments Uint63Axioms.to_Z : simpl never.
 #[local] Arguments Uint63Axioms.of_Z : simpl never.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
 Definition upd_val (ρ : valuation) (v : int) (z : Z) : valuation := fun x => if (x =? v)%uint63 then z else ρ x.
 
 Lemma upd_val_same (ρ : valuation) (v : int) (z : Z) : upd_val ρ v z v = z.
@@ -32,10 +28,6 @@ Proof. intros x Hx. unfold upd_val. destruct (x =? v)%uint63 eqn:E; [apply Uint6
 Lemma agree_entry (v : int) (ρ ρ' : valuation) :
   (forall x, x <> v -> ρ' x = ρ x) -> entry_var v = false -> forall x, entry_var x = true -> ρ' x = ρ x.
 Proof. intros Hag He x Hx. apply Hag. intros ->. rewrite He in Hx. discriminate Hx. Qed.
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 
 Lemma dec_str_agree (ρ ρ' : valuation) (k : Z) : (forall x, entry_var x = true -> ρ' x = ρ x) -> dec_str k ρ' = dec_str k ρ.
 Proof. exact (dec_str_agree_entry ρ ρ' k). Qed.
@@ -59,10 +51,6 @@ Proof.
   destruct (model_occ_parts v _ Hm) as (_ & _ & _ & _ & _ & _ & _ & Hout).
   exact (pieces_agree v ρ ρ' Hag He _ o Hout H).
 Qed.
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 
 Section Agree.
 Variable segs : list Segment.
@@ -98,7 +86,7 @@ Lemma RRegion_agree (m : word -> option byte) (R : region) :
   entry_var v = false -> region_occ v R = false -> RRegion segs ρ m R -> RRegion segs ρ' m R.
 Proof.
   intros He Ho HR. destruct (region_occ_parts R Ho) as [Ht Hc]. unfold RRegion in *. rewrite (rbase_agree R Ht).
-  destruct (rg_kind R) as [| | |w i|ph] eqn:Ek; try exact (eb_rel_agree ph ρ ρ' m _ _ (agree_entry v ρ ρ' Hag He) HR).
+  destruct (rg_kind R) as [| | |w i|r ph] eqn:Ek; try exact (eb_rel_agree r ph ρ ρ' m _ _ (agree_entry v ρ ρ' Hag He) HR).
   all: intros y Hy; rewrite (rbase_agree R Ht); destruct (HR y Hy) as [[b [Hb Hx]] Hw]; (split; [|exact Hw]); exists b; (split; [exact Hb|]);
     exact (xb_z_agree v ρ ρ' _ _ Hag (rbyte_occ R y Hc) Hx).
 Qed.

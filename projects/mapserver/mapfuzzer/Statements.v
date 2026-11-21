@@ -18,10 +18,19 @@
     harness.  Every statement quantifies over all of these cases and over every
     other process input (see Vocabulary in OSSVerify.Core.Shapes).
 
-    WHAT THE HARNESS CHECKS.  No summary of this harness is recorded yet; its
-    checks, if any, are listed below.  The harness makes no check of its own
-    beyond not crashing, so a statement about it says only that the code it
-    calls never crashes, hangs or trips a sanitizer.
+    WHAT THE HARNESS CHECKS.  Writes the input (Size from 10 to 10240 bytes) to
+    a new file named by CPLGenerateTempFilename(NULL) with .map (a suffix
+    msLoadMap's default mapfile name pattern accepts) appended, loads it as a
+    mapfile with msLoadMap(filename, NULL, NULL) and frees what that returns
+    with msFreeMap, then deletes the file with VSIUnlink, frees the name and
+    clears MapServer's error list with msResetErrorList. It returns -1 for an
+    input with Size below 10 or above 10240, returns 0 without loading anything
+    when fopen cannot open the file for writing, and drops the results of
+    fwrite, fclose and VSIUnlink.  The harness makes no check of its own beyond
+    not crashing.  Its halts statements say only that the code it calls never
+    crashes, hangs or trips a sanitizer.  Its agreement statements say only that
+    the code never crashes or trips a sanitizer, and allow a run that never
+    ends.
 
     Whether each statement is open, proved or known false is recorded in the
     harness README, not here: this file changes only when a statement does. *)

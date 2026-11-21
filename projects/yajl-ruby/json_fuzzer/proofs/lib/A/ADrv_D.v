@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (Section D takes the launch's execfn, ABASE and RDBRK take it in place of uid and hw, the IMGB notation is dropped, and RETINV, ABASE_munch and az_target_run are passed it; the stack window from usp0 - 6,144,513, the launch's 6,144,513 bytes below sp). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -91,7 +92,7 @@ Proof.
 Qed.
 
 Section D.
-  Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw) (arg0 arg1 : list byte)
+  Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw) (execfn : list byte) (arg0 arg1 : list byte)
             (PAD : list byte) (S4 S5 S6 S7 S8 S9 S10 S11 : word).
   Hypothesis VSP : valid_sp sp0.
   Hypothesis RCSP : rc_sp = bv_unsigned sp0.
@@ -109,9 +110,8 @@ Section D.
   Notation usp0 := (bv_unsigned sp0).
   Notation gpv := (Z_to_bv 64 0x10800).
   Notation tpv := (Z_to_bv 64 0x5e0b10).
-  Notation IMGB := (build_stack_bytes aph sp0 argv envp uid hw rnd).
   Notation LO' := (LO sp0).
-  Notation ABASE' := (ABASE sp0 argv envp uid hw rnd).
+  Notation ABASE' := (ABASE sp0 argv envp rnd execfn).
   Notation FRAME' mm := (MFRAME sp0 argv mm PAD S7 S6 S5 S4).
   Notation GST pc x1 t0 t1 t2 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x23 t3 t4 t5 t6 F fc mm :=
     (MS (mkR x1 (Z_to_bv 64 (usp0 + -128)) gpv tpv t0 t1 t2 (Z_to_bv 64 2) x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 (Z_to_bv 64 RSTAGE) x23 S8 S9 S10 S11 t3 t4 t5 t6)
@@ -119,7 +119,7 @@ Section D.
   Let PSTK := PSTK sp0 VSP RCSP.
 
   Variable FS0 : Fs.Fs.
-  Notation RDBRK' := (RDBRK sp0 argv envp uid hw rnd PAD S4 S5 S6 S7 S8 S9 S10 S11 D FS0).
+  Notation RDBRK' := (RDBRK sp0 argv envp rnd execfn PAD S4 S5 S6 S7 S8 S9 S10 S11 D FS0).
   Variables (P1v : Z) (pathb : list byte).
 
   (* [comment removed for export] *)
@@ -163,7 +163,7 @@ Section D.
     unfold TDIE. cbn [concat]. rewrite app_nil_r.
     pose proof (PSTK [mkABlock A cap]) as PS.
     aseg DI HKx. zstepA. aleaf. intros mo1 Hag1 HK1 Efs1 Efds1 Hh1.
-    eapply (adi_fwrite _ _ _ _ DI) with (lo := usp0 - 8388608);
+    eapply (adi_fwrite _ _ _ _ DI) with (lo := usp0 - 6144513);
       [ apply TEXIT2_nil | exact HK1
       | apply rodata_bytes; [exact MI| exact RO| lia| lia]
       | exact RNG | rewrite ML; lia | cbn [c_img_lo ACONSTS]; lia | lia
@@ -182,7 +182,7 @@ Section D.
     (* [comment removed for export] *)
     pose proof (PSTK [mkABlock A cap]) as PS1.
     aseg DI HK2. zstepA. zstepA. aleaf. intros mo3 Hag3 HK3 Efs3 Efds3 Hh3.
-    eapply (adi_free _ _ _ _ DI) with (lo := usp0 - 8388608) (A := A);
+    eapply (adi_free _ _ _ _ DI) with (lo := usp0 - 6144513) (A := A);
       [ apply TEXIT2_nil | exact HK3 | right; exists (mkABlock A cap); split; [left; reflexivity| reflexivity]
       | rewrite unsigned_lit by lia; exact ST1 | aceil; lia
       | rewrite unsigned_lit by lia; unfold AMALLOC_STACK; lia | clear -SF; rewrite unsigned_lit by lia; Z.div_mod_to_equations; lia
@@ -212,7 +212,7 @@ Section D.
   Lemma az_after_run : forall (x23 : word) (A cap L PL : Z) (d1 : byte) (status : Z) so s mo mm fc
       (t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 : word) (F : bvmap 5 word),
     0 <= status < 2^32 ->
-    RETINV sp0 argv envp uid hw rnd PAD S4 S5 S6 S7 D FS0 A cap so s mo mm fc ->
+    RETINV sp0 argv envp rnd execfn PAD S4 S5 S6 S7 D FS0 A cap so s mo mm fc ->
     realizes_cfg acfg asegs (mkCfg (MS (mkR (Z_to_bv 64 0x81c18) (Z_to_bv 64 (usp0 + -128)) gpv tpv t0 t1 t2 (Z_to_bv 64 (A + 2)) (Z_to_bv 64 A) (Z_to_bv 64 status) a1 a2 a3 a4 a5 a6 a7
                                         (Z_to_bv 64 L) (Z_to_bv 64 (A + 6 + L)) (Z_to_bv 64 PL) (Z_to_bv 64 (sx8 (bv_unsigned d1))) (Z_to_bv 64 RSTAGE) x23 S8 S9 S10 S11 t3 t4 t5 t6)
                                 F (Z_to_bv 64 0x81c18) fc None mm (seg_rom asegs)) mo)
@@ -260,7 +260,7 @@ Section D.
     pose proof (proj1 (proj2 (proj2 (proj2 (magree_frame _ _ Hag1))))) as Efs1.
     (* [comment removed for export] *)
     aseg DI HK1. zstepA. aleaf. intros mo2 Hag2 HK2 Efs2 Efds2 Hh2.
-    eapply (adi_free _ _ _ _ DI) with (lo := usp0 - 8388608) (A := A);
+    eapply (adi_free _ _ _ _ DI) with (lo := usp0 - 6144513) (A := A);
       [ apply KEXIT_nil | exact HK2 | right; exists (mkABlock A cap); split; [exact INB| reflexivity]
       | rewrite unsigned_lit by lia; exact ST | aceil; lia
       | rewrite unsigned_lit by lia; unfold AMALLOC_STACK; lia | clear -SF; rewrite unsigned_lit by lia; Z.div_mod_to_equations; lia
@@ -300,7 +300,7 @@ Section D.
     pose proof (PSTK [mkABlock A cap]) as PS.
     aseg DI HKx. zstepA. zstepA. aleaf. intros moa Haga HKa Efsa Efdsa Hha.
     (* [comment removed for export] *)
-    eapply (adi_close _ _ _ _ DI) with (lo := usp0 - 8388608) (fd := 3);
+    eapply (adi_close _ _ _ _ DI) with (lo := usp0 - 6144513) (fd := 3);
       [ apply KDONE_nil | exact HKa | lia | rewrite unsigned_lit by lia; exact ST | aceil; lia
       | rewrite unsigned_lit by lia; lia | reflexivity | reflexivity | ].
     intros u0 u1 u2 b0 b1 b2 b3 b4 b5 b6 b7 u3 u4 u5 u6 m1 mo1 s1 ST1 MUc WMc HK1 AS1 SO1 Efs1 Efds1 Hag1.
@@ -308,10 +308,10 @@ Section D.
     replace (ret_pc (Z_to_bv 64 0x81ba0)) with (Z_to_bv 64 0x81ba0) by (symmetry; rpc).
     assert (VS1 : vm_same moa (snd (close_out 3 moa))).
     { unfold close_out. destruct (fd_lookup (m_fds moa) (Z_to_bv 64 3)); cbn [snd]; [apply vm_same_with_fds | apply vm_same_refl]. }
-    assert (WOKW : Forall (AWOK sp0) [(usp0 - 8388608, usp0 + -128); (0x5e0a6c, 0x5e0a6c + 4)]).
+    assert (WOKW : Forall (AWOK sp0) [(usp0 - 6144513, usp0 + -128); (0x5e0a6c, 0x5e0a6c + 4)]).
     { unfold AWOK, LO. constructor; [cbn [fst snd]; lia|]. constructor; [cbn [fst snd]; lia| constructor]. }
     pose proof (adi_mem_inv _ _ _ _ DI _ _ _ _ _ HK1) as MI1.
-    assert (BA1 : ABASE' m1) by (eapply (ABASE_munch sp0 argv envp uid hw rnd VSP RCSP VARGV VENVP); [exact BA| exact WOKW| exact MUc| exact WMc| exact MI1| unfold LO; exact ST1]).
+    assert (BA1 : ABASE' m1) by (eapply (ABASE_munch sp0 argv envp uid hw rnd execfn VSP RCSP VARGV VENVP); [exact BA| exact WOKW| exact MUc| exact WMc| exact MI1| unfold LO; exact ST1]).
     pose proof (agree_on_of_munch _ _ _ MUc WMc) as AG.
     assert (FR1 : FRAME' m1) by (unfold MFRAME; eapply rw_cells_agree; [exact AG | exact FR | intros ax Ha; cbn in Ha |- *; lia]).
     assert (BLK1 : rw_cells asegs m1 A [CB (length FILE) FILE; CB (Z.to_nat (cap - Z.of_nat (length FILE))) junk]).
@@ -388,7 +388,7 @@ Section D.
     assert (HPL : 0 <= PL) by (subst PL; lia).
     assert (HLEN : Z.of_nat (length FILE) = 6 + L + PL) by (subst PL; lia).
     assert (HCAPM' : cap <= 67108864) by lia.
-    eapply (az_target_run sp0 argv envp uid hw rnd arg0 arg1 PAD S4 S5 S6 S7 x23 S8 S9 S10 S11 VSP RCSP EFIT VARGV VENVP EARGV D DI DIx FS0
+    eapply (az_target_run sp0 argv envp uid hw rnd execfn arg0 arg1 PAD S4 S5 S6 S7 x23 S8 S9 S10 S11 VSP RCSP EFIT VARGV VENVP EARGV D DI DIx FS0
               A cap L PL (sx8 (bv_unsigned d1)) FILE H (abud cap) (proj1 RL) HPL HLEN LTC HCAPM' HB (fun st so => KEXIT (128 <=? bv_unsigned d1) st so)
               ltac:(intros; apply KEXIT_nil)).
     - intros status so s' mo' mm' fc' v0 v1 v2 c1 c2 c3 c4 c5 c6 c7 v3 v4 v5 v6 F' SR RI. eapply (az_after_run x23); [exact SR | exact RI].

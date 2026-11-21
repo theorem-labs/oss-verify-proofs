@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: the closing pattern of a Theorem Labs lane's PASS4-REFIT.md section F for descriptors_panel_get's ASan+UBSan walk (lib/B/Prog/descriptors_panel_get.v, tdescriptors_panel_get_holds), in the form of lib/A/Prog/SupRemoveAllRefitClosed.v (a working branch e84227c9553) and a Theorem Labs lane's RecBClosed.v (a working branch f349bdaedba). *)
+(* Modified by Theorem Labs, 2026-10: the closing pattern of a Theorem Labs lane's PASS4-REFIT.md section F for descriptors_panel_get's ASan+UBSan walk (lib/B/Prog/descriptors_panel_get.v, tdescriptors_panel_get_holds), in the form of lib/A/Prog/SupRemoveAllRefitClosed.v (a working branch) and a Theorem Labs lane's RecBClosed.v (a working branch). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* The walk's record facts discharged at the pinned image (lib/B/Prog/CmdImg.v's instance PB_cmd, whose segments are
    tfibsegs, and B's sink head YE2k.tfib_sink_head): cmd_img_facts_tfib is CmdRecImg's lemma of that name,

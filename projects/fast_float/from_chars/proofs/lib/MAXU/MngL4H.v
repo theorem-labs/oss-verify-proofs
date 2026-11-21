@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the sc_alloc premise the munmap case needs). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -18,7 +19,7 @@ Theorem plain_heap_ok : forall (cfg : SpuriousCfg) (HTOP : Z) (GP : word),
   U_heap_ok cfg (HI HTOP) GP (wa 0x77990) HTOP STATIC_P.
 Proof.
   intros cfg HTOP GP Hoff HT DIRWK.
-  exact (heap_ok_L4 cfg HTOP GP HT (malloc_contract_L4 cfg Hoff DIRWK HTOP GP HT)).
+  exact (heap_ok_L4 cfg HTOP GP Hoff HT (malloc_contract_L4 cfg Hoff DIRWK HTOP GP HT)).
 Qed.
 
 Theorem plain_heap_init_ok : forall (cfg : SpuriousCfg) (HTOP : Z) (GP : word),

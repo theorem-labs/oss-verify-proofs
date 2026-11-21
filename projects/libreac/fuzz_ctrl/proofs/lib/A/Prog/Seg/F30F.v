@@ -4,23 +4,24 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 2004 of its 2120 lines of code are new or changed and 895 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F30.v; 54 of its 125 lines of code are new or changed and 2049 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/F30.v acba01bfc56c (the blob this tree had at release c5e779efe8c) at fdd2ed9f9d7.
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   FACTS, PAU pau-libreac-v190. Source: Seg/F30.v acba01bfc56c (the blob this tree had at release).
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: f30_stores_of_F re-derives F30.f30_stores at ExecF.RNG_all; f30_stores_of_F_verbatim checks by constr_eq
    that its type is the type of F30.f30_stores. Mechanical re-run, route (a) (lead 22:15Z); input to the ported walk
    only.
-   RE-FIT to this base: a Theorem Labs lane's 911c6aa5d2 was written against Seg/F30.v blob 5bb629fb22; the base's F30.v is
-   acba01bfc56c (the blob this tree had at release c5e779efe8c). The whole difference is the file's header comment (that version's lines 3-5 say "v1.9 STATUS:
+   RE-FIT to this base: a Theorem Labs lane's was written against Seg/F30.v blob 5bb629fb22; the base's F30.v is
+   acba01bfc56c (the blob this tree had at release). The whole difference is the file's header comment (that version's lines 3-5 say "v1.9 STATUS:
    UNVERIFIED ... waits for Tac_slot / Tac_fsfree re-fit"; acba01bfc56c lines 3-4 say "v1.9.0: moved onto
    [a Theorem Labs lane's] v1.9 cut bundle"), one line shorter, so NO statement, premise, numeral or proof of F30.v changed and
    this file's proof text is unchanged apart from the line citations below (f30_stores :290 -> :289,
    F30Call.f30_evt_call :505 -> :504, F30Call.f30_call_norm :584 -> :583). The verbatim pins checked the re-fit in
    the kernel; the call's pins now live in Seg/F30Fs.v. *)
-(* This delivery then edited comment text only: the code is unchanged from release c5e779efe8c, the comments are not. *)
+(* This delivery then edited comment text only: the code is unchanged from release, the comments are not. *)
 (* Footprint twin of a Theorem Labs lane's Seg/F30.v run f30_stores (segment F30, 0x8275c-0x82798, which ends in the call of
    reac_ctrl_classify_box_frame). rule 24: no function proved. The twin is the owner's run as an ExecF.evtF under a
    footprint RNG (forall RNG first), with the owner's premises unchanged and one rng premise per region the run
@@ -34,12 +35,12 @@
    *_of_F corollaries and two pins, with the helpers f30_bytes_all / f30_sh_all / f30_img_all / f30_cls1_all) is
    DELETED (a Theorem Labs lane's decision 04:5xZ): it took the callee's footprint contract
    reac_ctrl_classify_box_frame_contract_F and rng_fp_cls1, which the glue base's
-   lib/A/Prog/reac_ctrl_classify_box_frame_c.v (an earlier version, blob e726b412747, not in this delivery) (a working branch 5f2b9fab28a: a version not in this delivery) does not
+   lib/A/Prog/reac_ctrl_classify_box_frame_c.v (an earlier version, blob e726b412747, not in this delivery) (a working branch: a version not in this delivery) does not
    carry; a working branch's older version (an earlier version, blob 4ea5f8974df, not in this delivery) did. The Require of MemNormF and the Import of RngBytes, which only that
    module used, went with it. Nothing outside this file consumed F30CallF.
 
-   v1.9.0 (2026-10-28): moved onto a Theorem Labs lane's v1.9 F30 runs (a working branch 7ecd59d267b; on this base,
-   Seg/F30.v acba01bfc56c (the blob this tree had at release c5e779efe8c) at fdd2ed9f9d7, f30_stores :289). Every pc is copied from a Theorem Labs lane's text:
+   v1.9.0 (2026-10-28): moved onto a Theorem Labs lane's v1.9 F30 runs (a working branch; on this base,
+   Seg/F30.v acba01bfc56c (the blob this tree had at release), f30_stores :289). Every pc is copied from a Theorem Labs lane's text:
    v1.8 0x826b0 / 0x826e8 -> v1.9 0x8275c / 0x82794. The third spill reload is [A + 208] (v1.8 [A + 200]), the frame
    bound fr + 3136 (v1.8 fr + 3040) and S3 + 392 <= A (v1.8 S3 + 380), as in a Theorem Labs lane's text.
    The *_of_F_verbatim check pins the corollary to a Theorem Labs lane's text with constr_eq. *)

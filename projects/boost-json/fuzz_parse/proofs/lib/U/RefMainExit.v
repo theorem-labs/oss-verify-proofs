@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the launch's channel reader. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -55,6 +56,10 @@ End FPX1.
 Section MainExit.
   Context {fx : OSSVerify.Proofs.boost_json.fuzz_parse.lib.PropExec.FPState}.
   Variable model : ltac2:(zQ "10!mg8$0").
+  (* LPS 75d69e00: the exit flush writes stdout, which needs the launch's channel
+     reader (RefExit.ref_exit_Z's premise). It is the model's own fact, constant over
+     the run (Run.valid_input_channel_reader seeds it through init_model). *)
+  Hypothesis Hrdr : m_channel_reader model = true.
 
   (* [comment removed for export] *)
   Record main_frame (mem : word -> option byte) (sp : word) (slots : list word) : Prop := MF {
@@ -138,7 +143,7 @@ Section MainExit.
     clear HR HK. intros R' M' HR HK EQM.
     change (s_pc (fst (fst x_r))) with 0xddc64%Z. change (s_regs (fst (fst x_r))) with x_srF in HR.
     assert (EM : M' = mem) by (rewrite EQM; reflexivity). rewrite EM. clear EQM EM.
-    apply ref_exit_Z. apply HPRE.
+    apply ref_exit_Z; [apply HPRE | exact Hrdr].
     - regv HR (2 : reg). cbn [edenot ev ENV]. rewrite alu_add, vadd_wZ. reflexivity.
     - regv HR (4 : reg). cbn [edenot]. rewrite (x_ev_junk regs sp slots 13 HL) by lia. f_equal; apply bv_eq; reflexivity.
     - regv HR (10 : reg). cbn [edenot]. rewrite (x_ev_junk regs sp slots 17 HL) by lia. rewrite <- Hs0. f_equal; apply bv_eq; reflexivity.

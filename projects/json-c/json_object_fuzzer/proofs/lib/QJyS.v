@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput: the ambient Amb carries the kernel build, execfn, channel-reader and SIGPIPE fields, which mkModelC, mkProcInputC and amb_of fill; the vDSO layer: mkModelC carries init_model's own vDSO run, whose layer the bridge drops at the launch, and init_model_C over the launch's reservations with the vDSO pair, init_reserved, as cjson's Amb.v). *)
 
 From Stdlib Require Import ZArith List Lia.
-From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State StackLayout RiscvSemantics Run.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs Vdso State StackLayout RiscvSemantics Run.
 From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Q6q3.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Export Q6q3.
 Import ListNotations.
@@ -21,7 +22,17 @@ a_abort : bool;
 a_va : VaSize;
 a_rnd : EntryDraw;
 a_sp : word;
-a_sp_valid : valid_sp a_sp
+a_sp_valid : valid_sp a_sp;
+(* The launch facts the model's [ProcInput] and [VmState] have gained since this
+   file was written.  Appended LAST so every existing position is unmoved; the
+   only site that builds an [Amb] positionally is [amb_of] below.  Shape and
+   order follow cjson's Amb.v, whose own [mkModelC]/[mkProcInputC] are the
+   vendored sibling of these two. *)
+a_kernel : KernelBuild;
+a_execfn : list byte;
+a_channel_reader : bool;
+a_sigpipe_default : bool;
+a_sigpipe_terminal : bool
 }.
 
 Definition amb_creds {AMB : Amb} : Creds :=
@@ -30,20 +41,24 @@ mkCreds a_uid a_uid a_uid a_gid a_gid a_gid a_groups.
 Definition mkModelC {AMB : Amb} (fds : list (word * FdEntry)) (vm : VmMaps)
 (stdin : InputStream) (fs : Fs.Fs) (halted : option word)
 (tid : option word) (rlim : option (list byte)) : Model :=
-mkModelOf (mkFdState fds []) (mkVmState vm [] [])
+mkModelOf (mkFdState fds []) (mkVmState vm [] [] a_kernel (vdso_run_init vdso_draw_keep))
 (mkIoState stdin a_urandom a_net (Z_to_bv 64 0)) (mkFsState fs)
 (mkProcState halted tid amb_creds false a_sigmask false None
-false false false a_abort [])
+false false false a_abort [] false a_channel_reader
+(sigpipe_action_at_exec a_sigpipe_default) a_sigpipe_terminal)
 (mkLimState rlim a_nofile)
 (mkTimeState (Z_to_bv 64 0)).
 
 Definition mkProcInputC {AMB : Amb} (argv envp : list (list byte)) (fs : Fs.Fs)
 (stdin : InputStream) : ProcInput :=
-mkProcInput_full argv envp fs stdin a_uid a_gid a_groups a_net a_nofile a_sigmask a_hwcap a_abort a_va a_urandom [].
+mkProcInput_full argv envp fs stdin a_uid a_gid a_groups a_net a_nofile a_sigmask a_hwcap a_abort a_va a_urandom []
+a_kernel a_execfn a_channel_reader a_sigpipe_default a_sigpipe_terminal.
 
 Definition amb_of (inp : ProcInput) (rnd : EntryDraw) (sp : word) (Hsp : valid_sp sp) : Amb :=
 mkAmb (in_uid inp) (in_gid inp) (in_groups inp) (in_net inp) (in_urandom inp)
-(in_nofile inp) (in_sigmask inp) (in_hwcap inp) (in_abort_terminal inp) (in_va_size inp) rnd sp Hsp.
+(in_nofile inp) (in_sigmask inp) (in_hwcap inp) (in_abort_terminal inp) (in_va_size inp) rnd sp Hsp
+(in_kernel inp) (in_execfn inp) (in_channel_reader inp)
+(in_sigpipe_default inp) (in_sigpipe_terminal inp).
 
 Lemma mkProcInputC_of_fs : forall inp rnd sp Hsp,
 in_fs (@mkProcInputC (amb_of inp rnd sp Hsp) (in_argv inp) (in_envp inp) (in_fs inp) (in_stdin inp)) = in_fs inp.
@@ -78,12 +93,23 @@ Proof. destruct a_sp_valid as [_ [H _]]. exact H. Qed.
 Proof. destruct a_sp_valid as [_ [_ H]]. exact H. Qed.
 End SpFacts.
 
+(* Two changes the model forces, both taken from cjson's lib/Amb.v:70-85, which
+   is this file's vendored sibling and compiles:
+   - [init_model] reserves the vDSO pages, so the map list is
+     [init_reserved reserved mbase sp a_kernel] rather than bare [reserved]
+     (model State.v:7716, :7786; LPS #61).
+   - [init_model] installs [vdso_run_init vdso_draw_keep], and so does [mkModelC]: the
+     run's own draw is the layer [Run.init_config] wraps around [init_model], which
+     the launch drops ([BudgetWit.QRjHBRom.rz_with_vdso_no_text]); the models of this
+     chain are the unwrapped ones.
+   The file-system argument needs no [fs_seed_tmp]: [mkProcInputC] declares an
+   empty /tmp, and [fs_seed_tmp fs [] = fs] by computation (State.v:7139). *)
 Lemma with_tid_init_model_C : forall {AMB : Amb} reserved brk0 mbase sp lim av ev fs stdin tid,
 with_tid tid (init_model reserved brk0 mbase sp lim (mkProcInputC av ev fs stdin))
 = mkModelC [ (Z_to_bv 64 0, FdChannel (Z_to_bv 64 0));
 (Z_to_bv 64 1, FdChannel (Z_to_bv 64 1));
 (Z_to_bv 64 2, FdChannel (Z_to_bv 64 2)) ]
-(mkVmMapsFull reserved [] [] brk0 brk0 lim mbase sp) stdin fs None (Some tid) None.
+(mkVmMapsFull (init_reserved reserved mbase sp a_kernel) [] [] brk0 brk0 lim mbase sp) stdin fs None (Some tid) None.
 Proof. intros. reflexivity. Qed.
 
 Lemma init_model_C : forall {AMB : Amb} reserved brk0 mbase sp lim av ev fs stdin,
@@ -91,7 +117,7 @@ init_model reserved brk0 mbase sp lim (mkProcInputC av ev fs stdin)
 = mkModelC [ (Z_to_bv 64 0, FdChannel (Z_to_bv 64 0));
 (Z_to_bv 64 1, FdChannel (Z_to_bv 64 1));
 (Z_to_bv 64 2, FdChannel (Z_to_bv 64 2)) ]
-(mkVmMapsFull reserved [] [] brk0 brk0 lim mbase sp) stdin fs None None None.
+(mkVmMapsFull (init_reserved reserved mbase sp a_kernel) [] [] brk0 brk0 lim mbase sp) stdin fs None None None.
 Proof. intros. reflexivity. Qed.
 
 Section Proj.

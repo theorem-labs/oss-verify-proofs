@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC7z.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/Reusable/YC7z.v, with its module paths and module names changed; 18 of its 41 lines of code are new or changed and 50 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/reac_segconf_ignore_file_c.v; 16 of its 44 lines of code are new or changed and 13 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* ieq (fuzz_segconf.c:127-138; fuzz_segconf.asan 0x87904, 232 bytes, 58 instructions; frame 48 bytes, no
    side-stack frame): the contract of the ASan build's code, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre
    at the entry, SRr of apost_base at the return).
@@ -43,8 +44,8 @@
    IMAGE-INDEPENDENT: no image module is Required; A_ieq, STK_ieq, RLO and RHI are parameters, and the
    shadow-base cells are fields of B.
    The WALK takes these runtime entries as Section hypotheses (the interceptor lane's interface
-   provenance/evidence/interceptors/INTERFACE-A-interceptors.md (commit 7068323e2626); row 16 is in the accepted v1,
-   5e0b8a44fdc; at e45889d6935a strlen is that file's DECISION 2, option (b)):
+   provenance/evidence/interceptors/INTERFACE-A-interceptors.md; row 16 is in the accepted v1,;
+    strlen is that file's DECISION 2, option (b)):
      RtString.astrlen_realizes (row 16), at the strlen trampoline (image A 0x43a0c, interceptor 0x43abc).
    They are NOT premises of this contract: the statement does not mention them. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.

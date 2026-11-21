@@ -4,7 +4,7 @@ Written by mkdiffs.py. Each copy below is the script these records ran. A change
 
 | tool | copy sha256 | original sha256 | source | changed lines |
 |---|---|---|---|---|
-| `bytecmp-1480ca2faea0.py` | `0ac2ec8db277b17e34a4a0e35804270157525dbacbc6b0283f95134dbfe129de` | `1480ca2faea075e866800faab4e18aea5fb4a96dcea17ef1fe8981f1bdd0f98f` | tool registry commit 797e8971d27d, tools/bytecmp/1480ca2faea0/bytecmp.py (its lines 39-151 are insnflow a36c2b82eb44, tools/insnflow/a36c2b82eb44/insnflow.py at the same commit) | 11 removed, 11 added (195 lines in, 195 lines out) |
+| `bytecmp-1480ca2faea0.py` | `0ac2ec8db277b17e34a4a0e35804270157525dbacbc6b0283f95134dbfe129de` | `1480ca2faea075e866800faab4e18aea5fb4a96dcea17ef1fe8981f1bdd0f98f` | tool registry, tools/bytecmp/1480ca2faea0/bytecmp.py (its lines 39-151 are insnflow a36c2b82eb44, tools/insnflow/a36c2b82eb44/insnflow.py at the same commit) | 11 removed, 11 added (195 lines in, 195 lines out) |
 | `closure_strict2.py` | `21028c256d69b6802aaa3f86f5d4e170dc836a37e8389bf84926aa212372634a` | `387ac56b542550b4f0b3ead93eeceee2ed7c75248926caaa925301012c6bc999` | cmpkit 4bbd3a74be89, closure_strict2.py: by-name closure, one compare per X address, loads strictcmp2 | 1 removed, 1 added (98 lines in, 98 lines out) |
 | `drvcmp.py` | `89ca4b797ed737e4cfef64016d74febd46965baf758b175b446928f0f212e5c4` | `4d70e90bc1fa4d70fe1ea53e0208593ee5e87ff53c3b80c8b767ffdff4eaa3a6` | cmpkit 4bbd3a74be89, drvcmp.py: loader (bytecmp + repin_check Img / sx / targets / w_off), twins; no target pass | 7 removed, 7 added (60 lines in, 60 lines out) |
 | `dupcheck.py` | `4c08955c12af4db3d5ca86440ed62e603e9d3a71aecf0a1c1b09f03828fe66fd` | - | written for these records: duplicate-name check for every function compared by name (strictcmp2 cmp and closure_strict2) | - |
@@ -23,7 +23,7 @@ Written by mkdiffs.py. Each copy below is the script these records ran. A change
 ## bytecmp-1480ca2faea0.py
 
 - copy sha256 `0ac2ec8db277b17e34a4a0e35804270157525dbacbc6b0283f95134dbfe129de`
-- original sha256 `1480ca2faea075e866800faab4e18aea5fb4a96dcea17ef1fe8981f1bdd0f98f`: tool registry commit 797e8971d27d, tools/bytecmp/1480ca2faea0/bytecmp.py (its lines 39-151 are insnflow a36c2b82eb44, tools/insnflow/a36c2b82eb44/insnflow.py at the same commit)
+- original sha256 `1480ca2faea075e866800faab4e18aea5fb4a96dcea17ef1fe8981f1bdd0f98f`: tool registry, tools/bytecmp/1480ca2faea0/bytecmp.py (its lines 39-151 are insnflow a36c2b82eb44, tools/insnflow/a36c2b82eb44/insnflow.py at the same commit)
 - sha256 of the unredacted diff: `f1e81d36c95e547346054f743cb1455b09bfa5c6ec8a2404cdfff1affc99b0ed`
 
 ```diff
@@ -36,7 +36,7 @@ Written by mkdiffs.py. Each copy below is the script these records ran. A change
 -# ---- insnflow block begin (owner <redacted>). The same bytes as <redacted> (record: <redacted>
 -# tools/insnflow/). symreloc.py and elfdis.py CARRY this block instead of importing it, so that a tool's sha fixes its
 +# ---- insnflow block begin. The same bytes as insnflow a36c2b82eb44 (tools/insnflow/a36c2b82eb44/insnflow.py, tool
-+# registry commit 797e8971d27d) apart from comments. symreloc.py and elfdis.py CARRY this block instead of importing it, so that a tool's sha fixes its
++# registry) apart from comments. symreloc.py and elfdis.py CARRY this block instead of importing it, so that a tool's sha fixes its
 @@ -76,4 +76,4 @@
 -    A linear scan is wrong in both directions, as two lanes measured on 2026-10-29: it pairs an auipc with a word that is a
 -    jump-table case entered from elsewhere (<redacted>, printf_core+0x890: a false differing reference), and it drops a
@@ -95,7 +95,7 @@ Written by mkdiffs.py. Each copy below is the script these records ran. A change
 @@ -10,2 +10,2 @@
 -  - bytecmp 1480ca2faea0 (<redacted> tools/bytecmp/1480ca2faea0, version of record; file sha256 checked below),
 -    `bytecmp-1480ca2faea0.py` beside this file, everything above its `base = {` line.
-+  - bytecmp 1480ca2faea0 (tool registry commit 797e8971d27d, tools/bytecmp/1480ca2faea0; this file beside is that copy
++  - bytecmp 1480ca2faea0 (tool registry, tools/bytecmp/1480ca2faea0; this file beside is that copy
 +    with its comments scrubbed, code above `base = {` identical; file sha256 checked below), everything above that line.
 @@ -21 +21 @@
 -BC_SHA = '1480ca2faea075e866800faab4e18aea5fb4a96dcea17ef1fe8981f1bdd0f98f'
@@ -134,9 +134,9 @@ Written by mkdiffs.py. Each copy below is the script these records ran. A change
 +++ b/repin_check-4c05cadaeba3.py
 @@ -2,2 +2,2 @@
 -"""repin_check.py -- independent check of <redacted>'s PSnp* restatement/re-pin (<redacted>
--17a8581f30c) against <redacted> (<redacted> 7e395de08f5).  Read-only.
-+"""repin_check.py -- independent check of a PSnp* restatement/re-pin (commit 17a8581f30c) against the fm restatement
-+(commit 7e395de08f5).  Read-only.
+-) against <redacted> (<redacted>).  Read-only.
++"""repin_check.py -- independent check of a PSnp* restatement/re-pin against the fm restatement
++.  Read-only.
 @@ -16,6 +16,6 @@
 -IMG = {'A': '<redacted>',
 -       'B': '<redacted>',

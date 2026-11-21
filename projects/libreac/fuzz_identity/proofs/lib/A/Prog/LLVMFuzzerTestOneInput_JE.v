@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: restates text of projects/cgif/cgif_file_fuzzer/proofs/lib/YC1f.v:361-370, for
    libreac/fuzz_identity's ASan build (lib/A). *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Piece E of segment J of LLVMFuzzerTestOneInput's ASan walk (fuzz_identity.asan 0x81c34 .. 0x81e18):
    the expected display string exp_dp, from the expected name exp_nm and the two widths
    (j_E_stmt of LLVMFuzzerTestOneInput_Jcut.v).
@@ -358,7 +359,7 @@ Variable arodata_okS : list Segment -> asyms -> Z -> Z -> reader -> Prop.
 
 (* ---- what the segment takes, each as the contract's Section states it (LLVMFuzzerTestOneInput.v) ----------- *)
 Hypothesis HSTK : STK_LLVMF <= LLVMF_STK.
-(* The contract's own event bound (LLVMFuzzerTestOneInput.v:124): put_dec asks `st_nev Sc <= EV_MAX`, which
+(* The contract's own event bound (LLVMFuzzerTestOneInput.v:125): put_dec asks `st_nev Sc <= EV_MAX`, which
    the entry's pre-condition gives only through it. *)
 Hypothesis HEV : EV_LLVMF <= EV_LIB.
 Hypothesis LAWS : AR_laws SEGS B.

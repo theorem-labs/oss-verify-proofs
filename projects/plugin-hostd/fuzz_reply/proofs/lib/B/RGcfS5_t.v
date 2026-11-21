@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: relocated from fuzz_preset (commit d0fcb396eeeb); module paths changed and every image numeral moved by symbol + offset to fuzz_reply's asan image A (unstripped fuzz_reply.asan sha256 d751b179ea49, pin 42c58610e125). *)
-(* Modified by Theorem Labs, 2026-10-29: copied from the preset unit's lib/A/FSRealloc_S1_t.v (commit 337e6a94485, sha256 0388a364a67d; internal record) for realloc(NULL, n) (segment S5, RGtop's seg_npre), which was relocated from the fuzz_state unit's lib/A/FSRealloc_S1_t.v (commit ddc081c1a03, sha256 93e81e179b96; internal record), a port of the cgif_rgb unit's lib/YF6t.v. *)
+(* Modified by Theorem Labs, 2026-10: relocated from fuzz_preset; module paths changed and every image numeral moved by symbol + offset to fuzz_reply's asan image A (unstripped fuzz_reply.asan sha256 d751b179ea49, pin 42c58610e125). *)
+(* Modified by Theorem Labs, 2026-10-29: copied from the preset unit's lib/A/FSRealloc_S1_t.v (sha256 0388a364a67d; internal record) for realloc(NULL, n) (segment S5, RGtop's seg_npre), which was relocated from the fuzz_state unit's lib/A/FSRealloc_S1_t.v (sha256 93e81e179b96; internal record), a port of the cgif_rgb unit's lib/YF6t.v. *)
 (* Image B (fuzz_reply.asan-ubsan, pin 10ffb5f9202a): every address in the next comment is image B's; an image it names is the image its text came from. *)
 (* fuzz_reply.asan image A, realloc(NULL, n) (segment S5, RGtop's seg_npre). segA: the machine walk from A/RGcfS5_u.v's
    seed (a0 = 0) at __wrap_realloc 0x53e48 (`j 0x54244` -> __interceptor_realloc 0x54244, frame 0x7f0 + 0x70) to
@@ -9,12 +9,13 @@
    Path: 0x54284 `jal 0xb4d8` -> internal_allocator 0x5f75c (cut by tfib_ialloc_spec; returns to 0x54288); with a0 a
    literal, the PointerIsMine probe 0x54288-0x542a4 needs no pins, and the run reads the map word at the literal 0xa7848
    (A/RGcfS5_r.v R_IMN); the LONG trace branch (GetMallocContextSize 0x5bbd0 `auipc a0, 0x4b; lw a0, 0x76c(a0)` reads
-   malloc_context_size at 0xa733c, the REG0 seed cell = A/AF0m.v:98 `z4 (ANum 0xa733c) 0x1e`, `bltu a1, a0` 0x54348
+   malloc_context_size at 0xa733c, the REG0 seed cell = A/AF0m.v:99 `z4 (ANum 0xa733c) 0x1e`, `bltu a1, a0` 0x54348
    taken) to `jal 0x2096c` 0x5437c (GetCurrentPc 0x74ce8; pc0 = 0x54380) and `jal 0x7808` 0x543d8 (UnwindImpl 0x5bbe0,
    cut by tfib_unwind_spec; returns to 0x543dc); `jal -0x21e34` 0x543ec -> asan_realloc 0x325b8 (`beqz a0` 0x325c8
    taken -> 0x32610 .. `jal Allocate` 0x3262c) -> 0x31c30. *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/RGcfS5_t.v at commit 6ea216c338f as lib/B/RGcfS5_t.v, with its module paths changed (lib.A to lib.B, except the image-free ADIfaceImgA and the one params file CfParamsReply; the image twins A<r> to Y<r>, CfImgA / CfImg_A to CfImgB / CfImg_B, WrapAKit / WrapFreeA<x> to WrapBKit / WrapFreeB<x>, AFf0cfR to YFf0cfR, RGcfWalkA to RGcfWalkB with its three exported names wrap_realloc_walk_cf_A, wrap_realloc_null_walk_cf_A, wrap_realloc_walk_cf_rh_A to _B), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan by alreloc 6e5d1356c317 (37 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/RGcfS5_t.v as lib/B/RGcfS5_t.v, with its module paths changed (lib.A to lib.B, except the image-free ADIfaceImgA and the one params file CfParamsReply; the image twins A<r> to Y<r>, CfImgA / CfImg_A to CfImgB / CfImg_B, WrapAKit / WrapFreeA<x> to WrapBKit / WrapFreeB<x>, AFf0cfR to YFf0cfR, RGcfWalkA to RGcfWalkB with its three exported names wrap_realloc_walk_cf_A, wrap_realloc_null_walk_cf_A, wrap_realloc_walk_cf_rh_A to _B), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan by alreloc 6e5d1356c317 (37 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

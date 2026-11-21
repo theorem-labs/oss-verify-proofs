@@ -10,22 +10,23 @@
    - line 72: `From lib.Reusable Require YI16 YCbq YCbqG.` -> `From lib.Reusable Require YI16.` / `From lib.B Require YCbq YCbqG.`
    Nothing else changes: below this comment the bytes are the source's.
    DO NOT EDIT: change the source file on its branch, carry it again, and re-point it again. *)
-(* CARRIED from a working branch 861bb2393db4053ec166d3688044f898f949bd22,
+(* CARRIED from a working branch,
    proofs/omx-clap-core/fuzz_preset/lib/Reusable/YCe5x.v, sha256 60aa1000d5c2914faff070207e47062de8425b441c5dcfc635effd251da0c301.
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change
    made here is the module prefix OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib. *)
-(* Modified by Theorem Labs, 2026-10: for omx-clap-core/fuzz_preset, the call journals YCe5.v:255-275 (ajournal) and
+(* Modified by Theorem Labs, 2026-10: for omx-clap-core/fuzz_preset, the call journals YCe5.v:256-276 (ajournal) and
    YCbq.v:351-373 (ajournal) with the allocator invariant AR made the parameter ARx of YCbqG.v's shape; no other change. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* YCe5x.v is the ONLY home of the ARx twins of YCe5.ajournal and YCbq.ajournal. A proof that needs YCe5's journal over a
    generic ARx (the consumer is fuzz_reply's lib/A/ACfl.v, whose tfib_lib_contract names YCe5.afn_pre and YCe5.ajournal)
    cites ajournal_e5x; a proof that needs YCbq's journal over a generic ARx cites ajournal_bq_x; nobody makes a second
    copy.
    The pre side is YCbqG.afn_pre_x, which already equals YCe5.afn_pre over ARx + Hp; this file makes no copy of it.
-   ajournal_e5x is YCe5's text, so it differs from YCbqG.ajournal_x (YCbqG.v:208-261) in exactly three deliberate places:
-   (1) the io conjunct is `same_io md md'`, not `aos_step FP md md'` (YCbqG.v:221);
-   (2) the image clause has no `~ Exists (in_zr a) PST -> fp_spares FP a ->` premise (YCbqG.v:221), so Section x takes
+   ajournal_e5x is YCe5's text, so it differs from YCbqG.ajournal_x (YCbqG.v:209-262) in exactly three deliberate places:
+   (1) the io conjunct is `same_io md md'`, not `aos_step FP md md'` (YCbqG.v:222);
+   (2) the image clause has no `~ Exists (in_zr a) PST -> fp_spares FP a ->` premise (YCbqG.v:222), so Section x takes
        no PST and no YI16.sink_head instance;
-   (3) there is no `ly_extra` frame conjunct (YCbqG.v:259-260).
+   (3) there is no `ly_extra` frame conjunct (YCbqG.v:260-261).
    ARx takes the ghost poisoned-head set Hp, so ajournal_e5x takes Hp (before) and Hp' (after) at the positions
    YCbqG.ajournal_x takes them; only Hp' is read, as the argument of ARx at the post state. YCbqG's hl occurs only in
    its laws record AR_laws_x, never in a journal, so neither journal of this file takes hl.
@@ -35,30 +36,30 @@
    keeps aos_step, the fp_spares premise and the ly_extra conjunct, so Section bq takes YCbq's YI16.sink_head context SK
    (fp_spares reads it) and no PST. The check lemma ajournal_bq_x_AR proves the twin: at ARx := cgif's AR with Hp
    ignored, ajournal_bq_x is YCbq.ajournal by reflexivity. ajournal_bq_x_iff_x links the two ARx forms for every ARx:
-   at PST = [], ajournal_bq_x is YCbqG.ajournal_x, whose one extra premise `~ Exists (in_zr a) []` (YCbqG.v:221) holds.
-   Routing of the journal texts of fuzz_preset (checked at 459129c18903): only YCe5 and YCbq define a constant
+   at PST = [], ajournal_bq_x is YCbqG.ajournal_x, whose one extra premise `~ Exists (in_zr a) []` (YCbqG.v:222) holds.
+   Routing of the journal texts of fuzz_preset (checked): only YCe5 and YCbq define a constant
    `ajournal`; YC80 and YE01 name one by a notation; every other module whose code says `ajournal` (YC5d, YCeg, YCeh,
    YCem, YCfl, YD1r, YD1w) cites one of the two constants and routes as its body.
-     YCe5  own body, YCe5.v:255-275 -> ajournal_e5x (this file); identical modulo AR (ajournal_e5x_AR).
+     YCe5  own body, YCe5.v:256-276 -> ajournal_e5x (this file); identical modulo AR (ajournal_e5x_AR).
      YCbq  own body, YCbq.v:351-373 -> ajournal_bq_x (this file); identical modulo AR (ajournal_bq_x_AR).
-           YCbqG.ajournal_x differs from it only in the PST premise YCbqG.v:221 (ajournal_bq_x_iff_x for every ARx,
+           YCbqG.ajournal_x differs from it only in the PST premise YCbqG.v:222 (ajournal_bq_x_iff_x for every ARx,
            ajournal_x_YCbq at ARx := AR: iffs at PST = []).
      YC80  no body: YC80.v:51 is `Local Notation ajournal := (ajournal segs B)`, which is YCbq.ajournal (YC80.v:18
            imports YCbq and no module that defines another ajournal) -> as YCbq.
      YE01  no body: YE01.v:48, the same notation, YCbq.ajournal by YE01.v:21 -> as YCbq.
    YCbq.ajournal differs from YCe5.ajournal at YCbq.v:356 (aos_step FP for same_io), YCbq.v:363 (the extra premise
    fp_spares FP a) and YCbq.v:371-372 (the extra ly_extra conjunct). So no module needs a third journal twin.
-   THE KEEP LEMMA (Section k): acall_kept_of_journal_e5x is YCe5.v:842-859 acall_kept_of_journal with ajournal ->
+   THE KEEP LEMMA (Section k): acall_kept_of_journal_e5x is YCe5.v:843-860 acall_kept_of_journal with ajournal ->
    ajournal_e5x and its AR premise -> ARx; the proof is YCe5's and uses no law. Its conclusion is YCe5.acall_kept
-   (YCe5.v:704-715) as it stands, because acall_kept names no AR: a callee journal keeps every byte of a block live
+   (YCe5.v:705-716) as it stands, because acall_kept names no AR: a callee journal keeps every byte of a block live
    before and after the call outside E (E covers FP), every image byte that is not an owned static and not errno, every
    byte of a caller frame outside E, and every byte at or above alloc_ceiling outside the callee's stack window. No
-   journal conjunct keeps the errno cell (YCe5.v:267 excludes it) or a byte below alloc_ceiling that is in no block, in
+   journal conjunct keeps the errno cell (YCe5.v:268 excludes it) or a byte below alloc_ceiling that is in no block, in
    no frame and not in_img. acall_kept_of_journal_e5x_AR checks the twin against YCe5's statement at ARx := AR.
    THE HELPER TWINS (Section k): of the YCe5 names that the closed walk of fuzz_reply's lib/A cites, five state AR:
-   sep_blocks (YCe5.v:323) is YCbqG.sep_blocks_x and frames_bounds (YCe5.v:353) is YCbqG.frames_bounds_x; this file
-   adds amem_range_of_block_x (YCe5.v:1519, from alx_blocks), shent_app_of_block_x (YCe5.v:2045, from alx_blocks) and
-   shent_app_of_frame_x (YCe5.v:2056, from YCbqG.frames_bounds_x), each with a check _AR against YCe5's statement. *)
+   sep_blocks (YCe5.v:324) is YCbqG.sep_blocks_x and frames_bounds (YCe5.v:354) is YCbqG.frames_bounds_x; this file
+   adds amem_range_of_block_x (YCe5.v:1520, from alx_blocks), shent_app_of_block_x (YCe5.v:2046, from alx_blocks) and
+   shent_app_of_frame_x (YCe5.v:2057, from YCbqG.frames_bounds_x), each with a check _AR against YCe5's statement. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From Stdlib Require Import FunctionalExtensionality.
@@ -193,7 +194,7 @@ Context {hl : Z}.
 Hypothesis LAWS : YCbqG.AR_laws_x segs B ARx hl.
 Hypothesis segs_low : forall a, in_img segs a -> 0 <= a < kLowMemEnd.
 Local Abbreviation ajournal_e5x := (ajournal_e5x segs B ARx).
-(* YCe5.v:842 acall_kept_of_journal *)
+(* YCe5.v:843 acall_kept_of_journal *)
 Lemma acall_kept_of_journal_e5x : forall stk sp1 FP1 nf lyc Sc Hpc W memc mdc ly2 S2 Hp2 W2 mem2 md2 k1 (E : Z -> Prop),
 ajournal_e5x stk sp1 FP1 lyc Sc Hpc W memc mdc nf ly2 S2 Hp2 W2 mem2 md2 k1 ->
 ARx lyc Sc Hpc W memc mdc ->
@@ -212,7 +213,7 @@ split; [exact G3|]. split.
 split; [|exact Hpres].
 intros a Ha Hs Hp. eapply apresent_transfer; [zlia | intros Him; pose proof (segs_low a Him); zlia | apply G1; [exact Ha | exact Hs] | exact Hp].
 Qed.
-(* YCe5.v:1519 amem_range_of_block *)
+(* YCe5.v:1520 amem_range_of_block *)
 Lemma amem_range_of_block_x : forall ly S Hp W mem md p m a n,
 ARx ly S Hp W mem md -> In (p, m) (ablocks B ly S) -> p <= a -> a + n <= p + req_size m -> amem_range a n.
 Proof.
@@ -220,7 +221,7 @@ intros ly S Hp W mem md p m a n HAR Hin H1 H2.
 destruct (YCbqG.alx_blocks segs B ARx LAWS ly S Hp W mem md p m HAR Hin) as (_ & _ & Hc & [Hh Hh2] & _).
 pose proof asan_consts as (C1 & C2 & C3 & C4 & C5). zlia.
 Qed.
-(* YCe5.v:2045 shent_app_of_block *)
+(* YCe5.v:2046 shent_app_of_block *)
 Lemma shent_app_of_block_x : forall ly S Hp W mem md E Bx (m : nat) q p n wlo whi M,
 ARx ly S Hp W mem md -> In (p, n) (ablocks B ly S) ->
 U E Bx = SHADOW_OFF -> U E (SOff m 0) = q -> p <= q + wlo -> wlo < whi -> q + whi <= p + req_size n ->
@@ -232,7 +233,7 @@ unfold shent_ok, app_apart. cbn [she_m she_lo she_hi]. rewrite HB, Hm. split.
 - destruct (YCbqG.alx_blocks segs B ARx LAWS ly S Hp W mem md p n HAR Hin) as (_ & _ & _ & Happ & _).
 intros a Ha. unfold in_app, SHADOW_OFF, kLowShadowBeg, kHighMemBeg, ASAN_CEIL in *. zlia.
 Qed.
-(* YCe5.v:2056 shent_app_of_frame *)
+(* YCe5.v:2057 shent_app_of_frame *)
 Lemma shent_app_of_frame_x : forall ly S Hp W mem md E Bx (m : nat) q cid pos wlo whi M,
 ARx ly S Hp W mem md -> In (cid, pos) (frames S) ->
 U E Bx = SHADOW_OFF -> U E (SOff m 0) = q -> frame_addr ly cid pos <= q + wlo -> wlo < whi ->

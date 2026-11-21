@@ -12,11 +12,11 @@
 #                                  yb1w-side-stack-note.py (YB1w: the donor's side-stack note, GATES.md section 13)
 #
 # Inputs (each named by sha; nothing is read from a host path the tree does not name):
-#   REL    port_core 7a74e72920e6, the tool of record (pg-tools commit b25bb893cdb, tools/pg-reloc/7a74e72920e6;
-#          registered at tools registry commit 94d243257b5). Its B mode names lib.B.YImgTop, so no post-step does, and
+#   REL    port_core 7a74e72920e6, the tool of record (pg-tools, tools/pg-reloc/7a74e72920e6;
+#          registered at tools registry). Its B mode names lib.B.YImgTop, so no post-step does, and
 #          its renames leave the donor's leading licence-notice block as the donor has it.
-#   DON    fuzz_grant's RELEASED image-B lib, origin/ossv/recipes 4f87de75d67, normalised by mkdon.sh beside this file
-#            HUB=<clone> mkdon.sh 4f87de75d67 fuzz_grant B $DONROOT ; DON=$DONROOT/proofs/libreac/fuzz_grant/lib
+#   DON    fuzz_grant's RELEASED image-B lib, normalised by mkdon.sh beside this file
+#            HUB=<clone> mkdon.sh fuzz_grant B $DONROOT ; DON=$DONROOT/proofs/libreac/fuzz_grant/lib
 #   SYMS   fuzz_grant.asan-ubsan.syms.txt beside this file (mksyms.py over the donor's unstripped twin, sha256
 #          5a5ee7c02b4e; the same file as fuzz_uci's image-B core uses)
 #   P, R   the pinned image trees: P holds libreac's fuzz_grant (asan-ubsan fde52226dc48), R reac-repacer's result/

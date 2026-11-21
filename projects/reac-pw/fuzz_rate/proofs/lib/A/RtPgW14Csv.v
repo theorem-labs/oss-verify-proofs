@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v at 1d255703e88 (m2_stack,
-   m2_pre_call, m2_core_step, m2_core_call) and proofs/reac-pw/fuzz_role/lib/A/RPgM02Tail.v at 1d255703e88
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v (m2_stack,
+   m2_pre_call, m2_core_step, m2_core_call) and proofs/reac-pw/fuzz_role/lib/A/RPgM02Tail.v
    (m2t_garr8_kept, the run-to-call / contract / return pattern of tl_s4 .. tl_s6) for reac-pw/fuzz_rate's image-A
    list segment M03: rate's cut vocabulary (lib/A/RtPgSeg.v, rt_ / q_ names); the seam is generic in the segment's
    write set and carries rt_cpost_g's O conjunct; the walk of C6 -> C7 (memset, reac_rate_drivable_csv, check_csv)
    is new. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image A (fuzz_rate.asan, pinned sha256
    22bc8613d780c9a99353dc86368f9401311ef5c8358882651217836298529b6a; every address measured on the unstripped twin
    0d508f2c65c249840b6c8fe3c1960824f2548b175c23583632f06bb7956458c3, the same loaded bytes): THE LIST SEGMENT M03 of the

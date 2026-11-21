@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/boost-beast/http_request/lib/Lib/Tac.v; 392 of its 415 lines of code are new or changed and 299 lines of the source are left out. *)
 (* proves diginet_frame_parse_holds, the walk of diginet_frame_parse in fuzz_transport.ubsan against its UBSan contract, with the memcpy, rd32 and diginet_sum16 contracts as hypotheses. *)
-(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/diginet_frame_parse.v at 9bd29914ffdef650a37285056a472ff186b4331a to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/diginet_frame_parse.v to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Walk of diginet_frame_parse (src/diginet_frame.c:60-91 at 835f336c) in fuzz_transport.ubsan,
    0x18034..0x1821c. The 64 bytes at f are one byte cell until the two memcpy calls; then they
    are the cells at f, f + 6 and f + 12 (uwp_split64), one for each store, and at the end the

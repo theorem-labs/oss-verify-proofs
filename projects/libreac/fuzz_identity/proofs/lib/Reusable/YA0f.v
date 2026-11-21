@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from projects/cgif/cgif_file_fuzzer/proofs/lib/YA0f.v (donor image sha256 7093581aab04), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed LIMIT, node_x_sound_XIMemset, node_x_sound_XMemset, node_x_sound_XIMemcpy, node_x_sound_XMemcpy, node_x_sound_XMemIsZero and 2 more; added rz). *)
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -553,6 +554,8 @@ Variable SEGS : list Segment.
 Variable A : atable.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+(* The plan-node statements use the run's CONFIG_RSEQ flag. *)
+Variable rz : Z.
 Variable TOP : Z.
 Hypothesis SEGS_wx : wx_segs_nowrap SEGS.
 Hypothesis SEGS_in_hull : forall a : word, in_hull A (bv_unsigned a) = false -> find_segment SEGS (bv_unsigned a) 1 = None.
@@ -2093,7 +2096,7 @@ unfold M, Mr, mrestrict in Zi. rewrite Hhx in Zi. exact Zi.
 split; [eapply w_env_agree_le; [exact Hag | exact Fle] | exact Hag].
 Qed.
 Theorem node_x_sound_XIMemset :
-fill_spec SEGS (x_imemset A) 256 -> x_stmt SEGS A nx0 LIMIT TOP SINV argH FS0 XIMemset.
+fill_spec SEGS (x_imemset A) 256 -> x_stmt SEGS A nx0 LIMIT rz TOP SINV argH FS0 XIMemset.
 Proof.
 intros SUM args cs cs' E R FULL model T HC Hal Hn Hk. cbn [node_x] in Hn.
 destruct (spad_fillz A nx0 cs (x_imemset A) 256) as [cs0|] eqn:Hsz.
@@ -2103,7 +2106,7 @@ destruct (spad_fill0 A nx0 cs (x_imemset A) 256) as [cs1|] eqn:Hsp.
 - exact (summary_fill_sound _ _ SUM cs cs' E R FULL model T HC Hal Hn Hk).
 Qed.
 Theorem node_x_sound_XMemset :
-fill_spec SEGS (x_memset A) two64 -> x_stmt SEGS A nx0 LIMIT TOP SINV argH FS0 XMemset.
+fill_spec SEGS (x_memset A) two64 -> x_stmt SEGS A nx0 LIMIT rz TOP SINV argH FS0 XMemset.
 Proof.
 intros SUM args cs cs' E R FULL model T HC Hal Hn Hk. cbn [node_x] in Hn.
 destruct (spad_fillz A nx0 cs (x_memset A) two64) as [cs0|] eqn:Hsz.
@@ -2113,19 +2116,19 @@ destruct (spad_fill0 A nx0 cs (x_memset A) two64) as [cs1|] eqn:Hsp.
 - exact (summary_fill_sound _ _ SUM cs cs' E R FULL model T HC Hal Hn Hk).
 Qed.
 Theorem node_x_sound_XIMemcpy :
-copy_spec SEGS (x_imemcpy A) -> x_stmt SEGS A nx0 LIMIT TOP SINV argH FS0 XIMemcpy.
+copy_spec SEGS (x_imemcpy A) -> x_stmt SEGS A nx0 LIMIT rz TOP SINV argH FS0 XIMemcpy.
 Proof. intros SUM args. exact (summary_copy_sound _ SUM). Qed.
 Theorem node_x_sound_XMemcpy :
-copy_spec SEGS (x_memcpy A) -> x_stmt SEGS A nx0 LIMIT TOP SINV argH FS0 XMemcpy.
+copy_spec SEGS (x_memcpy A) -> x_stmt SEGS A nx0 LIMIT rz TOP SINV argH FS0 XMemcpy.
 Proof. intros SUM args. exact (summary_copy_sound _ SUM). Qed.
 Theorem node_x_sound_XMemIsZero :
-miz_spec SEGS (x_memiszero A) -> x_stmt SEGS A nx0 LIMIT TOP SINV argH FS0 XMemIsZero.
+miz_spec SEGS (x_memiszero A) -> x_stmt SEGS A nx0 LIMIT rz TOP SINV argH FS0 XMemIsZero.
 Proof. intros SUM args. exact (summary_miz_sound SUM). Qed.
 Theorem node_x_sound_XIStrncpy :
-istrncpy_spec SEGS (x_istrncpy A) (x_sealed A) -> x_stmt SEGS A nx0 LIMIT TOP SINV argH FS0 XIStrncpy.
+istrncpy_spec SEGS (x_istrncpy A) (x_sealed A) -> x_stmt SEGS A nx0 LIMIT rz TOP SINV argH FS0 XIStrncpy.
 Proof. intros SUM args. exact (summary_istrncpy_sound SUM). Qed.
 Theorem node_x_sound_XPopFree :
-popfree_spec SEGS (x_popfree A) -> x_stmt SEGS A nx0 LIMIT TOP SINV argH FS0 XPopFree.
+popfree_spec SEGS (x_popfree A) -> x_stmt SEGS A nx0 LIMIT rz TOP SINV argH FS0 XPopFree.
 Proof. intros SUM args. exact (summary_popfree_sound SUM args). Qed.
 Lemma w_cover_x_rd1 : forall fuel E M k b i stop,
 know_ok SEGS E M k -> cover_x fuel k b i stop = true ->

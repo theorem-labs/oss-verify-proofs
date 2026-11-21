@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the open_*_cps_A lemmas take the path below 2^47 and prove open_pre's TASK_SIZE bound from it). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Monad Fs Specs Run.
@@ -565,6 +566,7 @@ ro_cells asegs m A_GUARD_GOT [C8 (Z_to_bv 64 A_GUARD)] -> ro_cells asegs m A_GUA
 rw_cells asegs m (A_TP - 164) [C4 errv] ->
 stk asegs m lo (bv_unsigned sp) -> lo + 112 <= bv_unsigned sp -> alloc_ceiling <= lo -> bv_unsigned sp <= 2^47 ->
 (pp + Z.of_nat (length p) + 1 <= lo \/ bv_unsigned sp <= pp) ->
+pp + Z.of_nat (length p) + 1 <= 2^47 ->
 mem_inv asegs m -> bv_unsigned ra mod 2 = 0 -> TA [] -> TB [] ->
 (forall (e : Z) (t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' : word) m' (cf' : config),
 In e openat_errnos ->
@@ -583,7 +585,7 @@ F (ret_pc ra) fc None m' (seg_rom asegs))) ->
 AJ J (t_alt2 TA TB) cf (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 OPEN_A) fc None m (seg_rom asegs)).
 Proof.
-intros until d. intros HCK -> -> -> STR NONUL LEN NE NSL NDR FS AFD FD3 GG GV ER ST LO CEIL SPH APART MI RA HA0 HB0 KA KB.
+intros until d. intros HCK -> -> -> STR NONUL LEN NE NSL NDR FS AFD FD3 GG GV ER ST LO CEIL SPH APART PTK MI RA HA0 HB0 KA KB.
 unfold A_GUARD_GOT, A_GUARD, A_TP in *.
 word_range sp SPR. rc_lia_prep. unfold alloc_ceiling in CEIL.
 pose proof (wmono_refl asegs m) as WM.
@@ -600,7 +602,7 @@ lazymatch goal with |- AJ _ _ _ (epend ?R ?pc ?mm ?ro _) =>
 eapply (@ajs_open_file F fc asegs J (SYS F fc) R pc mm cf p d TA TB HCK) end;
 [ unfold open_pre; split; [reflexivity|]; split; [apply bv_eq; reflexivity|]; split; [vm_compute; reflexivity|]; split; [exact NONUL|]; split; [exact NSL|]; split; [exact NDD|];
 (match goal with |- context [QsRG.Mq0.getr ?R 11%bv] => replace (QsRG.Mq0.getr R 11%bv) with (Z_to_bv 64 pp : word) by reflexivity end;
-rewrite unsigned_lit by (destruct STR as (B1 & B2 & _); rewrite ?length_app in B2; cbn [length] in B2; lia); exact STR)
+rewrite unsigned_lit by (destruct STR as (B1 & B2 & _); rewrite ?length_app in B2; cbn [length] in B2; lia); split; [exact STR | unfold TASK_SIZE; lia])
 | unfold path_max; lia | exact NE | exact NDOT | exact FS | rewrite AFD; exact FD3 | exact HA0 | exact HB0 | | ].
 -
 intros e c1 He HN1 SIO1.
@@ -651,6 +653,7 @@ ro_cells asegs m A_GUARD_GOT [C8 (Z_to_bv 64 A_GUARD)] -> ro_cells asegs m A_GUA
 rw_cells asegs m (A_TP - 164) [C4 errv] ->
 stk asegs m lo (bv_unsigned sp) -> lo + 112 <= bv_unsigned sp -> alloc_ceiling <= lo -> bv_unsigned sp <= 2^47 ->
 (pp + 2 <= lo \/ bv_unsigned sp <= pp) ->
+pp + 2 <= 2^47 ->
 mem_inv asegs m -> bv_unsigned ra mod 2 = 0 -> TA [] -> TB [] ->
 (forall (e : Z) (t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' : word) m' (cf' : config),
 In e openat_errnos ->
@@ -669,7 +672,7 @@ F (ret_pc ra) fc None m' (seg_rom asegs))) ->
 AJ J (t_alt2 TA TB) cf (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 OPEN_A) fc None m (seg_rom asegs)).
 Proof.
-intros until lo. intros HCK -> -> -> STR AFD FD3 GG GV ER ST LO CEIL SPH APART MI RA HA0 HB0 KA KB.
+intros until lo. intros HCK -> -> -> STR AFD FD3 GG GV ER ST LO CEIL SPH APART PTK MI RA HA0 HB0 KA KB.
 unfold dot_path in *.
 unfold A_GUARD_GOT, A_GUARD, A_TP in *.
 word_range sp SPR. rc_lia_prep. unfold alloc_ceiling in CEIL.
@@ -686,7 +689,7 @@ lazymatch goal with |- AJ _ _ _ (epend ?R ?pc ?mm ?ro _) =>
 eapply (@ajs_open_dot F fc asegs J (SYS F fc) R pc mm cf TA TB HCK) end;
 [ unfold open_pre; split; [reflexivity|]; split; [apply bv_eq; reflexivity|]; split; [vm_compute; reflexivity|]; split; [cbn; intros [E|[]]; discriminate|]; split; [reflexivity|]; split; [reflexivity|];
 (match goal with |- context [QsRG.Mq0.getr ?R 11%bv] => replace (QsRG.Mq0.getr R 11%bv) with (Z_to_bv 64 pp : word) by reflexivity end;
-rewrite unsigned_lit by (destruct STR as (B1 & B2 & _); rewrite ?length_app in B2; cbn [length] in B2; lia); exact STR)
+rewrite unsigned_lit by (destruct STR as (B1 & B2 & _); rewrite ?length_app in B2; cbn [length] in B2; lia); split; [exact STR | match goal with |- context [length ?d] => let Ld := fresh "Ld" in assert (Ld : length d = 1%nat) by reflexivity; rewrite Ld end; unfold TASK_SIZE; lia])
 | rewrite AFD; exact FD3 | exact HA0 | exact HB0 | | ].
 -
 intros e c1 He HN1 SIO1.
@@ -737,6 +740,7 @@ ro_cells asegs m A_GUARD_GOT [C8 (Z_to_bv 64 A_GUARD)] -> ro_cells asegs m A_GUA
 rw_cells asegs m (A_TP - 164) [C4 errv] ->
 stk asegs m lo (bv_unsigned sp) -> lo + 112 <= bv_unsigned sp -> alloc_ceiling <= lo -> bv_unsigned sp <= 2^47 ->
 (pp + Z.of_nat (length p) + 1 <= lo \/ bv_unsigned sp <= pp) ->
+pp + Z.of_nat (length p) + 1 <= 2^47 ->
 mem_inv asegs m -> bv_unsigned ra mod 2 = 0 ->
 (forall (t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' : word) m' (cf' : config),
 munch [(bv_unsigned sp - 112, bv_unsigned sp); (A_TP - 164, A_TP - 160)] m m' -> wmono asegs m m' -> mem_inv asegs m' ->
@@ -747,7 +751,7 @@ F (ret_pc ra) fc None m' (seg_rom asegs))) ->
 AJ J T cf (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 OPEN_A) fc None m (seg_rom asegs)).
 Proof.
-intros until p. intros HCK -> -> -> STR NONUL LEN NE NSL NDR FS GG GV ER ST LO CEIL SPH APART MI RA KA.
+intros until p. intros HCK -> -> -> STR NONUL LEN NE NSL NDR FS GG GV ER ST LO CEIL SPH APART PTK MI RA KA.
 unfold A_GUARD_GOT, A_GUARD, A_TP in *.
 word_range sp SPR. rc_lia_prep. unfold alloc_ceiling in CEIL.
 pose proof (wmono_refl asegs m) as WM.
@@ -764,7 +768,7 @@ lazymatch goal with |- AJ _ _ _ (epend ?R ?pc ?mm ?ro _) =>
 eapply (@ajs_open_absent F fc asegs J (SYS F fc) R pc mm cf p T HCK) end;
 [ unfold open_pre; split; [reflexivity|]; split; [apply bv_eq; reflexivity|]; split; [vm_compute; reflexivity|]; split; [exact NONUL|]; split; [exact NSL|]; split; [exact NDD|];
 (match goal with |- context [QsRG.Mq0.getr ?R 11%bv] => replace (QsRG.Mq0.getr R 11%bv) with (Z_to_bv 64 pp : word) by reflexivity end;
-rewrite unsigned_lit by (destruct STR as (B1 & B2 & _); rewrite ?length_app in B2; cbn [length] in B2; lia); exact STR)
+rewrite unsigned_lit by (destruct STR as (B1 & B2 & _); rewrite ?length_app in B2; cbn [length] in B2; lia); split; [exact STR | unfold TASK_SIZE; lia])
 | unfold path_max; lia | exact NE | exact NDOT | exact FS | ].
 -
 intros c1 HN1 SIO1.
@@ -794,6 +798,7 @@ ro_cells asegs m A_GUARD_GOT [C8 (Z_to_bv 64 A_GUARD)] -> ro_cells asegs m A_GUA
 rw_cells asegs m (A_TP - 164) [C4 errv] ->
 stk asegs m lo (bv_unsigned sp) -> lo + 112 <= bv_unsigned sp -> alloc_ceiling <= lo -> bv_unsigned sp <= 2^47 ->
 (pp + 1 <= lo \/ bv_unsigned sp <= pp) ->
+pp + 1 <= 2^47 ->
 mem_inv asegs m -> bv_unsigned ra mod 2 = 0 ->
 (forall (t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' : word) m' (cf' : config),
 munch [(bv_unsigned sp - 112, bv_unsigned sp); (A_TP - 164, A_TP - 160)] m m' -> wmono asegs m m' -> mem_inv asegs m' ->
@@ -804,7 +809,7 @@ F (ret_pc ra) fc None m' (seg_rom asegs))) ->
 AJ J T cf (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 OPEN_A) fc None m (seg_rom asegs)).
 Proof.
-intros until lo. intros HCK -> -> -> STR GG GV ER ST LO CEIL SPH APART MI RA KA.
+intros until lo. intros HCK -> -> -> STR GG GV ER ST LO CEIL SPH APART PTK MI RA KA.
 unfold A_GUARD_GOT, A_GUARD, A_TP in *.
 word_range sp SPR. rc_lia_prep. unfold alloc_ceiling in CEIL.
 pose proof (wmono_refl asegs m) as WM.
@@ -820,7 +825,7 @@ lazymatch goal with |- AJ _ _ _ (epend ?R ?pc ?mm ?ro _) =>
 eapply (@ajs_open_empty F fc asegs J (SYS F fc) R pc mm cf T HCK) end;
 [ unfold open_pre; split; [reflexivity|]; split; [apply bv_eq; reflexivity|]; split; [vm_compute; reflexivity|]; split; [intros []|]; split; [reflexivity|]; split; [reflexivity|];
 (match goal with |- context [QsRG.Mq0.getr ?R 11%bv] => replace (QsRG.Mq0.getr R 11%bv) with (Z_to_bv 64 pp : word) by reflexivity end;
-rewrite unsigned_lit by (destruct STR as (B1 & B2 & _); rewrite ?length_app in B2; cbn [length] in B2; lia); exact STR)
+rewrite unsigned_lit by (destruct STR as (B1 & B2 & _); rewrite ?length_app in B2; cbn [length] in B2; lia); split; [exact STR | cbn [length]; unfold TASK_SIZE; lia])
 | ].
 -
 intros c1 HN1 SIO1.
@@ -851,6 +856,7 @@ ro_cells asegs m A_GUARD_GOT [C8 (Z_to_bv 64 A_GUARD)] -> ro_cells asegs m A_GUA
 rw_cells asegs m (A_TP - 164) [C4 errv] ->
 stk asegs m lo (bv_unsigned sp) -> lo + 112 <= bv_unsigned sp -> alloc_ceiling <= lo -> bv_unsigned sp <= 2^47 ->
 (pp + Z.of_nat (length p) + 1 <= lo \/ bv_unsigned sp <= pp) ->
+pp + Z.of_nat (length p) + 1 <= 2^47 ->
 mem_inv asegs m -> bv_unsigned ra mod 2 = 0 ->
 (forall (t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' : word) m' (cf' : config),
 munch [(bv_unsigned sp - 112, bv_unsigned sp); (A_TP - 164, A_TP - 160)] m m' -> wmono asegs m m' -> mem_inv asegs m' ->
@@ -861,7 +867,7 @@ F (ret_pc ra) fc None m' (seg_rom asegs))) ->
 AJ J T cf (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 OPEN_A) fc None m (seg_rom asegs)).
 Proof.
-intros until p. intros HCK -> -> -> STR NONUL LEN NSL NDD GG GV ER ST LO CEIL SPH APART MI RA KA.
+intros until p. intros HCK -> -> -> STR NONUL LEN NSL NDD GG GV ER ST LO CEIL SPH APART PTK MI RA KA.
 unfold A_GUARD_GOT, A_GUARD, A_TP in *.
 word_range sp SPR. rc_lia_prep. unfold alloc_ceiling in CEIL.
 pose proof (wmono_refl asegs m) as WM.
@@ -877,7 +883,7 @@ lazymatch goal with |- AJ _ _ _ (epend ?R ?pc ?mm ?ro _) =>
 eapply (@ajs_open_toolong F fc asegs J (SYS F fc) R pc mm cf p T HCK) end;
 [ unfold open_pre; split; [reflexivity|]; split; [apply bv_eq; reflexivity|]; split; [vm_compute; reflexivity|]; split; [exact NONUL|]; split; [exact NSL|]; split; [exact NDD|];
 (match goal with |- context [QsRG.Mq0.getr ?R 11%bv] => replace (QsRG.Mq0.getr R 11%bv) with (Z_to_bv 64 pp : word) by reflexivity end;
-rewrite unsigned_lit by (destruct STR as (B1 & B2 & _); rewrite ?length_app in B2; cbn [length] in B2; lia); exact STR)
+rewrite unsigned_lit by (destruct STR as (B1 & B2 & _); rewrite ?length_app in B2; cbn [length] in B2; lia); split; [exact STR | unfold TASK_SIZE; lia])
 | unfold path_max; exact LEN | ].
 -
 intros c1 HN1 SIO1.
@@ -1480,6 +1486,7 @@ ro_cells asegs m A_GUARD_GOT [C8 (Z_to_bv 64 A_GUARD)] -> ro_cells asegs m A_GUA
 rw_cells asegs m (A_TP - 164) [C4 errv] ->
 stk asegs m lo (bv_unsigned sp) -> lo + 112 <= bv_unsigned sp -> alloc_ceiling <= lo -> bv_unsigned sp <= 2^47 ->
 (pp + Z.of_nat (length p) + 1 <= lo \/ bv_unsigned sp <= pp) ->
+pp + Z.of_nat (length p) + 1 <= 2^47 ->
 mem_inv asegs m -> bv_unsigned ra mod 2 = 0 -> TA [] -> TB [] ->
 (forall (e : Z) (t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' : word) m' (cf' : config),
 In e openat_errnos ->
@@ -1498,7 +1505,7 @@ F (ret_pc ra) fc None m' (seg_rom asegs))) ->
 AJ J (t_alt2 TA TB) cf (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 OPEN_A) fc None m (seg_rom asegs)).
 Proof.
-intros until d. intros HCK -> -> -> STR NONUL LEN NE NSL NDR FS AFD FD3 GG GV ER ST LO CEIL SPH APART MI RA HA0 HB0 KA KB.
+intros until d. intros HCK -> -> -> STR NONUL LEN NE NSL NDR FS AFD FD3 GG GV ER ST LO CEIL SPH APART PTK MI RA HA0 HB0 KA KB.
 unfold A_GUARD_GOT, A_GUARD, A_TP in *.
 word_range sp SPR. rc_lia_prep. unfold alloc_ceiling in CEIL.
 pose proof (wmono_refl asegs m) as WM.
@@ -1515,7 +1522,7 @@ lazymatch goal with |- AJ _ _ _ (epend ?R ?pc ?mm ?ro _) =>
 eapply (@ajs_open_file F fc asegs J (SYS F fc) R pc mm cf p d TA TB HCK) end;
 [ unfold open_pre; split; [reflexivity|]; split; [apply bv_eq; reflexivity|]; split; [vm_compute; reflexivity|]; split; [exact NONUL|]; split; [exact NSL|]; split; [exact NDD|];
 (match goal with |- context [QsRG.Mq0.getr ?R 11%bv] => replace (QsRG.Mq0.getr R 11%bv) with (Z_to_bv 64 pp : word) by reflexivity end;
-rewrite unsigned_lit by (destruct STR as (B1 & B2 & _); rewrite ?length_app in B2; cbn [length] in B2; lia); exact STR)
+rewrite unsigned_lit by (destruct STR as (B1 & B2 & _); rewrite ?length_app in B2; cbn [length] in B2; lia); split; [exact STR | unfold TASK_SIZE; lia])
 | unfold path_max; lia | exact NE | exact NDOT | exact FS | rewrite AFD; exact FD3 | exact HA0 | exact HB0 | | ].
 -
 intros e c1 He HN1 SIO1.
@@ -1566,6 +1573,7 @@ ro_cells asegs m A_GUARD_GOT [C8 (Z_to_bv 64 A_GUARD)] -> ro_cells asegs m A_GUA
 rw_cells asegs m (A_TP - 164) [C4 errv] ->
 stk asegs m lo (bv_unsigned sp) -> lo + 112 <= bv_unsigned sp -> alloc_ceiling <= lo -> bv_unsigned sp <= 2^47 ->
 (pp + 2 <= lo \/ bv_unsigned sp <= pp) ->
+pp + 2 <= 2^47 ->
 mem_inv asegs m -> bv_unsigned ra mod 2 = 0 -> TA [] -> TB [] ->
 (forall (e : Z) (t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' : word) m' (cf' : config),
 In e openat_errnos ->
@@ -1584,7 +1592,7 @@ F (ret_pc ra) fc None m' (seg_rom asegs))) ->
 AJ J (t_alt2 TA TB) cf (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 OPEN_A) fc None m (seg_rom asegs)).
 Proof.
-intros until lo. intros HCK -> -> -> STR AFD FD3 GG GV ER ST LO CEIL SPH APART MI RA HA0 HB0 KA KB.
+intros until lo. intros HCK -> -> -> STR AFD FD3 GG GV ER ST LO CEIL SPH APART PTK MI RA HA0 HB0 KA KB.
 unfold dot_path in *.
 unfold A_GUARD_GOT, A_GUARD, A_TP in *.
 word_range sp SPR. rc_lia_prep. unfold alloc_ceiling in CEIL.
@@ -1601,7 +1609,7 @@ lazymatch goal with |- AJ _ _ _ (epend ?R ?pc ?mm ?ro _) =>
 eapply (@ajs_open_dot F fc asegs J (SYS F fc) R pc mm cf TA TB HCK) end;
 [ unfold open_pre; split; [reflexivity|]; split; [apply bv_eq; reflexivity|]; split; [vm_compute; reflexivity|]; split; [cbn; intros [E|[]]; discriminate|]; split; [reflexivity|]; split; [reflexivity|];
 (match goal with |- context [QsRG.Mq0.getr ?R 11%bv] => replace (QsRG.Mq0.getr R 11%bv) with (Z_to_bv 64 pp : word) by reflexivity end;
-rewrite unsigned_lit by (destruct STR as (B1 & B2 & _); rewrite ?length_app in B2; cbn [length] in B2; lia); exact STR)
+rewrite unsigned_lit by (destruct STR as (B1 & B2 & _); rewrite ?length_app in B2; cbn [length] in B2; lia); split; [exact STR | match goal with |- context [length ?d] => let Ld := fresh "Ld" in assert (Ld : length d = 1%nat) by reflexivity; rewrite Ld end; unfold TASK_SIZE; lia])
 | rewrite AFD; exact FD3 | exact HA0 | exact HB0 | | ].
 -
 intros e c1 He HN1 SIO1.
@@ -1652,6 +1660,7 @@ ro_cells asegs m A_GUARD_GOT [C8 (Z_to_bv 64 A_GUARD)] -> ro_cells asegs m A_GUA
 rw_cells asegs m (A_TP - 164) [C4 errv] ->
 stk asegs m lo (bv_unsigned sp) -> lo + 112 <= bv_unsigned sp -> alloc_ceiling <= lo -> bv_unsigned sp <= 2^47 ->
 (pp + Z.of_nat (length p) + 1 <= lo \/ bv_unsigned sp <= pp) ->
+pp + Z.of_nat (length p) + 1 <= 2^47 ->
 mem_inv asegs m -> bv_unsigned ra mod 2 = 0 ->
 (forall (t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' : word) m' (cf' : config),
 munch [(bv_unsigned sp - 112, bv_unsigned sp); (A_TP - 164, A_TP - 160)] m m' -> wmono asegs m m' -> mem_inv asegs m' ->
@@ -1662,7 +1671,7 @@ F (ret_pc ra) fc None m' (seg_rom asegs))) ->
 AJ J T cf (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 OPEN_A) fc None m (seg_rom asegs)).
 Proof.
-intros until p. intros HCK -> -> -> STR NONUL LEN NE NSL NDR FS GG GV ER ST LO CEIL SPH APART MI RA KA.
+intros until p. intros HCK -> -> -> STR NONUL LEN NE NSL NDR FS GG GV ER ST LO CEIL SPH APART PTK MI RA KA.
 unfold A_GUARD_GOT, A_GUARD, A_TP in *.
 word_range sp SPR. rc_lia_prep. unfold alloc_ceiling in CEIL.
 pose proof (wmono_refl asegs m) as WM.
@@ -1679,7 +1688,7 @@ lazymatch goal with |- AJ _ _ _ (epend ?R ?pc ?mm ?ro _) =>
 eapply (@ajs_open_absent F fc asegs J (SYS F fc) R pc mm cf p T HCK) end;
 [ unfold open_pre; split; [reflexivity|]; split; [apply bv_eq; reflexivity|]; split; [vm_compute; reflexivity|]; split; [exact NONUL|]; split; [exact NSL|]; split; [exact NDD|];
 (match goal with |- context [QsRG.Mq0.getr ?R 11%bv] => replace (QsRG.Mq0.getr R 11%bv) with (Z_to_bv 64 pp : word) by reflexivity end;
-rewrite unsigned_lit by (destruct STR as (B1 & B2 & _); rewrite ?length_app in B2; cbn [length] in B2; lia); exact STR)
+rewrite unsigned_lit by (destruct STR as (B1 & B2 & _); rewrite ?length_app in B2; cbn [length] in B2; lia); split; [exact STR | unfold TASK_SIZE; lia])
 | unfold path_max; lia | exact NE | exact NDOT | exact FS | ].
 -
 intros c1 HN1 SIO1.
@@ -1709,6 +1718,7 @@ ro_cells asegs m A_GUARD_GOT [C8 (Z_to_bv 64 A_GUARD)] -> ro_cells asegs m A_GUA
 rw_cells asegs m (A_TP - 164) [C4 errv] ->
 stk asegs m lo (bv_unsigned sp) -> lo + 112 <= bv_unsigned sp -> alloc_ceiling <= lo -> bv_unsigned sp <= 2^47 ->
 (pp + 1 <= lo \/ bv_unsigned sp <= pp) ->
+pp + 1 <= 2^47 ->
 mem_inv asegs m -> bv_unsigned ra mod 2 = 0 ->
 (forall (t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' : word) m' (cf' : config),
 munch [(bv_unsigned sp - 112, bv_unsigned sp); (A_TP - 164, A_TP - 160)] m m' -> wmono asegs m m' -> mem_inv asegs m' ->
@@ -1719,7 +1729,7 @@ F (ret_pc ra) fc None m' (seg_rom asegs))) ->
 AJ J T cf (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 OPEN_A) fc None m (seg_rom asegs)).
 Proof.
-intros until lo. intros HCK -> -> -> STR GG GV ER ST LO CEIL SPH APART MI RA KA.
+intros until lo. intros HCK -> -> -> STR GG GV ER ST LO CEIL SPH APART PTK MI RA KA.
 unfold A_GUARD_GOT, A_GUARD, A_TP in *.
 word_range sp SPR. rc_lia_prep. unfold alloc_ceiling in CEIL.
 pose proof (wmono_refl asegs m) as WM.
@@ -1735,7 +1745,7 @@ lazymatch goal with |- AJ _ _ _ (epend ?R ?pc ?mm ?ro _) =>
 eapply (@ajs_open_empty F fc asegs J (SYS F fc) R pc mm cf T HCK) end;
 [ unfold open_pre; split; [reflexivity|]; split; [apply bv_eq; reflexivity|]; split; [vm_compute; reflexivity|]; split; [intros []|]; split; [reflexivity|]; split; [reflexivity|];
 (match goal with |- context [QsRG.Mq0.getr ?R 11%bv] => replace (QsRG.Mq0.getr R 11%bv) with (Z_to_bv 64 pp : word) by reflexivity end;
-rewrite unsigned_lit by (destruct STR as (B1 & B2 & _); rewrite ?length_app in B2; cbn [length] in B2; lia); exact STR)
+rewrite unsigned_lit by (destruct STR as (B1 & B2 & _); rewrite ?length_app in B2; cbn [length] in B2; lia); split; [exact STR | cbn [length]; unfold TASK_SIZE; lia])
 | ].
 -
 intros c1 HN1 SIO1.
@@ -1766,6 +1776,7 @@ ro_cells asegs m A_GUARD_GOT [C8 (Z_to_bv 64 A_GUARD)] -> ro_cells asegs m A_GUA
 rw_cells asegs m (A_TP - 164) [C4 errv] ->
 stk asegs m lo (bv_unsigned sp) -> lo + 112 <= bv_unsigned sp -> alloc_ceiling <= lo -> bv_unsigned sp <= 2^47 ->
 (pp + Z.of_nat (length p) + 1 <= lo \/ bv_unsigned sp <= pp) ->
+pp + Z.of_nat (length p) + 1 <= 2^47 ->
 mem_inv asegs m -> bv_unsigned ra mod 2 = 0 ->
 (forall (t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' : word) m' (cf' : config),
 munch [(bv_unsigned sp - 112, bv_unsigned sp); (A_TP - 164, A_TP - 160)] m m' -> wmono asegs m m' -> mem_inv asegs m' ->
@@ -1776,7 +1787,7 @@ F (ret_pc ra) fc None m' (seg_rom asegs))) ->
 AJ J T cf (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 OPEN_A) fc None m (seg_rom asegs)).
 Proof.
-intros until p. intros HCK -> -> -> STR NONUL LEN NSL NDD GG GV ER ST LO CEIL SPH APART MI RA KA.
+intros until p. intros HCK -> -> -> STR NONUL LEN NSL NDD GG GV ER ST LO CEIL SPH APART PTK MI RA KA.
 unfold A_GUARD_GOT, A_GUARD, A_TP in *.
 word_range sp SPR. rc_lia_prep. unfold alloc_ceiling in CEIL.
 pose proof (wmono_refl asegs m) as WM.
@@ -1792,7 +1803,7 @@ lazymatch goal with |- AJ _ _ _ (epend ?R ?pc ?mm ?ro _) =>
 eapply (@ajs_open_toolong F fc asegs J (SYS F fc) R pc mm cf p T HCK) end;
 [ unfold open_pre; split; [reflexivity|]; split; [apply bv_eq; reflexivity|]; split; [vm_compute; reflexivity|]; split; [exact NONUL|]; split; [exact NSL|]; split; [exact NDD|];
 (match goal with |- context [QsRG.Mq0.getr ?R 11%bv] => replace (QsRG.Mq0.getr R 11%bv) with (Z_to_bv 64 pp : word) by reflexivity end;
-rewrite unsigned_lit by (destruct STR as (B1 & B2 & _); rewrite ?length_app in B2; cbn [length] in B2; lia); exact STR)
+rewrite unsigned_lit by (destruct STR as (B1 & B2 & _); rewrite ?length_app in B2; cbn [length] in B2; lia); split; [exact STR | unfold TASK_SIZE; lia])
 | unfold path_max; exact LEN | ].
 -
 intros c1 HN1 SIO1.

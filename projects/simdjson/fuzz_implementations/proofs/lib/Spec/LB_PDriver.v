@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the fd-stability hypotheses also ask the kernel state unchanged, which the steps supply through nstep_kernel. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation String.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Specs Run.
@@ -44,7 +45,7 @@ Hypothesis Hdf' : forall X p n, mspecL B (own' ((p, n) :: X)) (drv_free p) (fun 
 Hypothesis Hcount' : forall X, mspecL B (own' X) alloc_count (fun _ => own' X).
 Hypothesis Hown_minv : forall X s mo, own X s mo -> minv mo /\ m_halted mo = None.
 Hypothesis Hown_fds : forall X s mo mo', own X s mo ->
-  m_vmmaps mo' = m_vmmaps mo -> minv mo' -> m_halted mo' = None -> own X s mo'.
+  m_vmmaps mo' = m_vmmaps mo -> minv mo' -> m_halted mo' = None -> m_kernel mo' = m_kernel mo -> own X s mo'.
 Hypothesis Hown_live : forall X s mo, own X s mo -> live mo <= B.
 
 Hypothesis OK_first : mal_ok [] 65536.
@@ -54,6 +55,7 @@ Lemma own_after_nodeL : forall X s mo n rsp mo' evs,
   own X s mo -> nstep n mo rsp mo' evs -> nsafe n mo -> m_vmmaps mo' = m_vmmaps mo -> own X s mo' /\ live mo' <= B.
 Proof.
   intros X s mo n rsp mo' evs Ho Hst Hsafe Hvm. destruct (Hown_minv _ _ _ Ho) as [Hmi Hh].
+  pose proof (nstep_kernel n mo rsp mo' evs (nsafe_no_noreserve n mo Hsafe) Hst) as Hk.
   destruct (minv_preserved n mo rsp mo' evs Hmi Hh Hsafe Hst) as [Hh' Hmi'].
   assert (Ho' : own X s mo') by (eapply Hown_fds; eauto). split; [exact Ho'| exact (Hown_live _ _ _ Ho')].
 Qed.
@@ -223,13 +225,14 @@ Context {St : Type}.
 Variable B : Z.
 Variable I : assn St.
 Hypothesis I_minv : forall s mo, I s mo -> minv mo /\ m_halted mo = None.
-Hypothesis I_fds : forall s mo mo', I s mo -> m_vmmaps mo' = m_vmmaps mo -> minv mo' -> m_halted mo' = None -> I s mo'.
+Hypothesis I_fds : forall s mo mo', I s mo -> m_vmmaps mo' = m_vmmaps mo -> minv mo' -> m_halted mo' = None -> m_kernel mo' = m_kernel mo -> I s mo'.
 Hypothesis I_live : forall s mo, I s mo -> live mo <= B.
 
 Lemma I_after_node : forall s mo n rsp mo' evs,
   I s mo -> nstep n mo rsp mo' evs -> nsafe n mo -> m_vmmaps mo' = m_vmmaps mo -> I s mo' /\ live mo' <= B.
 Proof.
   intros s mo n rsp mo' evs Ho Hst Hsafe Hvm. destruct (I_minv _ _ Ho) as [Hmi Hh].
+  pose proof (nstep_kernel n mo rsp mo' evs (nsafe_no_noreserve n mo Hsafe) Hst) as Hk.
   destruct (minv_preserved n mo rsp mo' evs Hmi Hh Hsafe Hst) as [Hh' Hmi'].
   assert (Ho' : I s mo') by (eapply I_fds; eauto). split; [exact Ho'| exact (I_live _ _ Ho')].
 Qed.
@@ -332,7 +335,7 @@ Section StartupL.
 Variable B : Z.
 Variable I : assn PState.
 Hypothesis I_minv : forall s mo, I s mo -> minv mo /\ m_halted mo = None.
-Hypothesis I_fds : forall s mo mo', I s mo -> m_vmmaps mo' = m_vmmaps mo -> minv mo' -> m_halted mo' = None -> I s mo'.
+Hypothesis I_fds : forall s mo mo', I s mo -> m_vmmaps mo' = m_vmmaps mo -> minv mo' -> m_halted mo' = None -> m_kernel mo' = m_kernel mo -> I s mo'.
 Hypothesis I_live : forall s mo, I s mo -> live mo <= B.
 
 Lemma startup_L : mspecL B I startup (fun _ => I).

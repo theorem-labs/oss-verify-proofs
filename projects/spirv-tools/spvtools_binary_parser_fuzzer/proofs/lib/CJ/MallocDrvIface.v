@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved ledger ends with the launch's vDSO pair, and the model's channel reader in the driver state; the auxv mallocng reads is the launch's, 27 or 29 pairs by CONFIG_RSEQ). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith List Lia Bool.
@@ -49,7 +50,11 @@ Record mng_main_mem (M : LibIface.mem) : Prop := MNG_MAIN_MEM {
 Record mng_main_model (mo : Model) : Prop := MNG_MAIN_MODEL {
   mo_maps  : vm_maps (m_vmmaps mo) = [];
   mo_noacc : vm_noaccess (m_vmmaps mo) = [];
-  mo_resv  : vm_reserved (m_vmmaps mo) = segments_reserved SEGS;
+  (* 08b1429: [State.init_reserved] ends the reserved ledger with the launch's
+     vDSO/vvar pair, so the image part is a prefix ([State.vm_reserved_init_model]) *)
+  mo_resv  : vm_reserved (m_vmmaps mo)
+             = segments_reserved SEGS
+               ++ vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo));
   mo_brk   : vm_brk (m_vmmaps mo) = vm_start_brk (m_vmmaps mo);
   mo_sb    : valid_brk SEGS (vm_start_brk (m_vmmaps mo));
   mo_sbhi  : bv_unsigned (vm_start_brk (m_vmmaps mo)) + 4 * 4096 <= alloc_ceiling;
@@ -61,14 +66,19 @@ Record mng_main_model (mo : Model) : Prop := MNG_MAIN_MODEL {
 Definition a_inv0 (A : mstateA) (M : LibIface.mem) (mo : Model) : Prop :=
   a_invX A M mo /\ a_LB A = [] /\ a_P A = lib_caps /\ a_big A = LIB_BIGCAP.
 
-Definition auxv_words (x3 x4 x5 x16 x6 x11 x12 x23 rnd : Z) : list Z :=
-  [3; x3; 4; x4; 5; x5; 16; x16; 6; x6; 11; x11; 12; x12; 23; x23; 25; rnd; 0; 0].
+(* LPS 727298f3: the launch's auxv ([StackLayout.auxv_entries]), as [CJ.R.RMallocTree.rauxv_list] words *)
+Definition auxv_words (x3 x4 x5 x16 x6 x11 x12 x23 rnd : Z) (rs : bool) (g : Z -> Z) : list Z :=
+  [33; g 33; 40; g 40; 41; g 41; 42; g 42; 43; g 43; 44; g 44; 45; g 45; 46; g 46; 47; g 47; 51; g 51;
+   16; x16; 6; x6; 17; g 17; 3; x3; 4; x4; 5; x5; 7; g 7; 8; g 8; 9; g 9;
+   11; x11; 12; x12; 13; g 13; 14; g 14; 23; x23; 25; rnd; 31; g 31]
+  ++ (if rs then [27; g 27; 28; g 28] else []) ++ [0; 0].
 Definition mng_auxv (M : LibIface.mem) (sp : Z) : Prop :=
   exists av x3 x4 x5 x16 x6 x11 x12 x23 rnd,
     dcell M (RLIBC + 8) 8 av
-    /\ (forall i, (i < 20)%nat -> dcell M (av + 8 * Z.of_nat i) 8 (nth i (auxv_words x3 x4 x5 x16 x6 x11 x12 x23 rnd) 0))
+    /\ (exists rs g, forall i, (i < length (auxv_words x3 x4 x5 x16 x6 x11 x12 x23 rnd rs g))%nat ->
+          dcell M (av + 8 * Z.of_nat i) 8 (nth i (auxv_words x3 x4 x5 x16 x6 x11 x12 x23 rnd rs g) 0))
     /\ dcell M (rnd + 8) 8 rr_secret
-    /\ alloc_ceiling <= sp /\ sp <= av /\ av + 160 <= 2 ^ 64 /\ sp <= rnd + 8 /\ rnd + 16 <= 2 ^ 64
+    /\ alloc_ceiling <= sp /\ sp <= av /\ av + 464 <= 2 ^ 64 /\ sp <= rnd + 8 /\ rnd + 16 <= 2 ^ 64
     /\ Forall (fun x => 0 <= x < 2 ^ 64) [x3; x4; x5; x16; x6; x11; x12; x23; rnd].
 
 Definition a_tight (A : mstateA) : Prop := TIGHT (ps_m (a_s A)).
@@ -90,7 +100,7 @@ Definition a_inv0_frame_stmt : Prop :=
   forall A M M' mo mo', a_inv0 A M mo ->
     (forall a : word, a_owned A (bv_unsigned a) -> M' a = M a) ->
     (forall a : word, M a <> None -> M' a <> None) ->
-    m_vmmaps mo' = m_vmmaps mo -> m_vm_lazy mo' = m_vm_lazy mo -> a_inv0 A M' mo'.
+    m_vmmaps mo' = m_vmmaps mo -> m_vm_lazy mo' = m_vm_lazy mo -> m_kernel mo' = m_kernel mo -> a_inv0 A M' mo'.
 
 Definition ainv0_owned_stmt : Prop :=
   forall A M mo a, a_inv0 A M mo -> a_owned A a -> ~ in_ranges (ly_img L) a -> 0 < a < alloc_ceiling.
@@ -108,6 +118,7 @@ Definition mi_free_T_stmt : Prop :=
     stack_room SEGS M sp MNG_MALLOC_STACK ->
     (forall a, zwin (sp - MNG_MALLOC_STACK) sp a -> ~ a_owned A a) ->
     (forall A' R' M' mo', a_inv A' M' mo' -> a_tight A' -> mstd mo' -> m_fs mo' = m_fs mo -> m_fds mo' = m_fds mo ->
+        m_channel_reader mo' = m_channel_reader mo ->
         kept R R' -> live_del p (a_live A) (a_live A') -> a_P A' = a_P A -> a_big A' = a_big A ->
         (forall a, a_owned A' a -> a_owned A a \/ (p <= a < p + n)) ->
         frame_eq (fun a => a_owned A a \/ (p <= a < p + n) \/ zwin (sp - MNG_MALLOC_STACK) sp a \/ errno_win L a) M M' ->
@@ -126,6 +137,7 @@ Definition mi_malloc_T_stmt : Prop :=
     a_room A n ->
     (forall A' R' M' mo' (p : Z),
         a_inv A' M' mo' -> a_tight A' -> mstd mo' -> m_fs mo' = m_fs mo -> m_fds mo' = m_fds mo ->
+        m_channel_reader mo' = m_channel_reader mo ->
         kept R R' -> getr R' 10%bv = Z_to_bv 64 p -> 0 < p ->
         live_add p n (a_live A) (a_live A') -> a_P A' = a_P A -> a_big A' = a_big A ->
         (forall a, a_owned A' a -> a_owned A a \/ (~ in_ranges (ly_img L) a /\ M (Z_to_bv 64 a) = None)) ->
@@ -145,6 +157,7 @@ Definition mi_malloc_first_stmt : Prop :=
     (forall a, zwin (sp - MNG_MALLOC_STACK) sp a -> ~ a_owned A a) ->
     (forall A' R' M' mo' (p : Z),
         a_inv A' M' mo' -> a_tight A' -> mstd mo' -> m_fs mo' = m_fs mo -> m_fds mo' = m_fds mo ->
+        m_channel_reader mo' = m_channel_reader mo ->
         kept R R' -> getr R' 10%bv = Z_to_bv 64 p -> 0 < p ->
         live_add p n (a_live A) (a_live A') -> a_P A' = a_P A -> a_big A' = a_big A ->
         (forall a, a_owned A' a -> a_owned A a \/ (~ in_ranges (ly_img L) a /\ M (Z_to_bv 64 a) = None)) ->

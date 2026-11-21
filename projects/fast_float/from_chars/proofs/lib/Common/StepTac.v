@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput; the launch premises valid_launch and entry_launch_ok_va; the channel-reader premise of writev; the run's segment list run_segments; RomBase.sys_rob at the system-call nodes; the vDSO run state; the launch's reservations with the vDSO pair; the CONFIG_RSEQ flag of the start-up layer; the start-up stack layout (the strings above the random bytes, up to ed_top); the place_declined_b premise on mmap; the model's m_kernel field; the model's brk). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -36,11 +37,11 @@ Context {fx : FPState}.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma v_lui_4096 : v_lui 4096 = Z_to_bv 64 4096.
+Lemma v_lui_4096 : v_lui 4096 = Z_to_bv 64 4096.
 Proof. LiaFast.lf_pins LiaFast.u0. reflexivity. Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma c_lts_0_0 : c_lts (Z_to_bv 64 0) (Z_to_bv 64 0) = false.
+Lemma c_lts_0_0 : c_lts (Z_to_bv 64 0) (Z_to_bv 64 0) = false.
 Proof. LiaFast.lf_pins LiaFast.u0. reflexivity. Qed.
 
 (* [comment removed for export] *)
@@ -50,7 +51,7 @@ Proof. LiaFast.lf_pins LiaFast.u0. reflexivity. Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma write_to_mem_below : forall data mem (buf a : word),
+Lemma write_to_mem_below : forall data mem (buf a : word),
   (bv_unsigned buf + Z.of_nat (length data) <= 2^64)%Z ->
   (bv_unsigned a < bv_unsigned buf)%Z ->
   write_to_mem mem buf data a = mem a.
@@ -60,7 +61,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma write_to_mem_above : forall data mem (buf a : word),
+Lemma write_to_mem_above : forall data mem (buf a : word),
   (bv_unsigned buf + Z.of_nat (length data) <= bv_unsigned a)%Z ->
   write_to_mem mem buf data a = mem a.
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -69,7 +70,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma rdn_wtm_out : forall segs data m (buf a : word) n,
+Lemma rdn_wtm_out : forall segs data m (buf a : word) n,
   (bv_unsigned a + Z.of_nat n <= 2^64)%Z ->
   (bv_unsigned buf + Z.of_nat (length data) <= 2^64)%Z ->
   ((bv_unsigned buf + Z.of_nat (length data) <= bv_unsigned a)%Z \/
@@ -83,7 +84,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma rdn_write_to_mem : forall segs data mem (buf : word),
+Lemma rdn_write_to_mem : forall segs data mem (buf : word),
   (bv_unsigned buf + Z.of_nat (length data) <= 2^64)%Z ->
   rdn segs (write_to_mem mem buf data) buf (length data) = Some data.
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -96,7 +97,7 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma adv_apply_write : forall regs pc sv mem rom ret buf data,
+Lemma adv_apply_write : forall regs pc sv mem rom ret buf data,
   advance_past_svc (apply_effect
     {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc; ms_svc_pending := sv; ms_resv := None; ms_fcsr := fp_csr;
        ms_mem := mem; ms_rom := rom |}
@@ -115,7 +116,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma adv_apply_delivered : forall regs pc sv mem rom ret buf data,
+Lemma adv_apply_delivered : forall regs pc sv mem rom ret buf data,
   advance_past_svc (apply_effect
     {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc; ms_svc_pending := sv; ms_resv := None; ms_fcsr := fp_csr;
        ms_mem := mem; ms_rom := rom |}
@@ -159,10 +160,10 @@ Context {fx : FPState}.
 
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma fd32_1 : fd32 (Z_to_bv 64 1) = Z_to_bv 64 1.
+Lemma fd32_1 : fd32 (Z_to_bv 64 1) = Z_to_bv 64 1.
 Proof. LiaFast.lf_pins LiaFast.u0. apply bv_eq. vm_compute. reflexivity. Qed.
 
-#[using="Type"] Lemma fd32_2 : fd32 (Z_to_bv 64 2) = Z_to_bv 64 2.
+Lemma fd32_2 : fd32 (Z_to_bv 64 2) = Z_to_bv 64 2.
 Proof. LiaFast.lf_pins LiaFast.u0. apply bv_eq. vm_compute. reflexivity. Qed.
 
 (* [comment removed for export] *)
@@ -172,7 +173,7 @@ Proof. LiaFast.lf_pins LiaFast.u0. apply bv_eq. vm_compute. reflexivity. Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma u_len_word : forall {A} (l : list A), (Z.of_nat (length l) < 2^64)%Z ->
+Lemma u_len_word : forall {A} (l : list A), (Z.of_nat (length l) < 2^64)%Z ->
   bv_unsigned (len_word l) = Z.of_nat (length l).
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros A l H. unfold len_word. apply Z_to_bv_small.
@@ -181,7 +182,7 @@ Qed.
 
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma len_word_firstn_nat : forall n (bs : list byte),
+Lemma len_word_firstn_nat : forall n (bs : list byte),
   (n <= length bs)%nat ->
   len_word (firstn n bs) = nat_to_word n.
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -189,7 +190,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   rewrite firstn_length_le by exact Hn. reflexivity.
 Qed.
 
-#[using="Type"] Lemma u_len_word_firstn : forall n (bs : list byte),
+Lemma u_len_word_firstn : forall n (bs : list byte),
   (n <= length bs)%nat -> (Z.of_nat (length bs) < 2^64)%Z ->
   bv_unsigned (len_word (firstn n bs)) = Z.of_nat n.
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -200,7 +201,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma v_add_len_firstn : forall (p : word) n (bs : list byte),
+Lemma v_add_len_firstn : forall (p : word) n (bs : list byte),
   (n <= length bs)%nat ->
   v_add p (len_word (firstn n bs)) = p + nat_to_word n.
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -210,7 +211,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma v_add_len_firstn_Z : forall (p : word) n (bs : list byte),
+Lemma v_add_len_firstn_Z : forall (p : word) n (bs : list byte),
   (n <= length bs)%nat -> (Z.of_nat (length bs) < 2^64)%Z ->
   v_add p (len_word (firstn n bs)) = Z_to_bv 64 (bv_unsigned p + Z.of_nat n).
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -219,7 +220,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma word_add_nat_Z : forall (p : word) (k : nat),
+Lemma word_add_nat_Z : forall (p : word) (k : nat),
   (Z.of_nat k < 2^64)%Z ->
   p + nat_to_word k = Z_to_bv 64 (bv_unsigned p + Z.of_nat k).
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -231,7 +232,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma v_sub_len_firstn : forall n (bs : list byte),
+Lemma v_sub_len_firstn : forall n (bs : list byte),
   (n <= length bs)%nat -> (Z.of_nat (length bs) < 2^64)%Z ->
   v_sub (len_word bs) (len_word (firstn n bs)) = len_word (skipn n bs).
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -260,6 +261,8 @@ Inductive to_wall : machine_state -> list byte -> (machine_state -> Prop) -> Pro
     bv_unsigned x8 = 64%Z ->
     ms_gpr ms 0 = fd ->
     ms_read_bytes ms (ms_gpr ms 1) (ms_gpr ms 2) = Some rest ->
+    (* the range [vfs_write]'s [access_ok] accepts; see [CatSim.write1_check_n] *)
+    access_okb (ms_gpr ms 1) (bv_unsigned (ms_gpr ms 2)) = true ->
     (1 <= length rest)%nat ->
     (forall n, (1 <= n)%nat -> (n <= length rest)%nat ->
        to_wall_tail (advance_past_svc (set_gpr0 ms (len_word (firstn n rest))))
@@ -282,7 +285,7 @@ Scheme to_wall_min := Minimality for to_wall Sort Prop
 Combined Scheme to_wall_mutind from to_wall_min, to_wall_tail_min.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma msteps_to_wall_tail : forall ms ms' rest k,
+Lemma msteps_to_wall_tail : forall ms ms' rest k,
   msteps segs ms ms' -> to_wall_tail ms' rest k -> to_wall_tail ms rest k.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros ms ms' rest k H; induction H; [auto|].
@@ -290,7 +293,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma to_wall_tail_nil_msteps : forall ms k,
+Lemma to_wall_tail_nil_msteps : forall ms k,
   to_wall_tail ms [] k -> exists ms', msteps segs ms ms' /\ k ms'.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros ms k H.
@@ -312,7 +315,7 @@ Hypothesis Hfd32 : fd32 fd = fd.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Hfd32"] Lemma sstep_to_wall_inv : forall ms rest k model evs st,
+Lemma sstep_to_wall_inv : forall ms rest k model evs st,
   m_halted model = None ->
   m_vm_lazy model = [] ->
   fdchan fd ch model ->
@@ -324,17 +327,17 @@ Hypothesis Hfd32 : fd32 fd = fd.
     st = SNext (mkCfg (advance_past_svc (set_gpr0 ms (len_word (firstn n rest)))) model) /\
     to_wall_tail (advance_past_svc (set_gpr0 ms (len_word (firstn n rest))))
       (skipn n rest) k.
-Proof. LiaFast.lf_pins (fun (Hfd32 : LiaFast.U) => LiaFast.u0).
+Proof.
   intros ms rest k model evs st Hh Hlazy Hfdc Hbm Hw Hss.
   revert Hbm.
-  destruct Hw as [ms x8 rest k Hsvc Hno Hg Hr Hnb Hcont]. intro Hbm.
+  destruct Hw as [ms x8 rest k Hsvc Hno Hg Hr Hok Hnb Hcont]. intro Hbm.
   destruct (sstep_write_ch_inv segs fd ch Hfd32 ms model x8 rest evs st
-              Hh Hlazy Hfdc Hsvc Hno Hg Hr Hbm Hnb Hss) as (n & Hn1 & Hn2 & Hevs & Hst).
+              Hh Hlazy Hfdc Hsvc Hno Hg Hr Hok Hbm Hnb Hss) as (n & Hn1 & Hn2 & Hevs & Hst).
   exists n. repeat split; try assumption.
   apply (Hcont n Hn1 Hn2).
 Qed.
 
-#[using="Hfd32"] Lemma to_wall_no_error_sstep : forall ms rest k model evs,
+Lemma to_wall_no_error_sstep : forall ms rest k model evs,
   m_halted model = None ->
   m_vm_lazy model = [] ->
   fdchan fd ch model ->
@@ -353,7 +356,7 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Hfd32"] Lemma to_wall_star_admits_mut : forall model tr_k,
+Lemma to_wall_star_admits_mut : forall model tr_k,
   m_halted model = None ->
   m_vm_lazy model = [] ->
   fdchan fd ch model ->
@@ -365,7 +368,7 @@ Qed.
      buf_modeled rest ->
      (forall ms', k ms' -> exists c, star segs (mkCfg ms' model) tr_k c) ->
      exists c, star segs (mkCfg ms model) (map (WriteEv ch) rest ++ tr_k) c).
-Proof. LiaFast.lf_pins (fun (Hfd32 : LiaFast.U) => LiaFast.u0).
+Proof.
   intros model tr_k Hh Hlazy Hfdc.
   apply (to_wall_mutind
     (fun ms rest k =>
@@ -376,8 +379,8 @@ Proof. LiaFast.lf_pins (fun (Hfd32 : LiaFast.U) => LiaFast.u0).
        buf_modeled rest ->
        (forall ms', k ms' -> exists c, star segs (mkCfg ms' model) tr_k c) ->
        exists c, star segs (mkCfg ms model) (map (WriteEv ch) rest ++ tr_k) c)).
-  - (* [comment removed for export] *)
-    intros ms x8 rest k Hsvc Hno Hg Hr Hnb Hcont IH Hbm Hk.
+  - (* twl_write: deliver everything in one syscall *)
+    intros ms x8 rest k Hsvc Hno Hg Hr Hok Hnb Hcont IH Hbm Hk.
     destruct (IH (length rest) Hnb (Nat.le_refl _)
                 (buf_modeled_skipn (length rest) rest Hbm) Hk) as [c Hstar].
     exists c.
@@ -396,11 +399,11 @@ Proof. LiaFast.lf_pins (fun (Hfd32 : LiaFast.U) => LiaFast.u0).
       [exact Hh | exact Hsvc | | exact Hh |].
     eapply write_ch_ok_n; try eassumption. apply Nat.le_refl.
     rewrite (materialize_model_accesses_no_lazy model _ Hlazy). reflexivity.
-  - (* [comment removed for export] *)
+  - (* twt_done: hand off to the continuation *)
     intros ms k Hk Hbm Hcont. cbn [map app]. apply (Hcont ms Hk).
-  - (* [comment removed for export] *)
+  - (* twt_more *)
     intros ms rest k Hnb Hw IH Hbm Hk. exact (IH Hbm Hk).
-  - (* [comment removed for export] *)
+  - (* twt_step *)
     intros ms ms' rest k Hsvc Hstep Ht IH Hbm Hk.
     destruct (IH Hbm Hk) as [c Hstar].
     exists c.
@@ -411,7 +414,7 @@ Proof. LiaFast.lf_pins (fun (Hfd32 : LiaFast.U) => LiaFast.u0).
     rewrite (mi_account_step_no_lazy segs ms model Hlazy), Hstep. reflexivity.
 Qed.
 
-#[using="Hfd32"] Lemma to_wall_star_admits : forall ms rest k,
+Lemma to_wall_star_admits : forall ms rest k,
   to_wall ms rest k ->
   buf_modeled rest ->
   forall model tr_k,
@@ -425,7 +428,7 @@ Proof. LiaFast.lf_pins (fun (Hfd32 : LiaFast.U) => LiaFast.u0).
   exact (proj1 (to_wall_star_admits_mut model tr_k Hh Hlazy Hfdc) ms rest k Hw Hbm Hk).
 Qed.
 
-#[using="Hfd32"] Lemma to_wall_tail_star_admits : forall ms rest k,
+Lemma to_wall_tail_star_admits : forall ms rest k,
   to_wall_tail ms rest k ->
   buf_modeled rest ->
   forall model tr_k,
@@ -444,7 +447,7 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Hfd32"] Lemma to_wall_star_only_mut : forall model T,
+Lemma to_wall_star_only_mut : forall model T,
   m_halted model = None ->
   m_vm_lazy model = [] ->
   fdchan fd ch model ->
@@ -458,7 +461,7 @@ Qed.
      (forall ms' tr c, k ms' -> star segs (mkCfg ms' model) tr c -> is_prefix tr T) ->
      forall tr c, star segs (mkCfg ms model) tr c ->
      is_prefix tr (map (WriteEv ch) rest ++ T)).
-Proof. LiaFast.lf_pins (fun (Hfd32 : LiaFast.U) => LiaFast.u0).
+Proof.
   intros model T Hh Hlazy Hfdc.
   apply (to_wall_mutind
     (fun ms rest k =>
@@ -471,22 +474,22 @@ Proof. LiaFast.lf_pins (fun (Hfd32 : LiaFast.U) => LiaFast.u0).
        (forall ms' tr c, k ms' -> star segs (mkCfg ms' model) tr c -> is_prefix tr T) ->
        forall tr c, star segs (mkCfg ms model) tr c ->
        is_prefix tr (map (WriteEv ch) rest ++ T))).
-  - (* [comment removed for export] *)
-    intros ms x8 rest k Hsvc Hno Hg Hr Hnb Hcont IH Hbm HK tr c Hstar.
+  - (* twl_write *)
+    intros ms x8 rest k Hsvc Hno Hg Hr Hok Hnb Hcont IH Hbm HK tr c Hstar.
     inversion Hstar as [|c1 evs c2 tr2 c3 Hss Hstar2]; subst.
     { apply is_prefix_nil. }
     destruct (sstep_write_ch_inv segs fd ch Hfd32 ms model x8 rest evs (SNext c2)
-                Hh Hlazy Hfdc Hsvc Hno Hg Hr Hbm Hnb Hss) as (n & Hn1 & Hn2 & Hevs & Hc2).
+                Hh Hlazy Hfdc Hsvc Hno Hg Hr Hok Hbm Hnb Hss) as (n & Hn1 & Hn2 & Hevs & Hc2).
     subst evs. inversion Hc2; subst c2.
     pose proof (IH n Hn1 Hn2 (buf_modeled_skipn n rest Hbm) HK tr2 c Hstar2) as Hp.
     rewrite <- (firstn_skipn n rest) at 2.
     rewrite map_app, <- app_assoc.
     apply is_prefix_app_mono. exact Hp.
-  - (* [comment removed for export] *)
+  - (* twt_done *)
     intros ms k Hk Hbm HK tr c Hstar. cbn [map app]. exact (HK ms tr c Hk Hstar).
-  - (* [comment removed for export] *)
+  - (* twt_more *)
     intros ms rest k Hnb Hw IH Hbm HK tr c Hstar. exact (IH Hbm HK tr c Hstar).
-  - (* [comment removed for export] *)
+  - (* twt_step *)
     intros ms ms' rest k Hsvc Hstep Ht IH Hbm HK tr c Hstar.
     inversion Hstar as [|c1 evs c2 tr2 c3 Hss Hstar2]; subst.
     { apply is_prefix_nil. }
@@ -496,7 +499,7 @@ Proof. LiaFast.lf_pins (fun (Hfd32 : LiaFast.U) => LiaFast.u0).
     exact (IH Hbm HK tr2 c Hstar2).
 Qed.
 
-#[using="Hfd32"] Lemma to_wall_star_only : forall ms rest k,
+Lemma to_wall_star_only : forall ms rest k,
   to_wall ms rest k ->
   buf_modeled rest ->
   forall model T,
@@ -516,13 +519,14 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma twl_write_rec : forall (k : machine_state -> Prop) rest regs pc mem rom,
+Lemma twl_write_rec : forall (k : machine_state -> Prop) rest regs pc mem rom,
   bv_unsigned (getr regs 17) = 64%Z ->
   reg_get regs 10 = fd ->
   ms_read_bytes {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc;
                    ms_svc_pending := Some (getr regs 17); ms_resv := None;
                    ms_fcsr := fp_csr; ms_mem := mem; ms_rom := rom |}
     (reg_get regs 11) (reg_get regs 12) = Some rest ->
+  access_okb (reg_get regs 11) (bv_unsigned (reg_get regs 12)) = true ->
   (1 <= length rest)%nat ->
   (forall n, (1 <= n)%nat -> (n <= length rest)%nat ->
      to_wall_tail (mkst (regupd regs 10 (len_word (firstn n rest)))
@@ -532,8 +536,8 @@ Qed.
              ms_svc_pending := Some (getr regs 17); ms_resv := None;
              ms_fcsr := fp_csr; ms_mem := mem; ms_rom := rom |}
     rest k.
-Proof. LiaFast.lf_pins LiaFast.u0.
-  intros k rest regs pc mem rom H17 H10 Hr Hnb Hcont.
+Proof.
+  intros k rest regs pc mem rom H17 H10 Hr Hok Hnb Hcont.
   assert (E10 : Z_to_bv 5 (10 + Z.of_nat 0) = (10 : reg)) by (apply bv_eq; reflexivity).
   assert (E11 : Z_to_bv 5 (10 + Z.of_nat 1) = (11 : reg)) by (apply bv_eq; reflexivity).
   assert (E12 : Z_to_bv 5 (10 + Z.of_nat 2) = (12 : reg)) by (apply bv_eq; reflexivity).
@@ -542,6 +546,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   - exact H17.
   - unfold ms_gpr. cbn [ms_regs]. rewrite E10. exact H10.
   - unfold ms_gpr. cbn [ms_regs]. rewrite E11, E12. exact Hr.
+  - unfold ms_gpr. cbn [ms_regs]. rewrite E11, E12. exact Hok.
   - exact Hnb.
   - intros n Hn1 Hn2. rewrite adv_set. exact (Hcont n Hn1 Hn2).
 Qed.
@@ -570,25 +575,25 @@ Fixpoint to_wallexit (bufs : list (list byte)) (code : word)
   end.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma to_wall_k_ex_mut :
+Lemma to_wall_k_ex_mut :
   (forall ms rest k, to_wall ms rest k -> exists ms', k ms')
   /\ (forall ms rest k, to_wall_tail ms rest k -> exists ms', k ms').
-Proof. LiaFast.lf_pins LiaFast.u0.
+Proof.
   apply (to_wall_mutind
            (fun ms rest k => exists ms', k ms')
            (fun ms rest k => exists ms', k ms')).
-  - intros ms x8 rest k Hsvc Hno Hg Hr Hnb Hcont IH.
+  - intros ms x8 rest k Hsvc Hno Hg Hr Hok Hnb Hcont IH.
     exact (IH (length rest) Hnb (Nat.le_refl _)).
   - intros ms k Hk. exists ms. exact Hk.
   - intros ms rest k Hnb Hw IH. exact IH.
   - intros ms ms' rest k Hsvc Hstep Ht IH. exact IH.
 Qed.
 
-#[using="Type"] Lemma to_wall_tail_k_ex : forall ms rest k,
+Lemma to_wall_tail_k_ex : forall ms rest k,
   to_wall_tail ms rest k -> exists ms', k ms'.
 Proof. LiaFast.lf_pins LiaFast.u0. exact (proj2 to_wall_k_ex_mut). Qed.
 
-#[using="Type"] Lemma to_wallexit_bufs_nonempty : forall bufs code ms,
+Lemma to_wallexit_bufs_nonempty : forall bufs code ms,
   to_wallexit bufs code ms ->
   Forall (fun b : list byte => (1 <= length b)%nat) bufs.
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -599,7 +604,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma twe_step : forall ms ms' bufs code,
+Lemma twe_step : forall ms ms' bufs code,
   ms_svc_pending ms = None ->
   RiscvSemantics.step segs ms = MachineOk ms' ->
   to_wallexit bufs code ms' -> to_wallexit bufs code ms.
@@ -611,7 +616,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     eapply twt_step; eauto.
 Qed.
 
-#[using="Type"] Lemma msteps_to_wallexit : forall ms ms' bufs code,
+Lemma msteps_to_wallexit : forall ms ms' bufs code,
   msteps segs ms ms' -> to_wallexit bufs code ms' -> to_wallexit bufs code ms.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros ms ms' bufs code Hms Hw. destruct bufs as [|buf rest].
@@ -629,7 +634,7 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Hfd32"] Lemma to_wall_exec_mut : forall model (Q : post),
+Lemma to_wall_exec_mut : forall model (Q : post),
   m_halted model = None ->
   m_vm_lazy model = [] ->
   fdchan fd ch model ->
@@ -643,7 +648,7 @@ Qed.
      (forall ms', k ms' -> OmniRun.exec segs (mkCfg ms' model) Q) ->
      OmniRun.exec segs (mkCfg ms model)
        (fun tr o => exists tr', tr = map (WriteEv ch) rest ++ tr' /\ Q tr' o)).
-Proof. LiaFast.lf_pins (fun (Hfd32 : LiaFast.U) => LiaFast.u0).
+Proof.
   intros model Q Hh Hlazy Hfdc.
   apply (to_wall_mutind
     (fun ms rest k =>
@@ -656,11 +661,11 @@ Proof. LiaFast.lf_pins (fun (Hfd32 : LiaFast.U) => LiaFast.u0).
        (forall ms', k ms' -> OmniRun.exec segs (mkCfg ms' model) Q) ->
        OmniRun.exec segs (mkCfg ms model)
          (fun tr o => exists tr', tr = map (WriteEv ch) rest ++ tr' /\ Q tr' o))).
-  - (* [comment removed for export] *)
-    intros ms x8 rest k Hsvc Hno Hg Hr Hnb Hcont IH Hbm HK.
+  - (* twl_write: every delivered length is a successor, each covered by the IH *)
+    intros ms x8 rest k Hsvc Hno Hg Hr Hok Hnb Hcont IH Hbm HK.
     assert (Hw : to_wall ms rest k) by (eapply twl_write; eassumption).
     apply exec_step; [exact Hh | | |].
-    + (* [comment removed for export] *)
+    + (* progress: deliver everything in one syscall *)
       eexists; eexists.
       apply (sstep_syscall segs ms model x8
                (with_copyins [(ms_gpr ms 1, length rest)]
@@ -681,13 +686,13 @@ Proof. LiaFast.lf_pins (fun (Hfd32 : LiaFast.U) => LiaFast.u0).
         [exact (IH n Hn1 Hn2 (buf_modeled_skipn n rest Hbm) HK) |].
       intros tr o (tr' & -> & HQ). exists tr'. split; [| exact HQ].
       rewrite <- (firstn_skipn n rest) at 3. rewrite map_app, <- app_assoc. reflexivity.
-  - (* [comment removed for export] *)
+  - (* twt_done: the continuation's own judgment *)
     intros ms k Hk Hbm HK.
     eapply exec_conseq; [exact (HK ms Hk) |].
     intros tr o HQ. exists tr. split; [reflexivity | exact HQ].
-  - (* [comment removed for export] *)
+  - (* twt_more *)
     intros ms rest k Hnb Hw IH Hbm HK. exact (IH Hbm HK).
-  - (* [comment removed for export] *)
+  - (* twt_step: one silent instruction *)
     intros ms ms' rest k Hsvc Hstep Ht IH Hbm HK.
     apply (exec_step_only segs _ _ [] (mkCfg ms' model)).
     + apply (sstep_instr segs ms model ms' model); [exact Hh | exact Hsvc |].
@@ -697,18 +702,18 @@ Proof. LiaFast.lf_pins (fun (Hfd32 : LiaFast.U) => LiaFast.u0).
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma to_wexit_nil_exec_aux : forall ms bufs code model,
+Lemma to_wexit_nil_exec_aux : forall ms bufs code model,
   m_halted model = None ->
   m_vm_lazy model = [] ->
   to_wexit segs ms bufs code ->
   bufs = [] ->
   OmniRun.exec segs (mkCfg ms model)
     (fun tr o => tr = [ExitEv code (m_fs model)] /\ exits_with code tr o).
-Proof. LiaFast.lf_pins LiaFast.u0.
+Proof.
   intros ms bufs code model Hh Hlazy Hte.
   induction Hte as
     [ms x8 Hsvc Hx8
-    | ms x8 buf bufs code Hsvc Hno Hg Hr Hnb Hcont IH
+    | ms x8 buf bufs code Hsvc Hno Hg Hr Hok Hnb Hcont IH
     | ms ms' bufs code Hsvc Hstep Hte IH]; intro Hbufs; [| discriminate Hbufs |].
   - apply (exec_step_only segs _ _
              [ExitEv (bv_and (ms_gpr ms 0) (Z_to_bv 64 255)) (m_fs model)]
@@ -740,7 +745,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     + eapply exec_conseq; [exact (IH Hbufs) |]. intros tr o H. cbn [app]. exact H.
 Qed.
 
-#[using="Type"] Lemma to_wexit_nil_exec : forall ms code model,
+Lemma to_wexit_nil_exec : forall ms code model,
   m_halted model = None ->
   m_vm_lazy model = [] ->
   to_wexit segs ms [] code ->
@@ -752,7 +757,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Hfd32"] Lemma to_wallexit_exec : forall bufs code ms model,
+Lemma to_wallexit_exec : forall bufs code ms model,
   m_halted model = None ->
   m_vm_lazy model = [] ->
   fdchan fd ch model ->
@@ -777,7 +782,7 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Hfd32"] Lemma to_wallexit_star_admits : forall bufs code ms model,
+Lemma to_wallexit_star_admits : forall bufs code ms model,
   m_halted model = None ->
   m_vm_lazy model = [] ->
   fdchan fd ch model ->
@@ -794,7 +799,7 @@ Proof. LiaFast.lf_pins (fun (Hfd32 : LiaFast.U) => LiaFast.u0).
 Qed.
 
 (* [comment removed for export] *)
-#[using="Hfd32"] Lemma to_wallexit_no_other_exit : forall bufs code ms model,
+Lemma to_wallexit_no_other_exit : forall bufs code ms model,
   m_halted model = None ->
   m_vm_lazy model = [] ->
   fdchan fd ch model ->
@@ -812,7 +817,7 @@ Proof. LiaFast.lf_pins (fun (Hfd32 : LiaFast.U) => LiaFast.u0).
   exact (Hne (eq_sym Hx')).
 Qed.
 
-#[using="Hfd32"] Lemma to_wallexit_trace_unique : forall bufs code ms model,
+Lemma to_wallexit_trace_unique : forall bufs code ms model,
   m_halted model = None ->
   m_vm_lazy model = [] ->
   fdchan fd ch model ->
@@ -828,7 +833,7 @@ Proof. LiaFast.lf_pins (fun (Hfd32 : LiaFast.U) => LiaFast.u0).
   apply Hne. rewrite <- Heq', Heq. reflexivity.
 Qed.
 
-#[using="Hfd32"] Lemma to_wallexit_not_silent : forall bufs code ms model,
+Lemma to_wallexit_not_silent : forall bufs code ms model,
   m_halted model = None ->
   m_vm_lazy model = [] ->
   fdchan fd ch model ->
@@ -842,7 +847,7 @@ Proof. LiaFast.lf_pins (fun (Hfd32 : LiaFast.U) => LiaFast.u0).
   destruct (wevents_ch ch bufs); discriminate Hnil.
 Qed.
 
-#[using="Hfd32"] Lemma to_wallexit_star_only : forall bufs code ms model,
+Lemma to_wallexit_star_only : forall bufs code ms model,
   m_halted model = None ->
   m_vm_lazy model = [] ->
   fdchan fd ch model ->
@@ -863,7 +868,7 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Hfd32"] Lemma to_wallexit_no_error : forall ms model bufs code,
+Lemma to_wallexit_no_error : forall ms model bufs code,
   m_halted model = None ->
   m_vm_lazy model = [] ->
   fdchan fd ch model ->
@@ -883,7 +888,7 @@ Abbreviation wexit1 segs ms bufs code :=
   (to_wallexit segs (Z_to_bv 64 1) bufs code ms).
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma wevents_ch_fd1 : forall bufs,
+Lemma wevents_ch_fd1 : forall bufs,
   wevents_ch (Z_to_bv 64 1) bufs = wevents bufs.
 Proof. LiaFast.lf_pins LiaFast.u0.
   induction bufs as [|b bs IH]; cbn [wevents_ch wevents];
@@ -896,30 +901,37 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma wall_omni_run : forall fd ch, fd32 fd = fd ->
+Lemma fdchan_with_vdso : forall v m fd ch, fdchan fd ch m -> fdchan fd ch (with_vdso v m).
+Proof. intros v m fd ch H; exact H. Qed.
+
+Lemma wall_omni_run : forall fd ch, fd32 fd = fd ->
   forall segs pc ph sp brk0 mb rnd lim inp bufs code,
-  fdchan fd ch (init_model (segments_reserved segs) brk0 mb sp lim inp) ->
+  fdchan fd ch (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp) ->
   bufs_modeled bufs ->
-  to_wallexit segs fd bufs code (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
+  to_wallexit (run_segments segs inp sp mb) fd bufs code
+    (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp) ->
   omni_run (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp
     (fun tr o => tr = wevents_ch ch bufs ++ [ExitEv code (in_fs inp)]
                  /\ exits_with code tr o).
-Proof. LiaFast.lf_pins LiaFast.u0.
+Proof.
   intros fd ch Hfd32 segs pc ph sp brk0 mb rnd lim inp bufs code Hfdc Hbm Hw.
   cbn [omni_run]. unfold init_config.
-  exact (to_wallexit_exec segs fd ch Hfd32 bufs code _
-           (init_model (segments_reserved segs) brk0 mb sp lim inp)
-           eq_refl eq_refl Hfdc Hbm Hw).
+  exact (to_wallexit_exec (run_segments segs inp sp mb) fd ch Hfd32 bufs code _
+           (with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+              (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp))
+           eq_refl eq_refl (fdchan_with_vdso _ _ _ _ Hfdc) Hbm Hw).
 Qed.
 
-#[using="Type"] Lemma wall_obs_iff : forall fd ch, fd32 fd = fd ->
+Lemma wall_obs_iff : forall fd ch, fd32 fd = fd ->
   forall segs pc ph sp brk0 mb rnd lim inp bufs code,
-  fdchan fd ch (init_model (segments_reserved segs) brk0 mb sp lim inp) ->
+  fdchan fd ch (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp) ->
   bufs_modeled bufs ->
-  to_wallexit segs fd bufs code (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
-  forall tr, obs_trace segs (init_config segs pc ph sp brk0 mb rnd lim inp) tr
+  to_wallexit (run_segments segs inp sp mb) fd bufs code
+    (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp) ->
+  forall tr, obs_trace (run_segments segs inp sp mb)
+               (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) tr
              <-> is_prefix tr (wevents_ch ch bufs ++ [ExitEv code (in_fs inp)]).
-Proof. LiaFast.lf_pins LiaFast.u0.
+Proof.
   intros fd ch Hfd32 segs pc ph sp brk0 mb rnd lim inp bufs code Hfdc Hbm Hw tr.
   apply exec_obs_iff.
   eapply exec_conseq;
@@ -927,13 +939,15 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   intros tr' o (Heq & Hx). split; [exact Heq | exact (exits_with_never_errors _ _ _ Hx)].
 Qed.
 
-#[using="Type"] Lemma wall_no_error_run : forall fd ch, fd32 fd = fd ->
+Lemma wall_no_error_run : forall fd ch, fd32 fd = fd ->
   forall segs pc ph sp brk0 mb rnd lim inp bufs code,
-  fdchan fd ch (init_model (segments_reserved segs) brk0 mb sp lim inp) ->
+  fdchan fd ch (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp) ->
   bufs_modeled bufs ->
-  to_wallexit segs fd bufs code (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
-  ~ reaches_error segs (init_config segs pc ph sp brk0 mb rnd lim inp).
-Proof. LiaFast.lf_pins LiaFast.u0.
+  to_wallexit (run_segments segs inp sp mb) fd bufs code
+    (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp) ->
+  ~ reaches_error (run_segments segs inp sp mb)
+      (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp).
+Proof.
   intros fd ch Hfd32 segs pc ph sp brk0 mb rnd lim inp bufs code Hfdc Hbm Hw. apply exec_no_error.
   eapply exec_conseq;
     [exact (wall_omni_run fd ch Hfd32 segs pc ph sp brk0 mb rnd lim inp bufs code Hfdc Hbm Hw) |].
@@ -941,24 +955,25 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma wall_omni_strong_equiv :
+Lemma wall_omni_strong_equiv :
   forall source_segs rpc rph rsp rbrk rmb rrnd target_segs apc aph asp abrk amb arnd bufs code inp,
-  to_wallexit source_segs (Z_to_bv 64 1) bufs code
-    (init_machine_state source_segs rpc rph rsp rrnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
-  to_wallexit target_segs (Z_to_bv 64 1) bufs code
-    (init_machine_state target_segs apc aph asp arnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
+  to_wallexit (run_segments source_segs inp rsp rmb) (Z_to_bv 64 1) bufs code
+    (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp) ->
+  to_wallexit (run_segments target_segs inp asp amb) (Z_to_bv 64 1) bufs code
+    (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp) ->
   bufs_modeled bufs ->
+  in_channel_reader inp = true ->
   omni_strong_equiv (mkImage source_segs rpc rph) (mkImage target_segs apc aph)
                     (mkEntry rsp rbrk rmb rrnd) (mkEntry asp abrk amb arnd) inp.
-Proof. LiaFast.lf_pins LiaFast.u0.
+Proof.
   intros source_segs rpc rph rsp rbrk rmb rrnd target_segs apc aph asp abrk amb arnd bufs code inp
-    Hsource Htarget Hbm.
+    Hsource Htarget Hbm Hr.
   assert (HfdS : fdchan (Z_to_bv 64 1) (Z_to_bv 64 1)
-    (init_model (segments_reserved source_segs) rbrk rmb rsp source_alloc_limit inp))
-    by (split; reflexivity).
+    (init_model (segments_reserved (run_segments source_segs inp rsp rmb)) rbrk rmb rsp source_alloc_limit inp))
+    by (apply fd1chan_fdchan, init_model_fd1chan; exact Hr).
   assert (HfdT : fdchan (Z_to_bv 64 1) (Z_to_bv 64 1)
-    (init_model (segments_reserved target_segs) abrk amb asp target_alloc_limit inp))
-    by (split; reflexivity).
+    (init_model (segments_reserved (run_segments target_segs inp asp amb)) abrk amb asp target_alloc_limit inp))
+    by (apply fd1chan_fdchan, init_model_fd1chan; exact Hr).
   split.
   { cbn [img_segments].
     eapply coexec_conseq;
@@ -980,25 +995,26 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma wall_strong_equiv :
+Lemma wall_strong_equiv :
   forall source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim bufs code inp,
-  to_wallexit source_segs (Z_to_bv 64 1) bufs code
-    (init_machine_state source_segs rpc rph rsp rrnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
-  to_wallexit target_segs (Z_to_bv 64 1) bufs code
-    (init_machine_state target_segs apc aph asp arnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
+  to_wallexit (run_segments source_segs inp rsp rmb) (Z_to_bv 64 1) bufs code
+    (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp) ->
+  to_wallexit (run_segments target_segs inp asp amb) (Z_to_bv 64 1) bufs code
+    (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp) ->
   bufs_modeled bufs ->
+  in_channel_reader inp = true ->
   Equivalence.modeled (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
   /\ Equivalence.equiv (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
                        (run (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp).
-Proof. LiaFast.lf_pins LiaFast.u0.
+Proof.
   intros source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim
-         bufs code inp Hsource Htarget Hbm.
+         bufs code inp Hsource Htarget Hbm Hr.
   assert (HfdS : fdchan (Z_to_bv 64 1) (Z_to_bv 64 1)
-    (init_model (segments_reserved source_segs) rbrk rmb rsp rlim inp))
-    by (split; reflexivity).
+    (init_model (segments_reserved (run_segments source_segs inp rsp rmb)) rbrk rmb rsp rlim inp))
+    by (apply fd1chan_fdchan, init_model_fd1chan; exact Hr).
   assert (HfdT : fdchan (Z_to_bv 64 1) (Z_to_bv 64 1)
-    (init_model (segments_reserved target_segs) abrk amb asp alim inp))
-    by (split; reflexivity).
+    (init_model (segments_reserved (run_segments target_segs inp asp amb)) abrk amb asp alim inp))
+    by (apply fd1chan_fdchan, init_model_fd1chan; exact Hr).
   split.
   { apply no_error_run_modeled.
     apply (wall_no_error_run (Z_to_bv 64 1) (Z_to_bv 64 1) fd32_1
@@ -1097,19 +1113,26 @@ Proof. reflexivity. Qed.
 (* [comment removed for export] *)
 Definition M_loop (model : Model) : Prop :=
   fd_lookup (m_fds model) (Z_to_bv 64 0) = Some (FdChannel (Z_to_bv 64 0)) /\
-  fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)) /\
+  fd1chan model /\
   m_halted model = None /\
   m_vm_lazy model = [].
 
 Lemma init_M_loop : forall reserved brk0 mb sp lim inp,
+  in_channel_reader inp = true ->
   M_loop (init_model reserved brk0 mb sp lim inp).
-Proof. intros reserved brk0 mb sp lim inp. repeat split. Qed.
+Proof.
+  intros reserved brk0 mb sp lim inp Hr.
+  split; [reflexivity | split; [apply init_model_fd1chan; exact Hr | split; reflexivity]].
+Qed.
 
 (* [comment removed for export] *)
 Lemma M_loop_take : forall k model,
   M_loop model ->
   M_loop (with_stdin (snd (stream_take (m_stdin model) k)) model).
-Proof. intros k model (H0 & H1 & Hh & Hlazy). repeat split; assumption. Qed.
+Proof.
+  intros k model (H0 & H1 & Hh & Hlazy).
+  split; [exact H0 | split; [exact H1 | split; assumption]].
+Qed.
 
 Lemma M_loop_fd1chan : forall model, M_loop model -> fd1chan model.
 Proof. intros model (H0 & H1 & Hh & Hlazy). exact H1. Qed.
@@ -1675,7 +1698,7 @@ Definition ReadPend (ms : machine_state) : Prop :=
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
-#[using="Type"] Lemma msteps_to_wr : forall bs ms ms',
+Lemma msteps_to_wr : forall bs ms ms',
   msteps segs ms ms' -> to_wr bs ms' -> to_wr bs ms.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros bs ms ms' H; induction H; [auto|].
@@ -1683,7 +1706,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma to_wr_wall_tail : forall bs ms,
+Lemma to_wr_wall_tail : forall bs ms,
   to_wr bs ms -> to_wall_tail segs (Z_to_bv 64 1) ms bs lh_next.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros bs ms H; induction H as [ms HWP | ms ms' Hsvc Hstep Hwr IH].
@@ -1698,7 +1721,7 @@ Inductive to_rd : machine_state -> Prop :=
     RiscvSemantics.step segs ms = MachineOk ms' ->
     to_rd ms' -> to_rd ms.
 
-#[using="Type"] Lemma msteps_to_rd : forall ms ms',
+Lemma msteps_to_rd : forall ms ms',
   msteps segs ms ms' -> to_rd ms' -> to_rd ms.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros ms ms' H; induction H; [auto|].
@@ -1708,7 +1731,7 @@ Qed.
 (* [comment removed for export] *)
 Hypothesis H_LH : forall ms, LH ms -> to_rd ms.
 
-#[using="H_LH"] Lemma lh_next_to_rd : forall ms, lh_next ms -> to_rd ms.
+Lemma lh_next_to_rd : forall ms, lh_next ms -> to_rd ms.
 Proof. LiaFast.lf_pins (fun (H_LH : LiaFast.U) => LiaFast.u0).
   intros ms (ms' & Hm & HL). eapply msteps_to_rd; [exact Hm | apply H_LH, HL].
 Qed.
@@ -1717,7 +1740,7 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma to_rd_star : forall ms model,
+Lemma to_rd_star : forall ms model,
   m_halted model = None -> m_vm_lazy model = [] -> to_rd ms ->
   exists msR, ReadPend msR /\
     star segs (mkCfg ms model) [] (mkCfg msR model).
@@ -1733,7 +1756,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     rewrite (mi_account_step_no_lazy segs ms model Hlazy), Hstep. reflexivity.
 Qed.
 
-#[using="Type"] Lemma to_wr_star : forall bs ms model,
+Lemma to_wr_star : forall bs ms model,
   m_halted model = None -> m_vm_lazy model = [] -> to_wr bs ms ->
   exists msW, WrPend bs msW /\
     star segs (mkCfg ms model) [] (mkCfg msW model).
@@ -1753,7 +1776,7 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Hcnt H_LH"] Lemma stream_star_admits : forall s blocks s',
+Lemma stream_star_admits : forall s blocks s',
   chunks cnt s blocks s' ->
   forall ms model,
   M_loop model -> m_stdin model = s -> to_rd ms ->
@@ -1847,7 +1870,7 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Hcnt H_LH"] Lemma star_loop_only : forall c0 tr c', star segs c0 tr c' ->
+Lemma star_loop_only : forall c0 tr c', star segs c0 tr c' ->
   forall ms model, c0 = mkCfg ms model -> M_loop model ->
   (to_rd ms ->
      exists blocks s', chunks cnt (m_stdin model) blocks s' /\
@@ -1957,7 +1980,7 @@ Definition sinv (c : config) : Prop :=
            to_wall_tail segs (Z_to_bv 64 1) (cfg_ms c) bs lh_next))
   \/ on_path segs (Z_to_bv 64 0) c.
 
-#[using="Hcnt H_LH"] Lemma sinv_step : forall c evs c',
+Lemma sinv_step : forall c evs c',
   sinv c -> sstep segs c evs (SNext c') -> sinv c'.
 Proof. LiaFast.lf_pins (fun (Hcnt H_LH : LiaFast.U) => LiaFast.u0).
   intros [ms model] evs [ms' model'] Hinv Hss.
@@ -2015,7 +2038,7 @@ Proof. LiaFast.lf_pins (fun (Hcnt H_LH : LiaFast.U) => LiaFast.u0).
   - right. eapply on_path_step; eauto.
 Qed.
 
-#[using="Hcnt"] Lemma sinv_no_error : forall c evs, sinv c -> ~ sstep segs c evs SError.
+Lemma sinv_no_error : forall c evs, sinv c -> ~ sstep segs c evs SError.
 Proof. LiaFast.lf_pins (fun (Hcnt : LiaFast.U) => LiaFast.u0).
   intros [ms model] evs Hinv Hss.
   destruct Hinv as [[HM Hphase] | Hop]; cbn [cfg_ms cfg_model] in *.
@@ -2040,10 +2063,10 @@ Proof. LiaFast.lf_pins (fun (Hcnt : LiaFast.U) => LiaFast.u0).
   - eapply on_path_no_error; eauto.
 Qed.
 
-#[using="Hcnt H_LH"] Lemma star_sinv : forall c tr c', sinv c -> star segs c tr c' -> sinv c'.
+Lemma star_sinv : forall c tr c', sinv c -> star segs c tr c' -> sinv c'.
 Proof. LiaFast.lf_pins (fun (Hcnt H_LH : LiaFast.U) => LiaFast.u0). exact (star_inv segs sinv sinv_step). Qed.
 
-#[using="Hcnt H_LH"] Lemma to_rd_no_error : forall ms model,
+Lemma to_rd_no_error : forall ms model,
   M_loop model -> to_rd ms -> ~ reaches_error segs (mkCfg ms model).
 Proof. LiaFast.lf_pins (fun (Hcnt H_LH : LiaFast.U) => LiaFast.u0).
   intros ms model HM Hrd.
@@ -2055,17 +2078,20 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Hcnt H_LH"] Lemma stream_obs_iff : forall pc ph sp brk0 mb rnd lim inp,
-  to_rd (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
+Lemma stream_obs_iff : forall pc ph sp brk0 mb rnd lim inp,
+  to_rd (init_machine_state segs pc ph sp mb rnd inp) ->
+  in_channel_reader inp = true ->
   forall tr, obs_trace segs (init_config segs pc ph sp brk0 mb rnd lim inp) tr
              <-> stream_traces cnt (in_fs inp) (in_stdin inp) tr.
-Proof. LiaFast.lf_pins (fun (Hcnt H_LH : LiaFast.U) => LiaFast.u0).
-  intros pc ph sp brk0 mb rnd lim inp Hrd tr.
+Proof.
+  intros pc ph sp brk0 mb rnd lim inp Hrd Hrdr tr.
   set (fs0 := in_fs inp) in *; set (stdin0 := in_stdin inp) in *.
   unfold init_config.
-  set (ms0 := init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) in *.
-  pose proof (init_M_loop (segments_reserved segs) brk0 mb sp lim inp) as HM0.
-  set (model0 := init_model (segments_reserved segs) brk0 mb sp lim inp) in *.
+  set (ms0 := init_machine_state segs pc ph sp mb rnd inp) in *.
+  pose proof (init_M_loop (segments_reserved segs) brk0 mb sp lim inp Hrdr) as HM0'.
+  set (model0 := with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+                   (init_model (segments_reserved segs) brk0 mb sp lim inp)) in *.
+  assert (HM0 : M_loop model0) by exact HM0'.
   assert (Hst0 : m_stdin model0 = stdin0) by reflexivity.
   assert (Hfs0 : m_fs model0 = fs0) by reflexivity.
   split.
@@ -2083,12 +2109,13 @@ Proof. LiaFast.lf_pins (fun (Hcnt H_LH : LiaFast.U) => LiaFast.u0).
     split; assumption.
 Qed.
 
-#[using="Hcnt H_LH"] Lemma stream_no_error : forall pc ph sp brk0 mb rnd lim inp,
-  to_rd (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
+Lemma stream_no_error : forall pc ph sp brk0 mb rnd lim inp,
+  to_rd (init_machine_state segs pc ph sp mb rnd inp) ->
+  in_channel_reader inp = true ->
   ~ reaches_error segs (init_config segs pc ph sp brk0 mb rnd lim inp).
-Proof. LiaFast.lf_pins (fun (Hcnt H_LH : LiaFast.U) => LiaFast.u0).
-  intros pc ph sp brk0 mb rnd lim inp Hrd.
-  apply to_rd_no_error; [apply init_M_loop | exact Hrd].
+Proof.
+  intros pc ph sp brk0 mb rnd lim inp Hrd Hrdr.
+  apply to_rd_no_error; [apply init_M_loop; exact Hrdr | exact Hrd].
 Qed.
 
 (* [comment removed for export] *)
@@ -2099,30 +2126,36 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Hcnt H_LH"] Lemma to_rd_coexec : forall ms model,
+Lemma to_rd_coexec : forall ms model,
   M_loop model -> to_rd ms -> OmniRun.coexec segs (mkCfg ms model) never_errors.
 Proof. LiaFast.lf_pins (fun (Hcnt H_LH : LiaFast.U) => LiaFast.u0).
   intros ms model HM Hrd.
   apply (inv_coexec segs sinv sinv_step sinv_no_error). left; cbn; auto.
 Qed.
 
-#[using="Hcnt H_LH"] Lemma stream_omni_corun : forall pc ph sp brk0 mb rnd lim inp,
-  to_rd (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
-  omni_corun (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp never_errors.
-Proof. LiaFast.lf_pins (fun (Hcnt H_LH : LiaFast.U) => LiaFast.u0).
-  intros pc ph sp brk0 mb rnd lim inp Hrd. cbn [omni_corun]. unfold init_config.
-  apply to_rd_coexec; [apply init_M_loop | exact Hrd].
+Lemma stream_omni_corun : forall pc ph sp brk0 mb rnd lim inp,
+  to_rd (init_machine_state segs pc ph sp mb rnd inp) ->
+  in_channel_reader inp = true ->
+  OmniRun.coexec segs (init_config segs pc ph sp brk0 mb rnd lim inp) never_errors.
+Proof.
+  intros pc ph sp brk0 mb rnd lim inp Hrd Hrdr. unfold init_config.
+  set (model0 := with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+                   (init_model (segments_reserved segs) brk0 mb sp lim inp)) in *.
+  assert (HM0 : M_loop model0)
+    by exact (init_M_loop (segments_reserved segs) brk0 mb sp lim inp Hrdr).
+  apply to_rd_coexec; [exact HM0 | exact Hrd].
 Qed.
 
-#[using="Hcnt H_LH"] Lemma stream_omni_cosafe : forall pc ph sp brk0 mb rnd lim inp,
-  to_rd (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
-  omni_cosafe (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp
+Lemma stream_omni_cosafe : forall pc ph sp brk0 mb rnd lim inp,
+  to_rd (init_machine_state segs pc ph sp mb rnd inp) ->
+  in_channel_reader inp = true ->
+  OmniRun.cosafe segs (init_config segs pc ph sp brk0 mb rnd lim inp)
     (stream_traces cnt (in_fs inp) (in_stdin inp)).
-Proof. LiaFast.lf_pins (fun (Hcnt H_LH : LiaFast.U) => LiaFast.u0).
-  intros pc ph sp brk0 mb rnd lim inp Hrd. cbn [omni_cosafe].
+Proof.
+  intros pc ph sp brk0 mb rnd lim inp Hrd Hrdr.
   apply cosafe_obs_iff.
   - intros t t' Ht Hp. eapply stream_traces_prefix_closed; eauto.
-  - intros tr Hobs. apply (stream_obs_iff pc ph sp brk0 mb rnd lim inp Hrd). exact Hobs.
+  - intros tr Hobs. apply (stream_obs_iff pc ph sp brk0 mb rnd lim inp Hrd Hrdr). exact Hobs.
 Qed.
 
 End Loop.
@@ -2138,50 +2171,57 @@ End Loop.
 Lemma stream_omni_strong_equiv :
   forall cnt : word, (0 < bv_unsigned cnt <= rw_bytes_max)%Z ->
   forall source_segs rLH rpc rph rsp rbrk rmb rrnd target_segs aLH apc aph asp abrk amb arnd inp,
-  (forall ms, rLH ms -> to_rd source_segs rLH cnt ms) ->
-  (forall ms, aLH ms -> to_rd target_segs aLH cnt ms) ->
-  to_rd source_segs rLH cnt (init_machine_state source_segs rpc rph rsp rrnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
-  to_rd target_segs aLH cnt (init_machine_state target_segs apc aph asp arnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
+  (forall ms, rLH ms -> to_rd (run_segments source_segs inp rsp rmb) rLH cnt ms) ->
+  (forall ms, aLH ms -> to_rd (run_segments target_segs inp asp amb) aLH cnt ms) ->
+  to_rd (run_segments source_segs inp rsp rmb) rLH cnt
+    (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp) ->
+  to_rd (run_segments target_segs inp asp amb) aLH cnt
+    (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp) ->
+  in_channel_reader inp = true ->
   omni_strong_equiv (mkImage source_segs rpc rph) (mkImage target_segs apc aph)
                     (mkEntry rsp rbrk rmb rrnd) (mkEntry asp abrk amb arnd) inp.
 Proof.
   intros cnt Hcnt source_segs rLH rpc rph rsp rbrk rmb rrnd target_segs aLH apc aph asp abrk amb arnd
-         inp HrLH HaLH Hr Ha.
+         inp HrLH HaLH Hr Ha Hrdr.
   split.
   { cbn [img_segments].
     eapply coexec_conseq;
-      [exact (stream_omni_corun source_segs rLH cnt Hcnt HrLH rpc rph rsp rbrk rmb rrnd
-                source_alloc_limit inp Hr) | apply never_errors_covered]. }
+      [exact (stream_omni_corun (run_segments source_segs inp rsp rmb) rLH cnt Hcnt HrLH
+                rpc rph rsp rbrk rmb rrnd
+                source_alloc_limit inp Hr Hrdr) | apply never_errors_covered]. }
   right. split.
   - apply trace_equiv_iff_omni. intro tr. cbn.
-    rewrite (stream_obs_iff source_segs rLH cnt Hcnt HrLH rpc rph rsp rbrk rmb rrnd source_alloc_limit inp Hr tr).
-    rewrite (stream_obs_iff target_segs aLH cnt Hcnt HaLH apc aph asp abrk amb arnd target_alloc_limit inp Ha tr).
+    rewrite (stream_obs_iff (run_segments source_segs inp rsp rmb) rLH cnt Hcnt HrLH rpc rph rsp rbrk rmb rrnd source_alloc_limit inp Hr Hrdr tr).
+    rewrite (stream_obs_iff (run_segments target_segs inp asp amb) aLH cnt Hcnt HaLH apc aph asp abrk amb arnd target_alloc_limit inp Ha Hrdr tr).
     reflexivity.
-  - exact (stream_omni_corun target_segs aLH cnt Hcnt HaLH apc aph asp abrk amb arnd target_alloc_limit inp Ha).
+  - exact (stream_omni_corun (run_segments target_segs inp asp amb) aLH cnt Hcnt HaLH apc aph asp abrk amb arnd target_alloc_limit inp Ha Hrdr).
 Qed.
 
 Lemma stream_strong_equiv :
   forall cnt : word, (0 < bv_unsigned cnt <= rw_bytes_max)%Z ->
   forall source_segs rLH rpc rph rsp rbrk rmb rrnd rlim target_segs aLH apc aph asp abrk amb arnd alim inp,
-  (forall ms, rLH ms -> to_rd source_segs rLH cnt ms) ->
-  (forall ms, aLH ms -> to_rd target_segs aLH cnt ms) ->
-  to_rd source_segs rLH cnt (init_machine_state source_segs rpc rph rsp rrnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
-  to_rd target_segs aLH cnt (init_machine_state target_segs apc aph asp arnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
+  (forall ms, rLH ms -> to_rd (run_segments source_segs inp rsp rmb) rLH cnt ms) ->
+  (forall ms, aLH ms -> to_rd (run_segments target_segs inp asp amb) aLH cnt ms) ->
+  to_rd (run_segments source_segs inp rsp rmb) rLH cnt
+    (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp) ->
+  to_rd (run_segments target_segs inp asp amb) aLH cnt
+    (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp) ->
+  in_channel_reader inp = true ->
   Equivalence.modeled (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
   /\ Equivalence.equiv (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
                        (run (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp).
 Proof.
   intros cnt Hcnt source_segs rLH rpc rph rsp rbrk rmb rrnd rlim target_segs aLH apc aph asp abrk amb arnd alim
-         inp HrLH HaLH Hr Ha.
+         inp HrLH HaLH Hr Ha Hrdr.
   split.
   { apply no_error_run_modeled.
-    apply (stream_no_error source_segs rLH cnt Hcnt HrLH rpc rph rsp rbrk rmb rrnd rlim inp Hr). }
+    apply (stream_no_error (run_segments source_segs inp rsp rmb) rLH cnt Hcnt HrLH rpc rph rsp rbrk rmb rrnd rlim inp Hr Hrdr). }
   right. split.
   - intro tr. cbn.
-    rewrite (stream_obs_iff source_segs rLH cnt Hcnt HrLH rpc rph rsp rbrk rmb rrnd rlim inp Hr tr).
-    rewrite (stream_obs_iff target_segs aLH cnt Hcnt HaLH apc aph asp abrk amb arnd alim inp Ha tr).
+    rewrite (stream_obs_iff (run_segments source_segs inp rsp rmb) rLH cnt Hcnt HrLH rpc rph rsp rbrk rmb rrnd rlim inp Hr Hrdr tr).
+    rewrite (stream_obs_iff (run_segments target_segs inp asp amb) aLH cnt Hcnt HaLH apc aph asp abrk amb arnd alim inp Ha Hrdr tr).
     reflexivity.
-  - cbn. apply (stream_no_error target_segs aLH cnt Hcnt HaLH apc aph asp abrk amb arnd alim inp Ha).
+  - cbn. apply (stream_no_error (run_segments target_segs inp asp amb) aLH cnt Hcnt HaLH apc aph asp abrk amb arnd alim inp Ha Hrdr).
 Qed.
 End StreamSim.
 
@@ -2211,7 +2251,7 @@ Context {fx : FPState}.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma u_add_small : forall a b : word,
+Lemma u_add_small : forall a b : word,
   (bv_unsigned a + bv_unsigned b < 2 ^ 64)%Z ->
   bv_unsigned (a + b) = (bv_unsigned a + bv_unsigned b)%Z.
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -2219,7 +2259,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   pose proof (u64_range a). pose proof (u64_range b). lia.
 Qed.
 
-#[using="Type"] Lemma word_add_0_r : forall a : word, a + Z_to_bv 64 0 = a.
+Lemma word_add_0_r : forall a : word, a + Z_to_bv 64 0 = a.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intro a. apply bv_eq.
   rewrite bv_add_unsigned.
@@ -2228,7 +2268,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma word_add_sub_cancel : forall r t : word, r + t - r = t.
+Lemma word_add_sub_cancel : forall r t : word, r + t - r = t.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros r t. apply bv_eq.
   rewrite bv_sub_unsigned, bv_add_unsigned, !bv_wrap64_mod.
@@ -2238,14 +2278,14 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   apply Z.mod_small. apply u64_range.
 Qed.
 
-#[using="Type"] Lemma word_neq0_unsigned : forall r : word,
+Lemma word_neq0_unsigned : forall r : word,
   r <> Z_to_bv 64 0 -> (bv_unsigned r <> 0)%Z.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros r Hne Hu. apply Hne. apply bv_eq. rewrite Hu. reflexivity.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma word_add_nat_S : forall (a : word) k,
+Lemma word_add_nat_S : forall (a : word) k,
   (a + 1) + nat_to_word k = a + nat_to_word (S k).
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros a k. apply bv_eq. unfold nat_to_word.
@@ -2265,10 +2305,10 @@ Definition zmem (mem : word -> option byte) (b l : word) : word -> option byte :
               && Z.ltb (bv_unsigned a) (bv_unsigned b + bv_unsigned l)
            then Some (Z_to_bv 8 0) else mem a.
 
-#[using="Type"] Lemma apply_zeros_nil : forall mem, apply_zeros mem [] = mem.
+Lemma apply_zeros_nil : forall mem, apply_zeros mem [] = mem.
 Proof. LiaFast.lf_pins LiaFast.u0. reflexivity. Qed.
 
-#[using="Type"] Lemma apply_zeros_one : forall mem b l,
+Lemma apply_zeros_one : forall mem b l,
   apply_zeros mem [(b, l)] = zmem mem b l.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros mem b l. apply functional_extensionality. intro a.
@@ -2276,7 +2316,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   rewrite orb_false_r. reflexivity.
 Qed.
 
-#[using="Type"] Lemma zmem_out : forall mem b l a,
+Lemma zmem_out : forall mem b l a,
   (bv_unsigned a < bv_unsigned b \/ bv_unsigned b + bv_unsigned l <= bv_unsigned a)%Z ->
   zmem mem b l a = mem a.
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -2290,7 +2330,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma rdn_zmem_out : forall segs mem b l (a : word) n,
+Lemma rdn_zmem_out : forall segs mem b l (a : word) n,
   (bv_unsigned a + Z.of_nat n <= 2 ^ 64)%Z ->
   (bv_unsigned a + Z.of_nat n <= bv_unsigned b
    \/ bv_unsigned b + bv_unsigned l <= bv_unsigned a)%Z ->
@@ -2300,7 +2340,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   intros x Hx. apply zmem_out. lia.
 Qed.
 
-#[using="Type"] Lemma rdn_zmem_in1 : forall segs mem b l (a : word),
+Lemma rdn_zmem_in1 : forall segs mem b l (a : word),
   (bv_unsigned b <= bv_unsigned a < bv_unsigned b + bv_unsigned l)%Z ->
   rdn segs (zmem mem b l) a 1 = Some [Z_to_bv 8 0].
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -2310,7 +2350,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma wbytes_app : forall {bs1 bs2 : list byte} m (a : word),
+Lemma wbytes_app : forall {bs1 bs2 : list byte} m (a : word),
   wbytes m a (bs1 ++ bs2) = wbytes (wbytes m a bs1) (a + nat_to_word (length bs1)) bs2.
 Proof. LiaFast.lf_pins LiaFast.u0.
   induction bs1 as [|b bs1 IH]; intros bs2 m a.
@@ -2325,23 +2365,23 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma with_vmmaps_fds : forall h m, m_fds (with_vmmaps h m) = m_fds m.
+Lemma with_vmmaps_fds : forall h m, m_fds (with_vmmaps h m) = m_fds m.
 Proof. LiaFast.lf_pins LiaFast.u0. reflexivity. Qed.
-#[using="Type"] Lemma with_vmmaps_fs : forall h m, m_fs (with_vmmaps h m) = m_fs m.
+Lemma with_vmmaps_fs : forall h m, m_fs (with_vmmaps h m) = m_fs m.
 Proof. LiaFast.lf_pins LiaFast.u0. reflexivity. Qed.
-#[using="Type"] Lemma with_vmmaps_halted : forall h m, m_halted (with_vmmaps h m) = m_halted m.
+Lemma with_vmmaps_halted : forall h m, m_halted (with_vmmaps h m) = m_halted m.
 Proof. LiaFast.lf_pins LiaFast.u0. reflexivity. Qed.
-#[using="Type"] Lemma with_vmmaps_vm : forall h m, m_vmmaps (with_vmmaps h m) = h.
+Lemma with_vmmaps_vm : forall h m, m_vmmaps (with_vmmaps h m) = h.
 Proof. LiaFast.lf_pins LiaFast.u0. reflexivity. Qed.
-#[using="Type"] Lemma with_vmmaps_lazy : forall h m,
+Lemma with_vmmaps_lazy : forall h m,
   m_vm_lazy (with_vmmaps h m) = m_vm_lazy m.
 Proof. LiaFast.lf_pins LiaFast.u0. reflexivity. Qed.
 
-#[using="Type"] Lemma fd1chan_with_vmmaps : forall h m, fd1chan m -> fd1chan (with_vmmaps h m).
+Lemma fd1chan_with_vmmaps : forall h m, fd1chan m -> fd1chan (with_vmmaps h m).
 Proof. LiaFast.lf_pins LiaFast.u0. intros h m H. unfold fd1chan in *. exact H. Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma fd1chan_forget_vm_ranges : forall ranges m,
+Lemma fd1chan_forget_vm_ranges : forall ranges m,
   fd1chan m -> fd1chan (forget_vm_ranges ranges m).
 Proof. LiaFast.lf_pins LiaFast.u0.
   induction ranges as [|[a n] ranges IH]; intros m H; cbn [forget_vm_ranges].
@@ -2351,7 +2391,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma adv_brk : forall regs pc x8 mem rom r zs,
+Lemma adv_brk : forall regs pc x8 mem rom r zs,
   advance_past_svc (apply_effect
     {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc; ms_svc_pending := Some x8;
        ms_resv := None; ms_fcsr := fp_csr; ms_mem := mem; ms_rom := rom |} (mkEffect r [] zs))
@@ -2371,16 +2411,16 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma in_sysno_sys_input214 : forall segs ms x8,
+Lemma in_sysno_sys_input214 : forall segs ms x8,
   in_sysno (sys_input segs ms x8) = x8.
 Proof. LiaFast.lf_pins LiaFast.u0. reflexivity. Qed.
 
-#[using="Type"] Lemma in_arg0_sys_input214 : forall segs ms x8,
+Lemma in_arg0_sys_input214 : forall segs ms x8,
   in_arg (sys_input segs ms x8) 0 = ms_gpr ms 0.
 Proof. LiaFast.lf_pins LiaFast.u0. reflexivity. Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma syscall_spec_brk : forall segs ms x8 model o,
+Lemma syscall_spec_brk : forall segs ms x8 model o,
   bv_unsigned x8 = 214%Z ->
   (syscall_spec (sys_input segs ms x8) model o
    <-> brk_spec (ms_gpr ms 0) (sys_input segs ms x8) model o).
@@ -2409,14 +2449,14 @@ Definition brk_model (req r : word) (m : Model) : Model :=
   with_brk_next m req r.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma fd1chan_brk_model : forall req r m,
+Lemma fd1chan_brk_model : forall req r m,
   fd1chan m -> fd1chan (brk_model req r m).
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros req r m H. unfold brk_model, with_brk_next. cbv zeta.
   apply fd1chan_forget_vm_ranges, fd1chan_with_vmmaps, H.
 Qed.
 
-#[using="Type"] Lemma check_brk_ok_inv : forall req eff m m' evs,
+Lemma check_brk_ok_inv : forall req eff m m' evs,
   check_brk req eff m = CheckOk m' evs ->
   eff = mkEffectU (eff_ret eff) []
           (brk_zeros req (eff_ret eff) (vm_brk (m_vmmaps m)))
@@ -2443,7 +2483,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   repeat split; try reflexivity. exact HR.
 Qed.
 
-#[using="Type"] Lemma check_brk_ok_intro : forall req r m,
+Lemma check_brk_ok_intro : forall req r m,
   brk_resolution_ok m req r ->
   check_brk req (mkEffectU r [] (brk_zeros req r (vm_brk (m_vmmaps m)))
                               (brk_unmaps r (vm_brk (m_vmmaps m))) [] []) m
@@ -2457,7 +2497,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma brk_ok_iff : forall segs ms x8 model eff model' evs,
+Lemma brk_ok_iff : forall segs ms x8 model eff model' evs,
   bv_unsigned x8 = 214%Z ->
   (syscall_spec (sys_input segs ms x8) model (Ok eff model' evs) <->
    (eff = mkEffectU (eff_ret eff) []
@@ -2477,7 +2517,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     apply check_brk_ok_intro. exact Hok.
 Qed.
 
-#[using="Type"] Lemma brk_ok_intro : forall segs ms x8 model r,
+Lemma brk_ok_intro : forall segs ms x8 model r,
   bv_unsigned x8 = 214%Z ->
   brk_resolution_ok model (ms_gpr ms 0) r ->
   syscall_spec (sys_input segs ms x8) model
@@ -2490,7 +2530,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma brk_no_unmodeled : forall segs ms x8 model,
+Lemma brk_no_unmodeled : forall segs ms x8 model,
   bv_unsigned x8 = 214%Z ->
   ~ syscall_spec (sys_input segs ms x8) model Unmodeled.
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -2507,7 +2547,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma brk_receptive : forall segs ms x8 model,
+Lemma brk_receptive : forall segs ms x8 model,
   bv_unsigned x8 = 214%Z ->
   exists eff model',
     syscall_spec (sys_input segs ms x8) model (Ok eff model' []).
@@ -2532,7 +2572,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma brk_zeros_grow : forall req r old,
+Lemma brk_zeros_grow : forall req r old,
   req <> Z_to_bv 64 0 ->
   (0 < bv_unsigned old)%Z -> (bv_unsigned old < bv_unsigned r)%Z ->
   brk_zeros req r old =
@@ -2548,11 +2588,13 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma brk_grants_grow : forall req r old,
+Lemma brk_grants_grow : forall req r old,
   req <> Z_to_bv 64 0 ->
   (0 < bv_unsigned old)%Z -> (bv_unsigned old < bv_unsigned r)%Z ->
-  brk_grants req r old = [(old, r - old)].
-Proof. LiaFast.lf_pins LiaFast.u0.
+  brk_grants req r old =
+    brk_page_range (page_round_up_Z (bv_unsigned old))
+                   (page_round_up_Z (bv_unsigned r)).
+Proof.
   intros req r old Hreq Hold Hlt. unfold brk_grants, brk_is_grow.
   assert (E1 : w_is0 req = false)
     by (unfold w_is0; apply bv_eqb_neq; exact Hreq).
@@ -2561,32 +2603,32 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   rewrite E1, E2, E3. reflexivity.
 Qed.
 
-#[using="Type"] Lemma brk_zeros_query : forall r old, brk_zeros (Z_to_bv 64 0) r old = [].
+Lemma brk_zeros_query : forall r old, brk_zeros (Z_to_bv 64 0) r old = [].
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros r old. unfold brk_zeros, brk_is_grow, w_is0.
   rewrite bv_eqb_refl. reflexivity.
 Qed.
 
-#[using="Type"] Lemma brk_grants_query : forall r old, brk_grants (Z_to_bv 64 0) r old = [].
+Lemma brk_grants_query : forall r old, brk_grants (Z_to_bv 64 0) r old = [].
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros r old. unfold brk_grants, brk_is_grow, w_is0.
   rewrite bv_eqb_refl. reflexivity.
 Qed.
 
-#[using="Type"] Lemma brk_zeros_keep : forall req old, brk_zeros req old old = [].
+Lemma brk_zeros_keep : forall req old, brk_zeros req old old = [].
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros req old. unfold brk_zeros, brk_is_grow.
   rewrite Z.ltb_irrefl, !andb_false_r. reflexivity.
 Qed.
 
-#[using="Type"] Lemma brk_grants_keep : forall req old, brk_grants req old old = [].
+Lemma brk_grants_keep : forall req old, brk_grants req old old = [].
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros req old. unfold brk_grants, brk_is_grow.
   rewrite Z.ltb_irrefl, !andb_false_r. reflexivity.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma brk_unmaps_keep : forall old, brk_unmaps old old = [].
+Lemma brk_unmaps_keep : forall old, brk_unmaps old old = [].
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros old. unfold brk_unmaps. cbv zeta.
   destruct (0 <? bv_unsigned old)%Z eqn:E; [|reflexivity].
@@ -2594,12 +2636,12 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma brk_unmaps_query : forall h r,
+Lemma brk_unmaps_query : forall h r,
   r = vm_brk h -> brk_unmaps r (vm_brk h) = [].
 Proof. LiaFast.lf_pins LiaFast.u0. intros h r ->. apply brk_unmaps_keep. Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma brk_unmaps_grow : forall r old,
+Lemma brk_unmaps_grow : forall r old,
   (bv_unsigned old <= bv_unsigned r)%Z -> brk_unmaps r old = [].
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros r old H. unfold brk_unmaps. cbv zeta.
@@ -2611,7 +2653,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma brk_grow_ok_grow : forall h req r,
+Lemma brk_grow_ok_grow : forall h req r,
   req <> Z_to_bv 64 0 ->
   (0 < bv_unsigned (vm_brk h))%Z -> (bv_unsigned (vm_brk h) < bv_unsigned r)%Z ->
   brk_grow_ok h req r
@@ -2623,8 +2665,8 @@ Qed.
                 (Z_to_bv 64 (page_round_up_Z (bv_unsigned r) + page_size
                              - page_round_up_Z (bv_unsigned (vm_brk h))))
       else true)
-     && (vm_backed_bytes h + bv_unsigned (r - vm_brk h) <=? vm_limit h)%Z)%bool.
-Proof. LiaFast.lf_pins LiaFast.u0.
+     && (vm_backed_bytes h + brk_grow_bytes h r <=? vm_limit h)%Z)%bool.
+Proof.
   intros h req r Hreq H0 Hlt.
   assert (Hmaps : m_vmmaps (vm_model h) = h) by reflexivity.
   assert (Hbacked : vm_backing_used (vm_model h) = vm_backed_bytes h).
@@ -2642,7 +2684,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   rewrite E2, E3. reflexivity.
 Qed.
 
-#[using="Type"] Lemma brk_grow_ok_keep : forall h req,
+Lemma brk_grow_ok_keep : forall h req,
   brk_grow_ok h req (vm_brk h) = true.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros h req. unfold brk_grow_ok, Mmap.brk_grow_ok.
@@ -2653,7 +2695,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma page_round_up_Z_aligned : forall z,
+Lemma page_round_up_Z_aligned : forall z,
   (0 <= z)%Z -> (z mod page_size = 0)%Z -> page_round_up_Z z = z.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros z Hz Hmod. unfold page_round_up_Z, page_size in *.
@@ -2664,7 +2706,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   rewrite Z.div_small by lia. lia.
 Qed.
 
-#[using="Type"] Lemma page_round_up_Z_bounds : forall z,
+Lemma page_round_up_Z_bounds : forall z,
   (0 <= z)%Z ->
   (z <= page_round_up_Z z <= z + page_size - 1)%Z.
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -2675,7 +2717,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma round8_le_page_round : forall z,
+Lemma round8_le_page_round : forall z,
   (0 <= z)%Z ->
   ((((z + 7) / 8) * 8) <= page_round_up_Z z)%Z.
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -2695,7 +2737,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   lia.
 Qed.
 
-#[using="Type"] Lemma round8_le_page_grant : forall old n,
+Lemma round8_le_page_grant : forall old n,
   (0 <= old)%Z -> (0 <= n)%Z ->
   (old mod page_size = 0)%Z ->
   ((((n + 7) / 8) * 8) <= page_round_up_Z (old + n) - old)%Z.
@@ -2711,7 +2753,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma region_free_prefix : forall maps b small big,
+Lemma region_free_prefix : forall maps b small big,
   (bv_unsigned small <= bv_unsigned big)%Z ->
   region_free maps b big = true -> region_free maps b small = true.
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -2728,7 +2770,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma brk_grow_ok_aligned_grow : forall h req r,
+Lemma brk_grow_ok_aligned_grow : forall h req r,
   req <> Z_to_bv 64 0 ->
   (0 < bv_unsigned (vm_brk h))%Z ->
   (bv_unsigned (vm_brk h) < bv_unsigned r)%Z ->
@@ -2738,8 +2780,8 @@ Qed.
       && region_free (vm_reserved h ++ vm_maps h) (vm_brk h)
            (Z_to_bv 64 (page_round_up_Z (bv_unsigned r) + page_size
                         - bv_unsigned (vm_brk h))))
-     && (vm_backed_bytes h + bv_unsigned (r - vm_brk h) <=? vm_limit h)%Z)%bool.
-Proof. LiaFast.lf_pins LiaFast.u0.
+     && (vm_backed_bytes h + brk_grow_bytes h r <=? vm_limit h)%Z)%bool.
+Proof.
   intros h req r Hreq Hpos Hlt Halign.
   rewrite brk_grow_ok_grow by assumption.
   rewrite (page_round_up_Z_aligned (bv_unsigned (vm_brk h))) by lia.
@@ -2752,7 +2794,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   - symmetry. apply Z_to_bv_bv_unsigned.
 Qed.
 
-#[using="Type"] Lemma brk_zeros_aligned_grow : forall req r old,
+Lemma brk_zeros_aligned_grow : forall req r old,
   req <> Z_to_bv 64 0 ->
   (0 < bv_unsigned old)%Z -> (bv_unsigned old < bv_unsigned r)%Z ->
   (bv_unsigned old mod page_size = 0)%Z ->
@@ -2770,7 +2812,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma brk_aligned_grant_ok :
+Lemma brk_aligned_grant_ok :
   forall (res : list (word * word)) (r w g : word) (top ceil : Z),
   bv_unsigned (r + w) = (bv_unsigned r + bv_unsigned w)%Z ->
   bv_unsigned (r + w) = top ->
@@ -2845,7 +2887,8 @@ Definition growable (reserved : list (word * word)) (lim top : Z) (t r : word)
                                (bv_unsigned r + bv_unsigned t)
                               + page_size - page_round_up_Z (bv_unsigned r)))
       else true)
-     && (bv_unsigned t <=? lim)%Z)%bool = true)).
+     && (Z.max 0 (page_round_up_Z (bv_unsigned r + bv_unsigned t)
+                  - page_round_up_Z (bv_unsigned r)) <=? lim)%Z)%bool = true)).
 
 (* [comment removed for export] *)
 Definition T1 (reserved : list (word * word)) (lim top : Z) (t : word)
@@ -2864,7 +2907,7 @@ Definition T2 (want : word) (bufs : list (list byte)) (r2 : word)
         \/ (r2 <> want /\ o = ([], Z_to_bv 64 4)).
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma brk_r_ok_query_iff : forall h r,
+Lemma brk_r_ok_query_iff : forall h r,
   brk_r_ok h (Z_to_bv 64 0) r <-> r = vm_brk h.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros h r. unfold brk_r_ok, Mmap.brk_r_ok.
@@ -2874,7 +2917,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma reserved_top_above : forall reserved (r : Z),
+Lemma reserved_top_above : forall reserved (r : Z),
   (reserved_top reserved <= r)%Z ->
   Forall (fun p : word * word =>
             (bv_unsigned (fst p) + bv_unsigned (snd p) <= r)%Z) reserved.
@@ -2885,7 +2928,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma region_free_above_top : forall reserved (lo n : word),
+Lemma region_free_above_top : forall reserved (lo n : word),
   (reserved_top reserved <= bv_unsigned lo)%Z ->
   region_free reserved lo n = true.
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -2898,7 +2941,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma region_free_above : forall (l : list (word * word)) (lo n : word),
+Lemma region_free_above : forall (l : list (word * word)) (lo n : word),
   Forall (fun p => (bv_unsigned (fst p) + bv_unsigned (snd p)
                     <= bv_unsigned lo)%Z) l ->
   region_free l lo n = true.
@@ -2912,7 +2955,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma region_free_below : forall (l : list (word * word)) (lo n : word),
+Lemma region_free_below : forall (l : list (word * word)) (lo n : word),
   Forall (fun p => (bv_unsigned lo + bv_unsigned n
                     <= bv_unsigned (fst p))%Z) l ->
   region_free l lo n = true.
@@ -2926,7 +2969,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma growable_aligned_grow : forall reserved lim top (t r : word),
+Lemma growable_aligned_grow : forall reserved lim top (t r : word),
   (bv_unsigned r mod page_size = 0)%Z ->
   (reserved_top reserved <= bv_unsigned r)%Z ->
   (0 < bv_unsigned t)%Z ->
@@ -2959,11 +3002,11 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   - apply Z.leb_le. exact Hlim.
 Qed.
 
-#[using="Type"] Lemma brk_aslr_max_val : brk_aslr_max = 1073741824%Z.
+Lemma brk_aslr_max_val : brk_aslr_max = 1073741824%Z.
 Proof. LiaFast.lf_pins LiaFast.u0. reflexivity. Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma brk_model_next_query : forall h r,
+Lemma brk_model_next_query : forall h r,
   r = vm_brk h ->
   brk_model_next h (Z_to_bv 64 0) r
   = mkVmMapsFull (vm_reserved h) (vm_maps h) (vm_noaccess h)
@@ -2974,7 +3017,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   rewrite brk_grants_query, brk_unmaps_keep. reflexivity.
 Qed.
 
-#[using="Type"] Lemma brk_model_query : forall r m,
+Lemma brk_model_query : forall r m,
   r = vm_brk (m_vmmaps m) ->
   brk_model (Z_to_bv 64 0) r m
   = with_vmmaps
@@ -2989,7 +3032,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma brk_r_ok_grow_iff : forall reserved lim s r maps noaccess mb sp req r2,
+Lemma brk_r_ok_grow_iff : forall reserved lim s r maps noaccess mb sp req r2,
   (0 < bv_unsigned req)%Z ->
   (bv_unsigned s <= bv_unsigned req)%Z ->
   (bv_unsigned r <= bv_unsigned req)%Z ->
@@ -3015,13 +3058,13 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma T1_iff_T2 : forall reserved lim s (mb sp : word) t bufs r,
+Lemma T1_iff_T2 : forall reserved lim s (mb sp : word) t bufs r,
   r <> Z_to_bv 64 0 -> (bv_unsigned s <= bv_unsigned r)%Z ->
   (bv_unsigned r + bv_unsigned t < 2 ^ 64)%Z ->
   forall o, T1 reserved lim (bv_unsigned sp - stack_max_size) t bufs r o <->
     (exists r2, brk_r_ok (mkVmMapsFull reserved [] [] s r lim mb sp) (r + t) r2
                 /\ T2 (r + t) bufs r2 o).
-Proof. LiaFast.lf_pins LiaFast.u0.
+Proof.
   intros reserved lim s mb sp t bufs r Hr0 Hs Hnw o.
   pose proof (u64_range r) as Hur. pose proof (u64_range t) as Hut.
   pose proof (word_neq0_unsigned r Hr0) as Hur0.
@@ -3039,7 +3082,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     by (intro r2; apply brk_r_ok_grow_iff with (maps := []) (noaccess := []); lia).
   split.
   - intros [[-> Hcase] | [Hg ->]].
-    + (* [comment removed for export] *)
+    + (* exit 4: failure resolution r2 = r, which exists iff t <> 0 *)
       assert (Ht0 : t <> Z_to_bv 64 0)
         by (destruct Hcase as [Hc | [Hc | Hc]]; [congruence | lia | exact Hc]).
       pose proof (word_neq0_unsigned t Ht0) as Hut0.
@@ -3049,7 +3092,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
       * right. split; [| reflexivity].
         intro He. apply (f_equal bv_unsigned) in He.
         rewrite Huadd in He. lia.
-    + (* [comment removed for export] *)
+    + (* success: r2 = want *)
       destruct Hg as (_ & _ & Hb).
       exists (r + t). split.
       * apply Bridge. split; [left; reflexivity|].
@@ -3063,13 +3106,14 @@ Proof. LiaFast.lf_pins LiaFast.u0.
         rewrite brk_grow_ok_grow;
           cbn [vm_brk vm_reserved vm_maps vm_limit vm_live_bytes live_bytes];
           [| exact Hwant0 | lia | lia].
-        rewrite app_nil_r, word_add_sub_cancel, Huadd, Z.add_0_l.
+        unfold brk_grow_bytes. cbn [vm_brk].
+        rewrite app_nil_r, Huadd, Z.add_0_l.
         exact Hb.
       * left. split; reflexivity.
   - intros (r2 & Hrok & Hb).
     apply Bridge in Hrok. destruct Hrok as (Hcase & Hgrow).
     destruct Hb as [[-> ->] | [Hne ->]].
-    + (* [comment removed for export] *)
+    + (* success resolution *)
       right. split; [| reflexivity].
       split; [exact Hr0 | split; [exact Hnw |]].
       destruct (Z.eq_dec (bv_unsigned t) 0) as [Hz | Hz];
@@ -3077,9 +3121,10 @@ Proof. LiaFast.lf_pins LiaFast.u0.
       rewrite brk_grow_ok_grow in Hgrow;
         cbn [vm_brk vm_reserved vm_maps vm_limit vm_live_bytes live_bytes] in *;
         [| exact Hwant0 | lia | lia].
-      rewrite app_nil_r, word_add_sub_cancel, Huadd, Z.add_0_l in Hgrow.
+      unfold brk_grow_bytes in Hgrow. cbn [vm_brk] in Hgrow.
+      rewrite app_nil_r, Huadd, Z.add_0_l in Hgrow.
       exact Hgrow.
-    + (* [comment removed for export] *)
+    + (* failure resolution: r2 = r, and t <> 0 or r2 = want *)
       left. split; [reflexivity |].
       right. right.
       intro Ht0. subst t.
@@ -3087,13 +3132,13 @@ Proof. LiaFast.lf_pins LiaFast.u0.
       destruct Hcase as [Hc | Hc]; exact (Hne Hc).
 Qed.
 
-#[using="Type"] Lemma T2_fail_iff : forall want bufs r2,
+Lemma T2_fail_iff : forall want bufs r2,
   r2 <> want -> forall o, T2 want bufs r2 o <-> o = ([], Z_to_bv 64 4).
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros want bufs r2 Hne o. unfold T2. tauto.
 Qed.
 
-#[using="Type"] Lemma T2_succ_iff : forall want bufs o,
+Lemma T2_succ_iff : forall want bufs o,
   T2 want bufs want o <-> o = (bufs, Z_to_bv 64 0).
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros want bufs o. unfold T2. tauto.
@@ -3133,7 +3178,7 @@ Inductive to_outcomes : machine_state -> Model -> ((list (list byte) * word) -> 
     to_outcomes ms model U.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma tou_msteps : forall ms ms' model U,
+Lemma tou_msteps : forall ms ms' model U,
   msteps segs ms ms' -> to_outcomes ms' model U -> to_outcomes ms model U.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros ms ms' model U H; induction H; [auto|].
@@ -3141,7 +3186,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma forget_vm_ranges_frame : forall ranges model,
+Lemma forget_vm_ranges_frame : forall ranges model,
   m_halted (forget_vm_ranges ranges model) = m_halted model /\
   m_fs (forget_vm_ranges ranges model) = m_fs model /\
   m_fds (forget_vm_ranges ranges model) = m_fds model /\
@@ -3159,7 +3204,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma brk_step_shape : forall ms x8 model eff model' evs,
+Lemma brk_step_shape : forall ms x8 model eff model' evs,
   m_halted model = None ->
   m_vm_lazy model = [] ->
   bv_unsigned x8 = 214%Z ->
@@ -3186,7 +3231,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma sstep_brk_inv : forall ms model x8 evs st,
+Lemma sstep_brk_inv : forall ms model x8 evs st,
   m_halted model = None ->
   m_vm_lazy model = [] ->
   ms_svc_pending ms = Some x8 ->
@@ -3261,7 +3306,7 @@ Definition outcome_trace (fs : Fs.Fs) (o : list (list byte) * word) : list event
 Definition outcomes_post (fs : Fs.Fs) (U : (list (list byte) * word) -> Prop) : post :=
   fun tr o => exists out, U out /\ tr = outcome_trace fs out /\ exits_with (snd out) tr o.
 
-#[using="Type"] Lemma to_outcomes_exec : forall ms model U,
+Lemma to_outcomes_exec : forall ms model U,
   to_outcomes ms model U ->
   m_halted model = None ->
   m_vm_lazy model = [] ->
@@ -3311,7 +3356,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma to_outcomes_no_other_exit : forall ms model U,
+Lemma to_outcomes_no_other_exit : forall ms model U,
   to_outcomes ms model U -> m_halted model = None -> m_vm_lazy model = [] ->
   forall code', (forall o, U o -> snd o <> code') ->
   ~ OmniRun.exec segs (mkCfg ms model) (exits_with code').
@@ -3325,7 +3370,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   exact (Hne out Hout Hx').
 Qed.
 
-#[using="Type"] Lemma to_outcomes_not_silent : forall ms model U,
+Lemma to_outcomes_not_silent : forall ms model U,
   to_outcomes ms model U -> m_halted model = None -> m_vm_lazy model = [] ->
   ~ cosafe segs (mkCfg ms model) (fun tr => tr = []).
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -3338,7 +3383,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   destruct (wevents (fst out)); discriminate Hnil.
 Qed.
 
-#[using="Type"] Lemma to_outcomes_star_only : forall ms model U,
+Lemma to_outcomes_star_only : forall ms model U,
   to_outcomes ms model U ->
   m_halted model = None ->
   m_vm_lazy model = [] ->
@@ -3351,7 +3396,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   exists out. split; [exact Hout |]. rewrite <- Heq. apply is_prefix_app.
 Qed.
 
-#[using="Type"] Lemma to_outcomes_star_admits : forall ms model U,
+Lemma to_outcomes_star_admits : forall ms model U,
   to_outcomes ms model U ->
   m_halted model = None ->
   m_vm_lazy model = [] ->
@@ -3402,7 +3447,7 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma to_outcomes_no_error : forall ms model U,
+Lemma to_outcomes_no_error : forall ms model U,
   to_outcomes ms model U ->
   m_halted model = None ->
   m_vm_lazy model = [] ->
@@ -3418,7 +3463,7 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma tou_brk_r : forall ms model x8 (T' : word -> (list (list byte) * word) -> Prop) U,
+Lemma tou_brk_r : forall ms model x8 (T' : word -> (list (list byte) * word) -> Prop) U,
   ms_svc_pending ms = Some x8 ->
   bv_unsigned x8 = 214%Z ->
   (forall r,
@@ -3454,7 +3499,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma tou_wexit_eq : forall ms model bufs code,
+Lemma tou_wexit_eq : forall ms model bufs code,
   fd1chan model ->
   to_wallexit segs (Z_to_bv 64 1) bufs code ms ->
   bufs_modeled bufs ->
@@ -3465,7 +3510,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma tou_equiv : forall ms model U V,
+Lemma tou_equiv : forall ms model U V,
   to_outcomes ms model U ->
   (forall o, V o <-> U o) ->
   to_outcomes ms model V.
@@ -3491,65 +3536,74 @@ End WithSegs.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma alloc_omni_run : forall segs pc ph sp brk0 mb rnd lim inp U,
-  to_outcomes segs (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-              (init_model (segments_reserved segs) brk0 mb sp lim inp) U ->
+Lemma alloc_omni_run : forall segs pc ph sp brk0 mb rnd lim inp U,
+  to_outcomes (run_segments segs inp sp mb)
+              (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp)
+              (with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+                 (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp)) U ->
   omni_run (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp (outcomes_post (in_fs inp) U).
-Proof. LiaFast.lf_pins LiaFast.u0.
+Proof.
   intros segs pc ph sp brk0 mb rnd lim inp U Hto.
   cbn [omni_run]. unfold init_config.
-  exact (to_outcomes_exec segs _ _ U Hto eq_refl eq_refl).
+  exact (to_outcomes_exec (run_segments segs inp sp mb) _ _ U Hto eq_refl eq_refl).
 Qed.
 
-#[using="Type"] Lemma alloc_obs_iff : forall segs pc ph sp brk0 mb rnd lim inp U,
-  to_outcomes segs (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-              (init_model (segments_reserved segs) brk0 mb sp lim inp) U ->
-  forall tr, obs_trace segs (init_config segs pc ph sp brk0 mb rnd lim inp) tr
+Lemma alloc_obs_iff : forall segs pc ph sp brk0 mb rnd lim inp U,
+  to_outcomes (run_segments segs inp sp mb)
+              (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp)
+              (with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+                 (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp)) U ->
+  forall tr, obs_trace (run_segments segs inp sp mb)
+               (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) tr
     <-> exists o, U o /\ is_prefix tr (outcome_trace (in_fs inp) o).
-Proof. LiaFast.lf_pins LiaFast.u0.
+Proof.
   intros segs pc ph sp brk0 mb rnd lim inp U Hto tr.
   unfold init_config.
-  set (ms := init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) in *.
-  assert (Hh : m_halted (init_model (segments_reserved segs) brk0 mb sp lim inp) = None)
-    by reflexivity.
-  assert (Hlazy : m_vm_lazy
-      (init_model (segments_reserved segs) brk0 mb sp lim inp) = []) by reflexivity.
-  assert (Hfs : m_fs (init_model (segments_reserved segs) brk0 mb sp lim inp) = in_fs inp)
-    by reflexivity.
+  set (ms := init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp) in *.
+  set (m0 := with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+               (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp)) in *.
+  assert (Hh : m_halted m0 = None) by reflexivity.
+  assert (Hlazy : m_vm_lazy m0 = []) by reflexivity.
+  assert (Hfs : m_fs m0 = in_fs inp) by reflexivity.
   split.
   - intros (tr' & c & Hstar & Hp).
-    destruct (to_outcomes_star_only segs ms _ U Hto Hh Hlazy tr' c Hstar)
+    destruct (to_outcomes_star_only (run_segments segs inp sp mb) ms _ U Hto Hh Hlazy tr' c Hstar)
       as (o & Ho & Hp').
     exists o. split; [exact Ho|].
     rewrite Hfs in Hp'. eapply is_prefix_trans; eauto.
   - intros (o & Ho & Hp).
-    destruct (to_outcomes_star_admits segs ms _ U Hto Hh Hlazy o Ho) as [c Hstar].
+    destruct (to_outcomes_star_admits (run_segments segs inp sp mb) ms _ U Hto Hh Hlazy o Ho) as [c Hstar].
     rewrite Hfs in Hstar.
     exists (outcome_trace (in_fs inp) o), c. split; assumption.
 Qed.
 
-#[using="Type"] Lemma alloc_no_error_run : forall segs pc ph sp brk0 mb rnd lim inp U,
-  to_outcomes segs (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-              (init_model (segments_reserved segs) brk0 mb sp lim inp) U ->
-  ~ reaches_error segs (init_config segs pc ph sp brk0 mb rnd lim inp).
-Proof. LiaFast.lf_pins LiaFast.u0.
+Lemma alloc_no_error_run : forall segs pc ph sp brk0 mb rnd lim inp U,
+  to_outcomes (run_segments segs inp sp mb)
+              (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp)
+              (with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+                 (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp)) U ->
+  ~ reaches_error (run_segments segs inp sp mb)
+      (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp).
+Proof.
   intros segs pc ph sp brk0 mb rnd lim inp U Hto. apply exec_no_error.
   eapply exec_conseq; [exact (alloc_omni_run segs pc ph sp brk0 mb rnd lim inp U Hto) |].
   intros tr o (out & _ & _ & Hx). exact (exits_with_never_errors _ _ _ Hx).
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma alloc_omni_strong_equiv :
+Lemma alloc_omni_strong_equiv :
   forall source_segs rpc rph rsp rbrk rmb rrnd target_segs apc aph asp abrk amb arnd U inp,
-  to_outcomes source_segs
-    (init_machine_state source_segs rpc rph rsp rrnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-    (init_model (segments_reserved source_segs) rbrk rmb rsp source_alloc_limit inp) U ->
-  to_outcomes target_segs
-    (init_machine_state target_segs apc aph asp arnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-    (init_model (segments_reserved target_segs) abrk amb asp target_alloc_limit inp) U ->
+  to_outcomes (run_segments source_segs inp rsp rmb)
+    (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp)
+    (with_vdso (Vdso.vdso_run_init (ed_vdso rrnd))
+       (init_model (segments_reserved (run_segments source_segs inp rsp rmb)) rbrk rmb rsp source_alloc_limit inp)) U ->
+  to_outcomes (run_segments target_segs inp asp amb)
+    (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp)
+    (with_vdso (Vdso.vdso_run_init (ed_vdso arnd))
+       (init_model (segments_reserved (run_segments target_segs inp asp amb)) abrk amb asp target_alloc_limit inp)) U ->
   omni_strong_equiv (mkImage source_segs rpc rph) (mkImage target_segs apc aph)
                     (mkEntry rsp rbrk rmb rrnd) (mkEntry asp abrk amb arnd) inp.
-Proof. LiaFast.lf_pins LiaFast.u0.
+Proof.
   intros source_segs rpc rph rsp rbrk rmb rrnd target_segs apc aph asp abrk amb arnd U inp
     Hsource Htarget.
   split.
@@ -3569,19 +3623,21 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma alloc_strong_equiv :
+Lemma alloc_strong_equiv :
   forall source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim
          U inp,
-  to_outcomes source_segs
-    (init_machine_state source_segs rpc rph rsp rrnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-    (init_model (segments_reserved source_segs) rbrk rmb rsp rlim inp) U ->
-  to_outcomes target_segs
-    (init_machine_state target_segs apc aph asp arnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-    (init_model (segments_reserved target_segs) abrk amb asp alim inp) U ->
+  to_outcomes (run_segments source_segs inp rsp rmb)
+    (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp)
+    (with_vdso (Vdso.vdso_run_init (ed_vdso rrnd))
+       (init_model (segments_reserved (run_segments source_segs inp rsp rmb)) rbrk rmb rsp rlim inp)) U ->
+  to_outcomes (run_segments target_segs inp asp amb)
+    (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp)
+    (with_vdso (Vdso.vdso_run_init (ed_vdso arnd))
+       (init_model (segments_reserved (run_segments target_segs inp asp amb)) abrk amb asp alim inp)) U ->
   Equivalence.modeled (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
   /\ Equivalence.equiv (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
                        (run (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp).
-Proof. LiaFast.lf_pins LiaFast.u0.
+Proof.
   intros source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim
     U inp Hsource Htarget.
   split.
@@ -3604,6 +3660,7 @@ From Stdlib Require Import NArith ZArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence OmniEquivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run OmniRun.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement.
 From LinuxProcessSemantics.LinuxProcessSem.Checks.Sys Require Import Mm.Mmap.
 From OSSVerify.Proofs.fast_float.from_chars.lib.Common Require SimInv.
 From OSSVerify.Proofs.fast_float.from_chars.lib.Common Require CatSim.
@@ -3624,7 +3681,7 @@ Context {fx : FPState}.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma v_srli_div : forall (x : word) (sh : Z), (0 <= sh < 64)%Z ->
+Lemma v_srli_div : forall (x : word) (sh : Z), (0 <= sh < 64)%Z ->
   bv_unsigned (v_srli x sh) = (bv_unsigned x / 2 ^ sh)%Z.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros x sh Hsh. unfold v_srli.
@@ -3639,7 +3696,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma step_sb_any : forall segs regs pc mem rom w (rs1 rs2 : reg) (imm : bv 12),
+Lemma step_sb_any : forall segs regs pc mem rom w (rs1 rs2 : reg) (imm : bv 12),
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Store SZ1 rs1 rs2 imm, 4%Z) ->
   RiscvSemantics.store_ok segs mem
@@ -3655,7 +3712,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma step_sb_at : forall segs regs pc mem rom w (rs1 rs2 : reg) (imm : bv 12)
+Lemma step_sb_at : forall segs regs pc mem rom w (rs1 rs2 : reg) (imm : bv 12)
                           (a v : word) (b : byte),
   fetch_word segs pc = Some w -> is_ecall w = false ->
   decode_any w = Some (Store SZ1 rs1 rs2 imm, 4%Z) ->
@@ -3678,7 +3735,7 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma wbytes_snoc : forall (bs : list byte) (m : word -> option byte)
+Lemma wbytes_snoc : forall (bs : list byte) (m : word -> option byte)
                            (a : word) (b : byte),
   wbytes m a (bs ++ [b]) = wbytes (wbytes m a bs) (a + nat_to_word (length bs)) [b].
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -3697,13 +3754,13 @@ Qed.
 Definition zfill (a n : word) (m : word -> option byte) : word -> option byte :=
   zmem m a n.
 
-#[using="Type"] Lemma zfill_out : forall a n m (x : word),
+Lemma zfill_out : forall a n m (x : word),
   (bv_unsigned x < bv_unsigned a \/ bv_unsigned a + bv_unsigned n <= bv_unsigned x)%Z ->
   zfill a n m x = m x.
 Proof. LiaFast.lf_pins LiaFast.u0. intros a n m x Hx. exact (zmem_out m a n x Hx). Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma rdn_zfill_out : forall segs a n m (x : word) k,
+Lemma rdn_zfill_out : forall segs a n m (x : word) k,
   (bv_unsigned x + Z.of_nat k <= 2 ^ 64)%Z ->
   (bv_unsigned x + Z.of_nat k <= bv_unsigned a
    \/ bv_unsigned a + bv_unsigned n <= bv_unsigned x)%Z ->
@@ -3717,17 +3774,7 @@ Qed.
 (* [comment removed for export] *)
 
 Definition munmap_model (addr n : word) (m : Model) : Model :=
-  with_mmap_destroyed addr n
-    (mkVmMapsFull (vm_reserved (m_vmmaps m))
-               (map_remove (vm_maps (m_vmmaps m)) addr)
-               (maps_subtract (vm_noaccess (m_vmmaps m))
-                  (bv_unsigned addr)
-                  (bv_unsigned addr + bv_unsigned n))
-               (vm_start_brk (m_vmmaps m))
-               (vm_brk (m_vmmaps m))
-               (vm_limit (m_vmmaps m))
-               (vm_mmap_base (m_vmmaps m))
-               (vm_init_sp (m_vmmaps m))) m.
+  with_mmap_destroyed addr n (mmap_fixed_destroyed_next (m_vmmaps m) addr n) m.
 
 Definition mmap_model (a n : word) (m : Model) : Model :=
   with_vmmaps (mkVmMapsFull (vm_reserved (m_vmmaps m))
@@ -3745,51 +3792,67 @@ Definition page_round_up (len : word) : word :=
 
 (* [comment removed for export] *)
 Definition grant_ok (hint : word) (m : Model) (a : word) (n : Z) : bool :=
-  (bv_unsigned a mod page_size =? 0)%Z && (0 <? bv_unsigned a)%Z
+  linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint n a
+  && (bv_unsigned a mod page_size =? 0)%Z && (0 <? bv_unsigned a)%Z
   && (bv_unsigned a + n <=? alloc_top (m_vmmaps m))%Z
   && region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 n)
   && (vm_backing_used m + n <=? vm_limit (m_vmmaps m))%Z.
 
-#[using="Type"] Lemma munmap_model_halted : forall addr n m, m_halted (munmap_model addr n m) = m_halted m.
+Lemma grant_ok_intro : forall hint m a n,
+  (0 < n)%Z -> (n mod page_size = 0)%Z ->
+  linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint n a = true ->
+  (vm_backing_used m + n <= vm_limit (m_vmmaps m))%Z ->
+  grant_ok hint m a n = true.
+Proof.
+  intros hint m a n Hn Hnal Hpl Hbud.
+  destruct (linux_place_is_admissible _ _ _ _ _ Hn Hnal Hpl)
+    as (Hal & Hpos & Htop & Hfree).
+  unfold grant_ok. rewrite Hpl, Hfree.
+  rewrite (proj2 (Z.eqb_eq _ _) Hal), (proj2 (Z.ltb_lt _ _) Hpos),
+    (proj2 (Z.leb_le _ _) Htop), (proj2 (Z.leb_le _ _) Hbud).
+  reflexivity.
+Qed.
+
+Lemma munmap_model_halted : forall addr n m, m_halted (munmap_model addr n m) = m_halted m.
 Proof. LiaFast.lf_pins LiaFast.u0. reflexivity. Qed.
-#[using="Type"] Lemma munmap_model_fs : forall addr n m, m_fs (munmap_model addr n m) = m_fs m.
+Lemma munmap_model_fs : forall addr n m, m_fs (munmap_model addr n m) = m_fs m.
 Proof. LiaFast.lf_pins LiaFast.u0. reflexivity. Qed.
-#[using="Type"] Lemma munmap_model_fd1chan : forall addr n m, fd1chan m -> fd1chan (munmap_model addr n m).
+Lemma munmap_model_fd1chan : forall addr n m, fd1chan m -> fd1chan (munmap_model addr n m).
 Proof. LiaFast.lf_pins LiaFast.u0. intros addr n m H. exact H. Qed.
-#[using="Type"] Lemma munmap_model_no_lazy : forall addr n m,
+Lemma munmap_model_no_lazy : forall addr n m,
   m_vm_lazy m = [] -> m_vm_lazy (munmap_model addr n m) = [].
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros addr n m Hlazy. unfold munmap_model, with_mmap_destroyed,
     vm_forget_range, with_vm_backing, with_vmmaps.
   cbn [m_vm_lazy]. rewrite Hlazy. reflexivity.
 Qed.
-#[using="Type"] Lemma mmap_model_halted : forall a n m, m_halted (mmap_model a n m) = m_halted m.
+Lemma mmap_model_halted : forall a n m, m_halted (mmap_model a n m) = m_halted m.
 Proof. LiaFast.lf_pins LiaFast.u0. reflexivity. Qed.
-#[using="Type"] Lemma mmap_model_fs : forall a n m, m_fs (mmap_model a n m) = m_fs m.
+Lemma mmap_model_fs : forall a n m, m_fs (mmap_model a n m) = m_fs m.
 Proof. LiaFast.lf_pins LiaFast.u0. reflexivity. Qed.
-#[using="Type"] Lemma mmap_model_fd1chan : forall a n m, fd1chan m -> fd1chan (mmap_model a n m).
+Lemma mmap_model_fd1chan : forall a n m, fd1chan m -> fd1chan (mmap_model a n m).
 Proof. LiaFast.lf_pins LiaFast.u0. intros a n m H. exact H. Qed.
-#[using="Type"] Lemma mmap_model_lazy : forall a n m,
+Lemma mmap_model_lazy : forall a n m,
   m_vm_lazy (mmap_model a n m) = m_vm_lazy m.
 Proof. LiaFast.lf_pins LiaFast.u0. reflexivity. Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma grant_ok_unpack : forall hint m a n,
+Lemma grant_ok_unpack : forall hint m a n,
   grant_ok hint m a n = true ->
   (bv_unsigned a mod page_size = 0)%Z /\ (0 < bv_unsigned a)%Z /\
   (bv_unsigned a + n <= alloc_top (m_vmmaps m))%Z /\
   region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 n) = true /\
   (vm_backing_used m + n <= vm_limit (m_vmmaps m))%Z.
-Proof. LiaFast.lf_pins LiaFast.u0.
+Proof.
   intros hint m a n H. unfold grant_ok in H.
   rewrite !andb_true_iff in H.
-  destruct H as [[[[H1 H2] H3] H4] H5].
+  destruct H as [[[[[_ H1] H2] H3] H4] H5].
   apply Z.eqb_eq in H1. apply Z.ltb_lt in H2. apply Z.leb_le in H3.
   apply Z.leb_le in H5.
   auto 7.
 Qed.
 
-#[using="Type"] Lemma region_free_cons : forall (b s : word) r (lo n : word),
+Lemma region_free_cons : forall (b s : word) r (lo n : word),
   region_free ((b, s) :: r) lo n = true ->
   (bv_unsigned lo + bv_unsigned n <= bv_unsigned b
    \/ bv_unsigned b + bv_unsigned s <= bv_unsigned lo)%Z
@@ -3804,9 +3867,9 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma source_alloc_limit_val : source_alloc_limit = 0x400000000%Z.
+Lemma source_alloc_limit_val : source_alloc_limit = 0x400000000%Z.
 Proof. LiaFast.lf_pins LiaFast.u0. vm_compute. reflexivity. Qed.
-#[using="Type"] Lemma target_alloc_limit_val : target_alloc_limit = 0x8000000000%Z.
+Lemma target_alloc_limit_val : target_alloc_limit = 0x8000000000%Z.
 Proof. LiaFast.lf_pins LiaFast.u0. vm_compute. reflexivity. Qed.
 
 (* [comment removed for export] *)
@@ -3815,15 +3878,15 @@ Proof. LiaFast.lf_pins LiaFast.u0. vm_compute. reflexivity. Qed.
 
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma in_arg3_sys_input : forall segs ms x8,
+Lemma in_arg3_sys_input : forall segs ms x8,
   in_arg (sys_input segs ms x8) 3 = ms_gpr ms 3.
 Proof. LiaFast.lf_pins LiaFast.u0. reflexivity. Qed.
 
-#[using="Type"] Lemma in_arg4_sys_input : forall segs ms x8,
+Lemma in_arg4_sys_input : forall segs ms x8,
   in_arg (sys_input segs ms x8) 4 = ms_gpr ms 4.
 Proof. LiaFast.lf_pins LiaFast.u0. reflexivity. Qed.
 
-#[using="Type"] Lemma in_arg5_sys_input : forall segs ms x8,
+Lemma in_arg5_sys_input : forall segs ms x8,
   in_arg (sys_input segs ms x8) 5 = ms_gpr ms 5.
 Proof. LiaFast.lf_pins LiaFast.u0. reflexivity. Qed.
 
@@ -3834,7 +3897,7 @@ Definition mmap_args_ok (ms : machine_state) : Prop :=
   /\ ms_gpr ms 5 = Z_to_bv 64 0.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma mmap_args_ok_gates : forall ms,
+Lemma mmap_args_ok_gates : forall ms,
   mmap_args_ok ms ->
   mmap_off_aligned_b (ms_gpr ms 5) = true /\
   mmap_anon_b (ms_gpr ms 3) = true /\
@@ -3866,7 +3929,7 @@ Definition munmap_eff (ms : machine_state) : SyscallEffect :=
   mkEffectU (Z_to_bv 64 0) [] [] [(ms_gpr ms 0, page_round_up (ms_gpr ms 1))] [] [].
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma syscall_spec_munmap : forall segs ms x8 model o,
+Lemma syscall_spec_munmap : forall segs ms x8 model o,
   bv_unsigned x8 = 215%Z ->
   (syscall_spec (sys_input segs ms x8) model o
    <-> munmap_spec (ms_gpr ms 0) (ms_gpr ms 1) (sys_input segs ms x8) model o).
@@ -3877,18 +3940,23 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma munmap_check_modeled : forall ms model eff,
+Lemma munmap_check_modeled : forall ms model eff,
   munmap_args_ok ms model ->
   check_munmap (ms_gpr ms 0) (ms_gpr ms 1) eff model
   = match eff with
     | mkEffectU r [] [] us [] [] =>
-        if w_is0 r
-           && listNN_eqb us [(ms_gpr ms 0, page_round_up (ms_gpr ms 1))]
+        if errno_ret_in munmap_errnos r
+        then match us with
+             | [] => CheckOk model []
+             | _ => CheckReject
+             end
+        else if w_is0 r
+                && listNN_eqb us [(ms_gpr ms 0, page_round_up (ms_gpr ms 1))]
         then CheckOk (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) []
         else CheckReject
     | _ => CheckReject
     end.
-Proof. LiaFast.lf_pins LiaFast.u0.
+Proof.
   intros ms model eff (Hal & Hlen & Hnw & Hhas).
   unfold check_munmap.
   rewrite (proj2 (Z.eqb_eq _ _) Hal).
@@ -3898,28 +3966,32 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   unfold page_round_up in Hhas. rewrite Hhas. reflexivity.
 Qed.
 
-#[using="Type"] Lemma munmap_ok : forall segs ms x8 model,
+Lemma munmap_ok : forall segs ms x8 model,
   bv_unsigned x8 = 215%Z ->
   munmap_args_ok ms model ->
   syscall_spec (sys_input segs ms x8) model
     (Ok (munmap_eff ms)
         (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) []).
-Proof. LiaFast.lf_pins LiaFast.u0.
+Proof.
   intros segs ms x8 model Hno Ha.
   apply (proj2 (syscall_spec_munmap _ _ _ _ _ Hno)). apply check_munmap_sound_ok.
   rewrite (munmap_check_modeled ms model _ Ha).
-  unfold munmap_eff, w_is0. rewrite bv_eqb_refl.
+  unfold munmap_eff, w_is0.
+  replace (errno_ret_in munmap_errnos (Z_to_bv 64 0)) with false by reflexivity.
+  cbv beta iota. rewrite bv_eqb_refl.
   rewrite (proj2 (listNN_eqb_eq _ _) eq_refl). reflexivity.
 Qed.
 
-#[using="Type"] Lemma munmap_ok_inv : forall segs ms x8 model eff model' evs,
+Lemma munmap_ok_inv : forall segs ms x8 model eff model' evs,
   bv_unsigned x8 = 215%Z ->
   munmap_args_ok ms model ->
   syscall_spec (sys_input segs ms x8) model (Ok eff model' evs) ->
-  eff = munmap_eff ms /\
-  model' = munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model
-  /\ evs = [].
-Proof. LiaFast.lf_pins LiaFast.u0.
+  evs = [] /\
+  ((exists e, In e munmap_errnos /\
+     eff = mkEffect (errno_ret e) [] [] /\ model' = model)
+   \/ (eff = munmap_eff ms /\
+       model' = munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model)).
+Proof.
   intros segs ms x8 model eff model' evs Hno Ha Hspec.
   apply (proj1 (syscall_spec_munmap _ _ _ _ _ Hno)) in Hspec.
   apply check_munmap_complete_ok in Hspec.
@@ -3927,26 +3999,34 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   destruct eff as [r ws zs us cs copyins]; destruct ws as [|? ?];
     [destruct zs as [|? ?]|]; try discriminate.
   destruct cs as [|? ?]; [destruct copyins as [|? ?]|]; try discriminate.
-  destruct (w_is0 r
-            && listNN_eqb us [(ms_gpr ms 0, page_round_up (ms_gpr ms 1))])
-    eqn:HC; [|discriminate].
-  inversion Hspec; clear Hspec; subst.
-  apply andb_true_iff in HC as [Hr Hus].
-  unfold w_is0 in Hr. apply bv_eqb_eq in Hr; subst r.
-  apply listNN_eqb_eq in Hus; subst us.
-  unfold munmap_eff. auto.
+  destruct (errno_ret_in munmap_errnos r) eqn:He.
+  - destruct us as [|? ?]; [|discriminate].
+    inversion Hspec; clear Hspec; subst.
+    apply errno_ret_in_true in He. destruct He as (e & HIn & ->).
+    split; [reflexivity|]. left. exists e. auto.
+  - destruct (w_is0 r
+              && listNN_eqb us [(ms_gpr ms 0, page_round_up (ms_gpr ms 1))])
+      eqn:HC; [|discriminate].
+    inversion Hspec; clear Hspec; subst.
+    apply andb_true_iff in HC as [Hr Hus].
+    unfold w_is0 in Hr. apply bv_eqb_eq in Hr; subst r.
+    apply listNN_eqb_eq in Hus; subst us.
+    split; [reflexivity|]. right. unfold munmap_eff. auto.
 Qed.
 
-#[using="Type"] Lemma munmap_no_unmodeled : forall segs ms x8 model,
+Lemma munmap_no_unmodeled : forall segs ms x8 model,
   bv_unsigned x8 = 215%Z ->
   munmap_args_ok ms model ->
   ~ syscall_spec (sys_input segs ms x8) model Unmodeled.
-Proof. LiaFast.lf_pins LiaFast.u0.
+Proof.
   intros segs ms x8 model Hno Ha Hspec.
   apply (proj1 (syscall_spec_munmap _ _ _ _ _ Hno)) in Hspec.
   apply (check_munmap_complete_unmodeled _ _ _ _ (mkEffect (Z_to_bv 64 0) [] []))
     in Hspec.
   rewrite (munmap_check_modeled ms model _ Ha) in Hspec.
+  replace (errno_ret_in munmap_errnos (Z_to_bv 64 0)) with false in Hspec
+    by reflexivity.
+  cbv beta iota in Hspec.
   destruct (w_is0 (Z_to_bv 64 0)
             && listNN_eqb [] [(ms_gpr ms 0, page_round_up (ms_gpr ms 1))]);
     discriminate.
@@ -3957,7 +4037,7 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma syscall_spec_mmap : forall segs ms x8 model o,
+Lemma syscall_spec_mmap : forall segs ms x8 model o,
   bv_unsigned x8 = 222%Z ->
   (syscall_spec (sys_input segs ms x8) model o
    <-> mmap_spec (ms_gpr ms 0) (ms_gpr ms 1) (ms_gpr ms 2) (ms_gpr ms 3)
@@ -3968,28 +4048,31 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   rewrite in_sysno_sys_input, Hno. reflexivity.
 Qed.
 
-#[using="Type"] Lemma ENOMEM_in_mmap_errnos : In ENOMEM mmap_errnos.
+Lemma ENOMEM_in_mmap_errnos : In ENOMEM mmap_errnos.
 Proof. LiaFast.lf_pins LiaFast.u0. left. reflexivity. Qed.
 
-#[using="Type"] Lemma mmap_errno_range : forall e,
+Lemma mmap_errno_range : forall e,
   In e mmap_errnos -> (1 <= e)%Z /\ (e <= 4095)%Z.
 Proof. LiaFast.lf_pins LiaFast.u0. intros e HIn. exact (errnos_ok_range mmap_errnos e eq_refl HIn). Qed.
 
-#[using="Type"] Lemma mmap_fail_ok : forall segs ms x8 model e,
+Lemma mmap_fail_ok : forall segs ms x8 model e,
   bv_unsigned x8 = 222%Z -> mmap_args_ok ms -> In e mmap_errnos ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   syscall_spec (sys_input segs ms x8) model
     (Ok (mkEffect (errno_ret e) [] []) model []).
 Proof. LiaFast.lf_pins LiaFast.u0.
-  intros segs ms x8 model e Hno Ha HIn.
+  intros segs ms x8 model e Hno Ha HIn Hdecl.
   destruct (mmap_args_ok_gates ms Ha) as [Hoff [Hanon [Hl Hmb]]].
   apply (proj2 (syscall_spec_mmap _ _ _ _ _ Hno)). apply check_mmap_sound_ok.
-  unfold check_mmap. cbv beta.
+  unfold check_mmap, check_mmap_fixed_overflow. cbv beta.
   rewrite Hoff, Hanon, Hl, Hmb. cbn [negb]. cbv beta iota zeta.
+  rewrite Hdecl.
   rewrite errno_ret_in_intro by assumption. reflexivity.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma grant_not_errno : forall hint model a n,
+Lemma grant_not_errno : forall hint model a n,
   (0 <= n)%Z -> grant_ok hint model a n = true ->
   errno_ret_in mmap_errnos a = false.
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -3999,36 +4082,39 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   alloc_top_bounds. unfold two_pow_64 in *. lia.
 Qed.
 
-#[using="Type"] Lemma mmap_succ_ok : forall segs ms x8 model a,
+Lemma mmap_succ_ok : forall segs ms x8 model a,
   bv_unsigned x8 = 222%Z ->
   mmap_args_ok ms ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   grant_ok (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true ->
   syscall_spec (sys_input segs ms x8) model
     (Ok (mkEffect a [] [(a, page_round_up (ms_gpr ms 1))])
         (mmap_model a (page_round_up (ms_gpr ms 1)) model) []).
-Proof. LiaFast.lf_pins LiaFast.u0.
-  intros segs ms x8 model a Hno Ha Hg.
+Proof.
+  intros segs ms x8 model a Hno Ha Hdecl Hg.
   destruct (mmap_args_ok_gates ms Ha) as [Hoff [Hanon [Hl Hmb]]].
   destruct Ha as (_ & _ & Hflags & _ & _).
   apply (proj2 (syscall_spec_mmap _ _ _ _ _ Hno)). apply check_mmap_sound_ok.
-  unfold check_mmap. cbv beta.
+  unfold check_mmap, check_mmap_fixed_overflow. cbv beta.
   rewrite Hoff, Hanon, Hl, Hmb. cbn [negb]. cbv beta iota zeta.
+  rewrite Hdecl.
   rewrite (grant_not_errno (ms_gpr ms 0) model a
              (page_round_up_Z (bv_unsigned (ms_gpr ms 1))));
     [ | apply page_round_up_Z_nonneg; pose proof (u64_range (ms_gpr ms 1)); lia
       | exact Hg ].
   unfold grant_ok in Hg. rewrite !andb_true_iff in Hg.
-  destruct Hg as [[[[H1 H2] H3] H4] H5].
+  destruct Hg as [[[[[Hp H1] H2] H3] H4] H5].
   rewrite Hflags.
   assert (Hnr : mmap_noreserve_b (Z_to_bv 64 34) = false)
     by (vm_compute; reflexivity).
   unfold mmap_noreserve_backed_ok, with_mmap_backing. rewrite Hnr.
-  rewrite H1, H2, H3, H4, H5.
+  rewrite Hp, H5.
   unfold page_round_up. cbn [listNN_eqb]. rewrite !bv_eqb_refl.
   reflexivity.
 Qed.
 
-#[using="Type"] Lemma mmap_ok_inv : forall segs ms x8 model eff model' evs,
+Lemma mmap_ok_inv : forall segs ms x8 model eff model' evs,
   bv_unsigned x8 = 222%Z ->
   mmap_args_ok ms ->
   syscall_spec (sys_input segs ms x8) model (Ok eff model' evs) ->
@@ -4038,14 +4124,17 @@ Qed.
    (exists a, grant_ok (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true
       /\ eff = mkEffect a [] [(a, page_round_up (ms_gpr ms 1))]
       /\ model' = mmap_model a (page_round_up (ms_gpr ms 1)) model)).
-Proof. LiaFast.lf_pins LiaFast.u0.
+Proof.
   intros segs ms x8 model eff model' evs Hno Ha Hspec.
   destruct (mmap_args_ok_gates ms Ha) as [Hoff [Hanon [Hl Hmb]]].
   destruct Ha as (_ & _ & Hflags & _ & _).
   apply (proj1 (syscall_spec_mmap _ _ _ _ _ Hno)) in Hspec.
   apply check_mmap_complete_ok in Hspec.
-  unfold check_mmap in Hspec. cbv beta in Hspec.
+  unfold check_mmap, check_mmap_fixed_overflow in Hspec. cbv beta in Hspec.
   rewrite Hoff, Hanon, Hl, Hmb in Hspec. cbn [negb] in Hspec.
+  destruct (place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+              (page_round_up_Z (bv_unsigned (ms_gpr ms 1)))) eqn:Hdecl;
+    [discriminate|].
   rewrite Hflags in Hspec.
   assert (Hnr : mmap_noreserve_b (Z_to_bv 64 34) = false)
     by (vm_compute; reflexivity).
@@ -4064,10 +4153,8 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     split; [reflexivity|]. left.
     apply errno_ret_in_true in Herr. destruct Herr as (e & HIn & ->).
     exists e. auto.
-  - destruct ((bv_unsigned r mod page_size =? 0)%Z && (0 <? bv_unsigned r)%Z
-              && (bv_unsigned r + page_round_up_Z (bv_unsigned (ms_gpr ms 1)) <=? alloc_top (m_vmmaps model))%Z
-              && region_free (vm_reserved (m_vmmaps model) ++ vm_maps (m_vmmaps model)) r
-                   (Z_to_bv 64 (page_round_up_Z (bv_unsigned (ms_gpr ms 1))))
+  - destruct (linux_place_is (m_vmmaps model) (kb_thp (m_kernel model))
+                (ms_gpr ms 0) (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) r
               && (vm_backing_used model
                   + page_round_up_Z (bv_unsigned (ms_gpr ms 1))
                   <=? vm_limit (m_vmmaps model))%Z) eqn:Hcond;
@@ -4082,23 +4169,29 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     inversion Hspec; subst.
     split; [reflexivity|]. right.
     exists r. split; [|split].
-    + unfold grant_ok. exact Hcond.
+    + apply andb_true_iff in Hcond as [Hpl Hbud].
+      apply (grant_ok_intro _ _ _ _ (proj1 (mmap_grant_len_ok _ Hl))
+               (proj2 (mmap_grant_len_ok _ Hl)) Hpl).
+      now apply Z.leb_le.
     + unfold page_round_up. reflexivity.
     + reflexivity.
 Qed.
 
-#[using="Type"] Lemma mmap_no_unmodeled : forall segs ms x8 model,
+Lemma mmap_no_unmodeled : forall segs ms x8 model,
   bv_unsigned x8 = 222%Z ->
   mmap_args_ok ms ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   ~ syscall_spec (sys_input segs ms x8) model Unmodeled.
 Proof. LiaFast.lf_pins LiaFast.u0.
-  intros segs ms x8 model Hno Ha Hspec.
+  intros segs ms x8 model Hno Ha Hdecl Hspec.
   destruct (mmap_args_ok_gates ms Ha) as [Hoff [Hanon [Hl Hmb]]].
   apply (proj1 (syscall_spec_mmap _ _ _ _ _ Hno)) in Hspec.
   apply (check_mmap_complete_unmodeled _ _ _ _ _ _ _ _ (mkEffect (Z_to_bv 64 0) [] []))
     in Hspec.
-  unfold check_mmap in Hspec. cbv beta in Hspec.
+  unfold check_mmap, check_mmap_fixed_overflow in Hspec. cbv beta in Hspec.
   rewrite Hoff, Hanon, Hl, Hmb in Hspec. cbn [negb] in Hspec.
+  rewrite Hdecl in Hspec.
   cbv beta iota zeta in Hspec.
   assert (E : errno_ret_in mmap_errnos (Z_to_bv 64 0) = false) by reflexivity.
   rewrite E in Hspec. cbv beta iota in Hspec.
@@ -4111,7 +4204,7 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma adv_mmap_grant : forall regs pc sv mem rom a n,
+Lemma adv_mmap_grant : forall regs pc sv mem rom a n,
   advance_past_svc (apply_effect
     {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc; ms_svc_pending := sv;
        ms_resv := None; ms_fcsr := fp_csr; ms_mem := mem; ms_rom := rom |}
@@ -4141,7 +4234,7 @@ Definition unfill (a n : word) (m : word -> option byte) : word -> option byte :
               && Z.ltb (bv_unsigned x) (bv_unsigned a + bv_unsigned n)
            then None else m x.
 
-#[using="Type"] Lemma unfill_out : forall a n m (x : word),
+Lemma unfill_out : forall a n m (x : word),
   (bv_unsigned x < bv_unsigned a \/ bv_unsigned a + bv_unsigned n <= bv_unsigned x)%Z ->
   unfill a n m x = m x.
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -4152,7 +4245,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     rewrite andb_false_r. reflexivity.
 Qed.
 
-#[using="Type"] Lemma rdn_unfill_out : forall segs a n m (x : word) k,
+Lemma rdn_unfill_out : forall segs a n m (x : word) k,
   (bv_unsigned x + Z.of_nat k <= 2 ^ 64)%Z ->
   (bv_unsigned x + Z.of_nat k <= bv_unsigned a
    \/ bv_unsigned a + bv_unsigned n <= bv_unsigned x)%Z ->
@@ -4163,7 +4256,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma adv_munmap : forall regs pc sv mem rom a n,
+Lemma adv_munmap : forall regs pc sv mem rom a n,
   advance_past_svc (apply_effect
     {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc; ms_svc_pending := sv;
        ms_resv := None; ms_fcsr := fp_csr; ms_mem := mem; ms_rom := rom |}
@@ -4206,6 +4299,8 @@ Inductive twm : machine_state -> Model -> list (list byte) -> word -> Prop :=
     ms_svc_pending ms = Some x8 ->
     bv_unsigned x8 = 215%Z ->
     munmap_args_ok ms model ->
+    (forall e, In e munmap_errnos ->
+       twm (advance_past_svc (set_gpr0 ms (errno_ret e))) model bufs code) ->
     twm (advance_past_svc (apply_effect ms (munmap_eff ms)))
         (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) bufs code ->
     twm ms model bufs code
@@ -4214,13 +4309,19 @@ Inductive twm : machine_state -> Model -> list (list byte) -> word -> Prop :=
     RiscvSemantics.step segs ms = MachineOk ms' ->
     twm ms' model bufs code ->
     twm ms model bufs code
-(* [comment removed for export] *)
+(** The put-style retry loop realizing one buffer: a write-pending state
+    offering the remainder [rest]; the environment delivers any nonempty
+    prefix, the loop reissues on the rest.  The trace contribution of the
+    whole node is exactly the FULL buffer (WallSim's [to_wall] shape,
+    inlined here because the continuation is the mutual [twm]). *)
 with twm_pend : machine_state -> Model -> list byte -> list (list byte) -> word -> Prop :=
 | twmp_write : forall ms model x8 rest bufs code,
     ms_svc_pending ms = Some x8 ->
     bv_unsigned x8 = 64%Z ->
     ms_gpr ms 0 = Z_to_bv 64 1 ->
     ms_read_bytes ms (ms_gpr ms 1) (ms_gpr ms 2) = Some rest ->
+    (* the range [vfs_write]'s [access_ok] accepts; see [CatSim.write1_check_n] *)
+    access_okb (ms_gpr ms 1) (bv_unsigned (ms_gpr ms 2)) = true ->
     (1 <= length rest)%nat ->
     (forall n, (1 <= n)%nat -> (n <= length rest)%nat ->
        twm_tail (advance_past_svc (set_gpr0 ms (len_word (firstn n rest)))) model
@@ -4245,14 +4346,14 @@ Scheme twm_min := Minimality for twm Sort Prop
   with twm_tail_min := Minimality for twm_tail Sort Prop.
 Combined Scheme twm_mutind from twm_min, twm_pend_min, twm_tail_min.
 
-#[using="Type"] Lemma msteps_twm : forall ms ms' model bufs code,
+Lemma msteps_twm : forall ms ms' model bufs code,
   msteps segs ms ms' -> twm ms' model bufs code -> twm ms model bufs code.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros ms ms' model bufs code H; induction H; [auto|].
   intro Hw. eapply twm_step; eauto.
 Qed.
 
-#[using="Type"] Lemma msteps_twm_tail : forall ms ms' model rest bufs code,
+Lemma msteps_twm_tail : forall ms ms' model rest bufs code,
   msteps segs ms ms' -> twm_tail ms' model rest bufs code ->
   twm_tail ms model rest bufs code.
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -4265,13 +4366,14 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma twm_write_ret : forall regs pc mem rom model buf bufs code,
+Lemma twm_write_ret : forall regs pc mem rom model buf bufs code,
   bv_unsigned (getr regs 17) = 64%Z ->
   reg_get regs 10 = Z_to_bv 64 1 ->
   ms_read_bytes {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc;
                    ms_svc_pending := Some (getr regs 17); ms_resv := None; ms_fcsr := fp_csr;
                    ms_mem := mem; ms_rom := rom |}
     (reg_get regs 11) (reg_get regs 12) = Some buf ->
+  access_okb (reg_get regs 11) (bv_unsigned (reg_get regs 12)) = true ->
   (1 <= length buf)%nat ->
   (forall n, (1 <= n)%nat -> (n <= length buf)%nat ->
      twm_tail (mkst (regupd regs 10 (len_word (firstn n buf))) (v_addi pc 4) mem rom)
@@ -4280,8 +4382,8 @@ Qed.
          ms_svc_pending := Some (getr regs 17); ms_resv := None; ms_fcsr := fp_csr;
          ms_mem := mem; ms_rom := rom |}
       model (buf :: bufs) code.
-Proof. LiaFast.lf_pins LiaFast.u0.
-  intros regs pc mem rom model buf bufs code H17 H10 Hr Hnb Hcont.
+Proof.
+  intros regs pc mem rom model buf bufs code H17 H10 Hr Hok Hnb Hcont.
   assert (E10 : Z_to_bv 5 (10 + Z.of_nat 0) = (10 : reg)) by (apply bv_eq; reflexivity).
   assert (E11 : Z_to_bv 5 (10 + Z.of_nat 1) = (11 : reg)) by (apply bv_eq; reflexivity).
   assert (E12 : Z_to_bv 5 (10 + Z.of_nat 2) = (12 : reg)) by (apply bv_eq; reflexivity).
@@ -4291,18 +4393,20 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   - exact H17.
   - unfold ms_gpr. cbn [ms_regs]. rewrite E10. exact H10.
   - unfold ms_gpr. cbn [ms_regs]. rewrite E11, E12. exact Hr.
+  - unfold ms_gpr. cbn [ms_regs]. rewrite E11, E12. exact Hok.
   - exact Hnb.
   - intros n Hn1 Hn2. rewrite adv_set. exact (Hcont n Hn1 Hn2).
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma twm_tail_write_rec : forall regs pc mem rom model rest bufs code,
+Lemma twm_tail_write_rec : forall regs pc mem rom model rest bufs code,
   bv_unsigned (getr regs 17) = 64%Z ->
   reg_get regs 10 = Z_to_bv 64 1 ->
   ms_read_bytes {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc;
                    ms_svc_pending := Some (getr regs 17); ms_resv := None; ms_fcsr := fp_csr;
                    ms_mem := mem; ms_rom := rom |}
     (reg_get regs 11) (reg_get regs 12) = Some rest ->
+  access_okb (reg_get regs 11) (bv_unsigned (reg_get regs 12)) = true ->
   (1 <= length rest)%nat ->
   (forall n, (1 <= n)%nat -> (n <= length rest)%nat ->
      twm_tail (mkst (regupd regs 10 (len_word (firstn n rest))) (v_addi pc 4) mem rom)
@@ -4311,8 +4415,8 @@ Qed.
               ms_svc_pending := Some (getr regs 17); ms_resv := None; ms_fcsr := fp_csr;
               ms_mem := mem; ms_rom := rom |}
     model rest bufs code.
-Proof. LiaFast.lf_pins LiaFast.u0.
-  intros regs pc mem rom model rest bufs code H17 H10 Hr Hnb Hcont.
+Proof.
+  intros regs pc mem rom model rest bufs code H17 H10 Hr Hok Hnb Hcont.
   assert (E10 : Z_to_bv 5 (10 + Z.of_nat 0) = (10 : reg)) by (apply bv_eq; reflexivity).
   assert (E11 : Z_to_bv 5 (10 + Z.of_nat 1) = (11 : reg)) by (apply bv_eq; reflexivity).
   assert (E12 : Z_to_bv 5 (10 + Z.of_nat 2) = (12 : reg)) by (apply bv_eq; reflexivity).
@@ -4322,12 +4426,13 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   - exact H17.
   - unfold ms_gpr. cbn [ms_regs]. rewrite E10. exact H10.
   - unfold ms_gpr. cbn [ms_regs]. rewrite E11, E12. exact Hr.
+  - unfold ms_gpr. cbn [ms_regs]. rewrite E11, E12. exact Hok.
   - exact Hnb.
   - intros n Hn1 Hn2. rewrite adv_set. exact (Hcont n Hn1 Hn2).
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma twm_munmap_rec : forall regs pc mem rom model bufs code (a nlen : word),
+Lemma twm_munmap_rec : forall regs pc mem rom model bufs code (a nlen : word),
   bv_unsigned (getr regs 17) = 215%Z ->
   reg_get regs 10 = a ->
   reg_get regs 11 = nlen ->
@@ -4335,6 +4440,9 @@ Qed.
   nlen <> Z_to_bv 64 0 ->
   (bv_unsigned a + page_round_up_Z (bv_unsigned nlen) <= TASK_SIZE)%Z ->
   map_has (vm_maps (m_vmmaps model)) a (page_round_up nlen) = true ->
+  (forall e, In e munmap_errnos ->
+     twm (mkst (regupd regs 10 (errno_ret e)) (v_addi pc 4) mem rom)
+         model bufs code) ->
   twm (mkst (regupd regs 10 (Z_to_bv 64 0)) (v_addi pc 4)
             (unfill a (page_round_up nlen) mem) rom)
       (munmap_model a (page_round_up nlen) model) bufs code ->
@@ -4342,8 +4450,8 @@ Qed.
          ms_svc_pending := Some (getr regs 17); ms_resv := None; ms_fcsr := fp_csr;
          ms_mem := mem; ms_rom := rom |}
       model bufs code.
-Proof. LiaFast.lf_pins LiaFast.u0.
-  intros regs pc mem rom model bufs code a nlen H17 Ha Hn Hal Hlen Hnw Hhas Hcont.
+Proof.
+  intros regs pc mem rom model bufs code a nlen H17 Ha Hn Hal Hlen Hnw Hhas Hfail Hcont.
   assert (E10 : Z_to_bv 5 (10 + Z.of_nat 0) = (10 : reg)) by (apply bv_eq; reflexivity).
   assert (E11 : Z_to_bv 5 (10 + Z.of_nat 1) = (11 : reg)) by (apply bv_eq; reflexivity).
   eapply twm_munmap.
@@ -4351,13 +4459,14 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   - exact H17.
   - unfold munmap_args_ok, ms_gpr. cbn [ms_regs].
     rewrite E10, E11, Ha, Hn. auto.
+  - intros e He. rewrite adv_set. exact (Hfail e He).
   - unfold munmap_eff, ms_gpr. cbn [ms_regs].
     rewrite E10, E11, Ha, Hn.
     rewrite adv_munmap. exact Hcont.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma twm_exit_coden : forall regs pc mem rom model (c : word),
+Lemma twm_exit_coden : forall regs pc mem rom model (c : word),
   bv_unsigned (getr regs 17) = 93%Z ->
   reg_get regs 10 = c -> (bv_unsigned c < 256)%Z ->
   twm {| ms_regs := regs; ms_fregs := fp_regs; ms_pc_val := pc;
@@ -4383,7 +4492,7 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma sstep_munmap_inv : forall ms model x8 evs st,
+Lemma sstep_munmap_inv : forall ms model x8 evs st,
   m_halted model = None ->
   m_vm_lazy model = [] ->
   ms_svc_pending ms = Some x8 ->
@@ -4391,50 +4500,70 @@ Qed.
   munmap_args_ok ms model ->
   sstep segs (mkCfg ms model) evs st ->
   evs = [] /\
-  st = SNext (mkCfg (advance_past_svc (apply_effect ms (munmap_eff ms)))
-                    (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model)).
-Proof. LiaFast.lf_pins LiaFast.u0.
+  ((exists e, In e munmap_errnos /\
+      st = SNext (mkCfg (advance_past_svc (set_gpr0 ms (errno_ret e))) model)) \/
+   st = SNext (mkCfg (advance_past_svc (apply_effect ms (munmap_eff ms)))
+                     (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model))).
+Proof.
   intros ms model x8 evs st Hh Hlazy Hsvc Hno Hargs Hss.
   inversion Hss; subst; try congruence.
-  - (* [comment removed for export] *)
+  - (* sstep_syscall *)
     match goal with
     | H2 : ms_svc_pending ms = Some ?x,
       H3 : syscall_spec (sys_input segs ms ?x) model (Ok ?eff ?model' ?evs0) |- _ =>
       assert (Hx : x = x8) by congruence; subst x;
-      destruct (munmap_ok_inv segs ms x8 model eff model' evs0 Hno Hargs H3) as (Heff & Hm & Hevs);
-      subst eff model' evs0
+      destruct (munmap_ok_inv segs ms x8 model eff model' evs0 Hno Hargs H3)
+        as (Hevs & Hcase);
+      subst evs0
     end.
-    match goal with
-    | Hmat : materialize_model_accesses
-        (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) _ = Some _ |- _ =>
-      rewrite (materialize_model_accesses_no_lazy _ _
-        (munmap_model_no_lazy _ _ _ Hlazy)) in Hmat;
-      inversion Hmat; subst
-    end.
-    split; reflexivity.
-  - (* [comment removed for export] *)
+    split; [reflexivity|].
+    destruct Hcase as [(e & HIn & -> & ->) | (-> & ->)].
+    + left. exists e.
+      match goal with
+      | Hmat : materialize_model_accesses model _ = Some _ |- _ =>
+        rewrite (materialize_model_accesses_no_lazy _ _ Hlazy) in Hmat;
+        inversion Hmat; subst
+      end.
+      split; [assumption |].
+      rewrite apply_effect_no_write. reflexivity.
+    + right.
+      match goal with
+      | Hmat : materialize_model_accesses
+          (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) _ = Some _ |- _ =>
+        rewrite (materialize_model_accesses_no_lazy _ _
+          (munmap_model_no_lazy _ _ _ Hlazy)) in Hmat;
+        inversion Hmat; subst
+      end.
+      reflexivity.
+  - (* sstep_syscall_materialization_fault: no lazy range can fault *)
     exfalso.
     match goal with
     | H3 : syscall_spec (sys_input segs ms ?x) model (Ok ?eff ?model' ?evs0),
       Hmat : materialize_model_accesses ?model' _ = None |- _ =>
       assert (Hx : x = x8) by congruence; subst x;
       destruct (munmap_ok_inv segs ms x8 model eff model' evs0 Hno Hargs H3)
-        as (Heff & Hm & Hevs); subst eff model' evs0;
-      rewrite (materialize_model_accesses_no_lazy _ _
-        (munmap_model_no_lazy _ _ _ Hlazy)) in Hmat;
+        as (_ & Hcase);
+      destruct Hcase as [(? & ? & -> & ->) | (-> & ->)];
+      [ rewrite (materialize_model_accesses_no_lazy _ _ Hlazy) in Hmat
+      | rewrite (materialize_model_accesses_no_lazy _ _
+          (munmap_model_no_lazy _ _ _ Hlazy)) in Hmat ];
       discriminate
     end.
-  - (* [comment removed for export] *)
+  - (* sstep_exit : munmap leaves haltedness unchanged *)
     exfalso.
     match goal with
     | H2 : ms_svc_pending ms = Some ?x,
       H3 : syscall_spec (sys_input segs ms ?x) model (Ok ?eff ?model' ?evs0),
       H6 : m_halted ?model' = Some ?code |- _ =>
       assert (Hx : x = x8) by congruence; subst x;
-      destruct (munmap_ok_inv segs ms x8 model eff model' evs0 Hno Hargs H3) as (_ & Hm & _);
-      subst model'; rewrite munmap_model_halted, Hh in H6; discriminate
+      destruct (munmap_ok_inv segs ms x8 model eff model' evs0 Hno Hargs H3)
+        as (_ & Hcase);
+      destruct Hcase as [(? & ? & _ & ->) | (_ & ->)];
+      [ rewrite Hh in H6
+      | rewrite munmap_model_halted, Hh in H6 ];
+      discriminate
     end.
-  - (* [comment removed for export] *)
+  - (* sstep_killed : munmap leaves it unkilled for the same reason *)
     exfalso.
     match goal with
     | H2 : ms_svc_pending ms = Some ?x,
@@ -4442,15 +4571,14 @@ Proof. LiaFast.lf_pins LiaFast.u0.
       H6 : m_killed ?model' = Some ?sig |- _ =>
       assert (Hx : x = x8) by congruence; subst x;
       destruct (munmap_ok_inv segs ms x8 model eff model' evs0 Hno Hargs H3)
-        as (_ & Hm & _);
-      subst model';
-      assert (Hhn : m_halted
-                      (munmap_model (ms_gpr ms 0)
-                         (page_round_up (ms_gpr ms 1)) model) = None)
-        by (rewrite munmap_model_halted; exact Hh);
-      rewrite (m_killed_of_m_halted_none _ Hhn) in H6; discriminate
+        as (_ & Hcase);
+      destruct Hcase as [(? & ? & _ & ->) | (_ & ->)];
+      [ rewrite (m_killed_of_m_halted_none _ Hh) in H6
+      | rewrite m_killed_of_m_halted_none in H6;
+        [| rewrite munmap_model_halted; exact Hh] ];
+      discriminate
     end.
-  - (* [comment removed for export] *)
+  - (* sstep_syscall_unmodeled *)
     exfalso.
     match goal with
     | H2 : ms_svc_pending ms = Some ?x,
@@ -4477,7 +4605,7 @@ Definition twm_rest_post (rest : list byte) (bufs : list (list byte)) (code : wo
   fun tr o => tr = map (WriteEv (Z_to_bv 64 1)) rest ++ wevents bufs ++ [ExitEv code fs]
               /\ exits_with code tr o.
 
-#[using="Type"] Lemma twm_exec_mut :
+Lemma twm_exec_mut :
   (forall ms model bufs code, twm ms model bufs code ->
      bufs_modeled bufs ->
      m_halted model = None -> m_vm_lazy model = [] -> fd1chan model ->
@@ -4490,7 +4618,7 @@ Definition twm_rest_post (rest : list byte) (bufs : list (list byte)) (code : wo
      buf_modeled rest -> bufs_modeled bufs ->
      m_halted model = None -> m_vm_lazy model = [] -> fd1chan model ->
      OmniRun.exec segs (mkCfg ms model) (twm_rest_post rest bufs code (m_fs model))).
-Proof. LiaFast.lf_pins LiaFast.u0.
+Proof.
   apply (twm_mutind
     (fun ms model bufs code =>
        bufs_modeled bufs ->
@@ -4504,7 +4632,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
        buf_modeled rest -> bufs_modeled bufs ->
        m_halted model = None -> m_vm_lazy model = [] -> fd1chan model ->
        OmniRun.exec segs (mkCfg ms model) (twm_rest_post rest bufs code (m_fs model)))).
-  - (* [comment removed for export] *)
+  - (* twm_exit *)
     intros ms model x8 Hsvc Hx8 Hbm Hh Hlazy Hfd.
     apply (exec_step_only segs _ _
              [ExitEv (bv_and (ms_gpr ms 0) (Z_to_bv 64 255)) (m_fs model)]
@@ -4529,24 +4657,23 @@ Proof. LiaFast.lf_pins LiaFast.u0.
         cbn [exits_with cfg_model]. split;
           [ rewrite m_halted_with_halted; reflexivity
           | apply m_killed_with_halted ].
-  - (* [comment removed for export] *)
+  - (* twm_write: the wall node contributes the full buffer *)
     intros ms model buf bufs code Hnb Hp IH Hbm Hh Hlazy Hfd.
     apply Forall_cons_iff in Hbm as [Hb Hbs].
     eapply exec_conseq; [exact (IH Hb Hbs Hh Hlazy Hfd) |].
     intros tr o (Heq & Hx). split; [| exact Hx].
     rewrite Heq. cbn [wevents]. rewrite <- app_assoc. reflexivity.
-  - (* [comment removed for export] *)
-    intros ms model x8 bufs code Hsvc Hno Hargs Hte IH Hbm Hh Hlazy Hfd.
+  - (* twm_munmap: the refusal and the cut *)
+    intros ms model x8 bufs code Hsvc Hno Hargs Hfail IHfail Hcut IH Hbm Hh Hlazy Hfd.
     assert (Hh' : m_halted
                     (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) = None)
       by (rewrite munmap_model_halted; exact Hh).
     assert (Hfd' : fd1chan
                      (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model))
       by (apply munmap_model_fd1chan; exact Hfd).
-    apply (exec_step_only segs _ _ []
-             (mkCfg (advance_past_svc (apply_effect ms (munmap_eff ms)))
-                    (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model))).
-    + apply (sstep_syscall segs ms model x8 (munmap_eff ms)
+    apply exec_step; [exact Hh | | |].
+    + eexists; eexists.
+      apply (sstep_syscall segs ms model x8 (munmap_eff ms)
                (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model)
                (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) []).
       * exact Hh.
@@ -4555,21 +4682,28 @@ Proof. LiaFast.lf_pins LiaFast.u0.
       * exact Hh'.
       * apply materialize_model_accesses_no_lazy.
         exact (munmap_model_no_lazy _ _ _ Hlazy).
-    + intros evs st Hss.
-      exact (sstep_munmap_inv ms model x8 evs st Hh Hlazy Hsvc Hno Hargs Hss).
-    + eapply exec_conseq;
-        [exact (IH Hbm Hh' (munmap_model_no_lazy _ _ _ Hlazy) Hfd') |].
-      intros tr o (Heq & Hx). split; [| exact Hx].
-      cbn [app]. rewrite Heq, munmap_model_fs. reflexivity.
-  - (* [comment removed for export] *)
+    + intros evs Hss.
+      destruct (sstep_munmap_inv ms model x8 evs SError Hh Hlazy Hsvc Hno Hargs Hss)
+        as (_ & [(e & _ & Habs) | Habs]); discriminate Habs.
+    + intros evs c' Hss.
+      destruct (sstep_munmap_inv ms model x8 evs (SNext c') Hh Hlazy Hsvc Hno Hargs Hss)
+        as (-> & [(e & He & Hc) | Hc]); injection Hc as ->.
+      * eapply exec_conseq; [exact (IHfail e He Hbm Hh Hlazy Hfd) |].
+        intros tr o (Heq & Hx). split; [| exact Hx].
+        cbn [app]. exact Heq.
+      * eapply exec_conseq;
+          [exact (IH Hbm Hh' (munmap_model_no_lazy _ _ _ Hlazy) Hfd') |].
+        intros tr o (Heq & Hx). split; [| exact Hx].
+        cbn [app]. rewrite Heq, munmap_model_fs. reflexivity.
+  - (* twm_step *)
     intros ms ms' model bufs code Hsvc Hstep Hte IH Hbm Hh Hlazy Hfd.
     apply (exec_step_only segs _ _ [] (mkCfg ms' model)).
     + apply (sstep_instr segs ms model ms' model); [exact Hh | exact Hsvc |].
       rewrite (mi_account_step_no_lazy segs ms model Hlazy), Hstep. reflexivity.
     + intros evs st Hss. exact (sstep_instr_inv segs ms model ms' evs st Hlazy Hsvc Hstep Hss).
     + eapply exec_conseq; [exact (IH Hbm Hh Hlazy Hfd) |]. intros tr o H. cbn [app]. exact H.
-  - (* [comment removed for export] *)
-    intros ms model x8 rest bufs code Hsvc Hno Hg Hr Hnb Hcont IH Hbr Hbm Hh Hlazy Hfd.
+  - (* twmp_write: every delivered length is a successor *)
+    intros ms model x8 rest bufs code Hsvc Hno Hg Hr Hok Hnb Hcont IH Hbr Hbm Hh Hlazy Hfd.
     apply exec_step; [exact Hh | | |].
     + eexists; eexists.
       apply (sstep_syscall segs ms model x8
@@ -4583,25 +4717,25 @@ Proof. LiaFast.lf_pins LiaFast.u0.
       * apply materialize_model_accesses_no_lazy. exact Hlazy.
     + intros evs Hss.
       destruct (sstep_write_inv segs ms model x8 rest evs SError
-                  Hh Hlazy Hfd Hsvc Hno Hg Hr Hbr Hnb Hss) as (n & _ & _ & _ & Habs).
+                  Hh Hlazy Hfd Hsvc Hno Hg Hr Hok Hbr Hnb Hss) as (n & _ & _ & _ & Habs).
       discriminate Habs.
     + intros evs c' Hss.
       destruct (sstep_write_inv segs ms model x8 rest evs (SNext c')
-                  Hh Hlazy Hfd Hsvc Hno Hg Hr Hbr Hnb Hss) as (n & Hn1 & Hn2 & -> & Hc').
+                  Hh Hlazy Hfd Hsvc Hno Hg Hr Hok Hbr Hnb Hss) as (n & Hn1 & Hn2 & -> & Hc').
       injection Hc' as ->.
       eapply exec_conseq;
         [exact (IH n Hn1 Hn2 (buf_modeled_skipn n rest Hbr) Hbm Hh Hlazy Hfd) |].
       intros tr o (Heq & Hx). split; [| exact Hx].
       rewrite Heq. rewrite <- (firstn_skipn n rest) at 3.
       rewrite map_app, <- !app_assoc. reflexivity.
-  - (* [comment removed for export] *)
+  - (* twmt_done *)
     intros ms model bufs code Hte IH Hbr Hbm Hh Hlazy Hfd.
     eapply exec_conseq; [exact (IH Hbm Hh Hlazy Hfd) |].
     intros tr o (Heq & Hx). split; [| exact Hx]. cbn [map app]. exact Heq.
-  - (* [comment removed for export] *)
+  - (* twmt_more *)
     intros ms model rest bufs code Hnb Hp IH Hbr Hbm Hh Hlazy Hfd.
     exact (IH Hbr Hbm Hh Hlazy Hfd).
-  - (* [comment removed for export] *)
+  - (* twmt_step *)
     intros ms ms' model rest bufs code Hsvc Hstep Ht IH Hbr Hbm Hh Hlazy Hfd.
     apply (exec_step_only segs _ _ [] (mkCfg ms' model)).
     + apply (sstep_instr segs ms model ms' model); [exact Hh | exact Hsvc |].
@@ -4610,14 +4744,14 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     + eapply exec_conseq; [exact (IH Hbr Hbm Hh Hlazy Hfd) |]. intros tr o H. cbn [app]. exact H.
 Qed.
 
-#[using="Type"] Lemma twm_exec : forall ms model bufs code,
+Lemma twm_exec : forall ms model bufs code,
   twm ms model bufs code ->
   bufs_modeled bufs ->
   m_halted model = None -> m_vm_lazy model = [] -> fd1chan model ->
   OmniRun.exec segs (mkCfg ms model) (twm_post bufs code (m_fs model)).
 Proof. LiaFast.lf_pins LiaFast.u0. intros ms model bufs code Hte. exact (proj1 twm_exec_mut ms model bufs code Hte). Qed.
 
-#[using="Type"] Lemma twm_star_admits : forall ms model bufs code,
+Lemma twm_star_admits : forall ms model bufs code,
   twm ms model bufs code ->
   bufs_modeled bufs ->
   m_halted model = None -> m_vm_lazy model = [] -> fd1chan model ->
@@ -4630,7 +4764,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   exists c'. exact Hstar.
 Qed.
 
-#[using="Type"] Lemma twm_star_only : forall ms model bufs code,
+Lemma twm_star_only : forall ms model bufs code,
   twm ms model bufs code ->
   bufs_modeled bufs ->
   m_halted model = None -> m_vm_lazy model = [] -> fd1chan model ->
@@ -4654,6 +4788,8 @@ Inductive tmw : machine_state -> Model -> list (list byte) -> word
     ms_svc_pending ms = Some x8 ->
     bv_unsigned x8 = 222%Z ->
     mmap_args_ok ms ->
+    place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+      (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
     (forall e, In e mmap_errnos ->
        twm (advance_past_svc (set_gpr0 ms (errno_ret e))) model bf cf) ->
     (forall a, grant_ok (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true ->
@@ -4667,7 +4803,7 @@ Inductive tmw : machine_state -> Model -> list (list byte) -> word
     tmw ms' model bf cf bs cs ->
     tmw ms model bf cf bs cs.
 
-#[using="Type"] Lemma msteps_tmw : forall ms ms' model bf cf bs cs,
+Lemma msteps_tmw : forall ms ms' model bf cf bs cs,
   msteps segs ms ms' -> tmw ms' model bf cf bs cs -> tmw ms model bf cf bs cs.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros ms ms' model bf cf bs cs H; induction H; [auto|].
@@ -4675,13 +4811,15 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma tmw_mmap_rec : forall regs pc mem rom model bf cf bs cs,
+Lemma tmw_mmap_rec : forall regs pc mem rom model bf cf bs cs,
   bv_unsigned (getr regs 17) = 222%Z ->
   reg_get regs 11 <> Z_to_bv 64 0 ->
   reg_get regs 12 = Z_to_bv 64 3 ->
   reg_get regs 13 = Z_to_bv 64 34 ->
   reg_get regs 14 = Z_to_bv 64 (-1) ->
   reg_get regs 15 = Z_to_bv 64 0 ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (reg_get regs 10)
+    (page_round_up_Z (bv_unsigned (reg_get regs 11))) = false ->
   (forall e, In e mmap_errnos ->
      twm (mkst (regupd regs 10 (errno_ret e)) (v_addi pc 4) mem rom) model bf cf) ->
   (forall a, grant_ok (reg_get regs 10) model a (page_round_up_Z (bv_unsigned (reg_get regs 11))) = true ->
@@ -4695,7 +4833,7 @@ Qed.
       model bf cf bs cs.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros regs pc mem rom model bf cf bs cs H17 H11 H12 H13 H14 H15
-    Hfail Hsucc Hex.
+    Hdecl Hfail Hsucc Hex.
   assert (E11 : Z_to_bv 5 (10 + Z.of_nat 1) = (11 : reg)) by (apply bv_eq; reflexivity).
   assert (E12 : Z_to_bv 5 (10 + Z.of_nat 2) = (12 : reg)) by (apply bv_eq; reflexivity).
   assert (E13 : Z_to_bv 5 (10 + Z.of_nat 3) = (13 : reg)) by (apply bv_eq; reflexivity).
@@ -4707,6 +4845,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   - unfold mmap_args_ok, ms_gpr. cbn [ms_regs].
     rewrite E11, E12, E13, E14, E15.
     auto.
+  - unfold ms_gpr. cbn [ms_regs]. rewrite E11. exact Hdecl.
   - intros e HIn. rewrite adv_set. apply Hfail; assumption.
   - intros a Hg. rewrite adv_mmap_grant.
     unfold ms_gpr in *. cbn [ms_regs] in *. rewrite E11 in *.
@@ -4718,12 +4857,14 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma sstep_mmap_inv : forall ms model x8 evs st,
+Lemma sstep_mmap_inv : forall ms model x8 evs st,
   m_halted model = None ->
   m_vm_lazy model = [] ->
   ms_svc_pending ms = Some x8 ->
   bv_unsigned x8 = 222%Z ->
   mmap_args_ok ms ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   sstep segs (mkCfg ms model) evs st ->
   evs = [] /\
   ((exists e, In e mmap_errnos /\
@@ -4732,7 +4873,7 @@ Qed.
       st = SNext (mkCfg (advance_past_svc (apply_effect ms (mkEffect a [] [(a, page_round_up (ms_gpr ms 1))])))
                         (mmap_model a (page_round_up (ms_gpr ms 1)) model)))).
 Proof. LiaFast.lf_pins LiaFast.u0.
-  intros ms model x8 evs st Hh Hlazy Hsvc Hno Hargs Hss.
+  intros ms model x8 evs st Hh Hlazy Hsvc Hno Hargs Hdecl Hss.
   inversion Hss; subst; try congruence.
   - (* [comment removed for export] *)
     match goal with
@@ -4806,7 +4947,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     | H2 : ms_svc_pending ms = Some ?x,
       H3 : syscall_spec (sys_input segs ms ?x) model Unmodeled |- _ =>
       assert (Hx : x = x8) by congruence; subst x;
-      exact (mmap_no_unmodeled segs ms x8 model Hno Hargs H3)
+      exact (mmap_no_unmodeled segs ms x8 model Hno Hargs Hdecl H3)
     end.
 Qed.
 
@@ -4820,7 +4961,7 @@ Definition tmw_post (bf : list (list byte)) (cf : word) (bs : list (list byte)) 
   fun tr o => (tr = wevents bf ++ [ExitEv cf fs] /\ exits_with cf tr o)
               \/ (tr = wevents bs ++ [ExitEv cs fs] /\ exits_with cs tr o).
 
-#[using="Type"] Lemma tmw_exec : forall ms model bf cf bs cs,
+Lemma tmw_exec : forall ms model bf cf bs cs,
   tmw ms model bf cf bs cs ->
   bufs_modeled bf -> bufs_modeled bs ->
   m_halted model = None -> m_vm_lazy model = [] -> fd1chan model ->
@@ -4828,7 +4969,7 @@ Definition tmw_post (bf : list (list byte)) (cf : word) (bs : list (list byte)) 
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros ms model bf cf bs cs Hte.
   induction Hte as
-    [ms model x8 bf cf bs cs Hsvc Hno Hargs Hfail Hsucc Hex
+    [ms model x8 bf cf bs cs Hsvc Hno Hargs Hdecl Hfail Hsucc Hex
     | ms ms' model bf cf bs cs Hsvc Hstep Hte IH];
     intros Hbf Hbs Hh Hlazy Hfd.
   - (* [comment removed for export] *)
@@ -4837,14 +4978,14 @@ Proof. LiaFast.lf_pins LiaFast.u0.
       apply (sstep_syscall segs ms model x8 (mkEffect (errno_ret ENOMEM) [] []) model model []).
       * exact Hh.
       * exact Hsvc.
-      * apply mmap_fail_ok; [exact Hno | exact Hargs | apply ENOMEM_in_mmap_errnos].
+      * apply mmap_fail_ok; [exact Hno | exact Hargs | apply ENOMEM_in_mmap_errnos | exact Hdecl].
       * exact Hh.
       * apply materialize_model_accesses_no_lazy. exact Hlazy.
     + intros evs Hss.
-      destruct (sstep_mmap_inv ms model x8 evs SError Hh Hlazy Hsvc Hno Hargs Hss)
+      destruct (sstep_mmap_inv ms model x8 evs SError Hh Hlazy Hsvc Hno Hargs Hdecl Hss)
         as (_ & [(e & _ & Habs) | (a & _ & Habs)]); discriminate Habs.
     + intros evs c' Hss.
-      destruct (sstep_mmap_inv ms model x8 evs (SNext c') Hh Hlazy Hsvc Hno Hargs Hss)
+      destruct (sstep_mmap_inv ms model x8 evs (SNext c') Hh Hlazy Hsvc Hno Hargs Hdecl Hss)
         as (-> & [(e & He & Hc') | (a & Hg & Hc')]); injection Hc' as ->.
       * (* [comment removed for export] *)
         eapply exec_conseq; [exact (twm_exec _ _ _ _ (Hfail e He) Hbf Hh Hlazy Hfd) |].
@@ -4868,7 +5009,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     + eapply exec_conseq; [exact (IH Hbf Hbs Hh Hlazy Hfd) |]. intros tr o H. cbn [app]. exact H.
 Qed.
 
-#[using="Type"] Lemma tmw_star_admits_fail : forall ms model bf cf bs cs,
+Lemma tmw_star_admits_fail : forall ms model bf cf bs cs,
   tmw ms model bf cf bs cs ->
   bufs_modeled bf ->
   m_halted model = None -> m_vm_lazy model = [] -> fd1chan model ->
@@ -4876,7 +5017,7 @@ Qed.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros ms model bf cf bs cs Hte.
   induction Hte as
-    [ms model x8 bf cf bs cs Hsvc Hno Hargs Hfail Hsucc Hex
+    [ms model x8 bf cf bs cs Hsvc Hno Hargs Hdecl Hfail Hsucc Hex
     | ms ms' model bf cf bs cs Hsvc Hstep Hte IH]; intros Hbm Hh Hlazy Hfd.
   - destruct (twm_star_admits _ _ _ _ (Hfail ENOMEM ENOMEM_in_mmap_errnos)
                 Hbm Hh Hlazy Hfd) as [c Hstar].
@@ -4889,7 +5030,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
              model model []).
     + exact Hh.
     + exact Hsvc.
-    + apply mmap_fail_ok; [exact Hno | exact Hargs | apply ENOMEM_in_mmap_errnos].
+    + apply mmap_fail_ok; [exact Hno | exact Hargs | apply ENOMEM_in_mmap_errnos | exact Hdecl].
     + exact Hh.
     + apply materialize_model_accesses_no_lazy. exact Hlazy.
   - destruct (IH Hbm Hh Hlazy Hfd) as [c Hstar].
@@ -4901,7 +5042,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     rewrite (mi_account_step_no_lazy segs ms model Hlazy), Hstep. reflexivity.
 Qed.
 
-#[using="Type"] Lemma tmw_star_admits_succ : forall ms model bf cf bs cs,
+Lemma tmw_star_admits_succ : forall ms model bf cf bs cs,
   tmw ms model bf cf bs cs ->
   bufs_modeled bs ->
   m_halted model = None -> m_vm_lazy model = [] -> fd1chan model ->
@@ -4909,7 +5050,7 @@ Qed.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros ms model bf cf bs cs Hte.
   induction Hte as
-    [ms model x8 bf cf bs cs Hsvc Hno Hargs Hfail Hsucc Hex
+    [ms model x8 bf cf bs cs Hsvc Hno Hargs Hdecl Hfail Hsucc Hex
     | ms ms' model bf cf bs cs Hsvc Hstep Hte IH]; intros Hbm Hh Hlazy Hfd.
   - destruct Hex as [a Hg].
     set (n := page_round_up (ms_gpr ms 1)) in *.
@@ -4928,7 +5069,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
              (mmap_model a n model) (mmap_model a n model) []).
     + exact Hh.
     + exact Hsvc.
-    + apply mmap_succ_ok; [exact Hno | exact Hargs | exact Hg].
+    + apply mmap_succ_ok; [exact Hno | exact Hargs | exact Hdecl | exact Hg].
     + exact Hh'.
     + apply materialize_model_accesses_no_lazy.
       exact (eq_trans (mmap_model_lazy _ _ _) Hlazy).
@@ -4948,7 +5089,7 @@ Definition two_traces (bf : list (list byte)) (cf : word)
   is_prefix tr (wevents bf ++ [ExitEv cf fs]) \/
   is_prefix tr (wevents bs ++ [ExitEv cs fs]).
 
-#[using="Type"] Lemma tmw_star_only : forall ms model bf cf bs cs,
+Lemma tmw_star_only : forall ms model bf cf bs cs,
   tmw ms model bf cf bs cs ->
   bufs_modeled bf -> bufs_modeled bs ->
   m_halted model = None -> m_vm_lazy model = [] -> fd1chan model ->
@@ -4967,7 +5108,7 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma tmw_no_error : forall ms model bf cf bs cs,
+Lemma tmw_no_error : forall ms model bf cf bs cs,
   m_halted model = None -> m_vm_lazy model = [] -> fd1chan model ->
   tmw ms model bf cf bs cs ->
   bufs_modeled bf -> bufs_modeled bs ->
@@ -4979,7 +5120,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma twm_exec_not_errors : forall ms model bufs code,
+Lemma twm_exec_not_errors : forall ms model bufs code,
   twm ms model bufs code ->
   bufs_modeled bufs ->
   m_halted model = None -> m_vm_lazy model = [] -> fd1chan model ->
@@ -4992,7 +5133,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   exact (exits_with_never_errors _ _ _ Hx Herr).
 Qed.
 
-#[using="Type"] Lemma twm_exec_code_unique : forall ms model bufs code,
+Lemma twm_exec_code_unique : forall ms model bufs code,
   twm ms model bufs code ->
   bufs_modeled bufs ->
   m_halted model = None -> m_vm_lazy model = [] -> fd1chan model ->
@@ -5006,7 +5147,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   rewrite Hx in Hx'. injection Hx' as ->. reflexivity.
 Qed.
 
-#[using="Type"] Lemma tmw_exec_not_errors : forall ms model bf cf bs cs,
+Lemma tmw_exec_not_errors : forall ms model bf cf bs cs,
   tmw ms model bf cf bs cs ->
   bufs_modeled bf -> bufs_modeled bs ->
   m_halted model = None -> m_vm_lazy model = [] -> fd1chan model ->
@@ -5019,7 +5160,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma tmw_exec_not_fail_only : forall ms model bf cf bs cs,
+Lemma tmw_exec_not_fail_only : forall ms model bf cf bs cs,
   tmw ms model bf cf bs cs ->
   bufs_modeled bs ->
   m_halted model = None -> m_vm_lazy model = [] -> fd1chan model ->
@@ -5032,7 +5173,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   apply Hnp. rewrite <- Heq. apply is_prefix_app.
 Qed.
 
-#[using="Type"] Lemma tmw_exec_not_succ_only : forall ms model bf cf bs cs,
+Lemma tmw_exec_not_succ_only : forall ms model bf cf bs cs,
   tmw ms model bf cf bs cs ->
   bufs_modeled bf ->
   m_halted model = None -> m_vm_lazy model = [] -> fd1chan model ->
@@ -5051,28 +5192,32 @@ End WithSegs.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma two_traces_prefix_closed : forall bf cf bs cs fs tr tr',
+Lemma two_traces_prefix_closed : forall bf cf bs cs fs tr tr',
   two_traces bf cf bs cs fs tr -> is_prefix tr' tr -> two_traces bf cf bs cs fs tr'.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros bf cf bs cs fs tr tr' [H | H] Hp;
     [left | right]; eapply is_prefix_trans; eauto.
 Qed.
 
-#[using="Type"] Lemma mmap_obs_iff_te : forall segs pc ph sp brk0 mb rnd lim inp bf cf bs cs,
-  tmw segs (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-      (init_model (segments_reserved segs) brk0 mb sp lim inp) bf cf bs cs ->
+Lemma mmap_obs_iff_te : forall segs pc ph sp brk0 mb rnd lim inp bf cf bs cs,
+  tmw segs (init_machine_state segs pc ph sp mb rnd inp)
+      (with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+         (init_model (segments_reserved segs) brk0 mb sp lim inp)) bf cf bs cs ->
   bufs_modeled bf -> bufs_modeled bs ->
+  in_channel_reader inp = true ->
   forall tr, obs_trace segs (init_config segs pc ph sp brk0 mb rnd lim inp) tr
              <-> two_traces bf cf bs cs (in_fs inp) tr.
-Proof. LiaFast.lf_pins LiaFast.u0.
-  intros segs pc ph sp brk0 mb rnd lim inp bf cf bs cs Hte Hbf Hbs tr.
+Proof.
+  intros segs pc ph sp brk0 mb rnd lim inp bf cf bs cs Hte Hbf Hbs Hr tr.
   unfold init_config in *.
-  set (ms := init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) in *.
-  assert (Hh : m_halted (init_model (segments_reserved segs) brk0 mb sp lim inp) = None) by reflexivity.
-  assert (Hlazy : m_vm_lazy
-      (init_model (segments_reserved segs) brk0 mb sp lim inp) = []) by reflexivity.
-  assert (Hfd : fd1chan (init_model (segments_reserved segs) brk0 mb sp lim inp)) by reflexivity.
-  assert (Hfs : m_fs (init_model (segments_reserved segs) brk0 mb sp lim inp) = in_fs inp) by reflexivity.
+  set (ms := init_machine_state segs pc ph sp mb rnd inp) in *.
+  set (m0 := with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+               (init_model (segments_reserved segs) brk0 mb sp lim inp)) in *.
+  assert (Hh : m_halted m0 = None) by reflexivity.
+  assert (Hlazy : m_vm_lazy m0 = []) by reflexivity.
+  assert (Hfd : fd1chan m0)
+    by exact (init_model_fd1chan (segments_reserved segs) brk0 mb sp lim inp Hr).
+  assert (Hfs : m_fs m0 = in_fs inp) by reflexivity.
   split.
   - intros (tr' & c & Hstar & Hp).
     pose proof (tmw_star_only segs ms _ bf cf bs cs Hte Hbf Hbs Hh Hlazy Hfd
@@ -5090,89 +5235,121 @@ Proof. LiaFast.lf_pins LiaFast.u0.
       exists (wevents bs ++ [ExitEv cs (in_fs inp)]), c. split; assumption.
 Qed.
 
-#[using="Type"] Lemma mmap_no_error_run_te : forall segs pc ph sp brk0 mb rnd lim inp bf cf bs cs,
-  tmw segs (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-      (init_model (segments_reserved segs) brk0 mb sp lim inp) bf cf bs cs ->
+Lemma mmap_no_error_run_te : forall segs pc ph sp brk0 mb rnd lim inp bf cf bs cs,
+  tmw segs (init_machine_state segs pc ph sp mb rnd inp)
+      (with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+         (init_model (segments_reserved segs) brk0 mb sp lim inp)) bf cf bs cs ->
   bufs_modeled bf -> bufs_modeled bs ->
+  in_channel_reader inp = true ->
   ~ reaches_error segs (init_config segs pc ph sp brk0 mb rnd lim inp).
-Proof. LiaFast.lf_pins LiaFast.u0.
-  intros segs pc ph sp brk0 mb rnd lim inp bf cf bs cs Hte Hbf Hbs.
+Proof.
+  intros segs pc ph sp brk0 mb rnd lim inp bf cf bs cs Hte Hbf Hbs Hr.
   unfold init_config.
-  apply (tmw_no_error segs _ (init_model (segments_reserved segs) brk0 mb sp lim inp) bf cf bs cs);
-    [reflexivity | reflexivity | reflexivity | exact Hte | exact Hbf | exact Hbs].
+  apply (tmw_no_error segs _
+           (with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+              (init_model (segments_reserved segs) brk0 mb sp lim inp)) bf cf bs cs);
+    [reflexivity | reflexivity
+    | exact (init_model_fd1chan (segments_reserved segs) brk0 mb sp lim inp Hr)
+    | exact Hte | exact Hbf | exact Hbs].
 Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
-#[using="Type"] Lemma mmap_omni_run_te : forall segs pc ph sp brk0 mb rnd lim inp bf cf bs cs,
-  tmw segs (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-      (init_model (segments_reserved segs) brk0 mb sp lim inp) bf cf bs cs ->
+Lemma mmap_omni_run_te : forall segs pc ph sp brk0 mb rnd lim inp bf cf bs cs,
+  tmw (run_segments segs inp sp mb)
+      (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp)
+      (with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+         (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp)) bf cf bs cs ->
   bufs_modeled bf -> bufs_modeled bs ->
+  in_channel_reader inp = true ->
   omni_run (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp (tmw_post bf cf bs cs (in_fs inp)).
-Proof. LiaFast.lf_pins LiaFast.u0.
-  intros segs pc ph sp brk0 mb rnd lim inp bf cf bs cs Hte Hbf Hbs.
+Proof.
+  intros segs pc ph sp brk0 mb rnd lim inp bf cf bs cs Hte Hbf Hbs Hr.
   cbn [omni_run]. unfold init_config.
-  exact (tmw_exec segs _ _ bf cf bs cs Hte Hbf Hbs eq_refl eq_refl eq_refl).
+  exact (tmw_exec (run_segments segs inp sp mb) _ _ bf cf bs cs Hte Hbf Hbs eq_refl eq_refl
+           (init_model_fd1chan (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp
+              Hr)).
 Qed.
 
-#[using="Type"] Lemma mmap_omni_strong_equiv_te :
+Lemma mmap_omni_strong_equiv_te :
   forall source_segs rpc rph rsp rbrk rmb rrnd target_segs apc aph asp abrk amb arnd bf cf bs cs inp,
-  tmw source_segs (init_machine_state source_segs rpc rph rsp rrnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-      (init_model (segments_reserved source_segs) rbrk rmb rsp source_alloc_limit inp) bf cf bs cs ->
-  tmw target_segs (init_machine_state target_segs apc aph asp arnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-      (init_model (segments_reserved target_segs) abrk amb asp target_alloc_limit inp) bf cf bs cs ->
+  tmw (run_segments source_segs inp rsp rmb)
+      (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp)
+      (with_vdso (Vdso.vdso_run_init (ed_vdso rrnd))
+         (init_model (segments_reserved (run_segments source_segs inp rsp rmb)) rbrk rmb rsp
+            source_alloc_limit inp)) bf cf bs cs ->
+  tmw (run_segments target_segs inp asp amb)
+      (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp)
+      (with_vdso (Vdso.vdso_run_init (ed_vdso arnd))
+         (init_model (segments_reserved (run_segments target_segs inp asp amb)) abrk amb asp
+            target_alloc_limit inp)) bf cf bs cs ->
   bufs_modeled bf -> bufs_modeled bs ->
+  in_channel_reader inp = true ->
   omni_strong_equiv (mkImage source_segs rpc rph) (mkImage target_segs apc aph)
                     (mkEntry rsp rbrk rmb rrnd) (mkEntry asp abrk amb arnd) inp.
-Proof. LiaFast.lf_pins LiaFast.u0.
+Proof.
   intros source_segs rpc rph rsp rbrk rmb rrnd target_segs apc aph asp abrk amb arnd bf cf bs cs inp
-    Hsource Htarget Hbf Hbs.
+    Hsource Htarget Hbf Hbs Hr.
   split.
   { cbn [img_segments].
     eapply coexec_conseq;
       [apply exec_coexec;
        exact (mmap_omni_run_te source_segs rpc rph rsp rbrk rmb rrnd source_alloc_limit inp bf cf bs cs
-                Hsource Hbf Hbs) |].
+                Hsource Hbf Hbs Hr) |].
     intros tr o [(_ & Hx) | (_ & Hx)];
       exact (never_errors_covered _ _ _ (exits_with_never_errors _ _ _ Hx)). }
   right. split.
   - apply trace_equiv_iff_omni. intro tr. cbn.
-    rewrite (mmap_obs_iff_te source_segs rpc rph rsp rbrk rmb rrnd source_alloc_limit inp bf cf bs cs
-               Hsource Hbf Hbs tr).
-    rewrite (mmap_obs_iff_te target_segs apc aph asp abrk amb arnd target_alloc_limit inp bf cf bs cs
-               Htarget Hbf Hbs tr).
+    rewrite (mmap_obs_iff_te (run_segments source_segs inp rsp rmb) rpc rph rsp rbrk rmb rrnd
+               source_alloc_limit inp bf cf bs cs
+               Hsource Hbf Hbs Hr tr).
+    rewrite (mmap_obs_iff_te (run_segments target_segs inp asp amb) apc aph asp abrk amb arnd
+               target_alloc_limit inp bf cf bs cs
+               Htarget Hbf Hbs Hr tr).
     reflexivity.
   - apply bh_errors_iff. cbn.
-    apply (mmap_no_error_run_te target_segs apc aph asp abrk amb arnd target_alloc_limit inp bf cf bs cs
-             Htarget Hbf Hbs).
+    apply (mmap_no_error_run_te (run_segments target_segs inp asp amb) apc aph asp abrk amb arnd
+             target_alloc_limit inp bf cf bs cs
+             Htarget Hbf Hbs Hr).
 Qed.
 
-#[using="Type"] Lemma mmap_strong_equiv_te :
+Lemma mmap_strong_equiv_te :
   forall source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim bf cf bs cs inp,
-  tmw source_segs (init_machine_state source_segs rpc rph rsp rrnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-      (init_model (segments_reserved source_segs) rbrk rmb rsp rlim inp) bf cf bs cs ->
-  tmw target_segs (init_machine_state target_segs apc aph asp arnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-      (init_model (segments_reserved target_segs) abrk amb asp alim inp) bf cf bs cs ->
+  tmw (run_segments source_segs inp rsp rmb)
+      (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp)
+      (with_vdso (Vdso.vdso_run_init (ed_vdso rrnd))
+         (init_model (segments_reserved (run_segments source_segs inp rsp rmb)) rbrk rmb rsp
+            rlim inp)) bf cf bs cs ->
+  tmw (run_segments target_segs inp asp amb)
+      (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp)
+      (with_vdso (Vdso.vdso_run_init (ed_vdso arnd))
+         (init_model (segments_reserved (run_segments target_segs inp asp amb)) abrk amb asp
+            alim inp)) bf cf bs cs ->
   bufs_modeled bf -> bufs_modeled bs ->
+  in_channel_reader inp = true ->
   Equivalence.modeled (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
   /\ Equivalence.equiv (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
                        (run (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp).
-Proof. LiaFast.lf_pins LiaFast.u0.
+Proof.
   intros source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim bf cf bs cs inp
-    Hsource Htarget Hbf Hbs.
+    Hsource Htarget Hbf Hbs Hr.
   split.
   { apply no_error_run_modeled.
-    apply (mmap_no_error_run_te source_segs rpc rph rsp rbrk rmb rrnd rlim inp bf cf bs cs
-             Hsource Hbf Hbs). }
+    apply (mmap_no_error_run_te (run_segments source_segs inp rsp rmb) rpc rph rsp rbrk rmb rrnd
+             rlim inp bf cf bs cs
+             Hsource Hbf Hbs Hr). }
   right. split.
   - intro tr. cbn.
-    rewrite (mmap_obs_iff_te source_segs rpc rph rsp rbrk rmb rrnd rlim inp bf cf bs cs
-               Hsource Hbf Hbs tr).
-    rewrite (mmap_obs_iff_te target_segs apc aph asp abrk amb arnd alim inp bf cf bs cs
-               Htarget Hbf Hbs tr).
+    rewrite (mmap_obs_iff_te (run_segments source_segs inp rsp rmb) rpc rph rsp rbrk rmb rrnd
+               rlim inp bf cf bs cs
+               Hsource Hbf Hbs Hr tr).
+    rewrite (mmap_obs_iff_te (run_segments target_segs inp asp amb) apc aph asp abrk amb arnd
+               alim inp bf cf bs cs
+               Htarget Hbf Hbs Hr tr).
     reflexivity.
-  - cbn. apply (mmap_no_error_run_te target_segs apc aph asp abrk amb arnd alim inp bf cf bs cs
-                  Htarget Hbf Hbs).
+  - cbn. apply (mmap_no_error_run_te (run_segments target_segs inp asp amb) apc aph asp abrk amb
+                  arnd alim inp bf cf bs cs
+                  Htarget Hbf Hbs Hr).
 Qed.
 End WithFP1.
 End MmapSim.
@@ -5212,7 +5389,7 @@ Fixpoint procs (a : A) (bs : list byte) : option A :=
   | b :: rest => match f a b with Some a' => procs a' rest | None => None end
   end.
 
-#[using="Type"] Lemma procs_app : forall bs1 bs2 a,
+Lemma procs_app : forall bs1 bs2 a,
   procs a (bs1 ++ bs2) =
   match procs a bs1 with Some a' => procs a' bs2 | None => None end.
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -5277,7 +5454,7 @@ Definition drain_from (a : A) (fs : Fs.Fs) (s : InputStream)
     (tr : list event) : Prop :=
   drain_from_ch (Z_to_bv 64 0) a fs s tr.
 
-#[using="Type"] Lemma drain_from_ch_prefix : forall rch a fs s tr tr',
+Lemma drain_from_ch_prefix : forall rch a fs s tr tr',
   drain_from_ch rch a fs s tr -> is_prefix tr' tr -> drain_from_ch rch a fs s tr'.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros rch a fs s tr tr' [ (blocks & s' & a' & HC & Hp & Hpref)
@@ -5289,21 +5466,21 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     split; [exact Hn | eapply is_prefix_trans; eauto]]].
 Qed.
 
-#[using="Type"] Lemma drain_from_prefix : forall a fs s tr tr',
+Lemma drain_from_prefix : forall a fs s tr tr',
   drain_from a fs s tr -> is_prefix tr' tr -> drain_from a fs s tr'.
 Proof. LiaFast.lf_pins LiaFast.u0. exact (drain_from_ch_prefix (Z_to_bv 64 0)). Qed.
 
-#[using="Type"] Lemma drain_from_ch_nil : forall rch a fs s, drain_from_ch rch a fs s [].
+Lemma drain_from_ch_nil : forall rch a fs s, drain_from_ch rch a fs s [].
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros rch a fs s. left. exists [], s, a.
   split; [constructor | split; [reflexivity | apply is_prefix_nil]].
 Qed.
 
-#[using="Type"] Lemma drain_from_nil : forall a fs s, drain_from a fs s [].
+Lemma drain_from_nil : forall a fs s, drain_from a fs s [].
 Proof. LiaFast.lf_pins LiaFast.u0. exact (drain_from_ch_nil (Z_to_bv 64 0)). Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma drain_from_ch_out : forall rch a fs tr,
+Lemma drain_from_ch_out : forall rch a fs tr,
   is_prefix tr (map (WriteEv (Z_to_bv 64 1)) (out a) ++ [ExitEv (Z_to_bv 64 0) fs]) ->
   drain_from_ch rch a fs IEof tr.
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -5311,12 +5488,12 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   split; [constructor | split; [reflexivity | exact Hp]].
 Qed.
 
-#[using="Type"] Lemma drain_from_out : forall a fs tr,
+Lemma drain_from_out : forall a fs tr,
   is_prefix tr (map (WriteEv (Z_to_bv 64 1)) (out a) ++ [ExitEv (Z_to_bv 64 0) fs]) ->
   drain_from a fs IEof tr.
 Proof. LiaFast.lf_pins LiaFast.u0. exact (drain_from_ch_out (Z_to_bv 64 0)). Qed.
 
-#[using="Type"] Lemma drain_from_ch_block : forall rch a a1 fs s bs tr,
+Lemma drain_from_ch_block : forall rch a a1 fs s bs tr,
   (1 <= Z.of_nat (length bs))%Z -> (Z.of_nat (length bs) <= bv_unsigned cnt)%Z ->
   fst (stream_take s (length bs)) = bs ->
   procs f a bs = Some a1 ->
@@ -5341,7 +5518,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     apply is_prefix_app_mono. exact Hpref.
 Qed.
 
-#[using="Type"] Lemma drain_from_block : forall a a1 fs s bs tr,
+Lemma drain_from_block : forall a a1 fs s bs tr,
   (1 <= Z.of_nat (length bs))%Z -> (Z.of_nat (length bs) <= bv_unsigned cnt)%Z ->
   fst (stream_take s (length bs)) = bs ->
   procs f a bs = Some a1 ->
@@ -5349,7 +5526,7 @@ Qed.
   drain_from a fs s (map (ReadEv (Z_to_bv 64 0)) bs ++ tr).
 Proof. LiaFast.lf_pins LiaFast.u0. exact (drain_from_ch_block (Z_to_bv 64 0)). Qed.
 
-#[using="Type"] Lemma drain_from_ch_err : forall rch a fs s bs tr,
+Lemma drain_from_ch_err : forall rch a fs s bs tr,
   (1 <= Z.of_nat (length bs))%Z -> (Z.of_nat (length bs) <= bv_unsigned cnt)%Z ->
   fst (stream_take s (length bs)) = bs ->
   procs f a bs = None ->
@@ -5366,7 +5543,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   apply is_prefix_app_mono. exact Hp.
 Qed.
 
-#[using="Type"] Lemma drain_from_err : forall a fs s bs tr,
+Lemma drain_from_err : forall a fs s bs tr,
   (1 <= Z.of_nat (length bs))%Z -> (Z.of_nat (length bs) <= bv_unsigned cnt)%Z ->
   fst (stream_take s (length bs)) = bs ->
   procs f a bs = None ->
@@ -5453,14 +5630,14 @@ Inductive to_rd : A -> machine_state -> Prop :=
     RiscvSemantics.step segs ms = MachineOk ms' ->
     to_rd a ms' -> to_rd a ms.
 
-#[using="Type"] Lemma msteps_to_rd : forall a ms ms',
+Lemma msteps_to_rd : forall a ms ms',
   msteps segs ms ms' -> to_rd a ms' -> to_rd a ms.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros a ms ms' H; induction H; [auto|].
   intro Hrd. eapply trd_step; eauto.
 Qed.
 
-#[using="Type"] Lemma msteps_to_out : forall bs ms ms',
+Lemma msteps_to_out : forall bs ms ms',
   msteps segs ms ms' -> to_out bs ms' -> to_out bs ms.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros bs ms ms' H; induction H; [auto|].
@@ -5468,7 +5645,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma to_out_wall_tail : forall bs ms,
+Lemma to_out_wall_tail : forall bs ms,
   to_out bs ms ->
   to_wall_tail segs (Z_to_bv 64 1) ms bs (to_exit segs (Z_to_bv 64 0)).
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -5482,7 +5659,7 @@ Qed.
 (* [comment removed for export] *)
 Variable H_LH : forall a ms, LH a ms -> to_rd a ms.
 
-#[using="H_LH"] Lemma lh_next_to_rd : forall a ms, lh_next a ms -> to_rd a ms.
+Lemma lh_next_to_rd : forall a ms, lh_next a ms -> to_rd a ms.
 Proof. LiaFast.lf_pins (fun (H_LH : LiaFast.U) => LiaFast.u0).
   intros a ms (ms' & Hm & HL). eapply msteps_to_rd; [exact Hm | apply H_LH, HL].
 Qed.
@@ -5491,7 +5668,7 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma to_rd_star : forall a ms model,
+Lemma to_rd_star : forall a ms model,
   m_halted model = None -> m_vm_lazy model = [] -> to_rd a ms ->
   exists msR, ReadPend a msR /\
     star segs (mkCfg ms model) [] (mkCfg msR model).
@@ -5507,7 +5684,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     rewrite (mi_account_step_no_lazy segs ms model Hlazy), Hstep. reflexivity.
 Qed.
 
-#[using="Type"] Lemma msteps_star : forall ms ms' model,
+Lemma msteps_star : forall ms ms' model,
   m_halted model = None -> m_vm_lazy model = [] -> msteps segs ms ms' ->
   star segs (mkCfg ms model) [] (mkCfg ms' model).
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -5523,7 +5700,7 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma to_out_star_admits : forall bs ms model,
+Lemma to_out_star_admits : forall bs ms model,
   fd1chan model -> m_halted model = None -> m_vm_lazy model = [] ->
   to_out bs ms -> buf_modeled bs ->
   exists c, star segs (mkCfg ms model)
@@ -5551,7 +5728,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     rewrite (mi_account_step_no_lazy segs ms model Hlazy), Hstep. reflexivity.
 Qed.
 
-#[using="Type"] Lemma to_out_star_only : forall bs ms model,
+Lemma to_out_star_only : forall bs ms model,
   fd1chan model -> m_halted model = None -> m_vm_lazy model = [] ->
   to_out bs ms -> buf_modeled bs ->
   forall tr c, star segs (mkCfg ms model) tr c ->
@@ -5588,7 +5765,7 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Hcnt"] Lemma read0_check_eof_cnt : forall ms x8 model w,
+Lemma read0_check_eof_cnt : forall ms x8 model w,
   bv_unsigned x8 = 63%Z ->
   fd_lookup (m_fds model) (Z_to_bv 64 0) = Some (FdChannel (Z_to_bv 64 0)) ->
   m_stdin model = IEof ->
@@ -5602,7 +5779,7 @@ Qed.
     = CheckOk model [].
 Proof. LiaFast.lf_pins (fun (Hcnt : LiaFast.U) => LiaFast.u0). apply (StreamSim.read0_check_eof cnt Hcnt). Qed.
 
-#[using="Hcnt"] Lemma read0_ok_eof_cnt : forall ms x8 model w,
+Lemma read0_ok_eof_cnt : forall ms x8 model w,
   bv_unsigned x8 = 63%Z ->
   fd_lookup (m_fds model) (Z_to_bv 64 0) = Some (FdChannel (Z_to_bv 64 0)) ->
   m_stdin model = IEof ->
@@ -5614,7 +5791,7 @@ Proof. LiaFast.lf_pins (fun (Hcnt : LiaFast.U) => LiaFast.u0). apply (StreamSim.
     (Ok (mkEffect (Z_to_bv 64 0) [] []) model []).
 Proof. LiaFast.lf_pins (fun (Hcnt : LiaFast.U) => LiaFast.u0). apply (StreamSim.read0_ok_eof cnt Hcnt). Qed.
 
-#[using="Hcnt"] Lemma read0_check_bytes_cnt : forall ms x8 model w bs,
+Lemma read0_check_bytes_cnt : forall ms x8 model w bs,
   bv_unsigned x8 = 63%Z ->
   fd_lookup (m_fds model) (Z_to_bv 64 0) = Some (FdChannel (Z_to_bv 64 0)) ->
   ms_gpr ms 0 = Z_to_bv 64 0 -> ms_gpr ms 2 = cnt ->
@@ -5629,7 +5806,7 @@ Proof. LiaFast.lf_pins (fun (Hcnt : LiaFast.U) => LiaFast.u0). apply (StreamSim.
               (map (ReadEv (Z_to_bv 64 0)) bs).
 Proof. LiaFast.lf_pins (fun (Hcnt : LiaFast.U) => LiaFast.u0). apply (StreamSim.read0_check_bytes cnt Hcnt). Qed.
 
-#[using="Hcnt"] Lemma read0_ok_bytes_cnt : forall ms x8 model w bs,
+Lemma read0_ok_bytes_cnt : forall ms x8 model w bs,
   bv_unsigned x8 = 63%Z ->
   fd_lookup (m_fds model) (Z_to_bv 64 0) = Some (FdChannel (Z_to_bv 64 0)) ->
   ms_gpr ms 0 = Z_to_bv 64 0 -> ms_gpr ms 2 = cnt ->
@@ -5643,7 +5820,7 @@ Proof. LiaFast.lf_pins (fun (Hcnt : LiaFast.U) => LiaFast.u0). apply (StreamSim.
         (map (ReadEv (Z_to_bv 64 0)) bs)).
 Proof. LiaFast.lf_pins (fun (Hcnt : LiaFast.U) => LiaFast.u0). apply (StreamSim.read0_ok_bytes cnt Hcnt). Qed.
 
-#[using="Hcnt"] Lemma read0_ok_inv_cnt : forall ms x8 model buf w eff model' evs,
+Lemma read0_ok_inv_cnt : forall ms x8 model buf w eff model' evs,
   bv_unsigned x8 = 63%Z ->
   fd_lookup (m_fds model) (Z_to_bv 64 0) = Some (FdChannel (Z_to_bv 64 0)) ->
   ms_gpr ms 0 = Z_to_bv 64 0 -> ms_gpr ms 1 = buf -> ms_gpr ms 2 = cnt ->
@@ -5661,7 +5838,7 @@ Proof. LiaFast.lf_pins (fun (Hcnt : LiaFast.U) => LiaFast.u0). apply (StreamSim.
         evs = map (ReadEv (Z_to_bv 64 0)) bs).
 Proof. LiaFast.lf_pins (fun (Hcnt : LiaFast.U) => LiaFast.u0). apply (StreamSim.read0_ok_inv cnt Hcnt). Qed.
 
-#[using="Hcnt"] Lemma read0_no_err_cnt : forall ms x8 model w,
+Lemma read0_no_err_cnt : forall ms x8 model w,
   bv_unsigned x8 = 63%Z ->
   fd_lookup (m_fds model) (Z_to_bv 64 0) = Some (FdChannel (Z_to_bv 64 0)) ->
   ms_gpr ms 0 = Z_to_bv 64 0 -> ms_gpr ms 2 = cnt ->
@@ -5671,7 +5848,7 @@ Proof. LiaFast.lf_pins (fun (Hcnt : LiaFast.U) => LiaFast.u0). apply (StreamSim.
   ~ syscall_spec (sys_input segs ms x8) model Unmodeled.
 Proof. LiaFast.lf_pins (fun (Hcnt : LiaFast.U) => LiaFast.u0). apply (StreamSim.read0_no_unmodeled cnt Hcnt). Qed.
 
-#[using="Hcnt"] Lemma sstep_read_inv_cnt : forall ms model buf x8 w evs st,
+Lemma sstep_read_inv_cnt : forall ms model buf x8 w evs st,
   m_halted model = None ->
   m_vm_lazy model = [] ->
   fd_lookup (m_fds model) (Z_to_bv 64 0) = Some (FdChannel (Z_to_bv 64 0)) ->
@@ -5700,7 +5877,7 @@ Proof. LiaFast.lf_pins (fun (Hcnt : LiaFast.U) => LiaFast.u0). apply (StreamSim.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-#[using="Hcnt"] Lemma drain_read_step : forall bs ms model buf x8 w,
+Lemma drain_read_step : forall bs ms model buf x8 w,
   M_loop model ->
   ms_svc_pending ms = Some x8 ->
   bv_unsigned x8 = 63%Z ->
@@ -5731,7 +5908,7 @@ Proof. LiaFast.lf_pins (fun (Hcnt : LiaFast.U) => LiaFast.u0).
     + rewrite m_vm_lazy_with_stdin. exact Hlazy.
 Qed.
 
-#[using="Hcnt H_LH"] Lemma drain_star_admits_ok : forall s blocks s',
+Lemma drain_star_admits_ok : forall s blocks s',
   chunks cnt s blocks s' ->
   forall a a' ms model,
   M_loop model -> m_stdin model = s -> to_rd a ms ->
@@ -5807,7 +5984,7 @@ Proof. LiaFast.lf_pins (fun (Hcnt H_LH : LiaFast.U) => LiaFast.u0).
     eapply star_step; [exact HssR | exact Hstar3].
 Qed.
 
-#[using="Hcnt Hec H_LH"] Lemma drain_star_admits_err : forall s blocks s1,
+Lemma drain_star_admits_err : forall s blocks s1,
   chunks cnt s blocks s1 ->
   forall a a' bsE ms model,
   M_loop model -> m_stdin model = s -> to_rd a ms ->
@@ -5889,7 +6066,7 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Hcnt Hec H_LH"] Lemma star_drain_only : forall c0 tr c', star segs c0 tr c' ->
+Lemma star_drain_only : forall c0 tr c', star segs c0 tr c' ->
   forall a ms model, c0 = mkCfg ms model -> M_loop model -> to_rd a ms ->
   drain_from cnt f out ec a (m_fs model) (m_stdin model) tr.
 Proof. LiaFast.lf_pins (fun (Hcnt Hec H_LH : LiaFast.U) => LiaFast.u0).
@@ -5950,41 +6127,41 @@ Definition dinv (c : config) : Prop :=
   \/ on_path segs (Z_to_bv 64 0) c
   \/ on_path segs ec c.
 
-#[using="Type"] Lemma wall_out_dinv_step : forall rest ms model evs ms' model',
+Lemma wall_out_dinv_step : forall rest ms model evs ms' model',
   fd1chan model -> m_halted model = None -> m_vm_lazy model = [] ->
   buf_modeled rest ->
   to_wall_tail segs (Z_to_bv 64 1) ms rest (to_exit segs (Z_to_bv 64 0)) ->
   sstep segs (mkCfg ms model) evs (SNext (mkCfg ms' model')) ->
   dinv (mkCfg ms' model').
-Proof. LiaFast.lf_pins LiaFast.u0.
+Proof.
   intros rest ms model evs ms' model' Hfd1 Hh Hlazy Hbm Ht Hss.
   assert (Hfdc : fdchan (Z_to_bv 64 1) (Z_to_bv 64 1) model)
     by (apply fd1chan_fdchan; exact Hfd1).
   revert Hbm.
   inversion Ht as [msD kD HkD | msM restM kM HnbM Hwl
                   | msS msS' restS kS HsvcS HstepS Ht']; subst; intro Hbm.
-  - (* [comment removed for export] *)
+  - (* twt_done: on the exit line *)
     right. right. left.
     apply (on_path_step segs (Z_to_bv 64 0) (mkCfg ms model) evs); [|exact Hss].
     left. repeat split; assumption.
-  - (* [comment removed for export] *)
+  - (* twt_more: at the write ecall *)
     destruct (sstep_to_wall_inv segs (Z_to_bv 64 1) (Z_to_bv 64 1) fd32_1
                 ms rest _ model evs (SNext (mkCfg ms' model'))
                 Hh Hlazy Hfdc Hbm Hwl Hss) as (n & Hn1 & Hn2 & _ & Hc2 & Ht2).
     inversion Hc2; subst.
-    right. left. cbn. repeat split; try assumption.
+    right. left. cbn. split; [exact Hfd1 | repeat split; try assumption].
     exists (skipn n rest).
     split; [apply buf_modeled_skipn; exact Hbm | exact Ht2].
-  - (* [comment removed for export] *)
+  - (* twt_step *)
     destruct (sstep_instr_inv segs ms model msS' evs (SNext (mkCfg ms' model'))
                 Hlazy HsvcS HstepS Hss) as [_ Hc2].
     inversion Hc2; subst.
-    right. left. cbn. repeat split; try assumption.
+    right. left. cbn. split; [exact Hfd1 | repeat split; try assumption].
     exists rest. split; [exact Hbm | exact Ht'].
 Qed.
-#[using="Hcnt H_LH"] Lemma dinv_step : forall c evs c',
+Lemma dinv_step : forall c evs c',
   dinv c -> sstep segs c evs (SNext c') -> dinv c'.
-Proof. LiaFast.lf_pins (fun (Hcnt H_LH : LiaFast.U) => LiaFast.u0).
+Proof.
   intros [ms model] evs [ms' model'] Hinv Hss.
   destruct Hinv as
     [[HM (a & Hrd)] | [[Hfd1 [Hh [Hlazy (rest & Hbm & Ht)]]] | [Hop | Hop]]];
@@ -5997,7 +6174,7 @@ Proof. LiaFast.lf_pins (fun (Hcnt H_LH : LiaFast.U) => LiaFast.u0).
                   Hh Hlazy Hfd0 Hsvc Hno Hg0 Hg1 Hg2 Hw Haok Hss)
         as [(Hs & Hevs & Hc2) | (bs & Hlo & Hhi & Hpre & Hevs & Hc2)];
         inversion Hc2; subst.
-      * right. left. cbn. repeat split; try assumption.
+      * right. left. cbn. split; [exact Hfd1 | repeat split; try assumption].
         exists (out a).
         split; [exact Hobm | exact (to_out_wall_tail _ _ Hout)].
       * pose proof (Hbytes bs Hlo Hhi) as Hcont.
@@ -6016,7 +6193,7 @@ Proof. LiaFast.lf_pins (fun (Hcnt H_LH : LiaFast.U) => LiaFast.u0).
   - right. right. right. eapply on_path_step; eauto.
 Qed.
 
-#[using="Hcnt"] Lemma dinv_no_error : forall c evs, dinv c -> ~ sstep segs c evs SError.
+Lemma dinv_no_error : forall c evs, dinv c -> ~ sstep segs c evs SError.
 Proof. LiaFast.lf_pins (fun (Hcnt : LiaFast.U) => LiaFast.u0).
   intros [ms model] evs Hinv Hss.
   destruct Hinv as
@@ -6044,10 +6221,10 @@ Proof. LiaFast.lf_pins (fun (Hcnt : LiaFast.U) => LiaFast.u0).
   - eapply on_path_no_error; eauto.
 Qed.
 
-#[using="Hcnt H_LH"] Lemma star_dinv : forall c tr c', dinv c -> star segs c tr c' -> dinv c'.
+Lemma star_dinv : forall c tr c', dinv c -> star segs c tr c' -> dinv c'.
 Proof. LiaFast.lf_pins (fun (Hcnt H_LH : LiaFast.U) => LiaFast.u0). exact (star_inv segs dinv dinv_step). Qed.
 
-#[using="Hcnt H_LH"] Lemma to_rd_no_error : forall a ms model,
+Lemma to_rd_no_error : forall a ms model,
   M_loop model -> to_rd a ms -> ~ reaches_error segs (mkCfg ms model).
 Proof. LiaFast.lf_pins (fun (Hcnt H_LH : LiaFast.U) => LiaFast.u0).
   intros a ms model HM Hrd.
@@ -6059,17 +6236,20 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Hcnt Hec H_LH"] Lemma drain_obs_iff : forall pc ph sp brk0 mb rnd lim inp a0,
-  to_rd a0 (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
+Lemma drain_obs_iff : forall pc ph sp brk0 mb rnd lim inp a0,
+  to_rd a0 (init_machine_state segs pc ph sp mb rnd inp) ->
+  in_channel_reader inp = true ->
   forall tr, obs_trace segs (init_config segs pc ph sp brk0 mb rnd lim inp) tr
              <-> drain_from cnt f out ec a0 (in_fs inp) (in_stdin inp) tr.
-Proof. LiaFast.lf_pins (fun (Hcnt Hec H_LH : LiaFast.U) => LiaFast.u0).
-  intros pc ph sp brk0 mb rnd lim inp a0 Hrd tr.
+Proof.
+  intros pc ph sp brk0 mb rnd lim inp a0 Hrd Hrdr tr.
   set (fs0 := in_fs inp) in *; set (stdin0 := in_stdin inp) in *.
   unfold init_config.
-  set (ms0 := init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) in *.
-  pose proof (init_M_loop (segments_reserved segs) brk0 mb sp lim inp) as HM0.
-  set (model0 := init_model (segments_reserved segs) brk0 mb sp lim inp) in *.
+  set (ms0 := init_machine_state segs pc ph sp mb rnd inp) in *.
+  pose proof (init_M_loop (segments_reserved segs) brk0 mb sp lim inp Hrdr) as HM0'.
+  set (model0 := with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+                   (init_model (segments_reserved segs) brk0 mb sp lim inp)) in *.
+  assert (HM0 : StreamSim.M_loop model0) by exact HM0'.
   assert (Hst0 : m_stdin model0 = stdin0) by reflexivity.
   assert (Hfs0 : m_fs model0 = fs0) by reflexivity.
   split.
@@ -6091,12 +6271,13 @@ Proof. LiaFast.lf_pins (fun (Hcnt Hec H_LH : LiaFast.U) => LiaFast.u0).
       eexists; exists c; split; [exact Hstar | exact Hpref].
 Qed.
 
-#[using="Hcnt H_LH"] Lemma drain_no_error : forall pc ph sp brk0 mb rnd lim inp a0,
-  to_rd a0 (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
+Lemma drain_no_error : forall pc ph sp brk0 mb rnd lim inp a0,
+  to_rd a0 (init_machine_state segs pc ph sp mb rnd inp) ->
+  in_channel_reader inp = true ->
   ~ reaches_error segs (init_config segs pc ph sp brk0 mb rnd lim inp).
-Proof. LiaFast.lf_pins (fun (Hcnt H_LH : LiaFast.U) => LiaFast.u0).
-  intros pc ph sp brk0 mb rnd lim inp a0 Hrd.
-  apply (to_rd_no_error a0); [apply init_M_loop | exact Hrd].
+Proof.
+  intros pc ph sp brk0 mb rnd lim inp a0 Hrd Hrdr.
+  apply (to_rd_no_error a0); [apply init_M_loop; exact Hrdr | exact Hrd].
 Qed.
 
 (* [comment removed for export] *)
@@ -6105,7 +6286,7 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Hcnt H_LH"] Lemma to_rd_coexec : forall a ms model,
+Lemma to_rd_coexec : forall a ms model,
   M_loop model -> to_rd a ms -> OmniRun.coexec segs (mkCfg ms model) never_errors.
 Proof. LiaFast.lf_pins (fun (Hcnt H_LH : LiaFast.U) => LiaFast.u0).
   intros a ms model HM Hrd.
@@ -6113,27 +6294,33 @@ Proof. LiaFast.lf_pins (fun (Hcnt H_LH : LiaFast.U) => LiaFast.u0).
   left; cbn. split; [exact HM | exists a; exact Hrd].
 Qed.
 
-#[using="Hcnt H_LH"] Lemma drain_omni_corun : forall pc ph sp brk0 mb rnd lim inp a0,
-  to_rd a0 (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
-  omni_corun (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp never_errors.
-Proof. LiaFast.lf_pins (fun (Hcnt H_LH : LiaFast.U) => LiaFast.u0).
-  intros pc ph sp brk0 mb rnd lim inp a0 Hrd. cbn [omni_corun]. unfold init_config.
-  apply (to_rd_coexec a0); [apply init_M_loop | exact Hrd].
+Lemma drain_omni_corun : forall pc ph sp brk0 mb rnd lim inp a0,
+  to_rd a0 (init_machine_state segs pc ph sp mb rnd inp) ->
+  in_channel_reader inp = true ->
+  OmniRun.coexec segs (init_config segs pc ph sp brk0 mb rnd lim inp) never_errors.
+Proof.
+  intros pc ph sp brk0 mb rnd lim inp a0 Hrd Hrdr. unfold init_config.
+  set (model0 := with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+                   (init_model (segments_reserved segs) brk0 mb sp lim inp)) in *.
+  assert (HM0 : StreamSim.M_loop model0)
+    by exact (init_M_loop (segments_reserved segs) brk0 mb sp lim inp Hrdr).
+  apply (to_rd_coexec a0); [exact HM0 | exact Hrd].
 Qed.
 
-#[using="Hcnt Hec H_LH"] Lemma drain_omni_cosafe : forall pc ph sp brk0 mb rnd lim inp a0,
-  to_rd a0 (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
-  omni_cosafe (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp
+Lemma drain_omni_cosafe : forall pc ph sp brk0 mb rnd lim inp a0,
+  to_rd a0 (init_machine_state segs pc ph sp mb rnd inp) ->
+  in_channel_reader inp = true ->
+  OmniRun.cosafe segs (init_config segs pc ph sp brk0 mb rnd lim inp)
     (drain_from cnt f out ec a0 (in_fs inp) (in_stdin inp)).
-Proof. LiaFast.lf_pins (fun (Hcnt Hec H_LH : LiaFast.U) => LiaFast.u0).
-  intros pc ph sp brk0 mb rnd lim inp a0 Hrd. cbn [omni_cosafe].
+Proof.
+  intros pc ph sp brk0 mb rnd lim inp a0 Hrd Hrdr.
   apply cosafe_obs_iff.
-  - (* [comment removed for export] *)
+  - (* prefix-closed, through the trace-set characterisation itself *)
     intros t t' Ht Hp.
-    apply (drain_obs_iff pc ph sp brk0 mb rnd lim inp a0 Hrd).
+    apply (drain_obs_iff pc ph sp brk0 mb rnd lim inp a0 Hrd Hrdr).
     eapply obs_trace_prefix_closed; [| exact Hp].
-    apply (drain_obs_iff pc ph sp brk0 mb rnd lim inp a0 Hrd). exact Ht.
-  - intros tr Hobs. apply (drain_obs_iff pc ph sp brk0 mb rnd lim inp a0 Hrd). exact Hobs.
+    apply (drain_obs_iff pc ph sp brk0 mb rnd lim inp a0 Hrd Hrdr). exact Ht.
+  - intros tr Hobs. apply (drain_obs_iff pc ph sp brk0 mb rnd lim inp a0 Hrd Hrdr). exact Hobs.
 Qed.
 
 End Drain.
@@ -6153,31 +6340,32 @@ Lemma drain_omni_strong_equiv :
          source_segs rLH rpc rph rsp rbrk rmb rrnd target_segs aLH apc aph asp abrk amb arnd inp,
   (bv_unsigned ec < 256)%Z ->
   (0 < bv_unsigned cnt <= rw_bytes_max)%Z ->
-  (forall a ms, rLH a ms -> to_rd source_segs cnt f out ec rLH a ms) ->
-  (forall a ms, aLH a ms -> to_rd target_segs cnt f out ec aLH a ms) ->
-  to_rd source_segs cnt f out ec rLH a0
-    (init_machine_state source_segs rpc rph rsp rrnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
-  to_rd target_segs cnt f out ec aLH a0
-    (init_machine_state target_segs apc aph asp arnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
+  (forall a ms, rLH a ms -> to_rd (run_segments source_segs inp rsp rmb) cnt f out ec rLH a ms) ->
+  (forall a ms, aLH a ms -> to_rd (run_segments target_segs inp asp amb) cnt f out ec aLH a ms) ->
+  to_rd (run_segments source_segs inp rsp rmb) cnt f out ec rLH a0
+    (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp) ->
+  to_rd (run_segments target_segs inp asp amb) cnt f out ec aLH a0
+    (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp) ->
+  in_channel_reader inp = true ->
   omni_strong_equiv (mkImage source_segs rpc rph) (mkImage target_segs apc aph)
                     (mkEntry rsp rbrk rmb rrnd) (mkEntry asp abrk amb arnd) inp.
 Proof.
   intros A cnt f out ec a0 source_segs rLH rpc rph rsp rbrk rmb rrnd target_segs aLH apc aph asp abrk amb arnd
-         inp Hec Hcnt HrLH HaLH Hr Ha.
+         inp Hec Hcnt HrLH HaLH Hr Ha Hrdr.
   split.
   { cbn [img_segments].
     eapply coexec_conseq;
-      [exact (drain_omni_corun source_segs cnt Hcnt f out ec rLH HrLH
-                rpc rph rsp rbrk rmb rrnd source_alloc_limit inp a0 Hr) | apply never_errors_covered]. }
+      [exact (drain_omni_corun (run_segments source_segs inp rsp rmb) cnt Hcnt f out ec rLH HrLH
+                rpc rph rsp rbrk rmb rrnd source_alloc_limit inp a0 Hr Hrdr) | apply never_errors_covered]. }
   right. split.
   - apply trace_equiv_iff_omni. intro tr. cbn.
-    rewrite (drain_obs_iff source_segs cnt Hcnt f out ec Hec rLH HrLH
-               rpc rph rsp rbrk rmb rrnd source_alloc_limit inp a0 Hr tr).
-    rewrite (drain_obs_iff target_segs cnt Hcnt f out ec Hec aLH HaLH
-               apc aph asp abrk amb arnd target_alloc_limit inp a0 Ha tr).
+    rewrite (drain_obs_iff (run_segments source_segs inp rsp rmb) cnt Hcnt f out ec Hec rLH HrLH
+               rpc rph rsp rbrk rmb rrnd source_alloc_limit inp a0 Hr Hrdr tr).
+    rewrite (drain_obs_iff (run_segments target_segs inp asp amb) cnt Hcnt f out ec Hec aLH HaLH
+               apc aph asp abrk amb arnd target_alloc_limit inp a0 Ha Hrdr tr).
     reflexivity.
-  - exact (drain_omni_corun target_segs cnt Hcnt f out ec aLH HaLH
-             apc aph asp abrk amb arnd target_alloc_limit inp a0 Ha).
+  - exact (drain_omni_corun (run_segments target_segs inp asp amb) cnt Hcnt f out ec aLH HaLH
+             apc aph asp abrk amb arnd target_alloc_limit inp a0 Ha Hrdr).
 Qed.
 
 Lemma drain_strong_equiv :
@@ -6186,32 +6374,33 @@ Lemma drain_strong_equiv :
          source_segs rLH rpc rph rsp rbrk rmb rrnd rlim target_segs aLH apc aph asp abrk amb arnd alim inp,
   (bv_unsigned ec < 256)%Z ->
   (0 < bv_unsigned cnt <= rw_bytes_max)%Z ->
-  (forall a ms, rLH a ms -> to_rd source_segs cnt f out ec rLH a ms) ->
-  (forall a ms, aLH a ms -> to_rd target_segs cnt f out ec aLH a ms) ->
-  to_rd source_segs cnt f out ec rLH a0
-    (init_machine_state source_segs rpc rph rsp rrnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
-  to_rd target_segs cnt f out ec aLH a0
-    (init_machine_state target_segs apc aph asp arnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
+  (forall a ms, rLH a ms -> to_rd (run_segments source_segs inp rsp rmb) cnt f out ec rLH a ms) ->
+  (forall a ms, aLH a ms -> to_rd (run_segments target_segs inp asp amb) cnt f out ec aLH a ms) ->
+  to_rd (run_segments source_segs inp rsp rmb) cnt f out ec rLH a0
+    (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp) ->
+  to_rd (run_segments target_segs inp asp amb) cnt f out ec aLH a0
+    (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp) ->
+  in_channel_reader inp = true ->
   Equivalence.modeled (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
   /\ Equivalence.equiv (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
                        (run (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp).
 Proof.
   intros A cnt f out ec a0 source_segs rLH rpc rph rsp rbrk rmb rrnd rlim target_segs aLH apc aph asp abrk amb arnd alim
-         inp Hec Hcnt HrLH HaLH Hr Ha.
+         inp Hec Hcnt HrLH HaLH Hr Ha Hrdr.
   split.
   { apply no_error_run_modeled.
-    apply (drain_no_error source_segs cnt Hcnt f out ec rLH HrLH
-             rpc rph rsp rbrk rmb rrnd rlim inp a0 Hr). }
+    apply (drain_no_error (run_segments source_segs inp rsp rmb) cnt Hcnt f out ec rLH HrLH
+             rpc rph rsp rbrk rmb rrnd rlim inp a0 Hr Hrdr). }
   right. split.
   - intro tr. cbn.
-    rewrite (drain_obs_iff source_segs cnt Hcnt f out ec Hec rLH HrLH
-               rpc rph rsp rbrk rmb rrnd rlim inp a0 Hr tr).
-    rewrite (drain_obs_iff target_segs cnt Hcnt f out ec Hec aLH HaLH
-               apc aph asp abrk amb arnd alim inp a0 Ha tr).
+    rewrite (drain_obs_iff (run_segments source_segs inp rsp rmb) cnt Hcnt f out ec Hec rLH HrLH
+               rpc rph rsp rbrk rmb rrnd rlim inp a0 Hr Hrdr tr).
+    rewrite (drain_obs_iff (run_segments target_segs inp asp amb) cnt Hcnt f out ec Hec aLH HaLH
+               apc aph asp abrk amb arnd alim inp a0 Ha Hrdr tr).
     reflexivity.
   - cbn.
-    apply (drain_no_error target_segs cnt Hcnt f out ec aLH HaLH
-             apc aph asp abrk amb arnd alim inp a0 Ha).
+    apply (drain_no_error (run_segments target_segs inp asp amb) cnt Hcnt f out ec aLH HaLH
+             apc aph asp abrk amb arnd alim inp a0 Ha Hrdr).
 Qed.
 End DrainSim.
 
@@ -6286,7 +6475,7 @@ Variable segs : list Segment.
 Local Notation ME code c := (must_exit_at_cfg forced_only_cfg segs code c) (only parsing).
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma not_spurious_uninjected : forall cfg ms x8 model eff,
+Lemma not_spurious_uninjected : forall cfg ms x8 model eff,
   injected_arm (bv_unsigned x8) = None ->
   ~ spurious_refusal_cfg cfg (sys_input segs ms x8) model eff.
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -6298,7 +6487,7 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma me_step : forall code ms ms' model,
+Lemma me_step : forall code ms ms' model,
   m_halted model = None -> m_vm_lazy model = [] ->
   ms_svc_pending ms = None ->
   RiscvSemantics.step segs ms = MachineOk ms' ->
@@ -6317,7 +6506,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     injection Hst as Hc. subst c'. exact Hme.
 Qed.
 
-#[using="Type"] Lemma me_msteps : forall code ms ms' model,
+Lemma me_msteps : forall code ms ms' model,
   m_halted model = None -> m_vm_lazy model = [] ->
   msteps segs ms ms' ->
   ME code (mkCfg ms' model) ->
@@ -6329,7 +6518,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma me_sys : forall code regs pc mem rom model w,
+Lemma me_sys : forall code regs pc mem rom model w,
   m_halted model = None -> m_vm_lazy model = [] ->
   fetch_word segs pc = Some w -> is_ecall w = true ->
   ME code (mkCfg (epend regs pc mem rom (getr regs 17)) model) ->
@@ -6343,7 +6532,7 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma me_exit : forall ms model x8,
+Lemma me_exit : forall ms model x8,
   m_halted model = None ->
   ms_svc_pending ms = Some x8 -> is_exit_no x8 ->
   ME (bv_and (ms_gpr ms 0) (Z_to_bv 64 255)) (mkCfg ms model).
@@ -6363,7 +6552,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     + apply m_killed_with_halted.
 Qed.
 
-#[using="Type"] Lemma me_exit_lit : forall regs pc mem rom model (code : Z),
+Lemma me_exit_lit : forall regs pc mem rom model (code : Z),
   m_halted model = None -> is_exit_no (getr regs 17) ->
   getr regs 10 = Z_to_bv 64 code -> (0 <= code < 256)%Z ->
   ME (Z_to_bv 64 code) (mkCfg (epend regs pc mem rom (getr regs 17)) model).
@@ -6374,7 +6563,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma me_exit_at : forall regs (pc : word) mem rom model w (code : Z),
+Lemma me_exit_at : forall regs (pc : word) mem rom model w (code : Z),
   fetch_word segs pc = Some w -> is_ecall w = true ->
   m_halted model = None -> m_vm_lazy model = [] ->
   (getr regs 17 = Z_to_bv 64 94 \/ getr regs 17 = Z_to_bv 64 93) ->
@@ -6391,14 +6580,14 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma syscall_spec_96 : forall ms x8 m o, bv_unsigned x8 = 96%Z ->
+Lemma syscall_spec_96 : forall ms x8 m o, bv_unsigned x8 = 96%Z ->
   syscall_spec (sys_input segs ms x8) m o <-> set_tid_address_spec (sys_input segs ms x8) m o.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros ms x8 m o E; unfold syscall_spec, dispatch.
   change (in_sysno (sys_input segs ms x8)) with x8. rewrite E. reflexivity.
 Qed.
 
-#[using="Type"] Lemma set_tid_fresh_ok : forall i m eff m' evs,
+Lemma set_tid_fresh_ok : forall i m eff m' evs,
   m_tid m = None ->
   set_tid_address_spec i m (Ok eff m' evs) <->
   exists t, (0 < bv_unsigned t < PID_MAX_ENVELOPE)%Z
@@ -6415,7 +6604,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     exists tt, (with_tid t m), [], []. split; [reflexivity|]. split; reflexivity.
 Qed.
 
-#[using="Type"] Lemma set_tid_fresh_unmodeled : forall i m,
+Lemma set_tid_fresh_unmodeled : forall i m,
   m_tid m = None -> ~ set_tid_address_spec i m Unmodeled.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros i m Htid H. unfold set_tid_address_spec in H.
@@ -6423,12 +6612,12 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   unfold set_tid, ret_only, bind, choose, modify, pure in H. sys_destruct.
 Qed.
 
-#[using="Type"] Lemma with_tid_halted' : forall t m, m_halted (with_tid t m) = m_halted m.
+Lemma with_tid_halted' : forall t m, m_halted (with_tid t m) = m_halted m.
 Proof. LiaFast.lf_pins LiaFast.u0. intros t m. destruct m; reflexivity. Qed.
-#[using="Type"] Lemma with_tid_lazy' : forall t m, m_vm_lazy (with_tid t m) = m_vm_lazy m.
+Lemma with_tid_lazy' : forall t m, m_vm_lazy (with_tid t m) = m_vm_lazy m.
 Proof. LiaFast.lf_pins LiaFast.u0. intros t m. destruct m; reflexivity. Qed.
 
-#[using="Type"] Lemma me_set_tid : forall code regs (pc : word) mem rom model w,
+Lemma me_set_tid : forall code regs (pc : word) mem rom model w,
   fetch_word segs pc = Some w -> is_ecall w = true ->
   m_halted model = None -> m_vm_lazy model = [] ->
   getr regs 17 = Z_to_bv 64 96 ->
@@ -6525,34 +6714,34 @@ Context {fx : FPState}.
 (* [comment removed for export] *)
 Definition at_ (base : word) (d : Z) : word := Z_to_bv 64 (bv_unsigned base + d).
 
-#[using="Type"] Lemma at_0 : forall base, at_ base 0 = base.
+Lemma at_0 : forall base, at_ base 0 = base.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros base. unfold at_. rewrite Z.add_0_r. apply bv_eq.
   rewrite Z_to_bv_unsigned. apply bv_wrap_small, bv_unsigned_in_range.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma at_addi : forall base d e, v_addi (at_ base d) e = at_ base (d + e).
+Lemma at_addi : forall base d e, v_addi (at_ base d) e = at_ base (d + e).
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros base d e. unfold at_, v_addi. apply bv_eq.
   rewrite !Z_to_bv_unsigned. unfold bv_wrap.
   rewrite Zplus_mod_idemp_l. f_equal. lia.
 Qed.
 
-#[using="Type"] Lemma at_btgt : forall base d e, btgt (at_ base d) e = at_ base (d + e).
+Lemma at_btgt : forall base d e, btgt (at_ base d) e = at_ base (d + e).
 Proof. LiaFast.lf_pins LiaFast.u0. intros. unfold btgt. apply at_addi. Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma at_lit : forall (base : word) (d : Z) (a : word),
+Lemma at_lit : forall (base : word) (d : Z) (a : word),
   Z_to_bv 64 (bv_unsigned base + d) = a -> at_ base d = a.
 Proof. LiaFast.lf_pins LiaFast.u0. intros. assumption. Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma at_at : forall base d e, at_ (at_ base d) e = at_ base (d + e).
+Lemma at_at : forall base d e, at_ (at_ base d) e = at_ base (d + e).
 Proof. LiaFast.lf_pins LiaFast.u0. exact at_addi. Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma u_succ_shift : forall (a : word) (i : Z),
+Lemma u_succ_shift : forall (a : word) (i : Z),
   Z_to_bv 64 (bv_unsigned (a + 1) + i) = Z_to_bv 64 (bv_unsigned a + (1 + i)).
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros a i. apply bv_eq. rewrite !Z_to_bv_unsigned, bv_add_unsigned.
@@ -6560,7 +6749,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   unfold bv_wrap. rewrite Zplus_mod_idemp_l. f_equal. lia.
 Qed.
 
-#[using="Type"] Lemma at_self : forall a : word, Z_to_bv 64 (bv_unsigned a + 0) = a.
+Lemma at_self : forall a : word, Z_to_bv 64 (bv_unsigned a + 0) = a.
 Proof. LiaFast.lf_pins LiaFast.u0. intros a. exact (at_0 a). Qed.
 
 
@@ -6581,30 +6770,30 @@ Definition regs_agree (C : regset) (regs regs' : bvmap 5 word) : Prop :=
 Definition mem_agree (W : memset) (m m' : word -> option byte) : Prop :=
   forall x, ~ W x -> m' x = m x.
 
-#[using="Type"] Lemma regs_agree_refl : forall C regs, regs_agree C regs regs.
+Lemma regs_agree_refl : forall C regs, regs_agree C regs regs.
 Proof. LiaFast.lf_pins LiaFast.u0. intros C regs r _. reflexivity. Qed.
 
-#[using="Type"] Lemma mem_agree_refl : forall W m, mem_agree W m m.
+Lemma mem_agree_refl : forall W m, mem_agree W m m.
 Proof. LiaFast.lf_pins LiaFast.u0. intros W m x _. reflexivity. Qed.
 
-#[using="Type"] Lemma regs_agree_trans : forall C regs1 regs2 regs3,
+Lemma regs_agree_trans : forall C regs1 regs2 regs3,
   regs_agree C regs1 regs2 -> regs_agree C regs2 regs3 -> regs_agree C regs1 regs3.
 Proof. LiaFast.lf_pins LiaFast.u0. intros C r1 r2 r3 H1 H2 r Hr. rewrite (H2 r Hr). apply H1, Hr. Qed.
 
-#[using="Type"] Lemma mem_agree_trans : forall W m1 m2 m3,
+Lemma mem_agree_trans : forall W m1 m2 m3,
   mem_agree W m1 m2 -> mem_agree W m2 m3 -> mem_agree W m1 m3.
 Proof. LiaFast.lf_pins LiaFast.u0. intros W m1 m2 m3 H1 H2 x Hx. rewrite (H2 x Hx). apply H1, Hx. Qed.
 
-#[using="Type"] Lemma regs_agree_mono : forall (C C' : regset) regs regs',
+Lemma regs_agree_mono : forall (C C' : regset) regs regs',
   (forall r, C r -> C' r) -> regs_agree C regs regs' -> regs_agree C' regs regs'.
 Proof. LiaFast.lf_pins LiaFast.u0. intros C C' regs regs' Hsub H r Hr. apply H. intro; apply Hr, Hsub; assumption. Qed.
 
-#[using="Type"] Lemma mem_agree_mono : forall (W W' : memset) m m',
+Lemma mem_agree_mono : forall (W W' : memset) m m',
   (forall x, W x -> W' x) -> mem_agree W m m' -> mem_agree W' m m'.
 Proof. LiaFast.lf_pins LiaFast.u0. intros W W' m m' Hsub H x Hx. apply H. intro; apply Hx, Hsub; assumption. Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma regs_agree_upd : forall (C : regset) regs regs' r v,
+Lemma regs_agree_upd : forall (C : regset) regs regs' r v,
   C r -> regs_agree C regs regs' -> regs_agree C regs (regupd regs' r v).
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros C regs regs' r v Hin H s Hs.
@@ -6612,7 +6801,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   apply H, Hs.
 Qed.
 
-#[using="Type"] Lemma mem_agree_wbytes : forall (W : memset) m m' a bs,
+Lemma mem_agree_wbytes : forall (W : memset) m m' a bs,
   (forall i, (0 <= i < Z.of_nat (length bs))%Z -> W (Z_to_bv 64 (bv_unsigned a + i))) ->
   mem_agree W m m' -> mem_agree W m (wbytes m' a bs).
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -6644,7 +6833,7 @@ Definition triple (segs : list Segment)
       /\ mem_agree W mem mem'.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma triple_intro : forall segs C W P a b Q,
+Lemma triple_intro : forall segs C W P a b Q,
   (forall regs mem rom, P regs mem rom ->
      exists regs' mem',
        msteps segs (mkst regs a mem rom) (mkst regs' b mem' rom)
@@ -6659,7 +6848,7 @@ Proof. LiaFast.lf_pins LiaFast.u0. intros; assumption. Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma triple_skip : forall segs C W P a, triple segs C W P a a P.
+Lemma triple_skip : forall segs C W P a, triple segs C W P a a P.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros segs C W P a regs mem rom HP.
   exists regs, mem. split; [apply mst_refl|].
@@ -6667,7 +6856,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma triple_seq : forall segs C1 W1 C2 W2 P Q R a b c,
+Lemma triple_seq : forall segs C1 W1 C2 W2 P Q R a b c,
   triple segs C1 W1 P a b Q ->
   triple segs C2 W2 Q b c R ->
   triple segs (fun r => C1 r \/ C2 r) (fun x => W1 x \/ W2 x) P a c R.
@@ -6686,7 +6875,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma triple_conseq : forall segs C C' W W' P P' Q Q' a b,
+Lemma triple_conseq : forall segs C C' W W' P P' Q Q' a b,
   triple segs C W P a b Q ->
   (forall regs mem rom, P' regs mem rom -> P regs mem rom) ->
   (forall regs mem rom, Q regs mem rom -> Q' regs mem rom) ->
@@ -6700,7 +6889,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   split; [eapply regs_agree_mono; eauto | eapply mem_agree_mono; eauto].
 Qed.
 
-#[using="Type"] Lemma triple_seq_same : forall segs C W P Q R a b c,
+Lemma triple_seq_same : forall segs C W P Q R a b c,
   triple segs C W P a b Q ->
   triple segs C W Q b c R ->
   triple segs C W P a c R.
@@ -6724,7 +6913,7 @@ Definition frameable (C : regset) (W : memset) (R : assn) : Prop :=
     R regs mem rom -> R regs' mem' rom.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma triple_frame : forall segs C W P Q R a b,
+Lemma triple_frame : forall segs C W P Q R a b,
   triple segs C W P a b Q ->
   frameable C W R ->
   triple segs C W (fun regs mem rom => P regs mem rom /\ R regs mem rom) a b
@@ -6738,12 +6927,12 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma frameable_and : forall C W R1 R2,
+Lemma frameable_and : forall C W R1 R2,
   frameable C W R1 -> frameable C W R2 ->
   frameable C W (fun regs mem rom => R1 regs mem rom /\ R2 regs mem rom).
 Proof. LiaFast.lf_pins LiaFast.u0. intros C W R1 R2 H1 H2 regs mem rom regs' mem' Hr Hm (A & B); split; eauto. Qed.
 
-#[using="Type"] Lemma frameable_reg : forall (C : regset) W (r : reg) (v : word),
+Lemma frameable_reg : forall (C : regset) W (r : reg) (v : word),
   ~ C r -> frameable C W (fun regs _ _ => getr regs r = v).
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros C W r v Hnc regs mem rom regs' mem' Hr _ Hv.
@@ -6751,7 +6940,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma frameable_rdn : forall segs (C : regset) (W : memset) (a : word) (n : nat) bs,
+Lemma frameable_rdn : forall segs (C : regset) (W : memset) (a : word) (n : nat) bs,
   (forall i, (0 <= i < Z.of_nat n)%Z -> ~ W (Z_to_bv 64 (bv_unsigned a + i))) ->
   frameable C W (fun _ mem _ => rdn segs mem a n = Some bs).
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -6771,7 +6960,7 @@ Qed.
 (* [comment removed for export] *)
 Definition ret_ok (k : word) : Prop := v_jalr k 0 = k.
 
-#[using="Type"] Lemma land_m2_even : forall z : Z, (z mod 2 = 0)%Z -> Z.land z (-2) = z.
+Lemma land_m2_even : forall z : Z, (z mod 2 = 0)%Z -> Z.land z (-2) = z.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros z Hz.
   assert (Hl : Z.land z 1 = 0%Z).
@@ -6782,7 +6971,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   rewrite Hl, Z.lor_0_r. reflexivity.
 Qed.
 
-#[using="Type"] Lemma ret_ok_even : forall k, (bv_unsigned k mod 2 = 0)%Z -> ret_ok k.
+Lemma ret_ok_even : forall k, (bv_unsigned k mod 2 = 0)%Z -> ret_ok k.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros k Hk. unfold ret_ok, v_jalr, jalr_tgtZ.
   rewrite Z.add_0_r, land_m2_even by exact Hk.
@@ -6801,7 +6990,7 @@ Definition ra_indep (P : assn) : Prop :=
   forall regs v mem rom, P regs mem rom -> P (regupd regs 1 v) mem rom.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma triple_call : forall segs C W P Q callsite entry ret,
+Lemma triple_call : forall segs C W P Q callsite entry ret,
   (forall regs mem rom,
      RiscvSemantics.step segs (mkst regs callsite mem rom)
        = MachineOk (mkst (regupd regs 1 ret) entry mem rom)) ->
@@ -6830,7 +7019,7 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma triple_loop : forall segs C W (I : nat -> assn) (hd out : word) (Q : assn),
+Lemma triple_loop : forall segs C W (I : nat -> assn) (hd out : word) (Q : assn),
   (forall i, triple segs C W (I (S i)) hd hd (I i)) ->
   triple segs C W (I O) hd out Q ->
   forall n, triple segs C W (I n) hd out Q.
@@ -6841,7 +7030,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma triple_loop_measure :
+Lemma triple_loop_measure :
   forall segs C W (I : nat -> assn) (hd out : word) (Q P : assn),
   (forall i, triple segs C W (I (S i)) hd hd (I i)) ->
   triple segs C W (I O) hd out Q ->
@@ -6858,7 +7047,7 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma triple_msteps : forall segs C W P a b Q regs mem rom,
+Lemma triple_msteps : forall segs C W P a b Q regs mem rom,
   triple segs C W P a b Q -> P regs mem rom ->
   exists regs' mem',
     msteps segs (mkst regs a mem rom) (mkst regs' b mem' rom) /\ Q regs' mem' rom.
@@ -6869,7 +7058,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma triple_wexit : forall segs C W P a b Q bufs code regs mem rom,
+Lemma triple_wexit : forall segs C W P a b Q bufs code regs mem rom,
   triple segs C W P a b Q ->
   P regs mem rom ->
   (forall regs' mem', Q regs' mem' rom ->
@@ -7304,7 +7493,7 @@ Context {fx : FPState}.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma u_Z2bv : forall z, (0 <= z)%Z -> (z < 2^64)%Z ->
+Lemma u_Z2bv : forall z, (0 <= z)%Z -> (z < 2^64)%Z ->
   bv_unsigned (Z_to_bv 64 z) = z.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros z Hlo Hhi. rewrite Z_to_bv_unsigned.
@@ -7313,32 +7502,32 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma v_addi_m1 : forall x, (1 <= bv_unsigned x)%Z ->
+Lemma v_addi_m1 : forall x, (1 <= bv_unsigned x)%Z ->
   v_addi x (-1) = Z_to_bv 64 (bv_unsigned x - 1).
 Proof. LiaFast.lf_pins LiaFast.u0. intros x H1. apply (v_addi_m x 1); lia. Qed.
 
-#[using="Type"] Lemma v_addi_m16 : forall x, (16 <= bv_unsigned x)%Z ->
+Lemma v_addi_m16 : forall x, (16 <= bv_unsigned x)%Z ->
   v_addi x (-16) = Z_to_bv 64 (bv_unsigned x - 16).
 Proof. LiaFast.lf_pins LiaFast.u0. intros x H16. apply (v_addi_m x 16); lia. Qed.
 
-#[using="Type"] Lemma v_addi_m32 : forall x, (32 <= bv_unsigned x)%Z ->
+Lemma v_addi_m32 : forall x, (32 <= bv_unsigned x)%Z ->
   v_addi x (-32) = Z_to_bv 64 (bv_unsigned x - 32).
 Proof. LiaFast.lf_pins LiaFast.u0. intros x H32. apply (v_addi_m x 32); lia. Qed.
 
-#[using="Type"] Lemma v_addi_m48 : forall x, (48 <= bv_unsigned x)%Z ->
+Lemma v_addi_m48 : forall x, (48 <= bv_unsigned x)%Z ->
   v_addi x (-48) = Z_to_bv 64 (bv_unsigned x - 48).
 Proof. LiaFast.lf_pins LiaFast.u0. intros x H48. apply (v_addi_m x 48); lia. Qed.
 
-#[using="Type"] Lemma v_addi_m64 : forall x, (64 <= bv_unsigned x)%Z ->
+Lemma v_addi_m64 : forall x, (64 <= bv_unsigned x)%Z ->
   v_addi x (-64) = Z_to_bv 64 (bv_unsigned x - 64).
 Proof. LiaFast.lf_pins LiaFast.u0. intros x H64. apply (v_addi_m x 64); lia. Qed.
 
-#[using="Type"] Lemma v_addi_m80 : forall x, (80 <= bv_unsigned x)%Z ->
+Lemma v_addi_m80 : forall x, (80 <= bv_unsigned x)%Z ->
   v_addi x (-80) = Z_to_bv 64 (bv_unsigned x - 80).
 Proof. LiaFast.lf_pins LiaFast.u0. intros x H80. apply (v_addi_m x 80); lia. Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma v_addi_nneg_t : forall x imm, (0 <= imm)%Z ->
+Lemma v_addi_nneg_t : forall x imm, (0 <= imm)%Z ->
   (bv_unsigned x + imm < 2^64)%Z ->
   v_addi x imm = Z_to_bv 64 (bv_unsigned x + imm).
 Proof. LiaFast.lf_pins LiaFast.u0. intros x imm _ _. reflexivity. Qed.
@@ -7593,20 +7782,20 @@ Context {fx : FPState}.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma byte_nz_u : forall b : byte, b <> Z_to_bv 8 0 -> (bv_unsigned b <> 0)%Z.
+Lemma byte_nz_u : forall b : byte, b <> Z_to_bv 8 0 -> (bv_unsigned b <> 0)%Z.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros b Hb Hc. apply Hb. apply bv_eq. rewrite Hc. reflexivity.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma u_zext8 : forall b : byte,
+Lemma u_zext8 : forall b : byte,
   bv_unsigned (Z_to_bv 64 (bv_unsigned b)) = bv_unsigned b.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intro b. apply u_Z2bv; pose proof (u8_range b); lia.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma zext8_byte : forall b : byte,
+Lemma zext8_byte : forall b : byte,
   Z_to_bv 8 (bv_unsigned (Z_to_bv 64 (bv_unsigned b))) = b.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intro b. apply bv_eq.
@@ -7616,7 +7805,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma byte_neq_lit_u : forall (b : byte) (z : Z), (0 <= z < 256)%Z ->
+Lemma byte_neq_lit_u : forall (b : byte) (z : Z), (0 <= z < 256)%Z ->
   b <> Z_to_bv 8 z -> (bv_unsigned b <> z)%Z.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros b z Hz Hb Hc. apply Hb. apply bv_eq.
@@ -7626,7 +7815,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma c_eq_zext_lit_false : forall (b : byte) (z : Z), (0 <= z < 256)%Z ->
+Lemma c_eq_zext_lit_false : forall (b : byte) (z : Z), (0 <= z < 256)%Z ->
   b <> Z_to_bv 8 z ->
   c_eq (Z_to_bv 64 (bv_unsigned b)) (Z_to_bv 64 z) = false.
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -7636,12 +7825,12 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma u_ntw : forall n : nat, (Z.of_nat n < 2^64)%Z ->
+Lemma u_ntw : forall n : nat, (Z.of_nat n < 2^64)%Z ->
   bv_unsigned (nat_to_word n) = Z.of_nat n.
 Proof. LiaFast.lf_pins LiaFast.u0. intros n Hn. unfold nat_to_word. apply u_Z2bv; lia. Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma word_add_nat : forall (a : word) (n : nat),
+Lemma word_add_nat : forall (a : word) (n : nat),
   a + nat_to_word n = Z_to_bv 64 (bv_unsigned a + Z.of_nat n).
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros a n. apply bv_eq. unfold nat_to_word.
@@ -7650,14 +7839,14 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma word_add_nat_0 : forall x : word, x + nat_to_word 0 = x.
+Lemma word_add_nat_0 : forall x : word, x + nat_to_word 0 = x.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intro x. apply bv_eq. rewrite word_add_nat.
   rewrite u_Z2bv by (pose proof (u64_range x); lia). lia.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma word_add_nat_1 : forall (a : word) (m : nat),
+Lemma word_add_nat_1 : forall (a : word) (m : nat),
   v_addi (a + nat_to_word m) 1 = a + nat_to_word (S m).
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros a m. rewrite !word_add_nat. unfold v_addi. apply bv_eq.
@@ -7665,7 +7854,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   rewrite Zplus_mod_idemp_l. f_equal. lia.
 Qed.
 
-#[using="Type"] Lemma word_add_nat_m1 : forall (a : word) (m : nat),
+Lemma word_add_nat_m1 : forall (a : word) (m : nat),
   v_addi (a + nat_to_word (S m)) (-1) = a + nat_to_word m.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros a m. rewrite !word_add_nat. unfold v_addi. apply bv_eq.
@@ -7674,7 +7863,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma v_add_comm : forall x y : word, v_add x y = y + x.
+Lemma v_add_comm : forall x y : word, v_add x y = y + x.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros x y. apply bv_eq.
   change (v_add x y) with (x + y).
@@ -7682,7 +7871,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma v_add_wrap : forall x y : word,
+Lemma v_add_wrap : forall x y : word,
   (2^64 <= bv_unsigned x + bv_unsigned y)%Z ->
   v_add x y = Z_to_bv 64 (bv_unsigned x + bv_unsigned y - 2^64).
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -7693,7 +7882,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma v_sub_0_neg : forall y : word,
+Lemma v_sub_0_neg : forall y : word,
   v_sub (Z_to_bv 64 0) y = Z_to_bv 64 (- bv_unsigned y).
 Proof. LiaFast.lf_pins LiaFast.u0.
   intro y. unfold v_sub.
@@ -7702,7 +7891,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma u_neg_small : forall z : Z, (0 < z)%Z -> (z <= 2^64)%Z ->
+Lemma u_neg_small : forall z : Z, (0 < z)%Z -> (z <= 2^64)%Z ->
   bv_unsigned (Z_to_bv 64 (- z)) = (2^64 - z)%Z.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros z Hz0 Hz. rewrite Z_to_bv_unsigned, bv_wrap64_mod.
@@ -7712,7 +7901,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma v_addi_neg_S : forall d : nat,
+Lemma v_addi_neg_S : forall d : nat,
   v_addi (Z_to_bv 64 (- Z.of_nat (S d))) 1 = Z_to_bv 64 (- Z.of_nat d).
 Proof. LiaFast.lf_pins LiaFast.u0.
   intro d. unfold v_addi. apply bv_eq.
@@ -7721,18 +7910,70 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma bsb_bound : forall ph (sp : word) (a e : list (list byte)) uid hw rnd,
-  valid_argv a -> valid_envp e ->
-  (Z.of_nat (length (build_stack_bytes ph sp a e uid hw rnd)) <= 2240000)%Z.
-Proof. LiaFast.lf_pins LiaFast.u0.
-  intros ph sp a e uid hw rnd Hva Hve.
-  pose proof (build_stack_bytes_within_span ph sp a e uid hw rnd).
-  pose proof (entry_stack_span_bound a e Hva Hve).
-  unfold entry_stack_span_max in *. lia.
+Lemma block_head_size_le : forall rseq argv envp,
+  (Z.of_nat (block_head_size rseq argv envp)
+   <= 8 * Z.of_nat (length argv) + 8 * Z.of_nat (length envp) + 512)%Z.
+Proof.
+  intros rseq argv envp.
+  unfold block_head_size, block_items, auxv_size, auxv_count.
+  pose proof (Nat.mod_upper_bound
+                (length argv + length envp + 3) 2 ltac:(lia)).
+  destruct rseq; lia.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma range_avoids_two : forall (s0 s1 : Segment) (a n : Z),
+Lemma launch_sp_le_top : forall inp (top sp : word),
+  valid_launch_sp top inp sp ->
+  (bv_unsigned sp <= bv_unsigned top)%Z.
+Proof.
+  intros inp top sp [_ [_ Hhi]].
+  unfold launch_sp_hi, align_down16 in Hhi.
+  pose proof (Nat2Z.is_nonneg
+    (launch_string_bytes (in_argv inp) (in_envp inp) (in_execfn inp))).
+  pose proof (Nat2Z.is_nonneg
+    (block_head_size (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp))).
+  pose proof (Z.mod_pos_bound
+    (bv_unsigned top - 8
+     - Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp)
+                                     (in_execfn inp))) 16 ltac:(lia)).
+  lia.
+Qed.
+
+(* [comment removed for export] *)
+Lemma launch_top_minus_sp : forall inp (top sp : word),
+  valid_launch inp ->
+  valid_launch_sp top inp sp ->
+  (bv_unsigned top - bv_unsigned sp <= 2101782)%Z.
+Proof.
+  intros inp top sp [_ Hb] [_ [Hlo _]].
+  unfold launch_bytes, e2big_limit in Hb.
+  unfold launch_sp_lo, align_down16 in Hlo.
+  pose proof (block_head_size_le (kb_rseq (in_kernel inp))
+                (in_argv inp) (in_envp inp)).
+  pose proof (Z.mod_pos_bound
+    (bv_unsigned top - 8
+     - Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp)
+                                     (in_execfn inp))
+     - 4095) 16 ltac:(lia)).
+  lia.
+Qed.
+
+(* [comment removed for export] *)
+Lemma bsb_bound : forall v inp mbase ph entry (sp brk : word) draw,
+  valid_launch inp ->
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  (Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw))
+   <= 2101782)%Z.
+Proof.
+  intros v inp mbase ph entry sp brk draw Hvl Hlau.
+  rewrite (length_entry_stack_image_launch v inp mbase ph entry sp brk draw
+             Hlau).
+  destruct Hlau as (_ & Hsp & _).
+  exact (launch_top_minus_sp inp (ed_top draw) sp Hvl Hsp).
+Qed.
+
+(* [comment removed for export] *)
+Lemma range_avoids_two : forall (s0 s1 : Segment) (a n : Z),
   Z.ltb a (Z.of_N (seg_base s0) + Z.of_N (seg_size s0)) = false ->
   Z.ltb a (Z.of_N (seg_base s1) + Z.of_N (seg_size s1)) = false ->
   range_avoids_ro_segs [s0; s1] a n = true.
@@ -7749,7 +7990,7 @@ Definition ro_segs_below (segs : list Segment) (data_base : Z) : bool :=
              || Z.leb (Z.of_N (seg_base seg) + Z.of_N (seg_size seg)) data_base)
           segs.
 
-#[using="Type"] Lemma range_avoids_ro_above : forall (segs : list Segment) (data_base addr n : Z),
+Lemma range_avoids_ro_above : forall (segs : list Segment) (data_base addr n : Z),
   ro_segs_below segs data_base = true ->
   (data_base <= addr)%Z ->
   range_avoids_ro_segs segs addr n = true.

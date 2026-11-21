@@ -2,13 +2,14 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/Prog/LLVMFuzzerTestOneInput_fr.v, with its module paths and module names changed; 456 of its 574 lines of code are new or changed and 409 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Shared helpers for the segment lemmas of reac-pw/fuzz_headamp LLVMFuzzerTestOneInput (UBSan): the accessors of
    FrameAPI.frame_facts_ubsan (the ff_ lemmas), the image bound SL_TOP, munch/writability transport, the run lemmas
    sl_run and sl_run_fp (evt -> SR through MemNorm; sl_run_fp for a run that ends with its own FP registers and
    fflags), FR from scratch (sl_fr_of), FR across a Kind A run (sl_fr_run, sl_mid, sl_mid_fp), and FR's window and
    bounds.
    The plain file (lib/Prog/Seg/Tac_slot.v) with the UBSan numbers below. Taken from reac-pw/fuzz_role's U/Prog/Seg/Tac_slot.v, itself reac-pw/fuzz_pin's and libreac/fuzz_ctrl's released Prog/Seg/Tac_slot.v
-   (origin/ossv/recipes 25e3d17bdb50) adapted, same lemma names, with headamp's UBSan numbers: the frame is 608 bytes, so the
+   adapted, same lemma names, with headamp's UBSan numbers: the frame is 608 bytes, so the
    saved registers at S - 104 are fsp g + 504 (sl_fp); the sink and errno numerals (sl_sink, sl_errno_val) are
    frame_facts_ubsan's (ofl_head 0x50e20, ofl_lock 0x50e18, __libc 0x509f0, builtin_tls 0x30760); the last PT_LOAD
    ends at 0x51238, under SL_TOP. Every use of frame_facts_ubsan goes through the named accessors (the ff_ lemmas

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the mmap checks unfold check_mmap_fixed_overflow, the srz_alt2 nodes discharge the read-only-backing premise (rob_auto), and reserved_free_above and slice_args pass the arguments their AsanNodesMmLib lemmas now take. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -14,6 +15,12 @@ From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem
 From OSSVerify.Proofs.skcms.iccprofile_info.lib.Asan Require Import
   PropExec CatExec CatSim SeqExec StoreOk ShapeAlg SpinAlg AgentLib AgentNodes Nodes AllocSim
   AsanAcct AsanAcctShape AsanPlacement BackingAlgebra MmapSim RefNodes NoReserve.
+(* RomBase supplies [Ltac rob_auto] (RomBase.v:179), which the two [srz_alt2] uses below need
+   for their [sys_rob] goal.  An Ltac reaches an unqualified call site only through the calling
+   file's own Import -- [AsanNodesLibE] uses rob_auto but Requires rather than Exports RomBase,
+   so it does not carry it here.  RomBase is in this file's transitive Require set via
+   NoReserve, so this line loads no further file; it only brings the name into scope. *)
+From OSSVerify.Proofs.skcms.iccprofile_info.lib.Asan Require Import RomBase.
 From OSSVerify.Proofs.skcms.iccprofile_info.lib.Asan Require Import AxSymExec3 AxSymExec3Sound AxSymRun3 AsanPlanCore AsanPlan AsanPlanSound AsanNodesIface.
 From OSSVerify.Proofs.skcms.iccprofile_info.lib.Asan Require Import AsanNodesLibE.
 From OSSVerify.Proofs.skcms.iccprofile_info.lib.Asan Require Import AsanNodesMmLib.
@@ -101,7 +108,7 @@ Proof.
   assert (E1 : w_is0 (ms_gpr ms 1) = false).
   { unfold w_is0. apply bv_eqb_neq. intros E. apply (f_equal bv_unsigned) in E.
     rewrite Hu1 in E. change (bv_unsigned (Z_to_bv 64 0)) with 0%Z in E. lia. }
-  rewrite (mmap_check segs ms x8 model eff Hno). unfold check_mmap.
+  rewrite (mmap_check segs ms x8 model eff Hno). unfold check_mmap, check_mmap_fixed_overflow.
   rewrite E1, H2, H3, H5, H0, Hu1, mmap_off_aligned_b_0, (nr_anon flags Hcore), Gm, Gn, Gfn, Gfr, Gnn, Gnr.
   cbn [negb]. cbv beta iota zeta.
   rewrite G1, G2, G3, G4. fold nZ. fold n.
@@ -139,7 +146,7 @@ Proof.
   assert (E1 : w_is0 (ms_gpr ms 1) = false).
   { unfold w_is0. apply bv_eqb_neq. intros E. apply (f_equal bv_unsigned) in E.
     rewrite Hu1 in E. change (bv_unsigned (Z_to_bv 64 0)) with 0%Z in E. lia. }
-  rewrite (mmap_check segs ms x8 model eff Hno). unfold check_mmap.
+  rewrite (mmap_check segs ms x8 model eff Hno). unfold check_mmap, check_mmap_fixed_overflow.
   rewrite E1, H2, H3, H5, H0, Hu1, mmap_off_aligned_b_0, (nr_anon flags Hcore), Gm, Gn, Gfn, Gfr, Gnn.
   cbn [negb]. cbv beta iota zeta.
   rewrite G1, G2, G3, G4. fold nZ. fold n.
@@ -214,6 +221,7 @@ Proof.
       destruct (bv_eqb r addr && listNN_eqb zs [(addr, n)] && true)%bool; discriminate.
     + intros [[] | []]; cbn [ms']; [exact Hh | rewrite with_mmap_backing_halted; unfold mmap_model; rewrite with_vmmaps_halted; exact Hh].
     + intros [[] | []]; reflexivity.
+  - rob_auto.
   - intros []. cbn [effs ms']. unfold ms. rewrite adv_ret_epend. exact HA.
   - intros []. cbn [effs ms']. unfold ms. rewrite adv_zeros1_epend. exact HB.
 Qed.
@@ -280,6 +288,7 @@ Proof.
       destruct (bv_eqb r addr && listNN_eqb us [(addr, n)])%bool; discriminate.
     + intros [[] | []]; cbn [ms']; [exact Hh | rewrite with_mmap_backing_halted; unfold noaccess_model; rewrite with_vmmaps_halted; exact Hh].
     + intros [[] | []]; reflexivity.
+  - rob_auto.
   - intros []. cbn [effs ms']. unfold ms. rewrite adv_ret_epend. exact HA.
   - intros []. cbn [effs ms']. unfold ms. rewrite adv_unmaps1_epend. exact HB.
 Qed.
@@ -383,11 +392,11 @@ Let refuse_cont := AsanNodesMmLib.refuse_cont SEGS A nx0 LIMIT SINV argH FS0 RES
 Let refuse_ok := AsanNodesMmLib.refuse_ok SEGS A LIMIT SINV argH FS0 RES_len SINV_frame.
 Let region_free_of_apart := AsanNodesMmLib.region_free_of_apart SEGS A nx0 LIMIT SINV argH FS0 RES_len RES_hull HULL_ok.
 Let regs_ok_regupd_same := AsanNodesMmLib.regs_ok_regupd_same SEGS A RES_len.
-Let reserved_free_above := AsanNodesMmLib.reserved_free_above SEGS A RES_len RES_hull HULL_ok.
+Let reserved_free_above := AsanNodesMmLib.reserved_free_above SEGS A LIMIT SINV argH FS0 RES_len RES_hull HULL_ok.
 Let safe_range_apart := AsanNodesMmLib.safe_range_apart SEGS A RES_len HULL_ok.
 Let seps_map_disjoint := AsanNodesMmLib.seps_map_disjoint SEGS A RES_len.
 Let shadow_facts_new_ok := AsanNodesMmLib.shadow_facts_new_ok SEGS A LIMIT SINV argH FS0 RES_len HULL_ok SHADOW_ok.
-Let slice_args := AsanNodesMmLib.slice_args SEGS A LIMIT SINV argH FS0 RES_len RES_hull HULL_ok.
+Let slice_args := AsanNodesMmLib.slice_args SEGS A LIMIT SINV argH FS0 RES_len HULL_ok.
 Let slice_hyps := AsanNodesMmLib.slice_hyps SEGS A LIMIT SINV argH FS0.
 Let split_flat_estart := AsanNodesMmLib.split_flat_estart SEGS A RES_len HULL_ok.
 Let vis_add_inv := AsanNodesMmLib.vis_add_inv A LIMIT.

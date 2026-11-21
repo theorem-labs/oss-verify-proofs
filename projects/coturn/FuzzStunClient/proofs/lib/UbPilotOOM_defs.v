@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, block C runs once per value of the launch's rseq flag with that flag's auxv tail (kn_tail). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
@@ -71,11 +72,23 @@ Definition knB2 : list kentry := Eval vm_compute in fst (fst (carry [mc_store] k
 (* [comment removed for export] *)
 Definition srC0 : list expr := Eval vm_compute in sr_after_call_j srB (map ridx callee_kept) 38.
 
-(* [comment removed for export] *)
-Definition ssC0 : sym_state := SS 0x1c9ac srC0 [] knB2 70.
-Definition rC := Eval vm_compute in run scr0 ssC0.
-Definition srC : list expr := Eval vm_compute in s_regs (fst (fst rC)).
-Definition knC : list kentry := Eval vm_compute in kn_after rC knB2.
+(* LPS 08b1429/75d69e00: block C runs musl's malloc-init auxv scan (0x1c9ac-0x1c9c0 in the
+   ubsan image; 0x1c504-0x1c518 in the plain one: walk libc.auxv for AT_RANDOM=25 until
+   AT_NULL). [kn_main] records only the first 26 auxv pairs (416 bytes, UbMainEntry.v), because
+   pair 26 is AT_RSEQ_FEATURE_SIZE iff the input's free CONFIG_RSEQ flag is set, else AT_NULL
+   ([StackLayout.auxv_entries]). So the block is run once per flag value, each with that flag's
+   tail words ([kn_tail]); both runs reach 0x1ca74 with the SAME registers except a2 (dead:
+   overwritten by block D) and the SAME knowledge plus the tail.
+   [srC]/[knC] are that common part, so every block after C is the same for both runs. *)
+Definition kn_tail (r : bool) : list kentry :=
+  if r then [KWord (SA (EVar 3) 416) 8 (ELit 27); KWord (SA (EVar 3) 432) 8 (ELit 28);
+             KWord (SA (EVar 3) 448) 8 (ELit 0)]
+  else [KWord (SA (EVar 3) 416) 8 (ELit 0)].
+Definition ssC0r (r : bool) : sym_state := SS 0x1c9ac srC0 [] (knB2 ++ kn_tail r) 70.
+Definition rCt := Eval vm_compute in run scr0 (ssC0r true).
+Definition rCf := Eval vm_compute in run scr0 (ssC0r false).
+Definition srC : list expr := Eval vm_compute in sr_upd (s_regs (fst (fst rCf))) 12 (ELit 0).
+Definition knC : list kentry := Eval vm_compute in removelast (kn_after rCf (knB2 ++ kn_tail false)).
 
 (* [comment removed for export] *)
 Definition b_expr : expr := EVar 70.
@@ -125,7 +138,8 @@ Definition knG : list kentry := Eval vm_compute in kn_after rG knG0.
 Lemma itinerary_ok :
   (s_pc (fst (fst rA)), snd (fst rA)) = (0x24540%Z, [])
   /\ (s_pc (fst (fst rB)), snd (fst rB)) = (0x23ae8%Z, [])
-  /\ (s_pc (fst (fst rC)), snd (fst rC)) = (0x1ca74%Z, [])
+  /\ (s_pc (fst (fst rCt)), snd (fst rCt)) = (0x1ca74%Z, [])
+  /\ (s_pc (fst (fst rCf)), snd (fst rCf)) = (0x1ca74%Z, [])
   /\ (s_pc (fst (fst rD)), snd (fst rD)) = (0x1ca98%Z, [])
   /\ (s_pc (fst (fst rE)), snd (fst rE)) = (0x1dba8%Z, [SCBr true BC_NE b_expr (EAlu ALU_ADD b_expr (ELit 8192))])
   /\ (s_pc (fst (fst rF)), snd (fst rF)) = (0x1e3d0%Z, [])

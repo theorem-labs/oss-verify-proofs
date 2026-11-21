@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: DHEAP and DHEAPx state the ledger's reserved list instead of the model's; dheap_model, dheapx_model and dheap0_model take a kernel-equality premise; dheap_init takes the kernel build and a valid mmap base and covers the vDSO reservations init_reserved adds (vdso_resv_facts); the malloc room argument allows six reserved entries and fourteen maps (img_resv_ok, dheap_resv_small); the auxv witnesses follow rauxv_ok's launch auxv (nine of them where dheap_frame and the frame lemmas read the ceiling bound); dheap_model and dheapx_model need no step for the ledger's reserved list, which a model change does not touch; dheap_init takes the model's kernel build and proves KL_init's premise that the vDSO pair at vdso_top is the one init_reserved adds (page_round_down_Z_min_r). *)
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -131,12 +132,12 @@ Ltac splits := repeat (lazymatch goal with |- _ /\ _ => split | |- _ => fail end
 Definition DHEAPx (s : PState) (L : mled) (LBi : list block) (SPB : Z) (m : mem) (mo : Model) : Prop :=
   exists B, RHEAP s LBi m
     /\ MI_Contracts.SIMREL (ps_m s) L /\ KL L (ps_brk s) mo /\ incl (map blk_slot LBi) (ld_live L)
-    /\ MOK mo /\ rauxv_ok m B /\ SPB <= B /\ vm_reserved (m_vmmaps mo) = segments_reserved psegs.
+    /\ MOK mo /\ rauxv_ok m B /\ SPB <= B /\ ld_resv L = reservedZ psegs.
 
 Definition DHEAP (cs : mstate) (LBi : list block) (SPB : Z) (m : mem) (mo : Model) : Prop :=
   exists s L B, ps_m s = cs /\ RHEAP s LBi m
     /\ MI_Contracts.SIMREL cs L /\ KL L (ps_brk s) mo /\ incl (map blk_slot LBi) (ld_live L)
-    /\ MOK mo /\ rauxv_ok m B /\ SPB <= B /\ vm_reserved (m_vmmaps mo) = segments_reserved psegs.
+    /\ MOK mo /\ rauxv_ok m B /\ SPB <= B /\ ld_resv L = reservedZ psegs.
 
 Lemma dheapx_dheap : forall s L LBi SPB m mo, DHEAPx s L LBi SPB m mo -> DHEAP (ps_m s) LBi SPB m mo.
 Proof using . intros s L LBi SPB m mo (B & H). exists s, L, B. split; [reflexivity| exact H]. Qed.
@@ -164,16 +165,17 @@ Lemma dheap_lower : forall cs LBi SPB SPB' m mo, DHEAP cs LBi SPB m mo -> SPB' <
 Proof using . intros cs LBi SPB SPB' m mo (s & L & B & H) HS. exists s, L, B. splits; try tclose. lia. Qed.
 
 (* [comment removed for export] *)
-Lemma dheap_model : forall cs LBi SPB m mo mo', DHEAP cs LBi SPB m mo -> m_vm mo' = m_vm mo -> m_halted mo' = None -> DHEAP cs LBi SPB m mo'.
+(* The kernel equality travels with the m_vm equality: KL_vm_eq needs it for kl_vdso, which
+   is stated over m_kernel, and m_vm does not determine m_kernel. *)
+Lemma dheap_model : forall cs LBi SPB m mo mo', DHEAP cs LBi SPB m mo -> m_vm mo' = m_vm mo -> m_kernel mo' = m_kernel mo -> m_halted mo' = None -> DHEAP cs LBi SPB m mo'.
 Proof using .
-  intros cs LBi SPB m mo mo' (s & L & B & Hcs & HR & Hc & HK & Hi & [Hh Hl] & HA & HS & HV) E Hh'.
+  intros cs LBi SPB m mo mo' (s & L & B & Hcs & HR & Hc & HK & Hi & [Hh Hl] & HA & HS & HV) E Ekb Hh'.
   exists s, L, B. splits; auto.
   - assert (E1 : m_vmmaps mo' = m_vmmaps mo) by (unfold m_vmmaps; rewrite E; reflexivity).
-    eapply KL_vm_eq; [exact HK| | | | | | | | |]; try (rewrite E1; reflexivity).
+    eapply KL_vm_eq; [exact HK| | | | exact Ekb]; try (rewrite E1; reflexivity).
     + unfold m_vm_lazy. rewrite E. exact (kl_lazy _ _ _ HK).
     + unfold m_vm_materialized. rewrite E. exact (kl_mat _ _ _ HK).
   - split; [exact Hh'|]. unfold m_vm_lazy. rewrite E. exact Hl.
-  - unfold m_vmmaps. rewrite E. exact HV.
 Qed.
 
 (* [comment removed for export] *)
@@ -192,7 +194,7 @@ Proof using .
     unfold PERRNO, PGERROR, RLIBC, RCTX, RSSP_GUARD, RGOT_SSP in *.
     destruct FW' as [E|[ST|[ER|[GE|(A & n & HinB & HA1 & HA2)]]]]; [lia| left; lia| right; left; lia| right; left; lia|].
     right; right. destruct (in_bview _ _ _ HinB) as (b & Hb & <- & <-). exists b. auto.
-  - assert (HBc : alloc_ceiling <= B) by (destruct HA as (? & ? & ? & ? & ? & ? & ? & ? & ? & ? & _ & _ & _ & HB & _); exact HB).
+  - assert (HBc : alloc_ceiling <= B) by (destruct HA as (? & ? & ? & ? & ? & ? & ? & ? & ? & _ & _ & _ & HB & _); exact HB).
     eapply rauxv_ok_munch; eauto. intros lo hi Hin Hlt. specialize (FW' _ Hin).
     unfold cj_write_ok in FW'. cbn [fst snd] in FW'. (* [comment removed for export] *) unfold PERRNO, PGERROR, RLIBC, alloc_ceiling in *.
     destruct FW' as [E|[ST|[ER|[GE|(A & n & HinB & HA1 & HA2)]]]]; [lia| left; lia| right; left; lia| right; left; lia|].
@@ -215,7 +217,33 @@ Proof. intros cs LBi SPB m mo b (s & L & B & Hcs & HR & _) Hb. eapply RHEAP_bloc
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-Theorem dheap_init : forall (m : mem) (auxv : word) (B : Z) (mo : Model) (brk : word) lim mbase (sp0 : word),
+(* The vDSO pair init_reserved adds sits a guard pair's width above any valid brk, and is two
+   entries of at most twenty pages: from the launch's placement (State.vdso_reserved_above). *)
+Lemma vdso_resv_facts : forall kb (mbase sp0 brk : word),
+  valid_mmap_base mbase -> 0x7fff7f800000 <= bv_unsigned sp0 - stack_max_size ->
+  bv_unsigned brk <= 0x100000000 ->
+  let vr := vdso_reserved kb (page_round_down_Z (Z.min (bv_unsigned mbase) (bv_unsigned sp0 - stack_max_size))) in
+  (forall e, In e vr -> bv_unsigned brk + 4 * 4096 <= elo e)
+  /\ Forall (fun p => bv_unsigned (snd p) <= 2^18) vr /\ (length vr <= 2)%nat.
+Proof.
+  intros kb mbase sp0 brk (M1 & M2 & M3) Hsp Hbrk vr.
+  set (top := page_round_down_Z (Z.min (bv_unsigned mbase) (bv_unsigned sp0 - stack_max_size))).
+  pose proof (bv_unsigned_in_range 64 mbase) as RM. pose proof (bv_unsigned_in_range 64 sp0) as RS. unfold bv_modulus in RM, RS.
+  assert (T1 : Z.min (bv_unsigned mbase) (bv_unsigned sp0 - stack_max_size) - 4095 <= top
+               <= Z.min (bv_unsigned mbase) (bv_unsigned sp0 - stack_max_size)).
+  { subst top. unfold page_round_down_Z, page_size.
+    pose proof (Z.div_mod (Z.min (bv_unsigned mbase) (bv_unsigned sp0 - stack_max_size)) 4096 ltac:(lia)).
+    pose proof (Z.mod_pos_bound (Z.min (bv_unsigned mbase) (bv_unsigned sp0 - stack_max_size)) 4096 ltac:(lia)). lia. }
+  assert (Ttop : top < two_pow_64) by (unfold two_pow_64; unfold stack_max_size in *; lia).
+  pose proof (vdso_len_bounds kb) as VL. unfold page_size in VL. unfold mmap_base_min in M1.
+  split; [|split].
+  - intros [a n] Hin. destruct (vdso_reserved_above kb top a n Ttop Hin) as [A1 A2]. unfold elo. cbn [fst].
+    unfold stack_max_size in *. lia.
+  - apply Forall_forall. intros [a n] Hin. destruct (vdso_reserved_above kb top a n Ttop Hin) as [A1 A2]. cbn [snd]. lia.
+  - unfold vr, vdso_reserved. match goal with |- context [if ?c then _ else _] => destruct c end; cbn; lia.
+Qed.
+
+Theorem dheap_init : forall (m : mem) (auxv : word) (B : Z) (mo : Model) (brk : word) lim (mbase sp0 : word) kb,
   (forall a : word, 0x53b88 <= bv_unsigned a < 0x53f30 -> m a = None) ->
   rw_cells psegs m 0x53b18 [C1 (Z_to_bv 8 1); C1 (Z_to_bv 8 0); C1 (Z_to_bv 8 0); C1 (Z_to_bv 8 0); C4 (Z_to_bv 64 0)] ->
   rw_cells psegs m 0x53b20 [C8 auxv; C8 (Z_to_bv 64 0); C8 (Z_to_bv 64 224); C8 (Z_to_bv 64 8); C8 (Z_to_bv 64 0);
@@ -224,25 +252,31 @@ Theorem dheap_init : forall (m : mem) (auxv : word) (B : Z) (mo : Model) (brk : 
   rw_cells psegs m 0x53af8 [C8 ssp_guard_val] ->   (* [comment removed for export] *)
   mem_inv psegs m ->
   rauxv_ok m B ->
-  m_vmmaps mo = mkVmMapsFull (segments_reserved psegs) [] [] brk brk lim mbase sp0 ->
-  m_vm_lazy mo = [] -> m_vm_materialized mo = [] -> m_halted mo = None ->
-  valid_brk psegs brk -> drv_limit <= lim ->
+  m_vmmaps mo = mkVmMapsFull (init_reserved (segments_reserved psegs) mbase sp0 kb) [] [] brk brk lim mbase sp0 ->
+  m_vm_lazy mo = [] -> m_vm_materialized mo = [] -> m_halted mo = None -> m_kernel mo = kb ->
+  valid_brk psegs brk -> valid_mmap_base mbase -> drv_limit <= lim ->
   bv_unsigned sp0 - stack_max_size = alloc_ceiling ->   (* [comment removed for export] *)
   DHEAP0 B m mo.
 Proof using .
-  intros m auxv B mo brk lim mbase sp0 NONE LC LC2 GOT GUARD MI HA Evm Hl Hm Hh (V1 & V2 & V3) Hlim Htop.
+  intros m auxv B mo brk lim mbase sp0 kb NONE LC LC2 GOT GUARD MI HA Evm Hl Hm Hh EK (V1 & V2 & V3) VMB Hlim Htop.
   destruct (RHEAP_init_proof m auxv NONE LC LC2 GOT GUARD MI) as [HR _].
   assert (Hrtop : reserved_top (segments_reserved psegs) = 0x55000) by (vm_compute; reflexivity).
   rewrite Hrtop in V1, V2. rewrite page_size_eq in V3. unfold brk_aslr_max in V2.
-  pose proof (@KL_init ACEIL (segments_reserved psegs) brk mo lim mbase sp0 Evm Hl Hm ltac:(lia) V3 ltac:(lia)) as HK.
-  specialize (HK ltac:(intros e He; pose proof (reserved_top_ge _ _ He); lia) Hlim Htop). rewrite <- reservedZ_wwZ in HK.
+  pose proof (@alloc_ceiling_lo ACEIL) as Hcl.
+  destruct (vdso_resv_facts kb mbase sp0 brk VMB ltac:(lia) ltac:(lia)) as (VR1 & VR2 & VR3).
+  pose proof (@KL_init ACEIL (segments_reserved psegs) _ brk mo lim mbase sp0 Evm Hl Hm ltac:(lia) V3 ltac:(lia)) as HK.
+  specialize (HK ltac:(intros e He; pose proof (reserved_top_ge _ _ He); lia) VR1 VR2 VR3 Hlim Htop).
+  (* the launch's vDSO pair, read at the model's vdso_top, is the pair init_reserved adds *)
+  specialize (HK ltac:(intros e He; rewrite EK in He; unfold vdso_top, mmap_top, alloc_top in He;
+                       cbn [vm_mmap_base vm_init_sp] in He; rewrite page_round_down_Z_min_r in He;
+                       apply in_or_app; right; exact He)).
+  rewrite <- reservedZ_wwZ in HK.
   split; [| rewrite Evm; reflexivity].
   exists B. splits; auto.
   - apply simrel_init.
   - intros c [].
   - split; assumption.
   - lia.
-  - rewrite Evm. reflexivity.
 Qed.
 
 (* [comment removed for export] *)
@@ -311,7 +345,7 @@ Proof using .
     + exists s', (set_live (c :: ld_live L') L'), B. split; [reflexivity|]. split; [exact HR'|].
       split; [exact (simrel_malloc_step _ _ _ _ _ _ Hc Hn0 Hp)|]. split; [apply KL_set_live; exact HK'|].
       split. { cbn [map blk_slot fst ld_live set_live]. intros x [<-|Hx]; [left; reflexivity| right]. rewrite (cpath_live _ _ _ _ Hp). apply Hi. exact Hx. }
-      splits; auto. rewrite <- HV. apply (KL_resv_eq L (ps_brk s) mo L' (ps_brk s') mo' HK HK'). apply (MallocFacts_inv.cpath_resv _ _ _ _ Hp).
+      splits; auto. change (ld_resv L' = reservedZ psegs). rewrite (MallocFacts_inv.cpath_resv _ _ _ _ Hp). exact HV.
     + destruct (MI_Contracts.cpath_follow _ _ _ _ Hp) as (ans & Hf & _). exists ans. exact Hf.
 Qed.
 
@@ -348,6 +382,23 @@ Proof.
   cbn in Hp. lia.
 Qed.
 
+(* the same facts over the ledger's view, and with the two vDSO entries init_reserved adds *)
+Lemma img_resv_ok : Forall (fun p => snd p <= 2^18) (reservedZ psegs) /\ Z.of_nat (length (reservedZ psegs)) = 4.
+Proof.
+  destruct img_reserved_small as [RF RL]. rewrite reservedZ_wwZ. split; [| rewrite length_map; exact RL].
+  apply Forall_map. eapply Forall_impl; [| exact RF]. intros [a n] H. exact H.
+Qed.
+
+Lemma dheap_resv_small : forall L pbrk mo, KL L pbrk mo -> ld_resv L = reservedZ psegs ->
+  Forall (fun p => bv_unsigned (snd p) <= 2^18) (vm_reserved (m_vmmaps mo))
+  /\ Z.of_nat (length (vm_reserved (m_vmmaps mo))) <= 6.
+Proof.
+  intros L pbrk mo1 HK E. destruct img_resv_ok as [RF0 RL0].
+  destruct (kl_resv _ _ _ HK) as (vr & Evr & Fv & Lv).
+  destruct (KL_resv_small L pbrk mo1 HK ltac:(rewrite E; exact RF0) ltac:(rewrite E; lia)) as [F2 _].
+  split; [exact F2|]. pose proof (f_equal (@length _) Evr) as EL. rewrite length_app, !length_map, E in EL. lia.
+Qed.
+
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -371,20 +422,20 @@ Proof using .
   destruct (dheap_dheapx _ _ _ _ _ HD) as (s & L & <- & HX). pose proof HX as (B & HR & Hc & HK & _ & _ & _ & _ & Hresv).
   assert (HLS : led_small L (2^27 - 4096) 8).
   { apply (led_small_of_cs (ps_m s) L); [exact Hc| exact HS1| unfold PGSZ; lia| lia]. }
-  destruct img_reserved_small as [PR1 PR2].
-  destruct (KL_room_app L (ps_brk s) mo (2^27 - 4096) 8 4 HK HLS) as (F1 & F2 & F3);
-    [rewrite Hresv; eapply Forall_impl; [| exact PR1]; cbn; intros; lia| rewrite Hresv; lia|].
+  destruct (dheap_resv_small L (ps_brk s) mo HK Hresv) as [PR1 PR2].
+  destruct (KL_room_app L (ps_brk s) mo (2^27 - 4096) 8 6 HK HLS) as (F1 & F2 & F3);
+    [eapply Forall_impl; [| exact PR1]; cbn; intros; lia| lia|].
   assert (A0 : 0 <= n) by lia.
   assert (A1 : (2^27 - 4096) mod 4096 = 0) by reflexivity.
-  assert (A2 : Z.of_nat (length (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo))) <= 12) by lia.
+  assert (A2 : Z.of_nat (length (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo))) <= 14) by lia.
   (* [comment removed for export] *)
-  assert (A3 : AsanCeil.bottomup_floor + 12 * (2 * (2^27 - 4096)) + (2^27 - 4096) <= alloc_top (m_vmmaps mo)).
+  assert (A3 : AsanCeil.bottomup_floor + 14 * (2 * (2^27 - 4096)) + (2^27 - 4096) <= alloc_top (m_vmmaps mo)).
   { rewrite (kl_top _ _ _ HK). rewrite AsanCeil.bottomup_floor_val. pose proof (@alloc_ceiling_lo ACEIL). lia. }
   assert (A3L : alloc_top (m_vmmaps mo) <= alloc_ceiling) by (rewrite (kl_top _ _ _ HK); lia).
   assert (A4 : vm_backing_used mo + (2^27 - 4096) <= vm_limit (m_vmmaps mo)).
   { pose proof (vm_backing_used_le_live mo (kl_lazy _ _ _ HK) (kl_mat _ _ _ HK)). pose proof (kl_lim _ _ _ HK). unfold drv_limit in *. lia. }
   eapply (drv_malloc_x s L LBi SPB n lo errv TB HX); eauto.
-  exact (site_never_none (ps_m s) n lo0 hi0 mo (2^27 - 4096) 12 Hsite A0 Hlo0 Hhi0 A1 F1 A2 A3 A4 s L eq_refl Hc HK).
+  exact (site_never_none (ps_m s) n lo0 hi0 mo (2^27 - 4096) 14 Hsite A0 Hlo0 Hhi0 A1 F1 A2 A3 A4 s L eq_refl Hc HK).
 Qed.
 
 (* [comment removed for export] *)
@@ -405,10 +456,10 @@ Theorem drv_malloc_first : forall SPB (lo : Z) (errv : word) (TB : TSet),
            TB.
 Proof.
   intros SPB lo errv TB [HX Hmaps] HSP ST Hlo Hlo2 ER MI Htp Ha0 KB.
-  pose proof HX as (B & HR & Hc & HK & _ & _ & _ & _ & Hresv). destruct img_reserved_small as [PR1 PR2].
+  pose proof HX as (B & HR & Hc & HK & _ & _ & _ & _ & Hresv). destruct img_resv_ok as [PR1 PR2].
   eapply (drv_malloc_x _ _ [] SPB 65536 lo errv TB HX); eauto.
   - lia.
-  - apply (m0_never_none (reservedZ psegs)); [reflexivity| reflexivity| exact HK| rewrite Hresv; exact PR1| rewrite Hresv; lia].
+  - apply (m0_never_none (reservedZ psegs)); [reflexivity| reflexivity| exact HK| exact PR1| lia].
 Qed.
 
 (* [comment removed for export] *)
@@ -449,7 +500,7 @@ Proof using .
     split; [exact (simrel_free_step _ _ _ _ _ Hc Hlive Hp)|]. split; [apply KL_set_live; exact HK'|]. split; [| auto].
     destruct (lb_remove_views LBi p A n (RHEAP_slot_nodup _ _ _ HR) (RHEAP_addr_nodup _ _ _ HR) Hin) as (V1 & _ & _).
     rewrite V1. cbn [ld_live set_live]. rewrite (cpath_live _ _ _ _ Hp).
-    2:{ splits; auto. rewrite <- HV. apply (KL_resv_eq L (ps_brk s) mo L' (ps_brk s') mo' HK HK'). apply (MallocFacts_inv.cpath_resv _ _ _ _ Hp). }
+    2:{ splits; auto. change (ld_resv L' = reservedZ psegs). rewrite (MallocFacts_inv.cpath_resv _ _ _ _ Hp). exact HV. }
     intros x Hx. apply in_ap_remove; [apply Hi; eapply ap_remove_In; exact Hx|].
     intros ->. exact (ap_remove_notin_self _ _ (RHEAP_slot_nodup _ _ _ HR) Hx).
   - destruct (MI_Contracts.cpath_follow _ _ _ _ Hp) as (ans & Hf & _). exists ans. exact Hf.
@@ -563,7 +614,7 @@ Lemma rauxv_ok_munch2 : forall W m m' B LB, munch W m m' -> wmono psegs m m' -> 
   (forall A n, In (A, n) LB -> rblock_range A n) ->
   rauxv_ok m' B.
 Proof using .
-  intros W m m' B LB HM HW (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & H1 & H2 & H3 & H4) FW HLB.   (* [comment removed for export] *)
+  intros W m m' B LB HM HW (av & la & ph & ent & uid & gid & hw & xfn & rnd & H1 & H2 & H3 & H4) FW HLB.   (* [comment removed for export] *)
   pose proof (proj1 (Forall_forall _ _) FW) as FW'.
   assert (D : forall lo hi, In (lo, hi) W -> lo < hi ->
              (alloc_ceiling <= lo /\ hi <= B) \/ (hi <= RLIBC) \/ (RCTX + 928 <= lo /\ hi <= 0x55000)
@@ -571,10 +622,10 @@ Proof using .
   { intros lo hi Hin Hlt. specialize (FW' _ Hin). unfold drv_write_ok in FW'. cbn [fst snd] in FW'.
     destruct FW' as [E|[E|[E|[E|(A & n & HinB & EA & EB)]]]]; [lia| left; lia| right; left; lia| right; right; left; lia|].
     right; right; right. pose proof (HLB _ _ HinB) as (R1 & R2 & R3 & R4 & R5). lia. }
-  exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. split; [|split; [|split; [|exact H4]]].
+  exists av, la, ph, ent, uid, gid, hw, xfn, rnd. split; [|split; [|split; [|exact H4]]].
   - eapply rw_cells_munch; eauto. cbn [cells_size csize Nat.add]. unfold RAUXV_CELL. intros lo hi Hin Hlt.
     destruct (D lo hi Hin Hlt) as [E|[E|[E|E]]]; unfold alloc_ceiling, RLIBC, RCTX in *; lia.
-  - eapply bytes_at_munch; eauto. intros lo hi Hin Hlt. rewrite u64s_length. unfold auxv_list. rewrite length_map. cbn [length Nat.mul Nat.add].
+  - eapply bytes_at_munch; eauto. intros lo hi Hin Hlt. rewrite u64s_length. pose proof (length_auxv_list_le la ph ent uid gid hw (wz rnd) xfn).
     destruct (D lo hi Hin Hlt) as [E|[E|[E|E]]]; unfold alloc_ceiling, RLIBC, RCTX in *; lia.
   - eapply bytes_at_munch; eauto. intros lo hi Hin Hlt. rewrite length_le8. cbn [Z.of_nat Pos.of_succ_nat Pos.succ]. (* [comment removed for export] *)
     destruct (D lo hi Hin Hlt) as [E|[E|[E|E]]]; unfold alloc_ceiling, RLIBC, RCTX in *; lia.
@@ -585,7 +636,7 @@ Lemma lhd_frame_ext : forall SPB LB m m' mo W,
 Proof using .
   intros SPB LB m m' mo W (s & LBi & B & HR & -> & HO & HM & HA & HS) MU WM FW.
   pose proof (proj1 (Forall_forall _ _) FW) as FW'.
-  assert (HB : alloc_ceiling <= B) by (destruct HA as (? & ? & ? & ? & ? & ? & ? & ? & ? & ? & _ & _ & _ & HB & _); exact HB).
+  assert (HB : alloc_ceiling <= B) by (destruct HA as (? & ? & ? & ? & ? & ? & ? & ? & ? & _ & _ & _ & HB & _); exact HB).
   exists s, LBi, B. splits; auto.
   - apply (RHEAP_frame_proof s LBi m m' (nonempty_ivs W) HR (munch_nonempty _ _ _ MU) WM).
     apply Forall_forall. intros [lo hi] Hin. unfold nonempty_ivs in Hin. apply List.filter_In in Hin as [Hin Hlt]. cbn [fst snd] in Hlt. apply Z.ltb_lt in Hlt.
@@ -604,7 +655,7 @@ Lemma dheap_frame_ext : forall cs LBi SPB m m' mo W,
 Proof using .
   intros cs LBi SPB m m' mo W (s & L & B & Hcs & HR & Hc & HK & Hi & HM & HA & HS & HV) MU WM FW.
   pose proof (proj1 (Forall_forall _ _) FW) as FW'.
-  assert (HB : alloc_ceiling <= B) by (destruct HA as (? & ? & ? & ? & ? & ? & ? & ? & ? & ? & _ & _ & _ & HB & _); exact HB).
+  assert (HB : alloc_ceiling <= B) by (destruct HA as (? & ? & ? & ? & ? & ? & ? & ? & ? & _ & _ & _ & HB & _); exact HB).
   exists s, L, B. splits; auto.
   - apply (RHEAP_frame_proof s LBi m m' (nonempty_ivs W) HR (munch_nonempty _ _ _ MU) WM).
     apply Forall_forall. intros [lo hi] Hin. unfold nonempty_ivs in Hin. apply List.filter_In in Hin as [Hin Hlt]. cbn [fst snd] in Hlt. apply Z.ltb_lt in Hlt.
@@ -637,25 +688,24 @@ Proof.
     + intros A n HinB. destruct (in_bview _ _ _ HinB) as (b & Hb & <- & <-). exact (RHEAP_block_range_proof s LBi m b HR Hb).
 Qed.
 
-Lemma dheapx_model : forall s L LBi SPB m mo mo', DHEAPx s L LBi SPB m mo -> m_vm mo' = m_vm mo -> m_halted mo' = None -> DHEAPx s L LBi SPB m mo'.
+Lemma dheapx_model : forall s L LBi SPB m mo mo', DHEAPx s L LBi SPB m mo -> m_vm mo' = m_vm mo -> m_kernel mo' = m_kernel mo -> m_halted mo' = None -> DHEAPx s L LBi SPB m mo'.
 Proof using .
-  intros s L LBi SPB m mo mo' (B & HR & Hc & HK & Hi & [Hh Hl] & HA & HS & HV) E Hh'.
+  intros s L LBi SPB m mo mo' (B & HR & Hc & HK & Hi & [Hh Hl] & HA & HS & HV) E Ekb Hh'.
   exists B. splits; auto.
   - assert (E1 : m_vmmaps mo' = m_vmmaps mo) by (unfold m_vmmaps; rewrite E; reflexivity).
-    eapply KL_vm_eq; [exact HK| | | | | | | | |]; try (rewrite E1; reflexivity).
+    eapply KL_vm_eq; [exact HK| | | | exact Ekb]; try (rewrite E1; reflexivity).
     + unfold m_vm_lazy. rewrite E. exact (kl_lazy _ _ _ HK).
     + unfold m_vm_materialized. rewrite E. exact (kl_mat _ _ _ HK).
   - split; [exact Hh'|]. unfold m_vm_lazy. rewrite E. exact Hl.
-  - unfold m_vmmaps. rewrite E. exact HV.
 Qed.
 
 Lemma dheap0_frame_ext : forall SPB m m' mo W,
   DHEAP0 SPB m mo -> munch W m m' -> wmono psegs m m' -> Forall (drv_write_ok SPB []) W -> DHEAP0 SPB m' mo.
 Proof. intros SPB m m' mo W [HX HV] MU WM FW. split; [| exact HV]. eapply dheapx_frame_ext; eauto. Qed.
 
-Lemma dheap0_model : forall SPB m mo mo', DHEAP0 SPB m mo -> m_vm mo' = m_vm mo -> m_halted mo' = None -> DHEAP0 SPB m mo'.
+Lemma dheap0_model : forall SPB m mo mo', DHEAP0 SPB m mo -> m_vm mo' = m_vm mo -> m_kernel mo' = m_kernel mo -> m_halted mo' = None -> DHEAP0 SPB m mo'.
 Proof using .
-  intros SPB m mo mo' [HX HV] E Hh. split; [eapply dheapx_model; eauto|]. unfold m_vmmaps in *. rewrite E. exact HV.
+  intros SPB m mo mo' [HX HV] E Ekb Hh. split; [eapply dheapx_model; eauto|]. unfold m_vmmaps in *. rewrite E. exact HV.
 Qed.
 
 (* [comment removed for export] *)

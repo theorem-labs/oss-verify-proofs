@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: imports. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -12,6 +13,7 @@ From OSSVerify.Proofs.boost_json.fuzz_parse.lib Require Import
   Scfg PropExec CatSim ShapeAlg SReach LazyRestrict LazyRestrictRun LazyRestrictAlg.
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib.Lib Require Exec MState Mem.
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib.Lib Require Import Nd.
+From OSSVerify.Proofs.boost_json.fuzz_parse.lib.Common.Cfg Require RomBase.
 Require Import OSSVerify.Proofs.boost_json.fuzz_parse.lib.Lib.CDef.
 Local Ltac2 zQ s := CDef.cdeft "3h5LinuxProcessSemanticsfLinuxProcessSemeRiscvSemantics0dmachine_state69OSSVerify6Proofsaboost_jsonafuzz_parse3lib6CatSim~~~~~~k66msteps79OSSVerify6Proofsaboost_jsonafuzz_parse3lib3Lib4Exec~~~~~~o86msteps37Corelib4Init5Logicsc3andsc2exsc3iffo83evt37Corelib7Numbers7BinNumsv74Npos35stdpp9bitvectorbdefinitionshh72bv37Corelib4Init9Datatypeshja6optionhja4listhja4prod3h5LinuxProcessSemantics5Riscv7Preludehmc5bvmap79OSSVerify6Proofsaboost_jsonafuzz_parse3lib3Lib6MState~~~~~~hpb2MSsc2eq69OSSVerify6Proofsaboost_jsonafuzz_parse3libcLazyRestrict~~~~~~hu38restricthu3crestrict_mem0ems_svc_pendinghja4boolhja4truehja4Some06ms_memhu37hiddenbhu3ain_rangesbhh77Z_to_bv79OSSVerify6Proofsaboost_jsonafuzz_parse3lib6LazySR8WithSegs~~~~~~ip24rsubhja4consip28hid_samehu3dunrestrict_toip2ehidden_zero_on3h5LinuxProcessSemanticsfLinuxProcessSem3Runjh35mkCfg3h5LinuxProcessSemanticsfLinuxProcessSem5Statejk85Modelip24lzokhu38lazy_invhu3h5same_but_materializedjh36config69OSSVerify6Proofsaboost_jsonafuzz_parse3lib6SReach~~~~~~jr76sreach69OSSVerify6Proofsaboost_jsonafuzz_parse3libfLazyRestrictRun~~~~~~jva6dstepsjh36cfg_msjh39cfg_modelhu3azin_rangebhh7bbv_unsignedhja4andbjk88m_vmmapsjk89page_sizejk88vm_limithu3aeager_usedhu3bpages_totalhu38with_mem46Stdlib6ZArith6BinInt1Zkt03addkt02lekt03muljk84m_vmhja4Nonejk87VmStatejk88m_haltedjk8fvm_backing_used3h5LinuxProcessSemanticsfLinuxProcessSemcMemImageTypelj67Segment" s.   (* [comment removed for export] *)
 Import ListNotations.
@@ -127,7 +129,8 @@ Qed.
 Lemma sreach_dsteps : ltac2:(zQ "30!jqd!jv0!kjc>1c$0>2c'$0>1Q>0$0P>0@3$2?4segs^3^2>0@4$1?4segs?2SC^2^3@4$1?4segs?2SC^3^5").
 Proof.
   intros c c' Q H; induction H as [c | ms model ms' model' c3 Hh Hsvc Hacc H IH]; intros HQ; [exact HQ|].
-  eapply sreach_silent1; [apply node_account; [exact Hh | exact Hsvc | exact Hacc] | apply IH; exact HQ].
+  eapply sreach_silent1; [apply node_account; [exact Hh | exact Hsvc | exact Hacc] | apply RomBase.sys_rob_instr; exact Hsvc
+                        | apply IH; exact HQ].
 Qed.
 
 Section WithLazy.

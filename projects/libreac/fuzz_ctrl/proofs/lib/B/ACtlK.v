@@ -1,6 +1,6 @@
 (* lib/B/ACtlK.v -- the WALK-INTERNAL constants of fuzz_ctrl image B's (asan-ubsan) walk of LLVMFuzzerTestOneInput, in
    the released cgif_file_fuzzer form.  Written by a Theorem Labs lane as the image-B twin of a Theorem Labs lane's lib/A/ACtlK.v
-   (b535733d786, the frame-law / typecheck fix of a working branch e76ced8e847); single writer.
+   (the frame-law / typecheck fix of a working branch); single writer.
 
    ONE CONSTANT, ONE SOURCE (porter a Theorem Labs lane, 21:36Z and 21:37Z).  The program constants of the lib contract
    are NOT defined here.  The relocated core carries the donor's root YCfn.v (the image-B twin of A/ACfn.v) with

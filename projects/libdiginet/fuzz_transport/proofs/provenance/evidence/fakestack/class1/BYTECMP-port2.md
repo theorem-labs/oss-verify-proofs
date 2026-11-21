@@ -8,10 +8,10 @@ files with its own donor.conf and model.txt.
 Pins: fuzz_transport.asan e89be137db17b720 (unstripped twin 86efc3a803149811), fuzz_transport.asan-ubsan
 41113a03c82fde82 (twin e217cb0a84f1e181), as projects/libdiginet/fuzz_transport/harness.yaml pins them on this branch.
 
-Donor: libreac/fuzz_ctrl at origin/ossv/recipes 2fceb489f4aa (the last recipes commit with the proofs/<P>/<U>/lib
-layout alreloc reads; every file used has the same blob at the recipes tip 9b0ac6f0e678). Images: fuzz_ctrl.asan
-aac16e1fe728 (twin 78efaeda1de5), fuzz_ctrl.asan-ubsan 12136677c5cf (twin ee07e2c38d94), the pins of
-2fceb489f4aa:projects/libreac/fuzz_ctrl/harness.yaml (= the tip's). The contract: `ctrl_stack_malloc1 : forall fq B,
+Donor: libreac/fuzz_ctrl (the last recipes commit with the proofs/<P>/<U>/lib
+layout alreloc reads; every file used has the same blob at the recipes tip). Images: fuzz_ctrl.asan
+aac16e1fe728 (twin 78efaeda1de5), fuzz_ctrl.asan-ubsan 12136677c5cf (twin ee07e2c38d94), the pins:
+projects/libreac/fuzz_ctrl/harness.yaml (= the tip's). The contract: `ctrl_stack_malloc1 : forall fq B,
 AR_laws tfibsegs B -> CtrlTSyms B -> astack_malloc_realizes (fx := fq) tfibsegs B 1` (lib/A/Rt/StackMalloc1.v:535,
 lib/B/Rt/StackMalloc1.v:535).
 
@@ -23,7 +23,7 @@ numeral >= 0x10000: 0 / 0 / 0). Class 2 Requires StackRawKept.v and the three co
 
 ## Donor (rule 24: look up, compare, then choose)
 
-Lookup (rule24/lookup.sh, outputs beside it): the released set origin/ossv/recipes 9b0ac6f0e678, path-scoped per unit
+Lookup (rule24/lookup.sh, outputs beside it): the released set, path-scoped per unit
 (projects/<P>/<U>/proofs, 89 units), one git grep at a time: grep-stmt.txt (a statement `astack_malloc_realizes <segs>
 <B> 1|2` or a `stack_malloc{1,2}_contract`), grep-decl.txt (every Theorem / Lemma / Corollary named for class 1 / 2,
 which also finds statements split over lines, e.g. fuzz_ctrl's), files-sm12.txt (StackMalloc1/2, SM1/2 files).

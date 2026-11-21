@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the hand-off checks and gives the 0x5D0000-byte stack span (STACK_SPAN) the start state guarantees below sp instead of 8 MiB; taken in part from projects/simdjson/fuzz_ondemand/proofs/lib/B/HandoffImage.v, lines 72, 222-226, 265-267. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Monad Specs Run Fs.
@@ -12,6 +13,7 @@ From OSSVerify.Proofs.simdjson.fuzz_dump.lib.AS Require Import PropExec ShapeAlg
 From OSSVerify.Proofs.simdjson.fuzz_dump.lib.A Require Import SrzEqv HandoffKit.
 From OSSVerify.Proofs.simdjson.fuzz_dump.lib.AS Require Import AsanPlanImagesB.
 From OSSVerify.simdjson.fuzz_dump.images Require Import AsanUbsan.
+From OSSVerify.Proofs.simdjson.fuzz_dump.lib.AS Require StoreOk.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Import AX2. Import AX2S. Import AP.
@@ -67,7 +69,7 @@ Proof.
     replace (sp0 + - USP_OFF) with (sp0 - USP_OFF) by lia. reflexivity.
 Qed.
 
-Lemma hi_usp : (sp0 - USP_OFF) mod 16 = 0 /\ sp0 - USP_OFF < sp0 + 8 /\ sp0 - STACK_WIN + 0x100000 <= sp0 - USP_OFF
+Lemma hi_usp : (sp0 - USP_OFF) mod 16 = 0 /\ sp0 - USP_OFF < sp0 + 8 /\ sp0 - STACK_SPAN + 0x100000 <= sp0 - USP_OFF
                /\ sp0 - USP_OFF <= sp0 /\ 0x7fff80000000 <= sp0.
 Proof.
   destruct hi_sp0 as [Hsp [Hlo Hhi]]. unfold sp_window_lo, sp_window_hi in *.
@@ -217,7 +219,18 @@ Proof.
   - exact (IH k b (o + nn) hi H i ltac:(lia)).
 Qed.
 
-Definition hs_stk_ok (ch : acs) : bool := kwr_cover (kn ch) e_sp0 (-8388608) (- USP_OFF) (S (length (kn ch))).
+(* LPS 727298f3: the start state claims only [StoreOk.stack_window_depth] = 6144513
+   bytes writable below sp ([AsanPlanCore.init_kn_with]'s [KWr (SA e_sp0 (-6144513)) ..]),
+   so the hand-off checks the guaranteed span 0x5D0000 = 6094848 ([RT_iface.STACK_SPAN]),
+   not 8 MiB (-8388608). *)
+Definition hs_stk_ok (ch : acs) : bool := kwr_cover (kn ch) e_sp0 (-6094848) (- USP_OFF) (S (length (kn ch))).
+
+(* Why 0x5D0000: see the A twin (A/HandoffImage.v [STACK_SPAN_window]): the 64 KiB floor of
+   the model's guaranteed window [stack_window_depth] = 6144513 = 0x5DC201 bytes. *)
+Lemma STACK_SPAN_window :
+  STACK_SPAN = OSSVerify.Proofs.simdjson.fuzz_dump.lib.AS.StoreOk.stack_window_depth / 0x10000 * 0x10000
+  /\ STACK_SPAN <= OSSVerify.Proofs.simdjson.fuzz_dump.lib.AS.StoreOk.stack_window_depth.
+Proof. rewrite OSSVerify.Proofs.simdjson.fuzz_dump.lib.AS.StoreOk.stack_window_depth_val. unfold STACK_WIN. split; [reflexivity | lia]. Qed.
 
 Lemma rdn1_mrd : forall segs m a b, L_rdn segs m a 1 = Some [b] -> mrd segs m a = Some b.
 Proof.
@@ -256,9 +269,9 @@ Proof.
   change (Z.of_nat 0) with 0 in W. rewrite Z.add_0_r in W. exact W.
 Qed.
 
-Theorem hi_stk : hs_stk_ok ch = true -> stk SEGS (mH FULL model A') (sp0 - 8388608) (sp0 - USP_OFF).
+Theorem hi_stk : hs_stk_ok ch = true -> stk SEGS (mH FULL model A') (sp0 - STACK_SPAN) (sp0 - USP_OFF).
 Proof.
-  intros H. destruct (APS.cs_isp SEGS A nx0 LIMIT SINV argH FS0 E ch R FULL model HC) as [Hsp [Hlo Hhi]].
+  intros H. rewrite STACK_SPAN_val. destruct (APS.cs_isp SEGS A nx0 LIMIT SINV argH FS0 E ch R FULL model HC) as [Hsp [Hlo Hhi]].
   pose proof HULL_ok as (H0 & H1 & H2 & H3). unfold KHI in H3. unfold sp_window_lo, sp_window_hi in *. unfold USP_OFF.
   split; [lia|]. split; [lia|]. intros a Ha.
   destruct (kwr_cover_sound _ _ _ _ _ H (a - sp0) ltac:(unfold USP_OFF; lia)) as (o & n & Hin & Hn & Hi).

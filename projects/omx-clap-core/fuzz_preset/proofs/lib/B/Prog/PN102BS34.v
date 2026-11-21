@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image B' (asan-ubsan, harness fix #102, pin sha256
    d663f82d7f488d30f8e8d7496cb814e595a2f3cbbf16bde81a65cb3ea9af0994): SEGMENTS S3 and S4 of the walk of parse_noting
    (the B' twin of row N10-PNA; cut table lib/B/Prog/PN102BCuts.v):
@@ -11,7 +12,7 @@
          the hull use are kept.
    rule 24: proves function parse_noting (fuzz_preset, image B') (preparation; proof-index 03:20Z: 0 named / 0 by
    address / 0 released; the rule-24 parse_noting check CONFIRM 03:25Z; PORT of a Theorem Labs lane's image-A' file of the same role,
-   a working branch 41f83d5b57f8, at PI_prog_B / prh_img_B). This file: segments S3 and S4 of that
+   a working branch, at PI_prog_B / prh_img_B). This file: segments S3 and S4 of that
    walk.
    NUMERALS: the instruction offsets (LENGTH), 48 (the frame). No ADDRESS. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.

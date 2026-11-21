@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgE01M.v at 5d5b79394a1; ported to
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgE01M.v; ported to
    reac-pw/fuzz_headamp image B (module paths; rh_ / rl_ / rm_ names to lib/AU/HPgSegM.v hqu_ / lib/A/HPgBase.v hd_ /
    lib/A/HPgMem.v hm_; the real frame 0x220 below S, the class-4 frame of 1024 bytes and 128 shadow bytes with its
    flag word at F + 0x3f8, the prologue's 116 frame shadow bytes, the two kept real-frame cells R + 0x38 and R + 0x48,

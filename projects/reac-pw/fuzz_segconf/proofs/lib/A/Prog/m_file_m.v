@@ -1,40 +1,40 @@
 (* m_file on fuzz_segconf.asan (image A, 0x85ebc): the segment statements of its walk, one MF_<cut>_stmt per cut of
    the G2 walk owner's guide/MF-CUTS-A.md (sha256 8761669a9b3d) section 2, in the form of plugin-hostd/fuzz_command's
-   lib/A/Prog/check_reply_m.v (origin/ossv/recipes 501c0d516c69; AWALK-FORM.md 2.9): a bundle of the contract's
+   lib/A/Prog/check_reply_m.v (AWALK-FORM.md 2.9): a bundle of the contract's
    variables (mfv), the entry facts (mf_cx), the post (MF_POST), a mid-walk invariant (mf_core, mf_cells), the
    registers at a program point (mf_regs_at and each cut's own), and the configuration at BASE + pc realizing the
    post (mf_at). Statement text and the logic that chains the segments (no instruction is executed here). Lane
    the m_file cut-statement lane of the G2 walk owner's G2.
    CHANGE LOG (newest first; the segment lanes rebase on each):
-   - 4 (on commit 60167ac2d043): MF_EXIT_stmt takes mf_regs_ex (sp = s1, gp, tp, s0 = sp0, s1, s2 = SB,
+   - 4: MF_EXIT_stmt takes mf_regs_ex (sp = s1, gp, tp, s0 = sp0, s1, s2 = SB,
      s10 = shadow(FB)) in place of mf_regs_at. On the empty-text path (0x86060 -> 0x86e70) the set-up 0x86064-0x860cc
      has not run, so s3 (`li s3,32` 0x86094; it still holds FB from 0x85f44) and s9 (0x860b8; still the caller's)
      are not mf_regs_at's; the epilogue 0x86e70-0x86f50 reads only s0, s1, s8, s10 and 112(s1). mf_regs_ex_of_at
      gives it from mf_regs_at (TAIL -> EXIT). Found by the image-B twin's cut lane, confirmed on image A
      by the ENTRY segment lane. Every other statement is unchanged.
-   - 3 (on commit b14fca6b866f): image A's pure parameters come from lib/A/Prog/SegInstA.v (the image-A owner's ruling
+   - 3: image A's pure parameters come from lib/A/Prog/SegInstA.v (the image-A owner's ruling
      16:54Z): the Section variables RLO RHI lit WORDS ROLES CAT GOTW GUARD are gone and MF_STK is no longer a
      Definition here. The statements use SegInstA.STK_m_file (= 8,560), RLO_A, RHI_A, seg_litA_fz, wordsA, rolesA,
      catA, gotwA, guardA (local notations MF_STK, RLO, ... below name them in this file only). Every MF_<cut>_stmt
      and MF_<cut>_F now takes B (and n) only: write `MF_HEAD_stmt (fx := fx0) B n`, `MF_HEAD_F B n`. No cut
      predicate changed. Entries and call targets stay listing terms (BASE + AF_<F>, SIGMA SS_<x>).
-   - 2 (on commit 76c815f097a3): aligned to the image-A owner's text of record of m_file_c.v (commit
-     044216da3413): the Section variables and every MF_<cut>_F / m_file_contract use take the contract's parameter
+   - 2: aligned to the image-A owner's text of record of m_file_c.v:
+     the Section variables and every MF_<cut>_F / m_file_contract use take the contract's parameter
      order `RLO RHI lit WORDS ROLES CAT GOTW GUARD`; MF_STK = 288 + 16 + (64 + 2 * ESTACK) = 8,560 (the image-A owner's image-A
      STK_m_file: the deepest callee is fuzz_catalogue_row, snprintf's window is CMD_SNP_K = 2 * ESTACK). mf_cx is
      unchanged in shape (mf_words / mf_roles / m_file_pre now carry the image-A owner's sa_pinned and label forms).
-   - 1 (e6baa14cc8d5): the first text.
+   - 1: the first text.
 
-   LOGICAL CONTENT: the plain / image-B owner's plain cuts (lib/Prog/m_file_c.v H_MF_HEAD / H_MF_TAIL / H_MF_EXIT at 440d61eaa8c8 and
-   lib/Prog/mf_cuts.v H_MF_LONG / HDR / KEY / HFIND / KAT at dec616e11c2f) restated over the A reader, with the line
+   LOGICAL CONTENT: the plain / image-B owner's plain cuts (lib/Prog/m_file_c.v H_MF_HEAD / H_MF_TAIL / H_MF_EXIT and
+   lib/Prog/mf_cuts.v H_MF_LONG / HDR / KEY / HFIND / KAT) restated over the A reader, with the line
    loop's invariant m_file_loop as mf_loop, indexed by the bound n on the text left as there. The plain post of a
    cut is the function's post computed from the cut's state; here the post is the contract's, fixed by the bundle
    (as check_reply_m's CR_POST), and each cut states the plain post's model as an equation with the final model
    mf_final v = SegModel.m_file mc s lab: HEAD / TAIL / KDONE `fst (m_lines (mcc, cur) line (lines rest)) =
    mf_final v`, LONG `mf_fin (m_line ..)`, HDR `mf_fin (m_header ..)`, KEY `mf_fin (m_key .., cur)`, HFIND
    `mf_fin (mh_find ..)`, the K cuts `mf_fin (mk_disp ..)`. The line terms mf_line / mf_rest / mf_next / mf_fin and
-   the partial steps mh_find / mk_disp are restated word for word from the plain / image-B owner's lib/Prog/mfu_facts.v:228-271 at
-   dec616e11c2f (build-independent; that file is not in this tree), as is mk_kv (mf_cuts.v:168-170).
+   the partial steps mh_find / mk_disp are restated word for word from the plain / image-B owner's lib/Prog/mfu_facts.v:228-271
+    (build-independent; that file is not in this tree), as is mk_kv (mf_cuts.v:168-170).
 
    THE CUTS (A pc; listing offset = AF_m_file + (pc - 0x85ebc); the entries into each, MF-CUTS-A.md section 2):
      ENTRY  0x85ebc (+0x000)  the call
@@ -136,7 +136,7 @@ Definition mf_cur_ok (mc : mconf) (cur : option nat) : Prop :=
   match cur with Some i => (i < length (mc_seg mc))%nat | None => True end.
 
 (* ============================ the line and the partial model steps ============================ *)
-(* Restated from the plain / image-B owner's lib/Prog/mfu_facts.v:228-271 at dec616e11c2f. At the head the text left is rest at p;
+(* Restated from the plain / image-B owner's lib/Prog/mfu_facts.v:228-271. At the head the text left is rest at p;
    the line is the bytes before its first '\n' (or all of rest), the text after it is mf_rest rest, at
    mf_next p rest (nl + 1, or the NUL when there is no '\n'). *)
 Definition mf_line (rest : list Z) : list Z := fst (break_nl rest).

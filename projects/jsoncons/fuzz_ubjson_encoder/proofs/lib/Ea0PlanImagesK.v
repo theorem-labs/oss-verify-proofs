@@ -1,11 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the reserved-range ledger; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/As0PlanImagesK.v, line 157. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.jsoncons.fuzz_ubjson_encoder.images Require Import Asan.
@@ -19,7 +16,6 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 Definition Asan0_top : Z := 0x698000.
 
-(* [comment removed for export] *)
 Lemma Asan0_wx_nowrap : wx_segs_nowrap ASEGS0.
 Proof. apply wx_segs_nowrap_of_b. vm_compute. reflexivity. Qed.
 Lemma Asan0_segs_below : segs_below_b ASEGS0 Asan0_top = true.
@@ -30,7 +26,6 @@ Proof. intros H Ha. exact (H_off_segments_above _ H _ Asan0_segs_below Ha). Qed.
 Lemma Asan0_H_off_mkH : forall L A, ranges_from_b L Asan0_top = true -> H_off_segments ASEGS0 (mkH L A).
 Proof. intros L A HL. exact (H_off_segments_mkH _ L A _ Asan0_segs_below HL). Qed.
 
-(* [comment removed for export] *)
 Definition segs_in_hull_b (segs : list Segment) (lo hi : Z) : bool :=
   forallb (fun seg => (lo <=? Z.of_N (seg_base seg)) && (Z.of_N (seg_base seg) + Z.of_N (seg_size seg) <=? hi))%bool segs.
 
@@ -78,7 +73,6 @@ Proof. unfold APSK.shadow_ok. cbn [shadow_off ASAN0]. lia. Qed.
 Lemma asan0_res_sizes : APSK.sum_sizes (segments_reserved ASEGS0) = 0x688000.
 Proof. vm_compute. reflexivity. Qed.
 
-(* [comment removed for export] *)
 Lemma asan0_hex2 : scanN Asan_seg_bytes_002 64 0 32768 = true.
 Proof. apply FxHexScan.FXH.scan_ok; [vm_cast_no_check (@eq_refl bool true)|vm_compute; discriminate]. Qed.
 Lemma asan0_hex3 : scanN Asan_seg_bytes_003 64 0 5627904 = true.
@@ -114,7 +108,6 @@ Proof.
         [rewrite asan0_segs_eq; cbn; tauto | cbn; lia].
 Qed.
 
-(* [comment removed for export] *)
 Lemma asan0_hull_tiled : forall z, img_lo ASAN0 <= z < img_hi ASAN0 -> APSK.in_ivs z (segments_reserved ASEGS0) = true.
 Proof.
 intros z Hz. cbn [img_lo img_hi ASAN0] in Hz. rewrite asan0_res_eq. unfold APSK.in_ivs. cbn [existsb fst snd].
@@ -134,7 +127,6 @@ Qed.
 Lemma asan0_hull_lt : img_lo ASAN0 < img_hi ASAN0.
 Proof. cbn [img_lo img_hi ASAN0]. lia. Qed.
 
-(* [comment removed for export] *)
 Lemma segs_wr_of_forallb : forall segs,
   forallb (fun seg => negb (seg_writable seg) || seg_readable seg)%bool segs = true -> APSXK.segs_wr_ok segs.
 Proof.
@@ -145,15 +137,16 @@ Qed.
 Lemma asan0_segs_wr : APSXK.segs_wr_ok ASEGS0.
 Proof. apply segs_wr_of_forallb. vm_compute. reflexivity. Qed.
 
-(* [comment removed for export] *)
 Lemma asan0_img_facts : img_facts ASEGS0 ASAN0 APH0.
 Proof.
-constructor.
-- repeat split; reflexivity.
-- cbn [img_lo img_hi ASAN0]. lia.
-- vm_compute. reflexivity.
-- exact asan0_res_hull.
-- rewrite asan0_res_sizes. reflexivity.
-- cbn [rw_lo rw_len ASAN0]. split; [lia|]. intros m x Hx. apply asan0_rw_window. lia.
-- exact asan0_shadow_ok.
+  constructor.
+  - repeat split; reflexivity.
+  - cbn [img_lo img_hi ASAN0]. lia.
+  - vm_compute. reflexivity.
+  - exact asan0_res_hull.
+  - rewrite asan0_res_sizes. reflexivity.
+  - cbn [rw_lo rw_len ASAN0]. split; [lia|]. intros m x Hx. apply asan0_rw_window. lia.
+  - exact asan0_shadow_ok.
+
+  - cbn [n_resx p_resx ASAN0]. split; lia.
 Qed.

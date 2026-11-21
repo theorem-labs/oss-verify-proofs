@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: ex_ws (fuzz_preset.c :103-107) of fuzz_preset's asan-ubsan image B' (#102 pin d663f82d7f488d30,
    unstripped twin c90d4fa54d43160b), out of line in B only (image A inlines it into check_as_written and ex_value),
    proved against the #102 text tex_ws_specX (lib/A/PRH_FnEx.v 45ddb7a7d5ae, PRH_Base.v 3004a98fe2d9, both = the kit of
-   record decff67d721f) at the image-B' instance:
+   record) at the image-B' instance:
    listing B_prog_listing / PI_prog_B (the B' whole-range listing, lib/B/Listing_prog.v c97cc46b3e13 / PAImg_prog.v
    15fab93fe702; the walk runs over the instance's table pa_tbl = B_prog_tbl), frame table prh_img_B (lib/B/PRH_ImgB.v),
-   journal YCbqG's ajournal_x (c3b5d0111037, engine set of record 8a01e111a410;
+   journal YCbqG's ajournal_x (c3b5d0111037, engine set of record;
    table runners SRr_run_tok_AJx / SRr_run_to_tok_AJx), entry journal by YCbqGcallW's ajournal_x_init_W (same engine).
-   Donor: the old-pin proof of this file (cold/h-rw-pre-7-b-ex_ws-core 097fba0abfcc, blob bdcc5f65edce).
+   Donor: the old-pin proof of this file (blob bdcc5f65edce).
    - THE m-FORM POST (fpostWm = fpostW at fQmn mem Q, PRH_Base.v): the keep `memnorm segs mem -> memnorm segs mem'`
      (YAkMemnorm 96c72061b4d4). The walk (Section m) carries a memory invariant Pinv with YC80x's srr_inv_laws
      (YC80x 14f84f225e8f): exw_chain_inv / exw_run_inv / exw_run_to_inv below are YCbqG's SRr_chain_tok_AJx /
@@ -25,7 +26,7 @@
    - THE BODY. ex_ws (B_prog_sigma AS_ex_ws, 55 instructions) is skip_ws (B_prog_sigma AS_skip_ws) instruction for
      instruction once the pc-relative fields are masked (the internal file neutral_dis.py on the old pins f8f98a95 / 3b5e1a09, 2026-10-28). The
      segment lemmas below are therefore h-verbs-1's skip_ws walk (lib/B/Prog/skip_ws_x.v, origin/cold/
-     h-verbs-1-preset-leaf-skip_ws 2f4e237337f) re-pointed at ex_ws's entry, at the whole-range table and at the
+     h-verbs-1-preset-leaf-skip_ws) re-pointed at ex_ws's entry, at the whole-range table and at the
      image facts of this file's Section; its q bound is the stack's (q + 16 <= 2 ^ 47) instead of amem_range.
    - THE THREE UBSan CHECKS (all trap to `unimp`, the internal file B-U-TRAPS.md, measured on the old pins) are resolved
      NOT TAKEN inside the symbolic runs from the run's facts: entry + 0xc `bnez (q & 7)` by q mod 8 = 0 (fact on q,
@@ -309,7 +310,7 @@ Variable ARx : alayout -> astate -> list Z -> world rsegs -> (word -> option byt
 Context {HL : Z}.  (* AR_laws_x's head length (YCbqG.v), implicit: inferred from LAWS *)
 Hypothesis LAWS : AR_laws_x rsegs B ARx HL.
 (* image facts of B (asyms) at image B's atoms: the GOT word the code loads (auipc / ld) and the cell it points to;
-   PALib's pal_got_shadow / pal_cell (YC1fP.v:308-309) at PI_prog_B *)
+   PALib's pal_got_shadow / pal_cell (YC1fP.v:309-310) at PI_prog_B *)
 Hypothesis EXW_HGOT : as_got_shadow B = EXW_GOT.
 Hypothesis EXW_HCELL : as_shadow_cell B = EXW_CELL.
 (* the memory invariant the walk carries: kept by the three memory changes of one runner segment (YC80x's
@@ -341,7 +342,7 @@ aregs_preserved regs regs' /\
 (forall x, 0 <= x < 2 ^ 64 -> ~ (spZ regs - EXW_TSTK <= x < spZ regs) -> ~ (q <= x < q + 8) ->
 aview rsegs (w_H W) mem' x = aview rsegs (w_H W) memc x) /\
 val_mem rsegs (mrestrict (w_H W) mem') q 8 (text + len - Z.of_nat (length (PjGrammar.skip (skipn (Z.to_nat (p - text)) txt))))).
-(* YCbqG's run_post_tok_AJx (YCbqG.v:988-999) with the premise Pinv (ms_mem ms') right after the journal *)
+(* YCbqG's run_post_tok_AJx (YCbqG.v:989-1000) with the premise Pinv (ms_mem ms') right after the journal *)
 Definition exw_run_post_inv (W : world rsegs) (E : env) (K : nat) (Bx : sv) (SH : list shent) (ss : sstate) (st' : shst)
 (ms : machine_state) (STK sp0 : Z) (FP : list (Z * Z)) ly S Hp W0 mem md own lyc Sc Hpc (mdc : Model) (k : Z)
 (Q : world rsegs -> config -> Prop) : Prop :=
@@ -355,7 +356,7 @@ frame_of E (ss_mem ss) (ms_mem ms) (ms_mem ms') ->
 frame_of E (ss_mem ss) (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) (ms_mem ms')) ->
 mem_grows (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) (ms_mem ms')) ->
 SRr rsegs W (mkCfg ms' (with_vm_backing (m_vm_lazy mdc) mat' mdc)) Q.
-(* YCbqG's SRr_chain_tok_AJx (YCbqG.v:1000-1029) with YA0n.SRr_msteps replaced by YC80x.SRr_msteps_inv (YC80x.v:83):
+(* YCbqG's SRr_chain_tok_AJx (YCbqG.v:1001-1030) with YA0n.SRr_msteps replaced by YC80x.SRr_msteps_inv (YC80x.v:84):
    Pinv of the start memory gives Pinv of the merged end memory *)
 Lemma exw_chain_inv : forall W E K Bx SH ws ss st' ms msr' STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q,
 msteps rsegs (restrict (w_H W) ms) msr' ->
@@ -390,7 +391,7 @@ apply (Hk ws (unrestrict (w_H W) (ms_mem ms) msr') (m_vm_materialized model') Hl
 - rewrite Hmm. exact Hfr.
 - rewrite Hmm. exact Hgr.
 Qed.
-(* YCbqG's SRr_run_tok_AJx / SRr_run_to_tok_AJx (YCbqG.v:1030-1063) over exw_chain_inv, at the whole-range table *)
+(* YCbqG's SRr_run_tok_AJx / SRr_run_to_tok_AJx (YCbqG.v:1031-1064) over exw_chain_inv, at the whole-range table *)
 Lemma exw_run_inv : forall W n E K Bx Bspan SH ss st' r ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q,
 st_ok rsegs E ss (restrict (w_H W) ms) ->
 sh_ok rsegs Bx SH E (mrestrict (w_H W) (ms_mem ms)) ->

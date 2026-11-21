@@ -1,6 +1,6 @@
 (* lib/A/Prog/C_reac_ctrl_parseK.v -- fuzz_ctrl image A (asan, libreac v1.9.0): memory plumbing, the lifts and the
    window journal step of the cgif-form glue pb_reac_ctrl_parse (lib/A/Prog/C_reac_ctrl_parseP.v).
-   Ported from a Theorem Labs lane's lib/B/Prog/C_reac_ctrl_parseK.v and lib/B/Prog/GlueLift.v @ 258208c7d59, image A addresses
+   Ported from a Theorem Labs lane's lib/B/Prog/C_reac_ctrl_parseK.v and lib/B/Prog/GlueLift.v, image A addresses
    (A.Img0.rsegs, A.MemNorm / MemNormF / MemNormTr / ProgBridge / ImgBounds).  Ported lemmas, B name -> A name:
      C_reac_ctrl_parseK.rcpK_raw_SA / rcpK_outside_dec / rcpK_aview_eq / rcpK_apresent_eq / rcpK_u64 /
        rcpK_compose / rcpK_rw_cells_tr                                    -> the same names;

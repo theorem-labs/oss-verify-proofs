@@ -291,6 +291,32 @@ Definition clear_of_stack (h : VmMaps) (p : policy) (s : strip) (st n : Z) (a : 
   \/ (s_vvar s = true /\ (e <= p_vdso p < st)%Z)
   \/ (s_text s = true /\ (e <= p_vdso p + p_vvar p < st)%Z).
 
+(** #38 chooses one placement. Compatibility belongs to the predicate its
+    producers establish, not to a new hypothesis on the input kernel.
+    Only the live vDSO mappings tracked by the strip need ledger coverage. *)
+Definition vdso_in_ledger (h : VmMaps) (p : policy) (s : strip) : Prop :=
+  (s_vvar s = true ->
+     exists m, In m (vm_reserved h ++ vm_maps h)
+       /\ (bv_unsigned (fst m) <= vdso_end p - p_text p - p_vvar p)%Z
+       /\ (vdso_end p - p_text p <= bv_unsigned (fst m) + bv_unsigned (snd m))%Z)
+  /\ (s_text s = true ->
+     exists m, In m (vm_reserved h ++ vm_maps h)
+       /\ (bv_unsigned (fst m) <= vdso_end p - p_text p)%Z
+       /\ (vdso_end p <= bv_unsigned (fst m) + bv_unsigned (snd m))%Z).
+
+(* The guard is a policy knob absent from Linux's placement search, not a
+   restriction on the model's independently chosen kernel guard setting. *)
+Definition policy_pinned_h (h : VmMaps) (thp : bool) (p : policy) (s : strip) : Prop :=
+  p_legacy p = false
+  /\ (p_min p = page_size)%Z
+  /\ (p_base p = bv_unsigned (vm_mmap_base h))%Z
+  /\ p_thp p = thp
+  /\ (p_guard p = 0)%Z
+  /\ vdso_in_ledger h p s.
+
+Definition policy_pinned (p : policy) (s : strip) (m : Model) : Prop :=
+  policy_pinned_h (m_vmmaps m) (kb_thp (m_kernel m)) p s.
+
 (** [a] is a page-aligned address at or above [lo] and above 0 at which [n]
     bytes end at or below [top], overlap nothing in the ledger (the guard of
     the fresh-grant arms of lps's [mmap_spec], with [top] for [alloc_top]),
@@ -859,7 +885,7 @@ Definition canon_trace (cfg : SpuriousCfg) (p : policy) (img : Image) (lim : Z) 
     (inp : ProcInput) (tr : list event) : Prop :=
   match img, en with
   | mkImage segs pc ph, mkEntry sp brk0 mbase rnd =>
-    exists tr' c, canon_run p segs cfg (init_config segs pc ph sp brk0 mbase rnd lim inp) tr' c
+    exists tr' c, canon_run p (run_segments segs inp sp mbase) cfg (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp) tr' c
                   /\ is_prefix tr tr'
   end.
 
@@ -867,8 +893,8 @@ Definition canon_budget_refused (cfg : SpuriousCfg) (p : policy) (img : Image) (
     (en : ExecEntry) (inp : ProcInput) : Prop :=
   match img, en with
   | mkImage segs pc ph, mkEntry sp brk0 mbase rnd =>
-    exists tr c, canon_run p segs cfg (init_config segs pc ph sp brk0 mbase rnd lim inp) tr c
-                 /\ budget_refused_at segs c
+    exists tr c, canon_run p (run_segments segs inp sp mbase) cfg (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp) tr c
+                 /\ budget_refused_at (run_segments segs inp sp mbase) c
   end.
 
 (** An error that a canonical execution of [p] reaches, or that any other
@@ -878,10 +904,10 @@ Definition guarded_reaches_error (cfg : SpuriousCfg) (p : policy) (img : Image) 
   match img, en with
   | mkImage segs pc ph, mkEntry sp brk0 mbase rnd =>
     exists tr c evs,
-      ((star_guarded segs cfg (init_config segs pc ph sp brk0 mbase rnd lim inp) tr c
-        /\ ~ unplaced_at segs c /\ ~ budget_refused_at segs c)
-       \/ canon_run p segs cfg (init_config segs pc ph sp brk0 mbase rnd lim inp) tr c)
-      /\ sstep_cfg segs cfg c evs SError
+      ((star_guarded (run_segments segs inp sp mbase) cfg (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp) tr c
+        /\ ~ unplaced_at (run_segments segs inp sp mbase) c /\ ~ budget_refused_at (run_segments segs inp sp mbase) c)
+       \/ canon_run p (run_segments segs inp sp mbase) cfg (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp) tr c)
+      /\ sstep_cfg (run_segments segs inp sp mbase) cfg c evs SError
   end.
 
 Definition guarded_trace (cfg : SpuriousCfg) (p : policy) (img : Image) (lim : Z) (en : ExecEntry)
@@ -889,8 +915,8 @@ Definition guarded_trace (cfg : SpuriousCfg) (p : policy) (img : Image) (lim : Z
   match img, en with
   | mkImage segs pc ph, mkEntry sp brk0 mbase rnd =>
     exists tr' c,
-      (star_guarded segs cfg (init_config segs pc ph sp brk0 mbase rnd lim inp) tr' c
-       \/ canon_run p segs cfg (init_config segs pc ph sp brk0 mbase rnd lim inp) tr' c)
+      (star_guarded (run_segments segs inp sp mbase) cfg (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp) tr' c
+       \/ canon_run p (run_segments segs inp sp mbase) cfg (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp) tr' c)
       /\ is_prefix tr tr'
   end.
 
@@ -1023,7 +1049,7 @@ Lemma canon_complete_of_no_placement : forall vi cfg segs pc ph lim,
   (forall en inp, valid_entry (mkImage segs pc ph) en inp -> vi inp ->
      match en with
      | mkEntry sp brk0 mbase rnd =>
-       no_placement_from segs cfg (init_config segs pc ph sp brk0 mbase rnd lim inp)
+       no_placement_from (run_segments segs inp sp mbase) cfg (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp)
      end) ->
   canon_complete vi cfg (mkImage segs pc ph) lim.
 Proof.

@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported from proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v (the leaf walk: the seed at
-   the entry, the run, the return) and lib/A/AC8b.v (loops by fuel induction) at c8557374ad2e: the walk of
+   the entry, the run, the return) and lib/A/AC8b.v (loops by fuel induction): the walk of
    syntax_reply_matches on fuzz_command.asan. This file: the prologue (0x8857c to the item loop at 0x885e8), the entry
    facts the statement's premises give, and the theorem. The segments are in syntax_reply_matches_s1.v .. _s7.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

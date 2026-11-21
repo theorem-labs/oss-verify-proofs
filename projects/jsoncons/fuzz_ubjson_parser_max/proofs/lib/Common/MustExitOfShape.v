@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: updated the induction intro pattern in the MustExitOfShape proof to name the new sys_rob read-only-memory premise Hrob on node rules, as in fuzz_bigint's copy. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -127,7 +128,7 @@ exits_in S T ->
 m_halted (cfg_model c) = None ->
 must_exit_in_at_cfg scfg segs S c.
 Proof.
-intros S c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+intros S c T H; induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq];
 intros HX Hrun.
 - destruct Hnode as [Hcomp Hsound].
 apply must_exit_in_at_cfg_running.

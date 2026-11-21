@@ -4,10 +4,11 @@
 (* Modified by Theorem Labs, 2026-10: the closing pattern of a Theorem Labs lane's PASS4-REFIT.md section F for pins_set's
    ASan+UBSan walk (lib/B/Prog/pins_set.v, tpins_set_holds), with the per-binary record hypotheses it names
    discharged at the pinned image (lib/B/Prog/CmdImg.v's instance PB_cmd, whose segments are tfibsegs, and the sink
-   head lib/B/YE2k.v tfib_sink_head), after A's SupRemoveAllRefitClosed.v (a working branch e84227c9553) and
-   RecBClosed.v (a working branch f349bdaedba): cmd_sig_prog_PB, cmd_val_objs_PB, cmd_img_facts_tfib and
+   head lib/B/YE2k.v tfib_sink_head), after A's SupRemoveAllRefitClosed.v (a working branch) and
+   RecBClosed.v (a working branch): cmd_sig_prog_PB, cmd_val_objs_PB, cmd_img_facts_tfib and
    cmd_prw_tfib (PRW: the program's statics lie in tfibsegs' read-write window) are a Theorem Labs lane's lemmas
    (lib/B/Prog/CmdRecRest.v, CmdRecImg.v). What remains is the callees' contracts at every FP state, HB and MTL. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

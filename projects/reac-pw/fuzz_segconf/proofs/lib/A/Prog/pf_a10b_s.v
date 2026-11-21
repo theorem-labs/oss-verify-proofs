@@ -25,10 +25,11 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 413 of its 483 lines of code are new or changed and 4983 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/pf_a2.v, with its module names changed; 165 of its 260 lines of code are new or changed and 388 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/pf_a10b_j.v; 564 of its 643 lines of code are new or changed and 181 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image A (fuzz_segconf.asan): the store piece of segment A10b of reac_segconf_parse_file's
    walk, pa10_s_ok : PA10_S B (lib/A/Prog/pf_a10b_k.v: HA_JOIN n -> H_ROLEV n). Part of segment A10b's proof, by
    the G3 walk owner, 2026-10-30. proves no function (kind: segment lemma); the walk's rule-24 record is the
-   unit's internal record, commit dfb49d6ad789, path records/segp/g3-lookup.md (reuse verdict
+   unit's internal record, path records/segp/g3-lookup.md (reuse verdict
    none: written new).
 
    THE CODE (the excerpt reac_segconf_parse_file.fuzz_segconf.asan.s in records/segp/dis/ at that commit), ROLEV
@@ -50,7 +51,7 @@
    lib/A/Prog/pf_a8b_t.v (pfa8b_aj_snprintf_atSF with pfa8b_FR_s_regs, FR_cmd at "%s" with one string
    argument). PaFx.aj_art_blk_atF does NOT fit this call: it asks every byte of the destination's heap block
    to be in the footprint seg_spec.RC_PARSE_W c, which does not cover c's whole 16616 bytes. The snprintf post
-   (RtPFCmd.v:341-342) keeps EVERY byte outside the destination [d, d + sn_len) and the scratch window, so the
+   (RtPFCmd.v:342-343) keeps EVERY byte outside the destination [d, d + sn_len) and the scratch window, so the
    cut's facts are carried by that keep clause and the run's frame_of over this piece's write set p10_W (the
    stack below s1, seg[gi]'s role / role_set words, seg[gi].role_file): no SSPX, no VRO. The block's new
    bytes give sa_rconf of the updated record by pf_a10b_f.a10b_rconf_role, and H_JOIN at the FP state the

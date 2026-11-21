@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-29: copied from proofs/omx-clap-core/fuzz_state/lib/A/FSRealloc_inst.v:293-369 (hub ddc081c1a03, blob c7cb9a4b423e) fs_amemcpy_realizes, ported to omx-clap-core/fuzz_preset's asan image A (musl memcpy 0x9b2b4 = cf_pc_memcpy of CfImg_A, A/AE3c.v tfib_memcpy, A/AE2y.v) and restated as YGcfReallocCompose.wrap_realloc_walk_cf's field rw_memcpy; the overlay normal form conjunct (at_mem_cf) added. *)
+(* Modified by Theorem Labs, 2026-10-29: copied from proofs/omx-clap-core/fuzz_state/lib/A/FSRealloc_inst.v:293-369 (blob c7cb9a4b423e) fs_amemcpy_realizes, ported to omx-clap-core/fuzz_preset's asan image A (musl memcpy 0x9b2b4 = cf_pc_memcpy of CfImg_A, A/AE3c.v tfib_memcpy, A/AE2y.v) and restated as YGcfReallocCompose.wrap_realloc_walk_cf's field rw_memcpy; the overlay normal form conjunct (at_mem_cf) added. *)
 (* Modified by Theorem Labs, 2026-10-31: field round 3 part 3c (the record's rw_memcpy no longer states the overlay
    normal form): the at_mem_cf conjunct and its proof (MN2) removed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset.asan image A, row A5 of the internal file FREE-PIECES-102.md: the copy routine REAL(memcpy) (musl
    memcpy 0x9b2b4, Reallocate's `jalr a3` target through the RELRO cell 0xa2038 -> 0xa3e88): rw_memcpy_A is
    YGcfReallocCompose.wrap_realloc_walk_cf's field rw_memcpy at segs := tfibsegs, ci := CfImg_A: ReallocG.amemcpy_realizes

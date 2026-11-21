@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (RomBase.sys_rob at the madvise (233) node, and the munmap refund and cuts_covered lemmas over maps_subtract with a positive unmapped length). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -14,6 +15,7 @@ From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yc Require SpinAlg.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yc Require SpinAlg.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yc Require Hull.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yc Require Ledger Hull Lazyiq4.
+From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib Require RomBase.
 Import OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yc.Divembc OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yc.SpinAlg.Lazy9wo OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yc.SpinAlg OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yc.Hull.Lazylo0 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yc.Ledger OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yc.Hull OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yc.Lazyiq4.
 
 Module Madv3tp.
@@ -162,6 +164,7 @@ Proof.
   - intros o. apply (madvise_outcome_si ms x8 model o Hno Hargs).
   - rewrite madvise_model_halted. exact Hh.
   - reflexivity.
+  - exact (RomBase.sys_rob_memfree segs ms model x8 Hsvc ltac:(rewrite Hno; exact RomBase.memfree_233)).
 Qed.
 
 Lemma srz_madvise : forall ms model x8 T,
@@ -421,11 +424,12 @@ Lemma eager_used_munmap_refund : forall (a n : word) m,
   entries_nowrap (vm_maps (m_vmmaps m)) ->
   entries_nowrap (vm_noaccess (m_vmmaps m)) -> entries_nowrap (m_vm_lazy m) ->
   nooverlap (vm_maps (m_vmmaps m)) ->
-  In (a, n) (vm_maps (m_vmmaps m)) -> eager_map a n m ->
+  In (a, n) (vm_maps (m_vmmaps m)) -> 0 < bv_unsigned n -> eager_map a n m ->
   eager_used (munmap_modelL a n m) + bv_unsigned n <= eager_used m.
 Proof.
-  intros a n m HX HNA HL Hd Hin HE.
-  pose proof (eager_used_munmap_le a n m HX HNA HL Hd Hin) as LE.
+  (* 08b1429 (lazyledger-munmap): the cut needs the unmapped length to be positive *)
+  intros a n m HX HNA HL Hd Hin Hn HE.
+  pose proof (eager_used_munmap_le a n m HX HNA HL Hd Hin Hn) as LE.
   assert (R : rem (a, n) (cuts m) = bv_unsigned n); [|lia].
   unfold rem. replace (bv_unsigned n) with (hi (a, n) - lo (a, n)) by (unfold lo, hi; cbn [fst snd]; lia).
   apply zmeasure_all; [apply lo_hi|].
@@ -451,20 +455,25 @@ Proof. intros A AL E a n m lo hi HI. apply lazy_free_munmap. exact (minv_lazy_nw
 Theorem MInv_munmap_refund : forall A AL E (a n : word) m,
   MInv A AL E m ->
   map_has (vm_maps (m_vmmaps m)) a n = true ->
+  0 < bv_unsigned n ->   (* 08b1429 (lazyledger-munmap): the cut needs a positive length *)
   eager_map a n m ->
   MInv A AL (E - bv_unsigned n) (munmap_modelL a n m).
 Proof.
-  intros A AL E a n m HI Hhas HE.
+  intros A AL E a n m HI Hhas Hn HE.
+  (* the cut is map_remove less the empty entries based at a + n, so the ledger facts carry over *)
+  pose proof (maps_subtract_rm_nz (vm_maps (m_vmmaps m)) a n Hn (minv_nooverlap HI) (map_has_In _ _ _ Hhas)) as RMNZ.
   apply (MInv_rebuild A AL E (E - bv_unsigned n) m _
            (Some (page_outside_range (bv_unsigned a) (bv_unsigned a + bv_unsigned n))) HI).
   - apply munmap_modelL_materialized.
   - apply lazy_sub_munmap. exact (minv_lazy_nw HI).
   - rewrite munmap_modelL_lazy. apply maps_subtract_nowrap; [exact (minv_lazy_nw HI) | apply (lo_hi_range a n) | apply (lo_hi_range a n)].
-  - rewrite munmap_modelL_vmmaps. cbn. apply entries_nowrap_map_remove. exact (minv_maps_nw HI).
+  - rewrite munmap_modelL_vmmaps. cbn [vm_maps munmap_vmmaps]. rewrite RMNZ.
+    apply entries_nowrap_filter, entries_nowrap_map_remove. exact (minv_maps_nw HI).
   - rewrite munmap_modelL_vmmaps. cbn. apply maps_subtract_nowrap; [exact (minv_noacc_nw HI) | apply (lo_hi_range a n) | apply (lo_hi_range a n)].
-  - rewrite munmap_modelL_vmmaps. cbn. apply nooverlap_map_remove. exact (minv_nooverlap HI).
+  - rewrite munmap_modelL_vmmaps. cbn [vm_maps munmap_vmmaps]. rewrite RMNZ.
+    apply filter_sublist_nooverlap, nooverlap_map_remove. exact (minv_nooverlap HI).
   - pose proof (eager_used_munmap_refund a n m (minv_maps_nw HI) (minv_noacc_nw HI) (minv_lazy_nw HI)
-                  (minv_nooverlap HI) (map_has_In _ _ _ Hhas) HE).
+                  (minv_nooverlap HI) (map_has_In _ _ _ Hhas) Hn HE).
     pose proof (minv_eager HI). lia.
   - rewrite munmap_modelL_vmmaps. reflexivity.
   - pose proof (minv_budget HI). pose proof (bv_unsigned_in_range 64 n). lia.
@@ -676,37 +685,29 @@ Qed.
 (* [comment removed for export] *)
 Lemma cuts_covered_munmap : forall (b k : word) m,
   entries_nowrap (vm_noaccess (m_vmmaps m)) -> entries_nowrap (m_vm_lazy m) ->
+  entries_nowrap (vm_maps (m_vmmaps m)) ->
   nooverlap (vm_maps (m_vmmaps m)) -> In (b, k) (vm_maps (m_vmmaps m)) -> 0 < bv_unsigned k ->
   cuts_covered m -> cuts_covered (munmap_modelL b k m).
 Proof.
-  intros b k m HN HL NO Hin Hk CC x Hx. unfold cuts in Hx. rewrite munmap_modelL_vmmaps, munmap_modelL_lazy in Hx.
+  intros b k m HN HL HM NO Hin Hk CC x Hx. unfold cuts in Hx. rewrite munmap_modelL_vmmaps, munmap_modelL_lazy in Hx.
   rewrite munmap_modelL_vmmaps. cbn [vm_noaccess vm_maps munmap_vmmaps] in *. pose proof (lo_hi_range b k) as [R0 R1].
   rewrite zcovb_app, !zcovb_maps_subtract in Hx by assumption.
   assert (CX : zcovb (vm_maps (m_vmmaps m)) x = true /\ ~ (bv_unsigned b <= x < bv_unsigned b + bv_unsigned k)).
   { apply orb_true_iff in Hx. destruct Hx as [Hx|Hx]; apply andb_true_iff in Hx; destruct Hx as [Hx Hr];
       (split; [apply CC; unfold cuts; rewrite zcovb_app; apply orb_true_iff; auto|
                unfold zinb in Hr; intros X; destruct (Z.leb_spec (bv_unsigned b) x); destruct (Z.ltb_spec x (bv_unsigned b + bv_unsigned k)); cbn in Hr; try discriminate Hr; lia]). }
-  destruct CX as [CX NR]. apply zcovb_true in CX. destruct CX as (e & He & Hxe).
-  apply zcovb_true. exists e. split; [|exact Hxe].
-  unfold map_remove. apply filter_In. split; [exact He|]. unfold bv_eqb.
-  destruct (Z.eqb_spec (bv_unsigned (fst e)) (bv_unsigned b)) as [E|NE]; [|reflexivity]. exfalso.
-  (* [comment removed for export] *)
-  assert (SAME : e = (b, k) \/ (hi e <= lo (b, k) \/ hi (b, k) <= lo e)).
-  { clear - NO He Hin. induction (vm_maps (m_vmmaps m)) as [|e0 X IH]; [destruct He|].
-    destruct NO as [N0 NO]. destruct He as [->|He], Hin as [E0|Hin].
-    - left. exact E0.
-    - right. exact (N0 _ Hin).
-    - right. subst e0. destruct (N0 _ He); [right|left]; assumption.
-    - exact (IH NO Hin He). }
-  destruct SAME as [->|D]; [apply NR; unfold lo, hi in Hxe; cbn [fst snd] in Hxe; exact Hxe|].
-  unfold lo, hi in D, Hxe. cbn [fst snd] in D. rewrite E in Hxe, D. pose proof (bv_unsigned_in_range 64 (snd e)). lia.
+  destruct CX as [CX NR].
+  (* LPS 727298f3: munmap subtracts the range from the mappings ([maps_subtract]) instead of
+     dropping the entry at its base, so a point outside the range stays covered *)
+  rewrite (zcovb_maps_subtract _ _ _ x HM R0 R1), CX. cbn [andb].
+  rewrite negb_true_iff, zinb_false. exact NR.
 Qed.
 
 Lemma cuts_covered_munmap_MInv : forall A AL E (b k : word) m,
   MInv A AL E m -> In (b, k) (vm_maps (m_vmmaps m)) -> 0 < bv_unsigned k ->
   cuts_covered m -> cuts_covered (munmap_modelL b k m).
 Proof.
-  intros A AL E b k m HI Hin Hk. apply cuts_covered_munmap; [exact (minv_noacc_nw HI)| exact (minv_lazy_nw HI)| exact (minv_nooverlap HI)| exact Hin| exact Hk].
+  intros A AL E b k m HI Hin Hk. apply cuts_covered_munmap; [exact (minv_noacc_nw HI)| exact (minv_lazy_nw HI)| exact (minv_maps_nw HI)| exact (minv_nooverlap HI)| exact Hin| exact Hk].
 Qed.
 
 (* [comment removed for export] *)

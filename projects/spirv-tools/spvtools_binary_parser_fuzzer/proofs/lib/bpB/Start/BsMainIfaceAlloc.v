@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up invariant at the run's mmap base, and the reserved ledger with the launch's extra intervals, after boost-beast/http_request's As/AsMainIfaceAlloc.v; the reserved ledger now holds the launch's vDSO/vvar pair: the image-ledger bound kept at its section arguments). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -25,8 +26,11 @@ Section AT_MAIN.
   Hypothesis Vev : valid_envp (in_envp inp).
   Hypothesis Vfit : entry_stack_fits sp0 (in_argv inp) (in_envp inp).
   Hypothesis Hh : HSF_asan h = Some ch.
-  Hypothesis HC : cs_ok ASEGS ASAN_H BothInit.LIMIT (SINV0 APH sp0 rdraw brk0 (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-                        (argH0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model.
+  (* LPS #38: [AsanInit]/[BothInit] now take the mmap base; IMPLICIT so every caller
+     infers it by unification from the [cs_ok] hypothesis it already passes. *)
+  Context {mbase : word}.
+  Hypothesis HC : cs_ok ASEGS ASAN_H BothInit.LIMIT (SINV0 APH AENTRY sp0 rdraw brk0 mbase inp)
+                        (argH0 sp0 rdraw inp) (in_fs inp) E ch R FULL model.
   #[local] Notation g := (hole_granted h).
   #[local] Notation cls := (hole_class h).
   #[local] Notation X := (Xof g E).
@@ -388,11 +392,12 @@ Section AT_MAIN.
 
   Lemma fx_canary : exists gd : word, rw_cells asegs VM 0x6e5898 [C8 gd].
   Proof.
-    exists (edenot E (EVar 61)).
-    pose proof (kword_main w_all (CAbs, 0x6e5898) 8 (EVar 61) ltac:(vm_cast_no_check (@eq_refl bool true)) (world_ok_all _ _) ltac:(lia)) as W.
+    (* LPS 727298f3: the canary's fresh variable is the recorded one (61) under the start-up renumbering [FSH] *)
+    exists (edenot E (EVar (BsStartupRegen.FSH 61))).
+    pose proof (kword_main w_all (CAbs, 0x6e5898) 8 (EVar (BsStartupRegen.FSH 61)) ltac:(vm_cast_no_check (@eq_refl bool true)) (world_ok_all _ _) ltac:(lia)) as W.
     revert W. pmc_simpl. rewrite Z.add_0_l. intros W.
     apply rw_cells_img; [cbn; tauto | lia | csz; lia |]. apply bytes_at_of_nth; [lia | csz; lia |]. intros i Hi.
-    apply (rdn_mrd ASEGS (cells_bytes [C8 (edenot E (EVar 61))]) VM 0x6e5898); [| lia | csz; lia | exact Hi].
+    apply (rdn_mrd ASEGS (cells_bytes [C8 (edenot E (EVar (BsStartupRegen.FSH 61)))]) VM 0x6e5898); [| lia | csz; lia | exact Hi].
     cbn [cells_bytes cbytes app]. rewrite app_nil_r. exact (W ltac:(lia) ltac:(lia) ltac:(apply vr_img; lia)).
   Qed.
 
@@ -551,7 +556,11 @@ Section AT_MAIN.
   Proof. pose proof (pm_topz _ _ _ _ _ PMo) as T0. cbn [cfg_model cfg_of] in T0. unfold TOP, pm_top in T0. exact T0. Qed.
   Lemma ak_eager : eager_used model <= 16519168.
   Proof. pose proof (pm_eager _ _ _ _ _ PMo) as EG. cbn [cfg_model cfg_of] in EG. assert (H16 : 16515072 <= 16519168) by lia. exact (Z.le_trans _ _ _ EG H16). Qed.
-  Lemma ak_reserved : vm_reserved VMM = segments_reserved ASEGS.
+  (** #38: the reserved list is no longer the image's segments alone (the launch appends its vDSO/vvar pair);
+      [AsMainFacts.pm_reserved] carries the start-up invariant's split, so this re-exports it unchanged. *)
+  Lemma ak_reserved : exists rx : list (word * word),
+    vm_reserved VMM = segments_reserved ASEGS ++ rx
+    /\ Forall (resx_entry_ok ASAN_H) rx /\ (length rx <= n_resx ASAN_H)%nat /\ sum_sizes rx <= resx_bytes ASAN_H.
   Proof. exact (pm_reserved _ _ _ _ _ PMo). Qed.
   Lemma ak_res_list : segments_reserved ASEGS =
     [(Z_to_bv 64 0x10000, Z_to_bv 64 0x81000); (Z_to_bv 64 0x91000, Z_to_bv 64 0xed000); (Z_to_bv 64 0x17e000, Z_to_bv 64 0x8000); (Z_to_bv 64 0x186000, Z_to_bv 64 0x562000)].
@@ -560,14 +569,24 @@ Section AT_MAIN.
   Lemma ak_noacc : vm_noaccess VMM = zz2ww (PM_NOACC brk0z X).  Proof. exact PM_noacc_eq. Qed.
   Lemma ak_lazy : m_vm_lazy model = zz2ww (PM_LAZY sp0z X).       Proof. exact PM_lazy_eq. Qed.
 
-  Lemma ak1 : forall e, In e (vm_reserved VMM) -> bv_unsigned (fst e) + bv_unsigned (snd e) <= 0x6e8000.
-  Proof. intros e He. rewrite ak_reserved in He. pose proof (proj1 (Forall_forall _ _) asan_res_hull e He) as [_ H2]. cbn [img_hi ASAN_H] in H2. exact H2. Qed.
-  Lemma ak1_lo : forall e, In e (vm_reserved VMM) -> 0x10000 <= bv_unsigned (fst e).
-  Proof. intros e He. rewrite ak_reserved in He. pose proof (proj1 (Forall_forall _ _) asan_res_hull e He) as [H1 _]. cbn [img_lo ASAN_H] in H1. exact H1. Qed.
+  (** #38: the image hull bounds the SEGMENT half and never bounded anything else.  Stated
+      over [segments_reserved ASEGS], which is the half [asan_res_hull] is about; over the
+      whole [vm_reserved] it is FALSE, because the launch's vDSO/vvar pair sits near
+      [vdso_top].  Consumers split with [in_app_or]. *)
+  Lemma ak1 : forall e, In e (segments_reserved ASEGS) -> bv_unsigned (fst e) + bv_unsigned (snd e) <= 0x6e8000.
+  (* LPS 727298f3: [Proof using] keeps the section arguments [BS_InstMainK.akernel_main_pre]'s
+     recorded proof applies [ak1] to. *)
+  Proof using sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Hh mbase HC.
+    intros e He. pose proof (proj1 (Forall_forall _ _) asan_res_hull e He) as [_ H2]. cbn [img_hi ASAN_H] in H2. exact H2.
+  Qed.
+  Lemma ak1_lo : forall e, In e (segments_reserved ASEGS) -> 0x10000 <= bv_unsigned (fst e).
+  Proof. intros e He. pose proof (proj1 (Forall_forall _ _) asan_res_hull e He) as [H1 _]. cbn [img_lo ASAN_H] in H1. exact H1. Qed.
   Lemma ak9 : forall x : word, 0x10000 <= bv_unsigned x < 0x6e8000 -> in_rangesb x (vm_reserved VMM) = true.
   Proof.
-    intros x Hx. rewrite ak_reserved. destruct (proj2 asan_res_cover (bv_unsigned x) ltac:(cbn [img_lo img_hi ASAN_H]; lia)) as [iv [Hin Hr]].
-    unfold in_rangesb. apply existsb_exists. exists iv. split; [exact Hin|]. unfold zin_rangeb. apply andb_true_intro. split; [apply Z.leb_le | apply Z.ltb_lt]; lia.
+    intros x Hx. destruct ak_reserved as [rx [Hr _]]. rewrite Hr.
+    destruct (proj2 asan_res_cover (bv_unsigned x) ltac:(cbn [img_lo img_hi ASAN_H]; lia)) as [iv [Hin Hr2]].
+    unfold in_rangesb. apply existsb_exists. exists iv. split; [apply in_or_app; left; exact Hin|].
+    unfold zin_rangeb. apply andb_true_intro. split; [apply Z.leb_le | apply Z.ltb_lt]; lia.
   Qed.
 
   Lemma zz_in : forall l x b k, zz_ok l -> In (b, k) l -> b <= bv_unsigned x < b + k -> in_rangesb x (zz2ww l) = true.

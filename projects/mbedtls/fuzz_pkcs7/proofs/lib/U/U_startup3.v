@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (section P4 now ranges over the process input, mmap base, entry and brk with the valid_launch and entry_launch_ok_va premises, and tls_c1 to tls_c5 state the stack image at its new arguments: wrap_mem, pn_w, J_aux, J_lsm and D_libc); the encoded-statement table and its imports, the recorded lia answer tables and the proof-using lists dropped. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -10,22 +11,18 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC.
 From OSSVerify.mbedtls.fuzz_pkcs7.images Require Import Ubsan.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.BB Require Import StartupTac ArgvEnv Layout.
-From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.U Require Import U_img U_startup_defs.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.U Require Import U_img U_startup_defs   .
 Import ListNotations.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require Import PropExec.
 #[local] Existing Instance PropExec.fx0.
 Open Scope bv_scope.
+Local Set Default Proof Using "All".
 
 Abbreviation SEGS := Ubsan.M.loaded_segments.
 Abbreviation RPH := Ubsan.M.phdrs.
 
 (* [comment removed for export] *)
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
-From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require CDefT.
-From Ltac2 Require Ltac2.
-From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require Import LiaOrc. (* [comment removed for export] *)
-Local Ltac Stdlib.micromega.Lia.lia ::= orc_lia. (* [comment removed for export] *)
-Ltac2 gd_tbl_P_startup3 () : Init.string Init.list := ["LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.machine_state"; "OSSVerify.KrLib.BB.StartupTac.bwd"; "OSSVerify.KrImg.Tgt_fuzz_pkcs7_ubsan.M.loaded_segments"; "LinuxProcessSemantics.Riscv.Prelude.bvmap"; "stdpp.bitvector.definitions.bv"; "Corelib.Init.Datatypes.option"; "OSSVerify.KrLib.BB.MemSplit.wfJ"; "Corelib.Init.Logic.eq"; "OSSVerify.KrLib.Lib.PropExec.getr"; "stdpp.bitvector.definitions.BV"; "Corelib.Init.Logic.I"; "stdpp.bitvector.definitions.Z_to_bv"; "Stdlib.ZArith.BinInt.Z.sub"; "stdpp.bitvector.definitions.bv_unsigned"; "OSSVerify.KrLib.U.U_startup_defs.pn_w"; "OSSVerify.KrLib.BB.Hoare.regs_agree"; "Stdlib.Lists.List.In"; "Corelib.Init.Datatypes.cons"; "Corelib.Init.Datatypes.nil"; "OSSVerify.KrLib.Lib.PropExec.mkst"; "OSSVerify.KrLib.Lib.PropExec.fx0"; "OSSVerify.KrLib.BB.MemSplit.cmem"; "OSSVerify.KrLib.Lib.PropExec.wrap_mem"; "OSSVerify.KrImg.Tgt_fuzz_pkcs7_ubsan.M.phdrs"; "OSSVerify.KrLib.BB.CatExec.wbytes"; "OSSVerify.KrLib.U.U_startup_defs.J_aux"; "OSSVerify.KrLib.U.U_startup_defs.J_lsm"; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.word_to_le_bytes"; "OSSVerify.KrLib.U.U_startup_defs.D_libc"].
 
 
 Module U_startup3_rc2.
@@ -688,27 +685,32 @@ End U_startup3_rc2.
 Import U_startup3_rc2.
 
 Section P4.
-  Variable sp0 : word.
-  Variable Jb : word -> option byte.   (* [comment removed for export] *)
-  Variables av ev : list (list byte).
-  Variable uid : word.
-  Variable hw : word.          (* [comment removed for export] *)
-  Variable rdraw : EntryDraw.  (* [comment removed for export] *)
+  Variable v : VaSize.
+  Variable inp : ProcInput.
+  Variable mbase entry : word.
+  Variable sp0 brk : word.
+  Variable rdraw : EntryDraw.
+  Variable Jb : word -> option byte.
+  Local Notation av := (in_argv inp) (only parsing).
+  Local Notation ev := (in_envp inp) (only parsing).
+  Local Notation uid := (in_uid inp) (only parsing).
+  Local Notation hw := (in_hwcap inp) (only parsing).
   Hypothesis Hva : valid_argv av.
   Hypothesis Hve : valid_envp ev.
+  Hypothesis Hvl : valid_launch inp.
+  Hypothesis Hlau : entry_launch_ok_va v (mkEntry sp0 brk mbase rdraw) inp.
   Hypothesis Hlo : (0x7fff80000000 <= bv_unsigned sp0)%Z.
   Hypothesis Hhi : (bv_unsigned sp0 <= 0x800000000000)%Z.
   Hypothesis Hal : (bv_unsigned sp0 mod 16 = 0)%Z.
 
-  Local Notation CM := (cmem sp0 (wrap_mem RPH sp0 av ev uid hw rdraw)) (only parsing).
+  Local Notation CM := (cmem sp0 (wrap_mem inp mbase RPH entry sp0 rdraw)) (only parsing).
 
-  Local Ltac2 Set LiaOrc.tbl := fun () => "01C0?L11761355482.36L12243384033.36L12472498782.36L13158362499.36L13849259718.36L13902794593.36L13999799519.36L14776295533.36L16847764461.36L17791360090.36L18454684778.36L18808583149.36L20010634847.36L20900274026.36L21067643954.36L21088052577.36L22804526938.36L23057231425.36L23801962970.36L24083552966.36L24830725298.36L27413533382.36L28815628506.36L30106128178.36L30225524705.36L31203175110.36L32370296685.36L32627942707.36L33149916870.36L33371871026.36L33399687533.36L34241120498.36L34845370970.36L35538017773.36L37712470497.36L38045499757.36L38770839137.36L39144082956.36L41565400941.36L4179067590.36 L43161223137.36L44073407213.36L44373745114.36L45171463052.36L46240745569.36L46644813299.36L4746759898.36 L47574167789.36L47910928609.36L48122681030.36L48903658733.36L49265282410.36L50084013165.36L50106887647.36L50384613210.36L51648550536.36L51742694322.36L52326544712.36L52872416840.36L53602042477.36L54112840243.36L56406225114.36L57189647838.36L57498518253.36L5750520154.36 L58702473202.36L58834748168.36L59488113761.36L60389484781.36L61924970876.36L62433575514.36L62634461106.36L6293948684.36 L6295467501.36 L6550601484.36 L66336740467.36L68029267681.36L68444706778.36L68676491139.36L7327893746.36 L8454074721.36 L967128929.36  L9880704621.36 00000900B00K00P00U00^00g00l01101:01?01D01M01R01[01d01m02:02C02H02Q02V02_02h03103603;03@03E03N03S03T03]03b03k04004904>04C04H04Q04V04_04d04m05205;05@05I05N05S05X05]05f05o06406=06B06G06L06Q06Z06c06h07107207707@07E07J07S07\07]07b07g07l08508>08C08D08M08V08[S3sp03HloS3sp03HhiS3sp03HloS3sp0S3sp0S3sp03HhiS3sp03HloS3sp0S3sp0S3sp03HloS3sp0S3sp0S3sp03HloS3sp0S3sp03HhiS3sp03HhiS3sp03HloS3sp03Hlo3HhiS3sp03HloS3sp0S3sp03HhiS3sp0S3sp03HloS3sp03HhiS3sp03HhiS3sp0S3sp0S3sp0S3sp0S3sp03HhiS3sp0FS3sp03HloS3sp0S3sp03HhiS3sp0S3sp03HhiS3sp0S3sp0S3sp0S3sp03HhiS3sp0S3sp03HloS3sp0S3sp03HhiS3sp0S3sp03HloS3sp0S3sp03HhiS3sp0S3sp0S3sp0S3sp0S3sp03HloS3sp03HloS3sp0S3sp03HhiS3sp0S3sp0S3sp0S3sp0S3sp03HloS3sp03HloS3sp0S3sp03HloFS3sp0S3sp03HhiS3sp0S3sp0S3sp03HloS3sp03HhiFS3sp0S3sp0S3sp0S3sp03HhiS3sp03HloS3sp0FS3sp03HhiS3sp03HhiS3sp0". (* [comment removed for export] *)
-  #[using="Hlo Hhi"] Lemma tls_c1 : forall G, bwd SEGS G -> forall regs rom (s1v tid : word),
+  Lemma tls_c1 : forall G, bwd SEGS G -> forall regs rom (s1v tid : word),
 wfJ sp0 Jb ->
 getr regs 1 = Z_to_bv 64 258204 ->
 getr regs 2 = Z_to_bv 64 (bv_unsigned sp0 - 416) ->
 getr regs 3 = Z_to_bv 64 67584 ->
-getr regs 8 = pn_w sp0 av ev ->
+getr regs 8 = pn_w inp rdraw ->
 getr regs 9 = s1v ->
 getr regs 10 = Z_to_bv 64 (bv_unsigned sp0 - 368) ->
 getr regs 18 = Z_to_bv 64 512848 ->
@@ -743,8 +745,8 @@ getr regs' 28 = (Z_to_bv 64 1685382481) ->
 getr regs' 29 = (Z_to_bv 64 65600) ->
 getr regs' 30 = (Z_to_bv 64 131072) ->
 regs_agree (fun r => In r [2; 5; 6; 7; 9; 10; 11; 12; 13; 14; 15; 16; 17; 28; 29; 30]%list) regs regs' ->
-G (mkst regs' (0x3f334 : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (J_aux sp0 av ev uid hw (J_lsm sp0 av Jb)) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 258204))) (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 (pn_w sp0 av ev))) (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1v)) (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 (Z_to_bv 64 512848))) (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (D_libc sp0 av ev hw)) rom)) ->
-G (mkst regs (0x3f2ac : word) (CM (J_aux sp0 av ev uid hw (J_lsm sp0 av Jb)) (D_libc sp0 av ev hw)) rom)
+G (mkst regs' (0x3f334 : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (J_aux sp0 inp mbase entry rdraw (J_lsm sp0 inp Jb)) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 258204))) (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 (pn_w inp rdraw))) (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1v)) (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 (Z_to_bv 64 512848))) (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (D_libc sp0 inp rdraw)) rom)) ->
+G (mkst regs (0x3f2ac : word) (CM (J_aux sp0 inp mbase entry rdraw (J_lsm sp0 inp Jb)) (D_libc sp0 inp rdraw)) rom)
 (* [comment removed for export] *).
   Proof.
     intros G HG regs rom s1v tid HJ H1 H2 H3 H8 H9 H10 H18 H19 H20 H21 H22 H23 H24 H25 H26 H27 Hk.
@@ -752,7 +754,7 @@ G (mkst regs (0x3f2ac : word) (CM (J_aux sp0 av ev uid hw (J_lsm sp0 av Jb)) (D_
     eapply HG.
     { sv F_3bbb4 D_3bbb4 (Z_to_bv 64 (bv_unsigned sp0 - 480)).  (* [comment removed for export] *)
       stw F_3bbb8 D_3bbb8 (Z_to_bv 64 (bv_unsigned sp0 - 424)) (Z_to_bv 64 258204) ltac:(ok_win HJ).  (* [comment removed for export] *)
-      stw F_3bbbc D_3bbbc (Z_to_bv 64 (bv_unsigned sp0 - 432)) (pn_w sp0 av ev) ltac:(ok_win HJ).  (* [comment removed for export] *)
+      stw F_3bbbc D_3bbbc (Z_to_bv 64 (bv_unsigned sp0 - 432)) (pn_w inp rdraw) ltac:(ok_win HJ).  (* [comment removed for export] *)
       stw F_3bbc0 D_3bbc0 (Z_to_bv 64 (bv_unsigned sp0 - 440)) s1v ltac:(ok_win HJ).  (* [comment removed for export] *)
       stw F_3bbc4 D_3bbc4 (Z_to_bv 64 (bv_unsigned sp0 - 448)) (Z_to_bv 64 512848) ltac:(ok_win HJ).  (* [comment removed for export] *)
       stw F_3bbc8 D_3bbc8 (Z_to_bv 64 (bv_unsigned sp0 - 456)) (Z_to_bv 64 0) ltac:(ok_win HJ).  (* [comment removed for export] *)
@@ -783,10 +785,8 @@ G (mkst regs (0x3f2ac : word) (CM (J_aux sp0 av ev uid hw (J_lsm sp0 av Jb)) (D_
     apply Hk; try (gres; pin; first [reflexivity | f_equal; lia | bveq]).
     ra_chain.
   Qed.
-  Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
-  Local Ltac2 Set LiaOrc.tbl := fun () => "00I0?L13551766915.40L14071082371.40L14664843379.40L16701113219.40L16794754803.40L21102047372.40L264257630.40  L26956607363.40L30762139870.40L33417032542.40L36149741939.40L37334555523.40L37772652296.40L38319077384.40L3847806963.40 L41844969608.40L43215346952.40L44851326835.40L49657566814.40L52359991646.40L52991333763.40L55298622430.40L57478368883.40L58288354824.40L64547395464.4000000500:00?00D00I00J00S00X00a00j00o01401901>01C01H01M01R01[01d01i02202702<02AS3sp0S3sp0S3sp0S3sp0S3sp0FS3sp03HloS3sp0S3sp03HloS3sp03HloS3sp0S3sp0S3sp0S3sp0S3sp0S3sp0S3sp0S3sp0S3sp03HloS3sp03HloS3sp0S3sp03HloS3sp0S3sp0S3sp0". (* [comment removed for export] *)
-  #[using="Hlo"] Lemma tls_c2 : forall G, bwd SEGS G -> forall regs rom (s1v tid : word),
+  Lemma tls_c2 : forall G, bwd SEGS G -> forall regs rom (s1v tid : word),
 wfJ sp0 Jb ->
 getr regs 2 = Z_to_bv 64 (bv_unsigned sp0 - 480) ->
 getr regs 3 = Z_to_bv 64 67584 ->
@@ -829,8 +829,8 @@ getr regs' 28 = (Z_to_bv 64 1685382481) ->
 getr regs' 29 = (Z_to_bv 64 65880) ->
 getr regs' 30 = (Z_to_bv 64 131072) ->
 regs_agree (fun r => In r [8; 12; 13; 17; 29; 31]%list) regs regs' ->
-G (mkst regs' (0x3f334 : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (J_aux sp0 av ev uid hw (J_lsm sp0 av Jb)) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 258204))) (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 (pn_w sp0 av ev))) (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1v)) (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 (Z_to_bv 64 512848))) (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (D_libc sp0 av ev hw)) rom)) ->
-G (mkst regs (0x3f334 : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (J_aux sp0 av ev uid hw (J_lsm sp0 av Jb)) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 258204))) (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 (pn_w sp0 av ev))) (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1v)) (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 (Z_to_bv 64 512848))) (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (D_libc sp0 av ev hw)) rom)
+G (mkst regs' (0x3f334 : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (J_aux sp0 inp mbase entry rdraw (J_lsm sp0 inp Jb)) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 258204))) (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 (pn_w inp rdraw))) (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1v)) (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 (Z_to_bv 64 512848))) (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (D_libc sp0 inp rdraw)) rom)) ->
+G (mkst regs (0x3f334 : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (J_aux sp0 inp mbase entry rdraw (J_lsm sp0 inp Jb)) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 258204))) (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 (pn_w inp rdraw))) (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1v)) (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 (Z_to_bv 64 512848))) (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (D_libc sp0 inp rdraw)) rom)
 (* [comment removed for export] *).
   Proof.
     intros G HG regs rom s1v tid HJ H2 H3 H5 H7 H9 H10 H11 H13 H15 H16 H17 H22 H23 H24 H25 H26 H27 H28 H29 H30 Hk.
@@ -895,10 +895,8 @@ G (mkst regs (0x3f334 : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbyte
     apply Hk; try (gres; pin; first [reflexivity | f_equal; lia | bveq]).
     ra_chain.
   Qed.
-  Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
-  Local Ltac2 Set LiaOrc.tbl := fun () => "00I0?L14566693982.39L16774261768.39L18336576094.39L18604756339.39L18711471454.39L29339702664.39L31892319347.39L33836737758.39L34228139656.39L36661933955.39L45553235331.39L46981234163.39L47974888158.39L5038593923.39 L55196470659.39L55788868995.39L56544824200.39L56553727454.39L59912399112.39L59932376307.39L61170730508.39L6134504051.39 L63178599176.39L63583890819.39L67970814707.3900000900>00G00L00U00Z00_00h00m01201701<01E01J01O01T01Y01b01g01l01m02202702<02AS3sp03HloS3sp0S3sp03HloS3sp0S3sp03HloS3sp0S3sp0S3sp03HloS3sp0S3sp0S3sp0S3sp0S3sp03HloS3sp0S3sp0S3sp0S3sp0S3sp03HloS3sp0S3sp0FS3sp0S3sp0S3sp0S3sp0". (* [comment removed for export] *)
-  #[using="Hlo"] Lemma tls_c3 : forall G, bwd SEGS G -> forall regs rom (s1v tid : word),
+  Lemma tls_c3 : forall G, bwd SEGS G -> forall regs rom (s1v tid : word),
 wfJ sp0 Jb ->
 getr regs 2 = Z_to_bv 64 (bv_unsigned sp0 - 480) ->
 getr regs 3 = Z_to_bv 64 67584 ->
@@ -932,8 +930,8 @@ getr regs' 25 = (Z_to_bv 64 0) ->
 getr regs' 26 = (Z_to_bv 64 0) ->
 getr regs' 27 = (Z_to_bv 64 0) ->
 regs_agree (fun r => In r [8; 13; 17; 29; 31]%list) regs regs' ->
-G (mkst regs' (0x3f384 : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (J_aux sp0 av ev uid hw (J_lsm sp0 av Jb)) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 258204))) (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 (pn_w sp0 av ev))) (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1v)) (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 (Z_to_bv 64 512848))) (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (D_libc sp0 av ev hw)) rom)) ->
-G (mkst regs (0x3f334 : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (J_aux sp0 av ev uid hw (J_lsm sp0 av Jb)) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 258204))) (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 (pn_w sp0 av ev))) (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1v)) (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 (Z_to_bv 64 512848))) (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (D_libc sp0 av ev hw)) rom)
+G (mkst regs' (0x3f384 : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (J_aux sp0 inp mbase entry rdraw (J_lsm sp0 inp Jb)) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 258204))) (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 (pn_w inp rdraw))) (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1v)) (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 (Z_to_bv 64 512848))) (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (D_libc sp0 inp rdraw)) rom)) ->
+G (mkst regs (0x3f334 : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (J_aux sp0 inp mbase entry rdraw (J_lsm sp0 inp Jb)) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 258204))) (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 (pn_w inp rdraw))) (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1v)) (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 (Z_to_bv 64 512848))) (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (D_libc sp0 inp rdraw)) rom)
 (* [comment removed for export] *).
   Proof.
     intros G HG regs rom s1v tid HJ H2 H3 H5 H7 H9 H10 H11 H13 H16 H17 H22 H23 H24 H25 H26 H27 H28 H29 H30 Hk.
@@ -1005,10 +1003,8 @@ G (mkst regs (0x3f334 : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbyte
     apply Hk; try (gres; pin; first [reflexivity | f_equal; lia | bveq]).
     ra_chain.
   Qed.
-  Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
-  Local Ltac2 Set LiaOrc.tbl := fun () => "00o0?L10235426675.31L11028151134.31L1186627459.31 L12119956355.31L12472498782.31L13581673591.31L15658923870.31L16311710630.31L1705312627.31 L18445782566.31L1872621939.31 L18839700867.31L25333220595.31L2618183176.31 L26998569694.31L27463127923.31L27575482334.31L2898355336.31 L30900358531.31L31445245357.31L3164085000.31 L31720586355.31L33535221670.31L33964216328.31L3444781448.31 L34575018334.31L35665127974.31L3714438152.31 L3847806963.31 L39922841382.31L41581083144.31L41844969608.31L41887274406.31L42127505160.31L42390875528.31L42669178888.31L43215346952.31L46161772198.31L48939898995.31L50520870189.31L53214389619.31L54764468574.31L54973040606.31L55298622430.31L55344296947.31L55503184883.31L5681040771.31 L56978809638.31L57376515798.31L57478368883.31L58803348062.31L58834748168.31L59275993510.31L61333579478.31L61986565854.31L62338024835.31L62913131656.31L63537875622.31L66174993283.31L66336740467.31L7841721950.31 L8109717747.31 L843537758.31  00000500>00C00H00Q00R00[00\00a00b00g00l01101601?01D01M01R01W01\01a01f01g01l02102:02;02@02E02F02K02P02Q02V02[02`02e02f02k03003503>03G03P03U03Z03_03`03a03f03o04404504604?04D04I04J04K04P04Y04^04gS3sp0S3sp03HloS3sp0S3sp0S3sp03HloFS3sp03HloFS3sp0FS3sp0S3sp0S3sp0S3sp0S3sp03HloS3sp0S3sp03HloS3sp0S3sp0S3sp0S3sp0S3sp0FS3sp0S3sp0S3sp03HloFS3sp0S3sp0FS3sp0S3sp0FS3sp0S3sp0S3sp0S3sp0FS3sp0S3sp0S3sp0S3sp03HloS3sp03HloS3sp03HloS3sp0S3sp0S3sp0FFS3sp0S3sp03HloS3sp0FFS3sp03HloS3sp0S3sp0FFS3sp0S3sp03HloS3sp0S3sp03Hlo". (* [comment removed for export] *)
-  #[using="Hlo"] Lemma tls_c4 : forall G, bwd SEGS G -> forall regs rom (s1v tid : word),
+  Lemma tls_c4 : forall G, bwd SEGS G -> forall regs rom (s1v tid : word),
 wfJ sp0 Jb ->
 getr regs 2 = Z_to_bv 64 (bv_unsigned sp0 - 480) ->
 getr regs 3 = Z_to_bv 64 67584 ->
@@ -1040,8 +1036,8 @@ getr regs' 25 = (Z_to_bv 64 0) ->
 getr regs' 26 = (Z_to_bv 64 0) ->
 getr regs' 27 = (Z_to_bv 64 0) ->
 regs_agree (fun r => In r [1; 4; 8; 10; 11; 12; 13; 14; 15; 17; 18; 19; 20]%list) regs regs' ->
-G (mkst regs' (0x3f508 : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (J_aux sp0 av ev uid hw (J_lsm sp0 av Jb)) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 258204))) (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 (pn_w sp0 av ev))) (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1v)) (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 (Z_to_bv 64 512848))) (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (D_libc sp0 av ev hw) (Z_to_bv 64 512240) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 512256) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 512248) (word_to_le_bytes 8 (Z_to_bv 64 8))) (Z_to_bv 64 512872) (word_to_le_bytes 8 (Z_to_bv 64 224))) (Z_to_bv 64 512880) (word_to_le_bytes 8 (Z_to_bv 64 8))) (Z_to_bv 64 381144) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 381120) (word_to_le_bytes 8 (Z_to_bv 64 381144))) (Z_to_bv 64 380928) (word_to_le_bytes 8 (Z_to_bv 64 380928))) (Z_to_bv 64 512848) ([Z_to_bv 8 1])) (Z_to_bv 64 380968) (word_to_le_bytes 4 (Z_to_bv 64 2)))) rom)) ->
-G (mkst regs (0x3f384 : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (J_aux sp0 av ev uid hw (J_lsm sp0 av Jb)) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 258204))) (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 (pn_w sp0 av ev))) (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1v)) (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 (Z_to_bv 64 512848))) (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (D_libc sp0 av ev hw)) rom)
+G (mkst regs' (0x3f508 : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (J_aux sp0 inp mbase entry rdraw (J_lsm sp0 inp Jb)) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 258204))) (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 (pn_w inp rdraw))) (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1v)) (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 (Z_to_bv 64 512848))) (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (D_libc sp0 inp rdraw) (Z_to_bv 64 512240) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 512256) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 512248) (word_to_le_bytes 8 (Z_to_bv 64 8))) (Z_to_bv 64 512872) (word_to_le_bytes 8 (Z_to_bv 64 224))) (Z_to_bv 64 512880) (word_to_le_bytes 8 (Z_to_bv 64 8))) (Z_to_bv 64 381144) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 381120) (word_to_le_bytes 8 (Z_to_bv 64 381144))) (Z_to_bv 64 380928) (word_to_le_bytes 8 (Z_to_bv 64 380928))) (Z_to_bv 64 512848) ([Z_to_bv 8 1])) (Z_to_bv 64 380968) (word_to_le_bytes 4 (Z_to_bv 64 2)))) rom)) ->
+G (mkst regs (0x3f384 : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (J_aux sp0 inp mbase entry rdraw (J_lsm sp0 inp Jb)) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 258204))) (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 (pn_w inp rdraw))) (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1v)) (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 (Z_to_bv 64 512848))) (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (D_libc sp0 inp rdraw)) rom)
 (* [comment removed for export] *).
   Proof.
     intros G HG regs rom s1v tid HJ H2 H3 H9 H11 H17 H22 H23 H24 H25 H26 H27 Hk.
@@ -1110,10 +1106,8 @@ G (mkst regs (0x3f384 : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbyte
     apply Hk; try (gres; pin; first [reflexivity | f_equal; lia | bveq]).
     ra_chain.
   Qed.
-  Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
-  Local Ltac2 Set LiaOrc.tbl := fun () => "01R0?L10020158943.32L10420125836.32L10617393138.32L11761355482.32L11923865906.32L13591435698.32L16931134314.32L17061478962.32L171769736.32  L17791360090.32L18590187626.32L18808583149.32L19094035827.32L20146227634.32L22130483250.32L23057231425.32L23236351326.32L24676845990.32L25508581362.32L27144413682.32L27458063235.32L27953926386.32L28254875334.32L28515492360.32L29096242526.32L30225524705.32L30763284586.32L31254830954.32L31328252397.32L32101884978.32L32370296685.32L33184619114.32L33412024072.32L34013551538.32L37002513932.32L37502699656.32L37712470497.32L37797132454.32L38279645171.32L38770839137.32L39632012594.32L4009027679.32 L40206139570.32L41123362610.32L42562522974.32L42623864031.32L43030156172.32L43421366122.32L4398546700.32 L44210207410.32L44373745114.32L4755155762.32 L4760429418.32 L47910928609.32L48291646758.32L48651771487.32L49043383564.32L49113204851.32L50384613210.32L50417621926.32L51073996531.32L51076407198.32L51393073330.32L5251296365.32 L53369083251.32L54660277215.32L54877638898.32L56406225114.32L5750520154.32 L57645075550.32L59108716966.32L59370167304.32L59488113761.32L59650863752.32L5977713267.32 L60204197362.32L60389484781.32L60687922527.32L61013710066.32L61079771148.32L61408001062.32L61418609389.32L62072736627.32L62433575514.32L6243839597.32 L62776673202.32L63720825864.32L64202643955.32L64627859934.32L66701117151.32L6670145758.32 L67107155340.32L68029267681.32L68444706778.32L68625488136.32L8454074721.32 L967128929.32  L9815509982.32 00000900>00?00H00Q00Z00_00h00m01601;01@01E01N01W01d01m01n01o02002502602;02@02I02R02W02\02a02j02o03403903B03G03L03U03V03[03d03m04604?04H04Q04Z04_04d04i05205;05D05I05R05S05\05a05f05o06006506606?06D06I06R06S06\06e06n06o07407=07B07G07H07M07V07W07\07]07b07g08008508>08C08H08Q08Z08c08h09109:09?09H09Q09ZS3sp03HloS3sp0FS3sp03HloS3sp03HhiS3sp03HhiS3sp0S3sp03HhiS3sp0S3sp03HloS3sp0S3sp0S3sp0S3sp03HhiS3sp03HhiS3sp03Hlo3HhiS3sp03HloFFFS3sp0FS3sp0S3sp0S3sp03HloS3sp03HhiS3sp0S3sp0S3sp0S3sp03HhiS3sp0S3sp0S3sp0S3sp03HhiS3sp0S3sp0S3sp03HhiFS3sp0S3sp03HhiS3sp03HhiS3sp03HloS3sp03HhiS3sp03HhiS3sp03HloS3sp03HloS3sp0S3sp0S3sp0S3sp03HhiS3sp03HloS3sp03HhiS3sp0S3sp03HhiFS3sp03HloS3sp0S3sp0S3sp03HloFS3sp0FS3sp03HhiS3sp0S3sp0S3sp03HloFS3sp03HloS3sp03HloS3sp03HloFS3sp0S3sp03HhiS3sp0S3sp0FS3sp0S3sp03HloFS3sp0FS3sp0S3sp0S3sp03HloS3sp0S3sp03HhiS3sp0S3sp0S3sp03HloS3sp03HloS3sp03HloS3sp0S3sp03HhiS3sp03HloS3sp0S3sp03HhiS3sp03HhiS3sp03Hlo". (* [comment removed for export] *)
-  #[using="Hlo Hhi"] Lemma tls_c5 : forall G, bwd SEGS G -> forall regs rom (s1v tid : word),
+  Lemma tls_c5 : forall G, bwd SEGS G -> forall regs rom (s1v tid : word),
 wfJ sp0 Jb ->
 getr regs 2 = Z_to_bv 64 (bv_unsigned sp0 - 480) ->
 getr regs 3 = Z_to_bv 64 67584 ->
@@ -1141,8 +1135,8 @@ getr regs' 25 = (Z_to_bv 64 0) ->
 getr regs' 26 = (Z_to_bv 64 0) ->
 getr regs' 27 = (Z_to_bv 64 0) ->
 regs_agree (fun r => In r [1; 2; 8; 9; 10; 12; 18; 19; 20; 21]%list) regs regs' ->
-G (mkst regs' (0x3f09c : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (J_aux sp0 av ev uid hw (J_lsm sp0 av Jb)) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 258204))) (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 (pn_w sp0 av ev))) (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1v)) (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 (Z_to_bv 64 512848))) (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (D_libc sp0 av ev hw) (Z_to_bv 64 512240) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 512256) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 512248) (word_to_le_bytes 8 (Z_to_bv 64 8))) (Z_to_bv 64 512872) (word_to_le_bytes 8 (Z_to_bv 64 224))) (Z_to_bv 64 512880) (word_to_le_bytes 8 (Z_to_bv 64 8))) (Z_to_bv 64 381144) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 381120) (word_to_le_bytes 8 (Z_to_bv 64 381144))) (Z_to_bv 64 380928) (word_to_le_bytes 8 (Z_to_bv 64 380928))) (Z_to_bv 64 512848) ([Z_to_bv 8 1])) (Z_to_bv 64 380968) (word_to_le_bytes 4 (Z_to_bv 64 2))) (Z_to_bv 64 380960) (word_to_le_bytes 4 tid)) (Z_to_bv 64 381080) (word_to_le_bytes 8 (Z_to_bv 64 512904))) (Z_to_bv 64 381048) (word_to_le_bytes 8 (Z_to_bv 64 381048))) (Z_to_bv 64 380936) (word_to_le_bytes 8 (Z_to_bv 64 380928))) (Z_to_bv 64 380944) (word_to_le_bytes 8 (Z_to_bv 64 380928))) (Z_to_bv 64 380952) (word_to_le_bytes 8 (Z_to_bv 64 0)))) rom)) ->
-G (mkst regs (0x3f50c : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (J_aux sp0 av ev uid hw (J_lsm sp0 av Jb)) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 258204))) (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 (pn_w sp0 av ev))) (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1v)) (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 (Z_to_bv 64 512848))) (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (D_libc sp0 av ev hw) (Z_to_bv 64 512240) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 512256) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 512248) (word_to_le_bytes 8 (Z_to_bv 64 8))) (Z_to_bv 64 512872) (word_to_le_bytes 8 (Z_to_bv 64 224))) (Z_to_bv 64 512880) (word_to_le_bytes 8 (Z_to_bv 64 8))) (Z_to_bv 64 381144) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 381120) (word_to_le_bytes 8 (Z_to_bv 64 381144))) (Z_to_bv 64 380928) (word_to_le_bytes 8 (Z_to_bv 64 380928))) (Z_to_bv 64 512848) ([Z_to_bv 8 1])) (Z_to_bv 64 380968) (word_to_le_bytes 4 (Z_to_bv 64 2)))) rom)
+G (mkst regs' (0x3f09c : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (J_aux sp0 inp mbase entry rdraw (J_lsm sp0 inp Jb)) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 258204))) (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 (pn_w inp rdraw))) (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1v)) (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 (Z_to_bv 64 512848))) (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (D_libc sp0 inp rdraw) (Z_to_bv 64 512240) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 512256) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 512248) (word_to_le_bytes 8 (Z_to_bv 64 8))) (Z_to_bv 64 512872) (word_to_le_bytes 8 (Z_to_bv 64 224))) (Z_to_bv 64 512880) (word_to_le_bytes 8 (Z_to_bv 64 8))) (Z_to_bv 64 381144) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 381120) (word_to_le_bytes 8 (Z_to_bv 64 381144))) (Z_to_bv 64 380928) (word_to_le_bytes 8 (Z_to_bv 64 380928))) (Z_to_bv 64 512848) ([Z_to_bv 8 1])) (Z_to_bv 64 380968) (word_to_le_bytes 4 (Z_to_bv 64 2))) (Z_to_bv 64 380960) (word_to_le_bytes 4 tid)) (Z_to_bv 64 381080) (word_to_le_bytes 8 (Z_to_bv 64 512904))) (Z_to_bv 64 381048) (word_to_le_bytes 8 (Z_to_bv 64 381048))) (Z_to_bv 64 380936) (word_to_le_bytes 8 (Z_to_bv 64 380928))) (Z_to_bv 64 380944) (word_to_le_bytes 8 (Z_to_bv 64 380928))) (Z_to_bv 64 380952) (word_to_le_bytes 8 (Z_to_bv 64 0)))) rom)) ->
+G (mkst regs (0x3f50c : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (J_aux sp0 inp mbase entry rdraw (J_lsm sp0 inp Jb)) (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 (Z_to_bv 64 258204))) (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 (pn_w inp rdraw))) (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1v)) (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 (Z_to_bv 64 512848))) (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 (Z_to_bv 64 0))) (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (D_libc sp0 inp rdraw) (Z_to_bv 64 512240) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 512256) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 512248) (word_to_le_bytes 8 (Z_to_bv 64 8))) (Z_to_bv 64 512872) (word_to_le_bytes 8 (Z_to_bv 64 224))) (Z_to_bv 64 512880) (word_to_le_bytes 8 (Z_to_bv 64 8))) (Z_to_bv 64 381144) (word_to_le_bytes 8 (Z_to_bv 64 0))) (Z_to_bv 64 381120) (word_to_le_bytes 8 (Z_to_bv 64 381144))) (Z_to_bv 64 380928) (word_to_le_bytes 8 (Z_to_bv 64 380928))) (Z_to_bv 64 512848) ([Z_to_bv 8 1])) (Z_to_bv 64 380968) (word_to_le_bytes 4 (Z_to_bv 64 2)))) rom)
 (* [comment removed for export] *).
   Proof.
     intros G HG regs rom s1v tid HJ H2 H3 H4 H10 H11 H18 H22 H23 H24 H25 H26 H27 Hk.
@@ -1159,7 +1153,7 @@ G (mkst regs (0x3f50c : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbyte
       stw F_3be34 D_3be34 (Z_to_bv 64 380952) (Z_to_bv 64 0) ltac:(ok_data).  (* [comment removed for export] *)
       sn F_3be38 D_3be38.  (* [comment removed for export] *)
       ld_step F_3be40 D_3be40 (word_to_le_bytes 8 (Z_to_bv 64 258204)) (Z_to_bv 64 258204) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* [comment removed for export] *)
-      ld_step F_3be44 D_3be44 (word_to_le_bytes 8 (pn_w sp0 av ev)) (pn_w sp0 av ev) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* [comment removed for export] *)
+      ld_step F_3be44 D_3be44 (word_to_le_bytes 8 (pn_w inp rdraw)) (pn_w inp rdraw) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* [comment removed for export] *)
       ld_step F_3be48 D_3be48 (word_to_le_bytes 8 s1v) s1v ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* [comment removed for export] *)
       ld_step F_3be4c D_3be4c (word_to_le_bytes 8 (Z_to_bv 64 512848)) (Z_to_bv 64 512848) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* [comment removed for export] *)
       ld_step F_3be50 D_3be50 (word_to_le_bytes 8 (Z_to_bv 64 0)) (Z_to_bv 64 0) ltac:(rewrite rdn_cmem_win by region_side; rd_hit8) ltac:(apply bytes_le_to_Z_8).  (* [comment removed for export] *)
@@ -1171,7 +1165,6 @@ G (mkst regs (0x3f50c : word) (CM (wbytes (wbytes (wbytes (wbytes (wbytes (wbyte
     apply Hk; try (gres; pin; first [reflexivity | f_equal; lia | bveq]).
     ra_chain.
   Qed.
-  Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 End P4.
 
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).

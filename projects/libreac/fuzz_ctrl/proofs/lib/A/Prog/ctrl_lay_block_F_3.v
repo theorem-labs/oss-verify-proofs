@@ -3,13 +3,14 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 3817 of its 3853 lines of code are new or changed and 212 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its addresses changed; 109 of its 234 lines of code are new or changed and 3728 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* ctrl_lay_block, image A (asan, entry 0x855f4): STRETCH k = 3 of the footprint (_F) re-run of its proved v1.9
    run -- the silent stretch 0x85718 -> 0x85824, from the dispatch entry (DISP_T) to the cut
    `jal 85b44 <reac_box_model_block>`, on the 3 <= ly_k fr <= 9 path.  The split of record is
    ctrl_lay_block-stretches.md (a working note, not in this delivery); the shared skeleton (Require order,
    provenance, store_ok helpers) is lib/A/Prog/ctrl_lay_block_F_common.v.  ctrl_lay_block.v is unchanged apart from comment text.
 
-   SOURCE SCRIPT (a working branch d69f7c708f6, lib/A/Prog/ctrl_lay_block.v): ly_dispatch :2147-2215,
+   SOURCE SCRIPT (a working branch, lib/A/Prog/ctrl_lay_block.v): ly_dispatch :2147-2215,
    its common prefix :2156-2170 and the k = 3 .. 9 arms :2210-2214, then ly_boxcall :3913-3956 up to (but not
    including) `eapply BOXC` :3957 -- the three moves at 0x85818 / 0x8581c / 0x85820.  Every tactic is the old one
    over StepF: the same steps, the same shadow check at f + 2, the same jump table at 0x211b4.
@@ -28,7 +29,7 @@
      -> (internal path)
    - ELF sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd
    - compare: fuzz_ctrl.objdump.txt (a working note, not in this delivery), ctrl_lay_block 0x855f4 .. 0x85988
-   - FACTS of record ed6b6b7b0ab (origin/regen/libreac-v190-on-338), PAU (internal path)
+   - FACTS of record (origin/regen/libreac-v190-on-338), PAU (internal path)
    - auditor a Theorem Labs lane.
 
    NOTE ON THE REQUIRE LIST (for the auditor).  ctrl_lay_block_F_common.v requires its dependencies with

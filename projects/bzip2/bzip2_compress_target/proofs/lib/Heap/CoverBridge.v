@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the page-aligned grant length and the kernel build kept by vm_only). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
@@ -132,7 +133,8 @@ Proof.
   destruct QUIET as [QUIET LENMAX].
   pose proof (mmap_len_ge len ltac:(lia)) as ML.
   assert (ML2 : mmap_len len <= 2^27) by lia.
-  destruct (grant_exists_big (Z_to_bv 64 0) MD (mmap_len len) (kl_atop _ _ _ HK) ltac:(lia) SZ CNT ltac:(lia)) as [a GA].
+  destruct (grant_exists_big (Z_to_bv 64 0) MD (mmap_len len) (kl_atop _ _ _ HK) ltac:(lia)
+             ltac:(unfold mmap_len, page_round_up_Z, page_size; apply Z_mod_mult) SZ CNT ltac:(lia)) as [a GA].
   pose proof (nstep_mmap_grant len MD a ltac:(lia) GA) as NS.
   set (mo4 := with_vmmaps _ MD) in NS.
   cps_pose (nstep_dec_mmap len [] MD _ mo4 [] (kl_atop _ _ _ HK) ltac:(lia) ltac:(lia) ltac:(constructor) NS) as (_ & VO & LZ & x & DX & CX).
@@ -142,7 +144,7 @@ Proof.
   assert (KLh : m_halted MD = None /\ m_vm_lazy MD = []) by (split; [exact (kl_halt _ _ _ HK)| exact (kl_lazy _ _ _ HK)]).
   assert (Hh4 : m_halted mo4 = None) by (rewrite (vm_only_halted _ _ VO); exact (proj1 KLh)).
   assert (Hl4 : m_vm_lazy mo4 = []) by (apply LZ; exact (proj2 KLh)).
-  cps_pose (KL_mmap_new L (ps_brk s) MD mo4 z len false HK QUIET LENMAX AOK RF Hl4 Hh4 VM4) as (_ & AOK2 & NERR).
+  cps_pose (KL_mmap_new L (ps_brk s) MD mo4 z len false HK QUIET LENMAX AOK RF Hl4 Hh4 VM4 (vm_only_kernel _ _ VO)) as (_ & AOK2 & NERR).
   cps_destruct SR as (st & BL & LS & Est & INV & _).
   rewrite (mmap_answer_ok_eq x0 st L (proj1 INV)) in AOK2. rewrite <- Est, live_ranges_strip in KS.
   cps_destruct (HS _ _ (KS _ AOK2 NERR)) as ([xst xp] & EK & HPSx). destruct (HPS _ _ HPSx) as [c Hc]. cbn in Hc. subst xp.

@@ -4,7 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: the asan-ubsan twin of lib/A/APgLib.v of this library, for fuzz_knock's ASan-UBSan
    image (fuzz_knock.asan-ubsan, sha256 f834165f5002e65398e68d514ab2a5a5b10e53144f0b41b93ebbc6f895290e82), made the way
    proofs/cgif/cgif_file_fuzzer/lib/YCfn.v / YCfj.v / YCfh.v / YCfi.v are made from lib/A/ACfn.v / ACfj.v / ACfh.v /
-   ACfi.v at c8557374ad2e (the sources of lib/A/APgLib.v: ACfn.v:22-72 the contract, ACfj.v:180-255 its proof,
+   ACfi.v (the sources of lib/A/APgLib.v: ACfn.v:22-72 the contract, ACfj.v:180-255 its proof,
    ACfh.v:29-50 and 153-164 the journal facts, ACfi.v:56-140 the links and the closed form), with their module paths
    changed. rule 24: no function proved.
    - The imports move to the lib/AU twins (AWalkFw0 YCef YF0l YCej YCeh YCem YCep AWalkFw1 AWalkFw2 YCfm APgRt APgMain0
@@ -19,6 +19,7 @@
      lib/AU/YF0s.v's stack_malloc1_contract, TL and LAWS are a Theorem Labs lane's lib/AU/APgImgLink.v tfibX_lib / tfibX_LAWS;
      AIL is discharged by the core's lib/AU/YD1u.v tfib_AIL at TfibB (TfibB_syms, lib/AU/YD2l.v), the twin of the A
      file's lib/A/AD1u.v tfib_AIL, so the closed form's one hypothesis left is LEAF (LIBK pl fs K = K (LL 0 fs [])). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

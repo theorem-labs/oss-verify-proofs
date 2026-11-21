@@ -1,8 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: lib/A/TopX_RT.v at commit f1fb3bc1169 (a Theorem Labs lane's top_x group RT) relocated to
+(* Modified by Theorem Labs, 2026-10: lib/A/TopX_RT.v (a Theorem Labs lane's top_x group RT) relocated to
    image B (fuzz_reply.asan-ubsan) by alreloc ced0368250cb6538 (this file holds no image numeral), then cut to the two
-   runtime hypotheses of image B's top_x (lib/B/W_LLVMFuzzerTestOneInput_top_x.v at commit e43cf0c7bef), PROVED at
+   runtime hypotheses of image B's top_x (lib/B/W_LLVMFuzzerTestOneInput_top_x.v), PROVED at
    its instance:
      ALOCK   (top_x.v:304) : alock_realizes_x   (PI := PB_fr) TfibB ARX (SIGMA WS_pthread_mutex_lock)
      AUNLOCK (top_x.v:305) : aunlock_realizes_x (PI := PB_fr) TfibB ARX (SIGMA WS_pthread_mutex_unlock)
@@ -16,6 +16,7 @@
    ARX_laws) and layout_ok from ARcf's amc_layout.  No premise is left: every lemma here is closed.
    Cut from the A file: its ASTRLEN_x row (image B's top_x has no such hypothesis) with the imports only that row
    used (RT_kit, RT_strlen_x, W_palib_fr), and CfImgA (no term here names it). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the recorded states are renumbered and carry the new launch facts and sizes). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool.
 From LinuxProcessSemantics.Riscv Require Import Instr.
-From OSSVerify.Proofs.openssl.hashtable.lib Require Import AxSymExec3 AsanPlanCore CxPlan AsanNodesIO BKInv BKW5B2Lit BKE6a.
+From OSSVerify.Proofs.openssl.hashtable.lib Require Import AxSymExec3 AsanPlanCore CxPlan AsanNodesIO BKInv BKW5B2Lit BKE6a HBReg.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations. Import AX2. Import CAP.
 Open Scope Z_scope.
@@ -11,7 +12,7 @@ Definition ke6b2_S_ (_ : unit) : acs := kcompact kw5b2_hs106.
 Abbreviation ke6b2_S := (ke6b2_S_ tt).
 (* [comment removed for export] *)
 Definition ke6b2_inv_ (_ : unit) : acs :=
-  kinv ke6b2_S (kn0 ke6b2_S + 2) [(19%nat, 65536)] [1; 5; 6; 7; 10; 11; 12; 13; 14; 15; 16; 17; 23; 28; 29; 30; 31]%nat
+  kinvk ke6b2_S (kn0 ke6b2_S + 2) [(19%nat, 65536)] [1; 5; 6; 7; 10; 11; 12; 13; 14; 15; 16; 17; 23; 28; 29; 30; 31]%nat
     (FdFile 32 (EAlu ALU_ADD (EMd M_MUL (ELit 65536) (EVar 64)) (EVar 65)) (EAlu ALU_ADD (EMd M_MUL (ELit 65536) (EVar 66)) (ELit 2097152)))
     [(KRange (EAlu ALU_ADD (EMd M_MUL (ELit 65536) (EVar 64)) (EVar 65)) 2097152 4194303);
      (KRange (EAlu ALU_OR (EAlu ALU_SRL (EMd M_MUL (ELit 144115188075855872) (EBlob true 32 1 1)) (ELit 49)) (EBlob false 32 0 1)) 0 32767);

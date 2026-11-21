@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: in both copies the EVar indices of the boot ledger's maps that p8_factsG is given move by +16. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -77,8 +78,8 @@ Section Shadow.
            x HX C1 C3 C4 C5 C7 C8.
     pose proof HB as [HR HKN HA HZ HLZ HM F HMO RG HT Hcl Ht].
     pose proof (p8_factsG sp brk mbase draw lim inp (L_MAIN lb)
-                  [(EVar 107, 4096); (EVar 106, 4096); (EVar 105, 8388608); (EVar 104, 1048576); (EVar 103, 4096); (EVar 102, 8192);
-                   (EVar 83, 11571200); (EVar 60, 4096); (EVar 46, 4096)] _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ eq_refl HB E28) as (P1 & P2 & P3).
+                  [(EVar 123, 4096); (EVar 122, 4096); (EVar 121, 8388608); (EVar 120, 1048576); (EVar 119, 4096); (EVar 118, 8192);
+                   (EVar 99, 11571200); (EVar 76, 4096); (EVar 62, 4096)] _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ eq_refl HB E28) as (P1 & P2 & P3).
     destruct shk_in_window as [K1 K2].
     assert (HS : SHB_LO <= bv_unsigned x < SHB_HI) by (unfold SHB_LO, SHB_HI in *; lia).
     assert (HH : H_MAIN sp p8 sb p10 p12 a W p24 x = true).
@@ -174,8 +175,8 @@ Section Shadow.
            x HX C1 C3 C4 C5 C7 C8.
     pose proof HB as [HR HKN HA HZ HLZ HM F HMO RG HT Hcl Ht].
     pose proof (p8_factsG sp brk mbase draw lim inp (L_MAIN lb)
-                  [(EVar 107, 4096); (EVar 106, 4096); (EVar 105, 8388608); (EVar 104, 1048576); (EVar 103, 4096); (EVar 102, 8192);
-                   (EVar 83, 11571200); (EVar 60, 4096); (EVar 46, 4096)] _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ eq_refl HB E28) as (P1 & P2 & P3).
+                  [(EVar 123, 4096); (EVar 122, 4096); (EVar 121, 8388608); (EVar 120, 1048576); (EVar 119, 4096); (EVar 118, 8192);
+                   (EVar 99, 11571200); (EVar 76, 4096); (EVar 62, 4096)] _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ eq_refl HB E28) as (P1 & P2 & P3).
     destruct shk_in_window as [K1 K2].
     assert (HS : SHB_LO <= bv_unsigned x < SHB_HI) by (unfold SHB_LO, SHB_HI in *; lia).
     assert (HH : H_MAIN sp p8 sb p10 p12 a W p24 x = true).

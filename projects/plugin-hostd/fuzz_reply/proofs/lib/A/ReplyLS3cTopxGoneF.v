@@ -11,7 +11,7 @@
      gn_pair_ok source is at slot k (fr_RINV's distinct fds, RI_fds_holds), so after relay_instance_gone slot k holds
      rig_post's source for entry j, which rig_rel's dr_rel leaves drained (pending list empty, offset 0).
    - RI_gone_read_sat: one state meets all of RI_gone_read's premises (and RI_gone_pairs's).
-   - Section collapse / collapse2: the records of rounds 1 and 2 of the gone rules' texts (bb9dae5d905, a1a3591c77c),
+   - Section collapse / collapse2: the records of rounds 1 and 2 of the gone rules' texts,
      which were false at the instance; machine-checked counter-instances, not proofs of the rows.
    Part 2 (over W_LLVMFuzzerTestOneInput_gone_base.v's own model): RI_gone_pairs_plug / RI_gone_read_plug restate
    part 1 at gone_base's GN_RI_pairs / GN_RI_read; then the step and end rows.
@@ -19,19 +19,20 @@
      check_no_loss and check_shape_ends left of what relay_instance_gone left there; when gone = 0, `at` is the
      entry's position in the stream relay_instance_gone sent (rg_acc_pos), which is the entries' drained lines and
      then their ended keys' end lines (rg_rel_dec, rg_strm).
-   - RI_gone_step_holds(_c): GN_RI_step of a working branch a39b599f92e (copied verbatim as
+   - RI_gone_step_holds(_c): GN_RI_step of a working branch (copied verbatim as
      GN_RI_step_d) at MT := ameter_triv, RINV := fr_RINV, MMAX := WR_MMAX, LS := fr_LS3 B / fr_LS3c B.  The LS-side
-     conjunct cnl_room is a Theorem Labs lane's gx6_step_room(_c) (ReplyLS3cTopxGoneF.v at b25d82fcf04); mo_ok is True at
+     conjunct cnl_room is a Theorem Labs lane's gx6_step_room(_c) (ReplyLS3cTopxGoneF.v); mo_ok is True at
      ameter_triv; the rest is RINV-side (rg_step_rinv_side).
-   - RI_gone_end_holds_q5(_c): GN_RI_end of a39b599f92e (copied as GN_RI_end_q5) with REQ5 (no held list's capacity
-     shrinks from m to mc) as one more, last, premise: s5-r1d's gx6_end_LS3(_c) needs it, and a39b599f92e's gn_cnl_ok
+   - RI_gone_end_holds_q5(_c): GN_RI_end (copied as GN_RI_end_q5) with REQ5 (no held list's capacity
+     shrinks from m to mc) as one more, last, premise: s5-r1d's gx6_end_LS3(_c) needs it, and's gn_cnl_ok
      does not carry `hl_cap (hs_held h) <= hl_cap H'` from which ReplyLS3cTopxGoneH.v's gxh_req5 derives it.
-   - GN_RI_step_r3 (Section rg3): the record of round 3 (aa34c06e82c): without re_U NUL-free the step row is false.
+   - GN_RI_step_r3 (Section rg3): the record of round 3: without re_U NUL-free the step row is false.
    Local helpers rg_lines_nz / rg_upds_in / rg_W_read_lines_nz state what a Theorem Labs lane's ReplyRINV_a12.v
    (lines_nul_free / upds_nul_free) states; they stay local. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyRINV_gone.v; 105 of its 196 lines of code are new or changed and 2832 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The gone arm's LS conjuncts against the gone rules' premise lists (lib/A/W_LLVMFuzzerTestOneInput_gone_base.v
-   GN_RI_step / GN_RI_end; W8's walk commit 6a2e02357a4 first stated these premises), at LS := fr_LS3 B / fr_LS3c B,
+   GN_RI_step / GN_RI_end; W8's walk first stated these premises), at LS := fr_LS3 B / fr_LS3c B,
    RINV := fr_RINV, MT := ameter_triv, MMAX := WR_MMAX (= CfParamsReply.fr_MMAX), over gone_base's model.
    proves no function (kind: invariant lemma).
    The rules have, after RINV, `gn_op cx t m` and the per-entry premise (re_U NUL-free; each key NUL-free with
@@ -98,7 +99,7 @@ Proof.
   - right. exact (IH j h H).
 Qed.
 
-(* gx_xpre from 6a2e02357a4's two new premises (gn_op, the per-entry premise), gn_pairs, and REQ1-REQ3 *)
+(* gx_xpre from's two new premises (gn_op, the per-entry premise), gn_pairs, and REQ1-REQ3 *)
 Lemma gx_xpre_of6 : forall cx t m hs,
   gn_op cx t m ->
   Forall (fun e => ~ In (Z_to_bv 8 0) (re_U e) /\

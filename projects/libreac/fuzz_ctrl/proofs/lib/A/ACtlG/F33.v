@@ -1,6 +1,6 @@
 (* lib/A/ACtlG/F33.v -- GLUE for stage seg_F33 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput (lib/A/ACtl.v (at head lib/A/ACtl.v:845),
-   which carries a Theorem Labs lane's Batch3 (from a working branch d36efc6152d, through the glue base from a working branch 8ee48574229); the statement is
-   unchanged since 1633437e8f0).  Written by a Theorem Labs lane,
+   which carries a Theorem Labs lane's Batch3 (from a working branch, through the glue base from a working branch); the statement is
+   unchanged).  Written by a Theorem Labs lane,
    re-fitted to Batch3 by a Theorem Labs lane; single writer.  The pattern is
    glue-pattern.md (a working note, not in this delivery) (G1-G5), the worked example lib/A/ACtlG/A5.v.
    rule 24: no function proved (stage glue of a walk from an already-proved segment run through the proved bridge).
@@ -15,8 +15,8 @@
    entry body pins a0 = BOX_CATALOGUE <> 0 and the count word 11 <> 0).  Segment F33 is 0x8285c -> 0x8286c:
      0x8285c beqz a0,828bc (not taken)  0x82860 ld s8,0(s8)  0x82864 beqz s8,828bc (not taken)  0x82868 mv s4,a0.
 
-   THE RUN: lib/A/Prog/Seg/F33F.v f33_evt_F (blob 5cb4d3d5dd2 at 1633437e8f0; this worker's mechanical re-run of
-   f33_evt of Seg/F33.v 392fed23960 (the blob this tree had at release c5e779efe8c)), Required qualified.  It takes no callee contract and no Section
+   THE RUN: lib/A/Prog/Seg/F33F.v f33_evt_F (blob 5cb4d3d5dd2; this worker's mechanical re-run of
+   f33_evt of Seg/F33.v 392fed23960 (the blob this tree had at release)), Required qualified.  It takes no callee contract and no Section
    hypothesis; its one footprint premise is the count-word load's own access `acc_in RNG (wa c, 8)`.
 
    THE PROOF (glue-pattern.md section 3)
@@ -37,12 +37,12 @@
        Kit.kit_frac_move, FLSI / LK / FLSX / LT along registers 9 18 21 22 23 25 (the local *_move lemmas below),
        RL at row 0 (s4 = CAT + CAT_ROW * 0, s8 = CAT_N - 0, no earlier row); ctl_rt_C unchanged.
 
-   ROUTE (C) (L3; ACtlCut.v (at head lib/A/ACtlCut.v:243); the walk shell from a working branch 8ce82d7e310): ctl_from's runtime premise is
+   ROUTE (C) (L3; ACtlCut.v (at head lib/A/ACtlCut.v:243); the walk shell from a working branch): ctl_from's runtime premise is
    A.ACtlRtC.ctl_rt_C B ly3 S3 mem3 (was ACtlCut.ctl_rt mem3).  This stage reads no shadow byte and keeps ly3, S3 and
    the memory, so its exit passes the entry's Hrt as it is; the Section never had VIS0 / OWNED_RO.
 
    FRAC AND BATCH3'S TRAILER WORD.  This stage PRODUCES FRAC at its exit C_A8286c_at [j; 0], and since Batch3
-   (a Theorem Labs lane, d36efc6152d) FRAC's last conjunct is the fake-frame trailer word
+   (a Theorem Labs lane) FRAC's last conjunct is the fake-frame trailer word
    `q64 m (fr + 4088) (flag_addr (c_ly cx) 6 (c_fpos cx))` (ACtlCutP.v (at head lib/A/ACtlCutP.v:1078)).  The run writes no memory and the exit
    memory is the entry's mem3, so the entry body's FRAC, trailer word included, is the exit's at the same memory:
    Kit.kit_frac_move moves it along the register change only (its unfolding rewrites registers and keeps every
@@ -65,13 +65,13 @@
    are lib/Lib's Mem and MState, which also exist under lib/A/Bz/Lib, lib/B/Bz/Lib and lib/AZ/Lib (not in this delivery); every Require
    names its full directory in the From clause (05:28Z rule).
 
-   BUILD STATE (2026-10-29): TYPE-CHECK ON INTERIM 5da74c9c931, CLOSURE REACHES NO STAND-IN, not acceptance.  The
-   glue base a working branch 121bf608343 carries a Theorem Labs lane's stand-in-free 29ddfc3ea99 (a Theorem Labs lane's interim core
-   5da74c9c931 + Batch3 + a Theorem Labs lane's ProgWorld files): lib/A/AE2k.v AF0m.v AF0l.v ACej.v ACeh.v hold no port_core_refused
-   name, and the build substitutes nothing.  F33.vo compiles from a fresh clone through cb (BASE
-   23b918fe0c2e; the lane report names the commit, log and .vo mtime); Print Assumptions glue_seg_F33 = Rocq
+   BUILD STATE (2026-10-29): TYPE-CHECK ON INTERIM, CLOSURE REACHES NO STAND-IN, not acceptance.  The
+   glue base a working branch carries a Theorem Labs lane's stand-in-free (a Theorem Labs lane's interim core
+   + Batch3 + a Theorem Labs lane's ProgWorld files): lib/A/AE2k.v AF0m.v AF0l.v ACej.v ACeh.v hold no port_core_refused
+   name, and the build substitutes nothing.  F33.vo compiles from a fresh clone through cb (BASE;
+   the lane report names the commit, log and .vo mtime); Print Assumptions glue_seg_F33 = Rocq
    primitives + functional_extensionality_dep (LAWS is its Section-hypothesis argument).  No Axiom, no Parameter, no
-   Admitted.  The Batch3 re-fit itself type-checked first on 8ee48574229 with the stand-ins. *)
+   Admitted.  The Batch3 re-fit itself type-checked first with the stand-ins. *)
 
 From Coq Require Import ZArith List Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

@@ -1,17 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by a Theorem Labs lane (ReallocPrimary.TkSecLink), 2026-10-30: the trace premise in the P'' form, `admits (as_universe B) tr S` (YG01.v), replacing the In-form. *)
-(* Modified by a Theorem Labs lane (ReallocPrimary.TkSecLink), 2026-10-30: batch_room_cf added to rpreD_free_cf (YGcfMallocCompose.v) and supplied here at RDF2, the old-block free's premise, from ARX_br; the acall_prefix_cf comment updated (the conjunct is on this base since d48cd401d143). *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfReallocCompose.v at commit fec7cbb6287c (the cf layer of record, field rounds 1 + 2), module paths changed; the preset-side hunks kept on top are listed in the round6f report. *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfReallocCompose.v at commit d0377850faab (the cf layer of record, field round 3 + the hull round + pf_ial_apart_t), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
-(* Modified by Theorem Labs, 2026-10-30: field round 3 part 3 (MP) from proofs/cgif/cgif_file_fuzzer/lib/YGcfReallocCompose.v applied by 3-way (base commit 5034424e29db, theirs e8a7dd66acf2; preset-side hunks kept), module paths changed. *)
+(* Modified by a Theorem Labs lane (ReallocPrimary.TkSecLink), 2026-10-30: batch_room_cf added to rpreD_free_cf (YGcfMallocCompose.v) and supplied here at RDF2, the old-block free's premise, from ARX_br; the acall_prefix_cf comment updated (the conjunct is on this base). *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfReallocCompose.v (the cf layer of record, field rounds 1 + 2), module paths changed; the preset-side hunks kept on top are listed in the round6f report. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfReallocCompose.v (the cf layer of record, field round 3 + the hull round + pf_ial_apart_t), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
+(* Modified by Theorem Labs, 2026-10-30: field round 3 part 3 (MP) from proofs/cgif/cgif_file_fuzzer/lib/YGcfReallocCompose.v applied by 3-way (base, theirs; preset-side hunks kept), module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset's event-free allocator instance (suffix cf), row A4 of the internal file FREE-PIECES-102.md: the
    IMAGE-FREE realloc bridge, both bridges proved. From a Theorem Labs lane's frame-generic Allocate / Deallocate contracts (AllocG.v,
    DeallocG.v, with the errno twins of ErrnoGcf.v as YGcfMallocComposeE.v takes them), the realloc interceptor's walk as
    a Record, and a Theorem Labs lane's realloc composition (RGtop.v, c5: rg_realloc_all :378, rg_realloc_null :513; its model
    obligations at the instance are YGcfRmodel.rmodel_ok_cf_wf, cited, not re-derived) to the API leaves
    YGcfRealloc.arealloc_realizes_cf / arealloc_null_realizes_cf (YGcfRealloc.v:93-112); the null leaf is the body
-   of pa_realloc_null_cf / pa_realloc_null_cf_B (A/CfApiPreset.v:94-96, AU/CfApiPresetB.v:107-109).
+   of pa_realloc_null_cf / pa_realloc_null_cf_B (A/CfApiPreset.v:95-97, AU/CfApiPresetB.v:108-110).
    The record's segments are RGtop's (S1 seg_pre :244, S2a seg_mid_a :261, S2b seg_mid_b :282, S3 seg_ret :302,
    S4 seg_nret :318; S5 seg_npre :340, S6 seg_npost :356) at the cf instance, with the copy routine's contract
    (ReallocG.amemcpy_realizes at cf_pc_memcpy) as a field. They differ from RGtop's text in four ways, each one forced
@@ -34,14 +35,14 @@
    ARX is ARXh_t, the Hp-indexed relation of YGcfMallocCompose.v (the consumer's: YGcfDIface.ARXs_cf B segs).
    The call-site arguments (al, atp, acf of Allocate; atpD of Deallocate) and Allocate's size bound nmax are section
    variables, as in YGcfMallocCompose.v; realloc's Allocate calls pass malloc's arguments.
-   STACK ROOM: AllocG.alloc_pre / DeallocG.dealloc_pre need ly_bot ly < sp at the inner calls (AllocG.v:75,
-   DeallocG.v:83), below the interceptor's entry sp. acall_pre_cf bounds the entry sp by ly_bot ly + ACALL_PREFIX <
-   spZ regs (a Theorem Labs lane's ACALL_PREFIX := 4096; YG0dcf.v:61, on this base since d48cd401d143), so the segments that
+   STACK ROOM: AllocG.alloc_pre / DeallocG.dealloc_pre need ly_bot ly < sp at the inner calls (AllocG.v:76,
+   DeallocG.v:84), below the interceptor's entry sp. acall_pre_cf bounds the entry sp by ly_bot ly + ACALL_PREFIX <
+   spZ regs (a Theorem Labs lane's ACALL_PREFIX := 4096; YG0dcf.v:61, on this base), so the segments that
    reach Allocate's / Deallocate's entry (S1, S2b, S5) take ly_bot ly + 4096 < spZ regs from acall_pre_cf through
    acall_prefix_cf (section 2), the projection of that conjunct.
    a Theorem Labs lane's inputs are NAMED premises: the memnorm-kept contracts aalloc_realizes_cf_em_m / adealloc_realizes_raw_cf_em_m
    (YGcfMallocComposeE.v: MemnormT's at the cf instance; errno and memnorm from one post) and nmax_cf_ok
-   (YGcfMallocCompose.v:92; nmax_cf_ok_of_w in YGcfMallocComposeE.v).
+   (YGcfMallocCompose.v:93; nmax_cf_ok_of_w in YGcfMallocComposeE.v).
    Beyond the malloc / free bridges' premises, the bridges take named premises for the top's two pending conjuncts
    (acall_prefix_cf: the stack room; acall_xs_cf: the errbuf placement), two more projections of the consumer's ARX
    (ARX_qm, ARX_br: qmeter_cf and batch_room_cf, both ARXs_cf conjuncts) and the image fact errno_word_cf.
@@ -76,7 +77,7 @@ Local Open Scope Z_scope.
 
 (* ---------------------------------------------------------------------------- *)
 (* The inner malloc's path keeps the internal-init flag and adds no chunk but the  *)
-(* returned block's: every IRet of malloc_cf (YG00cf.v:234) satisfies it. The        *)
+(* returned block's: every IRet of malloc_cf (YG00cf.v:235) satisfies it. The        *)
 (* callees touch neither field; the proof is YGcfXs.v's cfx_ipost walk (its fr_*    *)
 (* tactics, :436-465, restated: Ltac does not leave its section) over this pair.     *)
 Definition ci_same (s s' : astate) : Prop := st_chunks s' = st_chunks s /\ st_internal_inited s' = st_internal_inited s.
@@ -252,7 +253,7 @@ call_trace ly cf_pc_realloc_ra0 regs ch.
 
 (* realloc(p, n)'s entry: arealloc_realizes_cf's premises (YGcfRealloc.v:93-101: arealloc_realizes_allP's,
    ReallocP.v:74-78, at the instance cpre := acall_pre_cf at Hp, rpre := True, nmax := cf_malloc_max, lmax := LIVE_MAX,
-   U := admits (as_universe B) (the P'' trace premise, YG01.v:158), with the freed base not hidden after a0). *)
+   U := admits (as_universe B) (the P'' trace premise, YG01.v:159), with the freed base not hidden after a0). *)
 Definition rentry_cf (ly : alayout) (S : astate) (Hp : list Z) (W : world segs) (regs : bvmap 5 word)
 (mem : word -> option byte) (md : Model) (p : sptr) (n_old n : Z) (ch : list (Z * Z * Z)) : Prop :=
 acall_pre_cf segs B ly S Hp W regs mem md ch /\
@@ -270,14 +271,14 @@ getr regs 10 = w64 0 /\ getr regs 11 = w64 n /\
 admits (as_universe B) (rtr_cf ly regs ch) S.
 
 (* Deallocate's pre at Reallocate's call, at the ghost set Hp: DeallocG.dealloc_pre at the instance of free_dpre_cf
-   (YGcfMallocCompose.v:298) with fpre := True: the walk proves nothing about Hp; the bridge adds fpre_hp_cf (the old
+   (YGcfMallocCompose.v:299) with fpre := True: the walk proves nothing about Hp; the bridge adds fpre_hp_cf (the old
    base not hidden, at Deallocate's layout) from the entry's premise. *)
 Definition realloc_dpre_cf (ARX : ARXh_t segs) (Hp : list Z) (inst so bp : Z) (ly : alayout) (S : astate)
 (W : world segs) (regs : bvmap 5 word) (mem : word -> option byte) (md : Model) (p : sptr) (n : Z) (tr : list Z) : Prop :=
 DeallocG.dealloc_pre segs B (admits (as_universe B)) (ARX Hp) (rpreD_free_cf B)
 (fun _ _ _ _ _ _ => True) atpD inst so bp ly S W regs mem md p n tr.
 
-(* The invariants' types: RGtop's K1_t / K2_t / Kn_t (RGtop.v:231-239) with the caller's ghost set Hp after S. *)
+(* The invariants' types: RGtop's K1_t / K2_t / Kn_t (RGtop.v:232-240) with the caller's ghost set Hp after S. *)
 Definition K1r_t : Type :=
 alayout -> astate -> list Z -> world segs -> bvmap 5 word -> (word -> option byte) -> Model ->
 sptr -> Z -> Z -> list (Z * Z * Z) ->
@@ -333,7 +334,7 @@ rw_mid_a : forall ly S Hp W regs mem md p n_old n ch S1 W1 inst so bp regsA memA
     same_io md2 mdM /\ RGtop.rkeep segs B regs W2 mem2 W3 memM /\
     errno_kept_cf B mem2 memM /\ 
     K2 ly S Hp W regs mem md p n_old n ch q ly2 S2 W3 regsM memM mdM);
-(* The copy routine (REAL(memcpy), reached at cf_pc_memcpy): ReallocG.amemcpy_realizes (ReallocG.v:243-251) at that
+(* The copy routine (REAL(memcpy), reached at cf_pc_memcpy): ReallocG.amemcpy_realizes (ReallocG.v:244-252) at that
    pc, with the overlay normal form kept. *)
 rw_memcpy : forall (W : world segs) regs mem md d s n,
   ReallocG.rmemcpy_pre segs W regs mem d s n ->
@@ -442,36 +443,36 @@ rwn_post : forall ly S Hp W regs mem md n ch S1 W1 inst so bp regsA memA mdA q l
 (* 2. The premises realloc needs beyond the malloc / free bridges'.              *)
 
 (* ARX gives qmeter_cf where the unit's hull admission holds: Deallocate's premise rpreD_free_cf at the state after the
-   inner malloc (YGcfMallocCompose.v:277) needs qmeter_cf there, and RGtop.rmodel_ok at the instance
+   inner malloc (YGcfMallocCompose.v:278) needs qmeter_cf there, and RGtop.rmodel_ok at the instance
    (YGcfRmodel.rmodel_ok_cf_wf) gives rpreD_cfr only. At the layer's call-site relation it is YGcfInstBase.ARXq_cf_qm
    (:507, the hull field round); the composition supplies cf_hull_ok at that state from the caller's post admission. *)
 Definition ARX_qmh (ARX : ARXh_t segs) : Prop :=
 forall Hp inst ly S W mem md, ARX Hp inst ly S W mem md -> cf_hull_ok S -> qmeter_cf S.
 
 (* The stack room at the interceptor's entry: the engine's acall_pre_cf conjunct ly_bot ly + ACALL_PREFIX < spZ regs,
-   ACALL_PREFIX := 4096 (a Theorem Labs lane, the internal file ACALL-PREFIX.md; a Theorem Labs lane 2026-10-29 16:00Z). It is on this base (YG0dcf.v:61,
-   since d48cd401d143), so acall_prefix_cf is the projection of acall_pre_cf's conjunct (lane R's
+   ACALL_PREFIX := 4096 (a Theorem Labs lane, the internal file ACALL-PREFIX.md; a Theorem Labs lane 2026-10-29 16:00Z). It is on this base (YG0dcf.v:61,),
+   so acall_prefix_cf is the projection of acall_pre_cf's conjunct (lane R's
    YGcfInstRealloc.acall_prefix_cf_ok). *)
 Definition acall_prefix_cf : Prop :=
 forall ly S Hp W regs mem md ch, acall_pre_cf segs B ly S Hp W regs mem md ch -> ly_bot ly + 4096 < spZ regs.
 
 (* The errbuf slot's placement at the interceptor's entry: the S1 / S5 walks build Allocate's pre at the consumer's
-   ARX (YGcfDIface.ARXs_cf's last conjunct, YGcfDIface.v:77), and acall_pre_cf does not state it. NOT vacuous: it holds
+   ARX (YGcfDIface.ARXs_cf's last conjunct, YGcfDIface.v:78), and acall_pre_cf does not state it. NOT vacuous: it holds
    once xs_placed_cf is ARcf's appended-last field (a Theorem Labs lane, 2026-10-29 14:41Z / 16:43Z, landing 1), with its
    projection xs_placed_of_ARcf : ARcf segs B ly S Hp W mem md -> xs_placed_cf ly S; acall_pre_cf's first conjunct is
    ARcf, so acall_xs_cf is then one line (destruct acall_pre_cf; apply xs_placed_of_ARcf). *)
 Definition acall_xs_cf : Prop :=
 forall ly S Hp W regs mem md ch, acall_pre_cf segs B ly S Hp W regs mem md ch -> xs_placed_cf ly S.
 
-(* ARX gives batch_room_cf: free's model post (ml_free_cf, YG03dcf.v:428: blocks, frames) at the state after the inner
+(* ARX gives batch_room_cf: free's model post (ml_free_cf, YG03dcf.v:429: blocks, frames) at the state after the inner
    malloc needs it, and the inner malloc may use it up (YGcfAmx2.realloc_cf_atok takes it as a premise, :127).
-   YGcfDIface.ARXs_cf's seventh conjunct (YGcfDIface.v:77). *)
+   YGcfDIface.ARXs_cf's seventh conjunct (YGcfDIface.v:78). *)
 Definition ARX_br (ARX : ARXh_t segs) : Prop :=
 forall Hp inst ly S W mem md, ARX Hp inst ly S W mem md -> batch_room_cf S.
 
 (* errno's four bytes are a 64-bit address range: the copy routine's raw frame keeps every byte outside its
    destination, and the destination (the new block) is outside ascratch's errno range only as unwrapped numbers.
-   An image-symbol fact: api_env's first conjunct (YCbq.v:809; TfibLib's tl_errno, YCeg.v:43) with
+   An image-symbol fact: api_env's first conjunct (YCbq.v:809; TfibLib's tl_errno, YCeg.v:44) with
    kLowMemEnd <= 2 ^ 64. *)
 Definition errno_word_cf : Prop := 0 <= as_errno B /\ as_errno B + 4 <= 2 ^ 64.
 
@@ -493,7 +494,7 @@ intros H mem a V. pose proof (V 0%nat ltac:(lia)) as V0. cbn [Z.of_nat] in V0. r
 unfold aview. rewrite V0. cbn [option_map]. rewrite Z_to_bv_unsigned. reflexivity.
 Qed.
 
-(* A live block's address is kept by a layout step (YG0s.sptr_addr_le, as AR_layout_law_ok_cf's USR, YG0scf.v:585). *)
+(* A live block's address is kept by a layout step (YG0s.sptr_addr_le, as AR_layout_law_ok_cf's USR, YG0scf.v:586). *)
 Lemma sptr_addr_block_cf : forall U ly ly' S p n, Wf_cf U S -> In (p, n) (blocks S) ->
 layout_le (length (st_secs S)) ly ly' -> sptr_addr B ly' p = sptr_addr B ly p.
 Proof.
@@ -586,7 +587,7 @@ Qed.
 (* 3. The bridges.                                                               *)
 
 (* realloc(NULL, n): YGcfRealloc.arealloc_null_realizes_cf at every ghost set, at the interceptor's entry
-   (pa_realloc_null_cf's body, A/CfApiPreset.v:98-100). *)
+   (pa_realloc_null_cf's body, A/CfApiPreset.v:99-101). *)
 Theorem arealloc_null_realizes_cf_of_parts : forall (ARX : ARXh_t segs) (Kn : Knr_t),
 acall_prefix_cf -> acall_xs_cf -> nmax_cf_ok nmax -> ARX_ARcf segs B ARX -> ARX_xs segs ARX ->
 (* field round 3 part 3b: the two image rows behind arodata_ok_cf at Allocate's entry, as the non-NULL bridge *)

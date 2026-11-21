@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the string block's bounds below TASK_SIZE; the output channel keeps a reader). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -97,18 +98,19 @@ Proof. intros fds [->|[e ->]]; reflexivity. Qed.
 (* [comment removed for export] *)
 Definition mdl_sim (m m' : Model) : Prop :=
   m_vmmaps m' = m_vmmaps m /\ m_vm_lazy m' = m_vm_lazy m /\ m_halted m' = m_halted m
-  /\ m_tid m' = m_tid m /\ m_fs m' = m_fs m /\ eager_used m' = eager_used m.
+  /\ m_tid m' = m_tid m /\ m_fs m' = m_fs m /\ eager_used m' = eager_used m
+  /\ m_channel_reader m' = m_channel_reader m /\ m_kernel m' = m_kernel m.
 
 Lemma mdl_sim_refl : forall m, mdl_sim m m.
 Proof. intros m. repeat split; reflexivity. Qed.
 Lemma mdl_sim_with_fds : forall f m, mdl_sim m (with_fds f m).
 Proof. intros f m. repeat split; reflexivity. Qed.
 Lemma mdl_sim_trans : forall m1 m2 m3, mdl_sim m1 m2 -> mdl_sim m2 m3 -> mdl_sim m1 m3.
-Proof. intros m1 m2 m3 (A1&A2&A3&A4&A5&A6) (B1&B2&B3&B4&B5&B6). repeat split; congruence. Qed.
+Proof. intros m1 m2 m3 (A1&A2&A3&A4&A5&A6&A7&A8) (B1&B2&B3&B4&B5&B6&B7&B8). repeat split; congruence. Qed.
 Lemma mdl_sim_materialized : forall m m', same_but_materialized m m' -> mdl_sim m m'.
 Proof.
   intros m m' Hs. pose proof (same_but_materialized_frame _ _ Hs) as F.
-  repeat split; apply F.
+  repeat split; try apply F; rewrite Hs; reflexivity.
 Qed.
 Lemma m_fds_with_fds : forall f m, m_fds (with_fds f m) = f.
 Proof. reflexivity. Qed.
@@ -176,6 +178,7 @@ Qed.
 Lemma cstr_access_len_aux_le : forall mp a fuel, (cstr_access_len_aux mp a fuel <= fuel)%nat.
 Proof.
   intros mp a fuel. revert a. induction fuel as [|f IH]; intros a; cbn [cstr_access_len_aux]; [lia|].
+  destruct (negb (access_okb a 1)); [lia|].
   destruct (mp a) as [b|]; [|lia]. destruct (bv_eqb b (Z_to_bv 8 0)); [lia|]. specialize (IH (a + 1)%bv). lia.
 Qed.
 
@@ -354,12 +357,13 @@ Section IOSound.
   Variable T : iotab.
 
   (* [comment removed for export] *)
-  Variable ph : PhdrInfo.
   Variable sp : word.
   Variables argv envp : list (list byte).
-  Variable uid : word.                  (* [comment removed for export] *)
-  Variable hw : word.                   (* [comment removed for export] *)
-  Variable rdraw : EntryDraw.           (* [comment removed for export] *)
+  (* LPS 75d69e00+: the launch image and argv[1]'s address are parameters here, with the
+     facts this section reads off them; [CxNodesIOInit] supplies both from [AsanInit]'s
+     layout of the revision. *)
+  Variable W0 : word -> option byte.
+  Variable STR1 : Z.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hsp_lo : sp_window_lo <= bv_unsigned sp.
@@ -369,13 +373,17 @@ Section IOSound.
   Let envc := Z.of_nat (length envp).
   Let argv0 := nth 0 argv [].
   Let argv1 := nth 1 argv [].
-  Let STR1 := usp + 8 * argc + 8 * envc + 184 + Z.of_nat (length argv0) + 1.   (* [comment removed for export] *)
+  Hypothesis STR1_lo : usp <= STR1.
+  Hypothesis STR1_hi : STR1 + Z.of_nat (length argv1) + 1 <= 2 ^ 47.
 
   (* [comment removed for export] *)
   Hypothesis H_vals : forall E M, SINV E M ->
     ev E V_ARGC = Z_to_bv 64 argc /\ (2 <= argc -> uE E e_str1 = STR1).
   Hypothesis H_str1 : forall E M (a : word), SINV E M -> 2 <= argc ->
-    STR1 <= bv_unsigned a <= STR1 + Z.of_nat (length argv1) -> M a = wrap_mem ph sp argv envp uid hw rdraw a.
+    STR1 <= bv_unsigned a <= STR1 + Z.of_nat (length argv1) -> M a = W0 a.
+  Hypothesis H_rd1 : forall M, 2 <= argc ->
+    (forall a : word, STR1 <= bv_unsigned a <= STR1 + Z.of_nat (length argv1) -> M a = W0 a) ->
+    rdn SEGS M (Z_to_bv 64 STR1) (length argv1 + 1) = Some (argv1 ++ [Z_to_bv 8 0]).
 
   (* [comment removed for export] *)
   Hypothesis HISP : ISP = usp.
@@ -422,10 +430,10 @@ Section IOSound.
     (forall a, hid A argH E cs model a = true -> FULL' a = FULL a) ->
     cs_ok E (ret_with cs r k' nx' f') R' FULL' model'.
   Proof.
-    intros E cs R FULL model R' FULL' model' r k' nx' f' HC (S1 & S2 & S3 & S4 & S5 & S6) Hinv HR HK Hf Hhid.
+    intros E cs R FULL model R' FULL' model' r k' nx' f' HC (S1 & S2 & S3 & S4 & S5 & S6 & S7 & S8) Hinv HR HK Hf Hhid.
     pose proof (hid_ret E cs r k' nx' f' model model' S1 S2) as Hh.
     destruct HC; constructor; cbn [ret_with a_ss a_maps a_totsz a_ylo a_eager a_vis a_ghost a_abytes a_brk a_fd a_tidset kn mk_ss s_regs s_log s_know];
-      rewrite ?allowA_ret, ?S1, ?S2, ?S3, ?S4, ?S5, ?S6; try assumption; try reflexivity.
+      rewrite ?allowA_ret, ?S1, ?S2, ?S3, ?S4, ?S5, ?S6, ?S7, ?S8; try assumption; try reflexivity.
     - unfold Mr. rewrite Hh. exact HK.
     - unfold model_ivs_wf in *. rewrite S1, S2. assumption.
     - intros a Ha. rewrite Hh in Ha. rewrite (Hhid a Ha). auto.
@@ -524,7 +532,7 @@ Section IOSound.
     unfold cfg_of.
     eapply (srz_ioctl_winsz SEGS R (Z_to_bv 64 (pc cs)) FULL model w (Z_to_bv 64 1));
       [exact HF | exact HE | exact (co_halt _ _ _ _ _ _ _ _ _ _ _ _ HC) | exact H17 | exact G10
-      | rewrite u64_lit by lia; lia | apply fd_lookup_1; exact Hfds | discriminate (* [comment removed for export] *) | exact G11 |].
+      | rewrite u64_lit by lia; lia | apply fd_lookup_1; exact Hfds | discriminate (* [comment removed for export] *) | intros n; discriminate | exact G11 |].
     rewrite (pc4 cs Hp0 Hp4).
     specialize (Hk E (regupd R 10%bv (errno_ret ENOTTY)) FULL model (conj (env_agree_refl nx0 E) (env_agree_refl (nxt cs) E))).
     unfold cfg_of, pc in Hk. cbn [ret_simple ret_with a_ss mk_ss s_pc] in Hk. apply Hk; [|reflexivity].
@@ -727,33 +735,17 @@ Section IOSound.
   Proof. intros H. unfold argv1. apply (valid_argv_str_len argv 1 Hva). unfold argc in H. lia. Qed.
   Lemma argv1_nz : 2 <= argc -> ~ In (Z_to_bv 8 0) argv1.
   Proof. intros H. unfold argv1. apply (valid_argv_str_nz argv 1 Hva). unfold argc in H. lia. Qed.
-  Lemma bsb_nw : usp + Z.of_nat (length (build_stack_bytes ph sp argv envp uid hw rdraw)) < 2 ^ 64.
-  Proof. unfold usp. apply lay_bsb_nw; assumption. Qed.
-
-  Lemma STR1_eq : 2 <= argc -> cat_argv_ptr sp argv envp 1 = Z_to_bv 64 STR1.
-  Proof.
-    intros H2. pose proof len_av. pose proof len_ev. pose proof usp_lo. pose proof usp_hi. pose proof len_argv0.
-    apply bv_eq. rewrite (u_cat_argv_ptr sp argv envp Hva Hve Hsp_lo Hsp_hi 1) by (unfold argc in H2; lia).
-    rewrite u64_lit by (unfold STR1; lia).
-    assert (Hf1 : forall l : list (list byte), l <> [] -> firstn 1 l = [nth 0 l []]) by (intros [|x l'] Hl; [congruence | reflexivity]).
-    rewrite (Hf1 argv) by (intros Hn; unfold argc in H2; rewrite Hn in H2; cbn in H2; lia).
-    rewrite total_arg_bytes_cons. change (total_arg_bytes_nat []) with 0%nat.
-    unfold STR1, cat_struct_size, auxv_size, usp, argc, envc, argv0. lia.
-  Qed.
-
+  (* argv[1] and its NUL lie below TASK_SIZE: [strncpy_from_user]'s range test, the fourth
+     conjunct of [path_at] and the last premise of [srz_openat_toolong]. *)
+  Lemma STR1_task : STR1 + Z.of_nat (length argv1) < TASK_SIZE.
+  Proof. pose proof STR1_hi. unfold TASK_SIZE. lia. Qed.
+  Lemma STR1_u64 : 0 <= STR1 < 2 ^ 64.
+  Proof. pose proof STR1_lo. pose proof STR1_hi. pose proof usp_lo. lia. Qed.
   (* [comment removed for export] *)
   Lemma rd_argv1 : forall M, 2 <= argc ->
-    (forall a : word, STR1 <= bv_unsigned a <= STR1 + Z.of_nat (length argv1) -> M a = wrap_mem ph sp argv envp uid hw rdraw a) ->
+    (forall a : word, STR1 <= bv_unsigned a <= STR1 + Z.of_nat (length argv1) -> M a = W0 a) ->
     rdn SEGS M (Z_to_bv 64 STR1) (length argv1 + 1) = Some (argv1 ++ [Z_to_bv 8 0]).
-  Proof.
-    intros M H2 HM. pose proof len_av. pose proof len_ev. pose proof usp_lo. pose proof usp_hi. pose proof len_argv0. pose proof (len_argv1 H2).
-    rewrite (rdn_ext SEGS (length argv1 + 1) M (wrap_mem ph sp argv envp uid hw rdraw)).
-    - rewrite rdn_wrap_stack_above; [| rewrite u64_lit; unfold STR1 in *; lia | rewrite u64_lit; unfold STR1 in *; [rewrite Nat2Z.inj_add; cbn [Z.of_nat Pos.of_succ_nat]|]; lia].
-      rewrite <- (STR1_eq H2). unfold argv1. apply read_argv_cstr_k; [unfold argc in H2; lia | exact bsb_nw].
-    - rewrite u64_lit; unfold STR1 in *; [rewrite Nat2Z.inj_add; cbn [Z.of_nat Pos.of_succ_nat]|]; lia.
-    - intros a Ha. rewrite u64_lit in Ha by (unfold STR1 in *; lia). rewrite Nat2Z.inj_add in Ha. cbn [Z.of_nat Pos.of_succ_nat] in Ha.
-      apply HM. lia.
-  Qed.
+  Proof. exact H_rd1. Qed.
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
@@ -768,7 +760,7 @@ Section IOSound.
     /\ getr R 11%bv = Z_to_bv 64 STR1
     /\ Z.ldiff (bv_unsigned (getr R 12%bv)) open_ignored_flags = 0
     /\ 2 <= argc
-    /\ (forall a : word, STR1 <= bv_unsigned a <= STR1 + Z.of_nat (length argv1) -> FULL a = wrap_mem ph sp argv envp uid hw rdraw a)
+    /\ (forall a : word, STR1 <= bv_unsigned a <= STR1 + Z.of_nat (length argv1) -> FULL a = W0 a)
     /\ m_fds model = fds_std
     /\ mat_id model (open_copyins (epend R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) (getr R 17%bv)))
     /\ (forall f, materialize_model_accesses (with_fds f model) (path_reads SEGS R FULL) = Some (with_fds f model)).
@@ -795,7 +787,7 @@ Section IOSound.
     replace (Z_to_bv 5 (Z.of_nat 11)) with (11%bv : bv 5) in G11 by (apply bv_eq; reflexivity).
     rewrite H11e in G11.
     assert (G11' : getr R 11%bv = Z_to_bv 64 STR1).
-    { rewrite G11. apply bv_eq. unfold uE in Vstr1. rewrite Vstr1, u64_lit by (unfold STR1; lia). reflexivity. }
+    { rewrite G11. apply bv_eq. unfold uE in Vstr1. pose proof STR1_lo. pose proof STR1_hi. pose proof usp_lo. rewrite Vstr1, u64_lit by lia. reflexivity. }
     (* [comment removed for export] *)
     destruct (reg_lit cs 12) as [z12|] eqn:Hr12; [|discriminate Hfl]. apply Z.eqb_eq in Hfl.
     destruct (reg_lit_sound SEGS A LIMIT SINV argH ISP FS0 E cs R FULL model 12 z12 HC ltac:(lia) Hr12) as [G12 Hz12].
@@ -815,7 +807,7 @@ Section IOSound.
       intros a' n' lo sz Hin Hl. destruct Hin as [Hin|[]].
       pose proof (f_equal fst Hin) as Ea. pose proof (f_equal snd Hin) as En. cbn [fst snd] in Ea, En. subst a' n'.
       pose proof (proj1 (Forall_forall _ _) Hlz (lo, sz) Hl) as Htop. cbn [fst snd] in Htop.
-      unfold access_outside_range. rewrite G11', u64_lit by (unfold STR1; lia). unfold STR1 in *. lia. }
+      unfold access_outside_range. pose proof STR1_lo. pose proof STR1_hi. pose proof usp_lo. rewrite G11', u64_lit by lia. lia. }
     split; [exact Hp0|]. split; [exact Hp4|]. split; [exact Hw|]. split; [exact H17|].
     split. { rewrite G10, H10. apply bv_eq. vm_compute. reflexivity. }
     split; [exact G11'|].
@@ -837,7 +829,7 @@ Section IOSound.
     destruct (openat_args_ok SEGS cs) eqn:Hargs; [|discriminate].
     destruct (openat_args_sound E cs R FULL model HC Hargs)
       as (Hp0 & Hp4 & [w [HF HE]] & H17 & H10 & H11 & H12 & Hargc2 & Hmem & Hfds & Hmat0 & Hmat1).
-    pose proof (len_argv1 Hargc2) as L1. pose proof (argv1_nz Hargc2) as NZ1.
+    pose proof (len_argv1 Hargc2) as L1. pose proof (argv1_nz Hargc2) as NZ1. pose proof STR1_task as TK. pose proof STR1_u64 as SU.
     pose proof (rd_argv1 FULL Hargc2 Hmem) as RD. rewrite <- H11 in RD.
     pose proof (co_fs _ _ _ _ _ _ _ _ _ _ _ _ HC) as Hfs.
     assert (POST : forall (e : Z) T0, cs' = ret_simple cs (ELit (two64 - e)) -> 0 < e < 100 ->
@@ -870,15 +862,16 @@ Section IOSound.
       + rewrite firstn_app, (proj2 (Nat.sub_0_le _ _)) by lia. cbn [firstn]. rewrite app_nil_r.
         intros Hin. apply NZ1. eapply firstn_In'; exact Hin.
       + apply (POST 36); [reflexivity | lia | exact Hk].
+      + rewrite H11, u64_lit by lia. pose proof TK. unfold TASK_SIZE in *. lia.
     - (* [comment removed for export] *)
       injection Hn as <-.
       destruct argv1 as [|b1 r1] eqn:Ea1.
       + eapply (srz_openat_empty SEGS R (Z_to_bv 64 (pc cs)) FULL model w HF HE (co_halt _ _ _ _ _ _ _ _ _ _ _ _ HC) H17 H10 H12 Hmat0).
-        * split; [cbn; lia|]. split; [intros []|]. exact RD.
+        * split; [cbn; lia|]. split; [intros []|]. split; [exact RD|]. rewrite H11, u64_lit by lia. exact TK.
         * apply (POST 2); [reflexivity | lia | exact Hk].
       + destruct H_open as [Hnil | (Hns & Hnd & Hlen & Hlk)]; [discriminate|].
         eapply (srz_openat_absent SEGS R (Z_to_bv 64 (pc cs)) FULL model w HF HE (co_halt _ _ _ _ _ _ _ _ _ _ _ _ HC) H17 H10 H12 Hmat0 (b1 :: r1)).
-        * split; [exact Hlen|]. split; [exact NZ1 | exact RD].
+        * split; [exact Hlen|]. split; [exact NZ1|]. split; [exact RD|]. rewrite H11, u64_lit by lia. exact TK.
         * discriminate.
         * exact Hns.
         * exact Hnd.
@@ -923,7 +916,7 @@ Section IOSound.
     apply andb_prop in Hc as [Hargs Hfresh].
     destruct (openat_args_sound E cs R FULL model HC Hargs)
       as (Hp0 & Hp4 & [w [HF HE]] & H17 & H10 & H11 & H12 & Hargc2 & Hmem & Hfds & Hmat0 & Hmat1).
-    pose proof (len_argv1 Hargc2) as L1. pose proof (argv1_nz Hargc2) as NZ1.
+    pose proof (len_argv1 Hargc2) as L1. pose proof (argv1_nz Hargc2) as NZ1. pose proof STR1_task as TK. pose proof STR1_u64 as SU.
     pose proof (rd_argv1 FULL Hargc2 Hmem) as RD. rewrite <- H11 in RD.
     pose proof (co_fs _ _ _ _ _ _ _ _ _ _ _ _ HC) as Hfs. pose proof (co_sinv _ _ _ _ _ _ _ _ _ _ _ _ HC) as HS.
     destruct (fresh_ok_parts nx0 cs Hfresh) as (Fsr & Fkn & Fmaps & Fallow & Fbrk & Ffd & Fle).
@@ -952,7 +945,7 @@ Section IOSound.
     - (* [comment removed for export] *)
       destruct H_open as [Hdr Hlen].
       eapply (srz_openat_dirref SEGS R (Z_to_bv 64 (pc cs)) FULL model w HF HE (co_halt _ _ _ _ _ _ _ _ _ _ _ _ HC) H17 H10 H12 Hmat0 Hfree argv1).
-      + split; [exact Hlen|]. split; [exact NZ1 | exact RD].
+      + split; [exact Hlen|]. split; [exact NZ1|]. split; [exact RD|]. rewrite H11, u64_lit by lia. exact TK.
       + exact Hdr.
       + exact ERR.
       + rewrite Halloc, (pc4 cs Hp0 Hp4), Hfds, fd_insert_std3.
@@ -968,7 +961,7 @@ Section IOSound.
     - (* [comment removed for export] *)
       destruct H_open as [c (Hne & Hns & Hnd & Hlen & Hlk & Hflen & Hblob & Hhdr)].
       eapply (srz_openat_file SEGS R (Z_to_bv 64 (pc cs)) FULL model w HF HE (co_halt _ _ _ _ _ _ _ _ _ _ _ _ HC) H17 H10 H12 Hmat0 Hfree argv1 c).
-      + split; [exact Hlen|]. split; [exact NZ1 | exact RD].
+      + split; [exact Hlen|]. split; [exact NZ1|]. split; [exact RD|]. rewrite H11, u64_lit by lia. exact TK.
       + exact Hne.
       + exact Hns.
       + exact Hnd.

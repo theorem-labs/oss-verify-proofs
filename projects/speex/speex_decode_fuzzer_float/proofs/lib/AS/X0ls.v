@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the plan's CONFIG_RSEQ flag rz as a new argument of asan_node_x_sound_XSniff). *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC.
@@ -28,7 +29,7 @@ Lemma asan_xs_code : forall i, (i < 28)%nat -> fetch_word ASEGS (Z_to_bv 64 (x_s
 Proof. intros i Hi. do 28 (destruct i as [|i]; [vm_refl|]). lia. Qed.
 
 Section Node.
-Variable nx0 : nat.   Variable LIMIT : Z.
+Variable nx0 : nat.   Variable LIMIT : Z.   Variable rz : Z.
 Variable SINV : env -> (word -> option byte) -> Prop.
 Variable argH : env -> word -> bool.   Variable FS0 : Fs.Fs.
 Hypothesis SEGS_wx : wx_segs_nowrap ASEGS.
@@ -37,6 +38,6 @@ Hypothesis HULL_ok : APS.hull_ok ASAN_A.
 Hypothesis argH_high : forall E (a : word), argH E a = true -> CEIL <= bv_unsigned a.
 Hypothesis SINV_frame : forall E M M', (forall a, argH E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
 
-Theorem asan_node_x_sound_XSniff : APS.x_stmt ASEGS ASAN_A nx0 LIMIT SINV argH FS0 XSniff.
+Theorem asan_node_x_sound_XSniff : APS.x_stmt ASEGS ASAN_A nx0 LIMIT rz SINV argH FS0 XSniff.
 Proof. eapply node_x_sound_XSniff; eauto using asan_xs_range, asan_xs_code. Qed.
 End Node.

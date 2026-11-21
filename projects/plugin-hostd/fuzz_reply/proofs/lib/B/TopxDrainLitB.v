@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: drain's three literal facts HLIT5 / HLIT6 / HLIT7 (lib/B/W_drain_cx_x.v Section c, lines
-   193-195 at c24ce76b828; dlit_at_x is the Definition at lines 187-191, A's W_drain_cx_x.v:172-176 word for word) at
+   193-195; dlit_at_x is the Definition at lines 187-191, A's W_drain_cx_x.v:172-176 word for word) at
    the instance of image B's top_x (fuzz_reply.asan-ubsan): PI := PB_fr (lib/B/W_img.v), ARx := B top_x's ARX
-   (lib/B/W_LLVMFuzzerTestOneInput_top_x.v:162-163, written out here as the same relation, so this file does not
+   (lib/B/W_LLVMFuzzerTestOneInput_top_x.v:163-164, written out here as the same relation, so this file does not
    Require top_x), B := TfibB (B is not an argument of dlit_at_x: its three conjuncts read SEGS, VAL and ARx only).
    B's literal objects are A_OBJ 18 / 20 / 21 (A's are 21 / 23 / 24):
      topx_HLIT5_x : dlit_at_x ARX 18 (K_GESTURE ++ [0])   .str.6 "param_gesture\0" at 0x20f20, 14 bytes
@@ -31,7 +32,7 @@
        0x7fffc1e4 = 0 (zero-shadow range (0x20f20, 8)), 0x7fffc1e5 = 6, 0x7fffc1e8 = 6, 0x7fffc1ec = 4; the hulls'
        other bytes 0x7fffc1e0 = 5 (.str.5 at 0x20f00, size 5), 0x7fffc1e1-e3 / e6-e7 / e9-eb / ed-ef = 0xf9.
    SATISFIABILITY (VERIFY rule 10): the only premise is ARX inside ashp_x.  B's ARX holds at the start-up hand-off
-   state: lib/B/YD1pcf.v:133 proves ARcf TSEGS B ly init_state [] W' FULL model by Reusable/YGcfNilInit.v:96
+   state: lib/B/YD1pcf.v:133 proves ARcf TSEGS B ly init_state [] W' FULL model by Reusable/YGcfNilInit.v:97
    ARcf_nil_init from the start-up AR, with Hp = [] (B := TfibB by lib/B/ReplyTFIBBcf.v), so ashp_x's premise is met
    there and the first two conjuncts hold outright.
    proves no function (kind: image facts of the instance). *)
@@ -112,7 +113,7 @@ Section topx_dlit_b.
 Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 #[local] Abbreviation segs := (@pa_segs _ fr_prog_listing PB_fr).
 #[local] Abbreviation VAL := (@pa_val _ fr_prog_listing PB_fr).
-(* B lib/B/W_LLVMFuzzerTestOneInput_top_x.v:177-179 Definition ARX, the same relation (W1: its third conjunct, image B's arodata_ok_cf) *)
+(* B lib/B/W_LLVMFuzzerTestOneInput_top_x.v:178-180 Definition ARX, the same relation (W1: its third conjunct, image B's arodata_ok_cf) *)
 #[local] Abbreviation ARX := (fun ly S Hp (W : world segs) mem md =>
   ARcf (ci := CfImg_B) (cp := CfParams_reply) segs TfibB ly S Hp W mem md /\ Hp = [] /\
     @YG0dcf.arodata_ok_cf CfImg_B segs TfibB mem).
@@ -126,7 +127,7 @@ Proof.
   - intros ly S Hp W mem md r ((M & _) & _) Hr. exact (proj1 (Forall_forall _ _) (amc_zshadow _ _ _ _ _ M) r Hr).
 Qed.
 
-(* HLIT5 (lib/B/W_drain_cx_x.v:199) *)
+(* HLIT5 (lib/B/W_drain_cx_x.v:200) *)
 Lemma topx_HLIT5_x : W_drain_cx_x.dlit_at_x (PI := PB_fr) ARX 18 (K_GESTURE ++ [0]).
 Proof.
   unfold W_drain_cx_x.dlit_at_x.
@@ -137,7 +138,7 @@ Proof.
   - change (Z.of_nat (length (K_GESTURE ++ [0]))) with 14. exact (topx_dlit_ashp_b _ _ dlit_shp18).
 Qed.
 
-(* HLIT6 (lib/B/W_drain_cx_x.v:200) *)
+(* HLIT6 (lib/B/W_drain_cx_x.v:201) *)
 Lemma topx_HLIT6_x : W_drain_cx_x.dlit_at_x (PI := PB_fr) ARX 20 (W_BEGIN ++ [0]).
 Proof.
   unfold W_drain_cx_x.dlit_at_x.
@@ -148,7 +149,7 @@ Proof.
   - change (Z.of_nat (length (W_BEGIN ++ [0]))) with 6. exact (topx_dlit_ashp_b _ _ dlit_shp20).
 Qed.
 
-(* HLIT7 (lib/B/W_drain_cx_x.v:201) *)
+(* HLIT7 (lib/B/W_drain_cx_x.v:202) *)
 Lemma topx_HLIT7_x : W_drain_cx_x.dlit_at_x (PI := PB_fr) ARX 21 (W_END ++ [0]).
 Proof.
   unfold W_drain_cx_x.dlit_at_x.

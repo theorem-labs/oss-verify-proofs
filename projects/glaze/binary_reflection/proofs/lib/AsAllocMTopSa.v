@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the place_declined_b premise on the mmap nodes; grant_exists' positive-size and page-alignment goals for the secondary map). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 Require OSSVerify.Proofs.glaze.binary_reflection.lib.AmLia.   (* [comment removed for export] *)
@@ -554,7 +555,7 @@ Section NODE2.
     { (lazymatch goal with |- ?G => let G' := eval unfold mmap_args_ok in G in change_no_check G' end). rewrite E1. (lazymatch goal with |- ?G => let G' := eval unfold ms in G in change_no_check G' end). rewrite AsKSys6.MhKSys.ms_gpr_epend2, AsKSys6.MhKSys.ms_gpr_epend3, AsKSys6.MhKSys.ms_gpr_epend4, AsKSys6.MhKSys.ms_gpr_epend5.
       split; [intros X; apply (f_equal bv_unsigned) in X; rewrite u_Z2bv in X by lia; lia|].
       split; [exact B12|]. split; [exact B13|]. split; [rewrite B14; apply bv_eq; reflexivity | exact B15]. }
-    apply (katsD_mmap_rw ASEGS ms mdlm (Z_to_bv 64 222) HALT eq_refl ltac:(rewrite u_Z2bv by lia; reflexivity) ARGS Qok' Qf').
+    apply (katsD_mmap_rw ASEGS ms mdlm (Z_to_bv 64 222) HALT eq_refl ltac:(rewrite u_Z2bv by lia; reflexivity) ARGS ltac:(rewrite E0; apply place_declined_b_null) Qok' Qf').
     - rewrite E0, E1, PRU. exact EX.
     - intros e He. (lazymatch goal with |- ?G => let G' := eval unfold mmrw_fail, ms in G in change_no_check G' end). rewrite AsKSys6.MhKSys.adv_set_epend.
       assert (Ee : e = ENOMEM) by (destruct He as [<-|[]]; reflexivity). subst e.
@@ -1115,7 +1116,7 @@ Section NODEDM.
     { (lazymatch goal with |- ?G => let G' := eval unfold mmap_args_ok in G in change_no_check G' end). rewrite E1. (lazymatch goal with |- ?G => let G' := eval unfold ms in G in change_no_check G' end). rewrite AsKSys6.MhKSys.ms_gpr_epend2, AsKSys6.MhKSys.ms_gpr_epend3, AsKSys6.MhKSys.ms_gpr_epend4, AsKSys6.MhKSys.ms_gpr_epend5.
       split; [intros X; apply (f_equal bv_unsigned) in X; rewrite u_Z2bv in X by lia; lia|].
       split; [exact B12|]. split; [exact B13|]. split; [rewrite B14; apply bv_eq; reflexivity | exact B15]. }
-    apply (katD_mmap_rw_dm ASEGS ms mdlm (Z_to_bv 64 222) Q' HALT eq_refl ltac:(rewrite u_Z2bv by lia; reflexivity) ARGS).
+    apply (katD_mmap_rw_dm ASEGS ms mdlm (Z_to_bv 64 222) Q' HALT eq_refl ltac:(rewrite u_Z2bv by lia; reflexivity) ARGS ltac:(rewrite E0; apply place_declined_b_null)).
     - rewrite E0, E1, PRU. exact EX.
     - intros e He. (lazymatch goal with |- ?G => let G' := eval unfold mmrw_fail, ms in G in change_no_check G' end). rewrite AsKSys6.MhKSys.adv_set_epend.
       assert (Ee : e = ENOMEM) by (destruct He as [<-|[]]; reflexivity). subst e.
@@ -1726,7 +1727,9 @@ Section SecK.
     pose proof (AsKSys6.AsanNodesMmLib.mat_pages_le_A_bytes (a_aa st) mdlm MI AW) as MP.
     pose proof (eager_used_ext mdlm mdl EV EL) as EE.
     apply (grant_exists bt st Lc FF (2 ^ 20) (2 ^ 28) M0 mdl W ltac:(lia) (qroom_WF bt st Lc FF W) RP KC BOK BTOT (Z_to_bv 64 0) mdlm (sec_map_size n) EV).
-    - exact (sec_map_size_NZEX n HN).
+    - (* [grant_exists] wants [0 < nZ]: [sec_map_size n >= n + 8192 > 0] for every admitted [n]. *)
+      pose proof (sec_map_size_NZEX n HN). pose proof (sec_msz_bnd n ltac:(lia)) as [_ Hb]. lia.
+    - pose proof (sec_msz_bnd n ltac:(lia)) as [Hm _]. unfold page_size. exact Hm.
     - rewrite vm_backing_used_split, EE, EV. lia.
   Qed.
 End SecK.

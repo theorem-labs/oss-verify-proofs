@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the section hypotheses entry_launch_ok_va Sv48 and valid_launch in place of entry_stack_fits, passed to aroot2_st_ok and arootN_st_ok; MP_ok also gives the run predicate's far-end channel reader, from the main entry's am_reader; the absent, too-long and usage families' first templates the root at the region both CONFIG_RSEQ values imply, and the directory family's certificates per CONFIG_RSEQ value, chosen by the run's own value, each one's first template the root at its region 3; each region 3 the ASan images', AT_PHNUM's value 11). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import PrimInt63 Uint63.
 From stdpp Require Import gmap.
@@ -22,6 +23,11 @@ From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.GlueA Require RootAsan2 I
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Asan2A Require T_Asan2A.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Asan2T Require T_Asan2T.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.AsanNU Require T_AsanNU.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.FX Require Auxv.
+(* The CONFIG_RSEQ copies first: their short names are shadowed by the in-place ones below, and are used only
+   through the full-path aliases after the imports. *)
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Asan2DR Require T_Asan2D.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.RunR Require Asan2D_1 Asan2D_10.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Asan2D Require T_Asan2D.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.W2 Require ExhFirst.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.Run Require Asan2A_1 Asan2A_5 Asan2T_1 Asan2T_5 AsanNU_1 AsanNU_6 Asan2D_1 Asan2D_10.
@@ -38,6 +44,9 @@ Module R2 := RootAsan2.RootAsan2.
 Module IN := InitAsanN.InitAsanN.
 Module RN := RootAsanN.RootAsanN.
 Module OUR := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Common.ShapeAlg.
+Module TDR := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Asan2DR.T_Asan2D.
+Module H1DR := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.RunR.Asan2D_1.
+Module N10DR := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.RunR.Asan2D_10.
 
 Section RunAsanATN.
 Context {rc : runConstT}.
@@ -69,20 +78,25 @@ Variables (en : ExecEntry) (inp : ProcInput).
 Hypothesis Hva : valid_argv (in_argv inp).
 Hypothesis Hve : valid_envp (in_envp inp).
 Hypothesis Hsp : valid_sp (en_sp en).
-Hypothesis Hfit : entry_stack_fits (en_sp en) (in_argv inp) (in_envp inp).
+Hypothesis Hlau : entry_launch_ok_va Sv48 en inp.
 Hypothesis Hhw : valid_hwcap (in_hwcap inp).
+Hypothesis Hvl : valid_launch inp.
 Let p1 := AsanDrun.p1 inp.
 Let file := AsanDrun.file inp.
 Let RA : drun := AsanDrun.RA IMGX IMGX_aci ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat UNIV AI_frame_top Cw ACCT_fds IMGX_rs3 inp (en_sp en) (en_draw en) Hva.
 Definition CRED0i : int := 51539607552%uint63.
 
-Lemma ROOT_EQ_A : T_Asan2A.T_DRV2 = I2.ROOT_with (AsanRootAsm.ROOT_OPS CRED0i).
+(* the first templates are the root at their region 3: the region both CONFIG_RSEQ values imply for the absent,
+   too-long and usage families; the auxv without CONFIG_RSEQ for the directory family in place, with it in the copy *)
+Lemma ROOT_EQ_A : T_Asan2A.T_DRV2 = I2.ROOT_with Auxv.Auxv.R3A_asan (AsanRootAsm.ROOT_OPS CRED0i).
 Proof. apply StEqb.st_eqb_eq. vm_compute. reflexivity. Qed.
-Lemma ROOT_EQ_T : T_Asan2T.T_DRV2 = I2.ROOT_with (AsanRootAsm.ROOT_OPS CRED0i).
+Lemma ROOT_EQ_T : T_Asan2T.T_DRV2 = I2.ROOT_with Auxv.Auxv.R3A_asan (AsanRootAsm.ROOT_OPS CRED0i).
 Proof. apply StEqb.st_eqb_eq. vm_compute. reflexivity. Qed.
-Lemma ROOT_EQ_N : T_AsanNU.T_DRVN = IN.ROOT_with (AsanRootAsmN.ROOT_OPS CRED0i).
+Lemma ROOT_EQ_N : T_AsanNU.T_DRVN = IN.ROOT_with Auxv.Auxv.R3A_asan (AsanRootAsmN.ROOT_OPS CRED0i).
 Proof. apply StEqb.st_eqb_eq. vm_compute. reflexivity. Qed.
-Lemma ROOT_EQ_D : T_Asan2D.T_DRV2 = I2.ROOT_with (AsanRootAsm.ROOT_OPS CRED0i).
+Lemma ROOT_EQ_D : T_Asan2D.T_DRV2 = I2.ROOT_with (Auxv.Auxv.R3Tb_asan false) (AsanRootAsm.ROOT_OPS CRED0i).
+Proof. apply StEqb.st_eqb_eq. vm_compute. reflexivity. Qed.
+Lemma ROOT_EQ_DR : TDR.T_DRV2 = I2.ROOT_with (Auxv.Auxv.R3Tb_asan true) (AsanRootAsm.ROOT_OPS CRED0i).
 Proof. apply StEqb.st_eqb_eq. vm_compute. reflexivity. Qed.
 
 Lemma argv_eq : length (in_argv inp) = 2%nat -> in_argv inp = [AsanDrun.a0 inp; AsanDrun.p1 inp].
@@ -102,14 +116,15 @@ Hypothesis IMGAP2 : forall a, (exists seg, find_segment asegs a 1 = Some seg) ->
 Hypothesis IMGAPN : forall a, (exists seg, find_segment asegs a 1 = Some seg) -> ~ in_ivs IMGX a -> in_priv RN.PRIV a.
 
 Lemma MP_ok : r_MP RA mo.
-Proof. cbn [r_MP RA AsanDrun.RA]. unfold AsanDrun.MP, AsanDrun.fs0. destruct HM as (w0 & V0 & m0 & _ & _ & _ & _ & _ & _ & _ & _ & _ & AMO). exact (ME.am_fs _ _ _ _ AMO). Qed.
+Proof. cbn [r_MP RA AsanDrun.RA]. unfold AsanDrun.MP, AsanDrun.fs0. destruct HM as (w0 & V0 & m0 & _ & _ & _ & _ & _ & _ & _ & _ & _ & AMO). exact (conj (ME.am_fs _ _ _ _ AMO) (ME.am_reader _ _ _ _ AMO)). Qed.
 
 Theorem rz_absent_asan : length (in_argv inp) = 2%nat -> (length p1 < 4096)%nat -> (p1 = [] \/ (path_is_dirref p1 = false /\ fs_lookup (in_fs inp) p1 = None)) ->
   Asan2A_1.hyps RA -> OUR.realizes asegs (mkCfg ms mo) (K inp).
 Proof.
   intros Hargc2 Hshort Hcase HYPS.
   destruct (AsanRootAsm.aroot2_st_ok IMGX IMGX_aci ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat UNIV AI_frame_top Cw p1 file IMGX_stksh
-              (AsanDrun.xb inp) en inp ms mo CRED0i L RNG sta Hva Hve Hsp Hfit Hhw Hargc2 HM USP AH AC HU LZ APR CW0 IMGAP2) as (E & HE & HS).
+              (AsanDrun.xb inp) en inp ms mo CRED0i L RNG sta Auxv.Auxv.R3A_asan Hva Hve Hsp Hlau Hhw Hvl Hargc2 HM (or_intror eq_refl)
+              USP AH AC HU LZ APR CW0 IMGAP2) as (E & HE & HS).
   assert (HK : K inp = DR RA OPENFAIL).
   { unfold K. rewrite (argv_eq Hargc2). unfold DR, K2. cbn [r_fs r_a0 r_p1 RA AsanDrun.RA]. fold p1.
     replace (4096 <=? Z.of_nat (length p1)) with false by (symmetry; apply Z.leb_gt; lia).
@@ -123,7 +138,8 @@ Theorem rz_toolong_asan : length (in_argv inp) = 2%nat -> (4096 <= length p1)%na
 Proof.
   intros Hargc2 Hlong HYPS.
   destruct (AsanRootAsm.aroot2_st_ok IMGX IMGX_aci ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat UNIV AI_frame_top Cw p1 file IMGX_stksh
-              (AsanDrun.xb inp) en inp ms mo CRED0i L RNG sta Hva Hve Hsp Hfit Hhw Hargc2 HM USP AH AC HU LZ APR CW0 IMGAP2) as (E & HE & HS).
+              (AsanDrun.xb inp) en inp ms mo CRED0i L RNG sta Auxv.Auxv.R3A_asan Hva Hve Hsp Hlau Hhw Hvl Hargc2 HM (or_intror eq_refl)
+              USP AH AC HU LZ APR CW0 IMGAP2) as (E & HE & HS).
   assert (HK : K inp = DR RA OPENFAIL).
   { unfold K. rewrite (argv_eq Hargc2). unfold DR, K2. cbn [r_fs r_a0 r_p1 RA AsanDrun.RA]. fold p1.
     replace (4096 <=? Z.of_nat (length p1)) with true by (symmetry; apply Z.leb_le; lia). reflexivity. }
@@ -136,11 +152,10 @@ Proof.
   pose proof Hva as (_ & _ & _ & _ & HSL). unfold p1, AsanDrun.p1. clear - HSL. destruct (in_argv inp) as [|x [|y l]]; cbn [hd tl]; try reflexivity.
   exact (proj1 (proj1 (Forall_forall _ _) HSL y (or_introl eq_refl))).
 Qed.
-Theorem rz_dir_asan : length (in_argv inp) = 2%nat -> path_is_dirref p1 = true -> Asan2D_1.hyps RA -> OUR.realizes asegs (mkCfg ms mo) (K inp).
+Theorem rz_dir_asan : length (in_argv inp) = 2%nat -> path_is_dirref p1 = true -> Asan2D_1.hyps RA -> H1DR.hyps RA ->
+  OUR.realizes asegs (mkCfg ms mo) (K inp).
 Proof.
-  intros Hargc2 Hdir HYPS.
-  destruct (AsanRootAsm.aroot2_st_ok IMGX IMGX_aci ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat UNIV AI_frame_top Cw p1 file IMGX_stksh
-              (AsanDrun.xb inp) en inp ms mo CRED0i L RNG sta Hva Hve Hsp Hfit Hhw Hargc2 HM USP AH AC HU LZ APR CW0 IMGAP2) as (E & HE & HS).
+  intros Hargc2 Hdir HYPS HYPSR.
   assert (Hp : p1 = [Z_to_bv 8 46]).
   { pose proof Hva as (_ & _ & _ & _ & HSL). pose proof p1_noslash as NS. unfold path_is_dirref in Hdir. apply orb_prop in Hdir.
     destruct Hdir as [H1|H2]; [apply path_eqb_eq in H1; exact H1|].
@@ -152,15 +167,27 @@ Proof.
     replace (4096 <=? Z.of_nat (length p1)) with false by (rewrite Hp; reflexivity).
     replace (path_eqb p1 []) with false by (rewrite Hp; reflexivity).
     replace (path_is_dirref p1) with true by (rewrite Hp; reflexivity). reflexivity. }
-  rewrite HK. rewrite <- ROOT_EQ_D in HS.
-  apply (Asan2D_10.N_T_DRV2 RA HYPS E ms mo); [exact HE| exact MP_ok| exact HS].
+  rewrite HK.
+  (* the run's CONFIG_RSEQ value chooses the certificates: the copy with it, the in-place one without *)
+  destruct (la_rseq (SI.LA (en_sp en) (en_mmap_base en) inp)) eqn:HR.
+  - destruct (AsanRootAsm.aroot2_st_ok IMGX IMGX_aci ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat UNIV AI_frame_top Cw p1 file IMGX_stksh
+                (AsanDrun.xb inp) en inp ms mo CRED0i L RNG sta (Auxv.Auxv.R3Tb_asan true) Hva Hve Hsp Hlau Hhw Hvl Hargc2 HM
+                (or_introl (f_equal Auxv.Auxv.R3Tb_asan (eq_sym HR))) USP AH AC HU LZ APR CW0 IMGAP2) as (E & HE & HS).
+    rewrite <- ROOT_EQ_DR in HS.
+    apply (N10DR.N_T_DRV2 RA HYPSR E ms mo); [exact HE| exact MP_ok| exact HS].
+  - destruct (AsanRootAsm.aroot2_st_ok IMGX IMGX_aci ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat UNIV AI_frame_top Cw p1 file IMGX_stksh
+                (AsanDrun.xb inp) en inp ms mo CRED0i L RNG sta (Auxv.Auxv.R3Tb_asan false) Hva Hve Hsp Hlau Hhw Hvl Hargc2 HM
+                (or_introl (f_equal Auxv.Auxv.R3Tb_asan (eq_sym HR))) USP AH AC HU LZ APR CW0 IMGAP2) as (E & HE & HS).
+    rewrite <- ROOT_EQ_D in HS.
+    apply (Asan2D_10.N_T_DRV2 RA HYPS E ms mo); [exact HE| exact MP_ok| exact HS].
 Qed.
 
 Theorem rz_usage_asan : length (in_argv inp) <> 2%nat -> AsanNU_1.hyps RA -> OUR.realizes asegs (mkCfg ms mo) (K inp).
 Proof.
   intros HargcN HYPS.
   destruct (AsanRootAsmN.arootN_st_ok IMGX IMGX_aci ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat UNIV AI_frame_top Cw p1 file IMGX_stksh
-              (AsanDrun.xb inp) en inp ms mo CRED0i L RNG sta Hva Hve Hsp Hfit Hhw HargcN HM USP AH AC HU LZ APR CW0 IMGAPN) as (E & HE & HS).
+              (AsanDrun.xb inp) en inp ms mo CRED0i L RNG sta Auxv.Auxv.R3A_asan Hva Hve Hsp Hlau Hhw Hvl HargcN HM (or_intror eq_refl)
+              USP AH AC HU LZ APR CW0 IMGAPN) as (E & HE & HS).
   assert (HK : K inp = DR RA USAGE).
   { unfold K, DR. cbn [r_fs r_a0 r_p1 RA AsanDrun.RA]. unfold AsanDrun.a0, AsanDrun.p1. pose proof HargcN as LN. set (l := in_argv inp) in LN |- *. clearbody l.
     destruct l as [|x [|y [|z l']]]; cbn [hd tl]; try reflexivity. exfalso. apply LN. reflexivity. }

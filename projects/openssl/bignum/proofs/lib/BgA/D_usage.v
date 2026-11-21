@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor lo is rt_sp0 - 6144000, that is rt_sp0 - STACK_WOK, the bottom of the stack the launch zero-maps, instead of rt_sp0 - 8388608). *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.openssl.bignum.lib.BgLib Require Import ImageBgA.
 
@@ -127,11 +128,11 @@ Proof using AF AF_DRV FPR EXC VARGV OUT_loc ERR_loc XENV_loc LIB_loc IO_img XENV
   destruct (SLKS 0%nat arg0 p0 Ha0 Hp0) as (slack0 & SLK0 & SLKM0 & SLKB0).
   pose proof (proj1 (Forall_forall _ _) VA4 arg0 (nth_error_In _ _ Ha0)) as NZ0.
   pose proof (proj1 (Forall_forall _ _) VA3 arg0 (nth_error_In _ _ Ha0)) as LN0. cbv beta in NZ0, LN0.
-  pose proof (af_sp0_range RT AF Σ m HART) as SP0R. unfold SEGTOP_A, STACK_WIN, USTACK_TOP in *.
+  pose proof (af_sp0_range RT AF Σ m HART) as SP0R. unfold SEGTOP_A, STACK_WIN, STACK_WOK, USTACK_TOP in *.
   destruct HSIG as (LV & FRS & CR & USP0 & SPW).
   pose proof (AF_DRV Σ m HART) as (SC0 & _).
   pose proof (u64arr_bound bgasegs m ap ptrs ARR) as ARB.
-  set (lo := rt_sp0 RT Σ - 8388608) in *.
+  set (lo := rt_sp0 RT Σ - 6144000) in *.
   rewrite (nth0_argv_Z argvb arg0 Ha0).
   replace (evw 2 (msg_usage (map bv_unsigned arg0))) with (evw 2 (fp_msg (FPusage (bv_unsigned p0) arg0)) ++ evw 1 (so_buf stdout_init))
     by (cbn [fp_msg so_buf stdout_init]; rewrite app_nil_r; reflexivity).

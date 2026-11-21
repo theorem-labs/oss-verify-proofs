@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths and module names changed; 848 of its 915 lines of code are new or changed and 447 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset image B (asan-ubsan), parse_value 0x8637c, SEGMENT N (the number arm), sub-piece C of
    SEG_N: S 0x8676c -> M 0x86778, the
    fuzz_malloc call. Proves PvB_NCut.v's pnC_stmt as pnC_holds.
@@ -221,7 +222,7 @@ Qed.
    YM05.alloc_ceiling`): a listing slot's pc is below the run's allocation ceiling. The slot's word is fetched from an
    image segment (pa_cert, pa_tbl_ok), so the pc is in_img, so below kLowMemEnd (pa_segs_low), which is below
    CEIL_MIN <= YM05.alloc_ceiling (YM05.alloc_ceiling_value). The proof is PRW_StepKit.pa_slot_lt_ceil's
-   (lib/A/Prog/PRW_StepKit.v:235); the same steps as YC1fP.v
+   (lib/A/Prog/PRW_StepKit.v:236); the same steps as YC1fP.v
    pa_slot_img, with pa_segs_low in place of pa_img_range. ---- *)
 Section pc. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Context {L : ptable asym} {PL : PAListing L} {PI : PAImg L}.
@@ -775,7 +776,7 @@ assert (Hmr : prh_maxreq (pe_gt en) = Z.of_nat (S L))
   by (rewrite Egt; unfold prh_maxreq; cbn [map fold_right PjGrammar.esize]; lia).
 assert (Hcalls : PjGrammar.calls (pe_gt en) = 1%nat) by (rewrite Egt; reflexivity).
 assert (HMAX : Z.of_nat m + 1 + cf_head < cf_malloc_max) by (rewrite Hmr in Hhpk; lia).
-(* The batch kit's per-event live room (rd_room's third conjunct at 03fcabb582d0): the call's request is the FIRST event of the
+(* The batch kit's per-event live room (rd_room's third conjunct): the call's request is the FIRST event of the
    call's request is the FIRST event of the entry's grant-all trace, so PvB_Defs.rd_room_first gives the
    bound on the entry's live bytes, and the call state's are the entry's (pv_reader0's blocks keep) *)
 assert (HLIVE : pe_cnt en <> pe_fail en -> blocks_bytes Sc + (Z.of_nat m + 1 + cf_head) <= LIVE_MAX).

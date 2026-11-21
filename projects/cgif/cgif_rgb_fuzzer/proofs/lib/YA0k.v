@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the generic system-call node lemmas take the third part of node_ok, sys_rob, as a premise; the close, read, ioctl, openat and writev nodes prove it). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -10,6 +11,7 @@ From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs
 From LinuxProcessSemantics.LinuxProcessSem.Checks.Sys Require Import DispatchCompute.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YK16 YK0o YK11 YK0j YK0i YK14 YK0v YK0q YK02 YK15 YK18.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YQ0k YK05 YA0i.
+From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import RomBase.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
@@ -45,13 +47,14 @@ ms_svc_pending ms = Some x8 ->
 (forall i, ranges_avoid H (syscall_effect_accesses (ef i))) ->
 (forall eff m' evs, check_syscall (sys_input segs ms x8) eff model = CheckOk m' evs ->
 exists i, eff = ef i /\ m' = md i /\ evs = ev i) ->
+sys_rob segs (mkCfg ms model) ->
 node_ok segs (mkCfg ms model) I ev
 (fun i => mkCfg (advance_past_svc (apply_effect ms (ef i)))
 (materialized_succ (md i) (syscall_effect_accesses (ef i))))
 /\ (forall i, AI segs H A (materialized_succ (md i) (syscall_effect_accesses (ef i)))
 /\ same_but_materialized (md i) (materialized_succ (md i) (syscall_effect_accesses (ef i)))).
 Proof.
-intros ms model x8 I i0 ef md ev HAI Hsvc Hok Hhl Hled Hav Hinv.
+intros ms model x8 I i0 ef md ev HAI Hsvc Hok Hhl Hled Hav Hinv Hrob.
 assert (HAIi : forall i, AI segs H A (md i)).
 { intros i. destruct (Hled i) as (Hv & Hl & Hm). exact (AI_ledgers model (md i) HAI Hv Hl Hm (Hhl i)). }
 destruct HAI as (HH & Hwf & Hcov & Hinv0 & Hh).
@@ -64,6 +67,7 @@ destruct (node_syscall_restricted segs H A ms model x8 I ef md ev Hwf Hh Hsvc) a
 - intros i. destruct (HAIi i) as (_ & _ & Hc & _). exact Hc.
 - intros i. exact (AI_MInv segs H A (md i) (HAIi i)).
 - exact Hav.
+- exact Hrob.
 - split; [exact Hnode|]. intros i. destruct (Hsucc i) as [Hm Hs]. split; [|exact Hs].
 exact (AI_same segs H A (md i) _ (HAIi i) Hs Hm).
 Qed.
@@ -89,7 +93,7 @@ Proof. intros m. apply materialized_succ_unlazy. intros a n k []. Qed.
 Lemma node_ok_ext : forall c (I : Type) (evs : I -> list event) (nx nx' : I -> config),
 node_ok segs c I evs nx -> (forall i, nx i = nx' i) -> node_ok segs c I evs nx'.
 Proof.
-intros c I evs nx nx' [H1 H2] He. split.
+intros c I evs nx nx' [H1 [H2 H3]] He. split; [| split; [| exact H3]].
 - intros i. rewrite <- He. apply H1.
 - intros e st Hs. destruct (H2 e st Hs) as (i & -> & ->). exists i. rewrite He. auto.
 Qed.
@@ -109,17 +113,19 @@ ranges_avoid H (syscall_effect_accesses eff) ->
 (forall eff2 m2 evs2,
 check_syscall (sys_input segs (pend_at regs pc mem rom) (getr regs 17)) eff2 model = CheckOk m2 evs2 ->
 eff2 = eff /\ m2 = m' /\ evs2 = evs) ->
+sys_rob segs (mkCfg (pend_at regs pc mem rom) model) ->
 node_ok segs (mkCfg (pend_at regs pc mem rom) model) unit (fun _ => evs)
 (fun _ => mkCfg (mkst (regupd regs 10 (eff_ret eff)) (v_addi pc 4) (effmem mem eff) rom)
 (materialized_succ m' (syscall_effect_accesses eff)))
 /\ AI segs H A (materialized_succ m' (syscall_effect_accesses eff))
 /\ same_but_materialized m' (materialized_succ m' (syscall_effect_accesses eff)).
 Proof.
-intros regs pc mem rom model eff m' evs HAI Hok Hh' Hled Hav Huniq.
+intros regs pc mem rom model eff m' evs HAI Hok Hh' Hled Hav Huniq Hrob.
 destruct (node_chk_lazy (pend_at regs pc mem rom) model (getr regs 17) unit tt
 (fun _ => eff) (fun _ => m') (fun _ => evs) HAI eq_refl
 (fun _ => Hok) (fun _ => Hh') (fun _ => Hled) (fun _ => Hav)) as [Hn Hs].
 - intros eff2 m2 evs2 H2. exists tt. apply Huniq. exact H2.
+- exact Hrob.
 - split; [|exact (Hs tt)]. eapply node_ok_ext; [exact Hn|]. intros []. cbn beta. rewrite adv_pend. reflexivity.
 Qed.
 Lemma node_ret_only_lazy : forall regs pc mem rom model r m' evs,
@@ -128,17 +134,19 @@ AI segs H A model ->
 = check_ret_only eff r m' evs) ->
 m_halted m' = None ->
 m_vmmaps m' = m_vmmaps model /\ m_vm_lazy m' = m_vm_lazy model /\ m_vm_materialized m' = m_vm_materialized model ->
+sys_rob segs (mkCfg (pend_at regs pc mem rom) model) ->
 node_ok segs (mkCfg (pend_at regs pc mem rom) model) unit (fun _ => evs)
 (fun _ => mkCfg (mkst (regupd regs 10 r) (v_addi pc 4) mem rom) m')
 /\ AI segs H A m'.
 Proof.
-intros regs pc mem rom model r m' evs HAI Hchk Hh' Hled.
+intros regs pc mem rom model r m' evs HAI Hchk Hh' Hled Hrob.
 destruct (node_chk1_lazy regs pc mem rom model (mkEffect r [] []) m' evs HAI) as (Hn & HA & _).
 - rewrite Hchk. apply check_ret_only_self.
 - exact Hh'.
 - exact Hled.
 - intros a n [].
 - intros eff2 m2 evs2 H2. rewrite Hchk in H2. apply check_ret_only_uniq. exact H2.
+- exact Hrob.
 - cbn [syscall_effect_accesses eff_copyins eff_writes write_accesses app eff_ret] in Hn, HA.
 rewrite materialized_succ_nil, effmem_ret_only in Hn. rewrite materialized_succ_nil in HA. exact (conj Hn HA).
 Qed.
@@ -149,11 +157,12 @@ AI segs H A model ->
 m_halted m' = None ->
 m_vmmaps m' = m_vmmaps model /\ m_vm_lazy m' = m_vm_lazy model /\ m_vm_materialized m' = m_vm_materialized model ->
 ranges_avoid H reads ->
+sys_rob segs (mkCfg (pend_at regs pc mem rom) model) ->
 node_ok segs (mkCfg (pend_at regs pc mem rom) model) unit (fun _ => evs)
 (fun _ => mkCfg (mkst (regupd regs 10 r) (v_addi pc 4) mem rom) (materialized_succ m' reads))
 /\ AI segs H A (materialized_succ m' reads) /\ same_but_materialized m' (materialized_succ m' reads).
 Proof.
-intros regs pc mem rom model reads r m' evs HAI Hchk Hh' Hled Hav.
+intros regs pc mem rom model reads r m' evs HAI Hchk Hh' Hled Hav Hrob.
 assert (Hacc : syscall_effect_accesses (with_copyins reads (mkEffect r [] [])) = reads).
 { cbn. apply app_nil_r. }
 destruct (node_chk1_lazy regs pc mem rom model (with_copyins reads (mkEffect r [] [])) m' evs HAI) as (Hn & HA & Hs).
@@ -162,6 +171,7 @@ destruct (node_chk1_lazy regs pc mem rom model (with_copyins reads (mkEffect r [
 - exact Hled.
 - rewrite Hacc. exact Hav.
 - intros eff2 m2 evs2 H2. rewrite Hchk in H2. apply check_ret_only_copyins_ok_iff. exact H2.
+- exact Hrob.
 - rewrite Hacc in Hn, HA, Hs. cbn [eff_ret with_copyins] in Hn. rewrite effmem_copyins_ret_only in Hn.
 exact (conj Hn (conj HA Hs)).
 Qed.
@@ -180,6 +190,7 @@ apply (node_ret_only_lazy regs pc mem rom model (Z_to_bv 64 0) _ [] HAI).
 - intro eff. rewrite chk57 by exact Hno. rewrite Hfd, H32. unfold check_close. rewrite Hlk. reflexivity.
 - exact (AI_halted segs H A model HAI).
 - apply ledgers_with_fds.
+- exact (sys_rob_memfree segs (pend_at regs pc mem rom) model (getr regs 17) eq_refl ltac:(rewrite Hno; exact memfree_57)).
 Qed.
 
 Lemma node_ioctl_winsz_lazy : forall regs pc mem rom model fd e,
@@ -199,6 +210,8 @@ apply (node_ret_only_lazy regs pc mem rom model (errno_ret ENOTTY) model [] HAI)
 rewrite Hlk. change (tty_only_request TIOCGWINSZ) with true. destruct e; try reflexivity. exfalso; eapply (Hnd true true); reflexivity.
 - exact (AI_halted segs H A model HAI).
 - apply ledgers_same.
+- apply (sys_rob_pend segs). intros r _ eff. rewrite !chk29 by exact Hno. rewrite Hfd, H32, Hcmd. unfold check_ioctl.
+rewrite Hlk. change (tty_only_request TIOCGWINSZ) with true. destruct e; try reflexivity; exfalso; eapply (Hnd true true); reflexivity.
 Qed.
 #[local] Notation OCI regs pc mem rom := (open_copyins (pend_at regs pc mem rom)).
 Lemma node_openat_toolong_lazy : forall regs pc mem rom model,
@@ -221,6 +234,7 @@ apply (node_ret_only_copyins_lazy regs pc mem rom model _ (errno_ret ENAMETOOLON
 - exact (AI_halted segs H A model HAI).
 - apply ledgers_same.
 - exact Hav.
+- exact (rob_openat segs regs pc mem rom model _ Hno Hp ltac:(discriminate)).
 Qed.
 
 Lemma node_openat_empty_lazy : forall regs pc mem rom model,
@@ -248,6 +262,7 @@ destruct (access_ranges_eqb _ _); reflexivity.
 - exact (AI_halted segs H A model HAI).
 - apply ledgers_same.
 - exact Hav.
+- exact (rob_openat segs regs pc mem rom model _ Hno Hp ltac:(discriminate)).
 Qed.
 Lemma node_openat_absent_lazy : forall regs pc mem rom model p,
 AI segs H A model ->
@@ -283,6 +298,7 @@ destruct (access_ranges_eqb _ _); reflexivity.
 - exact (AI_halted segs H A model HAI).
 - apply ledgers_same.
 - exact Hav.
+- exact (rob_openat segs regs pc mem rom model _ Hno Hp ltac:(discriminate)).
 Qed.
 Definition open_ix : Type := ({e : Z | In e openat_errnos} + unit)%type.
 Definition open_ret (fds : list (word * FdEntry)) (i : open_ix) : word :=
@@ -298,13 +314,14 @@ AI segs H A model ->
 /\ m_vm_materialized (mk fd) = m_vm_materialized model) ->
 fd_lookup (m_fds model) (alloc_fd (m_fds model)) = None ->
 ranges_avoid H reads ->
+sys_rob segs (mkCfg (pend_at regs pc mem rom) model) ->
 node_ok segs (mkCfg (pend_at regs pc mem rom) model) open_ix (fun _ => [])
 (fun i => mkCfg (mkst (regupd regs 10 (open_ret (m_fds model) i)) (v_addi pc 4) mem rom)
 (materialized_succ (open_md model mk i) reads))
 /\ (forall i, AI segs H A (materialized_succ (open_md model mk i) reads)
 /\ same_but_materialized (open_md model mk i) (materialized_succ (open_md model mk i) reads)).
 Proof.
-intros regs pc mem rom model reads mk HAI Hchk Hmk Hmkl Hfree Hav.
+intros regs pc mem rom model reads mk HAI Hchk Hmk Hmkl Hfree Hav Hrob.
 pose (ef := fun i : open_ix => with_copyins reads (mkEffect (open_ret (m_fds model) i) [] [])).
 assert (Hacc : forall i, syscall_effect_accesses (ef i) = reads) by (intros i; cbn; apply app_nil_r).
 destruct (node_chk_lazy (pend_at regs pc mem rom) model (getr regs 17) open_ix (inr tt)
@@ -319,6 +336,7 @@ ef (open_md model mk) (fun _ => []) HAI eq_refl) as [Hn Hs].
 destruct Hk as [(e & He & -> & -> & ->) | (fd & _ & -> & -> & -> & ->)].
 + exists (inl (exist _ e He)). unfold ef, open_md, open_ret; cbn [proj1_sig]. auto.
 + exists (inr tt). unfold ef, open_md, open_ret. auto.
+- exact Hrob.
 - split.
 + eapply node_ok_ext; [exact Hn|]. intros i. cbn beta. rewrite adv_pend, Hacc.
 unfold ef. cbn [eff_ret with_copyins]. rewrite effmem_copyins_ret_only. reflexivity.
@@ -355,6 +373,7 @@ apply (openat_rd_check segs (pend_at regs pc mem rom) (getr regs 17) model p d H
 - intro fd. apply ledgers_with_fds.
 - exact Hfree.
 - exact Hav.
+- exact (rob_openat segs regs pc mem rom model _ Hno Hp ltac:(discriminate)).
 Qed.
 Lemma node_openat_dir_lazy : forall regs pc mem rom model,
 AI segs H A model ->
@@ -389,6 +408,7 @@ exfalso. exact (check_open_result_never_unmodeled _ _ _ Hq).
 - intro fd. apply ledgers_with_fds.
 - exact Hfree.
 - exact Hav.
+- exact (rob_openat segs regs pc mem rom model _ Hno Hp ltac:(discriminate)).
 Qed.
 Lemma node_read_file_lazy : forall regs pc mem rom model fd p off data bs w,
 AI segs H A model ->
@@ -429,7 +449,8 @@ rewrite Hbs, si_wmem, Hw.
 destruct bs as [|b bs']; reflexivity. }
 destruct bs as [|b bs'].
 - cbn zeta in *. subst accs. rewrite materialized_succ_nil.
-destruct (node_ret_only_lazy regs pc mem rom model (Z_to_bv 64 0) md' [] HAI Hchk Hh (ledgers_with_fds _ _)) as [Hn HA].
+destruct (node_ret_only_lazy regs pc mem rom model (Z_to_bv 64 0) md' [] HAI Hchk Hh (ledgers_with_fds _ _)
+(sys_rob_memfree segs (pend_at regs pc mem rom) model (getr regs 17) eq_refl ltac:(rewrite Hno; exact memfree_63))) as [Hn HA].
 split; [exact Hn|]. split; [exact HA | apply same_but_materialized_refl].
 - subst accs.
 destruct (node_chk1_lazy regs pc mem rom model
@@ -447,6 +468,7 @@ destruct (listN_eqb bsx (b :: bs')) eqn:E2; [|discriminate].
 destruct (bv_eqb r (len_word (b :: bs'))) eqn:E3; [|discriminate].
 cbn [andb] in Hk. inversion Hk; subst.
 apply bv_eqb_eq in E1. apply listN_eqb_eq in E2. apply bv_eqb_eq in E3. subst. auto.
++ exact (sys_rob_memfree segs (pend_at regs pc mem rom) model (getr regs 17) eq_refl ltac:(rewrite Hno; exact memfree_63)).
 + cbn [syscall_effect_accesses eff_copyins eff_writes write_accesses app eff_ret] in Hn, HA, Hs.
 rewrite effmem_write1 in Hn. exact (conj Hn (conj HA Hs)).
 Qed.
@@ -465,6 +487,7 @@ apply (node_ret_only_lazy regs pc mem rom model (errno_ret EISDIR) model [] HAI)
 - intro eff. rewrite chk63 by exact Hno. unfold check_read. rewrite Hfd, H32, Hlk, Hdr. reflexivity.
 - exact (AI_halted segs H A model HAI).
 - apply ledgers_same.
+- exact (sys_rob_memfree segs (pend_at regs pc mem rom) model (getr regs 17) eq_refl ltac:(rewrite Hno; exact memfree_63)).
 Qed.
 Lemma node_writev_lazy : forall regs pc mem rom model fd ch iovs bs,
 AI segs H A model ->
@@ -522,6 +545,7 @@ apply Z.leb_le in E1. apply Z.leb_le in E2. apply access_ranges_eqb_eq in Hci.
 assert (Hr : (1 <= Z.to_nat (bv_unsigned ret))%nat /\ (Z.to_nat (bv_unsigned ret) <= length bs)%nat) by lia.
 exists (exist _ (Z.to_nat (bv_unsigned ret)) Hr). unfold ef, writev_eff; cbn [proj1_sig].
 rewrite Z2Nat.id by lia. rewrite Z_to_bv_bv_unsigned, Hci. auto.
+- exact (writev_rob segs regs pc mem rom model fd ch iovs bs Hno Hfdc H32 Hfd Hcnt Hmax Himp Hiok Hbok Hg Htot Hnb).
 - split.
 + eapply node_ok_ext; [exact Hn|]. intros i. cbn beta. rewrite adv_pend, Hacc.
 unfold ef. rewrite effmem_writev_eff. unfold writev_eff; cbn [eff_ret]. reflexivity.

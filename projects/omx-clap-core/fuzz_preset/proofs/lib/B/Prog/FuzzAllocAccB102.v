@@ -1,5 +1,5 @@
 (* fuzz_preset image B' (asan-ubsan, #102 pin d663f82d7f48): the walks of alloc.c's seven accessors of the harness
-   allocator's statics (alloc.c :129-162) against the texts at the kit of record decff67d721f,
+   allocator's statics (alloc.c :129-162) against the texts at the kit of record,
    lib/A/PRH_FnAlloc.v (blob 83fe93bc86e2): tfuzz_alloc_live_specX (:71), tfuzz_alloc_peak_specX (:82),
    tfuzz_alloc_peak_reset_specX (:93), tfuzz_alloc_count_specX (:104), tfuzz_alloc_fail_specX (:115),
    tfuzz_alloc_ran_out_specX (:127) and tfuzz_alloc_ran_out_reset_specX (:138), at the AL rows' instance
@@ -19,8 +19,8 @@
    The non-pc-relative words are those of image A' (lib/A/Listing_prog.v slots 4592-4620). The walks read these words
    from the image (build_table over the segments), so a different body fails them. None makes an instrumented access
    or a call: the readers load a static, the writers store into a static, which is PST (PRH_Base.v prh_pst).
-   Donors (copied and adapted, not Required): h-w6rep-2's A' relocation origin/cold/h-w6rep-2-p102-allocsurf
-   8a019eaaef99, lib/A/Prog/PwAllocSurf.v 428e59506566 (section 4's runs and image checkers, at image B here), and
+   Donors (copied and adapted, not Required): h-w6rep-2's A' relocation,
+   lib/A/Prog/PwAllocSurf.v 428e59506566 (section 4's runs and image checkers, at image B here), and
    its old-pin lib/A/Prog/PwRanOut.v 77105584e9ac / PwRanOutReset.v 5ff92c55a30c (the lbu read, the sb's chunk). The
    released plain / UBSan walks of the same C functions (lib/Prog/fuzz_alloc_*.v, lib/U/Prog) are the rule-24 donors:
    same source, other images; none is Required or cited.
@@ -383,7 +383,7 @@ apply HQ.
 Qed.
 End R.
 
-(* ---- the seven TEXTS (a Theorem Labs lane, lib/A/PRH_FnAlloc.v:71-146 at decff67d721f) at image B' (#102), at the AL rows' instance
+(* ---- the seven TEXTS (a Theorem Labs lane, lib/A/PRH_FnAlloc.v:71-146) at image B' (#102), at the AL rows' instance
    (OwnB_p102.v's own_holds_B form): PA := PI_prog_B, PI := prh_img_B, L := B_prog_listing, preset's CfParams,
    a Theorem Labs lane's room-live instance, and the allocator relation ARcfx (ARcf with the error-buffer extents placed). Each
    is its core (FuzzAllocAcc102.v section 3) with the byte run above. ---- *)

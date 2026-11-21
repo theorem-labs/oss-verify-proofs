@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/MemNorm.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_decode; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_decode.lib. *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/MemNorm.v for libdiginet/fuzz_decode; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_decode.lib. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -176,7 +176,9 @@ Proof.
     split; [reflexivity|]. split; [exact HR|]. intros x _. reflexivity.
   - rewrite (ov_read_rel m m0 a _ HR). revert H.
     destruct (ov_read_bytes segs m0 a (width_bytes n)) as [bs|]; intros H; cbn beta iota in H |- *;
-      [|discriminate H].
+      (* 08b1429: a failed load answers MachineUnmodeled on the vvar pages and MachineFault elsewhere,
+         so the empty case needs that test split before it can be discriminated *)
+      [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate H].
     revert H.
     lazymatch goal with
     | |- context [interp_eff_accesses segs ?t m0] => destruct (interp_eff_accesses segs t m0) as [r1| |] eqn:E1
@@ -303,6 +305,10 @@ Qed.
 Lemma fetch_failure_not_ok : forall m a st, fetch_failure segs m a <> MachineOk st.
 Proof.
   intros m a st. unfold fetch_failure.
+  (* LPS 08b1429: fetch_failure gained a LEADING arm, vdso_text_at addr, answering MachineUnmodeled:
+     the model does not execute the vDSO's instructions, and a program that jumps into them runs on
+     Linux (RiscvSemantics.v:1169). Three tests now, not two. Recipe: G5-8. *)
+  match goal with |- (if ?c then _ else _) <> _ => destruct c end; cbv beta iota zeta; [discriminate|].
   match goal with |- (if ?c then _ else _) <> _ => destruct c end; cbv beta iota zeta; [discriminate|].
   match goal with |- (if ?c then _ else _) <> _ => destruct c end; cbv beta iota; discriminate.
 Qed.
@@ -702,7 +708,10 @@ Proof.
   - injection H as <-. eexists. split; [reflexivity|]. cbn [access_value fst snd].
     split; [reflexivity|]. split; [exact HR|]. intros x _. reflexivity.
   - revert H. destruct (ov_read_bytes segs m0 a (width_bytes n)) as [bs|] eqn:Eo; intros H;
-      cbn beta iota in H; [|discriminate H].
+      cbn beta iota in H;
+      (* 08b1429: a failed load answers MachineUnmodeled on the vvar pages and MachineFault
+         elsewhere, so the empty case needs that test split before it can be discriminated *)
+      [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate H].
     rewrite (ov_read_rel_cj m m0 a _ bs HR Eo). cbn beta iota.
     revert H.
     lazymatch goal with

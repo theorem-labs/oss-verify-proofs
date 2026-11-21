@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Trevor Hansen, 2026-11: module names. *)
+(* Modified by Theorem Labs, 2026-11: ported toward LPS 727298f3 by the change of the same file of cgif/cgif_rgb_fuzzer, its addresses relocated to this unit's binaries. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -13,6 +14,7 @@ From OSSVerify.Proofs.libtasn1.asn1_get_length_der_fuzzer.lib.C Require Import
 YQ0j YQ0b YQ03 YQ0i YQ0h YQ09 YQ04 YQ05 YQ0e YQ02.
 From OSSVerify.Proofs.libtasn1.asn1_get_length_der_fuzzer.lib.C Require Import UH04 UH07 UH06.
 From OSSVerify.Proofs.libtasn1.asn1_get_length_der_fuzzer.lib.C Require Import YN05.
+From OSSVerify.Proofs.libtasn1.asn1_get_length_der_fuzzer.lib.C Require Import YK0a.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Open Scope bv_scope.
@@ -71,10 +73,32 @@ mkChunk (CTX + 64) (CVal 8 (SOff 41 0)); mkChunk (CTX + 72) (CVal 8 (SOff 42 0))
 Definition R_ctxC : region :=
 mkRegion None (CTX + 920) (CTX + 928) (CTX + 920) (CTX + 928) [mkChunk (CTX + 920) (CVal 8 (SOff 43 0))].
 Definition R_auxp : region := mkRegion None (LIBC + 8) (LIBC + 16) 0 0 [mkChunk (LIBC + 8) (CVal 8 (SOff 44 0))].
-Definition R_auxv : region := mkRegion (Some 44%nat) 0 160 0 0
-[mkChunk 0 (CVal 8 (SLit 3)); mkChunk 16 (CVal 8 (SLit 4)); mkChunk 32 (CVal 8 (SLit 5)); mkChunk 48 (CVal 8 (SLit 16));
-mkChunk 64 (CVal 8 (SLit 6)); mkChunk 80 (CVal 8 (SLit 11)); mkChunk 96 (CVal 8 (SLit 12)); mkChunk 112 (CVal 8 (SLit 23));
-mkChunk 128 (CVal 8 (SLit 25)); mkChunk 136 (CVal 8 (SOff 45 0)); mkChunk 144 (CVal 8 (SLit 0))].
+(* #38.  The auxv as [get_random_secret] reads it: musl walks the vector from
+   pair 0 to AT_NULL reading every KEY, and copies AT_RANDOM's VALUE.  So the
+   fixture holds the key word of every pair ([APC.AUXV_KEYS], read off the
+   model's [StackLayout.auxv_entries]; pair k at byte 16 * k) and AT_RANDOM's
+   value word at 392 = 16 * 24 + 8, in ascending offset order.  It was ten
+   pairs at 0,16,...,144 with AT_RANDOM's value at 136, the pre-revision
+   ten-pair layout; with only the ten keys the plan names, the run stopped at
+   pair 0's key ([RS_stopped (SR_load (Some 44%nat) 0)]) instead of reaching
+   memcpy.  A key is a literal of [auxv_entries], so naming all of them asks
+   nothing of the launch.
+
+   THIS IS A CLOSED STATE THAT [Eval vm_compute] REDUCES: the two CONFIG_RSEQ
+   cases are two closed instantiations, [R_auxv_t] and [R_auxv_f], and
+   [R_auxv_of_eq] ties both to the one builder [auxv_region]. *)
+Definition auxv_key_chunk (r : Z) (k : nat) : chunk :=
+mkChunk (16 * Z.of_nat k) (CVal 8 (SLit (nth k (APC.AUXV_KEYS r) 0))).
+Definition auxv_region (rs : bool) : region :=
+mkRegion (Some 44%nat) 0 (APC.AUXSZ (APC.rseq_z rs)) 0 0
+(map (auxv_key_chunk (APC.rseq_z rs)) (seq 0 25)
+ ++ mkChunk APC.AT_RANDOM_VOFF (CVal 8 (SOff 45 0))
+ :: map (auxv_key_chunk (APC.rseq_z rs)) (seq 25 (length (APC.AUXV_KEYS (APC.rseq_z rs)) - 25))).
+Definition R_auxv_t : region := Eval vm_compute in auxv_region true.
+Definition R_auxv_f : region := Eval vm_compute in auxv_region false.
+Definition R_auxv_of (rs : bool) : region := if rs then R_auxv_t else R_auxv_f.
+Lemma R_auxv_of_eq : forall rs, R_auxv_of rs = auxv_region rs.
+Proof. intros [|]; vm_compute; reflexivity. Qed.
 Definition R_fh : region := mkRegion (Some 33%nat) 0 16 0 16 [mkChunk 0 (CVal 8 (SOff 35 0)); mkChunk 8 (CVal 8 (SOff 34 0))].
 Definition R_nx : region := mkRegion (Some 34%nat) 0 8 0 8 [].
 Definition R_pr : region := mkRegion (Some 35%nat) 8 16 8 16 [].
@@ -83,24 +107,55 @@ Definition R_tl : region := mkRegion (Some 41%nat) 8 16 8 16 [].
 Definition zregion (n : nat) (off len : Z) : region :=
 mkRegion (Some n) off (off + len) off (off + len) [mkChunk off (CZero len)].
 Definition mem_am1 : smem := [R_stack; R_got; R_guard; R_pgsz; R_ctxA true; R_ctxB; R_ctxC; R_errno].
-Definition mem_am0 : smem := [R_stack; R_got; R_guard; R_pgsz; R_ctxA false; R_ctxB; R_ctxC; R_errno; R_auxp; R_auxv].
+Definition mem_am0_of (rs : bool) : smem :=
+[R_stack; R_got; R_guard; R_pgsz; R_ctxA false; R_ctxB; R_ctxC; R_errno; R_auxp; R_auxv_of rs].
 Definition F_sp : afact := mkAF (CEIL_MIN + AMS) (2 ^ 63 - 1) 4.
 Definition F_sh : afact := mkAF 0 40 0.
-Definition F_av : afact := mkAF 4096 (2 ^ 63 - 160) 0.
+(* #38, the SECOND-ORDER trap Main names: when the span moves, a FACT bound
+   moves with it IN A DIFFERENT FILE.  This ceiling and [UL06.auxv_check]'s
+   `af_hi fa + APC.AUXSZ 1 <=? 2 ^ 63` must agree, and they did NOT: written
+   as `2 ^ 63 - (if rs then 464 else 432)`, the rs = false branch gives
+   `af_hi = 2 ^ 63 - 432`, and the checker then demands
+   `2 ^ 63 - 432 + 464 <= 2 ^ 63`, FALSE BY 32.  A correct retable on each
+   side, inconsistent across the pair - and it would have read as a checker
+   bug rather than as a bound mismatch.
+   Fixed by taking the MAXIMUM span on both sides: 464 = 16 * 29 = AUXSZ 1 is
+   rs-FREE and pins nothing - it is the larger of the two layouts, so the
+   bound it states is the WEAKER obligation and holds for either build.  It
+   was [2 ^ 63 - 160], 160 being 16 * 10 under the ten-pair layout (12h).
+   The parameter stays only so the call sites keep their shape. *)
+Definition F_av_of (rs : bool) : afact := mkAF 4096 (2 ^ 63 - 464) 0.
 Definition F_ar : afact := mkAF 4096 (2 ^ 63 - 16) 0.
 Definition F_pg : afact := mkAF 4096 (CEIL_MAX - 4096) 12.
 Definition facts_am1 : facts := mkFacts [ (2%nat, F_sp); (39%nat, F_sh) ] [] [].
-Definition facts_am0 : facts := mkFacts [ (2%nat, F_sp); (39%nat, F_sh); (44%nat, F_av); (45%nat, F_ar) ] [] [].
+Definition facts_am0_of (rs : bool) : facts :=
+mkFacts [ (2%nat, F_sp); (39%nat, F_sh); (44%nat, F_av_of rs); (45%nat, F_ar) ] [] [].
 Definition ss_am1 : sstate := mkSS ubs2_A_alloc_meta regs_am mem_am1 None facts_am1.
-Definition ss_am0 : sstate := mkSS ubs2_A_alloc_meta regs_am mem_am0 None facts_am0.
-Definition ss_i1 : sstate := Eval vm_compute in runto_ ubs2_A_memcpy ss_am0.
+Definition ss_am0_of (rs : bool) : sstate := mkSS ubs2_A_alloc_meta regs_am (mem_am0_of rs) None (facts_am0_of rs).
+(* #38, Main's CHAIN-DUP ruling: the reduced chain is instantiated TWICE, once
+   per CONFIG_RSEQ case, and selected by the run's own flag.  The duplication is
+   CONTAINED - it ends at [merge_a2y], because [ss_A2] comes from [mem_am1],
+   which has no auxv region at all - so eight definitions and four lemmas
+   double, not the file's 44 [Eval vm_compute] lines.  The reduction reads NO
+   kernel field (measured: zero hits for all thirteen accessors in this file and
+   its twin), so the flag enters through [R_auxv_of] alone. *)
+Definition ss_i1_t : sstate := Eval vm_compute in runto_ ubs2_A_memcpy (ss_am0_of true).
+Definition ss_i1_f : sstate := Eval vm_compute in runto_ ubs2_A_memcpy (ss_am0_of false).
+Definition ss_i1_of (rs : bool) : sstate := if rs then ss_i1_t else ss_i1_f.
 Definition MC_JUNK : list reg := [5; 6; 7; 11; 12; 13; 14; 15; 16; 17; 28]%bv.
-Definition mem_i2 : smem :=
-Eval vm_compute in match store_region (ss_mem ss_i1) (Some 2%nat) (-64) 8 (CVal 8 (SOff 0 0)) with Some rs => rs | None => [] end.
-Definition ss_i1' : sstate := setpc PC_MCRET (setmem mem_i2 ss_i1).
-Definition ss_i2 : sstate := Eval vm_compute in junk_regs MC_JUNK 46 ss_i1'.
+Definition mem_i2_t : smem :=
+Eval vm_compute in match store_region (ss_mem ss_i1_t) (Some 2%nat) (-64) 8 (CVal 8 (SOff 0 0)) with Some rs => rs | None => [] end.
+Definition mem_i2_f : smem :=
+Eval vm_compute in match store_region (ss_mem ss_i1_f) (Some 2%nat) (-64) 8 (CVal 8 (SOff 0 0)) with Some rs => rs | None => [] end.
+Definition mem_i2_of (rs : bool) : smem := if rs then mem_i2_t else mem_i2_f.
+Definition ss_i1'_of (rs : bool) : sstate := setpc PC_MCRET (setmem (mem_i2_of rs) (ss_i1_of rs)).
+Definition ss_i2_t : sstate := Eval vm_compute in junk_regs MC_JUNK 46 (ss_i1'_of true).
+Definition ss_i2_f : sstate := Eval vm_compute in junk_regs MC_JUNK 46 (ss_i1'_of false).
+Definition ss_i2_of (rs : bool) : sstate := if rs then ss_i2_t else ss_i2_f.
 Definition ss_a2x : sstate := Eval vm_compute in runto_ PC_A2 ss_am1.
-Definition ss_a2y : sstate := Eval vm_compute in runto_ PC_A2 ss_i2.
+Definition ss_a2y_t : sstate := Eval vm_compute in runto_ PC_A2 (ss_i2_of true).
+Definition ss_a2y_f : sstate := Eval vm_compute in runto_ PC_A2 (ss_i2_of false).
+Definition ss_a2y_of (rs : bool) : sstate := if rs then ss_a2y_t else ss_a2y_f.
 Definition A2_JUNK : list reg := [1; 5; 6; 7; 9; 10; 11; 12; 13; 14; 15; 16; 17; 20; 28]%bv.
 Definition ss_A2 : sstate := Eval vm_compute in junk_regs A2_JUNK 57 ss_a2x.
 Definition C_fh0 : acond := mkAC BC_EQ (SOff 33 0) (SLit 0).
@@ -190,12 +245,19 @@ Definition ss_o1 : sstate := Eval vm_compute in run_ ss_O.
 Definition ss_oE0 : sstate := Eval vm_compute in run_ (add_cond ss_o1 C_tl0).
 Definition ss_o2 : sstate := addR R_tl (add_cond ss_o1 C_tl1).
 Definition ss_oE1 : sstate := Eval vm_compute in run_ ss_o2.
-Lemma run_am0 : sym_run_toN ubs2segs ubs2tbl FUEL ubs2_A_memcpy ss_am0 = (ss_i1, RS_running).
-Proof. vm_compute. reflexivity. Qed.
-Lemma store_i1 : store_region (ss_mem ss_i1) (Some 2%nat) (-64) 8 (CVal 8 (SOff 0 0)) = Some mem_i2.
-Proof. vm_compute. reflexivity. Qed.
-Lemma run_i2 : sym_run_toN ubs2segs ubs2tbl FUEL PC_A2 ss_i2 = (ss_a2y, RS_running).
-Proof. vm_compute. reflexivity. Qed.
+(* #38: one statement per fact, quantified over the run's CONFIG_RSEQ flag and
+   closed by splitting on it before any reduction, so each branch reduces a
+   CLOSED state exactly as the single-instantiation form did (rule 12).  The
+   consumers stay ONE proof: only the steps that need a reduced literal split. *)
+Lemma run_am0_of : forall rs,
+sym_run_toN ubs2segs ubs2tbl FUEL ubs2_A_memcpy (ss_am0_of rs) = (ss_i1_of rs, RS_running).
+Proof. intros [|]; vm_compute; reflexivity. Qed.
+Lemma store_i1_of : forall rs,
+store_region (ss_mem (ss_i1_of rs)) (Some 2%nat) (-64) 8 (CVal 8 (SOff 0 0)) = Some (mem_i2_of rs).
+Proof. intros [|]; vm_compute; reflexivity. Qed.
+Lemma run_i2_of : forall rs,
+sym_run_toN ubs2segs ubs2tbl FUEL PC_A2 (ss_i2_of rs) = (ss_a2y_of rs, RS_running).
+Proof. intros [|]; vm_compute; reflexivity. Qed.
 Lemma run_am1 : sym_run_toN ubs2segs ubs2tbl FUEL PC_A2 ss_am1 = (ss_a2x, RS_running).
 Proof. vm_compute. reflexivity. Qed.
 Lemma run_A2 : sym_runN ubs2segs ubs2tbl FUEL ss_A2 = (ss_fh, RS_stopped (SR_branch BC_EQ (SOff 33 0) (SLit 0))).
@@ -271,7 +333,8 @@ Proof. vm_compute. reflexivity. Qed.
 Lemma run_o2 : sym_runN ubs2segs ubs2tbl FUEL ss_o2 = (ss_oE1, RS_stopped (SR_jalr (SOff 1 0))).
 Proof. vm_compute. reflexivity. Qed.
 Lemma merge_a2x : mergeb ss_A2 (junk_regs A2_JUNK 57 ss_a2x) = true. Proof. vm_compute. reflexivity. Qed.
-Lemma merge_a2y : mergeb ss_A2 (junk_regs A2_JUNK 57 ss_a2y) = true. Proof. vm_compute. reflexivity. Qed.
+Lemma merge_a2y_of : forall rs, mergeb ss_A2 (junk_regs A2_JUNK 57 (ss_a2y_of rs)) = true.
+Proof. intros [|]; vm_compute; reflexivity. Qed.
 Definition absO1 (ss : sstate) : sstate := junk_regs [9%bv] 95 ss.
 Definition absO2 (ss : sstate) : sstate := junk_regs O_JUNK 96 (absO1 ss).
 Definition absO3 (ss : sstate) : sstate := upd_chunk 5 (CTX + 40) (CVal 8 (SOff 108 0)) (absO2 ss).
@@ -287,7 +350,7 @@ Definition absV2 (ss : sstate) : sstate := upd_chunk 6 (CTX + 920) (CVal 8 (SLit
 
 
 
-Lemma ss_i1_pc : ss_pc ss_i1 = ubs2_A_memcpy. Proof. reflexivity. Qed.
+Lemma ss_i1_pc_of : forall rs, ss_pc (ss_i1_of rs) = ubs2_A_memcpy. Proof. intros [|]; reflexivity. Qed.
 Lemma ss_rK_pc : ss_pc ss_rK = ubs2_A_mprotect + 0x30. Proof. reflexivity. Qed.
 Lemma ss_vK2_pc : ss_pc ss_vK2 = ubs2_A_mprotect + 0x30. Proof. reflexivity. Qed.
 Lemma ss_vK_pc : ss_pc ss_vK = ubs2_A_mmap + 0xc4. Proof. reflexivity. Qed.

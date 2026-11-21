@@ -1,5 +1,5 @@
 (* The recorder's facts of sup_host_setting's ASan+UBSan walk (plugin-hostd/fuzz_command): the B twin of the ASan
-   walk's lib/A/Prog/sup_host_setting_s1.v (a working branch e323bbe76d2), over B's rec_repA
+   walk's lib/A/Prog/sup_host_setting_s1.v (a working branch), over B's rec_repA
    (lib/B/Prog/CmdRep.v, the A form at B's addresses). B calls record() and arg_s() (their statements give rec_repA
    after each step), so only the parts the B walk needs are kept: reads kept (hs_aval_kept .. hs_rec_kept), the
    host-settings digest store (hs_rec_host, recorder.c:376), and what the walk reads of a recorder (the call count,

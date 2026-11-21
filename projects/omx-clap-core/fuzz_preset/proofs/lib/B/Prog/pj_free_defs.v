@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the STATEMENTS of pj_free's image-B walk (fuzz_preset asan-ubsan, B 0x86a24, 136 slots of
    lib/B/Listing_prog.v, 4 * 136 = 544 bytes; preset_file.c :334-350).
    proves no function (kind: statement text).
@@ -19,8 +20,8 @@
      (as_universe B) (call_trace ..) S` and its post BUDGETED at that trace; tfuzz_free_specO takes the trace in
      u_fix, which pj_free's FIXED traces have, and states the plain post) by PjFreeCommon.v pf_ff_of_kit /
      pf_specX_of_walk.
-     (History: at walkkit a3bdeca3920 the kit's fuzz_free premise ccnt24 S <= L24 + DRV was open at every call - the
-     STOP the kit owner ruled on by adding the entry premise and the keep to the kit texts; at decff67d721f the walk
+     (History: at walkkit the kit's fuzz_free premise ccnt24 S <= L24 + DRV was open at every call - the
+     STOP the kit owner ruled on by adding the entry premise and the keep to the kit texts; the walk
      took an earlier fuzz_free text with the entry widened to a bulk sub-position, which f97c's post-implication form made
      unnecessary.)
    - THE CUTS of the walk: the entry record PfEnt (tpj_free_specO's premises, pf_pre), the node record PfNode (v's
@@ -107,7 +108,7 @@ Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte
 #[local] Abbreviation RZ_cf := (@YGcfRehidePost.RZ_cf rc).
 
 (* the callee texts at image B: fuzz_free instrumented (m-form), and __asan_memset's m-form intrinsic text
-   (YGcallMxmn.v aintrin_realizes_xm OSet, s1b 459129c18903) *)
+   (YGcallMxmn.v aintrin_realizes_xm OSet, s1b) *)
 Definition pf_texts (PB : astate -> Prop) (FX : pf_obs) : Prop :=
   tfuzz_free_specO (PA := PA) B ARx SK PB FX /\
   YGcallMxmn.aintrin_realizes_xm SEGS B ARx OSet (pa_sigma AS___asan_memset).
@@ -183,7 +184,7 @@ Definition pf_node (en : PfEnt) (nd : PfNode) : Prop :=
 (* ---- what holds at every cut after the prologue ---- *)
 (* the frame: the journal from the entry at the widened window, footprint fe_FP; the caller's window outside the
    footprint untouched; sp lowered by 128; the saved ra, s0 .. s11 in their slots; the frame present; gp, tp kept;
-   the read-only view; THE MEMNORM KEEP from the entry memory (kit 4f18c75d4900 PRH_Base.v fQmn: every cut carries
+   the read-only view; THE MEMNORM KEEP from the entry memory (kit PRH_Base.v fQmn: every cut carries
    `memnorm mem0 -> memnorm mem`, the P of YSRrMemnorm.srr_inv_laws_imp, so the epilogue closes fpostWm) *)
 Definition pf_frame (en : PfEnt) (ly : alayout) (S : astate) (Hp : list Z) (W : world SEGS) (regs : bvmap 5 word)
   (mem : word -> option byte) (md : Model) (k : Z) : Prop :=

@@ -5,6 +5,7 @@
    of lib/A/Rt/StackMalloc8Tbl.v: the same Definitions, with the same names, in the same order, each value
    MEASURED on the asan-ubsan image. The cuts (lib/AU/Rt/StackMalloc8Cuts.v) hold no literal address and use the
    names below; they are the asan cuts with the module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 
 (*   HOW MEASURED. Host nm/objdump cannot read these RISC-V ELFs, so every value below comes from pyelftools
    (.symtab of the unstripped twin, and the PT_LOAD bytes of the pinned image) plus capstone 5.0.7 (decode):
@@ -106,7 +107,7 @@ Definition SM8_TP : Z := 0x5d6a98.
    it is AU/YF0r.v:40's TSD. *)
 Definition SM8_TSD : Z := 0x5f7e40.
 (* The main thread's dtv (inside builtin_tls), the value of [tp - 8] that __tls_get_addr loads at 0x9596c;
-   it reads dtv[1] = [SM8_DTV + 8] at 0x9597c. The value is the staged start-up table's (AU/YF0m.v:26,
+   it reads dtv[1] = [SM8_DTV + 8] at 0x9597c. The value is the staged start-up table's (AU/YF0m.v:27,
    z8 (ATp (-8))), and it is builtin_tls + 0xe8 = SM8_TP + 0x20, the same offsets as asan. *)
 Definition SM8_DTV : Z := 0x5d6ab8.
 (* The TLS-GD .got pair malloc_8 passes to __tls_get_addr (`auipc a0,0x5d` + `addi a0,a0,0x2d0` at entry
@@ -134,7 +135,7 @@ Definition SM8_GOT_DTLS : Z := 0x9c738.
 Definition SM8_DTLS_TPOFF : Z := 8.
 (* [T + 48] and [T + 56], the main thread's static-TLS bounds that __interceptor___tls_get_addr loads at
    0x48ce0 / 0x48ce4 and passes to DTLS_on_tls_get_addr. The values are those of the staged start-up table
-   (AU/YF0m.v:24, z8 (AT 48) / z8 (AT 56)), taken by the walk as a Section hypothesis. *)
+   (AU/YF0m.v:25, z8 (AT 48) / z8 (AT 56)), taken by the walk as a Section hypothesis. *)
 Definition SM8_T_TLS_BEG : Z := 0x5d71d0.
 Definition SM8_T_TLS_END : Z := 0x5d72ac.
 (* The image's extent: the first PT_LOAD's start and the last PT_LOAD's page end (AU/YF0x.v:35/:23). *)

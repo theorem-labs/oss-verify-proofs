@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx-GENERIC twin of ARM_gone's phase p6 on image B (lib/B/W_LLVMFuzzerTestOneInput_gone_p6.v,
-   a Theorem Labs lane's, fee5272ac13 / 4118c28f01e: check_shape_done, the fake frame's re-poison and the latch, GCSD to
+   a Theorem Labs lane: check_shape_done, the fake frame's re-poison and the latch, GCSD to
    INV_K), for the conversion of ARM_gone to the cut invariants of lib/B/W_LLVMFuzzerTestOneInput_cut_x.v.
    _gone_p6.v is not edited.
    - CITED from _gone_p6.v: its AR-free names (the run states, g6_fp_low and its lemmas, the kept lemmas, ...), with the
@@ -9,7 +10,7 @@
    - RESTATED over ARx at the ghost list []: B's Section g6c, the walk of check_shape_done with the kept post
      (g6_csdk_spec_x, g6_csd_entry_x, g6_pb_csdk_x; W1Verify's check_bounded conversion: the callee's journal
      W_journal_x's gx form at G = [], post cut_x's aleafx_post_x); and, merged per item with SmallX's image-A twin
-     lib/A/W_LLVMFuzzerTestOneInput_gone_p6_x.v (95a5de32ab2), the transport kit g6k (g6_blk_x .. g6_amodel_kept_x) and
+     lib/A/W_LLVMFuzzerTestOneInput_gone_p6_x.v, the transport kit g6k (g6_blk_x .. g6_amodel_kept_x) and
      the phase lemma gp6_csd_latch_x (its end state is cut_x's INV_K_x).
    Section hypotheses beyond cut_x's header: _gone.v's TL verbatim, BLKN and HPST (the generic relation's facts, as on
    image A).  Every ghost list is [] (cut_x's HP0). *)

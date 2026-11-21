@@ -2,7 +2,7 @@
    program code calls it. STRCMP_ENTRY is the trampoline __interceptor_trampoline_strcmp, which jumps to
    ___interceptor_strcmp. Since 2026-10-29 the statement itself is NOT written here: it is
    lib/Reusable/AStrcmpDef.astrcmp_realizes, the text of record for the strcmp trampoline contract in the
-   registry (proved on libreac/fuzz_grant image A at a working branch 97c611eec86). This
+   registry (proved on libreac/fuzz_grant image A at a working branch). This
    file keeps the name the identity callers cite and the asan-ubsan entry address. The earlier identity-local
    statement is superseded; `strcmp_res c1 c2 = 0 <-> c1 = c2` gives its result clause back in one step.
    Address check against the pinned binary

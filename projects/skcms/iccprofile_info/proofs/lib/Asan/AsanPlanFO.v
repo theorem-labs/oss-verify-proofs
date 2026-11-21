@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by gabelogan195, 2026-11: APF.check refuses PSpin (CErr 2) instead of returning COk SNil at a self-jump; no plan of this harness uses PSpin. *)
+(* Modified by Theorem Labs, 2026-11: the checker refuses every PSpin node (CErr 2) in place of the node_spin test. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 

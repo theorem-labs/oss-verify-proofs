@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/openssl/bndiv/lib/A/I_strnlen.v, with its module paths, addresses and numbers changed; 15 of its 196 lines of code are new or changed and 11 lines of the source are left out. *)
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/Bz/A/I_strnlen.v (a working branch 3e35620c52e); relocated to libreac/fuzz_disco.asan-ubsan by reloc.py (target disco-Y): module paths changed; 2 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan-ubsan, symbol + offset; its relocation table is not kept). *)
-(* Modified by Theorem Labs, 2026-10 (a Theorem Labs lane): Requires the Y copy lib.B.Bz.A.IcptSpec (a working branch 1da02a6e5d8), not the tool's class-(a) lib.A copy: memchr_chk / strnlen_chk are over StrFun.find_byte, a per-image constant. *)
-(* Modified by Theorem Labs, 2026-10: relocated to omx-clap-core fuzz_manifest.asan; from a working branch 840c4afa7e2 proofs/omx-clap-core/fuzz_state/lib/A/Bz/A/I_strnlen.v, module path fuzz_state -> fuzz_manifest and 1 address numeral, the entry ___interceptor_strnlen+0 0x42978 -> 0x42d60 (keyed on symbol + offset; fuzz_manifest.asan symtab, size 660; same 165 instructions, 22 differing only in pc-relative fields). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/Bz/A/I_strnlen.v (a working branch); relocated to libreac/fuzz_disco.asan-ubsan by reloc.py (target disco-Y): module paths changed; 2 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan-ubsan, symbol + offset; its relocation table is not kept). *)
+(* Modified by Theorem Labs, 2026-10 (a Theorem Labs lane): Requires the Y copy lib.B.Bz.A.IcptSpec (a working branch), not the tool's class-(a) lib.A copy: memchr_chk / strnlen_chk are over StrFun.find_byte, a per-image constant. *)
+(* Modified by Theorem Labs, 2026-10: relocated to omx-clap-core fuzz_manifest.asan; from a working branch proofs/omx-clap-core/fuzz_state/lib/A/Bz/A/I_strnlen.v, module path fuzz_state -> fuzz_manifest and 1 address numeral, the entry ___interceptor_strnlen+0 0x42978 -> 0x42d60 (keyed on symbol + offset; fuzz_manifest.asan symtab, size 660; same 165 instructions, 22 differing only in pc-relative fields). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_disco.lib.B.Bz Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)

@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: the kit of segment F of LLVMFuzzerTestOneInput's ASan walk (plugin-hostd/fuzz_command, 0x86974 .. 0x8699c: the three frees of the words blocks and the latch), in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACbk.v (wcb_entry: the symbolic seed of a point of the function) and A/ACh2.v:122-290 (the step through a call and back, with the facts carried over it). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/LLVMFuzzerTestOneInput_s70.v, with its module paths changed; 855 of its 936 lines of code are new or changed and 347 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_s24k.v; 390 of its 805 lines of code are new or changed and 521 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan image A (fuzz_segconf.asan, pin sha256 48c5355bdacb): the kit of file group _s17, segment
    S07 of the test harness's entry function LLVMFuzzerTestOneInput (0x853bc .. 0x85410: reac_segconf_parse(c, text),
    check 18, free(text)). No function of the binary is proved here: these are the lemmas LLVMFuzzerTestOneInput_s17.v
@@ -11,10 +12,10 @@
 
    - the model of the last turn (seg_spec.seg_after when f + 1 = nfiles): the reader's state and the model's after
      it, the answer of reac_segconf_parse equal to m->n, and conf_rel (SegModel.v's run_rel / file_rel / cross_rel
-     applied to the turns of seg_run); the cursor after the turn (_s15's s5_cur_S, LLVMFuzzerTestOneInput_s15k.v
-     at commit 1ff47048945a, copied);
+     applied to the turns of seg_run); the cursor after the turn (_s15's s5_cur_S, LLVMFuzzerTestOneInput_s15k.v,
+     copied);
    - the walk's facts at a cut, what a step keeps, the budget around a free and the free itself: _s24's kit
-     (LLVMFuzzerTestOneInput_s24k.v, commit 17b6c3e39168 and its worktree's later
+     (LLVMFuzzerTestOneInput_s24k.v, and its worktree's later
      s24_kept_of_journal / s24_blk_kept / s24_core_step_f), copied with s24_ renamed s17k_, its free at this
      segment's pc 0x8540c (mv a0, s7; jal free);
    - the call of reac_segconf_parse through PaFx.v's cl_callSF (the callee returns at some FP state fx1) and its

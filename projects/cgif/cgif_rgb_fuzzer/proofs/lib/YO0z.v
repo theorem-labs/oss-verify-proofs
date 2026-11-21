@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (new needed_taskG: the needed size is at most TASK_SIZE). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -85,6 +86,11 @@ Proof.
 exact (needed_facts A g am fr n (HW _ _ _ _ _ _ _ _ _ _ _ _ HC) (rc_used _ _ _ _ _ _ _ _ _ _ _ _ HC)
 (rc_fr _ _ _ _ _ _ _ _ _ _ _ _ HC) (rc_last _ _ _ _ _ _ _ _ _ _ _ _ HC) (Hth _ _ _ _ _ _ _ _ _ _ _ _ HC)
 (Hn62 _ _ _ _ _ _ _ _ _ _ _ _ HC)).
+Qed.
+Lemma needed_taskG : needed fr n <= TASK_SIZE.
+Proof.
+exact (needed_task A g am fr n (HW _ _ _ _ _ _ _ _ _ _ _ _ HC) (rc_used _ _ _ _ _ _ _ _ _ _ _ _ HC)
+(rc_fr _ _ _ _ _ _ _ _ _ _ _ _ HC) (rc_last _ _ _ _ _ _ _ _ _ _ _ _ HC) (rc_task _ _ _ _ _ _ _ _ _ _ _ _ HC)).
 Qed.
 Lemma off_rangeG : 0 <= fr_off fr <= 255.
 Proof.

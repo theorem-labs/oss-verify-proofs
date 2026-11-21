@@ -3,14 +3,14 @@
      rcpPA_rec      the record: 36 bytes that rw_cells puts at o, inside a live frame, read back through the core's view
                     (the frame bytes are visible: A.ProgWorldVisFrame.frame_vis; at a visible byte the view is ctrl's mrd:
                     C_reac_ctrl_parseV.rcpV_aview_mrd).  Port of a Theorem Labs lane's lib/B/Prog/C_reac_ctrl_parsePf.v (at head lib/B/Prog/C_reac_ctrl_parsePf.v:795-806)
-                    (written on a working branch 258208c7d59).
+                    (written on a working branch).
      rcpPA_kept_wr  the write premise of C_reac_ctrl_parseK.rcpK_compose for the stretch's EXACT write set
                     reac_ctrl_parseF_rbody.RBodyFOn.Wf2 fra jj 1 ++ [(ob, ob + 36)]: off the window [S - 8800, S), every
                     written byte is below alloc_ceiling, not an image byte, and inside the record [o, o + 36) if it is a
                     byte of a caller's block, frame or frame shadow.  The new class-1 frame, its shadow and its flag byte
                     are apart from all of these (C_reac_ctrl_parseV.rcpV_frame / rcpV_apart_img / rcpV_apart_block /
                     rcpV_apart_frame at S2, where (1, pos) is live); the record bytes are inside o's frame of Sc
-                    (rcpV_in_frame).  Port of a Theorem Labs lane's lib/B/Prog/C_reac_ctrl_parsePf.v (at head lib/B/Prog/C_reac_ctrl_parsePf.v:821-859; written on a working branch 258208c7d59).
+                    (rcpV_in_frame).  Port of a Theorem Labs lane's lib/B/Prog/C_reac_ctrl_parsePf.v (at head lib/B/Prog/C_reac_ctrl_parsePf.v:821-859; written on a working branch).
    Twin rule: every project module is Required without Import and named through a full-path Module alias.
    rule 24: no function proved. *)
 From Stdlib Require Import ZArith List Lia Bool.

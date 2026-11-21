@@ -2,11 +2,12 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/leptonica/pix_orient_fuzzer/lib/K5/A23/I_strchr.v, with its module paths changed; 396 of its 425 lines of code are new or changed and 84 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The asan strchr interceptor of fuzz_disco.asan, walked instruction by instruction: the exported
    trampoline, the sanitizer's internal strlen, the shadow-byte scan and the region check the interceptor
    runs after REAL(strchr) returns, and the whole interceptor from entry to return.  The proofs take the
    region-is-poisoned contract (rip_stmt) and REAL(strchr)'s contract (chr_stmt) as section hypotheses. *)
-(* Statements relocated to libreac/fuzz_disco.asan from proofs/omx-clap-core/fuzz_manifest/lib/A/Bz/A/I_strchrw.v (a working branch 3e35620c52e) by reloc.py (target disco-A): module paths and 25 address numerals, symbol + offset; table: this file's rows in provenance/evidence/g9-gxa/g9tool/g9-table-disco-A.tsv. That file is a Theorem Labs lane's unchanged port from a working branch affce6489c8 proofs/omx-clap-core/fuzz_manifest/lib/A/Bz/A/I_strchrw.v. Proofs written anew from the statements. *)
+(* Statements relocated to libreac/fuzz_disco.asan from proofs/omx-clap-core/fuzz_manifest/lib/A/Bz/A/I_strchrw.v (a working branch) by reloc.py (target disco-A): module paths and 25 address numerals, symbol + offset; table: this file's rows in provenance/evidence/g9-gxa/g9tool/g9-table-disco-A.tsv. That file is a Theorem Labs lane's unchanged port from a working branch proofs/omx-clap-core/fuzz_manifest/lib/A/Bz/A/I_strchrw.v. Proofs written anew from the statements. *)
 From OSSVerify.Proofs.libreac.fuzz_disco.lib.A.Bz Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

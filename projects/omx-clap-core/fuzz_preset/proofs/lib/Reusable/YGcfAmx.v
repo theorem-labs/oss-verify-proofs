@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: the event-free second allocator instance (suffix cf), the malloc / free laws in the
    form c-omx-alloc's generic kit consumes (alloc_model_laws_x_cf): a post with an UPPER bound on the event
    counter, which malloc_post_cf (YG07cf.v) and free_post_ycf (YG03cf.v) do not carry.
    The upper bounds, proved on every returning path of the model (ipost below, an all-paths property that
    needs no invariant):
-   - malloc_cf: st_nev s' <= st_nev s + 3. malloc_cf ticks once (YG00cf.v:235). Its only other ticks are
-     errb_map_cf's (YG00cf.v:123), reached through populate_cf -> map_more_user_cf's class-full arm ->
+   - malloc_cf: st_nev s' <= st_nev s + 3. malloc_cf ticks once (YG00cf.v:236). Its only other ticks are
+     errb_map_cf's (YG00cf.v:124), reached through populate_cf -> map_more_user_cf's class-full arm ->
      errb_report_cf, at most once per malloc_cf. errb_report_cf makes two errb_append_cf calls, and each
      maps at most once: on a mapped buffer it remaps at most once; on an unmapped one it maps
      ERRB_INIT = 65,536 bytes, after which the capacity is 65,536 and the request (exh_len1 = 33 or

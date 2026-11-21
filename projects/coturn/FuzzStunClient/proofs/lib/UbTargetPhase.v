@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, target_phase takes the launch's kernel build (Amb), which target_vm reads. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -12,6 +13,7 @@ From OSSVerify.Proofs.coturn.FuzzStunClient.lib Require Import
   Spec TargetSpec TargetKDefs UbWorld UbTargetPre UbWorldK UbTargetPreK
   SymExec3 SymPlan SymPlanSoundA UbATB UbTargetEntry_defs UbTargetEntryK_defs
   TargetShape TargetShapeTop UbTargetAssembly UbTargetCover.
+From OSSVerify.Proofs.coturn.FuzzStunClient.lib Require Amb.
 From OSSVerify.Proofs.coturn.FuzzStunClient.lib Require Import UbTPB_g01 UbTPB_g02 UbTPB_g03 UbTPB_g04 UbTPB_g05 UbTPB_g06 UbTPB_g07 UbTPB_g08 UbTPB_g09 UbTPB_g10.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 (* [comment removed for export] *)
@@ -97,12 +99,13 @@ Proof. vm_compute. reflexivity. Qed.
 
 Theorem target_phase :
   ub_tphase_hyps ->
+  forall {AMB : Amb.Amb},   (* LPS 08b1429: target_vm reads the launch's kernel build *)
   forall (sp0 gm area brkv mas tid : Z) (content : list byte)
          (R : bvmap 5 word) (M : word -> option byte) (VM : VmMaps) (model : Model),
     target_pre sp0 gm area brkv mas tid content R M -> target_vm sp0 gm area VM -> SPSA.std_model VM model ->
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x13d90) M (seg_rom RSEGS)) model) (t_target content (m_fs model)).
 Proof.
-  intros RH sp0 gm area brkv mas tid content R M VM model TP TV SM.
-  exact (tp0_dispatch classes_k0 0 65529 classes_k0_cover RH sp0 gm area brkv mas tid content R M VM model TP TV SM
+  intros RH AMB sp0 gm area brkv mas tid content R M VM model TP TV SM.
+  exact (tp0_dispatch classes_k0 0 65529 classes_k0_cover RH AMB sp0 gm area brkv mas tid content R M VM model TP TV SM
            (paylen_range0 sp0 gm area brkv mas tid content R M TP)).
 Qed.

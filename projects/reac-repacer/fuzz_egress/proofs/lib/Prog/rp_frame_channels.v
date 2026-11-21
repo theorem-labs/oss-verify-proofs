@@ -1,4 +1,4 @@
-(* rp_frame_channels walk, fuzz_egress plain 530b259d7622 0x13258..0x132c8 (repace_wire.c:74-86); ported from reac-repacer/fuzz_wire proofs/reac-repacer/fuzz_wire/lib/Prog/rp_frame_channels.v at d876dac3b12: module path and the in-function pc literals moved by the function's shift; nothing else changed.
+(* rp_frame_channels walk, fuzz_egress plain 530b259d7622 0x13258..0x132c8 (repace_wire.c:74-86); ported from reac-repacer/fuzz_wire proofs/reac-repacer/fuzz_wire/lib/Prog/rp_frame_channels.v: module path and the in-function pc literals moved by the function's shift; nothing else changed.
    reac_frame_clean_len is the named Section hypothesis HCL (its contract, reac_frame_clean_len_c.v). *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

@@ -6,7 +6,8 @@
    listing / Grant* modules -> ctrl's (ctrl_listing, CtrlSyms / CtrlList / CtrlAddr / CtrlPa / CtrlPaLib / CtrlBase).
    ctrl_finish itself is not walked in ctrl's port (it is a leaf inside ctrl_emit_as's lifted stretch), so the shapes
    live in this file of their own. The caller-journal form is cgif's (proofs/cgif/cgif_file_fuzzer/lib/YC20.v:311-365). *)
-(* Modified by Theorem Labs, 2026-10: image B's twin of proofs/libreac/fuzz_ctrl/lib/A/Prog/CtrlCallerJ.v at 31508bdaf24, re-keyed to fuzz_ctrl.asan-ubsan (the pin of analyses/libreac/fuzz_ctrl/listing-B): the caller journal over image B's listing: the Requires of the image-specific files point at lib/B/Prog. tcj_kept / twr_ok / tsrc_ok are stated over world (pa_segs PI), so image B's walks read them at PI_ctrl_B. *)
+(* Modified by Theorem Labs, 2026-10: image B's twin of proofs/libreac/fuzz_ctrl/lib/A/Prog/CtrlCallerJ.v, re-keyed to fuzz_ctrl.asan-ubsan (the pin of analyses/libreac/fuzz_ctrl/listing-B): the caller journal over image B's listing: the Requires of the image-specific files point at lib/B/Prog. tcj_kept / twr_ok / tsrc_ok are stated over world (pa_segs PI), so image B's walks read them at PI_ctrl_B. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation Znumtheory.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

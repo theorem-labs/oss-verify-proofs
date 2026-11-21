@@ -5,9 +5,10 @@
    lib/A/Prog/rp_hot_clamp_F_c.v rp_hot_clamp_contract_F. It follows lib/Prog/rp_hot_clamp.v (the plain walk: one
    continuation-style lemma per field; its f_pf .. f_sv, model_split, f_mn_range, sx32_int and lts_lit / ltu_lit reused
    by name, its mcase / br / join tactics copied, join extended to the walk's invariant) in the footprint style of
-   proofs/libreac/fuzz_decode/lib/A/Prog/reac_frame_is_reac_F.v and reac_decode_F.v (origin/ossv/recipes 88154566652a:
+   proofs/libreac/fuzz_decode/lib/A/Prog/reac_frame_is_reac_F.v and reac_decode_F.v (
    StepF's step, one rng fact per access; rd_all, addr_four, lts_sm and the one-byte shadow window copied from that
    unit's ReacDecodeLib.v and reac_decode_F.v; rw_cells_app from lib/Prog/check_clamp.v). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* rp_hot_clamp of fuzz_uci.asan (entry 0x7fc64, 0x28c bytes): `addi sp, sp, -0x10`, `sd ra, 8(sp)`, the shadow base
    through the GOT word 0x97020 and the cell 0x9eff8, then the five int fields of *a0. Before each 4-byte load or store
    of a field at x it loads the shadow byte k of x, (x >> 3) + 0x7fff8000, and when k <> 0 runs `andi t, x, 7`;

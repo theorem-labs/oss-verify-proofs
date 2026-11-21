@@ -1,18 +1,19 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/Ent102L7A.v, with its module paths changed; 38 of its 77 lines of code are new or changed and 23 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image A' (asan, harness fix #102 pin sha256
    1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44): SEGMENT L7 of the walk of
    LLVMFuzzerTestOneInput (A' 0x815e0), THE COMPOSITION. Proves entry_A_of_segs_stmt of the cut file
-   lib/A/Ent102CutsA.v (blob d8bdd4bf8946, :781; a working branch 21001ac66837): the thirteen segment statements,
+   lib/A/Ent102CutsA.v (blob d8bdd4bf8946, :781; a working branch): the thirteen segment statements,
    chained, are the walk from cut_start to cut_ret.
    - LISTING: lib/A/Listing_prog.v 1ab147923c5d. This file reads no slot of it: the composition is generic over the
      listing class ({L} {PA : PAImg L}), so it holds at L := A_prog_listing with the PAListing of lib/A/Ent102PLA.v
      by instantiation of its implicit arguments.
    - The kit TEXTS (reached only through the cut file's statements; no text is opened here): PRH_Base.v 016934fdc1af,
      PRH_FnCheck.v 1b4213c5f76f, PRH_FnAlloc.v 006c7e1ef8e6, PRH_FnPj.v 50f4781cadb9.
-   - Template: lib/B/EntryCutsB.v entry_B_of_segs (a working branch fbe3888c3879), its eb_bind; this
-     cut graph has no loop, so SRr_bind (YA0n.v:41) and the case split of the branching posts are all it uses.
+   - Template: lib/B/EntryCutsB.v entry_B_of_segs (a working branch), its eb_bind; this
+     cut graph has no loop, so SRr_bind (YA0n.v:42) and the case split of the branching posts are all it uses.
    THE GRAPH: start -> frame (L0a, exists fk) -> s1 | exit (L0b) -> cno (L1) -> pno | exit (L2) -> caw | free (L3)
    -> free | crs0 | acc (L4, exists t D); crs0 -> exit (L4j); acc -> rm (L5a) -> crt (L5b) -> free | crs1 (L5c);
    crs1 -> free (L5d); free -> exit (L6f); exit -> ret (L6x). Every cut after L0a is at the same fk.
@@ -53,7 +54,7 @@ Variable ec_lcut : ecx -> nat -> Z.
 (* the lanes from L1 on are at wle' over the fixed zone (Ent102CutsA.v ec_laneR WLE') *)
 Local Notation WLE' := (wle' segs (@YGcfRehidePost.RZ_cf rc)).
 
-(* two lanes in a row are one lane (YA0nH.SRrG_bind at the transitive wle', YA0nH.v:155) *)
+(* two lanes in a row are one lane (YA0nH.SRrG_bind at the transitive wle', YA0nH.v:156) *)
 Lemma ec_bind {P Q R : world segs -> config -> Prop} :
   ec_laneR WLE' P Q -> ec_laneR WLE' Q R -> ec_laneR WLE' P R.
 Proof.

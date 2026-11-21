@@ -6,7 +6,7 @@ From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.U.Prog Require Import FrameByte
 Import ListNotations.
 Open Scope Z_scope.
 
-(* Ported from libreac/fuzz_decode lib/U/Prog/reac_frame_counter.v (origin/ossv/recipes 25e3d17bdb5, blob a03706c1fe0f):
+(* Ported from libreac/fuzz_decode lib/U/Prog/reac_frame_counter.v (blob a03706c1fe0f):
    fuzz_wire's rp_counter (0x13910) is decode's reac_frame_counter (0x138e0) without the slli/srli 48 pair before `ret`, so the
    walk keeps decode's three pointer-overflow checks (each refuted as decode's are) and takes 5 steps in place of 7 after
    them; the value needs no shift rewrite. UBSan traps: the unimp at 0x13934, reached from 0x13910 (a0 = 0: refuted by the

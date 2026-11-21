@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: forward vDSO reservation inclusion through recursive slot calls and returns. *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -977,7 +978,7 @@ Section ASN.
   Proof using HL_E IHd HQF HQ DEF Hsp R4 Rra R2 HBUD Hreq Hlimbo Hd Hsc HL. clear - HL_E IHd HQF HQ DEF Hsp R4 Rra R2 HBUD Hreq Hlimbo Hd Hsc HL.
     intros s2 M2 mdl2 r m cnt GB Hle SIDE.
     destruct GB as (P2 & NJ2 & EL2 & Hnil & Um & Zm & NLm & G9 & G10 & G11 & G18 & G19 & G24 & G25 & G14 & G12 & C1 & C2 & C3 & C4).
-    pose proof P2 as [W2 RP2 LG2 Hh2 Hlz2 Hmat2 Hfs2 Hfds2 Hlim2 Hcan2 Herr2 BL2 LM2 MU2 FR2 DF2 SK2 Q2 Q8 Q20 Q21 Q22 Q23 KB].
+    pose proof P2 as [W2 RP2 LG2 Hh2 Hlz2 Hmat2 Hfs2 Hfds2 Hlim2 Hcan2 Herr2 BL2 LM2 MU2 FR2 DF2 SK2 Q2 Q8 Q20 Q21 Q22 Q23 KB Hrdr2 HVDSO2].
     pose proof scl_rng as SCL. pose proof stk272 as S272.
     assert (CNT2 : 2 <= cnt) by (destruct (Z.eq_dec cnt 1) as [E|NE]; [pose proof (C4 E); lia | lia]).
     assert (S1016 : 16 * size_class sc <= 1016) by nia.
@@ -1003,7 +1004,7 @@ Section ASN.
     assert (Er2 : getr r1 2 = Z_to_bv 64 (sp - 144)) by (kept_rw K1; exact Q2).
     pose proof (ASSTK_S d') as AS'. rewrite <- Ed in AS'.
     apply (kat_of_kfx F bo). replace (0x62c40%bv : word) with (Z_to_bv 64 AS_ENTRY) by (apply bv_eq; reflexivity).
-    apply (IH F bi bo s2 L M2 mdl2 r1 rom (sp - 144) j nreq HL SIDE W2 RP2 LG2 NJ2 Hh2 Hlz2 Hmat2 J48).
+    apply (IH F bi bo s2 L M2 mdl2 r1 rom (sp - 144) j nreq HL SIDE W2 RP2 LG2 NJ2 Hh2 Hlz2 Hmat2 HVDSO2 J48).
     { unfold dle. lia. }
     { rewrite EL2. rewrite zlen_cons. rewrite Ed, Nat2Z.inj_succ in Hlimbo. lia. }
     { lia. }
@@ -1018,7 +1019,7 @@ Section ASN.
     { intros y Hy. apply DF2. lia. }
     2: { (* [comment removed for export] *)
       intros c' PF.
-      destruct PF as (s3 & M3 & mdl3 & r3 & -> & W3 & RP3 & LG3 & Hh3 & Hlz3 & Hmat3 & Hfs3 & Hfds3 & Hlim3 & NJ3 & EL3 & Hcan3 &
+      destruct PF as (s3 & M3 & mdl3 & r3 & -> & W3 & RP3 & LG3 & Hh3 & Hlz3 & Hmat3 & Hfs3 & Hfds3 & Hrdr3 & HVDSO3 & Hlim3 & NJ3 & EL3 & Hcan3 &
                       LM3 & MU3 & F10 & F2 & K3 & FRM3 & DEF3).
       rewrite E1. replace (Z_to_bv 64 405536) with (0x63020%bv : word) by (apply bv_eq; reflexivity).
       apply (kf_of_kat F HL).
@@ -1045,6 +1046,8 @@ Section ASN.
         + rewrite F2, Er2. reflexivity.
         + kept_rw K3. kept_rw K1. exact Q20.
         + eapply keeps_big; [eapply keeps_big; [exact KB | exact K1 | reflexivity] | exact K3 | reflexivity].
+        + (* f_rdr: across the recursive slot call, then across the prefix. *)
+          rewrite Hrdr3. exact Hrdr2.
       - exact NJ3.
       - rewrite EL3. exact EL2.
       - exact NLm.
@@ -1053,7 +1056,7 @@ Section ASN.
       - exact F10.
       - left. reflexivity. }
     intros c' POST. apply (kfx_of_kat F HL bi).
-    destruct POST as (s3 & M3 & mdl3 & r3 & g' & idx' & -> & W3 & RP3 & LG3 & Hh3 & Hlz3 & Hmat3 & Hfs3 & Hfds3 & Hlim3 & EL3 & Hcan3 & Herr3 &
+    destruct POST as (s3 & M3 & mdl3 & r3 & g' & idx' & -> & W3 & RP3 & LG3 & Hh3 & Hlz3 & Hmat3 & Hfs3 & Hfds3 & Hrdr3 & HVDSO3 & Hlim3 & EL3 & Hcan3 & Herr3 &
                       Hhd3 & Hg3 & Hgsc3 & Hidx3 & Hsl3 & OJ3 & Hstr3 & Hbig3 & BL3 & LM3 & MU3 & F10 & F2 & K3 & FRM3 & DEF3).
     rewrite E1. replace (Z_to_bv 64 405536) with (0x63020%bv : word) by (apply bv_eq; reflexivity).
     (* [comment removed for export] *)

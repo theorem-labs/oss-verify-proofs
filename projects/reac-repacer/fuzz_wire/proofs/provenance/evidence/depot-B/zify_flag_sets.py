@@ -1,6 +1,6 @@
 """zify_flag_sets.py BEFORE BASELINE -- the files of glue rules E6 and E7, read from the image-A core's two flag tables (flag_probe.py read):
 BEFORE = the flag each lib/A file starts with in the unit's Require closure before the rules, BASELINE = the same in
-fuzz_grant's released lib (655d9c3e47c). E6: the closure sets true where the release sets false; E7: the closure sets
+fuzz_grant's released lib. E6: the closure sets true where the release sets false; E7: the closure sets
 false where the release sets true; a file with no value in either table (rc != 0) is in neither. Prints two lines,
 `E6 F...` and `E7 F...` (lib/A file names)."""
 import sys

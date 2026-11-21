@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 687 of its 701 lines of code are new or changed and 234 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The footprint twin of reac_box_model_block_case34.v (image B, asan-ubsan; route 2): cases b = 3 and b = 4 of
    reac_box_model_block as ExecF.evtF runs under the footprint RNG, by the plain file's scripts over StepF's step.
    The pure lemmas of the plain file (c34_chk, c34_sub_post, c34_geo, c34_out, c34_addr, c34_mod8) are reused from
@@ -361,7 +362,7 @@ Section Case34F.
         - rewrite (unsigned_lit (fr + 32)), (unsigned_lit 4) by lia.
           right. replace (fr + 32 + 7) with (fr + 39) by lia. apply FAP. lia.
         - rewrite (unsigned_lit o) by lia. exact AOrt.
-        (* the footprint (build_dt1_single_contract_F of a Theorem Labs lane 6faf362962e: rng_bytes, the image range, the
+        (* the footprint (build_dt1_single_contract_F of a Theorem Labs lane: rng_bytes, the image range, the
            callee's window and its 8-aligned shadow cover, the runtime words, o and its shadow, the digits and
            their shadow) *)
         - exact RBY.
@@ -664,7 +665,7 @@ Section Case34F.
       - rewrite (unsigned_lit (A + 35)), (unsigned_lit 8) by lia.
         right. replace (A + 35 + 7) with (A + 42) by lia. exact AP42.
       - rewrite (unsigned_lit o) by lia. exact AOrt.
-      (* the footprint (build_dt1_single_contract_F of a Theorem Labs lane 6faf362962e: rng_bytes, the image range, the
+      (* the footprint (build_dt1_single_contract_F of a Theorem Labs lane: rng_bytes, the image range, the
          callee's window and its 8-aligned shadow cover, the runtime words, o and its shadow, the rvb bytes and
          their shadow) *)
       - exact RBY.

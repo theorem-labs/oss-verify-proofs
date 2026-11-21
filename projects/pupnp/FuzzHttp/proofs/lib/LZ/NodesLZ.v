@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the NULL-hint grant is refused only when the model's linux_place has no answer). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -118,8 +119,10 @@ Definition lmcommit_post (mo : Model) (addr len off : Z) : Model :=
   with_vm_backing (m_vm_lazy sp)
     (pages_of (shw_lo off (addrZ addr)) (shw_hi off (addrZ addr) (lenZ len)) ++ m_vm_materialized sp) sp.
 
+(* LPS 727298f3: the NULL-hint grant is refused only when [linux_place] has no answer. *)
 Definition gap_refused (mo : Model) (len : Z) (eff : resp) (mo' : Model) : Prop :=
-  exists e, In e (mmap_errnos_when (negb (vm_gap_available (m_vmmaps mo) (lenZ len))))
+  exists e, In e (mmap_errnos_when
+                    (negb (vm_place_available (m_vmmaps mo) (kb_thp (m_kernel mo)) (Z_to_bv 64 0) (lenZ len))))
             /\ strip eff = efferr e /\ mo' = mo.
 
 Definition nstepL (n : nodeL) (mo : Model) (eff : resp) (mo' : Model) (evs : list event) : Prop :=

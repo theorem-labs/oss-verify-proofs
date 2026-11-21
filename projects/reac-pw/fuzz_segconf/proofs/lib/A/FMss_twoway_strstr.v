@@ -1,4 +1,4 @@
-(* lib/A/Prog/twoway_strstr.v (RtStr's port, unchanged from cold/c-asan-rt-fmio-n affce6489c8), over the
+(* lib/A/Prog/twoway_strstr.v (RtStr's port, unchanged), over the
    local-shadow statements (FMss_twoway_strstr_c.v, FMss_TwFront.v, FMss_TwBack.v); the proof line is the original's. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.A.Prog Require Import memchr_wrap_c memcmp_wrap_c twoway_strstr_c.
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.A Require Import

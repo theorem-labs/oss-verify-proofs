@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the fresh-variable literals, ledger grants and EVar indices of runs runTa to runTf, their store lists, register updates and side conditions move by +16, for the launch's entry table of 23 entries (was 7). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run.
@@ -31,13 +32,13 @@ Definition TRACE_SIZE : Z := 2.
 (* [comment removed for export] *)
 Definition DS_T1 : list (saddr * expr) :=
   [(SA (EVar 0) (- 0x800000), ELit 0x1800000); (SA (ELit 0) A_img_lo, ELit (A_img_hi - A_img_lo));
-   (SA (ELit 0) SHB_LO, ELit (SHB_HI - SHB_LO)); (SA (EVar 104) 0, ELit 1048576)] ++ List.skipn 3 DS_T0.
+   (SA (ELit 0) SHB_LO, ELit (SHB_HI - SHB_LO)); (SA (EVar 120) 0, ELit 1048576)] ++ List.skipn 3 DS_T0.
 Definition DS_T2 : list (saddr * expr) :=
   [(SA (EVar 0) (- 0x800000), ELit 0x1800000); (SA (ELit 0) A_img_lo, ELit (A_img_hi - A_img_lo));
-   (SA (ELit 0) SHB_LO, ELit (SHB_HI - SHB_LO)); (SA (EVar 105) 0, ELit 8388608)] ++ List.skipn 3 DS_T1.
+   (SA (ELit 0) SHB_LO, ELit (SHB_HI - SHB_LO)); (SA (EVar 121) 0, ELit 8388608)] ++ List.skipn 3 DS_T1.
 Definition DS_T3 : list (saddr * expr) :=
   [(SA (EVar 0) (- 0x800000), ELit 0x1800000); (SA (ELit 0) A_img_lo, ELit (A_img_hi - A_img_lo));
-   (SA (ELit 0) SHB_LO, ELit (SHB_HI - SHB_LO)); (SA (EVar 106) 0, ELit 4096)] ++ List.skipn 3 DS_T2.
+   (SA (ELit 0) SHB_LO, ELit (SHB_HI - SHB_LO)); (SA (EVar 122) 0, ELit 4096)] ++ List.skipn 3 DS_T2.
 
 (* [comment removed for export] *)
 Definition xpose (e : expr) (eo m : Z) (kn : list kentry) : list kentry :=
@@ -45,7 +46,7 @@ Definition xpose (e : expr) (eo m : Z) (kn : list kentry) : list kentry :=
 
 
 (* [comment removed for export] *)
-Definition runTa := ltac:(nf_run KN_T0 ((AX2L.sym_execFS6 SEGS IT_Kn11w2 KN_T0 F40 true STOPS11 (SCR [false; false] [] []) (SS PC_T0 SR_T0 [] KN_T0 104) []))).
+Definition runTa := ltac:(nf_run KN_T0 ((AX2L.sym_execFS6 SEGS IT_Kn11w2 KN_T0 F40 true STOPS11 (SCR [false; false] [] []) (SS PC_T0 SR_T0 [] KN_T0 120) []))).
 Definition PCTa : Z := Eval lazy in (s_pc (fst (fst runTa))).
 Definition SRTa : list expr := Eval lazy in (s_regs (fst (fst runTa))).
 Definition LGTa : list sentry := s_log (fst (fst runTa)).
@@ -53,7 +54,7 @@ Definition SKTa : list kentry := s_know (fst (fst runTa)).
 Definition NXTa : nat := Eval lazy in (s_next (fst (fst runTa))).
 Definition SCTa : list sidecond := Eval lazy in (snd (fst runTa)).
 Definition SPTa : scripts := Eval lazy in (snd runTa).
-Lemma runTa_eq : sym_exec SEGS F40 true STOPS11 (SCR [false; false] [] []) (SS PC_T0 SR_T0 [] KN_T0 104) [] = (SSR PCTa SRTa LGTa SKTa NXTa None, SCTa, SPTa).
+Lemma runTa_eq : sym_exec SEGS F40 true STOPS11 (SCR [false; false] [] []) (SS PC_T0 SR_T0 [] KN_T0 120) [] = (SSR PCTa SRTa LGTa SKTa NXTa None, SCTa, SPTa).
 Proof. apply (AX2L.sym_exec_viaFS6 SEGS IT_Kn11w2 KN_T0); [exact IT_Kn11w2_ok | reflexivity | vm_cast_no_check (eq_refl runTa)]. Qed.
 Definition KCa11w2_1 : list kentry := Eval vm_compute in (NFC.d_kl "$001%5&&#0100010%&-?80%&+%.8010%&/?404010%&.?80%&#$,8010'.$?81&>010'.#?802010'-@?800010'-/?820100%&@?010'-.?80%&#$,8010'--?80&<010'-,?820100$%?010'-+?80&&%@,8010%,?820100$%?010'-'?80,#$%@0010'-&?800010'-%?800").
 Definition KCa11w2_2 : list kentry := Eval vm_compute in (NFC.d_kl "$0010'-$?820100%.1010'-#?802010',@?80%&#$,8010',/?80%&+%.8010',.?80+@&--0010',-?820100$%?010',,?80%&#%-0010%&/7400010%&@?820100%&.?010'+.?80.<010%'?800010%&?800010%%?800010%$?800010%#?800010$@?800").
@@ -143,7 +144,7 @@ Lemma KNTam_eq : kn_merge44 KNTa (EVar 0) (-2280) TRACE_SIZE 0 = KNTam. Proof. v
 Lemma mergeTa_ok : merge44_ok KNTa (EVar 0) (-2280) TRACE_SIZE 0 = true. Proof. vmeq_cast. Qed.
 
 (* [comment removed for export] *)
-Definition runTb := ltac:(nf_run KNTam ((AX2L.sym_execFS6 SEGS IT_Kn11w2 KNTam F40 true STOPS11 noscr (SS PCTa SRTa [] KNTam 104) []))).
+Definition runTb := ltac:(nf_run KNTam ((AX2L.sym_execFS6 SEGS IT_Kn11w2 KNTam F40 true STOPS11 noscr (SS PCTa SRTa [] KNTam 120) []))).
 Definition PCTb : Z := Eval lazy in (s_pc (fst (fst runTb))).
 Definition SRTb : list expr := Eval lazy in (s_regs (fst (fst runTb))).
 Definition LGTb : list sentry := s_log (fst (fst runTb)).
@@ -151,7 +152,7 @@ Definition SKTb : list kentry := s_know (fst (fst runTb)).
 Definition NXTb : nat := Eval lazy in (s_next (fst (fst runTb))).
 Definition SCTb : list sidecond := Eval lazy in (snd (fst runTb)).
 Definition SPTb : scripts := Eval lazy in (snd runTb).
-Lemma runTb_eq : sym_exec SEGS F40 true STOPS11 noscr (SS PCTa SRTa [] KNTam 104) [] = (SSR PCTb SRTb LGTb SKTb NXTb None, SCTb, SPTb).
+Lemma runTb_eq : sym_exec SEGS F40 true STOPS11 noscr (SS PCTa SRTa [] KNTam 120) [] = (SSR PCTb SRTb LGTb SKTb NXTb None, SCTb, SPTb).
 Proof. apply (AX2L.sym_exec_viaFS6 SEGS IT_Kn11w2 KNTam); [exact IT_Kn11w2_ok | reflexivity | vm_cast_no_check (eq_refl runTb)]. Qed.
 Definition KCa11w2_75 : list kentry := Eval vm_compute in (NFC.d_kl "$0010'/&?800010'/%?80'+./.@0010'/$?80$#$&.&0010'/#?80.@+%-0010'.@?80$$'-+:010'./?800010'..?80&-,/+8010'.-740'4010'.,?80&+',.-@,-./##@%@+.<010'.+?80$#$&.&0010'.'?80'+./.@0010'.&?80'+./.@0010'.%?80'$.$,0000'+./.@0402010'.$?80&/%-@$0010'.#?802").
 Definition KCa11w2_76 : list kentry := Eval vm_compute in (NFC.d_kl "$0010'-@?800010'-/?80'$,+-0000'+././0402000&/%-@$040',%###-#/'.,&@%/,@0010'-,?804010'--?820100%&.?010'-+?800010'-'?80,#$%@0010'-&?800010'-%?800010'-$?820100%.1010'-#?802010',@?80&$++++@'#'$,..#@-0010',/?80%&+%.8010',.?80+@&--0010',-?820100$%?").
@@ -168,14 +169,14 @@ Proof. apply AX2L.carry_viaF3. vm_cast_no_check (eq_refl carTb). Qed.
 
 
 (* [comment removed for export] *)
-Definition SRTbg : list expr := sr_upd SRTb 10 (EVar 104).
+Definition SRTbg : list expr := sr_upd SRTb 10 (EVar 120).
 Definition KCa11w2_81 : list kentry := Eval vm_compute in (NFC.d_kl "$011,800.@+%-061,800.@+%-041,8'%,051,8'%,0',%###-#/,#&%'%$&+071,800.@+%-010,+,.@#?0$.+/'.&071,800.@+%-000,$-.00'.$,#&071,800.@+%-000$%.+.%#.'00--.,,-&&%./.071,800.@+%-01,700'%,071,800.@+%-01,600.+$071,800.@+%-01+300.@.--@071,800.@+%-01&<00'%,071,800.@+%-01%>00'%,071,800.@+%-01%600,$-.071,800.@+%-01%500'%,071,800.@+%-01%400,+,.@$071,800.@+%-01$<00-&$,,+.+/.0").
 Definition KCa11w2_82 : list kentry := Eval vm_compute in (NFC.d_kl "671,800.@+%-01$;00%//#,'071,800.@+%-01$:00,$-.071,800.@+%-00@,-.#/,/@&,000,.%#$&@'+@&,071,800.@+%-00$'++$##$&000@,,&,'+/@%&071,800.@+%-00$%.+.%#.'000$-@&.@&@071,800.@+%-01700'%,0").
-Definition KNTbg : list kentry := ltac:(nf_rope (KCa11w2_81 ++ KCa11w2_82 ++ KCa11w2_75 ++ KCa11w2_76 ++ KCa11w2_77 ++ KCa11w2_74 ++ KCa11w2_78 ++ KCa11w2_3 ++ KCa11w2_4 ++ KCa11w2_5 ++ KCa11w2_6 ++ KCa11w2_7 ++ KCa11w2_8 ++ KCa11w2_9 ++ KCa11w2_10 ++ KCa11w2_11 ++ KCa11w2_12 ++ KCa11w2_13 ++ KCa11w2_14 ++ KCa11w2_15 ++ KCa11w2_16 ++ KCa11w2_17 ++ KCa11w2_18 ++ KCa11w2_19 ++ KCa11w2_20 ++ KCa11w2_21 ++ KCa11w2_22 ++ KCa11w2_23 ++ KCa11w2_24 ++ KCa11w2_25 ++ KCa11w2_26 ++ KCa11w2_27 ++ KCa11w2_28 ++ KCa11w2_29 ++ KCa11w2_30 ++ KCa11w2_31 ++ KCa11w2_32 ++ KCa11w2_33 ++ KCa11w2_34 ++ KCa11w2_35 ++ KCa11w2_36 ++ KCa11w2_37 ++ KCa11w2_38 ++ KCa11w2_39 ++ KCa11w2_40 ++ KCa11w2_41 ++ KCa11w2_42 ++ KCa11w2_43 ++ KCa11w2_44 ++ KCa11w2_45 ++ KCa11w2_46 ++ KCa11w2_47 ++ KCa11w2_48 ++ KCa11w2_49 ++ KCa11w2_50 ++ KCa11w2_51 ++ KCa11w2_52 ++ KCa11w2_53 ++ KCa11w2_54 ++ KCa11w2_55 ++ KCa11w2_56 ++ KCa11w2_57 ++ KCa11w2_58 ++ KCa11w2_59 ++ KCa11w2_60 ++ KCa11w2_61 ++ KCa11w2_62 ++ KCa11w2_63 ++ KCa11w2_64 ++ KCa11w2_65 ++ KCa11w2_66 ++ KCa11w2_67 ++ KCa11w2_68 ++ KCa11w2_69 ++ KCa11w2_79 ++ KCa11w2_80 ++ KCa11w2_71 ++ KCa11w2_72 ++ KCa11w2_73) ((kn_grant_d DS_T0 104 1048576 KNTb))).
-Lemma KNTbg_eq : kn_grant_d DS_T0 104 1048576 KNTb = KNTbg. Proof. kn_fast. Qed.
+Definition KNTbg : list kentry := ltac:(nf_rope (KCa11w2_81 ++ KCa11w2_82 ++ KCa11w2_75 ++ KCa11w2_76 ++ KCa11w2_77 ++ KCa11w2_74 ++ KCa11w2_78 ++ KCa11w2_3 ++ KCa11w2_4 ++ KCa11w2_5 ++ KCa11w2_6 ++ KCa11w2_7 ++ KCa11w2_8 ++ KCa11w2_9 ++ KCa11w2_10 ++ KCa11w2_11 ++ KCa11w2_12 ++ KCa11w2_13 ++ KCa11w2_14 ++ KCa11w2_15 ++ KCa11w2_16 ++ KCa11w2_17 ++ KCa11w2_18 ++ KCa11w2_19 ++ KCa11w2_20 ++ KCa11w2_21 ++ KCa11w2_22 ++ KCa11w2_23 ++ KCa11w2_24 ++ KCa11w2_25 ++ KCa11w2_26 ++ KCa11w2_27 ++ KCa11w2_28 ++ KCa11w2_29 ++ KCa11w2_30 ++ KCa11w2_31 ++ KCa11w2_32 ++ KCa11w2_33 ++ KCa11w2_34 ++ KCa11w2_35 ++ KCa11w2_36 ++ KCa11w2_37 ++ KCa11w2_38 ++ KCa11w2_39 ++ KCa11w2_40 ++ KCa11w2_41 ++ KCa11w2_42 ++ KCa11w2_43 ++ KCa11w2_44 ++ KCa11w2_45 ++ KCa11w2_46 ++ KCa11w2_47 ++ KCa11w2_48 ++ KCa11w2_49 ++ KCa11w2_50 ++ KCa11w2_51 ++ KCa11w2_52 ++ KCa11w2_53 ++ KCa11w2_54 ++ KCa11w2_55 ++ KCa11w2_56 ++ KCa11w2_57 ++ KCa11w2_58 ++ KCa11w2_59 ++ KCa11w2_60 ++ KCa11w2_61 ++ KCa11w2_62 ++ KCa11w2_63 ++ KCa11w2_64 ++ KCa11w2_65 ++ KCa11w2_66 ++ KCa11w2_67 ++ KCa11w2_68 ++ KCa11w2_69 ++ KCa11w2_79 ++ KCa11w2_80 ++ KCa11w2_71 ++ KCa11w2_72 ++ KCa11w2_73) ((kn_grant_d DS_T0 120 1048576 KNTb))).
+Lemma KNTbg_eq : kn_grant_d DS_T0 120 1048576 KNTb = KNTbg. Proof. kn_fast. Qed.
 
 (* [comment removed for export] *)
-Definition runTc := ltac:(nf_run KNTbg ((AX2L.sym_execFS6 SEGS IT_Kn11w2 KNTbg F40 true STOPS11 noscr (SS (PCTb + 4) SRTbg [] KNTbg 105) []))).
+Definition runTc := ltac:(nf_run KNTbg ((AX2L.sym_execFS6 SEGS IT_Kn11w2 KNTbg F40 true STOPS11 noscr (SS (PCTb + 4) SRTbg [] KNTbg 121) []))).
 Definition PCTc : Z := Eval lazy in (s_pc (fst (fst runTc))).
 Definition SRTc : list expr := Eval lazy in (s_regs (fst (fst runTc))).
 Definition LGTc : list sentry := s_log (fst (fst runTc)).
@@ -183,7 +184,7 @@ Definition SKTc : list kentry := s_know (fst (fst runTc)).
 Definition NXTc : nat := Eval lazy in (s_next (fst (fst runTc))).
 Definition SCTc : list sidecond := Eval lazy in (snd (fst runTc)).
 Definition SPTc : scripts := Eval lazy in (snd runTc).
-Lemma runTc_eq : sym_exec SEGS F40 true STOPS11 noscr (SS (PCTb + 4) SRTbg [] KNTbg 105) [] = (SSR PCTc SRTc LGTc SKTc NXTc None, SCTc, SPTc).
+Lemma runTc_eq : sym_exec SEGS F40 true STOPS11 noscr (SS (PCTb + 4) SRTbg [] KNTbg 121) [] = (SSR PCTc SRTc LGTc SKTc NXTc None, SCTc, SPTc).
 Proof. apply (AX2L.sym_exec_viaFS6 SEGS IT_Kn11w2 KNTbg); [exact IT_Kn11w2_ok | reflexivity | vm_cast_no_check (eq_refl runTc)]. Qed.
 Definition KCa11w2_83 : list kentry := Eval vm_compute in (NFC.d_kl "$0010'@,?800010'@+?804010'@'?820100'--?010'@&?80$#$&.&0010'@%?80,+,.@$0010'@$?80$$+$#:010'@#?80&-.%-0010'//740$+@,4010'/.?806010'/-?80$%'/$,0010'/,?80$%'/$-8010'/+?80'#/.@0000$%'/$+080,+,.@$0000$%'/$-8402010'/'?806010'/&?80$%'/$'0").
 Definition KCa11w2_84 : list kentry := Eval vm_compute in (NFC.d_kl "$0010'/%?800010'/$?80'#-&@8010'./?800000$%'/$'0806010'/#?820100'.#?010'.@?80'#,//8010'.#?800010'..?800010'.-?80'+./.@0010'.,?80&+',.-@,-./##@%@+.<010'.+?80&/%-@$0010'.'?8201,80%0010'.&?8201,80%0010'.%?80'$+$#801,8%080&+',.-@,-./##@%@+.<010'-@?800").
@@ -201,17 +202,17 @@ Proof. apply AX2L.carry_viaF3. vm_cast_no_check (eq_refl carTc). Qed.
 
 
 (* [comment removed for export] *)
-Definition SRTcg : list expr := sr_upd SRTc 10 (EVar 105).
+Definition SRTcg : list expr := sr_upd SRTc 10 (EVar 121).
 Definition KCa11w2_90 : list kentry := Eval vm_compute in (NFC.d_kl "$041,9'%,051,9'%,0',%###-#/,#%--+.-#071,900,+,.@$010,+,.@#?0$.+/'.&071,900,+,.@$000,$-.00'.$,#&071,900,+,.@$000$%.+.%#.'00--.,,-&&%./.071,900,+,.@$01,800.@+%-071,900,+,.@$01,700'%,071,900,+,.@$01,600.+$071,900,+,.@$01+300.@.--@071,900,+,.@$01&<00'%,071,900,+,.@$01%>00'%,071,900,+,.@$01%600,$-.071,900,+,.@$01%500'%,071,900,+,.@$01%400,+,.@$071,900,+,.@$01$<00-&$,,+.+/.071,900,+,.@$01$;00%//#,'0").
 Definition KCa11w2_91 : list kentry := Eval vm_compute in (NFC.d_kl "571,900,+,.@$01$:00,$-.071,900,+,.@$00@,-.#/,/@&,000,.%#$&@'+@&,071,900,+,.@$00$'++$##$&000@,,&,'+/@%&071,900,+,.@$00$%.+.%#.'000$-@&.@&@071,900,+,.@$01700'%,0").
-Definition KNTcg : list kentry := ltac:(nf_rope (KCa11w2_90 ++ KCa11w2_91 ++ KCa11w2_83 ++ KCa11w2_84 ++ KCa11w2_85 ++ KCa11w2_86 ++ KCa11w2_82 ++ KCa11w2_87 ++ KCa11w2_77 ++ KCa11w2_74 ++ KCa11w2_78 ++ KCa11w2_3 ++ KCa11w2_4 ++ KCa11w2_5 ++ KCa11w2_6 ++ KCa11w2_7 ++ KCa11w2_8 ++ KCa11w2_9 ++ KCa11w2_10 ++ KCa11w2_11 ++ KCa11w2_12 ++ KCa11w2_13 ++ KCa11w2_14 ++ KCa11w2_15 ++ KCa11w2_16 ++ KCa11w2_17 ++ KCa11w2_18 ++ KCa11w2_19 ++ KCa11w2_20 ++ KCa11w2_21 ++ KCa11w2_22 ++ KCa11w2_23 ++ KCa11w2_24 ++ KCa11w2_25 ++ KCa11w2_26 ++ KCa11w2_27 ++ KCa11w2_28 ++ KCa11w2_29 ++ KCa11w2_30 ++ KCa11w2_31 ++ KCa11w2_32 ++ KCa11w2_33 ++ KCa11w2_34 ++ KCa11w2_35 ++ KCa11w2_36 ++ KCa11w2_37 ++ KCa11w2_38 ++ KCa11w2_39 ++ KCa11w2_40 ++ KCa11w2_41 ++ KCa11w2_42 ++ KCa11w2_43 ++ KCa11w2_44 ++ KCa11w2_45 ++ KCa11w2_46 ++ KCa11w2_47 ++ KCa11w2_48 ++ KCa11w2_49 ++ KCa11w2_50 ++ KCa11w2_51 ++ KCa11w2_52 ++ KCa11w2_53 ++ KCa11w2_54 ++ KCa11w2_55 ++ KCa11w2_56 ++ KCa11w2_57 ++ KCa11w2_58 ++ KCa11w2_59 ++ KCa11w2_60 ++ KCa11w2_61 ++ KCa11w2_62 ++ KCa11w2_63 ++ KCa11w2_64 ++ KCa11w2_65 ++ KCa11w2_66 ++ KCa11w2_67 ++ KCa11w2_68 ++ KCa11w2_69 ++ KCa11w2_88 ++ KCa11w2_89 ++ KCa11w2_80 ++ KCa11w2_71 ++ KCa11w2_72 ++ KCa11w2_73) ((kn_grant_none_d DS_T1 105 8388608 KNTc))).
-Lemma KNTcg_eq : kn_grant_none_d DS_T1 105 8388608 KNTc = KNTcg. Proof. kn_fast. Qed.
+Definition KNTcg : list kentry := ltac:(nf_rope (KCa11w2_90 ++ KCa11w2_91 ++ KCa11w2_83 ++ KCa11w2_84 ++ KCa11w2_85 ++ KCa11w2_86 ++ KCa11w2_82 ++ KCa11w2_87 ++ KCa11w2_77 ++ KCa11w2_74 ++ KCa11w2_78 ++ KCa11w2_3 ++ KCa11w2_4 ++ KCa11w2_5 ++ KCa11w2_6 ++ KCa11w2_7 ++ KCa11w2_8 ++ KCa11w2_9 ++ KCa11w2_10 ++ KCa11w2_11 ++ KCa11w2_12 ++ KCa11w2_13 ++ KCa11w2_14 ++ KCa11w2_15 ++ KCa11w2_16 ++ KCa11w2_17 ++ KCa11w2_18 ++ KCa11w2_19 ++ KCa11w2_20 ++ KCa11w2_21 ++ KCa11w2_22 ++ KCa11w2_23 ++ KCa11w2_24 ++ KCa11w2_25 ++ KCa11w2_26 ++ KCa11w2_27 ++ KCa11w2_28 ++ KCa11w2_29 ++ KCa11w2_30 ++ KCa11w2_31 ++ KCa11w2_32 ++ KCa11w2_33 ++ KCa11w2_34 ++ KCa11w2_35 ++ KCa11w2_36 ++ KCa11w2_37 ++ KCa11w2_38 ++ KCa11w2_39 ++ KCa11w2_40 ++ KCa11w2_41 ++ KCa11w2_42 ++ KCa11w2_43 ++ KCa11w2_44 ++ KCa11w2_45 ++ KCa11w2_46 ++ KCa11w2_47 ++ KCa11w2_48 ++ KCa11w2_49 ++ KCa11w2_50 ++ KCa11w2_51 ++ KCa11w2_52 ++ KCa11w2_53 ++ KCa11w2_54 ++ KCa11w2_55 ++ KCa11w2_56 ++ KCa11w2_57 ++ KCa11w2_58 ++ KCa11w2_59 ++ KCa11w2_60 ++ KCa11w2_61 ++ KCa11w2_62 ++ KCa11w2_63 ++ KCa11w2_64 ++ KCa11w2_65 ++ KCa11w2_66 ++ KCa11w2_67 ++ KCa11w2_68 ++ KCa11w2_69 ++ KCa11w2_88 ++ KCa11w2_89 ++ KCa11w2_80 ++ KCa11w2_71 ++ KCa11w2_72 ++ KCa11w2_73) ((kn_grant_none_d DS_T1 121 8388608 KNTc))).
+Lemma KNTcg_eq : kn_grant_none_d DS_T1 121 8388608 KNTc = KNTcg. Proof. kn_fast. Qed.
 Definition KCa11w2_92 : list kentry := Eval vm_compute in (NFC.d_kl "211,900'%,061,900'%,0").
-Definition KNTcx : list kentry := ltac:(nf_rope (KCa11w2_92 ++ KCa11w2_90 ++ KCa11w2_91 ++ KCa11w2_83 ++ KCa11w2_84 ++ KCa11w2_85 ++ KCa11w2_86 ++ KCa11w2_82 ++ KCa11w2_87 ++ KCa11w2_77 ++ KCa11w2_74 ++ KCa11w2_78 ++ KCa11w2_3 ++ KCa11w2_4 ++ KCa11w2_5 ++ KCa11w2_6 ++ KCa11w2_7 ++ KCa11w2_8 ++ KCa11w2_9 ++ KCa11w2_10 ++ KCa11w2_11 ++ KCa11w2_12 ++ KCa11w2_13 ++ KCa11w2_14 ++ KCa11w2_15 ++ KCa11w2_16 ++ KCa11w2_17 ++ KCa11w2_18 ++ KCa11w2_19 ++ KCa11w2_20 ++ KCa11w2_21 ++ KCa11w2_22 ++ KCa11w2_23 ++ KCa11w2_24 ++ KCa11w2_25 ++ KCa11w2_26 ++ KCa11w2_27 ++ KCa11w2_28 ++ KCa11w2_29 ++ KCa11w2_30 ++ KCa11w2_31 ++ KCa11w2_32 ++ KCa11w2_33 ++ KCa11w2_34 ++ KCa11w2_35 ++ KCa11w2_36 ++ KCa11w2_37 ++ KCa11w2_38 ++ KCa11w2_39 ++ KCa11w2_40 ++ KCa11w2_41 ++ KCa11w2_42 ++ KCa11w2_43 ++ KCa11w2_44 ++ KCa11w2_45 ++ KCa11w2_46 ++ KCa11w2_47 ++ KCa11w2_48 ++ KCa11w2_49 ++ KCa11w2_50 ++ KCa11w2_51 ++ KCa11w2_52 ++ KCa11w2_53 ++ KCa11w2_54 ++ KCa11w2_55 ++ KCa11w2_56 ++ KCa11w2_57 ++ KCa11w2_58 ++ KCa11w2_59 ++ KCa11w2_60 ++ KCa11w2_61 ++ KCa11w2_62 ++ KCa11w2_63 ++ KCa11w2_64 ++ KCa11w2_65 ++ KCa11w2_66 ++ KCa11w2_67 ++ KCa11w2_68 ++ KCa11w2_69 ++ KCa11w2_88 ++ KCa11w2_89 ++ KCa11w2_80 ++ KCa11w2_71 ++ KCa11w2_72 ++ KCa11w2_73) ((xpose (EVar 105) 0 4096 KNTcg))).
-Lemma KNTcx_eq : xpose (EVar 105) 0 4096 KNTcg = KNTcx. Proof. kn_fast. Qed.
+Definition KNTcx : list kentry := ltac:(nf_rope (KCa11w2_92 ++ KCa11w2_90 ++ KCa11w2_91 ++ KCa11w2_83 ++ KCa11w2_84 ++ KCa11w2_85 ++ KCa11w2_86 ++ KCa11w2_82 ++ KCa11w2_87 ++ KCa11w2_77 ++ KCa11w2_74 ++ KCa11w2_78 ++ KCa11w2_3 ++ KCa11w2_4 ++ KCa11w2_5 ++ KCa11w2_6 ++ KCa11w2_7 ++ KCa11w2_8 ++ KCa11w2_9 ++ KCa11w2_10 ++ KCa11w2_11 ++ KCa11w2_12 ++ KCa11w2_13 ++ KCa11w2_14 ++ KCa11w2_15 ++ KCa11w2_16 ++ KCa11w2_17 ++ KCa11w2_18 ++ KCa11w2_19 ++ KCa11w2_20 ++ KCa11w2_21 ++ KCa11w2_22 ++ KCa11w2_23 ++ KCa11w2_24 ++ KCa11w2_25 ++ KCa11w2_26 ++ KCa11w2_27 ++ KCa11w2_28 ++ KCa11w2_29 ++ KCa11w2_30 ++ KCa11w2_31 ++ KCa11w2_32 ++ KCa11w2_33 ++ KCa11w2_34 ++ KCa11w2_35 ++ KCa11w2_36 ++ KCa11w2_37 ++ KCa11w2_38 ++ KCa11w2_39 ++ KCa11w2_40 ++ KCa11w2_41 ++ KCa11w2_42 ++ KCa11w2_43 ++ KCa11w2_44 ++ KCa11w2_45 ++ KCa11w2_46 ++ KCa11w2_47 ++ KCa11w2_48 ++ KCa11w2_49 ++ KCa11w2_50 ++ KCa11w2_51 ++ KCa11w2_52 ++ KCa11w2_53 ++ KCa11w2_54 ++ KCa11w2_55 ++ KCa11w2_56 ++ KCa11w2_57 ++ KCa11w2_58 ++ KCa11w2_59 ++ KCa11w2_60 ++ KCa11w2_61 ++ KCa11w2_62 ++ KCa11w2_63 ++ KCa11w2_64 ++ KCa11w2_65 ++ KCa11w2_66 ++ KCa11w2_67 ++ KCa11w2_68 ++ KCa11w2_69 ++ KCa11w2_88 ++ KCa11w2_89 ++ KCa11w2_80 ++ KCa11w2_71 ++ KCa11w2_72 ++ KCa11w2_73) ((xpose (EVar 121) 0 4096 KNTcg))).
+Lemma KNTcx_eq : xpose (EVar 121) 0 4096 KNTcg = KNTcx. Proof. kn_fast. Qed.
 
 (* [comment removed for export] *)
-Definition runTd := ltac:(nf_run KNTcx ((AX2L.sym_execFS6 SEGS IT_Kn11w2 KNTcx F40 true STOPS11 noscr (SS (PCTc + 4) SRTcg [] KNTcx 106) []))).
+Definition runTd := ltac:(nf_run KNTcx ((AX2L.sym_execFS6 SEGS IT_Kn11w2 KNTcx F40 true STOPS11 noscr (SS (PCTc + 4) SRTcg [] KNTcx 122) []))).
 Definition PCTd : Z := Eval lazy in (s_pc (fst (fst runTd))).
 Definition SRTd : list expr := Eval lazy in (s_regs (fst (fst runTd))).
 Definition LGTd : list sentry := s_log (fst (fst runTd)).
@@ -219,7 +220,7 @@ Definition SKTd : list kentry := s_know (fst (fst runTd)).
 Definition NXTd : nat := Eval lazy in (s_next (fst (fst runTd))).
 Definition SCTd : list sidecond := Eval lazy in (snd (fst runTd)).
 Definition SPTd : scripts := Eval lazy in (snd runTd).
-Lemma runTd_eq : sym_exec SEGS F40 true STOPS11 noscr (SS (PCTc + 4) SRTcg [] KNTcx 106) [] = (SSR PCTd SRTd LGTd SKTd NXTd None, SCTd, SPTd).
+Lemma runTd_eq : sym_exec SEGS F40 true STOPS11 noscr (SS (PCTc + 4) SRTcg [] KNTcx 122) [] = (SSR PCTd SRTd LGTd SKTd NXTd None, SCTd, SPTd).
 Proof. apply (AX2L.sym_exec_viaFS6 SEGS IT_Kn11w2 KNTcx); [exact IT_Kn11w2_ok | reflexivity | vm_cast_no_check (eq_refl runTd)]. Qed.
 Definition KCa11w2_93 : list kentry := Eval vm_compute in (NFC.d_kl "$0010'.#?802010'-@?80,&####/.#.&%,+$@&0010'-/?80$#$&.&0010'-.?80'%,0010'--?80$#...6010'-,?800010'-+?80&-,/+8010'-'740'4010'-&?80&$++++@'#'$,..#@-0010'-%?80$#$&.&0010'-$?80'%,0010'-#?8201$:0$/+@0010',@?80%'%--8010',/?80+&&$.-.'@,-0010',.?80+@&--0010',-?820100$%?").
 Definition KCa11w2_94 : list kentry := Eval vm_compute in (NFC.d_kl "$0010',,?80%&#,#8000,#$'-08201$:0$/+@001$:$/,$080001$:$/,#080001$:$/+@0800000@-$,#08201$:0$/,%0000,#$+#080&$++++@'#'$,..#@-0010','?80,#$+$0000&/%-@$040201,8&040001,8&8402000$%'/$-040601,9%>10001,9%<10001,9%:10001,9%8100").
@@ -245,11 +246,11 @@ Proof. apply AX2L.carry_viaF3. vm_cast_no_check (eq_refl carTd). Qed.
 
 
 (* [comment removed for export] *)
-Definition SRTdg : list expr := sr_upd SRTd 10 (EVar 106).
+Definition SRTdg : list expr := sr_upd SRTd 10 (EVar 122).
 Definition KCa11w2_108 : list kentry := Eval vm_compute in (NFC.d_kl "$011,:00'%,061,:00'%,041,:'%,051,:'%,0',%###-#/,#&&%$%&,071,:00'%,010,+,.@#?0$.+/'.&071,:00'%,000,$-.00'.$,#&071,:00'%,000$%.+.%#.'00--.,,-&&%./.071,:00'%,01,900,+,.@$071,:00'%,01,800.@+%-071,:00'%,01,700'%,071,:00'%,01,600.+$071,:00'%,01+300.@.--@071,:00'%,01&<00'%,071,:00'%,01%>00'%,071,:00'%,01%600,$-.071,:00'%,01%500'%,0").
 Definition KCa11w2_109 : list kentry := Eval vm_compute in (NFC.d_kl "871,:00'%,01%400,+,.@$071,:00'%,01$<00-&$,,+.+/.071,:00'%,01$;00%//#,'071,:00'%,01$:00,$-.071,:00'%,00@,-.#/,/@&,000,.%#$&@'+@&,071,:00'%,00$'++$##$&000@,,&,'+/@%&071,:00'%,00$%.+.%#.'000$-@&.@&@071,:00'%,01700'%,0").
-Definition KNTdg : list kentry := ltac:(nf_rope (KCa11w2_108 ++ KCa11w2_109 ++ KCa11w2_93 ++ KCa11w2_94 ++ KCa11w2_95 ++ KCa11w2_96 ++ KCa11w2_90 ++ KCa11w2_91 ++ KCa11w2_97 ++ KCa11w2_98 ++ KCa11w2_99 ++ KCa11w2_86 ++ KCa11w2_82 ++ KCa11w2_100 ++ KCa11w2_74 ++ KCa11w2_101 ++ KCa11w2_3 ++ KCa11w2_4 ++ KCa11w2_5 ++ KCa11w2_6 ++ KCa11w2_7 ++ KCa11w2_8 ++ KCa11w2_9 ++ KCa11w2_10 ++ KCa11w2_11 ++ KCa11w2_12 ++ KCa11w2_13 ++ KCa11w2_14 ++ KCa11w2_15 ++ KCa11w2_16 ++ KCa11w2_17 ++ KCa11w2_18 ++ KCa11w2_19 ++ KCa11w2_20 ++ KCa11w2_21 ++ KCa11w2_22 ++ KCa11w2_23 ++ KCa11w2_24 ++ KCa11w2_25 ++ KCa11w2_26 ++ KCa11w2_27 ++ KCa11w2_28 ++ KCa11w2_29 ++ KCa11w2_30 ++ KCa11w2_31 ++ KCa11w2_32 ++ KCa11w2_33 ++ KCa11w2_34 ++ KCa11w2_35 ++ KCa11w2_36 ++ KCa11w2_37 ++ KCa11w2_38 ++ KCa11w2_39 ++ KCa11w2_40 ++ KCa11w2_41 ++ KCa11w2_42 ++ KCa11w2_43 ++ KCa11w2_44 ++ KCa11w2_45 ++ KCa11w2_46 ++ KCa11w2_47 ++ KCa11w2_48 ++ KCa11w2_49 ++ KCa11w2_50 ++ KCa11w2_51 ++ KCa11w2_52 ++ KCa11w2_53 ++ KCa11w2_54 ++ KCa11w2_55 ++ KCa11w2_56 ++ KCa11w2_57 ++ KCa11w2_102 ++ KCa11w2_59 ++ KCa11w2_103 ++ KCa11w2_104 ++ KCa11w2_61 ++ KCa11w2_62 ++ KCa11w2_63 ++ KCa11w2_64 ++ KCa11w2_65 ++ KCa11w2_66 ++ KCa11w2_67 ++ KCa11w2_105 ++ KCa11w2_106 ++ KCa11w2_69 ++ KCa11w2_107 ++ KCa11w2_89 ++ KCa11w2_80 ++ KCa11w2_71 ++ KCa11w2_72 ++ KCa11w2_73) ((kn_grant_d DS_T2 106 4096 KNTd))).
-Lemma KNTdg_eq : kn_grant_d DS_T2 106 4096 KNTd = KNTdg. Proof. kn_fast. Qed.
+Definition KNTdg : list kentry := ltac:(nf_rope (KCa11w2_108 ++ KCa11w2_109 ++ KCa11w2_93 ++ KCa11w2_94 ++ KCa11w2_95 ++ KCa11w2_96 ++ KCa11w2_90 ++ KCa11w2_91 ++ KCa11w2_97 ++ KCa11w2_98 ++ KCa11w2_99 ++ KCa11w2_86 ++ KCa11w2_82 ++ KCa11w2_100 ++ KCa11w2_74 ++ KCa11w2_101 ++ KCa11w2_3 ++ KCa11w2_4 ++ KCa11w2_5 ++ KCa11w2_6 ++ KCa11w2_7 ++ KCa11w2_8 ++ KCa11w2_9 ++ KCa11w2_10 ++ KCa11w2_11 ++ KCa11w2_12 ++ KCa11w2_13 ++ KCa11w2_14 ++ KCa11w2_15 ++ KCa11w2_16 ++ KCa11w2_17 ++ KCa11w2_18 ++ KCa11w2_19 ++ KCa11w2_20 ++ KCa11w2_21 ++ KCa11w2_22 ++ KCa11w2_23 ++ KCa11w2_24 ++ KCa11w2_25 ++ KCa11w2_26 ++ KCa11w2_27 ++ KCa11w2_28 ++ KCa11w2_29 ++ KCa11w2_30 ++ KCa11w2_31 ++ KCa11w2_32 ++ KCa11w2_33 ++ KCa11w2_34 ++ KCa11w2_35 ++ KCa11w2_36 ++ KCa11w2_37 ++ KCa11w2_38 ++ KCa11w2_39 ++ KCa11w2_40 ++ KCa11w2_41 ++ KCa11w2_42 ++ KCa11w2_43 ++ KCa11w2_44 ++ KCa11w2_45 ++ KCa11w2_46 ++ KCa11w2_47 ++ KCa11w2_48 ++ KCa11w2_49 ++ KCa11w2_50 ++ KCa11w2_51 ++ KCa11w2_52 ++ KCa11w2_53 ++ KCa11w2_54 ++ KCa11w2_55 ++ KCa11w2_56 ++ KCa11w2_57 ++ KCa11w2_102 ++ KCa11w2_59 ++ KCa11w2_103 ++ KCa11w2_104 ++ KCa11w2_61 ++ KCa11w2_62 ++ KCa11w2_63 ++ KCa11w2_64 ++ KCa11w2_65 ++ KCa11w2_66 ++ KCa11w2_67 ++ KCa11w2_105 ++ KCa11w2_106 ++ KCa11w2_69 ++ KCa11w2_107 ++ KCa11w2_89 ++ KCa11w2_80 ++ KCa11w2_71 ++ KCa11w2_72 ++ KCa11w2_73) ((kn_grant_d DS_T2 122 4096 KNTd))).
+Lemma KNTdg_eq : kn_grant_d DS_T2 122 4096 KNTd = KNTdg. Proof. kn_fast. Qed.
 (* [comment removed for export] *)
 Definition ISH_LO : Z := 0x7fffa000.
 Definition ISH_LEN : Z := 779776.
@@ -339,7 +340,7 @@ Definition KNTdx3 : list kentry := ltac:(nf_rope (KCa11w2_110 ++ KCa11w2_111 ++ 
 Lemma KNTdx3_eq : xpose (ELit 0) ISH_LO ISH_LEN KNTdg = KNTdx3. Proof. kn_fast. Qed.
 
 (* [comment removed for export] *)
-Definition runTe := ltac:(nf_run KNTdx3 ((AX2L.sym_execFS6 SEGS IT_Kn11w2 KNTdx3 F40 true STOPS11 noscr (SS (PCTd + 4) SRTdg [] KNTdx3 107) []))).
+Definition runTe := ltac:(nf_run KNTdx3 ((AX2L.sym_execFS6 SEGS IT_Kn11w2 KNTdx3 F40 true STOPS11 noscr (SS (PCTd + 4) SRTdg [] KNTdx3 123) []))).
 Definition PCTe : Z := Eval lazy in (s_pc (fst (fst runTe))).
 Definition SRTe : list expr := Eval lazy in (s_regs (fst (fst runTe))).
 Definition LGTe : list sentry := s_log (fst (fst runTe)).
@@ -347,7 +348,7 @@ Definition SKTe : list kentry := s_know (fst (fst runTe)).
 Definition NXTe : nat := Eval lazy in (s_next (fst (fst runTe))).
 Definition SCTe : list sidecond := Eval lazy in (snd (fst runTe)).
 Definition SPTe : scripts := Eval lazy in (snd runTe).
-Lemma runTe_eq : sym_exec SEGS F40 true STOPS11 noscr (SS (PCTd + 4) SRTdg [] KNTdx3 107) [] = (SSR PCTe SRTe LGTe SKTe NXTe None, SCTe, SPTe).
+Lemma runTe_eq : sym_exec SEGS F40 true STOPS11 noscr (SS (PCTd + 4) SRTdg [] KNTdx3 123) [] = (SSR PCTe SRTe LGTe SKTe NXTe None, SCTe, SPTe).
 Proof. apply (AX2L.sym_exec_viaFS6 SEGS IT_Kn11w2 KNTdx3); [exact IT_Kn11w2_ok | reflexivity | vm_cast_no_check (eq_refl runTe)]. Qed.
 Definition KCa11w2_192 : list kentry := Eval vm_compute in (NFC.d_kl "$0010'.@?802010'./?80'%,0010'..?80$#$&.&0010'.-?80'%,0010'.,?80.&//<010'.+?800010'.'?80&-,/+8010'.&740'4010'.%?80$#$&.&0010'.$?80.+#>010'.#?80.0010'-@?80,#$++0010'-/?80%&@'&8000,#$+-040$+0010'-.?80,$#/&0010'--?80&$++++@'#'$,..#@-0").
 Definition KCa11w2_193 : list kentry := Eval vm_compute in (NFC.d_kl "$0010'-,?800010'-+?80,#$++0010'-'?800010'-&?80%&/-+8010'-%?80.0010'-$?820100'+-?010'-#?80,#$++0010',@?80%&/&-0010',/?800010',.?80+@&--0010',-?820100$%?010',,?80%&%#,0000,#$+-8400000,#$+,0800000,#$++0800000,#$'@080,#$++0").
@@ -410,14 +411,14 @@ Proof. apply AX2L.carry_viaF3. vm_cast_no_check (eq_refl carTe). Qed.
 
 
 (* [comment removed for export] *)
-Definition SRTeg : list expr := sr_upd SRTe 10 (EVar 107).
+Definition SRTeg : list expr := sr_upd SRTe 10 (EVar 123).
 Definition KCa11w2_244 : list kentry := Eval vm_compute in (NFC.d_kl "$011,;00'%,061,;00'%,041,;'%,051,;'%,0',%###-#/,#&&%$%&,071,;00'%,010,+,.@#?0$.+/'.&071,;00'%,000,$-.00'.$,#&071,;00'%,000$%.+.%#.'00--.,,-&&%./.071,;00'%,01,:00'%,071,;00'%,01,900,+,.@$071,;00'%,01,800.@+%-071,;00'%,01,700'%,071,;00'%,01,600.+$071,;00'%,01+300.@.--@071,;00'%,01&<00'%,071,;00'%,01%>00'%,071,;00'%,01%600,$-.0").
 Definition KCa11w2_245 : list kentry := Eval vm_compute in (NFC.d_kl "971,;00'%,01%500'%,071,;00'%,01%400,+,.@$071,;00'%,01$<00-&$,,+.+/.071,;00'%,01$;00%//#,'071,;00'%,01$:00,$-.071,;00'%,00@,-.#/,/@&,000,.%#$&@'+@&,071,;00'%,00$'++$##$&000@,,&,'+/@%&071,;00'%,00$%.+.%#.'000$-@&.@&@071,;00'%,01700'%,0").
-Definition KNTeg : list kentry := ltac:(nf_rope (KCa11w2_244 ++ KCa11w2_245 ++ KCa11w2_192 ++ KCa11w2_193 ++ KCa11w2_194 ++ KCa11w2_195 ++ KCa11w2_196 ++ KCa11w2_197 ++ KCa11w2_198 ++ KCa11w2_199 ++ KCa11w2_200 ++ KCa11w2_201 ++ KCa11w2_202 ++ KCa11w2_203 ++ KCa11w2_204 ++ KCa11w2_205 ++ KCa11w2_206 ++ KCa11w2_207 ++ KCa11w2_208 ++ KCa11w2_209 ++ KCa11w2_210 ++ KCa11w2_211 ++ KCa11w2_212 ++ KCa11w2_213 ++ KCa11w2_214 ++ KCa11w2_215 ++ KCa11w2_216 ++ KCa11w2_217 ++ KCa11w2_218 ++ KCa11w2_219 ++ KCa11w2_220 ++ KCa11w2_221 ++ KCa11w2_222 ++ KCa11w2_223 ++ KCa11w2_224 ++ KCa11w2_225 ++ KCa11w2_226 ++ KCa11w2_227 ++ KCa11w2_228 ++ KCa11w2_229 ++ KCa11w2_230 ++ KCa11w2_231 ++ KCa11w2_232 ++ KCa11w2_233 ++ KCa11w2_234 ++ KCa11w2_235 ++ KCa11w2_236 ++ KCa11w2_237 ++ KCa11w2_114 ++ KCa11w2_115 ++ KCa11w2_116 ++ KCa11w2_238 ++ KCa11w2_118 ++ KCa11w2_239 ++ KCa11w2_120 ++ KCa11w2_121 ++ KCa11w2_122 ++ KCa11w2_123 ++ KCa11w2_124 ++ KCa11w2_125 ++ KCa11w2_126 ++ KCa11w2_127 ++ KCa11w2_128 ++ KCa11w2_129 ++ KCa11w2_130 ++ KCa11w2_131 ++ KCa11w2_132 ++ KCa11w2_133 ++ KCa11w2_134 ++ KCa11w2_135 ++ KCa11w2_136 ++ KCa11w2_137 ++ KCa11w2_138 ++ KCa11w2_139 ++ KCa11w2_140 ++ KCa11w2_141 ++ KCa11w2_142 ++ KCa11w2_143 ++ KCa11w2_144 ++ KCa11w2_145 ++ KCa11w2_146 ++ KCa11w2_147 ++ KCa11w2_148 ++ KCa11w2_149 ++ KCa11w2_150 ++ KCa11w2_151 ++ KCa11w2_152 ++ KCa11w2_153 ++ KCa11w2_154 ++ KCa11w2_155 ++ KCa11w2_156 ++ KCa11w2_157 ++ KCa11w2_158 ++ KCa11w2_159 ++ KCa11w2_160 ++ KCa11w2_161 ++ KCa11w2_162 ++ KCa11w2_163 ++ KCa11w2_164 ++ KCa11w2_165 ++ KCa11w2_166 ++ KCa11w2_167 ++ KCa11w2_168 ++ KCa11w2_169 ++ KCa11w2_170 ++ KCa11w2_171 ++ KCa11w2_172 ++ KCa11w2_173 ++ KCa11w2_174 ++ KCa11w2_175 ++ KCa11w2_176 ++ KCa11w2_177 ++ KCa11w2_240 ++ KCa11w2_179 ++ KCa11w2_180 ++ KCa11w2_181 ++ KCa11w2_182 ++ KCa11w2_241 ++ KCa11w2_184 ++ KCa11w2_242 ++ KCa11w2_243 ++ KCa11w2_186 ++ KCa11w2_187 ++ KCa11w2_188 ++ KCa11w2_189 ++ KCa11w2_190 ++ KCa11w2_191) ((kn_grant_d DS_T3 107 4096 KNTe))).
-Lemma KNTeg_eq : kn_grant_d DS_T3 107 4096 KNTe = KNTeg. Proof. kn_fast. Qed.
+Definition KNTeg : list kentry := ltac:(nf_rope (KCa11w2_244 ++ KCa11w2_245 ++ KCa11w2_192 ++ KCa11w2_193 ++ KCa11w2_194 ++ KCa11w2_195 ++ KCa11w2_196 ++ KCa11w2_197 ++ KCa11w2_198 ++ KCa11w2_199 ++ KCa11w2_200 ++ KCa11w2_201 ++ KCa11w2_202 ++ KCa11w2_203 ++ KCa11w2_204 ++ KCa11w2_205 ++ KCa11w2_206 ++ KCa11w2_207 ++ KCa11w2_208 ++ KCa11w2_209 ++ KCa11w2_210 ++ KCa11w2_211 ++ KCa11w2_212 ++ KCa11w2_213 ++ KCa11w2_214 ++ KCa11w2_215 ++ KCa11w2_216 ++ KCa11w2_217 ++ KCa11w2_218 ++ KCa11w2_219 ++ KCa11w2_220 ++ KCa11w2_221 ++ KCa11w2_222 ++ KCa11w2_223 ++ KCa11w2_224 ++ KCa11w2_225 ++ KCa11w2_226 ++ KCa11w2_227 ++ KCa11w2_228 ++ KCa11w2_229 ++ KCa11w2_230 ++ KCa11w2_231 ++ KCa11w2_232 ++ KCa11w2_233 ++ KCa11w2_234 ++ KCa11w2_235 ++ KCa11w2_236 ++ KCa11w2_237 ++ KCa11w2_114 ++ KCa11w2_115 ++ KCa11w2_116 ++ KCa11w2_238 ++ KCa11w2_118 ++ KCa11w2_239 ++ KCa11w2_120 ++ KCa11w2_121 ++ KCa11w2_122 ++ KCa11w2_123 ++ KCa11w2_124 ++ KCa11w2_125 ++ KCa11w2_126 ++ KCa11w2_127 ++ KCa11w2_128 ++ KCa11w2_129 ++ KCa11w2_130 ++ KCa11w2_131 ++ KCa11w2_132 ++ KCa11w2_133 ++ KCa11w2_134 ++ KCa11w2_135 ++ KCa11w2_136 ++ KCa11w2_137 ++ KCa11w2_138 ++ KCa11w2_139 ++ KCa11w2_140 ++ KCa11w2_141 ++ KCa11w2_142 ++ KCa11w2_143 ++ KCa11w2_144 ++ KCa11w2_145 ++ KCa11w2_146 ++ KCa11w2_147 ++ KCa11w2_148 ++ KCa11w2_149 ++ KCa11w2_150 ++ KCa11w2_151 ++ KCa11w2_152 ++ KCa11w2_153 ++ KCa11w2_154 ++ KCa11w2_155 ++ KCa11w2_156 ++ KCa11w2_157 ++ KCa11w2_158 ++ KCa11w2_159 ++ KCa11w2_160 ++ KCa11w2_161 ++ KCa11w2_162 ++ KCa11w2_163 ++ KCa11w2_164 ++ KCa11w2_165 ++ KCa11w2_166 ++ KCa11w2_167 ++ KCa11w2_168 ++ KCa11w2_169 ++ KCa11w2_170 ++ KCa11w2_171 ++ KCa11w2_172 ++ KCa11w2_173 ++ KCa11w2_174 ++ KCa11w2_175 ++ KCa11w2_176 ++ KCa11w2_177 ++ KCa11w2_240 ++ KCa11w2_179 ++ KCa11w2_180 ++ KCa11w2_181 ++ KCa11w2_182 ++ KCa11w2_241 ++ KCa11w2_184 ++ KCa11w2_242 ++ KCa11w2_243 ++ KCa11w2_186 ++ KCa11w2_187 ++ KCa11w2_188 ++ KCa11w2_189 ++ KCa11w2_190 ++ KCa11w2_191) ((kn_grant_d DS_T3 123 4096 KNTe))).
+Lemma KNTeg_eq : kn_grant_d DS_T3 123 4096 KNTe = KNTeg. Proof. kn_fast. Qed.
 
 (* [comment removed for export] *)
-Definition runTf := ltac:(nf_run KNTeg ((AX2L.sym_execFS6 SEGS IT_Kn11w2 KNTeg F40 true STOPS11 noscr (SS (PCTe + 4) SRTeg [] KNTeg 108) []))).
+Definition runTf := ltac:(nf_run KNTeg ((AX2L.sym_execFS6 SEGS IT_Kn11w2 KNTeg F40 true STOPS11 noscr (SS (PCTe + 4) SRTeg [] KNTeg 124) []))).
 Definition PC_MAIN : Z := Eval lazy in (s_pc (fst (fst runTf))).
 Definition SR_MAIN : list expr := Eval lazy in (s_regs (fst (fst runTf))).
 Definition LGTf : list sentry := s_log (fst (fst runTf)).
@@ -425,7 +426,7 @@ Definition SKTf : list kentry := s_know (fst (fst runTf)).
 Definition NXTf : nat := Eval lazy in (s_next (fst (fst runTf))).
 Definition SCTf : list sidecond := Eval lazy in (snd (fst runTf)).
 Definition SPTf : scripts := Eval lazy in (snd runTf).
-Lemma runTf_eq : sym_exec SEGS F40 true STOPS11 noscr (SS (PCTe + 4) SRTeg [] KNTeg 108) [] = (SSR PC_MAIN SR_MAIN LGTf SKTf NXTf None, SCTf, SPTf).
+Lemma runTf_eq : sym_exec SEGS F40 true STOPS11 noscr (SS (PCTe + 4) SRTeg [] KNTeg 124) [] = (SSR PC_MAIN SR_MAIN LGTf SKTf NXTf None, SCTf, SPTf).
 Proof. apply (AX2L.sym_exec_viaFS6 SEGS IT_Kn11w2 KNTeg); [exact IT_Kn11w2_ok | reflexivity | vm_cast_no_check (eq_refl runTf)]. Qed.
 Definition KCa11w2_246 : list kentry := Eval vm_compute in (NFC.d_kl "$0010$/?800010$.?800010$-?800010$,?800010$+?800010$'?800010$&?8202010400$0110%0010$%?80',../0010$$?80+.'@&0010$#?80+.'@'0010@?80+$@%'0000,#$+#0800000,#$'&0102000+@.'%0102000+@.'$0802000$%.+.@-'%080'+##$+&$.&$//,-'.&2").
 Definition KCa11w2_247 : list kentry := Eval vm_compute in (NFC.d_kl "$0000$%.+.@-'$080'+##$+&$.&$//,-'.&2000$%.+.@-'#080'+##$+&$.&$//,-'.&2000$%.+.@-&@080'+##$+&$.&$//,-'.&2000$%.+.@-&/080'+##$+&$.&$//,-'.&2000$%.+.@-&.080'+##$+&$.&$//,-'.&2000$%.+.@-&-080'+##$+&$.&$//,-'.&2000$%.+.@-&,080'+##$+&$.&$//,-'.&2000$%.+.@-&+080'+##$+&$.&$//,-'.&2000$%.+.@-&'080'+##$+&$.&$//,-'.&2000$%.+.@-&&080'+##$+&$.&$//,-'.&2000$%.+.@-&%080'+##$+&$.&$//,-'.&2000$%.+.@-&$080'+##$+&$.&$//,-'.&2000$%.+.@-&#080'+##$+&$.&$//,-'.&2000$%.+.@-%@080'+##$+&$.&$//,-'.&2000$%.+.@-%/080'+##$+&$.&$//,-'.&2000$%.+.@-%.080'+##$+&$.&$//,-'.&2").
@@ -476,18 +477,18 @@ Proof. apply AX2L.carry_viaF3. vm_cast_no_check (eq_refl carTf). Qed.
 
 
 Lemma itinerary11_ok :
-  (PCTa, CSTa, NXTa) = (A_trace_ld, [], 104%nat)
-  /\ SCTa = [SCBr false BC_GEU (EAlu ALU_ADD (EVar 0) (ELit (-112))) (EAlu ALU_ADD (EVar 62) (ELit (-16)));
-             SCBr false BC_GEU (EAlu ALU_ADD (EVar 62) (ELit (-8388608))) (EAlu ALU_ADD (EVar 0) (ELit (-112)))]
-  /\ (PCTb, SCTb, CSTb, NXTb) = (A_internal_mmap_ecall, [], [], 104%nat)
+  (PCTa, CSTa, NXTa) = (A_trace_ld, [], 120%nat)
+  /\ SCTa = [SCBr false BC_GEU (EAlu ALU_ADD (EVar 0) (ELit (-112))) (EAlu ALU_ADD (EVar 78) (ELit (-16)));
+             SCBr false BC_GEU (EAlu ALU_ADD (EVar 78) (ELit (-8388608))) (EAlu ALU_ADD (EVar 0) (ELit (-112)))]
+  /\ (PCTb, SCTb, CSTb, NXTb) = (A_internal_mmap_ecall, [], [], 120%nat)
   /\ map (fun r => sr_get SRTb (Z_to_bv 5 r)) [17; 10; 11; 12; 13; 14; 15] = [ELit 222; ELit 0; ELit 1048576; ELit 3; ELit 34; ELit (2 ^ 64 - 1); ELit 0]
-  /\ (PCTc, SCTc, CSTc, NXTc) = (A_internal_mmap_ecall, [], [], 105%nat)
+  /\ (PCTc, SCTc, CSTc, NXTc) = (A_internal_mmap_ecall, [], [], 121%nat)
   /\ map (fun r => sr_get SRTc (Z_to_bv 5 r)) [17; 10; 11; 12; 13; 14; 15] = [ELit 222; ELit 0; ELit 8388608; ELit 3; ELit 16418; ELit (2 ^ 64 - 1); ELit 0]
-  /\ (PCTd, SCTd, CSTd, NXTd) = (A_internal_mmap_ecall, [], [], 106%nat)
+  /\ (PCTd, SCTd, CSTd, NXTd) = (A_internal_mmap_ecall, [], [], 122%nat)
   /\ map (fun r => sr_get SRTd (Z_to_bv 5 r)) [17; 10; 11; 12; 13; 14; 15] = [ELit 222; ELit 0; ELit 4096; ELit 3; ELit 34; ELit (2 ^ 64 - 1); ELit 0]
-  /\ (PCTe, SCTe, CSTe, NXTe) = (A_internal_mmap_ecall, [], [], 107%nat)
+  /\ (PCTe, SCTe, CSTe, NXTe) = (A_internal_mmap_ecall, [], [], 123%nat)
   /\ map (fun r => sr_get SRTe (Z_to_bv 5 r)) [17; 10; 11; 12; 13; 14; 15] = [ELit 222; ELit 0; ELit 4096; ELit 3; ELit 34; ELit (2 ^ 64 - 1); ELit 0]
-  /\ (PC_MAIN, SCTf, CSTf, NXTf) = (A_main, [], [], 108%nat)
+  /\ (PC_MAIN, SCTf, CSTf, NXTf) = (A_main, [], [], 124%nat)
   /\ map (fun r => sr_get SR_MAIN (Z_to_bv 5 r)) [1; 2; 10; 11] = [ELit A_stage2_ret; EAlu ALU_ADD (EVar 0) (ELit (-48)); EVar 1; EAlu ALU_ADD (EVar 0) (ELit 8)]
   /\ existsb (APC.kentry_eqb KZDEEP) KN_MAIN = true.
 Proof. vmeq_conj. Qed.

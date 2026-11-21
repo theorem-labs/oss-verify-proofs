@@ -35,13 +35,13 @@ Open Scope Z_scope.
     firstn 15 p, its NUL, zeros, le2 vid (seg_spec.rvlan_enc).
 
     Callee contracts its walk takes as premises:
-    - strcmp_contract (Prog/strcmp_c.v under lib/U, STRCMP = 0x1f594; commit
-      06702a5f1f22): both strings NUL-terminated (tab[i].parent by rvlan_enc's cstr_enc 16), no stack, no store; r =
+    - strcmp_contract (Prog/strcmp_c.v under lib/U, STRCMP = 0x1f594):
+      both strings NUL-terminated (tab[i].parent by rvlan_enc's cstr_enc 16), no stack, no store; r =
       0 <-> equal is SegModel.strcmp = 0 on C strings (Spec/SegBridge.v's bridge_strcmp);
     - memset_contract (Prog/memset_c.v under lib/U, MEMSET = 0x1f2cc): the 18 bytes of tab[*n] present and writable
       (vtab_pre's free entries);
-    - strncpy_contract (Prog/strncpy_c.v under lib/U, STRNCPY = 0x1f780; commit
-      811f45dd6ed2): the 15 destination bytes, the source with its slack apart from them and from strncpy's 32 bytes
+    - strncpy_contract (Prog/strncpy_c.v under lib/U, STRNCPY = 0x1f780):
+      the 15 destination bytes, the source with its slack apart from them and from strncpy's 32 bytes
       of stack.
     ADD_STACK = 112 + 32 (strncpy's; strcmp and memset use none).
 

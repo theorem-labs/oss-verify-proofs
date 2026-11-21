@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 1441 of its 1505 lines of code are new or changed and 947 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/YTail.v, with its module paths and module names changed; 534 of its 819 lines of code are new or changed and 1220 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/YTailF.v, with its module paths and module names changed; 59 of its 90 lines of code are new or changed and 788 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Footprint form (D) of __asan_stack_free_6 of image A (fuzz_ctrl.asan, libreac v1.9.0) at
    ASAN_STACK_FREE_6 = 0x3dbf4, and the localized-shadow plain form its proof runs through.
 
@@ -17,7 +18,7 @@
      - one `ExecF.rng` premise per region the call reads or writes, LAST, after every original premise;
      - the run an ExecF.evtF on RNG instead of an Exec.evt.
    asan_stack_free_6_contract_F RNG is WORD FOR WORD Seg/YTailF.v's `stack_free_6_F RNG` (its consumer, blob
-   5439a6a24ed on the glue base and 81b7f401f87 on a working branch agree on the text), so that file's
+   5439a6a24ed on the glue base and on a working branch agree on the text), so that file's
    obligation is discharged by `exact asan_stack_freeF.asan_stack_free_6_holds_F`.
 
    THE REGIONS, and why each one is in the list (disassembly of 0x3dbf4, 18 instructions, 72 bytes, and of its

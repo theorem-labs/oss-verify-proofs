@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: AMI holds every map apart from every reservation (the launch's vDSO pair included) in place of the reservations' RES_HI bound (region_free_of_wsep_in). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
 From stdpp Require Import gmap.
@@ -177,7 +178,9 @@ Definition noacc_clear (na : list (word * word)) : Prop :=
 Definition AMI (RESV : list (Z * Z)) (ATOP : Z) (ch : list (Z * Z)) (st : astate) (mo : Model) : Prop :=
   m_vm_materialized mo = []
   /\ LIMIT <= vm_limit (m_vmmaps mo)                     (* [comment removed for export] *)
-  /\ Forall (fun e => bv_unsigned (fst e) + bv_unsigned (snd e) <= RES_HI) (vm_reserved (m_vmmaps mo))
+  (* LPS 727298f3: the launch also reserves the vDSO pair, above the image, so the reservations are
+     not all below RES_HI; every map is apart from every reservation instead *)
+  /\ Forall (fun e => Forall (wsep e) (vm_reserved (m_vmmaps mo))) (vm_maps (m_vmmaps mo))
   /\ zlen (vm_reserved (m_vmmaps mo)) <= LEN0 /\ live_bytes (vm_reserved (m_vmmaps mo)) <= RTOT0
   /\ Forall (entry_ok ATOP) (vm_maps (m_vmmaps mo))
   /\ ivs_wf (vm_noaccess (m_vmmaps mo))
@@ -377,6 +380,18 @@ Proof.
   apply andb_false_iff in H1 as [H1|H1]; apply Z.ltb_ge in H1; lia.
 Qed.
 
+(* LPS 727298f3: a range inside [e] is free of every interval [e] is apart from *)
+Lemma region_free_of_wsep_in : forall l (e : word * word) (a n : Z),
+  Forall (wsep e) l -> bv_unsigned (fst e) <= a -> a + n <= bv_unsigned (fst e) + bv_unsigned (snd e) ->
+  0 <= a -> a + n < 2^64 -> 0 <= n ->
+  region_free l (Z_to_bv 64 a) (Z_to_bv 64 n) = true.
+Proof.
+  induction l as [|[b s] l IH]; intros e a n Hf H1 H2 Ha Han Hn; [reflexivity|].
+  apply Forall_cons_iff in Hf as [Hw Hf]. cbn [region_free]. rewrite (IH e a n Hf H1 H2 Ha Han Hn), andb_true_r.
+  apply negb_true_iff. unfold iv_overlap. rewrite !unsigned_lit by lia. unfold wsep in Hw. cbn [fst snd] in Hw.
+  apply andb_false_iff. destruct Hw as [Hw|Hw]; [right| left]; apply Z.ltb_ge; lia.
+Qed.
+
 (* [comment removed for export] *)
 Lemma overlap_sum_contained : forall l e lo hi,
   seps l -> In e l -> B e <= lo -> hi <= B e + S e -> lo <= hi ->
@@ -560,6 +575,8 @@ Proof.
   pose proof MT as [[T1 T2] T3]. unfold ACEIL, ATOP_MAX in T1, T2.
   unfold AMI, grant_model. cbn -[Z.add Z.mul Z.pow Z_to_bv bv_unsigned sum_count Pm live_bytes zlen].
   repeat match goal with |- _ /\ _ => split end; try assumption.
+  - constructor; [|exact M3]. rewrite region_free_app in Hrf. apply andb_true_iff in Hrf as [Hrf _].
+    apply (region_free_wsep (vm_reserved (m_vmmaps mo)) (Z_to_bv 64 z) (Z_to_bv 64 nZ)). exact Hrf.
   - constructor; [|exact M6]. unfold entry_ok. cbn [fst snd]. rewrite !unsigned_lit by lia. repeat split; lia.
   - constructor; [|exact M9]. rewrite region_free_app in Hrf. apply andb_true_iff in Hrf as [_ Hrf].
     apply (region_free_wsep (vm_maps (m_vmmaps mo)) (Z_to_bv 64 z) (Z_to_bv 64 nZ)). exact Hrf.
@@ -678,6 +695,7 @@ Proof.
   all: try exact (proj1 MT).
   all: try (unfold alloc_top in *; cbn [vm_init_sp] in *; lia).
   - reflexivity.
+  - unfold map_remove. rewrite Forall_forall in M3 |- *. intros e He. apply M3. apply (incl_filter _ _ _ He).
   - unfold map_remove. rewrite Forall_forall in *. intros e He. apply M6. apply (incl_filter _ _ _ He).
   - apply maps_subtract_wf; [exact Wn| lia].
   - apply maps_subtract_wf; [exact Wl| lia].

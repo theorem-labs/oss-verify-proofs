@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO; the THP flag of the mmap placement; the reserved ledger). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -24,7 +25,9 @@ Section Glue.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   Definition topH (vm : VmMaps) : Prop := 0x7fff7f800000 <= alloc_top vm <= 0x7fffff800000.
-  Definition HTof (vm : VmMaps) (H : topH vm) : HeapTop := {| alloc_ceiling := alloc_top vm; alloc_ceiling_range := H |}.
+  Definition HTof (vm : VmMaps) (H : topH vm) : HeapTop :=
+    {| alloc_ceiling := alloc_top vm; alloc_ceiling_range := H;
+       heap_resx := skipn (length (segments_reserved ml_segs)) (vm_reserved vm) |}.
 
   Definition g_inv (A : astate) (m : word -> option byte) (vm : VmMaps) : Prop :=
     exists H : topH vm, minv (HT:=HTof vm H) A m vm /\ a_xmaps A = [] /\ replaced_clear m.
@@ -43,7 +46,7 @@ Section Glue.
   Let AL : AllocLayout := mallocng_alloc_layout.
 
   (* [comment removed for export] *)
-  Let HT0 : HeapTop := {| alloc_ceiling := 0x7fff7f800000; alloc_ceiling_range := ltac:(lia) |}.
+  Let HT0 : HeapTop := {| alloc_ceiling := 0x7fff7f800000; alloc_ceiling_range := ltac:(lia); heap_resx := [] |}.
 
   Lemma replaced_range : RW_LO <= u A_MALLOC_REPLACED /\ u A_MALLOC_REPLACED + 4 <= IMG_HI /\ CTX_END <= u A_MALLOC_REPLACED.
   Proof.
@@ -130,7 +133,14 @@ Section Glue.
       (forall a, @al_globals AL a -> m a = None) -> (forall a, grantable h0 a -> m a = None) -> g_inv MallocInv_defs.A0 m h0.
   Proof.
     intros m h0 IL Hg Hgr. exists (init_topH h0 IL). split; [| split; [reflexivity | intros a Ha; apply Hg; right; exact Ha]].
-    apply (minv_init (HT:=HTof h0 (init_topH h0 IL)) m h0 (il_maps h0 IL) (il_noaccess h0 IL) (il_reserved h0 IL) (il_start_brk h0 IL) (il_brk h0 IL) eq_refl).
+    destruct (il_reserved h0 IL) as (rx & Er & Rl & Rb).
+    assert (Sk : forall l1 l2 : list (word * word), skipn (length l1) (l1 ++ l2) = l2)
+      by (intros l1 l2; induction l1 as [|x l1 IH]; cbn; [reflexivity | exact IH]).
+    assert (Erx : @heap_resx (HTof h0 (init_topH h0 IL)) = rx).
+    { change (skipn (length (segments_reserved ml_segs)) (vm_reserved h0) = rx). rewrite Er. exact (Sk _ _). }
+    apply (minv_init (HT:=HTof h0 (init_topH h0 IL)) m h0 (il_maps h0 IL) (il_noaccess h0 IL)
+             ltac:(rewrite Erx; exact Er) ltac:(rewrite Erx; exact Rl) ltac:(rewrite Erx; exact Rb)
+             (il_start_brk h0 IL) (il_brk h0 IL) eq_refl).
     - intros a Ha. apply Hg. apply alloc_globals_al. exact Ha.
     - intros a (G1 & G2). apply Hgr. split; [split; [exact (proj1 G1) | exact G2] | exact (proj2 G1)].
   Qed.
@@ -144,25 +154,25 @@ Section Glue.
     apply FunctionalExtensionality.functional_extensionality. intros x. destruct (p x).
   Qed.
 
-  Lemma HT_eq : forall (T1 T2 : HeapTop), @alloc_ceiling T1 = @alloc_ceiling T2 -> T1 = T2.
+  Lemma HT_eq : forall (T1 T2 : HeapTop), @alloc_ceiling T1 = @alloc_ceiling T2 -> @heap_resx T1 = @heap_resx T2 -> T1 = T2.
   Proof.
-    intros [c1 [p1 q1]] [c2 [p2 q2]] E. cbn in E. subst c2.
+    intros [c1 [p1 q1] r1] [c2 [p2 q2] r2] E Er. cbn in E, Er. subst c2 r2.
     rewrite (Zle_irrel _ _ p1 p2), (Zle_irrel _ _ q1 q2). reflexivity.
   Qed.
 
   Lemma minv_transport : forall (T1 T2 : HeapTop) A m vm,
-    @alloc_ceiling T1 = @alloc_ceiling T2 -> minv (HT:=T1) A m vm -> minv (HT:=T2) A m vm.
-  Proof. intros T1 T2 A m vm E HM. rewrite <- (HT_eq T1 T2 E). exact HM. Qed.
+    @alloc_ceiling T1 = @alloc_ceiling T2 -> @heap_resx T1 = @heap_resx T2 -> minv (HT:=T1) A m vm -> minv (HT:=T2) A m vm.
+  Proof. intros T1 T2 A m vm E Er HM. rewrite <- (HT_eq T1 T2 E Er). exact HM. Qed.
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  Lemma call_env_of : forall vm (H : topH vm) A m (sp sp0 : word) argv envp (D : Z),
+  Lemma call_env_of : forall vm (H : topH vm) A m (sp sp0 : word) argv envp (D : Z) (thp : bool),
     minv (HT:=HTof vm H) A m vm -> mallocng_env sp0 argv envp m ->
     alloc_top vm + D <= u sp -> 0 <= D -> u sp <= u sp0 ->
-    call_env (HT:=HTof vm H) A (MS m vm (u sp - D) (u sp)) sp0 argv envp.
+    call_env (HT:=HTof vm H) A (MS m vm (u sp - D) (u sp) thp) sp0 argv envp.
   Proof.
-    intros vm H A m sp sp0 argv envp D HM (E1 & E2 & E3 & E4 & E5) Htop HD Hsp0. pose proof (u64_range sp).
+    intros vm H A m sp sp0 argv envp D thp HM (E1 & E2 & E3 & E4 & E5) Htop HD Hsp0. pose proof (u64_range sp).
     constructor; cbn [ms_mem ms_vm ms_lo ms_hi].
     - exact HM.
     - unfold WIN. cbn. lia.
@@ -178,17 +188,17 @@ Section Glue.
   (* [comment removed for export] *)
   Lemma g_inv_after : forall vm (H : topH vm) A A' m0 (m' mm' : word -> option byte) vm' (lo hi : Z),
     minv (HT:=HTof vm H) A' m' vm' -> a_xmaps A' = [] ->
-    alloc_top vm' = alloc_top vm -> alloc_top vm <= lo ->
+    alloc_top vm' = alloc_top vm -> vm_reserved vm' = vm_reserved vm -> alloc_top vm <= lo ->
     (forall a : word, ~ (lo <= u a < hi) -> mm' a = m' a) ->
     replaced_clear m0 ->
     (forall a : word, ~ mowned A a -> ~ mowned A' a -> ~ errno_slot a -> m' a = m0 a) ->
     WF (HT:=HTof vm H) A ->
     g_inv A' mm' vm'.
   Proof.
-    intros vm H A A' m0 m' mm' vm' lo hi HM' Hxm' Etop Hlo Hag Hrc Hfr HWA.
+    intros vm H A A' m0 m' mm' vm' lo hi HM' Hxm' Etop Eres Hlo Hag Hrc Hfr HWA.
     assert (H' : topH vm') by (unfold topH in *; rewrite Etop; exact H).
     exists H'. split; [| split; [exact Hxm'|]].
-    - apply (minv_transport (HTof vm H) (HTof vm' H')); [cbn; symmetry; exact Etop|].
+    - apply (minv_transport (HTof vm H) (HTof vm' H')); [cbn; symmetry; exact Etop | cbn; rewrite Eres; reflexivity |].
       apply (minv_agree (HT:=HTof vm H) A' m' mm' vm' HM'). intros a Ha. apply Hag. cbn in Ha. lia.
     - intros a Ha. pose proof replaced_range as RR. pose proof (layout_nums (HT:=HTof vm H)) as LN.
       assert (NO : forall B, WF (HT:=HTof vm H) B -> ~ mowned B a).
@@ -221,7 +231,7 @@ Section Glue.
     Hypothesis calloc_refines : forall fx : FPState, calloc_stmt (fx:=fx).
 
     Lemma glue_malloc_g : forall (fx : FPState) A m md regs (n : Z) (ret sp0 : word) argv envp (S : TSet),
-      g_inv A m (m_vmmaps md) -> md_pure md ->
+      g_inv A m (m_vmmaps md) -> md_pure md -> incl (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) (vm_reserved (m_vmmaps md)) ->
       mallocng_env sp0 argv envp m ->
       getr regs 10 = Z_to_bv 64 n -> 0 <= n < 2^61 ->
       getr regs 1 = ret -> ret_ok ret -> getr regs 4 = A_TP ->
@@ -244,18 +254,20 @@ Section Glue.
           (forall a, m a <> None -> u a < IMG_HI \/ g_owned A a \/ m' a <> None) ->
           vm_limit vm' = vm_limit (m_vmmaps md) -> alloc_top vm' = alloc_top (m_vmmaps md) ->
           vm_init_sp vm' = vm_init_sp (m_vmmaps md) -> vm_reserved vm' = vm_reserved (m_vmmaps md) ->
+          vm_mmap_base vm' = vm_mmap_base (m_vmmaps md) ->
           (* [comment removed for export] *)
           malloc_growX n A A' (m_vmmaps md) vm' -> (u res = 0 -> g_noroom n A (m_vmmaps md)) ->
           realizes ml_segs (mkCfg (mkst regs' ret m' ml_rom) (with_vmmaps vm' md)) S) ->
       realizes ml_segs (mkCfg (mkst regs PC_MALLOC m ml_rom) md) S.
     Proof.
-      intros fx A m md regs n ret sp0 argv envp S HG Hpure Henv H10 Hn H1 Hret H4 Hal Htop Hsp0 Hwin HK.
+      intros fx A m md regs n ret sp0 argv envp S HG Hpure Hvd Henv H10 Hn H1 Hret H4 Hal Htop Hsp0 Hwin HK.
       pose proof HG as (H & HM & Hxm & Hrc). pose proof (u64_range (getr regs 2)) as Hsp.
-      set (sp := getr regs 2) in *. set (s := MS m (m_vmmaps md) (u sp - ALLOC_STACK) (u sp)).
-      pose proof (call_env_of (m_vmmaps md) H A m sp sp0 argv envp ALLOC_STACK HM Henv ltac:(unfold ALLOC_STACK; lia) ltac:(unfold ALLOC_STACK; lia) Hsp0) as HE.
+      set (sp := getr regs 2) in *. set (s := MS m (m_vmmaps md) (u sp - ALLOC_STACK) (u sp) (kb_thp (m_kernel md))).
+      pose proof (call_env_of (m_vmmaps md) H A m sp sp0 argv envp ALLOC_STACK (kb_thp (m_kernel md)) HM Henv ltac:(unfold ALLOC_STACK; lia) ltac:(unfold ALLOC_STACK; lia) Hsp0) as HE.
       fold s in HE.
       pose proof (malloc_okX (HTof (m_vmmaps md) H) A s sp0 argv envp (at_ sp (-48)) n HE Hxm Hn) as HS.
       apply (tshape_const_rz (m_malloc (at_ sp (-48)) (Z_to_bv 64 n) s) S (malloc_postX (HT:=HTof (m_vmmaps md) H) A n s) _ HS).
+      pose proof (Hvd : vdso_ok md) as Hvdo.
       eapply (malloc_refines fx md regs m ml_rom s (Z_to_bv 64 n) sp ret (malloc_postX (HT:=HTof (m_vmmaps md) H) A n s) (fun _ _ => S));
         try reflexivity; try eassumption.
       - apply magree_refl.
@@ -263,14 +275,14 @@ Section Glue.
       - cbn. lia.
       - unfold RefStep.wtop. cbn. unfold topH, ALLOC_STACK, TASK_SIZE, AsanCeil.alloc_ceiling in *. lia.
       - intros a Ha. exact (proj1 (Hwin a Ha)).
-      - intros r s' mm' regs' HP Hag' Hlo' Hhi' Htop' Hr Hsp' Hcs Hfrw Hwin'.
+      - intros r s' mm' regs' HP Hag' Hlo' Hhi' Htop' Hthp' Hr Hsp' Hcs Hfrw Hwin'.
         destruct HP as (A' & Hxm' & HM' & Elo & Ehi & Hres & Hframe & Hlive & Hmap & Hfix & Hgrow & Hnoroom).
         cbn [ms_lo ms_hi ms_mem ms_vm s] in Elo, Ehi, Hres, Hframe, Hlive, Hmap, Hfix, Hgrow, Hnoroom, Htop', Hag'.
         destruct Hfix as (Flim & Ftop & Fisp & Fres).
         assert (Hout : forall a : word, u a < alloc_top (m_vmmaps md) -> mm' a = ms_mem s' a).
         { intros a Ha. apply Hag'. unfold in_win. rewrite Elo. unfold ALLOC_STACK. lia. }
         eapply (HK A' mm' (ms_vm s') regs' r).
-        + apply (g_inv_after (m_vmmaps md) H A A' m (ms_mem s') mm' (ms_vm s') (ms_lo s') (ms_hi s') HM' Hxm' Ftop).
+        + apply (g_inv_after (m_vmmaps md) H A A' m (ms_mem s') mm' (ms_vm s') (ms_lo s') (ms_hi s') HM' Hxm' Ftop Fres).
           * rewrite Elo. unfold ALLOC_STACK. lia.
           * intros a Ha. apply Hag'. unfold in_win. exact Ha.
           * exact Hrc.
@@ -294,12 +306,12 @@ Section Glue.
             -- right; right. apply Hwin'. lia.
             -- destruct (Hmap a Hm) as [Hlow | [Ho | Hs']]; [left; exact Hlow | right; left; left; exact Ho | right; right].
                rewrite Hag'; [exact Hs'|]. unfold in_win. rewrite Ehi. lia.
-        + exact Flim. + exact Ftop. + exact Fisp. + exact Fres.
+        + exact Flim. + exact Ftop. + exact Fisp. + exact Fres. + exact (vframe_mbase _ _ Htop').
         + exact Hgrow.
         + intros H0. exists H. exact (Hnoroom H0).
     Qed.
     Lemma glue_malloc : forall (fx : FPState) A m md regs (n : Z) (ret sp0 : word) argv envp (S : TSet),
-      g_inv A m (m_vmmaps md) -> md_pure md ->
+      g_inv A m (m_vmmaps md) -> md_pure md -> incl (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) (vm_reserved (m_vmmaps md)) ->
       mallocng_env sp0 argv envp m ->
       getr regs 10 = Z_to_bv 64 n -> 0 <= n < 2^61 ->
       getr regs 1 = ret -> ret_ok ret -> getr regs 4 = A_TP ->
@@ -322,15 +334,16 @@ Section Glue.
           (forall a, m a <> None -> u a < IMG_HI \/ g_owned A a \/ m' a <> None) ->
           vm_limit vm' = vm_limit (m_vmmaps md) -> alloc_top vm' = alloc_top (m_vmmaps md) ->
           vm_init_sp vm' = vm_init_sp (m_vmmaps md) -> vm_reserved vm' = vm_reserved (m_vmmaps md) ->
+          vm_mmap_base vm' = vm_mmap_base (m_vmmaps md) ->
           realizes ml_segs (mkCfg (mkst regs' ret m' ml_rom) (with_vmmaps vm' md)) S) ->
       realizes ml_segs (mkCfg (mkst regs PC_MALLOC m ml_rom) md) S.
     Proof.
-      intros fx A m md regs n ret sp0 argv envp S HG Hpure Henv H10 Hn H1 Hret H4 Hal Htop Hsp0 Hwin HK.
-      apply (glue_malloc_g fx A m md regs n ret sp0 argv envp S HG Hpure Henv H10 Hn H1 Hret H4 Hal Htop Hsp0 Hwin).
-      intros A' m' vm' regs' res X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 _ _. exact (HK A' m' vm' regs' res X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11).
+      intros fx A m md regs n ret sp0 argv envp S HG Hpure Hvd Henv H10 Hn H1 Hret H4 Hal Htop Hsp0 Hwin HK.
+      apply (glue_malloc_g fx A m md regs n ret sp0 argv envp S HG Hpure Hvd Henv H10 Hn H1 Hret H4 Hal Htop Hsp0 Hwin).
+      intros A' m' vm' regs' res X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 X12 _ _. exact (HK A' m' vm' regs' res X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 X12).
     Qed.
     Lemma glue_free_g : forall (fx : FPState) A m md regs (p ret sp0 : word) argv envp (S : TSet),
-      g_inv A m (m_vmmaps md) -> md_pure md ->
+      g_inv A m (m_vmmaps md) -> md_pure md -> incl (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) (vm_reserved (m_vmmaps md)) ->
       mallocng_env sp0 argv envp m ->
       getr regs 10 = p -> (p = Z_to_bv 64 0 \/ exists n, mlive A p = Some n) ->
       getr regs 1 = ret -> ret_ok ret -> getr regs 4 = A_TP ->
@@ -350,19 +363,21 @@ Section Glue.
           (forall a, m a <> None -> g_owned A a \/ m' a <> None) ->
           vm_limit vm' = vm_limit (m_vmmaps md) -> alloc_top vm' = alloc_top (m_vmmaps md) ->
           vm_init_sp vm' = vm_init_sp (m_vmmaps md) -> vm_reserved vm' = vm_reserved (m_vmmaps md) ->
+          vm_mmap_base vm' = vm_mmap_base (m_vmmaps md) ->
           vm_live_bytes vm' <= vm_live_bytes (m_vmmaps md) ->
           (* [comment removed for export] *)
           sgrow 0 0 0 A A' (m_vmmaps md) vm' ->
           realizes ml_segs (mkCfg (mkst regs' ret m' ml_rom) (with_vmmaps vm' md)) S) ->
       realizes ml_segs (mkCfg (mkst regs PC_FREE m ml_rom) md) S.
     Proof.
-      intros fx A m md regs p ret sp0 argv envp S HG Hpure Henv H10 Hp H1 Hret H4 Hal Htop Hsp0 Hwin HK.
+      intros fx A m md regs p ret sp0 argv envp S HG Hpure Hvd Henv H10 Hp H1 Hret H4 Hal Htop Hsp0 Hwin HK.
       pose proof HG as (H & HM & Hxm & Hrc). pose proof (u64_range (getr regs 2)) as Hsp.
-      set (sp := getr regs 2) in *. set (s := MS m (m_vmmaps md) (u sp - ALLOC_STACK) (u sp)).
-      pose proof (call_env_of (m_vmmaps md) H A m sp sp0 argv envp ALLOC_STACK HM Henv ltac:(unfold ALLOC_STACK; lia) ltac:(unfold ALLOC_STACK; lia) Hsp0) as HE.
+      set (sp := getr regs 2) in *. set (s := MS m (m_vmmaps md) (u sp - ALLOC_STACK) (u sp) (kb_thp (m_kernel md))).
+      pose proof (call_env_of (m_vmmaps md) H A m sp sp0 argv envp ALLOC_STACK (kb_thp (m_kernel md)) HM Henv ltac:(unfold ALLOC_STACK; lia) ltac:(unfold ALLOC_STACK; lia) Hsp0) as HE.
       fold s in HE.
       pose proof (free_okX (HTof (m_vmmaps md) H) A s p sp0 argv envp HE Hxm Hp) as HS.
       apply (tshape_const_rz (m_free p s) S (free_postX (HT:=HTof (m_vmmaps md) H) A p s) _ HS).
+      pose proof (Hvd : vdso_ok md) as Hvdo.
       eapply (free_refines fx md regs m ml_rom s p sp ret (free_postX (HT:=HTof (m_vmmaps md) H) A p s) (fun _ _ => S));
         try reflexivity; try eassumption.
       - apply magree_refl.
@@ -370,14 +385,14 @@ Section Glue.
       - cbn. lia.
       - unfold RefStep.wtop. cbn. unfold topH, ALLOC_STACK, TASK_SIZE, AsanCeil.alloc_ceiling in *. lia.
       - intros a Ha. exact (proj1 (Hwin a Ha)).
-      - intros r s' mm' regs' HP Hag' Hlo' Hhi' Htop' Hsp' Hcs Hfrw Hwin'.
+      - intros r s' mm' regs' HP Hag' Hlo' Hhi' Htop' Hthp' Hsp' Hcs Hfrw Hwin'.
         destruct HP as (A' & Hxm' & HM' & Elo & Ehi & Hl1 & Hl2 & Hframe & Hlive & Hmap & Hfix & Hbud & Hgrow).
         cbn [ms_lo ms_hi ms_mem ms_vm s] in Elo, Ehi, Hl1, Hl2, Hframe, Hlive, Hmap, Hfix, Hbud, Hgrow, Htop', Hag'.
         destruct Hfix as (Flim & Ftop & Fisp & Fres).
         assert (Hout : forall a : word, u a < alloc_top (m_vmmaps md) -> mm' a = ms_mem s' a).
         { intros a Ha. apply Hag'. unfold in_win. rewrite Elo. unfold ALLOC_STACK. lia. }
         eapply (HK A' mm' (ms_vm s') regs').
-        + apply (g_inv_after (m_vmmaps md) H A A' m (ms_mem s') mm' (ms_vm s') (ms_lo s') (ms_hi s') HM' Hxm' Ftop).
+        + apply (g_inv_after (m_vmmaps md) H A A' m (ms_mem s') mm' (ms_vm s') (ms_lo s') (ms_hi s') HM' Hxm' Ftop Fres).
           * rewrite Elo. unfold ALLOC_STACK. lia.
           * intros a Ha. apply Hag'. unfold in_win. exact Ha.
           * exact Hrc.
@@ -390,7 +405,7 @@ Section Glue.
           unfold in_win. rewrite Elo, Ehi. lia.
         + intros q k i Hq Hi.
           assert (HG' : g_inv A' mm' (ms_vm s')).
-          { apply (g_inv_after (m_vmmaps md) H A A' m (ms_mem s') mm' (ms_vm s') (ms_lo s') (ms_hi s') HM' Hxm' Ftop);
+          { apply (g_inv_after (m_vmmaps md) H A A' m (ms_mem s') mm' (ms_vm s') (ms_lo s') (ms_hi s') HM' Hxm' Ftop Fres);
               [rewrite Elo; unfold ALLOC_STACK; lia | intros a Ha; apply Hag'; unfold in_win; exact Ha | exact Hrc | exact Hframe | exact (mi_wf _ _ _ HM)]. }
           pose proof (g_live_hull A' mm' (ms_vm s') q k HG' Hq) as (Hk & _ & Hce & _). rewrite Ftop in Hce.
           pose proof (round16_ge k). pose proof (u64_range q).
@@ -400,12 +415,12 @@ Section Glue.
           * destruct (Z.lt_ge_cases (u a) (u sp)) as [Hc | Hc].
             -- right. apply Hwin'. lia.
             -- destruct (Hmap a Hm) as [Ho | Hs']; [left; left; exact Ho | right]. rewrite Hag'; [exact Hs'|]. unfold in_win. rewrite Ehi. lia.
-        + exact Flim. + exact Ftop. + exact Fisp. + exact Fres.
+        + exact Flim. + exact Ftop. + exact Fisp. + exact Fres. + exact (vframe_mbase _ _ Htop').
         + exact Hbud.
         + exact Hgrow.
     Qed.
     Lemma glue_free : forall (fx : FPState) A m md regs (p ret sp0 : word) argv envp (S : TSet),
-      g_inv A m (m_vmmaps md) -> md_pure md ->
+      g_inv A m (m_vmmaps md) -> md_pure md -> incl (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) (vm_reserved (m_vmmaps md)) ->
       mallocng_env sp0 argv envp m ->
       getr regs 10 = p -> (p = Z_to_bv 64 0 \/ exists n, mlive A p = Some n) ->
       getr regs 1 = ret -> ret_ok ret -> getr regs 4 = A_TP ->
@@ -425,16 +440,17 @@ Section Glue.
           (forall a, m a <> None -> g_owned A a \/ m' a <> None) ->
           vm_limit vm' = vm_limit (m_vmmaps md) -> alloc_top vm' = alloc_top (m_vmmaps md) ->
           vm_init_sp vm' = vm_init_sp (m_vmmaps md) -> vm_reserved vm' = vm_reserved (m_vmmaps md) ->
+          vm_mmap_base vm' = vm_mmap_base (m_vmmaps md) ->
           vm_live_bytes vm' <= vm_live_bytes (m_vmmaps md) ->
           realizes ml_segs (mkCfg (mkst regs' ret m' ml_rom) (with_vmmaps vm' md)) S) ->
       realizes ml_segs (mkCfg (mkst regs PC_FREE m ml_rom) md) S.
     Proof.
-      intros fx A m md regs p ret sp0 argv envp S HG Hpure Henv H10 Hp H1 Hret H4 Hal Htop Hsp0 Hwin HK.
-      apply (glue_free_g fx A m md regs p ret sp0 argv envp S HG Hpure Henv H10 Hp H1 Hret H4 Hal Htop Hsp0 Hwin).
-      intros A' m' vm' regs' X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 X12 _. exact (HK A' m' vm' regs' X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 X12).
+      intros fx A m md regs p ret sp0 argv envp S HG Hpure Hvd Henv H10 Hp H1 Hret H4 Hal Htop Hsp0 Hwin HK.
+      apply (glue_free_g fx A m md regs p ret sp0 argv envp S HG Hpure Hvd Henv H10 Hp H1 Hret H4 Hal Htop Hsp0 Hwin).
+      intros A' m' vm' regs' X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 X12 X13 _. exact (HK A' m' vm' regs' X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 X12 X13).
     Qed.
     Lemma glue_calloc_g : forall (fx : FPState) A m md regs (cnt sz : Z) (ret sp0 : word) argv envp (S : TSet),
-      g_inv A m (m_vmmaps md) -> md_pure md ->
+      g_inv A m (m_vmmaps md) -> md_pure md -> incl (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) (vm_reserved (m_vmmaps md)) ->
       mallocng_env sp0 argv envp m ->
       getr regs 10 = Z_to_bv 64 cnt -> getr regs 11 = Z_to_bv 64 sz ->
       0 <= cnt < 2^64 -> 0 <= sz < 2^64 -> 0 <= cnt * sz < 2^61 ->
@@ -459,21 +475,23 @@ Section Glue.
           (forall a, m a <> None -> u a < IMG_HI \/ g_owned A a \/ m' a <> None) ->
           vm_limit vm' = vm_limit (m_vmmaps md) -> alloc_top vm' = alloc_top (m_vmmaps md) ->
           vm_init_sp vm' = vm_init_sp (m_vmmaps md) -> vm_reserved vm' = vm_reserved (m_vmmaps md) ->
+          vm_mmap_base vm' = vm_mmap_base (m_vmmaps md) ->
           (* [comment removed for export] *)
           malloc_growX (cnt * sz) A A' (m_vmmaps md) vm' -> (u res = 0 -> g_noroom (cnt * sz) A (m_vmmaps md)) ->
           realizes ml_segs (mkCfg (mkst regs' ret m' ml_rom) (with_vmmaps vm' md)) S) ->
       realizes ml_segs (mkCfg (mkst regs PC_CALLOC m ml_rom) md) S.
     Proof.
-      intros fx A m md regs cnt sz ret sp0 argv envp S HG Hpure Henv H10 H11 Hcnt Hsz Hn H1 Hret H4 Hal Htop Hsp0 Hwin HK.
+      intros fx A m md regs cnt sz ret sp0 argv envp S HG Hpure Hvd Henv H10 H11 Hcnt Hsz Hn H1 Hret H4 Hal Htop Hsp0 Hwin HK.
       pose proof HG as (H & HM & Hxm & Hrc). pose proof (u64_range (getr regs 2)) as Hsp.
-      set (sp := getr regs 2) in *. set (s := MS m (m_vmmaps md) (u sp - CALLOC_STACK) (u sp)).
-      pose proof (call_env_of (m_vmmaps md) H A m sp sp0 argv envp CALLOC_STACK HM Henv ltac:(unfold CALLOC_STACK, ALLOC_STACK; lia) ltac:(unfold CALLOC_STACK, ALLOC_STACK; lia) Hsp0) as HE.
+      set (sp := getr regs 2) in *. set (s := MS m (m_vmmaps md) (u sp - CALLOC_STACK) (u sp) (kb_thp (m_kernel md))).
+      pose proof (call_env_of (m_vmmaps md) H A m sp sp0 argv envp CALLOC_STACK (kb_thp (m_kernel md)) HM Henv ltac:(unfold CALLOC_STACK, ALLOC_STACK; lia) ltac:(unfold CALLOC_STACK, ALLOC_STACK; lia) Hsp0) as HE.
       fold s in HE.
       set (fuel := Z.to_nat (cnt * sz / 4096 + 1)).
       assert (Hfuel : cnt * sz / 4096 < Z.of_nat fuel).
       { subst fuel. pose proof (Z.div_pos (cnt * sz) 4096 ltac:(lia) ltac:(lia)). rewrite Z2Nat.id by lia. lia. }
       pose proof (calloc_okX (HTof (m_vmmaps md) H) A s sp0 argv envp (at_ sp (-32)) fuel cnt sz HE Hxm Hrc Hcnt Hsz Hn Hfuel) as HS.
       apply (tshape_const_rz (m_calloc fuel (at_ sp (-32)) (Z_to_bv 64 cnt) (Z_to_bv 64 sz) s) S (calloc_postX (HT:=HTof (m_vmmaps md) H) A (cnt * sz) s) _ HS).
+      pose proof (Hvd : vdso_ok md) as Hvdo.
       eapply (calloc_refines fx md regs m ml_rom s fuel (Z_to_bv 64 cnt) (Z_to_bv 64 sz) sp ret (calloc_postX (HT:=HTof (m_vmmaps md) H) A (cnt * sz) s) (fun _ _ => S));
         try reflexivity; try eassumption.
       - apply magree_refl.
@@ -481,14 +499,14 @@ Section Glue.
       - cbn. lia.
       - unfold RefStep.wtop. cbn. unfold topH, CALLOC_STACK, ALLOC_STACK, TASK_SIZE, AsanCeil.alloc_ceiling in *. lia.
       - intros a Ha. apply (proj1 (Hwin a ltac:(unfold CALLOC_D, CALLOC_STACK in *; lia))).
-      - intros r s' mm' regs' HP Hag' Hlo' Hhi' Htop' Hr Hsp' Hcs Hfrw Hwin'.
+      - intros r s' mm' regs' HP Hag' Hlo' Hhi' Htop' Hthp' Hr Hsp' Hcs Hfrw Hwin'.
         destruct HP as (A' & Hxm' & HM' & Elo & Ehi & Hres & Hframe & Hlive & Hmap & Hfix & Hgrow & Hnoroom).
         cbn [ms_lo ms_hi ms_mem ms_vm s] in Elo, Ehi, Hres, Hframe, Hlive, Hmap, Hfix, Hgrow, Hnoroom, Htop', Hag'.
         destruct Hfix as (Flim & Ftop & Fisp & Fres).
         assert (Hout : forall a : word, u a < alloc_top (m_vmmaps md) -> mm' a = ms_mem s' a).
         { intros a Ha. apply Hag'. unfold in_win. rewrite Elo. unfold CALLOC_STACK, ALLOC_STACK. lia. }
         eapply (HK A' mm' (ms_vm s') regs' r).
-        + apply (g_inv_after (m_vmmaps md) H A A' m (ms_mem s') mm' (ms_vm s') (ms_lo s') (ms_hi s') HM' Hxm' Ftop).
+        + apply (g_inv_after (m_vmmaps md) H A A' m (ms_mem s') mm' (ms_vm s') (ms_lo s') (ms_hi s') HM' Hxm' Ftop Fres).
           * rewrite Elo. unfold CALLOC_STACK, ALLOC_STACK. lia.
           * intros a Ha. apply Hag'. unfold in_win. exact Ha.
           * exact Hrc.
@@ -515,12 +533,12 @@ Section Glue.
             -- right; right. apply Hwin'. unfold CALLOC_D, CALLOC_STACK in *. lia.
             -- destruct (Hmap a Hm) as [Hlow | [Ho | Hs']]; [left; exact Hlow | right; left; left; exact Ho | right; right].
                rewrite Hag'; [exact Hs'|]. unfold in_win. rewrite Ehi. lia.
-        + exact Flim. + exact Ftop. + exact Fisp. + exact Fres.
+        + exact Flim. + exact Ftop. + exact Fisp. + exact Fres. + exact (vframe_mbase _ _ Htop').
         + exact Hgrow.
         + intros H0. exists H. exact (Hnoroom H0).
     Qed.
     Lemma glue_calloc : forall (fx : FPState) A m md regs (cnt sz : Z) (ret sp0 : word) argv envp (S : TSet),
-      g_inv A m (m_vmmaps md) -> md_pure md ->
+      g_inv A m (m_vmmaps md) -> md_pure md -> incl (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) (vm_reserved (m_vmmaps md)) ->
       mallocng_env sp0 argv envp m ->
       getr regs 10 = Z_to_bv 64 cnt -> getr regs 11 = Z_to_bv 64 sz ->
       0 <= cnt < 2^64 -> 0 <= sz < 2^64 -> 0 <= cnt * sz < 2^61 ->
@@ -545,12 +563,13 @@ Section Glue.
           (forall a, m a <> None -> u a < IMG_HI \/ g_owned A a \/ m' a <> None) ->
           vm_limit vm' = vm_limit (m_vmmaps md) -> alloc_top vm' = alloc_top (m_vmmaps md) ->
           vm_init_sp vm' = vm_init_sp (m_vmmaps md) -> vm_reserved vm' = vm_reserved (m_vmmaps md) ->
+          vm_mmap_base vm' = vm_mmap_base (m_vmmaps md) ->
           realizes ml_segs (mkCfg (mkst regs' ret m' ml_rom) (with_vmmaps vm' md)) S) ->
       realizes ml_segs (mkCfg (mkst regs PC_CALLOC m ml_rom) md) S.
     Proof.
-      intros fx A m md regs cnt sz ret sp0 argv envp S HG Hpure Henv H10 H11 Hcnt Hsz Hn H1 Hret H4 Hal Htop Hsp0 Hwin HK.
-      apply (glue_calloc_g fx A m md regs cnt sz ret sp0 argv envp S HG Hpure Henv H10 H11 Hcnt Hsz Hn H1 Hret H4 Hal Htop Hsp0 Hwin).
-      intros A' m' vm' regs' res X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 _ _. exact (HK A' m' vm' regs' res X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11).
+      intros fx A m md regs cnt sz ret sp0 argv envp S HG Hpure Hvd Henv H10 H11 Hcnt Hsz Hn H1 Hret H4 Hal Htop Hsp0 Hwin HK.
+      apply (glue_calloc_g fx A m md regs cnt sz ret sp0 argv envp S HG Hpure Hvd Henv H10 H11 Hcnt Hsz Hn H1 Hret H4 Hal Htop Hsp0 Hwin).
+      intros A' m' vm' regs' res X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 X12 _ _. exact (HK A' m' vm' regs' res X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 X12).
     Qed.
     (* [comment removed for export] *)
     (* [comment removed for export] *)

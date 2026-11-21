@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the sc_alloc premise the munmap case needs). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -72,6 +73,9 @@ Section FG.
 Variable cfg : SpuriousCfg.
 Variable HTOP : Z.
 Context {fx : FPState}.
+(* [MngRz2.case_munmap] requires [sc_alloc cfg = false] at 75d69e00; the
+   chain's one top, [MngL4H.plain_heap_ok], already assumes it. *)
+Hypothesis Hoff : sc_alloc cfg = false.
 
 (* [comment removed for export] *)
 #[using="Type"] Theorem free_contract_grp0 : forall hs regs m md p k ret K g am i fr s',
@@ -106,13 +110,13 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Theorem free_contract_grpU : forall hs regs m md p k ret K g am i fr s2 r len kk,
+#[using="Hoff"] Theorem free_contract_grpU : forall hs regs m md p k ret K g am i fr s2 r len kk,
   free_entry HTOP hs regs m md p k ret g am i fr -> getr regs 4 = wa 0x75bd0 ->
   (am_freed am = 0 \/ Z.lor (am_freed am) (am_avail am) + bit i = ones (am_last am)) ->
   free (Some (frame_ptr am i fr)) (hs_s hs) = IAsk (KMunmap r len) s2 kk ->
   free_cont cfg HTOP hs regs m md p k ret K ->
   realizes_cfg SEGS cfg (mkCfg (@mkst fx regs (Z_to_bv 64 0x511d0) m (seg_rom SEGS)) md) K.
-Proof. LiaFast.lf_pins LiaFast.u0.
+Proof. LiaFast.lf_pins (fun (Hoff : LiaFast.U) => LiaFast.u0).
   intros hs regs m md p k ret K g am i fr s2 r len kk FE HR4 Hnt Hit CONT. entry_facts8 FE regs m hs g am i fr.
   pose proof (LINK_of_v HTOP (hs_L hs) (hs_s hs) md Hled MD) as HLK.
   assert (HRP : forall q rg, region_of (hs_s hs) q = Some rg -> rg_kind rg = RkMap -> rg_live rg = true -> 0 < rg_len rg).
@@ -123,7 +127,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   pose proof MD as [Hh Hl].
   assert (HTOPB : HTOP <= 2^47) by (unfold sp_of, FNEED in *; lia).
   eapply rzc_isteps; [exact Hh | exact Hl | apply catsim_isteps; exact Hms|].
-  apply (MngRz2.case_munmap SEGS cfg MngL4.FORB_P HTOP HTOPB (seg_rom SEGS) (fun _ => 0) (fun _ md1 _ => U md1 <= U md) (ob_munmap_U md) r len
+  apply (MngRz2.case_munmap SEGS cfg Hoff MngL4.FORB_P HTOP HTOPB (seg_rom SEGS) (fun _ => 0) (fun _ md1 _ => U md1 <= U md) (ob_munmap_U md) r len
            (hs_L hs) (MallocWfKf.kf_of s2) md 0 s2 R (wa 0x53558) m3 K AT eq_refl Hrq ltac:(rewrite HKF; exact HLK) ltac:(lia) ltac:(cbn; lia)).
   intros eff ans L' md' Ho Hvm HL' HB'. inversion Ho; subst eff ans L'. cbn [eff_ret] in *.
   change (MngWk.mem_after m3 (mkEffectU (MngWk.w64 0) [] [] [(MngWk.w64 (ly_reg (hs_L hs) r), MngWk.w64 (page_round len))] [] []))

@@ -1,7 +1,7 @@
 (* fuzz_preset, slice S5b (the S3 walk, a Theorem Labs lane): THE ONE-EVENT CALLEE STEPS of parse_items' loop ledger, one lemma per
    EVENT SHAPE, the callee ABSTRACT (its post's ledger fields are the arguments; no callee is named). They are the
-   second argument of the Ival walk's composition vl_ledger_move_app (lib/A/VrdLedgerStep.v, a working branch
-   8eb46ea7114), which carries a granted prefix E -> P to E -> P2; the free of a block the position owns is not an
+   second argument of the Ival walk's composition vl_ledger_move_app (lib/A/VrdLedgerStep.v, a working branch),
+   which carries a granted prefix E -> P to E -> P2; the free of a block the position owns is not an
    append, so it is stated directly on the composed move (vle_free_D). a Theorem Labs lane's ruling 2026-10-29 (the S3 walk writes
    the per-shape steps once; IelemC / IelemD (grow), the Ival walk (parse_value), PI-key (parse_string, REFUSE-B's
    fuzz_free) and the number-tail lane cite them).
@@ -21,14 +21,14 @@
      cnt <> fail): vle_alloc_free;
    - the free of a block the position owns (EFree k; no bit; Lam = (x, k) :: Lam' up to order): vle_free_D, on the
      composed move E -> P2.
-   The no-event step is IproD's vrd_imove_nil (lib/A/VrdIPro.v, a working branch 8a43904f620), not restated here.
+   The no-event step is IproD's vrd_imove_nil (lib/A/VrdIPro.v, a working branch), not restated here.
    With each shape, the vrd_imodel ledger clauses that composition needs: the lszR-append fact of the shape's trace
    (vl_ledger_move_app's last premise), the held / prh_held / lsum of the trace, and the blocks bound carried from the
    callee's `blocks_bytes S' <= blocks_bytes S + prh_held t` (vle_blocks_step).
-   SET: a working branch on ival 8eb46ea7114 (VrdLedgerStep.v) and ielem 58c529f9fd7; texts S5b 49745a1a153
+   SET: a working branch on ival (VrdLedgerStep.v) and ielem; texts S5b
    on walkkit-next preset-tree-at-2026-10-29T08-45-51Z.tsv (sha256 5158fa4d0b4f; internal record). A-only: B sites not measured. No numeral is an address.
    A'LEDGER (a Theorem Labs lane, 2026-10-29), against the kit text PRH_FnParse.v blob 94232293d483 / PRH_Base.v blob
-   ee2f5cd7ed35 (a working branch 3ac20a5c9e30): every shape takes rd_ledger_move's g_most (most) and the
+   ee2f5cd7ed35 (a working branch): every shape takes rd_ledger_move's g_most (most) and the
    call's ALL-GRANTED trace gt. The old refusal shape (ran' = 1, peak kept) is REFUTED by #102's rule (a Theorem Labs lane's
    counterexample, the string ab with ok [false]: the instance gives g_peak 3 and g_ran_out 0); vle_fail_refused now
    states the text's refusal ledger, which is parse_string's and grow's refused-arm ledger in PRH_FnReader.v blob

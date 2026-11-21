@@ -1,5 +1,5 @@
 (* Theorem Labs, 2026-10: NON-VACUITY of the kit's tpj_parse_specX premises at the A' binding B := AD2l.TfibB (pj_parse's
-   image-A' walk, lib/A/Prog/PjParseA_top.v), on the kit's cwpj-fix f29626eb1667: the closure premise at the driver's
+   image-A' walk, lib/A/Prog/PjParseA_top.v), on the kit's cwpj-fix: the closure premise at the driver's
    context PresetCfnA.iface_ctx0 = [[RA_LLVMF]] (the kit's PRH_Witness.prh_univ_closure_witness_A), and, at every entry
    state, a cursor set CW meeting the kit's REPAIRED prh_cw_pj (PRH_Base.v blob ae260e28900e :1521-1527: each cursor arm
    keeps its FIRST disjunct only, the code-word disjunct is gone) on A' - parse_items' arm by the cursor end t0 + len,

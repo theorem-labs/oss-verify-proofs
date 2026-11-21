@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AF0x.v, with its module paths changed, names TfibSyms -> BoxregSyms and its addresses moved to libreac/fuzz_boxreg's ASan build. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/A/AF0x.v, with its module paths changed; 24 of its 79 lines of code are new or changed and 518 lines of the source are left out. *)
-(* copied from proofs/cgif/cgif_file_fuzzer/lib/ImgBase.v @ 95e6f1d72b6 (c-asan, frozen), module paths changed only. *)
+(* copied from proofs/cgif/cgif_file_fuzzer/lib/ImgBase.v (c-asan, frozen), module paths changed only. *)
 (* The image-free base of the R2 interfaces (AGif0n / AGif2 / AGif4 / DGif0 / DMiface / DMspec).
 
    - [AImg]: ONE class that holds every fact about the binary's image the interfaces name.  An interface takes it as
@@ -13,6 +13,7 @@
      of cgif's.  aexp_eqb / cell_lookup / cell_lookup_In / le_byte_eq are verbatim copies: each copy and its YF0x
      original are convertible, so the walk files and their proofs are untouched. *)
 (* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/Reusable/ImgBase.v, derived mechanically (bkit derive_b.py): its Require lines name the lib/B copies; nothing else differs. The comments are the A file's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

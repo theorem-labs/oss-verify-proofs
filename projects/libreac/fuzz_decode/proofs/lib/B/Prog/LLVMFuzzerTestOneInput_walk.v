@@ -4,7 +4,8 @@
    of LLVMFuzzerTestOneInput, the statement dec_llvmf_holds_stmt of lib/B/Prog/LLVMFuzzerTestOneInput_cg.v, closed by
    the composition dec_llvmf_holds_of_segs (lib/B/Prog/LLVMFuzzerTestOneInput_segs.v) applied to the nine segment
    theorems of lib/B/Prog/LLVMFuzzerTestOneInput_seg{A,B,C,D,E,F,G,H}.v. Composition in the shape of cgif's
-   lib/A/ACfj.v:230-259 (origin/ossv/recipes c8557374ad2e). *)
+   lib/A/ACfj.v:230-259. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

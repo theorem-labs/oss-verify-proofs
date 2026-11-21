@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/YL0v.v, with its module paths, addresses and numbers changed; 9 of its 714 lines of code are new or changed and 9 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the top-anchored stack strings). *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -301,24 +302,30 @@ split; [reflexivity|]. intros i Hi. destruct i; [|lia]. cbn [nth_error]. rewrite
 rewrite (bytes_at_mbyte src0segs m _ _ j HB) by (rewrite length_app; cbn; lia).
 apply nth_error_nth'. rewrite length_app; cbn; lia.
 Qed.
-Lemma bsb_over_read : forall sp argv envp rnd m p L,
-valid_sp sp ->
-YP03.bytes_at m (z_strs (bv_unsigned sp) argv envp) (stack_tail argv envp rnd) ->
-z_strs (bv_unsigned sp) argv envp <= p + L -> p + L < z_rand (bv_unsigned sp) argv envp ->
+(* RESTATED.  The strings block is anchored at the entry draw's [ed_top] now, not at [sp]:
+   [z_strs] takes [ztop] and [efn] (YP08.v:200) and [stack_tail] takes [efn] rather than the
+   draw (YP08.v:475).  The old form derived its aligned ceiling from [z_rand], which the new
+   layout puts BELOW the strings ([YP08.layout_facts]' fourth conjunct,
+   [z_rand + 16 <= z_strs], YP08.v:757), so that route is gone and the ceiling is taken as a
+   premise against the END of the tail instead.  The caller discharges it from
+   [YN3e.STE] ([z_strs + length (stack_tail …) = ztop]) with [YN3e.LF] and [YN3e.ZAB]: the
+   tail ends in [efn ++ [NUL] ++ repeat 0 8], so every string in it has at least eight bytes
+   of mapped slack above its NUL.  [valid_sp] and the [z_rand] alignment step are no longer
+   needed, which is why the premise list is one shorter. *)
+Lemma bsb_over_read : forall (top : word) argv envp efn m p L,
+YP03.bytes_at m (z_strs (bv_unsigned top) argv envp efn) (stack_tail argv envp efn) ->
+z_strs (bv_unsigned top) argv envp efn <= p + L ->
+p + L - (p + L) mod 8 + 8
+<= z_strs (bv_unsigned top) argv envp efn + Z.of_nat (length (stack_tail argv envp efn)) ->
 forall a, p + L < a < p + L - (p + L) mod 8 + 8 -> rdn src0segs m (Z_to_bv 64 a) 1 <> None.
 Proof.
-intros sp argv envp rnd m p L Hsp HB Hlo Hhi a Ha.
-pose proof (stack_tail_end sp argv envp rnd) as Hlen.
-assert (Hal : p + L - (p + L) mod 8 + 8 <= z_rand (bv_unsigned sp) argv envp).
-{ apply align8_le; [lia|]. unfold z_rand.
-rewrite <- Zplus_mod_idemp_r, (rand_off_mod8 argv envp), Z.add_0_r.
-pose proof (mod8_of_mod16 (bv_unsigned sp) 0 (proj2 (proj2 Hsp))) as Hm8. rewrite Z.add_0_r in Hm8. exact Hm8. }
-rewrite (proj2 (rdn_mbytes src0segs m 1 a [match nth_error (stack_tail argv envp rnd)
-(Z.to_nat (a - z_strs (bv_unsigned sp) argv envp)) with Some b => b | None => Z_to_bv 8 0 end]));
+intros top argv envp efn m p L HB Hlo Hal a Ha.
+rewrite (proj2 (rdn_mbytes src0segs m 1 a [match nth_error (stack_tail argv envp efn)
+(Z.to_nat (a - z_strs (bv_unsigned top) argv envp efn)) with Some b => b | None => Z_to_bv 8 0 end]));
 [discriminate|].
 split; [reflexivity|]. intros i Hi. destruct i; [|lia]. cbn [nth_error]. rewrite Z.add_0_r.
-unfold mbyte. replace a with (z_strs (bv_unsigned sp) argv envp + Z.of_nat (Z.to_nat (a - z_strs (bv_unsigned sp) argv envp))) at 1 by lia.
-rewrite (HB (Z.to_nat (a - z_strs (bv_unsigned sp) argv envp))) by lia.
+unfold mbyte. replace a with (z_strs (bv_unsigned top) argv envp efn + Z.of_nat (Z.to_nat (a - z_strs (bv_unsigned top) argv envp efn))) at 1 by lia.
+rewrite (HB (Z.to_nat (a - z_strs (bv_unsigned top) argv envp efn))) by lia.
 destruct (nth_error _ _) eqn:Hn; [reflexivity|]. exfalso. apply nth_error_None in Hn. lia.
 Qed.
 Lemma img_rdn1 : forall E m rs r lo len a,
@@ -439,7 +446,7 @@ assert (Hover : forall x,
 bv_unsigned (ew E n) + Z.of_nat (length s) < x <
 bv_unsigned (ew E n) + Z.of_nat (length s) - (bv_unsigned (ew E n) + Z.of_nat (length s)) mod 8 + 8 ->
 rdn src0segs (ms_mem ms) (Z_to_bv 64 x) 1 <> None)
-by (rewrite Hp; refine (bsb_over_read _ _ _ _ (ms_mem ms) a (Z.of_nat (length s)) _ HBb _ _); [assumption| lia| lia]);
+by (rewrite Hp; refine (bsb_over_read _ _ _ _ (ms_mem ms) a (Z.of_nat (length s)) HBb _ _); [lia | lia]);
 pose proof (rom_reads _ _ _ HS ltac:(vm_compute; reflexivity)) as Hrom;
 let Hnul := lazymatch goal with H : ~ In _ s |- _ => H end in
 let Hrd := constr:(fun j (Hj : (j <= length s)%nat) =>
@@ -623,7 +630,9 @@ apply (bytes_at_wbytes_out m (zsp + woff + Z.of_nat (length s)) bs) in HKb;
 [| lia | rewrite Hlen; lia | lia | lia | left; lia ];
 replace d2 with (Z_to_bv 64 (zsp + woff + Z.of_nat (length s))) in * by (f_equal; evalE; lia);
 let HK' := fresh "HK'" in
-pose proof (bytes_at_app _ _ _ _ HKb (bytes_at_wbytes_same m (zsp + woff + Z.of_nat (length s)) bs
+(* YN3e's [bytes_at_app] (Section e, Proof Using "All") is Required after YN3v and shadows the
+   parameter-free YN3v.bytes_at_app this tactic's four [_]s were written against. *)
+pose proof (YN3v.bytes_at_app _ _ _ _ HKb (bytes_at_wbytes_same m (zsp + woff + Z.of_nat (length s)) bs
 ltac:(lia) ltac:(rewrite Hlen; lia))) as HK';
 clear HKb;
 assert (HK : runs_ok E' (wbytes m (Z_to_bv 64 (zsp + woff + Z.of_nat (length s))) bs)

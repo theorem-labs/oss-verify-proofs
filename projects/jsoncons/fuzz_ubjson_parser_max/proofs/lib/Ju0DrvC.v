@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: decodes twenty encoded statements to plain Rocq, threads the launch record inp, mbase and entry through main_entry, close_kg, p0/p1/rnd and hiv_facts', and adds a ReaderOn context with a reader premise for stdio_call_sound_fr, and its lemmas no longer carry #[using] lists, so each takes the section variables its proof uses, as fuzz_bigint's copy does; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Ub0DrvC.v, 61 lines within its lines 39-488. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -30,26 +31,30 @@ Tactic Notation "run_blockH" constr(scr) constr(NX) := run_block_gen FUEL STOPS_
 Tactic Notation "run_blockH_keep" constr(scr) constr(NX) := run_block_gen FUEL STOPS_H scr NX true.
 Section FPX_1. Context {fx : PropExec.FPState}.
 Variable scfg : SpuriousCfg.
-#[using="Type"] Lemma msg_short_img : ltac2:(TCodec.tc2 tcn__Ju0DrvC "H'>';'8'S8y8%211%411%611&QI&R9yR0%811(3%118q031&S7+R\b5%2271uO%;4:521(4&QL%22@1%G3@41").
+Lemma msg_short_img : ltac2:(TCodec.tc2 tcn__Ju0DrvC "H'>';'8'S8y8%211%411%611&QI&R9yR0%811(3%118q031&S7+R\b5%2271uO%;4:521(4&QL%22@1%G3@41").
 Proof. vm_compute. reflexivity. Qed.
-#[using="Type"] Lemma msg_overrun_img : ltac2:(TCodec.tc2 tcn__Ju0DrvC "H'>';'8'S8y8%211%411%611&QI&R9yR0%811(3%118q031&S7+RTUE%2271uO%;4:521(4&QK%22@1%G3@41").
+Lemma msg_overrun_img : ltac2:(TCodec.tc2 tcn__Ju0DrvC "H'>';'8'S8y8%211%411%611&QI&R9yR0%811(3%118q031&S7+RTUE%2271uO%;4:521(4&QK%22@1%G3@41").
 Proof. vm_compute. reflexivity. Qed.
-#[using="Type"] Lemma msg_short_len : ltac2:(TCodec.tc2 tcn__Ju0DrvC ":'>'9&7'S8y8%211&QL%5221uO%93821"). Proof. reflexivity. Qed.
-#[using="Type"] Lemma msg_overrun_len : ltac2:(TCodec.tc2 tcn__Ju0DrvC ":'>'9&7'S8y8%211&QK%5221uO%93821"). Proof. reflexivity. Qed.
-#[using="Type"] Lemma w2le1_byte : ltac2:(TCodec.tc2 tcn__Ju0DrvC "E'S8y8%211'>'8%113&Hu1&S7yR0&S9r1%22;1%5241%8271(6(:%11?%33@71%@3>51pVNB1").
+Lemma msg_short_len : length msg_short = 31%nat. Proof. reflexivity. Qed.
+Lemma msg_overrun_len : length msg_overrun = 31%nat. Proof. reflexivity. Qed.
+Lemma w2le1_byte : forall (x : byte), word_to_le_bytes 1 (Z_to_bv 64 (bv_unsigned x)) = [x].
 Proof.
 intros x. pose proof (bv_unsigned_in_range _ x) as Hx. change (bv_modulus 8) with 256%Z in Hx.
 unfold word_to_le_bytes. cbn [Z_to_le_bytes]. f_equal.
 rewrite u_small by lia. apply Z_to_bv_bv_unsigned.
 Qed.
-#[using="Type"] Lemma content_byte : ltac2:(TCodec.tc2 tcn__Ju0DrvC "R7'S8yR0%211';y8%511%311p051'B'8%115'9'>%:13&QI&R9r4&S7r3%22B1&7r2%22A1%948741(4%12?4%>3=31&@%82G:%2281&R<zr5%3221&R=&R;r6&R?%B2Q16%211%5241&R@+2+R0%3221%;251r8r7%;1@%>221%Q12QA1u1%Q64Q5621&H&S9&A%Q72QDI%24QDIE1%42QF1%Q:2QJ1%7291%Q52QC1%QB3QA:1p0B1p0O1p0Q41p0Q81pV2QH1pUFQJ1p2QM1pR8QO1").
+Lemma content_byte : forall M (A : Z) (data : list byte) j,
+rdn RSEGS M (Z_to_bv 64 A) (length data) = Some data -> (j < length data)%nat ->
+(0 <= A)%Z -> (A + Z.of_nat (length data) < 2 ^ 64)%Z ->
+rdn RSEGS M (Z_to_bv 64 (A + Z.of_nat j)) 1%nat
+= Some (word_to_le_bytes 1 (Z_to_bv 64 (bv_unsigned (nth j data (Z_to_bv 8 0))))).
 Proof.
 intros M A data j Hc Hj HA HA2.
 pose proof (rdn_nth RSEGS M (length data) _ data j Hc Hj) as H.
 rewrite w_add_nat in H. rewrite u_small in H by lia. rewrite w2le1_byte. exact H.
 Qed.
 Section DrvC.
-Context {RE : RunEnv}.
+Context {RE : RunEnv}. Context {RO : ReaderOn}.
 Variable L : heap_layout.
 Variable HI : heap_iface.
 Hypothesis HIok : heap_iface_ok L scfg HI.
@@ -71,7 +76,9 @@ Hypothesis Hva : valid_argv [a0s; path].
 Hypothesis Hve : valid_envp envv.
 Hypothesis Hvsp : valid_sp sp0.
 Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-Hypothesis ME : main_entry sp0 [a0s; path] envv uid hw rdraw tid regs0 mem0.
+Variable inp : ProcInput.
+Variable mbase entry : word.
+Hypothesis ME : main_entry inp mbase entry sp0 [a0s; path] envv uid hw rdraw tid regs0 mem0.
 Hypothesis Hfile : fs_lookup fs0 path = Some fdata.
 Hypothesis Hplen : (length path <= 4095)%nat.
 Hypothesis DL : drv_layout L sp0.
@@ -90,20 +97,20 @@ Definition B1 : Z := bv_unsigned (nth 1 fdata (Z_to_bv 8 0)).
 Definition B2 : Z := bv_unsigned (nth 2 fdata (Z_to_bv 8 0)).
 Definition CFG : Z := ((B0 + 256 * B1) mod 32768)%Z.
 Definition PL : Z := (LEN - 6 - CFG)%Z.
-#[using="LEN"] Lemma B0_range : ltac2:(TCodec.tc2 tcn__Ju0DrvC "9'=&R<z&Q8%3221&R=+X0%2241%8241").
+Lemma B0_range : (0 <= B0 < 256)%Z.
 Proof. clear Htid Hplen HLEN Hsp Hal. unfold B0. pose proof (bv_unsigned_in_range _ (nth 0 fdata (Z_to_bv 8 0))) as H. change (bv_modulus 8) with 256%Z in H. lia. Qed.
-#[using="LEN"] Lemma B1_range : ltac2:(TCodec.tc2 tcn__Ju0DrvC "9'=&R<z&Q9%3221&R=+X0%2241%8241").
+Lemma B1_range : (0 <= B1 < 256)%Z.
 Proof. clear Htid Hplen HLEN Hsp Hal. unfold B1. pose proof (bv_unsigned_in_range _ (nth 1 fdata (Z_to_bv 8 0))) as H. change (bv_modulus 8) with 256%Z in H. lia. Qed.
-#[using="LEN"] Lemma B2_range : ltac2:(TCodec.tc2 tcn__Ju0DrvC "9'=&R<z&Q:%3221&R=+X0%2241%8241").
+Lemma B2_range : (0 <= B2 < 256)%Z.
 Proof. clear Htid Hplen HLEN Hsp Hal. unfold B2. pose proof (bv_unsigned_in_range _ (nth 2 fdata (Z_to_bv 8 0))) as H. change (bv_modulus 8) with 256%Z in H. lia. Qed.
-#[using="LEN"] Lemma CFG_range : ltac2:(TCodec.tc2 tcn__Ju0DrvC "9'=&R<z&Q;%3221&R=+QPP0%2241%8241").
+Lemma CFG_range : (0 <= CFG < 32768)%Z.
 Proof. clear Htid Hplen HLEN Hsp Hal. unfold CFG. apply Z.mod_pos_bound. lia. Qed.
-Let close_kg := close_kg scfg L HI sp0 a0s path envv hw rdraw tid mem0 fs0 stdin0 fdata CAP crC.
+Let close_kg := close_kg scfg L HI sp0 a0s path envv hw rdraw tid mem0 fs0 stdin0 fdata inp CAP crC.
 Definition target_k (KT : TSet) : Prop :=
 forall vals R M VM (A1 : Z),
 length vals = 81%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 48 = Z_to_bv 64 A1 -> vals_ev vals 70 = Z_to_bv 64 LEN ->
-vals_ev vals 1 = p0 sp0 a0s path envv -> vals_ev vals 2 = p1 sp0 a0s path envv ->
-vals_ev vals 3 = auxvp sp0 a0s path envv -> vals_ev vals 4 = rnd sp0 a0s path envv -> vals_ev vals 5 = tid ->
+vals_ev vals 1 = p0 a0s path envv rdraw inp -> vals_ev vals 2 = p1 a0s path envv rdraw inp ->
+vals_ev vals 3 = auxvp sp0 a0s path envv -> vals_ev vals 4 = rnd sp0 a0s path envv inp -> vals_ev vals 5 = tid ->
 vals_ev vals 71 = Z_to_bv 64 B0 -> vals_ev vals 72 = Z_to_bv 64 B1 -> vals_ev vals 73 = Z_to_bv 64 CFG ->
 vals_ev vals 79 = Z_to_bv 64 PL -> vals_ev vals 80 = Z_to_bv 64 B2 ->
 regs_ok (ENVb vals) srT0 R -> know_ok RSEGS (ENVb vals) M knT0 ->
@@ -111,7 +118,10 @@ above M -> block_range L A1 CAP ->
 rdn RSEGS M (Z_to_bv 64 A1) (length fdata) = Some fdata ->
 hi_heap HI [(A1, CAP)] crC M VM ->
 srealizes RSEGS scfg (mkCfg (mkst R (Z_to_bv 64 0x340ec) M (seg_rom RSEGS)) (model2 VM)) KT.
-#[using="sp0 Hvsp Hplen CAP HCAP HLEN Hsp"] Lemma ltu_hdr_sc : ltac2:(TCodec.tc2 tcn__Ju0DrvC "R0'8'S8yR0%211%411';y8%611%311p061'5'>&R8r3uR6%3221&S7vG%22@1%83@41r4uR7%:221&Q8%82F1%>3F31r5uR8%@221&Q9%>2L1%D3L31&R>&R;&Q;+6%3221%52D1%K3L1B&R7&R9r6vCr7%211(R4(Q2(R0%11Q2(QN(Q1&Q>(QO%11B%53431%:4M971%A4@?<1p0C1p0K1p0Q21p0Q91pVHQC1pR8QE1pVLQK1").
+Lemma ltu_hdr_sc : forall vals M t,
+vals_ev vals 70 = Z_to_bv 64 LEN -> vals_ev vals 71 = Z_to_bv 64 B0 -> vals_ev vals 72 = Z_to_bv 64 B1 ->
+Z.ltb LEN (CFG + 6) = t ->
+sc_denot RSEGS M (ENVb vals) (SCBr t BC_LTU (EVar 70) (EAlu ALU_ADD cfglen_x (ELit 6))).
 Proof.
 intros vals M t P70 P71 P72 Ht. pose proof B0_range as R0. pose proof B1_range as R1. pose proof CFG_range as RC.
 cbn [sc_denot branch_taken].
@@ -120,7 +130,12 @@ change (edenot (ENVb vals) (EVar 70)) with (vals_ev vals 70).
 unfold ENVb, ENV. rewrite cfglen_x_cfgF, P70, P71, P72, cfgF_val by lia. fold CFG.
 rewrite alu_add_Z. unfold bv_ltu. rewrite !u_small by lia. exact Ht.
 Qed.
-#[using="Hvsp Hplen HCAP HLEN Hsp LEN"] Lemma kbyte48 : ltac2:(TCodec.tc2 tcn__Ju0DrvC "RB'8'S8yR0%211%411';y8%611%311p061'B'9'>&R8r5uQ@%3221&S7r3%22A1%83A41&QEvS6r4v2%43321%J1C%F11&QI&R9r6%>2MA&7vRL%22K1%746541(4%12;4%J3;31&R<z%221K&@&RB%11>%321;r:%Q221A&S9&Ar7%811%Q32Q><%44Q>2D1%62Q@1%Q62QE1%Q<3QE91&R5vCr;%211(R2(R3(R0%11QAr8%4221u1%51B%83321%=4Q9:H1p0?1p0K1p0Q01p0Q41p0QB1p0QH1pVJR21pV4R41p4R51pR8R71pVLR=1").
+Lemma kbyte48 : forall vals M (A1 : Z) (k : Z) (v : nat),
+vals_ev vals 48 = Z_to_bv 64 A1 -> hz sp0 A1 CAP ->
+rdn RSEGS M (Z_to_bv 64 A1) (length fdata) = Some fdata ->
+(0 <= k)%Z -> (Z.to_nat k < length fdata)%nat ->
+vals_ev vals v = Z_to_bv 64 (bv_unsigned (nth (Z.to_nat k) fdata (Z_to_bv 8 0))) ->
+kentry_ok RSEGS (ENVb vals) M (KWord (SA (EVar 48) k) 1 (EVar v)).
 Proof.
 intros vals M A1 k v P48 (Z1 & Z2 & Z3) HC Hk Hkl Pv. pose proof Hsp as Hsp'.
 cbn [kentry_ok]. split; [lia|]. split.
@@ -128,36 +143,40 @@ cbn [kentry_ok]. split; [lia|]. split.
 - unfold adenot, v_addi. cbn [a_base a_off edenot ev ENVb ENV]. rewrite P48, Pv, u_small by lia.
 replace (A1 + k)%Z with (A1 + Z.of_nat (Z.to_nat k))%Z by lia. apply content_byte; [exact HC | exact Hkl | lia | lia].
 Qed.
-#[using="sp0 Hplen LEN"] Lemma krange_lit : ltac2:(TCodec.tc2 tcn__Ju0DrvC "QI'8'S8yR0%211%411';y8%611%311p061'9'B'>&R8r6r4%3221&S7r3%22A1%83A41'=&R<z%2219&R=&R@+2+R0%3221%52?1%:271r5%;2B1%<22@%>221&R5&R9vCr9%211r8(R1(R0r7%211%431>O%;4:761p0=1p0B1p0N1pUNQ81pV6Q91pVNQ:1pVJQ<1pR8Q>1pVLQD1").
+Lemma krange_lit : forall vals M (v : nat) (x lo hi : Z),
+vals_ev vals v = Z_to_bv 64 x -> (0 <= x < 2 ^ 64)%Z -> (lo <= x <= hi)%Z ->
+kentry_ok RSEGS (ENVb vals) M (KRange (EVar v) lo hi).
 Proof. intros vals M v x lo hi Pv Hx Hr. cbn [kentry_ok edenot ev ENVb ENV]. rewrite Pv, u_small by lia. lia. Qed.
-#[using="uid hw rdraw Hva Hve Hvsp Hplen"] Lemma hiv_facts' : ltac2:(TCodec.tc2 tcn__Ju0DrvC "QF'8'S8yR0%211%411'>&R8r1u3%3221&QFvS6vRDvS5vRK%544321%;3=71r2u4%=221&QG%14:987%A3C31'9&R:(6(:%114%335:1%436E1%637G1'=&R<&S9%12Q0Gr5%N21C%42Q31%6241&R;&R@+2+D%3221%5271+R0%6251%?231%A2:1p0C1pV0K1p0M1p0Q41pVLQA1").
-Proof. intros vals P3 P4 i Hi. exact (hiv_facts sp0 a0s path envv uid hw rdraw Hva Hve Hvsp Hplen vals P3 P4 i Hi). Qed.
-#[using="Type"] Lemma m2_but : ltac2:(TCodec.tc2 tcn__Ju0DrvC "@'L'K&Q7vS4r2%211r1%5221'>&Q0%116%811%43;81p061pV8=1pU8?1").
+Lemma hiv_facts' : forall vals,
+vals_ev vals 3 = auxvp sp0 a0s path envv -> vals_ev vals 4 = rnd sp0 a0s path envv inp ->
+forall i, In i [3%nat; 4%nat] -> (bv_unsigned sp0 <= bv_unsigned (vals_ev vals i))%Z /\ (bv_unsigned (vals_ev vals i) + 2 ^ 20 <= 2 ^ 64)%Z.
+Proof. intros vals P3 P4 i Hi. exact (hiv_facts sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME Hplen vals P3 P4 i Hi). Qed.
+Lemma m2_but : forall VM m', model_but_vm (model2 VM) m' -> m' = model2 (m_vmmaps m').
 Proof. intros VM m' H. exact H. Qed.
-#[using="Type"] Lemma m2_fd2 : ltac2:(TCodec.tc2 tcn__Ju0DrvC "F'L'>';'J%211&N&OvS4r1%211%411&S7yR0+2%3221%:251(4(I%114%32@1%C3@51pU8E1").
+Lemma m2_fd2 : forall VM, fd_lookup (m_fds (model2 VM)) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
 Proof. intros. reflexivity. Qed.
-#[using="scfg L HIok path fdata Hvsp Hplen DL Hsp LEN"] Lemma heap_sw_post : ltac2:(TCodec.tc2 tcn__Ju0DrvC "QH'8'<'B%2211%411&Q5'S8yR0%211';y8%511%311p051'L&Q6vDr8r7r6r5%6554321'QHr4+flQ@r3r2%56943217&R<&R;&RA&S9vS6%22J1+XPPP0%5221+S@%8221%:21B%;2D6r<r;r9%L5K32J1p051p071p0C1p0J1pU@Q81pU>Q91pVFQ@1pR:Q61pU8Q61pR8Q81pUDQA1pQ>QC1").
+Lemma heap_sw_post : ltac2:(TCodec.tc2 tcn__Ju0DrvC "QH'8'<'B%2211%411&Q5'S8yR0%211';y8%511%311p051'L&Q6vDr8r7r6r5%6554321'QHr4+flQ@r3r2%56943217&R<&R;&RA&S9vS6%22J1+XPPP0%5221+S@%8221%:21B%;2D6r<r;r9%L5K32J1p051p071p0C1p0J1pU@Q81pU>Q91pVFQ@1pR:Q61pU8Q61pR8Q81pUDQA1pQ>QC1").
 Proof.
 intros LB cr M VM M' su bufp bufsz HH HP Hlo Hhi.
-pose proof (dl_ro L sp0 DL) as RO. pose proof (dl_static L sp0 DL) as STA. pose proof (dl_sptop L sp0 DL) as TOP.
+pose proof (dl_ro L sp0 DL) as ROd. pose proof (dl_static L sp0 DL) as STA. pose proof (dl_sptop L sp0 DL) as TOP.
 pose proof (dl_img_lo L sp0 DL) as IL. pose proof (dl_img_hi L sp0 DL) as IH.
 apply (hio_frame L scfg HI HIok LB cr M M' VM HH).
 - intros a Ha Hpriv. apply (swp_agree _ _ _ _ _ _ HP); rewrite u_small by lia.
-+ intros Hin. destruct Hpriv as [[A _]|A]; [rewrite TOP in A; lia|]. apply RO in A. lia.
-+ intros Hin. destruct Hpriv as [[_ [_ A]]|A]; [| apply RO in A; lia].
++ intros Hin. destruct Hpriv as [[A _]|A]; [rewrite TOP in A; lia|]. apply ROd in A. lia.
++ intros Hin. destruct Hpriv as [[_ [_ A]]|A]; [| apply ROd in A; lia].
 apply A. rewrite IL, IH. split; [lia|]. intros Hs. apply STA in Hs. lia.
-+ intros Hin. destruct Hpriv as [[_ [_ A]]|A]; [| apply RO in A; lia].
++ intros Hin. destruct Hpriv as [[_ [_ A]]|A]; [| apply ROd in A; lia].
 apply A. rewrite IL, IH. split; [lia|]. intros Hs. apply STA in Hs. lia.
 - exact (swp_grows _ _ _ _ _ _ HP).
 Qed.
-#[using="path fdata Hvsp Hplen Hsp LEN"] Lemma above_sw_post : ltac2:(TCodec.tc2 tcn__Ju0DrvC "Q2'S8yR0%211';y8%511%311p051'BvREr5%211'QHr6r4+flQ@r3r2%66543218&R<&S9vS6%22E1%42=1r7%@11p031p091p0A1pU@K1pU>L1pVFG1pR:I1pR8J1").
+Lemma above_sw_post : ltac2:(TCodec.tc2 tcn__Ju0DrvC "Q2'S8yR0%211';y8%511%311p051'BvREr5%211'QHr6r4+flQ@r3r2%66543218&R<&S9vS6%22E1%42=1r7%@11p031p091p0A1pU@K1pU>L1pVFG1pR:I1pR8J1").
 Proof.
 intros M M' su bufp bufsz HA HP Hhi a Ha. rewrite (swp_agree _ _ _ _ _ _ HP); [apply HA; exact Ha | lia | lia | lia].
 Qed.
 Definition err_tail_stmt (sr : list expr) (kn : list kentry) (NV : nat) : Prop :=
 forall vals R M VM (A1 : Z),
 length vals = NV -> vals_ev vals 0 = sp0 -> vals_ev vals 48 = Z_to_bv 64 A1 ->
-vals_ev vals 3 = auxvp sp0 a0s path envv -> vals_ev vals 4 = rnd sp0 a0s path envv -> vals_ev vals 5 = tid ->
+vals_ev vals 3 = auxvp sp0 a0s path envv -> vals_ev vals 4 = rnd sp0 a0s path envv inp -> vals_ev vals 5 = tid ->
 regs_ok (ENVb vals) sr R -> know_ok RSEGS (ENVb vals) M kn ->
 block_range L A1 CAP -> hi_heap HI [(A1, CAP)] crC M VM ->
 srealizes RSEGS scfg (mkCfg (mkst R (Z_to_bv 64 0x9f524) M (seg_rom RSEGS)) (model2 VM))
@@ -242,9 +261,9 @@ assert (P0' : vals_ev (vals ++ junk_vals R') 0 = sp0) by (rewrite vals_ev_app_l 
 assert (P5' : vals_ev (vals ++ junk_vals R') 5 = tid) by (rewrite vals_ev_app_l by (rewrite HL; lia); exact P5);
 run_block scr0 NV2;
 close_exit2 HR HK P0' P5'.
-#[using="HIok uid Hva Hve Hvsp Htid Hplen DL Hsp Hal LEN"] Lemma err_tail_short : ltac2:(TCodec.tc2 tcn__Ju0DrvC "5&Q<&QC&QAuS7%43321").
+Lemma err_tail_short : err_tail_stmt srIs0 knIs0 103%nat.
 Proof. unfold err_tail_stmt. err_tail_tac 103%nat. Qed.
-#[using="HIok uid Hva Hve Hvsp Htid Hplen DL Hsp Hal LEN"] Lemma err_tail_overrun : ltac2:(TCodec.tc2 tcn__Ju0DrvC "5&Q<&QB&Q@uS9%43321").
+Lemma err_tail_overrun : err_tail_stmt srIo0 knIo0 105%nat.
 Proof. unfold err_tail_stmt. err_tail_tac 105%nat. Qed.
 Ltac stdio_then_tail vals A1 NV res msg msg_img msg_addr TAIL HL P0 P48 P3 P4 P5 HR HK HH HBR :=
 lazymatch type of HK with know_ok _ _ ?Mc ?kn =>
@@ -254,7 +273,7 @@ unfold t_die, W;
 let HSC := fresh "HSC" in let Hsc := fresh "Hsc" in
 assert (HSC : stdio_call NV sr kn = Some res) by (vm_compute; reflexivity);
 pose proof (stdio_call_sound_fr scfg vals _ sr kn Rc Mc (model2 VMc) res [] msg
-(t_exit (exit_code 2) fs0) HR HK (eq_trans (f_equal (fun n => stdio_call n sr kn) HL) HSC)) as Hsc;
+(t_exit (exit_code 2) fs0) ltac:(rdr) HR HK (eq_trans (f_equal (fun n => stdio_call n sr kn) HL) HSC)) as Hsc;
 cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn res length app Z.of_nat] in Hsc;
 apply Hsc; clear Hsc HSC;
 [ cbn [edenot]; lia
@@ -290,7 +309,7 @@ apply (TAIL (vals ++ junk_vals R') R' M' VMc A1);
 | exact HR' | exact HK' | exact HBR
 | eapply (heap_sw_post _ _ _ _ M'); [exact HH | exact HP | rewrite u_small by lia; lia | rewrite u_small by lia; lia] ] ]
 end end end.
-#[using="HIok uid Hva Hve Hvsp Htid Hplen DL Hsp Hal LEN ENVb model2"] Theorem hdr_short : ltac2:(TCodec.tc2 tcn__Ju0DrvC "@&@&7'S8y8%211vRL%5221u6%8221vRH&QM&QLvRM%3221%511p071").
+Theorem hdr_short : (length fdata < 6)%nat -> close_kg (t_die msg_short fs0).
 Proof.
 intros Hlt. unfold close_kg, Ju0DrvG.close_kg.
 intros vals R M VM A1 HL P0 P48 P70 P1 P2 P3 P4 P5 HR HK HA HBR HC HH.
@@ -303,7 +322,12 @@ assert (HH1 : hi_heap HI [(A1, CAP)] crC M0 VM).
 clear EQM HH HA HC.
 stdio_then_tail vals A1 71%nat scS msg_short msg_short_img 0x13245%Z err_tail_short HL P0 P48 P3 P4 P5 HR HK HH1 HBR.
 Qed.
-#[using="Hvsp Hplen HCAP HLEN Hsp LEN"] Lemma know_GL : ltac2:(TCodec.tc2 tcn__Ju0DrvC "RA'8'S8yR0%211%411';y8%611%311p061'B'>'9&7r3%22<1uR9%63521&R8r4uQ@%3221&S7r2%22F1%>3F41&QEvS6v2%332?1%N1G%J11&QI&R9r5%=2Q1@vRL%H2N1%645431(4%12:4%N3:31'?u6%2217r8uR7%M221&Q8%K2Q?1%Q73Q?31r9uR8%Q3221&Q9%Q12QE1%Q=3QE31&R6vCr:%211&QD+6+QooooO%3221%84Q05>1r;%911&Q?%<4Q42:1p051p0?1p0F1p0M1p0Q11p0Q>1p0QC1p0QL1p4R41pR8R61pVLR<1").
+Lemma know_GL : forall vals M (A1 : Z),
+length vals = 73%nat -> vals_ev vals 48 = Z_to_bv 64 A1 -> hz sp0 A1 CAP ->
+rdn RSEGS M (Z_to_bv 64 A1) (length fdata) = Some fdata -> (6 <= length fdata)%nat ->
+vals_ev vals 71 = Z_to_bv 64 B0 -> vals_ev vals 72 = Z_to_bv 64 B1 ->
+know_ok RSEGS (ENVb vals) M (knG 6 67108863) ->
+know_ok RSEGS (ENVb vals) M knGL.
 Proof.
 intros vals M A1 HL P48 HZ HC H6 P71 P72 HK. pose proof B0_range as R0. pose proof B1_range as R1.
 unfold knGL, kn_hdr. apply Forall_app. split; [|exact HK].
@@ -313,7 +337,7 @@ constructor; [|constructor; [|constructor; [|constructor; [|constructor]]]].
 - eapply krange_lit; [exact P71 | lia | lia].
 - eapply krange_lit; [exact P72 | lia | lia].
 Qed.
-#[using="HIok uid Hva Hve Hvsp Htid Hplen DL HCAP HLEN Hsp Hal ENVb model2"] Theorem hdr_overrun : ltac2:(TCodec.tc2 tcn__Ju0DrvC "H'?u6&7'S8y8%211vRL%5221%8271&R=vG&R;+6&Q;%3221%6251vRH&QM&QKvRM%3221%511p071p0?1").
+Theorem hdr_overrun : (6 <= length fdata)%nat -> (LEN < 6 + CFG)%Z -> close_kg (t_die msg_overrun fs0).
 Proof.
 intros Hge Hov. unfold close_kg, Ju0DrvG.close_kg.
 intros vals R M VM A1 HL P0 P48 P70 P1 P2 P3 P4 P5 HR HK HA HBR HC HH.
@@ -325,7 +349,7 @@ set (vals1 := vals ++ [Z_to_bv 64 B0; Z_to_bv 64 B1]).
 assert (HL1 : length vals1 = 73%nat) by (subst vals1; rewrite length_app, HL; reflexivity).
 assert (Y0 : vals_ev vals1 0 = sp0) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P0).
 assert (Y3 : vals_ev vals1 3 = auxvp sp0 a0s path envv) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P3).
-assert (Y4 : vals_ev vals1 4 = rnd sp0 a0s path envv) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P4).
+assert (Y4 : vals_ev vals1 4 = rnd sp0 a0s path envv inp) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P4).
 assert (Y5 : vals_ev vals1 5 = tid) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P5).
 assert (Y48 : vals_ev vals1 48 = Z_to_bv 64 A1) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P48).
 assert (Y70 : vals_ev vals1 70 = Z_to_bv 64 LEN) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P70).
@@ -347,7 +371,7 @@ assert (HH1 : hi_heap HI [(A1, CAP)] crC M0 VM).
 clear EQM HH HA HC.
 stdio_then_tail vals1 A1 73%nat scO msg_overrun msg_overrun_img 0x110b5%Z err_tail_overrun HL1 Y0 Y48 Y3 Y4 Y5 HR HK HH1 HBR.
 Qed.
-#[using="uid Hva Hve Hvsp Hplen DL HCAP HLEN Hsp Hal"] Theorem hdr_ok : ltac2:(TCodec.tc2 tcn__Ju0DrvC "G&R<&R;+6&Q;%3221vG%6221&QJ&Q=r1%211r2(:'M%211%411vRHr3%211p041p0:1pQ<>1p0@1").
+Theorem hdr_ok : (6 + CFG <= LEN)%Z -> forall KT, target_k KT -> KT [] -> close_kg KT.
 Proof.
 intros Hok KT HKT HKT0. unfold close_kg, Ju0DrvG.close_kg.
 intros vals R M VM A1 HL P0 P48 P70 P1 P2 P3 P4 P5 HR HK HA HBR HC HH.
@@ -361,10 +385,10 @@ change (Env (vals_ev vals) (blobs_ev (blobs0 a0s path hw rdraw ++ [fdata]))) wit
 set (vals1 := vals ++ [Z_to_bv 64 B0; Z_to_bv 64 B1]).
 assert (HL1 : length vals1 = 73%nat) by (subst vals1; rewrite length_app, HL; reflexivity).
 assert (Y0 : vals_ev vals1 0 = sp0) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P0).
-assert (Y1 : vals_ev vals1 1 = p0 sp0 a0s path envv) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P1).
-assert (Y2 : vals_ev vals1 2 = p1 sp0 a0s path envv) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P2).
+assert (Y1 : vals_ev vals1 1 = p0 a0s path envv rdraw inp) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P1).
+assert (Y2 : vals_ev vals1 2 = p1 a0s path envv rdraw inp) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P2).
 assert (Y3 : vals_ev vals1 3 = auxvp sp0 a0s path envv) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P3).
-assert (Y4 : vals_ev vals1 4 = rnd sp0 a0s path envv) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P4).
+assert (Y4 : vals_ev vals1 4 = rnd sp0 a0s path envv inp) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P4).
 assert (Y5 : vals_ev vals1 5 = tid) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P5).
 assert (Y48 : vals_ev vals1 48 = Z_to_bv 64 A1) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P48).
 assert (Y70 : vals_ev vals1 70 = Z_to_bv 64 LEN) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P70).
@@ -389,10 +413,10 @@ Z_to_bv 64 (bv_unsigned (nth (Z.to_nat (5 + CFG)) fdata (Z_to_bv 8 0)))]).
 set (vals2 := vals1 ++ ext).
 assert (HL2 : length vals2 = 79%nat) by (subst vals2 ext; rewrite length_app, HL1; reflexivity).
 assert (W0 : vals_ev vals2 0 = sp0) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact Y0).
-assert (W1 : vals_ev vals2 1 = p0 sp0 a0s path envv) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact Y1).
-assert (W2 : vals_ev vals2 2 = p1 sp0 a0s path envv) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact Y2).
+assert (W1 : vals_ev vals2 1 = p0 a0s path envv rdraw inp) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact Y1).
+assert (W2 : vals_ev vals2 2 = p1 a0s path envv rdraw inp) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact Y2).
 assert (W3 : vals_ev vals2 3 = auxvp sp0 a0s path envv) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact Y3).
-assert (W4 : vals_ev vals2 4 = rnd sp0 a0s path envv) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact Y4).
+assert (W4 : vals_ev vals2 4 = rnd sp0 a0s path envv inp) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact Y4).
 assert (W5 : vals_ev vals2 5 = tid) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact Y5).
 assert (W48 : vals_ev vals2 48 = Z_to_bv 64 A1) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact Y48).
 assert (W70 : vals_ev vals2 70 = Z_to_bv 64 LEN) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL1; lia); exact Y70).

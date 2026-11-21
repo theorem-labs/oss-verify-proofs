@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: a segment of reac_headamp_tx_next on fuzz_grant.asan (NextEntry), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v. *)
-(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/NextEntry.v at a working branch af735a950e2 (blob 8725db69d2a; the walk was ported from blob 7788bf8f6e4 at a working branch afd75724b5b, which differs from it only by 4 added and 0 removed lines, the licence header), restated over image B's listing, addresses and walk layer (lib/B/Prog) against GrantBContracts.v; frame 96 with twelve saved registers, UBSan traps T1 and T2, and the .rodata divisor read at 0x85fa4 (IMG_NEXT_DIV3) *)
+(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/NextEntry.v at a working branch (blob 8725db69d2a; the walk was ported from blob 7788bf8f6e4 at a working branch, which differs from it only by 4 added and 0 removed lines, the licence header), restated over image B's listing, addresses and walk layer (lib/B/Prog) against GrantBContracts.v; frame 96 with twelve saved registers, UBSan traps T1 and T2, and the .rodata divisor read at 0x85fa4 (IMG_NEXT_DIV3) *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_grant/lib/B/Prog/NextEntry.v, with its module paths and module names changed; 542 of its 591 lines of code are new or changed and 711 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_link/lib/A/Prog/reac_link_alias_readExit.v, with its module paths and module names changed; 771 of its 824 lines of code are new or changed and 538 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_link_alias_write on image A: THE ARMS PIECE, the stretch +0x1a8 .. +0x1f0 from the MID cut, i.e.
 
      aw_arms : aw_exit_obl SK B -> aw_send_obl SK B -> aw_mid_obl SK B
@@ -94,7 +95,7 @@ Hypothesis ASTRLEN : RtString.astrlen_realizes SEGS B (pa_sigma LS___interceptor
 (* fuzz_if_nametoindex (0x826cc): the proof of its contract *)
 Hypothesis NIX : fuzz_if_nametoindex_acontract SK SEGS PCAP_RLO PCAP_RHI B.
 (* the strcmp tail facts of the name and of each table string at the call's memory (reac_link_alias_writeDefs.v
-   aw_tails), read off reac_link_alias_write_c.v's Pre (its tail clauses, commit e2b13a9a8f08) *)
+   aw_tails), read off reac_link_alias_write_c.v's Pre (its tail clauses) *)
 Lemma aw_tails_of_pre : forall cx : awcx, aw_pre SK B cx -> aw_tails cx.
 Proof.
   intros cx (_ & _ & HP).

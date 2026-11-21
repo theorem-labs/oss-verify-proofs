@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: hex4 of fuzz_preset's asan image (A, A_prog_sigma AS_hex4, 220 bytes) KEEPS memnorm, proved from its run. One added property of lib/A/Prog/hex4_x.v's hex4_x_holds; no new walk.
    rule 24: proves function hex4 (reuse search: `proof-index skip_ws hex4 put_utf8 literal`, 2026-10-28T21:1xZ, exit 0, index built 2026-10-28T20:16:23Z; named-list cold grep 2026-10-29 exit 0; CONFIRM R24ReaderLeaf 2026-10-28T21:15Z). VERBATIM: `hex4: 8 file(s) named for it, 4 file(s) use its address, 4 related; in an earlier delivery 28 named for it and 196 name(s) that hold it, in 131 tree(s)` - named hits are fuzz_preset/fuzz_state released PLAIN + UBSAN proofs; none on asan builds; cold AsanRT walks template only. Adds one property to MY proved hex4_x_holds (A and B); no new walk.
    WHAT: hex4_x_holds_mnI : thex4_leafXmn SK rsegs B PST ARx (A_prog_sigma AS_hex4) (lib/Prog/hex4_xs_mn.v), under the section context of hex4_x_holds (fx rc SK B PST ARx HL, LAWS, TL). thex4_leafXmn is thex4_leafX with the conjunct YAkMemnorm.memnorm segs memc -> YAkMemnorm.memnorm segs mem' appended last to the post, and no entry premise.
-   HOW: hex4_final / hex4_failret / hex4_turn / hex4_loop and hex4_x_holds's proof of hex4_x.v, re-run as hex4_finalP / hex4_failretP / hex4_turnP / hex4_loopP / hex4_mainP with an invariant Pinv of the full overlay: Pinv of the entry memory is a premise, Pinv of each continuation's memory is a premise of the continuation (after its journal premise), and Pinv of the end memory is a conjunct of each post (after the journal conjunct; last in hex4_mainP). The hypothesis is msteps_keeps rsegs Pinv (the statement of YSRrMemnorm.SRr_msteps_inv). Each runner segment is SRr_run_tok_AJxP / SRr_run_to_tok_AJxP over SRr_chain_tok_AJxP (YCbqG.SRr_chain_tok_AJx with SRr_msteps replaced by msteps_keeps; the Section tw lemmas of lib/B/Prog/skip_ws_mn.v at origin/cold/h-verbs-1-skip-mn 7c2e551b8f21, as there); a branch (YA0o.SRr_sym_branch) does not change the state; the return (YA0o.SRr_ret_at) leaves the memory as it is. The lemmas of hex4_x.v that make no run (hex4_entry_ok, the keeps / frame / garr8 lemmas, regs_pres_of_kept, ret_ok_mod2) and its tactic hexval_solve are used as they are; its section tactics xbr / prreg_raw / zcond / kept_at / acc_tac / cnt_tac (local to hex4_x.v's Section a) are copied verbatim, and xrun / xrunto / xafter / xafter2 / xtail are copied as xrunP / xruntoP / xafterP / xafter2P / xtailP, which pass and re-introduce the Pinv hypothesis HPM after the journal hypothesis HJ.
+   HOW: hex4_final / hex4_failret / hex4_turn / hex4_loop and hex4_x_holds's proof of hex4_x.v, re-run as hex4_finalP / hex4_failretP / hex4_turnP / hex4_loopP / hex4_mainP with an invariant Pinv of the full overlay: Pinv of the entry memory is a premise, Pinv of each continuation's memory is a premise of the continuation (after its journal premise), and Pinv of the end memory is a conjunct of each post (after the journal conjunct; last in hex4_mainP). The hypothesis is msteps_keeps rsegs Pinv (the statement of YSRrMemnorm.SRr_msteps_inv). Each runner segment is SRr_run_tok_AJxP / SRr_run_to_tok_AJxP over SRr_chain_tok_AJxP (YCbqG.SRr_chain_tok_AJx with SRr_msteps replaced by msteps_keeps; the Section tw lemmas of lib/B/Prog/skip_ws_mn.v, as there); a branch (YA0o.SRr_sym_branch) does not change the state; the return (YA0o.SRr_ret_at) leaves the memory as it is. The lemmas of hex4_x.v that make no run (hex4_entry_ok, the keeps / frame / garr8 lemmas, regs_pres_of_kept, ret_ok_mod2) and its tactic hexval_solve are used as they are; its section tactics xbr / prreg_raw / zcond / kept_at / acc_tac / cnt_tac (local to hex4_x.v's Section a) are copied verbatim, and xrun / xrunto / xafter / xafter2 / xtail are copied as xrunP / xruntoP / xafterP / xafter2P / xtailP, which pass and re-introduce the Pinv hypothesis HPM after the journal hypothesis HJ.
    INSTANCE: Pinv m := YAkMemnorm.memnorm rsegs memc -> YAkMemnorm.memnorm rsegs m (memc fixed by the theorem's binder), so Pinv memc holds by (fun h => h) and Pinv mem' is the appended conjunct. Its laws srr_inv_laws_memnorm_from rsegs memc are YSRrMemnorm.srr_inv_laws_memnorm's three laws under the premise (YAkMemnorm.memnorm is YAjMemnorm.memnorm by conversion, YAkMemnormJ.memnorm_kit_j); msteps_keeps rsegs Pinv := YSRrMemnorm.SRr_msteps_inv rsegs A_prog_wx Pinv (srr_inv_laws_memnorm_from rsegs memc). The proof uses no fact about where hex4 stores: YAkMemnorm.memnorm_msteps holds of every LPS run.
    ORDER: the walk proofs come before `Require YAjMemnorm YSRrMemnorm` (YAjMemnorm loads lib/Lib/LiaTwx2.v, which redefines lia), so they run under the lia hex4_x.v was proved with.
-   Taken by path from origin/cold/h-srr-inv 11b525112ae: lib/Reusable/YAjMemnorm.v 4372e77e66c5, YAkMemnorm.v 96c72061b4d4, YAkMemnormJ.v f6dbdc03064b, YSRrMemnorm.v 39aa827e68cb. *)
+   Taken by path: lib/Reusable/YAjMemnorm.v 4372e77e66c5, YAkMemnorm.v 96c72061b4d4, YAkMemnormJ.v f6dbdc03064b, YSRrMemnorm.v 39aa827e68cb. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -33,7 +34,7 @@ Unset Lia Cache. Unset Nia Cache.
 Local Set Warnings "-abstract-large-number".
 Open Scope Z_scope.
 (* the short image names this walk uses (CrcBp's wrong-image trap, owner 19:2xZ; Locate in this file's context on the
-   pins102 workspace of cf6f00470c9b: lib.A.Img0.rsegs, lib.A.PAImg_prog.PI_prog_A), checked against the full paths *)
+   pins102 workspace: lib.A.Img0.rsegs, lib.A.PAImg_prog.PI_prog_A), checked against the full paths *)
 Section g. Context {rc : YM05.RunCeil}.
 Lemma hex4_mn_names_guard :
   rsegs = OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A.Img0.rsegs /\
@@ -870,7 +871,7 @@ intros x Hx. rewrite (Hk x Hx).
 exact (HKO x ltac:(unfold kLowShadowBeg, kHighMemBeg, ASAN_CEIL in *; lia) ltac:(unfold HEX4_STK in *; lia)).
 Qed.
 End a.
-(* ENGINE s1b 459129c18903 (h-rw-pre-5-hex4m): srr_inv_laws, its fields sil_* and SRr_msteps_inv moved from YSRrMemnorm
+(* ENGINE s1b (h-rw-pre-5-hex4m): srr_inv_laws, its fields sil_* and SRr_msteps_inv moved from YSRrMemnorm
    to YC80x, and srr_inv_laws_memnorm (the YAjMemnorm instance) to YSRrMemnormJ, with the same statements. The names
    below are re-pointed there; no statement and no proof step changed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YAjMemnorm YC80x YSRrMemnormJ.

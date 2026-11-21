@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: file_write_app unfolds file_extend, fn_unlink covers the AT_REMOVEDIR arm's new unlink_before_type_errnos, and mq_mo0 and startup_exists see through with_vdso in the initial model. *)
 (* [comment removed for export] *)
 From Stdlib Require Lia.
 (* [comment removed for export] *)
@@ -360,7 +361,7 @@ Qed.
 
 #[using="Type"] Lemma file_write_app d bs : Z.of_nat (length d) < 2^64 -> file_write d (Z_to_bv 64 (Z.of_nat (length d))) bs = d ++ bs.
 Proof.
-  intros Hd. unfold file_write. destruct bs as [|b bs']; [rewrite app_nil_r; reflexivity|].
+  intros Hd. unfold file_write, file_extend. cbv zeta. destruct bs as [|b bs']; [rewrite app_nil_r; reflexivity|].
   unfold word_to_nat. rewrite unsigned_lit by lia. rewrite Nat2Z.id, Nat.sub_diag. cbn [repeat]. rewrite app_nil_r.
   rewrite firstn_all2 by lia. rewrite skipn_all2 by (cbn; lia). rewrite app_nil_r. reflexivity.
 Qed.
@@ -463,7 +464,15 @@ Proof.
   destruct (nstep_dec_unlink _ _ _ _ _ _ Hst) as (_ & a & Hd & X). exists a. split; [exact Hd|].
   split; [rewrite FU; exact NDP|]. destruct a as [err|v].
   - destruct X as [-> X]. split; [exact H|].
-    destruct X as [[_ ->]|[[_ [_ ->]]|[[_ [_ [_ ->]]]|[_ [_ [_ HIn]]]]]]; [destruct rmdir; unfold ENOTEMPTY, State.EISDIR; lia| unfold State.ENOENT; lia| unfold ENOTDIR; lia| apply unlinkat_errnos_range'; exact HIn].
+    (* the AT_REMOVEDIR disjunct gained [unlink_before_type_errnos] beside -ENOTDIR at
+       75d69e00 (theories/LinuxProcessSem/Sys/Fs/Namei.v:337-341), so arm three of four
+       now yields two goals, not one *)
+    destruct X as [[_ ->]|[[_ [_ ->]]|[[_ [_ [_ [->|HInT]]]]|[_ [_ [_ HIn]]]]]];
+      [destruct rmdir; unfold ENOTEMPTY, State.EISDIR; lia
+      | unfold State.ENOENT; lia
+      | unfold ENOTDIR; lia
+      | apply unlink_before_type_errnos_range'; exact HInT
+      | apply unlinkat_errnos_range'; exact HIn].
   - destruct X as (-> & _ & _ & -> & _ & ->). split; [reflexivity|]. split; [reflexivity|].
     eapply FI_unlink; [exact H| exact HC| rewrite m_fds_with_fs; reflexivity| rewrite m_fs_with_fs; reflexivity].
 Qed.
@@ -501,7 +510,9 @@ Context {CEG CEC : CEIL}.
 #[local] Notation fopsC := (full_ops (CE:=CEC)).
 #[using="Type"] Lemma mq_mo0 segsG segsC limG limC enG enC inp : mq (mo0 segsG limG enG inp) (mo0 segsC limC enC inp).
 Proof.
-  unfold mq, mo0. rewrite !m_fds_init_model, !m_fs_init_model, !m_halted_init_model, !m_tid_init_model, !m_stdin_init_model.
+  unfold mq, mo0.
+  repeat match goal with |- context [?f (with_vdso ?v ?m)] => change (f (with_vdso v m)) with (f m) end.
+  rewrite !m_fds_init_model, !m_fs_init_model, !m_halted_init_model, !m_tid_init_model, !m_stdin_init_model.
   repeat split; reflexivity.
 Qed.
 
@@ -602,7 +613,7 @@ Qed.
     /\ startup_mo (CE:=CEC) segsC limC enC inp tb t mo'.
 Proof.
   intros Ht.
-  assert (Htid0 : m_tid moC0 = None) by (unfold TopLevel.mo0; apply m_tid_init_model).
+  assert (Htid0 : m_tid moC0 = None) by (unfold TopLevel.mo0; change (m_tid (with_vdso ?v ?m)) with (m_tid m); apply m_tid_init_model).
   set (mo2 := with_tid (Z_to_bv 64 t) moC0).
   assert (Hst2 : nstep NSetTid moC0 (eff0 (Z_to_bv 64 t)) mo2 []).
   { cbn [nstep]. split; [reflexivity|]. exists (Z_to_bv 64 t). split; [reflexivity|]. rewrite Htid0. rewrite unsigned_lit by (unfold PID_MAX_ENVELOPE in *; lia). split; [exact Ht| reflexivity]. }

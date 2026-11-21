@@ -4,7 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: made for libreac/fuzz_knock's ASan harness walk (LLVMFuzzerTestOneInput 0x7eed0 in
    fuzz_knock.asan, sha256 61768cf4739b7641c99c825dde45eddafc55b601d41109555be0272fc7ca4118): segment S2 PARSED, from
    proofs/cgif/cgif_file_fuzzer/lib/A/ACfe.v (the journal-threaded callee call, lines 159-330) and A/ACf0.v (the
-   addressable range of a frame object from its zero shadow bytes, lines 56-78) at c8557374ad2e, with their module paths
+   addressable range of a frame object from its zero shadow bytes, lines 56-78), with their module paths
    changed and the names of a Theorem Labs lane's framework (a working branch). The S2 -> S7 boundary ss_X / INV_X is
    a Theorem Labs lane's lib/A/APgMain7.v (a working branch); the S2 -> S3 boundary ss_L / INV_L and the loop
    rt_L are a Theorem Labs lane's lib/A/APgLoop0.v / APgMainL.v (a working branch).
@@ -51,6 +51,7 @@
    Call sites: pin_memchr_site with aj_memchr_atS (amemchr_realizes made journal-threaded, the shape of
    PPgMainCall.aj_intrin_atS); pin_malloc_site with PPgMainCall.amalloc04_sub.
    Atoms: 430 .. 433, the after-call windows of the two calls, and ss_M's dead-register window 450 .. 469. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

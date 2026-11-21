@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the state invariants take the launch record [LaunchX], and the argument area is read from it). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -19,15 +20,11 @@ Open Scope Z_scope.
 Section Leaf.
   Variable sp : word.
   Variable rdraw : EntryDraw.
-  Variables brk0 mbase : word.
+  Variable brk0 : word.
   Variable lim : Z.   (* [comment removed for export] *)
   Variables argv envp : list (list byte).
-  Variable fs : Fs.Fs.
-  Variable stdin : InStreams.
-  Variables uid gid hw : word.
-  Variable groups : list word.
-  Variable net : NetQueue.
-  Variables nofile sigmask : word.
+  Variables uid hw : word.
+  Variable L : LaunchX.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hbrk : valid_brk HASEGS brk0.
   Hypothesis Hlim : (AsanInit.LIMIT <= lim)%Z.
@@ -35,6 +32,8 @@ Section Leaf.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
   Hypothesis Huid : valid_id uid.
+  Hypothesis HLX : launchL HAT sp rdraw brk0 argv envp uid hw L.
+  Let fs := lx_fs L.
   Let argv1 := nth 1 argv [].
   (* [comment removed for export] *)
   Hypothesis Hargc : length argv = 2%nat.
@@ -48,8 +47,8 @@ Section Leaf.
   Lemma c_cont : c = cont.
   Proof. subst c argv1. destruct argv as [|a0 [|p [|q r]]]; try discriminate Hargc. cbn in Hlk |- *. rewrite Hlk. reflexivity. Qed.
   Lemma Hlk_c : fs_lookup fs argv1 = Some c. Proof. rewrite c_cont. exact Hlk. Qed.
-  #[local] Notation SV := (SINVm HAPH sp rdraw brk0 argv envp uid hw c).
-  #[local] Notation argH := (argH0 HAPH sp rdraw argv envp uid hw).
+  #[local] Notation SV := (SINVm HAPH sp rdraw brk0 argv envp uid hw L c).
+  #[local] Notation argH := (argH0 sp rdraw argv envp (lx_kb L) (lx_execfn L)).
   #[local] Notation ISP := (bv_unsigned sp).
   #[local] Notation FXHOLE := (fx_hole SV argH ISP fs).
 
@@ -59,7 +58,7 @@ Section Leaf.
   Lemma T_main_hdr : forall lit E M, SV E M -> T_main (T98h lit) E fs = T_hdr lit argv1 fs.
   Proof.
     intros lit E M HS.
-    pose proof (HAArg.vals_of_SINV1 sp brk0 argv envp rdraw hw Hsp Hva Hve uid Hfit E M (SVm_to1 sp rdraw brk0 argv envp uid hw c E M HS)) as (_ & _ & _ & H1 & _).
+    pose proof (HAArg.vals_of_SINV1 sp brk0 argv envp rdraw hw Hsp Hva Hve uid Hfit E M (SVm_to1 sp rdraw brk0 argv envp uid hw L c E M HS)) as (_ & _ & _ & H1 & _).
     unfold T_main, usage_shape. cbn [sd]. change (EVar 1) with (EVar V_ARGC). rewrite H1, Hargc. reflexivity.
   Qed.
 
@@ -73,18 +72,17 @@ Section Leaf.
   Hypothesis H_S6_B3 : FXHOLE c2b3_hs10 s6endb3.   Hypothesis H_FE_B3 : FXHOLE c3b3_hs20 feendb3.   Hypothesis H_FEO_B3 : FXHOLE c4b3_hs21 feendob3.   Hypothesis H_FEH_B3 : FXHOLE c6b3_hs24 feendhb3.
   Hypothesis H_S6_B1 : FXHOLE c2b1_hs10 s6endb1.   Hypothesis H_FE_B1 : FXHOLE c3b1_hs20 feendb1.   Hypothesis H_FEO_B1 : FXHOLE c4b1_hs21 feendob1.   Hypothesis H_FEH_B1 : FXHOLE c6b1_hs24 feendhb1.
 
-  #[local] Notation INIT := (init_config HASEGS Asan.M.init_pc HAPH sp brk0 mbase rdraw lim (inp argv envp fs stdin uid gid hw groups net nofile sigmask)).
-  Lemma sv_init : SV (reblob (E0 HAPH sp rdraw brk0 argv envp uid hw) argv c) (FULL0 HAPH sp rdraw argv envp uid hw).
+  #[local] Notation INIT := (INITL HASEGS HAPH sp rdraw brk0 lim argv envp uid hw L).
+  Lemma sv_init : SV (reblob (E0L sp rdraw brk0 argv envp uid hw L) argv c) (FULL0L HAPH sp rdraw argv envp uid hw L).
   Proof.
     apply SINVm_reblob.
-    exact (AsanPlanSound.APS.co_sinv _ _ _ _ _ _ _ _ _ _ _ _ (init_cs_ok HASEGS HAT HAPH sp rdraw brk0 mbase lim argv envp fs stdin uid gid hw groups net nofile sigmask
-                  ha_img_facts Hsp Hbrk Hlim Hva Hve Hfit Huid)).
+    exact (AsanPlanSound.APS.co_sinv _ _ _ _ _ _ _ _ _ _ _ _ (init_cs_okL HASEGS HAT HAPH sp rdraw brk0 lim argv envp uid hw L ha_img_facts Hsp Hbrk Hlim Hva Hve Hfit Huid HLX)).
   Qed.
 
   Theorem hdr_short_leaf : flen cont <= 5 -> crz HASEGS INIT (T_hdr short_lit argv1 fs).
   Proof.
     intros H5. rewrite <- c_cont in H5.
-    pose proof (usage_chain sp rdraw brk0 mbase lim argv envp fs stdin uid gid hw groups net nofile sigmask Hsp Hbrk Hlim Hva Hve Hfit Huid (T98h short_lit) (T98h_agree _) (T98h_nil _)
+    pose proof (usage_chain sp rdraw brk0 lim argv envp uid hw L Hsp Hbrk Hlim Hva Hve Hfit Huid HLX (T98h short_lit) (T98h_agree _) (T98h_nil _)
                   H_S6_A0 H_FE_A0 (hdr_short_a0 sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit H_FEO_A0 H_FEH_A0 Hne Hsl Hdr Hln Hlk_c H5)
                   H_S6_A2 H_FE_A2 (hdr_short_a2 sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit H_FEO_A2 H_FEH_A2 Hne Hsl Hdr Hln Hlk_c H5)
                   H_S6_A3 H_FE_A3 (hdr_short_a3 sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit H_FEO_A3 H_FEH_A3 Hne Hsl Hdr Hln Hlk_c H5)
@@ -93,13 +91,13 @@ Section Leaf.
                   H_S6_B2 H_FE_B2 (hdr_short_b2 sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit H_FEO_B2 H_FEH_B2 Hne Hsl Hdr Hln Hlk_c H5)
                   H_S6_B3 H_FE_B3 (hdr_short_b3 sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit H_FEO_B3 H_FEH_B3 Hne Hsl Hdr Hln Hlk_c H5)
                   H_S6_B1 H_FE_B1 (hdr_short_b1 sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit H_FEO_B1 H_FEH_B1 Hne Hsl Hdr Hln Hlk_c H5)) as RZ.
-    rewrite (T_main_hdr short_lit _ (FULL0 HAPH sp rdraw argv envp uid hw)) in RZ; [exact RZ | exact sv_init].
+    rewrite (T_main_hdr short_lit _ (FULL0L HAPH sp rdraw argv envp uid hw L)) in RZ; [exact RZ | exact sv_init].
   Qed.
 
   Theorem hdr_overrun_leaf : 6 <= flen cont -> ION.room cont < 0 -> crz HASEGS INIT (T_hdr overrun_lit argv1 fs).
   Proof.
     intros H6 Hr. rewrite <- c_cont in H6, Hr.
-    pose proof (usage_chain sp rdraw brk0 mbase lim argv envp fs stdin uid gid hw groups net nofile sigmask Hsp Hbrk Hlim Hva Hve Hfit Huid (T98h overrun_lit) (T98h_agree _) (T98h_nil _)
+    pose proof (usage_chain sp rdraw brk0 lim argv envp uid hw L Hsp Hbrk Hlim Hva Hve Hfit Huid HLX (T98h overrun_lit) (T98h_agree _) (T98h_nil _)
                   H_S6_A0 H_FE_A0 (hdr_overrun_a0 sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit H_FEO_A0 H_FEH_A0 Hne Hsl Hdr Hln Hlk_c H6 Hr)
                   H_S6_A2 H_FE_A2 (hdr_overrun_a2 sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit H_FEO_A2 H_FEH_A2 Hne Hsl Hdr Hln Hlk_c H6 Hr)
                   H_S6_A3 H_FE_A3 (hdr_overrun_a3 sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit H_FEO_A3 H_FEH_A3 Hne Hsl Hdr Hln Hlk_c H6 Hr)
@@ -108,6 +106,6 @@ Section Leaf.
                   H_S6_B2 H_FE_B2 (hdr_overrun_b2 sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit H_FEO_B2 H_FEH_B2 Hne Hsl Hdr Hln Hlk_c H6 Hr)
                   H_S6_B3 H_FE_B3 (hdr_overrun_b3 sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit H_FEO_B3 H_FEH_B3 Hne Hsl Hdr Hln Hlk_c H6 Hr)
                   H_S6_B1 H_FE_B1 (hdr_overrun_b1 sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit H_FEO_B1 H_FEH_B1 Hne Hsl Hdr Hln Hlk_c H6 Hr)) as RZ.
-    rewrite (T_main_hdr overrun_lit _ (FULL0 HAPH sp rdraw argv envp uid hw)) in RZ; [exact RZ | exact sv_init].
+    rewrite (T_main_hdr overrun_lit _ (FULL0L HAPH sp rdraw argv envp uid hw L)) in RZ; [exact RZ | exact sv_init].
   Qed.
 End Leaf.

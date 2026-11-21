@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the start-up section reads the launch input, mmap base and entry point, and the auxv reads split on the launch's rseq flag (J_rseq). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith List Lia Bool.
@@ -26,6 +27,7 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 #[local] Existing Instance PropExec.fx0.  (* [comment removed for export] *)
 Import ListNotations.
 Open Scope bv_scope.
+Local Set Default Proof Using "All".
 
 Abbreviation SEGS := Ubsan.M.loaded_segments.
 Abbreviation RPH := Ubsan.M.phdrs.
@@ -39,19 +41,24 @@ Ltac ckpt rr Hrr :=
 Ltac ckv Hrr := rewrite Hrr; gres; pin; first [reflexivity | bveq].
 
 Section P4.
-  Variable sp0 : word.
-  Variables av ev : list (list byte).
-  Variables uid hw : word.
+  Variable v : VaSize.
+  Variable inp : ProcInput.
+  Variable mbase entry : word.
+  Variable sp0 brk : word.
   Variable rdraw : EntryDraw.
+  Local Notation av := (in_argv inp) (only parsing).
+  Local Notation ev := (in_envp inp) (only parsing).
   Hypothesis Hva : valid_argv av.
   Hypothesis Hve : valid_envp ev.
   Hypothesis Hlo : (0x7fff80000000 <= bv_unsigned sp0)%Z.
   Hypothesis Hhi : (bv_unsigned sp0 <= 0x800000000000)%Z.
   Hypothesis Hal : (bv_unsigned sp0 mod 16 = 0)%Z.
 
-  Local Abbreviation CM := (cmem sp0 (wrap_mem RPH sp0 av ev uid hw rdraw)) (only parsing).
+  Local Notation CM := (cmem sp0 (wrap_mem inp mbase RPH entry sp0 rdraw)) (only parsing).
 
-  Ltac uJ := unfold J_aux, aux_base.
+  (* LPS 08b1429: [J_aux] ends in the rseq layer [J_rseq], an [if] on [kb_rseq]; a read of a
+     slot below it is split on the flag and read in each layout. *)
+  Ltac uJ := unfold J_aux, J_rseq, aux_base; destruct (kb_rseq (in_kernel inp)); cbv iota.
   Ltac uD := unfold D_libc.
   Ltac rdJ := rewrite rdn_cmem_win by region_side; uJ; rd_hit8.
   Ltac rdD L := rewrite rdn_cmem_data by region_side; uD; peel; exact L.
@@ -62,7 +69,7 @@ Section P4.
     getr regs 1 = Z_to_bv 64 0x1b830 ->
     getr regs 2 = Z_to_bv 64 (bv_unsigned sp0 - 416) ->
     getr regs 3 = Z_to_bv 64 0x10800 ->
-    getr regs 8 = pn_w sp0 av ev ->
+    getr regs 8 = pn_w inp rdraw ->
     getr regs 9 = s1v ->
     getr regs 10 = Z_to_bv 64 (bv_unsigned sp0 - 368) ->
     getr regs 18 = Z_to_bv 64 0x56ee8 ->
@@ -90,18 +97,20 @@ Section P4.
         getr regs' 26 = Z_to_bv 64 0 ->
         getr regs' 27 = Z_to_bv 64 0 ->
         G (mkst regs' (0x1bc9c : word)
-             (CM (J_tls sp0 (J_aux sp0 av ev uid hw Jf) (Z_to_bv 64 0x1b830) (pn_w sp0 av ev) s1v
+             (CM (J_tls sp0 (J_aux inp mbase entry sp0 rdraw Jf) (Z_to_bv 64 0x1b830) (pn_w inp rdraw) s1v
                         (Z_to_bv 64 0x56ee8) (Z_to_bv 64 0) (Z_to_bv 64 0) (Z_to_bv 64 0))
-                 (D_tlsA (D_libc sp0 av ev hw))) rom)) ->
-    G (mkst regs (0x1ba40 : word) (CM (J_aux sp0 av ev uid hw Jf) (D_libc sp0 av ev hw)) rom).
+                 (D_tlsA (D_libc inp sp0 rdraw))) rom)) ->
+    G (mkst regs (0x1ba40 : word) (CM (J_aux inp mbase entry sp0 rdraw Jf) (D_libc inp sp0 rdraw)) rom).
   Proof.
-    intros G HG regs Jf rom s1v HJ H1 H2 H3 H8 H9 H10 H18 H19 H20 H21 H22 H23 H24 H25 H26 H27 Hk.
+    intros G HG regs Jf rom s1v HJ0 H1 H2 H3 H8 H9 H10 H18 H19 H20 H21 H22 H23 H24 H25 H26 H27 Hk.
+    assert (HJ : wfJ sp0 (J_aux inp mbase entry sp0 rdraw Jf)).
+    { unfold J_aux, J_rseq. destruct (kb_rseq (in_kernel inp)); cbv iota; repeat apply wfJ_wbytes; exact HJ0. }
     pose proof (u64_range sp0) as Hsp.
     eapply HG.
     {
       sv F_1ba40 D_1ba40 (Z_to_bv 64 (bv_unsigned sp0 - 480)).   (* [comment removed for export] *)
       stw F_1ba44 D_1ba44 (Z_to_bv 64 (bv_unsigned sp0 - 424)) (Z_to_bv 64 0x1b830) ltac:(ok_win HJ).   (* [comment removed for export] *)
-      stw F_1ba48 D_1ba48 (Z_to_bv 64 (bv_unsigned sp0 - 432)) (pn_w sp0 av ev) ltac:(ok_win HJ).   (* [comment removed for export] *)
+      stw F_1ba48 D_1ba48 (Z_to_bv 64 (bv_unsigned sp0 - 432)) (pn_w inp rdraw) ltac:(ok_win HJ).   (* [comment removed for export] *)
       stw F_1ba4c D_1ba4c (Z_to_bv 64 (bv_unsigned sp0 - 440)) s1v ltac:(ok_win HJ).   (* [comment removed for export] *)
       stw F_1ba50 D_1ba50 (Z_to_bv 64 (bv_unsigned sp0 - 448)) (Z_to_bv 64 0x56ee8) ltac:(ok_win HJ).   (* [comment removed for export] *)
       stw F_1ba54 D_1ba54 (Z_to_bv 64 (bv_unsigned sp0 - 456)) (Z_to_bv 64 0) ltac:(ok_win HJ).   (* [comment removed for export] *)

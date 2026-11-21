@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the NULL-hint mmap steps discharge the place_declined_b decline by place_declined_b_null, and the MAP_FIXED step reads nsafe's guarded decline conjunct; the brk step carries both break endpoints page-aligned for the page-granular grant ledger; munmap's step cuts the mappings with maps_subtract, its measure re-proved through maps_subtract_length1, maps_subtract_live and maps_subtract_sizes, with vmwf passed; mprotect's step takes the vDSO-clear premise). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
@@ -253,11 +254,11 @@ Proof.
   assert (Hn : bv_unsigned (Z_to_bv 64 (page_round_up_Z len)) = page_round_up_Z len).
   { apply unsigned_lit. unfold page_round_up_Z, page_size. lia. }
   destruct Hprot as [-> | ->].
-  - apply (proj1 (nstep_mmap_rw_inv 0 len mo rsp mo1 [] Hw)) in Hst as [_ [(e & _ & _ & ->) | (a & _ & _ & ->)]].
+  - apply (proj1 (nstep_mmap_rw_inv 0 len mo rsp mo1 [] Hw ltac:(apply place_declined_b_null; vm_compute; reflexivity))) in Hst as [_ [(e & _ & _ & ->) | (a & _ & _ & ->)]].
     + apply mstep_same; [unfold page_round_up_Z, page_size; lia | reflexivity].
     + rewrite HlenU. rewrite with_mmap_backing_noreserve_false by reflexivity.
       eapply mstep_cons_map; [| reflexivity | reflexivity | reflexivity]. rewrite Hn. unfold page_round_up_Z, page_size; lia.
-  - apply (proj1 (nstep_mmap_none_inv 0 len mo rsp mo1 [] Hw)) in Hst as [_ [(e & _ & _ & ->) | (a & _ & _ & ->)]].
+  - apply (proj1 (nstep_mmap_none_inv 0 len mo rsp mo1 [] Hw ltac:(apply place_declined_b_null; vm_compute; reflexivity))) in Hst as [_ [(e & _ & _ & ->) | (a & _ & _ & ->)]].
     + apply mstep_same; [unfold page_round_up_Z, page_size; lia | reflexivity].
     + rewrite HlenU. rewrite with_mmap_backing_noreserve_false by reflexivity.
       eapply mstep_cons_map; [| reflexivity | reflexivity | reflexivity]. rewrite Hn. unfold page_round_up_Z, page_size; lia.
@@ -269,7 +270,8 @@ Lemma mstep_mmap_fixed : forall addr len mo rsp mo1,
 Proof.
   intros addr len mo rsp mo1 Hs Hwf Hlen Hst.
   assert (Hpos : 0 <= page_round_up_Z len) by (unfold page_round_up_Z, page_size; lia).
-  cbn [nsafe] in Hs. cbv zeta in Hs. destruct Hs as (Hw & _ & _ & [Hrw | [Hno | Hfx]]).
+  (* LPS 727298f3: nsafe's mmap arm ends with the guarded place_declined_b conjunct (Lib/NodesM.v) *)
+  cbn [nsafe] in Hs. cbv zeta in Hs. destruct Hs as (Hw & _ & _ & [Hrw | [Hno | Hfx]] & _).
   - exfalso. unfold mmap_rw_shape in Hrw. vm_compute in Hrw. discriminate Hrw.
   - exfalso. destruct Hno as [_ Hno]. vm_compute in Hno. discriminate Hno.
   - destruct Hfx as (M1 & M2 & M3 & M4 & M5 & M6 & M7 & M8).
@@ -308,45 +310,65 @@ Proof.
   pose proof (kl_start _ _ _ HK) as (S1 & S2 & S3 & S4). pose proof (kl_phase _ _ _ HK) as PH.
   pose proof alloc_ceiling_lt as AC.
   set (h := m_vmmaps mo) in *. set (b := vm_brk h) in *.
-  assert (CASES : r = b \/ (r = Z_to_bv 64 req /\ bv_unsigned b < req < 2^64 /\ req - bv_unsigned b <= 3 * PGSZ)).
+  (* [brk_model_next_grown] needs both break endpoints page-aligned (the grant
+     ledger is page-granular), so carry the two alignment facts out of the case
+     analysis below, where the phase split is already performed. *)
+  assert (CASES : r = b \/ (r = Z_to_bv 64 req /\ bv_unsigned b < req < 2^64 /\ req - bv_unsigned b <= 3 * PGSZ
+                            /\ bv_unsigned b mod 4096 = 0 /\ req mod 4096 = 0)).
   { cbn [event_pre] in Hpre. destruct Hpre as [[-> Hph] | [(cur & Hph & ->) | (b0 & l & Hph & Hreg & ->)]].
     - left. unfold brk_r_ok in Hr. change (w_is0 (Z_to_bv 64 0)) with true in Hr. cbn [orb] in Hr. apply bv_eqb_eq in Hr. exact Hr.
     - rewrite Hph in PH. destruct PH as (Ecur & Eb & _ & _).
       assert (Hreq : bv_unsigned b < round_up_pg cur + 2 * PGSZ < 2^64).
       { rewrite round_up_pg_aligned by (rewrite Ecur; unfold PGSZ in S2; exact S2). unfold PGSZ in *. lia. }
       destruct (brk_r_ok_grow mo _ r ltac:(fold h b; lia) Hreq Hr) as [-> | [-> _]]; [left; reflexivity | right].
-      split; [reflexivity|]. split; [exact Hreq|]. rewrite round_up_pg_aligned by (rewrite Ecur; unfold PGSZ in S2; exact S2). unfold PGSZ in *. lia.
+      split; [reflexivity|]. split; [exact Hreq|].
+      rewrite round_up_pg_aligned by (rewrite Ecur; unfold PGSZ in S2; exact S2).
+      split; [unfold PGSZ in *; lia|]. split.
+      + unfold b in *. rewrite Eb, Ecur. unfold PGSZ in S2; exact S2.
+      + rewrite Ecur. unfold PGSZ in *. rewrite Z.add_mod, S2 by lia. reflexivity.
     - rewrite Hph in PH. destruct PH as (b1 & l1 & Hreg1 & Eb & _). rewrite Hreg in Hreg1. inversion Hreg1; subst b1 l1.
       pose proof (kl_brkreg _ _ _ HK b0 l Hreg) as (R1 & R2 & R3 & R4 & R5 & R6). fold h in Eb.
       assert (Hreq : bv_unsigned b < b0 + l + PGSZ < 2^64) by (unfold PGSZ in *; lia).
       destruct (brk_r_ok_grow mo _ r ltac:(fold h b; lia) Hreq Hr) as [-> | [-> _]]; [left; reflexivity | right].
-      split; [reflexivity|]. split; [exact Hreq|]. unfold PGSZ in *. lia. }
-  destruct CASES as [-> | (-> & Hreq & Hle)].
+      split; [reflexivity|]. split; [exact Hreq|]. split; [unfold PGSZ in *; lia|]. split.
+      + unfold b in *. rewrite Eb. unfold PGSZ in *. rewrite Z.add_mod, R2, R4 by lia. reflexivity.
+      + unfold PGSZ in *. rewrite Z.add_mod, (Z.add_mod b0 l), R2, R4 by lia. reflexivity. }
+  destruct CASES as [-> | (-> & Hreq & Hle & Hba & Hra)].
   - destruct (brk_model_next_same h (Z_to_bv 64 req)) as (E1 & E2 & _ & _ & _).
     apply mstep_same_maps; [unfold PGSZ; lia | | |]; unfold h in *; rewrite m_vmmaps_with_brk_next; [exact E1 | exact E2 | reflexivity].
-  - destruct (brk_model_next_grown h req ltac:(unfold b in *; lia) Hreq) as (E1 & E2 & _).
+  - destruct (brk_model_next_grown h req ltac:(unfold b in *; lia) Hreq Hba Hra) as (E1 & E2 & _).
     eapply mstep_cons_map; unfold h in *; rewrite ?m_vmmaps_with_brk_next; [| exact E1 | exact E2 | reflexivity].
     rewrite unsigned_lit by (unfold b, PGSZ in *; lia). unfold b in *. lia.
 Qed.
 
 Lemma mstep_munmap : forall addr len mo rsp mo1,
-  nsafe (NMunmap addr len) mo -> nstep (NMunmap addr len) mo rsp mo1 [] -> mstep 0 mo mo1.
+  nsafe (NMunmap addr len) mo -> vmwf (vm_maps (m_vmmaps mo)) ->
+  nstep (NMunmap addr len) mo rsp mo1 [] -> mstep 0 mo mo1.
 Proof.
-  intros addr len mo rsp mo1 Hs Hst. cbn [nsafe] in Hs. cbv zeta in Hs. destruct Hs as (C1 & C2 & C3 & C4).
+  intros addr len mo rsp mo1 Hs Hwf Hst. cbn [nsafe] in Hs. cbv zeta in Hs. destruct Hs as (C1 & C2 & C3 & C4).
   pose proof (nstep_munmap_inv addr len mo rsp mo1 []) as INV. cbv zeta in INV. specialize (INV C1 C2 C3 C4).
   apply (proj1 INV) in Hst as (_ & -> & ->). clear INV.
-  constructor; unfold vmaps, vm_live_bytes; rewrite m_vmmaps_with_mmap_destroyed; cbn [vm_reserved vm_maps vm_limit]; unfold map_remove.
-  - rewrite !length_app. pose proof (length_filter_le (fun p : word * word => negb (bv_eqb (fst p) (Z_to_bv 64 addr))) (vm_maps (m_vmmaps mo))). lia.
-  - pose proof (live_bytes_filter (fun p : word * word => negb (bv_eqb (fst p) (Z_to_bv 64 addr))) (vm_maps (m_vmmaps mo))). lia.
-  - intros B HB Hsz. unfold sizes_le in *. apply Forall_app in Hsz as [H1 H2]. apply Forall_app. split; [exact H1 | apply sizes_le_filter; exact H2].
+  destruct (len_place_ok len C2) as [Hn0 _].
+  pose proof (word_unsigned_range (Z_to_bv 64 addr)) as HA.
+  assert (HnU : bv_unsigned (Z_to_bv 64 (page_round_up_Z (bv_unsigned (Z_to_bv 64 len))))
+                = page_round_up_Z (bv_unsigned (Z_to_bv 64 len))).
+  { apply unsigned_lit. unfold TASK_SIZE in C3. lia. }
+  assert (Hlh : bv_unsigned (Z_to_bv 64 addr)
+                < bv_unsigned (Z_to_bv 64 addr) + bv_unsigned (Z_to_bv 64 (page_round_up_Z (bv_unsigned (Z_to_bv 64 len)))))
+    by (rewrite HnU; lia).
+  constructor; unfold vmaps, vm_live_bytes; rewrite m_vmmaps_with_mmap_destroyed; cbn [vm_reserved vm_maps vm_limit].
+  - rewrite !length_app. pose proof (maps_subtract_length1 (vm_maps (m_vmmaps mo)) _ _ (proj2 Hwf) Hlh). lia.
+  - pose proof (maps_subtract_live (vm_maps (m_vmmaps mo)) _ _ Hlh). lia.
+  - intros B HB Hsz. unfold sizes_le in *. apply Forall_app in Hsz as [H1 H2]. apply Forall_app.
+    split; [exact H1 | apply (maps_subtract_sizes B _ _ _ Hlh H2)].
   - reflexivity.
 Qed.
 
 Lemma mstep_mprotect : forall addr len prot mo rsp mo1,
   nsafe (NMprotect addr len prot) mo -> nstep (NMprotect addr len prot) mo rsp mo1 [] -> mstep 0 mo mo1.
 Proof.
-  intros addr len prot mo rsp mo1 Hs Hst. cbn [nsafe] in Hs. cbv zeta in Hs. destruct Hs as (C1 & C2 & C3 & C4 & C5 & C6 & C7).
-  pose proof (nstep_mprotect_inv addr len prot mo rsp mo1 []) as INV. cbv zeta in INV. specialize (INV C1 C2 C3 C4 C5 C6 C7).
+  intros addr len prot mo rsp mo1 Hs Hst. cbn [nsafe] in Hs. cbv zeta in Hs. destruct Hs as (C1 & C2 & C3 & C4 & C5 & C8 & C6 & C7).
+  pose proof (nstep_mprotect_inv addr len prot mo rsp mo1 []) as INV. cbv zeta in INV. specialize (INV C1 C2 C3 C4 C5 C8 C6 C7).
   apply (proj1 INV) in Hst as [_ [(e & _ & _ & ->) | (_ & _ & ->)]]; clear INV.
   - apply mstep_same; [lia | reflexivity].
   - apply mstep_same_maps; [lia | | |]; rewrite m_vmmaps_mprotect_model_next; reflexivity.
@@ -383,7 +405,7 @@ Proof.
   - cbn [event_pre] in Hpre. destruct Hpre as [(Hq & -> & -> & Hprot & Hlen) | (cur & Hph & -> & -> & -> & ->)].
     + eapply mstep_mono; [apply Z.le_max_r|]. eapply mstep_mmap_anon; [| | exact Hst]; unfold LEN_MAX in Hlen; [lia | destruct Hprot as [-> | ->]; auto].
     + eapply mstep_mono; [apply Z.le_max_r|]. eapply mstep_mmap_fixed; [exact Hsafe | exact (kl_wf _ _ _ HK) | unfold PGSZ; lia | exact Hst].
-  - eapply mstep_munmap; eassumption.
+  - eapply mstep_munmap; [exact Hsafe | exact (kl_wf _ _ _ HK) | exact Hst].
   - eapply mstep_mprotect; eassumption.
 Qed.
 

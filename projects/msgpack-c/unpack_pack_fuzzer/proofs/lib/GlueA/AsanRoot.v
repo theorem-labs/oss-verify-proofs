@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the root heap op's stack window at the launch's floor below sp). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import PrimInt63 Uint63.
 From stdpp Require Import gmap.
@@ -30,9 +31,11 @@ Variable UNIV : list (list Z).
 Variable AI_fake : AI_fake_law AI.
 Variable Cw : client_world.
 
+(* the heap op's arguments at the main entry; its stack window starts at the launch's floor, sp0 - 6144513
+   (the model's stack bottom, [Glue.InitLib.WLO_floor]; FX/Regen.v's AFLOOR in the templates) *)
 Definition ROOT_HEAP_ARGS (CRED : int) : list sv :=
   [VL wzero; VL (wlit CRED); VL (wlit 3%uint63);
-   VP 1%uint63 (Z2w (-8384512)); VL (wlit 140737488355328%uint63); VL wzero;
+   VP 1%uint63 (Z2w (-6144513)); VL (wlit 140737488355328%uint63); VL wzero;
    VL (wlit 140737488356352%uint63); VL wzero; VL wzero;
    VL (wlit 211106232532992%uint63); VL wzero; VL wzero].
 
@@ -49,15 +52,15 @@ Hypothesis CW0 : forall ws, Forall (fun w => w_kind w = K_STACK) ws -> cw_holds 
 
 Hypothesis APR : aprist sta.
 
-Definition ROOT_WS : list window := [Win (ATOP + 4096) (2 ^ 47) K_STACK; Win (ZC_BASE + 1024) 0 K_STACK; prist_win].
+Definition ROOT_WS : list window := [Win (ATOP + 2244095) (2 ^ 47) K_STACK; Win (ZC_BASE + 1024) 0 K_STACK; prist_win].
 Definition ROOT_W : wit := mkWit L RNG sta [] [] [] m 1024.
 
 Lemma root_decode : decode (map (den E) (ROOT_HEAP_ARGS CRED)) = Some (0, den E (VL (wlit CRED)), ROOT_WS, []).
 Proof.
   pose proof atop_range as ATR.
-  assert (D1 : bv_unsigned (den E (VP 1%uint63 (Z2w (-8384512)))) = ATOP + 4096).
+  assert (D1 : bv_unsigned (den E (VP 1%uint63 (Z2w (-6144513)))) = ATOP + 2244095).
   { rewrite ValP.den_VP. rewrite USP.
-    assert (S : w2Zs (Z2w (-8384512)) = -8384512) by (vm_compute; reflexivity). rewrite S.
+    assert (S : w2Zs (Z2w (-6144513)) = -6144513) by (vm_compute; reflexivity). rewrite S.
     rewrite Z.mod_small by (unfold two64; lia). lia. }
   unfold ROOT_HEAP_ARGS, decode. cbn [map].
   assert (N2 : Z.to_nat (bv_unsigned (den E (VL (wlit 3%uint63)))) = 3%nat) by (vm_compute; reflexivity).
@@ -139,9 +142,11 @@ Variable UNIV : list (list Z).
 Variable AI_fake : AI_fake_law AI.
 Variable Cw : client_world.
 
+(* the heap op's arguments at the main entry; its stack window starts at the launch's floor, sp0 - 6144513
+   (the model's stack bottom, [Glue.InitLib.WLO_floor]; FX/Regen.v's AFLOOR in the templates) *)
 Definition ROOT_HEAP_ARGS (CRED : int) : list sv :=
   [VL wzero; VL (wlit CRED); VL (wlit 3%uint63);
-   VP 1%uint63 (Z2w (-8384512)); VL (wlit 140737488355328%uint63); VL wzero;
+   VP 1%uint63 (Z2w (-6144513)); VL (wlit 140737488355328%uint63); VL wzero;
    VL (wlit 140737488356352%uint63); VL wzero; VL wzero;
    VL (wlit 211106232532992%uint63); VL wzero; VL wzero].
 
@@ -158,15 +163,15 @@ Hypothesis CW0 : forall ws, Forall (fun w => w_kind w = K_STACK) ws -> cw_holds 
 
 Hypothesis APR : aprist sta.
 
-Definition ROOT_WS : list window := [Win (ATOP + 4096) (2 ^ 47) K_STACK; Win (ZC_BASE + 1024) 0 K_STACK; prist_win].
+Definition ROOT_WS : list window := [Win (ATOP + 2244095) (2 ^ 47) K_STACK; Win (ZC_BASE + 1024) 0 K_STACK; prist_win].
 Definition ROOT_W : wit := mkWit L RNG sta [] [] [] m 1024.
 
 Lemma root_decode : decode (map (den E) (ROOT_HEAP_ARGS CRED)) = Some (0, den E (VL (wlit CRED)), ROOT_WS, []).
 Proof.
   pose proof atop_range as ATR.
-  assert (D1 : bv_unsigned (den E (VP 1%uint63 (Z2w (-8384512)))) = ATOP + 4096).
+  assert (D1 : bv_unsigned (den E (VP 1%uint63 (Z2w (-6144513)))) = ATOP + 2244095).
   { rewrite ValP.den_VP. rewrite USP.
-    assert (S : w2Zs (Z2w (-8384512)) = -8384512) by (vm_compute; reflexivity). rewrite S.
+    assert (S : w2Zs (Z2w (-6144513)) = -6144513) by (vm_compute; reflexivity). rewrite S.
     rewrite Z.mod_small by (unfold two64; lia). lia. }
   unfold ROOT_HEAP_ARGS, decode. cbn [map].
   assert (N2 : Z.to_nat (bv_unsigned (den E (VL (wlit 3%uint63)))) = 3%nat) by (vm_compute; reflexivity).

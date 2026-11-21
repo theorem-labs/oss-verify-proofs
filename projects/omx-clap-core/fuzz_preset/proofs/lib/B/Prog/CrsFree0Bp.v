@@ -2,12 +2,13 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths and module names changed; 755 of its 825 lines of code are new or changed and 444 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrsKitBp.v; 14 of its 45 lines of code are new or changed and 794 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image B' (the #102 pins, asan-ubsan): ONE SHARED INTERIM PREMISE of the walk of
    check_reject_clean_starved, fuzz_free (NULL). KIT-OWNED INTERIM: it is tfuzz_free_specX (lib/A/PRH_FnAlloc.v blob
    740f4d11d144, from the kit's #102 tip of record) restricted to p = 0, and is
    replaced by that text once the kit owner guards the text's entry position with p <> 0.
-   DONOR (rule 24, reuse): the A' interim lib/A/Prog/CrsFree0Ap.v blob 79d50622a638 (commit
-   3adfdcc651aa), restated at the B' instance: same shape, same premise order and spelling, the kit's `_B` names.
+   DONOR (rule 24, reuse): the A' interim lib/A/Prog/CrsFree0Ap.v blob 79d50622a638,
+   restated at the B' instance: same shape, same premise order and spelling, the kit's `_B` names.
    WHY. The kit's tpj_write_specX at that tip (PRH_FnWriter.v blob 2b497bc72172) gives the model-run position after a pj_write only
    under prh_granted, so after a REFUSED grow (ran' = 1, q = 0) no position is known; tfuzz_free_specX asks
    iface_room_pos at entry on EVERY arm, p = 0 included, so the walk cannot meet it at the fuzz_free (q) that follows
@@ -29,7 +30,7 @@
    0x82160`, the internal file index-crcs-Aprime.out, and an internal record of that lookup; CONFIRM by checker LookupCheckCrcsAp. At that
    search origin/ossv/recipes had no lib/A or lib/B, its released rows were lib/Prog (plain) and lib/U/Prog (ubsan) only, and no released
    asan Proof.v existed for check_reject_clean_starved). This file proves nothing: it STATES.
-   Inputs: pin B' asan-ubsan sha256 d663f82d7f488d30 (harness.yaml of release/fuzz-preset-ran-out-pins 8f3e7e1a07f1),
+   Inputs: pin B' asan-ubsan sha256 d663f82d7f488d30 (harness.yaml),
    unstripped twin ELF sha256 c90d4fa54d43160baf62e5aa387211a798dddbad13d2619d85acbf37aee0c175; listing
    lib/B/Listing_prog.v blob c97cc46b3e13 + lib/B/PAImg_prog.v blob 15fab93fe702; image record lib/B/PRH_ImgB.v blob
    3216eca68342; the kit lib/B/Prog/CrsKitBp.v. The three addresses above are the kit's, written only in this

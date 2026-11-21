@@ -5,12 +5,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_box_model_block.v; 1090 of its 1202 lines of code are new or changed and 1063 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P5.v, with its module paths, module names and addresses changed; 1348 of its 1450 lines of code are new or changed and 1100 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/A1.v; 137 of its 344 lines of code are new or changed and 1243 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/A1.v blob 458ad3d18e8a at fdd2ed9f9d7.
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   FACTS, PAU pau-libreac-v190. Source: Seg/A1.v blob 458ad3d18e8a.
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: each <r>_of_F re-derives A1.<r> at ExecF.RNG_all; <r>_of_F_verbatim checks by constr_eq that its type is
    the type of A1.<r>. Mechanical re-run, route (a) (lead 22:15Z); input to the ported walk only. *)
 
@@ -23,7 +24,7 @@
    sl_run_lib:861. Two of the four get no _F:
    - a1_req_evt (:785) is the class-6 frame request at 0x80f50 on the callee contract Sm6.stack_malloc_6
      (A1.v:832, lib/A/Tk/AW/Sm6.v). __asan_stack_malloc_6 has no _F contract on the base or on a Theorem Labs lane's
-     working branch 28b0af0a5b2, so that run stays plain: blocked, __asan_stack_malloc_6 has no _F.
+     working branch, so that run stays plain: blocked, __asan_stack_malloc_6 has no _F.
    - sl_run_lib (:861) is not a machine run: it concludes SR, and its Exec.evt appears only as a premise. Its _F
      counterpart is the kit bridge (ProgBridge.fevt_of_evtF + YA0nR.SRr_fevt), not a re-stepped run. *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.
@@ -50,7 +51,7 @@ Open Scope Z_scope.
 
 Module AC := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Contract.
 (* BRIDGE (a Theorem Labs lane 08:56Z rule, statement case): the three _F statements below name the UL engine's Frame.mkR,
-   in full path, not lib.Lib's: Seg/A1Fs.v:380-390 pins each of their types by constr_eq to a statement naming it. *)
+   in full path, not lib.Lib's: Seg/A1Fs.v:381-391 pins each of their types by constr_eq to a statement naming it. *)
 
 Section S.
 Context {fx : FPState}.

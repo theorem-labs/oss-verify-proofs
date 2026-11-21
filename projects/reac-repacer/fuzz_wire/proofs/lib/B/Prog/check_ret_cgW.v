@@ -10,14 +10,15 @@
    WireCg.v wire_leaf_at). The w_width loop and the frame law are this unit's plain walk lib/Prog/check_width.v
    (width_loop, w_width_frame_law, fc_model_neg), restated over image A's rp_frame_channels_model. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_wire/lib/A/Prog/check_width_cgW.v, with its module paths and module names changed; 441 of its 577 lines of code are new or changed and 585 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_ret_cgW: wire_check_ret_cg (wire_sigma WS_check_ret) at image B (fuzz_wire.asan-ubsan, check_counter
    at 0x804c0; objdump of record sha256 440b9550f4f5) from the callee contract the statement names, proving the frozen
    statement lib/B/Prog/check_ret_cg.v wire_check_counter_holds_stmt. In the walk style of reac-repacer/fuzz_uci's
-   lib/B/Prog/check_value_cgW.v (recipes commit 0295462466b2; its helpers copied under the prefix crw_): the body runs
+   lib/B/Prog/check_value_cgW.v (recipes; its helpers copied under the prefix crw_): the body runs
    as footprint runs (lib/B/Prog/WireCrBSegs.v) carried into SRr by lib/B/Prog/LeafCgFacts.v bridge_evtF_stmt_YA0n,
    an inner journal over the call's stack window, and the one call, of the leaf rp_ret_accept, cut by its leaf contract
    through the kit's lib/B/Prog/WireCcLeafb.v wcc_leafb_journal, in the form of libreac/fuzz_decode's released
-   lib/B/Prog/LLVMFuzzerTestOneInput_leafb.v dec_leafb_is_reac (recipes commit 48907dc7e8ca).
+   lib/B/Prog/LLVMFuzzerTestOneInput_leafb.v dec_leafb_is_reac (recipes).
 
    The walk:
      1. an INNER journal at the entry state (YCbq.v ajournal_sub_init): stack window [spZ regs - CCN_STK, spZ regs),

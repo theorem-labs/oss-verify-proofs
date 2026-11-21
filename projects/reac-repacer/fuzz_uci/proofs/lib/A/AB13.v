@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AB13.v at origin/ossv/recipes c8557374ad2e, with its module paths changed to reac-repacer/fuzz_uci's split library and every image numeral recomputed from fuzz_uci.asan by the rule the donor's own numeral follows (the rule reproduces cgif's released text on cgif's image: the control). The image numerals are fuzz_uci.asan's four PT_LOAD pages (their bases, sizes and byte counts), its writable window 0x96000..0x5f4000 and TFIB_BSS = (0x9b910, 0x5f4000), the start of the image's zero suffix (cgif's 0xa2930 by the same rule) up to img_hi. *)
+(* Modified by Theorem Labs: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AB13.v at theorem-labs/oss-verify-proofs@6b32741d849a, with its module paths changed to reac-repacer/fuzz_uci's split library and every image numeral recomputed from fuzz_uci.asan by the rule the donor's own numeral follows (the rule reproduces cgif's released text on cgif's image: the control). The image numerals are fuzz_uci.asan's four PT_LOAD pages (their bases, sizes and byte counts), its writable window 0x96000..0x5f4000 and TFIB_BSS = (0x9b910, 0x5f4000), the start of the image's zero suffix (cgif's 0xa2930 by the same rule) up to img_hi. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_uci.asan (reac-repacer/fuzz_uci asan) sha256 6ea017c24525e6946fa06dc7e3075459ad2c5146d59af49873bf3c51a46e885d; unstripped twin sha256 56822e263d767986a76ec862cbfbee7571b0e64df2413ad18d7201205a7563fb *)
 From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.

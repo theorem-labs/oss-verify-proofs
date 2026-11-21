@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (returning from a system call clears the LR/SC reservation in advance_apply_MSsvc and advance_set_gpr0_MSsvc). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -276,15 +277,16 @@ Lemma unrestrict_MSsvc : forall Hh full R F pc x8 fc rv m ro,
 Proof. reflexivity. Qed.
 
 (* [comment removed for export] *)
+(* Returning from the kernel clears LR/SC reservation, even for a GPR-only effect. *)
 Lemma advance_apply_MSsvc : forall R F pc x8 fc rv m ro r ws zs us cis,
   advance_past_svc (apply_effect (MSsvc R F pc x8 fc rv m ro) (mkEffectU r ws zs us [] cis))
-  = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4) fc rv
+  = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4) fc None
        (apply_writes (apply_zeros (apply_unmaps m us) zs) ws) ro.
 Proof. reflexivity. Qed.
 
 Lemma advance_set_gpr0_MSsvc : forall R F pc x8 fc rv m ro r,
   advance_past_svc (set_gpr0 (MSsvc R F pc x8 fc rv m ro) r)
-  = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4) fc rv m ro.
+  = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4) fc None m ro.
 Proof. reflexivity. Qed.
 
 Lemma ms_gpr_MSsvc : forall R F pc x8 fc rv m ro i,

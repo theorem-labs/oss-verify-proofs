@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 405 of its 499 lines of code are new or changed and 917 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* FRA / ENT transport for image-B segment P12 of fuzz_ctrl LLVMFuzzerTestOneInput (asan-ubsan, libreac v1.9.0
    image B; lib/B/Prog/Seg/P12.v): the frame-loop prologue 0x81e50-0x81ec0 writes seven spills of the save area
    [A + 88, A + 264) and eight frame shadow bytes S(fr) + 370 .. 385, so its write set has two kinds of address.
@@ -10,8 +11,8 @@
    transport, tp_fra_ent, takes the frame body above the header, the frame's FRAME_SHADOW shadow bytes, a callee
    window below sp and the save area [A + 72, A + 336) (above the fr reload / selector cells [A + 40, A + 56)).
    tp_fra_run / tp_fra_ent and the memory helpers below are a copy of prover a Theorem Labs lane's lib/B/Prog/Seg/Tac_f23.v
-   tf_fra_run / tf_fra_ent (a working branch 0bebaf13c4e; tf_fra_run is lib/B/Prog/Seg/F12.v's fra_run), copied
-   here because Tac_f23.v imports the segment file F27.v; v1.9.0 move of a working branch 509cbbd9bd1. *)
+   tf_fra_run / tf_fra_ent (a working branch; tf_fra_run is lib/B/Prog/Seg/F12.v's fra_run), copied
+   here because Tac_f23.v imports the segment file F27.v; v1.9.0 move of a working branch. *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

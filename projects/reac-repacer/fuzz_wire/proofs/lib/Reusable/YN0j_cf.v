@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN0j.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the CONFIG_RSEQ-sized auxiliary vector). *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -74,10 +75,12 @@ mkChunk (CTX + 64) (CVal 8 (SOff 41 0)); mkChunk (CTX + 72) (CVal 8 (SOff 42 0))
 Definition R_ctxC : region :=
 mkRegion None (CTX + 920) (CTX + 928) (CTX + 920) (CTX + 928) [mkChunk (CTX + 920) (CVal 8 (SOff 43 0))].
 Definition R_auxp : region := mkRegion None (LIBC + 8) (LIBC + 16) 0 0 [mkChunk (LIBC + 8) (CVal 8 (SOff 44 0))].
-Definition R_auxv : region := mkRegion (Some 44%nat) 0 160 0 0
-[mkChunk 0 (CVal 8 (SLit 3)); mkChunk 16 (CVal 8 (SLit 4)); mkChunk 32 (CVal 8 (SLit 5)); mkChunk 48 (CVal 8 (SLit 16));
-mkChunk 64 (CVal 8 (SLit 6)); mkChunk 80 (CVal 8 (SLit 11)); mkChunk 96 (CVal 8 (SLit 12)); mkChunk 112 (CVal 8 (SLit 23));
-mkChunk 128 (CVal 8 (SLit 25)); mkChunk 136 (CVal 8 (SOff 45 0)); mkChunk 144 (CVal 8 (SLit 0))].
+Definition auxv_chunks (rs : bool) : list chunk :=
+  map (fun k => mkChunk (16 * Z.of_nat k) (CVal 8 (SLit (nth k (auxv_types rs) 0))))
+    (seq 0 (length (auxv_types rs))) ++
+  [mkChunk (16 * Z.of_nat AUXV_RAND_K + 8) (CVal 8 (SOff 45 0))].
+Definition R_auxv : region := mkRegion (Some 44%nat) 0 464 0 0 (auxv_chunks true).
+Definition R_auxv_f : region := mkRegion (Some 44%nat) 0 432 0 0 (auxv_chunks false).
 Definition R_fh : region := mkRegion (Some 33%nat) 0 16 0 16 [mkChunk 0 (CVal 8 (SOff 35 0)); mkChunk 8 (CVal 8 (SOff 34 0))].
 Definition R_nx : region := mkRegion (Some 34%nat) 0 8 0 8 [].
 Definition R_pr : region := mkRegion (Some 35%nat) 8 16 8 16 [].
@@ -87,16 +90,21 @@ Definition zregion (n : nat) (off len : Z) : region :=
 mkRegion (Some n) off (off + len) off (off + len) [mkChunk off (CZero len)].
 Definition mem_am1 : smem := [R_stack; R_got; R_guard; R_pgsz; R_ctxA true; R_ctxB; R_ctxC; R_errno] ++ vml_mem.
 Definition mem_am0 : smem := [R_stack; R_got; R_guard; R_pgsz; R_ctxA false; R_ctxB; R_ctxC; R_errno; R_auxp; R_auxv] ++ vml_mem.
+Definition mem_am0_f : smem := [R_stack; R_got; R_guard; R_pgsz; R_ctxA false; R_ctxB; R_ctxC; R_errno; R_auxp; R_auxv_f] ++ vml_mem.
 Definition F_sp : afact := mkAF (CEIL_MIN + AMS) (2 ^ 63 - 1) 4.
 Definition F_sh : afact := mkAF 0 40 0.
-Definition F_av : afact := mkAF 4096 (2 ^ 63 - 160) 0.
+Definition F_av : afact := mkAF 4096 (2 ^ 63 - 464) 0.
+Definition F_av_f : afact := mkAF 4096 (2 ^ 63 - 432) 0.
 Definition F_ar : afact := mkAF 4096 (2 ^ 63 - 16) 0.
 Definition F_pg : afact := mkAF 4096 (CEIL_MAX - 4096) 12.
 Definition facts_am1 : facts := mkFacts [ (2%nat, F_sp); (39%nat, F_sh) ] [] [].
 Definition facts_am0 : facts := mkFacts [ (2%nat, F_sp); (39%nat, F_sh); (44%nat, F_av); (45%nat, F_ar) ] [] [].
+Definition facts_am0_f : facts := mkFacts [ (2%nat, F_sp); (39%nat, F_sh); (44%nat, F_av_f); (45%nat, F_ar) ] [] [].
 Definition ss_am1 : sstate := mkSS src0_A_alloc_meta regs_am mem_am1 None facts_am1.
 Definition ss_am0 : sstate := mkSS src0_A_alloc_meta regs_am mem_am0 None facts_am0.
 Definition ss_i1 : sstate := Eval vm_compute in runto_ src0_A_memcpy ss_am0.
+Definition ss_am0_f : sstate := mkSS src0_A_alloc_meta regs_am mem_am0_f None facts_am0_f.
+Definition ss_i1_f : sstate := Eval vm_compute in runto_ src0_A_memcpy ss_am0_f.
 Definition MC_JUNK : list reg := [5; 6; 7; 11; 12; 13; 14; 15; 16; 17; 28]%bv.
 Definition mem_i2 : smem :=
 Eval vm_compute in match store_region (ss_mem ss_i1) (Some 2%nat) (-64) 8 (CVal 8 (SOff 0 0)) with Some rs => rs | None => [] end.
@@ -104,6 +112,11 @@ Definition ss_i1' : sstate := setpc PC_MCRET (setmem mem_i2 ss_i1).
 Definition ss_i2 : sstate := Eval vm_compute in junk_regs MC_JUNK 46 ss_i1'.
 Definition ss_a2x : sstate := Eval vm_compute in runto_ PC_A2 ss_am1.
 Definition ss_a2y : sstate := Eval vm_compute in runto_ PC_A2 ss_i2.
+Definition mem_i2_f : smem :=
+  Eval vm_compute in match store_region (ss_mem ss_i1_f) (Some 2%nat) (-64) 8 (CVal 8 (SOff 0 0)) with Some rs => rs | None => [] end.
+Definition ss_i1'_f : sstate := setpc PC_MCRET (setmem mem_i2_f ss_i1_f).
+Definition ss_i2_f : sstate := Eval vm_compute in junk_regs MC_JUNK 46 ss_i1'_f.
+Definition ss_a2y_f : sstate := Eval vm_compute in runto_ PC_A2 ss_i2_f.
 Definition A2_JUNK : list reg := [1; 5; 6; 7; 9; 10; 11; 12; 13; 14; 15; 16; 17; 20; 28]%bv.
 Definition ss_A2 : sstate := Eval vm_compute in junk_regs A2_JUNK 57 ss_a2x.
 Definition C_fh0 : acond := mkAC BC_EQ (SOff 33 0) (SLit 0).
@@ -195,9 +208,15 @@ Definition ss_o2 : sstate := addR R_tl (add_cond ss_o1 C_tl1).
 Definition ss_oE1 : sstate := Eval vm_compute in run_ ss_o2.
 Lemma run_am0 : sym_run_toN src0segs src0tbl FUEL src0_A_memcpy ss_am0 = (ss_i1, RS_running).
 Proof. vm_compute. reflexivity. Qed.
+Lemma run_am0_f : sym_run_toN src0segs src0tbl FUEL src0_A_memcpy ss_am0_f = (ss_i1_f, RS_running).
+Proof. vm_compute. reflexivity. Qed.
 Lemma store_i1 : store_region (ss_mem ss_i1) (Some 2%nat) (-64) 8 (CVal 8 (SOff 0 0)) = Some mem_i2.
 Proof. vm_compute. reflexivity. Qed.
+Lemma store_i1_f : store_region (ss_mem ss_i1_f) (Some 2%nat) (-64) 8 (CVal 8 (SOff 0 0)) = Some mem_i2_f.
+Proof. vm_compute. reflexivity. Qed.
 Lemma run_i2 : sym_run_toN src0segs src0tbl FUEL PC_A2 ss_i2 = (ss_a2y, RS_running).
+Proof. vm_compute. reflexivity. Qed.
+Lemma run_i2_f : sym_run_toN src0segs src0tbl FUEL PC_A2 ss_i2_f = (ss_a2y_f, RS_running).
 Proof. vm_compute. reflexivity. Qed.
 Lemma run_am1 : sym_run_toN src0segs src0tbl FUEL PC_A2 ss_am1 = (ss_a2x, RS_running).
 Proof. vm_compute. reflexivity. Qed.
@@ -274,6 +293,7 @@ Proof. vm_compute. reflexivity. Qed.
 Lemma run_o2 : sym_runN src0segs src0tbl FUEL ss_o2 = (ss_oE1, RS_stopped (SR_jalr (SOff 1 0))).
 Proof. vm_compute. reflexivity. Qed.
 Lemma merge_a2x : mergeb ss_A2 (junk_regs A2_JUNK 57 ss_a2x) = true. Proof. vm_compute. reflexivity. Qed.
+Lemma merge_a2y_f : mergeb ss_A2 (junk_regs A2_JUNK 57 ss_a2y_f) = true. Proof. vm_compute. reflexivity. Qed.
 Lemma merge_a2y : mergeb ss_A2 (junk_regs A2_JUNK 57 ss_a2y) = true. Proof. vm_compute. reflexivity. Qed.
 Definition absO1 (ss : sstate) : sstate := junk_regs [9%bv] 95 ss.
 Definition absO2 (ss : sstate) : sstate := junk_regs O_JUNK 96 (absO1 ss).
@@ -291,6 +311,7 @@ Lemma merge_vBD : mergeb ss_V (setfacts facts_V (absV2 ss_vBD)) = true. Proof. v
 Lemma merge_vBN : mergeb ss_V (setfacts facts_V (absV1 ss_vBN)) = true. Proof. vm_compute. reflexivity. Qed.
 Lemma merge_vBC : mergeb ss_V (setfacts facts_V (absV1 ss_vBC)) = true. Proof. vm_compute. reflexivity. Qed.
 Lemma ss_i1_pc : ss_pc ss_i1 = src0_A_memcpy. Proof. reflexivity. Qed.
+Lemma ss_i1_f_pc : ss_pc ss_i1_f = src0_A_memcpy. Proof. reflexivity. Qed.
 Lemma ss_rK_pc : ss_pc ss_rK = src0_A_mprotect + 0x30. Proof. reflexivity. Qed.
 Lemma ss_vK2_pc : ss_pc ss_vK2 = src0_A_mprotect + 0x30. Proof. reflexivity. Qed.
 Lemma ss_vK_pc : ss_pc ss_vK = src0_A_mmap + 0xc4. Proof. reflexivity. Qed.

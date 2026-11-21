@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-29: copied from proofs/omx-clap-core/fuzz_state/lib/A/FSRealloc_inst.v:293-369 (hub ddc081c1a03, blob c7cb9a4b423e) fs_amemcpy_realizes, ported to omx-clap-core/fuzz_preset's asan image A (musl memcpy 0x9b2b4 = cf_pc_memcpy of CfImg_A, A/AE3c.v tfib_memcpy, A/AE2y.v) and restated as YGcfReallocCompose.wrap_realloc_walk_cf's field rw_memcpy; the overlay normal form conjunct (at_mem_cf) added. *)
-(* Modified by Theorem Labs, 2026-10: relocated from proofs/omx-clap-core/fuzz_preset/lib/A/RGcfMemcpy.v (hub dc970db26dad, blob 2a7f349aadf0), stated at fuzz_preset's asan image (ELF sha256 bff8519bbe3e), to its asan-ubsan image (ELF sha256 c90d4fa54d43): module paths to the image-B twins, every image numeral by symbol + offset, image bounds by the image-B start-up facts; comments removed (the source file keeps them). *)
+(* Modified by Theorem Labs, 2026-10-29: copied from proofs/omx-clap-core/fuzz_state/lib/A/FSRealloc_inst.v:293-369 (blob c7cb9a4b423e) fs_amemcpy_realizes, ported to omx-clap-core/fuzz_preset's asan image A (musl memcpy 0x9b2b4 = cf_pc_memcpy of CfImg_A, A/AE3c.v tfib_memcpy, A/AE2y.v) and restated as YGcfReallocCompose.wrap_realloc_walk_cf's field rw_memcpy; the overlay normal form conjunct (at_mem_cf) added. *)
+(* Modified by Theorem Labs, 2026-10: relocated from proofs/omx-clap-core/fuzz_preset/lib/A/RGcfMemcpy.v (blob 2a7f349aadf0), stated at fuzz_preset's asan image (ELF sha256 bff8519bbe3e), to its asan-ubsan image (ELF sha256 c90d4fa54d43): module paths to the image-B twins, every image numeral by symbol + offset, image bounds by the image-B start-up facts; comments removed (the source file keeps them). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

@@ -22,7 +22,7 @@
    G_PEAK, G_COUNT, G_FAIL), then g_ran_out, in the prh_pst order by symbol (lib/A/PRH_Base.v:308-310), then
    the #102 cells. GL_cells_over takes the four words' names as arguments, so GIInit.v can state the same list
    over Ledger.v's names. GL_runs: the cells merged into maximal runs of adjacent cells, in address order
-   (the range-list form of fuzz_free.v's globals_free list at base 9d764437e6be). *)
+   (the range-list form of fuzz_free.v's globals_free list at base). *)
 From Stdlib Require Import ZArith List.
 Import ListNotations.
 Local Open Scope Z_scope.

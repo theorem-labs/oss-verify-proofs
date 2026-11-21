@@ -1,8 +1,8 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanF.v at 225c2086379 for reac-pw/fuzz_rate:
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanF.v for reac-pw/fuzz_rate:
    the Pod model's Role answers become Rate's (Rate.rate_of_pairs, Rate.expect_value, Rate.expect_model,
    Rate.harness_parse), the cut file is lib/A/RtPgSeg.v; the role-specific answer cases and the role cell are
    dropped, the answer's shape is Rate.answer_ok. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgScanF.v at fa28558fbb17 for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgScanF.v for image B
    (fuzz_rate.asan-ubsan): the cut file is lib/AU/RtPgSegB.v (rs_scan_inv -> rsb_scan_inv, rs_E0 -> rsb_E0), the
    lemma prefix rk_ becomes rkb_; every statement and proof is otherwise image A's. *)
 (* reac-pw/fuzz_rate, the image-B walk of LLVMFuzzerTestOneInput: THE MODEL FACTS the checking segment's scan

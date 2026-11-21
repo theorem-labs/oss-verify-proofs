@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved ledger stated as the image's entries followed by the vDSO/vvar pair, vdso_pair_ok, written as plain text). *)
 (* [comment removed for export] *)
 Local Set Warnings "-require-in-module".
 (* [comment removed for export] *)
@@ -70,8 +71,8 @@ Proof. intros z Hz. rewrite Z_to_bv_unsigned. apply bv_wrap_small. exact Hz. Qed
 
 Section Blocks.
 Variables (m : Model) (a1 a2 : word).
-Hypothesis Hres : ltac2:(tb__ "0|1|
-SbS12S11S7Q40A1M0G0A2A1S18S15Vm;A1A1S23S24A1A3").
+(* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v [vdso_pair_ok]). *)
+Hypothesis Hres : exists V, vm_reserved (m_vmmaps m) = segments_reserved segsA ++ V /\ vdso_pair_ok V.
 Hypothesis Hmaps : ltac2:(tb__ "0|3|
 SbS12S11S7Q40M0A1M1G1A2M2A1S17S15Vm;A1A1S10G2SfG1G1Va2;S5G0Z38e000A2A4S10G2SfG1G1Va1;S5G0Z10000A2A4S10G2SfG1G1S5G0Z2008fff7000A2S5G0Zdfff0001000A2A4S10G2SfG1G1S5G0Z8fff7000A2S5G0Z20000000000A2A4S10G2SfG1G1S5G0Z7fff7000A2S5G0Z10000000A2A4S13G2A1A3A3A3A3A3A3").
 Hypothesis Htop : init_sp_ok (m_vmmaps m).

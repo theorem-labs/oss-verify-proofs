@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -102,7 +103,7 @@ Lemma od_cutB_intro : forall (Σ0 ΣB : rts RT) (m0 mB : mem) (usp S1 F lo : Z) 
     (cra cs0 cs1 cs2 cs3 cs4 cs5 cs6 cs7 cs8 cs9 cs10 cs11 : word)
     (j0 j192 j224 j248 j352 j400 h0 h8 jd jp : list byte),
   usp mod 16 = 0 -> usp + 16 <= USTACK_TOP -> S1 mod 32 = 0 -> usp - 528 <= S1 <= usp - 512 ->
-  rt_sp0 RT Σ0 - STACK_WIN <= lo -> lo + FUZZ_STACK <= usp -> F mod 64 = 0 -> 0 < F ->
+  rt_sp0 RT Σ0 - STACK_SPAN <= lo -> lo + FUZZ_STACK <= usp -> F mod 64 = 0 -> 0 < F ->
   rt_frames RT Σ0 = [] -> (forall p n, In (p, n) (rt_live RT Σ0) -> 0 < n) ->
   Z.of_nat (length (rt_live RT Σ0)) + FUZZ_LIVE <= LIVE_MAX -> FUZZ_COST <= rt_credit RT Σ0 ->
   ART RT ΣB mB -> mem_inv asegs mB -> stk asegs mB lo S1 -> rt_frames RT ΣB = [(F, 3%nat)] -> rt_sp0 RT ΣB = rt_sp0 RT Σ0 ->
@@ -192,7 +193,7 @@ Proof using LIB_loc AF FDO MST RTF NEWA AFC.
   set (S := F / 8 + 2147450880) in *.
   assert (GF : F + 512 <= lo /\ S + 64 <= lo /\ (F + 512 <= S \/ S + 64 <= F) /\ SEGTOP_A <= F) by (clear - FR1' SHT LOW FSELF FSEG; ul).
   destruct GF as (FLO & SLO & FSEP & FSG).
-  assert (LOWA : rt_sp0 RT ΣA - STACK_WIN <= lo) by (rewrite SP0; exact LOW).
+  assert (LOWA : rt_sp0 RT ΣA - STACK_SPAN <= lo) by (rewrite SP0; exact LOW).
   assert (EU1 : bv_unsigned (Z_to_bv 64 S1) = S1) by (apply unsigned_lit; ul).
 
   pose proof VR as (VSZ & VSC & VCAP & VA0 & VAT & VS & VB).
@@ -466,7 +467,7 @@ Proof using LIB_loc AF FDO MST RTF NEWA AFC.
   assert (INFN : In (F, 3%nat) (rt_frames RT ΣN)) by (rewrite FRSN; exact INF).
   assert (INC : In (COPY, len0 + 64) (rt_live RT ΣN)) by (rewrite LVN; left; reflexivity).
   assert (INVN : In (A, 16 * size) (rt_live RT ΣN)) by (rewrite LVN; right; exact INV).
-  assert (LOWN : rt_sp0 RT ΣN - STACK_WIN <= lo) by (rewrite SPN; exact LOWA).
+  assert (LOWN : rt_sp0 RT ΣN - STACK_SPAN <= lo) by (rewrite SPN; exact LOWA).
   pose proof (af_frames_range RT AF ΣN m5 F 3%nat ART5 INFN) as (_ & _ & _ & FLVN). change (fs_size 3) with 512 in FLVN.
   pose proof (af_fshadow_apart RT AF ΣN m5 F 3 ART5 INFN) as (FSLN & _). change (fs_size 3) with 512 in FSLN. rewrite SHF in FSLN. unfold shad, SHB in FSLN. fold S in FSLN.
   pose proof (FLVN COPY (len0 + 64) INC) as CF. pose proof (FSLN COPY (len0 + 64) INC) as CS.

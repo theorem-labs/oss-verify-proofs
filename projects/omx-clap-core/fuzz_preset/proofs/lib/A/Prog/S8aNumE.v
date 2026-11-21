@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image A' (#102 asan 1be0f53d, unstripped twin bff8519b), ex_value piece 5
    (ev_number), SUB-PIECE E of S8aNumCut.v: ev_E_stmt, from the cut CC (+0x958, 0x83bfc) to the cut CD (+0x9e4,
    0x83c88). Code walked: +0x958 .. +0x9e0 (0x83bfc-0x83c84, 35 instructions); the four ASan report arms +0xc4c,
@@ -26,12 +27,12 @@
    relation ARx (LAWS : AR_laws_x at the head length cf_head).
    SECTION HYPOTHESES: LAWS, Hent, MIDC (lane M's ev_mid_cur_stmt), and two open facts the cut / interface / generic
    kit does not carry: CUTFIX_blk32 (sent to h-w6u-pre) and CUTFIX_blk_amem8 (the shared eh_blk_amem8: a live block
-   is an amem_range8 region, which the strcmp row of the YGcallMx.v of record asks, YGcallMx.v:77-78, :160) (see
+   is an amem_range8 region, which the strcmp row of the YGcallMx.v of record asks, YGcallMx.v:78-79, :161) (see
    each). CUTFIX_rom (rom bytes not owned / errno / statics, for the old rom_view premise) is deleted: the xrom text
    takes arodata_okP, which evE_rod derives with no image fact. The real stack's shadow is AR_laws_x's
    alx_zshadow_byte (evE_qra); a harness block's shadow and hull alx_hshadow at cf_head, its granule tail alx_blocks +
    alx_blocks_tail (evE_lam, evE_scrtail); the tree root's hull prhex_tree's hull conjunct (evE_vhull); the tree
-   node's fields PRH_Reader.v's pj_nodeR (evE_tree). The bcmp's num-slot shadow byte is ev_CC's ev_fsh (57a154b9a2f).
+   node's fields PRH_Reader.v's pj_nodeR (evE_tree). The bcmp's num-slot shadow byte is ev_CC's ev_fsh.
    Rule 24: done for the piece (proof-index ex_value ex_number strtod checked_memcpy; R24CheckNum2 "NUM:
    CONFIRM"): no released file is Required and no released lemma is cited; the small byte / shadow lemmas below are
    restated here (FuzzStrdupB.v sd_* and S8aClose.v s8c_* shapes, not Required). CJ.Spec SoftFloat / FloatScan (the
@@ -583,9 +584,9 @@ Hypothesis CUTFIX_blk32 : forall ly S Hp W mem md p n,
   ARx ly S Hp W mem md -> In (p, n) (ablocks B ly S) -> n < 2 ^ 32.
 (* CUTFIX_blk_amem8: a live block is a region of the string rows' amem_range8 (the shared text: lib/B/Prog/ExvB_Stmt.v
    eh_blk_amem8, origin/cold/h-rw-pre-7-b-ex_value, MARKED, owner h-mani-a8 / c-omx-alloc). CAUSE: the YGcallMx.v of
-   record (c208cc03b35) states the strcmp row over amem_range8 (YGcallMx.v:77-78; astrcmp_realizes_x
-   `amem_range8 x (kx + 1)` / `amem_range8 y (ky + 1)`, YGcallMx.v:160), for v->str and the scratch at +0x9a8. No ARx
-   law gives it: alx_blocks (YCbqG.v:43) gives only in_app p (req_size n), whose high arm is `kHighMemBeg <= p`
+   record states the strcmp row over amem_range8 (YGcallMx.v:78-79; astrcmp_realizes_x
+   `amem_range8 x (kx + 1)` / `amem_range8 y (ky + 1)`, YGcallMx.v:161), for v->str and the scratch at +0x9a8. No ARx
+   law gives it: alx_blocks (YCbqG.v:44) gives only in_app p (req_size n), whose high arm is `kHighMemBeg <= p`
    (YG0f.v:277), and at a generic cp a block based at kHighMemBeg meets every AR_laws_x field (v->str's block when
    cf_head = 0; the scratch's block when its base is not in Hp). A sub-range with the same end inherits it
    (evE_amr8). *)

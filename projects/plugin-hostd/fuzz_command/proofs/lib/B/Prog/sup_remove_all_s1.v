@@ -17,10 +17,11 @@
    blocks, so it is in scn_FP's ablocks_fp O or is a block the walk made. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/sup_connect_s5.v, with its module paths and module names changed; 356 of its 399 lines of code are new or changed and 259 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/sup_remove_all_refit_s3.v, with its module paths changed; 65 of its 218 lines of code are new or changed and 246 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Pure lemmas for sup_remove_all's walk on the ASan+UBSan build of plugin-hostd/fuzz_command (fuzz_command.asan-ubsan,
    BASE + AF_sup_remove_all = 0x8b434), over the recorder's representation arep_at (lib/B/Prog/CmdRep.v) and the
    allocator's block lists, with no machine semantics. The B twin of the pure part of a Theorem Labs lane's A walk
-   (a working branch 59cc4017e62, lib/A/Prog/sup_remove_all_s1.v and the block lemmas of
+   (a working branch, lib/A/Prog/sup_remove_all_s1.v and the block lemmas of
    sup_remove_all_s3.v). B's sup_remove_all calls record() (lib/B/Prog/record_c.v) where A inlined it, so the A
    lemmas that rebuild the representation after record()'s two stores (arep_append, arep_spill_set, arep_kept) have
    no use here: record()'s contract gives the representation after the call.

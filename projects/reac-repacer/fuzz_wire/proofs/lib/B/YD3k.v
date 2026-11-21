@@ -26,9 +26,9 @@
    61768cf4739b7641c99c825dde45eddafc55b601d41109555be0272fc7ca4118), both fuzz_knock's; the YF0m.v lines below are its lib/AU file's:
    - theDepot (nm _ZN11__sanitizerL8theDepotE) 0x180418 -> 0x180458 and the StackStore object (nm
      _ZN11__sanitizerL10stackStoreE) 0x170408 -> 0x170448: the proofs read them as TFIB_DEPOT / as_depot and
-     TFIB_STORE / as_store (YF0m.v:19, ts_depot / ts_store); the one literal derived from them is kFACTS' witness of
+     TFIB_STORE / as_store (YF0m.v:20, ts_depot / ts_store); the one literal derived from them is kFACTS' witness of
      4 | DP + 4 * Kbkt, DP / 4 = 393478 -> 393494 (0x180458 / 4). DP / SS below are the asan-ubsan values.
-   - The hash constants stay at 0x102d8 / 0x102f8 / 0x10388 with the same values (YF0m.v:151-153).
+   - The hash constants stay at 0x102d8 / 0x102f8 / 0x10388 with the same values (YF0m.v:152-154).
    - Unchanged: the code addresses. As YD3j's header measures, StackDepotPut's 8 words differ only at 0x70ef8 (the
      theDepot addi), Put's 161 words (0x70f10-0x71194) and the lock's 36 (0x71684-0x71714) are byte-identical in both
      pins, and StackDepotNode::store's 23 (0x70c08-0x70c64) differ only at 0x70c24 / 0x70c28 (the stackStore auipc /
@@ -60,7 +60,8 @@
    The walk uses the symbolic runner of YFem.v (the mapped-case Put) with first-use seeds: YFem's Section s lemmas
    assume layout_ok and YFek's sstates carry DF_fixed (NB, SB >= 4096, n_uniq_ids >= 1), false at the first Put, so
    the seeds, the loop state and the frame invariant are rebuilt here; YFem's hash_loop is ported. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/AU/YD3k.v at 88154566652a (donor image sha256 f834165f5002), with its module paths changed, B/YB1v imported for AU/AWalkFw0, names TfibSyms -> WireSyms, its addresses moved to reac-repacer/fuzz_wire's ASan+UBSan build, YImgTop taken from lib/B instead of lib/Reusable and its proofs' unfolds of YImgTop.IMG_TOP (in 5 of the donor's unfold steps) removed (this unit's lib/B/YImgTop.v states the image bounds as notations, fuzz_knock's lib/Reusable/YImgTop.v as definitions). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/AU/YD3k.v (donor image sha256 f834165f5002), with its module paths changed, B/YB1v imported for AU/AWalkFw0, names TfibSyms -> WireSyms, its addresses moved to reac-repacer/fuzz_wire's ASan+UBSan build, YImgTop taken from lib/B instead of lib/Reusable and its proofs' unfolds of YImgTop.IMG_TOP (in 5 of the donor's unfold steps) removed (this unit's lib/B/YImgTop.v states the image bounds as notations, fuzz_knock's lib/Reusable/YImgTop.v as definitions). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.B Require YImgTop.
 From Stdlib Require Import ZArith NArith List Lia Bool.

@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN2r.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the allocation mode (the ledger's counting fields in the forced mode only; munmap's errno arm a real outcome in the may-fail mode)). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -18,7 +19,6 @@ Unset Lia Cache. Unset Nia Cache.
 Local Open Scope Z_scope.
 Local Open Scope mm_scope.
 Section b. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
-Context {AM : AllocMode}.
 Definition am_act (a : ameta) : ameta :=
 am_set_avail (Z.land (am_freed a) (ones (am_aidx a))) (am_set_freed (Z.ldiff (am_freed a) (ones (am_aidx a))) a).
 Lemma am_set_links_twice pr nx pr' nx' a : am_set_links pr nx (am_set_links pr' nx' a) = am_set_links pr nx a.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (srz_node and the srealizes lemmas carry the RomBase.sys_rob premise, discharged by sys_rob_instr and sys_rob_memfree; node_munmap and srz_munmap take AllocForced for the munmap arm's new ENOMEM refusal); srealizes is generic in a Leaf class with a leaf constructor srz_leaf, srealizes_nonempty reads lf_ne, and the lemmas that read traces ask NoLeaf. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -10,6 +11,12 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import
   Scfg SimInv ExitSim CatSim MmapSim ShapeAlg DivergeSim LazyFrame SymTac.
+(* LPS 08b1429: [srz_node] asks [RomBase.sys_rob] like [ShapeAlg.rz_node], so an srealizes walk
+   over a binary's own segments lifts to the run's segment list. *)
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import RomBase.
+(* A walk may end at a leaf of the class [Leaf] in scope ([srz_leaf]); at the default class
+   [leaf_none] it has none, and the lemmas below that read traces off a walk ask [NoLeaf]. *)
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import Leaf.
 Import ListNotations.
 Open Scope bv_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -19,6 +26,7 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Section WithSegs.
 Variable segs : list Segment.
 Context {SC : StepCfg}.
+Context {LF : Leaf}.
 
 (* [comment removed for export] *)
 
@@ -26,34 +34,38 @@ Inductive srealizes : config -> TSet -> Prop :=
 | srz_node : forall c (I : Type) (evs : I -> list event) (nx : I -> config)
                     (T : I -> TSet) (i0 : I),
     node_ok segs c I evs nx ->
+    sys_rob segs c ->
     (forall i, srealizes (nx i) (T i)) ->
     srealizes c (t_alt (fun i => t_emit (evs i) (T i)))
 | srz_halt : forall c,
     m_halted (cfg_model c) <> None ->
     srealizes c t_nil
 | srz_conseq : forall c T T',
-    srealizes c T -> t_eq T T' -> srealizes c T'.
+    srealizes c T -> t_eq T T' -> srealizes c T'
+| srz_leaf : forall c T,
+    lf segs c T -> srealizes c T.
 
 (* [comment removed for export] *)
 Lemma srealizes_of_realizes : forall c T,
   realizes segs c T -> srealizes c T.
 Proof.
   intros c T H;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq].
-  - exact (srz_node c I evs nx T i0 Hnode IH).
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq].
+  - exact (srz_node c I evs nx T i0 Hnode Hrob IH).
   - exact (srz_halt c Hh).
   - exact (srz_conseq c T T' IH Heq).
 Qed.
 
 (* [comment removed for export] *)
-Lemma realizes_of_srealizes : forall c T,
+Lemma realizes_of_srealizes {NL : NoLeaf LF} : forall c T,
   srealizes c T -> realizes segs c T.
 Proof.
   intros c T H;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq].
-  - exact (rz_node segs c I evs nx T i0 Hnode IH).
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq | c T Hl].
+  - exact (rz_node segs c I evs nx T i0 Hnode Hrob IH).
   - exact (rz_halt segs c Hh).
   - exact (rz_conseq segs c T T' IH Heq).
+  - destruct (leaf_absurd _ _ _ Hl).
 Qed.
 
 (* [comment removed for export] *)
@@ -61,19 +73,20 @@ Qed.
 Lemma srealizes_nonempty : forall c T, srealizes c T -> T [].
 Proof.
   intros c T H;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
-                   | c T T' H IH Heq].
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
+                   | c T T' H IH Heq | c T Hl].
   - exists i0. left. apply is_prefix_nil.
   - reflexivity.
   - apply Heq. exact IH.
+  - exact (lf_ne _ _ _ Hl).
 Qed.
 
-Lemma srealizes_pclosed : forall c T, srealizes c T ->
+Lemma srealizes_pclosed {NL : NoLeaf LF} : forall c T, srealizes c T ->
   forall tr tr', T tr -> is_prefix tr' tr -> T tr'.
 Proof.
   intros c T H;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
-                   | c T T' H IH Heq];
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
+                   | c T T' H IH Heq | c T Hl];
     intros tr tr' HT Hp.
   - destruct HT as [i [Hpre | (tr0 & -> & HT0)]]; exists i.
     + left. eapply is_prefix_trans; eauto.
@@ -82,16 +95,17 @@ Proof.
       * right. exists tr0'. split; [reflexivity | eapply IH; eauto].
   - unfold t_nil in *. subst tr. apply is_prefix_nil_r in Hp. exact Hp.
   - apply Heq. eapply IH; [apply Heq; exact HT | exact Hp].
+  - destruct (leaf_absurd _ _ _ Hl).
 Qed.
 
 (* [comment removed for export] *)
 
-Lemma srealizes_star_only : forall c T, srealizes c T ->
+Lemma srealizes_star_only {NL : NoLeaf LF} : forall c T, srealizes c T ->
   forall tr c', star_cfg segs the_scfg c tr c' -> T tr.
 Proof.
   intros c T H;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
-                   | c T T' H IH Heq];
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
+                   | c T T' H IH Heq | c T Hl];
     intros tr c' Hstar.
   - inversion Hstar as [|c1 e c2 tr2 c3 Hss Hstar2]; subst.
     + exists i0. left. apply is_prefix_nil.
@@ -102,16 +116,17 @@ Proof.
       split; [reflexivity | eapply IH; exact Hstar2].
   - destruct (star_halted_nil segs c tr c' Hh (star_cfg_sub segs _ _ _ _ Hstar)) as [-> _]. reflexivity.
   - apply Heq. eapply IH; exact Hstar.
+  - destruct (leaf_absurd _ _ _ Hl).
 Qed.
 
 (* [comment removed for export] *)
 
-Lemma srealizes_admits : forall c T, srealizes c T ->
+Lemma srealizes_admits {NL : NoLeaf LF} : forall c T, srealizes c T ->
   forall tr, T tr -> obs_trace_cfg segs the_scfg c tr.
 Proof.
   intros c T H;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
-                   | c T T' H IH Heq];
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
+                   | c T T' H IH Heq | c T Hl];
     intros tr HT.
   - destruct Hnode as [Hcomp _].
     destruct HT as [i [Hpre | (tr0 & -> & HT0)]].
@@ -122,10 +137,11 @@ Proof.
              | apply is_prefix_app_mono; exact Hp].
   - unfold t_nil in HT; subst tr. exists [], c. split; [apply star_cfg_refl | apply is_prefix_nil].
   - apply IH. apply Heq. exact HT.
+  - destruct (leaf_absurd _ _ _ Hl).
 Qed.
 
 (* [comment removed for export] *)
-Theorem srealizes_obs_iff : forall c T, srealizes c T ->
+Theorem srealizes_obs_iff {NL : NoLeaf LF} : forall c T, srealizes c T ->
   forall tr, obs_trace_cfg segs the_scfg c tr <-> T tr.
 Proof.
   intros c T H tr. split.
@@ -137,36 +153,38 @@ Qed.
 
 (* [comment removed for export] *)
 
-Lemma srealizes_step : forall c T e c',
+Lemma srealizes_step {NL : NoLeaf LF} : forall c T e c',
   srealizes c T -> sstep_cfg segs the_scfg c e (SNext c') -> exists T', srealizes c' T'.
 Proof.
   intros c T e c' H; revert e c';
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
-                   | c T T' H IH Heq];
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
+                   | c T T' H IH Heq | c T Hl];
     intros e c' Hss.
   - destruct Hnode as [_ Hsound].
     destruct (Hsound e (SNext c') Hss) as (i & _ & Heq2).
     inversion Heq2; subst c'. exists (T i). apply Hcont.
   - exfalso. apply Hh. eapply sstep_cfg_halted_none; exact Hss.
   - eapply IH; exact Hss.
+  - destruct (leaf_absurd _ _ _ Hl).
 Qed.
 
-Lemma srealizes_no_sserror : forall c T e,
+Lemma srealizes_no_sserror {NL : NoLeaf LF} : forall c T e,
   srealizes c T -> ~ sstep_cfg segs the_scfg c e SError.
 Proof.
   intros c T e H; revert e;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
-                   | c T T' H IH Heq];
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
+                   | c T T' H IH Heq | c T Hl];
     intros e Hss.
   - destruct Hnode as [_ Hsound].
     destruct (Hsound e SError Hss) as (i & _ & Hbad). discriminate.
   - apply Hh. eapply sstep_cfg_halted_none; exact Hss.
   - eapply IH; exact Hss.
+  - destruct (leaf_absurd _ _ _ Hl).
 Qed.
 
 Definition srz_path (c : config) : Prop := exists T, srealizes c T.
 
-Theorem srealizes_no_error : forall c T,
+Theorem srealizes_no_error {NL : NoLeaf LF} : forall c T,
   srealizes c T -> ~ reaches_error_cfg segs the_scfg c.
 Proof.
   intros c T H.
@@ -181,12 +199,13 @@ Qed.
 (* [comment removed for export] *)
 Lemma srz_silent1 : forall c c' T,
   node_ok segs c unit (fun _ => []) (fun _ => c') ->
+  sys_rob segs c ->
   srealizes c' T ->
   srealizes c T.
 Proof.
-  intros c c' T Hnode Hc.
+  intros c c' T Hnode Hrob Hc.
   apply (srz_conseq c (t_alt (fun _ : unit => t_emit [] T))).
-  - apply (srz_node c unit (fun _ => []) (fun _ => c') (fun _ => T) tt Hnode).
+  - apply (srz_node c unit (fun _ => []) (fun _ => c') (fun _ => T) tt Hnode Hrob).
     intros []; exact Hc.
   - eapply t_eq_trans;
       [ apply (t_alt_unit (fun _ : unit => t_emit [] T))
@@ -196,12 +215,13 @@ Qed.
 (* [comment removed for export] *)
 Lemma srz_emit1 : forall c c' e T,
   node_ok segs c unit (fun _ => e) (fun _ => c') ->
+  sys_rob segs c ->
   srealizes c' T ->
   srealizes c (t_emit e T).
 Proof.
-  intros c c' e T Hnode Hc.
+  intros c c' e T Hnode Hrob Hc.
   apply (srz_conseq c (t_alt (fun _ : unit => t_emit e T))).
-  - apply (srz_node c unit (fun _ => e) (fun _ => c') (fun _ => T) tt Hnode).
+  - apply (srz_node c unit (fun _ => e) (fun _ => c') (fun _ => T) tt Hnode Hrob).
     intros []; exact Hc.
   - apply t_alt_unit.
 Qed.
@@ -210,11 +230,12 @@ Qed.
 Lemma srz_alt2 : forall c (IA IB : Type) (nx : IA + IB -> config) (A B : TSet)
                         (a0 : IA) (b0 : IB),
   node_ok segs c (IA + IB) (fun _ => []) nx ->
+  sys_rob segs c ->
   (forall i, srealizes (nx (inl i)) A) ->
   (forall i, srealizes (nx (inr i)) B) ->
   srealizes c (t_alt2 A B).
 Proof.
-  intros c IA IB nx A B a0 b0 Hnode HA HB.
+  intros c IA IB nx A B a0 b0 Hnode Hrob HA HB.
   assert (HA0 : A []) by (eapply srealizes_nonempty; apply (HA a0)).
   assert (HB0 : B []) by (eapply srealizes_nonempty; apply (HB b0)).
   apply (srz_conseq c
@@ -222,7 +243,7 @@ Proof.
               t_emit [] (match i with inl _ => A | inr _ => B end)))).
   - apply (srz_node c (IA + IB) (fun _ => []) nx
              (fun i => match i with inl _ => A | inr _ => B end)
-             (inl a0) Hnode).
+             (inl a0) Hnode Hrob).
     intros [i|i]; [apply HA | apply HB].
   - intro tr. unfold t_alt2. split.
     + intros [[i|i] Hi];
@@ -243,7 +264,7 @@ Lemma srz_step : forall ms model ms' T,
   srealizes (mkCfg ms model) T.
 Proof.
   intros ms model ms' T Hh Hlazy Hsvc Hstep Hc.
-  eapply srz_silent1; [apply node_instr; eassumption | exact Hc].
+  eapply srz_silent1; [apply node_instr; eassumption | apply sys_rob_instr; exact Hsvc | exact Hc].
 Qed.
 
 Lemma srz_msteps : forall ms ms' model T,
@@ -293,7 +314,7 @@ Lemma rz_step_disjoint : forall ms model ms' ranges T,
   realizes segs (mkCfg ms model) T.
 Proof.
   intros ms model ms' ranges T Hh Hsvc Hstep Hout Hc.
-  eapply rz_silent1; [eapply node_instr_disjoint; eassumption | exact Hc].
+  eapply rz_silent1; [eapply node_instr_disjoint; eassumption | apply sys_rob_instr; exact Hsvc | exact Hc].
 Qed.
 
 Lemma srz_step_disjoint : forall ms model ms' ranges T,
@@ -306,7 +327,7 @@ Lemma srz_step_disjoint : forall ms model ms' ranges T,
   srealizes (mkCfg ms model) T.
 Proof.
   intros ms model ms' ranges T Hh Hsvc Hstep Hout Hc.
-  eapply srz_silent1; [eapply node_instr_disjoint; eassumption | exact Hc].
+  eapply srz_silent1; [eapply node_instr_disjoint; eassumption | apply sys_rob_instr; exact Hsvc | exact Hc].
 Qed.
 
 (* [comment removed for export] *)
@@ -326,7 +347,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma node_munmap : forall ms model x8,
+Lemma node_munmap {AF : AllocForced SC} : forall ms model x8,
   m_halted model = None ->
   m_vm_lazy model = [] ->
   ms_svc_pending ms = Some x8 ->
@@ -337,24 +358,28 @@ Lemma node_munmap : forall ms model x8,
                     (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1))
                                   model)).
 Proof.
-  intros ms model x8 Hh Hlazy Hsvc Hno Hargs. split.
+  intros ms model x8 Hh Hlazy Hsvc Hno Hargs.
+  assert (Hin : bv_unsigned (in_sysno (sys_input segs ms x8)) = 215%Z)
+    by (rewrite in_sysno_sys_input; exact Hno).
+  split.
   - intros []. apply (sstep_cfg_syscall segs the_scfg ms model x8 (munmap_eff ms)
                         (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model)
                         (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) []).
     + exact Hh.
     + exact Hsvc.
     + apply munmap_ok; assumption.
-    + apply not_spurious_none. rewrite in_sysno_sys_input, Hno. apply injected_arm_none_215.
+    + apply not_spurious_nonrefusal. rewrite (refusal_b_munmap _ model _ Hin).
+      apply munmap_eff_ret_not_ENOMEM.
     + rewrite munmap_model_halted; exact Hh.
     + apply materialize_model_accesses_no_lazy.
       exact (munmap_model_no_lazy _ _ _ Hlazy).
-  - intros e st Hss. apply sstep_cfg_sub in Hss.
-    destruct (sstep_munmap_inv segs ms model x8 e st Hh Hlazy Hsvc Hno Hargs Hss)
+  - intros e st Hss.
+    destruct (sstep_cfg_munmap_inv segs ms model x8 e st Hh Hlazy Hsvc Hno Hargs Hss)
       as [-> ->].
     exists tt. split; reflexivity.
 Qed.
 
-Lemma srz_munmap : forall ms model x8 T,
+Lemma srz_munmap {AF : AllocForced SC} : forall ms model x8 T,
   m_halted model = None ->
   m_vm_lazy model = [] ->
   ms_svc_pending ms = Some x8 ->
@@ -365,7 +390,8 @@ Lemma srz_munmap : forall ms model x8 T,
   srealizes (mkCfg ms model) T.
 Proof.
   intros ms model x8 T Hh Hlazy Hsvc Hno Hargs Hc.
-  eapply srz_silent1; [apply (node_munmap ms model x8); assumption | exact Hc].
+  eapply srz_silent1; [apply (node_munmap ms model x8); assumption
+                      | apply (sys_rob_memfree segs ms model x8 Hsvc); rewrite Hno; exact memfree_215 | exact Hc].
 Qed.
 
 (* [comment removed for export] *)

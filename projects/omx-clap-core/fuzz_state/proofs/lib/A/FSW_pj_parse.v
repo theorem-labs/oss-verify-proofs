@@ -3,14 +3,15 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACem.v, with its module paths and module names changed; 1540 of its 1601 lines of code are new or changed and 390 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_pj_string.v, with its module paths, module names and numbers changed; 998 of its 1074 lines of code are new or changed and 1525 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* pj_parse (A 0x82eac, pf.c:296-309) on fs.asan (sha256 64b53ff86172...), 60 words 0x82eac .. 0x82f9c: its ASan
    contract FSH_Fn_reader.v pj_parse_spec (the narrow SUCCESS form on the harness document), proved by a symbolic walk of
    the machine code over fs's walk kit (FSW_K / K3 / rres / ret / rd / pj), theorem pj_parse_holds.
    rule 24: pj_parse is CONFIRMED to have no ASan-image proof (ossv proof index v5 built 2026-10-29T01:50:18Z, released
    addresses only plain 0x1428c / ubsan 0x14454; a Theorem Labs lane's checker a Theorem Labs lane, confirm-resume-2.md). Its released
-   plain proof lib/Prog/pj_parse.v (c8557374ad2e) is the template of the functional part.
+   plain proof lib/Prog/pj_parse.v is the template of the functional part.
    The walk (MEASURED, (internal path)):
-   - STAGE A (pjp_stage_A, from a working branch eb28238b33c): the prologue, struct pj_in
+   - STAGE A (pjp_stage_A, from a working branch): the prologue, struct pj_in
      {text, text + len, 0} at sp - 48, __asan_memset(out, 0, 56) (RT_memset), the resume state at 0x82eec.
    - the call of parse_value at 0x82ef4 (level 0, Section hypothesis PV), struct pj_in at q = sp - 48, raised window top
      ot = sp - 16; the callee's frame chain is the left arm (q = its sp, s0 = out, bad_next); the resume is
@@ -124,7 +125,7 @@ destruct (in_ush U (bv_unsigned (Z_to_bv 64 a))) eqn:Hu.
 Qed.
 
 (* ---- the memset step: RT_memset's __asan_memset contract fed into FSW_K's fsw_intrin_atU (kit arity: awr_byte takes
-   (segs, B) and fr0 := frames S after own, S0 400b2a240b3 YCbq.v:465-467) ---- *)
+   (segs, B) and fr0 := frames S after own, S0 YCbq.v:465-467) ---- *)
 Lemma pjp_memset_step : forall STK sp0 FP ly S W0 mem0 md0 lyc Sc U W regsT memT mdc k d (o : Z),
   ajournal tfibsegs B STK sp0 FP ly S W0 mem0 md0 [] lyc Sc W (unpoison U memT) mdc k ->
   ARU tfibsegs B lyc Sc U W memT mdc ->

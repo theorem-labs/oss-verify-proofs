@@ -5,12 +5,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module names and numbers changed; 1592 of its 1709 lines of code are new or changed and 894 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F12.v, with its module paths, module names, addresses and numbers changed; 1202 of its 1379 lines of code are new or changed and 1532 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F16.v; 536 of its 868 lines of code are new or changed and 1047 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/F16.v blob ed137984f9f8 (the blob this tree had at release c5e779efe8c) at fdd2ed9f9d7.
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   FACTS, PAU pau-libreac-v190. Source: Seg/F16.v blob ed137984f9f8 (the blob this tree had at release).
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: each <r>_of_F re-derives F16.<r> at ExecF.RNG_all; <r>_of_F_verbatim checks by constr_eq that its type is
    the type of F16.<r>. Mechanical re-run, route (a) (lead 22:15Z); input to the ported walk only. *)
 
@@ -708,7 +709,7 @@ Qed.
 
 (* ---- Route (C) (a Theorem Labs lane 09:20Z; wave lead a Theorem Labs lane, ASSIGN.md (a working note, not in this delivery)): the _on twins.  f16_evt_F and
    f16_evt_of_F take a callee contract, so they stay as they are, with their own proofs; the twins are new.  The
-   callee enters through reac_identity_ingest_contract_F_on (reac_identity_ingest_c.v, a Theorem Labs lane 28e24b8fe6c; proof
+   callee enters through reac_identity_ingest_contract_F_on (reac_identity_ingest_c.v, a Theorem Labs lane; proof
    of record a Theorem Labs lane's reac_identity_ingest_F_holds_on), which has no shadow_rw premise.  F16's own run reads
    and stores no shadow byte through `shadow_rw m`: the loop's shadow loads come from `addressable m fb 72`
    (shadow0_72), the tail's two shadow checks from the explicit ov_read_bytes premises, and the proof above uses

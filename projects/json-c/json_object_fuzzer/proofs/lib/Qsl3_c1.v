@@ -1,4 +1,5 @@
 (* This file states or restates instruction words of the task's compiled program (third-party object code: the upstream library at its pinned commit, the C library, the sanitizer runtime and the task authors' wrapper) for use in the proofs - see NOTICE. No Anthropic licence header is applied to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput: both AsanInstance sections take the launch's fields (QpvH.inp argv envp fs stdin uid gid hw groups ... kb execfn ...) with apc, and QpvH.launch_ok in place of entry_stack_fits; the env and program-name scan nodes proved through Q0yM's init_x_sound_envscan and init_x_sound_pnscan at the launch's stack image, with the entry_stack_fits premise from QpvH.launch_ok; the CONFIG_RSEQ flag of the start-up layer: the node statements at rseq_z (kb_rseq kb)). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -27,6 +28,7 @@ Import AX2. Import AX2S. Import APC. Import AP. Import APS.
 Open Scope Z_scope.
 
 Section AsanInstance.
+Variable apc : N.
 Variable sp : word.
 Variable rdraw : EntryDraw.
 Variable brk0 mbase : word.
@@ -34,12 +36,23 @@ Variable argv envp : list (list byte).
 Variable fs : Fs.Fs.
 Variable stdin : InputStream.
 Variable FS0 : Fs.Fs.
+Variables uid gid hw : word.
+Variable groups : list word.
+Variable net : NetQueue.
+Variables nofile sigmask : word.
+Variable abort_terminal : bool.
+Variable urnd : InputStream.
+Variable tmp : Fs.Fs.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variables rdr sgd sgt : bool.
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
-Variable uid : word.
-Variable hw : word.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hfit : QpvH.launch_ok sp brk0 mbase rdraw (QpvH.inp argv envp fs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt).
+Let Hkernel := proj1 (proj2 Hfit).
+Let Hlaunch := proj1 (proj2 (proj2 Hfit)).
+Let Hlau := proj2 (proj2 (proj2 Hfit)).
 
 Lemma Xenv_tok : 0 <= x_envscan BJO6 /\ x_envscan BJO6 + 12 < 2 ^ 64 /\ x_envscan_k BJO6 = x_envscan BJO6 + 12.
 Proof. cbn [x_envscan x_envscan_k BJO6]. lia. Qed.
@@ -66,42 +79,26 @@ Variable nx0 : nat.
 Hypothesis Hnx0 : (NX0 <= nx0)%nat.
 
 Variable SINV : env -> (word -> option byte) -> Prop.
-Hypothesis SINV_SINV0 : forall E M, SINV E M -> SINV0 JOB6PH sp rdraw brk0 argv envp uid hw E M.
-Hypothesis SINV_frame : forall E M M', (forall a, argH0 JOB6PH sp rdraw argv envp uid hw E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
+Hypothesis SINV_SINV0 : forall E M, SINV E M -> SINV0 JOB6PH apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt E M.
+Hypothesis SINV_frame : forall E M M', (forall a, argH0 sp rdraw argv envp kb execfn E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
 Hypothesis SINV_agree : forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E' M.
 
-Lemma argH0_agree_nx0 : forall E E' (a : word), env_agree nx0 E E' -> argH0 JOB6PH sp rdraw argv envp uid hw E a = argH0 JOB6PH sp rdraw argv envp uid hw E' a.
-Proof. intros E E' a Hag. apply argH0_agree. eapply env_agree_le; [exact Hag | exact Hnx0]. Qed.
-
-Lemma nx0_ge_gen : APS.nx0_ge nx0.
-Proof. unfold APS.nx0_ge. pose proof Hnx0 as H. unfold NX0 in H. lia. Qed.
-
+(* LPS 727298f3: the scan nodes at the launch's stack image, through Q0yM's init_x_sound_*
+(the source unit's AsanNodesStartXAsan form); the run's CONFIG_RSEQ value is rseq_z (kb_rseq kb). *)
 #[local] Ltac init_side :=
 first [ exact asan_wx | exact asan_in_hull | exact asan_hull_ok
 | exact Xenv_tok | exact Xpn_tok
-| exact Fe1_tok | exact Fe2_tok | exact Fe3_tok | exact Fp0_tok | exact Fp1_tok | exact Fp2_tok | exact Fp3_tok | exact Fp4_tok
-| exact Ee_tok | exact Ep_tok
+| exact Fe1_tok | exact Fe2_tok | exact Fe3_tok | exact Fp0_tok | exact Fp1_tok | exact Fp2_tok | exact Fp3_tok | exact Fp4_tok | exact Ee_tok | exact Ep_tok
 | exact D_ce3d0 | exact D_ce3d4 | exact D_ce3d8 | exact D_ce48c | exact D_ce490 | exact D_ce494 | exact D_ce498 | exact D_ce49c
-| exact Hva | exact Hve | exact sp_lo_tok | exact sp_hi_tok
-| exact (argH0_high JOB6PH sp rdraw argv envp uid hw Hsp Hva) | exact argH0_agree_nx0
-| exact SINV_frame | exact SINV_agree | exact nx0_ge_gen
-| intros; eapply SINV0_vals; eassumption
-| intros; eapply SINV0_envp; eassumption
-| intros; eapply SINV0_str0; eassumption
-| assumption ].
+| exact Hsp | exact Hva | exact Hve | exact (proj1 Hfit) | exact Hkernel | exact Hlaunch | exact Hlau
+| exact SINV_SINV0 | exact SINV_frame | exact SINV_agree | exact Hnx0
+| eassumption ].
 
-Theorem node_x_sound_XEnvScan_asan_gen : x_stmt JOB6SEGS BJO6 nx0 LIMIT (bv_unsigned sp) SINV (argH0 JOB6PH sp rdraw argv envp uid hw) FS0 XEnvScan.
-Proof.
-eapply (x_sound_envscan JOB6SEGS BJO6 nx0 LIMIT sp SINV (argH0 JOB6PH sp rdraw argv envp uid hw) FS0 asan_wx asan_in_hull asan_hull_ok SINV_frame W_ce3d0 W_ce3d4 W_ce3d8);
-init_side.
-Qed.
+Theorem node_x_sound_XEnvScan_asan_gen : x_stmt JOB6SEGS BJO6 nx0 LIMIT (rseq_z (kb_rseq kb)) (bv_unsigned sp) SINV (argH0 sp rdraw argv envp kb execfn) FS0 XEnvScan.
+Proof. eapply init_x_sound_envscan; init_side. Qed.
 
-Theorem node_x_sound_XPnScan_asan_gen : x_stmt JOB6SEGS BJO6 nx0 LIMIT (bv_unsigned sp) SINV (argH0 JOB6PH sp rdraw argv envp uid hw) FS0 XPnScan.
-Proof.
-eapply (x_sound_pnscan JOB6SEGS BJO6 nx0 LIMIT sp SINV (argH0 JOB6PH sp rdraw argv envp uid hw) FS0 asan_wx asan_in_hull asan_hull_ok
-(argH0_high JOB6PH sp rdraw argv envp uid hw Hsp Hva) argH0_agree_nx0 SINV_frame SINV_agree nx0_ge_gen W_ce48c W_ce490 W_ce494 W_ce498 W_ce49c);
-init_side.
-Qed.
+Theorem node_x_sound_XPnScan_asan_gen : x_stmt JOB6SEGS BJO6 nx0 LIMIT (rseq_z (kb_rseq kb)) (bv_unsigned sp) SINV (argH0 sp rdraw argv envp kb execfn) FS0 XPnScan.
+Proof. eapply init_x_sound_pnscan; init_side. Qed.
 
 End AnySINV.
 
@@ -154,6 +151,7 @@ Import AX2. Import AX2S. Import APC. Import AP. Import APS.
 Open Scope Z_scope.
 
 Section AsanInstance.
+Variable apc : N.
 Variable sp : word.
 Variable rdraw : EntryDraw.
 Variable brk0 mbase : word.
@@ -161,12 +159,23 @@ Variable argv envp : list (list byte).
 Variable fs : Fs.Fs.
 Variable stdin : InputStream.
 Variable FS0 : Fs.Fs.
+Variables uid gid hw : word.
+Variable groups : list word.
+Variable net : NetQueue.
+Variables nofile sigmask : word.
+Variable abort_terminal : bool.
+Variable urnd : InputStream.
+Variable tmp : Fs.Fs.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variables rdr sgd sgt : bool.
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
-Variable uid : word.
-Variable hw : word.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hfit : QpvH.launch_ok sp brk0 mbase rdraw (QpvH.inp argv envp fs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt).
+Let Hkernel := proj1 (proj2 Hfit).
+Let Hlaunch := proj1 (proj2 (proj2 Hfit)).
+Let Hlau := proj2 (proj2 (proj2 Hfit)).
 
 Lemma Xenv_tok : 0 <= x_envscan AJO6 /\ x_envscan AJO6 + 12 < 2 ^ 64 /\ x_envscan_k AJO6 = x_envscan AJO6 + 12.
 Proof. cbn [x_envscan x_envscan_k AJO6]. lia. Qed.
@@ -193,42 +202,26 @@ Variable nx0 : nat.
 Hypothesis Hnx0 : (NX0 <= nx0)%nat.
 
 Variable SINV : env -> (word -> option byte) -> Prop.
-Hypothesis SINV_SINV0 : forall E M, SINV E M -> SINV0 JO6PH sp rdraw brk0 argv envp uid hw E M.
-Hypothesis SINV_frame : forall E M M', (forall a, argH0 JO6PH sp rdraw argv envp uid hw E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
+Hypothesis SINV_SINV0 : forall E M, SINV E M -> SINV0 JO6PH apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt E M.
+Hypothesis SINV_frame : forall E M M', (forall a, argH0 sp rdraw argv envp kb execfn E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
 Hypothesis SINV_agree : forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E' M.
 
-Lemma argH0_agree_nx0 : forall E E' (a : word), env_agree nx0 E E' -> argH0 JO6PH sp rdraw argv envp uid hw E a = argH0 JO6PH sp rdraw argv envp uid hw E' a.
-Proof. intros E E' a Hag. apply argH0_agree. eapply env_agree_le; [exact Hag | exact Hnx0]. Qed.
-
-Lemma nx0_ge_gen : APS.nx0_ge nx0.
-Proof. unfold APS.nx0_ge. pose proof Hnx0 as H. unfold NX0 in H. lia. Qed.
-
+(* LPS 727298f3: the scan nodes at the launch's stack image, through Q0yM's init_x_sound_*
+(the source unit's AsanNodesStartXAsan form); the run's CONFIG_RSEQ value is rseq_z (kb_rseq kb). *)
 #[local] Ltac init_side :=
 first [ exact asan_wx | exact asan_in_hull | exact asan_hull_ok
 | exact Xenv_tok | exact Xpn_tok
-| exact Fe1_tok | exact Fe2_tok | exact Fe3_tok | exact Fp0_tok | exact Fp1_tok | exact Fp2_tok | exact Fp3_tok | exact Fp4_tok
-| exact Ee_tok | exact Ep_tok
+| exact Fe1_tok | exact Fe2_tok | exact Fe3_tok | exact Fp0_tok | exact Fp1_tok | exact Fp2_tok | exact Fp3_tok | exact Fp4_tok | exact Ee_tok | exact Ep_tok
 | exact D_cbce4 | exact D_cbce8 | exact D_cbcec | exact D_cbda0 | exact D_cbda4 | exact D_cbda8 | exact D_cbdac | exact D_cbdb0
-| exact Hva | exact Hve | exact sp_lo_tok | exact sp_hi_tok
-| exact (argH0_high JO6PH sp rdraw argv envp uid hw Hsp Hva) | exact argH0_agree_nx0
-| exact SINV_frame | exact SINV_agree | exact nx0_ge_gen
-| intros; eapply SINV0_vals; eassumption
-| intros; eapply SINV0_envp; eassumption
-| intros; eapply SINV0_str0; eassumption
-| assumption ].
+| exact Hsp | exact Hva | exact Hve | exact (proj1 Hfit) | exact Hkernel | exact Hlaunch | exact Hlau
+| exact SINV_SINV0 | exact SINV_frame | exact SINV_agree | exact Hnx0
+| eassumption ].
 
-Theorem node_x_sound_XEnvScan_asan_gen : x_stmt JO6SEGS AJO6 nx0 LIMIT (bv_unsigned sp) SINV (argH0 JO6PH sp rdraw argv envp uid hw) FS0 XEnvScan.
-Proof.
-eapply (x_sound_envscan JO6SEGS AJO6 nx0 LIMIT sp SINV (argH0 JO6PH sp rdraw argv envp uid hw) FS0 asan_wx asan_in_hull asan_hull_ok SINV_frame W_cbce4 W_cbce8 W_cbcec);
-init_side.
-Qed.
+Theorem node_x_sound_XEnvScan_asan_gen : x_stmt JO6SEGS AJO6 nx0 LIMIT (rseq_z (kb_rseq kb)) (bv_unsigned sp) SINV (argH0 sp rdraw argv envp kb execfn) FS0 XEnvScan.
+Proof. eapply init_x_sound_envscan; init_side. Qed.
 
-Theorem node_x_sound_XPnScan_asan_gen : x_stmt JO6SEGS AJO6 nx0 LIMIT (bv_unsigned sp) SINV (argH0 JO6PH sp rdraw argv envp uid hw) FS0 XPnScan.
-Proof.
-eapply (x_sound_pnscan JO6SEGS AJO6 nx0 LIMIT sp SINV (argH0 JO6PH sp rdraw argv envp uid hw) FS0 asan_wx asan_in_hull asan_hull_ok
-(argH0_high JO6PH sp rdraw argv envp uid hw Hsp Hva) argH0_agree_nx0 SINV_frame SINV_agree nx0_ge_gen W_cbda0 W_cbda4 W_cbda8 W_cbdac W_cbdb0);
-init_side.
-Qed.
+Theorem node_x_sound_XPnScan_asan_gen : x_stmt JO6SEGS AJO6 nx0 LIMIT (rseq_z (kb_rseq kb)) (bv_unsigned sp) SINV (argH0 sp rdraw argv envp kb execfn) FS0 XPnScan.
+Proof. eapply init_x_sound_pnscan; init_side. Qed.
 
 End AnySINV.
 

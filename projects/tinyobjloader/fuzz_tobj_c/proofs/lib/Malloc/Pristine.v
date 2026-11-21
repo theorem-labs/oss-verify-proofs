@@ -1,8 +1,9 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the pristine start requirement carries the vDSO fact, from which the start's MInvR is built; its auxv part is restated in plain text over the launch's auxv layout for either value of the CONFIG_RSEQ flag, read through the malloc contract's auxv view, and minv_pristine's auxv_ok proof follows it; the ten-key auxv_keys and auxv_keys_early are removed). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
-#[local] Ltac2 tbs__ () := ["@Corelib.Init.Logic"; "and"; "eq"; "ex"; "not"; "or"; "@Corelib.Numbers.BinNums"; "Z"; "@Corelib.Init.Datatypes"; "bool"; "true"; "option"; "andb"; "cons"; "false"; "Some"; "nat"; "nil"; "list"; "prod"; "length"; "None"; "@Stdlib.ZArith.BinInt.Z"; "add"; "le"; "lt"; "of_nat"; "pow"; "eqb"; "modulo"; "ltb"; "mul"; "sub"; "to_nat"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Pristine.Req"; "untouched"; "reads"; "@stdpp.bitvector.definitions"; "bv"; "bv_unsigned"; "Z_to_bv"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocLayout"; "wz"; "C_P"; "C_U"; "mc_ctx"; "mc_chk_guard"; "mc_chk_guard_got"; "mc_ctz_tab"; "mc_lock"; "mc_med_cnt_tab"; "mc_need_locks"; "mc_replaced"; "mc_size_classes"; "mc_small_cnt_tab"; "ctz_tab_bytes"; "med_cnt_tab_bytes"; "size_classes_bytes"; "small_cnt_tab_bytes"; "holds"; "img_reserved"; "mc_auxv"; "mc_page_size"; "@Corelib.Init.Peano"; "lt"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocInv"; "CTX_SIZE"; "byteview"; "le_byte"; "Layout"; "layout"; "zseq"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Pristine"; "all_range"; "img_table"; "image_ok"; "img_zero"; "img_zero_rw"; "pristine_req"; "untouched"; "auxv_keys"; "img_word"; "reads"; "@Corelib.Lists.ListDef"; "nth"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymState"; "image_byte"; "valuation"; "rm"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Pristine.Img"; "img_table"; "img_zero"; "img_zero_rw"; "img_word"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.ExampleMemcpy"; "segsP"; "segsU"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract"; "MInvR"; "rd_of"; "tp_ok"; "wseg_addr"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocIface"; "MA_init"; "ma_blocks"; "ma_s"; "ri_brk0"; "ri_sec"; "ri_top"; "run_init"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocModel"; "st_init_done"; "PGSZ"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "Model"; "alloc_top"; "m_vmmaps"; "vm_brk"; "vm_maps"; "vm_start_brk"; "@Stdlib.Lists.List"; "forallb"].
+#[local] Ltac2 tbs__ () := ["@Corelib.Init.Logic"; "and"; "eq"; "ex"; "not"; "or"; "@Corelib.Numbers.BinNums"; "Z"; "@Corelib.Init.Datatypes"; "bool"; "true"; "option"; "andb"; "cons"; "false"; "Some"; "nat"; "nil"; "list"; "prod"; "length"; "None"; "@Stdlib.ZArith.BinInt.Z"; "add"; "le"; "lt"; "of_nat"; "pow"; "eqb"; "modulo"; "ltb"; "mul"; "sub"; "to_nat"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Pristine.Req"; "untouched"; "reads"; "@stdpp.bitvector.definitions"; "bv"; "bv_unsigned"; "Z_to_bv"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocLayout"; "wz"; "C_P"; "C_U"; "mc_ctx"; "mc_chk_guard"; "mc_chk_guard_got"; "mc_ctz_tab"; "mc_lock"; "mc_med_cnt_tab"; "mc_need_locks"; "mc_replaced"; "mc_size_classes"; "mc_small_cnt_tab"; "ctz_tab_bytes"; "med_cnt_tab_bytes"; "size_classes_bytes"; "small_cnt_tab_bytes"; "holds"; "img_reserved"; "mc_auxv"; "mc_page_size"; "@Corelib.Init.Peano"; "lt"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocInv"; "CTX_SIZE"; "byteview"; "le_byte"; "Layout"; "layout"; "zseq"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Pristine"; "all_range"; "img_table"; "image_ok"; "img_zero"; "img_zero_rw"; "pristine_req"; "untouched"; "auxv_keys"; "img_word"; "reads"; "@Corelib.Lists.ListDef"; "nth"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymState"; "image_byte"; "valuation"; "rm"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Pristine.Img"; "img_table"; "img_zero"; "img_zero_rw"; "img_word"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.ExampleMemcpy"; "segsP"; "segsU"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract"; "MInvR"; "rd_of"; "tp_ok"; "wseg_addr"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocIface"; "MA_init"; "ma_blocks"; "ma_s"; "ri_brk0"; "ri_sec"; "ri_top"; "run_init"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocModel"; "st_init_done"; "PGSZ"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "Model"; "alloc_top"; "m_vmmaps"; "vm_brk"; "vm_maps"; "vm_start_brk"; "@Stdlib.Lists.List"; "forallb"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract"; "vdso_ok"].
 #[local] Ltac2 tb__ s := OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.TermBlob.dec2 (tbs__ ()) s.
 From Stdlib Require Import ZArith NArith List Bool PArith Lia.
 From stdpp Require Import bitvector.
@@ -13,13 +14,11 @@ From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3 Require Import SymState 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc Require Import
   MallocModel MallocInv MallocLemmasBase MallocWfInv MallocWfMain MallocLayout MallocFooter NestTier MallocIface MallocLaws Contract ReprGlue ZBits.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib Require LiaFast.
+From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc Require ContractI.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Close Scope bv_scope.
 Open Scope Z_scope.
-
-Definition auxv_keys : list Z := ltac2:(tb__ "0|0|
-SaS5Z3SaS5Z4SaS5Z5SaS5Z10SaS5Z6SaS5ZbSaS5ZcSaS5Z17SaS5Z19SaS5Z0SeS5A1A3A3A3A3A3A3A3A3A3A3").
 
 Section Req.
   Variable segs : list Segment.
@@ -34,8 +33,44 @@ SdS38R1Vw;A2S1S8S20Q8M0A1M1A1S54Vsegs;Vm;S23S13Va;S16R2A1A2A1A3ScG1S22G0S3bVv;Vw
   Definition readable (m : word -> option byte) (lo n : Z) : Prop := ltac2:(tb__ "0|1|
 S5S0S14Vlo;R1A2S15R1S13Vlo;Vn;A2A2A2S2S20Q8A1M0G0S1S8G0A1S54Vsegs;Vm;S23R3A1A3ScG0R1A2A3Lb;A2F_;Fa;").
 
-  Definition pristine_req (ri : run_init) (rho : valuation) (md : Model) : Prop := ltac2:(tb__ "0|e|
-S4cVrho;A1S20Q40M0A1M1S8S20Q8A1A1F_;S5aVri;A1S5S0S1eR2S26VC;A1S39A3S0S1eR2S2aVC;A1Z4M2A3S0S1eR2S2dVC;A1G2A3S0S1eR2S2cVC;A1Z1A3S0S1eR2S2eVC;A1Z60A3S0S1eR2S2fVC;A1Z1bA3S0S1eR2S2bVC;A1G2A3S0S1eR2S29VC;A1Z20A3S0S1eR2S28VC;A1Z8M3A3S0S1fR2S37VC;A1U8M4Z1000A4S0S2S5S5S1fR3S27VC;A1G4R1A4Lgd;A2S0S2S5S5S2S5S5S0S1fR4S36VC;A1G4R2A4S0S14S5cVri;A1M5R2A2S0S14S13R2Za0A2S17Z2Z40A2M6A2S0S14G5R1A2S0S14S13R1Z10M7A2G6A2S0SdS38R1UaA2M8S1fR6S13R4S1bG7S16R2A1A2A2G4S49S5R2S46Z0M9A4A4F_;Fj;S0SdG8S2S5S5S1fR7S13S13R5S1bG7S16R3A1A2A2G3A2G4R1A4Lv;A2F_;Fj;S0S1fR4S13R2Z88A2G4R1A4S1fR4S13R1G3A2G4S5bVri;A1MaA4A2A2A2A2A2A2A2A2Lq;A2Lav;A2S0S1SfS10G1G1A2MbA1S64S62Vmd;A1McA1SeGbA1A3S0S1S5S21G0S63GcA1A2R1A3S0S1S5S21G0S65GcA1A2R1A3S0S1S5S19R1S5fA2G9A3S0S0S1S5S61GcA1G5A3S0S0S14Z7fff7f800000MdG5A2S14G5Z7fffff800000A2A2S0S14G9GaA2S15GaG6A2A2A2A2S0S0S15G9R1A2S15R1GdA2A2S0S35VC;GcA2S55VC;Vrho;A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2Tbrk0;Tm;").
+  (* LPS 727298f3: the auxv part holds for the launch's auxv layout of either value [r] of the CONFIG_RSEQ
+     flag: its keys, length and AT_RANDOM offset are those of [ContractI]'s view. *)
+  Definition pristine_req (ri : run_init) (rho : valuation) (md : Model) : Prop :=
+    let m := rm rho in
+    let brk0 := ri_brk0 ri in
+    vdso_ok md /\
+    untouched m (mc_ctx C) CTX_SIZE /\
+    untouched m (mc_lock C) 4 /\
+    untouched m (mc_replaced C) 4 /\
+    untouched m (mc_need_locks C) 1 /\
+    untouched m (mc_size_classes C) 96 /\
+    untouched m (mc_small_cnt_tab C) 27 /\
+    untouched m (mc_med_cnt_tab C) 4 /\
+    untouched m (mc_ctz_tab C) 32 /\
+    untouched m (mc_chk_guard_got C) 8 /\
+    reads m (mc_page_size C) 8%nat 4096 /\
+    (exists gd : Z, reads m (mc_chk_guard C) 8%nat gd) /\
+    (exists (r : bool) (av q : Z),
+       reads m (mc_auxv C) 8%nat av /\
+       ri_top ri <= av /\
+       av + ContractI.AM_AUXV_BYTES r <= 2 ^ 64 /\
+       ri_top ri <= q /\
+       q + 16 <= 2 ^ 64 /\
+       (forall j : nat, (j < ContractI.AM_AUXV_N r)%nat ->
+          reads m (av + 16 * Z.of_nat j) 8%nat (nth j (ContractI.am_auxv_keys r) 0)) /\
+       (forall j : nat, (j < ContractI.AM_AUXV_N r)%nat -> exists v : Z, reads m (av + 16 * Z.of_nat j + 8) 8%nat v) /\
+       reads m (av + ContractI.AM_AUXV_RANDOFF r) 8%nat q /\
+       reads m (q + 8) 8%nat (ri_sec ri)) /\
+    vm_maps (m_vmmaps md) = [] /\
+    bv_unsigned (vm_brk (m_vmmaps md)) = brk0 /\
+    bv_unsigned (vm_start_brk (m_vmmaps md)) = brk0 /\
+    brk0 mod PGSZ = 0 /\
+    (alloc_top (m_vmmaps md) = ri_top ri /\
+     (140735332483072 <= ri_top ri /\ ri_top ri <= 140737479966720) /\
+     (0 <= ri_sec ri /\ ri_sec ri < 2 ^ 64)) /\
+    (0 < brk0 /\ brk0 < 140735332483072) /\
+    img_reserved C (m_vmmaps md) /\
+    tp_ok C rho.
 End Req.
 
 Definition all_range (f : Z -> bool) (lo n : Z) : bool := ltac2:(tb__ "0|0|
@@ -73,16 +108,6 @@ Proof. vm_cast_no_check (@eq_refl bool true). Qed.
 
 Lemma le_byte_0 w k : le_byte 0 w k = 0.
 Proof. unfold le_byte. rewrite Z.mod_0_l by (apply Z.pow_nonzero; lia). rewrite Z.shiftr_0_l. reflexivity. Qed.
-
-Lemma auxv_keys_early j : ltac2:(tb__ "0|2|
-S38Vj;U8A2S0S3S1S5S49S5Vj;S46Z0M0A4M1G0A3A1S3S1S5G1Z19A3A1A2F_;").
-Proof.
-  intros Hj.
-  assert (X : forallb (fun j => negb (nth j auxv_keys 0 =? 0) && negb (nth j auxv_keys 0 =? 25)) (seq 0 8) = true) by reflexivity.
-  rewrite forallb_forall in X. specialize (X j ltac:(apply in_seq; lia)).
-  apply andb_prop in X as [X1 X2]. apply Bool.negb_true_iff in X1. apply Bool.negb_true_iff in X2.
-  apply Z.eqb_neq in X1. apply Z.eqb_neq in X2. auto.
-Qed.
 
 Section Thm.
   Variable segs : list Segment.
@@ -163,10 +188,10 @@ S0S53Vsegs;VC;S57VC;Vri;A2M0Vrho;Vmd;A5S0S1SfS10S5S5A2M1A1S58G0A1SeG1A1A3S1S6S5e
     split; [|split; reflexivity].
     pose proof IMG_parts as (Ictx & Ilock & Irep & Inl & Isc & Ismall & Imed & Ictz & Igot & Cmod & Cpos & Chi).
     pose proof REQ as RQ. unfold pristine_req in RQ. cbn zeta in RQ.
-    destruct RQ as (Uctx & Ulock & Urep & Unl & Usc & Usmall & Umed & Uctz & Ugot & Rps & (gd & Rguard) &
-                    (av & q & Rav & Hav0 & Hav1 & Hq0 & Hq1 & Rkeys & Rvals & Rq & Rsec) & Vmaps & Vbrk & Vsbrk & Vpg & (Vtop & Vtr & Vsec) & Vrange & Vimg & Htp).
+    destruct RQ as (Hvd0 & Uctx & Ulock & Urep & Unl & Usc & Usmall & Umed & Uctz & Ugot & Rps & (gd & Rguard) &
+                    (fl & av & q & Rav & Hav0 & Hav1 & Hq0 & Hq1 & Rkeys & Rvals & Rq & Rsec) & Vmaps & Vbrk & Vsbrk & Vpg & (Vtop & Vtr & Vsec) & Vrange & Vimg & Htp).
     assert (TOP : topL L = ri_top ri) by (apply topL_of_range; exact Vtr).
-    unfold MInvR, MInv. cbn [ma_s ma_L MA_init].
+    minvr_split; unfold MInv. cbn [ma_s ma_L MA_init].
     change (rd_of segs (rm rho)) with rd. change (wok_of segs (rm rho)) with wok. fold bv. fold rv.
     split; [apply wf_init|].
     split.
@@ -235,21 +260,33 @@ S0S53Vsegs;VC;S57VC;Vri;A2M0Vrho;Vmd;A5S0S1SfS10S5S5A2M1A1S58G0A1SeG1A1A3S1S6S5e
         apply Z.eqb_eq in X. rewrite X. replace (mc_chk_guard_got C + Z.of_nat k - mc_chk_guard_got C) with (Z.of_nat k) by lia. rewrite Nat2Z.id. reflexivity.
       - apply (reads_holds _ _ _ rv (or_introl eq_refl) Rguard); lia. }
     split.
-    {   intros _. unfold auxv_ok, mc_auxv. exists av, q, 8. cbn [ly_sec]. fold L. rewrite TOP.
+    {   intros _. unfold auxv_ok, mc_auxv. exists av, q, (Z.of_nat (ContractI.AM_AUXV_RIDX fl)). cbn [ly_sec]. fold L. rewrite TOP.
+      pose proof (ContractI.am_auxv_ridx_ltZ fl) as HRI.
+      pose proof (ContractI.am_auxv_bytes_eq fl) as HB.
+      pose proof (ContractI.am_auxv_randoff_eq fl) as HO.
       split; [apply (reads_holds _ _ _ rv (or_introl eq_refl) Rav); lia|].
-      split; [apply (reads_holds _ _ _ rv (or_introl eq_refl) (Rkeys 8%nat ltac:(lia))); lia|].
-      split; [replace (av + 16 * 8 + 8) with (av + 136) by lia; apply (reads_holds _ _ _ rv (or_introl eq_refl) Rq); lia|].
+      split.
+      { pose proof (Rkeys (ContractI.AM_AUXV_RIDX fl) ltac:(lia)) as K. rewrite ContractI.am_auxv_key_rand in K.
+        apply (reads_holds _ _ _ rv (or_introl eq_refl) K); lia. }
+      split.
+      { replace (av + 16 * Z.of_nat (ContractI.AM_AUXV_RIDX fl) + 8) with (av + ContractI.AM_AUXV_RANDOFF fl) by lia.
+        apply (reads_holds _ _ _ rv (or_introl eq_refl) Rq); lia. }
       split; [apply (reads_holds _ _ _ rv (or_introl eq_refl) Rsec); lia|].
       split.
       { intros j Hj. destruct (Rvals (Z.to_nat j) ltac:(lia)) as [v Rv]. rewrite Z2Nat.id in Rv by lia.
-        exists (nth (Z.to_nat j) auxv_keys 0), v.
+        exists (nth (Z.to_nat j) (ContractI.am_auxv_keys fl) 0), v.
         split; [pose proof (reads_holds _ _ _ rv (or_introl eq_refl) (Rkeys (Z.to_nat j) ltac:(lia))) as K; rewrite Z2Nat.id in K by lia; apply K; lia|].
-        destruct (auxv_keys_early (Z.to_nat j) ltac:(lia)) as [K0 K25].
+        destruct (ContractI.am_auxv_keys_early fl (Z.to_nat j) ltac:(lia)) as [K0 K25].
         split; [exact K0|].
         split; [apply (reads_holds _ _ _ rv (or_introl eq_refl) Rv); lia|].
         intros E. exfalso. exact (K25 E). }
-      split; [|lia]. exists 9. split; [lia|]. split; [apply (reads_holds _ _ _ rv (or_introl eq_refl) (Rkeys 9%nat ltac:(lia))); lia|].
-      intros j Hj. lia. }
+      split; [|lia]. exists (Z.of_nat (ContractI.AM_AUXV_N fl - 1)%nat). split; [lia|].
+      split.
+      { pose proof (Rkeys (ContractI.AM_AUXV_N fl - 1)%nat ltac:(lia)) as K. rewrite ContractI.am_auxv_key_last in K.
+        apply (reads_holds _ _ _ rv (or_introl eq_refl) K); lia. }
+      intros j Hj. exists (nth (Z.to_nat j) (ContractI.am_auxv_keys fl) 0).
+      split; [pose proof (reads_holds _ _ _ rv (or_introl eq_refl) (Rkeys (Z.to_nat j) ltac:(lia))) as K; rewrite Z2Nat.id in K by lia; apply K; lia|].
+      split; [exact (ContractI.am_auxv_keys_nz fl (Z.to_nat j) ltac:(lia)) | exact (ContractI.am_auxv_keys_late fl (Z.to_nat j) ltac:(lia))]. }
     split.
     {   intros e He. rewrite Vmaps in He. destruct He. }
     split; [   exact Vimg |].

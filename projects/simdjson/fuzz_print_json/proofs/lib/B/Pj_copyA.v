@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -140,7 +141,7 @@ Definition copy_cpsA (entry : Z) : Prop :=
   0 < Src -> Src + N <= lo -> 0 < Dst -> Dst + N <= lo ->
   (0 < N -> acc bsegs m Src N /\ rng_class RT Σ Src N) -> (0 < N -> acc bsegs m Dst N /\ rng_class RT Σ Dst N) ->
   (forall sp i, 0 <= i < N -> aclient (rt_live RT Σ) (rt_frames RT Σ) sp (Dst + i)) -> wr_at bsegs m Dst N ->
-  ART RT Σ m -> mem_inv bsegs m -> stk bsegs m lo q -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + PJ_COPY_STACK_A <= q ->
+  ART RT Σ m -> mem_inv bsegs m -> stk bsegs m lo q -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + PJ_COPY_STACK_A <= q ->
   q + 16 <= USTACK_TOP -> q mod 16 = 0 ->
   (forall t0' t1' t2' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F' m',
      ART RT Σ m' -> mem_inv bsegs m' -> stk bsegs m' lo q -> wmono bsegs m m' -> bytes_at bsegs m' Dst src ->

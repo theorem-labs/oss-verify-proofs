@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, a string pointer is at most 2 ^ 47 - 10, was 2 ^ 47 - 17. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -23,7 +24,7 @@ Definition kn0 : list kentry := [KRange (EVar 2) 140735332552704 140737488355328
    KWr (SA (EVar 2) (-16)) (ELit 672);
    KUnk (SA (EVar 2) (-16)) (ELit 672);
    KImg 65536 884736;
-   KRange (EVar 33) 140735332552704 140737488355311;
+   KRange (EVar 33) 140735332552704 140737488355318;
    KRange (EVar 34) 63 63;
    KDisj (SA (EVar 2) (-16)) (ELit 672) (SA (EVar 33) 0) (EAlu Instr.ALU_ADD (EVar 34) (ELit 1));
    KWr (SA (ELit 0) (895952)) (ELit 8);

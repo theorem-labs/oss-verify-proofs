@@ -10,8 +10,8 @@
    IdentBase, so the donor's bridge lemma aro_unowned_of_arodata is not carried. Unlike YG0d's rom_view, it says nothing about owned
    image bytes, so it survives a call whose post keeps only the bytes that are unowned before and after
    (__asan_stack_malloc_*, YG0d.v:298-299): aro_unowned_keep. *)
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_identity lib/A/Rt/WrapRo.v (origin/ossv/recipes 70952e1c8c9)
-   to reac-repacer/fuzz_uci image A (fuzz_uci.asan, sha256 6ea017c24525) on the fuzz_uci A core (276afc86670b): module
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_identity lib/A/Rt/WrapRo.v
+   to reac-repacer/fuzz_uci image A (fuzz_uci.asan, sha256 6ea017c24525) on the fuzz_uci A core: module
    paths; record class TfibSyms -> UciSyms (code only; the donor's own Modified-by lines are kept as its record).
    Numerals moved by symbol + offset from the fuzz_identity unstripped twin to the fuzz_uci unstripped twin (each
    function is the same code up to pc-relative fields: bytecmp 7daa0e2a03d9 with repin_check 9cbc3553c09e's target pass); a .got slot moves to the slot that

@@ -4,7 +4,7 @@
    The unit owner's ruling C2 (2026-10-31 04:19Z) struck the scratch notice that stood here, by a
    comment-only edit that keeps the header at 5 lines, so every line after it keeps its number. *)
 (* fuzz_preset, program part (the kit's tx texts): the ASan contract TEXTS of the harness's text renderer, tx_put,
-   tx_string, tx_line and tx_value (the merged #102 fuzz_preset.c :379-475; the base @0b89c6c1bd :353-441), in cgif's
+   tx_string, tx_line and tx_value (the merged #102 fuzz_preset.c :379-475; the base :353-441), in cgif's
    per-function form (cgif_file
    lib/YC21.v:33-66; the fm port's FMH_Fn.v:101-180), as PRH_FnAlloc.v: fpre (YCbqG's afn_pre_x + the read-only view), the
    argument registers, the realloc trace in the image's universe, the allocator room on the entry state,
@@ -80,7 +80,7 @@
    room_live_cf S' in every post. NO primary room_cf, not even at
    tx_put's raw realloc (the kit owner's ruling (i), on the Tx part's measured composition defect: tx_string / tx_line /
    tx_value could not supply it at their 2nd..kth tx_put state). room_cf's only consumer is a8's
-   malloc_cf_success_of_room (YGcfPath.v:544, it excludes the NULL); the realloc rule takes none. The class-full NULL
+   malloc_cf_success_of_room (YGcfPath.v:545, it excludes the NULL); the realloc rule takes none. The class-full NULL
    is excluded ONCE, globally, by the driver (the driver-contract owner's LLVMFuzzerTestOneInput slot: P8's preset_room -> room_at ->
    no_null_preset); in these texts a refusal lands in the REFUSED outcome (prhtx_out). The live room is
    RELATIVE to the buffer, `blocks_bytes S - cap0 + LIVE_tx <= LIVE_MAX` in all four texts (the S10 walk's tx_value part: the
@@ -177,13 +177,13 @@ Variable SK : YI16.sink_head.
 (* the realloc call's trace for a real-stack record (C-TXTRACE; the short traces are prh_univ_closure's): the
    trace of every frame chain the unwinder can read from s0 = t, through any reader that agrees with the entry view
    on [t - 16, ly_top ly) outside the record's 28 bytes, and that region present (so such a chain exists).
-   IN THE STATE-FREE FORM `inU (as_universe B) ..` (YG01.v:145; why: the note below), NOT arealloc_realizes_cf's
+   IN THE STATE-FREE FORM `inU (as_universe B) ..` (YG01.v:146; why: the note below), NOT arealloc_realizes_cf's
    premise `admits (as_universe B) .. S` (YGcfRealloc.v:98). The old `In _ (as_universe B)` meant, through the
    coercion u_fix, the FIXED list, which holds at this site only the 2-word trace (ACej.v:253) and the slack
    continuations of prh_univ_closure's clause 5 over the callers' contexts (ACej.v:254-268), while the run's trace
    goes on with the fake-frame chain's words: so all four tx texts were VACUOUS on both images. This gap PREDATES the
    P'' batch (it is C-TXTRACE); the universes now carry the site's wild prefix (A' [0x53c74; 0x84db0] ACej.v:273, B'
-   [0x53d60; 0x8529c] YCej.v:414), so the trace is inU, and admits adds the ROOM: a caller supplies it from the wild
+   [0x53d60; 0x8529c] YCej.v:415), so the trace is inU, and admits adds the ROOM: a caller supplies it from the wild
    prefix plus the room COUNT (|wild_part| < u_wmax, or the trace already in the depot), so the four tx texts' rows
    stay CONDITIONAL ON THE COUNT THREAD (owned by the S1 owner, not proved). *)
 (* STATE-FREE (the slice walker's measurement, 2026-10-30; it OVERTURNS the kit owner's 00:20Z pre-ruling that a guard on the
@@ -192,11 +192,11 @@ Variable SK : YI16.sink_head.
    (no lemma in this tree proves it), REFUTES the old premise (d = 1, len0 = cap0 = 0; put 1 grows with k1 = 1, put 2
    fits, K = 1; U = MkUniv [] [[7]] 1, tr = [7;1], depot S0 = [], S1 = [[7;2]], WS1 = [[7;2]]: every caller fact holds
    and `admits (as_universe B) tr S1` is still FALSE - tr is not in the depot, not fixed, and |wild_part| = 1 is not
-   < u_wmax = 1). CORROBORATION FROM THE OTHER SIDE: compiling Tx102Glue on 62dc819e58ff needed exactly one added
+   < u_wmax = 1). CORROBORATION FROM THE OTHER SIDE: compiling Tx102Glue needed exactly one added
    fact in tx_state_fold, `forall tr, admits (as_universe B) tr S -> admits (as_universe B) tr S'`, which no callee
    post gives. WHY `inU` AND NOT A GUARD OR A POST CONJUNCT: admission now comes from the callee's OWN GUARDED ROOM
    premise (a growing put has k = 1 and a fresh slot, so YCbqGwild.wild_room_admits gives admits at its realloc; a
-   fitting put makes no realloc and needs none; applied at TxPut102A_Grow.v:1452 and TxPut102B_GROW.v:1040); inU is
+   fitting put makes no realloc and needs none; applied at TxPut102A_Grow.v:1453 and TxPut102B_GROW.v:1040); inU is
    STATE-FREE, so the existing memory-only trace keep carries it across calls; and unlike the old
    `In _ (as_universe B)` it is NOT VACUOUS, because it includes the wild prefix. Adding prhtx_trace ly' S' W' mem' t
    to every tx post would instead need tx_put's walk to show that a GROW STORES tr, which no realloc post exposes. *)
@@ -245,7 +245,7 @@ Definition prhtx_inv (Lam : list (Z * Z)) (ly : alayout) (S : astate) (W : world
 
 (* bytes a later runtime read finds again, with their shadow facts and values, after an allocator or program call:
    kept_at (a live harness block; a registered read-only global by in_zs; or an image string by route (a), kept_img,
-   its granules' const-shadow cells kept by AR_laws_x's alx_const_cells, journal d15706bda36) or inside one fake frame
+   its granules' const-shadow cells kept by AR_laws_x's alx_const_cells, journal) or inside one fake frame
    of S (the journal keeps a frame's bytes and shadow outside FP) *)
 Definition prhtx_kept (Lam : list (Z * Z)) (ly : alayout) (S : astate) (p n : Z) : Prop :=
   kept_at B Lam p n \/

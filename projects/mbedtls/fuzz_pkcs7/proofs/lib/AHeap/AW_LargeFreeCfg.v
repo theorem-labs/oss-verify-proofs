@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the sealed-GOT and dying-flag cells, A_GOT_SEALED2 and A_DYING, carried through the large-free walk to UnmapOrDie, whose refused branch now reads them). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -198,7 +199,7 @@ Section LargeFreeS.
     assert (RS2 : rsmr_statics m2 can dd madv) by (eapply (rsmr_statics_transport _ _ _ _ _ _ RS1 MU2); intros A' n' H'; apply DJ2; clear -H' SKB LOIMG; lia).
     assert (DS2 : dealloc_statics m2 T CTX).
     { eapply (dealloc_statics_transport _ _ _ _ _ DS1 MU2). intros A' n' [H'|[H1 H2]]; apply DJ2; [clear -H' SKB LOIMG; lia| clear -H' SKB; lia| clear -H2 CH LOIMG; lia| clear -H1 H2 CL SKB; lia]. }
-    dpose RS2 as (_ & _ & _ & GOTF2 & LIM2 & _ & SEAL2 & GPZ2 & PZC2 & _).
+    dpose RS2 as (_ & _ & _ & GOTF2 & LIM2 & _ & SEAL2 & GPZ2 & PZC2 & _ & DY2 & _).
     assert (RMP2 : rmp_statics m2) by (exact (conj GPZ2 (conj PZC2 SEAL2))).
     clear SH1 TST1 PS1 RS1 DS1 SEC1 ARR1 HDR1 FR1 ST1 MI1 LH1.
     (* [comment removed for export] *)
@@ -215,11 +216,12 @@ Section LargeFreeS.
       sec_cells m2' PA nres (n - 1) (Z_to_bv 8 0) nfr' cal' g2' g3' 0 ->
       rw_cells asegs m2' S [CB (Z.to_nat k) (repeat (Z_to_bv 8 0) (Z.to_nat k))] ->
       ro_cells asegs m2' A_GOT_CFLAGS [C8 (Z_to_bv 64 A_CFLAGS)] -> ro_cells asegs m2' A_MMAP_LIMIT [C8 (Z_to_bv 64 0)] ->
+      ro_cells asegs m2' A_GOT_SEALED2 [C8 (Z_to_bv 64 1)] -> ro_cells asegs m2' A_DYING [C4 (Z_to_bv 64 0)] ->
       K mo2' -> J (ms_mem ms3s) mo2' ->
       evtA asegs AL CS (ldB2_post SP gp s2 s1 s0 ra s3 s4 s5 s6 s7 s8 s9 s10 s11 y28 y29 y30 y31 F fc T h ms sz idx lo m2') ms3s ->
       aevtS asegs Q (mkCfg ms3s mo2')).
-    { clear ARR2 LH2 SEC2 SHZ2 HDR2 TST2 FR2 ST2 MI2 PS2 RS2 DS2 RMP2 GOTF2 LIM2 SEAL2 GPZ2 PZC2 MU02 WM02 HK2.
-      intros ms3s m2' mo2' MU02 WM02 ARR2 LH2 SEC2 SHZ2 GOTF2 LIM2 HK2' HJ2' EV.
+    { clear ARR2 LH2 SEC2 SHZ2 HDR2 TST2 FR2 ST2 MI2 PS2 RS2 DS2 RMP2 GOTF2 LIM2 SEAL2 DY2 GPZ2 PZC2 MU02 WM02 HK2.
+      intros ms3s m2' mo2' MU02 WM02 ARR2 LH2 SEC2 SHZ2 GOTF2 LIM2 SEAL2 DY2 HK2' HJ2' EV.
       eapply (evtA_aevtS_KJ AL CS K _ Q _ mo2' KL HK2'); [exact HJ2'| exact EV|].
       cbn beta. intros ms3 mo3 P3 HK3 MM3 HJ3.
       ddestruct P3 as (m3 & z5 & z6 & z7 & z13 & z14 & z15 & z16 & z17 & MU3 & WM3 & MI3 & HDR3 & (mw1 & mw2 & TST3) & ST3 & ->).
@@ -238,13 +240,18 @@ Section LargeFreeS.
       by (eapply ro_cells_transport; [exact GOTF2| exact MU3| apply DJ3; cbn; unfold A_GOT_CFLAGS; clear -TL LOIMG; lia]).
     assert (LIM3 : ro_cells asegs m3 A_MMAP_LIMIT [C8 (Z_to_bv 64 0)])
       by (eapply ro_cells_transport; [exact LIM2| exact MU3| apply DJ3; cbn; unfold A_MMAP_LIMIT; clear -TL LOIMG; lia]).
+    (* 08b1429: UnmapOrDie's refused branch reads the two gates of ReportMunmapFailureAndDie *)
+    assert (SEAL3 : ro_cells asegs m3 A_GOT_SEALED2 [C8 (Z_to_bv 64 1)])
+      by (eapply ro_cells_transport; [exact SEAL2| exact MU3| apply DJ3; cbn; unfold A_GOT_SEALED2; clear -TL LOIMG; lia]).
+    assert (DY3 : ro_cells asegs m3 A_DYING [C4 (Z_to_bv 64 0)])
+      by (eapply ro_cells_transport; [exact DY2| exact MU3| apply DJ3; cbn; unfold A_DYING; clear -TL LOIMG; lia]).
     assert (MU03 : munch (ldA_W lo SP PA idx last ++ [(T + 2888, T + 2904); (S, S + k)]) m m3).
     { eapply munch_trans; [exact MU02|]. eapply munch_weaken; [| exact MU3]. unfold sub_fp, ldA_W; cbn [outside app]; clear; intros y Hy; lia. }
     assert (WM03 : wmono asegs m m3) by (eapply wmono_trans; [exact WM02| exact WM3]).
-    clear ARR2 LH2 SEC2 SHZ2 GOTF2 LIM2 MU02 MU3 WM02 WM3.
+    clear ARR2 LH2 SEC2 SHZ2 GOTF2 LIM2 SEAL2 DY2 MU02 MU3 WM02 WM3.
     (* [comment removed for export] *)
     eapply (unmap_or_die_cfgS AL IMG ALWF CS CSOK h ms K Kd KL CS' CSOK' KdL HAS T_unmap Q) with (lo := lo);
-      try first [exact GOTF3 | exact LIM3 | exact ST3 | exact LOIMG | exact SCS | exact SCS' | exact MI3 | exact HK3 | exact HJ3 | exact HAL].
+      try first [exact GOTF3 | exact LIM3 | exact SEAL3 | exact DY3 | exact ST3 | exact LOIMG | exact SCS | exact SCS' | exact MI3 | exact HK3 | exact HJ3 | exact HAL].
     { clear -HHI; lia. } { clear -MSB; lia. } { rewrite NZ. exact HMS. } { clear; lia. } { clear -SPL; lia. } { clear -SPH; lia. }
     intros c4 P4. ddestruct P4 as (ms4 & mo4 & w5 & w6 & w7 & wa0 & wa1 & wa2 & wa3 & wa4 & wa5 & wa6 & wa7 & w28 & w29 & w30 & w31 & m4 & -> & -> & MU4 & WMO4 & MI4 & ST4 & NONE4 & HKd4 & HJ4).
     rewrite NZ in MU4, WMO4, NONE4.
@@ -295,13 +302,17 @@ Section LargeFreeS.
       by (eapply ro_cells_transport; [exact GOTF2| exact MU3| apply DJ3f; cbn; unfold A_GOT_CFLAGS; clear -LOIMG; lia]).
     assert (LIM3 : ro_cells asegs m3 A_MMAP_LIMIT [C8 (Z_to_bv 64 0)])
       by (eapply ro_cells_transport; [exact LIM2| exact MU3| apply DJ3f; cbn; unfold A_MMAP_LIMIT; clear -LOIMG; lia]).
+    assert (SEAL3 : ro_cells asegs m3 A_GOT_SEALED2 [C8 (Z_to_bv 64 1)])
+      by (eapply ro_cells_transport; [exact SEAL2| exact MU3| apply DJ3f; cbn; unfold A_GOT_SEALED2; clear -LOIMG; lia]).
+    assert (DY3 : ro_cells asegs m3 A_DYING [C4 (Z_to_bv 64 0)])
+      by (eapply ro_cells_transport; [exact DY2| exact MU3| apply DJ3f; cbn; unfold A_DYING; clear -LOIMG; lia]).
     assert (MU03 : munch (ldA_W lo SP PA idx last ++ [(T + 2888, T + 2904); (S, S + k)]) m m3).
     { eapply munch_trans; [exact MU02|]. eapply munch_weaken; [| exact MU3]. unfold sub_fp, ldA_W; cbn [outside app]; clear; intros y Hy; lia. }
     assert (WM03 : wmono asegs m m3) by (eapply wmono_trans; [exact WM02| exact WM3]).
-    clear ARR2 LH2 SEC2 SHZ2 HDR2 TST2 FR2 ST2 MI2 PS2 RS2 DS2 RMP2 GOTF2 LIM2 SEAL2 GPZ2 PZC2 MU02 WM02 MU3 WM3 HK2.
+    clear ARR2 LH2 SEC2 SHZ2 HDR2 TST2 FR2 ST2 MI2 PS2 RS2 DS2 RMP2 GOTF2 LIM2 SEAL2 DY2 GPZ2 PZC2 MU02 WM02 MU3 WM3 HK2.
     destruct ARMS as [(NP & z10 & z11 & z12 & z13 & z17 & ->) | (PG & z13 & ->)].
     - (* [comment removed for export] *)
-      apply (TAIL _ m3 mo3 MU03 WM03 ARR3 LH3 SEC3 SHZ3 GOTF3 LIM3 HK3); [exact HJ3|].
+      apply (TAIL _ m3 mo3 MU03 WM03 ARR3 LH3 SEC3 SHZ3 GOTF3 LIM3 SEAL3 DY3 HK3); [exact HJ3|].
       eapply (ld_B2 AL IMG ALWF CS CSOK) with (T := T) (CTX := CTX) (h := h) (ms := ms) (sz := sz) (idx := idx) (mun := mun) (muned := muned) (lo := lo);
         first [ exact HDR3 | exact TST3 | exact TCS | exact DS3 | exact CCS | exact FR3 | exact ST3 | exact LOIMG | exact SCS | exact MI3
               | exact SZB | exact ATH | exact TH | exact CH | clear -TL; lia | clear -CL; lia
@@ -363,12 +374,16 @@ Section LargeFreeS.
         by (eapply ro_cells_transport; [exact GOTF3| exact MUz| apply DJz; cbn; unfold A_GOT_CFLAGS; clear -SKB; lia]).
       assert (LIMz : ro_cells asegs (apply_zeros m3 [(wa PB, Z_to_bv 64 nZ)]) A_MMAP_LIMIT [C8 (Z_to_bv 64 0)])
         by (eapply ro_cells_transport; [exact LIM3| exact MUz| apply DJz; cbn; unfold A_MMAP_LIMIT; clear -SKB; lia]).
+      assert (SEALz : ro_cells asegs (apply_zeros m3 [(wa PB, Z_to_bv 64 nZ)]) A_GOT_SEALED2 [C8 (Z_to_bv 64 1)])
+        by (eapply ro_cells_transport; [exact SEAL3| exact MUz| apply DJz; cbn; unfold A_GOT_SEALED2; clear -SKB; lia]).
+      assert (DYz : ro_cells asegs (apply_zeros m3 [(wa PB, Z_to_bv 64 nZ)]) A_DYING [C4 (Z_to_bv 64 0)])
+        by (eapply ro_cells_transport; [exact DY3| exact MUz| apply DJz; cbn; unfold A_DYING; clear -SKB; lia]).
       assert (MU0z : munch (ldA_W lo SP PA idx last ++ [(T + 2888, T + 2904); (S, S + k)]) m (apply_zeros m3 [(wa PB, Z_to_bv 64 nZ)])).
       { eapply munch_trans; [exact MU03|]. eapply munch_weaken; [| exact MUz]. unfold sub_fp, ldA_W; cbn [outside app]; unfold nZ; clear -PBR PER; intros y Hy; lia. }
       assert (WM0z : wmono asegs m (apply_zeros m3 [(wa PB, Z_to_bv 64 nZ)])) by (eapply wmono_trans; [exact WM03| exact WMz]).
       pose proof (J_madvise m3 mo3 PB nZ HJ3 ltac:(clear -Ha; lia) ltac:(unfold nZ; clear -PG; lia) ltac:(unfold nZ; clear -SKB PER; lia) (HASM mo3 HK3 PG)) as HJz.
       set (mz := apply_zeros m3 [(wa PB, Z_to_bv 64 nZ)]) in *. clearbody mz.
-      apply (TAIL _ mz (madvise_model PB nZ mo3) MU0z WM0z ARRz LHz SECz SHZz GOTFz LIMz (T_madv mo3 HK3 PG)); [exact HJz|].
+      apply (TAIL _ mz (madvise_model PB nZ mo3) MU0z WM0z ARRz LHz SECz SHZz GOTFz LIMz SEALz DYz (T_madv mo3 HK3 PG)); [exact HJz|].
       eapply (ld_B2m AL IMG ALWF CS CSOK) with (T := T) (CTX := CTX) (h := h) (ms := ms) (sz := sz) (idx := idx) (mun := mun) (muned := muned) (lo := lo);
         first [ exact HDRz | exact TSTz | exact TCS | exact DSz | exact CCS | exact FRz | exact STz | exact LOIMG | exact SCS | exact MIz
               | exact SZB | exact ATH | exact TH | exact CH | clear -TL; lia | clear -CL; lia

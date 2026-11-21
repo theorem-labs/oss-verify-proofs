@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: amaps_in_ledger's ledger-membership conjunct is asked only of an entry of non-zero size, because at LPS 727298f3 munmap's ledger drops a zero-size entry at the cut's end. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -867,7 +868,8 @@ Definition amaps_in_ledger (s : ast) (mo : Model) : Prop :=
      (* [comment removed for export] *)
      (forall mp, In mp (as_maps st) -> mp_kind mp <> MkRegionInfo -> (forall c, mp_kind mp <> MkUserMap c /\ mp_kind mp <> MkFreeArrayMap c) ->
         mp_kind mp <> MkPtrArrayCommit -> mp_kind mp <> MkShadowRemap ->
-        In (Z_to_bv 64 (mp_base mp), Z_to_bv 64 (mp_size mp)) (vm_maps h) /\ 0 <= mp_base mp < 2^64)   (* [comment removed for export] *)
+        (0 < bv_unsigned (Z_to_bv 64 (mp_size mp)) -> In (Z_to_bv 64 (mp_base mp), Z_to_bv 64 (mp_size mp)) (vm_maps h))
+        /\ 0 <= mp_base mp < 2^64)   (* At 727298f3 munmap's ledger is maps_subtract, which drops a zero-size entry based at the cut's end (LazyLedger.maps_subtract_rm_nz), so ledger membership is asked only of an entry of non-zero size, as boost-json/fuzz_parse's As/AllocRep.v restates it. *)
   /\ (* [comment removed for export] *)
      (forall mp, In mp (as_maps st) ->
         (mp_kind mp = MkRegionInfo \/ (exists c, mp_kind mp = MkUserMap c \/ mp_kind mp = MkFreeArrayMap c) \/ mp_kind mp = MkPtrArrayCommit) ->

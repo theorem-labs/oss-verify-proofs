@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's vDSO draw and reservation). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -26,7 +27,7 @@ Lemma rta_with_fds : forall Σ mo fds, ARTM_A Σ mo -> ARTM_A Σ (with_fds fds m
 Proof. intros Σ mo fds H. exact H. Qed.
 
 Lemma rta_mat_stable : forall Σ, mat_stable (ARTM_A Σ).
-Proof. intros Σ. unfold ARTM_A, artm_sys, lazy_in_maps_A, confined0, shadow_lazy, maps_zbound, BackingAlgebra.model_ivs_wf, NodesA_madv.noaccess_pos. mat_stable_tac. Qed.
+Proof. intros Σ. unfold ARTM_A, artm_res, artm_sys, lazy_in_maps_A, confined0, shadow_lazy, maps_zbound, BackingAlgebra.model_ivs_wf, NodesA_madv.noaccess_pos. mat_stable_tac. Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)

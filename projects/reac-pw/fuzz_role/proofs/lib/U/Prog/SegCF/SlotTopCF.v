@@ -2,7 +2,7 @@
    cut-free copy of the slot proof (U/Prog/SlotInvCF.v, SegCF/*.v) under the agreement frame's facts
    (SlotInvCF.frame_facts_cf: U/FrameAPI.frame_facts_ubsan with the cut-free allocator and the agreement room
    128 <= sb_cap <= CAP_AG). Model: reac-pw/fuzz_pin's U/Prog/SegCF/SlotTopCF.v (libreac/fuzz_ctrl's released
-   U/Prog/SegCF/SlotTopCF.v with its SegCF/Segs.v, origin/ossv/recipes 25e3d17bdb50), for role's four segments:
+   U/Prog/SegCF/SlotTopCF.v with its SegCF/Segs.v), for role's four segments:
    - role_build_holds_cf / role_check_holds_cf: the two evt contracts of the UBSan LLVMFuzzerTestOneInput, from the
      walks U/Prog/role_build.v (the leaves memset, memcpy, strlen and pod_write_ent) and U/Prog/role_check.v (the
      contracts of role's own callees: the libc leaves, the parse, the checks, and pod_nearest with its binary128 value

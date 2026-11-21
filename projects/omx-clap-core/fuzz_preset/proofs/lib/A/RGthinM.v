@@ -4,7 +4,8 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFfi.v, with its module paths changed and its addresses moved to libreac/fuzz_disco's ASan build. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_disco/lib/A/AFfi.v, with its module paths and module names changed; 392 of its 466 lines of code are new or changed and 398 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSRealloc_S4.v, with its module paths, addresses and numbers changed; 151 of its 201 lines of code are new or changed and 416 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10-29: relocated from proofs/plugin-hostd/fuzz_reply/lib/A/RGthinM.v (hub 66a127cb11e, blob 8b4e2d34d15a) to omx-clap-core/fuzz_preset's asan image A by a Theorem Labs lane's internal file alreloc.py (frozen-c4338d099cfb8025), module paths and every image numeral moved by symbol + offset; record, the internal file A5.md. *)
+(* Modified by Theorem Labs, 2026-10-29: relocated from proofs/plugin-hostd/fuzz_reply/lib/A/RGthinM.v (blob 8b4e2d34d15a) to omx-clap-core/fuzz_preset's asan image A by a Theorem Labs lane's internal file alreloc.py (frozen-c4338d099cfb8025), module paths and every image numeral moved by symbol + offset; record, the internal file A5.md. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset.asan image A: the machine runs of the thin realloc segments, between the call sites of Allocate,
    REAL(memcpy) and Deallocate and realloc's return (the addresses: RGthinK.v).
 

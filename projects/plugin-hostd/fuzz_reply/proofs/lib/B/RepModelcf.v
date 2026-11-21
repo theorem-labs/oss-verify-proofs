@@ -1,19 +1,20 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepModelcf.v (commit f01d79f3fb5, cf refill round 3; file sha256 e2c07001688b) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepModelcf.v (cf refill round 3; file sha256 e2c07001688b) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The class-full report of the cf allocator instance, at the MODEL level only (itree / astate): no machine, no
    symbolic execution, no address.
    rule 24: proves no function (kind: model and invariant lemmas).
-   (1) [exh_set]: the state shift of set_exh_cf (YG00cf.v:38-41), and [set_exh_cf_eq].  upd_reg is YG06.v:11.
+   (1) [exh_set]: the state shift of set_exh_cf (YG00cf.v:39-42), and [set_exh_cf_eq].  upd_reg is YG06.v:11.
    (2) [tsim]: two trees that differ only in the snapshots their IAsk nodes carry.  amreal (YG0d.v:66-85) reads a
        snapshot only through aok (YG00.v:593-599), so [amreal_tsim] carries amreal across [tsim]; [tsim_bind] composes
-       it; [tsim_append_exh]: errb_append_cf (YG00cf.v:133-143) touches st_secs only and asks only KMmapSec, whose aok
+       it; [tsim_append_exh]: errb_append_cf (YG00cf.v:134-144) touches st_secs only and asks only KMmapSec, whose aok
        does not read the state, so shifting the state by [exh_set c] commutes with it.
-   (3) [tree_classfull_cf]: the cf refill tree (YGcfInstRefill.v:58) on a non-batch class whose user map would cross
-       kFreeArrayOffset is the two report appends followed by the shift (YG00cf.v:147-178, :181-224), and
+   (3) [tree_classfull_cf]: the cf refill tree (YGcfInstRefill.v:59) on a non-batch class whose user map would cross
+       kFreeArrayOffset is the two report appends followed by the shift (YG00cf.v:148-179, :182-225), and
        [amreal_classfull_shift] moves the shift in front of the appends for amreal.
    The equation of (3) reassociates ibind under IAsk continuations, so it uses Stdlib's functional_extensionality. *)
-(* Built against the report interface at RepIFcf 2d6dcb3547a (errb_call_pre's lk / errb_slack). *)
+(* Built against the report interface at RepIFcf (errb_call_pre's lk / errb_slack). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -213,7 +214,7 @@ f_equal. apply functional_extensionality. intros r1. cbv beta. rewrite rep_ibind
 f_equal. apply functional_extensionality. intros r2. cbv beta. cbn [ibind]. apply Hk.
 Qed.
 
-(* map_more_user_cf's class-full arm (YG00cf.v:177) on a class whose byte is clear. *)
+(* map_more_user_cf's class-full arm (YG00cf.v:178) on a class whose byte is clear. *)
 Lemma rep_arm : forall c S, exh_mem_cf S c = false ->
   (errb_report_cf c ;; set_exh_cf c ;; ret false) S = rep_tree S c false.
 Proof.
@@ -278,9 +279,9 @@ Qed.
 
 (* ---------------------------------------------------------------------------- *)
 (* (4) The other arm: the class's byte is ALREADY set (exh_mem_cf S c = true).    *)
-(* errb_report_cf prints nothing (YG00cf.v:149) and set_exh_cf finds its hole in  *)
+(* errb_report_cf prints nothing (YG00cf.v:150) and set_exh_cf finds its hole in  *)
 (* place, so the whole tree returns (tt, S): a class's holes are only the one     *)
-(* sentinel and NoDup (wrc_holes, YG01cf.v:43), so add_hole re-makes the same list.*)
+(* sentinel and NoDup (wrc_holes, YG01cf.v:44), so add_hole re-makes the same list.*)
 Lemma rep_arm_set : forall c S, exh_mem_cf S c = true ->
   (errb_report_cf c ;; set_exh_cf c ;; ret false) S = IRet (false, exh_set c S).
 Proof.

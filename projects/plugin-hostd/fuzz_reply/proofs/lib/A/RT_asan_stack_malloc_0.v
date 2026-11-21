@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the runtime site contract of __asan_stack_malloc_0 (FakeStack class 0) on
    fuzz_reply.asan at 0x3d168, YG0d.v's astack_malloc_realizes at class 0, which W_frame.v (palf_sm0) and the core
-   consume.  Relocated from libreac/fuzz_grant's walk of the same code, a working branch c8e8b0fa5ec
+   consume.  Relocated from libreac/fuzz_grant's walk of the same code, a working branch
    proofs/libreac/fuzz_grant/lib/A/Rt/StackMalloc0Tbl.v (module SM0Tbl below) and StackMalloc0.v (the rest),
    themselves ported from proofs/cgif/cgif_rgb_fuzzer/lib/YF9p.v + YF9q.v (trb_stack_malloc_0) into
    cgif_file_fuzzer's vocabulary.  fuzz_grant's 93 words at 0x3cda4 equal fuzz_reply's at 0x3d168 except the eight
@@ -14,6 +14,7 @@
    and the T+48/T+56 cells (generated AF0m.v), fsA_rodata (RelocA's AF0r.v, checked by fsA_rodata_chk), the image
    end 6266880 -> 6270976 (TFIB_IMG_END 0x5fb000) in the low-zone bounds, GrantSyms -> TfibSyms, module paths;
    the code table adds class 0's range on top of AF0r.tbl_fs, which (unlike fuzz_grant's) does not hold it. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

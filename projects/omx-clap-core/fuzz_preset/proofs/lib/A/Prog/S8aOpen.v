@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the contract and walk of reac_ctrl_identity_poll_block on fuzz_grant.asan, written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v, proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_grant/lib/A/Prog/CtrlIdentityPollBlock.v, with its module paths and module names changed; 2273 of its 2322 lines of code are new or changed and 374 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, slice S8a EX-VALUE, image A' (asan #102, pin 1be0f53d, unstripped twin bff8519b): PIECE 6 of the walk
    of ex_value, `ev_items_open` (the internal file PIECES.md:94), CLOSED: ev_items_open_holds (the last lemma of this file) proves
    S8aIface.v:345's ev_items_open_spec verbatim, at L := A_prog_listing, PA := PI_prog_A, PI := prh_img_A,
@@ -18,7 +19,7 @@
    (the empty container, as ev_at_end; piece 10 is not called here), or to P_EXIT 0x83d48 (the grammar's depth
    refusal above PjGrammar.MAXD). Instructions walked: 0x834bc-0x834c8, 0x83654-0x83744, 0x83768-0x837e8 (122 with
    the report arms, the internal file PIECES.md); every report arm is a branch the token machinery shows not taken. The conclusion is
-   `SRr` (srealizes, YA0n.v:35-38); no second form of any interface predicate is written here.
+   `SRr` (srealizes, YA0n.v:36-39); no second form of any interface predicate is written here.
    The walk, by cut (offsets from ex_value's entry):
    - evo_head, 0x834bc (EV_ITEMS): the seated state evo_ss (evo_entry) with the measured branch outcomes as facts
      (evo_add_cond): (R) 31 < dep, the refusal -> P_EXIT (evo_refuse_post); dep <= 31 with (J0) v = 0, (J1) v's tag
@@ -39,8 +40,8 @@
      makes no call, so no callee's m-form post is used.
    The model step (ev_V_open_at) is COPIED as pure spec from the released plain ex_value_m.v:77-116, :270-292 (no
    plain or UBSan file is Required or cited); evo_mask_bit is COPIED from WalkS8a's S8aWs.v ws_mask_bit.
-   #102 (the port to image A', a working branch on the cut 7cdbb61b5fa0): ported from the old-pin proof of
-   a working branch 8f1571cb9e13 (image A d83eb25d, twin f0d2e8d4, ex_value 0x82f30) BY SYMBOL: every pc in a
+   #102 (the port to image A', a working branch on the cut): ported from the old-pin proof of
+   a working branch (image A d83eb25d, twin f0d2e8d4, ex_value 0x82f30) BY SYMBOL: every pc in a
    comment is A' ex_value 0x832a4 + the same offset (+0x374; checked against the A' listing of pin 1be0f53d, the
    stacknarrow neutral disassembly); the EV_* / EVO_* offsets and every stepped word are unchanged, so the runs need no
    edit. 9 of the 122 words walked differ, all untaken report arms' `jal __asan_report_*`; the CHANGED frame string
@@ -51,7 +52,7 @@
    covered no access), so evo_wsl asks that bound, not `x0 + len + 8`: the loop reads the bytes [x0 + i, x0 + len) only.
    BUILD: the targeted route, the internal file zfb-targets.e5b8f1f4ec31aa52.sh (the internal file zfactsbuild.sh passing env
    TARGETS to the internal file ows.sh start) with TARGETS = this file's and S8aClose.v's .vo, PAU=pau-preset-102 (the 4 #102 pins;
-   asan 1be0f53d), FACTS 8f3e7e1a07f1, at a pushed commit: the two files and their Require closure only. *)
+   asan 1be0f53d), FACTS, at a pushed commit: the two files and their Require closure only. *)
 (* The engine is the one of preset's lib/A/Prog/FuzzStrdup.v (c-omx-alloc-preset-s1): YC80x / YC1fPx over YCbqG's
    ajournal_x, with the float state fxc of the cut (the internal file PIECES.md house rule 4).
    Numerals here, classified (brief rule 4): ADDRESS - none is typed: every pc is `ev_pc <offset>` of S8aIface.v or
@@ -63,7 +64,7 @@
    and the 32-alignment). DERIVED:
    Z.of_nat PjGrammar.MAXD (the depth bound) and 31 = PjGrammar.MAXD - 1 (the depth test's immediate), 2 ^ 47 (the
    model's address-space bound), 2 ^ 64 / 2 ^ 32 (word ranges), 0x7fff7f800000 (the lower bound of ASAN_CEIL,
-   YG0f.v:16), 2 ^ 44 (the shadow band, FuzzStrdup.v:84), 512 (A_LIM, YC4aP.v:20), the atom indices of the symbolic
+   YG0f.v:16), 2 ^ 44 (the shadow band, FuzzStrdup.v:85), 512 (A_LIM, YC4aP.v:21), the atom indices of the symbolic
    states (the engine's numbering: registers 0..31, extra values from 32), the region positions 0..6 of a state's
    region list. WORD: the byte constants 123 '{', 91 '[', 125 '}', 93 ']', 32 (the largest blank), 255, the tags
    5 (JArr) / 6 (JObj) of PjTree.v:22-23 (all tags in 0..6), EV_WSMASK 4294977024, 0, 1, -1.
@@ -227,7 +228,7 @@ Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : Cf
 (* the cut's slot, as a byte offset from the listing's base (DERIVED: the generated A_prog_sigma / A_prog_base) *)
 Definition EVO_PC (off : Z) : Z := A_prog_sigma AS_ex_value + off - A_prog_base.
 
-(* the shadow band the token machinery works in (FuzzStrdup.v:84) *)
+(* the shadow band the token machinery works in (FuzzStrdup.v:85) *)
 Definition EVO_Bx : sv := SOff 24 0.
 Definition EVO_Bspan : Z * Z := (SHADOW_OFF, SHADOW_OFF + 2 ^ 44 - 1).
 (* the lower bound of ASAN_CEIL (YG0f.v:16): every stack byte is at or above it *)
@@ -311,7 +312,7 @@ Context {hl : Z}.  (* AR_laws_x's head length (YCbqG.v), implicit: inferred from
 Hypothesis LAWS : AR_laws_x SEGS B ARx hl.
 (* The per-byte law `alx_zshadow_byte` of AR_laws_x, stated as a hypothesis of this Section: it says that every byte
    of the REAL STACK reads shadow 0. The journal cannot give it: shadow_addr q is about 0x1000_7fef_0000, below
-   alloc_ceiling 0x7fff_7f80_0000, so ajournal_x's "at or above alloc_ceiling" clause (YCbqG.v:357, ajournal_xb) does
+   alloc_ceiling 0x7fff_7f80_0000, so ajournal_x's "at or above alloc_ceiling" clause (YCbqG.v:358, ajournal_xb) does
    not cover it. Section z's ev_items_open_holds discharges it by the citation `alx_zshadow_byte SEGS B ARx LAWS`. *)
 Hypothesis EV_ZSH_BYTE : forall ly S Hp (W : world SEGS) mem md z,
   ARx ly S Hp W mem md -> ly_stk_lo ly <= z < ly_stk_hi ly ->
@@ -324,7 +325,7 @@ Hypothesis EV_ZSH_BYTE : forall ly S Hp (W : world SEGS) mem md z,
 #[local] Notation EV_ENDAT := (@ev_at_end rc cp prh_img_A RL A_prog_listing PI_prog_A B ARx SK).
 #[local] Notation EV_TOEXIT := (@ev_to_exit fx rc cp prh_img_A RL A_prog_listing PI_prog_A B ARx SK).
 
-(* the frame of a stretch: what it did not write, it kept (FuzzStrdup.v:189-197) *)
+(* the frame of a stretch: what it did not write, it kept (FuzzStrdup.v:190-198) *)
 Lemma evo_aview_of_frame : forall (Wx : world SEGS) (E' : env) rs (m m' : word -> option byte) a,
 frame_of E' rs (mrestrict (w_H Wx) m) (mrestrict (w_H Wx) m') ->
 ~ in_wrange E' rs a -> 0 <= a < 2 ^ 64 ->

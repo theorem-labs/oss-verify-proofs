@@ -23,14 +23,15 @@
    achain_chain_pre of it. joined's new premises at its call: len's 8 bytes present (the journal's window), and
    (pass 5b) the stack from len - 16 present, from the statement's astack_pres kept by astack_pres_journal. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 285 of its 337 lines of code are new or changed and 5001 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image A (fuzz_segconf.asan): the piece MISS -> KLOOP of segment A11b of
    reac_segconf_parse_file's walk, `pfm_miss_ok : forall n, HA_KLOOP B n 0 -> H_MISS B n` (statements:
    lib/A/Prog/pf_pieces.v:623-636 and lib/A/Prog/pf_a11b_d.v). Part of segment A11b's proof, by the G3 walk owner, 2026-10-30.
    proves function reac_segconf_parse_file (segment A11b, piece MISS; reuse search and CONFIRM:
-   the unit's internal record, commit dfb49d6ad789, path records/segp/g3-lookup.md,
+   the unit's internal record, path records/segp/g3-lookup.md,
    the rule-24 check 2026-10-30T15:42:08Z; reuse verdict none).
 
-   The code (the excerpt in the unit's internal record, commit dfb49d6ad789, path records/segp/dis/
+   The code (the excerpt in the unit's internal record, path records/segp/dis/
    reac_segconf_parse_file.fuzz_segconf.asan.s), 45 instructions, 0x885a8 .. 0x88658:
      0x885a8 sd s9,0x18(s1)                 slot 0x18 = vp
      0x885ac .. 0x88624  31 x sb zero,X(s11)  cells 0x64..0x81 and 0x8a = 0: known[240] and ntok in scope

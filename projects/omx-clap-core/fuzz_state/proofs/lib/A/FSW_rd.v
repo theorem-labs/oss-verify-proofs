@@ -136,7 +136,7 @@ apply (aview_some_of_apresent tfibsegs). exact (proj1 Hsh).
 Qed.
 (* the reader's objects lie off fs's image [0x10000, FS_IMG_END): the layout's image zone covers [0x10000, FS_IMG_END)
    (AF0x.v img_cover_of_ledger: it holds fs's first and last PT_LOAD) and no client byte lies in it (AR_client_img_law);
-   the donor's blk_off_img / frm_off_img (ACeh.v) say the same but ACeh does not build (ACej.v:30). They lie off the
+   the donor's blk_off_img / frm_off_img (ACeh.v) say the same but ACeh does not build (ACej.v:31). They lie off the
    shadow [SHADOW_OFF, SHADOW_OFF + 2^44) = [0x7fff8000, kHighMemBeg) too: in_app puts each block / frame below
    kLowShadowBeg or at kHighMemBeg and above *)
 Lemma fsw_client_off_img : forall B ly S (W : world tfibsegs) mx md lo len, AR tfibsegs B ly S W mx md -> 0 < len ->
@@ -308,7 +308,7 @@ Qed.
 (* the body of a live block past its 16-byte head is addressable on the MACHINE's memory: AR (over the unpoisoned memory)
    makes its granules addressable (YCbq.range_addressable_of_block), and no head of U covers them, because each head is
    the start of a live block (FSupoisonU.fs_heads) and live blocks are pairwise disjoint (AR_blocks_law). Moved here
-   from the pj_get_str walk (a working branch 145a2f0cc88 FSW_pj_get_str.v pgs_body_addressable), same statement *)
+   from the pj_get_str walk (a working branch FSW_pj_get_str.v pgs_body_addressable), same statement *)
 Lemma fsw_block_body_addressable : forall B ly S U (W : world tfibsegs) mem md P n z len,
   ARU tfibsegs B ly S U W mem md -> FSupoisonU.fs_heads B ly S U ->
   In (P, n) (ablocks B ly S) -> P + 16 <= z -> 0 <= len -> z + len <= P + req_size n ->

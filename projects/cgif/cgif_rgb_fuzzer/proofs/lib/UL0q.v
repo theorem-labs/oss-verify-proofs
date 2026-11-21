@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (bsb_over_read bounds the eight-byte over-read past a string by the end of the strings block, now anchored at the entry draw's top with the execfn string, in place of the old random-block ceiling z_rand; new length_stack_tail). *)
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -287,24 +288,34 @@ split; [reflexivity|]. intros i Hi. destruct i; [|lia]. cbn [nth_error]. rewrite
 rewrite (bytes_at_mbyte ubs2segs m _ _ j HB) by (rewrite length_app; cbn; lia).
 apply nth_error_nth'. rewrite length_app; cbn; lia.
 Qed.
-Lemma bsb_over_read : forall sp argv envp rnd m p L,
-valid_sp sp ->
-bytes_at m (z_strs (bv_unsigned sp) argv envp) (stack_tail argv envp rnd) ->
-z_strs (bv_unsigned sp) argv envp <= p + L -> p + L < z_rand (bv_unsigned sp) argv envp ->
+(* #38: the strings block is anchored at the entry draw's top ([z_strs] takes
+   the top and the execfn string, and [stack_tail] the execfn string, YQ0a.v),
+   and the random block now sits BELOW the strings, so the old ceiling
+   [z_rand] is gone.  The ceiling is the end of the tail: a string of argv
+   ends at or below [z_strs + total_arg_bytes] ([YQ0a.z_argv_bounds]), and the
+   tail runs on past it with envp, the execfn string, its NUL and eight zero
+   bytes, so the eight-byte over-read stays inside the tail. *)
+Lemma length_stack_tail : forall av ev xf,
+Z.of_nat (length (stack_tail av ev xf))
+= Z.of_nat (total_arg_bytes_nat av) + Z.of_nat (total_arg_bytes_nat ev) + Z.of_nat (length xf) + 9.
+Proof.
+intros av ev xf. unfold stack_tail. rewrite !length_app, !length_flatten_strings, repeat_length. cbn [length]. lia.
+Qed.
+Lemma bsb_over_read : forall (top : word) argv envp efn m p L,
+bytes_at m (z_strs (bv_unsigned top) argv envp efn) (stack_tail argv envp efn) ->
+z_strs (bv_unsigned top) argv envp efn <= p + L ->
+p + L + 1 <= z_strs (bv_unsigned top) argv envp efn + Z.of_nat (total_arg_bytes_nat argv) ->
 forall a, p + L < a < p + L - (p + L) mod 8 + 8 -> rdn ubs2segs m (Z_to_bv 64 a) 1 <> None.
 Proof.
-intros sp argv envp rnd m p L Hsp HB Hlo Hhi a Ha.
-pose proof (stack_tail_end sp argv envp rnd) as Hlen.
-assert (Hal : p + L - (p + L) mod 8 + 8 <= z_rand (bv_unsigned sp) argv envp).
-{ apply align8_le; [lia|]. unfold z_rand.
-rewrite <- Zplus_mod_idemp_r, (rand_off_mod8 argv envp), Z.add_0_r.
-pose proof (mod8_of_mod16 (bv_unsigned sp) 0 (proj2 (proj2 Hsp))) as Hm8. rewrite Z.add_0_r in Hm8. exact Hm8. }
-rewrite (proj2 (rdn_mbytes ubs2segs m 1 a [match nth_error (stack_tail argv envp rnd)
-(Z.to_nat (a - z_strs (bv_unsigned sp) argv envp)) with Some b => b | None => Z_to_bv 8 0 end]));
+intros top argv envp efn m p L HB Hlo Hhi a Ha.
+pose proof (length_stack_tail argv envp efn) as Hlen.
+pose proof (Z.mod_pos_bound (p + L) 8 ltac:(lia)) as Hm.
+rewrite (proj2 (rdn_mbytes ubs2segs m 1 a [match nth_error (stack_tail argv envp efn)
+(Z.to_nat (a - z_strs (bv_unsigned top) argv envp efn)) with Some b => b | None => Z_to_bv 8 0 end]));
 [discriminate|].
 split; [reflexivity|]. intros i Hi. destruct i; [|lia]. cbn [nth_error]. rewrite Z.add_0_r.
-unfold mbyte. replace a with (z_strs (bv_unsigned sp) argv envp + Z.of_nat (Z.to_nat (a - z_strs (bv_unsigned sp) argv envp))) at 1 by lia.
-rewrite (HB (Z.to_nat (a - z_strs (bv_unsigned sp) argv envp))) by lia.
+unfold mbyte. replace a with (z_strs (bv_unsigned top) argv envp efn + Z.of_nat (Z.to_nat (a - z_strs (bv_unsigned top) argv envp efn))) at 1 by lia.
+rewrite (HB (Z.to_nat (a - z_strs (bv_unsigned top) argv envp efn))) by lia.
 destruct (nth_error _ _) eqn:Hn; [reflexivity|]. exfalso. apply nth_error_None in Hn. lia.
 Qed.
 Lemma img_rdn1 : forall E m rs r lo len a,
@@ -425,7 +436,7 @@ assert (Hover : forall x,
 bv_unsigned (ew E n) + Z.of_nat (length s) < x <
 bv_unsigned (ew E n) + Z.of_nat (length s) - (bv_unsigned (ew E n) + Z.of_nat (length s)) mod 8 + 8 ->
 rdn ubs2segs (ms_mem ms) (Z_to_bv 64 x) 1 <> None)
-by (rewrite Hp; refine (bsb_over_read _ _ _ _ (ms_mem ms) a (Z.of_nat (length s)) _ HBb _ _); [assumption| lia| lia]);
+by (rewrite Hp; refine (bsb_over_read _ _ _ _ (ms_mem ms) a (Z.of_nat (length s)) HBb _ _); [lia | lia]);
 pose proof (rom_reads _ _ _ HS ltac:(vm_compute; reflexivity)) as Hrom;
 let Hnul := lazymatch goal with H : ~ In _ s |- _ => H end in
 let Hrd := constr:(fun j (Hj : (j <= length s)%nat) =>

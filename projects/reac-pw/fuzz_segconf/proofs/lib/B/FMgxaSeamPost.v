@@ -16,7 +16,7 @@
 
    Two facts about fm.asan's four segments (tfibsegs) are checked by vm_compute: a writable segment
    is readable (so a writable byte is a byte the harness can read), and every segment lies in
-   [0x10000, 0x606000) (0x606000 = sym 0x35000 = GXA's GLOBALS_TOP on A_img, RT_IImgA.v:73). *)
+   [0x10000, 0x606000) (0x606000 = sym 0x35000 = GXA's GLOBALS_TOP on A_img, RT_IImgA.v:74). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

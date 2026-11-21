@@ -1,13 +1,13 @@
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3): segment B3 of reac_segconf_parse_file
    (0x87e38), lib/B/Prog/pf_pieces.v's S_B3. The B3 segment lane of the image-B G3 walk owner, 2026-10-30.
 
-    proves segment B3 of function reac_segconf_parse_file (reuse search, rule 24: origin/main 6e24fa4d602c, origin/ossv/recipes 3abc3740de97, origin/ossv/candidates ee89628c9971, origin/release/pau-projects-recipes b6a0088adcb4, the earlier proof delivery and the working heads, image-B address 0x87e38; output confirmed; the result is recorded with the commissioning brief)
+    proves segment B3 of function reac_segconf_parse_file (reuse search, rule 24:, the earlier proof delivery and the working heads, image-B address 0x87e38; output confirmed; the result is recorded with the commissioning brief)
    Verdict: none released; ADAPTED from the image-A G3 walk owner's image-A segment walks (a working branch's pf_a3_f.v,
    a working branch's pf_a2.v / pf_a2_g.v / pf_a5_k.v / pf_a8b_t.v) and the unit owner's UBSan piece walks
-   (commit 04f2be60e018's lib/Prog/pfA_facts.v, Required: pf_lctx_start, L_parse_start_holds,
+   (a commit's lib/Prog/pfA_facts.v, Required: pf_lctx_start, L_parse_start_holds,
    pf_cnt_start), re-derived on image B's code
-   (reac_segconf_parse_file.fuzz_segconf.asan-ubsan.s). Closed against G3 FINAL at 6f783602b5e3 (the contract
-   lib/B/Prog/reac_segconf_parse_file_c.v, the B-kit copies at 694f3575dda2).
+   (reac_segconf_parse_file.fuzz_segconf.asan-ubsan.s). Closed against G3 FINAL (the contract
+   lib/B/Prog/reac_segconf_parse_file_c.v, the B-kit copies).
 
    The segment (PLAN-pf-asanubsan.md section 5.2, row B3): FRAME 0x88074 -> DONE 0x89114 (the empty text) or HEAD
    0x881f8 (the first line); 0x88074-0x881f8 (97 instructions) + cold 0x891cc-0x891f8 (11) = 108, 9 conditional

@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 3817 of its 3853 lines of code are new or changed and 212 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Sem.
@@ -960,7 +961,7 @@ Section L.
     end.
 
 
-  (* ===== ported from the image-B proof (a working branch fe5ef33a7fe): LC, FI, stage statements, helpers ===== *)
+  (* ===== ported from the image-B proof (a working branch): LC, FI, stage statements, helpers ===== *)
   (* The output-block carry invariant: the 32-byte output cell and the 12 callee-saved registers the prologue stores
      are in mc at [S - 128, S), the local stack region below is still a stack, the writes so far are confined to the
      output block [p + 18, p + 50), the window [S - K, S) and lay_X (the class-0/1 side-stack bytes and the window's

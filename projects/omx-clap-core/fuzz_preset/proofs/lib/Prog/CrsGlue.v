@@ -141,8 +141,9 @@ Lemma cg_auxv_keep : forall sec lo mem mem', auxv_pre B sec lo mem ->
   (forall a, lo <= a < 2 ^ 63 -> mbyte (ms_segs B) mem' a = mbyte (ms_segs B) mem a) ->
   auxv_pre B sec lo mem'.
 Proof.
-  intros sec lo mem mem' (av & ar & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10) KL KH.
-  exists av, ar.
+  intros sec lo mem mem' (rs & av & ar & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10) KL KH.
+  pose proof (auxv_types_len_ge rs). unfold AUXV_RAND_K in *.
+  exists rs, av, ar. unfold AUXV_RAND_K.
   split; [eapply cg_word_keep; [exact H1|]; intros k Hk; apply KL; exact Hk|].
   split; [intros k Hk; eapply cg_word_keep; [apply H2; exact Hk|]; intros j Hj; apply KH; lia|].
   split; [eapply cg_word_keep; [exact H3|]; intros j Hj; apply KH; lia|].

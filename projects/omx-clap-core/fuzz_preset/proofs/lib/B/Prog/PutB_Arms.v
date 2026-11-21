@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset image B' (asan-ubsan #102 pin d663f82d7f48), the walk of put: THE
    TWO ARMS. Arm 1 (failed = 1): the entry run to the return (index 28 `bnez` taken). Arm 0 (failed = 0): the entry
    run to the need test (index 44, `bgeu cap, n + 1 + len`); FAST (cap >= need) to the seat at the join (index 65)
@@ -7,7 +8,7 @@
    (PutB_Loop.putb_loop), fuzz_realloc (index 56, the text through PutB_Base.put_realloc_call), then the NULL arm
    (index 116: failed := 1, the return) or the SUCCESS arm (indices 58 .. 64: buf := res, cap := newcap, o + 8 back
    from the spill at 0(sp)) to the seat and the tail.
-   Texts: the batch kit's cut 7cdbb61b5fa0 (PRH_FnWriter d89d3c67b78, PRH_FnAlloc
+   Texts: the batch kit's cut (PRH_FnWriter d89d3c67b78, PRH_FnAlloc
    4d8aeba047e, PRH_Base ef7c8ca9852). The two gaps the f97c walk met by a _FIX twin are CLOSED BY THE BATCH KIT'S TEXT, so the
    walk proves the text itself:
    (1) REFUSED-RET: the text now takes the consumer window prh_cons_from over put's own all-granted events and

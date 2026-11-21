@@ -61,9 +61,11 @@ Proof using.
   refine {| aa_MR := MRx src0_msyms; aa_laws := L0 |}.
   - intros mem md sec H Hs. apply (MRx_init src0_msyms mem md sec src0_syms_ok); [|exact Hs].
     destruct H. constructor; assumption.
-  - exact (fun fx => @src0_malloc_realizes fx rc Cfg.AcfgMode (@src0_alloc_meta fx rc Cfg.AcfgMode)
+  - (* 08b1429: both carry `@amf AM = false ->` (215 joined [alloc_mark_sysnos]); the mode is pinned here
+       ([Cfg.AcfgMode], amf = false), so the premise is [eq_refl] (as Reusable/YN33.v). *)
+    exact (fun fx => @src0_malloc_realizes fx rc Cfg.AcfgMode eq_refl (@src0_alloc_meta fx rc Cfg.AcfgMode)
       (@src0_malloc_small fx rc Cfg.AcfgMode (@src0_alloc_slot fx rc Cfg.AcfgMode))).
-  - exact (fun fx => @src0_free_realizes fx rc Cfg.AcfgMode (@src0_ntfree_of_A fx rc Cfg.AcfgMode (@src0_ntA fx rc Cfg.AcfgMode))).
+  - exact (fun fx => @src0_free_realizes fx rc Cfg.AcfgMode eq_refl (@src0_ntfree_of_A fx rc Cfg.AcfgMode (@src0_ntA fx rc Cfg.AcfgMode))).
   - exact (fun fx => @src0_free_null fx Cfg.AcfgMode).
   - intros fx pc L A regs mem md m n H. discriminate H.
 Defined.

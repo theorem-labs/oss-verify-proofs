@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: plugin-hostd/fuzz_reply.asan, the cf allocator bridge, part 5: the STRNDUP rule of the `_x`
    journal at top_x's instance, from the cf strndup contract astrndup_realizes_cf (Reusable/YG0dcf.v), taken as a
    hypothesis.  The leaf is the layer's (Reusable/YG0dcf.v astrndup_realizes_cf (pc mid), the measured text):
@@ -13,7 +14,7 @@
       [0x5408c; 0x427b8; 0x838e4] or, when adup's stop rules fire, [0x5408c]; both are fixed traces of the universe
       (u_fix (as_universe TfibB) = Tfib_universe, ACej.v:230-231).  aj_strndup_at_x_ct turns that membership into the
       leaf's admission by YG01.admits_fix (universe_ok from ARcf), as YGcallx's rules do.
-   2. aj_strndup_at_x_ct: the journal-level call-site rule of strndup, the twin of Reusable/YGcallx.v:1062
+   2. aj_strndup_at_x_ct: the journal-level call-site rule of strndup, the twin of Reusable/YGcallx.v:1063
       aj_malloc_at_x_ct at the shared cf shape (ARxs, QMm_cf, xs_cf), written as A/CfRBridgeAjRealloc.v's
       aj_realloc_null_at_x_ct is: the call's pre, amreal_SRr04 + SRr_mono over the model facts of malloc_cf (k + 1)
       (alloc_model_laws_x_cf), acall_post_journal_xw, ajournal_x_nil_pst + ajournal_x_sub, acall_kept_of_journal_x.
@@ -439,7 +440,7 @@ Hypothesis errno_low : api_env segs TfibB.
 Local Abbreviation ARX := (fun ly S Hp W mem md => ARcf (ci := CfImg_A) (cp := CfParams_reply) segs TfibB ly S Hp W mem md /\ Hp = [] /\
     @arodata_ok_cf CfImg_A segs TfibB mem).
 (* FIT CHECK of the relation: the rules' ARX is top_x's relation after W1, whose text is quoted
-   here VERBATIM from commit b27e847023f8, lib/A/W_LLVMFuzzerTestOneInput_top_x.v:171-172
+   here VERBATIM from lib/A/W_LLVMFuzzerTestOneInput_top_x.v:172-173
    (Definition ARX's body); it closes by reflexivity only if the two are the same term. *)
 Goal ARX = (
   fun ly S Hp W mem md => ARcf (ci := CfImg_A) (cp := CfParams_reply) segs TfibB ly S Hp W mem md /\ Hp = [] /\

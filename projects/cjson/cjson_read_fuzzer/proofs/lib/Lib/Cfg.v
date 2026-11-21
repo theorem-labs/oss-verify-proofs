@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: adds refusal_b_215 and acfg_family_off_215, munmap's refusal and its allocation-family membership. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -91,6 +92,16 @@ Proof.
   destruct which as [no | [no | [no | no]]]; rewrite no; reflexivity.
 Qed.
 
+(* munmap (215) is in the allocation family at LPS 727298f3 ([Run.injected_table]), and its
+   refusal is an answer in [Mmap.munmap_errnos]. *)
+Lemma acfg_family_off_215 : forall i, bv_unsigned (in_sysno i) = 215%Z ->
+  injected_family_off ACFG i = true.
+Proof. intros i no. unfold injected_family_off. rewrite no. reflexivity. Qed.
+
+Lemma refusal_b_215 : forall i m r, bv_unsigned (in_sysno i) = 215%Z ->
+  refusal_b i m r = ret_in_errnos munmap_errnos r.
+Proof. intros i m r is_munmap. unfold refusal_b. rewrite is_munmap. reflexivity. Qed.
+
 Lemma ret_in_errnos_ENOMEM : forall r,
   ret_in_errnos [ENOMEM] r = bv_eqb r (errno_ret ENOMEM).
 Proof.
@@ -120,6 +131,7 @@ Proof.
     [ ms0 m0 ms1 m1 live idle acct
     | ms0 m0 live idle acct
     | ms0 m0 live idle acct
+    | | |
     | ms0 m0 n8 eff m1 m2 out live pend spec alive mat
     | ms0 m0 n8 eff m1 out live pend spec alive mat
     | ms0 m0 n8 eff m1 out code live pend spec stopped unkilled
@@ -128,7 +140,10 @@ Proof.
     intros [= -> ->].
   - exact (sstep_cfg_instr segs cfg ms mo ms1 m1 live idle acct).
   - exact (sstep_cfg_instr_fault segs cfg ms mo live idle acct).
-  - exact (sstep_cfg_instr_unmodeled segs cfg ms mo live idle acct).
+  - eapply sstep_cfg_instr_unmodeled; eassumption.
+  - eapply sstep_cfg_vdso_call; eassumption.
+  - eapply sstep_cfg_vdso_materialization_fault; eassumption.
+  - eapply sstep_cfg_vdso_unmodeled; eassumption.
   - exact (sstep_cfg_syscall segs cfg ms mo n8 eff m1 m2 out live pend spec
              (filter n8 eff m1 out pend spec alive) alive mat).
   - exact (sstep_cfg_syscall_materialization_fault segs cfg ms mo n8 eff m1 out
@@ -216,13 +231,16 @@ Proof.
     [ ms0 m0 ms1 m1 live idle acct
     | ms0 m0 live idle acct
     | ms0 m0 live idle acct
+    | ms0 m0 fn n eff m1 m2 out live idle acct
+    | ms0 m0 fn n eff m1 out live idle acct
+    | ms0 m0 fn live idle acct
     | ms0 m0 n8 eff m1 m2 out live pend0 spec fine alive mat
     | ms0 m0 n8 eff m1 out live pend0 spec fine alive mat
     | ms0 m0 n8 eff m1 out code live pend0 spec stopped unkilled
     | ms0 m0 n8 eff m1 out sig live pend0 spec killed
     | ms0 m0 n8 live pend0 spec ];
     intros [= -> ->].
-  1-3: rewrite pend in idle; discriminate idle.
+  1-6: rewrite pend in idle; discriminate idle.
   all: rewrite pend in pend0; injection pend0 as <-.
   5: right; right; right; exact (conj spec (conj eq_refl eq_refl)).
   3: right; left; exists eff, m1, out, code;
@@ -302,13 +320,16 @@ Proof.
       [ ms0 m0 ms1 m1 was_live idle acct
       | ms0 m0 was_live idle acct
       | ms0 m0 was_live idle acct
+      | ms0 m0 fn n eff m1 m2 out was_live idle acct
+      | ms0 m0 fn n eff m1 out was_live idle acct
+      | ms0 m0 fn was_live idle acct
       | ms0 m0 n8 eff m1 m2 out was_live pend0 spec fine alive mat
       | ms0 m0 n8 eff m1 out was_live pend0 spec fine alive mat
       | ms0 m0 n8 eff m1 out code was_live pend0 spec stopped unkilled
       | ms0 m0 n8 eff m1 out sig was_live pend0 spec killed
       | ms0 m0 n8 was_live pend0 spec ];
       intros [= -> ->].
-    1-3: congruence.
+    1-6: congruence.
     all: assert (same_no : n8 = x8) by congruence; subst n8.
     5: exfalso; apply (never_unmodeled (effs i0));
        apply check_syscall_complete_unmodeled; exact spec.

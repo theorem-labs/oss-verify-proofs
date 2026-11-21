@@ -1,6 +1,6 @@
 # COPY.md: the exit-driver record of image A, copied from the working directory
 
-Until commit `8529e243afd7`, `lib/A/AD1y.v` and `lib/A/AE23.v` said in header line 5 that every numeral they hold is
+Until, `lib/A/AD1y.v` and `lib/A/AE23.v` said in header line 5 that every numeral they hold is
 named in `provenance/startup-gen/A/exitdrv/EXITDRV.md`. That directory is a working directory: it is not shipped, so
 the citation had no target in the shipped tree; since that commit line 5 cites this directory's `EXITDRV.md`
 (`README.md`, "Where the headers point"). This directory holds that record, `EXITDRV.md`, and the four run outputs
@@ -12,15 +12,15 @@ headers point.
 
 ## 1. The original
 
-- Commit `fadeeb148437a4303c8c69628e82fb04c844c523`, directory
+- Commit, directory
   `proofs/libreac/fuzz_decode/provenance/startup-gen/A/exitdrv/`. The five copied files are unchanged since they were
-  added: `EXITDRV.md`, `exitdrv.run2.out` and the drvivs gate output by `aefd8c038286`, the two ae37data outputs by
-  `b161fd4d9777` (the later `469e6875cc0a` changes only exitdrv.py there).
+  added: `EXITDRV.md`, `exitdrv.run2.out` and the drvivs gate output, the two ae37data outputs
+   (the later changes only exitdrv.py there).
 - Four copies keep their original's name. The drvivs gate output is shipped as `gate.drvivs.txt`: its original's name
   holds a lane name. copycheck.py finds each copy's original by its bytes, not by its name: the one file of that
   directory that, with the copy's spans put in, is the copy. Section 4 names it by its file sha256.
-- The verbatim originals of the three token copies are also kept in the internal records ref, commit
-  `594fa9d1d7218d06b07214e8bfa929a5d06483a4`: `exitdrv/A/EXITDRV.md` (sha256
+- The verbatim originals of the three token copies are also kept in the internal records ref,:
+  `exitdrv/A/EXITDRV.md` (sha256
   `337cd4a543e524427f97317c58e593077da71c65186ba04ddd41b09402f15c6f`), `exitdrv/A/exitdrv.run2.out` (sha256
   `2dec73eee925572cc0676e3e83ac1e60da78ca513ecaf1f29cbcd65b8e618679`) and `exitdrv/A/gate.drvivs.txt` (sha256
   `0cc0ff1c22f6d08b97aab50dbb9cc4f0cbd5ca0496e4bb88c71cbe00c62e6fc6`). They are the same bytes as the files of that
@@ -48,7 +48,7 @@ original. No span holds a newline, so every line keeps its number, and no line i
 
 | token | class | spans | what it stands for |
 |---|---|---|---|
-| `HUB` | PATH | 1 | the hub clone (a directory) from which the record's writer read the donor at `c8557374ad2e` (`EXITDRV.md` line 5) |
+| `HUB` | PATH | 1 | the hub clone (a directory) from which the record's writer read the donor (`EXITDRV.md` line 5) |
 | `OWNER_WORKER` | NAME | 2 | the worker session that wrote the record and owned the decode start-up files |
 | `PORTER_WORKER` | NAME | 4 | the worker session that ported AF0m / AD2l (the porter) |
 | `MAP_TOOL` | TOOL | 50 | the internal address-map tool that wrote `map.cgif2decode.asan.json`, the `ELFMAP_A` input of exitdrv.py (`../inputs/map.cgif2decode.asan.json`: its `tool` field held the same text, and the same token replaces it there); `MAP_TOOL+symtab` in the source column of `exitdrv.run2.out` (47 rows) is a data address moved by that map and named in the unstripped twin's `.symtab` |
@@ -89,7 +89,7 @@ Its output on this tree (scanner of record: `binscan_of_record.sh`, scanner `060
 
 ```
 $ python3 copycheck.py <hub clone> --scanner <scanner of record>
-copycheck: original fadeeb148437 proofs/libreac/fuzz_decode/provenance/startup-gen/A/exitdrv: 5 files copied (EXITDRV.md, ae37data.af0m-run4.out, ae37data.af0m-run5.out, exitdrv.run2.out, gate.drvivs.txt); 74 spans in 3 files {'LANE': 4, 'NAME': 6, 'PATH': 1, 'TOOL': 51, 'WORKDIR': 7, 'WORKFILE': 5}; every other byte identical; COPY.diff, COPY.md file table and SHA256SUMS match
+copycheck: original proofs/libreac/fuzz_decode/provenance/startup-gen/A/exitdrv: 5 files copied (EXITDRV.md, ae37data.af0m-run4.out, ae37data.af0m-run5.out, exitdrv.run2.out, gate.drvivs.txt); 74 spans in 3 files {'LANE': 4, 'NAME': 6, 'PATH': 1, 'TOOL': 51, 'WORKDIR': 7, 'WORKFILE': 5}; every other byte identical; COPY.diff, COPY.md file table and SHA256SUMS match
 copycheck: scanner on the 11 files here: exit 0, 0 blocking hits; listed, non-blocking, per file: {}
 copycheck: scanner on the original: 64 blocking hits, every one inside a replaced span (0 listed, non-blocking); 58 of 74 spans hold a hit; spans that hold none, by class: {'LANE': 4, 'WORKDIR': 7, 'WORKFILE': 5}
 ```
@@ -101,14 +101,14 @@ unchanged, the one wrong row included (`README.md`, "Erratum").
 
 The record covers both images: section 5 has a decode.asan column (image A: `lib/A/AE23.v`, `lib/A/AD1y.v`) and a
 decode.asan-ubsan column (image B: `lib/B/YE23.v`, `lib/B/YD1y.v`). Its section 0 lists the four `.v` outputs of the
-run by sha256; `lib/A/AE23.v` and `lib/A/AD1y.v` are the later re-emission of `469e6875cc0a` (the startup-A
+run by sha256; `lib/A/AE23.v` and `lib/A/AD1y.v` are the later re-emission (the startup-A
 README.md, "Identity"). Revision 2's note says the seven decimal literals are table rows `DEC` in section 5; section
 5 has no `DEC` row, and the seven rows are in `exitdrv.run2.out` (its last block before the `SEG` rows).
 
 ## 4. Files (the manifest of this directory)
 
 Every file here except this one and `SHA256SUMS` (each names the other's sha256), with the sha256 of its bytes as
-shipped. For a copied file, the file sha256 of its original at commit `fadeeb148437` (the first 12 hex digits; a file
+shipped. For a copied file, the file sha256 of its original (the first 12 hex digits; a file
 that is not a copy has `-`), and the number of replaced spans. `python3 copycheck.py <hub clone> --write-table` wrote
 this table from the originals in git and the files here, and copycheck.py checks every row.
 

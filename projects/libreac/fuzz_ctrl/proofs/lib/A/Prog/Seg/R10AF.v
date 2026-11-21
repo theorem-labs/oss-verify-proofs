@@ -4,12 +4,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names, addresses and numbers changed; 2252 of its 2377 lines of code are new or changed and 886 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/R10A.v; 289 of its 510 lines of code are new or changed and 2156 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/R10A.v c865c4581e03 (the blob this tree had at release c5e779efe8c) at fdd2ed9f9d7.
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   FACTS, PAU pau-libreac-v190. Source: Seg/R10A.v c865c4581e03 (the blob this tree had at release).
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: each <r>_of_F re-derives R10A.<r> at ExecF.RNG_all; <r>_of_F_verbatim checks by constr_eq that its type is
    the type of R10A.<r>. Mechanical re-run, route (a) (lead 22:15Z); input to the ported walk only. *)
 
@@ -27,8 +28,8 @@
 
    NOT re-run here: R10A.r10a_call34 (R10A.v:1060), the `jal reac_ctrl_identity_reply` at 0x816c0. It takes
    reac_ctrl_identity_reply_c.reac_ctrl_identity_reply_contract as its first premise, and no footprint contract
-   `reac_ctrl_identity_reply_contract_F` exists (neither on this base fdd2ed9f9d7 nor on a Theorem Labs lane's
-   working branch 28b0af0a5b2). Per the spec that run stays plain: blocked, reac_ctrl_identity_reply has no _F.
+   `reac_ctrl_identity_reply_contract_F` exists (neither on this base nor on a Theorem Labs lane's
+   working branch). Per the spec that run stays plain: blocked, reac_ctrl_identity_reply has no _F.
    R10A.v itself is unchanged apart from comment text; two comment lines (:63, :1058) differ from the source blob. *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

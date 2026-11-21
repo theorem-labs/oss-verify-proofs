@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the walk of rec_code_declared on fuzz_command.asan, in the shape of proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v (cmpPixel's leaf walk): a seed lemma at the entry, then the executor's run/branch loop to every return. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/rec_code_declared.v, with its module paths and module names changed; 678 of its 715 lines of code are new or changed and 275 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The ASan walk of socket_send (plugin-hostd/fuzz_command, entry BASE + AF_socket_send = 0x8d3e4): it proves
    `tsocket_send_spec` (lib/A/Prog/socket_send_c.v) in the form of cgif_file_fuzzer's per-function walks
-   (lib/A/AC8h.v, lib/A/AChj.v, lib/A/ACb8.v at c8557374ad2e): afn_pre at the entry, the
+   (lib/A/AC8h.v, lib/A/AChj.v, lib/A/ACb8.v at theorem-labs/oss-verify-proofs@293953e8dbd3): afn_pre at the entry, the
    symbolic executor over the position-abstract listing up to each call, the runtime's rules at the calls, the
    return through `paj_ret_at`, and apost_base at the end.
 

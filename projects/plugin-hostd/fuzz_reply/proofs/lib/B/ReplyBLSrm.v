@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/W_LLVMFuzzerTestOneInput_top_x.v, with its module paths and module names changed; 170 of its 243 lines of code are new or changed and 1154 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The image-B relocation of
    lib/A/ReplyLSI.v's remove-arm plugs lsi_LS_rm_step :526 and lsi_LS_rm_cnl_pre :621
-   (a working branch 1318828167d3), for B-TOPX-OWNERS rows 88 and 82 of
-   the B top's fr_contract_top_x (e43cf0c7bef), at the B instance a Theorem Labs lane ruled (06:02Z, 06:5xZ):
+   (a working branch), for B-TOPX-OWNERS rows 88 and 82 of
+   the B top's fr_contract_top_x, at the B instance a Theorem Labs lane ruled (06:02Z, 06:5xZ):
      LSI B OM fr_CAP := fr_LS3cp B CR /\ fr_OUT OM /\ fr_ENT B /\ fr_CAP   (lib/B/ReplyLS3B_inst.v, row G-BLS3-port).
    proves no function (kind: invariant lemma).
    The Require header is lib/B/ReplyLS3B_inst.v's (row G-BLS3-port) plus ReplyB3LS3oGn, ReplyLS3B_inst, ReplyB3LS3Arms,

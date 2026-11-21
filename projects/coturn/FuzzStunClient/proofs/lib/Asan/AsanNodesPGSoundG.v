@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the node statements carry the flag of the flagged relation SpinAlg.srealizesM. *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
@@ -146,6 +147,7 @@ Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 (* [comment removed for export] *)
 
 Section Sound.
+Context {sfl : bool}.   (* the flag of [SpinAlg.srealizesM] *)
 Variable SEGS : list Segment.
 Variable A : atable.
 Variable nx0 : N.
@@ -216,8 +218,8 @@ Lemma region_exit_sound : forall cs E R FULL model TT exitpc rs k' regs' MR',
   (forall E' R' FULL' model',
       env_agree nx0 E E' /\ env_agree (nxt cs) E E' ->
       cs_ok SEGS A LIMIT SINV argH FS0 E' (PGN.region_exit cs exitpc rs k') R' FULL' model' -> m_fs model' = m_fs model ->
-      srealizes SEGS (cfg_of SEGS R' exitpc FULL' model') TT) ->
-  srealizes SEGS (cfg_of SEGS R (pc cs) FULL model) TT.
+      srealizesM SEGS sfl (cfg_of SEGS R' exitpc FULL' model') TT) ->
+  srealizesM SEGS sfl (cfg_of SEGS R (pc cs) FULL model) TT.
 Proof.
   intros cs E R FULL model TT exitpc rs k' regs' MR' HC Hfresh Hrs Hms Hout HK' Hkv Hk.
   destruct (w_fresh_ok_parts nx0 cs Hfresh) as (Fsr & Fkn & Fmaps & Fallow & Fbrk & Ffd & Fle).
@@ -243,7 +245,7 @@ Proof. intros. lia. Qed.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
 Theorem node_isrc_sound : forall args,
-  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 always (fun cs => PGN.node_isrc SEGS nx0 T cs args).
+  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl always (fun cs => PGN.node_isrc SEGS nx0 T cs args).
 Proof.
   intros args cs cs' E R FULL model TT HC _ Hn Hk.
   pose proof HC as HKN. apply co_know in HKN.
@@ -405,7 +407,7 @@ Proof. intros. lia. Qed.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
 Theorem node_idst_sound : forall args,
-  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 always (fun cs => PGN.node_idst SEGS nx0 T cs args).
+  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl always (fun cs => PGN.node_idst SEGS nx0 T cs args).
 Proof.
   intros args cs cs' E R FULL model TT HC _ Hn Hk.
   pose proof HC as HKN. apply co_know in HKN.
@@ -534,7 +536,7 @@ Qed.
 Hypothesis IMG_gfl : img_cell SEGS (RPN.rp_gfl T) (RPN.rp_cfl T).
 
 Theorem node_pgran_sound : forall args,
-  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 always (fun cs => PGN.node_pgran SEGS nx0 T cs args).
+  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl always (fun cs => PGN.node_pgran SEGS nx0 T cs args).
 Proof.
   intros args cs cs' E R FULL model TT HC _ Hn Hk.
   pose proof HC as HKN. apply co_know in HKN.
@@ -710,7 +712,7 @@ Proof.
 Qed.
 
 Theorem node_rppart_sound : forall args,
-  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 always (fun cs => PGN.node_rppart SEGS nx0 T cs args).
+  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl always (fun cs => PGN.node_rppart SEGS nx0 T cs args).
 Proof.
   intros args cs cs' E R FULL model TT HC _ Hn Hk.
   pose proof HC as HKN. apply co_know in HKN.
@@ -884,7 +886,7 @@ Proof.
 Qed.
 
 Theorem node_and2srl_sound : forall args,
-  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 always (fun cs => PGN.node_and2srl cs args).
+  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl always (fun cs => PGN.node_and2srl cs args).
 Proof.
   intros args cs cs' E R FULL model TT HC _ Hn Hk.
   unfold PGN.node_and2srl in Hn. destruct args as [|[r| | | | | | |] [|]]; try discriminate.
@@ -904,7 +906,7 @@ Qed.
 
 (* [comment removed for export] *)
 Theorem node_rpinS_sound : forall eB eN,
-  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 always (fun cs => PGN.node_rpinS SEGS nx0 T cs eB eN).
+  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl always (fun cs => PGN.node_rpinS SEGS nx0 T cs eB eN).
 Proof.
   intros eB eN cs cs' E R FULL model TT HC _ Hn Hk.
   pose proof HC as HKN. apply co_know in HKN.
@@ -1039,7 +1041,7 @@ Qed.
 
 (* [comment removed for export] *)
 Theorem node_rpin_sound : forall args,
-  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 always (fun cs => PGN.node_rpin SEGS nx0 T cs args).
+  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl always (fun cs => PGN.node_rpin SEGS nx0 T cs args).
 Proof.
   intros args cs cs' E R FULL model TT HC HX Hn Hk.
   unfold PGN.node_rpin in Hn. destruct args as [|eB [|eN [|x rest]]]; try discriminate.
@@ -1164,7 +1166,7 @@ Proof.
   - exact Hk.
 Qed.
 
-Theorem pg_xn_sound : ext_stmt SEGS A nx0 LIMIT (PGN.xn SEGS nx0 T) SINV argH FS0.
+Theorem pg_xn_sound : ext_stmt SEGS A nx0 LIMIT (PGN.xn SEGS nx0 T) SINV argH FS0 sfl.
 Proof.
   intros id args. unfold PGN.xn.
   destruct (Nat.eqb id 105); [apply node_pgran_sound|].

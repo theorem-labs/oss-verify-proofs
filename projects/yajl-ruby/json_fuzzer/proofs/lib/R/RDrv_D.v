@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launchT context; the stack window from usp0 - 6,144,513 in place of the 8 MiB below sp for fwrite, free and close; a case split's hypothesis names no longer shadow the section's launch record LT). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -82,6 +83,7 @@ Qed.
 
 Section D.
   Context {RC__ : OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Lib.RunCeiling.RunCeiling}.
+  Context {LT : launchT}.
   Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw) (arg0 arg1 : list byte) (TID : Z)
             (PAD : list byte) (S4 S5 S6 S7 S8 S9 S10 S11 : word).
   Hypothesis VSP : valid_sp sp0.
@@ -100,7 +102,6 @@ Section D.
   Notation usp0 := (bv_unsigned sp0).
   Notation gpv := (Z_to_bv 64 0x10800).
   Notation tpv := (Z_to_bv 64 RATP).
-  Notation IMGB := (build_stack_bytes rph sp0 argv envp uid hw rnd).
   Notation LO' := (LO sp0).
   Notation BASE' := (BASE sp0 argv envp uid hw rnd TID).
   Notation FRAME' mm := (MFRAME sp0 argv mm PAD S7 S6 S5 S4).
@@ -157,7 +158,7 @@ Section D.
     destruct (di_ssp HKG DI _ _ _ _ _ HKx) as [G1 G2]. unfold RGOT_SSP, RSSP_GUARD in G1, G2.
     unfold TDIE. cbn [concat]. rewrite app_nil_r.
     rz_seg Hh Hl. zstep. apply evt_done.
-    eapply (rz_fwrite_diag) with (lo := usp0 - 8388608) (canary := rc_guard) (s := msg) (st := s);
+    eapply (rz_fwrite_diag) with (lo := usp0 - 6144513) (canary := rc_guard) (s := msg) (st := s);
       [ apply TEXIT2_nil | exact Hmi | exact Hh | exact SE
       | rewrite unsigned_lit by lia; apply rodata_bytes; [exact MI| exact RO| lia| lia]
       | exact RNG | rewrite ML; lia | rewrite ML; reflexivity | reflexivity | reflexivity
@@ -172,9 +173,9 @@ Section D.
     rewrite !unsigned_lit in MUc by lia. rewrite !unsigned_lit in ST1 by lia.
     replace (ret_pc (Z_to_bv 64 0x136c8)) with (Z_to_bv 64 0x136c8) by (symmetry; rpc).
     pose proof (agree_on_of_munch _ _ _ MUc WMc) as AG.
-    assert (OUT : forall a, (usp0 - 128 <= a /\ ~ (0x24a00 <= a < 0x24a00 + 232)) -> (fun a0 : Z => outside [(usp0 - 8388608, usp0 + -128); (0x24a00, 0x24a00 + 232)] a0) a).
+    assert (OUT : forall a, (usp0 - 128 <= a /\ ~ (0x24a00 <= a < 0x24a00 + 232)) -> (fun a0 : Z => outside [(usp0 - 6144513, usp0 + -128); (0x24a00, 0x24a00 + 232)] a0) a).
     { intros a Ha. cbn. lia. }
-    assert (OUT2 : forall a, (0x10000 <= a < 0x56000 /\ ~ (0x24a00 <= a < 0x24a00 + 232)) -> (fun a0 : Z => outside [(usp0 - 8388608, usp0 + -128); (0x24a00, 0x24a00 + 232)] a0) a).
+    assert (OUT2 : forall a, (0x10000 <= a < 0x56000 /\ ~ (0x24a00 <= a < 0x24a00 + 232)) -> (fun a0 : Z => outside [(usp0 - 6144513, usp0 + -128); (0x24a00, 0x24a00 + 232)] a0) a).
     { intros a Ha. cbn. lia. }
     apply (rw_cells_agree _ _ _ _ _ AG) in FR; [| intros a Ha; apply OUT; cbn in Ha; lia].
     apply (rw_cells_agree _ _ _ _ _ AG) in ERR; [| intros a Ha; apply OUT2; cbn in Ha; lia].
@@ -190,7 +191,7 @@ Section D.
     clear MUc WMc AG OUT OUT2.
     (* [comment removed for export] *)
     rz_seg Hh Hl. zstep. zstep. apply evt_done.
-    eapply (di_freeX HKG DI (G_fdfs (m_fds mo) FS0) (frame_ok_G_fdfs _ _)) with (lo := usp0 - 8388608) (B := usp0) (p := bufp) (A := A) (n := cap);
+    eapply (di_freeX HKG DI (G_fdfs (m_fds mo) FS0) (frame_ok_G_fdfs _ _)) with (lo := usp0 - 6144513) (B := usp0) (p := bufp) (A := A) (n := cap);
       try reflexivity.
     all: unfold RATP; rewrite ?(unsigned_lit 0x34d40) by lia; rewrite ?(unsigned_lit (usp0 + -128)) by lia.
     - apply TEXIT2_nil.
@@ -247,7 +248,7 @@ Section D.
                                       (Z_to_bv 64 L) (Z_to_bv 64 (A + 6 + L)) (Z_to_bv 64 PL) (Z_to_bv 64 (sx8 (bv_unsigned d1))) (Z_to_bv 64 RSTAGE) x23 S8 S9 S10 S11 t3 t4 t5 t6)
                                F (Z_to_bv 64 0x13648) fc None mm (seg_rom rsegs)) mo) K).
     { intros K HK0 HKK.
-      destruct (Z.ltb_spec (bv_unsigned d1) 128) as [LT|GE].
+      destruct (Z.ltb_spec (bv_unsigned d1) 128) as [HLT|HGE].
       - assert (E8 : sx8 (bv_unsigned d1) = bv_unsigned d1) by (unfold sx8; destruct (Z.ltb_spec0 (bv_unsigned d1) 128); lia).
         rewrite E8 in HKK |- *. replace (128 <=? bv_unsigned d1) with false in HKK by (symmetry; apply Z.leb_gt; lia).
         replace (128 <=? bv_unsigned d1) with false by (symmetry; apply Z.leb_gt; lia).
@@ -270,7 +271,7 @@ Section D.
     assert (CR : 0 <= code < 2^32) by (subst code; destruct (128 <=? _); lia).
     (* [comment removed for export] *)
     rz_seg Hh Hl. zstep. apply evt_done.
-    eapply (di_freeX HKG DI (G_fdfs (m_fds mo) FS0) (frame_ok_G_fdfs _ _)) with (lo := usp0 - 8388608) (B := usp0) (p := bufp) (A := A) (n := cap);
+    eapply (di_freeX HKG DI (G_fdfs (m_fds mo) FS0) (frame_ok_G_fdfs _ _)) with (lo := usp0 - 6144513) (B := usp0) (p := bufp) (A := A) (n := cap);
       try reflexivity.
     all: unfold RATP; rewrite ?(unsigned_lit 0x34d40) by lia; rewrite ?(unsigned_lit (usp0 + -128)) by lia.
     - apply KEXIT_nil.
@@ -318,7 +319,7 @@ Section D.
     (* [comment removed for export] *)
     pose proof (close_spec (Z_to_bv 64 0x135d0) (Z_to_bv 64 (usp0 + -128)) gpv tpv t0 t1 t2 (Z_to_bv 64 2) (Z_to_bv 64 A)
                   (Z_to_bv 64 3) a1 a2 a3 a4 a5 a6 a7 (Z_to_bv 64 P1v) (Z_to_bv 64 LEN) (Z_to_bv 64 3) (Z_to_bv 64 cap) (Z_to_bv 64 RSTAGE) x23 S8 S9 S10 S11 t3 t4 t5 t6 F fc mm
-                  3 errv (usp0 - 8388608)) as IMC.
+                  3 errv (usp0 - 6144513)) as IMC.
     specialize (IMC ltac:(rewrite (unsigned_lit (usp0 + -128)) by lia; exact ST) ltac:(unfold RATP; rewrite (unsigned_lit 0x34d40) by lia; exact ERR) MI eq_refl ltac:(lia)).
     do 2 (specialize (IMC ltac:(unfold RATP; rewrite ?(unsigned_lit 0x34d40) by lia; rewrite ?(unsigned_lit (usp0 + -128)) by lia; lia))).
     specialize (IMC ltac:(unfold RATP; rewrite ?(unsigned_lit 0x34d40) by lia; lia)).

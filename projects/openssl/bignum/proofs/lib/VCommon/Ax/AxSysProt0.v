@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mprotect's vDSO gate and the vDSO). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith Lia Bool List.
@@ -12,9 +13,37 @@ Import ListNotations.
 Local Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
+Lemma refusal_226 (i : SyscallInput) (m : Model) (r : word) :
+  bv_unsigned (in_sysno i) = 226 -> refusal_b i m r = errno_ret_in mprotect_errnos r.
+Proof. intros H. unfold refusal_b. rewrite H. reflexivity. Qed.
+
+Lemma refusal_226_of_errno (i : SyscallInput) (m : Model) (r : word) :
+  bv_unsigned (in_sysno i) = 226 -> errno_ret_in mprotect_errnos r = true -> refusal_b i m r = true.
+Proof. intros H E. rewrite (refusal_226 i m r H). exact E. Qed.
+
 Lemma refusal_226_zero : errno_ret_in mprotect_errnos (Z_to_bv 64 0) = false.
 Proof. reflexivity. Qed.
 
+Lemma injected_off_226 (cfg : SpuriousCfg) (i : SyscallInput) :
+  bv_unsigned (in_sysno i) = 226 -> sc_alloc cfg = false -> injected_family_off cfg i = true.
+Proof. intros H Hc. unfold injected_family_off. rewrite H. cbn. rewrite Hc. reflexivity. Qed.
+
+Lemma spurious_226 (cfg : SpuriousCfg) (i : SyscallInput) (m : Model) (eff eff' : SyscallEffect) (m' : Model) (evs' : list event) :
+  bv_unsigned (in_sysno i) = 226 -> sc_alloc cfg = false ->
+  errno_ret_in mprotect_errnos (eff_ret eff) = true ->
+  check_syscall i eff' m = CheckOk m' evs' -> errno_ret_in mprotect_errnos (eff_ret eff') = false ->
+  spurious_refusal_cfg cfg i m eff.
+Proof.
+  intros H Hc E Hok E'. split; [exact (injected_off_226 cfg i H Hc)|].
+  split; [exact (refusal_226_of_errno i m _ H E)|].
+  exists eff', m', evs'. split; [apply check_syscall_ok_iff; exact Hok | rewrite (refusal_226 i m _ H); exact E'].
+Qed.
+
+(* [comment removed for export] *)
 Lemma prot_shape_lit (prot : word) : bv_unsigned prot = 3 -> mprotect_grows_conflict_b prot = false /\ mprotect_modeled_b prot = true.
 Proof. intros H. unfold mprotect_grows_conflict_b, mprotect_modeled_b. rewrite H. split; reflexivity. Qed.
 
@@ -23,7 +52,9 @@ Record prot_gate (m : Model) (addr len : word) : Prop := mkProtGate {
   pg_al  : bv_unsigned addr mod 4096 = 0;
   pg_top : bv_unsigned addr + fix_nZ len < two_pow_64;
   pg_na  : map_contains (vm_noaccess (m_vmmaps m)) addr (fix_n len) = true;
-  pg_own : map_contains (vm_maps (m_vmmaps m)) addr (fix_n len) = true
+  pg_own : map_contains (vm_maps (m_vmmaps m)) addr (fix_n len) = true;
+  (* LPS 08b1429: a request meeting the vdso/vvar pair is unmodeled. *)
+  pg_vdso : region_free (vdso_reserved (m_kernel m) (vdso_top (m_vmmaps m))) addr (fix_n len) = true
 }.
 
 Section Prot.
@@ -44,11 +75,11 @@ Lemma check_mprotect_na (eff : SyscallEffect) :
   | _ => CheckReject
   end.
 Proof.
-  destruct G as [g1 g2 g3 g4 g5]. unfold check_mprotect. rewrite S1.
+  destruct G as [g1 g2 g3 g4 g5 g6]. unfold check_mprotect. rewrite S1.
   replace (negb (bv_unsigned addr mod page_size =? 0)) with false by (symmetry; apply negb_false_iff, Z.eqb_eq; exact g2).
   rewrite (w_is0_false len g1). fold (fix_nZ len).
   replace (two_pow_64 <=? bv_unsigned addr + fix_nZ len) with false by (symmetry; apply Z.leb_gt; exact g3).
-  rewrite S2. cbn [negb]. cbv zeta. fold (fix_nZ len). fold (fix_n len). rewrite g4, g5. reflexivity.
+  rewrite S2. cbn [negb]. cbv zeta. fold (fix_nZ len). fold (fix_n len). rewrite g6. cbn [negb]. rewrite g4, g5. reflexivity.
 Qed.
 
 Lemma chk_prot (eff : SyscallEffect) (m' : Model) (evs : list event) :
@@ -99,6 +130,10 @@ Proof.
 Qed.
 
 End Prot.
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
 
 Section UsedProt.
 Variables (m : Model) (addr n : word).

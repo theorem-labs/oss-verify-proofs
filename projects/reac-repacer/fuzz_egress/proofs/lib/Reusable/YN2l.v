@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN2l.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO-aware reserved-pair capacity, native brk guards, kernel identity ledger transports and new-brk mmap-base callers). *)
 From OSSVerify.Proofs.reac_repacer.fuzz_egress.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -388,8 +389,11 @@ Let L' := Lset L A (bv_unsigned b).
 Definition sBN : astate := brk2_st A0.
 Lemma sBN_open : open_st p sBN = open_st (SP (length (st_regions A)) PGSZ) (brk2_st A0).
 Proof. reflexivity. Qed.
-Theorem open_BN : open_ctx sBN p L' md3 (fun x => bv_unsigned b <= x < bv_unsigned b + 2 * PGSZ).
+Theorem open_BN :
+vm_mmap_base (m_vmmaps md3) = vm_mmap_base h ->
+open_ctx sBN p L' md3 (fun x => bv_unsigned b <= x < bv_unsigned b + 2 * PGSZ).
 Proof.
+intro VMB3.
 clear Gceil.
 pose proof (mid_md _ _ _ _ _ MID) as (M1 & M2 & M3). pose proof (proj1 alloc_ceiling_val) as AC. pose proof (u64_range b) as Ub.
 pose proof (lg_brk0 _ _ _ _ LG) as (B1 & B2 & B3 & B4 & B5).
@@ -402,7 +406,9 @@ assert (ROo : forall k, (k < N)%nat -> region_of sBN k = region_of A k) by (intr
 assert (ROhi : forall k rg, region_of sBN k = Some rg -> (k < N)%nat /\ region_of A k = Some rg \/ k = N /\ rg = mkRegion RkBrk (2 * PGSZ) [] true).
 { intros k rg Hk. rewrite RO in Hk. destruct (Nat.ltb_spec k N); [left; auto|]. destruct (Nat.eqb_spec k N); [injection Hk as <-; right; auto | discriminate]. }
 assert (LGX : ledger_ok B L' sBN md3 /\ ledger_x L' sBN md3).
-{ destruct MD3 as (_ & ML3 & MM3). exact (ledger_new_brk B L A md LG LX NN sBN md3 Hbk Gfree ER eq_refl VM3 VN3 VNX3 VR3 VS3 VB3 VL3 VT3 ML3 MM3). }
+{ destruct MD3 as (_ & ML3 & MM3).
+  assert (Hker : m_kernel md3 = m_kernel md) by (destruct MDW3 as [v ->]; reflexivity).
+  exact (ledger_new_brk B L A md LG LX NN sBN md3 Hbk Gfree ER eq_refl VM3 VN3 VNX3 VR3 VS3 VB3 VL3 VT3 ML3 MM3 Hker VMB3). }
 pose proof (fresh_region L A md LX b (2 * PGSZ) ltac:(lia) ltac:(lia) ltac:(lia) Gfree) as FRG.
 pose proof (fresh_img B L A md LG b (2 * PGSZ) ltac:(lia) ltac:(lia) ltac:(lia) Gfree) as FI.
 assert (Ep : ptr_addr L' p = bv_unsigned b + PGSZ).

@@ -1,26 +1,27 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: lib/A/RPgCheckStr.v at 77f59d02b01 (the engine run from a fresh entry state and
+(* Modified by Theorem Labs, 2026-10: lib/A/RPgCheckStr.v (the engine run from a fresh entry state and
    its re-seat at a fixed pc) for the value dispatch and the Int arm of reac-pw/fuzz_role's image-A segment M02
    (0x82318 .. 0x823e0). *)
-(* Modified by Theorem Labs, 2026-10: lib/A/RPgCheckStr.v at 77f59d02b01 (the call in the middle of a walk: the run
+(* Modified by Theorem Labs, 2026-10: lib/A/RPgCheckStr.v (the call in the middle of a walk: the run
    to the jal, the callee's contract through SRr_bind, a fresh entry state at the return pc) for the common value
    tail of reac-pw/fuzz_role's image-A segment M02 (0x823e0 .. 0x823f8: the role's range test, check_role, the jump
    to T). *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: ported from proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v (entry state, region and fact proofs, the run/branch loop and its leaf) with the caller-journal leaf of lib/A/ACeu.v rfc_A_ok, aview_frame_off of lib/A/AD28.v (as kept_step) and frm_off_img of lib/A/ACeh.v (as frame_not_img) at c8557374ad2e to libreac/fuzz_knock: lib_asan3_0_listing -> knock_asan_listing, AF_asan3_cmpPixel -> AF_asan_reac_knock_step, tcmp_spec / tcmp_post -> tknock_step_specX / kn_post_step of lib/A/APgCSpec.v, cmp_entry / cmp_regions / cmp_facts / ss_cmp / cmp_SH / cmp_extra / EC / CBx / CBspan / pb_cmpPixel -> step_entry / step_regions / step_facts / ss_step / step_SH / step_extra / EK / KBx / KBspan / pb_knock_stepX; constants: TCMP_STK 16 + ESTACK -> T_step_STK 16, shadow-base atom 42 -> 39, GOT shadow slot / shadow-base cell A_OBJ 0 / A_OBJ 12 -> A_OBJ 1 / A_OBJ 7 (lib/Reusable/YC1f.v got_regionP / bcell_regionP / PALib), image bounds only through lib/Reusable/YImgTop.v (knock's 0x10000 .. 0x5f3000); the struct kp lies in a caller frame (cid, pos) of any class, written through awr_byte's in_frames case by In (cid, pos) own. *)
-(* Modified by Theorem Labs, 2026-10: made from lib/A/RPgCheck.v at fb6520a9cda (its entry state ss_ck, regs_ok_override, the save-slot region and awr_stk / kwr_stk, ck_kept_run, the ret leaf) for reac-pw/fuzz_role's image A (fuzz_role.asan): it walks check_answer 0x82c30 and check_code 0x82c80 against lib/A/RPgCSpec.v's rl_check_answer_specX / rl_check_code_specX on lib/A/Img0.v rsegs. Each function is cut at its calls of the strcmp wrapper (0x41ad0): the run to the call, the call through lib/A/RPgStrcmp.v's aj_strcmp_at (the wrapper's contract astrcmp_realizes is the Section hypothesis ASTRCMP), and a fresh entry state after the call whose save slot holds the caller's ra (and s0) from the extra env slots 33 / 34; the callee-saved registers are threaded across the cuts with cs_eq. The snez-of-xor value lemma is lib/A/RPgCfgChanges.v's snez_xor_Z, restated. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02KeyI.v at 7e8cf15c304 (the engine run from
+(* Modified by Theorem Labs, 2026-10: ported from proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v (entry state, region and fact proofs, the run/branch loop and its leaf) with the caller-journal leaf of lib/A/ACeu.v rfc_A_ok, aview_frame_off of lib/A/AD28.v (as kept_step) and frm_off_img of lib/A/ACeh.v (as frame_not_img) to libreac/fuzz_knock: lib_asan3_0_listing -> knock_asan_listing, AF_asan3_cmpPixel -> AF_asan_reac_knock_step, tcmp_spec / tcmp_post -> tknock_step_specX / kn_post_step of lib/A/APgCSpec.v, cmp_entry / cmp_regions / cmp_facts / ss_cmp / cmp_SH / cmp_extra / EC / CBx / CBspan / pb_cmpPixel -> step_entry / step_regions / step_facts / ss_step / step_SH / step_extra / EK / KBx / KBspan / pb_knock_stepX; constants: TCMP_STK 16 + ESTACK -> T_step_STK 16, shadow-base atom 42 -> 39, GOT shadow slot / shadow-base cell A_OBJ 0 / A_OBJ 12 -> A_OBJ 1 / A_OBJ 7 (lib/Reusable/YC1f.v got_regionP / bcell_regionP / PALib), image bounds only through lib/Reusable/YImgTop.v (knock's 0x10000 .. 0x5f3000); the struct kp lies in a caller frame (cid, pos) of any class, written through awr_byte's in_frames case by In (cid, pos) own. *)
+(* Modified by Theorem Labs, 2026-10: made from lib/A/RPgCheck.v (its entry state ss_ck, regs_ok_override, the save-slot region and awr_stk / kwr_stk, ck_kept_run, the ret leaf) for reac-pw/fuzz_role's image A (fuzz_role.asan): it walks check_answer 0x82c30 and check_code 0x82c80 against lib/A/RPgCSpec.v's rl_check_answer_specX / rl_check_code_specX on lib/A/Img0.v rsegs. Each function is cut at its calls of the strcmp wrapper (0x41ad0): the run to the call, the call through lib/A/RPgStrcmp.v's aj_strcmp_at (the wrapper's contract astrcmp_realizes is the Section hypothesis ASTRCMP), and a fresh entry state after the call whose save slot holds the caller's ra (and s0) from the extra env slots 33 / 34; the callee-saved registers are threaded across the cuts with cs_eq. The snez-of-xor value lemma is lib/A/RPgCfgChanges.v's snez_xor_Z, restated. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02KeyI.v (the engine run from
    a fresh entry state and the rebuild of a cut at a run's last state), with the register tactic m2k_rsv of
    RPgM02KeyV.v and the lemma den_extra of RPgCheckStr.v at the same commit, for the Tail of the piece
    value_nearest of segment M03 of reac-pw/fuzz_headamp image A: a read-only run, so every byte is the entry's and
    the cut's hs_core is rebuilt from the run's journal alone. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image A (fuzz_headamp.asan, pinned sha256
    f3e0669d2819724922df0556b11c2dcd22d1e16fe7e0fe1535ce784b34436c47; every address below is measured on the
    unstripped twin b5f352154c54a97c66fd92dfa228e8a854498f6cd313dba0107900546b043f9a, whose loaded sections are
    byte-equal to the pin's except .note.gnu.build-id): THE TAIL LANE of the piece value_nearest of segment M03 of LLVMFuzzerTestOneInput
    (0x80bc0), lib/A/HPgM3dBase.v's hv_piece_tail_stmt.
-   proves function LLVMFuzzerTestOneInput (reuse search: at ossv/recipes 2d2ff01bb6f2, read by the released-proof
+   proves function LLVMFuzzerTestOneInput (reuse search:, read by the released-proof
    index v5 built 2026-10-30T13:16:21Z, no released proof of these pieces; the lookup record is in the PR body).
 
    THE CODE (five instructions and one branch, fuzz_headamp.c:141):

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""relocownUciB.py -- fuzz_decode B's relocownB.py (provenance/startup-gen/B/af0m/relocownB.py at -decB 7eb81ddb186, sha256
+"""relocownUciB.py -- fuzz_decode B's relocownB.py (provenance/startup-gen/B/af0m/relocownB.py at -decB, sha256
 4a866ee29181) with fuzz_uci image B's inputs; only paths, the header text and the output names change, no rule.
 
 relocownB.py -- derive libreac/fuzz_decode IMAGE B's Tfib_owned_static from decode B's OWN image, keyed by a NAME,
 exactly as image A was derived (provenance/startup-gen/A/af0m/{relocown,patchbase,control,audit}.py), with the
 DONOR = cgif (image B's donor, a10 COREB-STATUS), not grant.
 
-The base (commit ca2cdd36b2e lib/B/YF0m.v) carries cgif's Tfib_owned_static VERBATIM (unrelocated: cgif .data
+The base (lib/B/YF0m.v) carries cgif's Tfib_owned_static VERBATIM (unrelocated: cgif .data
 0x9ff18 vs decode .data 0x9aff8). Every donor row is mapped by a KEY and kept under decode's own key:
   asan_globals descriptor array / per-global redzone -> class c (af0m.py regenerates it)
   .got / .data.rel.ro entry  -> by_pointer: the POINTER TARGET's name; decode's slot holding decode's &target

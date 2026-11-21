@@ -12,10 +12,11 @@
                  outside its window [sp - DRAIN_STK_x, sp), the bytes of F (a frame of S1, apart from every block, so
                  outside drain's footprint dr_fp, which holds block bytes only) and g_lock (an image byte outside
                  G_DR, by HRGP, and off the program statics, PSTG).
-   ROUTE (b), STEP 3 (the image-A twin: a Theorem Labs lane's RIG_x round of lib/A/W_rig_top.v, commit f4cd818e98d): over ARx
+   ROUTE (b), STEP 3 (the image-A twin: a Theorem Labs lane's RIG_x round of lib/A/W_rig_top.v): over ARx
    at W_relay_instance_gone_cx.v's generic Section; the journals are ajournal_gx_x at the kit's RIG_STK_x /
    DRAIN_STK_x, GLIVE carries the cut's head set.
    Proves no function (kind: segment lemma). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

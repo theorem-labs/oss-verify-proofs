@@ -1,5 +1,5 @@
 (* Theorem Labs, 2026-10: fuzz_preset, image A' (asan #102 pin 1be0f53d96cb, unstripped twin bff8519bbe3e): put's walk
-   (S7a_put.v put_holds, the kit's text tput_specX at the cut 7cdbb61b5fa0) AT THE A' INSTANCE, with the __asan_memcpy row
+   (S7a_put.v put_holds, the kit's text tput_specX at the cut) AT THE A' INSTANCE, with the __asan_memcpy row
    CITED (owner order 14:33Z; a Theorem Labs lane's row of record).
    rule 24: no function proved. rule 24: proves no function (kind: instance corollary citing proved rows).
    put_holds_A_inst is put_holds at

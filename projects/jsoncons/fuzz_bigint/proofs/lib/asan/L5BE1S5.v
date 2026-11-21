@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the auxv lies at least 16 bytes above the stack top (ar_sptop ar + 16 <= av), the auxv fact is the launch's vector (L5USA.auxv_okA) in place of the ten-pair auxv20A, and it is read through the visible memory (auxv_vis) and passed with the CONFIG_RSEQ flag to the leaf lemmas. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -74,7 +75,7 @@ Lemma e1_s5 :
     forall (RNDR : 0 <= rnd < 2 ^ 64),
     forall (CANR : 0 <= canary < 2 ^ 64),
     forall (HWR : 0 <= hw < 2 ^ 64),
-    forall (AVS : ar_sptop ar <= av),
+    forall (AVS : ar_sptop ar + 16 <= av),
     forall (HH : ri_inv HI LB FF LK cr A M (vml_of model)),
     forall (AM : amodel_ok A model),
     forall (HK : K []),
@@ -245,7 +246,7 @@ Lemma e1_s5 :
     forall (FL5 : fl = true -> L5.u8_at RSEGS M21 6363190 0),
     forall (FL3 : fl = true -> L5.u8_at RSEGS M21 6363188 0),
     forall (FL1 : fl = true -> L5.u8_at RSEGS M21 6363186 0),
-    forall (AUXV : forall j : nat, (j < 20)%nat -> L5.u64_at RSEGS M21 (av + 8 * Z.of_nat j) (nth j (L5USA.auxv20A uid rnd hw) 0)),
+    forall (AUXV : L5USA.auxv_okA M21 av uid rnd hw),
     forall (IC3 : L5.img_clear M21 895872 (895872 + 8)),
     forall (IC2 : L5.img_clear M21 895824 895856),
     forall (IC1 : L5.img_clear M21 65536 884736),
@@ -284,7 +285,7 @@ Proof.
             L5.u8_at RSEGS M22 6363189 1 -> L5.u8_at RSEGS M22 6363190 0 ->
             L5.u64_at RSEGS M22 6363352 6495184 -> L5.u64_at RSEGS M22 6495224 0 -> (exists e, L5.u32_at RSEGS M22 6363236 e /\ 0 <= e < 2 ^ 64) ->
             L5.u64_at RSEGS M22 6494536 canary -> L5.u64_at RSEGS M22 6495136 av ->
-            (forall j : nat, (j < 20)%nat -> L5.u64_at RSEGS M22 (av + 8 * Z.of_nat j) (nth j (L5USA.auxv20A uid rnd hw) 0)) ->
+            L5USA.auxv_okA M22 av uid rnd hw ->
             L5.img_clear M22 65536 884736 -> L5.img_clear M22 895824 895856 -> L5.img_clear M22 895872 (895872 + 8) ->
             srealizes RSEGS SCFG (cfg (fx:=fx22) R22 583128 M22 model22) K).
   { intros fx22 R22 M22 model22 CI22 KS22 X2 X8 X9 X10 X11 X18 H32 H72 H40 H120 H104 H8 Hr16 HC HU HG0 HG1 F0 F1 F2 F3 F4 F5 HTD HMS HER HCA HAX HAV I1 I2 I3.
@@ -319,30 +320,11 @@ Proof.
     - exact AM22.
     - rewrite <- EU. exact HH22. }
   (* [comment removed for export] *)
-  pose proof (auxv_cell M21 av uid rnd hw AUXV 0%nat av 3 ltac:(clear; lia) ltac:(clear; lia) eq_refl) as AVC0.
-  pose proof (auxv_cell M21 av uid rnd hw AUXV 1%nat (av + 8) 65600 ltac:(clear; lia) ltac:(clear; lia) eq_refl) as AVC1.
-  pose proof (auxv_cell M21 av uid rnd hw AUXV 2%nat (av + 16) 4 ltac:(clear; lia) ltac:(clear; lia) eq_refl) as AVC2.
-  pose proof (auxv_cell M21 av uid rnd hw AUXV 3%nat (av + 24) 56 ltac:(clear; lia) ltac:(clear; lia) eq_refl) as AVC3.
-  pose proof (auxv_cell M21 av uid rnd hw AUXV 4%nat (av + 32) 5 ltac:(clear; lia) ltac:(clear; lia) eq_refl) as AVC4.
-  pose proof (auxv_cell M21 av uid rnd hw AUXV 5%nat (av + 40) 11 ltac:(clear; lia) ltac:(clear; lia) eq_refl) as AVC5.
-  pose proof (auxv_cell M21 av uid rnd hw AUXV 6%nat (av + 48) 16 ltac:(clear; lia) ltac:(clear; lia) eq_refl) as AVC6.
-  pose proof (auxv_cell M21 av uid rnd hw AUXV 7%nat (av + 56) hw ltac:(clear; lia) ltac:(clear; lia) eq_refl) as AVC7.
-  pose proof (auxv_cell M21 av uid rnd hw AUXV 8%nat (av + 64) 6 ltac:(clear; lia) ltac:(clear; lia) eq_refl) as AVC8.
-  pose proof (auxv_cell M21 av uid rnd hw AUXV 9%nat (av + 72) 4096 ltac:(clear; lia) ltac:(clear; lia) eq_refl) as AVC9.
-  pose proof (auxv_cell M21 av uid rnd hw AUXV 10%nat (av + 80) 11 ltac:(clear; lia) ltac:(clear; lia) eq_refl) as AVC10.
-  pose proof (auxv_cell M21 av uid rnd hw AUXV 11%nat (av + 88) uid ltac:(clear; lia) ltac:(clear; lia) eq_refl) as AVC11.
-  pose proof (auxv_cell M21 av uid rnd hw AUXV 12%nat (av + 96) 12 ltac:(clear; lia) ltac:(clear; lia) eq_refl) as AVC12.
-  pose proof (auxv_cell M21 av uid rnd hw AUXV 13%nat (av + 104) uid ltac:(clear; lia) ltac:(clear; lia) eq_refl) as AVC13.
-  pose proof (auxv_cell M21 av uid rnd hw AUXV 14%nat (av + 112) 23 ltac:(clear; lia) ltac:(clear; lia) eq_refl) as AVC14.
-  pose proof (auxv_cell M21 av uid rnd hw AUXV 15%nat (av + 120) 0 ltac:(clear; lia) ltac:(clear; lia) eq_refl) as AVC15.
-  pose proof (auxv_cell M21 av uid rnd hw AUXV 16%nat (av + 128) 25 ltac:(clear; lia) ltac:(clear; lia) eq_refl) as AVC16.
-  pose proof (auxv_cell M21 av uid rnd hw AUXV 17%nat (av + 136) rnd ltac:(clear; lia) ltac:(clear; lia) eq_refl) as AVC17.
-  pose proof (auxv_cell M21 av uid rnd hw AUXV 18%nat (av + 144) 0 ltac:(clear; lia) ltac:(clear; lia) eq_refl) as AVC18.
-  pose proof (auxv_cell M21 av uid rnd hw AUXV 19%nat (av + 152) 0 ltac:(clear; lia) ltac:(clear; lia) eq_refl) as AVC19.
+  auxv_vis CI21 AUXV rx.
   destruct fl; cbv iota in FL0, FL2, FL4.
   - (* [comment removed for export] *)
     specialize (FL1 eq_refl). specialize (FL3 eq_refl). specialize (FL5 eq_refl).
-    pose proof (ue1t2_v1_conc HFILL HCOPY HTLS fx21 R21 (mrestrict (ahid A14 model21) M21)
+    pose proof (ue1t2_v1_conc HFILL HCOPY HTLS rx fx21 R21 (mrestrict (ahid A14 model21) M21)
                   (fun j => match j with 2%nat => Sp - 32 | 10%nat => obj | 32%nat => av | 33%nat => canary | 34%nat => uid | 36%nat => rnd | 39%nat => hw | 40%nat => U R21 10
                                     | 41%nat => ctx | 42%nat => th | 43%nat => blk | 44%nat => tbv | 45%nat => tev | 46%nat => 877160
                                     | 47%nat => bv_unsigned (getr R19 (reg 9)) | 48%nat => bv_unsigned (getr R19 (reg 18)) | 49%nat => s0v | 50%nat => s2v | _ => 0 end)) as P. cbn beta iota in P.
@@ -353,7 +335,7 @@ Proof.
     + eexists. split. exact EX6. apply BL.bvu_range.
   - (* [comment removed for export] *)
     clear FL1 FL3 FL5.
-    pose proof (ue1t2_v0_conc HFILL HCOPY HTLS fx21 R21 (mrestrict (ahid A14 model21) M21)
+    pose proof (ue1t2_v0_conc HFILL HCOPY HTLS rx fx21 R21 (mrestrict (ahid A14 model21) M21)
                   (fun j => match j with 2%nat => Sp - 32 | 10%nat => obj | 32%nat => av | 33%nat => canary | 34%nat => uid | 36%nat => rnd | 39%nat => hw | 40%nat => U R21 10
                                     | 41%nat => ctx | 42%nat => th | 43%nat => blk | 44%nat => tbv | 45%nat => tev | 46%nat => 877160
                                     | 47%nat => bv_unsigned (getr R19 (reg 9)) | 48%nat => bv_unsigned (getr R19 (reg 18)) | 49%nat => s0v | 50%nat => s2v | _ => 0 end)) as P. cbn beta iota in P.

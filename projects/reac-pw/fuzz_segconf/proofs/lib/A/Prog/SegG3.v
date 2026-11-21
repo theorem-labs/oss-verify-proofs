@@ -11,10 +11,10 @@
    (the interceptor layer's wrapper rows, the kit's intrinsic laws, the core's shadow and side-stack rows), refuse's contract (the
    fifth G3 walk, not closed yet), and the G2 callees reac_box_catalogue / reac_box_catalogue_by_token, which
    lib/A/Prog/SegProgClosed.v discharges from lib/A/Prog/SegG2.v at the core's record SegB.
-   The walks are the G3 walks at 84490aabe1bd (lib/A/Prog/trim.v, cross_check.v,
-   reac_segconf_parse.v, reac_segconf_parse_file.v), merged into this close; FINAL 6f783602b5e3 is
+   The walks are the G3 walks (lib/A/Prog/trim.v, cross_check.v,
+   reac_segconf_parse.v, reac_segconf_parse_file.v), merged into this close; FINAL is
    an ancestor (checked). This file states no contract: each lemma's statement is the contract of lib/A/Prog/<F>_c.v at
-   contracts FINAL 6f783602b5e3, at SegInstA's terms, as the walk states it.
+   contracts FINAL, at SegInstA's terms, as the walk states it.
    proves no function (kind: merge; the composition of G3's walk theorems). *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.

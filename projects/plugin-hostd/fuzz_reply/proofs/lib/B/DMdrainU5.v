@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainU5.v (commit 67fc7ef5787c2195464dbe4d4f7905278328dc0c, drain recycle tail; file sha256 d05532a39cdd) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainU5.v at commit 2e76ed2595c, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (1 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainU5.v (drain recycle tail; file sha256 d05532a39cdd) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainU5.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (1 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, WalkB1): the quarantine's cells at the RECYCLE cut - Recycle's call of
    DoRecycle (0x33b54) - the twin of DMdrainTB.cut_cells, which states the same at the return cut.  At this cut
    the model state is DMiface.drain_recyc's S' = set_qglobal g' (set_qthread qc0 X): the thread cache is empty
    and the global cache is the KEPT list, the part of the transferred quarantine the dequeue loop did not pop.
-   Every word comes from DMdeq.ATDR (DMdeq.v:201-205): the two lock bytes and the two after them, the global
+   Every word comes from DMdeq.ATDR (DMdeq.v:202-206): the two lock bytes and the two after them, the global
    header's four words over the kept list, the thread header's four zero words (which the loop does not touch),
    and the kept list's batch cells through DMdrainU3.kept_lcn and DMdrainP.batch_cells_of_lcn.
    rule 24: no function proved (kind: the cells of a cut of segments already walked; the lane's reuse search is
@@ -48,7 +49,7 @@ Local Notation S' := (set_qglobal gk (set_qthread qc0 X)).
 
 Hypothesis Hinst : as_inst B = inst.
 Hypothesis AQ : inst + o_quar = A_QUAR.
-(* DMdeq.ATDR's header words (DMdeq.v:201-203) *)
+(* DMdeq.ATDR's header words (DMdeq.v:202-204) *)
 Hypothesis HMUT : forall a, A_QUAR + 152 <= a < A_QUAR + 156 -> mbyte tfibsegs m' a = Some (Z_to_bv 8 0).
 Hypothesis HC160 : val_mem tfibsegs m' (A_QUAR + 160) 8 (Z.of_nat (length R)).
 Hypothesis HC168 : val_mem tfibsegs m' (A_QUAR + 168) 8 (fa ly R 0).

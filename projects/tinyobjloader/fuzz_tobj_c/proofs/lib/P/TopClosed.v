@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (top_closed_P_lim, top_closed_P and top_closed_P_sanitizer state their three facts over the run's segment list and the run's start, where Run.run_scfg reads the binary, LPS 75d69e00, lifted from the walk's by RobReach.facts_run_init with Top.top_rob_P). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -14,6 +15,7 @@ From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require Import InitLayou
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P Require Import Init.
 Require OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Top OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Drv_spine OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Lib_fuzz__G1 OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_free_top OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_calloc__G1 OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_mdirect__G4 OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_mslow__G4 OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_aslot__G11 OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_X1 OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_X3 OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_XS OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_mdirect_S OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_malloc__G4.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib Require LiaFast.
+Require OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.RobReach.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope Z_scope.
 
@@ -61,21 +63,24 @@ Lemma lim_P : 2 ^ 30 <= source_alloc_limit <= 2 ^ 40. Proof. unfold source_alloc
 (* [comment removed for export] *)
 Theorem top_closed_P_lim : forall lim, 2 ^ 30 <= lim <= 2 ^ 40 -> forall sp brk mb draw inp,
   valid_entry48 imgP (mkEntry sp brk mb draw) inp -> valid_input_either inp ->
-  SOUND segsP (c0P sp brk mb draw lim inp) (Spec inp) /\
-  COMPLETE segsP (c0P sp brk mb draw lim inp) (Spec inp) /\
-  ~ reaches_error_a segsP (c0P sp brk mb draw lim inp).
+  SOUND (run_segments segsP inp sp mb) (init_config (run_segments segsP inp sp mb) pcP phP sp brk mb draw lim inp) (Spec inp) /\
+  COMPLETE (run_segments segsP inp sp mb) (init_config (run_segments segsP inp sp mb) pcP phP sp brk mb draw lim inp) (Spec inp) /\
+  ~ reaches_error_a (run_segments segsP inp sp mb) (init_config (run_segments segsP inp sp mb) pcP phP sp brk mb draw lim inp).
 Proof.
   intros lim Hlim sp brk mb draw inp Hent Hinp.
-  apply (Top.top_P sp brk mb draw lim inp Hent Hinp).
-  - exact (Drv_spine.spine_safe sp brk mb draw lim inp Hent Hinp MCs_P MIS_P MBS_P FDS_P MPS_P FS_P Hlim).
-  - exact (Drv_spine.spine_ex sp brk mb draw lim inp Hent Hinp MIX_P MBX_P FDX_P MPX_P FCX_P FSX_P Hlim).
+  pose proof (Drv_spine.spine_safe sp brk mb draw lim inp Hent Hinp MCs_P MIS_P MBS_P FDS_P MPS_P FS_P Hlim) as Hs.
+  apply (RobReach.facts_run_init segsP inp sp brk mb pcP phP draw lim (Spec inp)).
+  - reflexivity.
+  - exact (Top.top_rob_P sp brk mb draw lim inp Hent Hinp Hs).
+  - exact (Top.top_P sp brk mb draw lim inp Hent Hinp Hs
+             (Drv_spine.spine_ex sp brk mb draw lim inp Hent Hinp MIX_P MBX_P FDX_P MPX_P FCX_P FSX_P Hlim)).
 Qed.
 
 Theorem top_closed_P : forall sp brk mb draw inp,
   valid_entry48 imgP (mkEntry sp brk mb draw) inp -> valid_input_either inp ->
-  SOUND segsP (c0P sp brk mb draw source_alloc_limit inp) (Spec inp) /\
-  COMPLETE segsP (c0P sp brk mb draw source_alloc_limit inp) (Spec inp) /\
-  ~ reaches_error_a segsP (c0P sp brk mb draw source_alloc_limit inp).
+  SOUND (run_segments segsP inp sp mb) (init_config (run_segments segsP inp sp mb) pcP phP sp brk mb draw source_alloc_limit inp) (Spec inp) /\
+  COMPLETE (run_segments segsP inp sp mb) (init_config (run_segments segsP inp sp mb) pcP phP sp brk mb draw source_alloc_limit inp) (Spec inp) /\
+  ~ reaches_error_a (run_segments segsP inp sp mb) (init_config (run_segments segsP inp sp mb) pcP phP sp brk mb draw source_alloc_limit inp).
 Proof. exact (top_closed_P_lim source_alloc_limit lim_P). Qed.
 
 Lemma lim_P_sanitizer : 2 ^ 30 <= LinuxProcessSemantics.EquivalenceDefinition.Equivalence.SanitizerBudgets.lim_source <= 2 ^ 40.
@@ -84,7 +89,7 @@ Proof. unfold LinuxProcessSemantics.EquivalenceDefinition.Equivalence.SanitizerB
 (* [comment removed for export] *)
 Theorem top_closed_P_sanitizer : forall sp brk mb draw inp,
   valid_entry48 imgP (mkEntry sp brk mb draw) inp -> valid_input_either inp ->
-  SOUND segsP (c0P sp brk mb draw LinuxProcessSemantics.EquivalenceDefinition.Equivalence.SanitizerBudgets.lim_source inp) (Spec inp) /\
-  COMPLETE segsP (c0P sp brk mb draw LinuxProcessSemantics.EquivalenceDefinition.Equivalence.SanitizerBudgets.lim_source inp) (Spec inp) /\
-  ~ reaches_error_a segsP (c0P sp brk mb draw LinuxProcessSemantics.EquivalenceDefinition.Equivalence.SanitizerBudgets.lim_source inp).
+  SOUND (run_segments segsP inp sp mb) (init_config (run_segments segsP inp sp mb) pcP phP sp brk mb draw LinuxProcessSemantics.EquivalenceDefinition.Equivalence.SanitizerBudgets.lim_source inp) (Spec inp) /\
+  COMPLETE (run_segments segsP inp sp mb) (init_config (run_segments segsP inp sp mb) pcP phP sp brk mb draw LinuxProcessSemantics.EquivalenceDefinition.Equivalence.SanitizerBudgets.lim_source inp) (Spec inp) /\
+  ~ reaches_error_a (run_segments segsP inp sp mb) (init_config (run_segments segsP inp sp mb) pcP phP sp brk mb draw LinuxProcessSemantics.EquivalenceDefinition.Equivalence.SanitizerBudgets.lim_source inp).
 Proof. exact (top_closed_P_lim _ lim_P_sanitizer). Qed.

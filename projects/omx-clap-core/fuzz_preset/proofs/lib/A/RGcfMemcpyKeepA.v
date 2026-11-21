@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/omx-clap-core/fuzz_preset/lib/A/RGcfMemcpy.v (hub 20254185415e, blob 2a7f349aadf0) rw_memcpy_A, with the overlay normal form kept across the copy routine as one more conjunct (the proof of RGcfMemcpy.v blob 287111d53db5's MN2). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/omx-clap-core/fuzz_preset/lib/A/RGcfMemcpy.v (blob 2a7f349aadf0) rw_memcpy_A, with the overlay normal form kept across the copy routine as one more conjunct (the proof of RGcfMemcpy.v blob 287111d53db5's MN2). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset.asan image A: rw_memcpy_keep_A is YGcfReallocCompose.wrap_realloc_walk_cf's field
-   rw_memcpy (part 3c form, YGcfReallocCompose.v:367-374) at segs := tfibsegs, ci := CfImg_A, with one added conjunct,
+   rw_memcpy (part 3c form, YGcfReallocCompose.v:368-375) at segs := tfibsegs, ci := CfImg_A, with one added conjunct,
    the LAST inside the existential: (YAkMemnorm.memnorm segs mem -> YAkMemnorm.memnorm segs mem'), the form of the
    realloc keep record's field rwk_memcpy. The run is RGcfMemcpy.rw_memcpy_A's (A/AE3c.v tfib_memcpy on the visible
    memory, lifted to SRr by YA0n.SRr_msteps); memnorm across the run by YAkMemnorm.memnorm_mrestrict, memnorm_msteps

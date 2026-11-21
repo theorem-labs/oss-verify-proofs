@@ -7,7 +7,7 @@
                       segment's own byte when m has none, so the fact does not depend on m);
      pst_in_img_A   : every static byte is an image byte (in_img rsegs);
      pst_not_ro_A   : no static byte is read-only (in_roP over rsegs and the relro range).
-   Shape: port-fm's FMW_fuzz_alloc_base.v (origin/cold/port-fm-g1 f261040a641) fma_rw :62-65 and fma_in_img
+   Shape: port-fm's FMW_fuzz_alloc_base.v fma_rw :62-65 and fma_in_img
    :107-114, and cgif's YB13.v tfib_rw_window :25-45, whose writability is wview <> None; here the window is not a
    typed address range but alloc.c's statics themselves, checked byte by byte by vm_compute (pst_allb).
    The image-free checkers (wv_b, in_img_b, in_ro_b, pst_allb) and their soundness lemmas now live in

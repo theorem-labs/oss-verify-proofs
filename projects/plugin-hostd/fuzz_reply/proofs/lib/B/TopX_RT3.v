@@ -1,7 +1,7 @@
 (* The image-B (fuzz_reply.asan-ubsan) twin of lib/A/TopX_RT3.v's topx_AMEMCHR / topx_AMEMMOVE, with the SAME lemma
    names: two runtime contracts AT the B top's instance ARX_rt (lib/B/TopX_RT_lock.v's verbatim copy of the B top's
-   ARX, lib/B/W_LLVMFuzzerTestOneInput_top_x.v:168-169: ARcf (cp := CfParams_reply) segs TfibB /\ Hp = []), for the B
-   drain walks' hypotheses (W_drain_pb.v:218-219's AMEMMOVE / AMEMCHR, W_sites_x's texts at B := TfibB, ARx := the B
+   ARX, lib/B/W_LLVMFuzzerTestOneInput_top_x.v:169-170: ARcf (cp := CfParams_reply) segs TfibB /\ Hp = []), for the B
+   drain walks' hypotheses (W_drain_pb.v:219-220's AMEMMOVE / AMEMCHR, W_sites_x's texts at B := TfibB, ARx := the B
    top's ARX):
      topx_AMEMCHR  : amemchr_realizesM_x segs TfibB ARX_rt 0x10350 0x10370 (SIGMA WS_memchr)
      topx_AMEMMOVE : amemmove_realizes_x TfibB ARX_rt (SIGMA WS_asan_memmove)
@@ -75,9 +75,9 @@ Proof. exact (MM.rt_amemmove_x TfibB TRL.ARX_rt TRL.rt_laws_ARX TfibB_syms). Qed
    the two contracts above at top_x's W1 ARX, TopX_RT_lock.ARX_rtW (ARX_rt /\ arodata_ok_cf).
    - memchr writes nothing: its post keeps every view off the call's ESTACK stack window, which lies above the image
      (TRL.stk_above_img), so arodata_ok_cf carries over by TRL.aro_keep_view with X := False and Y := the window.
-   - memmove writes [d, d + n) only, and its own premise puts that range off the image (W_sites_x.v:343 amemmove_realizes_x,
+   - memmove writes [d, d + n) only, and its own premise puts that range off the image (W_sites_x.v:344 amemmove_realizes_x,
      `forall a, d <= a < d + n -> ~ in_img SEGS a`); a kept byte is an image byte (kept_x's first conjunct,
-     Reusable/YCbqG.v:48), so the write set holds no kept byte and TRL.aentry_post_x_rtW rebuilds the post (a Theorem Labs lane
+     Reusable/YCbqG.v:49), so the write set holds no kept byte and TRL.aentry_post_x_rtW rebuilds the post (a Theorem Labs lane
      02:13Z: no engine edit for memmove).
    The lemmas at ARX_rt stay; top_x cites the _W names. ---- *)
 Lemma topx_AMEMCHR_W : amemchr_realizesM_x segs TfibB TRL.ARX_rtW 0x10350 0x10370 (SIGMA WS_memchr).

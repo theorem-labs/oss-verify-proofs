@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: each srealizes node also asks RomBase.sys_rob, which the srz_ node lemmas take, and srealizes_cfg_eqv assumes a segment list with no vDSO text and carries it with sys_rob_eqv. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -18,6 +19,7 @@ Import OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.RealizesEqv.RegsEqv0.
 From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib Require Import RealizesEqv.
 From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.LRT Require Import Spin.
 From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.Lib Require Import Cfg.
+From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib Require Import RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope bv_scope.
@@ -31,6 +33,7 @@ Inductive srealizes : config -> TSet -> Prop :=
 | srz_node : forall c (I : Type) (evs : I -> list event) (nx : I -> config)
                     (T : I -> TSet) (i0 : I),
     node_ok segs c I evs nx ->
+    sys_rob segs c ->   (* LPS 08b1429: see [ShapeAlg.rz_node] *)
     (forall i, srealizes (nx i) (T i)) ->
     srealizes c (t_alt (fun i => t_emit (evs i) (T i)))
 | srz_halt : forall c,
@@ -46,8 +49,8 @@ Lemma srealizes_of_realizes : forall c T,
   realizes segs c T -> srealizes c T.
 Proof.
   intros c T H;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq].
-  - exact (srz_node c I evs nx T i0 Hnode IH).
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq].
+  - exact (srz_node c I evs nx T i0 Hnode Hrob IH).
   - exact (srz_halt c Hh).
   - exact (srz_conseq c T T' IH Heq).
 Qed.
@@ -62,7 +65,7 @@ Proof. intros [ms mo] Hs Hh. apply srz_jspin. split; assumption. Qed.
 Lemma srealizes_nonempty : forall c T, srealizes c T -> T [].
 Proof.
   intros c T H;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
                    | c Hc | c T T' H IH Heq].
   - exists i0. left. apply is_prefix_nil.
   - reflexivity.
@@ -74,7 +77,7 @@ Lemma srealizes_pclosed : forall c T, srealizes c T ->
   forall tr tr', T tr -> is_prefix tr' tr -> T tr'.
 Proof.
   intros c T H;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
                    | c Hc | c T T' H IH Heq];
     intros tr tr' HT Hp.
   - destruct HT as [i [Hpre | (tr0 & -> & HT0)]]; exists i.
@@ -93,7 +96,7 @@ Lemma srealizes_star_only : forall c T, srealizes c T ->
   forall tr c', star_cfg segs ACFG c tr c' -> T tr.
 Proof.
   intros c T H;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
                    | c Hc | c T T' H IH Heq];
     intros tr c' Hstar.
   - inversion Hstar as [|c1 e c2 tr2 c3 Hss Hstar2]; subst.
@@ -114,7 +117,7 @@ Lemma srealizes_admits : forall c T, srealizes c T ->
   forall tr, T tr -> obs_trace_cfg segs ACFG c tr.
 Proof.
   intros c T H;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
                    | c Hc | c T T' H IH Heq];
     intros tr HT.
   - destruct Hnode as [Hcomp _].
@@ -145,7 +148,7 @@ Lemma srealizes_step : forall c T e c',
   srealizes c T -> sstep_cfg segs ACFG c e (SNext c') -> exists T', srealizes c' T'.
 Proof.
   intros c T e c' H; revert e c';
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
                    | c Hc | c T T' H IH Heq];
     intros e c' Hss.
   - destruct Hnode as [_ Hsound].
@@ -161,7 +164,7 @@ Lemma srealizes_no_sserror : forall c T e,
   srealizes c T -> ~ sstep_cfg segs ACFG c e SError.
 Proof.
   intros c T e H; revert e;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh
                    | c Hc | c T T' H IH Heq];
     intros e Hss.
   - destruct Hnode as [_ Hsound].
@@ -193,13 +196,13 @@ Qed.
 (* [comment removed for export] *)
 
 Lemma srz_silent1 : forall c c' T,
-  node_ok segs c unit (fun _ => []) (fun _ => c') ->
+  node_ok segs c unit (fun _ => []) (fun _ => c') -> sys_rob segs c ->
   srealizes c' T ->
   srealizes c T.
 Proof.
-  intros c c' T Hnode Hc.
+  intros c c' T Hnode Hrob Hc.
   apply (srz_conseq c (t_alt (fun _ : unit => t_emit [] T))).
-  - apply (srz_node c unit (fun _ => []) (fun _ => c') (fun _ => T) tt Hnode).
+  - apply (srz_node c unit (fun _ => []) (fun _ => c') (fun _ => T) tt Hnode Hrob).
     intros []; exact Hc.
   - eapply t_eq_trans;
       [ apply (t_alt_unit (fun _ : unit => t_emit [] T))
@@ -207,25 +210,25 @@ Proof.
 Qed.
 
 Lemma srz_emit1 : forall c c' e T,
-  node_ok segs c unit (fun _ => e) (fun _ => c') ->
+  node_ok segs c unit (fun _ => e) (fun _ => c') -> sys_rob segs c ->
   srealizes c' T ->
   srealizes c (t_emit e T).
 Proof.
-  intros c c' e T Hnode Hc.
+  intros c c' e T Hnode Hrob Hc.
   apply (srz_conseq c (t_alt (fun _ : unit => t_emit e T))).
-  - apply (srz_node c unit (fun _ => e) (fun _ => c') (fun _ => T) tt Hnode).
+  - apply (srz_node c unit (fun _ => e) (fun _ => c') (fun _ => T) tt Hnode Hrob).
     intros []; exact Hc.
   - apply t_alt_unit.
 Qed.
 
 Lemma srz_alt2 : forall c (IA IB : Type) (nx : IA + IB -> config) (A B : TSet)
                         (a0 : IA) (b0 : IB),
-  node_ok segs c (IA + IB) (fun _ => []) nx ->
+  node_ok segs c (IA + IB) (fun _ => []) nx -> sys_rob segs c ->
   (forall i, srealizes (nx (inl i)) A) ->
   (forall i, srealizes (nx (inr i)) B) ->
   srealizes c (t_alt2 A B).
 Proof.
-  intros c IA IB nx A B a0 b0 Hnode HA HB.
+  intros c IA IB nx A B a0 b0 Hnode Hrob HA HB.
   assert (HA0 : A []) by (eapply srealizes_nonempty; apply (HA a0)).
   assert (HB0 : B []) by (eapply srealizes_nonempty; apply (HB b0)).
   apply (srz_conseq c
@@ -233,7 +236,7 @@ Proof.
               t_emit [] (match i with inl _ => A | inr _ => B end)))).
   - apply (srz_node c (IA + IB) (fun _ => []) nx
              (fun i => match i with inl _ => A | inr _ => B end)
-             (inl a0) Hnode).
+             (inl a0) Hnode Hrob).
     intros [i|i]; [apply HA | apply HB].
   - intro tr. unfold t_alt2. split.
     + intros [[i|i] Hi];
@@ -246,14 +249,14 @@ Qed.
 
 (* [comment removed for export] *)
 Lemma srz_silent : forall c (I : Type) (nx : I -> config) (B : TSet) (i0 : I),
-  node_ok segs c I (fun _ => []) nx ->
+  node_ok segs c I (fun _ => []) nx -> sys_rob segs c ->
   (forall i, srealizes (nx i) B) ->
   srealizes c B.
 Proof.
-  intros c I nx B i0 Hnode HB.
+  intros c I nx B i0 Hnode Hrob HB.
   assert (HB0 : B []) by (eapply srealizes_nonempty; apply (HB i0)).
   apply (srz_conseq c (t_alt (fun i : I => t_emit [] B))).
-  - apply (srz_node c I (fun _ => []) nx (fun _ => B) i0 Hnode). exact HB.
+  - apply (srz_node c I (fun _ => []) nx (fun _ => B) i0 Hnode Hrob). exact HB.
   - intro tr. split.
     + intros [i Hi]. exact (proj1 (t_emit_nil_eq B HB0 tr) Hi).
     + intro H. exists i0. exact (proj2 (t_emit_nil_eq B HB0 tr) H).
@@ -261,16 +264,16 @@ Qed.
 
 (* [comment removed for export] *)
 Lemma srz_silent_spin : forall c (I : Type) (nx : I -> config) (sp : I -> bool) (B : TSet) (i0 : I),
-  node_ok segs c I (fun _ => []) nx ->
+  node_ok segs c I (fun _ => []) nx -> sys_rob segs c ->
   sp i0 = false ->
   (forall i, sp i = true -> jspinning segs (nx i)) ->
   (forall i, sp i = false -> srealizes (nx i) B) ->
   srealizes c B.
 Proof.
-  intros c I nx sp B i0 Hnode Hi0 Hsp HB.
+  intros c I nx sp B i0 Hnode Hrob Hi0 Hsp HB.
   assert (HB0 : B []) by (eapply srealizes_nonempty; apply (HB i0 Hi0)).
   apply (srz_conseq c (t_alt (fun i : I => t_emit [] (if sp i then t_nil else B)))).
-  - apply (srz_node c I (fun _ => []) nx (fun i => if sp i then t_nil else B) i0 Hnode).
+  - apply (srz_node c I (fun _ => []) nx (fun i => if sp i then t_nil else B) i0 Hnode Hrob).
     intros i. destruct (sp i) eqn:E.
     + apply srz_jspin. apply Hsp. exact E.
     + apply HB. exact E.
@@ -283,14 +286,14 @@ Qed.
 
 (* [comment removed for export] *)
 Lemma srz_silent_spin_sum : forall c (IA IB : Type) (nx : IA + IB -> config) (B : TSet) (b0 : IB),
-  node_ok segs c (IA + IB) (fun _ => []) nx ->
+  node_ok segs c (IA + IB) (fun _ => []) nx -> sys_rob segs c ->
   (forall i, jspinning segs (nx (inl i))) ->
   (forall i, srealizes (nx (inr i)) B) ->
   srealizes c B.
 Proof.
-  intros c IA IB nx B b0 Hnode HA HB.
+  intros c IA IB nx B b0 Hnode Hrob HA HB.
   apply (srz_silent_spin c (IA + IB) nx (fun i => match i with inl _ => true | inr _ => false end) B (inr b0));
-    [exact Hnode | reflexivity | |].
+    [exact Hnode | exact Hrob | reflexivity | |].
   - intros [i|i]; [intros _; apply HA | discriminate].
   - intros [i|i]; [discriminate | intros _; apply HB].
 Qed.
@@ -315,14 +318,17 @@ Proof.
   intros [ms mo] [ms' mo'] [Hj Hh] [Heqv Hmo]; cbn in *. subst mo'. split; [eapply to_jself_eqv; eassumption| exact Hh].
 Qed.
 
+Hypothesis Hvi : vdso_image segs = None.
+
 Theorem srealizes_cfg_eqv : forall c T,
   srealizes c T -> forall c', cfg_eqv c c' -> srealizes c' T.
 Proof.
-  intros c T H. induction H as [c I evs nx T i0 Hnode Hk IH | c Hh | c Hc | c T T' H IH Heq];
+  intros c T H. induction H as [c I evs nx T i0 Hnode Hrob Hk IH | c Hh | c Hc | c T T' H IH Heq];
     intros c' Heqv.
   - destruct c as [ms mo], c' as [ms' mo']. destruct Heqv as [Hms Hmo]; simpl in Hms, Hmo; subst mo'.
-    destruct (node_ok_xfer segs ms ms' mo I evs nx Hms Hnode) as [Hnode' Hx].
-    apply (srz_node (mkCfg ms' mo) I evs (fun i => xfer segs ms' mo (nx i)) T i0 Hnode').
+    destruct (node_ok_xfer segs Hvi ms ms' mo I evs nx Hms Hnode) as [Hnode' Hx].
+    apply (srz_node (mkCfg ms' mo) I evs (fun i => xfer segs ms' mo (nx i)) T i0 Hnode'
+             (sys_rob_eqv segs ms ms' mo Hms Hrob)).
     intros i. apply (IH i). apply Hx.
   - apply srz_halt. destruct Heqv as [_ <-]. exact Hh.
   - apply srz_jspin. eapply jspinning_eqv; eassumption.

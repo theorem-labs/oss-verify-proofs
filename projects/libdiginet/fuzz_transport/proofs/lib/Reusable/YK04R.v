@@ -4,6 +4,7 @@
    The converse of YK04.step_accesses_restrict: a full step whose access ranges avoid H is the same step on the
    restricted state. With it, a footprint run (fsteps, the kit form of Lib/ExecF.v mstepsF) whose footprint avoids H
    is a run of the restricted state, which YA0n.SRr_msteps lifts into a world walk (YA0nR.v). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the fetch and load arms over the vDSO text and the vvar pages). *)
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -35,7 +36,7 @@ Proof.
   induction t as [c0 | c0 | c0 | c0 | c0 | c0 | n a k IH | n a v k IH];
     intros m c mf' rs Hi Hrs; cbn [interp_eff_accesses] in Hi |- *; try discriminate.
   - injection Hi as <- <- <-. reflexivity.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|] eqn:Hrd; [|discriminate].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|] eqn:Hrd; [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) m)
       as [[[c1 m1] rs1]| |] eqn:Hk; try discriminate.
     cbn [access_value accessed_ranges] in Hi. injection Hi as <- <- <-.
@@ -92,7 +93,7 @@ Proof.
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|].
   { exact (decode_exec_accesses_restrict_conv ms w ms' rs Hs Hrs). }
   exfalso. unfold fetch_failure in Hs.
-  destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
+  try (destruct (vdso_text_at _ _); [discriminate|]). destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
   destruct (fetch_byte_traps segs (ms_pc ms) || fetch_byte_traps segs (ms_pc ms + 1)
     || match fetch_half_any segs (ms_mem ms) (ms_pc ms) with
        | Some _ => fetch_byte_traps segs (ms_pc ms + 2) || fetch_byte_traps segs (ms_pc ms + 3)

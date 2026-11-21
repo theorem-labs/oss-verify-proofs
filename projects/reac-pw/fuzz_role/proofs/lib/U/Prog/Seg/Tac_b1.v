@@ -2,17 +2,18 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_wire/lib/U/Prog/LLVMFuzzerTestOneInput_cfb.v, with its module paths changed; 532 of its 580 lines of code are new or changed and 97 lines of the source are left out. *)
-(* Modified by Theorem Labs: reac-repacer/fuzz_uci's lib/Prog/LLVMFuzzerTestOneInput_fr.v (6874bc78b1f) at fuzz_wire's
+(* Modified by Theorem Labs: reac-repacer/fuzz_uci's lib/Prog/LLVMFuzzerTestOneInput_fr.v at fuzz_wire's
    module paths; lf_guard_img reads this image's __stack_chk_guard GOT slot 0x1cef0; lf_fr_call_x is new. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_wire/lib/Prog/LLVMFuzzerTestOneInput_fr.v, with its module paths and module names changed; 455 of its 574 lines of code are new or changed and 461 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_role/lib/U/Prog/Seg/Tac_slot.v, with its module names changed; 480 of its 561 lines of code are new or changed and 493 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Helpers of the segments of reac-pw/fuzz_role LLVMFuzzerTestOneInput (UBSan): byte transport across runs, the
    allocator facts of frame_facts_ubsan, malloc as a Kind B step from any list hb of live harness blocks
    (b1_malloc_call), FR across a run that writes the stack window and one block of hb (b1_fr_hb), and a live block's
    cells, separation from the other blocks, slack and absence from the image (b1_hb, b1_sep, b1_slack_ok,
    b1_blk_rom, b1_blk_present, b1_in_all).
    The plain file (lib/Prog/Seg/Tac_b1.v) with the UBSan numbers below. Taken from reac-pw/fuzz_pin's U/Prog/Seg/Tac_b1.v, itself libreac/fuzz_ctrl's released Prog/Seg/Tac_b1.v
-   (origin/ossv/recipes 25e3d17bdb50) adapted, with role's UBSan numbers (frame 544, saved registers [S - 104, S), malloc
+   adapted, with role's UBSan numbers (frame 544, saved registers [S - 104, S), malloc
    at 0x160ec, the sink cells 0x4f8a1, 0x4fcc8 .. 0x4fccc, 0x4fcd0 .. 0x4fcd8, the request bound 2^26 of
    SlotFR.resb_room). Widened from one block to a list hb: b1_FR_malloc / b1_malloc_call take FR with any hb (of at
    most 16 blocks and 2^24 bytes) to FR with (res, n) :: hb, and give res mod 16 = 0 and the bytes of the blocks of

@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/cgif/cgif_file_fuzzer/lib/RepAppTcf.v (commit 3cae605a900a, file sha256 7ca6f57970d9) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; cgif's image-instance names kept where preset's B' instance carries them (AGif2cgif, AImg_cgif), CfImg_cgif -> CfImg_B, cgif's image rows mapped to preset's (YGcfImgcgif.* -> CfImgB / PresetImgRefillB / PresetImgRowsB, *cgif -> *preset); its 0 image numerals moved by symbol from cgif_file_fuzzer.asan-ubsan (pin 1c29845fe605, unstripped twin of the same build) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal, jump-table offsets, derived counts and list indices by the same stage map), 0 list indices re-picked, and 0 addresses named in comments; facts preset already states are cited, not restated; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/cgif/cgif_file_fuzzer/lib/RepAppTcf.v (file sha256 7ca6f57970d9) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; cgif's image-instance names kept where preset's B' instance carries them (AGif2cgif, AImg_cgif), CfImg_cgif -> CfImg_B, cgif's image rows mapped to preset's (YGcfImgcgif.* -> CfImgB / PresetImgRefillB / PresetImgRowsB, *cgif -> *preset); its 0 image numerals moved by symbol from cgif_file_fuzzer.asan-ubsan (pin 1c29845fe605, unstripped twin of the same build) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal, jump-table offsets, derived counts and list indices by the same stage map), 0 list indices re-picked, and 0 addresses named in comments; facts preset already states are cited, not restated; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved-region ledger). *)
 (* Theorem Labs, 2026-10-30 (a prior worker, slice F4 of a Theorem Labs lane's class-full report walk): the slice's theorem.
    __asan::AppendToErrorMessageBuffer (0x54bec) of cgif_file_fuzzer's asan-ubsan image (pin 1c29845fe605)
-   realizes the model step errb_append_cf (YG00cf.v:133): RepIFcf.append_spec_cf, which this file never edits.
+   realizes the model step errb_append_cf (YG00cf.v:134): RepIFcf.append_spec_cf, which this file never edits.
    The walk is RepAppWcf.append_ok_w; this file discharges its three premises from the call premise alone:
    - the forced grant: the placement from the cf relation (RepGrantcf, over CfParams' cf_sec_live_place_lt) and
      the room from a Theorem Labs lane's YGcfCker.room_wA_cf at the room of record, which errb_call_pre's Wf_cf, qloose and
@@ -44,12 +45,13 @@ Lemma errb_map_fits_of_pre :
   layout_ok ly -> img_cover ly -> TfibSyms B -> ly_tsd ly = TFIB_TSD ->
   ARcf tfibsegs B ly S Hp W mem md -> xs_mapped_cf ly S md -> qloose S -> cf_hull_ok S ->
   0 < nZ -> nZ mod kPage = 0 -> nZ <= cf_nob ->
-  (exists a, YK13.grant_ok_na_pin md a nZ = true) /\
+  (exists a, YK13.grant_ok_na_pin (Z_to_bv 64 0) md a nZ = true) /\
   eager_used md + A_bytes (w_A W) + nZ <= vm_limit (m_vmmaps md).
 Proof.
 intros Hp ly S W mem md nZ LY IMG TS TSD AR XM QL HT Hpos Hal Hnob. split.
-- destruct (RepGrantcf.errb_grant_exists_cf B Hp ly S W mem md [] nZ AR (conj Hpos Hnob)) as [a Ha].
-  (* grant_ok_na_pin reads only m_vmmaps, which with_vm_backing keeps (YK04.m_vmmaps_wvb). *)
+- destruct (RepGrantcf.errb_grant_exists_cf B Hp ly S W mem md [] nZ AR (conj Hpos Hnob) ltac:(unfold page_size, kPage in *; lia))
+    as [a Ha].
+  (* [grant_ok_na_pin] reads only m_vmmaps and m_kernel, which with_vm_backing keeps (YK04.m_vmmaps_wvb). *)
   exists a. exact Ha.
 - pose proof (amc_wf _ _ _ _ _ (proj1 AR)) as WF.
   pose proof cf_nob_ok as NB.
@@ -58,9 +60,9 @@ intros Hp ly S W mem md nZ LY IMG TS TSD AR XM QL HT Hpos Hal Hnob. split.
 Qed.
 
 (* No page of a granted errbuf map is lazy: a lazy page is covered by a map (alc_lazy_in_maps), and the grant is
-   free of every map (grant_ok_na_pin's region_free). *)
+   free of every map (the region_free that [grant_ok_na_pin] implies, YK13.grant_ok_na_pin_facts). *)
 Lemma glazy_of_pre : forall lk Hp ly S W mem md n, errb_call_pre B lk Hp ly S W mem md -> 0 < n -> n mod 4096 = 0 ->
-  forall (a2 : Z) (pg : word), YK13.grant_ok_na_pin md (w64 a2) n = true -> a2 <= bv_unsigned pg ->
+  forall (a2 : Z) (pg : word), YK13.grant_ok_na_pin (Z_to_bv 64 0) md (w64 a2) n = true -> a2 <= bv_unsigned pg ->
   bv_unsigned pg + page_size <= a2 + n -> page_in_ranges pg (m_vm_lazy md) = false.
 Proof.
 intros lk Hp ly S W mem md n PRE Hn Hal a2 pg G H1 H2.
@@ -72,7 +74,7 @@ set (a' := bv_unsigned (w64 a2)).
 assert (A' : a' = a2 mod 2 ^ 64).
 { unfold a', w64. rewrite Z_to_bv_unsigned. unfold bv_wrap. reflexivity. }
 assert (Ra' : 0 <= a' < 2 ^ 64) by (rewrite A'; apply Z.mod_pos_bound; lia).
-assert (Ga' : YK13.grant_ok_na_pin md (w64 a') n = true).
+assert (Ga' : YK13.grant_ok_na_pin (Z_to_bv 64 0) md (w64 a') n = true).
 { unfold a', w64. rewrite Z_to_bv_bv_unsigned. exact G. }
 destruct (RepGluecf.rep_grant_below_ceil B lk Hp ly S W mem md n PRE Hn Hal a' Ra' Ga') as [CE _].
 pose proof (Z.div_mod a2 (2 ^ 64) ltac:(lia)) as DM. rewrite <- A' in DM.
@@ -91,7 +93,8 @@ assert (C1 : YK0g.covered (vm_noaccess (m_vmmaps md) ++ m_vm_lazy md) (bv_unsign
 pose proof (LZ _ C1) as C2. unfold YK0g.covered in C2. apply existsb_exists in C2 as (c & Hc & Hi).
 unfold YK0g.in_iv, YK0g.in_rng, YK0g.B, YK0g.S in Hi. apply andb_prop in Hi as [K1 K2].
 apply Z.leb_le in K1. apply Z.ltb_lt in K2.
-unfold YK13.grant_ok_na_pin in Ga'. apply andb_prop in Ga' as [_ G4].
+pose proof (YK13.grant_ok_na_pin_facts _ _ _ _ Hn ltac:(unfold page_size; exact Hal) Ga') as Gb.
+unfold YK13.grant_ok_na_pin_b in Gb. apply andb_prop in Gb as [_ G4].
 pose proof (YK13.region_free_In _ (w64 a2) (Z_to_bv 64 n) (fst c) (snd c) G4
   ltac:(apply in_app_iff; right; rewrite <- surjective_pairing; exact Hc)) as D.
 assert (Ua : bv_unsigned (w64 a2) = a2) by (apply YG0h.w64_unsigned; lia).

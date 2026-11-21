@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: decodes the encoded statements of dg_shape_nil, t_emit_congrA, dg_shape_eq, dgW_cwa, agree0_Z, agree0_trans2 and dg_chain_run into plain Rocq, drops the name table, and adds di_rdr and sbm_rdrA reservation-invariant steps to the dg_chain_run proof; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Bo0DiagChainK.v, lines 64-68, 115-123, 175, 195-196. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -14,7 +15,6 @@ From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require L5Defs L5KnA J
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Require OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.L5FastLia. Require OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.L5FastLiaT. From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require TCodec.
-Ltac2 tcn__Jb0DiagChainK () := ([""; "Corelib.Init.Datatypes."; "Corelib.Init.Logic."; "Corelib.Numbers.BinNums."; "LinuxProcessSemantics.LinuxProcessSem.Fs."; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics."; "LinuxProcessSemantics.LinuxProcessSem.Run."; "LinuxProcessSemantics.LinuxProcessSem.State."; "LinuxProcessSemantics.Riscv.Prelude."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AsanAcct."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.HeapIface."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.HeapIfaceA."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Jb0DiagChainK."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Jb0DiagChainK.FPX_1.Chain."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Jb0DiagGlue.DG."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Jb0DiagLoopK."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Jb0DrvExit."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Jb0DrvLib."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.PropExec."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.ShapeAlg."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Spec."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.SpinAlg."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.StoreOk."; "OSSVerify.jsoncons.fuzz_ubjson_parser_max.images.AsanUbsan.M."; "Stdlib.Lists.List."; "Stdlib.ZArith.BinInt.Z."; "stdpp.bitvector.definitions."], [["0A"; "1None"; "1Some"; "1bool"; "1cons"; "1list"; "1nat"; "1nil"; "1option"; "1prod"; "1true"; "2and"; "2eq"; "2not"; "3Z"; "0HI"]; ["0LB"; "0LK"; "4Fs"; "5store_ok"; "6mkCfg"; "7FdChannel"; "7FdEntry"; "7Model"; "7event"; "7fd_lookup"; "7m_fds"; "7m_fs"; "8bvmap"; "0M"; "0M0"; "0MVi"]; ["0Ma"; "0Mb"; "0Mi"; "0R"; "0R'"; "9mrestrict"; ":credit"; ";ahid"; ";fframe"; "=dgW"; "<dg_chain"; "<dg_shape"; ">agree0"; "?WV_KEEP"; "@exitA"; "@stdoutPA"]; ["ACWA"; "Adinv"; "BFPState"; "Bgetr"; "Bmkst"; "Bseg_rom"; "CTSet"; "Ct_emit"; "Ct_eq"; "Ct_exit"; "DW"; "Dexit_code"; "Esrealizes"; "Fmem_grows"; "Gloaded_segments"; "0S"]; ["0Sf"; "HIn"; "Hconcat"; "Iadd"; "Ile"; "Ilt"; "Imodulo"; "Iof_nat"; "Ipow"; "Isub"; "0T"; "0T'"; "0a"; "0ar"; "0cr"; "0d"]; ["0evs"; "0fs"; "0fx"; "0i"; "0k"; "0model"; "0n"; "0parts"; "0pc"; "0r"; "0scfg"; "0sp0"; "JZ_to_bv"; "Jbv"; "Jbv_unsigned"; "0tid"]]).
 Local Ltac lia := L5FastLiaT.plia2.
 Open Scope Z_scope.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
@@ -55,11 +55,11 @@ msteps ASEGS (@mkst fx R (Z_to_bv 64 pc) M rom) (@mkst fxE RE (Z_to_bv 64 0x11d1
 dg_chain usp M0 S Sf rest fxE RX 0x11d148 MX
 end.
 Definition dg_shape (parts : list (list byte)) (fs : Fs.Fs) : TSet := fold_right (fun bs K => t_emit (W 2 bs) K) (t_exit (exit_code 2) fs) parts.
-Lemma dg_shape_nil : ltac2:(TCodec.tc2 tcn__Jb0DiagChainK "@'5'RMy8%211%411%511&B&Q;r2r1(7'H%211%63541pU481pU@:1").
+Lemma dg_shape_nil : forall parts fs, dg_shape parts fs [].
 Proof. intros [|bs rest] fs; cbn [dg_shape fold_right]; [apply t_exit_has_nil | apply t_emit_has_nil]. Qed.
-Lemma t_emit_congrA : ltac2:(TCodec.tc2 tcn__Jb0DiagChainK "B'5'H%211&QF&QHr2r1%3221&QGr4r3%3221%4237%9221p071pTH<1pTF=1pU2?1").
+Lemma t_emit_congrA : forall evs T T', t_eq T T' -> t_eq (t_emit evs T) (t_emit evs T').
 Proof. intros evs T T' H tr. unfold t_emit. split; (intros [X|(tr' & E & Y)]; [left; exact X | right; exists tr'; split; [exact E | apply H; exact Y]]). Qed.
-Lemma dg_shape_eq : ltac2:(TCodec.tc2 tcn__Jb0DiagChainK "J'5'RMy8%211%411%511&B&QH&Q;r2r1%3221&QG&QJ+2&R2%12=7%4231&QI&QK%116%321;%:251%@2<1pU4B1pU@D1").
+Lemma dg_shape_eq : forall parts fs, t_eq (dg_shape parts fs) (t_emit (W 2 (concat parts)) (t_exit (exit_code 2) fs)).
 Proof.
 induction parts as [|bs rest IH]; intros fs; cbn [dg_shape fold_right concat].
 - apply t_eq_sym. apply t_emit_W_nil. apply t_exit_has_nil.
@@ -85,14 +85,14 @@ Variable M0 : word -> option byte.
 #[local] Notation dinvA := (dinv ar HI sp0 M0).
 #[local] Notation usp := (bv_unsigned sp0).
 Definition dgW (S a : Z) : Prop := S - 5440 <= a < S \/ filew a.
-#[using="Hsp M0"] Lemma dgW_cwa : ltac2:(TCodec.tc2 tcn__Jb0DiagChainK "M'5'9'>%2211%411';&R4&R9&RNyR0vRK%3221+TP0%6221r2%9221%:225%<221&Q9r3%2216&Q@r5%23=14p041p081pTJH1pT0I1pQ2H1").
+#[using="Hsp M0"] Lemma dgW_cwa : forall LB S a, usp - 4096 <= S <= usp -> dgW S a -> CWA sp0 LB a.
 Proof.
 intros LB S a HS [Ha|Ha]; unfold CWA; [right; left; pose proof Hsp; lia|]. right; right.
 exists 0x138ba8, 0x138ea0. split; [unfold IMG_W_A; cbn [In]; tauto | unfold Jb0DiagGlue.DG.filew in Ha; lia].
 Qed.
-#[using="sp0 M0"] Lemma agree0_Z : ltac2:(TCodec.tc2 tcn__Jb0DiagChainK "Q='RMyR0%211'8y8%511%311p051'>&Q<r3r2r1%43321';&R4z%2215&R5&R8+2+R0%3221%52;1%:271&=&Q9r4%221A%411'<r6&RL%12Q0G%311r7%113%73O31p091p0?1pTJQ01p0L1pT0Q21pR4Q41pR2Q51").
+#[using="sp0 M0"] Lemma agree0_Z : forall (Ma Mb : word -> option byte) S, agree0 Ma Mb S -> forall a, 0 <= a < 2 ^ 64 -> ~ dgW S a -> Mb (Z_to_bv 64 a) = Ma (Z_to_bv 64 a).
 Proof. intros Ma Mb S AG a Ha Hn. apply AG; rewrite u64_lit by lia; intros X; apply Hn; [left | right]; exact X. Qed.
-#[using="sp0 M0"] Lemma agree0_trans2 : ltac2:(TCodec.tc2 tcn__Jb0DiagChainK "QA'RMyR0%211'8y8%511%311p051'>&Q<r4r3r1%43321r5r2%73251';&R4z%2218&R5&R8+2+R0%3221%52>1%:271&=&Q9%12@?%311'<r7&RL%12Q2H%311r8%113%73Q131p091p0>1pTJQ21p0K1p0O1pT0Q51pR4Q71pR2Q81pR6Q91").
+#[using="sp0 M0"] Lemma agree0_trans2 : forall (Mi Ma Mb : word -> option byte) S, agree0 Mi Ma S -> agree0 Mi Mb S -> forall a, 0 <= a < 2 ^ 64 -> ~ dgW S a -> Mb (Z_to_bv 64 a) = Ma (Z_to_bv 64 a).
 Proof. intros Mi Ma Mb S A1 A2 a Ha Hn. rewrite (agree0_Z Mi Mb S A2 a Ha Hn), (agree0_Z Mi Ma S A1 a Ha Hn). reflexivity. Qed.
 Section SE.
 Variables (R R' : bvmap 5 word).
@@ -104,7 +104,16 @@ apply KR. unfold WV_KEEP. cbn [In] in Hk |- *.
 repeat (destruct Hk as [<-|Hk]; [repeat first [left; apply bv_eq; reflexivity | right]|]). destruct Hk.
 Qed.
 End SE.
-#[using="L C IL HIok ICok ILY Hsp Hal DL Hex"] Theorem dg_chain_run : ltac2:(TCodec.tc2 tcn__Jb0DiagChainK "UL'5'RMy8%211%411%511'9'>%2211%911&Q8%;11&Q6yR0%=11'8%11=p031&B'QB&Ly5%2218'G'QAvR=v?vRKvNr>r=r<r;r2r1%;::987654321'<&K%115r7%43F21&Q<&Q5&Q7r3%22?1r4%5221%73A1@&QM%72E4r5%:221%42G1';&R4&R9&RN%12Q=O+TP0%4221%621O%72Q04%9221%92Q3Q2%;213&R6+@%22Q71z%Q23QO21+XPPP0%@2>1%B21Q8&R3%12OQ:%E21B'6%G29Q=&R7%11Q?%72Q51r6%L221'3&C&QNrI&RLr8%@21Q<%32R>1%74651Q@(:%QJ3:21p0<1p0B1pU:D1pU0RK1p0G1p0K1pU>RN1pTJRO1+RPP0%QA21R6&R5+QVhP0%22R91%QF241rD%F2S1R=%211(1%11S>%R>3S231p071pU8S=1&Q>r@rC%3221&Q?%11='F%S=11&I&J%11S0+2%Q92SD1%5231(2(E%114%32;1%S33;51&Q:rFrErKrAr?rG%S421SA%S621SC%99RG87Q465K41'QLvRJ(D&QDrB%QO2T:Q1&QE%11R3%554>3=1%721SN&Q;rL%221Q7%=4R9<41p0?1p0J1p0Q81p0Q;1p0Q@1p0QO1p0S01p0S61p0S91p0SD1p0SJ1p0T31p0T91pU<TF1pQLTM1pUBU81pR8TJ1pU6TN1pU4U01pV0U<1pT2U=1pT0U>1pR0U51p2U>1pTNU<1pQ4U>1pQ2UA1pU@UF1").
+#[using="L C IL HIok ICok ILY Hsp Hal DL Hex"] Theorem dg_chain_run : forall parts LB LK cr A (MVi : word -> option byte) (S Sf tid : Z) fs (fx : PropExec.FPState) R pc M (model : Model),
+dinvA LB LK cr A M model -> m_fs model = fs ->
+agree0 MVi (mrestrict (ahid A model) M) S -> mem_grows MVi (mrestrict (ahid A model) M) ->
+usp - 4096 <= S <= usp -> S <= Sf <= usp -> Sf mod 16 = 0 ->
+(forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MVi (Z_to_bv 64 (a + d)) k = true) ->
+(forall i, 65536 <= i < 1269760 -> MVi (Z_to_bv 64 i) = None) ->
+exitA tid MVi -> stdoutPA MVi ->
+fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+dg_chain usp MVi S Sf parts fx R pc (mrestrict (ahid A model) M) ->
+srealizes ASEGS scfg (mkCfg (@mkst fx R (Z_to_bv 64 pc) M rom) model) (dg_shape parts fs).
 Proof.
 induction parts as [|bs rest IH]; intros LB LK cr A MVi S Sf tid fs fx R pc M model D EFS AGI MGI HS HSf HSf16 WINi IMGi XAi SOPi FD2 CH; pose proof Hsp as Hsp'.
 -
@@ -156,6 +165,7 @@ apply (@wv_loop fxE scfg (ahid A model1) A HH1 (m_vm_lazy model1) HL1 HA1 128093
 + exact HM1.
 + exact Hh1.
 + exact FD1.
++ exact (di_rdr _ _ _ _ _ _ _ _ _ _ D1).
 + unfold wv_regs. repeat split; assumption.
 + rewrite VIS1. unfold wv_iov. split; [exact W3|]. split; [exact W4|]. split; [exact Wc|]. split; [exact I0|]. split; [exact I1|].
 split. { replace (Z_to_bv 64 q) with (Z_to_bv 64 (q + 0)) by (f_equal; lia). apply (store_ok_mono ASEGS _ MVi ME _ MGiE). apply (WINi q (16 * c)); lia. }
@@ -175,7 +185,8 @@ assert (D3 : dinvA LB LK cr A M3 model3).
 - exact GRM3.
 - exact (sbm_vml _ _ SBM3).
 - exact MI3.
-- rewrite (sbm_halted_eq _ _ SBM3). exact Hh1. }
+- rewrite (sbm_halted_eq _ _ SBM3). exact Hh1.
+- exact (sbm_rdrA _ _ SBM3). }
 pose proof (ahid_sbm A model1 model3 SBM3) as AH3. rewrite VIS1 in FRV3, GRV3. rewrite <- AH3 in FRV3, GRV3.
 set (MV3 := mrestrict (ahid A model3) M3) in *.
 apply (IH LB LK cr A MVi S Sf tid fs fxE R3 0x11d148 M3 model3 D3).

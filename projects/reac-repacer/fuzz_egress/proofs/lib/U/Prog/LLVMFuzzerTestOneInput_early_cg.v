@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
-(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/U/Prog/LLVMFuzzerTestOneInput_early_cg.v
-   at bc49657c087aa7d6ab0af1ffb2cb67fa08b15de1; module path and fuzz_egress's UBSan values: frame 0xa0 and LLVM_K from
+(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/U/Prog/LLVMFuzzerTestOneInput_early_cg.v;
+   module path and fuzz_egress's UBSan values: frame 0xa0 and LLVM_K from
    check_inject, over this unit's lib/U/Prog/LLVMFuzzerTestOneInput_early.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The cut-free (SRcf) twin of lib/U/Prog/LLVMFuzzerTestOneInput_early.v's llvm_early (the size >= 64 MiB return of
    fuzz_egress.c:145-146): the same proof over the same instruction walk (llvm_early_evt), with llvm_run_norm_cf and
    SRcf_ret for llvm_run_norm and SR_ret. *)

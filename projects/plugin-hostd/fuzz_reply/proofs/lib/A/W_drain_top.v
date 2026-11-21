@@ -6,6 +6,7 @@
    (dr_top_stmt / dr_feed_stmt / dr_feeds_stmt).  The call-site technique follows the finished w2 walk
    lib/A/W_lp_tail.v (allocator + __asan_memcpy over ajournal_gx) and W_send_line_loop.v / W_send_line_entry.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_drain_top.v, with its module paths changed; 6076 of its 6173 lines of code are new or changed and 12 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The TOP segment of the ASan walk of fuzz_reply's drain
    (DI 0x831f8 -> grow/realloc, source_of scan, EINTR round, empty-pending -> DEND, data round with __asan_memcpy
    -> DRB 0).  Statement fixed in W_drain_cx.v (dr_top_stmt); reference_feed's byte loop (dr_feed_stmt /
@@ -68,7 +69,7 @@ Hypothesis HG : gx_ok SEGS B (G_DR B RG).
 Hypothesis HGR : forall a, inG (G_DR B RG) a -> ~ in_rom SEGS a.
 (* a ROM byte survives a callee's journal (W_journal.v rom_out / ajournal_gx_rom_view): it is not a walk global,
    errno or the sink's overflow head, and if it is an allocator static it is pinned as an AR const cell
-   (rom_pinned; W1 45a3cc9bdd0).  The instance discharges it at the pinned placement by vm_compute. *)
+   (rom_pinned; W1).  The instance discharges it at the pinned placement by vm_compute. *)
 Hypothesis HROMO : rom_out SEGS B (G_DR B RG).
 (* aout_at's three read-only cells are program globals off the allocator's statics, so an allocator or program
    call keeps them (found by GsFree at free #2: they are not in G_DR; send_line's W_send_line_cx.v HGO) *)
@@ -2429,7 +2430,7 @@ J1 (drain_b_c.ds_u sg) (drain_b_c.ds_skip sg) (drain_b_c.ds_ref sg) /\
 dlater cx sg jb a tl /\ dbud MT MMAX cx S1 spent tl.
 
 (* ---- The other three slots, with the values the machine compares. ----
-   aothers_at (W_contract.v, a Theorem Labs lane's fix f71593d7630) gives the slot's fd and open as values whose low
+   aothers_at (W_contract.v, a Theorem Labs lane's fix) gives the slot's fd and open as values whose low
    four bytes val_mem pins, and the fd test as `f mod 2 ^ 32 <> fd mod 2 ^ 32`, which is what `beq a1, a4`
    at 0x832dc decides.  The scan's state wants them canonical, and val_mem keeps only v mod 2 ^ (8 n), so the
    canonical witnesses hold just as well. *)

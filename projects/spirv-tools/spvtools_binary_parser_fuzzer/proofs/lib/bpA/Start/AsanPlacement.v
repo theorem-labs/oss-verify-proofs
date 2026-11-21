@@ -1,10 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the grant witness is the address of the model's Linux placement). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State Monad Specs.
+From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Mmap.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Placement.
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Import AsanCeil.
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Import PlacementSearch.
 Import ListNotations.
@@ -172,6 +175,28 @@ Proof.
   destruct (free_gap_of_slack (vm_reserved h ++ vm_maps h) nZ HnZ) as (g & Hal & Hfl & Hc & Hfree).
   { rewrite gap_weight_sizes. lia. }
   exists g. split; [exact Hal|]. split; [exact Hfl|]. split; [exact Hc|]. exact Hfree.
+Qed.
+
+(** 08b1429: THE GRANT WITNESS is Linux's own address.  A plan whose totals leave a
+    free gap above [bottomup_floor] and below [alloc_ceiling] (<= [alloc_top h]) makes
+    the request PLACEABLE: the gap is a fit in Linux's bottom-up window, so
+    [Placement.linux_place_exists] answers.  The gap is not the answer; the address
+    the conclusion names is Linux's (the model's Common/AsanPlacement statement). *)
+Theorem free_gap_of_totals_place : forall (h : VmMaps) (thp : bool) nZ tot,
+  0 < nZ -> nZ mod page_size = 0 ->
+  alloc_ceiling <= alloc_top h ->
+  gw_sizes (vm_reserved h ++ vm_maps h) <= tot ->
+  bottomup_floor + nZ + tot + Z.of_nat (length (vm_reserved h ++ vm_maps h)) * (nZ + 4095) <= alloc_ceiling ->
+  exists g, Mmap.linux_place h thp (Z_to_bv 64 0) nZ g.
+Proof.
+  intros h thp nZ tot HnZ HnAl Htop Htot Hband.
+  destruct (free_gap_of_slack (vm_reserved h ++ vm_maps h) nZ ltac:(lia))
+    as (g & Hal & Hfl & Hc & Hfree).
+  { rewrite gap_weight_sizes. lia. }
+  apply (Placement.linux_place_exists h thp (Z_to_bv 64 0) nZ HnZ HnAl).
+  exists g. right. unfold Mmap.gap_fits.
+  pose proof bottomup_floor_val as Hfv.
+  repeat split; [exact Hal | unfold Mmap.task_unmapped_base; lia | lia | exact Hfree].
 Qed.
 
 Definition kHighMemBeg : Z := 0x10007fff8000.

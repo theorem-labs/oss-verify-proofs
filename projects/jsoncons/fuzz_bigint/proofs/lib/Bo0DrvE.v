@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the header values carry the auxv base (auxvp) in place of argv[0]'s pointer (p0). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -104,7 +105,7 @@ Section DrvE.
   Hypothesis DL : drv_layoutA L ar IL sp0.
   Variable fs0 : Fs.Fs.
   Variable fdata : list byte.
-  Variables p0 p1 can : word.
+  Variables auxvp p1 can : word.
   Variable M0 : word -> option byte.
   Hypothesis M0_def : defined M0 (bv_unsigned sp0) (ar_stack_top ar - bv_unsigned sp0).
   Variable A0 : list (Z * Z).
@@ -127,7 +128,7 @@ Section DrvE.
 
   (* [comment removed for export] *)
   Definition e_valsA (n : nat) (vals : list word) (A1 PTR OWN k : Z) : Prop :=
-    length vals = n /\ hdr_valsA sp0 p0 p1 can vals
+    length vals = n /\ hdr_valsA sp0 auxvp p1 can vals
     /\ vals_ev vals 48 = Z_to_bv 64 A1 /\ vals_ev vals 70 = Z_to_bv 64 LEN
     /\ vals_ev vals 73 = Z_to_bv 64 CFG /\ vals_ev vals 79 = Z_to_bv 64 PL
     /\ vals_ev vals 81 = Z_to_bv 64 k /\ vals_ev vals 82 = Z_to_bv 64 PTR /\ vals_ev vals 83 = Z_to_bv 64 OWN.
@@ -316,7 +317,7 @@ Section DrvE.
 
   (* [comment removed for export] *)
   Lemma tail_FA : forall (fx' : PropExec.FPState) (j : nat) vals R M (model : Model) A LK cr,
-    length vals = 230%nat -> hdr_valsA sp0 p0 p1 can vals -> (j <= 3)%nat ->
+    length vals = 230%nat -> hdr_valsA sp0 auxvp p1 can vals -> (j <= 3)%nat ->
     regs_ok (ENVG vals) srF2A R -> know_ok ASEGS (ENVG vals) (mrestrict (ahid A model) M) knF2A ->
     dinvA [] LK cr A M model -> m_fds model = fds0 -> m_fs model = fs0 ->
     stdoutA (Z.of_nat j) (mrestrict (ahid A model) M) -> stdoutXA (mrestrict (ahid A model) M) ->
@@ -427,7 +428,7 @@ Section DrvE.
 
   (* [comment removed for export] *)
   Lemma tail_MA : forall (fx' : PropExec.FPState) (j : nat) vals R M (model : Model) A (A1 : Z) LK cr,
-    length vals = 198%nat -> hdr_valsA sp0 p0 p1 can vals -> vals_ev vals 48 = Z_to_bv 64 A1 -> (j <= 3)%nat ->
+    length vals = 198%nat -> hdr_valsA sp0 auxvp p1 can vals -> vals_ev vals 48 = Z_to_bv 64 A1 -> (j <= 3)%nat ->
     regs_ok (ENVG vals) srF1A R -> know_ok ASEGS (ENVG vals) (mrestrict (ahid A model) M) knF1A ->
     dinvA [(A1, CAP)] LK cr A M model -> m_fds model = fds0 -> m_fs model = fs0 ->
     stdoutA (Z.of_nat j) (mrestrict (ahid A model) M) -> stdoutXA (mrestrict (ahid A model) M) ->

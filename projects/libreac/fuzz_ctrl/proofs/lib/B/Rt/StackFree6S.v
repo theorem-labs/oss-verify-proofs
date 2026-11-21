@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_disco lib/A/Rt/StackFree6.v (itself ported from proofs/cgif/cgif_rgb_fuzzer/lib/YF3h.v and YF9b.v) and restated onto lib/Reusable/StackFreeDef.v's astack_free_realizes; the fill pattern at 0x10350 is read through the AR constant cell that lib/A/Rt/StackFree6Tbl.v's sf_rodata row checks, as cgif_rgb_fuzzer YF3h.v's sf_rodata rows are; every address and class constant is cited from StackFree6Tbl.v; module names. *)
-(* Modified by Theorem Labs, 2026-10: relocated from proofs/libreac/fuzz_disco/lib/A/Rt/StackFree6S.v (a working branch 9a4c15f69ab) to libreac/fuzz_ctrl's ASan+UBSan build (v1.9.0, (internal path)): module paths fuzz_disco -> fuzz_ctrl, lib.A.Rt -> lib.B.Rt and the core modules from lib/Reusable's image-B twins (AF0x -> YF0x, AE2y -> YE2y, ...); the core's record name CtrlTSyms for TfibSyms. Every address is cited from the Tbl file. No proof step changed. *)
+(* Modified by Theorem Labs, 2026-10: relocated from proofs/libreac/fuzz_disco/lib/A/Rt/StackFree6S.v (a working branch) to libreac/fuzz_ctrl's ASan+UBSan build (v1.9.0, (internal path)): module paths fuzz_disco -> fuzz_ctrl, lib.A.Rt -> lib.B.Rt and the core modules from lib/Reusable's image-B twins (AF0x -> YF0x, AE2y -> YE2y, ...); the core's record name CtrlTSyms for TfibSyms. Every address is cited from the Tbl file. No proof step changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

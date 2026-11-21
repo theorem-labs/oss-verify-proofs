@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: am_after_write_win is the text of lib/Reusable/YCbq.v's ajournal_after_write
-   (lines 519-637, copied there from proofs/libreac/fuzz_knock/lib/Reusable/YCbq.v at origin/ossv/recipes 4b6f0df50aa7)
+   (lines 519-637, copied there from proofs/libreac/fuzz_knock/lib/Reusable/YCbq.v)
    with its presence premise narrowed to the journal's stack window, as
-   proofs/libreac/fuzz_identity/lib/A/Prog/LLVMFuzzerTestOneInput_L.v:105-226 (L_after_write_win, origin/ossv/recipes
-   4b6f0df50aa7) states it; am_set_shadow_at is that file's L_set_shadow_at (:230-276); both for
+   proofs/libreac/fuzz_identity/lib/A/Prog/LLVMFuzzerTestOneInput_L.v:105-226 (L_after_write_win)
+   states it; am_set_shadow_at is that file's L_set_shadow_at (:230-276); both for
    libdiginet/fuzz_codec's ASan build (image A). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_codec/lib/A/Prog/codec_amain_exit_rt.v, with its module paths changed; 3 of its 198 lines of code are new or changed and 8 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* A call of the runtime's shadow fill (__asan_set_shadow_XX) over a range of one of the caller's own side-stack
    frames' shadow, in journal form, for the EXIT segment of the image-B walk of LLVMFuzzerTestOneInput
    (lib/AU/Prog/codec_bmain_exit.v). The fill's contract (lib/AU/Rt/SetShadowDef.v aset_shadow_realizes) keeps only

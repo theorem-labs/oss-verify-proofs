@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGfz.v (a working branch 30a1993588f, c5 + memnorm; file sha256 f72607ef7c18) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 22 image addresses moved by code-verified function pairs (21 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 2 pcs named in comments; 1 hand maps (agreloc-resolve-R.tsv, each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGfz.v (a working branch, c5 + memnorm; file sha256 f72607ef7c18) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 22 image addresses moved by code-verified function pairs (21 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 2 pcs named in comments; 1 hand maps (agreloc-resolve-R.tsv, each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/DGfz.v, with its module paths, module names, addresses and numbers changed; 275 of its 813 lines of code are new or changed and 193 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/B: the Deallocate drain arm at image B under the re-hide (WalkSigDrh.wsr_drn, the drain field CfF2a's record
    states PRIMED), at round 3 part 3; lib/A's MemnormDdrnRh.v at image B's addresses and module names: Quarantine::Drain recycles the popped chunks (DoRecycle, Recycle's secondary arm), and a secondary
    Recycle re-hides the dead map's shadow interior, so the arm runs at YG0dH.amreal' over YGcfRehidePost.RZ_cf and ends in
@@ -88,7 +89,7 @@ intros segs DS W1 W2 W3 H12 H23 a Ha. destruct (H23 a Ha) as [H2|H2]; [left; exa
 Qed.
 
 (* qx keeps st_secs, so every slot live at qx S k z tr is live at S with the same length (DGbig.v's qx_secs_live,
-   r2-a e212e0532ab2, at the core's index-keyed dead_shadow_new). *)
+   r2-a, at the core's index-keyed dead_shadow_new). *)
 Lemma qx_secs_live_d : forall S k z tr r sm0, nth_error (st_secs (qx S k z tr)) r = Some sm0 -> sm_live sm0 = true ->
 exists sm2, nth_error (st_secs S) r = Some sm2 /\ sm_live sm2 = true /\ sm_len sm2 = sm_len sm0.
 Proof.
@@ -816,13 +817,13 @@ intros inst so bp ly S W regs mem md p n tr PRE HMP HBLK DRAIN.
 pose proof PRE as PRE0.
 destruct PRE0 as (HARX & HRP & Hra & Hra4096 & Hal & Hlo & Hbot & Hhi & Hpres & Hgp & Htp & Hr10 & Hr11 & Hr12 & Hr13 & Hr14 & Hr15 &
 Hso1 & Hso2 & Hso3 & Hbp1 & Hbp2 & Hbp3 & Htrlen & PSO & PLEN & PBUF & Htr & Hp0 & HFP).
-(* copy of DGfz.v:724-728 *)
+(* copy of DGfz.v:725-729 *)
 pose proof (DIfaceRh.dih_view _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ IF inst ly S W mem md p n HARX HRP HFP HBLK) as DV.
 destruct (dv_chunk _ _ _ _ _ _ _ _ DV) as (k & HK & HKS & _ & HKR).
 pose proof (dv_nonnull _ _ _ _ _ _ _ _ DV) as PNN.
 pose proof (DIfaceRh.dih_inst _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ IF inst ly S W mem md HARX) as HIO.
 destruct (DGg1.FH_m B TS U ARX rpre fpre inst so bp ly S W regs mem md p n tr PRE HBLK HIO DV) as (hb1 & j1 & j2 & j3 & Hhb1 & Hhdr & FH).
-(* copy of DGfz.v:730-746 (errno's bytes apart from Put's frame and dmem_m's windows), with sp0 / pa / nn unfolded *)
+(* copy of DGfz.v:731-747 (errno's bytes apart from Put's frame and dmem_m's windows), with sp0 / pa / nn unfolded *)
 pose proof (dv_n _ _ _ _ _ _ _ _ DV) as DN.
 pose proof (dn_ly _ _ _ _ _ DN) as LY. pose proof (dn_img _ _ _ _ _ DN) as IMG.
 destruct (dv_zone _ _ _ _ _ _ _ _ DV) as (Z3 & _ & _ & NN).

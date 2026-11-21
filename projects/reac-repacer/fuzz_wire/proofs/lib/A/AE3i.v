@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: IMG_RO_LO / IMG_RO_HI / img_ro_chunks generated for reac-repacer/fuzz_wire's asan image by ae3i.py (frozen 3cf49addef7e; byte-equal to projects/libreac/fuzz_disco/proofs/provenance/evidence/core-A/ae3i/ae3i.py at c23278b142b8): the chunks are [IMG_RO_LO, IMG_RO_HI) minus lib/A/AF0m.v's Tfib_owned_static (the rule reproduces cgif's own 15 chunks byte for byte), and IMG_RO_HI is THIS image's read-only PT_LOAD end - cgif_file_fuzzer's 0x2f1ac is a free choice, not a derivable boundary, so relocating it is unsound *)
+(* Modified by Theorem Labs, 2026-10: IMG_RO_LO / IMG_RO_HI / img_ro_chunks generated for reac-repacer/fuzz_wire's asan image by ae3i.py (frozen 3cf49addef7e; byte-equal to projects/libreac/fuzz_disco/proofs/provenance/evidence/core-A/ae3i/ae3i.py): the chunks are [IMG_RO_LO, IMG_RO_HI) minus lib/A/AF0m.v's Tfib_owned_static (the rule reproduces cgif's own 15 chunks byte for byte), and IMG_RO_HI is THIS image's read-only PT_LOAD end - cgif_file_fuzzer's 0x2f1ac is a free choice, not a derivable boundary, so relocating it is unsound *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_wire.asan (reac-repacer/fuzz_wire asan) sha256 2f8f8697cd4f99bd15999cce4963a6fcc39b308444bd58e2bf526ec7c1ad5fa1; unstripped twin sha256 d2f662a229626fd402f1018631498190e800834bad837fa4027204b79088b128 *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.

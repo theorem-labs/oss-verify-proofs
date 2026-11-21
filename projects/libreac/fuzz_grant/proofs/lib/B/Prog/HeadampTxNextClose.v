@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the composition of reac_headamp_tx_next on fuzz_grant.asan (HeadampTxNextClose), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v. *)
-(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/HeadampTxNextClose.v at a working branch af735a950e2 (blob 41fc606328e; the walk was ported from blob bcb968a739d at a working branch afd75724b5b, which differs from it only by 4 added and 0 removed lines, the licence header), restated over image B's listing, addresses and walk layer (lib/B/Prog) against GrantBContracts.v; the composition takes reac_headamp_tx_effective's contract, which image B calls, and destructs IMG_NEXT_DIV3 from hyps_reac_headamp_tx_next *)
+(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/HeadampTxNextClose.v at a working branch (blob 41fc606328e; the walk was ported from blob bcb968a739d at a working branch, which differs from it only by 4 added and 0 removed lines, the licence header), restated over image B's listing, addresses and walk layer (lib/B/Prog) against GrantBContracts.v; the composition takes reac_headamp_tx_effective's contract, which image B calls, and destructs IMG_NEXT_DIV3 from hyps_reac_headamp_tx_next *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_headamp_tx_next (image B fuzz_grant.asan-ubsan 0x85efc): the code meets the contract
    GrantBContracts.v states (tb_reac_headamp_tx_next_spec), so `walk_reac_headamp_tx_next` holds. The walk is cut at six
    slots, each segment proved in its own file:

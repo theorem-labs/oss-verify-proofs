@@ -96,7 +96,7 @@ Proof.
 Qed.
 
 (* ---- route (C): the region form (a Theorem Labs lane 09:20Z; form rule a Theorem Labs lane 09:37Z, 09:38Z; R amended 10:33Z) ----
-   Image B twin of image A's block (A/Prog/reac_box_catalogue_c.v, a Theorem Labs lane d68c95046c8): the statements below are
+   Image B twin of image A's block (A/Prog/reac_box_catalogue_c.v, a Theorem Labs lane): the statements below are
    A's text, byte for byte; the names REAC_BOX_CATALOGUE / BOX_CATALOGUE are this file's image-B constants.
    R is the set of shadow bytes the run needs PRESENT through its shadow_rw premise (the bytes it reads AND the bytes
    it stores into). For this run R is EMPTY, so each _on statement is the old one with the premise shadow_rw m DROPPED

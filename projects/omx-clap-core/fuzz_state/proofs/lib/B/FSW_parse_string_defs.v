@@ -4,12 +4,12 @@
    here.
    rule 24: proves no function (kind: walk definitions; the walk's rule-24 line is in lib/B/FSW_parse_string.v).
 
-   TEMPLATES. The definitions and lemma names are image A's walk, a working branch 9f3343583b7
+   TEMPLATES. The definitions and lemma names are image A's walk, a working branch
    lib/A/FSW_parse_string.v :89-115 (addresses, frame, Section W), :117-162 (pstr_frame_at, pstr_call_facts,
    pstr_ret_facts), :163-264 (the shadow lemmas), :372-445 (memory and register readers), :705-720 (pstr_shx),
    :1146-1147 (ps2_req) and :1259-1267 (ps2_img_hi). The B values are read off the B listing (a Theorem Labs lane's
    parse_string.B.s, 386 four-byte instructions 0x85534 .. 0x85b3c) and checked against the bespoke B proof,
-   a working branch 955803f9b2e lib/B/Prog/parse_string_segs.v :39-47 (aps_out: s0 = q, s1 = q + 8,
+   a working branch lib/B/Prog/parse_string_segs.v :39-47 (aps_out: s0 = q, s1 = q + 8,
    s6 = q >> 3 + K, s7 = K, s8 = (q + 8) >> 3 + K) and lib/B/Prog/parse_string.v :1180 (aps_some, the Some-Q path).
 
    WHAT IS B's (not A's):
@@ -24,7 +24,7 @@
    - FsShadowSyms is B's (FSH_Base.v: the GOT word 0x9fc10 = YB1w.tfib_D_GOT_asan_shadow_memory_dynamic_address and
      the cell 0xa8438 = YB1w.tfib_D_asan_shadow_memory_dynamic_address), the form the kit's entry and return states
      take (lib/B/FSW_K.v fsw_entryT_args).
-   - the last loaded segment of fs.asan-ubsan is [0xa1000, 0x5fd000) as in A (lib/B/YD1y.v:65-73
+   - the last loaded segment of fs.asan-ubsan is [0xa1000, 0x5fd000) as in A (lib/B/YD1y.v:66-74
      AsanUbsan_segment_003); FS_PSTAT_FP's four cells (lib/B/FSPstat.v) lie in it.
    No Admitted, no Axiom, no Parameter, no admit. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
@@ -331,7 +331,7 @@ End W.
    call step ---- *)
 Lemma ps2_req : forall n, 0 < n -> req_size n = n.
 Proof. intros n Hn. unfold req_size. destruct (Z.eqb_spec n 0); lia. Qed.
-(* the last loaded segment of fs.asan-ubsan, [0xa1000, 0x5fd000) (lib/B/YD1y.v:65-73 AsanUbsan_segment_003), holds
+(* the last loaded segment of fs.asan-ubsan, [0xa1000, 0x5fd000) (lib/B/YD1y.v:66-74 AsanUbsan_segment_003), holds
    fuzz/alloc.c's statics *)
 Lemma ps2_img_hi : forall x, 0xa1000 <= x < 0x5fd000 -> in_img tfibsegs x.
 Proof.

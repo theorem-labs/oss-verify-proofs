@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the place_declined_b premise of mmap, the vDSO, the THP flag). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import decidable.
@@ -72,8 +73,8 @@ Qed.
 
 Lemma rz_sys_mmap_at : forall k md (R : bvmap 5 word) (pc : word) w mm rom (s : mstate) (len : word)
     (P : word -> mstate -> Prop) (L : word -> mstate -> TSet),
-  md_pure md -> fetch_word ml_segs pc = Some w -> is_ecall w = true ->
-  bv_unsigned (getr R 17) = 222 -> getr R 11 = len ->
+  md_pure md -> ms_thp s = kb_thp (m_kernel md) -> fetch_word ml_segs pc = Some w -> is_ecall w = true ->
+  bv_unsigned (getr R 17) = 222 -> bv_unsigned (getr R 10) = 0 -> getr R 11 = len ->
   bv_unsigned (getr R 12) = mmap_prot k -> bv_unsigned (getr R 13) = 34 ->
   bv_unsigned (getr R 14) = 2^64 - 1 -> bv_unsigned (getr R 15) = 0 ->
   tsafe (sys_mmap k len s) P ->
@@ -98,7 +99,7 @@ Lemma rz_sys_mmap_at : forall k md (R : bvmap 5 word) (pc : word) w mm rom (s : 
             (tshape (MallocTree.mret a s') L)) ->
   realizes ml_segs (mkCfg (mkst R pc mm rom) (with_vmmaps (ms_vm s) md)) (tshape (sys_mmap k len s) L).
 Proof.
-  intros k md R pc w mm rom s len P L Hp HF HE H17 H11 H12 H13 H14 H15 HS HKf HKo.
+  intros k md R pc w mm rom s len P L Hp Hthp HF HE H17 H10 H11 H12 H13 H14 H15 HS HKf HKo.
   unfold sys_mmap in HS |- *.
   destruct (0 <? bv_unsigned len) eqn:E1; [|cbn in HS; contradiction].
   destruct (bv_unsigned len <? 2^62) eqn:E2; [|cbn in HS; contradiction].
@@ -106,21 +107,32 @@ Proof.
   cbn [andb tsafe tshape] in HS |- *. destruct HS as [HSf HSo].
   pose proof (alloc_top_lt64 (ms_vm s)) as Htop. unfold stack_max_size in Htop.
   pose proof (md_pure_vmmaps (ms_vm s) md Hp) as Hp'.
-  destruct k; cbn [mmap_grant_ok mmap_prot mmap_refusable_k] in *.
-  - apply (rz_mmap_ix_at ml_segs R pc mm rom (with_vmmaps (ms_vm s) md) w len _ _ Hp' HF HE H17 H11 E1 H12 H13 H14 H15).
+  destruct (nZ_ok len (nonzero_word _ E1)) as [Hn Hnal].
+  rewrite (mmap_refusable_k_vm k (ms_thp s) (ms_vm s) _ Hn Hnal) in HSf |- *.
+  assert (E10 : getr R 10 = Z_to_bv 64 0) by (apply word_of_unsigned; exact H10).
+  destruct k; cbn [mmap_grant_ok mmap_prot] in *.
+  - pose proof (rz_mmap_ix_at ml_segs R pc mm rom (with_vmmaps (ms_vm s) md) w len) as RZ.
+    cbv zeta in RZ. rewrite E10 in RZ.
+    change (kb_thp (m_kernel (with_vmmaps (ms_vm s) md))) with (kb_thp (m_kernel md)) in RZ.
+    rewrite <- Hthp in RZ.
+    apply (RZ _ _ Hp' HF HE H17 H11 E1 H12 H13 H14 H15 (place_declined_b_null _ _ _)).
     + intros Hr (* [comment removed for export] *). apply HKf; [exact (HSf Hr) | alia].
     + intros a Ha. rewrite with_vmmaps_vmmaps in Ha. rewrite with_vmmaps_vmmaps, with_vmmaps_twice.
-      pose proof (grant_ok_vm_unpack _ _ _ Ha) as (Hal & Ha0 & Hceil & _ & _).
+      pose proof (grant_ok_vm_unpack _ _ _ _ _ Ha) as (Hal & Ha0 & Hceil & _ & _).
       pose proof (u64_range a) as Har.
-      assert (Hn : bv_unsigned (page_round_up len) = page_round_up_Z (bv_unsigned len)) by (apply pru_u; alia).
-      apply (HKo a); [apply HSo; exact Ha | exact Hal | exact Ha0 | rewrite Hn; exact Hceil | exact Hn | alia].
-  - apply (rz_mmap_noaccess_ix_at ml_segs R pc mm rom (with_vmmaps (ms_vm s) md) w len _ _ Hp' HF HE H17 H11 E1 H12 H13 H14 H15).
+      assert (Hn' : bv_unsigned (page_round_up len) = page_round_up_Z (bv_unsigned len)) by (apply pru_u; alia).
+      apply (HKo a); [apply HSo; exact Ha | exact Hal | exact Ha0 | rewrite Hn'; exact Hceil | exact Hn' | alia].
+  - pose proof (rz_mmap_noaccess_ix_at ml_segs R pc mm rom (with_vmmaps (ms_vm s) md) w len) as RZ.
+    cbv zeta in RZ. rewrite E10 in RZ.
+    change (kb_thp (m_kernel (with_vmmaps (ms_vm s) md))) with (kb_thp (m_kernel md)) in RZ.
+    rewrite <- Hthp in RZ.
+    apply (RZ _ _ Hp' HF HE H17 H11 E1 H12 H13 H14 H15 (place_declined_b_null _ _ _)).
     + intros Hr. apply HKf; [exact (HSf Hr) | alia].
     + intros a Ha. rewrite with_vmmaps_vmmaps in Ha. rewrite with_vmmaps_vmmaps, with_vmmaps_twice.
-      pose proof (grant_ok_na_vm_unpack _ _ _ Ha) as (Hal & Ha0 & Hceil & _).
+      pose proof (grant_ok_na_vm_unpack _ _ _ _ _ Ha) as (Hal & Ha0 & Hceil & _).
       pose proof (u64_range a) as Har.
-      assert (Hn : bv_unsigned (page_round_up len) = page_round_up_Z (bv_unsigned len)) by (apply pru_u; alia).
-      apply (HKo a); [apply HSo; exact Ha | exact Hal | exact Ha0 | rewrite Hn; exact Hceil | exact Hn | alia].
+      assert (Hn' : bv_unsigned (page_round_up len) = page_round_up_Z (bv_unsigned len)) by (apply pru_u; alia).
+      apply (HKo a); [apply HSo; exact Ha | exact Hal | exact Ha0 | rewrite Hn'; exact Hceil | exact Hn' | alia].
 Qed.
 
 
@@ -201,6 +213,7 @@ Lemma rz_sys_mprotect_at : forall md (R : bvmap 5 word) (pc : word) w mm rom (s 
   getr R 11 = n1 -> bv_unsigned n1 = page_round_up_Z (bv_unsigned len) ->
   bv_unsigned (getr R 12) = 3 ->
   tsafe (sys_mprotect_rw addr len s) P ->
+  vdso_ok (with_vmmaps (ms_vm s) md) ->
   let n := page_round_up len in
   (* [comment removed for export] *)
   (tsafe (MallocTree.mbind (set_errno ENOMEM) (fun _ => MallocTree.mret MAP_FAILED) s) P ->
@@ -220,14 +233,19 @@ Lemma rz_sys_mprotect_at : forall md (R : bvmap 5 word) (pc : word) w mm rom (s 
             (tshape (MallocTree.mret (Z_to_bv 64 0) s) L)) ->
   realizes ml_segs (mkCfg (mkst R pc mm rom) (with_vmmaps (ms_vm s) md)) (tshape (sys_mprotect_rw addr len s) L).
 Proof.
-  intros md R pc w mm rom s addr len a0v n1 P L Hp HF HE H17 H10 Ha0 H11 Hn1 H12 HS n HKf HKo HKrw. subst n.
+  intros md R pc w mm rom s addr len a0v n1 P L Hp HF HE H17 H10 Ha0 H11 Hn1 H12 HS Hvdo n HKf HKo HKrw. subst n.
   rewrite Ha0 in H10.
   unfold sys_mprotect_rw in HS |- *.
   destruct (0 <? bv_unsigned len) eqn:E1; [|cbn in HS; contradiction].
   destruct (bv_unsigned addr mod page_size =? 0) eqn:E2; [|cbn in HS; contradiction].
   destruct (bv_unsigned addr + page_round_up_Z (bv_unsigned len) <=? alloc_top (ms_vm s)) eqn:E3; [|cbn in HS; contradiction].
   destruct (map_contains (vm_maps (ms_vm s)) addr (page_round_up len)) eqn:E4; [|cbn in HS; contradiction].
+  destruct (region_free (vm_reserved (ms_vm s)) addr (page_round_up len)) eqn:E4r; [|cbn in HS; contradiction].
   apply Z.ltb_lt in E1. apply Z.eqb_eq in E2. apply Z.leb_le in E3.
+  (* the vDSO gate: the pair is in the reserved ledger ([vdso_ok]) and the range is free of that ledger *)
+  assert (HVD : region_free (vdso_reserved (m_kernel md) (vdso_top (ms_vm s))) addr (page_round_up len) = true).
+  { apply RefNodes.region_free_intro. intros b0 s0 Hin0.
+    exact (RefNodes.region_free_In _ _ _ b0 s0 E4r (Hvdo _ Hin0)). }
   cbn [andb] in HS |- *.
   pose proof (u64_range addr) as Har. pose proof E3 as E3'.
   pose proof (alloc_top_lt64 (ms_vm s)) as Htop. unfold stack_max_size in Htop.
@@ -245,14 +263,14 @@ Proof.
                   (L (Z_to_bv 64 0) (upd s (zfill addr (page_round_up len) (ms_mem s)) (vm_unprotect addr (page_round_up len) (ms_vm s))))
                   Hp' HF HE H17 H10 H11 E1' H12 E2 Hnw) as RZ.
     cbv zeta in RZ. rewrite !with_vmmaps_vmmaps, !with_vmmaps_twice, !Hpn in RZ.
-    apply RZ; [exact E5 | exact E4 | intros Hb; apply HKf; [exact (HSf Hb) | rewrite Hn; exact E3' | exact Hn] |].
+    apply RZ; [exact HVD | exact E5 | exact E4 | intros Hb; apply HKf; [exact (HSf Hb) | rewrite Hn; exact E3' | exact Hn] |].
     intros Hb. apply HKo; [apply HSo; exact Hb | rewrite Hn; exact E3' | exact Hn].
   - destruct (region_free (vm_noaccess (ms_vm s)) addr (page_round_up len)) eqn:E6; [|cbn in HS; contradiction].
     cbn [tsafe tshape] in HS |- *.
     pose proof (rz_mprotect_already_rw_at ml_segs R pc mm rom (with_vmmaps (ms_vm s) md) w addr n1
                   (L (Z_to_bv 64 0) s) Hp' HF HE H17 H10 H11 E1' H12 E2 Hnw) as RZ.
     cbv zeta in RZ. rewrite !with_vmmaps_vmmaps, !Hpn in RZ.
-    apply RZ; [exact E5 | exact E4 | exact E6 |].
+    apply RZ; [exact HVD | exact E5 | exact E4 | exact E6 |].
     apply HKrw; [exact HS | rewrite Hn; exact E3' | exact Hn].
 Qed.
 
@@ -532,8 +550,7 @@ Ltac sys_rethread Hag HI HS magree_tac top_lemma :=
   let HInew := fresh "HI" in let Hag' := fresh "Hag" in
   lazymatch type of HS with
   | tsafe (_ ?s1) _ =>
-      first [ pose proof (minv_same _ _ s1 HI eq_refl eq_refl (top_lemma)) as HInew
-            | pose proof (minv_same _ _ s1 HI eq_refl eq_refl eq_refl) as HInew ];
+      pose proof (minv_same _ _ s1 HI eq_refl eq_refl ltac:(reflexivity) eq_refl) as HInew;
       magree_tac Hag';
       clear Hag HI; rename Hag' into Hag; rename HInew into HI; note_win HI
   end.
@@ -595,7 +612,7 @@ Ltac mach_sys_mmap Hp HS Hag HI :=
   lazymatch goal with
   | |- realizes _ (mkCfg (mkst ?R ?pc ?mm ?rom) (with_vmmaps _ ?md)) (tshape (sys_mmap ?k ?l ?s) _) =>
       eapply (rz_sys_mmap_at k md R pc _ mm rom s l);
-      [ mpure Hp | solveF | reflexivity | sys_reg | sys_reg | sys_reg | sys_reg | sys_reg | sys_reg | exact HS
+      [ mpure Hp | thp_side HI | solveF | reflexivity | sys_reg | sys_reg | sys_reg | sys_reg | sys_reg | sys_reg | sys_reg | exact HS
       | let HS' := fresh "HS" in let Hlen := fresh "Hlen" in
         intros HS' Hlen; rz_norm; clear HS; rename HS' into HS;
         unfold set_errno in HS |- *; sys_unfocus HS; mnorm HS
@@ -654,7 +671,7 @@ Ltac mach_sys_mprotect Hp HS Hag HI :=
       | regnorm; reflexivity
       | first [ apply mprotect_len_u; alia
               | match goal with |- ?g => fail 1 "mprotect a1:" g end ]
-      | sys_reg | exact HS
+      | sys_reg | exact HS | vdso_side HI
       | let HS' := fresh "HS" in let Hc := fresh "Hktop" in let Hn := fresh "Hkn" in
         intros HS' Hc Hn; rz_norm; clear HS; rename HS' into HS; cbn [ms_lo ms_hi ms_mem ms_vm upd] in Hc;
         unfold set_errno in HS |- *; sys_unfocus HS; mnorm HS

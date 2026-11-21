@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the statements carry the flag of the flagged relation SpinAlg.srealizesM and use the shadow table of the launch's rseq layout (ASAN_at (rseq_z rsb)). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -28,7 +29,7 @@ Proof. vm_compute. reflexivity. Qed.
 Lemma asan_ug_fills : forallb (fun f : Z * Z => (Z.leb (UGN.ug_hlo UGN.UG_ASAN) (fst f) && Z.leb (fst f + snd f) (UGN.ug_hhi UGN.UG_ASAN))%bool) (UGN.ug_fills UGN.UG_ASAN) = true.
 Proof. vm_compute. reflexivity. Qed.
 
-Lemma asan_ug_spec : ug_spec ASEGS ASAN UGN.UG_ASAN.
+Lemma asan_ug_spec {rsb : bool} : ug_spec ASEGS (ASAN_at (rseq_z rsb)) UGN.UG_ASAN.
 Proof.
   intros mem rom regs Hrd Hst R1 R20 R27 R10 R11 R12 R8 RR.
   (* [comment removed for export] *)
@@ -50,7 +51,7 @@ Proof.
   all: try (first [exact R10 | exact R12 | exact R8 | exact R11 | exact G9 | exact G18 | exact G23 | exact G25 | exact G26]).
   { rewrite R1. apply bv_eq. vm_compute. reflexivity. }
   exists regs'. split; [|split; [|split; [|split]]].
-  - replace (Z_to_bv 64 (x_memset ASAN)) with ms_entry by (apply bv_eq; vm_compute; reflexivity).
+  - replace (Z_to_bv 64 (x_memset (ASAN_at (rseq_z rsb)))) with ms_entry by (apply bv_eq; vm_compute; reflexivity).
     replace (Z_to_bv 64 (UGN.ug_exit UGN.UG_ASAN)) with (0x41f60 : word)%bv by (apply bv_eq; vm_compute; reflexivity).
     exact RUN.
   - rewrite S8. f_equal.
@@ -63,6 +64,8 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Section AsanNode.
+Context {sfl : bool}.   (* the flag of [SpinAlg.srealizesM] *)
+  Context {rsb : bool}.   (* the launch's kb_rseq; the table is ASAN_at/BOTH_at (rseq_z rsb) *)
 Variable nx0 : N.
 Variable LIMIT : Z.
 Variable SINV : env -> (word -> option byte) -> Prop.
@@ -74,9 +77,9 @@ Hypothesis SINV_agree : forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E'
 Hypothesis nx0_ge7 : APS.nx0_ok nx0.
 Variable FS0 : Fs.Fs.
 
-Theorem asan_ug_ext_sound : ext_stmt ASEGS ASAN nx0 LIMIT (UGN.xn ASEGS ASAN nx0 UGN.UG_ASAN) SINV argH FS0.
+Theorem asan_ug_ext_sound : ext_stmt ASEGS (ASAN_at (rseq_z rsb)) nx0 LIMIT (UGN.xn ASEGS (ASAN_at (rseq_z rsb)) nx0 UGN.UG_ASAN) SINV argH FS0 sfl.
 Proof.
-  eapply (ug_xn_sound ASEGS ASAN nx0 UGN.UG_ASAN LIMIT); try eassumption;
+  eapply (ug_xn_sound ASEGS (ASAN_at (rseq_z rsb)) nx0 UGN.UG_ASAN LIMIT); try eassumption;
     first [ exact asan_wx | exact asan_in_hull | exact asan_hull_ok | exact asan_segs_wr | exact asan_ug_spec | exact asan_ug_wf | idtac ].
 Qed.
 End AsanNode.

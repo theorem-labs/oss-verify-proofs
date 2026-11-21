@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the induction over [realizes] names the new sys_rob premise of its node constructor). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Classical.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
@@ -48,7 +49,7 @@ Theorem realizes_must_exit_ncfg : forall S c T,
   must_exit_in_at_cfg ncfg segs S c.
 Proof.
   intros S c T H.
-  induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq]; intros pre HT Hnh.
+  induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq]; intros pre HT Hnh.
   - destruct Hnode as [Hcomp Hsound].
     apply must_exit_in_at_cfg_running; [exact Hnh | | |].
     + exists (evs i0), (SNext (nx i0)). apply Hcomp.

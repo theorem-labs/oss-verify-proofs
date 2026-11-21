@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (brk_r_ok_X and check_brk_X state the break's growth as brk_grow_bytes; check_mprotect_X re-proved for mprotect's vDSO gate, which reads m_kernel; check_mmap_X re-proved for check_mmap's reads of m_kernel and the fd table (m_fds_MX) and the MAP_FIXED arms' check_mmap_fixed_overflow). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs.
@@ -204,7 +205,7 @@ rewrite <- (filter_true mat). apply backing_within_limit_X; [exact CAN| exact LE
 Qed.
 #[using="Type"] Lemma brk_r_ok_X : forall mo mat req r,
 m_vm_materialized mo = [] -> (length mat <= NMAX)%nat ->
-robust (nonlazy_bytes mo + bv_unsigned (bv_sub req (vm_brk (m_vmmaps mo)))) (vm_limit (m_vmmaps mo)) ->
+robust (nonlazy_bytes mo + brk_grow_bytes (m_vmmaps mo) req) (vm_limit (m_vmmaps mo)) ->
 brk_r_ok (MX mo mat) req r = brk_r_ok mo req r.
 Proof.
 intros mo mat req r CAN LEN R. unfold brk_r_ok, brk_grow_ok, brk_budget_ok. rewrite !m_vmmaps_MX.
@@ -215,8 +216,8 @@ destruct (bv_eqb r req) eqn:Er; cbn [orb].
 - apply bv_eqb_eq in Er. subst r.
 destruct ((0 <? bv_unsigned (vm_brk (m_vmmaps mo))) && (bv_unsigned (vm_brk (m_vmmaps mo)) <? bv_unsigned req))%bool; [|reflexivity].
 f_equal. f_equal.
-replace (nonlazy_bytes mo + Z.of_nat (length mat) * page_size + bv_unsigned (req - vm_brk (m_vmmaps mo)))
-with (nonlazy_bytes mo + bv_unsigned (req - vm_brk (m_vmmaps mo)) + Z.of_nat (length mat) * page_size) by lia.
+replace (nonlazy_bytes mo + Z.of_nat (length mat) * page_size + brk_grow_bytes (m_vmmaps mo) req)
+with (nonlazy_bytes mo + brk_grow_bytes (m_vmmaps mo) req + Z.of_nat (length mat) * page_size) by lia.
 apply robust_leb; [exact R| apply mat_bound0; exact LEN].
 - destruct (bv_eqb r (vm_brk (m_vmmaps mo))) eqn:Eb; cbn [andb]; [|reflexivity].
 apply bv_eqb_eq in Eb. subst r.
@@ -270,11 +271,12 @@ Proof.
 intros addr len prot eff mo mat CAN LEN R. unfold check_mprotect.
 unfold mprotect_refusable. rewrite !(mprotect_budget_ok_X NMAX) by assumption.
 rewrite !m_vmmaps_MX, !mprotect_model_next_MX.
+try change (m_kernel (MX mo mat)) with (m_kernel mo).
 xfer.
 Qed.
 #[using="Type"] Lemma check_brk_X : forall req eff mo mat,
 m_vm_materialized mo = [] -> (length mat <= NMAX)%nat ->
-robust NMAX (nonlazy_bytes mo + bv_unsigned (bv_sub req (vm_brk (m_vmmaps mo)))) (vm_limit (m_vmmaps mo)) ->
+robust NMAX (nonlazy_bytes mo + brk_grow_bytes (m_vmmaps mo) req) (vm_limit (m_vmmaps mo)) ->
 relX mo mat (check_brk req eff (MX mo mat)) (check_brk req eff mo).
 Proof.
 intros req eff mo mat CAN LEN R. unfold check_brk.
@@ -297,13 +299,15 @@ robust NMAX (nonlazy_bytes (with_mmap_replacement flags addr (Z_to_bv 64 nZ)
 (vm_limit (m_vmmaps mo)) ->
 relX mo mat (check_mmap addr len prot flags fd off eff (MX mo mat)) (check_mmap addr len prot flags fd off eff mo).
 Proof.
-intros addr len prot flags fd off eff mo mat CAN LEN nZ R1 R2 R3. unfold check_mmap.
+intros addr len prot flags fd off eff mo mat CAN LEN nZ R1 R2 R3. unfold check_mmap, check_mmap_fixed_overflow.
 unfold mmap_grant_refusable, mmap_reserve_refusable, mmap_fixed_fresh_refusable, mmap_fixed_commit_refusable,
 mmap_fixed_span_refusable.
 rewrite !(noreserve_backed_ok_X NMAX) by assumption.
 rewrite !(fixed_rw_budget_ok_X NMAX) by assumption.
 rewrite !(fixed_rw_span_budget_ok_X NMAX) by assumption.
 rewrite !m_vmmaps_MX, !with_vmmaps_MX, !with_mmap_backing_MX, !with_mmap_destroyed_MX, !with_mmap_replacement_MX.
+try change (m_kernel (MX mo mat)) with (m_kernel mo).
+rewrite ?m_fds_MX.
 xfer.
 Qed.
 End Transfer.

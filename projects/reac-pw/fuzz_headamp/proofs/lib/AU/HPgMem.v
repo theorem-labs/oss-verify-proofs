@@ -1,8 +1,8 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgMem.v at 37d45827ae9; module paths and the
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgMem.v; module paths and the
    rm_ / rl_ prefixes renamed (hm_ / hd_) for reac-pw/fuzz_headamp image A; sections 1-4, 7 and 9 as they stand;
    section 5 at headamp's real-frame check, section 6 restated for headamp's class-4 frame (80-byte P0, res and x,
    the 128 shadow bytes, the flag cell), section 8 at headamp's two first input reads, section 10 new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgMem.v at c38a913f485; image B's own parts
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgMem.v; image B's own parts
    (the real-frame check, the frame for locals with its 116 shadow bytes and scope sites, the two first input reads on
    image B's code) restated with the hmu_ prefix; the image-generic sections are imported from that file, not copied. *)
 (* reac-pw/fuzz_headamp image B (fuzz_headamp.asan-ubsan, pinned sha256

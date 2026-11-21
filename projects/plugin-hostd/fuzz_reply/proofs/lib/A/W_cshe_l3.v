@@ -6,6 +6,7 @@
    THE GENERIC WALK (route (b), step 3; CONVERSION.md (sha256 1015972e02a9; internal record)): over any allocator relation ARx with its laws,
    in W_check_shape_ends.v's generic Section header (XCshe's): cshe_l3_top_x concludes W_contract_x.cshe_post_x.
    W_cshe_top.v re-derives the AR theorem at ARi0. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -756,7 +757,7 @@ repeat match goal with H : _ /\ _ |- _ => destruct H end.
 repeat split; (apply (val_mem_kept SEGS (w_H W1) (w_H W2) m1 m2); [intros k Hk; apply HK; cbn in Hk; lia | assumption]).
 Qed.
 
-(* W1's lib/A/W_list_drop.v helpers (a working branch 5bc6dd7b8b5), copied *)
+(* W1's lib/A/W_list_drop.v helpers (a working branch), copied *)
 Lemma l3_writable_kept_w : forall (W W' : world SEGS) (m m' : word -> option byte) a,
 (apresent (w_H W) m a -> apresent (w_H W') m' a) -> wle W W' ->
 writable_at SEGS (mrestrict (w_H W) m) a -> writable_at SEGS (mrestrict (w_H W') m' ) a.
@@ -1087,7 +1088,7 @@ Proof. intros q Hq Hc. destruct (HAimg (as_errno B + q) Hc) as (_ & _ & He & _).
 Definition l3_err (W1 : world SEGS) (mem1 : word -> option byte) : Prop :=
 forall j, 0 <= j < 4 -> aview SEGS (w_H W1) mem1 (as_errno B + j) = aview SEGS (w_H W) mem (as_errno B + j).
 
-(* the invariant at the head, w turns left (the plain proof's cse_inv, old ASan proof 23f70bc959c
+(* the invariant at the head, w turns left (the plain proof's cse_inv, old ASan proof
    lib/A/Prog/check_shape_ends.v:503-521, over this walk's journal) *)
 Definition l3_regs (regs1 : bvmap 5 word) (w : nat) : Prop :=
 getr regs1 2 = w64 (sp0 - 144) /\ getr regs1 3 = getr regs0 3 /\ getr regs1 4 = getr regs0 4 /\
@@ -2895,7 +2896,7 @@ Qed.
 End loop.
 
 (* ------------------------------------------------------------------ the top lemma: W_cshe_top.v's Hypothesis L3 *)
-(* Its type was W_cshe_top.v's L3 (a working branch 7035864229a) verbatim; since fb87b19890f its two P premises
+(* Its type was W_cshe_top.v's L3 (a working branch) verbatim; its two P premises
    (in_rom on P's bytes, ashp of its shadow) are cshe_spec's one disjunctive P-home premise, at the same position.
    cshe_spec's premises, the branch (g_gone = 0, want > 0) and the state cshe_gone_l3 leaves at the loop head: what the
    composition supplies at the head is exactly these premises; of them the loop reads the journal (index 0, from the
@@ -3156,7 +3157,7 @@ split; [|split; [exact HP2 | split; [exact Hbl | split; [exact Hfrs | split; [ex
 apply (ajournal_gx_pack_xR SEGS B PST ARx G XO1 OUT1 STK sp0 FP ly S hp W0 mem md own ly2 S2 hp2 W2 mem2 md2 (k + 1) memS HSTK HXO HJ2 Hag).
 intros a Ha Hno. rewrite <- (Hout a Ha Hno). apply (proj1 HK); lia.
 Qed.
-(* W_sites_x.v:795 aj_bcmp_gx_at_x at R, through aj_gx_entry_at_xR (the bcmp contract stays strict) *)
+(* W_sites_x.v:796 aj_bcmp_gx_at_x at R, through aj_gx_entry_at_xR (the bcmp contract stays strict) *)
 Lemma l3_bcmp_gx_at_xR : forall pc, abcmp_realizes_x SEGS B ARx pc ->
 forall G XO OUT W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k x y n (o : Z) raw,
 gx_ok SEGS B G -> XO mod 16 = 0 ->
@@ -3539,7 +3540,7 @@ Proof. intros q Hq Hc. destruct (HAimg (as_errno B + q) Hc) as (_ & _ & He & _).
 Definition l3_errR (W1 : world SEGS) (mem1 : word -> option byte) : Prop :=
 forall j, 0 <= j < 4 -> aview SEGS (w_H W1) mem1 (as_errno B + j) = aview SEGS (w_H W) mem (as_errno B + j).
 
-(* the invariant at the head, w turns left (the plain proof's cse_inv, old ASan proof 23f70bc959c
+(* the invariant at the head, w turns left (the plain proof's cse_inv, old ASan proof
    lib/A/Prog/check_shape_ends.v:503-521, over this walk's journal) *)
 Definition l3_regsR (regs1 : bvmap 5 word) (w : nat) : Prop :=
 getr regs1 2 = w64 (sp0 - 144) /\ getr regs1 3 = getr regs0 3 /\ getr regs1 4 = getr regs0 4 /\

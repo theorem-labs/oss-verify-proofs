@@ -5,14 +5,15 @@
    for libreac/fuzz_identity's ASan build (lib/A). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_catalogue.v, with its module paths and numbers changed; 204 of its 254 lines of code are new or changed and 319 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/check_ignore.v, with its module paths and module names changed; 278 of its 317 lines of code are new or changed and 215 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* trim (reac_segconf.c:51-59, static) on the ASan+UBSan image B of reac-pw/fuzz_segconf (fuzz_segconf.asan-ubsan,
    pin c3796c0b38f3; entry BASE + AF_trim = 0x89640, 324 bytes, 81 instructions, frame 32 bytes, no side-stack
    frame): the kit of its walk. ADAPTED for the image-B G3 walk owner's image-B trim walk lane from the image-A G3 walk owner's image-A kit
-   lib/A/Prog/trim_k.v (commit 07dedd5b93c6: its pure lemmas, tr_cx / tr_mid / tr_post and the
-   cut-statement form) and the unit owner's UBSan walk lib/U/Prog/trim.v (commit 523c6a205596: the
+   lib/A/Prog/trim_k.v (its pure lemmas, tr_cx / tr_mid / tr_post and the
+   cut-statement form) and the unit owner's UBSan walk lib/U/Prog/trim.v (the
    three trap discharges), re-derived on image B's code (the
    neutral excerpt trim.fuzz_segconf.asan-ubsan.s; listing lib/B/Prog/SegList.v,
-   AF_trim = 0x4880). The contract is trim_c.v (the image-A owner's text, G3 FINAL 6f783602b5e3).
+   AF_trim = 0x4880). The contract is trim_c.v (the image-A owner's text, G3 FINAL).
    Image B's code differs from image A's in three ways that matter here: the shadow base lives in s1 (x9; A: s2),
    s2 (x18) holds 1 - s (it counts down with the leading loop and feeds the s + |s1| trap), and three UBSan trap
    branches go to the `unimp` at 0x89770:
@@ -60,7 +61,7 @@ Local Set Warnings "-abstract-large-number".
 Open Scope bv_scope.
 Open Scope Z_scope.
 
-(* ---- the plain walk's pure lemmas (the unit owner's lib/Prog/trim.v TrimSpine at db8c4beebf62, the image-free part, as
+(* ---- the plain walk's pure lemmas (the unit owner's lib/Prog/trim.v TrimSpine, the image-free part, as
    the image-A G3 walk owner's lib/A/Prog/trim_k.v TrimA copies them) ---- *)
 Module TrimB.
 Import SegModel.
@@ -227,7 +228,7 @@ Definition TR_MASK : Z := 4294976000.
 Definition TR_M1 : Z := 18446744073709551615.
 (* the callee-saved registers trim never writes *)
 Definition TR_KEPT : list (bv 5) := [3; 4; 19; 20; 21; 22; 23; 24; 25; 26; 27]%bv.
-(* image B's values of the contract's pure parameters come from the image-B harness owner's lib/B/Prog/SegInstB.v (1f771e2f2066,
+(* image B's values of the contract's pure parameters come from the image-B harness owner's lib/B/Prog/SegInstB.v (
    the image-A owner's SegInstA names): STK_trim = 32 + ESTACK = 4128 (trim's 32-byte frame, 0x89640 `addi sp,sp,-32`, and below it
    the strlen wrapper's ESTACK window, called at sp0 - 32), RLO_A / RHI_A = SegGlob.SEG_RLO / SEG_RHI = 0xa1c60 /
    0xa3f08. The entry stays the listing term BASE + AF_trim (SegInstB's ruling; A_trim_A_AF ties it to 0x89640). *)

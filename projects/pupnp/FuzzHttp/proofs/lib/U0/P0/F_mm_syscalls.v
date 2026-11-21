@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the mmap node's NULL hint). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Specs Run.
@@ -235,13 +236,13 @@ Proof.
 
   assert (SH1 : w_is0 (Z_to_bv 64 len) = false) by (rewrite w_is0_lit by lia; apply Z.eqb_neq; lia).
   assert (SH3 : let P := Z_to_bv 64 prot in let FL := Z_to_bv 64 34 in
-      (mmap_modeled_b P FL (Z_to_bv 64 0) = true
+      ((mmap_modeled_b P FL (Z_to_bv 64 0) = true /\ 0%Z = 0%Z)
        \/ (mmap_modeled_b P FL (Z_to_bv 64 0) = false /\
-           mmap_noaccess_b P FL (Z_to_bv 64 0) = true)
+           mmap_noaccess_b P FL (Z_to_bv 64 0) = true /\ 0%Z = 0%Z)
        \/ (mmap_modeled_b P FL (Z_to_bv 64 0) = false /\
            mmap_noaccess_b P FL (Z_to_bv 64 0) = false /\
            mmap_fixed_noaccess_b P FL (Z_to_bv 64 0) = true))).
-  { destruct isnone; subst prot; [right; left; split; reflexivity | left; reflexivity]. }
+  { destruct isnone; subst prot; [right; left; repeat split; reflexivity | left; split; reflexivity]. }
   assert (PR : (0 <= prot < 4)%Z) by (destruct isnone; subst prot; lia). clearbody prot.
   apply impl_enode.
   carve_frame 64%nat ST.

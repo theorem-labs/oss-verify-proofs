@@ -1,7 +1,7 @@
 (* WireCmSeg2: two straight-line pieces of the image-B walk of check_meter (fuzz_wire.asan-ubsan 0x8016c), the
    footprint runs (lib/Lib/ExecF.v evtF) of lib/B/Prog/WireCmIface.v cm_seg2a_stmt and cm_seg2c_stmt, stepped by
    lib/Lib/StepF.v. The form, and the register and literal helpers, are those of reac-repacer/fuzz_uci's
-   lib/B/Prog/UciCvBSegs.v (recipes commit 0295462466b2):
+   lib/B/Prog/UciCvBSegs.v (recipes):
      cm_seg2a  CM_RET_SM (0x801dc) -> CM_PRE (0x8026c): `mv s2, a0`, `j`, `mv s6, s2`, `bnez s2` at 0x801ec taken
                (Fa >= 4096); the frame header (0x41b58ab3, 0x18cc3, 0x8016c) by the three `sd` at 0x8022c .. 0x80234;
                s7 := (Fa >> 3) + s8 (`srli` at 0x80218, `add` at 0x8023c), which is shadow_addr Fa; the frame's 8

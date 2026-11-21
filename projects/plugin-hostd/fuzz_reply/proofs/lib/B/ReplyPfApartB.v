@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, for lane W of a Theorem Labs lane's cf layer at plugin-hostd/fuzz_reply): the unit row
    PF_APART at reply's image B (fuzz_reply.asan-ubsan), the twin of lib/A/ReplyPfApartA.v, the premise HPFA of the cf layer's Deallocate tops
    (lane F2a, lib/B/YGcfInstFreePost.v PF_APART B at B := TfibB).
@@ -7,10 +8,10 @@
 
    PF_APART B := forall a, pf_byte a -> ~ dg_izone a /\ (forall ly, LGUARD ly -> ~ dg_dzone ly a), where pf_byte is
    Printf's two writable image cells (CfImg_B's cf_toolname_cell / cf_pfcb_cell, 8 bytes each) and LGUARD ly :=
-   ly_img_ok B ly /\ im_img_cover ly /\ asyms_ok B (YGcfInstFreePost.v:71, :125).  [pf_apart_reply_B] states that text
+   ly_img_ok B ly /\ im_img_cover ly /\ asyms_ok B (YGcfInstFreePost.v:72, :126).  [pf_apart_reply_B] states that text
    unfolded at reply's DImg_reply (DGif0reply: dg_izone := DGgi.IZONE, dg_dzone := DGgi.DZONE) and AImg_reply
    (im_img_cover := YF0x.img_cover), so the layer's PF_APART TfibB is it by conversion.  The twin of cgif's
-   YGcfInstFreeImgcgif.PF_APART_of_rows_cgif (a working branch d3b943ec6dd3), on the same route, from the
+   YGcfInstFreeImgcgif.PF_APART_of_rows_cgif (a working branch), on the same route, from the
    reply rows of three other lanes:
    - not in IZONE: a Theorem Labs lane's row ReplyRelroGeoB.pf_ial_apart_reply_B (YG0ncf.pf_ial_apart_t at TfibSyms);
    - not in DZONE's first disjunct [dzone_static_lo, dzone_static_hi) (= TFIB_STORE .. YD20.RS_LO, stackStore ..
@@ -50,7 +51,7 @@ induction l as [|h t IH]; intros [|i] [|j] x y P Hi Hj Hij; cbn in *; try discri
 - destruct P as [_ P]. eapply IH; eauto. lia.
 Qed.
 
-(* PF_APART TfibB (YGcfInstFreePost.v:126), unfolded at DImg_reply / AImg_reply. *)
+(* PF_APART TfibB (YGcfInstFreePost.v:127), unfolded at DImg_reply / AImg_reply. *)
 Lemma pf_apart_reply_B : forall a,
   (cf_toolname_cell <= a < cf_toolname_cell + 8 \/ cf_pfcb_cell <= a < cf_pfcb_cell + 8) ->
   ~ dg_izone a /\

@@ -292,7 +292,7 @@ Lemma cl_sup_resp : forall fx0 : YK11.FPState, @A.Prog.sup_resp_c.tsup_resp_spec
 Proof.
 exact (fun fx0 => @A.Prog.SupRespClosed.tsup_resp_closed fx0 rc B MT HB MTFL cl_xstrdup r_sm1 r_snprintf).
 Qed.
-(* chain_words: tchain_words_closed (ChainWordsClosed.v:40) *)
+(* chain_words: tchain_words_closed (ChainWordsClosed.v:41) *)
 Lemma cl_chain_words : forall fx0 : YK11.FPState, @A.Prog.chain_words_c.tchain_words_spec fx0 rc SK0 PB_cmd B MT.
 Proof.
 exact (fun fx0 => @A.Prog.ChainWordsClosed.tchain_words_closed fx0 rc B MT HB MTL MTFL cl_number cl_sup_chain
@@ -341,7 +341,7 @@ Proof.
 exact (fun fx0 => @A.Prog.RecBClosed.tpins_clear_closed fx0 rc B MT HB MTL cl_rec_calls_free cl_xstrdup cl_mix_call
   cl_answer_code).
 Qed.
-(* sup_add: tsup_add_closed (SupAddClosed.v:43) *)
+(* sup_add: tsup_add_closed (SupAddClosed.v:44) *)
 Lemma cl_sup_add : forall fx0 : YK11.FPState, @A.Prog.sup_add_c.tsup_add_spec fx0 rc SK0 PB_cmd B MT.
 Proof.
 exact (fun fx0 => @A.Prog.SupAddClosed.tsup_add_closed fx0 rc B MT HB MTL MTFL cl_rec_calls_free cl_xstrdup
@@ -372,7 +372,7 @@ Proof.
 exact (fun fx0 => @A.Prog.SupBroadcastClosed.tsup_broadcast_closed fx0 rc B MT HB MTL cl_rec_calls_free cl_arg_line
   cl_answer).
 Qed.
-(* sup_call: tsup_call_closed (SupCallClosed.v:38) *)
+(* sup_call: tsup_call_closed (SupCallClosed.v:39) *)
 Lemma cl_sup_call : forall fx0 : YK11.FPState, @A.Prog.sup_call_c.tsup_call_spec fx0 rc SK0 PB_cmd B MT.
 Proof.
 exact (fun fx0 => @A.Prog.SupCallClosed.tsup_call_closed fx0 rc B MT HB MTL cl_rec_calls_free cl_arg_i cl_arg_line

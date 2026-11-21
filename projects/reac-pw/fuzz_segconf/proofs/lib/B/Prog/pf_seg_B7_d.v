@@ -4,10 +4,11 @@
 (* Modified by Theorem Labs, 2026-10: the boundary states and segment statements of LLVMFuzzerTestOneInput's ASan+UBSan walk (plugin-hostd/fuzz_command image B, 0x86530), the B twin of lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh6.v (the CL_*_stmtX statements: from a point of the function to its return, under the entry's context) and A/ACf5.v (rtcx, rt_base: the entry's facts bundled once). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths, module names, addresses and numbers changed; 469 of its 518 lines of code are new or changed and 289 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths and module names changed; 127 of its 152 lines of code are new or changed and 493 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3): the vocabulary segment B7 of
    reac_segconf_parse_file's walk shares between its call sites and its runs. The B7 segment lane of the image-B G3 walk owner,
-   2026-10-30. ADAPTED from the image-A G3 walk owner's image-A A7 segment lane lib/A/Prog/pf_a7_d.v (commit
-   ebe0b30cca65): the same text over image B's lib/B/Prog/pf_pieces.v (a7_ -> b7_). Every fact here is about the
+   2026-10-30. ADAPTED from the image-A G3 walk owner's image-A A7 segment lane lib/A/Prog/pf_a7_d.v:
+   the same text over image B's lib/B/Prog/pf_pieces.v (a7_ -> b7_). Every fact here is about the
    cut predicates of pf_pieces.v (pf_base, pf_fsh, pf_shb, PF_SC_LINE) and the class-5 frame F, which image B lays
    at A's offsets (buf at F + 0x40, 512 bytes; the 144 shadow cells of pf_shb, plan section 1.3), so no number of
    image A is carried.

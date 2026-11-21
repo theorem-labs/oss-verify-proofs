@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB; taken in part from projects/simdjson/fuzz_dump/proofs/lib/B/El_os_xsputnLA.v, line 32. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -28,7 +29,7 @@ Definition xsputnX_cpsA : Prop :=
   rw_cells bsegs m OS (sb_cellsX pb (wz pp) (wz ep) dum) -> PUTINV OS pp ep -> bytes_at bsegs m (shad OS) (repeat z8 36) ->
   bytes_at bsegs m S bs -> Z.of_nat (length bs) = CAP -> 0 <= N <= CAP -> CAP <= 2^40 -> 0 < S -> S + CAP <= 2^47 -> acc bsegs m S N -> (0 < N -> rng_class RT Σ S N) ->
   ((S + CAP <= lo /\ (S + CAP <= OS \/ OS + 288 <= S)) \/ q <= S) ->
-  ART RT Σ m -> mem_inv bsegs m -> stk bsegs m lo q -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + EL_XSPUTN_DEPTH <= q ->
+  ART RT Σ m -> mem_inv bsegs m -> stk bsegs m lo q -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + EL_XSPUTN_DEPTH <= q ->
   q + 16 <= USTACK_TOP -> q mod 16 = 0 ->
   (forall t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' m' (pb' : word) (pp' ep' : Z) (dum' : list byte),
      ART RT Σ m' -> mem_inv bsegs m' -> stk bsegs m' lo q ->

@@ -1,6 +1,6 @@
 (* fuzz_state image B, realloc segment S1 (a Theorem Labs lane, 2026-10-29).
-   The decode table of the realloc prefix's code: the B twin of lib/A/FSRealloc_S1_tbl.v (a working branch
-   ce07ca45bca; port of cgif_rgb_fuzzer lib/YF77.v tfxtbl_rr) at fuzz_state.asan-ubsan's addresses (capstone over sha256
+   The decode table of the realloc prefix's code: the B twin of lib/A/FSRealloc_S1_tbl.v (a working branch;
+   port of cgif_rgb_fuzzer lib/YF77.v tfxtbl_rr) at fuzz_state.asan-ubsan's addresses (capstone over sha256
    5ac5ce0954f87e2d..., RV64, no compressed instructions; A's address in []):
    - 0x534e4 [0x53474], 118 instructions: __interceptor_realloc, 0x534e4 `addi sp, sp, -0x7f0` .. 0x536b8 `ret`;
    - 0x328ec [0x3287c], 131 instructions: asan_realloc 0x328ec `addi sp, sp, -0x10` .. 0x32994 `ret`, then

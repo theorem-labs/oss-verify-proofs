@@ -1,8 +1,8 @@
 (* The cut-free (agreement) slot of reac-pw/fuzz_rate's UBSan build: lib_contract_cg for every j < 4, from the
    cut-free copy of the slot proof (U/Prog/SlotInvCF.v, SegCF/*.v) under the agreement frame's facts
    (SlotInvCF.frame_facts_cf: U/FrameAPI.frame_facts_ubsan with the cut-free allocator and the agreement room
-   128 <= sb_cap <= CAP_AG). Model: reac-pw/fuzz_role's U/Prog/SegCF/SlotTopCF.v (reac-pw/fuzz_pin's, and libreac/fuzz_ctrl's released U/Prog/SegCF/SlotTopCF.v with its SegCF/Segs.v,
-   origin/ossv/recipes 25e3d17bdb50), for rate's five segments:
+   128 <= sb_cap <= CAP_AG). Model: reac-pw/fuzz_role's U/Prog/SegCF/SlotTopCF.v (reac-pw/fuzz_pin's, and libreac/fuzz_ctrl's released U/Prog/SegCF/SlotTopCF.v with its SegCF/Segs.v),
+   for rate's five segments:
    - the three evt contracts of the UBSan LLVMFuzzerTestOneInput are U/Prog/RateTop.v's build_ok (the walk
      U/Prog/rate_build.v from memset, memcpy, strlen and pod_write_ent), check_ok (U/Prog/rate_check.v from the
      contracts of rate's own callees, pod_nearest_ok included) and csv_ok (U/Prog/rate_csv.v from memset,

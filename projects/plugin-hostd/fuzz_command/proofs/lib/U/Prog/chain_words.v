@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/boost-beast/http_request/lib/Lib/Tac.v; 237 of its 261 lines of code are new or changed and 298 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_pcap/lib/Prog/mread.v, with its module paths and numbers changed; 1088 of its 1116 lines of code are new or changed and 233 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 as this unit's lib/Prog/chain_words.v is, with the U module paths (changed cw_mid). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
@@ -771,8 +772,8 @@ Proof using SEGS TP EOFF AX ERRNO_NO.
     - intros a [].
     - intros p n _ _ _ F. exact F.
     - intros p n _ H1 H2. contradiction.
-    - intros HI. specialize (HAUX HI). destruct HAUX as (av & ar & W1 & W2 & W3 & W4 & B1 & B2 & B3 & B4 & L1 & L2).
-      exists av, ar.
+    - intros HI. specialize (HAUX HI). destruct HAUX as (auxrs & av & ar & W1 & W2 & W3 & W4 & B1 & B2 & B3 & B4 & L1 & L2).
+      exists auxrs, av, ar. pose proof (auxv_types_len_ge auxrs). unfold AUXV_RAND_K in *.
       assert (LIB : forall k, (k < 8)%nat ->
                 0 <= ms_libc B + 8 + Z.of_nat k < 2 ^ 64 /\ Frame.outside W (ms_libc B + 8 + Z.of_nat k)).
       { intros k Hk. assert (SO : owned B L A (ms_libc B + 8 + Z.of_nat k)) by (right; unfold static_owned; lia).

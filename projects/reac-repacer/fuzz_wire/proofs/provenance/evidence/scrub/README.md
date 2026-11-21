@@ -2,12 +2,12 @@
 
 ## The run
 
-`scrub-comments` at the scrub head of record, `aab1e7684343` (the units' CI/CD lead named it at 2026-10-31 14:55Z),
-ran ONCE on the pre-scrub bytes of this branch's head `a3f9509d24de`, from 16:28Z to 16:45Z, as
-`scrub-comments --commit --base a3f9509d24de --formats-dir <comment formats 892a91f0aeb6> --machine-names <the unit's
+`scrub-comments` at the scrub head of record, (the units' CI/CD lead named it at 2026-10-31 14:55Z),
+ran ONCE on the pre-scrub bytes of this branch's head, from 16:28Z to 16:45Z, as
+`scrub-comments --commit --formats-dir <comment formats 892a91f0aeb6> --machine-names <the unit's
 names file, sha256 9613a711985e> --lane-names <the unit's lane-names file, sha256 4df44bfec534> ... reac-repacer/fuzz_wire`.
-The formats are the version the tools registry's `tools/comment-formats/LATEST` named when the run started (registry
-7a6e4e9997b9, its SHA256SUMS OK). It wrote one commit, `72f35bc38566`: 720 `.v` files, 2182 comment lines, no other
+The formats are the version the tools registry's `tools/comment-formats/LATEST` named when the run started (registry,
+its SHA256SUMS OK). It wrote one commit: 720 `.v` files, 2182 comment lines, no other
 change (`git diff --numstat` adds as many lines as it deletes in every file, so no line number moved).
 
 The tool's own check of that commit ended with exit 1 and 2 problems, both `a stoplist word replaced by a lane`, at
@@ -16,7 +16,7 @@ Theorem Labs lane's`. The name is a lane's, so the rewrite is right; the CI/CD l
 stand and that the successor scrub head fixes the check.
 
 The run's own outputs are internal records, not shipped, because its stderr names host paths and its report's kind
-column names the delivery's codename. They are kept byte-exact at the records ref `75c46c1a4634`, folder `scrub-E/`:
+column names the delivery's codename. They are kept byte-exact at the records ref, folder `scrub-E/`:
 
 | file | sha256 |
 |---|---|
@@ -44,7 +44,7 @@ nothing unless all pass. A reader who did not write the rows checked all 33 agai
   for it (lib/A/AD3c.v:24, AD3d.v:11, AD3g.v:83, AD3h.v:8). Two of these lines the scrub had rewritten for a lane name,
   which made them no longer equal to released text, so the scanner read the codename in them as new.
 - D, 1 row: lib/B/YD3g.v:22, where the scrub dropped a commit sha together with a lane name; the sha is kept
-  (`at d9020f8b4339:`).
+  (`:`).
 - K, 3 rows: a lane possessive the scrub wrote as `a working branch's` becomes `a Theorem Labs lane's`
   (lib/A/AD3i.v:34, lib/B/YD3i.v:40, lib/B/YD3j.v:14).
 
@@ -169,7 +169,7 @@ donor made; and tools that named a donor file by a path no published commit hold
 
 The readers also reported the defects they met on other lines, and those were fixed too, with three exceptions kept by
 rule. A line byte-equal to the donor's published line is the donor's own history and keeps its text: 46 such lines
-were reported (copy notes byte-equal to fuzz_grant's `lib/B` at 4f87de75d67, the three `lib/B/Rt` headers, and
+were reported (copy notes byte-equal to fuzz_grant's `lib/B`, the three `lib/B/Rt` headers, and
 `lib/B/WireBClose.v:7`, which is fuzz_decode's line). An unpublished commit named as a run's identifier stays (gate
 record lines 427 and 657). And the generator-output files stay as their generator printed them.
 
@@ -188,7 +188,7 @@ hold tabs; only sha256 cells changed in it) and the allocator slice's files, whi
 
 A line byte-equal to the donor's published line is exempt from the name scanner, not from being true: the series'
 lead ruled that such a line is fixed here when it is false of this unit's file or cites what a reader cannot open.
-46 lines were of that kind. 27 copy notes cited the old-layout cgif path with no commit and now name `25e3d17bdb50`,
+46 lines were of that kind. 27 copy notes cited the old-layout cgif path with no commit and now name,
 which holds it; 15 line 4s of `lib/B/YFk*` and `YFl*` said the donor moved its addresses to fuzz_grant's ASan build,
 where every numeral in fuzz_grant's `lib/B` is its ASan+UBSan one (measured in both of fuzz_grant's pinned images);
 the four `lib/B/Rt/*` headers and `lib/B/WireBClose.v:5` cited `origin/cold/...` branches and a version no published
@@ -225,9 +225,9 @@ the copy changed (`YD1p` applies `ly0` without `ch`, `YD1r` requires `KnLayoutGl
 The second class was wider than the lines that reader could see, so it was measured over all of `lib/`: 1443 citations
 of a donor path carry no commit, and 59 of them name a path that no published donor commit holds, because the donor
 keeps the file in another directory. Each of those 59 now names the path that exists and the commit that holds it,
-and in each case the donor file's declarations are this file's: 53 are fuzz_grant's `lib/B/<f>.v` at `4f87de75d67`,
-three are fuzz_grant's `lib/Reusable/<f>.v` there, and three are fuzz_knock's `lib/Reusable/<f>.v` at
-`88154566652a` (`KnBlockExt.v`, and `YC5d.v` and `YCbp.v`, whose text uses `depot_has_trace` and `DepotCfg`, which
+and in each case the donor file's declarations are this file's: 53 are fuzz_grant's `lib/B/<f>.v`,
+three are fuzz_grant's `lib/Reusable/<f>.v` there, and three are fuzz_knock's `lib/Reusable/<f>.v`
+ (`KnBlockExt.v`, and `YC5d.v` and `YCbp.v`, whose text uses `depot_has_trace` and `DepotCfg`, which
 no fuzz_grant copy has). A non-writer read all 59 and the 20 above: it confirmed the 54 the measurement had settled
 and decided the five the measurement could not, two of them to a different donor than the measurement proposed.
 
@@ -240,11 +240,11 @@ which name no commit, are left: that is the series' older form, and changing it 
 The branch `ossv/recipes` is being deleted, and 69 lines of the files this unit ships named it. 56 of them name a
 commit as well, and each of those nine commits is an ancestor of `origin/main`, so they resolve after the deletion
 and their branch word is stale, not broken. Thirteen named the branch with no commit beside it. Eleven are fixed
-here, each by naming the commit that holds the file the sentence cites, opened and checked first: `88154566652a`
-for the six `crtA_*.v` helpers of `lib/{A,B}/Prog/check_copy_cgW_walk.v`, `48907dc7e8ca` for the five
+here, each by naming the commit that holds the file the sentence cites, opened and checked first:
+for the six `crtA_*.v` helpers of `lib/{A,B}/Prog/check_copy_cgW_walk.v`, for the five
 `lib/A/Prog/reac_frame_is_reac*.v` headers (the layout-move commit, which is the published commit that holds the
 new-layout path those lines give) and for `stackmalloc-B/MANIFEST.md`'s citation of fuzz_knock's `lib/AU/YF0s.v`,
-`4f87de75d67` for the two `depot_apply.py` docstrings, and `5098883da0b` for `memmove-reloc/adapt_memmove.py`.
+for the two `depot_apply.py` docstrings, and for `memmove-reloc/adapt_memmove.py`.
 
 Two are left as they are, because each is a verbatim record of other text and editing it would make the record
 false, and each names its commit anyway: `depot/hashlen-cases.tsv:54`, whose cell quotes `provenance/TRUNK.md:3`
@@ -252,3 +252,5 @@ word for word, and `depot-B/adaptations/depot_apply.py.diff:9`, a context line o
 commit sits on the line above it.
 
 residual-rows.tsv, reader-rows.tsv and second-rows.tsv, named above and in prep-rows.tsv and reread-rows.tsv, were removed from the shipped tree on 2026-11-04 (internal record; in git history).
+
+The internal commit ids in these files were replaced by public commits or removed, so the output of `run.sh` differs from the shipped tables in those columns only.

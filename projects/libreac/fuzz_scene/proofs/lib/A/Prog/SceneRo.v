@@ -14,7 +14,7 @@
        (`img_shadow_vis`, a fact of the runtime's symbols that a Theorem Labs lane gives).
    A walk takes `in_zs B q n` for the table it reads and `img_shadow_vis`; never
    their consequences. *)
-(* Modified by Theorem Labs, 2026-10: copied by path from a Theorem Labs lane's proofs/libreac/fuzz_grant/lib/A/Prog/GrantRo.v (a working branch acae397d926) for libreac/fuzz_scene's program walk; the module path and the listing's names changed. ro_usable and ro_hull are stated over fuzz_scene.asan (sha256 43654a025fd02e1f248bcaf6b8ac44f9e5dbded7f2fc1d9a1e90f9d74feb3026)'s image range 0x10000..0x5f9000, the page range of its four loaded segments (fuzz_grant.asan's is 0x10000..0x5fa000); the file names no other address. *)
+(* Modified by Theorem Labs, 2026-10: copied by path from a Theorem Labs lane's proofs/libreac/fuzz_grant/lib/A/Prog/GrantRo.v (a working branch) for libreac/fuzz_scene's program walk; the module path and the listing's names changed. ro_usable and ro_hull are stated over fuzz_scene.asan (sha256 43654a025fd02e1f248bcaf6b8ac44f9e5dbded7f2fc1d9a1e90f9d74feb3026)'s image range 0x10000..0x5f9000, the page range of its four loaded segments (fuzz_grant.asan's is 0x10000..0x5fa000); the file names no other address. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

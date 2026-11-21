@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YCkd.v for libreac/fuzz_grant's program walk, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: carried from libreac/fuzz_grant lib/A/Prog/YCkd.v at a working branch d98082bd58b into lib/B/Prog for image B's walk layer on a working branch, which has no copy of it, with its text unchanged (it Requires nothing under lib.A). It names no image. *)
+(* Modified by Theorem Labs, 2026-10: carried from libreac/fuzz_grant lib/A/Prog/YCkd.v at a working branch into lib/B/Prog for image B's walk layer on a working branch, which has no copy of it, with its text unchanged (it Requires nothing under lib.A). It names no image. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State.

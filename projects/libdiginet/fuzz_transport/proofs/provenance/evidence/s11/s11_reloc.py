@@ -83,8 +83,8 @@ FRAME_REV = '02fe409d4aedd004fa028b5815c9f0fa8868ced5'    # libdiginet/fuzz_fram
 DECODE_REV = '7b6185922a15c0a042393f270448dd8af24a7ce4'   # libdiginet/fuzz_decode's ASan branch (brief)
 BASE_REV = '41cf46de4c3084f1b3d4568ba60ac927cb1c8f47'     # the image-B ASan integration branch (step 3): the image-B
 #                                                           kit (S07), S10 B, the image-B statements, the ASan line with
-#                                                           image A's S11 walks; the listing files are c8ebc3afb25's,
-#                                                           unchanged. Steps 1 and 2 ran on c8ebc3afb25 and 66fa526ea390
+#                                                           image A's S11 walks; the listing files are,
+#                                                           unchanged. Steps 1 and 2 ran
 UNIT_ROOT = {'frame': 'proofs/libdiginet/fuzz_frame/lib/', 'decode': 'proofs/libdiginet/fuzz_decode/lib/',
              'transport': 'proofs/libdiginet/fuzz_transport/lib/'}
 UNIT_REV = {'frame': FRAME_REV, 'decode': DECODE_REV, 'transport': BASE_REV}

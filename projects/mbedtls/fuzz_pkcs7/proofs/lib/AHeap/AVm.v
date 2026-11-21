@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (HKv written out in plain text with a fifteenth conjunct, AMark.heap_mark, carried through every lemma that opens or rebuilds it, with AMark imported; HKv's tenth conjunct restated as a census of the mappings only and its eleventh as every reserved entry apart from every mapping, since the launch's reserved ledger now ends in the vDSO pair, with the lemmas that read or rebuild them reproved; HKh written out with a seventh conjunct, AMark.heap_mark_slot, and its fourth restated as the hole's clearance from the whole ledger; HKv_grant_eager and HKv_grant_lazy restated with the placed_at and GRANT_MAX premises and room_gen with the GRANT_MAX premise, now getting Linux's placement from the mark alone; HKv_room16 and the counting lemmas it and the grants use added; HKv_munmap reproved for the revision's munmap cut; the new mmap-base premise of model_ivs_wf_with_vmmaps; a debug print removed). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State.
@@ -7,6 +8,7 @@ From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require Import MState.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.ABoot Require Import BackingAlgebra.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA Require Import ALazy AShadow.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.AHeap Require Import ASys ASysS AKinv AFreeSlot AVmLib AJ.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.AHeap Require AMark.   (* LPS #38: the room invariant *)
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.LibA Require Import DietDestruct.   (* [comment removed for export] *)
 Import ListNotations.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require Import LiaKitAH. (* [comment removed for export] *)
@@ -120,8 +122,58 @@ Definition vcensus (v : vst) (R M : list (word * word)) : Prop := ltac2:(CDefT.b
 
 Definition VLIMIT : Z := 0x8000000000.   (* [comment removed for export] *)
 
-Definition HKv (v : vst) (mo : Model) : Prop := ltac2:(CDefT.buildp (gd_tbl_AVm ()) "(1.(12.(48.(30.&40.))(49.O1.)(4:.(30.&40.)))(1.(36.(30.&40.)(4;.O1.))(1.(2>.(30.&40.)(4<.O2.)(4;.O1.))(1.Px,$4.P,(4=.VAL,(4>.O2.)R1.)P,(12.$13.(4?.(50.R2.)(51.O1.))$15.)(4<.O2.(50.R3.))(1.(12.$4.(52.(53.O1.))$54.)(1.(2.(55.O1.)(40.O2.))(1.(2.(<.(40.O2.)(56.+1000.(57.O2.)))$54.)(1.(58.O1.)(1.(59.O2.(5:.(53.O1.))(5;.(53.O1.))(51.O1.))(1.(5<.O2.(5=.(53.O1.))(5:.(53.O1.)))(1.Pe,(19.(30.&40.)(30.&40.))P,(10.(19.(30.&40.)(30.&40.))R1.(5=.(53.O1.)))(1.(2.(3;.VAL,)(25.&40.(3.(30.&40.)(30.&40.)R2.)))(2.(<.(25.&40.(3.(30.&40.)(30.&40.)R2.))(25.&40.(7.(30.&40.)(30.&40.)R2.)))(3<.VAL,)))(1.Px,$4.P,(1.(2.(3;.VAL,)R1.)(6.R1.(3<.VAL,)))(>.(19.(30.&40.)(30.&40.))Le,(19.(30.&40.)(30.&40.))(1.(10.(19.(30.&40.)(30.&40.))R1.(5=.(53.O1.)))(1.(2.(25.&40.(3.(30.&40.)(30.&40.)R1.))R3.)(6.R3.(<.(25.&40.(3.(30.&40.)(30.&40.)R1.))(25.&40.(7.(30.&40.)(30.&40.)R1.)))))))(1.(5>.O2.)(5?.VhAR,(60.(53.O1.))))))))))))))))")
-(* [comment removed for export] *).
+(* LPS #38.  THE FIFTEENTH CONJUNCT IS NEW: [AMark.heap_mark], the split
+   ledger with a descending high mark that replaced the heap's old
+   "[bottomup_floor <= a]" room argument.  See [AHeap/AMark.v]'s header for why
+   the floor conjunct became false at the revision.
+
+   Its budget argument is [v_eb v + 4096 * vnb v] -- the SAME quantity the
+   seventh conjunct caps at [VLIMIT] -- because every NULL-hint grant charges
+   at least its own size against it AT GRANT TIME ([AInstDepot.veb_N]/[vnb_N]
+   for [0x22], [vnb_S] for [0x4022]), and the mark loses at most twice the
+   grant.  So the seventh conjunct pays for the fifteenth: no new state.
+
+   IT IS HEADED BY AN [exists], DELIBERATELY: a [repeat split] over [HKv] stops
+   on an existential, so the twelve [repeat split] proofs in this file keep
+   closing it whole.  A conjunction here would be split open and leave goals
+   [assumption] cannot close -- the failure mode MbedPkcs7 hit when
+   [AsanCeil.init_sp_ok] became a two-conjunct definition.
+
+   Explicit text, not a re-encoding: the KReplay rule forbids decoding and
+   re-encoding a [CDefT.buildp] blob, so the blob is replaced.
+
+   LPS 727298f3.  THE TENTH AND ELEVENTH CONJUNCTS ARE RESTATED because the
+   launch's reserved ledger is no longer the image's alone: [State.init_reserved]
+   appends the vDSO/vvar pair just under [mmap_top], above the image and in no
+   cover of the heap's ([AsanMainEntryFacts.me_res]).  The eleventh used to say
+   that every reserved entry lies inside the image; it now says what the launch
+   gives and what its three readers ([HKv_commit_sub], [HKv_madvise],
+   [HKv_rereserve]) need: every reserved entry is apart from every mapping.  The
+   tenth used to census the reserved entries too; the one reader of that half,
+   [room_gen], now takes Linux's answer from the mark's own window
+   ([AMark.heap_mark_place]), so the census counts the mappings only. *)
+Definition HKv (v : vst) (mo : Model) : Prop :=
+  m_halted mo = None
+  /\ List.NoDup (m_vm_materialized mo)
+  /\ List.Forall (vgood v) (m_vm_materialized mo)
+  /\ (forall x : Z, aok_addr AL (vcs v) x ->
+        page_in_ranges (page_base_of x) (m_vm_lazy mo) = true ->
+        vgood v (page_base_of x))
+  /\ vm_limit (m_vmmaps mo) = VLIMIT
+  /\ eager_bytes mo <= v_eb v
+  /\ v_eb v + 4096 * vnb v <= VLIMIT
+  /\ model_ivs_wf mo
+  /\ vm_table v (vm_maps (m_vmmaps mo)) (vm_noaccess (m_vmmaps mo)) (m_vm_lazy mo)
+  /\ vcensus v [] (vm_maps (m_vmmaps mo))
+  /\ (forall e : word * word, List.In e (vm_reserved (m_vmmaps mo)) ->
+        clear (vm_maps (m_vmmaps mo)) (bv_unsigned (fst e)) (bv_unsigned (fst e) + bv_unsigned (snd e)))
+  /\ (forall x : Z, al_img_lo AL <= x /\ x < al_img_hi AL ->
+        exists e : word * word, List.In e (vm_reserved (m_vmmaps mo))
+          /\ bv_unsigned (fst e) <= x
+          /\ x < bv_unsigned (fst e) + bv_unsigned (snd e))
+  /\ vwf v
+  /\ atop_ok (alloc_top (m_vmmaps mo))
+  /\ AMark.heap_mark (m_vmmaps mo) (v_eb v + 4096 * vnb v).
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -258,16 +310,16 @@ Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 (* [comment removed for export] *).
 Proof.
   intros v mo mo' K MM Hh' ND' GD'.
-  ddestruct K as (Hh & ND & GD & LZ & LIM & EB & BUD & WF & TB & CE & RS & RC & VW & AT).
+  ddestruct K as (Hh & ND & GD & LZ & LIM & EB & BUD & WF & TB & CE & RS & RC & VW & AT & MK).
   ddestruct MM as (F1 & F2 & F3 & _).
   unfold HKv. rewrite F2, F3. split; [exact Hh'|]. split; [exact ND'|]. split; [exact GD'|]. split; [exact LZ|].
   split; [exact LIM|]. split; [unfold eager_bytes in *; rewrite F2, F3; exact EB|]. split; [exact BUD|].
   split; [unfold model_ivs_wf in *; rewrite F2, F3; exact WF|].
-  split; [exact TB|]. split; [exact CE|]. split; [exact RS|]. split; [exact RC|]. split; [exact VW| exact AT].
+  split; [exact TB|]. split; [exact CE|]. split; [exact RS|]. split; [exact RC|]. split; [exact VW|]. split; [exact AT| exact MK].
 Qed.
 
 #[using="Type"] Lemma HKv_top : forall v mo, HKv v mo -> atop_ok (alloc_top (m_vmmaps mo)).
-Proof. intros v mo K. exact (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 K))))))))))))). Qed.
+Proof. intros v mo K. exact (proj1 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 K)))))))))))))). Qed.
 
 #[using="Type"] Theorem HKv_kinv : forall v, vranges_ok v -> kinv AL (vcs v) (HKv v).
 Proof.
@@ -289,7 +341,7 @@ Local Ltac2 Set LiaOrc.tbl := fun () => "0040?L36885742122.49L59308661201.58L593
 (* [comment removed for export] *).
 Proof.
   intros v mo a n K RF N16 CE x Hx IN.
-  ddestruct K as (Hh & ND & GD & LZ & LIM & EB & BUD & WF & (TB & TN & TL & THL & TEM & MND & MSEP & NZN & NZL & BANDM) & CEN & RS & RC & VW & AT).
+  ddestruct K as (Hh & ND & GD & LZ & LIM & EB & BUD & WF & (TB & TN & TL & THL & TEM & MND & MSEP & NZN & NZL & BANDM) & CEN & RS & RC & VW & AT & MK).
   ddestruct VW as (TWF & APT & HWF & HAP & THA & STK0 & STK1 & STK2 & IMG0 & IMG1 & IMG2 & IMG3 & IMG4 & _ & _ & _).
   pose proof (u64_range n) as Rn. pose proof (u64_range a) as Ra.
   pose proof (region_free_clear _ a n ltac:(lia) RF) as CL. apply clear_app_inv in CL. destruct CL as [CLR CLM].
@@ -312,7 +364,7 @@ Proof.
   intros v mo a n K RF A0 IL ILH N16 CE.
   pose proof (u64_range a) as Ra.
   destruct (Z.le_gt_cases (al_img_hi AL) (bv_unsigned a)) as [H|H]; [exact H|]. exfalso.
-  dpose K as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & VW & AT). ddestruct VW as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & IMG2 & IMG3 & _ & _ & _ & _).
+  dpose K as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & VW & AT & MK). ddestruct VW as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & IMG2 & IMG3 & _ & _ & _ & _).
   destruct (Z.le_gt_cases (al_img_lo AL) (bv_unsigned a)).
   - apply (HKv_apart v mo a n K RF N16 CE (bv_unsigned a)); [right; lia| lia].
   - apply (HKv_apart v mo a n K RF N16 CE (al_img_lo AL)); [right; lia| lia].
@@ -424,17 +476,53 @@ Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 Definition v_add_eager (v : vst) (lo n : Z) (cs : bool) : vst := ltac2:(CDefT.buildp (gd_tbl_AVm ()) "(74.(18.$?.(75.O3.O2.$3>.$15.O1.)(11.O4.))(35.O4.)(20.O4.)(5.O4.)(8.O4.)(<.(40.O4.)O2.)(18.(19.$4.$4.)(1:.$4.$4.O3.O2.)(43.O4.))(<.(46.O4.)(<.(64.O2.(3?.+2.+14.))+2.))(<.(47.O4.)(<.(64.O2.(3?.+2.+17.))+2.))(32.O4.))")
 (* [comment removed for export] *).
 
+(* LPS #38.  What pays for [AMark.heap_mark]'s descent is the heap's own
+   backing charge, so the two grant constructors need their page count known:
+   monotone for [v_add_eager] (its [trange] reaches [csranges] only when [cs]
+   is set, hence an inequality) and exact for [v_add_lazy] (below, where the
+   entry reaches BOTH [csranges] and [lazyranges], which is what makes the
+   charge exceed the block). *)
+Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
+#[using="Type"] Lemma vnb_add_eager_ge : forall v lo n cs, 0 <= n -> vnb v <= vnb (v_add_eager v lo n cs).
+Proof.
+  intros v lo n cs Hn. pose proof (Z.div_pos n 32768 ltac:(lia) ltac:(lia)) as DP.
+  unfold vnb, csranges, lazyranges.
+  destruct cs;
+    cbn [v_stk v_img v_tr v_ghost v_add_eager List.filter is_lazy_cs t_kind t_cs map app zsum];
+    cbn [t_lo t_len]; unfold npages_shadow, npages_inside; cbn [snd]; clear - DP; lia.
+Qed.
+
 Local Ltac2 Set LiaOrc.tbl := fun () => "0040>L19172205990.8L41415988076.8L53877237476.8L9690391349.8 00000800900?00ES1S1R2HRSS1R2HRS1S2HS". (* [comment removed for export] *)
 #[using="Type"] Lemma rhits_le : forall F S JS R, 0 < S -> 0 <= snd R -> rhits F S JS R <= snd R / S + 2.
 Proof. intros F S JS R HS HR. unfold rhits. destruct (_ || _); [| lia]. apply Z.add_nonneg_nonneg; [apply Z.div_pos; lia| lia]. Qed.
 Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
 Local Ltac2 Set LiaOrc.tbl := fun () => "00`0?L1186817686.83 L13131539002.84L19621671945.84L19864066953.87L2420763460.83 L2425185628.83 L2427330681.82 L2427330681.86 L26696831159.82L2744867246.84 L28783840466.90L29677719528.87L3236455794.84 L32992433899.84L33075001344.87L34184042490.84L34385283113.87L34909900027.89L35710099825.88L36362093169.84L36969038919.89L47878138838.83L50162843968.82L51109213081.75L51111709851.90L51111768481.84L51230418227.83L52439286882.84L52464427497.82L56061752866.83L5744891568.96 L58287161420.90L58354491464.83L59308579027.91L59308972630.99L59310679309.85L59310683405.83L59315137787.76L59338096377.83L61640231099.97L61929658689.69L6277110275.83 L63208222909.85L63374718476.89L63537114425.83L67788525744.82L7009116958.87 L8911144577.85 00000C00O00P00Q00`01701F01U01a02;02R02S02T02n02o03003103@03b04104D04S04_04n05=05L05\06106=06U06k07?07O07f08Y09409N09b0:50:n0;C0;\0<70<C0<D0<P0<Q0<lS3hAR2AL1a1n2ua3IMUS3hAR1a1n2uaFFS3hAR1a1n2ua2N0S3hAR2mo1a1n2ua2N01h2ZLS3hAR1a1n2ua2N0S3hAR1a1n2ua2N0S3hAR1a1n2uaS3hAR1a1n2ua3ACB2Ra2e23CLMS3hAR2AL1a1n3SBH2ua1c1HFFS3hAR1a1n2ua3ACB2Ra2e13CLMFFFS3hAR1a1n2ua2A0S3hAR1a1n2ua3ACB2Ra2e'3CLM1e2T12T2S3hAR1a1n2ua2CES3hAR1a1n2ua2CE1c1RS3hAR1a1n2ua2CES3hAR1a1n2uaS3hAR1a1n2ua2N0S3hAR1a1n2ua2N0S3hAR1a1n2ua2N0S3hAR1a1n2ua3NALS3hAR1v1a1n2ua2N03EB0S3hAR1a1n2uaS3hAR1v1a1n2ua3CE31H3CE4S3hAR1a1n2ua2A02CE1x1RS3hAR1a1n2ua2U92n91HS3hAR1a1n2ua3AL_S3hAR1a1n2ua1H2M22H02M1S3hAR1a1n2ua3ACB2Ra2e'3CLM1x2iv2I12I21R2T12T22P12P2S3hAR1a1n2ua2N03ACB2Ra4APT'S3hAR1a1n2ua2N03ACB2Ra3CLMS3hAR1a1n2ua1t3TL01XS3hAR1a1n2ua3AL_2A0S3hAR1a1n2ua2N02e12X12Y12e22X22Y22e32X32Y33ACB2Ra1H2H02H1S3hAR1a1n2ua2A02CE2N0S3hAR1v2mo1a1n2ua1h2EB2ZLS3hAR1a1n2ua3ACB2Ra2t14APT'S3hAR1a1n2uaFS3hAR1a1n2uaFS3hAR1a1n2ua3ACB2Ra2t24APT'". (* [comment removed for export] *)
-#[using="Type"] Theorem HKv_grant_eager : ltac2:(CDefT.buildp (gd_tbl_AVm ()) "Pv,$68.Pmo,$6:.Pa,(30.&40.)Pn,$4.Pcs,$13.P,(6;.R5.R4.)P,(2.=(65.VAL,))P,(6.(65.VAL,)(3?.+2.+3>.))Zua,$4.(25.&40.R6.)P,(12.$4.(27.R1.+1000.)=)P,(6.=R2.)P,(2.(<.R3.R8.)(37.VhAR,))P,(6.=R9.)P,(12.$4.(27.R:.+1000.)=)P,(2.(3<.VAL,)R6.)P,(12.$13.(6=.(1<.(19.(30.&40.)(30.&40.))(5=.(53.R>.))(5:.(53.R>.)))R=.(76.&40.R<.))$15.)P,(2.(<.(<.(40.R10.)R=.)(56.+1000.(57.(77.R10.R8.R=.R<.))))$54.)(6;.(77.R11.R9.R>.R=.)(78.+22.R?.R>.R10.))")
-(* [comment removed for export] *).
+(* LPS #38: two new premises, both discharged at every call site.
+   [PL] is the checker's own placement test -- [HKv]'s fifteenth conjunct is
+   [AMark.heap_mark], and re-establishing it across a grant needs
+   [AMark.heap_mark_cons], which needs to know the address is Linux's.
+   [NSM] bounds the grant by [AMark.GRANT_MAX]: this lemma is generic in [n]
+   while the mark pays for ONE grant of at most [AMark.GRANT_MAX = 2^29].
+   The depot's callers pass 2^20 and 2^23; the SECONDARY allocator's caller
+   passes the variable [msz], bounded by [AInstMallocS.MSZH] at 2^28 + 12288,
+   which is why the constant is 2^29 and not the 2^23 this comment first
+   claimed.  Explicit text, not a re-encoding (KReplay rule). *)
+#[using="Type"] Theorem HKv_grant_eager : forall v mo (a : word) (n : Z) (cs : bool),
+  HKv v mo ->
+  0 <= al_sb AL -> al_sb AL < 2 ^ 62 ->
+  let ua := bv_unsigned a in
+  ua mod 4096 = 0 -> 0 < ua -> ua + n <= ACEIL ->
+  0 < n -> n mod 4096 = 0 ->
+  al_img_hi AL <= ua ->
+  region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 n) = true ->
+  v_eb v + n + 4096 * vnb (v_add_eager v ua n cs) <= VLIMIT ->
+  ASys.placed_at n mo a ->
+  n <= AMark.GRANT_MAX ->
+  HKv (v_add_eager v ua n cs) (anon_grant 0x22 a n mo).
 Proof.
-  intros v mo a n cs K SB SBH ua AL_ A0 CE N0 NAL IMU RF BUD.
-  dpose K as (Hh & ND & GD & LZ & LIM & EB & BUD0 & WF & (TB & TN & TL & THL & TEM & MND & MSEP & NZN & NZL & BANDM) & (CE1 & CE2 & CE3 & CE4) & RS & RC & VW & AT).
+  intros v mo a n cs K SB SBH ua AL_ A0 CE N0 NAL IMU RF BUD MKPL MKSM.
+  dpose K as (Hh & ND & GD & LZ & LIM & EB & BUD0 & WF & (TB & TN & TL & THL & TEM & MND & MSEP & NZN & NZL & BANDM) & (CE1 & CE2 & CE3 & CE4) & RS & RC & VW & AT & MK).
   dpose VW as (TWF & APT & HWF & HAP & THA & STK0 & STK1 & STK2 & IMG0 & IMG1 & IMG2 & IMG3 & IMG4 & GWF & BANDCS & EB0 & TND & UW & USEP & HUL & UT).
   assert (TBL0 : vm_table v (vm_maps (m_vmmaps mo)) (vm_noaccess (m_vmmaps mo)) (m_vm_lazy mo)) by exact (conj TB (conj TN (conj TL (conj THL (conj TEM (conj MND (conj MSEP (conj NZN (conj NZL BANDM))))))))).
   aceilb. 
@@ -541,7 +629,25 @@ Proof.
     - intros c [<-|Hc]; [cbn; lia| apply CE2; exact Hc].
     - cbn [zsum v_cover v_add_eager v_cb20]. pose proof (rhits_le bottomup_floor (2^20) (ACEIL_MIN - bottomup_floor) (ua, n) ltac:(lia) ltac:(cbn; lia)). cbn [snd] in H. lia.  (* [comment removed for export] *)
     - cbn [zsum v_cover v_add_eager v_cb23]. pose proof (rhits_le bottomup_floor (2^23) (ACEIL_MIN - bottomup_floor) (ua, n) ltac:(lia) ltac:(cbn; lia)). cbn [snd] in H. lia. }  (* [comment removed for export] *)
-  split; [exact RS|]. split; [exact RC|]. split; [| exact AT].
+  (* 727298f3: the grant is free of the whole ledger ([RF]), so it is apart from every reserved entry. *)
+  split; [intros e He; apply clear_cons; [exact (RS e He)| specialize (CLR e He); rewrite NZ; fold ua; lia]|].
+  split; [exact RC|]. split; [| split; [exact AT|]].
+  2: { (* LPS #38: the fifteenth conjunct, [AMark.heap_mark], across an eager
+          grant.  [charge] is what this grant adds to the heap's backing budget
+          ([v_eb] gains the block, [vnb] does not fall), and the budget
+          expression is [replace]d into [used + charge] so the conclusion
+          matches [heap_mark_cons]'s syntactically. *)
+    pose proof (vnb_add_eager_ge v ua n cs ltac:(clear - N0; lia)) as VNBM.
+    assert (EBE : v_eb (v_add_eager v ua n cs) = v_eb v + n) by reflexivity.
+    rewrite EBE.
+    replace (v_eb v + n + 4096 * vnb (v_add_eager v ua n cs))
+      with ((v_eb v + 4096 * vnb v) + (n + 4096 * (vnb (v_add_eager v ua n cs) - vnb v)))
+      by (clear - VNBM; lia).
+    apply (AMark.heap_mark_cons h (m_vmmaps mo') (kb_thp (m_kernel mo)) _ _ a (Z_to_bv 64 n) n);
+      [ exact MK | exact N0 | exact NAL | exact MKSM | exact MKPL
+      | reflexivity | reflexivity | reflexivity
+      | clear - VNBM; lia
+      | clear - BUD VNBM; unfold AMark.MARKCAP, VLIMIT in *; lia ]. }
   (* [comment removed for export] *)
   assert (HAPT : forall H, In H (v_hulls v) -> ua + n <= fst H \/ fst H + snd H <= ua).
   { intros H HH. apply (hull_fresh_apart v _ _ _ H ua (ua + n) (conj TB (conj TN (conj TL (conj THL (conj TEM (conj MND (conj MSEP (conj NZN (conj NZL BANDM))))))))) VW HH); [exact CLM| lia]. }
@@ -577,12 +683,37 @@ Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 Definition v_add_lazy (v : vst) (lo n : Z) : vst := ltac2:(CDefT.buildp (gd_tbl_AVm ()) "(74.(18.$?.(75.O2.O1.$79.$15.$15.)(11.O3.))(35.O3.)(20.O3.)(5.O3.)(8.O3.)(40.O3.)(18.(19.$4.$4.)(1:.$4.$4.O2.O1.)(43.O3.))(<.(46.O3.)(<.(64.O1.(3?.+2.+14.))+2.))(<.(47.O3.)(<.(64.O1.(3?.+2.+17.))+2.))(32.O3.))")
 (* [comment removed for export] *).
 
-Local Ltac2 Set LiaOrc.tbl := fun () => "0150@L1186817686.85  L13131539002.86 L14419301975.84 L18926365809.88 L18926365809.92 L18926563191.93 L18926563318.94 L18933043916.89 L19621671945.86 L19864066953.89 L2420763460.85  L2424962856.86  L2426452985.74  L2427036741.84  L2427036741.88  L26697192587.84 L2706105983.86  L2744867246.86  L28783840466.100L28783840466.90 L29677719528.89 L30389294.86    L3236455794.86  L32992433899.86 L33075001344.89 L34385283113.89 L34909900027.99 L35710099825.90 L36361590730.74 L36368352239.85 L36969038919.99 L39497479604.86 L47878138838.85 L50163336572.84 L51109213081.74 L51111709851.92 L51111768481.86 L51230418227.85 L52463936981.84 L56061752866.85 L57365520411.88 L57365520411.89 L57368009786.94 L5744825905.94  L5744833530.85  L5744962057.88  L5744962057.89  L58287161420.92 L58354491464.85 L59308579027.93 L59310664567.94 L59310679309.87 L59310683405.85 L59315137787.75 L59315300849.97 L59338096377.85 L61640231099.99 L61929658689.68 L62596492723.86 L63208222909.87 L63368150556.89 L63374718476.99 L63537114425.85 L6604881317.84  L67788690572.84 L68390338709.89 L7009116958.89  L8911144577.87  L9846831376.89  00000C00O00[00i01701E01S01a01b01c02202F02U02d03303?03@03Z04304J04K04\04]05705805905J05l06;06J06_07007?07K07Z07i08808H08T08l09N09d0:;0:R0:i0;U0;k0<?0<O0<f0=I0=d0>>0>R0?70?J0@C0@X0A30AN0AZ0Ah0Ai0B50BA0B`0Ba0C<0C[S3hAR2AL1a1n2ua3IMUS3hAR1a1n2uaS3hAR1a1n2uaS3hAR1a1n2ua1xS3hAR1a1n2ua1xS3hAR1a1n2ua1xS3hAR1a1n2ua1xS3hAR1a1n2ua1xFFS3hAR1a1n2ua2N0S3hAR1a1n2ua2N01x2HxS3hAR1a1n2ua2N0S3hAR1a1n2ua2N0S3hAR1a1n2ua2N0S3hAR1a1n2uaFS3hAR1a1n2ua3ACB2Ra2e23CLMS3hAR2AL1a1n3SBH2ua1x1c1HS3hAR2AL1a1n3SBH2ua1c1HFS3hAR1a1n2ua1x2HxFS3hAR1a1n2ua3ACB2Ra2e13CLMFFS3hAR1a1n2ua2A01xS3hAR1a1n2ua3ACB2Ra2e'3CLM1e2T12T2S3hAR1a1n2ua2CES3hAR1a1n2ua2CES3hAR1a1n2ua2CE1x1c1RS3hAR1a1n2ua1x2HxS3hAR1a1n2ua2CES3hAR1a1n2uaS3hAR1a1n2ua2N0S3hAR1a1n2ua2N0S3hAR1a1n2ua2N0S3hAR1a1n2ua3NALS3hAR1a1n2uaS3hAR1v1a1n2ua3CE31H3CE4S3hAR2AL1a1n2ua2CE2N03IMU4IMG21c1YS3hAR1a1n2ua2A02CE1c1RS3hAR1a1n2ua1c1t1R1H2H1S3hAR1a1n2ua1x1t1R1H2H1S3hAR1a1n2ua2A02CE1x2HxS3hAR1v1a1n2ua4STK04STK21x1Y2AL4IMG24IMG42IMS3hAR1a1n2ua2A02CE1x1RS3hAR1a1n2ua2U92n91HS3hAR1a1n2ua3AL_S3hAR1a1n2ua1H2M22H02M1S3hAR1a1n2ua3ACB2Ra1x2Q12Q23AOR3OUTS3hAR1a1n2ua2N03ACB2Ra4APT'S3hAR1a1n2ua2N03ACB2Ra3CLMS3hAR1a1n2ua1t3TL01XS3hAR1a1n2ua3ACB2Ra1x3AOR2P12P23OUT1RS3hAR1a1n2ua3AL_2A0S3hAR1a1n2ua2N02e12X12Y12e22X22Y22e32X32Y33ACB2Ra1H2H02H1S3hAR1a1n2ua2A02CE2N0S3hAR1v2mo1a1n2ua1h2EB4MONOS3hAR1a1n2ua3ACB2Ra2t14APT'S3hAR1a1n2uaS3hAR1a1n2ua1xFS3hAR1a1n2uaS3hAR1a1n2uaS3hAR1v1a1n2ua4STK03ACB2Ra1c2CBFS3hAR1a1n2ua3ACB2Ra2t24APT'S3hAR1v1a1n2ua4STK23ACB2Ra1c2CB". (* [comment removed for export] *)
-#[using="Type"] Theorem HKv_grant_lazy : ltac2:(CDefT.buildp (gd_tbl_AVm ()) "Pv,$68.Pmo,$6:.Pa,(30.&40.)Pn,$4.P,(6;.R4.R3.)P,(2.=(65.VAL,))P,(6.(65.VAL,)(3?.+2.+3>.))Zua,$4.(25.&40.R5.)P,(12.$4.(27.R1.+1000.)=)P,(6.=R2.)P,(2.(<.R3.R7.)(37.VhAR,))P,(6.=R8.)P,(12.$4.(27.R9.+1000.)=)P,(2.(3<.VAL,)R6.)P,(12.$13.(6=.(1<.(19.(30.&40.)(30.&40.))(5=.(53.R=.))(5:.(53.R=.)))R<.(76.&40.R;.))$15.)P,(2.(<.(40.R?.)(56.+1000.(57.(7:.R?.R8.R<.))))$54.)(6;.(7:.R10.R9.R=.)(78.+4022.R>.R=.R?.))")
-(* [comment removed for export] *).
+(* LPS #38: the lazy charge, exactly.  The entry reaches [csranges] AND
+   [lazyranges], so the grant is charged [(n/32768 + 3) + (n/4096 + 1)] pages
+   -- more than its own [n] bytes, which is what [AMark.heap_mark_cons]'s
+   [nZ <= charge] premise needs.  This is [AInstDepot.vnb_S] with the literal
+   [2^23] left general. *)
+Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
+#[using="Type"] Lemma vnb_add_lazy_eq : forall v lo n,
+  vnb (v_add_lazy v lo n) = vnb v + (n / 32768 + 3) + (n / 4096 + 1).
 Proof.
-  intros v mo a n K SB SBH ua AL_ A0 CE N0 NAL IMU RF BUD.
-  dpose K as (Hh & ND & GD & LZ & LIM & EB & BUD0 & WF & (TB & TN & TL & THL & TEM & MND & MSEP & NZN & NZL & BANDM) & (CE1 & CE2 & CE3 & CE4) & RS & RC & VW & AT).
+  intros v lo n. unfold vnb, csranges, lazyranges.
+  cbn [v_stk v_img v_tr v_ghost v_add_lazy List.filter is_lazy_cs t_kind t_cs map app zsum].
+  cbn [t_lo t_len]. unfold npages_shadow, npages_inside. cbn [snd]. clear. lia.
+Qed.
+
+Local Ltac2 Set LiaOrc.tbl := fun () => "0150@L1186817686.85  L13131539002.86 L14419301975.84 L18926365809.88 L18926365809.92 L18926563191.93 L18926563318.94 L18933043916.89 L19621671945.86 L19864066953.89 L2420763460.85  L2424962856.86  L2426452985.74  L2427036741.84  L2427036741.88  L26697192587.84 L2706105983.86  L2744867246.86  L28783840466.100L28783840466.90 L29677719528.89 L30389294.86    L3236455794.86  L32992433899.86 L33075001344.89 L34385283113.89 L34909900027.99 L35710099825.90 L36361590730.74 L36368352239.85 L36969038919.99 L39497479604.86 L47878138838.85 L50163336572.84 L51109213081.74 L51111709851.92 L51111768481.86 L51230418227.85 L52463936981.84 L56061752866.85 L57365520411.88 L57365520411.89 L57368009786.94 L5744825905.94  L5744833530.85  L5744962057.88  L5744962057.89  L58287161420.92 L58354491464.85 L59308579027.93 L59310664567.94 L59310679309.87 L59310683405.85 L59315137787.75 L59315300849.97 L59338096377.85 L61640231099.99 L61929658689.68 L62596492723.86 L63208222909.87 L63368150556.89 L63374718476.99 L63537114425.85 L6604881317.84  L67788690572.84 L68390338709.89 L7009116958.89  L8911144577.87  L9846831376.89  00000C00O00[00i01701E01S01a01b01c02202F02U02d03303?03@03Z04304J04K04\04]05705805905J05l06;06J06_07007?07K07Z07i08808H08T08l09N09d0:;0:R0:i0;U0;k0<?0<O0<f0=I0=d0>>0>R0?70?J0@C0@X0A30AN0AZ0Ah0Ai0B50BA0B`0Ba0C<0C[S3hAR2AL1a1n2ua3IMUS3hAR1a1n2uaS3hAR1a1n2uaS3hAR1a1n2ua1xS3hAR1a1n2ua1xS3hAR1a1n2ua1xS3hAR1a1n2ua1xS3hAR1a1n2ua1xFFS3hAR1a1n2ua2N0S3hAR1a1n2ua2N01x2HxS3hAR1a1n2ua2N0S3hAR1a1n2ua2N0S3hAR1a1n2ua2N0S3hAR1a1n2uaFS3hAR1a1n2ua3ACB2Ra2e23CLMS3hAR2AL1a1n3SBH2ua1x1c1HS3hAR2AL1a1n3SBH2ua1c1HFS3hAR1a1n2ua1x2HxFS3hAR1a1n2ua3ACB2Ra2e13CLMFFS3hAR1a1n2ua2A01xS3hAR1a1n2ua3ACB2Ra2e'3CLM1e2T12T2S3hAR1a1n2ua2CES3hAR1a1n2ua2CES3hAR1a1n2ua2CE1x1c1RS3hAR1a1n2ua1x2HxS3hAR1a1n2ua2CES3hAR1a1n2uaS3hAR1a1n2ua2N0S3hAR1a1n2ua2N0S3hAR1a1n2ua2N0S3hAR1a1n2ua3NALS3hAR1a1n2uaS3hAR1v1a1n2ua3CE31H3CE4S3hAR2AL1a1n2ua2CE2N03IMU4IMG21c1YS3hAR1a1n2ua2A02CE1c1RS3hAR1a1n2ua1c1t1R1H2H1S3hAR1a1n2ua1x1t1R1H2H1S3hAR1a1n2ua2A02CE1x2HxS3hAR1v1a1n2ua4STK04STK21x1Y2AL4IMG24IMG42IMS3hAR1a1n2ua2A02CE1x1RS3hAR1a1n2ua2U92n91HS3hAR1a1n2ua3AL_S3hAR1a1n2ua1H2M22H02M1S3hAR1a1n2ua3ACB2Ra1x2Q12Q23AOR3OUTS3hAR1a1n2ua2N03ACB2Ra4APT'S3hAR1a1n2ua2N03ACB2Ra3CLMS3hAR1a1n2ua1t3TL01XS3hAR1a1n2ua3ACB2Ra1x3AOR2P12P23OUT1RS3hAR1a1n2ua3AL_2A0S3hAR1a1n2ua2N02e12X12Y12e22X22Y22e32X32Y33ACB2Ra1H2H02H1S3hAR1a1n2ua2A02CE2N0S3hAR1v2mo1a1n2ua1h2EB4MONOS3hAR1a1n2ua3ACB2Ra2t14APT'S3hAR1a1n2uaS3hAR1a1n2ua1xFS3hAR1a1n2uaS3hAR1a1n2uaS3hAR1v1a1n2ua4STK03ACB2Ra1c2CBFS3hAR1a1n2ua3ACB2Ra2t24APT'S3hAR1v1a1n2ua4STK23ACB2Ra1c2CB". (* [comment removed for export] *)
+(* LPS #38: the same two new premises as [HKv_grant_eager]; see there. *)
+#[using="Type"] Theorem HKv_grant_lazy : forall v mo (a : word) (n : Z),
+  HKv v mo ->
+  0 <= al_sb AL -> al_sb AL < 2 ^ 62 ->
+  let ua := bv_unsigned a in
+  ua mod 4096 = 0 -> 0 < ua -> ua + n <= ACEIL ->
+  0 < n -> n mod 4096 = 0 ->
+  al_img_hi AL <= ua ->
+  region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 n) = true ->
+  v_eb v + 4096 * vnb (v_add_lazy v ua n) <= VLIMIT ->
+  ASys.placed_at n mo a ->
+  n <= AMark.GRANT_MAX ->
+  HKv (v_add_lazy v ua n) (anon_grant 0x4022 a n mo).
+Proof.
+  intros v mo a n K SB SBH ua AL_ A0 CE N0 NAL IMU RF BUD MKPL MKSM.
+  dpose K as (Hh & ND & GD & LZ & LIM & EB & BUD0 & WF & (TB & TN & TL & THL & TEM & MND & MSEP & NZN & NZL & BANDM) & (CE1 & CE2 & CE3 & CE4) & RS & RC & VW & AT & MK).
   dpose VW as (TWF & APT & HWF & HAP & THA & STK0 & STK1 & STK2 & IMG0 & IMG1 & IMG2 & IMG3 & IMG4 & GWF & BANDCS & EB0 & TND & UW & USEP & HUL & UT).
   assert (TBL0 : vm_table v (vm_maps (m_vmmaps mo)) (vm_noaccess (m_vmmaps mo)) (m_vm_lazy mo)) by exact (conj TB (conj TN (conj TL (conj THL (conj TEM (conj MND (conj MSEP (conj NZN (conj NZL BANDM))))))))).
   aceilb. 
@@ -729,7 +860,25 @@ Proof.
     - intros c [<-|Hc]; [cbn; lia| apply CE2; exact Hc].
     - cbn [zsum v_cover v_add_lazy v_cb20]. pose proof (rhits_le bottomup_floor (2^20) (ACEIL_MIN - bottomup_floor) (ua, n) ltac:(lia) ltac:(cbn; lia)). cbn [snd] in H. lia.  (* [comment removed for export] *)
     - cbn [zsum v_cover v_add_lazy v_cb23]. pose proof (rhits_le bottomup_floor (2^23) (ACEIL_MIN - bottomup_floor) (ua, n) ltac:(lia) ltac:(cbn; lia)). cbn [snd] in H. lia. }  (* [comment removed for export] *)
-  split; [exact RS|]. split; [exact RC|]. split; [| exact AT].
+  (* 727298f3: the grant is free of the whole ledger ([RF]), so it is apart from every reserved entry. *)
+  split; [intros e He; apply clear_cons; [exact (RS e He)| specialize (CLR e He); rewrite NZ; fold ua; lia]|].
+  split; [exact RC|]. split; [| split; [exact AT|]].
+  2: { (* LPS #38: the fifteenth conjunct across a lazy grant.  [v_eb] does not
+          move; the whole charge is the page count, and it exceeds the block
+          because the entry is charged in both ledgers. *)
+    pose proof (vnb_add_lazy_eq v ua n) as VNBL.
+    pose proof (Z.div_pos n 32768 ltac:(clear - N0; lia) ltac:(lia)) as DP2.
+    pose proof (Z.div_mod n 4096 ltac:(lia)) as DM.
+    assert (EBL : v_eb (v_add_lazy v ua n) = v_eb v) by reflexivity.
+    rewrite EBL.
+    replace (v_eb v + 4096 * vnb (v_add_lazy v ua n))
+      with ((v_eb v + 4096 * vnb v) + 4096 * (vnb (v_add_lazy v ua n) - vnb v))
+      by (clear - VNBL; lia).
+    apply (AMark.heap_mark_cons h (m_vmmaps mo') (kb_thp (m_kernel mo)) _ _ a (Z_to_bv 64 n) n);
+      [ exact MK | exact N0 | exact NAL | exact MKSM | exact MKPL
+      | reflexivity | reflexivity | reflexivity
+      | clear - VNBL DP2 DM NAL; lia
+      | clear - BUD VNBL; unfold AMark.MARKCAP, VLIMIT in *; lia ]. }
   assert (HAPT : forall H, In H (v_hulls v) -> ua + n <= fst H \/ fst H + snd H <= ua).
   { intros H HH. apply (hull_fresh_apart v _ _ _ H ua (ua + n) (conj TB (conj TN (conj TL (conj THL (conj TEM (conj MND (conj MSEP (conj NZN (conj NZL BANDM))))))))) VW HH); [exact CLM| lia]. }
   split.
@@ -765,26 +914,52 @@ Definition J20 : Z := 89476429.   (* [comment removed for export] *)
 Definition J23 : Z := 11184553.   (* [comment removed for export] *)
 
 Local Ltac2 Set LiaOrc.tbl := fun () => "00<0?L18926563191.40L26984040175.39L3422768537.38 L35987774815.34L38014092657.39L51313584003.34L56765302024.39L58971515497.39L61259569273.40L62742048647.34L63747082658.38L7100914763.39 00000;00L00Z00m01;01G01e02A02b02m03E03SS1S2JZ2JE1aS1S2JZ2FV2JE1a2A1S1S2JZ2JE1e2R1S1S2JZ2JB2FV3ACV2JES1S2JZ2JE1a2A1S1S2JZ2FV2JES1S2JZ2HS2JB2FV3ACV2JE1a2A12A2S3hAR1S2JZ2JB2FV3ACV2JE1a2A2S1v2mo1S2JZ2HS4EBUD2EB2JE1a2A12A2S1v1S2JZ2JES1S2JZ2JB2FV3ACV2JE1e2R2S1S2JZ2HS2JE1a". (* [comment removed for export] *)
-#[using="Type"] Lemma room_gen : ltac2:(CDefT.buildp (gd_tbl_AVm ()) "Pv,$68.Pmo,$6:.PS,$4.PJZ,$4.Pflags,$4.P,(6;.R5.R4.)P,(6.=R4.)P,(12.$4.(27.R5.+1000.)=)P,(2.=R5.)P,(2.(<.$41.(56.R6.R7.))$42.)P,(6.(44.(19.$4.$4.)(45.$41.R8.(56.R7.R8.))(43.R:.))R7.)P,P,(12.$4.R7.+22.)(2.(<.(<.(40.R<.)(56.(62.(63.(30.&40.)(4;.R;.)))+1000.))R:.)$54.)(>.(30.&40.)La,(30.&40.)(7;.VhAR,R9.R;.R<.R1.))")
-(* [comment removed for export] *).
+(* LPS #38.  ONE NEW PREMISE, [SMAX]: the mark pays for ONE grant of at most
+   [AMark.GRANT_MAX = 2^29] while this lemma is generic in [S].  Its two
+   callers below pass [2^20] and [2^23]; the bound is 2^29 rather than 2^23
+   because the secondary allocator's grant is the variable [msz], which
+   [AInstMallocS.MSZH] bounds at 2^28 + 12288.
+
+   At the revision the checker's modeled-anon arm gates on
+   [Placement.linux_place_is] -- the address must be the one LINUX gives --
+   and the four facts the old guard listed come back out of
+   [AMark.heap_mark_place] as [linux_place_is_admissible]'s consequences.
+
+   LPS 727298f3: THE FIT WITNESS IS THE MARK'S.  It used to be
+   [AFreeSlot.free_slot_exists_B]'s bottom-up slot above [bottomup_floor], which
+   needed the census to count every ledger entry in the band; the launch's
+   vDSO pair is a ledger entry that no cover of the heap's holds.  The mark
+   leaves a free window just under itself, inside Linux's top-down window, and
+   [AMark.heap_mark_place] now builds its witness there.  The premises
+   [0 <= JZ], the span bound and the hit count are no longer read; they stay so
+   that the callers ([HKv_room20], [HKv_room23], [HKv_room16] and
+   [ARoomL.HKv_room_large]) are unchanged.
+
+   [kb_thp] is READ OFF THE RUN'S OWN MODEL, never assumed: it is one of the
+   five fields [Run.recorded_kernel] leaves free.  Explicit text rather than a
+   re-encoded [CDefT.buildp] blob (the KReplay rule forbids the round trip). *)
+#[using="Type"] Lemma room_gen : forall v mo (S JZ flags : Z),
+  HKv v mo ->
+  0 < S ->
+  S mod 4096 = 0 ->
+  0 <= JZ ->
+  bottomup_floor + JZ * S <= ACEIL_MIN ->
+  zsum (rhits bottomup_floor S (JZ * S)) (v_cover v) < JZ ->
+  S <= AMark.GRANT_MAX ->
+  (flags = 0x22 -> v_eb v + Z.of_nat (length (m_vm_materialized mo)) * 4096 + S <= VLIMIT) ->
+  exists a : word, anon_grantable flags S mo a.
 Proof.
-  intros v mo S JZ flags K HS SAL J0 JB SUM EBUD.
-  dpose K as (Hh & ND & GD & LZ & LIM & EB & BUD0 & WF & TBL & (CE1 & CE2 & CE3 & CE4) & RS & RC & VW & AT).
-  assert (FV : bottomup_floor = 0x2aaaaaaab000) by reflexivity. assert (ACV : ACEIL_MIN = 0x7fff7f800000) by reflexivity.  (* [comment removed for export] *)
-  pose proof (Z2Nat.id JZ J0) as JE.
-  ddestruct (free_slot_exists_B (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) (v_cover v) bottomup_floor S
-              (zsum (rhits bottomup_floor S (JZ * S)) (v_cover v)) (Z.to_nat JZ) HS ltac:(lia) ltac:(rewrite JE; lia) CE2) as (a & A1 & A2 & A3 & RF).
-  - intros e He R1 R2. unfold ebase, elen in *. rewrite JE in R2. apply CE1; [exact He| lia| lia].
-  - rewrite JE. lia.
-  - rewrite JE. exact SUM.
-  - rewrite JE in A2. exists (Z_to_bv 64 a). unfold anon_grantable. rewrite u64_lit by lia.
-    split. { pose proof (Z.div_mod (a - bottomup_floor) S ltac:(lia)) as D1. rewrite A3, Z.add_0_r in D1.
-             pose proof (Z.div_mod S 4096 ltac:(lia)) as D2. rewrite SAL, Z.add_0_r in D2.
-             set (q := (a - bottomup_floor) / S) in *. set (r := S / 4096) in *.
-             replace a with (q * r * 4096 + 11453246123 * 4096) by (rewrite FV in *; nia).
-             rewrite <- Z.mul_add_distr_r. apply Z_mod_mult. }
-    split; [lia|]. split; [lia|]. split; [lia|]. split; [exact RF|].
-    intros HF. rewrite vm_backing_used_split, LIM. specialize (EBUD HF). unfold page_size. lia.
+  intros v mo S JZ flags K HS SAL J0 JB SUM SMAX EBUD.
+  dpose K as (Hh & ND & GD & LZ & LIM & EB & BUD0 & WF & TBL & CE & RS & RC & VW & AT & MK).
+  destruct (AMark.heap_mark_place (m_vmmaps mo) (kb_thp (m_kernel mo))
+              (v_eb v + 4096 * vnb v) S MK HS SAL SMAX)
+    as (a' & PL & HKB & PAL & PPOS & PTOP & PRF).
+  exists a'. unfold anon_grantable.
+  split; [exact PAL|]. split; [exact PPOS|].
+  split; [exact (conj PL HKB)|].
+  split; [exact (atop_grant _ _ _ AT PAL SAL PTOP)|].
+  split; [exact PRF|].
+  intros HF. rewrite vm_backing_used_split, LIM. specialize (EBUD HF). unfold page_size. lia.
 Qed.
 Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
@@ -806,6 +981,46 @@ Proof.
 Qed.
 Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
+(* LPS #38.  REFINING THE CENSUS TO A FINER SLOT SIZE.  [vcensus]'s third and
+   fourth conjuncts count the cover's hits at the DEPOT's two slot sizes, 2^20
+   and 2^23.  The embedded region is [AModel.kEmbBytes = 2^16], which has no
+   conjunct of its own -- and it does not need one, because a hit count at a
+   finer size is bounded by a multiple of the coarser one.
+
+   WHY THIS IS SOUND AND NOT A SLEIGHT OF HAND.  [AFreeSlot.rhits]'s guard,
+   [(fst R + snd R <=? F) || (F + JS <=? fst R)], MENTIONS NEITHER [S] NOR THE
+   SIZE -- so at a fixed [F] and a fixed span [JS] the two granularities agree
+   EXACTLY on which ranges count.  There is no finer band that admits a hit the
+   coarser one hides, which is the only way this could have failed and the only
+   thing that would have forced a new [HKv] conjunct.  On the ranges that do
+   count the claim is division arithmetic:
+     snd R / S = k * (snd R / (k*S)) + (snd R / S) mod k,  0 <= .. mod k < k
+   so  rhits F S JS R = snd R/S + 2 <= k*(snd R/(k*S)) + (k-1) + 2
+                                    <= k*(snd R/(k*S) + 2) = k * rhits F (k*S) JS R
+   whenever k >= 1.  [JS] is the SAME on both sides, deliberately. *)
+Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
+#[using="Type"] Lemma rhits_refine : forall F S k JS R,
+  0 < S -> 0 < k -> 0 <= snd R ->
+  rhits F S JS R <= k * rhits F (k * S) JS R.
+Proof.
+  intros F S k JS R HS Hk HR. unfold rhits.
+  destruct (_ || _); [lia|].
+  pose proof (Z.div_pos (snd R) S HR HS) as DP.
+  pose proof (Z.div_div (snd R) S k ltac:(lia) ltac:(lia)) as DD.
+  pose proof (Z.div_mod (snd R / S) k ltac:(lia)) as DM.
+  pose proof (Z.mod_pos_bound (snd R / S) k ltac:(lia)) as MB.
+  replace (k * S) with (S * k) by lia. rewrite <- DD. clear - DP DM MB Hk. lia.
+Qed.
+
+#[using="Type"] Lemma zsum_rhits_refine : forall F S k JS l,
+  0 < S -> 0 < k -> (forall R, List.In R l -> 0 <= snd R) ->
+  zsum (rhits F S JS) l <= k * zsum (rhits F (k * S) JS) l.
+Proof.
+  intros F S k JS l HS Hk HR. induction l as [|R r IH]; cbn; [lia|].
+  pose proof (rhits_refine F S k JS R HS Hk (HR R ltac:(now left))).
+  specialize (IH ltac:(intros; apply HR; now right)). lia.
+Qed.
+
 (* [comment removed for export] *)
 #[using="Type"] Lemma HKv_mat_le : forall v mo, vranges_ok v -> HKv v mo -> Z.of_nat (length (m_vm_materialized mo)) <= vnb v.
 Proof. (intros v mo W dd_H; ddestruct dd_H as (Hh & ND & GD & _)). apply (vgood_card v W); assumption. Qed.
@@ -815,9 +1030,10 @@ Local Ltac2 Set LiaOrc.tbl := fun () => "0050?L16448997332.28L23745279192.28L355
 (* [comment removed for export] *).
 Proof.
   intros v mo flags W K CB EBUD.
-  dpose K as (Hh & ND & GD & LZ & LIM & EB & BUD0 & WF & TBL & (CE1 & CE2 & CE3 & CE4) & RS & RC & VW & AT).
+  dpose K as (Hh & ND & GD & LZ & LIM & EB & BUD0 & WF & TBL & (CE1 & CE2 & CE3 & CE4) & RS & RC & VW & AT & MK).
   assert (FV : bottomup_floor = 0x2aaaaaaab000) by reflexivity. assert (ACV : ACEIL_MIN = 0x7fff7f800000) by reflexivity.  (* [comment removed for export] *)
-  apply (room_gen v mo (2^20) J20 flags K); [lia| reflexivity| unfold J20; lia| rewrite FV, ACV; unfold J20; lia| |].
+  (* LPS #38: slot 6 is [room_gen]'s new [S <= AMark.GRANT_MAX]. *)
+  apply (room_gen v mo (2^20) J20 flags K); [lia| reflexivity| unfold J20; lia| rewrite FV, ACV; unfold J20; lia| | unfold AMark.GRANT_MAX; lia|].
   - eapply Z.le_lt_trans; [| exact CB]. eapply Z.le_trans; [| exact CE3]. apply zsum_rhits_mono; [lia| exact CE2| rewrite FV, ACV; unfold J20; lia].
   - intros HF. specialize (EBUD HF). pose proof (HKv_mat_le v mo W K). lia.
 Qed.
@@ -828,10 +1044,70 @@ Local Ltac2 Set LiaOrc.tbl := fun () => "0050?L17745709641.28L24197634836.28L389
 (* [comment removed for export] *).
 Proof.
   intros v mo flags W K CB EBUD.
-  dpose K as (Hh & ND & GD & LZ & LIM & EB & BUD0 & WF & TBL & (CE1 & CE2 & CE3 & CE4) & RS & RC & VW & AT).
+  dpose K as (Hh & ND & GD & LZ & LIM & EB & BUD0 & WF & TBL & (CE1 & CE2 & CE3 & CE4) & RS & RC & VW & AT & MK).
   assert (FV : bottomup_floor = 0x2aaaaaaab000) by reflexivity. assert (ACV : ACEIL_MIN = 0x7fff7f800000) by reflexivity.  (* [comment removed for export] *)
-  apply (room_gen v mo (2^23) J23 flags K); [lia| reflexivity| unfold J23; lia| rewrite FV, ACV; unfold J23; lia| |].
+  (* LPS #38: slot 6 is [room_gen]'s new [S <= AMark.GRANT_MAX]. *)
+  apply (room_gen v mo (2^23) J23 flags K); [lia| reflexivity| unfold J23; lia| rewrite FV, ACV; unfold J23; lia| | unfold AMark.GRANT_MAX; lia|].
   - eapply Z.le_lt_trans; [| exact CB]. eapply Z.le_trans; [| exact CE4]. apply zsum_rhits_mono; [lia| exact CE2| rewrite FV, ACV; unfold J23; lia].
+  - intros HF. specialize (EBUD HF). pose proof (HKv_mat_le v mo W K). lia.
+Qed.
+Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
+
+(* LPS #38.  THE EMBEDDED REGION'S ROOM LEMMA.  [AInstEmbT.MX_ROOM_e] used to
+   obtain a [kEmbBytes] grant by SHRINKING a 2^20 one: [anon_grantable]'s third
+   slot was [bottomup_floor <= a], which does not mention the size, so narrowing
+   the region and the ceiling was enough.  At the revision that slot is
+   [ASysS.grant_placed nZ mo a], and [nZ] sits INSIDE
+   [Placement.linux_place_is ... nZ a]: Linux's answer for a 2^20 request is not
+   its answer for a 0x10000 one, so the shrink is UNSOUND and no amount of
+   patching the old proof recovers it.  The emb path has to ask for its own size.
+
+   It takes EXACTLY [HKv_room20]'s four hypotheses -- the same [v_cb20 v < J20],
+   not a new counter -- because the slot premise refines through
+   [zsum_rhits_refine] at [k = 16] onto [vcensus]'s existing 2^20 conjunct:
+     zsum (rhits F 2^16 (JZ*2^16)) cover
+       <= zsum (rhits F 2^16 (ACEIL_MIN - F)) cover      [zsum_rhits_mono]
+       <= 16 * zsum (rhits F 2^20 (ACEIL_MIN - F)) cover [zsum_rhits_refine]
+       <= 16 * v_cb20 v                                  [vcensus's third]
+        < 16 * J20 = JZ                                  [the caller's CB]
+   and [JZ * kEmbBytes = 16 * J20 * 2^16 = J20 * 2^20] is the very span bound
+   [HKv_room20] already discharges.  So no [HKv] field is added and no consumer
+   of the invariant moves. *)
+Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
+#[using="Type"] Theorem HKv_room16 : forall v mo (S flags : Z),
+  0 < S -> S mod 4096 = 0 -> 16 * S = 2 ^ 20 ->
+  vranges_ok v ->
+  HKv v mo ->
+  v_cb20 v < J20 ->
+  (flags = 0x22 -> v_eb v + 4096 * vnb v + S <= VLIMIT) ->
+  exists a : word, anon_grantable flags S mo a.
+Proof.
+  intros v mo S flags HS SAL S16 W K CB EBUD.
+  dpose K as (Hh & ND & GD & LZ & LIM & EB & BUD0 & WF & TBL & (CE1 & CE2 & CE3 & CE4) & RS & RC & VW & AT & MK).
+  assert (FV : bottomup_floor = 0x2aaaaaaab000) by reflexivity.
+  assert (ACV : ACEIL_MIN = 0x7fff7f800000) by reflexivity.
+  apply (room_gen v mo S (16 * J20) flags K);
+    [ exact HS
+    | exact SAL
+    | unfold J20; lia
+    | rewrite FV, ACV; unfold J20; clear - S16; lia
+    |
+    | unfold AMark.GRANT_MAX; clear - S16; lia
+    | ].
+  - (* Both steps are stated as [assert]s rather than chained with [eapply
+       Z.le_trans].  Chaining leaves the middle term an EVAR, and then
+       [zsum_rhits_mono]'s third premise is [16 * J20 * S <= ?JS'], which has no
+       [bottomup_floor] in it for [rewrite FV] to find -- measured, as
+       "Found no subterm matching bottomup_floor", in a build of this port. *)
+    assert (M1 : zsum (rhits bottomup_floor S (16 * J20 * S)) (v_cover v)
+               <= zsum (rhits bottomup_floor S (ACEIL_MIN - bottomup_floor)) (v_cover v)).
+    { apply zsum_rhits_mono;
+        [ exact HS | exact CE2 | rewrite FV, ACV; unfold J20; clear - S16; lia ]. }
+    assert (M2 : zsum (rhits bottomup_floor S (ACEIL_MIN - bottomup_floor)) (v_cover v)
+               <= 16 * zsum (rhits bottomup_floor (16 * S) (ACEIL_MIN - bottomup_floor)) (v_cover v)).
+    { apply (zsum_rhits_refine bottomup_floor S 16 (ACEIL_MIN - bottomup_floor));
+        [ exact HS | lia | exact CE2 ]. }
+    rewrite S16 in M2. clear - M1 M2 CE3 CB. unfold J20 in *. lia.
   - intros HF. specialize (EBUD HF). pose proof (HKv_mat_le v mo W K). lia.
 Qed.
 Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
@@ -877,7 +1153,7 @@ Local Ltac2 Set LiaOrc.tbl := fun () => "01?0@L10072007836.98 L13058043995.97 L1
 Proof.
   intros v mo H U n cs VR K ASB IMH HH U0 U1 UAL NAL N0 H68 HUN APT BUD.
   assert (SB : 0 <= al_sb AL) by (rewrite ASB; lia). assert (SBH : al_sb AL < 2^62) by (rewrite ASB; lia).
-  dpose K as (Hh & ND & GD & LZ & LIM & EB & BUD0 & WF & (TB & TN & TL & THL & TEM & MND & MSEP & NZN & NZL & BANDM) & (CE1 & CE2 & CE3 & CE4) & RS & RC & VW & AT).
+  dpose K as (Hh & ND & GD & LZ & LIM & EB & BUD0 & WF & (TB & TN & TL & THL & TEM & MND & MSEP & NZN & NZL & BANDM) & (CE1 & CE2 & CE3 & CE4) & RS & RC & VW & AT & MK).
   dpose VW as (TWF & APT2 & HWF & HAP & THA & STK0 & STK1 & STK2 & IMG0 & IMG1 & IMG2 & IMG3 & IMG4 & GWF & BANDCS & EB0 & TND & UW & USEP & HUL & UT).
   pose proof (THL U n HUN) as HL.   (* [comment removed for export] *)
   pose proof (proj1 (Forall_forall _ _) HWF H HH) as (W0 & W1 & W2 & W3 & W4 & W5).
@@ -888,7 +1164,9 @@ Proof.
   assert (MC : map_contains (vm_maps (m_vmmaps mo)) (Z_to_bv 64 U) (Z_to_bv 64 n) = true).
   { apply covers_map_contains; [lia| lia| lia| exact HL]. }
   assert (RFR : region_free (vm_reserved (m_vmmaps mo)) (Z_to_bv 64 U) (Z_to_bv 64 n) = true).
-  { apply clear_region_free; [lia| lia| lia|]. intros e He. destruct (RS e He). lia. }
+  { (* 727298f3: [(U, n)] lies inside one mapping ([HL]), and every reserved entry is apart from it. *)
+    apply clear_region_free; [lia| lia| lia|]. intros e He.
+    pose proof HL as (eM & HeM & E1 & E2). pose proof (RS e He eM HeM) as X. clear - X E1 E2. lia. }
   assert (OV : overlap_sum (vm_maps (m_vmmaps mo)) U (U + n) <= n).
   { eapply (overlap_sum_sub v _ _ _ U n); [exact (conj TB (conj TN (conj TL (conj THL (conj TEM (conj MND (conj MSEP (conj NZN (conj NZL BANDM)))))))))| exact HL| lia]. }
   (* [comment removed for export] *)
@@ -1025,7 +1303,21 @@ Proof.
     - intros e He. eapply maps_subtract_pos; [exact W3'| exact NZL| exact He].
     - exact BANDM. }
   split; [exact (conj CE1 (conj CE2 (conj CE3 CE4)))|].
-  split; [exact RS|]. split; [exact RC|]. split; [| exact AT].
+  split; [exact RS|]. split; [exact RC|]. split; [| split; [exact AT|]].
+  2: { (* LPS #38: the fifteenth conjunct across a MAP_FIXED commit.  The commit
+          only SHRINKS [vm_noaccess]; [vm_reserved] and [vm_maps] are untouched,
+          so the mark does not move.  The backing budget only grows, and
+          [heap_mark_used_le] absorbs that. *)
+    assert (VNBS : vnb v <= vnb (v_add_sub v U n cs)).
+    { unfold vnb, csranges, lazyranges. cbn [v_stk v_img v_tr v_ghost v_add_sub List.filter t_cs is_lazy_cs t_kind map zsum].
+      destruct cs; cbn [map zsum app]; [| lia]. cbn [t_lo t_len].
+      assert (0 <= npages_shadow (U, n)) by (unfold npages_shadow; cbn [snd]; pose proof (Z.div_pos n 32768 ltac:(lia) ltac:(lia)); lia). lia. }
+    assert (EBS : v_eb (v_add_sub v U n cs) = v_eb v + n) by reflexivity.
+    apply (AMark.heap_mark_incl h);
+      [ apply (AMark.heap_mark_used_le h _ _ MK);
+          [ rewrite EBS; clear - VNBS N0; lia | exact BUD ]
+      | cbn [vm_reserved vm_maps]; apply incl_refl
+      | reflexivity ]. }
   (* [comment removed for export] *)
   split.
   { constructor; [| exact TWF]. unfold t_hi. cbn [t_lo t_len t_kind t_cs]. repeat split; try lia; try (intros _; discriminate). }
@@ -1077,12 +1369,95 @@ Proof.
 Qed.
 Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
+(* 08b1429: a munmap cuts its range out of [vm_maps] ([Mmap.mmap_fixed_destroyed_next]).
+   On a ledger whose entries are positive and separated from the exact one, the cut is
+   [map_remove]: the model's own proof (Common/MmapSim.maps_subtract_exact). *)
+#[using="Type"] Lemma avm_iv_subtract_outside : forall (b s : word) lo hi,
+  (0 < bv_unsigned s)%Z -> (lo < hi)%Z ->
+  (bv_unsigned b + bv_unsigned s <= lo \/ hi <= bv_unsigned b)%Z ->
+  iv_subtract b s lo hi = [(b, s)].
+Proof.
+  intros b s lo hi Hs Hlh Hd. unfold iv_subtract. cbv zeta.
+  destruct Hd as [Hd|Hd].
+  - rewrite (proj2 (Z.ltb_lt (bv_unsigned b) lo)) by lia.
+    rewrite (proj2 (Z.ltb_ge hi (bv_unsigned b + bv_unsigned s))) by lia.
+    rewrite Z.min_l by lia. rewrite Z_to_bv_bv_unsigned. reflexivity.
+  - rewrite (proj2 (Z.ltb_ge (bv_unsigned b) lo)) by lia.
+    rewrite (proj2 (Z.ltb_lt hi (bv_unsigned b + bv_unsigned s))) by lia.
+    rewrite Z.max_l by lia.
+    replace (bv_unsigned b + bv_unsigned s - bv_unsigned b)%Z with (bv_unsigned s) by lia.
+    rewrite !Z_to_bv_bv_unsigned. reflexivity.
+Qed.
+
+#[using="Type"] Lemma avm_maps_subtract_exact : forall l (a n : word),
+  (0 < bv_unsigned n)%Z ->
+  (forall b s, In (b, s) l -> (0 < bv_unsigned s)%Z) ->
+  (forall b s, In (b, s) l -> b = a -> s = n) ->
+  (forall b s, In (b, s) l -> b <> a ->
+     (bv_unsigned b + bv_unsigned s <= bv_unsigned a
+      \/ bv_unsigned a + bv_unsigned n <= bv_unsigned b)%Z) ->
+  maps_subtract l (bv_unsigned a) (bv_unsigned a + bv_unsigned n) = map_remove l a.
+Proof.
+  induction l as [|[b s] r IH]; intros a n Hn Hpos Hu Hd; [reflexivity|].
+  assert (IHr : maps_subtract r (bv_unsigned a) (bv_unsigned a + bv_unsigned n) = map_remove r a).
+  { apply IH; [exact Hn
+              | intros b' s' H; apply (Hpos b' s'); right; exact H
+              | intros b' s' H; apply (Hu b' s'); right; exact H
+              | intros b' s' H; apply (Hd b' s'); right; exact H]. }
+  cbn [maps_subtract]. rewrite IHr.
+  unfold map_remove. cbn [List.filter fst]. fold (map_remove r a).
+  destruct (bv_eqb b a) eqn:E; cbn [negb].
+  - apply bv_eqb_eq in E. subst b.
+    rewrite (Hu a s (or_introl eq_refl) eq_refl).
+    unfold iv_subtract. cbv zeta.
+    rewrite (proj2 (Z.ltb_ge _ _) (Z.le_refl (bv_unsigned a))).
+    rewrite (proj2 (Z.ltb_ge _ _) (Z.le_refl (bv_unsigned a + bv_unsigned n))).
+    reflexivity.
+  - assert (Hne : b <> a) by (intros ->; rewrite bv_eqb_refl in E; discriminate).
+    rewrite (avm_iv_subtract_outside b s); [reflexivity | | lia |].
+    + exact (Hpos b s (or_introl eq_refl)).
+    + exact (Hd b s (or_introl eq_refl) Hne).
+Qed.
+
+(* LPS #38.  [AMark.heap_mark]'s descent is paid by [v_eb v + 4096 * vnb v], so
+   that quantity must never FALL -- a mark the heap has spent is not given back
+   by a free.  It does not fall, and the mechanism is [v_ghost]: [v_remove]
+   takes the retired range out of [v_tr] and puts it straight into the ghost
+   list, which [csranges] still counts.  The two lemmas below are what turns
+   that into a proof: a partition of a [zsum] over a filtered [v_tr], and the
+   fact that a [NoDup] list whose members are all one element is [] or [x].
+   With [UNIQ] the second gives "at most the retired [trange] leaves the
+   filter", and with [t_kind t = KEager] it gives "nothing leaves the LAZY
+   filter", which is the only component [v_ghost] does not cover. *)
+Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
+#[using="Type"] Lemma zsum_tr_filter_split : forall (F : Z * Z -> Z) (P g g' : trange -> bool) (tr : list trange),
+  (forall t, g t = negb (g' t)) ->
+  zsum F (map (fun t => (t_lo t, t_len t)) (List.filter P tr))
+  = zsum F (map (fun t => (t_lo t, t_len t)) (List.filter P (List.filter g tr)))
+    + zsum F (map (fun t => (t_lo t, t_len t)) (List.filter P (List.filter g' tr))).
+Proof.
+  intros F P g g' tr Hg. induction tr as [|a tr IH]; [reflexivity|].
+  cbn [List.filter]. rewrite (Hg a). destruct (g' a); destruct (P a) eqn:Hp;
+    cbn [negb List.filter map zsum]; rewrite ?Hp; cbn [map zsum]; lia.
+Qed.
+
+#[using="Type"] Lemma nodup_all_eq : forall {A} (l : list A) (x : A),
+  List.NoDup l -> (forall y, In y l -> y = x) -> l = [] \/ l = [x].
+Proof.
+  intros A l x ND H. destruct l as [|y r]; [left; reflexivity| right].
+  pose proof (H y ltac:(now left)) as <-.
+  inversion ND as [|? ? NIn ND']; subst.
+  destruct r as [|z r']; [reflexivity|]. exfalso. apply NIn.
+  rewrite <- (H z ltac:(right; now left)). now left.
+Qed.
+Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
+
 Local Ltac2 Set LiaOrc.tbl := fun () => "00d0@L11424775649.100L13058012530.108L13058408412.97 L13060160071.98 L13060471105.93 L16002239660.99 L18926759799.98 L18928845742.96 L18928845742.97 L18933043916.95 L18933043916.96 L21303640324.75 L22831240455.105L23144198646.91 L24711450387.110L24711450387.113L24816150268.97 L25963904667.94 L25964171064.96 L26553311493.5  L26890139629.90 L27998384744.107L27998384744.111L30493818264.96 L36417483129.105L39147364409.99 L44820861986.90 L44888098779.81 L47966040186.96 L51851018037.100L52427764692.94 L52553944276.108L55117688560.83 L59308585732.109L59308585732.112L59308660947.112L59308730611.108L59308910835.109L59310684874.96 L59310684883.111L59315137787.107L59315137787.84 L60803539096.105L61929571768.76 L63368429084.94 L63368447790.95 L63842446571.110L65616925470.107L66086610871.95 L66622374278.91 L68044391932.96 L9658772623.109 00000I00[00m01?01Q01m02@02S02f03903L03a04?04]05=05[06906Z07@07U07h08J08o09G09_0:@0:S0:j0;?0;N0;d0<E0<]0=B0=e0>N0>j0?I0?b0@>0@[0A<0AT0Al0B?0BR0C00CH0C^0D;0DT0E6S3hAR1t1U3T681n5TBAND3ACBS3hAR1t1U3T681n2W1S3hAR1t1U3T681n2W1S3hAR1t1U3T681n2W1S3hAR1t1U3T681n2W1S3hAR1v2mo1t1U3T681n1h2EB2SRS3hAR1t1U3T681n1p1rS3hAR1t1U3T681n1p1rS3hAR1t1U3T681n1p1rS3hAR1t1U3T681n1p1rS3hAR1t1U3T681n1p1rS3hAR1t1U3T681n2W12W2S3hAR1t1U3T681n2U92n92e02A12A2S3hAR2AL1t1U3T681n4IMG24IMG41pS3hAR1t1U3T681n2lo2hi2LH1e2E12E2S3hAR1t1U3T681n2t'3TL01e2E12E2S3hAR1t1U3T681n1p1r2X11H2H02H1S3hAR1t1U3T681n3ACB1p2t'2X12X22APS3hAR1t1U3T681n5TBAND3ACB1p1r2RB2P02P1S3hAR2t'4TLO03TL03THIS3hAR1t1U3T681n1p1HS3hAR1t1U3T681n2U92n92e02A12A23NP9S3hAR1t1U3T681n1e1r2R12R22EP2e02A12A2S3hAR1t1U3T681n1p1r1H2H1S3hAR1t1U3T681n1e1x2Hx1HS3hAR1t1U3T681n1p1r2X21H2H02H12H2S3hAR1t1U3T681n1p1HS3hAR1t1U3T681n3ACB1e1XS3hAR1t1U3T681n2W12W2S3hAR1t1U3T681nS3hAR1t1U3T681n1p1r2RBS3hAR1t1U3T681n1x1q2Q12Q21r2R12R2S3hAR1t1U3T681n3ACB2t'1XS3hAR1t1U3T681n3ACB2lo2hi2LH2AP2E22E1S3hAR1t1U3T681n3ACB2t'2AP3TL02E22E1S3hAR1t1U3T681n3ACB1e1r2R12R22R32EP2A12A2S3hAR1t3T683ACB1e1x2Hx2Rt2APS3hAR1t3T682W13ACB2U92n91x2Hx1XS3hAR1t1U3T681n2W13ACB2APS3hAR1t3T683ACB1e1x2Hx2R32RtS3hAR1t3T682U92n92A13NP91X2A2S3hAR1t1U3T681n2W13ACB1e3EB12ES1XS3hAR1t1U3T681n1e1x2Hx1HS3hAR1t1U3T681n2W02W12W2S3hAR1t1U3T681n1p1rS3hAR1t1U3T681n1p1rS3hAR1t1U3T681n1e1x2Hx1r2R12R2S3hAR1t3T682U92n91x2Hx1XS3hAR1t1U3T681n1p1r2RBS3hAR1v1t1U3T681n4STK04STK21pS3hAR1t1U3T681n1p2t01H2H1S3hAR1t1U3T681n1e1r2R12R22e02A12A2". (* [comment removed for export] *)
 #[using="Type"] Theorem HKv_munmap : ltac2:(CDefT.buildp (gd_tbl_AVm ()) "Pv,$68.Pmo,$6:.Pt,$?.P,(6;.R3.R2.)P,(12.$4.(65.VAL,)+7???8000.)P,(10.$?.R3.(11.R5.))P,(12.$13.(34.R4.)$15.)P,(12.$38.(39.R5.)$3>.)P,(2.=(16.R6.))P,(12.$13.(14.R7.)$15.)P,Pt',$?.P,(10.$?.R1.(11.R;.))P,(12.$4.(16.R2.)(16.R:.))(12.$?.R3.R;.)P,(2.(<.(40.R;.)(56.+1000.(57.(85.R;.(16.R9.)(18.(19.$4.$4.)(1:.$4.$4.(16.R9.)(1>.R9.))(86.(19.$4.$4.)))))))$54.)(1.(6;.(85.R<.(16.R:.)(18.(19.$4.$4.)(1:.$4.$4.(16.R:.)(1>.R:.))(86.(19.$4.$4.))))(87.(16.R:.)(1>.R:.)R;.))(12.$13.(88.(5:.(53.R;.))(76.&40.(16.R:.))(76.&40.(1>.R:.)))$15.))")
 (* [comment removed for export] *).
 Proof.
   intros v mo t K ASB Ht TLIT TK T68 TCS UNIQ BUD.
-  dpose K as (Hh & ND & GD & LZ & LIM & EB & BUD0 & WF & (TB & TN & TL & THL & TEM & MND & MSEP & NZN & NZL & BANDM) & (CE1 & CE2 & CE3 & CE4) & RS & RC & VW & AT).
+  dpose K as (Hh & ND & GD & LZ & LIM & EB & BUD0 & WF & (TB & TN & TL & THL & TEM & MND & MSEP & NZN & NZL & BANDM) & (CE1 & CE2 & CE3 & CE4) & RS & RC & VW & AT & MK).
   dpose VW as (TWF & APT2 & HWF & HAP & THA & STK0 & STK1 & STK2 & IMG0 & IMG1 & IMG2 & IMG3 & IMG4 & GWF & BANDCS & EB0 & TND & UW & USEP & HUL & UT).
   pose proof (BANDCS t Ht TCS) as TBAND.
   pose proof (proj1 (Forall_forall _ _) TB t Ht) as (TC & TLH & TKF). rewrite TK in TKF. destruct TKF as [TCN TCL].
@@ -1108,7 +1483,21 @@ Proof.
   assert (TAP' : forall t', In t' (v_tr v') -> t_lo t' + t_len t' <= U \/ U + n <= t_lo t').
   { intros t' Ht'. apply TRR in Ht'. destruct Ht' as [Ht' NE]. destruct (TAP t' Ht') as [E|X]; [contradiction| exact X]. }
   (* [comment removed for export] *)
-  unfold munmap_model. cbv zeta. unfold with_mmap_destroyed. rewrite UZ, NZ.
+  (* 08b1429: [munmap_model] cuts [U, U + n) from [vm_maps]; on this ledger the cut is
+     [map_remove] (entries positive by the table, separated by MSEP) *)
+  assert (EXM : maps_subtract (vm_maps (m_vmmaps mo)) U (U + n) = map_remove (vm_maps (m_vmmaps mo)) (Z_to_bv 64 U)).
+  { pose proof TEM as TEM0. ddestruct TEM0 as (_ & MPOS0 & _).
+    rewrite <- (avm_maps_subtract_exact (vm_maps (m_vmmaps mo)) (Z_to_bv 64 U) (Z_to_bv 64 n)).
+    - rewrite UZ, NZ. reflexivity.
+    - rewrite NZ. lia.
+    - intros b s Hin. exact (MPOS0 (b, s) Hin).
+    - intros b s Hin Eb. destruct (MAP (b, s) Hin) as [E|X].
+      + injection E as _ Es. exact Es.
+      + exfalso. pose proof (MPOS0 (b, s) Hin) as P0. cbn [fst snd] in X, P0. subst b. rewrite UZ in X. lia.
+    - intros b s Hin Hne. destruct (MAP (b, s) Hin) as [E|X].
+      + injection E as Eb _. contradiction.
+      + cbn [fst snd] in X. rewrite UZ, NZ. lia. }
+  unfold munmap_model. cbv zeta. unfold with_mmap_destroyed, mmap_fixed_destroyed_next. rewrite UZ, NZ, EXM. clear EXM.
   set (h := m_vmmaps mo). set (mo' := vm_forget_range _ _ _).
   assert (PM : m_vmmaps mo' = mkVmMapsFull (vm_reserved h) (map_remove (vm_maps h) (Z_to_bv 64 U)) (maps_subtract (vm_noaccess h) U (U + n)) (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h)) by reflexivity.
   assert (PL : m_vm_lazy mo' = maps_subtract (m_vm_lazy mo) U (U + n)) by (subst mo'; rewrite m_vm_lazy_vm_forget_range; reflexivity).
@@ -1184,7 +1573,7 @@ Proof.
           destruct X; [left; apply Z.leb_gt| right; apply Z.ltb_ge]; lia. }
         rewrite !covered_app, CN, CL, OUT. cbn [negb andb]. rewrite !Bool.andb_true_r. reflexivity. }
     pose proof (sum_count_remove_le (fun x => negb (covered (vm_noaccess h ++ m_vm_lazy mo) x)) (vm_maps h) (Z_to_bv 64 U)) as SR.
-    match goal with |- ?G => idtac "MG" G end. match type of SR with ?T => idtac "SR" T end. match type of EB with ?T => idtac "EB" T end. subst v'. cbn [v_eb v_remove]. lia. }
+    subst v'. cbn [v_eb v_remove]. lia. }
   split; [subst v'; cbn [v_eb v_remove]; exact BUD|].
   split; [exact WF'|].
   split.
@@ -1257,7 +1646,44 @@ Proof.
     split; [| exact (conj CE2 (conj CE3 CE4))].
     intros e He R1 R2. apply CE1; [| exact R1| exact R2]. apply in_app_iff in He. apply in_app_iff.
     destruct He as [He|He]; [left; exact He| right]. apply in_map_remove in He. exact (proj1 He). }
-  split; [exact RS|]. split; [exact RC|]. split; [| exact AT].
+  (* 727298f3: the unmap only drops a mapping, so every reserved entry stays apart from what is left. *)
+  split; [intros e He q Hq; apply in_map_remove in Hq; exact (RS e He q (proj1 Hq))|].
+  split; [exact RC|]. split; [| split; [exact AT|]].
+  2: { (* LPS #38: the fifteenth conjunct across an unmap.  [vm_maps] loses one
+          whole entry ([map_remove]) and [vm_noaccess] is cut, so the ledger
+          only shrinks by MEMBERSHIP and [heap_mark_incl] applies directly.
+          The mark is not given back -- [used] does not fall, because
+          [v_remove] moves the retired range into [v_ghost], which [csranges]
+          still counts. *)
+    assert (ISL : is_lazy_cs t = false) by (unfold is_lazy_cs; rewrite TK; reflexivity).
+    assert (TRU : List.filter (fun t' => t_lo t' =? U) (v_tr v) = []
+                  \/ List.filter (fun t' => t_lo t' =? U) (v_tr v) = [t]).
+    { apply nodup_all_eq; [apply NoDup_filter; exact TND|].
+      intros y Hy. apply filter_In in Hy. destruct Hy as [Hy E]. apply Z.eqb_eq in E.
+      apply (UNIQ y Hy). exact E. }
+    assert (NPS : 0 <= npages_shadow (U, n))
+      by (unfold npages_shadow; cbn [snd]; pose proof (Z.div_pos n 32768 ltac:(clear - W1; lia) ltac:(lia)); clear - H; lia).
+    assert (UE : t_lo t = U) by reflexivity.
+    assert (NE2 : t_len t = n) by reflexivity.
+    assert (VNBR : vnb v <= vnb v').
+    { subst v'. unfold vnb, csranges, lazyranges.
+      cbn [v_stk v_img v_tr v_ghost v_remove List.filter t_cs is_lazy_cs t_kind map zsum].
+      rewrite !zsum_app.
+      rewrite (zsum_tr_filter_split npages_shadow t_cs
+                 (fun t' => negb (t_lo t' =? U)) (fun t' => t_lo t' =? U) (v_tr v) ltac:(reflexivity)).
+      rewrite (zsum_tr_filter_split npages_inside is_lazy_cs
+                 (fun t' => negb (t_lo t' =? U)) (fun t' => t_lo t' =? U) (v_tr v) ltac:(reflexivity)).
+      destruct TRU as [E|E]; rewrite E; cbn [List.filter map zsum];
+        [ clear - NPS; lia
+        | rewrite ISL; destruct (t_cs t); cbn [List.filter map zsum];
+          rewrite ?UE, ?NE2; clear - NPS; lia ]. }
+    apply (AMark.heap_mark_incl h);
+      [ apply (AMark.heap_mark_used_le h _ _ MK);
+          [ clear - VNBR; subst v'; cbn [v_eb v_remove]; lia | exact BUD ]
+      | cbn [vm_reserved vm_maps];
+        intros x Hx; apply in_app_iff in Hx; apply in_app_iff;
+        destruct Hx as [Hx|Hx]; [left; exact Hx| right; apply in_map_remove in Hx; exact (proj1 Hx)]
+      | reflexivity ]. }
   (* [comment removed for export] *)
   split. { apply Forall_forall. intros t' Ht'. apply (proj1 (Forall_forall _ _) TWF). exact (proj1 (proj1 (TRR t') Ht')). }
   split. { intros t1 t2 H1 H2. apply APT2; [exact (proj1 (proj1 (TRR t1) H1))| exact (proj1 (proj1 (TRR t2) H2))]. }
@@ -1286,7 +1712,7 @@ Local Ltac2 Set LiaOrc.tbl := fun () => "00>0?L17302396704.52L17304280759.53L173
 (* [comment removed for export] *).
 Proof.
   intros v mo t U n K Ht TK TLIT U0 U1 UAL NAL N0.
-  dpose K as (Hh & ND & GD & LZ & LIM & EB & BUD0 & WF & (TB & TN & TL & THL & TEM & MND & MSEP & NZN & NZL & BANDM) & CE & RS & RC & VW & AT).
+  dpose K as (Hh & ND & GD & LZ & LIM & EB & BUD0 & WF & (TB & TN & TL & THL & TEM & MND & MSEP & NZN & NZL & BANDM) & CE & RS & RC & VW & AT & MK).
   pose proof VW as (TWF & _).
   pose proof (proj1 (Forall_forall _ _) TB t Ht) as (TC & TLH & TKF). rewrite TK in TKF.
   pose proof (proj1 (Forall_forall _ _) TWF t Ht) as (W0 & W1 & W2 & W3 & W4 & W5 & IMT).
@@ -1294,7 +1720,9 @@ Proof.
   assert (MC : map_contains (vm_maps (m_vmmaps mo)) (Z_to_bv 64 U) (Z_to_bv 64 n) = true).
   { apply covers_map_contains; [lia| lia| lia|]. eapply covers_weaken; [exact TC| lia| lia]. }
   assert (RFR : region_free (vm_reserved (m_vmmaps mo)) (Z_to_bv 64 U) (Z_to_bv 64 n) = true).
-  { apply clear_region_free; [lia| lia| lia|]. intros e He. destruct (RS e He). lia. }
+  { (* 727298f3: [(U, n)] lies inside the mapping covering [t] ([TC]), and every reserved entry is apart from it. *)
+    apply clear_region_free; [lia| lia| lia|]. intros e He.
+    pose proof TC as (eM & HeM & E1 & E2). pose proof (RS e He eM HeM) as X. clear - X E1 E2 U0 U1. lia. }
   assert (RFN : region_free (vm_noaccess (m_vmmaps mo)) (Z_to_bv 64 U) (Z_to_bv 64 n) = true).
   { apply clear_region_free; [lia| lia| lia|]. eapply clear_weaken; [exact TKF| lia| lia]. }
   split; [unfold madvise_dontneed_ok; rewrite RFR, MC, RFN; reflexivity|].
@@ -1311,7 +1739,7 @@ Proof.
   split; [exact LZ|]. split; [exact LIM|]. split; [exact EB|]. split; [exact BUD0|].
   split; [exact WF|].
   split; [exact (conj TB (conj TN (conj TL (conj THL (conj TEM (conj MND (conj MSEP (conj NZN (conj NZL BANDM)))))))))|].
-  split; [exact CE|]. split; [exact RS|]. split; [exact RC|]. split; [exact VW| exact AT].
+  split; [exact CE|]. split; [exact RS|]. split; [exact RC|]. split; [exact VW|]. split; [exact AT| exact MK].
 Qed.
 Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
@@ -1416,7 +1844,7 @@ Qed.
 #[using="Type"] Theorem HKv_perm : forall v v' mo, vperm v v' -> HKv v mo -> HKv v' mo.
 Proof.
   intros v v' mo VP K. dpose VP as (P & PC & HU & GH & ST & IM & EBQ & C20 & C23 & UQ).
-  dpose K as (Hh & ND & GD & LZ & LIM & EB & BUD0 & WF & (TB & TN & TL & THL & TEM & MND & MSEP & NZN & NZL & BANDM) & (CE1 & CE2 & CE3 & CE4) & RS & RC & VW & AT).
+  dpose K as (Hh & ND & GD & LZ & LIM & EB & BUD0 & WF & (TB & TN & TL & THL & TEM & MND & MSEP & NZN & NZL & BANDM) & (CE1 & CE2 & CE3 & CE4) & RS & RC & VW & AT & MK).
   dpose VW as (TWF & APT2 & HWF & HAP & THA & STK0 & STK1 & STK2 & IMG0 & IMG1 & IMG2 & IMG3 & IMG4 & GWF & BANDCS & EB0 & TND & UW & USEP & HUL & UT).
   assert (INt : forall t, In t (v_tr v') <-> In t (v_tr v)).
   { intros t. split; intros H; [eapply Permutation_in; [apply Permutation_sym; exact P| exact H]| eapply Permutation_in; [exact P| exact H]]. }
@@ -1439,7 +1867,12 @@ Proof.
   { unfold vcensus. split; [intros e He R1 R2; ddestruct (CE1 e He R1 R2) as (c & Hc & X); exists c; split; [apply INc; exact Hc| exact X]|].
     split; [intros c Hc; apply CE2; apply INc; exact Hc|].
     rewrite <- (zsum_perm _ _ _ PC), C20. rewrite <- (zsum_perm _ _ _ PC), C23. split; [exact CE3| exact CE4]. }
-  split; [exact RS|]. split; [exact RC|]. split; [| exact AT].
+  split; [exact RS|]. split; [exact RC|]. split; [| split; [exact AT|]].
+  2: { (* LPS #38: a permutation moves neither the model nor the budget --
+          the proof above has already rewritten [v_eb v']/[vnb v'] to [v]'s
+          through [vperm]'s own components and [vnb_perm] -- so the mark is
+          literally the one the hypothesis carries. *)
+    exact MK. }
   unfold vwf. rewrite ?HU, ?ST, ?IM, ?GH, ?UQ.
   split; [apply Forall_forall; intros t Ht; apply (proj1 (Forall_forall _ _) TWF); apply INt; exact Ht|].
   split; [intros t1 t2 H1 H2; apply APT2; apply INt; assumption|].
@@ -1517,7 +1950,11 @@ Proof.
   dpose WF as (W1 & W2 & W3 & W4).
   assert (WF' : model_ivs_wf (fixrw_destroyed U n mo)).
   { unfold fixrw_destroyed, with_mmap_destroyed. cbv zeta. rewrite UZ, NZ.
-    apply model_ivs_wf_vm_forget_range; [lia|]. apply model_ivs_wf_with_vmmaps; [exact WF| | |reflexivity];
+    (* the merge gave [model_ivs_wf_with_vmmaps] a fifth premise,
+       [vm_mmap_base h = vm_mmap_base (m_vmmaps m)] (BackingAlgebra:622); here
+       [h] is built from the model's own ledger, so it is [reflexivity] like the
+       [vm_init_sp] one beside it *)
+    apply model_ivs_wf_vm_forget_range; [lia|]. apply model_ivs_wf_with_vmmaps; [exact WF| | |reflexivity|reflexivity];
       unfold mmap_fixed_destroyed_next; cbn [vm_maps vm_noaccess]; rewrite UZ, NZ; apply maps_subtract_wf; (assumption || lia). }
   split; [exact WF'|].
   rewrite (eager_bytes_sem _ WF'), (eager_bytes_sem _ WF).
@@ -1535,7 +1972,7 @@ Local Ltac2 Set LiaOrc.tbl := fun () => "00P0?L10419669224.98L11422990074.86L119
 (* [comment removed for export] *).
 Proof.
   intros v mo U n K ASB IMH HUN U68 UHI APT.
-  dpose K as (Hh & ND & GD & LZ & LIM & EB & BUD0 & WF & (TB & TN & TL & THL & TEM & MND & MSEP & NZN & NZL & BANDM) & (CE1 & CE2 & CE3 & CE4) & RS & RC & VW & AT).
+  dpose K as (Hh & ND & GD & LZ & LIM & EB & BUD0 & WF & (TB & TN & TL & THL & TEM & MND & MSEP & NZN & NZL & BANDM) & (CE1 & CE2 & CE3 & CE4) & RS & RC & VW & AT & MK).
   dpose VW as (TWF & APT2 & HWF & HAP & THA & STK0 & STK1 & STK2 & IMG0 & IMG1 & IMG2 & IMG3 & IMG4 & GWF & BANDCS & EB0 & TND & UW & USEP & HUL & UT).
   ddestruct TEM as (UNC & MPOS & LZK & MX & MH).
   dpose (UW U n HUN) as (N0 & U0 & UCE & UAL & NAL).
@@ -1619,7 +2056,27 @@ Proof.
       pose proof (maps_subtract_pos _ _ _ e W1' MPOS He) as EP.
       ddestruct (CE1 r ltac:(apply in_app_iff; right; exact Hr) ltac:(lia) ltac:(lia)) as (c & Hc & X1 & X2).
       exists c. split; [exact Hc| lia]. }
-  split; [exact RS|]. split; [exact RC|]. split; [| exact AT].
+  (* 727298f3: the destroy only cuts mappings, so every reserved entry stays apart from the pieces. *)
+  split; [intros e He; exact (clear_subtract _ _ _ _ _ W1' (RS e He))|].
+  split; [exact RC|]. split; [| split; [exact AT|]].
+  2: { (* LPS #38: the fifteenth conjunct across a destroy.  [maps_subtract]
+          CUTS entries rather than dropping them, so the stubs it leaves are
+          not members of the old ledger and [heap_mark_incl] does not reach
+          them; they are CONTAINED in members, which is what
+          [AMark.heap_mark_within] is for.  [v_hole] touches neither [v_tr]
+          nor [v_ghost] nor [v_eb], so [used] is unchanged. *)
+    assert (EBH : v_eb (v_hole v U n) = v_eb v) by reflexivity.
+    assert (VNBH : vnb (v_hole v U n) = vnb v)
+      by (unfold vnb, csranges, lazyranges; cbn [v_stk v_img v_tr v_ghost v_hole]; reflexivity).
+    rewrite EBH, VNBH.
+    apply (AMark.heap_mark_within (m_vmmaps mo));
+      [ exact MK
+      | rewrite PMM, PMR; intros b s Hb; apply in_app_iff in Hb; destruct Hb as [Hb|Hb];
+        [ exists b, s; split; [apply in_app_iff; left; exact Hb| clear; lia]
+        | destruct (maps_subtract_pieces _ _ _ (b, s) W1' Hb) as ([b0 s0] & Hr & R1 & R2 & R3);
+          exists b0, s0; split; [apply in_app_iff; right; exact Hr|];
+          cbn [fst snd] in R1, R2, R3; clear - R1 R2 R3; lia ]
+      | reflexivity ]. }
   (* [comment removed for export] *)
   split; [exact TWF|]. split; [exact APT2|].
   split; [constructor|]. split; [intros H1 H2 []|]. split; [intros t H _ []|].
@@ -1632,18 +2089,60 @@ Qed.
 Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
 
-(* [comment removed for export] *)
-Definition HKh (v : vst) (U n : Z) (mh : Model) : Prop := ltac2:(CDefT.buildp (gd_tbl_AVm ()) "(1.(6;.(91.O4.O3.O2.)O1.)(1.(5>.O4.)(1.Pe,(19.(30.&40.)(30.&40.))PH,(19.$4.$4.)P,(10.(19.(30.&40.)(30.&40.))R2.(5:.(53.O1.)))P,(10.(19.$4.$4.)R2.(35.O4.))P,(6.(25.&40.(3.(30.&40.)(30.&40.)R4.))(<.(3.$4.$4.R3.)(7.$4.$4.R3.)))P,(6.(3.$4.$4.R4.)(<.(25.&40.(3.(30.&40.)(30.&40.)R5.))(25.&40.(7.(30.&40.)(30.&40.)R5.))))(1.(2.(3.$4.$4.R5.)(25.&40.(3.(30.&40.)(30.&40.)R6.)))(2.(<.(25.&40.(3.(30.&40.)(30.&40.)R6.))(25.&40.(7.(30.&40.)(30.&40.)R6.)))(<.(3.$4.$4.R5.)(7.$4.$4.R5.))))(1.(71.(5:.(53.O1.))O3.(<.O3.O2.))(1.(71.(5;.(53.O1.))O3.(<.O3.O2.))(71.(51.O1.)O3.(<.O3.O2.)))))))")
-(* [comment removed for export] *).
+(* LPS #38.  THE SEVENTH CONJUNCT IS NEW: [AMark.heap_mark_slot], the hole's
+   own placement against the mark.
+
+   [HKv_rereserve] puts [(U, n)] BACK into [vm_maps], so [ledger_split] must
+   hold of it: [U + n <= K \/ Y <= U].  Neither disjunct follows from the band
+   fact this predicate already carries -- [kHighMemBeg <= K] is a LOWER bound
+   on [K] and [K] is capped below [bottomup_floor], so the high band is not
+   under [K]; and [Y <= mmap_top mh] admits [State.mmap_base_min], which is
+   ABOVE [kHighMemBeg].  See [AMark]'s "THE SLOT" section for the numbers.
+
+   The fact is nonetheless TRUE, and the model had it: while [(U, n)] was
+   still mapped, [ledger_split] said it of the entries covering it.  THE
+   DESTROY DESTROYS THE EVIDENCE, NOT THE TRUTH, so the hole carries it.
+   [HKh_of_destroy] produces it from the pre-destroy covering that [vm_table]
+   already supplies, and [HKv_rereserve] consumes it.  No new [vst] field, no
+   kernel flag, and [heap_mark_slot] implies [heap_mark], so nothing
+   downstream of [HKv] moves.
+
+   Explicit text rather than a re-encoded [CDefT.buildp] blob (the KReplay
+   rule forbids the round trip).  The first six conjuncts are the replay's own
+   decode, checked against the compiler's own reading of them -- the six names
+   [K & VW & MHv & CLM & CLN & CLL] that [HKv_rereserve] binds below.
+
+   LPS 727298f3: THE FOURTH CONJUNCT IS THE HOLE'S CLEARANCE FROM THE WHOLE
+   LEDGER, [vm_reserved ++ vm_maps], not from [vm_maps] alone.  The launch's
+   vDSO pair is a reserved entry that is not inside the image, so the re-reserve
+   can no longer read its clearance off the image bounds; the destroy reads it
+   off the mapping that still holds the interval and the eleventh conjunct of
+   [HKv]. *)
+Definition HKh (v : vst) (U n : Z) (mh : Model) : Prop :=
+  HKv (v_hole v U n) mh
+  /\ vwf v
+  /\ (forall (e : word * word) (H : Z * Z),
+        In e (vm_maps (m_vmmaps mh)) -> In H (v_hulls v) ->
+        eB e < fst H + snd H -> fst H < eB e + eS e ->
+        fst H <= eB e /\ eB e + eS e <= fst H + snd H)
+  /\ clear (vm_reserved (m_vmmaps mh) ++ vm_maps (m_vmmaps mh)) U (U + n)
+  /\ clear (vm_noaccess (m_vmmaps mh)) U (U + n)
+  /\ clear (m_vm_lazy mh) U (U + n)
+  /\ AMark.heap_mark_slot (m_vmmaps mh)
+       (v_eb (v_hole v U n) + 4096 * vnb (v_hole v U n)) U (U + n).
 
 #[using="Type"] Theorem HKh_kinv : forall v U n, vranges_ok v -> kinv AL (vcs v) (HKh v U n).
 Proof.
   intros v U n W. pose proof (HKv_kinv (v_hole v U n) (vranges_ok_hole v U n W)) as KL. split.
   - intros mo [K _]. exact (ki_halted KL mo K).
   - intros mo [K _]. exact (ki_top KL mo K).
-  - intros mo acc [K (VW0 & MH0 & C1 & C2 & C3)] OK. ddestruct (ki_mat KL mo acc K OK) as (mo' & E & K' & MM).
+  - intros mo acc [K (VW0 & MH0 & C1 & C2 & C3 & SLOT0)] OK. ddestruct (ki_mat KL mo acc K OK) as (mo' & E & K' & MM).
     exists mo'. split; [exact E|]. split; [| exact MM]. split; [exact K'|]. split; [exact VW0|].
-    ddestruct MM as (_ & EV & EL & _). rewrite EV, EL. auto.
+    (* LPS #38: materialisation moves no interval of the ledger -- [EV] says the
+       whole [VmMaps] is the same object -- so the slot that comes in is the one
+       that goes out, witnessed by the same K and Y. *)
+    ddestruct MM as (_ & EV & EL & EM). rewrite EV, EL.
+    split; [exact MH0|]. split; [exact C1|]. split; [exact C2|]. split; [exact C3| exact SLOT0].
 Qed.
 
 Local Ltac2 Set LiaOrc.tbl := fun () => "0070?L14887528701.37L21303640324.23L42796375072.39L47427134892.25L51135828186.25L61929571768.24L67494645980.3700000A00U00l01501<01P01aS3hAR1q1H2M21r2R2S3hAR1U1n3U682N03UCES3hAR1q1H1r2R12R22H02H1S3hAR1U1nS3hAR1US3hAR1U1n3U682N03UCES3hAR1q1H2M11r2R1". (* [comment removed for export] *)
@@ -1662,7 +2161,44 @@ Proof.
     intros q H Hq HH M1 M2. destruct (maps_subtract_pieces _ _ _ q W1 Hq) as (r & Hr & R1 & R2 & R3).
     pose proof (maps_subtract_pos _ _ _ q W1 ltac:(dpose K as (_ & _ & _ & _ & _ & _ & _ & _ & (_ & _ & _ & _ & (_ & MPOS & _) & _) & _); exact MPOS) Hq) as QP.
     destruct (MH r H Hr HH ltac:(lia) ltac:(lia)). lia. }
-  split; [apply clear_subtract_cut; [exact W1| lia| lia]|]. split; [apply clear_subtract_cut; [exact W2| lia| lia]| apply clear_subtract_cut; [exact W3| lia| lia]].
+  split.
+  { (* 727298f3: the hole is clear of the whole ledger: of [vm_maps] because the destroy cut it out, of
+       [vm_reserved] because [(U, n)] was inside one mapping ([vm_table]'s fourth conjunct) and every
+       reserved entry is apart from every mapping ([HKv]'s eleventh). *)
+    apply clear_app; [| apply clear_subtract_cut; [exact W1| lia| lia]].
+    intros e He.
+    dpose K as (_ & _ & _ & _ & _ & _ & _ & _ & (_ & _ & _ & THLd & _) & _ & RSd & _).
+    destruct (THLd U n HUN) as (eM & HeM & E1 & E2). pose proof (RSd e He eM HeM) as X. clear - X E1 E2. lia. }
+  split; [apply clear_subtract_cut; [exact W2| lia| lia]|].
+  split; [apply clear_subtract_cut; [exact W3| lia| lia]|].
+  (* LPS #38: THE SLOT.  [(U, n)] is still mapped in [mo] -- [v_unit v U n]
+     gives [covers (vm_maps (m_vmmaps mo)) U (U + n)] through [vm_table]'s
+     fourth conjunct -- so [AMark.heap_mark_slot_of_covers] reads its placement
+     straight off the mark [mo] already carries.  The destroy then cuts the
+     interval out, and [heap_mark_slot_within] carries the slot across the cut
+     on the SAME K and Y, which is why the body of [heap_mark] had to be named.
+     [v_hole] moves neither [v_tr] nor [v_ghost] nor [v_eb], so the budget is
+     the one [mo]'s mark is stated at. *)
+  dpose K as (_ & _ & _ & _ & _ & _ & _ & _ & (_ & _ & _ & THL & _) & _ & _ & _ & _ & _ & MK).
+  assert (EBH : v_eb (v_hole v U n) = v_eb v) by reflexivity.
+  assert (VNBH : vnb (v_hole v U n) = vnb v)
+    by (unfold vnb, csranges, lazyranges; cbn [v_stk v_img v_tr v_ghost v_hole]; reflexivity).
+  rewrite EBH, VNBH.
+  (* [AVmLib.covers] is ONE entry spanning the whole interval, not a pointwise
+     cover, so the same witness serves every point. *)
+  destruct (THL U n HUN) as (e & He & E1 & E2).
+  apply (AMark.heap_mark_slot_within (m_vmmaps mo));
+    [ apply (AMark.heap_mark_slot_of_covers (m_vmmaps mo) _ U (U + n) MK ltac:(clear - N0; lia));
+      intros x Hx;
+      exists (fst e), (snd e); split;
+        [ apply in_app_iff; right; rewrite <- surjective_pairing; exact He
+        | clear - E1 E2 Hx; unfold eB, eS in *; lia ]
+    | intros b s Hb; apply in_app_iff in Hb; destruct Hb as [Hb|Hb];
+      [ exists b, s; split; [apply in_app_iff; left; exact Hb| clear; lia]
+      | destruct (maps_subtract_pieces _ _ _ (b, s) W1 Hb) as ([b0 s0] & Hr & R1 & R2 & R3);
+        exists b0, s0; split; [apply in_app_iff; right; exact Hr|];
+        cbn [fst snd] in R1, R2, R3; clear - R1 R2 R3; lia ]
+    | reflexivity ].
 Qed.
 Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
@@ -1682,7 +2218,7 @@ Proof.
     model_proj. rewrite LI. reflexivity. }
   assert (WF' : model_ivs_wf (norep_grant U n mh)).
   { unfold norep_grant. cbv zeta. apply model_ivs_wf_with_mmap_backing; [rewrite UZ, NZ; lia|].
-    apply model_ivs_wf_with_vmmaps; [exact WF| | | reflexivity]; cbn [vm_maps vm_noaccess];
+    apply model_ivs_wf_with_vmmaps; [exact WF| | | reflexivity| reflexivity]; cbn [vm_maps vm_noaccess];
       (apply ivs_wf_cons; [apply iv_wf_intro; rewrite UZ, NZ; lia| assumption]). }
   split; [exact WF'|]. split; [| exact PL].
   rewrite (eager_bytes_sem _ WF'), (eager_bytes_sem _ WF). rewrite PL.
@@ -1705,8 +2241,10 @@ Local Ltac2 Set LiaOrc.tbl := fun () => "00R0@L17302376639.84 L17304280759.85 L2
 #[using="Type"] Theorem HKv_rereserve : ltac2:(CDefT.buildp (gd_tbl_AVm ()) "Pv,$68.Pmh,$6:.PU,$4.Pn,$4.P,(92.R4.R2.R1.R3.)P,(12.$4.(65.VAL,)+7???8000.)P,(2.(3<.VAL,)+65;000.)P,(32.R7.R5.R4.)P,(2.+65;000.R6.)P,(0.(2.(<.R7.R6.)+7???7000.)(2.+10007???8000.R7.))P,Pt,$?.P,(10.$?.R1.(11.R;.))(0.(2.(<.R:.R9.)(16.R2.))(2.(17.R2.)R:.))P,(>.(19.$4.$4.)Lc,(19.$4.$4.)(1.(10.(19.$4.$4.)R1.(43.R<.))(1.(2.(3.$4.$4.R1.)R:.)(2.(<.R:.R9.)(<.(3.$4.$4.R1.)(7.$4.$4.R1.))))))P,(>.(19.$4.$4.)LH,(19.$4.$4.)(1.(10.(19.$4.$4.)R1.(35.R=.))(1.(2.(3.$4.$4.R1.)R;.)(2.(<.R;.R:.)(<.(3.$4.$4.R1.)(7.$4.$4.R1.))))))(1.(12.$13.(6=.(1<.(19.(30.&40.)(30.&40.))(5=.(53.R<.))(5:.(53.R<.)))(76.&40.R;.)(76.&40.R:.))$15.)(6;.R=.(93.R;.R:.R<.)))")
 (* [comment removed for export] *).
 Proof.
-  (intros v mh U n [K (VW & MHv & CLM & CLN & CLL)] ASB IMH HUN U68 UHI APT dd_H; ddestruct dd_H as (cc & Hcc & CC1 & CC2); intros dd_H; ddestruct dd_H as (HU0 & HHU & HU1 & HU2)).
-  dpose K as (Hh & ND & GD & LZ & LIM & EB & BUD0 & WF & (TB & TN & TL & THL & TEM & MND & MSEP & NZN & NZL & BANDM) & (CE1 & CE2 & CE3 & CE4) & RS & RC & _ & AT).
+  (intros v mh U n [K (VW & MHv & CLM & CLN & CLL & SLOT)] ASB IMH HUN U68 UHI APT dd_H; ddestruct dd_H as (cc & Hcc & CC1 & CC2); intros dd_H; ddestruct dd_H as (HU0 & HHU & HU1 & HU2)).
+  (* LPS #38: [HKv] has FIFTEEN conjuncts and [atop_ok] is the fourteenth, so
+     the pattern needs a trailing slot for the mark or [AT] binds both. *)
+  dpose K as (Hh & ND & GD & LZ & LIM & EB & BUD0 & WF & (TB & TN & TL & THL & TEM & MND & MSEP & NZN & NZL & BANDM) & (CE1 & CE2 & CE3 & CE4) & RS & RC & _ & AT & _).
   dpose VW as (TWF & APT2 & HWF & HAP & THA & STK0 & STK1 & STK2 & IMG0 & IMG1 & IMG2 & IMG3 & IMG4 & GWF & BANDCS & EB0 & TND & UW & USEP & HUL & UT).
   ddestruct TEM as (UNC & MPOS & LZK & MX & MH).
   dpose (UW U n HUN) as (N0 & U0 & UCE & UAL & NAL).
@@ -1714,7 +2252,8 @@ Proof.
   assert (UZ : bv_unsigned (Z_to_bv 64 U) = U) by (apply u64_lit; lia).
   assert (NZ : bv_unsigned (Z_to_bv 64 n) = n) by (apply u64_lit; lia).
   assert (RFR : region_free (vm_reserved (m_vmmaps mh) ++ vm_maps (m_vmmaps mh)) (Z_to_bv 64 U) (Z_to_bv 64 n) = true).
-  { apply clear_region_free; [lia| lia| lia|]. apply clear_app; [| exact CLM]. intros e He. destruct (RS e He). lia. }
+  { apply clear_region_free; [lia| lia| lia| exact CLM]. }
+  pose proof (clear_app_inv _ _ _ _ CLM) as [CLMr CLMm].
   split; [exact RFR|].
   ddestruct (eager_rereserve_le mh U n WF ltac:(lia) N0 ltac:(lia) UAL NAL) as (WF' & EBLE & PL).
   assert (PMM : vm_maps (m_vmmaps (norep_grant U n mh)) = (Z_to_bv 64 U, Z_to_bv 64 n) :: vm_maps (m_vmmaps mh)).
@@ -1787,8 +2326,8 @@ Proof.
         * (* [comment removed for export] *)
           intros e H [<-|He] HH M1 M2; [| exact (MHv e H He HH M1 M2)]. cbn [fst snd] in M1, M2 |- *. rewrite UZ, NZ in *.
           destruct (HAP H HU0 HH HHU) as [<-|X]; lia.
-    - constructor; [| exact MND]. intros Hin. specialize (CLM _ Hin). cbn [fst snd] in CLM. rewrite UZ, NZ in CLM. lia.
-    - apply msep_cons; [exact MSEP| rewrite UZ, NZ; exact CLM].
+    - constructor; [| exact MND]. intros Hin. specialize (CLMm _ Hin). cbn [fst snd] in CLMm. rewrite UZ, NZ in CLMm. lia.
+    - apply msep_cons; [exact MSEP| rewrite UZ, NZ; exact CLMm].
     - intros e [<-|He]; [cbn [snd]; rewrite NZ; lia| exact (NZN e He)].
     - intros e [<-|He]; [cbn [snd]; rewrite NZ; lia| exact (NZL e He)].
     - ddestruct BANDM as (B1 & B2 & B3). repeat split; apply covers_cons; assumption. }
@@ -1798,8 +2337,24 @@ Proof.
     - apply CE1; [apply in_app_iff; left; exact He| exact R1| exact R2].
     - exists cc. split; [exact Hcc|]. cbn [fst snd]. rewrite UZ, NZ. lia.
     - apply CE1; [apply in_app_iff; right; exact He| exact R1| exact R2]. }
-  split; [exact RS|]. split; [exact RC|]. split; [exact VW|].
-  rewrite alloc_top_norep_grant. exact AT.
+  (* 727298f3: the re-added interval is clear of the reserved ledger ([CLMr]), so every reserved entry stays apart. *)
+  split; [intros e He; apply clear_cons; [exact (RS e He)| specialize (CLMr e He); rewrite UZ, NZ; lia]|].
+  split; [exact RC|]. split; [exact VW|].
+  split; [rewrite alloc_top_norep_grant; exact AT|].
+  (* LPS #38: the re-reserve is the one GROW the mark cannot justify from the
+     band alone, and [HKh]'s seventh conjunct is the fact the destroy saved.
+     [v_hole] moves neither [v_eb] nor [vnb], so [SLOT]'s budget is already
+     the one this goal is stated at. *)
+  assert (EBH : v_eb (v_hole v U n) = v_eb v) by reflexivity.
+  assert (VNBH : vnb (v_hole v U n) = vnb v)
+    by (unfold vnb, csranges, lazyranges; cbn [v_stk v_img v_tr v_ghost v_hole]; reflexivity).
+  rewrite EBH, VNBH in SLOT.
+  apply (AMark.heap_mark_slot_cons (m_vmmaps mh) _ _ U (U + n) (Z_to_bv 64 U) (Z_to_bv 64 n) SLOT);
+    [ exact UZ | rewrite UZ, NZ; reflexivity
+    | unfold norep_grant; cbv zeta; rewrite vmmaps_with_mmap_backing; model_proj; reflexivity
+    | exact PMM
+    | unfold mmap_top; rewrite alloc_top_norep_grant;
+      unfold norep_grant; cbv zeta; rewrite vmmaps_with_mmap_backing; model_proj; reflexivity ].
 Qed.
 Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 End AVm.

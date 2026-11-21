@@ -1,23 +1,23 @@
 (* fs program part, runtime half over fs.asan: fields of lib/A/FSH_Rt.v's FsRt, each proved at segs := tfibsegs and
    B := TfibB (lib/A/AD2l.v:15) and stated as the field is: fr_strlen (A3), fr_memchr (A5), fr_bcmp (A7), fr_memcpy (A8),
    fr_memset (A9) and fr_set_shadow_f5 (A10). Each theorem below has the type of the closing side's named runtime
-   hypothesis (H_strlen / H_memchr / H_bcmp / H_memcpy / H_memset / H_set_shadow_f5, S0 8fee0cc526f lib/A/FSClose.v:162,
+   hypothesis (H_strlen / H_memchr / H_bcmp / H_memcpy / H_memset / H_set_shadow_f5, S0 lib/A/FSClose.v:162,
    :166, :170, :172, :174, :176-177, at its Local Abbreviation B := TfibB), so that side can apply it in place of that
    hypothesis.
    rule 24: no function proved (kind: merge). This file only instantiates proved theorems at TfibB and rewrites one pc:
-   - A7: lib/A/FSupoisonCmp.v:35 tfib_abcmp_realizesU_closed (a Theorem Labs lane, POISON-U, a working branch
-     cd7610bc4ed; it and its five walk files taken by path), stated at pc_wrap_bcmp (as_code B); pc_wrap_bcmp_TfibB
+   - A7: lib/A/FSupoisonCmp.v:35 tfib_abcmp_realizesU_closed (a Theorem Labs lane, POISON-U, a working branch;
+     it and its five walk files taken by path), stated at pc_wrap_bcmp (as_code B); pc_wrap_bcmp_TfibB
      rewrites that pc to PC_bcmp through TfibSyms' ts_code (lib/A/AF0l.v:15 pc_wrap_bcmp := 0x42668 = lib/A/FSH_Base.v
      PC_bcmp, sym __wrap_bcmp).
   - A10: lib/A/FSxSS.v:57 set_shadow_f5_contractU_x (a Theorem Labs lane, in S0 already).
-  - A3 / A5 (fr_strlen / fr_memchr, H_strlen / H_memchr at S0 8fee0cc526f FSClose.v:162 / :166): lib/A/FSstrlen.v:835 fs_strlen_realizesU
-    and lib/A/FSmemchr.v:268 fs_memchr_realizesU (a Theorem Labs lane, folded into S0 8fee0cc526f with its strfold
-    0bc79e8d0f8), at PC_strlen / PC_memchr already; their FsRtCells premise is lib/A/FSrtcells.v fs_rt_cells_of, and
+  - A3 / A5 (fr_strlen / fr_memchr, H_strlen / H_memchr at S0 FSClose.v:162 / :166): lib/A/FSstrlen.v:836 fs_strlen_realizesU
+    and lib/A/FSmemchr.v:269 fs_memchr_realizesU (a Theorem Labs lane, folded into S0 with its strfold),
+    at PC_strlen / PC_memchr already; their FsRtCells premise is lib/A/FSrtcells.v fs_rt_cells_of, and
     FsShadowSyms TfibB (lib/A/FSH_Base.v:119, two GOT cells) holds by computation (fs_shadow_syms_TfibB below), so no
     TfibLib TfibB is needed here.
   - A8 / A9 (fr_memcpy / fr_memset, H_memcpy :172 / H_memset :174): lib/A/FSupoisonAsanC.v tfib_asan_memcpy_realizesU
-    (a working branch 53ce9e4138c; with FSupoisonAsanR.v, both by path) and lib/A/FSxMset.v
-    tfib_asan_memset_realizesU (a working branch d354a61f91e, blobs = fe33232c1fb's; with
+    (a working branch; with FSupoisonAsanR.v, both by path) and lib/A/FSxMset.v
+    tfib_asan_memset_realizesU (a working branch, blobs = a commit's; with
     FSxMsetR.v, both by path), already at PC_memcpy 0x51d20 = __asan_memcpy / PC_memset 0x521bc = __asan_memset.
   AR_laws tfibsegs TfibB is lib/Reusable/YG0q.v:804 AR_laws_ok; TfibSyms TfibB is lib/A/AD2l.v:73 TfibB_syms.
   No Axiom, no Admitted. *)

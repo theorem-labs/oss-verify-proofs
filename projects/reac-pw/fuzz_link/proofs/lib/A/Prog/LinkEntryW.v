@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/AD1d.v, with its module paths and module names changed; 315 of its 356 lines of code are new or changed and 270 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the CONFIG_RSEQ-sized auxiliary vector; the launch's ProcInput, mmap base and entry draw; the start-up hand-off states computed in the build; the launch input with its SIGPIPE default free; the launch's string area with the exec file name). *)
 (* The satisfiability witness of LLVMFuzzerTestOneInput's image-A entry Pre: lib/A/Prog/LinkEntry.v tfib_lib_pre_x at
    lib/A/Prog/LinkEntryA.v's instance (tfibsegs, PCAP_RLO / PCAP_RHI, A_LLVMF, RA_LLVMF, A_EMPTY, LLVMF_STK, G_HARNESS,
    link_amf, LA_NUL), at link's own start state. Image: fuzz_link.asan, the PUBLISHED pin (sha256 059dae63e07c...); listings
@@ -36,7 +37,7 @@
      start-up's regions, from which AD2j.v:4 cuts the harness bodies (g_sink, g_say, long_alias).
 
    THE WHOLE PRE AT THAT CALL: tfib_lib_pre_x SK regs ly S W mem md p n pl T, at SK = link_asink_head, B = PcapB,
-   MT = ameter_triv, XM_LIB = fun _ => 0 (the driver's instance, staged AD2o.v:53), T = []. Registers after the jal
+   MT = ameter_triv, XM_LIB = fun _ => 0 (the driver's instance, staged AD2o.v:54), T = []. Registers after the jal
    at 0x820c4: pc = A_LLVMF = 0x827d4, ra = 0x820c8, a0 = p (0x820bc mv a0, s1), a1 = n (0x820c0 mv a1, s0),
    sp = main's entry sp - 0x50 - 0x50 (0x81d2c, 0x81ffc), gp = as_gp B and tp = as_tp B as the start-up left them.
    The journal of the post starts at this state (ly, S, W, mem, md) with the footprint amf_harness_fp [] =
@@ -56,13 +57,13 @@
    7. arodata_okP segs PCAP_RLO PCAP_RHI B (aview segs (w_H W) mem): the driver's arodata_ok B (AD1w.v:93), through
       the re-pointing.
    8. amf_gi segs link_amf [] (rd W mem), its first arm (g_sink = g_say = ofl_head = 0, lw_heads0 /
-      lw_gi_nil_heads): lw_amf_gi; lw_handoff / lw_startup; lw_rd_not_*.
+      lw_gi_nil_heads): lw_amf_gi; lw_handoff; lw_rd_not_*.
    9. incl [] (ablocks B ly S): lw_kept_nil.
    10. 0 < n -> ~ In (p, n) []: lw_kept_nil.
-   11. amf_env segs link_amf (rd W mem): lw_amf_env; lw_handoff / lw_startup; lw_rd_not_*.
+   11. amf_env segs link_amf (rd W mem): lw_amf_env; lw_handoff; lw_rd_not_*.
    12. amf_head_law link_asink_head link_amf: lw_head_law (AMemFile.v link_amf_head_law).
    13. val_mem segs (rd W mem) LA_NUL 1 0: lw_la_nul (long_alias[300] is 0 in the image: lw_la_nul_rom);
-       lw_handoff / lw_startup; lw_rd_not_*.
+       lw_handoff; lw_rd_not_*.
    14. Namei.fd_names_path (m_fds md) sink_path = false, Fs.fs_sorted (m_fs md) = true: lib_site_x premises
        (AD1w.v:96-97).
    15. mo_ok MT S (XM_LIB n): lw_meter (MT = ameter_triv).
@@ -79,7 +80,7 @@ BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
 From OSSVerify.reac_pw.fuzz_link.images Require Import Asan.
 From OSSVerify.Proofs.reac_pw.fuzz_link.lib.Reusable Require Import YK11 YP09 YK00 YK04 YA0i YA0n YK0c YK0d YK0e YK0f YK09 YA01 YA0c YA0e YA0d YA02 YA0j.
-From OSSVerify.Proofs.reac_pw.fuzz_link.lib.A Require Import AB12 AB1h AB13 AB01.
+From OSSVerify.Proofs.reac_pw.fuzz_link.lib.A Require Import AB12 AB1h AB13 AB01r.
 From OSSVerify.Proofs.reac_pw.fuzz_link.lib.Reusable Require Import YG00 YG01 YG0f YG0n YG0d YI04 YI00 YGwildCount YC5d YCbp.
 From OSSVerify.Proofs.reac_pw.fuzz_link.lib.Reusable Require Import PcapImgEnd YImgTop.
 From OSSVerify.Proofs.reac_pw.fuzz_link.lib.Reusable Require YO0f YK0o.
@@ -481,7 +482,7 @@ Qed.
 (* In each of the 50 hand-off states of the start-up certificate, every range read is inside one KImg entry of the
    state's knowledge: bytes the start-up did not write (AD2i.v cjust_sound's KImg arm reads them the same way). *)
 Definition lw_check (ch : acs) : bool := forallb (fun r => kn_img ch (fst r) (snd r)) LW_RANGES.
-Lemma lw_check_all : forallb lw_check HS_tfib_list = true.
+Lemma lw_check_all : forallb lw_check HS_tfib_list_all = true.
 Proof. vm_compute. reflexivity. Qed.
 
 Section handoff. Context {fx : YK11.FPState}.
@@ -491,13 +492,16 @@ Hypothesis Hva : valid_argv (in_argv inp).
 Variable h : nat.
 Variable FS0 : Fs.Fs.
 Variables (ch : acs) (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model).
-Hypothesis Hch : HS_tfib h = Some ch.
+Hypothesis Hch : HS_tfib_r (rseq_z (kb_rseq (in_kernel inp))) h = Some ch.
 #[local] Notation argv := (in_argv inp).
 #[local] Notation envp := (in_envp inp).
 #[local] Notation uid := (in_uid inp).
 #[local] Notation hw := (in_hwcap inp).
-#[local] Notation SINV := (YA02.SINV0 TPH sp rdraw brk argv envp uid hw).
-#[local] Notation argH := (YA02.argH0 TPH sp rdraw argv envp uid hw).
+(* The stack invariant abstract and the input's own fields, as A/AD1g.v's Section a0. *)
+Variable SINV : env -> (word -> option byte) -> Prop.
+#[local] Notation argH := (YA02.argH0 sp rdraw argv envp
+  (in_image_fs inp) (in_stdin inp) uid (in_gid inp) hw (in_groups inp) (in_net inp)
+  (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp) (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp)).
 #[local] Notation TOP := (YA02.TOP sp).
 #[local] Notation LIM := YA02.LIMIT.
 Hypothesis HC : cs_ok TSEGS TFIB LIM TOP SINV argH FS0 E ch R FULL model.
@@ -506,7 +510,7 @@ Hypothesis HC : cs_ok TSEGS TFIB LIM TOP SINV argH FS0 E ch R FULL model.
 Lemma lw_handoff_rom : forall a, lw_rd a -> mbyte tfibsegs m1 a = seg_rom tfibsegs (Z_to_bv 64 a).
 Proof.
   intros a Ha. pose proof (lw_rd_range a Ha) as Rg. destruct Ha as (r & Hr & Ha).
-  pose proof (proj1 (forallb_forall _ _) lw_check_all ch (HS_tfib_In h ch Hch)) as C. unfold lw_check in C.
+  pose proof (proj1 (forallb_forall _ _) lw_check_all ch (HS_tfib_r_In _ h ch Hch)) as C. unfold lw_check in C.
   pose proof (proj1 (forallb_forall _ _) C r Hr) as K.
   unfold kn_img in K. apply existsb_exists in K as (Kn & HK & HKb).
   destruct Kn as [| | |lo hi| | | | | |]; try discriminate HKb.
@@ -524,16 +528,3 @@ Qed.
 Theorem lw_handoff : amf_gi tfibsegs link_amf [] m1 /\ amf_env tfibsegs link_amf m1 /\ val_mem tfibsegs m1 LA_NUL 1 0.
 Proof. exact (lw_rom_conj m1 lw_handoff_rom). Qed.
 End handoff.
-
-(* The same, from the start-up theorem's hand-off (AB1n.v HS_ok, the states tfib_startup_T1 hands main). *)
-Corollary lw_startup : forall h sp rdraw brk inp fs c, valid_sp sp -> valid_argv (in_argv inp) ->
-  AB1n.HS_ok h sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) fs c ->
-  exists ch E R FULL model, HS_tfib h = Some ch /\ c = cfg_of TSEGS R (pc ch) FULL model /\
-  amf_gi tfibsegs link_amf [] (mrestrict (AD2i.H1 sp rdraw inp ch E model) FULL) /\
-  amf_env tfibsegs link_amf (mrestrict (AD2i.H1 sp rdraw inp ch E model) FULL) /\
-  val_mem tfibsegs (mrestrict (AD2i.H1 sp rdraw inp ch E model) FULL) LA_NUL 1 0.
-Proof.
-  intros h sp rdraw brk inp fs c Hsp Hva (ch & E & R & FULL & model & Hch & Hc & HC).
-  exists ch, E, R, FULL, model. split; [exact Hch|]. split; [exact Hc|].
-  eapply lw_handoff; eassumption.
-Qed.

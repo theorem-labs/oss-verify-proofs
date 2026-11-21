@@ -1,0 +1,39 @@
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
+From Stdlib Require Import ZArith.
+From Stdlib Require Import List.
+From Stdlib Require Import Lia.
+From Stdlib Require Import Bool.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.Z Require Import RefDeflSafeZ.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.Z Require Import OverlayHuff1.
+From OSSVerify.Proofs.zlib.example_large_fuzzer.lib.ubsan_agrees_alloc_forced_only.Z Require Import OverlayBlock.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+Import ListNotations.
+Local Open Scope Z_scope.
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
+(* [comment removed for export] *)
+Fixpoint zr (L : Z -> Z) (i : Z) (n : nat) (cur : Z) : list Z :=
+  match n with
+  | O => if cur =? 0 then [] else [cur]
+  | S k => if L i =? 0 then zr L (i + 1) k (cur + 1)
+           else (if cur =? 0 then [] else [cur]) ++ zr L (i + 1) k 0
+  end.
+
+(* [comment removed for export] *)
+
+(* [comment removed for export] *)
+
+(* [comment removed for export] *)
+
+(* [comment removed for export] *)
+
+(* [comment removed for export] *)
+
+(* [comment removed for export] *)
+

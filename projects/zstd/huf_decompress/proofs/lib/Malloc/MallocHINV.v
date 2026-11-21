@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (3 recorded proofs replaced by written proofs (HINV_from_init, HINV_init, brk_link_ps_iff)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -22,16 +23,13 @@ Notation HINV := (HINV_from agent_reserved).
 
 Section CANSEC2. Context {rc : runConstT}.
 Lemma HINV_from_init : forall resv pbrk, HINV_from resv (minit 0 resv ATOP) pbrk [].
-Proof.
-ltac2:(KReplay.run1 (kr_t_MallocHINV ()) ["CANSEC2"] "h04pbrkh14resvp;2p;1p;3p;4g0000j28Tg000Pj17Tg0010j10Tg001fj31Tg002\j26Tg003]j12Tg004=j43Tg005Cj24Tg006Ij45Tg006dR0/80#7g007Bf1R1p,2rcR2#031R3f0'6P2P1P3g007`#2C3g008^1421C5X00W1o"). Qed.
+Proof. intros. split; [exact I | apply areach_init]. Qed.
 
 Lemma HINV_init : forall pbrk, HINV (minit 0 agent_reserved ATOP) pbrk [].
-Proof.
-ltac2:(KReplay.run1 (kr_t_MallocHINV ()) ["CANSEC2"] "h04pbrkp;2g009:j20Tg006dg00:?f0'0W0o"). Qed.
+Proof. intros. apply HINV_from_init. Qed.
 
 Lemma brk_link_ps_iff : forall st s, brk_link_ps st s <-> brk_link st (ps_brk s).
-Proof.
-ltac2:(KReplay.run1 (kr_t_MallocHINV ()) ["CANSEC2"] "p'0h01Hh11bi001bh23offi013offh33ridi023ridh41sh52sti031xp;1p;4p;2p;3g00;Cj19Tg00<7j18Tg00<mj10Tg00=dj43Tg00>Dj22Tg00?9j31Tg00?Sj25Tg006Ij44Tg00?lj26Tg002\j27Tg00@ng00Agf1R0#9#8g00B`R1P1P1p-0f0R1g00C[R2P2g006dR3f4#0f5R4g00D7R5P3P0P1C3R6'231n011030003000020102101R7/57P1P2\2R7P7g008^X02R2P2C4R2P2%04f6R4/26513R6%04f7P5P3f2P0C3'2513[R4P4P1X06R6P6C4X23X35P0P1O2n011000003000020102101b11601%01,70'5eW4W5o"). Qed.
+Proof. intros st s. unfold brk_link_ps, brk_link. destruct (c_brk (ctx st)); tauto. Qed.
 
 
 End CANSEC2.

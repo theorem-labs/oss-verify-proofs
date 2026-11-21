@@ -1,0 +1,3 @@
+schema: oss-fuzz-theorems/proof/1
+proves: zlib/zlib_uncompress_fuzzer/ubsan_cb_sound
+fingerprint: fb52fc1b7fddb7e4f39973d91c04244f41eeeadcc2a3f52d80c940751a9b4a6a

@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseL.v at afaa3cb55c1 (the engine plumbing
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseL.v (the engine plumbing
    of a segment of a parse walk: entry state, run / branch / exit tactics, the frame temporaries as region chunks), for
    reac_headamp_prop_parse_result's pair loop on reac-pw/fuzz_headamp's ASan + UBSan image B, its two segments WALK
    and ADV of lib/AU/HPgParseCut.v; the arithmetic both images share is lib/A/HPgParseGWalk.v's; the entry states,
    the inner cuts WLB / WRET, the exits, the strncmp call inside the frame hole and the walks below are new. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_headamp_prop_parse_result 0x849ac of fuzz_headamp.asan-ubsan (pinned sha256
    53edda9bdeeba1803865babfecb1af6732babe47ab83c64d38cc59a90d717a94), segments WALK 0x84cb4 and ADV 0x84edc of
    lib/AU/HPgParseCut.v: segWALK_ok : segWALK_stmt B MT and segADV_ok : segADV_stmt B MT. Proves no function

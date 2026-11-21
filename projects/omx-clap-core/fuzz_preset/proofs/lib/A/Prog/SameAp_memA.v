@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image A' (asan #102 pin 1be0f53d96cb9d6c, unstripped twin bff8519bbe3ea0e4), the
    walk of same: memory facts, part A. A tree the kit's tsame_specX gives at the entry (prhex_tree: the representation, a
    home, the root's 56 bytes addressable) stays the same tree at every later point of the walk, read from the journal
@@ -7,8 +8,8 @@
    representation holds over the current memory (sma_node_now), and the root's shadow is still addressable
    (sma_ra_now). The read-only image bytes keep their view (sma_ro_now): that arodata_okP is what the strcmp row's
    read-only-premise form asks for (YGcallMxmn.v aj_strcmp_at_xrom). Taken from the image-B' file lib/B/Prog/SameB_memA.v
-   (a working branch e95b6ce78e87; the port of the old-A walk's lib/A/Prog/Wsame_memA.v at
-   a working branch 9a0674f0b5f2 to the #102 kit: the ledger carries most / own, prh_pst lists
+   (a working branch; the port of the old-A walk's lib/A/Prog/Wsame_memA.v at
+   a working branch to the #102 kit: the ledger carries most / own, prh_pst lists
    seven statics), renamed smb_ -> sma_, at image A's PrhImg prh_img_A. No image constant, no address. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

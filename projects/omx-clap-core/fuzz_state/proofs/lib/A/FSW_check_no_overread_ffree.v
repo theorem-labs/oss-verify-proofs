@@ -1,5 +1,5 @@
 (* check_no_overread 0x811c8 (fs.c), fs.asan: the fuzz_free call step of the tail, i.e. a Theorem Labs lane's
-   `cno_call_ffree_T B` (lib/A/FSW_check_no_overread.v:1070, the CTX-free Prop at a working branch fb4231f5e1e),
+   `cno_call_ffree_T B` (lib/A/FSW_check_no_overread.v:1071, the CTX-free Prop at a working branch),
    proved here with the name cno_call_ffree. The sites are 0x81420 / 0x81428 / 0x81430 (return addresses 0x81424 /
    0x8142c / 0x81434), one lemma for the three: the call shapes agree and nothing in the step depends on which
    return address it is. Rule 24: this file proves PART of check_no_overread only (one call step).
@@ -9,23 +9,23 @@
    The step (MEASURED control flow in the walk file's header): at the call the walk holds its class-1 fake frame
    (own = [(1, pos)]), sp = s1 = sp1, s0 = sp0, and the prologue's two words at sp0 - 8 / sp0 - 16, which are the
    callee's frame-pointer chain (cno_chain). fuzz_free's own contract (FSH_Fn_alloc.v fuzz_free_spec, the CTX-free
-   form of a working branch 05f474949ed) is the Section hypothesis FFREE; it takes no call-trace row, so
+   form of a working branch) is the Section hypothesis FFREE; it takes no call-trace row, so
    this file has no TRACE_* hypothesis. Both arms:
      p = 0   : the callee returns at once, kc = 0, U' = U, ablocks and the ledger unchanged;
      p <> 0  : the block's head (p - HEAD, HEAD) leaves U, one event (kc = 1), the block leaves ablocks and
                g_live drops by n.
-   The journal composition is FSW_K3.v:215 fsw_ajournal_sub4. Its callee-footprint premise is why the p <> 0 arm
+   The journal composition is FSW_K3.v:216 fsw_ajournal_sub4. Its callee-footprint premise is why the p <> 0 arm
    needs `~ In (p - HEAD, n + HEAD) (ablocks B (c_ly cx) (c_S cx))` (a Theorem Labs lane added it at 04:42Z): the freed
    block's bytes are in the callee's FP, and the composition admits them only as in_tmp_block of the ENTRY blocks,
    i.e. as a block the walk itself made.
 
    LOOKUP (rule 24): the walk file's header carries the index runs; re-CONFIRMED for this lane (a Theorem Labs lane,
    2026-10-29 03:4xZ): `proof-index check_no_overread`, unpiped, rc=0, index v5
-   built 2026-10-29T01:50:18Z (main f4cc67298b7, ossv/recipes 5121fb8693b, ossv/candidates ee89628c997,
-   release/pau-projects-recipes b6a0088adcb): 20 named / 50 by address / 36 related / 9 lemma(s), 71 hit lines, all
+   built 2026-10-29T01:50:18Z (main,):
+   20 named / 50 by address / 36 related / 9 lemma(s), 71 hit lines, all
    under lib/Prog, lib/Prog/CF, lib/U/Prog, lib/U/Prog/CF (plain and UBSan), none under lib/A or lib/B; full output
    (internal path). TEMPLATE (text only, never Required): the bespoke A-build
-   proof on a working branch 1da71ab56d4, lib/A/Prog/check_no_overread_mid_r4.v (CnoSt_8..CnoSt_10, the
+   proof on a working branch, lib/A/Prog/check_no_overread_mid_r4.v (CnoSt_8..CnoSt_10, the
    three fuzz_free calls of the same sites) and check_no_overread_mid_st.v; it is built on the pre-ruling model
    (AA / a_call_pre_tp / its own ALedger), so nothing is bridged from it. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
@@ -152,7 +152,7 @@ apply (cno_chain ly (aview tfibsegs (w_H (c_W cx)) (unpoison (c_U cx) (c_mem cx)
 - lia.
 Qed.
 
-(* ---- the callee's premise at the call (FSW_ret.v:184 fsw_fpreU_atFP) ---- *)
+(* ---- the callee's premise at the call (FSW_ret.v:185 fsw_fpreU_atFP) ---- *)
 Lemma cno_ff_pre : forall cx k ly S U (W : world tfibsegs) regs mem md,
   cno_base B cx -> cno_site B cx k ly S U W regs mem md ->
   fpreU tfibsegs B STK_fuzz_free ly S U W regs mem md
@@ -190,7 +190,7 @@ apply (fsw_fpreU_atFP B STK_check_no_overread (cno_sp0 cx) FS_PSTAT_FP (c_ly cx)
 - exact (cno_ff_chain cx k ly S U W mem md regs HBASE HJ HARU Hsp Hs0 Hw8 Hw16).
 Qed.
 
-(* ---- the step after the call, shared by the two arms: the journal composition (FSW_K3.v:215 fsw_ajournal_sub4),
+(* ---- the step after the call, shared by the two arms: the journal composition (FSW_K3.v:216 fsw_ajournal_sub4),
    ARU at the callee's U', and the bytes cno_ret asks the step to keep (the walk's saved words and slots, its fake
    frame and the frame's sixteen shadow bytes, and every block live before and after) ---- *)
 Lemma cno_ff_after : forall cx k ly S U (W : world tfibsegs) regs mem md FP1 kc ly' S' U'

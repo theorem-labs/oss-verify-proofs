@@ -6,7 +6,7 @@
 (* Modified by Theorem Labs, 2026-10-31: seg_pre_cf / rw_pre_A take the form of the realloc keep record's field rwk_pre
    (YGcfReallocComposeKeep.wrap_realloc_walk_keep_cf): the frame is YGcfMallocComposeKeep.ikeep_mn_cf (ikeep_cf's two
    conjuncts, then the memnorm keep, which is MNK). *)
-(* Modified by Theorem Labs, 2026-10-29: relocated from proofs/omx-clap-core/fuzz_state/lib/A/FSRealloc_S1.v (hub ddc081c1a03, blob 72c9c802e887) to omx-clap-core/fuzz_preset's asan image A by a Theorem Labs lane's internal file alreloc.py (frozen-c4338d099cfb8025; one resolve line, 86568 -> 87896 = 0xac0c0 / 8), then restated at preset's event-free allocator instance (record, the internal file A5.md):
+(* Modified by Theorem Labs, 2026-10-29: relocated from proofs/omx-clap-core/fuzz_state/lib/A/FSRealloc_S1.v (blob 72c9c802e887) to omx-clap-core/fuzz_preset's asan image A by a Theorem Labs lane's internal file alreloc.py (frozen-c4338d099cfb8025; one resolve line, 86568 -> 87896 = 0xac0c0 / 8), then restated at preset's event-free allocator instance (record, the internal file A5.md):
    - the Section premise PRE is acall_pre_cf tfibsegs B ly S Hp W regs mem md ch (YG0dcf.v:48), whose ARcf reads the machine's memory itself, so fs's user-poison layer (FSupoison.unpoison, ARU, appz, vm_lo / vm_T / vm_C) is gone and Up is preset's ghost set Hp;
    - the cell facts come from a Theorem Labs lane's WrapAKit.v (cf_const_lookup / cf_const_lookup_sym / cf_cell_state / cf_unwinding_val, img_cover_of_ledger_cf), p's facts from chunk_facts_cf (YG0scf.v);
    - FINH re-establishes RGcfLaws.ARXqA B Hp (YGcfInstBase.ARXq_cf at image A) at s1 with A/AFf0cfR.v's free_finn_ARcf (AFf0cf's realloc twin), xs_mapped_cf from the rebuilt ARcf's ledger field (YGcfXs.ARcf_xsm), and pa_leaf's relation parameter R := ARXqA.
@@ -27,6 +27,7 @@
    entry 0x325b8 (one `jal` after the donor's 0x33054); word_of_bytes is fs's A/AFio.v lemma (copied).
    Every error / CHECK branch of the prefix is decided untaken by the symbolic walk (FSRealloc_S1_t.segA). *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

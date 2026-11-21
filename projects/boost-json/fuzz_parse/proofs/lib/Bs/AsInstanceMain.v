@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -38,9 +39,10 @@ Record mctx : Type := MCTX {
   k_Vev : valid_envp (in_envp k_inp);
   k_Vfit : entry_stack_fits k_sp0 (in_argv k_inp) (in_envp k_inp);
   k_Hh : HSF_asan k_h = Some k_ch;
+  (* LPS 727298f3: the start-up invariant over the run's whole input, its mmap base bound inside *)
   k_HC : cs_ok ASEGS ASAN_H AsanInit.LIMIT
-           (SINV0 APH k_sp0 k_rdraw k_brk0 (in_argv k_inp) (in_envp k_inp) (in_uid k_inp) (in_hwcap k_inp))
-           (argH0 APH k_sp0 k_rdraw (in_argv k_inp) (in_envp k_inp) (in_uid k_inp) (in_hwcap k_inp)) (in_fs k_inp) k_E k_ch k_R k_FULL k_model }.
+           (AsanInitP.SINVm APH A_PC k_sp0 k_rdraw k_brk0 k_inp)
+           (AsanInitP.argHp k_sp0 k_rdraw k_inp) (in_fs k_inp) k_E k_ch k_R k_FULL k_model }.
 
 (* [comment removed for export] *)
 Definition KX : ltac2:(zQ "20!hmd!hr5>1k$0$1") := ltac2:(zQ "50!hs0!hs7!hmd!igc!ih3\1k$2@2$3@1$4@1$1^1@1$0^1").
@@ -114,6 +116,7 @@ Section Kit.
     - (* [comment removed for export] *) exact (K_al k).
     - (* [comment removed for export] *) exact (K_tr k).
     - (* [comment removed for export] *) exact (BsMainIfacePre.pre_fds sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Hh HC).
+    - (* LPS 727298f3: the channel reader, cs_ok's [co_rdr] *) exact (co_rdr _ _ _ _ _ _ _ _ _ _ _ HC).
   Qed.
 End Kit.
 (* [comment removed for export] *)

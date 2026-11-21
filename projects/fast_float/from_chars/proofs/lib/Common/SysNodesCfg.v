@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise of writev; RomBase.sys_rob at the system-call nodes; writev's capped iovec copy-in). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -9,6 +10,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys Require Import Uapi Syscall.
 From OSSVerify.Proofs.fast_float.from_chars.lib.Common Require Import PropExec CatExec SeqExec ShapeSet RealizesCfg.
+From OSSVerify.Proofs.fast_float.from_chars.lib.Common Require RomBase RomWrite.
 Import ListNotations.
 Open Scope bv_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -167,12 +169,13 @@ Qed.
   (forall eff, ~ spurious_refusal_cfg cfg (sys_input segs ms x8) model eff) ->
   (forall j, m_halted (M j) = None) ->
   (forall j, m_vm_lazy (M j) = []) ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   (forall j, realizes_cfg segs cfg (mkCfg (advance_past_svc (apply_effect ms (E j))) (M j)) (T j)) ->
   realizes_cfg segs cfg (mkCfg ms model) (t_alt (fun j => t_emit (EV j) (T j))).
 Proof. LiaFast.lf_pins LiaFast.u0.
-  intros ms model x8 I E M EV T i0 Hh Hsvc Hcomp Hsound Hnu Hns HhM HlM HK.
+  intros ms model x8 I E M EV T i0 Hh Hsvc Hcomp Hsound Hnu Hns HhM HlM Hrob HK.
   apply (rzc_node segs cfg (mkCfg ms model) I EV
-           (fun j => mkCfg (advance_past_svc (apply_effect ms (E j))) (M j)) T i0); [| exact HK].
+           (fun j => mkCfg (advance_past_svc (apply_effect ms (E j))) (M j)) T i0); [| exact Hrob | exact HK].
   apply (node_sys_cfg_nl segs cfg ms model x8 I E M EV Hh Hsvc Hcomp); try assumption.
   - intros j. apply Hns.
   - intros eff m' evs Hs _. exact (Hsound eff m' evs Hs).
@@ -189,10 +192,11 @@ Qed.
   ~ syscall_spec (sys_input segs ms x8) model Unmodeled ->
   (forall eff1, ~ spurious_refusal_cfg cfg (sys_input segs ms x8) model eff1) ->
   m_halted m' = None -> m_vm_lazy m' = [] ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   realizes_cfg segs cfg (mkCfg (advance_past_svc (apply_effect ms eff)) m') T ->
   realizes_cfg segs cfg (mkCfg ms model) T.
 Proof. LiaFast.lf_pins LiaFast.u0.
-  intros ms model x8 eff m' T Hh Hsvc Hc Hs Hnu Hns HhM HlM HK.
+  intros ms model x8 eff m' T Hh Hsvc Hc Hs Hnu Hns HhM HlM Hrob HK.
   eapply rzc_conseq.
   - apply (rzc_sys ms model x8 unit (fun _ => eff) (fun _ => m') (fun _ => []) (fun _ => T) tt);
       try assumption.
@@ -281,7 +285,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   eapply rzc_conseq.
   - apply (rzc_sys segs cfg ms model x8 I (fun j => mkEffect (proj1_sig j) [] [])
              (fun j => with_tid (proj1_sig j) model) (fun _ => []) (fun _ => T) i0);
-      [exact Hh | reflexivity | | | | | | | ].
+      [exact Hh | reflexivity | | | | | | | | ].
     + intros [t Ht]. apply Hsp. apply set_tid_fresh_ok; [exact Htid|]. exists t. auto.
     + intros eff m' evs Hs. apply Hsp in Hs. apply set_tid_fresh_ok in Hs as (t & Ht & -> & -> & ->); [|exact Htid].
       exists (exist _ t Ht). auto.
@@ -289,6 +293,9 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     + intros eff. apply not_spurious_uninjected. rewrite Hno. reflexivity.
     + intros j. rewrite with_tid_halted. exact Hh.
     + intros j. rewrite with_tid_lazy. exact Hlazy.
+    + apply (RomBase.sys_rob_memfree segs ms model x8 eq_refl).
+      change (bv_unsigned x8) with (bv_unsigned (in_sysno (sys_input segs ms x8))). rewrite Hno.
+      exact RomBase.memfree_96.
     + intros [t Ht]. cbn [proj1_sig]. unfold ms. rewrite adv_epend_ret. apply Hk. exact Ht.
   - apply t_alt_const_nil; [exact i0|].
     destruct i0 as [t Ht]. exact (realizes_cfg_nonempty segs cfg _ _ (Hk t Ht)).
@@ -511,6 +518,42 @@ Local Abbreviation PEND regs pc mem := (epend regs pc mem (seg_rom segs) (getr r
   bv_unsigned (in_sysno (sys_input segs (PEND regs pc mem) (getr regs 17))) = no.
 Proof. LiaFast.lf_pins LiaFast.u0. intros regs pc mem no H Hr. cbn [in_sysno sys_input]. rewrite H. apply u64_lit. exact Hr. Qed.
 
+(** [RomBase.sys_rob] at a pending system call whose specification reads no memory. *)
+#[using="Type"] Lemma rob_pend_memfree : forall regs pc mem model (no : Z),
+  getr regs 17 = Z_to_bv 64 no -> (0 <= no < 2^64)%Z -> RomBase.memfree no ->
+  RomBase.sys_rob segs (mkCfg (PEND regs pc mem) model).
+Proof. LiaFast.lf_pins LiaFast.u0.
+  intros regs pc mem model no H17 Hr Hm.
+  apply (RomBase.sys_rob_memfree segs (PEND regs pc mem) model (getr regs 17) eq_refl).
+  rewrite H17, u64_lit by exact Hr. exact Hm.
+Qed.
+
+(** ... at an openat whose path read does not fault. *)
+#[using="Type"] Lemma rob_pend_openat : forall regs pc mem model,
+  getr regs 17 = Z_to_bv 64 56 ->
+  read_cstr (mrb segs mem) (getr regs 11) <> CstrFault ->
+  RomBase.sys_rob segs (mkCfg (PEND regs pc mem) model).
+Proof. LiaFast.lf_pins LiaFast.u0.
+  intros regs pc mem model H17 Hnf.
+  apply (RomWrite.openat_rob segs (PEND regs pc mem) model (getr regs 17) eq_refl).
+  - rewrite H17. apply u64_lit. lia.
+  - replace (ms_gpr (PEND regs pc mem) 1) with (getr regs 11) by (rewrite ms_gpr_epend by lia; f_equal).
+    exact Hnf.
+Qed.
+
+(** ... at an ioctl with a terminal-only request. *)
+#[using="Type"] Lemma rob_pend_ioctl : forall regs pc mem model,
+  getr regs 17 = Z_to_bv 64 29 ->
+  tty_only_request (cmd32 (getr regs 11)) = true ->
+  RomBase.sys_rob segs (mkCfg (PEND regs pc mem) model).
+Proof. LiaFast.lf_pins LiaFast.u0.
+  intros regs pc mem model H17 Ht.
+  apply (RomWrite.ioctl_rob_tty segs (PEND regs pc mem) model (getr regs 17) eq_refl).
+  - rewrite H17. apply u64_lit. lia.
+  - replace (ms_gpr (PEND regs pc mem) 1) with (getr regs 11) by (rewrite ms_gpr_epend by lia; f_equal).
+    exact Ht.
+Qed.
+
 Section Open.
 Hypothesis Hfs : sc_fs cfg = true.
 
@@ -560,7 +603,7 @@ Proof. LiaFast.lf_pins (fun (Hfs : LiaFast.U) => LiaFast.u0).
                                   | inr _ => with_fds (fd_insert (m_fds model) (alloc_fd (m_fds model)) ent) model end)
              (fun _ => [])
              (fun j => match j with inl _ => A | inr _ => B end) (inl ia));
-      [exact Hh | reflexivity | | | | | | | ].
+      [exact Hh | reflexivity | | | | | | | exact (rob_pend_openat regs pc mem model H17 ltac:(rewrite Hc; discriminate)) | ].
     + intros [[e He]|[]]; apply Hsp; apply record_copyins_ok_iff; cbn [proj1_sig].
       * exists (mkEffect (errno_ret e) [] []). split.
         2:{ unfold with_copyins, ret_ci. cbn [eff_ret eff_writes eff_zeros eff_unmaps eff_copies eff_copyins].
@@ -631,13 +674,14 @@ Qed.
 #[using="Hfs"] Lemma rzc_openat_det_err : forall regs pc mem model (e : Z) T,
   m_halted model = None -> m_vm_lazy model = [] ->
   getr regs 17 = Z_to_bv 64 56 ->
+  read_cstr (mrb segs mem) (getr regs 11) <> CstrFault ->
   (forall o, syscall_spec (sys_input segs (PEND regs pc mem) (getr regs 17)) model o <->
      record_copyins [(getr regs 11, cstr_access_len_aux (mrb segs mem) (getr regs 11) path_max)] (err_ret e)
        (sys_input segs (PEND regs pc mem) (getr regs 17)) model o) ->
   realizes_cfg segs cfg (mkCfg (mkst (regupd regs 10 (errno_ret e)) (v_addi pc 4) mem (seg_rom segs)) model) T ->
   realizes_cfg segs cfg (mkCfg (PEND regs pc mem) model) T.
 Proof. LiaFast.lf_pins (fun (Hfs : LiaFast.U) => LiaFast.u0).
-  intros regs pc mem model e T Hh Hlz H17 Hsp HK.
+  intros regs pc mem model e T Hh Hlz H17 Hnf Hsp HK.
   set (i := sys_input segs (PEND regs pc mem) (getr regs 17)) in *.
   assert (A0 : in_arg i 0 = getr regs 10) by apply in_arg0_epend.
   assert (A1 : in_arg i 1 = getr regs 11) by apply in_arg1_epend.
@@ -645,7 +689,7 @@ Proof. LiaFast.lf_pins (fun (Hfs : LiaFast.U) => LiaFast.u0).
   assert (Hno : bv_unsigned (in_sysno i) = 56%Z) by (apply in_sysno_pend; [exact H17 | lia]).
   set (ci := [(getr regs 11, cstr_access_len_aux (mrb segs mem) (getr regs 11) path_max)]) in *.
   apply (rzc_sys_det segs cfg (PEND regs pc mem) model (getr regs 17) (ret_ci (errno_ret e) ci) model T);
-    [exact Hh | reflexivity | | | | | exact Hh | exact Hlz | ].
+    [exact Hh | reflexivity | | | | | exact Hh | exact Hlz | exact (rob_pend_openat regs pc mem model H17 Hnf) | ].
   - apply Hsp. apply record_copyins_ok_iff. exists (mkEffect (errno_ret e) [] []).
     split.
     2:{ unfold with_copyins, ret_ci. cbn [eff_ret eff_writes eff_zeros eff_unmaps eff_copies eff_copyins].
@@ -671,7 +715,7 @@ Qed.
   realizes_cfg segs cfg (mkCfg (PEND regs pc mem) model) T.
 Proof. LiaFast.lf_pins (fun (Hfs : LiaFast.U) => LiaFast.u0).
   intros regs pc mem model p T Hh Hlz H17 Hd Hfl Hc Hne Hsl Hdr Hlk HK.
-  apply (rzc_openat_det_err regs pc mem model ENOENT T Hh Hlz H17); [|exact HK].
+  apply (rzc_openat_det_err regs pc mem model ENOENT T Hh Hlz H17 ltac:(rewrite Hc; discriminate)); [|exact HK].
   intro o. set (i := sys_input segs (PEND regs pc mem) (getr regs 17)).
   assert (A0 : in_arg i 0 = getr regs 10) by apply in_arg0_epend.
   assert (A1 : in_arg i 1 = getr regs 11) by apply in_arg1_epend.
@@ -695,7 +739,7 @@ Qed.
   realizes_cfg segs cfg (mkCfg (PEND regs pc mem) model) T.
 Proof. LiaFast.lf_pins (fun (Hfs : LiaFast.U) => LiaFast.u0).
   intros regs pc mem model T Hh Hlz H17 Hfl Hc HK.
-  apply (rzc_openat_det_err regs pc mem model ENOENT T Hh Hlz H17); [|exact HK].
+  apply (rzc_openat_det_err regs pc mem model ENOENT T Hh Hlz H17 ltac:(rewrite Hc; discriminate)); [|exact HK].
   intro o. set (i := sys_input segs (PEND regs pc mem) (getr regs 17)).
   assert (A0 : in_arg i 0 = getr regs 10) by apply in_arg0_epend.
   assert (A1 : in_arg i 1 = getr regs 11) by apply in_arg1_epend.
@@ -718,7 +762,7 @@ Qed.
   realizes_cfg segs cfg (mkCfg (PEND regs pc mem) model) T.
 Proof. LiaFast.lf_pins (fun (Hfs : LiaFast.U) => LiaFast.u0).
   intros regs pc mem model T Hh Hlz H17 Hfl Hc HK.
-  apply (rzc_openat_det_err regs pc mem model ENAMETOOLONG T Hh Hlz H17); [|exact HK].
+  apply (rzc_openat_det_err regs pc mem model ENAMETOOLONG T Hh Hlz H17 ltac:(rewrite Hc; discriminate)); [|exact HK].
   intro o. set (i := sys_input segs (PEND regs pc mem) (getr regs 17)).
   assert (A0 : in_arg i 0 = getr regs 10) by apply in_arg0_epend.
   assert (A1 : in_arg i 1 = getr regs 11) by apply in_arg1_epend.
@@ -742,12 +786,13 @@ End Open.
      eff = mkEffect r [] [] /\ m1 = m' /\ evs = []) ->
   ~ syscall_spec (sys_input segs (PEND regs pc mem) (getr regs 17)) model Unmodeled ->
   m_halted m' = None -> m_vm_lazy m' = [] ->
+  RomBase.sys_rob segs (mkCfg (PEND regs pc mem) model) ->
   realizes_cfg segs cfg (mkCfg (mkst (regupd regs 10 r) (v_addi pc 4) mem (seg_rom segs)) m') T ->
   realizes_cfg segs cfg (mkCfg (PEND regs pc mem) model) T.
 Proof. LiaFast.lf_pins LiaFast.u0.
-  intros regs pc mem model no r m' T Hh Hlz H17 Hr Hinj Hsp Hnu HhM HlM HK.
+  intros regs pc mem model no r m' T Hh Hlz H17 Hr Hinj Hsp Hnu HhM HlM Hrob HK.
   apply (rzc_sys_det segs cfg (PEND regs pc mem) model (getr regs 17) (mkEffect r [] []) m' T);
-    [exact Hh | reflexivity | apply Hsp; auto | | exact Hnu | | exact HhM | exact HlM | ].
+    [exact Hh | reflexivity | apply Hsp; auto | | exact Hnu | | exact HhM | exact HlM | exact Hrob | ].
   - intros eff1 m1 evs1 Hs. apply Hsp in Hs. exact Hs.
   - intros eff. apply not_spurious_uninjected. rewrite (in_sysno_pend regs pc mem no H17 Hr). exact Hinj.
   - change (mkEffect r [] []) with (mkEffectU r [] [] [] [] []). rewrite adv_epend_ret. exact HK.
@@ -772,7 +817,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   { intro o. rewrite (syscall_spec_63 i model o Hno). rewrite (A0), (A1), (A2).
     unfold read_spec. rewrite bind_input, bind_get_model. rewrite Hfd, Hok. reflexivity. }
   apply (rzc_det_ret regs pc mem model 63 (errno_ret EISDIR) model T Hh Hlz H17 ltac:(lia) eq_refl);
-    [ | | exact Hh | exact Hlz | exact HK].
+    [ | | exact Hh | exact Hlz | exact (rob_pend_memfree regs pc mem model 63 H17 ltac:(lia) RomBase.memfree_63) | exact HK].
   - intros eff m1 evs. fold i. rewrite Hsp. apply err_ret_ok_iff.
   - intros Hs. fold i in Hs. apply Hsp in Hs. exact (err_ret_unmodeled _ _ _ Hs).
 Qed.
@@ -823,7 +868,8 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     unfold set_fds, modify, bind, pure in Hs. sys_destruct. }
   apply (rzc_sys_det segs cfg (PEND regs pc mem) model (getr regs 17) eff m' T);
     [exact Hh | reflexivity | apply Hsp; auto | intros; apply Hsp; assumption | exact Hnu | |
-     unfold m'; rewrite with_fds_halted; exact Hh | unfold m'; rewrite with_fds_lazy; exact Hlz | ].
+     unfold m'; rewrite with_fds_halted; exact Hh | unfold m'; rewrite with_fds_lazy; exact Hlz
+     | exact (rob_pend_memfree regs pc mem model 63 H17 ltac:(lia) RomBase.memfree_63) | ].
   - intros eff1. apply not_spurious_uninjected. fold i. rewrite Hno. reflexivity.
   - unfold eff, delivered_writes. destruct bs as [|b bs'] eqn:Ebs.
     + change (mkEffect (len_word []) [] []) with (mkEffectU (len_word (@nil byte)) [] [] [] [] []).
@@ -854,7 +900,8 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     unfold close_spec. rewrite bind_get_model. rewrite Hfd. reflexivity. }
   apply (rzc_det_ret regs pc mem model 57 (Z_to_bv 64 0) (with_fds (fd_remove (m_fds model) (fd32 (getr regs 10))) model) T
            Hh Hlz H17 ltac:(lia) eq_refl);
-    [ | | rewrite with_fds_halted; exact Hh | rewrite with_fds_lazy; exact Hlz | exact HK].
+    [ | | rewrite with_fds_halted; exact Hh | rewrite with_fds_lazy; exact Hlz
+    | exact (rob_pend_memfree regs pc mem model 57 H17 ltac:(lia) RomBase.memfree_57) | exact HK].
   - intros eff m1 evs. fold i. rewrite Hsp. unfold set_fds, modify, ret_only, bind, pure. split.
     + intros H. sys_destruct. auto.
     + intros (-> & -> & ->). exists tt, (with_fds (fd_remove (m_fds model) (fd32 (getr regs 10))) model), [], [].
@@ -881,7 +928,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   { intro o. rewrite (syscall_spec_29 i model o Hno). rewrite (A0), (A1).
     unfold ioctl_spec. rewrite bind_get_model. rewrite Hfd, Htty. reflexivity. }
   apply (rzc_det_ret regs pc mem model 29 (errno_ret ENOTTY) model T Hh Hlz H17 ltac:(lia) eq_refl);
-    [ | | exact Hh | exact Hlz | exact HK].
+    [ | | exact Hh | exact Hlz | exact (rob_pend_ioctl regs pc mem model H17 Htty) | exact HK].
   - intros eff m1 evs. fold i. rewrite Hsp. apply err_ret_ok_iff.
   - intros Hs. fold i in Hs. apply Hsp in Hs. exact (err_ret_unmodeled _ _ _ Hs).
 Qed.
@@ -1051,6 +1098,8 @@ Qed.
   (bv_unsigned (getr regs 11) + 16 * Z.of_nat (length iovs) <= TASK_SIZE)%Z ->
   iov_array mem (getr regs 11) iovs -> iov_bufs_ok iovs -> iov_bufs mem iovs bss ->
   (1 <= iovs_total iovs)%Z -> (iovs_total iovs <= 2 ^ 30)%Z ->
+  (* the far end has a reader: writev's channel arm raises SIGPIPE otherwise *)
+  m_channel_reader model = true ->
   let bs := concat bss in
   let CA := import_iovecs_accesses (mrb segs mem) (getr regs 11) (Z_to_bv 64 (Z.of_nat (length iovs))) in
   (syscall_spec (sys_input segs (PEND regs pc mem) (getr regs 17)) model (Ok eff m' evs) <->
@@ -1058,7 +1107,7 @@ Qed.
      /\ eff = ret_ci (Z_to_bv 64 (Z.of_nat k)) (CA ++ (iov_prefix_accesses iovs k ++ []))
      /\ m' = model /\ evs = map (WriteEv ch) (firstn k bs)).
 Proof. LiaFast.lf_pins LiaFast.u0.
-  intros regs pc mem model ch iovs bss eff m' evs H17 Hfd Hch H12 Hcnt Hiok Harr Hbok Hbufs Ht1 Ht30 bs CA.
+  intros regs pc mem model ch iovs bss eff m' evs H17 Hfd Hch H12 Hcnt Hiok Harr Hbok Hbufs Ht1 Ht30 Hrd bs CA.
   set (i := sys_input segs (PEND regs pc mem) (getr regs 17)).
   assert (A0 : in_arg i 0 = getr regs 10) by apply in_arg0_epend.
   assert (A1 : in_arg i 1 = getr regs 11) by apply in_arg1_epend.
@@ -1080,6 +1129,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   unfold writev_gathered. rewrite Hcap, (gather_prefix_full _ _ _ Hg). fold bs.
   cbv beta iota zeta.
   replace ((iovs_total iovs =? 0)%Z) with false by (symmetry; apply Z.eqb_neq; lia).
+  rewrite Hrd. cbn [negb].
   replace ((length bs =? 0)%nat) with false by (symmetry; apply Nat.eqb_neq; lia).
   replace (addr_is_error_b (len_word bs)) with false
     by (symmetry; unfold addr_is_error_b, two_pow_64; apply Z.ltb_ge; rewrite Hlw; lia).
@@ -1122,9 +1172,10 @@ Qed.
   (bv_unsigned (getr regs 11) + 16 * Z.of_nat (length iovs) <= TASK_SIZE)%Z ->
   iov_array mem (getr regs 11) iovs -> iov_bufs_ok iovs -> iov_bufs mem iovs bss ->
   (1 <= iovs_total iovs)%Z -> (iovs_total iovs <= 2 ^ 30)%Z ->
+  m_channel_reader model = true ->
   ~ syscall_spec (sys_input segs (PEND regs pc mem) (getr regs 17)) model Unmodeled.
 Proof. LiaFast.lf_pins LiaFast.u0.
-  intros regs pc mem model ch iovs bss H17 Hfd Hch H12 Hcnt Hiok Harr Hbok Hbufs Ht1 Ht30.
+  intros regs pc mem model ch iovs bss H17 Hfd Hch H12 Hcnt Hiok Harr Hbok Hbufs Ht1 Ht30 Hrd.
   set (i := sys_input segs (PEND regs pc mem) (getr regs 17)).
   assert (A0 : in_arg i 0 = getr regs 10) by apply in_arg0_epend.
   assert (A1 : in_arg i 1 = getr regs 11) by apply in_arg1_epend.
@@ -1146,12 +1197,96 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   unfold writev_gathered in Hs. rewrite Hcap, (gather_prefix_full _ _ _ Hg) in Hs.
   cbv beta iota zeta in Hs.
   replace ((iovs_total iovs =? 0)%Z) with false in Hs by (symmetry; apply Z.eqb_neq; lia).
+  rewrite Hrd in Hs. cbn [negb] in Hs.
   replace ((length (concat bss) =? 0)%nat) with false in Hs by (symmetry; apply Nat.eqb_neq; lia).
   replace (addr_is_error_b (len_word (concat bss))) with false in Hs
     by (symmetry; unfold addr_is_error_b, two_pow_64; apply Z.ltb_ge; rewrite Hlw; lia).
   unfold bind, choose, emit, pure in Hs. sys_destruct.
   match goal with H : record_copyins _ _ _ _ _ |- _ => apply record_copyins_unmodeled_iff in H end.
   unfold ret_only, pure in *. discriminate.
+Qed.
+
+(** [RomBase.sys_rob] at a writev whose iovec array imports and whose buffers read in full
+    ([RomWrite.writev_rob]). *)
+#[using="Type"] Lemma rob_pend_writev : forall regs pc mem model iovs bss,
+  getr regs 17 = Z_to_bv 64 66 ->
+  getr regs 12 = Z_to_bv 64 (Z.of_nat (length iovs)) ->
+  (1 <= length iovs <= 1024)%nat ->
+  (bv_unsigned (getr regs 11) + 16 * Z.of_nat (length iovs) <= TASK_SIZE)%Z ->
+  iov_array mem (getr regs 11) iovs -> iov_bufs_ok iovs -> iov_bufs mem iovs bss ->
+  (iovs_total iovs <= 2 ^ 30)%Z ->
+  RomBase.sys_rob segs (mkCfg (PEND regs pc mem) model).
+Proof. LiaFast.lf_pins LiaFast.u0.
+  intros regs pc mem model iovs bss H17 H12 Hcnt Hiok Harr Hbok Hbufs Ht30.
+  assert (Hcnt32 : iovcnt32 (Z_to_bv 64 (Z.of_nat (length iovs))) = Z_to_bv 64 (Z.of_nat (length iovs))).
+  { unfold iovcnt32, abi_low32. rewrite u64_lit by lia. rewrite Z.mod_small by lia. reflexivity. }
+  assert (Hcap : cap_iovecs iovs = iovs).
+  { unfold cap_iovecs. apply cap_iovecs_id. unfold MAX_RW_COUNT. lia. }
+  apply (RomWrite.writev_rob segs (PEND regs pc mem) model (getr regs 17) iovs (concat bss) (getr regs 11)
+           (Z_to_bv 64 (Z.of_nat (length iovs))) eq_refl).
+  - rewrite H17. apply u64_lit. lia.
+  - rewrite ms_gpr_epend by lia. f_equal.
+  - replace (ms_gpr (PEND regs pc mem) 2) with (getr regs 12) by (rewrite ms_gpr_epend by lia; f_equal).
+    rewrite H12. exact Hcnt32.
+  - exact (import_iovecs_of_array mem iovs (getr regs 11) Hcnt Hiok Harr Hbok).
+  - exact Hcap.
+  - exact (gather_of_bufs mem iovs bss Hbufs).
+Qed.
+
+(** ... at any state with the same registers, memory and backing (the ASan engine's [svc_set]). *)
+#[using="fx"] Lemma rob_writev_state : forall ms model iovs bss,
+  ms_svc_pending ms = Some (getr (ms_regs ms) 17) -> ms_rom ms = seg_rom segs ->
+  getr (ms_regs ms) 17 = Z_to_bv 64 66 ->
+  getr (ms_regs ms) 12 = Z_to_bv 64 (Z.of_nat (length iovs)) ->
+  (1 <= length iovs <= 1024)%nat ->
+  (bv_unsigned (getr (ms_regs ms) 11) + 16 * Z.of_nat (length iovs) <= TASK_SIZE)%Z ->
+  iov_array (ms_mem ms) (getr (ms_regs ms) 11) iovs -> iov_bufs_ok iovs -> iov_bufs (ms_mem ms) iovs bss ->
+  (iovs_total iovs <= 2 ^ 30)%Z ->
+  RomBase.sys_rob segs (mkCfg ms model).
+Proof. LiaFast.lf_pins LiaFast.u0.
+  intros ms model iovs bss Hs Hrom H17 H12 Hcnt Hiok Harr Hbok Hbufs Ht30.
+  apply (RomWrite.sys_rob_same_input segs ms (PEND (ms_regs ms) (ms_pc_val ms) (ms_mem ms)) model);
+    [exact Hs | reflexivity | reflexivity | exact Hrom |].
+  exact (rob_pend_writev (ms_regs ms) (ms_pc_val ms) (ms_mem ms) model iovs bss H17 H12 Hcnt Hiok Harr Hbok Hbufs Ht30).
+Qed.
+
+(** ... at a writev whose iovecs total nothing ([RomWrite.writev_rob_zero]). *)
+#[using="Type"] Lemma rob_pend_writev_zero : forall regs pc mem model iovs,
+  getr regs 17 = Z_to_bv 64 66 ->
+  getr regs 12 = Z_to_bv 64 (Z.of_nat (length iovs)) ->
+  (1 <= length iovs <= 1024)%nat ->
+  (bv_unsigned (getr regs 11) + 16 * Z.of_nat (length iovs) <= TASK_SIZE)%Z ->
+  iov_array mem (getr regs 11) iovs -> iov_bufs_ok iovs ->
+  iovs_total iovs = 0%Z ->
+  RomBase.sys_rob segs (mkCfg (PEND regs pc mem) model).
+Proof. LiaFast.lf_pins LiaFast.u0.
+  intros regs pc mem model iovs H17 H12 Hcnt Hiok Harr Hbok Ht0.
+  assert (Hcnt32 : iovcnt32 (Z_to_bv 64 (Z.of_nat (length iovs))) = Z_to_bv 64 (Z.of_nat (length iovs))).
+  { unfold iovcnt32, abi_low32. rewrite u64_lit by lia. rewrite Z.mod_small by lia. reflexivity. }
+  apply (RomWrite.writev_rob_zero segs (PEND regs pc mem) model (getr regs 17) iovs (getr regs 11)
+           (Z_to_bv 64 (Z.of_nat (length iovs))) eq_refl).
+  - rewrite H17. apply u64_lit. lia.
+  - rewrite ms_gpr_epend by lia. f_equal.
+  - replace (ms_gpr (PEND regs pc mem) 2) with (getr regs 12) by (rewrite ms_gpr_epend by lia; f_equal).
+    rewrite H12. exact Hcnt32.
+  - exact (import_iovecs_of_array mem iovs (getr regs 11) Hcnt Hiok Harr Hbok).
+  - unfold cap_iovecs. rewrite cap_iovecs_id by (unfold MAX_RW_COUNT; lia). rewrite Ht0. reflexivity.
+Qed.
+
+#[using="fx"] Lemma rob_writev_state_zero : forall ms model iovs,
+  ms_svc_pending ms = Some (getr (ms_regs ms) 17) -> ms_rom ms = seg_rom segs ->
+  getr (ms_regs ms) 17 = Z_to_bv 64 66 ->
+  getr (ms_regs ms) 12 = Z_to_bv 64 (Z.of_nat (length iovs)) ->
+  (1 <= length iovs <= 1024)%nat ->
+  (bv_unsigned (getr (ms_regs ms) 11) + 16 * Z.of_nat (length iovs) <= TASK_SIZE)%Z ->
+  iov_array (ms_mem ms) (getr (ms_regs ms) 11) iovs -> iov_bufs_ok iovs ->
+  iovs_total iovs = 0%Z ->
+  RomBase.sys_rob segs (mkCfg ms model).
+Proof. LiaFast.lf_pins LiaFast.u0.
+  intros ms model iovs Hs Hrom H17 H12 Hcnt Hiok Harr Hbok Ht0.
+  apply (RomWrite.sys_rob_same_input segs ms (PEND (ms_regs ms) (ms_pc_val ms) (ms_mem ms)) model);
+    [exact Hs | reflexivity | reflexivity | exact Hrom |].
+  exact (rob_pend_writev_zero (ms_regs ms) (ms_pc_val ms) (ms_mem ms) model iovs H17 H12 Hcnt Hiok Harr Hbok Ht0).
 Qed.
 
 (* [comment removed for export] *)
@@ -1165,13 +1300,14 @@ Qed.
   (bv_unsigned (getr regs 11) + 16 * Z.of_nat (length iovs) <= TASK_SIZE)%Z ->
   iov_array mem (getr regs 11) iovs -> iov_bufs_ok iovs -> iov_bufs mem iovs bss ->
   (1 <= iovs_total iovs)%Z -> (iovs_total iovs <= 2 ^ 30)%Z ->
+  m_channel_reader model = true ->
   (forall k, (1 <= k)%nat -> (k <= length (concat bss))%nat ->
      realizes_cfg segs cfg (mkCfg (mkst (regupd regs 10 (Z_to_bv 64 (Z.of_nat k))) (v_addi pc 4) mem (seg_rom segs)) model) (T k)) ->
   realizes_cfg segs cfg (mkCfg (PEND regs pc mem) model)
     (t_alt (fun i : wr_index (concat bss) =>
        t_emit (map (WriteEv ch) (firstn (proj1_sig i) (concat bss))) (T (proj1_sig i)))).
 Proof. LiaFast.lf_pins LiaFast.u0.
-  intros regs pc mem model ch iovs bss T Hh Hlz H17 Hfd Hch H12 Hcnt Hiok Harr Hbok Hbufs Ht1 Ht30 HK.
+  intros regs pc mem model ch iovs bss T Hh Hlz H17 Hfd Hch H12 Hcnt Hiok Harr Hbok Hbufs Ht1 Ht30 Hrd HK.
   set (bs := concat bss) in *.
   set (CA := import_iovecs_accesses (mrb segs mem) (getr regs 11) (Z_to_bv 64 (Z.of_nat (length iovs)))).
   pose proof (gather_of_bufs mem iovs bss Hbufs) as Hg.
@@ -1184,18 +1320,19 @@ Proof. LiaFast.lf_pins LiaFast.u0.
            (fun _ => model)
            (fun j => map (WriteEv ch) (firstn (proj1_sig j) bs))
            (fun j => T (proj1_sig j)) (wr_full bs Hnb));
-    [exact Hh | reflexivity | | | | | | | ].
+    [exact Hh | reflexivity | | | | | | | | ].
   - intros [k Hk]. cbn [proj1_sig].
-    apply (writev_ch_ok_iff regs pc mem model ch iovs bss _ _ _ H17 Hfd Hch H12 Hcnt Hiok Harr Hbok Hbufs Ht1 Ht30).
+    apply (writev_ch_ok_iff regs pc mem model ch iovs bss _ _ _ H17 Hfd Hch H12 Hcnt Hiok Harr Hbok Hbufs Ht1 Ht30 Hrd).
     exists k. auto.
   - intros eff m' evs Hs.
-    apply (writev_ch_ok_iff regs pc mem model ch iovs bss _ _ _ H17 Hfd Hch H12 Hcnt Hiok Harr Hbok Hbufs Ht1 Ht30)
+    apply (writev_ch_ok_iff regs pc mem model ch iovs bss _ _ _ H17 Hfd Hch H12 Hcnt Hiok Harr Hbok Hbufs Ht1 Ht30 Hrd)
       in Hs as (k & Hk & -> & -> & ->).
     exists (exist _ k Hk). auto.
-  - exact (writev_ch_no_unmodeled regs pc mem model ch iovs bss H17 Hfd Hch H12 Hcnt Hiok Harr Hbok Hbufs Ht1 Ht30).
+  - exact (writev_ch_no_unmodeled regs pc mem model ch iovs bss H17 Hfd Hch H12 Hcnt Hiok Harr Hbok Hbufs Ht1 Ht30 Hrd).
   - intros eff. apply not_spurious_uninjected. rewrite Hno. reflexivity.
   - intros _. exact Hh.
   - intros _. exact Hlz.
+  - exact (rob_pend_writev regs pc mem model iovs bss H17 H12 Hcnt Hiok Harr Hbok Hbufs Ht30).
   - intros [k [Hk1 Hk2]]. cbn [proj1_sig]. unfold ret_ci. rewrite adv_epend_ret. apply HK; assumption.
 Qed.
 
@@ -1210,13 +1347,14 @@ Qed.
   (bv_unsigned (getr regs 11) + 16 * Z.of_nat (length iovs) <= TASK_SIZE)%Z ->
   iov_array mem (getr regs 11) iovs -> iov_bufs_ok iovs -> iov_bufs mem iovs bss ->
   (1 <= iovs_total iovs)%Z -> (iovs_total iovs <= 2 ^ 30)%Z ->
+  m_channel_reader model = true ->
   K [] ->
   (forall k, (1 <= k)%nat -> (k <= length (concat bss))%nat ->
      realizes_cfg segs cfg (mkCfg (mkst (regupd regs 10 (Z_to_bv 64 (Z.of_nat k))) (v_addi pc 4) mem (seg_rom segs)) model)
        (t_emit (map (WriteEv ch) (skipn k (concat bss))) K)) ->
   realizes_cfg segs cfg (mkCfg (PEND regs pc mem) model) (t_emit (map (WriteEv ch) (concat bss)) K).
 Proof. LiaFast.lf_pins LiaFast.u0.
-  intros regs pc mem model ch iovs bss K Hh Hlz H17 Hfd Hch H12 Hcnt Hiok Harr Hbok Hbufs Ht1 Ht30 HK0 HK.
+  intros regs pc mem model ch iovs bss K Hh Hlz H17 Hfd Hch H12 Hcnt Hiok Harr Hbok Hbufs Ht1 Ht30 Hrd HK0 HK.
   pose proof (gather_of_bufs mem iovs bss Hbufs) as Hg.
   pose proof (gather_iovecs_length _ _ _ Hg) as Hlen.
   eapply rzc_conseq.

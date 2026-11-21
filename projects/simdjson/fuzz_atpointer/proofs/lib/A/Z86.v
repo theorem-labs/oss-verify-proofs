@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor raised to the 0x5D0000 bytes below sp that the launch guarantees ([STACK_GAP])). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -49,7 +50,7 @@ Definition LOOPS (Σ : rts RT) (usp buf cap : Z) : Prop :=
 Definition DCTX (Σ : rts RT) (usp ap path : Z) (c0 c1 c2 c3 c4 c5 c6 c7 : word) (m : mem) : Prop :=
   MAINCTX RT OUT_rep ERR_rep XENV LIB argvb Σ stdout_init usp ap c0 c1 c2 c3 c4 c5 c6 c7 m
   /\ bytes_at asegs m path (path_b argvb ++ [Z_to_bv 8 0]) /\ ap < path
-  /\ path + Z.of_nat (length (path_b argvb)) + 1 <= USTACK_TOP - 16 /\ 0x7fff80000000 <= rt_sp0 RT Σ.
+  /\ path + Z.of_nat (length (path_b argvb)) + 1 <= USTACK_TOP - 9 /\ 0x7fff80000000 <= rt_sp0 RT Σ.
 
 Definition RL (len cap : Z) (c : config) : Prop :=
   exists (Σ : rts RT) (usp ap path buf : Z) (gp t0 t1 t2 a3 a4 a5 a6 a7 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
@@ -121,7 +122,7 @@ Hypothesis AF : art_facts RT.
 
 Lemma DCTX_agree : forall Σ Σ' usp ap path c0 c1 c2 c3 c4 c5 c6 c7 m m',
   DCTX RT OUT_rep ERR_rep XENV LIB argvb Σ usp ap path c0 c1 c2 c3 c4 c5 c6 c7 m ->
-  ART RT Σ' m' -> mem_inv asegs m' -> wmono asegs m m' -> stk asegs m' (rt_sp0 RT Σ - STACK_WIN) (usp - 80) ->
+  ART RT Σ' m' -> mem_inv asegs m' -> wmono asegs m m' -> stk asegs m' (rt_sp0 RT Σ - STACK_WIN + STACK_GAP) (usp - 80) ->
   rt_sp0 RT Σ' = rt_sp0 RT Σ -> CLX OUT_rep ERR_rep XENV LIB stdout_init m' ->
   agree_on (fun x => usp - 80 <= x < USTACK_TOP) m m' ->
   DCTX RT OUT_rep ERR_rep XENV LIB argvb Σ' usp ap path c0 c1 c2 c3 c4 c5 c6 c7 m'.
@@ -135,7 +136,7 @@ Qed.
 
 Lemma DCTX_agree_nw : forall Σ Σ' usp ap path c0 c1 c2 c3 c4 c5 c6 c7 m m',
   DCTX RT OUT_rep ERR_rep XENV LIB argvb Σ usp ap path c0 c1 c2 c3 c4 c5 c6 c7 m ->
-  ART RT Σ' m' -> mem_inv asegs m' -> stk asegs m' (rt_sp0 RT Σ - STACK_WIN) (usp - 80) ->
+  ART RT Σ' m' -> mem_inv asegs m' -> stk asegs m' (rt_sp0 RT Σ - STACK_WIN + STACK_GAP) (usp - 80) ->
   rt_sp0 RT Σ' = rt_sp0 RT Σ -> CLX OUT_rep ERR_rep XENV LIB stdout_init m' ->
   agree_on (fun x => usp - 80 <= x < USTACK_TOP) m m' ->
   DCTX RT OUT_rep ERR_rep XENV LIB argvb Σ' usp ap path c0 c1 c2 c3 c4 c5 c6 c7 m'.

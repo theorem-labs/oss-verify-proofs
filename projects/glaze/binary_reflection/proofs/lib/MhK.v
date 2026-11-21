@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (node_ok_reindex carries node_ok's third part, RomBase.sys_rob). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -74,7 +75,7 @@ Lemma node_ok_reindex : forall c (I J : Type) (evs : I -> list event) (nx : I ->
   (forall i, evs i = evs' (g i) /\ nx i = nx' (g i)) ->
   node_ok segs c J evs' nx'.
 Proof.
-  intros c I J evs nx evs' nx' f g [N1 N2] Hf Hg. split.
+  intros c I J evs nx evs' nx' f g [N1 [N2 N3]] Hf Hg. split; [| split; [| exact N3]].
   - intros j. destruct (Hf j) as [E1 E2]. rewrite <- E1, <- E2. apply N1.
   - intros e st Hss. destruct (N2 e st Hss) as (i & -> & ->). exists (g i).
     destruct (Hg i) as [E1 E2]. rewrite E1, E2. split; reflexivity.

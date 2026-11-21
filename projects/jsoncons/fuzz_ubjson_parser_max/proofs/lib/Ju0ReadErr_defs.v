@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: replaced the hard-coded 8388608-byte stack write window in the initial memory constraint list with the symbolic DRV_ZWIN constant and added a modification note describing the change; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Ub0ReadErr_defs.v, line 55. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State.
@@ -35,7 +36,7 @@ Definition KEPT_RE : list nat := [2; 3; 4; 18]%nat.
 Definition srRE0 : list expr := Eval vm_compute in sr_after_call_j srRE_base KEPT_RE 6.
 Definition knRE0 : list kentry :=
 [KAlign (EVar 0) 16; KRange (EVar 0) 0x7fff80000000 0x800000000000;
-KWr (SA (EVar 0) (-8388608)) 8388608;
+KWr (SA (EVar 0) (- DRV_ZWIN)) DRV_ZWIN;
 KRange (EVar 2) 0x7fff80000000 0x800000400000;
 KWr (SA (ELit 0) 0xb6000) 0x34000;
 KImg 0x10000 0xb7230; KImg 0xb7231 0xb7279; KImg 0xc7279 0xc8be0; KImg 0xe8cb8 0xe8cd8;

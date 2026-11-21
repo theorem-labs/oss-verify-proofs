@@ -43,7 +43,7 @@
         ctl_rt_C unchanged (route (C), a working branch: the cut's A.ACtlRtC.ctl_rt_C B ly3 S3 mem3; same state, same memory).
 
    _F RUN (Required, not a hypothesis): A.Prog.Seg.F28bF.f28b_run_F (lib/A/Prog/Seg/F28bF.v blob 5a906a1e2cf,
-   a Theorem Labs lane's re-run of Seg/F28b.v's f28b_run, on the glue base since 5dbd293c250), instantiated at its fx :=
+   a Theorem Labs lane's re-run of Seg/F28b.v's f28b_run, on the glue base), instantiated at its fx :=
    A.Reusable.YK11.mkFP over the Section's fx (glue-pattern.md section 6 (a working note, not in this delivery)).  f28b_run_of_F_bounded is NOT used: its
    twelve bound premises are discharged here at the use site, inside the range_visible facts of the eight ranges.
 
@@ -188,7 +188,7 @@ Proof.
     pose proof (Z.mul_div_le s0 8 ltac:(lia)) as D0.
     pose proof (Z.div_mod s2 8 ltac:(lia)) as D2. pose proof (Z.mod_pos_bound s2 8 ltac:(lia)) as D2'.
     lia. }
-  (* G2e: the eight footprint ranges, each with its bounds (f28b_run_of_F_bounded's six, F28bF.v:184-190) *)
+  (* G2e: the eight footprint ranges, each with its bounds (f28b_run_of_F_bounded's six, F28bF.v:185-191) *)
   assert (RV128 : A.ProgBridge.range_visible (lib.Reusable.YA0n.w_H W3) (fr + 128) 4).
   { split; [lia|]. split; [lia|]. intros a Ha. apply HVfr. lia. }
   assert (RV132 : A.ProgBridge.range_visible (lib.Reusable.YA0n.w_H W3) (fr + 132) 4).

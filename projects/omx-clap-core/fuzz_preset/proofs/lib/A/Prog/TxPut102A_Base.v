@@ -4,6 +4,7 @@
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YP0n.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/Reusable/YP0n.v, with its module paths and module names changed; 967 of its 1043 lines of code are new or changed and 1914 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/Cno102B_Base.v, with its module paths and module names changed; 336 of its 376 lines of code are new or changed and 1003 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* fuzz_preset lib/A, the #102 re-walk of tx_put on image A' (ASan build): the SHARED BASE of the segment lemmas
    of the walk. STATEMENTS ONLY: the entry record, the text's premises, the cut predicates and the
    segment statements; the segment files TxPut102A_S*.v prove them, TxPut102A_Top.v composes them and
@@ -168,7 +169,7 @@ Record tp_img : Prop := {
   (* NO field for __asan_memcpy: its text is taken at the listing's own `SIGMA AS___asan_memcpy`, as
      FuzzStrdup.v does, so no equation against `pc_asan_memcpy (as_code B)` is needed and
      tp_img stays a record of PA / CfImg facts, each closed at the instance by vm_compute. *)
-  (* THE IMAGE BINDING OF B, in one field (YC1fP.v:322-330 PALibCore, the facts pinned at EVERY listing):
+  (* THE IMAGE BINDING OF B, in one field (YC1fP.v:323-331 PALibCore, the facts pinned at EVERY listing):
      as_got_shadow B = VAL (A_OBJ 0) and as_shadow_cell B = VAL (A_OBJ 12) - without them the prologue's GOT pair
      (A' 0x84d28 PHi 58 / 0x84d2c PLdHi .. (A_OBJ 0) .. SZ8, then 0x84d30 `ld s6, 0(a2)`) cannot use ARx's const
      law and s6 = SHADOW_OFF is unreachable, so tp_shregs and every shadow check are blocked (found at
@@ -192,7 +193,7 @@ Record tp_img : Prop := {
      journal exempts prh_pst from its image clause, and the runtime rules keep a static only when in_img) *)
   tpi_pst_rw : forall a, Exists (in_zr a) prh_pst -> ~ in_roP segs (@pa_relro_lo _ _ PA) (@pa_relro_hi _ _ PA) a;
   tpi_pst_img : forall a, Exists (in_zr a) prh_pst -> in_img segs a;
-  (* the two B-side facts the PST write rule asks (YCbqG.v:575 ajournal_x_pst_write): a static of prh_pst is not one
+  (* the two B-side facts the PST write rule asks (YCbqG.v:576 ajournal_x_pst_write): a static of prh_pst is not one
      of the runtime's own statics and is not errno. They are facts of the IMAGE BINDING of B, not of PA, so the
      instance file does not close them by computation: it takes them from the unit's binding of B, as FuzzFree.v
      :389-390 (pal_pst_ok) and Cno102A_Base.v (cni_pst_ok) do. Owner: the kit. A finding (TPA-NULL). *)
@@ -208,7 +209,7 @@ Record tp_img : Prop := {
        supplies", here over YImgTop's IMG_LO / IMG_TOP, the names kept_at and kept_img use): src_rd's
        shadow_hull_vis for an in_zs global or a kept_img string reads shadow bytes outside the zero-shadow ranges
        and the const cells, which neither ARcf nor a journal clause keeps across the realloc. A fact of the image
-       binding of B: the instance takes img_shadow_vis_cf from the unit's stand-in (FuzzStrdup.v:249-251's
+       binding of B: the instance takes img_shadow_vis_cf from the unit's stand-in (FuzzStrdup.v:250-252's
        shape) and bridges cf_img_lo / cf_img_top to IMG_LO / IMG_TOP by vm_compute. *)
   tpi_head_wide : prh_head_wide;
   (* over the instance's own image bounds pa_lo / pa_hi, the wording of kept_at / kept_img since PRH_Base.v

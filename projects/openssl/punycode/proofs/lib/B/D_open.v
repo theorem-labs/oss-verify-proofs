@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (failed_intro and opened_intro take the path bound USTACK_TOP - 9 instead of USTACK_TOP - 16; the stack floor is rt_sp0 - STACK_WOK, the part of the stack mapping the launch writes, instead of rt_sp0 - STACK_WIN, and the contracts' premise rt_sp0 - STACK_WIN <= lo is proved by win_le_wok). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -156,7 +157,7 @@ Hypothesis LIB_loc : fp_local LIB_FP LIB.
 Hypothesis IO_img : forall x, in_ranges IO_FP x -> client_static x /\ ~ drv_cell x /\ outside LIB_FP x.
 Hypothesis XENV_img : forall x, in_ranges XENV_FP x -> client_static x /\ ~ drv_cell x /\ outside IO_FP x /\ outside LIB_FP x.
 
-Local Ltac ul := unfold SEGTOP_A, STACK_WIN, USTACK_TOP, RT_STACK in *; lia.
+Local Ltac ul := pose proof STACK_WOK_val; unfold SEGTOP_A, STACK_WIN, USTACK_TOP, RT_STACK in *; lia.
 Local Notation CLXm := (CLX_munch OUT_rep ERR_rep IO_FP XENV XENV_FP LIB OUT_loc ERR_loc XENV_loc LIB_loc IO_img XENV_img).
 Local Notation CLXe := (CLX_munch_errno OUT_rep ERR_rep IO_FP XENV XENV_FP LIB OUT_loc ERR_loc XENV_loc LIB_loc IO_img XENV_img).
 
@@ -208,12 +209,12 @@ Proof.
   pose proof (af_sp0_range RT AF Σ m HART) as SP0R.
   pose proof HSIG as (LV & FRS & CR & USP0 & SPW).
   pose proof (u64arr_bound bsegs m ap ptrs ARR) as ARB.
-  set (lo := rt_sp0 RT Σ - STACK_WIN) in *.
+  set (lo := rt_sp0 RT Σ - STACK_WOK) in *.
   rewrite HL in HA, P1lo. rewrite Lptrs in ARB. replace (Nat.min 2 (length argvb)) with 2%nat in ARB by lia.
   pose proof (to_open_walk usp ap gp t0 t1 t2 s0 s1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m lo ptrs p1) as W1.
   lazymatch type of W1 with _ -> _ -> _ -> _ -> _ -> _ -> _ -> _ -> _ -> _ -> evt bsegs _ ?X =>
     assert (W1' : forall ms, eq X ms -> evt bsegs _ ms)
-      by (intros ms <-; apply W1; try assumption; unfold SEGTOP_A, STACK_WIN, USTACK_TOP in *; lia) end.
+      by (intros ms <-; apply W1; try assumption; pose proof STACK_WOK_val; unfold SEGTOP_A, STACK_WIN, USTACK_TOP in *; lia) end.
   clear W1.
   apply (cps_realizes bsegs _ _ _ c (asta_evt RT AF Σ fds0 fs _ _ W1') HA).
   intros c1 Hc1. apply Hk.
@@ -251,11 +252,11 @@ Qed.
 (* [comment removed for export] *)
 Lemma failed_intro : forall Σ usp ap path gp s1 s3 s4 s5 s6 s7 s8 s9 s10 s11 c0 c1 c2 c3 c4 c5 c6 c7 m m' (e : Z) c,
   MAINCTX RT OUT_rep ERR_rep XENV LIB argvb Σ stdout_init usp ap c0 c1 c2 c3 c4 c5 c6 c7 m -> sigma0_ok RT Σ usp ->
-  bytes_at bsegs m path (path_b argvb ++ [Z_to_bv 8 0]) -> ap < path -> path + Z.of_nat (length (path_b argvb)) + 1 <= USTACK_TOP - 16 ->
+  bytes_at bsegs m path (path_b argvb ++ [Z_to_bv 8 0]) -> ap < path -> path + Z.of_nat (length (path_b argvb)) + 1 <= USTACK_TOP - 9 ->
   path_slack argvb m path ->
   ASTA RT Σ (PMfd fds0 fs) (fun ms => ret_st (Z_to_bv 64 RET_OPEN) (Z_to_bv 64 (usp - 80)) gp (Z_to_bv 64 TP_A) (Z_to_bv 64 2) s1
          (Z_to_bv 64 path) s3 s4 s5 s6 s7 s8 s9 s10 s11 (Z_to_bv 64 (-1)) m' ms
-      /\ musl_after RT Σ (bv_unsigned (Z_to_bv 64 (usp - 80))) (rt_sp0 RT Σ - STACK_WIN) [(errno_cell (Z_to_bv 64 TP_A), errno_cell (Z_to_bv 64 TP_A) + 4)] m m'
+      /\ musl_after RT Σ (bv_unsigned (Z_to_bv 64 (usp - 80))) (rt_sp0 RT Σ - STACK_WOK) [(errno_cell (Z_to_bv 64 TP_A), errno_cell (Z_to_bv 64 TP_A) + 4)] m m'
       /\ rw_cells bsegs m' (errno_cell (Z_to_bv 64 TP_A)) [C4 (Z_to_bv 64 e)]) c ->
   FAILED RT OUT_rep ERR_rep XENV LIB argvb fs c.
 Proof using AF OUT_loc ERR_loc XENV_loc LIB_loc IO_img XENV_img.
@@ -296,7 +297,7 @@ Proof using AF AF_DRV OPR VARGV OUT_loc ERR_loc XENV_loc LIB_loc IO_img XENV_img
   rewrite nth1_argv_Z in HCL. apply oc_fail in HCL.
   apply (OPR Σ fds0 fs (Z_to_bv 64 RET_OPEN) (Z_to_bv 64 (usp - 80)) gp (Z_to_bv 64 TP_A) t0 t1 t2 (Z_to_bv 64 2) s1
            (Z_to_bv 64 path) (Z_to_bv 64 0) a2 a3 a4 a5 a6 a7 (Z_to_bv 64 path) s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
-           F fc m path (path_b argvb) (rt_sp0 RT Σ - STACK_WIN)); try reflexivity; try assumption.
+           F fc m path (path_b argvb) (rt_sp0 RT Σ - STACK_WOK)); try reflexivity; try assumption; try exact (win_le_wok _).
   - rewrite unsigned_lit by ul. exact ST0.
   - rewrite unsigned_lit by ul. ul.
   - right. rewrite unsigned_lit by ul. lia.
@@ -307,12 +308,12 @@ Qed.
 (* [comment removed for export] *)
 Lemma opened_intro : forall Σ usp ap path gp s1 s3 s4 s5 s6 s7 s8 s9 s10 s11 c0 c1 c2 c3 c4 c5 c6 c7 m m' ent c,
   MAINCTX RT OUT_rep ERR_rep XENV LIB argvb Σ stdout_init usp ap c0 c1 c2 c3 c4 c5 c6 c7 m -> sigma0_ok RT Σ usp ->
-  bytes_at bsegs m path (path_b argvb ++ [Z_to_bv 8 0]) -> ap < path -> path + Z.of_nat (length (path_b argvb)) + 1 <= USTACK_TOP - 16 ->
+  bytes_at bsegs m path (path_b argvb ++ [Z_to_bv 8 0]) -> ap < path -> path + Z.of_nat (length (path_b argvb)) + 1 <= USTACK_TOP - 9 ->
   open_ent (path_b argvb) fs = Some ent -> path_slack argvb m path ->
   ASTA RT Σ (PMfd (fd_insert fds0 (alloc_fd fds0) ent) fs)
     (fun ms => ret_st (Z_to_bv 64 RET_OPEN) (Z_to_bv 64 (usp - 80)) gp (Z_to_bv 64 TP_A) (Z_to_bv 64 2) s1
          (Z_to_bv 64 path) s3 s4 s5 s6 s7 s8 s9 s10 s11 (alloc_fd fds0) m' ms
-      /\ musl_after RT Σ (bv_unsigned (Z_to_bv 64 (usp - 80))) (rt_sp0 RT Σ - STACK_WIN) [] m m') c ->
+      /\ musl_after RT Σ (bv_unsigned (Z_to_bv 64 (usp - 80))) (rt_sp0 RT Σ - STACK_WOK) [] m m') c ->
   OPENED RT OUT_rep ERR_rep XENV LIB argvb fs c.
 Proof using AF OUT_loc ERR_loc XENV_loc LIB_loc IO_img XENV_img.
   intros Σ usp ap path gp s1 s3 s4 s5 s6 s7 s8 s9 s10 s11 c0 c1 c2 c3 c4 c5 c6 c7 m m' ent c
@@ -350,7 +351,7 @@ Proof using AF AF_DRV OPC VARGV OUT_loc ERR_loc XENV_loc LIB_loc IO_img XENV_img
   rewrite nth1_argv_Z in HCL. destruct (oc_notfail _ _ HCL) as (ent & HENT).
   apply (OPC Σ fds0 fs (Z_to_bv 64 RET_OPEN) (Z_to_bv 64 (usp - 80)) gp (Z_to_bv 64 TP_A) t0 t1 t2 (Z_to_bv 64 2) s1
            (Z_to_bv 64 path) (Z_to_bv 64 0) a2 a3 a4 a5 a6 a7 (Z_to_bv 64 path) s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
-           F fc m path (path_b argvb) (rt_sp0 RT Σ - STACK_WIN) ent); try reflexivity; try assumption.
+           F fc m path (path_b argvb) (rt_sp0 RT Σ - STACK_WOK) ent); try reflexivity; try assumption; try exact (win_le_wok _).
   - rewrite unsigned_lit by ul. exact ST0.
   - rewrite unsigned_lit by ul. ul.
   - right. exact ERRN0.
@@ -372,7 +373,7 @@ Proof using AF AF_DRV FPR EXC VARGV OUT_loc ERR_loc XENV_loc LIB_loc IO_img XENV
   pose proof (AF_DRV Σ m ART0) as DC0. pose proof DC0 as (SC0 & _). pose proof (drv_ssp m g0 DC0 SG0) as SSP0.
   pose proof (af_sp0_range RT AF Σ m ART0) as SP0R.
   destruct (path_b_facts HL) as (NZ & NSL & NDD & LEN).
-  set (lo := rt_sp0 RT Σ - STACK_WIN) in *.
+  set (lo := rt_sp0 RT Σ - STACK_WOK) in *.
   rewrite nth1_argv_Z.
   replace (evw 2 (msg_cannot_open (map bv_unsigned (nth 1 argvb []))))
     with (evw 2 (fp_msg (FPcannot_open path (path_b argvb))) ++ evw 1 (so_buf stdout_init))
@@ -393,7 +394,7 @@ Proof using AF AF_DRV FPR EXC VARGV OUT_loc ERR_loc XENV_loc LIB_loc IO_img XENV
   apply (FPR Σ fds0 fs (Z_to_bv 64 0x1edd64) (Z_to_bv 64 (usp - 80)) gp (Z_to_bv 64 TP_A) t0 t1 t2 (Z_to_bv 64 2) s1
            (Z_to_bv 64 STDERR_FILE) (Z_to_bv 64 FMT_cannot_open) (Z_to_bv 64 path) a3 a4 a5 a6 a7 (Z_to_bv 64 path)
            s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m (FPcannot_open path (path_b argvb)) STDERR_FILE lo);
-    try reflexivity; try assumption.
+    try reflexivity; try assumption; try exact (win_le_wok _).
   - intros a s Hs. cbn [fp_str] in Hs. injection Hs as <- <-. split; [exact HB|]. split; [exact NZ|].
     split; [lia|]. split; [split|].
     + intros _. split.
@@ -423,7 +424,7 @@ Proof using AF AF_DRV FPR EXC VARGV OUT_loc ERR_loc XENV_loc LIB_loc IO_img XENV
     destruct (ASTA_unpack RT Σ _ _ cf3 Hc3) as (ms3 & <- & Hc3').
     apply (EXC Σ fds0 fs (Z_to_bv 64 0x1edd94) (Z_to_bv 64 (usp - 80)) gp (Z_to_bv 64 TP_A) t0' t1' t2' (Z_to_bv 64 2) s1
              (Z_to_bv 64 2) a1' a2' a3' a4' a5' a6' a7' (Z_to_bv 64 path) s3 s4 s5 s6 s7 s8 s9 s10 s11 t3' t4' t5' t6' F' fc'
-             m2 stdout_init 2 lo); try reflexivity; try assumption.
+             m2 stdout_init 2 lo); try reflexivity; try assumption; try exact (win_le_wok _).
     + lia.
     + left. reflexivity.
     + unfold call_ok. rewrite unsigned_lit by ul. split; [exact ST2|]. ul.

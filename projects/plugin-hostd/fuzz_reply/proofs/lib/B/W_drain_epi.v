@@ -9,7 +9,7 @@
      1. lib/A/W_drain_epi.v of a working branch: the same two segments in the same framework on image A
         (A_dr_end 0x83bbc, A_dr_eof 0x83b64, A_dr_epi 0x83b80): the entry states, the runner, the errno call, the
         footprint lemmas (dend_* below) and dend_post.
-     2. A working branch 1c09e330abe lib/B/Prog/drain_p_exit_step.v (a Theorem Labs lane's old-framework
+     2. A working branch lib/B/Prog/drain_p_exit_step.v (a Theorem Labs lane's old-framework
         walk of image-B drain): the two arms of the tail (closed: bdr_closed, bdr_eof, bdr_epi; open: bdr_again, the
         __errno_location call 0x83eac -> 0x83eb0, bdr_eset, bdr_eexit, bdr_epi); its SR statements do not
         transport.
@@ -37,6 +37,7 @@
    ARx FORM (an internal work row, the image-B twin of image A's slice B): Section cx proves dr_epi_x and dr_end_x,
    W_drain_cx_x.v's dr_epi_stmt_x and dr_end_stmt_x at the room texts, over any allocator relation ARx, its journal at
    W_contract_x.v's DRAIN_STK_x; the AR walk (Section c: dr_epi, dr_end) is unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up invariant is SINV0L over the run's input, the args block no longer takes the stack-fit premise, kunk_check_w and kunk_main read the auxv words known only to be present, pre_rdr gives the launch's channel reader, the canary word's variable is AsMainFacts.K_CAN, renumbered with the end states, and the stack presence floor of stack_full and pre_stk is sp0 - 6144000, read in LSTK and stk_check from the main-entry states' claim of the whole pages [sp0 - 6144000, sp0) of the launch's write window [sp0 - 6144513, sp0); lden_LSTK and lden_LSH read the sums of LSTK, LSHSTK and LSHLEN by conversion). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -11,7 +12,7 @@ From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Lib Require Import Mem Ce
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import HeapCeil.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.As Require Import ASegs AsShadow AsConst AsIface AsStack0 AsCellOk ECH_Xpres AsPrintfFirst AsDrvDefs.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import
-  PropExec AxSymExec3 AxSymExec3Sound AxSymExec3B AsanAcct AsanPlanCore AsanPlan AsanPlanSound AsanPlanSoundSums AsanInit AsanHexScan
+  PropExec AxSymExec3 AxSymExec3Sound AxSymExec3B AsanAcct AsanPlanCore AsanPlan AsanPlanSound AsanPlanSoundSums AsanInit AsanInitL AsanHexScan
   AsHSTab AsMainVM AsMainState AsMainFacts AsMainLazyChk AsMainLazy AsMainCells AsMainIface LazyRestrict LazySR.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.As Require Import AsMainSyms.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.AsCert Require Import AsImages AsPlanImages.
@@ -29,8 +30,8 @@ Section AT_MAIN.
   Hypothesis Vev : valid_envp (in_envp inp).
   Hypothesis Vfit : entry_stack_fits sp0 (in_argv inp) (in_envp inp).
   Hypothesis Hh : HSF_asan h = Some ch.
-  Hypothesis HC : cs_ok ASEGS ASAN_H AsanInit.LIMIT (SINV0 APH sp0 rdraw brk0 (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-                        (argH0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model.
+  Hypothesis HC : cs_ok ASEGS ASAN_H AsanInit.LIMIT (SINV0L APH Asan.M.init_pc sp0 rdraw brk0 inp)
+                        (argH0 sp0 rdraw inp) (in_fs inp) E ch R FULL model.
   #[local] Notation g := (hole_granted h).
   #[local] Notation cls := (hole_class h).
   #[local] Notation X := (Xof g E).
@@ -180,15 +181,15 @@ Section AT_MAIN.
   #[local] Notation hid_sh := (AsMainCells.hid_sh sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Hh HC) (only parsing).
   #[local] Notation hid_stack := (AsMainCells.hid_stack sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Hh HC) (only parsing).
   #[local] Notation visibleZ_hid := (AsMainCells.visibleZ_hid sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Hh HC) (only parsing).
-  #[local] Notation args_block := (AsMainCells.args_block sp0 brk0 rdraw inp ch E R FULL model Vsp Vav Vev Vfit HC) (only parsing).
+  #[local] Notation args_block := (AsMainCells.args_block sp0 brk0 rdraw inp ch E R FULL model Vsp Vav Vev HC) (only parsing).
   #[local] Notation Mr_some := (AsMainCells.Mr_some sp0 rdraw inp ch E FULL model) (only parsing).
   #[local] Notation Mr_vis_none := (AsMainCells.Mr_vis_none sp0 rdraw inp ch E FULL model) (only parsing).
   #[local] Notation rdn_Mr_full := (AsMainCells.rdn_Mr_full sp0 brk0 rdraw inp ch E FULL model) (only parsing).
 
   (* [comment removed for export] *)
   #[local] Notation CXV a := (cx_val sp0z brk0z X a).
-  #[local] Notation MR := (Mr ASAN_H (argH0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) E ch model FULL).
-  #[local] Notation HID := (hid ASAN_H (argH0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) E ch model).
+  #[local] Notation MR := (Mr ASAN_H (argH0 sp0 rdraw inp) E ch model FULL).
+  #[local] Notation HID := (hid ASAN_H (argH0 sp0 rdraw inp) E ch model).
   Let KNF := co_know _ _ _ _ _ _ _ _ _ _ _ HC.
   Ltac csz := cbn [cells_size csize cells_bytes cbytes le8 le4 le2 le1 word_to_le_bytes Z_to_le_bytes length Nat.add Z.of_nat Pos.of_succ_nat Pos.succ Pos.add app repeat map].
 
@@ -308,6 +309,50 @@ Section AT_MAIN.
     destruct (VR (bv_unsigned x) ltac:(lia)) as [V _]. unfold wa in V. replace (Z_to_bv 64 (bv_unsigned x)) with x in V by (apply bv_eq; rewrite Z_to_bv_unsigned; symmetry; apply bv_wrap_small; apply bv_unsigned_in_range). exact V.
   Qed.
 
+  (* The KUnk analogue of [kword_check_w].  [KUnk]'s length is an [expr], so a concrete
+     byte count enters as [ELit (Z.of_nat n)] -- that is what [auxk] emits. *)
+  Definition kunk_check_w (w : world) (a : cx) (n : nat) : bool :=
+    all_holes_w w (fun g cls ch => let (b, k) := csym_base g cls (fst a) in existsb (kentry_eqb (KUnk (SA b (k + snd a)) (ELit (Z.of_nat n)))) (kn ch)).
+  (* The KUnk dual of [kword_main].  [kword_main] reads a slot whose VALUE the plan knows;
+     this one reads a slot the plan knows only to be PRESENT -- [auxk]'s arm, which at LPS
+     75d69e00 covers fourteen of the auxv's twenty-six pairs (the eight riscv64 cache words,
+     AT_MINSIGSTKSZ, and the five whose value musl never reads).  The conclusion is
+     deliberately weaker than kword_main's: eight readable bytes, no claim about which.
+     Ported per hunk from [kword_main] above: the hole selection, the [estart]/[adenot]
+     rewriting, the FULL->VM transport by [rdn_Mr_full] + [rdn_ext] and the [vrange]
+     discharge are its, line for line.  What is NOT ported, because it has no counterpart
+     there: [kentry_ok]'s KUnk arm has TWO components rather than three -- [flat] and a
+     POINTWISE presence fact -- so the [rdn] equation kword_main destructures does not
+     exist here, and [rdn_defined] is what turns the pointwise fact into one. *)
+  Lemma kunk_main : forall w a n,
+    kunk_check_w w a n = true -> world_ok w (pm_short sp0z) g -> (0 < n)%nat ->
+    0 <= CXV a -> CXV a + Z.of_nat n < 2 ^ 64 -> vrange (CXV a) (CXV a + Z.of_nat n) ->
+    exists bs, rdn ASEGS VM (Z_to_bv 64 (CXV a)) n = Some bs /\ length bs = n.
+  Proof.
+    intros w [s off] n H Hw Hn0 H0 H1 VR. apply (all_holes_w_here w) in H; [|exact (hole_sel_here w Hw)].
+    cbn [fst snd] in H.
+    destruct (csym_den s) as (D1 & D2 & D3).
+    destruct (csym_base g cls s) as [b k] eqn:CB. cbn [fst snd] in D1, D2, D3.
+    apply existsb_exists in H as [K [HK HE]]. apply kentry_eqb_eq in HE. subst K.
+    pose proof (proj1 (Forall_forall _ _) KNF _ HK) as KO. cbn [kentry_ok] in KO. destruct KO as (FL & PT).
+    assert (HE : estart E (SA b (k + off)) = CXV (s, off)).
+    { unfold estart. cbn [a_base a_off]. fold (uE E b). revert D1. pmc_simpl. intros D1. lia. }
+    assert (Ha : adenot E (SA b (k + off)) = Z_to_bv 64 (CXV (s, off))).
+    { apply bv_eq. rewrite (flat_u E _ _ FL), HE, u_of_Z; [reflexivity|]. pose proof (u64_range (adenot E (SA b (k + off)))) as RR. rewrite (flat_u E _ _ FL), HE in RR. exact RR. }
+    (* the pointwise presence fact, re-addressed, then turned into a read *)
+    assert (PT' : forall j, (j < n)%nat -> rd1 ASEGS FULL (Z_to_bv 64 (CXV (s, off) + Z.of_nat j)) <> None).
+    { intros j Hj. specialize (PT (Z.of_nat j) ltac:(unfold elenZ; rewrite edenot_lit, u_of_Z by lia; lia)). rewrite HE in PT.
+      revert PT. unfold Mr, mrestrict, rd1.
+      destruct (FULL (Z_to_bv 64 (CXV (s, off) + Z.of_nat j))); [intros _; discriminate|].
+      match goal with |- context [if ?c then _ else _] => destruct c end; intros PT; exfalso; apply PT; reflexivity. }
+    destruct (rdn_defined ASEGS FULL n (Z_to_bv 64 (CXV (s, off)))
+                ltac:(rewrite u_of_Z by lia; lia)
+                ltac:(intros j Hj; rewrite u_of_Z by lia; exact (PT' j Hj))) as (bs & RF & LB).
+    exists bs. split; [|exact LB].
+    rewrite <- RF. apply rdn_ext; [rewrite u_of_Z by lia; lia|]. intros x Hx. rewrite u_of_Z in Hx by lia.
+    destruct (VR (bv_unsigned x) ltac:(lia)) as [V _]. unfold wa in V. replace (Z_to_bv 64 (bv_unsigned x)) with x in V by (apply bv_eq; rewrite Z_to_bv_unsigned; symmetry; apply bv_wrap_small; apply bv_unsigned_in_range). exact V.
+  Qed.
+
   Lemma pre_tid : atid_cell VM (ps_tid X).
   Proof.
     pose proof (facts sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Hh HC) as (_ & _ & _ & _ & _ & VTID & _).
@@ -320,8 +365,8 @@ Section AT_MAIN.
 
   Lemma pre_can : exists can, acanary VM can.
   Proof.
-    exists (bv_unsigned (edenot E (EVar 61))). split; [|apply u64_range].
-    pose proof (kword_main w_all (CAbs, 0xbce690) 8 (EVar 61) ltac:(vm_cast_no_check (@eq_refl bool true)) (world_ok_all _ _) ltac:(lia)) as W.
+    exists (bv_unsigned (edenot E (EVar K_CAN))). split; [|apply u64_range].
+    pose proof (kword_main w_all (CAbs, 0xbce690) 8 (EVar K_CAN) ltac:(vm_cast_no_check (@eq_refl bool true)) (world_ok_all _ _) ltac:(lia)) as W.
     revert W. pmc_simpl. rewrite Z.add_0_l. intros W. change Asan.M.loaded_segments with ASEGS.
     rewrite (W ltac:(lia) ltac:(lia) ltac:(apply vr_img; lia)). do 2 f_equal. apply bv_eq. rewrite Z_to_bv_unsigned. symmetry. apply bv_wrap_small. apply bv_unsigned_in_range.
   Qed.
@@ -409,27 +454,37 @@ Section AT_MAIN.
     | _ => false
     end.
   (* [comment removed for export] *)
-  Definition LSTK : lin := (-8388608, [(32768, EVar 0); (4096, EVar 6); (16, EVar 10)]).
+  (* LPS 727298f3: only [stack_window_lo, sp0) is mapped at the launch (Run.stack_window_lo), and the start-up
+     knowledge's write window under sp0 is [sp0 - 6144513, sp0) (AsanPlanCore.init_kn_with's
+     KWr (SA e_sp0 (-6144513)) (ELit 6144513); 6144513 = StoreOk.stack_window_depth).  The main-entry states
+     (AsHole/ES6End0 .. ES6End5) claim its whole pages [sp0 - 6144000, sp0) of the stack region the holes'
+     leaf check sees (whose pages are counted from sp0 - 8 MiB): the form that check derives *)
+  Definition LSTK : lin := (-6144000, [(32768, EVar 0); (4096, EVar 6); (16, EVar 10)]).
   Definition LSHSTK : lin := (2146402304, [(4096, EVar 0); (512, EVar 6)]).
   Definition LSHLEN : lin := (17592187092992, [(-4096, EVar 0); (-512, EVar 6)]).
-  Definition stk_check : bool := all_holes (fun g cls ch => existsb (kwr1 (mkbc (kn ch)) LSTK 8388608) (kn ch)).
+  Definition stk_check : bool := all_holes (fun g cls ch => existsb (kwr1 (mkbc (kn ch)) LSTK 6144000) (kn ch)).
   Definition shz_check : bool := all_holes (fun g cls ch => existsb (kzero1 (mkbc (kn ch)) LSHSTK LSHLEN) (kn ch)).
   Lemma stk_check_ok : stk_check = true.  Proof. vm_compute. reflexivity. Qed.
   Lemma shz_check_ok : shz_check = true.  Proof. vm_compute. reflexivity. Qed.
 
-  Lemma lden_LSTK : lden E LSTK = sp0z - 8388608.
+  (* [lden] of a literal [lin] is, by conversion, the sum its [tden] spells out over [vE] *)
+  Lemma lden_LSTK : lden E LSTK = sp0z - 6144000.
   Proof.
     pose proof (facts sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Hh HC) as (_ & _ & _ & _ & _ & _ & _ & _ & SP & _).
-    unfold LSTK, lden. cbn [fst snd tden]. rewrite !uE_var. lia.
+    assert (D : lden E LSTK = -6144000 + (32768 * vE E 0 + (4096 * vE E 6 + (16 * vE E 10 + 0)))) by reflexivity.
+    rewrite D. lia.
   Qed.
   Lemma lden_LSH : lden E LSHSTK = SHOFF + (page_down sp0z - 8388608) / 8 /\ lden E LSHSTK + lden E LSHLEN = SHOFF + 2 ^ 44.
   Proof.
     pose proof (facts sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Hh HC) as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & PGD & _).
-    unfold LSHSTK, LSHLEN, lden, SHOFF. cbn [fst snd tden]. rewrite !uE_var. rewrite <- PGD. lia.
+    assert (D1 : lden E LSHSTK = 2146402304 + (4096 * vE E 0 + (512 * vE E 6 + 0))) by reflexivity.
+    assert (D2 : lden E LSHLEN = 17592187092992 + ((-4096) * vE E 0 + ((-512) * vE E 6 + 0))) by reflexivity.
+    rewrite D1, D2. unfold SHOFF. rewrite <- PGD. lia.
   Qed.
 
   (* [comment removed for export] *)
-  Lemma stack_full : forall z, sp0z - 8388608 <= z < sp0z -> exists b, FULL (wa z) = Some b.
+  (* LPS 727298f3: the floor is the main-entry states' write window ([LSTK], [stk_check]), no longer sp0 - 8 MiB *)
+  Lemma stack_full : forall z, sp0z - 6144000 <= z < sp0z -> exists b, FULL (wa z) = Some b.
   Proof.
     intros z Hz. pose proof stk_check_ok as H0. unfold stk_check in H0. pose proof (all_holes_here _ H0) as H. cbv beta in H. clear H0.
     apply existsb_exists in H as [K [HK HW]]. pose proof (proj1 (Forall_forall _ _) KNF _ HK) as KO.
@@ -454,7 +509,7 @@ Section AT_MAIN.
   Qed.
 
   (* [comment removed for export] *)
-  Lemma pre_stk : forall lo, sp0z - 8388608 <= lo -> lo <= sp0z -> stk asegs VM lo sp0z.
+  Lemma pre_stk : forall lo, sp0z - 6144000 <= lo -> lo <= sp0z -> stk asegs VM lo sp0z.
   Proof.
     intros lo H1 H2. pose proof Vsp as [V1 [V2 _]]. unfold sp_window_lo, sp_window_hi in V1, V2.
     pose proof pd_facts as PD.
@@ -512,6 +567,9 @@ Section AT_MAIN.
   Qed.
   Lemma pre_fds : m_fds model = [(Z_to_bv 64 0, FdChannel (Z_to_bv 64 0)); (Z_to_bv 64 1, FdChannel (Z_to_bv 64 1)); (Z_to_bv 64 2, FdChannel (Z_to_bv 64 2))].
   Proof. exact (pm_fds _ _ _ _ _ PMo). Qed.
+  (* 08b1429: the launch's channel reader, from [PM]'s [pm_rdr] *)
+  Lemma pre_rdr : m_channel_reader model = true.
+  Proof. exact (pm_rdr _ _ _ _ _ PMo). Qed.
   Lemma pre_fs : m_fs model = in_fs inp.
   Proof. exact (pm_fs _ _ _ _ _ PMo). Qed.
 End AT_MAIN.

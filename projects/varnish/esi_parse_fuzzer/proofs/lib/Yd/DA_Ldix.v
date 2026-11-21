@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the library statements carry the channel-reader premise, the open precondition bounds the path's end below TASK_SIZE, and the diagnostic needs 8 bytes of slack after its argument. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -70,7 +71,8 @@ Context {Clg : Ceiling}.  (* [comment removed for export] *)
 
   (* [comment removed for export] *)
   Definition md_io (md md' : Model) (fds' : list (word * FdEntry)) : Prop :=
-    m_fs md' = m_fs md /\ m_fds md' = fds' /\ m_halted md' = None.
+    m_fs md' = m_fs md /\ m_fds md' = fds' /\ m_halted md' = None
+    /\ m_channel_reader md' = m_channel_reader md.   (* 08b1429: channel-reader-premise *)
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
@@ -148,6 +150,8 @@ Context {Clg : Ceiling}.  (* [comment removed for export] *)
   Definition open_pre (v : word -> option byte) (sp a0 a1 tp : word) (p1 : Z) (path : list byte) (lo : Z) : Prop :=
        a0 = wz p1 /\ a1 = wz 0 /\ tp = cl_tp LPA
     /\ bytes_at rsegs v p1 (path ++ [Z_to_bv 8 0]) /\ ~ In (Z_to_bv 8 0) path /\ bv_unsigned sp <= p1
+    (* LPS 727298f3: openat reads the path only below TASK_SIZE ([read_cstr]'s per-byte access_ok) *)
+    /\ p1 + Z.of_nat (length path) < TASK_SIZE
     /\ mem_inv rsegs v /\ open_cells v
     /\ stk rsegs v lo (bv_unsigned sp) /\ lo + OPEN_STACK <= bv_unsigned sp /\ alloc_ceiling <= lo
     /\ (exists e, rw_cells rsegs v ERRNO_CELL [C4 e]).
@@ -342,6 +346,7 @@ Context {Clg : Ceiling}.  (* [comment removed for export] *)
       file_at v Fa f -> (mf_fd f = 1 \/ mf_fd f = 2) ->
       0xaa000 <= Fa -> Fa + 152 <= SSP_GUARD -> img_client (L:=LPA) Fa (Fa + 152) ->
       fd_lookup (m_fds md) (wz (mf_fd f)) = Some (FdChannel (wz (mf_fd f))) ->
+      m_channel_reader md = true ->   (* 08b1429: channel-reader-premise *)
       mf_wbase f = wz (mf_buf f) -> mf_wpos f = wz wp -> wp = mf_buf f + Z.of_nat (length pend) ->
       bytes_at rsegs v (mf_buf f) pend -> bytes_at rsegs v sa s ->
       Z.of_nat (length pend) + Z.of_nat (length s) <= 2^26 -> (1 <= length pend + length s)%nat ->
@@ -440,6 +445,7 @@ Context {Clg : Ceiling}.  (* [comment removed for export] *)
       mf_bufsize f - Z.of_nat (length pend) < l -> Z.of_nat (length pend) <= mf_bufsize f -> Z.of_nat (length pend) + l <= 2^26 ->
       0xaa000 <= Fa -> Fa + 152 <= SSP_GUARD -> img_client (L:=LPA) Fa (Fa + 152) ->
       fd_lookup (m_fds md) (wz (mf_fd f)) = Some (FdChannel (wz (mf_fd f))) ->
+      m_channel_reader md = true ->   (* 08b1429: channel-reader-premise *)
       bytes_at rsegs v (mf_buf f) pend -> bytes_at rsegs v sa s ->
       0 <= sa -> sa + l < 2^47 ->
       (mf_buf f + Z.of_nat (length pend) <= bv_unsigned sp - FWRITEX_STACK \/ bv_unsigned sp <= mf_buf f) ->
@@ -472,6 +478,7 @@ Context {Clg : Ceiling}.  (* [comment removed for export] *)
       mf_wbase f = wz STDOUT_BUF -> mf_wpos f = wz (STDOUT_BUF + Z.of_nat (length pend)) -> mf_wend f = wz (STDOUT_BUF + 1024) ->
       (length pend + 1 <= 1024)%nat ->
       fd_lookup (m_fds md) (wz 1) = Some (FdChannel (wz 1)) ->
+      m_channel_reader md = true ->   (* 08b1429: channel-reader-premise *)
       rw_cells rsegs v STDOUT_BUF [CB 1024 bj] -> firstn (length pend) bj = pend ->
       bytes_at rsegs v sa [Z_to_bv 8 10] -> 0 <= sa -> sa + 1 < 2^47 ->
       (sa + 1 <= lo \/ bv_unsigned sp <= sa) -> (sa + 1 <= STDOUT_F \/ STDOUT_F + 152 <= sa) ->
@@ -502,6 +509,7 @@ Context {Clg : Ceiling}.  (* [comment removed for export] *)
       a0 = wz STDOUT_F -> a1 = wz sa -> a2 = wz (Z.of_nat (length s)) ->
       file_at v STDOUT_F f -> mf_fd f = 1 -> mf_flags f = 5 -> mf_buf f = STDOUT_BUF -> mf_bufsize f = 1024 ->
       fd_lookup (m_fds md) (wz 1) = Some (FdChannel (wz 1)) ->
+      m_channel_reader md = true ->   (* 08b1429: channel-reader-premise *)
       mf_wbase f = wz STDOUT_BUF -> mf_wpos f = wz (STDOUT_BUF + Z.of_nat (length pend)) ->
       bytes_at rsegs v STDOUT_BUF pend -> bytes_at rsegs v sa s ->
       (1 <= length pend + length s)%nat -> (length pend <= 1024)%nat -> Z.of_nat (length s) <= 2^25 ->
@@ -546,6 +554,7 @@ Context {Clg : Ceiling}.  (* [comment removed for export] *)
       bytes_at rsegs v pa msg -> (forall v', consts_hold LPA v' -> range_ok v' pa (Z.of_nat (length msg))) ->
       file_at v STDERR_F fe -> stderr_ok fe ->
       fd_lookup (m_fds md) (wz 2) = Some (FdChannel (wz 2)) ->
+      m_channel_reader md = true ->   (* 08b1429: channel-reader-premise *)
       stk rsegs v lo (bv_unsigned sp) -> lo + FWRITE_ICPT_STACK <= bv_unsigned sp -> alloc_ceiling <= lo -> bv_unsigned sp <= 2^47 -> K [] ->
       (forall m' md' fe', ainv A m' md' -> md_io md md' (m_fds md) -> stderr_ok fe' -> file_at (aview A m') STDERR_F fe' ->
           forall ms', (exists t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6',
@@ -577,13 +586,17 @@ Context {Clg : Ceiling}.  (* [comment removed for export] *)
       a0 = wz STDERR_F -> a1 = wz (diag_fmt_addr d) ->
       match d with DF_refused => a2 = wz 67108864 /\ arg = []
                  | _ => a2 = wz pa /\ bytes_at rsegs v pa (arg ++ Z_to_bv 8 0 :: slack) /\ ~ In (Z_to_bv 8 0) arg
-                        /\ alloc_ceiling <= pa /\ pa + Z.of_nat (length arg) + 1 + Z.of_nat (length slack) <= 2^47 /\ 16 <= Z.of_nat (length slack) (* [comment removed for export] *)
+                        /\ alloc_ceiling <= pa /\ pa + Z.of_nat (length arg) + 1 + Z.of_nat (length slack) <= 2^47
+                        (* LPS 727298f3: 8 bytes of slack, not 16: an argv string at the top of the launch's
+                           block is followed by as little as the exec file name's NUL and the eight-byte slot *)
+                        /\ 8 <= Z.of_nat (length slack) (* [comment removed for export] *)
                         /\ bv_unsigned sp <= pa (* [comment removed for export] *)
                         /\ (- (pa + Z.of_nat (length arg) + 1)) mod 8 <= Z.of_nat (length slack) (* [comment removed for export] *) end ->
       (Z.of_nat (length arg) <= 131072) ->
       bytes_at rsegs v (sh alloc_ceiling) (zeros (Z.to_nat ((2^47 - alloc_ceiling) / 8))) ->
       file_at v STDERR_F fe -> stderr_ok fe -> (exists j8, rw_cells rsegs v STDERR_BUFP [CB 8 j8]) ->
       fd_lookup (m_fds md) (wz 2) = Some (FdChannel (wz 2)) ->
+      m_channel_reader md = true ->   (* 08b1429: channel-reader-premise *)
       (exists g, ro_cells rsegs v SSP_GUARD [C8 g]) -> ro_cells rsegs v SSP_GOT [C8 (wz SSP_GUARD)] ->   (* [comment removed for export] *)
       stk rsegs v lo (bv_unsigned sp) -> lo + FPRINTF_ICPT_STACK <= bv_unsigned sp -> alloc_ceiling <= lo ->
       bv_unsigned sp mod 16 = 0 ->
@@ -614,6 +627,7 @@ Context {Clg : Ceiling}.  (* [comment removed for export] *)
       (forall v', consts_hold LPA v' -> range_ok v' FMT_D 4 /\ range_ok v' STDOUT_BUF 1024) ->   (* [comment removed for export] *)
       bytes_at rsegs v (sh alloc_ceiling) (zeros (Z.to_nat ((2^47 - alloc_ceiling) / 8))) ->
       stdout_at v SO_pristine -> fd_lookup (m_fds md) (wz 1) = Some (FdChannel (wz 1)) ->
+      m_channel_reader md = true ->   (* 08b1429: channel-reader-premise *)
       (exists g, ro_cells rsegs v SSP_GUARD [C8 g]) -> ro_cells rsegs v SSP_GOT [C8 (wz SSP_GUARD)] ->
       stk rsegs v lo (bv_unsigned sp) -> lo + VPRINTF_ICPT_STACK <= bv_unsigned sp -> alloc_ceiling <= lo -> bv_unsigned sp mod 16 = 0 ->
       K [] ->

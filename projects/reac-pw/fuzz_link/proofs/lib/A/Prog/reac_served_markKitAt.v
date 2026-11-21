@@ -8,7 +8,7 @@
    shadow_transport_akb. The 8 bytes past the marks block are visible at every AR
    state (srm_blk_tail_vis16: the rest of the block's chunk is AR's junk, libreac/fuzz_boxreg BoxTailVis.v
    ar_blk_tail_vis on origin/ossv/recipes, here to the next multiple of 16). The rest of a string's NUL granule is
-   not in the read set (the contract's W6 revert, ab90b9e2923d): srm_tail_vis carries its visibility from the entry
+   not in the read set (the contract's W6 revert): srm_tail_vis carries its visibility from the entry
    to the cut by the four cases of `akb` of the NUL (the stack row: akept keeps presence there; a heap block: AR's
    block law and the chunk's junk; the image: the ROM fallback, lib/A/AB13.v tfib_rom_all; a side frame of the
    entry: AR's frame law at the cut).

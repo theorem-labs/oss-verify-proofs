@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/AF0r.v, with its module paths changed; 528 of its 589 lines of code are new or changed and 383 lines of the source are left out. *)
-(* Ported from: a working branch 52efd1c871f7 proofs/omx-clap-core/fuzz_manifest/lib/A/FMpoisonW.v:1-585
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Ported from: a working branch proofs/omx-clap-core/fuzz_manifest/lib/A/FMpoisonW.v:1-585
    (a Theorem Labs lane, design/POISON.md section 7): tfib_poison16 / tfib_unpoison16, now at fs.asan's
    __asan_poison_memory_region 0x54894 / __asan_unpoison_memory_region 0x54a34 (FSpoisonR.PO_ENTRY / UP_ENTRY =
    FSH_Base.PC_poison / PC_unpoison; disassembly evidence in lib/A/FSpoisonR.v's header), over the relocated fs core

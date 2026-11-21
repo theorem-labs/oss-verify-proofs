@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (U_side passes run_of_tree its channel-reader premise, vie_reader of the valid input). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -34,7 +35,7 @@ Proof.
   intros HU en inp He Hi.
   destruct (prog_model_ok_U (CE__:=run_ceiling en) en inp He Hi (run_ceiling_eqA _ _ _ _ _ (vie_va_size _ Hi) He)) as [Hl Hs].
   destruct (run_of_tree usegs Ubsan.M.init_pc Ubsan.M.phdrs target_alloc_limit
-              (the_prog usegs ustage inp en) (epost the_post) en inp (HU en inp He Hi) Hl Hs)
+              (the_prog usegs ustage inp en) (epost the_post) en inp (HU en inp He Hi) Hl Hs (vie_reader inp Hi))
     as (Htr & Herr & _).
   split; [| exact Herr].
   intros tr. rewrite (Htr tr). exact (prog_det_U prog_no_enomem_U en inp He Hi tr).

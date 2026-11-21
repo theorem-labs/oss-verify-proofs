@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: decodes sixteen encoded lemma statements (vals_lo, store_ok_of_defined, regions_stagewrite, etc.) into plain Rocq, adds a ReaderOn context and ProcInput/mbase/entry arguments to main_entry, and updates hiv_facts' and rnd uses as in fuzz_bigint's copy; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Ub0DrvB.v, 43 lines within its lines 34-226. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -26,19 +27,22 @@ Tactic Notation "run_block" constr(scr) constr(NX) := run_block_gen FUEL STOPS s
 Tactic Notation "run_block_keep" constr(scr) constr(NX) := run_block_gen FUEL STOPS scr NX true.
 Section FPX_1. Context {fx : PropExec.FPState}.
 Variable scfg : SpuriousCfg.
-Lemma vals_lo : ltac2:(TCodec.tc2 tcn__Ju0DrvB "Q0'8'S=yR0%211%411'9'Cr2&7r4%2271%5241&Dr3%2271'@&R<&4&Er6%23A;1r5%53C21%721:%825;%:3F21p0<1p0@1pV2G1pV:H1pULJ1pW2K1").
+Lemma vals_lo : forall (vals ext : list word) (n j : nat),
+(n <= length vals)%nat -> (j < n)%nat -> vals_ev (firstn n vals ++ ext) j = vals_ev vals j.
 Proof.
 intros vals ext n j Hn Hj. unfold vals_ev. rewrite app_nth1 by (rewrite length_firstn; lia).
 rewrite nth_firstn. replace (j <? n)%nat with true by (symmetry; apply Nat.ltb_lt; exact Hj). reflexivity.
 Qed.
-Lemma vals_hi : ltac2:(TCodec.tc2 tcn__Ju0DrvB "Q2'8'S=yR0%211%411'9'Cr2&7r4%2271%5241'@&R<&4&Er3r5%33?21%53@1:&B%125>%9231&F&S<z%22H1%44HDB1%@3I61p0B1pV0I1pV:J1pULL1pW2M1").
+Lemma vals_hi : forall (vals ext : list word) (n i : nat),
+(n <= length vals)%nat -> vals_ev (firstn n vals ++ ext) (n + i) = nth i ext (Z_to_bv 64 0).
 Proof.
 intros vals ext n i Hn. unfold vals_ev. rewrite app_nth2 by (rewrite length_firstn; lia).
 rewrite length_firstn. replace (n + i - Nat.min n (length vals))%nat with i by lia. reflexivity.
 Qed.
-Lemma len_lay : ltac2:(TCodec.tc2 tcn__Ju0DrvB "K'8'S=yR0%211%411'9'Cr1&7r3%2271%5241'@&4&Er2r4%33>21%53?19%;2@1&B%126;%:3A31p0<1pV:C1pULE1pW2F1").
+Lemma len_lay : forall (vals ext : list word) n, (n <= length vals)%nat -> length (firstn n vals ++ ext) = (n + length ext)%nat.
 Proof. intros. rewrite length_app, length_firstn. lia. Qed.
-Lemma regs_ok_by_nth : ltac2:(TCodec.tc2 tcn__Ju0DrvB "Q>'R5'8'R6%211&Q9y5'S=yR0%211%5241'9'?&D(2r1%3221uQ0%5231%7231'@&R0r3&S<&RBr2%211%42E1%7261&R4r5&Fr4(R3z%211%54Q1;41%8271%B3M:1p0D1pV0M1&R;%13:DAp031pRHQ21pVFQ91pQBQ=1").
+Lemma regs_ok_by_nth : forall E sr R,
+(forall i, (0 < i < 32)%nat -> getr R (Z_to_bv 5 (Z.of_nat i)) = edenot E (nth i sr (ELit 0))) -> regs_ok E sr R.
 Proof.
 intros E sr R H r. unfold sr_get. destruct (bv_eqb r 0) eqn:Hr0.
 - assert (r = 0%bv) by (apply bv_eq; unfold bv_eqb in Hr0; lia). subst r. cbn [edenot]. reflexivity.
@@ -47,7 +51,9 @@ intros E sr R H r. unfold sr_get. destruct (bv_eqb r 0) eqn:Hr0.
 rewrite bv_eqb_refl in Hr0. discriminate. }
 pose proof (H (ridx r) ltac:(pose proof (ridx_range r); lia)) as Hx. rewrite ridx_roundtrip in Hx. exact Hx.
 Qed.
-Lemma store_ok_of_defined : ltac2:(TCodec.tc2 tcn__Ju0DrvB "QL'S=yR0%211';y8%511%311pW451'G'9&R@zr2%3221&R?r3&RB%115%4231&RC+2+R0%3221%=251'?r1%@2?1&RAr4%=11%3251%7251&A'@r7&S<r6%G21I%32Q51%511(1%11Q4%93Q431%;11p0=1pV0Q51'5&N&R=r5%?2QA1%443?1G(=%D3721p091p0Q01p0Q;1pV8Q@1pU<QB1pRFQD1").
+Lemma store_ok_of_defined : forall M (a : Z) (m : nat),
+(0 <= a)%Z -> (a + Z.of_nat m <= 2 ^ 64)%Z -> (forall i, (0 <= i < Z.of_nat m)%Z -> M (Z_to_bv 64 (a + i)) <> None) ->
+store_ok RSEGS M (Z_to_bv 64 a) m = true.
 Proof.
 intros M a m Ha Ham Hdef. destruct m as [|m']; [reflexivity|].
 apply store_ok_of_all; [rewrite u_small by lia; lia|].
@@ -61,7 +67,7 @@ intros M n Hn. eapply (store_ok_window RSEGS M (Z_to_bv 64 0xb6000) _ 212992%nat
 [reflexivity | reflexivity | lia | exact wseg_5f000 | rewrite u_small by lia; lia | rewrite u_small by lia; lia].
 Qed.
 Section DrvB.
-Context {RE : RunEnv}.
+Context {RE : RunEnv}. Context {RO : ReaderOn}.
 Variable L : heap_layout.
 Variable HI : heap_iface.
 Hypothesis HIok : heap_iface_ok L scfg HI.
@@ -83,7 +89,9 @@ Hypothesis Hva : valid_argv [a0s; path].
 Hypothesis Hve : valid_envp envv.
 Hypothesis Hvsp : valid_sp sp0.
 Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-Hypothesis ME : main_entry sp0 [a0s; path] envv uid hw rdraw tid regs0 mem0.
+Variable inp : ProcInput.
+Variable mbase entry : word.
+Hypothesis ME : main_entry inp mbase entry sp0 [a0s; path] envv uid hw rdraw tid regs0 mem0.
 Hypothesis Hfile : fs_lookup fs0 path = Some fdata.
 Hypothesis Hpne : path <> [].
 Hypothesis Hplen : (length path <= 4095)%nat.
@@ -95,26 +103,39 @@ Let ENVb (vals : list word) : env := ENV a0s path hw rdraw fdata vals.
 Let above (M : word -> option byte) : Prop := above_sp0 sp0 mem0 M.
 Definition model2 (VM : VmMaps) : Model := mkModelE fds0 VM stdin0 fs0 None (Some tid) None.
 Definition model1o (off : Z) (VM : VmMaps) : Model := mkModelE (fd_insert fds0 (Z_to_bv 64 3) (FdFile path (Z_to_bv 64 off))) VM stdin0 fs0 None (Some tid) None.
-Lemma model1_o : ltac2:(TCodec.tc2 tcn__Ju0DrvB "@'Q2'@'Q1&QDvQ<vS8vS?vRNvS;r1%76654321&QHz%2214%=3<41pU:?1"). Proof. reflexivity. Qed.
-Lemma m1o_fds : ltac2:(TCodec.tc2 tcn__Ju0DrvB "N'G'Q2'@'8'<'S=yR0%211'O%5221%711&Q6&QHr2r1%3221%511&Q3&QC&S<+3%22?1(Q0vS8%52B;%3221%93851%I3A;1pU:K1pV>M1").
+Lemma model1_o : forall VM, model1 path tid fs0 stdin0 VM = model1o 0 VM. Proof. reflexivity. Qed.
+Lemma m1o_fds : forall off VM, m_fds (model1o off VM) = fd_insert fds0 (Z_to_bv 64 3) (FdFile path (Z_to_bv 64 off)).
 Proof. reflexivity. Qed.
-Lemma m1o_fs : ltac2:(TCodec.tc2 tcn__Ju0DrvB ">'G'Q2'@&M&Q7&QHr2r1%3221%511vRN%93821pU:;1pV>=1"). Proof. reflexivity. Qed.
-Lemma fds_lookup3 : ltac2:(TCodec.tc2 tcn__Ju0DrvB "G'G'@';'O%211&Q4&Q3&QC&S<yR0+3%3221(Q0vS8r1%7261%4231%;3:61%=217(3%12A4%D3A31pV>F1").
+Lemma m1o_fs : forall off VM, m_fs (model1o off VM) = fs0. Proof. reflexivity. Qed.
+Lemma fds_lookup3 : forall off, fd_lookup (fd_insert fds0 (Z_to_bv 64 3) (FdFile path (Z_to_bv 64 off))) (Z_to_bv 64 3)
+= Some (FdFile path (Z_to_bv 64 off)).
 Proof. intros. reflexivity. Qed.
-Lemma fds_remove3 : ltac2:(TCodec.tc2 tcn__Ju0DrvB "I'G'@'8'<'S=yR0%211'O%5221%711&Q5&Q3&QC&S<+3%22:1(Q0vS8r1%62>1%4231%:3961%<217%F3>1;pV>H1").
+Lemma fds_remove3 : forall off, fd_remove (fd_insert fds0 (Z_to_bv 64 3) (FdFile path (Z_to_bv 64 off))) (Z_to_bv 64 3) = fds0.
 Proof. intros. reflexivity. Qed.
-Lemma with_fds_read : ltac2:(TCodec.tc2 tcn__Ju0DrvB "Q>'G'S=yR0%211'Q2'@'Q1&Q8&Q3&QC&S<+3%22:1(Q0vS8r3%62>1%4231%:3961r2%7261%=3391&QHr1%2291%B241&R2vQ<%D3C@8vS;vRN(1%11M(3vS?%22Q01'8y8%Q511%311%911%?8>=B<;961%Q53Q4A1pU:Q71pV@Q91pV>Q=1").
+Lemma with_fds_read : forall off off' VM,
+with_fds (fd_insert (fd_insert fds0 (Z_to_bv 64 3) (FdFile path (Z_to_bv 64 off))) (Z_to_bv 64 3) (FdFile path off')) (model1o off VM)
+= mkModelE (fd_insert fds0 (Z_to_bv 64 3) (FdFile path off')) VM stdin0 fs0 None (Some tid) None.
 Proof. intros. reflexivity. Qed.
-Lemma with_fds_close : ltac2:(TCodec.tc2 tcn__Ju0DrvB "@'G'Q2'@'Q1&Q8&QC&QHr2r1%3221%6251&QI%114%;3:31pU:=1pV>?1").
+Lemma with_fds_close : forall off VM, with_fds fds0 (model1o off VM) = model2 VM.
 Proof. intros. reflexivity. Qed.
-Lemma hiv_facts' : ltac2:(TCodec.tc2 tcn__Ju0DrvB "QF'8'S=yR0%211%411'@&R<r1u3%3221&QNvS9vRFvS8vRL%544321%;3=71r2u4%=221&QO%14:987%A3C31'9&R>(6(:%114%335:1%436E1%637G1'?&R@&S>%12Q0Gr5%N21C%42Q31%6241&R?&RC+2+D%3221%5271+R0%6251%?231%A2:1p0C1pV0K1p0M1p0Q41pW2QA1").
-Proof. intros vals P3 P4 i Hi. exact (hiv_facts sp0 a0s path envv uid hw rdraw Hva Hve Hvsp Hplen vals P3 P4 i Hi). Qed.
-Lemma content_block' : ltac2:(TCodec.tc2 tcn__Ju0DrvB "R='8'S=yR0%211%411';y8%611%311p061'R8%;11'G%=16'@&R<r5(2%3221vS9%63A21'5&Q?&RC+2+Q8%3221(:'<'9%221B%411%513&QJr4%=7B994321(=%G3@21&QK&RB&7r3%22Q31%411%63I:1%Q81Q0&R1&R=r7&S<%12Q@Q2%;2Q<A%645421(3%12Q9D%Q93:31&R:vIr9%211r8%5321=r6%>2QM1%H2QIQ@%C4B421%=2QEQB%QE3F21p0=1p0I1p0Q11p0QC1pUHQK1p2QM1pV6QO1pRFR21pW2R81").
+Lemma hiv_facts' : forall vals,
+vals_ev vals 3 = auxvp sp0 a0s path envv -> vals_ev vals 4 = rnd sp0 a0s path envv inp ->
+forall i, In i [3%nat; 4%nat] -> (bv_unsigned sp0 <= bv_unsigned (vals_ev vals i))%Z /\ (bv_unsigned (vals_ev vals i) + 2 ^ 20 <= 2 ^ 64)%Z.
+Proof.
+intros vals P3 P4 i Hi.
+exact (hiv_facts sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME Hplen vals P3 P4 i Hi).
+Qed.
+Lemma content_block' : forall vals M log (A : Z) (data : list byte),
+vals_ev vals 0 = sp0 -> log_in_b 0 (2 ^ 40) (2 ^ 40) [] [] IMG_W log = true ->
+hz sp0 A (Z.of_nat (length data)) ->
+rdn RSEGS M (Z_to_bv 64 A) (length data) = Some data ->
+rdn RSEGS (mem_denot (ENVb vals) M log) (Z_to_bv 64 A) (length data) = Some data.
 Proof.
 clear Htid Hplen Hal. intros vals M log A data P0 Hlog HZ Hc. unfold ENVb, ENV.
 rewrite (rdn_heap_frame sp0 Hsp vals _ M log A (length data) P0 Hlog HZ). exact Hc.
 Qed.
-Lemma above_wbytes : ltac2:(TCodec.tc2 tcn__Ju0DrvB "Q:'S=yR0%211';y8%511%311p051'G'8%115&R@zr2%3221&R?r3&RB&7%12>6%311%6251&S>vS9%22G1%>241vRGr5%211&Q=r6&S<%12O5r4%53421%911p081p0<1p0H1pUDM1pU<Q01pRFQ21").
+Lemma above_wbytes : forall M (a : Z) bs,
+(0 <= a)%Z -> (a + Z.of_nat (length bs) <= bv_unsigned sp0)%Z -> above M -> above (wbytes M (Z_to_bv 64 a) bs).
 Proof.
 clear Htid Hplen Hal LEN. intros M a bs Ha Hab HA x Hx. pose proof Hsp as Hsp'. rewrite wbytes_out; [apply HA; exact Hx | rewrite u_small by lia; lia | rewrite u_small by lia; lia].
 Qed.
@@ -132,7 +153,11 @@ exfalso. destruct Hp as [(_ & _ & Hni)|Hro].
 Qed.
 Definition IMG_NOSTAGE : list (Z * Z) := [(0x10000, 0xb7279); (0xc7279, 0xc8c0c); (0xc8c10, 0xe90b8); (0xe9460, 0xea000)]%Z.
 Definition CPout_stage (n : Z) (a : Z) : Prop := ~ (0xb7279 <= a < 0xb7279 + n)%Z.
-Lemma regions_stagewrite : ltac2:(TCodec.tc2 tcn__Ju0DrvB "S3'8'S=yR0%211%411'G'<'9%2213%911%4255%;11'@&R<r4(2%3221vS9%63?21'?&R@z%2218+RPP0%42:1%6231';%11F&Q>r2r6%3221(3r1%22M1%G3841&Dr3&7r9%22Q51%5241&QLvK&S>%Q0268%22Q<1%544A1B%M271p0>1pV<Q=1pV0Q<1&R>(6u3u4(:%11QB%53QC31%63QD51%83QEK1%A2QKQ<%QA2GQ1%C2QM1%Q<231&R?&RC+2+D%3221%5271+R0%6251%QE231%QG2:1p0?1pV0R51'Q@&R=%G1R7&QF&QMvIr8%211&QEr7%211'>q0RD1%=<<R;R5R5QL;O:9631p0?1p0Q91p0R41p0R<1pQJRD1pUBRG1pV:RL1pW2RN1").
+Lemma regions_stagewrite : forall vals (n : Z) bls LB,
+vals_ev vals 0 = sp0 -> (0 <= n <= 65536)%Z ->
+(forall i nb, find_nz i bls = Some nb -> (i < length vals)%nat /\ sub_block L LB (bv_unsigned (vals_ev vals i)) nb) ->
+(forall i, In i [3%nat; 4%nat] -> (bv_unsigned sp0 <= bv_unsigned (vals_ev vals i))%Z /\ (bv_unsigned (vals_ev vals i) + 2 ^ 20 <= 2 ^ 64)%Z) ->
+regions_ok RSEGS 0 0 0 bls [] [3%nat; 4%nat] IMG_NOSTAGE IMG_RW (ENVb vals) (CPout_stage n) (fun _ => False).
 Proof.
 clear Htid Hplen Hal. intros vals n bls LB P0 Hn Hbl Hhi. pose proof Hsp as Hsp'.
 constructor; cbn [ev ENVb ENV]; rewrite ?P0.

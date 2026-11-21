@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the node combinators take the read-only-backing premise (RomBase.sys_rob) of ShapeAlg.rz_node. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -9,6 +10,7 @@ From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.skcms.iccprofile_info.lib.Info Require Import RelSpec SimInv ExitSim CatSim FileSim ShapeAlg.
+From OSSVerify.Proofs.skcms.iccprofile_info.lib.Info Require Import RomBase.
 Unset Nia Cache.  (* [comment removed for export] *)
 Unset Lia Cache.
 
@@ -213,6 +215,7 @@ Qed.
 Lemma rz_ret_only : forall ms model x8 r m' evs T,
   m_halted model = None ->
   ms_svc_pending ms = Some x8 ->
+  sys_rob segs (mkCfg ms model) ->
   alloc_no x8 = false ->
   (forall o, syscall_spec (sys_input segs ms x8) model o <-> o = Ok (mkEffect r [] []) m' evs) ->
   m_halted m' = None ->
@@ -220,13 +223,14 @@ Lemma rz_ret_only : forall ms model x8 r m' evs T,
   realizes segs (mkCfg (advance_past_svc (set_gpr0 ms r)) m') T ->
   realizes segs (mkCfg ms model) (t_emit evs T).
 Proof.
-  intros ms model x8 r m' evs T Hh Hsvc Hna Hchk Hh' Hlazy Hc.
-  eapply rz_emit1; [apply node_ok_of_s; [eapply nonalloc_no; eassumption | eapply node_ret_only; eassumption] | exact Hc].
+  intros ms model x8 r m' evs T Hh Hsvc Hrob Hna Hchk Hh' Hlazy Hc.
+  eapply rz_emit1; [apply node_ok_of_s; [eapply nonalloc_no; eassumption | eapply node_ret_only; eassumption] | exact Hrob | exact Hc].
 Qed.
 
 Lemma rz_ret_only_copyins : forall ms model x8 reads r m' evs T,
   m_halted model = None ->
   ms_svc_pending ms = Some x8 ->
+  sys_rob segs (mkCfg ms model) ->
   alloc_no x8 = false ->
   (forall o, syscall_spec (sys_input segs ms x8) model o
              <-> o = Ok (with_copyins reads (mkEffect r [] [])) m' evs) ->
@@ -235,14 +239,15 @@ Lemma rz_ret_only_copyins : forall ms model x8 reads r m' evs T,
   realizes segs (mkCfg (advance_past_svc (set_gpr0 ms r)) m') T ->
   realizes segs (mkCfg ms model) (t_emit evs T).
 Proof.
-  intros ms model x8 reads r m' evs T Hh Hsvc Hna Hchk Hh' Hlazy Hc.
-  eapply rz_emit1; [apply node_ok_of_s; [eapply nonalloc_no; eassumption | eapply node_ret_only_copyins; eassumption] | exact Hc].
+  intros ms model x8 reads r m' evs T Hh Hsvc Hrob Hna Hchk Hh' Hlazy Hc.
+  eapply rz_emit1; [apply node_ok_of_s; [eapply nonalloc_no; eassumption | eapply node_ret_only_copyins; eassumption] | exact Hrob | exact Hc].
 Qed.
 
 (* [comment removed for export] *)
 Lemma rz_ret_only_silent : forall ms model x8 r m' T,
   m_halted model = None ->
   ms_svc_pending ms = Some x8 ->
+  sys_rob segs (mkCfg ms model) ->
   alloc_no x8 = false ->
   (forall o, syscall_spec (sys_input segs ms x8) model o <-> o = Ok (mkEffect r [] []) m' []) ->
   m_halted m' = None ->
@@ -250,13 +255,14 @@ Lemma rz_ret_only_silent : forall ms model x8 r m' T,
   realizes segs (mkCfg (advance_past_svc (set_gpr0 ms r)) m') T ->
   realizes segs (mkCfg ms model) T.
 Proof.
-  intros ms model x8 r m' T Hh Hsvc Hna Hchk Hh' Hlazy Hc.
-  eapply rz_silent1; [apply node_ok_of_s; [eapply nonalloc_no; eassumption | eapply node_ret_only; eassumption] | exact Hc].
+  intros ms model x8 r m' T Hh Hsvc Hrob Hna Hchk Hh' Hlazy Hc.
+  eapply rz_silent1; [apply node_ok_of_s; [eapply nonalloc_no; eassumption | eapply node_ret_only; eassumption] | exact Hrob | exact Hc].
 Qed.
 
 Lemma rz_ret_only_copyins_silent : forall ms model x8 reads r m' T,
   m_halted model = None ->
   ms_svc_pending ms = Some x8 ->
+  sys_rob segs (mkCfg ms model) ->
   alloc_no x8 = false ->
   (forall o, syscall_spec (sys_input segs ms x8) model o
              <-> o = Ok (with_copyins reads (mkEffect r [] [])) m' []) ->
@@ -265,14 +271,15 @@ Lemma rz_ret_only_copyins_silent : forall ms model x8 reads r m' T,
   realizes segs (mkCfg (advance_past_svc (set_gpr0 ms r)) m') T ->
   realizes segs (mkCfg ms model) T.
 Proof.
-  intros ms model x8 reads r m' T Hh Hsvc Hna Hchk Hh' Hlazy Hc.
-  eapply rz_silent1; [apply node_ok_of_s; [eapply nonalloc_no; eassumption | eapply node_ret_only_copyins; eassumption] | exact Hc].
+  intros ms model x8 reads r m' T Hh Hsvc Hrob Hna Hchk Hh' Hlazy Hc.
+  eapply rz_silent1; [apply node_ok_of_s; [eapply nonalloc_no; eassumption | eapply node_ret_only_copyins; eassumption] | exact Hrob | exact Hc].
 Qed.
 
 (* [comment removed for export] *)
 Lemma rz_det : forall ms model x8 eff0 m0 T,
   m_halted model = None ->
   ms_svc_pending ms = Some x8 ->
+  sys_rob segs (mkCfg ms model) ->
   alloc_no x8 = false ->
   (forall o, syscall_spec (sys_input segs ms x8) model o <-> o = Ok eff0 m0 []) ->
   m_halted m0 = None ->
@@ -280,19 +287,19 @@ Lemma rz_det : forall ms model x8 eff0 m0 T,
   realizes segs (mkCfg (advance_past_svc (apply_effect ms eff0)) m0) T ->
   realizes segs (mkCfg ms model) T.
 Proof.
-  intros ms model x8 eff0 m0 T Hh Hsvc Hna Hchk Hh0 Hlazy0 Hc.
-  eapply rz_silent1; [apply node_ok_of_s; [eapply nonalloc_no; eassumption | eapply node_det; eassumption] | exact Hc].
+  intros ms model x8 eff0 m0 T Hh Hsvc Hrob Hna Hchk Hh0 Hlazy0 Hc.
+  eapply rz_silent1; [apply node_ok_of_s; [eapply nonalloc_no; eassumption | eapply node_det; eassumption] | exact Hrob | exact Hc].
 Qed.
 
 (* [comment removed for export] *)
 Lemma rz_cases : forall c (I : Type) (nx : I -> config) (T : I -> TSet) (i0 : I),
-  node_ok segs c I (fun _ => []) nx ->
+  node_ok segs c I (fun _ => []) nx -> sys_rob segs c ->
   (forall i, realizes segs (nx i) (T i)) ->
   realizes segs c (t_alt T).
 Proof.
-  intros c I nx T i0 Hnode Hc.
+  intros c I nx T i0 Hnode Hrob Hc.
   apply (rz_conseq segs c (t_alt (fun i => t_emit [] (T i)))).
-  - apply (rz_node segs c I (fun _ => []) nx T i0 Hnode Hc).
+  - apply (rz_node segs c I (fun _ => []) nx T i0 Hnode Hrob Hc).
   - intros tr. split.
     + intros [i Hi]. exists i.
       exact (proj1 (t_emit_nil_eq (T i) (realizes_nonempty segs _ _ (Hc i)) tr) Hi).
@@ -362,6 +369,7 @@ Lemma rz_open : forall ms model x8 reads (mk : word -> Model) A B,
   m_halted model = None ->
   m_vm_lazy model = [] ->
   ms_svc_pending ms = Some x8 ->
+  sys_rob segs (mkCfg ms model) ->
   alloc_no x8 = false ->
   (forall o, syscall_spec (sys_input segs ms x8) model o <-> open_out reads model mk o) ->
   (forall fd, m_halted (mk fd) = None) ->
@@ -373,10 +381,11 @@ Lemma rz_open : forall ms model x8 reads (mk : word -> Model) A B,
                        (mk (alloc_fd (m_fds model)))) B ->
   realizes segs (mkCfg ms model) (t_alt2 A B).
 Proof.
-  intros ms model x8 reads mk A B Hh Hlazy Hsvc Hna Hchk Hmk Hmklazy Hfree HA HB.
+  intros ms model x8 reads mk A B Hh Hlazy Hsvc Hrob Hna Hchk Hmk Hmklazy Hfree HA HB.
   apply (rz_alt2 segs (mkCfg ms model) {e : Z | In e openat_errnos} unit
            (open_nx ms model mk) A B (exist _ ENOMEM ENOMEM_in_openat_errnos) tt).
   - apply node_ok_of_s; [eapply nonalloc_no; eassumption|]. eapply node_open; eassumption.
+  - exact Hrob.
   - intros [e He]. cbn [open_nx]. apply HA. exact He.
   - intros []. cbn [open_nx]. exact HB.
 Qed.

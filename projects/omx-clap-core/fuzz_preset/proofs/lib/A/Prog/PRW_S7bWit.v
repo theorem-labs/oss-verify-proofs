@@ -18,10 +18,10 @@
                            PRW_S7bLitWit.s7bl_pjw_hlit / s7bl_ps_hlit17 / s7bl_ps_hlit85 / 87 / 89 / 91 / 93 /
                            s7bl_wv_hlit (on WalkS7aR's generic S7a_litrd.s7w_lit_rd);
      AMS / AMCPY (the memset / memcpy rows at SIGMA ..): a Theorem Labs lane's PRowSet.prow_asan_memset_xm_A /
-                           PRowCpyA.prow_asan_memcpy_xm_A (a working branch 599a4cefc740) at pc_asan_memset /
+                           PRowCpyA.prow_asan_memcpy_xm_A (a working branch) at pc_asan_memset /
                            pc_asan_memcpy (as_code TA), glued by s7bw_memset_pc / s7bw_memcpy_pc below.
      SNP (put_string's escape: the engine's snprintf row at its instance): a Theorem Labs lane's snprintf_xrom_A
-                           (lib/A/PSnpSnpRoot.v:140, blob 4edc9be9a050 at the cut) at the parameters whose closed side
+                           (lib/A/PSnpSnpRoot.v:141, blob 4edc9be9a050 at the cut) at the parameters whose closed side
                            conditions s7bw_snp_row_side below states; its STATIC instance facts SNPI (PRW_put_string_e.v
                            ps_snp_img): s7bw_ps_snp_img below.
    Numerals: none typed except the offsets 0 / 4 / 8 / 25 / 4 * 25 the premises themselves state, the page size 4096
@@ -284,7 +284,7 @@ split; [|split; [|split; [|split; [|split; [|split]]]]].
   apply existsb_exists in C as (sg & Hsg & C). apply Z.ltb_lt in C. exists sg. split; [exact Hsg | exact C].
 Qed.
 
-(* the closed side conditions of a Theorem Labs lane's snprintf_xrom_A (lib/A/PSnpSnpRoot.v:140-141, blob 4edc9be9a050 at the cut:
+(* the closed side conditions of a Theorem Labs lane's snprintf_xrom_A (lib/A/PSnpSnpRoot.v:141-142, blob 4edc9be9a050 at the cut:
    0x10000 <= lo, got <= AE2p.A_GOT_canary, 8160 <= K, img_lo <= 65536, 0x600000 <= img_hi) at the parameters of
    PRW_put_string_e.v's SNP: lo := IMG_LO, got := gcan := GCAN (AE2p.A_GOT_canary's value, so got <= A_GOT_canary
    holds with equality), K := STK_RT_PRINTF, img_lo := IMG_LO, img_hi := IMG_TOP; GCAN / CAN are the values of record

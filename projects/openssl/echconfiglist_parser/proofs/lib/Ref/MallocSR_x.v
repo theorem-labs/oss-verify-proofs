@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the auxv claim is taken apart and rebuilt in its Lib/AuxvTable.v form). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From stdpp Require Import gmap.
@@ -35,10 +36,10 @@ Section HCW.
 Theorem rauxv_elim_proof : HeapSR_iface.rauxv_elim HS.
 Proof.
   unfold HeapSR_iface.rauxv_elim. cbn [HeapSR_iface.hs_rauxv_ok HS].
-  intros m B (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & C & A1 & A2 & H).
-  exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd, hsecret.
+  intros m B (av & v & rnd & execfn & r & C & A1 & A2 & H).
+  exists av, v, rnd, execfn, r, hsecret.
   split; [exact C|]. split; [exact A1|]. split; [exact A2|].
-  pose proof hsecret_range. repeat (split; [tauto|]). lia.
+  pose proof hsecret_range. repeat (split; [tauto|]). all: lia.
 Qed.
 
 Theorem statics_of_RHEAP_proof : HeapSR_iface.statics_of_RHEAP HS.
@@ -108,8 +109,9 @@ Proof. try hcb. try hsb.
   pose proof KMs as (Lk & CRk & Kk & Bk).
   unfold HeapSR_iface.RREALLOC_STACK, RMALLOC_STACK in LO. unfold HeapSR_iface.RMMAP_THRESHOLD in N.
   pose proof (bv_unsigned_in_range _ sp) as SPR. change (bv_modulus 64) with (2^64) in SPR.
-  pose proof AUX as (av0 & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & _ & _ & _ & AVB). 
-  assert (SPH : bv_unsigned sp + 8 <= 2 ^ 64) by (clear -AVB HB; lia). clear AVB av0 x3 x4 x5 x16 x6 x11 x12 x23 rnd.
+  pose proof AUX as (av0 & v0 & rnd0 & execfn0 & r0 & _ & _ & _ & AVB).
+  pose proof (auxv_vec_bytes_range r0) as AVR.
+  assert (SPH : bv_unsigned sp + 8 <= 2 ^ 64) by (clear -AVB AVR HB; lia). clear AVB AVR av0 v0 rnd0 execfn0 r0.
   eapply sreach_mono.
   { eapply (cj_evt_sreach rsegs _ _ mo (kb_halt _ _ _ Kk) (proj1 (kb_minv _ _ _ Kk))).
     eapply (rre_inplace_evt st L BL LS c off n mm bm i ai aa ar ka r INV BF Hr GO); try eassumption.
@@ -254,8 +256,9 @@ Proof. try hcb. try hsb.
   pose proof KMs as (Lk & CRk & Kk & Bk).
   unfold HeapSR_iface.RREALLOC_STACK, RMALLOC_STACK in LO. unfold HeapSR_iface.RMMAP_THRESHOLD in N.
   pose proof (bv_unsigned_in_range _ sp) as SPR. change (bv_modulus 64) with (2^64) in SPR.
-  pose proof AUX as (av0 & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & _ & _ & _ & AVB).
-  assert (SPH : bv_unsigned sp + 8 <= 2 ^ 64) by (clear -AVB HB; lia). clear AVB av0 x3 x4 x5 x16 x6 x11 x12 x23 rnd.
+  pose proof AUX as (av0 & v0 & rnd0 & execfn0 & r0 & _ & _ & _ & AVB).
+  pose proof (auxv_vec_bytes_range r0) as AVR.
+  assert (SPH : bv_unsigned sp + 8 <= 2 ^ 64) by (clear -AVB AVR HB; lia). clear AVB AVR av0 v0 rnd0 execfn0 r0.
   pose proof RM as (WF & _).
   destruct (bk_all st L BL LS c off n mm bm i ai aa ar ka r INV Hk BF Hr WF)
     as ((B0 & BAL & S0 & S16 & SPAN & BC) & (Hi & Hoff & Hn & Hfit & R0 & RS & B3) & [SK SKL] & SC & [ST16 STM] & G63 & SST & DRr & _).
@@ -497,8 +500,9 @@ Proof. try hcb. try hsb.
   pose proof KMs as (Lk & CRk & Kk & Bk).
   unfold HeapSR_iface.RAALLOC_STACK, RMALLOC_STACK in LO. unfold HeapSR_iface.RMMAP_THRESHOLD in N. unfold HeapSR_iface.RAALLOC_SYM.
   pose proof (bv_unsigned_in_range _ sp) as SPR. change (bv_modulus 64) with (2^64) in SPR.
-  pose proof AUX as (av0 & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & _ & _ & _ & AVB).
-  assert (SPH : bv_unsigned sp + 8 <= 2 ^ 64) by (clear -AVB HB; lia). clear AVB av0 x3 x4 x5 x16 x6 x11 x12 x23 rnd.
+  pose proof AUX as (av0 & v0 & rnd0 & execfn0 & r0 & _ & _ & _ & AVB).
+  pose proof (auxv_vec_bytes_range r0) as AVR.
+  assert (SPH : bv_unsigned sp + 8 <= 2 ^ 64) by (clear -AVB AVR HB; lia). clear AVB AVR av0 v0 rnd0 execfn0 r0.
   assert (ALR : 16 <= al <= 64).
   { rewrite HAL. split; [change 16 with (2^4); apply Z.pow_le_mono_r; clear -HK; lia| change 64 with (2^6); apply Z.pow_le_mono_r; clear -HK; lia]. }
   assert (ETP : errno_addr tp = RMalloc_iface_stmt.RERRNO) by (rewrite TP; unfold errno_addr, RMalloc_iface_stmt.RATP, RMallocRep.RATP, RMalloc_iface_stmt.RERRNO; rewrite unsigned_lit by (clear; lia); reflexivity).

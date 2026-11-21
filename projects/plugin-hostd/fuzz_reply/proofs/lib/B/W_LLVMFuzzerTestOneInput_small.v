@@ -4,10 +4,10 @@
    fuzz_reply's LLVMFuzzerTestOneInput (0x84408) -- arm 3 (s->closed = 1, 0x84938), arm 6 (s->eintr = 1, 0x849d4),
    arm 8 (g_send_max = fuzz_u8(&in); g_send_eintr = 1, 0x84a00) and the default arm 9 (the controller goes away,
    0x84a30) -- as cgif segment walks (an SRr from one cut point's invariant to the next) over the cut invariants of
-   lib/B/W_LLVMFuzzerTestOneInput_cut.v (frozen at a987841a18c).  Each theorem is exactly one of that file's Section
+   lib/B/W_LLVMFuzzerTestOneInput_cut.v (frozen).  Each theorem is exactly one of that file's Section
    hypotheses: ARM_close (:752), ARM_eintr (:755), ARM_sendmax (:757), ARM_default (:758).
    A NEW WALK over B's own body (UBSan trap mode: other registers, frame slots and objects than image A): the
-   structure is lib/A/W_LLVMFuzzerTestOneInput_small.v's (45f5b1d4122); every frame, shadow, register and address fact
+   structure is lib/A/W_LLVMFuzzerTestOneInput_small.v; every frame, shadow, register and address fact
    below is read from B's disassembly (fuzz_reply.objdump.txt (sha256 17f5c434bf57; internal record) of the pinned asan-ubsan ELF, sha256 10ffb5f9...).
    B's registers in the loop (_cut.v difference (4)): s1 = F, s11 = SB, s7 = 1, s4 = the input cursor, t1 = the
    bytes left, s5 = the picked source, s9 = t.  The arms' code:
@@ -43,10 +43,11 @@
      ALOCK / AUNLOCK - W_sites.v's pthread_mutex_lock / _unlock site contracts, the default arm's two calls;
      RI_* / LS_*     - the model step of each arm, each at the choice the walk makes: the loop's relational
                        invariant and the allocator-state invariant after it.
-   Structure taken from the Kind-B donors on a working branch 1c09e330abe (same image, same arm pcs,
+   Structure taken from the Kind-B donors on a working branch (same image, same arm pcs,
    old SR framework; read, not cited): lib/B/Prog/SlotPass3.v bpass3_holds (close), SlotPass6.v apass6_holds
    (eintr), SlotPass8.v apass8_holds (sendmax), SlotPass9D.v apass9_dead_ok / SlotPass9G.v apass9_gone_ok joined by
    SlotSteps.v apass9_of_branches (default). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

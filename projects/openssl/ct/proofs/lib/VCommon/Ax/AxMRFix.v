@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the VCommon proof library over the revised model). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
@@ -207,7 +208,7 @@ Theorem MR_fix (flags : word) :
   MRm ρ (add_exp am e0 f n) (fix_rw_model flags addr nw m).
 Proof.
   intros Hbig Hfull.
-  pose proof HM as [H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 H16 H17 H18 H19 H20 H21].
+  pose proof HM as [H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 H16 H17 H18 H19 H20 H21 H22 H23].
   assert (Ev : m_vmmaps (fix_rw_model flags addr nw m) = mmap_fixed_rw_next (m_vmmaps m) addr nw)
     by (unfold fix_rw_model; rewrite repl_vmmaps_eq, with_vmmaps_vmmaps_eq; reflexivity).
   assert (El : m_vm_lazy (fix_rw_model flags addr nw m) = repl_lazy flags addr nw (m_vm_lazy m))
@@ -230,6 +231,9 @@ Proof.
   - apply (LZr_fix ρ (am_maps am) (m_vm_lazy m) (vm_noaccess (m_vmmaps m)) H21 (MR_lazy_nowrap segs fs0 ρ am m HM) H13 e0 He0 rng_ents_disj
              addr nw rng_in_e0 ltac:(rewrite rng_n; exact Hn) ltac:(rewrite rng_addr, rng_n; exact rng_two64) rng_al flags Hbig).
     intros Hf. rewrite rng_addr, rng_n. exact (Hfull Hf).
+  (* mr_rdr, appended last: fix_rw_model is with_mmap_replacement over with_vmmaps, and
+     repl_rdr (AxSysFix.v:382) is the branch split that reflexivity needs. *)
+  - unfold fix_rw_model. rewrite repl_rdr. exact H23.
 Qed.
 
 (* [comment removed for export] *)
@@ -238,7 +242,7 @@ Qed.
 
 Theorem MR_prot : MRm ρ (add_exp am e0 f n) (mprotect_model_next m addr nw).
 Proof.
-  pose proof HM as [H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 H16 H17 H18 H19 H20 H21].
+  pose proof HM as [H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 H16 H17 H18 H19 H20 H21 H22 H23].
   unfold mprotect_model_next. cbv zeta.
   constructor; rewrite ?with_vmmaps_vmmaps_eq, ?with_vmmaps_lazy_eq;
     cbn [add_exp am_maps am_brk0 am_brk am_tid am_shadow am_next am_atop am_out am_exp am_fd
@@ -263,7 +267,7 @@ Theorem MR_none (flags : word) : ae_na e0 = false ->
   MRm ρ am (fix_none_model flags addr nw m).
 Proof.
   intros Hna0 Hbig Hnfull.
-  pose proof HM as [H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 H16 H17 H18 H19 H20 H21].
+  pose proof HM as [H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 H16 H17 H18 H19 H20 H21 H22 H23].
   assert (Ev : m_vmmaps (fix_none_model flags addr nw m) =
     mkVmMapsFull (vm_reserved (m_vmmaps m)) (vm_maps (m_vmmaps m))
       ((addr, nw) :: maps_subtract (vm_noaccess (m_vmmaps m)) (bv_unsigned addr) (bv_unsigned addr + bv_unsigned nw))
@@ -286,6 +290,11 @@ Proof.
   - intros p q Hp Hq. exact (rng_repl_lazy_res flags p q Hp Hq).
   - exact (LZr_none ρ (am_maps am) (m_vm_lazy m) (vm_noaccess (m_vmmaps m)) H21 (MR_lazy_nowrap segs fs0 ρ am m HM) H13 e0 He0 rng_ents_disj
              addr nw rng_in_e0 ltac:(rewrite rng_n; exact Hn) ltac:(rewrite rng_addr, rng_n; exact rng_two64) rng_al flags Hbig Hnfull).
+  (* mr_rdr, as in MR_fix: fix_none_model is with_mmap_replacement over with_vmmaps.
+     MR_prot and MR_unmap need no bullet -- their successors go through with_vmmaps
+     alone and the existing `try assumption` closes them by conversion
+     (measured in the donor tree). *)
+  - unfold fix_none_model. rewrite repl_rdr. exact H23.
 Qed.
 
 End Range.
@@ -345,7 +354,7 @@ Qed.
 
 Theorem MR_unmap : MRm ρ (del_ent am e0) (munmap_model addr nw m).
 Proof.
-  pose proof HM as [H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 H16 H17 H18 H19 H20 H21].
+  pose proof HM as [H1 H2 H3 H4 H5 H6 H7 H8 H9 H10 H11 H12 H13 H14 H15 H16 H17 H18 H19 H20 H21 H22 H23].
   pose proof (MR_lazy_nowrap segs fs0 ρ am m HM) as Hlnw.
   assert (Ev : m_vmmaps (munmap_model addr nw m) =
     mkVmMapsFull (vm_reserved (m_vmmaps m)) (map_remove (vm_maps (m_vmmaps m)) addr)

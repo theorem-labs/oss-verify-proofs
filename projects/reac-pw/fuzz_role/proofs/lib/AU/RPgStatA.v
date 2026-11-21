@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgStatA.v at c9f9a5a10e3; the same law at image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgStatA.v; the same law at image B
    (fuzz_role.asan-ubsan): image B's core tables (lib/AU/YF0m.v), segments (lib/AU/Img0.v), record (lib/AU/RPgImgA.v
    role_himg_B), checkers (lib/AU/RPgSat.v, RPgSatSeg.v) and read-only range 0x9a3c0 .. 0x9b7c8, and the law's
    instance at the closing's symbols lib/AU/YD2l.v TfibB and segments lib/AU/YB1v.v tfibsegs. *)

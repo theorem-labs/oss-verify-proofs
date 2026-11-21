@@ -3,9 +3,10 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/boost-beast/http_request/lib/Spec/StrFun.v; 245 of its 281 lines of code are new or changed and 428 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: the straight-line segments of reac-repacer/fuzz_uci's check_value in image A, in the form
-   and with the helpers of proofs/libreac/fuzz_decode/lib/A/Prog/crtA_segs.v (origin/ossv/recipes 88154566652a:
+   and with the helpers of proofs/libreac/fuzz_decode/lib/A/Prog/crtA_segs.v (
    crt_seg1_F .. crt_seg9_F, Z_to_le_bytes_to_Z, crt_le8_of_bytes, crt_c8s, crt_rw_c8s, crt_frame_words, crt_regs,
    crt_usub, crt_shift, crt_w, crt_finF, crt_memF, crt_pc) and of its lib/A/Prog/ReacDecodeLib.v rd_all. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* UciCvSegs: the footprint (ExecF.evtF) runs of the straight-line segments of check_value (fuzz_uci.asan 0x7f62c),
    each from a cut point of lib/A/Prog/UciCvIface.v to the next call, stepped by lib/Lib/StepF.v:
      cv_seg1_F   entry -> malloc(n + (n == 0)): the 0x40-byte frame (s5 .. s0, ra at 8(sp) .. 0x38(sp)), the shadow

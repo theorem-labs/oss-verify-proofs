@@ -2,26 +2,27 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/YD2p.v and YD2o.v (the closing of
    TFIB_T from its parts) for fuzz_scene's asan-ubsan image, in the form of fuzz_pcap's lib/A/PcapClose.v
-   (a working branch fe3d720b4c7); module paths changed. *)
+   (a working branch); module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed TF, HS). *)
 (* The closing of fuzz_scene's asan-ubsan statements (rule 24: no function proved; this file is assembly).
    SceneAsanTop.ASAN_UBSAN_T and Statements.asan_ubsan_agrees / asan_ubsan_halts follow from ASAN_UBSAN_T_of_glue (G_Top.v)
    applied to these instances: the budgets EV_LIB 2000, LIVE_LIB 2^33,
    LLVMF_STK 32768 (cgif A/ACfn.v:23-25; their four bounds by vm_compute), the owners' PROVED walks
-   pb_kind_of_link1 and pb_ctrl_checksum_verify (a Theorem Labs lane c2fc5d41458), pb_check_stepX (a Theorem Labs lane 722526c3436, Qed in
+   pb_kind_of_link1 and pb_ctrl_checksum_verify (a Theorem Labs lane), pb_check_stepX (a Theorem Labs lane, Qed in
    both images), pb_reac_ctrl_build_scene_step / pb_reac_ctrl_scene_build / pb_reac_ctrl_scene_set_mac / pb_reac_ctrl_block_cksum_stamp
-   (a Theorem Labs lane a0866e7f49c), pb_ctrl_parse (a Theorem Labs lane c2fc5d41458 lib/AU/Prog/CtrlParse.v), and B's static facts
-   at the CONCRETE B := YD2l.TfibB (a Theorem Labs lane d7f9043aaa7), whose tables are TS := YF0m.TfibSyms (a Theorem Labs lane
-   e503e4f4264) and HB := YD2l.TfibB_syms; so B, TS and HB are not rows. A Theorem Labs lane's certificate lib/AU/SceneBCertU.v
-   (c7fbc8da541), at B := TfibB, gives HZS_PL, HB_C_PL, HB_Z_TT, HB_C_TT, HB_Z_TR, HB_Z_CF, HB_C_CS and the parse walk's
+   (a Theorem Labs lane), pb_ctrl_parse (a Theorem Labs lane lib/AU/Prog/CtrlParse.v), and B's static facts
+   at the CONCRETE B := YD2l.TfibB (a Theorem Labs lane), whose tables are TS := YF0m.TfibSyms (a Theorem Labs lane)
+   and HB := YD2l.TfibB_syms; so B, TS and HB are not rows. A Theorem Labs lane's certificate lib/AU/SceneBCertU.v,
+   at B := TfibB, gives HZS_PL, HB_C_PL, HB_Z_TT, HB_C_TT, HB_Z_TR, HB_Z_CF, HB_C_CS and the parse walk's
    HGM / HIMGSH; ML is the donor's link_ML (A/ACfi.v:72-73); TL / TLF (PALib / PALibF; TLF's palf_sm8 field is a Theorem Labs lane's
-   ScenePalfSm8.scene_palf_sm8, c3131b23386), HRO_TT / HRO_PL / HRO_PLGOT, HRO_TR / HRO_CF and the parse walk's
+   ScenePalfSm8.scene_palf_sm8), HRO_TT / HRO_PL / HRO_PLGOT, HRO_TR / HRO_CF and the parse walk's
    HG15 / HBC_RNG / HBC_VAL are decided by vm_compute on TfibB and the image
    (a Theorem Labs lane's P_check_step_cut.v: "decided at the closing by vm_compute").
-   On the restaged core (at 58c9f2eb390) every row is closed by a named term at the call site
+   On the restaged core every row is closed by a named term at the call site
    of ASAN_UBSAN_T_of_rows, or by a Let: AMEMSET / AMEMCPY / ABCMP by SceneIntrin.scene_AMEMSET / _AMEMCPY /
    _ABCMP (a Theorem Labs lane) at B := TfibB, HB := TfibB_syms; HTRACE by SceneTrace.scene_HTRACE (a Theorem Labs lane);
    stack_malloc_8_sz / ASF8 / ASH00 / ASHF8 by G_RowsU.p_stack_malloc_8_sz / p_ASF8 / p_ASH00 / p_ASHF8 (a Theorem Labs lane's
-   proofs, at a423d9a58b9); AIL by G_SinkSub.scene_AIL; W_LLVMFuzzerTestOneInput by
+   proofs); AIL by G_SinkSub.scene_AIL; W_LLVMFuzzerTestOneInput by
    AU/P_LLVMFuzzerTestOneInput_Closed.v scene_llvmf_closed. The nine driver site types
    (aread_check, xst_frame, printf_first, printf_next, est_img, est_frame, fwrite_site, refused_site, fprintf_s_site)
    are Lets bound to their relocated Definitions (YD1i.v aread_check_stmt, YD1w.v xst_frame_tfa / printf_first_tfa /
@@ -59,30 +60,30 @@ From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU Require SceneIntrin SceneTrace Y
 (* A Theorem Labs lane's start-up and driver leaves (ROWMAP.md), from the restaged core: YB12 (TFIB), YB01 (HS_tfib), YB1n
    (tfib_startup_T1), YD1k (xst, est and the stderr / xst-frame leaves), YD1o (the printf leaves), YD1j
    (tfib_exit_site), YD2m (tfib_AICPY, tfib_ARDCHK). *)
-From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU Require YB12 YB01 YB1n YD1k YD1o YD1j YD2m.
-(* The restage's fourth commit 58c9f2eb390: YD1l (the three fprintf sites), YD1p (the driver walk tfib_drv_main),
-   YF0s / YF0u (the class-1 / class-2 fake-frame contracts), SceneAlloc (scene_AMALLOC, scene_AFREE; a Theorem Labs lane,
-   at 5387e903a6ae) and the closed entry walk P_LLVMFuzzerTestOneInput_Closed (scene_llvmf_closed). *)
+From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU Require YB12 YB01r YB1n YD1k YD1o YD1j YD2m.
+(* The restage's fourth: YD1l (the three fprintf sites), YD1p (the driver walk tfib_drv_main),
+   YF0s / YF0u (the class-1 / class-2 fake-frame contracts), SceneAlloc (scene_AMALLOC, scene_AFREE; a Theorem Labs lane)
+   and the closed entry walk P_LLVMFuzzerTestOneInput_Closed (scene_llvmf_closed). *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU Require YD1l YD1p YF0s YF0u SceneAlloc P_LLVMFuzzerTestOneInput_Closed.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU Require G_RowsU G_SinkSub.
-(* Gate 6o (the placement table of record, at 5977155c3d7 port/6o/placement.tsv): TRUNK and
+(* Gate 6o (the placement table of record, port/6o/placement.tsv): TRUNK and
    SHARED modules from lib/Reusable, the image-specific ones (YCbq and its dependents) from lib/AU. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require Import
   YK11 YK15 YK18 YK0c YK0e YG0f YG00 YG01 YG0n YG0d YG05 YG0q YG0t YK04 YA0i YA0n YI16
   YO05 YO09 YO06 YO01 YM05.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require Import YK09 YA0c YA0e YA01 YA02.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU Require Import YCbq YC5d YCbp.
-(* A Theorem Labs lane's sink record and its laws, BY PATH (at 4d244de18f0). *)
+(* A Theorem Labs lane's sink record and its laws, BY PATH. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require Import YE00.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU Require Import YE01.
 (* The runtime contracts shared by both images (a Theorem Labs lane, 22:5xZ): astack_malloc_sz_realizes (pc cid) (a Theorem Labs lane,
-   lib/Reusable/AsStackSz.v, at 578cf24e2f15), astack_free_realizes (pc cid)
+   lib/Reusable/AsStackSz.v), astack_free_realizes (pc cid)
    (lib/Reusable/StackFreeDef.v), aset_shadow_realizes (pc v) (a Theorem Labs lane's SetShadowDef.v at lib/Reusable). *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require Import AsStackSz StackFreeDef SetShadowDef.
 (* The asan-ubsan scene listing (lib/AU/Prog, gate 6o) and the owners'
    statement files: a Theorem Labs lane's callee contracts (AU/Prog/P_kind_of_link1.v, P_reac_ctrl_checksum_verify.v,
-   P_reac_ctrl_parse.v, at c2fc5d41458), a Theorem Labs lane's check_step (AU/P_check_step*.v
-   at 722526c3436), the glue's sink
+   P_reac_ctrl_parse.v), a Theorem Labs lane's check_step (AU/P_check_step*.v),
+   the glue's sink
    laws (G_Sink.v), and a Theorem Labs lane's asan-ubsan entry contract and statement (below). *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU.Prog Require Import
   PaTable PaSym SceneSyms SceneList SceneCode ScenePa SceneImg ScenePaLib SceneBase SceneRo SceneFrame.
@@ -92,24 +93,24 @@ From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU.Prog Require Import
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU Require Import P_check_step_frame P_check_step_cut P_check_step.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU Require Import G_Sink.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU Require Import P_reac_ctrl_build_scene_step P_reac_ctrl_scene_build P_reac_ctrl_scene_set_mac P_cksum_stamp.
-(* A Theorem Labs lane's class-8 table twin (at caa7a6e7cc2): PC_STACK_MALLOC_8 = 0x3f438, CID8 = 8,
-   which a Theorem Labs lane's PALibF field palf_sm8 (AU/Prog/SceneFrame.v:106) and a Theorem Labs lane's class-8 leaf name. *)
+(* A Theorem Labs lane's class-8 table twin: PC_STACK_MALLOC_8 = 0x3f438, CID8 = 8,
+   which a Theorem Labs lane's PALibF field palf_sm8 (AU/Prog/SceneFrame.v:107) and a Theorem Labs lane's class-8 leaf name. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU.Rt Require Import StackMalloc8Tbl.
 (* The asan-ubsan entry contract and trace statement, and the entry statement file for A_TAIL_TRAILER and
-   TAIL_TRAILER_N (AU :151-152), which HB_Z_TT names (at f6ab6e97937). *)
+   TAIL_TRAILER_N (AU :151-152), which HB_Z_TT names. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU Require Import P_LLVMFuzzerTestOneInput_ctx.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU Require Import P_LLVMFuzzerTestOneInput.
-(* A Theorem Labs lane's start-up record and certificate (SceneBCertU.v at c7fbc8da541; YF0m.v at
-   e503e4f4264): TfibSyms (YF0m.v:906-930)
+(* A Theorem Labs lane's start-up record and certificate (SceneBCertU.v; YF0m.v):
+   TfibSyms (YF0m.v:907-931)
    and the lemmas of SceneBCertU.v over `HB : TfibSyms B`. Required, not imported: they are used by qualified name. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU Require YF0m SceneBCertU.
-(* A Theorem Labs lane's concrete start-up record (at d7f9043aaa7): YD2l.TfibB and YD2l.TfibB_syms : TfibSyms TfibB,
-   over YF0m.v (a Theorem Labs lane e503e4f4264) and its measured trace universe (a Theorem Labs lane 1c79108a270). *)
+(* A Theorem Labs lane's concrete start-up record: YD2l.TfibB and YD2l.TfibB_syms : TfibSyms TfibB,
+   over YF0m.v (a Theorem Labs lane) and its measured trace universe (a Theorem Labs lane). *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU Require YD2l.
-(* A Theorem Labs lane's proved parse walk (at c2fc5d41458 lib/AU/Prog/CtrlParse.v pb_ctrl_parse;
+(* A Theorem Labs lane's proved parse walk (at lib/AU/Prog/CtrlParse.v pb_ctrl_parse;
    CtrlParseCut.OBJ_BCAST = 15, .str.4). *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU.Prog Require CtrlParse.
-(* A Theorem Labs lane's palf_sm8 lemma (at c3131b23386 lib/AU/ScenePalfSm8.v). *)
+(* A Theorem Labs lane's palf_sm8 lemma (at lib/AU/ScenePalfSm8.v). *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU Require ScenePalfSm8.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU Require Import G_Drv G_Top.
 Import ListNotations.
@@ -210,7 +211,7 @@ Section close.
    below the fx0 instance, bound to the core's Definition. The exit site's image parts (IMG_X / IMG_XL / stdout_img)
    are inside the core's exit_site_tfa. *)
 (* TL: donor (scene) ScenePaLib.v:307 PALib; cgif A/ACk1.v:64-74. Proved below at B := TfibB (g_TL), by computation. *)
-(* TLF: donor (scene) SceneFrame.v:102 PALibF (a Theorem Labs lane 8df4a950395: palf_sm8 = StackMalloc8Tbl.PC_STACK_MALLOC_8); cgif
+(* TLF: donor (scene) SceneFrame.v:102 PALibF (a Theorem Labs lane: palf_sm8 = StackMalloc8Tbl.PC_STACK_MALLOC_8); cgif
    A/ACk1.v:82. Proved below at B := TfibB (g_TLF), by computation. *)
 (* AIL (donor A/AD1u.v:34 tfib_AIL over A/AE2k.v's record; a Theorem Labs lane's YE01.v:28-40 asink_img_laws at G_Sink.scene_K) is
    a row no more: G_SinkSub.scene_AIL at the concrete B, passed at the call site of ASAN_UBSAN_T_of_rows. *)
@@ -218,10 +219,10 @@ Section close.
 (* ML: the donor's A/ACfi.v:72-73 link_ML, from TfibSyms' ts_universe and YG05.v:138 model_laws_ok. *)
 Lemma g_ML : model_laws (as_universe B).
 Proof. exact (model_laws_ok (as_universe B) (YF0m.ts_universe B HB)). Qed.
-(* HZS_PL (a Theorem Labs lane f6ab6e97937 AU/P_LLVMFuzzerTestOneInput.v:267): SceneBCertU.v scene_zs_placeholder (a Theorem Labs lane c7fbc8da541). *)
+(* HZS_PL (a Theorem Labs lane AU/P_LLVMFuzzerTestOneInput.v:268): SceneBCertU.v scene_zs_placeholder (a Theorem Labs lane). *)
 Lemma g_HZS_PL : forall (rc : YM05.RunCeil) (fx : YK11.FPState), in_zs B 0x20e80 8904.
 Proof. intros rc fx. exact (SceneBCertU.scene_zs_placeholder B HB). Qed.
-(* HB_C_PL (AU/P_LLVMFuzzerTestOneInput.v:268): SceneBCertU.v:481 scene_c_pl (a Theorem Labs lane c7fbc8da541); g_PL_SHCELLS is its list with shadow_addr
+(* HB_C_PL (AU/P_LLVMFuzzerTestOneInput.v:269): SceneBCertU.v:482 scene_c_pl (a Theorem Labs lane); g_PL_SHCELLS is its list with shadow_addr
    unfolded (shadow_addr (0x20e80 + 8904) = 0x7fffc629). *)
 Lemma g_HB_C_PL : forall ly, Forall (fun c => In c (as_const B ly)) g_PL_SHCELLS.
 Proof.
@@ -229,11 +230,11 @@ Proof.
   assert (E : g_PL_SHCELLS = map (fun k => z1 (ANum (0x7fffc629 + Z.of_nat k)) 0xf9) (seq 0 8)) by (vm_compute; reflexivity).
   rewrite E. exact (SceneBCertU.scene_c_pl B HB ly).
 Qed.
-(* HB_Z_TT (AU/P_LLVMFuzzerTestOneInput.v:269, its symbolic text): SceneBCertU.v:460 scene_z_tt (a Theorem Labs lane c7fbc8da541), the zero range (0x20e00, 0x28). *)
+(* HB_Z_TT (AU/P_LLVMFuzzerTestOneInput.v:270, its symbolic text): SceneBCertU.v:461 scene_z_tt (a Theorem Labs lane), the zero range (0x20e00, 0x28). *)
 Lemma g_HB_Z_TT : forall (rc : YM05.RunCeil) (fx : YK11.FPState),
   in_zs B (A_TAIL_TRAILER - 0x20) (0x20 + (TAIL_TRAILER_N - TAIL_TRAILER_N mod 8)).
 Proof. intros rc fx. exact (SceneBCertU.scene_z_tt B HB). Qed.
-(* HB_C_TT (AU/P_LLVMFuzzerTestOneInput.v:270): SceneBCertU.v:416-423 scene_sh_kl1_p / _rz0 / _rz1. *)
+(* HB_C_TT (AU/P_LLVMFuzzerTestOneInput.v:271): SceneBCertU.v:417-424 scene_sh_kl1_p / _rz0 / _rz1. *)
 Lemma g_HB_C_TT : forall ly, Forall (fun c => In c (as_const B ly)) g_TT_SHCELLS.
 Proof.
   intro ly.
@@ -245,7 +246,7 @@ Proof.
   apply Forall_cons; [exact (SceneBCertU.scene_sh_kl1_rz1 B HB ly)|].
   apply Forall_nil.
 Qed.
-(* HRO_TT / HRO_PL / HRO_PLGOT (the texts of AU/P_LLVMFuzzerTestOneInput.v:215-228 at f6ab6e97937): decided by
+(* HRO_TT / HRO_PL / HRO_PLGOT (the texts of AU/P_LLVMFuzzerTestOneInput.v:216-229): decided by
    vm_compute at B := TfibB (g_not_owned_errno): the trailer's 12 bytes, the placeholder's LLVMF_SCENE_BYTES = 8904
    bytes (not st_size 11136) and the GOT word VAL (A_OBJ 4) (0x9c6b8) lie in no Tfib_owned_static range and are not the
    errno cell. *)
@@ -259,7 +260,7 @@ Proof. intros rc fx. apply g_not_owned_errno. vm_compute. reflexivity. Qed.
 Lemma g_HRO_PLGOT : forall (rc : YM05.RunCeil) (fx : YK11.FPState), forall i, 0 <= i < 8 ->
   ~ Exists (in_zr (VAL (A_OBJ 4) + i)) (as_owned_static B) /\ ~ (as_errno B <= VAL (A_OBJ 4) + i < as_errno B + 4).
 Proof. intros rc fx. apply g_not_owned_errno. vm_compute. reflexivity. Qed.
-(* HB_Z_TR / HB_Z_CF (AU/P_check_step.v premises): SceneBCertU.v:439 scene_z_trailer / :444 scene_z_cframe, at
+(* HB_Z_TR / HB_Z_CF (AU/P_check_step.v premises): SceneBCertU.v:440 scene_z_trailer / :444 scene_z_cframe, at
    g_HB_ADDR's 0x20d80 / 0x20da0. *)
 Lemma g_HB_Z_TR : forall (rc : YM05.RunCeil) (fx : YK11.FPState),
   Exists (zr_sub (A_CS_TRAILER (PI:=PI_scene), 8)) (as_zero_shadow B).
@@ -267,7 +268,7 @@ Proof. intros rc fx. rewrite (proj1 (g_HB_ADDR rc fx)). exact (SceneBCertU.scene
 Lemma g_HB_Z_CF : forall (rc : YM05.RunCeil) (fx : YK11.FPState),
   Exists (zr_sub (A_CS_CFRAME (PI:=PI_scene), 48)) (as_zero_shadow B).
 Proof. intros rc fx. rewrite (proj2 (g_HB_ADDR rc fx)). exact (SceneBCertU.scene_z_cframe B HB). Qed.
-(* HB_C_CS (AU/P_check_step.v premise): SceneBCertU.v:500 scene_cs_shadow, a Theorem Labs lane's shape, at g_HB_ADDR's addresses. *)
+(* HB_C_CS (AU/P_check_step.v premise): SceneBCertU.v:501 scene_cs_shadow, a Theorem Labs lane's shape, at g_HB_ADDR's addresses. *)
 Lemma g_HB_C_CS : forall (rc : YM05.RunCeil) (fx : YK11.FPState) ly,
   In (z1 (ANum (shadow_addr (A_CS_TRAILER (PI:=PI_scene)) + 1)) 4) (as_const B ly) /\
   In (z1 (ANum (shadow_addr (A_CS_TRAILER (PI:=PI_scene)) + 2)) 0xf9) (as_const B ly) /\
@@ -334,7 +335,7 @@ Proof.
   - vm_compute. reflexivity.
   - split; apply Z.ltb_lt; vm_compute; reflexivity.
 Qed.
-(* TLF: PALibF at B := TfibB; palf_sm8 is StackMalloc8Tbl.PC_STACK_MALLOC_8 (a Theorem Labs lane 8df4a950395's ruled SceneFrame.v),
+(* TLF: PALibF at B := TfibB; palf_sm8 is StackMalloc8Tbl.PC_STACK_MALLOC_8 (a Theorem Labs lane's ruled SceneFrame.v),
    given by a Theorem Labs lane's scene_palf_sm8; the other fields by computation. *)
 Lemma g_TLF : forall (rc : YM05.RunCeil) (fx : YK11.FPState), PALibF (L:=scene_listing) (PI:=PI_scene) B.
 Proof.
@@ -342,13 +343,13 @@ Proof.
   - vm_compute. reflexivity.
   - vm_compute. reflexivity.
   - vm_compute. reflexivity.
-  - (* palf_sm8: a Theorem Labs lane's published lemma (ScenePalfSm8.v, at c3131b23386). *)
+  - (* palf_sm8: a Theorem Labs lane's published lemma (ScenePalfSm8.v). *)
     exact ScenePalfSm8.scene_palf_sm8.
   - cbv [zseps zseps_from fst snd].
     repeat split; first [left; apply Z.leb_le; vm_compute; reflexivity | right; apply Z.leb_le; vm_compute; reflexivity].
 Qed.
-(* The parse walk's premises (a Theorem Labs lane's CtrlParse.v, AU :62-83) the glue holds at B := TfibB: G := SCENE_GLOBS (SceneBCertU.v:47),
-   HGM / HIMGSH from SceneBCertU.v:561 / :547, HG15 and HBC_RNG by computation (object 15 is .str.4 at 0x20e40). *)
+(* The parse walk's premises (a Theorem Labs lane's CtrlParse.v, AU :62-83) the glue holds at B := TfibB: G := SCENE_GLOBS (SceneBCertU.v:48),
+   HGM / HIMGSH from SceneBCertU.v:562 / :548, HG15 and HBC_RNG by computation (object 15 is .str.4 at 0x20e40). *)
 Lemma g_HG15 : forall (rc : YM05.RunCeil) (fx : YK11.FPState),
   In (VAL (A_OBJ CtrlParseCut.OBJ_BCAST), 7) SceneBCertU.SCENE_GLOBS.
 Proof.
@@ -358,20 +359,20 @@ Qed.
 Lemma g_HBC_RNG : forall (rc : YM05.RunCeil) (fx : YK11.FPState),
   0x10000 + 64 <= VAL (A_OBJ CtrlParseCut.OBJ_BCAST) /\ VAL (A_OBJ CtrlParseCut.OBJ_BCAST) + 6 + 64 <= 0x5f9000.
 Proof. intros rc fx. split; apply Z.leb_le; vm_compute; reflexivity. Qed.
-(* HTRACE (donor A/ACeh.v:26; a Theorem Labs lane f6ab6e97937 AU/P_LLVMFuzzerTestOneInput_ctx.v:84 rt_trace_in_stmt) is a row no
+(* HTRACE (donor A/ACeh.v:26; a Theorem Labs lane AU/P_LLVMFuzzerTestOneInput_ctx.v:85 rt_trace_in_stmt) is a row no
    more: a Theorem Labs lane's SceneTrace.scene_HTRACE (RA_LLVMF and the six g_RT_* by conversion), at the call site. *)
 (* AMALLOC / AFREE (donor A/AD1q.v:43 / :44; asan-ubsan twins AU/YF0w.v, AU/YF0q.v) are rows no more: a Theorem Labs lane's
-   SceneAlloc.scene_AMALLOC / scene_AFREE (at 5387e903a6a), at the call site. *)
+   SceneAlloc.scene_AMALLOC / scene_AFREE, at the call site. *)
 (* AMEMCPY / AMEMSET / ABCMP (donor A/ACfi.v:97 / :92, A/AE2s.v; YG0d.v:318 / :353) are rows no more: a Theorem Labs lane's
    SceneIntrin.scene_AMEMCPY / scene_AMEMSET / scene_ABCMP B HB (over AU/YE2q.v / YE2r.v / YE2s.v), at the call site. *)
 (* ASM1 / ASM2 (YG0d.v:285) are rows no more: AU/YF0s.v:514 stack_malloc1_contract / AU/YF0u.v:514
    stack_malloc2_contract at B, with AR_laws_ok and HB (CS_CID = 2, AU/P_check_step_cut.v), at the call site. *)
 (* stack_malloc_8_sz / ASF8 / ASH00 / ASHF8 (rgb YG0e.v:17 / :34 / :48) are rows no more: G_RowsU.p_stack_malloc_8_sz /
-   p_ASF8 / p_ASH00 / p_ASHF8 (a Theorem Labs lane's proofs, at a423d9a58b9, over
+   p_ASF8 / p_ASH00 / p_ASHF8 (a Theorem Labs lane's proofs, over
    AU/Rt/StackMalloc8Closed.v, AU/Rt/StackFree8Closed.v, AU/RT_set_shadow.v and SceneBCertU.v), each of exactly the
    row's type, at the call site. *)
-(* W_LLVMFuzzerTestOneInput (a Theorem Labs lane f6ab6e97937 AU/P_LLVMFuzzerTestOneInput.v:312-315 under its Section h) is a row no
-   more: AU/P_LLVMFuzzerTestOneInput_Closed.v:212 scene_llvmf_closed, at the call site. It takes the row's premises
+(* W_LLVMFuzzerTestOneInput (a Theorem Labs lane AU/P_LLVMFuzzerTestOneInput.v:313-316 under its Section h) is a row no
+   more: AU/P_LLVMFuzzerTestOneInput_Closed.v:213 scene_llvmf_closed, at the call site. It takes the row's premises
    except HRA_LLVMF, HA_EMPTY, HRO_PL, FFL and HB_C_PL, which its proof does not use. *)
 (* The driver's leaves are stated at the FP state fx0, as in G_Top.v. *)
 #[local] Existing Instance YK11.fx0.
@@ -396,10 +397,11 @@ Let refused_site : YM05.RunCeil -> asyms -> ((word -> bool) -> (word -> option b
   fun rc B' est' => YD1x.refused_site_tfa B' est'.
 Let fprintf_s_site : YM05.RunCeil -> asyms -> ((word -> bool) -> (word -> option byte) -> Prop) -> Z -> list byte -> list byte -> Prop :=
   fun rc B' est' fmt lit1 lit2 => YD1x.fprintf_s_site_tfa B' est' fmt lit1 lit2.
-(* A Theorem Labs lane's data rows (ROWMAP.md): TF AU/YB12.v:12 TFIB, HS AU/YB01.v:620 HS_tfib, xst AU/YD1k.v:125, est
+(* A Theorem Labs lane's data rows (ROWMAP.md): TF AU/YB12.v:13 TFIB, HS AU/YB01.v:620 HS_tfib, xst AU/YD1k.v:125, est
    AU/YD1k.v:86. *)
 Let TF : atable := YB12.TFIB.
-Let HS : nat -> option acs := YB01.HS_tfib.
+(* LPS 727298f3: the hand-off states computed in the build per CONFIG_RSEQ flag (AU/YB01r.v HS_tfib_r). *)
+Let HS : Z -> nat -> option acs := YB01r.HS_tfib_r.
 Let xst : nat -> (word -> bool) -> (word -> option byte) -> Prop := YD1k.xst.
 Let est : (word -> bool) -> (word -> option byte) -> Prop := YD1k.est.
 (* AICPY / ARDCHK (AU/YD2m.v:16 / :21), XFR (AU/YD1k.v:133), PF1 / PFN (AU/YD1o.v:247 / :283), ESTI / ESTF

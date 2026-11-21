@@ -1,6 +1,6 @@
 # kit-rerun: the exposure scans of cmpkit 86da41d3ef68 on the records made on cmpkit 4bbd3a74be89
 
-cmpkit 86da41d3ef68 (tools/cmpkit/86da41d3ef68 at the tools commit 98e50c029045) supersedes cmpkit 4bbd3a74be89. Its
+cmpkit 86da41d3ef68 (tools/cmpkit/86da41d3ef68 at the tools) supersedes cmpkit 4bbd3a74be89. Its
 README ("For lanes that compared on 4bbd3a74be89 (or older): what needs a re-run") gives two scans:
 - `luiscan.py` 9ae61e4a0e01: rule 8 exposure. `exposure` 0 for a function in both images means rule 8 leaves the old
   verdict unchanged.

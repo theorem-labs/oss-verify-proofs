@@ -17,7 +17,7 @@
        s1 = res + 1, s2 = str, s3 = size, a0 = res; it returns at 0x4599c;
      the epilogue reloads ra, s0..s7 from the saved slots (a symbolic state built from them, as A/AE35.v builds its
        ss_epi) and returns. *)
-(* Modified by Theorem Labs, 2026-10: the image-bearing half of origin/cold/port-fm-rtprintf-param 7e395de08f5
+(* Modified by Theorem Labs, 2026-10: the image-bearing half of
    proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfGvsni.v for the snprintf chain restated over ARx (route (a),
    c-omx-hpreset 10:51Z), re-pinned at preset image A (fuzz_preset.asan d83eb25d; symbols from its unstripped twin
    f0d2e8d4): only the items of the four roots' closure that carry image numerals or run the code, vsni_rodata
@@ -51,7 +51,8 @@
          since h-pre-b3's blob d82ec2d7dae8)
      vsnprintf + 0 (value)                             0x9a63c    0x9aed8
      ss_epi's pc: AU/PSnpGwrc.RC_END = ___interceptor_vsnprintf + 0xfc = 0x46308; ro_low's bound 0x140000 kept (B's highest cell ends at 0x13ccfd) *)
-(* Modified by Theorem Labs, 2026-10: moved to the #102 pins, image B' (fuzz_preset.asan-ubsan d663f82d, unstripped c90d4fa5), from the old-pin donor origin/cold/c-libc-stdio-presetsnp-vfp ac1750cac8be: every code numeral by symbol + offset, checked equal to the B -> B' map of record (preset-F reloc102-maps bmap_b2bp.py 27b4c628bef6 over this file); B''s derived bounds from that map: the read-only top / writable start 0xa1000 -> 0xa2000, the image top 0x600000 -> 0x601000; kept as written: the IImg record keys, the instruction words and the segment sizes; audited by port_addr_check 0767e70e074a (only the record keys flag). Per-numeral table: c-libc-stdio scratch/p102/reloc/AU/PSnpGvsni.v.reloc.tsv. Comment numerals are as written. *)
+(* Modified by Theorem Labs, 2026-10: moved to the #102 pins, image B' (fuzz_preset.asan-ubsan d663f82d, unstripped c90d4fa5), from the old-pin donor: every code numeral by symbol + offset, checked equal to the B -> B' map of record (preset-F reloc102-maps bmap_b2bp.py 27b4c628bef6 over this file); B''s derived bounds from that map: the read-only top / writable start 0xa1000 -> 0xa2000, the image top 0x600000 -> 0x601000; kept as written: the IImg record keys, the instruction words and the segment sizes; audited by port_addr_check 0767e70e074a (only the record keys flag). Per-numeral table: c-libc-stdio scratch/p102/reloc/AU/PSnpGvsni.v.reloc.tsv. Comment numerals are as written. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -81,8 +82,8 @@ Definition vsni_rodata : list (Z * Z * list (Z * N * Z)) :=
    (0xa45d0, 8, [(0, 8%N, 0x9b3c8)])].
 (* The three cells other than REAL (vsnprintf), and the split (the roots' Svsni uses them). Every cell of vsni_rodata
    is a row of preset B's constant table (Reusable/YF0m.v Tfib_const): the REAL (vsnprintf) row
-   `z8 (ANum 0xa40f0) 0x9aed8` is h-pre-b3's generated blob d82ec2d7dae8 (origin/cold/h-pre-b3-preset-yf0m
-   8ed757b61d3); fm's AF0m has its twin (7e395de08f5 lib/A/AF0m.v:341). *)
+   `z8 (ANum 0xa40f0) 0x9aed8` is h-pre-b3's generated blob d82ec2d7dae8;
+   fm's AF0m has its twin (lib/A/AF0m.v:341). *)
 Definition vsni_rodata0 : list (Z * Z * list (Z * N * Z)) :=
   [(0xac3d8, 1, [(0, 1%N, 1)]); (0xa2840, 8, [(0, 8%N, 0x13d228)]); (0x13d27c, 1, [(0, 1%N, 1)])].
 Lemma vsni_rodata_split : vsni_rodata = vsni_rodata0 ++ [(0xa45d0, 8, [(0, 8%N, 0x9b3c8)])].

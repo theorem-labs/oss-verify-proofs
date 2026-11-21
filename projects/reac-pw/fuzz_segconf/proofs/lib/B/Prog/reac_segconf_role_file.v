@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the ASan walk of sup_reply_code (plugin-hostd/fuzz_command, 0x89d6c, 20 instructions), in the form of proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v (pb_cmpPixel, a leaf that ends in a tail jump to a runtime entry) and A/ACh2.v (the step through a call and back). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/sup_reply_code.v, with its module paths and module names changed; 498 of its 558 lines of code are new or changed and 228 lines of the source are left out. *)
-(* The image-B port of lib/A/Prog/reac_segconf_role_file.v (commit 6c85b2c21267): the ASan+UBSan
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* The image-B port of lib/A/Prog/reac_segconf_role_file.v: the ASan+UBSan
    walk of reac_segconf_role_file on image B of reac-pw/fuzz_segconf (fuzz_segconf.asan-ubsan, 0x89cbc = BASE +
    AF_reac_segconf_role_file, 41 instructions, real frame 16 bytes, no side-stack frame), over image B's listing
    layer (lib/B/Prog) and image B's kit and contract copies (lib/B).

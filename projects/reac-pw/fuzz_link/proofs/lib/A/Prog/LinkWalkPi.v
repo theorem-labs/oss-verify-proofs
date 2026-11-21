@@ -6,6 +6,7 @@
    plain pi run that stops at a call) and the generic lemmas of lib/A/AC8j.v.  Only the symbol type, the module paths
    and PALibF's two stack_malloc fields (fuzz_reply calls classes 0 and 1) change. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_frame.v, with its module paths, module names and numbers changed; 352 of its 746 lines of code are new or changed and 786 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_link, image A: generic helpers of the symbolic engine (st_ok_pi at link's listing) that every
    image-A walk of link's own functions uses and that link's tree did not have: the register / region / fact
    updates of a symbolic state, the after-call splice with fresh atoms above the listing's atoms, the side-stack
@@ -90,7 +91,7 @@ rewrite Z.land_ones, Z.mod_small by lia.
 rewrite Z.ldiff_ones_r by lia. rewrite Z.shiftr_div_pow2, Z.shiftl_mul_pow2 by lia. change (2 ^ 5) with 32. lia.
 Qed.
 
-(* cgif_file_fuzzer lib/A/ACer.v:156-164 (origin/ossv/recipes c8557374ad2e). *)
+(* cgif_file_fuzzer lib/A/ACer.v:156-164 (theorem-labs/oss-verify-proofs@6b32741d849a). *)
 Lemma denot_and_m32 : forall E n v c, ew E n = Z_to_bv 64 v -> 0 <= v + c -> v + c < 2 ^ 64 -> 0 <= v < 2 ^ 64 ->
   sv_denot E (SAlu ALU_AND (SOff n c) (SLit (-32))) = Z_to_bv 64 (32 * ((v + c) / 32)).
 Proof.

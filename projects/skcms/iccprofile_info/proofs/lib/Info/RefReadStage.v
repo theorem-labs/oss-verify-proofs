@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the recorded stack window is 6144513 bytes, was 8388608, and vm_stage's ledger is the launch's (ResLaunch.res_launch: the image's entries and the vDSO pair). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -10,6 +11,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From OSSVerify.skcms.iccprofile_info.images Require Import Plain.
+From OSSVerify.Proofs.skcms.iccprofile_info.lib.Info Require ResLaunch.
 From OSSVerify.Proofs.skcms.iccprofile_info.lib.Info Require Import Amb
   PropExec CatExec CatSim SeqExec StoreOk ShapeAlg
   MmapSim AllocSim StreamSim
@@ -79,7 +81,7 @@ Definition sr_FULL (j : Z) : list expr := sr_GROW (bx (off_of j)) (cap_of j) (ca
 (* [comment removed for export] *)
 Definition kn_static (j : Z) : list kentry :=
   [KAlign (EVar 0) 16; KRange (EVar 0) 0x7fff80000000 0x800000000000;
-   KWr (SA (EVar 0) (-8388608)) 8388608;
+   KWr (SA (EVar 0) (-6144513)) (6144513);
    KRange (EVar 1) 0x7fff80000000 0x800000400000;
    KAlign (EVar 2) 4096; KRange (EVar 2) 0x52000 (0x7fff7f800000 - 8192);
    KDisj (SA (EVar 0) (-8388608)) BAND (SA (EVar 2) 0) 8192;   (* [comment removed for export] *)
@@ -157,7 +159,7 @@ Definition kn_FULL (j : Z) : list kentry := kn_static j ++ kn_ctx j ++ kn_meta j
 (* [comment removed for export] *)
 Definition kn_G0 : list kentry :=
   [KAlign (EVar 0) 16; KRange (EVar 0) 0x7fff80000000 0x800000000000;
-   KWr (SA (EVar 0) (-8388608)) 8388608;
+   KWr (SA (EVar 0) (-6144513)) (6144513);
    KRange (EVar 1) 0x7fff80000000 0x800000400000;
    KAlign (EVar 2) 4096; KRange (EVar 2) 0x52000 (0x7fff7f800000 - 8192);
    KDisj (SA (EVar 0) (-8388608)) BAND (SA (EVar 2) 0) 8192;
@@ -350,7 +352,7 @@ Qed.
 
 (* [comment removed for export] *)
 Definition vm_stage (VM : VmMaps) (sp0 mb B : word) (nb : Z) : Prop :=
-  vm_reserved VM = segments_reserved RSEGS
+  ResLaunch.res_launch (segments_reserved RSEGS) VM   (* LPS 727298f3: image entries ++ vdso/vvar pair *)
   /\ (2 ^ 31 <= vm_limit VM)%Z
   /\ vm_init_sp VM = sp0
   /\ exists rest,

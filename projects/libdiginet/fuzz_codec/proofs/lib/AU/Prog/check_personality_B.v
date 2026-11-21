@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/A/APgRt.v (rt_hand, fs_roF / fs_rwF) and
-   APgStep.v (same_io_wvb) at 6ebe35ba632; adapted to the class-0 frame and the exit of reac_box_pin_parse. *)
+   APgStep.v (same_io_wvb); adapted to the class-0 frame and the exit of reac_box_pin_parse. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_pin/lib/A/PPgParse4.v, with its module paths and module names changed; 263 of its 292 lines of code are new or changed and 251 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Image B: check_personality at 0x8391c, 161 instructions, against lib/AU/Prog/CPgChkU.v's
    cdcU_check_pers_specX: image A's walk (lib/A/Prog/check_personality_A.v) on the image-B cut
    (lib/AU/Prog/check_personality_B_cut.v), at image B's addresses. Image B's code is image A's with two more

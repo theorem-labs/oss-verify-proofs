@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith Lia Bool List.
@@ -51,7 +52,9 @@ Record prot_gate (m : Model) (addr len : word) : Prop := mkProtGate {
   pg_al  : bv_unsigned addr mod 4096 = 0;
   pg_top : bv_unsigned addr + fix_nZ len < two_pow_64;
   pg_na  : map_contains (vm_noaccess (m_vmmaps m)) addr (fix_n len) = true;
-  pg_own : map_contains (vm_maps (m_vmmaps m)) addr (fix_n len) = true
+  pg_own : map_contains (vm_maps (m_vmmaps m)) addr (fix_n len) = true;
+  (* LPS 08b1429: a request meeting the vdso/vvar pair is unmodeled. *)
+  pg_vdso : region_free (vdso_reserved (m_kernel m) (vdso_top (m_vmmaps m))) addr (fix_n len) = true
 }.
 
 Section Prot.
@@ -72,11 +75,11 @@ Lemma check_mprotect_na (eff : SyscallEffect) :
   | _ => CheckReject
   end.
 Proof.
-  destruct G as [g1 g2 g3 g4 g5]. unfold check_mprotect. rewrite S1.
+  destruct G as [g1 g2 g3 g4 g5 g6]. unfold check_mprotect. rewrite S1.
   replace (negb (bv_unsigned addr mod page_size =? 0)) with false by (symmetry; apply negb_false_iff, Z.eqb_eq; exact g2).
   rewrite (w_is0_false len g1). fold (fix_nZ len).
   replace (two_pow_64 <=? bv_unsigned addr + fix_nZ len) with false by (symmetry; apply Z.leb_gt; exact g3).
-  rewrite S2. cbn [negb]. cbv zeta. fold (fix_nZ len). fold (fix_n len). rewrite g4, g5. reflexivity.
+  rewrite S2. cbn [negb]. cbv zeta. fold (fix_nZ len). fold (fix_n len). rewrite g6. cbn [negb]. rewrite g4, g5. reflexivity.
 Qed.
 
 Lemma chk_prot (eff : SyscallEffect) (m' : Model) (evs : list event) :

@@ -11,11 +11,11 @@
    with its event index raised by the function's EV, and a kept clause relative to the call. Three reasons:
    - link's functions store into image globals (g_nl, g_names, g_say, ...). The donor's `ajournal`
      (Reusable/YCbq.v:347-369) keeps every image byte outside the allocator's statics and errno, so no contract over
-     it can say "fuzz_close writes g_nl.open". `ajournal_gx G` keeps them outside G only (W_journalG.v:197-208).
+     it can say "fuzz_close writes g_nl.open". `ajournal_gx G` keeps them outside G only (W_journalG.v:198-209).
    - they store through pointers into their CALLERS' side-stack frames (copy_attr into nl_talk's caller's buffer,
      fuzz_recv into nl_talk's class-9 frame, attr_text / nl_error into kernel's class-8 frame). The journal lets a
      callee write a frame its owner took (`awr_byte`'s `in_frames ly own`, YCbq.v:457-461); a journal that starts at
-     the callee's own entry cannot hand those bytes on (W_journalG.v:477-486 `ajournal_gx_sub` asks every callee
+     the callee's own entry cannot hand those bytes on (W_journalG.v:478-487 `ajournal_gx_sub` asks every callee
      footprint byte to be a heap-block byte).
    - text_of stores into slots of LLVMFuzzerTestOneInput's REAL frame (link-a/design/ACEJ-WILD.md
      (internal record, sha256 6ee1df95f779) section 1); those lie inside the journal's window [sp0 - STK, sp0).
@@ -43,7 +43,7 @@
    - added to the Post: `frames S2 = frames Sc` (the side stack is back), `ashadow_kept` (the shadow of every heap
      block the call keeps is unchanged), and the descriptors and the file system kept.
 
-   Sources: libreac/fuzz_pcap released lib/A (origin/ossv/recipes f26f9fbd8777), relocated onto link by a Theorem Labs lane at
+   Sources: libreac/fuzz_pcap released lib/A, relocated onto link by a Theorem Labs lane at
    two internal commits (lib/A frame; lib/Reusable). *)
 From OSSVerify.Proofs.reac_pw.fuzz_link.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -170,8 +170,8 @@ Proof. intros W mem. reflexivity. Qed.
 
 (* A byte the caller's journal lets a callee write: a byte the journal's runner admits (its window but not an
    out-cell byte, a heap block of FP, a block allocated since the journal began, a side frame the journal's owner
-   took), a byte of a program global of G, or an out cell. This is the per-byte condition of W_journalG.v:259-262
-   awr_ok_x and of ajournal_gx_exec (W_journalG.v:303-304). *)
+   took), a byte of a program global of G, or an out cell. This is the per-byte condition of W_journalG.v:260-263
+   awr_ok_x and of ajournal_gx_exec (W_journalG.v:304-305). *)
 Definition ajw (G : list (Z * Z)) (XO : Z) (OUT : list (Z * Z)) (STK sp0 : Z) (FP : list (Z * Z))
     (ly : alayout) (S : astate) (lyc : alayout) (Sc : astate) (own : list (Z * Z)) (a : Z) : Prop :=
   (awr_byte STK sp0 FP (ablocks B ly S) (ablocks B lyc Sc) lyc own a /\ ~ (sp0 <= a < sp0 + XO)) \/
@@ -541,7 +541,7 @@ Qed.
    apostF at fx' back to its own entry fx with `srr_apostF_lift` (fxr is transitive, `fxr_trans`). A callee
    stated at a fixed fx is applied in that form through `aleaf_fx_of_rd` / `aleaf_fx_of_rdb` (and the alloc
    twins): fx' := fx.
-   Models: boxreg (libreac/fuzz_boxreg, origin/ossv/recipes) Prog/BoxBase.v:71-105 apost_baseF / fxr /
+   Models: boxreg (libreac/fuzz_boxreg, origin/ossv/recipes) Prog/BoxBase.v:72-106 apost_baseF / fxr /
    apost_baseF_continue, Prog/BoxLxDefs.v:337-355 lx_fxr_trans / lx_fxr_frm0, Rt/FMsnprintfSx.v:87-105
    srr_fx_continue; plugin-hostd/fuzz_command Prog/PaFx.v fxrel_of_frm0 and srr_apost_baseF_lift. boxreg's
    apost_baseF and apost_baseF_continue do not fit link as they are: their journal is the donor's ajournal, and

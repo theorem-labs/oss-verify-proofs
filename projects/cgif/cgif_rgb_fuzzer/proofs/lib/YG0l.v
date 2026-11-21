@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap cuts the request from the ledger with maps_subtract, shown equal to map_remove for an exact entry, grants at a null hint unpacked with grant_ok_na_pin_unpack, and a reserved ledger with the vDSO pair appended). *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -71,7 +72,7 @@ covered (vm_noaccess (m_vmmaps (munmap_model a n md)) ++ m_vm_lazy (munmap_model
 = covered (vm_noaccess (m_vmmaps md) ++ m_vm_lazy md) x.
 Proof.
 intros a n md x WF Hx. pose proof (model_ivs_wf_parts md WF) as (_ & Wn & Wl). pose proof (bv_unsigned_in_range 64 n) as Rn. unfold bv_modulus in Rn.
-unfold munmap_model, with_mmap_destroyed, vm_forget_range. mproj. cbn [vm_noaccess].
+unfold munmap_model, with_mmap_destroyed, vm_forget_range, mmap_fixed_destroyed_next. mproj. cbn [vm_noaccess].
 rewrite !cov_app, !cov_subtract_out by (assumption || lia). reflexivity.
 Qed.
 Lemma sum_count_ext_in : forall P Q l,
@@ -135,12 +136,25 @@ assert (D : bv_unsigned (fst q) + bv_unsigned (snd q) <= bv_unsigned (fst e) \/ 
 { apply in_app_iff in Hq as [Hq|Hq]; [exact (D1 q Hq) | pose proof (D2 q Hq); lia]. }
 split; [|exact D]. intros Ef. rewrite Ef in D. lia. }
 assert (RM : map_remove (vm_maps (m_vmmaps md)) (fst e) = l1 ++ l2) by (rewrite E; apply map_remove_mid; intros q Hq; exact (proj1 (OTHER q Hq))).
+(* LPS 727298f3: munmap cuts the request from the ledger ([mmap_fixed_destroyed_next] is
+   [maps_subtract]); the request is exactly the entry [e], so the cut is [map_remove]. *)
+assert (RMS : maps_subtract (vm_maps (m_vmmaps md)) (bv_unsigned (fst e)) (bv_unsigned (fst e) + bv_unsigned (snd e)) = l1 ++ l2).
+{ rewrite (maps_subtract_exact _ (fst e) (snd e) NZe); [exact RM | | |].
+- intros b s Hb. exact (NE (b, s) Hb).
+- intros b s Hb Eb. rewrite E in Hb. apply in_app_iff in Hb as [Hb|[Hb|Hb]].
++ exfalso. exact (proj1 (OTHER (b, s) ltac:(apply in_app_iff; left; exact Hb)) Eb).
++ rewrite Hb. reflexivity.
++ exfalso. exact (proj1 (OTHER (b, s) ltac:(apply in_app_iff; right; exact Hb)) Eb).
+- intros b s Hb Nb. rewrite E in Hb. apply in_app_iff in Hb as [Hb|[Hb|Hb]].
++ exact (proj2 (OTHER (b, s) ltac:(apply in_app_iff; left; exact Hb))).
++ exfalso. apply Nb. rewrite Hb. reflexivity.
++ exact (proj2 (OTHER (b, s) ltac:(apply in_app_iff; right; exact Hb))). }
 assert (VM' : vm_maps (m_vmmaps (munmap_model (fst e) (snd e) md)) = l1 ++ l2).
-{ unfold munmap_model, with_mmap_destroyed, vm_forget_range. mproj. cbn [vm_maps]. exact RM. }
+{ unfold munmap_model, with_mmap_destroyed, vm_forget_range, mmap_fixed_destroyed_next. mproj. cbn [vm_maps]. exact RMS. }
 split; [|exact VM'].
 assert (WF' : YK0h.model_ivs_wf (munmap_model (fst e) (snd e) md)).
 { pose proof (bv_unsigned_in_range 64 (snd e)) as Rn. unfold bv_modulus in Rn.
-unfold YK0h.model_ivs_wf. rewrite VM'. unfold munmap_model, with_mmap_destroyed, vm_forget_range. mproj. cbn [vm_noaccess vm_init_sp].
+unfold YK0h.model_ivs_wf. rewrite VM'. unfold munmap_model, with_mmap_destroyed, vm_forget_range, mmap_fixed_destroyed_next. mproj. cbn [vm_noaccess vm_init_sp].
 split; [| split; [|split; [|exact Wsp]]; apply YK0h.maps_subtract_wf; try lia; intros q Hq; [exact (W2 q Hq) | exact (W3 q Hq)]].
 intros q Hq. apply W1. rewrite E. apply in_app_iff in Hq as [?|?]; apply in_app_iff; [left|right;right]; assumption. }
 rewrite (eager_used_sem _ WF'), (eager_used_sem _ WF), VM', E. rewrite !YK0h.sum_count_app. cbn [YK0h.sum_count].
@@ -217,14 +231,13 @@ Qed.
 
 Lemma anon_grant_facts : forall U pp cc bb ly S md (a n : word),
 layout_ok ly -> WfP U pp cc bb S -> sec_placed ly S -> ALedger segs ly S md ->
-grant_ok_na_pin md a (bv_unsigned n) = true -> 0 < bv_unsigned n -> bv_unsigned n mod 4096 = 0 ->
+grant_ok_na_pin (Z_to_bv 64 0) md a (bv_unsigned n) = true -> 0 < bv_unsigned n -> bv_unsigned n mod 4096 = 0 ->
 page_aligned (bv_unsigned a) /\ in_app (bv_unsigned a) (bv_unsigned n) /\ bv_unsigned a + bv_unsigned n <= ASAN_CEIL /\
 Forall (zdisjoint (bv_unsigned a, bv_unsigned n)) (static_extents ly ++ sec_extents ly S ++ perm_maps ly ++ band_maps).
 Proof.
 intros U pp cc bb ly S md a n LO W PL L G Hn Hnal.
 pose proof (bv_unsigned_in_range 64 a) as Ra. pose proof (bv_unsigned_in_range 64 n) as Rn. unfold bv_modulus in Ra, Rn.
-unfold grant_ok_na_pin in G. apply andb_prop in G as [G G4]. apply andb_prop in G as [G G3]. apply andb_prop in G as [G1 G2].
-apply Z.eqb_eq in G1. apply Z.ltb_lt in G2. apply Z.leb_le in G3. unfold page_size in G1.
+destruct (grant_ok_na_pin_unpack _ _ _ _ Hn Hnal G) as (G1 & G2 & G3 & G4). unfold page_size in G1.
 assert (Hn64 : Z_to_bv 64 (bv_unsigned n) = n) by (apply w64_uw). rewrite Hn64 in G4.
 set (lo := bv_unsigned a) in *. set (len := bv_unsigned n) in *.
 destruct L as [L1 L2 L3 L4 L5 L6 L7 L8 L9 L10 L11 L12 L13 L14 L15].
@@ -270,7 +283,7 @@ destruct (Z_lt_le_dec lo (fst (ly_img ly) + snd (ly_img ly))) as [X1|X1]; [|righ
 destruct (Z_lt_le_dec (fst (ly_img ly)) (lo + len)) as [X2|X2]; [|left; lia]. exfalso.
 set (x := Z.max lo (fst (ly_img ly))).
 destruct (L14 x ltac:(unfold in_zr; subst x; lia)) as (e & He & E1).
-pose proof (YK13.region_free_In _ a n (fst e) (snd e) G4 ltac:(apply in_app_iff; left; rewrite L3, <- surjective_pairing; exact He)) as D.
+pose proof (YK13.region_free_In _ a n (fst e) (snd e) G4 ltac:(apply in_app_iff; left; destruct L3 as (rxL3 & L3e & _); rewrite L3e; apply in_app_iff; left; rewrite <- surjective_pairing; exact He)) as D.
 subst lo len x. lia. }
 assert (PERM : Forall (zdisjoint (lo, len)) (perm_maps ly)).
 { apply Forall_forall. intros z Hz. pose proof (perm_facts ly 1 LO ltac:(lia) z Hz) as (Z1 & Z2 & Z3 & _). apply RFm; [lia | lia | lia | exact (L10 z Hz)]. }
@@ -293,7 +306,7 @@ unfold zdisjoint. cbn [fst snd]. left. unfold ASAN_CEIL in *. lia.
 Qed.
 Lemma ALedger_anon : forall U pp cc bb ly S S' md (a n : word) (r : nat) (av : Z),
 layout_ok ly -> WfP U pp cc bb S -> sec_placed ly S -> amwf md -> ALedger segs ly S md ->
-grant_ok_na_pin md a (bv_unsigned n) = true ->
+grant_ok_na_pin (Z_to_bv 64 0) md a (bv_unsigned n) = true ->
 aregime S   -> 0 < bv_unsigned n <= MALLOC_MAX + 4 * 4096 -> bv_unsigned n mod 4096 = 0 ->
 (forall c, 1 <= c <= 31 -> reg S' c = reg S c) -> prim_committed S' = prim_committed S ->
 sec_extents (set_ly_sec ly r av) S' = sec_extents ly S ++ [(bv_unsigned a, bv_unsigned n)] ->
@@ -309,8 +322,7 @@ assert (EP : ly_prim (set_ly_sec ly r av) = ly_prim ly) by reflexivity.
 assert (EQ : ly_Q (set_ly_sec ly r av) = ly_Q ly) by reflexivity.
 assert (EI : ly_img (set_ly_sec ly r av) = ly_img ly) by reflexivity.
 pose proof (bv_unsigned_in_range 64 a) as Ra. pose proof (bv_unsigned_in_range 64 n) as Rn. unfold bv_modulus in Ra, Rn.
-pose proof G as G'. unfold grant_ok_na_pin in G. apply andb_prop in G as [G G4]. apply andb_prop in G as [G G3]. apply andb_prop in G as [G1 G2].
-apply Z.eqb_eq in G1. apply Z.ltb_lt in G2. apply Z.leb_le in G3.
+pose proof G as G'. destruct ((fun Hp => grant_ok_na_pin_unpack _ _ _ _ Hp Hal G) ltac:(lia)) as (G1 & G2 & G3 & G4).
 assert (Hn64 : Z_to_bv 64 (bv_unsigned n) = n) by (apply w64_uw).
 rewrite Hn64 in G4.
 assert (RF : forall b s, In (b, s) (vm_maps (m_vmmaps md)) -> bv_unsigned a + bv_unsigned n <= bv_unsigned b \/ bv_unsigned b + bv_unsigned s <= bv_unsigned a).

@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YFf0.v, with its module paths changed; relocated to fuzz_preset asan-ubsan (pin f8f98a95bc52), map sha256 69a6a2e91fb7, checker port_addr_check.py 39e67a7eb166. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: omx-clap-core/fuzz_preset image B (asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43; relocated from pin f8f98a95bc52 by alreloc c4338d099cfb8025): the
    allocator relation ARmcf / ARcf (Reusable/YG0ncf.v) rebuilt after the free interceptor's own writes (the caller's
    stack window, T + t_unwinding, the internal allocator's zone and flag), AT THE STATE WITH THE FLAG SET,
-   set_internal_inited true S (= YGcfMallocCompose.finit_cf S, YGcfMallocCompose.v:396, Deallocate's entry state).
+   set_internal_inited true S (= YGcfMallocCompose.finit_cf S, YGcfMallocCompose.v:397, Deallocate's entry state).
    Ported BY STATEMENT: the text is lib/Reusable/YFf0.v (cgif's ARm rebuild after the free NULL arm,
    image B) with the cf changes of lib/A/AFf0cf.v (the image-A ARcf port of AFf0.v, its header
    lists them) applied, and two changes more:
@@ -14,9 +15,9 @@
    - D_owned_cf finds the owned static area as YFf0.v:517 does at image B (YImgCellsB's symbol cells
      B_METADATA_MEM_OFF_8_CELL .. B_READ_STAGE_CELL); image A's ADIfaceImgA.covers_b has no image-B twin.
    On the cf layer of record ARmcf's cell fields amc_exh_cell / amc_errb_cells / amc_pf_cells (with amc_cells_owned and
-   amc_pf_owned) move from S to S' by YG0qcf.v:717 exh_cell_move_cf, :729 errb_cells_move_cf and :770 pf_cells_move_cf
+   amc_pf_owned) move from S to S' by YG0qcf.v:718 exh_cell_move_cf, :729 errb_cells_move_cf and :770 pf_cells_move_cf
    over the untouched set ok: the exhausted bytes lie in the primary reserve (ok_prim), the errbuf object and the two
-   Printf cells are owned static data apart from DI (ok_static, not_DI); Wf_cf's depot bound is YG01.v:177
+   Printf cells are owned static data apart from DI (ok_static, not_DI); Wf_cf's depot bound is YG01.v:178
    depot_len_bound, the budget's frame YG0ncf.v:451 abudget_cf_frame.
    Reads no listing; proves no function (rule 24). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.

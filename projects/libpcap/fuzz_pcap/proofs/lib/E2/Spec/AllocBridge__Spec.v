@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: kl_resv_top splits the reserved ledger into entries below the break and a tail of at most two entries of at most 20 pages (the vDSO/vvar pair), and the new kl_vdso and kl_vdso_in keep every mapping clear of the reserved entries and the pair in the ledger. *)
 (* [comment removed for export] *)
 From Stdlib Require Lia.
 (* [comment removed for export] *)
@@ -296,7 +297,12 @@ Record KL (L : mled) (pbrk : Z) (mo : Model) : Prop := mkKL {
          \/ (In e (vm_maps (m_vmmaps mo)) /\ pin_clear L e
              /\ forall b l, (In (b, l) (ld_groups L) \/ exists k, In (b, l, k) (ld_metas L)) ->
                    b + mmap_len l <= elo e \/ ehi e <= b));
-  kl_resv_top : forall e, In e (vm_reserved (m_vmmaps mo)) -> ehi e <= bv_unsigned (vm_start_brk (m_vmmaps mo));
+  (* LPS 727298f3: the reserved ledger is the image segments followed by the vDSO/vvar pair
+     ([State.init_reserved]); the pair sits inside the mmap window, not below the break:
+     the ledger is a prefix below the break and a tail of at most two entries of at most
+     20 pages. *)
+  kl_resv_top : exists R0 V, vm_reserved (m_vmmaps mo) = R0 ++ V /\ (length V <= 2)%nat /\ live_bytes V <= 20 * 4096 /\
+      (forall e, In e R0 -> ehi e <= bv_unsigned (vm_start_brk (m_vmmaps mo)));
   kl_start : 0 < bv_unsigned (vm_start_brk (m_vmmaps mo))
       /\ bv_unsigned (vm_start_brk (m_vmmaps mo)) mod PGSZ = 0
       /\ bv_unsigned (vm_start_brk (m_vmmaps mo)) <= bv_unsigned (vm_brk (m_vmmaps mo))
@@ -349,7 +355,11 @@ Record KL (L : mled) (pbrk : Z) (mo : Model) : Prop := mkKL {
       (exists b l k, In (b, l, k) (ld_metas L) /\ b <= elo e /\ ehi e <= b + mmap_len l)
       \/ (exists b0 l0, ld_brkreg L = Some (b0, l0) /\ b0 <= elo e /\ ehi e <= b0 + PGSZ);
   (* [comment removed for export] *)
-  kl_top : alloc_ceiling = page_round_down_Z (alloc_top (m_vmmaps mo)) }.
+  kl_top : alloc_ceiling = page_round_down_Z (alloc_top (m_vmmaps mo));
+  (* LPS 727298f3: every mapping misses every reserved entry (the vDSO pair among them),
+     and the pair itself is in the reserved ledger. *)
+  kl_vdso : forall r, In r (vm_reserved (m_vmmaps mo)) -> forall e, In e (vm_maps (m_vmmaps mo)) -> edisj e r;
+  kl_vdso_in : incl (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo))) (vm_reserved (m_vmmaps mo)) }.
 
 Section PS.
 Context {St : Type} {AS : AllocSt St}.

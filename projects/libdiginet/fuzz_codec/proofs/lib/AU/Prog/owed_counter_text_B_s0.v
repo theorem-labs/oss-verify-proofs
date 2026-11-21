@@ -2,11 +2,12 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACez.v:26-243 (the harness entry
-   segment, tfib_lib_A_seg) at c8557374ad2e for fuzz_knock's ASan image (fuzz_knock.asan, sha256
+   segment, tfib_lib_A_seg) for fuzz_knock's ASan image (fuzz_knock.asan, sha256
    61768cf4739b7641c99c825dde45eddafc55b601d41109555be0272fc7ca4118), and the S0/S1 boundary state from the form of
    proofs/cgif/cgif_file_fuzzer/lib/A/ACf7.v:27-28 (ss_A2). rule 24: no function proved (a port of the released
    cgif_file_fuzzer harness walk structure). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_knock/lib/A/APgMain0.v, with its module paths and module names changed; 210 of its 241 lines of code are new or changed and 275 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment S0 of owed_counter_text's walk in image B (fuzz_codec.asan-ubsan 0x84474): oc_seg_S0 of
    owed_counter_text_B_inv.v, from parts a (entry -> the frame request) and b (-> __asan_memset's return) and the
    last part here, 0x845b8 .. the loop-1 head 0x845d4:

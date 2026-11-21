@@ -1,4 +1,4 @@
-# Rule-24 lookup for fake-stack classes 0 and 4 (2026-10-31): origin/ossv/recipes 9b0ac6f0e678 (the tip, layout
+# Rule-24 lookup for fake-stack classes 0 and 4 (2026-10-31): (the tip, layout
 # projects/<P>/<H>/proofs/lib), one path-scoped git grep per released unit that has an ASan proof tree (36 units:
 # `git ls-tree -r -d --name-only REF -- projects/ | grep -E '^projects/[^/]+/[^/]+/proofs/lib/(A|B|AU)$'`), run one
 # at a time:

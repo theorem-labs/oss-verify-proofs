@@ -2,7 +2,8 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD25.v (origin/ossv/recipes c8557374ad2e), with its module paths changed, names TfibSyms -> PcapSyms and its addresses moved to libreac/fuzz_pcap's asan-ubsan build (pinned image fuzz_pcap.asan-ubsan sha256 9e66f771f22a, symbols from its unstripped twin fuzz_pcap.asan-ubsan sha256 c969d83cdd59). It is the asan-ubsan twin of a Theorem Labs lane's lib/A/AD25.v (a working branch 9700d736a50): every hunk of that file against the donor's A file is mirrored here, each address re-measured on the asan-ubsan image (keyed by symbol + offset or section + offset, never by a delta from the asan value); a Theorem Labs lane's hunks there are relocation (__interceptor_read+0x50), the image-end class (pcap_img_end), the dropped Require of cgif's YE2k, and ONE ADAPTED STATEMENT: rs_zero_shadow (donor :530-551) is restated over the zero-shadow row that holds the read slab, here Reusable/YF0m.v's row (0x9e0d0, 0x5d3e48 - 0x9e0d0) (AF0m's (0x9e200, 0x5d3f48 - 0x9e200)). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD25.v (theorem-labs/oss-verify-proofs@6b32741d849a), with its module paths changed, names TfibSyms -> PcapSyms and its addresses moved to libreac/fuzz_pcap's asan-ubsan build (pinned image fuzz_pcap.asan-ubsan sha256 9e66f771f22a, symbols from its unstripped twin fuzz_pcap.asan-ubsan sha256 c969d83cdd59). It is the asan-ubsan twin of a Theorem Labs lane's lib/A/AD25.v (a working branch): every hunk of that file against the donor's A file is mirrored here, each address re-measured on the asan-ubsan image (keyed by symbol + offset or section + offset, never by a delta from the asan value); a Theorem Labs lane's hunks there are relocation (__interceptor_read+0x50), the image-end class (pcap_img_end), the dropped Require of cgif's YE2k, and ONE ADAPTED STATEMENT: rs_zero_shadow (donor :530-551) is restated over the zero-shadow row that holds the read slab, here Reusable/YF0m.v's row (0x9e0d0, 0x5d3e48 - 0x9e0d0) (AF0m's (0x9e200, 0x5d3f48 - 0x9e200)). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3, with libreac/fuzz_boxreg's port of its copy of this file (changed srr_read_win, EL, eagree_6). *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -172,11 +173,33 @@ rewrite (wbytes_inside' bs mem (Z_to_bv 64 a) (Z_to_bv 64 (a + i))) by (rewrite 
 rewrite Hau, u64_lit by lia. replace (a + i - a) with i by lia. symmetry. apply nth_error_nth'. lia.
 Qed.
 Section f.
-Variables (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte).
+Variables (sp brk mbase : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte) (rnd : EntryDraw).
+(* Shape copied from the in-tree ported donor YD1v.v:119-125 / YL0q.v Section b: binders
+   [sp brk mbase] .. [inp] .. [a0 p] .. [rnd], premises
+   [valid_sp; in_argv =; valid_argv (in_argv inp); valid_envp; valid_launch;
+    entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp; valid_input].
+   [entry_stack_fits] is NOT added: it is implied by [entry_launch_ok_va]
+   ([entry_launch_ok_va_fits], 75d69e00 Run.v:3718-3722), and this section never carried it.
+   [Hargv] is new here; [eagree_6] needs it to turn YP08's [in_argv inp] back into [[a0; p]].
+   [rnd] is a Section VARIABLE rather than an existential: [eagree] compares an env against
+   [EL] POINTWISE below [K_M1], and indices 1 and 2 of [YP08.E0] are now [z_argv]s anchored
+   to [bv_unsigned (ed_top rnd)], so an existential would lose exactly the equalities the
+   consumers destructure ([YD22.v:64] uses [proj1 HE1] and [proj2 HE1] against its own [EL]).
+   CONSEQUENCE for callers, measured by reading each call to its closing paren: every
+   discharged argument list of a Section-f export that mentions [EL] gains ONE argument,
+   [rnd], immediately after [p]; nothing else moves.  [eagree_6] (and [rd_cpy], its only
+   user, YD25.v:706) additionally gains [brk mbase] before [inp] and the four new
+   hypotheses after [Hsp]. *)
+Hypothesis Hargv : in_argv inp = [a0; p].
 Hypothesis Hsp : valid_sp sp.
-Hypothesis Hva : valid_argv [a0; p].
+Hypothesis Hva : valid_argv (in_argv inp).
 Hypothesis Hve : valid_envp (in_envp inp).
-#[local] Notation EL := (YP08.E0 sp [a0; p] (in_envp inp) xw xd).
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp.
+Hypothesis Hvi : valid_input inp.
+(* [YP08.E0] is TOP-anchored and launch-indexed at 75d69e00 (YP08.v:209-210): entry-draw top,
+   the run's own [kb_rseq] flag, and the execfn. *)
+#[local] Notation EL := (YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd).
 #[local] Notation usp := (bv_unsigned sp).
 Let HWXi : wx_segs_nowrap tfibsegs := Hwx_tfa.
 Definition eagree (E : YP0m.env) : Prop := (forall k, (k < K_M1)%nat -> ew E k = ew EL k) /\ ed E = ed EL.
@@ -184,8 +207,13 @@ Lemma eagree_0 : forall E, eagree E -> bv_unsigned (ew E 0) = usp.
 Proof. intros E [HE _]. rewrite HE by (unfold K_M1; lia). reflexivity. Qed.
 Lemma eagree_6 : forall E, eagree E -> usp <= bv_unsigned (ew E 6).
 Proof.
-intros E [HE _]. rewrite HE by (unfold K_M1; lia). change (ew EL 6) with (Z_to_bv 64 (z_rand usp [a0; p] (in_envp inp))).
-pose proof (YP08.z_rand_end sp [a0; p] (in_envp inp) Hsp Hva Hve) as Hz. pose proof (u64_range sp).
+(* [z_rand] remains SP-anchored and uses the run's rseq flag. This unit's [YP08]
+   retains the full section prefix, including unused image arguments (YP08.v:481-496). *)
+intros E [HE _]. rewrite HE by (unfold K_M1; lia).
+change (ew EL 6) with (Z_to_bv 64 (z_rand usp (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp))).
+assert (Hz : z_rand usp (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp) + 16 < 2 ^ 63)
+by (eapply (YP08.z_rand_end TSEGS TPH inp mbase AsanUbsan.M.init_pc sp brk rnd Hsp Hva Hve Hvl Hlau)).
+rewrite Hargv in Hz. pose proof (u64_range sp).
 unfold z_rand in *. rewrite u64_lit by lia. lia.
 Qed.
 Lemma eagree_ewset : forall E n v, eagree E -> (K_M1 <= n)%nat -> eagree (ewset E n v).
@@ -311,6 +339,17 @@ Proof.
 intros ly S W memx md0 md2 fds Hs HA.
 apply (AR_same_but_materialized B ly S W memx (with_fds fds md0) md2); [| exact Hs]. apply AR_with_fds. exact HA.
 Qed.
+(* The channel reader [fdchan] asks for at LPS 727298f3 rides beside [m_fs] through the read
+   steps' posts: a descriptor update, a backing ledger and a materialization leave [m_proc]
+   alone ([same_but_materialized_frame]'s sixth component). *)
+Lemma wf_rdr : forall f m, m_channel_reader (with_fds f m) = m_channel_reader m.
+Proof. reflexivity. Qed.
+Lemma sbm_rdr_fw : forall f l mat m m', same_but_materialized (with_fds f (with_vm_backing l mat m)) m' ->
+m_channel_reader m' = m_channel_reader m.
+Proof.
+intros f l mat m m' Hs. destruct (same_but_materialized_frame _ _ Hs) as (_ & _ & _ & _ & _ & Hp & _).
+unfold m_channel_reader. rewrite Hp. destruct m; reflexivity.
+Qed.
 Lemma rd_step_pos : forall E (W : world tfibsegs) ms md ly S (pth : list byte) data (len cap want : Z),
 eagree E -> st_ok tfibsegs E S_RW (restrict (w_H W) ms) ->
 bv_unsigned (ew E A_LEN) = len -> bv_unsigned (ew E A_CAP) = cap -> bv_unsigned (ew E A_WANT) = want ->
@@ -324,7 +363,7 @@ SRr tfibsegs W (mkCfg ms md)
 let mem1 := wbytes mem0 (Z_to_bv 64 RS_LO) bs in
 1 <= n <= want
 /\ AI tfibsegs (w_H W) (w_A W) md1 /\ AR tfibsegs B ly S W mem1 md1
-/\ m_fds md1 = APSG.fds3 (FdFile pth (Z_to_bv 64 (len + n))) /\ m_fs md1 = m_fs md
+/\ m_fds md1 = APSG.fds3 (FdFile pth (Z_to_bv 64 (len + n))) /\ m_fs md1 = m_fs md /\ m_channel_reader md1 = m_channel_reader md
 /\ (forall i, 0 <= i < n -> mem1 (Z_to_bv 64 (RS_LO + i)) = nth_error bs (Z.to_nat i))
 /\ (forall x : word, bv_unsigned x < RS_LO \/ RS_LO + n <= bv_unsigned x -> mem1 x = mem0 x)
 /\ frame_of E LH_mem (ms_mem ms) mem0
@@ -384,6 +423,7 @@ apply SRr_ret. exists (ms_mem ms1), md2. cbv zeta.
 split; [exact Hn|]. split; [exact HAI2|]. split; [exact HAR2|].
 split. { rewrite Hfds2, with_fds_fds, wvb_fds', Hfds, Hnw, Hoff. unfold fd_insert, APSG.fds3. f_equal. }
 split. { rewrite Hfs2, with_fds_fs, wvb_fs'. reflexivity. }
+split. { exact (sbm_rdr_fw _ _ _ _ _ Hs). }
 split; [exact Hbytes'|]. split; [intros x Hx; apply Hfr'; lia|].
 split; [exact HF1|]. split; [exact HFr1|].
 split; [reflexivity|]. eexists. eexists. split; [reflexivity|]. split; [exact HS2|]. split; [exact HF | exact HFr].
@@ -398,7 +438,7 @@ SRr tfibsegs W (mkCfg ms md)
 (fun W' c' => W' = W /\ exists ms' md',
 c' = mkCfg ms' md' /\ st_ok tfibsegs E S_HDR (restrict (w_H W) ms')
 /\ AI tfibsegs (w_H W) (w_A W) md' /\ AR tfibsegs B ly S W (ms_mem ms') md'
-/\ m_fds md' = APSG.fds_std /\ m_fs md' = m_fs md
+/\ m_fds md' = APSG.fds_std /\ m_fs md' = m_fs md /\ m_channel_reader md' = m_channel_reader md
 /\ frame_of E LH_mem (ms_mem ms) (ms_mem ms')
 /\ frame_of E LH_mem (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) (ms_mem ms'))).
 Proof.
@@ -470,6 +510,7 @@ split.
 rewrite E0'. intros a Ha. apply (apresent_some' (w_H W)). apply (winP E S_HDR _ W (or_introl HS4) E0'); [| exact Ha]. do 3 eexists; reflexivity. }
 split. { rewrite wvb_fds', with_fds_fds, wvb_fds', Hfds2, with_fds_fds, wvb_fds', Hfds. unfold fd_remove, fd_insert, APSG.fds3, APSG.fds_std. cbn -[Z_to_bv bv_add]. reflexivity. }
 split. { rewrite wvb_fs', with_fds_fs, wvb_fs', Hfs2, with_fds_fs, wvb_fs'. reflexivity. }
+split. { rewrite wvb_rdr', wf_rdr, wvb_rdr'. exact (sbm_rdr_fw _ _ _ _ _ Hs). }
 split.
 - apply (frame_of_trans E LH_mem (ss_mem S_RE) _ _ _ (eq_sym SK1) HF1).
 apply (frame_of_trans E (ss_mem S_RE) (ss_mem S_CL) _ _ _ ltac:(rewrite SK1, SK5; reflexivity) HF2). rewrite Emem2. exact HF.
@@ -486,7 +527,7 @@ SRr tfibsegs W (mkCfg ms md)
 (fun W' c' => W' = W /\ exists ms' md',
 c' = mkCfg ms' md' /\ st_ok tfibsegs E S_DIR (restrict (w_H W) ms')
 /\ AI tfibsegs (w_H W) (w_A W) md' /\ AR tfibsegs B ly S W (ms_mem ms') md'
-/\ m_fds md' = m_fds md /\ m_fs md' = m_fs md
+/\ m_fds md' = m_fds md /\ m_fs md' = m_fs md /\ m_channel_reader md' = m_channel_reader md
 /\ frame_of E LH_mem (ms_mem ms) (ms_mem ms')
 /\ frame_of E LH_mem (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) (ms_mem ms'))).
 Proof.
@@ -524,13 +565,13 @@ split; [exact HAI3|].
 split.
 { apply (AR_after_run B HB ARL ly S W E (ss_mem S_RE) mem _ _ _ ltac:(rewrite Emm; exact HAR1) WOKre); [rewrite E0'; exact Ulo | rewrite E0'; exact HCT | exact HF |].
 rewrite E0'. intros a Ha. apply (apresent_some' (w_H W)). apply (winP E S_DIR _ W (or_introl HS2) E0'); [| exact Ha]. do 3 eexists; reflexivity. }
-split; [rewrite ?wvb_fds'; reflexivity|]. split; [rewrite ?wvb_fs'; reflexivity|].
+split; [rewrite ?wvb_fds'; reflexivity|]. split; [rewrite ?wvb_fs'; reflexivity|]. split; [rewrite ?wvb_rdr'; reflexivity|].
 split.
 - apply (frame_of_trans E LH_mem (ss_mem S_RE) _ _ _ (eq_sym SK1) HF1). rewrite <- Emm. exact HF.
 - apply (frame_of_trans E LH_mem (ss_mem S_RE) _ _ _ (eq_sym SK1) HFr1). rewrite <- Emm. exact HFr.
 Qed.
 (* ADAPTED (a Theorem Labs lane's AD25.v:528-530): donor :530 states the one zero-shadow range (0xa2ba0, img_end - 0xa2ba0) of
-   cgif's Tfib_zero_shadow; pcap's (Reusable/YF0m.v:347 Tfib_zero_shadow) is split around the harness globals'
+   cgif's Tfib_zero_shadow; pcap's (Reusable/YF0m.v:348 Tfib_zero_shadow) is split around the harness globals'
    redzones, and the read slab [RS_LO, RS_HI) lies in its row 3, (0x9e0d0, 0x5d3e48 - 0x9e0d0) (0x9e0d0 = the end
    of section asan_globals 0x9dfd0 + 0x100; 0x5d3e48 = g_file_len + 8, the start of its redzone), which this lemma
    states. *)

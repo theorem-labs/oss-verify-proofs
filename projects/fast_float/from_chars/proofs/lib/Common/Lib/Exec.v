@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vvar answer of a memory read; the model's fetch_failure cases). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -229,7 +230,8 @@ Variable segs : list Segment.
   end.
 Proof. LiaFast.lf_pins LiaFast.u0.
   intros t t' H m. rewrite !interp_eff_ieff. revert m. induction H; intros m; cbn [ieff]; auto.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [apply H0| exact I].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|];
+      [apply H0| destruct (range_meets_vvar segs a (width_bytes n)); exact I].
   - destruct (store_ok segs m a (width_bytes n)); [apply IHeff_eqv| exact I].
 Qed.
 
@@ -263,7 +265,8 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   destruct (fetch_word segs (ms_pc_val ms)); [apply decode_exec_eqv; exact Heqv|].
   destruct (fetch_word_ov segs (ms_mem ms) (ms_pc_val ms)); [apply decode_exec_eqv; exact Heqv|].
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc_val ms)); [apply decode_exec_eqv; exact Heqv|].
-  unfold fetch_failure. destruct (negb _); [exact I|]. destruct (_ || _)%bool; exact I.
+  unfold fetch_failure.
+  repeat match goal with |- context [if ?b then _ else _] => destruct b end; exact I.
 Qed.
 
 (* [comment removed for export] *)

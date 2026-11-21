@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the RomBase.sys_rob premise of each node lemma, mmap grants at Linux's own placement from the hint with the place_declined_b premise, and the munmap node over the allocation-only outcome munmap_outcome_acfg through node_det_nil_acfg). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -22,6 +23,7 @@ From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yc Require Ledger Hull.
 Import OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yc.Divembc OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yc.SpinAlg.Lazy9wo OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yc.SpinAlg OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yc.Hull.Lazylo0 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yc.Ledger OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yc.Hull.
 Import ListNotations.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib Require Import Acfg.
+From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib Require RomBase.
 Open Scope bv_scope.
 
 (* [comment removed for export] *)
@@ -86,10 +88,11 @@ Lemma node_family_mat : forall ms model x8 (I : Type)
   (forall o, R o -> exists i, o = Ok (effs i) (ms' i) (evs i)) ->
   (forall i, m_halted (ms' i) = None) ->
   (forall i, materialize_model_accesses (ms' i) (syscall_effect_accesses (effs i)) = Some (ms'' i)) ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   node_ok segs (mkCfg ms model) I evs
           (fun i => mkCfg (advance_past_svc (apply_effect ms (effs i))) (ms'' i)).
 Proof.
-  intros ms model x8 I effs ms' ms'' evs R Hh Hsvc HR Hin Hout Hh' Hmat. split.
+  intros ms model x8 I effs ms' ms'' evs R Hh Hsvc HR Hin Hout Hh' Hmat Hrob. split; [| split; [| exact Hrob]].
   - intros i. apply (sstep_of_spec_mat ms model x8 _ (ms' i)); auto. apply HR. apply Hin.
   - intros e st Hss.
     destruct (sstep_svc_inv segs ms model x8 e st Hsvc Hss)
@@ -114,11 +117,12 @@ Lemma node_family_nil : forall ms model x8 (I : Type)
   (forall o, R o -> exists i, o = Ok (effs i) (ms' i) (evs i)) ->
   (forall i, m_halted (ms' i) = None) ->
   (forall i, syscall_effect_accesses (effs i) = []) ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   node_ok segs (mkCfg ms model) I evs
           (fun i => mkCfg (advance_past_svc (apply_effect ms (effs i))) (ms' i)).
 Proof.
-  intros ms model x8 I effs ms' evs R Hh Hsvc HR Hin Hout Hh' Hnil.
-  apply (node_family_mat ms model x8 I effs ms' ms' evs R Hh Hsvc HR Hin Hout Hh').
+  intros ms model x8 I effs ms' evs R Hh Hsvc HR Hin Hout Hh' Hnil Hrob.
+  apply (node_family_mat ms model x8 I effs ms' ms' evs R Hh Hsvc HR Hin Hout Hh'); [| exact Hrob].
   intros i. rewrite (Hnil i). apply materialize_model_accesses_nil.
 Qed.
 
@@ -133,13 +137,14 @@ Lemma node_family_hull : forall A AL E ms model x8 (I : Type)
   (forall i, m_halted (ms' i) = None) ->
   (forall i, MInv A AL E (ms' i)) ->
   (forall i, accs_in_hull A (syscall_effect_accesses (effs i))) ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   node_ok segs (mkCfg ms model) I evs
           (fun i => mkCfg (advance_past_svc (apply_effect ms (effs i)))
                           (model_after (ms' i) (syscall_effect_accesses (effs i))))
   /\ (forall i, MInv A AL E (model_after (ms' i) (syscall_effect_accesses (effs i)))).
 Proof.
-  intros A AL E ms model x8 I effs ms' evs R Hh Hsvc HR Hin Hout Hh' HI Ha. split.
-  - apply (node_family_mat ms model x8 I effs ms' _ evs R Hh Hsvc HR Hin Hout Hh').
+  intros A AL E ms model x8 I effs ms' evs R Hh Hsvc HR Hin Hout Hh' HI Ha Hrob. split.
+  - apply (node_family_mat ms model x8 I effs ms' _ evs R Hh Hsvc HR Hin Hout Hh'); [| exact Hrob].
     intros i. exact (proj1 (materialize_hull A AL E (ms' i) _ (HI i) (Ha i))).
   - intros i. exact (proj2 (materialize_hull A AL E (ms' i) _ (HI i) (Ha i))).
 Qed.
@@ -154,12 +159,13 @@ Lemma node_det_mat : forall ms model x8 eff0 m0 m0' evs0,
   (forall o, syscall_spec (sys_input segs ms x8) model o <-> o = Ok eff0 m0 evs0) ->
   m_halted m0 = None ->
   materialize_model_accesses m0 (syscall_effect_accesses eff0) = Some m0' ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   node_ok segs (mkCfg ms model) unit (fun _ => evs0)
           (fun _ => mkCfg (advance_past_svc (apply_effect ms eff0)) m0').
 Proof.
-  intros ms model x8 eff0 m0 m0' evs0 Hh Hsvc Hchk Hh0 Hmat.
+  intros ms model x8 eff0 m0 m0' evs0 Hh Hsvc Hchk Hh0 Hmat Hrob.
   apply (node_family_mat ms model x8 unit (fun _ => eff0) (fun _ => m0) (fun _ => m0') (fun _ => evs0)
-           (fun o => o = Ok eff0 m0 evs0) Hh Hsvc (syscall_spec_acfg_det _ _ _ _ _ Hchk)).
+           (fun o => o = Ok eff0 m0 evs0) Hh Hsvc (syscall_spec_acfg_det _ _ _ _ _ Hchk)); [| | | | exact Hrob].
   - intros []. reflexivity.
   - intros o ->. exists tt. reflexivity.
   - intros []; exact Hh0.
@@ -172,12 +178,34 @@ Lemma node_det_nil : forall ms model x8 eff0 m0 evs0,
   (forall o, syscall_spec (sys_input segs ms x8) model o <-> o = Ok eff0 m0 evs0) ->
   m_halted m0 = None ->
   syscall_effect_accesses eff0 = [] ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   node_ok segs (mkCfg ms model) unit (fun _ => evs0)
           (fun _ => mkCfg (advance_past_svc (apply_effect ms eff0)) m0).
 Proof.
-  intros ms model x8 eff0 m0 evs0 Hh Hsvc Hchk Hh0 Hnil.
-  apply (node_det_mat ms model x8 eff0 m0 m0 evs0 Hh Hsvc Hchk Hh0).
+  intros ms model x8 eff0 m0 evs0 Hh Hsvc Hchk Hh0 Hnil Hrob.
+  apply (node_det_mat ms model x8 eff0 m0 m0 evs0 Hh Hsvc Hchk Hh0); [| exact Hrob].
   rewrite Hnil. apply materialize_model_accesses_nil.
+Qed.
+
+(* 08b1429: the same over the alloc-only config's characterisation, for a call whose plain spec also
+   admits a spurious refusal (munmap, 215) *)
+Lemma node_det_nil_acfg : forall ms model x8 eff0 m0 evs0,
+  m_halted model = None ->
+  ms_svc_pending ms = Some x8 ->
+  (forall o, syscall_spec_acfg (sys_input segs ms x8) model o <-> o = Ok eff0 m0 evs0) ->
+  m_halted m0 = None ->
+  syscall_effect_accesses eff0 = [] ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
+  node_ok segs (mkCfg ms model) unit (fun _ => evs0)
+          (fun _ => mkCfg (advance_past_svc (apply_effect ms eff0)) m0).
+Proof.
+  intros ms model x8 eff0 m0 evs0 Hh Hsvc Hchk Hh0 Hnil Hrob.
+  apply (node_family_mat ms model x8 unit (fun _ => eff0) (fun _ => m0) (fun _ => m0) (fun _ => evs0)
+           (fun o => o = Ok eff0 m0 evs0) Hh Hsvc Hchk); [| | | | exact Hrob].
+  - intros []. reflexivity.
+  - intros o ->. exists tt. reflexivity.
+  - intros []; exact Hh0.
+  - intros []. rewrite Hnil. apply materialize_model_accesses_nil.
 Qed.
 
 Lemma node_det_hull : forall A AL E ms model x8 eff0 m0 evs0,
@@ -186,14 +214,15 @@ Lemma node_det_hull : forall A AL E ms model x8 eff0 m0 evs0,
   (forall o, syscall_spec (sys_input segs ms x8) model o <-> o = Ok eff0 m0 evs0) ->
   m_halted m0 = None ->
   MInv A AL E m0 -> accs_in_hull A (syscall_effect_accesses eff0) ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   node_ok segs (mkCfg ms model) unit (fun _ => evs0)
           (fun _ => mkCfg (advance_past_svc (apply_effect ms eff0))
                           (model_after m0 (syscall_effect_accesses eff0)))
   /\ MInv A AL E (model_after m0 (syscall_effect_accesses eff0)).
 Proof.
-  intros A AL E ms model x8 eff0 m0 evs0 Hh Hsvc Hchk Hh0 HI Ha.
+  intros A AL E ms model x8 eff0 m0 evs0 Hh Hsvc Hchk Hh0 HI Ha Hrob.
   destruct (materialize_hull A AL E m0 _ HI Ha) as [Hmat HI']. split; [|exact HI'].
-  apply (node_det_mat ms model x8 eff0 m0 _ evs0 Hh Hsvc Hchk Hh0 Hmat).
+  apply (node_det_mat ms model x8 eff0 m0 _ evs0 Hh Hsvc Hchk Hh0 Hmat Hrob).
 Qed.
 
 (* [comment removed for export] *)
@@ -204,12 +233,13 @@ Lemma node_ret_only_nil : forall ms model x8 r m' evs,
   ms_svc_pending ms = Some x8 ->
   (forall o, syscall_spec (sys_input segs ms x8) model o <-> o = Ok (mkEffect r [] []) m' evs) ->
   m_halted m' = None ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   node_ok segs (mkCfg ms model) unit (fun _ => evs)
           (fun _ => mkCfg (advance_past_svc (set_gpr0 ms r)) m').
 Proof.
-  intros ms model x8 r m' evs Hh Hsvc Hchk Hh'.
+  intros ms model x8 r m' evs Hh Hsvc Hchk Hh' Hrob.
   rewrite <- (apply_effect_no_write ms r).
-  apply (node_det_nil ms model x8 (mkEffect r [] []) m' evs Hh Hsvc Hchk Hh' eq_refl).
+  apply (node_det_nil ms model x8 (mkEffect r [] []) m' evs Hh Hsvc Hchk Hh' eq_refl Hrob).
 Qed.
 
 (* [comment removed for export] *)
@@ -224,14 +254,15 @@ Lemma node_ret_only_copyins_hull : forall A AL E ms model x8 reads r m' evs,
              <-> o = Ok (with_copyins reads (mkEffect r [] [])) m' evs) ->
   m_halted m' = None ->
   MInv A AL E m' -> accs_in_hull A reads ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   node_ok segs (mkCfg ms model) unit (fun _ => evs)
           (fun _ => mkCfg (advance_past_svc (set_gpr0 ms r)) (model_after m' reads))
   /\ MInv A AL E (model_after m' reads).
 Proof.
-  intros A AL E ms model x8 reads r m' evs Hh Hsvc Hchk Hh' HI Ha.
+  intros A AL E ms model x8 reads r m' evs Hh Hsvc Hchk Hh' HI Ha Hrob.
   rewrite <- (apply_effect_copyins_no_write ms r reads).
   destruct (materialize_hull A AL E m' reads HI Ha) as [Hmat HI']. split; [|exact HI'].
-  apply (node_det_mat ms model x8 (with_copyins reads (mkEffect r [] [])) m' _ evs Hh Hsvc Hchk Hh').
+  apply (node_det_mat ms model x8 (with_copyins reads (mkEffect r [] [])) m' _ evs Hh Hsvc Hchk Hh'); [| exact Hrob].
   rewrite syscall_effect_accesses_copyins. exact Hmat.
 Qed.
 
@@ -250,10 +281,11 @@ Lemma srz_ret_only_silent_nil : forall ms model x8 r m' T,
   ms_svc_pending ms = Some x8 ->
   (forall o, syscall_spec (sys_input segs ms x8) model o <-> o = Ok (mkEffect r [] []) m' []) ->
   m_halted m' = None ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   srealizes segs (mkCfg (advance_past_svc (set_gpr0 ms r)) m') T ->
   srealizes segs (mkCfg ms model) T.
 Proof.
-  intros ms model x8 r m' T Hh Hsvc Hchk Hh' Hc.
+  intros ms model x8 r m' T Hh Hsvc Hchk Hh' Hrob Hc.
   eapply srz_silent1; [eapply node_ret_only_nil; eassumption | exact Hc].
 Qed.
 
@@ -270,13 +302,14 @@ Lemma srz_det_hull : forall A AL E ms model x8 eff0 m0 T,
   (forall o, syscall_spec (sys_input segs ms x8) model o <-> o = Ok eff0 m0 []) ->
   m_halted m0 = None ->
   MInv A AL E m0 -> accs_in_hull A (syscall_effect_accesses eff0) ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   (MInv A AL E (model_after m0 (syscall_effect_accesses eff0)) ->
    srealizes segs (mkCfg (advance_past_svc (apply_effect ms eff0))
                          (model_after m0 (syscall_effect_accesses eff0))) T) ->
   srealizes segs (mkCfg ms model) T.
 Proof.
-  intros A AL E ms model x8 eff0 m0 T Hh Hsvc Hchk Hh0 HI Ha Hc.
-  destruct (node_det_hull A AL E ms model x8 eff0 m0 [] Hh Hsvc Hchk Hh0 HI Ha) as [Hn HI'].
+  intros A AL E ms model x8 eff0 m0 T Hh Hsvc Hchk Hh0 HI Ha Hrob Hc.
+  destruct (node_det_hull A AL E ms model x8 eff0 m0 [] Hh Hsvc Hchk Hh0 HI Ha Hrob) as [Hn HI'].
   eapply srz_silent1; [exact Hn | exact (Hc HI')].
 Qed.
 
@@ -300,18 +333,66 @@ End WithSegs.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
+(* 08b1429: each grant predicate's first conjunct is the spec's placement rule. *)
 Definition grant_okf (flags hint : word) (m : Model) (a : word) (n : Z) : bool :=
-  (bv_unsigned a mod page_size =? 0)%Z && (0 <? bv_unsigned a)%Z
+  LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint n a
+  && (bv_unsigned a mod page_size =? 0)%Z && (0 <? bv_unsigned a)%Z
   && (bv_unsigned a + n <=? alloc_top (m_vmmaps m))%Z
   && region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 n)
   && mmap_noreserve_backed_ok flags m n.
-(* [comment removed for export] *)
+
+Lemma grant_okf_intro : forall flags hint m a n,
+  (0 < n)%Z -> (n mod page_size = 0)%Z ->
+  LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint n a = true ->
+  mmap_noreserve_backed_ok flags m n = true ->
+  grant_okf flags hint m a n = true.
+Proof.
+  intros flags hint m a n Hn Hnal Hpl Hb.
+  destruct (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is_admissible _ _ _ _ _ Hn Hnal Hpl)
+    as (Hal & Hpos & Htop & Hfree).
+  unfold grant_okf. rewrite Hpl, Hfree, Hb.
+  rewrite (proj2 (Z.eqb_eq _ _) Hal), (proj2 (Z.ltb_lt _ _) Hpos), (proj2 (Z.leb_le _ _) Htop).
+  reflexivity.
+Qed.
+
+Lemma grant_okf_place : forall flags hint m a n,
+  grant_okf flags hint m a n = true ->
+  LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint n a = true
+  /\ mmap_noreserve_backed_ok flags m n = true.
+Proof.
+  intros flags hint m a n H. unfold grant_okf in H. rewrite !andb_true_iff in H. tauto.
+Qed.
 
 (* [comment removed for export] *)
 Definition grant_ok_nr (hint : word) (m : Model) (a : word) (n : Z) : bool :=
-  (bv_unsigned a mod page_size =? 0)%Z && (0 <? bv_unsigned a)%Z
+  LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint n a
+  && (bv_unsigned a mod page_size =? 0)%Z && (0 <? bv_unsigned a)%Z
   && (bv_unsigned a + n <=? alloc_top (m_vmmaps m))%Z
   && region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 n).
+
+Lemma grant_ok_nr_place : forall hint m a n,
+  grant_ok_nr hint m a n = true ->
+  LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint n a = true.
+Proof.
+  intros hint m a n H. unfold grant_ok_nr in H. rewrite !andb_true_iff in H. tauto.
+Qed.
+
+(* [comment removed for export] *)
+Lemma grant_okf_not_refusable : forall flags hint m a n,
+  grant_okf flags hint m a n = true -> mmap_grant_refusable hint flags m n = false.
+Proof.
+  intros flags hint m a n Hg. destruct (grant_okf_place _ _ _ _ _ Hg) as [Hp Hb].
+  exact (mmap_grant_not_refusable hint flags m n a Hp Hb).
+Qed.
+
+(* [comment removed for export] *)
+Lemma grant_okf_of_not_refusable : forall flags hint m n,
+  (0 < n)%Z -> (n mod page_size = 0)%Z ->
+  mmap_grant_refusable hint flags m n = false -> exists a, grant_okf flags hint m a n = true.
+Proof.
+  intros flags hint m n Hn Hnal H. destruct (mmap_grant_refusable_false hint flags m n Hn Hnal H) as (Hb & a & Hp).
+  exists a. exact (grant_okf_intro flags hint m a n Hn Hnal Hp Hb).
+Qed.
 
 (* [comment removed for export] *)
 
@@ -396,6 +477,9 @@ Variable segs : list Segment.
 
 Lemma mmap_rw_outcome_si_rel : forall ms x8 model flags,
   bv_unsigned x8 = 222%Z -> mmap_rw_args flags ms ->
+  (* LPS 727298f3: off the [place_declined_b] decline, as [mmap_rw_outcome] needs. *)
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   let nZ := page_round_up_Z (bv_unsigned (ms_gpr ms 1)) in
   forall o, syscall_spec (sys_input segs ms x8) model o <->
     (exists e, In e mmap_errnos /\ o = Ok (mkEffect (errno_ret e) [] []) model [])
@@ -403,58 +487,56 @@ Lemma mmap_rw_outcome_si_rel : forall ms x8 model flags,
          /\ o = Ok (mkEffect a [] [(a, Z_to_bv 64 nZ)])
                    (grant_model flags a (Z_to_bv 64 nZ) false model) []).
 Proof.
-  (intros ms x8 model flags Hno; (first [ intro dR_14; dand6 dR_14 as H1 H2 H3 H4 H5 Hmb | intros (H1 & H2 & H3 & H4 & H5 & Hmb) ]); intros nZ o).
+  (intros ms x8 model flags Hno; (first [ intro dR_14; dand6 dR_14 as H1 H2 H3 H4 H5 Hmb | intros (H1 & H2 & H3 & H4 & H5 & Hmb) ]); intros Hdecl nZ o).
+  destruct (mmap_len_place_ok (ms_gpr ms 1) (w_is0_false_of_ne _ H1)) as [Hn0 Hnal]. fold nZ in Hn0, Hnal.
   rewrite (syscall_spec_222 _ model o) by (rewrite in_sysno_si'; exact Hno).
   rewrite in_arg0_si', in_arg1_si', in_arg2_si', in_arg3_si', in_arg4_si', in_arg5_si'.
   rewrite H2, H3, H4, H5.
   rewrite (mmap_rw_outcome (ms_gpr ms 0) (ms_gpr ms 1) (Z_to_bv 64 3) flags
              (Z_to_bv 64 (-1)) (Z_to_bv 64 0) (sys_input segs ms x8) model o
-             (w_is0_false_of_ne _ H1) Hmb).
-  unfold mmap_err_out, grant_okf, grant_model, grant_vmmaps. fold nZ. cbn [negb].
+             (w_is0_false_of_ne _ H1) Hmb Hdecl).
+  unfold mmap_err_out, grant_model, grant_vmmaps. fold nZ. cbn [negb].
   split; (intros [H | (a & Hg & ->)]; [left; exact H | right; exists a; split; [|reflexivity]]).
-  - (first [ dand5 Hg as G1 G2 G3 G4 G5 | destruct Hg as (G1 & G2 & G3 & G4 & G5) ]).   (* [comment removed for export] *)
-    rewrite (proj2 (Z.eqb_eq _ _) G1), (proj2 (Z.ltb_lt _ _) G2), (proj2 (Z.leb_le _ _) G3), G4, G5.
-    reflexivity.
-  - rewrite !andb_true_iff in Hg. destruct Hg as [[[[G1 G2] G3] G4] G5].
-    apply Z.eqb_eq in G1. apply Z.ltb_lt in G2. apply Z.leb_le in G3. auto 10.
+  - destruct Hg as [Hpl Hb]. apply grant_okf_intro; [exact Hn0 | exact Hnal | | exact Hb].
+    exact (proj2 (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is_iff _ _ _ _ _ Hn0 Hnal) Hpl).
+  - destruct (grant_okf_place _ _ _ _ _ Hg) as [Hpl Hb]. split; [| exact Hb].
+    exact (proj1 (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is_iff _ _ _ _ _ Hn0 Hnal) Hpl).
 Qed.
 
 (* [comment removed for export] *)
 Lemma mmap_rw_outcome_si : forall ms x8 model flags,
   bv_unsigned x8 = 222%Z -> m_halted model = None -> mmap_rw_args flags ms ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   let nZ := page_round_up_Z (bv_unsigned (ms_gpr ms 1)) in
   forall o, syscall_spec_acfg (sys_input segs ms x8) model o <->
-    (exists e, In e (mmap_errnos_when (mmap_grant_refusable flags model nZ))
+    (exists e, In e (mmap_errnos_when (mmap_grant_refusable (ms_gpr ms 0) flags model nZ))
                /\ o = Ok (mkEffect (errno_ret e) [] []) model [])
     \/ (exists a, grant_okf flags (ms_gpr ms 0) model a nZ = true
          /\ o = Ok (mkEffect a [] [(a, Z_to_bv 64 nZ)])
                    (grant_model flags a (Z_to_bv 64 nZ) false model) []).
 Proof.
-  intros ms x8 model flags Hno Hh Hargs nZ.
+  intros ms x8 model flags Hno Hh Hargs Hdecl nZ.
+  destruct (mmap_len_place_ok (ms_gpr ms 1) (w_is0_false_of_ne _ (proj1 Hargs))) as [Hn0 Hnal].
   apply (acfg_lift_mmap_when (sys_input segs ms x8) model
            (fun o => exists a, grant_okf flags (ms_gpr ms 0) model a nZ = true
                        /\ o = Ok (mkEffect a [] [(a, Z_to_bv 64 nZ)])
                                  (grant_model flags a (Z_to_bv 64 nZ) false model) [])
-           (mmap_grant_refusable flags model nZ) Hno Hh
-           (mmap_rw_outcome_si_rel ms x8 model flags Hno Hargs)).
+           (mmap_grant_refusable (ms_gpr ms 0) flags model nZ) Hno Hh
+           (mmap_rw_outcome_si_rel ms x8 model flags Hno Hargs Hdecl)).
   - intros o (a & Hg & ->). eexists _, _, _. split; [reflexivity|]. split.
-    + unfold grant_okf in Hg. rewrite !andb_true_iff in Hg. destruct Hg as [[[[G1 _] _] _] _].
+    + unfold grant_okf in Hg. rewrite !andb_true_iff in Hg. destruct Hg as [[[[[_ G1] _] _] _] _].
       apply Z.eqb_eq in G1. exact G1.
     + rewrite grant_model_halted. exact Hh.
-  - intros o (a & Hg & _). unfold grant_okf in Hg.
-    rewrite !andb_true_iff in Hg. destruct Hg as [[[[G1 G2] G3] G4] G5].
-    apply Z.eqb_eq in G1. apply Z.ltb_lt in G2. apply Z.leb_le in G3.
-    exact (mmap_grant_not_refusable flags model nZ a G1 G2 G3 G4 G5).
-  - intros Hf. destruct (mmap_grant_refusable_false flags model nZ Hf) as (Hb & a & G1 & G2 & G3 & G4).
+  - intros o (a & Hg & _). exact (grant_okf_not_refusable flags (ms_gpr ms 0) model a nZ Hg).
+  - intros Hf. destruct (grant_okf_of_not_refusable flags (ms_gpr ms 0) model nZ Hn0 Hnal Hf) as [a Ha].
     exists (Ok (mkEffect a [] [(a, Z_to_bv 64 nZ)]) (grant_model flags a (Z_to_bv 64 nZ) false model) []).
-    cbv beta. exists a. split; [|reflexivity]. unfold grant_okf.
-    rewrite (proj2 (Z.eqb_eq _ _) G1), (proj2 (Z.ltb_lt _ _) G2), (proj2 (Z.leb_le _ _) G3), G4, Hb.
-    reflexivity.
+    cbv beta. exists a. split; [exact Ha | reflexivity].
 Qed.
 
 (* [comment removed for export] *)
 Definition mmap_rw_I (flags : word) (ms : machine_state) (model : Model) : Type :=
-  ({e : Z | In e (mmap_errnos_when (mmap_grant_refusable flags model
+  ({e : Z | In e (mmap_errnos_when (mmap_grant_refusable (ms_gpr ms 0) flags model
                      (page_round_up_Z (bv_unsigned (ms_gpr ms 1)))))}   (* [comment removed for export] *)
    + {a : word | grant_okf flags (ms_gpr ms 0) model a
                    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true})%type.
@@ -475,10 +557,12 @@ Lemma node_mmap_rw : forall ms model x8 flags,
   ms_svc_pending ms = Some x8 ->
   bv_unsigned x8 = 222%Z ->
   mmap_rw_args flags ms ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   node_ok segs (mkCfg ms model) (mmap_rw_I flags ms model) (fun _ => [])
           (mmap_rw_nx flags ms model).
 Proof.
-  intros ms model x8 flags Hh Hsvc Hno Hargs.
+  intros ms model x8 flags Hh Hsvc Hno Hargs Hdecl.
   set (nZ := page_round_up_Z (bv_unsigned (ms_gpr ms 1))).
   pose (effs := fun i : mmap_rw_I flags ms model => match i with
           | inl (exist _ e _) => (mkEffect (errno_ret e) [] [] : SyscallEffect)
@@ -490,17 +574,19 @@ Proof.
                           = mkCfg (advance_past_svc (apply_effect ms (effs i))) (ms' i)).
   { intros [[e He] | [a Ha]]; cbn [mmap_rw_nx effs ms'];
       [rewrite apply_effect_no_write; reflexivity | reflexivity]. }
-  pose proof (mmap_rw_outcome_si ms x8 model flags Hno Hh Hargs) as HR. cbv zeta in HR. fold nZ in HR.
+  pose proof (mmap_rw_outcome_si ms x8 model flags Hno Hh Hargs Hdecl) as HR. cbv zeta in HR. fold nZ in HR.
   pose proof (node_family_nil segs ms model x8 (mmap_rw_I flags ms model) effs ms' (fun _ => []) _
                 Hh Hsvc HR
                 ltac:(intros [[e He] | [a Ha]]; cbn [effs ms']; [left; exists e; auto | right; exists a; auto])
                 ltac:(intros o [(e & He & ->) | (a & Ha & ->)];
                         [exists (inl (exist _ e He)) | exists (inr (exist _ a Ha))]; reflexivity)
                 ltac:(intros [[e He] | [a Ha]]; cbn [ms']; [exact Hh | rewrite grant_model_halted; exact Hh])
-                ltac:(intros [[e He] | [a Ha]]; reflexivity)) as Hnode.
-  split.
+                ltac:(intros [[e He] | [a Ha]]; reflexivity)
+                (RomBase.sys_rob_memfree segs ms model x8 Hsvc ltac:(rewrite Hno; exact RomBase.memfree_222)))
+    as Hnode.
+  split; [| split; [| exact (proj2 (proj2 Hnode))]].
   - intros i. rewrite Enx. apply (proj1 Hnode).
-  - intros e st Hss. (first [ pose proof ((proj2 Hnode e st Hss)) as dR_2; dex1 dR_2 as i; destruct dR_2 as [-> ->] | pose proof ((proj2 Hnode e st Hss)) as dR_2; dand3 dR_2 as i -> -> | destruct (proj2 Hnode e st Hss) as (i & -> & ->) ]).
+  - intros e st Hss. (first [ pose proof ((proj1 (proj2 Hnode) e st Hss)) as dR_2; dex1 dR_2 as i; destruct dR_2 as [-> ->] | pose proof ((proj1 (proj2 Hnode) e st Hss)) as dR_2; dand3 dR_2 as i -> -> | destruct (proj1 (proj2 Hnode) e st Hss) as (i & -> & ->) ]).
     exists i. rewrite Enx. split; reflexivity.
 Qed.
 
@@ -508,45 +594,23 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-Lemma mmap_rw_errno_forced : forall flags model nZ e,
-  In e (mmap_errnos_when (mmap_grant_refusable flags model nZ)) ->
-  e = ENOMEM /\ mmap_grant_refusable flags model nZ = true.
-Proof. intros flags model nZ e H. exact (mmap_errnos_when_In _ e H). Qed.
-
-(* [comment removed for export] *)
-Lemma grant_okf_not_refusable : forall flags hint m a n,
-  grant_okf flags hint m a n = true -> mmap_grant_refusable flags m n = false.
-Proof.
-  intros flags hint m a n Hg. unfold grant_okf in Hg.
-  rewrite !andb_true_iff in Hg. destruct Hg as [[[[G1 G2] G3] G4] G5].
-  apply Z.eqb_eq in G1. apply Z.ltb_lt in G2. apply Z.leb_le in G3.
-  exact (mmap_grant_not_refusable flags m n a G1 G2 G3 G4 G5).
-Qed.
-
-(* [comment removed for export] *)
-Lemma grant_okf_of_not_refusable : forall flags hint m n,
-  mmap_grant_refusable flags m n = false -> exists a, grant_okf flags hint m a n = true.
-Proof.
-  intros flags hint m n H. destruct (mmap_grant_refusable_false flags m n H) as (Hb & a & G1 & G2 & G3 & G4).
-  exists a. unfold grant_okf.
-  rewrite (proj2 (Z.eqb_eq _ _) G1), (proj2 (Z.ltb_lt _ _) G2), (proj2 (Z.leb_le _ _) G3), G4, Hb. reflexivity.
-Qed.
+Lemma mmap_rw_errno_forced : forall hint flags model nZ e,
+  In e (mmap_errnos_when (mmap_grant_refusable hint flags model nZ)) ->
+  e = ENOMEM /\ mmap_grant_refusable hint flags model nZ = true.
+Proof. intros hint flags model nZ e H. exact (mmap_errnos_when_In _ e H). Qed.
 
 (* [comment removed for export] *)
 Lemma grant_ok_nr_not_refusable : forall hint m a n,
-  grant_ok_nr hint m a n = true -> mmap_reserve_refusable m n = false.
+  grant_ok_nr hint m a n = true -> mmap_reserve_refusable hint m n = false.
 Proof.
-  intros hint m a n Hg. unfold grant_ok_nr in Hg.
-  rewrite !andb_true_iff in Hg. destruct Hg as [[[G1 G2] G3] G4].
-  apply Z.eqb_eq in G1. apply Z.ltb_lt in G2. apply Z.leb_le in G3.
-  exact (mmap_reserve_not_refusable m n a G1 G2 G3 G4).
+  intros hint m a n Hg. exact (mmap_reserve_not_refusable hint m n a (grant_ok_nr_place _ _ _ _ Hg)).
 Qed.
 
 (* [comment removed for export] *)
 Lemma mmap_rw_I_no_errno : forall flags ms model
-    (s : {e : Z | In e (mmap_errnos_when (mmap_grant_refusable flags model
+    (s : {e : Z | In e (mmap_errnos_when (mmap_grant_refusable (ms_gpr ms 0) flags model
                           (page_round_up_Z (bv_unsigned (ms_gpr ms 1)))))}),
-  mmap_grant_refusable flags model (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false -> False.
+  mmap_grant_refusable (ms_gpr ms 0) flags model (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false -> False.
 Proof. intros flags ms model [e He] Hnf. rewrite Hnf in He. exact He. Qed.
 
 (* [comment removed for export] *)
@@ -555,15 +619,18 @@ Lemma srz_mmap_rw_nf : forall ms model x8 flags T,
   ms_svc_pending ms = Some x8 ->
   bv_unsigned x8 = 222%Z ->
   mmap_rw_args flags ms ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   let nZ := page_round_up_Z (bv_unsigned (ms_gpr ms 1)) in
-  mmap_grant_refusable flags model nZ = false ->
+  mmap_grant_refusable (ms_gpr ms 0) flags model nZ = false ->
   (forall a, grant_okf flags (ms_gpr ms 0) model a nZ = true ->
      srealizes segs (mkCfg (advance_past_svc (apply_effect ms (mkEffect a [] [(a, Z_to_bv 64 nZ)])))
                           (grant_model flags a (Z_to_bv 64 nZ) false model)) T) ->
   srealizes segs (mkCfg ms model) T.
 Proof.
-  intros ms model x8 flags T Hh Hsvc Hno Hargs nZ Hnf HB.
-  destruct (grant_okf_of_not_refusable flags (ms_gpr ms 0) model nZ Hnf) as [a0 Ha0].
+  intros ms model x8 flags T Hh Hsvc Hno Hargs Hdecl nZ Hnf HB.
+  destruct (mmap_len_place_ok (ms_gpr ms 1) (w_is0_false_of_ne _ (proj1 Hargs))) as [Hn0 Hnal].
+  destruct (grant_okf_of_not_refusable flags (ms_gpr ms 0) model nZ Hn0 Hnal Hnf) as [a0 Ha0].
   apply (srz_node_spin_b segs (mkCfg ms model) (mmap_rw_I flags ms model)
            (mmap_rw_nx flags ms model)
            (fun i => match i with inr _ => false | _ => true end) T
@@ -580,6 +647,10 @@ Lemma srz_mmap_rw_nf_ex : forall ms model x8 flags T,
   ms_svc_pending ms = Some x8 ->
   bv_unsigned x8 = 222%Z ->
   mmap_rw_args flags ms ->
+  (* the hint is fixed by the caller: a NULL hint discharges this by
+     [RelSpec.place_declined_b_null] *)
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   let nZ := page_round_up_Z (bv_unsigned (ms_gpr ms 1)) in
   (exists a, grant_okf flags (ms_gpr ms 0) model a nZ = true) ->
   (forall a, grant_okf flags (ms_gpr ms 0) model a nZ = true ->
@@ -587,8 +658,8 @@ Lemma srz_mmap_rw_nf_ex : forall ms model x8 flags T,
                           (grant_model flags a (Z_to_bv 64 nZ) false model)) T) ->
   srealizes segs (mkCfg ms model) T.
 Proof.
-  intros ms model x8 flags T Hh Hsvc Hno Hargs nZ [a0 Ha0] HB.
-  apply (srz_mmap_rw_nf ms model x8 flags T Hh Hsvc Hno Hargs); [| exact HB].
+  intros ms model x8 flags T Hh Hsvc Hno Hargs Hdecl nZ [a0 Ha0] HB.
+  apply (srz_mmap_rw_nf ms model x8 flags T Hh Hsvc Hno Hargs Hdecl); [| exact HB].
   exact (grant_okf_not_refusable flags (ms_gpr ms 0) model a0 _ Ha0).
 Qed.
 
@@ -640,7 +711,7 @@ Variable segs : list Segment.
 (* [comment removed for export] *)
 
 Definition mmap_na_I (ms : machine_state) (model : Model) : Type :=
-  ({e : Z | In e (mmap_errnos_when (mmap_reserve_refusable model
+  ({e : Z | In e (mmap_errnos_when (mmap_reserve_refusable (ms_gpr ms 0) model
                      (page_round_up_Z (bv_unsigned (ms_gpr ms 1)))))}   (* [comment removed for export] *)
    + {a : word | grant_ok_nr (ms_gpr ms 0) model a
                    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true})%type.
@@ -690,10 +761,11 @@ Lemma node_munmap_lazy : forall ms model x8,
                     (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model)).
 Proof.
   intros ms model x8 Hh Hsvc Hno Hargs.
-  apply (node_det_nil segs ms model x8 (munmap_eff ms) _ [] Hh Hsvc).
-  - intros o. apply (munmap_outcome_si segs ms x8 model o Hno Hargs).
+  apply (node_det_nil_acfg segs ms model x8 (munmap_eff ms) _ [] Hh Hsvc).
+  - intros o. apply (munmap_outcome_acfg segs ms x8 model o Hno Hh Hargs).
   - rewrite munmap_model_halted. exact Hh.
   - reflexivity.
+  - exact (RomBase.sys_rob_memfree segs ms model x8 Hsvc ltac:(rewrite Hno; exact RomBase.memfree_215)).
 Qed.
 
 Lemma srz_munmap_lazy : forall ms model x8 T,

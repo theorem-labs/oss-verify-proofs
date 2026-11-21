@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_cno0.v at a working branch 31d1eb57a40. B makes the SAME 17
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_cno0.v at a working branch. B makes the SAME 17
    calls in the SAME order as A, so the 17 resume points carry; every address, the frame (112, s10 / s11 saved) and every
    register fact of the resume states are re-derived from B's listing (internal path).
 
@@ -86,7 +86,7 @@ Section c. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}
 Variable B : asyms.
 #[local] Notation rdW W mem := (mrestrict (w_H W) mem).
 
-(* a source window's home: empty, or inside a block live at the entry (check_no_overread_spec, hdesign 0caf3fb9019) *)
+(* a source window's home: empty, or inside a block live at the entry (check_no_overread_spec, hdesign) *)
 Definition cno_home (ly : alayout) (S : astate) (p : Z) (l : list Z) : Prop :=
   l = [] \/ exists b m, In (b, m) (ablocks B ly S) /\ b <= p /\ p + Z.of_nat (length l) <= b + m.
 

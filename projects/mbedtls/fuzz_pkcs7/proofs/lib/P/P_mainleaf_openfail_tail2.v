@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (new section hypothesis Hrdr, the channel reader that writev reads, added to the proof-using lists of of_segH3, of_segG3, of_segH4, of_segFG4 and of_tail and passed on to the write steps and to of_segF). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -81,6 +82,8 @@ Section Tail2.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  (* 08b1429: writev reads the channel reader (recipes/channel-reader-premise.md) *)
+  Hypothesis Hrdr : m_channel_reader model = true.
 
   Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
   Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
@@ -98,7 +101,7 @@ Section Tail2.
     close_exit HR HK P0 Hh Hlazy sp0.
   Qed.
 
-  #[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma of_segH3 : ltac2:(CDefT.buildp (gd_tbl_P_mainleaf_openfail_tail2 ()) "Pvals,(0.(1.&40.))PR,(2.&5.(1.&40.))PM,P,(1.&40.)(3.(1.&8.))P,(4.$5.(6.(1.&40.)R3.)#>7.)P,(4.(1.&40.)(7.R4.#0.)Vsp0,)P,(8.(9.VBL,R5.)$17.R4.)P,(;.$<.(9.VBL,R6.)R4.$18.)(>.$<.(?.(10.$11.R6.(12.&40.+3>;80.)R5.(13.$<.))Vmodel,)(14.(15.+2.)(16.Vmodel,)))")
+  #[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma of_segH3 : ltac2:(CDefT.buildp (gd_tbl_P_mainleaf_openfail_tail2 ()) "Pvals,(0.(1.&40.))PR,(2.&5.(1.&40.))PM,P,(1.&40.)(3.(1.&8.))P,(4.$5.(6.(1.&40.)R3.)#>7.)P,(4.(1.&40.)(7.R4.#0.)Vsp0,)P,(8.(9.VBL,R5.)$17.R4.)P,(;.$<.(9.VBL,R6.)R4.$18.)(>.$<.(?.(10.$11.R6.(12.&40.+3>;80.)R5.(13.$<.))Vmodel,)(14.(15.+2.)(16.Vmodel,)))")
 (* [comment removed for export] *).
   Proof.
     intros vals R M HL P0 HR HK.
@@ -124,6 +127,9 @@ Section Tail2.
     - reflexivity.
     - reflexivity.
     - exact Hfd2.
+
+    - exact Hrdr.
+
     - exact Hh.
     - exact Hlazy.
     - apply t_exit_has_nil.
@@ -135,7 +141,7 @@ Section Tail2.
   Qed.
 
   (* [comment removed for export] *)
-  #[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma of_segG3 : ltac2:(CDefT.buildp (gd_tbl_P_mainleaf_openfail_tail2 ()) "Ppath,(0.(1.&8.))P,(4.$19.(1:.(6.(1.&8.)R1.))+3?.)(1;.Vsp0,VBL,Vmodel,R2.+3?.(1<.(1=.+2.(1>.R2.))(14.(15.+2.)(16.Vmodel,))))")
+  #[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma of_segG3 : ltac2:(CDefT.buildp (gd_tbl_P_mainleaf_openfail_tail2 ()) "Ppath,(0.(1.&8.))P,(4.$19.(1:.(6.(1.&8.)R1.))+3?.)(1;.Vsp0,VBL,Vmodel,R2.+3?.(1<.(1=.+2.(1>.R2.))(14.(15.+2.)(16.Vmodel,))))")
 (* [comment removed for export] *).
   Proof.
     intros path HP vals R M HL P0 P113 HR HK SBp.
@@ -191,6 +197,9 @@ Section Tail2.
       replace (17 + length path)%nat with (17 + length path)%nat by lia. exact B80.
     - cbn [edenot]. exact Hnl.
     - exact Hfd2.
+
+    - exact Hrdr.
+
     - exact Hh.
     - exact Hlazy.
     - apply t_exit_has_nil.
@@ -219,7 +228,7 @@ Section Tail2.
     close_exit HR HK P0 Hh Hlazy sp0.
   Qed.
 
-  #[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma of_segH4 : ltac2:(CDefT.buildp (gd_tbl_P_mainleaf_openfail_tail2 ()) "Pvals,(0.(1.&40.))PR,(2.&5.(1.&40.))PM,P,(1.&40.)(3.(1.&8.))P,(4.$5.(6.(1.&40.)R3.)#>7.)P,(4.(1.&40.)(7.R4.#0.)Vsp0,)P,(8.(9.VBL,R5.)$21.R4.)P,(;.$<.(9.VBL,R6.)R4.$22.)(>.$<.(?.(10.$11.R6.(12.&40.+3>66<.)R5.(13.$<.))Vmodel,)(1<.(1=.+2.(23.(1.&8.)(12.&8.+:.)(24.(1.&8.))))(14.(15.+2.)(16.Vmodel,))))")
+  #[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma of_segH4 : ltac2:(CDefT.buildp (gd_tbl_P_mainleaf_openfail_tail2 ()) "Pvals,(0.(1.&40.))PR,(2.&5.(1.&40.))PM,P,(1.&40.)(3.(1.&8.))P,(4.$5.(6.(1.&40.)R3.)#>7.)P,(4.(1.&40.)(7.R4.#0.)Vsp0,)P,(8.(9.VBL,R5.)$21.R4.)P,(;.$<.(9.VBL,R6.)R4.$22.)(>.$<.(?.(10.$11.R6.(12.&40.+3>66<.)R5.(13.$<.))Vmodel,)(1<.(1=.+2.(23.(1.&8.)(12.&8.+:.)(24.(1.&8.))))(14.(15.+2.)(16.Vmodel,))))")
 (* [comment removed for export] *).
   Proof.
     intros vals R M HL P0 HR HK.
@@ -248,6 +257,9 @@ Section Tail2.
       replace (bv_unsigned sp0 + -560)%Z with (bv_unsigned sp0 + -560)%Z by lia. exact Hb.
     - reflexivity.
     - exact Hfd2.
+
+    - exact Hrdr.
+
     - exact Hh.
     - exact Hlazy.
     - apply t_exit_has_nil.
@@ -259,7 +271,7 @@ Section Tail2.
   Qed.
 
   (* [comment removed for export] *)
-  #[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma of_segFG4 : ltac2:(CDefT.buildp (gd_tbl_P_mainleaf_openfail_tail2 ()) "Ppath,(0.(1.&8.))Ppp,(1.&40.)PP,$19.Pvals,(0.(1.&40.))PR,(2.&5.(1.&40.))PM,P,(1.&40.)(3.(1.&8.))P,(4.$19.(1:.(6.(1.&8.)R6.))R4.)P,(25.(26.+40.R5.)(26.R5.+1????.))P,(4.$5.(6.(1.&40.)R5.)#:7.)P,(4.(1.&40.)(7.R6.#0.)Vsp0,)P,(4.(1.&40.)(7.R7.#2.)R9.)P,(4.(1.&40.)(7.R8.#71.)(12.&40.R9.))P,(26.(27.&40.Vsp0,)(27.&40.R;.))P,(26.(28.(28.(27.&40.R<.)R;.)+8.)(28.(27.&40.Vsp0,)+400000.))P,(26.(28.(28.(27.&40.R=.)R<.)+1.)+800000000000.)P,(8.(9.VBL,R<.)$29.R;.)P,(;.$<.(9.VBL,R=.)R;.$2:.)P,(4.(3.(0.(1.&8.)))(2;.$<.R<.R10.(2<.(6.(1.&8.)R11.)#1.))(2=.(0.(1.&8.))(2>.(1.&8.)R11.(23.(1.&8.)(12.&8.=)(24.(1.&8.))))))(>.$<.(?.(10.$11.R>.(12.&40.+3>66<.)R=.(13.$<.))Vmodel,)(1<.(1=.+2.(1>.R12.))(14.(15.+2.)(16.Vmodel,))))")
+  #[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma of_segFG4 : ltac2:(CDefT.buildp (gd_tbl_P_mainleaf_openfail_tail2 ()) "Ppath,(0.(1.&8.))Ppp,(1.&40.)PP,$19.Pvals,(0.(1.&40.))PR,(2.&5.(1.&40.))PM,P,(1.&40.)(3.(1.&8.))P,(4.$19.(1:.(6.(1.&8.)R6.))R4.)P,(25.(26.+40.R5.)(26.R5.+1????.))P,(4.$5.(6.(1.&40.)R5.)#:7.)P,(4.(1.&40.)(7.R6.#0.)Vsp0,)P,(4.(1.&40.)(7.R7.#2.)R9.)P,(4.(1.&40.)(7.R8.#71.)(12.&40.R9.))P,(26.(27.&40.Vsp0,)(27.&40.R;.))P,(26.(28.(28.(27.&40.R<.)R;.)+8.)(28.(27.&40.Vsp0,)+400000.))P,(26.(28.(28.(27.&40.R=.)R<.)+1.)+800000000000.)P,(8.(9.VBL,R<.)$29.R;.)P,(;.$<.(9.VBL,R=.)R;.$2:.)P,(4.(3.(0.(1.&8.)))(2;.$<.R<.R10.(2<.(6.(1.&8.)R11.)#1.))(2=.(0.(1.&8.))(2>.(1.&8.)R11.(23.(1.&8.)(12.&8.=)(24.(1.&8.))))))(>.$<.(?.(10.$11.R>.(12.&40.+3>66<.)R=.(13.$<.))Vmodel,)(1<.(1=.+2.(1>.R12.))(14.(15.+2.)(16.Vmodel,))))")
 (* [comment removed for export] *).
   Proof.
     intros path pp P vals R M HP HPr HL P0 P2 P113 Hpp1 Hpp2 Hpp3 HR HK Hstr.
@@ -321,6 +333,9 @@ Section Tail2.
       replace (bv_unsigned sp0 + -560)%Z with (bv_unsigned sp0 + -560)%Z by lia. exact H17.
     - cbn [edenot ev ENV PX]. rewrite P2. exact Hsrc.
     - exact Hfd2.
+
+    - exact Hrdr.
+
     - exact Hh.
     - exact Hlazy.
     - apply t_emit_has_nil.
@@ -392,7 +407,7 @@ Section Tail2.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
 
-  #[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Theorem of_tail : ltac2:(CDefT.buildp (gd_tbl_P_mainleaf_openfail_tail2 ()) "Ppath,(0.(1.&8.))Ppp,(1.&40.)Pt8,(0.(1.&8.))Pvals,(0.(1.&40.))PR,(2.&5.(1.&40.))PM,P,(1.&40.)(3.(1.&8.))P,(2?.(30.(1.&8.)(12.&8.=)R6.))P,(26.(1:.(6.(1.&8.)R7.))+1????.)P,(4.$5.(6.(1.&40.)R5.)#27.)P,(4.(1.&40.)(7.R6.#0.)Vsp0,)P,(4.(1.&40.)(7.R7.#2.)R9.)P,(26.(31.(32.+2.+40.)+???.)(27.&40.(7.R8.#26.)))P,(26.(27.&40.Vsp0,)(27.&40.R;.))P,(26.(28.(28.(27.&40.R<.)(1:.(6.(1.&8.)R=.)))+8.)(28.(27.&40.Vsp0,)+400000.))P,(26.(28.(28.(27.&40.R=.)(1:.(6.(1.&8.)R>.)))+1.)+800000000000.)P,(8.(9.VBL,R<.)(33.$34.(35.(36.&5.+:.$37.))(38.#26.))R;.)P,(;.$<.(9.VBL,R=.)R;.$39.)P,(4.(3.(0.(1.&8.)))(2;.$<.R<.R10.(2<.(6.(1.&8.)R11.)#1.))(2=.(0.(1.&8.))(2>.(1.&8.)R11.(23.(1.&8.)(12.&8.=)(24.(1.&8.))))))P,(4.(3.(0.(1.&8.)))(2;.$<.R=.(12.&40.(28.(27.&40.R11.)(1:.(6.(1.&8.)R12.))))#8.)(2=.(0.(1.&8.))R10.))(>.$<.(?.(10.$11.R?.(12.&40.+43;:4.)R>.(13.$<.))Vmodel,)(3:.(1>.R13.)(16.Vmodel,)))")
+  #[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Theorem of_tail : ltac2:(CDefT.buildp (gd_tbl_P_mainleaf_openfail_tail2 ()) "Ppath,(0.(1.&8.))Ppp,(1.&40.)Pt8,(0.(1.&8.))Pvals,(0.(1.&40.))PR,(2.&5.(1.&40.))PM,P,(1.&40.)(3.(1.&8.))P,(2?.(30.(1.&8.)(12.&8.=)R6.))P,(26.(1:.(6.(1.&8.)R7.))+1????.)P,(4.$5.(6.(1.&40.)R5.)#27.)P,(4.(1.&40.)(7.R6.#0.)Vsp0,)P,(4.(1.&40.)(7.R7.#2.)R9.)P,(26.(31.(32.+2.+40.)+???.)(27.&40.(7.R8.#26.)))P,(26.(27.&40.Vsp0,)(27.&40.R;.))P,(26.(28.(28.(27.&40.R<.)(1:.(6.(1.&8.)R=.)))+8.)(28.(27.&40.Vsp0,)+400000.))P,(26.(28.(28.(27.&40.R=.)(1:.(6.(1.&8.)R>.)))+1.)+800000000000.)P,(8.(9.VBL,R<.)(33.$34.(35.(36.&5.+:.$37.))(38.#26.))R;.)P,(;.$<.(9.VBL,R=.)R;.$39.)P,(4.(3.(0.(1.&8.)))(2;.$<.R<.R10.(2<.(6.(1.&8.)R11.)#1.))(2=.(0.(1.&8.))(2>.(1.&8.)R11.(23.(1.&8.)(12.&8.=)(24.(1.&8.))))))P,(4.(3.(0.(1.&8.)))(2;.$<.R=.(12.&40.(28.(27.&40.R11.)(1:.(6.(1.&8.)R12.))))#8.)(2=.(0.(1.&8.))R10.))(>.$<.(?.(10.$11.R?.(12.&40.+43;:4.)R>.(13.$<.))Vmodel,)(3:.(1>.R13.)(16.Vmodel,)))")
 (* [comment removed for export] *).
   Proof.
     intros path pp t8 vals R M Hnonul HPl HL P0 P2 P38 Hpp1 Hpp2 Hpp3 HR HK Hstr Ht8.
@@ -401,7 +416,7 @@ Section Tail2.
       try eassumption; try lia.
     intros vals' R' M' HL' Q0 Q2 Q113 HR' HK' Hstr'.
     destruct (Z.le_gt_cases (Z.of_nat (length path)) 62) as [Hle | Hgt].
-    - eapply (of_segF sp0 BL model Hvsp Hh Hlazy Hfd2 path pp _ vals'); try eassumption; lia.
+    - eapply (of_segF sp0 BL model Hvsp Hh Hlazy Hfd2 Hrdr path pp _ vals'); try eassumption; lia.
     - destruct (Z.le_gt_cases (Z.of_nat (length path)) 63) as [Hle2 | Hgt2].
       + assert (E63 : Z.of_nat (length path) = 63%Z) by lia. rewrite E63 in Q113.
         eapply (of_segF_gen sp0 BL model Hvsp Hh Hlazy path pp 63 _ vals'); try eassumption; try lia.

@@ -3,7 +3,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD1u.v, with its module paths changed; relocated to fuzz_preset asan-ubsan (pin f8f98a95bc52), map sha256 69a6a2e91fb7, checker port_addr_check.py 39e67a7eb166. The sink's path, mode, "rwa" and trailer strings are removed from tfib_AIL, FINV_IVS and finv_img_ivs, tfib_AIL's icell cases are the four rows tfib_icells keeps, and tfib_AIL, finv_img_ivs, finv_frame and finv_acall_post read the sink's cells through tfib_K's ak_owned (tfib_owned_iff, tfib_core_owned): the text of lib/A/AD1u.v (libreac/fuzz_grant's lib/A/AD1u.v at port-grant's release commit 4d244de18f0), with image B's modules and image bounds. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD1u.v, with its module paths changed; relocated to fuzz_preset asan-ubsan (pin f8f98a95bc52), map sha256 69a6a2e91fb7, checker port_addr_check.py 39e67a7eb166. The sink's path, mode, "rwa" and trailer strings are removed from tfib_AIL, FINV_IVS and finv_img_ivs, tfib_AIL's icell cases are the four rows tfib_icells keeps, and tfib_AIL, finv_img_ivs, finv_frame and finv_acall_post read the sink's cells through tfib_K's ak_owned (tfib_owned_iff, tfib_core_owned): the text of lib/A/AD1u.v (libreac/fuzz_grant's lib/A/AD1u.v at port-grant's release), with image B's modules and image bounds. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YImgTop.
 From Stdlib Require Import ZArith NArith List Lia Bool.

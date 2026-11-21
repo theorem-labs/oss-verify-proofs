@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap, syscall 215, in the injected allocation family). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From LinuxProcessSemantics.LinuxProcessSem Require Import Run.
@@ -17,7 +18,6 @@ Import ListNotations.
 Lemma injected_arm_none_66 : Run.injected_arm 66 = None.   Proof. reflexivity. Qed.
 
 Lemma injected_arm_none_96 : Run.injected_arm 96 = None.   Proof. reflexivity. Qed.
-Lemma injected_arm_none_215 : Run.injected_arm 215 = None. Proof. reflexivity. Qed.
 
 Lemma injected_family_off_none : forall cfg i,
   Run.injected_arm (bv_unsigned (in_sysno i)) = None ->
@@ -61,6 +61,25 @@ Proof.
   intros i m ret H. unfold Run.refusal_b. rewrite H. cbn. rewrite Bool.orb_false_r. reflexivity.
 Qed.
 
+(* At the revision [Run.injected_table] registers munmap (215, FamAlloc,
+   [ENOMEM]), so [injected_arm 215 = None] is false.  A munmap that answers
+   anything but -ENOMEM is still never a spurious refusal: [refusal_b] reads
+   the arm's errno list ([Run.spurious_refusal_not_refusal]). *)
+Lemma refusal_b_munmap : forall i m ret,
+  bv_unsigned (in_sysno i) = 215%Z ->
+  Run.refusal_b i m ret = bv_eqb ret (errno_ret ENOMEM).
+Proof.
+  intros i m ret H. unfold Run.refusal_b. rewrite H. cbn. rewrite Bool.orb_false_r. reflexivity.
+Qed.
+
+(* At the revision [Run.injected_table] registers munmap (215) in [FamAlloc],
+   so its family is forced-only exactly when [sc_alloc] is false, as for
+   mmap (222) and mprotect (226). *)
+Lemma injected_family_off_munmap : forall cfg i,
+  bv_unsigned (in_sysno i) = 215%Z ->
+  Run.injected_family_off cfg i = negb (Run.sc_alloc cfg).
+Proof. intros cfg i H. unfold Run.injected_family_off. rewrite H. reflexivity. Qed.
+
 Lemma refusal_b_brk : forall i m ret,
   bv_unsigned (in_sysno i) = 214%Z ->
   Run.refusal_b i m ret = Run.brk_refusal_b m (in_arg i 0) ret.
@@ -86,4 +105,8 @@ Section ScfgFacts.
   Lemma family_off_mprotect_true {AF : AllocForced SC} : forall i,
     bv_unsigned (in_sysno i) = 226%Z -> Run.injected_family_off the_scfg i = true.
   Proof. intros i H. rewrite (injected_family_off_mprotect _ _ H), alloc_forced. reflexivity. Qed.
+
+  Lemma family_off_munmap_true {AF : AllocForced SC} : forall i,
+    bv_unsigned (in_sysno i) = 215%Z -> Run.injected_family_off the_scfg i = true.
+  Proof. intros i H. rewrite (injected_family_off_munmap _ _ H), alloc_forced. reflexivity. Qed.
 End ScfgFacts.

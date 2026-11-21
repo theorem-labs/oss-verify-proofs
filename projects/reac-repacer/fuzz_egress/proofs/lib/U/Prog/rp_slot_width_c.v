@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs: copied from reac-repacer/fuzz_wire proofs/reac-repacer/fuzz_wire/lib/U/Prog/rp_slot_width_c.v at 75e059c080d; module path, entry address and the addresses in comments set to fuzz_egress's.
+(* Modified by Theorem Labs: copied from reac-repacer/fuzz_wire proofs/reac-repacer/fuzz_wire/lib/U/Prog/rp_slot_width_c.v; module path, entry address and the addresses in comments set to fuzz_egress's.
    rp_slot_width, reac-repacer src/repace_wire.c:101-109 (sha256 cfd1889a071e): fuzz_egress ubsan 44f6a3ebc228 at 0x133f0
    (0x7c bytes). Reads f[16] / f[17] (is_audio, repace_wire.c:29-32) when n >= 50, then calls rp_frame_channels
    (contract rp_frame_channels_c.v) on (long)n. Saves ra / s0 in a 16-byte frame; with rp_frame_channels's frame the

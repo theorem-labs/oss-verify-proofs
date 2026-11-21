@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved ledger is the image's reservations followed by the vDSO pair, so the image-segment fact is read through the append; a new lemma okres shows realloc's new range is free of the whole reserved ledger, for the realloc leaf's new premise). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -111,12 +112,12 @@ pose proof (placed ubs2_msyms L A mem md g am fr MX (rc_used _ _ _ _ _ _ _ _ _ _
 pose proof (names_eq L A regs mem md g am fr n a ka rg HC) as (NM & NO & _). rewrite NM, NO in Pimg. rewrite NO in P5.
 pose proof YN05.alloc_ceiling_val as HCV. pose proof (lx_disj _ _ _ (MRx_ledger_x _ _ _ _ _ MX)) as LD.
 pose proof (lx_maps _ _ _ (MRx_ledger_x _ _ _ _ _ MX)) as LM.
-pose proof (lg_reserved _ _ _ _ (mc_ledger _ _ _ _ _ M)) as LR. change (ms_segs ubs2_msyms) with ubs2segs in LR.
+destruct (lg_reserved _ _ _ _ (mc_ledger _ _ _ _ _ M)) as (rxL & LR & _). change (ms_segs ubs2_msyms) with ubs2segs in LR.
 destruct old_entry as (r & EMEM & Hr & Hk & Hlv & ELEN & OIN).
 assert (NPOS : 0 < NEEDED). { clear - C3 C4 C1 C2. lia. }
 assert (IMGseg : forall x lo nn, region_free (vm_reserved (m_vmmaps md)) (Z_to_bv 64 lo) (Z_to_bv 64 nn) = true ->
 0 <= lo -> 0 < nn -> lo + nn < 2 ^ 64 -> lo <= x < lo + nn -> ~ in_img ubs2_msyms x).
-{ intros x lo nn RF Hlo Hnn Hhi Hx [_ (s & Hs & Hxs)]. change (ms_segs ubs2_msyms) with ubs2segs in Hs. rewrite <- LR in Hs.
+{ intros x lo nn RF Hlo Hnn Hhi Hx [_ (s & Hs & Hxs)]. change (ms_segs ubs2_msyms) with ubs2segs in Hs. assert (Hs' : In s (vm_reserved (m_vmmaps md))) by (rewrite LR; apply in_app_iff; left; exact Hs). clear Hs. rename Hs' into Hs.
 destruct s as [b sz]. pose proof (region_free_In _ _ _ _ _ RF Hs) as OV. cbn [fst snd] in Hxs.
 unfold iv_overlap in OV. rewrite !lit64_small in OV by lia.
 apply Bool.andb_false_iff in OV. destruct OV as [OV|OV]; apply Z.ltb_ge in OV; lia. }
@@ -159,6 +160,27 @@ split; [exact R4096|]. split; [exact Hce|]. split; [exact Hal|]. split.
 pose proof (region_free_In _ _ _ _ _ RF2 He) as OV. unfold iv_overlap in OV. rewrite !lit64_small in OV by lia.
 unfold ranges_disjoint. cbn [fst snd]. apply Bool.andb_false_iff in OV. destruct OV as [OV|OV]; apply Z.ltb_ge in OV; clear - OV; lia.
 + intros x Hx. apply (IMGseg x RET NEEDED RF1); clear - Hx R4096 Hce HCV NPOS; lia.
+Qed.
+(* 08b1429: the new range avoids the reserved ledger (image + vDSO pair) *)
+Lemma okres : region_free (vm_reserved (m_vmmaps md)) (w64 RET) (w64 NEEDED) = true.
+Proof.
+pose proof (ctx_lin L A regs mem md g am fr n a ka rg HC) as CL.
+destruct CL as (C1 & C2 & C3 & C4 & C5 & C6 & C7 & C8 & C9 & C10 & C11 & _).
+pose proof (placed ubs2_msyms L A mem md g am fr MX (rc_used _ _ _ _ _ _ _ _ _ _ _ _ HC) (rc_fr _ _ _ _ _ _ _ _ _ _ _ _ HC) (rc_63 _ _ _ _ _ _ _ _ _ _ _ _ HC)) as (_ & _ & _ & _ & P5).
+pose proof (names_eq L A regs mem md g am fr n a ka rg HC) as (NM & NO & _). rewrite NO in P5.
+destruct old_entry as (r & EMEM & Hr & Hk & Hlv & ELEN & OIN).
+pose proof (lg_mres _ _ _ _ (mc_ledger _ _ _ _ _ M) _ OIN) as RM. cbn [fst snd] in RM.
+pose proof YN05.alloc_ceiling_val as HCV.
+assert (NPOS : 0 < NEEDED). { clear - C3 C4 C1 C2. lia. }
+assert (RFapp : forall l1 l2 lo nn, region_free (l1 ++ l2) lo nn = true -> region_free l1 lo nn = true).
+{ intros l1 l2 lo nn RF. apply region_free_intro; intros b sz Hin; apply (region_free_In _ _ _ _ _ RF); apply in_or_app; left; exact Hin. }
+unfold w64. destruct CASES as [(ER & Hce & SUB) | (Hlt & FR)].
+- assert (ERET : RET = MEM) by (unfold RET; rewrite ER; apply lit64_small; lia). rewrite ERET.
+destruct SUB as [RF | SHR]; [exact (RFapp _ _ _ _ RF)|].
+apply (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.region_free_shrink _ _ _ _ _ RM); rewrite !lit64_small by lia; lia.
+- pose proof (mremap_fresh_facts md (Z_to_bv 64 MEM) (Z_to_bv 64 OLDLEN) RETw (Z_to_bv 64 NEEDED)) as FF.
+rewrite !lit64_small in FF by lia. specialize (FF FR). destruct FF as (_ & _ & _ & _ & RF & _).
+rewrite ERETw in RF. exact (RFapp _ _ _ _ RF).
 Qed.
 Let RETlo : 4096 <= RET := proj1 okfacts.
 Let REThi : RET + NEEDED <= alloc_ceiling := proj1 (proj2 okfacts).
@@ -396,7 +418,7 @@ destruct (at_S5 ms5 HS5 HF5) as (OM & WS & RP & A05 & E1).
 assert (NEI : YO2z.OLDLEN am <> YO2z.NEEDED fr n) by (rewrite NO, NN; exact Hne).
 destruct (realloc_ok_leaf ubs2_msyms L A mem md g am fr n RET (ms_mem ms5) (SCR regs) gctx NEI
 ltac:(unfold PGSZ; exact RETpg) ltac:(clear - R0; lia) REThi
-ltac:(intros e He Hq; apply (DISJ e He); rewrite <- NM, <- NO; exact Hq) NIMG OM)
+ltac:(intros e He Hq; apply (DISJ e He); rewrite <- NM, <- NO; exact Hq) NIMG ltac:(rewrite NN; exact okres) OM)
 as (MX5 & WF5 & BND5 & LE5 & ADDR5 & FRM5 & BLK5 & [EPP Pnz] & CNT5 & UB5 & _).
 rewrite A'_is in MX5, WF5, BND5, BLK5, UB5. rewrite <- Emd5 in MX5. rewrite KOFF in EPP, Pnz, CNT5. rewrite NP' in CNT5. rewrite KNOLD in CNT5, UB5.
 change (frame_ptr am 0 fr) with (pp am fr) in UB5.

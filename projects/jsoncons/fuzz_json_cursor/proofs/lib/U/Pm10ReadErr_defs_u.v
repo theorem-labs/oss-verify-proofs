@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the zero-filled stack window): changed knRE0. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
@@ -36,7 +37,13 @@ Definition srRE0 : list expr := Eval vm_compute in sr_after_call_j srRE_base KEP
 
 Definition knRE0 : list kentry :=
   [KAlign (EVar 0) 16; KRange (EVar 0) 0x7fff80000000 0x800000000000;
-   KWr (SA (EVar 0) (-8388608)) 8388608;
+   (* THE ZERO-FILLED WINDOW, old beside new: [KWr (SA (EVar 0) (-8388608)) 8388608] ->
+      [KWr (SA (EVar 0) (- DRV_ZWIN)) DRV_ZWIN], DRV_ZWIN = 6144513 = StoreOk.stack_window_depth
+      (Pm10MainEntry_u).  The 8 MiB row is FALSE at LPS 75d69e00 (wrap_mem zero-fills only to
+      MemSplit.wok_lo sp0 = sp0 - 6144513).  Discharged by [Pm10ReadErr_u.know_okRE] from
+      [stack_writable], which Pm10DrvH_u proves off [Pm10MainEntry_u.kn_stack]'s narrow row.
+      This run's own stack reach is a few hundred bytes under sp0 ([BUF_LO] = -560). *)
+   KWr (SA (EVar 0) (- DRV_ZWIN)) DRV_ZWIN;
    KRange (EVar 2) 0x7fff80000000 0x800000400000;
    KWr (SA (ELit 0) 0xc4000) 0x34000;
    KImg 0x10000 0xc4d70; KImg 0xc4d71 0xc4db9; KImg 0xd4db9 0xd6730; KImg 0xf6808 0xf6828;

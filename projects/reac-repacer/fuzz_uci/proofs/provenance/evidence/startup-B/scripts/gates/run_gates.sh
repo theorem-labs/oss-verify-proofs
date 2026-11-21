@@ -3,11 +3,11 @@
 # FIRST. OSSV-249 T1 "B". rule 24: proves no function (start-up facts).
 # Method of record: the fuzz_decode B gate set (GATES-decB.md + run_gates.sh / run_gates2.sh / gates_dec.py /
 # recount_dec.py / yb13/run_gates_yb13.sh / codeptr-c0ce/REPORT.md) and the image-A start-up gate lines (uci-sg/start/*/run_*.sh).
-# Tool set of record: commit dbb5a97ad14's corrected start-up set, extracted at
+# Tool set of record: a commit's corrected start-up set, extracted at
 # $FT and run as $FRT = `bash $FT/frozen-run.sh $FT/startup-set-2026-10-30.tsv TOOL` (absolute
 # bundle path): codeptr 12348302dfd2, pins 4778073f01be, keyset f050b43e480e, ifchk f5cde600cc18 - byte-equal to the rows
-# of commit 8cd71d3a4bb's earlier start-up set ($BUN), on which the first G1/G2 run was made
-# (logs/run1-8cd71d3a4bb/). NEVER the withdrawn bundle 894122e7fa24;
+# of a commit's earlier start-up set ($BUN), on which the first G1/G2 run was made
+# (logs/run1/). NEVER the withdrawn bundle 894122e7fa24;
 # nothing here runs codeptr c0ce606ed1fa.
 #
 #   bash run_gates.sh [G0 G1 ... G12]      default: all, in order. G0 (snapshot + inputs) runs first whenever any gate
@@ -53,7 +53,7 @@ G0() {  # snapshot of the 19 files + their raw twins; cgif inputs; sha256 of eve
   } > "$L/SHA256.inputs.txt"
   (cd "$T" && find . -type f ! -name '*.pyc' | sort | xargs sha256sum) > "$L/SHA256.tools.txt"
   sha256sum "$G"/run_gates.sh "$G"/codeptr-decl.sh "$G"/pac_table.py >> "$L/SHA256.tools.txt"
-  # the two gen_ad1k versions lowbeg.py imports (G10): 814c81b8966e (8cd71d3a4bb, YD1k's generator) and 43a0cf0abc67 (dbb5)
+  # the two gen_ad1k versions lowbeg.py imports (G10): 814c81b8966e (YD1k's generator) and 43a0cf0abc67 (dbb5)
   local b
   for b in 8cd7:"$BUN":"$S/frozen" dbb5:"$FT/startup-set-2026-10-30.tsv":"$FT/frozen"; do
     local tag=${b%%:*} rest=${b#*:}; local bun=${rest%%:*} fz=${rest#*:}

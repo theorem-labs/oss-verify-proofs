@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the madvise node proofs discharge the new premise of ast_node_mm with RomBase.memfree_233). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -8,6 +9,7 @@ From Stdlib Require Import FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
 From OSSVerify.Proofs.openssl.punycode.lib.Common Require Import CatSim ShapeAlg AsanAcct AsanAcctShape AsanCeil BackingAlgebra.
 From OSSVerify.Proofs.openssl.punycode.lib.Lib Require Import PropExec MState Mem Exec ITree Nodes RelSpec RzCPS NodesA NodesA_mm.
+From OSSVerify.Proofs.openssl.punycode.lib.Common.Cfg Require RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope Z_scope.
@@ -146,6 +148,7 @@ Proof using Hwx Hsegs.
   apply (ast_node_mm segs segtop A A Pm PM unit tt (fun _ => K) (fun _ => KM) ms mo (Z_to_bv 64 233)
            (fun _ => Z_to_bv 64 0) (fun _ => [(a, n)]) (fun _ => []) (fun _ => mdl_madvise mo a n) T Hc Hsvc).
   - vm_compute; reflexivity.   (* [comment removed for export] *)
+  - exact RomBase.memfree_233.
   - intros []. apply Hchar. reflexivity.
   - intros o Ho. exists tt. exact (proj1 (Hchar o) Ho).
   - intros []. split; [exact HAwf|]. split; [|split; [rewrite mdl_madvise_halted; exact Hh|]].
@@ -214,6 +217,7 @@ Proof using Hwx Hsegs.
   apply (ast_node_mm segs segtop A A' Pm PM unit tt (fun _ => K) (fun _ => KM) ms mo (Z_to_bv 64 233)
            (fun _ => Z_to_bv 64 0) (fun _ => [(a, n)]) (fun _ => []) (fun _ => mdl_madvise mo a n) T Hc Hsvc).
   - vm_compute; reflexivity.   (* [comment removed for export] *)
+  - exact RomBase.memfree_233.
   - intros []. apply Hchar. reflexivity.
   - intros o Ho. exists tt. exact (proj1 (Hchar o) Ho).
   - intros []. split; [|split; [|split; [rewrite mdl_madvise_halted; exact Hh|]]].

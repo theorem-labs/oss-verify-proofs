@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YP03.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the write's buffer access check). *)
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -456,6 +457,8 @@ sv_denot E (sr_get (ss_regs ss) 10) = fd ->
 fdchan fd ch model -> fd32 fd = fd ->
 rdn segs (ms_mem ms) (sv_denot E (sr_get (ss_regs ss) 11))
 (word_to_nat (sv_denot E (sr_get (ss_regs ss) 12))) = Some buf ->
+(* 08b1429: write_spec checks access_ok on the buffer (vfs_write) *)
+access_okb (sv_denot E (sr_get (ss_regs ss) 11)) (bv_unsigned (sv_denot E (sr_get (ss_regs ss) 12))) = true ->
 buf_modeled buf -> (1 <= length buf)%nat ->
 (forall k ms', (1 <= k)%nat -> (k <= length buf)%nat ->
 st_ok segs E (resume ss (SLit (Z.of_nat k)) (ss_mem ss) (ss_facts ss)) ms' ->
@@ -463,7 +466,7 @@ ms_mem ms' = ms_mem ms ->
 realizes segs (mkCfg ms' model) T) ->
 realizes segs (mkCfg ms model) (t_write_ch ch buf T).
 Proof.
-intros E ss ms model fd ch buf T Hh Hlz HS Hrv Hno Ha0 Hch H32 Hbuf Hbm Hnb Hk.
+intros E ss ms model fd ch buf T Hh Hlz HS Hrv Hno Ha0 Hch H32 Hbuf Hok Hbm Hnb Hk.
 destruct (st_ok_ecall_shape E ss ms HS Hrv) as (regs & mem & Hms & Hregs & Hmem & HG).
 subst ms. cbn [ms_mem pend_at] in Hbuf, Hk.
 eapply rz_write.
@@ -475,6 +478,7 @@ eapply rz_write.
 - rewrite (Hregs 10%bv). exact Ha0.
 - rewrite (ms_read_bytes_rdn segs) by reflexivity. cbn [ms_mem pend_at].
 rewrite (Hregs 11%bv), (Hregs 12%bv). exact Hbuf.
+- rewrite (Hregs 11%bv), (Hregs 12%bv). exact Hok.
 - exact Hbm.
 - exact Hnb.
 - intros n Hn1 Hn2. apply (Hk n); [exact Hn1|exact Hn2| |reflexivity].
@@ -817,6 +821,7 @@ lazymatch type of Hch with fdchan ?fd ?ch _ =>
 eapply (rz_sym_write segs E ss ms model fd ch);
 [ assumption | assumption | exact HS | reflexivity | reflexivity | reflexivity | exact Hch | reflexivity
 |
+| vm_compute; reflexivity
 |
 |
 | clear HS;

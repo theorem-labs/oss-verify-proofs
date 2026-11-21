@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (walks lifted to the run's segment list). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -9,7 +10,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Lib Require Import Cfg.
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Lib Require Import PropExec MState Mem Exec ITree.
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.ASN Require AsanAcct.
-From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Top Require Import Realize SafeReach Bridge.
+From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Top Require Import RomBase Realize SafeReach Bridge.
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.LZ Require Import ITreeLZ.
 Import ListNotations.
 Import ITree.Exc.
@@ -80,33 +81,78 @@ Record node_soundL : Prop := mkNSL {
         /\ sstep_cfg segs ACFG (mkCfg msF mo) [ExitEv code (m_fs moE')] (SNext (mkCfg msF mo'));
   nsl_progress : forall n msF mo H P,
       at_node n (restrict H msF) -> lzframe H P mo -> hzero H msF -> nsafe n (perase P mo) ->
-      (exists rsp moE' evs, nstep n (perase P mo) rsp moE' evs) \/ (exists code moE', nexit n (perase P mo) code moE') }.
+      (exists rsp moE' evs, nstep n (perase P mo) rsp moE' evs) \/ (exists code moE', nexit n (perase P mo) code moE');
+  (* LPS 727298f3: the node's system call reads the same over every larger read-only backing
+     ([RomBase.sys_rob], asked by [Top.Realize.rz_node] and [Top.SafeReach.sr_node]) *)
+  nsl_rob : forall n msF mo H P,
+      at_node n (restrict H msF) -> lzframe H P mo -> hzero H msF -> nsafe n (perase P mo) ->
+      sys_rob segs (mkCfg msF mo) }.
 
 Hypothesis NSL : node_soundL.
 
 #[using="Type"] Lemma node_ok_conv : forall c I evs nx, AsanAcct.node_ok segs c I evs nx -> node_ok segs c I evs nx.
 Proof. intros c I evs nx [A B]. split; assumption. Qed.
 
+(* The instruction steps of a restricted walk ([AsanAcct.rz_msteps_restricted]'s induction), with
+   each step's [ms_svc_pending = None] handed to the closure, which [RomBase.sys_rob_instr] needs. *)
+#[using="Hwx"] Lemma lz_msteps_ind : forall (Pc : config -> Prop) H A,
+  H_off_segments segs H ->
+  (forall c c', ms_svc_pending (cfg_ms c) = None ->
+                node_ok segs c unit (fun _ => []) (fun _ => c') -> Pc c' -> Pc c) ->
+  forall msr0 msr', msteps segs msr0 msr' ->
+  forall ms model, msr0 = restrict H ms ->
+  lazy_cover H (m_vm_lazy model) A -> A_wf A -> MInv A model -> m_halted model = None ->
+  (forall model', MInv A model' -> same_but_materialized model model' ->
+      Pc (mkCfg (unrestrict H (ms_mem ms) msr') model')) ->
+  Pc (mkCfg ms model).
+Proof.
+  intros Pc H A HO Hsil msr0 msr' Hms.
+  induction Hms as [msr | msr msr1 msr2 [Hsvc Hstep] Hrest IH];
+    intros ms model -> Hcov Hwf Hinv Hh Hk.
+  - specialize (Hk model Hinv (AsanAcct.same_but_materialized_refl model)).
+    rewrite AsanAcct.unrestrict_restrict in Hk. exact Hk.
+  - rewrite AsanAcct.restrict_svc_pending in Hsvc.
+    destruct (AsanAcct.node_instr_restricted segs H HO Hwx A ms msr1 model Hcov Hwf Hinv Hh Hsvc Hstep)
+      as (model1 & Hinv1 & Hsame1 & Hcl1 & _ & Hnode).
+    apply (Hsil (mkCfg ms model) _ Hsvc (node_ok_conv _ _ _ _ Hnode)).
+    pose proof (AsanAcct.same_but_materialized_frame model model1 Hsame1) as Hfr.
+    apply (IH (unrestrict H (ms_mem ms) msr1) model1).
+    + symmetry. apply AsanAcct.restrict_unrestrict_clean. exact Hcl1.
+    + replace (m_vm_lazy model1) with (m_vm_lazy model) by (symmetry; apply Hfr). exact Hcov.
+    + exact Hwf.
+    + exact Hinv1.
+    + replace (m_halted model1) with (m_halted model) by (symmetry; apply Hfr). exact Hh.
+    + intros model' Hinv' Hsame'.
+      rewrite AsanAcct.unrestrict_mem, AsanAcct.unrestrict_munrestrict.
+      apply Hk; [exact Hinv' | exact (AsanAcct.same_but_materialized_trans _ _ _ Hsame1 Hsame')].
+Qed.
+
 #[using="Hwx"] Lemma lz_msteps : forall (Pc : config -> Prop) H P msF msr' mo,
-  (forall c c', node_ok segs c unit (fun _ => []) (fun _ => c') -> Pc c' -> Pc c) ->
+  (forall c c', ms_svc_pending (cfg_ms c) = None ->
+                node_ok segs c unit (fun _ => []) (fun _ => c') -> Pc c' -> Pc c) ->
   lzframe H P mo -> msteps segs (restrict H msF) msr' ->
   (forall mo', MInv (ivl P) mo' -> same_but_materialized mo mo' -> hclean H msr' ->
                Pc (mkCfg (unrestrict H (ms_mem msF) msr') mo')) ->
   Pc (mkCfg msF mo).
 Proof.
   intros Pc H P msF msr' mo Hsil HF HM HK. pose proof HF as [Hh Hm HI HC HW HO].
-  apply (AsanAcct.rz_msteps_restricted' segs H HO Hwx Pc
-           (fun c c' Hn Hr => Hsil c c' (node_ok_conv _ _ _ _ Hn) Hr)
-           (ivl P) msF msr' mo HC (A_wf_ivl _ HW) HI Hh (msteps_cat segs _ _ HM) HK).
+  pose proof (AsanAcct.msteps_hclean segs H HO Hwx _ _ (msteps_cat segs _ _ HM) (AsanAcct.restrict_hclean H msF)) as Hcl.
+  apply (lz_msteps_ind Pc H (ivl P) HO Hsil _ _ HM msF mo eq_refl HC (A_wf_ivl _ HW) HI Hh).
+  intros mo' HI' HS'. exact (HK mo' HI' HS' Hcl).
 Qed.
 
 #[using="Type"] Lemma rz_silent_closed : forall T c c',
+  ms_svc_pending (cfg_ms c) = None ->
   node_ok segs c unit (fun _ => []) (fun _ => c') -> realizes segs c' T -> realizes segs c T.
-Proof. intros T c c' Hn Hr. exact (rz_silent1 segs c c' T Hn Hr). Qed.
+Proof. intros T c c' Hs Hn Hr. exact (rz_silent1 segs c c' T Hn (sys_rob_instr segs c Hs) Hr). Qed.
 
 #[using="Type"] Lemma sr_silent_closed : forall Q c c',
+  ms_svc_pending (cfg_ms c) = None ->
   node_ok segs c unit (fun _ => []) (fun _ => c') -> safe_reach segs Q c' -> safe_reach segs Q c.
-Proof. intros Q c c' Hn Hr. apply (sr_node segs Q c unit (fun _ => c') tt Hn). intros _. exact Hr. Qed.
+Proof.
+  intros Q c c' Hs Hn Hr. apply (sr_node segs Q c unit (fun _ => c') tt Hn (sys_rob_instr segs c Hs)).
+  intros _. exact Hr.
+Qed.
 
 #[using="Type"] Lemma t_eq_alt_bi {I J} (f : I -> TSet) (g : J -> TSet) :
   (forall i, exists j, t_eq (f i) (g j)) -> (forall j, exists i, t_eq (f i) (g j)) -> t_eq (t_alt f) (t_alt g).
@@ -194,7 +240,7 @@ Proof.
         split; [exact Hss|]. split; [subst moE; rewrite EQ; exact Hex| exact Hh']. }
     destruct Hi0 as [i0].
     apply (rz_conseq segs _ (t_alt (fun i : I1 + I2 => t_emit (evs i) (TT i)))).
-    + exact (rz_node segs _ (I1 + I2) evs nx TT i0 Hnode Hcont).
+    + exact (rz_node segs _ (I1 + I2) evs nx TT i0 Hnode (nsl_rob NSL n ms1F mo1 H P Hat HF1 HZ1 Hsafe) Hcont).
     +
       apply t_eq_alt_bi.
       * intros [[[[rsp mo'] es] PF] | [[code mo'] PF]]; cbn.
@@ -256,6 +302,7 @@ Proof.
           as [(rsp & mo' & -> & Hst & HF' & HZ' & ERS) | (code & mo' & -> & Hex & _)]; [| exfalso; exact (Hnx _ _ Hex)].
         destruct (Hwk _ _ _ Hst) as [-> _].
         unshelve eexists (exist _ (rsp, mo') _); [cbn; auto 6| cbn; auto].
+    + exact (nsl_rob NSL n ms1F mo1 H P Hat HF1 HZ1 Hsafe).
     + intros [[rsp mo'] PF]. cbn. destruct PF as (Hss & Hst & HF' & HZ' & ERS).
       destruct (Hwk _ _ _ Hst) as [_ Hwf'].
       eapply (IH rsp Q (hide n rsp H) (allow n rsp P)); [| exact Hwf'| exact HF'| exact HZ'].

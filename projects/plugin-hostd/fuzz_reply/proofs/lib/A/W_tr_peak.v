@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Copyright 2026 Theorem Labs *)
 (* C3 (a Theorem Labs lane's option (a): tr_peak everywhere), THE LEMMA KIT the producers of the peak-form contracts use.
    W_contract.v defines the measure tr_peak and the net change tr_net (a Theorem Labs lane's ReplyTrPeak.v:120-135, word for
@@ -7,11 +8,11 @@
    gse_room over them.  This file holds what a walk needs to discharge or use those premises.  It is taken BY PATH from
    a Theorem Labs lane's working branch (reviewers B1cReviewTrPeak and B1cReviewTrPeakC: SOUND); no
    other file of that branch is taken.  Provenance:
-   - lib/A/ReplyTrPeak.v at a974170418e (byte-identical at cf21c8546ba): :136-165 (tr_pos, tr_room, tr_olds_ok,
+   - lib/A/ReplyTrPeak.v (byte-identical): :136-165 (tr_pos, tr_room, tr_olds_ok,
      tr_sizes_ok), :167-342 (Section peak), :345-402 (Section rules), word for word except two names: tr_sizes_ok is
-     tr_sizes_nonneg here (W_drain_tr.v:116 has a tr_sizes_ok over dtrace), and its bsum_nil (lib/A/ReplyLS.v:123) is
+     tr_sizes_nonneg here (W_drain_tr.v:116 has a tr_sizes_ok over dtrace), and its bsum_nil (lib/A/ReplyLS.v:124) is
      restated as tp_bsum_nil;
-   - lib/A/ReplyTrPeakC.v at cf21c8546ba: :60-112 (sizes), :114-126 (composition), :128-167 (moves, free(NULL)),
+   - lib/A/ReplyTrPeakC.v: :60-112 (sizes), :114-126 (composition), :128-167 (moves, free(NULL)),
      :217-242 (sl_ / lp_ / ge_peak_callee), word for word; :182-189 gse_tr, word for word; and at W_contract.v's names
      (ge_room / gse_room ARE its ge_room_p / gse_room_p :179-197 word for word, sl_spec's room its sl_room_p :171-173,
      lp_spec's its lp_room_p :176-177): :200-208 as gse_room_of_peak, :210-216 as ge_room_first (W_ge_room.v:163 has a
@@ -265,7 +266,7 @@ Variable B : asyms.
 Context {P : Type}.
 Local Notation rv := (RelayRunT.rev P).
 
-(* ReplyLS.v:123 bsum_nil, under this kit's name (ReplyLS.v is not below this file) *)
+(* ReplyLS.v:124 bsum_nil, under this kit's name (ReplyLS.v is not below this file) *)
 Lemma tp_bsum_nil : bsum [] = 0.
 Proof. reflexivity. Qed.
 Lemma tp_bb_app : forall ly S ly2 S2 l, ablocks B ly2 S2 = ablocks B ly S ++ l -> blocks_bytes S2 = blocks_bytes S + bsum l.

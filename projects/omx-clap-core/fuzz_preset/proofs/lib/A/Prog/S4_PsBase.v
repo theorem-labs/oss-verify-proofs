@@ -1,9 +1,9 @@
 (* fuzz_preset lib/A, slice S4 (parse_string, 389 instructions): the walk's SHARED BASE.
-   The goal is the kit's tparse_string_specX (lib/A/PRH_FnReader.v f1ae32e3b2cd, as the kit's cut 7cdbb61b5fa0 carries it),
+   The goal is the kit's tparse_string_specX (lib/A/PRH_FnReader.v f1ae32e3b2cd, as the kit's cut carries it),
    proved at the ONE program listing (lib/A/Listing_prog.v 7ed1529926bd + PAImg_prog.v 505a51ff7d08, the cut's)
    with the listing engine (lib/Reusable/YC80x.v, YC1fPx.v, YCbqGcall.v). FILE SET: the cut's tree (YCbqG blob
    219748197d6b, AR_laws_x with hl); the unit's set of record at 06:3xZ was engine files and YCbqG.v by path from
-   a working branch 63997a07aa6 + the kit walkkit b7722372682 + listing 7c8ffeba5035. This slice's caller-window discharge kit
+   a working branch + the kit walkkit + listing. This slice's caller-window discharge kit
    (lib/A/Prog/PRW_CallerJ.v) and the S7b walk's PRW_StepKit.v.
    parse_string writes its caller's cursor word in->p ABOVE its entry sp, so the kit owner states it in the caller-window form
    fpostW (PRH_Base.v): the journal runs at (STK_parse_string + e) (sp + e), FP is [(q, q + 8)], and fpostW's
@@ -24,12 +24,12 @@
    MEASUREMENT SCOPE: every code fact cited here (cut offsets, register maps, the chain's discharge routes at the two
    callers) is A-MEASURED from the neutral listing of image A; image B is UNMEASURED by this lane (BParseString
    measures B, including B's parse_value prologue and pj_parse's call, before any B twin cites a route).
-   The harness-block shadow law is no longer a stand-in: it is the journal's law field 14 alx_hshadow (YCbqG walks-new
-   d15706bda36, adopted verbatim from the S7b walk's PRW_HShadow.v), so LAWS is taken at hl := cf_head.
+   The harness-block shadow law is no longer a stand-in: it is the journal's law field 14 alx_hshadow (YCbqG walks-new,
+   adopted verbatim from the S7b walk's PRW_HShadow.v), so LAWS is taken at hl := cf_head.
    #102 MOVE (a Theorem Labs lane PsRebindA, 2026-10-29): image A (asan d83eb25d) -> A' (asan 1be0f53d, twin bff8519bbe3e). The
    lane files are relocated from the Qed donor walk-S4 preset-tree-at-2026-10-29T15-36-18Z.tsv (sha256 88f8a644e245; internal record) by alreloc c4338d099cfb8025 (3 comment numerals
    moved); the A' listing is PAImg_prog 505a51ff7d08 (parse_string's slot 6363, 0x8794c).
-   AT THE KIT'S CUT (a Theorem Labs lane PsRebindA, 2026-10-30): a working branch 7cdbb61b5fa0 merged forward into the
+   AT THE KIT'S CUT (a Theorem Labs lane PsRebindA, 2026-10-30): a working branch merged forward into the
    row's prep head preset-tree-at-2026-10-30T03-26-38Z.tsv (sha256 9eaa45cdfc48; internal record), every path but the lane files at the cut's blob (PRH_FnReader f1ae32e3b2cd,
    PRH_FnAlloc 4d8aeba047e5, PRH_Base ef7c8ca98529, the P'' set with AR_laws_x's 25 fields). The text
    tparse_string_specX is POST-IMPLICATION (PRH_Base.v's THE TWO FAMILIES): no position and no run premise at entry;
@@ -66,7 +66,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YG0v
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YG00 YG0a YG01 YG0f YG0n YG0d YCbq.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YM05 YG0p YCbqG YGcfNames YK06.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YGcfRoomKeep.
-(* the memnorm keep's runner side: the record srr_inv_laws is the engine's (YC80x.v, a Theorem Labs lane s1b 459129c18903),
+(* the memnorm keep's runner side: the record srr_inv_laws is the engine's (YC80x.v, a Theorem Labs lane s1b),
    srr_inv_call / srr_inv_laws_imp / srr_inv_call_imp / srr_inv_laws_memnorm_k stay in YSRrMemnorm.v (5ffa8525936b);
    neither loads LiaTwx2 *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YAkMemnorm.
@@ -206,7 +206,7 @@ Definition ps_cnts (D : ps_in) : Prop :=
   Z.of_nat (PresetRun.pkR (PresetRoom.in_cls YG00.kBatchClass) (PresetRoom.rs_live (YGcfRoom.room_of_cf (pi_S D)))
     (prhPs_evs (ps_x D) [])) <= PresetLiveBounds.L24 + PresetLiveBounds.DRV.
 
-(* tparse_string_specX's premises (the kit's cut 7cdbb61b5fa0, PRH_FnReader.v f1ae32e3b2cd :517-577), at one record, in the
+(* tparse_string_specX's premises (the kit's cut, PRH_FnReader.v f1ae32e3b2cd :517-577), at one record, in the
    text's order. Two conjuncts carry several of the text's premises: the fifth is prh_cw_ok (the cursor set CW, the
    slot prh_cur_ok vacated), and the eighth is the wild room `wild_room (as_universe B) CW 0 (st_depot S)` (:550)
    followed by the two live counts (ps_cnts) and the hull budget over the same all-granted events; the last is the
@@ -304,7 +304,7 @@ Definition ps_Qres (D : ps_in) (res : Z) (ly' : alayout) (S' : astate) (Hp' : li
        pj_in_okR segs (rdW W' mem') (pi_q D) (pi_text D) (pi_len D) (pi_p D + Z.of_nat Q + 2) (pi_d D) (pi_tb D) /\
        ps_rpos D [PresetReqAt.HMal (Z.of_nat Q + 1 + cf_head)] S')
   end.
-(* THE TEXT'S ARMS (the kit's cut 7cdbb61b5fa0, PRH_FnReader.v f1ae32e3b2cd :582-680), VERBATIM at one record: every arm
+(* THE TEXT'S ARMS (the kit's cut, PRH_FnReader.v f1ae32e3b2cd :582-680), VERBATIM at one record: every arm
    states the live requests and the position after its own events prhPs_evs x okA, with okA the instance's outcomes on
    that arm ([] when no allocator call, [false] for a NULL, [true] for a block); ps_live / ps_rposK unfold to the text's
    Permutation and forall clauses *)
@@ -798,7 +798,7 @@ Definition ps_at_retok (D : ps_in) (ly : alayout) (S : astate) (Hp : list Z) (W 
 
 (* ---- THE CHAIN FROM q AT A CALL. parse_string's four calls (fuzz_malloc 200, hex4 988, put_utf8 1044, fuzz_free
    1280) all run with s0 = q, so each callee's afn_pre_x needs a frame chain from q at the call's sp (the entry sp less
-   the frame) in the CALL view. The kit's text (since walkkit 4eb03b7b7e8) gives it at the ENTRY view from prh_s0
+   the frame) in the CALL view. The kit's text (since walkkit) gives it at the ENTRY view from prh_s0
    F_parse_string q (= q: pi_s0cur F_parse_string = Some 0 on image A), together with the gap bound spZ regs + 16 <= q.
    The stretches consume ONLY ps_chain0_of_pre / ps_qgap_of_pre / ps_chain_call. ---- *)
 Definition ps_chain0 (D : ps_in) : Prop :=
@@ -806,7 +806,7 @@ Definition ps_chain0 (D : ps_in) : Prop :=
     (prh_s0 F_parse_string (pi_q D)) ch.
 Lemma ps_chain0_of_pre : forall CTX CW D, ps_pre CTX CW D -> ps_chain0 D.
 Proof. intros CTX CW D (_ & _ & HCH & _). exact HCH. Qed.
-(* the gap bound (the kit's text since 4eb03b7b7e8; WalkS4's q = sp + 8 counterexample made it a premise) *)
+(* the gap bound (the kit's text; WalkS4's q = sp + 8 counterexample made it a premise) *)
 Definition ps_qgap (D : ps_in) : Prop := spZ (pi_regs D) + 16 <= pi_q D.
 Lemma ps_qgap_of_pre : forall CTX CW D, ps_pre CTX CW D -> ps_qgap D.
 Proof. intros CTX CW D (_ & _ & _ & _ & _ & HGAP & _). exact HGAP. Qed.
@@ -880,7 +880,7 @@ Proof. intros W c Q H. apply SRr_ret. exact H. Qed.
 
 (* ---- THE LEDGER THROUGH NAMED HELPERS ONLY. The four projections cite the kit's Section ledger_proj (PRH_Base.v
    ef7c8ca98529); ps_glob_keep_mb, ps_glob_cnt and ps_led_mk have no kit counterpart and are the only positional sites.
-   The kit's Batch 2 (Option E, in decff67d721f) added g_most's and g_own_ran_out's cells to prh_glob (prh_most / prh_own)
+   The kit's Batch 2 (Option E) added g_most's and g_own_ran_out's cells to prh_glob (prh_most / prh_own)
    and the binders most own to prh_ledger; this block absorbed that change, the stretches only pass most own on. ---- *)
 Lemma ps_vmem_keep : forall (W W' : world segs) m m' a n v,
   (forall i, 0 <= i < Z.of_nat n -> aview segs (w_H W') m' (a + i) = aview segs (w_H W) m (a + i)) ->
@@ -951,7 +951,7 @@ Proof. intros ly S Hp W mem Lam peak cnt fail ran most own H1 H2 H3 H4. exact (c
    function's top instantiates P ONCE as ps_mn D (memnorm of the entry memory gives memnorm at every later memory; the
    memnorm keep of the kit's m-form post). Every definition above stays byte-identical; the stable statements are the
    P := (fun _ => True) corollaries (ps_seg_*_of_True below). A segment that crosses a kit CALL also takes
-   srr_inv_call segs P (a Theorem Labs lane 12:22Z; YSRrMemnorm.v blob a1c1ece77b14, a working branch 161f89a71b4d). ==== *)
+   srr_inv_call segs P (a Theorem Labs lane 12:22Z; YSRrMemnorm.v blob a1c1ece77b14, a working branch). ==== *)
 
 (* the instantiation at the top: memnorm of the entry memory gives memnorm at m *)
 Definition ps_mn (D : ps_in) (m : word -> option byte) : Prop :=
@@ -1242,7 +1242,7 @@ intros CTX CW. split.
   intros W' c' _ HQ. apply ps_postP_T. exact HQ.
 Qed.
 
-(* ---- THE TOP'S STATEMENT IS THE KIT TEXT ITSELF: tparse_string_specX of the kit's cut 7cdbb61b5fa0 (PRH_FnReader.v
+(* ---- THE TOP'S STATEMENT IS THE KIT TEXT ITSELF: tparse_string_specX of the kit's cut (PRH_FnReader.v
    f1ae32e3b2cd :517-681). Its binders are packed into one ps_in (mkPsIn), its premises are ps_pre (prh_cw_ok in the
    fifth conjunct, the wild room, the two live counts and the hull budget in the eighth), and its post fpostWbm ..
    (wbudget CW 0) .. is ps_postPR at wle' segs RZ_cf and P := ps_mn D with ps_Q's conjuncts put in the text's order (ps_postm_is_K0:

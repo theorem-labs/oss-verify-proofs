@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *) (* Modified by Theorem Labs, 2026-10: the sink's path, mode, "rwa" and trailer strings (A_PATH, A_WB, A_RWA, A_TRAILER) are removed, as fuzz_decode.asan-ubsan holds none of them (the donor's 0x20dc0 output-path string, 0x20e20 "wb", 0x200e6 "rwa" and 0x20e60 ";" have no counterpart in this image), so tfib_K's four string fields are 0 and asink_strs is never stated; the fopen and fclose cells are already deleted by the release's delete-with-uses; tfib_owned is the sink's own static cells *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YE2k.v (donor image sha256 1c29845fe605), with its module paths changed and its addresses moved to libreac/fuzz_decode's ASan build. *)
-(* Relocated from proofs/libreac/fuzz_decode/lib/YE2k.v at 88154566652a by port_core 83f5203d2a2f onto libdiginet/fuzz_transport (asan-ubsan). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Relocated from proofs/libreac/fuzz_decode/lib/YE2k.v by port_core 83f5203d2a2f onto libdiginet/fuzz_transport (asan-ubsan). *)
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List.
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YI16 YE00.
@@ -47,7 +48,7 @@ Definition tfib_icells : list (Z * Z) :=
 (FF_got_strchr, FF_real_strchr); (FF_mask, FF_mask_val)].
 (* The sink's own static cells, as (address, size): __libc.threaded, __libc.need_locks, ofl_lock and __stack_chk_guard. *)
 Definition tfib_owned : list (Z * Z) := [(A_threaded, 1); (A_need_locks, 1); (A_ofl_lock, 4); (FF_canary, 8)].
-(* fuzz_decode writes no file: ak_path, ak_mode, ak_rwa and ak_trailer are 0. *)
+(* fuzz_transport's record, as fuzz_decode's (this file's donor): ak_path, ak_mode, ak_rwa and ak_trailer are 0. *)
 Definition tfib_K : asink_syms :=
 mkASink A_stdio_read A_stdio_write A_stdio_seek A_stdio_close 0 0 0 0 A_threaded A_need_locks A_ofl_lock FF_meta_ptr FF_meta_mem FF_got_canary FF_canary
 tfib_icells tfib_owned.

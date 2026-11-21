@@ -1,16 +1,17 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: copied from projects/libreac/fuzz_grant/proofs/lib/A/Prog/CtrlParseCut.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_ctrl_parse (fuzz_scene.asan-ubsan 0x84028, 673 instructions): the contract of the ASan+UBSan build's code,
    in the caller-journal form (it writes the caller's 36-byte `struct reac_ctrl_parsed`). The return code and the
    36 bytes it writes are Pau's model `ctrlparse` (lib/Prog/RcParse.v:45). Statement only; the walk is ported later.
    The asan-ubsan twin of lib/A/Prog/P_reac_ctrl_parse.v. Ported from a Theorem Labs lane's
-   proofs/libreac/fuzz_grant/lib/A/Prog/CtrlParseCut.v (at 9fb598002a1, lines 283-317): the listing
+   proofs/libreac/fuzz_grant/lib/A/Prog/CtrlParseCut.v (lines 283-317): the listing
    modules are lib.AU.Prog's and their names changed; the core modules are lib.Reusable's except the image-specific
    YCbq, which is lib.AU's (MERGE-GATES.md 6o); the text of A_ctrl_parseP, TPARSE_STK, tctrl_parse_post and
    tctrl_parse_spec is the donor's. The UBSan checks need no premise the donor's statement does not have (below).
    Numbers: fuzz_scene.asan-ubsan, sha256 e98b1ed286c1aa5c3d558cb2069011d2413d58b2122f741531364382a528833f
-   (projects/libreac/fuzz_scene/harness.yaml at c8557374ad2e); symbols and DWARF lines from
+   (projects/libreac/fuzz_scene/harness.yaml); symbols and DWARF lines from
    unstripped/fuzz_scene/fuzz_scene.asan-ubsan, whose bytes at 0x84028..0x84aac equal the pinned image's.
    - reac_ctrl_parse = 0x84028, st_size 2692 = 673 instructions (no compressed instruction).
    - LLVMFuzzerTestOneInput = 0x828a4 = the listing's base (SceneAddr.v:16 scene_text), so
@@ -29,7 +30,7 @@
      stack_malloc_progressP gives a class-1 frame under `length (frames Sc) <= 8`.) The deepest callee window is
      the bcmp wrapper's 2 * ESTACK (abcmp_realizes): jal __interceptor_trampoline_bcmp (0x44338) @0x84220;
      __asan_memset, __asan_memcpy and __asan_stack_malloc_1 take ESTACK, kind_of_link1 (0x84aac, jal @0x845b8)
-     takes KIND_OF_LINK1_STK = ESTACK (P_kind_of_link1.v:126). So the call needs 144 + 2 * ESTACK = 8336 bytes;
+     takes KIND_OF_LINK1_STK = ESTACK (P_kind_of_link1.v:127). So the call needs 144 + 2 * ESTACK = 8336 bytes;
      160 + 2 * ESTACK = 8352 covers it. The 41 words 0x84028..0x840cc equal the donor function's first 41 words
      except the five pc-relative ones (auipc @0x84074, @0x84078; ld @0x8407c, @0x84080; jal @0x84098).
    - the cells: auipc a1 @0x84074 (hi 22), ld a1 @0x84080 reads the GOT word 0x9ba40 (object 1), which holds
@@ -63,7 +64,7 @@
      frames_bounds (under the AR of the ajournal premise and the walk's AR_laws hypothesis) gives 4096 <= frame_addr
      and frame_addr + fs_frame_bytes <= alloc ceiling <= 0x7fffff800000 (asan_consts), so 4096 <= f and
      f + 50 < 2^47: G01-G03, G05-G13 and G15-G21 never hold (the largest offset tested is f + 38). `afobj ... o 36`
-     gives o mod 8 = 0 (SceneBase.v:54) and, the same way, 4096 <= o, so s3 = o and G04, G14 never hold. No premise
+     gives o mod 8 = 0 (SceneBase.v:55) and, the same way, 4096 <= o, so s3 = o and G04, G14 never hold. No premise
      is added. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -135,7 +136,7 @@ length fr = 50%nat ->
 (forall i, (i < 50)%nat -> aview SEGS (w_H W) memc (f + Z.of_nat i) = Some (cp_v fr i)) ->
 SRr SEGS W (cfg_at SEGS A_ctrl_parseP regs memc mdc)
 (tctrl_parse_post STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc k regs n o fr).
-(* pb_ctrl_parse: proved in lib/AU/Prog/CtrlParse.v:88 (Qed), which lib/AU/G_Close.v applies. *)
+(* pb_ctrl_parse: proved in lib/AU/Prog/CtrlParse.v:89 (Qed), which lib/AU/G_Close.v applies. *)
 (* The port plan, as written before the port (this file proves nothing): pb_ctrl_parse, of type tctrl_parse_spec, is a port of
    a Theorem Labs lane's walk of the same source (that walk is closed nowhere; see the last three items)
    (CtrlParse.v, CtrlParseMid.v, CtrlParseTail.v, CtrlParseEpi.v, with CtrlParseLib.v
@@ -143,11 +144,11 @@ SRr SEGS W (cfg_at SEGS A_ctrl_parseP regs memc mdc)
    pz_E0, pz_cur, pz_post, the three cut specs, pz_open*, pz_std) over this listing, with these changes, each
    measured in fuzz_scene.asan-ubsan:
    - the listing modules are lib.AU.Prog's (the core modules as in the Require lines above); RET takes PL_scene
-     (lib/AU/Prog/ScenePa.v:36); the listing is
+     (lib/AU/Prog/ScenePa.v:37); the listing is
      scene_listing (SceneList.v:25); pz_rt's runtime names are SIGMA SS___asan_memset, SS___asan_memcpy,
      SS___interceptor_trampoline_bcmp (SceneSyms.v:13, :16, :17).
-   - Listing objects (atom A_OBJ i = 241 + i, PaTable.v:15): the shadow-base cell 0xa3af8 is object 16 (atom 257) and
-     the UAR flag 0xa3b00 is object 17 (atom 258), ScenePaLib.v:309 pal_cell / :311 pal_uar_cell; the GOT words are
+   - Listing objects (atom A_OBJ i = 241 + i, PaTable.v:16): the shadow-base cell 0xa3af8 is object 16 (atom 257) and
+     the UAR flag 0xa3b00 is object 17 (atom 258), ScenePaLib.v:310 pal_cell / :311 pal_uar_cell; the GOT words are
      objects 0 (0x9ba98, ld @0x8407c, :310 pal_got_uar) and 1 (0x9ba40, ld @0x84080, :308 pal_got_shadow). Every
      use of the donor's two cell indices changes to 16 and 17 (pa_obj_img, EOB, the cell atoms, the
      uar_got_regionP / uar_cell_regionP argument, pz_bases' AGX list); EOB's bound becomes scene_nobj = 18
@@ -160,18 +161,18 @@ SRr SEGS W (cfg_at SEGS A_ctrl_parseP regs memc mdc)
      (andi a0,s3,3 @0x84440), not a `mv a0, zero`.
    - Each guard's unimp side (0x84824) is refuted, not walked, from the facts on atom 10 (f in [4096, 0x7fffff800000],
      8-aligned) and atom 12 (o, the same): G01-G03, G05-G13, G15-G21 by the range of f (with G09-G11, G15-G21 on
-     a0 = f + 18), G04 and G14 by o mod 8 = 0. lib/AU/U_NotTrap.v's kill_not_trap (at
-     27b1f2557dc) covers only the `not rX; bltu rX, rK` shape, which this function does not use.
+     a0 = f + 18), G04 and G14 by o mod 8 = 0. lib/AU/U_NotTrap.v's kill_not_trap
+      covers only the `not rX; bltu rX, rK` shape, which this function does not use.
    - The donor walk is closed at no cited commit, so no part of this file may be reported as "proved by port"
-     while that holds. At d315cc159b2 the donor theorem itself ends in `admit` / `Admitted`
-     (CtrlParse.v:381-382). At 119225419ab CtrlParse.v:318 is Qed, but every segment it
-     applies is Admitted: pz_segB (CtrlParseMid.v:41), pz_segD (CtrlParseEpi.v:41), pz_segAcc
-     (CtrlParseAcc.v:42), pz_segN (CtrlParseNone.v:42) and pz_tail1..pz_tail5 (CtrlParseTail1..5.v:41).
+     while that holds. At the donor theorem itself ends in `admit` / `Admitted`
+     (CtrlParse.v:382-383). At CtrlParse.v:319 is Qed, but every segment it
+     applies is Admitted: pz_segB (CtrlParseMid.v:42), pz_segD (CtrlParseEpi.v:42), pz_segAcc
+     (CtrlParseAcc.v:43), pz_segN (CtrlParseNone.v:43) and pz_tail1..pz_tail5 (CtrlParseTail1..5.v:41).
      So parse's inline release of its class-1 fake frame, and the AR re-establishment after it
      (astack_free_law), were machine-checked nowhere then: this port had to close every segment itself, or wait
      until the donor closed them. This tree's CtrlParseMid.v .. CtrlParseTail5.v close every segment with Qed.
-   - The section hypotheses the port inherits from the donor theorem (CtrlParse.v:44-65 at 119225419ab, the
-     same list at :133-151 of d315cc159b2): RO : ro_below_ofl SEGS pa_relro_lo pa_relro_hi; B : asyms, with
+   - The section hypotheses the port inherits from the donor theorem (CtrlParse.v:44-65, the
+     same list at :133-151): RO : ro_below_ofl SEGS pa_relro_lo pa_relro_hi; B : asyms, with
      LAWS : AR_laws SEGS B, TL : PALib B, TLF : PALibF B, ML : model_laws (as_universe B),
      AMEMSET / AMEMCPY : aintrin_realizes SEGS B OSet / OCpy (SIGMA SS___asan_memset / SS___asan_memcpy),
      ABCMP : abcmp_realizes SEGS B (SIGMA SS___interceptor_trampoline_bcmp),

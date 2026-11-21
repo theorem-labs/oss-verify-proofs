@@ -262,13 +262,14 @@ Proof.
     split; [intros a Ha; apply WM1; apply HSTK; lia|].
     split; [rewrite G4; exact HTP|].
     split; [intros a Ha; apply WM1; apply HERR; exact Ha|].
-    intros Hi. destruct (HAUX Hi) as (av & ar & W1 & W2 & W3 & W4 & Hv1 & Hv2 & Hr1 & Hr2 & Hl1 & Hl2).
+    intros Hi. destruct (HAUX Hi) as (rs & av & ar & W1 & W2 & W3 & W4 & Hv1 & Hv2 & Hr1 & Hr2 & Hl1 & Hl2).
     assert (HL8 : 0 <= ms_libc B + 8 /\ ms_libc B + 15 < YM05.alloc_ceiling).
     { assert (O1 : owned B L A (ms_libc B + 8)) by (unfold owned, static_owned; right; right; right; left; lia).
       assert (O2 : owned B L A (ms_libc B + 15)) by (unfold owned, static_owned; right; right; right; left; lia).
       pose proof (mr_owned_low B _ (aa_laws API) L A mem md _ HMR O1).
       pose proof (mr_owned_low B _ (aa_laws API) L A mem md _ HMR O2). lia. }
-    unfold auxv_pre. exists av, ar.
+    unfold auxv_pre. exists rs, av, ar.
+    change (Z.of_nat AUXV_RAND_K) with 24 in *.
     split; [intros k Hk; rewrite MB1 by lia; apply W1; exact Hk|].
     split; [intros j Hj k Hk; rewrite MB1 by lia; apply (W2 j Hj); exact Hk|].
     split; [intros k Hk; rewrite MB1 by lia; apply W3; exact Hk|].

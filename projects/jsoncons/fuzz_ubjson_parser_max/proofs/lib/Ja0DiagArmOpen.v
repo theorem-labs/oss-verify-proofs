@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: unwrapped errno_ltuA from its encoded Section SE block into a plain lemma, and shrank the path-string slack in Hp and str_atA (sa_lo bound 16 to 9, sa_def defined span 16 to 8); taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/As0DiagArmOpen.v, lines 41-42, 121, 260-264, 295. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -35,18 +36,15 @@ Lemma open_itinerary_okA :
 = (ELit 685072, EAlu ALU_ADD (EVar 0) (ELit (-128)), ELit 6745472, ELit 1273408, ELit 127129, EVar 2)
 /\ dg_kn_ok knOEA = true.
 Proof. vm_compute. repeat split; reflexivity. Qed.
-Section SE.
-Local Abbreviation SEC_T_errno_ltuA := (forall e, 1 <= e <= 4095 ->
-branch_taken BC_LTU (sext 64 (alu32 ALU_ADD (low32 (errno_ret e)) (low32 (Z_to_bv 64 0)))) (Z_to_bv 64 18446744073709547521) = false) (only parsing).
-Variable e : ltac:(sec_ty2 constr:(SEC_T_errno_ltuA) 0%nat 0%nat).
-Lemma errno_ltuA : ltac:(sec_stmt2 constr:(SEC_T_errno_ltuA) 1%nat 0%nat).
+Lemma errno_ltuA : forall e, 1 <= e <= 4095 ->
+branch_taken BC_LTU (sext 64 (alu32 ALU_ADD (low32 (errno_ret e)) (low32 (Z_to_bv 64 0)))) (Z_to_bv 64 18446744073709547521) = false.
 Proof.
+intros e.
 intros He.
 assert (X : forallb (fun k => negb (branch_taken BC_LTU (sext 64 (alu32 ALU_ADD (low32 (errno_ret (Z.of_nat k))) (low32 (Z_to_bv 64 0)))) (Z_to_bv 64 18446744073709547521)))
 (seq 1 4095) = true) by (vm_compute; reflexivity).
 rewrite forallb_forall in X. specialize (X (Z.to_nat e) ltac:(apply in_seq; lia)). rewrite Z2Nat.id in X by lia. apply negb_true_iff in X. exact X.
 Qed.
-End SE.
 Lemma wseg_errno : wseg_ok ASEGS (Z_to_bv 64 6745308) 4 = true. Proof. vm_compute. reflexivity. Qed.
 Lemma msg_open_eqA : forall path, Ja0DiagOpenA.DOA.PRE17 ++ path ++ Ja0DiagOpenA.DOA.SUF1 = msg_cannot_open path.
 Proof.
@@ -111,7 +109,7 @@ Hypothesis HS16 : S mod 16 = 0.
 Hypothesis HW : L5Defs.L5.writable ASEGS MV (S - 5440) 5440.
 Hypothesis HD : L5Defs.L5.defined MV (S - 5440) 5440.
 Hypothesis HIMG : L5Defs.L5.img_clear MV 65536 1261568.
-Hypothesis Hp : S <= p /\ p + n + 1 + 16 <= 2 ^ 47.
+Hypothesis Hp : S <= p /\ p + n + 1 + 9 <= 2 ^ 47.
 Hypothesis HSTR : Ja0DiagStrnlen.DSN.cstr MV p bs t8.
 Hypothesis HSH : forall x : word, Ja0RegionPoisoned.SB + p / 8 - 7 <= bv_unsigned x < Z.min (Ja0RegionPoisoned.SB + (p + n) / 8 + 8) (Ja0RegionPoisoned.SB + 2 ^ 44) -> MV x = Some (Z_to_bv 8 0).
 Hypothesis HSTK : L5KnA.L5KA.zeros_at MV (Ja0RegionPoisoned.SB + S / 8 - 680) 688.
@@ -240,11 +238,11 @@ exact (dg_chain_run scfg L ar C IL HI HIok ICok ILY sp0 Hsp Hal DL Hex M0 parts 
 (fun x _ _ => eq_refl) (mem_grows_refl _) ltac:(lia) ltac:(lia) HS16 WINi IMGi XAi SOPi FD2 CH).
 Qed.
 Record str_atA (A : list (Z * Z)) (p1 : word) (path : list byte) : Prop := STR_ATA {
-sa_lo : usp <= bv_unsigned p1 /\ bv_unsigned p1 + Z.of_nat (length path) + 1 + 16 <= 2 ^ 47;
+sa_lo : usp <= bv_unsigned p1 /\ bv_unsigned p1 + Z.of_nat (length path) + 1 + 9 <= 2 ^ 47;
 sa_str : rdn ASEGS M0 p1 (length path + 1) = Some (path ++ [Z_to_bv 8 0]);
 sa_nonul : ~ In (Z_to_bv 8 0) path;
 sa_len : Z.of_nat (length path) <= 131071;
-sa_def : defined M0 (bv_unsigned p1) (Z.of_nat (length path) + 1 + 16);
+sa_def : defined M0 (bv_unsigned p1) (Z.of_nat (length path) + 1 + 8);
 sa_sah : shadow_allowed A (ahl_ceil ar) (2 ^ 47 - ahl_ceil ar)
 }.
 #[using="L C IL HIok ICok ILY Hsp Hal DL Hex Hdg Hdgs"] Lemma dg_open_site : forall (fxq : PropExec.FPState) vals R M (model : Model) LB LK cr A fs (p1 : word) (path : list byte),
@@ -273,7 +271,7 @@ assert (G4 : getr R 4%bv = Z_to_bv 64 6745472) by (regv HR (4%bv : reg); reflexi
 assert (G10 : getr R 10%bv = Z_to_bv 64 1273408) by (regv HR (10%bv : reg); reflexivity).
 assert (G11 : getr R 11%bv = Z_to_bv 64 127129) by (regv HR (11%bv : reg); reflexivity).
 assert (G12 : getr R 12%bv = Z_to_bv 64 (bv_unsigned p1)) by (regv HR (12%bv : reg); cbn [edenot ev ENVA]; rewrite P2; symmetry; apply Z_to_bv_bv_unsigned).
-assert (Hp : S <= bv_unsigned p1 /\ bv_unsigned p1 + Z.of_nat (length path) + 1 + 16 <= 2 ^ 47) by (unfold S; lia).
+assert (Hp : S <= bv_unsigned p1 /\ bv_unsigned p1 + Z.of_nat (length path) + 1 + 9 <= 2 ^ 47) by (unfold S; lia).
 destruct (Z_le_gt_dec (Z.of_nat (length path)) 62) as [HnA|HnA'].
 - apply (die_of_chain [Ja0DiagOpenA.DOA.PRE17 ++ path ++ Ja0DiagOpenA.DOA.SUF1] _ vals knOEA LB LK cr A M model fxq R fs S HK OKb P0 D EFS FD2
 ltac:(unfold S; lia) ltac:(unfold S; lia) HS16).

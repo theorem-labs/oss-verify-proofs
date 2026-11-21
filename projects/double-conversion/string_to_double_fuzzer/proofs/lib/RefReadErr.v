@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reader fact of the output channels). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -52,6 +53,7 @@ Section Tail.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  Hypothesis Hrdr : m_channel_reader model = true.   (* LPS 727298f3: the stderr write's channel reader (LibStdioCall.stdio_call_sound) *)
 
   Definition ENV (vals : list word) : env := Env (vals_ev vals) (blobs_ev BL).
 
@@ -132,7 +134,7 @@ Section Tail.
     ++ word_to_le_bytes 1 (Z_to_bv 64 32) = PRE19.
   Proof. vm_compute. repeat (apply (f_equal2 cons); [apply bv_eq; reflexivity|]). reflexivity. Qed.
 
-  #[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma re_segH : forall (path : list byte) (P : Z) vals R M,
+  #[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma re_segH : forall (path : list byte) (P : Z) vals R M,
     Z.of_nat (length path) = P -> (0 <= P <= 60)%Z ->
     length vals = 231%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 113 = Z_to_bv 64 P ->
     regs_ok (ENV vals) srH0 R -> know_ok RSEGS (ENV vals) M knH0 ->
@@ -204,6 +206,7 @@ Section Tail.
       replace (bv_unsigned sp0 + -560)%Z with (bv_unsigned sp0 + -560)%Z in MSG by lia. exact MSG.
     - reflexivity.
     - exact Hfd2.
+    - exact Hrdr.
     - exact Hh.
     - exact Hlazy.
     - apply t_exit_has_nil.
@@ -222,7 +225,7 @@ Section Tail.
   #[using="Type"] Lemma re_nl_img : rdn RSEGS (fun _ => None) (Z_to_bv 64 0x1289c) 1 = Some [Z_to_bv 8 10].
   Proof. vm_compute. reflexivity. Qed.
 
-  #[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma re_segG : forall (path : list byte) (P : Z) vals R M,
+  #[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma re_segG : forall (path : list byte) (P : Z) vals R M,
     Z.of_nat (length path) = P -> (0 <= P <= 60)%Z ->
     length vals = 199%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 113 = Z_to_bv 64 P ->
     regs_ok (ENV vals) srG0 R -> know_ok RSEGS (ENV vals) M knG0 ->
@@ -399,7 +402,7 @@ Section Tail.
     apply Hc. rewrite u_small by lia. lia.
   Qed.
 
-  #[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma re_segF : forall (path : list byte) (pp : word) (P : Z) vals R M,
+  #[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma re_segF : forall (path : list byte) (pp : word) (P : Z) vals R M,
     Z.of_nat (length path) = P -> (0 <= P <= 60)%Z ->
     length vals = 167%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = pp -> vals_ev vals 113 = Z_to_bv 64 P ->
     (bv_unsigned sp0 <= bv_unsigned pp)%Z -> (bv_unsigned pp + P + 8 <= bv_unsigned sp0 + 4194304)%Z ->
@@ -797,13 +800,14 @@ Section ReadErr.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  Hypothesis Hrdr : m_channel_reader model = true.   (* LPS 727298f3: the stderr write's channel reader *)
 
   Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
   Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
   Let SPal : (bv_unsigned sp0 mod 16 = 0)%Z := proj2 (proj2 Hvsp).
 
   (* [comment removed for export] *)
-  #[using="Hvsp Hh Hlazy Hfd2"] Theorem re_tail : forall (path : list byte) (pp : word) (t8 : list byte) vals R M,
+  #[using="Hvsp Hh Hlazy Hfd2 Hrdr"] Theorem re_tail : forall (path : list byte) (pp : word) (t8 : list byte) vals R M,
     ~ In (Z_to_bv 8 0) path -> (Z.of_nat (length path) <= 60)%Z ->
     length vals = 39%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = pp ->
     (bv_unsigned sp0 <= bv_unsigned pp)%Z ->
@@ -819,7 +823,7 @@ Section ReadErr.
     eapply (re_segBC sp0 BL model Hvsp Hh Hlazy path pp (Z.of_nat (length path)) _ t8 vals);
       try eassumption; try lia.
     intros vals' R' M' HL' Q0 Q2 Q113 HR' HK' Hstr'.
-    eapply (re_segF sp0 BL model Hvsp Hh Hlazy Hfd2 path pp _ vals'); try eassumption; lia.
+    eapply (re_segF sp0 BL model Hvsp Hh Hlazy Hfd2 Hrdr path pp _ vals'); try eassumption; lia.
   Qed.
 
   (* [comment removed for export] *)
@@ -918,7 +922,7 @@ Section ReadErr.
     - change (edenot E (EVar 0)) with sp0. lia.
     - (* [comment removed for export] *) split; [apply flat_intro; cbn; lia|].
       intros d m Hd Hm. unfold estart. cbn [a_base a_off]. change (edenot E (EVar 0)) with sp0.
-      replace (bv_unsigned sp0 + -8388608 + d)%Z with (bv_unsigned sp0 - 8388608 + d)%Z by lia.
+      replace (bv_unsigned sp0 + -6144513 + d)%Z with (bv_unsigned sp0 - 6144513 + d)%Z by lia.
       apply Mstack; lia.
     - change (edenot E (EVar 2)) with pp. lia.
     - (* [comment removed for export] *) split; [apply flat_intro; cbn [edenot a_base a_off]; rewrite ?(u_small 0) by lia; lia|].
@@ -938,7 +942,7 @@ Section ReadErr.
   Qed.
 
   (* [comment removed for export] *)
-  #[using="BL Hvsp Hh Hlazy Hfd2 SPlo SPhi SPal tid Rsp Rgp Rtp Rs2 Mstack Mimg Mtid Htid Mself can Hcan Mcanary Mpagesz Hpp1 E"] Theorem ref_read_error : forall (path : list byte) (t8 : list byte),
+  #[using="BL Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi SPal tid Rsp Rgp Rtp Rs2 Mstack Mimg Mtid Htid Mself can Hcan Mcanary Mpagesz Hpp1 E"] Theorem ref_read_error : forall (path : list byte) (t8 : list byte),
     ~ In (Z_to_bv 8 0) path -> (Z.of_nat (length path) <= 60)%Z ->
     (bv_unsigned pp + Z.of_nat (length path) + 8 <= bv_unsigned sp0 + 4194304)%Z ->
     rdn RSEGS M pp (length path + 1) = Some (path ++ [Z_to_bv 8 0]) ->
@@ -955,7 +959,7 @@ Section ReadErr.
     - apply know_okRE. lia.
   Qed.
 
-  #[using="BL Hvsp Hh Hlazy Hfd2 SPlo SPhi SPal tid Rsp Rgp Rtp Rs2 Mstack Mimg Mtid Htid Mself can Hcan Mcanary Mpagesz Hpp1 E"] Corollary ref_read_error_dot : forall (t8 : list byte),
+  #[using="BL Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi SPal tid Rsp Rgp Rtp Rs2 Mstack Mimg Mtid Htid Mself can Hcan Mcanary Mpagesz Hpp1 E"] Corollary ref_read_error_dot : forall (t8 : list byte),
     (bv_unsigned pp + 9 <= bv_unsigned sp0 + 4194304)%Z ->
     rdn RSEGS M pp 2 = Some [Z_to_bv 8 46; Z_to_bv 8 0] ->
     rdn RSEGS M (Z_to_bv 64 (bv_unsigned pp + 1)) 8 = Some t8 ->

@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGif4.v (commit 30a1993588f, c5 + memnorm; file sha256 357d21d2f9fe) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/AGif4.v at commit 789778cb16f, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGif4.v (c5 + memnorm; file sha256 357d21d2f9fe) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/AGif4.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved-region ledger). *)
 (* The interface between the SECONDARY path of the frame-generic Allocate walk (n >= 64513, the
    LargeMmapAllocator) and an allocator model.  It is the secondary twin of AGif0n.AIface: the hit-g arm reads the
    machine through AIface's fields, the secondary arm reads it through AIfaceS's.
@@ -161,7 +162,7 @@ Record skern (grow : bool) (W Wz : world im_segs) (md0 mdz : Model) (ly : alayou
      kernel nodes (AGjs.nodeS's amwf of the map's model, AGjt.nodeV's eager bound), the instance cannot rebuild
      the eager bound without the world's AI at the commit *)
   sk_md : exists mat matV mat', mdz = sec_md grow md0 mat matV mat' mb msz qs /\
-    grant_ok_na_pin (with_vm_backing (m_vm_lazy md0) mat md0) (w64 mb) msz = true /\
+    grant_ok_na_pin_b (with_vm_backing (m_vm_lazy md0) mat md0) (w64 mb) msz = true /\
     amwf (mmap_model (w64 mb) (w64 msz) (with_vm_backing (m_vm_lazy md0) mat md0)) /\
     (grow = true -> eager_used mdz <= eager_used (mmap_model (w64 mb) (w64 msz) (with_vm_backing (m_vm_lazy md0) mat md0)) + 131072);
   sk_wle : wle W Wz;
@@ -269,17 +270,20 @@ Record AIfaceS : Prop := {
   ifs_room : forall inst ly S W mem md n, ARX inst ly S W mem md -> rpre S n ->
     eager_used md + A_bytes (w_A W) + 2 ^ 30 <= vm_limit (m_vmmaps md);
   ifs_ledger : forall inst ly S W mem md, ARX inst ly S W mem md ->
-    vm_reserved (m_vmmaps md) = segments_reserved im_segs /\
+    (exists rx, vm_reserved (m_vmmaps md) = segments_reserved im_segs ++ rx /\ res_tail_ok ly rx) /\
     (forall sg, In sg im_segs -> 4096 <= Z.of_N (seg_base sg) /\ Z.of_N (seg_base sg) + Z.of_N (seg_size sg) <= kImgEnd) /\
     In (wiv (ly_Q ly, kPtrArrayResv)) (vm_maps (m_vmmaps md)) /\
     YM05.ceil_of_top (alloc_top (m_vmmaps md));
   (* a grant of the block's size exists *)
-  ifs_grant : forall inst ly S W mem md mat sz, ARX inst ly S W mem md -> 0 < sz <= ImgBaseAGS.NOB ->
-    exists a, grant_ok_na_pin (with_vm_backing (m_vm_lazy md) mat md) a sz = true;
+  (* 727298f3: the size is page aligned, as the placement rule's producer asks, and the grant is in the
+     placement rule's form at the mmap call's NULL addr (YF05.anon_node asks for it; omx-clap-core/fuzz_state's
+     AGif4.v) *)
+  ifs_grant : forall inst ly S W mem md mat sz, ARX inst ly S W mem md -> 0 < sz <= ImgBaseAGS.NOB -> sz mod 4096 = 0 ->
+    exists a, grant_ok_na_pin (Z_to_bv 64 0) (with_vm_backing (m_vm_lazy md) mat md) a sz = true;
   (* and every grant is in the heap band, apart from what the allocator owns, with a zero shadow *)
   ifs_apart : forall inst ly S W mem md mat sz (a : word), ARX inst ly S W mem md ->
     0 < sz <= MALLOC_MAX + 4 * 4096 -> sz mod 4096 = 0 ->
-    grant_ok_na_pin (with_vm_backing (m_vm_lazy md) mat md) a sz = true ->
+    grant_ok_na_pin_b (with_vm_backing (m_vm_lazy md) mat md) a sz = true ->
     ims_zone3 (bv_unsigned a) sz /\
     Forall (zdisjoint (bv_unsigned a, sz)) (static_extents ly ++ vis0_zones ly ++ sec_extents ly S) /\
     (forall g, g mod 8 = 0 -> bv_unsigned a <= g -> g + 8 <= bv_unsigned a + sz ->
@@ -329,15 +333,15 @@ Variables (NMAXW NOBW ROOMW : Z).
 Definition ifs_apart_w : Prop :=
   forall inst ly S W mem md mat sz (a : word), ARX inst ly S W mem md ->
     0 < sz <= NMAXW + 4 * 4096 -> sz mod 4096 = 0 ->
-    grant_ok_na_pin (with_vm_backing (m_vm_lazy md) mat md) a sz = true ->
+    grant_ok_na_pin_b (with_vm_backing (m_vm_lazy md) mat md) a sz = true ->
     ims_zone3 (bv_unsigned a) sz /\
     Forall (zdisjoint (bv_unsigned a, sz)) (static_extents ly ++ vis0_zones ly ++ sec_extents ly S) /\
     (forall g, g mod 8 = 0 -> bv_unsigned a <= g -> g + 8 <= bv_unsigned a + sz ->
        mem (Z_to_bv 64 (shadow_addr g)) = Some (Z_to_bv 8 0)).
 (* a grant of the block's size exists, up to the instance's own bound *)
 Definition ifs_grant_w : Prop :=
-  forall inst ly S W mem md mat sz, ARX inst ly S W mem md -> 0 < sz <= NOBW ->
-    exists a, grant_ok_na_pin (with_vm_backing (m_vm_lazy md) mat md) a sz = true.
+  forall inst ly S W mem md mat sz, ARX inst ly S W mem md -> 0 < sz <= NOBW -> sz mod 4096 = 0 ->
+    exists a, grant_ok_na_pin (Z_to_bv 64 0) (with_vm_backing (m_vm_lazy md) mat md) a sz = true.
 (* the instance's room below the vm limit.  The walk needs the block's map, its shadow hull and the growth of
    A_bytes, i.e. 2 * MSv + MSv / 8 + 2 pages, and on the grow arm 2 ^ 19 more for the pointer-array commit
    (AGjt.nodeV); cgif's is the model's VM_HEAD = 2 ^ 30 (YG0n.v:542, through mroom / qmeter). *)

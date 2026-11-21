@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO step cases). *)
 From Stdlib Require Import ZArith NArith List Lia Bool Classical_Prop.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -44,7 +45,7 @@ Lemma acfg_family_off_no : forall i n,
   bv_unsigned (in_sysno i) = n -> In n alloc_mark_sysnos -> injected_family_off ACFG i = true.
 Proof.
   intros i n E Hin. unfold injected_family_off. rewrite E. cbn [alloc_mark_sysnos In] in Hin.
-  destruct Hin as [<-|[<-|[<-|[<-|[]]]]]; reflexivity.
+  destruct Hin as [<-|[<-|[<-|[<-|[<-|[]]]]]]; reflexivity.
 Qed.
 
 Lemma acfg_nonspurious : forall i m eff,
@@ -300,6 +301,9 @@ Proof.
   - eapply sstep_cfg_instr; eassumption.
   - eapply sstep_cfg_instr_fault; eassumption.
   - eapply sstep_cfg_instr_unmodeled; eassumption.
+  - eapply sstep_cfg_vdso_call; eassumption.
+  - eapply sstep_cfg_vdso_materialization_fault; eassumption.
+  - eapply sstep_cfg_vdso_unmodeled; eassumption.
 Qed.
 
 Lemma sstep_cfg_of_nonalloc : forall ms model x8 e st,

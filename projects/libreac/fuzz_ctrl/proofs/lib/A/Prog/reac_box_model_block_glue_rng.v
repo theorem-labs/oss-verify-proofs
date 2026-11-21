@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* reac_box_model_block (0x85b44) on fuzz_ctrl's ASan build, image A: the rows owned by a Theorem Labs lane in a Theorem Labs lane's goal
    list tmb-goals.md (a working note, not in this delivery), the premises of
    reac_box_model_block_glue.BmbGlue.bmb_body that the TMB glue theorem pb_reac_box_model_block (lib/A/Prog/reac_box_model_block_thm.v:126)
@@ -138,7 +139,7 @@ Proof.
   destruct (OFACTS Hn) as (_ & _ & _ & H). unfold APPMEM_END in H. lia.
 Qed.
 
-(* HPs, the spec's row premise (C_reac_box_model_block.v:149-155), carries length row = 296 as its second conjunct. *)
+(* HPs, the spec's row premise (C_reac_box_model_block.v:150-156), carries length row = 296 as its second conjunct. *)
 Lemma bmb_rng_Hlen : forall (GLOBS : list (Z * Z)) (RLO RHI : Z) (W : YA0n.world AB1v.tfibsegs)
     (memc : word -> option byte) (p o : Z) (row : list byte)
     (HPs : p <> 0 ->

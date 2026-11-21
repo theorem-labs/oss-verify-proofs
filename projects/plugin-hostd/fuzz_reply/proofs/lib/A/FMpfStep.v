@@ -1,4 +1,4 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMpfStep.v (a working branch 3242941dc96); relocated to plugin-hostd/fuzz_reply/fuzz_reply.asan by a Theorem Labs lane's pfinst/tool (reloc.py target reply-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_reply.asan, symbol + offset; table pfinst/tool/tables-3242941dc96/reply-A/FMpfStep.table). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMpfStep.v (a working branch); relocated to plugin-hostd/fuzz_reply/fuzz_reply.asan by a Theorem Labs lane's pfinst/tool (reloc.py target reply-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_reply.asan, symbol + offset; table pfinst/tool/tables/reply-A/FMpfStep.table). *)
 (* One format piece at a time (the shared printf route's per-piece interface, R-1 W0). For each piece p of
    FMsnprintfPf.v:
    - pf_step p args: what pf_text renders for p and the arguments it leaves (pf_text_step: pf_text is the steps

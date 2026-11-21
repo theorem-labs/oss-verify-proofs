@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (1 recorded proof replaced by written proofs (stderr_wfile_file)). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -273,8 +274,7 @@ Definition stderr_wfile (m : mem) : Prop :=
     rw_cells psegs m RSTDERR (file_cells flags wend e e F_STDIO_WRITE 0x57f00 0 2 mode 0xffffffff tail)
     /\ Z.land (bv_unsigned flags) 40 = 0.
 Lemma stderr_wfile_file : forall m, stderr_wfile m -> stderr_file m.
-Proof.
-ltac2:(KReplay.run1 (kr_t_F_printf_iface ()) [] "p'0h04tailh14wendh21eh32H0h44modeh55flagsh61Hh72_Hh81mi001xp;1p;2p;4p;;p;3p-1R0p10000p4p710p8P0p1000QR1p4p710p8P0P1p4p7210R1p8p1000np4p710p10027p4p710R0p8p1002hp4p710R2P0p8P2p1003mp4p710p8P2P1p8P2p1004mR1p4p7210p8P2P1p4p73110p8p1005ap4p710P0p8g006fj1:Tg007Kj1CTg007ij1@Tg008Lj1JTg008nj1ITg00:4j1HTg00:Tj14Tg00;9j18Tg00;WR0j20Tg00<1j19Tg00=2j4;Tg00=Ll;GTg00>Lj2BTg00?6j2DTg00?Tj3ETg00?nj4>Tg00@dR1j2ATf0R2#:#:p=3%42#4p==%42#:p=<%42#4#4#4p=5P2f1R3f2R4f3R5f4R6f5R7g00A?R8f6R9f7R:f8R;f9R<M;Gp=1g00A]R=1B43/D2;E8p=?g00B;R>P5P4P3C>/A2p=F10=2p=2P>P7P6P5C>1B43/D2=E=8'Ap=6P>P4P3P2C>p=7g00C0R>#:R8#3R?#:#3#CR@#@RA%C?#@R?#J[%I2P0PA%H?R?P9%3>#=#<#4#3#5#3#3#8RBP6P3P4P4%=>#5#<#3#=#<#3#8RC%:>#<#4#=#5#3#3#3#3#8RD%88REP5%4>#=#5#5#5#5#5#5#5#8R>P2M:1RF%<8#3#8R89?@6RGCFX0?'0X1=#2X2=#2X4A,0AX5A%94P2P;PBPFPGCFX0?,0?X1=#2X2=#2X4A,0AP0PAP<PBP7P3P4P4PCPDPEP5P>P2M:1P@P7P8E6X0?,0?X1=#2X2=#2X4A%99P2f;RGPBP:P3P4P4PCPDPEP5P>P2M:1P@P:P8E6X0?,0?X1=#2X2=#2P0P=f<RHPBP;P3P4P4PCPDPEP6P>P2M:1P@P;P8E6X0?,0?X1=#2X2=f:RI#9P2f>RJPBPIP3P4P4PCPDPEP9P>P2M:1P@PIP8E6X0?,0?X1=#2P0P=f?RKPBPGP3P5P5PCPDPEP:P>P2M:1P@PGP8E6X0?,0?X1=%9JP2fARLPBf=RMP3P7P7PCPDPEP<P>P2M:1P@PMP8E6X0?,0?P0P?fBR0PBPJP4P9P9PCPDPEPIP>P2M:1P@PJP8E6X0?%90P2fDR9PBf@RNP6P;P;PCPDPEPHP>P2M:1P@PNP8E6P1fER1PLP7P<P<PCPDPEPMP>P3M:177BA?@L8fFRN#9P2fGRHfCR;P:PGPGPCPDPEPKP>P5M:177BA?@98PAfN?7BFX0?,0?X1=#2X2=#2X4A,0AX5AP1PAfMfIP3P4P4PCPDPEP5P>P2M:177BX0?,0?X1=#2X2=#2X4APLP=fLfHP3P4P4PCPDPEP9P>P2M:177BX0?,0?X1=#2X2=PMP=fKPHP3PKPKPCPDPEP;P>P2M:177BX0?,0?X1=P<P?fJPNPIPJPJPCPDPEP0P>P2M:177BX0?P7P3C;C;C;C;C;W7W6P3P2O2n2001000000121000000W3X0?P3P2O2n2001000000121100000W3X1=P3P2O2n2001000000121100000W3X2=P3P2O2n2001000000121100000W3X4AP3P2O2n2001000000121100000W3X5AP3P2O2n2011000000121100000W3W8o"). Qed.
+Proof. intros m (flags & mode & e & wend & tail & H & _). exists flags, mode, e, wend, tail. exact H. Qed.
 
 (* [comment removed for export] *)
 

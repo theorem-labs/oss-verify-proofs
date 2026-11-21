@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgSat.v at 7379c28ff70f; the same witness for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgSat.v; the same witness for
    image B at the lists of lib/AU/RtPgImgB.v's rate_himg_B: image B's loaded segments, its globals table 0xa0a20,
    its five .data.rel.ro tables (image A's at +0x300), its 46 strings, its 45 read-only cells (two more doubles than
    image A), its four tables and its callee entries; the premises are stated over the record's fields, and the

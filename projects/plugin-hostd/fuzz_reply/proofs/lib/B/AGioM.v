@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGioM.v (commit fec7cbb6287c, round-2 layer (P'' re-take, sweep parts 1-6); file sha256 ecb060821ea6) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 1 image addresses moved by code-verified function pairs (2 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
-(* Taken by path from a working branch 5ca1fbe20ff9 (the HNW weakening `NMAXW + 4 * 4096 <= 2 ^ 30`), before c5 installs it. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGioM.v (round-2 layer (P'' re-take, sweep parts 1-6); file sha256 ecb060821ea6) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 1 image addresses moved by code-verified function pairs (2 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Taken by path from a working branch (the HNW weakening `NMAXW + 4 * 4096 <= 2 ^ 30`), before c5 installs it. *)
 (* Theorem Labs, 2026-10 (task MEMNORM, full Allocate): the memnorm-kept twin of AGioE.alloc_sec_e (the SECONDARY arm
    of the frame-generic Allocate contract): [alloc_sec_em] concludes MemnormT.alloc_leaf_em (ErrnoG.alloc_leaf_e plus
    `memnorm mem -> memnorm mem'`) in place of ErrnoG.alloc_leaf_e, from AGioE's hypotheses.
@@ -58,7 +59,7 @@ Hypothesis HNOB : NMAXW + 4 * 4096 <= NOBW.
 Hypothesis HROOM : 2 * (NMAXW + 4 * 4096) + (NMAXW + 4 * 4096) / 8 + 8192 + 2 ^ 19 <= ROOMW.
 Hypothesis IFS : AGif4.AIfaceSw B U mt ARX AOX rpre nmax lmax lpost dpost mtag stag NMAXW NOBW ROOMW.
 Hypothesis TS : TfibSyms B.
-(* Every instantiation keeps Allocate's size-too-big branch off (AllocG.v:20). *)
+(* Every instantiation keeps Allocate's size-too-big branch off (AllocG.v:21). *)
 Hypothesis Hnmax : nmax <= NMAXW.
 (* The call site's can_fill argument: 1 for malloc / realloc, 0 for calloc (AllocG's [cf]). *)
 Variable cf : Z.
@@ -237,7 +238,7 @@ Variables (mtag stag : Z).
 Hypothesis IF : AGif0n.AIface B U mt ARX AOX rpre nmax lmax lpost dpost mtag stag.
 Hypothesis IFS : AGif4.AIfaceS B U mt ARX AOX rpre nmax lmax lpost dpost mtag stag.
 Hypothesis TS : TfibSyms B.
-(* Every instantiation keeps Allocate's size-too-big branch off (AllocG.v:20). *)
+(* Every instantiation keeps Allocate's size-too-big branch off (AllocG.v:21). *)
 Hypothesis Hnmax : nmax <= MALLOC_MAX.
 (* The call site's can_fill argument: 1 for malloc / realloc, 0 for calloc (AllocG's [cf]). *)
 Variable cf : Z.

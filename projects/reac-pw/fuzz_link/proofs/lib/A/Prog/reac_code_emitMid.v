@@ -5,9 +5,9 @@
    BASE + AF_pcap_source_open, AF = 0xa58), proving lib/A's image-generic contract tpcap_source_open_specX
    (lib/A/Prog/PcapSourceOpenDefs.v) at SEGS = pa_segs, rlo / rhi = pa_relro_lo / pa_relro_hi,
    apath / alen / afile = VAL (A_OBJ 3) / VAL (A_OBJ 4) / VAL (A_OBJ 2) (0x20d00 "<fuzz-input>", g_file_len
-   0x5d3e40, g_file 0x5d3e60), with FM_RA and roimg as parameters. At ossv/recipes 25e3d17bdb50 (2026-10-29), there was no released proof of this function at
-   this image (rule 24 lookup, a Theorem Labs lane, 22:35Z): the v1.8 ubsan proof (lib/U/Prog/pcap_source_open.v at
-   origin/ossv/recipes c8557374ad2e) serves only as the template for the UBSan guards.
+   0x5d3e40, g_file 0x5d3e60), with FM_RA and roimg as parameters. At (2026-10-29), there was no released proof of this function at
+   this image (rule 24 lookup, a Theorem Labs lane, 22:35Z): the v1.8 ubsan proof (lib/U/Prog/pcap_source_open.v)
+   serves only as the template for the UBSan guards.
 
    The code. Up to the fopen call it is lib/A's ASan code byte for byte at
    other pcs (asan 0x8145c.. = asan-ubsan 0x811e0..): the prologue saves ra, s0 .. s9 (0x811e0..0x81210) and
@@ -52,6 +52,7 @@
    lib/A/Prog/PcapHarnessTail.v:37). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_pcap/lib/B/Prog/PcapSourceOpen.v, with its module paths, module names and numbers changed; 695 of its 778 lines of code are new or changed and 1468 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_link/lib/A/Prog/reac_code_emitEntry.v; 397 of its 516 lines of code are new or changed and 659 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_code_emit (fuzz_link.asan 0x89be4) on image A: the MIDDLE phase of its walk, `em_mid` of
    lib/A/Prog/reac_code_emitDefs.v. From the cut EM_f1_ra (+0x120, wrapper_fprintf returned) the code
      +0x120          sb zero, 4(s5): F's shadow byte 4 := 0 (the va_list slot F + 0x20 addressable)

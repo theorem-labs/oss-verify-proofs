@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YP0k.v, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Reusable/YP0k.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_decode; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_decode.lib. *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Reusable/YP0k.v for libdiginet/fuzz_decode; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_decode.lib. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the symbolic stepper's stop on a reservation-free store-conditional); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_decode.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.
@@ -322,10 +323,8 @@ eexists; (split; [reflexivity|]);
 (split; [apply st_ok_mach; cbn; auto; [apply regs_ok_set'; [exact Hregs| reflexivity] | apply pc_plus4]
 | cbn [ms_mem]; eapply store_region_frame; [exact Hmem| | cbn; lia] ]).
 all: unfold sstore in Hst; unfold st_bytes; rewrite length_zbytes; exact Hst.
-+ injection H as <-. rewrite ?rset_core.
-cbv beta iota zeta delta [Sem.c_regs Sem.c_fregs Sem.c_pc Sem.c_fcsr Sem.c_resv].
-eexists; (split; [reflexivity|]); (split; [|cbn [ms_mem]; apply frame_of_refl]).
-apply st_ok_mach; cbn; auto; [apply regs_ok_set'; [exact Hregs| reflexivity] | apply pc_plus4].
++ (* 08b1429: the stepper stops on a reservation-free sc (YP0l), so this case cannot arise *)
+discriminate H.
 Qed.
 Theorem sym_step_ecallP : forall E ss ss' ms,
 st_okP E ss ms -> sym_step segs tbl ss = SEcall ss' ->

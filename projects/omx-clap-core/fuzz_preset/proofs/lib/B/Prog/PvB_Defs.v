@@ -63,7 +63,7 @@ Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte
 
 (* the entry values of one call; pe_most / pe_own are the two #102 ledger statics (alloc.c's g_most, fuzz_preset.c's
    g_own_ran_out: PRH_Base.v prh_glob's prh_most / prh_own), kept unchanged by the call, in the record's binder order
-   (the batch kit, a working branch 240b06ed4fd4: lib/A/PRH_FnParse.v tparse_value_specX d CTX
+   (the batch kit, a working branch: lib/A/PRH_FnParse.v tparse_value_specX d CTX
    CTX0 CW; pe_CW is the cursor set CW of the wild-room form). The post-implication form has no run position at
    entry: the post quantifies it (PvB_Room.v rp_post). *)
 Record PvEnt : Type := mkPvEnt {
@@ -80,7 +80,7 @@ Definition pe_FP (en : PvEnt) : list (Z * Z) :=
   [(pe_q en, pe_q en + 8); (pe_q en + 16, pe_q en + 20); (pe_v en, pe_v en + 56)].
 Definition pe_sp (en : PvEnt) : Z := spZ (pe_regs en).
 
-(* the entry premises: the record text's (PRH_FnParse.v tparse_value_specX d CTX CTX0 CW at the batch kit's tip 240b06ed4fd4),
+(* the entry premises: the record text's (PRH_FnParse.v tparse_value_specX d CTX CTX0 CW at the batch kit's tip),
    in this cut's order: the memory normal form (record premise 2) sits after the frames bound, the two live-count
    premises (the room's live list's peak sec / 24-byte-class counts along the model's grant-all trace), then the
    wild-room form's two (every cursor free trace at q is in CW, prh_cw_entry; the depot's wild part has room in CW,
@@ -157,7 +157,7 @@ Definition pv_inj (en : PvEnt) (ok : list bool) (tr : list PjGrammar.ev) : Prop 
 
 (* the post's memory part, with the frames clause a parameter fr and the result code a value: pv_Q below is it at
    fr := frames back to a permutation of the entry's and the code in a0; the exit cut states it at fr := the fake frame still
-   frame still on top. In the record's order (the batch kit's tip 8ba304fe2f93): the ledger move is rd_ledger_move with g_most,
+   frame still on top. In the record's order (the batch kit's tip): the ledger move is rd_ledger_move with g_most,
    the ledger move is rd_ledger_move with g_most, the grant-all trace and the refused peak; the blocks move is rd_blocks_move
    without its frames conjunct (that one is fr); the live room handed on is `blocks_bytes S' <= blocks_bytes S + prh_held tr`;
    the hull use after room_live_cf S' (the record's hull_used over the value's all-granted events); the room post is the
@@ -298,7 +298,7 @@ destruct (HC sm x os i H0 h1 P1 R C F) as (E1 & E2 & h2 & P2).
 split; [exact E1|]. split; [exact E2|]. exact (K2 _ _ _ _ _ _ P2).
 Qed.
 
-(* ---- The batch kit's per-event live room (rd_room's third conjunct, PRH_FnParse.v at 03fcabb582d0: prh_live_evs S (rd_hevs gt),
+(* ---- The batch kit's per-event live room (rd_room's third conjunct, PRH_FnParse.v: prh_live_evs S (rd_hevs gt),
    PRH_Base.v prh_live_at / prh_ev_req) ---- *)
 
 (* the allocator's live bytes are the room's live list summed *)

@@ -1,7 +1,7 @@
 (* fs WRITER, put's GROW arm (preset_file.c:454-476), the model half: what the grow arm needs about
    WriterSpec.newcap and the writer's own-trace budget, over the live definitions of lib/A/FSH_Fn_writer.v
-   (WMAX :62, bsz :82, wcalls :92, wbudget_pre :93-96, wbudget_kept :109-110; line numbers of statement head
-   0e39966a268, the budgets-by-own-trace text, over S0 400b2a240b3's FP-keyed core) and lib/Prog/WriterSpec.v
+   (WMAX :62, bsz :82, wcalls :92, wbudget_pre :93-96, wbudget_kept :109-110; line numbers of statement head,
+   the budgets-by-own-trace text, over S0's FP-keyed core) and lib/Prog/WriterSpec.v
    (dbl / newcap :29-35). No engine run, no walk, no image, no Section variable: pure arithmetic that the put
    walk `apply`s.
 
@@ -23,20 +23,20 @@
    - `4096 <= newcap cap need` needs the class (cap = 1, need = 1: newcap = 1); with it, `0 < need` is not used.
    - `newcap cap need <= WMAX` needs `cap <= WMAX` too (cap = 2^28, need = 1: newcap = 2^28 > WMAX).
    - the size-class budget (wgrows / wbud, the wbud budget step and the wbud form of wbudget_kept) left every
-     spec at 0e39966a268, which states each budget by the call's own trace; the count facts are now
+     spec, which states each budget by the call's own trace; the count facts are now
      put_grow_wcalls_* and wbudget_kept is re-proved in its new body.
    - put1's count is `(cnt + 1) mod 2 ^ 64` (WriterApp.v:23,25); `cnt <= cnt'` holds because wbudget_pre gives
      `cnt + wcalls st' < 2 ^ 64` and wcalls st' = 1 on a grow (put_grow_kept_put1 reads it off wbudget_pre).
 
-   Reused, not copied, from fs's released plain chain (ossv/recipes 566eb6ffa5df, also
-   release/pau-projects-recipes b6a0088adcb4; proofs/omx-clap-core/fuzz_state/lib/Prog/, last touched there by
-   84b1ffc6d7d0; byte-identical to this tree's lib/Prog/put_blocks.v and WriterRet.v, the modules Required
+   Reused, not copied, from fs's released plain chain (also;
+   proofs/omx-clap-core/fuzz_state/lib/Prog/, last touched there;
+   byte-identical to this tree's lib/Prog/put_blocks.v and WriterRet.v, the modules Required
    here): put_blocks.v:264 newcap_pow, WriterRet.v:52 dbl_ge, WriterRet.v:163 newcap_pos. Re-proved: the 2^27
    bound (put_grow_dbl_le / put_grow_newcap_le), because the released bound WriterSpecFacts.v:464 newcap_le28
    fixes the plain 2^28 in its statement and the ASan WMAX is 2^27. FSW_writer_model.v:76 newcap_ge_4096 is
    fact 1 with an extra `need <= 2^63` premise; put_grow_newcap_ge_4096 drops it.
-   Rule 24 (git grep over origin/main d65b67070f2, ossv/recipes 566eb6ffa5d, ossv/candidates ee89628c997,
-   release/pau-projects-recipes b6a0088adcb, under proofs/, for the prefix `put_grow_`): the one hit is
+   Rule 24 (git grep over,
+    under proofs/, for the prefix `put_grow_`): the one hit is
    put_blocks.v:304 put_grow_to_call, not a name used here; no lemma name in this file is taken. *)
 
 From Stdlib Require Import ZArith List Lia Bool.

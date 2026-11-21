@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* LLVMFuzzerTestOneInput_segX_crt1_cut: the facts that carry the frame invariant and the memory clauses of image B's
    LLVMFuzzerTestOneInput (lib/B/Prog/LLVMFuzzerTestOneInput_segs.v dec_b_core and the clauses llvm_b_st_5cc and
    llvm_b_st_6f0 share) across the runs and the four calls of segment crt1 (+0x5cc .. +0x6ec).
@@ -10,10 +11,10 @@
    one written block (a program leaf, __asan_memset), c1_keep_acall from check_round_trip's acall_kept.
    PORT: c1_cell_view / c1_cell_agree / c1_val_mem_kept / c1_mode_kept / c1_mem_kept are
    lib/B/Prog/LLVMFuzzerTestOneInput_segX_up_kit.v up_cell_view / up_cell_agree / up_val_mem_kept / up_mode_kept /
-   up_mem_kept (commit aea2a52bae6; the mode tables' +4 / +8 words through the read-only view as a Theorem Labs lane's
-   8975dd26876 up_ro_agree / up_tab_ro), and c1_core_kept / c1_garr8_kept / c1_rom_covers / c1_ro_rd_covered /
+   up_mem_kept (the mode tables' +4 / +8 words through the read-only view as a Theorem Labs lane's
+   up_ro_agree / up_tab_ro), and c1_core_kept / c1_garr8_kept / c1_rom_covers / c1_ro_rd_covered /
    c1_in_rom / c1_rom_rd are lib/B/Prog/LLVMFuzzerTestOneInput_segX_exit_defs.v ex_core_kept / ex_garr8_kept
-   (commit 44e7264cb0a) / ex_rom_covers / ex_ro_rd_covered / ex_in_rom / ex_rom_rd (a Theorem Labs lane's 38678070ce7),
+   / ex_rom_covers / ex_ro_rd_covered / ex_in_rom / ex_rom_rd (a Theorem Labs lane),
    copied here so that this lane does not build on two lanes' working copies; c1_mem lists crt1's own slots. *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

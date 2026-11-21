@@ -21,8 +21,12 @@
     WHAT THE HARNESS CHECKS.  git_config_backend_from_string on the raw input,
     add it to a fresh git_config, then git_config_foreach with a no-op callback;
     error codes only choose cleanup.  The harness makes no check of its own
-    beyond not crashing, so a statement about it says only that the code it
-    calls never crashes, hangs or trips a sanitizer.
+    beyond not crashing.  Its halts statements say only that the code it calls
+    never crashes, hangs or trips a sanitizer.  Its agreement statements say
+    only that the code never crashes or trips a sanitizer, and allow a run that
+    never ends.  Its bound statements say only how often its builds may
+    disagree.  Its decidability statements say only that some program decides
+    where its builds agree.
 
     Whether each statement is open, proved or known false is recorded in the
     harness README, not here: this file changes only when a statement does. *)

@@ -2,16 +2,17 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk of sup_instance_info (plugin-hostd/fuzz_command,
-   fuzz_command.asan-ubsan, 0x8bb70, 122 instructions), after lib/A/Prog/answer_code.v (a working branch
-   2ba4488ce71: a side-stack frame taken by __asan_stack_malloc_N, its header and shadow, the snprintf call and the
-   release by the flag store) and lib/A/Prog/sup_instance_info.v (a working branch 0de7ca03d26: the
+   fuzz_command.asan-ubsan, 0x8bb70, 122 instructions), after lib/A/Prog/answer_code.v (a working branch:
+   a side-stack frame taken by __asan_stack_malloc_N, its header and shadow, the snprintf call and the
+   release by the flag store) and lib/A/Prog/sup_instance_info.v (a working branch: the
    recorder's chain through record, arg_s, rec_shape_of and answer and the post), re-derived on B's code, against
-   a Theorem Labs lane's statement (a working branch f490061c104). The snprintf step through the shared contract and the change of FP
-   state after it follow a working branch 07b554c4785 (lib/B/Prog/answer_code.v:943-1070), the release
-   by the flag store answer_code.v's end, the post's block algebra a working branch b5e1a22725a
-   (descriptors_panel_get_aux.v dpgb_post_of), the calls after record a working branch c79a9f2daf7. *)
+   a Theorem Labs lane's statement (a working branch). The snprintf step through the shared contract and the change of FP
+   state after it follow a working branch (lib/B/Prog/answer_code.v:943-1070), the release
+   by the flag store answer_code.v's end, the post's block algebra a working branch
+   (descriptors_panel_get_aux.v dpgb_post_of), the calls after record a working branch. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/sup_instance_info.v, with its module paths and module names changed; 369 of its 434 lines of code are new or changed and 1757 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/cross_check_s1.v, with its module paths, module names and numbers changed; 1498 of its 1574 lines of code are new or changed and 358 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment 2 of the walk of cross_check on reac-pw/fuzz_segconf's ASan+UBSan IMAGE B
    (fuzz_segconf.asan-ubsan, pin c3796c0b38f3; cross_check 0x897cc): ONE PASS of the segment loop, from the loop
    head 0x89874 (CC_LOOP = AF_cross_check + 0xa8) to the loop head of pass i + 1 or to the epilogue 0x899fc
@@ -61,8 +62,8 @@
      are walked from a fresh seed over refuse's post state, so the window is never used at the head and only
      added an awr_ok and an app-shadow entry to prove.)
 
-   HOW THE PASS IS WALKED (the form of plugin-hostd/fuzz_command's chain_words_s4.v at origin/ossv/recipes
-   501c0d516c69: a token run to the call, PaFx.cl_callSF + PaFx.srr_after_callF, the rest a lemma of a closed
+   HOW THE PASS IS WALKED (the form of plugin-hostd/fuzz_command's chain_words_s4.v:
+   a token run to the call, PaFx.cl_callSF + PaFx.srr_after_callF, the rest a lemma of a closed
    section taken at the FP state the callee returned):
    - cc_s2 seeds ss_cc2 (cc2_seed) and token-runs the tests. The executor decides the two trap branches itself:
      0x89878 `beq s10,33` from the atom fact (26, mkAF 0 31 0) (ranges [0, 31] and [33, 33] are apart), and
@@ -95,7 +96,7 @@
 
    ADAPTED from the image-A G3 walk owner's image-A cross_check lane (a working branch), the released engine models
    being plugin-hostd/fuzz_command's numberA.v / numberE.v / check_reply_s1.v / check_reply_s2.v /
-   chain_words_s4.v at origin/ossv/recipes 501c0d516c69. *)
+   chain_words_s4.v. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From Stdlib Require Import FunctionalExtensionality.

@@ -1,7 +1,7 @@
 # fuzz_decode kit relocation: gate record
 
-Tool: port_addr_check.py, sha256 efa19b81e92ba289e7c185d481faadf045ce7d52d092cc10642fec69924aba03. Donor: proofs/libreac/fuzz_decode/lib at
-bf7779f81ed764787b77895d2f5c0db2627f33f3 (the relocation's donor ref). Ported tree: this unit's lib at 70a4ac10b1cb1dadd5428b5899fbbe8debd8bd34.
+Tool: port_addr_check.py, sha256 efa19b81e92ba289e7c185d481faadf045ce7d52d092cc10642fec69924aba03. Donor: proofs/libreac/fuzz_decode/lib
+ (the relocation's donor ref). Ported tree: this unit's lib.
 Images (pins, sha256): decode plain 556b61e63c44907b003aff8b1e8b926863db277b4f2897fdc58967a7beddc9cc, decode ubsan
 ff70f30e22dcdcea42fe294ed23995ec278b6c66ace0ecade26d2a917657c1b9; libdiginet fuzz_decode plain d570b4c96d9e764af0482c34642d2e58e6eef3af84e768d2a076a56eaeb045a7,
 fuzz_decode ubsan cfe3a2ee2a54a9693cae0c77632e069b3e7dd8ae01a8a8c25258faa955a31f71. Each image is read with its unstripped twin (decode plain 18a5c8eae19b,
@@ -10,14 +10,14 @@ vaddr, filesz, memsz and bytes, with only e_shoff / e_shnum / e_shstrndx and the
 
 Command (arguments in angle brackets are local paths):
 
-    port_addr_check.py --git <hub clone> --src bf7779f81ed7:proofs/libreac/fuzz_decode/lib --dst <this unit's lib>
+    port_addr_check.py --git <hub clone>:proofs/libreac/fuzz_decode/lib --dst <this unit's lib>
       --src-image P=<decode plain pin>:<twin> --src-image U=<decode ubsan pin>:<twin>
       --dst-image P=<fuzz_decode plain pin>:<twin> --dst-image U=<fuzz_decode ubsan pin>:<twin>
       --assign 'U/**=U' --assign '**=P' --paired-only --fail-on-flags --summary --include <each file the relocation wrote>
 
 The images are keyed by their build letters (P plain, U ubsan), so the named-symbol rule is measured: `count named-symbol
 cells UNMEASURED: 0`. The included files are the 1100 .v files the relocation script (k2/README.md) writes for this
-unit: the files of the plain / UBSan kit (25e3d17bdb50's file list) that k2-values.tsv does not list as not copied or
+unit: the files of the plain / UBSan kit (a commit's file list) that k2-values.tsv does not list as not copied or
 dropped, without Theorems.v (the script does not write it). The unit's own files (lib/Spec, the walks and harness files of
 lib/Prog and lib/U/Prog, Theorems.v: 99 files) are not relocations; the tool reports them as UNPAIRED-FILE-UNMEASURED
 (99 rows, on its own UNMEASURED line: neither a finding nor a pass).
@@ -95,7 +95,7 @@ __malloc_size_classes, src0_D_got_stack_chk_guard (0x1d750, U 0x1d948) is the GO
 
 global_settings.py sha256 439f8e3bd4637640d6d40fb668716c081c3ba202aa831f31f0120de0b4e39242 (r2), over every .v of
 proofs/libdiginet/fuzz_decode (1200 files): exit 0; ESCAPES 480, PLAIN 1738, UNMEASURED 1, KERNEL 0. The 1100 relocated
-files give ESCAPES 476, PLAIN 1717, UNMEASURED 1 (Lib/Exec.v:137, `Arguments`), and so do their donor counterparts at
-bf7779f81ed7, file by file (0 files differ). The unit's own files add ESCAPES 4, all tactic-level `Ltac ... ::=`
+files give ESCAPES 476, PLAIN 1717, UNMEASURED 1 (Lib/Exec.v:137, `Arguments`), and so do their donor counterparts,
+file by file (0 files differ). The unit's own files add ESCAPES 4, all tactic-level `Ltac ... ::=`
 redefinitions: Prog/diginet_decoder_next_lib.v:190, Prog/diginet_msg_next.v:117, U/Prog/diginet_msg_next.v:120 and :128
 (the two msg_next walks carry them from libdiginet/fuzz_frame's texts), and PLAIN 21.

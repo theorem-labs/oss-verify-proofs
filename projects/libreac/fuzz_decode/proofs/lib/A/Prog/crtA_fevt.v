@@ -2,7 +2,7 @@
    (decodesegs0, lib/A/DecodeTFIB.v:19, which is rsegs of lib/A/Img0.v:3 by its module path), so the check_round_trip
    walk (lib/A/Prog/crtA_walk.v) takes no kit hypothesis: crtA_walk's `Hypothesis BRIDGE` is crtA_bridge_holds.
    The proof is the image-neutral kit lib/Lib/CrtFevt.v (crt_fevt_SRr_mstepsF, a port of image B's
-   lib/B/Prog/crtB_fevt.v on a working branch at 82cbfac97a3) at decodesegs0; only the
+   lib/B/Prog/crtB_fevt.v on a working branch) at decodesegs0; only the
    wx_segs_nowrap fact of the image (crtA_wx, image B's crtB_wx at decodesegs0) is image-specific. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/Prog/diginet_body_check.v at 9bd29914ffdef650a37285056a472ff186b4331a to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/Prog/diginet_body_check.v to fuzz_transport's images *)
 (* Walk of diginet_body_check (src/diginet_codec.c:47-64 at 835f336c) in fuzz_transport.plain,
    0x17c38..0x17d44, against diginet_body_check_contract.
    The frame of 144 bytes holds the message at sp - 136 (40 bytes), the cursor at sp - 96

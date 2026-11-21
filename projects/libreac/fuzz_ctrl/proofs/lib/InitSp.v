@@ -41,7 +41,7 @@ Lemma check_mmap_vm_fixed : forall addr len prot flags fd off eff m m' evs,
   check_mmap addr len prot flags fd off eff m = CheckOk m' evs ->
   vm_fixed (m_vmmaps m') (m_vmmaps m).
 Proof.
-  intros addr len prot flags fd off eff m m' evs H. unfold check_mmap in H. isp H.
+  intros addr len prot flags fd off eff m m' evs H. unfold check_mmap, check_mmap_fixed_overflow in H. isp H.
 Qed.
 
 Lemma check_mremap_vm_fixed : forall old old_size new_size flags eff m m' evs,
@@ -131,6 +131,10 @@ Proof.
       | eapply check_getsockname_frame; eassumption
       | eapply check_getpeername_frame; eassumption
       | eapply check_setsockopt_frame; eassumption
+      (* 08b1429: checked_table gained set_robust_list, clock_getres, pwritev2 (recipes/dispatcher-arms.md) *)
+      | eapply check_set_robust_list_frame; eassumption
+      | eapply check_clock_getres_frame; eassumption
+      | eapply check_pwritev2_frame; eassumption
       | eapply check_getsockopt_frame; eassumption
       | eapply check_shutdown_frame; eassumption
       | eapply check_sendto_frame; eassumption
@@ -238,7 +242,11 @@ Proof.
       | eapply vm_fixed_trans;
           [ eapply materialize_model_accesses_vm_fixed; eassumption
           | eapply syscall_spec_vm_fixed; eassumption ]
-      | eapply syscall_spec_vm_fixed; eassumption ].
+      | eapply syscall_spec_vm_fixed; eassumption
+      (* 08b1429: the vDSO call lands on [with_vdso_bump model''], which keeps the VM maps *)
+      | rewrite m_vmmaps_with_vdso_bump; eapply vm_fixed_trans;
+          [ eapply materialize_model_accesses_vm_fixed; eassumption
+          | eapply syscall_spec_vm_fixed; eassumption ] ].
 Qed.
 
 Lemma sstep_cfg_init_sp : forall segs cfg c evs c',
@@ -298,5 +306,6 @@ Lemma init_config_vm_limit : forall segs pc ph sp brk mbase rnd lim inp,
   vm_limit (m_vmmaps (cfg_model (init_config segs pc ph sp brk mbase rnd lim inp))) = lim.
 Proof.
   intros segs pc ph sp brk mbase rnd lim inp.
-  unfold init_config. cbn [cfg_model]. rewrite m_vmmaps_init_model. reflexivity.
+  (* 08b1429: init_config wraps the model in [with_vdso], which keeps the VM maps *)
+  unfold init_config. cbn [cfg_model]. rewrite m_vmmaps_with_vdso, m_vmmaps_init_model. reflexivity.
 Qed.

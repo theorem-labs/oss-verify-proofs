@@ -4,6 +4,7 @@
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN0j.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/Reusable/YN0j.v, with its module paths and module names changed; 546 of its 584 lines of code are new or changed and 260 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segC.v, with its module names changed; 1538 of its 1613 lines of code are new or changed and 509 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_round_trip 0x81a9c (fuzz_state.c:278-314 with round_trip_document fs.c:229-264 inlined), fs.asan (image
    tfibsegs, the pinned fuzz_state.asan sha256 64b53ff86172bb07f93f146e67b81a0354bca88e0a580e93fb1da01406fb76e0): the ASan
    walk of FSH_Fn_crt.v check_round_trip_spec, segment group C2 = segments 25-29, from the return of the last pj_set at
@@ -27,10 +28,10 @@
    lib/A/FSH_crt_site.v (crt_seg_call / crt_seg_call_br / crt_hcall: one segment = a store-free run from crt_ss2 to the
    callee, then the call). Each segment here is an instance of it; c2_chain composes the five.
    lib/A/FSH_crt_segC.v does NOT build on the CTX-free S0 (line 283 names
-   crt_ctx_at, which S0 f32db4da382 removed), and its engine runs start from crt_ss_ret, not crt_ss2; so this file does
+   crt_ctx_at, which S0 removed), and its engine runs start from crt_ss_ret, not crt_ss2; so this file does
    not import it, and keeps its own four small ingredients (c2_key, c2_in_bytes / c2_in_state, the c2_fpsub lemmas).
 
-   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from d25a984c903
+   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from
    check_round_trip_sd15.v / check_round_trip_sd16.v / check_round_trip_stdefs.v St14 / St15 / St16). That branch
    (a working branch) holds a bespoke ASan proof of these same bytes (0x81a9c) in the AsanAllocAPI
    framework; this file keeps its route, its boundary contents and its premise discharges, restated in the lane's
@@ -126,7 +127,7 @@ End f.
 (* ================= the four INNER boundary invariants of segment group C2 =================
    One `c2_INV_<pc>` per boundary strictly inside the group (0x82218 is the base's crt_INV_82218, C1's text; 0x82268
    is the base's crt_INV_82268). Each is the document / buffer state the program holds at that pc, ported from the
-   bespoke ASan proof d25a984c903: check_round_trip_stdefs.v St15 (0x82228, after pj_write: the written text joins
+   bespoke ASan proof: check_round_trip_stdefs.v St15 (0x82228, after pj_write: the written text joins
    the holdings) and St16 (0x82238, at pj_parse: file in s6 = x22 and a0, its length in a1, &back in a2 = x18),
    with the two boundaries St16's own proof (check_round_trip_sd16.v crt16_runA) crosses inside pj_get / pj_get_str
    stated here as 0x82248 and 0x8225c.
@@ -302,7 +303,7 @@ End i.
    The kit only KEEPS a cstr_ok (FSW_strkit.cstr_ok_kept_blk / _blkU / _keptU / _tbl); this BUILDS one, from the block
    and its bytes: crt_INV_82268's `cstr_ok z zs` (out of pj_get_str's post, pj_cstr + In (z, n) D) and the strlen
    argument at 0x82234 (pj_write's file). All eight conjuncts of S0's cstr_ok (FSH_Gen.v, its eighth
-   `p + |l| + 1 <= alloc_ceiling`, a Theorem Labs lane 2d9cdf6a160) follow from the block. ================= *)
+   `p + |l| + 1 <= alloc_ceiling`, a Theorem Labs lane) follow from the block. ================= *)
 Section g. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Variable B : asyms.
 Let LAWS : AR_laws tfibsegs B := AR_laws_ok tfibsegs B.
@@ -700,7 +701,7 @@ Lemma c2_doc_has_state : forall es,
   In ([115; 116; 97; 116; 101], PjTree.JObj (check_round_trip_stages_b.crt_st es)) (check_round_trip_stages_b.crt_doc es).
 Proof. intros es. unfold check_round_trip_stages_b.crt_doc. right; right; left. reflexivity. Qed.
 
-(* the decoded length (ported from FSH_crt_segC1.v at a working branch 725a5b225fe, crtC1_six_len /
+(* the decoded length (ported from FSH_crt_segC1.v at a working branch, crtC1_six_len /
    crtC1_dec_len, which port lib/Prog/check_no_overread.v:125-139) *)
 Lemma c2_six_len : forall six, (length (WriterSpec.six_bytes six) * 4 <= length six * 3)%nat.
 Proof.
@@ -789,7 +790,7 @@ intros st. unfold FSH_Fn_writer.wcalls, FSH_Fn_writer.wev0.
 destruct (WriterApp.w_calls st) as [|c r]; cbn [length]; unfold EV_fuzz_malloc, EV_fuzz_realloc; lia.
 Qed.
 (* blocks_bytes across a boundary whose block list is the entry's plus L plus the reader blocks of D (FSH_crt_segC1.v
-   crtC1_bsum_rd_hblocks / crtC1_rd_sum_le at a working branch 725a5b225fe, restated) *)
+   crtC1_bsum_rd_hblocks / crtC1_rd_sum_le at a working branch, restated) *)
 Lemma c2_bsum_rd_hblocks : forall D, YCbq.bsum (rd_hblocks D) = rd_sum D + HEAD * Z.of_nat (length D).
 Proof.
   induction D as [|b D IH]; [reflexivity|].
@@ -1051,7 +1052,7 @@ End s25.
    own restricted to the call's stack window (YCbq.ajournal_sub_init) and moved over the call's write
    (YCbq.ajournal_after_write, Wr = the STK_RT_STR window). The `beqz` arm is crt_seg_call_br's with BC_EQ. *)
 (* fs's allocator statics are image bytes, so a step that keeps the visible image keeps fs_glob (segD's crt_glob_img /
-   crt_glob_keep at 6b0ff16eb7c FSH_crt_segD.v:139-181, restated) *)
+   crt_glob_keep at FSH_crt_segD.v:139-181, restated) *)
 Lemma c2_glob_img : forall a, (G_FAIL <= a < G_FAIL + 8 \/ G_LIVE <= a < G_LIVE + 8 \/ G_PEAK <= a < G_PEAK + 8 \/
   G_COUNT <= a < G_COUNT + 8) -> in_img tfibsegs a.
 Proof.
@@ -1084,7 +1085,7 @@ intros E n z v H Hr. apply bv_eq. rewrite denot_SOff, H, zcanon_id by (unfold M6
 rewrite Z_to_bv_unsigned, bv_wrap_small; [reflexivity | change (bv_modulus 64) with (2 ^ 64); lia].
 Qed.
 
-(* the `beqz a0` form of crt_seg_call_br (FSH_crt_site.v:578-614, BC_EQ for BC_NE, crt_no_trap_eq for _ne): a0 is a
+(* the `beqz a0` form of crt_seg_call_br (FSH_crt_site.v:579-615, BC_EQ for BC_NE, crt_no_trap_eq for _ne): a0 is a
    nonzero pointer the previous call returned *)
 Definition c2_c1 : acond := mkAC BC_NE (SOff 10 0) (SLit 0).
 Section beq. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
@@ -1337,7 +1338,7 @@ End s26.
    a2 = s2 = &back = F + 0x140 (atom 18), ra = 0x82248 (MEASURED by the engine). An instance of
    FSH_crt_site.crt_seg_call; HCALL is pj_parse's contract at text = file (pj_write's block), out = back's object,
    t = the written document, pr = true, under the by-trace room crt_room_C2 (FSH_crt_room.crt_room_C2_holds).
-   pj_parse's post (S0, READER e9dc3b32681 / fd1c15a7141) gives `rd_sum D = PjGrammar.held tr` and
+   pj_parse's post (S0, READER) gives `rd_sum D = PjGrammar.held tr` and
    `(length D <= length tr)%nat`: the exit's live equation, and |Dback| for the D groups' allowance and the block bytes. *)
 Definition c2_s27 : sstate := Eval vm_compute in fst (sym_run_toN tfibsegs crt_tbl FUEL A_pj_parse (crt_ss2 0x82238)).
 Lemma c2_run27 : sym_run_toN tfibsegs crt_tbl FUEL A_pj_parse (crt_ss2 0x82238) = (c2_s27, RS_running).

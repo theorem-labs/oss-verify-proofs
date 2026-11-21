@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up definitions take the whole ProcInput, the mmap base and the entry; the string pointers follow the stack top and the exec file name; J_aux also stores AT_ENTRY, AT_GID, AT_EGID, AT_CLKTCK, AT_EXECFN and AT_SYSINFO_EHDR, and the RSEQ pair under CONFIG_RSEQ); and launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -35,10 +36,16 @@ Proof. intro s. unfold progname_off. pose proof (after_last_slash_le s 0 0). lia
 
 Section Defs.
   Variable sp0 : word.
-  Variables av ev : list (list byte).
-  Variable uid : word.   (* [comment removed for export] *)
-  Variable hw : word.    (* [comment removed for export] *)
+  Variable inp : ProcInput.    (* argv, envp, uid, gid, AT_HWCAP, the kernel build and the exec file name *)
+  Variable mbase : word.       (* the mmap base the auxv's AT_SYSINFO_EHDR reads *)
+  Variable entry : word.       (* AT_ENTRY *)
   Variable rdraw : EntryDraw.  (* [comment removed for export] *)
+  Local Notation av := (in_argv inp).
+  Local Notation ev := (in_envp inp).
+  Local Notation uid := (in_uid inp).
+  Local Notation gid := (in_gid inp).
+  Local Notation hw := (in_hwcap inp).
+  Local Notation rseq := (kb_rseq (in_kernel inp)).
 
   (* [comment removed for export] *)
   Definition rnd16 : list byte := at_random_bytes (ed_random rdraw).
@@ -50,13 +57,14 @@ Section Defs.
   Definition envp_w : word := Z_to_bv 64 (bv_unsigned sp0 + 16 + 8 * Z.of_nat (length av)).
   Definition auxv_w : word :=
     Z_to_bv 64 (bv_unsigned sp0 + 24 + 8 * Z.of_nat (length av) + 8 * Z.of_nat (length ev)).
-  Definition argc_w : word := argcN av.
+  Definition argc_w : word := argcN inp.
   (* [comment removed for export] *)
-  Definition pn_w : word := cat_argv_ptr sp0 av ev 0.
+  Definition pn_w : word := cat_argv_ptr (ed_top rdraw) av ev (in_execfn inp) 0.
   Definition progname_w : word :=
     Z_to_bv 64 (bv_unsigned pn_w + Z.of_nat (progname_off (nth 0 av []))).
   (* [comment removed for export] *)
-  Definition rnd_w : word := at_random_ptr sp0 av ev.
+  Definition rnd_w : word := at_random_ptr sp0 rseq av ev.
+  Definition execfn_w : word := at_execfn_ptr (ed_top rdraw) (in_execfn inp).
 
   (* [comment removed for export] *)
   Definition D_libc : word -> option byte :=
@@ -82,8 +90,19 @@ Section Defs.
       (Z_to_bv 64 (bv_unsigned sp0 - 64)) (word_to_le_bytes 8 (Z_to_bv 64 0x1149c)).
 
   (* [comment removed for export] *)
+  (* musl's __init_libc stores aux[type] for every auxv pair with type < AUX_CNT (38): the
+     cache-geometry pairs (40..47) and AT_MINSIGSTKSZ (51) are skipped; the RSEQ pair (27, 28)
+     is present only under CONFIG_RSEQ. aux[k] sits at aux_base + 8 k. *)
+  Definition J_rseq (J : word -> option byte) : word -> option byte :=
+    if rseq
+    then wbytes (wbytes J
+           (Z_to_bv 64 (bv_unsigned sp0 - 152)) (word_to_le_bytes 8 (Z_to_bv 64 28)))
+           (Z_to_bv 64 (bv_unsigned sp0 - 144)) (word_to_le_bytes 8 (Z_to_bv 64 32))
+    else J.
   Definition J_aux (Jf : word -> option byte) : word -> option byte :=
-    wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes
+    J_rseq
+    (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes
+    (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes
       (wbytes Jf aux_base (zeros 304))
       (Z_to_bv 64 (bv_unsigned sp0 - 344)) (word_to_le_bytes 8 (Z_to_bv 64 0x10040)))  (* [comment removed for export] *)
       (Z_to_bv 64 (bv_unsigned sp0 - 336)) (word_to_le_bytes 8 (Z_to_bv 64 56)))       (* [comment removed for export] *)
@@ -93,7 +112,14 @@ Section Defs.
       (Z_to_bv 64 (bv_unsigned sp0 - 280)) (word_to_le_bytes 8 uid))        (* [comment removed for export] *)
       (Z_to_bv 64 (bv_unsigned sp0 - 272)) (word_to_le_bytes 8 uid))        (* [comment removed for export] *)
       (Z_to_bv 64 (bv_unsigned sp0 - 184)) (word_to_le_bytes 8 (Z_to_bv 64 0)))        (* [comment removed for export] *)
-      (Z_to_bv 64 (bv_unsigned sp0 - 168)) (word_to_le_bytes 8 rnd_w).                  (* [comment removed for export] *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 168)) (word_to_le_bytes 8 rnd_w))                 (* [comment removed for export] *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 296)) (word_to_le_bytes 8 entry))                 (* aux[AT_ENTRY] *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 264)) (word_to_le_bytes 8 gid))                   (* aux[AT_GID] *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 256)) (word_to_le_bytes 8 gid))                   (* aux[AT_EGID] *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 232)) (word_to_le_bytes 8 (Z_to_bv 64 100)))      (* aux[AT_CLKTCK] *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 120)) (word_to_le_bytes 8 execfn_w))              (* aux[AT_EXECFN] *)
+      (Z_to_bv 64 (bv_unsigned sp0 - 104))
+        (word_to_le_bytes 8 (la_sysinfo_ehdr (launch_auxv inp sp0 mbase)))).               (* aux[AT_SYSINFO_EHDR] *)
 
   (* [comment removed for export] *)
   Definition D_tlsA (D : word -> option byte) : word -> option byte :=

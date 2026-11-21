@@ -25,6 +25,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 414 of its 496 lines of code are new or changed and 4971 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/pf_seg_B2.v; 101 of its 169 lines of code are new or changed and 428 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/pf_seg_B11c_l.v, with its addresses and numbers changed; 71 of its 191 lines of code are new or changed and 49 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca): the KOUT piece
    of segment B11c of reac_segconf_parse_file's walk: after the F_badmodel refusal returns (0x88bf0), known and
    ntok go out of scope and the walk falls into LOWOUT (0x88c70). The B11c segment lane of the image-B G3 walk owner, 2026-10-30.
@@ -32,8 +33,8 @@
    KOUT (0x88bf0, BASE + AF_reac_segconf_parse_file + 0xdb8) is a walk-internal cut of B11c: no other segment
    names it. Its state is INV_LOWOUT's with known and ntok still IN scope (PF_SC_KNOWN) and a0 free: refuse
    returned with c holding the refused state cf, the counters' room of the next line, cur in slot 0xc0.
-   ADAPTED from the image-A G3 walk owner's image-A join piece lib/A/Prog/pf_a10b_j.v (commit
-   c6f2a9302a3c), the same form at another set of cells; A11b's twin of this stretch is A's 0x886ec-0x88770
+   ADAPTED from the image-A G3 walk owner's image-A join piece lib/A/Prog/pf_a10b_j.v,
+   the same form at another set of cells; A11b's twin of this stretch is A's 0x886ec-0x88770
    (a working branch's pf_a11b_d.v head comment).
    The code (reac_segconf_parse_file.fuzz_segconf.asan-ubsan.s), 0x88bf0 .. 0x88c6c, 32 instructions, no call,
    no inline check, no UBSan trap branch:

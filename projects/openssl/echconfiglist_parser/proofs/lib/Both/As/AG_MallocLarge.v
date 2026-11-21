@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the gap witness's bound side condition also unfolds task_unmapped_base; the pointer array's reserved-ledger premise is discharged by AllocRepX.ak_resf_pa, since the launch's vDSO/vvar pair is reserved above AHI_LO). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -142,7 +143,7 @@ Section MallocLargeGlue.
     { unfold aPhi, lg_cost, page_size in *. clear - AB0 AB1 ALLOW PNN; try acb. subst st. lia. }
     { (* [comment removed for export] *)
       pose proof (ak_atop s mo AK) as AT.
-      exact (gap_witness_fit_top _ AHI_LO msz ltac:(clear - MSZ SZ; lia) ltac:(unfold AHI_LO; clear; lia) ltac:(clear; reflexivity)
+      exact (gap_witness_fit_top _ AHI_LO msz ltac:(clear - MSZ SZ; lia) ltac:(unfold AHI_LO, task_unmapped_base; clear; lia) ltac:(clear; reflexivity)
                ltac:(rewrite AT; hcb; clear - HCEILB; lia) AGP). }
     { exact (ak_imgr s mo AK). } { exact (ak_shland s mo AK). }   (* [comment removed for export] *)
     { exact (ak_atop s mo AK). }
@@ -153,7 +154,7 @@ Section MallocLargeGlue.
     { intros x Hx. apply DCOV. left. exact Hx. } { intros x Hx. apply DCOV. right. exact Hx. }
     { intros E. clear - AK BND NB1 NB2 E; try acb. subst nch nres pa st. unfold kChunksBlockCount, kPtrArrayReserve in *.
       apply (ak_pamc s mo AK); unfold wz, kPtrArrayReserve; rewrite ?unsigned_lit by lia; lia. }
-    { intros E. clear - AK BND NB1 NB2 E; try acb. subst nch nres pa st. unfold kChunksBlockCount in *. apply (ak_resf s mo AK). unfold wz, AIMG_TOP; rewrite unsigned_lit by lia; lia. }   (* [comment removed for export] *)
+    { intros E. clear - AK BND NB1 NB2 E; try acb. subst nch nres pa st. unfold kChunksBlockCount, kPtrArrayReserve in *. apply (ak_resf_pa s mo AK); unfold wz, kPtrArrayReserve; rewrite ?unsigned_lit by lia; lia. }   (* [comment removed for export] *)
     { intros E x Hx. clear - AK BND NB1 NB2 Hx E; try acb. subst nch nres pa st. unfold kChunksBlockCount in *. apply (ak_zr_pa s mo AK). unfold kPtrArrayReserve. lia. }
     { exact OK. } { exact VISE. }
     (* [comment removed for export] *)

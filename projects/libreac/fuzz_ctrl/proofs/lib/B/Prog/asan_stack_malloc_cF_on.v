@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 3501 of its 3539 lines of code are new or changed and 210 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_ctrl_parseF.v, with its module paths and module names changed; 45 of its 97 lines of code are new or changed and 3487 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* lib/B/Prog/asan_stack_malloc_cF_on.v -- route (C) (a Theorem Labs lane 09:20Z; a Theorem Labs lane 11:49Z / 11:50Z; writer a Theorem Labs lane): the
    ADDITIVE `_on` form of asan_stack_malloc_cF.v's FOOTPRINT contract, STATEMENT ONLY, plus two bridges.
    asan_stack_malloc_cF.v and asan_stack_malloc_c_on.v stay byte-identical apart from comment text. Twin of image A's
@@ -17,7 +18,7 @@
    - asan_stack_malloc_contract_F_of_F_on: the _F_on form gives the old _F form (shadow_rw gives shadow_rw_on).
    - asan_stack_malloc_contract_on_of_F_on: the _F_on form gives the plain _on form at RNG_all, for c <= 10; every
      rng bound comes from a premise the _on contract already carries, by asan_stack_malloc_1_contract_of_F's script
-     (reac_ctrl_parseF.v:190-224) with the class generic.
+     (reac_ctrl_parseF.v:191-225) with the class generic.
    No proof of the contract itself is here; the proofs are a Theorem Labs lane's. *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -79,7 +80,7 @@ Proof.
 Qed.
 
 (* The plain region form from the footprint region form at RNG_all (classes 0..10): asan_stack_malloc_1_contract_of_F's
-   script (reac_ctrl_parseF.v:190-224) with the class generic. The class-c frame area ends at or below FS + FS_SIZE
+   script (reac_ctrl_parseF.v:191-225) with the class generic. The class-c frame area ends at or below FS + FS_SIZE
    (36864 + (c + 1) * 2^20 <= 11571200 for c <= 10) and its shadow is 2^20 / 8 = 131072 bytes for every c <= 10. *)
 Lemma asan_stack_malloc_contract_on_of_F_on : forall c entry K, (c <= 10)%nat ->
   asan_stack_malloc_contract_F_on c entry K -> asan_stack_malloc_contract_on c entry K.

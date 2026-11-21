@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/EnqGhit.v (a working branch f38a2a07767b, file sha256 7d4f29496b52), lane B2's frame-generic Enqueue arm on the cf layer 987b886cbb10 (no image numeral); module paths changed only: 53 modules to this unit's lib/Reusable. No other edit; no image numeral is stated here. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/EnqGhit.v (a working branch, file sha256 7d4f29496b52), lane B2's frame-generic Enqueue arm on the cf layer (no image numeral); module paths changed only: 53 modules to this unit's lib/Reusable. No other edit; no image numeral is stated here. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B2; integrator ReallocPrimary).
    rule 24: proves function __sanitizer::QuarantineCache<__asan::QuarantineCallback>::Enqueue (the HIT arm: a new
    batch is needed and the class-24 cache is not empty), frame-generic, at cgif_file_fuzzer's asan-ubsan image

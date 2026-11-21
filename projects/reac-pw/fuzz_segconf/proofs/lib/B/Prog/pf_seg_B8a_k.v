@@ -10,17 +10,18 @@
    (rt_rom_view) follow from the statement's arodata_okP. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/rec_calls_equal.v, with its module paths, module names and numbers changed; 532 of its 679 lines of code are new or changed and 1344 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/check_segments_s1.v, with its module paths and module names changed; 177 of its 258 lines of code are new or changed and 598 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3): the pure kit of segment B8a of
    reac_segconf_parse_file's walk (lib/B/Prog/pf_pieces.v S_B8a: SEG 0x88ca0 -> NEW 0x88e54 / FOUND 0x88eb0 /
    REFTL 0x887cc, the inlined seg_get search of reac_segconf.c:103-118). The B8a segment lane of the image-B G3 walk owner, 2026-10-30.
    proves no function (kind: model and byte lemmas, no instruction walked).
-   ADAPTED from the image-A G3 walk owner's image-A kit lib/A/Prog/pf_a8a_k.v (commit 61a728170142, part 1:
+   ADAPTED from the image-A G3 walk owner's image-A kit lib/A/Prog/pf_a8a_k.v (part 1:
    the spine a8_ovf / a8_step_full / a8_find_step and the c->overflow + 1 encoding a8_rconf_ovf, which the image-A G3 walk owner
    copied from the unit owner's lib/Prog/pfB_p4_spine.v; the block's bytes a8_bytes_app .. a8_le4_byte, which it copied
    from the image-A G4/G5 walk owner's check_segments_s1.v); image-free, so the statements are A's with b8_ names; added for image B:
    the search invariant b8_find_inv / b8_find_hit / b8_find_miss in the loop's terms (B's loop carries the entry
    index i), the counters of the bound refusal at REFTL (b8_reftl_cnt: INV_REFTL's room after the line with one
-   more refused, pf_pieces.v ba1c0e453663), and the store of c->overflow + 1 through a reader (b8_sa_rconf_ovf). *)
+   more refused, pf_pieces.v), and the store of c->overflow + 1 through a reader (b8_sa_rconf_ovf). *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -84,7 +85,7 @@ Qed.
 Lemma b8_find_miss : forall segs name, b8_find_inv segs name (length segs) -> r_find_go segs name 0 = None.
 Proof. intros segs name H. unfold b8_find_inv in H. rewrite H. apply b8_find_end. Qed.
 
-(** ** 2. The counters of the bound refusal (INV_REFTL, pf_pieces.v ba1c0e453663) *)
+(** ** 2. The counters of the bound refusal (INV_REFTL, pf_pieces.v) *)
 Lemma b8_reftl_cnt : forall s o cf, (o < length s)%nat -> pf_cnt cf (length (skipn o s)) ->
   pf_cnt (b8_ovf cf) (length (skipn (pf_next s o) s)) /\
   rc_refused (b8_ovf cf) + Z.of_nat (length (skipn (pf_next s o) s)) + 1 + 2 ^ 16 < 2 ^ 32 /\

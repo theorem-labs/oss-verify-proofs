@@ -1,9 +1,9 @@
 (* lib/B/Prog/reac_box_model_block_c_on.v -- route (C), image B: the `_on` statement of reac_box_model_block as a LEAF
-   beside reac_box_model_block_c.v 2339efccffe (the blob this tree had at release c5e779efe8c), which stays image B's text of record (apart from comment lines, a Theorem Labs lane 11:55Z; it
+   beside reac_box_model_block_c.v 2339efccffe (the blob this tree had at release), which stays image B's text of record (apart from comment lines, a Theorem Labs lane 11:55Z; it
    carries reac_box_model_block_contract_F). The four declarations below (reac_box_model_block_shadow_R,
    reac_box_model_block_post_on, reac_box_model_block_contract_on, reac_box_model_block_contract_of_on) are the image-B
-   twin of a Theorem Labs lane's image-A text (a working branch ba2ec85429d, lib/A/Prog/reac_box_model_block_c.v), moved here
-   with their text unchanged from a working branch 1d3f3f868d5. STATEMENTS (rule 24: no function proved). *)
+   twin of a Theorem Labs lane's image-A text (a working branch, lib/A/Prog/reac_box_model_block_c.v), moved here
+   with their text unchanged from a working branch. STATEMENTS (rule 24: no function proved). *)
 From Stdlib Require Import ZArith List Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Import PropExec MState Mem Exec Frame Cells Step.

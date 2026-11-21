@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (len_rw also unfolds wok_lo and stack_window_reach; new lemmas msteps_run_segments, bwd_run_segments and wbytes_same_m). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-From Stdlib Require Import ZArith List Lia Bool.
+From Stdlib Require Import ZArith List Lia Bool FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -52,8 +53,23 @@ Ltac len_rw :=
          end.
 
 (* [comment removed for export] *)
+(* OLD: unfold win_lo;   NEW: try unfold win_lo; try unfold wok_lo; try unfold
+   stack_window_reach;
+   store_ok_cmem_win (MemSplit.v:306-309) asks 'wok_lo sp0 <= bv_unsigned a', and
+   wok_lo (MemSplit.v:123-124) is 'bv_unsigned sp0 + stack_window_reach -
+   stack_max_size' - a STRICTLY TIGHTER bound than win_lo, as MemSplit.v:129-130's
+   win_lo_le_wok_lo records.  region_side unfolded only win_lo, so on that side
+   condition wok_lo stayed folded, lia saw an opaque atom it could not relate to
+   bv_unsigned sp0, and answered "Cannot find witness" - the error at seven sites:
+   AsanInit.v:282 (fixed separately, a stale constant), RefStartup1.v:136,
+   RefStartup3.v:97, RefStartup4.v:209, UbStartup1.v:132, UbStartup3.v:96,
+   UbStartup4.v:207.  The tree already unfolds it this way where it is written out by
+   hand: StoreOk.v:760 'unfold stack_window_reach, stack_max_size; u_norm; lia'.
+   Each unfold is under [try] because region_side runs on BOTH side conditions of
+   store_ok_cmem_win and the second mentions none of these constants; a bare [unfold]
+   of an absent constant is an error. *)
 Ltac region_side :=
-  unfold win_lo;
+  try unfold win_lo; try unfold wok_lo; try unfold stack_window_reach;
   match goal with |- context [stack_max_size] => rewrite ?stack_max_size_val | _ => idtac end;
   len_rw;
   cbn [length Z.of_nat Pos.of_succ_nat Pos.succ Nat.add Nat.mul]; imm_norm; unorm; lia.
@@ -253,6 +269,44 @@ Definition bwd (segs : list Segment) (G : machine_state -> Prop) : Prop :=
 
 Lemma bwd_msteps : forall segs tgt, bwd segs (fun st => msteps segs st tgt).
 Proof. intros segs tgt st st' H1 H2. eapply msteps_trans; eassumption. Qed.
+
+(* A walk over the binary's own segments is the same walk over the run's
+   segment list ([StoreOk.step_run_segments]), so a goal closed backwards
+   over [run_segments] is closed backwards over the binary's walk. *)
+Lemma msteps_run_segments : forall segs inp (sp mbase : word) st st',
+  msteps segs st st' -> msteps (run_segments segs inp sp mbase) st st'.
+Proof.
+  intros segs inp sp mbase st st' H.
+  induction H as [ms | ms ms' ms'' Hs Hstep _ IH]; [apply mst_refl|].
+  eapply mst_step; [exact Hs | apply step_run_segments; exact Hstep | exact IH].
+Qed.
+
+Lemma bwd_run_segments : forall segs inp (sp mbase : word) G,
+  bwd (run_segments segs inp sp mbase) G -> bwd segs G.
+Proof.
+  intros segs inp sp mbase G HG st st' Hm HG'.
+  apply (HG st st'); [apply msteps_run_segments; exact Hm | exact HG'].
+Qed.
+
+(* A store of bytes the memory already holds changes nothing. *)
+Lemma wbytes_same_m : forall bs m (a : word),
+  (bv_unsigned a + Z.of_nat (length bs) <= 2 ^ 64)%Z ->
+  (forall j, (j < length bs)%nat ->
+     m (Z_to_bv 64 (bv_unsigned a + Z.of_nat j)) = Some (nth j bs (Z_to_bv 8 0))) ->
+  wbytes m a bs = m.
+Proof.
+  intros bs m a Hnw Hall. apply functional_extensionality. intros x.
+  pose proof (u64_range x) as Hx. pose proof (u64_range a) as Ha.
+  destruct (Z_lt_dec (bv_unsigned x) (bv_unsigned a)) as [Hlt|Hge].
+  { apply wbytes_outside; lia. }
+  destruct (Z_lt_dec (bv_unsigned x) (bv_unsigned a + Z.of_nat (length bs))) as [Hin|Hout].
+  2: { apply wbytes_outside; lia. }
+  rewrite wbytes_inside by lia.
+  assert (Hxj : x = Z_to_bv 64 (bv_unsigned a
+                     + Z.of_nat (Z.to_nat (bv_unsigned x - bv_unsigned a)))).
+  { apply bv_eq. rewrite u_Z2bv by lia. lia. }
+  rewrite Hxj at 2. symmetry. apply Hall. lia.
+Qed.
 
 (* [comment removed for export] *)
 Ltac gsteps HG := eapply HG.

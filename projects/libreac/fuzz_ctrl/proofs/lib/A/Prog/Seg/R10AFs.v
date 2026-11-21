@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names, addresses and numbers changed; 2252 of its 2377 lines of code are new or changed and 886 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/R10A.v; 45 of its 108 lines of code are new or changed and 2314 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* PROVENANCE. Image A = fuzz_ctrl.asan, libreac v1.9.0 (pinned image and tools as in R10AF.v's header).
    Written by a Theorem Labs lane (a Theorem Labs lane's stage lane for seg_R10) under the NARROWED-STRETCH RULE (a Theorem Labs lane /
    a Theorem Labs lane, 04:23Z / 04:34Z, via a Theorem Labs lane): a stretch of a Theorem Labs lane's split carries the source run's whole premise
@@ -14,7 +15,7 @@
    r10a_call34_pre_Fs: the six instructions 0x816ac mv a0,s8 ; 0x816b0 mv a1,s2 ; 0x816b4 ld a2,88(s1) ;
    0x816b8 ld a3,80(s1) ; 0x816bc ld a4,72(s1) ; 0x816c0 jal reac_ctrl_identity_reply, ending in the callee entry
    state (pc = REAC_CTRL_IDENTITY_REPLY, ra = 0x816c4), with the same post as R10AF.r10a_call34_pre_F
-   (R10AF.v:357).  Its premises are the ones these steps read: s1 = A with the window bound A + 96 <= 2 ^ 64, the
+   (R10AF.v:358).  Its premises are the ones these steps read: s1 = A with the window bound A + 96 <= 2 ^ 64, the
    three spilled words q64 m (A + 88) pa / (A + 80) pp / (A + 72) pn, and the three rng premises of those loads.
    Dropped (the callee contract's premises, which a Theorem Labs lane's pre_F carries for its of_pre_post pin and which the
    steps never read): s8 / s2 / sp equations, the five value ranges, the stack alignment and window, mem_inv,
@@ -33,7 +34,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import memcmp_c bcmp_
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require asan_memset asan_memcpy.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog.Seg Require Import R10A.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Import ExecF StepF.
-(* R10AF.v's mid-file Require block (R10AF.v:329-339), so the stretch is stated in the environment of
+(* R10AF.v's mid-file Require block (R10AF.v:330-340), so the stretch is stated in the environment of
    R10AF.r10a_call34_pre_F (YK11's getr, SlotInv's q64; StepF's step last). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Reusable Require Import YK11 YM05 YK0o YK0s YK15 YP09 YO0f YO0d YO09
   YL00 YL0g YL0i YI14 YI16 YL01 YM06.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstMiss.v (a working branch 3cae605a900a, file sha256 3a8141a009c3), the generic cf instance layer, field round 3 part 3c; module paths changed only: 79 modules to this unit's lib/Reusable. No other edit; no image numeral is stated here. *)
+(* Modified by Theorem Labs, 2026-10-31: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstMiss.v (a working branch, file sha256 3a8141a009c3), the generic cf instance layer, field round 3 part 3c; module paths changed only: 79 modules to this unit's lib/Reusable. No other edit; no image numeral is stated here. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (lane M of the generic cf instance layer, a working branch; integrator ReallocPrimary).
    The cf twin of cgif/cgif_file_fuzzer lib/AGif1m.v (file sha256 a8ba029fc832; donor not released), cgif/cgif_file_fuzzer lib/AGif1mE.v (file sha256 557a16163429; donor not released) and cgif/cgif_file_fuzzer lib/MnRefillcgif.v (file sha256 3300aa9f1a0a; donor not released): the miss
    interface, its errno add-on and the memnorm-kept refill field at the call-site relation YGcfInstBase.ARXq_cf, over
@@ -12,7 +13,7 @@
    Fixed arguments (YGcfInstBase.v section 4): U := U_cf B, mt := malloc_cf, ARX := ARXq_cf B IOK Hp at every ghost set
    Hp, AOX := AOX_cf B, rpre := rpre_cf B, nmax := cf_malloc_max, lmax := LIVE_MAX, lpost := qtight,
    dpost := YGcfInstHit.dpost_cf B, mtag / stag := CfImg's cf_pc_malloc_max / cf_pc_spin_shadow (malloc_cf's mcheck tag
-   and shadow-remap spin, YG00cf.v:237 / :249), rtree := YGcfInstRefill.refill_tree_cf.
+   and shadow-remap spin, YG00cf.v:238 / :250), rtree := YGcfInstRefill.refill_tree_cf.
 
    Field by field, against cgif's proof:
    - if_mview (mview_cf): ARmcf's layout / tsd / const cells / cache count cell / unwinding cell (AGif1m.mview_cgif's
@@ -214,9 +215,9 @@ Proof. intros c s. unfold refill_if_empty_cf. repeat rq_step. Qed.
 #[local] Hint Resolve rq_refill_cf : rqdb.
 
 (* The refill tree's post on every returning path.  The depot clause: no step of the refill tree puts into the depot
-   (refill_tree_cf, YGcfInstRefill.v:62, and its steps YG00cf.v:38-218 and cgif's YG00 steps for the batch class have
-   no depot_put / set_depot; the only depot_put of the cf model is malloc_cf's join tail, YG00cf.v:245, after the
-   refill, and free_cf's, YG00cf.v:338); this walk checks it on every path. *)
+   (refill_tree_cf, YGcfInstRefill.v:63, and its steps YG00cf.v:39-219 and cgif's YG00 steps for the batch class have
+   no depot_put / set_depot; the only depot_put of the cf model is malloc_cf's join tail, YG00cf.v:246, after the
+   refill, and free_cf's, YG00cf.v:339); this walk checks it on every path. *)
 Lemma refill_tree_cf_post : forall c s, cfx_ipost (refill_tree_cf c s) (fun r =>
 st_chunks (snd r) = st_chunks s /\ st_qthread (snd r) = st_qthread s /\ st_qglobal (snd r) = st_qglobal s /\
 st_cache_inited (snd r) = true /\ st_depot (snd r) = st_depot s).
@@ -262,7 +263,7 @@ Hypothesis IOK_inst : IOK_ok B IOK.
 (* image: the instance object's constant cells wherever the constant cells hold (CfInstSec's INST_CELLS text, carried
    as YGcfInstHit.INST_CELLS_t; cgif: tfib_const_lookup / tfib_const_lookup_sym over Tfib_const) *)
 Hypothesis INST_CELLS : INST_CELLS_t B.
-(* YGcfInstHit's bridge premises (YGcfInstHit.v:137-152, same texts): the shadow offset, the depot's write zone and
+(* YGcfInstHit's bridge premises (YGcfInstHit.v:138-153, same texts): the shadow offset, the depot's write zone and
    footprint, and the constant cells apart from the thread cells the hit walk writes *)
 Hypothesis HSHB : ag_shadow = SHADOW_OFF.
 Hypothesis HDZO : forall ly' a, ag_dzone ly' a ->
@@ -395,7 +396,7 @@ Proof. intros a Ha E. rewrite E in Ha. exact (proj1 (proj2 (proj2 (proj2 oom_own
 Lemma no_iflag_cf : forall a, as_ialloc_flag B <= a < as_ialloc_flag B + 2 -> not_oom_cf a.
 Proof. intros a Ha E. rewrite E in Ha. exact (proj2 (proj2 (proj2 (proj2 oom_owned_img))) Ha). Qed.
 
-(* copy of YG0tcf.v:141-172 (rinfo_in_cf / meta_in_cf / batch_in_cf) at not_oom_cf *)
+(* copy of YG0tcf.v:142-173 (rinfo_in_cf / meta_in_cf / batch_in_cf) at not_oom_cf *)
 Lemma rinfo_no_cf : forall a, ly_space ly + kRegionInfoOff <= a < ly_space ly + kRegionInfoOff + 4096 -> not_oom_cf a.
 Proof.
 intros a Ha. pose proof (lo_space_in _ (amc_layout _ _ _ _ _ M)) as [S1 S2]. unfold kRegionInfoOff, kSpaceSize in *.
@@ -430,7 +431,7 @@ assert (BX : ly_space ly + b_self b = region_base ly kBatchClass + x) by (unfold
 apply no_prim_cf. lia.
 Qed.
 
-(* copy of YG0tcf.v:174-326 (the cell families) at not_oom_cf *)
+(* copy of YG0tcf.v:175-327 (the cell families) at not_oom_cf *)
 Lemma region_cells_no_cf : forall c, 1 <= c <= 31 -> Forall (CBO ly) (region_cells S c).
 Proof.
 intros c Hc. apply (YG0tcf.Forall_cbi_of_range B not_oom_cf ly _ (ly_space ly + kRegionInfoOff) 4096); [exact rinfo_no_cf|].
@@ -606,7 +607,7 @@ unfold ashadow in H. destruct (find_chunk_at B ly (st_chunks S) g) as [k|] eqn:F
 Qed.
 End z.
 
-(* The law. AR_frame_law_ok_cf's proof (YG0qcf.v:669) with its owned-agreement AG at the bytes other than the OOM byte:
+(* The law. AR_frame_law_ok_cf's proof (YG0qcf.v:670) with its owned-agreement AG at the bytes other than the OOM byte:
    every byte the cells, the free arrays, the flags, the depot, the shadow and the internal allocator's zero ranges
    read is not the OOM byte (the _no_cf family above). *)
 Lemma AR_oom_law_cf_ok : AR_oom_law_cf.
@@ -963,8 +964,8 @@ split; [|exact QT']. split; [split; [exact I | split] | exact QT'].
 Qed.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* if_depot_miss: the depot field at the pop state Sp.  At P'' U_cf (admits, YG01.v:157) reads the depot: the entry's *)
-(* trace premise carries to Sp through the field's depot equation (YG01.admits_keep, YG01.v:223); the entry ARX is   *)
+(* if_depot_miss: the depot field at the pop state Sp.  At P'' U_cf (admits, YG01.v:158) reads the depot: the entry's *)
+(* trace premise carries to Sp through the field's depot equation (YG01.admits_keep, YG01.v:224); the entry ARX is   *)
 (* not read (AGif1m.depot_miss_cgif).                                                                              *)
 Lemma depot_miss_cf : forall Hp inst ly ly0 S0 Sp W0 mem00 md00 W mem0 md0 tr (regs : bvmap 5 word) (mem : word -> option byte)
 (md : Model) (buf : Z),
@@ -1129,8 +1130,8 @@ exact (FRV a Ra N0 N1 NS).
 Qed.
 
 (* ame_depot_miss: YGcfInstHit.ae_depot_cf (the depot field with errno kept, AGif1mE.errno_kept_depot_cgif's script)
-   at the pop state Sp.  At P'' U_cf (admits, YG01.v:157) reads the depot: the entry's trace premise carries to Sp
-   through the field's depot equation (YG01.admits_keep, YG01.v:223); the entry ARX is not read. *)
+   at the pop state Sp.  At P'' U_cf (admits, YG01.v:158) reads the depot: the entry's trace premise carries to Sp
+   through the field's depot equation (YG01.admits_keep, YG01.v:224); the entry ARX is not read. *)
 Lemma ame_depot_miss_cf : forall Hp, MnRefillW.ame_depot_miss_w_t B (U_cf B) (ARXq_cf B IOK Hp) (dpost_cf B).
 Proof.
 intros Hp inst ly ly0 S0 Sp W0 mem00 md00 W mem0 md0 tr regs mem md buf _ HU HARXp HDP.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 From OSSVerify.Proofs.boost_beast.http_request.lib.Common Require KReplay.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -13,6 +14,8 @@ From OSSVerify.Proofs.boost_beast.http_request.lib Require Import HeapCeil.
 From OSSVerify.Proofs.boost_beast.http_request.lib.Bo Require Import BSegs AsShadow AsConst AsIface FakeStackRep.   (* [comment removed for export] *)
 From OSSVerify.Proofs.boost_beast.http_request.lib Require Import
   PropExec AxSymExec3 AxSymExec3Sound AxSymExec3B AsanAcct AsanPlanCore AsanPlan AsanPlanSound AsanPlanSoundSums AsanInit AsanHexScan BothImages BothPlanImages AsHSTab BoStartupHSF AsMainVM BoMainState BoMainFacts BoMainLazyChk BoMainLazy BoMainCells BoMainIface LazyRestrict LazySR.
+From OSSVerify.boost_beast.http_request.images Require AsanUbsan.
+From OSSVerify.Proofs.boost_beast.http_request.lib Require Import AsanInitL.
 From OSSVerify.Proofs.boost_beast.http_request.lib.Bo Require Import AsMainSyms.
 Import ListNotations. Import AX2. Import AX2S. Import AX2B. Import APC. Import AP. Import APS. Import APSX.
 Open Scope Z_scope.
@@ -28,8 +31,9 @@ Section AT_MAIN.
   Hypothesis Vev : valid_envp (in_envp inp).
   Hypothesis Vfit : entry_stack_fits sp0 (in_argv inp) (in_envp inp).
   Hypothesis Hh : HSF_both h = Some ch.
-  Hypothesis HC : cs_ok BSEGS2 BOTH_H AsanInit.LIMIT (SINV0 BPH2 sp0 rdraw brk0 (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-                        (argH0 BPH2 sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model.
+  Hypothesis HC : cs_ok BSEGS2 BOTH_H AsanInit.LIMIT
+                        (SINV0L BPH2 OSSVerify.boost_beast.http_request.images.AsanUbsan.M.init_pc sp0 rdraw brk0 inp)
+                        (argH0 sp0 rdraw inp) (in_fs inp) E ch R FULL model.
   #[local] Notation g := (hole_granted h).
   #[local] Notation cls := (hole_class h).
   #[local] Notation X := (Xof g E).

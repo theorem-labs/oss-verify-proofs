@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the plain binary's library is closed at the run instance, FZ_p of type Ref.ECH_LibTop.fuzz_vc_type). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List QArith Lia.
 Require LinuxProcessSemantics.EquivalenceDefinition.Equivalence.
@@ -31,8 +32,7 @@ Module OpensslEchconfiglistParserHaltsAsanExits <: LinuxProcessSemantics.Equival
 End OpensslEchconfiglistParserHaltsAsanExits.
 
 (* [comment removed for export] *)
-Definition FZ_p : forall (HCEIL : HeapCeil) (HSEC : HeapSecret),
-    @OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Ref.ECH_Iface.fuzz_stmt HCEIL (@OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Ref.MallocSR.HS HCEIL HSEC)
+Definition FZ_p : OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Ref.ECH_LibTop.fuzz_vc_type
   := OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Ref.ECH_LibTop.fuzz_closed.
 
 Section ThirdAsan.

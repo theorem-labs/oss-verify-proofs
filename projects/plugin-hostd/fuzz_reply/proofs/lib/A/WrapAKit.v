@@ -1,6 +1,7 @@
-(* Modified by a Theorem Labs lane (ReallocPrimary.RealSegA), 2026-10-30: relocated from proofs/omx-clap-core/fuzz_preset/lib/A/WrapAKit.v (commit d0fcb396eeeb, sha256 01ccc10fcfdab7a5; preset image p102: unstripped fuzz_preset.asan sha256 bff8519bbe3e, pin 1be0f53d96cb) to plugin-hostd/fuzz_reply's asan image A (unstripped fuzz_reply.asan sha256 d751b179ea49, pin 42c58610e125) by a Theorem Labs lane's alreloc.py (frozen-ced0368250cb6538): module paths changed, every image numeral moved by symbol + offset (hand-check table in the commit); preset lib.Reusable -> reply lib.A for: none. *)
+(* Modified by a Theorem Labs lane (ReallocPrimary.RealSegA), 2026-10-30: relocated from proofs/omx-clap-core/fuzz_preset/lib/A/WrapAKit.v (sha256 01ccc10fcfdab7a5; preset image p102: unstripped fuzz_preset.asan sha256 bff8519bbe3e, pin 1be0f53d96cb) to plugin-hostd/fuzz_reply's asan image A (unstripped fuzz_reply.asan sha256 d751b179ea49, pin 42c58610e125) by a Theorem Labs lane's alreloc.py (frozen-ced0368250cb6538): module paths changed, every image numeral moved by symbol + offset (hand-check table in the commit); preset lib.Reusable -> reply lib.A for: none. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: omx-clap-core/fuzz_preset image A (asan, pin d83eb25dbf0d, unstripped twin f0d2e8d40c7e),
    the kit the interceptor walks (WrapMallocA*.v, WrapFreeA*.v) take their seeds from: the facts cgif's free / malloc
    site files read off cgif's ARm, read here off ARcf's ARmcf (YG0ncf.v:213-264) and ALedger_cf (YG0ncf.v:551).
@@ -12,7 +13,7 @@
      part, as it is acells' ninth, YG0n.v:119-122, YG0ncf.v:50-53);
    - img_cover_of_ledger_cf: AF0x.v:55-62 img_cover_of_ledger (the image's segments Asan.Asan_segment_000 /
      Asan_segment_003, as the donor reads them);
-   - HIGH_cf / SX_cf: AFf0.v:65-70 SX and :105-124 HIGH, whose proofs read only layout_ok and img_cover.
+   - HIGH_cf / SX_cf: AFf0.v:66-71 SX and :105-124 HIGH, whose proofs read only layout_ok and img_cover.
    Reads no listing: no instruction is stepped here. No Admitted / Axiom. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YImgTop.
@@ -95,7 +96,7 @@ Hypothesis LO : layout_ok ly.
 Hypothesis IMG : img_cover ly.
 Local Notation T := (ly_T ly).
 
-(* AFf0.v:65-70. *)
+(* AFf0.v:66-71. *)
 Lemma SX_cf : forall i j x y, nth_error (static_extents ly) i = Some x -> nth_error (static_extents ly) j = Some y -> i <> j -> zdisjoint x y.
 Proof.
 intros i j x y Hi Hj Hne. destruct (Nat.lt_ge_cases i j).
@@ -103,7 +104,7 @@ intros i j x y Hi Hj Hne. destruct (Nat.lt_ge_cases i j).
 - apply zdisjoint_sym. apply (pairwise_nth zdisjoint _ j i y x (lo_disj _ LO) Hj Hi). lia.
 Qed.
 
-(* AFf0.v:107-126. *)
+(* AFf0.v:108-127. *)
 Lemma HIGH_cf : kHighMemBeg <= ly_prim ly /\ ly_prim ly + kPrimResvSize <= ASAN_CEIL /\ zone3 (ly_Q ly) (kPtrArrayResv) /\ ly_Q ly + kPtrArrayResv <= ASAN_CEIL /\
 zone3 T kThreadObjSize /\ T + kThreadObjSize <= ASAN_CEIL /\ zone3 (ly_F ly) (kFakeStackSize) /\ ly_F ly + kFakeStackSize <= ASAN_CEIL /\
 zone3 (ly_NB ly) (kNodesBlockSize) /\ ly_NB ly + kNodesBlockSize <= ASAN_CEIL /\ zone3 (ly_SB ly) (kStoreBlockSize) /\ ly_SB ly + kStoreBlockSize <= ASAN_CEIL /\

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import List Lia.
@@ -70,7 +71,8 @@ Qed.
 Lemma no_error_run_corun :
   forall (segs : list Segment) (pc : N) (ph : PhdrInfo) (sp brk0 mb : word) (rnd : EntryDraw)
          (lim : Z) (inp : ProcInput),
-  ~ reaches_error segs (init_config segs pc ph sp brk0 mb rnd lim inp) ->
+  ~ reaches_error (run_segments segs inp sp mb)
+      (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) ->
   omni_corun (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp never_errors.
 Proof.
   intros segs pc ph sp brk0 mb rnd lim inp H. cbn [omni_corun].
@@ -83,10 +85,12 @@ Qed.
 Lemma no_error_run_modeled :
   forall (segs : list Segment) (pc : N) (ph : PhdrInfo) (sp brk0 mb : word) (rnd : EntryDraw)
          (lim : Z) (inp : ProcInput),
-  ~ reaches_error segs (init_config segs pc ph sp brk0 mb rnd lim inp) ->
+  ~ reaches_error (run_segments segs inp sp mb)
+      (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) ->
   Equivalence.modeled (run (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp).
 Proof.
   intros segs pc ph sp brk0 mb rnd lim inp H.
-  apply modeled_iff. cbn [img_segments].
+  apply modeled_iff.
+  cbn [image_run_segments img_segments en_sp en_mmap_base].
   eapply coexec_conseq; [apply no_error_run_corun, H | apply never_errors_covered].
 Qed.

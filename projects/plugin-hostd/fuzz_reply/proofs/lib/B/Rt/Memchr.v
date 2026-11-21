@@ -3,8 +3,9 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: cgif_file_fuzzer lib/YE6x.v's walk of the memchr wrapper, generalised to any byte c in a1 and to a window that may hold no c: the musl call is MemchrMusl's walk, and after it the found case keeps YE6x's check (YE6y, count a0 - s2 + 1) while the not-found case takes the twin check of MemchrChk (count s1). *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_disco/lib/A/Rt/Memchr.v
-   (a working branch 3b8a77d146c, the general memchr), with its module paths changed and its seven addresses moved to fuzz_reply.asan (lib/A/Rt/Memchr.v, by code pairing), and from there to fuzz_reply.asan-ubsan (this file): trampoline 0x42208, musl memchr 0x96950, return 0x445fc, epilogue 0x4465c, REAL(memchr) cell 0x9fca8, and the musl mask window 0x10350/0x10370 (YE39.v mc_bounds). *)
-(* Modified by Theorem Labs, 2026-10: the asan-ubsan twin of lib/A/Rt/Memchr.v (a working branch b499e5453f1): lib/A's cgif-layer modules replaced by their lib/B twins, and its addresses moved to fuzz_reply.asan-ubsan by code pairing. *)
+   (a working branch, the general memchr), with its module paths changed and its seven addresses moved to fuzz_reply.asan (lib/A/Rt/Memchr.v, by code pairing), and from there to fuzz_reply.asan-ubsan (this file): trampoline 0x42208, musl memchr 0x96950, return 0x445fc, epilogue 0x4465c, REAL(memchr) cell 0x9fca8, and the musl mask window 0x10350/0x10370 (YE39.v mc_bounds). *)
+(* Modified by Theorem Labs, 2026-10: the asan-ubsan twin of lib/A/Rt/Memchr.v (a working branch): lib/A's cgif-layer modules replaced by their lib/B twins, and its addresses moved to fuzz_reply.asan-ubsan by code pairing. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

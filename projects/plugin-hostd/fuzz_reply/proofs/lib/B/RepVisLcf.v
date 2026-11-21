@@ -1,17 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepVisLcf.v (commit f01d79f3fb5, cf refill round 3; file sha256 25d728052a20) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepVisLcf.v (cf refill round 3; file sha256 25d728052a20) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30: the cf twins of cgif's vis_lists_committed (YG0o.v:140) and vis_lists_u64 (YG0o.v:249),
-   over the fresh record ARmcf of YG0ncf.v, and visloc_cf, the premise VISLOC of YFkmcf.v:573 in one lemma.
+   over the fresh record ARmcf of YG0ncf.v, and visloc_cf, the premise VISLOC of YFkmcf.v:574 in one lemma.
    rule 24: proves no function (kind: invariant lemma: cf twins of vis_lists_u64 / vis_lists_committed).
    Substitutions (YG0qcf.v:7-9): ARm B ly S rd -> ARmcf B ly S Hp rd, am_X -> amc_X, wf_X / wr_X / ws_X ->
    wfc_X / wrc_X / wsc_X, chunk_facts / frame_facts / owned_sec_bound -> their YG0scf _cf forms, and
    ajunk -> ajunk_cf (YG0ncf.v:59, the junk list ARmcf's amc_junk states). Proof changes beyond those:
      - region_junk_cf (YG0ncf.v:45) lists the exhausted byte (R+68,1) before cgif's three region_junk entries,
        so the region-junk case destructs four entries; R+68 lies in the region-info page as the others do.
-     - cgif's mapped_user_bound (2 GiB per class) -> mapped_bound_cf (kFreeArrayOffset, YG01cf.v:230); the
+     - cgif's mapped_user_bound (2 GiB per class) -> mapped_bound_cf (kFreeArrayOffset, YG01cf.v:231); the
        region-window steps unfold kFreeArrayOffset (3,758,096,384 < 2 ^ 32 keeps every step true).
-   visloc_cf states VISLOC over YG0n's ajunk exactly as YFkmcf.v:573 does; ajunk_incl_cf (YG0ncf.v:80) carries
+   visloc_cf states VISLOC over YG0n's ajunk exactly as YFkmcf.v:574 does; ajunk_incl_cf (YG0ncf.v:80) carries
    it to ajunk_cf. visloc_jcf is the same over ajunk_cf. The as_junk premise is cgif's (YG0o.v:141), which the
    callers of cgif's lemmas discharge from ts_junk. cgif's files are NOT edited. No address. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
@@ -253,7 +254,7 @@ pose proof (shadow_range_below (ly_F ly + fs_frame_off cid pos) (fs_frame_bytes 
 ltac:(ceil; unfold ASAN_CEIL, kHighMemEnd in *; lia)).
 pose proof (SH0 (ly_F ly + fs_frame_off cid pos) ltac:(unfold kHighMemBeg, kFakeFramesOff in *; lia)). ceil; unfold ASAN_CEIL, kHighMemBeg in *. lia.
 Qed.
-(* VISLOC (YFkmcf.v:573) over ajunk_cf, ARmcf's own junk list. *)
+(* VISLOC (YFkmcf.v:574) over ajunk_cf, ARmcf's own junk list. *)
 Lemma visloc_jcf : forall ly S Hp rd, ARmcf B ly S Hp rd ->
 (forall r, In r (as_junk B ly) -> exists z, fst r = ANum z /\ 4096 <= z /\ z + snd r <= kImgEnd) ->
 forall r i, In r (ajunk_cf B ly S ++ aareas S ++ aclient S) -> 0 <= i < snd r ->
@@ -264,7 +265,7 @@ intros ly S HG rd M JK r i Hr Hi. split.
 - pose proof (vis_lists_u64_cf ly S HG rd M JK r i Hr Hi) as X. pose proof (proj1 (@YG0f.ASAN_CEIL_range _)) as [_ C2]. lia.
 - exact (vis_lists_committed_cf ly S HG rd M JK r i Hr Hi).
 Qed.
-(* VISLOC (YFkmcf.v:573) exactly: over YG0n's ajunk, which ajunk_cf contains (ajunk_incl_cf). *)
+(* VISLOC (YFkmcf.v:574) exactly: over YG0n's ajunk, which ajunk_cf contains (ajunk_incl_cf). *)
 Lemma visloc_cf : forall ly S Hp rd, ARmcf B ly S Hp rd ->
 (forall r, In r (as_junk B ly) -> exists z, fst r = ANum z /\ 4096 <= z /\ z + snd r <= kImgEnd) ->
 forall r i, In r (ajunk B ly S ++ aareas S ++ aclient S) -> 0 <= i < snd r ->

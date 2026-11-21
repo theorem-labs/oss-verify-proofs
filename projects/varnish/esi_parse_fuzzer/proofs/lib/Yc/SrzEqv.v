@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vvar arm of a failed load, the new branches of fetch_failure, and the srealizes transport re-proved over sstep_eqv with node_ok's third conjunct). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -8,6 +9,7 @@ From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib Require Import PropExec MState Frame Regs6ss RzEqv.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib Require ShapeAlg.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yc Require Import Divembc SpinAlg.
+From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib Require Import Acfg.
 Import ListNotations.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib Require Import Dest4xs.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib Require AndN.   (* [comment removed for export] *)
@@ -213,7 +215,7 @@ Lemma interp_park : forall R R' ko t t', eff_park R R' ko t t' -> forall m,
   end.
 Proof.
   intros R R' ko t t' H. induction H; intros m; cbn [interp_eff_accesses]; auto.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|exact I].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|destruct (range_meets_vvar segs a (width_bytes n)); exact I].
     specialize (H0 (bv_extract 0 n (le_bytes_to_word bs)) m).
     destruct (interp_eff_accesses segs (k _) m) as [ra| |]; destruct (interp_eff_accesses segs (k' _) m) as [rb| |];
       cbn [access_value accessed_ranges] in *; try exact H0; try contradiction.
@@ -260,7 +262,8 @@ Proof.
     rewrite <- Hpc, <- Hm, F1, F2, F3. apply decode_exec_park. exact Heqv. }
   exists None. intros ms' Heqv. (first [ pose proof (Heqv) as dR_17; dand8 dR_17 as _ _ Hpc _ _ _ Hm _ | pose proof Heqv as (_ & _ & Hpc & _ & _ & _ & Hm & _) ]).
   rewrite <- Hpc, <- Hm, F1, F2, F3.
-  unfold fetch_failure. destruct (negb _); [exact I|]. destruct (_ || _)%bool; exact I.
+  unfold fetch_failure.
+  repeat match goal with |- context [if ?b then _ else _] => destruct b end; exact I.
 Qed.
 
 (* [comment removed for export] *)
@@ -332,18 +335,33 @@ Theorem srealizes_eqv : forall c T, srealizes segs c T ->
 Proof.
   intros c T H.
   induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c Hspin Hh | c T T' H IH Heq]; intros c' Heqv.
-  - destruct c as [ms mo], c' as [ms' mo']. destruct Heqv as [Hms Hmo]; cbn in Hms, Hmo. subst mo'.
-    destruct Hnode as [Hn1 Hn2].
-    apply (srz_node segs (mkCfg ms' mo) I evs (fun i => xport_cfg segs ms ms' (nx i)) T i0).
-    + split.
-      * intros i. exact (proj1 (sstep_xport segs ms ms' mo (evs i) (SNext (nx i)) Hms (Hn1 i))).
-      * intros e st Hst'.
-        destruct (sstep_xport segs ms' ms mo e st (ms_eqv_sym _ _ Hms) Hst') as [S _].
-        (first [ pose proof ((Hn2 e (xport segs ms' ms st) S)) as dR_25; dex1 dR_25 as i; destruct dR_25 as [-> Hx] | pose proof ((Hn2 e (xport segs ms' ms st) S)) as dR_25; dand3 dR_25 as i -> Hx | destruct (Hn2 e (xport segs ms' ms st) S) as (i & -> & Hx) ]).
-        exists i. split; [reflexivity|].
-        rewrite <- (xport_round_trip segs ms ms' mo (evs i) st Hms Hst'). rewrite Hx. reflexivity.
-    + intros i. apply (IH i).
-      exact (proj2 (sstep_xport segs ms ms' mo (evs i) (SNext (nx i)) Hms (Hn1 i))).
+  - (* 08b1429: the new node's index carries its own next configuration ([sstep_eqv]); see
+       RzEqv.realizes0_eqv *)
+    destruct c as [ms mo], c' as [ms' mo']. destruct Heqv as [Hms Hmo]; cbn in Hms, Hmo. subst mo'.
+    destruct Hnode as [Hn1 [Hn2 Hrob]].
+    set (I' := {i : I & {c2 : config | sstep_cfg segs ACFG (mkCfg ms' mo) (evs i) (SNext c2) /\ cfg_eqv (nx i) c2}}).
+    assert (Fwd : forall i, exists c2, sstep_cfg segs ACFG (mkCfg ms' mo) (evs i) (SNext c2) /\ cfg_eqv (nx i) c2).
+    { intros i. destruct (sstep_eqv segs ms ms' mo (evs i) (SNext (nx i)) Hms (Hn1 i)) as ([c2|] & Hs & Hto);
+        [|contradiction]. exists c2. split; [exact Hs | exact Hto]. }
+    destruct (Fwd i0) as (c20 & Hs0 & He0).
+    apply (srz_conseq segs (mkCfg ms' mo)
+             (ShapeAlg.t_alt (fun j : I' => ShapeAlg.t_emit (evs (projT1 j)) (T (projT1 j))))).
+    + apply (srz_node segs (mkCfg ms' mo) I' (fun j => evs (projT1 j)) (fun j => proj1_sig (projT2 j))
+               (fun j => T (projT1 j)) (existT i0 (exist _ c20 (conj Hs0 He0)))).
+      * split; [| split].
+        -- intros j. destruct j as [i [c2 [Hs He]]]. cbn [projT1 projT2 proj1_sig]. exact Hs.
+        -- intros e st Hst'.
+           destruct (sstep_eqv segs ms' ms mo e st (ms_eqv_sym _ _ Hms) Hst') as (X & Hs & Hto).
+           destruct (Hn2 e X Hs) as (i & -> & ->).
+           destruct st as [c2|]; cbn [to_eqv] in Hto; [|contradiction].
+           exists (existT i (exist _ c2 (conj Hst' (conj (ms_eqv_sym _ _ (proj1 Hto)) (eq_sym (proj2 Hto)))))).
+           split; reflexivity.
+        -- exact (sys_rob_ms_eqv segs ms ms' mo Hms Hrob).
+      * intros [i [c2 [Hs He]]]. cbn [projT1 projT2 proj1_sig]. exact (IH i c2 He).
+    + intros tr. split.
+      * intros (j & Hj). exists (projT1 j). exact Hj.
+      * intros (i & Hi). destruct (Fwd i) as (c2 & Hs & He).
+        exists (existT i (exist _ c2 (conj Hs He))). exact Hi.
   - apply srz_halt. destruct Heqv as [_ <-]. exact Hh.
   - destruct Hspin as [[] _].   (* [comment removed for export] *)
   - eapply srz_conseq; [apply IH; exact Heqv| exact Heq].

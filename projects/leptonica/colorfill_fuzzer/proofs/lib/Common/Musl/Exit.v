@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the m_channel_reader premise). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -98,11 +99,12 @@ Theorem exit_tail_flush :
   stdout_pending mem wb wp bufp bufsz rp1 can pending ->
   m_halted model = None -> m_vm_lazy model = [] ->
   fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)) ->
+  m_channel_reader model = true ->
   realizes RSEGS (mkCfg (mkst regs (rl dF_1771c 0x1771c) mem (seg_rom RSEGS)) model)
            (t_emit (W 1 pending) (t_exit (bv_and code (Z_to_bv 64 255)) (m_fs model))).
 Proof.
   rl_dwin_bounds.
-  intros regs mem model sp code wp2 rp2 wb wp bufp bufsz rp1 can pending Hsp Hs0 Hra SPlo SPhi SOK G F2 SP Hh Hlazy Hfd.
+  intros regs mem model sp code wp2 rp2 wb wp bufp bufsz rp1 can pending Hsp Hs0 Hra SPlo SPhi SOK G F2 SP Hh Hlazy Hfd Hrdr.
   destruct SP as [P1l P1wp P1wb P1wr P1buf P1bsz P1fd P1rp P1re RANGE LEN PMAX BYTES [Ggot Gcan]].
   rl_zaddr P1l; rl_zaddr P1wp; rl_zaddr P1wb; rl_zaddr P1wr; rl_zaddr P1buf; rl_zaddr P1bsz; rl_zaddr P1fd; rl_zaddr P1rp; rl_zaddr P1re.
   (* [comment removed for export] *)
@@ -125,7 +127,7 @@ Proof.
     | lia | lia
     | (* [comment removed for export] *) split; subst mem3; unfold mem_w3a; rl_zaddr_goal; rdn_solve
     | (* [comment removed for export] *) split; subst mem3; unfold mem_w3a; rdn_solve
-    | lia | exact Hfd | exact Hh | exact Hlazy
+    | lia | exact Hfd | exact Hrdr | exact Hh | exact Hlazy
     | lia | lia | exact LEN
     | cbn [length]; u_norm; reflexivity
     | cbn [length]; lia

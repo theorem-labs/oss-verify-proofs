@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (one more name for AO_grant's placement in the grant branch of the large chunk's mmap, which passes it on to the hypothesis T_large; T_large takes that placement premise placed_at, its encoded statement kept verbatim with a lemma proving it equal to the written-out statement without that premise). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -133,8 +134,30 @@ Section LargeCfgS.
   (* [comment removed for export] *)
   Hypothesis K_apart : ltac2:(CDefT.buildp (gd_tbl_AW_LargeCfgS ()) "Psc,(0.(20.$2.$2.))Pr,$2.Pmo,$21.Pa,(>.&40.)Pn,(>.&40.)P,A3.VK,R5.R4.R3.P,(:.$22.(23.(24.(20.(>.&40.)(>.&40.))(25.(26.R4.))(27.(26.R4.)))R3.R2.)$28.)P,(4.+10000.(29.&40.R3.))P,(4.(5.(29.&40.R5.)(29.&40.R4.))(2:.VhAR,))Py,$2.P,(1?.A3.VCSf,R:.R9.R1.(1?.(1>.(4.(2;.VAL,)R1.)(9.R1.(2<.VAL,)))(1?.(1>.(4.+7???7000.R1.)(9.R1.+10007???8000.))(1>.(4.VPA,R1.)(9.R1.(5.VPA,+800000.))))))(2=.(1>.(4.(29.&40.R8.)R2.)(9.R2.(5.(29.&40.R8.)(29.&40.R7.)))))")
 (* [comment removed for export] *).
-  Hypothesis T_large : ltac2:(CDefT.buildp (gd_tbl_AW_LargeCfgS ()) "Psc,(0.(20.$2.$2.))Pr,$2.Pms,$2.Pmo,$21.Pa,(>.&40.)P,A3.VGl,R5.R4.R3.P,A3.VK,R6.R5.R3.P,(:.$2.(2>.(29.&40.R3.)+1000.)=)P,(9.=(29.&40.R4.))P,(4.(5.(29.&40.R5.)R7.)(2:.VhAR,))P,(:.$22.(23.(24.(20.(>.&40.)(>.&40.))(25.(26.R7.))(27.(26.R7.)))R6.(1<.&40.R8.))$28.)(1>.A3.VK,(24.(20.$2.$2.)R;.(15.(20.$2.$2.)(2?.$2.$2.(29.&40.R7.)R9.)(18.(20.$2.$2.))))R:.(30.+22.R7.R9.R8.)(31.A2.VCSf,(24.(20.$2.$2.)R;.(15.(20.$2.$2.)(2?.$2.$2.(29.&40.R7.)R9.)(18.(20.$2.$2.))))R:.(29.&40.R7.)R9.))")
-(* [comment removed for export] *).
+  Definition ZZ_T_large_old : Prop := ltac2:(CDefT.buildp (gd_tbl_AW_LargeCfgS ()) "Psc,(0.(20.$2.$2.))Pr,$2.Pms,$2.Pmo,$21.Pa,(>.&40.)P,A3.VGl,R5.R4.R3.P,A3.VK,R6.R5.R3.P,(:.$2.(2>.(29.&40.R3.)+1000.)=)P,(9.=(29.&40.R4.))P,(4.(5.(29.&40.R5.)R7.)(2:.VhAR,))P,(:.$22.(23.(24.(20.(>.&40.)(>.&40.))(25.(26.R7.))(27.(26.R7.)))R6.(1<.&40.R8.))$28.)(1>.A3.VK,(24.(20.$2.$2.)R;.(15.(20.$2.$2.)(2?.$2.$2.(29.&40.R7.)R9.)(18.(20.$2.$2.))))R:.(30.+22.R7.R9.R8.)(31.A2.VCSf,(24.(20.$2.$2.)R;.(15.(20.$2.$2.)(2?.$2.$2.(29.&40.R7.)R9.)(18.(20.$2.$2.))))R:.(29.&40.R7.)R9.))").
+  Lemma ZZ_T_large_faithful : ZZ_T_large_old =
+    (forall (sc : list (Z * Z)) (r ms : Z) (mo : Model) (a : word),
+       Gl sc r ms ->
+       K sc r mo ->
+       bv_unsigned a mod 4096 = 0 ->
+       0 < bv_unsigned a ->
+       bv_unsigned a + ms <= ACEIL ->
+       region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 ms) = true ->
+       K (sc ++ [(bv_unsigned a, ms)]) r (anon_grant 0x22 a ms mo)
+       /\ crange (CSf (sc ++ [(bv_unsigned a, ms)]) r) (bv_unsigned a) ms).
+  Proof. exact eq_refl. Qed.
+
+  Hypothesis T_large :
+    forall (sc : list (Z * Z)) (r ms : Z) (mo : Model) (a : word),
+      Gl sc r ms ->
+      K sc r mo ->
+      bv_unsigned a mod 4096 = 0 ->
+      0 < bv_unsigned a ->
+      bv_unsigned a + ms <= ACEIL ->
+      region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 ms) = true ->
+      ASys.placed_at ms mo a ->
+      K (sc ++ [(bv_unsigned a, ms)]) r (anon_grant 0x22 a ms mo)
+      /\ crange (CSf (sc ++ [(bv_unsigned a, ms)]) r) (bv_unsigned a) ms.
   (* [comment removed for export] *)
   Hypothesis LEDGER_P : ltac2:(CDefT.buildp (gd_tbl_AW_LargeCfgS ()) "Psc,(0.(20.$2.$2.))Pr,$2.Pmo,$21.P,A2.VGp,R3.R2.P,A3.VK,R4.R3.R2.(1>.(:.$22.(23.(25.(26.R3.))(1<.&40.A1.VU,R4.)(1<.&40.+20000.))$28.)(1?.(:.$22.(32.(27.(26.R3.))(1<.&40.A1.VU,R4.)(1<.&40.+20000.))$28.)(:.$22.(23.(24.(20.(>.&40.)(>.&40.))(25.(26.R3.))(27.(26.R3.)))(1<.&40.A1.VU,R4.)(1<.&40.+20000.))$28.)))")
 (* [comment removed for export] *).
@@ -315,7 +338,8 @@ Section LargeCfgS.
       - clear - MSZ Hx; lia.
       - left. reflexivity. }
     (intros c3 dd_H; ddestruct dd_H as (eff & mo3 & OUT & ->)).
-    destruct OUT as [e HIn | aw AAL A0 ACE RF].
+    (* one more name: [AO_grant]'s placement *)
+    destruct OUT as [e HIn | aw AAL A0 APL ACE RF].
     - (* [comment removed for export] *)
       destruct HIn as [<-|[]].
       rewrite nret_MSsvc, mkR_set_a0, apply_mem_none.
@@ -370,7 +394,7 @@ Section LargeCfgS.
       assert (SEPA' : PA + 0x800000 <= a \/ a + map_size x <= PA).
       { eapply (apart_of (fun y => PA <= y < PA + 0x800000)); [intros y Hy; apply AP; right; right; right; exact Hy| intros y Hy; exact Hy| clear; lia| clear - MSZ Hx; lia]. }
       assert (SEPA : a + map_size x <= PA \/ PA + 0x800000 <= a) by (clear - SEPA'; lia). clear SEPA'.
-      destruct (T_large sc r (map_size x) mo2 aw HGl HK2 AAL A0 ACE RF) as [HK3 CR3]. fold a in HK3, CR3.
+      destruct (T_large sc r (map_size x) mo2 aw HGl HK2 AAL A0 ACE RF APL) as [HK3 CR3]. fold a in HK3, CR3.
       pose proof (J_anon_grant m2 mo2 0x22 aw (map_size x) HJ2 ltac:(clear - MSZ Hx; lia) ltac:(fold a; clear - ACE AC; lia) RF) as HJ3.
       rewrite <- (Z_to_bv_bv_unsigned aw) in HK3 |- *. fold a in HK3 |- *.
       change (Z_to_bv 64 a, Z_to_bv 64 (map_size x)) with (wa a, Z_to_bv 64 (map_size x)).

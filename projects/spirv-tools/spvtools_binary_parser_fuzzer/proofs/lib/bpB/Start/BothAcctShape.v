@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the robustness of each node's system call over a larger read-only backing (RomBase.sys_rob), which the walk's nodes now ask, proved at each node). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -8,6 +9,7 @@ From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Impo
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Import BShapeAlg.
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Import BothAcct BpinAlg.
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require KReplay.
+From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib.Common.Cfg Require RomBase.
 Ltac2 kr_t_BothAcctShape () := "I47Corelib4Init9Datatypes4prod00I47Corelib4Init9Datatypes4list00C69OSSVerify5KrLib3bpB5Start8BothAcctErz_msteps_restricted'C1?~~~~~~~~~~~~~~~I47Corelib7Numbers7BinNums1Z00I4ELinuxProcessSemantics?LinuxProcessSem>RiscvSemantics=machine_state00I4ELinuxProcessSemantics?LinuxProcessSem5State5Model00C69OSSVerify5KrLib3bpB2HF9BShapeAlg4TSetC1?~~~~~~~~~~~~~~~".
 Import ListNotations.
 Open Scope bv_scope.
@@ -23,16 +25,16 @@ Hypothesis Hwx : wx_segs_nowrap segs.
 Let P_of (T : TSet) : config -> Prop := fun c => realizes segs c T.
 
 Let P_of_silent1 (T : TSet) : forall c c',
-    BothAcct.node_ok segs c unit (fun _ => []) (fun _ => c') ->
+    BothAcct.node_ok segs c unit (fun _ => []) (fun _ => c') -> ms_svc_pending (cfg_ms c) = None ->
     P_of T c' -> P_of T c :=
-  fun c c' Hn Hr => rz_silent1 segs c c' T Hn Hr.
+  fun c c' Hn Hs Hr => rz_silent1 segs c c' T Hn (RomBase.sys_rob_instr segs c Hs) Hr.
 
 Let SP_of (T : TSet) : config -> Prop := fun c => srealizes segs c T.
 
 Let SP_of_silent1 (T : TSet) : forall c c',
-    BothAcct.node_ok segs c unit (fun _ => []) (fun _ => c') ->
+    BothAcct.node_ok segs c unit (fun _ => []) (fun _ => c') -> ms_svc_pending (cfg_ms c) = None ->
     SP_of T c' -> SP_of T c :=
-  fun c c' Hn Hr => srz_silent1 segs c c' T Hn Hr.
+  fun c c' Hn Hs Hr => srz_silent1 segs c c' T Hn (RomBase.sys_rob_instr segs c Hs) Hr.
 
 Theorem srz_msteps_restricted_T : forall A ms msr' model T,
   lazy_cover H (m_vm_lazy model) A -> A_wf A -> MInv A model ->

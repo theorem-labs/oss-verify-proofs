@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (model0 written out in plain text from its encoded form, starting from the launch's vDSO run; argc read as len_word; p0N and cat_argv_ptr at their new arguments; the channel-reader fact passed to us_tail). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -48,8 +49,10 @@ Section Usage.
   Hypothesis ME : main_entry sp0 av envv tid rd regs0 mem0.
   Hypothesis Hargc : length av <> 2%nat.
 
-  Definition model0 : Model := ltac2:(CDefT.buildp (gd_tbl_P_mainleaf_usage ()) "(0.Vtid,(1.(2.$3.)Vbrk,Vmbase,Vsp0,Vlim,(4.VAMB,Vav,Venvv,Vfs0,Vstdin0,)))")
-(* [comment removed for export] *).
+  (* 08b1429: [Run.init_config] starts from the launch's vDSO run, which the ambient
+     record carries ([Amb.a_vdso]) *)
+  Definition model0 : Model :=
+    with_tid tid (with_vdso a_vdso (init_model (segments_reserved Ubsan.M.loaded_segments) brk mbase sp0 lim (mkProcInputC av envv fs0 stdin0))).
 
   Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
   Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
@@ -86,24 +89,27 @@ Section Usage.
     assert (Hlen : (1 <= length av <= 1024)%nat) by (destruct Hva as [[H1 H2] _]; lia).
     assert (HR : regs_ok (EN sp0 av envv tid rd regs0) sr_mainN regs0) by (eapply main_regs_okN; eassumption).
     assert (HK : know_ok RSEGS (EN sp0 av envv tid rd regs0) mem0 kn_mainN) by (eapply main_know_okN; eassumption).
-    assert (Hac : ev (EN sp0 av envv tid rd regs0) 16 = argcN av) by (eapply evN_argc; eassumption).
+    (* [ArgvEnv.argcN] is now stated over the input; the word here is the same [len_word av] *)
+    assert (Hac : ev (EN sp0 av envv tid rd regs0) 16 = len_word av) by (eapply evN_argc; eassumption).
+    assert (Uav : bv_unsigned (len_word av) = Z.of_nat (length av))
+      by (pose proof (valid_argv_len av Hva); unfold len_word; apply u_Z2bv_lt; lia).
     change (EN sp0 av envv tid rd regs0) with (ENV (valsN sp0 av envv tid rd regs0)) in HR, HK, Hac.
     set (vals := valsN sp0 av envv tid rd regs0) in *.
     assert (HL : length vals = 38%nat) by (subst vals; apply valsN_length).
     assert (P0 : vals_ev vals 0 = sp0) by reflexivity.
-    assert (P1 : vals_ev vals 1 = p0N sp0 av envv) by reflexivity.
+    assert (P1 : vals_ev vals 1 = p0N av envv rd) by reflexivity.
     cbn [ev ENV] in Hac.
     assert (STR := fun k Hk => main_strN sp0 av envv tid rd regs0 mem0 Hva Hve Hvsp ME k Hk) || idtac.
     edestruct (main_strN sp0 av envv tid rd regs0 mem0) as (Sr & Slo & Shi & Slen & t8 & Ht8); try eassumption.
     1:{ instantiate (1 := 0%nat). lia. }
     rewrite <- hd_nth in Sr, Slen, Ht8. set (a0s := hd [] av) in *.
-    pose proof (u64_range (cat_argv_ptr sp0 av envv 0)) as Hppr.
+    pose proof (u64_range (cat_argv_ptr (ed_top rd) av envv a_execfn 0)) as Hppr.
     clearbody vals.
     pose proof model0_halted as Hh.
     (* [comment removed for export] *)
     run_blk_keep u_scrA 38%nat.
     { unfold sc_denot. cbn [branch_taken edenot ev ENV]. rewrite Hac.
-      unfold bv_eqb. rewrite (u_argcN av Hva). change (bv_unsigned (Z_to_bv 64 2)) with 2%Z.
+      unfold bv_eqb. rewrite Uav. change (bv_unsigned (Z_to_bv 64 2)) with 2%Z.
       apply Bool.negb_true_iff. apply Z.eqb_neq. lia. }
     assert (Habove : forall x : word, (bv_unsigned sp0 <= bv_unsigned x)%Z -> M x = mem0 x).
     { intros x Hx. rewrite EQM. apply (mem_denot_above (ENV vals) mem0 _ 0%nat 0x7e000);
@@ -153,11 +159,11 @@ Section Usage.
     set (vals1 := vals ++ junk_vals R2) in *.
     assert (HL1 : length vals1 = 70%nat) by (subst vals1; rewrite length_app, junk_vals_length, HL; reflexivity).
     assert (Q0 : vals_ev vals1 0 = sp0) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P0).
-    assert (Q1 : vals_ev vals1 1 = p0N sp0 av envv) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P1).
+    assert (Q1 : vals_ev vals1 1 = p0N av envv rd) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P1).
     clearbody vals1.
     change (Env (vals_ev vals1) (blobs_ev [])) with (ENV vals1) in HR, HK.
     rewrite <- model0_fs.
-    eapply (us_tail sp0 model0 Hvsp model0_halted model0_lazy model0_fd2 a0s (p0N sp0 av envv) t8 vals1); try eassumption.
+    eapply (us_tail sp0 model0 Hvsp model0_halted model0_lazy model0_fd2 ltac:(exact a_reader) a0s (p0N av envv rd) t8 vals1); try eassumption.
     - apply a0s_nonul.
     - unfold p0N. lia.
     - (* [comment removed for export] *)

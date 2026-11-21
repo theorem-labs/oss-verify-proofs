@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's validity hypotheses; the process input's new fields; the new initial stack layout; the reader fact of the output channels; write's access_ok range). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -80,18 +81,19 @@ Proof. intros fds [->|[e ->]]; reflexivity. Qed.
 (* [comment removed for export] *)
 Definition mdl_sim (m m' : Model) : Prop :=
   m_vmmaps m' = m_vmmaps m /\ m_vm_lazy m' = m_vm_lazy m /\ m_halted m' = m_halted m
-  /\ m_tid m' = m_tid m /\ m_fs m' = m_fs m /\ eager_used m' = eager_used m.
+  /\ m_tid m' = m_tid m /\ m_fs m' = m_fs m /\ eager_used m' = eager_used m
+  /\ m_channel_reader m' = m_channel_reader m /\ m_kernel m' = m_kernel m.
 
 Lemma mdl_sim_refl : forall m, mdl_sim m m.
 Proof. intros m. repeat split; reflexivity. Qed.
 Lemma mdl_sim_with_fds : forall f m, mdl_sim m (with_fds f m).
 Proof. intros f m. repeat split; reflexivity. Qed.
 Lemma mdl_sim_trans : forall m1 m2 m3, mdl_sim m1 m2 -> mdl_sim m2 m3 -> mdl_sim m1 m3.
-Proof. intros m1 m2 m3 (A1&A2&A3&A4&A5&A6) (B1&B2&B3&B4&B5&B6). repeat split; congruence. Qed.
+Proof. intros m1 m2 m3 (A1&A2&A3&A4&A5&A6&A7&A8) (B1&B2&B3&B4&B5&B6&B7&B8). repeat split; congruence. Qed.
 Lemma mdl_sim_materialized : forall m m', same_but_materialized m m' -> mdl_sim m m'.
 Proof.
   intros m m' Hs. pose proof (same_but_materialized_frame _ _ Hs) as F.
-  repeat split; apply F.
+  repeat split; try apply F; rewrite Hs; reflexivity.
 Qed.
 Lemma m_fds_with_fds : forall f m, m_fds (with_fds f m) = f.
 Proof. reflexivity. Qed.
@@ -177,6 +179,15 @@ Qed.
 Lemma cstr_access_len_aux_le : forall mp a fuel, (cstr_access_len_aux mp a fuel <= fuel)%nat.
 Proof.
   intros mp a fuel. revert a. induction fuel as [|f IH]; intros a; cbn [cstr_access_len_aux]; [lia|].
+  (* #38 put a LEADING access_okb guard in cstr_access_len_aux (75d69e00 State.v:1493,
+     "past strncpy_from_user's clamp: never fetched"), ahead of the mp a lookup -- the
+     same family as read_cstr_aux's.  The walk below went straight to `destruct (mp a)`,
+     so after cbn the goal still had the whole `if negb (access_okb a 1) then 0 else ...`
+     in front of it and lia was asked to bound a term it could not see into: that is the
+     "Tactic failure: Cannot find witness" the round reported, from the `lia` in `[|lia]`.
+     Destructing the guard first costs one line: its true branch yields 0 <= S f, and its
+     false branch is exactly the walk this proof already handled. *)
+  destruct (negb (access_okb a 1)); [lia|].
   destruct (mp a) as [b|]; [|lia]. destruct (bv_eqb b (Z_to_bv 8 0)); [lia|]. specialize (IH (a + 1)%bv). lia.
 Qed.
 
@@ -359,8 +370,19 @@ Hypothesis LFP_hull : forall z, in_lfp A z = true -> img_lo A <= z < img_hi A.
   Variable sp : word.
   Variable rdraw : EntryDraw.   (* [comment removed for export] *)
   Variables argv envp : list (list byte).
-  Variable uid : word.                  (* [comment removed for export] *)
-  Variable hw : word.   (* [comment removed for export] *)
+  (* #38 re-packed the launch arguments into the ProcInput the model builds at execve.
+     `wrap_mem` now reads (inp mbase ph entry sp draw) (PropExec.v:2763 rdn_wrap_stack_above,
+     75d69e00 Run.v), so `uid` and `hw` are GONE from this section: they reach wrap_mem inside
+     INP as in_uid / in_hwcap, and nothing else here used them (measured: their only uses in
+     this file were the four wrap_mem call sites).
+     This section is the GENERIC half of the IO nodes -- it has no AsanInit section to draw on
+     -- so the two facts about argv[1]'s address arrive as hypotheses, exactly as H_vals and
+     H_str1 already do.  The caller (AsanNodesIOInit) discharges them from AsanInit. *)
+  Variable INP : ProcInput.
+  Variable mbase brk entry : word.
+  Hypothesis Hargv : in_argv INP = argv.
+  Hypothesis Henvp : in_envp INP = envp.
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) INP.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hsp_lo : sp_window_lo <= bv_unsigned sp.
@@ -370,14 +392,48 @@ Hypothesis LFP_hull : forall z, in_lfp A z = true -> img_lo A <= z < img_hi A.
   Let envc := Z.of_nat (length envp).
   Let argv0 := nth 0 argv [].
   Let argv1 := nth 1 argv [].
-  Let STR1 := usp + 8 * argc + 8 * envc + 184 + Z.of_nat (length argv0) + 1.   (* [comment removed for export] *)
+  (* SB is argv[0]'s ADDRESS -- AsanInit's STR0, sp + block_head_size + block_pad_len
+     (CatExec.v:412 cat_string_off).  It REPLACES the literal usp + 8*argc + 8*envc + 184,
+     whose 184 was the pre-#38 auxv block size and is false at #38.
+     Carried as a PARAMETER WITH A RANGE rather than re-derived here, for two reasons.  The
+     range needs AsanInit's whole Section (chead_eq: CHEAD = 8*argc + 8*envc + 472 + 32*rz +
+     8*G with rz, G in [0,1], so CHEAD <= 8*argc + 8*envc + 512; pad_range: W <= 4110;
+     472+32+8+4110 = 4622, stated AT that sum so every arithmetic site below keeps the
+     tightest true slack).  And taking the ADDRESS rather than the offset keeps STR1
+     SYNTACTICALLY the caller's `STR0 + Z.of_nat (length argv0) + 1`: Z.add is not
+     definitionally associative and Z.of_nat does not distribute over a nat sum, so an offset
+     parameter would have broken the caller's `exact` by conversion alone. *)
+  Variable SB : Z.
+  Hypothesis H_sb_lo : usp <= SB.
+  (* K2 moved the frontier nowhere: the same site failed with
+     H_str1_fit in context, so what was missing was the LOWER half.  The sites that compile
+     (STR1_eq, rd_argv1, openat_args_sound) all `pose proof usp_lo` first; node_openat_err_sound
+     does not, and a Section lemma is invisible to dc's pruning lia tier.  SB's own absolute
+     lower bound is a hypothesis for the same reason the upper one is. *)
+  Hypothesis H_sb_pos : 0x7fff80000000 <= SB.
+  Hypothesis H_sb_hi : SB <= usp + 8 * argc + 8 * envc + 4622.
+  Let STR1 := SB + Z.of_nat (length argv0) + 1.
+  (* The arithmetic sites below reach the CONTEXT, not this section's lemmas: dc rebinds `lia`
+     to a pruning tier (LiaFast.v:174 zprune/zprune1 then lia_stock), which uses hypotheses and
+     never looks a Section lemma up.  With the literal 184 layout the bound was inside STR1's
+     own body; with SB abstract it has to arrive as a hypothesis, so the caller supplies the
+     bounds every `u64_lit` and TASK_SIZE site needs.  AsanInit.str1_fit proves the fit from
+     usp_fit and s01_in_strings; 2^47 IS TASK_SIZE (75d69e00 State.v:403).
+     The u64 range is stated SEPARATELY and with no other atom in it: K3
+     advanced :921 -> :1014, a different proof with the same
+     side condition, because the fit mentions `length argv1` and the ODir branch has rewritten
+     that very term away through H_open. *)
+  Hypothesis H_str1_u64 : 0 <= STR1 < 2 ^ 64.
+  Hypothesis H_str1_fit : STR1 + Z.of_nat (length argv1) + 1 <= 2 ^ 47.
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   Hypothesis H_vals : forall E M, SINV E M ->
     uE E e_sp0 = usp /\ ev E V_ARGC = Z_to_bv 64 argc /\ (2 <= argc -> uE E e_str1 = STR1).
+  Hypothesis H_str1_val : 2 <= argc ->
+    bv_unsigned (cat_argv_ptr (ed_top rdraw) argv envp (in_execfn INP) 1) = STR1.
   Hypothesis H_str1 : forall E M (a : word), SINV E M -> 2 <= argc ->
-    STR1 <= bv_unsigned a <= STR1 + Z.of_nat (length argv1) -> M a = wrap_mem ph sp argv envp uid hw rdraw a.
+    STR1 <= bv_unsigned a <= STR1 + Z.of_nat (length argv1) -> M a = wrap_mem INP mbase ph entry sp rdraw a.
 
   (* [comment removed for export] *)
   Hypothesis H_open : match io_open T with
@@ -421,10 +477,10 @@ Hypothesis LFP_hull : forall z, in_lfp A z = true -> img_lo A <= z < img_hi A.
     (forall a, in_lfp A (bv_unsigned a) = true -> FULL' a = FULL a) ->     (* [comment removed for export] *)
     cs_ok E (ret_with cs r k' nx' f') R' FULL' model'.
   Proof.
-    intros E cs R FULL model R' FULL' model' r k' nx' f' HC (S1 & S2 & S3 & S4 & S5 & S6) Hinv HR HK Hf Hhid Hlfp.
+    intros E cs R FULL model R' FULL' model' r k' nx' f' HC (S1 & S2 & S3 & S4 & S5 & S6 & S7 & S8) Hinv HR HK Hf Hhid Hlfp.
     pose proof (hid_ret E cs r k' nx' f' model model' S1 S2) as Hh.
     destruct HC; constructor; cbn [ret_with a_ss a_maps a_totsz a_ylo a_eager a_vis a_ghost a_abytes a_brk a_fd a_tidset kn mk_ss s_regs s_log s_know];
-      rewrite ?allowA_ret, ?S1, ?S2, ?S3, ?S4, ?S5, ?S6; try assumption; try reflexivity.
+      rewrite ?allowA_ret, ?S1, ?S2, ?S3, ?S4, ?S5, ?S6, ?S7, ?S8; try assumption; try reflexivity.
     - unfold Mr. rewrite Hh. exact HK.
     - unfold model_ivs_wf in *. rewrite S1, S2. assumption.
     - intros a Ha. rewrite Hh in Ha. rewrite (Hhid a Ha). auto.
@@ -732,29 +788,36 @@ Hypothesis LFP_hull : forall z, in_lfp A z = true -> img_lo A <= z < img_hi A.
   Proof. intros H. unfold argv1. apply (valid_argv_str_len argv 1 Hva). unfold argc in H. lia. Qed.
   Lemma argv1_nz : 2 <= argc -> ~ In (Z_to_bv 8 0) argv1.
   Proof. intros H. unfold argv1. apply (valid_argv_str_nz argv 1 Hva). unfold argc in H. lia. Qed.
-  Lemma bsb_nw : usp + Z.of_nat (length (build_stack_bytes ph sp argv envp uid hw rdraw)) < 2 ^ 64.
-  Proof. unfold usp. apply lay_bsb_nw; assumption. Qed.
+  (* #38: the image is entry_stack_image, and the no-wrap side condition needs nothing but
+     the launch conjunct (PropExec.v:2533).  The old form called build_stack_bytes on the
+     pre-#38 seven-argument list through RefLayout's lay_bsb_nw. *)
+  Lemma bsb_nw : usp + Z.of_nat (length (entry_stack_image INP mbase ph entry sp rdraw)) < 2 ^ 64.
+  Proof.
+    unfold usp.
+    exact (entry_stack_image_no_wrap Sv48 INP mbase ph entry sp brk rdraw Hlau).
+  Qed.
 
-  Lemma STR1_eq : 2 <= argc -> cat_argv_ptr sp argv envp 1 = Z_to_bv 64 STR1.
+  (* argv[1]'s address.  At #38 cat_argv_ptr is TOP-first and five-argument (CatExec.v:403),
+     and its VALUE is H_str1_val's, supplied by the caller off AsanInit -- this lemma only
+     moves it from Z into word form.  The old proof derived the value here from the literal
+     8*argc + 8*envc + 184 layout, which is what made it stale. *)
+  Lemma STR1_eq : 2 <= argc -> cat_argv_ptr (ed_top rdraw) argv envp (in_execfn INP) 1 = Z_to_bv 64 STR1.
   Proof.
     intros H2. pose proof len_av. pose proof len_ev. pose proof usp_lo. pose proof usp_hi. pose proof len_argv0.
-    apply bv_eq. rewrite (u_cat_argv_ptr sp argv envp Hva Hve Hsp_lo Hsp_hi 1) by (unfold argc in H2; lia).
-    rewrite u64_lit by (unfold STR1; lia).
-    assert (Hf1 : forall l : list (list byte), l <> [] -> firstn 1 l = [nth 0 l []]) by (intros [|x l'] Hl; [congruence | reflexivity]).
-    rewrite (Hf1 argv) by (intros Hn; unfold argc in H2; rewrite Hn in H2; cbn in H2; lia).
-    rewrite total_arg_bytes_cons. change (total_arg_bytes_nat []) with 0%nat.
-    unfold STR1, cat_struct_size, auxv_size, usp, argc, envc, argv0. lia.
+    apply bv_eq. rewrite (H_str1_val H2), u64_lit by (unfold STR1; lia). reflexivity.
   Qed.
 
   (* [comment removed for export] *)
   Lemma rd_argv1 : forall M, 2 <= argc ->
-    (forall a : word, STR1 <= bv_unsigned a <= STR1 + Z.of_nat (length argv1) -> M a = wrap_mem ph sp argv envp uid hw rdraw a) ->
+    (forall a : word, STR1 <= bv_unsigned a <= STR1 + Z.of_nat (length argv1) -> M a = wrap_mem INP mbase ph entry sp rdraw a) ->
     rdn SEGS M (Z_to_bv 64 STR1) (length argv1 + 1) = Some (argv1 ++ [Z_to_bv 8 0]).
   Proof.
     intros M H2 HM. pose proof len_av. pose proof len_ev. pose proof usp_lo. pose proof usp_hi. pose proof len_argv0. pose proof (len_argv1 H2).
-    rewrite (rdn_ext SEGS (length argv1 + 1) M (wrap_mem ph sp argv envp uid hw rdraw)).
+    rewrite (rdn_ext SEGS (length argv1 + 1) M (wrap_mem INP mbase ph entry sp rdraw)).
     - rewrite rdn_wrap_stack_above; [| rewrite u64_lit; unfold STR1 in *; lia | rewrite u64_lit; unfold STR1 in *; [rewrite Nat2Z.inj_add; cbn [Z.of_nat Pos.of_succ_nat]|]; lia].
-      rewrite <- (STR1_eq H2). unfold argv1. apply read_argv_cstr_k; [unfold argc in H2; lia | exact bsb_nw].
+      rewrite <- (STR1_eq H2). unfold argv1. rewrite <- Hargv, <- Henvp.
+      exact (read_argv_cstr_k Sv48 SEGS INP mbase ph entry sp brk rdraw 1 Hlau
+               ltac:(rewrite Hargv; unfold argc in H2; lia)).
     - rewrite u64_lit; unfold STR1 in *; [rewrite Nat2Z.inj_add; cbn [Z.of_nat Pos.of_succ_nat]|]; lia.
     - intros a Ha. rewrite u64_lit in Ha by (unfold STR1 in *; lia). rewrite Nat2Z.inj_add in Ha. cbn [Z.of_nat Pos.of_succ_nat] in Ha.
       apply HM. lia.
@@ -773,7 +836,7 @@ Hypothesis LFP_hull : forall z, in_lfp A z = true -> img_lo A <= z < img_hi A.
     /\ getr R 11%bv = Z_to_bv 64 STR1
     /\ Z.ldiff (bv_unsigned (getr R 12%bv)) open_ignored_flags = 0
     /\ 2 <= argc
-    /\ (forall a : word, STR1 <= bv_unsigned a <= STR1 + Z.of_nat (length argv1) -> FULL a = wrap_mem ph sp argv envp uid hw rdraw a)
+    /\ (forall a : word, STR1 <= bv_unsigned a <= STR1 + Z.of_nat (length argv1) -> FULL a = wrap_mem INP mbase ph entry sp rdraw a)
     /\ m_fds model = fds_std
     /\ materialize_model_accesses model (path_reads SEGS R FULL) = Some model
     /\ (forall f, materialize_model_accesses (with_fds f model) (path_reads SEGS R FULL) = Some (with_fds f model)).
@@ -867,6 +930,7 @@ Hypothesis LFP_hull : forall z, in_lfp A z = true -> img_lo A <= z < img_hi A.
       injection Hn as <-.
       eapply (srz_openat_toolong_lazy SEGS R (Z_to_bv 64 (pc cs)) FULL model w HF HE (co_halt _ _ _ _ _ _ _ _ _ _ _ _ HC) H17 H10 H12 Hmat0
                 (firstn 4096 (argv1 ++ [Z_to_bv 8 0]))).
+      + rewrite H11, u64_lit by (unfold STR1 in *; lia). unfold STR1, TASK_SIZE in *. lia.
       + eapply rdn_firstn; [exact RD | lia].
       + rewrite firstn_app, (proj2 (Nat.sub_0_le _ _)) by lia. cbn [firstn]. rewrite app_nil_r.
         intros Hin. apply NZ1. eapply firstn_In'; exact Hin.
@@ -875,11 +939,11 @@ Hypothesis LFP_hull : forall z, in_lfp A z = true -> img_lo A <= z < img_hi A.
       injection Hn as <-.
       destruct argv1 as [|b1 r1] eqn:Ea1.
       + eapply (srz_openat_empty_lazy SEGS R (Z_to_bv 64 (pc cs)) FULL model w HF HE (co_halt _ _ _ _ _ _ _ _ _ _ _ _ HC) H17 H10 H12 Hmat0).
-        * split; [cbn; lia|]. split; [intros []|]. exact RD.
+        * split; [cbn; lia|]. split; [intros []|]. split; [cbn [length]; rewrite Z.add_0_r; (rewrite H11, u64_lit by (unfold STR1 in *; lia); unfold STR1, TASK_SIZE in *; lia) | exact RD].
         * apply (POST 2); [reflexivity | lia | exact Hk].
       + destruct H_open as [Hnil | (Hsl & Hnd & Hlen & Hlk)]; [discriminate|].
         eapply (srz_openat_absent_lazy SEGS R (Z_to_bv 64 (pc cs)) FULL model w HF HE (co_halt _ _ _ _ _ _ _ _ _ _ _ _ HC) H17 H10 H12 Hmat0 (b1 :: r1)).
-        * split; [exact Hlen|]. split; [exact NZ1 | exact RD].
+        * split; [exact Hlen|]. split; [exact NZ1|]. split; [(rewrite H11, u64_lit by (unfold STR1 in *; lia); unfold STR1, TASK_SIZE in *; lia) | exact RD].
         * discriminate.
         * exact Hsl.
         * exact Hnd.
@@ -953,7 +1017,12 @@ Hypothesis LFP_hull : forall z, in_lfp A z = true -> img_lo A <= z < img_hi A.
     destruct (io_open T) as [| | | |lo hi] eqn:Eo; try contradiction; subst lohi.
     - (* [comment removed for export] *)
       eapply (srz_openat_dot_lazy SEGS R (Z_to_bv 64 (pc cs)) FULL model w HF HE (co_halt _ _ _ _ _ _ _ _ _ _ _ _ HC) H17 H10 H12 Hmat0 Hfree Hmat1).
-      + rewrite H_open in NZ1, RD. split; [cbn; lia|]. split; [exact NZ1 | exact RD].
+      + pose proof L1 as L1'. rewrite H_open in NZ1, RD, L1'.
+        (* the dot branch rewrites argv1 to dot_path, so H_str1_fit's |argv1| must be rewritten
+           to match before lia connects the two: H_str1_fit bounds STR1 + |argv1| + 1, the goal
+           bounds STR1 + |dot_path|. *)
+        pose proof H_str1_fit as HFT; rewrite H_open in HFT.
+        split; [cbn; lia|]. split; [exact NZ1|]. split; [(rewrite H11, u64_lit by (unfold STR1 in *; lia); unfold STR1, TASK_SIZE in *; lia) | exact RD].
       + exact ERR.
       + rewrite Halloc, (pc4 cs Hp0 Hp4), Hfds, fd_insert_std3.
         specialize (HkB E (regupd R 10%bv (Z_to_bv 64 3)) FULL (with_fds (fds3 State.FdDir) model) (conj (env_agree_refl nx0 E) (env_agree_refl (nxt cs) E))).
@@ -969,7 +1038,7 @@ Hypothesis LFP_hull : forall z, in_lfp A z = true -> img_lo A <= z < img_hi A.
     - (* [comment removed for export] *)
       destruct H_open as [c (Hne & Hsl & Hnd & Hlen & Hlk & Hflen & Hblob & Hhdr)].
       eapply (srz_openat_file_lazy SEGS R (Z_to_bv 64 (pc cs)) FULL model w HF HE (co_halt _ _ _ _ _ _ _ _ _ _ _ _ HC) H17 H10 H12 Hmat0 Hfree Hmat1 argv1 c).
-      + split; [exact Hlen|]. split; [exact NZ1 | exact RD].
+      + split; [exact Hlen|]. split; [exact NZ1|]. split; [(rewrite H11, u64_lit by (unfold STR1 in *; lia); unfold STR1, TASK_SIZE in *; lia) | exact RD].
       + exact Hne.
       + exact Hsl.
       + exact Hnd.

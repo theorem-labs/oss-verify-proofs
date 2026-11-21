@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: preserve vDSO reservation inclusion in slot failure carriers and returns. *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -291,7 +292,10 @@ Section ASF.
     f_fr : forall a, 0 <= a < 2 ^ 64 -> Mc (Z_to_bv 64 a) <> M (Z_to_bv 64 a) ->
              (sp - ASSTK d <= a < sp) \/ (HEAPLO <= a < CEIL /\ (a < IMG_LO \/ IMG_HI <= a) /\ ~ app_of L a) \/ (CTX <= a < CTX_END) \/ (A_ERRNO <= a < A_ERRNO + 4);
     f_def : defined Mc (sp - ASSTK d) sp; f_stk : stk_ok Mc;
-    f_r2 : getr r 2 = Z_to_bv 64 (sp - 144); f_r20 : getr r 20 = Z_to_bv 64 A_CANARY; f_K : keeps_but BIG regs r }.
+    f_r2 : getr r 2 = Z_to_bv 64 (sp - 144); f_r20 : getr r 20 = Z_to_bv 64 A_CANARY; f_K : keeps_but BIG regs r;
+    (* Trailing model fields preserve the positional prefix. *)
+    f_rdr : m_channel_reader mdl1 = m_channel_reader mdl;
+    f_vdso : incl (vdso_reserved (m_kernel mdl1) (vdso_top (m_vmmaps mdl1))) (vm_reserved (m_vmmaps mdl1)) }.
 
 
 
@@ -309,7 +313,7 @@ Section ASF.
     kat RSEGS (mkCfg (mkst r (0x634a0%bv : word) Mc rom) mdl1) QF.
   Proof.
     intros s1 Mc mdl1 r P NJ1 EL A10.
-    pose proof P as [W1 RP1 LG1 Hh1 Hlz1 Hmat1 Hfs1 Hfds1 Hlim1 Hcan1 LM1 MU1 FR1 DF1 SK1 Q2 Q20 KB].
+    pose proof P as [W1 RP1 LG1 Hh1 Hlz1 Hmat1 Hfs1 Hfds1 Hlim1 Hcan1 LM1 MU1 FR1 DF1 SK1 Q2 Q20 KB Hrdr1 HVDSO1].
     pose proof SK1 as (Kc & K1 & K8 & K9 & K18 & K19 & K20 & K21 & K22 & K23 & K24 & K25).
     pose proof (rc_canary s1 Mc (rp_statics s1 Mc RP1)) as CAN. rewrite Hcan1 in CAN. fold (MhASlotKA.can st) in CAN.
     assert (Hsp' : CEIL + 144 <= sp < 2 ^ 64) by (ceil; pose proof stk288; lia).
@@ -321,7 +325,8 @@ Section ASF.
     exists s1, Mc, mdl1, r'.
     split; [reflexivity|].
     split; [exact W1|]. split; [exact RP1|]. split; [exact LG1|].
-    split; [exact Hh1|]. split; [exact Hlz1|]. split; [exact Hmat1|]. split; [exact Hfs1|]. split; [exact Hfds1|]. split; [exact Hlim1|].
+    split; [exact Hh1|]. split; [exact Hlz1|]. split; [exact Hmat1|]. split; [exact Hfs1|]. split; [exact Hfds1|].
+    split; [exact Hrdr1|]. split; [exact HVDSO1|]. split; [exact Hlim1|].
     split; [exact NJ1|]. split; [exact EL|]. split; [exact Hcan1|]. split; [exact LM1|]. split; [exact MU1|].
     split; [rewrite E10; exact A10|]. split; [rewrite E2, R2; reflexivity|].
     split.
@@ -630,6 +635,11 @@ Section MmapNode.
              (H11 : getr regs 11 = Z_to_bv 64 len) (Hlen : 0 < len < 2 ^ 64)
              (H12 : getr regs 12 = Z_to_bv 64 3) (H13 : getr regs 13 = Z_to_bv 64 34)
              (H14 : getr regs 14 = Z_to_bv 64 (-1)) (H15 : getr regs 15 = Z_to_bv 64 0).
+  (* 727298f3 #146: the decline reaches here through [node_mmap_rw_grant]; the
+     four callers all run under [hint = 0], so this terminates at
+     [place_declined_b_null] rather than propagating further. *)
+  Hypothesis Hdeclk : LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.place_declined_b (m_kernel model) (m_vmmaps model) (getr regs 10)
+    (page_round_up_Z len) = false.
 
   Lemma as_kfx_mmap_rw : forall (bi b : bool),
     (exists a, grant_ok (getr regs 10) model a (page_round_up_Z len) = true) ->
@@ -642,6 +652,7 @@ Section MmapNode.
     apply (kfx_closed RSEGS F HL b _ unit tt _ (node_sys RSEGS regs pc mem rom model w Hh Hl HF HE)). intros [].
     apply (kfx_grant_node RSEGS F HL bi b _ _ (exist _ a0 Ha0) _
              (node_mmap_rw_grant RSEGS regs pc mem rom model len Hh Hl H17 H11 Hlen H12 H13 H14 H15
+                Hdeclk
                 (grant_ok_not_refusable (Z_to_bv 64 34) _ _ _ _ Ha0))).
     intros [a Ha]. exact (Hg a Ha).
   Qed.

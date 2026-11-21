@@ -7,8 +7,8 @@
    - translation of record: llvmf-cgif-walk-plan.md sections 1-5 (a working note, not in this delivery), whose
      appendix carries every ruling since it was written; cut table
      cut-table-A.tsv (a working note, not in this delivery) (100 rows, every Inv_* verified at its cited
-     line of SlotInv.v at d5e20dfd330).
-   - donor, RELEASED: origin/ossv/recipes c8557374ad2e, proofs/cgif/cgif_file_fuzzer/lib.  The cut shell below is
+     line of SlotInv.v).
+   - donor, RELEASED:, proofs/cgif/cgif_file_fuzzer/lib.  The cut shell below is
      the donor's rt_from (A/ACf5.v:70-80) and its context record rtcx (:45-48), restated for ctrl.  The ENTRY
      and the EXIT are NOT restated: they are the donor's own lib contract, A/ACfn.v (tfib_lib_pre_x :31-46,
      tfib_lib_post_x :47-58, tfib_lib_contract_x :59-72), which the relocated core carries as lib.A.ACfn with
@@ -45,9 +45,9 @@
    donor's non-A files land in lib/Reusable and are named Reusable.<file>.  Reusable.YK11 is one of the 106 files
    ctrl shares with the donor, kept as ctrl's version.
 
-   BUILD STATE (honest): a labelled stand-in that TYPECHECKS on the image-A PLANNING core (a working branch
-   5a85b67a5d8, merged on this branch; TYPE-CHECK ONLY, its values do not count): `cb build`
-   on the packed fuzz_ctrl base 362baf478bf5 (FACTS ed6b6b7b0ab, PAU pau-libreac-v190), with the core's undefined
+   BUILD STATE (honest): a labelled stand-in that TYPECHECKS on the image-A PLANNING core (a working branch,
+   merged on this branch; TYPE-CHECK ONLY, its values do not count): `cb build`
+   on the packed fuzz_ctrl base (FACTS, PAU pau-libreac-v190), with the core's undefined
    `port_core_refused_<hex>` names (lib/A/AE2k.v, which A.ACfn Imports) replaced by the hex literal in the build
    workspace only -- a core-file error, reported to the porter a Theorem Labs lane and never edited on this branch.  It
    contains no Axiom, no Parameter and no Admitted. *)
@@ -74,7 +74,7 @@ Import ListNotations.
 Local Open Scope Z_scope.
 
 (* The core's segment list.  The lib contract is stated over it (the donor's `Local Notation segs := tfibsegs`,
-   A/ACfn.v:31, tfibsegs at A/AB1v.v:11), so the cut layer must use the SAME list: a free Variable here would make
+   A/ACfn.v:31, tfibsegs at A/AB1v.v:12), so the cut layer must use the SAME list: a free Variable here would make
    `world segs` a different type from the pre's.  The name `A.AB1v.tfibsegs` is the donor's; the porter confirms
    the core's name (asked 22:38Z) and this one line changes if it differs. *)
 Local Notation segs := A.AB1v.tfibsegs.
@@ -130,7 +130,7 @@ Definition ctl_base (cx : ctlcx) : Prop :=
 
 (* ---------------------------------------------------------------------------------------------------------
    1b. The frame-pointer chain and the call trace at an allocator call: SHELL definitions, NOT ctl_from premises
-   (a Theorem Labs lane 23:17Z; image B writes them first, lib/B/ACtlCut.v at a working branch 6adbb8c9272,
+   (a Theorem Labs lane 23:17Z; image B writes them first, lib/B/ACtlCut.v at a working branch,
    and image A mirrors them with A names).  The donor's allocator rules (amalloc04_rule / afree04_rule,
    YC5d.v:56-96) take a chain_pre of the caller's frame-pointer chain and its call trace in the core's trace
    universe; the donor builds them per call site (rt_chain, A/ACf5.v:170-185, and rt_trace_in, A/ACf5.v:155-163,
@@ -192,7 +192,7 @@ Definition own0 (_ : ctlcx) : list (Z * Z) := [].
    post is `exists ... pos`), and every own6 cut after it is entered at the context with c_fpos := pos.  So the ENTRY
    stage (ACtl.v's seg_A1) concludes only for posts that do not read c_fpos; the donor states the same by an
    `exists fpos` in its entry segment (cgif A/ACfj.v:252).  Batch 4, item B5.2 (found by the ENTRY glue,
-   lib/A/ACtlG/A1.v:18); the same name and form as image B's twin at
+   lib/A/ACtlG/A1.v:19); the same name and form as image B's twin at
    lib/B/ACtlCut.v:200.  The constructor, with only c_fpos replaced; ctl_base reads no c_fpos, so
    ctl_base (cx_set_fpos cx p) is ctl_base cx by conversion. *)
 Definition cx_set_fpos (cx : ctlcx) (p : Z) : ctlcx :=
@@ -291,7 +291,7 @@ End CtlCut.
    (after End CtlCut a definition takes only the section variables it uses, in declaration order: ctl_from
    takes B MT XM_LIB RLO RHI FP; ctl_post takes B MT XN_LIB; ctlcx and the cut records take none; the contexts
    fx / rc / LS / SK stay implicit.  The TOP instantiates SK EXPLICITLY with the core's
-   `A.AE2k.tfib_sink_head` (AE2k.v:44, ofl_head 0x5fbf08 = ctrl's A ofl_head; porter 22:42Z) and never lets
+   `A.AE2k.tfib_sink_head` (AE2k.v:45, ofl_head 0x5fbf08 = ctrl's A ofl_head; porter 22:42Z) and never lets
    instance search find YL0j's global src0_sink_head.)
 
    with the cut records C_* from lib/A/ACtlCutP.v.  Standing rules for those files: one local lemma per

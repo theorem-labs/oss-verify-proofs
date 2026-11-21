@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: FRONTR_placeable_big takes the mapping size's page alignment from smapsize_pos. *)
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -1950,9 +1951,9 @@ Proof.
       + intros _. (nelim (fresh_cls_facts st (pclass n) (FX (pclass n) ltac:(unfold KNUMCLASSES; lia) N24)) 3%nat; intros _ F2 _).
         rewrite F2. unfold KFREEARRAY_OFF. lia.
     - (* [comment removed for export] *)
-      pose proof (smapsize_le n ltac:(lia) HPn) as SL. pose proof (smapsize_pos n ltac:(lia)) as [SP _].
+      pose proof (smapsize_le n ltac:(lia) HPn) as SL. pose proof (smapsize_pos n ltac:(lia)) as [SP SPm].
       pose proof (rt_prov_nonneg st WF) as PN.
-      apply (FRONTR_placeable_big mo (g_res g) (smapsize n) HO HFR); [lia| unfold FR_NBIG; unfold DRV_REQ_MAX in Hn0; lia| unfold FR_RBIG; unfold DRV_BFLOOR in HBF; clear - HBF BB PN; lia]. }
+      apply (FRONTR_placeable_big mo (g_res g) (smapsize n) HO HFR); [lia| exact SPm| unfold FR_NBIG; unfold DRV_REQ_MAX in Hn0; lia| unfold FR_RBIG; unfold DRV_BFLOOR in HBF; clear - HBF BB PN; lia]. }
   apply evt_done. eapply lscps_bind.
   { pose proof allocate_nn_ok as AL. unfold allocate_nn_spec in AL.
     eapply AL with (lo := lo) (st := st) (n := n) (S := bv_unsigned sp + -2128) (tr := hook_tr PC0_MALLOC sp0 (bv_unsigned sp) (bv_unsigned ra) tl); try reflexivity.

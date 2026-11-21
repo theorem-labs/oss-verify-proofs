@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: the musl strtod CALL-SITE ROW over YCbqG.v's ajournal_x, GENERIC over the allocator
    invariant ARx (Section Variables segs B ARx) and over the image (strtod_img: the constants of one image's
    lib/{A,B}/Prog/strtod_c.v). No image numeral, no lib/A or lib/B import.
@@ -7,7 +8,7 @@
       the entry address pc, the image constants and the model sm as parameters; the instance files prove it by
       `exact strtod_x_holds`.
    2. astrtod_realizes_x: the call-site text in FCiface.v's ecall_pre_x form, the one text agreed for the stand-ins of
-      h-rw-pre-7 (lib/B/Prog/ExvB_Stmt.v:89, origin/cold/h-rw-pre-7-b-ex_value), h-w6u-pre (lib/A/Prog/S8aNumCut.v:67,
+      h-rw-pre-7 (lib/B/Prog/ExvB_Stmt.v:90, origin/cold/h-rw-pre-7-b-ex_value), h-w6u-pre (lib/A/Prog/S8aNumCut.v:68,
       origin/cold/h-hpreset-7-walk-S8a-number) and h-verbs-3 (lib/A/VrdNum.v H_strtod, origin/cold/h-verbs-3-vnum):
       ExvB's text, its end cell stated by properties, with S8a's s + len + 1 <= 2 ^ 62 and presence growth, and the
       facts strtod_x_holds needs that no stand-in states (the caller's stack bounds of YCbq.v astk_ok and

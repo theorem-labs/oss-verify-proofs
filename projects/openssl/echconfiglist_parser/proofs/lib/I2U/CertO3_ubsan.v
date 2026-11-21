@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the auxv claim is destructured in its Lib/AuxvTable.v form and bounded by auxv_vec_bytes_range). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString Permutation.
@@ -8,7 +9,7 @@ From stdpp Require Import bitvector.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType RiscvSemantics State Run.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import HeapCeil.
-From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Lib Require Import PropExec MState Mem Cells Step Frame Exec TacX CellsX Arr.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Lib Require Import PropExec MState Mem Cells Step Frame Exec TacX CellsX Arr AuxvTable.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Agent Require Import InitMem.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Spec Require Import Prog.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Ub Require Import USegs RMalloc_iface_stmt HeapSR_iface ECH_SR ECH_Img ECH_Xpres ECH_Rep ECH_LibState ECH_C1_stmt ECH_C2_stmt ECH_C3_stmt ECH_C4_stmt.
@@ -171,10 +172,11 @@ Section C.
     set (x := xregs_of3 errv ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6).
     set (W := [(30%uint63, errv); (32%uint63, wz (hs_canary H)); (31%uint63, wz (cx_olock cx))]).
     pose proof HHx as (_ & _ & _ & Hrx & _ & _).
-    destruct (Hrx _ _ Haux) as (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & sec & _ & _ & _ & _ & HBav & Hav & _).
-    assert (HB64 : B < 2 ^ 64) by (clear - HBav Hav; slia).
-    assert (Hsp63 : bv_unsigned (x 2) < 2 ^ 63) by (clear - HBav Hav HB; change (x 2) with sp; slia).
-    clear HBav Hav av x3 x4 x5 x16 x6 x11 x12 x23 rnd sec Hrx.
+    destruct (Hrx _ _ Haux) as (av & v0 & rnd0 & execfn0 & r0 & sec & _ & _ & _ & _ & HBav & Hav & _).
+    pose proof (auxv_vec_bytes_range r0) as HAVR.
+    assert (HB64 : B < 2 ^ 64) by (clear - HBav Hav HAVR; slia).
+    assert (Hsp63 : bv_unsigned (x 2) < 2 ^ 63) by (clear - HBav Hav HAVR HB; change (x 2) with sp; slia).
+    clear HBav Hav HAVR av v0 rnd0 execfn0 r0 sec Hrx.
     change (bv_unsigned sp) with (bv_unsigned (x 2)) in HB, Hsp16, Hstk, Hlo.
     assert (Etp : x 4 = Z_to_bv 64 RATP) by exact Htp.
     assert (Eerr : bv_unsigned tp + -164 = RERRNO).

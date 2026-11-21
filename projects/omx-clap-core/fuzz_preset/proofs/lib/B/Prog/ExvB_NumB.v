@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Does not rest on tex_word_specX; memnorm only through EXN_keepM's keep premise, the identity here (kit 4f18c75d4900). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Does not rest on tex_word_specX; memnorm only through EXN_keepM's keep premise, the identity here (kit). *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B (asan-ubsan, rebuilt pin f8f98a95bc52, unstripped twin 3b5e1a099b53),
    ex_value's NUMBER SEGMENT, sub-piece Bp (lib/B/Prog/ExvB_NumCut.v EXN_Bl): the scan loop, CL (exv_pc 0x324,
    B 0x83850) to CS (exv_pc 0x84c, B 0x83d78), by induction on the bytes left (length x - j), as ex_ws_x.v's

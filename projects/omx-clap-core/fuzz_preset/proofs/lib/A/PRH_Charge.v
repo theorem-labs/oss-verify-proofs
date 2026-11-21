@@ -21,7 +21,7 @@
    Charges over OTHER models stay over those models (the writer's grows prhWriter_ngrow, tx's prhtx_grows, pj_free's
    frees prhPj_fsteps over the tree's blocks).
    One copy: PRH_FnReader.v, PRH_FnPj.v, PRH_FnCheck.v and the recursive-reader author's PRH_FnParse.v cite these names; prhPv_rk_ev /
-   prhPv_rk / prhPv_gtrace / prhPi_gtrace are the image-B parse_value walk's names (PRH_FnPValue.v a34197aa5760), bodies kept. *)
+   prhPv_rk / prhPv_gtrace / prhPi_gtrace are the image-B parse_value walk's names (PRH_FnPValue.v), bodies kept. *)
 From Stdlib Require Import ZArith NArith List.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Spec Require Import PjTree PjGrammar.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YGcfNames YGcfRoomKeep.
@@ -72,7 +72,7 @@ Definition prh_maxreq (tr : list PjGrammar.ev) : Z :=
 
 (* THE BYTES A CALL MAY ADD TO blocks_bytes, over its trace tr (the post conjunct `blocks_bytes S' <= blocks_bytes S +
    prh_held tr` of parse_value, parse_items, parse_string and grow; the items-element walk's finding: after a call nothing else
-   re-establishes a reading's live room). blocks_bytes sums the allocator's REQUESTS (YG01.v:223-224), and a harness
+   re-establishes a reading's live room). blocks_bytes sums the allocator's REQUESTS (YG01.v:224-225), and a harness
    block's request is its user size plus the head (the kit's ablocks entry (res - cf_head, n + cf_head)), while
    PjGrammar.held counts USER bytes (EAlloc n => n, EGrow m n => n - m). So each call is charged cf_head on top: an
    EAlloc, or an EGrow from a NULL base, adds n + cf_head; an EGrow from a live block adds n - m; a free removes

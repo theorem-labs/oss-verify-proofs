@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyImg_su_printf.v (commit 4d286b2e618d, file sha256 90edc3226891) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 2 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 9 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyImg_su_printf.v (file sha256 90edc3226891) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 2 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 9 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
 (* Modified by Theorem Labs, 2026-10: start-up row img-su-printf-B (the internal file CF-UNIT-HYPS.md Table 4, line 154,
    "printf callback cell = AppendToErrorMessageBuffer"), at plugin-hostd/fuzz_reply's asan-ubsan image B: in reply B's
    start-up records, each of the 50 hand-off states (YB01.v HS_tfib_list) and the join state (YB03.v JS_tfib_band)
@@ -16,7 +16,7 @@
    from the unstripped twin sha256 3389287e1d6107841f4e2bb22c691542a11433094c1a07d94fd5828afc3671f7, whose R+X PT_LOAD
    (0x309ec + 0x6bfcc) and both RW PT_LOADs (0xa2240, 0x9fc60) are byte-equal to the pinned file's (only PT_LOAD[0],
    the ELF header / build-id / rodata, differs).
-   (a) The cell.  _ZN11__sanitizer26SetPrintfAndReportCallbackEPFvPKcE = 0x685cc (size 12; YB1w.v:349
+   (a) The cell.  _ZN11__sanitizer26SetPrintfAndReportCallbackEPFvPKcE = 0x685cc (size 12; YB1w.v:350
        tfib_A_SetPrintfAndReportCallback):
          0x685cc  97050d00  auipc a1, 0xd0
          0x685d0  23b2a5d8  sd    a0, -0x27c(a1)        -> stores a0 to 0x685cc + 0xd0000 - 0x27c = 0x13d410
@@ -42,6 +42,7 @@
 
    cf name: the internal file CF-UNIT-HYPS.md Table 4 has no Definition for "printf callback cell = AppendToErrorMessageBuffer" and the
    reply tree carries none, so the statements below are the UNFOLDED text of that row at reply B. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YK0c YK09 YA0j.

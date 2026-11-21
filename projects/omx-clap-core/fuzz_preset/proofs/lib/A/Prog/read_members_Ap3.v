@@ -1,10 +1,10 @@
 (* omx-clap-core/fuzz_preset, image A' (asan, harness fix #102): read_members at the A' instance with the strcmp row
    CLOSED, so it has no premise. read_members_holds_Ap_c (lib/A/Prog/read_members_Ap2.v) applied to
-   c-libc-stdio's A' strcmp row PSstrRo.ps_strcmp_xrom_A (lib/A/PSstrRo.v:66, blob 4de202368a14: astrcmp_realizes_xrom at
+   c-libc-stdio's A' strcmp row PSstrRo.ps_strcmp_xrom_A (lib/A/PSstrRo.v:67, blob 4de202368a14: astrcmp_realizes_xrom at
    AB1v.tfibsegs, ARcf, any rlo / rhi, pc CfImgA's cf_pc_strcmp), at B := AD2l.TfibB with TS := AD2l.TfibB_syms
    (lib/A/AD2l.v:73), rlo / rhi := PI_prog_A's relro bounds.
    THE TWO FACTS that carry the row to read_members_holds_Ap_c's premise ASC:
-     the pc     CfImgA's cf_pc_strcmp (lib/A/CfImgA.v:46) and PI_prog_A's pa_sigma AS___wrap_strcmp (lib/A/PAImg_prog.v:82)
+     the pc     CfImgA's cf_pc_strcmp (lib/A/CfImgA.v:46) and PI_prog_A's pa_sigma AS___wrap_strcmp (lib/A/PAImg_prog.v:83)
                 are the same entry (__wrap_strcmp = __interceptor_trampoline_strcmp): rmA3_pc, by vm_compute;
      the segs   AB1v.tfibsegs (lib/A/AB1v.v:12) and PI_prog_A's pa_segs = lib/A/Img0.v rsegs are both
                 Asan.M.loaded_segments: by conversion (delta), at the final `exact`.

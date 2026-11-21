@@ -20,7 +20,7 @@ port_addr_check.py --git $HUB --donors-from $DONORS --summary --fail-on-flags \
 
 The same command with `$PAC0D24`, `--cache $OUT/addr205a/cache0d24` and `--out $OUT/addr205a/pac0d24-A.tsv` gives the
 0d24592683b6 table on the same tree. The arguments are those of gates 1, 6 and 9 with ONE change: `--dst` names the
-series tree `$SERIES` = d57e4e79e469316d9e26c20fd6bb5ff3a086dd55, not the base. Both runs started from an empty cache.
+series tree `$SERIES` =, not the base. Both runs started from an empty cache.
 cgif's four pins are the ones its harness.yaml names (sha256 7093581aab04 / 1c29845fe605 / 19dedd1bc682 / 44a34d2e23b6).
 
 ## Tools (cited by name + sha256, not copied)

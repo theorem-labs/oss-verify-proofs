@@ -12,9 +12,10 @@
    the statement's AMALLOC4 and TL (CmdPaLib.v: the malloc trampoline is the rule's entry, the GOT shadow cell). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/rec_canonical.v, with its module paths and module names changed; 696 of its 835 lines of code are new or changed and 2224 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/U/Prog/CF/rec_canonical.v, with its module paths and module names changed; 261 of its 292 lines of code are new or changed and 804 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* text_buf (fuzz_link.c:655-666), PLAIN build: the proof of text_buf_contract
    (lib/Prog/text_buf_c.v) on the plain image, in the SR form of the released allocator-facing
-   walks (form: libreac/fuzz_pcap lib/Prog/fmemopen.v at origin/ossv/recipes 4b6f0df50aa).
+   walks (form: libreac/fuzz_pcap lib/Prog/fmemopen.v).
    The instruction pieces are lib/Prog/text_buf_walk.v. The malloc call goes through the frame's
    malloc contract (Contract.malloc_contract); memset is a tail call, through memset_contract.
    cap = 0: no allocation, a0 = 0. cap <> 0: malloc(cap+1), whose answer is not NULL by the malloc

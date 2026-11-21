@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (in both sections, E0 is built by the new InitLib.E0 from the image's entry pc and program headers, sp (also standing in for the mmap base) and the ProcInput; the run predicate MP also carries the far-end channel reader, m_channel_reader = true, which MP_fs, MP_stable and the new TM_rdr argument of RA use). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import PrimInt63 Uint63.
 From stdpp Require Import gmap.
@@ -79,8 +80,12 @@ Definition xb (j : int) : list byte :=
   | 14 => LE8 (6 + cfg_len file)
   | _ => []
   end.
-Definition E0 : env := InitLib.E0 sp (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) rnd xb.
-Definition MP (m : Model) : Prop := m_fs m = fs0.
+(* the launch's environment; [PB] reads only its blobs, which neither the image's entry and headers nor the mmap
+   base enter ([InitLib.eb0]), so [sp] stands in for the base *)
+Definition E0 : env := InitLib.E0 a_init_pc a_phdrs sp sp inp rnd xb.
+(* LPS 08b1429: the far-end reader is a launch fact no step writes; the run predicate carries it
+   ([valid_input]'s [in_channel_reader] seeds it at start-up). *)
+Definition MP (m : Model) : Prop := m_fs m = fs0 /\ m_channel_reader m = true.
 Definition PB (b : int -> list byte) : Prop := b = eb E0.
 
 Let OPSA : optable := AsanRun.OPSA IMGX IMGX_aci ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat UNIV AI_frame_top Cw p1 file.
@@ -127,10 +132,13 @@ Proof.
   - inversion X.
 Qed.
 
-Lemma MP_fs : forall m, MP m -> m_fs m = fs0. Proof. intros m H. exact H. Qed.
+Lemma MP_fs : forall m, MP m -> m_fs m = fs0. Proof. intros m H. exact (proj1 H). Qed.
 Lemma MP_fds : forall fds m, MP m -> MP (with_fds fds m). Proof. intros fds m H. exact H. Qed.
 Lemma MP_stable : mp_stable MP.
-Proof. intros mo acc mo' H M. unfold MP in *. destruct (materialize_model_accesses_frame _ _ _ M) as (_ & _ & _ & _ & F & _). unfold m_fs. rewrite F. exact H. Qed.
+Proof.
+  intros mo acc mo' [H HR] M. unfold MP in *. destruct (materialize_model_accesses_frame _ _ _ M) as (_ & _ & _ & _ & F & PR & _).
+  unfold m_fs, m_channel_reader in *. rewrite F, PR. split; assumption.
+Qed.
 Lemma eb1 : eb E0 1%uint63 = cstr a0. Proof. reflexivity. Qed.
 Lemma eb3 : eb E0 3%uint63 = cstr p1. Proof. reflexivity. Qed.
 Lemma eb9 : eb E0 9%uint63 = LE8 (Z.of_nat (length a0) + 1). Proof. reflexivity. Qed.
@@ -150,12 +158,14 @@ Lemma TM_fds : forall mo fds, op_minv (CtrSys.OPS heapA extA p1 file RS3 RS3_ran
 Proof. intros mo fds [H L]. split; [exact H| exact L]. Qed.
 Lemma TM_cov1 : forall id args a, op_cov1 (CtrSys.OPS heapA extA p1 file RS3 RS3_range TM) id args a -> id = 1%uint63.
 Proof. intros id args a [E _]. apply Uint63.eqb_correct in E. exact E. Qed.
+Lemma TM_rdr : forall m, MP m -> op_minv (CtrSys.OPS heapA extA p1 file RS3 RS3_range TM) m -> m_channel_reader m = true.
+Proof. intros m H _. exact (proj2 H). Qed.
 
 Definition RA : drun :=
   DRun heapA extA a0 p1 file fs0 RS3 RS3_range MP PB MP_fs MP_fds MP_stable heap_fds heap_fp_stage ext_fds ext_fp_stage
        (fun b (H : PB b) => match eq_sym H in (_ = e) return (e 1%uint63 = cstr a0 /\ e 9%uint63 = LE8 (Z.of_nat (length a0) + 1)) with eq_refl => conj eb1 eb9 end)
        (fun b (H : PB b) => match eq_sym H in (_ = e) return (e 3%uint63 = cstr p1 /\ e 10%uint63 = LE8 (Z.of_nat (length p1) + 1)) with eq_refl => conj eb3 eb10 end)
-       a0_len p1_len p1_nz TM TM_fds TM_cov1.
+       a0_len p1_len p1_nz TM TM_fds TM_cov1 TM_rdr.
 Lemma OPS_RA : DrvLib.OPS RA = OPSA. Proof. reflexivity. Qed.
 
 Theorem close_sound_RA : forall pc, PlanSound.PlanS.ecall_at asegs pc -> PlanSound.PlanS.contract_sound asegs OPSA MP PB (CtrS.c_close pc).
@@ -260,8 +270,12 @@ Definition xb (j : int) : list byte :=
   | 14 => LE8 (6 + cfg_len file)
   | _ => []
   end.
-Definition E0 : env := InitLib.E0 sp (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) rnd xb.
-Definition MP (m : Model) : Prop := m_fs m = fs0.
+(* the launch's environment; [PB] reads only its blobs, which neither the image's entry and headers nor the mmap
+   base enter ([InitLib.eb0]), so [sp] stands in for the base *)
+Definition E0 : env := InitLib.E0 b_init_pc b_phdrs sp sp inp rnd xb.
+(* LPS 08b1429: the far-end reader is a launch fact no step writes; the run predicate carries it
+   ([valid_input]'s [in_channel_reader] seeds it at start-up). *)
+Definition MP (m : Model) : Prop := m_fs m = fs0 /\ m_channel_reader m = true.
 Definition PB (b : int -> list byte) : Prop := b = eb E0.
 
 Let OPSA : optable := AsanRun.TwinB.OPSA IMGX IMGX_aci ACCT COVP NMAX ACCT_led ACCT_cov ACCT_cov_sh ACCT_mat UNIV AI_frame_top Cw p1 file.
@@ -308,10 +322,13 @@ Proof.
   - inversion X.
 Qed.
 
-Lemma MP_fs : forall m, MP m -> m_fs m = fs0. Proof. intros m H. exact H. Qed.
+Lemma MP_fs : forall m, MP m -> m_fs m = fs0. Proof. intros m H. exact (proj1 H). Qed.
 Lemma MP_fds : forall fds m, MP m -> MP (with_fds fds m). Proof. intros fds m H. exact H. Qed.
 Lemma MP_stable : mp_stable MP.
-Proof. intros mo acc mo' H M. unfold MP in *. destruct (materialize_model_accesses_frame _ _ _ M) as (_ & _ & _ & _ & F & _). unfold m_fs. rewrite F. exact H. Qed.
+Proof.
+  intros mo acc mo' [H HR] M. unfold MP in *. destruct (materialize_model_accesses_frame _ _ _ M) as (_ & _ & _ & _ & F & PR & _).
+  unfold m_fs, m_channel_reader in *. rewrite F, PR. split; assumption.
+Qed.
 Lemma eb1 : eb E0 1%uint63 = cstr a0. Proof. reflexivity. Qed.
 Lemma eb3 : eb E0 3%uint63 = cstr p1. Proof. reflexivity. Qed.
 Lemma eb9 : eb E0 9%uint63 = LE8 (Z.of_nat (length a0) + 1). Proof. reflexivity. Qed.
@@ -331,12 +348,14 @@ Lemma TM_fds : forall mo fds, op_minv (CtrSys.OPS heapA extA p1 file RS3 RS3_ran
 Proof. intros mo fds [H L]. split; [exact H| exact L]. Qed.
 Lemma TM_cov1 : forall id args a, op_cov1 (CtrSys.OPS heapA extA p1 file RS3 RS3_range TM) id args a -> id = 1%uint63.
 Proof. intros id args a [E _]. apply Uint63.eqb_correct in E. exact E. Qed.
+Lemma TM_rdr : forall m, MP m -> op_minv (CtrSys.OPS heapA extA p1 file RS3 RS3_range TM) m -> m_channel_reader m = true.
+Proof. intros m H _. exact (proj2 H). Qed.
 
 Definition RA : drun :=
   DRun heapA extA a0 p1 file fs0 RS3 RS3_range MP PB MP_fs MP_fds MP_stable heap_fds heap_fp_stage ext_fds ext_fp_stage
        (fun b (H : PB b) => match eq_sym H in (_ = e) return (e 1%uint63 = cstr a0 /\ e 9%uint63 = LE8 (Z.of_nat (length a0) + 1)) with eq_refl => conj eb1 eb9 end)
        (fun b (H : PB b) => match eq_sym H in (_ = e) return (e 3%uint63 = cstr p1 /\ e 10%uint63 = LE8 (Z.of_nat (length p1) + 1)) with eq_refl => conj eb3 eb10 end)
-       a0_len p1_len p1_nz TM TM_fds TM_cov1.
+       a0_len p1_len p1_nz TM TM_fds TM_cov1 TM_rdr.
 Lemma OPS_RA : DrvLib.OPS RA = OPSA. Proof. reflexivity. Qed.
 
 Theorem close_sound_RA : forall pc, PlanSound.PlanS.ecall_at bsegs pc -> PlanSound.PlanS.contract_sound bsegs OPSA MP PB (CtrS.c_close pc).

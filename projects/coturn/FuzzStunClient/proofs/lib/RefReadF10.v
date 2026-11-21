@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the stack window is LPS 727298f3's 6144513 bytes, was 8388608, read through stack_writable_of_lit. *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -158,7 +159,7 @@ Section F.
     set (E := Env (vals_ev vals) (gblobs content)) in *.
     (* [comment removed for export] *)
     lazymatch type of HK with know_ok _ _ _ ?kn =>
-      pose proof (kwr_store_ok RSEGS E M kn ltac:(let i := kidx kn (is_kwr_cov (EVar 0) (-8388608)%Z 1%Z) in exact i) (EVar 0) (-8388608)%Z 8388608%Z (-136)%Z 8%nat HK eq_refl ltac:(lia) ltac:(lia)) as SOKs;
+      pose proof (kwr_store_ok RSEGS E M kn ltac:(let i := kidx kn (is_kwr_cov (EVar 0) (-6144513)%Z 1%Z) in exact i) (EVar 0) (-6144513)%Z 6144513%Z (-136)%Z 8%nat HK eq_refl ltac:(lia) ltac:(lia)) as SOKs;
       pose proof (kwr_store_ok RSEGS E M kn ltac:(let i := kidx kn (is_kwr_cov (EVar 5) 0%Z 1%Z) in exact i) (EVar 5) 0%Z 67112960%Z 33554624%Z (Z.to_nat 33554432) HK eq_refl ltac:(lia) ltac:(lia)) as SOKb end.
     unfold adenot, v_addi in SOKs, SOKb. cbn [a_base a_off edenot ev] in SOKs, SOKb. subst E. cbn [ev] in SOKs, SOKb.
     rewrite P0 in SOKs. rewrite P5 in SOKb.
@@ -279,7 +280,7 @@ Section F.
     set (E := Env (vals_ev vals) (gblobs content)) in *.
     (* [comment removed for export] *)
     lazymatch type of HK with know_ok _ _ _ ?kn =>
-      pose proof (kwr_store_ok RSEGS E M kn ltac:(let i := kidx kn (is_kwr_cov (EVar 0) (-8388608)%Z 1%Z) in exact i) (EVar 0) (-8388608)%Z 8388608%Z (-136)%Z 8%nat HK eq_refl ltac:(lia) ltac:(lia)) as SOKs;
+      pose proof (kwr_store_ok RSEGS E M kn ltac:(let i := kidx kn (is_kwr_cov (EVar 0) (-6144513)%Z 1%Z) in exact i) (EVar 0) (-6144513)%Z 6144513%Z (-136)%Z 8%nat HK eq_refl ltac:(lia) ltac:(lia)) as SOKs;
       pose proof (kwr_store_ok RSEGS E M kn ltac:(let i := kidx kn (is_kwr_cov (EVar 5) 0%Z 1%Z) in exact i) (EVar 5) 0%Z 67112960%Z 33554624%Z (Z.to_nat 33554432) HK eq_refl ltac:(lia) ltac:(lia)) as SOKb end.
     unfold adenot, v_addi in SOKs, SOKb. cbn [a_base a_off edenot ev] in SOKs, SOKb. subst E. cbn [ev] in SOKs, SOKb.
     rewrite P0 in SOKs. rewrite P5 in SOKb.
@@ -382,12 +383,12 @@ Section F.
     + regv HR (3 : reg). reflexivity.
     + regv HR (4 : reg). reflexivity.
     + exact PRES2.
-    + intros d m Hd Hm.
+    + apply stack_writable_of_lit. intros d m Hd Hm.
       lazymatch type of HK with know_ok _ ?E' ?Mc ?kn =>
-        let i := kidx kn (is_kwr_cov (EVar 0) (-8388608)%Z 1%Z) in
-        pose proof (kwr_store_ok RSEGS E' Mc kn i (EVar 0) (-8388608)%Z 8388608%Z (-8388608 + d)%Z m HK eq_refl ltac:(lia) ltac:(lia)) as ST end.
+        let i := kidx kn (is_kwr_cov (EVar 0) (-6144513)%Z 1%Z) in
+        pose proof (kwr_store_ok RSEGS E' Mc kn i (EVar 0) (-6144513)%Z 6144513%Z (-6144513 + d)%Z m HK eq_refl ltac:(lia) ltac:(lia)) as ST end.
       unfold adenot, v_addi in ST. cbn [a_base a_off edenot ev] in ST. subst E. cbn [ev] in ST. rewrite P0 in ST.
-      replace (bv_unsigned sp0 - 8388608 + d)%Z with (bv_unsigned sp0 + (-8388608 + d))%Z by lia. exact ST.
+      replace (bv_unsigned sp0 - 6144513 + d)%Z with (bv_unsigned sp0 + (-6144513 + d))%Z by lia. exact ST.
   Qed.
 End F.
 

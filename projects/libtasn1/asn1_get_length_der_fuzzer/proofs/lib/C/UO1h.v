@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Trevor Hansen, 2026-11: the R_tabs lemmas for two chunks, hex addresses and numbers for libtasn1/asn1_get_length_der_fuzzer's UBSan binary, and module names. *)
+(* Modified by Theorem Labs, 2026-11: ported toward LPS 727298f3 by the change of the same file of cgif/cgif_rgb_fuzzer, its addresses relocated to this unit's binaries. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -1153,7 +1154,7 @@ destruct (Wlow _ Wx) as [Hlo|[Hi|(q & Hq & Hqx & _)]]; [unfold CTX_SIZE in *; li
 -- destruct (key_rangeq (hd m ms) (CTX + off + Z.of_nat kk) (Kh0 Hne) ltac:(lia)) as (NI & _). apply NI. apply (so_ctx_img _ SO). change (ms_ctx B) with CTX. unfold CTX_SIZE in *. lia.
 -- destruct (key_rangeq (last ms m) (CTX + off + Z.of_nat kk) (Khp Hne) ltac:(lia)) as (NI & _). apply NI. apply (so_ctx_img _ SO). change (ms_ctx B) with CTX. unfold CTX_SIZE in *. lia.
 * destruct (key_rangeq q (CTX + off + Z.of_nat kk) Hq Hqx) as (NI & _). apply NI. apply (so_ctx_img _ SO). change (ms_ctx B) with CTX. unfold CTX_SIZE in *. lia. }
-pose proof (YO2m.ledger_same B L' sq md' (mid_ledger _ _ _ _ _ HM) (mid_ledgerx _ _ _ _ _ HM) sf md' Srg Sbrk eq_refl eq_refl eq_refl) as [LG2 LX2].
+pose proof (YO2m.ledger_same B L' sq md' (mid_ledger _ _ _ _ _ HM) (mid_ledgerx _ _ _ _ _ HM) sf md' Srg Sbrk eq_refl eq_refl eq_refl eq_refl) as [LG2 LX2].
 split.
 - exact SO.
 - exact MR'.

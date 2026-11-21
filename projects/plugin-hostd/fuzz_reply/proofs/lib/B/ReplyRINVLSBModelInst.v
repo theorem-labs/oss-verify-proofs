@@ -20,7 +20,8 @@
      fr_start_b_2p33 then gives both invariants at the first head from lf_base at ANY live-state clause P (the
      contract's own) and that driver split: the fr_live_pre conjunct at 2 ^ 33 is proved, not assumed.  The split is
      the B driver's at the FIRST call; at a later call the entry keeps g_src's table and g_out's buffer
-     (lib/A/AD1r_heap_cf.v :1-4), and image B has no cf driver at cb5e14dbcf9 to bound those. *)
+     (lib/A/AD1r_heap_cf.v :1-4), and image B has no cf driver to bound those. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

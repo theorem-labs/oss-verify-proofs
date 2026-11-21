@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, a munmap is the PMunmap2 node with a refused and a granted arm, the layout node reads the table's rseq layout, and PCaseNJ checks its branches through nj_starts_all. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -70,6 +71,7 @@ Inductive plan : Type :=
 | PMmapIn (kkept kok kdestroyed : plan)       
 | PMprotect (krefused kgranted : plan)       (* [comment removed for export] *)
 | PBrk2 (kblocked kgranted : plan)           (* [comment removed for export] *)
+| PMunmap2 (krefused kgranted : plan)        (* munmap of exactly one tracked entry: -ENOMEM child / cut child *)
 | PX (x : xnode) (args : list expr) (k : plan)   (* [comment removed for export] *)
 | PExt (id : nat) (args : list expr) (k : plan)  (* [comment removed for export] *)
 | PEmit (id : nat) (args : list expr) (k : plan) (* [comment removed for export] *)
@@ -129,7 +131,7 @@ Inductive plan : Type :=
 
 Definition node_sys (y : snode) (cs : acs) : option acs :=
   match y with
-  | YMunmap => node_munmap A cs
+  | YMunmap => None   (* at 08b1429 munmap may be refused (-ENOMEM): a munmap is a [PMunmap2] node *)
   | YBrk => node_brk1 A cs
   | YSetTid => node_settid nx0 cs
   end.
@@ -143,7 +145,7 @@ Definition node_x (x : xnode) (args : list expr) (cs : acs) : option acs :=
   | XMemIsZero => summary_miz A nx0 cs
   | XEnvScan => node_envscan A cs
   | XPnScan => node_pnscan A nx0 cs
-  | XLayout => node_layout cs args
+  | XLayout => node_layout A cs args   (* the layout terms read [a_rseq A] *)
   | XIStrncpy => summary_istrncpy A nx0 cs
   | XPopFree => summary_popfree A nx0 cs args
   | XSniff => None    
@@ -168,7 +170,7 @@ Variable bfuel : nat.              (* [comment removed for export] *)
 (* [comment removed for export] *)
 Definition check_all (chk : acs -> plan -> cres) (k : plan) (css : list acs) : cres :=
   match css with
-  | [] => CErr 3 k (init_acs_of A)
+  | [] => CErr 3 k (init_acs_of A)   (* any state: the error carries it only for reporting. *)
   | cs0 :: rest =>
       match chk cs0 k with
       | COk s0 =>
@@ -288,6 +290,20 @@ Fixpoint check (fuel : nat) (lc : option loopctx) (cs : acs) (p : plan) {struct 
                 end
             | None => CErr 3 p cs
             end
+        end
+      else CErr 2 p cs
+  | PMunmap2 ka kb =>
+      if is_ecall_at segs cs then
+        match node_munmap2 A cs with
+        | Some (csa, csb) =>
+            match check f csa ka with
+            | COk sa => match check f csb kb with
+                        | COk sb => COk (salt2 sa sb)
+                        | err => err
+                        end
+            | err => err
+            end
+        | None => CErr 3 p cs
         end
       else CErr 2 p cs
   | PMmap ka kb =>
@@ -504,7 +520,7 @@ Fixpoint check (fuel : nat) (lc : option loopctx) (cs : acs) (p : plan) {struct 
   | PCaseNJ e cuts joinpc rs ws k =>      (* [comment removed for export] *)
       match erange (kn cs) e with
       | Some (lo, hi) =>
-          match nj_ends (run_block_gc segs IT gcb KC bfuel (joinpc :: STOPS A)) joinpc (nj_starts cs e (nj_arms lo hi cuts)) with
+          match nj_ends (run_block_gc segs IT gcb KC bfuel (joinpc :: STOPS A)) joinpc (nj_starts_all cs e (nj_arms lo hi cuts)) with
           | Some ends =>
               match node_joinN segs A nx0 (nxt cs) joinpc rs ws ends with
               | Some csj => check f csj k

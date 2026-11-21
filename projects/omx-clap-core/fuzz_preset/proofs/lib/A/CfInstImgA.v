@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10-30: fuzz_preset (a Theorem Labs lane memnorm102): image rows of a Theorem Labs lane's generic cf instance layer at
    A' (#102 pin fuzz_preset.asan 1be0f53d96cb; image class AImg_A, A/AImgA.v: im_syms := TfibSyms,
    im_img_cover := AF0x.img_cover).
@@ -195,7 +196,7 @@ Proof. intros B TB. rewrite cf_errbuf_obj_A, (ts_oom B TB). unfold TFIB_OOM. lia
 (* ---- ERRB_SEP's final text (cgif/cgif_file_fuzzer lib/YGcfErrbSep.v (file sha256 f62c93ec3f86; donor not released) :26-29):
    ERRB_SEP_t B := YGcfImgRows.ERRB_QAPART /\ (the rest).  Both conjuncts at A'. ---- *)
 
-(* ERRB_QAPART (YGcfImgRows.v:23-24, class-free, every B, no layout premise) at A': the errbuf object [0xaa728,
+(* ERRB_QAPART (YGcfImgRows.v:24-25, class-free, every B, no layout premise) at A': the errbuf object [0xaa728,
    0xaa760) lies above the instance object [0xa7858, 0xa8688). *)
 Theorem ERRB_QAPART_A : YGcfImgRows.ERRB_QAPART.
 Proof.
@@ -203,7 +204,7 @@ intros B TS a Ha. change (TfibSyms B) in TS. rewrite cf_errbuf_obj_A in Ha. rewr
 unfold TFIB_INST. lia.
 Qed.
 
-(* ERRB_SEP_t's second conjunct (YGcfErrbSep.v:27-29), verbatim, at A' (the last four of errb_sep5_A). *)
+(* ERRB_SEP_t's second conjunct (YGcfErrbSep.v:28-30), verbatim, at A' (the last four of errb_sep5_A). *)
 Theorem ERRB_SEP_rest_A : forall B, TfibSyms B ->
   forall ly a, layout_ok ly -> im_img_cover ly -> ly_tsd ly = as_tsd B ->
   cf_errbuf_obj <= a < cf_errbuf_obj + 56 ->

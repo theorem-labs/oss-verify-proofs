@@ -1,5 +1,5 @@
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) copy of lib/A/Prog/FSW_rdx.v, copied from
-   a working branch f9ccbd8f565 (= a working branch 6fcf9aa5a9b, blob 7dfeea4451),
+   a working branch (= a working branch, blob 7dfeea4451),
    same lemma names and bodies; imports point at lib/B's image files (YB1v, YB1w, FSH_Base, FSH_Rt, FSPstat, FSH_Fn_reader,
    FSH_Fn_alloc and the lib/B FSW kit), the image-agnostic FSupoison, FSupoisonU, FSH_YC20, FSH_Gen stay lib/A's. It holds
    no image value. The Section binds the sink head explicitly, (SK : YI16.sink_head), and the statement passes it with @

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the section also takes the run's launch class, the stack image is pimg under the launch_ok premise, the argv pointers and the image bounds come from the launch's layout, and the stack region's lower bound is 4 MiB below the entry sp instead of 8 MiB. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation Strings.String.
@@ -25,7 +26,7 @@ Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.
 Ltac rpc := apply ret_pc_even; [lia| reflexivity].
 
 (* [comment removed for export] *)
-Section CANSEC1. Context {rc : runConstT}.
+Section CANSEC1. Context {rc : runConstT} {rl : runLaunchT}.
 Lemma stderr_file0_wfile : forall m, stderr_file0 m -> stderr_wfile m.
 Proof.
   intros m H. exists (Z_to_bv 64 5), (wz 0), 0, 0, (repeat (Z_to_bv 8 0) 80). split; [exact H|]. vm_compute. reflexivity.
@@ -41,7 +42,7 @@ Section A.
   Notation usp0 := (bv_unsigned sp0).
   Notation gpv := (Z_to_bv 64 0x10800).
   Notation tpv := (Z_to_bv 64 RATP).
-  Notation IMGB := (build_stack_bytes pph sp0 argv envp uid hw draw).
+  Notation IMGB := (pimg sp0 argv envp uid hw draw).
   Notation LO' := (LO sp0).
 
   (* [comment removed for export] *)
@@ -51,18 +52,14 @@ Section A.
 
   Lemma IMGB_len : usp0 + Z.of_nat (length IMGB) <= 2^64.
   Proof.
-    destruct VSP as ((A & B & C) & _ & _). unfold sp_window_lo, sp_window_hi in *.
-    pose proof (build_stack_bytes_length pph sp0 argv envp uid hw draw). pose proof (raw_len_nonneg argv envp).
-    destruct VARGV as (A1 & A2 & _). destruct VENVP as (E1 & E2 & _). unfold raw_len, struct_size, argc, envc in *. lia.
+    pose proof VARGV as VA0. pose proof VENVP as VE0. clear VA0 VE0.
+    destruct VSP as (_ & _ & _ & ROK). destruct (pimg_end sp0 argv envp uid hw draw ROK) as [PE TW]. lia.
   Qed.
 
   (* [comment removed for export] *)
   Lemma IMGB_top : usp0 + Z.of_nat (length IMGB) <= 2^47.
   Proof.
-    destruct VSP as (_ & _ & FIT). unfold entry_stack_fits, entry_stack_span, sp_window_hi in FIT.
-    change (Z.of_nat auxv_size) with 160 in FIT.
-    pose proof (build_stack_bytes_length pph sp0 argv envp uid hw draw) as BL. pose proof (raw_len_nonneg argv envp).
-    unfold raw_len, struct_size, argc, envc in *. lia.
+    destruct VSP as (_ & _ & _ & ROK). destruct (pimg_end sp0 argv envp uid hw draw ROK) as [PE TW]. lia.
   Qed.
 
   (* [comment removed for export] *)
@@ -169,7 +166,7 @@ Section A2.
   Notation usp0 := (bv_unsigned sp0).
   Notation gpv := (Z_to_bv 64 0x10800).
   Notation tpv := (Z_to_bv 64 RATP).
-  Notation IMGB := (build_stack_bytes pph sp0 argv envp uid hw draw).
+  Notation IMGB := (pimg sp0 argv envp uid hw draw).
   Notation LO' := (LO sp0).
 
   (* [comment removed for export] *)
@@ -191,22 +188,22 @@ Section A2.
     pose proof (sp_facts sp0 argv envp VSP) as SF. pose proof (IMGB_len sp0 argv envp uid hw draw VSP VARGV VENVP) as IL. unfold LO in *.
     pose proof (bytes_at_bound _ _ _ _ IMG) as IMGBD.
     pose proof (heap_init sp0 argv envp m NONE LIBC1 LIBC2 GOTG GUARD MI) as [HP0i AUXC].
-    pose proof (rauxv_ok_init sp0 argv envp uid hw draw m NONE LIBC1 LIBC2 GOTG GUARD MI IMG HSEC (proj1 (proj2 VSP))) as AI.
+    pose proof (rauxv_ok_init sp0 argv envp uid hw draw m NONE LIBC1 LIBC2 GOTG GUARD MI IMG HSEC (proj1 (proj2 VSP)) (proj2 (proj2 (proj2 VSP)))) as AI.
     pose proof (conj (trun_cells0_init m NONE) (client_static0_init m NONE) : TRUN0 m) as TR0.
     assert (IOS : ios_cells m) by exact I.      (* [comment removed for export] *)
     pose proof (dso_cell_init m NONE) as DSO0.
     pose proof (stderr_file0_init m NONE) as SE.
     pose proof (stage_init m NONE) as STG0.
     clear TLS MTLS SYSI PROG HWCAP ENV DSS GOT0 GOTM G38 G50 IA INI IMGW HP0 NONE.
-    replace (usp0 - 8388608) with (usp0 + -8388608) in ST by lia.
+    replace (usp0 - 4194304) with (usp0 + -4194304) in ST by lia.
     unfold PMAIN, PSTAGE2_RET in *.
-    eapply (main_prologue sp0 argv envp VSP); [unfold LO; replace (usp0 - 8388608) with (usp0 + -8388608) by lia; exact ST| exact MI|].
+    eapply (main_prologue sp0 argv envp VSP); [unfold LO; replace (usp0 - 4194304) with (usp0 + -4194304) by lia; exact ST| exact MI|].
     intros j8 m1 FR ST1 MU WM MI1. unfold LO in ST1.
     pose proof (magree_of_munch usegs _ _ _ MU WM) as AG.
     assert (OUT : forall a, (a < usp0 - 128 \/ usp0 - 48 <= a) -> (fun a0 : Z => outside [(usp0 - 128, usp0 - 48)] a0) a) by (intros a Ha; cbn; lia).
     apply (K t t0 t1 t2 a3 a4 a5 a6 a7 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 m1 j8 HT).
     - exact FR.
-    - split; [unfold LO; replace (usp0 - 8388608) with (usp0 + -8388608) by lia; exact ST1|]. split; [exact MI1|].
+    - split; [unfold LO; replace (usp0 - 4194304) with (usp0 + -4194304) by lia; exact ST1|]. split; [exact MI1|].
       split. { eapply (RSTAT_agree t _ _ _ AG); [intros a Ha; apply OUT; unfold rstat_addr, ios_addr in Ha; lia|].
                unfold RSTAT. split; [exact TD|]. split; [exact EXL|]. split; [exact GF|]. split; [exact FA|]. split; [exact FIN|]. split; [exact GCX|].
                split; [exact OFL|]. split; [exact SIN|]. split; [exact SOU|]. split; [exact SEU|]. split; [exact G28|]. split; [exact GD0|]. split; [exact IOS| exact DSO0]. }
@@ -255,22 +252,22 @@ Section A2.
     destruct VARGV as (ARGC & _ & ARGLEN & NONUL & _).
     destruct argv as [|arg0 argv'] eqn:EARGV; [cbn in ARGC; lia|]. rewrite <- EARGV in *.
     (* [comment removed for export] *)
-    destruct (argv_cstring sp0 argv envp uid hw draw mm IMG 0 arg0 ltac:(rewrite EARGV; reflexivity) ltac:(clear -SF; Z.div_mod_to_equations; lia))
-      as (p0 & slack0 & HP0 & P0LO & P0HI & STR0 & SLK0). unfold str_base, struct_size, argc, envc in P0LO.
-    destruct (stack_pieces sp0 argv envp uid hw draw mm IMG) as (_ & ARGVP & _).
+    destruct (argv_cstring sp0 argv envp uid hw draw mm IMG (proj2 (proj2 (proj2 VSP))) 0 arg0 ltac:(rewrite EARGV; reflexivity) ltac:(clear -SF; Z.div_mod_to_equations; lia))
+      as (p0 & slack0 & HP0 & P0LO & P0HI & STR0 & SLK0). pose proof (str_base_lo sp0 argv envp (proj2 (proj2 (proj2 VSP)))) as SBL. unfold argc, envc in SBL.
+    destruct (stack_pieces sp0 argv envp uid hw draw mm IMG (proj2 (proj2 (proj2 VSP)))) as (_ & ARGVP & _).
     assert (A0NN : ~ In (Z_to_bv 8 0) arg0) by (rewrite EARGV in NONUL; inversion NONUL; assumption).
     assert (A0LEN : Z.of_nat (length arg0) <= 131071) by (rewrite EARGV in ARGLEN; inversion ARGLEN; assumption).
     unfold argc, PMAIN, PSTAGE2_RET. zstep. if_cases K0; zify_cond K0; try (exfalso; lia). clear K0.
     (* [comment removed for export] *)
     zstep. zstep. zstep.
-    pose proof (u64ro_read usegs mm (usp0 + 8) (argv_ptrs sp0 argv envp ++ [Z_to_bv 64 0]) 0 (Z_to_bv 64 p0) (Z_to_bv 64 (usp0 + 8))
+    pose proof (u64ro_read usegs mm (usp0 + 8) (argv_ptrs RL_top argv envp RL_execfn ++ [Z_to_bv 64 0]) 0 (Z_to_bv 64 p0) (Z_to_bv 64 (usp0 + 8))
                   ARGVP ltac:(rewrite nth_error_app1 by (rewrite argv_ptrs_length, EARGV; cbn; lia); exact HP0) ltac:(lia) ltac:(unfold wa; f_equal; lia)) as RD.
     zstep. clear RD. zstep. zstep. zstep.
     (* [comment removed for export] *)
     apply evt_done.
     lazymatch goal with |- impl _ _ (?tm _) _ ?msx => change (implM usegs tm (ps_init (reservedZ usegs) ATOP) (fun code s' ms' => pat_exitU code s' ms') msx) end.
     eapply implM_bind.
-    { eapply (FPR (DUsage (nth 0 (argv_Z argv) []))) with (lo := usp0 - 8388608) (canary := CAN);
+    { eapply (FPR (DUsage (nth 0 (argv_Z argv) []))) with (lo := usp0 - 4194304) (canary := CAN);
         [exact FWX| exact SWF| apply stderr_file0_wfile; exact SE| reflexivity| | rewrite unsigned_lit by lia; exact ST
         | rewrite unsigned_lit by lia; unfold FPRINTF_DEPTH; lia| unfold GLOBALS_TOP; lia| rewrite unsigned_lit by lia; lia
         | apply (RHEAP_ssp _ _ _ HP)| exact MI| vm_compute; reflexivity].
@@ -285,16 +282,16 @@ Section A2.
     rewrite !unsigned_lit in MUc by lia. rewrite !unsigned_lit in ST2 by lia.
     replace (ret_pc (Z_to_bv 64 0x2680c)) with (Z_to_bv 64 0x2680c) by (symmetry; rpc).
     pose proof (magree_of_munch usegs _ _ _ MUc WMc) as AG.
-    assert (OUT : forall a, (usp0 - 128 <= a /\ ~ (0x80f68 <= a < 0x80f68 + 232)) -> (fun a0 : Z => outside [(usp0 - 8388608, usp0 + -128); (0x80f68, 0x80f68 + 232)] a0) a).
+    assert (OUT : forall a, (usp0 - 128 <= a /\ ~ (0x80f68 <= a < 0x80f68 + 232)) -> (fun a0 : Z => outside [(usp0 - 4194304, usp0 + -128); (0x80f68, 0x80f68 + 232)] a0) a).
     { intros a Ha. cbn. lia. }
-    assert (OUT2 : forall a, (0x10000 <= a < 0xb3000 /\ ~ (0x80f68 <= a < 0x80f68 + 232)) -> (fun a0 : Z => outside [(usp0 - 8388608, usp0 + -128); (0x80f68, 0x80f68 + 232)] a0) a).
+    assert (OUT2 : forall a, (0x10000 <= a < 0xb3000 /\ ~ (0x80f68 <= a < 0x80f68 + 232)) -> (fun a0 : Z => outside [(usp0 - 4194304, usp0 + -128); (0x80f68, 0x80f68 + 232)] a0) a).
     { intros a Ha. cbn. lia. }
     apply implM_ret. unfold MFRAME, PMAIN, PSTAGE2_RET in FR.
     apply (rw_cells_magree usegs _ _ _ _ _ AG) in FR; [| intros a Ha; apply OUT; cbn in Ha; lia].
     zstep.
     eapply (main_return sp0 argv envp TID VSP HT 2 (ps_init (reservedZ usegs) ATOP) []).
     - unfold MFRAME, PMAIN, PSTAGE2_RET. exact FR.
-    - unfold LO. replace (usp0 - 8388608) with (usp0 + -8388608) in ST2 by lia. exact ST2 || exact ST2.
+    - unfold LO. replace (usp0 - 4194304) with (usp0 + -4194304) in ST2 by lia. exact ST2 || exact ST2.
     - eapply (RSTAT_agree TID _ _ _ AG); [intros a Ha; apply OUT2; unfold rstat_addr, ios_addr in Ha; lia| exact RS].
     - eapply RMalloc_ifaceP.RHEAP_frame_proof; [exact HP| exact MUc| exact WMc|].
       constructor; [left; cbn [fst snd]; atop_facts; lia|]. constructor; [| constructor].

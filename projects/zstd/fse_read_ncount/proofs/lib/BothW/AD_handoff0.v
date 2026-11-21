@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main entry's recorded facts as kept (BMKN, BPKN); the string block on the launch's stack layout (SBLK: the strings, the exec file name and the end marker up to the stack VMA's end; SBLK_length, SBLK_end, SBLK_at, arg_string, and arg_pack moved into StringBlock from the removed ArgPack section; SBLK_mod8 and span_ge removed); argv_ptrs_init removed, the argv cells now coming from bmain_at; launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef); SBLK_at from the stack block's whole length (InitMem.build_stack_bytes_length_top), in the form of zstd/zstd_frame_info's AD_handoff0). *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation Strings.String.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run.
@@ -78,14 +79,14 @@ pose proof (aimg_chunk V m _ A cs HM ltac:(vm_compute; reflexivity) ltac:(cbn; r
 ltac:(vm_compute; reflexivity) ltac:(lia) ltac:(cbn; lia)) as H.
 Notation z64 := (Z_to_bv 64 0).
 Section CANSEC3. Context {rc : runConstT}.
-#[using="Type"] Lemma stderr_wfile0_init : forall V m, Forall (mfact_ok bsegs V m) both_mem_facts -> stderr_wfile0 m.
+#[using="Type"] Lemma stderr_wfile0_init : forall V m, Forall (mfact_ok bsegs V m) BMKN -> stderr_wfile0 m.
 Proof.
 intros V m HM. exists (Z_to_bv 64 5), z64, 0, 0, (repeat (Z_to_bv 8 0) 80).
 Local Ltac2 Set LiaHints.tbl := fun () => "0030=12538897553.436526189834.450085102877.4000001002003SSS".
 split; [| split; [vm_compute; reflexivity| split; [left; reflexivity| lia]]].
 aimg V m HM 0x9dec8 (file_cells (Z_to_bv 64 5) 0 0 0 F_STDIO_WRITE 0x5f5bd8 0 2 z64 0xffffffff (repeat (Z_to_bv 8 0) 80)) H. exact H.
 Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
-#[using="Type"] Lemma stdout_file_init : forall V m, Forall (mfact_ok bsegs V m) both_mem_facts -> stdout_file m stdout_init.
+#[using="Type"] Lemma stdout_file_init : forall V m, Forall (mfact_ok bsegs V m) BMKN -> stdout_file m stdout_init.
 Proof.
 intros V m HM. exists (Z_to_bv 64 5), z64, (repeat (Z_to_bv 8 0) 80), (repeat (Z_to_bv 8 0) 1024).
 cbn [so_active so_buf so_lbf_nl so_first stdout_init Prelim.zlength length Z.of_nat Z.add].
@@ -114,7 +115,7 @@ replace (Z.of_N (seg_base AsanUbsan_segment_003)) with 0x9b000 by (vm_compute; r
 replace (Z.to_N (0x5f5510 + i - 0x9b000)) with (0x5f5510 - 0x9b000 + N.of_nat (Z.to_nat i))%N by lia.
 rewrite canary_seg_bytes by lia. discriminate.
 Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
-#[using="Type"] Lemma ssp_guard_init : forall V m, Forall (mfact_ok bsegs V m) both_mem_facts -> rw_cells bsegs m ssp_guard [C8 (Z_to_bv 64 (V 45%nat))].
+#[using="Type"] Lemma ssp_guard_init : forall V m, Forall (mfact_ok bsegs V m) BMKN -> rw_cells bsegs m ssp_guard [C8 (Z_to_bv 64 (V 45%nat))].
 Proof.
 intros V m HM. mf V m HM (MRo (ZLit 6247696) 8 (ZV 45)) H. unfold ssp_guard.
 pose proof (cellw_bytes 8 (V 45%nat) eq_refl) as (Cb & Cs & Cwf). change (cellw 8 (V 45%nat)) with (C8 (Z_to_bv 64 (V 45%nat))) in Cb, Cs, Cwf.
@@ -122,7 +123,7 @@ split.
 - split; [cbn; split; [exact Cwf| exact I]|]. cbn [cells_bytes]. rewrite app_nil_r, Cb. exact H.
 - cbn [cells_size]. rewrite Cs. apply canary_wr_at.
 Qed.
-#[using="Type"] Lemma errno_init : forall V m, Forall (mfact_ok bsegs V m) both_mem_facts -> rw_cells bsegs m 0x5d542c [C4 z64].
+#[using="Type"] Lemma errno_init : forall V m, Forall (mfact_ok bsegs V m) BMKN -> rw_cells bsegs m 0x5d542c [C4 z64].
 Proof. intros V m HM. aimg V m HM 0x5d542c [C4 z64] H. exact H. Qed.
 #[using="Type"] Lemma run_rw_cells : forall m A n (b : byte),
 0 <= n -> (forall i, 0 <= i < n -> m (wa (A + i)) = Some b) -> wr_at bsegs m A n ->
@@ -291,8 +292,8 @@ exact (mimg_cover bsegs V m l d (d + 64 * Z.of_nat (length G)) HF HE).
 Qed.
 Section HandoffFacts.
 Variables (V : nat -> Z) (m : word -> option byte).
-Hypothesis HM : Forall (mfact_ok bsegs V m) both_mem_facts.
-Hypothesis HP : Forall (pfact_ok V) both_pure_facts.
+Hypothesis HM : Forall (mfact_ok bsegs V m) BMKN.
+Hypothesis HP : Forall (pfact_ok V) BPKN.
 Let WSH : wr_at bsegs m 0x7fffa000 0xbce00.
 Proof. mf V m HM (MWr (ZLit 2147459072) 773632) H. exact H. Qed.
 #[using="V HM"] Lemma sh_zero1 : forall i, 0 <= i < 8656 -> m (wa (2147459072 + i)) = Some (Z_to_bv 8 0).
@@ -371,8 +372,8 @@ Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
 End HandoffFacts.
 Section HandoffFacts2.
 Variables (V : nat -> Z) (m : word -> option byte).
-Hypothesis HM : Forall (mfact_ok bsegs V m) both_mem_facts.
-Hypothesis HP : Forall (pfact_ok V) both_pure_facts.
+Hypothesis HM : Forall (mfact_ok bsegs V m) BMKN.
+Hypothesis HP : Forall (pfact_ok V) BPKN.
 Notation usp := (32768 * V 0%nat + (16 * V 6%nat + 4096 * V 10%nat)).
 Hypothesis HAT : 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat - 8388608 = ATOP.
 #[using="HP"] Lemma tid_range : 1 <= V 44%nat <= 4194303.
@@ -466,15 +467,6 @@ Proof.
 clear HAT. mf V m HM (MCell (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit (-8))) 8 (ZLit 0)) H.
 apply rw_cells_bytes_at in H. cbn [cells_bytes cbytes app] in H. rewrite app_nil_r in H. exact H.
 Qed.
-#[using="HM"] Lemma argv_ptrs_init :
-bytes_at bsegs m (usp + 8) (word_to_le_bytes 8 (Z_to_bv 64 (32768 * V 0%nat + (8 * V 1%nat + (8 * V 2%nat + (16 * V 6%nat + 4096 * V 10%nat))) + 184)))
-/\ bytes_at bsegs m (usp + 16) (word_to_le_bytes 8 (Z_to_bv 64
-(Z.b2z ((1 mod two64) <? (V 1%nat mod two64)) * (32768 * V 0%nat + (8 * V 1%nat + (8 * V 2%nat + (V 3%nat + (16 * V 6%nat + 4096 * V 10%nat)))) + 185)))).
-Proof.
-clear HAT. split.
-- mf V m HM (MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit 8)) 8 (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 184))) H. exact H.
-- mf V m HM (MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit 16)) 8 (ZMul (ZLtu (ZLit 1) (ZV 1)) (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZV 3) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10))))))) (ZLit 185)))) H. exact H.
-Qed.
 #[using="V HM HP HAT"] Lemma stack_shclean_init : forall lo hi RLO RHI,
 ATOP <= RLO -> RLO <= lo -> lo < hi -> hi <= RHI -> hi + 8 <= KEND -> RHI <= KEND -> RLO mod 64 = 0 -> RHI mod 64 = 0 ->
 shclean m lo hi RLO RHI.
@@ -515,67 +507,74 @@ intros m m' a bs (A & B & H) AG. split; [exact A|]. split; [exact B|]. intros i 
 unfold mrd. Local Ltac2 Set LiaHints.tbl := fun () => "0010>53024458931.11000004S2Hi".
 rewrite (AG (a + Z.of_nat i)) by lia. apply (H i Hi).
 Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
+(* LPS 727298f3: the string area is the stack block's tail, from the launch's string base
+[str_base top argv envp execfn] (= [bmain_at]'s [STR0_of]) to the stack VMA's end [top]: argv's and
+envp's strings, the exec file name with its NUL, and the 8-byte end marker (InitMem.build_stack_bytes_eq). *)
 Section StringBlock.
-Variables (sp : word) (argv envp : list (list byte)) (uid hw : word) (draw : EntryDraw) (m : word -> option byte).
+Variables (inp : ProcInput) (mbase sp : word) (draw : EntryDraw) (m : word -> option byte).
 Notation usp := (bv_unsigned sp).
-Notation m0 := (wrap_mem b_phdrs sp argv envp uid hw draw).
-Definition SBLK : list byte := flatten_strings argv ++ flatten_strings envp ++ repeat (Z_to_bv 8 0) (Z.to_nat (pad_len argv envp)).
-Notation SB := (str_base sp argv envp).
-#[using="Type"] Lemma SBLK_length : Z.of_nat (length SBLK) = total_arg_bytes argv + total_arg_bytes envp + pad_len argv envp.
+Notation argv := (in_argv inp).
+Notation envp := (in_envp inp).
+Notation execfn := (in_execfn inp).
+Notation top := (ed_top draw).
+Notation m0 := (wrap_mem inp mbase b_phdrs (Z_to_bv 64 (Z.of_N b_init_pc)) sp draw).
+Definition SBLK : list byte := flatten_strings argv ++ flatten_strings envp ++ execfn ++ [Z_to_bv 8 0] ++ repeat (Z_to_bv 8 0) 8.
+Notation SB := (str_base top argv envp execfn).
+#[using="Type"] Lemma SBLK_length : Z.of_nat (length SBLK) = lstr argv envp execfn + 8.
 Proof.
-unfold SBLK. rewrite !length_app, repeat_length. pose proof (flatten_strings_length argv). pose proof (flatten_strings_length envp).
-pose proof (raw_len_nonneg argv envp). Local Ltac2 Set LiaHints.tbl := fun () => "0010>30555039533.11000009S1H2H02H1".
-lia.
-Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
-Hypothesis SPLO : stack_max_size <= usp.
-Hypothesis IMGHI : usp + Z.of_nat (length (entry_stack_image b_phdrs sp argv envp uid hw draw)) <= 2^64.
-Hypothesis SP16 : usp mod 16 = 0.
-Hypothesis VARGV : valid_argv argv.
+unfold SBLK. rewrite !length_app, repeat_length. cbn [length].
+pose proof (flatten_strings_length argv). pose proof (flatten_strings_length envp). pose proof (lstr_eq argv envp execfn). lia.
+Qed.
+#[using="Type"] Lemma SBLK_end : SB + Z.of_nat (length SBLK) = bv_unsigned top.
+Proof. rewrite SBLK_length. unfold str_base. lia. Qed.
+Hypothesis IMGHI : usp + Z.of_nat (length (entry_stack_image inp mbase b_phdrs (Z_to_bv 64 (Z.of_N b_init_pc)) sp draw)) <= 2^64.
+Hypothesis PADOK : usp + hsz (kb_rseq (in_kernel inp)) argv envp + lstr argv envp execfn + 8 <= bv_unsigned top.
+Hypothesis TOP8 : bv_unsigned top mod 8 = 0.
 Hypothesis HID : forall z, SB <= z < SB + Z.of_nat (length SBLK) -> m (wa z) = m0 (wa z).
-#[using="SP16"] Lemma SBLK_mod8 : (SB + Z.of_nat (length SBLK)) mod 8 = 0 /\ SB mod 8 = 0.
-Proof.
-clear SPLO IMGHI VARGV HID. rewrite SBLK_length. unfold str_base, struct_size, pad_len, raw_len, struct_size, Lib.InitMem.argc, Lib.InitMem.envc.
-pose proof (raw_len_nonneg argv envp) as (R1 & R2 & R3 & R4). unfold struct_size, Lib.InitMem.argc, Lib.InitMem.envc in R1.
-Local Ltac2 Set LiaHints.tbl := fun () => "0020>66149329538.4166151427842.2700000E00SS4SP161H2H02H42H93H14S4SP161H2H02H4".
-split; Z.div_mod_to_equations; lia.
-Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
-#[using="uid hw draw SPLO IMGHI HID"] Lemma SBLK_at : bytes_at bsegs m SB SBLK.
+#[using="mbase sp IMGHI PADOK HID"] Lemma SBLK_at : bytes_at bsegs m SB SBLK.
 Proof.
 eapply bytes_at_agree; [| exact HID].
-pose proof (init_stack_bytes bsegs b_phdrs sp argv envp uid hw draw SPLO IMGHI) as B. rewrite build_stack_bytes_eq in B.
-unfold raw_bytes in B. set (U := u64s _) in B. set (FA := flatten_strings argv) in B. set (FE := flatten_strings envp) in B.
-set (PAD := repeat _ _) in B. set (RND := rnd_bytes draw) in B.
-replace ((U ++ FA ++ FE) ++ PAD ++ RND) with (U ++ ((FA ++ FE ++ PAD) ++ RND)) in B by (rewrite <- !app_assoc; reflexivity).
-apply bytes_at_app in B. destruct B as [_ B]. apply bytes_at_app in B. destruct B as [B _].
-assert (LU : Z.of_nat (length U) = struct_size argv envp).
-{ subst U. rewrite u64s_length. cbn [length]. rewrite !length_app. cbn [length].
-unfold argv_ptrs, envp_ptrs. rewrite !map_length, !str_ptrs_length.
-match goal with |- context [length (auxv_words ?a ?b ?c ?d ?e ?f)] => change (length (auxv_words a b c d e f)) with 20%nat end.
-unfold struct_size, Lib.InitMem.argc, Lib.InitMem.envc. Local Ltac2 Set LiaHints.tbl := fun () => "0020>31250298448.1765955603401.18000004005S2LUS".
-lia. }
-unfold SBLK. subst FA FE PAD. replace SB with (usp + Z.of_nat (length U)); [exact B|].
-unfold str_base. lia.
-Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
-#[using="uid hw draw SPLO IMGHI SP16 HID"] Lemma arg_string : forall i s, nth_error argv i = Some s ->
+assert (B : bytes_at bsegs m0 usp (entry_stack_image inp mbase b_phdrs (Z_to_bv 64 (Z.of_N b_init_pc)) sp draw))
+by (eapply init_stack_bytes; exact IMGHI).
+rewrite entry_stack_image_launch_of in B. cbn [launch_of L_LA L_TOP L_EXECFN L_GID] in B.
+(* the block runs from sp to the stack VMA's end (PADOK, InitMem.build_stack_bytes_length_top), so the
+head before the string block is what the string block leaves of it *)
+match type of B with
+| bytes_at _ _ _ (build_stack_bytes ?la ?ph ?en ?sp' ?tp ?av ?ev ?ef ?u ?g ?h ?d) =>
+pose proof (build_stack_bytes_length_top la ph en sp' tp av ev ef u g h d PADOK) as LT
+end.
+rewrite build_stack_bytes_eq in B, LT.
+set (HW := u64s _) in B, LT. set (GP := repeat _ (gap_len _ _)) in B, LT. set (RB := rnd_bytes draw) in B, LT.
+set (PD := repeat _ (block_pad_len _ _ _ _ _ _)) in B, LT.
+replace (HW ++ GP ++ RB ++ PD ++ flatten_strings argv ++ flatten_strings envp ++ execfn ++ [Z_to_bv 8 0] ++ repeat (Z_to_bv 8 0) 8)
+with ((HW ++ GP ++ RB ++ PD) ++ SBLK) in B by (unfold SBLK; rewrite <- !app_assoc; reflexivity).
+replace (HW ++ GP ++ RB ++ PD ++ flatten_strings argv ++ flatten_strings envp ++ execfn ++ [Z_to_bv 8 0] ++ repeat (Z_to_bv 8 0) 8)
+with ((HW ++ GP ++ RB ++ PD) ++ SBLK) in LT by (unfold SBLK; rewrite <- !app_assoc; reflexivity).
+apply bytes_at_app in B. destruct B as [_ B].
+replace SB with (usp + Z.of_nat (length (HW ++ GP ++ RB ++ PD))); [exact B|].
+rewrite length_app, Nat2Z.inj_add, SBLK_length in LT. unfold str_base. lia.
+Qed.
+#[using="mbase sp IMGHI PADOK TOP8 HID"] Lemma arg_string : forall i s, nth_error argv i = Some s ->
 exists off, nth_error (str_ptrs SB argv) i = Some (SB + off) /\ 0 <= off /\
 let P := SB + off in
 let k := (- (P + Z.of_nat (length s) + 1)) mod 8 in
-exists slack : list byte, zlength slack = k /\ P + Z.of_nat (length s) + 1 + k <= SB + Z.of_nat (length SBLK)
+exists slack : list byte, zlength slack = k /\ P + Z.of_nat (length s) + 1 + k <= bv_unsigned top - 8
 /\ bytes_at bsegs m P (s ++ Z_to_bv 8 0 :: slack).
 Proof.
 intros i s Hn. destruct (str_ptrs_nth argv SB i s Hn) as (off & Hp & Ho & Ht & Hf).
 exists off. split; [exact Hp|]. split; [exact Ho|]. cbv zeta.
-pose proof SBLK_mod8 as [M1 M2]. pose proof SBLK_length as SL. pose proof (raw_len_nonneg argv envp) as (R1 & R2 & R3 & R4).
+pose proof SBLK_length as SL. pose proof SBLK_end as SE.
+pose proof (total_arg_bytes_nonneg envp). pose proof (lstr_eq argv envp execfn) as LE.
 set (k := (- (SB + off + Z.of_nat (length s) + 1)) mod 8).
 Local Ltac2 Set LiaHints.tbl := fun () => "0070>13714664255.3215200645030.3319033648627.5623230617938.3437466247107.314504959674.33 57988272893.3200000>00B00F00c01:01A01ES2Ho2Hk3FIT2LSS2LSS2H0S2Ho2Ht2SL2R32R42Hk3FIT2LS2FLS2Ho2Ht2SL2R32R42Hk3FITS2Ho2LSS2LS".
 assert (Hk : 0 <= k < 8) by (subst k; Z.div_mod_to_equations; lia).
-assert (FIT : SB + off + Z.of_nat (length s) + 1 + k <= SB + Z.of_nat (length SBLK)).
-{ subst k. Z.div_mod_to_equations. nia. }
+assert (FIT : SB + off + Z.of_nat (length s) + 1 + k <= bv_unsigned top - 8).
+{ subst k. unfold str_base in *. Z.div_mod_to_equations. lia. }
 exists (firstn (Z.to_nat k) (skipn (Z.to_nat off + (length s + 1)) SBLK)).
-assert (LS : (Z.to_nat off + (length s + 1) + Z.to_nat k <= length SBLK)%nat) by lia.
+assert (LS : (Z.to_nat off + (length s + 1) + Z.to_nat k <= length SBLK)%nat) by (unfold str_base in *; lia).
 split. { unfold zlength. rewrite firstn_length, length_skipn. lia. }
 split; [exact FIT|].
-pose proof (bytes_at_slice bsegs b_phdrs sp argv envp uid hw draw m SB SBLK (Z.to_nat off) (length s + 1 + Z.to_nat k) SBLK_at ltac:(lia)) as B.
+pose proof (InitMem.bytes_at_slice bsegs m SB SBLK (Z.to_nat off) (length s + 1 + Z.to_nat k) SBLK_at ltac:(lia)) as B.
 rewrite Z2Nat.id in B by lia. rewrite firstn_add_split in B. rewrite skipn_skipn in B || rewrite <- skipn_add in B || idtac.
 eapply bytes_at_ext; [exact B|].
 replace (length s + 1 + Z.to_nat off)%nat with (Z.to_nat off + (length s + 1))%nat by lia.
@@ -585,6 +584,44 @@ pose proof (flatten_strings_length argv) as FL.
 rewrite Hf. rewrite length_skipn.
 replace (length s + 1 - (length (flatten_strings argv) - Z.to_nat off))%nat with 0%nat by lia. cbn [firstn]. apply app_nil_r.
 Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
+Definition round_dn64 (x : Z) : Z := x / 64 * 64.
+Definition round_up64 (x : Z) : Z := (x + 63) / 64 * 64.
+Variable V : nat -> Z.
+Hypothesis HM : Forall (mfact_ok bsegs V m) BMKN.
+Hypothesis HP : Forall (pfact_ok V) BPKN.
+Hypothesis TOPHI : bv_unsigned top <= 2^47.
+Hypothesis SPW : ATOP + 8388608 <= usp.
+Hypothesis HAT : 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat - 8388608 = ATOP.
+Lemma arg_pack : forall i s, nth_error argv i = Some s ->
+exists off (slack : list byte) (r : region),
+nth_error (str_ptrs SB argv) i = Some (SB + off) /\ 0 <= off
+/\ bytes_at bsegs m (SB + off) (s ++ Z_to_bv 8 0 :: slack)
+/\ (- (SB + off + Z.of_nat (length s) + 1)) mod 8 <= zlength slack
+/\ usp + 24 <= SB + off
+/\ shclean m (r_lo r) (r_hi r) (r_rlo r) (r_rhi r) /\ r_lo r < r_hi r
+/\ inreg r (SB + off) (Z.of_nat (length s) + 1 + zlength slack)
+/\ usp + -112 <= r_rlo r /\ ATOP <= r_rlo r /\ r_rhi r <= 2^47
+/\ SB + off + Z.of_nat (length s) + 1 + zlength slack <= 2^47.
+Proof using All.
+intros i s Hn.
+destruct (arg_string i s Hn) as (off & Hp & Ho & slack & SL & FIT & BY).
+cbv zeta in SL, FIT.
+pose proof (hsz_eq (kb_rseq (in_kernel inp)) argv envp) as HS. unfold Lib.InitMem.argc, Lib.InitMem.envc in HS.
+pose proof (Nat2Z.is_nonneg (length argv)). pose proof (Nat2Z.is_nonneg (length envp)).
+pose proof (Nat2Z.is_nonneg (auxv_count (kb_rseq (in_kernel inp)))). pose proof (Nat2Z.is_nonneg (gap_len argv envp)).
+assert (SB24 : usp + 24 <= SB) by (unfold str_base in *; lia).
+atop_facts.
+assert (LS : 0 <= zlength slack) by (unfold zlength; lia).
+assert (HE : SB + off + Z.of_nat (length s) + 1 + zlength slack <= 2^47 - 8) by lia.
+assert (D1 : SB + off - 63 <= round_dn64 (SB + off) <= SB + off /\ round_dn64 (SB + off) mod 64 = 0) by (unfold round_dn64; Z.div_mod_to_equations; lia).
+assert (U1 : SB + off + Z.of_nat (length s) + 1 + zlength slack <= round_up64 (SB + off + Z.of_nat (length s) + 1 + zlength slack) <= 2^47
+/\ round_up64 (SB + off + Z.of_nat (length s) + 1 + zlength slack) mod 64 = 0) by (unfold round_up64; Z.div_mod_to_equations; lia).
+exists off, slack, (mkRegion (SB + off) (SB + off + Z.of_nat (length s) + 1 + zlength slack)
+(round_dn64 (SB + off)) (round_up64 (SB + off + Z.of_nat (length s) + 1 + zlength slack))).
+cbn [r_lo r_hi r_rlo r_rhi]. unfold inreg. cbn [r_lo r_hi].
+repeat match goal with |- _ /\ _ => split end; try exact Hp; try exact BY; try lia.
+apply (stack_shclean_init V m HM HP HAT); unfold Shadow.KEND; lia.
+Qed.
 End StringBlock.
 End CANSEC4.
 Ltac lit_divs := repeat match goal with |- context [?a / ?b] =>
@@ -593,7 +630,7 @@ Section CANSEC5. Context {rc : runConstT}.
 Section VisRng.
 Variables (lz : list (word * word)) (AL : word -> Prop) (V : nat -> Z).
 Hypothesis A0I : forall p : word, bv_unsigned p mod 4096 = 0 -> aallowed (allow_of 2147450880 V both_vis) p -> AL p.
-Hypothesis HP : Forall (pfact_ok V) both_pure_facts.
+Hypothesis HP : Forall (pfact_ok V) BPKN.
 Hypothesis HAT : 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat - 8388608 = ATOP.
 #[using="Type"] Lemma page_base_of_val : forall z, 0 <= z < 2^64 -> bv_unsigned (page_base_of z) = z / 4096 * 4096.
 Proof.
@@ -663,56 +700,4 @@ Proof. clear HP HAT. intros P310. atop_facts. eapply (vis_rng 4); [reflexivity| 
 Proof. clear A0I HP HAT. intros b Hb. Local Ltac2 Set LiaHints.tbl := fun () => "0030=33629942853.861883801886.68739886716.6 00000400800<S2HzS2HbS2Hb".
 apply rng_fp_ok; [lia| lia|]. intros z Hz. lia. Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
 End VisRng.
-Section ArgPack.
-Variables (V : nat -> Z) (sp : word) (argv envp : list (list byte)) (uid hw : word) (draw : EntryDraw) (m : word -> option byte).
-Notation usp := (bv_unsigned sp).
-Notation SB := (str_base sp argv envp).
-Hypothesis HM : Forall (mfact_ok bsegs V m) both_mem_facts.
-Hypothesis HP : Forall (pfact_ok V) both_pure_facts.
-Hypothesis SPLO : stack_max_size <= usp.
-Hypothesis IMGHI : usp + Z.of_nat (length (entry_stack_image b_phdrs sp argv envp uid hw draw)) <= 2^64.
-Hypothesis SP16 : usp mod 16 = 0.
-Hypothesis SPW : ATOP + 8388608 <= usp.
-Hypothesis HAT : 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat - 8388608 = ATOP.
-Hypothesis FITS : usp + entry_stack_span argv envp <= 2^47.
-Hypothesis VARGV : valid_argv argv.
-Hypothesis HID : forall z, SB <= z < SB + Z.of_nat (length (SBLK argv envp)) -> m (wa z) = wrap_mem b_phdrs sp argv envp uid hw draw (wa z).
-Definition round_dn64 (x : Z) : Z := x / 64 * 64.
-Definition round_up64 (x : Z) : Z := (x + 63) / 64 * 64.
-#[using="rc VARGV"] Lemma span_ge : SB + Z.of_nat (length (SBLK argv envp)) + 16 <= usp + entry_stack_span argv envp /\ usp + 192 <= SB.
-Proof.
-clear HM HP SPLO IMGHI SP16 SPW FITS HID. rewrite SBLK_length. unfold str_base, struct_size, Lib.InitMem.argc, Lib.InitMem.envc, entry_stack_span, pad_len, raw_len, struct_size, Lib.InitMem.argc, Lib.InitMem.envc.
-pose proof (raw_len_nonneg argv envp) as (R1 & R2 & R3 & R4). unfold pad_len, raw_len, struct_size, Lib.InitMem.argc, Lib.InitMem.envc in R4.
-destruct VARGV as (A1 & _). change (Z.of_nat auxv_size) with 160.
-Local Ltac2 Set LiaHints.tbl := fun () => "0020>19770166445.1720724056121.3100000:00>S2R22R32A1S2R4".
-split; [| lia]. Z.div_mod_to_equations. lia.
-Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
-#[using="V uid hw draw HM HP SPLO IMGHI SP16 SPW HAT FITS VARGV HID"] Lemma arg_pack : forall i s, nth_error argv i = Some s ->
-exists off (slack : list byte) (r : region),
-nth_error (str_ptrs SB argv) i = Some (SB + off) /\ 0 <= off
-/\ bytes_at bsegs m (SB + off) (s ++ Z_to_bv 8 0 :: slack)
-/\ (- (SB + off + Z.of_nat (length s) + 1)) mod 8 <= zlength slack
-/\ usp + 24 <= SB + off
-/\ shclean m (r_lo r) (r_hi r) (r_rlo r) (r_rhi r) /\ r_lo r < r_hi r
-/\ inreg r (SB + off) (Z.of_nat (length s) + 1 + zlength slack)
-/\ usp + -112 <= r_rlo r /\ ATOP <= r_rlo r /\ r_rhi r <= 2^47
-/\ SB + off + Z.of_nat (length s) + 1 + zlength slack <= 2^47.
-Proof.
-intros i s Hn.
-destruct (arg_string sp argv envp uid hw draw m SPLO IMGHI SP16 HID i s Hn) as (off & Hp & Ho & slack & SL & FIT & BY).
-cbv zeta in SL, FIT.
-pose proof span_ge as [SG1 SG2]. pose proof (SBLK_mod8 sp argv envp SP16) as [M1 M2]. atop_facts.
-Local Ltac2 Set LiaHints.tbl := fun () => "00D0>10433973477.3810746855567.381607278993.38 16936740393.3821263250465.3827609915065.3832749706502.8632749706889.783665281493.38 38309828691.3438569593740.354511089163.38 4724217088.38 49722223811.3850189981417.3859014471979.3862504773662.3863463036573.386425729787.38 9063849466.38 00000400500900S00T00n01E01R01S01T01o02302M02Q02k02o03I03M03g03kS2U1SS2HES3SPW2Ho2SL3SG21H2LS2D12U1SS3SPW2Ho2SL3SG21H2LS2D12U1S2SL2HE2H02H12H52H63H25S2H02H12H52H6FSS3SPW4FITS2SL3FIT3SG13SG21HS2HoS3SPW2Ho2SL3SG21H2LS2D12U1S2U1S3SPW2Ho2SL3SG21H2LS2D12U1S2HES3SPW2Ho2SL3SG21H2LS2D12U1S2D1S3SPW2Ho2SL3SG21H2LS2D12U1S2U1".
-assert (LS : 0 <= zlength slack) by (unfold zlength; lia).
-assert (HE : SB + off + Z.of_nat (length s) + 1 + zlength slack <= 2^47 - 16) by lia.
-assert (D1 : SB + off - 63 <= round_dn64 (SB + off) <= SB + off /\ round_dn64 (SB + off) mod 64 = 0) by (unfold round_dn64; Z.div_mod_to_equations; lia).
-assert (U1 : SB + off + Z.of_nat (length s) + 1 + zlength slack <= round_up64 (SB + off + Z.of_nat (length s) + 1 + zlength slack) <= 2^47
-/\ round_up64 (SB + off + Z.of_nat (length s) + 1 + zlength slack) mod 64 = 0) by (unfold round_up64; Z.div_mod_to_equations; lia).
-exists off, slack, (mkRegion (SB + off) (SB + off + Z.of_nat (length s) + 1 + zlength slack)
-(round_dn64 (SB + off)) (round_up64 (SB + off + Z.of_nat (length s) + 1 + zlength slack))).
-cbn [r_lo r_hi r_rlo r_rhi]. unfold inreg. cbn [r_lo r_hi].
-repeat match goal with |- _ /\ _ => split end; try exact Hp; try exact BY; try lia.
-apply (stack_shclean_init V m HM HP HAT); unfold Shadow.KEND; lia.
-Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
-End ArgPack.
 End CANSEC5.

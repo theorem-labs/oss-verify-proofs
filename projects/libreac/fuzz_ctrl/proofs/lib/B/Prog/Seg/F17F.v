@@ -3,9 +3,9 @@
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
    source runs: lib/B/Prog/Seg/F17.v (not in this delivery) seg_F17 (the inline run of the sl_run bullet) at
-     a working branch 3803efccea0 (blob e013a16d62b4fdb9840ec9ea0ff0b7293820c8ce);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+     a working branch (blob e013a16d62b4fdb9840ec9ea0ff0b7293820c8ce);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    compare: seg_F17_run (evtF_evt, no rng premise to discharge: the run touches no memory) re-derives the source
      run's statement in the lib.Lib Exec.evt form; the segment proof states that run in the UL engine's Exec.evt
      form and carries it to lib.Lib with SmLib.ul_entry inside Tac_slot.sl_run, and the two evt definitions are the

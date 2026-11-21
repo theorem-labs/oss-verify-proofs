@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the section is over YA02's run-input form, SINV0, argH0, E0 and wrap_mem over the run's ProcInput, mmap base and entry word, with valid_launch and the launch premise entry_launch_ok_va in place of entry_stack_fits and the uid and hwcap fields; the reserved-ledger obligation covers the image's reservations followed by the vDSO pair, and a new obligation shows the primary reserve and the pointer array avoid the reserved ledger; the hand-off premise over the hand-off states computed from the run at the run's own CONFIG_RSEQ flag, YB01r.v, and the computed hand-off check over both flags' states; the fresh variables its data and proofs name are the computed hand-off states' own numbers in place of the recorded states' (109 to 518, and 391), read from this unit's hand-off probe). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -9,7 +10,7 @@ From OSSVerify.cgif.cgif_rgb_fuzzer.images Require Import AsanUbsan.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import
 YK11 YQ0b YK00 YK05 YA0i YA0l YK0h
 YK0d YK0e YK0f YK0g YK0a YA01 YA0c YA0e YA0d YA02 YA0j
-YB11 YB1g YB12 YB01
+YB11 YB1g YB12 YB01r
 YG00 YG01 YG0h YG10 YG0u YG0x YG0b YG0i YF9j YN05 YD1e YD1d YD2e.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
@@ -27,39 +28,45 @@ intros sg Hsg. pose proof (proj1 (forallb_forall _ _) trb_img_segs_b sg Hsg) as 
 apply andb_prop in X as [X1 X2]. apply Z.leb_le in X1. apply Z.leb_le in X2. exact (conj X1 X2).
 Qed.
 Definition AVIS13 : list (expr * expr) :=
-[ (epg 518, ELit 4096); (epg 501, ELit 8388608); (epg 500, ELit 1048576); (epg 424, ELit 11571200); (epg 357, ELit 4096);
-(epg 292, ELit 4096); (epg 275, ELit 65536); (epg 274, ELit 4096); RINFO_P; (epg 254, ELit 3727360); (epg 109, ELit 65536); IMG_P; STK_P ].
+[ (epg 524, ELit 4096); (epg 507, ELit 8388608); (epg 506, ELit 1048576); (epg 430, ELit 11571200); (epg 363, ELit 4096);
+(epg 296, ELit 4096); (epg 279, ELit 65536); (epg 278, ELit 4096); RINFO_P; (epg 258, ELit 3727360); (epg 113, ELit 65536); IMG_P; STK_P ].
 Definition avis_chk (ch : acs) : bool :=
 forallb (fun p => existsb (pair_eqb p) AVIS13 || existsb (sub_of_map p) (musl_maps ch))%bool (a_vis ch).
 Definition kz_chk (ch : acs) : bool :=
-(kn_zero ch (EMd M_MUL (ELit 512) (EVar 501)) 2147450880 1048576
-&& kn_zero ch (EMd M_MUL (ELit 512) (EVar 500)) 2147450880 131072
-&& kn_zero ch (EMd M_MUL (ELit 512) (EVar 424)) 2147450880 1446400)%bool.
-Lemma trb_holes_chkB : forallb (fun ch => avis_chk ch && kz_chk ch)%bool HS_trb_list = true.
+(kn_zero ch (EMd M_MUL (ELit 512) (EVar 507)) 2147450880 1048576
+&& kn_zero ch (EMd M_MUL (ELit 512) (EVar 506)) 2147450880 131072
+&& kn_zero ch (EMd M_MUL (ELit 512) (EVar 430)) 2147450880 1446400)%bool.
+Lemma trb_holes_chkB : forallb (fun ch => avis_chk ch && kz_chk ch)%bool HS_trb_list_all = true.
 Proof. vm_compute. reflexivity. Qed.
 Section f. Context {fx : YK11.FPState}.
 Section g.
 Variable B : asyms.
 Hypothesis HB : TrbSyms B.
-Variables (sp : word) (rdraw : EntryDraw) (brk : word) (inp : ProcInput).
+Variables (sp : word) (rdraw : EntryDraw) (brk mbase : word) (inp : ProcInput).
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv (in_argv inp).
 Hypothesis Hve : valid_envp (in_envp inp).
-Hypothesis Hfit : entry_stack_fits sp (in_argv inp) (in_envp inp).
+(* #38: [entry_stack_fits] is gone from YA02's section - YA02.v:47-56 lists the
+   hypotheses it now has and that is not among them - and every layout fact is
+   taken off the launch instead, as YD1d.v:267-271. *)
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) inp.
 Variable h : nat.
 Variables (ch : acs) (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model).
-Hypothesis Hch : HS_trb h = Some ch.
+Hypothesis Hch : HS_trb_r (APC.rseq_z (kb_rseq (in_kernel inp))) h = Some ch.
 #[local] Notation argv := (in_argv inp).
 #[local] Notation envp := (in_envp inp).
-#[local] Notation uid := (in_uid inp).
-#[local] Notation hw := (in_hwcap inp).
-#[local] Notation SINV := (YA02.SINV0 TPH sp rdraw brk argv envp uid hw).
-#[local] Notation argH := (YA02.argH0 TPH sp rdraw argv envp uid hw).
+(* #38: YA02's section is over the run's [inp] (YA02.v:47-56), so
+   [SINV0]/[argH0]/[E0] discharge as YD1d.v:281-287 spells them, and [wrap_mem]
+   takes the run, the mmap base and the entry word.  [uid] and [hw] leave: they
+   come off [inp] now. *)
+#[local] Notation SINV := (YA02.SINV0 TRB TPH sp rdraw brk mbase inp).
+#[local] Notation argH := (YA02.argH0 sp rdraw inp).
 #[local] Notation TOP := (YA02.TOP sp).
 #[local] Notation LIM := YA02.LIMIT.
 Hypothesis HC : cs_ok TSEGS TRB LIM TOP SINV argH (in_fs inp) E ch R FULL model.
-Hypothesis HE : forall n, (n < NX0G)%nat -> ev E n = ev (YA02.E0 TPH sp rdraw brk argv envp uid hw) n.
-Hypothesis HM : forall a, argH E a = true -> FULL a = wrap_mem TPH sp argv envp uid hw rdraw a.
+Hypothesis HE : forall n, (n < NX0G)%nat -> ev E n = ev (YA02.E0 sp rdraw brk inp) n.
+Hypothesis HM : forall a, argH E a = true -> FULL a = wrap_mem inp mbase TPH (Z_to_bv 64 (a_entry TRB)) sp rdraw a.
 #[local] Notation MR := (Mr TRB TOP argH E ch model FULL).
 #[local] Notation HID := (hid TRB TOP argH E ch model).
 #[local] Notation u := (uE E).
@@ -71,8 +78,8 @@ Hypothesis Hceil : YN05.ceil_of_top (usp - stack_max_size).
 #[local] Notation ly0 := (YD1d.ly0 ch E model).
 #[local] Notation rdS := (YD1d.rdS sp rdraw inp ch E FULL model).
 #[local] Notation HS0 := (YD1d.HS0 sp rdraw inp ch E model).
-Ltac inst H := try specialize (H B); try specialize (H HB); try specialize (H sp); try specialize (H rdraw); try specialize (H brk); try specialize (H inp);
-try specialize (H Hsp); try specialize (H Hva); try specialize (H Hve); try specialize (H Hfit); try specialize (H h); try specialize (H ch);
+Ltac inst H := try specialize (H B); try specialize (H HB); try specialize (H sp); try specialize (H rdraw); try specialize (H brk); try specialize (H mbase); try specialize (H inp);
+try specialize (H Hsp); try specialize (H Hva); try specialize (H Hve); try specialize (H Hvl); try specialize (H Hlau); try specialize (H h); try specialize (H ch);
 try specialize (H E); try specialize (H R); try specialize (H FULL); try specialize (H model); try specialize (H Hch); try specialize (H HC);
 try specialize (H HE); try specialize (H HM); try specialize (H rc); try specialize (H Hceil).
 Ltac get L := let H := fresh "L" in pose proof L as H; inst H; exact H.
@@ -137,7 +144,22 @@ constructor.
 -
 intros sg Hsg. cbn [ly_img YD1d.ly0]. exact (trb_img_segs sg Hsg).
 - exact (ho_limit TSEGS TRB LIM TOP SINV argH (in_fs inp) E ch R FULL model HC).
-- exact (ho_res TSEGS TRB LIM TOP SINV argH (in_fs inp) E ch R FULL model HC).
+- (* 08b1429: the reserved ledger is the image's reservations plus the vDSO pair ([co_res]) *)
+destruct (ho_res TSEGS TRB LIM TOP SINV argH (in_fs inp) E ch R FULL model HC) as (rx & Hres & HG & Hlen & Hsum).
+assert (SS : forall l, 0 <= sum_sizes l).
+{ induction l as [|y l IH]; cbn [sum_sizes]; [lia|]. pose proof (bv_unsigned_in_range 64 (snd y)) as Ry. unfold bv_modulus in Ry. lia. }
+assert (SLE : forall l e, In e l -> bv_unsigned (snd e) <= sum_sizes l).
+{ induction l as [|y l IH]; intros e He; [destruct He|]. cbn [sum_sizes]. destruct He as [<-|He].
+- pose proof (SS l). lia.
+- pose proof (IH e He). pose proof (bv_unsigned_in_range 64 (snd y)) as Ry. unfold bv_modulus in Ry. lia. }
+assert (PR : resx_bytes TRB = 0x14000) by (vm_compute; reflexivity).
+assert (NR : n_resx TRB = 2%nat) by reflexivity.
+exists rx. split; [exact Hres|]. split.
++ apply Forall_forall. intros e He. pose proof (proj1 (Forall_forall _ _) HG e He) as (P1 & _ & _ & _ & P5 & _).
+pose proof (SLE rx e He). rewrite PR in Hsum.
+match type of P5 with ?k + 4096 <= _ => assert (Ek : k = 0x10007fff8000) by reflexivity; rewrite Ek in P5 end.
+unfold YG0h.kHighMemBeg. lia.
++ rewrite NR in Hlen. exact Hlen.
 -
 exists [(u eP, kPrimResvSize)]. split.
 + split; [|split].
@@ -223,6 +245,18 @@ apply YG0i.shna_of_uncovered.
 assert (Hx64 : 0 <= x < 2 ^ 64) by (unfold kLowShadowBeg, kLowShadowEnd, kHighShadowBeg, kHighShadowEnd in Hx; lia).
 pose proof (band_facts (Z_to_bv 64 x)) as BF. rewrite Z_to_bv_unsigned, bv_wrap_small in BF by (change (bv_modulus 64) with (2 ^ 64); lia).
 exact (proj1 (BF Hx)).
+-   (* al_zres: the primary reserve and the pointer array are start-up maps, which avoid the reserved ledger *)
+pose proof (ho_mres TSEGS TRB LIM TOP SINV argH (in_fs inp) E ch R FULL model HC) as MR.
+assert (ZR : forall d, In d vm -> region_free (vm_reserved (m_vmmaps model)) (fst d) (snd d) = true).
+{ intros d Hd. pose proof (proj1 (Forall_forall _ _) MR d Hd) as D. apply YG0j.region_free_intro.
+  intros e He. pose proof (proj1 (Forall_forall _ _) D e He) as De. unfold iv_disjoint in De. unfold YG0j.uw. lia. }
+split.
++ assert (HP : In (wiv (ly_prim ly0, kPrimResvSize)) vm).
+  { cbn [ly_prim YD1d.ly0]. unfold kPrimResvSize. rewrite <- VP, wiv_wzp. vin. }
+  exact (ZR _ HP).
++ assert (HQ : In (wiv (ly_Q ly0, kPtrArrayResv)) vm).
+  { cbn [ly_Q YD1d.ly0]. change kPtrArrayResv with 8388608. rewrite <- VQ, wiv_wzp. vin. }
+  exact (ZR _ HQ).
 Qed.
 Definition W0 : world TSEGS := YD2e.W1 sp rdraw inp Hsp Hva ch E model.
 Lemma W0_H : w_H W0 = YD2e.H1 sp rdraw inp ch E model.   Proof. reflexivity. Qed.
@@ -264,7 +298,7 @@ Lemma MR_full : forall (a : word) b, MR a = Some b -> FULL a = Some b.
 Proof. intros a b H. unfold Mr, mrestrict in H. destruct (HID a); [discriminate H | exact H]. Qed.
 Lemma CHKB : avis_chk ch = true /\ kz_chk ch = true.
 Proof.
-pose proof (proj1 (forallb_forall _ _) trb_holes_chkB ch (HS_trb_In h ch Hch)) as H. cbn beta in H.
+pose proof (proj1 (forallb_forall _ _) trb_holes_chkB ch (HS_trb_r_In _ h ch Hch)) as H. cbn beta in H.
 apply andb_prop in H as [H1 H2]. exact (conj H1 H2).
 Qed.
 Lemma avis_cases : forall p, In p (a_vis ch) -> In p AVIS13 \/ exists m, In m (musl_maps ch) /\ sub_of_map p m = true.
@@ -273,9 +307,9 @@ intros p Hp. pose proof (proj1 (forallb_forall _ _) (proj1 CHKB) p Hp) as H. cbn
 - left. apply existsb_exists in H as (q & Hq & He). apply pair_eqb_eq in He. subst q. exact Hq.
 - right. apply existsb_exists in H as (m & Hm & Hs). exists m. exact (conj Hm Hs).
 Qed.
-Lemma kz_facts : kn_zero ch (EMd M_MUL (ELit 512) (EVar 501)) 2147450880 1048576 = true
-/\ kn_zero ch (EMd M_MUL (ELit 512) (EVar 500)) 2147450880 131072 = true
-/\ kn_zero ch (EMd M_MUL (ELit 512) (EVar 424)) 2147450880 1446400 = true.
+Lemma kz_facts : kn_zero ch (EMd M_MUL (ELit 512) (EVar 507)) 2147450880 1048576 = true
+/\ kn_zero ch (EMd M_MUL (ELit 512) (EVar 506)) 2147450880 131072 = true
+/\ kn_zero ch (EMd M_MUL (ELit 512) (EVar 430)) 2147450880 1446400 = true.
 Proof.
 pose proof (proj2 CHKB) as H. unfold kz_chk in H. apply andb_prop in H as [H H3]. apply andb_prop in H as [H1 H2]. exact (conj H1 (conj H2 H3)).
 Qed.

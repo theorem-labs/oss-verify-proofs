@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/CLenqcgifRaw.v (a working branch ced28ed2383, file sha256 efb4361fbbdc) onto omx-clap-core/fuzz_state's asan-ubsan image (fuzz_state.asan-ubsan, pinned sha256 5ac5ce0954f8; addresses read from its unstripped build b1566a1ca816); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/CLenqcgifRaw.v (a working branch, file sha256 efb4361fbbdc) onto omx-clap-core/fuzz_state's asan-ubsan image (fuzz_state.asan-ubsan, pinned sha256 5ac5ce0954f8; addresses read from its unstripped build b1566a1ca816); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
 (* Modified by Theorem Labs, 2026-10: omx-clap-core fuzz_state image B (fs.asan-ubsan): fs C5 - U is tr_admit (as_universe B) S tr, the DIface / DIfaceR instance's trace premise, instead of In tr (as_universe B); the proof does not change. Image A's text (a Theorem Labs lane's DgC5-s1a.patch), mirrored. *)
 (* Modified by Theorem Labs, 2026-10: new file.  cgif_file's [dr_enqueue] field of DIfaceR (DIfaceR.v): QuarantineCache::
    Enqueue at Put's call with the raw frame, [enq_spec_g (acall_raw_x B (aowned B))] at cgif's instance (U := tr_admit
    (as_universe B) S tr, ARX := ARX_cgif, AOX := aowned, rpre := rpre_dealloc_cgif, lpost := qtight, fpre := fpre_cgif,
    dpost := CLdepot.dpost_x, QB := qloose), for a Theorem Labs lane's DIfaceRcgif.diface_r_cgif_of_enq. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* No new walk: CLenqcgif.di_enqueue_cgif already proves the enqueue with CLenq.acall_post_x, whose seventh conjunct
    IS the raw frame (CLenq.v: `forall x : word, ~ AOX ly S .. -> ~ AOX ly' S' .. -> ~ ascratch B stk regs .. -> ~ E .. ->

@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/AD2o.v, with its module paths, module names and addresses changed; 30 of its 82 lines of code are new or changed and 30 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises)). *)
 (* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMTfibParts.v, relocated by b_reloc.py (b7comp): every image
    numeral re-derived by symbol / section / string content, revcheck report (internal path). *)
 (* fuzz_manifest's image-B ASan side TFIB_TB (FMTfibTB.v) from the relocated runtime core of cgif_file_fuzzer (lib/ReusableB),
@@ -78,26 +79,28 @@ Let EXS : exit_site_tfa B est xst := tfib_exit_site B HB LAWS.
 Lemma fm_srealizesX_rc : forall sp rdraw brk mb inp,
   valid_sp sp -> valid_brk TSEGS brk -> valid_mmap_base mb ->
   entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
   YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
   srealizes TSEGS (init_config TSEGS AsanUbsan.M.init_pc TPH sp brk mb rdraw target_alloc_limit inp) (SPECX inp).
 Proof.
-intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil.
+intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil.
 change target_alloc_limit with YA02.LIMIT.
 exact (tfib_srealizesX B HB AMALLOC AFREE AICPY ARDCHK ameter_triv XL0 XL0 0x99738 0x9a990 MT_FREE RO_IN LI LIBX LIK LI0 xst XFR PF1 PFN est ESTI ESTF FWS RFS FPO FPR FPU EXS
-  sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil).
+  sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil).
 Qed.
 End RC.
 Theorem fm_srealizesX_top : forall sp rdraw brk mb inp,
   valid_sp sp -> valid_brk TSEGS brk -> valid_mmap_base mb ->
   entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
   srealizes TSEGS (init_config TSEGS AsanUbsan.M.init_pc TPH sp brk mb rdraw target_alloc_limit inp) (SPECX inp).
 Proof.
-intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp.
-exact (@fm_srealizesX_rc (YM05.RunCeilOf (bv_unsigned sp) (valid_sp_windowX sp Hsp)) sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp (YM05.ceil_of_top_run _)).
+intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau.
+exact (@fm_srealizesX_rc (YM05.RunCeilOf (bv_unsigned sp) (valid_sp_windowX sp Hsp)) sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau (YM05.ceil_of_top_run _)).
 Qed.
 Theorem TFIB_TB_of_lib : TFIB_TB.
 Proof.
 unfold TFIB_TB, tfibsegsB0. change AsanUbsan.M.loaded_segments with TSEGS. change AsanUbsan.M.phdrs with TPH.
-intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp. exact (fm_srealizesX_top sp rnd brk mbase inp Hsp Hbrk Hmb Hfit Hinp).
+intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau. exact (fm_srealizesX_top sp rnd brk mbase inp Hsp Hbrk Hmb Hfit Hinp Hlau).
 Qed.
 End b.

@@ -5,7 +5,7 @@
    atom 13 in [2^64 - 2^47, 2^64 - 4097]), the word's shadow byte s (IMG's cstr_ok of ex_prefix_word.word 0x20d20:
    s = 0 or 7), the entry state ss_W k s (hd_W_entry), a run to 0x8144c, the word byte region (hd_W_swap), a run to the
    beq 0x81450, the branches (0x81450 beq a0, a1; 0x81458 bne a1 - 32, a0).
-   Shape after image A's lib/A/FMW_ex_head_w.v (06d82004dc3). *)
+   Shape after image A's lib/A/FMW_ex_head_w.v. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

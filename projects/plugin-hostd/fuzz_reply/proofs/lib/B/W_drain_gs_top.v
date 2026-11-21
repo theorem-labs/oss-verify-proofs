@@ -8,6 +8,7 @@
      pb_gs_free (lib/B/W_gsfree.v) : gs_free_stmt   GF 0x83cb4 -> DLN 0x839d4
    Proves no function (kind: segment lemma of drain's image-B walk, GS stage).  The Section header is
    lib/B/W_drain_gs.v's (= lib/B/W_drain_cx.v's), verbatim. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -163,9 +164,9 @@ Variable RP : roomp.
 Variable MMAX : Z.
 Variable RG : rep_globals.
 Context {hl : Z}.
-(* lib/B/W_drain_cx_x.v:154 *)
+(* lib/B/W_drain_cx_x.v:155 *)
 Hypothesis LAWS : AR_laws_x SEGS B ARx hl.
-(* lib/B/W_drain_cx_x.v:156-216, the ones the three stages take *)
+(* lib/B/W_drain_cx_x.v:157-217, the ones the three stages take *)
 Hypothesis HG : gx_ok SEGS B (G_DR B RG).
 Hypothesis HGR : forall a, inG (G_DR B RG) a -> ~ in_rom SEGS a.
 Hypothesis HROMO : rom_out SEGS B (G_DR B RG).
@@ -192,7 +193,7 @@ Hypothesis HSM : 0x10000 <= rg_send_max RG /\ rg_send_max RG + 8 <= IMG_TOP.
 Hypothesis HP0 : forall ly S Hp W mem md, ARx ly S Hp W mem md -> Hp = [].
 Hypothesis BLKN : forall ly S Hp W mem md p n, ARx ly S Hp W mem md -> In (p, n) (ablocks B ly S) -> 0 <= n.
 Hypothesis PSTR : forall a, in_rom SEGS a -> ~ Exists (in_zr a) PST.
-(* lib/B/W_drain_cx_x.v:219-226: the three allocator rules the stages call and their call-site facts *)
+(* lib/B/W_drain_cx_x.v:220-227: the three allocator rules the stages call and their call-site facts *)
 Variables CTX_R CTX_F CTX_S : list (list Z).
 Hypothesis AREALLOC : arealloc_cf_rule_c_x SEGS B PST ARx MT MMAX RP CTX_R (SIGMA WS_realloc).
 Hypothesis AFREE : afree_cf_rule_c_x SEGS B PST ARx MT RP CTX_F.
@@ -222,7 +223,7 @@ Hypothesis ASTRNDUP_R : astrndup_cf_rule_c_xR SEGS B PST ARx MT MMAX RP CTX_S R 
 Hypothesis AFREE_R : afree_cf_rule_c_xR SEGS B PST ARx MT RP RO CTX_F R.
 
 (* R twin of pb_dr_gs_x: the three stages at R.  Scan is this lane's pb_gs_scan_xR (W_gsscan.v); add and free are
-   CfInstMiss-style twins from a Theorem Labs lane's W_gsadd.v / W_gsfree.v (a working branch 2e85f97d9c85). *)
+   CfInstMiss-style twins from a Theorem Labs lane's W_gsadd.v / W_gsfree.v (a working branch). *)
 Theorem pb_dr_gs_xR : dr_gs_stmt_xR B PST ARx MT RP MMAX RG R.
 Proof.
 apply dr_gs_of_xR;

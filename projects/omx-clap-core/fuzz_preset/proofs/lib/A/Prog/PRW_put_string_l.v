@@ -9,14 +9,14 @@
 (* Modified by Theorem Labs, 2026-10: cgif's frame-area call rule aj_stack_malloc_at (proofs/cgif/cgif_file_fuzzer/lib/
    YCbq.v:1749-1809, this tree's copy lib/Reusable/YCbq.v:1749) restated over YCbqG.v's journal ajournal_x (allocator
    invariant a parameter ARx, ghost head set Hp after S / Hpc after Sc, program statics PST), for the frame-area
-   contract astack_malloc_realizes_x of the frozen lib/Reusable/FCiface.v (frameclass d9a884240c6e, sha256
+   contract astack_malloc_realizes_x of the frozen lib/Reusable/FCiface.v (frameclass, sha256
    673aac5ee2f6ed86). Generic: no image
    class, no address, no allocator instance.
    Differences from the donor, each minimal:
    (a) cgif read the model's progress and post from model_laws (stack_malloc_progressP, ml_stack_malloc through
        am_wf); here they are ONE hypothesis in ARx form, SMX, which an instance discharges from its own model laws
        (the cf instance: YG05cf.v stack_malloc_progress_cf and stack_malloc_ok_cf with Wf_cf from ARcf);
-   (b) the call's own journal is call_effect_journal_x (YGcallx.v:251) at PST = [], lifted by ajournal_x_nil_pst, and
+   (b) the call's own journal is call_effect_journal_x (YGcallx.v:252) at PST = [], lifted by ajournal_x_nil_pst, and
        composed by ajournal_x_sub (YCbqG.v, footprint FP1 = []); Hp is threaded unchanged (FCiface: a frame-area call
        neither poisons nor unpoisons a head);
    (c) the frame's presence (FCiface's post) is also returned, which a caller writing its new frame needs;
@@ -27,14 +27,15 @@
    (ASFX = YG0dcf.v astack_free_law_cf; FFLX = the two conjuncts of cgif's frame_flag_lawP the rule reads, over ARx;
    SFX = YG05cf.v stack_free_ok_cf).
    THIRD RULE, aj_set_shadow_at_x: cgif's frame-area set_shadow call rule (cgif_rgb_fuzzer lib/YC05.v:206) over
-   ajournal_x for FCiface's aset_shadow_realizes_x, taken from WalkH6's set-shadow-v2.patch (cold/h-hpreset-7-walk-H6
-   321efcb143d) unchanged but for its comment.
+   ajournal_x for FCiface's aset_shadow_realizes_x, taken from WalkH6's set-shadow-v2.patch
+    unchanged but for its comment.
    Rule 24: no ajournal_x port of aj_stack_malloc_at or aj_flag_store existed on any branch read (WalkS8a confirmed,
    2026-10-28 ~23:40Z; h-hpreset-7 stopped c-omx-alloc's lane for both); cgif's released YCbq.v is the source ported.
    Numerals: 0, 10 (cgif's class range), 16 (stack alignment), 64 (the smallest frame), 4096 (= ESTACK, YG0d.v),
    2 ^ 40, 2 ^ 64: LENGTH / DERIVED. No ADDRESS. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcallSx.v, with its module names changed; 817 of its 892 lines of code are new or changed and 286 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/PRW_put_string_t.v, with its numbers changed; 997 of its 1155 lines of code are new or changed and 734 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset image A, slice S7b (WalkS7b.S7bPutString.PsLoop): put_string's walk, the LOOP lane: from the loop head
    (A 0x884ec = AF_put_string + 384) through the byte test, the run put of a special byte (A 0x88514) and the re-poison /
    shadow-checked load of the next byte (A 0x885b8 = AF_put_string + 588 .. 0x88604), to the escape join (AF + 428,

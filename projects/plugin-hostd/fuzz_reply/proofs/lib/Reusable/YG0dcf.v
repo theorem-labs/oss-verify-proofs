@@ -1,4 +1,4 @@
-(* CARRIED from commit f02099425ace9f613657229b085bb00b2e89f977,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YG0dcf.v, sha256 ad2dabf4baa20e6cc40881b9ab2c5feb623cd74df4815e0f25f0910a61f2b194 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the Require lines only:
    the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
@@ -6,9 +6,10 @@
 *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Taken by path from a working branch a0fed4266a1b, provisional. *)
+(* Taken by path from a working branch, provisional. *)
 (* Modified by Theorem Labs, 2026-10: module paths changed from fuzz_preset lib.Reusable to cgif_file_fuzzer lib; the text is otherwise unchanged. *)
-(* Modified by a Theorem Labs lane (ReallocPrimary.TkSecLink), 2026-10-30: acall_pre_cf's stack-bottom conjunct is A7d's `ly_bot ly + ACALL_PREFIX < spZ regs` (a3e599d9f79e Reusable/YG0dcf.v:52), with the Notation ACALL_PREFIX taken from a3e599d9f79e Reusable/YG0d.v:21; nothing else of that set is taken. *)
+(* Modified by a Theorem Labs lane (ReallocPrimary.TkSecLink), 2026-10-30: acall_pre_cf's stack-bottom conjunct is A7d's `ly_bot ly + ACALL_PREFIX < spZ regs` (Reusable/YG0dcf.v:52), with the Notation ACALL_PREFIX taken from Reusable/YG0d.v:21; nothing else of that set is taken. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (malloc_leaf_cf's comment names the revision's grant check, grant_ok_na_pin_b); internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the event-free second allocator instance (suffix cf), the CALL FORMS and the
    STATEMENTS of the AR laws, over ARcf. cgif's YG0d.v is NOT edited.
    Restated from YG0d.v: acall_pre (:226-234) without `aregime S` and with qmeter_cf, acall_post (:235-243),
@@ -32,7 +33,7 @@ Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Local Set Warnings "-abstract-large-number".
 Local Open Scope Z_scope.
-(* Taken from a working branch A7d a3e599d9f79e proofs/omx-clap-core/fuzz_preset/lib/Reusable/YG0d.v:21, provisional:
+(* Taken from a working branch A7d proofs/omx-clap-core/fuzz_preset/lib/Reusable/YG0d.v:21, provisional:
    the stack an allocator interceptor uses above the ASan stack bottom ly_bot before it enters Allocate / Deallocate /
    Reallocate.  A numeral notation, so that lia sees its value; it stands before Section G because a notation
    declared inside a section disappears when the section closes. *)
@@ -41,8 +42,8 @@ Notation ACALL_PREFIX := 4096%Z (only parsing).
 
 Section G. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : CfParams}.
 
-(* The two names AR_head_frame_law_cf needs, VERBATIM from h-rw-man-5's YGcfHp.v:46-51
-   (cold/h-rw-man-5-cfhp 29c8b46b1cef). They live here, not in YGcfHp.v, because the law is
+(* The two names AR_head_frame_law_cf needs, VERBATIM from h-rw-man-5's YGcfHp.v:47-52.
+   They live here, not in YGcfHp.v, because the law is
    a field of AR_laws_cf below and YGcfHp.v imports this file (a cycle otherwise).
    amc_hp_live's body (YG0ncf.v), named: p is the user base of a live block of at least
    cf_head bytes. *)
@@ -60,7 +61,7 @@ Section RO.
 Variable segs : list Segment.
 
 (* memnorm (YAkMemnorm.v:42) keeps the overlay off every read-only address, so a read-only byte reads as the image's
-   (a Theorem Labs lane's rif_vsn; the shape of the kit's mem_inv_ro_read, kit 7bb12afd3646 A/Bk/Lib/Mem.v:363).  Field round
+   (a Theorem Labs lane's rif_vsn; the shape of the kit's mem_inv_ro_read, kit A/Bk/Lib/Mem.v:363).  Field round
    3 part 3c: no call carries memnorm any more; the report's read-only reads go through aro_read_cf below.  This lemma
    stays as a standalone fact. *)
 Lemma ro_byte_read_cf : forall (H : word -> bool) mem a, YAkMemnorm.memnorm segs mem ->
@@ -300,7 +301,7 @@ qtight (snd r) /\
    image (as_errno B, as_oom_byte B). *)
 (fst r = PNull -> rd32 (aview segs (w_H W') mem') (as_errno B) 12 /\ aview segs (w_H W') mem' (as_oom_byte B) = Some 1) /\
 (* the errbuf slot stays placed (xs_placed_cf, YG0ncf.v): on a class-full remap the Allocate walk
-   proves it once, from the granted KMmapSec answer (grant_ok_na_pin / the LPS placement facts);
+   proves it once, from the granted KMmapSec answer (grant_ok_na_pin_b / the LPS placement facts);
    otherwise the slot is unchanged. *)
 xs_placed_cf ly' (snd r) /\
 (* errno's four bytes are kept on the SUCCESS arm (the raw form of c-asan's alloc_post_e, Allocate's grant leaf);
@@ -354,7 +355,7 @@ amreal segs (malloc_cf n (call_trace ly (pc_malloc_ra0 code) regs ch) S) W
 (* ---------------------------------------------------------------------------- *)
 (* The malloc interceptor's BODY, the contract the allocating string entries use   *)
 (* (a Theorem Labs lane's agreed text of 2026-10-30 09:02Z;                                   *)
-(* copied from fuzz_command's RtDDefs.v, a working branch 8aaeb29ab7b2, with _cf      *)
+(* copied from fuzz_command's RtDDefs.v, a working branch, with _cf      *)
 (* names and this file's cf forms; its universe premise is P'''s `admits`, as       *)
 (* amalloc_realizes_cf's).                                                          *)
 
@@ -527,7 +528,7 @@ Definition hd_skip (Hp : list Z) (p : Z) : Z := if existsb (Z.eqb p) Hp then cf_
    interceptor's return from that call (reply A 0x427b8, reply B 0x42810). The unwinder records only
    [pc0] when that bp is at or below the stack bottom, at or above the stack top less 16, or the
    first return address is below a page; else mid, then the caller's chain under call_trace's stop
-   rules. This is fuzz_command's adup_trace (a working branch 8aaeb29ab7b2, lib/A/Rt/RtAlloc.v)
+   rules. This is fuzz_command's adup_trace (a working branch, lib/A/Rt/RtAlloc.v)
    verbatim with STRNDUP_FRAME renamed; its RtDStrndupA.v snd_trace_eq proves the body records
    exactly it. *)
 Definition STRNDUP_FRAME_CF : Z := 2160.
@@ -558,7 +559,7 @@ amreal segs (malloc_cf (k + 1) (adup_trace_cf ly (pc_malloc_ra0 code) mid regs c
 
 (* ---------------------------------------------------------------------------- *)
 (* The frame-area (fake stack) forms, ADOPTED verbatim from h-asan-init-2's ArT   *)
-(* (origin/cold/h-asan-init-2-art 47e01d3478d5, YG0tcf.v:33-83), so there is ONE   *)
+(* (YG0tcf.v:34-84), so there is ONE   *)
 (* definition; checked there by eq_refl against PresetFrameClasses' frozen        *)
 (* FCiface.v at ARx := ARcf segs B. They live here, not in YGcfNames.v, because    *)
 (* they mention ARcf and ecall_pre_cf, which import YGcfNames (a cycle otherwise). *)
@@ -688,7 +689,7 @@ forall ly S Hp W mem md a, ARcf segs B ly S Hp W mem md ->
 (exists cid pos, In (cid, pos) (frames S) /\ a = flag_addr ly cid pos)) ->
 ~ in_zr a (ly_img ly) /\ ~ in_img segs a.
 
-(* The law AR_laws_cf lacked, VERBATIM from h-rw-man-5's YGcfHp.v:63-76 (29c8b46b1cef):
+(* The law AR_laws_cf lacked, VERBATIM from h-rw-man-5's YGcfHp.v:64-77:
    cgif's AR_frame_law (YG0d.v:445) with two changes: the owned bytes that may change are
    the hidden-head shadow bytes of Hp and Hp', and each such byte that shadow_ok_cf governs
    takes the value shadow_ok_cf at Hp' demands; the result is ARcf at Hp', given that every
@@ -721,8 +722,8 @@ alc_owned_low : AR_owned_low_law_cf;
 alc_owned_image : AR_owned_image_law_cf;
 alc_sep : AR_sep_law_cf;
 alc_client_img : AR_client_img_law_cf;
-(* the 15th law: the frame law with Hp moving, h-rw-man-5's statement (YGcfHp.v:63 at
-   29c8b46b1cef), defined above in this file; proved in h-asan-init-2's YG0tcf.v. *)
+(* the 15th law: the frame law with Hp moving, h-rw-man-5's statement (YGcfHp.v:63),
+   defined above in this file; proved in h-asan-init-2's YG0tcf.v. *)
 alc_head_frame : AR_head_frame_law_cf
 }.
 

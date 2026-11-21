@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's validity hypotheses; the process input's new fields; the SIGPIPE disposition). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -194,17 +195,30 @@ Section Main.
   Variables (brk0 : word) (argv envp : list (list byte)).
   Variable uid : word.
   Variable hw : word.   (* [comment removed for export] *)
+  Variable apc : N.
+  Variable mbase : word.
+  Variable fs : Fs.Fs.
+  Variable stdin : InputStream.
+  Variable gid : word.
+  Variable groups : list word.
+  Variable net : NetQueue.
+  Variable ur : InputStream.
+  Variable kern : KernelBuild.
+  Variable execfn : list byte.
+  Variable nofile : word.
+  Variable sigmask : word.
+  Variables abt sdf : bool.
   Variable c : list byte.
 
   (* [comment removed for export] *)
   Definition SINVm (E : env) (M : word -> option byte) : Prop :=
-    SINV0 ph sp rdraw brk0 argv envp uid hw E M /\ eb E 1%nat = nth 0 argv [] /\ eb E 2%nat = nth 1 argv []
+    SINV0 ph apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf E M /\ eb E 1%nat = nth 0 argv [] /\ eb E 2%nat = nth 1 argv []
     /\ forall j, eb E (8 + j)%nat = chunk j c.
 
-  Lemma SINVm_SINV0 : forall E M, SINVm E M -> SINV0 ph sp rdraw brk0 argv envp uid hw E M.
+  Lemma SINVm_SINV0 : forall E M, SINVm E M -> SINV0 ph apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf E M.
   Proof. intros E M [H _]. exact H. Qed.
 
-  Lemma SINVm_frame : forall E M M', (forall a, argH0 ph sp rdraw argv envp uid hw E a = true -> M' a = M a) -> SINVm E M -> SINVm E M'.
+  Lemma SINVm_frame : forall E M M', (forall a, argH0 sp rdraw argv envp kern execfn E a = true -> M' a = M a) -> SINVm E M -> SINVm E M'.
   Proof. intros E M M' Hf (H0 & H1 & H2 & H3). split; [eapply SINV0_frame; eassumption | auto]. Qed.
 
   Lemma SINVm_agree : forall E E' M, env_agree NX0 E E' -> SINVm E M -> SINVm E' M.
@@ -213,7 +227,7 @@ Section Main.
     rewrite <- Heb. auto.
   Qed.
 
-  Lemma SINVm_reblob : forall E M, SINV0 ph sp rdraw brk0 argv envp uid hw E M -> SINVm (reblob E argv c) M.
+  Lemma SINVm_reblob : forall E M, SINV0 ph apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf E M -> SINVm (reblob E argv c) M.
   Proof.
     intros E M [Hev HM]. split; [split; [exact Hev | exact HM]|].
     split; [reflexivity|]. split; [reflexivity|]. intros j. cbn [reblob eb].
@@ -223,7 +237,7 @@ Section Main.
 
   Lemma hid_reblob : forall E cs model,
     forallb pair_bf (a_vis cs) = true ->
-    hid A (argH0 ph sp rdraw argv envp uid hw) (reblob E argv c) cs model = hid A (argH0 ph sp rdraw argv envp uid hw) E cs model.
+    hid A (argH0 sp rdraw argv envp kern execfn) (reblob E argv c) cs model = hid A (argH0 sp rdraw argv envp kern execfn) E cs model.
   Proof.
     intros E cs model Hv. apply functional_extensionality. intros a. unfold hid, vis, APS.in_allow.
     rewrite (in_vis_evsame E (reblob E argv c) (reblob_evsame E argv c) cs _ Hv).
@@ -232,15 +246,15 @@ Section Main.
 
   Theorem cs_ok_reblob : forall LIMIT LINV FS0 E cs R FULL model,
     acs_noblob cs = true ->
-    cs_ok segs A LIMIT (SINV0 ph sp rdraw brk0 argv envp uid hw) (argH0 ph sp rdraw argv envp uid hw) LINV FS0 E cs R FULL model ->
-    cs_ok segs A LIMIT SINVm (argH0 ph sp rdraw argv envp uid hw) LINV FS0 (reblob E argv c) cs R FULL model.
+    cs_ok segs A LIMIT (SINV0 ph apc sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf) (argH0 sp rdraw argv envp kern execfn) LINV FS0 E cs R FULL model ->
+    cs_ok segs A LIMIT SINVm (argH0 sp rdraw argv envp kern execfn) LINV FS0 (reblob E argv c) cs R FULL model.
   Proof.
     intros LIMIT LINV FS0 E cs R FULL model Hnb HC.
     unfold acs_noblob in Hnb.
     apply andb_prop in Hnb as [Hnb Hfd]. apply andb_prop in Hnb as [Hnb Hbrk]. apply andb_prop in Hnb as [Hnb Hgh].
     apply andb_prop in Hnb as [Hnb Hvis]. apply andb_prop in Hnb as [Hnb Hmaps]. apply andb_prop in Hnb as [Hregs Hkn].
     pose proof (reblob_evsame E argv c) as HS. set (E' := reblob E argv c) in *.
-    destruct HC as [f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 fholes f11 f12 f13 f14 f15 f16 f17 f18 f19 f20 f21 f22 f23 f24 f25 f26 flinv].
+    destruct HC as [f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 fholes f11 f12 f13 f14 f15 f16 f17 f18 f19 f20 f21 f22 f23 f24 f25 f26 flinv frdr].
     constructor.
     - eapply regs_ok_evsame; [exact HS | exact Hregs | exact f1].
     - exact f2.
@@ -274,6 +288,7 @@ Section Main.
     - unfold E'. rewrite (hid_reblob E cs model Hvis). intros a H1 H2 H3 H4 H5. rewrite (in_ghost_evsame E (reblob E argv c) (reblob_evsame E argv c) cs _ Hgh) in H5. exact (f25 a H1 H2 H3 H4 H5).
     - apply SINVm_reblob. exact f26.
     - exact flinv.
+    - exact frdr.
   Qed.
 End Main.
 
@@ -521,6 +536,38 @@ Proof.
       * left. repeat split; auto.
 Qed.
 
+(* The range of [qlook], proved before the section so no section variable is destructed. *)
+Lemma qlook_range_g : forall argv fs, 0 <= qlook argv fs <= 4.
+Proof.
+  intros av fv. pose proof (qlook_cases av fv) as Q.
+  destruct av as [|a0 [|p [|x r]]]; try (rewrite Q; lia).
+  destruct Q as [[-> _]|[[-> _]|[[-> _]|[-> _]]]]; lia.
+Qed.
+
+(* [look_L1_sound]'s case analysis on a universally quantified argv, before the section, as
+   [qlook_range_g] does for [qlook_range]: a `destruct argv` on the SECTION VARIABLE made the
+   section copy depend on every section item that mentions argv (Hfit, Hkernel, Hlau and the
+   launch tuple), and [facts_of_class_sound] inherited that list through it. *)
+Lemma look_L1_sound_g : forall argv fs v, valid_argv argv ->
+  (v = qlook argv fs \/ v = -1) ->
+  fst (look_L1 v) <= Z.of_nat (length (nth 1 argv [])) <= snd (look_L1 v)
+  /\ (1 <= v <= 4 -> Z.of_nat (length argv) = 2).
+Proof.
+  intros av fv v Hva Hv.
+  assert (HL1 : 0 <= Z.of_nat (length (nth 1 av [])) <= 131071).
+  { destruct (Nat.lt_ge_cases 1 (length av)) as [Hl|Hl].
+    - pose proof (valid_argv_str_len av 1 Hva Hl). lia.
+    - rewrite nth_overflow by lia. cbn. lia. }
+  pose proof (qlook_cases av fv) as Q. unfold look_L1.
+  destruct Hv as [->| ->]; [|cbn; lia].
+  clear Hva.
+  destruct av as [|a0 [|p [|x r]]]; cbn [nth length] in HL1 |- *; try (rewrite Q; cbn; lia).
+  cbn [nth length] in *.
+  destruct Q as [[-> Hl]|[[-> [Hl _]]|[[-> Hp]|[-> (Hne & _ & Hl & _)]]]]; cbn; try lia.
+  - rewrite Hp. cbn. lia.
+  - split; [|lia]. destruct p; [congruence|]. cbn [length] in *. clear -Hl. lia.
+Qed.
+
 Section ClassSound.
   Variables (ph : PhdrInfo) (sp : word) (rdraw : EntryDraw) (* [comment removed for export] *).
   Variables (brk0 mbase : word) (argv envp : list (list byte)) (fs : Fs.Fs) (stdin : InputStream).
@@ -529,25 +576,60 @@ Section ClassSound.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
+  Variable apc : N.
+  Variable gid : word.
+  Variable groups : list word.
+  Variable net : NetQueue.
+  Variable ur : InputStream.
+  Variable kern : KernelBuild.
+  Variable execfn : list byte.
+  Variable nofile : word.
+  Variable sigmask : word.
+  Variables abt sdf : bool.
+  Hypothesis Hkernel : in_kernel (inp argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf) = recorded_kernel (in_kernel (inp argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf)).
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) (inp argv envp fs stdin uid gid hw groups net ur kern execfn nofile sigmask abt sdf).
   Hypothesis Hfit : entry_stack_fits sp argv envp.
 
   Let argc := Z.of_nat (length argv).
   Let L0 := Z.of_nat (length (nth 0 argv [])).
   Let L1 := Z.of_nat (length (nth 1 argv [])).
 
-  Lemma argc_range : 1 <= argc <= 1024.
+  (* These five are proved from [argv], [fs] and [Hva] alone, but with no [using] set the
+     section discharges them over every variable of [ClassSound] -- `About qval_bounds` at
+     a probe run printed sp, rdraw, brk0, mbase, stdin, uid, hw, gid,
+     groups, net, ur, kern, execfn, nofile, sigmask, abt, Hkernel, Hlau and Hfit.  That
+     over-capture is what makes every caller carry nineteen arguments and what would have
+     forced nine new Section variables into AsanShape.ShapeSound.  Naming the real set
+     fixes it at the producer and shortens every call site instead. *)
+  #[using="Hva L0 L1 argc argv"] Lemma argc_range : 1 <= argc <= 1024.
   Proof. unfold argc. destruct Hva as [H _]. lia. Qed.
-  Lemma L0_range' : 0 <= L0 <= 131071.
+  #[using="Hva L0 L1 argc argv"] Lemma L0_range' : 0 <= L0 <= 131071.
   Proof. unfold L0. pose proof (valid_argv_str_len argv 0 Hva ltac:(destruct Hva as [Hl _]; lia)). lia. Qed.
-  Lemma L1_range' : 0 <= L1 <= 131071.
-  Proof. exact (L1_range ph sp rdraw argv envp uid hw Hva). Qed.
-  Lemma qlook_range : 0 <= qlook argv fs <= 4.
+  #[using="Hva L0 L1 argc argv"] Lemma L1_range' : 0 <= L1 <= 131071.
+  (* #38 changed the Section variables AsanInit's L1_range is discharged over, so its
+     first positional argument is now an N where this call passes a PhdrInfo:
+     "The term "ph" has type "PhdrInfo" while it is expected to have type "N"."
+     The repair does not chase the new argument list -- it removes the dependence on
+     it.  AsanInit.v:369-371 is the whole proof of the same statement and it uses only
+     argv and Hva, both already in scope here; L0_range' one line above is the identical
+     pattern for index 0 and compiles.  Inlining it is the in-file donor, and it cannot
+     be broken again by a Section's variable list moving.  The index-1 case needs the
+     overflow branch that index 0 does not, because nth 1 argv [] is [] when argv is a
+     singleton -- that is AsanInit's second bullet, kept verbatim. *)
   Proof.
-    pose proof (qlook_cases argv fs) as Q. destruct argv as [|a0 [|p [|x r]]]; try (rewrite Q; lia).
-    destruct Q as [[-> _]|[[-> _]|[[-> _]|[-> _]]]]; lia.
+    unfold L1. destruct (Nat.lt_ge_cases 1 (length argv)) as [Hl|Hl].
+    - pose proof (valid_argv_str_len argv 1 Hva Hl). lia.
+    - rewrite nth_overflow by lia. cbn. lia.
   Qed.
+  (* [qlook_range]'s old proof did `destruct argv` on the SECTION VARIABLE, which makes the
+     lemma depend on every section item mentioning argv -- Hkernel, Hlau, Hfit, and the whole
+     launch tuple (Rocq listed all nineteen).  That, not the
+     statement, is where the over-capture came from.  [qlook_range_g] does the same case
+     analysis on a universally quantified argv, so the section copy destructs nothing. *)
+  #[using="argv fs"] Lemma qlook_range : 0 <= qlook argv fs <= 4.
+  Proof. exact (qlook_range_g argv fs). Qed.
 
-  Lemma qval_bounds : forall q, QMIN <= qval q argv fs <= QMAX.
+  #[using="Hva L0 L1 argc argv fs"] Lemma qval_bounds : forall q, QMIN <= qval q argv fs <= QMAX.
   Proof.
     pose proof argc_range. pose proof L0_range'. pose proof L1_range'. pose proof qlook_range.
     pose proof (cfglen_range (content_of argv fs)). pose proof (flen_range (content_of argv fs)).
@@ -567,25 +649,30 @@ Section ClassSound.
     destruct (Z.eqb_spec (fst (cbounds C QLook)) (snd (cbounds C QLook))); lia.
   Qed.
 
-  Lemma look_L1_sound : forall v, (v = qlook argv fs \/ v = -1) -> fst (look_L1 v) <= L1 <= snd (look_L1 v) /\ (1 <= v <= 4 -> argc = 2).
-  Proof.
-    intros v Hv. pose proof L1_range' as HL1. pose proof (qlook_cases argv fs) as Q. unfold look_L1.
-    destruct Hv as [->| ->]; [|cbn; lia].
-    destruct argv as [|a0 [|p [|x r]]]; try (rewrite Q; cbn; lia).
-    unfold L1, argc in *. cbn [nth length] in *.
-    destruct Q as [[-> Hl]|[[-> [Hl _]]|[[-> Hp]|[-> (Hne & _ & Hl & _)]]]]; cbn; try lia.
-    - rewrite Hp. cbn. lia.
-    - split; [|lia]. destruct p; [congruence|]. cbn [length] in *. clear -Hl. lia.
-  Qed.
+  (* Lifted: the case analysis is [look_L1_sound_g]'s, on a universally quantified argv, so
+     this copy destructs no section variable and depends on Hva and argv, fs only. *)
+  #[using="Hva L1 argc argv fs"] Lemma look_L1_sound : forall v, (v = qlook argv fs \/ v = -1) -> fst (look_L1 v) <= L1 <= snd (look_L1 v) /\ (1 <= v <= 4 -> argc = 2).
+  Proof. intros v Hv. exact (look_L1_sound_g argv fs v Hva Hv). Qed.
 
   Theorem facts_of_class_sound : forall segs C E M,
-    in_class C argv fs = true -> (forall n, (n < 8)%nat -> ev E n = ev (E0 ph sp rdraw brk0 argv envp uid hw) n) ->
+    in_class C argv fs = true -> (forall n, (n < 8)%nat -> ev E n = ev (E0 sp rdraw brk0 argv envp uid gid hw kern execfn) n) ->
     know_ok segs E M (facts_of_class C).
   Proof.
     intros segs C E M HC Hev.
-    pose proof (uE0 ph sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit) as (_ & _ & UA & _ & UL0 & _).
-    pose proof (uE0_L1 ph sp rdraw brk0 argv envp uid hw Hva) as UL1.
-    assert (HV : forall n, (n < 8)%nat -> uE E (EVar n) = uE (E0 ph sp rdraw brk0 argv envp uid hw) (EVar n)).
+    (* The three start values this lemma reads -- argc, L0, L1 -- are read off [vals0]
+       directly, as AsanInit's uE0 and uE0_L1 do.  uE0 itself also carries the stack-pointer
+       values, whose bounds need the launch (Hlau) and Hfit; taking it whole put those into
+       this lemma's section dependencies, which AsanShape's sections do not have. *)
+    assert (UA : uE (E0 sp rdraw brk0 argv envp uid gid hw kern execfn) (EVar V_ARGC) = Z.of_nat (length argv)).
+    { pose proof argc_range as HA0. unfold argc in HA0. unfold uE. cbn [edenot E0 ev nth vals0 V_ARGC].
+      rewrite u64_lit by lia. reflexivity. }
+    assert (UL0 : uE (E0 sp rdraw brk0 argv envp uid gid hw kern execfn) (EVar V_L0) = Z.of_nat (length (nth 0 argv []))).
+    { pose proof L0_range' as HL00. unfold L0 in HL00. unfold uE. cbn [edenot E0 ev nth vals0 V_L0].
+      rewrite u64_lit by lia. reflexivity. }
+    assert (UL1 : uE (E0 sp rdraw brk0 argv envp uid gid hw kern execfn) (EVar V_L1) = Z.of_nat (length (nth 1 argv []))).
+    { pose proof L1_range' as HL10. unfold L1 in HL10. unfold uE. cbn [edenot E0 ev nth vals0 V_L1].
+      rewrite u64_lit by lia. reflexivity. }
+    assert (HV : forall n, (n < 8)%nat -> uE E (EVar n) = uE (E0 sp rdraw brk0 argv envp uid gid hw kern execfn) (EVar n)).
     { intros n Hn. unfold uE. cbn [edenot]. rewrite (Hev n Hn). reflexivity. }
     pose proof argc_range as HA. pose proof L0_range' as HL0. pose proof L1_range' as HL1.
     pose proof (cbounds_sound C QArgc argv fs HC (qval_bounds QArgc)) as BA.
@@ -649,7 +736,12 @@ Section ClassSound.
           rewrite SW. destruct (Z.ltb_spec b 128); [|lia]. rewrite Z.mod_small by lia. lia. }
     revert HDR.
     destruct HLK as [HL|HL]; [|rewrite HL; cbn -[ION.hdr_ok content_of]; intros _; exact I].
-    rewrite HL. clearbody argc L0 L1. clear Hva Hfit. destruct argv as [|a0 [|p [|x r]]]; try (rewrite Q; cbn -[ION.hdr_ok content_of]; intros _; exact I).
+    (* `clear Hva Hfit` was already limiting the blast radius of the `destruct argv` below;
+       Hkernel and Hlau mention argv too, so without them the destruct still widened this
+       lemma's using-set over the whole launch tuple.  Nothing after the destruct uses
+       either, so they go as well -- the destruct then touches only the goal. *)
+    rewrite HL. clearbody argc L0 L1. clear Hva Hfit. try clear Hkernel. try clear Hlau.
+    destruct argv as [|a0 [|p [|x r]]]; try (rewrite Q; cbn -[ION.hdr_ok content_of]; intros _; exact I).
     cbn [nth].
     destruct Q as [[-> Hl]|[[-> (Hl & Hp)]|[[-> ->]|[-> (Hne & Hnd & Hl & c & Hlk & Hc)]]]]; cbn -[ION.hdr_ok content_of clamp cbounds Z.pow Z.min]; intros HDR.
     - exact Hl.

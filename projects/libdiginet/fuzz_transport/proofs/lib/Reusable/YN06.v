@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN06.v, with its module paths, addresses and numbers changed. *)
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Reusable/YN06.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_transport; 4 image values moved to fuzz_transport's binaries by symbol and offset (provenance/evidence/kit-relocation/values.tsv); module path OSSVerify.Proofs.libdiginet.fuzz_transport.lib. *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Reusable/YN06.v for libdiginet/fuzz_transport; 4 image values moved to fuzz_transport's binaries by symbol and offset (provenance/evidence/kit-relocation/values.tsv); module path OSSVerify.Proofs.libdiginet.fuzz_transport.lib. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the lg_rfree bullet of ledger_ok_A'; the ledger_ok construction bullets for its new fields); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -673,6 +674,10 @@ split; rewrite ?ER, ?EL, ?EN; try apply LG.
 - intros k rg0 off Hk0. rewrite ER in Hk0. exact (lg_noaccess _ _ _ _ LG k rg0 off Hk0).
 - rewrite K2. exact (lg_brk _ _ _ _ LG).
 - intros k rg0 Hk0. rewrite ER in Hk0. exact (lg_placed _ _ _ _ LG k rg0 Hk0).
+(* The two fields [ledger_ok] gained at 08b1429.  [lg_vdso] speaks only of [md], which this
+   step does not change, so the [try apply LG] above already closes it; [lg_rfree]
+   quantifies over regions and takes [ER] like [lg_maps]. *)
+- intros k rg0 Hk0. rewrite ER in Hk0. exact (lg_rfree _ _ _ _ LG k rg0 Hk0).
 Qed.
 Lemma ledger_f : ledger_ok B1 L Af mdf /\ ledger_x L Af mdf /\
 m_halted mdf = None /\ m_vm_lazy mdf = [] /\ m_vm_materialized mdf = [] /\ (exists vm', mdf = with_vmmaps vm' md).

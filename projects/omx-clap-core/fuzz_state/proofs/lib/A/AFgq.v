@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFgq.v, with its module paths changed and its addresses moved to omx-clap-core/fuzz_state's ASan build. *)
-(* Modified by Theorem Labs, 2026-10: the kit's EV_MAX = 11776 (5e580eb5ab5) bounds the batch class's mapped user part by kFreeArrayOffset, not 2 ^ 31; fh_hit takes coff + kBatchBytes <= kFreeArrayOffset, so CPv = coff / 16 <= (kFreeArrayOffset - 8192) / 16 = 0x0DFFFE00 < 2 ^ 28, and hit_ranges and FFQ's fact 41 use 2 ^ 28 (was 2 ^ 27). *)
+(* Modified by Theorem Labs, 2026-10: the kit's EV_MAX = 11776 bounds the batch class's mapped user part by kFreeArrayOffset, not 2 ^ 31; fh_hit takes coff + kBatchBytes <= kFreeArrayOffset, so CPv = coff / 16 <= (kFreeArrayOffset - 8192) / 16 = 0x0DFFFE00 < 2 ^ 28, and hit_ranges and FFQ's fact 41 use 2 ^ 28 (was 2 ^ 27). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

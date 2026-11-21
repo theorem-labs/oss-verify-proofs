@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: highmem_range asks the range's end plus 7 (was plus 8) to be at most KHIGHMEM_END, which a string ending at the launch's stack top (8 bytes below 2^47) meets. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -105,7 +106,9 @@ Qed.
 
 (* [comment removed for export] *)
 Definition lowmem_range (a n : Z) : Prop := 0 <= a /\ 0 <= n /\ a + n <= KLOWSHADOW_BEG.
-Definition highmem_range (a n : Z) : Prop := KHIGHMEM_BEG <= a /\ 0 <= n /\ a + n + 8 <= KHIGHMEM_END.
+(* the range's end is in high memory with room for the 8-byte granule its start rounds up to: a string at the
+   launch's stack top ends at the 8-byte boundary 8 bytes below 2^47 *)
+Definition highmem_range (a n : Z) : Prop := KHIGHMEM_BEG <= a /\ 0 <= n /\ a + n + 7 <= KHIGHMEM_END.
 Definition app_range (a n : Z) : Prop := lowmem_range a n \/ highmem_range a n.
 
 (* [comment removed for export] *)

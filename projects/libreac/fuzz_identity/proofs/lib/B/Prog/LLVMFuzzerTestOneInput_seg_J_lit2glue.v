@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: restates text of projects/cgif/cgif_file_fuzzer/proofs/lib/YCbo.v:2300-2306, for
    libreac/fuzz_identity's asan-ubsan build (lib/B). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/B/Prog/LLVMFuzzerTestOneInput_seg_I.v, with its addresses changed; 887 of its 998 lines of code are new or changed and 3050 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Piece +0x17e8 .. +0x188c (0x81f5c .. 0x82000) of segment J of LLVMFuzzerTestOneInput's build-B walk
    (fuzz_identity.asan-ubsan): `j_lit2_glue_stmt` of lib/B/Prog/LLVMFuzzerTestOneInput_seg_J_pre.v.
 
@@ -169,7 +170,7 @@ Variable ameta_inv : list Segment -> asink_syms_T -> alayout -> (word -> option 
 Variable arodata_okS : list Segment -> asyms -> Z -> Z -> reader -> Prop.
 Variable G : list (Z * Z).
 Context {RO : ro_below_ofl SEGS pa_relro_lo pa_relro_hi}.
-(* the two image hypotheses of the contract (LLVMFuzzerTestOneInput.v:299 and the prefix file's HRO), which
+(* the two image hypotheses of the contract (LLVMFuzzerTestOneInput.v:300 and the prefix file's HRO), which
    `j_img` of the prefix file needs; j_lit2_glue_stmt does not carry them. *)
 Hypothesis HRO : forall rdr, arodata_okS SEGS B RLO RHI rdr -> arodata_okP SEGS pa_relro_lo pa_relro_hi B rdr.
 Hypothesis HIMG : forall (W : world SEGS) mem,

@@ -21,9 +21,10 @@
    - q_core_same and its siblings: the boundary at a state whose memory reads the same (after a symbolic run);
    - q_jmp: the jump from a return pc to a join (the S08 lane's vr_jmp).
    The reader transports (q_rdeq ...) and q_jmp are copied from the S08 lane's verbs_receive_s08_lib.v
-   (a working branch 1413152415c). The blocks after a recorder call are re-assembled into the interface's
+   (a working branch). The blocks after a recorder call are re-assembled into the interface's
    Permutation with vr_perm_new / vr_perm_same, which need the live-block list to have no duplicate (the kit's
    RecBLemmas.recb_ablocks_nodup_m). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

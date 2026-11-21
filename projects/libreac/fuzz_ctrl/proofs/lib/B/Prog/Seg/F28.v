@@ -4,11 +4,12 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module names changed; 615 of its 727 lines of code are new or changed and 899 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F35.v, with its module names changed; 625 of its 686 lines of code are new or changed and 666 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment F28 of fuzz_ctrl LLVMFuzzerTestOneInput (asan-ubsan, libreac v1.9.0 image B): the port-slot loops of the
    inlined check_ports, slot-plan-asan-ubsan.md section 2 row F28 (no external callee, twin Q05/Q06). The segment
    proved here runs from the moved loop head 0x8292c (the official Inv_B8292c_at of lib/B/Prog/SlotInv.v, whose
    body carries F28GAP since adopt 12) to 0x82aa4 (the official Inv_B82aa4_at, F29's entry); 0x828f0-0x82928 is the
-   loop prologue, which F27 owns. The v1.9.0 move of the patched-image seg_F28 (a working branch 4131ff88f40,
+   loop prologue, which F27 owns. The v1.9.0 move of the patched-image seg_F28 (a working branch,
    patched 0x828bc-0x82a3c): the loop is the patched one shifted by 0x70; the tail reads the ports words through
    s5 = fr + 128 (FTL's position 1) where the patched tail reloaded [A+248], and the first pointer from [A+136]
    (patched [A+144]).

@@ -212,7 +212,7 @@ destruct Hr as [(-> & -> & Hprog & Hdead) | (-> & -> & Hprog)].
 Qed.
 
 (* WA_Top: tcheck_as_written_specX as this tree states it (PRH_FnCheck.v:1313-1402: c40cf3fdcd2a :832-902 at the kit's cut
-   7cdbb61b5fa0 plus hull_budget and HPOS, SRr' for SRr) at ARcfx B, through caw_text_of_walkR (the walk at RW); the room counts are the text's entry premises (caw_pre_cnt) *)
+   plus hull_budget and HPOS, SRr' for SRr) at ARcfx B, through caw_text_of_walkR (the walk at RW); the room counts are the text's entry premises (caw_pre_cnt) *)
 Theorem caw_A_top : @tcheck_as_written_specX fx rc ci CfParams_preset CW_PrhImg (@CW_RL CfParams_preset)
   A_prog_listing PA B (ARcfx B) SK CTX0.
 Proof.

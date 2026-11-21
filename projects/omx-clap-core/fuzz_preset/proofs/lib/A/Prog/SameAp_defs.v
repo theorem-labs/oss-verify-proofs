@@ -1,20 +1,21 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset, the walk of same (fuzz_preset.c:65-86) at image A' (asan #102 pin
-   1be0f53d96cb9d6c, unstripped twin bff8519bbe3ea0e4), against the kit's text tsame_specX (lib/A/PRH_FnEx.v :353 at the cut
-   7cdbb61b5fa0; SameAp_walk.v's same_holds_Ap), over the whole-program listing
+   1be0f53d96cb9d6c, unstripped twin bff8519bbe3ea0e4), against the kit's text tsame_specX (lib/A/PRH_FnEx.v :353 at the cut;
+   SameAp_walk.v's same_holds_Ap), over the whole-program listing
    A_prog_listing / PI_prog_A (lib/A/Listing_prog.v, PAImg_prog.v of the cut): same is A_prog_sigma AS_same, 187
    instructions, frame 128. This file: the image numbers, the entry state, the run tactics, the segment states, the
    loop's canonical state and the value lemmas.
    RELOCATION. The instruction walk is the old-A walk (a Theorem Labs lane's slice S9, lib/A/Prog/Wsame.v at
-   a working branch 9a0674f0b5f2, old pin d83eb25d). Old A and A' same are the
+   a working branch, old pin d83eb25d). Old A and A' same are the
    same 748 bytes modulo 19 words: the lo12 of the .got load at word 15 (both load the .got slot of
    __asan_shadow_memory_dynamic_address: here SMA_GOT, the listing's object 0) and 18 jal displacements (to the same
    callees). So every state of the old walk is the A' state with its pc moved: the old walk's entry + o is SMA_AT o
    here (the segment states sma_ssD / sma_ssN / sma_ssS / sma_ssC are at SMA_AT 0xb4 / 0xf0 / 0x24c / 0x144), the .got slot and the
    shadow-base cell are SMA_GOT / SMA_CELL (PALib's A_OBJ 0 / A_OBJ 12), the strcmp / bcmp wrappers SMA_STRCMP /
    SMA_BCMP. The run tactics, the image numbers and the memnorm keep each run records (HMNP, for fpostm) are
-   lib/B/Prog/SameB_defs.v's (a working branch e95b6ce78e87) at A_prog_tbl.
+   lib/B/Prog/SameB_defs.v's (a working branch) at A_prog_tbl.
    Numerals: SMA_AT offsets are LENGTHs (byte offsets inside the 748-byte body); 128 (LENGTH: the frame), 56 / 40 / 32 /
    24 / 16 / 8 (LENGTH: struct pj and its fields, the frame slots), 3 / 4 / 5 / 6 (WORD: the tags), 2 ^ 46 / 2 ^ 47 /
    4096 (DERIVED: address-space bounds), 0x400 (LENGTH: a bound on the body). No ADDRESS: every image number is an

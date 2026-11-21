@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs: reac-repacer/fuzz_uci's lib/Prog/LLVMFuzzerTestOneInput_end.v (6874bc78b1f, itself
+(* Modified by Theorem Labs: reac-repacer/fuzz_uci's lib/Prog/LLVMFuzzerTestOneInput_end.v (itself
    libreac/fuzz_decode's released lib/Prog/LLVMFuzzerTestOneInput_end.v) at fuzz_wire's module paths and plain image
    values: llvm_sink_env reads the sink words of lib/FrameAPI.v inside the libc data at 0x4e500. fuzz_wire links no
    calloc. *)

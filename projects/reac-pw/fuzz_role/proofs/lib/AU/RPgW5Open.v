@@ -1,20 +1,20 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: restates text of proofs/reac-pw/fuzz_role/lib/A/RPgX01.v at 9bffaa83ff88
+(* Modified by Theorem Labs, 2026-10: restates text of proofs/reac-pw/fuzz_role/lib/A/RPgX01.v
    [Apache-2.0] (rx_reg_atom / rx_reg_ext / rx_ew_reg / rx_st_region / rx_chunk_zero / rx_flag0_of, the saved-slot
    chunk list rx_sv_chunks, the numeral tactics z5 / z5g and the flag-store tactic rx_run_flag, which passes
-   aj_flag_store its sixteen journal arguments) and of proofs/reac-pw/fuzz_role/lib/A/RPgCheck.v at 77f59d02b018
+   aj_flag_store its sixteen journal arguments) and of proofs/reac-pw/fuzz_role/lib/A/RPgCheck.v
    [Apache-2.0] (the shape of a `ret` leaf into a callee post), for reac-pw/fuzz_rate's image A: the walk is
    check_csv's release and epilogue, the side-stack class is 2 instead of 3, and the post is RtPgCSpec.rt_cpost_o,
    whose owned-set conjunct is discharged from the cut's layout, chunk and frame equalities. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_rate/lib/A/RtPgCcsvS3.v, with its module names changed; 913 of its 952 lines of code are new or changed and 287 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW5Open.v at 635914e101a0 for reac-pw/fuzz_rate's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW5Open.v for reac-pw/fuzz_rate's
    image A: module paths changed; rate's pcs (SELS 0x81150 -> C 0x8127c / CL 0x82484, the slow block 0x82608, the
    constant at .rodata 0x10408), registers (s6 / s7 / s2 for role's s4 / s5 / s7; the capacity bound -0x4001 is s10 and
    what is left of the input is s8, for role's cells R+0xe0 and R+0xf8) and real-frame cells (at R+0xe0, the cursor
    R+0x100, -0x3ffd at R+0x130, the count R+0xf0, for role's R+0xa0 / 0xc8 / 0xe8 / 0xa8); the shadow byte's address,
    the input byte and the shadow byte are atoms 36 .. 38; rm_ / rl_ become rtm_ / rt_. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW5Open.v at a66696a9b1d1 for the same unit's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW5Open.v for the same unit's
    image B (fuzz_rate.asan-ubsan): image B's pcs (SELS 0x81210 -> C 0x813a0 / CL 0x824c0 through 0x82474 / 0x8247c, the
    slow block 0x825dc, the constant at .rodata 0x10418), registers (pp, &pp->len's shadow address and &e62 are loaded
    from the real-frame cells R+0x168 / R+0x170 / R+0x150, s2 = &pp->len, t1 = -0x4001, s4 = K, the cursor in s10, what
@@ -23,13 +23,13 @@
    the one of the input read are decided by atom ranges (~pp is atom 36); pp, pp + at, at, ~pp, the shadow byte's
    address, the input byte and the shadow byte are atoms 33 .. 39; rtm_ / w5_ become rtmb_ / w5b_. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_rate/lib/AU/RtPgW5OpenB.v, with its module paths, module names, addresses and numbers changed; 286 of its 921 lines of code are new or changed and 317 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW5Open.v at 635914e101a0 for reac-pw/fuzz_rate's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW5Open.v for reac-pw/fuzz_rate's
    image A: module paths changed; rate's pcs (SELS 0x81150 -> C 0x8127c / CL 0x82484, the slow block 0x82608, the
    constant at .rodata 0x10408), registers (s6 / s7 / s2 for role's s4 / s5 / s7; the capacity bound -0x4001 is s10 and
    what is left of the input is s8, for role's cells R+0xe0 and R+0xf8) and real-frame cells (at R+0xe0, the cursor
    R+0x100, -0x3ffd at R+0x130, the count R+0xf0, for role's R+0xa0 / 0xc8 / 0xe8 / 0xa8); the shadow byte's address,
    the input byte and the shadow byte are atoms 36 .. 38; rm_ / rl_ become rtm_ / rt_. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW5Open.v at a66696a9b1d1 for the same unit's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW5Open.v for the same unit's
    image B (fuzz_rate.asan-ubsan): image B's pcs (SELS 0x81210 -> C 0x813a0 / CL 0x824c0 through 0x82474 / 0x8247c, the
    slow block 0x825dc, the constant at .rodata 0x10418), registers (pp, &pp->len's shadow address and &e62 are loaded
    from the real-frame cells R+0x168 / R+0x170 / R+0x150, s2 = &pp->len, t1 = -0x4001, s4 = K, the cursor in s10, what
@@ -37,7 +37,7 @@
    and the count R+0x140 the piece writes); at is read from pp->len; the four UBSan trap branches of the two put32 and
    the one of the input read are decided by atom ranges (~pp is atom 36); pp, pp + at, at, ~pp, the shadow byte's
    address, the input byte and the shadow byte are atoms 33 .. 39; rtm_ / w5_ become rtmb_ / w5b_. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgW5OpenB.v at 2ebedbb4253d for reac-pw/fuzz_role's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgW5OpenB.v for reac-pw/fuzz_role's
    image B (fuzz_role.asan-ubsan): module paths fuzz_rate -> fuzz_role, the segments lib/AU/Img0.v rsegs; role B's pcs
    (SELS 0x809d4 -> C 0x80b54, or CL 0x81ccc directly on a zero count and through 0x81c84 with no input left; the
    input's slow block 0x81ddc in the `bge; j back` form; the constant at .rodata 0x10410), registers (pp in s8 and in
@@ -46,6 +46,7 @@
    the piece) and real-frame cells (~pp at R+0xf8, the four cells R+0x80 .. R+0x98 and the count R+0x128 the piece
    writes); the frame for locals is not read (role B forms no &e62 here), so F is no parameter of the core lemmas; the
    input apart from the real frame is one range [R+0x48, R+0x160); the prefix w5b_ / rtmb_ becomes w5_ / rm_. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_role image B (fuzz_role.asan-ubsan, pinned sha256
    b255d4935da5af137a3967dbe33380ea43be8e78bfe05d1e356e0a2be8a69ff0; addresses from the unstripped twin
    dc791783f32962615e18a5f5cffae758ba56eb5dc87f70913c3579b101b4406a): the params Struct's header and its pod count,

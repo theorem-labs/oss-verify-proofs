@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcSecCutCf.v (commit 3d8ad2aeb77e, H4 cf instance set (reply-rccf); file sha256 dd916a5921b8) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 32 image addresses moved by code-verified function pairs (33 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); 3 data addresses the tool read as sizes, by the same value MAPS prediction, and 1 pcs named in comments; 1 hand maps (each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcSecCutCf.v (H4 cf instance set (reply-rccf); file sha256 dd916a5921b8) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 32 image addresses moved by code-verified function pairs (33 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); 3 data addresses the tool read as sizes, by the same value MAPS prediction, and 1 pcs named in comments; 1 hand maps (each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, slice H4): H4's secondary CUT-READ field DMrcSecReads.rc_sec_cut_t at reply's
    image, at the cf layer's cut relation YGcfInstDrainR.ARXr_cf.
    rule 24: proves function __asan::QuarantineCallback::Recycle (0x33e30; RChunk secondary cut / map reads) at reply's cf relation,
    instance of H4's own transports; checker: git grep rc_sec_cut|rc_sec_mapr|rc_reads|rchunk_ok = 0 statements.
 
    WHAT.  [rc_sec_cut_of_cf]: for every B with TfibSyms B, every IOK with YGcfInstBase.IOK_ok B IOK (the instance
-   object is the binary's allocator object, the premise rc_fh_cut_facts_cf takes, YGcfInstRcPrim.v:1160) and every
+   object is the binary's allocator object, the premise rc_fh_cut_facts_cf takes, YGcfInstRcPrim.v:1161) and every
    Hp, rc_sec_cut_t B (ARXr_cf B IOK Hp): at the secondary arm's call, the instance object, the TSD slot, the image's
    constant cells and the whole cut record DMrcSecFc.sec_cut.
    [rc_sec_cut_nf_of_cf]: the same at the flag-free field DMrcSecNf.rc_sec_cut_nf_t (rcc_pre_sec, rcc_pre_x without
@@ -26,7 +27,7 @@
    - the image's constant cells are amr_const with TfibSyms' ts_const (as DMrcFhCf.cell_lit / cell_sym);
    - the stack facts come from rcc_pre_sec at KSTACK_CF = 2048 >= AFeu.KSTACK = 512;
    - the instance object is IOK_ok at the relation's IOK conjunct.
-   The cgif-only size bounds (the map length's and the user size's) are not part of sec_cut (DMrcSecFc.v:10-12), so
+   The cgif-only size bounds (the map length's and the user size's) are not part of sec_cut (DMrcSecFc.v:11-13), so
    none is derived here. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -122,7 +123,7 @@ Lemma HSP : ly_stk_lo ly + KSTACK <= sp0 <= ly_stk_hi ly.
 Proof. destruct PRE as (_ & _ & _ & _ & Hlo & Hcb1 & Hcb2 & _). unfold spZ in *. unfold sp0, KSTACK, KSTACK_CF in *. lia. Qed.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* The chunk, the map and the layout (AFfc.v:75-150, AFf4.v:212-278).                                              *)
+(* The chunk, the map and the layout (AFfc.v:75-150, AFf4.v:213-279).                                              *)
 Lemma KF : YGcfInstDrainRL.RL.cfacts_cf B ly X k. Proof. exact (YGcfInstDrainRL.RL.chunk_facts_cf B ly X Hp _ k M Hk). Qed.
 
 Lemma ELEN : LEN = sec_map_size (ck_req k) /\ o = kPage /\ sm_live sm = true.

@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YE2u.v, with its module paths changed, and its fuzz_reply.asan-ubsan addresses relocated from cgif_file_fuzzer.asan-ubsan (21 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -62,7 +63,7 @@ icpt_rodata ++ [(0x9df40, 8, [(0, 8%N, 0x138168)]); (0x1381bc, 1, [(0, 1%N, 1)])
 Lemma fpA_rodata_chk : forall ly, rodata_chk ly fpA_rodata = true.
 Proof. intros ly. vm_compute. reflexivity. Qed.
 Definition SH_LO : Z := 0x7fffbae8.  Definition SH_HI : Z := 0x7fffbaf0.
-(* SH_LO / SH_HI are the 8-aligned shadow hull of FMT's bytes up to its NUL (FMT + 22), the donor's derivation (as lib/A/AE2u.v, RelocA e5cf89b8f08). *)
+(* SH_LO / SH_HI are the 8-aligned shadow hull of FMT's bytes up to its NUL (FMT + 22), the donor's derivation (as lib/A/AE2u.v, RelocA). *)
 Lemma SH_window_of_FMT : SH_LO = (0x7fff8000 + FMT / 8) / 8 * 8 /\ SH_HI = (0x7fff8000 + (FMT + 22) / 8 + 8) / 8 * 8.
 Proof. split; reflexivity. Qed.
 Definition shz : YP09.region := YP09.mkRegion None SH_LO SH_HI SH_LO SH_LO [YP09.mkChunk SH_LO (CZero (SH_HI - SH_LO))].

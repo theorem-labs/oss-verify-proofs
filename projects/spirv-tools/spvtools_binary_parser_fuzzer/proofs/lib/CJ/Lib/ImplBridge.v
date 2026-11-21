@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the mmap decline premise place_declined_b; the robustness of each node's system call over a larger read-only backing (RomBase.sys_rob), which the walk's nodes now ask, proved at each node). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -11,6 +12,7 @@ From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Node
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib.CJ.Lib Require Import MState Mem Exec ITree Nodes Decode.
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib.CJ.Spec Require Import Monad MSafe.
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Import AllocCeil RunRandom.
+From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib.Common.Cfg Require RomBase.
 #[global] Unset Lia Cache. #[global] Unset Nia Cache. #[global] Unset Nra Cache.
 Import ListNotations.
 Open Scope bv_scope.
@@ -49,6 +51,36 @@ Definition node_char (n : node) (ms : machine_state) (mo : Model) : Prop :=
   (forall o, syscall_spec (sys_input segs ms x8) mo o <->
              exists eff mo', nstep n mo eff mo' [] /\ o = LinuxProcessSem.Monad.Ok eff mo' []) /\
   (exists eff mo', nstep n mo eff mo' []).
+
+(* WHAT A NODE CAN STILL CLAIM AT THE REVISION.  [node_char] asks the
+   spec and the node to agree on every outcome.  munmap (215) is an
+   injected [FamAlloc] arm now ([Run.injected_table]), so its spec also
+   admits an -ENOMEM that no node arm lists; under [CFG] ([sc_alloc] is
+   false) that answer is a SPURIOUS refusal and [sstep_cfg] never takes
+   it.  So the agreement to carry is: every node arm is admissible, and
+   every admissible NON-SPURIOUS outcome is a node arm. *)
+Definition node_char_sp (n : node) (ms : machine_state) (mo : Model) : Prop :=
+  exists x8, ms_svc_pending ms = Some x8 /\
+  (forall eff mo', nstep n mo eff mo' [] ->
+     syscall_spec (sys_input segs ms x8) mo (LinuxProcessSem.Monad.Ok eff mo' [])) /\
+  (forall eff mo' evs, syscall_spec (sys_input segs ms x8) mo (LinuxProcessSem.Monad.Ok eff mo' evs) ->
+     nstep n mo eff mo' evs
+     \/ (spurious_refusal_cfg CFG (sys_input segs ms x8) mo eff /\ mo' = mo /\ evs = [])) /\
+  (~ syscall_spec (sys_input segs ms x8) mo LinuxProcessSem.Monad.Unmodeled) /\
+  (exists eff mo', nstep n mo eff mo' []).
+
+(* An arm whose spec agrees on EVERY outcome (brk, mmap, mprotect: each
+   already lists its errno arm) gives the weaker form at once. *)
+Lemma node_char_sp_of_char : forall n ms mo, node_char n ms mo -> node_char_sp n ms mo.
+Proof.
+  intros n ms mo (x8 & Hsvc & Hiff & Hex). exists x8. split; [exact Hsvc|].
+  split; [intros eff mo' Hn; apply Hiff; exists eff, mo'; split; [exact Hn | reflexivity]|].
+  split.
+  - intros eff mo' evs Hs. left. apply Hiff in Hs as (e2 & m2 & Hn & E).
+    injection E as -> -> ->. exact Hn.
+  - split; [| exact Hex].
+    intros Hu. apply Hiff in Hu as (e2 & m2 & _ & E). discriminate E.
+Qed.
 
 Definition mstd' (mo : Model) : Prop :=
   m_halted mo = None /\ m_vm_lazy mo = [] /\ m_vm_materialized mo = []
@@ -178,8 +210,22 @@ Proof.
     + exists (eff0 (vm_brk (m_vmmaps mo))), mo. apply nstep_brk_grow_unfold; [exact Hnz|]. left. auto.
 Qed.
 
+Lemma refusal_b_215 : forall i mo ret,
+  bv_unsigned (in_sysno i) = 215%Z -> refusal_b i mo ret = ret_in_errnos munmap_errnos ret.
+Proof. intros i mo ret H. unfold refusal_b. rewrite H. reflexivity. Qed.
+
+Lemma zero_not_refusal_215 : forall i mo,
+  bv_unsigned (in_sysno i) = 215%Z -> refusal_b i mo (Z_to_bv 64 0) = false.
+Proof.
+  intros i mo H. rewrite (refusal_b_215 i mo _ H).
+  unfold ret_in_errnos, munmap_errnos. cbn [existsb]. rewrite orb_false_r.
+  apply bv_eqb_neq. intros E. apply (f_equal bv_unsigned) in E.
+  vm_compute in E. discriminate E.
+Qed.
+
 Lemma node_char_munmap : forall addr len ms mo,
-  at_node segs (NMunmap addr len) ms -> nsafe (NMunmap addr len) mo -> mstd' mo -> node_char (NMunmap addr len) ms mo.
+  at_node segs (NMunmap addr len) ms -> nsafe (NMunmap addr len) mo -> mstd' mo ->
+  node_char_sp (NMunmap addr len) ms mo.
 Proof.
   intros addr len ms mo (Hsvc & Ha0 & Ha1) Hsafe (Hh & Hl & Hm).
   cbv zeta in Hsafe. unfold nsafe in Hsafe. destruct Hsafe as (Hal & Hlen & Ha0' & Hnw & Hhas).
@@ -187,6 +233,8 @@ Proof.
   assert (HTS : TASK_SIZE = 0x800000000000) by reflexivity.
   exists (Z_to_bv 64 215). split; [exact Hsvc|].
   assert (Hno : bv_unsigned (Z_to_bv 64 215) = 215) by reflexivity.
+  assert (Hno' : bv_unsigned (in_sysno (sys_input segs ms (Z_to_bv 64 215))) = 215%Z)
+    by (rewrite in_sysno_si; exact Hno).
   assert (H0 : ms_gpr ms 0 = Z_to_bv 64 addr) by (rewrite areg_gpr0; exact Ha0).
   assert (H1 : ms_gpr ms 1 = Z_to_bv 64 len) by (rewrite areg_gpr1; exact Ha1).
   assert (Hu0 : bv_unsigned (ms_gpr ms 0) = addr) by (rewrite H0; apply u64_lit; lia).
@@ -199,11 +247,32 @@ Proof.
             (eff = mkEffectU (Z_to_bv 64 0) [] [] [(Z_to_bv 64 addr, Z_to_bv 64 (page_round_up_Z len))] [] []
              /\ mo' = kmunmap_model (Z_to_bv 64 addr) (Z_to_bv 64 (page_round_up_Z len)) mo)).
   { intros eff mo'. unfold nstep. cbv zeta. split; [intros [_ H]; exact H | intros H; split; [reflexivity | exact H]]. }
+  pose proof (munmap_outcome_si segs ms (Z_to_bv 64 215) mo) as Hsi.
+  assert (Hcut : syscall_spec (sys_input segs ms (Z_to_bv 64 215)) mo
+            (LinuxProcessSem.Monad.Ok (munmap_eff ms)
+               (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) mo) [])).
+  { apply (Hsi _ Hno Hargs). right. reflexivity. }
   split.
-  - intros o. rewrite (munmap_outcome_si segs ms _ mo o Hno Hargs). unfold munmap_eff. rewrite Hpru, H0. split.
-    + intros ->. eexists _, _. split; [apply En; split; reflexivity | reflexivity].
-    + intros (eff & mo' & Hn & ->). apply En in Hn as [-> ->]. reflexivity.
-  - eexists _, _. apply En. split; reflexivity.
+  - (* every node arm is admissible *)
+    intros eff mo' Hn. apply En in Hn as [-> ->].
+    unfold munmap_eff in Hcut. rewrite Hpru, H0 in Hcut. exact Hcut.
+  - split.
+    + (* the only outcome beside the node's arm is the -ENOMEM the
+         injected arm admits, and under [CFG] that one is spurious *)
+      intros eff mo' evs Hs. apply (Hsi _ Hno Hargs) in Hs.
+      destruct Hs as [(e & He & Hok) | Hok]; injection Hok as -> -> ->.
+      * right. split; [| split; reflexivity]. split; [| split].
+        -- rewrite injected_family_off_CFG, Hno'. reflexivity.
+        -- cbn [eff_ret]. rewrite (refusal_b_215 _ mo _ Hno').
+           destruct He as [<- | []]. unfold ret_in_errnos, munmap_errnos.
+           cbn [existsb]. rewrite bv_eqb_refl. reflexivity.
+        -- eexists _, _, _. split; [exact Hcut|].
+           unfold munmap_eff. cbn [eff_ret]. exact (zero_not_refusal_215 _ mo Hno').
+      * left. apply En. unfold munmap_eff. rewrite Hpru, H0. split; reflexivity.
+    + split.
+      * intros Hu. apply (Hsi _ Hno Hargs) in Hu.
+        destruct Hu as [(e & _ & Hok) | Hok]; discriminate Hok.
+      * eexists _, _. apply En. split; reflexivity.
 Qed.
 
 Lemma node_char_mprotect : forall addr len prot ms mo,
@@ -211,7 +280,7 @@ Lemma node_char_mprotect : forall addr len prot ms mo,
   node_char (NMprotect addr len prot) ms mo.
 Proof.
   intros addr len prot ms mo (Hsvc & Ha0 & Ha1 & Ha2) Hsafe (Hh & Hl & Hm).
-  unfold nsafe in Hsafe. cbv zeta in Hsafe. destruct Hsafe as (-> & Hal & Hlen & Ha0' & Hnw & Hna & Hma).
+  unfold nsafe in Hsafe. cbv zeta in Hsafe. destruct Hsafe as (-> & Hal & Hlen & Ha0' & Hnw & Hvd & Hna & Hma).
   pose proof (page_round_up_Z_bounds len ltac:(lia)) as Hpr.
   exists (Z_to_bv 64 226). split; [exact Hsvc|].
   assert (Hno : bv_unsigned (Z_to_bv 64 226) = 226) by reflexivity.
@@ -220,7 +289,7 @@ Proof.
   assert (H2 : ms_gpr ms 2 = Z_to_bv 64 3) by (rewrite areg_gpr2; exact Ha2).
   assert (Hua : bv_unsigned (Z_to_bv 64 addr) = addr) by (apply u64_lit; lia).
   pose proof (mprotect_outcome_si segs ms _ mo (Z_to_bv 64 addr) len Hno H0 ltac:(rewrite Hua; exact Hal) H1 Hlen
-                ltac:(rewrite Hua; exact Hnw) H2 Hna Hma) as Hchk.
+                ltac:(rewrite Hua; exact Hnw) H2 Hvd Hna Hma) as Hchk.
   cbv zeta in Hchk.
   assert (En : forall eff mo', nstep (NMprotect addr len PROT_RW_Z) mo eff mo' [] <->
             ((exists e, In e mprotect_errnos /\ eff = efferr e /\ mo' = mo)
@@ -269,7 +338,10 @@ Proof.
     { intros eff mo'. unfold nstep. cbv zeta. cbn [Z.eqb MAP_ANON_PRIV PROT_RW_Z Pos.eqb andb].
       split; [intros [_ H]; exact H | intros H; split; [reflexivity | exact H]]. }
     split.
-    + intros o. rewrite (mmap_outcome_si segs ms _ mo o Hno Hargs). rewrite Hu1, Hpru, H0.
+    (* 727298f3: this node's hint is the literal 0 ([H0] after the case
+       split), and [Mmap.place_declined_b]'s first conjunct is
+       [negb (hint_address hint =? 0)], so the new premise computes. *)
+    + intros o. rewrite (mmap_outcome_si segs ms _ mo o Hno Hargs ltac:(rewrite H0; first [apply place_declined_b_null | reflexivity])). rewrite Hu1, Hpru, H0.
       setoid_rewrite <- (kgrant_ok_spec _ mo _ _ Hc). split.
       * intros [(e & He & ->) | (a & Hg & ->)].
         -- exists (efferr e), mo. split; [apply En; left; exists e; auto | reflexivity].
@@ -280,7 +352,7 @@ Proof.
     + exists (efferr ENOMEM), mo. apply En. left. exists ENOMEM. split; [apply ENOMEM_in_mmap_errnos | auto].
   -
     assert (Hargs : mmap_noaccess_args_ok ms) by (unfold mmap_noaccess_args_ok; rewrite H2, H3, H4, H5; repeat split; try reflexivity; exact Hl0).
-    pose proof (mmap_noaccess_outcome_si segs ms _ mo Hno Hargs) as Hchk. cbv zeta in Hchk. rewrite Hu1, H0 in Hchk.
+    pose proof (mmap_noaccess_outcome_si segs ms _ mo Hno Hargs ltac:(rewrite H0; first [apply place_declined_b_null | reflexivity])) as Hchk. cbv zeta in Hchk. rewrite Hu1, H0 in Hchk.
     setoid_rewrite <- (kgrant_ok_na_spec _ mo _ _ Hc) in Hchk.
     assert (En : forall eff mo', nstep (NMmap 0 len 0 MAP_ANON_PRIV) mo eff mo' [] <->
             ((exists e, In e mmap_errnos /\ eff = efferr e /\ mo' = mo)
@@ -329,13 +401,25 @@ Proof.
 Qed.
 
 Lemma node_char_of : forall n ms mo,
-  at_node segs n ms -> nsafe n mo -> mstd' mo -> node_char n ms mo.
+  at_node segs n ms -> nsafe n mo -> mstd' mo -> node_char_sp n ms mo.
 Proof.
   intros n ms mo Hat Hsafe Hstd. destruct n; try (exfalso; exact Hsafe).
-  - apply node_char_brk; assumption.
-  - apply node_char_mmap; assumption.
+  - apply node_char_sp_of_char. apply node_char_brk; assumption.
+  - apply node_char_sp_of_char. apply node_char_mmap; assumption.
   - apply node_char_munmap; assumption.
-  - apply node_char_mprotect; assumption.
+  - apply node_char_sp_of_char. apply node_char_mprotect; assumption.
+Qed.
+
+(* LPS 08b1429: [RomBase.sys_rob] at a safe node: [nsafe] holds only at the memory-management
+   nodes, whose syscalls (brk, mmap, munmap, mprotect) do not read [in_mem]. *)
+Lemma at_node_rob : forall n ms mo,
+  at_node segs n ms -> nsafe n mo -> RomBase.sys_rob segs (mkCfg ms mo).
+Proof.
+  intros n ms mo Hat Hsafe. destruct n; try (exfalso; exact Hsafe); cbn [at_node] in Hat.
+  - destruct Hat as (Hs & _). apply (RomBase.sys_rob_memfree segs ms mo _ Hs). exact RomBase.memfree_214.
+  - destruct Hat as (Hs & _). apply (RomBase.sys_rob_memfree segs ms mo _ Hs). exact RomBase.memfree_222.
+  - destruct Hat as (Hs & _). apply (RomBase.sys_rob_memfree segs ms mo _ Hs). exact RomBase.memfree_215.
+  - destruct Hat as (Hs & _). apply (RomBase.sys_rob_memfree segs ms mo _ Hs). exact RomBase.memfree_226.
 Qed.
 
 Lemma nrefusal_refusal_b : forall n ms x8 mo eff mo',
@@ -365,71 +449,99 @@ Proof.
   intros n ms x8 mo eff mo' Hat Hsvc Hn Hoff e.
   destruct n; try (destruct Hn as [_ Hn]; contradiction); cbn [at_node] in Hat; destruct Hat as (Hs & _);
     rewrite Hs in Hsvc; injection Hsvc as <-; rewrite injected_family_off_CFG, in_sysno_si in Hoff;
-    try (vm_compute in Hoff; discriminate Hoff).
-  reflexivity.
+    vm_compute in Hoff; discriminate Hoff.
 Qed.
+
+(* MOVED UP FROM :526 (text unchanged, statement and proof character-identical).
+   It was declared BELOW its own first use - :455, :461, :492 and :497 all sit in
+   [nspurious_iff] and [srz_svc_fam] below - which is the farm's "The variable
+   nstep_evs_nil was not found in the current environment" at :455.  A forward
+   reference, not a model change: [nstep]'s first component has always been the
+   empty-event fact, and the two other trees that use this lemma call it from
+   below its definition (CJ/MallocInstS1.v:355, CJ/MallocInstU1.v:355). *)
+Lemma nstep_evs_nil : forall n mo eff mo' evs, nstep n mo eff mo' evs -> evs = [].
+Proof. intros n mo eff mo' evs [H _]. exact H. Qed.
 
 Lemma nspurious_iff : forall n ms mo x8 eff mo',
   at_node segs n ms -> ms_svc_pending ms = Some x8 ->
-  (forall o, syscall_spec (sys_input segs ms x8) mo o <->
-             exists eff mo', nstep n mo eff mo' [] /\ o = LinuxProcessSem.Monad.Ok eff mo' []) ->
+  (forall e m', nstep n mo e m' [] ->
+     syscall_spec (sys_input segs ms x8) mo (LinuxProcessSem.Monad.Ok e m' [])) ->
+  (forall e m' evs, syscall_spec (sys_input segs ms x8) mo (LinuxProcessSem.Monad.Ok e m' evs) ->
+     nstep n mo e m' evs
+     \/ (spurious_refusal_cfg CFG (sys_input segs ms x8) mo e /\ m' = mo /\ evs = [])) ->
   nstep n mo eff mo' [] ->
   (~ spurious_refusal_cfg CFG (sys_input segs ms x8) mo eff <-> nstep_cfg n mo eff mo' []).
 Proof.
-  intros n ms mo x8 eff mo' Hat Hsvc Hchar Hn.
+  intros n ms mo x8 eff mo' Hat Hsvc Hsound Hcomp Hn.
   pose proof (nrefusal_refusal_b n ms x8 mo eff mo' Hat Hsvc Hn) as HR.
   split.
   - intros Hns. split; [exact Hn |]. intros Hr eff' mo'' evs' Hn'.
     destruct (nrefusal n mo eff') eqn:E; [reflexivity |]. exfalso. apply Hns.
     destruct (injected_family_off CFG (sys_input segs ms x8)) eqn:Hoff.
     + split; [exact Hoff |]. split; [rewrite HR; exact Hr |].
-      pose proof (proj1 Hn') as ->.
-      exists eff', mo'', []. split; [apply Hchar; exists eff', mo''; auto |]. rewrite HR. exact E.
+      pose proof (nstep_evs_nil _ _ _ _ _ Hn') as ->.
+      exists eff', mo'', []. split; [apply Hsound; exact Hn' |]. rewrite HR. exact E.
     + rewrite (nfamily_off n ms x8 mo eff mo' Hat Hsvc Hn Hoff eff) in Hr. discriminate Hr.
   - intros [_ Hcfg] (Hoff & Hr & (eff' & m' & evs' & Hs & Hnr)).
-    rewrite HR in Hr, Hnr. apply Hchar in Hs. destruct Hs as (e2 & mo2 & Hn2 & E2).
-    injection E2 as -> -> ->.
-    rewrite (Hcfg Hr e2 mo2 [] Hn2) in Hnr. discriminate Hnr.
+    rewrite HR in Hr.
+    destruct (Hcomp eff' m' evs' Hs) as [Hn2 | (Hsp2 & _ & _)].
+    + pose proof (nstep_evs_nil _ _ _ _ _ Hn2) as ->.
+      rewrite (nrefusal_refusal_b n ms x8 mo eff' m' Hat Hsvc Hn2) in Hnr.
+      rewrite (Hcfg Hr eff' m' [] Hn2) in Hnr. discriminate Hnr.
+    + destruct Hsp2 as (_ & Hr2 & _). rewrite Hr2 in Hnr. discriminate Hnr.
 Qed.
 
 Lemma srz_svc_fam : forall n ms mo x8 (T : resp -> Model -> TSet),
   at_node segs n ms ->
   m_halted mo = None -> m_vm_lazy mo = [] -> ms_svc_pending ms = Some x8 ->
-  (forall o, syscall_spec (sys_input segs ms x8) mo o <->
-             exists eff mo', nstep n mo eff mo' [] /\ o = LinuxProcessSem.Monad.Ok eff mo' []) ->
+  (forall e m', nstep n mo e m' [] ->
+     syscall_spec (sys_input segs ms x8) mo (LinuxProcessSem.Monad.Ok e m' [])) ->
+  (forall e m' evs, syscall_spec (sys_input segs ms x8) mo (LinuxProcessSem.Monad.Ok e m' evs) ->
+     nstep n mo e m' evs
+     \/ (spurious_refusal_cfg CFG (sys_input segs ms x8) mo e /\ m' = mo /\ evs = [])) ->
+  (~ syscall_spec (sys_input segs ms x8) mo LinuxProcessSem.Monad.Unmodeled) ->
   (exists eff mo', nstep n mo eff mo' []) ->
+  RomBase.sys_rob segs (mkCfg ms mo) ->
   (forall eff mo', nstep n mo eff mo' [] -> m_halted mo' = None /\ m_vm_lazy mo' = []) ->
   (forall eff mo', nstep_cfg n mo eff mo' [] -> srealizes segs (mkCfg (nret ms eff) mo') (T eff mo')) ->
   srealizes segs (mkCfg ms mo)
     (fun tr => tr = [] \/ exists eff mo', nstep_cfg n mo eff mo' [] /\ T eff mo' tr).
 Proof.
-  intros n ms mo x8 T Hat Hh Hl Hsvc Hchar (eff0_ & mo0 & H0) Hpost HK.
+  intros n ms mo x8 T Hat Hh Hl Hsvc Hsound Hcomp Hnu (eff0_ & mo0 & H0) Hrob Hpost HK.
   set (I := { p : resp * Model | nstep n mo (fst p) (snd p) [] }).
-  set (R := fun o => exists eff mo', nstep n mo eff mo' [] /\ o = LinuxProcessSem.Monad.Ok eff mo' []).
-  assert (Hin : forall i : I, R (LinuxProcessSem.Monad.Ok (fst (proj1_sig i)) (snd (proj1_sig i)) [])).
-  { intros [[eff mo'] Ho]. cbn. exists eff, mo'. split; [exact Ho | reflexivity]. }
-  assert (Hout : forall o, R o -> exists i : I, o = LinuxProcessSem.Monad.Ok (fst (proj1_sig i)) (snd (proj1_sig i)) []).
-  { intros o (eff & mo' & Ho & ->). exists (exist _ (eff, mo') Ho). reflexivity. }
-  assert (HN := Nodes.node_family_cfg segs ms mo x8 I (fun i => fst (proj1_sig i)) (fun i => snd (proj1_sig i))
-                  (fun _ => []) R Hh Hsvc Hchar Hin Hout
-                  ltac:(intros [[eff mo'] Ho]; exact (proj1 (Hpost eff mo' Ho)))
+  assert (Hin : forall i : I, syscall_spec (sys_input segs ms x8) mo
+                  (LinuxProcessSem.Monad.Ok (fst (proj1_sig i)) (snd (proj1_sig i)) [])).
+  { intros [[eff mo'] Ho]. cbn. apply Hsound. exact Ho. }
+  assert (Hout : forall e m' ev, syscall_spec (sys_input segs ms x8) mo (LinuxProcessSem.Monad.Ok e m' ev) ->
+            ~ spurious_refusal_cfg CFG (sys_input segs ms x8) mo e ->
+            exists i : I, e = fst (proj1_sig i) /\ m' = snd (proj1_sig i) /\ ev = (fun _ : I => @nil event) i).
+  { intros e m' ev Hs Hns. destruct (Hcomp e m' ev Hs) as [Hn | (Hsp & _ & _)];
+      [| exfalso; exact (Hns Hsp)].
+    pose proof (nstep_evs_nil _ _ _ _ _ Hn) as ->.
+    exists (exist _ (e, m') Hn). cbn. auto. }
+  assert (Hhalt : forall e m' ev, syscall_spec (sys_input segs ms x8) mo (LinuxProcessSem.Monad.Ok e m' ev) ->
+            m_halted m' = None).
+  { intros e m' ev Hs. destruct (Hcomp e m' ev Hs) as [Hn | (_ & -> & _)]; [| exact Hh].
+    pose proof (nstep_evs_nil _ _ _ _ _ Hn) as ->. exact (proj1 (Hpost e m' Hn)). }
+  assert (HN := Nodes.node_family_cfg_sp segs ms mo x8 I (fun i => fst (proj1_sig i)) (fun i => snd (proj1_sig i))
+                  (fun _ => []) Hh Hsvc Hin Hout Hnu Hhalt
                   ltac:(intros [[eff mo'] Ho]; exact (proj2 (Hpost eff mo' Ho)))).
-  pose (j0 := Nodes.family_cfg_nonempty segs ms mo x8 I (fun i => fst (proj1_sig i)) (fun i => snd (proj1_sig i))
-                (fun _ => []) R Hchar Hout (exist _ (eff0_, mo0) H0)).
+  pose (j0 := Nodes.family_cfg_sp_nonempty segs ms mo x8 I (fun i => fst (proj1_sig i)) (fun i => snd (proj1_sig i))
+                (fun _ => []) Hin Hout (exist _ (eff0_, mo0) H0)).
   eapply srz_conseq.
   - eapply (srz_node segs (mkCfg ms mo) _ (fun _ => []) _
-             (fun j => T (fst (proj1_sig (proj1_sig j))) (snd (proj1_sig (proj1_sig j)))) j0 HN).
+             (fun j => T (fst (proj1_sig (proj1_sig j))) (snd (proj1_sig (proj1_sig j)))) j0 HN Hrob).
     intros [[[eff mo'] Ho] Hns]. cbn. apply HK.
-    exact (proj1 (nspurious_iff n ms mo x8 eff mo' Hat Hsvc Hchar Ho) Hns).
+    exact (proj1 (nspurious_iff n ms mo x8 eff mo' Hat Hsvc Hsound Hcomp Ho) Hns).
   - intros tr. unfold t_alt, t_emit. split.
     + intros [[[[eff mo'] Ho] Hns] [Hp | (tr' & -> & Ht)]]; cbn in *.
       * left. destruct tr; [reflexivity | destruct Hp].
       * right. exists eff, mo'. split; [| exact Ht].
-        exact (proj1 (nspurious_iff n ms mo x8 eff mo' Hat Hsvc Hchar Ho) Hns).
+        exact (proj1 (nspurious_iff n ms mo x8 eff mo' Hat Hsvc Hsound Hcomp Ho) Hns).
     + intros [-> | (eff & mo' & Hc & Ht)].
       * exists j0. left. constructor.
       * exists (exist _ (exist _ (eff, mo') (nstep_cfg_sub _ _ _ _ _ Hc))
-                  (proj2 (nspurious_iff n ms mo x8 eff mo' Hat Hsvc Hchar (nstep_cfg_sub _ _ _ _ _ Hc)) Hc)).
+                  (proj2 (nspurious_iff n ms mo x8 eff mo' Hat Hsvc Hsound Hcomp (nstep_cfg_sub _ _ _ _ _ Hc)) Hc)).
         right. exists tr. auto.
 Qed.
 
@@ -439,8 +551,6 @@ Fixpoint tset {R : Type} (t : itree node R) (mo : Model) (KL : R -> Model -> TSe
   | Vis n k => fun tr => tr = [] \/ exists eff mo', nstep_cfg n mo eff mo' [] /\ tset (k eff) mo' KL tr
   end.
 
-Lemma nstep_evs_nil : forall n mo eff mo' evs, nstep n mo eff mo' evs -> evs = [].
-Proof. intros n mo eff mo' evs [H _]. exact H. Qed.
 
 Theorem srz_impl : forall {R : Type} (t : itree node R) Q P ms mo (KL : R -> Model -> TSet),
   impl segs (at_node segs) t Q ms -> twf t mo P -> mstd' mo ->
@@ -454,8 +564,9 @@ Proof.
   - cbn in Himpl, Htwf. cbn [tset]. destruct Htwf as [Hsafe Hk]. pose proof Hstd as (Hh & Hl & Hm).
     eapply srz_evt; [exact Hh | exact Hl | exact Himpl |].
     intros ms1 [Hat Himpl1].
-    destruct (node_char_of n ms1 mo Hat Hsafe Hstd) as (x8 & Hsvc & Hchar & Hex).
-    apply (srz_svc_fam n ms1 mo x8 (fun eff mo' => tset (k eff) mo' KL) Hat Hh Hl Hsvc Hchar Hex).
+    destruct (node_char_of n ms1 mo Hat Hsafe Hstd) as (x8 & Hsvc & Hsound & Hcomp & Hnu & Hex).
+    apply (srz_svc_fam n ms1 mo x8 (fun eff mo' => tset (k eff) mo' KL) Hat Hh Hl Hsvc Hsound Hcomp Hnu Hex
+             (at_node_rob n ms1 mo Hat Hsafe)).
     + intros eff mo' Hn. pose proof (nstep_mstd' n mo eff mo' Hstd Hn) as (A & B & C & D). auto.
     + intros eff mo' Hn. apply nstep_cfg_sub in Hn.
       apply (IH eff Q P); [apply Himpl1 | apply (Hk eff mo' []); exact Hn | exact (nstep_mstd' n mo eff mo' Hstd Hn) | exact HL].
@@ -527,8 +638,9 @@ Proof.
   - cbn in Himpl, Htwf. cbn [tset]. destruct Htwf as [Hsafe Hk]. pose proof Hstd as (Hh & Hl & Hm).
     eapply srz_evt; [exact Hh | exact Hl | exact Himpl |].
     intros ms1 [Hat Himpl1].
-    destruct (node_char_of n ms1 mo Hat Hsafe Hstd) as (x8 & Hsvc & Hchar & Hex).
-    apply (srz_svc_fam n ms1 mo x8 (fun eff mo' => tset (k eff) mo' KL) Hat Hh Hl Hsvc Hchar Hex).
+    destruct (node_char_of n ms1 mo Hat Hsafe Hstd) as (x8 & Hsvc & Hsound & Hcomp & Hnu & Hex).
+    apply (srz_svc_fam n ms1 mo x8 (fun eff mo' => tset (k eff) mo' KL) Hat Hh Hl Hsvc Hsound Hcomp Hnu Hex
+             (at_node_rob n ms1 mo Hat Hsafe)).
     + intros eff mo' Hn. pose proof (nstep_mstd' n mo eff mo' Hstd Hn) as (A & B & C & D). auto.
     + intros eff mo' Hn.
       apply (IH eff Q P); [apply Himpl1 | apply (Hk eff mo' []); exact Hn

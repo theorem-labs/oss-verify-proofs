@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (A_side lifts the walk over the binary's own segments to the run's segment list by SRomStable.srun_init). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -11,6 +12,7 @@ From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.LibA Require Import X1
 From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.AS Require Import X0mx X0n0 X0lj.
 From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.A Require Import X0ec X0fg X00a X001 X047 X0jw X080 X0jb.
 From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.A Require Import X002.
+From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.AS.Cfg Require SRomStable.
 
 From OSSVerify.speex.speex_decode_fuzzer_float.images Require AsanUbsan.
 From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.AS Require X0lk.
@@ -48,9 +50,13 @@ Proof.
 intros HM HD en inp He Hi.
 pose proof (asan_side_of_main T_spx D_spx T_spx_nil HM en inp He Hi (HD inp Hi)) as Hr.
 destruct en as [sp brk mb rnd]. cbn [Run.run_scfg bh_traces bh_errors en_sp en_brk en_mmap_base en_draw] in *.
+(* LPS 08b1429: the run reads the binary against [run_segments]; [SRomStable.srun_init] lifts the
+   walk over the binary's own segments ([vdso_image] of an image's own segment list is [None], by
+   computation). *)
+pose proof (SRomStable.srun_init _ inp sp mb _ _ brk rnd _ _ (eq_refl : vdso_image ASEGS = None) Hr) as Hr'.
 split.
-- intros tr. exact (srealizes_obs_iff ASEGS _ _ Hr tr).
-- exact (srealizes_no_error ASEGS _ _ Hr).
+- intros tr. exact (srealizes_obs_iff _ _ _ Hr' tr).
+- exact (srealizes_no_error _ _ _ Hr').
 Qed.
 End B_TWIN.
 
@@ -76,7 +82,11 @@ Proof.
 intros HM HD en inp He Hi.
 pose proof (asan_side_of_main T_spx D_spx T_spx_nil HM en inp He Hi (HD inp Hi)) as Hr.
 destruct en as [sp brk mb rnd]. cbn [Run.run_scfg bh_traces bh_errors en_sp en_brk en_mmap_base en_draw] in *.
+(* LPS 08b1429: the run reads the binary against [run_segments]; [SRomStable.srun_init] lifts the
+   walk over the binary's own segments ([vdso_image] of an image's own segment list is [None], by
+   computation). *)
+pose proof (SRomStable.srun_init _ inp sp mb _ _ brk rnd _ _ (eq_refl : vdso_image ASEGS = None) Hr) as Hr'.
 split.
-- intros tr. exact (srealizes_obs_iff ASEGS _ _ Hr tr).
-- exact (srealizes_no_error ASEGS _ _ Hr).
+- intros tr. exact (srealizes_obs_iff _ _ _ Hr' tr).
+- exact (srealizes_no_error _ _ _ Hr').
 Qed.

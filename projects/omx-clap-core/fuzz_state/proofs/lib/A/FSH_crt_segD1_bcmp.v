@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/YE05.v, with its module paths changed; 2671 of its 2756 lines of code are new or changed and 333 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segA.v; 260 of its 336 lines of code are new or changed and 2680 lines of the source are left out. *)
-(* rule 24: proves no function (kind: helper lemmas of check_round_trip's D1 segment lemma, PORTED from a working branch d25a984c903 check_round_trip_sd16.v / sd17.v / sd18.v)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* rule 24: proves no function (kind: helper lemmas of check_round_trip's D1 segment lemma, PORTED from a working branch check_round_trip_sd16.v / sd17.v / sd18.v)
    This file holds segment 31's bcmp call with the callee's frame clause and md relation handed to the continuation
    (crtD1_bcmp_call), the walk's boundary state crt_ss_ret r crt_cs1 csF rebuilt over the memory after that call
    (crtD1_bcmp_resume), and the call as an empty-footprint callee journal (crtD1_bcmp_journal).

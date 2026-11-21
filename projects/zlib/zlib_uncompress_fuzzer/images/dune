@@ -25,3 +25,63 @@
  (action
   (run elf-snapshot %{elf} AsanUbsan.v --prefix AsanUbsan --module-name M
        --namespace OSSVerify.zlib.zlib_uncompress_fuzzer.images)))
+(rule
+ (targets PlainOriginal.v PlainOriginal_seg_000.hex PlainOriginal_seg_001.hex PlainOriginal_seg_002.hex PlainOriginal_seg_003.hex)
+ (deps (:elf %{project_root}/projects/zlib/bin/zlib_uncompress_fuzzer/zlib_uncompress_fuzzer.original-plain))
+ (action
+  (run elf-snapshot %{elf} PlainOriginal.v --prefix PlainOriginal --module-name M
+       --namespace OSSVerify.zlib.zlib_uncompress_fuzzer.images)))
+(rule
+ (targets UbsanOriginal.v UbsanOriginal_seg_000.hex UbsanOriginal_seg_001.hex UbsanOriginal_seg_002.hex UbsanOriginal_seg_003.hex)
+ (deps (:elf %{project_root}/projects/zlib/bin/zlib_uncompress_fuzzer/zlib_uncompress_fuzzer.original-ubsan))
+ (action
+  (run elf-snapshot %{elf} UbsanOriginal.v --prefix UbsanOriginal --module-name M
+       --namespace OSSVerify.zlib.zlib_uncompress_fuzzer.images)))
+(rule
+ (targets AsanOriginal.v AsanOriginal_seg_000.hex AsanOriginal_seg_001.hex AsanOriginal_seg_002.hex AsanOriginal_seg_003.hex)
+ (deps (:elf %{project_root}/projects/zlib/bin/zlib_uncompress_fuzzer/zlib_uncompress_fuzzer.original-asan))
+ (action
+  (run elf-snapshot %{elf} AsanOriginal.v --prefix AsanOriginal --module-name M
+       --namespace OSSVerify.zlib.zlib_uncompress_fuzzer.images)))
+(rule
+ (targets AsanUbsanOriginal.v AsanUbsanOriginal_seg_000.hex AsanUbsanOriginal_seg_001.hex AsanUbsanOriginal_seg_002.hex AsanUbsanOriginal_seg_003.hex)
+ (deps (:elf %{project_root}/projects/zlib/bin/zlib_uncompress_fuzzer/zlib_uncompress_fuzzer.original-asan-ubsan))
+ (action
+  (run elf-snapshot %{elf} AsanUbsanOriginal.v --prefix AsanUbsanOriginal --module-name M
+       --namespace OSSVerify.zlib.zlib_uncompress_fuzzer.images)))
+(rule
+ (targets ClassifierAUbsan.v ClassifierAUbsan_seg_000.hex ClassifierAUbsan_seg_001.hex ClassifierAUbsan_seg_002.hex ClassifierAUbsan_seg_003.hex)
+ (deps (:elf %{project_root}/projects/zlib/bin/zlib_uncompress_fuzzer/zlib_uncompress_fuzzer.classifier-a-ubsan))
+ (action
+  (run elf-snapshot %{elf} ClassifierAUbsan.v --prefix ClassifierAUbsan --module-name M
+       --namespace OSSVerify.zlib.zlib_uncompress_fuzzer.images)))
+(rule
+ (targets ClassifierBUbsan.v ClassifierBUbsan_seg_000.hex ClassifierBUbsan_seg_001.hex ClassifierBUbsan_seg_002.hex ClassifierBUbsan_seg_003.hex)
+ (deps (:elf %{project_root}/projects/zlib/bin/zlib_uncompress_fuzzer/zlib_uncompress_fuzzer.classifier-b-ubsan))
+ (action
+  (run elf-snapshot %{elf} ClassifierBUbsan.v --prefix ClassifierBUbsan --module-name M
+       --namespace OSSVerify.zlib.zlib_uncompress_fuzzer.images)))
+(rule
+ (targets ClassifierAAsan.v ClassifierAAsan_seg_000.hex ClassifierAAsan_seg_001.hex ClassifierAAsan_seg_002.hex ClassifierAAsan_seg_003.hex)
+ (deps (:elf %{project_root}/projects/zlib/bin/zlib_uncompress_fuzzer/zlib_uncompress_fuzzer.classifier-a-asan))
+ (action
+  (run elf-snapshot %{elf} ClassifierAAsan.v --prefix ClassifierAAsan --module-name M
+       --namespace OSSVerify.zlib.zlib_uncompress_fuzzer.images)))
+(rule
+ (targets ClassifierBAsan.v ClassifierBAsan_seg_000.hex ClassifierBAsan_seg_001.hex ClassifierBAsan_seg_002.hex ClassifierBAsan_seg_003.hex)
+ (deps (:elf %{project_root}/projects/zlib/bin/zlib_uncompress_fuzzer/zlib_uncompress_fuzzer.classifier-b-asan))
+ (action
+  (run elf-snapshot %{elf} ClassifierBAsan.v --prefix ClassifierBAsan --module-name M
+       --namespace OSSVerify.zlib.zlib_uncompress_fuzzer.images)))
+(rule
+ (targets ClassifierAAsanUbsan.v ClassifierAAsanUbsan_seg_000.hex ClassifierAAsanUbsan_seg_001.hex ClassifierAAsanUbsan_seg_002.hex ClassifierAAsanUbsan_seg_003.hex)
+ (deps (:elf %{project_root}/projects/zlib/bin/zlib_uncompress_fuzzer/zlib_uncompress_fuzzer.classifier-a-asan-ubsan))
+ (action
+  (run elf-snapshot %{elf} ClassifierAAsanUbsan.v --prefix ClassifierAAsanUbsan --module-name M
+       --namespace OSSVerify.zlib.zlib_uncompress_fuzzer.images)))
+(rule
+ (targets ClassifierBAsanUbsan.v ClassifierBAsanUbsan_seg_000.hex ClassifierBAsanUbsan_seg_001.hex ClassifierBAsanUbsan_seg_002.hex ClassifierBAsanUbsan_seg_003.hex)
+ (deps (:elf %{project_root}/projects/zlib/bin/zlib_uncompress_fuzzer/zlib_uncompress_fuzzer.classifier-b-asan-ubsan))
+ (action
+  (run elf-snapshot %{elf} ClassifierBAsanUbsan.v --prefix ClassifierBAsanUbsan --module-name M
+       --namespace OSSVerify.zlib.zlib_uncompress_fuzzer.images)))

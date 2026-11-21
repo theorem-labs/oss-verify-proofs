@@ -3,13 +3,14 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the kit of check_reply_answer's ASan walk (plugin-hostd/fuzz_command), in the form of proofs/cgif/cgif_file_fuzzer/lib/A/AChc.v (the walk's kit: regions, facts, register files, seed lemma cl_seed) over fuzz_command's listing (lib/A/Prog/CmdList.v). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_reply_answer_k.v, with its module paths, module names and numbers changed; 325 of its 448 lines of code are new or changed and 306 lines of the source are left out. *)
-(* the image-B port of lib/A/Prog/check_provenance_lem.v (commit 9e9d574ba383): the pieces of
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* the image-B port of lib/A/Prog/check_provenance_lem.v: the pieces of
    the walk of check_provenance on fuzz_segconf image B (asan-ubsan, BASE + AF_check_provenance = 0x87278) that are
    not the run itself: the call rule of the strcmp wrapper in the journal form the walk uses, the byte bridges from
    the contract's reader forms (lib/B/Prog/SegABase.v) to the wrapper's (lib/B/Rt/RtDefs.v), the symbolic entry
    state and its seed lemma (its alignment fact on want, from want mod 4 = 0, lets the run decide image B's added
-   UBSan test at 0x87294 not taken). The form is plugin-hostd/fuzz_command's lib/A/Prog/check_reply_answer_k.v at
-   origin/ossv/recipes 501c0d516c69 (acall_rule, acall_of_art, call_strcmp_of, cra_entry), over image B's listing
+   UBSan test at 0x87294 not taken). The form is plugin-hostd/fuzz_command's lib/A/Prog/check_reply_answer_k.v
+    (acall_rule, acall_of_art, call_strcmp_of, cra_entry), over image B's listing
    (lib/B/Prog/SegList.v). Image A's text is kept; module paths are lib.B's (image B's kit copies and contract
    base), the image numbers are image B's. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.

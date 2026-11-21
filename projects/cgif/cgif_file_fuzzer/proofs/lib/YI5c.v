@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed src0_sink_laws. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.
@@ -59,5 +60,6 @@ destruct Ha as [Ha | [Ha | [Ha | [Ha | [Ha | [Ha | [Ha | [Ha | Ha]]]]]]]].
 + split; [apply src0_sink_ro_img; lia | src0_static_tac].
 - intros a Ha. unfold errno_addr in Ha. cbn in Ha. unfold src0_tp in Ha.
 split; [apply src0_sink_in_img; lia | src0_static_tac].
+- intros a Ha. pose proof (src0_env_addr_range a Ha). lia.
 Qed.
 End b.

@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/AChf.v, with its module paths, module names and addresses changed; 145 of its 210 lines of code are new or changed and 301 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_scene/lib/A/P_check_step_S0.v, with its module paths and module names changed; 246 of its 293 lines of code are new or changed and 163 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The middle of segment S3 of the asan-ubsan walk of check_step (a Theorem Labs lane, 2026-10-29; fuzz_scene.asan-ubsan,
    sha256 e98b1ed286c1aa5c3d558cb2069011d2413d58b2122f741531364382a528833f), proved, and used by a Theorem Labs lane's cs_S3.
    Rule 24 is met: this is part of one segment of the walk; reac_ctrl_parse is the Section hypothesis PARSE.
@@ -89,7 +90,7 @@ Variable B : asyms.
 Context {RO : ro_below_ofl SEGS pa_relro_lo pa_relro_hi}.
 (* LAWS is a theorem, not a hypothesis (an internal review, CHECKSTEP-REVIEW item R4): AR_laws_ok (Reusable/YG0q.v:803). *)
 Let LAWS : AR_laws SEGS B := AR_laws_ok SEGS B.
-(* reac_ctrl_parse: a Theorem Labs lane (8cd86323565). *)
+(* reac_ctrl_parse: a Theorem Labs lane. *)
 Hypothesis PARSE : tctrl_parse_spec (SK := SK) B.
 Lemma s3u_mid : forall ly S W (regs : bvmap 5 word) mem md ch (blk body k : Z) (b : list byte) (fpos : Z)
   ly3 S3 (W3 : world SEGS) (regs3 : bvmap 5 word) mem3 md3,

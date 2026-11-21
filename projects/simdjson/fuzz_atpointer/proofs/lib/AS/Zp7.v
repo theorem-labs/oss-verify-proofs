@@ -1,12 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the place_declined_b premise of the mmap decline; the start over the image's run_segments, with each node's sys_rob robustness; the launch stated over the run's whole input; the start-up per CONFIG_RSEQ value and the new auxv layout; the syscall-return and channel-reader fields of the model's state; the model's munmap and grant_ok changes; the model's vDSO changes). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence OmniEquivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
-  BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run OmniRun.
+  BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run OmniRun Vdso.
 From OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.AS Require Import SimInv Z8t CatSim Zfa Z16 Z17 Z11j.
+From OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.AS Require Import RomBase RomWrite.
 From OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.AS Require Export CfgRun.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
@@ -252,6 +254,11 @@ Inductive realizes : config -> TSet -> Prop :=
 | rz_node : forall c (I : Type) (evs : I -> list event) (nx : I -> config)
                    (T : I -> TSet) (i0 : I),
     node_ok c I evs nx ->
+    (* LPS 727298f3: the node's system call reads no byte the run's backing adds
+       ([RomBase.sys_rob]; [RomStable.srun_init] lifts a walk to the run's
+       segment list, the simdjson family's design as simdjson/fuzz_utf8's port
+       has it) *)
+    sys_rob segs c ->
     (forall i, realizes (nx i) (T i)) ->
     realizes c (t_alt (fun i => t_emit (evs i) (T i)))
 | rz_halt : forall c,
@@ -262,7 +269,7 @@ Inductive realizes : config -> TSet -> Prop :=
 
 Lemma realizes_nonempty : forall c T, realizes c T -> T [].
 Proof.
-  intros c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq].
+  intros c T H; induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq].
   - exists i0. left. apply is_prefix_nil.
   - reflexivity.
   - apply Heq. exact IH.
@@ -271,7 +278,7 @@ Qed.
 Lemma realizes_pclosed : forall c T, realizes c T ->
   forall tr tr', T tr -> is_prefix tr' tr -> T tr'.
 Proof.
-  intros c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+  intros c T H; induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq];
     intros tr tr' HT Hp.
   - destruct HT as [i [Hpre | (tr0 & -> & HT0)]]; exists i.
     + left. eapply is_prefix_trans; eauto.
@@ -286,7 +293,7 @@ Lemma realizes_star_only : forall c T, realizes c T ->
   forall tr c', star_cfg segs ACFG c tr c' -> T tr.
 Proof.
   intros c T rz.
-  induction rz as [c I evs nx Tk i0 shape kids IHkids | c stopped | c T T' rz IHrz same];
+  induction rz as [c I evs nx Tk i0 shape rob kids IHkids | c stopped | c T T' rz IHrz same];
     intros tr c' run.
   - inversion run as [x | x out mid rest last first tail]; subst.
     + exists i0. left. apply is_prefix_nil.
@@ -302,7 +309,7 @@ Lemma realizes_admits : forall c T, realizes c T ->
   forall tr, T tr -> obs_trace_cfg segs ACFG c tr.
 Proof.
   intros c T rz.
-  induction rz as [c I evs nx Tk i0 shape kids IHkids | c stopped | c T T' rz IHrz same];
+  induction rz as [c I evs nx Tk i0 shape rob kids IHkids | c stopped | c T T' rz IHrz same];
     intros tr member.
   - destruct member as [j [short | (rest & -> & deeper)]].
     + exists (evs j), (nx j).
@@ -332,7 +339,7 @@ Lemma realizes_step : forall c T e c',
   realizes c T -> sstep_cfg segs ACFG c e (SNext c') -> exists T', realizes c' T'.
 Proof.
   intros c T e c' rz.
-  induction rz as [c I evs nx Tk i0 shape kids IHkids | c stopped | c T T' rz IHrz same];
+  induction rz as [c I evs nx Tk i0 shape rob kids IHkids | c stopped | c T T' rz IHrz same];
     intro move.
   - destruct (proj2 shape e (SNext c') move) as (j & _ & landed).
     injection landed as ->. exists (Tk j). exact (kids j).
@@ -344,7 +351,7 @@ Lemma realizes_no_sserror : forall c T e,
   realizes c T -> ~ sstep_cfg segs ACFG c e SError.
 Proof.
   intros c T e rz.
-  induction rz as [c I evs nx Tk i0 shape kids IHkids | c stopped | c T T' rz IHrz same];
+  induction rz as [c I evs nx Tk i0 shape rob kids IHkids | c stopped | c T T' rz IHrz same];
     intro crash.
   - destruct (proj2 shape e SError crash) as (j & _ & clash). discriminate clash.
   - exact (stopped (sstep_cfg_halted_none segs c e SError crash)).
@@ -376,46 +383,61 @@ Proof.
 Qed.
 
 Lemma rz_silent1 : forall c c' T,
-  node_ok c unit (fun _ => []) (fun _ => c') ->
+  node_ok c unit (fun _ => []) (fun _ => c') -> sys_rob segs c ->
   realizes c' T ->
   realizes c T.
 Proof.
-  intros c c' T Hnode Hc.
+  intros c c' T Hnode Hrob Hc.
   apply (rz_conseq c (t_alt (fun _ : unit => t_emit [] T))).
-  - apply (rz_node c unit (fun _ => []) (fun _ => c') (fun _ => T) tt Hnode).
+  - apply (rz_node c unit (fun _ => []) (fun _ => c') (fun _ => T) tt Hnode Hrob).
     intros []; exact Hc.
   - eapply t_eq_trans;
       [ apply (t_alt_unit (fun _ : unit => t_emit [] T))
       | apply t_emit_nil_eq; eapply realizes_nonempty; exact Hc ].
 Qed.
 
+Lemma rz_silent_all : forall c (I : Type) (nx : I -> config) (T : TSet) (i0 : I),
+  node_ok c I (fun _ => []) nx -> sys_rob segs c ->
+  (forall i, realizes (nx i) T) ->
+  realizes c T.
+Proof.
+  intros c I nx T i0 Hnode Hrob HT.
+  assert (HT0 : T []) by (eapply realizes_nonempty; apply (HT i0)).
+  apply (rz_conseq c (t_alt (fun _ : I => t_emit [] T))).
+  - apply (rz_node c I (fun _ => []) nx (fun _ => T) i0 Hnode Hrob).
+    intros i; exact (HT i).
+  - intro tr. split.
+    + intros [i Hi]. exact (proj1 (t_emit_nil_eq T HT0 tr) Hi).
+    + intro H. exists i0. exact (proj2 (t_emit_nil_eq T HT0 tr) H).
+Qed.
+
 Lemma rz_emit1 : forall c c' e T,
-  node_ok c unit (fun _ => e) (fun _ => c') ->
+  node_ok c unit (fun _ => e) (fun _ => c') -> sys_rob segs c ->
   realizes c' T ->
   realizes c (t_emit e T).
 Proof.
-  intros c c' e T Hnode Hc.
+  intros c c' e T Hnode Hrob Hc.
   apply (rz_conseq c (t_alt (fun _ : unit => t_emit e T))).
-  - apply (rz_node c unit (fun _ => e) (fun _ => c') (fun _ => T) tt Hnode).
+  - apply (rz_node c unit (fun _ => e) (fun _ => c') (fun _ => T) tt Hnode Hrob).
     intros []; exact Hc.
   - apply t_alt_unit.
 Qed.
 
 Lemma rz_alt2 : forall c (IA IB : Type) (nx : IA + IB -> config) (A B : TSet)
                        (a0 : IA) (b0 : IB),
-  node_ok c (IA + IB) (fun _ => []) nx ->
+  node_ok c (IA + IB) (fun _ => []) nx -> sys_rob segs c ->
   (forall i, realizes (nx (inl i)) A) ->
   (forall i, realizes (nx (inr i)) B) ->
   realizes c (t_alt2 A B).
 Proof.
-  intros c IA IB nx A B a0 b0 Hnode HA HB.
+  intros c IA IB nx A B a0 b0 Hnode Hrob HA HB.
   assert (HA0 : A []) by (eapply realizes_nonempty; apply (HA a0)).
   assert (HB0 : B []) by (eapply realizes_nonempty; apply (HB b0)).
   apply (rz_conseq c
     (t_alt (fun i : IA + IB =>
               t_emit [] (match i with inl _ => A | inr _ => B end)))).
   - apply (rz_node c (IA + IB) (fun _ => []) nx
-             (fun i => match i with inl _ => A | inr _ => B end) (inl a0) Hnode).
+             (fun i => match i with inl _ => A | inr _ => B end) (inl a0) Hnode Hrob).
     intros [i|i]; [apply HA | apply HB].
   - intro tr. unfold t_alt2. split.
     + intros [[i|i] Hi];
@@ -453,7 +475,7 @@ Lemma rz_step : forall ms model ms' T,
   realizes (mkCfg ms model) T.
 Proof.
   intros ms model ms' T Hh Hlazy Hsvc Hstep Hc.
-  eapply rz_silent1; [apply node_instr; eassumption | exact Hc].
+  eapply rz_silent1; [apply node_instr; eassumption | apply sys_rob_instr; exact Hsvc | exact Hc].
 Qed.
 
 Lemma rz_msteps : forall ms ms' model T,
@@ -478,6 +500,8 @@ Lemma node_write1 : forall ms model x8 buf,
   bv_unsigned x8 = 64%Z ->
   ms_gpr ms 0 = Z_to_bv 64 1 ->
   ms_read_bytes ms (ms_gpr ms 1) (ms_gpr ms 2) = Some buf ->
+  (* the range [vfs_write]'s [access_ok] accepts; see [CatSim.write1_check_n] *)
+  access_okb (ms_gpr ms 1) (bv_unsigned (ms_gpr ms 2)) = true ->
   buf_modeled buf ->
   (1 <= length buf)%nat ->
   node_ok (mkCfg ms model) (wr_index buf)
@@ -486,19 +510,25 @@ Lemma node_write1 : forall ms model x8 buf,
                              (set_gpr0 ms (len_word (firstn (proj1_sig i) buf))))
                           model).
 Proof.
-  intros ms model x8 buf nohalt nolazy fd1 svc sysno arg0 rd bm len1.
-  apply node_ok_of_transparent;
-    [| exact (transparent_nonalloc_no segs ms model x8 64%Z svc sysno eq_refl)].
-  split.
-  - intros [n [lo hi]]. cbn [proj1_sig].
-    rewrite <- (apply_effect_copyins_no_write ms (len_word (firstn n buf)) [(ms_gpr ms 1, n)]).
-    refine (sstep_syscall segs ms model x8 _ model model _ nohalt svc _ nohalt _).
-    + exact (write1_ok_n segs ms x8 model buf n fd1 sysno arg0 rd bm lo hi).
-    + apply materialize_model_accesses_no_lazy. exact nolazy.
-  - intros out res move.
-    destruct (sstep_write_inv segs ms model x8 buf out res nohalt nolazy fd1 svc sysno arg0
-                rd bm len1 move) as (n & lo & hi & outeq & reseq).
-    subst out res. exists (exist _ n (conj lo hi)). split; reflexivity.
+  intros ms model x8 buf Hh Hlazy Hfd Hsvc Hno Hg Hr Hok Hbm Hnb.
+  apply node_ok_of_transparent; [| apply (transparent_nonalloc_no segs ms model x8 64 Hsvc Hno eq_refl)]. split.
+  - intros [n [Hn1 Hn2]]. cbn [proj1_sig].
+    rewrite <- (apply_effect_copyins_no_write ms (len_word (firstn n buf))
+                  [(ms_gpr ms 1, n)]).
+    apply (sstep_syscall segs ms model x8
+             (with_copyins [(ms_gpr ms 1, n)]
+                (mkEffect (len_word (firstn n buf)) [] [])) model
+             model (map (WriteEv (Z_to_bv 64 1)) (firstn n buf))).
+    + exact Hh.
+    + exact Hsvc.
+    + apply write1_ok_n; assumption.
+    + exact Hh.
+    + apply materialize_model_accesses_no_lazy. exact Hlazy.
+  - intros e st Hss.
+    destruct (sstep_write_inv segs ms model x8 buf e st
+                Hh Hlazy Hfd Hsvc Hno Hg Hr Hok Hbm Hnb Hss)
+      as (n & Hn1 & Hn2 & -> & ->).
+    exists (exist _ n (conj Hn1 Hn2)). split; reflexivity.
 Qed.
 
 Lemma rz_write1 : forall ms model x8 buf T,
@@ -509,13 +539,14 @@ Lemma rz_write1 : forall ms model x8 buf T,
   bv_unsigned x8 = 64%Z ->
   ms_gpr ms 0 = Z_to_bv 64 1 ->
   ms_read_bytes ms (ms_gpr ms 1) (ms_gpr ms 2) = Some buf ->
+  access_okb (ms_gpr ms 1) (bv_unsigned (ms_gpr ms 2)) = true ->
   buf_modeled buf ->
   (1 <= length buf)%nat ->
   (forall n, (1 <= n)%nat -> (n <= length buf)%nat ->
      realizes (mkCfg (advance_past_svc (set_gpr0 ms (len_word (firstn n buf)))) model) T) ->
   realizes (mkCfg ms model) (t_write_ch (Z_to_bv 64 1) buf T).
 Proof.
-  intros ms model x8 buf T Hh Hlazy Hfd Hsvc Hno Hg Hr Hbm Hnb Hc.
+  intros ms model x8 buf T Hh Hlazy Hfd Hsvc Hno Hg Hr Hok Hbm Hnb Hc.
   unfold t_write_ch.
   apply (rz_node (mkCfg ms model) (wr_index buf)
            (fun i => map (WriteEv (Z_to_bv 64 1)) (firstn (proj1_sig i) buf))
@@ -524,6 +555,7 @@ Proof.
                            model)
            (fun _ => T) (wr_full buf Hnb)).
   - apply (node_write1 ms model x8 buf); assumption.
+  - apply (write1_rob segs ms model x8 buf); assumption.
   - intros [n [Hn1 Hn2]]. cbn [proj1_sig]. apply Hc; assumption.
 Qed.
 
@@ -548,9 +580,58 @@ Proof.
       destruct (sstep_exit_inv segs ms model x8 out res nohalt svc exitno
                   (sstep_of_cfg segs _ out res move)) as [-> ->].
       exists tt. split; reflexivity.
+  - destruct exitno as [E|E];
+      (eapply sys_rob_memfree; [exact svc | rewrite E; first [exact memfree_93 | exact memfree_94]]).
   - apply rz_halt.
     change (m_halted (with_halted (bv_and (ms_gpr ms 0) (Z_to_bv 64 255)) model) <> None).
     rewrite m_halted_with_halted. discriminate.
+Qed.
+Lemma node_munmap_cfg : forall ms model x8 model'',
+  m_halted model = None ->
+  ms_svc_pending ms = Some x8 ->
+  bv_unsigned x8 = 215%Z ->
+  munmap_args_ok ms model ->
+  materialize_model_accesses
+    (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model)
+    (syscall_effect_accesses (munmap_eff ms)) = Some model'' ->
+  node_ok (mkCfg ms model) unit (fun _ => [])
+    (fun _ => mkCfg (advance_past_svc (apply_effect ms (munmap_eff ms))) model'').
+Proof.
+  intros ms model x8 model'' live pend is215 args mat.
+  assert (alive1 : m_halted (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) = None).
+  { rewrite munmap_model_halted. exact live. }
+  assert (sp215 : bv_unsigned (in_sysno (sys_input segs ms x8)) = 215%Z)
+    by (rewrite in_sysno_sys_input; exact is215).
+  pose proof (munmap_ok segs ms x8 model is215 args) as commit.
+  assert (keep : refusal_b (sys_input segs ms x8) model (eff_ret (munmap_eff ms)) = false).
+  { rewrite (refusal_b_215 _ model _ sp215). exact ret_in_errnos_ENOMEM_zero. }
+  split.
+  - intros _.
+    exact (sstep_cfg_syscall_nonrefusal segs ACFG ms model x8 (munmap_eff ms) _ _ [] live pend
+             commit keep alive1 mat).
+  - intros e st move. exists tt.
+    pose proof (sstep_cfg_sys_inv segs ACFG ms model x8 e st pend move) as outcomes.
+    cbv zeta in outcomes.
+    destruct outcomes as
+        [ (eff & model1 & evs0 & spec & nonsp & _ & landing)
+        | [ (eff & model1 & evs0 & code & spec & halted1 & _ & _ & _)
+        | [ (eff & model1 & evs0 & sig & spec & killed1 & _ & _)
+        | (unmod & _ & _) ] ] ].
+    + destruct (munmap_ok_inv segs ms x8 model eff model1 evs0 is215 args spec)
+        as (evs0_is & [(er & Her & eff_is & model1_is) | (eff_is & model1_is)]).
+      * exfalso. apply nonsp. subst eff.
+        refine (refusal_spurious_of_grant ACFG _ model _ _ _ _
+                  (acfg_family_off_215 _ sp215) _ commit keep).
+        rewrite (refusal_b_215 _ model _ sp215). apply ret_in_errnos_errno. exact Her.
+      * subst eff model1 evs0. rewrite mat in landing. exact landing.
+    + destruct (munmap_ok_inv segs ms x8 model eff model1 evs0 is215 args spec)
+        as (_ & [(_ & _ & _ & model1_is) | (_ & model1_is)]); subst model1;
+        [rewrite live in halted1 | rewrite alive1 in halted1]; discriminate halted1.
+    + destruct (munmap_ok_inv segs ms x8 model eff model1 evs0 is215 args spec)
+        as (_ & [(_ & _ & _ & model1_is) | (_ & model1_is)]); subst model1;
+        [rewrite (m_killed_of_m_halted_none _ live) in killed1
+        | rewrite (m_killed_of_m_halted_none _ alive1) in killed1]; discriminate killed1.
+    + destruct (munmap_no_unmodeled segs ms x8 model is215 args unmod).
 Qed.
 
 Lemma rz_munmap : forall ms model x8 T,
@@ -559,25 +640,19 @@ Lemma rz_munmap : forall ms model x8 T,
   ms_svc_pending ms = Some x8 ->
   bv_unsigned x8 = 215%Z ->
   munmap_args_ok ms model ->
+  (forall e, In e munmap_errnos ->
+     realizes (mkCfg (advance_past_svc (set_gpr0 ms (errno_ret e))) model) T) ->
   realizes (mkCfg (advance_past_svc (apply_effect ms (munmap_eff ms)))
                   (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model)) T ->
   realizes (mkCfg ms model) T.
 Proof.
-  intros ms model x8 T nohalt nolazy svc sysno args after.
-  refine (rz_silent1 (mkCfg ms model) _ T _ after).
-  apply node_ok_of_transparent;
-    [| exact (transparent_nonalloc_no segs ms model x8 215%Z svc sysno eq_refl)].
-  split.
-  - intros [].
-    refine (sstep_syscall segs ms model x8 (munmap_eff ms)
-              (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) _ []
-              nohalt svc (munmap_ok segs ms x8 model sysno args) _ _).
-    + rewrite munmap_model_halted. exact nohalt.
-    + apply materialize_model_accesses_no_lazy. apply munmap_model_no_lazy. exact nolazy.
-  - intros out res move.
-    destruct (sstep_munmap_inv segs ms model x8 out res nohalt nolazy svc sysno args move)
-      as [outnil landed].
-    subst out res. exists tt. split; reflexivity.
+  (* LPS 08b1429: under [ACFG] the injected -ENOMEM of munmap (215) is spurious when the unmap
+     is possible, so the failing branch [HA] is never taken ([node_munmap_cfg]). *)
+  intros ms model x8 T live no_lazy pend is215 args _ after.
+  refine (rz_silent1 _ _ T _ _ after).
+  - apply (node_munmap_cfg ms model x8 _ live pend is215 args).
+    apply materialize_model_accesses_no_lazy. apply munmap_model_no_lazy. exact no_lazy.
+  - eapply sys_rob_memfree; [exact pend | rewrite is215; exact memfree_215].
 Qed.
 Lemma grant_not_refusal : forall ms model a,
   grant_ok (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true ->
@@ -588,7 +663,8 @@ Proof.
   apply andb_prop in granted as [granted _].
   apply andb_prop in granted as [granted _].
   apply andb_prop in granted as [granted _].
-  apply andb_prop in granted as [aligned _].
+  apply andb_prop in granted as [granted _].
+  apply andb_prop in granted as [_ aligned].
   apply ret_in_errnos_ENOMEM_aligned. apply Z.eqb_eq. exact aligned.
 Qed.
 Lemma node_mmap_grant : forall ms model x8,
@@ -597,6 +673,8 @@ Lemma node_mmap_grant : forall ms model x8,
   ms_svc_pending ms = Some x8 ->
   bv_unsigned x8 = 222%Z ->
   mmap_args_ok ms ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   (exists a, grant_ok (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true) ->
   node_ok (mkCfg ms model)
     {a : word | grant_ok (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true}
@@ -605,7 +683,7 @@ Lemma node_mmap_grant : forall ms model x8,
        mkCfg (advance_past_svc (apply_effect ms (mkEffect a [] [(a, page_round_up (ms_gpr ms 1))])))
              (mmap_model a (page_round_up (ms_gpr ms 1)) model) end).
 Proof.
-  intros ms model x8 nohalt nolazy svc sysno args [a0 granted0].
+  intros ms model x8 nohalt nolazy svc sysno args decl [a0 granted0].
   assert (unrefused : forall a,
             grant_ok (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true ->
             refusal_b (sys_input segs ms x8) model
@@ -620,7 +698,7 @@ Proof.
     refine (sstep_cfg_syscall segs ACFG ms model x8
               (mkEffect a [] [(a, page_round_up (ms_gpr ms 1))])
               (mmap_model a (page_round_up (ms_gpr ms 1)) model) _ [] nohalt svc
-              (mmap_succ_ok segs ms x8 model a sysno args granted) _ _ _).
+              (mmap_succ_ok segs ms x8 model a sysno args decl granted) _ _ _).
     + apply spurious_refusal_not_refusal. exact (unrefused a granted).
     + rewrite mmap_model_halted. exact nohalt.
     + exact (materialize_model_accesses_no_lazy _ _ (lazy_after a)).
@@ -642,7 +720,7 @@ Proof.
         -- apply acfg_family_off_222. exact sysno.
         -- rewrite (refusal_b_222 (sys_input segs ms x8) model _ sysno).
            apply ret_in_errnos_errno. exact errin.
-        -- exact (mmap_succ_ok segs ms x8 model a0 sysno args granted0).
+        -- exact (mmap_succ_ok segs ms x8 model a0 sysno args decl granted0).
         -- exact (unrefused a0 granted0).
       * rewrite (materialize_model_accesses_no_lazy _ _ (lazy_after a)) in mat.
         destruct mat as [outeq reseq]. subst out res.
@@ -659,7 +737,7 @@ Proof.
       * rewrite (m_killed_of_m_halted_none _ (eq_trans (mmap_model_halted _ _ _) nohalt)) in dead.
         discriminate dead.
     + subst res.
-      destruct (sstep_mmap_inv segs ms model x8 out SError nohalt nolazy svc sysno args
+      destruct (sstep_mmap_inv segs ms model x8 out SError nohalt nolazy svc sysno args decl
                   (sstep_of_cfg segs _ out SError move))
         as [_ [(err & _ & clash) | (a & _ & clash)]]; discriminate clash.
 Qed.
@@ -670,6 +748,8 @@ Lemma rz_mmap : forall ms model x8 B,
   ms_svc_pending ms = Some x8 ->
   bv_unsigned x8 = 222%Z ->
   mmap_args_ok ms ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   (forall a, grant_ok (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true ->
      realizes (mkCfg (advance_past_svc
                        (apply_effect ms (mkEffect a [] [(a, page_round_up (ms_gpr ms 1))])))
@@ -677,12 +757,13 @@ Lemma rz_mmap : forall ms model x8 B,
   (exists a, grant_ok (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true) ->
   realizes (mkCfg ms model) B.
 Proof.
-  intros ms model x8 B nohalt nolazy svc sysno args after [a0 granted0].
-  pose proof (node_mmap_grant ms model x8 nohalt nolazy svc sysno args
+  intros ms model x8 B nohalt nolazy svc sysno args decl after [a0 granted0].
+  pose proof (node_mmap_grant ms model x8 nohalt nolazy svc sysno args decl
                 (ex_intro _ a0 granted0)) as shape.
   assert (empty_ok : B []) by exact (realizes_nonempty _ _ (after a0 granted0)).
-  refine (rz_conseq _ _ B (rz_node _ _ _ _ (fun _ => B) _ shape _) _).
+  refine (rz_conseq _ _ B (rz_node _ _ _ _ (fun _ => B) _ shape _ _) _).
   - exists a0. exact granted0.
+  - eapply sys_rob_memfree; [exact svc | rewrite sysno; exact memfree_222].
   - intros [a granted]. exact (after a granted).
   - intro tr. split.
     + intros [_ inner]. exact (proj1 (t_emit_nil_eq B empty_ok tr) inner).
@@ -693,58 +774,54 @@ End WithSegs.
 
 Lemma realizes_run_scfg :
   forall segs pc ph sp brk0 mb rnd (lim : Z) (T : TSet) (inp : ProcInput),
-  realizes segs (init_config segs pc ph sp brk0 mb rnd lim inp) T ->
+  realizes (run_segments segs inp sp mb)
+    (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) T ->
   Equivalence.error_free (run_scfg ACFG (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp)
   /\ trace_equiv (bh_traces (run_scfg ACFG (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp)) T.
 Proof.
-  intros segs pc ph sp brk0 mb rnd lim T inp rz.
-  split.
-  - apply no_error_error_free_scfg. exact (realizes_no_error segs _ T rz).
-  - intro tr. exact (realizes_obs_iff segs _ T rz tr).
+  intros segs pc ph sp brk0 mb rnd lim T inp H. split.
+  - apply no_error_error_free_scfg. exact (realizes_no_error _ _ _ H).
+  - intros tr. exact (realizes_obs_iff _ _ _ H tr).
 Qed.
 Theorem shape_error_free_equiv :
-
-
   forall source_segs rpc rph rsp rbrk rmb rrnd (rlim : Z)
          target_segs apc aph asp abrk amb arnd (alim : Z)
          (T : TSet) (inp : ProcInput),
-  realizes source_segs
-    (init_config source_segs rpc rph rsp rbrk rmb rrnd rlim inp) T ->
-  realizes target_segs
-    (init_config target_segs apc aph asp abrk amb arnd alim inp) T ->
+  realizes (run_segments source_segs inp rsp rmb)
+    (init_config (run_segments source_segs inp rsp rmb) rpc rph rsp rbrk rmb rrnd rlim inp) T ->
+  realizes (run_segments target_segs inp asp amb)
+    (init_config (run_segments target_segs inp asp amb) apc aph asp abrk amb arnd alim inp) T ->
   Equivalence.error_free (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
   /\ Equivalence.error_free (run_scfg ACFG (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp)
   /\ trace_equiv (bh_traces (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp))
                  (bh_traces (run_scfg ACFG (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp)).
 Proof.
   intros source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim
-    T inp src tgt.
-  destruct (realizes_run_scfg _ _ _ _ _ _ _ _ _ _ tgt) as [tgt_clean tgt_traces].
-  destruct (realizes_run_scfg _ _ _ _ _ _ _ _ _ _ src) as [src_clean src_traces].
-  refine (conj src_clean (conj tgt_clean _)).
-  intro tr. rewrite (tgt_traces tr). exact (src_traces tr).
+    T inp Hsource Htarget.
+  destruct (realizes_run_scfg _ _ _ _ _ _ _ _ _ _ Hsource) as [HeS HtS].
+  destruct (realizes_run_scfg _ _ _ _ _ _ _ _ _ _ Htarget) as [HeT HtT].
+  split; [exact HeS|]. split; [exact HeT|].
+  intros tr. rewrite (HtS tr), (HtT tr). reflexivity.
 Qed.
 
 Theorem shape_strong_equiv :
   forall source_segs rpc rph rsp rbrk rmb rrnd (rlim : Z)
          target_segs apc aph asp abrk amb arnd (alim : Z)
          (T : TSet) (inp : ProcInput),
-  realizes source_segs
-    (init_config source_segs rpc rph rsp rbrk rmb rrnd rlim inp) T ->
-  realizes target_segs
-    (init_config target_segs apc aph asp abrk amb arnd alim inp) T ->
+  realizes (run_segments source_segs inp rsp rmb)
+    (init_config (run_segments source_segs inp rsp rmb) rpc rph rsp rbrk rmb rrnd rlim inp) T ->
+  realizes (run_segments target_segs inp asp amb)
+    (init_config (run_segments target_segs inp asp amb) apc aph asp abrk amb arnd alim inp) T ->
   Equivalence.modeled (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
   /\ Equivalence.equiv (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
                        (run_scfg ACFG (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp).
 Proof.
   intros source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim
-    T inp src tgt.
-  pose proof (shape_error_free_equiv source_segs rpc rph rsp rbrk rmb rrnd rlim
-                target_segs apc aph asp abrk amb arnd alim T inp src tgt)
-    as (_ & tgt_clean & same_traces).
+    T inp Hsource Htarget.
   split.
-  - apply no_error_modeled_scfg. exact (realizes_no_error source_segs _ T src).
-  - right. exact (conj same_traces tgt_clean).
+  - apply no_error_modeled_scfg. exact (realizes_no_error _ _ _ Hsource).
+  - right. destruct (shape_error_free_equiv _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ Hsource Htarget)
+      as (_ & HeT & Htr). split; [exact Htr | exact HeT].
 Qed.
 
 Lemma cat_realizes : forall segs ms model bufs code,
@@ -758,7 +835,7 @@ Proof.
   intros segs ms model bufs code Hh Hlazy Hfd Hte. revert model Hh Hlazy Hfd.
   induction Hte as
     [ms x8 Hsvc Hx8
-    | ms x8 buf bufs code Hsvc Hno Hg Hr Hnb Hcont IH
+    | ms x8 buf bufs code Hsvc Hno Hg Hr Hok Hnb Hcont IH
     | ms ms' bufs code Hsvc Hstep Hte IH];
     intros model Hh Hlazy Hfd Hbm.
   - rewrite t_writes_pick_nil. eapply rz_exit; eassumption.
@@ -777,7 +854,7 @@ Proof.
   intros segs ms bufs code model Hte.
   induction Hte as
     [ms x8 Hsvc Hx8
-    | ms x8 buf bufs code Hsvc Hno Hg Hr Hnb Hcont IH
+    | ms x8 buf bufs code Hsvc Hno Hg Hr Hok Hnb Hcont IH
     | ms ms' bufs code Hsvc Hstep Hte IH]; intros Hbufs Hh;
     [| discriminate Hbufs |]; intro Hlazy.
   - eapply rz_exit; eassumption.
@@ -820,8 +897,8 @@ Proof.
        (forall ms', k ms' -> realizes segs (mkCfg ms' model) T) ->
        realizes segs (mkCfg ms model)
          (t_emit (map (WriteEv (Z_to_bv 64 1)) rest) T))).
-  -
-    intros ms x8 rest k Hsvc Hno Hg Hr Hnb Hcont IH Hbm T HT Hk.
+  - (* twl_write *)
+    intros ms x8 rest k Hsvc Hno Hg Hr Hok Hnb Hcont IH Hbm T HT Hk.
     eapply rz_conseq.
     { apply (rz_node segs (mkCfg ms model) (wr_index rest)
         (fun i => map (WriteEv (Z_to_bv 64 1)) (firstn (proj1_sig i) rest))
@@ -832,16 +909,17 @@ Proof.
                               (skipn (proj1_sig i) rest)) T)
         (wr_full rest Hnb)).
       - apply (node_write1 segs ms model x8 rest); assumption.
+      - apply (write1_rob segs ms model x8 rest); assumption.
       - intros [n [Hn1 Hn2]]. cbn [proj1_sig].
         apply (IH n Hn1 Hn2 (buf_modeled_skipn n rest Hbm) T HT Hk). }
     apply t_alt_wall; [exact HT | exact Hnb].
-  -
+  - (* twt_done *)
     intros ms k Hk Hbm T HT Hcont.
     eapply rz_conseq; [apply Hcont; exact Hk|].
     cbn [map]. apply t_eq_sym. apply t_emit_nil_eq. exact HT.
-  -
+  - (* twt_more *)
     intros ms rest k Hnb Hw IH Hbm T HT Hk. exact (IH Hbm T HT Hk).
-  -
+  - (* twt_step *)
     intros ms ms' rest k Hsvc Hstep Ht IH Hbm T HT Hk.
     eapply rz_step; [exact Hh | exact Hlazy | exact Hsvc | exact Hstep
                     | exact (IH Hbm T HT Hk)].
@@ -901,24 +979,26 @@ Proof.
        realizes segs (mkCfg ms model)
          (t_emit (map (WriteEv (Z_to_bv 64 1)) rest)
                  (t_writes bufs (t_exit code (m_fs model)))))).
-  -
+  - (* twm_exit *)
     intros ms model x8 Hsvc Hx8 Hh Hlazy Hfd Hbm. eapply rz_exit; eassumption.
-  -
+  - (* twm_write *)
     intros ms model buf bufs code Hnb Hp IH Hh Hlazy Hfd Hbm.
     apply Forall_cons_iff in Hbm as [Hb Hbs].
     rewrite t_writes_cons. exact (IH Hh Hlazy Hfd Hb Hbs).
-  -
-    intros ms model x8 bufs code Hsvc Hno Hargs Hte IH Hh Hlazy Hfd Hbm.
-    eapply rz_munmap; try eassumption.
-    rewrite <- (munmap_model_fs (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model).
-    apply IH; [rewrite munmap_model_halted; exact Hh
-              | exact (munmap_model_no_lazy _ _ _ Hlazy)
-              | apply munmap_model_fd1chan; exact Hfd | exact Hbm].
-  -
+  - (* twm_munmap *)
+    intros ms model x8 bufs code Hsvc Hno Hargs Hfail IHfail Hcut IH Hh Hlazy Hfd Hbm.
+    eapply rz_munmap;
+      [exact Hh | exact Hlazy | exact Hsvc | exact Hno | exact Hargs | | ].
+    + intros e He. exact (IHfail e He Hh Hlazy Hfd Hbm).
+    + rewrite <- (munmap_model_fs (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model).
+      apply IH; [rewrite munmap_model_halted; exact Hh
+                | exact (munmap_model_no_lazy _ _ _ Hlazy)
+                | apply munmap_model_fd1chan; exact Hfd | exact Hbm].
+  - (* twm_step *)
     intros ms ms' model bufs code Hsvc Hstep Hte IH Hh Hlazy Hfd Hbm.
     eapply rz_step; try eassumption. apply IH; assumption.
-  -
-    intros ms model x8 rest bufs code Hsvc Hno Hg Hr Hnb Hcont IH Hh Hlazy Hfd Hbr Hbm.
+  - (* twmp_write *)
+    intros ms model x8 rest bufs code Hsvc Hno Hg Hr Hok Hnb Hcont IH Hh Hlazy Hfd Hbr Hbm.
     eapply rz_conseq.
     { apply (rz_node segs (mkCfg ms model) (wr_index rest)
         (fun i => map (WriteEv (Z_to_bv 64 1)) (firstn (proj1_sig i) rest))
@@ -930,19 +1010,20 @@ Proof.
                          (t_writes bufs (t_exit code (m_fs model))))
         (wr_full rest Hnb)).
       - apply (node_write1 segs ms model x8 rest); assumption.
+      - apply (write1_rob segs ms model x8 rest); assumption.
       - intros [n [Hn1 Hn2]]. cbn [proj1_sig].
         apply (IH n Hn1 Hn2 Hh Hlazy Hfd (buf_modeled_skipn n rest Hbr) Hbm). }
     apply t_alt_wall;
       [unfold t_writes; apply t_writes_ch_exit_has_nil | exact Hnb].
-  -
+  - (* twmt_done *)
     intros ms model bufs code Hte IH Hh Hlazy Hfd Hbr Hbm.
     eapply rz_conseq; [apply IH; assumption|].
     cbn [map]. apply t_eq_sym. apply t_emit_nil_eq.
     unfold t_writes. apply t_writes_ch_exit_has_nil.
-  -
+  - (* twmt_more *)
     intros ms model rest bufs code Hnb Hp IH Hh Hlazy Hfd Hbr Hbm.
     exact (IH Hh Hlazy Hfd Hbr Hbm).
-  -
+  - (* twmt_step *)
     intros ms ms' model rest bufs code Hsvc Hstep Ht IH Hh Hlazy Hfd Hbr Hbm.
     eapply rz_step; try eassumption. exact (IH Hh Hlazy Hfd Hbr Hbm).
 Qed.
@@ -969,7 +1050,7 @@ Lemma tmw_realizes : forall segs ms model bf cf bs cs,
 Proof.
   intros segs ms model bf cf bs cs Hh Hlazy Hfd Hte. revert Hh Hlazy Hfd.
   induction Hte as
-    [ms model x8 bf cf bs cs Hsvc Hno Hargs Hfail Hsucc Hex
+    [ms model x8 bf cf bs cs Hsvc Hno Hargs Hdecl Hfail Hsucc Hex
     | ms ms' model bf cf bs cs Hsvc Hstep Hte IH]; intros Hh Hlazy Hfd Hbf Hbs.
   - eapply rz_mmap; try eassumption.
     + intros a Ha.
@@ -985,54 +1066,121 @@ Qed.
 Theorem cat_strong_equiv_alg :
   forall source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim
          bufs code (inp : ProcInput),
-  to_wexit source_segs
-    (init_machine_state source_segs rpc rph rsp rrnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) bufs code ->
-  to_wexit target_segs
-    (init_machine_state target_segs apc aph asp arnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) bufs code ->
+  to_wexit (run_segments source_segs inp rsp rmb)
+    (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp) bufs code ->
+  to_wexit (run_segments target_segs inp asp amb)
+    (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp) bufs code ->
   bufs_modeled bufs ->
+  (* [cat_realizes]'s third premise is [fd1chan model], and the run's model is
+     [with_vdso .. (init_model .. inp)], whose [m_channel_reader] is [in_channel_reader inp]
+     rather than a literal.  So the reader declaration has to be said; it is a conjunct of
+     the published [valid_input] (75d69e00:Run.v:4594) and is discharged there.  The three
+     [eq_refl]s below predate the field and the third of them never stood. *)
+  in_channel_reader inp = true ->
   Equivalence.modeled (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
   /\ Equivalence.equiv (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
                        (run_scfg ACFG (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp).
 Proof.
   intros source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim
-    bufs code inp src tgt fit.
-  assert (from_init : forall segs ms reserved brk0 mb sp lim,
-            to_wexit segs ms bufs code ->
-            realizes segs (mkCfg ms (init_model reserved brk0 mb sp lim inp))
-              (t_writes_pick bufs (t_exit code (in_fs inp)))).
-  { intros segs ms reserved brk0 mb sp lim run.
-    rewrite <- (m_fs_init_model reserved brk0 mb sp lim inp).
-    apply cat_realizes;
-      [apply m_halted_init_model | reflexivity | apply init_model_fd1chan | exact run | exact fit]. }
-  apply shape_strong_equiv with (T := t_writes_pick bufs (t_exit code (in_fs inp)));
-    apply from_init; assumption.
+    bufs code inp Hs Ht Hbm Hr.
+  apply (shape_strong_equiv source_segs rpc rph rsp rbrk rmb rrnd rlim
+           target_segs apc aph asp abrk amb arnd alim
+           (t_writes_pick bufs (t_exit code (in_fs inp))) inp).
+  - unfold init_config.
+    apply (cat_realizes (run_segments source_segs inp rsp rmb)
+             (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp)
+             (with_vdso (vdso_run_init (ed_vdso rrnd)) (init_model (segments_reserved (run_segments source_segs inp rsp rmb)) rbrk rmb rsp rlim inp))
+             bufs code eq_refl eq_refl
+             (fd1chan_with_vdso _ _
+                (init_model_fd1chan (segments_reserved (run_segments source_segs inp rsp rmb))
+                   rbrk rmb rsp rlim inp Hr)) Hs Hbm).
+  - unfold init_config.
+    apply (cat_realizes (run_segments target_segs inp asp amb)
+             (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp)
+             (with_vdso (vdso_run_init (ed_vdso arnd)) (init_model (segments_reserved (run_segments target_segs inp asp amb)) abrk amb asp alim inp))
+             bufs code eq_refl eq_refl
+             (fd1chan_with_vdso _ _
+                (init_model_fd1chan (segments_reserved (run_segments target_segs inp asp amb))
+                   abrk amb asp alim inp Hr)) Ht Hbm).
 Qed.
 
 
 Theorem mmap_strong_equiv_alg :
   forall source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim
          bf cf bs cs (inp : ProcInput),
-  Zfa.tmw source_segs (init_machine_state source_segs rpc rph rsp rrnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-      (init_model (segments_reserved source_segs) rbrk rmb rsp rlim inp) bf cf bs cs ->
-  Zfa.tmw target_segs (init_machine_state target_segs apc aph asp arnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-      (init_model (segments_reserved target_segs) abrk amb asp alim inp) bf cf bs cs ->
+  (* init_machine_state went 9 args -> 7 in theories/Common at the revision: the four
+     (in_argv/in_envp/in_uid/in_hwcap inp) projections collapse into inp, a mbase argument
+     appears before rnd, and the segment argument is wrapped as run_segments segs inp sp mb.
+     Donor is this same file at :1081, already ported; rmb/amb are bound at :1091.
+     Compare 75d69e00:theories/Common/AllocMixSim.v:361 against f1006fe8:…:359. *)
+  (* The run's model is the VDSO-WRAPPED one.  [init_config] is
+     [mkCfg (init_machine_state inp) (with_vdso (vdso_run_init (ed_vdso mi_draw)) (init_model ...))]
+     (75d69e00:theories/LinuxProcessSem/Run.v:1426-1430), so a premise stated over a bare
+     [init_model] cannot meet the goal [shape_strong_equiv] leaves.  Two things were stale
+     here, not one: the segment argument is [run_segments segs inp sp mb] rather than [segs],
+     and the model carries the wrapper.  Both are spelled the already-ported way by the
+     sibling [cat_strong_equiv_alg] at :1074 and :1082 in this same file. *)
+  Zfa.tmw (run_segments source_segs inp rsp rmb)
+      (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp)
+      (with_vdso (vdso_run_init (ed_vdso rrnd))
+         (init_model (segments_reserved (run_segments source_segs inp rsp rmb)) rbrk rmb rsp rlim inp)) bf cf bs cs ->
+  Zfa.tmw (run_segments target_segs inp asp amb)
+      (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp)
+      (with_vdso (vdso_run_init (ed_vdso arnd))
+         (init_model (segments_reserved (run_segments target_segs inp asp amb)) abrk amb asp alim inp)) bf cf bs cs ->
   bufs_modeled bf -> bufs_modeled bs ->
+  (* [init_model_fd1chan] gained a premise at the revision: it is
+     [in_channel_reader inp = true -> fd1chan (init_model ...)]
+     (75d69e00:theories/Common/CatSim.v:1126-1129), where f1006fe8:…:790 proved
+     [fd1chan (init_model ...)] outright by [reflexivity].  The model's own
+     re-derivation of this theorem carries the reader declaration as a premise in
+     exactly this position (75d69e00:theories/Common/ShapeAlg.v:1384), and the
+     published [valid_input] discharges it at the top -- it is a conjunct there
+     (75d69e00:theories/LinuxProcessSem/Run.v:4594, identically
+     [valid_input_abort]:4667 and [valid_input_either]:4690).  The sibling
+     [cat_strong_equiv_alg] above says it the same way. *)
+  in_channel_reader inp = true ->
   Equivalence.modeled (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
   /\ Equivalence.equiv (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
                        (run_scfg ACFG (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp).
 Proof.
   intros source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim
-    bf cf bs cs inp src tgt fit_fail fit_succ.
-  assert (from_init : forall segs ms reserved brk0 mb sp lim,
-            tmw segs ms (init_model reserved brk0 mb sp lim inp) bf cf bs cs ->
-            realizes segs (mkCfg ms (init_model reserved brk0 mb sp lim inp))
+    bf cf bs cs inp src tgt fit_fail fit_succ Hr.
+  (* [from_init] over the WRAPPED model.  [m_halted] and [m_fs] see through
+     [with_vdso] by conversion -- it sets the vDSO field alone -- but a
+     CONVERTIBLE equation is not enough here, because the model of
+     [tmw_realizes] is determined by unification and the goal names it twice:
+     once inside [mkCfg], where it is wrapped, and once inside [m_fs model],
+     which is where the rewrite puts it.  Rewriting with the UNWRAPPED
+     [m_fs_init_model] made the second occurrence [m_fs (init_model ...)], so
+     the model was taken unwrapped and [run], which is about the wrapped one,
+     no longer fitted ("The term run has type tmw segs ms (with_vdso ...) ...
+     while it is expected to have type tmw segs ms (init_model ...) ...",
+     round output).  So state the two facts OVER THE
+     WRAPPER and rewrite with those: both hold [by reflexivity] there, which is
+     exactly how AS/CatSim.v:958 and :966 state them.  Only [fd1chan] needs a
+     lemma, and the tree has it: [fd1chan_with_vdso] (AS/CatSim.v:911), used
+     this way by [cat_strong_equiv_alg] at :1078. *)
+  assert (from_init : forall segs ms rnd reserved brk0 mb sp lim,
+            tmw segs ms (with_vdso (vdso_run_init (ed_vdso rnd))
+                           (init_model reserved brk0 mb sp lim inp)) bf cf bs cs ->
+            realizes segs (mkCfg ms (with_vdso (vdso_run_init (ed_vdso rnd))
+                           (init_model reserved brk0 mb sp lim inp)))
               (t_writes bs (t_exit cs (in_fs inp)))).
-  { intros segs ms reserved brk0 mb sp lim run.
-    rewrite <- (m_fs_init_model reserved brk0 mb sp lim inp).
-    refine (tmw_realizes segs ms _ bf cf bs cs (m_halted_init_model reserved brk0 mb sp lim inp)
-              eq_refl (init_model_fd1chan reserved brk0 mb sp lim inp) run fit_fail fit_succ). }
+  { intros segs ms rnd reserved brk0 mb sp lim run.
+    assert (Hfsw : m_fs (with_vdso (vdso_run_init (ed_vdso rnd))
+                     (init_model reserved brk0 mb sp lim inp)) = in_fs inp)
+      by reflexivity.
+    assert (Hhw : m_halted (with_vdso (vdso_run_init (ed_vdso rnd))
+                     (init_model reserved brk0 mb sp lim inp)) = None)
+      by reflexivity.
+    rewrite <- Hfsw.
+    refine (tmw_realizes segs ms _ bf cf bs cs Hhw
+              eq_refl
+              (fd1chan_with_vdso _ _ (init_model_fd1chan reserved brk0 mb sp lim inp Hr))
+              run fit_fail fit_succ). }
   apply shape_strong_equiv with (T := t_writes bs (t_exit cs (in_fs inp)));
-    apply from_init; assumption.
+    unfold init_config; apply from_init; assumption.
 Qed.
 
 Corollary rz_alloc_writes : forall segs ms0 ms model x8 bf cf bs cs,
@@ -1043,6 +1191,8 @@ Corollary rz_alloc_writes : forall segs ms0 ms model x8 bf cf bs cs,
   ms_svc_pending ms = Some x8 ->
   bv_unsigned x8 = 222%Z ->
   mmap_args_ok ms ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   (forall e, In e mmap_errnos ->
      to_wexit segs (advance_past_svc (set_gpr0 ms (errno_ret e))) bf cf) ->
   (forall a, grant_ok (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true ->
@@ -1054,7 +1204,7 @@ Corollary rz_alloc_writes : forall segs ms0 ms model x8 bf cf bs cs,
   bufs_modeled bf -> bufs_modeled bs ->
   realizes segs (mkCfg ms0 model) (t_writes bs (t_exit cs (m_fs model))).
 Proof.
-  intros segs ms0 ms model x8 bf cf bs cs Hh Hlazy Hfd Hms Hsvc Hno Hargs Hfail Hsucc Hex
+  intros segs ms0 ms model x8 bf cf bs cs Hh Hlazy Hfd Hms Hsvc Hno Hargs Hdecl Hfail Hsucc Hex
     Hbf Hbs.
   eapply rz_msteps; [exact Hh | exact Hlazy | exact Hms |].
   eapply rz_mmap; try eassumption.
@@ -1109,6 +1259,8 @@ Lemma node_write_ch : forall segs ms model fd ch x8 buf,
   bv_unsigned x8 = 64%Z ->
   ms_gpr ms 0 = fd ->
   ms_read_bytes ms (ms_gpr ms 1) (ms_gpr ms 2) = Some buf ->
+  (* the range [vfs_write]'s [access_ok] accepts; see [CatSim.write1_check_n] *)
+  access_okb (ms_gpr ms 1) (bv_unsigned (ms_gpr ms 2)) = true ->
   buf_modeled buf ->
   (1 <= length buf)%nat ->
   node_ok segs (mkCfg ms model) (wr_index buf)
@@ -1117,19 +1269,25 @@ Lemma node_write_ch : forall segs ms model fd ch x8 buf,
                              (set_gpr0 ms (len_word (firstn (proj1_sig i) buf))))
                           model).
 Proof.
-  intros segs ms model fd ch x8 buf nohalt nolazy chan narrow svc sysno arg0 rd bm len1.
-  split.
-  - intros [n [lo hi]]. cbn [proj1_sig].
-    rewrite <- (apply_effect_copyins_no_write ms (len_word (firstn n buf)) [(ms_gpr ms 1, n)]).
-    refine (sstep_cfg_syscall segs ACFG ms model x8 _ model model _ nohalt svc
-              (write_ch_ok_n segs ms x8 model fd ch buf n chan narrow sysno arg0 rd bm lo hi)
-              (acfg_nonspurious_no segs ms x8 64%Z model _ sysno eq_refl) nohalt _).
-    exact (materialize_model_accesses_no_lazy _ _ nolazy).
-  - intros e st move.
-    destruct (sstep_write_ch_inv segs fd ch narrow ms model x8 buf e st nohalt nolazy chan svc
-                sysno arg0 rd bm len1 (sstep_of_cfg segs _ e st move))
-      as (n & lo & hi & -> & ->).
-    exists (exist _ n (conj lo hi)). split; reflexivity.
+  intros segs ms model fd ch x8 buf Hh Hlazy Hfdc H32 Hsvc Hno Hg Hr Hok Hbm Hnb.
+  apply node_ok_of_transparent; [| apply (transparent_nonalloc_no segs ms model x8 64 Hsvc Hno eq_refl)]. split.
+  - intros [n [Hn1 Hn2]]. cbn [proj1_sig].
+    rewrite <- (apply_effect_copyins_no_write ms (len_word (firstn n buf))
+                  [(ms_gpr ms 1, n)]).
+    apply (sstep_syscall segs ms model x8
+             (with_copyins [(ms_gpr ms 1, n)]
+                (mkEffect (len_word (firstn n buf)) [] [])) model
+             model (map (WriteEv ch) (firstn n buf))).
+    + exact Hh.
+    + exact Hsvc.
+    + eapply write_ch_ok_n; eassumption.
+    + exact Hh.
+    + apply materialize_model_accesses_no_lazy. exact Hlazy.
+  - intros e st Hss.
+    destruct (sstep_write_ch_inv segs fd ch H32 ms model x8 buf e st
+                Hh Hlazy Hfdc Hsvc Hno Hg Hr Hok Hbm Hnb Hss)
+      as (n & Hn1 & Hn2 & -> & ->).
+    exists (exist _ n (conj Hn1 Hn2)). split; reflexivity.
 Qed.
 
 Lemma rz_write_ch : forall segs ms model fd ch x8 buf T,
@@ -1140,6 +1298,7 @@ Lemma rz_write_ch : forall segs ms model fd ch x8 buf T,
   bv_unsigned x8 = 64%Z ->
   ms_gpr ms 0 = fd ->
   ms_read_bytes ms (ms_gpr ms 1) (ms_gpr ms 2) = Some buf ->
+  access_okb (ms_gpr ms 1) (bv_unsigned (ms_gpr ms 2)) = true ->
   buf_modeled buf ->
   (1 <= length buf)%nat ->
   (forall n, (1 <= n)%nat -> (n <= length buf)%nat ->
@@ -1147,7 +1306,7 @@ Lemma rz_write_ch : forall segs ms model fd ch x8 buf T,
        (mkCfg (advance_past_svc (set_gpr0 ms (len_word (firstn n buf)))) model) T) ->
   realizes segs (mkCfg ms model) (t_write_ch ch buf T).
 Proof.
-  intros segs ms model fd ch x8 buf T Hh Hlazy Hfdc H32 Hsvc Hno Hg Hr Hbm Hnb Hc.
+  intros segs ms model fd ch x8 buf T Hh Hlazy Hfdc H32 Hsvc Hno Hg Hr Hok Hbm Hnb Hc.
   unfold t_write_ch.
   apply (rz_node segs (mkCfg ms model) (wr_index buf)
            (fun i => map (WriteEv ch) (firstn (proj1_sig i) buf))
@@ -1156,6 +1315,7 @@ Proof.
                            model)
            (fun _ => T) (wr_full buf Hnb)).
   - eapply node_write_ch; eassumption.
+  - eapply write_ch_rob; eassumption.
   - intros [n [Hn1 Hn2]]. cbn [proj1_sig]. apply Hc; assumption.
 Qed.
 
@@ -1171,7 +1331,7 @@ Proof.
   revert model Hh Hlazy Hfdc.
   induction Hte as
     [ms x8 Hsvc Hx8
-    | ms x8 buf bufs code Hsvc Hno Hg Hr Hnb Hcont IH
+    | ms x8 buf bufs code Hsvc Hno Hg Hr Hok Hnb Hcont IH
     | ms ms' bufs code Hsvc Hstep Hte IH];
     intros model Hh Hlazy Hfdc Hbm.
   - eapply rz_exit; eassumption.
@@ -1182,53 +1342,71 @@ Proof.
 Qed.
 
 Theorem cat_ch_strong_equiv_alg :
-  forall source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim
-         (fd ch : word) bufs code (inp : ProcInput),
-  fd32 fd = fd ->
-  (forall reserved brk0 mb1 sp1 lim1 inp1,
-     fdchan fd ch (init_model reserved brk0 mb1 sp1 lim1 inp1)) ->
-  to_wexit_ch source_segs fd
-    (init_machine_state source_segs rpc rph rsp rrnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) bufs code ->
-  to_wexit_ch target_segs fd
-    (init_machine_state target_segs apc aph asp arnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) bufs code ->
-  bufs_modeled bufs ->
-  Equivalence.modeled (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
-  /\ Equivalence.equiv (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
-                       (run_scfg ACFG (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp).
+forall source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim
+(fd ch : word) bufs code (inp : ProcInput),
+fd32 fd = fd ->
+(forall reserved brk0 mb1 sp1 lim1 inp1,
+in_channel_reader inp1 = true ->
+fdchan fd ch (init_model reserved brk0 mb1 sp1 lim1 inp1)) ->
+in_channel_reader inp = true ->
+to_wexit_ch (run_segments source_segs inp rsp rmb) fd
+(init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp)
+bufs code ->
+to_wexit_ch (run_segments target_segs inp asp amb) fd
+(init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp)
+bufs code ->
+bufs_modeled bufs ->
+Equivalence.modeled (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
+/\ Equivalence.equiv (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
+(run_scfg ACFG (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp).
 Proof.
-  intros source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim
-    fd ch bufs code inp narrow chans src tgt fit.
-  apply shape_strong_equiv with (T := t_writes_ch_pick ch bufs (t_exit code (in_fs inp))).
-  - pose proof (cat_realizes_ch source_segs fd ch _
-                  (init_model (segments_reserved source_segs) rbrk rmb rsp rlim inp) bufs code
-                  (m_halted_init_model _ _ _ _ _ _) eq_refl (chans _ _ _ _ _ _) narrow src fit)
-      as made.
-    rewrite m_fs_init_model in made. exact made.
-  - pose proof (cat_realizes_ch target_segs fd ch _
-                  (init_model (segments_reserved target_segs) abrk amb asp alim inp) bufs code
-                  (m_halted_init_model _ _ _ _ _ _) eq_refl (chans _ _ _ _ _ _) narrow tgt fit)
-      as made.
-    rewrite m_fs_init_model in made. exact made.
+intros source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim
+fd ch bufs code inp H32 Hinit Hrdr Hs Ht Hbm.
+apply (shape_strong_equiv source_segs rpc rph rsp rbrk rmb rrnd rlim
+target_segs apc aph asp abrk amb arnd alim
+(t_writes_ch_pick ch bufs (t_exit code (in_fs inp))) inp).
+- unfold init_config.
+apply (cat_realizes_ch (run_segments source_segs inp rsp rmb) fd ch
+(init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp)
+(with_vdso (vdso_run_init (ed_vdso rrnd))
+(init_model (segments_reserved (run_segments source_segs inp rsp rmb))
+rbrk rmb rsp rlim inp))
+bufs code eq_refl eq_refl
+(Hinit (segments_reserved (run_segments source_segs inp rsp rmb))
+rbrk rmb rsp rlim inp Hrdr) H32 Hs Hbm).
+- unfold init_config.
+apply (cat_realizes_ch (run_segments target_segs inp asp amb) fd ch
+(init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp)
+(with_vdso (vdso_run_init (ed_vdso arnd))
+(init_model (segments_reserved (run_segments target_segs inp asp amb))
+abrk amb asp alim inp))
+bufs code eq_refl eq_refl
+(Hinit (segments_reserved (run_segments target_segs inp asp amb))
+abrk amb asp alim inp Hrdr) H32 Ht Hbm).
 Qed.
 
 
 Corollary cat_strong_equiv_alg_via_ch :
-  forall source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim
-         bufs code (inp : ProcInput),
-  to_wexit source_segs
-    (init_machine_state source_segs rpc rph rsp rrnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) bufs code ->
-  to_wexit target_segs
-    (init_machine_state target_segs apc aph asp arnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) bufs code ->
-  bufs_modeled bufs ->
-  Equivalence.modeled (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
-  /\ Equivalence.equiv (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
-                       (run_scfg ACFG (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp).
+forall source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim
+bufs code (inp : ProcInput),
+in_channel_reader inp = true ->
+to_wexit (run_segments source_segs inp rsp rmb)
+(init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp)
+bufs code ->
+to_wexit (run_segments target_segs inp asp amb)
+(init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp)
+bufs code ->
+bufs_modeled bufs ->
+Equivalence.modeled (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
+/\ Equivalence.equiv (run_scfg ACFG (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
+(run_scfg ACFG (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp).
 Proof.
-  intros source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim
-    bufs code inp src tgt fit.
-  refine (cat_ch_strong_equiv_alg source_segs rpc rph rsp rbrk rmb rrnd rlim
-            target_segs apc aph asp abrk amb arnd alim (Z_to_bv 64 1) (Z_to_bv 64 1) bufs code inp
-            eq_refl _ (to_wexit_ch_1 _ _ _ _ src) (to_wexit_ch_1 _ _ _ _ tgt) fit).
-  intros reserved brk0 mb1 sp1 lim1 inp1.
-  exact (fd1chan_fdchan _ (init_model_fd1chan reserved brk0 mb1 sp1 lim1 inp1)).
+intros. eapply (cat_ch_strong_equiv_alg _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+(Z_to_bv 64 1) (Z_to_bv 64 1));
+[ reflexivity
+| intros; apply fd1chan_fdchan; apply init_model_fd1chan; assumption
+| eassumption
+| apply to_wexit_ch_1; eassumption
+| apply to_wexit_ch_1; eassumption
+| eassumption ].
 Qed.

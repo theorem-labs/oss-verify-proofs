@@ -9,7 +9,7 @@ Local Open Scope Z_scope.
 
 (* lib/U/Prog/LLVMFuzzerTestOneInput_c.v names `llvm_calloc_model` (calloc_contract for calloc(1, 8856) at
    0x13be0) as a premise of the UBSan slot contract, because the frame's calloc contracts asked m * n < 4096.
-   They now ask m * n < 2 ^ 62 (lib/U/Contract.v:153), and the premise follows from the frame's calloc_contract
+   They now ask m * n < 2 ^ 62 (lib/U/Contract.v:154), and the premise follows from the frame's calloc_contract
    (lib/U/CallocSite.v calloc_model_site), from the allocator record frame_ubsan gives, and at link's own
    allocator zlib_API. *)
 

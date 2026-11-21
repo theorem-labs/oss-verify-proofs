@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: the ajournal image clause is keyed on the journal footprint (~ inFP FP a) instead of a per-unit exemption, ported by path from omx-clap-core/fuzz_manifest at a working branch 5658cc32098; off_img cites Reusable/YImgTop.v (IMG_LO / IMG_TOP), fuzz_state's own image bounds; awr_byte gains a write case, ported by path from omx-clap-core/fuzz_manifest at a working branch 4c30cd807c4: an image byte in FP that is not an owned static (the donor's four cases are now awr_byte0, which awr_byte_present and aj_intrin_at keep), so awr_byte and awr_ok take segs and B, and awr_byte_cases and ajournal_after_write carry the image case; awr_byte and awr_ok also take fr0, the frames of the journal's entry state, and awr_byte gains a case for an FP byte of one of those frames, which awr_byte_cases and ajournal_after_write carry too. *)
+(* Modified by Theorem Labs, 2026-10: the ajournal image clause is keyed on the journal footprint (~ inFP FP a) instead of a per-unit exemption, ported by path from omx-clap-core/fuzz_manifest at a working branch; off_img cites Reusable/YImgTop.v (IMG_LO / IMG_TOP), fuzz_state's own image bounds; awr_byte gains a write case, ported by path from omx-clap-core/fuzz_manifest at a working branch: an image byte in FP that is not an owned static (the donor's four cases are now awr_byte0, which awr_byte_present and aj_intrin_at keep), so awr_byte and awr_ok take segs and B, and awr_byte_cases and ajournal_after_write carry the image case; awr_byte and awr_ok also take fr0, the frames of the journal's entry state, and awr_byte gains a case for an FP byte of one of those frames, which awr_byte_cases and ajournal_after_write carry too. *)
 (* Modified by Theorem Labs, 2026-10: the malloc/free journal lemmas (aj_free_at, aj_free_at_io, aj_free_null_at, aj_free_null_at_io, aj_malloc_at, aj_malloc_at_io, aj_malloc_at04, aj_malloc_at04_io, aj_malloc, aj_free) no longer take In (call_trace0 ...) (as_universe B); the model laws get the trace length (call_trace_len) and the contracts the event bound. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's four new process-state fields); with libreac/fuzz_boxreg's repair of its copy of this file (its proofs/lib/Reusable/YCbq.v). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From Stdlib Require Import FunctionalExtensionality.
@@ -34,7 +35,9 @@ Ltac zlia := appn; lia.
 Definition proc_but_pins (md md' : Model) : Prop :=
 m_proc md' = mkProcState (procst_halted (m_proc md)) (procst_tid (m_proc md)) (procst_creds (m_proc md)) (procst_setsid_succeeded (m_proc md))
 (procst_sigmask (m_proc md)) (procst_children (m_proc md)) (procst_utsname (m_proc md)) (procst_sigaltstack_installed (m_proc md))
-(procst_killed (m_proc md)) (procst_sigabrt_pending (m_proc md)) (procst_abort_terminal (m_proc md)) (m_statpins md').
+(procst_killed (m_proc md)) (procst_sigabrt_pending (m_proc md)) (procst_abort_terminal (m_proc md)) (m_statpins md')
+(procst_sigpipe_pending (m_proc md)) (procst_channel_reader (m_proc md))
+(procst_sigpipe_action (m_proc md)) (procst_sigpipe_terminal (m_proc md)).
 Definition aos_step (FP : list (Z * Z)) (md md' : Model) : Prop :=
 m_io md' = m_io md /\ m_pipes md' = m_pipes md /\
 YI16.fds_rel (m_fds md) (m_fds md') /\ YI16.fs_rel (m_fs md) (m_fs md') /\
@@ -42,7 +45,7 @@ YI16.fds_rel (m_fds md) (m_fds md') /\ YI16.fs_rel (m_fs md) (m_fs md') /\
 proc_but_pins md md' /\
 (~ YI16.sink_open_fp FP -> m_fd md' = m_fd md /\ m_fsys md' = m_fsys md /\ m_proc md' = m_proc md).
 Lemma proc_but_pins_refl : forall md, proc_but_pins md md.
-Proof. intros [fd vm io fs [h ti c ss sm ch u sa k sp at_ pins] li tm]. reflexivity. Qed.
+Proof. intros [fd vm io fs [h ti c ss sm ch u sa k sp at_ pins spp cr spa spt] li tm]. reflexivity. Qed.
 Lemma proc_but_pins_trans : forall m1 m2 m3, proc_but_pins m1 m2 -> proc_but_pins m2 m3 -> proc_but_pins m1 m3.
 Proof.
 intros m1 m2 m3 H12 H23. unfold proc_but_pins, m_statpins in *. rewrite H23. rewrite H12. reflexivity.

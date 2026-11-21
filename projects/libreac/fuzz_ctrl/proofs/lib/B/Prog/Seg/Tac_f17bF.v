@@ -2,11 +2,11 @@
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
    source runs: lib/B/Prog/Seg/Tac_f17b.v f17_mc (:205-289) and the stretch F17b.v seg_F17b :1145-1174
-     at a working branch 3803efccea0
+     at a working branch
      (blobs d8601d21afdf3de23b0d22a463c3f968fb2ab6dd, dc9ae8087a72de90382bb6524f59281543b429f5);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
-   compare: f17_post_F re-runs F17b.v lines 1145-1174 (the zero-step stretch from the memcpy return to the F18
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
+   compare: f17_post_F re-runs F17b.v lines 1146-1175 (the zero-step stretch from the memcpy return to the F18
      entry cut); f17_mc has NO _F twin, see below. *)
 (* rule 24: no function proved. *)
 (* The call side of segment S_F17b: `jal __asan_memcpy` at 0x82630, returning to 0x82634.
@@ -41,7 +41,7 @@ Open Scope Z_scope.
 Module ACPY := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog.asan_memcpy_c.
 
 (* The post stretch of the memcpy call: from the return pc 0x82634 to the F18 entry cut 0x82634, zero steps.
-   Premises: the two memory facts the proved run carries across the call at that point (F17b.v:1162-1174),
+   Premises: the two memory facts the proved run carries across the call at that point (F17b.v:1163-1175),
    f17_mid (the two stores of `first`, mem -> m0) and f17_cp (the copied body and the callee's write set,
    m0 -> m'). The conclusion is the run's own exit predicate. *)
 Lemma f17_post_F : forall (RNG : footprint) (R Fr : bvmap 5 word) (fc : bv 32)

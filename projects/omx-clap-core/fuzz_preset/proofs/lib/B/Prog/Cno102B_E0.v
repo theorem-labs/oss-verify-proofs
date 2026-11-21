@@ -20,14 +20,15 @@
    the keep (MN.memnorm segs memT -> MN.memnorm segs mem2) from their conclusion: each _m / _mR rule is now its
    YGcallx.v original VERBATIM (the _mR forms are proved by it), under its own name for the walks that apply it. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcallMxmn.v, with its module paths and module names changed; 948 of its 1094 lines of code are new or changed and 2183 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image B' (#102 pins: asan-ubsan sha256 d663f82d7f488d30, unstripped twin c90d4fa54d43160b):
    SEGMENT CB0 Entry of the re-walk of check_no_overread (cno, entry B' 0x819f0 = slot 201 of the whole-program
    listing), from the function's entry to the cut CNB_FRAME (B' 0x81a94, entry + 164). Row R7-4 of
    the internal file FREE-PIECES-102.md (a Theorem Labs lane's CB0; plan, the internal file PLAN-cno-caw-102.md sections 5.0 / 5.2,
    row "CB0 Entry").
    rule 24: no function proved. rule 24: proves no function (kind: segment lemma).
-   INPUTS (by path; all at this branch's base, the B' cno segments on the kit's CUT a working branch
-   7cdbb61b5fa0, a working branch 0e85941c7687):
+   INPUTS (by path; all at this branch's base, the B' cno segments on the kit's CUT a working branch,
+   a working branch):
      THE CONTRACT lib/B/Prog/Cno102B_Base.v 06098b64f859: cnb_pre CTX0 D (no DW), cnb_set_fpos, cnb_at_frame (cnb_base
      at the spent wild budget 0, cnb_prog D [] S, the progress fact for no event), cnb_J (the budgeted journal),
      cnb_ex_frame, the record cnb_img B (cnbi_entry, cnbi_pst_rw, cnbi_pst_ok), the listing tables PL_cno_B. Nothing
@@ -49,12 +50,12 @@
      (call_effect_journal_x at a budget), YGcallcf.v / YG0lawscf.v (the ARcfx laws), YG0sshcf.v
      (AR_shadow_law_ok_cf), YGcallScf.v (stack_malloc_x_any, xs_placed_cf_set_fs), lib/A/Prog/S1Ledger.v
      (8cf15eeb6311: prh_ledger_kept_aview), lib/A/Prog/PRW_StepKit.v 0df3991c13f4.
-     PORTED BY PATH (image-free, the numbers not carried): a working branch 4ab1ca20acf7
+     PORTED BY PATH (image-free, the numbers not carried): a working branch
      lib/A/Prog/Ent102L0A.v (blob 8dc69284befb: l0_land_m32 / l0_and_m32 / l0_land_neg32 / l0_val_mem_of_rd32 /
      l0_chunk8 / l0_chunk4 / l0_val_mem_agree / l0_aview_kept and the shape of seg_L0a_A: the prologue, the two GOT
      loads, the flag, the frame call); lib/B/Prog/FuzzStrdupB.v at the base (sd_req / sd_hull_sub / sd_hull_img /
      sd_garr8_move / the shadow cases of sd_src_shadow); lib/Reusable/YCem.v rdword_of_val_mem;
-     a working branch 91c2bea0273 lib/B/Prog/Cno102B_F.v cnob_arodata_J.
+     a working branch lib/B/Prog/Cno102B_F.v cnob_arodata_J.
    THE SEGMENT (DERIVED byte offsets inside check_no_overread, pinned by cnb0_slots on the listing of record):
        0 `addi sp, sp, -0xa0`, `sd zero, 0(sp)`, the thirteen saves ra .. s11 at sp0 - 8 .. sp0 - 104, `addi s0, sp,
          0xa0`, `andi sp, sp, -0x20`, `mv s1, sp`, `mv s7, a1`, the hi pair and the two GOT loads (a2 = [A_OBJ 1],

@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMspec_str.v at a working branch 5d8d8a15571, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMspec_str.v at a working branch, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
 (* The functional half of the bridge for the string walks: the walks answer with
    `strstr_val` (lib/A/Spec/StrStr.v, a computation over byte lists), while fm's program
    part asks for `first_occ` / `no_occ` (lib/A/FMH_Rt.v:31-32, relations over the byte

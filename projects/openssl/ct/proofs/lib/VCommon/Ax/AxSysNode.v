@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -11,6 +12,7 @@ From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC.
 From OSSVerify.Proofs.openssl.ct.lib.VCommon Require Import ShapeAlg ShapeAlgCfg.
 From OSSVerify.Proofs.openssl.ct.lib.VCommon.Ax Require Import AsanWLazy AsanWAcc.
+From OSSVerify.Proofs.openssl.ct.lib.VCommon.Cfg Require RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 
@@ -72,6 +74,7 @@ Qed.
 (* [comment removed for export] *)
 Theorem rzc_all_silent (ms : machine_state) (model : Model) (x8 : word) (T : TSet) :
   m_halted model = None -> ms_svc_pending ms = Some x8 ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   ~ syscall_spec (INP ms x8) model Unmodeled ->
   (forall eff m' evs, syscall_spec (INP ms x8) model (Ok eff m' evs) -> evs = [] /\ m_halted m' = None) ->
   (exists eff m' evs, syscall_spec (INP ms x8) model (Ok eff m' evs) /\ ~ spurious_refusal_cfg cfg (INP ms x8) model eff) ->
@@ -80,7 +83,7 @@ Theorem rzc_all_silent (ms : machine_state) (model : Model) (x8 : word) (T : TSe
                  /\ realizes_cfg segs cfg (mkCfg (advance_past_svc (apply_effect ms eff)) m'') T) ->
   realizes_cfg segs cfg (mkCfg ms model) T.
 Proof.
-  intros Hh Hsvc Hnu Hsil [eff0 [m0 [evs0 [Hs0 Hns0]]]] Hcont.
+  intros Hh Hsvc Hrob Hnu Hsil [eff0 [m0 [evs0 [Hs0 Hns0]]]] Hcont.
   assert (Hnh : forall eff m' evs, syscall_spec (INP ms x8) model (Ok eff m' evs) -> m_halted m' = None)
     by (intros eff m' evs Hs; exact (proj2 (Hsil _ _ _ Hs))).
   assert (Hmat : forall eff m' evs, syscall_spec (INP ms x8) model (Ok eff m' evs) -> ~ spurious_refusal_cfg cfg (INP ms x8) model eff ->
@@ -100,12 +103,13 @@ Proof.
     rewrite Hm in E2. injection E2 as <-. exact HT. }
   pose proof (proj1 (Hsil _ _ _ Hs0)) as E0. subst evs0.
   destruct (Hcont eff0 m0 Hs0 Hns0) as [m2 [E2 _]].
-  exact (rzc_silent_all segs cfg _ _ _ T (exist _ (eff0, m0, [], m2) (conj Hs0 (conj Hns0 E2))) Hnode' Hall).
+  exact (rzc_silent_all segs cfg _ _ _ T (exist _ (eff0, m0, [], m2) (conj Hs0 (conj Hns0 E2))) Hnode' Hrob Hall).
 Qed.
 
 (* [comment removed for export] *)
 Theorem rzc_chk_silent (ms : machine_state) (model : Model) (x8 : word) (T : TSet) :
   m_halted model = None -> ms_svc_pending ms = Some x8 ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   check_syscall (INP ms x8) (mkEffect (Z_to_bv 64 0) [] []) model <> CheckUnmodeled ->
   (forall eff m' evs, check_syscall (INP ms x8) eff model = CheckOk m' evs -> evs = [] /\ m_halted m' = None) ->
   (exists eff m', check_syscall (INP ms x8) eff model = CheckOk m' [] /\ ~ spurious_refusal_cfg cfg (INP ms x8) model eff) ->
@@ -114,8 +118,8 @@ Theorem rzc_chk_silent (ms : machine_state) (model : Model) (x8 : word) (T : TSe
                  /\ realizes_cfg segs cfg (mkCfg (advance_past_svc (apply_effect ms eff)) m'') T) ->
   realizes_cfg segs cfg (mkCfg ms model) T.
 Proof.
-  intros Hh Hsvc Hnu Hsil [eff0 [m0 [Hc0 Hr0]]] Hcont.
-  apply (rzc_all_silent ms model x8 T Hh Hsvc).
+  intros Hh Hsvc Hrob Hnu Hsil [eff0 [m0 [Hc0 Hr0]]] Hcont.
+  apply (rzc_all_silent ms model x8 T Hh Hsvc Hrob).
   - intros Hs. apply Hnu. exact (proj2 (check_syscall_err_iff _ _ _) Hs).
   - intros eff m' evs Hs. apply check_syscall_ok_iff in Hs. exact (Hsil _ _ _ Hs).
   - exists eff0, m0, []. split; [apply check_syscall_ok_iff; exact Hc0 | exact Hr0].
@@ -133,6 +137,7 @@ Qed.
 (* [comment removed for export] *)
 Theorem rzc_sys_silent (ms : machine_state) (model : Model) (x8 : word) (T : TSet) :
   m_halted model = None -> ms_svc_pending ms = Some x8 ->
+  RomBase.sys_rob segs (mkCfg ms model) ->
   check_syscall (INP ms x8) (mkEffect (Z_to_bv 64 0) [] []) model <> CheckUnmodeled ->
   (forall eff m' evs, check_syscall (INP ms x8) eff model = CheckOk m' evs -> evs = [] /\ m_halted m' = None) ->
   (exists eff m', check_syscall (INP ms x8) eff model = CheckOk m' [] /\ refusal_b (INP ms x8) model (eff_ret eff) = false) ->
@@ -142,8 +147,8 @@ Theorem rzc_sys_silent (ms : machine_state) (model : Model) (x8 : word) (T : TSe
                  /\ realizes_cfg segs cfg (mkCfg (advance_past_svc (apply_effect ms eff)) m'') T) ->
   realizes_cfg segs cfg (mkCfg ms model) T.
 Proof.
-  intros Hh Hsvc Hnu Hsil [eff0 [m0 [Hc0 Hr0]]] Hcont.
-  apply (rzc_all_silent ms model x8 T Hh Hsvc).
+  intros Hh Hsvc Hrob Hnu Hsil [eff0 [m0 [Hc0 Hr0]]] Hcont.
+  apply (rzc_all_silent ms model x8 T Hh Hsvc Hrob).
   - intros Hs. apply Hnu. exact (proj2 (check_syscall_err_iff _ _ _) Hs).
   - intros eff m' evs Hs. apply check_syscall_ok_iff in Hs. exact (Hsil _ _ _ Hs).
   - exists eff0, m0, []. split; [apply check_syscall_ok_iff; exact Hc0 | apply spurious_refusal_not_refusal; exact Hr0].
@@ -152,6 +157,28 @@ Proof.
     exfalso. apply Hns. split; [exact Hoff|]. split; [exact Er|].
     exists eff0, m0, []. split; [apply check_syscall_ok_iff; exact Hc0 | exact Hr0].
 Qed.
+
+(* LPS 08b1429: [RomBase.sys_rob] at a system call whose specification does not read
+   [in_mem] (set_tid_address, brk, munmap, mmap, mprotect) *)
+Lemma rob_sys_96 (ms : machine_state) (model : Model) (x8 : word) :
+  ms_svc_pending ms = Some x8 -> bv_unsigned x8 = 96 -> RomBase.sys_rob segs (mkCfg ms model).
+Proof. intros Hs Hno. apply (RomBase.sys_rob_memfree segs ms model x8 Hs). rewrite Hno. exact RomBase.memfree_96. Qed.
+
+Lemma rob_sys_214 (ms : machine_state) (model : Model) (x8 : word) :
+  ms_svc_pending ms = Some x8 -> bv_unsigned x8 = 214 -> RomBase.sys_rob segs (mkCfg ms model).
+Proof. intros Hs Hno. apply (RomBase.sys_rob_memfree segs ms model x8 Hs). rewrite Hno. exact RomBase.memfree_214. Qed.
+
+Lemma rob_sys_215 (ms : machine_state) (model : Model) (x8 : word) :
+  ms_svc_pending ms = Some x8 -> bv_unsigned x8 = 215 -> RomBase.sys_rob segs (mkCfg ms model).
+Proof. intros Hs Hno. apply (RomBase.sys_rob_memfree segs ms model x8 Hs). rewrite Hno. exact RomBase.memfree_215. Qed.
+
+Lemma rob_sys_222 (ms : machine_state) (model : Model) (x8 : word) :
+  ms_svc_pending ms = Some x8 -> bv_unsigned x8 = 222 -> RomBase.sys_rob segs (mkCfg ms model).
+Proof. intros Hs Hno. apply (RomBase.sys_rob_memfree segs ms model x8 Hs). rewrite Hno. exact RomBase.memfree_222. Qed.
+
+Lemma rob_sys_226 (ms : machine_state) (model : Model) (x8 : word) :
+  ms_svc_pending ms = Some x8 -> bv_unsigned x8 = 226 -> RomBase.sys_rob segs (mkCfg ms model).
+Proof. intros Hs Hno. apply (RomBase.sys_rob_memfree segs ms model x8 Hs). rewrite Hno. exact RomBase.memfree_226. Qed.
 
 (* [comment removed for export] *)
 Lemma rzc_latch (ms : machine_state) (model : Model) (w : bv 32) (T : TSet) :
@@ -201,6 +228,17 @@ Proof.
   intros Hoff Hin H215. unfold injected_family_off. change (in_sysno (INP ms x8)) with x8.
   destruct Hin as [H|[H|[H|[H|[]]]]]; try (exfalso; exact (H215 (eq_sym H))); rewrite <- H; cbn; rewrite Hoff; reflexivity.
 Qed.
+
+Lemma family_off_215 (ms : machine_state) (x8 : word) :
+  sc_alloc cfg = false -> bv_unsigned x8 = 215 -> injected_family_off cfg (INP ms x8) = true.
+Proof.
+  intros Hoff H. unfold injected_family_off. change (in_sysno (INP ms x8)) with x8.
+  rewrite H. cbn. rewrite Hoff. reflexivity.
+Qed.
+
+Lemma refusal_b_215 (ms : machine_state) (x8 : word) (model : Model) (r : word) :
+  bv_unsigned x8 = 215 -> refusal_b (INP ms x8) model r = ret_in_errnos [ENOMEM] r.
+Proof. intros Hno. unfold refusal_b. change (in_sysno (INP ms x8)) with x8. rewrite Hno. reflexivity. Qed.
 
 Lemma refusal_b_222 (ms : machine_state) (x8 : word) (model : Model) (r : word) :
   bv_unsigned x8 = 222 -> refusal_b (INP ms x8) model r = ret_in_errnos [ENOMEM] r.

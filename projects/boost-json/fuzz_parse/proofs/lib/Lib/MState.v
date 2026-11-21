@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: statements written out as text, lemmas added for the revision. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -8,7 +9,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics 
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib.Lib Require Import PropExec.
 Require Import OSSVerify.Proofs.boost_json.fuzz_parse.lib.Lib.CDef.
-Local Ltac2 zQ s := CDef.cdeft "37Corelib7Numbers7BinNums04Npos35stdpp9bitvectorbdefinitionshf2bv37Corelib4Init9Datatypesk16option3h5LinuxProcessSemantics5Riscv7Preludem25bvmap3h5LinuxProcessSemanticsfLinuxProcessSemeRiscvSemanticsp0dmachine_statek14Nonep0h3Build_machine_statek14Some3h5LinuxProcessSemantics5Riscv3Semvc4corevc6c_fcsrvc7c_fregsvc4c_pcvc6c_regsvc6c_resv79OSSVerify6Proofsaboost_jsonafuzz_parse3lib3Lib6MState~~~~~~hl12MSk14prod37Corelib4Init5Logichpb2eqp0ainterp_effp0emachine_resultvc3eff89OSSVerify6Proofsaboost_jsonafuzz_parse3lib3Lib6MStateaInterpEff0~~~~~~ht9binterp_eff0p0cMachineFaultp09MachineOkp0h0MachineUnmodeledhl1aMS_of_core01Z3h5LinuxProcessSemantics5Riscv5Instrin05instrk14boolk15falsek14listk14pair3h5LinuxProcessSemanticsfLinuxProcessSemcMemImageTypeira7Segmentp0afetch_wordp08is_ecallp04step3h5LinuxProcessSemantics5Riscv7DecodeCjh9adecode_anyvc4Corevc4exechl1binterp_eff0hl1blift_resulthf7Z_to_bvhpb1Ihf2BVhf4BvWfk14truevc5is_x0vc7reg_getvc2w0hl15MSsvcm29bvmap_sethpb3notvc2w146Stdlib6ZArith6BinInt1Zjt33addhf6bv_addhfbbv_unsignedhpb3andjt32lejt32ltjt33powjt36modulohf6bv_andhf6bv_nothl16ret_pc" s.
+Local Ltac2 zQ s := CDef.cdeft "37Corelib7Numbers7BinNums04Npos35stdpp9bitvectorbdefinitionshf2bv37Corelib4Init9Datatypesk16option3h5LinuxProcessSemantics5Riscv7Preludem25bvmap3h5LinuxProcessSemanticsfLinuxProcessSemeRiscvSemanticsp0dmachine_statek14Nonep0h3Build_machine_statek14Some3h5LinuxProcessSemantics5Riscv3Semvc4corevc6c_fcsrvc7c_fregsvc4c_pcvc6c_regsvc6c_resv79OSSVerify6Proofsaboost_jsonafuzz_parse3lib3Lib6MState~~~~~~hl12MSk14prod37Corelib4Init5Logichpb2eqp0ainterp_effp0emachine_result~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~p0cMachineFaultp09MachineOkp0h0MachineUnmodeledhl1aMS_of_core01Z3h5LinuxProcessSemantics5Riscv5Instrin05instrk14boolk15falsek14listk14pair3h5LinuxProcessSemanticsfLinuxProcessSemcMemImageTypeira7Segmentp0afetch_wordp08is_ecallp04step3h5LinuxProcessSemantics5Riscv7DecodeCjh9adecode_anyvc4Corevc4exechl1binterp_eff0hl1blift_resulthf7Z_to_bvhpb1Ihf2BVhf4BvWfk14truevc5is_x0vc7reg_getvc2w0hl15MSsvcm29bvmap_sethpb3notvc2w146Stdlib6ZArith6BinInt1Zjt33addhf6bv_addhfbbv_unsignedhpb3andjt32lejt32ltjt33powjt36modulohf6bv_andhf6bv_nothl16ret_pc" s.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope bv_scope.
@@ -28,6 +29,26 @@ Definition MS_of_core : ltac2:(zQ "51!h9!jc!l9!s7!hhe&>0@1$1@1$0#k0@1$2@1$1@1$0#
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
+(* 08b1429: the vvar arm of a failed load is guarded by [segs_vvar segs] first: for a binary's
+   own segment list (no vvar segment) it reduces to [false] by conversion, so [interp_eff0] on a
+   concrete image keeps the pre-revision shape the recorded walks were built against
+   (boost-beast Lib/MState.v). *)
+Definition segs_vvar (segs : list Segment) : bool := existsb seg_vdso_vvar segs.
+
+Lemma find_segment_in : forall segs a n seg, find_segment segs a n = Some seg -> In seg segs.
+Proof.
+  induction segs as [|s r IH]; intros a n seg H; cbn in H; [discriminate|].
+  destruct (_ && _)%bool; [injection H as <-; left; reflexivity | right; exact (IH _ _ _ H)].
+Qed.
+
+Lemma range_meets_vvar_segs : forall segs a n, range_meets_vvar segs a n = true -> segs_vvar segs = true.
+Proof.
+  intros segs a n; revert a. induction n as [|n IH]; intros a H; cbn in H; [discriminate|].
+  apply orb_prop in H as [H|H]; [|exact (IH _ H)].
+  unfold vvar_byte_at in H. destruct (find_segment segs (bv_unsigned a) 1) as [seg|] eqn:E; [|discriminate].
+  unfold segs_vvar. apply existsb_exists. exists seg. split; [exact (find_segment_in _ _ _ _ E) | exact H].
+Qed.
+
 Section InterpEff0.
 Variable segs : ltac2:(zQ "20!iqc!iuf@1$0$1").
 Fixpoint interp_eff0 (t : eff) (m : word -> option byte)
@@ -39,7 +60,7 @@ Fixpoint interp_eff0 (t : eff) (m : word -> option byte)
   | ELoad n a k =>
       match ov_read_bytes segs m a (width_bytes n) with
       | Some bs => interp_eff0 (k (bv_extract 0 n (le_bytes_to_word bs))) m
-      | None => MachineFault
+      | None => if (segs_vvar segs && range_meets_vvar segs a (width_bytes n))%bool then MachineUnmodeled else MachineFault
       end
   | EStore n a v k =>
       if store_ok segs m a (width_bytes n)
@@ -47,11 +68,18 @@ Fixpoint interp_eff0 (t : eff) (m : word -> option byte)
       else MachineFault
   end.
 
-Lemma interp_eff0_ok : ltac2:(zQ "a1!h9!jc!l9!hp4!hqf!hr5!hs2!hhe!ht3!ii1&>0@1$1@1$0#k0@1$2@1$1@1$0#8>1t$8>1m~0@3$4@1$6@2$3$7~0@3$5?4segs^2^1@2$9^2^1").
+(** The machine's [interp_eff] answers [MachineUnmodeled] for a load that
+    meets the vvar pages (08b1429); [interp_eff0] keeps the fault leaf, so
+    it agrees with [interp_eff] on every successful run, which is all the
+    step lemmas use. *)
+Lemma interp_eff0_ok : forall t m, interp_eff segs t m = interp_eff0 t m.
 Proof.
   unfold interp_eff. induction t as [c|c|c|c|c|c|n a k IH|n a v k IH]; intros m; cbn; try reflexivity.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|reflexivity].
-    rewrite <- IH. destruct (interp_eff_accesses segs _ m) as [[? ?]| |]; reflexivity.
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|].
+    + rewrite <- IH. destruct (interp_eff_accesses segs _ m) as [[? ?]| |]; reflexivity.
+    + destruct (range_meets_vvar segs a (width_bytes n)) eqn:Ev.
+      * rewrite (range_meets_vvar_segs _ _ _ Ev). reflexivity.
+      * rewrite andb_false_r. reflexivity.
   - destruct (store_ok segs m a (width_bytes n)); [|reflexivity].
     rewrite <- IH. destruct (interp_eff_accesses segs k _) as [[? ?]| |]; reflexivity.
 Qed.
@@ -59,15 +87,48 @@ End InterpEff0.
 
 Definition lift_result : ltac2:(zQ "71!h9!jc!l9!hs2!hp4!s7!hhe&>0@1$1@1$0#k0@1$2@1$1@1$0#8>2ro~0>1r@1$3@2$4$6~0@1$3$5") := ltac2:(zQ "b3!h9!jc!l9!hp4!hs2!s7!hhe!ij0!ijf!ikb!ilf&>0@1$1@1$0#k0@1$2@1$1@1$0#8&@2$3$6~0&@1$4~1\2ro~0\1r~2M4\1r~2@1$4$5^1\6result~1M3\6result~1@1$4$5^1\1c$6\2m'~0@2$8$5@3$a^2^1^5@1$7$5@1$9$5").
 
-Lemma step_gen : ltac2:(zQ "ha1!h9!jc!l9!hqf!imd!ip4!v5!hp4!o8!ipd!iq4!iqc!ir3!iuf!iva!jg7!hs2!s7!jh2!jjf!jkd!jl4!hoe!jlb!jma!jn9&>0@1$1@1$0#k0@1$2@1$1@1$0#8>4segs@1$b$d>1R@2$8@1$0#5@1$1@1$0#k0>1F@2$8@1$0#5@1$1@1$0#k0>2pc@1$1@1$0#k0>2fc@1$1@1$0#i0>2rv@1$2@1$1@1$0#k0>1m~0>2ro~0>1w@1$1@1$0#i0>1i$5>2sz$4>0@3$3@1$2@1$1@1$0#i0@2$e^b^8@2$6@1$1@1$0#i0^3>0@3$3$9@1$f^4$a>0@3$3@1$2@2$7$5$4@1$h3^5@2$6@2$7$5$4@4$c$5$4^4^3@3$3@1$h0$h1@2$h2^e@7$h6^d^c^b^a^9^8^7@2$h8^7@3$h7^e@3$h5@2$h9@1$0#k0^4^5@5$h4^d^c^b^a^9^8").
+Lemma step_gen_eff : forall segs R F pc fc rv m ro w i sz,
+  fetch_word segs pc = Some w ->
+  is_ecall w = false ->
+  decode_any w = Some (i, sz) ->
+  RiscvSemantics.step segs (MS R F pc fc rv m ro) =
+  lift_result ro (interp_eff segs (exec (Z_to_bv 64 sz) i
+    {| c_regs := R; c_fregs := F; c_pc := pc; c_fcsr := fc; c_resv := rv |}) m).
 Proof.
   intros segs R F pc fc rv m ro w i sz Hf He Hd.
   unfold RiscvSemantics.step, RiscvSemantics.step_accesses. cbn [ms_pc ms_pc_val MS]. rewrite Hf.
   unfold RiscvSemantics.drop_access_report, RiscvSemantics.decode_exec_accesses. rewrite He, Hd.
   cbn [ms_regs ms_fregs ms_pc_val ms_fcsr ms_resv ms_mem ms_rom MS].
-  rewrite <- interp_eff0_ok. unfold interp_eff.
+  unfold interp_eff.
   destruct (interp_eff_accesses segs (exec (Z_to_bv 64 sz) i _) m) as [[[c m'] acc]| |]; reflexivity.
 Qed.
+
+(** A successful [interp_eff0] run is the machine's step. *)
+Lemma step_gen : forall segs R F pc fc rv m ro w i sz,
+  fetch_word segs pc = Some w ->
+  is_ecall w = false ->
+  decode_any w = Some (i, sz) ->
+  RiscvSemantics.step segs (MS R F pc fc rv m ro) =
+  lift_result ro (interp_eff0 segs (exec (Z_to_bv 64 sz) i
+    {| c_regs := R; c_fregs := F; c_pc := pc; c_fcsr := fc; c_resv := rv |}) m).
+Proof.
+  intros segs R F pc fc rv m ro w i sz Hf He Hd.
+  rewrite (step_gen_eff segs R F pc fc rv m ro w i sz Hf He Hd), interp_eff0_ok. reflexivity.
+Qed.
+
+(** A successful [interp_eff0] run is the machine's step. *)
+Lemma step_gen_ok : forall segs R F pc fc rv m ro w i sz ms1,
+  fetch_word segs pc = Some w ->
+  is_ecall w = false ->
+  decode_any w = Some (i, sz) ->
+  lift_result ro (interp_eff0 segs (exec (Z_to_bv 64 sz) i
+    {| c_regs := R; c_fregs := F; c_pc := pc; c_fcsr := fc; c_resv := rv |}) m) = MachineOk ms1 ->
+  RiscvSemantics.step segs (MS R F pc fc rv m ro) = MachineOk ms1.
+Proof.
+  intros segs R F pc fc rv m ro w i sz ms1 Hf He Hd Hx.
+  rewrite (step_gen segs R F pc fc rv m ro w i sz Hf He Hd). exact Hx.
+Qed.
+
 
 (* [comment removed for export] *)
 Lemma step_ecall_gen : ltac2:(zQ "h82!h9!jc!l9!ipd!hqf!jo3!s7!o8!jo8!jod!v5!iqc!jp4!iuf!ijf!iva!jg7!hs2!jh2!jpb!jq3!jqd!hoe!jr2&>0@1$1@1$0#k0@1$2@1$1@1$0#8&@3$8@1$0#5+h1Kv$5@2$9@1$0#5+h1>4segs@1$b$d>1R@2$7@1$0#5@1$1@1$0#k0>1F@2$7@1$0#5@1$1@1$0#k0>2pc@1$1@1$0#k0>2fc@1$1@1$0#i0>2rv@1$2@1$1@1$0#k0>1m~0>2ro~0>1w@1$1@1$0#i0>0@3$4@1$2@1$1@1$0#i0@2$f^9^6@2$a@1$1@1$0#i0^1>0@3$4$3@1$h0^2$c@3$4@1$h1$6@2$h2^b@7$h6^a^9^8^7^6^5^4@2$e$6@8$h7^a^9^8M3\0$3@1$1@1$0#k0@1$h3~1$h5@2$h4^a~1^7^6^5^4").

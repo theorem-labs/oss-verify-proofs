@@ -24,11 +24,12 @@
    (pass 5b) the stack from len - 16 present, from the statement's astack_pres kept by astack_pres_journal. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths, module names and numbers changed; 536 of its 623 lines of code are new or changed and 4966 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/pf_seg_B4.v, with its module paths and module names changed; 264 of its 345 lines of code are new or changed and 542 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca): the geometry and the
    keep lemmas of piece PB10_S of segment B10b of reac_segconf_parse_file's walk (lib/B/Prog/pf_seg_B10b_k.v:
    HA_JOIN n -> H_ROLEV n). A B10b sub-lane of the image-B G3 walk owner, 2026-10-30. proves no function (kind: helper
    lemmas of a segment lemma of reac_segconf_parse_file's walk); no instruction is walked here.
-   ADAPTED from the B10b segment lane's lib/B/Prog/pf_seg_B10b_j.v (961c19ce3f65: b10j_geo, b10j_SHb, the b10j_k_* /
+   ADAPTED from the B10b segment lane's lib/B/Prog/pf_seg_B10b_j.v (b10j_geo, b10j_SHb, the b10j_k_* /
    b10j_keep_* reader lemmas, the image-A A2 segment lane's pf_a2_g.v form), with this piece's write set in place of the frame's
    shadow cells:
      b10s_Wr: the block c (the two `sw` of 0x88d90 / 0x88dac into c->seg[gi].role / role_set and the snprintf

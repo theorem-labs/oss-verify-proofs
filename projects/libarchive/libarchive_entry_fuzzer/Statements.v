@@ -21,13 +21,18 @@
 
     WHAT THE HARNESS CHECKS.  Builds an archive_entry from fuzz fields
     (pathname, size, mode, ids, 4 timestamps, uname/gname, symlink/hardlink)
-    plus fuzz ACL entries, then archive_entry_acl_to_text (ACCESS) and parses
-    that text back with archive_entry_acl_from_text into the same entry -- a
-    text round trip whose result is never compared with the original ACL; also
-    DEFAULT/NFS4/wide to_text, pathname variants, clone, clear. All results
-    discarded.  The harness makes no check of its own beyond not crashing, so a
-    statement about it says only that the code it calls never crashes, hangs or
-    trips a sanitizer.
+    plus fuzz ACL entries, then, when archive_entry_acl_to_text (ACCESS) returns
+    text, parses it back into the same entry with archive_entry_acl_from_text
+    and never compares the result with the original ACL; also DEFAULT/NFS4/wide
+    to_text, pathname variants, clone, clear. It returns early when
+    archive_entry_new returns NULL and frees each to_text text and the clone
+    when not NULL; every other libarchive result is dropped.  The harness makes
+    no check of its own beyond not crashing.  Its halts statements say only that
+    the code it calls never crashes, hangs or trips a sanitizer.  Its agreement
+    statements say only that the code never crashes or trips a sanitizer, and
+    allow a run that never ends.  Its bound statements say only how often its
+    builds may disagree.  Its decidability statements say only that some program
+    decides where its builds agree.
 
     Whether each statement is open, proved or known false is recorded in the
     harness README, not here: this file changes only when a statement does. *)

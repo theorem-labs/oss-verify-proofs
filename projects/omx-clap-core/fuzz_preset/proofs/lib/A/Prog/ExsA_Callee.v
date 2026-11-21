@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Theorem Labs, 2026-10: fuzz_preset image A' (#102 pin asan 1be0f53d96cb, facts 8f3e7e1a07f1): the ACHAIN-FREE RUN
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10: fuzz_preset image A' (#102 pin asan 1be0f53d96cb, facts): the ACHAIN-FREE RUN
    FORMS of ex_string's two program callees, ex_hex4 (fuzz_preset.c :136-155, A_prog_sigma AS_ex_hex4 = 0x84688) and
    ex_utf8 (fuzz_preset.c :157-183, A_prog_sigma AS_ex_utf8 = 0x84764). STATEMENTS ONLY; the proofs are
    lib/A/Prog/ExHex4RunA.v and lib/A/Prog/ExUtf8RunA.v.
-   PORTED from lib/B/Prog/ExsB_Callee.v (image B', a Theorem Labs lane, on the cut 7cdbb61b5fa0): the same texts, verbatim, over
+   PORTED from lib/B/Prog/ExsB_Callee.v (image B', a Theorem Labs lane, on the cut): the same texts, verbatim, over
    image A's loaded segments (lib/A/Img0.v rsegs) in place of image B's. The form is image-free; only the segments
    constant changed.
    WHY a run form: ex_string keeps q in s0 (A 0x84078 `mv s0,a0`), so at its calls A 0x84180 / 0x841f4 (ex_hex4) and

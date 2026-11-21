@@ -1,0 +1,3 @@
+refutes: toy/ebreak/asan_ca_total
+approach: the classifier, lps's ebreak image, faults at its first instruction, so on lps's finite-input witness it exits with no code at all
+uses: [lps-checks]

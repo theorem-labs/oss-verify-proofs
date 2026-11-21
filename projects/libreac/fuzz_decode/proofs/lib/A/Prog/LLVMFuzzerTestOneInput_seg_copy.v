@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: the copy segment of the image-B walk of libreac/fuzz_decode's LLVMFuzzerTestOneInput (llvm_b_copy_stmt of LLVMFuzzerTestOneInput_segs.v), with proof steps adapted from proofs/libreac/fuzz_boxreg/lib/A/Prog/ReadName.v (a working branch: the run / branch / call pattern); ew_Eimg_Ereg_nat and img_env_atomP copied from this unit's lib/A/Prog/YC1g.v / YC1h.v at image B's PAImg; the malloc call step and eb_ch / eb_chain_at / eb_trace_at / eb_rdword_of_bytes / eb_rdword_of_val_mem copied from lib/B/Prog/LLVMFuzzerTestOneInput_segB.v (a working branch 84be2173fcc); the two leaf calls in the shape of lib/B/Prog/LLVMFuzzerTestOneInput_leafb.v's dec_leafb_inspect; module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: the copy segment of the image-B walk of libreac/fuzz_decode's LLVMFuzzerTestOneInput (llvm_b_copy_stmt of LLVMFuzzerTestOneInput_segs.v), with proof steps adapted from proofs/libreac/fuzz_boxreg/lib/A/Prog/ReadName.v (a working branch: the run / branch / call pattern); ew_Eimg_Ereg_nat and img_env_atomP copied from this unit's lib/A/Prog/YC1g.v / YC1h.v at image B's PAImg; the malloc call step and eb_ch / eb_chain_at / eb_trace_at / eb_rdword_of_bytes / eb_rdword_of_val_mem copied from lib/B/Prog/LLVMFuzzerTestOneInput_segB.v (a working branch); the two leaf calls in the shape of lib/B/Prog/LLVMFuzzerTestOneInput_leafb.v's dec_leafb_inspect; module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_decode/lib/B/Prog/LLVMFuzzerTestOneInput_segC.v, with its module paths and module names changed; 2590 of its 2760 lines of code are new or changed and 2192 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* LLVMFuzzerTestOneInput_seg_copy: the image-A walk's segment llvm_a_copy, +0x234 .. +0x3bc of libreac/fuzz_decode's
    LLVMFuzzerTestOneInput: `Theorem llvm_a_copy_ok : llvm_a_copy_stmt` (lib/A/Prog/LLVMFuzzerTestOneInput_segs.v), proved
    in the Pa engine.
@@ -26,7 +27,7 @@
    4. malloc #2 by amalloc04_rule (YC85.v amalloc04_sub), the trace from dec_llvmf_utraces, ending at llvm_a_st_3c0
       (after lib/A/Prog/LLVMFuzzerTestOneInput_seg_early.v e_call): cp_call_malloc2;
    5. the symbolic runs between the calls, in the idiom of libreac/fuzz_boxreg's lib/A/Prog/ReadName.v at
-      a working branch 1d92330b7ad (an sstate naming the regions and facts, paj_run /
+      a working branch (an sstate naming the regions and facts, paj_run /
       paj_branch, awr_ok, the shadow side conditions): cp_stage_a (+0x234), cp_stage_b (+0x254), cp_stage_c (+0x260),
       cp_stage_d (+0x2b4), cp_stage_e (+0x2c4); and the composition llvm_a_copy_ok. *)
 From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require YZ00.

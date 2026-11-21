@@ -6,6 +6,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3a.v, with its module names changed; 1977 of its 2075 lines of code are new or changed and 2368 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3b.v, with its module paths, module names and numbers changed; 884 of its 966 lines of code are new or changed and 1993 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/F13.v; 198 of its 220 lines of code are new or changed and 944 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/P10.v -- GLUE for stage seg_P10 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput
    (lib/A/ACtl.v:731).  Written by a Theorem Labs lane's glue lane (piece W3, second part); single writer.
    rule 24: no function proved (stage glue of a walk).
@@ -21,7 +22,7 @@
    a Theorem Labs lane's consent 12:55Z) of a Theorem Labs lane's v1.9 re-run Seg/P10F.p10_evt_F (not in this delivery), Required.  It drops the universal
    `shadow_rw m` premise (the run and its callee read no shadow byte through it).  Its callee premise
    reac_ports_unknown_contract_F_on is discharged by the PROVED
-   A.Prog.reac_ports_unknownF.reac_ports_unknown_F_holds_on (a Theorem Labs lane 4038362e590); the segment is lifted whole.
+   A.Prog.reac_ports_unknownF.reac_ports_unknown_F_holds_on (a Theorem Labs lane); the segment is lifted whole.
 
    THE PROOF: the steps of lib/A/ACtlG/P8.v (G1-G5) with that file's W3 lemmas.  What differs: the run writes one
    byte of the owned class-6 frame, c = fr + 3040 (XC's spill [s1 + 280]); it is present and visible
@@ -34,7 +35,7 @@
    off the image).
 
    SECTION HYPOTHESIS: LAWS (ACtl.v:183).  The memory helpers are cited by name from
-   a Theorem Labs lane's shared lib/A/ACtlG/KitMem.v (a working branch 4a56e997c0f, merged).
+   a Theorem Labs lane's shared lib/A/ACtlG/KitMem.v (a working branch, merged).
 
    CLOSURE and SHADOWED NAMES: as lib/A/ACtlG/P8.v. *)
 

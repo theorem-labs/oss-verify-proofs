@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/ShadowRwOnT.v 6e434d2c487 (the blob this tree had at release c5e779efe8c) (a working branch 9ec78006def: fl_shadow_rw_on moved to lib/B/ShadowRwOnK.v and the unused B.Prog.RcAsanRT Require dropped, as A; first twinned from blob 62335f14b9a at ea8776b2302): character-identical to this tree's A apart from the image prefix (A.AsanRT / A.Img0 / A.ShadowRwOn / A.AsanRTFacts / A.MemNorm / A.MemNormTr / A.Prog.ImgBounds / A.Prog.MemMono -> B.*; lib/A/ -> lib/B/ and "image A" -> "image B" in the comment).  B.Prog.MemMono is lib/B/Prog/MemMono.v, the prefix twin of A's.  The comment's line references are A's text unchanged: B's AsanRTFacts.v:54 and MemNormTr.v:113 / :214 are the same lines, B's Prog/MemMono.v twin of :49 is :50 (its header line); Seg/A1.v:325, F18.v:232, P7.v:136 are image A's stage files. *)
+(* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/ShadowRwOnT.v 6e434d2c487 (the blob this tree had at release) (a working branch: fl_shadow_rw_on moved to lib/B/ShadowRwOnK.v and the unused B.Prog.RcAsanRT Require dropped, as A; first twinned from blob 62335f14b9a): character-identical to this tree's A apart from the image prefix (A.AsanRT / A.Img0 / A.ShadowRwOn / A.AsanRTFacts / A.MemNorm / A.MemNormTr / A.Prog.ImgBounds / A.Prog.MemMono -> B.*; lib/A/ -> lib/B/ and "image A" -> "image B" in the comment).  B.Prog.MemMono is lib/B/Prog/MemMono.v, the prefix twin of A's.  The comment's line references are A's text unchanged: B's AsanRTFacts.v:54 and MemNormTr.v:114 / :215 are the same lines, B's Prog/MemMono.v twin of :49 is :50 (its header line); Seg/A1.v:325, F18.v:232, P7.v:136 are image A's stage files. *)
 (* lib/B/ShadowRwOnT.v -- route (C): the TRANSPORTS of B.ShadowRwOn.shadow_rw_on across a run's memory relation, one
    twin per shared shadow_rw transport of image B (a Theorem Labs lane 09:24Z, from a Theorem Labs lane's R19F test).  ONE WRITER: a Theorem Labs lane.
    rule 24: no function proved.  Kept out of the leaf ShadowRwOn.v because these Require MemNorm / MemMono / the asan
@@ -7,8 +7,8 @@
    Each twin is the original's proof with the region guard P carried through (the originals argue per address):
      shadow_rw_on_kept       <- B.AsanRTFacts.shadow_rw_kept      (AsanRTFacts.v:54; meta_kept + wmono)
      shadow_rw_on_rel        <- the stage-local forward shadow_rw_rel (Seg/A1.v:325, F18.v:232, P7.v:136, ...; mem_rel)
-     shadow_rw_on_normalize  <- B.MemNormTr.shadow_rw_normalize   (MemNormTr.v:113; ro_agree)
-     shadow_rw_on_of_rel     <- B.MemNormTr.shadow_rw_of_rel      (MemNormTr.v:214; mem_rel, backward)
+     shadow_rw_on_normalize  <- B.MemNormTr.shadow_rw_normalize   (MemNormTr.v:114; ro_agree)
+     shadow_rw_on_of_rel     <- B.MemNormTr.shadow_rw_of_rel      (MemNormTr.v:215; mem_rel, backward)
      shadow_rw_on_mem_mono   <- B.Prog.MemMono.shadow_rw_mono     (MemMono.v:49; wmono + rd_mono)
    fl_shadow_rw_on (<- RcAsanFPLib.fl_shadow_rw) moved to lib/B/ShadowRwOnK.v (12:1xZ; light closure). *)
 From Stdlib Require Import ZArith Lia.

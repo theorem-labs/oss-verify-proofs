@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN1z.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap's refusal under a may-fail allocator). *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -20,6 +21,7 @@ Unset Lia Cache. Unset Nia Cache.
 Open Scope Z_scope.
 Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Context {AM : AllocMode}.
+Context {AMF : Forced AM}.
 Definition regs_lit (l : list (nat * Z)) : list sv :=
 map (fun i => match find (fun p => Nat.eqb (fst p) i) l with
 | Some (_, z) => SLit z

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up over the run's entry stack). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -52,7 +53,7 @@ Definition argv0_of (inp : ProcInput) : list byte := nth 0 (in_argv inp) [].
 Definition pnoffZ (inp : ProcInput) : Z := Z.of_nat (pn_off (argv0_of inp)).
 
 (* [comment removed for export] *)
-Definition draw0 : EntryDraw := mkDraw (Z_to_bv 128 0) (fun _ => Z_to_bv 8 0).
+Definition draw0 : EntryDraw := mkDraw (Z_to_bv 128 0) (Z_to_bv 64 0) vdso_keeps_all.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)

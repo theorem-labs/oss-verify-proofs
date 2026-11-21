@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vvar and vDSO-text cases of a step; new lemma same_but_materialized_reader keeps the channel reader across materialization). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -288,7 +289,7 @@ Proof.
   - discriminate.
   - discriminate.
   - discriminate.
-  - destruct (ov_read_bytes segs (rmem m) a (width_bytes n)) as [bs|] eqn:Er; [|discriminate].
+  - destruct (ov_read_bytes segs (rmem m) a (width_bytes n)) as [bs|] eqn:Er; [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
     destruct (ov_read_bytes_restrict _ _ _ _ Er) as [-> Hvis].
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) (rmem m))
       as [[[c' m''] rs']| |] eqn:Ek; [|discriminate|discriminate].
@@ -422,6 +423,7 @@ Proof.
   { exact (decode_exec_accesses_restrict _ _ _ H). }
   rewrite fetch_failure_restrict in H.
   unfold fetch_failure in H |- *.
+  destruct (vdso_text_at segs (ms_pc msF)); [discriminate|].
   destruct (negb (bv_unsigned (ms_pc msF) `mod` 2 =? 0)%Z); [discriminate|].
   match type of H with (match (if ?c then _ else _) with _ => _ end = _) =>
     destruct c; discriminate end.
@@ -862,6 +864,11 @@ Proof. intros [fd [maps lazy mat] io fs proc lim tm] m' ->. reflexivity. Qed.
 
 Lemma same_but_materialized_vmmaps : forall m m',
   same_but_materialized m m' -> m_vmmaps m' = m_vmmaps m.
+Proof. intros [fd [maps lazy mat] io fs proc lim tm] m' ->. reflexivity. Qed.
+
+(* 08b1429: materialization leaves the process state, so the channel reader *)
+Lemma same_but_materialized_reader : forall m m',
+  same_but_materialized m m' -> m_channel_reader m' = m_channel_reader m.
 Proof. intros [fd [maps lazy mat] io fs proc lim tm] m' ->. reflexivity. Qed.
 
 Lemma same_but_materialized_lazy : forall m m',

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the kernel ledger invariant covers the vDSO pair of reservations, with lemmas for its initial state and that mappings miss the pair. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Specs Run.
@@ -175,8 +176,17 @@ Record KL (L : mled) (pbrk : Z) (mo : Model) : Prop := mkKL {
   kl_minv : minv mo;
   kl_halt : m_halted mo = None;
   kl_wf : vmwf (vm_maps (m_vmmaps mo));
-  kl_resv : ld_resv L = map wwZ (vm_reserved (m_vmmaps mo));
-  kl_resv_top : forall e, In e (vm_reserved (m_vmmaps mo)) -> ehi e <= bv_unsigned (vm_start_brk (m_vmmaps mo));
+  (* LPS 08b1429: the ledger is the image's reservations [R0] (what the heap's
+     ghost [ld_resv] knows, below [start_brk]) followed by the vDSO pair [rx]
+     ([State.init_reserved]): at most two entries and 20 pages, at or above
+     [start_brk + 4 pages]. See recipes/artm-vdso-ledger.md, rauxv-layout.md. *)
+  kl_resv : exists R0 rx, vm_reserved (m_vmmaps mo) = R0 ++ rx /\ ld_resv L = map wwZ R0
+      /\ (forall e, In e R0 -> ehi e <= bv_unsigned (vm_start_brk (m_vmmaps mo)))
+      /\ (forall e, In e rx -> bv_unsigned (vm_start_brk (m_vmmaps mo)) + 4 * PGSZ <= elo e)
+      /\ (length rx <= 2)%nat /\ live_bytes rx <= 0x14000;
+  kl_resv_top : forall e, In e (vm_reserved (m_vmmaps mo)) ->
+      ehi e <= bv_unsigned (vm_start_brk (m_vmmaps mo))
+      \/ bv_unsigned (vm_start_brk (m_vmmaps mo)) + 4 * PGSZ <= elo e;
   kl_start : 0 < bv_unsigned (vm_start_brk (m_vmmaps mo))
       /\ bv_unsigned (vm_start_brk (m_vmmaps mo)) mod PGSZ = 0
       /\ bv_unsigned (vm_start_brk (m_vmmaps mo)) <= bv_unsigned (vm_brk (m_vmmaps mo))
@@ -208,7 +218,22 @@ Record KL (L : mled) (pbrk : Z) (mo : Model) : Prop := mkKL {
       | BPDead => True
       end;
 
-  kl_top : alloc_top (m_vmmaps mo) = alloc_ceiling }.
+  kl_top : alloc_top (m_vmmaps mo) = alloc_ceiling;
+  (* LPS 08b1429: every mapping is free of the reserved ledger (placement grants only
+     [region_free (vm_reserved ++ vm_maps)] ranges), and the vDSO pair [check_mprotect]
+     tests is part of that ledger. Together: a range inside a mapping misses the pair. *)
+  kl_mres : forall e, In e (vm_maps (m_vmmaps mo)) -> region_free (vm_reserved (m_vmmaps mo)) (fst e) (snd e) = true;
+  kl_vin : incl (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo))) (vm_reserved (m_vmmaps mo)) }.
+
+Lemma KL_vin_init : forall reserved brk0 mbase sp lim inp,
+  incl (vdso_reserved (m_kernel (init_model reserved brk0 mbase sp lim inp))
+                      (vdso_top (m_vmmaps (init_model reserved brk0 mbase sp lim inp))))
+       (vm_reserved (m_vmmaps (init_model reserved brk0 mbase sp lim inp))).
+Proof.
+  intros. rewrite vm_reserved_init_model.
+  assert (EK : m_kernel (init_model reserved brk0 mbase sp lim inp) = in_kernel inp) by reflexivity.
+  rewrite EK. intros x Hx. apply in_or_app. right. exact Hx.
+Qed.
 
 Definition frame_ok (G : PState -> Model -> Prop) : Prop :=
   forall s s' mo mo', ps_fa s' = ps_fa s -> ps_so s' = ps_so s -> vm_only mo mo' -> G s mo -> G s' mo'.
@@ -217,5 +242,57 @@ Definition ev_step_post (L : mled) (e : ev) (G : PState -> Model -> Prop) (s0 : 
   : Z -> PState -> Model -> Prop :=
   fun z s mo => answer_ok L e z = true /\ KL (event_post L e z) (ps_brk s) mo /\ G s mo
                 /\ ps_m s = ps_m s0 /\ ps_fa s = ps_fa s0 /\ ps_so s = ps_so s0.
+
+Lemma reserved_top_ge_kl : forall l e, In e l -> ehi e <= reserved_top l.
+Proof.
+  induction l as [|[a sz] l IH]; intros e Hin; [destruct Hin|].
+  cbn [reserved_top]. destruct Hin as [<-|Hin]; unfold ehi; cbn [fst snd]; [lia|]. specialize (IH e Hin). unfold ehi in IH. lia.
+Qed.
+
+Lemma vdso_reserved_size : forall kb top,
+  (length (vdso_reserved kb top) <= 2)%nat /\ live_bytes (vdso_reserved kb top) <= 0x14000.
+Proof.
+  intros kb top. pose proof (vdso_text_pages_pos kb). pose proof (vdso_text_pages_le kb).
+  unfold vdso_reserved. cbv zeta.
+  match goal with |- context [if ?c then _ else _] => destruct c end; cbn [length live_bytes]; [lia|].
+  rewrite !bv_unsigned_Z_to_bv_u64 by (unfold two_pow_64, vdso_vvar_pages, page_size in *; lia).
+  unfold vdso_vvar_pages, page_size. lia.
+Qed.
+
+(* The ledger [init_model] starts from: the image's reservations, then the vDSO
+   pair under [min mbase (sp - stack_max_size)], far above any brk start. *)
+Lemma KL_resv_init : forall segs brk0 mbase sp lim inp,
+  valid_brk segs brk0 -> reserved_top (segments_reserved segs) + brk_aslr_max <= 2 ^ 33 ->
+  mmap_base_min <= bv_unsigned mbase -> bv_unsigned sp - stack_max_size = alloc_ceiling ->
+  let h := m_vmmaps (init_model (segments_reserved segs) brk0 mbase sp lim inp) in
+  (exists R0 rx, vm_reserved h = R0 ++ rx /\ map wwZ (segments_reserved segs) = map wwZ R0
+      /\ (forall e, In e R0 -> ehi e <= bv_unsigned (vm_start_brk h))
+      /\ (forall e, In e rx -> bv_unsigned (vm_start_brk h) + 4 * PGSZ <= elo e)
+      /\ (length rx <= 2)%nat /\ live_bytes rx <= 0x14000)
+  /\ (forall e, In e (vm_reserved h) ->
+        ehi e <= bv_unsigned (vm_start_brk h) \/ bv_unsigned (vm_start_brk h) + 4 * PGSZ <= elo e).
+Proof.
+  intros segs brk0 mbase sp lim inp (Hlo & Hhi & Hal) Hlow Hmb Htop h.
+  set (T := page_round_down_Z (Z.min (bv_unsigned mbase) (bv_unsigned sp - stack_max_size))).
+  assert (ER : vm_reserved h = segments_reserved segs ++ vdso_reserved (in_kernel inp) T)
+    by (subst h T; rewrite m_vmmaps_init_model; reflexivity).
+  assert (ESB : vm_start_brk h = brk0) by (subst h; rewrite m_vmmaps_init_model; reflexivity).
+  pose proof alloc_ceiling_ge as HCg. pose proof alloc_ceiling_le as HCl.
+  pose proof (vdso_len_bounds (in_kernel inp)) as VL.
+  pose proof (bv_unsigned_in_range 64 mbase) as RM. unfold bv_modulus in RM. cbn in RM.
+  assert (HT : Z.min (bv_unsigned mbase) (bv_unsigned sp - stack_max_size) - 4096 < T
+               <= Z.min (bv_unsigned mbase) (bv_unsigned sp - stack_max_size)).
+  { subst T. unfold page_round_down_Z, page_size. Z.div_mod_to_equations. lia. }
+  assert (HX : forall e, In e (vdso_reserved (in_kernel inp) T) -> bv_unsigned brk0 + 4 * PGSZ <= elo e).
+  { intros [a n] Hin. destruct (vdso_reserved_above (in_kernel inp) T a n ltac:(unfold two_pow_64; lia) Hin) as [A1 _].
+    unfold elo. cbn [fst]. unfold mmap_base_min, PGSZ, page_size, stack_max_size in *. lia. }
+  assert (HR : forall e, In e (segments_reserved segs) -> ehi e <= bv_unsigned brk0)
+    by (intros e He; pose proof (reserved_top_ge_kl _ _ He); lia).
+  destruct (vdso_reserved_size (in_kernel inp) T) as [LN LB].
+  rewrite ER, ESB. split.
+  - exists (segments_reserved segs), (vdso_reserved (in_kernel inp) T).
+    split; [reflexivity|]. split; [reflexivity|]. split; [exact HR|]. split; [exact HX|]. split; assumption.
+  - intros e He. apply in_app_or in He as [He|He]; [left; exact (HR e He)| right; exact (HX e He)].
+Qed.
 
 End WithCeiling.

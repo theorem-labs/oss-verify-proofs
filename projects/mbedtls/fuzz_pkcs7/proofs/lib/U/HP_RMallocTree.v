@@ -1,10 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (rauxv_list and rauxv_ok restated over the launch's own auxv vector (StackLayout.auxv_entries: 27 pairs, or 29 under CONFIG_RSEQ), with its length lemmas; rauxv_ok_weaken and rauxv_ok_frame destructure the new witnesses). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.LinuxProcessSem Require StackLayout.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require Import Tac Image ZBridge SysStep  ITree Nodes Decode Arr.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Heap Require Import SFModel.
@@ -280,25 +282,46 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-Definition rauxv_list (x3 x4 x5 hw x6 x11 x12 x23 rnd : Z) : list word :=
-  map wz [3; x3; 4; x4; 5; x5; 16; hw; 6; x6; 11; x11; 12; x12; 23; x23; 25; rnd; 0; 0].
+(* LPS 727298f3: the auxv is the launch's own vector, [StackLayout.auxv_entries] as type/value words:
+   24 fixed-key pairs, AT_RANDOM (25), AT_EXECFN (31), the two AT_RSEQ_* pairs only under
+   CONFIG_RSEQ, then AT_NULL.  Every key and value is the launch's; none is recorded here. *)
+Definition rauxv_list (la : StackLayout.LaunchAuxv) (ph : PhdrInfo) (ent uid gid hw rnd xfn : word) : list word :=
+  flat_map (fun e => [fst e; snd e]) (StackLayout.auxv_entries la ph ent uid gid hw rnd xfn).
 
-Definition rauxv_ok (m : mem) (B : Z) : Prop := ltac2:(CDefT.buildp (gd_tbl_HP_RMallocTree ()) "(0.$1.Lav,$1.(0.$1.Lx3,$1.(0.$1.Lx4,$1.(0.$1.Lx5,$1.(0.$1.Lhw,$1.(0.$1.Lx6,$1.(0.$1.Lx11,$1.(0.$1.Lx12,$1.(0.$1.Lx23,$1.(0.$1.Lrnd,$1.(2.(3.$4.O2.$5.(6.$7.(8.(9.R:.))(:.$7.)))(2.(;.$4.O2.R:.(<.(=.R9.R8.R7.R6.R5.R4.R3.R2.R1.)))(2.(;.$4.O2.(>.R1.+8.)(?.(9.(10.VhRP,))))(2.(11.(12.VhRP,)O1.)(2.(11.O1.R:.)(2.(11.(>.R:.+:0.)(13.+2.+40.))(2.(11.O1.(>.R1.+8.))(2.(11.(>.R1.+10.)(13.+2.+40.))(2.(2.(11.=R9.)(14.R9.(13.+2.+40.)))(2.(2.(11.=R8.)(14.R8.(13.+2.+40.)))(2.(2.(11.=R7.)(14.R7.(13.+2.+40.)))(2.(2.(11.=R6.)(14.R6.(13.+2.+40.)))(2.(2.(11.=R5.)(14.R5.(13.+2.+40.)))(2.(2.(11.=R4.)(14.R4.(13.+2.+40.)))(2.(2.(11.=R3.)(14.R3.(13.+2.+40.)))(2.(2.(11.=R2.)(14.R2.(13.+2.+40.)))(2.(11.=R1.)(14.R1.(13.+2.+40.)))))))))))))))))))))))))))))")
-(* [comment removed for export] *).
+#[using="Type"] Lemma length_rauxv_list : forall la ph ent uid gid hw rnd xfn,
+  length (rauxv_list la ph ent uid gid hw rnd xfn) = (2 * StackLayout.auxv_count (StackLayout.la_rseq la))%nat.
+Proof. intros [ehdr c msz [|]] ph ent uid gid hw rnd xfn; reflexivity. Qed.
+
+#[using="Type"] Lemma length_rauxv_list_le : forall la ph ent uid gid hw rnd xfn,
+  (length (rauxv_list la ph ent uid gid hw rnd xfn) <= 58)%nat.
+Proof.
+  intros. rewrite length_rauxv_list. unfold StackLayout.auxv_count. destruct (StackLayout.la_rseq la); lia.
+Qed.
+
+Definition rauxv_ok (m : mem) (B : Z) : Prop :=
+  exists (av : Z) (la : StackLayout.LaunchAuxv) (ph : PhdrInfo) (ent uid gid hw xfn : word) (rnd : Z),
+    OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Step.rw_cells rsegs m RAUXV_CELL
+      [OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Cells.C8 (wz av)]
+    /\ OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Mem.bytes_at rsegs m av
+         (OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Arr.u64s (rauxv_list la ph ent uid gid hw (wz rnd) xfn))
+    /\ OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Mem.bytes_at rsegs m (rnd + 8)
+         (OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib.Mem.le8 (wz rp_secret))
+    /\ rceil <= B /\ B <= av /\ av + 464 <= 2 ^ 64 /\ B <= rnd + 8 /\ rnd + 16 <= 2 ^ 64
+    /\ 0 <= rnd < 2 ^ 64.
 
 #[using="Type"] Lemma rauxv_ok_weaken : forall m B B', rauxv_ok m B -> rceil <= B' <= B -> rauxv_ok m B'.
 Proof.
-  (intros m B B' dd_H; ddestruct dd_H as (av & x3 & x4 & x5 & hw & x6 & x11 & x12 & x23 & rnd & H); intros HB).
-  dexists av, x3, x4, x5, hw, x6, x11, x12, x23, rnd. repeat (split; [tauto|]). lia.
+  (intros m B B' dd_H; ddestruct dd_H as (av & la & ph & ent & uid & gid & hw & xfn & rnd & H); intros HB).
+  dexists av, la, ph, ent, uid, gid, hw, xfn, rnd. repeat (split; [tauto|]). lia.
 Qed.
 
 #[using="Type"] Lemma rauxv_ok_frame : ltac2:(CDefT.buildp (gd_tbl_HP_RMallocTree ()) "Pm,$15.Pm',P,(16.&40.)(17.(16.&8.))PB,$1.PW,(18.$19.)P,(1:.R4.R2.)P,(1;.R2.R5.R4.)P,(1<.$4.R6.R5.)P,(1=.(1>.$1.$1.)Liv,(1>.$1.$1.)(2.(11.(1?.$1.$1.R1.)R6.)(20.(11.(1?.$1.$1.R1.)$5.)(11.(>.$5.+8.)(21.$1.$1.R1.))))R4.)(1:.R7.R6.)")
 (* [comment removed for export] *).
 Proof.
-  (intros m m' B W dd_H; ddestruct dd_H as (av & x3 & x4 & x5 & hw & x6 & x11 & x12 & x23 & rnd & C & A1 & A2 & H); intros MU WM FW).
-  dexists av, x3, x4, x5, hw, x6, x11, x12, x23, rnd. split; [|split; [|split; [|exact H]]].
+  (intros m m' B W dd_H; ddestruct dd_H as (av & la & ph & ent & uid & gid & hw & xfn & rnd & C & A1 & A2 & H); intros MU WM FW).
+  dexists av, la, ph, ent, uid, gid, hw, xfn, rnd. split; [|split; [|split; [|exact H]]].
   - eapply rw_cells_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [_ ?]. lia.
-  - eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [? _]. lia.
+  - eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn [fst snd]. intros lo hi [? _]. lia.
   - eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [? _]. lia.
 Qed.
 

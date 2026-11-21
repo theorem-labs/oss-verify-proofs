@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the link of fuzz_identity's ASan (image A) entry function to the A closer. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* The A closer is fuzz_grant's lib/A/AGrantT.v relocated to identity. Where AGrantT.v:40 assumes LIBX_ALL, it has the lemma
      ident_lib_all : forall rc, @tfib_lib_contract_x_all rc identity_shape IdentB ameter_triv XL0 XL0 RLO RHI
    with RLO, RHI = 0x9ada0, 0x9d0a8 (pa_relro_lo / pa_relro_hi of PI_ident). This file proves it from the walk's
@@ -289,7 +290,7 @@ exact (@reac_box_name_walk.pb_reac_box_name fx rc SKA PI IdentB G RO_ok TL LAWS 
 AMEMSET AMEMCPY ABCMP ASTRLEN ASSF5 GM IV PSIG HSB_ok).
 Qed.
 
-(* ---- the entry contract's image facts (LLVMFuzzerTestOneInput.llvmf_img, LLVMFuzzerTestOneInput.v:246-305) --- *)
+(* ---- the entry contract's image facts (LLVMFuzzerTestOneInput.llvmf_img, LLVMFuzzerTestOneInput.v:247-306) --- *)
 (* Every byte llvmf_img reads is read-only data of fuzz_identity.asan: .rodata (segment 0x10000, r--) or
    .data.rel.ro inside [pa_relro_lo, pa_relro_hi). arodata_okP gives such a byte as seg_rom when it is not the
    runtime's own and not errno, and each seg_rom byte is then decided by vm_compute of a closed checker over
@@ -607,7 +608,7 @@ split; [reflexivity|]. exact (himg_str W mem _ _ HR img_nmout_b).
 Qed.
 Lemma img_cat_al : VAL (A_OBJ 27) mod 8 = 0.
 Proof. change (VAL (A_OBJ 27)) with 0x9b240. reflexivity. Qed.
-(* The catalogue-row clause (LLVMFuzzerTestOneInput.v:296-305), at the given state; the row's four values are
+(* The catalogue-row clause (LLVMFuzzerTestOneInput.v:297-306), at the given state; the row's four values are
    read from the image bytes (himg_cat_P/I/O/S). *)
 Lemma img_cat : forall (W : world SEGS) mem, himg_ro W mem ->
 forall r, 0 <= r < reac_box_catalogue.BOX_COUNT ->

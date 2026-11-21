@@ -1,13 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/A/APgLib.v at origin/ossv/recipes 6ebe35ba632
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/A/APgLib.v
    (lines 132-146 ajournal_fp_nil and 156-159 ajournal_nil_io, from cgif ACfh.v; lines 207-239, the leaf of
    knock_lib_x_body: the contract's post from the walk's return state) for reac-pw/fuzz_role image A: the walk is
    role's chain of five segments over the harness-level cuts of lib/A/RPgHarn.v, with lib/A/RPgCSpec.v's two
    middle contracts in the middle and the malloc(pod) step between them; the leaf is unchanged but for the
    exists-fx' form of RPgCSpec.rl_lib_contract_x. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgTop.v at 3c7e900fc63 for reac-pw/fuzz_headamp
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgTop.v for reac-pw/fuzz_headamp
    image A: module paths changed, rh_ renamed to hq_; role's five segments become headamp's eleven (E01, the five
    middle contracts of lib/A/HPgCSpec.v, the three malloc steps, X01's two parts) over the cuts of lib/A/HPgE01D.v,
    lib/A/HPgSegC23.v, lib/A/HPgM24Out.v and lib/A/HPgSegM.v; the class-4 frame (1024 bytes, flag word F + 0x3f8),
@@ -16,6 +16,7 @@
    float state carried as each contract states it (M03 and M04b change it; M04a, M04b, X01 run at the state the
    segment before returns at); the parse's answer fixed in the run's quantities at C2; the leaf at the
    exists-fx' post of HPgSegM.hq_ret. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image A (fuzz_headamp.asan, pinned sha256
    f3e0669d2819724922df0556b11c2dcd22d1e16fe7e0fe1535ce784b34436c47; addresses measured on the unstripped twin
    b5f352154c54a97c66fd92dfa228e8a854498f6cd313dba0107900546b043f9a): THE WHOLE RUN of LLVMFuzzerTestOneInput

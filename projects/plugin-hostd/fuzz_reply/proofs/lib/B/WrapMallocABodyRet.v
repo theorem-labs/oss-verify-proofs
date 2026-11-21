@@ -1,6 +1,7 @@
-(* CARRIED BY PATH from commit 9e87119fcf60, proofs/omx-clap-core/fuzz_preset/lib/A/WrapMallocABodyRet.v, sha256 79eafeaf0ec7; internal record; image numerals relocated to fuzz_reply image A by alreloc frozen-a5c53bb2bed4ad03; one added module, AB1wMalloc, for 4 preset-AB1w symbols. *)
+(* CARRIED BY PATH from proofs/omx-clap-core/fuzz_preset/lib/A/WrapMallocABodyRet.v, sha256 79eafeaf0ec7; internal record; image numerals relocated to fuzz_reply image A by alreloc frozen-a5c53bb2bed4ad03; one added module, AB1wMalloc, for 4 preset-AB1w symbols. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30: the malloc interceptor BODY's return field (omx-clap-core/fuzz_preset image A, asan, pin
    1be0f53d96cb): Allocate's return -> the body's return (raZ regs: the body is entered by a call, and the wrapper's
    `j` leaves ra unchanged, so this is also the wrapper's return). It is lib/A/WrapMallocARetG.v's wm_ret_gen (Section b,

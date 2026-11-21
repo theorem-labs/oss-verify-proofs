@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (rzc_node and its derived rules take the new sys_rob premise, from RomBase; shape_strong_equiv_ef_cfg is over the run's segment list `run_segments`; the step inversion covers the three new vDSO steps). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -9,6 +10,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude.
 From OSSVerify.Proofs.openssl.bndiv.lib.VCommon Require Import CatSim ShapeAlg.
+From OSSVerify.Proofs.openssl.bndiv.lib.VCommon.Cfg Require RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 Import ListNotations.
@@ -73,6 +75,9 @@ Inductive realizes_cfg : config -> TSet -> Prop :=
 | rzc_node : forall c (I : Type) (evs : I -> list event) (nx : I -> config)
                     (T : I -> TSet) (i0 : I),
     node_ok_cfg c I evs nx ->
+    (* LPS 08b1429: the node's system call reads no byte the run's backing adds
+       ([RomBase.sys_rob]; [RomStable.run_init] lifts a walk to the run's segment list) *)
+    RomBase.sys_rob segs c ->
     (forall i, realizes_cfg (nx i) (T i)) ->
     realizes_cfg c (t_alt (fun i => t_emit (evs i) (T i)))
 | rzc_halt : forall c,
@@ -88,7 +93,7 @@ Inductive realizes_cfg : config -> TSet -> Prop :=
 
 Lemma realizes_cfg_nonempty : forall c T, realizes_cfg c T -> T [].
 Proof.
-  intros c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c S0 HS Hinv | c T T' H IH Heq].
+  intros c T H; induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c S0 HS Hinv | c T T' H IH Heq].
   - exists i0. left. apply is_prefix_nil.
   - reflexivity.
   - reflexivity.
@@ -98,7 +103,7 @@ Qed.
 Lemma realizes_cfg_pclosed : forall c T, realizes_cfg c T ->
   forall tr tr', T tr -> is_prefix tr' tr -> T tr'.
 Proof.
-  intros c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c S0 HS Hinv | c T T' H IH Heq];
+  intros c T H; induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c S0 HS Hinv | c T T' H IH Heq];
     intros tr tr' HT Hp.
   - destruct HT as [i [Hpre | (tr0 & -> & HT0)]]; exists i.
     + left. eapply is_prefix_trans; eauto.
@@ -113,7 +118,7 @@ Qed.
 Lemma realizes_cfg_star_only : forall c T, realizes_cfg c T ->
   forall tr c', star_cfg segs cfg c tr c' -> T tr.
 Proof.
-  intros c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c S0 HS Hinv | c T T' H IH Heq];
+  intros c T H; induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c S0 HS Hinv | c T T' H IH Heq];
     intros tr c' Hstar.
   - inversion Hstar as [|c1 e c2 tr2 c3 Hss Hstar2]; subst.
     + exists i0. left. apply is_prefix_nil.
@@ -129,7 +134,7 @@ Qed.
 Lemma realizes_cfg_admits : forall c T, realizes_cfg c T ->
   forall tr, T tr -> obs_trace_cfg segs cfg c tr.
 Proof.
-  intros c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c S0 HS Hinv | c T T' H IH Heq];
+  intros c T H; induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c S0 HS Hinv | c T T' H IH Heq];
     intros tr HT.
   - destruct Hnode as [Hcomp _].
     destruct HT as [i [Hpre | (tr0 & -> & HT0)]].
@@ -156,7 +161,7 @@ Lemma realizes_cfg_step : forall c T e c',
   realizes_cfg c T -> sstep_cfg segs cfg c e (SNext c') -> exists T', realizes_cfg c' T'.
 Proof.
   intros c T e c' H; revert e c';
-  induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c S0 HS Hinv | c T T' H IH Heq];
+  induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c S0 HS Hinv | c T T' H IH Heq];
     intros e c' Hss.
   - destruct Hnode as [_ Hsound].
     destruct (Hsound e (SNext c') Hss) as (i & _ & Heq2).
@@ -171,7 +176,7 @@ Lemma realizes_cfg_no_sserror : forall c T e,
   realizes_cfg c T -> ~ sstep_cfg segs cfg c e SError.
 Proof.
   intros c T e H; revert e;
-  induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c S0 HS Hinv | c T T' H IH Heq];
+  induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c S0 HS Hinv | c T T' H IH Heq];
     intros e Hss.
   - destruct Hnode as [_ Hsound].
     destruct (Hsound e SError Hss) as (i & _ & Hbad). discriminate.
@@ -201,12 +206,13 @@ Qed.
 
 Lemma rzc_silent1 : forall c c' T,
   node_ok_cfg c unit (fun _ => []) (fun _ => c') ->
+  RomBase.sys_rob segs c ->
   realizes_cfg c' T ->
   realizes_cfg c T.
 Proof.
-  intros c c' T Hnode Hc.
+  intros c c' T Hnode Hrob Hc.
   apply (rzc_conseq c (t_alt (fun _ : unit => t_emit [] T))).
-  - apply (rzc_node c unit (fun _ => []) (fun _ => c') (fun _ => T) tt Hnode).
+  - apply (rzc_node c unit (fun _ => []) (fun _ => c') (fun _ => T) tt Hnode Hrob).
     intros []; exact Hc.
   - eapply t_eq_trans;
       [ apply (t_alt_unit (fun _ : unit => t_emit [] T))
@@ -215,12 +221,13 @@ Qed.
 
 Lemma rzc_emit1 : forall c c' e T,
   node_ok_cfg c unit (fun _ => e) (fun _ => c') ->
+  RomBase.sys_rob segs c ->
   realizes_cfg c' T ->
   realizes_cfg c (t_emit e T).
 Proof.
-  intros c c' e T Hnode Hc.
+  intros c c' e T Hnode Hrob Hc.
   apply (rzc_conseq c (t_alt (fun _ : unit => t_emit e T))).
-  - apply (rzc_node c unit (fun _ => e) (fun _ => c') (fun _ => T) tt Hnode).
+  - apply (rzc_node c unit (fun _ => e) (fun _ => c') (fun _ => T) tt Hnode Hrob).
     intros []; exact Hc.
   - apply t_alt_unit.
 Qed.
@@ -228,13 +235,14 @@ Qed.
 (* [comment removed for export] *)
 Lemma rzc_silent_all : forall c (I : Type) (nx : I -> config) (T : TSet) (i0 : I),
   node_ok_cfg c I (fun _ => []) nx ->
+  RomBase.sys_rob segs c ->
   (forall i, realizes_cfg (nx i) T) ->
   realizes_cfg c T.
 Proof.
-  intros c I nx T i0 Hnode Hc.
+  intros c I nx T i0 Hnode Hrob Hc.
   assert (HT0 : T []) by (eapply realizes_cfg_nonempty; apply (Hc i0)).
   apply (rzc_conseq c (t_alt (fun _ : I => t_emit [] T))).
-  - apply (rzc_node c I (fun _ => []) nx (fun _ => T) i0 Hnode). exact Hc.
+  - apply (rzc_node c I (fun _ => []) nx (fun _ => T) i0 Hnode Hrob). exact Hc.
   - intro tr. split.
     + intros [i Hi]. exact (proj1 (t_emit_nil_eq T HT0 tr) Hi).
     + intro Htr. exists i0. exact (proj2 (t_emit_nil_eq T HT0 tr) Htr).
@@ -244,18 +252,19 @@ Qed.
 Lemma rzc_alt2 : forall c (IA IB : Type) (nx : IA + IB -> config) (A B : TSet)
                         (a0 : IA) (b0 : IB),
   node_ok_cfg c (IA + IB) (fun _ => []) nx ->
+  RomBase.sys_rob segs c ->
   (forall i, realizes_cfg (nx (inl i)) A) ->
   (forall i, realizes_cfg (nx (inr i)) B) ->
   realizes_cfg c (t_alt2 A B).
 Proof.
-  intros c IA IB nx A B a0 b0 Hnode HA HB.
+  intros c IA IB nx A B a0 b0 Hnode Hrob HA HB.
   assert (HA0 : A []) by (eapply realizes_cfg_nonempty; apply (HA a0)).
   assert (HB0 : B []) by (eapply realizes_cfg_nonempty; apply (HB b0)).
   apply (rzc_conseq c
     (t_alt (fun i : IA + IB =>
               t_emit [] (match i with inl _ => A | inr _ => B end)))).
   - apply (rzc_node c (IA + IB) (fun _ => []) nx
-             (fun i => match i with inl _ => A | inr _ => B end) (inl a0) Hnode).
+             (fun i => match i with inl _ => A | inr _ => B end) (inl a0) Hnode Hrob).
     intros [i|i]; [apply HA | apply HB].
   - intro tr. unfold t_alt2. split.
     + intros [[i|i] Hi];
@@ -269,15 +278,16 @@ Qed.
 (* [comment removed for export] *)
 Lemma rzc_silent_mix : forall c (I : Type) (nx : I -> config) (good : I -> bool) (T : TSet) (i0 : I),
   node_ok_cfg c I (fun _ => []) nx ->
+  RomBase.sys_rob segs c ->
   good i0 = true ->
   (forall i, good i = true -> realizes_cfg (nx i) T) ->
   (forall i, good i = false -> realizes_cfg (nx i) t_nil) ->
   realizes_cfg c T.
 Proof.
-  intros c I nx good T i0 Hnode Hg0 HG HB.
+  intros c I nx good T i0 Hnode Hrob Hg0 HG HB.
   assert (HT0 : T []) by (eapply realizes_cfg_nonempty; apply (HG i0 Hg0)).
   apply (rzc_conseq c (t_alt (fun i : I => t_emit [] (if good i then T else t_nil)))).
-  - apply (rzc_node c I (fun _ => []) nx (fun i => if good i then T else t_nil) i0 Hnode).
+  - apply (rzc_node c I (fun _ => []) nx (fun i => if good i then T else t_nil) i0 Hnode Hrob).
     intro i. destruct (good i) eqn:E; [apply HG | apply HB]; exact E.
   - intro tr. split.
     + intros [i Hi]. destruct (good i).
@@ -303,15 +313,20 @@ End WithCfg.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
+(* LPS 08b1429: [run_scfg] reads each binary against its run's segment list ([run_segments]),
+   so the two walks are over those lists; [RomStable.run_init] lifts a walk over the binary's
+   own segments to one. *)
 Theorem shape_strong_equiv_ef_cfg :
   forall (cfg : SpuriousCfg) (segs1 : list Segment) (pc1 : N) (ph1 : PhdrInfo)
          (segs2 : list Segment) (pc2 : N) (ph2 : PhdrInfo)
          (en1 en2 : ExecEntry) (inp : ProcInput) (T : TSet),
-  realizes_cfg segs1 cfg
-    (init_config segs1 pc1 ph1 (en_sp en1) (en_brk en1) (en_mmap_base en1) (en_draw en1)
+  realizes_cfg (run_segments segs1 inp (en_sp en1) (en_mmap_base en1)) cfg
+    (init_config (run_segments segs1 inp (en_sp en1) (en_mmap_base en1)) pc1 ph1
+                 (en_sp en1) (en_brk en1) (en_mmap_base en1) (en_draw en1)
                  source_alloc_limit inp) T ->
-  realizes_cfg segs2 cfg
-    (init_config segs2 pc2 ph2 (en_sp en2) (en_brk en2) (en_mmap_base en2) (en_draw en2)
+  realizes_cfg (run_segments segs2 inp (en_sp en2) (en_mmap_base en2)) cfg
+    (init_config (run_segments segs2 inp (en_sp en2) (en_mmap_base en2)) pc2 ph2
+                 (en_sp en2) (en_brk en2) (en_mmap_base en2) (en_draw en2)
                  target_alloc_limit inp) T ->
   strong_equiv_error_free_scfg cfg (mkImage segs1 pc1 ph1) (mkImage segs2 pc2 ph2) en1 en2 inp.
 Proof.
@@ -342,6 +357,13 @@ Proof.
   - eapply sstep_cfg_instr; eassumption.
   - eapply sstep_cfg_instr_fault; eassumption.
   - eapply sstep_cfg_instr_unmodeled; eassumption.
+  (* LPS 08b1429: sstep gained three vDSO arms, and sstep_cfg has the matching
+     sstep_cfg_vdso_call, _vdso_materialization_fault and _vdso_unmodeled. They carry no
+     pending syscall, so the svc_pending discharge above does not reach them and the
+     inversion left them open ("Attempt to save an incomplete proof"). *)
+  - eapply sstep_cfg_vdso_call; eassumption.
+  - eapply sstep_cfg_vdso_materialization_fault; eassumption.
+  - eapply sstep_cfg_vdso_unmodeled; eassumption.
 Qed.
 
 Lemma transparent_family_on : forall ms model x8,
@@ -430,7 +452,7 @@ Lemma rzc_step : forall ms model ms' T,
   realizes_cfg segs cfg (mkCfg ms model) T.
 Proof.
   intros ms model ms' T Hh Hlazy Hsvc Hstep Hc.
-  eapply rzc_silent1; [apply node_instr_cfg; eassumption | exact Hc].
+  eapply rzc_silent1; [apply node_instr_cfg; eassumption | apply RomBase.sys_rob_instr; exact Hsvc | exact Hc].
 Qed.
 
 (* [comment removed for export] *)
@@ -453,11 +475,12 @@ Lemma rzc_node_transparent : forall c (I : Type) (evs : I -> list event) (nx : I
                                     (T : I -> TSet) (i0 : I),
   node_ok segs c I evs nx ->
   cfg_transparent c ->
+  RomBase.sys_rob segs c ->
   (forall i, realizes_cfg segs cfg (nx i) (T i)) ->
   realizes_cfg segs cfg c (t_alt (fun i => t_emit (evs i) (T i))).
 Proof.
-  intros c I evs nx T i0 Hn Ht Hc.
-  apply (rzc_node segs cfg c I evs nx T i0); [apply node_ok_cfg_of_transparent; assumption | exact Hc].
+  intros c I evs nx T i0 Hn Ht Hrob Hc.
+  apply (rzc_node segs cfg c I evs nx T i0); [apply node_ok_cfg_of_transparent; assumption | exact Hrob | exact Hc].
 Qed.
 
 End Transparent.

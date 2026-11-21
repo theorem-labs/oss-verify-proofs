@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: the SCAN and SCANS segments of the ASan walk of fuzz_reply's relay_remove
    (lib/A/W_relay_remove_cx.v: rr_scan_stmt, rr_scans_stmt): the scan loop 0x83f14 -> {0x83f48 | 0x83fc4}.
 
-   Where each part comes from (the retired lane form: commit 2ad36763b22, lib/A/Prog/relay_remove_*.v):
+   Where each part comes from (the retired lane form:, lib/A/Prog/relay_remove_*.v):
    - rrs_nth_le_bytes, rrs_garr8_le: copied from lib/A/W_gestures_end.v gse_nth_le_bytes / gse_garr8_le.
    - rrs_concat_split: the lane's rrA_concat_split (relay_remove_stg.v:172-180), verbatim.
    - rrs_eb_len, rrs_concat_len: the lane's rrA_entry_len (relay_remove_stg.v:182-186) and the length step of
@@ -23,6 +23,7 @@
    W_relay_remove_cx.v's generic block); the scan writes nothing and calls nothing, so RHELD (with its room budget and
    count fact) passes through unchanged.  The four helpers RIG cites (regs_ok_same, rrs_concat_len, rrs_concat_split,
    rrs_garr8_le) keep their statements. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

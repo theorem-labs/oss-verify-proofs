@@ -4,9 +4,10 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFfi.v, with its module paths changed and its addresses moved to libreac/fuzz_disco's ASan build. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_disco/lib/A/AFfi.v, with its module paths and module names changed; 392 of its 466 lines of code are new or changed and 398 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSRealloc_S4.v, with its addresses and numbers changed; 285 of its 405 lines of code are new or changed and 346 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_state image B: the thin realloc segment S3 (RGtop.seg_ret): Deallocate's return into Reallocate ->
    realloc's return (a0 = the new block q), through Reallocate's, asan_realloc's and the interceptor's epilogues.
-   The B twin of lib/A/FSRealloc_S3.v (a working branch e879876a45c, fs_seg_ret on image A).
+   The B twin of lib/A/FSRealloc_S3.v (a working branch, fs_seg_ret on image A).
 
    Rule 24 (a Theorem Labs lane L13-RtB.md): proves function __asan::Allocator::Reallocate chain on fs image B
    (fuzz_state.asan-ubsan sha256 5ac5ce0954f87e2d...: __wrap_realloc 0x530e8 -> __interceptor_realloc 0x534e4 ->
@@ -20,7 +21,7 @@
    a Theorem Labs lane's shared thin-segment statement (lib/Reusable/RGtop.v, seg_ret).
 
    PORTED FILES (named per the owner's gate):
-   - TEMPLATE (primary): fs's PROVED image-A segment lib/A/FSRealloc_S3.v (e879876a45c), the same proof text at B's
+   - TEMPLATE (primary): fs's PROVED image-A segment lib/A/FSRealloc_S3.v, the same proof text at B's
      addresses: fs's A and B bodies of Reallocate / asan_realloc / the interceptor are byte-identical modulo
      pc-relative fields, and the three epilogues this segment runs are byte-identical words (capstone diff below).
      Relocated: FS_RA_DEALLOC 0x32a28 -> 0x32a98, FS_RA_REALLOCATE 0x32918 -> 0x32988, FS_RA_ASAN_REALLOC 0x53620

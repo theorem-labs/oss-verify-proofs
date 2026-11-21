@@ -15,13 +15,13 @@ own composition files, which no port_core run writes, so they are not in the dif
 
 | input | path | state |
 | --- | --- | --- |
-| tool | `tools/pg-reloc/d9e0589898fd/` at the relocation tools branch `4cc81ff763b` | `port_core.py` sha256 `d9e0589898fd`; vendored files as `check_vendored()` requires |
-| donor text | `proofs/cgif/cgif_file_fuzzer/lib` of the relocation lane's branch (last change `9a7a69740fa6`, 10-27) | 2468 files, git blob for blob equal to `<the acceptance lane's workspace>/port/core/src/proofs/cgif/cgif_file_fuzzer/lib` |
+| tool | `tools/pg-reloc/d9e0589898fd/` at the relocation tools branch | `port_core.py` sha256 `d9e0589898fd`; vendored files as `check_vendored()` requires |
+| donor text | `proofs/cgif/cgif_file_fuzzer/lib` of the relocation lane's branch (last change, 10-27) | 2468 files, git blob for blob equal to `<the acceptance lane's workspace>/port/core/src/proofs/cgif/cgif_file_fuzzer/lib` |
 | donor image | `<the relocation lane's workspace>/bin/cgif/cgif_file_fuzzer/cgif_file_fuzzer.asan-ubsan` | sha256 `1c29845fe605` = `builds.asan-ubsan` of cgif's `harness.yaml` |
 | donor twin | `<redacted: see the internal record>bin/cgif-twins/cgif_file_fuzzer/cgif_file_fuzzer.asan-ubsan` | sha256 `ce511d541cda`; PT_LOAD table and allocated sections equal to the pin |
 | donor names | `<redacted: see the internal record><a recovery cache; see the internal record> (`--old-syms`) | sha256 `5dfc9244b543`, keyed by the donor image's own hash |
 | target lib | `proofs/libreac/fuzz_identity/lib` of the B-core tag (its 625-file list `B-core-files.txt`, sha256 `1d5c942ac07d`, is not preserved; the 147 files d9e0 kept ARE the shipped `lib/B` and `lib/ReusableB`) | no `ReusableB/`; d9e0 keeps 147 files from it, as the run of record did (run 18: "147 kept from the target") |
-| target image | `<redacted: see the internal record>bin/libreac/asan-ubsan/fuzz_identity` (the run of record's own `--target-elf` path) | sha256 `baf1a4d065e0` = `builds.asan-ubsan` of the unit's `harness.yaml` at `70952e1c8c9`; same bytes as `<redacted: see the internal record>bin/pau-libreac-v190/libreac/bin/fuzz_identity/fuzz_identity.asan-ubsan` |
+| target image | `<redacted: see the internal record>bin/libreac/asan-ubsan/fuzz_identity` (the run of record's own `--target-elf` path) | sha256 `baf1a4d065e0` = `builds.asan-ubsan` of the unit's `harness.yaml`; same bytes as `<redacted: see the internal record>bin/pau-libreac-v190/libreac/bin/fuzz_identity/fuzz_identity.asan-ubsan` |
 | target twin | `<redacted: see the internal record>bin/libreac/asan-ubsan/fuzz_identity.debug` (`--target-syms`); `<redacted: see the internal record>bin/libreac-v190/x/unstripped/fuzz_identity/fuzz_identity.asan-ubsan` (sweeps) | sha256 `43b44d50be8a` / `4eac57e0fceb`; both have the pin's section layout and the same 2200 FUNC/OBJECT symbols |
 | file list | `<the B-core lane's workspace>/bcore-rel3/B-core-files.txt` | sha256 `1d5c942ac07d`; 625 entries, the entry set of the tag's `core-files-Y.txt` |
 | overrides | `<the B-core lane's workspace>/bcore-rel4/overrides-B-full.tsv` | 64 rows, sha256 `34df46258062` = `overrides_sha256` of the run's `compose-B-rec.json` |
@@ -51,7 +51,7 @@ because d9e0's text around the hunk changed (07, 08, 06, 16). The other FAIL row
 
 ## The classified diff, against the SHIPPED tree
 
-Shipped = `lib/ReusableB/` at `70952e1c8c9`, the merge of PR #399. origin/ossv/recipes has not changed this unit since.
+Shipped = `lib/ReusableB/`, the merge of PR #399. origin/ossv/recipes has not changed this unit since.
 The comparison is sentence by sentence on comment-free code (`scripts/classify-defs.py`, `classify/classify-B.tsv`).
 
 | class | count | disposition |
@@ -75,7 +75,7 @@ The comparison is sentence by sentence on comment-free code (`scripts/classify-d
 
 | file | definition | shipped | d9e0 | what the image says | verdict |
 | --- | --- | --- | --- | --- | --- |
-| `ReusableB/YFem.v:128` | `TOT_range : 2 <= TOT <= N` | `127443` | `127008` | The bound is the unit's own count: TOT <= 31 + 1 + 31 * 4096 = 127008 (DEPOT_MAX at lib/Reusable/YG01.v:141). Its terms are `lo_tr0` ≤ 31 and `depot_frames_bound` ≤ 31·len, with `Definition DEPOT_MAX : Z := 4096.` The donor twin's line says 127008 already (cgif_file_fuzzer `lib/YFem.v:127` at `70952e1c8c9`). 127443 = `0x1f1d3` = the pin's `.rodata` string "CIE start does not match"+22, and 127008 = `0x1f020` is the same string+22 in the donor. The run of record moved a count as a string address. port_addr_check 3d2e: NON-ADDRESS-CHANGED. d9e0's row is how this was found, not the source of the value | **ACCEPTED** |
+| `ReusableB/YFem.v:128` | `TOT_range : 2 <= TOT <= N` | `127443` | `127008` | The bound is the unit's own count: TOT <= 31 + 1 + 31 * 4096 = 127008 (DEPOT_MAX at lib/Reusable/YG01.v:141). Its terms are `lo_tr0` ≤ 31 and `depot_frames_bound` ≤ 31·len, with `Definition DEPOT_MAX : Z := 4096.` The donor twin's line says 127008 already (cgif_file_fuzzer `lib/YFem.v:127`). 127443 = `0x1f1d3` = the pin's `.rodata` string "CIE start does not match"+22, and 127008 = `0x1f020` is the same string+22 in the donor. The run of record moved a count as a string address. port_addr_check 3d2e: NON-ADDRESS-CHANGED. d9e0's row is how this was found, not the source of the value | **ACCEPTED** |
 | `ReusableB/YFem.v:206` | `zone_facts` (`2 <= TOT <= N`) | `127443` | `127008` | the same bound, TOT <= 31 + 1 + 31 * 4096 = 127008 (the donor twin's `lib/YFem.v:205` says 127008) | **ACCEPTED** |
 | `ReusableB/YE34.v:20` | `musl_sel_ranges` | `(0x905f8,125); (0x907ec,258)` | `(0x905f8,383)` | the same words. Both start at `__stdio_write` and end at `__stdio_exit+0x1c`, as cgif's `(0x92f60,435)` does. The shipped list splits at `__lockfile`'s start | REJECTED |
 | `ReusableB/YE34.v:23` | `icpt_ranges` | `(0x421f4,24); (0x42254,1); (0x42258,11)` | `(0x421f4,36)` | the same words, to `___interceptor_strlen`'s start. The shipped list splits at the trampolines `0x42254` / `0x42258` | REJECTED |

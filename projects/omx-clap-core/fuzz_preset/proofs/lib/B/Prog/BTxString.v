@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumA.v, with its module paths and module names changed; 1213 of its 1267 lines of code are new or changed and 724 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* THE FREE / REALLOC MOVE (S3 phase D, a Theorem Labs lane; plan rows D-2 .. D-12, rule F12): every tx_put call crosses the
    grow's free, so the text concludes SRr' segs RZ_cf with the post's journal at WR := wle' SEGS RZ_cf. The entry
    segment A (ts_A_cps: the prologue and frame_alloc_0, no free) runs at wle as before and is lifted once at its top
@@ -22,13 +23,13 @@
    over PL_prog_B. Everything image-generic is the #102 glue lib/A/Prog/TxStr102Glue.v (owner h-rw-pre-5, lane
    TxStrBp) over BTxValueB's lib/A/Prog/Tx102Glue.v (the text state), instantiated here at PI_prog_B, the
    whole-program instance (PALib is satisfiable only there). BASE: the kit's cut
-   7cdbb61b5fa0 (merged forward); B' listing c97cc46b3e13 / PAImg_prog 15fab93fe702.
-   RE-WALK FOR #102 (donor cold/h-rw-pre-5-b-tx 043041dbb091, Qed against the old-pin texts with the fabortW arm):
+   (merged forward); B' listing c97cc46b3e13 / PAImg_prog 15fab93fe702.
+   RE-WALK FOR #102 (donor, Qed against the old-pin texts with the fabortW arm):
    prhtx_rec takes f, prh_ledger takes most / own, prhtx_fp is 28 bytes, and tx_put's post has THREE outcomes and no
    abort arm, so every call site continues on every outcome and the live state carries the buffer, failed, own and
-   the appended prefix; the instruction-level segments are the donor's, relocated (3e23de6bf8c9, audited AGREE).
-   THE BATCH KIT, NOW THE KIT'S CUT 7cdbb61b5fa0 (PRH_FnTx.v 88468bf162d8 at the cut; first fitted as a prep on a
-   working branch over the batch kit's cdde0ed15730); now in PRH_FnTx.v 7cf918708def the text drops DW (:414 / :671),
+   the appended prefix; the instruction-level segments are the donor's, relocated (audited AGREE).
+   THE BATCH KIT, NOW THE KIT'S CUT (PRH_FnTx.v 88468bf162d8 at the cut; first fitted as a prep on a
+   working branch over the batch kit); now in PRH_FnTx.v 7cf918708def the text drops DW (:414 / :671),
    takes the guarded room and consumer window (:677 / :682: Section-g HROOMW / HCONS, carried into the glue's
    ts_pre), states DEAD-TXSTRING (:706) and a BUDGETED post fpostWbmR at wle' segs RZ_cf (wbudget_if f0 [] k) under
    SRr' segs RZ_cf (:695-696). Every lemma name kept; the changes here: Section f CTX0 alone, TXPUT and HCL
@@ -89,11 +90,11 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.B Require Import Img0 Listin
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require Import PRH_Base PRH_FnTx CfParamsPreset.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require PRH_Reader.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A.Prog Require Import Tx102Glue TxStr102Glue.
-(* pa_slot_lt_ceil_b (fpre's raZ bound at a call), generic in the listing, by path from walk-S7B c50d0958c0b; it loads
+(* pa_slot_lt_ceil_b (fpre's raZ bound at a call), generic in the listing, by path from walk-S7B; it loads
    YF0v.v, which sets the zify division flag to false globally: the #[local] reset below follows it *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A.Prog Require PRW_StepKit.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.B.Prog Require Import S1ImgB.
-(* the loop body (sub-lane BTxStep, cold/h-rw-pre-5-b-txq 49a798cd1e08), Required qualified *)
+(* the loop body (sub-lane BTxStep), Required qualified *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.B.Prog Require BTxStep.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
@@ -113,10 +114,10 @@ Definition TS_LH_OFF_B : Z := 348.   (* 0x85a1c: the loop head (li a0, 6; sb a0,
 Definition TS_G_OFF_B : Z := 688.    (* 0x85b70: the closing quote's return *)
 Definition TS_X_OFF_B : Z := 668.    (* 0x85b5c: the closing quote's block *)
 Definition TS_SPAN_B : Z * Z := (SHADOW_OFF, SHADOW_OFF + 2 ^ 44 - 1).
-(* (* DELETE when S10TxStrGlue carries it *) B-local copy of S10TxString.v's ts_list_cases (walk-S10 21e90e1b0e3 :66) *)
+(* (* DELETE when S10TxStrGlue carries it *) B-local copy of S10TxString.v's ts_list_cases (walk-S10 :66) *)
 Lemma ts_list_cases_B : forall (l : list Z), l = [] \/ exists x l', l = x :: l'.
 Proof. intros [|x l]; [left; reflexivity | right; exists x, l; reflexivity]. Qed.
-(* B-local copy of S10TxString.v's tskeep (walk-S10 18165859e13 :69; DELETE when S10TxStrGlue carries it): a register a
+(* B-local copy of S10TxString.v's tskeep (walk-S10 :69; DELETE when S10TxStrGlue carries it): a register a
    run did not write keeps the segment's start value (the run's env may extend the segment's TE by fresh atoms) *)
 Ltac tskeep_B HS := lazymatch goal with |- getr _ ?rr = _ =>
   let H := fresh in prreg HS rr H; rewrite H; repeat rewrite ew_ewset_other by lia; te_close end.
@@ -194,7 +195,7 @@ Hypothesis pal_uar_img : @cf_img_lo ci <= as_uar_cell B /\ as_uar_cell B + 4 <= 
    BTxStrWitB.v tsw_cf_img_ok_B / tsw_img_cf_box_B) *)
 Hypothesis cf_img_ok : 0 <= @cf_img_lo ci /\ @cf_img_top ci <= 2 ^ 31.
 Hypothesis img_cf_box : @cf_img_lo ci <= @pa_lo _ B_prog_listing PA /\ @pa_hi _ B_prog_listing PA <= @cf_img_top ci.
-(* SRC-CEIL RETIRED (on the cut 7cdbb61b5fa0, the internal file MIGRATION.md, section 4): the stand-in hypothesis is DELETED. The cut's
+(* SRC-CEIL RETIRED (on the cut, the internal file MIGRATION.md, section 4): the stand-in hypothesis is DELETED. The cut's
    src_rd states `p + len <= alloc_ceiling` (no `+ 8`), and TxStr102Glue.v ts_src_byte takes that bound from the
    string's prhtx_bvis granule bound, as BTxValue did *)
 (* ---- frame class 0 (frame_alloc_0): the m-form contract astack_malloc_realizes_xm (YGcallMxmn.v:303 = FCiface.v's
@@ -593,7 +594,7 @@ Definition ss_Bb : sstate := mkSS (TS_PC_B + TS_B_OFF_B) cur_atoms
   (mkFacts [(xr 9, mkAF (2 ^ 46) (2 ^ 47) 5); (xr 10, mkAF 4096 (2 ^ 47) 5); (xr 24, mkAF SHADOW_OFF SHADOW_OFF 0);
             (64%nat, mkAF SHADOW_OFF (SHADOW_OFF + 2 ^ 44) 0)] []
            [(SAlu ALU_ADD (SAlu ALU_SRL (SOff (xr 10) 0) (SLit 3)) (SOff (xr 24) 0), SOff 64 0)]).
-(* SHAPE: S10TxString.v ts_B_entry (image A, walk-S10 1c3f6103b950), with B's seam *)
+(* SHAPE: S10TxString.v ts_B_entry (image A, walk-S10), with B's seam *)
 Lemma ts_B_entry_B : forall lyc Sc Hpc Wc memc mdc pos rg,
   ARx lyc Sc Hpc Wc memc mdc -> In (0, pos) (frames Sc) ->
   (forall a, frame_addr lyc 0 pos <= a < frame_addr lyc 0 pos + 64 -> apresent (w_H Wc) memc a) ->
@@ -830,7 +831,7 @@ split.
 Qed.
 
 (* ---- the model at the end: the calls' sizes and the text appended (B-local copies of S10TxString.v's ts_ks_fin /
-   ts_add_fin, walk-S10 18165859e13 :342-348; DELETE when S10TxStrGlue carries them) ---- *)
+   ts_add_fin, walk-S10 :342-348; DELETE when S10TxStrGlue carries them) ---- *)
 Lemma ts_ks_fin_B : TxModel.plen (ts_pieces bs) ++ [1] = TSks.
 Proof. unfold TS_ks. rewrite s10s_ks. reflexivity. Qed.
 Lemma ts_add_fin_B : concat (ts_pieces bs) ++ [34] = TSadd.

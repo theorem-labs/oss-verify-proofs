@@ -19,7 +19,7 @@ Read-only. For each image this lists every defined function symbol named `__inte
 | fuzz_egress | `a4a151dbf92bc8641d13932865f9d51bf2fd95b0f98d0cc9aa173d87c52ab63e` | index/binaries.tsv:7513 | `5db4802c6137e4d3fff1651b098ff56f3b1a6fe11023ea06ca4fef8910c600c6` |
 | fuzz_wire | `af4534831a4528320c7dc74ca3f64bb96e8232ed2e313f01126d10879f3417d6` | index/binaries.tsv:7525 | `51eb4bef24252e4df6e11baa89f653d20d74e38ae684f61bc94f4fb339ac97c3` |
 
-The index lines are the same at f47e2a8927b9 and at recipes 6d085644782c.
+The index lines are the same and at recipes.
 
 - **Tool:** `inventory/tools/inventory.py` (sha256 `c4e5592ab63d5d584fce9e0e188faa1e6c384fa51b544481492b87cbc02cfc64`,
   written for these records). It loads the same `drvcmp.py` (1b13206c79dd), bytecmp (0ac2ec8db277, from 1480ca2faea0)

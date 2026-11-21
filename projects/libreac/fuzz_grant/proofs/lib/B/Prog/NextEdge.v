@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: a segment of reac_headamp_tx_next on fuzz_grant.asan (NextEdge), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v, proofs/cgif/cgif_file_fuzzer/lib/A/AC8c.v, proofs/cgif/cgif_file_fuzzer/lib/A/ACgb.v. *)
-(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/NextEdge.v at a working branch af735a950e2 (blob 4872b8584d0; the walk was ported from blob cc682d0a16f at a working branch afd75724b5b, which differs from it only by 4 added and 0 removed lines, the licence header), restated over image B's listing, addresses and walk layer (lib/B/Prog) against GrantBContracts.v; image B divides the index by 3 with mulhu where image A uses zext8(i)*171>>9, and adds UBSan traps T3..T11 *)
+(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/NextEdge.v at a working branch (blob 4872b8584d0; the walk was ported from blob cc682d0a16f at a working branch, which differs from it only by 4 added and 0 removed lines, the licence header), restated over image B's listing, addresses and walk layer (lib/B/Prog) against GrantBContracts.v; image B divides the index by 3 with mulhu where image A uses zext8(i)*171>>9, and adds UBSan traps T3..T11 *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The edge scan of reac_headamp_tx_next on the ASan+UBSan build (fuzz_grant.asan-ubsan, the slot
    LOOPD 0x85fb8 of lib/B/Prog/HeadampTxNext.v). The scan runs over the 144 flattened cells of the
    table's dirty array at offset 288: at each index it reads the dirty byte; at the first non-zero

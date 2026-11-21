@@ -6,10 +6,11 @@
    image-A lib/A/W_rig_top_rep.v (a working branch 80fffa8e840); the helpers it took from lib/A's
    W_rig_tail.v (tinb and the tl_ lemmas) are copied below, unchanged.  The Section header is W_rig_top_defs.v's,
    verbatim.
-   ROUTE (b), STEP 3 (the image-A twin: a Theorem Labs lane's RIG_x round of lib/A/W_rig_top.v, commit f4cd818e98d): over ARx
+   ROUTE (b), STEP 3 (the image-A twin: a Theorem Labs lane's RIG_x round of lib/A/W_rig_top.v): over ARx
    (AR_laws_x's alx_* laws, ajournal_gx_x at DRAIN_STK_x); an image byte drain keeps must also be off the program
    statics PST (tc_o_KG, PSTG at its use).
    Proves no function (kind: segment lemma). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

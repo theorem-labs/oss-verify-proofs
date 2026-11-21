@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main entry's recorded facts read as the main entry keeps them: AMKNW, AMKN, APKN). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -28,8 +29,8 @@ Open Scope Z_scope.
 Section CANSEC1. Context {rc : runConstT}.
 Section Init.
 Variables (V : nat -> Z) (w : bool) (U : list (list Z)) (m : amem).
-Hypothesis HM : Forall (mfact_ok asegs V m) asan_mem_facts.
-Hypothesis HP : Forall (pfact_ok V) asan_pure_facts.
+Hypothesis HM : Forall (mfact_ok asegs V m) AMKN.
+Hypothesis HP : Forall (pfact_ok V) APKN.
 Hypothesis HU : (length U <= Z.to_nat AUMAX)%nat.
 Hypothesis HAT : 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat - 8388608 = ATOP.
 Hypothesis SH0 : ashadow0 V m.
@@ -81,7 +82,7 @@ End Init.
 #[using="Type"] Corollary AHEAP_P_init_fake :
 forall (AQ ASEC : alayout -> astate -> aconc -> amem -> Prop) (DEP : alayout -> amem -> Prop)
 (V : nat -> Z) (w : bool) (U : list (list Z)) (m : amem) (lz : list (word * word)) (AL : word -> Prop),
-Forall (mfact_ok asegs V m) asan_mem_facts -> Forall (pfact_ok V) asan_pure_facts -> (length U <= Z.to_nat AUMAX)%nat ->
+Forall (mfact_ok asegs V m) AMKN -> Forall (pfact_ok V) APKN -> (length U <= Z.to_nat AUMAX)%nat ->
 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat - 8388608 = ATOP -> ashadow0 V m ->
 AQ (mkALayout (LV V) w U) (ST0 V) X0 m -> ASEC (mkALayout (LV V) w U) (ST0 V) X0 m -> DEP (mkALayout (LV V) w U) m ->
 (forall p : word, bv_unsigned p mod 4096 = 0 -> aallowed (allow_of 2147450880 V asan_vis) p -> AL p) ->
@@ -96,7 +97,7 @@ Qed.
 #[using="Type"] Corollary AHEAP_P_init_quar_fake :
 forall (ASEC : alayout -> astate -> aconc -> amem -> Prop) (DEP : alayout -> amem -> Prop)
 (V : nat -> Z) (w : bool) (U : list (list Z)) (m : amem) (lz : list (word * word)) (AL : word -> Prop),
-Forall (mfact_ok asegs V m) asan_mem_facts -> Forall (pfact_ok V) asan_pure_facts -> (length U <= Z.to_nat AUMAX)%nat ->
+Forall (mfact_ok asegs V m) AMKN -> Forall (pfact_ok V) APKN -> (length U <= Z.to_nat AUMAX)%nat ->
 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat - 8388608 = ATOP -> ashadow0 V m ->
 ASEC (mkALayout (LV V) w U) (ST0 V) X0 m -> DEP (mkALayout (LV V) w U) m ->
 (forall p : word, bv_unsigned p mod 4096 = 0 -> aallowed (allow_of 2147450880 V asan_vis) p -> AL p) ->
@@ -111,7 +112,7 @@ Qed.
 #[using="Type"] Corollary AHEAP_P_init_qdf :
 forall (ASEC : alayout -> astate -> aconc -> amem -> Prop)
 (V : nat -> Z) (w : bool) (U : list (list Z)) (m : amem) (lz : list (word * word)) (AL : word -> Prop),
-Forall (mfact_ok asegs V m) asan_mem_facts -> Forall (mfact_ok asegs V m) (asan_mem_facts_w w) -> Forall (pfact_ok V) asan_pure_facts ->
+Forall (mfact_ok asegs V m) AMKN -> Forall (mfact_ok asegs V m) (AMKNW w) -> Forall (pfact_ok V) APKN ->
 (length U <= 4096)%nat -> Forall (fun u => (length u <= 254)%nat) U ->
 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat - 8388608 = ATOP -> ashadow0 V m ->
 ASEC (mkALayout (LV V) w U) (ST0 V) X0 m ->

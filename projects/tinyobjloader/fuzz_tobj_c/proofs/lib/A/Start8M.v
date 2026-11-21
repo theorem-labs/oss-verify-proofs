@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up invariant minv8 states the reserved ledger as the image's entries followed by the vDSO/vvar pair, and the apartness of the whole ledger with the pair in it; lemmas for that prefix form, for the pair's two adjacent entries and for the whole reserved ledger's apartness at the launch; minv8_cons_low reads its placement against the whole ledger). *)
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
 #[local] Ltac2 tbs__ () := ["@Corelib.Numbers.BinNums"; "Z"; "@Corelib.Init.Logic"; "eq"; "and"; "or"; "iff"; "ex"; "not"; "@stdpp.bitvector.definitions"; "bv_unsigned"; "bv"; "Z_to_bv"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "m_vmmaps"; "Model"; "vm_maps"; "m_vm_lazy"; "vm_reserved"; "vm_noaccess"; "vm_init_sp"; "vm_limit"; "maps_subtract"; "page_in_ranges"; "region_free"; "VmMaps"; "alloc_top"; "iv_subtract"; "@Stdlib.ZArith.BinInt.Z"; "le"; "lt"; "add"; "modulo"; "pow"; "sub"; "@Corelib.Init.Datatypes"; "prod"; "list"; "cons"; "app"; "bool"; "pair"; "true"; "fst"; "snd"; "false"; "nil"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.Start8M"; "minv8"; "apartW"; "ranges_apart"; "@Stdlib.Lists.List"; "In"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.BackingAlgebra"; "covered"; "ivs_wf"; "ivB"; "ivS"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.Placement"; "SHADOW_BAND_LO"; "SHADOW_BAND_HI"; "band_covered"; "@LinuxProcessSemantics.LinuxProcessSem.Run"; "segments_reserved"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.ImageFacts"; "segsA"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysSpec"; "mmap_place_ok_none"; "mmap_n"; "mmap_nZ"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.e8.StartNodes3"; "null_rw_model"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.A.e7.StartNodes"; "LB_of"; "eager_model"].
@@ -134,14 +135,71 @@ Lemma page_in_ranges_app_r : ltac2:(tb__ "0|3|
 S8Q40A1M0S1fS1eG0G0A2M1A1M2G2S1S22S13R3R1A2S24A3S1S22S13R4S21G1R3R2A3A2S24A3F_;Fl2;Fl1;Fp;").
 Proof. intros p l1 l2 H. rewrite page_in_ranges_app, H. apply Bool.orb_true_r. Qed.
 
+(* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v [vdso_pair_ok]).
+   The lemmas below read that prefix form: a ledger entry dropped from the middle of a list keeps
+   [region_free] and [ranges_apart]; the pair's two entries are adjacent and apart; the image's
+   entries lie below [VDSO_FLOOR], so the whole reserved ledger is apart once the pair is. *)
+Lemma region_free_app8 : forall (l1 l2 : list (word * word)) (a n : word),
+  State.region_free (l1 ++ l2) a n = State.region_free l1 a n && State.region_free l2 a n.
+Proof.
+  induction l1 as [|[b s] l1 IH]; intros l2 a n; [reflexivity|].
+  cbn [app State.region_free]. rewrite IH. apply andb_assoc.
+Qed.
+
+Lemma region_free_drop_mid : forall (l1 l2 l3 : list (word * word)) (a n : word),
+  State.region_free ((l1 ++ l2) ++ l3) a n = true -> State.region_free (l1 ++ l3) a n = true.
+Proof.
+  intros l1 l2 l3 a n H. rewrite !region_free_app8 in H. rewrite region_free_app8.
+  apply andb_prop in H as [H H3]. apply andb_prop in H as [H1 _]. rewrite H1, H3. reflexivity.
+Qed.
+
+Lemma ranges_apart_drop_mid : forall (l1 l2 l3 : list (word * word)),
+  ranges_apart ((l1 ++ l2) ++ l3) -> ranges_apart (l1 ++ l3).
+Proof.
+  intros l1 l2 l3 H. apply ranges_apart_app in H as (H12 & H3 & X).
+  apply ranges_apart_app in H12 as (H1 & _ & _).
+  apply (proj2 (ranges_apart_app l1 l3)). split; [exact H1|]. split; [exact H3|].
+  intros e1 e2 He1 He2. apply X; [apply in_app_iff; left; exact He1 | exact He2].
+Qed.
+
+Lemma vdso_reserved_apart : forall kb top, top < two_pow_64 -> ranges_apart (vdso_reserved kb top).
+Proof.
+  intros kb top Htop. unfold vdso_reserved. cbv zeta.
+  destruct (top - vdso_len kb <? page_size) eqn:E; [exact I|]. apply Z.ltb_ge in E.
+  pose proof (vdso_text_pages_pos kb) as T1. pose proof (vdso_text_pages_le kb) as T2.
+  unfold vdso_len, vdso_vvar_pages, page_size, two_pow_64 in *.
+  cbn [ranges_apart]. split; [|split; [constructor | exact I]].
+  constructor; [|constructor].
+  unfold apartW. cbn [fst snd]. left. rewrite !u64_of_lit by lia. lia.
+Qed.
+
+Lemma resv_apart_of : forall (h : VmMaps) V,
+  vm_reserved h = segments_reserved segsA ++ V -> vdso_pair_ok V -> ranges_apart V -> ranges_apart (vm_reserved h).
+Proof.
+  intros h V EV (_ & HV) RV. rewrite EV. apply (proj2 (ranges_apart_app _ _)). split; [|split; [exact RV|]].
+  - rewrite segments_reserved_A. cbn [ranges_apart].
+    repeat match goal with
+           | |- _ /\ _ => split
+           | |- Forall _ _ => constructor
+           | |- True => exact I
+           end;
+    unfold apartW; cbn [fst snd]; rewrite ?u64_of_lit by lia; lia.
+  - intros e1 e2 He1 He2. destruct (HV e2 He2) as (F & _). unfold VDSO_FLOOR in F.
+    rewrite segments_reserved_A in He1. unfold apartW.
+    repeat (destruct He1 as [<-|He1]; [cbn [fst snd]; rewrite !u64_of_lit by lia; left; lia|]). destruct He1.
+Qed.
+
 Record minv8 (L : list (word * word)) (lim : Z) (isp : word) (HQ : Z) (mo : Model) : Prop := mkMinv8 {
-  mi_res : vm_reserved (m_vmmaps mo) = segments_reserved segsA;
+  (* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v [vdso_pair_ok]). *)
+  mi_res : exists V, vm_reserved (m_vmmaps mo) = segments_reserved segsA ++ V /\ vdso_pair_ok V;
   mi_maps : vm_maps (m_vmmaps mo) = L;
   mi_lim : vm_limit (m_vmmaps mo) = lim;
   mi_isp : vm_init_sp (m_vmmaps mo) = isp;
   mi_top : init_sp_ok (m_vmmaps mo);
   mi_band : band_covered (segments_reserved segsA ++ L) SHADOW_BAND_LO SHADOW_BAND_HI;
-  mi_apart : ranges_apart (segments_reserved segsA ++ L);
+  (* LPS 727298f3: the whole ledger (the image's entries, the vDSO/vvar pair, L) is apart: each grant
+     is placed by [region_free] over [vm_reserved ++ vm_maps], so it is apart from the pair too. *)
+  mi_apart : ranges_apart (vm_reserved (m_vmmaps mo) ++ L);
   mi_pos : forall b s, In (b, s) L -> 0 < bv_unsigned s;
   mi_wfm : ivs_wf L;
   mi_lzlow : forall p : word, SHADOW_BAND_LO <= bv_unsigned p -> bv_unsigned p + 4096 <= SHADOW_RW_LO_END -> page_in_ranges p (m_vm_lazy mo) = true;
@@ -172,13 +230,20 @@ Arguments mi_wfn {L lim isp HQ mo} _.
 Arguments mi_wfl {L lim isp HQ mo} _.
 Arguments mi_posn {L lim isp HQ mo} _.
 
-Lemma minv8_ledger : ltac2:(tb__ "0|4|
-S1fS1eS8Q40A1M0G0A2M1A1M2S0G0S0SbS29R5R4R3R2R1A5S1G2S21G1SeSaR2A1M3A1ScG3A1A3S21G1S34S35A1R6A3A3F_;Fmo;FHQ;Fisp;Flim;FL;").
-Proof. intros L lim isp HQ mo HI. rewrite (mi_res HI), (mi_maps HI). reflexivity. Qed.
+(* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v [vdso_pair_ok]);
+   the ledger is the reserved entries followed by [L].  Statement written as plain text. *)
+Lemma minv8_ledger : forall (L : list (word * word)) (lim : Z) (isp : word) (HQ : Z) (mo : Model),
+  minv8 L lim isp HQ mo ->
+  vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo) = vm_reserved (m_vmmaps mo) ++ L.
+Proof. intros L lim isp HQ mo HI. rewrite (mi_maps HI). reflexivity. Qed.
 
 Lemma minv8_bandM : ltac2:(tb__ "0|3|
 S1fS1eS8Q40A1M0G0A2M1A1S0G0S0SbS29R5R4R3R2R1A5S33S21G1SeSaR2A1M2A1ScG2A1A3S31S32A3F_;Fmo;FHQ;Fisp;Flim;FL;").
-Proof. intros L lim isp HQ mo HI. rewrite (minv8_ledger _ _ _ _ _ HI). exact (mi_band HI). Qed.
+Proof.
+  intros L lim isp HQ mo HI. rewrite (minv8_ledger _ _ _ _ _ HI). destruct (mi_res HI) as (V & EV & _). rewrite EV.
+  apply (band_covered_incl _ _ _ _ (mi_band HI)). intros e He.
+  apply in_app_iff in He as [He|He]; apply in_app_iff; [left; apply in_app_iff; left; exact He | right; exact He].
+Qed.
 
 Lemma minv8_top : ltac2:(tb__ "0|2|
 S1fS1eS8Q40M0A1M1G1A2A1S0G1S0SbS29R5R4R3R2R1A5S1S0S16SaR2A1A1S1dS7G0R4A2Z800000A2A3F_;Fmo;FHQ;Fisp;Flim;FL;").
@@ -222,7 +287,27 @@ Proof.
   pose proof (place_LB_A mo Lz a (mi_top HI) (mi_res HI) (minv8_bandM _ _ _ _ _ HI) ltac:(lia) HLal Hpl) as (P1 & P2 & P3 & P4 & _).
   rewrite (minv8_top _ _ _ _ _ HI) in P4. pose proof Hpl as (Pal & _ & _ & Pfree).
   destruct (mmap_nZ_of_pages Lz HL HLal HLs) as [HnZ Hn]. rewrite Hn, (minv8_ledger _ _ _ _ _ HI) in Pfree.
+  destruct (mi_res HI) as (V & EV & _). rewrite EV in Pfree. apply region_free_drop_mid in Pfree.
   unfold page_size in Pal. repeat split; try assumption.
+Qed.
+
+(* LPS 727298f3: the placement's [region_free] read against the whole ledger (the image's entries,
+   the vDSO/vvar pair, [L]), for [mi_apart] after a grant. *)
+Lemma minv8_free_all : forall (L : list (word * word)) (lim : Z) (isp : word) (HQ : Z) (mo : Model) (Lz : Z) (a : word),
+  minv8 L lim isp HQ mo -> 0 < Lz -> Lz mod 4096 = 0 -> Lz < 2 ^ 62 ->
+  mmap_place_ok_none (Z_to_bv 64 0) mo (Z_to_bv 64 Lz) a ->
+  State.region_free (vm_reserved (m_vmmaps mo) ++ L) a (Z_to_bv 64 Lz) = true.
+Proof.
+  intros L lim isp HQ mo Lz a HI HL HLal HLs Hpl. pose proof Hpl as (_ & _ & _ & Pfree).
+  destruct (mmap_nZ_of_pages Lz HL HLal HLs) as [_ Hn]. rewrite Hn, (minv8_ledger _ _ _ _ _ HI) in Pfree. exact Pfree.
+Qed.
+
+(* LPS 727298f3: the image's entries and [L] alone are apart ([mi_apart] with the pair dropped). *)
+Lemma minv8_apart_img : forall (L : list (word * word)) (lim : Z) (isp : word) (HQ : Z) (mo : Model),
+  minv8 L lim isp HQ mo -> ranges_apart (segments_reserved segsA ++ L).
+Proof.
+  intros L lim isp HQ mo HI. pose proof (mi_apart HI) as R. destruct (mi_res HI) as (V & EV & _).
+  rewrite EV in R. exact (ranges_apart_drop_mid _ _ _ R).
 Qed.
 
 Lemma minv8_fresh_acc : ltac2:(tb__ "0|4|
@@ -248,6 +333,7 @@ S1fS1eS8Q40M0A1M1G1A2M2A1M3S0G1S0SbSbS0G1G3S29R9R8R7R6R5A5S19Z0M4R4A2S1S0S1bR5Z1
 Proof.
   intros L lim isp HQ mo mo' Lz a lz' HI HL HLal HLs Hpl ER EM EN EL EI EZ WZ.
   pose proof (minv8_place _ _ _ _ _ Lz a HI HL HLal HLs Hpl) as (G1 & G2 & G3 & G4 & G5 & G6).
+  pose proof (minv8_free_all _ _ _ _ _ Lz a HI HL HLal HLs Hpl) as GF.
   pose proof (urange isp) as UI. assert (Un : bv_unsigned (Z_to_bv 64 Lz) = Lz) by (apply u64_of_lit; lia).
   constructor; rewrite ?ER, ?EM, ?EN, ?EL, ?EI, ?EZ.
   - exact (mi_res HI).
@@ -256,7 +342,7 @@ Proof.
   - exact (mi_isp HI).
   - pose proof (mi_top HI) as T. unfold init_sp_ok in *. rewrite EI. exact T.
   - apply band_covered_app_cons. exact (mi_band HI).
-  - apply ranges_apart_insert; [exact (mi_apart HI)|]. intros e He. exact (apart_of_region_free _ _ _ e G6 He).
+  - apply ranges_apart_insert; [exact (mi_apart HI)|]. intros e He. exact (apart_of_region_free _ _ _ e GF He).
   - intros b s [[= <- <-]|Hin]; [rewrite Un; lia | exact (mi_pos HI b s Hin)].
   - apply ivs_wf_cons; [|exact (mi_wfm HI)]. unfold iv_wf, ivB, ivS. cbn [fst snd]. rewrite Un. lia.
   - intros p H1 H2. apply page_in_ranges_app_r. exact (mi_lzlow HI p H1 H2).
@@ -302,8 +388,20 @@ Proof.
             ltac:(rewrite u64_of_lit by lia; lia) ltac:(rewrite u64_of_lit by lia; lia))). rewrite u64_of_lit by lia. lia.
 Qed.
 
-Lemma minv8_cons_low : ltac2:(tb__ "0|8|
-S1fS1eS8Q40M0A1M1G1A2M2A1M3S0G1S0SbSbG1G1G1S29R9R8R7R6R5A5S1S22S14S21G2S34S35A1RaA3R4R2A3S24A3S18S7G0R4A2S7G0R3A2A2S19Z0S7G0R5A2A2S18S1aS7G0R7A2S7G0R6A2A2S31A2S1G3SeSaR9A1A1SeSaRaA1M4A1A3S1G3ScG4A1S20G2S23G1G1R9R8A4ScSaRbA1M5A1A3A3S1G3SfG5A1SfSaRcA1M6A1A3S1S0S11G6A1S11SaRdA1M7A1A3S1G1S10G7A1S10SaReA1A1A3S1G3SdReA1SdRfA1A3S29S20G2S23G1G1ReRdA4R14A3R13R12R11RfA5F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;Fn;Fs;Fb;Fmo';Fmo;FHQ;Fisp;Flim;FL;").
+(* LPS 727298f3: the placement's [region_free] is read against the whole ledger ([vm_reserved], the image's
+   entries then the vDSO/vvar pair, followed by [L]), for [mi_apart].  Statement written as plain text. *)
+Lemma minv8_cons_low : forall (L : list (word * word)) (lim : Z) (isp : word) (HQ : Z) (mo mo' : Model) (b s n : word),
+  minv8 L lim isp HQ mo ->
+  State.region_free (vm_reserved (m_vmmaps mo) ++ L) b n = true ->
+  bv_unsigned s <= bv_unsigned n -> 0 < bv_unsigned s ->
+  bv_unsigned b + bv_unsigned s <= Placement.SHADOW_BAND_LO ->
+  vm_reserved (m_vmmaps mo') = vm_reserved (m_vmmaps mo) ->
+  vm_maps (m_vmmaps mo') = (b, s) :: vm_maps (m_vmmaps mo) ->
+  vm_noaccess (m_vmmaps mo') = vm_noaccess (m_vmmaps mo) ->
+  vm_limit (m_vmmaps mo') = vm_limit (m_vmmaps mo) ->
+  vm_init_sp (m_vmmaps mo') = vm_init_sp (m_vmmaps mo) ->
+  m_vm_lazy mo' = m_vm_lazy mo ->
+  minv8 ((b, s) :: L) lim isp HQ mo'.
 Proof.
   intros L lim isp HQ mo mo' b s n HI Hfree Hsn Hs Hb ER EM EN EL EI EZ.
   constructor; rewrite ?ER, ?EM, ?EN, ?EL, ?EI, ?EZ.
@@ -368,7 +466,7 @@ Proof.
 
   assert (AP : forall b s, In (b, s) L0 -> 0 < bv_unsigned s /\ (bv_unsigned b + bv_unsigned s <= bv_unsigned b0 \/ hi <= bv_unsigned b)).
   { intros b s Hin. split; [exact (mi_pos HI b s (or_intror Hin))|].
-    pose proof (ranges_apart_mid (segments_reserved segsA) L0 (b0, s0) (b, s) (mi_apart HI) ltac:(apply in_app_iff; right; exact Hin)) as [A|A]; cbn [fst snd] in A; [right | left]; lia. }
+    pose proof (ranges_apart_mid (vm_reserved (m_vmmaps mo)) L0 (b0, s0) (b, s) (mi_apart HI) ltac:(apply in_app_iff; right; exact Hin)) as [A|A]; cbn [fst snd] in A; [right | left]; lia. }
   assert (EM' : vm_maps (m_vmmaps mo') = (Z_to_bv 64 hi, Z_to_bv 64 (bv_unsigned b0 + bv_unsigned s0 - hi)) :: L0).
   { rewrite EM, (mi_maps HI). cbn [maps_subtract]. rewrite (maps_subtract_apart L0 (bv_unsigned b0) hi ltac:(lia) AP).
     unfold iv_subtract. cbv zeta. rewrite (proj2 (Z.ltb_ge (bv_unsigned b0) (bv_unsigned b0))) by lia.
@@ -382,7 +480,7 @@ Proof.
   - pose proof (mi_top HI) as T. unfold init_sp_ok in *. rewrite EI. exact T.
   - apply (band_covered_transfer (segments_reserved segsA ++ (b0, s0) :: L0)); [exact (mi_band HI)|].
     intros b s z Hin Hz Hbs. apply in_app_iff in Hin as [Hin|[[= <- <-]|Hin]]; apply in_app_iff; [left; exact Hin | exfalso; ulia | right; right; exact Hin].
-  - apply (ranges_apart_shrink (segments_reserved segsA) L0 (b0, s0)); [exact (mi_apart HI) | cbn [fst]; rewrite Uh; lia | cbn [fst snd]; rewrite Uh, Ur; lia].
+  - apply (ranges_apart_shrink (vm_reserved (m_vmmaps mo)) L0 (b0, s0)); [exact (mi_apart HI) | cbn [fst]; rewrite Uh; lia | cbn [fst snd]; rewrite Uh, Ur; lia].
   - intros b s [[= <- <-]|Hin]; [rewrite Ur; lia | exact (mi_pos HI b s (or_intror Hin))].
   - apply ivs_wf_cons; [unfold iv_wf, ivB, ivS; cbn [fst snd]; rewrite Uh, Ur; lia | intros q Hq; exact (W1 q (or_intror Hq))].
   - intros p H1 H2. apply page_in_ranges_subtract_keep8; [exact W3 | exact Hlh | exact (mi_lzlow HI p H1 H2) | right; ulia].
@@ -405,6 +503,7 @@ S1fS1eS8Q40M0A1M1G1A2M2A1M3S0G1S0SbSbS0G1S29R8R7R6R5R4A5S19Z0M4R3A2S1S0S1bR4Z100
 Proof.
   intros L lim isp HQ mo mo' Lz a HI HL HLal HLs Hpl ER EM EN EL EI EZ.
   pose proof (minv8_place _ _ _ _ _ Lz a HI HL HLal HLs Hpl) as (G1 & G2 & G3 & G4 & G5 & G6).
+  pose proof (minv8_free_all _ _ _ _ _ Lz a HI HL HLal HLs Hpl) as GF.
   pose proof (urange isp) as UI. assert (Un : bv_unsigned (Z_to_bv 64 Lz) = Lz) by (apply u64_of_lit; lia).
   assert (Wa : iv_wf (a, Z_to_bv 64 Lz)) by (unfold iv_wf, ivB, ivS; cbn [fst snd]; rewrite Un; lia).
   constructor; rewrite ?ER, ?EM, ?EN, ?EL, ?EI, ?EZ.
@@ -414,7 +513,7 @@ Proof.
   - exact (mi_isp HI).
   - pose proof (mi_top HI) as T. unfold init_sp_ok in *. rewrite EI. exact T.
   - apply band_covered_app_cons. exact (mi_band HI).
-  - apply ranges_apart_insert; [exact (mi_apart HI)|]. intros e He. exact (apart_of_region_free _ _ _ e G6 He).
+  - apply ranges_apart_insert; [exact (mi_apart HI)|]. intros e He. exact (apart_of_region_free _ _ _ e GF He).
   - intros b s [[= <- <-]|Hin]; [rewrite Un; lia | exact (mi_pos HI b s Hin)].
   - apply ivs_wf_cons; [exact Wa | exact (mi_wfm HI)].
   - exact (mi_lzlow HI).

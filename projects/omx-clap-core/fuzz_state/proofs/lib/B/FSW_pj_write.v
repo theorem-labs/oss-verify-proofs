@@ -1,16 +1,16 @@
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/FSW_pj_write.v from
-   a working branch 00f7cec1bbc (Theorem pjw_pj_write_spec, a Theorem Labs lane), same structure and lemma names,
+   a working branch (Theorem pjw_pj_write_spec, a Theorem Labs lane), same structure and lemma names,
    walked over image B's own code and stated over the CTX-dropped statement text of a working branch
-   50968be8342 (lib/B/FSH_Fn_writer.v pj_write_spec: no CTX binder, fs_glob at entry; put_spec and
+   (lib/B/FSH_Fn_writer.v pj_write_spec: no CTX binder, fs_glob at entry; put_spec and
    write_value_spec_at take the head-in-U premise `cap <> 0 -> In (buf - HEAD, HEAD) U`). *)
 (*   rule 24: proves function pj_write (reuse search: proof-index pj_write / 0x83f94 unpiped, + named cold heads;
    a Theorem Labs lane 04:2xZ, re-run by checker a Theorem Labs lane 06:22Z: no released ASan-image proof of pj_write, and no cold head
-   proves pj_write_spec for image B; the bespoke image-B proof a working branch 4309d52a177
+   proves pj_write_spec for image B; the bespoke image-B proof a working branch
    lib/B/Prog/pj_write.v is a template only, no bridge to it).
 
    pj_write 0x83f94 (preset_file.c:654-668) on fs.asan-ubsan, image B: the ASan walk of lib/B/FSH_Fn_writer.v's
    `pj_write_spec`, over the image-B walk kit lib/B/FSW_K.v, FSW_K3.v, FSW_ret.v, FSW_rres.v, FSW_rd.v
-   (a working branch 65632947036).
+   (a working branch).
 
    MEASURED (fuzz_state.objdump.txt of image B, sha256 5ac5ce0954f8...): image B's pj_write is image A's instruction
    for instruction - 124 bytes, the same 31 words at the same offsets, the same frame (FRAME_pj_write = 64), the same
@@ -1402,7 +1402,7 @@ Qed.
    fp_spares FP; the read-only range is image bytes (pjw_j_roP_img), so the premise is fp_spares FP over it (a caller
    with ~ YI16.sink_open_fp FP, e.g. every FP whose ranges start above 0 (YCbq.sink_closed_pos), has it by
    YCbq.fp_spares_closed). Stated over the journal's own memories, then in the walk's raw-memory form. *)
-(* FP-keyed core (S0 400b2a240b3): the image clause spares an image byte that is not runtime-owned, not errno,
+(* FP-keyed core (S0): the image clause spares an image byte that is not runtime-owned, not errno,
    NOT in FP and fp_spares FP, so the caller states both FP premises over the read-only range. *)
 Lemma pjw_arodata_journal : forall STK sp0 FP ly S (W : world tfibsegs) mem md own ly' S' (W' : world tfibsegs) mem' md' k,
   ajournal tfibsegs B STK sp0 FP ly S W mem md own ly' S' W' mem' md' k ->
@@ -2313,7 +2313,7 @@ srr_branch_with fsw_wr_tbl_ok HS.
   + exact HGL3.
 Qed.
 
-(* stage 5, proved by a part agent of a Theorem Labs lane in its scratch tree over b6c5b22a453, pasted unchanged *)
+(* stage 5, proved by a part agent of a Theorem Labs lane in its scratch tree over, pasted unchanged *)
 (* ================= stage 5: the call of write_value at level 0 and its return =================
    The walk is at the callee's entry (pjw_to_write_value leaves it there). This is write_value's spec at level 0
    with its premises from pjw_wv_premises (stage 4), and its post composed back into pj_write's journal with
@@ -3357,7 +3357,7 @@ assert (Hc0buf : WriterApp.w_cap (pjw_st_wv t (negb (pretty =? 0)) cnt fail) = 0
 assert (Hinbuf : WriterApp.w_cap (pjw_st_wv t (negb (pretty =? 0)) cnt fail) <> 0 ->
     In (buf1 - HEAD, WriterApp.w_cap (pjw_st_wv t (negb (pretty =? 0)) cnt fail) + HEAD) (ablocks B ly2 S2)).
 { intros E0. destruct Hdisj as [(Hc & _)|(_ & (Hin & _) & _)]; [exact (False_ind _ (E0 Hc)) | exact Hin]. }
-(* put_spec's head-in-U premise at the newline put (CTX-drop text; not in image A's 00f7cec1bbc walk): uswap's
+(* put_spec's head-in-U premise at the newline put (CTX-drop text; not in image A's walk): uswap's
    first arm keeps buf1 = 0, which a live block (4096 <= buf1 - HEAD) excludes; the other two put the new head last *)
 assert (HUIN1 : WriterApp.w_cap (pjw_st_wv t (negb (pretty =? 0)) cnt fail) <> 0 -> In (buf1 - HEAD, HEAD) U2).
 { intros E0. destruct HUSW as [(_ & Eb)|[(V1 & V2 & _ & EU2)|(_ & EU2)]].

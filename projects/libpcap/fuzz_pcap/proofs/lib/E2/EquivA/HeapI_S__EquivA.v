@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: file_write_app unfolds file_extend, and the unlinkat errno-range case covers unlink_before_type_errnos, which the AT_REMOVEDIR arm gained beside -ENOTDIR. *)
 (* [comment removed for export] *)
 From Stdlib Require Lia.
 (* [comment removed for export] *)
@@ -760,7 +761,7 @@ Qed.
 
 #[using="Type"] Lemma file_write_app d bs : Z.of_nat (length d) < 2^64 -> file_write d (Z_to_bv 64 (Z.of_nat (length d))) bs = d ++ bs.
 Proof.
-  intros Hd. unfold file_write. destruct bs as [|b bs']; [rewrite app_nil_r; reflexivity|].
+  intros Hd. unfold file_write, file_extend. cbv zeta. destruct bs as [|b bs']; [rewrite app_nil_r; reflexivity|].
   unfold word_to_nat. rewrite unsigned_lit by lia. rewrite Nat2Z.id, Nat.sub_diag. cbn [repeat]. rewrite app_nil_r.
   rewrite firstn_all2 by lia. rewrite skipn_all2 by (cbn; lia). rewrite app_nil_r. reflexivity.
 Qed.
@@ -863,7 +864,14 @@ Proof.
   destruct (nstep_dec_unlink _ _ _ _ _ _ Hst) as (_ & a & Hd & X). exists a. split; [exact Hd|].
   split; [rewrite FU; exact NDP|]. destruct a as [err|v].
   - destruct X as [-> X]. split; [exact H|].
-    destruct X as [[_ ->]|[[_ [_ ->]]|[[_ [_ [_ ->]]]|[_ [_ [_ HIn]]]]]]; [destruct rmdir; unfold ENOTEMPTY, State.EISDIR; lia| unfold State.ENOENT; lia| unfold ENOTDIR; lia| apply unlinkat_errnos_range'; exact HIn].
+    (* the AT_REMOVEDIR disjunct gained [unlink_before_type_errnos] beside -ENOTDIR at
+       75d69e00 (theories/LinuxProcessSem/Sys/Fs/Namei.v:337-341) *)
+    destruct X as [[_ ->]|[[_ [_ ->]]|[[_ [_ [_ [->|HInT]]]]|[_ [_ [_ HIn]]]]]];
+      [destruct rmdir; unfold ENOTEMPTY, State.EISDIR; lia
+      | unfold State.ENOENT; lia
+      | unfold ENOTDIR; lia
+      | apply unlink_before_type_errnos_range'; exact HInT
+      | apply unlinkat_errnos_range'; exact HIn].
   - destruct X as (-> & _ & _ & -> & _ & ->). split; [reflexivity|]. split; [reflexivity|].
     eapply FI_unlink; [exact H| exact HC| rewrite m_fds_with_fs; reflexivity| rewrite m_fs_with_fs; reflexivity].
 Qed.

@@ -4,8 +4,8 @@
 (* Modified by Theorem Labs, 2026-10: arg_s's ASan+UBSan walk (plugin-hostd/fuzz_command, fuzz_command.asan-ubsan,
    .symtab LOCAL FUNC arg_s at 0x8a820, 344 bytes, 86 instructions; lib/B/Prog/arg_s_aux.v lists the code). It proves
    a Theorem Labs lane's targ_s_spec (lib/B/Prog/arg_s_c.v) unchanged. The A image inlines arg_s at every call site, so this walk
-   follows the B code alone, after the A walks' inlined segments (lib/A/Prog/sup_pin_accept_s4.v, a working branch
-   3cc8391594b: the entry seed, the branch split, the run to the meet).
+   follows the B code alone, after the A walks' inlined segments (lib/A/Prog/sup_pin_accept_s4.v, a working branch:
+   the entry seed, the branch split, the run to the meet).
 
    The segments:
    - the entry (+0x00 .. +0x64): the frame, the two UBSan checks of c, the shadow base, the load4 check of c->nargs,
@@ -20,6 +20,7 @@
      0x8a874 `bnez a0` (load4 check of c + 4, report 0x8a948): tok_branch_pi's shadow token over the slot's shadow
        entry (as_shok: the record's zero shadow of g_rec / record.spill);
      0x8a880 `blt a1,a0` with a1 = 5: decided by atom 33's fact (c->nargs = m, [0, 5] or [6, 6]). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

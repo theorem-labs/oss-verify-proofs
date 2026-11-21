@@ -3,8 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the walk of sup_after_reply on plugin-hostd/fuzz_command's ASan+UBSan build
    (fuzz_command.asan-ubsan, entry 0x8c758 = BASE + AF_sup_after_reply, 120 instructions), proving a Theorem Labs lane's
-   tsup_after_reply_spec (lib/B/Prog/sup_after_reply_c.v, statement from a Theorem Labs lane 0934cb146c3). Shape: the ASan walk of
-   answer_code (lib/A/Prog/answer_code.v, a working branch 2ba4488ce71) - a side-stack frame taken by
+   tsup_after_reply_spec (lib/B/Prog/sup_after_reply_c.v, statement from a Theorem Labs lane). Shape: the ASan walk of
+   answer_code (lib/A/Prog/answer_code.v, a working branch) - a side-stack frame taken by
    __asan_stack_malloc_0, its header and shadow, the snprintf wrapper, program callees through cl_callS_wide, the
    release by the flag store - over B's code. The snprintf wrapper is the one step that changes the FP state: the
    walk goes on at the FP state fx1 it returns (PaFx's aj_art_own_atF, srr_art_postF_of_pf, srr_after_artF), with
@@ -17,6 +17,7 @@
    `sup_after_reply 0`, gen/funcs.tsv:50 `0` reports). The branches the walk prunes: 0x8c7b8 (the use-after-return
    flag, the record's const cell 1, read through sar_entry's region from al_const), 0x8c7d4 and 0x8c8ac (the side
    frame F is nonzero, the HPTR fact on its atom from frames_bounds). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation Znumtheory.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -50,7 +51,7 @@ Open Scope bv_scope.
 Open Scope Z_scope.
 
 (* the program's writable statics are the record's TFIB_PROG_STATIC (lib/B/YF0m.v:4874; CmdBSyms' ts_prog), the form
-   a Theorem Labs lane's record facts use (lib/B/Prog/CmdRecRest.v:56-73 on a working branch 6830f0bf032) *)
+   a Theorem Labs lane's record facts use (lib/B/Prog/CmdRecRest.v:56-73 on a working branch) *)
 
 Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Context {SK : YI16.sink_head}.
@@ -83,7 +84,7 @@ Hypothesis MTL : ameter_laws MT.
 Hypothesis MTLF : ameter_fs_laws MT.
 Hypothesis SIGP : cmd_sig_prog.
 (* the per-binary image facts, as ONE record in a Theorem Labs lane's own form (lib/B/Prog/CmdRecBase.v cmd_img_facts on
-   a working branch 0934cb146c3): every named record fact this walk uses (cmd_prog_img, cmd_ro_prog_apart,
+   a working branch): every named record fact this walk uses (cmd_prog_img, cmd_ro_prog_apart,
    cmd_ro_ok_of_aro, cmd_rec_cells, RELRO_IMG, cmd_fobj_tail, cmd_heap_tail_vis, cmd_rodata_kept,
    cmd_consts_view_snp) is a Theorem Labs lane's lemma over it, so the closing file discharges this one hypothesis *)
 Hypothesis cmd_img_facts_tfib : forall B0, CmdBSyms B0 -> cmd_img_facts SEGS B0.

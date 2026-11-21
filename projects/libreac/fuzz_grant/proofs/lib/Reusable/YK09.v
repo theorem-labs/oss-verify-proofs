@@ -2,12 +2,13 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YK09.v, with its module paths changed and the two start-up tables ASAN and BOTH (with ASAN_TEXT_LO/N, BOTH_TEXT_LO/N, asan_init, both_init) removed: they describe the images of another program (img_hi 0x671000), and no file of libreac/fuzz_grant's lib reads them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3, with libreac/fuzz_boxreg's port of its copy of this file (changed kn_grant_filterB_eqf, gap_ok, e_atrandom, e_str0, e_str1, e_atr8 and 13 more; added V_G, rseq_z, rseq_z_range, AUXSZ, AUXSZ_of, auxt and 2 more). *)
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
-BvBase RiscvSemantics MemImageType State Run.
+BvBase RiscvSemantics MemImageType StackLayout State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
-From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require Import YK11.
+From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require Import YK11 YK1b.
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require Import YK0c YK0d.
 Unset Lia Cache. Unset Nia Cache.
 Import ListNotations.
@@ -1287,9 +1288,11 @@ kimg_clip (List.filter (grant_keep_bB bc ms) (bc_fk bc)).
 Lemma kn_grant_filterB_eqf : forall fk, kn_grant_filterB (mkbc fk) = kn_grant_filter fk.
 Proof. intros. bcfe. unfold kn_grant_filterB, kn_grant_filter. autorewrite with bceq. reflexivity. Qed.
 #[local] Hint Rewrite kn_grant_filterB_eqf : bceq.
+(* co_res also carries the kernel's pair: at most two entries and twenty pages. *)
 Definition gap_ok (cs : acs) (nhi : Z) : bool :=
-let cnt := Z.of_nat (n_res A + length (a_maps cs))%nat in
-Z.leb (FLOOR + nhi + a_totsz cs + cnt * (nhi + 4095)) CEIL.
+let cnt := Z.of_nat (n_res A + 2 + length (a_maps cs))%nat in
+(Z.leb 0 nhi &&
+ Z.leb (FLOOR + nhi + a_totsz cs + 20 * 4096 + cnt * (nhi + 4095)) CEIL)%bool.
 Definition budget_ok (cs : acs) (extra : Z) : bool :=
 Z.leb (a_eager cs + a_abytes cs + extra) LIMIT.
 Definition kdisj_new (ms : list amap) (nb : expr) (ne : expr) : list kentry :=
@@ -2278,25 +2281,32 @@ Definition V_BRK : nat := 5.
 Definition V_S2 : nat := 6.
 Definition V_L1 : nat := 7.
 Definition V_UID : nat := 8.
+Definition V_G : nat := 9.
+Definition rseq_z (b : bool) : Z := if b then 1 else 0.
+Lemma rseq_z_range : forall b, 0 <= rseq_z b <= 1.
+Proof. intros [|]; cbn; lia. Qed.
+Definition AUXSZ (r : Z) : Z := 432 + 32 * r.
+Lemma AUXSZ_of : forall b, AUXSZ (rseq_z b) = Z.of_nat (StackLayout.auxv_size b).
+Proof. intros [|]; vm_compute; reflexivity. Qed.
 Definition e_sp0 : expr := eadd (escale 32768 (EVar V_S1)) (escale 16 (EVar V_S2)).
 Definition e_envp : expr := eadd e_sp0 (eadd (escale 8 (EVar V_ARGC)) (ELit 16)).
 Definition e_auxv : expr := eadd e_envp (eadd (escale 8 (EVar V_ENVC)) (ELit 8)).
-Definition e_str0 : expr := eaddz e_auxv 160.
-Definition e_str1 : expr := eadd e_str0 (eaddz (EVar V_L0) 1).
-Definition e_atrandom : expr := eadd e_str0 (escale 8 (EVar V_W)).
+Definition e_atrandom (r : Z) : expr := eadd (eaddz e_auxv (AUXSZ r)) (escale 8 (EVar V_G)).
+Definition e_str0 (r : Z) : expr := eadd (eaddz (e_atrandom r) 16) (EVar V_W).
+Definition e_str1 (r : Z) : expr := eadd (e_str0 r) (eaddz (EVar V_L0) 1).
 Definition e_atr8 : expr :=
-eadd (eadd (escale 4096 (EVar V_S1)) (escale 2 (EVar V_S2))) (eadd (EVar V_ARGC) (eadd (EVar V_ENVC) (EVar V_W))).
-Definition e_argv1w : expr := EMd M_MUL (EAlu ALU_SLTU (ELit 1) (EVar V_ARGC)) e_str1.
+eadd (eadd (escale 4096 (EVar V_S1)) (escale 2 (EVar V_S2))) (eadd (EVar V_ARGC) (eadd (EVar V_ENVC) (EVar V_G))).
+Definition e_argv1w (r : Z) : expr := EMd M_MUL (EAlu ALU_SLTU (ELit 1) (EVar V_ARGC)) (e_str1 r).
 Definition node_envscan (cs : acs) : option acs :=
 let k := kn cs in
 if (Z.eqb (pc cs) (x_envscan A) && len_eqb k (reg cs 9) e_envp)%bool then
 Some (set_pc (set_reg (set_reg cs 9 (eadd (reg cs 9) (eadd (escale 8 (EVar V_ENVC)) (ELit 8)))) 10 (ELit 0)) (x_envscan_k A))
 else None.
-Definition node_pnscan (cs : acs) : option acs :=
+Definition node_pnscan (r : Z) (cs : acs) : option acs :=
 let k := kn cs in
 match reg_lit cs 10, reg_lit cs 12 with
 | Some p, Some 47 =>
-if (Z.eqb (pc cs) (x_pnscan A) && len_eqb k (reg cs 11) (eaddz e_str0 1)
+if (Z.eqb (pc cs) (x_pnscan A) && len_eqb k (reg cs 11) (eaddz (e_str0 r) 1)
 && kwritable k k (ELit 0) p 8 && Z.leb (img_lo A) p && Z.leb (p + 8) (img_hi A) && fresh_ok cs)%bool then
 let v := nxt cs in
 let k' := kn_havoc (kimg_cut k p 8) (ELit 0) p (ELit 8) in
@@ -2306,13 +2316,13 @@ else None
 | _, _ => None
 end.
 Definition kw_argv1 (v : expr) : kentry := KWord (SA e_sp0 16) 8 v.
-Definition node_layout (cs : acs) (args : list expr) : option acs :=
+Definition node_layout (r : Z) (cs : acs) (args : list expr) : option acs :=
 let k := kn cs in
-if negb (existsb (kentry_eqb (kw_argv1 e_argv1w)) k) then None else
-let k' := List.filter (fun K => negb (kentry_eqb (kw_argv1 e_argv1w) K)) k in
+if negb (existsb (kentry_eqb (kw_argv1 (e_argv1w r))) k) then None else
+let k' := List.filter (fun K => negb (kentry_eqb (kw_argv1 (e_argv1w r)) K)) k in
 match args with
 | [ELit 1] => match xlo k (EVar V_ARGC) with
-| Some lo => if Z.leb 2 lo then Some (set_kn cs (kw_argv1 e_str1 :: k')) else None
+| Some lo => if Z.leb 2 lo then Some (set_kn cs (kw_argv1 (e_str1 r) :: k')) else None
 | None => None
 end
 | [ELit 0] => match xhi k (EVar V_ARGC) with
@@ -2714,36 +2724,56 @@ end.
 Definition mk_itab_ranges (rs : list (Z * nat)) : itab := mk_itab_ranges_acc rs PTLeaf.
 End q.
 Definition BRK_ASLR : Z := 0x80000000.
-Definition NX0 : nat := 9.
+Definition NX0 : nat := 10.
 Definition K_RND : nat := 25.
 Definition e_auxb : expr * Z := split_lit e_auxv.
-Definition e_atrb : expr * Z := split_lit e_atrandom.
+Definition e_atrb (r : Z) : expr * Z := split_lit (e_atrandom r).
 Definition auxw (i : Z) (ty : Z) (v : expr) : list kentry :=
 [KWord (SA (fst e_auxb) (snd e_auxb + 16 * i)) 8 (ELit ty); KWord (SA (fst e_auxb) (snd e_auxb + 16 * i + 8)) 8 v].
-Definition init_kn_with (atr : kentry) (A : atable) : list kentry :=
+(* A pair's type word alone, for the pairs whose value no plan variable denotes. *)
+Definition auxt (i ty : Z) : kentry := KWord (SA (fst e_auxb) (snd e_auxb + 16 * i)) 8 (ELit ty).
+(* musl's [__init_libc] loop reads EVERY pair's type word up to AT_NULL (27 pairs, or 29 with
+   CONFIG_RSEQ) and stores the value of each type below AUX_CNT, so every type word is
+   claimed, the values the launch fixes are claimed (AT_CLKTCK 100, AT_BASE 0, AT_FLAGS 0,
+   AT_ENTRY, and the CONFIG_RSEQ pair's 28 and 32 when [r = 1]), and the whole vector is
+   readable ([KUnk]); the values no plan variable denotes (ARCH_DLINFO's pairs 0..9,
+   AT_EXECFN at 25) stay unknown.  AT_HWCAP (10) and AT_GID/AT_EGID (21, 22) are claimed in
+   [YA01.init_kn_g].  The pairs are [StackLayout.auxv_entries]'s at 727298f3.  Shape and
+   table from cgif/cgif_file_fuzzer's YK09.v in this working copy, which took it from
+   bzip2's [K/AS/AsanPlanCore.v]. *)
+Definition AUXT_UNCLAIMED : list (Z * Z) :=
+[(0, 33); (1, 40); (2, 41); (3, 42); (4, 43); (5, 44); (6, 45); (7, 46); (8, 47); (9, 51);
+(25, 31)].
+Definition auxt_all (r : Z) (A : atable) : list kentry :=
+KUnk (SA (fst e_auxb) (snd e_auxb)) (ELit (AUXSZ r))
+:: auxw 12 17 (ELit 100) ++ auxw 16 7 (ELit 0) ++ auxw 17 8 (ELit 0) ++ auxw 18 9 (ELit (a_entry A))
+++ (if Z.eqb r 1 then auxw 26 27 (ELit 28) ++ auxw 27 28 (ELit 32) else [])
+++ map (fun p => auxt (fst p) (snd p)) AUXT_UNCLAIMED.
+Definition init_kn_with (r : Z) (atr : kentry) (A : atable) : list kentry :=
 [KRange (EVar V_S1) 0xFFFF0000 0xFFFFFFFF; KRange (EVar V_S2) 0 2047;
-KRange (eaddz e_atrandom 16) 0x7fff800000c0 0x800000000000; KRange e_atr8 0xFFFF0000001 0xFFFFFFFFFE9;
+KRange (eaddz (e_atrandom r) 16) 0x7fff800000c0 0x800000000000; KRange e_atr8 0xFFFF0000001 (0xFFFFFFFFFC5 - 4 * r);
 KRange e_sp0 0x7fff80000000 0x7fffffffff40;
 KRange (eadd (escale 4096 (EVar V_S1)) (escale 2 (EVar V_S2))) 0xFFFF0000000 0xFFFFFFFFFE8;
 KRange (EVar V_ARGC) 1 1024; KRange (EVar V_ENVC) 0 256; KRange (EVar V_L0) 0 131071; KRange (EVar V_L1) 0 131071;
 KRange (EVar V_UID) 0 0xFFFFFFFE;
-KRange (EVar V_W) 0 280000; KRange (EVar V_BRK) (img_hi A / 4096) ((img_hi A + BRK_ASLR) / 4096);
-KWr (SA e_sp0 (-8388608)) (ELit 8388608); KZero (SA e_sp0 (-8388608)) (ELit 8388608);
-KWord (SA e_sp0 0) 8 (EVar V_ARGC); KWord (SA e_sp0 8) 8 e_str0; kw_argv1 e_argv1w]
-++ auxw 0 3 (ELit (ph_addr_z A)) ++ auxw 1 4 (ELit (ph_ent_z A)) ++ auxw 2 5 (ELit (ph_num_z A)) ++ auxw 4 6 (ELit 4096)
-++ auxw 5 11 (EVar V_UID) ++ auxw 6 12 (EVar V_UID) ++ auxw 7 23 (ELit 0) ++ auxw 8 25 e_atrandom ++ auxw 9 0 (ELit 0)
+KRange (EVar V_W) 0 4110; KRange (EVar V_G) 0 1; KRange (EVar V_BRK) (img_hi A / 4096) ((img_hi A + BRK_ASLR) / 4096);
+KWr (SA e_sp0 (-stack_window_depth)) (ELit stack_window_depth); KZero (SA e_sp0 (-stack_window_depth)) (ELit stack_window_depth);
+KWord (SA e_sp0 0) 8 (EVar V_ARGC); KWord (SA e_sp0 8) 8 (e_str0 r); kw_argv1 (e_argv1w r)]
+++ auxw 13 3 (ELit (ph_addr_z A)) ++ auxw 14 4 (ELit (ph_ent_z A)) ++ auxw 15 5 (ELit (ph_num_z A)) ++ auxw 11 6 (ELit 4096)
+++ auxw 19 11 (EVar V_UID) ++ auxw 20 12 (EVar V_UID) ++ auxw 23 23 (ELit 0) ++ auxw 24 25 (e_atrandom r) ++ auxw (26 + 2 * r) 0 (ELit 0)
 ++ [atr;
-KImg (img_lo A) (img_hi A); KWr (SA (ELit 0) (rw_lo A)) (ELit (rw_len A))].
-Definition atr_entry : kentry := KBlob (SA (fst e_atrb) (snd e_atrb)) (ELit 16) K_RND.
-Definition atr_entry_zero : kentry := KZero (SA (fst e_atrb) (snd e_atrb)) (ELit 16).
-Definition init_kn (A : atable) : list kentry := init_kn_with atr_entry A.
-Definition init_kn_zero (A : atable) : list kentry := init_kn_with atr_entry_zero A.
+KImg (img_lo A) (img_hi A); KWr (SA (ELit 0) (rw_lo A)) (ELit (rw_len A))]
+++ auxt_all r A.
+Definition atr_entry (r : Z) : kentry := KBlob (SA (fst (e_atrb r)) (snd (e_atrb r))) (ELit 16) K_RND.
+Definition atr_entry_zero (r : Z) : kentry := KZero (SA (fst (e_atrb r)) (snd (e_atrb r))) (ELit 16).
+Definition init_kn (r : Z) (A : atable) : list kentry := init_kn_with r (atr_entry r) A.
+Definition init_kn_zero (r : Z) (A : atable) : list kentry := init_kn_with r (atr_entry_zero r) A.
 Definition init_regs : list expr := sr_upd (repeat (ELit 0) 32) 2 e_sp0.
 Definition init_vis (A : atable) : list (expr * expr) :=
 [(ELit (img_lo A), ELit (img_hi A - img_lo A)); (ELit CEIL, ELit (2^47 - CEIL))].
 Definition init_acs_of_with (kn0 : list kentry) (A : atable) : acs :=
 ACS (mk_ss (a_entry A) init_regs kn0 NX0) [] (img_hi A - img_lo A) MBASE_MIN 0 (init_vis A) []
 (vis_cost (img_hi A - img_lo A) + vis_cost (2^47 - CEIL)) (escale 4096 (EVar V_BRK)) FdStd false.
-Definition init_acs_of (A : atable) : acs := init_acs_of_with (init_kn A) A.
-Definition init_acs_of_zero (A : atable) : acs := init_acs_of_with (init_kn_zero A) A.
+Definition init_acs_of (r : Z) (A : atable) : acs := init_acs_of_with (init_kn r A) A.
+Definition init_acs_of_zero (r : Z) (A : atable) : acs := init_acs_of_with (init_kn_zero r A) A.
 End APC.

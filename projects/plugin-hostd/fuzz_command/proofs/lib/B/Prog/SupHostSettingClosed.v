@@ -10,11 +10,12 @@
    meter's laws (MTL, and MTFL for the class-7 side-stack frame) and the callees' and runtime entries' contracts at
    every FP state. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/AnswerClosed.v, with its module paths and module names changed; 24 of its 53 lines of code are new or changed and 29 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The closing pattern of a Theorem Labs lane's PASS4-REFIT.md section F for sup_host_setting's ASan+UBSan walk
    (lib/B/Prog/sup_host_setting.v, tsup_host_setting_holds): the walk's record hypotheses discharged at the pinned image
    (lib/B/Prog/CmdImg.v's instance PB_cmd, whose segments are tfibsegs, and the sink head YE2k.tfib_sink_head), as
-   lib/A/Prog/SupRemoveAllRefitClosed.v (a working branch e84227c9553) does for A, all by a Theorem Labs lane's lemmas
-   (lib/B/Prog/CmdRecRest.v, CmdRecImg.v on a working branch 92195a003c6): TL by cmd_palib, TLF by cmd_palibf,
+   lib/A/Prog/SupRemoveAllRefitClosed.v (a working branch) does for A, all by a Theorem Labs lane's lemmas
+   (lib/B/Prog/CmdRecRest.v, CmdRecImg.v on a working branch): TL by cmd_palib, TLF by cmd_palibf,
    cmd_sig_prog_PB / cmd_val_his_PB / VOBJS by the *_PB lemmas, the image facts by cmd_img_facts_tfib, PRW by
    cmd_prw_tfib, FFL by cmd_frame_flag_law, and the side-stack free law AFREE_LAW by cmd_astack_free_law.
    What remains is the allocator record HB, the meter's laws MTL / MTLF, and the callees' and runtime entries'

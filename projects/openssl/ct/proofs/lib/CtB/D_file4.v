@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack-top bound from main's 16-alignment, below the strings that now end eight bytes under the stack top; the main-level stack floor STACK_WOK). *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.openssl.ct.lib.CtLib Require Import ImageCtA.
 (* [comment removed for export] *)
@@ -109,7 +110,7 @@ Hypothesis XENV2_intro : forall m, XENV1 m -> incb 0 m -> XENV2 m.
 Hypothesis INCB_off : forall x, TR_INIT + 1 <= x < TR_INIT + 5 -> outside IO_FP x /\ outside XENV1_FP x.
 Hypothesis ATXW_off : forall x, in_ranges ATX_W x -> outside IO_FP x.
 
-Local Ltac ul := unfold SEGTOP_A, STACK_WIN, USTACK_TOP, RT_STACK, FUZZ_STACK, FUZZ_COST, CREDIT_DRV, g_read_stage, S_SHORT, S_OVER in *; lia.
+Local Ltac ul := unfold SEGTOP_A, STACK_WIN, STACK_WOK, USTACK_TOP, RT_STACK, FUZZ_STACK, FUZZ_COST, CREDIT_DRV, g_read_stage, S_SHORT, S_OVER in *; lia.
 
 Theorem done_cpsE : Z.of_nat (length data) < 67108864 ->
   cpsE ctbsegs (RDONE RT OUT_rep ERR_rep XENV LIB argvb fs data)
@@ -126,15 +127,21 @@ Proof using AF AF_DRV CLS MAL FRE FRN MCP FWR ATX INIT FUZZ LFR LEX VPR EXC EXC2
   pose proof (cap_ok_range cap HCAP) as CAPR.
   assert (INB : In (buf, cap) (rt_live RT Σ)) by (rewrite LV; left; reflexivity).
   pose proof (af_live_range RT AF Σ m buf cap ART0 INB) as (PR1 & PR2 & PR3).
-  set (lo := rt_sp0 RT Σ - STACK_WIN) in *.
+  set (lo := rt_sp0 RT Σ - STACK_WOK) in *.
   set (n := Z.of_nat (length data)) in *.
   assert (EU : bv_unsigned (Z_to_bv 64 (usp - 80)) = usp - 80) by (apply unsigned_lit; ul).
-  assert (UTOP : usp + 16 <= USTACK_TOP) by lia.
+  (* LPS 727298f3: the strings end eight bytes below the stack VMA's end, which
+     may be USTACK_TOP; the remaining bytes come from main's 16-alignment (B16). *)
+  assert (UTOP : usp + 16 <= USTACK_TOP).
+  { assert (Hup : usp <= USTACK_TOP - 11) by ul.
+    pose proof (Z_div_mod_eq_full usp 16) as Hq. rewrite B16, Z.add_0_r in Hq.
+    set (q := usp / 16) in Hq. clearbody q.
+    unfold USTACK_TOP in Hup |- *. lia. }
   pose proof CLX0 as (_ & _ & _ & _ & _ & _ & _ & _ & CC0).   (* [comment removed for export] *)
   (* [comment removed for export] *)
   apply (CLS Σ (FD argvb n) fs (Z_to_bv 64 0x1eecd0) (Z_to_bv 64 (usp - 80)) gp (Z_to_bv 64 TP_A) t0 t1 t2 (Z_to_bv 64 2)
            (Z_to_bv 64 buf) (Z_to_bv 64 3) a1 a2 a3 a4 a5 a6 a7 (Z_to_bv 64 path) (Z_to_bv 64 n) (Z_to_bv 64 3) (Z_to_bv 64 cap)
-           (Z_to_bv 64 g_read_stage) (Z_to_bv 64 0) s8 s9 s10 s11 t3 t4 t5 t6 F fc m 3 lo); try reflexivity; try assumption.
+           (Z_to_bv 64 g_read_stage) (Z_to_bv 64 0) s8 s9 s10 s11 t3 t4 t5 t6 F fc m 3 lo); try reflexivity; try assumption; try exact (win_le_wok _).
   - lia.
   - unfold FD. rewrite fd_lookup_insert_same. discriminate.
   - rewrite EU. exact ST0.

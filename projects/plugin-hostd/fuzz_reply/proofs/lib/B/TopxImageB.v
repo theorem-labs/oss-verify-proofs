@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Copyright 2026 Theorem Labs *)
 (* Theorem Labs, 2026-10 (a Theorem Labs lane): image B's .str.3 shadow pin over a generic ARx, the hypothesis
      HSTR3S : ashp_x ARx (VAL (A_OBJ 25)) 1
    of lib/B/W_LLVMFuzzerTestOneInput_remove_x.v (Section wrx; a Theorem Labs lane's B ARM_remove over ARx,
-   a working branch f9a2a493730), read there only through rm_ashp_str3_x at check_shape_ends' .str.3
+   a working branch), read there only through rm_ashp_str3_x at check_shape_ends' .str.3
    premises.  It is the image-B analogue of image A's HSTR2S (lib/A/W_LLVMFuzzerTestOneInput_remove_x.v at
-   a working branch bb9dae5d905), which lib/A/W_shadow_pin_x.v's ashp_str2_1_fr_x / ashp_str2_1_fr_cf discharge
-   (WriteX, 31c12112315).  The METHOD is that file's; every numeral is image B's (fuzz_reply.asan-ubsan, sha256
+   a working branch), which lib/A/W_shadow_pin_x.v's ashp_str2_1_fr_x / ashp_str2_1_fr_cf discharge
+   (WriteX).  The METHOD is that file's; every numeral is image B's (fuzz_reply.asan-ubsan, sha256
    10ffb5f9202ae2bd):
      .str.3   ""   A_OBJ 25 = 0x20ee0 (lib/B/W_place.v fr_obj 25), 1 byte (the NUL), in B's "r--" segment
               [0x10000, 0x2f9ec); its ASan global descriptor (beg 0x20ee0, size 1, size_with_redzone 32, ".str.3")
@@ -26,8 +27,8 @@
    - ashp_str3_1_fr_x: for every B with lib/B/YF0m.TfibSyms B and every ARx with AR_laws_x: its type is HSTR3S's
      text at remove_x's Section variables B HT ARx LAWS (so `ashp_str3_1_fr_x B HT ARx LAWS` discharges HSTR3S).
    - ashp_str3_1_fr_cf: at the cf instance of image B's top_x (B := TfibB of lib/B/YD2l.v, ARx := ARcf segs TfibB
-     /\ Hp = [], the ARX of lib/B/W_LLVMFuzzerTestOneInput_top_x.v:132-133 at a working branch
-     2cde0860a09, there at cp := CfParams_reply), for every CfParams cp: the two laws are projections of ARcf's first
+     /\ Hp = [], the ARX of lib/B/W_LLVMFuzzerTestOneInput_top_x.v:133-134 at a working branch,
+     there at cp := CfParams_reply), for every CfParams cp: the two laws are projections of ARcf's first
      conjunct ARmcf (YG0ncf.v amc_const, amc_zshadow), so no AR_laws_x record is built. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -148,7 +149,7 @@ End f.
 Section cf. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : CfParams}.
 #[local] Notation segs := (@pa_segs _ fr_prog_listing PB_fr).
 #[local] Notation VAL := (@pa_val _ fr_prog_listing PB_fr).
-(* top_x's ARX (lib/B/W_LLVMFuzzerTestOneInput_top_x.v:132-133 Definition ARX at 2cde0860a09, there at
+(* top_x's ARX (lib/B/W_LLVMFuzzerTestOneInput_top_x.v:132-133 Definition ARX, there at
    cp := CfParams_reply): the laws are ARmcf's amc_const and amc_zshadow (YG0ncf.v), the first conjunct of ARcf *)
 Lemma ashp_str3_1_fr_cf :
   ashp_x (fun ly S Hp (W : world segs) mem md => ARcf segs TfibB ly S Hp W mem md /\ Hp = [])

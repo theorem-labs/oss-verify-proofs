@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed ffo_cstr_len_le, ffo_openat_node. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import Sorting.Permutation.
@@ -33,6 +34,12 @@ Lemma ffo_cstr_len_le : forall mp fuel (a : word) n,
 mp (woff a n) = Some (Z_to_bv 8 0) -> (cstr_access_len_aux mp a fuel <= S n)%nat.
 Proof.
 intros mp fuel. induction fuel as [|fuel IH]; intros a n Hn; cbn [cstr_access_len_aux]; [lia|].
+(* [State.cstr_access_len_aux] gained [strncpy_from_user]'s clamp at this revision
+   (75d69e00:theories/LinuxProcessSem/State.v:1493): the fuel-successor case now tests
+   [negb (access_okb a 1)] BEFORE it looks at [mp a], and returns 0 there, so the walk
+   stops without counting.  That arm bounds the count by 0, which is below [S n].  The
+   None arm below returns 1 now rather than 0, and [lia] closes it either way. *)
+destruct (negb (access_okb a 1)); [lia|].
 destruct (mp a) as [b|] eqn:Ha; [|lia].
 destruct (bv_eqb b (Z_to_bv 8 0)) eqn:Hb; [lia|].
 destruct n as [|n].
@@ -155,7 +162,9 @@ destruct (ffo_mbyte_unhidden W mem1 (A_PATH + (Z.of_nat j + Z.of_nat k)) (PIMG (
 rewrite E in X. unfold mbyte, mrb in *. exact X. }
 assert (Hcstr : read_cstr (ms_read_byte (pend_at regs1 (Z_to_bv 64 FO_ECALL) mem1 (seg_rom tfibsegs))) (getr regs1 11) = CstrOk sink_path).
 { rewrite pend_read_byte_mrb, H11. change (w64 A_PATH) with (Z_to_bv 64 A_PATH). rewrite sink_path_eq.
-apply (read_cstr_of_garr8 tfibsegs mem1 A_PATH sink_path_Z Hraw); [|cbn; lia]. unfold sink_path_Z. repeat (constructor; [lia|]). constructor. }
+(* The last two branches are 75d69e00's TASK_SIZE premise on [read_cstr_of_garr8] (YI19.v:41);
+   [A_PATH] is a literal here, so both close by computation. *)
+apply (read_cstr_of_garr8 tfibsegs mem1 A_PATH sink_path_Z Hraw); [| cbn; lia | unfold A_PATH; lia | change (Z.of_nat (length sink_path_Z)) with 12; unfold A_PATH, TASK_SIZE; lia ]. unfold sink_path_Z. repeat (constructor; [lia|]). constructor. }
 assert (Hav : ranges_avoid (w_H W) (open_copyins (pend_at regs1 (Z_to_bv 64 FO_ECALL) mem1 (seg_rom tfibsegs)))).
 { intros a n Hin. unfold open_copyins in Hin. rewrite pend_gpr1, pend_read_byte_mrb, H11 in Hin. change (w64 A_PATH) with (Z_to_bv 64 A_PATH) in Hin.
 assert (Hlen : (cstr_access_len_aux (mrb tfibsegs mem1) (Z_to_bv 64 A_PATH) path_max <= 13)%nat).

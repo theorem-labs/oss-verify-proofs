@@ -2,6 +2,7 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: new file (a Theorem Labs lane). *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 
 (* ---------------------------------------------------------------------------------------------- *)
 (* PFreadC: pcap's fread interceptor, CLOSED, for the ASAN image.                                   *)
@@ -12,7 +13,7 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* PFREAD, which is 0x8ee5c by conversion, from three callee contracts and three image facts:        *)
 (*   - __toread at PTOREAD:  rtoread_contract_asan (PFtoreadMWA.v, a Theorem Labs lane);                      *)
 (*   - mread at as_read K:   rmread_contract_asan (PFmreadMWA.v, a Theorem Labs lane), at K := pcap_KS, whose  *)
-(*                           as_read is mread 0x8ea40 = PMREAD (PSourceK.v:16) by conversion;         *)
+(*                           as_read is mread 0x8ea40 = PMREAD (PSourceK.v:17) by conversion;         *)
 (*   - the image below kLowMemEnd and its nowrap layout: mr_segs_low_asan / mr_wx_asan (PFmreadMWA.v);*)
 (*   - as_read pcap_KS in range and even: by computation.                                             *)
 (* The memcpy trampoline's contract (aintrin_realizes ... OCpy TRAMP_MEMCPY) is the core runtime's  *)

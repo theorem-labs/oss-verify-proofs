@@ -2,16 +2,17 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_decode/lib/B/Prog/LLVMFuzzerTestOneInput_segX_exit_td.v, with its module paths, module names and numbers changed; 1110 of its 1140 lines of code are new or changed and 322 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset lib/B, parse_string on image B (asan-ubsan): the three TAIL stretches of the walk, proved against the
-   cut layer lib/A/Prog/PS_Gen.v + lib/B/Prog/PSB_Base.v on the kit's cut 7cdbb61b5fa0 (earlier the OLD-PIN ACCEPTANCE base
-   6225fcbb328, kit 4f18c75d4900; generic P, a Theorem Labs lane 12:18Z / 12:22Z):
+   cut layer lib/A/Prog/PS_Gen.v + lib/B/Prog/PSB_Base.v on the kit's cut (earlier the OLD-PIN ACCEPTANCE base,
+   kit; generic P, a Theorem Labs lane 12:18Z / 12:22Z):
    psb_ret0_holdsP (from PSB_RET0), psb_retok_holdsP (from PSB_RETOK) and psb_free_holdsP (from PSB_FREE), each stated
    over a memory invariant P (srr_inv_laws segs P; the free also srr_inv_call segs P, as it crosses the kit call
    fuzz_free), carried at the cut (ps_carryP: ps_carry with `/\ P mem` last) and ending in ps_postP P CW D. P stays
    ABSTRACT here: every engine run is the invariant twin paj_run_x_inv at P with its laws; at a return ps_closeP (or
    fpostW_x_of_kept with ps_QP) takes P from the carry. The memnorm instance (PS_Gen's ps_mn D) is taken ONCE, at the
    function's top, never in this file.
-   THE FREE CALL has NO open premise: fuzz_free's text (the kit's cut 7cdbb61b5fa0, PRH_FnAlloc.v blob 4d8aeba047e5) posts
+   THE FREE CALL has NO open premise: fuzz_free's text (the kit's cut, PRH_FnAlloc.v blob 4d8aeba047e5) posts
    the m-form fpostbm, so P across the call is the TEXT's memnorm keep through srr_inv_call. It takes
    NO position (POST-IMPLICATION form): its live count ccnt24 at the call is ps_pre's class-24 peak at the all-granted
    events' second state (PS_Gen.ps_count24_free), and its post transfers any position by [HFr m], which extends the
@@ -23,19 +24,19 @@
    ps_rpos; the success arm's post takes the use from ps_rpos_mal.
    THE STABLE STATEMENTS psb_ret0_holds / psb_retok_holds / psb_free_holds are the P := (fun _ => True) corollaries
    (srr_inv_laws_True, srr_inv_call_True, psb_seg_*_of_True). psb_ret0_holds and psb_retok_holds are at their
-   statements of record (d19ced981f4), UNMOVED. psb_free_holds MOVED for the callee's TEXT only: its two open premises
+   statements of record, UNMOVED. psb_free_holds MOVED for the callee's TEXT only: its two open premises
    of record (the live count, psb_free_rp) are gone; the text took the room position at f668aebf57c4, takes none now;
    the kit's primed tfuzz_free_specX ends at wle' segs RZ_cf, so its NULL-return premise is the ret0 stretch over that
    relation (psb_seg_ret0R) and its conclusion psb_seg_free is SRr' segs RZ_cf.
    rule 24: proves no function (kind: segment lemma). The function is parse_string B (lane BParseString); its reuse
    search is the record file r24-index.txt (sha256 e7c12b08eeb1; internal record) (checker CONFIRM; donor none).
-   FILE SET: every non-lane file as the kit's cut 7cdbb61b5fa0 carries it (PRH_Base.v ef7c8ca98529, PRH_FnAlloc.v
+   FILE SET: every non-lane file as the kit's cut carries it (PRH_Base.v ef7c8ca98529, PRH_FnAlloc.v
    4d8aeba047e5, PRH_FnReader.v f1ae32e3b2cd, YGcfRoomLive.v edc1017de99c; YCbqG.v 219748197d6b, YGcallcf.v
    8645fa6a514f, YC80x.v 14f84f225e8f, YC1fPx.v 7814b594066f, YCbqGcall.v c1fcd07d2537, YSRrMemnorm.v 5ffa8525936b
    (srr_inv_call); B listing c97cc46b3e13 / 15fab93fe702) and this row's shared text-across-a-call lemma
-   lib/B/Prog/PSB_Src.v; earlier the lane's acceptance base 6225fcbb328 (the kit-oldpin 4f18c75d4900, engine s1b of
-   c-omx-alloc-preset-s1b 459129c18903). TEMPLATES (read, adapted, not required): WalkS4's image-A S4_PsRet.v and
-   S4_PsFree.v (the gp form a working branch 18d97df47d0).
+   lib/B/Prog/PSB_Src.v; earlier the lane's acceptance base (the kit-oldpin, engine s1b of
+   c-omx-alloc-preset-s1b). TEMPLATES (read, adapted, not required): WalkS4's image-A S4_PsRet.v and
+   S4_PsFree.v (the gp form a working branch).
    THE CODE (the neutral listing parse_string.fuzz_preset.asan-ubsan.s (sha256 549ddc2d23bf; internal record); every offset is a
    DERIVED byte offset from parse_string's B entry):
      1248  mv a0, s2; 1252 jal fuzz_free           PSB_FREE: every bad escape
@@ -388,7 +389,7 @@ Proof.
 intros CTX CW P PLAW.
 exact (psb_ret0_holdsPR CTX CW P (@wle segs) (wle_refl segs) (wle_trans segs) (fun W W' H => H) PLAW).
 Qed.
-(* its stable statement (d19ced981f4), the P := (fun _ => True) instance, and its form over R *)
+(* its stable statement, the P := (fun _ => True) instance, and its form over R *)
 Theorem psb_ret0_holds : forall CTX CW, psb_seg_ret0 B ARx SK CTX CW.
 Proof.
 intros CTX CW. apply (psb_seg_ret0_of_True B ARx SK CTX CW).
@@ -535,7 +536,7 @@ unfold SHADOW_OFF in *. lia.
 Qed.
 
 Section retok.
-(* the head is at least one shadow granule wide (the kit's ONE spelling, PRH_Base.v prh_head_wide, walkkit 9d109484e53;
+(* the head is at least one shadow granule wide (the kit's ONE spelling, PRH_Base.v prh_head_wide, walkkit;
    discharged at the preset instance by a Theorem Labs lane's preset_head_wide): at cf_head = 0 the NUL store at w = out would
    overwrite the new block's head word, which the ledger reads *)
 Hypothesis HW : prh_head_wide.
@@ -866,7 +867,7 @@ paj_run_tok_x_inv RUN HS1 HJ SHOK1 HMN PSB_Bspan.
     rewrite (ps_evs_ok _ Q _ HSCAN Hdec).
     exact (conj (ps_live_app (L := B_prog_listing) (PA := PSB_PAImg) B D ly S _ _ Hab) (proj2 HRP)).
 Qed.
-(* its stable statement (d19ced981f4), the P := (fun _ => True) instance *)
+(* its stable statement, the P := (fun _ => True) instance *)
 Theorem psb_retok_holds : forall CTX CW, psb_seg_retok B ARx SK CTX CW.
 Proof.
 intros CTX CW. apply (psb_seg_retok_of_True B ARx SK CTX CW).
@@ -877,7 +878,7 @@ End retok.
 Section free.
 (* the callee text this stretch calls (the internal file STRETCH-BRIEF.md): fuzz_free at image B's instances *)
 Hypothesis HFREE : tfuzz_free_specX B ARx SK.
-(* IMAGE FACTS of the shared text-across-a-call lemma lib/B/Prog/PSB_Src.v (a working branch 60cea7f5c19,
+(* IMAGE FACTS of the shared text-across-a-call lemma lib/B/Prog/PSB_Src.v (a working branch,
    BParseString's agreement), verbatim: the image's zero-shadow ranges are granule-aligned; its shadow is present *)
 Hypothesis ZSA : forall q m, In (q, m) (as_zero_shadow B) -> q mod 8 = 0 /\ m mod 8 = 0.
 Hypothesis IMGV : psb_img_shadow_vis ARx.
@@ -944,7 +945,7 @@ Qed.
    back to the entry's), so ps_at_ret0P P holds (ps_Qres's bad-escape arm) and the ret0 stretch finishes. The callee's
    chain from s0 = q is PS_Gen's ps_chain_call_offq (at most one record), its trace the closure's cursor conjunct
    with ps_cur_call_offq; the text survives by PSB_Src.v's psb_src_after_call.
-   THE STRETCH, at any P with the runner and call laws, with NO open premise: fuzz_free's text (the kit's cut 7cdbb61b5fa0,
+   THE STRETCH, at any P with the runner and call laws, with NO open premise: fuzz_free's text (the kit's cut,
    PRH_FnAlloc.v blob 4d8aeba047e5, POST-IMPLICATION) takes no position; its live count `ccnt24 S <= L24 + DRV` at the
    call state (asked for p <> 0) is ps_pre's class-24 peak at the second state of the all-granted events
    (PS_Gen.ps_count24_free); its post transfers every position by HFr (n + cf_head), which extends the cut's malloc
@@ -1151,7 +1152,7 @@ assert (HWR : YCbqGwild.wild_room (as_universe B) CW 0 (st_depot S))
               HJ HWR0 (le_n 0)).
 (* THE ADMISSION of the free text (the batch kit PRH_FnAlloc 4d8aeba047e5 :336): a fixed trace by admits_ct_fix; a CW
    trace by the wild room, with the depot's NoDup from AR_laws_x FIELD 25 alx_depot_nodup (a Theorem Labs lane's
-   a working branch b4ca247aad5d, YCbqG.v 219748197d6b; the former named premise DEPOT is GONE) *)
+   a working branch, YCbqG.v 219748197d6b; the former named premise DEPOT is GONE) *)
 assert (Hadm : admits (as_universe B) (call_trace ly (pc_free_ra0 (as_code B)) (ms_regs ms) ch1) S).
 { destruct HTRS as [Hfix | (Hcw & HinU)].
   - exact (admits_ct_fix _ _ _ _ _ _ Hfix).

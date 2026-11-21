@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (div_core_props and its callers call SFdiv_core_binary with the model's div_core_emax bound and SpecFloat.fexp, closing the exponent bound from prec_pos and prec_lt_emax). *)
 From Stdlib Require Import ZArith Reals Psatz SpecFloat Bool.
 From Flocq Require Import Core.Core Calc.Bracket Calc.Round Calc.Operations
 Calc.Div IEEE754.BinarySingleNaN.
@@ -175,17 +176,17 @@ destruct (_ ?= _); reflexivity.
 Qed.
 
 Lemma div_core_props (ma mb : positive) (ea eb : Z) :
-let '(mz, ez, lz) := SFdiv_core_binary prec emax (Z.pos ma) ea (Z.pos mb) eb in
+let '(mz, ez, lz) := SFdiv_core_binary prec (div_core_emax f) (Z.pos ma) ea (Z.pos mb) eb in
 0 <= mz /\
 inbetween_float radix2 mz ez (F2R (Float radix2 (Z.pos ma) ea) / F2R (Float radix2 (Z.pos mb) eb)) lz /\
 ez <= fexp (Zdigits radix2 mz + ez).
 Proof.
 unfold SFdiv_core_binary. rewrite !Zdigits2_Zdigits.
 set (d1 := Zdigits radix2 (Z.pos ma)). set (d2 := Zdigits radix2 (Z.pos mb)).
-set (e' := Z.min (fexp (d1 + ea - (d2 + eb))) (ea - eb)).
+set (e' := Z.min (SpecFloat.fexp prec (div_core_emax f) (d1 + ea - (d2 + eb))) (ea - eb)).
 set (s := ea - eb - e').
 assert (Hs : 0 <= s) by (unfold s, e'; lia).
-assert (He' : e' <= fexp (d1 + ea - (d2 + eb))) by (unfold e'; lia).
+assert (He' : e' <= SpecFloat.fexp prec (div_core_emax f) (d1 + ea - (d2 + eb))) by (unfold e'; lia).
 set (m' := match s with 0 => Z.pos ma | Z.pos _ => Z.shiftl (Z.pos ma) s | Z.neg _ => 0 end).
 assert (Hm' : m' = Z.pos ma * 2 ^ s).
 { unfold m'. destruct s as [|p|p]; [lia| |lia]. apply Z.shiftl_mul_pow2. lia. }
@@ -205,7 +206,10 @@ clearbody e'. clear Hin r.
 set (D := d1 + ea - (d2 + eb)) in *.
 assert (Hd1 : 0 < d1) by (unfold d1; apply Zdigits_gt_0; lia).
 assert (Hd2 : 0 < d2) by (unfold d2; apply Zdigits_gt_0; lia).
-rewrite (fexp_unfold f) in He' |- *.
+rewrite (fexp_unfold f).
+unfold SpecFloat.fexp, SpecFloat.emin, div_core_emax in He'.
+assert (Hem : fp_emin f = 3 - fp_emax f - fp_prec f) by reflexivity.
+pose proof (prec_pos f Hf) as Hpp. pose proof (prec_lt_emax f Hf) as Hpe.
 destruct (Z.eq_dec q 0) as [Hqz|Hqnz].
 -
 rewrite Hqz. cbn [Zdigits].
@@ -253,7 +257,7 @@ unfold Rdiv. rewrite Rmult_0_l. split; [apply (Nearest_of_rep f), (Rep_0 f Hf)|]
 rewrite Rabs_R0. eapply Rle_trans; [apply Rabs_pos|exact Hx].
 -
 generalize (div_core_props pa pb xa xb).
-destruct (SFdiv_core_binary prec emax (Z.pos pa) xa (Z.pos pb) xb) as [[mz ez] lz].
+destruct (SFdiv_core_binary prec (div_core_emax f) (Z.pos pa) xa (Z.pos pb) xb) as [[mz ez] lz].
 intros (Hmz & Hin & Hez).
 set (q := (F2R (Float radix2 (Z.pos pa) xa) / F2R (Float radix2 (Z.pos pb) xb))%R) in *.
 assert (Hq : (F2R (Float radix2 (cond_Zopp sa (Z.pos pa)) xa) / F2R (Float radix2 (cond_Zopp sb (Z.pos pb)) xb))%R
@@ -284,7 +288,7 @@ unfold fp_div. destruct (nan_pass2 f a b) as [r|] eqn:En.
 destruct (fp_decode f a) as [sa|sa| |sa pa xa]; destruct (fp_decode f b) as [sb|sb| |sb pb xb]; simpl;
 try apply encode_inf_range; try apply encode_zero_range; try apply canonical_nan_range.
 generalize (div_core_props pa pb xa xb).
-destruct (SFdiv_core_binary prec emax (Z.pos pa) xa (Z.pos pb) xb) as [[mz ez] lz].
+destruct (SFdiv_core_binary prec (div_core_emax f) (Z.pos pa) xa (Z.pos pb) xb) as [[mz ez] lz].
 intros (Hmz & Hin & Hez). apply enc_range.
 apply (proj1 (round_aux_valid f Hf md (xorb sa sb) mz ez lz _ Hmz Hin Hez)).
 Qed.

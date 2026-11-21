@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the entry memory fact taken from main_entry_launch instead of main_entry_mem_data; the cut_mem hypothesis takes the entry draw rd). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -95,7 +96,8 @@ Section AtCut.
 (* [comment removed for export] *).
   Proof.
     intros a Ha Hn. pose proof SPlo as Hlo. pose proof SPhi as Hhi.
-    rewrite (main_entry_mem_data sp0 [a0s; path] envv tid rd regs0 mem0 ME)
+    destruct (main_entry_launch sp0 [a0s; path] envv tid rd regs0 mem0 ME) as (inp & mbase & brk & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & MD & _).
+    rewrite MD
       by (rewrite stack_max_size_val, u_small by lia; lia).
     pose proof (u64_range tid).
     unfold D_main, D_fd, D_ssp, D_tls, D_tlsB, D_tlsA, D_libc.
@@ -105,12 +107,12 @@ Section AtCut.
   Qed.
 
   Variable M : word -> option byte.
-  Hypothesis CM : cut_mem sp0 a0s path envv mem0 M.
+  Hypothesis CM : cut_mem sp0 a0s path envv rd mem0 M.
 
   #[using="AMB a0s path envv tid rd regs0 mem0 Hvsp ME SPlo SPhi CM"] Lemma cut_clear : ltac2:(CDefT.buildp (gd_tbl_P_cutkit ()) "Pa,$3.P,(12.(:.=R1.)(13.R1.(14.(15.&40.Vsp0,)+800000.)))P,(16.(13.R2.+4<?20.)(16.(12.(:.+4<?21.R2.)(13.R2.+5<??8.))(16.(16.(12.(:.+5=0>0.R2.)(13.R2.+5=150.))(12.(:.+7=108.R2.)(13.R2.+7=330.)))(:.+7=3<0.R2.))))(4.(1.(0.&8.))A1.VM,(18.R3.)(17.(0.&8.)))")
 (* [comment removed for export] *).
   Proof.
-    intros a Ha Hn. pose proof SPlo. unfold wa. rewrite (cm_below _ _ _ _ _ _ CM) by (rewrite u_small by lia; lia).
+    intros a Ha Hn. pose proof SPlo. unfold wa. rewrite (cm_below _ _ _ _ _ _ _ CM) by (rewrite u_small by lia; lia).
     apply mem0_none; assumption.
   Qed.
 
@@ -128,7 +130,7 @@ Section AtCut.
   Qed.
 
   
-  #[using="a0s path envv tid mem0 Hvsp Htid SPlo SPhi CM"] Theorem cut_frame : ltac2:(CDefT.buildp (gd_tbl_P_cutkit ()) "(19.$6.VM,(14.(15.&40.Vsp0,)+78.)(1:.$1;.(1<.(7.&40.=))(1:.$1;.(1<.(7.&40.=))(1:.$1;.(1<.(7.&40.=))(1:.$1;.(1<.(7.&40.=))(1:.$1;.(1<.(7.&40.(;.(15.&40.Vsp0,)+20.)))(1:.$1;.(1<.(7.&40.+1=24<.))(1:.$1;.(1<.(7.&40.+2.))(1:.$1;.(1<.(7.&40.(;.(15.&40.Vsp0,)+8.)))(1:.$1;.(1<.(7.&40.+3?2:8.))(1=.$1;.)))))))))))")
+  #[using="AMB a0s path envv tid rd mem0 Hvsp Htid SPlo SPhi CM"] Theorem cut_frame : ltac2:(CDefT.buildp (gd_tbl_P_cutkit ()) "(19.$6.VM,(14.(15.&40.Vsp0,)+78.)(1:.$1;.(1<.(7.&40.=))(1:.$1;.(1<.(7.&40.=))(1:.$1;.(1<.(7.&40.=))(1:.$1;.(1<.(7.&40.=))(1:.$1;.(1<.(7.&40.(;.(15.&40.Vsp0,)+20.)))(1:.$1;.(1<.(7.&40.+1=24<.))(1:.$1;.(1<.(7.&40.+2.))(1:.$1;.(1<.(7.&40.(;.(15.&40.Vsp0,)+8.)))(1:.$1;.(1<.(7.&40.+3?2:8.))(1=.$1;.)))))))))))")
 (* [comment removed for export] *).
   Proof.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi. destruct CM as [AB BE WO WI RA S0 S1 S2 S3 S4 S5 S6 S7 PA PL PH].

@@ -3,7 +3,7 @@
    yet, so parse_items' walk carries it as ONE named Section hypothesis ARX_DEPOT (lib/B/Prog/PItems_body_free.v):
      ARX_DEPOT : forall ly S Hp W mem md, ARx ly S Hp W mem md -> List.NoDup (st_depot S).
    This file is its discharge at the relations of record: at ARcf it is ARmcf's amc_wf (Wf_cf (as_universe B) S,
-   YG0ncf.v:122), whose wfc_depot (YG01cf.v:147) is YG01.depot_fits, whose first conjunct is the NoDup; at
+   YG0ncf.v:122), whose wfc_depot (YG01cf.v:148) is YG01.depot_fits, whose first conjunct is the NoDup; at
    ARcfx = ARcf /\ xs_placed_cf the same through the conjunction. When the kit's AR_laws_x gains its field 25
    ARx_depot_nodup_law, ARX_DEPOT becomes that field's projection and these lemmas are its proof at ARcf.
    Pure projection: no image fact, no numeral that names an address.

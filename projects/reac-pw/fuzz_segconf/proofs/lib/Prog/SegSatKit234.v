@@ -1,6 +1,6 @@
 (** reac-pw/fuzz_segconf: the build-independent part of the kit for the satisfiability lemmas of the premises of
-    contract families F2, F3 and F4 (lib/Prog/*_c.v, lib/U/Prog/*_c.v, Prog/seg_cuts.v and U/Prog/seg_cuts.v of
-    commit aca5136e2baf), on top of Prog/SegSatKit.v (canonical images, encoding checkers, the region
+    contract families F2, F3 and F4 (lib/Prog/*_c.v, lib/U/Prog/*_c.v, Prog/seg_cuts.v and U/Prog/seg_cuts.v),
+    on top of Prog/SegSatKit.v (canonical images, encoding checkers, the region
     memory RMEM, sat_goal). The per-build parts are Prog/SegSat234.v (plain) and U/Prog/SegSat234.v (UBSan); the
     lemmas are in Prog/sat/ and U/Prog/sat/.
 

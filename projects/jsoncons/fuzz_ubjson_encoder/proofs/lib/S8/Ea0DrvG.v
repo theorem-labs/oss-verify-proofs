@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the new launch (process input, auxv, group id, exec file name); the channel-reader premise of writev; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/As0DrvG.v, lines 135, 148, 453, 838. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
@@ -126,7 +127,7 @@ Section DrvG.
   Variables a0s path : list byte.
   Variable fs0 : Fs.Fs.
   Variable fdata : list byte.
-  Variables p0 p1 can : word.
+  Variables auxvp p1 can : word.
   Variable M0 : word -> option byte.
   Hypothesis M0_def : defined M0 (bv_unsigned sp0) (ar_stack_top ar - bv_unsigned sp0).
   Hypothesis Hfile : fs_lookup fs0 path = Some fdata.
@@ -138,7 +139,7 @@ Section DrvG.
   Let LEN : Z := Z.of_nat (length fdata).
 
   Definition hdr_valsA (vals : list word) : Prop :=
-    vals_ev vals 0 = sp0 /\ vals_ev vals 1 = p0 /\ vals_ev vals 2 = p1 /\ vals_ev vals 3 = can.
+    vals_ev vals 0 = sp0 /\ vals_ev vals 5 = auxvp /\ vals_ev vals 2 = p1 /\ vals_ev vals 3 = can.
   Lemma hdr_relayA : forall vals R x38 x48 x70 ext, hdr_valsA vals -> hdr_valsA (relayV vals R x38 x48 x70 ext).
   Proof. intros vals R x38 x48 x70 ext H. unfold hdr_valsA. rewrite !relayV_lo by lia. exact H. Qed.
   Lemma hdr_appA : forall vals ext, hdr_valsA vals -> (6 <= length vals)%nat -> hdr_valsA (vals ++ ext).
@@ -420,7 +421,7 @@ Section DrvG.
         rewrite F1, fds_remove3A.
         set (model2 := with_fds fds0 model).
         assert (DI2 : dinvA [(A1, CAPk k)] LK0 cr A M model2).
-        { apply (dinv_model scfg L ar C IL HI HIok sp0 Hsp DL M0 _ _ _ _ _ model model2 DI); [apply with_fds_vm|].
+        { apply (dinv_model scfg L ar C IL HI HIok sp0 Hsp DL M0 _ _ _ _ _ model model2 DI); [apply with_fds_vm| |apply with_fds_rdr].
           unfold model2. rewrite with_fds_halted'. exact (di_halt _ _ _ _ _ _ _ _ _ _ DI). }
         assert (HK2 : know_ok ASEGS (ENVG vals2) (mrestrict (ahid A model2) M) (cellCA :: knRf0A)) by exact HK.
         assert (G1 : m_fds model2 = fds0) by (unfold model2; apply with_fds_fds).
@@ -798,7 +799,7 @@ Section DrvG.
   Variable cr0 : credit.
   Hypothesis Hcr0 : credA 0 (adebit L cr0 65536).
 
-  Theorem drv_fileA : file_kA scfg L ar HI sp0 path fs0 fdata p0 p1 can M0 LK0 cr0 A0 K.
+  Theorem drv_fileA : file_kA scfg L ar HI sp0 path fs0 fdata auxvp p1 can M0 LK0 cr0 A0 K.
   Proof.
     unfold file_kA.
     intros vals R M model A A1 HL P0 P1 P2 P3 P48 HR HK DI HINC MF MS HBR.

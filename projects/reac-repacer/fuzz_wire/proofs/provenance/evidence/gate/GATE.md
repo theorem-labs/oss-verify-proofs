@@ -1,14 +1,14 @@
 # fuzz_wire kit relocation: gate record on the series tree
 
 Tool: port_addr_check.py, sha256 prefix 3d2eee813cce (it keys each image by its build letter: P = plain, U = ubsan).
-Donor: proofs/libreac/fuzz_decode/lib at 25e3d17bdb5059606131377a3722d585415ab5d6. Images (pins, sha256 prefix):
+Donor: proofs/libreac/fuzz_decode/lib. Images (pins, sha256 prefix):
 decode plain 556b61e63c44, decode ubsan ff70f30e22dc; fuzz_wire plain c8763dfc4e81, fuzz_wire ubsan 6e91fe0b5555.
-Tree checked: this unit's lib/ at the series head, after the code commits 21a12f93ff3 (FILE-sink restatement), 5dc55e235e5 (YH03 cells),
-8b420399cf8c (review fixes), 167c590ef1b8 (YK1a self-test constants) and a8248a48a2c5 (YH03 keeps the three true stdio cells).
+Tree checked: this unit's lib/ at the series head, after the code commits (FILE-sink restatement), (YH03 cells),
+(review fixes), (YK1a self-test constants) and (YH03 keeps the three true stdio cells).
 
 Command (arguments in angle brackets are local paths):
 
-    port_addr_check.py --git <hub clone> --src 25e3d17bdb50:proofs/libreac/fuzz_decode/lib --dst <this unit's lib>
+    port_addr_check.py --git <hub clone>:proofs/libreac/fuzz_decode/lib --dst <this unit's lib>
       --src-image P=<decode plain pin>:<twin> --src-image U=<decode ubsan pin>:<twin>
       --dst-image P=<fuzz_wire plain pin>:<twin> --dst-image U=<fuzz_wire ubsan pin>:<twin>
       --assign 'U/**=U' --assign '**=P' --paired-only --fail-on-flags --summary --only-flags --out gate.tsv
@@ -45,8 +45,8 @@ pull request body), file gate/gate-0d24.tsv, sha256 4c9c23a23f2ef748f148cc5d0f7e
 
 ## Re-run on the series head after the shared restatements (RECORD.md items 6 and 8)
 
-The same command, inputs and checker (port_addr_check.py sha256 prefix 0d24592683b6) on the series head bbe1bbba6aeb,
-where lib/Lib/Acfg.v (4f4da94a3b6a) and lib/Reusable/R/Cfg.v (b96006e5d59f) are the shared clean-room restatements, taken byte-equal by
+The same command, inputs and checker (port_addr_check.py sha256 prefix 0d24592683b6) on the series head,
+where lib/Lib/Acfg.v and lib/Reusable/R/Cfg.v (theorem-labs/oss-verify-proofs@f92feaf8b7e6) are the shared clean-room restatements, taken byte-equal by
 sha: exit 4. `count files paired: 1108`. `FLAG-CLASSES 575d398c6022 27 classes count as findings (--list-flag-classes prints them)`. `UNMEASURED named-symbol 0 / 90 cells  UNMEASURED-NAME 0 rows  UNPAIRED-FILE-UNMEASURED 120 rows`. `FLAGGED 852 rows in 5 classes: DIFFERENT-SYMBOL=2 GEOMETRY-CHANGED=1 NON-ADDRESS-CHANGED=8 UNPAIRED-PORTED=79 UNPAIRED-SOURCE=762`.
 
 Against the set above: 32 rows more, 0 rows fewer, and every added row is in one of the two restated files:

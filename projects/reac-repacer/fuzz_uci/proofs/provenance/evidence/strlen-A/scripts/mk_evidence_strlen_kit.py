@@ -8,7 +8,7 @@ unsettled is the one of provenance/evidence/memchr-A/scripts/mk_evidence_memchr_
 Inputs, all from the environment:
   UCI_A, UCI_PIN_A   fuzz_uci.asan: the unstripped twin, and the pinned image (projects/reac-repacer/fuzz_uci/harness.yaml)
   ID_A, ID_PIN_A     fuzz_identity.asan: the unstripped twin, and the pinned image (projects/libreac/fuzz_identity/harness.yaml)
-  KIT      a directory holding the kit's SHA256SUMS and the seven files it names (commit 3c3e62ee278,
+  KIT      a directory holding the kit's SHA256SUMS and the seven files it names (
            tools/cmpkit/4bbd3a74be89/). sha256(SHA256SUMS) must start with 4bbd3a74be89 and each file must match its line,
            else the run stops. The seven files are copied into one temporary directory that holds only them, and run there.
   PYTHONPATH   a pyelftools install

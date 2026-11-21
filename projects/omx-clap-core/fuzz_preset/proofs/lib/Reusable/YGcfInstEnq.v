@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstEnq.v (a working branch 3cae605a900a, file sha256 b4f82d2cae76), the generic cf instance layer, field round 3 part 3c; module paths changed only: 67 modules to this unit's lib/Reusable. No other edit; no image numeral is stated here. *)
+(* Modified by Theorem Labs, 2026-10-31: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstEnq.v (a working branch, file sha256 b4f82d2cae76), the generic cf instance layer, field round 3 part 3c; module paths changed only: 67 modules to this unit's lib/Reusable. No other edit; no image numeral is stated here. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (lane F1 of the generic cf instance layer; integrator ReallocPrimary).
-   The cf twins of proofs/cgif/cgif_file_fuzzer/lib/CLenqcgif.v, CLenqcgifE.v, MnEnqcgif.v and MnEnqArms.v at c5
-   30a1993588f: QuarantineCache::Enqueue at Put's call, at the cf relation, in every form the Deallocate interfaces
+   The cf twins of proofs/cgif/cgif_file_fuzzer/lib/CLenqcgif.v, CLenqcgifE.v, MnEnqcgif.v and MnEnqArms.v at c5:
+   QuarantineCache::Enqueue at Put's call, at the cf relation, in every form the Deallocate interfaces
    take it.
    rule 24: no function proved (kind: interface-instance discharge over the unit's Enqueue arms).
 
@@ -12,24 +13,24 @@
    image over cgif's ARm and Wf.  No unit has them at the cf relation yet.  They are the three fields of [EnqArmsCf],
    stated over [enq_pre_cf] at the walk relation [ARX]; lane B2 ports them per unit.  Nothing below proves them.
 
-   The pre [enq_pre_cf] is CLenq.enq_pre_x (CLenq.v:68-79) with its event terms removed (the internal file CF-LAYER-LANES.md's gate,
+   The pre [enq_pre_cf] is CLenq.enq_pre_x (CLenq.v:69-80) with its event terms removed (the internal file CF-LAYER-LANES.md's gate,
    Main 23:2xZ / 23:4xZ):
-   - dropped: CLenq.v:70's cgif-budget clause; refill_reg's two ceiling conjuncts (YG0m.v:63-64, over YG01.v:165-166
+   - dropped: CLenq.v:71's cgif-budget clause; refill_reg's two ceiling conjuncts (YG0m.v:63-64, over YG01.v:166-167
      and :202-203); qloosem's cgif-meter room half (YG0n.v:545-547).  The room for the miss arm's class-24 map comes
-     from bytes: [batch_room_cf] (YG00cf.v:349-350, map_more_user_ok_cf's premise, YG03cf.v:440) and the walk
+     from bytes: [batch_room_cf] (YG00cf.v:350-351, map_more_user_ok_cf's premise, YG03cf.v:441) and the walk
      relation's byte budget.  The miss arm's refill reads its own refill contract (lane B2's ei_refill), not this pre;
-   - replaced (ReallocPrimary / Main 00:3xZ): CLenq.v:71's batch-count clause and refill_reg's prim clause (YG0m.v:64),
+   - replaced (ReallocPrimary / Main 00:3xZ): CLenq.v:72's batch-count clause and refill_reg's prim clause (YG0m.v:64),
      both LOWER bounds on the event count, are not premises: the pre says instead that X is Put's Enqueue call state
-     [qx S0 k0 z tr] (DGif0.v:77-78: Deallocate's tick, the depot answer, the chunk's flip) of a Wf_cf state S0, and
+     [qx S0 k0 z tr] (DGif0.v:78-79: Deallocate's tick, the depot answer, the chunk's flip) of a Wf_cf state S0, and
      [enq_tick_bounds_cf] / [enq_pre_tick_cf] derive both bounds from it (Wf_cf's wfc_batches_ev / wfc_prim_ev,
-     YG01cf.v:145 / :142, one tick ahead).  The one credit covers Enqueue's single class-24 map (map_post_y3,
-     YG03cf.v:436): depot_put maps nothing between the tick and Enqueue;
+     YG01cf.v:146 / :143, one tick ahead).  The one credit covers Enqueue's single class-24 map (map_post_y3,
+     YG03cf.v:437): depot_put maps nothing between the tick and Enqueue;
    - kept: qloose (bytes), the call registers and the chunk facts, verbatim;
    - added (ReallocPrimary 02:3xZ, decision (a)): `ck_n k <= kQuarantineMax`, the text of free_cf's quarantine guard
      (Put's `size > max_size` test: a block of exactly max_size bytes is enqueued); lane B2's strict NMAXD is
      kQuarantineMax + 1 at the cf instance (YGcfInstEnqG.enq_nmax_cf);
    - the stack window stays CLenq.QSTACK_G = 1088 (route 2): the miss arm's Refill call at the entry sp - 64 fits it,
-     because the refill contract's window at kBatchClass is RSTACK (YGcfInstRefill.REP_W_enq, commit d94d29d53c8).
+     because the refill contract's window at kBatchClass is RSTACK (YGcfInstRefill.REP_W_enq).
 
    What this file proves from the seam, the call-site bridge [enq_bridge_cf] and the drain bound [enq_qb_t]:
    - [enqueue_spec_xsm_cf]: the three arms as one contract (MnEnqcgif.enqueue_spec_xsm_cgif's case split);
@@ -37,7 +38,7 @@
      instance-uniqueness field, which the cf relation does not give: the unit's instance predicate IOK);
    - [de_enqueue_g_cf]: DIfaceR.enq_spec_g for every extra conjunct the post, the arm's raw frame and the memnorm keep
      give (MnEnqcgif.de_enqueue_g_m_cgif, CLenqcgifE.de_enqueue_g_cgif);
-   - the interface fields: [di_enqueue_cf] (DGif0.v:301-324), [dr_enqueue_cf] (DIfaceR.dr_enqueue),
+   - the interface fields: [di_enqueue_cf] (DGif0.v:302-325), [dr_enqueue_cf] (DIfaceR.dr_enqueue),
      [de_enqueue_v_cf] / [de_enqueue_cf] (ErrnoG.de_enqueue_v_t / de_enqueue_t), [enq_m_cf] (MnEnq.de_enqueue_m_t,
      MemnormDtop.v:69's ENQm).
    [enq_bridge_cf] is CLenqcgif.enq_bridge (:455-468) at the cf relation: the Deallocate instance proves it (lane F2a,
@@ -101,9 +102,9 @@ Lemma es_owned_cf : forall B ly X X' a, st_chunks X' = st_chunks X -> st_fs X' =
 aowned B ly X' a -> aowned B ly X a.
 Proof. intros B ly X X' a E1 E2 H. unfold aowned, aclient_byte, sec_extents, frames in *. rewrite E1, E2 in H. exact H. Qed.
 
-(* The batch-count and prim-mapped lower bounds at Put's Enqueue call state qx S k z tr (DGif0.v:77-78: the depot
+(* The batch-count and prim-mapped lower bounds at Put's Enqueue call state qx S k z tr (DGif0.v:78-79: the depot
    answer and the chunk's change after Deallocate's +1 tick), from Wf_cf at Deallocate's entry state S: they are
-   Wf_cf's own wfc_batches_ev / wfc_prim_ev (YG01cf.v:145, :142) moved by the tick, nothing more. *)
+   Wf_cf's own wfc_batches_ev / wfc_prim_ev (YG01cf.v:146, :143) moved by the tick, nothing more. *)
 Lemma enq_tick_bounds_cf : forall U S k z tr, Wf_cf U S ->
 Z.of_nat (length (all_batches (qx S k z tr))) + 1 <= st_nev (qx S k z tr) /\
 prim_user_mapped (qx S k z tr) + kUserMapSize <= kUserMapSize * st_nev (qx S k z tr).
@@ -131,7 +132,7 @@ Hypothesis HAR : forall inst ly S W mem md, ARX inst ly S W mem md -> ARcf im_se
 (* ---------------------------------------------------------------------------------------------------------------- *)
 (* 1. The pre, the leaf and the seam.                                                                               *)
 
-(* CLenq.enq_pre_x (CLenq.v:68-79) at the cf relation, its event terms removed (header): the state is Put's call
+(* CLenq.enq_pre_x (CLenq.v:69-80) at the cf relation, its event terms removed (header): the state is Put's call
    state of a Wf_cf state (the two lower bounds follow, enq_pre_tick_cf).  The last three conjuncts are
    acall_pre_cf's last three (field round 3, Main's call-boundary route): cf_hull_ok X, which the drain entry reads
    (Enqueue changes neither st_secs nor the secondary chunks, so the law cf_hull_counts carries it), and the overlay
@@ -263,7 +264,7 @@ unfold quar_n in *. rewrite Hch. rewrite queued_n_eq in EQ |- *.
 rewrite Hqt, Hqg, PI. lia.
 Qed.
 
-(* CLenq.EnqSub's es_qb at the consumer's QB (CLenq.v:129-135), its event term dropped (CLenqcgif.es_qb_cgif does
+(* CLenq.EnqSub's es_qb at the consumer's QB (CLenq.v:130-136), its event term dropped (CLenqcgif.es_qb_cgif does
    not use it, :424).  Since round 3 the consumer's QB (lane F2b's QB_cf) ends with the hull admission cf_hull_ok X';
    so the pre-state's admission (enq_pre_cf's own cf_hull_ok conjunct) and Enqueue's st_secs frame
    (YGcfSecsStep.ss_enqueue: Enqueue touches no st_secs entry) are premises here, from which cf_hull_counts gives it. *)
@@ -299,7 +300,7 @@ getr regs 13 = w64 (sptr_addr B ly p - kChunkHeaderSize) -> getr regs 14 = w64 (
 enq_pre_cf inst ly (qx S k z tr) W regs mem (with_vm_backing (m_vm_lazy md0) mat md0) (qk k) /\
 EP_cf (qx S k z tr) (qk k).
 
-(* CLenq.di_enq_post_of_leaf (CLenq.v:154-172) at the cf relation, without EnqSub's instance-uniqueness field; the
+(* CLenq.di_enq_post_of_leaf (CLenq.v:155-173) at the cf relation, without EnqSub's instance-uniqueness field; the
    result's st_secs frame (Enqueue's model, on every granted path) feeds enq_qb_t. *)
 Theorem di_enq_post_cf_of_leaf : enq_qb_t ->
 forall inst ly X W regs mem md k r W' c',
@@ -364,7 +365,7 @@ Qed.
 (* ---------------------------------------------------------------------------------------------------------------- *)
 (* 4. The interface fields at the cf relation.                                                                      *)
 
-(* DGif0.DIface's di_enqueue (DGif0.v:301-324). *)
+(* DGif0.DIface's di_enqueue (DGif0.v:302-325). *)
 Theorem di_enqueue_cf : EnqArmsCf -> enq_bridge_cf -> enq_qb_t ->
 forall inst ly S W mem0 md0 p n tr k z hb1 sp0 (regs : bvmap 5 word) (mem : word -> option byte) mat,
 ARX inst ly S W mem0 md0 -> rpre S n -> fpre ly S W mem0 p n -> In (p, n) (blocks S) ->

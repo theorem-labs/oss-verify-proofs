@@ -1,16 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/PSbz_str.v, with its module paths and module names changed; 125 of its 195 lines of code are new or changed and 89 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: relocated from omx-clap-core/fuzz_manifest lib/A/FMgxa_bzcj.v (a working branch 3e35620c52e) to libreac/fuzz_boxreg.asan-ubsan: module paths changed; 0 address numerals relocated (port_addr_check 0767e70e074a predict mode, symbol + offset). *)
+(* Modified by Theorem Labs, 2026-10: relocated from omx-clap-core/fuzz_manifest lib/A/FMgxa_bzcj.v (a working branch) to libreac/fuzz_boxreg.asan-ubsan: module paths changed; 0 address numerals relocated (port_addr_check 0767e70e074a predict mode, symbol + offset). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/B/Rt/FMgxa_bzcj.v, with its module paths changed; 83 of its 219 lines of code are new or changed and 59 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/RT_gxa_calls.v, with its module paths and addresses changed; 11 of its 111 lines of code are new or changed and 119 lines of the source are left out. *)
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/RT_gxa_strnlen.v (a working branch 0ddf65fd8cc); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 3 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/RT_gxa_strnlen.table); GXA symbol keys kept (0x21920); names: record RT_IImgA -> A_img RecAsanVfA.N_img_asan_vf. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/RT_gxa_strnlen.v (a working branch); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 3 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/RT_gxa_strnlen.table); GXA symbol keys kept (0x21920); names: record RT_IImgA -> A_img RecAsanVfA.N_img_asan_vf. *)
 (* GXA's interceptor call contract for strnlen (lib/CJ/RL/GXA/StrnlenCall.v:30 strnlen_stack_contract),
    discharged at the ASan instance A_img (RT_IImgA.v:102) on the pinned fuzz_manifest.asan.
 
    This file proves no new function.  It composes proofs that are already in the tree:
    - the Bz interceptor walk of ___interceptor_strnlen 0x43374 (lib/A/Bz/A/I_strnlen.v istrnlen_spec, relocated
-     here from fuzz_state), which calls REAL(strnlen) = musl strnlen 0x9b490 (I_strnlenw.v:81 musl_strnlen_spec);
+     here from fuzz_state), which calls REAL(strnlen) = musl strnlen 0x9b490 (I_strnlenw.v:82 musl_strnlen_spec);
    - its two section hypotheses: rip_stmt (lib/A/Bz/A/R_isPoisoned.v rip_proof) and memchr_stmt
      (lib/A/FMmch.v mch_proof);
    - GXA's call-contract statement, which it takes as a Context in G_printf_core.v.
@@ -25,7 +25,8 @@
    Numerals introduced here, each keyed on its fuzz_manifest.asan symbol + offset:
      0x43048  __wrap_strnlen = __interceptor_trampoline_strnlen + 0  (the A_img row KV 0x21920 0x43048)
      0x43374  ___interceptor_strnlen + 0                             (the target of the j at 0x43048; istrnlen_spec's entry pc) *)
-(* Modified by Theorem Labs, 2026-10: relocated to omx-clap-core fuzz_manifest.asan; from a working branch 5247aa4d0b9 proofs/plugin-hostd/fuzz_reply/lib/A/RT_gxa_calls.v, module path fuzz_reply -> fuzz_manifest, FRsl -> FMmch, renamed RT_gxa_calls.v -> RT_gxa_strnlen.v, its image-generic lemmas moved to lib/A/FMgxa_bzcj.v, and 2 fuzz_reply.asan address numerals re-imaged by symbol + offset: __interceptor_trampoline_strnlen 0x42190 -> 0x412cc, ___interceptor_strnlen 0x424c4 -> 0x415f8 (comments: musl memchr 0x963d0 -> 0x924a8, musl strnlen 0x96e48 -> 0x92f68). *)
+(* Modified by Theorem Labs, 2026-10: relocated to omx-clap-core fuzz_manifest.asan; from a working branch proofs/plugin-hostd/fuzz_reply/lib/A/RT_gxa_calls.v, module path fuzz_reply -> fuzz_manifest, FRsl -> FMmch, renamed RT_gxa_calls.v -> RT_gxa_strnlen.v, its image-generic lemmas moved to lib/A/FMgxa_bzcj.v, and 2 fuzz_reply.asan address numerals re-imaged by symbol + offset: __interceptor_trampoline_strnlen 0x42190 -> 0x412cc, ___interceptor_strnlen 0x424c4 -> 0x415f8 (comments: musl memchr 0x963d0 -> 0x924a8, musl strnlen 0x96e48 -> 0x92f68). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.

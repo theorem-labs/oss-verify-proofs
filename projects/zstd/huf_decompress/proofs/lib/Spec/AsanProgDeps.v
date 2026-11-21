@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (1 recorded proof replaced by written proofs (alift_ret)). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State.
@@ -71,8 +72,7 @@ ltac2:(KReplay.run1 (kr_t_AsanProgDeps ()) [] "h01ph11sh21vp;2g00>>j21Tg003Fj20T
 
 (* [comment removed for export] *)
 Lemma alift_ret : forall {R} (r : R) (s : APS), alift (SRet r) s = Ret (Ok (r, s)).
-Proof.
-ltac2:(KReplay.run1 (kr_t_AsanProgDeps ()) [] "h01Rh11rh21sp;2p;1p;4p;3p200R0p1001Vp4p710p8g00:ij26Tg00?@j15Tg00@8j20Tg00@nj41Tg00ANj24Tg00BFj32Tg003Fj23Tf0R1g004[R2g00C<R3f2R4/62R5#5R6'0P4P2f1P1C1,459236'3W2W1X00o"). Qed.
+Proof. reflexivity. Qed.
 
 (* [comment removed for export] *)
 Definition progAsan_tree (s0 : APS) (rs : Z) (argv : list (list Z)) : itree node (exc unit) := progA_tree AAllocAsan s0 rs argv.

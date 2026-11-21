@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN27.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's munmap (errno arm, cut, allocation mark); the vDSO pair and its reserved region; the page-rounded brk). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -136,8 +137,28 @@ vm_brk (m_vmmaps md_kill) = vm_brk (m_vmmaps md) /\
 m_halted md_kill = m_halted md /\ m_vm_lazy md_kill = [] /\ m_vm_materialized md_kill = [].
 Proof.
 destruct Hmd as [H1 H2]. pose proof Ebase as EB. pose proof Elen as EL.
+(* 08b1429: munmap_model cuts with maps_subtract; on an exact mapping disjoint from the others
+   that is map_remove (YK0v.maps_subtract_exact, the model's MmapSim helper). *)
+assert (VM : vm_maps (m_vmmaps md_kill) = map_remove (vm_maps (m_vmmaps md)) (w64 base)).
+{ transitivity (maps_subtract (vm_maps (m_vmmaps md)) (bv_unsigned (w64 base))
+(bv_unsigned (w64 base) + bv_unsigned (w64 len))); [reflexivity|].
+apply maps_subtract_exact.
+- rewrite EL. exact (proj1 len_pos).
+- intros b s Hbs. exact (proj1 (lx_maps _ _ _ LX _ Hbs)).
+- intros b s Hbs Eb. subst b.
+destruct (lx_disj _ _ _ LX _ _ Hbs entry_in) as [E|D]; [injection E as ->; reflexivity|].
+exfalso. unfold ranges_disjoint, iv_lo, iv_len in D. cbn [fst snd] in D.
+pose proof (proj1 (lx_maps _ _ _ LX _ Hbs)) as Hs. unfold iv_len in Hs. cbn [snd] in Hs.
+rewrite EL in D. pose proof len_pos. lia.
+- intros b s Hbs Hne.
+destruct (lx_disj _ _ _ LX _ _ Hbs entry_in) as [E|D]; [injection E as -> _; exfalso; exact (Hne eq_refl)|].
+unfold ranges_disjoint, iv_lo, iv_len in D. cbn [fst snd] in D. rewrite EL in D. lia. }
+split; [exact VM|].
+split.
+{ transitivity (maps_subtract (vm_noaccess (m_vmmaps md)) (bv_unsigned (w64 base))
+(bv_unsigned (w64 base) + bv_unsigned (w64 len))); [reflexivity|]. rewrite EB, EL. reflexivity. }
 unfold md_kill, munmap_model, with_mmap_destroyed, vm_forget_range, with_vm_backing, with_vmmaps. cbn.
-rewrite EB, EL, H1, H2. cbn. repeat split; reflexivity.
+rewrite ?H1, ?H2. cbn. repeat split; reflexivity.
 Qed.
 Lemma other_base k rg' : k <> r -> region_of A k = Some rg' -> rg_live rg' = true -> rg_kind rg' <> RkBrk ->
 w64 (ly_reg L k) <> w64 base /\ 0 < rg_len rg' /\
@@ -234,6 +255,10 @@ pose proof (live_bytes_maps_subtract_all (vm_noaccess (m_vmmaps md_kill)) (map_r
 pose proof (live_bytes_map_remove _ _ _ EIN) as LR. rewrite Elen in LR.
 pose proof (lx_lb _ _ _ LX). rewrite (live_bytes_kill A A' r rg Hr Hl HA'). unfold len in *. lia.
 -   exact (lg_ceil _ _ _ _ LG).
+- rewrite VR. exact (lg_vdso _ _ _ _ LG).
+- intros k rg' Hk' Hl' Hnb. destruct (OTHER k rg' Hk' Hl') as [_ HkA]. rewrite VR.
+exact (lg_rfree _ _ _ _ LG k rg' HkA Hl' Hnb).
+- exact (lg_brk_vdso _ _ _ _ LG).
 Qed.
 Lemma md_kill_facts : m_halted md_kill = m_halted md /\ m_vm_lazy md_kill = [] /\ m_vm_materialized md_kill = [] /\
 exists vm', md_kill = with_vmmaps vm' md.

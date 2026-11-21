@@ -1,5 +1,5 @@
 (* The image-B (fuzz_reply.asan-ubsan) twin of
-   part 1 of lib/A/ReplyLS3w.v (a working branch 1318828167d3, :73-125, the exit's count post:
+   part 1 of lib/A/ReplyLS3w.v (a working branch, :73-125, the exit's count post:
    xcnt_post, xcnt_pre_post, fr_LS3c_exit_cnt, fr_LS3c_exit_cnt_ret), with A's names and statements, plus
    xcnt_ok_of_post (A: lib/A/ReplyLScap.v :595-601) and LS_exit_cnt_3c, B top_x's LS_exit_cnt at LSx := fr_LS3c.
    Part 2 of A's file (the long-input witness) is not ported here.  proves no function (kind: invariant lemma).
@@ -16,7 +16,7 @@
       exit must give back the entry's count bound: xcnt_pre (ReplyLS3c.v) bounds the entry's blocks other than the
       input, the kept table and g_out.  xcnt_post is the same bound at any (ly, S); xcnt_pre is xcnt_post at the
       entry's (c_ly, c_S) (xcnt_pre_post).  fr_LS3c_exit_cnt: at the premises of LS_exit_end (the model rule of
-      lib/A/W_LLVMFuzzerTestOneInput_exit_x.v:158-167 at a working branch bb9dae5d905: LS at S3 with
+      lib/A/W_LLVMFuzzerTestOneInput_exit_x.v:159-168 at a working branch: LS at S3 with
       ablocks S3 ~ input ++ model ++ rest, and ablocks S' ~ input ++ (lm_G m, ATABLE) :: aout_blks cap out ++ rest,
       the same rest), xcnt_post holds at S' with T0 := lm_G m: what S' holds besides the input, the table and g_out is
       fr_LS3's rest, and fr_CNT bounds the rest.  The one added premise is the block law's address bound (every live
@@ -30,7 +30,7 @@
       8 * 72,688 = 581,504 bytes; the table; the source's partial buffer; no out buffer.  The 72,687 lines carry
       1,671,801 key bytes and 72,687 newlines = 1,744,488 bytes, which 27 writes of at most 65,535 bytes carry
       (t = 27); the input is those bytes and 4 header bytes per write (op, source, two length bytes:
-      W_LLVMFuzzerTestOneInput_write.v:169-178), 1,744,596 bytes, all consumed.  The allocator state holds exactly the
+      W_LLVMFuzzerTestOneInput_write.v:170-179), 1,744,596 bytes, all consumed.  The allocator state holds exactly the
       input block and the model's blocks (ablocks = input ++ model ++ [], as ReplyLS3.v sat3 builds ls3_S from chunks;
       the 72,687 key chunks come from a Fixpoint), and the call's entry state holds only the input block.
       w_fr_LS3c proves fr_LS3c there; w_sec_cut evaluates ReplyLSCntM.fr_LS3c_sec_cut (106); w_counts computes the
@@ -148,7 +148,7 @@ Proof.
   - intros c _. exact (H2 c).
 Qed.
 
-(* ---- B top_x's LS_exit_cnt (lib/B/W_LLVMFuzzerTestOneInput_top_x.v :341 at W8's room branch 33adc98d051c; the same
+(* ---- B top_x's LS_exit_cnt (lib/B/W_LLVMFuzzerTestOneInput_top_x.v :341 at W8's room branch; the same
    text as a Theorem Labs lane's lib/B/W_LLVMFuzzerTestOneInput_exit_x.v :192) at LSx := fr_LS3c B CALL_ROOM_B, TfibB := B ---- *)
 Lemma LS_exit_cnt_3c : forall cx t m ly3 S3 rest (ly' : alayout) (S' : astate) cap out,
   fr_LS3c B CALL_ROOM_B cx t m ly3 S3 ->

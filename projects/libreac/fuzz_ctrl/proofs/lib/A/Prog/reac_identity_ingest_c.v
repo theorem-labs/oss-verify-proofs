@@ -115,7 +115,7 @@ Qed.
 (* ---- Route (C) (a Theorem Labs lane 2026-10-29 09:20Z; wave lead a Theorem Labs lane, form of ASSIGN.md (a working note, not in this delivery)): the _on forms.  The run reads
    NO shadow byte through shadow_rw: its own checks of the id and p ranges read their shadow through `addressable`
    (rt_shadow_rd), and the proof of record introduces the shadow_rw premise and clears it unused
-   (reac_identity_ingestF.v (a version not in this delivery; from a working branch 29ddfc3ea99)).  The post states no shadow fact.  So, by the form's rule "no
+   (reac_identity_ingestF.v (a version not in this delivery; from a working branch)).  The post states no shadow fact.  So, by the form's rule "no
    read: premise dropped", the _on forms are the contracts WITHOUT `shadow_rw m ->`, and nothing else changes.
    The old statements follow (reac_identity_ingest_contract_of_on, _F_of_F_on). Writer: a Theorem Labs lane. *)
 Definition reac_identity_ingest_contract_on : Prop :=

@@ -1,4 +1,4 @@
-(* Relocated from libreac/fuzz_decode lib/B/Prog/reac_frame_clean_len_cg.v (origin/ossv/recipes 98c99a85e4) to reac-repacer/fuzz_wire
+(* Relocated from libreac/fuzz_decode lib/B/Prog/reac_frame_clean_len_cg.v to reac-repacer/fuzz_wire
    image B: entry 0x8158c -> 0x818e8, constants 0x10310 -> 0x10300 and 0x103c8 -> 0x103b0, module paths changed. A byte compare
    gives the two functions equal modulo pc-relative offsets and both 8-byte constants byte-equal. *)
 (* reac_frame_clean_len_cg: fuzz_wire image B's reac_frame_clean_len, its footprint contract (reac_frame_clean_len_F_c.v) translated to cgif_file's leaf form
@@ -22,11 +22,11 @@ Open Scope Z_scope.
 
 Section LeafCg.
 Context {fx : YK11.FPState}.
-Variable world : Type.                                                (* YA0n.v:19 *)
-Variable w_H : world -> word -> bool.                                 (* YA0n.v:20 *)
-Variable SRr : world -> config -> (world -> config -> Prop) -> Prop.    (* YA0n.v:36 *)
-Variable alayout : Type.                                              (* YG0f.v:45 *)
-Variable astate : Type.                                               (* YG00.v:158 *)
+Variable world : Type.                                                (* YA0n.v:20 *)
+Variable w_H : world -> word -> bool.                                 (* YA0n.v:21 *)
+Variable SRr : world -> config -> (world -> config -> Prop) -> Prop.    (* YA0n.v:37 *)
+Variable alayout : Type.                                              (* YG0f.v:46 *)
+Variable astate : Type.                                               (* YG00.v:159 *)
 Variable AR : alayout -> astate -> world -> (word -> option byte) -> Model -> Prop.  (* YG0n.v:795 *)
 Variable aview : (word -> bool) -> (word -> option byte) -> Z -> option Z.          (* YG0n.v:20 *)
 Variable same_but_materialized : Model -> Model -> Prop.              (* YK04.v:540 *)

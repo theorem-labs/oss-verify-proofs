@@ -8,9 +8,10 @@
    lib/A/Prog/CmdRecBase.v, CmdRecRo.v and CmdRecImg.v, under the walk hypotheses
    (with cgif's names). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/rec_shape_of.v, with its module paths and module names changed; 649 of its 707 lines of code are new or changed and 260 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The walk of arg_line on the ASan build of plugin-hostd/fuzz_command (statement: arg_line_c.v, targ_line_spec).
 
-   Shape: cgif_file_fuzzer's freeCGIF walk (lib/A/AC8h.v at c8557374ad2e): the symbolic executor over the
+   Shape: cgif_file_fuzzer's freeCGIF walk (lib/A/AC8h.v at theorem-labs/oss-verify-proofs@6b32741d849a): the symbolic executor over the
    position-abstract listing (paj_run_tok), the inline shadow checks removed with the shadow entry of the call
    slot, the strlen wrapper through PaArt's aj_art_at, the program call through cl_callS (PaCall.v) applying
    rec_canonical's statement, and the symbolic state carried over each call with jafter_call_keep_pi.

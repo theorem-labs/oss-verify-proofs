@@ -28,7 +28,7 @@
      slot of the caller's real stack above this sp. Every arm keeps the string outside this call's stack window,
      which is the plain apart premise (:34); the plain stack_ok and mem_inv are afn_pre's.
    - arodata_okP over the read-only window RLO RHI: NOT needed by row 9 - its accepted text,
-     RtSeg.aisalnum_realizes (commit 80d098bd1905, lib/A/Rt/RtSeg.v:140), asks no read-only
+     RtSeg.aisalnum_realizes (lib/A/Rt/RtSeg.v:140), asks no read-only
      view, since musl's isalnum reads no memory (the interceptor lane's review, O2). It stays in the statement
      because the one caller carries the same premise, so it costs no caller anything; dropping it would be a
      statement change.
@@ -46,11 +46,12 @@
    IMAGE-INDEPENDENT: no image module is Required; A_name_ok, STK_name_ok, RLO, RHI and every image cell are
    parameters (or fields of B).
    The WALK takes these runtime entries as Section hypotheses (the interceptor lane's interface
-   provenance/evidence/interceptors/INTERFACE-A-interceptors.md (commit 7068323e2626); row 9 accepted at 80d098bd1905):
-     RtSeg.aisalnum_realizes (pc) (row 9, lib/A/Rt/RtSeg.v:140), at musl's isalnum (image A 0x901a0; a direct
+   provenance/evidence/interceptors/INTERFACE-A-interceptors.md; row 9 accepted):
+     RtSeg.aisalnum_realizes (pc) (row 9, lib/A/Rt/RtSeg.v:141), at musl's isalnum (image A 0x901a0; a direct
        call, not intercepted).
    They are NOT premises of this contract: the statement does not mention them. *)
 (* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/A/Prog/name_ok_c.v, derived mechanically (bkit derive_b.py): its Require lines name the lib/B copies; nothing else differs. The comments are the A file's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

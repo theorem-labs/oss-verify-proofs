@@ -10,12 +10,13 @@
          frame slots.
    OUTER the outer loop by induction on |es| - i (the image-A twin's form, lib/A/W_rig_step.v rig_outer_proof).
    KEYS  the inner loop by induction on r (the image-A twin's form, lib/A/W_rig_key.v rig_keys_proof).
-   ROUTE (b), STEP 3 (the image-A twin's conversion, lib/A/W_rig_step.v at f4cd818e98d): converted IN PLACE to the
+   ROUTE (b), STEP 3 (the image-A twin's conversion, lib/A/W_rig_step.v): converted IN PLACE to the
    generic Section of the segment interface (lib/B/W_relay_instance_gone_cx.v): any allocator relation ARx with its
    laws, the program statics PST and the room record RP; Section c below is the cx's list.  STEP runs over the generic
    journal (W_frame_x.v's paj_run_sh_x / paj_run_to_sh_x / psrr_branch_pi_x on YCbqG.v's ajournal_x, packed again by
    W_journal_x.v ajournal_gx_pack_x); the cut's head set Hp1 is kept (no call), and gbud, room and counts included, is
    carried unchanged: the step keeps the layout, the allocator state and the trace still owed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

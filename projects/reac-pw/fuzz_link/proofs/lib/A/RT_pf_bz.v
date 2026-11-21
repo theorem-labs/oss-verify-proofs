@@ -1,11 +1,11 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/RT_pf_bz.v (a working branch 3e35620c52e); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/RT_pf_bz.table). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/RT_pf_bz.v (a working branch); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/RT_pf_bz.table). *)
 (* printf_common's call contract at fuzz_manifest.asan, in the Bz vocabulary: the same statements as a Theorem Labs lane's
-   lib/A/RT_pf_bz.v (a working branch 970f7d733a4) pcom_pre and pcom_call, at fm's printf_common
+   lib/A/RT_pf_bz.v (a working branch) pcom_pre and pcom_call, at fm's printf_common
    (RT_pf_Tbl.v PF_PRINTF_COMMON); the interceptor cells (a Theorem Labs lane's sni_cells / vfi_cells) are not here, they belong
    to the interceptor chain.
 
    This file proves no new function. `pcom_call` is a Theorem Labs lane's printf_common walk (lib/A/Bz/A/I_pcxlist.v
-   pcom_genx_spec, relocated onto fuzz_manifest from fuzz_state 840c4afa7e2) with its section hypothesis rip_stmt
+   pcom_genx_spec, relocated onto fuzz_manifest from fuzz_state) with its section hypothesis rip_stmt
    discharged by R_isPoisoned.v rip_proof; what it adds is the stack bookkeeping that lets a caller with a deeper floor
    lo call it: pcom_genx_spec is used at the floor sp - PCOM_DEPTH (its own window), and the part of the caller's stack
    below that floor is carried across the call untouched (stk_split / stk_merge).

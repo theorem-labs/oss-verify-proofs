@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: preserved map/reserved separation through enqueue ledger transport. *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -505,7 +506,7 @@ Section Enfr.
   Qed.
 
   Lemma e_ledger : forall vm, LEDGER st vm -> LEDGER st' vm.
-  Proof using. intros vm [A B C D E]. constructor; assumption. Qed.
+  Proof using. intros vm [A B C D E F]. constructor; assumption. Qed.
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)

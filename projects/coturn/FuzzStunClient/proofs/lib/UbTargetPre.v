@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the stack window is stack_window_depth (6144513 bytes, was 8388608) with its literal forms, and target_vm's ledger is the launch's init_reserved over the kernel build (Amb). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -15,6 +16,7 @@ From OSSVerify.Proofs.coturn.FuzzStunClient.lib.Common Require Import MallocDefs
 From OSSVerify.Proofs.coturn.FuzzStunClient.lib Require Import EnframeDefs UbWorld.
 From OSSVerify.Proofs.coturn.FuzzStunClient.lib.Common Require Import ShapeAlg.
 From OSSVerify.Proofs.coturn.FuzzStunClient.lib Require Import Spec TargetSpec.
+From OSSVerify.Proofs.coturn.FuzzStunClient.lib Require Import Amb.   (* LPS 08b1429: a_kernel in target_vm *)
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 (* [comment removed for export] *)
 From OSSVerify.Proofs.coturn.FuzzStunClient.lib.Common Require Import WalkFastM.
@@ -30,9 +32,17 @@ Abbreviation RSEGS := Ubsan.M.loaded_segments.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
+(* LPS 08b1429: as RefReadBase.stack_writable, the launch's guaranteed window below sp0 is
+   [StoreOk.stack_window_depth] (= 6144513, [stack_window_depth_val]) bytes, not 8 MiB
+   (RefMainEntry.v:158). *)
 Definition stack_writableZ (M : word -> option byte) (sp0 : Z) : Prop :=
-  forall d m, 0 <= d -> d + Z.of_nat m <= 8388608 ->
-    store_ok RSEGS M (Z_to_bv 64 (sp0 - 8388608 + d)) m = true.
+  forall d m, 0 <= d -> d + Z.of_nat m <= stack_window_depth ->
+    store_ok RSEGS M (Z_to_bv 64 (sp0 - stack_window_depth + d)) m = true.
+
+Lemma stack_writableZ_lit : forall M sp0, stack_writableZ M sp0 ->
+  forall d m, 0 <= d -> d + Z.of_nat m <= 6144513 ->
+    store_ok RSEGS M (Z_to_bv 64 (sp0 - 6144513 + d)) m = true.
+Proof. intros M sp0 H. unfold stack_writableZ in H. rewrite stack_window_depth_val in H. exact H. Qed.
 
 Record target_pre (sp0 gm area brkv mas tid : Z) (content : list byte)
        (R : bvmap 5 word) (M : word -> option byte) : Prop := TARGET_PRE {
@@ -73,8 +83,9 @@ Inductive seps : list (word * word) -> Prop :=
 | seps_cons : forall p l, Forall (iv_disjoint p) l -> seps l -> seps (p :: l).
 
 (* [comment removed for export] *)
-Record target_vm (sp0 gm area : Z) (VM : VmMaps) : Prop := TARGET_VM {
-  tv_res   : vm_reserved VM = segments_reserved RSEGS;
+(* LPS 08b1429: the launch's reserved ledger is [init_reserved] (image entries ++ vdso/vvar pair). *)
+Record target_vm {AMB : Amb} (sp0 gm area : Z) (VM : VmMaps) : Prop := TARGET_VM {
+  tv_res   : vm_reserved VM = init_reserved (segments_reserved RSEGS) (vm_mmap_base VM) (vm_init_sp VM) a_kernel;
   tv_has   : In (Z_to_bv 64 gm, Z_to_bv 64 69632) (vm_maps VM);
   tv_area  : exists lo sz, In (lo, sz) (vm_maps VM)
                /\ bv_unsigned lo <= area /\ area + 4096 <= bv_unsigned lo + bv_unsigned sz;

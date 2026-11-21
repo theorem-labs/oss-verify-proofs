@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: ported from this harness's lib/A/Prog/check_reply_k.v (the ASan walk, a working branch 91059853ab1) to the ASan+UBSan build fuzz_command.asan-ubsan (lib/B, entry 0x86e64): the program points, g_rec and the GOT objects at B's addresses (a Theorem Labs lane's pairing, a Theorem Labs lane's reloc). *)
+(* Modified by Theorem Labs, 2026-10: ported from this harness's lib/A/Prog/check_reply_k.v (the ASan walk, a working branch) to the ASan+UBSan build fuzz_command.asan-ubsan (lib/B, entry 0x86e64): the program points, g_rec and the GOT objects at B's addresses (a Theorem Labs lane's pairing, a Theorem Labs lane's reloc). *)
 (* Modified by Theorem Labs, 2026-10: the walk kit of check_reply (fuzz_command.asan-ubsan, 0x86e64), in the form of
    proofs/cgif/cgif_file_fuzzer/lib/A/AChc.v (cgif_close's kit: program points, the symbolic regions, facts and
    shadow entries, the entry seed) and A/ACa2.v (a walk with a class-1 side-stack frame).
@@ -14,6 +14,7 @@
    The prologue realigns sp with `andi sp,sp,-32` (0x86ea0); the alias of atom 41 names the result, so the store
    `sd s7,24(s1)` (0x86f7c) lands in a region of its own. The reply's last byte is read through a computed address
    rep + (size - 1) (0x86fc8); the alias of atom 36 names it. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

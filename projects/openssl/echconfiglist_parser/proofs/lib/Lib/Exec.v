@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (new lemmas mstep_step_ok, mstep_not_unmodeled and mstep_not_fault, which keep this layer apart from the vDSO node). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -34,6 +35,22 @@ Proof. intros ms a b [_ Ha] [_ Hb]. congruence. Qed.
 (* [comment removed for export] *)
 Lemma mstep_not_svc : forall ms ms', mstep ms ms' -> ms_svc_pending ms = None.
 Proof. intros ms ms' [H _]; exact H. Qed.
+
+(* An [mstep] is a MachineOk step and nothing else, so neither of the machine's two
+   declining answers is one.  At LPS 75d69e00 that is what keeps this layer and the node
+   layer disjoint at a vDSO call as well as at a trap: [RiscvSemantics.fetch_failure]
+   answers [MachineUnmodeled] for a pc in the vDSO text before any permission is
+   consulted (RiscvSemantics.v:1170), so [mstep] is already false there and the hand-off
+   needs no second disjunct in the definition above.  [Spec/VdNode.mstep_not_vdso] is the
+   form the vDSO node uses. *)
+Lemma mstep_step_ok : forall ms ms', mstep ms ms' -> RiscvSemantics.step segs ms = MachineOk ms'.
+Proof. intros ms ms' [_ H]; exact H. Qed.
+
+Lemma mstep_not_unmodeled : forall ms ms', mstep ms ms' -> RiscvSemantics.step segs ms <> MachineUnmodeled.
+Proof. intros ms ms' [_ H] E; rewrite H in E; discriminate E. Qed.
+
+Lemma mstep_not_fault : forall ms ms', mstep ms ms' -> RiscvSemantics.step segs ms <> MachineFault.
+Proof. intros ms ms' [_ H] E; rewrite H in E; discriminate E. Qed.
 
 (* [comment removed for export] *)
 

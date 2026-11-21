@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths and module names changed; 371 of its 396 lines of code are new or changed and 3828 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v; 176 of its 211 lines of code are new or changed and 361 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/Tac_b5.v, with its module paths and module names changed; 1788 of its 1832 lines of code are new or changed and 167 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment F17 of fuzz_ctrl LLVMFuzzerTestOneInput (asan, image A): the opens_record range 0x8229c-0x823e4 plus
    the instrumented-load report blocks. The record field walk (G06 opens_record) makes nine instrumented checks,
    each a load of the metadata byte (X >> 3) + 0x7fff8000 of a record byte X and a compare; the report call is
@@ -521,7 +522,7 @@ Proof. intros Q ms (ms' & H & HQ). exists ms'. split; [exact (f17_lib_msteps _ _
    `ld s9,176(s1)`. This is the file's ONLY use of a callee contract. The contract wants mem_inv, which the cut
    does not carry (it carries ro_agree), so the call runs through Tac_f17b.f17_mc, which takes the contract on
    MemNorm's normalized memory and carries the post back (image B's F17b does the same,
-   proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F17b.v @ 3803efccea0). Every register is a parameter, so the caller
+   proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F17b.v). Every register is a parameter, so the caller
    passes `Sem.reg_get R0 k` for its register file R0 (as image B's call does); the four the run reads are pinned by
    equations. The destination's old bytes come from its stk fact (the frame is byte-backed, fra_stk), the copy and
    the callee's scratch are apart from the stack pointer by disjunctions (on FRA's real arm sp = fr). *)

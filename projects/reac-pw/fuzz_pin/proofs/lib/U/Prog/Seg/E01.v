@@ -10,7 +10,7 @@
    b1_malloc_call, whose continuation gives Inv_K12d50 (k in s2, the rest in s1: the UBSan build swaps them
    against the plain one).
    Adapted from libreac/fuzz_ctrl's released segments A01 (the run from Inv_ENTRY on the normalized memory, FR with
-   hb = []) and F01 (malloc as a Kind B step) (origin/ossv/recipes 25e3d17bdb50, Prog/Seg/); memchr is called inside
+   hb = []) and F01 (malloc as a Kind B step) (Prog/Seg/); memchr is called inside
    the run by evt_cut over memchr_c.memchr_contract, as reac-pw/fuzz_qdisc's walk calls its leaves. The bridge
    lemmas e01_find_nul_some / e01_find_nul_none give memchr's result as pin_spec.pin_k. *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.

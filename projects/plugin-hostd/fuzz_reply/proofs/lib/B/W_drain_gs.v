@@ -5,12 +5,12 @@
    (relay.c:89-121, inlined), 0x83aa4 .. 0x83d98, and the composition of its three stages.
    The statement is lib/B/W_drain_cx.v's dr_gs_stmt (DGS 0x83aa4 -> DLN 0x839d4 at S q) and the Section
    header below is that file's, verbatim.  Nothing of the three stages is proved here.
-   Split and statement names mirror image A's lib/A/W_drain_gs.v (a working branch ed12337f74d,
+   Split and statement names mirror image A's lib/A/W_drain_gs.v (a working branch,
    gs_scan_stmt :863, gs_add_stmt :871, gs_free_stmt :877, dr_gs_of :884); every pc, register and frame
    slot below is read from image B's own listing (fuzz_reply.objdump.txt (sha256 17f5c434bf57; internal record) 0x83aa4 .. 0x83d98) and from
    lib/B/W_drain_cx.v's dregs_line (:769) and dr_frame (:537).  The structure of the walk (the cut pcs,
    the case split and the symbolic states) agrees with the closed old-framework B walk of this stage,
-   a working branch 89040c52421 lib/B/Prog/drain_p_seen_scan.v (entry 0x83aa4, add path 0x83ba0,
+   a working branch lib/B/Prog/drain_p_seen_scan.v (entry 0x83aa4, add path 0x83ba0,
    loop head 0x83b34), drain_p_seen_scan_body.v, drain_p_seen_strncmp.v, drain_p_seen_add_{a,b,b2}.v and
    drain_p_seen_drop.v; those theorems are stated over SR rsegs / a_call_pre and do NOT transport, so
    only their geometry is used.
@@ -58,7 +58,7 @@
               0x83d38 NONNULL, 0x83d40 and 0x83d68 ALIGN8.  Shadow side-exits: 0x8410c, 0x84114,
               0x83e14, 0x83e24, 0x8411c, 0x84120.
    3 + 6 + 8 = the 17 trap sites W_drain_cx.v's census lists for stage GS (rows 0x83b38 .. 0x83d68); all
-   are shapes of the trap kit a working branch 6c73ae99620 (lib/B/W_traps.v).
+   are shapes of the trap kit a working branch (lib/B/W_traps.v).
 
    REGISTERS AT THE TWO CUTS.  The GS stage CLOBBERS s5 / s4 / s6 / s11 (x21 / x20 / x22 / x27), the four
    SA-derived pins of W_drain_cx.v's dregs_line, and restores them from the frame only on the way out
@@ -74,6 +74,7 @@
    The scratch frame slots each arm reads are named by the cut that hands them over (dr_frame covers only
    the 23 one-time slots; 0, 16, 24, 96, 112, 160, 168 and 192 are scratch).  dsp0 cx - DRAIN_FRAME is sp
    inside drain's frame, so slot k is at (dsp0 cx - DRAIN_FRAME + k). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -312,14 +313,14 @@ End a.
 
 (* ============================================================================================================
    THE ARx-GENERIC TWIN of this file (image B's DR_x slice D, 2026-10-30; the B twin of lib/A/W_drain_gs.v's
-   Sections ax / bx / rk / cx at a working branch 50623273289): the gs stage over lib/B/W_drain_cx_x.v's
+   Sections ax / bx / rk / cx at a working branch): the gs stage over lib/B/W_drain_cx_x.v's
    Section variables (B PST ARx MT RP MMAX RG), with the entry's ghost list Hp and budget kr after cx and a cut's own
    ghost list Hp1 after S1, as W_drain_cx_x.v threads them.  Everything above this line is unchanged, so every AR
    statement of this file keeps its text and its Section list; the twin only adds names (the AR name with _x).  The
    AR-free names of Section c above (GSF, GSno, GSoc, GSfut, dregs_gs, A_dr_add / A_dr_free) are CITED.
    - The cut predicates GA_x / GF_x and the stage statements gs_scan_stmt_x / gs_add_stmt_x / gs_free_stmt_x are the
      AR texts above (image B's registers and scratch frame slots) with W_drain_cx_x.v's twins (DBASE_x, DGS_x, DLN_x,
-     dPOST_x, LCORE_x); dr_gs_of_x composes them into W_drain_cx_x.v:762 dr_gs_stmt_x, unchanged.
+     dPOST_x, LCORE_x); dr_gs_of_x composes them into W_drain_cx_x.v:763 dr_gs_stmt_x, unchanged.
    - The journal's open / close at an allocator site over W_journal_x.ajournal_gx_x (gs_gx_open_x / gs_gx_close_x,
      the twins of lib/B/W_drain_gs_aux.v's gs_gx_open / gs_gx_close).
    - The room round's bookkeeping at a call (W_drain_cx_x.v dbud_x: the room rp_RM at MT_rk's charge of the requests
@@ -570,7 +571,7 @@ ajournal_x SEGS B PST ARx STK sp0 FP ly S Hp W0 memS md own ly2 S2 Hp2 W2 mem2 m
 @ajournal_gx_x _ SK SEGS B PST ARx G 0 [] STK sp0 FP ly S Hp W0 mem md own ly2 S2 Hp2 W2 mem2 md2 k2.
 Proof. eapply (gs_gx_close_xR (@wle SEGS)); wle_inst. Qed.
 
-(* ---- The segment over ARx: W_drain_cx_x.v:762 dr_gs_stmt_x, from the three stages. ---- *)
+(* ---- The segment over ARx: W_drain_cx_x.v:763 dr_gs_stmt_x, from the three stages. ---- *)
 Theorem dr_gs_of_x : gs_scan_stmt_x -> gs_add_stmt_x -> gs_free_stmt_x -> dr_gs_stmt_x B PST ARx MT RP MMAX RG.
 Proof. eapply (dr_gs_of_xR (@wle SEGS)); wle_inst. Qed.
 

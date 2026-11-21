@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: geoA states the stack floor ALO over the 0x5D0000-byte stack span. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation.
 From stdpp Require Import gmap.
@@ -117,7 +118,7 @@ Section A.
     (* [comment removed for export] *)
     /\ (forall x, usp + -48 <= x < usp / 4096 * 4096 + 4096 -> wview asegs mm (wa x) <> None).
 
-  Lemma geoA : ATOP <= LO /\ LO + 8388608 - 4096 = usp /\ KHIGH <= LO /\ usp + 24 <= 2^47 /\ usp mod 16 = 0.
+  Lemma geoA : ATOP <= LO /\ LO + 6094848 - 4096 = usp /\ KHIGH <= LO /\ usp + 24 <= 2^47 /\ usp mod 16 = 0.
   Proof. clear BOT. unfold ALO, KHIGH in *. repeat split; lia. Qed.   (* [comment removed for export] *)
 
   Lemma argc_facts : 1 <= argc <= 1024.

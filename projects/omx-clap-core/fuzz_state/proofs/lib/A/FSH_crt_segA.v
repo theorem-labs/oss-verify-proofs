@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/YE05.v, with its module paths changed; 2671 of its 2756 lines of code are new or changed and 333 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_round_trip (fs.asan 0x81a9c, 667 insns), build A: lane A0 of its ASan walk, entry (0x81a9c) -> crt_INV_81d0c -
    segment 0, the class-3 fake-frame grant at 0x81b10 and the resume at 0x81b14, and segments 1-4 (the frame header and
    shadow, preset_base64_encode, malloc want, strlen (input), malloc same), up to the head of the expected_text loop.
-   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from d25a984c903
+   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from
    proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_top.v crt_run_pro :953 / crt_run_sm :1017 /
    crt_run_setup :1129 / crt_run_side :1285, check_round_trip_runs.v crt_pro :42 / crt_side_frame :92, and the stage
    steps check_round_trip_sd0.v .. sd2.v over the cuts St0 :215 / St1 :229 / St2 :244 of check_round_trip_stdefs.v).
@@ -35,12 +36,12 @@
      `jal preset_base64_encode` 0x81c80 with a0 = bd, a1 = |bs|.
    Secondary patterns (shape only, no text copied): cgif origin/ossv/recipes proofs/cgif/cgif_file_fuzzer/lib/A/
    AChf.v:77 `pb_flushFrameX_A` and ACic.v:95 `pb_flushFrameX` for the grant and the backwards chain; a Theorem Labs lane's
-   working branch c4bfd3bc057 lib/A/FSH_check_reject_clean_starved.v:305-406 (crcs_entry,
+   working branch lib/A/FSH_check_reject_clean_starved.v:305-406 (crcs_entry,
    crcs_seg0, crcs_sm_site) for the entry and segment-0 shape. A new file: no licence lines (internal).
    The function's rule-24 line (checker a Theorem Labs lane 04:26Z, crt-lane-head.md): proves function check_round_trip -
-   PORTED from a working branch d25a984c903 proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip.v:11
-   (same fs.asan bytes; contract a_call_pre / a_call_post, not importable); reuse search origin/main@f4cc67298b
-   origin/ossv/recipes@5121fb8693 origin/ossv/candidates@ee89628c99 origin/release/pau-projects-recipes@b6a0088adc,
+   PORTED from a working branch proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip.v:11
+   (same fs.asan bytes; contract a_call_pre / a_call_post, not importable); reuse search origin/main
+   origin/ossv/recipes origin/ossv/candidates origin/release/pau-projects-recipes,
    the delivered package and all 32,168 refs of ovpi (proof-index check_round_trip: 31 named, 92 by
    address, 86 related, 14 lemmas, none ASan; git grep -E '0x0*81a9c|0x0*81b9c' on the four refs = 0).
 
@@ -64,7 +65,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.A Require Import
 AB1v AB1w FSupoison FSupoisonU FSH_YC20 FSH_Gen FSH_Base FSH_Rt FSPstat FSW_K FSW_K3 FSW_rres FSW_crt_tbl
 FSH_crt_base FSH_crt_site.
 (* lib/A/FSH_Fn_entry.v is NOT imported, though its fs_fake_granted is the fact crt's grant needs: it imports
-   lib/A/ACfn.v, which imports lib/Reusable/YE01.v, and YE01.v:60 (aenv_kept) does not build over RELOC 4aa3d96b823
+   lib/A/ACfn.v, which imports lib/Reusable/YE01.v, and YE01.v:61 (aenv_kept) does not build over RELOC
    (the journal's image clause F3 gained a `~ inFP FP a` argument before fp_spares). The same two lines are proved
    here over YG01's count_cid and YG00's fs_frames instead. *)
 (* these files are REQUIRED, not IMPORTED: several of their lemma names clash with the imported kits', so their lemmas
@@ -401,7 +402,7 @@ Ltac crtA_cs := unfold acallee_saved;
    FsRt.fr_stack_malloc_3, then FSW_frame3.fsw_resume_after_stack_mallocU for the s0 words, the s1 slots and the frame
    (atom 10 = the grant's a0) with its flag word, then the frame's shadow window at atom 48 (present and not runtime-owned
    by AR_frames_law, so writable on the machine's memory), the facts of atoms 9 / 48 / 18 and the shadow alias. Ported
-   from d25a984c903 check_round_trip_top.v crt_run_sm :1017 (the call through its contract, the frame arm) and
+   from check_round_trip_top.v crt_run_sm :1017 (the call through its contract, the frame arm) and
    check_round_trip_runs.v crt_side_frame :92 (the arm whose `bnez a0` is taken on 0 < fr; here the frame fact
    4096 <= F lets the engine decide it in the next run). ---- *)
 Lemma crtA_grant : forall ly S U (W : world tfibsegs) regs mem md ch FP ms mat (Q : world tfibsegs -> config -> Prop),
@@ -539,7 +540,7 @@ Qed.
    (magic, descriptor, pc) -> 0x81b7c s3 := (F >> 3) + s2, the alias's atom 48 -> 0x81b80..0x81c74 the 60 poison bytes
    of the frame's shadow -> 0x81c80 `jal preset_base64_encode` with a0 = s5 = bd, a1 = s4 = |bs|, ra = 0x81c84.
    Shadow-store method (a Theorem Labs lane 04:14Z): the state the stores run on is crtA_ss2 - the shadow window seated fresh with
-   no chunks at the atom 48 the alias names, and only the flag chunk on the frame. Ported from d25a984c903
+   no chunks at the atom 48 the alias names, and only the flag chunk on the frame. Ported from
    check_round_trip_top.v crt_run_setup :1129 (runs.v crt_setup2: A + 16, A + 80, the header at fr, crt_fshadow). *)
 Definition crtA_ss3 : sstate :=
   Eval vm_compute in fst (sym_run_toN tfibsegs crt_tbl FUEL A_preset_base64_encode crtA_ss2).
@@ -702,7 +703,7 @@ assert (Hag : forall n, (32 <= n < nb)%nat -> ew E' n = ew E n).
 { intros n Hn. rewrite (HE n Hn). replace n with (32 + (n - 32))%nat at 1 by lia.
   exact (crt_E_extra cx E' (n - 32) HE' ltac:(unfold crt_nextra; lia)). }
 (* the composed journal: FSW_K3.fsw_ajournal_sub5, whose FP relation is exactly fsw_fp_sub's five arms (the fifth, an
-   entry-frame byte, came with S0 b04db294041's kit update), so HFP fits as given *)
+   entry-frame byte, came with S0's kit update), so HFP fits as given *)
 assert (HJ2 : ajournal tfibsegs B STK_check_round_trip (spZ (c_regs cx)) FS_PSTAT_FP (c_ly cx) (c_S cx) (c_W cx)
     (unpoison (c_U cx) (c_mem cx)) (c_md cx) [(3, c_pos cx)] ly' S' W' (unpoison U' mem') md' (k + kc)).
 { eapply (fsw_ajournal_sub5 B STK_check_round_trip (spZ (c_regs cx)) FS_PSTAT_FP (c_ly cx) (c_S cx) (c_W cx)
@@ -867,14 +868,14 @@ apply (crt_raw_of_unp B ly S U W mem md ly' S' U' W' mem' md' (p + i) HARU HARU'
 Qed.
 
 (* ================= the encode call (0x81c80), its premises and its boundary =================
-   Ported from d25a984c903 check_round_trip_stdefs.v St0 :215 (the cut at the encode call: the body bd with its block,
+   Ported from check_round_trip_stdefs.v St0 :215 (the cut at the encode call: the body bd with its block,
    the text t, the frame and the statics) and check_round_trip_sd0.v st0 :136 (St1 -> St0). encode_spec's premises are
    read off crt_base and the call-site state; the ones that speak of memory come in as hypotheses, because the walk
    proves them once, at the entry, from the runs' own keeps. ---- *)
 Hypothesis ENCODE : @FSH_Fn_writer.encode_spec fx rc SK B tfibsegs.
 Hypothesis IMG : fs_img_facts tfibsegs B.
 
-(* the decoded body's length: at most 3/4 of the text's, so well inside encode's 2 ^ 27 (ported from d25a984c903
+(* the decoded body's length: at most 3/4 of the text's, so well inside encode's 2 ^ 27 (ported from
    check_round_trip_top.v crt_dec_len :52, which is WriterSpecFacts.b64_dec_bound here) *)
 Lemma crtA_len : forall (tb : list byte) (bs : list Z),
   WriterSpec.b64_dec (HState.zs tb) = Some bs -> Z.of_nat (length tb) <= 3 * 2 ^ 20 ->
@@ -1248,7 +1249,7 @@ Proof. intros ly S lyc Sc own a Ha. right. right. left. split; [exact Ha | exact
    the blocks of the calls since (blks); U = the entry's U plus the text's head; the text's block and bytes; the
    statics after encode's one g_count bump; and the callee-saved registers the rest of the walk reads: s2 = the shadow
    base, s4 = |bs|, s5 = bd, s7 = F, s9 = t. The body bd and the input t are entry blocks, so their bytes come from the
-   journal's block clause wherever they are read (crtA_blk_keep) and are not carried. Ported from d25a984c903
+   journal's block clause wherever they are read (crtA_blk_keep) and are not carried. Ported from
    check_round_trip_stdefs.v St0 :215 / St1 :229 / St2 :244, whose cuts carry the same facts. ---- *)
 Definition crtA_blen (cx : crt_cx) : Z := Z.of_nat (length (c_bs cx)).
 Definition crtA_En (cx : crt_cx) : Z := (crtA_blen cx + 2) / 3 * 4.
@@ -1290,7 +1291,7 @@ Definition crtA_INV_81cbc : crt_inv := fun cx E k ly3 S3 U3 W3 ms3 md3 =>
    encode's premises (crtA_pre_encode: bd's bytes and block by the journal's block clause, the statics by the three
    runs' image keeps). The refused arm of encode_spec needs g_count = SIZE_MAX, which crt_base's `quiet` excludes; the
    success arm is crossed by crtA_after_call at nb = 48, and the walk picks c_text := encode's result there. Ported
-   from d25a984c903 check_round_trip_top.v crt_run_pro :953 / crt_run_sm :1017 / crt_run_setup :1129 and
+   from check_round_trip_top.v crt_run_pro :953 / crt_run_sm :1017 / crt_run_setup :1129 and
    check_round_trip_sd0.v st0 :136 (St1 -> St0, the encode crossing). ---- *)
 Lemma crtA_reg_eq : forall (x : word) z, bv_unsigned x = z -> 0 <= z < 2 ^ 64 -> x = Z_to_bv 64 z.
 Proof. intros x z <- _. symmetry. apply Z_to_bv_bv_unsigned. Qed.
@@ -1873,7 +1874,7 @@ Qed.
 (* ================= segment 2: 0x81c84 -> malloc (want) -> 0x81ca8 =================
    0x81c84 `sd a0, 0x30(s1)` (the text's slot), 0x81c88 / 0x81c8c the constant 0xaaaaaaaaaaaaaaab (crtA_kcell),
    0x81c90 .. 0x81c9c s6 := (|bs| + 2) / 3 * 4 (crtA_En_U), 0x81ca0 a0 := s6 + 1, 0x81ca4 `jal __wrap_malloc`. The walk
-   picks c_want := malloc's result. Ported from d25a984c903 check_round_trip_sd1.v (St1 -> St0's malloc step). *)
+   picks c_want := malloc's result. Ported from check_round_trip_sd1.v (St1 -> St0's malloc step). *)
 Definition crtA_cs1b : list YP09.chunk :=
   [YP09.mkChunk 0x10 (CVal 8 (SOff 47 0)); YP09.mkChunk 0x30 (CVal 8 (SOff 48 0)); YP09.mkChunk 0x50 (CVal 8 (SOff 47 0))].
 Definition crtA_ssC2 : sstate :=
@@ -2014,7 +2015,7 @@ Qed.
    crt_rt_call, whose post keeps every byte outside the callee's stack window). t is cstr_ok at the call from the
    entry's block and bytes (the journal's block clause) and from crt_base's last conjunct, which keeps the input clear
    of every user-poisoned head of the entry's U; the text's head is a different live block's. The return is re-seated
-   by crtA_reseat (a Theorem Labs lane's a23_reseat, a working branch d1bbf1448b5 FSH_crt_segA23.v:130-251, renamed). *)
+   by crtA_reseat (a Theorem Labs lane's a23_reseat, a working branch FSH_crt_segA23.v:131-252, renamed). *)
 Lemma crtA_reseat : forall cx E k ly' S' U' (W' : world tfibsegs) regs' mem' md' r cs1 csF,
   crt_E cx E -> spZ (c_regs cx) mod 16 = 0 -> 192 <= spZ (c_regs cx) ->
   alloc_ceiling + STK_check_round_trip <= spZ (c_regs cx) -> spZ (c_regs cx) <= 2 ^ 47 ->
@@ -2384,7 +2385,7 @@ Qed.
 
 (* ================= segment 4: 0x81cb4 -> malloc (same) -> 0x81cbc =================
    0x81cb4 `addi a0, a0, 1` (|tb| + 1), 0x81cb8 `jal __wrap_malloc`. The record does not move (c_want was picked at
-   0x81ca8): crtA_malloc_call at nb = 50 with w := c_want. Ported from d25a984c903 check_round_trip_sd1.v (the second
+   0x81ca8): crtA_malloc_call at nb = 50 with w := c_want. Ported from check_round_trip_sd1.v (the second
    malloc of St1 -> St0). *)
 Definition crtA_ssC4 : sstate :=
   Eval vm_compute in fst (sym_run_toN tfibsegs crt_tbl FUEL PC_malloc (crtA_ssR 0x81cb4 crtA_cs1b [])).
@@ -2754,7 +2755,7 @@ Definition crtA_csF5 : list YP09.chunk :=
 Definition crtA_shadow5 : YP09.region :=
   YP09.mkRegion (Some 19%nat) 0 64 0 64 [YP09.mkChunk 56 (CVal 1 (SLit 0))].
 
-(* ---- a Theorem Labs lane's crt6_keepA (lib/A/FSH_crt_keepA0.v, taken by path from a working branch ff3fb23bb7b):
+(* ---- a Theorem Labs lane's crt6_keepA (lib/A/FSH_crt_keepA0.v, taken by path from a working branch):
    the whole memory and arithmetic content of crt_keepA and crt_l5_mem at A0's exit state, from the blocks A0 hands
    it. crtA_exit5 below applies it. ---- *)
 

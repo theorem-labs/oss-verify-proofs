@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the hand-off is stated over the run's whole launch input, with the hand-off table, plan and result shape read at its CONFIG_RSEQ flag and one certificate per flag value, and passes the table's bounds on the vDSO tail of the reserved list to the runtime hand-off; taken in part from projects/simdjson/fuzz_ondemand/proofs/lib/A/TopA.v, lines 28-32, 40-44, 50-66, 71-89, 106-107. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -24,8 +25,11 @@ Import ListNotations.
 Import AX2. Import AX2S. Import AP.
 Open Scope Z_scope.
 
-Definition hs_all_ok (ch : acs) : bool :=
-  (Z.eqb (pc ch) a_main && hs_start_ok ch && hs_rt_ok ASAN_A ch && hs_g1_ok ch)%bool.
+(* [r] is the launch's CONFIG_RSEQ bit.  [hs_start_ok] and [hs_g1_ok] carry it
+   because the revision's auxv vector is rseq-dependent, so the argv and stack
+   window they check move with the flag. *)
+Definition hs_all_ok (r : Z) (ch : acs) : bool :=
+  (Z.eqb (pc ch) a_main && hs_start_ok r ch && hs_rt_ok ASAN_A ch && hs_g1_ok r ch)%bool.
 
 Lemma asan_segtop : img_hi ASAN_A = SEGTOP_A.
 Proof. reflexivity. Qed.
@@ -33,41 +37,56 @@ Lemma asan_shoff : shadow_off ASAN_A = SHB.
 Proof. reflexivity. Qed.
 Lemma asan_lim : AsanInit.LIMIT = VMLIMIT.
 Proof. reflexivity. Qed.
+(* The vDSO tail bounds RT_init.ri_artm reads off the table: two intervals, 20 pages. *)
+Lemma asan_nresx : (n_resx ASAN_A <= 2)%nat.
+Proof. cbn. lia. Qed.
+Lemma asan_resxb : resx_bytes ASAN_A <= 81920.
+Proof. unfold resx_bytes. cbn. lia. Qed.
 
 Section Cert.
 
   Variable IT0 : itab.
   Hypothesis IT0_ok : itab_sound ASEGS IT0.
-  Variable HS_asan : nat -> option acs.
-  Variable startup_plan : plan.
-  Variable startup_shape : shape.
+  (* ONE CHAIN PER CONFIG_RSEQ VALUE (A/TopA_start.v): the hand-off table, the plan and
+     the result shape are read at the run's own [rseq_z (kb_rseq (in_kernel inp))]; the
+     hand-off states move with [AUXSZ r = 432 + 32 * r], so one table cannot serve both. *)
+  Variable HS_asan : Z -> nat -> option acs.
+  Variable startup_plan : Z -> plan.
+  Variable startup_shape : Z -> shape.
   Variables KC0 BFUEL FUEL : nat.
-  Hypothesis startup_cert :
-    check ASEGS IT0 ASAN_A NX0 AsanInit.LIMIT XN0 XE0 XB0 HS_asan KC0 BFUEL FUEL None asan_a_init startup_plan = COk startup_shape.
-  Hypothesis Hshape : holes_only startup_shape = true.
-  Hypothesis HS_ok : forall h ch, HS_asan h = Some ch -> hs_all_ok ch = true.
+  (* ONE CERTIFICATE PER CLOSED [rseq_z b], joined by the [forall b] wrapper --
+     the type [AS/AsanStartupCert.v]'s [startup_cert] proves. *)
+  Hypothesis startup_cert : forall b : bool,
+    check ASEGS IT0 ASAN_A NX0 AsanInit.LIMIT (rseq_z b) XN0 XE0 XB0 (HS_asan (rseq_z b)) KC0 BFUEL FUEL None
+          (asan_a_init (rseq_z b)) (startup_plan (rseq_z b)) = COk (startup_shape (rseq_z b)).
+  Hypothesis Hshape : forall b : bool, holes_only (startup_shape (rseq_z b)) = true.
+  Hypothesis HS_ok : forall (b : bool) h ch, HS_asan (rseq_z b) h = Some ch -> hs_all_ok (rseq_z b) ch = true.
 
   Variable CL : client_A.
-  Hypothesis HS_cl : forall h ch, HS_asan h = Some ch -> cl_hs_ok CL ch = true.
+  Hypothesis HS_cl : forall (b : bool) h ch, HS_asan (rseq_z b) h = Some ch -> cl_hs_ok CL ch = true.
 
   Hypothesis RC : rt_contracts2 RTA.
   Hypothesis IOC : forall Σ m, ART RTA Σ m -> io_consts m.
 
-  Lemma topA_holes : forall (sp : word) (rdraw : EntryDraw) (brk0 : word) (argv envp : list (list byte)) (uid hw : word) (fs : Fs.Fs),
-    valid_sp sp -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp argv envp ->
-    APS.holes_stmt ASEGS ASAN_A NX0 AsanInit.LIMIT HS_asan (SINV0 APH sp rdraw brk0 argv envp uid hw) (argH0 APH sp rdraw argv envp uid hw)
-               (fun _ _ fs' => canonT (argv_Z argv) fs') fs.
+  (* LPS 727298f3: the launch is the run's whole input [inp] (AS/AsanInit.v Section Init),
+     and the hand-off table and checks are read at its own CONFIG_RSEQ flag. *)
+  Lemma topA_holes : forall (sp : word) (rdraw : EntryDraw) (brk0 mbase : word) (inp : ProcInput),
+    valid_sp sp -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+    valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) inp ->
+    APS.holes_stmt ASEGS ASAN_A NX0 AsanInit.LIMIT (HS_asan (rseq_z (kb_rseq (in_kernel inp))))
+      (SINV0 ASAN_A APH sp rdraw brk0 mbase inp) (argH0 sp rdraw inp)
+      (fun _ _ fs' => canonT (argv_Z (in_argv inp)) fs') (in_fs inp).
   Proof using HS_ok HS_cl RC IOC.
-    intros sp rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit.
-    intros h ch Hh E R FULL model HC.
-    pose proof (HS_ok h ch Hh) as HT. unfold hs_all_ok in HT.
+    intros sp rdraw brk0 mbase inp Hsp Hva Hve Hfit Hlaunch Hlau h ch Hh E R FULL model HC.
+    pose proof (HS_ok (kb_rseq (in_kernel inp)) h ch Hh) as HT. unfold hs_all_ok in HT.
     apply andb_prop in HT as [HT HTL]. apply andb_prop in HT as [HT HTR]. apply andb_prop in HT as [Hpc HTS].
     apply Z.eqb_eq in Hpc. rewrite Hpc. cbv beta. rewrite (APS.co_fs _ _ _ _ _ _ _ _ _ _ _ _ HC).
-    exact (hs_hole_rt ASAN_A NX0 AsanInit.LIMIT fs APH sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit asan_in_hull asan_hull_ok
-             asan_segtop asan_shoff asan_lim E ch R FULL model HC HTS HTR HTL (cl_LIB CL)
-             (cl_hs CL ASAN_A NX0 AsanInit.LIMIT _ _ fs asan_in_hull asan_hull_ok (argH0_high APH sp rdraw argv envp uid hw Hsp Hva)
-                E ch R FULL model HC _ (ri_HA' ASAN_A E ch model) (HS_cl h ch Hh))
-             (canonT (argv_Z argv) fs) (main_rta CL RC IOC argv fs Hva)).
+    exact (hs_hole_rt ASAN_A NX0 AsanInit.LIMIT (in_fs inp) APH sp rdraw brk0 mbase inp Hsp Hva Hve Hfit Hlaunch Hlau
+             asan_in_hull asan_hull_ok asan_segtop asan_shoff asan_lim asan_nresx asan_resxb E ch R FULL model HC HTS HTR HTL (cl_LIB CL)
+             (cl_hs CL ASAN_A NX0 AsanInit.LIMIT _ _ (in_fs inp) asan_in_hull asan_hull_ok
+                (hrt_argH_high sp rdraw brk0 mbase inp Hsp Hva Hve Hfit Hlaunch Hlau)
+                E ch R FULL model HC _ (ri_HA' ASAN_A E ch model) (HS_cl (kb_rseq (in_kernel inp)) h ch Hh))
+             (canonT (argv_Z (in_argv inp)) (in_fs inp)) (main_rta CL RC IOC (in_argv inp) (in_fs inp) Hva)).
   Qed.
 
   Theorem s3s_A_of : S3s_stmt_e Asan.M.loaded_segments Asan.M.init_pc Asan.M.phdrs.
@@ -84,6 +103,7 @@ Section Cert.
       (mkImage Plain.M.loaded_segments Plain.M.init_pc Plain.M.phdrs)
       (mkImage Asan.M.loaded_segments Asan.M.init_pc Asan.M.phdrs).
   Proof using IT0_ok startup_cert Hshape HS_ok HS_cl RC IOC.
-    intros HP Hne. exact (error_free_of_S3s _ _ _ HP Hne (S3s_of_e _ _ _ s3s_A_of)).
+    intros HP Hne.
+    exact (error_free_of_S3s Asan.M.loaded_segments _ _ ltac:(repeat constructor) HP Hne (S3s_of_e _ _ _ s3s_A_of)).
   Qed.
 End Cert.

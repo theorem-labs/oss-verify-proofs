@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (tra_img_facts proves one more field, the vDSO reservation budget of the address table). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC.
@@ -109,6 +110,7 @@ constructor.
 - rewrite tra_res_sizes. reflexivity.
 - split; [cbn [rw_lo rw_len TRA]; lia|]. cbn [rw_lo rw_len TRA]. intros m x Hx. apply tra_rw_window. lia.
 - cbn [shadow_off TRA]. lia.
+- (* the vDSO reservation budget (atable n_resx/p_resx, 08b1429) *) cbn. lia.
 Qed.
 Section b. Context {fx : YK11.FPState}.
 Lemma tramusl_fetch : forall (p : word) (w : bv 32),

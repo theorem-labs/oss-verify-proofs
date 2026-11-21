@@ -10,7 +10,7 @@
    WHY AN INDUCTION ON FUEL, AND NOT THE DONOR'S COUNTER
    The donor's harness loop is counted: the trip count sits in env slot 400 and the closure is an induction on
    that counter, which the body decrements by one (proofs/cgif/cgif_file_fuzzer/lib/A/ACfj.v:157-179 at
-   c8557374ad2e, with A/ACfk.v:266 and A/ACfe.v:67 as its two users).  knock's loop has no counter: it runs while
+   theorem-labs/oss-verify-proofs@6b32741d849a, with A/ACfk.v:266 and A/ACfe.v:67 as its two users).  knock's loop has no counter: it runs while
    the input has bytes left, the body eats one, two or three of them, and it also leaves through `i > 4094`.  So
    this file REPLACES the donor's slot-400 induction by the released PLAIN proof's induction on a nat `fuel` with
    `Z.to_nat rem <= fuel` (lib/Prog/LLVMFuzzerTestOneInput.v:83-101 loop_ok and :303-307 knock_loop).
@@ -33,6 +33,7 @@
    contracts the loop calls (a Theorem Labs lane's tknock_heard_specX / tknock_step_specX at knock's entries, lib/A/APgCSpec.v)
    and the laws the segments and S7 use.  S2 (lib/A/APgMain2.v rt_H) consumes rt_loop.  This file adds no walk
    and no arithmetic of its own.  rule 24: no function proved. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

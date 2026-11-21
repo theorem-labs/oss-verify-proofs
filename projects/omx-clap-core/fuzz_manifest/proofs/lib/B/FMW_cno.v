@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan) of lib/A/FMW_cno.v (a working branch 31d1eb57a40).
+(* B twin (fm.asan-ubsan) of lib/A/FMW_cno.v (a working branch).
    check_no_overread 0x80bd4 (fuzz_manifest.c:176-189): check_no_overread_spec at CTX_check_no_overread, by chaining the
    17 segment lemmas of lib/B/FMW_cno_*.v over the resume points of lib/B/FMW_cno0.v. The context fixes ch = [] and
    ra = 0x80a6c (CNO_RA); quiet fixes fail = SIZE_MAX. Every inline shadow check tests a byte inside a block the
@@ -29,7 +29,7 @@ Open Scope Z_scope.
 
 Section S. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 Variable B : asyms.
-Hypothesis FB : FmB B.                                   (* FMW_seg.v:32: code addresses, GOT/cell values, statics not owned *)
+Hypothesis FB : FmB B.                                   (* FMW_seg.v:33: code addresses, GOT/cell values, statics not owned *)
 Hypothesis HB : TfibSyms B.                              (* YF0m.v (lib/ReusableB) *)
 Hypothesis IMG : fm_img_facts tfibsegs B.                (* FMH_Fn.v:56 *)
 Hypothesis UNIV : fm_univ B.                             (* FMH_Fn.v:70: incl Tfib_universe (as_universe B) *)

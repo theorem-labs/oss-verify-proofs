@@ -1,11 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the band walk finds a free page base, band_gap, instead of vm_find_base; vm_gap_available_intro and _intro_N become vm_place_available_intro and _intro_N, through EdDefs.vm_place_available_of_gap in Linux's bottom-up window, and take a page-aligned size; MmapComplete no longer imported). *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Specs Run.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.ALib Require Import MState.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Scfg Require Import EdDefs.
-From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.ALib Require Import MmapComplete.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope Z_scope.
@@ -120,9 +120,13 @@ Let maps := vm_reserved h ++ vm_maps h.
 Hypothesis HnZ : 0 < nZ.
 Hypothesis Htop : CEIL <= alloc_top h.
 
+(** A free page base in the band [[FLOOR, CEIL]]. *)
+Definition band_gap (c : Z) : Prop :=
+  c mod 4096 = 0 /\ FLOOR <= c /\ c + nZ <= CEIL /\ region_free maps (Z_to_bv 64 c) (Z_to_bv 64 nZ) = true.
+
 Lemma walk_step : forall c,
   c mod 4096 = 0 -> FLOOR <= c -> c + nZ + pot nZ c maps <= CEIL ->
-  (exists a, vm_find_base h nZ = Some a)
+  (exists c', band_gap c')
   \/ (exists e, In e maps /\ above c e = true /\ glo e < c + nZ).
 Proof.
   intros c Hal Hfl Hinv. pose proof FLOOR_val as FV. pose proof CEIL_val as CV.
@@ -130,12 +134,7 @@ Proof.
   assert (Hc64 : 0 <= c < 2^64) by (unfold FLOOR, CEIL in *; lia).
   assert (HnZ64 : 0 <= nZ < 2^64) by (unfold FLOOR, CEIL in *; lia).
   destruct (region_free maps (Z_to_bv 64 c) (Z_to_bv 64 nZ)) eqn:Hfree.
-  - left. apply (MmapComplete.vm_find_base_complete h nZ (Z_to_bv 64 c)); rewrite ?unsigned_lit by exact Hc64.
-    + lia.
-    + rewrite page_size_4096. exact Hal.
-    + lia.
-    + unfold CEIL in *. lia.
-    + exact Hfree.
+  - left. exists c. unfold band_gap. split; [exact Hal|]. split; [exact Hfl|]. split; [lia | exact Hfree].
   - right. destruct (region_free_false_inv _ _ _ Hfree) as (e & Hin & Hov). exists e.
     unfold iv_overlap in Hov. rewrite !unsigned_lit in Hov by assumption. apply andb_prop in Hov as [O1 O2].
     apply Z.ltb_lt in O1. apply Z.ltb_lt in O2.
@@ -149,7 +148,7 @@ Qed.
 Lemma walk : forall k c,
   (length (List.filter (above c) maps) <= k)%nat ->
   c mod 4096 = 0 -> FLOOR <= c -> c + nZ + pot nZ c maps <= CEIL ->
-  exists a, vm_find_base h nZ = Some a.
+  exists c', band_gap c'.
 Proof.
   induction k as [|k IH]; intros c Hk Hal Hfl Hinv.
   - destruct (walk_step c Hal Hfl Hinv) as [Hok|(e & Hin & Hab & Hlo)]; [exact Hok|].
@@ -170,13 +169,16 @@ Proof.
 Qed.
 End Walk.
 
-Theorem vm_gap_available_intro : forall h nZ,
-  0 < nZ -> CEIL <= alloc_top h ->
+(** A free page base in the band lies in Linux's bottom-up window
+    [[task_unmapped_base, alloc_top]], so the placement is available
+    ([EdDefs.vm_place_available_of_gap]) whatever the hint. *)
+Theorem vm_place_available_intro : forall h thp hint nZ,
+  0 < nZ -> nZ mod page_size = 0 -> CEIL <= alloc_top h ->
   let maps := vm_reserved h ++ vm_maps h in
   (Z.of_nat (length (List.filter in_band_b maps)) + 1) * (nZ + 4095) + live_bytes maps <= CEIL - FLOOR ->
-  vm_gap_available h nZ = true.
+  vm_place_available h thp hint nZ = true.
 Proof.
-  intros h nZ HnZ Htop maps Hb. unfold vm_gap_available.
+  intros h thp hint nZ HnZ Hnal Htop maps Hb.
   assert (Hinv : FLOOR + nZ + pot nZ FLOOR maps <= CEIL).
   { unfold pot. rewrite <- sum_sz_live_bytes in Hb.
     assert (L1 : (length (List.filter (above FLOOR) maps) <= length (List.filter in_band_b maps))%nat).
@@ -184,22 +186,25 @@ Proof.
     pose proof (sum_sz_filter_le (above FLOOR) maps). pose proof (sum_sz_nonneg maps).
     assert (M : Z.of_nat (length (List.filter (above FLOOR) maps)) * (nZ + 4095)
                 <= Z.of_nat (length (List.filter in_band_b maps)) * (nZ + 4095)) by (apply Z.mul_le_mono_nonneg_r; lia).
-    lia. }
-  destruct (walk h nZ HnZ Htop (length (List.filter (above FLOOR) maps)) FLOOR (le_n _) FLOOR_aligned (Z.le_refl _) Hinv) as [a ->].
-  reflexivity.
+    clear Hnal. lia. }
+  destruct (walk h nZ HnZ Htop (length (List.filter (above FLOOR) maps)) FLOOR (le_n _) FLOOR_aligned (Z.le_refl _) Hinv)
+    as (c & Hc1 & Hc2 & Hc3 & Hc4).
+  apply (vm_place_available_of_gap h thp hint nZ HnZ Hnal). exists c. right.
+  unfold gap_fits. split; [exact Hc1|]. split; [unfold task_unmapped_base, FLOOR in *; clear Hnal Hc1; lia|].
+  split; [clear Hnal Hc1; lia | exact Hc4].
 Qed.
 
-Corollary vm_gap_available_intro_N : forall h nZ N R T,
-  0 < nZ <= R -> CEIL <= alloc_top h ->
+Corollary vm_place_available_intro_N : forall h thp hint nZ N R T,
+  0 < nZ <= R -> nZ mod page_size = 0 -> CEIL <= alloc_top h ->
   let maps := vm_reserved h ++ vm_maps h in
   Z.of_nat (length (List.filter in_band_b maps)) <= N ->
   live_bytes maps <= T ->
   (N + 1) * (R + 4095) + T <= CEIL - FLOOR ->
-  vm_gap_available h nZ = true.
+  vm_place_available h thp hint nZ = true.
 Proof.
-  intros h nZ N R T HnZ Htop maps HN HT HB. apply vm_gap_available_intro; [lia| exact Htop|]. fold maps.
+  intros h thp hint nZ N R T HnZ Hnal Htop maps HN HT HB. apply vm_place_available_intro; [lia| exact Hnal | exact Htop|]. fold maps.
   set (L := Z.of_nat (length (List.filter in_band_b maps))) in *.
   assert (M1 : (L + 1) * (nZ + 4095) <= (N + 1) * (nZ + 4095)) by (apply Z.mul_le_mono_nonneg_r; lia).
   assert (M2 : (N + 1) * (nZ + 4095) <= (N + 1) * (R + 4095)) by (apply Z.mul_le_mono_nonneg_l; subst L; lia).
-  lia.
+  clear Hnal. lia.
 Qed.

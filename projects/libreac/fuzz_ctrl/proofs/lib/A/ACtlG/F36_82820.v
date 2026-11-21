@@ -64,10 +64,10 @@
      registered-globals table of a Theorem Labs lane's spec (its Section variable GLOBS) holds the catalogue; owner: whoever
      fixes GLOBS with a Theorem Labs lane's HGM (a Theorem Labs lane / the walk top).
    - CM_SPEC : A.Prog.C_reac_box_catalogue_match.treac_box_catalogue_match_spec (SK := A.AE2k.tfib_sink_head)
-     B RLO RHI GLOBS: a Theorem Labs lane's constant itself (lib/A/Prog/C_reac_box_catalogue_match.v:116, the statement-only
-     file, blob 7d25cf12319 (the blob this tree had at release c5e779efe8c), taken by path (from a working branch 43728b681c5) onto this branch until
+     B RLO RHI GLOBS: a Theorem Labs lane's constant itself (lib/A/Prog/C_reac_box_catalogue_match.v:117, the statement-only
+     file, blob 7d25cf12319 (the blob this tree had at release), taken by path (from a working branch) onto this branch until
      a Theorem Labs lane's glue base carries it).  Owner a Theorem Labs lane (pb_reac_box_catalogue_match discharges it).
-   - ROUTE (C) (L3; a shell from a working branch 8ce82d7e310; ACtlCut.v:243): ctl_from's runtime premise is
+   - ROUTE (C) (L3; a shell from a working branch; ACtlCut.v:243): ctl_from's runtime premise is
      A.ACtlRtC.ctl_rt_C B ly3 S3 mem3 (was ACtlCut.ctl_rt mem3).  The stage reads no shadow byte from it (Hrt is
      unused; the callee spec CM_SPEC takes no shadow_rw), and the exit's ctl_rt_C B ly' S' mem' is a Theorem Labs lane's
      PROVED A.ProgWorldCtlRtC.ctl_rt_C_of_AR, cited by name; so VIS0 / OWNED_RO are no longer Section hypotheses.
@@ -75,11 +75,11 @@
    NAMES: every lib/Reusable and lib/Lib module is Required from its own directory and used through a full-path
    Module alias (a Theorem Labs lane 05:28Z: 160 + 15 twins).  getr / mkst / seg_rom / cfg_at only through those aliases.
 
-   BUILD STATE: type-check on 5da74c9c931, closure reaches no stand-in (glue base 121bf608343: AE2k / AF0m /
+   BUILD STATE: type-check, closure reaches no stand-in (glue base: AE2k / AF0m /
    AF0l / ACej / ACeh compiled from their own text, no port_core_refused substitution).  No Axiom, Parameter, Admitted
    or admit.
    START-UP VALUES READ: TFIB_SYMS's ts_owned / ts_errno (f36c_cat_not_owned); the same verdict holds on the record
-   AF0m (a working branch e56483f863b AF0m.v:18, :2965-2981: the neighbours (0x9e7d0, 0x30) and
+   AF0m (a working branch AF0m.v:19, :2966-2982: the neighbours (0x9e7d0, 0x30) and
    (0x9f4b8, 0x328) touch the table exactly, errno 0x5db76c). *)
 
 From Coq Require Import ZArith List Lia Permutation.

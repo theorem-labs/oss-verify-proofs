@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YA0n.v, with its module paths changed; its addresses are still cgif_file_fuzzer.asan's. *)
-(* Modified by Theorem Labs, 2026-10: the world record gains the field w_H8 (on the two shadow bands, w_H is constant on each 8-byte-aligned word); mkW and the wle_* lemmas that build mkW take its proof. The text of origin/cold/port-fm-rtprintf-param 3e35620c52e proofs/omx-clap-core/fuzz_manifest/lib/Reusable/YA0n.v:5, :13, :22-33, :271, :277 (the field's author's), module paths fuzz_manifest -> fuzz_preset. *)
+(* Modified by Theorem Labs, 2026-10: the world record gains the field w_H8 (on the two shadow bands, w_H is constant on each 8-byte-aligned word); mkW and the wle_* lemmas that build mkW take its proof. The text of proofs/omx-clap-core/fuzz_manifest/lib/Reusable/YA0n.v:5, :13, :22-33, :271, :277 (the field's author's), module paths fuzz_manifest -> fuzz_preset. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import Wellfounded.

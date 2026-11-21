@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v; 497 of its 510 lines of code are new or changed and 235 lines of the source are left out. *)
-(* Footprint (_F) re-run of reac_box_model_block_cases0.v at a working branch d69f7c708f6 (proved v1.9
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Footprint (_F) re-run of reac_box_model_block_cases0.v at a working branch (proved v1.9
    run of record) over lib/Lib/StepF: cs0_F follows cs0's script and sfacts is a Lemma with its own proof; the script edits include `hide_sec.` first, footprint (rng, shadow-cover) steps, the R16 / R20 reorder with `clear R16`, RIr / ROr for RI / RO, two `clear - ... lia.` bullets, `unfold BCASES0A.H8` for `unfold H8` and `f_equal; lia` for `f_equal. lia`.
    Image: fuzz_ctrl.asan (libreac v1.9.0), ELF sha256
-   78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd. FACTS ed6b6b7b0ab.
+   78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd. FACTS.
    Const cells checked against the v1.9.0 image bytes: none read (the run of this file reads the row fields at
    p + 16, p + 20, p + 252, p + 253, p + 290 and their shadow bytes, writes the eight header bytes of the out
    block [o, o + 8) and calls __asan_memset at 0x85e14 / 0x86624; it reads no image or runtime cell with a fixed
@@ -86,7 +87,7 @@ Set Default Proof Mode "Classic".
 (* An opaque wrapper: a hypothesis of type mb_hide T is invisible to lia. *)
 Definition mb_hide (P : Prop) : Prop := P.
 
-(* The store hook of the evtF walk of this function (reac_box_model_blockF.v of 3c9fcc93205, as
+(* The store hook of the evtF walk of this function (reac_box_model_blockF.v, as
    reac_box_model_block_cases0aF.v re-issues it): it also transports rd_mono. *)
 Local Ltac footprint_after_store segs m a bs ::=
   repeat match goal with
@@ -106,7 +107,7 @@ Local Ltac footprint_after_store segs m a bs ::=
    The hook fires ONLY on that wrapped shape: StepF calls acc_hint FIRST in solve_acc1, so a wider pattern (every
    [wa a]) would shadow StepF's own cheap paths and run lia over every rng hypothesis at every access of the run
    (a Theorem Labs lane, 06:4xZ: a 3 h compile of cases0aF).  It does no division reasoning (text of
-   reac_box_model_block_cases0aF.v:120-132): cs0_F puts each shadow byte it reads in the bare form
+   reac_box_model_block_cases0aF.v:121-133): cs0_F puts each shadow byte it reads in the bare form
    [rng RNG (x / 8 + off) 1] (the division argument made once per region, not at every access). *)
 Ltac mb_accF :=
   lazymatch goal with

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the place_declined_b premise of rz_mmap_grant and RomBase.sys_rob in the rz node). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -23,6 +24,7 @@ Open Scope bv_scope.
 (* [comment removed for export] *)
 From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Lib Require Import CpsOpen.
 From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Common Require Import CfgStep AllocRefusal.
+From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Common.Cfg Require RomBase.
 
 (* [comment removed for export] *)
 
@@ -277,6 +279,7 @@ Inductive realizes : config -> TSet -> Prop :=
 | rz_node : forall c (I : Type) (evs : I -> list event) (nx : I -> config)
                    (T : I -> TSet) (i0 : I),
     node_ok c I evs nx ->
+    RomBase.sys_rob segs c ->   (* LPS 08b1429: the node's syscall reads the same over a larger backing *)
     (forall i, realizes (nx i) (T i)) ->
     realizes c (t_alt (fun i => t_emit (evs i) (T i)))
 | rz_halt : forall c,
@@ -289,7 +292,7 @@ Inductive realizes : config -> TSet -> Prop :=
 
 Lemma realizes_nonempty : forall c T, realizes c T -> T [].
 Proof.
-  intros c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq].
+  intros c T H; induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq].
   - exists i0. left. apply is_prefix_nil.
   - reflexivity.
   - apply Heq. exact IH.
@@ -298,7 +301,7 @@ Qed.
 Lemma realizes_pclosed : forall c T, realizes c T ->
   forall tr tr', T tr -> is_prefix tr' tr -> T tr'.
 Proof.
-  intros c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+  intros c T H; induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq];
     intros tr tr' HT Hp.
   - destruct HT as [i [Hpre | (tr0 & -> & HT0)]]; exists i.
     + left. eapply is_prefix_trans; eauto.
@@ -314,7 +317,7 @@ Qed.
 Lemma realizes_star_only : forall c T, realizes c T ->
   forall tr c', star_cfg segs kit_cfg c tr c' -> T tr.
 Proof.
-  intros c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+  intros c T H; induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq];
     intros tr c' Hstar.
   - inversion Hstar as [|c1 e c2 tr2 c3 Hss Hstar2]; subst.
     + exists i0. left. apply is_prefix_nil.
@@ -331,7 +334,7 @@ Qed.
 Lemma realizes_admits : forall c T, realizes c T ->
   forall tr, T tr -> obs_trace_cfg segs kit_cfg c tr.
 Proof.
-  intros c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+  intros c T H; induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq];
     intros tr HT.
   - destruct Hnode as [Hcomp _].
     destruct HT as [i [Hpre | (tr0 & -> & HT0)]].
@@ -378,7 +381,7 @@ Lemma realizes_step : forall c T e c',
   realizes c T -> sstep_cfg segs kit_cfg c e (SNext c') -> exists T', realizes c' T'.
 Proof.
   intros c T e c' H; revert e c';
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq];
     intros e c' Hss.
   - destruct Hnode as [_ Hsound].
     destruct (Hsound e (SNext c') Hss) as (i & _ & Heq2).
@@ -391,7 +394,7 @@ Lemma realizes_no_sserror : forall c T e,
   realizes c T -> ~ sstep_cfg segs kit_cfg c e SError.
 Proof.
   intros c T e H; revert e;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq];
     intros e Hss.
   - destruct Hnode as [_ Hsound].
     destruct (Hsound e SError Hss) as (i & _ & Hbad). discriminate.
@@ -443,12 +446,13 @@ Qed.
 (* [comment removed for export] *)
 Lemma rz_silent1 : forall c c' T,
   node_ok c unit (fun _ => []) (fun _ => c') ->
+  RomBase.sys_rob segs c ->
   realizes c' T ->
   realizes c T.
 Proof.
-  intros c c' T Hnode Hc.
+  intros c c' T Hnode Hrob Hc.
   apply (rz_conseq c (t_alt (fun _ : unit => t_emit [] T))).
-  - apply (rz_node c unit (fun _ => []) (fun _ => c') (fun _ => T) tt Hnode).
+  - apply (rz_node c unit (fun _ => []) (fun _ => c') (fun _ => T) tt Hnode Hrob).
     intros []; exact Hc.
   - eapply t_eq_trans;
       [ apply (t_alt_unit (fun _ : unit => t_emit [] T))
@@ -458,12 +462,13 @@ Qed.
 (* [comment removed for export] *)
 Lemma rz_emit1 : forall c c' e T,
   node_ok c unit (fun _ => e) (fun _ => c') ->
+  RomBase.sys_rob segs c ->
   realizes c' T ->
   realizes c (t_emit e T).
 Proof.
-  intros c c' e T Hnode Hc.
+  intros c c' e T Hnode Hrob Hc.
   apply (rz_conseq c (t_alt (fun _ : unit => t_emit e T))).
-  - apply (rz_node c unit (fun _ => e) (fun _ => c') (fun _ => T) tt Hnode).
+  - apply (rz_node c unit (fun _ => e) (fun _ => c') (fun _ => T) tt Hnode Hrob).
     intros []; exact Hc.
   - apply t_alt_unit.
 Qed.
@@ -472,18 +477,19 @@ Qed.
 Lemma rz_alt2 : forall c (IA IB : Type) (nx : IA + IB -> config) (A B : TSet)
                        (a0 : IA) (b0 : IB),
   node_ok c (IA + IB) (fun _ => []) nx ->
+  RomBase.sys_rob segs c ->
   (forall i, realizes (nx (inl i)) A) ->
   (forall i, realizes (nx (inr i)) B) ->
   realizes c (t_alt2 A B).
 Proof.
-  intros c IA IB nx A B a0 b0 Hnode HA HB.
+  intros c IA IB nx A B a0 b0 Hnode Hrob HA HB.
   assert (HA0 : A []) by (eapply realizes_nonempty; apply (HA a0)).
   assert (HB0 : B []) by (eapply realizes_nonempty; apply (HB b0)).
   apply (rz_conseq c
     (t_alt (fun i : IA + IB =>
               t_emit [] (match i with inl _ => A | inr _ => B end)))).
   - apply (rz_node c (IA + IB) (fun _ => []) nx
-             (fun i => match i with inl _ => A | inr _ => B end) (inl a0) Hnode).
+             (fun i => match i with inl _ => A | inr _ => B end) (inl a0) Hnode Hrob).
     intros [i|i]; [apply HA | apply HB].
   - intro tr. unfold t_alt2. split.
     + intros [[i|i] Hi];
@@ -532,7 +538,7 @@ Lemma rz_step : forall ms model ms' T,
   realizes (mkCfg ms model) T.
 Proof.
   intros ms model ms' T Hh Hlazy Hsvc Hstep Hc.
-  eapply rz_silent1; [apply node_instr; eassumption | exact Hc].
+  eapply rz_silent1; [apply node_instr; eassumption | apply RomBase.sys_rob_instr; exact Hsvc | exact Hc].
 Qed.
 
 Lemma rz_msteps : forall ms ms' model T,
@@ -583,6 +589,8 @@ Proof.
     + intros e st Hss.
       destruct (sstep_exit_inv segs ms model x8 e st Hh Hsvc Hx8 Hss) as [-> ->].
       exists tt. split; reflexivity.
+  - eapply RomBase.sys_rob_memfree; [exact Hsvc|].
+    destruct Hx8 as [E | E]; rewrite E; [exact RomBase.memfree_93 | exact RomBase.memfree_94].
   - apply rz_halt. cbn. discriminate.
 Qed.
 
@@ -598,20 +606,24 @@ Lemma rz_munmap : forall ms model x8 T,
   realizes (mkCfg ms model) T.
 Proof.
   intros ms model x8 T Hh Hlazy Hsvc Hno Hargs Hc.
-  eapply rz_silent1; [| exact Hc].
-  apply node_ok_of_u; [apply (kit_pending_on_sysno segs ms model x8 215 Hsvc Hno); reflexivity |].
+  eapply rz_silent1; [| eapply RomBase.sys_rob_memfree; [exact Hsvc | rewrite Hno; exact RomBase.memfree_215] | exact Hc].
+  (* munmap is an alloc-family injected call at the revision, so the node
+     lives over the config-filtered step: the ENOMEM child is a refusal
+     and is dropped, the cut returns 0 and is not one. *)
   split.
-  - intros []. apply (sstep_syscall segs ms model x8 (munmap_eff ms)
+  - intros []. apply (sstep_cfg_syscall segs kit_cfg ms model x8 (munmap_eff ms)
                         (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model)
                         (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) []).
     + exact Hh.
     + exact Hsvc.
     + apply munmap_ok; assumption.
+    + apply spurious_refusal_not_refusal. unfold munmap_eff. cbn [eff_ret].
+      exact (munmap_ret0_not_refusal segs ms model x8 Hno).
     + rewrite munmap_model_halted; exact Hh.
     + apply materialize_model_accesses_no_lazy.
       exact (munmap_model_no_lazy _ _ _ Hlazy).
   - intros e st Hss.
-    destruct (sstep_munmap_inv segs ms model x8 e st Hh Hlazy Hsvc Hno Hargs Hss)
+    destruct (sstep_cfg_munmap_inv segs ms model x8 e st Hh Hlazy Hsvc Hno Hargs Hss)
       as [-> ->].
     exists tt. split; reflexivity.
 Qed.
@@ -619,13 +631,14 @@ Qed.
 (* [comment removed for export] *)
 Lemma rz_silent_all : forall c (I : Type) (nx : I -> config) (T : TSet) (i0 : I),
   node_ok c I (fun _ => []) nx ->
+  RomBase.sys_rob segs c ->
   (forall i, realizes (nx i) T) ->
   realizes c T.
 Proof.
-  intros c I nx T i0 Hnode HT.
+  intros c I nx T i0 Hnode Hrob HT.
   assert (HT0 : T []) by (eapply realizes_nonempty; apply (HT i0)).
   apply (rz_conseq c (t_alt (fun _ : I => t_emit [] T))).
-  - apply (rz_node c I (fun _ => []) nx (fun _ => T) i0 Hnode). exact HT.
+  - apply (rz_node c I (fun _ => []) nx (fun _ => T) i0 Hnode Hrob). exact HT.
   - intro tr. split.
     + intros [i Hi]. exact (proj1 (t_emit_nil_eq T HT0 tr) Hi).
     + intros H. exists i0. exact (proj2 (t_emit_nil_eq T HT0 tr) H).
@@ -638,14 +651,20 @@ Lemma rz_mmap_grant : forall ms model x8 B,
   ms_svc_pending ms = Some x8 ->
   bv_unsigned x8 = 222%Z ->
   mmap_args_ok ms ->
-  mmap_grant_refusable (ms_gpr ms 3) model (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
+  mmap_grant_refusable (ms_gpr ms 0) (ms_gpr ms 3) model (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
+  (* LPS 727298f3 (#144/#146): a declined placement above [State.alloc_top] is
+     unmodeled, so [check_mmap] is a conditional on [place_declined_b]; the
+     premise is the model's own, threaded from [mmap_succ_ok] and
+     [sstep_cfg_mmap_grant_inv]. *)
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   (forall a, grant_ok (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true ->
      realizes (mkCfg (advance_past_svc
                        (apply_effect ms (mkEffect a [] [(a, page_round_up (ms_gpr ms 1))])))
                      (mmap_model a (page_round_up (ms_gpr ms 1)) model)) B) ->
   realizes (mkCfg ms model) B.
 Proof.
-  intros ms model x8 B Hh Hlazy Hsvc Hno Hargs Hnf HB.
+  intros ms model x8 B Hh Hlazy Hsvc Hno Hargs Hnf Hdecl HB.
   set (n := page_round_up (ms_gpr ms 1)).
   set (nZ := page_round_up_Z (bv_unsigned (ms_gpr ms 1))).
   destruct (not_refusable_grant ms model Hargs Hnf) as [a0 Ha0].
@@ -670,9 +689,10 @@ Proof.
       * apply materialize_model_accesses_no_lazy.
         exact (eq_trans (mmap_model_lazy _ _ _) Hlazy).
     + intros e st Hss.
-      destruct (sstep_cfg_mmap_grant_inv segs ms model x8 e st Hh Hlazy Hsvc Hno Hargs Hnf Hss)
+      destruct (sstep_cfg_mmap_grant_inv segs ms model x8 e st Hh Hlazy Hsvc Hno Hargs Hnf Hdecl Hss)
         as [-> (a & Ha & ->)].
       exists (exist _ a Ha). split; reflexivity.
+  - eapply RomBase.sys_rob_memfree; [exact Hsvc | rewrite Hno; exact RomBase.memfree_222].
   - intros [a Ha]; cbn. apply HB; exact Ha.
 Qed.
 
@@ -681,6 +701,12 @@ Qed.
 (* [comment removed for export] *)
 
 End WithSegs.
+
+(* LPS 08b1429: [RomBase.sys_rob] at an instruction node, and at a node whose syscall does not
+   read [in_mem] (from the equation naming its number). *)
+Ltac rob_instr := apply RomBase.sys_rob_instr; cbn [cfg_ms]; first [reflexivity | eassumption].
+Ltac rob_mf Heq :=
+  eapply RomBase.sys_rob_memfree; [ first [reflexivity | eassumption] | rewrite Heq; RomBase.memfree_lit ].
 
 (* [comment removed for export] *)
 

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the mmap nodes discharge the decline test from the NULL hint (place_declined_b_null), the mprotect range is apart from the vDSO pair, after lines 80-102, 130-150 and 175-195 of projects/jsoncons/fuzz_json_cursor/proofs/lib/CJ/Bridge/BrNodes.v as in the LPS 727298f3 update, and the munmap node takes the allocation flag. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -108,7 +109,10 @@ Proof.
   { unfold mmap_args_ok. rewrite gpr_areg1, gpr_areg2, gpr_areg3, gpr_areg4, gpr_areg5, H11, H12, H13, H14, H15.
     repeat split; try reflexivity. apply lit_ne0. lia. }
   assert (H0 : ms_gpr ms 0 = Z_to_bv 64 0) by (rewrite gpr_areg0; exact H10).
-  eapply (srz_mmap segs scfg ms model (Z_to_bv 64 222) K Hh Hlazy Hsvc u222 Hargs Halloc).
+  (* the hint is the literal 0 ([cj_at_node]'s [NMmap 0 ...]), and the model
+     never declines a NULL hint: [place_declined_b_null]. *)
+  eapply (srz_mmap segs scfg ms model (Z_to_bv 64 222) K Hh Hlazy Hsvc u222 Hargs
+            ltac:(rewrite H0; apply place_declined_b_null) Halloc).
   - intros a Ha. rewrite Hpr. rewrite H0, Hu1 in Ha. apply HB. exact Ha.
   - rewrite H0, Hu1. exact Hex.
 Qed.
@@ -133,7 +137,9 @@ Proof.
   { unfold mmap_noaccess_args_ok. rewrite gpr_areg1, gpr_areg2, gpr_areg3, gpr_areg4, gpr_areg5, H11, H12, H13, H14, H15.
     repeat split; try reflexivity. apply lit_ne0. lia. }
   assert (H0 : ms_gpr ms 0 = Z_to_bv 64 0) by (rewrite gpr_areg0; exact H10).
-  apply (srz_mmap_noaccess_at segs scfg ms model (Z_to_bv 64 222) K Hh Hlazy Hsvc u222 Hargs Halloc);
+  (* terminus, shape (ii): [cj_at_node (NMmap 0 …)] pins the hint, as in [bn_mmap_rw]. *)
+  apply (srz_mmap_noaccess_at segs scfg ms model (Z_to_bv 64 222) K Hh Hlazy Hsvc u222 Hargs
+           ltac:(rewrite H0; apply place_declined_b_null) Halloc);
     rewrite H0, Hu1; [exact Hex | exact HB].
 Qed.
 
@@ -174,6 +180,10 @@ Lemma bn_mprotect : forall ms model (addr len : Z) K,
   addr mod page_size = 0 -> 0 < len -> 0 <= addr ->
   addr + page_round_up_Z len < two_pow_64 ->
   let n := Z_to_bv 64 (page_round_up_Z len) in
+  (* the range is apart from the vdso/vvar pair (LPS 727298f3 answers [CheckUnmodeled]
+     for an mprotect meeting it).  Copied from bn_mprotect, lines 175-195 of
+     projects/jsoncons/fuzz_json_cursor/proofs/lib/CJ/Bridge/BrNodes.v as in the LPS 727298f3 update.  This comment is the source's comment on this premise, worded for this tree, with the citation added. *)
+  region_free (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) (Z_to_bv 64 addr) n = true ->
   map_contains (vm_noaccess (m_vmmaps model)) (Z_to_bv 64 addr) n = true ->
   map_contains (vm_maps (m_vmmaps model)) (Z_to_bv 64 addr) n = true ->
   mprotect_budget_ok model (Z_to_bv 64 addr) n = true ->
@@ -181,7 +191,7 @@ Lemma bn_mprotect : forall ms model (addr len : Z) K,
                             (mprotect_model (Z_to_bv 64 addr) n model)) K ->
   srealizes segs scfg (mkCfg ms model) K.
 Proof.
-  intros ms model addr len K Hh Hlazy (Hsvc & H10 & H11 & H12) Hal Hlen Ha0 Hnw n Hna Hma Hbud HB.
+  intros ms model addr len K Hh Hlazy (Hsvc & H10 & H11 & H12) Hal Hlen Ha0 Hnw n Hvd Hna Hma Hbud HB.
   pose proof (page_round_up_Z_bounds len ltac:(lia)) as Hpr.
   assert (Haddr : bv_unsigned (Z_to_bv 64 addr) = addr) by (apply u64_lit; unfold two_pow_64 in Hnw; lia).
   apply (srz_mprotect_at segs scfg ms model (Z_to_bv 64 226) (Z_to_bv 64 addr) len K Hh Hlazy Hsvc u226 Halloc);
@@ -212,7 +222,7 @@ Proof.
   assert (Hargs : munmap_args_ok ms model).
   { unfold munmap_args_ok. rewrite H0, Hu1, Hprr, Haddr. repeat split; try assumption.
     intro Hz. apply (f_equal bv_unsigned) in Hz. rewrite Hu1 in Hz. change (bv_unsigned (Z_to_bv 64 0)) with 0%Z in Hz. lia. }
-  eapply (SpinAlg.srz_munmap segs scfg ms model (Z_to_bv 64 215) K Hh Hlazy Hsvc u215 Hargs).
+  eapply (SpinAlg.srz_munmap segs scfg ms model (Z_to_bv 64 215) K Hh Hlazy Hsvc u215 Hargs Halloc).
   unfold munmap_eff. rewrite H0, Hprr. exact Hc.
 Qed.
 

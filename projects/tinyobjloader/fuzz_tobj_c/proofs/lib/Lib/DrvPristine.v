@@ -1,8 +1,9 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the pristine VM predicate PRvm restated for the model's VM state, one more fact named where it is taken apart; PRm, prm_fp, PRm_ext, auxv_init_of_PRm and PRm_pristine restated in plain text over the launch's auxv layout for a CONFIG_RSEQ flag, through the malloc contract's auxv view, with the random pointer's word above the auxv's end). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
-#[local] Ltac2 tbs__ () := ["@Corelib.Numbers.BinNums"; "Z"; "positive"; "N"; "@Stdlib.ZArith.BinInt.Z"; "le"; "add"; "lt"; "leb"; "pow"; "ltb"; "of_nat"; "to_nat"; "opp"; "modulo"; "mul"; "eqb"; "@Corelib.Init.Logic"; "and"; "eq"; "or"; "False"; "ex"; "not"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymState"; "sv"; "cell"; "sobj"; "valuation"; "SLit"; "sprop"; "ob_base"; "ob_cells"; "eval"; "obj_holds"; "c_off"; "holds"; "mkCell"; "rom_ok"; "ob_hi"; "ob_lo"; "obj_range"; "rd"; "enc_bytes"; "image_byte"; "ob_dflt"; "odefault"; "rm"; "ro_addr"; "DImage"; "DZero"; "c_width"; "covered"; "ranges_disjoint"; "rw"; "@Corelib.Init.Datatypes"; "andb"; "bool"; "option"; "true"; "false"; "list"; "negb"; "Some"; "nat"; "orb"; "prod"; "fst"; "length"; "nil"; "snd"; "pair"; "@stdpp.bitvector.definitions"; "bv"; "bv_unsigned"; "Z_to_bv"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Pristine"; "reads"; "untouched"; "auxv_keys"; "pristine_req"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.DrvPristine.P"; "outb"; "find_cell"; "PRm"; "robjs_miss"; "robjs_hi_img"; "cells_clear"; "cells_lit62"; "img_ok_rangeb"; "img_okb"; "robj_img"; "wseg_rangeb"; "PRvm"; "prm_fp"; "robj_img_misses"; "robjs_miss_statics"; "rom_bytes_ok"; "@Corelib.Lists.ListDef"; "Forall"; "nth"; "seq"; "@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics"; "machine_state"; "ms_mem"; "find_segment"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocLayout"; "wz"; "mc_chk_guard"; "mc_chk_guard_got"; "mc_ctx"; "mc_ctz_tab"; "mc_lock"; "mc_med_cnt_tab"; "mc_replaced"; "mc_size_classes"; "mc_small_cnt_tab"; "topL"; "mc_libc"; "mc_errno"; "img_reserved"; "mc_auxv"; "mc_need_locks"; "mc_page_size"; "@LinuxProcessSemantics.Riscv.Instr"; "aluop"; "mulop"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.TobjJV"; "T_ok"; "img_ok"; "robj_stack"; "T0"; "aceil"; "caddr"; "robjs_ok"; "robjs_okF"; "@Stdlib.Lists.List"; "forallb"; "In"; "@Corelib.Init.Peano"; "lt"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocInv"; "CTX_SIZE"; "layout"; "ly_brk0"; "ly_sec"; "@LinuxProcessSemantics.LinuxProcessSem.MemImageType"; "Segment"; "seg_writable"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocIface"; "ri_sec"; "run_init"; "MA"; "ma_L"; "ri_top"; "ri_brk0"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocModel"; "PGSZ"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "Model"; "alloc_top"; "m_vmmaps"; "vm_brk"; "vm_maps"; "vm_start_brk"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.DrvStatics"; "a_got"; "a_guard"; "a_nl"; "statics_disjoint"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract"; "rd_of"; "tp_ok"; "wseg_addr"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ContractI"; "auxv_init"].
+#[local] Ltac2 tbs__ () := ["@Corelib.Numbers.BinNums"; "Z"; "positive"; "N"; "@Stdlib.ZArith.BinInt.Z"; "le"; "add"; "lt"; "leb"; "pow"; "ltb"; "of_nat"; "to_nat"; "opp"; "modulo"; "mul"; "eqb"; "@Corelib.Init.Logic"; "and"; "eq"; "or"; "False"; "ex"; "not"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymState"; "sv"; "cell"; "sobj"; "valuation"; "SLit"; "sprop"; "ob_base"; "ob_cells"; "eval"; "obj_holds"; "c_off"; "holds"; "mkCell"; "rom_ok"; "ob_hi"; "ob_lo"; "obj_range"; "rd"; "enc_bytes"; "image_byte"; "ob_dflt"; "odefault"; "rm"; "ro_addr"; "DImage"; "DZero"; "c_width"; "covered"; "ranges_disjoint"; "rw"; "@Corelib.Init.Datatypes"; "andb"; "bool"; "option"; "true"; "false"; "list"; "negb"; "Some"; "nat"; "orb"; "prod"; "fst"; "length"; "nil"; "snd"; "pair"; "@stdpp.bitvector.definitions"; "bv"; "bv_unsigned"; "Z_to_bv"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Pristine"; "reads"; "untouched"; "auxv_keys"; "pristine_req"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.DrvPristine.P"; "outb"; "find_cell"; "PRm"; "robjs_miss"; "robjs_hi_img"; "cells_clear"; "cells_lit62"; "img_ok_rangeb"; "img_okb"; "robj_img"; "wseg_rangeb"; "PRvm"; "prm_fp"; "robj_img_misses"; "robjs_miss_statics"; "rom_bytes_ok"; "@Corelib.Lists.ListDef"; "Forall"; "nth"; "seq"; "@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics"; "machine_state"; "ms_mem"; "find_segment"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocLayout"; "wz"; "mc_chk_guard"; "mc_chk_guard_got"; "mc_ctx"; "mc_ctz_tab"; "mc_lock"; "mc_med_cnt_tab"; "mc_replaced"; "mc_size_classes"; "mc_small_cnt_tab"; "topL"; "mc_libc"; "mc_errno"; "img_reserved"; "mc_auxv"; "mc_need_locks"; "mc_page_size"; "@LinuxProcessSemantics.Riscv.Instr"; "aluop"; "mulop"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.TobjJV"; "T_ok"; "img_ok"; "robj_stack"; "T0"; "aceil"; "caddr"; "robjs_ok"; "robjs_okF"; "@Stdlib.Lists.List"; "forallb"; "In"; "@Corelib.Init.Peano"; "lt"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocInv"; "CTX_SIZE"; "layout"; "ly_brk0"; "ly_sec"; "@LinuxProcessSemantics.LinuxProcessSem.MemImageType"; "Segment"; "seg_writable"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocIface"; "ri_sec"; "run_init"; "MA"; "ma_L"; "ri_top"; "ri_brk0"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocModel"; "PGSZ"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "Model"; "alloc_top"; "m_vmmaps"; "vm_brk"; "vm_maps"; "vm_start_brk"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.DrvStatics"; "a_got"; "a_guard"; "a_nl"; "statics_disjoint"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract"; "rd_of"; "tp_ok"; "wseg_addr"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ContractI"; "auxv_init"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract"; "vdso_ok"].
 #[local] Ltac2 tb__ s := OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.TermBlob.dec2 (tbs__ ()) s.
 From Stdlib Require Import ZArith NArith List Bool PArith Lia.
 From stdpp Require Import bitvector.
@@ -24,34 +25,74 @@ Section P.
 Variable segs : list Segment.
 Variable C : mconsts.
 
-Definition PRm (m : word -> option byte) (ri : run_init) (av q : Z) : Prop := ltac2:(tb__ "0|7|
-SfS47Vm;S63VC;A1S7eA3SfS47Vm;S65VC;A1Z4M0A3SfS47Vm;S67VC;A1G0A3SfS47Vm;S6fVC;A1Z1A3SfS47Vm;S68VC;A1Z60A3SfS47Vm;S69VC;A1Z1bA3SfS47Vm;S66VC;A1G0A3SfS47Vm;S64VC;A1Z20A3SfS47Vm;S62VC;A1Z8M1A3SfS46Vsegs;Vm;S70VC;A1U8M2Z1000A5SfS13S0S0S46Vsegs;Vm;S61VC;A1G2R1A5Lgd;A2SfS46Vsegs;Vm;S6eVC;A1G2Vav;A5SfS3S88Vri;A1M3Vav;A2SfS3S4Vav;Za0A2S7Z2Z40A2M4A2SfS3G3Vq;A2SfS3S4Vq;Z10M5A2G4A2SfS3bS7dR1UaA2M6S46Vsegs;Vm;S4Vav;SdG5S9R2A1A2A2G2S5bS0R2S48Z0A4A5F_;Fj;SfS3bG6S13S0S0S46Vsegs;Vm;S4S4Vav;SdG5S9R3A1A2A2G1A2G2R1A5Lv;A2F_;Fj;SfS46Vsegs;Vm;S4Vav;Z88A2G2Vq;A5S46Vsegs;Vm;S4Vq;G1A2G2S84Vri;A1A5A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2A2").
+(* LPS 727298f3: the auxv part is the launch's auxv layout for CONFIG_RSEQ flag [r] ([ContractI]'s view). *)
+Definition PRm (r : bool) (m : word -> option byte) (ri : run_init) (av q : Z) : Prop :=
+  untouched m (mc_ctx C) CTX_SIZE /\
+  untouched m (mc_lock C) 4 /\
+  untouched m (mc_replaced C) 4 /\
+  untouched m (mc_need_locks C) 1 /\
+  untouched m (mc_size_classes C) 96 /\
+  untouched m (mc_small_cnt_tab C) 27 /\
+  untouched m (mc_med_cnt_tab C) 4 /\
+  untouched m (mc_ctz_tab C) 32 /\
+  untouched m (mc_chk_guard_got C) 8 /\
+  reads segs m (mc_page_size C) 8%nat 4096 /\
+  (exists gd : Z, reads segs m (mc_chk_guard C) 8%nat gd) /\
+  reads segs m (mc_auxv C) 8%nat av /\
+  ri_top ri <= av /\
+  av + AM_AUXV_BYTES r <= 2 ^ 64 /\
+  ri_top ri <= q /\
+  q + 16 <= 2 ^ 64 /\
+  (forall j : nat, (j < AM_AUXV_N r)%nat -> reads segs m (av + 16 * Z.of_nat j) 8%nat (nth j (am_auxv_keys r) 0)) /\
+  (forall j : nat, (j < AM_AUXV_N r)%nat -> exists v : Z, reads segs m (av + 16 * Z.of_nat j + 8) 8%nat v) /\
+  reads segs m (av + AM_AUXV_RANDOFF r) 8%nat q /\
+  reads segs m (q + 8) 8%nat (ri_sec ri).
 
-Lemma auxv_init_of_PRm : ltac2:(tb__ "0|2|
-S18S7fS85S0S0S4cS2bR5A1R3R2R1A4S10S0ScR3Z8A2Z0A3M0G0S3S44Q40S32R8PaA2A2R5A2S3S4R6Za0A2R5A2S3S4R6Z10A2S7Z2Z30A2A2S10S0S81RaA1S84R9A1A3SfS3S8aS80RbA1M1A2S5G1Z2aaaaaaa9000A2A2S98Vsegs;VC;RcRdA4F_;F_;F_;F_;F_;F_;F_;F_;Fq;Fav;Fri;FL;Frho;").
+Lemma auxv_init_of_PRm : forall (r : bool) (rho : valuation) (L : layout) (ri : run_init) (av q : Z),
+  PRm r (rm rho) ri av q ->
+  av mod 8 = 0 -> q mod 8 = 0 ->
+  bv_unsigned (rw rho 10%positive) <= av ->
+  av + AM_AUXV_BYTES r <= q ->
+  q + 16 <= 2 ^ 48 ->
+  ly_sec L = ri_sec ri ->
+  (PGSZ <= ly_brk0 L /\ ly_brk0 L < 46912496111616) ->
+  auxv_init segs C L rho.
 Proof using .
-  intros rho L ri av q H Hav Hq Hsp Hd Hq16 Hsec Hbrk. unfold PRm in H.
+  intros r rho L ri av q H Hav Hq Hsp Hd Hq16 Hsec Hbrk. unfold PRm in H.
   destruct H as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & Rav & _ & _ & _ & _ & Rkeys & Rvals & Rq & Rsec).
-  exists av, q. split; [exact Rav|]. split; [exact Rkeys|]. split; [exact Rvals|]. split; [exact Rq|].
+  pose proof (am_auxv_bytes_eq r) as HB.
+  exists r. unfold auxv_init_r. exists av, q.
+  split; [exact Rav|]. split; [exact Rkeys|]. split; [exact Rvals|]. split; [exact Rq|].
   split; [rewrite Hsec; exact Rsec|]. repeat (split; [lia|]). lia.
 Qed.
 
-Definition PRvm (ri : run_init) (md : Model) : Prop := ltac2:(tb__ "0|8|
-S89Vri;A1S0SfS10S38S3dS43Q40M0A1M1G1A2M2A1S8fS8dVmd;A1M3A1S40G2A1A3SfS10S0S44G0S8eG3A1A2R1A3SfS10S0S44G0S90G3A1A2R1A3SfS10S0ScR1S8aA2Z0M4A3SfSfS10S0S8cG3A1S88Vri;A1M5A3SfSfS3Z7fff7f800000M6G5A2S3G5Z7fffff800000A2A2SfS3G4S84Vri;A1M7A2S5G7S7Z2Z40A2A2A2A2A2SfSfS5G4R1A2S5R1Z2aaaaaaa9000A2A2S6dVC;G3A2A2A2A2A2A2A2Tbrk0;").
+Definition PRvm (ri : run_init) (md : Model) : Prop := ltac2:(tb__ "0|0|
+S89Vri;A1S0SfS10S38S3dS43Q40A1S43Q40A1A2A1S8fS8dVmd;A1A1S40S3dS43Q40A1S43Q40A1A2A1A3SfS10S0S44Q40S8eS8dVmd;A1A1A2R1A3SfS10S0S44Q40S90S8dVmd;A1A1A2R1A3SfS10S0ScR1S8aA2Z0A3SfSfS10S0S8cS8dVmd;A1A1S88Vri;A1A3SfSfS3Z7fff7f800000S88Vri;A1A2S3S88Vri;A1Z7fffff800000A2A2SfS3Z0S84Vri;A1A2S5S84Vri;A1S7Z2Z40A2A2A2A2A2SfSfS5Z0R1A2S5R1Z2aaaaaaa9000A2A2SfS6dVC;S8dVmd;A1A2S99Vmd;A1A2A2A2A2A2A2A2Tbrk0;").
 
-Lemma PRm_pristine : ltac2:(tb__ "0|0|
-S85S18S8bS0S0S4cS2bR4A1R5R2R1A4S55R6R4A2S96VC;R6A2S49Vsegs;VC;R8R7R6A5F_;F_;F_;Fq;Fav;Fmd;Frho;Fri;").
+Lemma PRm_pristine : forall (r : bool) (ri : run_init) (rho : valuation) (md : Model) (av q : Z),
+  PRm r (rm rho) ri av q -> PRvm ri md -> tp_ok C rho -> pristine_req segs C ri rho md.
 Proof using .
-  intros ri rho md av q H (V1 & V2 & V3 & V4 & V5 & V6 & V7) HT. unfold PRm in H. unfold pristine_req. cbn zeta.
+  intros r ri rho md av q H (V1 & V2 & V3 & V4 & V5 & V6 & V7 & V8) HT. unfold PRm in H. unfold pristine_req. cbn zeta.
   assert (V6' : 0 < ri_brk0 ri /\ ri_brk0 ri < 140735332483072) by (destruct V6 as [V6a V6b]; split; lia).
   decompose [and] H.
   repeat (split; [assumption|]).
-  split; [exists av, q; repeat (split; [assumption|]); assumption|].
+  split; [exists r, av, q; repeat (split; [assumption|]); assumption|].
   repeat (split; [assumption|]). exact HT.
 Qed.
 
-Definition prm_fp (av q a : Z) : Prop := ltac2:(tb__ "0|c|
-S11SfS3S63VC;A1M0Va;A2S5Va;S4G0S7eA2A2A2S11SfS3S65VC;A1M1Va;A2S5Va;S4G1Z4M2A2A2A2S11SfS3S67VC;A1M3Va;A2S5Va;S4G3G2A2A2A2S11SfS3S6bVC;A1M4Va;A2S5Va;S4G4Z38A2A2A2S11SfS3S68VC;A1M5Va;A2S5Va;S4G5Z60A2A2A2S11SfS3S69VC;A1M6Va;A2S5Va;S4G6Z1bA2A2A2S11SfS3S66VC;A1M7Va;A2S5Va;S4G7G2A2A2A2S11SfS3S64VC;A1M8Va;A2S5Va;S4G8Z20A2A2A2S11SfS3S62VC;A1M9Va;A2S5Va;S4G9Z8MaA2A2A2S11SfS3S61VC;A1MbVa;A2S5Va;S4GbGaA2A2A2S11SfS3Vav;Va;A2S5Va;S4Vav;Za0A2A2A2SfS3S4Vq;GaA2Va;A2S5Va;S4Vq;Z10A2A2A2A2A2A2A2A2A2A2A2A2A2A2").
+Definition prm_fp (r : bool) (av q a : Z) : Prop :=
+  (mc_ctx C <= a < mc_ctx C + CTX_SIZE) \/
+  (mc_lock C <= a < mc_lock C + 4) \/
+  (mc_replaced C <= a < mc_replaced C + 4) \/
+  (mc_libc C <= a < mc_libc C + 56) \/
+  (mc_size_classes C <= a < mc_size_classes C + 96) \/
+  (mc_small_cnt_tab C <= a < mc_small_cnt_tab C + 27) \/
+  (mc_med_cnt_tab C <= a < mc_med_cnt_tab C + 4) \/
+  (mc_ctz_tab C <= a < mc_ctz_tab C + 32) \/
+  (mc_chk_guard_got C <= a < mc_chk_guard_got C + 8) \/
+  (mc_chk_guard C <= a < mc_chk_guard C + 8) \/
+  (av <= a < av + AM_AUXV_BYTES r) \/
+  (q + 8 <= a < q + 16).
 
 Lemma reads_ext : ltac2:(tb__ "0|3|
 S43Q40A1S35S43Q8A1A1M0Fx;M1G1S0S3bS0S3bS7dR1R3A2S10G0R6S60S4R5S9R2A1A2A1M2A1R7G2A1A3F_;Fk;S46Vsegs;R6R4R3R2A5S46Vsegs;R6R5R4R3A5F_;F_;Fv;Fw;Fa;Fm';Fm;").
@@ -61,14 +102,17 @@ Lemma untouched_ext : ltac2:(tb__ "0|3|
 S43Q40A1S35S43Q8A1A1M0F_;M1G1S0S0S0SfS3R3R1A2S5R1S4R3R2A2A2A2S10G0R5S60R2A1M2A1R6G2A1A3F_;Fa;S47R5R3R2A3S47R5R4R3A3F_;F_;Fn;Flo;Fm';Fm;").
 Proof using . intros m m' lo n E H a Ha. rewrite (E a Ha). apply H. exact Ha. Qed.
 
-Lemma PRm_ext : ltac2:(tb__ "0|3|
-S43Q40A1S35S43Q8A1A1M0Fx;M1G1S85S0S0S0S56R3R2R1A3S10G0R6S60R2A1M2A1R7G2A1A3F_;Fa;S4cR6R4R3R2A4S4cR6R5R4R3A4F_;F_;Fq;Fav;Fri;Fm';Fm;").
+Lemma PRm_ext : forall (r : bool) (m m' : word -> option byte) (ri : run_init) (av q : Z),
+  (forall a : Z, prm_fp r av q a -> m' (wz a) = m (wz a)) ->
+  PRm r m ri av q -> PRm r m' ri av q.
 Proof using .
-  intros m m' ri av q E H. unfold PRm in H |- *.
+  intros r m m' ri av q E H. unfold PRm in H |- *.
   destruct H as (H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10 & [gd H11] & H12 & H13 & H14 & H15 & H16 & H17 & H18 & H19 & H20).
-  assert (U : forall lo n, (forall a, lo <= a < lo + n -> prm_fp av q a) -> untouched m lo n -> untouched m' lo n).
+  pose proof (am_auxv_bytes_eq r) as HB. pose proof (am_auxv_randoff_eq r) as HO.
+  pose proof (am_auxv_ridx_ltZ r) as HRI.
+  assert (U : forall lo n, (forall a, lo <= a < lo + n -> prm_fp r av q a) -> untouched m lo n -> untouched m' lo n).
   { intros lo n Hfp Hu. eapply untouched_ext; [|exact Hu]. intros a Ha. apply E. apply Hfp. exact Ha. }
-  assert (R : forall a w v, (forall k, (k < w)%nat -> prm_fp av q (a + Z.of_nat k)) -> reads segs m a w v -> reads segs m' a w v).
+  assert (R : forall a w v, (forall k, (k < w)%nat -> prm_fp r av q (a + Z.of_nat k)) -> reads segs m a w v -> reads segs m' a w v).
   { intros a w v Hfp Hr. eapply reads_ext; [|exact Hr]. intros k Hk. apply E. apply Hfp. exact Hk. }
   unfold prm_fp in U, R. unfold mc_need_locks, mc_page_size, mc_auxv in *.
   split; [apply U; [intros; lia|exact H1]|]. split; [apply U; [intros; lia|exact H2]|]. split; [apply U; [intros; lia|exact H3]|].

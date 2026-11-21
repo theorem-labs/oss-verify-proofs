@@ -3,13 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: the walk of reac_box_catalogue on fuzz_segconf.asan-ubsan (image B, pin sha256
    c3796c0b38f3, twin 80e82127e8ca; entry 0x8a8a0, 84 bytes, 21 instructions, a 16-byte frame, no side-stack
    frame): reac_box_catalogue_contract of lib/B/Prog/reac_box_catalogue_c.v (image B's copy of the image-A owner's FINAL
-   text at 6f783602b5e3) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
+   text) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
    entry, SRr of apost_base at the return, over `Context {PI : PAImg seg_listing}` of image B's listing,
    lib/B/Prog/SegPa.v).
-   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane, commit
-   434ade288123, both arms): the same entry seeds, token runs and return steps over image B's listing modules and
+   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane,
+    both arms): the same entry seeds, token runs and return steps over image B's listing modules and
    B's kit copies. The UBSan alignment check is read from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_catalogue.v
-   at origin/ossv/recipes 3abc3740de97 (the same image-B code but 4 pc-relative words; caller-journal form, not
+   (the same image-B code but 4 pc-relative words; caller-journal form, not
    copied), whose token run decides it the same way.
    Image B's code differs from image A's by two instructions: `andi a1,a0,7` (0x8a8ac) and `bnez a1,0x8a8ec`
    (0x8a8b0) to `unimp` (0x8a8ec), the UBSan alignment check of the 8-byte store through c.
@@ -37,6 +37,7 @@
    definitions (SegInstA's names at image B): SegInstB.STK_reac_box_catalogue and SegInstB.catA, tied to this walk
    by the lemmas STK_reac_box_catalogue_B (the value 16) and catA_B (listing object 77 of B's seg_objs). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/reac_box_catalogue.v, with its module paths and module names changed; 83 of its 130 lines of code are new or changed and 406 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* m_file on fuzz_segconf.asan (image A), segment S_MF_FRONT: the glue every piece of the segment uses -- the text
    left at the head as the pieces read it (fr_text_facts), and the head's facts carried across a run that stores
    nothing (fr_ctx_run). The FRONT segment lane of the G2 walk owner's G2. *)
@@ -73,7 +74,7 @@ Open Scope Z_scope.
    pieces' states, so it is checked apart) *)
 Definition FR_KEPT : list (bv 5) := [2; 3; 4; 8; 9; 18; 21; 24; 25; 26]%bv.
 
-(* a run whose regions are all read-only keeps every byte (mix_call.v:298-303 at 501c0d516c69) *)
+(* a run whose regions are all read-only keeps every byte (mix_call.v:298-303) *)
 Lemma fr_frame_ro : forall E rs (m m' : word -> option byte),
 frame_of E rs m m' -> forallb (fun r => YP09.r_whi r <=? YP09.r_wlo r) rs = true -> forall x, m' x = m x.
 Proof.
@@ -96,7 +97,7 @@ Context {PI : PAImg seg_listing}.
 #[local] Notation BASE := (@pa_val _ seg_listing PI A_TEXT).
 #[local] Notation rdW W mem := (aview SEGS (w_H W) mem).
 
-(* a byte the reader sees is a byte (mix_call.v:64-69 at 501c0d516c69) *)
+(* a byte the reader sees is a byte (mix_call.v:64-69) *)
 Lemma fr_aview_byte : forall H mem a z, aview SEGS H mem a = Some z -> 0 <= z < 256.
 Proof.
 intros H mem a z Ha. unfold aview in Ha. destruct (mbyte SEGS (mrestrict H mem) a) as [b|]; [|discriminate].
@@ -154,7 +155,7 @@ split; [lia|]. split; [lia|]. split; [exact BY|]. split; [|exact RA0].
 intros k Hk. exact (fr_aview_byte _ _ _ _ (BY k Hk)).
 Qed.
 
-(* a run whose regions are all read-only keeps the reader (mix_call.v:304-309 at 501c0d516c69) *)
+(* a run whose regions are all read-only keeps the reader (mix_call.v:304-309) *)
 Lemma fr_aview_ro : forall E rs H (m m' : word -> option byte),
 frame_of E rs (mrestrict H m) (mrestrict H m') -> forallb (fun r => YP09.r_whi r <=? YP09.r_wlo r) rs = true ->
 forall a, aview SEGS H m' a = aview SEGS H m a.

@@ -2,20 +2,21 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumA.v, with its module paths and module names changed; 1213 of its 1267 lines of code are new or changed and 724 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/BTxString.v, with its module paths and module names changed; 125 of its 164 lines of code are new or changed and 1228 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset image A, slice S7b: put_string's walk (A 0x8836c, 221 instructions). The segments are
    PRW_put_string_base.v (kit-level lemmas, the entry state, the put call site, the join-point invariants),
    PRW_put_string_a.v (ps_seg_a: the entry through the opening-quote put to the loop head / tail join),
    PRW_put_string_l.v (ps_loop: the loop), PRW_put_string_e.v (ps_esc_run: the escape), PRW_put_string_t.v
    (ps_tail_run: the tail).
    rule 24: proves function put_string (CONFIRM R24Writer 2026-10-30). put_string_holds below is the kit's text
-   tput_string_specX (the kit's cut 7cdbb61b5fa0, PRH_FnWriter.v d89d3c67b78c :574-649), composed
+   tput_string_specX (the kit's cut, PRH_FnWriter.v d89d3c67b78c :574-649), composed
    from ps_seg_a (continuations KH / KT) with ps_loop (its escape continuation ps_esc_run, its tail continuation
    ps_tail_run). The memory invariant of the segments is instantiated ONCE here: Pm := `memnorm mem -> memnorm m` for
    put_string's entry memory mem (YSRrMemnorm.srr_inv_laws_imp over srr_inv_laws_memnorm_k, srr_inv_call_imp), so the
    post is fpostWFm's (S7a_put.v's put_holds, the same step). The float state: the entry float state is the Section's
    fx (x_fx X := fx); the loop and the escape run at the float state of their join, so the callee texts and rows read
    after the snprintf row (put, __wrap_strlen, __asan_memcpy, the snprintf row) are hypotheses at every float state.
-   KIT: the kit's cut 7cdbb61b5fa0 (its PRH_* texts and its engine: int102 f44822dff082's with the P'' set). *)
+   KIT: the kit's cut (its PRH_* texts and its engine: int102's with the P'' set). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

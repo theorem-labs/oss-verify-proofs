@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: fr_RINV, a concrete definition of the loop's relational invariant RINV of the
-   entry walk of fuzz_reply's LLVMFuzzerTestOneInput (lib/A/W_LLVMFuzzerTestOneInput_cut.v:332, the Section variable
+   entry walk of fuzz_reply's LLVMFuzzerTestOneInput (lib/A/W_LLVMFuzzerTestOneInput_cut.v:333, the Section variable
    `RINV : lfcx -> Z -> lmod -> Prop` that lcut carries at every cut point), and, below it, each model rule over RINV
    that a W8 segment takes as a Section hypothesis, restated with RINV := fr_RINV (the `_obl` definitions).  The last
    section proves the obligations that read fr_RINV alone or step only the cursor and the flags; the rest are open.
@@ -25,7 +25,7 @@
      A-proof keeps in LS (LS_write_room, LS_drain_pre); they are not here.
    - The cost counts the relay's unfinished line by its bytes, `length (re_U e)`, where SlotInv.v:56 counts
      `re_used e`: the two are equal under aentry_ok (W_rep.v:127), but the arms' rules see only the model, and W7's
-     drain fixes re_U, not re_used (dr_step_ok, W_LLVMFuzzerTestOneInput_drain.v:601).
+     drain fixes re_U, not re_used (dr_step_ok, W_LLVMFuzzerTestOneInput_drain.v:602).
    - The entries' model facts that aentry_ok (W_rep.v:122-137) states in memory and that RINV-only rules read
      (RI_pads, RI_pair, RI_rm_cnlr_eof, the exit's end matching) are fr_entry_ok.
    The `_obl` definitions are grouped by segment file, each with the rule's file:line.  Rules on atop's head (head,
@@ -40,17 +40,18 @@
    fr_hkeep, fr_upd_pair, fr_pair_upd, fr_cost_map and fr_step_upd, copied as hb_* (renamed, image B's small-file
    names qualified), and the six rules RI_src_b, RI_pair_b, RI_close_b, RI_eintr_b, RI_sendmax_b, RI_default_b,
    proved as A's RI_*_holds over lib/B/ReplyRINVB.v's fr_RINV. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* proves no function (rule 24; kind: model rules): six of image B top_x's RINV obligations at RINV := ReplyRINVB.fr_RINV
    (row G-BRI-head; B-TOPX-OWNERS.md (sha256 705727227472; internal record) rows 51, 53, 59, 60, 61, 62).
    Each `_b` lemma states, token for token, the Section hypothesis of the same name in lib/B/ReplyBTop.v
-   (a working branch f908a004fd1, :100, :101, :105-108), each for every rc and fx:
+   (a working branch, :100, :101, :105-108), each for every rc and fx:
      RI_src_b     : ReplyBTop.v :100 (B top_x RI_src,     Btop:321)
      RI_pair_b    : ReplyBTop.v :101 (B top_x RI_pair,    Btop:327)
      RI_close_b   : ReplyBTop.v :105 (B top_x RI_close,   Btop:378)
      RI_eintr_b   : ReplyBTop.v :106 (B top_x RI_eintr,   Btop:381)
      RI_sendmax_b : ReplyBTop.v :107 (B top_x RI_sendmax, Btop:384)
      RI_default_b : ReplyBTop.v :108 (B top_x RI_default, Btop:387)
-   The image-A twins (a working branch 8da615a239d): lib/A/ReplyRINV.v RI_src_holds (:727),
+   The image-A twins (a working branch): lib/A/ReplyRINV.v RI_src_holds (:727),
    RI_close_holds (:941), RI_eintr_holds (:953), RI_sendmax_holds (:837), RI_default_holds (:843), and
    lib/A/ReplyRINV_a3.v RI_pair_holds (:149).  Each proof below is A's, relocated: fr_RINV, fr_pair_ok, fr_relay,
    fr_gone, fr_cost, fr_pair_cost and fr_step_k are lib/B/ReplyRINVB.v's (the same text as A's ReplyRINV.v :97-183,

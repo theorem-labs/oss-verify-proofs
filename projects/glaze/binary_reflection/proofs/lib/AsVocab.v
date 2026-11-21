@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vvar range test and the vDSO text check in the step lemmas; RomBase.sys_rob as the third part of node_ok, as StoreOk.ShapeAlg.node_ok, proved at the instruction node and a premise of node_syscall_restricted). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -288,6 +289,7 @@ Definition as_annot (IA : as_addrs) : Z := if Z.eqb (ia_malloc IA) (ia_malloc as
 End AsCells.
 Require Stdlib.NArith.NArith Stdlib.micromega.Lia Stdlib.Bool.Bool Stdlib.Logic.FunctionalExtensionality LinuxProcessSemantics.LinuxProcessSem.BvBase LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics LinuxProcessSemantics.LinuxProcessSem.MemImageType LinuxProcessSemantics.LinuxProcessSem.State LinuxProcessSemantics.LinuxProcessSem.Monad LinuxProcessSemantics.LinuxProcessSem.Specs LinuxProcessSemantics.LinuxProcessSem.Run LinuxProcessSemantics.Riscv.Prelude LinuxProcessSemantics.Riscv.Instr LinuxProcessSemantics.Riscv.Decode LinuxProcessSemantics.Riscv.DecodeC LinuxProcessSemantics.Riscv.Sem OSSVerify.Proofs.glaze.binary_reflection.lib.Common.CatExec OSSVerify.Proofs.glaze.binary_reflection.lib.Common.PropExec OSSVerify.Proofs.glaze.binary_reflection.lib.PuLia.
 Require OSSVerify.Proofs.glaze.binary_reflection.lib.Common.CfgStep.
+Require OSSVerify.Proofs.glaze.binary_reflection.lib.Common.RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Module AsanAcct.
 (* [comment removed for export] *)
@@ -721,7 +723,7 @@ Proof.
     apply ranges_avoid_nil.
   - (* [comment removed for export] *)
     destruct (ov_read_bytes segs (mrestrict H m) a (width_bytes n)) as [bs|] eqn:Hrd;
-      [|discriminate].
+      [| destruct (range_meets_vvar _ _ _); discriminate].
     destruct (ov_read_bytes_restrict _ m a bs Hrd) as [Hfull Hav].
     rewrite Hfull.
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) (mrestrict H m))
@@ -803,6 +805,7 @@ Proof.
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|].
   { exact (decode_exec_accesses_restrict ms w msr' rs' Hs). }
   exfalso. unfold fetch_failure in Hs.
+  destruct (vdso_text_at segs (ms_pc ms)); [discriminate|].
   destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
   destruct (fetch_byte_traps segs (ms_pc ms) || fetch_byte_traps segs (ms_pc ms + 1)
             || match fetch_half_any segs (ms_mem ms) (ms_pc ms) with
@@ -854,6 +857,7 @@ Proof.
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|]; [exact (Hdec w Hs)|].
   exfalso. destruct (fetch_failure segs (ms_mem ms) (ms_pc ms)) eqn:Hf; try discriminate.
   unfold fetch_failure in Hf.
+  destruct (vdso_text_at segs (ms_pc ms)); [discriminate|].
   destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
   destruct (fetch_byte_traps segs (ms_pc ms) || fetch_byte_traps segs (ms_pc ms + 1)
             || match fetch_half_any segs (ms_mem ms) (ms_pc ms) with
@@ -1272,7 +1276,13 @@ Hypothesis Hwx : wx_segs_nowrap segs.
 Definition node_ok (c : config) (I : Type)
     (evs : I -> list event) (nx : I -> config) : Prop :=
   (forall i, sstep_cfg segs CfgStep.kit_cfg c (evs i) (SNext (nx i)))
-  /\ (forall e st, sstep_cfg segs CfgStep.kit_cfg c e st -> exists i, e = evs i /\ st = SNext (nx i)).
+  /\ (forall e st, sstep_cfg segs CfgStep.kit_cfg c e st -> exists i, e = evs i /\ st = SNext (nx i))
+  (* LPS 727298f3: [StoreOk.ShapeAlg.node_ok]'s third part, so that the two stay one definition *)
+  /\ RomBase.sys_rob segs c.
+
+Lemma node_ok_of_c : forall c (I : Type) evs nx,
+  CfgStep.node_ok_c segs CfgStep.kit_cfg c I evs nx -> RomBase.sys_rob segs c -> node_ok c I evs nx.
+Proof. intros c I evs nx [Hc Hs] Hr. exact (conj Hc (conj Hs Hr)). Qed.
 
 (* [comment removed for export] *)
 Theorem mi_account_step_restricted : forall A ms msr' model,
@@ -1329,6 +1339,7 @@ Proof.
   exists (with_vm_backing (m_vm_lazy model) mat' model).
   split; [exact Hinv'|]. split; [apply with_vm_backing_same|]. split; [exact Hcl|].
   split; [exact Hacc|].
+  apply node_ok_of_c; [| apply RomBase.sys_rob_instr; exact Hsvc].
   apply (CfgStep.node_transfer_on segs CfgStep.kit_cfg); [CfgStep.kit_pending_on |].
   split.
   - intros []. apply sstep_instr; [exact Hh | exact Hsvc | exact Hacc].
@@ -1471,6 +1482,8 @@ Theorem node_syscall_restricted :
   (forall i, lazy_cover H (m_vm_lazy (mdl i)) A) ->
   (forall i, MInv A (mdl i)) ->
   (forall i, ranges_avoid H (syscall_effect_accesses (eff i))) ->
+  (* LPS 727298f3: the call reads no byte the run's backing adds ([RomBase.sys_rob]) *)
+  RomBase.sys_rob segs (mkCfg ms model) ->
   (forall i, MInv A (materialized_succ (mdl i) (syscall_effect_accesses (eff i)))
              /\ same_but_materialized (mdl i)
                   (materialized_succ (mdl i) (syscall_effect_accesses (eff i))))
@@ -1478,7 +1491,7 @@ Theorem node_syscall_restricted :
        (fun i => mkCfg (advance_past_svc (apply_effect ms (eff i)))
                        (materialized_succ (mdl i) (syscall_effect_accesses (eff i)))).
 Proof.
-  intros A ms model x8 I eff mdl evs Hwf Hh Hsvc Hnalloc Hsound Hcompl Hnh Hcov Hinv Hav.
+  intros A ms model x8 I eff mdl evs Hwf Hh Hsvc Hnalloc Hsound Hcompl Hnh Hcov Hinv Hav Hrob.
   assert (Hmat : forall i, exists mat',
             materialize_model_accesses (mdl i) (syscall_effect_accesses (eff i))
               = Some (with_vm_backing (m_vm_lazy (mdl i)) mat' (mdl i))
@@ -1487,7 +1500,8 @@ Proof.
   split.
   - intros i. destruct (Hmat i) as (mat' & Hm & Hinv').
     unfold materialized_succ. rewrite Hm. split; [exact Hinv' | apply with_vm_backing_same].
-  - apply (CfgStep.node_transfer_on segs CfgStep.kit_cfg);
+  - apply (node_ok_of_c segs); [| exact Hrob].
+    apply (CfgStep.node_transfer_on segs CfgStep.kit_cfg);
       [exact (CfgStep.kit_pending_on_sysno segs ms model x8 _ Hsvc eq_refl Hnalloc) |].
     split.
     + intros i. destruct (Hmat i) as (mat' & Hm & Hinv').

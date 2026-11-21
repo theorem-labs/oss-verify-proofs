@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's vDSO pair; the channel-reader fact; the launch's input, mmap base and entry draw). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp Require Import gmap.
@@ -76,7 +77,7 @@ Section POST.
   Context {HGW : HasGuard} {HCEIL : HasCeiling}.
   Variables (sp0 : word) (argv : list (list byte)) (TID : Z) (S4 S5 S6 S7 S8 S9 S10 S11 : word).
   Hypothesis VSP : valid_sp sp0.
-  Hypothesis CEIL : alloc_ceiling = LO sp0.
+  Hypothesis CEIL : alloc_ceiling = bv_unsigned sp0 - 8388608.
   Hypothesis HTID : 0 < TID < 4194304.
   Hypothesis FZ : fuzz_one_stmt AI_P0.
 
@@ -327,20 +328,26 @@ Qed.
 
 Section RUN.
   Context {HGW : HasGuard} {HCEIL : HasCeiling}.
-  Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw).
-  Variables (brk0 mbase : word) (lim : Z) (inp : ProcInput).
+  (* LPS 727298f3: the run's argv/envp are the input's; the launch facts the chain reads are
+     [InitStack.stack_launch_ok] (from [valid_launch] and [entry_launch_ok_va] at the top). *)
+  Variables (sp0 : word) (inp : ProcInput) (mbase : word) (rnd : EntryDraw).
+  Variables (brk0 : word) (lim : Z).
+  Notation argv := (in_argv inp).
+  Notation envp := (in_envp inp).
   Hypothesis VSP : valid_sp sp0.
-  Hypothesis CEIL : alloc_ceiling = LO sp0.
+  Hypothesis CEIL : alloc_ceiling = bv_unsigned sp0 - 8388608.
   Hypothesis VARGV : valid_argv argv.
   Hypothesis VENVP : valid_envp envp.
-  Hypothesis ESF : entry_stack_fits sp0 argv envp.
+  Hypothesis ESF : stack_launch_ok inp argv envp sp0 mbase rnd.
   Hypothesis GW : guard_word = entry_guard rnd.
   Hypothesis GS : secret_word = entry_secret rnd.
   Hypothesis VBRK : valid_brk rsegs brk0.
+  Hypothesis VMB : valid_mmap_base mbase.
+  Hypothesis VCR : in_channel_reader inp = true.
   Hypothesis FZ : fuzz_one_stmt AI_P0.
 
-  Let mo0 := init_model (segments_reserved rsegs) brk0 mbase sp0 lim inp.
-  Let ms0 := init_ms rsegs Plain_init_pc Plain_phdrs sp0 argv envp uid hw rnd.
+  Let mo0 := with_vdso (Vdso.vdso_run_init (ed_vdso rnd)) (init_model (segments_reserved rsegs) brk0 mbase sp0 lim inp).
+  Let ms0 := init_ms rsegs Plain_init_pc Plain_phdrs sp0 mbase rnd inp.
 
   #[using="VSP CEIL FZ"] Lemma leaf_realizes : forall ap s ms mo TID S4 S5 S6 S7 S8 S9 S10 S11,
     0 < TID < 4194304 ->
@@ -372,10 +379,12 @@ Section RUN.
     eapply Forall_impl; [| exact HL]. intros a Ha. cbn in Ha |- *. rewrite length_map. lia.
   Qed.
 
-  #[using="HGW VSP CEIL VARGV VENVP ESF GW GS VBRK FZ"] Theorem p0_realizes : realizes rsegs (mkCfg ms0 mo0) (T_P0 argv mo0).
+  #[using="HGW VSP CEIL VARGV VENVP ESF GW GS VBRK VMB VCR FZ"] Theorem p0_realizes : realizes rsegs (mkCfg ms0 mo0) (T_P0 argv mo0).
   Proof.
     unfold T_P0, prog_pre.
-    assert (MF0 : mfr mo0). { split; [apply m_halted_init_model| apply minv_init; destruct VSP as (V1 & V2 & _); split; [exact V1| exact V2]]. }
+    assert (MF0 : mfr mo0).
+    { split; [unfold mo0; rewrite m_halted_wvdso; apply m_halted_init_model|].
+      apply minv_wvdso. apply minv_init; [destruct VSP as (V1 & V2 & _); split; [exact V1| exact V2]| exact VCR]. }
     eapply (impl_realizes node rsegs (at_node rsegs) nstep nexit minv nsafe NSR _ _ ms0 mo0
               (fun r mo' => match r with
                             | Unr => False
@@ -385,18 +394,18 @@ Section RUN.
                             end)).
     -
       eapply impl_ebind.
-      + exact (rstartup_spec sp0 argv envp uid hw rnd VSP VARGV VENVP).
+      + exact (rstartup_spec sp0 inp mbase rnd VSP VARGV VENVP ESF).
       + intros u ms' HRM. cbn in HRM.
-        exact (rmain_pre_closed sp0 argv envp uid hw rnd ms' VSP CEIL VARGV VENVP ESF GW GS HRM).
+        exact (rmain_pre_closed sp0 argv envp inp mbase rnd ms' VSP CEIL VARGV VENVP ESF GW GS HRM).
     -
       unfold ebind. apply twfP_bind. unfold enode. cbn [twfP]. split; [exact I|].
       intros rsp mo1 evs Hst.
       destruct (nstep_dec_set_tid _ _ _ _ (proj2 MF0) Hst) as (_ & t & D & Ht & Hmo1). rewrite D. cbn [twfP ITree.bind].
       assert (HO1 : OWN [] DriverModel.G0 (ps_init (reservedZ rsegs) alloc_ceiling) mo1).
       { destruct Hmo1 as [[E _] | [_ ->]].
-        - exfalso. unfold mo0 in E. rewrite m_tid_init_model in E. discriminate.
+        - exfalso. unfold mo0 in E. rewrite m_tid_wvdso, m_tid_init_model in E. discriminate.
         - apply OWN_with_tid; [| rewrite unsigned_lit by (unfold PID_MAX_ENVELOPE in Ht; lia); exact Ht| exact I].
-          pose proof (P0_link_init brk0 mbase sp0 lim inp VBRK VSP CEIL) as L0. cbn [LINK AI_P0] in L0. unfold P0_LINK in L0. cbn [map] in L0. exact L0. }
+          pose proof (P0_link_init_vdso (Vdso.vdso_run_init (ed_vdso rnd)) brk0 mbase sp0 lim inp VBRK VSP VMB VCR CEIL) as L0. cbn [LINK AI_P0] in L0. unfold P0_LINK in L0. cbn [map] in L0. exact L0. }
       eapply twfP_mono.
       + apply (drv_pre_twf RSV [] (argv_Z argv) (ps_init (reservedZ rsegs) alloc_ceiling) mo1 argvZ_small HO1). cbn. lia.
       + intros [|[ap s']] mo'; cbn [fst snd]; [intros F; exact F|]. intros (O & B & _ & F). auto.

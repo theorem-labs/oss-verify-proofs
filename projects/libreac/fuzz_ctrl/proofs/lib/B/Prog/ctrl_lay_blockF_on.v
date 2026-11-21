@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/C_reac_ctrl_classify_box_frameLib.v, with its module paths, module names, addresses and numbers changed; 4015 of its 4198 lines of code are new or changed and 806 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Sem.
@@ -10,16 +11,16 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Prog Require Import RcModel RcLib Rc
   RcSynthLib RcLay RcLayLib RcAsan RcAsanLib.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require Import RcAsanRT RcAsanFP RcAsanFPLib
   asan_stack_malloc_c asan_memset_c asan_memcpy_c reac_box_model_block_c ctrl_lay_block_c.
-(* a Theorem Labs lane's OWN footprint contracts of the two runtime helpers (a working branch 9869f1d1f86,
+(* a Theorem Labs lane's OWN footprint contracts of the two runtime helpers (a working branch,
    merged into this branch): asan_memset_contract_F, asan_memcpy_contract_F, sh_word_rng, IMG_LO, IMG_HI.
    This file states no copy of them (image-B owner, 23:15Z). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require Import asan_memset_cF asan_memcpy_cF.
 (* route (C): the region vocabulary and the callees' footprint _on contracts: the stack-malloc leaves of record
-   (a working branch 6a82e56a6ee: asan_stack_malloc_cF.v, asan_stack_malloc_cF_on.v; this copy
-   states no local malloc contract), a Theorem Labs lane's memset / memcpy _on (a working branch
-   13875397c54), reac_box_model_block's (lib/B/Prog/reac_box_model_block_cF_on.v, a Theorem Labs lane 0f83c3ed3e5). *)
+   (a working branch: asan_stack_malloc_cF.v, asan_stack_malloc_cF_on.v; this copy
+   states no local malloc contract), a Theorem Labs lane's memset / memcpy _on (a working branch),
+   reac_box_model_block's (lib/B/Prog/reac_box_model_block_cF_on.v, a Theorem Labs lane). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B Require Import ShadowRwOn.
-(* fl_shadow_rw_on: a Theorem Labs lane's (lib/B/ShadowRwOnK.v, a working branch 2bfdc5c22cd8), cited qualified. *)
+(* fl_shadow_rw_on: a Theorem Labs lane's (lib/B/ShadowRwOnK.v, a working branch), cited qualified. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B Require ShadowRwOnK.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require Import sh_word_on asan_stack_malloc_cF
   asan_stack_malloc_cF_on asan_memset_cF_on asan_memcpy_cF_on reac_box_model_block_c_on reac_box_model_block_cF_on.
@@ -38,7 +39,7 @@ Open Scope Z_scope.
    the callees are their footprint _on contracts, and the post carries every shadow region the caller holds
    (forall P, shadow_rw_on P m -> shadow_rw_on P m').  ctrl_lay_block_holds_F_on proves
    ctrl_lay_block_contract_F_on.  rule 24: no function proved here.  The rest of this comment is the original's. *)
-(* This delivery then edited comment text only: the code is unchanged from release c5e779efe8c, the comments are not. *)
+(* This delivery then edited comment text only: the code is unchanged from release, the comments are not. *)
 (* Footprint (_F) form of the ctrl_lay_block run of libreac fuzz_ctrl, image B (asan-ubsan, entry 0x86104),
    re-walk form (D), RECIPE.md step 1 (a working note, not in this delivery): the run of ctrl_lay_block.v (not in this delivery) re-stepped with the lib.Lib StepF
    tactics as an ExecF.evtF under a universally quantified footprint RNG, with one rng premise per region the run
@@ -56,7 +57,7 @@ Open Scope Z_scope.
    window, each buffer with the 8-aligned shadow word cover its quick check loads, and the runtime words); the
    memcpy text is the one already landed in lib/A/Prog/Seg/R8F.v (not in this delivery), read with image B's names.
    reac_box_model_block_contract_F is the owner's, lib/B/Prog/reac_box_model_block_c.v (a Theorem Labs lane,
-   a working branch 7975eab1fe0). *)
+   a working branch). *)
 
 (* Every byte readable in m is readable in m'. *)
 Definition rd_mono (m m' : word -> option byte) : Prop :=
@@ -453,21 +454,21 @@ Qed.
    (image-B owner, 23:15Z: "never define a callee's contract locally"):
 
    - __asan_memset / __asan_memcpy: a Theorem Labs lane's OWN files, merged in from a working branch
-     9869f1d1f86 and Required above (lib/B/Prog/asan_memset_cF.v, asan_memcpy_cF.v).  Their
+     and Required above (lib/B/Prog/asan_memset_cF.v, asan_memcpy_cF.v).  Their
      `asan_memset_contract_F` / `asan_memcpy_contract_F` are used as they stand; no copy of their text is in
      this file.
-   - __asan_stack_malloc_<c>: the leaf's (lib/B/Prog/asan_stack_malloc_cF.v:29, Required above); in the accepted file a LOCAL COPY, OWNER PENDING (a Theorem Labs lane with a Theorem Labs lane).  Per the image-B owner's
+   - __asan_stack_malloc_<c>: the leaf's (lib/B/Prog/asan_stack_malloc_cF.v:30, Required above); in the accepted file a LOCAL COPY, OWNER PENDING (a Theorem Labs lane with a Theorem Labs lane).  Per the image-B owner's
      23:19Z ruling the accepted file carried exactly ONE such statement, named `asan_stack_malloc_contract_F`, with the
-     text of record of lib/B/Prog/reac_ctrl_parseF.v (at head lib/B/Prog/reac_ctrl_parseF.v:53; written on a working branch 6cc50b9ea7d), copied verbatim.  It
+     text of record of lib/B/Prog/reac_ctrl_parseF.v (at head lib/B/Prog/reac_ctrl_parseF.v:54; written on a working branch), copied verbatim.  It
      counts as F6 (conditional), NOT as proved.
    - reac_box_model_block: the OWNER's published statement (a Theorem Labs lane,
-     lib/B/Prog/reac_box_model_block_c.v at a working branch 7975eab1fe0, taken into this branch
+     lib/B/Prog/reac_box_model_block_c.v at a working branch, taken into this branch
      by path); that file is Required above and this file states no copy of its text. *)
 
-(* fs_shadow_area: the leaf's (lib/B/Prog/asan_stack_malloc_cF.v:27); this copy states no local copy. *)
+(* fs_shadow_area: the leaf's (lib/B/Prog/asan_stack_malloc_cF.v:28); this copy states no local copy. *)
 
 (* asan_stack_malloc_contract_F and asan_stack_malloc_1_contract_F: the leaf's (lib/B/Prog/asan_stack_malloc_cF.v,
-   smon 6a82e56a6ee); the accepted file's local copy is not repeated here. *)
+   smon); the accepted file's local copy is not repeated here. *)
 
 (* The thread cells reac_box_model_block reads through the thread pointer (its __asan_stack_malloc_0 call). *)
 Definition reac_box_model_block_tls_rng (RNG : footprint) (m : word -> option byte) (TP : Z) : Prop :=
@@ -477,7 +478,7 @@ Definition reac_box_model_block_tls_rng (RNG : footprint) (m : word -> option by
     rng RNG (bv_unsigned DB + 24) 8.
 
 (* reac_box_model_block: the OWNER's statement, lib/B/Prog/reac_box_model_block_c.v
-   `reac_box_model_block_contract_F` as a Theorem Labs lane published it (a working branch 7975eab1fe0,
+   `reac_box_model_block_contract_F` as a Theorem Labs lane published it (a working branch,
    lines 141-194, with RngBytes.rng_bytes at :177).  This file states no copy of it. *)
 
 (* ------------------------------------------------------------------------------------------------------- *)
@@ -1139,7 +1140,7 @@ Section LF.
   Qed.
 
   (* route (C) (form of image A's frame_shadow_rwcells_shadow_R,
-     lib/A/Prog/ctrl_lay_block.v (a version not in this delivery; written on a working branch ba2ec85429d)): the shadow bytes frame_shadow_rwcells reads, the 12 shadow bytes
+     lib/A/Prog/ctrl_lay_block.v (a version not in this delivery; written on a working branch)): the shadow bytes frame_shadow_rwcells reads, the 12 shadow bytes
      [shadow_addr frb, shadow_addr frb + 12) of the 96-byte frame at frb (their presence for the byte list, their
      writability for the cell block; no other shadow byte). *)
   Definition frame_shadow_rwcells_shadow_R (frb : Z) : Z -> Prop :=

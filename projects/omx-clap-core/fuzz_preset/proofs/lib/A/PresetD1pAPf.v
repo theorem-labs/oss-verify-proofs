@@ -50,7 +50,7 @@
    (5) cgif's model_laws argument ML is gone from every leaf (the cf leaves cite a8's laws in their own proofs);
    (6) the post-call leaves (free sites, exit leaf) are built at every FP state, since a harness call returns at the
        callee's fx';
-   (7) memnorm (the interface's header item (8), a working branch 446222ec0601; lane MnPrefix): the
+   (7) memnorm (the interface's header item (8), a working branch; lane MnPrefix): the
        loop's named premise H_memnorm_drv_A is the THEOREM PresetD1rAmn.H_memnorm_drv_A_holds (no statement premise
        any more). Memnorm of the full overlay at main is seeded here from the start-up invariant: SINV0 ends in
        memnorm (core YA02.v SINV0_mn), and YA0j.ho_memnorm reads it at the hand-off from HC; arm_argv2 takes it (its
@@ -60,8 +60,9 @@
        seeded here at main's entry by H_stackup_main_A (lib/A/PresetD1pA.v section 3, a Section hypothesis here like
        every leaf; lib/A/PresetD1pAPfC.v proves it by stack_up_main_W1_A), at the start-up world W1 and AD1g.ly0, whose
        top is page aligned (layout_ok) and within top_ok of usp (AD1f.tfib_top_ok);
-   a8's malloc_cf_keeps_pristine_except is a theorem (YGcfPristine.v:381), so no leaf takes it as a premise any more
-   (CwRunqA 508a56e69bef). *)
+   a8's malloc_cf_keeps_pristine_except is a theorem (YGcfPristine.v:382), so no leaf takes it as a premise any more
+   (CwRunqA). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the input-owned, top-anchored launch stack; the start-up certificate per CONFIG_RSEQ flag with states computed in the build; the model's channel reader that fdchan asks for beside the descriptor (cs_ok's co_rdr, proved at the launch)). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -71,7 +72,7 @@ From OSSVerify.Core Require Shapes.
 From OSSVerify.omx_clap_core.fuzz_preset Require Images.
 From OSSVerify.omx_clap_core.fuzz_preset.images Require Import Asan.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YK11 YK15 YK18 YK0c YK0e YK09 YA0c YA0e YA01 YA02 YA00.
-From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require Import AB12 AB1h AB01.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require Import AB12 AB1h AB01r.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YK00 YK0s YP0n YM02 YP0m YP09 YP0l YP06 YP08 YP03 YN3q YN3v YK04 YA0i YA0n YA0o YA0p.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YG00 YG0a YG01 YG0k YG0f YG0v YG0n YG0d YCe5 YL02 YG08.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require Import AB1v AF0l AF0m AD2j AD1t AD20 AD1v AD2h AD2f AD1w AD1x ACeg AD1i.
@@ -83,7 +84,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YA0j YAkMem
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YGcallStackUp.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require PresetStkUpA.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YGcfNames YG0ncf YG0dcf YG0d2cf YGcfRoomPre YGcfNilInit YG0lawscf YGcfRoomKeep.
-From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require Import CfImgA CfParamsPreset PresetCfnA PresetD1pA.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require Import CfImgA CfParamsPreset PresetCfnA PresetD1qA PresetD1pA.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require Import PresetD1sitesA PresetD1preA.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require PresetD1rA PresetD1rAmn PresetD2eA PresetD2runA PresetD2runQA PresetPinvA PresetPinvAcf.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require PWorldH8 CfAroPresetA.
@@ -182,8 +183,13 @@ Theorem tfib_drv_main_A_of_leaves : tfib_drv_main_A.
 Proof.
 intros rc L PA sm NP NPI NPS NPT B HB AMALLOC AFREE AICPY ARDCHK
 MT XM_LIB XN_LIB MT_FREE RO_IN PAYLOAD_ROOM NR PROOM LIBC UNIV HWMAX HSIG xst XFR PF1 PFN est ESTI ESTF FWS RFS FPO FPR FPU EXS.
-intros sp rdraw brk inp en_p h ch E R FULL model Hsp Hbrk Hfit Hinp HNR Hceil Hch HC HE HM.
-pose proof Hinp as (Hva & Hve & Hvfs & _).
+intros sp rdraw brk mbase inp en_p h ch E R FULL model Hsp Hbrk Hmb Hfit Hinp Hlau HNR Hceil Hch HC HE HM.
+pose proof Hinp as (Hva & Hve & Hvfs & _ & _ & _ & _ & _ & _ & _ & _ & _ & Hvl & _).
+set (Hvi := Hinp).
+(* the start-up invariant at this input, and its stack-top fact (YA02.SINV0_sp0), which the core sections read *)
+set (SINV := SINV_A sp rdraw brk mbase inp) in HC.
+assert (SINV_sp0 : forall E' M, SINV E' M -> uE E' e_sp0 = YA02.TOP sp + 8388608).
+{ intros E' M HSv. eapply YA02.SINV0_sp0; try eassumption. Unshelve. all: first [assumption | exact TSEGS | exact TFIB]. }
 set (LS := ZTraceSpec.checksum_shape).
 (* the input predicate at this entry, which the leaves on the file arm carry, and the payload-room bridge at it *)
 set (NRp := NR en_p).
@@ -231,36 +237,50 @@ pose proof (Hrd0_file YK11.fx0 rc LS CfImg_A CfParams_preset B NP NRp HB NPS NPT
 pose proof (Hfile_arm YK11.fx0 rc LS CfImg_A CfParams_preset B NP NRp HB NPI NPS MSITE RDF) as HFILE.
 pose proof (Hdir_arm YK11.fx0 rc LS CfImg_A CfParams_preset B NP HB NPI NPS MSITE RDD) as HDIR.
 (* the walk, as the donor's *)
-(* the W8 core's w_H8 proof of the start-up world W1 (as the core's own callers pass it) *)
-pose (H8 := PWorldH8.H1_H8 sp rdraw brk inp Hsp Hva Hve Hfit h ch E R FULL model Hch HC).
-pose proof (tfib_main_entry sp rdraw brk inp Hsp Hva Hve Hfit h ch E R FULL model Hch HC HE HM
-  (sliver_allowed sp rdraw brk inp Hsp Hva Hve Hfit h ch E R FULL model Hch HC Hceil) H8) as (Hpc & HST & HAI & Hfs & Hfds & _).
+(* the core sections' lemmas (A/AD1g.v, A/AD2i.v, A/AD1f.v) through their binders, in Section order, at this
+   proof's names (A/AD1p.v's instP), each once: a second pass would give a lemma's own word binder (sliver_allowed's
+   address) the next word of the list. The start-up world's w_H8 proof H8 is the one A/AD1f.v's tfib_AR states the
+   world with (its H1H8, lib/A/PWorldH8.v's H1_H8 at the section's binders), named with its value, so W1 below is
+   that world and tfib_AR, tfib_main_entry and the leaves read one world. *)
+let instP H := (try specialize (H YK11.fx0); try specialize (H B); try specialize (H HB); try specialize (H sp);
+  try specialize (H rdraw); try specialize (H brk); try specialize (H mbase); try specialize (H inp);
+  try specialize (H Hsp); try specialize (H Hva); try specialize (H Hve); try specialize (H Hfit);
+  try specialize (H Hvl); try specialize (H Hlau); try specialize (H Hvi); try specialize (H h); try specialize (H ch);
+  try specialize (H E); try specialize (H R); try specialize (H FULL); try specialize (H model); try specialize (H Hch);
+  try specialize (H SINV); try specialize (H SINV_sp0); try specialize (H HC); try specialize (H HE);
+  try specialize (H HM); try specialize (H rc); try specialize (H Hceil)) in
+pose proof (@AD1g.sliver_allowed) as SL_allowed; instP SL_allowed;
+pose proof (@AD1f.tfib_AR) as HAR; instP HAR;
+match type of HAR with AR _ _ _ _ (AD2i.W1 _ _ _ _ _ _ _ _ ?h8) _ _ => set (H8 := h8) in HAR end;
+pose proof (@AD2i.tfib_main_entry) as ME; instP ME; specialize (ME SL_allowed); specialize (ME H8);
+pose proof (@AD1f.tfib_top_ok) as HTOP; instP HTOP.
+destruct ME as (Hpc & HST & HAI & Hfs & Hfds & _).
+(* The hand-off model's channel reader, which [fdchan] asks for at LPS 727298f3 beside the descriptor:
+   [cs_ok]'s [co_rdr], proved at the launch ([YA02.model0_channel_reader]).  The arms carry it to their sites. *)
+assert (Hcr : m_channel_reader model = true) by (eapply co_rdr; exact HC).
 set (ly := AD1g.ly0 ch E model).
-assert (HAR : AR TSEGS B ly init_state (AD2i.W1 sp rdraw inp Hsp Hva ch E model H8) FULL model) by (eapply (tfib_AR B HB); eassumption).
+set (W1 := AD2i.W1 sp rdraw inp Hsp Hva ch E model H8).
 (* the allocator switch (a8's YGcfNilInit.v ARcf_nil_init, combine6's EXPOSE form), once, at the allocator's initial
    state: the start-up world W1 widens to Wc (class 1's band exposed), where AI and ARcf hold *)
-destruct (ARcf_nil_init (cp := CfParams_preset) tfibsegs B ly
-  (AD2i.W1 sp rdraw inp Hsp Hva ch E model H8) FULL model HAR HAI
-  (H_start_lazy_A sp rdraw brk inp h ch E R FULL model Hch HC)
-  (H_start_cells_A rc sp rdraw brk inp Hsp Hva h ch E R FULL model Hch HC H8 B HB)
-  (H_start_pf_A rc sp rdraw brk inp Hsp Hva h ch E R FULL model Hch HC H8 B HB)
+destruct (ARcf_nil_init (cp := CfParams_preset) tfibsegs B ly W1 FULL model HAR HAI
+  (H_start_lazy_A sp rdraw brk mbase inp h ch E R FULL model SINV SINV_sp0 Hch HC)
+  (H_start_cells_A rc sp rdraw brk mbase inp Hsp Hva h ch E R FULL model SINV SINV_sp0 Hch HC H8 B HB)
+  (H_start_pf_A rc sp rdraw brk mbase inp Hsp Hva h ch E R FULL model SINV SINV_sp0 Hch HC H8 B HB)
   (H_errb_rows_A B HB) (H_pf_rows_A B HB)) as (Wc & HWle & HAIc & HARc).
-assert (HTOP : AD1v.top_ok (bv_unsigned sp) ly) by (eapply tfib_top_ok; eassumption).
 (* #102 (lane StackDrv): the live real stack above usp at main, from H_stackup_main_A at the start-up world W1 and
    ly (its top page aligned by layout_ok, within top_ok of usp) *)
-assert (HUP0 : YGcallStackUp.astack_up_x tfibsegs ly (AD2i.W1 sp rdraw inp Hsp Hva ch E model H8) (bv_unsigned sp) FULL).
+assert (HUP0 : YGcallStackUp.astack_up_x tfibsegs ly W1 (bv_unsigned sp) FULL).
 { pose proof (lo_top _ (am_layout _ _ _ _ (proj1 HAR))) as (_ & _ & HPA & _). unfold YG0f.page_aligned in HPA.
   intros a Ha.
-  exact (H_stackup_main_A rc sp rdraw brk inp Hsp Hva Hve Hfit h ch E R FULL model Hch HC HE HM H8 ly HPA HTOP a ltac:(lia)). }
+  exact (H_stackup_main_A rc sp rdraw brk mbase inp Hsp Hva Hve Hfit Hlau h ch E R FULL model SINV SINV_sp0 Hch HC HE HM H8
+    ly HPA HTOP a ltac:(lia)). }
 pose proof (PresetStkUpA.stk_up_wle ly _ Wc FULL (bv_unsigned sp) HWle HUP0) as HUPc.
-pose proof (Hhandoff YK11.fx0 rc sp rdraw brk inp Hsp Hva h ch E R FULL model H8 Hch HC) as HPI.
+pose proof (Hhandoff YK11.fx0 rc sp rdraw brk inp Hsp Hva h ch E R FULL model H8 SINV SINV_sp0 Hch HC) as HPI.
 pose proof (pinv_wle_drv _ Wc FULL 0 0 HWle HPI) as HPIc.
 (* memnorm of the full overlay at main: the start-up invariant SINV0 carries it (core YA02.v SINV0_mn), read at the
-   hand-off by YA0j.ho_memnorm from HC (lib/A/AjMemnormMainA.v's route, in the YAkMemnorm form directly) *)
+   hand-off by YA0j.ho_memnorm from HC *)
 assert (HMN0 : YAkMemnorm.memnorm Asan.M.loaded_segments FULL).
-{ eapply YA0j.ho_memnorm;
-    [exact (YA02.SINV0_mn Asan.M.loaded_segments Asan.M.phdrs sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-    | exact HC]. }
+{ eapply YA0j.ho_memnorm; [| exact HC]. intros E' M HSv. eapply YA02.SINV0_mn; exact HSv. }
 rewrite Hpc. change (cfg_of Asan.M.loaded_segments R TFIB_MAIN FULL model) with (mkCfg (mkst R (Z_to_bv 64 TFIB_MAIN) FULL (seg_rom tfibsegs)) model).
 change TSEGS with tfibsegs in HST, HAI |- *. unfold CLOSEDX.
 destruct (Nat.eq_dec (length (in_argv inp)) 2) as [Hlen|Hlen].
@@ -270,14 +290,16 @@ destruct (Nat.eq_dec (length (in_argv inp)) 2) as [Hlen|Hlen].
   destruct (HST true ltac:(unfold two_ok; rewrite Hargv; cbn; lia)) as [HS HR].
   pose proof (st_ok_wle tfibsegs _ Wc _ _ _ HWle HS) as HSc. pose proof (runs_at_wle_drv _ Wc _ _ _ HWle HR) as HRc.
   replace (CLOSEDX_args (in_argv inp) (in_fs inp)) with (CLOSEDX_args [a0; p] (in_fs inp)) by (rewrite Hargv; reflexivity).
-  exact (Harm_argv2 YK11.fx0 rc LS CfImg_A CfParams_preset B NRp HB HCO HFILE HDIR sp inp (xwE E R) (xdE inp)
+  (* launch-indexed (PresetPinvAcf.v tfib_arm_argv2_cf_A, as the core's AD2a.v): the entry environment's word and
+     data maps are read from HSc *)
+  exact (Harm_argv2 YK11.fx0 rc LS CfImg_A CfParams_preset B NRp HB HCO HFILE HDIR sp brk mbase inp rdraw _ _
     Wc (mkst R (Z_to_bv 64 TFIB_MAIN) FULL (seg_rom tfibsegs)) model ly a0 p
-    Hargv Hsp Hva Hve Hfit Hvfs HNR HSc HRc HAIc HARc HTOP HPIc HMN0 HUPc Hfs Hfds).
+    Hsp Hargv Hva Hve Hvl Hlau Hvi Hvfs HNR HSc HRc HAIc HARc HTOP HPIc HMN0 HUPc Hfs Hfds Hcr).
 - destruct (HST false I) as [HS HR].
   pose proof (st_ok_wle tfibsegs _ Wc _ _ _ HWle HS) as HSc. pose proof (runs_at_wle_drv _ Wc _ _ _ HWle HR) as HRc.
   replace (CLOSEDX_args (in_argv inp) (in_fs inp)) with (diag (msg_usage (nth 0 (in_argv inp) [])) (in_fs inp)).
   2:{ clear -Hlen. unfold CLOSEDX_args. destruct (in_argv inp) as [|x [|y [|z r]]]; try reflexivity. cbn in Hlen. lia. }
-  exact (USAGE sp inp (xwE E R) (xdE inp) Wc
-    (mkst R (Z_to_bv 64 TFIB_MAIN) FULL (seg_rom tfibsegs)) model ly Hsp Hva Hve Hfit Hlen HSc HRc HAIc HARc HTOP Hfs Hfds).
+  exact (USAGE sp brk mbase inp rdraw _ _ Wc
+    (mkst R (Z_to_bv 64 TFIB_MAIN) FULL (seg_rom tfibsegs)) model ly Hsp Hva Hve Hvl Hlau Hvi Hlen HSc HRc HAIc HARc HTOP Hfs Hfds Hcr).
 Qed.
 End pf.

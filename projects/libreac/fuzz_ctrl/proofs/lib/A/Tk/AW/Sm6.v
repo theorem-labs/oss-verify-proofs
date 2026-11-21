@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/boost-beast/http_request/lib/As/AllocWalkKit.v, with its module paths and module names changed; 353 of its 387 lines of code are new or changed and 128 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Tk/AW/SmLeaf.v, with its module paths, module names and numbers changed; 359 of its 393 lines of code are new or changed and 353 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Fpu Sem.
@@ -397,7 +398,7 @@ Proof.
 Qed.
 
 (* a Theorem Labs lane's statement asan_stack_malloc_6_contract_on (lib/A/Prog/asan_stack_malloc_c_on.v (an earlier version, blob e08ea035a48, not in this delivery), from
-   the merge of a working branch e0d0696bcb1), proved from stack_malloc_6_on: its premise region
+   the merge of a working branch), proved from stack_malloc_6_on: its premise region
    asan_stack_malloc_shadow_R FS 6 is stack_malloc_6_on's R, since fs_frame FS 6 0 = FS + 6328320. *)
 Theorem stack_malloc_6_contract_on : A.Prog.asan_stack_malloc_c_on.asan_stack_malloc_6_contract_on.
 Proof.

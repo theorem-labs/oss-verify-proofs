@@ -23,6 +23,7 @@
    achain_chain_pre of it. joined's new premises at its call: len's 8 bytes present (the journal's window), and
    (pass 5b) the stack from len - 16 present, from the statement's astack_pres kept by astack_pres_journal. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 5000 of its 5273 lines of code are new or changed and 4780 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan+UBSan image B (fuzz_segconf.asan-ubsan, pin sha256 c3796c0b38f3): segment S05 of the
    walk of the test harness's entry function LLVMFuzzerTestOneInput (0x84dc0): from the cut
    K85210 (0x85210) to K85338 (0x85338, the last turn) or K85530 (0x85530), the statement lt_seg_S05_stmt of
@@ -31,7 +32,7 @@
    proves function LLVMFuzzerTestOneInput (reuse search, rule 24: released units, the earlier proof delivery and working
    heads; the result is recorded with the commissioning brief; none: written new)
 
-   THE FORM: plugin-hostd/fuzz_command's image-B harness walk (origin/ossv/recipes 3abc3740de97,
+   THE FORM: plugin-hostd/fuzz_command's image-B harness walk (
    lib/B/Prog/LLVMFuzzerTestOneInput_s*.v) in this stream's segconf vocabulary (image B's closed S00, S01 / S02 and
    S21 / ret walks in this walk's integration; image A's S00, S01 / S02 and S21 / ret walks and its S05 kit). The
    walk of S05 is cut at the four inner points the kit LLVMFuzzerTestOneInput_s15k.v states, into five pieces, each
@@ -111,9 +112,9 @@ From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YI67.
    K85210 (0x85210) to the kit's inner cut S5_LB (0x8526c) of LLVMFuzzerTestOneInput_s15k.v.
 
    THE FORM: plugin-hostd/fuzz_command's image-B harness walk lib/B/Prog/LLVMFuzzerTestOneInput_s42.v
-   (origin/ossv/recipes 3abc3740de97: a token run to the copy's call, the call through aj_intrin_atS, a fresh seed
+   (a token run to the copy's call, the call through aj_intrin_atS, a fresh seed
    after it with the text's last byte as an atom and its shadow entry, a token run through the instrumented check and
-   the NUL store), and image A's S07 / S08 walk (image A's S07 / S08 commit 6b130104f652: the label's five shadow
+   the NUL store), and image A's S07 / S08 walk (image A's S07 / S08: the label's five shadow
    stores by the plain runner through SH(FR)). The code (dis/LLVMFuzzerTestOneInput.fuzz_segconf.asan-ubsan.s
    lines 278-300, SegList.v slots 276-299):
    - 0x85210 .. 0x85218, token run A: `beqz a0` (the abort edge) decided by t >= 4096 (lt_hblk), s7 := t; it stops at
@@ -272,8 +273,8 @@ Hypothesis ML : model_laws (as_universe B).
 Hypothesis PRW : prog_rw SEGS B.
 Hypothesis VOBJS : seg_val_objs.
 Hypothesis SIGP : seg_sig_prog.
-(* image B's per-image record (lib/B/Prog/SegRecBase.v, the image-B listing owner's commit c4abdaee306f, merged into
-   this walk's integration commit da997fa1859d): the image facts lt_img needs at a reader after a call, each a field.
+(* image B's per-image record (lib/B/Prog/SegRecBase.v, the image-B listing owner, merged into
+   this walk's integration): the image facts lt_img needs at a reader after a call, each a field.
    It SUPERSEDES the three hypotheses IMG_RELRO / IMG_GOTW / IMG_GUARD an earlier version of this brief had.
    Never weaken lt_img instead. *)
 Hypothesis IMGF : seg_img_facts SEGS B.
@@ -1140,7 +1141,7 @@ End da.
    Each arm ends with the kit's S5_label for the pointer it leaves in s3.
    THE FORM: image A's S01 / S02 walk (seeds, paj_run_tok, prreg; its kit's lk_hblk / lk_core_run / lk_img_kept, here
    s5b_hblk / s5b_kept / s5b_img_kept with longl[0 .. 120) as the one image range a call may change), fuzz_command's
-   PaRt.v cwc_aj_snprintf_atSF (origin/ossv/recipes 3abc3740de97) restated at this call as s5b_snp_call, its
+   PaRt.v cwc_aj_snprintf_atSF restated at this call as s5b_snp_call, its
    RtPFDog.v pa_dest_off_globals_frame as s5b_frame's kImgEnd / snp_hi <= FR.
    Code: dis/LLVMFuzzerTestOneInput.fuzz_segconf.asan-ubsan.s lines 301-323 and 347 (SegList.v slots 299-321 and 345,
    lines 350-372 and 396; slot k is line 51 + k). *)
@@ -1343,8 +1344,8 @@ Hypothesis ML : model_laws (as_universe B).
 Hypothesis PRW : prog_rw SEGS B.
 Hypothesis VOBJS : seg_val_objs.
 Hypothesis SIGP : seg_sig_prog.
-(* image B's per-image record (lib/B/Prog/SegRecBase.v, the image-B listing owner's commit c4abdaee306f, merged into
-   this walk's integration commit da997fa1859d): the image facts lt_img needs at a reader after a call, each a field.
+(* image B's per-image record (lib/B/Prog/SegRecBase.v, the image-B listing owner, merged into
+   this walk's integration): the image facts lt_img needs at a reader after a call, each a field.
    It SUPERSEDES the three hypotheses IMG_RELRO / IMG_GOTW / IMG_GUARD an earlier version of this brief had.
    Never weaken lt_img instead. *)
 Hypothesis IMGF : seg_img_facts SEGS B.
@@ -1902,7 +1903,7 @@ Ltac s5b_inl := solve [cbn [In]; tauto].
 Ltac s5b_cs := first [unfold acallee_saved; lia | apply bv_eq; reflexivity].
 
 (* ---------------- the snprintf call at 0x8528c (row 4 at this call site) ----------------
-   fuzz_command's PaRt.v cwc_aj_snprintf_atSF (origin/ossv/recipes 3abc3740de97) restated at this call: snprintf(label,
+   fuzz_command's PaRt.v cwc_aj_snprintf_atSF restated at this call: snprintf(label,
    40, "reac-pw.conf.d/%u-x.conf", lb) through the trampoline, row 4 (RtPFSeg.seg_asnprintf_realizes, the window
    RtPFSeg.SEG_SNP_K = 2 * ESTACK, the family RtPFSeg.FR_seg snp_lo gotwA) built from the walk's facts: the
    destination label[40] of the class-3 frame (in_frames of the journal's own frame; its shadow bytes 0 by LFO_L;
@@ -2478,8 +2479,8 @@ End db.
    carried past the call by the callee's journal (its keep clauses: the stack above S1, the class-3 frame and its
    shadow, the image bytes, the live blocks outside M_FILE_FP, which lies inside the mconf block m), and the
    counters of K85338 from m_file_c.v's m_file_gen / m_file_refused / m_file_overflow. The carrying lemmas are the
-   image-B twins of the S01 / S02 walk's (image B's S01 / S02 commit c9accd8a8a50, LLVMFuzzerTestOneInput_s12k.v:
-   lk_sp, lk_hblk, lk_img_kept, lk_core_run) and the S03 walk's of image A (image A's S03 commit efe4db8b7b60:
+   image-B twins of the S01 / S02 walk's (image B's S01 / S02, LLVMFuzzerTestOneInput_s12k.v:
+   lk_sp, lk_hblk, lk_img_kept, lk_core_run) and the S03 walk's of image A (image A's S03:
    s13_not_entry, s13_chunk_word, s13_U_atom); the program call is METHOD.md section 4.6's pattern. *)
 (* ======================================== pure facts ======================================== *)
 (* nfiles is 1 .. 4 (the _s02.v lemma lt_nfiles_range, which this file does not Require) *)
@@ -2671,8 +2672,8 @@ Hypothesis ML : model_laws (as_universe B).
 Hypothesis PRW : prog_rw SEGS B.
 Hypothesis VOBJS : seg_val_objs.
 Hypothesis SIGP : seg_sig_prog.
-(* image B's per-image record (lib/B/Prog/SegRecBase.v, the image-B listing owner's commit c4abdaee306f, merged into
-   this walk's integration commit da997fa1859d): the image facts lt_img needs at a reader after a call, each a field.
+(* image B's per-image record (lib/B/Prog/SegRecBase.v, the image-B listing owner, merged into
+   this walk's integration): the image facts lt_img needs at a reader after a call, each a field.
    It SUPERSEDES the three hypotheses IMG_RELRO / IMG_GOTW / IMG_GUARD an earlier version of this brief had.
    Never weaken lt_img instead. *)
 Hypothesis IMGF : seg_img_facts SEGS B.
@@ -3715,8 +3716,8 @@ Hypothesis ML : model_laws (as_universe B).
 Hypothesis PRW : prog_rw SEGS B.
 Hypothesis VOBJS : seg_val_objs.
 Hypothesis SIGP : seg_sig_prog.
-(* image B's per-image record (lib/B/Prog/SegRecBase.v, the image-B listing owner's commit c4abdaee306f, merged into
-   this walk's integration commit da997fa1859d): the image facts lt_img needs at a reader after a call, each a field.
+(* image B's per-image record (lib/B/Prog/SegRecBase.v, the image-B listing owner, merged into
+   this walk's integration): the image facts lt_img needs at a reader after a call, each a field.
    It SUPERSEDES the three hypotheses IMG_RELRO / IMG_GOTW / IMG_GUARD an earlier version of this brief had.
    Never weaken lt_img instead. *)
 Hypothesis IMGF : seg_img_facts SEGS B.
@@ -5106,8 +5107,8 @@ Hypothesis ML : model_laws (as_universe B).
 Hypothesis PRW : prog_rw SEGS B.
 Hypothesis VOBJS : seg_val_objs.
 Hypothesis SIGP : seg_sig_prog.
-(* image B's per-image record (lib/B/Prog/SegRecBase.v, the image-B listing owner's commit c4abdaee306f, merged into
-   this walk's integration commit da997fa1859d): the image facts lt_img needs at a reader after a call, each a field.
+(* image B's per-image record (lib/B/Prog/SegRecBase.v, the image-B listing owner, merged into
+   this walk's integration): the image facts lt_img needs at a reader after a call, each a field.
    It SUPERSEDES the three hypotheses IMG_RELRO / IMG_GOTW / IMG_GUARD an earlier version of this brief had.
    Never weaken lt_img instead. *)
 Hypothesis IMGF : seg_img_facts SEGS B.

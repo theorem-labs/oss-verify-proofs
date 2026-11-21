@@ -2,7 +2,8 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: proof half of cgif c8557374ad2e lib/YD1k.v (the asan-ubsan twin of lib/A/AD1k.v:272-346: tfib_fwrite_site, msg_refused_eq, tfib_refused_site); the data half is a Theorem Labs lane's generated Reusable/YD1k.v (a working branch). It is the asan-ubsan twin of a Theorem Labs lane's lib/A/AD1kSites.v (a working branch 9700d736a50; commit 78fd6b35204), every hunk mirrored, ported for libreac/fuzz_pcap's asan-ubsan build (pinned image fuzz_pcap.asan-ubsan sha256 9e66f771f22a, symbols from its unstripped twin fuzz_pcap.asan-ubsan sha256 c969d83cdd59): module paths changed, TfibSyms -> PcapSyms; F_STDERR = 0x9dcd0 (__stderr_FILE+0, .symtab st_size 232 = FILE_SZ; a Theorem Labs lane's asan value 0x9de08) at both sites; the stderr FILE image range 646280 .. 647120 = [oft_arg0, __start_asan_globals) = [0x9dc88, 0x9dfd0) at both sites, which is Reusable/YD2j.v's R_A3 and the third conjunct IR3 of Reusable/YD1k.v img_facts (a Theorem Labs lane's asan range 646592 .. 647424). Unchanged from the donor (sizes): 6224, 9216, 16384, 232, message length 38, 67108864, SOff 41 0. FMT_refused 0x1965e = .rodata+0x937e, 'cli: input >= %u bytes, refused\n' in the asan-ubsan pin too (Reusable/YE3l.v). Adaptation as a Theorem Labs lane's (4 call sites): YD1k's Section d closes before this file, so icpt_pre_facts B, icpt_pre_room B, rodata_shadow_facts B HB LAWS and rodata_hull_zero B HB LAWS take B explicitly; and the two `unfold YF0x.TFIB_IMG_LO, YF0x.TFIB_IMG_END` steps also open pcap_img_end, YImgTop.IMG_TOP before their lia. TAKEN FROM (relocated core twins): Reusable/YE2p.v musl fwrite walk on __stderr_FILE; YE2x.v tfib_fwrite_icpt; YE2v.v tfib_fprintf_icpt_refused; YE3l.v refused-message constants; YE3h.v vf_file. rule 24: no function proved anew. *)
+(* Modified by Theorem Labs, 2026-10: proof half of cgif lib/YD1k.v (the asan-ubsan twin of lib/A/AD1k.v:273-347: tfib_fwrite_site, msg_refused_eq, tfib_refused_site); the data half is a Theorem Labs lane's generated Reusable/YD1k.v (a working branch). It is the asan-ubsan twin of a Theorem Labs lane's lib/A/AD1kSites.v (a working branch), every hunk mirrored, ported for libreac/fuzz_pcap's asan-ubsan build (pinned image fuzz_pcap.asan-ubsan sha256 9e66f771f22a, symbols from its unstripped twin fuzz_pcap.asan-ubsan sha256 c969d83cdd59): module paths changed, TfibSyms -> PcapSyms; F_STDERR = 0x9dcd0 (__stderr_FILE+0, .symtab st_size 232 = FILE_SZ; a Theorem Labs lane's asan value 0x9de08) at both sites; the stderr FILE image range 646280 .. 647120 = [oft_arg0, __start_asan_globals) = [0x9dc88, 0x9dfd0) at both sites, which is Reusable/YD2j.v's R_A3 and the third conjunct IR3 of Reusable/YD1k.v img_facts (a Theorem Labs lane's asan range 646592 .. 647424). Unchanged from the donor (sizes): 6224, 9216, 16384, 232, message length 38, 67108864, SOff 41 0. FMT_refused 0x1965e = .rodata+0x937e, 'cli: input >= %u bytes, refused\n' in the asan-ubsan pin too (Reusable/YE3l.v). Adaptation as a Theorem Labs lane's (4 call sites): YD1k's Section d closes before this file, so icpt_pre_facts B, icpt_pre_room B, rodata_shadow_facts B HB LAWS and rodata_hull_zero B HB LAWS take B explicitly; and the two `unfold YF0x.TFIB_IMG_LO, YF0x.TFIB_IMG_END` steps also open pcap_img_end, YImgTop.IMG_TOP before their lia. TAKEN FROM (relocated core twins): Reusable/YE2p.v musl fwrite walk on __stderr_FILE; YE2x.v tfib_fwrite_icpt; YE2v.v tfib_fprintf_icpt_refused; YE3l.v refused-message constants; YE3h.v vf_file. rule 24: no function proved anew. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel reader that fdchan asks for at LPS 727298f3 carried beside the descriptor fact, from cs_ok's co_rdr). *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -29,7 +30,7 @@ Hypothesis LAWS : AR_laws tfibsegs B.
 Hypothesis TL : PcapSyms B.
 Theorem tfib_fwrite_site : fwrite_site_tfa B est.
 Proof.
-intros ly S W regs mem md E p len msg T HPRE G10 G11 G12 G13 Hlen Hlen1 Hp1 Hp2 Hhole Himg HIMG Hfd HAI HPOST.
+intros ly S W regs mem md E p len msg T HPRE G10 G11 G12 G13 Hlen Hlen1 Hp1 Hp2 Hhole Himg HIMG Hfd Hcr HAI HPOST.
 pose proof (icpt_pre_facts B ly S W regs mem md HPRE) as (HEPRE & Hslo & Hwin & Hpres). pose proof (proj1 HEPRE) as HAR.
 pose proof (img_facts E _ HIMG) as ([IR1a IR1b] & IR2 & IR3 & Vcan).
 pose proof asan_consts as (C1 & C2 & C3 & C4 & C5).
@@ -57,7 +58,9 @@ apply (tfib_not_owned_static B F_STDERR (F_STDERR + FILE_SZ) a HB); [vm_compute;
 - left. unfold kLowMemEnd. lia.
 - exact (proj1 (rodata_shadow_facts B HB LAWS ly S W mem md p len HAR Hp1 ltac:(lia) ltac:(lia))).
 - exact (proj2 (rodata_shadow_facts B HB LAWS ly S W mem md p len HAR Hp1 ltac:(lia) ltac:(lia))).
-- split; [exact Hfd | reflexivity].
+(* [fdchan]'s third conjunct at LPS 727298f3 is the model's channel reader, which the
+   site takes beside the descriptor. *)
+- split; [exact Hfd | split; [reflexivity | exact Hcr]].
 - exact HAI.
 - intros regs' mem' md' HAR' HP' Hsbm' Ha0' HFW' Hfr' Hpr' HAI'.
 apply (HPOST regs' mem' md' HAR' HP' Hsbm' Ha0').
@@ -70,7 +73,7 @@ Lemma msg_refused_eq : map (Z_to_bv 8) YE3l.msg_refused = YO05.msg_refused /\ Z.
 Proof. vm_compute. split; reflexivity. Qed.
 Theorem tfib_refused_site : refused_site_tfa B est.
 Proof.
-intros ly S W regs mem md E T HPRE G10 G11 G12 HIMG Hfd HAI HPOST.
+intros ly S W regs mem md E T HPRE G10 G11 G12 HIMG Hfd Hcr HAI HPOST.
 pose proof (icpt_pre_facts B ly S W regs mem md HPRE) as (HEPRE & Hslo & Hwin & Hpres). pose proof (proj1 HEPRE) as HAR.
 pose proof (img_facts E _ HIMG) as (IR1 & IR2 & IR3 & Vcan).
 pose proof asan_consts as (C1 & C2 & C3 & C4 & C5). pose proof msg_refused_eq as [ME ML].
@@ -90,7 +93,7 @@ apply (tfib_not_owned_static B F_STDERR (F_STDERR + FILE_SZ) a HB); [vm_compute;
 - exact (u64_range (sv_denot E (SOff 41 0))).
 - exact (ro_img_of_IMG E _ HIMG).
 - apply (rodata_hull_zero B HB LAWS ly S W mem md); [exact HAR | unfold FMT_refused; lia | unfold FMT_refused; lia | lia].
-- split; [exact Hfd | reflexivity].
+- split; [exact Hfd | split; [reflexivity | exact Hcr]].
 - exact HAI.
 - intros regs' mem' md' HAR' HP' Hsbm' Ha0' HFW' Hfr' Hpr' HAI'.
 apply (HPOST regs' mem' md' HAR' HP' Hsbm').

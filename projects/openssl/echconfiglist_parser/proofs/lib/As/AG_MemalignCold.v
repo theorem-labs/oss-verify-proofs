@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the runtime's reserved-ledger premise is discharged on the class's primary region by AllocRepX.ak_resf_prim, since the launch's vDSO/vvar pair is reserved above AHI_LO). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FMapPositive.
@@ -313,7 +314,7 @@ Section MemalignColdGlue.
     { exact FARR1. }
     { exact FAJ1. }
     { exact USJ1. }
-    { intros a k Ha. exact (ak_resf_hi s mo1 AK1 a k Ha). }
+    { intros a k Ha Hk. apply (ak_resf_prim s mo1 AK1 a k c); [unfold kNumClasses; clear - HC; try acb; lia| exact Ha| unfold kRegionSize; exact Hk]. }
     { intros a k Ha Hk. apply (ak_prim s mo1 AK1 a k c); [unfold kNumClasses; clear - HC; try acb; lia| exact Ha| unfold kRegionSize; exact Hk]. }
     { exact NW1. }
     { exact NWA1. }

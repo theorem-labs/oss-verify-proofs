@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the mmap rule takes the place_declined_b premise of triple1_mmap_rwJ; its proof takes Linux's address, the request's non-refusability and the kept room from RoomK's vm_room_rw_not_refusable and vm_room_grant_rw; RoomK imported). *)
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
 #[local] Ltac2 tbs__ () := ["@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.Safety"; "assn"; "world"; "etriple"; "triple"; "w_cfg"; "@Corelib.Init.Datatypes"; "list"; "fst"; "prod"; "pair"; "snd"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymState"; "sstate"; "valuation"; "@Corelib.Init.Logic"; "and"; "True"; "False"; "eq"; "iff"; "or"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "Model"; "event"; "@Corelib.Numbers.BinNums"; "Z"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymSummary"; "jpost"; "LQP"; "@Stdlib.ZArith.BinInt.Z"; "le"; "add"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.TRRulesK.Angelic"; "roomw"; "posts_room"; "TR_ang"; "jroom"; "proom"; "@Corelib.Lists.ListDef"; "map"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ContractDrv"; "vm_room"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.TRRulesK"; "tr_rules"; "implJ"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymSoundR"; "SPJ"; "ok_frameJ"; "@LinuxProcessSemantics.LinuxProcessSem.Run"; "cfg_model"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymCall"; "ok_pframeJ"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract"; "ok_sideK"].
@@ -10,7 +11,18 @@ From stdpp Require Import bitvector.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap.
-From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc Require Import Contract ContractDrv VmRoom.
+(* RoomK carries the K-family placement layer: vm_room_place_available and
+   vm_room_rw_not_refusable, the vm_room twins of RoomS.v:145-166. It is required HERE and not
+   further up because RoomS.v:14 requires VmRoom, so VmRoom is upstream of RoomS and the twins
+   cannot live in it; and RoomK is a new file below both rather than a move, because RoomS.v:5's
+   tbs__ blob table names WTOP, ROOMC and WSPAN by MODULE PATH and a move would stop it resolving.
+   Checked before adding, by the class-field test: RoomK brings vm_roomS, WTOP, WSPAN, ROOMC and
+   lcount into this scope through RoomS, and all five are plain Definitions over Z, Model and
+   list (word * word) -- no Class, no Instance, no Record -- so nothing here is a field of, or
+   indexed by, a class this tree redeclares. The Require sits ABOVE this file's
+   `Close Scope bv_scope. Open Scope Z_scope.` block at :22-23, so it cannot reopen bv_scope over
+   the file's numerals. *)
+From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc Require Import Contract ContractDrv VmRoom RoomK.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw Require Import Safety SysSpec SysStep.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3 Require Import
   SymState SymStep SymSoundA SymSoundR SymFrame SymSummary SymCall SymEntail SymHeap Glue3.
@@ -69,7 +81,10 @@ Record tr_rules (TR : Z -> assn -> assn -> Prop) : Prop := mkTRR {
       instr_at segs (ss_pc S) = Some Ecall ->
       reg_sv S 17 = SLit 222 ->
       (forall tr ms md, smatch_pending segs rho S (tr, mkCfg ms md) -> J rho tr md ->
-         ms_gpr ms 1 <> Z_to_bv 64 0
+         (* LPS 727298f3: the decline premise of Fw3/SymHeap.v's [triple1_mmap_rwJ]. *)
+         place_declined_b (m_kernel md) (m_vmmaps md) (ms_gpr ms 0)
+           (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false
+         /\ ms_gpr ms 1 <> Z_to_bv 64 0
          /\ mmap_modeled_b (ms_gpr ms 2) (ms_gpr ms 3) (ms_gpr ms 5) = true
          /\ mmap_noreserve_b (ms_gpr ms 3) = false
          /\ Jf rho tr md
@@ -178,8 +193,8 @@ Proof using .
   - intros k kf ko J Jf Jo S rho Q _ Hi H17 HP Hfail Hok _ _ _.
     eapply etriple_seq.
     + apply (etriple_mmap_rw_anyJ segs J Jf Jo S rho Hi H17).
-      intros tr ms md Hsp Hj. destruct (HP tr ms md Hsp Hj) as (A1 & A2 & A3 & A4 & A5).
-      split; [exact A1|]. split; [exact A2|]. split; [exact A3|]. split; [intros _; exact A4 | exact A5].
+      intros tr ms md Hsp Hj. destruct (HP tr ms md Hsp Hj) as (A0 & A1 & A2 & A3 & A4 & A5).
+      split; [exact A0|]. split; [exact A1|]. split; [exact A2|]. split; [exact A3|]. split; [intros _; exact A4 | exact A5].
     + intros w [Hw | [a Hw]]; [exact (Hfail I w Hw) | exact (Hok I a w Hw)].
 Qed.
 
@@ -279,18 +294,20 @@ Proof using .
     + apply (etriple_mmap_rw_okJ segs (jroom J (r + k)) (fun a => jroom (Jo a) (r + ko)) S rho Hi H17).
       intros tr ms md Hsp [HJ HR].
       destruct (pending_args segs rho S tr ms md Hsp) as (G0 & G1 & G2 & G3 & G4 & G5).
-      destruct (HP tr ms md Hsp HJ) as (Hlen & Hmod & Hnr & _ & Hall).
+      destruct (HP tr ms md Hsp HJ) as (Hdecl & Hlen & Hmod & Hnr & _ & Hall).
       assert (Hpos : 0 < bv_unsigned (ms_gpr ms 1)).
       { pose proof (urange (ms_gpr ms 1)) as U.
         destruct (Z.eq_dec (bv_unsigned (ms_gpr ms 1)) 0) as [E|NE]; [|lia].
         exfalso. apply Hlen. apply bv_eq. rewrite E. reflexivity. }
       rewrite G1 in *.
-      destruct (vm_room_grant md (r + k) len HR Hpos H32 ltac:(lia))
-        as (a & _ & _ & _ & _ & _ & _ & _ & Hpl & _ & HRo & _).
-      split; [exact Hlen|]. split; [exact Hmod|]. split; [exact Hnr|].
-      exists a. destruct (Hall a (Hpl _ _ Hnr)) as (Hdisj & Hnro & HJo).
-      split; [exact (Hpl _ _ Hnr)|]. split; [exact Hdisj|]. split; [exact Hnro|].
-      split; [exact HJo|]. eapply vm_room_mono; [|exact HRo]. lia.
+      (* LPS 727298f3: Linux's address, not the room's: Fw3/SymHeap.v's [etriple_mmap_rw_okJ] asks
+         that the request be non-refusable and that every admissible address keep the room;
+         Malloc/RoomK.v answers both from the S room ([vm_room_S]). *)
+      split; [exact Hdecl|]. split; [exact Hlen|]. split; [exact Hmod|]. split; [exact Hnr|].
+      split; [exact (vm_room_rw_not_refusable md (r + k) len (ms_gpr ms 3) (ms_gpr ms 0) HR Hpos ltac:(lia) Hnr)|].
+      intros a Hpl. destruct (Hall a Hpl) as (Hdisj & Hnro & HJo).
+      split; [exact Hdisj|]. split; [exact Hnro|]. split; [exact HJo|].
+      eapply vm_room_mono; [|exact (vm_room_grant_rw md (r + k) len a (ms_gpr ms 0) (ms_gpr ms 3) HR Hpos ltac:(lia) Hpl)]. lia.
     + apply etriple_ex. intros a. destruct (Hok a) as [_ HT].
       eapply etriple_pre; [|exact (HT r Hr)]. intros w Hw. exact (proj2 (SPJ_room _ _ _ _ _) Hw).
 Qed.

@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the generic half of the bridge from a Bz body walk (lib/B/Bz, on
    fuzz_reply.asan-ubsan) to the W_sites.v runtime site contracts, for every runtime lane of fuzz_reply. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/RT_kit.v at commit debcdf3fa6a, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (95 numerals; per-numeral report). *)
-(* Ported from: a working branch 3210d71ee38 proofs/omx-clap-core/fuzz_state/lib/A/FSstrlen.v:90-750
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/RT_kit.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (95 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Ported from: a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSstrlen.v:90-750
    (a Theorem Labs lane's bridge, itself from a Theorem Labs lane's FMbz_bridge / FMbz_str and a Theorem Labs lane's MemNorm / RegisterBridge).
    Changes (R1Str, 2026-10-29):
    - fuzz_state.asan -> fuzz_reply.asan-ubsan: Img0.rsegs is lib/B/Img0.v (the ASan-UBSan segments, NOT lib/Img0.v,
@@ -165,9 +166,9 @@ Definition fr_tl_cells (m : word -> option byte) : Prop :=
    0x138265 (intercept_strchr) = 1 and REAL(strrchr) 0x9fc90 = 0x9740c.  The values are start-up state.  On A the
    generated AF0m's Tfib_const (AF0m.v sha256 007c9a7eb8b9; internal record) holds all 14 cells, and RT_kit_cells_x.FrRtCells_of_syms
    gives FrRtCells from AR_laws and TfibSyms (FrRtCells_x_of_syms: FrRtCells_x from rt_laws and TfibSyms).  On B the
-   generated YF0m's Tfib_const (lib/B/YF0m.v (sha256 9dfefcb3f00e; internal record) at the B top e43cf0c7bef, sha256 e71d30bf6539 (internal record) at integ
-   debcdf3fa6a) has 12 of the cells as rows (REAL(strlen) 0x9fc68 at YF0m.v:443) and 0x138265 as byte 5 of the row
-   0x138260 = 0x0101010101010101 (YF0m.v:72), but NO row for REAL(strrchr) 0x9fc90: A's row for it (AF0m.v:447,
+   generated YF0m's Tfib_const (lib/B/YF0m.v (sha256 9dfefcb3f00e; internal record) at the B top, sha256 e71d30bf6539 (internal record) at integ)
+   has 12 of the cells as rows (REAL(strlen) 0x9fc68 at YF0m.v:444) and 0x138265 as byte 5 of the row
+   0x138260 = 0x0101010101010101 (YF0m.v:73), but NO row for REAL(strrchr) 0x9fc90: A's row for it (AF0m.v:448,
    0x9f710) came with ZeroGlobals' regeneration of AF0m, which YF0m has not had.  The image file holds the value
    (fuzz_reply.asan-ubsan's bytes at 0x9fc90 are 0x9740c), so the B discharge needs that row in YF0m first. *)
 Definition fr_rt_rest (m : word -> option byte) : Prop :=

@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/bzip2/bzip2_compress_target/lib/K/A/I_strlen.v, with its module paths, module names, addresses and numbers changed; 110 of its 158 lines of code are new or changed and 217 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* StrtolFixAndCheck (0x55418, 1216 B) with endptr = NULL, on reac-pw/fuzz_segconf's ASan image A: the NULL arm.
-   Port of pupnp/FuzzHttp lib/A0/ICP/I_strtolfix.v:311 sfix0_spec (origin/ossv/recipes 501c0d516c69): with a2 = 0
+   Port of pupnp/FuzzHttp lib/A0/ICP/I_strtolfix.v:311 sfix0_spec (theorem-labs/oss-verify-proofs@6b32741d849a): with a2 = 0
    the branch `beqz a2` at 0x55458 is taken, no end pointer is stored, and the code joins at 0x554a0 the tail it
    runs for a live end pointer (base check, the blank / sign skip when nothing was parsed, the range check of
    (end - x) + 1 string bytes, the return). pupnp's proof is stated over its own kit; here the same steps are stated

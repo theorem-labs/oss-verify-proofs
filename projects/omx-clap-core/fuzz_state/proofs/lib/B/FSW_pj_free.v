@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_parse_items_calls.v, with its module paths and module names changed; 3663 of its 3768 lines of code are new or changed and 1083 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* pj_free 0x83674 (pf.c:334-350) on fs.asan-ubsan (image B), 136 instructions: the symbolic walk of lib/B's
    FSH_Fn_reader.v pj_free_spec k, level-indexed k = 0..2 (statement FIXED, not edited here).
-   rule 24: the function's released plain proof exists (lib/Prog/pj_free.v @ c8557374ad2e); no released ASan-image proof
+   rule 24: the function's released plain proof exists (lib/Prog/pj_free.v); no released ASan-image proof
    of any fs function exists (ossv proof index v5 built 2026-10-29T06:12:16Z; a Theorem Labs lane, sonic, `pj_free B: CONFIRM`).
    Written new from the image-A walk (a working branch lib/A/FSW_pj_free.v) as a template; no lib/A image-content
    file is loaded (lib/A FSupoison / FSupoisonU / FSH_YC20 / FSH_Gen only), every image name is lib/B's.

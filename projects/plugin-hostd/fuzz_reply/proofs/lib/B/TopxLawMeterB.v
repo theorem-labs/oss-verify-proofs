@@ -19,7 +19,7 @@ Open Scope Z_scope.
 (* KF-COUNT #4: top_x's MO_FR at the instance meter ameter_triv (A's TopxLawMeter.topx_MO_FR) *)
 Lemma topx_MO_FR : forall s f, mo_le ameter_triv s (set_fs f s) 0.
 Proof. intros s f. exact I. Qed.
-(* the window's earlier name for the same lemma (6bf6c172f46), kept as a corollary (W8: an old name stays at
+(* the window's earlier name for the same lemma, kept as a corollary (W8: an old name stays at
    ameter_triv) *)
 Lemma topx_MO_FR_triv : forall s f, mo_le ameter_triv s (set_fs f s) 0.
 Proof. exact topx_MO_FR. Qed.

@@ -1,18 +1,19 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Reusable/YCbq.v aj_intrin_at at 28fdc66416e (the call of
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Reusable/YCbq.v aj_intrin_at (the call of
    __asan_memcpy in the journal) restated as hd_memcpy with the wrapper's same_but_materialized kept in the post as
-   same_io, and proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v at 9e73ed57244 (m2_img_zone, m2_cstr_kept, the .rodata
+   same_io, and proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v (m2_img_zone, m2_cstr_kept, the .rodata
    zone of m2_szone) restated as hd_img_zone / hd_cstr_kept / hd_szone for the .rodata range only; the rest of the
    file is new. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_role/lib/A/RPgScanHead.v, with its module paths and module names changed; 298 of its 329 lines of code are new or changed and 983 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanSetup.v at a1fdf6ce036f for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanSetup.v for
    reac-pw/fuzz_rate's image A: role's pcs (E 0x8212c, O 0x821bc, MAL 0x823fc, ABS 0x82380) become rate's (0x82930,
    0x829c0, 0x82c9c, 0x82b7c), the registers are renamed as rate's code has them (pp + 0x4000 s5 -> s7, the shadow
    offset s7 -> s2, ra := -1 -> s11 := -1, n_ent t2 -> t3, s4 -> s3, s10 -> s9, the operands s11 t3 -> s10 t2), the
    real-frame cells 0x68 / 0x78 / 0x80 / 0x28 become 0xa8 / 0xb8 / 0xc0 / 0x78, the exits' kept registers are rate's
    (s6 and s10 at MAL), the cut file is lib/A/RtPgSeg.v (rl_ -> rt_, e_ -> q_), the list lemmas come from
    lib/A/RtPgScanKit.v, the memory facts from lib/A/RtPgMem.v and the image facts from lib/A/RtPgSteps.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image A (fuzz_rate.asan, pinned sha256
    22bc8613d780c9a99353dc86368f9401311ef5c8358882651217836298529b6a; every address measured on the unstripped twin
    0d508f2c65c249840b6c8fe3c1960824f2548b175c23583632f06bb7956458c3, same loaded bytes): the set-up of the inlined

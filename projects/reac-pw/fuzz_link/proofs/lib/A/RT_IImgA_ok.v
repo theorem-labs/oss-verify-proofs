@@ -1,6 +1,6 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/RT_IImgA_ok.v (a working branch 3e35620c52e); changed: module prefix fuzz_manifest -> fuzz_disco, record RT_IImgA.A_img/A_sym -> RecAsanVfA.N_img_asan_vf/N_sym_asan_vf and RT_IImgA.A_img_vsn/A_sym_vsn -> RecAsanA.N_img_asan/N_sym_asan, numerals 0x41308 -> 0x429f8 and 0x8ede0 -> 0x95fac. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/RT_IImgA_ok.v (a working branch); changed: module prefix fuzz_manifest -> fuzz_disco, record RT_IImgA.A_img/A_sym -> RecAsanVfA.N_img_asan_vf/N_sym_asan_vf and RT_IImgA.A_img_vsn/A_sym_vsn -> RecAsanA.N_img_asan/N_sym_asan, numerals 0x41308 -> 0x429f8 and 0x8ede0 -> 0x95fac. *)
 (* Modified by Theorem Labs, 2026-10: copied from plugin-hostd/fuzz_reply lib/A/RT_IImgA_ok.v at
-   a working branch e51895d5655; the module path prefix is this harness's, the instance is
+   a working branch; the module path prefix is this harness's, the instance is
    RT_IImgA.v's A_img on fuzz_manifest.asan, and the measured addresses in the comments are
    fuzz_manifest's. *)
 (* The image facts that lib/CJ/RL/GXA/G_vfprintf_snf_closed.v takes as Context (its lines 29-78),

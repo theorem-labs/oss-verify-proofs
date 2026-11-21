@@ -5,7 +5,7 @@ rule 24: no function proved. No .v file was edited, nothing was built or committ
 Scope: every flagged row of the value gate (port_addr_check 3d2eee813cce, wrapper pac.sh) for
 (1) the runtime files lib/A/Rt and lib/B/Rt whose header says they were copied, made or moved from a donor file, and
 (2) lib/Reusable (run RU, already done: cgif_file_fuzzer root Y*.v -> our lib/Reusable/Y*.v, key B, 1957 flagged rows).
-Trees: ours at plugin-hostd/fuzz_command tree (git tree 86ee7833f146; internal record) (proofs/plugin-hostd/fuzz_command/lib), cgif_file_fuzzer at c8557374ad2e.
+Trees: ours at plugin-hostd/fuzz_command tree (git tree 86ee7833f146; internal record) (proofs/plugin-hostd/fuzz_command/lib), cgif_file_fuzzer.
 
 Result: **0 FINDINGs** (code: none, comment: none). 8252 flagged rows: 6735 OK by a measured rule, 1517
 OK-out-of-scope (pre-port lib/Reusable files, owner ruling), 0 OPEN. No STOP-rule message was needed.
@@ -38,9 +38,9 @@ find_donor.py ranks every version of a candidate donor path in the git history b
 |---|---|---|
 | Strnlen, StrnlenChk, StrnlenMusl | libreac/fuzz_disco lib/A/Rt/Strnlen.v (file sha256 286ff995df6d; donor not released), libreac/fuzz_disco lib/A/Rt/StrnlenChk.v (file sha256 359ec34cd1e1; donor not released), libreac/fuzz_disco lib/A/Rt/StrnlenMusl.v (file sha256 dffa10905023; donor not released) libreac/fuzz_disco lib/A/Rt/<same name> | 64 / 142 / 32 |
 | Memchr, MemchrChk, MemchrMusl | libreac/fuzz_disco lib/A/Rt/Memchr.v (file sha256 ddef3ac73e5b; donor not released), libreac/fuzz_disco lib/A/Rt/MemchrChk.v (file sha256 d4a1f6879789; donor not released), libreac/fuzz_disco lib/A/Rt/MemchrMusl.v (file sha256 cce24fcd2d45; donor not released) libreac/fuzz_disco lib/A/Rt/<same name> | 58 / 138 / 14 |
-| RtSM3 / RtSM3T | libreac/fuzz_disco lib/A/Rt/StackMalloc3.v (file sha256 e7016b729aac; donor not released) / b5cf457a8820 libreac/fuzz_disco lib/A/Rt/StackMalloc3(Tbl).v | 162 / 53 |
+| RtSM3 / RtSM3T | libreac/fuzz_disco lib/A/Rt/StackMalloc3.v (file sha256 e7016b729aac; donor not released) / libreac/fuzz_disco lib/A/Rt/StackMalloc3(Tbl).v | 162 / 53 |
 | RtStrcmp, ChkX, ChkY, Loop, Tbl | libreac/fuzz_grant lib/A/Rt/Strcmp.v (file sha256 2589fff6e1c6; donor not released), libreac/fuzz_grant lib/A/Rt/StrcmpChkX.v (file sha256 6ac978ef4ba9; donor not released), libreac/fuzz_grant lib/A/Rt/StrcmpChkY.v (file sha256 0b8c7ceea8b0; donor not released), libreac/fuzz_grant lib/A/Rt/StrcmpLoop.v (file sha256 df262e182c54; donor not released), libreac/fuzz_grant lib/A/Rt/StrcmpTbl.v (file sha256 cd94185b81fd; donor not released) libreac/fuzz_grant lib/A/Rt/Strcmp*.v | 89 .. 135 |
-| RtSM5T / RtSMxA / RtDtorExit | omx-clap-core/fuzz_preset lib/A/FCm3r.v (file sha256 03046e7ffa94; donor not released) FCm3r.v / 4cda83dac850 FCxA.v / omx-clap-core/fuzz_preset lib/A/AE37.v (file sha256 1a56c76e4ad3; donor not released) AE37.v of omx-clap-core/fuzz_preset lib/A | 92 / 21 / 188 |
+| RtSM5T / RtSMxA / RtDtorExit | omx-clap-core/fuzz_preset lib/A/FCm3r.v (file sha256 03046e7ffa94; donor not released) FCm3r.v / FCxA.v / omx-clap-core/fuzz_preset lib/A/AE37.v (file sha256 1a56c76e4ad3; donor not released) AE37.v of omx-clap-core/fuzz_preset lib/A | 92 / 21 / 188 |
 | RtSIstrlen, RtSM7Fm, RtDtorExit, Strnlen*, MemchrChk, RtD04d, RtD04n | cgif_file_fuzzer lib/A/AE38, AFfm, AE37, AE7d/e/f, AE6y, root YCbq.v (the headers' named donors) | 15 .. 255 |
 
 StrcmpTbl: libreac/fuzz_grant lib/A/Rt/StrcmpTbl.v (file sha256 265250074da7; donor not released) ranks 54 lines, libreac/fuzz_grant lib/A/Rt/StrcmpTbl.v (file sha256 cd94185b81fd; donor not released) 57; only libreac/fuzz_grant lib/A/Rt/StrcmpTbl.v (file sha256 cd94185b81fd; donor not released) holds the sentence sc_rodata that our file
@@ -81,10 +81,10 @@ lib/A/Rt files with B addresses (same numeral count, 12535).
 
 ### lib/Reusable (run RU, 1957 rows)
 
-git log of the series head: 425 of lib/Reusable's 565 `.v` files were added 2026-10-27 in 84b1ffc6d7d (the plain
+git log of the series head: 425 of lib/Reusable's 565 `.v` files were added 2026-10-27 (the plain
 build's proofs; 421 directly in lib/Reusable, 4 in its sub-directories R/ and Z/); one of them, YK1a.v, was changed
-2026-10-28 in f0e6eb38667 (its two `timeout 30` removed) and none of the 425 changed after that. 140 were added
-2026-10-30 in 6b559e1f018 (5 of them, YD2n.v, YG00.v, YG03.v, YG06.v and YG0k.v, touched again in the commit after which the unit tree is plugin-hostd/fuzz_command tree (git tree 7676a6b422e5; internal record)). Only the 140
+2026-10-28 (its two `timeout 30` removed) and none of the 425 changed after that. 140 were added
+2026-10-30 (5 of them, YD2n.v, YG00.v, YG03.v, YG06.v and YG0k.v, touched again in the commit after which the unit tree is plugin-hostd/fuzz_command tree (git tree 7676a6b422e5; internal record)). Only the 140
 were added by the port. Owner ruling: pre-port rows are OUT-OF-SCOPE-PREPORT, result OK-out-of-scope, with the plain-image
 measurement; lib/Reusable/YH03.v is covered by the YH03 procedure of record (adjacent.tsv, one line).
 
@@ -151,7 +151,7 @@ python3 base_triage.py runs/<RUN>/full.tsv <dst dir> flag-classes.txt triage/gen
 python3 triage_rtru.py .                                               # triage-rows*.tsv, controls.tsv, counts.tsv, adjacent.tsv, donors.tsv
 ```
 RtPreset, CtlPreset and RtGrant were re-run on the build VM with the same wrapper (REL=RUNDIR=<dir> rt_runs.sh run ..).
-SIBLING-LINE reads work/sib: lib/Reusable of the 11 released sibling units of 781f46bc05cd (`git archive 781f46bc05cd
+SIBLING-LINE reads work/sib: lib/Reusable of the 11 released sibling units (`git archive
 proofs/<project>/<unit>/lib/Reusable`). work/reusable_history.txt (series head: the commit whose unit tree is plugin-hostd/fuzz_command tree (git tree 86ee7833f146; internal record)) is `git log --name-status <series head> --
 proofs/plugin-hostd/fuzz_command/lib/Reusable`.
 
@@ -161,3 +161,5 @@ Scripts: find_donor.py, check_twin.py, rt_runs.sh, ru_runs.sh, img.py (image que
 byuse.py (by-use grep), triage_rtru.py. Results: triage-rows.tsv, triage-rows.<RUN>.tsv, controls.tsv, counts.tsv,
 adjacent.tsv, donors.tsv. Raw: runs/ (gate output, with the run's own INPUTS USED block), runs/superseded/, triage/
 (base pass), work/ (run inputs, images, donor rankings, sibling extracts).
+
+The internal commit ids in these files were replaced by public commits or removed, so the output of `run.sh` differs from the shipped tables in those columns only.

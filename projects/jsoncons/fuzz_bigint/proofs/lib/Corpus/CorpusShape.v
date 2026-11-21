@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-11: whole copy of projects/jsoncons/fuzz_ubjson_parser_max/proofs/lib/Common/MustExitOfShape.v at c395a1e0dfa, with OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib renamed to OSSVerify.Proofs.jsoncons.fuzz_bigint.lib and its Common.MustExit* requires renamed to Corpus.Corpus*. *)
+(* Modified by Theorem Labs, 2026-11: whole copy of projects/jsoncons/fuzz_ubjson_parser_max/proofs/lib/Common/MustExitOfShape.v at theorem-labs/oss-verify-proofs@c5665593c2d8, with OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib renamed to OSSVerify.Proofs.jsoncons.fuzz_bigint.lib and its Common.MustExit* requires renamed to Corpus.Corpus*. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the induction names a node's read-only-backing premise (Hrob), and the cited source commit is named by its public id. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -128,7 +129,7 @@ exits_in S T ->
 m_halted (cfg_model c) = None ->
 must_exit_in_at_cfg scfg segs S c.
 Proof.
-intros S c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+intros S c T H; induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq];
 intros HX Hrun.
 - destruct Hnode as [Hcomp Hsound].
 apply must_exit_in_at_cfg_running.

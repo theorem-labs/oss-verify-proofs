@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: statements written out as text, the launch's channel reader. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib.RefU Require RefU0Gc5. (* [comment removed for export] *)
@@ -25,9 +26,98 @@ Open Scope Z_scope.
 Section HC.
 Context {HCEIL : HeapCeil} {HSEC : HeapSecret}.
 
-Theorem KM_init : ltac2:(zQ "h40!h9!jc!ne!o6!pd!se!u3!uf!hi8!hj4!hk1!hl2!hp8!hu1!ii3!iie!il3!il9!im0!im7>3tid@1$1@1$0#k0>3brk@1$1@1$0#k0>5mbase@1$1@1$0#k0>2sp@1$1@1$0#k0>3lim$3>3inp$8>0@2$6$2^5>0@1$7^4>0@2$h0@2$h1+2+i2^4>0@3$4$3@2$h2@2$h3@1$0#k0^6$a@1$c?5HCEIL@3$d?5HCEIL@3$e?5HCEIL?4HSEC@1$f$2@2$b^a@6$9@1$5$2^9^8^7^6^5").
+Theorem KM_init : forall tid brk mbase sp lim inp,
+  valid_brk rsegs brk -> valid_sp sp -> 2^34 <= lim ->
+  bv_unsigned sp - stack_max_size = hceil ->
+  (* LPS 727298f3 port: the launch's channel reader, which the relation now carries
+     ([Run.valid_input] gives it through [Run.valid_input_channel_reader]) *)
+  in_channel_reader inp = true ->
+  KM (ps_init (reservedZ rsegs)) (with_tid tid (init_model (segments_reserved rsegs) brk mbase sp lim inp)).
+(* LPS 727298f3 port: written out (rule 11g), restated with the reader premise.  The replay
+   built [KLB] with its old fields; at the revision [init_model]'s reserved ledger is the
+   image's segments FOLLOWED BY the launch's vDSO/vvar pair ([State.vm_reserved_init_model]),
+   which [kb_resv_top]'s [exists V] covers.  Bullets follow boost-beast/http_request's
+   Ref/MallocSR_init.v [KM_init]; the [kb_resv_top] witness is openssl/pem's
+   (Spec/LB_Init.v [QI_init]). *)
 Proof.
-ltac2:(KReplay.run1z (kr_t_MallocSR_init ()) ["HC"] "#$__p'0h01Hh16__sat1h21eh31zh47__arithh54__ffh68__varmaph75__with81lh92H0h:1bh;!sh%5h<!s/%6h=!s/%7h>!s/%8h?4__x1h@2zhhA1vhB!s?%0hC2H1hD2H2hE2H3hF2H4hG!sC%4hH1khI2HahJ3HinhK1ahL1qhM2TRhN3VB1hO3VB2hP3VB3hQ4__p1hR4__x2hS4__x3hT2AThU5HCANBhV6HCEILBhW5HSECBhX3HSPhY1LhZ3LIMh[3VSPh\3brkh]3inph^3limh_1mh`5mbaseha5nd_i1hb1oi001ohc1phd2sphe3tidi013curi021xp%0p%1p&0p&1p;1p;2p;3p;6p;4p;7p;8p;Gp;<g0000j12Tg000Uk10KTg0013k10O!s0$Vk21jTg002Lk11PTg003Aj!s/&_j1BTg004Dk20S!s0$aR0j20Tg005=j21!s/$gj2nTg006Dk10!ss$7Fk11]Tg008Dk11XTg009?j24!s/$\j28Tg00:<k11HTg00;Ck3!t9%<Hj6WTg00=Aj2UTg00>8k316Tg00?<j6D!s/$Xk21!tJ$@ij1RTg00A`k10CTg00BXk60xTg00Chk20sTg00E<k10oTg00FDk10dTg00GPk11iTg00HVk11aTg00Ibk11\Tg00Jhk10!u8$Kjk20JTg00M2k11!tk$N6k40!sN$O:k40[Tg00P<k20<!s0$\k10YTg00Q_j3!tc$R?k11!wB$SEj23!s/$`k20!v8$THk30V!s0$lj2!u1$U]j2zTg00V>k11A!s0$Wj2QTg00W4j2M!s/$Qj2~Tg00X8j2}!s/$_j2LTg00Y;k20!wm$Yaj2!uz$ZGk20!vS$[Rk20`Tg00\3j2I!s/$Mj1v!s/$mk107Tg00]Mk20E!s0$kk11!u&$^Ik1!yc%_4k20!w@$_Wk20!w]$`:k30!tq$`]k10!wz$a?k21!tW$aak20!t}$bMj3!sC$bgk30!u/$cFk40|Tg00d8k30{Tg00e@k20!u{$fEk10yTg00gJj4b!s/$jk40wTg00i0k60!u2$jAk10uTg00kGS00k10N!s3$ij1!v|$l`k10tTg00mYk10rTg00nQk10qTg00oFk10pTg010?k10nTg0114k10m!s0$ik10lTg012ak70kTg013Wk20@Tg014=k10BTg0155j8q!s/$lk10iTg016ck10hTg017Wk70gTg018Mk20fTg019Fk20eTg01:Ak20cTg01;8k20bTg01<2k20a!s0$mk71!sl$=lj6GTg01>Jk21!su$?Lk21!su$@Pk21!su$APk21!sk$BSk21`Tg01CWk11_Tg01DWk21^Tg01EYk21[Tg01Fdk21ZTg01Gdj1OTg01HZk10LTg01I\j3;Tg01J3j1JTg01K4j!{9$1L5k11YTg01M;k404!s0$Vk6!w<$1NXk21UTg01OXj1|Tg01PRk11STg01QWj1rTg01RQk30Ak21N!s4$nk3!~6$1SKj2!tu$TMk40=!s0$ij!}Z$1Udk1!tu%VBk405Tg01WIk30!tv$Wlk30:Tg01Y3j2!x%$YSj!u~%Z2R1j2{!s1$Lk41ITg01[7j!tc%[lk20FTg01\Uk30WTg01]>k21!w<$]jk41!sD$^Hk61E!s0$lj4!y=$_Wk309Tg01`:k11CTg01aAj1yTg01bHk30!t9$cNk11!yP$dTj2!xN$dnk11MTg01eJk31>!s0$gk21!uj$fCk11QTg01gJk20!sN$glk30!sN$hnk21<Tg01iMk11!uu$jQS01k20!w@$jkk10!ve$kgk11!v4$llR2k10TTg01mLk11!u,$!{v$!y8$oHmG18Tg020Lk417!s0$fk615Tg021kj7gTg022Ok702Tg0233k814!s0$Wk31cTg024:m<1dTf0R3#2#2p=Yg024_R4f1R5;63p=7g025=R69643p=:%B3#2p>08%2!sX$#2p=[!s2+!s$&Pp=Xf2R7/05/33p=NP4f4R8f3R9P7P5P3EGp=9%B3#Bp>0?!s/$#B#Bp=j!sq32p>0310671L53'3p=A1353,37p=i1L63p=d1063p=<1L7!t<%h1L!sH&wP!u4$[R:g026:R;P;g026ZR<P4P5g027:R=P3Cmg027aR>Fgp=@20R43p=?!sI&8AR?P3Cmp=cP9P:P;P;P<!u<$!s2'3P>FgK02p>0P!sI23L14p=Eg028hR@P8P!uv-5P7!t/$9_P3H0=p=p%23#Pp>0Z%23#Bp=tB1c453p=Zf6S02!t$'f5RA!t4+4P8P=P9CmP>FgP7!s>-5P!u-$!tk'=]10!v5%>1L1L891n75/0!vr$>!u,0!s0'5!sy$3!sc$ug02:`P4P1P2P0g02;?PA!uF,N<1dp>1Jg02;aR0,83p=f1M30p=o14!t6$p=H10!wh$,39p=_1L6!wu%eP8!tA+!tU,4P7P=P5!uN&!tS$>0H!w<3p>1D!u$0!sO&GA;9!x|&F!yF&,39,38p==10!tG%>1?A64!sL%>1T!s2'!tl$T1a43p=kg02<eR=#2S03#2S04#2S05#2#YR2$0KR1$0OR?g02=Jg02>DRB01j8&1P9Q03#PRCQ05#BS06#2S07#PRD+0SRE/09111Ag02?HRF'np,5HCEILRG$0jRH'7&1]BRI$1XRJf8RK,11RL'0S08g02@ERM,4JRN,0Lg02A@RO,8L#:p,4HSECRL&1HBRB61BGRPf9RQPIPKf7RRQ02PAP8EW'U616GQ08111Q/0Nf:S09,11/8O#:P4PJf<RN,11RS,03X34P7Q04#B$08#Y$08#[#XRTg02B8RUEDf;S0:,11,0T!sb$=RJ,11RV143M'0!se$PTPUED14TM,0SP4POf>S0;,11RO/83#:!sK$%[2S0<#YS0=#PRMg02COED18VM#:211NKg02DZRU1nSFRSg02EaRW,0S3NP41nVF103W9NU3X34S0>P3PHPRED10HW9NUHS0?PIf@RUf?RWQ0;PJPNEWRV#R$0CRS173H!s_$@1nOFQ0@PKPSPIPUP!sS'J0xD9fAS0A/U!s\&NQ0A00sVD917NH&0oG%B=S0B$0?S0C!s+$D#B#j#jRN#2#j#j$03$03#XS0E%BN!s8/,0HS0F7NHRNePN&0dL&1iLRN%P2R2-0SCRV7ANRJePJ&1aL&1\LRL?ALVRLePLg02FhRL&0]PRS00J3PGP3&1WPS0GfFS0HPIfERPfDROfCS0IfBS0JQ0AEW'URFH0\P3PFP6P6H0[3iXYL20<44RL&0YHRX;CBRY$1KRZ20JSZRSPGPZQ0GPIPOQ0IQ!sq$PUEWR[,UPR\H0\R]PZP\!sx&S0K'320XCDR^%dCR_%<D%dE[R`[Ra%<CRbg02GlRcB0VCD5UWIRD%<ERd\c^IbRe20XC2Rf%<2%dV[Rg\_RhB0VC25VcXIbR2%<VRi!sS%jfHS0L,11Rk/xMS0M%<k%<MS0NfJS0O,11Rl/8MRm#<[[S0PfIS0Q,11/zMS0R%:MRn$1AS0S1QlM,MM/4m,7l[S0T1~lMS0U%dMS0VfKS0W,11Rm/8MRo?AoM[S0X1}mMS0Y1LM6S0ZfLS0[,11S0\!tA$10m65hM[S0]Q0\000MS0^fMS0_!sp%QM#:\nS0`1smMS0afNS0b,11Ro/8M/7o\nS0cg02HHS0d201oMS0eeS0fQ0eP8g02HdRp20`6M'IQ0VeO1S0gf!uj$q/8MS0h#<S0iQ0h;wMS0jP5PcQ09P3P5O2XKbS0kPi^KbS0lQ0:20`6C,IpP_eS0mO1S0nPgP8PcPW!sX-oPd!sX$pPUQ!sL%qP`g02IJS0r#vRbQ0r$07Rd20E45S0s&134RW&124R_P_20R46Rp20D4=Ri5@_S0tP_%?CS0u>0Q41S0v,ciH0PRr&06;RsPrCE210_<RrP3P7g02J6Rtg02JVRu'I20~37=6tudB0}465H0|Rub5b6b7X?4%<3S0w?w3V%<5S0x?w5V[^?4P3PNPOO2b4b>b=b@b<b;b@b9PJebFbEbDbCb9b0bGb;b<b=b>:0{NY20zNY$0yP6P4P4P6P6CbP>H0w$0]00JZePSeP]Q0K!|>'\PP!|@0J0v&0u\e&0N?RG%V[&06?R]96G3XbGRSPG&0tUR>&0rURY&0qURN&0pURJ&0nURtPtPt&0m!s0+lUK0k!v'$K6Rv-0<?RwP?Pv20@16Rx&0BxCbP?Pv%P=R=-0@1!s;/20@1CRv&0BvCb%vw5Cw5Cw3CS0yPI20<??Rw#vRvPvPOPOQ0A!u@%GqRx&0iUS0z&0hUS0{P]P]Q05$0K$0O$07$06S0|K0gRy+0fRz+0eR{+0cR|+0bR}+0aR~#VS0}PSPG%V}S0~!s0%|S10!s0%{S11!s0%zS12!s0%yS13PSPGP]PS1IG]Q13Q0yPxQ0zQ!tS'|K1hEGQ1221gtyEGQ1121fJzEGQ1021eN{EGQ0~21bY|EGQ0}21`>}EG&1_UR}01^~#V21[}~EG%V\R}21ZP[EGA6G}]e%R[R}%O3S0}$0LXA@R]PxP]A;w3vS0~%J5S10%K5S11'LS12Q11/0VR]'3[^2w&1YvQ0~g02KnS0|%J7%K7RG10GVRG3hP3n010!s#%W0X2wg02LKH04%OxS0{$0LeP}!#7$1J1VRUD5%R\R\21UP[R[D5P}%|59;w3P][^2wXA@R~PxP~Q0~Q0|PG!t74PIPvPvPPPPQ0J!t-$GqS0z#|!sk,eP}PUD5P\P[D5PH&07LR]&1SZRG&0Y3%RFS0y#r9pwL5CL36X34P}%r3S139pwL9CLX96]GXA@RFPxPFP]g02MQRFACLX3ApwLI9CLX56]X8]&07wS14PLPwB0A443B1R443'^XcLPFH0=S15Q14ACLXFApwL3!sa&W8Q15!t=',I]PIg02NdS16EGPBg02P@EG%rxS17!tc/!uR0&0C\S18P9D9PHQ0>P8Q0?eQ!s8,@1I4H17HH!s;+}%r!w5$S0@Q11%\7,11'0!wA'GPxPGA;w3IS0?Q14PIQ14A;w73W8P3Q15Q16EDS0>Q159;w5S19Q01Q0=#2#YRG$0ZR]Q0B#tRX#B#Y#[#XRB'^S0==6w7S1:Q06!s?+FQ03#B#tS06$0?!s;&~'^R>Q0C#2$08!s:&|%PGRG'^RYQ0D#2!s<&{%2X!#Cv&X'^RN=CwvS0D5CwS0C5CwS1;9;w7S1<%K9S1=/0kP3Q!tY$9S1>PwQ0=%K3Rk/0lX2w14]BS1?103lX34P^PaPDPePfPhP2Pj1xmM%<mQ0NQ0i[[1zoMQ0S1QqM,MMQ0h'4,7q[1~qMQ0VfPS0i!#<n'z?AzM[1}mMQ0ZfQ,11Rz/8MS1@Q1@/065hM[200zMfRS1A,11S1B!#<\%Q1B/sMfS,11RJ!sZ$C/7J\nQ0d201JMRyePyQ0gfTS1D,11Ry/8MRt?AtMS1E!#<0$kQ0lQ!#;d&Q0oQ0pQ0qP`PbPdQ0sPWP_%?TS1F=@_iS1GPs%?]S1H%?BS1I'ZS1J=@_iCEPrP!#:J+10T3S1KQ1?/05!#:C$f\,11Q0i!#:G4!sL$y!#:K9Q0=#KS1LP]PB!w4'P5Q0mO1RtPgPbPd&1O4RSPWP_P_PpQ1HP_Q1HQ0vF]!tc,AA]]VP3b4b1bBb1S0m!st+!sm&P!si-IP_Q1I!si4BB!si-H05S1ID9P8P3EDW0P3O1Q!yk$9S1;Q01A6w>8S1MQ0C9;w8S1N%KAS1O/0lP3A6w>AS1PPwP>Q0\,0k!y{$F~S1Q!s6$3!y}8qM%<qQ0NQ1@#<[[1zm!z#%z!z#$1@'4,7z[1~zMQ0VQ1B/8MRl?AlM[Q1B/}MQ0ZQ1CQ1C!yp,JM1Qy!yf$1syMfU!#E=&S1@/7l!yd'lMS1ReQ1RQ0gfVS1R!zH$S!sN$TQ1T;AMS1T!yjLQ!y`%FS1U%?~S1V'ZS1W!y`6Q1KQ1Q!y\,^,11Q1A!y\7QQ1S'0!y^:%K>S1APFP~!xf?UP_Q1U!xf4FF!yQ/1X!si?VP_Q1V!si4~~!yQ3VD9Q02!yR-!y=$AS0CQ01Q0296wYS1YQ02Q0D5;wS1Z%KRS1[Q0\'0!yX$YRS0\PwPY10ko!yV$|GS1\103o!yT8zM%<z!yT$C#<[!y%$z!yV%J!yV%C'4,7J[1~J!yV%E[1}y!yK%!#4=0lMQ1S!#45'S/sMfW!#4i+E/7z!yO'zMS1CeQ1CQ0gfX!yL$C!sK$BQ1B;AM!yIS|S1B%?GS1]'ZS1^!yI;\!yI,`!yI$D!yI7\Q1C!yI>YS1_P|PG!x^?BP_Q1B!x^4||!yI0`!si?]P_Q1]!si4GG!yI3]D9PK!yH/D9;wRS0D!#3t$NKS1aA;wKvS1b%KQS1c/0o!y@$NQS1dPwPN10km!y@${XRo103m!y?8JM%<J!#3m-y!y=%l!#3m,l[1~l!y=%T[Q1S!#3d&EQ1E!#:V-Q1C!y?+C/sMfY!#3h&!#3e/RlePlQ0gfZ!sE'Rn?An!y6T{Rn%?XRy'ZRJ!y3910o!y1'b!y1$R!y1510ol!y,<NS1RP{P!~e>PnP_Pn!x@4{{!y'0K!sg>yP_Py!sg4XX!y%20vD9Q09!y&,A;wQvS1CQ0|Q0:#KS0Z/0m!#GN0P3O1n20!s8'2110!s3&!sB;1!sB/1!sBQbJWJX2wQ0z#r9;w3S1SQ11!#Hw$Q0H!s%$IPPPOGqRm#\!#EH'!#Hv0}Q0@Q12Q11Q10'n<1LES12!#Ep&VPxPVQ0?Q0>Q!#EK$1:Q1<%J9RVQ1=Q1=PVPED>P3Q!#Ca&J3RVPkPk!s?%X2wRyP]P3Q1LQ1LP3!s;$34Q1?P]P3P3P]!s8&!|;+t!z<%!wz'Q1HQ1J'cQ1JQ1H60;4Q0uQ07$0K60Q4Rl5@_Cu!x;,P]Q1?!t,%!tg$!xD'!tO$ID9Q0=#JQ0m:0:]B!#?L3!uY$MQ1N%JARBQ1OQ1OPB!uY'PPwP>PyPFP3Q1AQ1A!uF-QPF!uF$F!uFDUQ1W'cQ1WQ1U60;4=@_l!u80FQ1Q!sw%!u82AQ1VD9%J>Q1X:0:F~!#;14!u7$YQ1Z%JRR~Q1[Q1[P~!u7&!#:s$PyP|P3Q1_Q1_!u7-\P|!u7$|!u7DBQ1^'cQ1^Q1B!u78|Q1\!sw%!u72_Q1]D9%JYQ1`:0:|G!#6w3!u6$aQ1b%JQRQQ1cQ1cPQ!wG'dPwPNPyP{P3Q1RQ1R!u6+PoP{!u5${!u5B1cnJB0;4Jn!u,4{Po!sm$!u'2RQ0vD9%JNQ1K:0:{X!~y2Q!~t+JRXQ0ZQ0ZPX!sk%!~|~!~|J1SQ!~,%!~U313,lwg02QYRX#`#`R{!s+$N#`!s$%Ro'{XA@RJPxPJQ14Q15Q141lw3/{oW81{NoQ04#PRJQ05#PRn'0RtPNPJ1I4JPoPn1I4nJ1J!wB'%?JRS%?nS055@_!w<-tP3b4H1IQ15,lw/{oePIQ16EGQ17!s7'!u1/HQ0y#\S17,11Ro%fo#:PoQ0y#SS0y,11%oJRt=Ho3C_'e!#Vc$\3S16!sU/%S3S15,11AHotH!sO$A@RoPxPoP4PM111PRo18o3#:PoPo1MJ3=HoH!sx'!#=n1Q0MQ0PQ0RQ0TQ0UQ0XQ0YQ0]Q0^Q0`Q0aQ0cQ0fQ0eQ0gQ!#e:&!#<i:p-0RoQ0r20F4N20F4{20F4X60W460W4g02R8+1G;CbPdP420E47P520E49H1F!}Y&0tPsP_%?MRX9@_pPsQ03-0D4R{9@_pCECEPsP_!sQ%E#?Q0B!sD$NP_!#v6'AJ1EI0H!sN$4P{g02RdPpCm-1D_R{PsP_Q1F%?=Q0<#PR<#?R;6094>094;!s'$'Z9@_i!sO%G!t=%1cpi!tE$iPiB094SX,Zi=@_NI0H:0G_{CuCE!s$'!#?E/XR4XS4WQQ0wQ0N%<9[[Q0E?N98%:91M=</M</M<,4T,0910T8Q02#:PAPA1MJMRJ=HARC_,eA[[[[[^?4^R4^S4^QoP3Q0FPHQ1EPzQ0;PPQ0QQ0OQ0WO9!#FW30h#:PqPqAHqJHC_,eq!#@[9P0g02SKEG%\xS0h,11Rq%fq#:Pq%Sx!#u?$AHq!z:%!{F0!#\6'P4P4P5P3CbRq&1CZS1E5;LRtg02TQRJ,L5,e5Rz%d7RM%f7#:RT%y5R<,47R{/09S0FPw1^7<RNQ0QPIQ0LfGRXQ0HPPPOEW'U#R#OS02B0IZ7<R<CFD=[^84^:4!|E$PzPMPT10{HR{PwPN%O9S0EP!sN$\t!sO&A@RSPxPS%vL9;LqQ0|AwM7JRS%d9R;%f9#:R:%y7Ry,49RQ/0HRGPw1^9yR|PvB0IZ9yRYCFD=!#bR184X:4!tQ%P!tM$!#ba%XPXPO!u;$Gq#ORN!t^1!vi920<L4R<PL!vr$4P7P5CbR{!vz$z&1@ZS0w3;R~PSP;P:10Q8S0NQ0x14=5#o/0yRyPwP|Q0OPI!y5$LP!vf%!vd'14=7RQ/03RF145=#oR>%y8'0RBPwP3Q0bPIQ0_Q0[Q0W!ys$Q!s`&|%o9R],4RRRAHR0k5NVRRCFX2w,aw[[^L4,3YCF3iD=[^H4!wd/!tz$PGQ0xPwP|%O8PwP3%|KP!sf+\B\F!sh'7iyD=\~!sj,A@S0bPxQ0b%v<9;<z!x%$;9J%d8%f8#:%y9RJ=H8H%oQPw1^8J!wv%8JAH=93%yA,0>Q0~PV14K]R]AH]0kC_!u1-'3CF7NJ-1?7!xM-1!xM$H4!xP&!u=1!#F=&LQ0LPP!w+$Gq#OPwP3!sA'[!s%$Q!vh%Gq#|!ugI!y07&1M4PLP421N44Q1EH0=P<P4B0AL43:0A44X_<Q0wH0=61>4-1=4ePH&0NLR<&1QZRy20MLqRq36RYPMPT%oCRC/05RF%f5#:RB1475RRQ021470R|<0>R7N9!|v2MPTPFPB10RHRGQ0E@0>|R'3D=\Y!|t2&06LRS=6<qP<PSQ00PLPoP3Q0|Pcn1!#>F&2!|U&X2<Q0d20ML{P3EDQ0|PT1497R{PH1490>0>v{C_9NC79i;:01<3b9!}1+!td&B0>N|R,3G!t],!|s9g02UVRGPo&1;ZR|Q0yQ1756?A6<ySRy'3PI!#4&%!#n\$EW,UX#RRR#\,11,73RN%SR,11RRP3Q0G@1T3yRBCTPNPR143CRRQ0G/7RRN!|c%LPI!}=&!sy$!|`%RP#OAH5Ck9NV5RV!y0'Q0FAH9C7+0U!#31&Q0NAH8C9+0U!y=-'3R~'39NR57iyCTPY%SP,111453RP!tN$PRCCTX84#kX:4#kPcn0110200050010101111!{Q%!xM%GPoP|!#l4$56?/3y%\5!uh&t%S5,11RkP3PBCTPtPkPRPNPy!xz$H!~0$O7P!u=+P~D=!tc%7,11PPP!tYMA@R7PxP7A6?OOA6<SS1I?O1I<SH04!tr&0;Q0h!tr%Q0z!w^+|Q0z#S,11Ro!tv&|Po!tv%P!tr&m!tr7m!trR!yn8}&0^3&1:ZRC'7XA@RPPxPP1I4C&0^x/7C!#R-3},lw$0T&19ZRZ!sZ1ZQ0{!sD%/7Z!s_2g02V_Rw&0_3'0RPXA@R1PxP1!#Ct~!#Y_/A@_liRiPsP!#le4E3R110E5Rm!#YX$Q1DQ0iO2R3!#@24[,0ERY!#lf;A,0wR~e&0_x,0wRV!u}0NG18P}1066RHPHAHC6wRwPP14Z6g02Wd'4g02Xk'LRZD=XA@R@PxP@!vA~!vA1PiPsA@_ppR!#D~$ZppRpPl!s?$_Q05,ZpQ06#t#t#t$0ZRp#?'cH0P!#E6%s60G_!vz2PHPH1466R6/0EREPm146n/LpRpD=\1!w3$!w%3PHPHPEPYPpD=!w,:!sI$wP~PZD=e!s3&V!s3%!{J/0KeH04H04H17bUbWbVbTbMbMbPbObNWPWOWNP9J15WXWZW[WaW]X^4Xd?X`?X\?Weo"). Qed.
+  intros tid brk mbase sp lim inp (Hb1 & Hb2 & Hb3) (Hs1 & Hs2 & Hs3) Hlim Hc Hrd.
+  set (mo := with_tid tid (init_model (segments_reserved rsegs) brk mbase sp lim inp)).
+  rewrite reserved_top_ref in Hb1, Hb2.
+  pose proof (hceil_range : 0x7fff7f800000 <= hceil <= 0x7fffff800000) as Hcr.
+  assert (Hat : alloc_top (m_vmmaps mo) = hceil) by exact Hc.
+  assert (Hsb : bv_unsigned (vm_start_brk (m_vmmaps mo)) = bv_unsigned brk) by reflexivity.
+  assert (Hbb : bv_unsigned (vm_brk (m_vmmaps mo)) = bv_unsigned brk) by reflexivity.
+  assert (Hlm : vm_limit (m_vmmaps mo) = lim) by reflexivity.
+  assert (Hmaps : vm_maps (m_vmmaps mo) = []) by reflexivity.
+  assert (Hnacc : vm_noaccess (m_vmmaps mo) = []) by reflexivity.
+  assert (Hres : vm_reserved (m_vmmaps mo)
+                 = segments_reserved rsegs ++ vdso_reserved (in_kernel inp) (vdso_top (m_vmmaps mo)))
+    by exact (vm_reserved_init_model _ _ _ _ _ _).
+  assert (Htop : vdso_top (m_vmmaps mo)
+                 = page_round_down_Z (Z.min (bv_unsigned mbase) (bv_unsigned sp - stack_max_size)))
+    by exact (vdso_top_init_model _ _ _ _ _ _).
+  pose proof (vdso_len_bounds (in_kernel inp)) as Lb.
+  assert (Ht64 : vdso_top (m_vmmaps mo) < two_pow_64).
+  { rewrite Htop. pose proof (page_round_down_Z_le (Z.min (bv_unsigned mbase) (bv_unsigned sp - stack_max_size))) as Pd.
+    pose proof (bv_unsigned_in_range 64 sp) as Rs. unfold bv_modulus in Rs.
+    unfold two_pow_64, stack_max_size in *. lia. }
+  (* each entry of the pair is non-empty and no longer than the pair *)
+  assert (Hvd : forall a n, In (a, n) (vdso_reserved (in_kernel inp) (vdso_top (m_vmmaps mo))) ->
+            0 < bv_unsigned n /\ bv_unsigned n <= 20 * 4096).
+  { intros a n Hin.
+    destruct (vdso_reserved_above _ _ _ _ Ht64 Hin) as [A1 A2].
+    pose proof (vdso_reserved_nonzero _ _ _ _ Ht64 Hin) as A3.
+    unfold page_size in *. lia. }
+  exists (led_init (rband hceil :: reservedZ rsegs)). split; [|split].
+  - exact (hreach_init hsecret _ hsecret_range).
+  - assert (Elt : ltotal (led_init (rband hceil :: reservedZ rsegs)) = 0) by reflexivity.
+    assert (Elc : lcount (led_init (rband hceil :: reservedZ rsegs)) = 0) by reflexivity.
+    constructor.
+    + exact (mminv_init tid brk mbase sp lim inp).
+    + reflexivity.
+    + rewrite Hmaps. split; [intros e [] | constructor].
+    + rewrite Hnacc. intros e [].
+    + exists (segments_reserved rsegs), (vdso_reserved (in_kernel inp) (vdso_top (m_vmmaps mo))).
+      split; [exact Hres|]. cbn [ld_resv led_init]. rewrite Hat. reflexivity.
+    + rewrite Hat. unfold CEIL_MIN, CEIL_MAX. lia.
+    + exact Hat.
+    + exists (vdso_reserved (in_kernel inp) (vdso_top (m_vmmaps mo))).
+      split; [|split].
+      * unfold vdso_reserved; cbv zeta; destruct (_ <? _)%Z; cbn [length]; lia.
+      * pose proof (vdso_text_pages_pos (in_kernel inp)) as HPP.
+        pose proof (vdso_text_pages_le (in_kernel inp)) as HL.
+        unfold vdso_reserved, vdso_len, vdso_vvar_pages, page_size in *; cbv zeta.
+        destruct (_ <? 4096)%Z; cbn [live_bytes]; [lia|].
+        rewrite !Z_to_bv_unsigned, !bv_wrap_small by (change (bv_modulus 64) with (2^64)%Z; lia). lia.
+      * intros e He. rewrite Hres in He. apply in_app_or in He as [He|He]; [left| right; exact He].
+        rewrite Hsb. set (Bb := bv_unsigned brk) in *. clearbody Bb.
+        rewrite segments_reserved_ref in He. unfold ref_segments in He.
+        cbn [map fst snd] in He. destruct He as [<-|[<-|[<-|[<-|[]]]]];
+          unfold ehi, went, wz; cbn [fst snd]; vm_compute bv_unsigned; lia.
+    + intros e He. rewrite Hres in He. apply in_app_or in He as [He|He].
+      * rewrite segments_reserved_ref in He. unfold ref_segments in He.
+        cbn [map fst snd] in He. destruct He as [<-|[<-|[<-|[<-|[]]]]];
+          unfold elo, ehi, went, wz; cbn [fst snd]; vm_compute bv_unsigned; lia.
+      * destruct e as [a n]. destruct (Hvd a n He) as (V2 & V3).
+        unfold elo, ehi. cbn [fst snd]. lia.
+    + rewrite Hres, segments_reserved_ref. unfold ref_segments. cbn [map app length].
+      unfold vdso_reserved. cbv zeta. destruct (_ <? _)%Z; cbn [length]; lia.
+    + try rewrite Hsb; try rewrite Hbb; try rewrite Hat. unfold PGSZ, page_size, brk_aslr_max in *. repeat split; lia.
+    + intros b l [].
+    + intros b l k [].
+    + constructor.
+    + intros b l E. discriminate E.
+    + cbn [ld_brk led_init]. split; reflexivity.
+    + rewrite Elt. reflexivity.
+    + rewrite Elc, Hmaps. reflexivity.
+    + rewrite Hlm. unfold BUDCAP. lia.
+    + intros x Hx. rewrite Hres. apply in_or_app. right. exact Hx.
+    + rewrite Hmaps. intros r _ e [].
+    + exact Hrd.
+  - assert (Elt : ltotal (led_init (rband hceil :: reservedZ rsegs)) = 0) by reflexivity.
+    assert (Elc : lcount (led_init (rband hceil :: reservedZ rsegs)) = 0) by reflexivity.
+    unfold BUD. rewrite Elt, Elc, Hlm. unfold BUDCAP, RESV_MAX, GRID_J. lia.
+Qed.
 
 (* [comment removed for export] *)
 

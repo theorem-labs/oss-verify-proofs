@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from projects/cgif/cgif_file_fuzzer/proofs/lib/YE01.v, with its module paths changed; asink_img_laws states ail_env_static over the sink's own static cells (ak_owned) and has the law ail_owned_core (ak_owned holds the four cells astdio_env reads); the kept lemmas frame through aenv_of_core; asink_strs_kept keeps the file strings; and afopen_spec and aunlink_spec take asink_strs, which astdio_env no longer states (the text of commit 4d244de18f0, for fuzz_knock: module paths fuzz_knock). *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YE01.v at origin/ossv/recipes 4b6f0df50aa7 (fuzz_knock's released ASan tree); module paths changed to libdiginet/fuzz_codec. *)
+(* Modified by Theorem Labs, 2026-10: copied from projects/cgif/cgif_file_fuzzer/proofs/lib/YE01.v, with its module paths changed; asink_img_laws states ail_env_static over the sink's own static cells (ak_owned) and has the law ail_owned_core (ak_owned holds the four cells astdio_env reads); the kept lemmas frame through aenv_of_core; asink_strs_kept keeps the file strings; and afopen_spec and aunlink_spec take asink_strs, which astdio_env no longer states (the text, for fuzz_knock: module paths fuzz_knock). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YE01.v (fuzz_knock's released ASan tree); module paths changed to libdiginet/fuzz_codec. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import Sorting.Permutation.

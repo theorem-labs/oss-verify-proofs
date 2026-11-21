@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the closing pattern of a Theorem Labs lane's PASS4-REFIT.md section F for arg_s's ASan+UBSan
-   walk (lib/B/Prog/arg_s.v, targ_s_holds), as lib/B/Prog/HandBackClosed.v (a working branch 30b80f50c51)
+   walk (lib/B/Prog/arg_s.v, targ_s_holds), as lib/B/Prog/HandBackClosed.v (a working branch)
    does for hand_back: the per-binary hypotheses the walk names are discharged at the pinned image (lib/B/Prog/CmdImg.v's
    instance PB_cmd, whose segments are tfibsegs, and the sink head YE2k.tfib_sink_head): VOBJS, cmd_sig_prog_PB and
    PRW are a Theorem Labs lane's lemmas cmd_val_objs_PB, cmd_sig_prog_PB and cmd_prw_tfib (lib/B/Prog/CmdRecRest.v), and
    cmd_img_facts_tfib is CmdRecImg.v's. What remains is the statement's own contracts (the callee's and the runtime
    entries' at every FP state), HB and MTL. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

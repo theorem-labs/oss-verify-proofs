@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Old-pin kit 4f18c75d4900 rebind: KIT_RUNs / KT_RUN carry the memnorm keep at the post memory, KIT_CALLs / KIT_EXB_CALL
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Old-pin kit rebind: KIT_RUNs / KT_RUN carry the memnorm keep at the post memory, KIT_CALLs / KIT_EXB_CALL
    exv_room Sc S2 and the memnorm keep (in place of the room_live premise), EXV_PRE one more last conjunct (memnorm). *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B, ex_value, segment CL (the items loop): the PROOFS of the loop-only kit
    facts of lib/B/Prog/ExvB_Loop_Stmt.v (ExvLoop's statements; this file proves, never restates them):

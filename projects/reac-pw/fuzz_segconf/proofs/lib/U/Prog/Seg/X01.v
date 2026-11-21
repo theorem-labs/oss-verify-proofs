@@ -3,6 +3,7 @@
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/Prog/LLVMFuzzerTestOneInput_fr.v, with its module paths and module names changed; 456 of its 574 lines of code are new or changed and 409 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/U/Prog/Seg/Tac_slot.v, with its module paths and module names changed; 223 of its 256 lines of code are new or changed and 541 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment X01 of reac-pw/fuzz_segconf LLVMFuzzerTestOneInput (UBSan, ELF afc060e3cc9c): [0x141ec, 0x14248], the
    four frees and the epilogue. K141ec -> RET (U/Prog/LLVMFuzzerTestOneInput_c.v's S_X01 at U/Prog/Seg/SegWalkMainA.v's
    CPseg). The plain segment (lib/Prog/Seg/X01.v) with the UBSan numbers: the frame is 240 bytes, free is 0x173d8
@@ -16,7 +17,7 @@
    Then 0x1420c `mv a0,zero`, the thirteen restores ra, s0 .. s11 from [sp + 0x88, sp + 0xf0) = the saved bytes FR
    keeps at S - 104 (0x14210 .. 0x14240), 0x14244 `addi sp,sp,0xf0`, 0x14248 `ret`: Post by Tac_b8.b8_post_FR at the
    cut's FP state. No trap is reached in this stretch.
-   Template: reac-pw/fuzz_role's U/Prog/Seg/X01.v (commit cb8205fb6109; two frees there), with
+   Template: reac-pw/fuzz_role's U/Prog/Seg/X01.v (two frees there), with
    segconf's pcs, its four frees and frame 240.
    Part of the proof of LLVMFuzzerTestOneInput (segment X01 of its walk); no released proof of fuzz_segconf's
    LLVMFuzzerTestOneInput exists. *)

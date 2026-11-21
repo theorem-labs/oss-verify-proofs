@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (sf_install_load concludes the load leaf with the vvar-page case, MachineUnmodeled, beside MachineFault). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
@@ -33,7 +34,19 @@ Lemma sf_install_load : forall segs (ro m : word -> option byte) (a : word) (n :
 (K : word -> machine_result (core * (word -> option byte))) (r : machine_result machine_state),
 sf_load_goal segs m a n f = Some v ->
 lift_result ro (K v) = r ->
-lift_result ro (match ov_read_bytes segs m a n with Some bs => K (f bs) | None => MachineFault end) = r.
+(* The conclusion has to be the load leaf [interp_eff] now REDUCES to: a read no
+   segment backs is a fault UNLESS it meets the vvar page, where the model
+   answers MachineUnmodeled (LPS #61, RiscvSemantics.v:1017).  With the bare
+   MachineFault this lemma no longer applies to any step goal, which is what
+   a build of this unit reported 44 times as
+   "Illegal application: the term X1de.sf_evt_step ... cannot be applied",
+   the 17th argument differing only in this leaf.  The proof is unchanged: the
+   None branch is still killed by [discriminate] on [sf_load_goal ... = Some v]. *)
+lift_result ro (match ov_read_bytes segs m a n with
+                | Some bs => K (f bs)
+                | None => if range_meets_vvar segs a n
+                          then MachineUnmodeled else MachineFault
+                end) = r.
 Proof.
 intros segs ro m a n f v K r H1 H2. unfold sf_load_goal in H1. destruct (ov_read_bytes segs m a n); [|discriminate].
 injection H1 as <-. exact H2.

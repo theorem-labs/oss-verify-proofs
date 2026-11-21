@@ -1,21 +1,22 @@
-(* CARRIED BY PATH from commit 9e87119fcf60, proofs/omx-clap-core/fuzz_preset/lib/A/WrapMallocARetH.v, sha256 333bf7582c31; internal record; image numerals relocated to fuzz_reply image A by alreloc frozen-a5c53bb2bed4ad03. *)
+(* CARRIED BY PATH from proofs/omx-clap-core/fuzz_preset/lib/A/WrapMallocARetH.v, sha256 333bf7582c31; internal record; image numerals relocated to fuzz_reply image A by alreloc frozen-a5c53bb2bed4ad03. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30: the helper lemmas of lib/A/WrapMallocARet.v (moved verbatim, everything before its wm_ret_A), in a file
    of their own so that the malloc BODY walk (WrapMallocABodyRet.v) needs them without wm_ret_A. *)
 (* Theorem Labs, 2026-10: omx-clap-core/fuzz_preset image A (asan, pin 1be0f53d96cb), field M2 (wm_ret) of
    a Theorem Labs lane's Record wrap_malloc_walk_cf (lib/Reusable/YGcfMallocCompose.v:165, sha256 c6515cb7094c; internal record) at
    ARX := ARXh_A B, K := K_A (lib/A/WrapMallocADefs.v): Allocate's return (RA_ALLOC) -> __wrap_malloc's return.
    The machine runs are WrapMallocARetM.m_null / m_blk; this file is the allocator-side glue, by the method of
-   plugin-hostd/fuzz_reply's lib/A/RGthinS6.v rt_seg_npost (a working branch 66a127cb11e): the same
+   plugin-hostd/fuzz_reply's lib/A/RGthinS6.v rt_seg_npost (a working branch): the same
    SRr / RGtop framework. Rule 24 and the relocation check: RULE24-W6PRE.md (sha256 17e6b9ded9a9; internal record).
    What the glue does:
    - the stack is not in AOXm_cf at either layout (AR_stack_law_ok_cf for aowned; xs_placed_cf's disjointness from
      the stack extent, static_extents ly's index 8, for xs_cf), so AllocG.alloc_post's frame carries K's frame words
      and the caller's window from memA to mem2;
-   - on a block, malloc_cf_apath_success (YGcfApath.v:38) puts (q, n) in blocks S2 and block_user_range_cf
-     (YGcfBlockRange.v:31) puts it below ASAN_CEIL, hence off the stack and non-zero;
-   - after the run, ARcf at mem' by AR_frame_law_ok_cf (YG0qcf.v:668): the run writes only the caller's stack window
+   - on a block, malloc_cf_apath_success (YGcfApath.v:39) puts (q, n) in blocks S2 and block_user_range_cf
+     (YGcfBlockRange.v:32) puts it below ASAN_CEIL, hence off the stack and non-zero;
+   - after the run, ARcf at mem' by AR_frame_law_ok_cf (YG0qcf.v:669): the run writes only the caller's stack window
      and errno, neither owned (errno is inside the image and not in Tfib_owned_static), and neither in_band_rw.
    No Admitted / Axiom. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
@@ -41,7 +42,7 @@ Unset Lia Cache. Unset Nia Cache.
 Local Set Warnings "-abstract-large-number".
 Open Scope Z_scope.
 
-(* The callee-saved registers, one goal per register (RGthinS.v:36-57). *)
+(* The callee-saved registers, one goal per register (RGthinS.v:37-58). *)
 Ltac to_lit r Hr :=
   first [ replace r with (2%bv : bv 5) by (apply bv_eq; rewrite Hr; vm_compute; reflexivity)
         | replace r with (3%bv : bv 5) by (apply bv_eq; rewrite Hr; vm_compute; reflexivity)
@@ -67,7 +68,7 @@ Ltac cs_cases :=
 
 Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : CfParams}.
 
-(* RGthinS.v:64-147, at tfibsegs. *)
+(* RGthinS.v:65-148, at tfibsegs. *)
 Lemma val_mem_pw_r : forall (H : word -> bool) (m m' : word -> option byte) a (n : nat) v,
 (forall x, m' x = m x) -> val_mem tfibsegs (mrestrict H m) a n v -> val_mem tfibsegs (mrestrict H m') a n v.
 Proof. intros H m m' a n v E V k Hk. rewrite <- (V k Hk). unfold mbyte, mrestrict. rewrite E. reflexivity. Qed.

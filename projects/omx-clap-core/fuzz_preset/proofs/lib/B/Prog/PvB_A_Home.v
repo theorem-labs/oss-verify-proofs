@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths and module names changed; 137 of its 184 lines of code are new or changed and 467 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* fuzz_preset image B (asan-ubsan), parse_value 0x8637c (lane PValueB), segment A (entry .. skip_ws): the HOME
    lemmas segment A's walk (PvB_A.v) consumes. Pure state-level facts: no machine code is walked here.
    The text the reader reads lives at prhReader_home (PRH_FnReader.v:127-128): a live harness block (Lam), a registered
@@ -41,7 +42,7 @@ Lemma pvh_req_eq : forall m, 0 < m -> req_size m = m.
 Proof. intros m Hm. unfold req_size. destruct (Z.eqb_spec m 0); lia. Qed.
 Lemma pvh_shadow_mono : forall x y, x <= y -> shadow_addr x <= shadow_addr y.
 Proof. intros x y H. unfold shadow_addr. apply Z.add_le_mono_l. apply Z.div_le_mono; lia. Qed.
-(* FuzzStrdupB.v:116 sd_hull_sub (cgif YCbq.v:1945 shadow_hull_vis_of_block): a hull covers its sub-ranges' hulls *)
+(* FuzzStrdupB.v:117 sd_hull_sub (cgif YCbq.v:1945 shadow_hull_vis_of_block): a hull covers its sub-ranges' hulls *)
 Lemma pvh_hull_sub : forall (rd : reader) p m d n, shadow_hull_vis rd p m -> p <= d -> d + n <= p + m -> 0 < n ->
   shadow_hull_vis rd d n.
 Proof.
@@ -51,7 +52,7 @@ assert (R8 : forall u v, u <= v -> u / 8 * 8 <= v / 8 * 8)
   by (intros u v Huv; apply Z.mul_le_mono_nonneg_r; [lia|]; apply Z.div_le_mono; lia).
 pose proof (R8 _ _ M1). pose proof (R8 _ _ M2). lia.
 Qed.
-(* FuzzStrdupB.v:126 sd_hull_img (GrantRo.v:82-100 ro_hull's arithmetic): the hull of a range at least 64 bytes inside
+(* FuzzStrdupB.v:127 sd_hull_img (GrantRo.v:82-100 ro_hull's arithmetic): the hull of a range at least 64 bytes inside
    [IMG_LO_B, IMG_TOP_B) is the shadow of image bytes *)
 Lemma pvh_hull_img : forall a n s, 0 < n -> IMG_LO_B + 64 <= a -> a + n + 64 <= IMG_TOP_B ->
   shadow_addr a / 8 * 8 <= s < shadow_addr (a + n - 1) / 8 * 8 + 8 ->
@@ -90,20 +91,20 @@ Hypothesis LAWS : AR_laws_x SEGS B ARx cf_head.
 Hypothesis pvh_img_vis : forall ly S Hp W mem md a, ARx ly S Hp W mem md -> IMG_LO_B <= a < IMG_TOP_B ->
   aview SEGS (w_H W) mem (shadow_addr a) <> None.
 (* MARKED image fact, discharged at PI_prog_B: the image's zero-shadow ranges are whole granules (YG0f.v asyms_ok's
-   aso_zshadow, a conjunct of ARcf's am_syms; FuzzStrdupB.v:470 reads it there) *)
+   aso_zshadow, a conjunct of ARcf's am_syms; FuzzStrdupB.v:471 reads it there) *)
 Hypothesis pvh_zs_al : forall r, In r (as_zero_shadow B) -> fst r mod 8 = 0 /\ snd r mod 8 = 0.
 (* MARKED instance fact, discharged at PI_prog_B (PAImg_prog.v: pa_lo := IMG_LO_B, pa_hi := IMG_TOP_B): the
    per-instance image bounds of the kit's kept_img / kept_at (f97c: `pa_lo + 64 <= p /\ p + n + 64 <= pa_hi`) lie
    inside the B' image box the shadow-visibility fact covers *)
 Hypothesis PA_BOX : IMG_LO_B <= @pa_lo _ B_prog_listing PA /\ @pa_hi _ B_prog_listing PA <= IMG_TOP_B.
 
-(* FuzzStrdupB.v:143 sd_ro_img: a read-only byte is an image byte *)
+(* FuzzStrdupB.v:144 sd_ro_img: a read-only byte is an image byte *)
 Lemma pvh_ro_img : forall a, in_roP SEGS pa_relro_lo pa_relro_hi a -> in_img SEGS a.
 Proof.
 intros a [(sg & Hin & _ & Hr) | Hr]; [exists sg; split; [exact Hin | exact Hr] | exact (@pa_relro_img _ _ PA a Hr)].
 Qed.
 
-(* FuzzStrdupB.v:166 sd_garr8_move: bytes the view keeps keep their garr8 reading *)
+(* FuzzStrdupB.v:167 sd_garr8_move: bytes the view keeps keep their garr8 reading *)
 Lemma pvh_garr8_move : forall (W W' : world SEGS) m m' x d l, garr8 SEGS (mrestrict (w_H W) m) x l ->
   (forall j, (j < length l)%nat -> aview SEGS (w_H W') m' (d + Z.of_nat j) = aview SEGS (w_H W) m (x + Z.of_nat j)) ->
   garr8 SEGS (mrestrict (w_H W') m') d l.

@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-11-05: copied from projects/cgif/cgif_rgb_fuzzer/proofs/lib/HaltsFO.v at c395a1e0dfa,
+(* Modified by Theorem Labs, 2026-11-05: copied from projects/cgif/cgif_rgb_fuzzer/proofs/lib/HaltsFO.v at theorem-labs/oss-verify-proofs@c5665593c2d8,
    lines 13-171 and 314-316, with its lead comment replaced by this line.  The import of that tree's YK15 becomes
    OSSVerify.Proofs.coturn.FuzzStunClient.lib.Common.ShapeAlg, which holds the same TSet algebra, the same node_ok over
    plain sstep and the same three-constructor realizes.  Its lines 173-311 (injected_family_off_*, fo_dead_refusal*,
    fo_dead_node, refusal_b_*, ret_in_errnos_*, small_not_errno, mmap_*_refusal, apply_effect_a0) are not copied:
    nothing here needs a dead refusal arm, because the plain and UBSan closures of this target are built with realizes,
    which has no spin constructor. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, fo_progress covers the three vDSO arms of sstep (the vDSO call steps by sstep_cfg_vdso_call, and NOERR refutes the vDSO materialization fault and the unmodeled vDSO call), the induction of fo_of_realizes binds the read-only-backing premise Hrob of rz_node, with a comment of this file's own on each of these two changes, the dead refusal arm (fo_dead_refusal, fo_dead_refusal_sib and fo_dead_node, with apply_effect_a0, in_sysno_sys_input and ret_in_errnos_errno) is copied from projects/cgif/cgif_rgb_fuzzer/proofs/lib/HaltsFO.v lines 173-310 at theorem-labs/oss-verify-proofs@f92feaf8b7e6, without the lemmas nothing here uses, and adapted to the vDSO arms, without the source's seven comments on those declarations (one above each of apply_effect_a0, fo_dead_refusal_sib and fo_dead_node, four in the proof of fo_dead_refusal) and with a comment of this file's own above fo_dead_refusal, and alloc3_family_off, alloc3_refusal_b, dead_sib, fo_dead_of_sib, dead_sib_eff and ret_in_enomem are added for the refused ENOMEM arm of munmap, mmap and mprotect; this line takes back what lines 3-9 say of the dead refusal arm and of the six declarations copied with it: the flagged derivation srealizesM of Common/SpinAlg.v needs that arm, through fo_dead_of_sib; the line above names its source commit by its public id. *)
 From Stdlib Require Import ZArith NArith List Lia Bool Classical_Prop.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
@@ -97,6 +98,13 @@ Proof.
   - eexists _, _. eapply sstep_cfg_instr; eassumption.
   - eexists _, _. eapply sstep_cfg_instr_fault; eassumption.
   - eexists _, _. eapply sstep_cfg_instr_unmodeled; eassumption.
+  (* LPS 08b1429/75d69e00: [sstep] has three vDSO constructors after [sstep_instr_unmodeled]
+     ([c0dd863a:theories/LinuxProcessSem/Run.v:724-761]), in the model's order: the call reaches [SNext] and has its own unfiltered
+     [sstep_cfg_vdso_call] twin; the materialization fault and the unmodeled call conclude
+     [SError], which [NOERR] refutes exactly as it does the syscall's. *)
+  - eexists _, _. eapply sstep_cfg_vdso_call; eassumption.
+  - exfalso. eapply NOERR. eapply sstep_vdso_materialization_fault; eassumption.
+  - exfalso. eapply NOERR. eapply sstep_vdso_unmodeled; eassumption.
   - destruct (classic (spurious_refusal_cfg forced_only_cfg (sys_input segs ms x8) model eff)) as [Hsp | Hns].
     + destruct Hsp as (_ & _ & eff' & m' & evs' & Hspec' & Hnr').
       assert (Hns' : ~ spurious_refusal_cfg forced_only_cfg (sys_input segs ms x8) model eff').
@@ -162,7 +170,8 @@ Qed.
 (* [comment removed for export] *)
 Lemma fo_of_realizes : forall c T, realizes segs c T -> fo_exits c T.
 Proof.
-  intros c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq].
+  (* (B2): [rz_node] asks [RomBase.sys_rob]; the halting argument does not read it. *)
+  intros c T H; induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq].
   - apply (fo_node_all c I evs nx T i0 Hnode IH).
     intros i. eapply realizes_nonempty. exact (Hcont i).
   - apply fo_halted. exact Hh.
@@ -174,6 +183,133 @@ Lemma fo_exits_must_exit : forall S c T,
   fo_exits c T -> shape_ok S T -> m_halted (cfg_model c) = None ->
   must_exit_in_at_cfg forced_only_cfg segs S c.
 Proof. intros S c T H HS Hh. exact (H S HS Hh). Qed.
+
+(* The dead refusal arm, copied from projects/cgif/cgif_rgb_fuzzer/proofs/lib/HaltsFO.v lines 173-310
+   (theorem-labs/oss-verify-proofs@f92feaf8b7e6).  [sstep_cfg] and [sstep] have the three vDSO
+   arms after [*_instr_unmodeled]; the inversions below close them with the pending-call fact, as they close the
+   instruction arm. *)
+Lemma fo_dead_refusal : forall ms model x8 c',
+  ms_svc_pending ms = Some x8 ->
+  injected_family_off forced_only_cfg (sys_input segs ms x8) = true ->
+  (exists eff' m' evs', syscall_spec (sys_input segs ms x8) model (Ok eff' m' evs')
+                       /\ refusal_b (sys_input segs ms x8) model (eff_ret eff') = false) ->
+  ms_svc_pending (cfg_ms c') = None ->
+  (forall eff model'', cfg_ms c' = advance_past_svc (apply_effect ms eff) ->
+                       cfg_model c' = model'' ->
+                       refusal_b (sys_input segs ms x8) model (eff_ret eff) = true) ->
+  fo_dead (mkCfg ms model) c'.
+Proof.
+  intros ms model x8 c' Hsvc Hoff Hex Hsvc' Href e Hstep.
+  inversion Hstep; subst; cbn [cfg_ms cfg_model] in *; try congruence.
+  match goal with
+  | [ H : ~ spurious_refusal_cfg _ (sys_input _ _ ?y) _ ?eff |- _ ] =>
+      apply H; replace y with x8 by congruence
+  end.
+  split; [exact Hoff | split; [| exact Hex]].
+  eapply Href; reflexivity.
+Qed.
+
+Lemma apply_effect_a0 : forall ms eff,
+  reg_get (ms_regs (advance_past_svc (apply_effect ms eff))) (Z_to_bv 5 10) = eff_ret eff.
+Proof.
+  intros ms eff. cbn [advance_past_svc apply_effect ms_regs]. unfold set_reg.
+  destruct (bv_eqb _ _) eqn:E.
+  - apply bv_eqb_eq in E. exfalso. apply (f_equal bv_unsigned) in E. vm_compute in E. discriminate E.
+  - cbn [ms_regs]. unfold reg_get.
+    replace (Z_to_bv 5 10) with (10%bv : bv 5) by (apply bv_eq; reflexivity).
+    rewrite bvmap_get_set_same. reflexivity.
+Qed.
+
+Lemma in_sysno_sys_input : forall ms x8, in_sysno (sys_input segs ms x8) = x8.
+Proof. intros. reflexivity. Qed.
+
+Lemma ret_in_errnos_errno : forall es e, In e es -> ret_in_errnos es (errno_ret e) = true.
+Proof.
+  intros es e Hin. unfold ret_in_errnos. apply existsb_exists. exists e. split; [exact Hin|].
+  apply bv_eqb_eq. reflexivity.
+Qed.
+
+Lemma fo_dead_refusal_sib : forall ms model x8 ej cj c',
+  ms_svc_pending ms = Some x8 ->
+  injected_family_off forced_only_cfg (sys_input segs ms x8) = true ->
+  sstep segs (mkCfg ms model) ej (SNext cj) ->
+  ms_svc_pending (cfg_ms cj) = None ->
+  refusal_b (sys_input segs ms x8) model (reg_get (ms_regs (cfg_ms cj)) (Z_to_bv 5 10)) = false ->
+  ms_svc_pending (cfg_ms c') = None ->
+  refusal_b (sys_input segs ms x8) model (reg_get (ms_regs (cfg_ms c')) (Z_to_bv 5 10)) = true ->
+  fo_dead (mkCfg ms model) c'.
+Proof.
+  intros ms model x8 ej cj c' Hsvc Hoff Hsib Hsvcj Hnr Hsvc' Hr.
+  apply (fo_dead_refusal ms model x8 c' Hsvc Hoff).
+  - inversion Hsib; subst; cbn [cfg_ms cfg_model] in *; try congruence.
+    match goal with
+    | [ H : syscall_spec (sys_input segs ms ?y) model (Ok ?eff ?m' ?evs) |- _ ] =>
+        assert (Hy : y = x8) by congruence; rewrite Hy in H; exists eff, m', evs; split; [exact H|]
+    end.
+    rewrite apply_effect_a0 in Hnr. exact Hnr.
+  - exact Hsvc'.
+  - intros eff model'' Hms _. rewrite Hms, apply_effect_a0 in Hr. exact Hr.
+Qed.
+
+Lemma fo_dead_node : forall ms model x8 (I : Type) (evs : I -> list event) (nx : I -> config) (j i : I),
+  node_ok segs (mkCfg ms model) I evs nx ->
+  ms_svc_pending ms = Some x8 ->
+  injected_family_off forced_only_cfg (sys_input segs ms x8) = true ->
+  ms_svc_pending (cfg_ms (nx j)) = None ->
+  refusal_b (sys_input segs ms x8) model (reg_get (ms_regs (cfg_ms (nx j))) (Z_to_bv 5 10)) = false ->
+  ms_svc_pending (cfg_ms (nx i)) = None ->
+  refusal_b (sys_input segs ms x8) model (reg_get (ms_regs (cfg_ms (nx i))) (Z_to_bv 5 10)) = true ->
+  fo_dead (mkCfg ms model) (nx i).
+Proof.
+  intros ms model x8 I evs nx j i [Hcomp _] Hsvc Hoff Hj Hnr Hi Hr.
+  exact (fo_dead_refusal_sib ms model x8 (evs j) (nx j) (nx i) Hsvc Hoff (Hcomp j) Hj Hnr Hi Hr).
+Qed.
+
+(* The three allocation calls a plan's mapping nodes make -- munmap (215), mmap (222), mprotect (226) -- inject
+   from the allocation family, which [forced_only_cfg] turns off, and each refuses with the one errno ENOMEM
+   (Sys/Mm/Mmap.v [munmap_errnos], [mmap_errnos]; Sys/Mm/Mprotect.v [mprotect_errnos]). *)
+Lemma alloc3_family_off : forall ms x8,
+  In (bv_unsigned x8) [215; 222; 226]%Z -> injected_family_off forced_only_cfg (sys_input segs ms x8) = true.
+Proof.
+  intros ms x8 H. unfold injected_family_off. rewrite in_sysno_sys_input.
+  destruct H as [H|[H|[H|[]]]]; rewrite <- H; reflexivity.
+Qed.
+Lemma alloc3_refusal_b : forall ms x8 model r,
+  In (bv_unsigned x8) [215; 222; 226]%Z -> refusal_b (sys_input segs ms x8) model r = ret_in_errnos [ENOMEM] r.
+Proof.
+  intros ms x8 model r H. unfold refusal_b. rewrite in_sysno_sys_input.
+  destruct H as [H|[H|[H|[]]]]; rewrite <- H; reflexivity.
+Qed.
+
+(* A refused arm of one of those calls whose node also has an arm that is no refusal: the arm a flagged
+   derivation ([Common/SpinAlg.srealizesM]) may leave at the flag [false].  The statement reads only the
+   machine states, so it survives a change of the segment list and of the read-only backing. *)
+Definition dead_sib (c cj ci : config) : Prop :=
+  exists x8, ms_svc_pending (cfg_ms c) = Some x8 /\ In (bv_unsigned x8) [215; 222; 226]%Z /\
+    ms_svc_pending (cfg_ms cj) = None /\ ret_in_errnos [ENOMEM] (reg_get (ms_regs (cfg_ms cj)) (Z_to_bv 5 10)) = false /\
+    ms_svc_pending (cfg_ms ci) = None /\ ret_in_errnos [ENOMEM] (reg_get (ms_regs (cfg_ms ci)) (Z_to_bv 5 10)) = true.
+
+Lemma fo_dead_of_sib : forall c (I : Type) (evs : I -> list event) (nx : I -> config) (j i : I),
+  node_ok segs c I evs nx -> dead_sib c (nx j) (nx i) -> fo_dead c (nx i).
+Proof.
+  intros [ms model] I evs nx j i Hn (x8 & Hsvc & H3 & Hj & Hjr & Hi & Hir). cbn [cfg_ms] in Hsvc.
+  apply (fo_dead_node ms model x8 I evs nx j i Hn Hsvc (alloc3_family_off ms x8 H3) Hj); [| exact Hi |].
+  - rewrite (alloc3_refusal_b ms x8 model _ H3). exact Hjr.
+  - rewrite (alloc3_refusal_b ms x8 model _ H3). exact Hir.
+Qed.
+
+Lemma dead_sib_eff : forall ms model x8 (effj effi : SyscallEffect) (mj mi : Model),
+  ms_svc_pending ms = Some x8 -> In (bv_unsigned x8) [215; 222; 226]%Z ->
+  ret_in_errnos [ENOMEM] (eff_ret effj) = false -> ret_in_errnos [ENOMEM] (eff_ret effi) = true ->
+  dead_sib (mkCfg ms model) (mkCfg (advance_past_svc (apply_effect ms effj)) mj)
+           (mkCfg (advance_past_svc (apply_effect ms effi)) mi).
+Proof.
+  intros ms model x8 effj effi mj mi Hsvc H3 Hj Hi. exists x8. cbn [cfg_ms].
+  rewrite !apply_effect_a0. exact (conj Hsvc (conj H3 (conj eq_refl (conj Hj (conj eq_refl Hi))))).
+Qed.
+
+Lemma ret_in_enomem : ret_in_errnos [ENOMEM] (errno_ret ENOMEM) = true.
+Proof. apply ret_in_errnos_errno. left. reflexivity. Qed.
 
 End WithSegs.
 

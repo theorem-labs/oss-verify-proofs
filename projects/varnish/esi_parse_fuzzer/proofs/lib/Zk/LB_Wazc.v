@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the ledger's top-bound obligation, from kl_resv_top. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -1582,6 +1583,7 @@ Proof.
   assert (BD : forall b n, brk_disj L2 b n -> brk_disj L b n) by (intros b n H b0 l0 Hb; apply H; rewrite EB; exact Hb).
   destruct HK. constructor; auto.
   - rewrite <- ER. assumption.
+  - intros b n H. rewrite <- ER in H. exact (kl_resv_top b n H).
   - intros b l H. apply IG in H. destruct (kl_groups b l H) as (A1 & A2 & A3 & A4 & A5 & A6). splits; auto; lia.
   - intros b l k H. apply IM in H. destruct (kl_metas b l k H) as (A1 & A2 & A3 & A4 & A5 & A6 & A7 & A8 & A9). splits; auto; lia.
   - eapply Permutation_NoDup; [| exact kl_distinct]. apply Permutation_app; apply Permutation_map; assumption.

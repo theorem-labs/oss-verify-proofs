@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack window below sp; the 27- or 29-pair auxv; the launch's input, mmap base and entry draw); and launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation Strings.String.
 From stdpp Require Import gmap.
@@ -129,13 +130,13 @@ Section C.
   Hypothesis AMS : forall lo hi, a0_static lo hi -> am_static FI AI lo hi.
   Variable PZ : mem -> Prop.
   Hypothesis PZ_agree : forall (P : Z -> Prop) m m', gagree_on P m m' -> (forall a, pz_band a -> P a) -> PZ m -> PZ m'.
-  Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw) (arg0 arg1 : list byte) (TID : Z)
+  Variables (sp0 : word) (argv envp : list (list byte)) (inp : ProcInput) (mbase : word) (rnd : EntryDraw) (arg0 arg1 : list byte) (TID : Z)
             (MPAD : list byte) (S4 S5 S6 S7 S8 S9 S10 S11 : word).
   Hypothesis VSP : valid_sp sp0.
-  Hypothesis CEIL : alloc_ceiling = LO sp0.
+  Hypothesis CEIL : alloc_ceiling = bv_unsigned sp0 - 8388608.
   Hypothesis VARGV : valid_argv argv.
   Hypothesis VENVP : valid_envp envp.
-  Hypothesis ESF : entry_stack_fits sp0 argv envp.
+  Hypothesis ESF : img_fits sp0 argv envp inp mbase rnd.
   Hypothesis EARGV : argv = [arg0; arg1].
   Hypothesis HT : 0 < TID < 2^31.
   Hypothesis AC : am_contracts FI AI (JA FI AI).
@@ -150,11 +151,11 @@ Section C.
   Notation usp0 := (bv_unsigned sp0).
   Notation gpv := (Z_to_bv 64 0x10800).
   Notation tpv := (Z_to_bv 64 RATPA).
-  Notation IMGB := (build_stack_bytes rph sp0 argv envp uid hw rnd).
+  Notation IMGB := (build_stack_bytes (launch_auxv inp sp0 mbase) rph AENTRY sp0 (ed_top rnd) argv envp (in_execfn inp) (in_uid inp) (in_gid inp) (in_hwcap inp) rnd).
   Notation LO' := (LO sp0).
-  Notation BASE' := (BASE_A PZ sp0 argv envp uid hw rnd TID stdout_init).
+  Notation BASE' := (BASE_A PZ sp0 argv envp inp mbase rnd TID stdout_init).
   Notation FRAME' mm := (MFRAME sp0 argv mm MPAD S7 S6 S5 S4).
-  Notation RDONE' := (RDONE FI AI PZ sp0 argv envp uid hw rnd TID MPAD S4 S5 S6 S7 S8 S9 S10 S11).
+  Notation RDONE' := (RDONE FI AI PZ sp0 argv envp inp mbase rnd TID MPAD S4 S5 S6 S7 S8 S9 S10 S11).
   Local Notation K := (am_K FI AI).
 
   Notation GST pc x1 t0 t1 t2 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 t3 t4 t5 t6 F fc mm :=
@@ -224,7 +225,7 @@ Section C.
       (GST 0x8624c x1 t0 t1 t2 (Z_to_bv 64 2) (Z_to_bv 64 A) (Z_to_bv 64 PA) (Z_to_bv 64 31) (Z_to_bv 64 1) (Z_to_bv 64 RSTDERR) x14 x15 x16 x17 x18 x19 x20 x21 t3 t4 t5 t6 F fc mm) g.
   Proof.
     intros until mm. intros ED RO ML RNG LOA HIA HP0 SO FR BA. subst so.
-    pose proof (sp_facts sp0 VSP CEIL) as SF. pose proof (IMGB_len47 sp0 argv envp uid hw rnd ESF) as IL47. pose proof alloc_ceiling_bounds as CB'. unfold LO in SF.
+    pose proof (sp_facts sp0 VSP CEIL) as SF. pose proof (IMGB_len47 sp0 argv envp inp mbase rnd ESF) as IL47. pose proof alloc_ceiling_bounds as CB'. unfold LO in SF.
     pose proof BA as (ST & MI & EX & MC & IMG & SE & SOF & RSS & SI & SZ & ENV & GSH & HPZ & CRT). unfold LO in ST. unfold MFRAME in FR.
     destruct MC as (G28 & GSE & SSP).
     cbn [io_diag ioA io_S]. rewrite ED.
@@ -232,17 +233,17 @@ Section C.
 
     eapply djM_bind.
     { eapply djM_of_implM; [| fdt].
-      eapply (FWR) with (lo := usp0 - 8388608) (s := msg) (canary := guard_word); rewrite ?unsigned_lit by lia;
+      eapply (FWR) with (lo := usp0 - 6144512) (s := msg) (canary := guard_word); rewrite ?unsigned_lit by lia;
         first [ exact SE | exact RO | exact RNG | rewrite ML; lia | rewrite ML; reflexivity | reflexivity | exact ST | exact SSP | exact MI | exact ENV
               | unfold RO_LO; lia | unfold RO_LO, RO_SZ; lia | unfold FWRITE_DEPTH, A0_RT_STACK; lia | unfold GLOBALS_TOP; lia | lia
-              | unfold RO_LO, RO_SZ; apply (SHZ_ro sp0 argv envp uid hw rnd); exact SZ ]. }
+              | unfold RO_LO, RO_SZ; apply (SHZ_ro sp0 argv envp inp mbase rnd); exact SZ ]. }
     cbv beta. intros [] so1 ms1 g1 [PO ->].
     destruct PO as (u0 & u1 & u2 & b0 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & u3 & u4 & u5 & u6 & m1 & -> & MUc & WMc & MI1 & ST1 & SEW & SSP1 & ENV1 & ->).
     rewrite !unsigned_lit in MUc by lia. rewrite !unsigned_lit in ST1 by lia.
     replace (ret_pc (Z_to_bv 64 0x86250)) with (Z_to_bv 64 0x86250) by (symmetry; rpc).
     pose proof (gagree_on_of_munch _ _ _ MUc WMc) as AG.
     assert (BA1 : BASE' m1).
-    { eapply (BASE_A_agree_se PZ PZ_agree sp0 argv envp uid hw rnd TID VSP CEIL ESF HT stdout_init); [exact BA| exact AG| | exact WMc| exact MI1| unfold LO; exact ST1| | exact ENV1| exact SEW].
+    { eapply (BASE_A_agree_se PZ PZ_agree sp0 argv envp inp mbase rnd TID VSP CEIL ESF HT stdout_init); [exact BA| exact AG| | exact WMc| exact MI1| unfold LO; exact ST1| | exact ENV1| exact SEW].
       - intros a Ha Hs. unfold base_addr, exitc_addr, stdout_addr, stderr_addr, stdin_addr, pz_band, sh, SHADOW_OFF, SH_HI in *. cbn [outside fst snd].
         clear -Ha Hs SF IL47 CB'. split; [| split; [| exact I]]; Z.div_mod_to_equations; lia.
       - eapply stk_gagree; [exact AG| exact RSS| intros a Ha; cbn [outside fst snd]; unfold RSVA in *; lia]. }
@@ -264,7 +265,7 @@ Section C.
     destruct HP1 as (sA & stA & RH & RF & Eg & _ & _). subst g.
     pose proof (am_stack_ok FI AI) as SOK.
     eapply djM_seam.
-    { eapply ((ac_free_any FI AI (JA FI AI) AC)) with (lo := usp0 - 8388608) (k := kb) (A := A) (n := cap);
+    { eapply ((ac_free_any FI AI (JA FI AI) AC)) with (lo := usp0 - 6144512) (k := kb) (A := A) (n := cap);
         rewrite ?unsigned_lit by lia;
         first [ exact RH | left; reflexivity | exact ENV | exact RF | exact ST | exact MI | reflexivity | lia | unfold A0_RT_STACK; lia
               | cbn [fpchain]; unfold valid_frame; lia
@@ -273,7 +274,7 @@ Section C.
     cbv beta. intros msr2 g2 (s2 & LB2 & -> & PO).
     destruct PO as (w0 & w1 & w2 & ra0 & d1 & d2 & d3 & d4 & d5 & d6 & d7 & w3 & w4 & w5 & w6 & m2 & -> & AFR & -> & RH2).
     rewrite lb_remove_self in AFR, RH2.
-    assert (BA2 : BASE' m2) by (eapply (BASE_A_alloc FI AI AMS PZ PZ_agree sp0 argv envp uid hw rnd TID VSP CEIL ESF HT stdout_init); [exact BA1| unfold LO; exact AFR]).
+    assert (BA2 : BASE' m2) by (eapply (BASE_A_alloc FI AI AMS PZ PZ_agree sp0 argv envp inp mbase rnd TID VSP CEIL ESF HT stdout_init); [exact BA1| unfold LO; exact AFR]).
     destruct AFR as (MI2 & ST2 & ENV2 & RF2 & AP2).
     assert (FR2 : FRAME' m2) by (unfold MFRAME in *; eapply (apres_rw_cells FI AI); [exact AP2| exact FR1| apply aclient_range_above; lia]).
     replace (ret_pc (Z_to_bv 64 0x86258)) with (Z_to_bv 64 0x86258) by (symmetry; rpc).
@@ -296,7 +297,7 @@ Section C.
     intros b content so ms g Q RD K.
     destruct RD as (x1 & t0 & t1 & t2 & a0 & a1 & a2 & a3 & a4 & a5 & a6 & a7 & t3 & t4 & t5 & t6 & F & fc & mm & A & cap & P1v & fd & DATA & junk & errv & kb
                     & -> & HCT & -> & BU & FR & BA & CJ & ERR & FRM).
-    pose proof (sp_facts sp0 VSP CEIL) as SF. pose proof (IMGB_len47 sp0 argv envp uid hw rnd ESF) as IL47. pose proof alloc_ceiling_bounds as CB'. unfold LO in SF.
+    pose proof (sp_facts sp0 VSP CEIL) as SF. pose proof (IMGB_len47 sp0 argv envp inp mbase rnd ESF) as IL47. pose proof alloc_ceiling_bounds as CB'. unfold LO in SF.
     pose proof BA as (ST & MI & EX & MC & IMG & SE & SOF & RSS & SI & SZ & ENV & GSH & HPZ & CRT). unfold LO in ST. destruct MC as (G28 & GSE & SSP).
     pose proof ERR as ERR0. unfold RERRNOA in ERR. pose proof FR as FR0. unfold MFRAME in FR.
     pose proof BU as (HP0 & BLK & BSH & [CAPR CAPK] & LENR & BR1 & BR2 & BR3 & BR4).

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO run state). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run Fs.
@@ -65,7 +66,7 @@ Proof. LiaFast.lf_pins (fun (Hwx : LiaFast.U) => LiaFast.u0).
   - exact Hanz.
   - rewrite (AM_agree (s_next S) model0 E E' M Hwf Ha). exact Hinv'.
   - rewrite HH. exact Hhoff.
-  - rewrite Hvm. exact Hres.
+  - rewrite Hvm, (same_but_materialized_kernel _ _ Hsb'). exact Hres.
   - rewrite Hvm. exact Hlim.
   - rewrite Hvm, Hsp. symmetry. exact (lden_agree_wf _ E E' _ Hwsp Ha).
   - rewrite Hvm. exact Hspok.
@@ -107,6 +108,7 @@ Proof. LiaFast.lf_pins (fun (Hwx : LiaFast.U) => LiaFast.u0).
     { apply (proj2 (outside_agree (s_next S) E E' (s_rgs S) _ Hbw Ha)). apply (outside_shape E' (s_rgs L) (s_rgs S) _ (eq_sym Hsh)). exact Hout'. }
     cbn [unrestrict ms_mem]. rewrite (munrestrict_outside H (ms_mem ms) (restrict H ms) msr' _ eq_refl (Hfr _ Hout)). exact (Hm Hout).
   - apply (blob_ok_agree (s_next S) E E' M model model' _ Hwf Ha); [rewrite Hvm; reflexivity | exact Hblob].
+  - rewrite Hvm, (same_but_materialized_kernel _ _ Hsb'). vdso_keep_tac.
 Qed.
 
 

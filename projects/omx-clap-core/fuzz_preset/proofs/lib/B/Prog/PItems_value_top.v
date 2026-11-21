@@ -7,7 +7,7 @@
                                          in->p++, grow, and the exits to PI_O_BODY / PI_O_CLOSE2 / PI_O_EPI
    pv_step_val has EXACTLY STEP_VAL's statement (PItems_top.v); the Section hypotheses below are the segment's own
    callee texts and laws, each with its owner, and the top takes them as its own.
-   The batch kit (240b06ed4fd4): every spec takes the cursor set CW after CTX0 (a Section variable here, as in
+   The batch kit: every spec takes the cursor set CW after CTX0 (a Section variable here, as in
    PItems_top.v), and the parse_value text at S d (pi_PV) is the batch kit's tparse_value_specX at that CW.
    (pi_PV) is the kit's tparse_value_specX at that CW. Rule 24: proves no function in this file (kind: segment wiring);
    the walk index for parse_items is the rule-24 lookup the internal file idx-parse_items.txt (rule-24 check: CONFIRM).
@@ -48,7 +48,7 @@ Variable SK : YI16.sink_head.
 Variable B : asyms.
 Variable ARx : alayout -> astate -> list Z -> world SEGS -> (word -> option byte) -> Model -> Prop.
 Variable CTX0 : list (list Z).
-(* the cursor set (the batch kit 240b06ed4fd4): parse_items' own, handed to every block spec and to parse_value at S d *)
+(* the cursor set (the batch kit): parse_items' own, handed to every block spec and to parse_value at S d *)
 Variable CW : list (list Z).
 (* the engine's laws at the instance's head length *)
 Hypothesis LAWS : AR_laws_x SEGS B ARx cf_head.
@@ -65,7 +65,7 @@ Hypothesis SKW : forall (fy : YK11.FPState), tskip_ws_specX (fx := fy) (L := B_p
    pi_curmem_kept_callR): the walks call at wle' segs RZ_cf, so the callee's journal is at that relation *)
 Hypothesis HCURK : pi_cur_kept_callR_stmt (L := B_prog_listing) (PA := PA) (SKq := SK) B ARx.
 Hypothesis CURM : pi_curmem_kept_callR_stmt (L := B_prog_listing) (PA := PA) (SKq := SK) B ARx.
-(* grow's record text (the kit's tgrow_specX, same shape on the batch kit 240b06ed4fd4; the grow lane), at the segment's CTX0 *)
+(* grow's record text (the kit's tgrow_specX, same shape on the batch kit; the grow lane), at the segment's CTX0 *)
 Hypothesis GROW : forall (fy : YK11.FPState),
   tgrow_specX (fx := fy) (PI := prh_img_B) (L := B_prog_listing) (PA := PA) B ARx SK CTX0.
 (* the instance's head length is the model's (PItems_body_loop.v PIL_HEAD, same text): grow's event lists prhPg_evs

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the UTOP bound of the new stack layout, whose strings end eight bytes below the stack's end, proved from main's 16-alignment; the stack floor lo := rt_sp0 - STACK_SPAN, the guaranteed stack span). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -118,13 +119,19 @@ Proof using AF AF_DRV CLS MAL FRE FRN MCP FWR FUZZ VPR EXC EXC1 XENV1x_of OUT_lo
   pose proof (cap_ok_range cap HCAP) as CAPR.
   assert (INB : In (buf, cap) (rt_live RT Σ)) by (rewrite LV; left; reflexivity).
   pose proof (af_live_range RT AF Σ m buf cap ART0 INB) as (PR1 & PR2 & PR3).
-  set (lo := rt_sp0 RT Σ - STACK_WIN) in *.
+  set (lo := rt_sp0 RT Σ - STACK_SPAN) in *.
   set (n := Z.of_nat (length data)) in *.
   assert (EU : bv_unsigned (Z_to_bv 64 (usp - 80)) = usp - 80) by (apply unsigned_lit; ul).
-  assert (UTOP : usp + 16 <= USTACK_TOP) by lia.
+  (* LPS 08b1429: the strings end eight bytes below the stack VMA's end, which
+     may be USTACK_TOP; the remaining bytes come from main's 16-alignment (B16). *)
+  assert (UTOP : usp + 16 <= USTACK_TOP).
+  { assert (Hup : usp <= USTACK_TOP - 11) by ul.
+    pose proof (Z_div_mod_eq_full usp 16) as Hq. rewrite B16, Z.add_0_r in Hq.
+    set (q := usp / 16) in Hq. clearbody q.
+    unfold USTACK_TOP in Hup |- *. lia. }
   apply (CLS Σ (FD argvb n) fs (Z_to_bv 64 0x8c088) (Z_to_bv 64 (usp - 80)) gp (Z_to_bv 64 TP_A) t0 t1 t2 (Z_to_bv 64 2)
            (Z_to_bv 64 buf) (Z_to_bv 64 3) a1 a2 a3 a4 a5 a6 a7 (Z_to_bv 64 path) (Z_to_bv 64 n) (Z_to_bv 64 3) (Z_to_bv 64 cap)
-           (Z_to_bv 64 g_read_stage) (Z_to_bv 64 0) s8 s9 s10 s11 t3 t4 t5 t6 F fc m 3 lo); try reflexivity; try assumption.
+           (Z_to_bv 64 g_read_stage) (Z_to_bv 64 0) s8 s9 s10 s11 t3 t4 t5 t6 F fc m 3 lo); try reflexivity; try assumption; try (match goal with |- _ - STACK_WIN <= lo => unfold lo, STACK_WIN; lia end).
   - lia.
   - unfold FD. rewrite fd_lookup_insert_same. discriminate.
   - rewrite EU. exact ST0.

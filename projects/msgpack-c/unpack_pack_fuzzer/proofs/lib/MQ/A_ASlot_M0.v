@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the proofs that open auxv_ok take its new witnesses, the CONFIG_RSEQ flag and the list of auxv values, in place of the old table's fixed pair values). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -399,7 +400,7 @@ Lemma auxv_ok_malloc_fp_ER stE mE lo sp m1 m' B :
 Proof.
   intros MRE AUX PE CLO SB. eapply auxv_ok_pres; [exact AUX| exact PE| |].
   - intros a Ha Hfp. destruct (malloc_fp_cases_ER stE mE lo sp a MRE Hfp); [lia|].
-    destruct AUX as (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & _ & _ & _ & HH). pose_ceil. lia.
+    destruct AUX as (r & av & vals & rnd & _ & _ & _ & _ & _ & _ & HH). pose_ceil. lia.
   - intros a Ha Hfp. unfold AUXV_CELL, LIBC in Ha.
     destruct (malloc_fp_image_ER stE mE lo sp a MRE Hfp CLO ltac:(lia)) as [X|X]; unfold CTX in X; lia.
 Qed.

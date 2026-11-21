@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -22,12 +23,12 @@ Open Scope bv_scope.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
 Section P6.
+  Variable inp : ProcInput.
   Variable sp0 : word.
   Variable Jb : word -> option byte.
-  Variables av ev : list (list byte).
-  Variable uid : word.
-  Variable hw : word.
   Variable rnd : EntryDraw.
+  Local Notation av := (in_argv inp) (only parsing).
+  Local Notation ev := (in_envp inp) (only parsing).
   Hypothesis Hva : valid_argv av.
   Hypothesis Hve : valid_envp ev.
   Hypothesis Hlo : (0x7fff80000000 <= bv_unsigned sp0)%Z.
@@ -43,9 +44,9 @@ Section P6.
     rdn segs m a' n = r -> a = a' -> rdn segs m a n = r.
   Proof. intros; subst; reflexivity. Qed.
 
-  Lemma slli_argc : v_slli (argc_w av) 3 = Z_to_bv 64 (8 * Z.of_nat (length av)).
+  Lemma slli_argc : v_slli (argc_w inp) 3 = Z_to_bv 64 (8 * Z.of_nat (length av)).
   Proof.
-    pose proof len_av. unfold argc_w, v_slli. rewrite (u_argcN av Hva).
+    pose proof len_av. unfold argc_w, v_slli. rewrite (u_argcN inp Hva).
     f_equal. rewrite Z.shiftl_mul_pow2 by lia. change (2^3)%Z with 8%Z. lia.
   Qed.
 End P6.

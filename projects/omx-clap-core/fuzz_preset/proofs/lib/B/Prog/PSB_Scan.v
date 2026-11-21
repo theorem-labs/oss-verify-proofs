@@ -3,24 +3,25 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_decode/lib/B/Prog/LLVMFuzzerTestOneInput_segX_exit_td.v, with its module paths, module names and numbers changed; 1110 of its 1140 lines of code are new or changed and 322 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/PSB_Tail.v, with its module names changed; 1182 of its 1298 lines of code are new or changed and 1024 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset lib/B, parse_string on image B (asan-ubsan): the stretch PSB_SCAN (offset 148) .. PSB_DEC (offset 324),
-   against the cut layer lib/A/Prog/PS_Gen.v + lib/B/Prog/PSB_Base.v on the kit's cut 7cdbb61b5fa0 (earlier the OLD-PIN
-   ACCEPTANCE base 1ecd17746af on a working branch).
+   against the cut layer lib/A/Prog/PS_Gen.v + lib/B/Prog/PSB_Base.v on the kit's cut (earlier the OLD-PIN
+   ACCEPTANCE base on a working branch).
    rule 24: proves no function (kind: segment lemma). The function is parse_string B (lane BParseString); its reuse
    search is the record file r24-index.txt (sha256 e7c12b08eeb1; internal record) (checker CONFIRM; donor none).
-   FILE SET: the kit's cut 7cdbb61b5fa0 with this row's lane files; at ACC-BRIEF, the acceptance base 6225fcbb328 on
+   FILE SET: the kit's cut with this row's lane files; at ACC-BRIEF, the acceptance base on
    a working branch (PS_Gen blob 1ed8831ad889: ps_carryP / ps_postP / ps_at_ret0P, ps_rpos,
    srr_inv_laws_True / srr_inv_call_True; PSB_Base 37dbe86f11d0: psb_at_scanP / psb_at_decP, psb_seg_{scan,ret0,dec}P
    and their _of_True; PSB_Src 7630d0babd39: the text across the call); the OLD-PIN kit of record
-   a working branch 4f18c75d4900 (owner 14:00Z; PRH_FnAlloc blob f668aebf57c4: tfuzz_malloc_specX
+   a working branch (owner 14:00Z; PRH_FnAlloc blob f668aebf57c4: tfuzz_malloc_specX
    takes the room position iface_room_pos and posts fpostm with the advanced position; PRH_Base ee6c7a38d6b6: fpre with
    the stack-top and raZ conjuncts, fQmn / fpostm at :689-697; PRH_FnReader 66e11f202508; YGcfRoomLive db11c2a5eb11);
    a Theorem Labs lane's image-B harness contract lib/AU/PresetCfnB.v (blob 395e15521a77: counts_of_room_pos_rl); the whole engine
-   set s1b from a working branch 459129c18903 (YCbqG c3b5d0111037, YGcallcf 6d2b13c24437, YC80x
+   set s1b from a working branch (YCbqG c3b5d0111037, YGcallcf 6d2b13c24437, YC80x
    14f84f225e8f: srr_inv_laws and the SRr _inv runners; YC1fPx 7814b594066f: paj_run_x_inv / paj_run_to_x_inv and their
    tactics; YSRrMemnorm 5ffa8525936b: srr_inv_call; YAkMemnorm 96c72061b4d4); listing v4 (B Listing_prog f843fdf7fe2f /
    PAImg_prog 5abade432081); PRW_StepKit f5da83bd521e / PRW_HShadow 2662d68ca36b. This file by path from
-   a working branch 22a4423dbc1 (the generic-P walk), ported to the m-form callee text.
+   a working branch (the generic-P walk), ported to the m-form callee text.
    THE GENERIC-P FORM (a Theorem Labs lane 12:18Z / 12:22Z; GP-BRIEF): an SRr post is OPAQUE once Qed, so the end-state invariant
    is in the stretch's statement. The walk (Section scP) is over an ABSTRACT invariant P of the memory with
    srr_inv_laws segs P (PLAW) and, since it crosses the fuzz_malloc call, srr_inv_call segs P (PCALL): the cut's P mem
@@ -655,7 +656,7 @@ pose proof HPRE as ((_ & _ & _ & _ & HFRM) & HCL & _ & _ & _ & _ & HRL & _ & _ &
   _ & _ & HLIVE).
 destruct (ps_counts_entry (PI := PSB_PrhImg) (L := B_prog_listing) (PA := PSB_PAImg) B ARx CTX CW D Q HPRE HQ)
   as [HSEC H24].
-(* the request bound and the call's room: the text's per-event live premise at its event 0 (the kit cut 7cdbb61b5fa0,
+(* the request bound and the call's room: the text's per-event live premise at its event 0 (the kit cut,
    PRH_FnReader f1ae32e3b2cd :566-576; PS_Gen.ps_room_entry) *)
 destruct (ps_room_entry (PI := PSB_PrhImg) (L := B_prog_listing) (PA := PSB_PAImg) B ARx CTX CW D Q HPRE HQ)
   as [Hmax Hbb].

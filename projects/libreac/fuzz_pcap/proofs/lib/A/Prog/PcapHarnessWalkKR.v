@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: these two lines are the source header of lib/A/Prog/PaGxSites.v, whose lemma
    aj_gx_entry_at (:70-174) this file copies as kr_gx_entry with one conjunct (same_but_materialized) kept in its post;
    the rest of the file is new. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The body of the record loop of fuzz_pcap's entry function LLVMFuzzerTestOneInput on the ASan build of libreac
    v1.9.0 (lib/A): from the cut PP_KR (0x80b70, the head of the harness's skip loop) to the cut PP_KL2 (0x80fa4,
    the loop's own pcap_source_next returned). This file proves
@@ -45,52 +46,52 @@
                (p_reader's rec_bytes) and the copy holds the file (p_copy), so the wrapper answers 0.
 
    The exits to PP_abort 0x81340, each refuted inside the walk (GI_abort is reached by no run):
-     0x80c34: refuted by kr_skip at PcapHarnessWalkKR.v:1169, from GI_KR's p_skips e (psn_q p) and
+     0x80c34: refuted by kr_skip at PcapHarnessWalkKR.v:1170, from GI_KR's p_skips e (psn_q p) and
               p_kind (psn_q p) = KFit (kr_m_empty / kr_m_big: e + 16 + incl + 16 <= |F| on the chain).
-     0x80c6c: refuted by kr_rec at PcapHarnessWalkKR.v:2820, from p_kind (psn_q p) = KFit (PWalk.kind_fit:
+     0x80c6c: refuted by kr_rec at PcapHarnessWalkKR.v:2821, from p_kind (psn_q p) = KFit (PWalk.kind_fit:
               psn_q p + 16 + incl <= |F|).
-     0x80d14: refuted by kr_rec at PcapHarnessWalkKR.v:2820, from p_reader's last_orig_len = PSN.orig
-              (kb_le32w_U / kb_be32w_U at PcapHarnessWalkKR.v:297 / :324).
-     0x80d68: refuted by kr_rec at PcapHarnessWalkKR.v:2820, from p_reader's last_vlan_tagged = PSN.tagged.
-     0x80d80: refuted by kr_rec at PcapHarnessWalkKR.v:2820, from a2 = p_res = rec_len (kr_res_fit at :2754).
-     0x80d90: refuted by kr_tag1 at PcapHarnessWalkKR.v:2673, from kr_bcmp's a0 = 0 (ABCMP, kr_cmp_ms3 at
+     0x80d14: refuted by kr_rec at PcapHarnessWalkKR.v:2821, from p_reader's last_orig_len = PSN.orig
+              (kb_le32w_U / kb_be32w_U at PcapHarnessWalkKR.v:298 / :325).
+     0x80d68: refuted by kr_rec at PcapHarnessWalkKR.v:2821, from p_reader's last_vlan_tagged = PSN.tagged.
+     0x80d80: refuted by kr_rec at PcapHarnessWalkKR.v:2821, from a2 = p_res = rec_len (kr_res_fit at :2754).
+     0x80d90: refuted by kr_tag1 at PcapHarnessWalkKR.v:2674, from kr_bcmp's a0 = 0 (ABCMP, kr_cmp_ms3 at
               :2530, kr_recb_tag12 at :2385).
-     0x80dac: refuted by kr_tag2 at PcapHarnessWalkKR.v:2605, from kr_bcmp's a0 = 0 (kr_recb_tagmid at
+     0x80dac: refuted by kr_tag2 at PcapHarnessWalkKR.v:2606, from kr_bcmp's a0 = 0 (kr_recb_tagmid at
               :2394).
-     0x80df8: refuted by kr_tag2 at PcapHarnessWalkKR.v:2605, from p_reader's last_vlan_id = PSN.rec_vid
+     0x80df8: refuted by kr_tag2 at PcapHarnessWalkKR.v:2606, from p_reader's last_vlan_id = PSN.rec_vid
               (kr_vid_U at :2499).
-     0x80e00: refuted by kr_rec at PcapHarnessWalkKR.v:2820, from a2 = p_res = rec_len = incl (kr_res_fit).
-     0x80e0c: refuted by kr_untag at PcapHarnessWalkKR.v:2445, from kr_bcmp's a0 = 0 (kr_recb_untag at
+     0x80e00: refuted by kr_rec at PcapHarnessWalkKR.v:2821, from a2 = p_res = rec_len = incl (kr_res_fit).
+     0x80e0c: refuted by kr_untag at PcapHarnessWalkKR.v:2446, from kr_bcmp's a0 = 0 (kr_recb_untag at
               :2381).
-     0x80f74: refuted by kr_ts at PcapHarnessWalkKR.v:2256, from p_reader's ts = PSN.rec_ts (kr_tsT_U at
+     0x80f74: refuted by kr_ts at PcapHarnessWalkKR.v:2257, from p_reader's ts = PSN.rec_ts (kr_tsT_U at
               :938).
 
    The 20 ASan shadow checks of the copy's bytes, by the entry edge (the body's bnez on the shadow byte); each slow
    block is never entered: the seat's sh_ok entry for the copy makes the token engine read the shadow byte as 0, so
    the bnez falls through. The premise is range_addressable (aview SEGS (w_H W) mem) SHADOW_OFF (b + e + lo) (hi - lo)
    for the copy block (b, |F|) of the cut, from AR's block shadow law (obl_of_block, Reusable/YCbq.v:2777), carried
-   by kr_shok at PcapHarnessWalkKR.v:741. Slow blocks and tails checked on the pin (the owner's triples).
-     0x80b84 (-> 0x80c38 -> bge 0x80c3c): refuted by kr_skip at PcapHarnessWalkKR.v:1169, from kr_shok (copy e+8 .. e+12).
-     0x80b9c (-> 0x80c44 -> bge 0x80c48): refuted by kr_skip at PcapHarnessWalkKR.v:1169, from kr_shok (copy e+8 .. e+12).
-     0x80bb4 (-> 0x80c50 -> bge 0x80c54): refuted by kr_skip at PcapHarnessWalkKR.v:1169, from kr_shok (copy e+8 .. e+12).
-     0x80bcc (-> 0x80c5c -> bge 0x80c60): refuted by kr_skip at PcapHarnessWalkKR.v:1169, from kr_shok (copy e+8 .. e+12).
-     0x80c84 (-> 0x80fb4 -> bge 0x80fb8): refuted by kr_rec at PcapHarnessWalkKR.v:2820, from kr_seat_now at :1509 (copy Q .. Q+L).
-     0x80c9c (-> 0x80fc0 -> bge 0x80fc4): refuted by kr_rec at PcapHarnessWalkKR.v:2820, from kr_seat_now at :1509.
-     0x80cb4 (-> 0x80fcc -> bge 0x80fd0): refuted by kr_rec at PcapHarnessWalkKR.v:2820, from kr_seat_now at :1509.
-     0x80ccc (-> 0x80fd8 -> bge 0x80fdc): refuted by kr_rec at PcapHarnessWalkKR.v:2820, from kr_seat_now at :1509.
-     0x80d30 (-> 0x81044 -> bge 0x81048): refuted by kr_rec at PcapHarnessWalkKR.v:2820, from kr_seat_now at :1509 (L = 32).
-     0x80d50 (-> 0x81068 -> blt 0x8106c, jal __asan_report_load1 0x81070): refuted by kr_rec at PcapHarnessWalkKR.v:2820,
+   by kr_shok at PcapHarnessWalkKR.v:742. Slow blocks and tails checked on the pin (the owner's triples).
+     0x80b84 (-> 0x80c38 -> bge 0x80c3c): refuted by kr_skip at PcapHarnessWalkKR.v:1170, from kr_shok (copy e+8 .. e+12).
+     0x80b9c (-> 0x80c44 -> bge 0x80c48): refuted by kr_skip at PcapHarnessWalkKR.v:1170, from kr_shok (copy e+8 .. e+12).
+     0x80bb4 (-> 0x80c50 -> bge 0x80c54): refuted by kr_skip at PcapHarnessWalkKR.v:1170, from kr_shok (copy e+8 .. e+12).
+     0x80bcc (-> 0x80c5c -> bge 0x80c60): refuted by kr_skip at PcapHarnessWalkKR.v:1170, from kr_shok (copy e+8 .. e+12).
+     0x80c84 (-> 0x80fb4 -> bge 0x80fb8): refuted by kr_rec at PcapHarnessWalkKR.v:2821, from kr_seat_now at :1509 (copy Q .. Q+L).
+     0x80c9c (-> 0x80fc0 -> bge 0x80fc4): refuted by kr_rec at PcapHarnessWalkKR.v:2821, from kr_seat_now at :1509.
+     0x80cb4 (-> 0x80fcc -> bge 0x80fd0): refuted by kr_rec at PcapHarnessWalkKR.v:2821, from kr_seat_now at :1509.
+     0x80ccc (-> 0x80fd8 -> bge 0x80fdc): refuted by kr_rec at PcapHarnessWalkKR.v:2821, from kr_seat_now at :1509.
+     0x80d30 (-> 0x81044 -> bge 0x81048): refuted by kr_rec at PcapHarnessWalkKR.v:2821, from kr_seat_now at :1509 (L = 32).
+     0x80d50 (-> 0x81068 -> blt 0x8106c, jal __asan_report_load1 0x81070): refuted by kr_rec at PcapHarnessWalkKR.v:2821,
               from kr_seat_now at :1509 (L = 32).
-     0x80dc8 (-> 0x81050 -> bge 0x81054): refuted by kr_tag2 at PcapHarnessWalkKR.v:2605, from kr_seat_now at :1509.
-     0x80de0 (-> 0x8105c -> bge 0x81060): refuted by kr_tag2 at PcapHarnessWalkKR.v:2605, from kr_seat_now at :1509.
-     0x80e28 (-> 0x80fe4 -> bge 0x80fe8): refuted by kr_ts at PcapHarnessWalkKR.v:2256, from kr_seat_now at :1509.
-     0x80e40 (-> 0x80ff0 -> bge 0x80ff4): refuted by kr_ts at PcapHarnessWalkKR.v:2256, from kr_seat_now at :1509.
-     0x80e58 (-> 0x80ffc -> bge 0x81000): refuted by kr_ts at PcapHarnessWalkKR.v:2256, from kr_seat_now at :1509.
-     0x80e70 (-> 0x81008 -> bge 0x8100c): refuted by kr_ts at PcapHarnessWalkKR.v:2256, from kr_seat_now at :1509.
-     0x80ec8 (-> 0x81014 -> bge 0x81018): refuted by kr_ts at PcapHarnessWalkKR.v:2256, from kr_seat_now at :1509.
-     0x80ee0 (-> 0x81020 -> bge 0x81024): refuted by kr_ts at PcapHarnessWalkKR.v:2256, from kr_seat_now at :1509.
-     0x80ef8 (-> 0x8102c -> bge 0x81030): refuted by kr_ts at PcapHarnessWalkKR.v:2256, from kr_seat_now at :1509.
-     0x80f10 (-> 0x81038 -> bge 0x8103c): refuted by kr_ts at PcapHarnessWalkKR.v:2256, from kr_seat_now at :1509.
+     0x80dc8 (-> 0x81050 -> bge 0x81054): refuted by kr_tag2 at PcapHarnessWalkKR.v:2606, from kr_seat_now at :1509.
+     0x80de0 (-> 0x8105c -> bge 0x81060): refuted by kr_tag2 at PcapHarnessWalkKR.v:2606, from kr_seat_now at :1509.
+     0x80e28 (-> 0x80fe4 -> bge 0x80fe8): refuted by kr_ts at PcapHarnessWalkKR.v:2257, from kr_seat_now at :1509.
+     0x80e40 (-> 0x80ff0 -> bge 0x80ff4): refuted by kr_ts at PcapHarnessWalkKR.v:2257, from kr_seat_now at :1509.
+     0x80e58 (-> 0x80ffc -> bge 0x81000): refuted by kr_ts at PcapHarnessWalkKR.v:2257, from kr_seat_now at :1509.
+     0x80e70 (-> 0x81008 -> bge 0x8100c): refuted by kr_ts at PcapHarnessWalkKR.v:2257, from kr_seat_now at :1509.
+     0x80ec8 (-> 0x81014 -> bge 0x81018): refuted by kr_ts at PcapHarnessWalkKR.v:2257, from kr_seat_now at :1509.
+     0x80ee0 (-> 0x81020 -> bge 0x81024): refuted by kr_ts at PcapHarnessWalkKR.v:2257, from kr_seat_now at :1509.
+     0x80ef8 (-> 0x8102c -> bge 0x81030): refuted by kr_ts at PcapHarnessWalkKR.v:2257, from kr_seat_now at :1509.
+     0x80f10 (-> 0x81038 -> bge 0x8103c): refuted by kr_ts at PcapHarnessWalkKR.v:2257, from kr_seat_now at :1509.
    The other ASan accesses of the segment need no check on the pin: the slots s1 + [40, 96), ps's fields and ts are
    frame slots the compiler proved addressable; ts's shadow (frame shadow byte 12, PSH_ts) is the premise of the ts
    write's window (kr_seat_now). The bcmp wrapper's own checks are inside ABCMP.
@@ -99,10 +100,10 @@
    hw_md_fds, hw_body_mem, hw_pspad_mem, hw_plslots_mem, hw_pslot_mem, hw_pglob_mem, hw_preader_mem,
    hw_fields_of_shape, hw_eqon_of_kept, hw_rdword_on, hw_val_on, hw_mbyte_on, ms_of_body), never re-proved;
    PcapHarnessA.v gives h_sp, h_frame, h_base, h_blocks3, h_achain, h_meta_gx, h_arodata_S, h_nx_model, h_psn_lh_fit,
-   h_ra_frame, h_rdword_keep, and kr_next follows h_C_next (PcapHarnessA.v:721) for the call of pcap_source_next.
-   The skip loop's induction has the SHAPE of lib/B/Prog/PcapEntrySkip.v on a working branch cb8f7855e50
+   h_ra_frame, h_rdword_keep, and kr_next follows h_C_next (PcapHarnessA.v:722) for the call of pcap_source_next.
+   The skip loop's induction has the SHAPE of lib/B/Prog/PcapEntrySkip.v on a working branch
    (pe_from_skip_m, w3_skips_inv, w3_skip_step: the asan-ubsan image, other pcs and registers): no text is taken.
-   kr_gx_entry is PaGxSites.v's aj_gx_entry_at (lib/A/Prog/PaGxSites.v:70-174) with one conjunct kept in its post
+   kr_gx_entry is PaGxSites.v's aj_gx_entry_at (lib/A/Prog/PaGxSites.v:71-175) with one conjunct kept in its post
    (same_but_materialized; see there). NOT USED: pcap_L_x_a (ASegLx.v (sha256 e4355f5a77a3; internal record), a working branch), the
    slot-segment form the owner's brief forbids; no W6 / slot contract / _cf / AsanRT file is Required. The plain
    model lib/Prog/Slot/PWalk.v is Required, never Imported, as PcapHarnessWalk.v does (rule 24). *)
@@ -132,7 +133,7 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib.A.Prog Require Import PcapSourceClos
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.A.Prog Require Import PcapHarnessA PcapHarnessWalk.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Prog.Slot Require PWalk.
 (* The zify flag leak (a Theorem Labs lane, 09:00Z): `Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::=` is
-   global and set both ways by the files Required above (AE2e / YE2e and others to false, PcapHarnessA.v:631 to true),
+   global and set both ways by the files Required above (AE2e / YE2e and others to false, PcapHarnessA.v:632 to true),
    so its value here depends on their load order. This file fixes it, for its own proofs only (Local): its division
    goals use explicit div / mod lemmas, so the euclidean equations stay off, as PcapHarnessWalk.v's walk keeps them
    (its line 56); with them on, lia fails ("No applicable tactic") on linear goals beside a mod or div fact. *)
@@ -1654,7 +1655,7 @@ Proof.
 Qed.
 
 (* ---- a runtime entry inside the harness's journal, with the model relation kept ---- *)
-(* kr_gx_entry is PaGxSites.v's aj_gx_entry_at (lib/A/Prog/PaGxSites.v:70-174) with ONE conjunct added to its post:
+(* kr_gx_entry is PaGxSites.v's aj_gx_entry_at (lib/A/Prog/PaGxSites.v:71-175) with ONE conjunct added to its post:
    same_but_materialized mdc md2, which that proof has in hand (its Hsame) and drops. The record checks need it: the
    descriptors and the file system after the bcmp calls are the cut's (p_cut, PcapEntryPhases.v:248), and only the
    model relation carries them (wvb_fds_fs). The text below is that proof, with its local MT renamed MTg (this file's

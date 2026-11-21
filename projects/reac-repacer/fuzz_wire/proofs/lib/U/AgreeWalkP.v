@@ -48,7 +48,7 @@ Hypothesis LIMLAW : forall L A mem md, aa_MR API L A mem md -> SRC_LIM_MIN <= vm
 
 Theorem pack_walk_crealizes : forall sp brk mbase rnd lim inp,
   valid_sp sp -> valid_brk src0segs brk -> valid_mmap_base mbase ->
-  entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
   valid_input inp -> SRC_LIM_MIN <= lim ->
   YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
   crealizes src0_msyms (init_config src0segs Ubsan_init_pc Ubsan_phdrs sp brk mbase rnd lim inp) (SPECX inp).
@@ -67,7 +67,7 @@ Theorem zlib_pack_walk_crealizes : forall (rc : RunCeil) (LS : lib_shape) (CS : 
   lib_contract_x_Rc_all src0_msyms (@zlib_API rc) (RI_Pc CS) src0_G src0_R GI OUT LIBPC RA_LIB EMPTY LIB_STACK ->
   forall sp brk mbase rnd lim inp,
   valid_sp sp -> valid_brk src0segs brk -> valid_mmap_base mbase ->
-  entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
   valid_input inp -> SRC_LIM_MIN <= lim ->
   YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
   crealizes src0_msyms (init_config src0segs Ubsan_init_pc Ubsan_phdrs sp brk mbase rnd lim inp) (SPECX (LS:=LS) inp).

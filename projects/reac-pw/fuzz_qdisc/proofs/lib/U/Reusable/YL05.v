@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YL05.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the allocation mode the allocator record carries (a refused munmap leaves a leaked map)). *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -12,10 +13,12 @@ YK11 YK0o YK0s YK15 YM06 YM02 YP0m YP0e YP09 YP0l YP0k YP06 YP03 YP08 YN3v.
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.U.Reusable Require Import YO0i YO0f YO0d.
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.U.Reusable Require Import YN03 YL07 YL01 YL0d YL0g.
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.U.Reusable Require Import YM05.
+From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.U.Reusable.R Require Import Cfg.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Local Open Scope Z_scope.
 Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {AM : AllocMode}.
 Lemma regs_atoms_lt_upd : forall k sr n e,
 regs_atoms_lt k sr = true -> sv_atoms_lt k e = true -> regs_atoms_lt k (sr_upd sr n e) = true.
 Proof.

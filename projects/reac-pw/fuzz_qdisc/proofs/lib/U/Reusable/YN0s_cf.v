@@ -2,7 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN0s.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the allocation mode the allocator record carries (a refused munmap leaves a leaked map)). *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.U.Reusable Require YZ00.
+From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.U.Reusable.R Require Import Cfg.
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -16,6 +18,8 @@ Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Local Open Scope Z_scope.
 Section b. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {AM : AllocMode}.
+Context {AMF : Forced AM}.
 Definition mi_base (L : layout) (mi : option (nat * Z)) : Z := match mi with Some (k, _) => ly_reg L k | None => 0 end.
 Definition mi_len (mi : option (nat * Z)) : Z := match mi with Some (_, len) => len | None => 0 end.
 Record ntmidF (e : fentry) (Xz : list sptr) (fuel : nat) (L : layout) (A0 s : astate) (g : sptr) (mi : option (nat * Z))

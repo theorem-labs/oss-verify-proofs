@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main entry's recorded facts read as the main entry keeps them: APKN). *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Lib Require Import PropExec MState Mem Cells Step.
@@ -35,7 +36,7 @@ Qed.
 Local Ltac pf V HP f H := pose proof (pfact_find V _ f HP ltac:(vm_compute; reflexivity)) as H; cbn [pfact_ok zv] in H.
 Definition aspace_beg (V : nat -> Z) : Z := 4096 * V 208%nat - 4096 * V 209%nat + 65536.
 Theorem primary_shadow0 : forall (V : nat -> Z) (m : word -> option byte),
-ashadow0 V m -> Forall (pfact_ok V) asan_pure_facts ->
+  ashadow0 V m -> Forall (pfact_ok V) APKN ->
 (forall i, 0 <= i < 2^34 -> m (wa (shad (aspace_beg V) + i)) = Some (Z_to_bv 8 0))
 /\ wr_at asegs m (shad (aspace_beg V)) (2^34).
 Proof.

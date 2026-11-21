@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumE.v, with its module paths and module names changed; 2503 of its 2694 lines of code are new or changed and 1724 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, slice S8a EX-VALUE, image A' (asan #102, pin 1be0f53d, unstripped twin bff8519b): sub-lane S8aP7a of piece 7
    (ev_item_step) of the walk of ex_value (A' 0x832a4), in the srealizes / SRr form, against the cut interface of
    lib/A/Prog/S8aItems.v (S8aP7). Hand: h-walk-ctrl's S8aP7a.
@@ -10,16 +11,16 @@
      refusal join 0x83b54 -> P_EXIT 0x83d48.
    Section hypotheses: LAWS, WS, PSTI (S8aItemsWalk.v's header, copied verbatim; HSH derived from LAWS), STR (S8b),
    SCMP, BLKAM8 (each with its owner below). SCMP: STAND-IN, owner c-libc-stdio. HYPOTHESIS CHANGE (stronger:
-   adds the memnorm keep; arodata_okP form). Supplier ps_strcmp_xrom_A @ c-libc-stdio-presetstr-ro 45e489ec67c7; its
-   YGcallMxmn cites PresetRodata.arodata_okP, and so does the engine of record here (s1b bb085d091bbe, YGcallMxmn blob
+   adds the memnorm keep; arodata_okP form). Supplier ps_strcmp_xrom_A @ c-libc-stdio-presetstr-ro; its
+   YGcallMxmn cites PresetRodata.arodata_okP, and so does the engine of record here (s1b, YGcallMxmn blob
    b47cf7942c3d, which Requires lib/Spec/PresetRodata.v 4eb7e95e7e93 and has no local copy): one arodata_okP home.
    HFHULL and HSTK64 are DELETED (the S8a memnorm interface's contract item 4): p7a_frame_hull / p7a_stk64 derive them
    from LAWS (AR_laws_x field 18, as S8aEntry.v's eve_frame_hull / eve_stk64). ROM is DELETED: its one use was the
    rom_view premise of the strcmp row, and the xrom row takes ev_pre's arodata_okP instead. BLK32 is DELETED: its one
    use (keys[n]'s kx + 1 < 2 ^ 32) is the kit's pj_cstrR conjunct (PRH_Reader.v:113). No ADDRESS literal:
    addresses are pa_sigma / pa_val of PAImg_prog.v; each block's numerals are classified in its comment.
-   MEMNORM (S8aIface.v: ev_pre's and ev_mid's last conjunct `YAkMemnorm.memnorm segs mem`, walkkit old-pin
-   be60d536d2af): kept across every runner segment by YC1fPx's `*_inv` runners (P := YAkMemnorm.memnorm SEGS, laws
+   MEMNORM (S8aIface.v: ev_pre's and ev_mid's last conjunct `YAkMemnorm.memnorm segs mem`, walkkit old-pin):
+   kept across every runner segment by YC1fPx's `*_inv` runners (P := YAkMemnorm.memnorm SEGS, laws
    YSRrMemnorm.srr_inv_laws_memnorm_k), across the ex_string call by tex_string_specX's fpostWm keep and across the
    strcmp call by YGcallMxmn.aj_strcmp_at_xrom's keep; p7a_mid_frame and p7a_mid_call take it at the new memory. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
@@ -37,7 +38,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YK04
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YG0v.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YG00 YG0a YG01 YG0f YG0n YG0d YCbq.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YM05 YI16 YG0p YK0o YCbqG.
-(* the caller-window call rule is Reusable/YCbqGcallW.v's aj_call_xW (walkkit b77223726823's engine set) *)
+(* the caller-window call rule is Reusable/YCbqGcallW.v's aj_call_xW (walkkit's engine set) *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YP0d YP0c YC80 YPsym YC4aP YC1fP YC80x YC1fPx.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YImgTop YGcfNames YG0dcf YGcallMx FCiface.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Prog Require Ledger.
@@ -76,12 +77,12 @@ Context {RL : PrhRoomLive}.
 (* the kit's allocator laws at ARx, at the harness head length cf_head (YCbqG.v journal 83da015952be; at ARx := ARcf
    this is YGcallcf.v's AR_laws_x_cf) *)
 Hypothesis LAWS : AR_laws_x SEGS B ARx cf_head.
-(* the shared whitespace loop, PROVED (no longer a stand-in): WalkS8a's S8aWs.ev_ws_loop (ws-rawframe 91e4dffbfb7),
+(* the shared whitespace loop, PROVED (no longer a stand-in): WalkS8a's S8aWs.ev_ws_loop (ws-rawframe),
    whose only Section hypothesis is LAWS *)
 Lemma WS : ev_ws_loop_spec_FIX (fx := fx) (L := A_prog_listing) (PA := PA) B ARx SK.
 Proof. exact (S8aWs.ev_ws_loop B ARx SK LAWS). Qed.
 (* HSH is DERIVED (c-omx-hpreset 10:43Z): ev_hshadow_law is AR_laws_x's field alx_hshadow at hl := cf_head (journal
-   83da015952be, YCbqG.v:163); S8aItems.v ev_hshadow_of_laws *)
+   83da015952be, YCbqG.v:164); S8aItems.v ev_hshadow_of_laws *)
 Lemma HSH : ev_hshadow_law (L := A_prog_listing) (PA := PA) B ARx.
 Proof. exact (ev_hshadow_of_laws B ARx LAWS). Qed.
 (* STAND-IN: a Theorem Labs lane, the image binding of PrhImg: alloc.c's statics (prh_pst) are image bytes (true at prh_img_A: PRH_Img.v,
@@ -104,18 +105,18 @@ Let ev_segs_low : forall a, in_img SEGS a -> 0 <= a < kLowMemEnd := @pa_segs_low
 Hypothesis STR : forall fxc : YK11.FPState,
   tex_string_specX (fx := fxc) (cp := cp) (L := A_prog_listing) (PA := PA) B ARx SK.
 (* STAND-IN, owner c-libc-stdio. HYPOTHESIS CHANGE (stronger: adds the memnorm keep; arodata_okP form). Supplier
-   ps_strcmp_xrom_A @ c-libc-stdio-presetstr-ro 45e489ec67c7; it and the engine of record (s1b bb085d091bbe, YGcallMxmn
+   ps_strcmp_xrom_A @ c-libc-stdio-presetstr-ro; it and the engine of record (s1b, YGcallMxmn
    blob b47cf7942c3d) both cite PresetRodata.arodata_okP (lib/Spec/PresetRodata.v 4eb7e95e7e93): one home. The strcmp
    row (YGcallMxmn.v astrcmp_realizes_xrom) at __wrap_strcmp, at every float state, at ev_pre's read-only bounds
    (fpre's arodata_okP, PRH_Base.v, converted by S8aItems.aro_prh_to_mxmn) *)
 Hypothesis SCMP : forall fxc : YK11.FPState, YGcallMxmn.astrcmp_realizes_xrom (fx := fxc) SEGS B ARx (@pa_relro_lo _ A_prog_listing PA) (@pa_relro_hi _ A_prog_listing PA) (SIGMA AS___wrap_strcmp).
-(* (the chain stand-in CHA is gone at iface 67f35bb5f4bb: ev_pre's prhex_ch_apart conjunct gives it) *)
+(* (the chain stand-in CHA is gone at iface: ev_pre's prhex_ch_apart conjunct gives it) *)
 (* (HFHULL / HSTK64, the fake-frame and real-stack shadow hulls of a tree root after the `jal ex_string`, are DERIVED
    from LAWS since the S8a memnorm interface: p7a_frame_hull / p7a_stk64 below. ROM is gone with the strcmp row's
    rom_view premise. BLK32 (a live block is shorter than 2 ^ 32, for keys[n]'s kx + 1 < 2 ^ 32) is gone: the kit's
    pj_cstrR carries `Z.of_nat (length s) + 1 < 2 ^ 32` itself, PRH_Reader.v:113.) *)
-(* STAND-IN, owner h-mani-a8 / c-omx-alloc, S8aNumE.v CUTFIX_blk_amem8 verbatim (origin/cold/h-s8a-number-sweep
-   1fdf0c60bc6a :576-577; the other lanes' text lib/B/Prog/ExvB_Stmt.v eh_blk_amem8): a live block is a region of the string
+(* STAND-IN, owner h-mani-a8 / c-omx-alloc, S8aNumE.v CUTFIX_blk_amem8 verbatim (
+   576-577; the other lanes' text lib/B/Prog/ExvB_Stmt.v eh_blk_amem8): a live block is a region of the string
    rows' amem_range8. The strcmp row (YGcallMxmn.v astrcmp_realizes_xrom, as YGcallMx.v astrcmp_realizes_x) asks amem_range8 for
    keys[n] and the scratch; no AR_laws_x field gives it (alx_blocks gives in_app only). At the preset instance:
    block_amem_range8_cf (h-mani-a8, YGcfBlockRange.v). *)
@@ -125,7 +126,7 @@ Hypothesis BLKAM8 : forall ly S Hp W mem md p n,
 (* ======== p7a TRANSPORT KIT ========
    ev_mid (S8aIface.v:169) across what piece 7's segment 2 does between its cuts:
    - p7a_mid_frame: a stretch at one allocator state whose changed bytes Wr lie in [S1 - 2 ESTACK, S1 + 152) or in
-     the written cells of `struct ex`. It is lane FRAME's ev_mid_frame (S8aItemsWalk.v at 638cd0ea026, :304-436)
+     the written cells of `struct ex`. It is lane FRAME's ev_mid_frame (S8aItemsWalk.v, :304-436)
      with two changes: the stack part of Wr is widened from [S1, S1 + 152) to [S1 - 2 ESTACK, S1 + 152) (the strcmp
      call writes its window [S1 - 2 ESTACK, S1); that window lies in [sp0 - STK, sp0), which the tree's footprint
      misses, and above alloc_ceiling + ESTACK, by p7a_stk), and the frame premise is stated over aview (what a
@@ -881,7 +882,7 @@ Lemma p7a_mid_call : forall (a : ev_act) ly S Hp W mem md k p dep dl
   (* the callee's text: the harness blocks and the ledger *)
   Hp2 = Hp -> ablocks B ly2 S2 = ablocks B ly S ->
   prh_ledger B ly2 S2 Hp2 W2 mem2 (ea_Lam a) (ea_peak a) (ea_cnt a) (ea_fail a) (ea_ran a) (ea_most a) (ea_own a) ->
-  (* the callee's text: the non-primary room (walkkit b77223726823) and its hull use (S8aIface's ev_mid pairs it with
+  (* the callee's text: the non-primary room (walkkit) and its hull use (S8aIface's ev_mid pairs it with
      the room; composed by hull_used_app), and the run position (S8aIface's ev_mid keeps
      iface_room_pos from the activation's state; the callee's text gives its own keep, or S2 = S) *)
   (room_live_cf S -> room_live_cf S2) ->
@@ -930,7 +931,7 @@ assert (KBLK : forall b m z, In (b, m) (ablocks B ly S) -> b <= z < b + req_size
 { intros b m z Hin Hz Hn. replace z with (b + (z - b)) by lia.
   apply (F2 b m (z - b)); [exact Hin|rewrite EAB; exact Hin|lia|replace (b + (z - b)) with z by lia; exact Hn]. }
 (* the text's and the scratch's blocks *)
-(* (the text's block exists only for a non-empty text: ev_pre's (0 < len -> prhex_inblk ..), iface 67f35bb5f4bb) *)
+(* (the text's block exists only for a non-empty text: ev_pre's (0 < len -> prhex_inblk ..), iface) *)
 pose proof HINS as (bs & ms & Hbs & Hbs1 & Hbs2 & _). rewrite <- HABL in Hbs.
 assert (Rs : ms <= req_size ms) by (unfold req_size; destruct (Z.eqb_spec ms 0); lia).
 destruct (alx_blocks _ _ _ LAWS ly S Hp W mem md bs ms HAR Hbs) as (_ & Hs4096 & Hsc & Hsapp & _).
@@ -1045,8 +1046,8 @@ apply (p7a_tree_call a ly S Hp W mem md k p dep dl STK1 e1 FP1 ly2 S2 Hp2 W2 mem
 intros z Hz. destruct (FOOT z (proj2 (ev_foot_R _ _ _) (Hfoot z Hz))) as (Hsc & Hq & _). split; assumption.
 Qed.
 
-(* ======== p7a CALL KIT: what a mid-body caller-window call of the activation needs (after S8aItemsWalk.v
-   0939d966f14 :1746-1899, ev7_bytes8 / ev7_rdword / ev7_saved_offs / ev7_mod8_of16 / ev7_chain_call / ev7_CN /
+(* ======== p7a CALL KIT: what a mid-body caller-window call of the activation needs (after S8aItemsWalk.v:
+   1746-1899, ev7_bytes8 / ev7_rdword / ev7_saved_offs / ev7_mod8_of16 / ev7_chain_call / ev7_CN /
    ev7_pres_get / ev7_regs_pres / ev7_s1_lo / ev7_mod16 / ev7_mod16', copied: S8aItemsWalk Requires this file).
    Numerals: 256, 8, 16, 32 (LENGTH: byte radix, word, alignments), 248 / 240 (LENGTH: EV_SAVED's ra and s0 slots),
    272 (LENGTH: 256 + 16), 152 (LENGTH: the save area's lowest slot). ======== *)
@@ -1389,7 +1390,7 @@ split; [exact V104|]. split; [exact V120|]. split; [exact Hd|]. split; [exact Hn
 split; [exact Hna|]. split; [exact HL|]. split; [exact HN|]. split; [exact HK|]. split; [exact HD|exact Hdl].
 Qed.
 
-(* ---- the engine's view (helpers after lane NEXT's S8aItemsWalk.v at cb3bf00de8c :144-341, its ev8 lemmas) ----
+(* ---- the engine's view (helpers after lane NEXT's S8aItemsWalk.v :144-341, its ev8 lemmas) ----
    Numerals: 7364 (DERIVED: ex_value's listing offset, slot 1841 * 4 of bff8519b); atom indices 9-38 (DERIVED: the
    RISC-V ABI registers and Ereg's extra atoms from 32); 8, 1, 4 (LENGTH: access sizes); 3 (LENGTH: the granule
    shift); 5 (LENGTH: s1's 32-alignment as a log); 2 ^ 44, 2 ^ 47, 2 ^ 64, 4096, 64, 40 (DERIVED / LENGTH: shadow
@@ -2158,14 +2159,14 @@ destruct (Nat.lt_ge_cases i' (length (ea_x a))) as [Hlt | Hge].
               { destruct Hinb20 as (b0 & m0 & Hbm & Hb0 & _ & _).
                 destruct (alx_blocks _ _ _ LAWS _ _ _ _ _ _ b0 m0 HAR0 Hbm) as (_ & H4096 & _). lia. }
               repeat (apply Forall_cons; [cbn [fst]; lia|]). apply Forall_nil. }
-            (* PRH_Base.fpre's two conjuncts added at walkkit old-pin be60d536d2af: the callee's sp is the body's S1, 64
+            (* PRH_Base.fpre's two conjuncts added at walkkit old-pin: the callee's sp is the body's S1, 64
                or more below the stack's top (S1 + 152 <= sp0 <= q, q + 40 <= ly_stk_hi: ev_bounds, ev_q_stack); its ra
                is the jal's return pc, a listing literal below the ceiling's least value *)
             split; [rewrite GSP; lia|].
             split.
             { unfold raZ. rewrite GRA.
               apply (Z.lt_le_trans _ 0x7fff7f800000); [apply Z.ltb_lt; vm_compute; reflexivity | exact C1]. }
-            (* FRM0-ENTRY (kit f97c8b2f046b, PRH_Base.v fdb45545469b: fpre's last conjunct): the rounding mode at
+            (* FRM0-ENTRY (kit, PRH_Base.v fdb45545469b: fpre's last conjunct): the rounding mode at
                ex_string's entry is the caller's, frm 0 by ev_fx *)
             exact (proj1 HFX).
           + exact N10.
@@ -2439,7 +2440,7 @@ apply (pa_entry_st_ok_full (fx := fxc) (PI := PA)).
     rewrite (zcanon_id (nn * 8)) by (unfold M64; lia). rewrite zcanon_id by (unfold M64; lia). lia.
 Qed.
 
-(* ---- the strcmp call's premises (after S8aNumE.v b930551f458a :383-498, eve_* and evE_rom, restated) ---- *)
+(* ---- the strcmp call's premises (after S8aNumE.v :383-498, eve_* and evE_rom, restated) ---- *)
 Lemma p7a_garr8_aview : forall (H : word -> bool) m p l j, garr8 SEGS (mrestrict H m) p l -> (j < length l)%nat ->
   aview SEGS H m (p + Z.of_nat j) = Some (nth j l 0).
 Proof.
@@ -2534,7 +2535,7 @@ assert (u / 8 <= w / 8) by (apply Z.div_le_mono; lia). lia.
 Qed.
 (* ev_pre's read-only view (fpre's arodata_okP, PRH_Base.v) at a state of the piece, in the xrom strcmp row's spelling
    PresetRodata.arodata_okP (S8aItems.v ev_aro_kept: the journal's image clause; aro_prh_to_mxmn: PRH_Base's body to
-   the leaf's, by conversion). It replaces p7a_rom (rom_view from ROM), which the strcmp row of walkkit b77223726823
+   the leaf's, by conversion). It replaces p7a_rom (rom_view from ROM), which the strcmp row of walkkit
    needed. STATEMENT CHANGE forced by the engine of record: its YGcallMxmn.v (b47cf7942c3d) no longer defines
    YGcallMxmn.arodata_okP, which this conclusion named; the new name is the one astrcmp_realizes_xrom now asks. *)
 Lemma p7a_aro : forall a ly S Hp W mem md k,
@@ -2826,7 +2827,7 @@ eapply SRr_bind.
     rewrite length_app in Ha0. cbn [length] in Ha0. fold ky in Ha0. unfold ESTACK in *. clear - Ha0 Hstop Hky1. lia.
   - intros a0 Ha0. clear - Ha0 Hxtop Hkxk. lia.
   - intros a0 Ha0. clear - Ha0 Hstop Hky1. lia.
-  - (* walkkit b77223726823's strcmp row asks amem_range8: BLKAM8 for keys[n]'s block, a sub-range with the same end *)
+  - (* walkkit's strcmp row asks amem_range8: BLKAM8 for keys[n]'s block, a sub-range with the same end *)
     apply (p7a_am8_sub (x - cf_head) (req_size (kk + cf_head))); [exact (BLKAM8 ly S Hp W mem md _ _ HAR Hblkx)| |];
       rewrite ?Rx; clear - Hkxk Hkxn Hh0; lia.
   - apply (p7a_am8_sub bs (req_size msz)); [exact (BLKAM8 ly S Hp W mem md _ _ HAR Hbs)| |];

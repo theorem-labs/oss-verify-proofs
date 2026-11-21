@@ -4,6 +4,7 @@
    proofs/cgif/cgif_file_fuzzer/lib/A/AD2o.v TFIB_T_of_partsXF, origin/ossv/recipes c8557374ad2) for libreac/fuzz_boxreg's
    ASan+UBSan build (fuzz_boxreg.asan-ubsan): the lib/B core files, images.AsanUbsan, TFIB_TB, and the read-only range
    [0x98d78, 0x99fd0) of lib/B/ACeg.v:60 in_ro_tfa (BoxBClose.v's BOXB_RLO / BOXB_RHI). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed boxb_srealizesX_rc, boxb_TFIB_TB_of_lib; its imports changed. *)
 (* The relocated core's closed walk of fuzz_boxreg.asan-ubsan at the image's asyms record (rule 24: no function proved;
    this file is assembly). boxb_TFIB_TB_of_lib is lib/B/Prog/BoxBClose.v's coreB_srz: from the whole-run contract of
    LLVMFuzzerTestOneInput (lib/B/ACfn.v tfib_lib_contract_x_all, the instance of lib/B/Prog/BoxBLibX.v's statement with
@@ -75,19 +76,20 @@ Let EXS : forall fx : YK11.FPState, frm_zero (@fp_csr fx) -> exit_site_tfa (fx :
 Lemma boxb_srealizesX_rc : forall sp rdraw brk mb inp,
   valid_sp sp -> valid_brk TSEGS brk -> valid_mmap_base mb ->
   entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
   YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
   srealizes TSEGS (init_config TSEGS AsanUbsan.M.init_pc TPH sp brk mb rdraw target_alloc_limit inp) (SPECX inp).
 Proof.
-intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil.
+intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil.
 change target_alloc_limit with YA02.LIMIT.
 exact (tfib_srealizesX B HB AMALLOC AFREE AICPY ARDCHK ameter_triv (fun _ => 0) (fun _ => 0) 0x98d78 0x99fd0 MT_FREE
-  RO_IN LIBX xst XFR PF1 PFN est ESTI ESTF FWS RFS FPO FPR FPU EXS sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil).
+  RO_IN LIBX xst XFR PF1 PFN est ESTI ESTF FWS RFS FPO FPR FPU EXS sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil).
 Qed.
 End RC.
 Theorem boxb_TFIB_TB_of_lib : TFIB_TB.
 Proof.
-intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp.
+intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau.
 exact (@boxb_srealizesX_rc (YM05.RunCeilOf (bv_unsigned sp) (ZComplete.valid_sp_window_for_ceil sp Hsp))
-  sp rnd brk mbase inp Hsp Hbrk Hmb Hfit Hinp (YM05.ceil_of_top_run _)).
+  sp rnd brk mbase inp Hsp Hbrk Hmb Hfit Hinp Hlau (YM05.ceil_of_top_run _)).
 Qed.
 End b.

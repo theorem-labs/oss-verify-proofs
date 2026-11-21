@@ -1,8 +1,8 @@
-(* rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from 82a1d1bf3a6 lib/A/FSH_crt_segD1_s31.v)
-   rule 24: proves no function (kind: segment lemmas of check_round_trip's walk, PORTED from 1ab57ca7ad7) - RT : CrtRt B
-   (not FsRt) (a working branch 1ab57ca7ad7).
-   PORT SOURCE: a working branch 82a1d1bf3a6 proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segD1_s31.v (blob
-   c3960191231), itself PORTED from a working branch d25a984c903
+(* rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from lib/A/FSH_crt_segD1_s31.v)
+   rule 24: proves no function (kind: segment lemmas of check_round_trip's walk, PORTED) - RT : CrtRt B
+   (not FsRt) (a working branch).
+   PORT SOURCE: a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segD1_s31.v (blob
+   c3960191231), itself PORTED from a working branch
    proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_sd16.v crt16_runB :541 (the stretch after the second
    decode, the bcmp wrapper and the empty-body arm crt_skipbcmp2; checker a Theorem Labs lane, role check, CONFIRM, on the lane
    head (internal path) lines 6-21: the hit's Require closure is 334 files with

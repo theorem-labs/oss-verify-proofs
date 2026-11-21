@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10-30: hull_room_cf and its two instance lemmas; Cker_le_kit_cf over hull_room_cf; room_wA_parts_R over the hull form. *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfCker.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-10-30: hull_room_cf and its two instance lemmas; Cker_le_kit_cf over hull_room_cf; room_wA_parts_R over the hull form. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30: the kit's canonical allowance fits the room's allowance form (Main 05:0xZ, option
    (beta) in the kit's form): Cker A0 ly S kk <= abudget_kit_cf S. Cker and Cker_le are a Theorem Labs lane's cgif port of the kit's
    lazy residue (YGcfLazyResid.v); abudget_kit_cf is a Theorem Labs lane's (YGcfRoomCf.v). From Cker_le: the primary and
@@ -33,7 +34,7 @@ Local Open Scope Z_scope.
 
 Section U. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : CfParams}.
 
-(* The unit's at-main allowance fits the budget's base (the A0 of Cker / base_cf, YGcfLazyResid.v:146-148). *)
+(* The unit's at-main allowance fits the budget's base (the A0 of Cker / base_cf, YGcfLazyResid.v:147-149). *)
 Definition A0_fits_cf (A0 : list (Z * Z)) : Prop := A_bytes A0 <= A_BASE_CF.
 
 (* The hull room the residue needs: the live hulls and two pages per recycled secondary (kk of them) fit the unit's
@@ -59,7 +60,7 @@ unfold A0_fits_cf in HA. unfold abudget_kit_cf, abudget_cf. lia.
 Qed.
 
 (* ---------------------------------------------------------------------------- *)
-(* 2. What the report walk's errbuf grant reads from ARcf (F4, a working branch 1ad9ddb5882).          *)
+(* 2. What the report walk's errbuf grant reads from ARcf (F4, a working branch).          *)
 (* H_aledger: the restated alc_eager_x. *)
 Lemma ARcf_eager_x_cf : forall segs B ly S Hp W mem md, ARcf segs B ly S Hp W mem md ->
 eager_used md <= E_BASE + eager_cf ly S md.

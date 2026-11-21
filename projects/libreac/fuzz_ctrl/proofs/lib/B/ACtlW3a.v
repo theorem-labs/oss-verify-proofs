@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/openssl/bignum/lib/BnP/BnKit2.v, with its module paths and module names changed; 1014 of its 1028 lines of code are new or changed and 33 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/tx_put.v, with its module paths and module names changed; 2422 of its 2466 lines of code are new or changed and 984 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/B/ACtlW3a.v -- piece W3a (cut-table-B.tsv rows 28-34: B81c58 .. B81d68; segments S_P1, S_P1_bfc, S_P2,
    S_P3, S_P4, S_P5, S_P6) of fuzz_ctrl image B's (asan-ubsan) walk of LLVMFuzzerTestOneInput in the released
    cgif_file_fuzzer form.  One writer: a Theorem Labs lane's glue lane, by brief
@@ -10,7 +11,7 @@
    rule 24: no function proved (stage glue of a walk; drafting).
 
    WHAT THIS FILE PROVES (when it builds): one lemma per cut of W3a, NAMED AND STATED EXACTLY AS lib/B/ACtl.v's
-   stage hypothesis (ACtl.v:478-490, seg_P1 .. seg_P6, after its CF notation), proved for every SK and FP (the top
+   stage hypothesis (ACtl.v:479-491, seg_P1 .. seg_P6, after its CF notation), proved for every SK and FP (the top
    instantiates SK := Reusable.YE2k.tfib_sink_head, FP := []), so the top cites it directly.
      seg_P1     B81c58 (0x81c58, k <= 14) -> B81ca8   beqz a0 (taken), 14 frame-shadow stores, __asan_set_shadow_f8
      seg_P1_bfc B81c60 (0x81c60, k <= 12) -> B81ca8   the same run from its second entry
@@ -42,7 +43,7 @@
    or, after the world spec of S_P6, from YCbq.acall_kept's view clauses (w3a_mrd_view_eq), and ctl_rt_C from
    B.ProgWorldCtlRtC.ctl_rt_C_of_AR (w3a_ctlrt).
 
-   ROUTE (C) (a Theorem Labs lane 09:20Z / 11:15Z; shell a working branch a2ab7f5988a).  A cut carries
+   ROUTE (C) (a Theorem Labs lane 09:20Z / 11:15Z; shell a working branch).  A cut carries
    B.ACtlRtC.ctl_rt_C B ly3 S3 mem3 (asan_cells, shadow_rw_on (cut_shadow ly3 S3), shadow_rw_on img_shadow, ro_agree)
    in place of the full ctl_rt.  The runs are the `_on` twins (P1F.p1_pc_pre_F_on: its region [Q, Q + 187) comes from
    cut_shadow's owned-frame disjunct, w3a_srw_frame_norm; P3F.p3_pre_F_on / P5F.p5_pre_F_on: no shadow premise); the
@@ -83,7 +84,7 @@
    SECTION HYPOTHESES (source of each text):
    - Hwx (YK04.wx_segs_nowrap segs), LAWS (YG0d.AR_laws), segs_low: the core's own facts (YCbq's sections).
    - ASF8: __asan_set_shadow_f8 (entry 0x55144) by Reusable.SetShadowDefP.aset_shadow_realizesP (shared form,
-     RTPOST, walk line 5826fdf4d4d; owner a Theorem Labs lane).
+     RTPOST, walk line; owner a Theorem Labs lane).
    - AMEMSET: __asan_memset by the core's aintrin_realizes segs B OSet at Reusable.YB1w.tfib_A_asan_memset, used
      through YCbq.aj_intrin_at.
    - TFIB_SYMS, RELRO_IMG, Context RO_OFL: the texts ctl_rt_C_of_AR's route takes (ACtl.v Section Ctl; owner: the
@@ -91,7 +92,7 @@
    - ctl_kind_name_addressable (RTPOST, owner a Theorem Labs lane); ctl_parse_bc_addressable (its twin for
      REAC_CTRL_PARSE_BC, owner a Theorem Labs lane; seg_P5's exit cut carries it).
    - reac_identity_init_holds_F_on: reac_identity_init's footprint contract in route (C)'s form
-     (RII.reac_identity_init_contract_F_on, statements by path from a working branch c1ab8e42e7f;
+     (RII.reac_identity_init_contract_F_on, statements by path from a working branch;
      obligation: its image-B proof; owner a Theorem Labs lane).
    - TREPLY: reac_ctrl_identity_reply's world spec (B.Prog.C_reac_ctrl_identity_reply; owner a Theorem Labs lane).  Its
      statement takes no shadow premise (the caller-journal form), so route (C) changes nothing at S_P6's call.
@@ -106,9 +107,9 @@
    placement.
 
    CLOSURE (rule (3); measured BEFORE route (C): 239 files, a Require walk from this file over the then tip with
-   a Theorem Labs lane's P1F-P6F from 12a7ea50807; on a working branch a2ab7f5988a standin_scan.py counts 455 files and no stand-in, and the
+   a Theorem Labs lane's P1F-P6F; on a working branch standin_scan.py counts 455 files and no stand-in, and the
    blob list below is not re-measured): the frame-route files reached through the `_F` modules were the v1.9 blobs:
-   lib/B/Prog/SlotModel.v de18d111c37, lib/B/Prog/SlotInv.v dfc10b8f7a4, lib/B/Prog/Seg/* at 3803efccea0
+   lib/B/Prog/SlotModel.v de18d111c37, lib/B/Prog/SlotInv.v dfc10b8f7a4, lib/B/Prog/Seg/*
    (Seg/P1.v 0de0b82c0a6, P2.v d84d761a5b9, P3.v a5b65d45f85, P4.v 08a43f8a230, P5.v 97ba3fa3f27, P6.v 23917ccc08f,
    the blobs a Theorem Labs lane re-runs), and through Seg/Tac_bp.v -> lib/B/Contract.v 65b05173b1a:
    lib/B/ClassConsDef.v 164f778c20b, lib/AZ/Spec/AsanCtrl.v 80ffbfc0a07, AsanCtrlProps.v b4f333a2672, STree.v
@@ -120,7 +121,7 @@
 
    PROVENANCE: cut table cut-table-B.tsv rows 28-34 (lines 29-35) (a working note, not in this delivery); plan
    llvmf-B-walk-plan.md 2.2 rows 28-34, 2.3 rows 28-34, 2.4 row S_P3, 6.2 (a working note, not in this delivery);
-   ctrl's runs at a working branch 3803efccea0 (Seg/P1.v .. P6.v); objdump
+   ctrl's runs at a working branch (Seg/P1.v .. P6.v); objdump
    fuzz_ctrl.objdump.txt (L84579-L84652) (a working note, not in this delivery). *)
 
 From Coq Require Import ZArith List Permutation.
@@ -145,7 +146,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require B.Img0 B.AsanRT B.AsanRTFact
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require B.MemNormF Reusable.YG0s.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require Lib.Regs6ss.
 (* a Theorem Labs lane's image-B ProgWorld layer (arodata_okP_of_S, ctl_post_set_shadow / ctl_post_memset, aview_vis_mrd) and
-   route (C)'s cut form (a Theorem Labs lane 09:20Z / 11:15Z; a working branch ad8c0a4792a): the narrowed runtime conjunct
+   route (C)'s cut form (a Theorem Labs lane 09:20Z / 11:15Z; a working branch): the narrowed runtime conjunct
    B.ACtlRtC.ctl_rt_C, its producer B.ProgWorldCtlRtC.ctl_rt_C_of_AR (CtrlTSyms + AR_laws + AR + arodata_okP; no
    AR_states_vis0_shadow, no AR_states_owned_ro), the region form B.ShadowRwOn.shadow_rw_on and its transports
    B.ShadowRwOnT. *)
@@ -158,7 +159,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require B.Prog.reac_ctrl_parse_c.
 (* reac_ctrl_identity_reply's world spec (TREPLY) *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require B.Prog.C_reac_ctrl_identity_reply.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require B.ACtlK B.ACtlCut B.ACtlCutP.
-(* a Theorem Labs lane's footprint runs of S_P1 .. S_P6 (a working branch 12a7ea50807), Required QUALIFIED, never
+(* a Theorem Labs lane's footprint runs of S_P1 .. S_P6 (a working branch), Required QUALIFIED, never
    Imported (porter 23:38Z); their closure is the CLOSURE paragraph of the header. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog.Seg Require P1F P2F P3F P4F P5F P6F.
 Import ListNotations.
@@ -203,8 +204,8 @@ Hypothesis Hwx : Reusable.YK04.wx_segs_nowrap segs.
 Hypothesis LAWS : Reusable.YG0d.AR_laws segs B.
 Hypothesis segs_low : forall a, Reusable.YG0d.in_img segs a -> 0 <= a < Reusable.YG0f.kLowMemEnd.
 
-(* __asan_set_shadow_f8 @0x81ca4 (entry 0x55144), value 0xf8: the shared form (lib/B/RTPOST-SHARED-B.txt (a working note, not in this delivery), walk line
-   5826fdf4d4d): a Theorem Labs lane's Reusable.SetShadowDefP.aset_shadow_realizesP = SetShadowDef.aset_shadow_realizes plus the
+(* __asan_set_shadow_f8 @0x81ca4 (entry 0x55144), value 0xf8: the shared form (lib/B/RTPOST-SHARED-B.txt (a working note, not in this delivery), walk line):
+   a Theorem Labs lane's Reusable.SetShadowDefP.aset_shadow_realizesP = SetShadowDef.aset_shadow_realizes plus the
    presence clause.  OWNER a Theorem Labs lane; the top discharges it (B Rt/SetShadow.v ctrl_set_shadow_f8P). *)
 Hypothesis ASF8 : Reusable.SetShadowDefP.aset_shadow_realizesP segs B 0x55144 0xf8.
 
@@ -230,7 +231,7 @@ Local Notation rt_post_frame W mem mem' WR :=
       Reusable.YG0n.apresent (Reusable.YA0n.w_H W) mem' a)).
 
 
-(* ctl_rt_C at a cut (route (C), ACtlCut.v ctl_from's runtime premise; a working branch ad8c0a4792a): after a runtime call it is
+(* ctl_rt_C at a cut (route (C), ACtlCut.v ctl_from's runtime premise; a working branch): after a runtime call it is
    B.ProgWorldCtlRtC.ctl_rt_C_of_AR (PROVED; statement ctl_rt_C_of_AR_stmt) on the journal's AR, which takes
    CtrlTSyms and AR_laws only (no AR_states_vis0_shadow, no AR_states_owned_ro).  TFIB_SYMS carries ACtl.v's exact
    name and text (Section Ctl; the top supplies it).  Used by w3a_ctlrt below, after each core runtime call (the
@@ -243,7 +244,7 @@ Hypothesis TFIB_SYMS : Reusable.YF0m.CtrlTSyms B.
 Hypothesis RELRO_IMG : forall a, RLO <= a < RHI -> Reusable.YG0d.in_img segs a.
 Context {RO_OFL : Reusable.APostBase.ro_below_ofl segs RLO RHI}.
 
-(* V6 twin for the KIND_NAME table: lib/B/RTPOST-SHARED-B.txt (a working note, not in this delivery) (adc9b58a03c), token for token; owner a Theorem Labs lane
+(* V6 twin for the KIND_NAME table: lib/B/RTPOST-SHARED-B.txt (a working note, not in this delivery), token for token; owner a Theorem Labs lane
    (lib/B/ProgBridgeData.v; the top discharges it).  W3a: every cut of W3a carries `addressable m KNA.KIND_NAME 112`
    across the runtime calls. *)
 Hypothesis ctl_kind_name_addressable : forall ly S (W : Reusable.YA0n.world segs) mem md,
@@ -259,13 +260,13 @@ Hypothesis ctl_parse_bc_addressable : forall ly S (W : Reusable.YA0n.world segs)
 
 (* reac_identity_init @0x81d14 (callee 0x87de8): its footprint contract in route (C)'s narrowed form,
    reac_identity_init_contract_F_on (lib/B/Prog/reac_identity_init_c.v, the image-B _on STATEMENTS taken by path from
-   a working branch c1ab8e42e7f; region reac_identity_init_shadow_R id := id <> 0 /\ sh_word_on id 38).
+   a working branch; region reac_identity_init_shadow_R id := id <> 0 /\ sh_word_on id 38).
    OBLIGATION: its image-B proof (reac_identity_init_F_holds_on / closed corollary).  OWNER: a Theorem Labs lane. *)
 Hypothesis reac_identity_init_holds_F_on : RII.reac_identity_init_contract_F_on.
 
 (* reac_ctrl_identity_reply @0x81d7c (callee 0x848fc) at S_P6's refused call (a0 = fr = 0, a1 = len = 0): its world
-   spec in the caller-journal form, the shared name (walk line 5826fdf4d4d, a Theorem Labs lane 08:06Z; a Theorem Labs lane's
-   lib/B/Prog/C_reac_ctrl_identity_reply.v, 024ef401073).  OWNER a Theorem Labs lane (pb_reac_ctrl_identity_reply); the top
+   spec in the caller-journal form, the shared name (walk line, a Theorem Labs lane 08:06Z; a Theorem Labs lane's
+   lib/B/Prog/C_reac_ctrl_identity_reply.v).  OWNER a Theorem Labs lane (pb_reac_ctrl_identity_reply); the top
    discharges it. *)
 Hypothesis TREPLY : B.Prog.C_reac_ctrl_identity_reply.treac_ctrl_identity_reply_spec RLO RHI B.
 

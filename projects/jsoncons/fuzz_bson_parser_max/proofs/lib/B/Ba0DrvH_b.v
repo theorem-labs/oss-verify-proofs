@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader fact): changed can, dg_dot_of, dg_readerr_stmt and 3 more; added auxvp; removed p0; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Bo0DrvH.v, 17 lines within its lines 80-323. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -78,7 +79,7 @@ Section DrvH.
   Hypothesis DL : drv_layoutA L ar IL sp0.
   Hypothesis Hcells : incl RD_CELLS (asc_cells C).
   Variable fs0 : Fs.Fs.
-  Variables p0 p1 can : word.
+  Variables auxvp p1 can : word.
   Variable M0 : word -> option byte.                    (* [comment removed for export] *)
   Hypothesis M0_def : defined M0 (bv_unsigned sp0) (ar_stack_top ar - bv_unsigned sp0).
   Hypothesis Hfs : sc_fs scfg = true.
@@ -99,7 +100,7 @@ Section DrvH.
   (* [comment removed for export] *)
   Definition read_err_kA (KE : TSet) : Prop :=
     forall vals R M (model : Model) A (A1 : Z),
-      length vals = 102%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 1 = p0 -> vals_ev vals 2 = p1 -> vals_ev vals 3 = can ->
+      length vals = 102%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 5 = auxvp -> vals_ev vals 2 = p1 -> vals_ev vals 3 = can ->
       vals_ev vals 48 = Z_to_bv 64 A1 ->
       regs_ok (ENV0 vals) srHE R -> know_ok ASEGS (ENV0 vals) (mrestrict (ahid A model) M) knHE ->
       dinvA [(A1, 65536)] LK0 (adebit L cr0 65536) A M model -> incl A0 A ->
@@ -107,18 +108,18 @@ Section DrvH.
       ablock_range L ar A1 65536 ->
       srealizes ASEGS scfg (mkCfg (mkst R (Z_to_bv 64 0x633bc) M (seg_rom ASEGS)) model) KE.
 
-  #[using="C IL HIok Hsp Hal DL Hcells M0_def Hfs P1lo P1str Hcr0"] Theorem drv_dirA : forall KA KE R (model : Model) (tid : word),
-    let vals := vals_mainA sp0 p0 p1 can tid R in
+  #[using="C IL HIok Hsp Hal DL Hcells M0_def Hfs P1lo P1str Hcr0"] Theorem drv_dirA : forall KA KE R (model : Model) (tid a0p : word),
+    let vals := vals_mainA sp0 a0p p1 can tid auxvp R in
     regs_ok (ENV0 vals) sr_mainA R -> know_ok ASEGS (ENV0 vals) (mrestrict (ahid A0 model) M0) kn_mainA ->
     dinvA [] LK0 cr0 A0 M0 model -> m_fds model = fds0 -> m_fs model = fs0 ->
     open_err_kA scfg ar HI sp0 fs0 [] p1 M0 LK0 cr0 A0 KA -> read_err_kA KE -> KE [] ->
     srealizes ASEGS scfg (mkCfg (mkst R (Z_to_bv 64 0xa7b04) M0 (seg_rom ASEGS)) model) (t_alt2 KA KE).
   Proof.
-    intros KA KE R model tid vals HR HK DI Hfds Hfs0 HKA HKE HKE0.
+    intros KA KE R model tid a0p vals HR HK DI Hfds Hfs0 HKA HKE HKE0.
     pose proof Hsp as Hsp'. pose proof Hal as Hal'.
     assert (HL : length vals = 38%nat) by (subst vals; unfold vals_mainA; rewrite length_app, junk_vals_length; reflexivity).
     assert (P0 : vals_ev vals 0 = sp0) by reflexivity.
-    assert (P1 : vals_ev vals 1 = p0) by reflexivity.
+    assert (P1 : vals_ev vals 5 = auxvp) by reflexivity.
     assert (P2 : vals_ev vals 2 = p1) by reflexivity.
     assert (P3 : vals_ev vals 3 = can) by reflexivity.
     clearbody vals.
@@ -142,7 +143,12 @@ Section DrvH.
       apply (nolazy_of_inv scfg L ar C IL HI HIok sp0 Hsp DL _ _ _ _ _ _ _ _ _ (di_inv _ _ _ _ _ _ _ _ _ _ DIa)); [lia|].
       intros k Hk. right. left. lia.
     - rewrite F1. reflexivity.
-    - split; [cbn; lia|]. split; [cbn; intros [E0|[]]; apply (f_equal bv_unsigned) in E0; vm_compute in E0; lia|].
+    - split; [cbn; lia|]. split; [cbn; intros [E0|[]]; apply (f_equal bv_unsigned) in E0; vm_compute in E0; lia|]. split.
+      { regv HRa (11%bv : reg). cbn [edenot ev ENVA]. rewrite P2.
+        (* The open-at lemma states its path over the model's [Uapi.dot_path]; this file's bare
+           [dot_path] is [Spec.dot_path] (Spec is imported last), which [change] would not match. *)
+        change (Z.of_nat (length Uapi.dot_path)) with 1%Z.
+        unfold TASK_SIZE. pose proof (proj2 P1lo). lia. }
       regv HRa (11%bv : reg). cbn [edenot ev ENVA]. rewrite P2. exact Sr'.
     - (* [comment removed for export] *)
       intros e He. rewrite v_addi_pc4 by lia. change (0x12a8d8 + 4)%Z with 0x12a8dc%Z.
@@ -168,7 +174,7 @@ Section DrvH.
       rewrite F1. change (alloc_fd fds0) with (Z_to_bv 64 3).
       set (model1 := with_fds (fd_insert fds0 (Z_to_bv 64 3) FdDir) modela).
       assert (DI1 : dinvA [] LK0 cr0 A0 Ma model1).
-      { apply (dinv_model scfg L ar C IL HI HIok sp0 Hsp DL M0 _ _ _ _ _ modela model1 DIa); [apply with_fds_vm|].
+      { apply (dinv_model scfg L ar C IL HI HIok sp0 Hsp DL M0 _ _ _ _ _ modela model1 DIa); [apply with_fds_vm| |apply with_fds_rdr].
         unfold model1. rewrite with_fds_halted'. exact (di_halt _ _ _ _ _ _ _ _ _ _ DIa). }
       assert (HK1 : know_ok ASEGS (ENV0 vals) (mrestrict (ahid A0 model1) Ma) knA) by exact HKa.
       assert (G1 : m_fds model1 = fds1d) by (unfold model1; apply with_fds_fds).
@@ -212,7 +218,7 @@ Section DrvH.
       change (sr_after_call_j _ (map ridx c_kept) 38) with srC0 in HR'.
       change (kn_blkA 48 65536 ++ keep_allocA (-128) 4096 [] [] _) with knC0 in HK'.
       assert (Q0 : vals_ev vals1 0 = sp0) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P0).
-      assert (Q1 : vals_ev vals1 1 = p0) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P1).
+      assert (Q1 : vals_ev vals1 5 = auxvp) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P1).
       assert (Q2 : vals_ev vals1 2 = p1) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P2).
       assert (Q3 : vals_ev vals1 3 = can) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P3).
       pose proof (hzA_of_block_range L ar IL sp0 DL _ _ HBR) as (Z1 & Z2 & Z3).
@@ -254,7 +260,7 @@ Section DrvH.
       set (vals2 := vals1 ++ junk_vals R3) in *.
       change (Env (vals_ev vals2) (blobs_ev [[]; []; []; []; []])) with (ENV0 vals2) in HR3, HK3.
       assert (W0 : vals_ev vals2 0 = sp0) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL'; lia); exact Q0).
-      assert (W1 : vals_ev vals2 1 = p0) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL'; lia); exact Q1).
+      assert (W1 : vals_ev vals2 5 = auxvp) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL'; lia); exact Q1).
       assert (W2 : vals_ev vals2 2 = p1) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL'; lia); exact Q2).
       assert (W3 : vals_ev vals2 3 = can) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL'; lia); exact Q3).
       assert (W48 : vals_ev vals2 48 = Z_to_bv 64 u) by (subst vals2; rewrite vals_ev_app_l by (rewrite HL'; lia); exact HA').
@@ -284,9 +290,9 @@ End FPX_1.
 
 (* [comment removed for export] *)
 Definition dg_readerr_stmt (scfg : SpuriousCfg) (L : asan_layout) (C : asan_statics_cells) (IL : icpt_layout) : Prop :=
-  forall ar HI sp0 M0, drv_ctxA scfg L C IL ar HI sp0 M0 -> forall fs0 p0 p1 can cr0 A0, drv_pathA sp0 M0 p1 dot_path ->
+  forall ar HI sp0 M0, drv_ctxA scfg L C IL ar HI sp0 M0 -> forall fs0 auxvp p1 can cr0 A0, drv_pathA sp0 M0 p1 dot_path ->
     shadow_allowed A0 (ahl_ceil ar) (2 ^ 47 - ahl_ceil ar) ->
-    read_err_kA scfg L ar HI sp0 fs0 p0 p1 can M0 [] cr0 A0 (t_die (msg_read_error dot_path) fs0).
+    read_err_kA scfg L ar HI sp0 fs0 auxvp p1 can M0 [] cr0 A0 (t_die (msg_read_error dot_path) fs0).
 
 Theorem dg_dot_of : forall scfg (L : asan_layout) (C : asan_statics_cells) (IL : icpt_layout) (Lay : lib_layoutA) (LSt : asan_run -> lib_statics),
   drv_lib_layoutA Lay L -> drv_budgetA L Lay ->
@@ -294,7 +300,7 @@ Theorem dg_dot_of : forall scfg (L : asan_layout) (C : asan_statics_cells) (IL :
 Proof.
   intros scfg L C IL Lay LSt DLL HBUD DG_OPENERR DG_READERR.
   unfold dg_dot_stmt, drv_main_on.
-  intros Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs Hdot ar HI p0 p1 can tid A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK AUXV DI M0def FDS EFS STR PLO Ecr PDEF SAH.
+  intros Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs Hdot ar HI p0 p1 can tid auxvp A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK AUXV DI M0def FDS EFS STR PLO Ecr PDEF SAH.
   subst path.
   assert (Hsp : 0x7fff80000000 <= bv_unsigned sp <= 2 ^ 47) by (destruct Hvsp as (H1 & H2 & H3); unfold sp_window_lo, sp_window_hi in H1, H2; lia).
   assert (Hal : bv_unsigned sp mod 16 = 0) by (destruct Hvsp as (_ & _ & H3); exact H3).
@@ -315,9 +321,9 @@ Proof.
   unfold env_mainA in HR, HK.
   pose proof (regs_ok_nb _ _ (blobs_ev [[]; []; []; []; []]) _ _ NB1 HR) as HR'.
   pose proof (know_ok_nb ASEGS _ _ (blobs_ev [[]; []; []; []; []]) _ _ NB2 HK) as HK'.
-  apply (@drv_dirA PropExec.fx0 scfg L ar C IL HI HIok sp Hsp Hal DL HRD fs p0 p1 can M0 M0def Hfs ltac:(lia) STRF [] (8192, 2 ^ 34) A0 Hcr
-           (t_die (msg_cannot_open dot_path) fs) (t_die (msg_read_error dot_path) fs) R model tid HR' HK' DI FDS EFS).
+  apply (@drv_dirA PropExec.fx0 scfg L ar C IL HI HIok sp Hsp Hal DL HRD fs auxvp p1 can M0 M0def Hfs ltac:(lia) STRF [] (8192, 2 ^ 34) A0 Hcr
+           (t_die (msg_cannot_open dot_path) fs) (t_die (msg_read_error dot_path) fs) R model tid p0 HR' HK' DI FDS EFS).
   - exact (DG_OPENERR ar HI sp M0 CTX dot_path fs [] p1 (8192, 2 ^ 34) A0 PTH SAH).
-  - exact (DG_READERR ar HI sp M0 CTX fs p0 p1 can (8192, 2 ^ 34) A0 PTH SAH).
+  - exact (DG_READERR ar HI sp M0 CTX fs auxvp p1 can (8192, 2 ^ 34) A0 PTH SAH).
   - unfold t_die. apply ShapeAlg.t_emit_has_nil.
 Qed.

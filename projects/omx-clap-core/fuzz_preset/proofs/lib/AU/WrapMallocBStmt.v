@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: omx-clap-core/fuzz_preset, the malloc interceptor walk of image B (asan-ubsan, stripped pin
    d663f82d7f48, unstripped twin c90d4fa54d43; relocated from pin f8f98a95bc52) over the second allocator instance ARcf: the
    statements the walk proves, the two fields of the keep record wrap_malloc_walk_keep_cf
-   (lib/Reusable/YGcfMallocComposeKeep.v:74-102), whose fields are the plain record's (YGcfMallocCompose.v:172-200) with
+   (lib/Reusable/YGcfMallocComposeKeep.v:74-102), whose fields are the plain record's (YGcfMallocCompose.v:173-201) with
    the memnorm keep in each segment's post.
    - wmk_call_stmt: field wmk_call (YGcfMallocComposeKeep.v:75-83) verbatim. Its frame is ikeep_mn_cf
      (YGcfMallocComposeKeep.v:57-62: ikeep_cf's two conjuncts, then the memnorm keep). No premise is added: the stack
-     room malloc_apre_cf asks at Allocate's entry (ly_bot ly < spZ regsA, AllocG.v:75, the image's sp there being the
+     room malloc_apre_cf asks at Allocate's entry (ly_bot ly < spZ regsA, AllocG.v:76, the image's sp there being the
      caller's less 2144) comes from acall_pre_cf's conjunct ly_bot ly + ACALL_PREFIX < spZ regs (YG0dcf.v:225,
      ACALL_PREFIX := 4096, YG0d.v:21).
    - wmk_ret_stmt: field wmk_ret (YGcfMallocComposeKeep.v:84-101) verbatim, the memnorm keep right after RGtop.rwin.

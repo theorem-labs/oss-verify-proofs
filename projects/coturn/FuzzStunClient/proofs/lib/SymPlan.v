@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, a munmap may be refused (-ENOMEM), so the checkers also check the refused state (munmap_refused) and ask that both arms give the same shape (shape_eqb). *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -2611,6 +2612,26 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
+(* 08b1429: decidable shape equality; a refused munmap must give the same shape as the unmap *)
+Fixpoint zlist_eqb (a b : list Z) : bool :=
+  match a, b with
+  | [], [] => true
+  | x :: a', y :: b' => Z.eqb x y && zlist_eqb a' b'
+  | _, _ => false
+  end.
+Fixpoint shape_eqb (a b : shape) : bool :=
+  match a, b with
+  | SNil, SNil => true
+  | SExit c, SExit d => Z.eqb c d
+  | SEmit f bs s, SEmit g cs t => Z.eqb f g && zlist_eqb bs cs && shape_eqb s t
+  | SAlt2 a1 a2, SAlt2 b1 b2 => shape_eqb a1 b1 && shape_eqb a2 b2
+  | SCase e m s1 s2, SCase e' m' t1 t2 => expr_eqb e e' && Z.eqb m m' && shape_eqb s1 t1 && shape_eqb s2 t2
+  | _, _ => false
+  end.
+
+(* the state after a refused munmap (-ENOMEM): model and memory unchanged, a0 = -12 *)
+Definition munmap_refused (cs : cstate) : cstate := set_pc (set_reg cs 10 (ELit (two64 - 12))) (pc cs + 4).
+
 Definition STOPS : list Z :=
   [t_memcpy A; t_memset A; t_strnlen A; t_memchr A; t_F A; t_cas_or A; t_cas_and A; t_cas_lock A;
    t_calls A; t_main_ret A; t_enframe A; t_freepro A; t_stdio_write A; t_printf A; t_exitc A]%Z.
@@ -2667,7 +2688,17 @@ Fixpoint check_ref (fuel : nat) (cs0 : cstate) (p : plan) {struct fuel} : cres :
         end else CErr 2 p cs
     | PMunmap k =>
         if is_ecall_at cs then
-        match node_munmap cs with Some cs' => check_ref f cs' k | None => CErr 3 p cs end else CErr 2 p cs
+        match node_munmap cs with
+        | Some cs' =>
+            match check_ref f (munmap_refused cs) k with
+            | COk sr => match check_ref f cs' k with
+                        | COk ss => if shape_eqb sr ss then COk ss else CErr 4 p cs
+                        | err => err
+                        end
+            | err => err
+            end
+        | None => CErr 3 p cs
+        end else CErr 2 p cs
     | PIoctl k =>
         if is_ecall_at cs then
         match node_ioctl cs with Some cs' => check_ref f cs' k | None => CErr 3 p cs end else CErr 2 p cs
@@ -2758,7 +2789,19 @@ Fixpoint checkM (fuel : nat) (cs0 : cstate) (p : plan) (m : smemo) {struct fuel}
         end else (CErr 2 p cs, m)
     | PMunmap k =>
         if is_ecall_at cs then
-        match node_munmap cs with Some cs' => checkM f cs' k m | None => (CErr 3 p cs, m) end else (CErr 2 p cs, m)
+        match node_munmap cs with
+        | Some cs' =>
+            let '(r1, m) := checkM f (munmap_refused cs) k m in
+            match r1 with
+            | COk sr => let '(r2, m) := checkM f cs' k m in
+                        (match r2 with
+                         | COk ss => if shape_eqb sr ss then COk ss else CErr 4 p cs
+                         | err => err
+                         end, m)
+            | err => (err, m)
+            end
+        | None => (CErr 3 p cs, m)
+        end else (CErr 2 p cs, m)
     | PIoctl k =>
         if is_ecall_at cs then
         match node_ioctl cs with Some cs' => checkM f cs' k m | None => (CErr 3 p cs, m) end else (CErr 2 p cs, m)

@@ -10,7 +10,7 @@
    Every written byte outside the caller's window and the caller's block lies in the class-1 frame (1, pos), its shadow
    or its flag byte.  (1, pos) is not a frame of Sc, so AR's frame separation (al_sep at S2) keeps it apart from every
    frame of Sc; the flag byte is in the fake stack's flag area, below every frame; heap blocks are apart from the fake
-   stack (A.ProgWorldBlkApart.ctl_block_apart_fs, proved, a Theorem Labs lane 87fcd8d0b28); shadow bytes of application memory lie in
+   stack (A.ProgWorldBlkApart.ctl_block_apart_fs, proved, a Theorem Labs lane); shadow bytes of application memory lie in
    [kLowMemEnd, kHighMemBeg), apart from application memory and below the allocation ceiling.
    Imports: C_ctrl_lay_block_glue.v lines 26-71 (the glue Requires this file), plus YG0s for frame_facts. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
@@ -40,7 +40,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import YC85 CtrlFrame
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YK04R YA0nR.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A Require ProgBridge ProgWorld ProgWorldVisWin ProgWorldVisFrame
   ProgWorldShadow ProgWorld_Fs ProgWorldAstack ProgWorldCtlRt MemNorm MemNormF MemNormTr AF0m.
-(* heap blocks are apart from the fake stack (proved, a working branch 87fcd8d0b28) *)
+(* heap blocks are apart from the fake stack (proved, a working branch) *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A Require ProgWorldBlkApart.
 (* the _F closure, QUALIFIED only *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require PropExec ExecF MState Mem Frame Step Cells Regs6ss

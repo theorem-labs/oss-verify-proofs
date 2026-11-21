@@ -1,13 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-29: relocated from libreac/fuzz_grant (a working branch 97c611eec86,
+(* Modified by Theorem Labs, 2026-10-29: relocated from libreac/fuzz_grant (a working branch,
    proofs/libreac/fuzz_grant/lib/A/Rt/Strcmp.v, owner a Theorem Labs lane) to libreac/fuzz_identity's ASan build (image A) by
    an address map recorded by the porting lane: every code address of the walk moves by
    +0x5c, the common_flags GOT slot and the two flag cells move to the ones fuzz_identity.asan gives, the module
    paths change, GrantSyms becomes TfibSyms, the trampoline word is stated in StrcmpTbl.v instead of being
    taken from A/AE34.v's trampoline range, and the trampoline theorem is restated at lib/A/Rt/StrcmpDef.v's
    STRCMP_ENTRY, the name identity's callers cite. The proof script is a Theorem Labs lane's, unchanged. *)
-(* Modified by Theorem Labs, 2026-10: derived from lib/A/Strcmp.v of this library by derive_y.py: module names A.Axyz -> AU.Yxyz, addresses moved from libdiginet/fuzz_codec's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/Strcmp.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
+(* Modified by Theorem Labs, 2026-10: derived from lib/A/Rt/Strcmp.v of this library by derive_y.py: module names A.Axyz -> AU.Yxyz, addresses moved from libdiginet/fuzz_codec's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/Rt/Strcmp.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
 (* Modified by Theorem Labs, 2026-10: copied from projects/libreac/fuzz_identity/proofs/lib/A/Rt/Strcmp.v (donor image sha256 c954b804786c), with its module paths changed and its addresses moved to libdiginet/fuzz_codec's ASan build. *)
 (* libreac/fuzz_identity, build asan (image A): the shared-core contract of the ASan strcmp interceptor,
    Reusable/AStrcmpDef.v's astrcmp_realizes, for ___interceptor_strcmp (0x42748) and for the one-instruction
@@ -51,6 +51,7 @@
    __asan::TryAsanInitFromRtl 40 words (1 immediate-only: grant's `mv s0,a0` is identity's `addi s0,a0,1060`, which
    is identity's asan_inited address 0xa5c98). No other word differs. *)
 (* Modified by Theorem Labs, 2026-10-29: for a Theorem Labs lane's acceptance (a working branch), the record class is TfibSyms, not IdentTfibSyms (TfibSyms in both A and B, no --rename), and the core modules are Required by full path at the applied A core's names (lib/A/A*.v, lib/Reusable/YA0m, YE08, YE21). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

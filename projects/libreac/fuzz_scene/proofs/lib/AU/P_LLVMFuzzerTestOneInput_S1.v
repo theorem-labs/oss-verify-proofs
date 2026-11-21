@@ -7,8 +7,9 @@
    refuted, the fill loop over reac_scene_placeholder and the xor loop over the rest of the input, each closed by
    induction on its turns.  The statement is lib/AU/P_LLVMFuzzerTestOneInput_seg.v's `seg_S1_stmt`, which this
    file does not restate and does not change (rule 24: one segment, not the function); `llvmf_S1` proves it.
-   The asan twin of this segment is a working branch 7b2b57c5429 (lib/A/P_LLVMFuzzerTestOneInput_S1.v),
+   The asan twin of this segment is a working branch (lib/A/P_LLVMFuzzerTestOneInput_S1.v),
    whose walk shape (MAIN at the call, three one-word stack regions, the NULL refutation) this file mirrors. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -115,7 +116,7 @@ Hypothesis HTRACE : rt_trace_in_stmt SEGS (sw_ra WK) (pc_malloc_ra0 (as_code B))
    go verbatim in EACH segment's own Section, beside Variable WK; the top discharges them by eq_refl. *)
 Hypothesis HWRLO : sw_rlo WK = pa_relro_lo.
 Hypothesis HWRHI : sw_rhi WK = pa_relro_hi.
-(* The statement's HRO_PLGOT (at be134c66f29, Section h), verbatim: the two negative
+(* The statement's HRO_PLGOT (Section h), verbatim: the two negative
    conditions arodata_okS needs to read the fill loop's GOT word (object 4, VAL (A_OBJ 4) = 0x9c6b8), whose value
    0x20e80 = &reac_scene_placeholder.  Kept here because a segment file does not Require the statement file; the
    composition discharges it.  (The statement's HRO_PL is not needed by S1: the fill loop never reads the
@@ -128,8 +129,8 @@ Hypothesis HRO_PLGOT : forall i, 0 <= i < 8 ->
 Hypothesis HZS_PL : in_zs B 0x20e80 8904.
 (* Every byte of reac_scene_placeholder [0x20e80, 0x20e80 + 8904) is a ROM byte.  Presence is all the fill loop
    needs (aview falls back to seg_rom; the loaded byte is dead, C2's bb being existential).  Decided on the image
-   in ONE vm_compute over a forallb of the 8904 addresses (the asan twin's s1_pl_rom, at
-   7b2b57c5429 lib/A/P_LLVMFuzzerTestOneInput_S1.v:246).  Measured: a scratch copy of this file with it compiled in
+   in ONE vm_compute over a forallb of the 8904 addresses (the asan twin's s1_pl_rom,
+    lib/A/P_LLVMFuzzerTestOneInput_S1.v:246).  Measured: a scratch copy of this file with it compiled in
    43.6 s against 43 s without it; the costly form is a separate closed term per address, not this one. *)
 Lemma HIMG_PL : forall i, 0 <= i < 8904 -> seg_rom SEGS (Z_to_bv 64 (0x20e80 + i)) <> None.
 Proof.
@@ -1607,7 +1608,7 @@ psrr_branch_tok RUN BR HS HSH BAND_SPAN.
 Qed.
 
 (* C2's body contents are existential: read them off a state where every byte of the block is present (the asan
-   twin's s1_bytes / s1_garr8_present, at 7b2b57c5429 lib/A/...S1.v:273-305). *)
+   twin's s1_bytes / s1_garr8_present, at lib/A/...S1.v:273-305). *)
 Lemma s1_val_mem_byte : forall (m : word -> option byte) (a : Z) (b : byte),
 mbyte SEGS m a = Some b -> val_mem SEGS m a 1 (bv_unsigned b).
 Proof.
@@ -1706,8 +1707,8 @@ eapply (s1_mkC2 cx POST bs body ly3x S3x W3x regs3x mem3x md3x Hbase HC2 HIN HCx
 Qed.
 
 (* ================================================================================================================
-   THE WALK, C1 (0x82c28) -> stateA (0x82c54), the shape of the asan twin's scene_seg_S1 (at
-   7b2b57c5429 lib/A/P_LLVMFuzzerTestOneInput_S1.v:1032): the entry block and its flag branch (`paj_run_sh` /
+   THE WALK, C1 (0x82c28) -> stateA (0x82c54), the shape of the asan twin's scene_seg_S1 (
+    lib/A/P_LLVMFuzzerTestOneInput_S1.v:1032): the entry block and its flag branch (`paj_run_sh` /
    `psrr_branch_pi`), each arm run to the call 0x82c4c and handed to MAIN with a0 = n'' and s8 = n'; MAIN seats a
    fresh state at the call, applies aj_malloc_at04, refutes the NULL abort 0x82c50 from the post's 4096 <= res, and
    hands s1_stateA at 0x82c54 to s1_afterA.  The helpers below are the asan twin's (same names, AU offsets).

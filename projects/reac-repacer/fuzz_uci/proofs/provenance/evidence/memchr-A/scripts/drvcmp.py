@@ -2,7 +2,7 @@
 """drvcmp.py -- per-function byte compare of named functions between ELF images. Read-only.
 
 Reuses, verbatim and without running their mains:
-  - bytecmp.py 7daa0e2a03d9 (the tools of record, commit 8cd71d3a4bb, tools/bytecmp/7daa0e2a03d9/bytecmp.py): load / words /
+  - bytecmp.py 7daa0e2a03d9 (the tools of record, tools/bytecmp/7daa0e2a03d9/bytecmp.py): load / words /
     auipc_states / cmp, everything above its `base = {` line;
   - repin_check.py 9cbc3553c09e (same commit, tools/repin_check/9cbc3553c09e/repin_check.py): class Img (lines 31-59)
     and sx / targets / tcmp / w_off (lines 188-237), its target pass: every pc-relative target (jal, auipc+lo12 bound

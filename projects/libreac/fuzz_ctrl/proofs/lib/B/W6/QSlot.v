@@ -1,7 +1,7 @@
 (* Image B (asan-ubsan) twin of lib/A/W6/QSlot.v (a Theorem Labs lane's per-class quarantine slot bound, as image A carries it at
-   a working branch 0b6b7fff89f), verbatim except lane names and that it Requires lib/B's ClassConsDef / ClassRoomLow (
+   a working branch), verbatim except lane names and that it Requires lib/B's ClassConsDef / ClassRoomLow (
    ClassConsDef is image A's text; ClassRoomLow's code is image A's apart from the Require, the name crl_prim_class_in for prim_class_in, and the place of the bc_row .. a_class_bytes_out block) instead of lib/A's. Seg/Tac_cls.v reads no_request_in_classes_0_5_31 from it. *)
-(* This delivery then edited comment text only: the code is unchanged from release c5e779efe8c, the comments are not. *)
+(* This delivery then edited comment text only: the code is unchanged from release, the comments are not. *)
 (* The per-class quarantine slot bound QSLOT c (a Theorem Labs lane).
 
    a Theorem Labs lane ruled (2026-10-28 03:58Z) that the class-full side condition must be PER CLASS: one constant for every

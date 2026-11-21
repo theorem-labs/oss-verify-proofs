@@ -1,30 +1,31 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: the run plumbing of proofs/reac-pw/fuzz_role/lib/A/RPgCfgChanges.v at 964efd2f474 (cfg_keep, cfg_kwr_ro and the same_io chain of cfg_leaf, as l_keep, l_kwr and l_post) and of proofs/reac-pw/fuzz_qdisc/lib/A/QPgCheck.v at b0f706c04a1 (awr_stk, as l_awr: the writable window is the frame [F, F + 0x60) at atom 2), for a segment of reac_role_prop_parse's walk that starts and ends at the cuts of lib/A/RPgParseBase.v; the entry states, exits, string lemmas and the walk below are new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseL.v at afaa3cb55c1d; for reac-pw/fuzz_rate's reac_rate_prop_parse at image A: module paths and the rl_ / Role names changed to rate's (rt_cstr, rt_fxk, Rate.harness_parse, Rate.RATE_KEY, RtPgStrcmp's rt_cstr_args and cstr_at_of_rt_cstr; kept_run and same_io_wvb from RtPgParseBase), the pcs and image constants are fuzz_rate.asan's (key 0x21720, strcmp wrapper 0x4219c), and on the three next-child paths the foreach back edge 0x84728 beqz is the taken side to L2 (its fall-through 0x8472c j 0x84554 is the impossible one). *)
+(* Modified by Theorem Labs, 2026-10: the run plumbing of proofs/reac-pw/fuzz_role/lib/A/RPgCfgChanges.v (cfg_keep, cfg_kwr_ro and the same_io chain of cfg_leaf, as l_keep, l_kwr and l_post) and of proofs/reac-pw/fuzz_qdisc/lib/A/QPgCheck.v (awr_stk, as l_awr: the writable window is the frame [F, F + 0x60) at atom 2), for a segment of reac_role_prop_parse's walk that starts and ends at the cuts of lib/A/RPgParseBase.v; the entry states, exits, string lemmas and the walk below are new. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseL.v; for reac-pw/fuzz_rate's reac_rate_prop_parse at image A: module paths and the rl_ / Role names changed to rate's (rt_cstr, rt_fxk, Rate.harness_parse, Rate.RATE_KEY, RtPgStrcmp's rt_cstr_args and cstr_at_of_rt_cstr; kept_run and same_io_wvb from RtPgParseBase), the pcs and image constants are fuzz_rate.asan's (key 0x21720, strcmp wrapper 0x4219c), and on the three next-child paths the foreach back edge 0x84728 beqz is the taken side to L2 (its fall-through 0x8472c j 0x84554 is the impossible one). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_rate/lib/A/RtPgParseL.v; 499 of its 567 lines of code are new or changed and 845 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseF.v at afaa3cb55c1d for reac-pw/fuzz_rate's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseF.v for reac-pw/fuzz_rate's
    reac_rate_prop_parse: module paths and the rl_ / Role names changed to rate's; the pcs are image A's of
    fuzz_rate.asan; the find loop's back edge is 0x845cc beqz -> L1 (taken: the next pass) with 0x845d0 j 0x84554
    (not taken: impossible, r' = 0 mod 4). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgParseF.v at f7246d55e8c3 for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgParseF.v for image B
    (fuzz_rate.asan-ubsan); the image is lib/AU/Img0.v's and the cut vocabulary lib/AU/RtPgParseBaseB.v's; the pcs are
    image B's; P + 8 is in a1 (atom 11) at L1, image A's a0; the ret 0 leaves go through 0x84804 li a0,0; the trap
    branch 0x848ac is new and image A's alignment branch 0x84638 is gone. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_rate/lib/AU/RtPgParseFB.v, with its module paths and module names changed; 1564 of its 1625 lines of code are new or changed and 506 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/Prog/Seg/ParseValue.v at 3e9fc5c8969 (pv_range,
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/Prog/Seg/ParseValue.v (pv_range,
    pv_body, pv_res_big, pv_res_bad, pv_res_bool, pv_res_int, pv_res_flt: the model of value_pod_to_byte and
    value_in_range) with module paths changed and the names prefixed hv_; the engine form of the value read in the
-   form of proofs/reac-pw/fuzz_role/lib/A/RPgParseK.v at afaa3cb55c1 (the entry split on the child's size, the pod
+   form of proofs/reac-pw/fuzz_role/lib/A/RPgParseK.v (the entry split on the child's size, the pod
    region with the size / type / body chunks, asm_eq / U_asm for the four body bytes put together, br_big / br_ty)
-   and the step chain of the double instructions in the form of proofs/reac-pw/fuzz_role/lib/A/RPgParseFV.v at
-   afaa3cb55c1 (fvw_auipc, fvw_beq_tk / fvw_beq_ft, fvw_jal0, fv_getr_upd / fv_getr_set), restated for headamp's
+   and the step chain of the double instructions in the form of proofs/reac-pw/fuzz_role/lib/A/RPgParseFV.v
+    (fvw_auipc, fvw_beq_tk / fvw_beq_ft, fvw_jal0, fv_getr_upd / fv_getr_set), restated for headamp's
    cut states (lib/A/HPgParseCut.v) and the frame hole (lib/A/HPgHole.v). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/A/HPgParseVal.v, with its module paths, module names and numbers changed; 509 of its 634 lines of code are new or changed and 1500 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseK.v at d428443238a; for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseK.v; for image B
    (fuzz_role.asan-ubsan): the image is lib/AU/Img0.v's and the cut vocabulary lib/AU/RPgParseBase.v's (kept_run and
    same_io_wvb from there); the pcs are image B's; the key slot at L2 and the Int value at T are in a1 (register 11),
    image A's a0. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment K of reac_role_prop_parse's walk on image B (fuzz_role.asan-ubsan): from K 0x833bc (strcmp's return)
    through the next-child step to L2, or the value read to T (Int) / FV (Float) / ret -1; proves RPgParseBase's
    segK_stmt. *)

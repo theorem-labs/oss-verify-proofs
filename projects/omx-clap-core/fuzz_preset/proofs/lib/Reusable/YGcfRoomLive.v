@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by a Theorem Labs lane (DeallocNmaxA), 2026-10-30 (free_cf's size test, Quarantine::Put): rl_free_rff and c24_free cover free_cf's recycle side (rff_rchunk / rk_rchunk_fr); statements unchanged. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: the event-free second allocator instance (suffix cf), the NON-PRIMARY ROOM AS A STATE
    INVARIANT, room_live_cf. Model and invariant lemmas only; no function is proved (rule 24). No address.
    WHY: ROOM_cf_k S k (YGcfRoomKeep.v:26-28) charges a whole kUserMapSize map of class kBatchClass per remaining call,
@@ -18,12 +19,12 @@
        exhausted byte, which clear_exh_cf re-opens at the end of every successful populate_cf. It is still bounded:
        a refusal needs rg_mapped_user = kFreeArrayOffset (need * class_size <= 65,536 < kUserMapSize, and both are
        multiples of kUserMapSize: rl_full_of_refusal), and populate_cf carves ALL the uncarved room
-       (new_cnt = (mapped - alloc) / size, YG00cf.v:189), so a full class has at most one more success and at most
+       (new_cnt = (mapped - alloc) / size, YG00cf.v:190), so a full class has at most one more success and at most
        2 reports. Hence 2 reports x 30 reporting classes (class kBatchClass keeps cgif's arm and never reports)
        x 100 B. The brief's bound 100 * (31 + sum_c (kUserMapSize + kMaxSize) / class_size c), about 2.19 MB,
        was true but loose: it assumed one record per later success, while a success carves every uncarved record.
    (c) rg_mapped_user (reg S kBatchClass) + 3 * kUserMapSize <= kFreeArrayOffset: the class-24 HIGH-WATER mark that
-       ROOM_cf's batch_room_cf reads (YG00cf.v:349-350); it never falls. Class kBatchClass maps only with an empty
+       ROOM_cf's batch_room_cf reads (YG00cf.v:350-351); it never falls. Class kBatchClass maps only with an empty
        cache, an empty free array and no uncarved record (its refill target is max_cached 24 / 2 = 1), so by
        Compl0 the new mapped size is below kBatchBytes * (n24 S + 1) + kUserMapSize, n24 = the class's chunk
        records + the quarantine's batch objects at the call's start (m24_bound); under Wf_cf + qtight,

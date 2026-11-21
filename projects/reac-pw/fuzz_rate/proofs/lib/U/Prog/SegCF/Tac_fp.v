@@ -3,6 +3,7 @@
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/Prog/LLVMFuzzerTestOneInput_fr.v, with its module paths and module names changed; 457 of its 575 lines of code are new or changed and 409 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/U/Prog/SegCF/Tac_slot.v, with its module paths changed; 103 of its 160 lines of code are new or changed and 518 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Cut-free (agreement) copy of lib/U/Prog/Seg/Tac_fp.v, over U/Prog/SlotInvCF.v (SR := SRcf). Model:
    reac-pw/fuzz_role's U/Prog/SegCF/*.v copies (role has no Tac_fp), as libreac/fuzz_ctrl's released
    U/Prog/SegCF/*.v copy its U/Prog/Seg/*.v: the same text with SlotFR, SlotInv -> SlotInvCF, Seg -> SegCF, the
@@ -19,7 +20,7 @@
    - sl_cj_keep, sl_cj_hi, sl_stk_cj, sl_blk_cj, sl_run_fp_cj: reac-pw/fuzz_role's Prog/Seg/M02.v m02_cj_keep,
      m02_cj_hi, m02_stk_cj, m02_blk_cj, m02_run_cj (lines 37-129), renamed;
      sl_run_fp_cj is Tac_slot.sl_run_fp with normalize_cj, as libreac/fuzz_boxreg's released
-     Prog/LLVMFuzzerTestOneInput_fr.v llvm_run_norm_cj (origin/ossv/recipes 25e3d17bdb50).
+     Prog/LLVMFuzzerTestOneInput_fr.v llvm_run_norm_cj.
    - sl_mid_fp_blk (new): Tac_slot.sl_mid_fp on normalize_cj, with Tac_b1.b1_fr_hb in place of Tac_slot.sl_fr_run,
      so the run may write the stack window [S - K, S - 104) and one block (phi, n) of hb. It is the composition
      fuzz_role's seg_M02 does inline (M02.v:172-229: m02_run_cj, munch_rel_cj / wmono_rel_cj / ro_agree_same_cj,

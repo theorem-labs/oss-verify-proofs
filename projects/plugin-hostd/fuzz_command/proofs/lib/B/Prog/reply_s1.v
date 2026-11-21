@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: helpers of the walk of reply on the ASan+UBSan build of plugin-hostd/fuzz_command
    (fuzz_command.asan-ubsan; reply.v): the recorder representation under a memory that agrees on what it reads. The
-   B twin of lib/A/Prog/reply_s1.v (a working branch 094fb7cf5be), over lib/B/Prog/CmdRep.v, whose
+   B twin of lib/A/Prog/reply_s1.v (a working branch), over lib/B/Prog/CmdRep.v, whose
    recorder layout (field offsets, REC_SIZE, SC_SIZE) is A's; only g_rec / record.spill are at B's addresses. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

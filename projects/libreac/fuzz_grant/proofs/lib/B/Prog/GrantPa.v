@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/GrantPa.v (a working branch d98082bd58b): the listing is lib/B/Prog's (5889 slots from 0x80a3c, 37 objects), the image range is IMG_LO_B..IMG_TOP_B of GrantTop.v (computed from image B's PT_LOADs), pa_obj_img covers the 37 objects, and grant_xcalls lists the 27 program functions image B's listing calls (A's 22 plus want_of, reac_ctrl_block_cksum_stamp, reac_ctrl_record_cksum_stamp, dt1_head, name_field; A's build_dt1_single kept); image A's file was made from proofs/cgif/cgif_file_fuzzer/lib/YC4a.v. *)
+(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/GrantPa.v (a working branch): the listing is lib/B/Prog's (5889 slots from 0x80a3c, 37 objects), the image range is IMG_LO_B..IMG_TOP_B of GrantTop.v (computed from image B's PT_LOADs), pa_obj_img covers the 37 objects, and grant_xcalls lists the 27 program functions image B's listing calls (A's 22 plus want_of, reac_ctrl_block_cksum_stamp, reac_ctrl_record_cksum_stamp, dt1_head, name_field; A's build_dt1_single kept); image A's file was made from proofs/cgif/cgif_file_fuzzer/lib/YC4a.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.

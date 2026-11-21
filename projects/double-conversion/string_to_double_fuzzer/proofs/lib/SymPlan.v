@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap can be refused). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -876,6 +877,13 @@ Definition node_munmap (cs : cstate) : option cstate :=
       else None
   | _, _ => None
   end.
+
+(** The refused answer of the same [munmap] node ([munmap_errnos] = [ENOMEM]): a0 is -ENOMEM,
+    the pc moves past the ecall, and nothing else changes: the region stays mapped, its
+    knowledge and slots are kept, and the ledger is unchanged.  A [PMunmap k] node is checked
+    from both this state and [node_munmap]'s cut state, with the same continuation [k]. *)
+Definition munmap_refuse (cs : cstate) : cstate :=
+  set_pc (set_reg cs 10 (ELit (two64 - 12))) (pc cs + 4).
 
 (* [comment removed for export] *)
 Definition node_ioctl (cs : cstate) : option cstate :=
@@ -2080,7 +2088,14 @@ Fixpoint collect (cs0 : cstate) (p : plan) {struct p} : dres :=
         end else DErr 2 p cs
     | PMunmap k =>
         if is_ecall_at cs then
-        match node_munmap cs with Some cs' => collect cs' k | None => DErr 3 p cs end else DErr 2 p cs
+        match node_munmap cs with
+        | Some cs' =>
+            match collect cs' k with
+            | DOk a => match collect (munmap_refuse cs) k with DOk b => DOk (a ++ b) | err => err end
+            | err => err
+            end
+        | None => DErr 3 p cs
+        end else DErr 2 p cs
     | PIoctl k =>
         if is_ecall_at cs then
         match node_ioctl cs with Some cs' => collect cs' k | None => DErr 3 p cs end else DErr 2 p cs
@@ -2178,7 +2193,17 @@ Fixpoint check (fuel : nat) (cs0 : cstate) (p : plan) {struct fuel} : cres :=
         end else CErr 2 p cs
     | PMunmap k =>
         if is_ecall_at cs then
-        match node_munmap cs with Some cs' => check f cs' k | None => CErr 3 p cs end else CErr 2 p cs
+        match node_munmap cs with
+        | Some cs' =>
+            match check f cs' k with
+            | COk s => match check f (munmap_refuse cs) k with
+                       | COk sr => if shape_eqb s sr then COk s else CErr 4 p cs
+                       | err => err
+                       end
+            | err => err
+            end
+        | None => CErr 3 p cs
+        end else CErr 2 p cs
     | PIoctl k =>
         if is_ecall_at cs then
         match node_ioctl cs with Some cs' => check f cs' k | None => CErr 3 p cs end else CErr 2 p cs

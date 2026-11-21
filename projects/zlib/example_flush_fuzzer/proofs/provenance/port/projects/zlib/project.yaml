@@ -1,0 +1,8 @@
+# Seeded by Theorem from the oss-fuzz-theorems 2026.10 release, not enrolled by the project's
+# maintainers: provisional. To adopt it, set primary_contact and remove these lines (docs/project-yaml.md).
+repo: https://github.com/madler/zlib#99623ef7097352da7993ba614161fd6a311e046e
+primary_contact: n/a
+homepage: https://www.zlib.net
+language: c++
+sanitizers: [address, undefined]
+fuzz_targets: [checksum_fuzzer, compress_fuzzer, example_dict_fuzzer, example_flush_fuzzer, example_large_fuzzer, example_small_fuzzer, gzio_fuzzer, minigzip_fuzzer, zlib_uncompress2_fuzzer, zlib_uncompress3_fuzzer, zlib_uncompress_fuzzer]

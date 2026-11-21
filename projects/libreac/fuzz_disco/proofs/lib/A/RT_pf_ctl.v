@@ -1,6 +1,6 @@
 (* Non-vacuity controls for disco's shared printf route at disco's three conversions Pd, Px02, Pllu (G9 rows
    R9-A-RT_pf_ctl / R9-Y-RT_pf_ctl). Written for fuzz_disco (a Theorem Labs lane's ruling b, 16:26Z), not relocated: the twin of
-   fm's lib/A/RT_pf_ctl.v (a working branch 0ddf65fd8cc), whose %c / %04x controls do not apply here
+   fm's lib/A/RT_pf_ctl.v (a working branch), whose %c / %04x controls do not apply here
    (disco has neither conversion, and pf_disco_piece Pc / Px04 are False).
    The family these controls make non-vacuous is disco's FF_disco disco_fmt_lo disco_fmt_hi (lib/Rt/SnFF.v:236) at
    PK = pf_disco_piece, the format family of disco's snprintf instance lib/A/FMsnprintfDiscoR1.v / lib/B/FMsnprintfDiscoR1.v
@@ -20,7 +20,7 @@
    (1) FF_disco lo hi at every range [lo, hi) that holds the format, and at disco_fmt_lo / disco_fmt_hi
        (lib/A/Rt/SnprintfConsts.v:11-12);
    (2) RT_pf_sh.FF_pcomK pf_disco_piece (printf_common's family at disco's pieces; lib/A/RT_pf_sh.v:266, row
-       R9-A-RT_pf_sh-delta, a working branch e246dd3a70d, from fm 0ddf65fd8cc
+       R9-A-RT_pf_sh-delta, a working branch, from fm
        RT_pf_sh.v:263). Its f + |fmt| + 1 <= TFIB_IMG_END is at disco's TFIB_IMG_END = YImgTop.IMG_TOP = 0x5fe000
        (fm's file has 0x5f7000);
    (3) pf_family_ro pf_disco_piece lo hi, from (1) by SnFF.FF_disco_ro;
@@ -28,17 +28,17 @@
        site1_not_fm, not landed).
    Prior controls, cited, not Required (neither is on a branch this base can merge; both are at fm's widened
    predicates, not at pf_disco_piece / FF_disco):
-   - %dx%d: a Theorem Labs lane's FMpfArmPdCtl (fm 0ddf65fd8cc lib/A/FMpfArmPdCtl.v:110-227: ctl_parse, ctl_text, ctl_fmt_at,
+   - %dx%d: a Theorem Labs lane's FMpfArmPdCtl (fm lib/A/FMpfArmPdCtl.v:110-227: ctl_parse, ctl_text, ctl_fmt_at,
      ctl_in_pcomK / ctl_in_route at pf_fm_pc_d, ctl_f = 0x20fe0); its disco row R9-A-FMpfArmPdCtl (a Theorem Labs lane,
-     a working branch 990c3a3a8c1) holds notes only. ctl_d_parse / ctl_d_text below
+     a working branch) holds notes only. ctl_d_parse / ctl_d_text below
      restate its ctl_parse / ctl_text at disco's names.
-   - site 1's %02x: a Theorem Labs lane's controls (a working branch 6dbf2ed755a = fm 0ddf65fd8cc
+   - site 1's %02x: a Theorem Labs lane's controls (a working branch = fm
      lib/A/RT_pf_02x.v:49-80 disco_mac_parse / disco_mac_render at pf_pc_02x, and lib/A/FMgxaSeam02x.v:65-106
      disco_mac02_* at pk_02x); rows R9-*-RT_pf_02x / R9-*-FMgxaSeam02x, not relocated. The mac de:ad:be:ef:00:01 of
      ctl_02x_text_mac is theirs.
-   - %llu: fm 0ddf65fd8cc lib/A/RT_pf_llu.v:38-94 places "%llu" at 0x10000, below disco_fmt_lo, so it cannot serve here.
+   - %llu: fm lib/A/RT_pf_llu.v:38-94 places "%llu" at 0x10000, below disco_fmt_lo, so it cannot serve here.
    Image: NOT neutral (measured, a Theorem Labs lane 16:5xZ: Print Libraries of a throwaway file that Requires this one, dgb
-   probe on T0 dc724fb4daf). It loads the A image images.Asan and the lib/A image modules AF0x (TFIB_IMG_END, used by
+   probe on T0). It loads the A image images.Asan and the lib/A image modules AF0x (TFIB_IMG_END, used by
    (2)), AF0l, AF0m, AB1v, AB1q, RT_pf_sh, Rt/SnprintfConsts (disco_fmt_lo / disco_fmt_hi) and, through it,
    Prog/DiscoImg, DiscoPa, PaRun, PaShadow; the closure's other lib/A files, Bz/A/I_pcxgram, Bz/BvWfKernel and FMpfStep,
    are image-neutral (one copy for both images). The Y image has its own copy, lib/B/RT_pf_ctl.v (row R9-Y-RT_pf_ctl),

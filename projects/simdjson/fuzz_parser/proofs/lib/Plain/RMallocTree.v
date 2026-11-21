@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the auxv invariant is stated over the launch's auxv layout, its values as a list and the CONFIG_RSEQ pair present or absent, in place of the twenty-word auxv. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -307,26 +308,31 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-Definition rauxv_list (x3 x4 x5 x16 x6 x11 x12 x23 rnd : Z) : list word :=
-  map wz [3; x3; 4; x4; 5; x5; 16; x16; 6; x6; 11; x11; 12; x12; 23; x23; 25; rnd; 0; 0].
+(* The auxv [StackLayout.auxv_entries] lays, as mallocng's [__malloc_init]
+   scan sees it: the keys are literal, the values other than AT_RANDOM's are
+   [vs], and the CONFIG_RSEQ pair is there when [r] (the launch's [la_rseq])
+   says so. *)
+Definition rauxv_list (vs : list Z) (r : bool) (rnd : Z) : list word :=
+  map wz ([33; nth 0 vs 0; 40; nth 1 vs 0; 41; nth 2 vs 0; 42; nth 3 vs 0; 43; nth 4 vs 0;
+           44; nth 5 vs 0; 45; nth 6 vs 0; 46; nth 7 vs 0; 47; nth 8 vs 0; 51; nth 9 vs 0;
+           16; nth 10 vs 0; 6; nth 11 vs 0; 17; nth 12 vs 0; 3; nth 13 vs 0; 4; nth 14 vs 0;
+           5; nth 15 vs 0; 7; nth 16 vs 0; 8; nth 17 vs 0; 9; nth 18 vs 0; 11; nth 19 vs 0;
+           12; nth 20 vs 0; 13; nth 21 vs 0; 14; nth 22 vs 0; 23; nth 23 vs 0; 25; rnd;
+           31; nth 24 vs 0]
+          ++ (if r then [27; 28; 28; 32] else []) ++ [0; 0]).
 
 Definition rauxv_ok (m : mem) (B : Z) : Prop :=
-  exists av x3 x4 x5 x16 x6 x11 x12 x23 rnd,
+  exists av (vs : list Z) (r : bool) rnd,
     rw_cells psegs m RAUXV_CELL [C8 (wz av)]
-    /\ bytes_at psegs m av (u64s (rauxv_list x3 x4 x5 x16 x6 x11 x12 x23 rnd))
+    /\ bytes_at psegs m av (u64s (rauxv_list vs r rnd))
     /\ bytes_at psegs m (rnd + 8) (le8 (wz SECRET))
-    /\ ATOP <= B /\ B <= av /\ av + 160 <= 2^64 /\ B <= rnd + 8 /\ rnd + 16 <= 2^64
-    /\ 0 <= x3 < 2^64 /\ 0 <= x4 < 2^64 /\ 0 <= x5 < 2^64 /\ 0 <= x16 < 2^64 /\ 0 <= x6 < 2^64
-    /\ 0 <= x11 < 2^64 /\ 0 <= x12 < 2^64 /\ 0 <= x23 < 2^64 /\ 0 <= rnd < 2^64.
-
-Lemma rauxv_list_length : forall x3 x4 x5 x16 x6 x11 x12 x23 rnd,
-  length (rauxv_list x3 x4 x5 x16 x6 x11 x12 x23 rnd) = 20%nat.
-Proof. intros. reflexivity. Qed.
+    /\ ATOP <= B /\ B <= av /\ av + 8 * Z.of_nat (length (rauxv_list vs r rnd)) <= 2^64 /\ B <= rnd + 8 /\ rnd + 16 <= 2^64
+    /\ 0 <= rnd < 2^64.
 
 Lemma rauxv_ok_weaken : forall m B B', rauxv_ok m B -> ATOP <= B' <= B -> rauxv_ok m B'.
 Proof.
-  intros m B B' (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & H) HB.
-  exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. repeat (split; [tauto|]). lia.
+  intros m B B' (av & vs & r & rnd & H) HB.
+  exists av, vs, r, rnd. repeat (split; [tauto|]). lia.
 Qed.
 
 Lemma rauxv_ok_frame : forall m m' B W,
@@ -334,8 +340,8 @@ Lemma rauxv_ok_frame : forall m m' B W,
   Forall (fun iv : Z * Z => snd iv <= B /\ (snd iv <= RAUXV_CELL \/ RAUXV_CELL + 8 <= fst iv)) W ->
   rauxv_ok m' B.
 Proof.
-  intros m m' B W (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & C & A1 & A2 & H) MU WM FW.
-  exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. split; [|split; [|split; [|exact H]]].
+  intros m m' B W (av & vs & r & rnd & C & A1 & A2 & H) MU WM FW.
+  exists av, vs, r, rnd. split; [|split; [|split; [|exact H]]].
   - eapply rw_cells_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [_ ?]. lia.
   - eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [? _]. lia.
   - eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [? _].

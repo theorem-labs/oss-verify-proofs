@@ -359,7 +359,7 @@ Proof.
   exact (cmZ_ajournal_sk lib.Reusable.YE2k.tfib_sink_head SK _ _ _ _ _ _ _ _ _ _ _ _ _ _ HJ').
 Qed.
 
-(* ---- the POST: from the exit state to treac_box_catalogue_match_post (apost_base, APostBase.v:59).  The run and the
+(* ---- the POST: from the exit state to treac_box_catalogue_match_post (apost_base, APostBase.v:60).  The run and the
    release by cmZ_rel_ret; at the return: the configuration at the caller's ra (ret_ok, cmZ_ret_pc), the journal from
    the entry with own [] and k = EV_CM = 0, aregs_preserved (the 13 saves restored, sp = the entry sp, gp / tp kept),
    a0 = want A_CM_TBL len fb (CM_T = A_CM_TBL = 0x9f620), and the blocks' Permutation (stack_free_state keeps the
@@ -510,8 +510,8 @@ Qed.
      ML, SMP, ASM2                 core laws;
      RELRO_IMG                     the spec file's own Section hypothesis (C_reac_box_catalogue_match.v:46), the
                                    composer's (CtrlImg.ctrl_relro_img at pa_relro);
-     GLOBS, TPARSE, TMB            the two walked callees' contracts by name (a Theorem Labs lane ea59dbb03aa; a Theorem Labs lane
-                                   5487787da37 / 572f4b58796), as cmPfB_mid takes them;
+     GLOBS, TPARSE, TMB            the two walked callees' contracts by name (a Theorem Labs lane; a Theorem Labs lane),
+                                   as cmPfB_mid takes them;
      ABCMP                         the bcmp wrapper's route-(C) contract bcmp_wrap_c_on.bcmp_wrap_contract_F_on
                                    (lib/B/Prog/bcmp_wrap_c_on.v), as cmPfB_mid takes it.
    PREMISES of cmPf_top:

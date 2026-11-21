@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: json_tokener_parse_ex_A_cps and json_tokener_parse_ex_B_cps take it after alloc_ceiling <= lo and pass it to seg_entry_A0 and seg_entry_B0). *)
 
 From Stdlib Require ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -220,7 +221,7 @@ rw_cells asegs m LOCCELL_A [C8 (Z_to_bv 64 GLOBLOC_A)] ->
 rw_cells asegs m LOCALE_LOCK_A [C4 (Z_to_bv 64 0)] -> GA m ->
 bytes_at asegs m UTF8REP_ADDR_A Qa8x.Mq3.utf8rep ->
 sp = Z_to_bv 64 sp0 ->
-stk asegs m lo sp0 -> alloc_ceiling <= lo -> lo <= sp0 - PE_STK_A ->
+stk asegs m lo sp0 -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= sp0 - PE_STK_A ->
 sp0 mod 32 = 0 -> sp0 + 32 <= hiA_top A4L HIx -> sp0 < 2^62 ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
 tp = Z_to_bv 64 A_TP -> frm0 fc ->
@@ -243,7 +244,7 @@ AJ5 A4L HIx A' T md' ms') ->
 AJ5 A4L HIx A T md (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 A_PE_ENTRY) fc None m (seg_rom asegs)).
 Proof.
-intros until pbs. intros HP ETBS MXB TOK PB Hpb TSK PBK CAP STR PLEN LEN MODE SB0 SBL LOC LCK G UTF ESP ST LO LOS SPA HT SP62 ERR TP FRM A0 A1 A2 S0V RAV UWa UWo UWf UWd UWs UWn UWds LMN FRN BM1 BB BD BSL DSL K.
+intros until pbs. intros HP ETBS MXB TOK PB Hpb TSK PBK CAP STR PLEN LEN MODE SB0 SBL LOC LCK G UTF ESP ST LO HBT LOS SPA HT SP62 ERR TP FRM A0 A1 A2 S0V RAV UWa UWo UWf UWd UWs UWn UWds LMN FRN BM1 BB BD BSL DSL K.
 
 assert (CSTR : lenr = len \/ nth_error payload (Z.to_nat (len - 1)) = Some (Z_to_bv 8 0)).
 { destruct MODE as [_ [-> | (_ & _ & (str0 & Ep & _) & _)]]; [left; reflexivity | right].
@@ -256,7 +257,7 @@ pose proof (heapA_blk A4L HIx _ _ _ _ _ _ _ tk 72 HP INtk) as (_ & _ & Htlo & Ht
 pose proof alloc_ceiling_range as ACR.
 eapply (seg_entry_A0 HIx GA GA_outside GA_pres GA_loc RTC_PEPC OBL_ERRNO OBL_SH_ERRNO USE ERRNOL DUP NEWL FREEL ISTRLEN) with (bsl := bsl) (dsl := dsl) (sp0 := sp0) (payload := payload) (slack := slack) (q := q) (pb := pb) (pbs := pbs) (len := len) (lenr := lenr) (sb := sb) (tk := tk) (mxd := mxd) (fl := 0);
 [ exact HP | exact ETBS | split; [exact MXB | lia] | exact TOK | exact PB | exact Hpb | exact TSK | exact STR | exact PLEN | exact LEN | exact MODE | exact SB0 | exact SBL | exact LOC | exact LCK | exact G
-| exact ESP | exact ST | exact LO | exact LOS | exact SPA | exact HT | exact SP62 | exact ERR | exact TP | rewrite RAV; unfold PE_RA2; rewrite unsigned_lit by lia; reflexivity
+| exact ESP | exact ST | exact LO | exact HBT | exact LOS | exact SPA | exact HT | exact SP62 | exact ERR | exact TP | rewrite RAV; unfold PE_RA2; rewrite unsigned_lit by lia; reflexivity
 | exact A0 | exact A1 | exact A2 | exact LMN | exact FRN | exact BM1 | unfold K_ev, PhiPB, K_free, K_exit in *; lia | lia | exact BSL | | exact K ].
 cbn zeta. intros newl spf Ff m1 md1 A1x B1 nb pj errv1 gp' t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' s5' t4' STC INV VM1 HPRX AGP LOC1 NEWLR BB1 BD1.
 set (pf := PEF tk 0 0 len lenr sb spf (cfg_model md1) mxd 0) in *.
@@ -465,7 +466,7 @@ rw_cells asegs m LOCCELL_A [C8 (Z_to_bv 64 GLOBLOC_A)] ->
 rw_cells asegs m LOCALE_LOCK_A [C4 (Z_to_bv 64 0)] -> GA m ->
 bytes_at asegs m UTF8REP_ADDR_A Qa8x.Mq3.utf8rep ->
 sp = Z_to_bv 64 sp0 ->
-stk asegs m lo sp0 -> alloc_ceiling <= lo -> lo <= sp0 - PE_STK_A ->
+stk asegs m lo sp0 -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= sp0 - PE_STK_A ->
 sp0 mod 32 = 16 -> sp0 + 32 <= hiA_top A4L HIx -> sp0 < 2^62 ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
 tp = Z_to_bv 64 A_TP -> frm0 fc ->
@@ -488,7 +489,7 @@ AJ5 A4L HIx A' T md' ms') ->
 AJ5 A4L HIx A T md (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 A_PE_ENTRY) fc None m (seg_rom asegs)).
 Proof.
-intros until pbs. intros HP ETBS MXB TOK PB Hpb TSK PBK CAP STR PLEN LEN MODE SB0 SBL LOC LCK G UTF ESP ST LO LOS SPA HT SP62 ERR TP FRM A0 A1 A2 S0V RAV UWa UWo UWf UWd UWs UWn UWds LMN FRN BM1 BB BD BSL DSL K.
+intros until pbs. intros HP ETBS MXB TOK PB Hpb TSK PBK CAP STR PLEN LEN MODE SB0 SBL LOC LCK G UTF ESP ST LO HBT LOS SPA HT SP62 ERR TP FRM A0 A1 A2 S0V RAV UWa UWo UWf UWd UWs UWn UWds LMN FRN BM1 BB BD BSL DSL K.
 
 assert (CSTR : lenr = len \/ nth_error payload (Z.to_nat (len - 1)) = Some (Z_to_bv 8 0)).
 { destruct MODE as [_ [-> | (_ & _ & (str0 & Ep & _) & _)]]; [left; reflexivity | right].
@@ -501,7 +502,7 @@ pose proof (heapA_blk A4L HIx _ _ _ _ _ _ _ tk 72 HP INtk) as (_ & _ & Htlo & Ht
 pose proof alloc_ceiling_range as ACR.
 eapply (seg_entry_B0 HIx GA GA_outside GA_pres GA_loc RTC_PEPC OBL_ERRNO OBL_SH_ERRNO USE ERRNOL DUP NEWL FREEL ISTRLEN) with (bsl := bsl) (dsl := dsl) (sp0 := sp0) (payload := payload) (slack := slack) (q := q) (pb := pb) (pbs := pbs) (len := len) (lenr := lenr) (sb := sb) (tk := tk) (mxd := mxd) (fl := 0);
 [ exact HP | exact ETBS | split; [exact MXB | lia] | exact TOK | exact PB | exact Hpb | exact TSK | exact STR | exact PLEN | exact LEN | exact MODE | exact SB0 | exact SBL | exact LOC | exact LCK | exact G
-| exact ESP | exact ST | exact LO | exact LOS | exact SPA | exact HT | exact SP62 | exact ERR | exact TP | rewrite RAV; unfold PE_RA2; rewrite unsigned_lit by lia; reflexivity
+| exact ESP | exact ST | exact LO | exact HBT | exact LOS | exact SPA | exact HT | exact SP62 | exact ERR | exact TP | rewrite RAV; unfold PE_RA2; rewrite unsigned_lit by lia; reflexivity
 | exact A0 | exact A1 | exact A2 | exact LMN | exact FRN | exact BM1 | unfold K_ev, PhiPB, K_free, K_exit in *; lia | lia | exact BSL | | exact K ].
 cbn zeta. intros newl spf Ff m1 md1 A1x B1 nb pj errv1 gp' t0' a0' a1' a3' a4' a5' a6' a7' s3' s5' s6' s7' s8' s9' s11' t3' t4' t5' t6' STC INV VM1 HPRX AGP LOC1 NEWLR BB1 BD1.
 set (pf := PEF tk 0 0 len lenr sb spf (cfg_model md1) mxd 0) in *.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved ledger is the image's plus the run's vDSO pair). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From stdpp Require Import gmap.
@@ -287,7 +288,7 @@ Proof.
       { eapply rw_cells_transport; [exact ERR| exact MU1| exact WM1|]. cbn. unfold RERRNO, RATP. lia. }
       pose proof (rreserved_disjoint1 _ _ RF ltac:(lia)) as DRo.
       assert (COV : Forall (pcovered (vm_reserved (m_vmmaps mo))) p0_avoid).
-      { apply pcovered_p0. rewrite RSVE, <- Hst. exact Hres. }
+      { destruct RSVE as (Rr & Vr & ER & EW). rewrite ER. apply Forall_pcovered_app_l. apply pcovered_p0. rewrite EW, <- Hst. exact Hres. }
       set (on := m_maplen (get_meta_rec st g) * 4096) in *.
 
       pose proof (p0mremap_spec (Z_to_bv 64 0x19c44) (Z_to_bv 64 (bv_unsigned sp + -64)) gp (Z_to_bv 64 RATP) t0' (Z_to_bv 64 (r_base rg + 16)) (Z_to_bv 64 0x1ffec)

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: changed free_gap_of_totals, kHighMemBeg_le, ledger_split_window_free and 6 more; added ledger_split_window_free_w, spin_exec_input; taken in part from projects/jsoncons/fuzz_bson_parser_max/proofs/lib/AsanPlacement.v at theorem-labs/oss-verify-proofs@f92feaf8b7e6, lines 220-224, 282-288, 301, 332-357, 377-381. *)
 (* [comment removed for export] *)
 Set Warnings "-require-in-module".
 From OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib Require BvWfKernel. From Stdlib Require ZArith NArith List Lia Bool String PrimString. From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run. From LinuxProcessSemantics.Riscv Require Prelude Instr Decode DecodeC Sem. From OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib Require PropExec. From OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib Require BMode.
@@ -10,7 +11,7 @@ From OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool String PrimString.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
-  BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+  BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Vdso Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib Require Import PropExec.
 From OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib Require Import BMode.
@@ -613,7 +614,8 @@ Definition spin_seg : Segment := {|
   seg_base := 0x10000;
   seg_size := 4;
   seg_perms := "r-x"%string;
-  seg_bytes := ["6f000000"%pstring]
+  seg_bytes := ["6f000000"%pstring];
+  seg_kind  := SegLoader
 |}.
 Definition spin_segs : list Segment := [spin_seg].
 Definition spin_img : Image :=
@@ -623,13 +625,14 @@ Example j_dot_decodes :
   decode_any (Z_to_bv 32 0x6f) = Some (Jal 0 (Z_to_bv 21 0), 4%Z).
 Proof. div_vm_refl. Qed.
 
-Lemma spin_img_to_spin : forall sp brk0 mbase (rnd : EntryDraw) lim inp,
-  to_spin spin_segs
-    (init_machine_state spin_segs 0x10000 (mkPhdrInfo 0x10040 56 6) sp rnd
-       (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-    (init_model (segments_reserved spin_segs) brk0 mbase sp lim inp).
+Lemma spin_img_to_spin : forall vt sp brk0 mbase (rnd : EntryDraw) lim inp,
+  to_spin (spin_segs ++ vt)
+    (init_machine_state (spin_segs ++ vt) 0x10000 (mkPhdrInfo 0x10040 56 6)
+       sp mbase rnd inp)
+    (with_vdso (vdso_run_init (ed_vdso rnd))
+       (init_model (segments_reserved (spin_segs ++ vt)) brk0 mbase sp lim inp)).
 Proof.
-  intros sp brk0 mbase rnd lim inp.
+  intros vt sp brk0 mbase rnd lim inp.
   eapply ts_spin_of_step_j with (w := Z_to_bv 32 0x6f).
   - reflexivity.
   - div_vm_refl.
@@ -670,15 +673,19 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
+Definition spin_exec_input : ProcInput :=
+  mkProcInput [[]] [] [] IEof (Z_to_bv 64 1000) (Z_to_bv 64 1002) []
+    net_silent default_nofile (Z_to_bv 64 0) hwcap_rv64gc false Sv48.
+
 Example spin_img_to_spin_by_execution :
   to_spin spin_segs
     (init_machine_state spin_segs 0x10000 (mkPhdrInfo 0x10040 56 6)
-       (Z_to_bv 64 65536) (mkDraw (Z_to_bv 128 0) (fun _ => Z_to_bv 8 0))
-       [[]] [] (Z_to_bv 64 1000) hwcap_rv64gc)
+       (Z_to_bv 64 65536) (Z_to_bv 64 0x7fff7f800000)
+       (mkDraw (Z_to_bv 128 0) (Z_to_bv 64 69632) vdso_keeps_all)
+       spin_exec_input)
     (init_model (segments_reserved spin_segs) (Z_to_bv 64 1048576)
        (Z_to_bv 64 0x7fff7f800000) (Z_to_bv 64 65536) 0x40000000%Z
-       (mkProcInput [[]] [] [] IEof (Z_to_bv 64 1000) (Z_to_bv 64 1002) []
-          net_silent default_nofile (Z_to_bv 64 0) hwcap_rv64gc false Sv48)).
+       spin_exec_input).
 Proof. prove_to_spin 1%nat. Qed.
 
 End SelfJumpImage.
@@ -905,6 +912,7 @@ From OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State Monad Specs.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Placement.
 Require OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.Mh_0023. Import OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.Mh_0023.AsanCeil OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.Mh_0023.PlacementSearch.  (* [comment removed for export] *)
 Import ListNotations.
 Open Scope bv_scope.
@@ -1046,7 +1054,12 @@ Theorem free_gap_of_totals : forall (h : VmMaps) nZ tot,
             /\ region_free (vm_reserved h ++ vm_maps h) (Z_to_bv 64 g) (Z_to_bv 64 nZ) = true
             /\ hint_placement_ok_b (Z_to_bv 64 0) h g nZ = true.
 Proof.
-ltac2:(KReplay.run1 (kr_t_AsanPlacement ()) ["FPX_1"] "p'0h01gh11Hh24__x1h34__x2h44__x3h54__x4h64__x5h74__x6h83Halh95Hbandh:2Hch;3Hflh<5Hfreeh=3HnZh>4Htoth?7__arithh@4__ffhA8__varmaphB5__withC4cstrhD1ehE1hhF2nZhG3tothH1zi001xp;2p;1p;3p;4p;6p;5p;7p;8p-1p10000p4p710R0p8p1000Gp4p70R1g00HBR2p4p710R3p8P1P0p8P1p1001Qp4p710R4p8P1p1001mp4p710R5p8P1p1002Kp4p7210R6p8P1g002hR1p4p710R7p8p1003Fp6051000R8p1004Op4p710R9p8p1005Ep6051000R:P9p8P:p1006Op4p710R;p8P:g0071R<p4p710R=p8p1007Np4p70R>P3p8P>P0p8P>P4p8P>P9p8P>p1008<p4p710p8P>P5p8P>p1008Yp4p710p8P>P6p8P>P8p8P>p1009Tp4p710p8P>P:p8P>p100:Np4p710p8P>P7p8P>P=p8p100;Jp4p7210R=P3p8P=P0p8P=P4p8P=P5p8P=P6p8P=P7p8P=p100<6p4p710p8p100==p6051000R=P0p8P=P;p8P=p100>Dp4p710p8p100>`p4p70R=P3p8P=P0p8P=P4p8P=P5p8P=P6p8P=P7p8g00?Vj22Tg00@2j17Tg00BIj1fTg00IAj1_Tg00h9j2wTg01_5j1MTg00M\j20Tg016@j2JTg016`j1ITg00H\j1CTg00@Wj1[Tg00M?j2DTg019Fj1mTg00XPj1XTg00Xoj2NTg00ZAj3WTg00Zjj2jTg00PSj1hTg00[Vj3gTg00Q3j1eTg00\6j2LTg00\Tj4KTg00QSj1cTg00R1j1bTg00ROj1aTg00]Tj28Tg00S:j2`Tg00^7j3^Tg00]2j1]Tg00TAj2\TP2j2ZTg00Tcj2YTg00UOj3vTg00Unj4uTg011@j2tTg01`8j2sTP1j6rTg01aCj4qTg00JWj2ATg00Dbj21Tg00j3R1j2=Tg01bOj49Tg00AnR2j23Tg01cXj5iTg00nYj4ETg00o4j4kTg01djj1QTg01edj1OTP<j3PTg00^Zj3nTg00_=j4dTg00_hj7oTg00`Lj8pTg0017j3<Tg00hYj3RTf2R<f1R7#Qf0R=#O3Pp=B%C=#Cp=@107=g01TSR6'2p=6g00FaR5?n7=p=:P5P7g012EP=Cdp=HP7g00aWR4g00b6R0P0g00bVR3P=g00c6Fop=Gf3R;P4P0P0P3P<P7P=Gpp=Tg00e:R4g00eZR>7<=p=Sg00G?R:9<5=p=Fg01SOR8/2=p=;f4R9%Q;%O<3P?R7==<4>p=?10<7/26/3=,3;,39p=5117=9R;<=<4>p=lf5R?%Q9%O;3P117=7R<=<4>p=4A<4=>,37p=>137=,3<p=U10<7/26/3=p=Vg01fZ12:7g00G]R@#7RA#7RB#7#7#7#7#fRC#_RD/wDRD?B;;#M/27108;/0<ABD99,JD#I%C@RE#@#@#@#@#@#[RF,0;RG'D'6ABD??RHP9P<P5%MH1JDHRI#IRJ109F'D'0108?/6=XH5%mI12:Jg00dNRJg00fWRI#XRK#X,N51N5K1N5I5W55W5g00g6'j%hJ3g%eJP5P51L59P<f6RJ,L5CKP7P51L5?P;%c5CKCK%b5%a5RI185@185AR@':RK%7E,85RL':185B1`5F,:@5^5R@':%CA,85RA'H,GI%]0R0PI185ERE/HL,GIP01:E@,:K/HA,GICTCT1\I3P=P<1Z4>1Y=<#SdAv5:7Cub@bAbBX25X35X45X55X65X7510=7/0?107F,D;'0/2912;J10<;1D?G,09'0/2J[[^25^35^45^55^65^75P=P?P6f7R6=BD6RG,JD#I%MGPJP8P<P;O8b?bC1t9H1s9HErCqg00cVRH,A=#FR<%;=R8P=P?PDPJPJ11C=RF11C?R>D?D5X05,=5P1P5P<P8P=PJPGPFPCPJClD5X05P<P8P=P6PDf8RJPJPFPCP6E411C:R:PJP=P6C9'>D5X05,=5P=P<P8P=PJPDf9RGPGPF11CJR1D?D5P21A7H#F%;7167GPDf:R4P411C711CGR4D?3UP<P8P=f;RIPDf<R3P3PFPCPIE4P:P3P=PIC9'>D5X05,=5P=1A;H#F%;91693PDf=R;P;11C911C3R3D?3UP2%;?PDf>R9P9P>11C;R>D?9V?;P<P8P=f?R9PDf@RAPAPFPCP9E4P:PAP=P9C9'>D5X05,=5P=%;6PDfAR6P6P1PCPAE49VJAP216G6PDfBR2P2P4PCP6E4P<P8P=fCR6PDfDR4P4PFPCP6E4P:P4P=P6C9'>D5X05,=5P=16I6PDfER6P6P3PCP4E4P5P<P8P=fFR8PDfGR<P<PFPCP8E4P:P<P=P8C9'>D5X05P;1A;H#F%;;RH16;6R<PDP8P8P>PCP6E4RCP:P8P;P6C9#SR>'3RD'3RF'3PGPHPFP?P<PDP7PCP>P=P:P8P;P6P?DiCECECECECkW<W:P7P=O2n2001000000121000000W1W;P7P=O2n2001000000121000000W1W8P7P=O2n2001000000121000000W1X05P7P=O2n2001000000121100000bDW9W>W=XG5XF5WEo"). Qed.
+  intros h nZ tot HnZ Htot Hband.
+  destruct (free_gap_of_slack (vm_reserved h ++ vm_maps h) nZ HnZ) as (g & Hal & Hfl & Hc & Hfree).
+  { rewrite gap_weight_sizes. lia. }
+  exists g. split; [exact Hal|]. split; [exact Hfl|]. split; [exact Hc|]. split; [exact Hfree|].
+  apply hint_placement_ok_b_of_floor. exact Hfl.
+Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -1095,40 +1108,109 @@ Proof.
 ltac2:(KReplay.run1 (kr_t_AsanPlacement ()) ["FPX_1"] "h01fh11lh21xh31Ah42H0h52Hxh61Hh72H1h81Kh91Yp;1p;2p;3p;4p;5p;6p-1g00gbR0p4p710R1p8p1000Gp4p70R2g0017R3p4p710R4p8P2P1p8P2p1001Qp4p710R5p8P2p1001mp4p710R6p8P2p1002Kp4p7210R7p8P2p1002hp4p710R2p8p1003Fp6051000R8p1004Op4p710R9p8p1005Ep6051000R:P9p8P:p1006Op4p710R;p8P:p10071p4p710R<p8p1007Np4p70R=P4p8P=P1p8P=P5p8P=P9p8P=p1008<p4p710p8P=P6p8P=p1008Yp4p710p8P=P7p8P=P8p8P=p1009Tp4p710p8P=P:p8P=p100:Np4p710p8P=P2p8P=P<p8p100;Jp4p7210R<P4p8P<P1p8P<P5p8P<P6p8P<P7p8P<P2p8P<p100<6p4p710p8p100==p6051000R<P1p8P<P;p8P<g00>Dp4p710R<p8p100>`p4p70R;P4p8P;P1p8P;P5p8P;P6p8P;P7p8P;P2p8g00@2j12Tg00BIj1>Tg00IAj17Tg00h9j26Tg00Q3j15Tg01gQj3;Tg012lj33TP0j30Tg00AnR0j24Tg01iPj48Tg01inj59Tg01i7j3:Tg01jKj6=TP3j3<Tg00e:R3f0R2g00eZ3<p=1g00G]#2#2#2#2#2#2#>#7R;/6;R;P3[%5;g00FaR7f2R6f1R5;;2f3R1f4R4=3;1R=P6P5P2f5R:=3;490;2P3\2R3%56R8P0A31629015A0465P1P6O1#1'4[R0A0152P6P5O1#1'4A34159046R9[A0:16P4P1O1#1'4\9P1P6P5P2C8P5n2001000000120000000W1X25W0X3<P0^18^25^03^3<P2P;f7R<P6f6R3P5O5A0;63P<P6O1#1'4A0;1<R<f8P1O1#1P<f9P4O1#1P5W7X4<P2D9b5b4W5X2;A:;=1eE=W6X97W8W1W0o"). Qed.
 
 (* [comment removed for export] *)
+Lemma ledger_split_window_free_w : forall l K Y w,
+  0 <= K -> 0 < w -> K + w <= Y -> Y < 2 ^ 64 ->
+  ledger_split l K Y ->
+  region_free l (Z_to_bv 64 (Y - w)) (Z_to_bv 64 w) = true.
+Proof.
+  intros l K Y w HK Hw HY HY64 Hsplit.
+  apply region_free_intro. intros b s Hin.
+  unfold iv_overlap. rewrite !fg_u64_lit by lia.
+  pose proof (bv_unsigned_in_range 64 s).
+  destruct (Hsplit b s Hin) as [Hlow|Hhigh].
+  - apply andb_false_iff. left. apply Z.ltb_ge. lia.
+  - apply andb_false_iff. right. apply Z.ltb_ge. lia.
+Qed.
+
 Lemma ledger_split_window_free : forall l K Y nZ,
   0 <= K -> 0 < nZ -> K + 2 * nZ <= Y -> Y < 2 ^ 64 ->
   ledger_split l K Y ->
   region_free l (Z_to_bv 64 (Y - nZ)) (Z_to_bv 64 nZ) = true.
 Proof.
-ltac2:(KReplay.run1 (kr_t_AsanPlacement ()) ["FPX_1"] "h04__x1h14__x2h24__x3h32H0h47__arithh54__ffh67__sat65h77__sat66h88__varmaph95__with:1Hh;2Hah<4__x4h=4__x5h>2b1h?2b2h@1xhA1yhB1zhC2HKhD2HYhE4HY64hF5HhighhG3HinhH4HlowhI3HnZhJ6HsplithK1KhL1YhM1bhN1lhO2nZhP1ohQ1sp;1p;2p;3p;4p;6p;7p;8p-1g00gbR0p4p710R1p8p1000Gp4p70R2g0017R3p4p710R4p8P2P1p8P2p1001Qp4p710R5p8P2p1001mp4p710R6p8P2p1002Kp4p7210R7p8P2g002hR2p4p710R8p8p1003Fp6051000R9p1004Op4p710R:p8p1005Ep6051000R;P:p8P;p1006Op4p710R<p8P;p10071p4p710R=p8p1007Np4p70R>P4p8P>P1p8P>P5p8P>P:p8P>p1008<p4p710p8P>P6p8P>p1008Yp4p710p8P>P7p8P>P9p8P>p1009Tp4p710p8P>P;p8P>p100:Np4p710p8P>P8p8P>P=p8p100;Jp4p7210R=P4p8P=P1p8P=P5p8P=P6p8P=P7p8P=P8p8P=p100<6p4p710p8p100==p6051000R=P1p8P=P<p8P=p100>Dp4p710p8p100>`p4p70R=P4p8P=P1p8P=P5p8P=P6p8P=P7p8P=P8p8g00@2j1>Tg00BIj1{Tg00IAj1hTg00h9j2_Tg00Q3j1ZTg00@Wj1UTg00M?j2LTg00A5j2^Tg00ARj29Tg01gQj3\Tg01S2j23Tg00Dbj2ATg00iSj4xTP0j3vTg00EHj20Tg00M\j25Tg014Ij22Tg00jlj2?Tg00Idj2gTg00CMj1eTg00AnR0j2ITg00?Vj26Tg00kJR8j2MTg00kdj2cTg01P3j2bTg01H;j2aTg01Hcj3`Tg00XPj1ETg00Xoj2BTg00Zjj2JTg00PSj1]Tg00[Vj3HTg00\6j2FTg00QSj1[Tg00\Tj4GTg00R1j1zTg00ROj1yTg00]Tj2DTg00^Zj3CTg00H\j1YTg00]2j1wTg00S:j2XTg00^7j3KTg01OPj3WTg00TAj2uTg00HBj2tTg00Tcj2pTP3j3TTg00UOj3oTg00Unj4nTg00n?j3mTg00oNj3lTg01kWj2iTg01l@j3jTg01IGj3kTg01Ijj2QTP2j6RTg00lFj4qTg01lij4rTg00ZAj3sTg00_=j4OTg00_hj7PTg00`Lj8NTg01>aj7dTg00G?R2f0R3'6p=41923p==f2R=f1R7'5/63p=7g00e:R6g00oh7T3p=1g00FaR5?s73p=:P5P7g012ER1P3COp=;P5P7g01B^P3COp=<P=g00aWR4g00b6R<P<g00bVR>P5P7P1P3COg00c6R1FPp=@f4R;P4P<P<P>f3R9P4P<P<P>P=P1FPP7P3GNp=8P7P4P<P<P>P3P1FPp=SP=P4P<P<P>P7P3Fdp=Vf6R1P4P<P<P>f5R:P;P9P4P<P<P>P=P7P3GNGNp=fg00G]R4#>R?#>R@#>#>#>#>RA#{RB#hRC/_CRD#Z%4=%=7%U?RE/L=RF=7;9%UARA,^ERG,9;RHf7RI?\1:f8RJ131:,AB1AB:PCPCP7P3Cxf:RK5vDP5f9RD/3JRL10B9RM10B='5RN,231ABD,0B,53,2M'?#1XB5P5PJ13KDRO/2N15O3,2M'?#1XB51gB710B7RO#4%eBRP,9O'IP;P9P=P7O3f;RO,6N16KM'MP810B;R8f<RN77M16O813NORM10B:RQ/58R8'215MO,2Q'?#1P3f=RM,68P01?73#1%1=%17R8'MRR[%13,M81?=7#1[R81?9=#1\R1c73P3n2001000000120000000X?6X>6RRP8^?6^>6R8P3f>RS/3MRT10BIRU10B1'5'2RV15TM,2URT%1VRW%1TRXP01273#1167=RY[163712=7#1[RZ129=#1\Y1b73P3n2001000000120000000XA5X@5RYPZ^A5^@5RZP3f?R[/3SR\10BJR]/5U1aEARU%=E%4A%=G[[R^%4ER_g010HR`A`EA7UW;RA%4G\`^;_R_P010BDR`#4Ra19`PR`10BORb10BKfBRcfARd'3Re37PI%4bRf10BN/9PRPg00dNRgg00fWRh#ERi#ERj#ERk,B5Rl1B5jRj1B5iRi1B5hRh':':':g00g6Rm'JRn%]gRo3H%ZgRpP5P51F5;P=%[5RqCGP7P51F5:P9PqCGCG%z5Rq%y5RrPr1D54Rs1D5?Rt5C5Ru%Y?,D5R?';%w<R<PrPr1X5ERv1D5@R@5K59C5?%Y4,D5R4';P<PrPr1X52R?/<@P<AW54@9@ruD8D8D81ur>R>P3P=g00eZRu,t61p3==T6udAo527CnR2b5b8b9X05X15X25X<5X=5A737;1LE;=7:9%=:13:1979;[[[^05^15^25^<5^=5P3fGfER1fFRu10BS10B[R[PDPcfCO8b4W3W:P7P3O2n2001000000121000000b6b7O3b33mO3b3WHP3O116NQPRP8P3PVPTPYPZP3P]15\SPUP^PAP_P0PaP`A7edbPIPoPpP51F5=P71F59CGRePqPrPr1;s4P<AW5stRd=C5t=@r4D8P>P2b5b8b9X05X15X25163=137=?7=9[^05^15^25P3P[P1PuPDO4b4X3PX:fP7P3O2n2001000000120000000b6b7O3b39lWXO3b3WFP3O1n200100000021100011000bPb:1ABJRX,0BPUP^PAP_%Ek,B5Rk1i5E=j5h,:i,:l':/Jm=HgoPpPePqPrPrAk5vBRl,<4P<PrPrAK5vs9C5t/;4P<PrPr1<?sP<PrPr1;?tP<A@r?s1<sl,SrRi5VrD8D8D8D8P>P2b5b8b9X05X15X2519=G1LE7=7=9%==%4;RE1IEH[[[[^05^15^25P3PNPMPOPIPJPDPKO7b4b6b7,QJER1ABLRE,0BPUP^PAP_1:jh,:k/Jm=Hgo9HgnPpPePqPrPiP<PrAK5vt9C54=@rsP<PrPr1<?tP<PrPr1;?4P<A@r?d1<dl,Sr5VrD8D8FfP>P2b5b8b9X05X15X25193GA79F7%=9%4:13;:R:#419:G'I[[[[^05^15^25P3PMPOPNPIPJPDPKO7b4b6b7,QLERPEPXP=P7Cq#1eWGXQCXMCCrWJWEWDWIWCXO5XL5XK5WNo"). Qed.
+  intros l K Y nZ HK HnZ HY HY64 Hsplit.
+  apply (ledger_split_window_free_w l K Y nZ); [lia|lia|lia|lia|exact Hsplit].
+Qed.
 
 (* [comment removed for export] *)
 Theorem null_hint_grant_above : forall h (a : word) nZ K Y,
   0 < nZ -> nZ mod page_size = 0 ->
   bv_unsigned a mod page_size = 0 ->
-  Y mod page_size = 0 -> Y <= bv_unsigned (vm_mmap_base h) ->
-  0 <= K -> K + 2 * nZ <= Y ->
+  Y mod page_size = 0 -> Y <= mmap_top h ->
+  page_size <= K -> K + 2 * nZ <= Y ->
   ledger_split (vm_reserved h ++ vm_maps h) K Y ->
   placement_ok_b h (bv_unsigned a) nZ = true ->
   bottomup_floor <= bv_unsigned a \/ Y - 2 * nZ < bv_unsigned a.
 Proof.
-ltac2:(KReplay.run1 (kr_t_AsanPlacement ()) ["FPX_1"] "p'0h04__x1h14__x2h24__x3h31Hh42Hah57__arithh64__ffh78__varmaph85__with91zh:3Hnoh;3Hplh<2H0h=2H1h>2H2h?2HBh@2HKhA2HYhB4HY64hC3HYBhD4HYalhE4HaAlhF3HflhG5HfreehH4HgAlhI3HgehJ3HlthK4HnAlhL3HnZhM4HnhfhN6HsplithO1KhP1YhQ6__sat0hR6__sat1hS1ahT1bi001bhU1ehV1hhW2nZhX1op;1p;2p;3p;4p;6p;9p;7p;8p-1p10000p4p710R0p8p1000Gp4p70R1g0017R2p4p710R3p8P1P0p8P1g001QR4p4p710R5p8P1p1001mp4p710R6p8P1p1002Kp4p7210R7p8P1g002hR1p4p710R8p8p1003Fp6051000R9p1004Op4p710R:p8p1005Ep6051000R;P:p8P;p1006Op4p710R<p8P;g0071R=p4p710R>p8p1007Np4p70R?P3p8P?P0p8P?P5p8P?P:p8P?p1008<p4p710p8P?P6p8P?p1008Yp4p710p8P?P7p8P?P9p8P?p1009Tp4p710p8P?P;p8P?p100:Np4p710p8P?P8p8P?P>p8p100;Jp4p7210R>P3p8P>P0p8P>P5p8P>P6p8P>P7p8P>P8p8P>p100<6p4p710p8p100==p6051000R>P0p8P>P<p8P>p100>Dp4p710p8p100>`p4p70R>P3p8P>P0p8P>P5p8P>P6p8P>P7p8P>P8p8g00@2j1>Tg00BIj1zTg00IAj1fTg00ARj20Tg00EHj23Tg00?Vj22Tg00@Wj1NTg00M?j27Tg00M\j2BTg00h9j2yTg01djj19Tg01edj1=TP=j3<Tg01gQj3pTg01mij3JTg01nmj1UTg00A5j2gTg00AnR=j2STg0204j1MTg01H;j2cTg01Hcj3bTg00XPj1QTg00Xoj2HTg00ZAj3PTg00Zjj2aTg00PSj1`Tg00[Vj3_Tg00Q3j1^Tg00\6j2OTg00QSj1]Tg00\Tj4LTg00R1j1\Tg00ROj1[Tg00]Tj2DTg00S:j2ZTg01IGj3xTg00_=j4KTg00]2j1wTg00TAj2tTg00HBj2YTg00Tcj2sTg00UOj3rTg00Unj4qTg01S2j21TP1j6ETg020oj3oTg021Ol9nTg00Dbj2;Tg00hYj3FTg022bj3ITg023dj3jTg024?j7iTg025Gj4TTg00kJR1j2RTg00n?j3hTg026Qj2kTg00H\j1lTg00^7j3mTg01OPj3GTg00^Zj3VTP2j3ATP4j6WTg00jMj2XTg00oNj3eTg00JWj2dTg00_hj7uTg00`Lj8vTf0R4g00cVR2'dp=5g00FaR8g00G?R>7A4p=:f1R7%M4'3p=612>4p=4g00e:R6g00eZR57A4p=?P7g00aWR0g00b6R3P3g00bVR<P4g00c6Fup=8P8P7g012EP4CKp=@f3R?P0P3P3P<f2R0P7P4Gvp=Cg01fZg00G]R;#>R9#>#>#>#>#>R:#zR@#fRA10>0%5?#:RBf5RC,3@#5#:f4RDf8RE,6@'2f6RF#4f7RG%N9RH/7E'B/2F1yAARAf;RI#9%=I3<?pEGf<RJ13@If:RK3J#?%UJ13@JRL#4%N:R:,gHRM,0L'Sf>RL#MRN#U13@NRN#410NM'S1cH:10>H%4:10>M[[%4HRNg010HROAbH:7UW4%4M\O^4NP=fARN,6@R:#410:M10LMP0fCR:,6@#4fDRP,6@RQ/0Mg00dNRRg00fWRS#QRT#Q,H81H8T1H8S5P85P8g00g6'a%`RRS3_%^RRRP81O80RTP7%]8CL%\8RU%[8RVP81D89R9g01B^RW1Z8HRX=x8@RYCK,8V%w3R3PV1D8;RZ/@9,8VP3P8PZPWPYCK,8VCCCC1tV<R<P4P01Y651s40#?dAr8>7CqRYb6b7b8X08X18107M1270100M[[^08^18P4fFRW,6@fBR[P7f=R\O4b5W<W3P7P4O2n2001000000121000000bQbR10IMP8%5JR]%5LR^'1#5%:4X98P8P>f?R_#5,14#5#:X98P8P>11>4#5#:X981Y8>P^PKEEP]PEEE11JL#5REAoJL2EE%:E%9N%=N5<AREPLP\P_PGPJPFP7PCM9n11\_,;@1;@_5FE#?P=13@NR=f@RE5J[#?13@[R_=I:NRG[RLAI[=EAJ:_N#?R_[13@:R2=IP[\_P[P=PE%4=10=M;jDP\PIPJFiP7n2001000000120000000PLP4PFO1PGP1g01SORG/22%9P%=P5<AP2P[PQCT13@PRQ,2GR217H:,1N/0Q'RP4fERN,3@RF,2GRG17HP,1[RL/0FRJ;h4XF2P4O1%9N%=N5<APQP:16@NCT1kLF12FL,RJP117HN,1:R:13@WR1'0121:17HW,1PRPfGR1,3@R:'0RLP4P4XJLP4O112:P17H1,1NfHR:,3@RP'0PSPRP8PTP71O8?CLRTPUPV%l;,D8R;Am8X95G8,@Z,8VP3AV8Z9AG8;9'@,8VCCP<PYb6b7b8X08X18X2817H7,10,241B7011?0'2[^08^18^28P4PWP:fIRH,3@P7O4b51BP111N1'2PSPRPTPUPV1@Z;,8VP3AG8Z9=V89/@;,8VCCP<PYb6b7b8X08X18X2812401170/B0/2?[^08^18^28P4fKR?,6@PHP1P[O4b511W:/B:fJRW,6@'2PC111HR1PKP7P4O4%9?%=?5<A1;@11;@H3Fg00ohRH5A6P6fLR1#9%=15<A11:W,;@1;@W3FAA64HXT6P4P5PKEWAA65HP6P5P6p-0P4POg00f:ROn0110000020000XU6g010dPHP4EWPO1XO4b3b:b:b>b='XWIP4O1n200100000021000011000bX9eGJWMP4O1n200100000021000011000b;b3bGbHbBb?b4W;WNWAW@WCXDBWEWKWLXP8XO8XW8WSWVo"). Qed.
+  intros h a nZ K Y HnZ HnAl HaAl HYal HYB HK HY Hsplit Hpl.
+  pose proof (Placement.mmap_top_lt_two_pow_64 h) as Htop64.
+  assert (HY64 : Y < 2 ^ 64) by (clear - Htop64 HYB; unfold two_pow_64 in *; lia).
+  (* every window of width [w <= Y - K] ending at [Y] is free: unchanged *)
+  assert (FIT : forall w, 0 < w -> w mod page_size = 0 -> K + w <= Y ->
+           gap_fits (vm_reserved h ++ vm_maps h) page_size (mmap_top h) w (Y - w)).
+  { intros w Hw Hwal Hroom. unfold gap_fits.
+    repeat split.
+    - rewrite Zminus_mod, HYal, Hwal. reflexivity.
+    - unfold page_size in HK |- *. lia.
+    - lia.
+    - exact (ledger_split_window_free_w _ K Y w ltac:(unfold page_size in HK; lia)
+               Hw ltac:(lia) HY64 Hsplit). }
+  (* This tree's placement_ok is the floor disjunction (Mh_0023.v:263-265), not
+     the model's existential, and its LEFT disjunct is this goal's left
+     disjunct -- so the gate is consumed before either side is chosen. *)
+  apply (placement_ok_b_iff h (bv_unsigned a) nZ
+           (proj1 (fg_u64_range a)) HnZ HaAl HnAl) in Hpl.
+  destruct Hpl as [Hfloor | Hnhf].
+  - left. exact Hfloor.
+  - right.
+    destruct (Z_lt_le_dec (Y - 2 * nZ) (bv_unsigned a)) as [Hlt | Hle];
+      [exact Hlt | exfalso].
+    assert (Hbase : mmap_top h <= bv_unsigned (vm_mmap_base h))
+      by (unfold mmap_top; apply Z.le_min_l).
+    destruct (FIT nZ HnZ HnAl ltac:(lia)) as (Hal & _ & _ & Hrf).
+    rewrite (Hnhf (Y - nZ) Hal ltac:(lia) ltac:(lia)) in Hrf. discriminate.
+Qed.
 
 (* [comment removed for export] *)
 Theorem null_hint_grant_step : forall h (a n : word) nZ K Y,
   0 < nZ -> nZ mod page_size = 0 ->
   bv_unsigned a mod page_size = 0 ->
-  Y mod page_size = 0 -> Y <= bv_unsigned (vm_mmap_base h) ->
-  0 <= K -> K < bottomup_floor -> K + 2 * nZ <= Y ->
+  Y mod page_size = 0 -> Y <= mmap_top h ->
+  page_size <= K -> K < bottomup_floor -> K + 2 * nZ <= Y ->
   ledger_split (vm_reserved h ++ vm_maps h) K Y ->
   placement_ok_b h (bv_unsigned a) nZ = true ->
   let Y' := Z.min Y (bv_unsigned a) in
   K < bv_unsigned a
   /\ (bottomup_floor <= Y' \/ Y - 2 * nZ + page_size <= Y') /\ Y' <= Y
-  /\ Y' mod page_size = 0 /\ Y' <= bv_unsigned (vm_mmap_base h)
+  /\ Y' mod page_size = 0 /\ Y' <= mmap_top h
   /\ ledger_split (vm_reserved h ++ (a, n) :: vm_maps h) K Y'.
 Proof.
-ltac2:(KReplay.run1 (kr_t_AsanPlacement ()) ["FPX_1"] "h04__x1h14__x2h24__x3h34__x4h44__x5h57__arithh64__x6h74__ffh88__varmaph95__with:2H4h;6heq_Y'h<2z4h=1Hh>4__p1h?4__x7h@2H0hA6HsplithB1YhC4__x8hD1ohE1zhF2E1hG2E2hH2E3hI2HKhJ4HKflhK2HYhL3HYBhM4HYalhN4HaAlhO6HabovehP3HflhQ3HfvhR3HlthS2HmhT4HnAlhU3HnZhV5HpagehW3HplhX3HqnhY2HrhZ1Kh[2Y'h\1ah]1hh^1nh_2nZh`2qaha2qnhb2qyp%0p&0p;1p;2p;3p;>p;4p;5p;6p;7p;8p-1p10000p4p710R0p8p1000Gp4p70R1g0017R2p4p710R3p8P1P0p8P1p1001Qp4p710R4p8P1p1001mp4p710R5p8P1p1002Kp4p7210R6p8P1g002hR1p4p710R7p8p1003Fp6051000R8p1004Op4p710R9p8p1005Ep6051000R:P9p8P:p1006Op4p710R;p8P:g0071R<p4p710R=p8p1007Np4p70R>P3p8P>P0p8P>P4p8P>P9p8P>p1008<p4p710p8P>P5p8P>p1008Yp4p710p8P>P6p8P>P8p8P>p1009Tp4p710p8P>P:p8P>p100:Np4p710p8P>P7p8P>P=p8p100;Jp4p7210R=P3p8P=P0p8P=P4p8P=P5p8P=P6p8P=P7p8P=p100<6p4p710p8p100==p6051000R=P0p8P=P;p8P=p100>Dp4p710p8p100>`p4p70R=P3p8P=P0p8P=P4p8P=P5p8P=P6p8P=P7p8g00@2j1@Tg00BIk10@Tg00IAk10;Tg00ARj21Tg00JWj2YTg00EHj23Tg0204j1gTg00?Vj20Tg00@Wj1jTg00M?j25Tg00h9k20PTg01djj1LTg01edj1QTP<j3lTg01gQj3=Tg01mik30GTP2j3WTg0276j2:Tg027Sm>0BTg00kJR2j24Tg00H\j1BTg028cj2oTg00Lbj2^Tg00HBj2TTg029nj2dTg00XPj1MTg00Xoj2uTg00PSk10OTg00Q3k10NTg00QSk10MTg00R1k10JTg00ROk10ITg00]Tk203Tg00S:j2kTg00]2k10HTg00TAk20FTg00Tck20ETg00UOk30DTg00Unk40CTg00M\j2tTg00n?k301Tg01kWk200Tg01l@j3sTg00WQj1~Tg00Woj2}Tg00YXj3_Tg01OPj3{Tg00^Zj3rTg01S2j2NTg00oNj3hTg00iSj4eTg00[Vj3]Tg00AnS00j2;Tg02:Pk20>Tg02;5j2xTg02;ak30=Tg02<@k30<Tg02<_j2vTg02=?k509Tg02>Nj6zTg02?Zk708Tg02@fk60ATg00nYj4aTg00ZAj3[Tg00Zjk202Tg00\6k207Tg00\Tj4\Tg00^7k306Tg00_=j4bTg00_hj7mTg00`Lj8nTg02B1k705TP1k604Tg01>=k60KTg01>ak70LTf0R1#@#@p=>g00FaR<g00G?R77W1p=Xf2R=f1R6't/01p=6g01SOR5/01p=71561,N=p=E%@1#Bp>0?%@1#B#@#Bp=KAW<61p=2AW<61,;=p=P10=6/;1p=C1u<1p=RA[<61g00g6R4+02p=FA[<=6/x1p=Hg00dNR0?]61p=8207<1p=SP<P=P6P1C\p=<P<P<f4R3f3R;P=C\P6P1C\p=G203<1p=IB06<61p=ZP<P6g00a0R>P1Cbp=cP=g00aWR:g00b6R8P8g00bVR9P<P6P>P1Cbg00c6R>Fmp=AP<P6g01B^P1Cbp=VP=P:P8P8P9P<P6g012ER?P1CbP>Fmp=?P3P:P8P8P9P;P:P8P8P9P=P>FmP6P1Gnp=Df6R@P:P8P8P9f5RAP3P;P:P8P8P9P=P6P1GnGnp=9A[<61p=JA[<619[<=p=O20214p=|P=P:P8P8P9P6P1K05p=iP6P:P8P8P9P1P>Fmp=qP;P:P8P8P9P=P6P1Gnp=f1N=6/t1p=yP<P3P;P<P=P6P1C\C\p=pP<P3P;P=P6P1J04p=UP6P:P8P8P9P1J0Kp=wP=P:P8P8P9P6P1K0Lp=`P<P6P?P1Cbp>0:g01fZg00G]R?#@R:#@R>#@R4#@#>RB$0@RC$0;RD117=g00cVRE,Y;#XS0113C@/YE#XQ01f9RF#g,3C,03107@f7RG/15f8RH%j:RI/5F;6G20PDDRJf=RK#L%QK3l?=FHg00e:RLf>RM13CKf;RN40Gg00eZRO3Wf:RP13CM':P<f@RQf?RRPKf<RSPNPPPFPHPGP@PAP;P=P6N>0B13CRRT#7AENIK/1T'4g01Ve%B:S02$0?#K#K#K#K#K#K#K#B#>#>#>#>#>#>#j9W<5fART,3CRU/oP%>B#>#>#jRB,^U/5B,2U1oMP1^MB/5B,2M1oTK1^TBRU/5B,2TfDRV,3CS03/^BP<PUP<1^VBP<fCRUfGRW,3C':RX,T<12HXRXePXfHRX,3CRY,dV11VY1:VYRZ;PV12ZY9CYV'4fERZfIR[,3CR\':R]P<g00fWR^#MR_#MR`#MRa#MRb#RRc%R_R_1u<^R^/F_3H&0O0Rd'8&0N0R0%SAS04&0M<Re7<@S05P=PeP6%S@S06?<@eS07%S3S087<;DGS09&0J<Rf&0I<RgPg%I:Rh203<?Ri1k<BRj'Z'c&0H8R8Pg%B?Rk#IRl%B>#IRm/ZjS0:5AgS0;P8Pg%Bk#IRn%I4/ZjR45AgS0<P8PgPg1k<7/VhP8%j?Ro,k<Rp=?giDDF9DD20Fg9R9P1P=1TLO20E1==WLOdB0D<76H0CROb7b8b9X0<X1<X2<X3<X4<X6<151B,2615@BRL,2;Rq12ALRr117310o3[[[[^0<^1<^2<^3<^4<^6<P1PAP@fKR7,3CRsPWP[P3PGPHPFfFRtO:b5b<b:b;10o1P2%7YS0=AEVItS0>/1Y%7\RuAEZIWRv/tBS0?/0\'4PHfJRw,3CRx#7RyAEtIXS0@?6BxS0A<011XPuP1O111v\S0BQ0A1:txRv,T<12NvRzePz1dWs11Ws1:WsRz;PW12zs9CsW'4fLR{,3CR|,:XR}P<200<IS0C=s<c%~?,}<R?%RaRa5_<R~%R`R`/J_S0D'J%~:,}<S0E%MbS0F#RRb5_<AOc~_1J_^R~#|S0G3H3H/8dP0Q09PfPgA?gpmS09P8PgQ0:9AghS0HP8PgPg1ci4P8PgPg1ZnjS0I,clP8PgPg1k<IS0J/Zh9{<iRp/VlP8Ar<pjS0K=?glS0LDDDDDDF9P9POb7b8b9X0<X1<X2<X3<X4<X6<10oA12=LRp15IAS0M,N3/1@15I@S0N,NA?6BG[\r\p[[^0<^1<^2<^3<^4<^6<P1PGPHPFfNRm,3CR:P{PwP@PPPNPSP3O;b5b<b:b;5hyWRP1O1n200100000021000011000Q0=Q0>?6BY'411t\%7PQ0?/0P'4S0?10PZS0=1YPB#XS0>%gw,3C,0PS0A%LwS0OPDPDP[PXCe%QwS0P5]J5lJ?=tPS0Q';S0R';S0S';S0T';P2PuQ0B11WxPF1T<z12SzS0BeS0UQ0B1dX|S0V11X|?P}X12}|9C|X'4S0WfMRu,3CRY,:[S0XP<Q0F#MS0F#M#RS0Y1J`^'FQ0Y/F~/8d'8P0%SGS0Y?<3eP=Q04P6%SHPHPeP;Q06DGDGPfPg%@k#IRk=?gh%I>R>Q0J/ZlRl5{<S0J=r<j=?gh5igP8PgQ09P8PgQ0;P8PgAAg>4S0ZP8PgQ0I9AghS0IP8PgAr<il=?g>RlP8PgPg1VikP81Vih,qgS0[DDF9F9F9P9POb7b8b9X0<X1<X2<X3<X4<X6<X?<XC<103615I=S0\,N;?6B6'410oH15FBRk,2312@k12Ak15IG=6AH11@P11GH[[[[[[[^0<^1<^2<^3<^4<^6<^?<^C<P1PHPFPPP5P7PufORk,3CRjP{P@PGPNPSPKPUPVO?b5b<b:b;X=yP1O1Q0@/1xQ0UQ0BQ0VQ0WQ0XP<Q0C=s<bA_<?cRy?Oa`200<B=s<^S0CQ0EQ0F#RS0F5_<Q0D,Jy7Ob'F3H/8dP0Q06?<3eP=PeP6Q0YPGPeP;Q04DGDGPfPgQ0;P8PgQ0ZP8PgQ0IP8PgQ0J/Vh,qgP8PgPlP8Q0[CfF9F9P9POb7b8b9X0<X1<X2<X3<X4<X6<X?<123LRlQ0M,N@/13Q0N=63G11A@[[\q[\p^0<^1<^2<^3<^4<^6<^?<P1PHPFPPP7PuPjP{PNPSPKP3PUO<b5b<b:b;W=P1O1n200100000021100011000Q0?Q0T20>Z\S0T10Z\11\Z'4S0?P210txS0N11xtS0M%7zAEWI[?6Bz'4P110WsS0JPX%7115I7=y[BS0I/01'4XE<S0Z%7X15Iw=yXBR\/0XA_<?`R?1F^c5H^,x^/8dP0%S=RpP6%S;Ry?<;eP;PeDpPfPgQ09P8PgQ0HP8Q0K=?giF9P9POb7b8b9X0<X1<X2<10o=15;B,2=AE=I;?6B=[[^0<^1<^2<P1P@P7P[PAPFO5b53hP}PdP0A<p6eS0KPfPgA?gihRoP8PoCfP9POb7b8b9X0<X1<S091016106=S0;[^0<^1<S0YP1PYP[P6O3b5:0=X|S0DDUW=P1O111sWS0EP|Q0ZP2%7|10\|%7YR\Q0I/0YS0I'4P;%7:S0ZAEwI{?6B:RsQ09Q0YP1PjP5P6O3b5401X@\P1O1Q0IQ0ZPdP0A<p6yPfPgQ0LP8Q0LCfP9POb7b8b9X0<X1<X2<AE1I6?6B=Q0\,N6?6B;[^0<^1<^2<P1PjPuP7P6O4b57hsW@P1O1n200100000021000011000P}PdP0Q0KPfPgQ0[P8PoCfP9POb7b8b9X0<X1<1116Q0;[^0<^1<P1P[PYP6O3b5:0<X|S0;DUW=P1O1n200100000021100011000bDQ0=Q0S1T<]12P]R]eS0SP]1dtxS0=11tx?Pvt12vx9Cxt'4S0[PzP<p-0RxAOa?~Q0CQ0F?Oa?'F5Hc1Ja^,FcS0C/8d'8P0Q08?<@eP=PeP6Q05P@Q06P;PeDpDGPfPg1wgHQ02#B#IR^=Agh5`gRvA?gnhAAg^nRs5`g5igP8PgAAgi^RiP8PgQ0HP8PgQ0<P8PoF9F9P9POb7b8b9X0<X1<X2<X3<X4<X6<W>S0<AP@A6Rp12A=R\9C=6'4126@R5103AS0H\r\q[[^0<^1<^2<^3<^4<^6<^>xRqP111[YRrP6PGPHPYP[PMP=P;PPPNO;b5b<b:b;Q0>Q0RQ0TQ0?P2Q0NQ0M1YzB#XP1Q0JPX1Y1B#XR2XE<RNPLP2XB<1v@BPXPFDUP}Q0DDUW=P1O1Q0EP|PN15GBPN1vGBP|PPDUP}Q0;DUW=P1O1n200100000021100011000bDQ0AQ0QQ0SP]Q0=Q0[PzP<AOa`~R~,Fc%|~/8d'8P0PyP=PeP6PePAQ04P3PeDpDGPfPg1wgGAAg^>R^5`gA?gn>=`gs5igP8PgPiP8PgPg20:>hP8PoDDF9P9POb7b8b9X0<X1<X2<X3<X4<X>xAPA3=123;9C;='4126A103;10;3[[[^0<^1<^2<^3<^4<^>xP1PrP6PYP[%gm,3CPMP=P;PVO9b5b<b:b;Q0OQ0PPtPZPSI09Q0O?=tZQ0P?=tZ';Q00%L7?=Wt%Q7?=Wt%L{PDPDP7PwCe%Q{5]J5lJ?=XSP1%Lu?=[X%Qm?=w[%LkR[PDPDPmPuCe%QkRk5]JP7PRP[P7PwPRP61:w:R[,T<12R[R[eRXP[1d7jRt117j1:7jRW;P712Wj9Cj7'4RjfP,3C,:{R{P<Q0<PqP1fR,3CRq,1mP6PSPKPqPmPUP=P;PRPQO;b5b<b:b;RWEzPkP7PRPmPuPkP7PwPRP1PWEzA6:Y710R:PXP[PtPjP{P<Q0C1J?_R?AOca?Q0G5Hb5Hb/8d'8P0Q08?<;eP=PeP6Q05Q077<@DGPfPg1V>h,qg=`g^=igvP8PgPiP8PgPgQ0:,c>P8PgPg1ch4P8PoDDDDF9P9POb7b8b9X0<X1<X2<X3<X4<X6<X>x11=6/;\/4pQ0H\l\l\5[^0<^1<^2<^3<^4<^6<^>xP110qmP6PSPKPmPqPUP=P;PRPQO;b5b<b:b;3hK08J0AWSWYP6P1O2n2001000000121000000bACaCaCaCaCabVbXbabbb`Q03,1T%7AfB9EQI?6EA'41YAE#X%gZ,3C%LZPDPDPVPUCe%QZ5]J5lJ?=TA5CA';9CAQ';';ebHbGbFbQbOb[WWWAWKWJWIWLWMWNWTWUXB<XZ<X_<X^DW\W]o"). Qed.
+  intros h a n nZ K Y HnZ HnAl HaAl HYal HYB HK HKfl HY Hsplit Hpl Y'.
+  pose proof (null_hint_grant_above h a nZ K Y HnZ HnAl HaAl HYal HYB HK HY Hsplit Hpl) as Habove.
+  pose proof bottomup_floor_val as Hfv.
+  (* page arithmetic: name the quotients so everything is linear *)
+  pose proof (page_multiple_eq _ HaAl) as E1.
+  pose proof (page_multiple_eq _ HYal) as E2.
+  pose proof (page_multiple_eq _ HnAl) as E3.
+  clear HnAl HaAl HYal Hpl. unfold page_size.
+  set (qa := bv_unsigned a / 4096) in *. set (qy := Y / 4096) in *. set (qn := nZ / 4096) in *.
+  clearbody qa qy qn.
+  assert (Hqn : 1 <= qn) by lia.
+  assert (Hpage : bottomup_floor <= bv_unsigned a \/ Y - 2 * nZ + 4096 <= bv_unsigned a).
+  { destruct Habove as [Hfl|Hlt]; [left; exact Hfl|right]. lia. }
+  split; [|split; [|split; [|split; [|split]]]].
+  - destruct Habove; lia.
+  - subst Y'.
+    destruct (Z.le_gt_cases Y (bv_unsigned a));
+      [rewrite Z.min_l by lia; right; lia | rewrite Z.min_r by lia; destruct Hpage; [left|right]; lia].
+  - lia.
+  - subst Y'. destruct (Z.le_gt_cases Y (bv_unsigned a)); [rewrite Z.min_l by lia | rewrite Z.min_r by lia];
+      [rewrite E2 | rewrite E1]; apply Z_mod_mult.
+  - lia.
+  - apply ledger_split_app_inv in Hsplit as [Hr Hm].
+    apply ledger_split_app; [eapply ledger_split_mono; [exact Hr|lia]|].
+    apply ledger_split_cons; [eapply ledger_split_mono; [exact Hm|lia]|].
+    right. lia.
+Qed.
 
 (* [comment removed for export] *)
 Definition kHighMemBeg : Z := 0x10007fff8000.
@@ -1142,13 +1224,18 @@ ltac2:(KReplay.run1 (kr_t_AsanPlacement ()) ["FPX_1"] "h01zp;1p;2p;3p;4p;6p-1p10
 Corollary kHighMemBeg_le : forall h (a : word) nZ Y,
   0 < nZ -> nZ mod page_size = 0 ->
   bv_unsigned a mod page_size = 0 ->
-  Y mod page_size = 0 -> Y <= bv_unsigned (vm_mmap_base h) ->
+  Y mod page_size = 0 -> Y <= mmap_top h ->
   kHighMemBeg + 2 * nZ <= Y ->
   ledger_split (vm_reserved h ++ vm_maps h) kHighMemBeg Y ->
   placement_ok_b h (bv_unsigned a) nZ = true ->
   kHighMemBeg < bv_unsigned a.
 Proof.
-ltac2:(KReplay.run1 (kr_t_AsanPlacement ()) ["FPX_1"] "h04__x1h17__arithh24__ffh38__varmaph45__with53Hflh64__x2h74__x3h84__x4h92HKh:2HYh;3HYBh<4HYalh=4HaAlh>3Hlth?4HnAlh@3HnZhA3HplhB6HsplithC1YhD1ahE1hhF2nZhG1ohH1zp;1p;2p;3p;4p;>p;6p;7p;8p-1p10000p4p710R0p8p1000Gp4p70R1g0017R2p4p710R3p8P1P0p8P1g001QR4p4p710R5p8P1p1001mp4p710R6p8P1p1002Kp4p7210R7p8P1p1002hp4p710R1p8p1003Fp6051000R8p1004Op4p710R9p8p1005Ep6051000R:P9p8P:p1006Op4p710R;p8P:g0071R<p4p710R=p8p1007Np4p70R>P3p8P>P0p8P>P5p8P>P9p8P>p1008<p4p710p8P>P6p8P>p1008Yp4p710p8P>P7p8P>P8p8P>p1009Tp4p710p8P>P:p8P>p100:Np4p710p8P>P1p8P>P=p8p100;Jp4p7210R=P3p8P=P0p8P=P5p8P=P6p8P=P7p8P=P1p8P=p100<6p4p710p8p100==p6051000R=P0p8P=P;p8P=p100>Dp4p710p8p100>`p4p70R=P3p8P=P0p8P=P5p8P=P6p8P=P7p8P=P1p8g00@2j10Tg00BIj1ZTg00IAj1STg00ARj22Tg00JWj2CTg00EHj23Tg0204j1VTg00?Vj21Tg00@Wj1>Tg00M?j28Tg00M\j2GTg00h9j2kTg01djj1iTg01edj1gTP<j3fTg01gQj3`Tg01mij3_TP2j3ATg00PSj1\Tg00Q3j1[Tg00QSj1YTg00R1j1XTg00ROj1WTg00S:j2:Tg00TAj2RTg00HBj2QTg00Tcj2NTg00UOj3OTg00Unj4PTg027Sl>MTg01S2j2<Tg00kJR2j2TTP4j6jTg00\6j2ETg00]Tj2;Tg00]2j1hTg00XPj1LTg00Xoj2?Tg00ZAj3JTg00Zjj2eTg00[Vj3dTg00\Tj4ITg00H\j17Tg00^7j3aTg01OPj3bTg00^Zj3cTg00_=j4KTg00_hj7^Tg00`Lj8]Tf0R4#0#0#0#0p=4g00FaR<g00G?R17A4p=@%04#0p=H%04#7p=U%74#7p=5%74#0p=FP<f1R=g012EP4CKp==P=g00aWR7g00b6R6P6g00bVR5P4g00c6F^p=9%74#0#7#0p=6P<P=g01B^P4CKp=Df3R0P7P6P6P5f2R7P=P4G]p=Bg01fZg00G]R3#0R;#0R>#4R:#ZR8#SR9121=g00cVR?,C7#@f4R@,38/C?#@1C0?#@f7R?#V,38,1@g02E>RA%>;RBf6RC'8'Gf5RD'11k99f9R9#i%g93f?`ACg00e:REf:RF1389f8RG3_g00eZRH3Ag00dNRI#\RJ%[IRK%Y<RL%X<RM%W<RN1:<1%H:#4#U#5#5#5#5#5#5#5#F#H#4#4#4#>R:,:<RO'='91RN5R5P4P71QEH1N47=AEHdAO<1=CPRHb2b3b4111:P4b1111AR1eP1f<R1f;REPFPAP9PGP?PCPDP@P4P0P7P=M>Mg01SORD138ERC'118BF,<9/2C'TP21381R2,1D18BE,<F/22f=R2,38RF,2AP411DFP<PDf?,38RD,14XH<P4%F;#6#6#6#6#6#6#6#5#4#4#4#>RCg01VeEjf>R9,38,1CPJPK1E<=PMPN1:<C1;<3RG'=,9N%h6R61DOG,9NCBP5PHb2b3b4X0<11C412:=[^0<P4f@,38P=O2b112ADeb5W5P4O118B1,<E/2Fg00fWRF#LRE#L,?<1?<E1?<F5J<5J<g00g6'e=dIJPKP<P<1E<@P7PLCIP=1E<0CIPMPN1;<>R>1:<B%73,;<5a<R35b<1;<;R;'D,9NP6PNAc<G3/=>,9NP61DG;,9NCBCBP5PHb2b3b4X0<X6<X7<X8<18B7,<0/2=18B0,G=/1@1270[[^0<^6<^7<^8<P4P2P9PDPAP=P?O6b1W>P4O1n200100000021100011000bGb9WAWBW:W;W<W=W?W@XC<XF<WDWEo"). Qed.
+  intros h a nZ Y HnZ HnAl HaAl HYal HYB HY Hsplit Hpl.
+  assert (HK : page_size <= kHighMemBeg) by (unfold kHighMemBeg, page_size; clear; lia).
+  destruct (null_hint_grant_above h a nZ kHighMemBeg Y HnZ HnAl HaAl HYal HYB HK HY Hsplit Hpl)
+    as [Hfl|Hlt]; clear HnAl HaAl HYal Hpl; [|lia].
+  rewrite bottomup_floor_val in Hfl. unfold kHighMemBeg. lia.
+Qed.
 
 End FPX_1.
 

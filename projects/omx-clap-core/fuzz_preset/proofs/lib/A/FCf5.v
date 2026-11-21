@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: __asan_set_shadow_f5 of omx-clap-core/fuzz_preset's ASan image, stated over the frame-area
    interface (a relation ARx with the poisoned-head set Hp). Ported from proofs/cgif/cgif_rgb_fuzzer/lib/YF8u.v
    (set_shadow_gen and its f8 stub instance) into the cgif_file-based core's names: YF8r's musl memset run is the
@@ -12,7 +13,7 @@
    invariant is NOT cgif's AR (preset's ARcf, fuzz_state's ARU) and for classes with no released cgif walk. A unit
    whose invariant IS cgif's AR should take the released AR-form walk (cgif_file A/AF0s.v, AF0u.v and their kin,
    relocated) and, if it needs this shape, obtain it through FCiface.fs_iface_AR plus
-   FCiface.astack_malloc_realizes_of_x (FCiface.v:168-200, Qed) for the malloc contracts; for set_shadow the AR form is the _x
+   FCiface.astack_malloc_realizes_of_x (FCiface.v:169-201, Qed) for the malloc contracts; for set_shadow the AR form is the _x
    form at AR_nohp by definition (cgif_rgb YG0e.v:48 with AR). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.

@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (2 recorded proofs replaced by written proofs (dequeue_self_eq, dequeue_other_eq)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -29,7 +30,9 @@ Lemma dequeue_self_eq sc g st :
   m_next (get_meta_rec st g) = Some g ->
   dequeue (LActive sc) g st = put_meta g (clr (get_meta_rec st g)) (set_active sc None st).
 Proof.
-ltac2:(KReplay.run1 (kr_t_ASlot_W5 ()) ["CANSEC1"] "p'0h01gh12sch22sth32GNh41bh51mh61oh71ri002nxi012pvi021xp;2p;1p;3p;6p;4g0000R0p4p70R1g000eR2p4p710p8P1p1001?R3p4p710R4p8P1P3p4p7210R3p8P1g001\R1p4p710R5p8g002:R6p4p70R7P4p8P7P3p8P7P5p8g002oj25Tg003lj1ETg004cj27TP2j31Tg005Ej1JTg005gj2Cj16Tg006bj2Aj19Tg007]j24Tg008Vj18Tg0094j1:Tg009kj30Tg00:dj1DTg00;\j2=Tg00<Uj33Tg00=Nj1BTg00>Fj3@Tg00?Aj3<Tg00@:j2?Tg00@Tj3ITP1j6;Tg00AYj2>Tg00BRj2GTg00CVj4FTg00D1j3HTg00DiR1f1R2f0R531p=2g00EbR71552#E1702516P6f2R3,70R4f3R8g00F@%J0R91C95'AW7R:g00G7R;P11708R<,45#8P;P1g00GWR=P0P1P5f4R>,58#:R?#9P=P0P1P?%63=05>P8n10110200021010100505P=P0P11538R?#:R@%62=058P3n10110200021010100n10110200021010000RA%D>RB'=/4<A3B5APAn0100000020000A3B93RAn010000002000030%B?A@>935<8R?'2X66P;g00H9R6P;P1%85P;P1%9@P=P0P1P@170>#6=058P3n10110200021010100508R>/=B/4<A3B<>P>n0100000020000PAn0100000020000908:/2?X4;P1A@892RA/53,C9,A9=<3A125?X511523R?#B=<3AR>,?1A03:AAIA3:E;P;P1%86P;P1%:?RA#9P=P0P1PA%6<=053P2n10110200021010100503R<%D8RA'=/44A3A4<P<n0100000020000R<A3A92R9n0100000020000903:/2>e1>33R=A1;=6A1088[A10331>88=1;6[1G331?03CFE;P;P11444#8P<P9n0100000020000903:/2>e%E?P5E;AHA32/2>eW3X21X00X17P3P2P5O3X21X00W1o"). Qed.
+  intros GN. unfold dequeue. rewrite GN. cbn [optr_eqb negb]. rewrite (proj2 (aptr_eqb_eq g g) eq_refl). cbn [negb set_head].
+  rewrite upd_meta_put. reflexivity.
+Qed.
 
 Lemma dequeue_other_eq sc g nx pv st :
   m_next (get_meta_rec st g) = Some nx -> m_prev (get_meta_rec st g) = Some pv -> nx <> g -> pv <> g ->
@@ -40,7 +43,13 @@ Lemma dequeue_other_eq sc g nx pv st :
     let st3 := set_active sc (Some nx) st2 in
     put_meta g (clr (get_meta_rec st g)) st3.
 Proof.
-ltac2:(KReplay.run1 (kr_t_ASlot_W5 ()) ["CANSEC1"] "p'0h01mh11oh21Eh31bh41gh52nxi002nxh62pvi012pvh72sch82sth92GNh:2GPh;2HAh<3NEnh=3NEph>1rh?3st1h@3st2hA3st3i021xp;2p;1p;3p;4p;5p;6p;8g002oj21Tg003lj1PTg004cj2<Tg000ej37Tg0094j1DTg00HYj1BTg00I2j2=Tg005Ej1WTg007]j23Tg008Vj1>Tg006bj1@j2GTg005gj1?j2MTg009kj30Tg00:dj1OTg00;\j2CTg00<Uj3;Tg00=Nj1HTg00?Aj38j2Nj1VTg00>Fj39Tg00@:j2ATg00Iij4KTg00JEj5JTg001\j64Tg00KTj4UTg001?j8ITg00AYj2FTg00BRj2TTg00CVj4STg00@Tj3ETg00L[j3QTg00D1j3RTg0000R0f1R1f0R237p=:f2R31M12'Gp=L1112,M3p=6f3R41G31;82p=5g00DiR5?712p=2g00EbR6g002:R71124#P1<03R837f4R9,11#D=778f5R8,:9#Bf6R:,:9#Bf8R;,=9f7R<,<0R=577P7P=f9R>g00F@R?%W0R@?L@2RAW>RBg00G7RCP51<0>RD,32RE#>PCP5g00GWRFP0P5P2f:RG,1<#DRH#@PFP0P5PH%?3=02;P<n10110200021010100502PFP0P511:>RH#D%?1=02<P:n10110200021010100n10110200021010000RI%OGRJ'C/3DA;J2IPIn0100000020000A;J@:RIn010000002000030%HHRH1<0;RKP;P=A6K:<=8<:RL/1;PLC5RL59GRM58>RN'2X17P71<0:ROPCP513KD#>PCP5%@2PFP0P5P2%?D=02<P:n1011020002101010050;RF/CJ/3DA;JKFPFn0100000020000PIn010000002000090>B/2NX17PCg00M`RFPCP5%>2PCP5%@=%?K=0<:50;RP/CJ/3DA;JKPPPn0100000020000PIn010000002000090>B/2NX3CP5P;P@PCP5%@ORI%?=RP=0:8RJ50<RQ/=>/3KA9>=QPQn0100000020000RR=6@;PRC5122NX05P5P<PO11J<PJC5P>P@PCP51=2G/3DA9GK2P2n0100000020000RS=6@>PSC5/2NX05P5A6=8:RS=8:8RTP>P@PCP5P;P=112;P2C5RU/=G/3DA9GKUPUn0100000020000RG=6@>PGC5/2NX05P7PKP>P@PCP5PEPMPLn0100000020000RE=6@>PEC5/2NX17PCg00H9R7P>P@PCP5P2PMPLn0100000020000RL=6@>PLC5/2NX3CP5P511T<,GORO=8<TRN99>=RL/1;RM9L@@RE,N;118;RG#HRV,N;PLPLP?P5\5RW%V;RXPXPEPVPW\?/AXP?11N;RXA7?AHX0?RHP?11T;RAPHP?PGPH1A?VPAP8P:PSP;1:;:RSP3P0P>P<P2CKO1W2%BSeDJE4PXPTP<POP;1:;<ROP4P0P>P;P2CKO1W2%BOeDJE4PMPNP>P=P;CUE4GI1A5LGIA8;ELA8;VLRV'2e1F;;REA7CE71:>>[1:;;1F>>=7C7[1T;;1A0;CSE4P;P@PCP513KKPLPNn0100000020000RN=6@;PNC5/2Ve1=8>P2E4PJAE8:PE4PQAEJ<IE4A0;BRAER;BE4PCP5%>FPCP5%O>R>,CQ/3KA;>=QPQn0100000020000RQA;>@8R@n010000002000090;B/2Ve1F<;AQ<;3E4PCP513=K#>PQP@n010000002000090;B/2Ve%DGP4E4%PGP9E4AR>;8PTP5PUP5f;RU?9D2P511;U#H=8U2bAb@b?'2eW;W=W<W:W9X85X60X50X40X76P9P4P3P1P2O5X85X60X50X40W7o"). Qed.
+  intros GN GP NEn NEp HA. unfold dequeue. rewrite GN, GP. cbn [optr_eqb negb]. rewrite (aptr_eqb_neq nx g NEn). cbn [negb get_head set_head].
+  rewrite !upd_meta_put.
+  match goal with |- context [optr_eqb (active ?s sc) (Some g)] => change (active s sc) with (active st sc) end.
+  rewrite HA. cbn [optr_eqb]. rewrite (proj2 (aptr_eqb_eq g g) eq_refl). cbv zeta.
+  f_equal. f_equal. rewrite rec_set_active. rewrite (get_meta_rec_put_other _ nx) by (intros E; apply NEn; symmetry; exact E).
+  rewrite (get_meta_rec_put_other _ pv) by (intros E; apply NEp; symmetry; exact E). reflexivity.
+Qed.
 
 Section DEQ.
 Variables (st : mstate) (m : mem) (g : aptr) (sc : Z).

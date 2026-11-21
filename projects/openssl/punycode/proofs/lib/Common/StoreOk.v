@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (wrap_mem_window_defined and store_ok_wrap_window over the launch input with the launch's stack window; new stack_window_reach, stack_window_depth, mmap_gap_sv48, mmap_gap_sv48_mod, stack_window_lo_ge_sp, page_round_up_Z_aligned, launch_base_gap_le, stack_window_lo_valid and store_ok_wrap_window_valid bound that window). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -111,29 +112,174 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma wrap_mem_window_defined : forall ph sp argv envp (x : word) uid hw rnd,
-  bv_unsigned sp - stack_max_size <= bv_unsigned x ->
+Lemma wrap_mem_window_defined :
+  forall inp mbase ph entry sp (x : word) draw,
+  stack_window_lo (in_kernel inp) mbase draw <= bv_unsigned x ->
   bv_unsigned x < bv_unsigned sp ->
-  wrap_mem ph sp argv envp uid hw rnd x <> None.
+  wrap_mem inp mbase ph entry sp draw x <> None.
 Proof.
-  intros ph sp argv envp x uid hw rnd Hlo Hhi. unfold wrap_mem.
-  destruct (stack_to_mem sp (entry_stack_image ph sp argv envp uid hw rnd) x) as [b|];
-    [discriminate|].
+  intros inp mbase ph entry sp x draw Hlo Hhi. unfold wrap_mem.
+  destruct (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw) x)
+    as [b|]; [discriminate|].
   rewrite (proj2 (Z.leb_le _ _) Hlo), (proj2 (Z.ltb_lt _ _) Hhi).
   cbn. discriminate.
 Qed.
 
-Lemma store_ok_wrap_window : forall segs ph sp argv envp a n uid hw rnd,
-  bv_unsigned sp - stack_max_size <= bv_unsigned a ->
+Lemma store_ok_wrap_window :
+  forall segs inp mbase ph entry sp a n draw,
+  stack_window_lo (in_kernel inp) mbase draw <= bv_unsigned a ->
   bv_unsigned a + Z.of_nat n <= bv_unsigned sp ->
-  store_ok segs (wrap_mem ph sp argv envp uid hw rnd) a n = true.
+  store_ok segs (wrap_mem inp mbase ph entry sp draw) a n = true.
 Proof.
-  intros segs ph sp argv envp a n uid hw rnd Hlo Hhi.
+  intros segs inp mbase ph entry sp a n draw Hlo Hhi.
   assert (Hsp : bv_unsigned sp < 2 ^ 64) by apply bv_unsigned_in_range.
   apply store_ok_of_all; [lia|].
   intros x Hx. unfold wview.
-  destruct (wrap_mem ph sp argv envp uid hw rnd x) as [b|] eqn:Hw; [discriminate|].
+  destruct (wrap_mem inp mbase ph entry sp draw x) as [b|] eqn:Hw;
+    [discriminate|].
   exfalso. revert Hw. apply wrap_mem_window_defined; lia.
+Qed.
+
+Definition stack_window_reach : Z := 2244095.
+
+Definition stack_window_depth : Z := stack_max_size - stack_window_reach.
+
+Lemma mmap_gap_sv48 : forall kb,
+  mmap_gap Sv48 kb
+  = (let g := (stack_max_size + (stack_guard_gap_bytes kb
+                 + if kb_aslr kb then stack_rnd_max else 0))%Z in
+     if (g <? mmap_min_gap)%Z then mmap_min_gap else g).
+Proof.
+  intros kb. pose proof (stack_guard_gap_bytes_bounds kb) as Hgg.
+  unfold mmap_gap. cbv zeta.
+  rewrite Z.mod_small
+    by (unfold two_pow_64, stack_max_size, stack_rnd_max;
+        destruct (kb_aslr kb); lia).
+  assert (Hmax : mmap_max_gap Sv48 = 117281240296105%Z)
+    by (vm_compute; reflexivity).
+  rewrite !Hmax.
+  unfold mmap_min_gap in *. rewrite !Z.gtb_ltb.
+  (* the kernel's own overflow guard [gap + pad > gap] first: [pad] is
+     never negative, so it decides the branch and the remaining tests
+     are between a closed form and literals *)
+  destruct (kb_aslr kb); cbv beta iota delta [andb];
+  [ destruct (stack_max_size
+              <? stack_max_size + (stack_guard_gap_bytes kb + stack_rnd_max))%Z
+      eqn:Ein
+  | destruct (stack_max_size
+              <? stack_max_size + (stack_guard_gap_bytes kb + 0))%Z
+      eqn:Ein ];
+  try apply Z.ltb_lt in Ein; try apply Z.ltb_ge in Ein;
+  cbv beta iota delta [andb];
+  repeat (match goal with
+          | |- context [(?x <? ?y)%Z] =>
+              let E := fresh "E" in destruct (x <? y)%Z eqn:E;
+              [ apply Z.ltb_lt in E | apply Z.ltb_ge in E ]
+          end;
+          cbv beta iota delta [andb]);
+  unfold stack_max_size, stack_rnd_max in *; lia.
+Qed.
+
+Lemma mmap_gap_sv48_mod : forall kb,
+  (mmap_gap Sv48 kb mod page_size = 0)%Z.
+Proof.
+  intros kb.
+  assert (H4096 : forall x : Z, ((4096 * x) mod 4096 = 0)%Z)
+    by (intro x; rewrite Z.mul_comm; apply Z_mod_mult).
+  rewrite mmap_gap_sv48. cbv zeta.
+  unfold stack_guard_gap_bytes, mmap_min_gap, stack_max_size,
+    stack_rnd_max, page_size.
+  destruct (_ <? _)%Z;
+    [ replace (128 * 1024 * 1024)%Z with (4096 * 32768)%Z by reflexivity;
+      apply H4096 |].
+  destruct (kb_aslr kb);
+    [ replace (8 * 1024 * 1024
+               + (4096 * stack_guard_gap_pages kb + 1073737728))%Z
+        with (4096 * (264191 + stack_guard_gap_pages kb))%Z by lia
+    | replace (8 * 1024 * 1024 + (4096 * stack_guard_gap_pages kb + 0))%Z
+        with (4096 * (2048 + stack_guard_gap_pages kb))%Z by lia ];
+    apply H4096.
+Qed.
+
+Lemma stack_window_lo_ge_sp : forall inp (sp brk0 mbase : word) draw,
+  entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase draw) inp ->
+  (bv_unsigned sp - stack_max_size
+   <= stack_window_lo (in_kernel inp) mbase draw)%Z.
+Proof.
+  intros inp sp brk0 mbase draw (_ & Hsp & _).
+  pose proof (launch_sp_le_top inp (ed_top draw) sp Hsp).
+  unfold stack_window_lo.
+  apply Z.le_trans with (bv_unsigned (ed_top draw) - stack_max_size)%Z;
+    [lia | apply Z.le_max_l].
+Qed.
+
+Lemma page_round_up_Z_aligned : forall n,
+  (n mod page_size = 0)%Z -> page_round_up_Z n = n.
+Proof.
+  intros n Hn. unfold page_round_up_Z, page_size in *.
+  apply Z.mod_divide in Hn; [|lia]. destruct Hn as [k Hk]. subst n.
+  replace (k * 4096 + 4096 - 1)%Z with (k * 4096 + 4095)%Z by lia.
+  rewrite Z.div_add_l by lia.
+  replace (4095 / 4096)%Z with 0%Z by reflexivity. lia.
+Qed.
+
+Lemma launch_base_gap_le : forall kb mbase,
+  valid_launch_base Sv48 kb mbase ->
+  (bv_unsigned mbase + stack_guard_gap_bytes kb
+   <= va_stack_top Sv48
+      - (if kb_aslr kb then 0x407ff000 else 8 * 1024 * 1024))%Z.
+Proof.
+  intros kb mbase (r & Hr & _ & _ & Heq).
+  pose proof (stack_guard_gap_bytes_bounds kb) as Hgg.
+  rewrite Heq. unfold mmap_base_of.
+  assert (Hdiv : (page_size
+                  | va_stack_top Sv48 - mmap_gap Sv48 kb - page_size * r)%Z).
+  { apply Z.divide_sub_r; [apply Z.divide_sub_r|].
+    - exists 34359738368%Z. vm_compute. reflexivity.
+    - apply Z.mod_divide; [unfold page_size; lia|]. apply mmap_gap_sv48_mod.
+    - exists r. unfold page_size. lia. }
+  rewrite page_round_up_Z_aligned
+    by (apply Z.mod_divide; [unfold page_size; lia | exact Hdiv]).
+  rewrite mmap_gap_sv48. cbv zeta.
+  unfold mmap_min_gap, va_stack_top, sp_window_hi, stack_max_size,
+    stack_rnd_max, page_size in *.
+  destruct (kb_aslr kb); cbv beta iota;
+  repeat (match goal with
+          | |- context [(?x <? ?y)%Z] =>
+              let E := fresh "E" in destruct (x <? y)%Z eqn:E;
+              [ apply Z.ltb_lt in E | apply Z.ltb_ge in E ]
+          end;
+          cbv beta iota);
+  lia.
+Qed.
+
+Lemma stack_window_lo_valid : forall inp (sp brk0 mbase : word) draw,
+  valid_launch inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase draw) inp ->
+  stack_window_lo (in_kernel inp) mbase draw
+  <= bv_unsigned sp + stack_window_reach - stack_max_size.
+Proof.
+  intros inp sp brk0 mbase draw Hlaunch (Htop & Hsp & Hbase).
+  pose proof (launch_top_minus_sp inp (ed_top draw) sp Hlaunch Hsp) as Hd.
+  pose proof (launch_base_gap_le (in_kernel inp) mbase Hbase) as Hg.
+  destruct Htop as (_ & Hhi & Hlo).
+  unfold stack_window_lo, stack_window_reach, stack_max_size,
+    va_stack_top, sp_window_hi, stack_rnd_max, page_size in *.
+  destruct (kb_aslr (in_kernel inp)); cbv beta iota in Hg, Hlo;
+    apply Z.max_lub; lia.
+Qed.
+
+Lemma store_ok_wrap_window_valid :
+  forall segs inp mbase ph entry (sp brk0 : word) a n draw,
+  valid_launch inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase draw) inp ->
+  bv_unsigned sp + stack_window_reach - stack_max_size <= bv_unsigned a ->
+  bv_unsigned a + Z.of_nat n <= bv_unsigned sp ->
+  store_ok segs (wrap_mem inp mbase ph entry sp draw) a n = true.
+Proof.
+  intros segs inp mbase ph entry sp brk0 a n draw Hvl Hlau Hlo Hhi.
+  apply store_ok_wrap_window; [|exact Hhi].
+  pose proof (stack_window_lo_valid inp sp brk0 mbase draw Hvl Hlau). lia.
 Qed.
 
 (* [comment removed for export] *)

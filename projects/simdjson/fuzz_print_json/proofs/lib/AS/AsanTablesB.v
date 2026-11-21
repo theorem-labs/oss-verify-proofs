@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the ASan table gains the n_resx and p_resx fields, and the initial state is a function of the rseq flag. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List.
 From OSSVerify.Proofs.simdjson.fuzz_print_json.lib.AS Require Import AxSymExec3 AsanPlanCore.
@@ -10,7 +11,7 @@ Open Scope Z_scope.
 Import APC.
 
 Definition ASAN_B : atable :=
-  {| img_lo := 0x10000; img_hi := 0x6d6000; n_res := 4; shadow_off := 0x7fff8000;
+  {| img_lo := 0x10000; img_hi := 0x6d6000; n_res := 4; n_resx := 2; p_resx := 20; shadow_off := 0x7fff8000;
      a_entry := 0x5aee0; rw_lo := 0x171000; rw_len := 0x565000; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 11;
      x_imemset := 0x94ab8; x_imemcpy := 0x94a3c; x_memset := 0x169974; x_memcpy := 0x169570; x_memiszero := 0x95004;
      x_istrncpy := 0x94ee4; x_sealed := 0x11b83; x_popfree := 0x61590;
@@ -22,4 +23,5 @@ Definition ASAN_B : atable :=
 Definition ASAN_B_TEXT_LO : Z := 0x5aee0.
 Definition ASAN_B_TEXT_N : nat := 283733.
 Definition ASAN_B_MAIN : Z := 0xb115c.
-Definition asan_b_init : acs := init_acs_of ASAN_B.
+(* See the A twin: init_acs_of takes rz first, so this is a function of rz. *)
+Definition asan_b_init (rz : Z) : acs := init_acs_of rz ASAN_B.

@@ -1,0 +1,13 @@
+path	source
+# No row, and that is a decision, not an omission.  history.py beside this file finds 66 headerless files of this
+# unit by rule h1 -- first added carrying Anthropic's lines, headerless now -- and each of the 66 is exactly one
+# non-blank line, a re-export of a file of this unit's own proof library: 62 of the form
+# `From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require Export <name>.`, 2 from ...lib.Reusable.R and
+# 2 from ...lib.Reusable.Z (checked, 66 of 66).  The release lane ruled for this unit that those stubs take no
+# licence line, on Dispatch issue OSSV-276, comment fb7bfa70-6b80-4d69-ab52-1966fc1bc3c6, 2026-11-03: "The
+# history rule's re-export stubs take no line".
+# So the history rule names no file here, and made_from.py decides those 66 by what they share today, which is
+# that one line: written here, requirement 7 case 3, MIT, no licence lines.
+# curl/fuzz_fnmatch's record does give its one stub a line.  That is its lane's call for its unit; this unit's
+# differs on the record above, not by accident.
+# history.tsv beside this file is history.py's raw output, the evidence for the 66.

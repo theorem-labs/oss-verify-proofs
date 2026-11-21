@@ -2,8 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10-30 (lane F1 of the generic cf instance layer; integrator
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YFg4cf.v (commit af0289e23fe, CfF1 round-3 re-fit; file sha256 cd2cf2778978) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-   ReallocPrimary): the RELATION half of proofs/cgif/cgif_file_fuzzer/lib/YFg4.v at c5 30a1993588f (Enqueue's ROOM
+   ReallocPrimary): the RELATION half of proofs/cgif/cgif_file_fuzzer/lib/YFg4.v at c5 theorem-labs/oss-verify-proofs@6b32741d849a (Enqueue's ROOM
    arm), ported from cgif's AR / enq_pre to the cf instance's ARX_cf / enq_pre_cf, as A/AFf0cf.v ported AFf0.v.
    Kept, with these changes only: the Section's call premise is YGcfInstEnq.enq_pre_cf at the layer's walk relation
    YGcfInstBase.ARX_cf B IOK Hp (IOK, Hp, inst become Section Variables); M / Hk / Hst / Hnq / HSP / IMG read it
@@ -13,11 +12,13 @@
    EnqIfaceRoom.ir_post states), through YFf1cf.enq_finp_ARmcf, ALedger_same_cf, ahs_transfer_cf and Wf_cf of the end
    state from YGcfInstEnqG.enq_room_wf_cf (the tick's two lower bounds are spent there, nothing else).
    DROPPED: the walk half (FH_ok, tfib_enqueue_room_arm, last_cells, bsz_range, slot_present, chunk_atom8): it reads
-   the walk's own size bound (YFgp.v:97 fh_Hnn, 1 <= nn < 2 ^ 28), which is the unit's relocated walk (EnqGbase's
+   the walk's own size bound (YFgp.v:98 fh_Hnn, 1 <= nn < 2 ^ 28), which is the unit's relocated walk (EnqGbase's
    ir_walk at NMAXD), not this transport.
    IMAGE-SPECIFIC (cgif_file's image, TfibSyms): each unit relocates this file to its own image (preset A' / B':
    A11; reply A / B: lane W), as A/AFf0cf.v was.
    rule 24: no function proved (kind: relational transport of the allocator relation over Enqueue's room arm). *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YFg4cf.v (CfF1 round-3 re-fit; file sha256 cd2cf2778978) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -155,7 +156,7 @@ unfold zdisjoint in PT, PC, PD, PSTK, TC, TD, TSTK, CD, CSTK, DSTK. cbn [fst snd
 destruct C12 as [C1 C2]. destruct D12 as [D1 D2]. splits; assumption.
 Qed.
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* The walk's entry hypotheses (YFg4.v:86-221, ported): YFgp.free_hyps (at commit de1e889fb0f: fh_Hnn reads the      *)
+(* The walk's entry hypotheses (YFg4.v:86-221, ported): YFgp.free_hyps (fh_Hnn reads the      *)
 (* caller's inclusive guard nn <= kQuarantineMax) from enq_pre_cf at ARX_cf, through YFfqcf's memory facts.          *)
 Lemma HQL : qloose X.
 Proof. destruct ENQ as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & QL & _). exact QL. Qed.

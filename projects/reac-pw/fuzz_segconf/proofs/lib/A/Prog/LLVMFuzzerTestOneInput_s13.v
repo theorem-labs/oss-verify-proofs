@@ -4,13 +4,14 @@
 (* Modified by Theorem Labs, 2026-10: the head of the top loop of LLVMFuzzerTestOneInput's ASan walk (plugin-hostd/fuzz_command, 0x865f4 .. 0x86694: the header bytes, the cases r = 1, r = 2 and r >= 3, the 8192 clamp), from LT_LH_stmt's state to the mid point LH_M1_stmt, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh6.v (a segment lemma from one point of the function to the next, its seed lemma cl_seedX) and A/ACbk.v (the walk through the branches). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/LLVMFuzzerTestOneInput_s23.v, with its module paths, module names and numbers changed; 990 of its 1070 lines of code are new or changed and 452 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_s14.v, with its module paths and module names changed; 304 of its 340 lines of code are new or changed and 1034 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan image A (fuzz_segconf.asan, pin sha256 48c5355bdacb): segment S03 of the walk of the
    test harness's entry function LLVMFuzzerTestOneInput (0x84d34), file group _s13: from the cut K84f98
    (0x84f98, calloc(1, 9236) returned m) to the file loop's head K85024 at turn 0 (0x85024), the statement
    lt_seg_S03_stmt of LLVMFuzzerTestOneInput_defs.v.
 
-   proves function LLVMFuzzerTestOneInput (reuse search: origin/main@6e24fa4d602c origin/ossv/recipes@3abc3740de97
-   origin/ossv/candidates@ee89628c9971 origin/release/pau-projects-recipes@b6a0088adcb4 / the stream's proof index
+   proves function LLVMFuzzerTestOneInput (reuse search: origin/main origin/ossv/recipes
+   origin/ossv/candidates origin/release/pau-projects-recipes / the stream's proof index
    LLVMFuzzerTestOneInput + four-ref git grep; checker (fresh, read-only): CONFIRM; none: written new)
 
    The code (dis/LLVMFuzzerTestOneInput.fuzz_segconf.asan.s lines 155-189):
@@ -30,7 +31,7 @@
    bytes and m lie outside them (AR_sep_law, in_app, off_img, sep_blocks), so lt_img needs no image hypothesis.
    THE FORM: fuzz_command's lib/A/Prog/LLVMFuzzerTestOneInput_s41.v aw_st5 (a run to a point, the NULL tests decided
    by the blocks' facts) and _s65.v lt_rc_call_loc (a program call through cl_callS, the callee's contract
-   applied, the caller's facts carried past it) at origin/ossv/recipes 501c0d516c69.
+   applied, the caller's facts carried past it).
    Section hypotheses: the callee contract reac_segconf_init_contract (lib/A/Prog/reac_segconf_init_c.v) at every
    FP state, seg_sig_prog and ameter_fs_laws; AR_laws is YG0q.AR_laws_ok. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.

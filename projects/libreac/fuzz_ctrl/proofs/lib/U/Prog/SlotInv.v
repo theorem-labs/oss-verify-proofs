@@ -64,7 +64,7 @@ Import ListNotations.
 Open Scope Z_scope.
 
 (* frame_ubsan (U/FrameAPI.v) without its last conjunct, and that conjunct (the slot's obligation). frame_ubsan's
-   ms_debruijn_len B = 132 (7c15abed81: static_owned covers [ms_debruijn B - 108, ms_debruijn B + max 32 len)) is
+   ms_debruijn_len B = 132 (static_owned covers [ms_debruijn B - 108, ms_debruijn B + max 32 len)) is
    placed just before frame_allocator, so the positions of the earlier conjuncts stay as they were. *)
 Definition frame_facts (B : malloc_syms) (API : forall rc : RunCeil, AllocAPI B) (LS : lib_shape)
     (SH : sink_head) (SK : sink_syms) (ra empty : Z) : Prop :=
@@ -96,7 +96,7 @@ Definition slot_obligation (B : malloc_syms) (API : forall rc : RunCeil, AllocAP
     G_local_c B G GI ->
     (forall mem, G_img_c B G mem -> GI 0%nat mem) ->
     (forall (rc : RunCeil) (fx : FPState) (j : nat), (j < 4)%nat ->
-       @lib_contract_g fx rc LS B (API rc) SH SK G frame_RELRO GI j ENTRY ra empty SLOT_STACK) ->
+       @lib_contract_g fx rc LS B _ (API rc) SH SK G frame_RELRO GI j ENTRY ra empty SLOT_STACK) ->
     Statements.ubsan_halts.
 
 Lemma frame_ubsan_split : frame_ubsan -> exists B API LS SH SK ra empty,

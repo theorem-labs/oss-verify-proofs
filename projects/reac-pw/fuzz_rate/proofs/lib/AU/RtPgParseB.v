@@ -1,7 +1,7 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParse.v at afaa3cb55c1d for reac-pw/fuzz_rate's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParse.v for reac-pw/fuzz_rate's
    reac_rate_prop_parse: module paths and names changed to rate's (rt_parse_specX, the RtPgParse files), rt_parse_specX's
    extra premise 0 < Q is taken and not used, the theorems are named rt_parse_A_of_segs / rt_parse_A. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgParse.v at f7246d55e8c3 for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgParse.v for image B
    (fuzz_rate.asan-ubsan): the image is lib/AU/Img0.v's, the segment statements are lib/AU/RtPgParseBaseB.v's, the
    segment files are image B's twins (lib/AU/RtPgParse{E,F,L,LB,K,FV,T}B.v of A's RtPgParse{E,F,L,LB,K,FV,T}.v:
    RtPgParseLB.v is the twin of A's L file, RtPgParseLBB.v of A's LB file), rt_parse_specX's premise 0 < Q goes into

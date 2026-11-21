@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: fuzz_reply.asan-ubsan's __asan_memmove (0x52e5c), its site contract
    W_sites.v amemmove_realizes, as an instance of the Bz walk Bz/A/I_amemmovew.v amemmove_spec.
    The pieces composed:
-   - the walk: lib/B/Bz/A/I_amemmovew.v (pcap's walk, a working branch eabce720039, relocated to
+   - the walk: lib/B/Bz/A/I_amemmovew.v (pcap's walk, a working branch, relocated to
      fuzz_reply.asan as the lib/A source - of that source: the 220 words differ only in auipc/ld/jal - and from there
      to fuzz_reply.asan-ubsan) with its section hypothesis RIP = Bz/A/R_isPoisoned.v rip_proof, and the internal
      memmove lib/B/Bz/A/I_imemmove.v it calls;
@@ -14,10 +14,11 @@
    The program calls __asan_memmove directly (jal 0x52e5c), so there is no trampoline.
    No refusal exit: the walk proves both range checks pass (the quick check, or __asan_region_is_poisoned returning
    0), so it never reaches an error branch, the fatal stack trace or libunwind. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/RT_asan_memmove.v at commit 8fe76247f18, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (47 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/RT_asan_memmove.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (47 numerals; per-numeral report). *)
 (* Modified by Theorem Labs, 2026-10-30: comments only: the inherited header made true of this image-B file (its addresses
    named as fuzz_reply.asan-ubsan's, lib/B paths); the inherited fuzz_pcap -> fuzz_reply.asan claim is kept and marked as
    about the lib/A source. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGif1.v (a working branch 86aa4177b94, file sha256 8fca682385b3) onto omx-clap-core/fuzz_state's asan-ubsan image (fuzz_state.asan-ubsan, pinned sha256 5ac5ce0954f8; addresses read from its unstripped build b1566a1ca816); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGif1.v (a working branch, file sha256 8fca682385b3) onto omx-clap-core/fuzz_state's asan-ubsan image (fuzz_state.asan-ubsan, pinned sha256 5ac5ce0954f8; addresses read from its unstripped build b1566a1ca816); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
 (* Modified by Theorem Labs, 2026-10-29: the instance universe is fs's U := fun tr S => tr_admit (as_universe B) S tr (a Theorem Labs lane's UA, the S1a shape), by a Theorem Labs lane's fix list (FS-INSTANCE.md section 1.4, kind L); the proof text is unchanged. *)
 (* Modified by Theorem Labs, 2026-10-29: the depot / post statements at fs's premises (YFl0.tfib_depot_spec takes areq_ok S (KDepot tr); YG07.malloc_ok takes tr_admit), from a Theorem Labs lane's measured trial (a Theorem Labs lane's dgb-AG-trial-extra.diff); the iface depot field reaches areq_ok by tr_admit_len. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The cgif_file instance of the hit-g interface AGif0n.AIface: ARX = ARX_cgif (inst = TFIB_INST /\ AR), AOX = aowned,
    rpre = aregime /\ qmeter, mt = malloc, lpost = qtight, and the depot post dpost_cgif.  The fields come from the
    released route: the view from AGiy (YFiy), the shape from YFi3, the depot callee and the owned set from AGix (YFix),

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's segment list with the vDSO/vvar pair). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -24,7 +25,8 @@ Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
 Lemma must_exit_with_scfg_unfold : forall cfg code segs pc ph sp brk0 mbase rnd lim inp,
   must_exit_with_scfg cfg code (mkImage segs pc ph) lim (mkEntry sp brk0 mbase rnd) inp
-  = must_exit_at_cfg cfg segs code (init_config segs pc ph sp brk0 mbase rnd lim inp).
+  = must_exit_at_cfg cfg (run_segments segs inp sp mbase) code
+      (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp).
 Proof. reflexivity. Qed.
 
 Section MainThm.

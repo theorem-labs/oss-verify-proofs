@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the ASan+UBSan base theorem reads the launch facts of the input and both entries and passes the mmap base, AT_GID, the kernel build, the exec file name and the SIGPIPE disposition to the main-entry holes and the start-up bridge, with the start-up certificates computed at the run's CONFIG_RSEQ flag ([BothRegen]/[BothRegen2]); the budgeted theorem follows from it through the source-limit step. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import NArith List ZArith Lia Bool Classical_Prop.
@@ -30,13 +31,14 @@ From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Zq Require ACoreF5.
 Import OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Zq.LayoutPA OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Zq.AInv OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Zq.AInioec OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Zq.ALogic OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Zq.ARt_u2d OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Zq.AInit0 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Zq.AInitL OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Zq.ASma77w OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Zq.ASma77w.AFreeSF OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Zq.ASec0jn OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Zq.ACor4x6 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Zq.ACoresk OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Zq.ACorg10 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Zq.AWra9g1.AWrapTop OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Zq.AWra9g1 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Zq.ACoreF4.ACoreF3 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Zq.ACoreF5.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require AxSyioe Asanz3l AsanPlan.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require AsanPlan.
-From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Asanqlm Bothny9 AsanInit Starr0h Stargqr Bothr3g Bootk6w Bothjqf Bothg0u Both56i.
-Import OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AxSyioe OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanz3l OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan.Asanfbz OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanqlm OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothny9 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanInit OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Starr0h OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Stargqr OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothr3g OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bootk6w OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothjqf OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothg0u OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Both56i.   (* [comment removed for export] *)
+From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Asanqlm Bothny9 AsanInit Bothr3g Bootk6w Bothjqf BothRegen BothRegen2.
+Import OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.BothRegen OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.BothRegen2 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AxSyioe OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanz3l OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan.Asanfbz OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanqlm OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothny9 OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanInit OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothr3g OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bootk6w OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Bothjqf.   (* [comment removed for export] *)
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Zd Require Import DA_Am90 DA_Mwrv.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Zl Require Import A_AI16 A_Cocsh.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Zk Require Import AllocSpec LayoutP0 DriverKit.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib Require Import Ceiling.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib Require Import Acfg.
+From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.BudgetBridge Require LimStep.
 Import AX2. Import APC. Import AP. Import APS.
 Local Open Scope Z_scope.
 
@@ -80,12 +82,13 @@ Section AssemblyB.
     intros [rsp rbrk rmb rrnd] [asp abrk amb arnd] inp Hens Hent Hvalid.
     pose proof (valid_input_va_size _ Hvalid) as Hsv48.
     rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hens. rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent.
-    destruct Hens as [Hrsp [Hrbrk [Hrmb Hrfit]]]. destruct Hent as [Hasp [Habrk [Hamb Hafit]]].
+    destruct Hens as (Hrsp & Hrbrk & Hrmb & Hrfit & Hrlau). destruct Hent as (Hasp & Habrk & Hamb & Hafit & Halau).
     pose proof Hvalid as Hvalid0.
     (* [comment removed for export] *)
-    destruct Hvalid as (Hargv & Henvp & Hfs & Hrel & [Huid Hgid] & Hnofile & Hsigmask & Hhwcap & Habort & Hva).
+    destruct Hvalid as (Hargv & Henvp & Hfs & Hrel & Hreal & [Huid Hgid] & Hnofile & Hsigmask & Hhwcap & Habort
+                        & Hva & Hurand & Hlaunch & Hrdr & Hsigp & Hkern).
     pose proof (OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.E_As0ui.D_Mak2g.ref_realizes_spec_lib_run (BW:=bw_pinned) AI0 DK0 img_ok0 img_ok0_intro LIB0
-                  rsp rbrk rmb rrnd inp Hrsp Hrbrk Hargv Henvp Hrfit Habort) as SRC.
+                  rsp rbrk rmb rrnd inp Hrsp Hrbrk Hargv Henvp Hrfit Habort Hrdr Hlaunch Hrlau) as SRC.
     assert (NIL : spec (in_argv inp) (in_fs inp) []) by (eapply realizes_nonempty; [exact SRC | apply never_excused_pinned]).
     (* [comment removed for export] *)
     set (argv := in_argv inp) in *. set (envp := in_envp inp) in *. set (fs := in_fs inp) in *. set (stdin := in_stdin inp) in *.
@@ -101,75 +104,50 @@ Section AssemblyB.
       (* [comment removed for export] *)
       assert (HLIM_T : AInv.TLIM_MIN <= @AsanInit.blim AsanInit.BL_T).
       { cbn [AsanInit.blim AsanInit.BL_T]. rewrite AInv.TLIM_MIN_eq. unfold AsanInit.LIMIT, target_alloc_limit. lia. }
-      pose proof (@asan_main_hole_1 Clg DepotRepL asp HCEIL arnd abrk argv envp uid hw fs Hasp Hargv Henvp Hafit AsanInit.BL_T HLIM_T
+      pose proof (@asan_main_hole_1 Clg DepotRepL asp HCEIL arnd abrk amb argv envp uid gid hw (in_kernel inp) (in_execfn inp) fs
+                    Hasp Hargv Henvp Hafit Halau AsanInit.BL_T HLIM_T
                     (Hmalloc Clg) (Hfree Clg) (Hcalloc Clg) (Hrealloc Clg) (Hsmalloc Clg) (Hsfree Clg) (DINIT Clg) (AINIT Clg)
                     (AI16 Clg) (LIB Clg)) as H1.
-      pose proof (@asan_main_hole_2 Clg DepotRepL asp HCEIL arnd abrk argv envp uid hw fs Hasp Hargv Henvp Hafit AsanInit.BL_T HLIM_T
+      pose proof (@asan_main_hole_2 Clg DepotRepL asp HCEIL arnd abrk amb argv envp uid gid hw (in_kernel inp) (in_execfn inp) fs
+                    Hasp Hargv Henvp Hafit Halau AsanInit.BL_T HLIM_T
                     (Hmalloc Clg) (Hfree Clg) (Hcalloc Clg) (Hrealloc Clg) (Hsmalloc Clg) (Hsfree Clg) (DINIT Clg) (AINIT Clg)
                     (AI16 Clg) (LIB Clg)) as H2.
-      pose proof (@asan_main_hole_3 Clg DepotRepL asp HCEIL arnd abrk argv envp uid hw fs Hasp Hargv Henvp Hafit AsanInit.BL_T HLIM_T
+      pose proof (@asan_main_hole_3 Clg DepotRepL asp HCEIL arnd abrk amb argv envp uid gid hw (in_kernel inp) (in_execfn inp) fs
+                    Hasp Hargv Henvp Hafit Halau AsanInit.BL_T HLIM_T
                     (Hmalloc Clg) (Hfree Clg) (Hcalloc Clg) (Hrealloc Clg) (Hsmalloc Clg) (Hsfree Clg) (DINIT Clg) (AINIT Clg)
                     (AI16 Clg) (LIB Clg)) as H3.
-      pose proof (@asan_main_hole_4 Clg DepotRepL asp HCEIL arnd abrk argv envp uid hw fs Hasp Hargv Henvp Hafit AsanInit.BL_T HLIM_T
+      pose proof (@asan_main_hole_4 Clg DepotRepL asp HCEIL arnd abrk amb argv envp uid gid hw (in_kernel inp) (in_execfn inp) fs
+                    Hasp Hargv Henvp Hafit Halau AsanInit.BL_T HLIM_T
                     (Hmalloc Clg) (Hfree Clg) (Hcalloc Clg) (Hrealloc Clg) (Hsmalloc Clg) (Hsfree Clg) (DINIT Clg) (AINIT Clg)
                     (AI16 Clg) (LIB Clg)) as H4.
       (* [comment removed for export] *)
-      rewrite <- (AsanInit.init_config_inp_of _ _ _ _ _ _ _ _ inp Habort).
+      rewrite <- (AsanInit.init_config_inp_of _ _ _ _ _ _ _ _ inp Habort Hrdr Hsigp).
       exact (both_startup_main_A_entry (BL:=AsanInit.BL_T) asp arnd abrk amb argv envp fs stdin uid gid nofile sigmask hw groups net urandom
-               Hasp Hargv Henvp Hafit Huid Hhwcap (spec argv fs) NIL Habrk startup_cert_both startup_cert_both2 startup_cert_both2b
+               (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp)
+               Hasp Hargv Henvp Hafit Huid Hhwcap Hamb Hlaunch Halau (spec argv fs) NIL Habrk
+               (startup_cert_both _ (rseq_z_range _)) (startup_cert_both2 _ (rseq_z_range _)) (startup_cert_both2b _ (rseq_z_range _))
                (fun E R FULL model HC => H1 E R FULL model NIL HC)
                (fun E R FULL model HC => H2 E R FULL model NIL HC)
                (fun E R FULL model HC => H3 E R FULL model NIL HC)
                (fun E R FULL model HC => H4 E R FULL model NIL HC)).
+    - reflexivity.
+    - reflexivity.
   Qed.
 
-  (* [comment removed for export] *)
+  (* LPS 727298f3: the budget premise reads the run against [run_segments] and the walk's
+     budget world reads the binary's own segments, so the premise does not give the world.
+     The statement follows from [both_base] instead: off a budget refusal at the lower source
+     limit, the run at that limit is the run at [source_alloc_limit]
+     ([BudgetBridge.LimStep.run_scfg_relimit_error_free]/[_traces], as bzip2/bzip2_compress_target's
+     [ThmCompressAsan.join_san]); the target side is [both_base]'s, at [target_alloc_limit]. *)
   Theorem both_base_budgets :
     strong_universal_error_free_T_scfg_budgets ACFG SanitizerBudgets.lim_source SanitizerBudgets.lim_target SRC0 BOTHI.
   Proof.
-    intros [rsp rbrk rmb rrnd] [asp abrk amb arnd] inp Hens Hent Hvalid Hprem.
-    pose proof (valid_input_va_size _ Hvalid) as Hsv48.
-    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hens. rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent.
-    destruct Hens as [Hrsp [Hrbrk [Hrmb Hrfit]]]. destruct Hent as [Hasp [Habrk [Hamb Hafit]]].
-    pose proof Hvalid as Hvalid0.
-    (* [comment removed for export] *)
-    destruct Hvalid as (Hargv & Henvp & Hfs & Hrel & [Huid Hgid] & Hnofile & Hsigmask & Hhwcap & Habort & Hva).
-    pose proof (OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.E_As0ui.D_Mak2g.ref_realizes_spec_lib_run (BW:=bw_premise SanitizerBudgets.lim_source) AI0 DK0 img_ok0 img_ok0_intro LIB0
-                  rsp rbrk rmb rrnd inp Hrsp Hrbrk Hargv Henvp Hrfit Habort) as SRC.
-    assert (NIL : spec (in_argv inp) (in_fs inp) []) by (eapply realizes_nonempty; [exact SRC | apply never_excused_of_premise; exact Hprem]).
-    (* [comment removed for export] *)
-    set (argv := in_argv inp) in *. set (envp := in_envp inp) in *. set (fs := in_fs inp) in *. set (stdin := in_stdin inp) in *.
-    set (uid := in_uid inp) in *. set (gid := in_gid inp) in *. set (groups := in_groups inp) in *. set (net := in_net inp) in *.
-    set (nofile := in_nofile inp) in *. set (sigmask := in_sigmask inp) in *. set (hw := in_hwcap inp) in *.
-    set (urandom := in_urandom inp) in *.
-    unfold strong_equiv_error_free_budgets_scfg.
-    apply (spin_shape_strong_equiv_ef_budgets _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (spec argv fs)); [| | exact Hprem].
-    - exact SRC.
-    - pose (Clg := ceiling_of_sp (BW:=bw_pinned) asp Hasp).
-      assert (HCEIL : @alloc_ceiling Clg = bv_unsigned asp - 0x800000).
-      { unfold alloc_ceiling, Clg, ceiling_of_sp. rewrite stack_max_size_val. reflexivity. }
-      (* [comment removed for export] *)
-      assert (HLIM_T : AInv.TLIM_MIN <= @AsanInit.blim AsanInit.BL_T).
-      { cbn [AsanInit.blim AsanInit.BL_T]. rewrite AInv.TLIM_MIN_eq. unfold AsanInit.LIMIT, target_alloc_limit. lia. }
-      pose proof (@asan_main_hole_1 Clg DepotRepL asp HCEIL arnd abrk argv envp uid hw fs Hasp Hargv Henvp Hafit AsanInit.BL_T HLIM_T
-                    (Hmalloc Clg) (Hfree Clg) (Hcalloc Clg) (Hrealloc Clg) (Hsmalloc Clg) (Hsfree Clg) (DINIT Clg) (AINIT Clg)
-                    (AI16 Clg) (LIB Clg)) as H1.
-      pose proof (@asan_main_hole_2 Clg DepotRepL asp HCEIL arnd abrk argv envp uid hw fs Hasp Hargv Henvp Hafit AsanInit.BL_T HLIM_T
-                    (Hmalloc Clg) (Hfree Clg) (Hcalloc Clg) (Hrealloc Clg) (Hsmalloc Clg) (Hsfree Clg) (DINIT Clg) (AINIT Clg)
-                    (AI16 Clg) (LIB Clg)) as H2.
-      pose proof (@asan_main_hole_3 Clg DepotRepL asp HCEIL arnd abrk argv envp uid hw fs Hasp Hargv Henvp Hafit AsanInit.BL_T HLIM_T
-                    (Hmalloc Clg) (Hfree Clg) (Hcalloc Clg) (Hrealloc Clg) (Hsmalloc Clg) (Hsfree Clg) (DINIT Clg) (AINIT Clg)
-                    (AI16 Clg) (LIB Clg)) as H3.
-      pose proof (@asan_main_hole_4 Clg DepotRepL asp HCEIL arnd abrk argv envp uid hw fs Hasp Hargv Henvp Hafit AsanInit.BL_T HLIM_T
-                    (Hmalloc Clg) (Hfree Clg) (Hcalloc Clg) (Hrealloc Clg) (Hsmalloc Clg) (Hsfree Clg) (DINIT Clg) (AINIT Clg)
-                    (AI16 Clg) (LIB Clg)) as H4.
-      (* [comment removed for export] *)
-      rewrite <- (AsanInit.init_config_inp_of _ _ _ _ _ _ _ _ inp Habort).
-      exact (both_startup_main_A_entry (BL:=AsanInit.BL_T) asp arnd abrk amb argv envp fs stdin uid gid nofile sigmask hw groups net urandom
-               Hasp Hargv Henvp Hafit Huid Hhwcap (spec argv fs) NIL Habrk startup_cert_both startup_cert_both2 startup_cert_both2b
-               (fun E R FULL model HC => H1 E R FULL model NIL HC)
-               (fun E R FULL model HC => H2 E R FULL model NIL HC)
-               (fun E R FULL model HC => H3 E R FULL model NIL HC)
-               (fun E R FULL model HC => H4 E R FULL model NIL HC)).
+    intros enS enT inp HeS HeT Hi HB.
+    destruct (both_base enS enT inp HeS HeT Hi) as (ES & ET & TR).
+    assert (HlL : (SanitizerBudgets.lim_source <= source_alloc_limit)%Z) by (apply Z.leb_le; reflexivity).
+    split; [exact (proj2 (LimStep.run_scfg_relimit_error_free ACFG SRC0 enS inp _ _ HlL HB) ES)|].
+    split; [exact ET|].
+    intro tr. rewrite (LimStep.run_scfg_relimit_traces ACFG SRC0 enS inp _ _ HlL HB tr). exact (TR tr).
   Qed.
 End AssemblyB.

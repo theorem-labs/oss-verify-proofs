@@ -2,11 +2,12 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: segment S0 of the ASan walk of libreac/fuzz_scene's LLVMFuzzerTestOneInput
    on the input lengths n = 8: `s0_case_n8`.  Split out of lib/A/P_LLVMFuzzerTestOneInput_S0.v
-   (a working branch 67f0c71b18d): the proof is that file's walk to its case split (lines 624-899)
+   (a working branch): the proof is that file's walk to its case split (lines 624-899)
    and its block for n = 8 (lines 2488-2709).  New: the premise Hc8 is hidden from lia (`rs_hold`) until the
    case starts, and the steps marked `rs_hide_all` / `rs_hold` hide context facts from lia where no goal
    needs them.  P_LLVMFuzzerTestOneInput_S0.v assembles scene_seg_S0 from the twelve cases; the leaves, the
    Ltacs and the Section premises are P_LLVMFuzzerTestOneInput_S0_kit.v's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -28,7 +29,7 @@ PaRun PaShadow PaStep PaJournal SceneSyms SceneList SceneAddr SceneCode ScenePa 
 SceneBase SceneFrame SceneRo SceneImg YC1g YC1h YC45 YC85 YC88 YC4b YC81 YC1i ACbf SceneACja SceneACjr ACj1.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.A Require Import SceneAsanTop.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.A Require Import P_LLVMFuzzerTestOneInput_ctx J_StackSz P_check_step_frame P_LLVMFuzzerTestOneInput_seg.
-(* A Theorem Labs lane (at d1cfd1a8204): the two caller-side journal steps J_StackSz.v states, PROVED. *)
+(* A Theorem Labs lane: the two caller-side journal steps J_StackSz.v states, PROVED. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.A Require Import J_StackSzPf.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.A.Rt Require Import StackMalloc8Tbl.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.A Require Import P_LLVMFuzzerTestOneInput_S0_kit.
@@ -42,7 +43,7 @@ Open Scope Z_scope.
 Section b. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 (* gate 6h / the sink widening (a Theorem Labs lane, 2026-10-29 01:57Z): the sink head is a Section variable whose type is written
    fully qualified (lib/U/Reusable/YI16.v has the same short name), passed BY NAME to every term that takes it.  The
-   composition instantiates it with scene's own head (lib/A/P_LLVMFuzzerTestOneInput.v:150-151, ofl_head 0x5f6e90). *)
+   composition instantiates it with scene's own head (lib/A/P_LLVMFuzzerTestOneInput.v:151-152, ofl_head 0x5f6e90). *)
 Context (SK : OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable.YI16.sink_head). #[local] Existing Instance SK.
 #[local] Notation SEGS := (@pa_segs _ scene_listing PI_scene).
 #[local] Notation VAL := (@pa_val _ scene_listing PI_scene).
@@ -59,7 +60,7 @@ Hypothesis TLF : PALibF (L := scene_listing) (PI := PI_scene) B.
 (* A Theorem Labs lane: the glue's instances. *)
 Hypothesis ML : model_laws (as_universe B).
 Hypothesis FFL : frame_flag_lawP SEGS B.
-(* A Theorem Labs lane (968ea35e8f5 proves it; this lane TAKES it). *)
+(* A Theorem Labs lane (proves it; this lane TAKES it). *)
 Hypothesis stack_malloc_8_sz : astack_malloc_sz_realizes SEGS B PC_STACK_MALLOC_8 CID8.
 (* Two Theorem Labs lanes: __asan_set_shadow_f8. *)
 Hypothesis ASHF8 : SetShadowDef.aset_shadow_realizes SEGS B (SIGMA SS___asan_set_shadow_f8) 0xf8.

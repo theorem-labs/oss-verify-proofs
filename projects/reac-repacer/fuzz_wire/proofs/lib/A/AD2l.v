@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AD2l.v at 25e3d17bdb50, with its module paths changed, names TfibB -> GrantB, TfibSyms -> GrantSyms, TfibB_syms -> GrantB_syms, TfibB_ok -> GrantB_ok, TfibB_pair -> GrantB_pair and its addresses moved to libreac/fuzz_grant's ASan build. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/AD2l.v at 4f87de75d67 (donor image sha256 c2c7559b29bd), with its module paths changed, names GrantB -> WireB, GrantSyms -> WireSyms, GrantB_syms -> WireB_syms, GrantB_ok -> WireB_ok, GrantB_pair -> WireB_pair and its addresses moved to reac-repacer/fuzz_wire's ASan build; the proof of WireB_syms has no as_dhash case. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AD2l.v at theorem-labs/oss-verify-proofs@6b32741d849a, with its module paths changed, names TfibB -> GrantB, TfibSyms -> GrantSyms, TfibB_syms -> GrantB_syms, TfibB_ok -> GrantB_ok, TfibB_pair -> GrantB_pair and its addresses moved to libreac/fuzz_grant's ASan build. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/AD2l.v (donor image sha256 c2c7559b29bd), with its module paths changed, names GrantB -> WireB, GrantSyms -> WireSyms, GrantB_syms -> WireB_syms, GrantB_ok -> WireB_ok, GrantB_pair -> WireB_pair and its addresses moved to reac-repacer/fuzz_wire's ASan build; the proof of WireB_syms has no as_dhash case. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require Import YG00 YG01 YG0f.

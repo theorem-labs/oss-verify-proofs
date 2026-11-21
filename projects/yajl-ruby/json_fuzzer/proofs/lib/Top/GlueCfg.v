@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (realizes_spec_cfg over run_segments, the binary's segments plus the vDSO pair). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -22,16 +23,19 @@ Definition realizes_spec_cfg (segs : list Segment) (pc : N) (ph : PhdrInfo) (lim
            (T : ProcInput -> TSet) : Prop :=
   forall en inp,
     valid_entry (mkImage segs pc ph) en inp -> valid_input inp ->
-    behaves_cfg cfg segs
-      (init_config segs pc ph (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) lim inp)
+    (* LPS 08b1429: the run's segments are the binary's plus the vDSO pair *)
+    behaves_cfg cfg (run_segments segs inp (en_sp en) (en_mmap_base en))
+      (init_config (run_segments segs inp (en_sp en) (en_mmap_base en)) pc ph
+         (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) lim inp)
       (T inp).
 
 (* [comment removed for export] *)
 Lemma realizes_spec_cfg_intro : forall segs pc ph lim T,
   (forall en inp,
      valid_entry (mkImage segs pc ph) en inp -> valid_input inp ->
-     realizes_cfg cfg segs
-       (init_config segs pc ph (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) lim inp)
+     realizes_cfg cfg (run_segments segs inp (en_sp en) (en_mmap_base en))
+       (init_config (run_segments segs inp (en_sp en) (en_mmap_base en)) pc ph
+          (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) lim inp)
        (T inp)) ->
   realizes_spec_cfg segs pc ph lim T.
 Proof. intros segs pc ph lim T H en inp HE HI. apply realizes_cfg_behaves. apply H; assumption. Qed.

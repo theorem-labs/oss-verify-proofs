@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: lib/B/W_drain_join.v, the MEMCHR JOIN of the image-B (fuzz_reply.asan-ubsan)
    walk of fuzz_reply's drain.  Proves no function (kind: segment lemma): the stage lemma dr_memchr_join, over
-   lib/B/W_drain_cx.v's cut predicates (a working branch 789597341d1; that file is not edited).
+   lib/B/W_drain_cx.v's cut predicates (a working branch; that file is not edited).
    B's line loop re-enters at 0x8395c, and both DLL (0x8399c) and DLR (0x83e34) are reached from the ONE memchr at
    0x83990 (W_drain_cx.v:38-40), so DROP (DE 0x838a0 -> 0x8395c, with p = 0) and NEXT (DLN 0x839d4 -> 0x8395c) both
    end in the cut DJ below and take dr_memchr_join.  DJ is DLN's text (dregs_line, dinband, dbound, DLC, dlfut) with
@@ -18,13 +18,14 @@
    No UBSan trap on this stretch (W_drain_cx.v:121-185 lists none here); the two shadow checks are decided by the
    runner from the table block's shadow (sh_ok of [SA, SA + 56)).
    STRUCTURE PORTED FROM the older halts-level walk of the same image, a working branch
-   1c09e330abe lib/B/Prog/drain_p_line_test.v (the memchr test: one site, found / not found) and
+   lib/B/Prog/drain_p_line_test.v (the memchr test: one site, found / not found) and
    lib/B/Prog/drain_p_lsh.v (the line head's shadow checks); nothing is copied, the vocabulary (SRr over AR, journal
-   ajournal_gx, symbolic seats) is this framework's, and the memchr call follows lib/B/W_next_line.v:581-707.
+   ajournal_gx, symbolic seats) is this framework's, and the memchr call follows lib/B/W_next_line.v:582-708.
    ARx FORM (an internal work row): Section cx states the cut DJ_x and proves dr_memchr_join_x : dr_memchr_join_stmt_x over any
    allocator relation ARx (W_drain_cx_x.v's cut predicates, Section c header plus HP0), its journal at W_contract_x.v's
    DRAIN_STK_x; the AR walk (Section c) is unchanged.  The memchr call takes W_sites_x.v's amemchr_realizesM_x through
    dj_aentry_of_memchrM_x, the ARx twin of W_next_line.v's aentry_of_memchrM. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

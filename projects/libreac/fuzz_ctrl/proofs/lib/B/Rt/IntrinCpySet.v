@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YE6k.v .. YE6s.v, YE2q.v, YE6t.v .. YE6v.v and YE2r.v (b6a0088adc), one Module per file in this one file, with its module paths changed, names TfibSyms -> CtrlTSyms and its addresses moved to libreac/fuzz_ctrl's ASan-UBSan build (image B). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YE6k.v .. YE6s.v, YE2q.v, YE6t.v .. YE6v.v and YE2r.v (theorem-labs/oss-verify-proofs@6b32741d849a), one Module per file in this one file, with its module paths changed, names TfibSyms -> CtrlTSyms and its addresses moved to libreac/fuzz_ctrl's ASan-UBSan build (image B). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/B/Rt/IntrinCpySet.v -- image B (asan-ubsan) of libreac/fuzz_ctrl: the core's memory-intrinsic contract
    Reusable.YG0d.aintrin_realizes at B's __asan_memcpy entry 0x52164 (Reusable.YB1w.tfib_A_asan_memcpy, OCpy) and at
    B's __asan_memset entry 0x52600 (Reusable.YB1w.tfib_A_asan_memset, OSet).  The B core proves the contract only at the
@@ -10,7 +11,7 @@
    lane.
    rule 24: CONFIRM (lookup check a Theorem Labs lane, 16:2xZ): proof-index found no released function proof of
    0x52164 or 0x52600 on fuzz_ctrl.
-   At ossv/recipes c5e779efe8c (2026-10-31), the released function proofs at fuzz_ctrl's 0x52164 / 0x52600 are this unit's own
+   At (2026-10-31), the released function proofs at fuzz_ctrl's 0x52164 / 0x52600 are this unit's own
    (this file's ctrlB_asan_memcpy_realizes / ctrlB_asan_memset_realizes among them).
 
    WHAT THIS FILE PROVES (end of file, Section IntrinB):
@@ -35,7 +36,7 @@
    Kept, not addresses: 0x200000 (the rodata extent bound, same text in B core YE30.v) and the instruction words 505731 /
    538627 / 571523 (ld a5,0(a5) / ld a6,0(a6) / ld a7,0(a7), at the same offsets of both functions in A and B).
    CROSS-CHECK: the same port made independently from fuzz_ctrl image A's lib/A/AE6k .. AE6v, AE2q, AE2r
-   (a working branch 1899bed1aee; A -> B by ELF symbol + offset) is byte-identical to the module bodies here.
+   (a working branch; A -> B by ELF symbol + offset) is byte-identical to the module bodies here.
 
    CODE IDENTITY (measured 2026-10-30, comparison kit 4bbd3a74be89: bytecmp 1480ca2faea0, strictcmp2 16982e3ef42b,
    repin_check 4c05cadaeba3, drvcmp 4d70e90bc1fa, on unstripped twins whose loaded bytes equal the pins): A's and B's

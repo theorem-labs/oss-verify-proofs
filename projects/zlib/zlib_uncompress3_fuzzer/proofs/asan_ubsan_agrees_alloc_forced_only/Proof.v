@@ -1,0 +1,22 @@
+(* SPDX-License-Identifier: MIT *)
+(** [Statements.asan_ubsan_agrees_alloc_forced_only], from a theorem of this proof library.  The library states that theorem over
+    its own names for the memory images; the alias texts in its World folder make each of them the
+    repository's image of the same build, which [world_*_is_images] below checks by computation. *)
+From LinuxProcessSemantics.LinuxProcessSem Require Import MemImageType.
+From OSSVerify.zlib.zlib_uncompress3_fuzzer Require Statements Images.
+From OSSVerify.Proofs.zlib.zlib_uncompress3_fuzzer.lib.zlib_uncompress3_fuzzer_asan_ubsan.World Require Src_zlib_zlib_uncompress3_fuzzer_repro Tgt_zlib_uncompress3_fuzzer_both.
+Require OSSVerify.Proofs.zlib.zlib_uncompress3_fuzzer.lib.zlib_uncompress3_fuzzer_asan_ubsan.BaseBothU3.
+
+Lemma world_plain_is_images :
+  mkImage Src_zlib_zlib_uncompress3_fuzzer_repro.M.loaded_segments Src_zlib_zlib_uncompress3_fuzzer_repro.M.init_pc Src_zlib_zlib_uncompress3_fuzzer_repro.M.phdrs = Images.plain.
+Proof. reflexivity. Qed.
+
+Lemma world_asan_ubsan_is_images :
+  mkImage Tgt_zlib_uncompress3_fuzzer_both.M.loaded_segments Tgt_zlib_uncompress3_fuzzer_both.M.init_pc Tgt_zlib_uncompress3_fuzzer_both.M.phdrs = Images.asan_ubsan.
+Proof. reflexivity. Qed.
+
+Theorem asan_ubsan_agrees_alloc_forced_only_holds : Statements.asan_ubsan_agrees_alloc_forced_only.
+Proof.
+  unfold Statements.asan_ubsan_agrees_alloc_forced_only. rewrite <- world_plain_is_images, <- world_asan_ubsan_is_images.
+  exact ((OSSVerify.Proofs.zlib.zlib_uncompress3_fuzzer.lib.zlib_uncompress3_fuzzer_asan_ubsan.BaseBothU3.base_both_u3)).
+Qed.

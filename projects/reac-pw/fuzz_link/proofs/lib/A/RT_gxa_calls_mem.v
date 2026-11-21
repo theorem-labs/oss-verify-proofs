@@ -1,4 +1,4 @@
-(* Copied from a working branch 86b50358d34 proofs/plugin-hostd/fuzz_reply/lib/A/RT_gxa_calls_mem.v; changed: module path fuzz_reply -> fuzz_disco, instance RT_IImgA.A_img -> RecAsanA.N_img_asan, the bridge module RT_gxa_calls -> RT_gxa_bridge, comments dropped; set_ready asked only when 0 <= n, as fm a working branch 3899f140f93 (memset_stack_contract and set_ready_intro re-proved for it). *)
+(* Copied from a working branch proofs/plugin-hostd/fuzz_reply/lib/A/RT_gxa_calls_mem.v; changed: module path fuzz_reply -> fuzz_disco, instance RT_IImgA.A_img -> RecAsanA.N_img_asan, the bridge module RT_gxa_calls -> RT_gxa_bridge, comments dropped; set_ready asked only when 0 <= n, as fm a working branch (memset_stack_contract and set_ready_intro re-proved for it). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.

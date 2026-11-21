@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: in the form of projects/reac-repacer/fuzz_wire/proofs/lib/B/Prog/LLVMFuzzerTestOneInput_seg_exit.v (f610b082953b) for reac-repacer/fuzz_wire's image A: the image modules of lib/A, the offsets of fuzz_wire.asan, the free return addresses of WIRE_LLVMF_RA_FREE, and the cost of the image-A statement (u_cost_ladder, which charges the blocks at their size). *)
+(* Modified by Theorem Labs, 2026-10: in the form of projects/reac-repacer/fuzz_wire/proofs/lib/B/Prog/LLVMFuzzerTestOneInput_seg_exit.v for reac-repacer/fuzz_wire's image A: the image modules of lib/A, the offsets of fuzz_wire.asan, the free return addresses of WIRE_LLVMF_RA_FREE, and the cost of the image-A statement (u_cost_ladder, which charges the blocks at their size). *)
 (* LLVMFuzzerTestOneInput_seg_exit: u_exit_ok : u_exit_stmt (lib/A/Prog/LLVMFuzzerTestOneInput_segs.v), the exit of
    the image-A walk of fuzz_wire.asan's LLVMFuzzerTestOneInput: runs of the Pa engine to a call, the free rule at the
    call, the run from its return address, and the teardown (the reloads, the return and the slot post out of the

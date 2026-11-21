@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-10: the malloc/free journal lemmas (aj_free_at, aj_free_at_io, aj_free_null_at, aj_free_null_at_io, aj_malloc_at, aj_malloc_at_io, aj_malloc_at04, aj_malloc_at04_io, aj_malloc, aj_free) no longer take In (call_trace0 ...) (as_universe B); the model laws get the trace length (call_trace_len) and the contracts the event bound. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/Reusable/YCbq.v, with its numbers changed; 205 of its 373 lines of code are new or changed and 3177 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/PaRt.v, with its module paths and module names changed; 382 of its 431 lines of code are new or changed and 324 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3): helper of the RS1 cut of segment B11a of
    reac_segconf_parse_file's walk (lib/B/Prog/pf_seg_B11a_t.v): the snprintf step through the walk's journal, the
    "%s" format fact, the C strings of the block reac_segconf and the record lemmas the cut's second snprintf
@@ -12,9 +13,9 @@
    proves no function (kind: segment lemma of reac_segconf_parse_file's walk, helper of B11a's RS1 cut: no
    instruction is walked here). The B11a segment lane of the image-B G3 walk owner, 2026-10-30 (a sub-lane).
    ADAPTED from a working branch + U piece walks; templates a lane clone
-   lib/B/Prog/pf_seg_B3_t.v (the B3 segment lane, 151b4054f431: b3t_* copied with the prefix b11ts_, itself the
+   lib/B/Prog/pf_seg_B3_t.v (the B3 segment lane: b3t_* copied with the prefix b11ts_, itself the
    image-A refuse walk lane's refuse_pft.v r_snp_pre / r_snp_post / r_aj_snprintf_atSF) and a lane clone
-   lib/B/Prog/pf_seg_B8b_m.v (the B8b segment lane, 49a20292ece9: pb8b_cstr_sa_str, pb8b_reading_str, pb8b_cstr_rng,
+   lib/B/Prog/pf_seg_B8b_m.v (the B8b segment lane: pb8b_cstr_sa_str, pb8b_reading_str, pb8b_cstr_rng,
    pb8b_cstr_splice0, pb8b_upd_nth_twice re-derived here). Row 4 on image B is RtFormat.asnprintf_realizes =
    RtPFCmd.asnprintf_sh (lib/B/Rt/RtPFCmd.v, image B's constants CMD_GOTW 0xa3e98, CMD_SNP_K = 2 * ESTACK,
    CMD_IMG_LO 0x10000, CMD_IMG_HI kImgEnd); no lemma here names an image-A number.

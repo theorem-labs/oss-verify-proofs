@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the IMAGE B (fs.asan-ubsan, UBSan trap mode) walk of grow against
-   lib/B/FSH_Fn_reader.v grow_spec (:575, CTX-free; the text of S0 a working branch f32db4da382 = a working branch adfa7850046 on this branch): the STAGES.
+   lib/B/FSH_Fn_reader.v grow_spec (:575, CTX-free; the text of S0 a working branch = a working branch on this branch): the STAGES.
    rule 24 (lane brief (internal path), CONFIRM a Theorem Labs lane): proves function
    grow - fuzz_state image B asan-ubsan, entry 0x83ca8, success form. Reuse search, the three
    result lines:
@@ -11,7 +11,7 @@
        9 named and 48 name(s) holding it
      proof-index 0x83ca8 (exit 4): 0x83ca8: 0 named, 0 by address, 0 related, 0 lemma(s), 0 by file name, an earlier delivery 0
        named and 0 name(s) holding it, 108 unreleased
-   Port source (Lookup result): ported from a working branch 75e39a1f41d:
+   Port source (Lookup result): ported from a working branch:
    proofs/omx-clap-core/fuzz_state/lib/B/Prog/grow.v (blob bf8e2804f8dd, 3835 lines, 35 Qed, no admit; grow_holds :
    fuzz_realloc_contract ... -> grow_contract ... CAP, matching rdn1b's grow_c.v a8d1dc75b495): its walk is restated
    against grow_spec's frame (fpreU / fpostU / SRr over W, rd_sum Dold0 <= live, quiet, no CTX) lemma by lemma; NOT
@@ -21,19 +21,20 @@
    HA8 Z.land v 7 = 0; here the symbolic engine decides both from v's fact), the shadow walk (gr_sh = SHADOW_OFF + x / 8 cells, here FSW_grow_shcell's regions and the
    token run's checks), the size arithmetic (gr_cap2 / gr_sz: cap2 cap, 8 * cap2 cap, 56 * cap2 cap), and the frame
    (gr_frame: 96 bytes, ra s0 .. s9 at sp + 0x58 .. sp + 8). The NEW-frame shape is the image-A walk of the same C:
-   a working branch 728177ca53c lib/A/Prog/FSW_grow.v (a Theorem Labs lane's final; its stages equal 582c4d69613's and
-   the draft a working branch f9ccbd8f565's: grow_stageA / grow_stageB / grow_stageC, grow_FP, grow_post),
+   a working branch lib/A/Prog/FSW_grow.v (a Theorem Labs lane's final; its stages equal's and
+   the draft a working branch: grow_stageA / grow_stageB / grow_stageC, grow_FP, grow_post),
    copied here and re-measured for B's code. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/Prog/FSW_grow.v, with its module paths and module names changed; 239 of its 270 lines of code are new or changed and 612 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* pj_free's walk on image B (lib/B/FSW_pj_free.v, fs.asan-ubsan), the data half: lemmas over the reader statements'
    data predicates (lib/Prog/PjStruct.v pj_fd / pf_items / pj_u64, lib/B/FSH_Fn_reader.v udrop / rd_heads / rd_hblocks /
    rd_sum) that the walk needs between its machine segments. No machine code is read here and no function's contract is
-   proved (rule 24). The lib/B twin of lib/A/FSW_pj_free_dat.v (a working branch eab6ac2a2be), written new from it
+   proved (rule 24). The lib/B twin of lib/A/FSW_pj_free_dat.v (a working branch), written new from it
    as a template: the image-free bodies are A's text, read over lib/B's statement names (FSH_Fn_reader.v, FSPstat.v);
    pjf_pstat_img names B's four fuzz/alloc.c statics (lib/B/FSPstat.v FS_PSTAT_FP: 0xa41c0, 0x5daac0, 0x5daae0,
    0x5dab00). No lib/A image-content file is loaded.
    Port-from (A's dat, itself from): pjf_items_frame / pjf_fd_frame / pjf_items_mono: fs's RELEASED plain proof
-   lib/Prog/pj_free.v:435-504 (c8557374ad2e pf_items_frame / pf_fd_frame / pf_items_mono), the memory premise restated in
+   lib/Prog/pj_free.v:435-504 (pf_items_frame / pf_fd_frame / pf_items_mono), the memory premise restated in
    PjStruct's equality form (PjStruct.pj_hdr_eq / pj_u64_eq, as PjStruct.pj_node_frame states it). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

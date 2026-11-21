@@ -1,10 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: lib/A/TopX_INTRIN.v at commit d12d454ec30 (a Theorem Labs lane's top_x group INTRIN, its
+(* Modified by Theorem Labs, 2026-10: lib/A/TopX_INTRIN.v (a Theorem Labs lane's top_x group INTRIN, its
    topx_AMEMSET_x) relocated to image B (fuzz_reply.asan-ubsan), cut to the memset row: the intrinsic contract of
    __asan_memset (B entry 0x52c1c, the callee of the B call at 0x82bd4) PROVED at image B's top_x instance
      AMEMSET_x : aintrin_realizes_x segs TfibB ARX OSet (pa_sigma WS_asan_memset)
-   with ARX := TopX_RT_lock.ARX_rt (lib/B/W_LLVMFuzzerTestOneInput_top_x.v:154-155 verbatim), so the plug is `exact`
+   with ARX := TopX_RT_lock.ARX_rt (lib/B/W_LLVMFuzzerTestOneInput_top_x.v:155-156 verbatim), so the plug is `exact`
    up to unfolding ARX.  The proof is the ARx port of the memset walk at ARx := ARX_rt: lib/B/YE6t_x.v .. YE6v_x.v,
    YE2r_x.v asan_memset_realizes_x over YE2y.icpt_laws_x.  icpt_laws_x at ARX_rt comes from RTxIcpt's bridge
    icpt_laws_of_rt: the runtime laws TopX_RT_lock.rt_laws_ARX, and the zero-shadow law from the field alx_zshadow of
@@ -13,6 +13,7 @@
    topx_AMEMSET_x moves amem_range to its place and drops the OSet source premise (True).  Cut from the A file: its
    memcpy row (another lane's), with the imports only that row used.  No premise is left: every lemma here is
    closed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

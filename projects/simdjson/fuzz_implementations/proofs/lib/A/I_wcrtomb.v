@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -90,7 +91,7 @@ Section Walk.
 
 Variables (sp0 : Z).
 
-Theorem iwcrtomb_ok : iwcrtomb_stmt (ixit2 sp0) (sp0 - STACK_WIN).
+Theorem iwcrtomb_ok : iwcrtomb_stmt (ixit2 sp0) (sp0 - STACK_SPAN).
 Proof.
   intros ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m D PS lo j
          -> -> -> DC DLO DHI PSC PS0 PSH ST LOD GLO XL SPH [IXm XCm] MI.

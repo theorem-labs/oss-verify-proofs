@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-29 (PresetStrlenB, c-libc-stdio lane): fuzz_preset.asan-ubsan's (IMAGE B's) strcmp
    interceptor, called at its trampoline __wrap_strcmp 0x42e0c (`jal zero, 0x433c0` = ___interceptor_strcmp), in the
    contract of the second allocator instance:
@@ -9,13 +10,13 @@
    AU/PSstrlen.v's post_of_walk, PresetStrRo). Image B only. rule 24: the CONFIRM is the internal file strcmpB-CONFIRM.md
    (StrcmpBLookupCheck, 2026-10-29 13:18Z): no ref proves strcmp's interceptor at image B. This file is the IMAGE-B
    RESTATEMENT of an existing, proved composition.
-   2026-10-29 (pstr102, #102 pin B' asan-ubsan d663f82d, twin c90d4fa5): presetstr-ro 45e489ec67c7's file (blob
+   2026-10-29 (pstr102, #102 pin B' asan-ubsan d663f82d, twin c90d4fa5): presetstr-ro's file (blob
    27b807515ae1) with every image-B numeral moved to B' by symbol + offset and the KEYING table re-keyed A' -> B',
    over the B' kit lib/K5/B10 (re-derived by tools/presetstr/presetstr_reloc.py), the B' YF0m.v f82202ebccdf and
    CfImgB 82495e01f675; pc_strcmp_B cites CfImgB's cf_pc_strcmp by field name.
 
-   DONOR: lib/A/PSstrcmp.v at origin/cold/c-libc-stdio-presetstr 20751730fbc2 (`ps_strcmp_realizes_cf`, image A,
-   Qed), itself the port of fuzz_state's FSstrcmp.v (origin/cold/port-state-rt-str 999a7102a6e). Every lemma below is
+   DONOR: lib/A/PSstrcmp.v (`ps_strcmp_realizes_cf`, image A,
+   Qed), itself the port of fuzz_state's FSstrcmp.v. Every lemma below is
    the donor's, in the donor's order, under the donor's name, with the donor's proof script, unless listed here. Its
    inputs are the image-B halves of the same pieces, REUSED, not copied:
    - the walk: lib/K5/B10/I_strcmp_entry.v `istrcmp_wrap_closed` (= istrcmp_wrap_spec rip_proof: the trampoline step

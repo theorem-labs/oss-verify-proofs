@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO/vvar pair in the plan ledger: n_resx/p_resx, gap_ok against GAP_CEIL and resx_clear; the 27-or-29-pair auxv in auxv_entries order with V_G, V_R, V_GID and a start state init_acs_r per CONFIG_RSEQ; the plan node PGhost's node_ghost, which no plan uses, is removed; likewise PUnvis's node_unvis, node_unvis_ref and node_unvis_eq). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -32,6 +33,8 @@ Lemma CEIL_le_CEILMAX : CEIL <= CEILMAX. Proof. unfold CEIL, CEILMAX. apply Z.le
 Definition KHI : Z := 0x10007fff8000.
 (* [comment removed for export] *)
 Definition FLOOR : Z := 0x2aaaaaaab000.
+(** [AsanCeil.alloc_ceiling]: the number [gap_ok] compares against ([AsanPlacement.free_gap_of_totals]) *)
+Definition GAP_CEIL : Z := 0x7fff7f800000.
 (* [comment removed for export] *)
 Definition MBASE_MIN : Z := 0x154555557000.
 (* [comment removed for export] *)
@@ -40,6 +43,8 @@ Definition PID_MAX : Z := 4194304.
 Record atable : Type := AT {
   img_lo : Z; img_hi : Z;          (* [comment removed for export] *)
   n_res : nat;                     (* [comment removed for export] *)
+  n_resx : nat;                    (** upper bound on the NUMBER of the launch's extra reserved intervals (vDSO/vvar, [State.vdso_reserved]) *)
+  p_resx : nat;                    (** upper bound on their total size, in pages *)
   shadow_off : Z;                  (* [comment removed for export] *)
   a_entry : Z;                     (* [comment removed for export] *)
   rw_lo : Z; rw_len : Z;           (* [comment removed for export] *)
@@ -56,6 +61,9 @@ Record atable : Type := AT {
   x_envscan : Z; x_envscan_k : Z; x_pnscan : Z; x_pnscan_k : Z;
   stops_more : list Z              (* [comment removed for export] *)
 }.
+
+(** the byte allowance of the launch's extra reserved intervals (non-negative by construction) *)
+Definition resx_bytes (A : atable) : Z := Z.of_nat (p_resx A) * 4096.
 
 Section WithSegs.
 Variable segs : list Segment.
@@ -2023,8 +2031,10 @@ Proof. apply functional_extensionality; intros k. unfold kn_grant_filterM. apply
 
 (* [comment removed for export] *)
 Definition gap_ok (cs : acs) (nhi : Z) : bool :=
-  let cnt := Z.of_nat (n_res A + length (a_maps cs))%nat in
-  Z.leb (FLOOR + nhi + a_totsz cs + cnt * (nhi + 4095)) CEIL.
+  (* [n_resx A] counts the launch's extra reserved intervals: they sit in the
+     same ledger [free_gap_of_totals] measures. *)
+  let cnt := Z.of_nat (n_res A + n_resx A + length (a_maps cs))%nat in
+  Z.leb (FLOOR + nhi + a_totsz cs + cnt * (nhi + 4095)) GAP_CEIL.
 
 Definition budget_ok (cs : acs) (extra : Z) : bool :=
   Z.leb (a_eager cs + a_abytes cs + extra) LIMIT.
@@ -2118,10 +2128,14 @@ Definition mmap_fixed_grant (cs : acs) (ms0 : list amap) (b : expr) (off : Z) (n
   let cs1 := add_entry (with_maps0 cs ms0) (s_regs (a_ss cs)) k' (nxt cs) m nhi eager (a_ylo cs) in
   if visible then vis_add cs1 a ne (kmem ++ kn cs1) else Some cs1.
 
+(** the disjointness floor against the launch's extra reservations: [a_ylo cs] is at or below
+    every extra reserved base and [KHI] is the placement bound ([APS.resx_entry_ok]) *)
+Definition resx_clear (cs : acs) : Z := Z.min KHI (a_ylo cs).
+
 Definition mmap_fixed_free (cs : acs) (kind : mkind) (eager visible : bool) : option acs :=
   let k := kn cs in
   let a := reg cs 10 in
-  match fixed_args cs KHI false with
+  match fixed_args cs (resx_clear cs) false with
   | Some (b, off, ne, nlo, nhi) =>
       if (no_fog (a_maps cs)
           && forallb (fun m => ranges_apart_x k b off ne (am_base m) 0 (am_len m)) (a_maps cs)
@@ -2677,63 +2691,7 @@ Definition node_fognew (cs : acs) (i : nat) (sz : Z) : option acs :=
   else None.
 
 (* [comment removed for export] *)
-Definition node_ghost (cs : acs) (b n : expr) : option acs :=
-  match xhi (kn cs) n with
-  | Some nhi =>
-      if (expr_vars_lt (nxt cs) b && expr_vars_lt (nxt cs) n && Z.leb (a_eager cs + a_abytes cs + vis_cost nhi) LIMIT)%bool
-      then Some (ACS (a_ss cs) (a_maps cs) (a_totsz cs) (a_ylo cs) (a_eager cs) (a_vis cs) (a_ghost cs ++ [(b, n)])
-                     (a_abytes cs + vis_cost nhi) (a_brk cs) (a_fd cs) (a_tidset cs) (a_vmops cs))
-      else None
-  | None => None
-  end.
-
-(* [comment removed for export] *)
 Definition vis_here (b n : expr) (p : expr * expr) : bool := (expr_eqb (fst p) b && expr_eqb (snd p) n)%bool.
-
-Definition node_unvis_ref (cs : acs) (b n : expr) : option acs :=
-  let k := kn cs in
-  let '(bb, bk) := split_lit b in
-  let '(sb, sk, sn) := shadow_of k b n in
-  match xhi k b, xhi k n with
-  | Some bh, Some nh =>
-      if (existsb (vis_here b n) (a_vis cs)
-          && Z.leb 3 (ealign k b) && Z.leb 3 (ealign k n) && flat_x k bb bk n && Z.leb (bh + nh) 0x800000000000
-          && flat_x k sb sk sn && kzero_x k k sb sk sn)%bool
-      then
-        let k1 := kn_unfill k bb bk n in
-        let k2 := kn_unfill k1 sb sk sn in
-        let ss := a_ss cs in
-        Some (ACS (mk_ss (s_pc ss) (s_regs ss) k2 (s_next ss))
-                  (a_maps cs) (a_totsz cs) (a_ylo cs) (a_eager cs)
-                  (List.filter (fun p => negb (vis_here b n p)) (a_vis cs)) (a_ghost cs ++ [(b, n)])
-                  (a_abytes cs) (a_brk cs) (a_fd cs) (a_tidset cs) (a_vmops cs))
-      else None
-  | _, _ => None
-  end.
-(* [comment removed for export] *)
-Definition node_unvis (cs : acs) (b n : expr) : option acs :=
-  let k := kn cs in let bc := mkbc k in   (* [comment removed for export] *)
-  let '(bb, bk) := split_lit b in
-  let '(sb, sk, sn) := shadow_ofB bc b n in
-  match xhiB bc b, xhiB bc n with
-  | Some bh, Some nh =>
-      if (existsb (vis_here b n) (a_vis cs)
-          && Z.leb 3 (ealignB bc b) && Z.leb 3 (ealignB bc n) && flat_xB bc bb bk n && Z.leb (bh + nh) 0x800000000000
-          && flat_xB bc sb sk sn && kzero_xB bc k sb sk sn)%bool
-      then
-        let k1 := kn_unfillB bc bb bk n in
-        let k2 := kn_unfillM k1 sb sk sn in
-        let ss := a_ss cs in
-        Some (ACS (mk_ss (s_pc ss) (s_regs ss) k2 (s_next ss))
-                  (a_maps cs) (a_totsz cs) (a_ylo cs) (a_eager cs)
-                  (List.filter (fun p => negb (vis_here b n p)) (a_vis cs)) (a_ghost cs ++ [(b, n)])
-                  (a_abytes cs) (a_brk cs) (a_fd cs) (a_tidset cs) (a_vmops cs))
-      else None
-  | _, _ => None
-  end.
-
-Lemma node_unvis_eq : forall cs b n, node_unvis cs b n = node_unvis_ref cs b n.
-Proof. intros. unfold node_unvis, node_unvis_ref. unfold ehi, elo. rewrite ?ealignB_eqf, ?flat_xB_eqf, ?kn_unfillB_eqf, ?kzero_xB_eqf, ?shadow_ofB_eqf, ?xhiB_eqf, ?kn_unfillM_eq. reflexivity. Qed.
 
 
 (* [comment removed for export] *)
@@ -3275,6 +3233,42 @@ Definition V_L1 : nat := 7.     (* [comment removed for export] *)
 Definition V_UID : nat := 8.    (* [comment removed for export] *)
 Definition V_HW : nat := 9.     (* [comment removed for export] *)
 Definition V_S3 : nat := 10.    (* [comment removed for export] *)
+Definition V_G : nat := 11.     (** [StackLayout.block_items argv envp mod 2]: the 8-byte gap [STACK_ROUND]
+                                    clears below the AT_RANDOM block so that it lands 16-aligned *)
+Definition V_R : nat := 12.     (** CONFIG_RSEQ of the run's kernel build, as 0/1 ([rseq_z (kb_rseq (in_kernel inp))]):
+                                    the auxv is 27 pairs (432 bytes) without it and 29 pairs (464 bytes) with it
+                                    ([StackLayout.auxv_entries], [StackLayout.auxv_size]).  [Run.valid_input] leaves
+                                    the kernel build free, so the plan carries the flag as a variable and one initial
+                                    state covers both builds. *)
+(** LPS 727298f3: the launch's gid, the one value AT_GID and AT_EGID carry
+    ([StackLayout.auxv_entries], pairs 21 and 22).  At the old [NX0], so no existing index
+    changes meaning and every fresh variable moves up; the recorded plans are renumbered
+    where they are checked (the certificate-data method of OSSV-343, section 4.3). *)
+Definition V_GID : nat := 13.
+(** LPS c0dd863a: AT_SYSINFO_EHDR, the text base of the vDSO pair the launch places
+    ([Run.vdso_text_base (in_kernel inp) sp mbase], pair 0's value word of
+    [StackLayout.auxv_entries]).  At the old [NX0], as [V_GID] was.  Its value reads the run's
+    mmap base, which the start-up invariant binds existentially, so the invariant does not pin
+    it; [APS.cs_ok]'s [co_ehdr] ties it to the model's kernel build and [vdso_top]. *)
+Definition V_EHDR : nat := 14.
+(** [V_EHDR] below a plan's first fresh variable [n]: the Section hypothesis of the lemmas
+    that carry [co_ehdr] across a change of valuation.  A definition, not the bare
+    inequality, so that [lia] in the other lemmas of those Sections does not take it as a
+    premise (it would become an argument of each of them); an instantiation discharges it
+    by computation, [proj1 (Nat.ltb_lt V_EHDR NX0) eq_refl]. *)
+Definition V_EHDR_below (n : nat) : Prop := (V_EHDR < n)%nat.
+
+(** the flag as a number *)
+Definition rseq_z (b : bool) : Z := if b then 1 else 0.
+
+(** The auxv's size in bytes, the ONE place the plan names it: [432 + 32 * rseq]. *)
+Definition e_auxsz : expr := eaddz (escale 32 (EVar V_R)) 432.
+
+Lemma auxv_size_rseq : forall b, Z.of_nat (StackLayout.auxv_size b) = 432 + 32 * rseq_z b.
+Proof. intros [|]; vm_compute; reflexivity. Qed.
+
+Lemma rseq_z_range : forall b, 0 <= rseq_z b <= 1.
+Proof. intros [|]; cbn; lia. Qed.
 
 (* [comment removed for export] *)
 Definition e_pg : expr := eadd (escale 32768 (EVar V_S1)) (escale 4096 (EVar V_S2)).
@@ -3284,12 +3278,14 @@ Definition e_sp8 : expr := eadd (escale 4096 (EVar V_S1)) (eadd (escale 512 (EVa
 (* [comment removed for export] *)
 Definition e_envp : expr := eadd e_sp0 (eadd (escale 8 (EVar V_ARGC)) (ELit 16)).
 Definition e_auxv : expr := eadd e_envp (eadd (escale 8 (EVar V_ENVC)) (ELit 8)).
-Definition e_str0 : expr := eaddz e_auxv 160.
+(** Linux's block, bottom to top: atrandom = auxv + (432 + 32*rseq) + 8*g; str0 = atrandom + 16 + pad
+    (the strings sit ABOVE the random bytes, at the top of the stack VMA) *)
+Definition e_atrandom : expr := eadd (eadd e_auxv e_auxsz) (escale 8 (EVar V_G)).
+Definition e_str0 : expr := eadd (eaddz e_atrandom 16) (EVar V_W).
 Definition e_str1 : expr := eadd e_str0 (eaddz (EVar V_L0) 1).
-Definition e_atrandom : expr := eadd e_str0 (escale 8 (EVar V_W)).
-(* [comment removed for export] *)
+(** (e_atrandom - 24 - 432) / 8 as a linear form *)
 Definition e_atr8 : expr :=
-  eadd e_sp8 (eadd (EVar V_ARGC) (eadd (EVar V_ENVC) (EVar V_W))).
+  eadd e_sp8 (eadd (EVar V_ARGC) (eadd (EVar V_ENVC) (eadd (escale 4 (EVar V_R)) (EVar V_G)))).
 
 (* [comment removed for export] *)
 Definition e_argv1w : expr := EMd M_MUL (EAlu ALU_SLTU (ELit 1) (EVar V_ARGC)) e_str1.
@@ -4095,31 +4091,55 @@ End WithSegs.
 
 (* [comment removed for export] *)
 Definition BRK_ASLR : Z := 0x80000000.
-Definition NX0 : nat := 11.   (* [comment removed for export] *)
+Definition NX0 : nat := 15.   (** includes V_UID, V_HW, V_S3, V_G, V_R and (LPS 727298f3) V_GID at 13 and
+                                  (LPS c0dd863a) V_EHDR at 14, each at the old NX0: every fresh variable moves up from there *)
 
 (* [comment removed for export] *)
 Definition e_auxb : expr * Z := split_lit e_auxv.
 Definition e_atrb : expr * Z := split_lit e_atrandom.
 Definition auxw (i : Z) (ty : Z) (v : expr) : list kentry :=
   [KWord (SA (fst e_auxb) (snd e_auxb + 16 * i)) 8 (ELit ty); KWord (SA (fst e_auxb) (snd e_auxb + 16 * i + 8)) 8 v].
+(* Key claimed as a literal; VALUE claimed as KUnk - present but unknown.  As punycode's
+   copy: the walk branches on every key, so an unclaimed key stops the run, and a value
+   word that is merely ABSENT is also wrong because no word above sp may be visible and
+   unclaimed.  The shape is the one coturn/FuzzStunClient's copy of this file states for its
+   auxv words (its proofs/lib/Corpus/AsanPlanCore.v).
+   KUnk's arity read off this tree's own AsanPlan.v. *)
+Definition auxk (i : Z) (ty : Z) : list kentry :=
+  [KWord (SA (fst e_auxb) (snd e_auxb + 16 * i)) 8 (ELit ty);
+   KUnk (SA (fst e_auxb) (snd e_auxb + 16 * i + 8)) (ELit 8)].
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Definition K_RND : nat := 25.
 
 Definition init_kn_with (atr : kentry) (A : atable) : list kentry :=
-  [KRange (EVar V_S1) 0xFFFF0000 0xFFFFFFFF; KRange (EVar V_S2) 0 7; KRange (EVar V_S3) 0 255;   (* [comment removed for export] *)
-   KRange (eaddz e_atrandom 16) 0x7fff800000c0 0x800000000000; KRange e_atr8 0xFFFF0000001 0xFFFFFFFFFE7;   (* [comment removed for export] *)
+  [KRange (EVar V_S1) 0xFFFF0000 0xFFFFFFFF; KRange (EVar V_S2) 0 7; KRange (EVar V_S3) 0 255;
+   KRange (eaddz e_atrandom 16) 0x7fff800000c0 0x800000000000; KRange e_atr8 0xFFFF0000001 0xFFFFFFFFFC5;
    KRange e_sp0 0x7fff80000000 0x7fffffffff40; KRange e_pg 0x7fff80000000 0x7ffffffff000;
    KRange e_sp8 0xFFFF0000000 0xFFFFFFFFFE8;
    KRange (EVar V_ARGC) 1 1024; KRange (EVar V_ENVC) 0 256; KRange (EVar V_L0) 0 131071; KRange (EVar V_L1) 0 131071;
-   KRange (EVar V_UID) 0 0xFFFFFFFE; KRange (EVar V_HW) 0x112d 0x20112d;
-   KRange (EVar V_W) 0 280000; KRange (EVar V_BRK) (img_hi A / 4096) ((img_hi A + BRK_ASLR) / 4096);
-   KWr (SA e_sp0 (-8388608)) (ELit 8388608); KZero (SA e_sp0 (-8388608)) (ELit 8388608);
+   KRange (EVar V_UID) 0 0xFFFFFFFE; KRange (EVar V_HW) 0x112d 0x20112d; KRange (EVar V_G) 0 1; KRange (EVar V_R) 0 1;
+   KRange (EVar V_W) 0 4110; KRange (EVar V_BRK) (img_hi A / 4096) ((img_hi A + BRK_ASLR) / 4096);
+   KWr (SA e_sp0 (-6144513)) (ELit 6144513); KZero (SA e_sp0 (-6144513)) (ELit 6144513);
    KWord (SA e_sp0 0) 8 (EVar V_ARGC); KWord (SA e_sp0 8) 8 e_str0; kw_argv1 e_argv1w]
-  ++ auxw 0 3 (ELit (ph_addr_z A)) ++ auxw 1 4 (ELit (ph_ent_z A)) ++ auxw 2 5 (ELit (ph_num_z A)) ++ auxw 3 16 (EVar V_HW)
-  ++ auxw 4 6 (ELit 4096) ++ auxw 5 11 (EVar V_UID) ++ auxw 6 12 (EVar V_UID) ++ auxw 7 23 (ELit 0) ++ auxw 8 25 e_atrandom
-  ++ auxw 9 0 (ELit 0)
+  (* the pair indices are [StackLayout.auxv_entries]' order; pairs 0..25 sit at the same
+     index under both kernel builds.  Not claimed: ARCH_DLINFO's pairs 0..9, AT_CLKTCK (12),
+     AT_BASE (16), AT_FLAGS (17), AT_ENTRY (18), AT_GID/AT_EGID (21, 22), AT_EXECFN (25),
+     and everything after it (the CONFIG_RSEQ pair and AT_NULL move with the flag) *)
+  ++ auxw 13 3 (ELit (ph_addr_z A)) ++ auxw 14 4 (ELit (ph_ent_z A)) ++ auxw 15 5 (ELit (ph_num_z A)) ++ auxw 10 16 (EVar V_HW)
+  ++ auxw 11 6 (ELit 4096) ++ auxw 19 11 (EVar V_UID) ++ auxw 20 12 (EVar V_UID) ++ auxw 23 23 (ELit 0) ++ auxw 24 25 e_atrandom
+  (* The seventeen the comment above lists as not claimed.  Keys from
+     rocq-linux-process-semantics@75d69e00:theories/LinuxProcessSem/StackLayout.v:65-93,
+     indices from :232-257's auxv_entries order; the mapping is confirmed by the nine
+     claims above agreeing with it at 13/3, 14/4, 15/5, 10/16, 11/6, 19/11, 20/12, 23/23
+     and 24/25.  Pairs 0..25 are at the same index under both kernel builds, so none pins
+     a free field; 26-27 stay unclaimed because index 26 is AT_RSEQ_FEATURE_SIZE with
+     rseq and AT_NULL without, and claiming it would pin kb_rseq. *)
+  ++ auxk 0 33 ++ auxk 1 40 ++ auxk 2 41 ++ auxk 3 42 ++ auxk 4 43
+  ++ auxk 5 44 ++ auxk 6 45 ++ auxk 7 46 ++ auxk 8 47 ++ auxk 9 51
+  ++ auxw 12 17 (ELit 100) ++ auxw 16 7 (ELit 0) ++ auxw 17 8 (ELit 0)
+  ++ auxk 18 9 ++ auxk 21 13 ++ auxk 22 14 ++ auxk 25 31
   ++ [atr;
       KImg (img_lo A) (img_hi A); KWr (SA (ELit 0) (rw_lo A)) (ELit (rw_len A))].
 
@@ -4138,9 +4158,38 @@ Definition init_vis (A : atable) : list (expr * expr) :=
   [(ELit (img_lo A), ELit (img_hi A - img_lo A)); (e_stk, e_stklen)].
 
 Definition init_acs_of_with (kn0 : list kentry) (A : atable) : acs :=
-  ACS (mk_ss (a_entry A) init_regs kn0 NX0) [] (img_hi A - img_lo A) MBASE_MIN 0 (init_vis A) []
+  ACS (mk_ss (a_entry A) init_regs kn0 NX0) []
+      (img_hi A - img_lo A + resx_bytes A) (MBASE_MIN - resx_bytes A) 0 (init_vis A) []
       (vis_cost (img_hi A - img_lo A) + vis_cost STKLEN_MAX) (escale 4096 (EVar V_BRK)) FdStd false [].
 Definition init_acs_of (A : atable) : acs := init_acs_of_with (init_kn A) A.        (* [comment removed for export] *)
+
+(** LPS 727298f3: THE START STATE, ONE PER CONFIG_RSEQ VALUE.  [init_kn] claims what holds
+    under both kernel builds.  Two things the start-up code reads it cannot carry, measured by
+    the start-up certificate's probes: (1) the vector's tail above pair 25 at its LITERAL pair
+    index (pair 26 is AT_NULL without CONFIG_RSEQ; with it pairs 26 and 27 are
+    AT_RSEQ_FEATURE_SIZE (27) -> 28 and AT_RSEQ_ALIGN (28) -> 32 and pair 28 is AT_NULL,
+    [StackLayout.auxv_entries]); (2) musl [__init_libc]'s [aux[AT_GID] == aux[AT_EGID]] test, a
+    branch on two VALUES.  [StackLayout.auxv_entries] fills AT_GID and AT_EGID (pairs 21 and 22)
+    from the ONE launch [gid], so both value words are claimed as [EVar V_GID] and the branch is
+    decided ([know_lookup] skips [KUnk], so the [auxk] claims of those value words do not hide
+    these).  [r] is the run's CONFIG_RSEQ as 0/1 ([rseq_z]); [AsanInit.init_kn_r_ok] proves the
+    claims at [r = rseq_z (kb_rseq (in_kernel inp))].  The form is boost-beast/http_request's
+    As/AsanPlanCore.v [init_acs_r]; the whole vector is claimed pair by pair here, so no
+    [KUnk] span is added for the CONFIG_RSEQ pairs. *)
+Definition auxv_rseq_kn (r : Z) : list kentry :=
+  [KRange (EVar V_R) r r]
+  ++ (if Z.eqb r 1
+      then auxw 26 27 (ELit 28) ++ auxw 27 28 (ELit 32) ++ auxw 28 0 (ELit 0)
+      else auxw 26 0 (ELit 0)).
+Definition auxv_gid_kn : list kentry :=
+  [KWord (SA (fst e_auxb) (snd e_auxb + 16 * 21 + 8)) 8 (EVar V_GID);
+   KWord (SA (fst e_auxb) (snd e_auxb + 16 * 22 + 8)) 8 (EVar V_GID)].
+(** LPS c0dd863a: pair 0's value word, AT_SYSINFO_EHDR, is the launch variable [V_EHDR]
+    ([know_lookup] skips [auxk 0 33]'s [KUnk]) *)
+Definition auxv_ehdr_kn : list kentry :=
+  [KWord (SA (fst e_auxb) (snd e_auxb + 8)) 8 (EVar V_EHDR)].
+Definition init_kn_r (r : Z) (A : atable) : list kentry := init_kn A ++ auxv_rseq_kn r ++ auxv_gid_kn ++ auxv_ehdr_kn.
+Definition init_acs_r (r : Z) (A : atable) : acs := init_acs_of_with (init_kn_r r A) A.
 
 (* [comment removed for export] *)
 Lemma e_pg_early_eq : e_pg_early = e_pg.
@@ -4156,7 +4205,7 @@ Proof. vm_compute. reflexivity. Qed.
 
 (* [comment removed for export] *)
 Definition ASAN : atable :=
-  {| img_lo := 0x10000; img_hi := 0x671000; n_res := 4; shadow_off := 0x7fff8000;
+  {| img_lo := 0x10000; img_hi := 0x671000; n_res := 4; n_resx := 2; p_resx := 20; shadow_off := 0x7fff8000;
      a_entry := 0x4ba64; rw_lo := 0x142000; rw_len := 0x52f000; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 11;
      x_imemset := 0xe1ea4; x_imemcpy := 0xe1e28; x_memset := 0x116934; x_memcpy := 0x116530; x_memiszero := 0xe2508;
      x_istrncpy := 0xe23b8; x_sealed := 0x1205f; x_popfree := 0x52a70; x_smear := 0;
@@ -4171,7 +4220,7 @@ Definition asan_init : acs := init_acs_of ASAN.
 
 (* [comment removed for export] *)
 Definition BOTH : atable :=
-  {| img_lo := 0x10000; img_hi := 0x671000; n_res := 4; shadow_off := 0x7fff8000;
+  {| img_lo := 0x10000; img_hi := 0x671000; n_res := 4; n_resx := 2; p_resx := 20; shadow_off := 0x7fff8000;
      a_entry := 0x4ba54; rw_lo := 0x142000; rw_len := 0x52f000; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 11;
      x_imemset := 0xe1e94; x_imemcpy := 0xe1e18; x_memset := 0x116924; x_memcpy := 0x116520; x_memiszero := 0xe24f8;
      x_istrncpy := 0xe23a8; x_sealed := 0x1205f; x_popfree := 0x52a60; x_smear := 0;

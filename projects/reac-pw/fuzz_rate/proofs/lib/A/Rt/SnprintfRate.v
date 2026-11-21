@@ -2,7 +2,7 @@
    22bc8613d780c9a99353dc86368f9401311ef5c8358882651217836298529b6a): the snprintf wrapper's contract at
    reac_rate_drivable_csv's call (lib/A/Rt/SnprintfRateDef.v rate_snprintf_sd_realizes), from the port of fuzz_disco's
    released ASan snprintf walk. New file, in the form of fuzz_disco's lib/A/FMsnprintfDiscoR1.v (the instance at the
-   unit's pieces) and lib/A/FMsnprintfDiscoSnp.v (the instance at the unit's call) at origin/ossv/recipes 2d2ff01bb6f2.
+   unit's pieces) and lib/A/FMsnprintfDiscoSnp.v (the instance at the unit's call).
    Rule 24: no function is proved here beyond the ported walk; this file instantiates it.
    - rate's pieces pf_rate_piece = %s and %d (the format "%s%d" parses to [Ps; Pd]), each with its four arms, taken by
      path: %s FMgxaSeamPf.v seam_*_arm_ps and RT_pf_sh.v pcom_pcx_arm_ps; %d FMpfArmPdSeam.v seam_*_arm_pd and

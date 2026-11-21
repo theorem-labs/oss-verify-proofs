@@ -1,19 +1,20 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane WFree): AFREE_CF premise #13 at plugin-hostd/fuzz_reply image A (asan, pin
    42c58610e125, unstripped twin d751b179ea49): the free interceptor's call segment and its PRIMED return segment.
-   rule 24: no released proof (RULE24-wrapfree.md sha256 a048293a91fe; internal record); the walk is A2's fuzz_preset family relocated from
-   f6c2b01c2457 by alreloc a5c53bb2bed4 (WrapFreeA*.v; hand check a Theorem Labs lane's RELOC-CHECK.md (sha256 6283be15fb26; internal record)).
+   rule 24: no released proof (RULE24-wrapfree.md sha256 a048293a91fe; internal record); the walk is A2's fuzz_preset family relocated
+    by alreloc a5c53bb2bed4 (WrapFreeA*.v; hand check a Theorem Labs lane's RELOC-CHECK.md (sha256 6283be15fb26; internal record)).
 
    The instances (agreed with a Theorem Labs lane 18:21Z): segs := im_segs (AImg_reply, = tfibsegs), B := TfibB (AD2l.v),
    atpD := atp_cf (= 1, asan_free's FROM_MALLOC), ARX := YGcfInstBase.ARXq_cf TfibB (fun i => i = as_inst TfibB),
    K := K_reply (WrapFreeAK.v, A2's K_A relocated).
-   - wrap_free_call_reply_A: the type of field wf_call of YGcfMallocCompose.wrap_free_walk_cf (YGcfMallocCompose.v:492-501)
+   - wrap_free_call_reply_A: the type of field wf_call of YGcfMallocCompose.wrap_free_walk_cf (YGcfMallocCompose.v:493-502)
      at those instances, no extra premise.
-   - wrap_free_ret_reply_A_rh: field wf_ret's text (YGcfMallocCompose.v:502-515) at those instances with ONE change: the
-     Deallocate post free_dpost_cf (:484-485) is the primed YGcfRehidePost.dealloc_post_raw_rh (YGcfRehidePost.v:402).
-   The primed record wrap_free_walk_rh_reply_A (YGcfMallocComposeRh.wrap_free_walk_cf_rh, fu2-mp aa6f26a086a4,
-   YGcfMallocComposeRh.v:90) is assembled from the two (a Theorem Labs lane's decision 2026-10-30); no unprimed record or
+   - wrap_free_ret_reply_A_rh: field wf_ret's text (YGcfMallocCompose.v:503-516) at those instances with ONE change: the
+     Deallocate post free_dpost_cf (:484-485) is the primed YGcfRehidePost.dealloc_post_raw_rh (YGcfRehidePost.v:403).
+   The primed record wrap_free_walk_rh_reply_A (YGcfMallocComposeRh.wrap_free_walk_cf_rh, fu2-mp,
+   YGcfMallocComposeRh.v:91) is assembled from the two (a Theorem Labs lane's decision 2026-10-30); no unprimed record or
    theorem is exported (the unprimed fit is a Check). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
@@ -99,7 +100,7 @@ Qed.
 Check (fun Hret => {| wf_call := wrap_free_call_reply_A; wf_ret := Hret |}
   : wrap_free_walk_cf im_segs TfibB atp_cf (ARXq_cf TfibB (fun i => i = as_inst TfibB)) K_reply).
 
-(* The primed walk record at fuzz_reply image A (YGcfMallocComposeRh.v:90; fields wfr_call :91, wfr_ret :100). *)
+(* The primed walk record at fuzz_reply image A (YGcfMallocComposeRh.v:91; fields wfr_call :91, wfr_ret :100). *)
 Theorem wrap_free_walk_rh_reply_A :
   wrap_free_walk_cf_rh im_segs TfibB atp_cf (ARXq_cf TfibB (fun i => i = as_inst TfibB)) K_reply.
 Proof.

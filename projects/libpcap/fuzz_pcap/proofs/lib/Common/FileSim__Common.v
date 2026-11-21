@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the C-string walk lemmas' 2^47 access_ok bound, the argv string reads over the new entry stack image, the write nodes' access_ok and channel-reader premises, and the fout run lemmas over Run.run_segments and the with_vdso model. *)
 (* [comment removed for export] *)
 From Stdlib Require Lia.
 (* [comment removed for export] *)
@@ -286,7 +287,7 @@ Qed.
 #[using="Type"] Lemma file_write_append : forall data off bs,
   word_to_nat off = length data -> file_write data off bs = data ++ bs.
 Proof.
-  intros data off bs Hoff. unfold file_write.
+  intros data off bs Hoff. unfold file_write, file_extend.
   destruct bs as [|b bs]; [now rewrite app_nil_r|]. cbv zeta.
   rewrite Hoff, Nat.sub_diag. cbn [repeat]. rewrite app_nil_r.
   rewrite firstn_all.
@@ -361,17 +362,40 @@ Proof.
   injection H; intros; subst; reflexivity.
 Qed.
 
+(* THE [access_ok] GUARD THE WALK ITSELF GAINED, at
+   75d69e00:theories/LinuxProcessSem/State.v:1551-1565: every [S k'] step of
+   [read_cstr_aux] now tests [negb (access_okb a 1)] first and answers
+   [CstrFault] past it (strncpy_from_user's clamp), so a walk that steps off the
+   top of the user address space faults instead of wrapping.  [rdn] does NOT
+   give it: that predicate bounds its range by 2^64, while [State.access_okb]
+   asks for [State.TASK_SIZE] = 2^47.  The bound is over the bytes this walk
+   touches -- [str] and the NUL after it, hence the [+ 1] -- because that is
+   exactly the set of addresses the guard is tested at.  Same conjunct and same
+   house form as [E2/Lib/Nodes.v]'s [read_cstr_aux_bytes_in], with ONE
+   difference: that twin quantifies [a : Z] and re-enters through [wa], so its
+   [wa_succ] is unconditional, whereas this walk steps [a + 1] in WORD
+   arithmetic, so the successor needs [State.bv_unsigned_succ_below_task_size]
+   (75d69e00:theories/LinuxProcessSem/State.v:1574) to stay below [TASK_SIZE]. *)
 #[using="Type"] Lemma read_cstr_aux_of_rdn : forall segs str fuel mem a,
   (length str < fuel)%nat -> ~ In (Z_to_bv 8 0) str ->
+  (bv_unsigned a + Z.of_nat (length str) + 1 <= 2^47)%Z ->
   rdn segs mem a (length str + 1) = Some (str ++ [Z_to_bv 8 0]) ->
   read_cstr_aux (mrb segs mem) a fuel = CstrOk str.
 Proof.
-  intros segs str; induction str as [|b str IH]; intros fuel mem a Hf Hnz Hr.
+  intros segs str; induction str as [|b str IH]; intros fuel mem a Hf Hnz Hacc Hr.
   - cbn [length] in *. destruct fuel as [|fuel]; [lia|].
+    assert (Hok : access_okb a 1 = true).
+    { rewrite access_okb_one. apply Z.ltb_lt. unfold TASK_SIZE. lia. }
     assert (Hb0 : mrb segs mem a = Some (Z_to_bv 8 0))
       by (apply (mrb_first segs mem a 0 (Z_to_bv 8 0) []); exact Hr).
-    cbn [read_cstr_aux]. rewrite Hb0. reflexivity.
+    cbn [read_cstr_aux]. rewrite Hok, Hb0. reflexivity.
   - cbn [length] in *. destruct fuel as [|fuel]; [lia|].
+    pose proof (Nat2Z.is_nonneg (length str)) as Hnn.
+    assert (Hlt : (bv_unsigned a < TASK_SIZE)%Z) by (unfold TASK_SIZE; lia).
+    assert (Hok : access_okb a 1 = true)
+      by (rewrite access_okb_one; apply Z.ltb_lt; exact Hlt).
+    assert (Hsucc : bv_unsigned (a + 1) = (bv_unsigned a + 1)%Z)
+      by (apply bv_unsigned_succ_below_task_size; exact Hlt).
     cbn [read_cstr_aux]. cbn [app] in Hr.
     assert (Hb : b <> Z_to_bv 8 0) by (intro; apply Hnz; left; auto).
     assert (Hfirst : mrb segs mem a = Some b)
@@ -381,97 +405,137 @@ Proof.
                     = Some (str ++ [Z_to_bv 8 0]))
       by (apply (rdn_tail segs mem a (length str + 1) b (str ++ [Z_to_bv 8 0]));
           exact Hr).
-    rewrite Hfirst. rewrite (bv_eqb_neq b (Z_to_bv 8 0) Hb).
+    rewrite Hok, Hfirst. rewrite (bv_eqb_neq b (Z_to_bv 8 0) Hb).
     rewrite (IH fuel mem (a + 1) ltac:(lia)
-               ltac:(intro; apply Hnz; right; assumption) Htail).
+               ltac:(intro; apply Hnz; right; assumption)
+               ltac:(rewrite Hsucc; lia) Htail).
     reflexivity.
 Qed.
 
 #[using="Type"] Lemma read_cstr_of_rdn : forall segs mem a str,
   (length str <= 4095)%nat -> ~ In (Z_to_bv 8 0) str ->
+  (bv_unsigned a + Z.of_nat (length str) + 1 <= 2^47)%Z ->
   rdn segs mem a (length str + 1) = Some (str ++ [Z_to_bv 8 0]) ->
   read_cstr (mrb segs mem) a = CstrOk str.
 Proof.
-  intros segs mem a str Hlen Hnz Hr.
-  unfold read_cstr. apply read_cstr_aux_of_rdn; [|exact Hnz|exact Hr].
+  intros segs mem a str Hlen Hnz Hacc Hr.
+  unfold read_cstr. apply read_cstr_aux_of_rdn; [|exact Hnz|exact Hacc|exact Hr].
   change path_max with 4096%nat. lia.
 Qed.
 
-(* [comment removed for export] *)
+(* THE SAME GUARD on the fuel-exhausting walk
+   (75d69e00:theories/LinuxProcessSem/State.v:1551-1565).  Here the walk stops
+   after [fuel] steps, so the bound is over [fuel] bytes from [a] rather than
+   over all of [bs]: that is the weakest premise covering every address the
+   guard is tested at, and a caller holding the stronger string bound discharges
+   it by [lia].  The successor again needs
+   [State.bv_unsigned_succ_below_task_size], because this walk steps [a + 1] in
+   word arithmetic with no [wa] re-entry. *)
 #[using="Type"] Lemma read_cstr_aux_toolong_of_rdn : forall segs fuel bs mem a,
   length bs = fuel -> ~ In (Z_to_bv 8 0) bs ->
+  (bv_unsigned a + Z.of_nat fuel <= 2^47)%Z ->
   rdn segs mem a fuel = Some bs ->
   read_cstr_aux (mrb segs mem) a fuel = CstrTooLong.
 Proof.
-  intros segs fuel; induction fuel as [|fuel IH]; intros bs mem a Hlen Hnz Hr;
-    [reflexivity|].
+  intros segs fuel; induction fuel as [|fuel IH];
+    intros bs mem a Hlen Hnz Hacc Hr; [reflexivity|].
   destruct bs as [|b bs]; [cbn in Hlen; lia|].
+  pose proof (Nat2Z.is_nonneg fuel) as Hnn.
+  assert (Hlt : (bv_unsigned a < TASK_SIZE)%Z) by (unfold TASK_SIZE; lia).
+  assert (Hok : access_okb a 1 = true)
+    by (rewrite access_okb_one; apply Z.ltb_lt; exact Hlt).
+  assert (Hsucc : bv_unsigned (a + 1) = (bv_unsigned a + 1)%Z)
+    by (apply bv_unsigned_succ_below_task_size; exact Hlt).
   cbn [read_cstr_aux].
   assert (Hb : b <> Z_to_bv 8 0) by (intro; apply Hnz; left; auto).
   assert (Hfirst : mrb segs mem a = Some b)
     by (apply (mrb_first segs mem a fuel b bs); exact Hr).
   assert (Htail : rdn segs mem (a + 1) fuel = Some bs)
     by (apply (rdn_tail segs mem a fuel b bs); exact Hr).
-  rewrite Hfirst. rewrite (bv_eqb_neq b (Z_to_bv 8 0) Hb).
+  rewrite Hok, Hfirst. rewrite (bv_eqb_neq b (Z_to_bv 8 0) Hb).
   rewrite (IH bs mem (a + 1) ltac:(cbn in Hlen; lia)
-             ltac:(intro; apply Hnz; right; assumption) Htail).
+             ltac:(intro; apply Hnz; right; assumption)
+             ltac:(rewrite Hsucc; lia) Htail).
   reflexivity.
 Qed.
 
 #[using="Type"] Lemma read_cstr_toolong_of_rdn : forall segs mem a bs,
   length bs = 4096%nat -> ~ In (Z_to_bv 8 0) bs ->
+  (bv_unsigned a + 4096 <= 2^47)%Z ->
   rdn segs mem a 4096%nat = Some bs ->
   read_cstr (mrb segs mem) a = CstrTooLong.
 Proof.
-  intros segs mem a bs Hlen Hnz Hr.
+  intros segs mem a bs Hlen Hnz Hacc Hr.
   unfold read_cstr. change path_max with 4096%nat.
-  eapply read_cstr_aux_toolong_of_rdn; eauto.
+  eapply read_cstr_aux_toolong_of_rdn; [exact Hlen | exact Hnz | | exact Hr].
+  lia.
 Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma read_argv_cstr_k : forall ph segs (sp : word) av ev k uid hw rnd,
-  (k < length av)%nat ->
-  (bv_unsigned sp + Z.of_nat (length (build_stack_bytes ph sp av ev uid hw rnd)) < 2^64)%Z ->
-  rdn segs (stack_to_mem sp (entry_stack_image ph sp av ev uid hw rnd))
-      (cat_argv_ptr sp av ev k) (length (nth k av []) + 1)
-  = Some (nth k av [] ++ [Z_to_bv 8 0]).
+#[using="Type"] Lemma read_argv_cstr_k :
+  forall v segs inp mbase ph entry (sp brk : word) draw k,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  (k < length (in_argv inp))%nat ->
+  rdn segs (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw))
+      (cat_argv_ptr (ed_top draw) (in_argv inp) (in_envp inp) (in_execfn inp) k)
+      (length (nth k (in_argv inp) []) + 1)
+  = Some (nth k (in_argv inp) [] ++ [Z_to_bv 8 0]).
 Proof.
-  intros ph segs sp av ev k uid hw rnd Hk Hnw.
-  destruct (bsb_byte_k ph sp av ev k uid hw rnd Hk) as [pre [post [E Hlen]]].
-  pose proof (read_at_offset_image segs ph sp av ev uid hw rnd
-    pre (nth k av [] ++ [Z_to_bv 8 0]) post (length (nth k av []) + 1)) as H.
+  intros v segs inp mbase ph entry sp brk draw k Hlaunch Hk.
+  pose proof (entry_stack_image_no_wrap v inp mbase ph entry sp brk draw Hlaunch)
+    as Hnw.
+  destruct (bsb_byte_k inp mbase ph entry sp draw k Hk) as [pre [post [E Hlen]]].
+  pose proof (read_at_offset_image segs inp mbase ph entry sp draw
+    pre (nth k (in_argv inp) [] ++ [Z_to_bv 8 0]) post
+    (length (nth k (in_argv inp) []) + 1)) as H.
   rewrite Hlen in H.
-  replace (cat_argv_ptr sp av ev k)
-    with (sp + nat_to_word (cat_struct_size av ev + total_arg_bytes_nat (firstn k av))).
-  2:{ rewrite (cat_argv_ptr_offset sp av ev k Hk). unfold cat_string_base.
+  replace (cat_argv_ptr (ed_top draw) (in_argv inp) (in_envp inp)
+             (in_execfn inp) k)
+    with (sp + nat_to_word
+                 (cat_string_off (kb_rseq (in_kernel inp)) sp (ed_top draw)
+                    (in_argv inp) (in_envp inp) (in_execfn inp)
+                  + total_arg_bytes_nat (firstn k (in_argv inp)))).
+  2:{ rewrite (cat_argv_ptr_offset _ _ _ _ k Hk),
+        (cat_string_base_offset v inp mbase sp brk draw Hlaunch).
       rewrite nat_to_word_add_merge. reflexivity. }
   apply H; [exact E | | exact Hnw].
   rewrite length_app. cbn [length]. lia.
 Qed.
 
-#[using="Type"] Lemma read_argv_prefix_k : forall ph segs (sp : word) av ev k n uid hw rnd,
-  (k < length av)%nat -> (n <= length (nth k av []))%nat ->
-  (bv_unsigned sp + Z.of_nat (length (build_stack_bytes ph sp av ev uid hw rnd)) < 2^64)%Z ->
-  rdn segs (stack_to_mem sp (entry_stack_image ph sp av ev uid hw rnd))
-      (cat_argv_ptr sp av ev k) n
-  = Some (firstn n (nth k av [])).
+#[using="Type"] Lemma read_argv_prefix_k :
+  forall v segs inp mbase ph entry (sp brk : word) draw k n,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  (k < length (in_argv inp))%nat ->
+  (n <= length (nth k (in_argv inp) []))%nat ->
+  rdn segs (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw))
+      (cat_argv_ptr (ed_top draw) (in_argv inp) (in_envp inp) (in_execfn inp) k)
+      n
+  = Some (firstn n (nth k (in_argv inp) [])).
 Proof.
-  intros ph segs sp av ev k n uid hw rnd Hk Hn Hnw.
-  destruct (bsb_byte_k ph sp av ev k uid hw rnd Hk) as [pre [post [E Hlen]]].
-  pose proof (read_at_offset_image segs ph sp av ev uid hw rnd
-    pre (firstn n (nth k av []))
-    ((skipn n (nth k av []) ++ [Z_to_bv 8 0]) ++ post) n) as H.
+  intros v segs inp mbase ph entry sp brk draw k n Hlaunch Hk Hn.
+  pose proof (entry_stack_image_no_wrap v inp mbase ph entry sp brk draw Hlaunch)
+    as Hnw.
+  destruct (bsb_byte_k inp mbase ph entry sp draw k Hk) as [pre [post [E Hlen]]].
+  pose proof (read_at_offset_image segs inp mbase ph entry sp draw
+    pre (firstn n (nth k (in_argv inp) []))
+    ((skipn n (nth k (in_argv inp) []) ++ [Z_to_bv 8 0]) ++ post) n) as H.
   rewrite Hlen in H.
-  replace (cat_argv_ptr sp av ev k)
-    with (sp + nat_to_word (cat_struct_size av ev + total_arg_bytes_nat (firstn k av))).
-  2:{ rewrite (cat_argv_ptr_offset sp av ev k Hk). unfold cat_string_base.
+  replace (cat_argv_ptr (ed_top draw) (in_argv inp) (in_envp inp)
+             (in_execfn inp) k)
+    with (sp + nat_to_word
+                 (cat_string_off (kb_rseq (in_kernel inp)) sp (ed_top draw)
+                    (in_argv inp) (in_envp inp) (in_execfn inp)
+                  + total_arg_bytes_nat (firstn k (in_argv inp)))).
+  2:{ rewrite (cat_argv_ptr_offset _ _ _ _ k Hk),
+        (cat_string_base_offset v inp mbase sp brk draw Hlaunch).
       rewrite nat_to_word_add_merge. reflexivity. }
   apply H; [| |exact Hnw].
   - rewrite E. rewrite <- !app_assoc.
-    rewrite (app_assoc (firstn n (nth k av [])) (skipn n (nth k av []))).
+    rewrite (app_assoc (firstn n (nth k (in_argv inp) []))
+               (skipn n (nth k (in_argv inp) []))).
     rewrite firstn_skipn. reflexivity.
   - apply firstn_length_le. exact Hn.
 Qed.
@@ -1606,6 +1670,7 @@ Qed.
   fd_lookup (m_fds model) (ms_gpr ms 0) = Some (FdFileW p off) ->
   fd32 (ms_gpr ms 0) = ms_gpr ms 0 ->
   read_bytes_map (ms_read_byte ms) (ms_gpr ms 1) (ms_gpr ms 2) = Some bs ->
+  access_okb (ms_gpr ms 1) (bv_unsigned (ms_gpr ms 2)) = true ->
   (bv_unsigned (ms_gpr ms 2) <= rw_bytes_max)%Z ->
   fs_lookup (m_fs model) p = Some data ->
   (* [comment removed for export] *)
@@ -1624,7 +1689,7 @@ Qed.
     U ->
   to_fout segs ms model U.
 Proof.
-  intros ms model x8 p off data bs U Hsvc Hno Hfd Hfd32 Hrd Hcnt Hfs Hgap Hnz Hh Hlazy Hcont.
+  intros ms model x8 p off data bs U Hsvc Hno Hfd Hfd32 Hrd Hok Hcnt Hfs Hgap Hnz Hh Hlazy Hcont.
   assert (Hrb : read_bytes_map (in_mem (sys_input segs ms x8))
                   (ms_gpr ms 1) (ms_gpr ms 2) = Some bs).
   { rewrite in_mem_si. exact Hrd. }
@@ -1638,6 +1703,7 @@ Proof.
     rewrite (check_syscall_64 segs ms x8 eff model Hno). unfold check_write.
     rewrite Hfd32, Hfd. cbv beta iota.
     rewrite (rw_range_in_range _ _ Hcnt). cbv beta iota zeta.
+    rewrite Hok. cbn [negb]. cbv beta iota.
     rewrite (write_source_of_rw _ _ _ Hcnt), (readable_bytes_full _ _ _ _ Hrb).
     pose proof (read_bytes_map_length _ _ _ _ Hrb) as Hlen.
     assert (Hret : len_word bs = ms_gpr ms 2).
@@ -1710,6 +1776,7 @@ Proof.
     rewrite (check_syscall_64 segs ms x8 eff model Hno). unfold check_write.
     rewrite Hfd32, Hfd. cbv beta iota.
     rewrite (rw_range_in_range _ _ Hcnt). cbv beta iota zeta.
+    rewrite Hok. cbn [negb]. cbv beta iota.
     rewrite (write_source_of_rw _ _ _ Hcnt), (readable_bytes_full _ _ _ _ Hrb).
     pose proof (read_bytes_map_length _ _ _ _ Hrb) as Hlen.
     assert (Hret : len_word bs = ms_gpr ms 2).
@@ -1876,7 +1943,7 @@ Qed.
   (* [comment removed for export] *)
   negb (modeled_file_gap data off bs) = false ->
   (* [comment removed for export] *)
-  (access_okb buf (bv_unsigned cnt) = true \/ (0 < bv_unsigned cnt)%Z) ->
+  access_okb buf (bv_unsigned cnt) = true ->
   m_halted model = None ->
   m_vm_lazy model = [] ->
   to_fout segs (mkst (regupd regs 10 cnt) (v_addi pc 4) mem (seg_rom segs))
@@ -1913,10 +1980,7 @@ Proof.
     + exact Hfs.
     + exact Hgap.
     + rewrite Hg2. exact Hz.
-    + destruct Hok as [Hfl | Hp].
-      * rewrite Hg1, Hg2. exact Hfl.
-      * (* [comment removed for export] *)
-        rewrite (w_is0_pos cnt Hp) in Hz. discriminate.
+    + rewrite Hg1, Hg2. exact Hok.
     + exact Hh.
     + exact Hlazy.
     + rewrite Hg0, Hg2. unfold ms.
@@ -1931,6 +1995,7 @@ Proof.
       rewrite read_bytes_map_read_byte.
       rewrite (ms_read_bytes_rdn segs ms) by reflexivity.
       exact Hrd.
+    + rewrite Hg1, Hg2. exact Hok.
     + rewrite Hg2. exact Hcnt.
     + exact Hfs.
     + exact Hgap.
@@ -2164,42 +2229,51 @@ End OpenNodes.
 
 (* [comment removed for export] *)
 #[using="Type"] Lemma fout_omni_run : forall segs pc ph sp brk0 mb rnd lim inp U,
-  to_fout segs (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-          (init_model (segments_reserved segs) brk0 mb sp lim inp) U ->
+  to_fout (run_segments segs inp sp mb)
+          (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp)
+          (with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+             (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp)) U ->
   omni_run (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp (fout_post U).
 Proof.
   intros segs pc ph sp brk0 mb rnd lim inp U Hto.
   cbn [omni_run]. unfold init_config.
-  exact (to_fout_exec segs _ _ U Hto eq_refl eq_refl).
+  exact (to_fout_exec (run_segments segs inp sp mb) _ _ U Hto eq_refl eq_refl).
 Qed.
 
 #[using="Type"] Lemma fout_obs_iff : forall segs pc ph sp brk0 mb rnd lim inp U,
-  to_fout segs (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-          (init_model (segments_reserved segs) brk0 mb sp lim inp) U ->
-  forall tr, obs_trace segs (init_config segs pc ph sp brk0 mb rnd lim inp) tr
+  to_fout (run_segments segs inp sp mb)
+          (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp)
+          (with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+             (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp)) U ->
+  forall tr, obs_trace (run_segments segs inp sp mb)
+               (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) tr
     <-> exists o, U o /\ is_prefix tr (fout_trace o).
 Proof.
   intros segs pc ph sp brk0 mb rnd lim inp U Hto tr.
   unfold init_config.
-  set (ms := init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) in *.
-  assert (Hh : m_halted (init_model (segments_reserved segs) brk0 mb sp lim inp) = None)
-    by reflexivity.
-  assert (Hlazy : m_vm_lazy (init_model (segments_reserved segs) brk0 mb sp lim inp) = [])
-    by reflexivity.
+  set (ms := init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp) in *.
+  set (m0 := with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+               (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp)) in *.
+  assert (Hh : m_halted m0 = None) by reflexivity.
+  assert (Hlazy : m_vm_lazy m0 = []) by reflexivity.
   split.
   - intros (tr' & c & Hstar & Hp).
-    destruct (to_fout_star_only segs ms _ U Hto Hh Hlazy tr' c Hstar)
+    destruct (to_fout_star_only (run_segments segs inp sp mb) ms _ U Hto Hh Hlazy tr' c Hstar)
       as (o & Ho & Hp').
     exists o. split; [exact Ho | eapply is_prefix_trans; eauto].
   - intros (o & Ho & Hp).
-    destruct (to_fout_star_admits segs ms _ U Hto Hh Hlazy o Ho) as [c Hstar].
+    destruct (to_fout_star_admits (run_segments segs inp sp mb) ms _ U Hto Hh Hlazy o Ho)
+      as [c Hstar].
     exists (fout_trace o), c. split; assumption.
 Qed.
 
 #[using="Type"] Lemma fout_no_error_run : forall segs pc ph sp brk0 mb rnd lim inp U,
-  to_fout segs (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-          (init_model (segments_reserved segs) brk0 mb sp lim inp) U ->
-  ~ reaches_error segs (init_config segs pc ph sp brk0 mb rnd lim inp).
+  to_fout (run_segments segs inp sp mb)
+          (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp)
+          (with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+             (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp)) U ->
+  ~ reaches_error (run_segments segs inp sp mb)
+      (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp).
 Proof.
   intros segs pc ph sp brk0 mb rnd lim inp U Hto. apply exec_no_error.
   eapply exec_conseq; [exact (fout_omni_run segs pc ph sp brk0 mb rnd lim inp U Hto) |].
@@ -2209,12 +2283,16 @@ Qed.
 (* [comment removed for export] *)
 #[using="Type"] Lemma fout_omni_strong_equiv :
   forall source_segs rpc rph rsp rbrk rmb rrnd target_segs apc aph asp abrk amb arnd U inp,
-  to_fout source_segs
-    (init_machine_state source_segs rpc rph rsp rrnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-    (init_model (segments_reserved source_segs) rbrk rmb rsp source_alloc_limit inp) U ->
-  to_fout target_segs
-    (init_machine_state target_segs apc aph asp arnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-    (init_model (segments_reserved target_segs) abrk amb asp target_alloc_limit inp) U ->
+  to_fout (run_segments source_segs inp rsp rmb)
+    (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp)
+    (with_vdso (Vdso.vdso_run_init (ed_vdso rrnd))
+       (init_model (segments_reserved (run_segments source_segs inp rsp rmb)) rbrk rmb rsp
+          source_alloc_limit inp)) U ->
+  to_fout (run_segments target_segs inp asp amb)
+    (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp)
+    (with_vdso (Vdso.vdso_run_init (ed_vdso arnd))
+       (init_model (segments_reserved (run_segments target_segs inp asp amb)) abrk amb asp
+          target_alloc_limit inp)) U ->
   omni_strong_equiv (mkImage source_segs rpc rph) (mkImage target_segs apc aph)
                     (mkEntry rsp rbrk rmb rrnd) (mkEntry asp abrk amb arnd) inp.
 Proof.
@@ -2239,12 +2317,16 @@ Qed.
 (* [comment removed for export] *)
 #[using="Type"] Lemma fout_strong_equiv :
   forall source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim U inp,
-  to_fout source_segs
-    (init_machine_state source_segs rpc rph rsp rrnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-    (init_model (segments_reserved source_segs) rbrk rmb rsp rlim inp) U ->
-  to_fout target_segs
-    (init_machine_state target_segs apc aph asp arnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-    (init_model (segments_reserved target_segs) abrk amb asp alim inp) U ->
+  to_fout (run_segments source_segs inp rsp rmb)
+    (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp)
+    (with_vdso (Vdso.vdso_run_init (ed_vdso rrnd))
+       (init_model (segments_reserved (run_segments source_segs inp rsp rmb)) rbrk rmb rsp
+          rlim inp)) U ->
+  to_fout (run_segments target_segs inp asp amb)
+    (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp)
+    (with_vdso (Vdso.vdso_run_init (ed_vdso arnd))
+       (init_model (segments_reserved (run_segments target_segs inp asp amb)) abrk amb asp
+          alim inp)) U ->
   Equivalence.modeled (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
   /\ Equivalence.equiv (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
                        (run (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp).
@@ -2265,7 +2347,8 @@ Qed.
 (* [comment removed for export] *)
 #[using="Type"] Lemma spec_err_escape_equiv :
   forall segs pc ph sp brk0 mb rnd lim inp (target : behavior),
-  all_traces_error segs (init_config segs pc ph sp brk0 mb rnd lim inp) ->
+  all_traces_error (run_segments segs inp sp mb)
+    (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) ->
   Equivalence.equiv (run (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp) target.
 Proof.
   intros segs pc ph sp brk0 mb rnd lim inp target Hall.
@@ -2787,18 +2870,23 @@ Lemma rz_write_chan : forall segs regs pc mem model fd ch n bs T,
   bv_unsigned (getr regs 17) = 64%Z ->
   getr regs 10 = fd -> (bv_unsigned fd < 2 ^ 32)%Z ->
   fd_lookup (m_fds model) fd = Some (FdChannel ch) -> w_is0 ch = false ->
+  (* the far end has a reader: [CatSim.fdchan]'s third conjunct, which the
+     channel arm of [write_spec] reads before it admits a transfer *)
+  m_channel_reader model = true ->
   getr regs 12 = Z_to_bv 64 (Z.of_nat n) ->
   (1 <= n)%nat -> (Z.of_nat n <= rw_bytes_max)%Z -> (Z.of_nat n < 2 ^ 64)%Z ->
   rdn segs mem (getr regs 11) n = Some bs ->
+  (* the range [vfs_write]'s [access_ok] accepts; see [CatSim.write1_check_n] *)
+  access_okb (getr regs 11) (bv_unsigned (getr regs 12)) = true ->
   (forall k, (1 <= k)%nat -> (k <= n)%nat ->
      realizes segs (mkCfg (mkst (regupd regs 10 (Z_to_bv 64 (Z.of_nat k))) (v_addi pc 4) mem (seg_rom segs)) model) T) ->
   realizes segs (mkCfg (epend regs pc mem (seg_rom segs) (getr regs 17)) model)
            (t_write_ch ch bs T).
 Proof.
-  intros segs regs pc mem model fd ch n bs T Hh Hlazy Hno Hfd Hfd32 Hlk Hch Hcnt Hn1 Hmax Hn64 Hrd Hc.
+  intros segs regs pc mem model fd ch n bs T Hh Hlazy Hno Hfd Hfd32 Hlk Hch Hrdr Hcnt Hn1 Hmax Hn64 Hrd Hacc Hc.
   pose proof (rdn_length segs mem n (getr regs 11) bs Hrd) as Hlen.
   eapply (rz_write_ch segs _ model fd ch (getr regs 17) bs T Hh Hlazy).
-  - unfold fdchan. split; [exact Hlk | exact Hch].
+  - unfold fdchan. split; [exact Hlk | split; [exact Hch | exact Hrdr]].
   - apply fd32_id. exact Hfd32.
   - reflexivity.
   - exact Hno.
@@ -2806,6 +2894,7 @@ Proof.
   - rewrite ms_gpr_epend1, ms_gpr_epend2, Hcnt.
     rewrite (ms_read_bytes_rdn segs) by reflexivity. cbn [ms_mem epend].
     unfold word_to_nat. rewrite u64_lit by lia. rewrite Nat2Z.id. exact Hrd.
+  - rewrite ms_gpr_epend1, ms_gpr_epend2. exact Hacc.
   - unfold buf_modeled. rewrite Hlen. exact Hmax.
   - rewrite Hlen. exact Hn1.
   - intros k Hk1 Hk2. rewrite adv_set_epend.

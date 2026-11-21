@@ -7,8 +7,9 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/LLVMFuzzerTestOneInput_L.v, with its module paths, module names and numbers changed; 222 of its 252 lines of code are new or changed and 1050 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_put_grow.v; 84 of its 116 lines of code are new or changed and 220 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_put_close.v, with its module names changed; 1524 of its 1565 lines of code are new or changed and 75 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* indent 0x85e4c (preset_file.c:514-523) on fs.asan: Theorem indent_proof : indent_spec B tfibsegs (S0's statement,
-   lib/A/FSH_Fn_writer.v indent_spec, no CTX: a working branch b2324526f67 over S0 40e035433e6), the
+   lib/A/FSH_Fn_writer.v indent_spec, no CTX: a working branch over S0), the
    callee put 0x8418c through put_spec (same file) as a Section hypothesis. Uninstrumented: no GOT load, no shadow
    check. 29 words:
      0x85e4c addi sp, sp, -32; sd ra, 24(sp); sd s0, 16(sp); sd s1, 8(sp); sd s2, 0(sp)
@@ -41,7 +42,7 @@
    Rule 24 (record (internal path): proof-index indent, v5 built
    2026-10-29T01:50:18Z, exit 0, 14 named / 15 by address / 4 related / 28 lemma(s), an earlier delivery 6 named; git grep by name and
    by ASan entry 0x85e4c over the released refs and the cold branches, 2026-10-29T03:28:17Z; CONFIRM by a Theorem Labs lane
-   04:05:58Z): the released plain / UBSan proofs (lib/Prog, lib/U/Prog indent*.v) and 211ff3e9df0's old-engine
+   04:05:58Z): the released plain / UBSan proofs (lib/Prog, lib/U/Prog indent*.v) and's old-engine
    lib/A/Prog walk are templates only; no lib/A or lib/B proof of indent; written over S0 and the walk kit
    lib/A/FSW_K.v / FSW_K3.v / FSW_ret.v / FSW_rd.v (U form). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.

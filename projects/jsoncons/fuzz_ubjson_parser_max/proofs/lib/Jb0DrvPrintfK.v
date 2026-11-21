@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: decodes the encoded statements of printf2_run, printf3_run and printf4_run into plain Rocq lemmas, replacing the Section SE variable block with an explicit forall statement and dropping the tcn__Jb0DrvPrintfK name table; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Bo0DrvPrintfK.v, lines 60-78, 145-164, 231-250. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -16,7 +17,6 @@ Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Require OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.L5FastLia. Require OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.L5FastLiaT.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require Import SecKit. From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require TCodec.
-Ltac2 tcn__Jb0DrvPrintfK () := ([""; "Corelib.Init.Datatypes."; "Corelib.Init.Logic."; "Corelib.Numbers.BinNums."; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics."; "LinuxProcessSemantics.LinuxProcessSem.Run."; "LinuxProcessSemantics.LinuxProcessSem.State."; "LinuxProcessSemantics.Riscv.Prelude."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AsanAcct."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.HeapIface."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.HeapIfaceA."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Jb0DrvLib."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Jb0DrvPrintfK."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.PropExec."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.ShapeAlg."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.SpinAlg."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.asan.Jb0DrvP_dpA2.AS0DRVP_dpA2."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.asan.Jb0DrvP_dpA3.AS0DRVP_dpA3."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.asan.Jb0DrvP_dpA4.AS0DRVP_dpA4."; "OSSVerify.jsoncons.fuzz_ubjson_parser_max.images.AsanUbsan.M."; "Stdlib.Lists.List."; "Stdlib.ZArith.BinInt.Z."; "stdpp.bitvector.definitions."], [["0A"; "1None"; "1Some"; "1bool"; "1list"; "1nat"; "1option"; "1prod"; "1true"; "2I"; "2and"; "2eq"; "2not"; "3Z"; "0HI"; "0K"]; ["0LB"; "0LK"; "4store_ok"; "4word_to_le_bytes"; "5mkCfg"; "6Model"; "7bvmap"; "0M"; "0M0"; "0M1"; "0MV"; "0R"; "0R'"; "8mrestrict"; "8same_but_materialized"; "9credit"]; [":ahid"; ":fframe"; ";dinv"; "<Wpf"; "<stdoutA"; "=FPState"; "=getr"; "=mkst"; "=rdn"; "=seg_rom"; ">TSet"; "?srealizes"; "@KS_dpA2"; "AKS_dpA3"; "BKS_dpA4"; "Cloaded_segments"]; ["0S"; "DIn"; "Eadd"; "Ele"; "Elt"; "Emodulo"; "Eof_nat"; "Epow"; "Esub"; "0a"; "0ar"; "0canz"; "0cr"; "0d"; "0fx"; "0fx'"]; ["0i"; "0k"; "0model"; "0model1"; "0n"; "0scfg"; "0sp0"; "FBV"; "FZ_to_bv"; "Fbv"; "Fbv_unsigned"; "0x"]]).
 Local Ltac lia := L5FastLiaT.plia2.
 Open Scope Z_scope.
 Definition SOBUF : Z := 6886112.
@@ -53,20 +53,28 @@ Variable M0 : word -> option byte.
 #[local] Notation dinvA := (dinv ar HI sp0 M0).
 #[local] Notation usp := (bv_unsigned sp0).
 #[local] Notation rom := (seg_rom ASEGS).
-Section SE.
-Local Abbreviation SEC_T_printf2_run := (ltac2:(TCodec.tc2 tcn__Jb0DrvPrintfK "XD'4'7'=%2211%411&Q1%611&O'R9yR0%211'6y8%511%311p051'E&Fy5%2219&Q:'Q2vQJv>vR6vHr:r9r8r7r6r5%;::987654321&M&Q0%1275%3217&QC&QH&R:%12O@+TP0%4221%621<&QB+Q0%22@1%:217';&QE+@%22F1z%53QC21':%B23J&QD&QG+2+R0%3221%52Q01%8271&Q6(R7+1(9%33QA21%52Q:1&R8+dnX@%22QN1%H3QN41r;%:3QH@8%<221%72R3QB%M3R321r<+:%@3QN1>%B231+Rc^L%>2R:1%Q43R:31r=+;%G3R51E%I231+H%Q>2<1%F2RB1%Q<3RB41+XPPP0%QH2QF1r2%QK221r3%QF213%QN21QK'5%R02QA6&QF%118%QL271%R421R;'3&B&Q?rAr4%R32RC1%Q;2S71%64541@(8%R33921p0;1p0@1pT4B1pSLSE1p0E1p0I1pT:SH1pSDSI1+RPP0r1%RI221+QVhP0%R8231%R;231%QM2SIQ3%QE11(1%11SH%RF3SH31p061pT2T61%T91SL%SO11&Q8+VbRh0%R82T41u8%44Q3R621(2&Cr>%R>2T:1%3261%52<1%S63<71r@%S<21QO%RD2T@1u4%@4Q?R=21%RG2TCS8%<231%>2E1%S?3E41&Q4%12S=R<'Q5rMrLrKrJ%TB:TAT@T?T>4321R8Q:&NrI%221R;&QA&Q<%23R9Q@1%S92TLR7%S@2TB1%SA2;2%T13U721p051pTHR?1%SE2TFS4%S@2U<SK%T63U<21rN%TF21TI%TH21TK%J2SI1%TF2T7QN%T42QOT0%T7221&<&Q3%13MT<S1%311%SM2UIS1%U911rQ1%113%TF3UH31p061p0;1pSDV71%;3CTFS;%=11rQ3%U;21UC%U=31T5<%Q:1=%U03V221p061p0E1pSDVA1%Q>1RG%U53V71R@%H11%UF3:T>SH%U83V:1RC%K11p041pSDVA1'Q;vR5(D&Q7&Q9%11SE%35TDTITKV81%521V8%84SH71R0p0:1p0C1p0N1p0Q>1p0QC1p0QG1p0R11p0R51pT8VM1pQDVO1pQJVL1pT0R>1vQNrD+\[Y4%U?2W;1rF%G55421ErE%J221%M4T=L1T<p0:1p0RJ1p0RM1p0S71p0SF1p0T41p0U41p0U=1p0UE1p0UK1p0V61p0V@1p0VG1p0VL1tQFWIW41p0W91pQ0WF1pSHX91pS2X:1pQHWJ1pT6WN1pQ@X01p2X<1pSJX:1pQ4X<1pQ2X?1")) (only parsing).
-Variable LB : ltac:(sec_ty2 constr:(SEC_T_printf2_run) 0%nat 0%nat).
-Variable LK : ltac:(sec_ty2 constr:(SEC_T_printf2_run) 1%nat 0%nat).
-Variable cr : ltac:(sec_ty2 constr:(SEC_T_printf2_run) 2%nat 0%nat).
-Variable A : ltac:(sec_ty2 constr:(SEC_T_printf2_run) 3%nat 0%nat).
-Variable M : ltac:(sec_ty2 constr:(SEC_T_printf2_run) 4%nat 0%nat).
-Variable model : ltac:(sec_ty2 constr:(SEC_T_printf2_run) 5%nat 0%nat).
-Variable R : ltac:(sec_ty2 constr:(SEC_T_printf2_run) 6%nat 0%nat).
-Variable S : ltac:(sec_ty2 constr:(SEC_T_printf2_run) 7%nat 0%nat).
-Variable canz : ltac:(sec_ty2 constr:(SEC_T_printf2_run) 8%nat 0%nat).
-Variable K : ltac:(sec_ty2 constr:(SEC_T_printf2_run) 9%nat 0%nat).
-Lemma printf2_run : ltac:(sec_stmt2 constr:(SEC_T_printf2_run) 10%nat 0%nat).
-Proof using L C IL HIok ICok ILY Hsp DL Hpr LB LK cr A M model R S canz K.
+#[using="L C IL HIok ICok ILY Hsp DL Hpr"] Lemma printf2_run : forall LB LK cr A M (model : Model) R (S canz : Z) K,
+dinvA LB LK cr A M model ->
+let MV := mrestrict (ahid A model) M in
+usp - 4096 <= S -> S + 32 <= usp -> S mod 16 = 0 -> 0 <= canz < 2 ^ 64 ->
+getr R 1%bv = Z_to_bv 64 686352 -> getr R 2%bv = Z_to_bv 64 S -> getr R 10%bv = Z_to_bv 64 85468 -> getr R 11%bv = Z_to_bv 64 (S + 24) ->
+(forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true) ->
+(forall i, 65536 <= i < 1269760 -> MV (Z_to_bv 64 i) = None) ->
+rdn ASEGS MV (Z_to_bv 64 6884096) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 canz)) ->
+rdn ASEGS MV (Z_to_bv 64 (S + 24)) 4 = Some (word_to_le_bytes 4 (Z_to_bv 64 0)) ->
+stdoutA 0 MV ->
+(forall (fx' : PropExec.FPState) R' M1 (model1 : Model),
+dinvA LB LK cr A M1 model1 -> same_but_materialized model model1 ->
+(forall x, In x AS0DRVP_dpA2.KS_dpA2 -> getr R' (Z_to_bv 5 (Z.of_nat x)) = getr R (Z_to_bv 5 (Z.of_nat x))) ->
+getr R' 10%bv = Z_to_bv 64 2 ->
+stdoutA 1 (mrestrict (ahid A model1) M1) ->
+(forall a, 0 <= a < 2 ^ 64 -> ~ Wpf S 0 a -> M1 (Z_to_bv 64 a) = M (Z_to_bv 64 a)) ->
+(forall a, 0 <= a < 2 ^ 64 -> ~ Wpf S 0 a -> mrestrict (ahid A model1) M1 (Z_to_bv 64 a) = MV (Z_to_bv 64 a)) ->
+(forall a : word, MV a <> None -> mrestrict (ahid A model1) M1 a <> None) ->
+srealizes ASEGS scfg (mkCfg (@mkst fx' R' (Z_to_bv 64 0xa7910) M1 rom) model1) K) ->
+srealizes ASEGS scfg (mkCfg (@mkst fx R (Z_to_bv 64 0x62d24) M rom) model) K.
+Proof.
+intros LB LK cr A M model R S canz K.
 intros D MV HS1 HS2 HS16 Hcan R1 R2 R10 R11 WIN IMG CAN ARG SO KONT.
 pose proof Hsp as Hsp'. destruct SO as (F1 & F2 & F3 & F4 & F5 & F6 & F7 & FW & BW & BC).
 assert (PC : forall a n v, In (a, n, v) PR_CELLS -> rdn ASEGS MV (Z_to_bv 64 a) (Z.to_nat n) = Some (word_to_le_bytes (Z.to_nat n) (Z_to_bv 64 v)))
@@ -131,8 +139,26 @@ intros i Hi. destruct (Z.eq_dec i 0) as [->|N]; [split; [exact O4 | exact O3]|].
 destruct (BC i ltac:(lia)) as (B1 & B2).
 split; (apply TR; [assumption | unfold SOBUF; lia | unfold SOBUF; cbn; lia | intros x Hx; unfold Wpf, SOBUF in *; cbn in Hx; lia]).
 Qed.
-End SE.
-#[using="L C IL HIok ICok ILY Hsp DL Hpr"] Lemma printf3_run : ltac2:(TCodec.tc2 tcn__Jb0DrvPrintfK "XD'4'7'=%2211%411&Q1%611&O'R9yR0%211'6y8%511%311p051'E&Fy5%2219&Q:'Q2vQJv>vR6vHr:r9r8r7r6r5%;::987654321&M&Q0%1275%3217&QC&QH&R:%12O@+TP0%4221%621<&QB+Q0%22@1%:217';&QE+@%22F1z%53QC21':%B23J&QD&QG+2+R0%3221%52Q01%8271&Q6(R7+1(9%33QA21%52Q:1&R8+dnX@%22QN1%H3QN41r;%:3QH@8%<221%72R3QB%M3R321r<+:%@3QN1>%B231+Rc^L%>2R:1%Q43R:31r=+;%G3R51E%I231+H%Q>2<1%F2RB1%Q<3RB41+XPPP0%QH2QF1r2%QK221r3%QF213%QN21QK'5%R02QA6&QF%118%QL271%R421R;'3&B&Q?rAr4%R32RC1%Q;2S71%64541@(8%R33921p0;1p0@1pT4B1pSLSE1p0E1p0I1pT:SH1pSDSI1+RPP0r1%RI221+QVhP0%R8231%R;231%QM2SIQ3%QE11(1%11SH%RF3SH31p061pT2T61%T91SL%SO11&Q8+VbRh0%R82T41u8%44Q3R621(2&Cr>%R>2T:1%3261%52<1%S63<71r@%S<21QO%RD2T@1u4%@4Q?R=21%RG2TCS8%<231%>2E1%S?3E41&Q4%12S0R<'Q5rMrLrKrJ%TB:TAT@T?T>4321R8Q:&NrI%221R;&QA&Q=%23R9Q@1%S92TLR7%S@2TB1%SA2;2%T13U721p051pTHR?1%SE2TFS4%S@2U<SK%T63U<21rN%TF21TI%TH21TK%J2T01%TF2T7QN%T42QOT0%T7221&<&Q3%13MSOS1%311%SM2UIS1%U911rQ1%113%TF3UH31p061p0;1pSDV71%;3CT9S;%=11rQ3%U;21UC%U=31T5<%Q:1=%U03V221p061p0E1pSDVA1%Q>1RG%U53V71R@%H11%UF3:T>SH%U83V:1RC%K11p041pSDVA1'Q;vR5(D&Q7&Q9%11SE%35TDTITKV81%521V8%84SH71R0p0:1p0C1p0N1p0Q>1p0QC1p0QG1p0R11p0R51pT8VM1pQDVO1pQJVL1pT0R>1vQNrD+\[Y4%U?2W;1rF%G55421ErE%J221%M4T=L1T<p0:1p0RJ1p0RM1p0S71p0SF1p0T41p0U41p0U=1p0UE1p0UK1p0V61p0V@1p0VG1p0VL1tQFWIW41p0W91pQ0WF1pSHX91pS2X:1pQHWJ1pT6WN1pQ@X01p2X<1pSJX:1pQ4X<1pQ2X?1").
+Lemma printf3_run : forall LB LK cr A M (model : Model) R (S canz : Z) K,
+dinvA LB LK cr A M model ->
+let MV := mrestrict (ahid A model) M in
+usp - 4096 <= S -> S + 32 <= usp -> S mod 16 = 0 -> 0 <= canz < 2 ^ 64 ->
+getr R 1%bv = Z_to_bv 64 686352 -> getr R 2%bv = Z_to_bv 64 S -> getr R 10%bv = Z_to_bv 64 85468 -> getr R 11%bv = Z_to_bv 64 (S + 24) ->
+(forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true) ->
+(forall i, 65536 <= i < 1269760 -> MV (Z_to_bv 64 i) = None) ->
+rdn ASEGS MV (Z_to_bv 64 6884096) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 canz)) ->
+rdn ASEGS MV (Z_to_bv 64 (S + 24)) 4 = Some (word_to_le_bytes 4 (Z_to_bv 64 0)) ->
+stdoutA 1 MV ->
+(forall (fx' : PropExec.FPState) R' M1 (model1 : Model),
+dinvA LB LK cr A M1 model1 -> same_but_materialized model model1 ->
+(forall x, In x AS0DRVP_dpA3.KS_dpA3 -> getr R' (Z_to_bv 5 (Z.of_nat x)) = getr R (Z_to_bv 5 (Z.of_nat x))) ->
+getr R' 10%bv = Z_to_bv 64 2 ->
+stdoutA 2 (mrestrict (ahid A model1) M1) ->
+(forall a, 0 <= a < 2 ^ 64 -> ~ Wpf S 1 a -> M1 (Z_to_bv 64 a) = M (Z_to_bv 64 a)) ->
+(forall a, 0 <= a < 2 ^ 64 -> ~ Wpf S 1 a -> mrestrict (ahid A model1) M1 (Z_to_bv 64 a) = MV (Z_to_bv 64 a)) ->
+(forall a : word, MV a <> None -> mrestrict (ahid A model1) M1 a <> None) ->
+srealizes ASEGS scfg (mkCfg (@mkst fx' R' (Z_to_bv 64 0xa7910) M1 rom) model1) K) ->
+srealizes ASEGS scfg (mkCfg (@mkst fx R (Z_to_bv 64 0x62d24) M rom) model) K.
 Proof.
 intros LB LK cr A M model R S canz K D MV HS1 HS2 HS16 Hcan R1 R2 R10 R11 WIN IMG CAN ARG SO KONT.
 pose proof Hsp as Hsp'. destruct SO as (F1 & F2 & F3 & F4 & F5 & F6 & F7 & FW & BW & BC).
@@ -198,7 +224,26 @@ intros i Hi. destruct (Z.eq_dec i 1) as [->|N]; [split; [exact O4 | exact O3]|].
 destruct (BC i ltac:(lia)) as (B1 & B2).
 split; (apply TR; [assumption | unfold SOBUF; lia | unfold SOBUF; cbn; lia | intros x Hx; unfold Wpf, SOBUF in *; cbn in Hx; lia]).
 Qed.
-#[using="L C IL HIok ICok ILY Hsp DL Hpr"] Lemma printf4_run : ltac2:(TCodec.tc2 tcn__Jb0DrvPrintfK "XE'4'7'=%2211%411&Q1%611&O'R9yR0%211'6y8%511%311p051'E&Fy5%2219&Q:'Q2vQJv>vR6vHr:r9r8r7r6r5%;::987654321&M&Q0%1275%3217&QC&QH&R:%12O@+TP0%4221%621<&QB+Q0%22@1%:217';&QE+@%22F1z%53QC21':%B23J&QD&QG+2+R0%3221%52Q01%8271&Q6(R7+1(9%33QA21%52Q:1&R8+dnX@%22QN1%H3QN41r;%:3QH@8%<221%72R3QB%M3R321r<+:%@3QN1>%B231+Rc^L%>2R:1%Q43R:31r=+;%G3R51E%I231+H%Q>2<1%F2RB1%Q<3RB41+XPPP0%QH2QF1r2%QK221r3%QF213%QN21QK'5%R02QA6&QF%118%QL271%R421R;'3&B&Q?rAr4%R32RC1%Q;2S71%64541@(8%R33921p0;1p0@1pT4B1pSLSE1p0E1p0I1pT:SH1pSDSI1+RPP0r1%RI221+QVhP0%R8231%R;231%QM2SIQ3%QE11(1%11SH%RF3SH31p061pT2T61%T91SL%SO11&Q8+VbRh0%R82T41u8%44Q3R621(2&Cr>%R>2T:1%3261%52<1%S63<71r@%S<21QO%RD2T@1u4%@4Q?R=21%RG2TCS8%<231%>2E1%S?3E41&Q4%12S7R<'Q5rMrLrKrJ%TB:TAT@T?T>4321R8Q:&NrI%221R;&QA&Q>%23R9Q@1%S92TLR7%S@2TB1%SA2;2%T13U721p051pTHR?1%SE2TFS4%S@2U<SK%T63U<21+3rN%TG21TJ%TI21TL%K241%TG2T8QO%T52R0T1%T8221&<&Q3%13NT7S2%311%SN2UJS2%U:11rQ1%113%TG3UI31p061p0;1pSDV81%;3CTAS<%=11rQ3%U<21UD%U>31T6<%Q;1=%U13V321p061p0E1pSDVB1%Q?1RH%U63V81RA%H11%UG3:T?SI%U93V;1RD%K11p041pSDVB1'Q;vR5(D&Q7&Q9%11SF%35TETJTLV91%521V9%84SI71R1p0:1p0C1p0N1p0Q>1p0QD1p0QH1p0R21p0R61pT8VN1pQDW01pQJVM1pT0R?1vQNrD+\[Y4%U@2W<1rF%G55421ErE%J221%M4T>L1T=p0:1p0RK1p0RN1p0S81p0SG1p0T51p0U51p0U>1p0UF1p0UL1p0V71p0VA1p0VH1p0VM1tQFWJW51p0W:1pQ0WG1pSHX:1pS2X;1pQHWK1pT6WO1pQ@X11p2X=1pSJX;1pQ4X=1pQ2X@1").
+Lemma printf4_run : forall LB LK cr A M (model : Model) R (S canz : Z) K,
+dinvA LB LK cr A M model ->
+let MV := mrestrict (ahid A model) M in
+usp - 4096 <= S -> S + 32 <= usp -> S mod 16 = 0 -> 0 <= canz < 2 ^ 64 ->
+getr R 1%bv = Z_to_bv 64 686352 -> getr R 2%bv = Z_to_bv 64 S -> getr R 10%bv = Z_to_bv 64 85468 -> getr R 11%bv = Z_to_bv 64 (S + 24) ->
+(forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true) ->
+(forall i, 65536 <= i < 1269760 -> MV (Z_to_bv 64 i) = None) ->
+rdn ASEGS MV (Z_to_bv 64 6884096) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 canz)) ->
+rdn ASEGS MV (Z_to_bv 64 (S + 24)) 4 = Some (word_to_le_bytes 4 (Z_to_bv 64 0)) ->
+stdoutA 2 MV ->
+(forall (fx' : PropExec.FPState) R' M1 (model1 : Model),
+dinvA LB LK cr A M1 model1 -> same_but_materialized model model1 ->
+(forall x, In x AS0DRVP_dpA4.KS_dpA4 -> getr R' (Z_to_bv 5 (Z.of_nat x)) = getr R (Z_to_bv 5 (Z.of_nat x))) ->
+getr R' 10%bv = Z_to_bv 64 2 ->
+stdoutA 3 (mrestrict (ahid A model1) M1) ->
+(forall a, 0 <= a < 2 ^ 64 -> ~ Wpf S 2 a -> M1 (Z_to_bv 64 a) = M (Z_to_bv 64 a)) ->
+(forall a, 0 <= a < 2 ^ 64 -> ~ Wpf S 2 a -> mrestrict (ahid A model1) M1 (Z_to_bv 64 a) = MV (Z_to_bv 64 a)) ->
+(forall a : word, MV a <> None -> mrestrict (ahid A model1) M1 a <> None) ->
+srealizes ASEGS scfg (mkCfg (@mkst fx' R' (Z_to_bv 64 0xa7910) M1 rom) model1) K) ->
+srealizes ASEGS scfg (mkCfg (@mkst fx R (Z_to_bv 64 0x62d24) M rom) model) K.
 Proof.
 intros LB LK cr A M model R S canz K D MV HS1 HS2 HS16 Hcan R1 R2 R10 R11 WIN IMG CAN ARG SO KONT.
 pose proof Hsp as Hsp'. destruct SO as (F1 & F2 & F3 & F4 & F5 & F6 & F7 & FW & BW & BC).

@@ -59,7 +59,7 @@
      nest: refuse asks sa_room at ITS entry, where this call's frame is already in frames S).
    - it reaches snprintf, and vsnprintf through refuse: apost_baseF, sa_frm0, sa_ssp rd gotw guard.
    - arodata_okP over the window RLO .. RHI: the string interceptors ask rt_rom_view (fuzz_command
-     lib/A/Rt/RtDefs.v:145 at origin/ossv/recipes 501c0d516c69), which AR does not give.
+     lib/A/Rt/RtDefs.v:145), which AR does not give.
    - EV_reac_segconf_parse_file = 0, post tail sa_noalloc.
    Call sites (callsites.asan.tsv lines 13, 337): LLVMFuzzerTestOneInput 0x851bc (every file but the last, with
    main's label buffer, longl or NULL) and reac_segconf_parse 0x891f0 (c, text, "reac-pw.conf").
@@ -80,14 +80,14 @@
    IMAGE-INDEPENDENT: no image module is Required; A_reac_segconf_parse_file, STK_reac_segconf_parse_file, RLO,
    RHI, lit, cat, gotw and guard are parameters.
    The WALK takes these as Section hypotheses (the interceptor lane's interface
-   provenance/evidence/interceptors/INTERFACE-A-interceptors.md (commit 7068323e2626): rows 1-15 at e45889d6935a,
-   rows 16-17 and the RtString forms of rows 6, 7, 10 in the accepted v1 5e0b8a44fdc):
-     RtString.astrlen_realizes (row 16, strlen 0x43a0c, 3 sites); RtSeg.astrchr_realizes (pc) (row 6, accepted at
-     commit 80d098bd1905, lib/A/Rt/RtSeg.v:72; strchr 0x43a28, 3 sites: c = 0x0a, 0x5d, 0x3d);
+   provenance/evidence/interceptors/INTERFACE-A-interceptors.md: rows 1-15,
+   rows 16-17 and the RtString forms of rows 6, 7, 10 in the accepted v1):
+     RtString.astrlen_realizes (row 16, strlen 0x43a0c, 3 sites); RtSeg.astrchr_realizes (pc) (row 6, accepted,
+     lib/A/Rt/RtSeg.v:72; strchr 0x43a28, 3 sites: c = 0x0a, 0x5d, 0x3d);
      RtString.astrspn_realizes (row 2, strspn 0x43a30, pc gotw guard); RtSeg.astrncasecmp_realizes (pc) (row 7,
-     RtSeg.v:92 at 80d098bd1905; strncasecmp 0x43a20, n = 7); RtSeg.astrcasecmp_realizes (pc) (row 10, RtSeg.v:152
-     at 80d098bd1905; strcasecmp 0x43a1c, 8 sites); RtString.astrcmp_realizes (row 17, strcmp 0x43a14);
-     RtPFSeg.seg_asnprintf_realizes (row 4, commit 755e9278f8ff RtPFSeg.v:228; snprintf 0x43a64,
+     RtSeg.v:92; strncasecmp 0x43a20, n = 7); RtSeg.astrcasecmp_realizes (pc) (row 10, RtSeg.v:152;
+     strcasecmp 0x43a1c, 8 sites); RtString.astrcmp_realizes (row 17, strcmp 0x43a14);
+     RtPFSeg.seg_asnprintf_realizes (row 4, RtPFSeg.v:229; snprintf 0x43a64,
      7 sites);
      astack_malloc_realizes 5 (row 14, kit YG0d.v:293, `__asan_stack_malloc_5` 0x3ea2c);
      RtStack.astack_free_cls_realizes (row 15, `__asan_stack_free_5` 0x3ec38, class 5);
@@ -159,8 +159,8 @@ sa_frm0 /\ sa_ssp rd gotw guard /\ sa_cat segs B rd cat /\
    entry: parse_file calls `__asan_stack_malloc_5` (0x87af0) before the snprintf that reads the label (0x87ce8),
    and the kit's astack_malloc_realizes (lib/Reusable/YG0d.v:293-308) keeps no byte of aowned B ly S, which holds
    the shadow of every image byte (aowned's lm_zone shadow, YG0n.v:236-242); the allocator record pins an image
-   global's shadow at every AR state (fuzz_command's route, its lib/A/Prog/CmdRecBase.v cmd_addressable_chk at
-   501c0d516c69), so the walk re-derives it from the AR the runtime entry's post gives. A heap label's shadow is
+   global's shadow at every AR state (fuzz_command's route, its lib/A/Prog/CmdRecBase.v cmd_addressable_chk),
+   so the walk re-derives it from the AR the runtime entry's post gives. A heap label's shadow is
    AR's shadow_ok at every state; a live frame's bytes and shadow are client bytes, which the entry keeps.
    The image case also pins the label's TAIL at every AR state (sa_pinned_tail): the one image label is the
    harness's .bss longl (image A 0x5de680, 121 bytes), whose slack 0x5de6f9..0x5de6ff is a .bss redzone, an owned

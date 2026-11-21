@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AD1d.v, with its module paths changed; its addresses are still cgif_file_fuzzer.asan's. *)
-(* Modified by Theorem Labs, 2026-10-29: hand-edited for route R1 (cold/h-hpreset-7-r1-memnorm bad7e00334f, 'the start-up invariant SINV0 carries memnorm to the hand-off'; R1 blob 49d6c2c40197); a re-relocation of this file from cgif must be checked against that edit. *)
-(* Modified by Theorem Labs, 2026-10: for the world field w_H8 (YA0n), W1 takes the proof H1_H8 of the image-A twin lib/A/PWorldH8.v (fm's form, origin/cold/port-fm-rtprintf-param 3e35620c52e lib/A/AD1d.v:16, :230-231, :235); W0 and tfib_AI pass it as H1H8. *)
+(* Modified by Theorem Labs, 2026-10-29: hand-edited for route R1 ('the start-up invariant SINV0 carries memnorm to the hand-off'; R1 blob 49d6c2c40197); a re-relocation of this file from cgif must be checked against that edit. *)
+(* Modified by Theorem Labs, 2026-10: for the world field w_H8 (YA0n), W1 takes the proof H1_H8 of the image-A twin lib/A/PWorldH8.v (fm's form, lib/A/AD1d.v:16, :230-231, :235); W0 and tfib_AI pass it as H1H8. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/AD1d.v, with its module paths and module names changed; 87 of its 122 lines of code are new or changed and 277 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/AStkPres.v; 10 of its 78 lines of code are new or changed and 54 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The stack-presence fact, image-independent part (used by A/AStkPres.v for fuzz_reply.asan and by image B's twin).
    Construction (a Theorem Labs lane's ruling, 2026-10-29): state presence over a FIXED range [usp - stack_max_size, usp), usp the
    ENTRY sp, discharge it once at the start-up hand-off, and forward it along any run by monotonicity alone.

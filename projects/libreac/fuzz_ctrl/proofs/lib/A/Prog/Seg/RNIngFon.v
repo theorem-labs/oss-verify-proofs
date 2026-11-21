@@ -4,20 +4,20 @@
    agreed) puts this twin in this lane.  Written by a Theorem Labs lane.  rule 24: no function proved (a
    footprint run of a segment).
 
-   WHAT IT IS.  rn_ing_evt_F_on is RNIngF.rn_ing_evt_F (RNIngF.v (not in this delivery) at a Theorem Labs lane's fold a working branch
-   4bae33fdf54, blob 19d0d469524) with exactly two changes:
+   WHAT IT IS.  rn_ing_evt_F_on is RNIngF.rn_ing_evt_F (RNIngF.v (not in this delivery) at a Theorem Labs lane's fold a working branch,
+   blob 19d0d469524) with exactly two changes:
      - the premise `shadow_rw m ->` is removed: the run's own eight instructions read no shadow byte, and its only
        use was to be forwarded to the callee contract;
-     - the callee hypothesis INGF is reac_identity_ingest_contract_F_on (a Theorem Labs lane 28e24b8fe6c,
-       lib/A/Prog/reac_identity_ingest_c.v 9f4749b6486 (the blob this tree had at release c5e779efe8c)), the footprint contract with that premise DROPPED,
-       proved by reac_identity_ingestF.reac_identity_ingest_F_holds_on (a Theorem Labs lane 330e60af39d, blob f2407e89a16).
+     - the callee hypothesis INGF is reac_identity_ingest_contract_F_on (a Theorem Labs lane,
+       lib/A/Prog/reac_identity_ingest_c.v 9f4749b6486 (the blob this tree had at release)), the footprint contract with that premise DROPPED,
+       proved by reac_identity_ingestF.reac_identity_ingest_F_holds_on (a Theorem Labs lane, blob f2407e89a16).
    Every other binder, premise and the post are RNIngF.rn_ing_evt_F's, term for term (the core copies that statement
    names: lib/Lib's Frame / MState / Mem / Cells / Step, ctrl's A.Reusable.YK11.seg_rom and A.Img0.rsegs).  The
    proof is RNIngF.v's script with the `exact HSW` bullet removed.  No pin to the old lemma: the old one is
    quantified over the OLD contract (reac_identity_ingest_contract_F), which does not give the narrowed one, so it is
    not a one-line corollary of this one; it stays byte-identical (a Theorem Labs lane's condition).
 
-   BASE.  The fold's blob 19d0d469524 differs from a working branch's dcc49379a66 (a working branch 8ce82d7e310)
+   BASE.  The fold's blob 19d0d469524 differs from a working branch's dcc49379a66 (a working branch)
    only in spelling: `Frame.outside / munch / wmono` -> `LFr.*` (LFr := lib.Lib.Frame) and `MState.unsigned_lit` ->
    the full path of A.Tk.UL.MState's, which is what the short names resolved to.  This file starts from the fold's
    text and writes every twin-library name by a path that picks one copy (the gate's rule), Requires without Import,

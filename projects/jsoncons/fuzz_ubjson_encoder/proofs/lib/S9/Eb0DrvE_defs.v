@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: addresses and numbers. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
@@ -43,7 +44,7 @@ Lemma loop_itinerary_okA :
      = (ELit 0xa9144, EAlu ALU_ADD (EVar 0) (ELit (-288)), ELit 85823, EAlu ALU_ADD (EVar 0) (ELit (-264)), ELit 0)
 
   /\ forallb (fun K => existsb (kentry_eqb K) knPA)
-       [KWr (SA (EVar 0) (-8388608)) 8388608; KWord (SA (EVar 0) (-264)) 8 (ELit 0); KImg 65536 1306624; KWord (SA (ELit 0) 6922688) 8 (EVar 3)] = true
+       [KWr (SA (EVar 0) (-6144513)) (6144513); KWord (SA (EVar 0) (-264)) 8 (ELit 0); KImg 65536 1306624; KWord (SA (ELit 0) 6922688) 8 (EVar 3)] = true
   /\ sr_vars_lt 134 srPA = true /\ kn_vars_lt 134 knPA = true
   /\ (s_pc (fst (fst rQtA)), snd (fst rQtA), s_log (fst (fst rQtA))) = (0xa9038, [SCBr true BC_NE (EAluw ALU_ADD (EVar 81) (ELit (-1))) (ELit 0)], [])
   /\ (s_pc (fst (fst rQfA)), snd (fst rQfA), s_log (fst (fst rQfA))) = (0x7a9c0, [SCBr false BC_NE (EAluw ALU_ADD (EVar 81) (ELit (-1))) (ELit 0)], [])
@@ -82,7 +83,7 @@ Lemma loop2_itinerary_okA :
   /\ summE rLB2A = summE rLB1A /\ s_regs (fst (fst rLB2A)) = srLBA /\ kn_after rLB2A knLH2A = knLc2A
   /\ summE rP2A = (0x64558, [SCStoreOk (SA (ELit 0) 0x678754) 1], 134%nat, 10%nat) /\ s_regs (fst (fst rP2A)) = srPA
   /\ forallb (fun K => existsb (kentry_eqb K) knP2A)
-       [KWr (SA (EVar 0) (-8388608)) 8388608; KWord (SA (EVar 0) (-264)) 8 (ELit 0); KImg 65536 1306624; KWord (SA (ELit 0) 6922688) 8 (EVar 3)] = true
+       [KWr (SA (EVar 0) (-6144513)) (6144513); KWord (SA (EVar 0) (-264)) 8 (ELit 0); KImg 65536 1306624; KWord (SA (ELit 0) 6922688) 8 (EVar 3)] = true
   /\ (s_pc (fst (fst rSt2A)), snd (fst rSt2A), s_log (fst (fst rSt2A))) = (0xa9038, [SCBr true BC_NE (EAluw ALU_ADD (EVar 81) (ELit (-1))) (ELit 0)], [])
   /\ (s_pc (fst (fst rSf2A)), snd (fst rSf2A), s_log (fst (fst rSf2A))) = (0x7a9c0, [SCBr false BC_NE (EAluw ALU_ADD (EVar 81) (ELit (-1))) (ELit 0)], [])
   /\ (nth 1 srSf2A (ELit 0), nth 10 srSf2A (ELit 0), nth 21 srSt2A (ELit 0)) = (ELit 0xa9078, EVar 83, EAluw ALU_ADD (EVar 81) (ELit (-1)))

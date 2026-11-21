@@ -4,8 +4,8 @@
    are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: made for reac-pw/fuzz_qdisc image A (fuzz_qdisc.asan, sha256
    980e2b8458528060633e6c98fff20d2f46b97738c06eae4307d09f59c82c890e) from
-   proofs/libreac/fuzz_knock/lib/A/APgMain7.v (its lemma rt_XP_aux / rt_X, lines 184-237) at
-   origin/ossv/recipes 6ebe35ba632, with its module paths changed (h-small-a3).
+   proofs/libreac/fuzz_knock/lib/A/APgMain7.v (its lemma rt_XP_aux / rt_X, lines 184-237),
+   with its module paths changed (h-small-a3).
    rule 24 (reuse): no function is proved here; this is SEGMENT S7, the exit block of
    LLVMFuzzerTestOneInput's walk.
 
@@ -23,6 +23,7 @@
    fake frame (lib/A/QPgRt.v, change Q1): the exit block writes NOTHING, so this segment is one plain run
    and the `ret` leaf, it takes neither ASF nor FFL, and rt_post's block list is S3's unchanged (knock had
    to push it through stack_free_state). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

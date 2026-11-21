@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGif1dr.v (a working branch 84ee52cd012, file sha256 b93fc55c9771) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; its 2 image addresses moved by code-verified function pairs (2 port_addr_check 16f8a030c869 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 2 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGif1dr.v (a working branch, file sha256 b93fc55c9771) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; its 2 image addresses moved by code-verified function pairs (2 port_addr_check 16f8a030c869 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 2 pcs named in comments; no other numeral changed. *)
 (* Modified by Theorem Labs, 2026-10: cgif_file's instance of DGif0.DIface's di_rchunk and di_cdealloc (DMiface.v types),
    restated from the released QuarantineCallback::Recycle and LocalCache::Deallocate walks (YFfs, YFg7, YFg8, YFg9, YFg0)
    at DMspec.acall_post_x's raw frame clause and the stack window DMiface.KSTACK_CF. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* cgif_file's instance of the recycle-side fields of the generic Deallocate interface (DGif0.DIface), at the agreed
    instantiation ARXr := AllocGcgif.ARX_cgif B, AOX := aowned B, DRq := DRq_cgif B (below).
 
@@ -25,7 +26,7 @@
      [cd_leafR] / [rcc_leafR] below are the released leaves with that raw frame added.  No new walk;
    - the stack window.  The released walks use at most 320 bytes below the entry sp (AFgk.WIN: 320, AFgs.WIN: 256,
      AFgv.GDEPTH: 96; CacheDealloc is a tail call at the same sp), inside AFeu.KSTACK = 512, which KSTACK_CF = 2048
-     contains.  The 1264 bytes DMiface.v:113-116 counts are the free-array growth arm's (FGt.tfib_efa_spec,
+     contains.  The 1264 bytes DMiface.v:114-117 counts are the free-array growth arm's (FGt.tfib_efa_spec,
      FGt.v:85-88).  At cgif that arm is not reached: DRq_cgif's free-array room (YG03.RIx's fa_room, with a batch object
      still to free) is cd_pre's room conjunct, from which the released walk's segment facts show that the drained half
      fits the mapped free array (AFfi.FH_ok, AFfi.v:462, by YG0l.return_room), so EnsureFreeArraySpace does not map;
@@ -64,7 +65,7 @@ Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Local Open Scope am_scope.
 
 (* The cgif recycle invariant: [DRq_cgif B S its zs] with the chunks [its] and the batch objects [zs] (their offsets in
-   the space) still to recycle (DGif0.v:253-255, DMiface.v:21-22).  Same body as DGif1d.DRq_cgif. *)
+   the space) still to recycle (DGif0.v:254-256, DMiface.v:22-23).  Same body as DGif1d.DRq_cgif. *)
 Definition DRq_cgif (B : asyms) (S : astate) (its : list chunk) (zs : list Z) : Prop :=
 RIx (as_universe B) 0 0 0 S its [] zs.
 
@@ -128,7 +129,7 @@ rcc_leaf B ly X k W regs mem md r W' c' /\
  ~ (spZ regs - KSTACK <= bv_unsigned x < spZ regs) -> mem' x = mem x).
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* CacheDealloc: AFg0.tfib_cdealloc_arm (AFg0.v:285-297), the leaf with AFgk.MEQ's raw frame.                         *)
+(* CacheDealloc: AFg0.tfib_cdealloc_arm (AFg0.v:286-298), the leaf with AFgk.MEQ's raw frame.                         *)
 Theorem cdealloc_okR : forall ly X c off W regs mem md, cd_pre B ly X c off W regs mem md -> ly_tsd ly = TFIB_TSD ->
 amreal tfibsegs (cache_dealloc c off X) W (cfg_at tfibsegs A_CDealloc regs mem md) (cd_leafR ly X W regs mem md).
 Proof.

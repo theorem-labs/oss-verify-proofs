@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Trevor Hansen, 2026-11: module names. *)
+(* Modified by Theorem Labs, 2026-11: ported toward LPS 727298f3 by the change of the same file of cgif/cgif_rgb_fuzzer, its addresses relocated to this unit's binaries. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit OmniEquivalence.
@@ -87,32 +88,44 @@ end.
 
 
 Lemma sstep_instr_inv : forall ms model ms' evs st,
-m_vm_lazy model = [] ->
-ms_svc_pending ms = None ->
-RiscvSemantics.step segs ms = MachineOk ms' ->
-sstep segs (mkCfg ms model) evs st ->
-evs = [] /\ st = SNext (mkCfg ms' model).
+  m_vm_lazy model = [] ->
+  ms_svc_pending ms = None ->
+  RiscvSemantics.step segs ms = MachineOk ms' ->
+  sstep segs (mkCfg ms model) evs st ->
+  evs = [] /\ st = SNext (mkCfg ms' model).
 Proof.
-intros ms model ms' evs st Hlazy Hsvc Hstep Hss.
-inversion Hss; subst.
--
-match goal with H : mi_account_step segs ms model = MachineOk _ |- _ =>
-rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
-rewrite Hstep in H; inversion H; subst end.
-split; reflexivity.
--
-match goal with H : mi_account_step segs ms model = MachineFault |- _ =>
-rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
-rewrite Hstep in H; discriminate end.
--
-match goal with H : mi_account_step segs ms model = MachineUnmodeled |- _ =>
-rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
-rewrite Hstep in H; discriminate end.
--   congruence.
--   congruence.
--   congruence.
--   congruence.
--   congruence.
+  intros ms model ms' evs st Hlazy Hsvc Hstep Hss.
+  inversion Hss; subst.
+  - (* sstep_instr *)
+    match goal with H : mi_account_step segs ms model = MachineOk _ |- _ =>
+      rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
+      rewrite Hstep in H; inversion H; subst end.
+    split; reflexivity.
+  - (* sstep_instr_fault *)
+    match goal with H : mi_account_step segs ms model = MachineFault |- _ =>
+      rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
+      rewrite Hstep in H; discriminate end.
+  - (* sstep_instr_unmodeled *)
+    match goal with H : mi_account_step segs ms model = MachineUnmodeled |- _ =>
+      rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
+      rewrite Hstep in H; discriminate end.
+  - (* sstep_vdso_call: its first premise is the same [MachineUnmodeled] *)
+    match goal with H : mi_account_step segs ms model = MachineUnmodeled |- _ =>
+      rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
+      rewrite Hstep in H; discriminate end.
+  - (* sstep_vdso_materialization_fault *)
+    match goal with H : mi_account_step segs ms model = MachineUnmodeled |- _ =>
+      rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
+      rewrite Hstep in H; discriminate end.
+  - (* sstep_vdso_unmodeled *)
+    match goal with H : mi_account_step segs ms model = MachineUnmodeled |- _ =>
+      rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
+      rewrite Hstep in H; discriminate end.
+  - (* sstep_syscall *) congruence.
+  - (* sstep_syscall_materialization_fault *) congruence.
+  - (* sstep_exit *) congruence.
+  - (* sstep_killed *) congruence.
+  - (* sstep_syscall_unmodeled *) congruence.
 Qed.
 Lemma sstep_exit_inv : forall ms model x8 evs st,
 m_halted model = None ->
@@ -232,15 +245,16 @@ else base_mem addr.
 
 
 Definition enum_state (segs : list Segment) (init_pc : N) (ph : PhdrInfo)
-(init_sp : word) (init_rnd : EntryDraw) (argc : nat)
-(base : word -> option byte) (uid : word)
-(hw : word) : machine_state :=
-{| ms_regs       := ms_regs (init_machine_state segs init_pc ph init_sp init_rnd nil nil uid hw); ms_fregs := ms_fregs (init_machine_state segs init_pc ph init_sp init_rnd nil nil uid hw);
-ms_pc_val     := ms_pc_val (init_machine_state segs init_pc ph init_sp init_rnd nil nil uid hw);
-ms_svc_pending := ms_svc_pending (init_machine_state segs init_pc ph init_sp init_rnd nil nil uid hw);
-ms_resv       := ms_resv (init_machine_state segs init_pc ph init_sp init_rnd nil nil uid hw); ms_fcsr := ms_fcsr (init_machine_state segs init_pc ph init_sp init_rnd nil nil uid hw);
-ms_mem        := overlay_argc_bytes init_sp argc base;
-ms_rom        := ms_rom (init_machine_state segs init_pc ph init_sp init_rnd nil nil uid hw) |}.
+    (init_sp mbase : word) (init_rnd : EntryDraw) (inp : ProcInput)
+    (argc : nat) (base : word -> option byte) : machine_state :=
+  {| ms_regs       := ms_regs (init_machine_state segs init_pc ph init_sp mbase init_rnd inp);
+     ms_fregs      := ms_fregs (init_machine_state segs init_pc ph init_sp mbase init_rnd inp);
+     ms_pc_val     := ms_pc_val (init_machine_state segs init_pc ph init_sp mbase init_rnd inp);
+     ms_svc_pending := ms_svc_pending (init_machine_state segs init_pc ph init_sp mbase init_rnd inp);
+     ms_resv       := ms_resv (init_machine_state segs init_pc ph init_sp mbase init_rnd inp);
+     ms_fcsr       := ms_fcsr (init_machine_state segs init_pc ph init_sp mbase init_rnd inp);
+     ms_mem        := overlay_argc_bytes init_sp argc base;
+     ms_rom        := ms_rom (init_machine_state segs init_pc ph init_sp mbase init_rnd inp) |}.
 
 
 

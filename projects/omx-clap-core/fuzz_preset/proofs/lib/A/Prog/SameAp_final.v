@@ -1,17 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image A' (asan #102 pin 1be0f53d96cb, unstripped twin bff8519bbe3e), same:
    THE WALK AT THE INSTANCE OF RECORD. lib/A/Prog/SameAp_walk.v's same_holds_Ap, the batch kit's text tsame_specX itself
-   (lib/A/PRH_FnEx.v :353 at the cut 7cdbb61b5fa0, with its GUARDED live-stack premise
+   (lib/A/PRH_FnEx.v :353 at the cut, with its GUARDED live-stack premise
    `spZ regs <= pa -> YGcallStackUp.astack_up_x segs ly W (spZ regs) mem` after fpre), at B := AD2l.TfibB (image A's
    generated record), RL := prh_room_live_a8, PA := PI_prog_A. PAL := PALibA.palib_A; SMA_CF (ARx refines ARcf) the
-   identity / proj1. The A' twin of a Theorem Labs lane's image-B' lib/B/Prog/SameB_final.v (a working branch
-   e95b6ce78e87), with the same argument order. Two tops:
+   identity / proj1. The A' twin of a Theorem Labs lane's image-B' lib/B/Prog/SameB_final.v (a working branch),
+   with the same argument order. Two tops:
    - same_holds_Ap_TfibBx at the relation of record ARxs = ARcf /\ xs_placed_cf (YGcallcf.ARxs; LAWS :=
      YGcallcf.AR_laws_x_xs);
    - same_holds_Ap_TfibB at plain ARcf (LAWS := PALibA.palib_laws_A, the A' twin of PALibB.exvi_eh_laws).
    FIT CHECK (same_holds_Ap_HSAME_fit below): the HSAME premise of lib/A/Prog/Cno102A_Top.v (check_no_overread A',
-   a working branch d4661e0cd87a, :139-140, `forall fz : YK11.FPState, @tsame_specX fz rc CP
+   a working branch, :139-140, `forall fz : YK11.FPState, @tsame_specX fz rc CP
    prh_img_A prh_room_live_a8 A_prog_listing PA B ARcfx SK DOC_D`), at the instance Cno102A_TopA.v gives it
    (PA := PI_prog_A, B := AD2l.TfibB, SEGS := pa_segs of PI_prog_A, ARcfx := ARcf SEGS B /\ xs_placed_cf), restated
    here for every depth n, closed by plain exact from same_holds_Ap_TfibBx.
@@ -71,7 +72,7 @@ exact (@same_holds_Ap fx rc ci CP (@prh_room_live_a8 CP) TB ARX SK
 Qed.
 End f.
 
-(* ---- FIT CHECK: Cno102A_Top.v's HSAME (d4661e0cd87a :139-140) at Cno102A_TopA.v's instance, for every depth n
+(* ---- FIT CHECK: Cno102A_Top.v's HSAME (139-140) at Cno102A_TopA.v's instance, for every depth n
    (DOC_D is one of them), with the segments as Cno102A_Top.v spells them (SEGS := pa_segs of PA), closed by plain exact.
    The runtime rows are taken at every FPState, as HSAME quantifies over fz. ---- *)
 Section fit. Context {rc : YM05.RunCeil} {ci : CfImg}.

@@ -3,15 +3,16 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN0j.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/Reusable/YN0j.v, with its module paths and module names changed; 548 of its 586 lines of code are new or changed and 260 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_round_trip 0x81b9c (fuzz_state.c:278-314 with round_trip_document fs.c:229-264 inlined), fs.asan-ubsan (image
    tfibsegs = lib/B/YB1v.v, the pinned fuzz_state.asan-ubsan sha256
    5ac5ce0954f87e2d050c481b7b0599cfd55ef554eadc008e51491f44c053d204): the B twin of the ASan walk of lib/B/FSH_Fn_crt.v
    check_round_trip_spec, segment group C = segments 20-29, from the return of pj_set at 0x82304 (0x82308) to the
    return of pj_get_str at 0x823bc (0x823c0), with the class-3 fake frame live (own = [(3, pos)]).
-   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from 27728fda52c lib/A/FSH_crt_segC.v)
-   Port source: a working branch 27728fda52c proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segC.v (blob
-   02a0b2e19e2, over S0 + A base v25 / site v24 e377e99a5c4), CTX-free; its own port sources (the bespoke ASan proof of
-   this function, a working branch d25a984c903 lib/A/Prog/check_round_trip_*.v; the released plain
+   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from lib/A/FSH_crt_segC.v)
+   Port source: a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segC.v (blob
+   02a0b2e19e2, over S0 + A base v25 / site v24), CTX-free; its own port sources (the bespoke ASan proof of
+   this function, a working branch lib/A/Prog/check_round_trip_*.v; the released plain
    lib/Prog/check_round_trip_stages_b.v stage names; cgif lib/A/AChf.v / ACic.v segment shape; checker a Theorem Labs lane
    CONFIRM on (internal path)) carry over. Same Definition / Lemma names and
    statement shapes as the A file; every pc, return address, callee address, register and slot fact RE-MEASURED on B
@@ -611,7 +612,7 @@ End q.
    also pj_get_str's key at B 0x823bc), "state" 0x20f00 (pj_set key at B 0x82370 and pj_get's key at B 0x823b0). At
    every state of the walk each is
    cstr_ok on the machine's memory (FSW_strkit.cstr_ok_kept_tbl from the image facts IMG, ARU and the read-only image
-   crt_rodata carries) and cstr_kept by its table arm (U taken, S0 4a924247f5f). IMG is a fact about B alone (RELOC /
+   crt_rodata carries) and cstr_kept by its table arm (U taken, S0). IMG is a fact about B alone (RELOC /
    TfibB discharge it in the final instance), the reader and writer files' own name. *)
 Section k. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Variable SK : YI16.sink_head.
@@ -644,8 +645,8 @@ End k.
    Every callee footprint of segment group C splits into: fs's statics (the static arm: FS_PSTAT_FP is crt's own FP and
    image bytes, FSH_crt_base.crt_pstat_img), objects of crt's class-3 frame (the own-frame arm), and for pj_set the old
    kids / keys blocks grow may free (the tmp-block arm: blocks the walk itself allocated, not crt's entry blocks - a
-   fact the boundary invariant carries, a premise here). pj_get / pj_get_str post FP = []. pj_write's post (S0
-   10ffef27396, FSH_Fn_writer.v pj_write_spec) has window top spZ regs and FP = FS_PSTAT_FP, so its after-call is the
+   fact the boundary invariant carries, a premise here). pj_get / pj_get_str post FP = []. pj_write's post (S0,
+   FSH_Fn_writer.v pj_write_spec) has window top spZ regs and FP = FS_PSTAT_FP, so its after-call is the
    ordinary crt_after_call with crtC_fpsub_static; it has no raised top and no wkeep at crt's call. *)
 Section f. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Variable B : asyms.

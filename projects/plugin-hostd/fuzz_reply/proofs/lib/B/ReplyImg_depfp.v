@@ -1,28 +1,29 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, row img-depfp-B of REPLY-IMG-ROWS.md (sha256 a33a582e3ffd; internal record), for a Theorem Labs lane's cf layer at
    plugin-hostd/fuzz_reply).
    rule 24: no function proved (kind: image row; a closed computation at reply's image B, fuzz_reply.asan-ubsan, pin
    10ffb5f9202a).  Reuse search: proof-index dep_fp_img footprint_DZONE dep_fp_a_cgif (index v5, 2026-10-30
-   04:38Z): dep_fp_img is only the layer's Definition (YGcfInstDepot.v:165); footprint_DZONE exists at cgif, decode,
+   04:38Z): dep_fp_img is only the layer's Definition (YGcfInstDepot.v:166); footprint_DZONE exists at cgif, decode,
    preset and state, none at fuzz_reply; no discharge of the row at any reply image.
 
-   The row is the cf layer's [dep_fp_img B DZ] (YGcfInstDepot.v:165-166 at c0780f715a3c, lane F1):
+   The row is the cf layer's [dep_fp_img B DZ] (YGcfInstDepot.v:165-166, lane F1):
      forall ly a, layout_ok ly -> im_img_cover ly -> ly_tsd ly = as_tsd B -> CLdepot.depot_footprint B ly a -> DZ ly a,
    for the two zones the layer uses, the Allocate zone ImgBaseAG.ag_dzone and the Deallocate zone ImgBaseDG.dg_dzone
    (cgif's discharges: YGcfInstF1Wcgif.v:82 dep_fp_a_cgif / :89 dep_fp_d_cgif, both by AGix.footprint_DZONE).  Reply
    has not taken YGcfInstDepot.v yet, so each Lemma states that Definition's body VERBATIM at reply's image-B instances
-   (ImgBase.AImg_reply, B/AGif2reply.v:24; ImgBaseAG.AGImg_reply, B/AGif0reply.v:117, ag_dzone := AGis.DZONE;
+   (ImgBase.AImg_reply, B/AGif2reply.v:25; ImgBaseAG.AGImg_reply, B/AGif0reply.v:118, ag_dzone := AGis.DZONE;
    ImgBaseDG.DImg_reply, B/DGif0reply.v:31, dg_dzone := DGgi.DZONE), for every B with the image's symbol facts
    (im_syms = TfibSyms); a consumer closes the layer's row with `exact (dep_fp_a_B B TS)` once the layer is on reply.
    No Definition of the layer is copied here.
 
-   The computation: StackDepotPut's write set (B/CLdepot.v:48-50) is the depot [as_depot B, + d_map1 + 8 * 32768), the
+   The computation: StackDepotPut's write set (B/CLdepot.v:49-51) is the depot [as_depot B, + d_map1 + 8 * 32768), the
    nodes block, the store block and the store [as_store B, + 64).  At image B as_depot B = TFIB_DEPOT = 0x188518 and
-   as_store B = TFIB_STORE = 0x178508 (values B/YF0m.v:17; fields ts_depot / ts_store B/YF0m.v:875-876), d_map1 =
+   as_store B = TFIB_STORE = 0x178508 (values B/YF0m.v:18; fields ts_depot / ts_store B/YF0m.v:876-877), d_map1 =
    4 * 2 ^ 20 + 16 (Reusable/YG0f.v:228),
    so the depot ends at 0x5c8528 and the store at 0x178548, both inside the zone's static part [0x178508, 0x5c8c90)
-   (B/AGis.v:231-232 and B/DGgi.v:515-516, the same text); the nodes and store blocks are the zone's other two
+   (B/AGis.v:232-233 and B/DGgi.v:516-517, the same text); the nodes and store blocks are the zone's other two
    disjuncts verbatim. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -53,7 +54,7 @@ unfold CLdepot.depot_footprint in FP. rewrite (ts_depot B TS), (ts_store B TS) i
 change d_map1 with 4194320 in FP. unfold TFIB_DEPOT, TFIB_STORE in FP. lia.
 Qed.
 
-(* dep_fp_img B ag_dzone (YGcfInstDepot.v:165-166) at image B. *)
+(* dep_fp_img B ag_dzone (YGcfInstDepot.v:166-167) at image B. *)
 Lemma dep_fp_a_B : forall B, @im_syms AImg_reply B ->
   forall ly a, layout_ok ly -> im_img_cover ly -> ly_tsd ly = as_tsd B -> CLdepot.depot_footprint B ly a ->
   @ImgBaseAG.ag_dzone AImg_reply AGif0reply.AGImg_reply ly a.
@@ -62,7 +63,7 @@ intros B TS ly a _ _ _ FP. change (AGis.DZONE ly a). unfold AGis.DZONE.
 exact (depot_footprint_B B ly a TS FP).
 Qed.
 
-(* dep_fp_img B dg_dzone (YGcfInstDepot.v:165-166) at image B. *)
+(* dep_fp_img B dg_dzone (YGcfInstDepot.v:166-167) at image B. *)
 Lemma dep_fp_d_B : forall B, @im_syms AImg_reply B ->
   forall ly a, layout_ok ly -> im_img_cover ly -> ly_tsd ly = as_tsd B -> CLdepot.depot_footprint B ly a ->
   @ImgBaseDG.dg_dzone AImg_reply DGif0reply.DImg_reply ly a.

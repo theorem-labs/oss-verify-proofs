@@ -5,12 +5,13 @@
    proofs/cgif/cgif_file_fuzzer/lib/A/ACh9.v:115-118 [Apache-2.0];
    proofs/cgif/cgif_file_fuzzer/lib/YCbo.v:1570-1572, 1593-1598, 1605-1613 [Apache-2.0 OR MIT], for
    libreac/fuzz_identity's ASan build (lib/A). The [Apache-2.0 OR MIT] text is used under Apache-2.0. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/A/Prog/LLVMFuzzerTestOneInput_Klib.v at origin/ossv/recipes 2d2ff01bb6f2 (aj_strlen_at, as w7_strlen_at, over reac-pw/fuzz_role's image A: SEGS := rsegs, pa_segs_low := w7_segs_low, and the post also keeps the I/O state, same_io from the wrapper's same_but_materialized); the rest of the file is new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW7bCall.v at 25d4b718638 (w7_strlen_at,
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/A/Prog/LLVMFuzzerTestOneInput_Klib.v (aj_strlen_at, as w7_strlen_at, over reac-pw/fuzz_role's image A: SEGS := rsegs, pa_segs_low := w7_segs_low, and the post also keeps the I/O state, same_io from the wrapper's same_but_materialized); the rest of the file is new. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW7bCall.v (w7_strlen_at,
    w7_strlen_cstr's route) for reac-pw/fuzz_headamp's image B: the strlen call at image B's trampoline 0x41c18 on a
    HPgCaseB.cb_strok string; the memcpy step is lib/AU/HPgCaseB.v's cb_memcpy_at at image B's 0x51d8c; the two
    sources of a cb_strok fact (an image string as HPgBase.hd_cstr states it, the key's first part in ch) are new;
    w7_ -> hw7b_, module paths. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image B (fuzz_headamp.asan-ubsan, pinned sha256
    53edda9bdeeba1803865babfecb1af6732babe47ab83c64d38cc59a90d717a94; addresses measured on the unstripped twin
    1674e30a0698f381704e66d2398d7906c881f4ba8fc619cb41b89fb97ad112ff): the two call steps of the walk of

@@ -4,7 +4,7 @@
    are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: made for reac-pw/fuzz_qdisc's ASan image (fuzz_qdisc.asan, sha256
    980e2b8458528060633e6c98fff20d2f46b97738c06eae4307d09f59c82c890e) from
-   proofs/libreac/fuzz_knock/lib/A/APgLib.v at origin/ossv/recipes 6ebe35ba632, with its module paths
+   proofs/libreac/fuzz_knock/lib/A/APgLib.v, with its module paths
    changed (h-small-a3). rule 24 (reuse): no function is proved here; this file is the program contract's
    statement, its closed form and the bridge to the core's ACfn text.
 
@@ -26,6 +26,7 @@
      0x7e94c and 0x7e870 and the divisor cell 0x10350.
    - LEAF: fuzz_qdisc's harness writes no file, so the shape's LIBK pl fs K = K (LL 0 fs []) holds by
      eq_refl at AgreeQdisc.ag_sil_shape (ZTraceSpec.checksum_shape), as knock's does. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -134,7 +135,7 @@ Lemma qd_rod_of_P : forall B rd, arodata_okP tfibsegs RO_LO RO_HI B rd -> arodat
 Proof. intros B rd H a Ha. apply H. exact Ha. Qed.
 (* in_ro_tfa lies below the sink head A_ofl_head 0x5f0f08 (lib/A/AE2k.v:27, 36): its read-only segments
    are the first two PT_LOADs, which end at 0x2f9e4 and 0x94330, and its second disjunct is 0x95368 ..
-   0x965c0 (lib/A/ACeh.v:47-49). lib/A/QPgMain2.v and QPgMain3.v carry arodata_ok along the journal with
+   0x965c0 (lib/A/ACeh.v:48-50). lib/A/QPgMain2.v and QPgMain3.v carry arodata_ok along the journal with
    ACeh.arodata_ok_journal, which needs this; knock needed no instance (its APgLib.v:21). Local, so the
    statement of qdisc_lib_x_all does not change. *)
 #[local] Instance qdisc_ROB : @ACeh.ro_tfa_below_ofl tfib_sink_head.
@@ -232,7 +233,7 @@ End g.
 Lemma qdisc_TfibLib : TfibLib TfibB.
 Proof.
 constructor; try reflexivity.
-- (* errno sits in the bss: TFIB_ERRNO = 0x5d076c (lib/A/AF0m.v:21) *)
+- (* errno sits in the bss: TFIB_ERRNO = 0x5d076c (lib/A/AF0m.v:22) *)
   cbn [as_errno TfibB]. unfold TFIB_ERRNO, kLowMemEnd. lia.
 - (* ... inside the fourth PT_LOAD, page range [0x97000, 0x5f3000) *)
   intros a Ha. cbn [as_errno TfibB] in Ha. unfold TFIB_ERRNO in Ha.

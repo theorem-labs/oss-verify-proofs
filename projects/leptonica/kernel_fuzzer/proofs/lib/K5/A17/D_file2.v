@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor lo := rt_sp0 - STACK_SPAN, the span the start state guarantees writable). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -51,7 +52,7 @@ Proof using AF AF_DRV FPR EXC OUT_loc ERR_loc XENV_loc LIB_loc IO_img XENV_img.
   pose proof HD as ((ART0 & MI0 & CLX0 & ARGV0 & FR0 & ST0 & B16 & UA & ULO & USP0) & HB & Hap & Hhi & SPW).
   pose proof CLX0 as (OUT0 & ERR0 & XE0 & _).
   pose proof (af_sp0_range RT AF Σ m ART0) as SP0R.
-  set (lo := rt_sp0 RT Σ - STACK_WIN) in *.
+  set (lo := rt_sp0 RT Σ - STACK_SPAN) in *.
   assert (EU : bv_unsigned (Z_to_bv 64 (usp - 80)) = usp - 80) by (apply unsigned_lit; ul).
   replace (evw 2 msg_too_big) with (evw 2 (fp_msg FPtoo_big) ++ evw 1 (so_buf stdout_init))
     by (cbn [fp_msg so_buf stdout_init]; rewrite app_nil_r; reflexivity).

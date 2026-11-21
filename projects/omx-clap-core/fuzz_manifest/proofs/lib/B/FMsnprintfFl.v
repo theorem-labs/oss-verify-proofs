@@ -1,8 +1,9 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMsnprintfFl.v at a working branch 5d8d8a15571, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMsnprintfFl.v at a working branch, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: new contract of musl sn_write as vfprintf's flush f->write (f, 0, 0) on musl
    vsnprintf's FILE at fm.asan addresses, by FMsnprintfFw.v's sink-call kit (A/YE3h.v's VI_run / vf_phase adapted). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* vfprintf's flush f->write (f, 0, 0) = sn_write on the snprintf FILE: the buffered bytes (when any) and a NUL reach
    the destination behind the cookie, wpos = wbase = buf, a0 = 0. Stated over the sink invariant SNK (FMsnprintfI.v). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require YZ00.

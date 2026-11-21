@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* The proofs in this file are Anthropic's; the theorem statements were issued by the task authors and are reproduced as issued (see NOTICE). *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-11: added the allowed-exits module and the halts theorem of the asan-ubsan build, copied from this file's own asan halts theorem and module at commit 874e3397a35 (lines 31-35 and 464-473) with images.Asan replaced by images.AsanUbsan and lib.EchTopAsan by lib.Both.EchTopAsan. *)
+(* Modified by Theorem Labs, 2026-11: added the allowed-exits module and the halts theorem of the asan-ubsan build, copied from this file's own asan halts theorem and module (lines 31-35 and 464-473) with images.Asan replaced by images.AsanUbsan and lib.EchTopAsan by lib.Both.EchTopAsan. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import NArith List QArith.

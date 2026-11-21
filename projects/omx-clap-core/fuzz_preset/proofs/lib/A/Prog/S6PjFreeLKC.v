@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/pj_free_seg_lk.v, with its module paths, module names and numbers changed; 358 of its 671 lines of code are new or changed and 336 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* fuzz_preset image A, slice S6 (WalkS6): pj_free's walk (lib/A/Prog/S6PjFree.v), the KEY and BOUND-TEST segments.
    rule 24: proves no function (kind: segment lemma of pj_free's walk).
    - pf_seg_LK (pfs_LK d'): from the cut pf_LK (slot 39, AF_pf + 156, the recursive call's return site) the ASan check
@@ -23,7 +24,7 @@
    THE RE-HIDING MOVE: fuzz_free can hide shadow again, so both segments conclude SRr' SEGS RZ_cf (YA0nH) and run over
    R := wle' SEGS RZ_cf: the _invR runners (YC1fPx), paj_branchR (YSRrG), the call by YCbqGcallW.aj_call_xWR, the
    frame's journal at wle' (pf_frameR), and the after-call facts by S6PjFreeKeep's / S6PjFreeGlue's R forms.
-   Re-fitted to the #102 kit (pfs_LK / pfs_LC take no DW binder, S6PjFree.v:401-415): the ledger's most / own (fe_most /
+   Re-fitted to the #102 kit (pfs_LK / pfs_LC take no DW binder, S6PjFree.v:402-416): the ledger's most / own (fe_most /
    fe_own) threaded through the ledger lemmas and the call of FREE; fpre's last conjunct frm_zero (FRM0-ENTRY)
    passes from pj_free's fpre to fuzz_free's (same float state fx); pf_pre's pf_safe is used at fe_v en <> 0.
    Numerals: 156 / 200 / 136 / 228 (DERIVED: S6PjFree.v PF_LK / PF_LC / PF_LH / PF_LX), 96 (LENGTH: pj_free's frame),

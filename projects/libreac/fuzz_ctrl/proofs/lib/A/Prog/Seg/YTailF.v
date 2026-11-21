@@ -4,12 +4,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 1441 of its 1505 lines of code are new or changed and 947 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/YTail.v, with its module paths and module names changed; 534 of its 819 lines of code are new or changed and 1220 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/YTail.v blob 3b859284448d at fdd2ed9f9d7.
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   FACTS, PAU pau-libreac-v190. Source: Seg/YTail.v blob 3b859284448d.
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: each <r>_of_F re-derives YTail.v's <r> at ExecF.RNG_all; <r>_of_F_verbatim checks by constr_eq that
    its type is the type of YTail.<r>. Mechanical re-run, route (a) (lead 22:15Z); input to the ported walk only. *)
 
@@ -117,7 +118,7 @@ Proof. exact (stack_free_6_F_gen ExecF.RNG_all). Qed.
 
 (* Route (C) (a Theorem Labs lane 09:20Z; frozen form a Theorem Labs lane's ASSIGN.md (a working note, not in this delivery); R = the shadow bytes the run reads and
    stores through its shadow_rw premise, a Theorem Labs lane 10:33Z): stack_free_6_F over frame_release_6's _on contract
-   (a Theorem Labs lane's leaf asan_stack_free_c_on.v, f99fbd501ea). Its shadow premise is the callee's own region
+   (a Theorem Labs lane's leaf asan_stack_free_c_on.v). Its shadow premise is the callee's own region
    SFO.asan_stack_free_shadow_R 6 L FS j (the frame shadow it fills with 0xf5; it reads no shadow), its post
    SFO.asan_stack_free_post_on (the POST form). stack_free_6_F and stack_free_6_F_all above are unchanged. *)
 Definition stack_free_6_F_on (RNG : ExecF.footprint) : Prop :=

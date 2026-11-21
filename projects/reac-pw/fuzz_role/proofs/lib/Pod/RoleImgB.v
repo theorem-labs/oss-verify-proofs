@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Pod/RoleImgA.v at 7d5486c1b1d; the same facts for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Pod/RoleImgA.v; the same facts for
    image B (fuzz_role.asan-ubsan): its three .data.rel.ro table addresses, its string addresses, its jump table and
    targets, its constant-pool cells, its pcs, its read-only range, the image module AsanUbsan, and a control against
    the plain and the UBSan image. *)

@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the user-poisoned-heads form of the asan state (unpoison, ARU, ecall_preU and their U = []
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/UPoison.v (donor image sha256 c2c7559b29bd), with its module paths changed. *)
-   lemmas), taken by path from proofs/omx-clap-core/fuzz_state/lib/A/FSupoison.v:13-55, Section u only (a working branch
-   7c46ddd1720; itself from a Theorem Labs lane's FMupoison.v, a working branch 7ba11794c88, design/POISON.md), into the shared core,
+   lemmas), taken by path from proofs/omx-clap-core/fuzz_state/lib/A/FSupoison.v:13-55, Section u only (a working branch;
+   itself from a Theorem Labs lane's FMupoison.v, a working branch, design/POISON.md), into the shared core,
    module prefix only. The frame lemmas of FSupoison's Section l are not taken: the strcmp U form (AStrcmpDefU.v) needs only
    these definitions and the three _nil lemmas. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/Reusable/UPoison.v, with its module paths changed; 330 of its 373 lines of code are new or changed and 5 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_boxreg/lib/A/Rt/FMupoison.v at origin/ossv/recipes f26f9fbd8777; module paths changed (boxreg's lib.Lib modules as pin's lib.Lib modules); the comments are boxreg's, verbatim, and name fuzz_boxreg.asan's addresses; in the comments, internal branch and lane names are replaced by neutral words. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_boxreg/lib/A/Rt/FMupoison.v; module paths changed (boxreg's lib.Lib modules as pin's lib.Lib modules); the comments are boxreg's, verbatim, and name fuzz_boxreg.asan's addresses; in the comments, internal branch and lane names are replaced by neutral words. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/UPoison.v (donor image sha256 c2c7559b29bd), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

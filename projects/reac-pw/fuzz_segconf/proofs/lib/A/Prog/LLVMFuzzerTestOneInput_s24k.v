@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the kit of segment F of LLVMFuzzerTestOneInput's ASan walk (plugin-hostd/fuzz_command, 0x86974 .. 0x8699c: the three frees of the words blocks and the latch), in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACbk.v (wcb_entry: the symbolic seed of a point of the function) and A/ACh2.v:122-290 (the step through a call and back, with the facts carried over it). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/LLVMFuzzerTestOneInput_s70.v, with its module paths changed; 855 of its 936 lines of code are new or changed and 347 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan image A (fuzz_segconf.asan, pin sha256 48c5355bdacb): the kit of file group _s24, segments
    S16 .. S20 of the test harness's entry function LLVMFuzzerTestOneInput (0x85bd0 .. 0x85c40). No function of the
    binary is proved here: these are the lemmas the segment file LLVMFuzzerTestOneInput_s24.v applies.
@@ -10,7 +11,7 @@
    - the model facts check_declared asks (m_declared's answer bounded, SegModel.segconf_agrees's last check, each
      table entry's parent a C string with its tail), from the plain / UBSan owner's SegModel and seg_spec;
    - the walk's own facts at a cut: the frame chain at sp = S1 with s0 = SP0 (fuzz_command's chain_words_s2.v
-     cw2_chain at origin/ossv/recipes 501c0d516c69, the frame record ra / s0 at SP0 - 8 / SP0 - 16), the live
+     cw2_chain, the frame record ra / s0 at SP0 - 8 / SP0 - 16), the live
      blocks are distinct, a harness block's facts from AR (lt_hblk), what a cut keeps across a step (the stack
      [S1, SP0), the frame's header and flag words, its 36 shadow bytes, the image bytes the runtime does not own);
    - one free (fuzz_command's LLVMFuzzerTestOneInput_s70.v ltf_free): the run `mv a0, s<x>; jal free` at one of

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: statements written out as text, the mmap decline premise (place_declined_b). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -98,7 +99,9 @@ End Unfill.
 Definition ECALLW : ltac2:(zQ "20!hk2!hr9@1$1@1$0#i0") := ltac2:(zQ "20!hk2!ii9@2$1@1$0#i0+n3").
 Lemma is_ecall_ECALLW : ltac2:(zQ "50!hk8!ir9!r4!is0!jg8@3$2$0@1$3$4$1"). Proof. reflexivity. Qed.
 
-Lemma sysret_MSsvc : ltac2:(zQ "f1!hk2!hr9!p7!jj8!jk1!r4!jk5!jl5!jpe!ju5!jub!jv4!jva!ii9!kg2&>0@1$1@1$0#k0@1$2@1$1@1$0#8>1R@2$3@1$0#5@1$1@1$0#k0>1F@2$3@1$0#5@1$1@1$0#k0>2pc@1$1@1$0#k0>2x8@1$1@1$0#k0>2fc@1$1@1$0#i0>2rv@1$2@1$1@1$0#k0>1m~0>2ro~0>1r@1$1@1$0#k0>1M~0@3$5$6@3$8@8$a^a^9^8^7^6^5^4^3^2^1@7$9@5$7@1$0#5@1$1@1$0#k0@3$b@1$0#5+aKv$4@2$c@1$0#5+a^2^a^9@3$e@1$0#k0^8@2$d@1$0#k0+4^6^5^1^3").
+(* 08b1429: a syscall return clears the reservation (recipes/svc-clears-resv.md). *)
+Lemma sysret_MSsvc : forall R F pc x8 fc rv m ro r M,
+  sysret (MSsvc R F pc x8 fc rv m ro) r M = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4) fc None M ro.
 Proof. reflexivity. Qed.
 
 Section CjNodes.
@@ -133,10 +136,14 @@ Section CjNodes.
     let h := m_vmmaps mo in
     x11 <> Z_to_bv 64 0 ->
     x12 = Z_to_bv 64 (kprot na) -> x13 = Z_to_bv 64 (kflags nr) -> x14 = Z_to_bv 64 (-1) -> x15 = Z_to_bv 64 0 ->
+    (* LPS 727298f3: off the hint decline ([Mmap.place_declined_b]) *)
+    place_declined_b (m_kernel mo) (m_vmmaps mo) x10 nZ = false ->
     entries_nowrap (vm_maps h) ->
     (na = false -> nr = false -> eager_used mo + pages_total S * page_size + nZ <= vm_limit h) ->
     (exists g : word, bv_unsigned g mod page_size = 0 /\ 0 < bv_unsigned g /\ bv_unsigned g + nZ <= alloc_top h
-                      /\ region_free (vm_reserved h ++ vm_maps h) g n = true) ->
+                      /\ region_free (vm_reserved h ++ vm_maps h) g n = true
+                      (* 08b1429: Linux places only in [page_size, mmap_top) or [task_unmapped_base, alloc_top) *)
+                      /\ (bv_unsigned g + nZ <= mmap_top h \/ task_unmapped_base <= bv_unsigned g)) ->
     (nr = true -> forall a : word, region_free (vm_reserved h) a n = true -> bv_unsigned a + nZ <= alloc_top h -> lazy_range_okb asegs (a, n) = true) ->
     (forall (a : word) (msF' : machine_state),
        bv_unsigned a mod page_size = 0 -> 0 < bv_unsigned a -> bv_unsigned a + nZ <= alloc_top h ->
@@ -144,20 +151,21 @@ Section CjNodes.
        let mo' := grant_model (Z_to_bv 64 (kflags nr)) a n na mo in
        lzok asegs ((if nr then [(a, n)] else []) ++ L) S ((if nr && negb na then [(a, n)] else []) ++ Zr) (mkCfg msF' mo') ->
        restrict ((if nr then [(a, n)] else []) ++ L) S msF'
-         = MS (Ra a) F (Z_to_bv 64 (pc + 4)) fc rv (if na || nr then unfill a n m else zfill a n m) (seg_rom asegs) ->
+         = MS (Ra a) F (Z_to_bv 64 (pc + 4)) fc None (if na || nr then unfill a n m else zfill a n m) (seg_rom asegs) ->
        hid_same L S msF msF' ->
        eager_used mo' <= eager_used mo + (if na || nr then 0 else nZ) ->
        sreach asegs Q (mkCfg msF' mo')) ->
     sreach asegs Q (mkCfg msF mo).
   Proof.
-    intros na nr msF mo Q OK VIS H17. cbv zeta. intros LEN H12 H13 H14 H15 NW BUD GAP ROK K.
+    intros na nr msF mo Q OK VIS H17. cbv zeta. intros LEN H12 H13 H14 H15 DECL NW BUD GAP ROK K.
     eapply (sreach_mmap_kernel_lazy asegs na nr L S Zr msF _ mo x17 Q OK VIS eq_refl); [ rewrite H17; reflexivity | ..];
     change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 1) with x11;
     change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 2) with x12;
     change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 3) with x13;
     change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 4) with x14;
     change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 5) with x15;
-      [ exact LEN | exact H12 | exact H13 | exact H14 | exact H15 | exact NW | exact BUD | exact GAP | exact ROK | ].
+    change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 0) with x10;
+      [ exact LEN | exact H12 | exact H13 | exact H14 | exact H15 | exact DECL | exact NW | exact BUD | exact GAP | exact ROK | ].
     intros a msF'.
     change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 1) with x11.
     change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom asegs)) 0) with x10.
@@ -190,7 +198,7 @@ Section CjNodes.
        let L' := (if nr then [(addr, n)] else []) ++ maps_subtract L (bv_unsigned addr) (bv_unsigned addr + nZ) in
        lzok asegs L' S Zr (mkCfg msF' mo') ->
        restrict L' S msF'
-         = MS (Ra addr) F (Z_to_bv 64 (pc + 4)) fc rv
+         = MS (Ra addr) F (Z_to_bv 64 (pc + 4)) fc None
               (if nr then (fun x => if zin_rangeb (bv_unsigned x) (addr, n) && in_rangesb x S then Some (Z_to_bv 8 0) else m x)
                else zfill addr n m) (seg_rom asegs) ->
        hid_same L' S msF msF' ->
@@ -233,7 +241,7 @@ Section CjNodes.
        let mo' := munmap_model a n mo in
        lzok asegs (maps_subtract L (bv_unsigned a) (bv_unsigned a + nZ)) S Zr (mkCfg msF' mo') ->
        restrict (maps_subtract L (bv_unsigned a) (bv_unsigned a + nZ)) S msF'
-         = MS (Ra (Z_to_bv 64 0)) F (Z_to_bv 64 (pc + 4)) fc rv (unfill a n m) (seg_rom asegs) ->
+         = MS (Ra (Z_to_bv 64 0)) F (Z_to_bv 64 (pc + 4)) fc None (unfill a n m) (seg_rom asegs) ->
        hid_same L S msF msF' ->
        (forall x, hiddenb (maps_subtract L (bv_unsigned a) (bv_unsigned a + nZ)) S x = hiddenb L S x) ->
        eager_used mo' + rem (a, n) (cuts mo) <= eager_used mo ->

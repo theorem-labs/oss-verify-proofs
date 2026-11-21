@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (vdso_ok added, the vDSO pair kept in the reserved ledger and missed by every tracked mapping, with Kvd and its frame, grant, munmap, maps_subtract and brk lemmas, two of them the model's Checks/VmMapsDisjoint.v lemmas copied; MInvR gains it, written as plain text; client_addr_not_owned_stmt over MInv; the coercion, the hints and the vdso_close, vdso_munmap, minvr_split and minvr_dest tactics added). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -23,6 +24,276 @@ Import ListNotations.
 Close Scope bv_scope.
 Open Scope Z_scope.
 
+(* LPS 727298f3: the vdso/vvar pair is reserved at the launch (State.v [vm_reserved_init_model]:
+   the initial ledger is the image's entries then [vdso_reserved (in_kernel inp) (vdso_top ..)]),
+   and mprotect over the pair is unmodeled, so its triple asks that the range miss the pair.
+   [vdso_ok] says the pair is still in the reserved ledger, and that no tracked mapping meets it:
+   the launch's [vm_maps] is empty, every grant this unit takes passed a gate that keeps it off the
+   reserved ledger (the placement search and [brk_grow_ok]), and munmap only removes entries.
+   No step of this unit writes [m_kernel], [vm_reserved], [vm_mmap_base] or [vm_init_sp], so
+   [vdso_ok_frame] carries the fact over every step that leaves [vm_maps] alone, and [vdso_ok_step]
+   over the steps that change it. *)
+Definition vdso_ok (md : Model) : Prop :=
+  (forall e, In e (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) -> In e (vm_reserved (m_vmmaps md)))
+  /\ (forall e, In e (vm_maps (m_vmmaps md)) ->
+        region_free (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) (fst e) (snd e) = true).
+
+(* A class, so a proof that rebuilds the malloc invariant deep inside a section chain finds the fact
+   by instance search from the hypothesis its caller holds. *)
+Existing Class vdso_ok.
+
+Lemma vdso_ok_step (md md' : Model) :
+  m_kernel md' = m_kernel md ->
+  vm_reserved (m_vmmaps md') = vm_reserved (m_vmmaps md) ->
+  vm_mmap_base (m_vmmaps md') = vm_mmap_base (m_vmmaps md) ->
+  vm_init_sp (m_vmmaps md') = vm_init_sp (m_vmmaps md) ->
+  (forall e, In e (vm_maps (m_vmmaps md')) -> In e (vm_maps (m_vmmaps md)) \/
+     region_free (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) (fst e) (snd e) = true) ->
+  vdso_ok md -> vdso_ok md'.
+Proof.
+  intros Hk Hr Hb Hs Hm [H1 H2].
+  assert (Ht : vdso_top (m_vmmaps md') = vdso_top (m_vmmaps md))
+    by (unfold vdso_top, mmap_top, alloc_top; rewrite Hb, Hs; reflexivity).
+  unfold vdso_ok. rewrite Ht, Hk, Hr. split; [exact H1|].
+  intros e He. destruct (Hm e He) as [Ho|Hn]; [exact (H2 e Ho) | exact Hn].
+Qed.
+
+Lemma vdso_ok_frame (md md' : Model) :
+  m_kernel md' = m_kernel md ->
+  vm_reserved (m_vmmaps md') = vm_reserved (m_vmmaps md) ->
+  vm_mmap_base (m_vmmaps md') = vm_mmap_base (m_vmmaps md) ->
+  vm_init_sp (m_vmmaps md') = vm_init_sp (m_vmmaps md) ->
+  vm_maps (m_vmmaps md') = vm_maps (m_vmmaps md) ->
+  vdso_ok md -> vdso_ok md'.
+Proof.
+  intros Hk Hr Hb Hs Hm Hv. refine (vdso_ok_step md md' Hk Hr Hb Hs _ Hv).
+  intros e He. left. rewrite <- Hm. exact He.
+Qed.
+
+(* Instance search may also carry the fact to a model the run reached by setters that keep the kernel
+   build, the reserved ledger, the mmap base, the initial stack pointer and the mappings
+   ([vdso_ok_frame]). *)
+#[global] Hint Extern 5 (vdso_ok ?m) =>
+  match goal with V : vdso_ok ?m0 |- _ => refine (vdso_ok_frame m0 m _ _ _ _ _ V); reflexivity end
+  : typeclass_instances.
+
+Lemma vdso_ok_vm (md md' : Model) :
+  m_kernel md' = m_kernel md -> m_vmmaps md' = m_vmmaps md -> vdso_ok md -> vdso_ok md'.
+Proof.
+  intros Hk Hv H. refine (vdso_ok_frame md md' Hk _ _ _ _ H); rewrite Hv; reflexivity.
+Qed.
+
+Lemma region_free_incl (l1 l2 : list (word * word)) (a n : word) :
+  (forall e, In e l1 -> In e l2) -> region_free l2 a n = true -> region_free l1 a n = true.
+Proof.
+  intros Hs H. apply region_free_intro. intros b s Hin.
+  exact (region_free_In l2 a n b s H (Hs _ Hin)).
+Qed.
+
+Lemma region_free_sub (l : list (word * word)) (a n a' n' : word) :
+  region_free l a n = true ->
+  bv_unsigned a <= bv_unsigned a' -> bv_unsigned a' + bv_unsigned n' <= bv_unsigned a + bv_unsigned n ->
+  region_free l a' n' = true.
+Proof.
+  intros H Hlo Hhi. apply region_free_intro. intros b s Hin.
+  pose proof (region_free_In _ _ _ _ _ H Hin) as Hno.
+  unfold iv_overlap in *. apply andb_false_iff in Hno. apply andb_false_iff.
+  destruct Hno as [Hno|Hno]; apply Z.ltb_ge in Hno; [left|right]; apply Z.ltb_ge; lia.
+Qed.
+
+(* The mprotect gate: a range free of the reserved ledger misses the pair. *)
+Lemma vdso_ok_region (md : Model) (l : list (word * word)) (a n : word) :
+  vdso_ok md -> region_free (vm_reserved (m_vmmaps md) ++ l) a n = true ->
+  region_free (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) a n = true.
+Proof.
+  intros Hv H. apply (region_free_incl _ (vm_reserved (m_vmmaps md) ++ l) a n); [|exact H].
+  intros e He. apply in_or_app. left. exact (proj1 Hv e He).
+Qed.
+
+(* A range inside a tracked mapping misses the pair (the mapping clause of [vdso_ok]). *)
+Lemma vdso_ok_in_maps (md : Model) (b s a n : word) :
+  vdso_ok md -> In (b, s) (vm_maps (m_vmmaps md)) ->
+  bv_unsigned b <= bv_unsigned a -> bv_unsigned a + bv_unsigned n <= bv_unsigned b + bv_unsigned s ->
+  region_free (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) a n = true.
+Proof.
+  intros Hv Hin Hlo Hhi. apply (region_free_sub _ b s a n); [exact (proj2 Hv (b, s) Hin) | exact Hlo | exact Hhi].
+Qed.
+
+(* A step that adds one grant [(a, n)] in front of the mappings, where the grant passed a gate
+   [region_free (vm_reserved .. ++ l)] (the placement search, [brk_grow_ok]). *)
+Lemma vdso_ok_grant (md md' : Model) (l : list (word * word)) (a n : word) :
+  m_kernel md' = m_kernel md ->
+  vm_reserved (m_vmmaps md') = vm_reserved (m_vmmaps md) ->
+  vm_mmap_base (m_vmmaps md') = vm_mmap_base (m_vmmaps md) ->
+  vm_init_sp (m_vmmaps md') = vm_init_sp (m_vmmaps md) ->
+  vm_maps (m_vmmaps md') = (a, n) :: vm_maps (m_vmmaps md) ->
+  region_free (vm_reserved (m_vmmaps md) ++ l) a n = true ->
+  vdso_ok md -> vdso_ok md'.
+Proof.
+  intros Hk Hr Hb Hs Hm Hg Hv. refine (vdso_ok_step md md' Hk Hr Hb Hs _ Hv).
+  intros e He. rewrite Hm in He. destruct He as [<-|He]; [right | left; exact He].
+  exact (vdso_ok_region md l a n Hv Hg).
+Qed.
+
+(* A step whose mappings are a sublist of the old ones (munmap's [map_remove]). *)
+Lemma vdso_ok_sub (md md' : Model) :
+  m_kernel md' = m_kernel md ->
+  vm_reserved (m_vmmaps md') = vm_reserved (m_vmmaps md) ->
+  vm_mmap_base (m_vmmaps md') = vm_mmap_base (m_vmmaps md) ->
+  vm_init_sp (m_vmmaps md') = vm_init_sp (m_vmmaps md) ->
+  (forall e, In e (vm_maps (m_vmmaps md')) -> In e (vm_maps (m_vmmaps md))) ->
+  vdso_ok md -> vdso_ok md'.
+Proof.
+  intros Hk Hr Hb Hs Hm Hv. refine (vdso_ok_step md md' Hk Hr Hb Hs _ Hv).
+  intros e He. left. exact (Hm e He).
+Qed.
+
+(* munmap's [map_remove l a] keeps only entries of [l]. *)
+Lemma vdso_map_remove_in (l : list (word * word)) (a : word) (e : word * word) :
+  In e (map_remove l a) -> In e l.
+Proof. unfold map_remove. intros H. apply filter_In in H. exact (proj1 H). Qed.
+
+(* A caller's world predicate [Kc] with the vDSO fact added: what free's slow path hands the
+   callee of its inner call, so the model it gets back still has the vDSO frame (the callee's
+   contract carries its world predicate through unchanged). *)
+Definition Kvd (Kc : list event -> Model -> Prop) : list event -> Model -> Prop :=
+  fun tr md => Kc tr md /\ vdso_ok md.
+
+(* [iv_subtract_inside] and [maps_subtract_inside] are the model's (Checks/VmMapsDisjoint.v at LPS
+   727298f3), copied with their word-range helpers written inline: each piece a cut leaves lies inside
+   the entry it came from. *)
+Lemma vdso_u64 (z : Z) : 0 <= z < 2 ^ 64 -> bv_unsigned (Z_to_bv 64 z) = z.
+Proof. intros H. rewrite Z_to_bv_unsigned. apply bv_wrap_small. change (bv_modulus 64) with (2 ^ 64). lia. Qed.
+
+Lemma vdso_iv_subtract_inside (a sz : word) (lo hi : Z) (b s : word) :
+  0 <= lo -> hi < 2 ^ 64 ->
+  In (b, s) (iv_subtract a sz lo hi) ->
+  bv_unsigned a <= bv_unsigned b /\ bv_unsigned b + bv_unsigned s <= bv_unsigned a + bv_unsigned sz.
+Proof.
+  intros Hlo Hhi Hin.
+  pose proof (bv_unsigned_in_range 64 a) as Ha. pose proof (bv_unsigned_in_range 64 sz) as Hs.
+  change (bv_modulus 64) with (2 ^ 64) in Ha, Hs.
+  unfold iv_subtract in Hin. cbv zeta in Hin. apply in_app_or in Hin.
+  destruct Hin as [Hin|Hin].
+  - destruct (bv_unsigned a <? lo) eqn:E1; cbn in Hin; [|contradiction].
+    apply Z.ltb_lt in E1. destruct Hin as [Heq|[]]. inversion Heq; subst b s.
+    rewrite vdso_u64 by lia. lia.
+  - destruct (hi <? bv_unsigned a + bv_unsigned sz) eqn:E2; cbn in Hin; [|contradiction].
+    apply Z.ltb_lt in E2. destruct Hin as [Heq|[]]. inversion Heq; subst b s.
+    rewrite !vdso_u64 by lia. lia.
+Qed.
+
+Lemma vdso_maps_subtract_inside (maps : list (word * word)) (lo hi : Z) (b s : word) :
+  0 <= lo -> hi < 2 ^ 64 ->
+  In (b, s) (maps_subtract maps lo hi) ->
+  exists a sz, In (a, sz) maps /\ bv_unsigned a <= bv_unsigned b
+    /\ bv_unsigned b + bv_unsigned s <= bv_unsigned a + bv_unsigned sz.
+Proof.
+  revert lo hi b s. induction maps as [|[a sz] r IH]; intros lo hi b s Hlo Hhi Hin; [contradiction|].
+  cbn [maps_subtract] in Hin. apply in_app_or in Hin.
+  destruct Hin as [Hin|Hin].
+  - destruct (vdso_iv_subtract_inside a sz lo hi b s Hlo Hhi Hin) as [H1 H2].
+    exists a, sz. split; [left; reflexivity | split; assumption].
+  - destruct (IH lo hi b s Hlo Hhi Hin) as (a' & sz' & Hin' & H1 & H2).
+    exists a', sz'. split; [right; exact Hin' | split; assumption].
+Qed.
+
+(* A step whose mappings are the old ones with a range cut out ([maps_subtract], e.g. the dead
+   MAP_FIXED model): each remaining piece lies inside an old entry, so it misses the pair too. *)
+Lemma vdso_ok_subtract (md md' : Model) (lo hi : Z) :
+  m_kernel md' = m_kernel md ->
+  vm_reserved (m_vmmaps md') = vm_reserved (m_vmmaps md) ->
+  vm_mmap_base (m_vmmaps md') = vm_mmap_base (m_vmmaps md) ->
+  vm_init_sp (m_vmmaps md') = vm_init_sp (m_vmmaps md) ->
+  vm_maps (m_vmmaps md') = maps_subtract (vm_maps (m_vmmaps md)) lo hi ->
+  0 <= lo -> hi < 2 ^ 64 ->
+  vdso_ok md -> vdso_ok md'.
+Proof.
+  intros Hk Hr Hb Hs Hm Hlo Hhi Hv. refine (vdso_ok_step md md' Hk Hr Hb Hs _ Hv).
+  intros [b s] He. right. rewrite Hm in He. cbn [fst snd].
+  destruct (vdso_maps_subtract_inside _ lo hi b s Hlo Hhi He) as (a & sz & Hin & H1 & H2).
+  exact (region_free_sub _ a sz b s (proj2 Hv (a, sz) Hin) H1 H2).
+Qed.
+
+(* A brk GROW (no shrink): its grant [brk_grants] is the page range [lo, hi) that [brk_grow_ok] found
+   free of [vm_reserved ++ vm_maps] (with one page above), so the new mapping misses the pair. *)
+Lemma vdso_ok_brk (md : Model) (req r : word) :
+  bv_unsigned (vm_brk (m_vmmaps md)) <= bv_unsigned r ->
+  LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.brk_grow_ok md req r = true -> vdso_ok md ->
+  vdso_ok (with_vmmaps (LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.brk_model_next (m_vmmaps md) req r) md).
+Proof.
+  intros Hle Hok Hv. refine (vdso_ok_step md _ _ _ _ _ _ Hv); [reflexivity | reflexivity | reflexivity | reflexivity |].
+  intros e He. rewrite m_vmmaps_with_vmmaps in He.
+  unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.brk_model_next,
+    LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.brk_maps_next in He. cbn [vm_maps] in He.
+  destruct (Z.ltb 0 (bv_unsigned (vm_brk (m_vmmaps md))) && Z.ltb (bv_unsigned r) (bv_unsigned (vm_brk (m_vmmaps md)))) eqn:Es.
+  { exfalso. apply andb_true_iff in Es as [_ Es]. apply Z.ltb_lt in Es. lia. }
+  apply in_app_or in He as [Hg|Ho]; [right | left; exact Ho].
+  unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.brk_grants,
+    LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.brk_page_range in Hg.
+  destruct (LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.brk_is_grow req r (vm_brk (m_vmmaps md))) eqn:Eg;
+    [|destruct Hg].
+  destruct (Z.ltb (page_round_up_Z (bv_unsigned (vm_brk (m_vmmaps md)))) (page_round_up_Z (bv_unsigned r))) eqn:El;
+    [|destruct Hg].
+  destruct Hg as [<-|[]]. cbn [fst snd].
+  unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.brk_is_grow in Eg.
+  apply andb_true_iff in Eg as [Eg G3]. apply andb_true_iff in Eg as [_ G2].
+  unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.brk_grow_ok in Hok. cbv zeta in Hok.
+  rewrite G2, G3, El in Hok. cbn [andb] in Hok.
+  apply andb_true_iff in Hok as [Hok _]. apply andb_true_iff in Hok as [Htop RF].
+  apply Z.leb_le in Htop. apply Z.ltb_lt in El. apply Z.ltb_lt in G2.
+  pose proof (vdso_ok_region md _ _ _ Hv RF) as RP.
+  pose proof (alloc_top_room (m_vmmaps md)) as AT. unfold stack_max_size, two_pow_64 in AT.
+  set (lo := page_round_up_Z (bv_unsigned (vm_brk (m_vmmaps md)))) in *.
+  set (hi := page_round_up_Z (bv_unsigned r)) in *.
+  assert (Hlo : 0 <= lo).
+  { subst lo. unfold page_round_up_Z, page_size.
+    assert (0 <= (bv_unsigned (vm_brk (m_vmmaps md)) + 4096 - 1) / 4096) by (apply Z.div_pos; lia). lia. }
+  assert (W1 : bv_unsigned (Z_to_bv 64 lo) = lo) by (rewrite Z_to_bv_unsigned; apply bv_wrap_small; change (bv_modulus 64) with (2 ^ 64); lia).
+  assert (W2 : bv_unsigned (Z_to_bv 64 (hi - lo)) = hi - lo) by (rewrite Z_to_bv_unsigned; apply bv_wrap_small; change (bv_modulus 64) with (2 ^ 64); lia).
+  assert (W3 : bv_unsigned (Z_to_bv 64 (hi + page_size - lo)) = hi + page_size - lo)
+    by (rewrite Z_to_bv_unsigned; apply bv_wrap_small; change (bv_modulus 64) with (2 ^ 64); unfold page_size; lia).
+  apply (region_free_sub _ _ _ _ _ RP); rewrite ?W1, ?W2, ?W3; unfold page_size; lia.
+Qed.
+
+(* The same for a brk grow whose caller knows the reserved ledger misses the grant's pages
+   [[page_round_up old, page_round_up r)] directly (in place of [brk_grow_ok]). *)
+Lemma vdso_ok_brk_free (md : Model) (req r : word) :
+  bv_unsigned (vm_brk (m_vmmaps md)) <= bv_unsigned r ->
+  page_round_up_Z (bv_unsigned r) < 2 ^ 64 ->
+  (forall e, In e (vm_reserved (m_vmmaps md)) ->
+     bv_unsigned (fst e) + bv_unsigned (snd e) <= page_round_up_Z (bv_unsigned (vm_brk (m_vmmaps md)))
+     \/ page_round_up_Z (bv_unsigned r) <= bv_unsigned (fst e)) ->
+  vdso_ok md ->
+  vdso_ok (with_vmmaps (LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.brk_model_next (m_vmmaps md) req r) md).
+Proof.
+  intros Hle Hr Hd Hv. refine (vdso_ok_step md _ _ _ _ _ _ Hv); [reflexivity | reflexivity | reflexivity | reflexivity |].
+  intros e He. rewrite m_vmmaps_with_vmmaps in He.
+  unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.brk_model_next,
+    LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.brk_maps_next in He. cbn [vm_maps] in He.
+  destruct (Z.ltb 0 (bv_unsigned (vm_brk (m_vmmaps md))) && Z.ltb (bv_unsigned r) (bv_unsigned (vm_brk (m_vmmaps md)))) eqn:Es.
+  { exfalso. apply andb_true_iff in Es as [_ Es]. apply Z.ltb_lt in Es. lia. }
+  apply in_app_or in He as [Hg|Ho]; [right | left; exact Ho].
+  unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.brk_grants,
+    LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.brk_page_range in Hg.
+  destruct (LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.brk_is_grow req r (vm_brk (m_vmmaps md))) eqn:Eg;
+    [|destruct Hg].
+  destruct (Z.ltb (page_round_up_Z (bv_unsigned (vm_brk (m_vmmaps md)))) (page_round_up_Z (bv_unsigned r))) eqn:El;
+    [|destruct Hg].
+  destruct Hg as [<-|[]]. cbn [fst snd]. apply Z.ltb_lt in El.
+  unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.brk_is_grow in Eg.
+  apply andb_true_iff in Eg as [Eg _]. apply andb_true_iff in Eg as [_ G2]. apply Z.ltb_lt in G2.
+  set (lo := page_round_up_Z (bv_unsigned (vm_brk (m_vmmaps md)))) in *.
+  set (hi := page_round_up_Z (bv_unsigned r)) in *.
+  assert (Hlo : 0 <= lo).
+  { subst lo. unfold page_round_up_Z, page_size.
+    assert (0 <= (bv_unsigned (vm_brk (m_vmmaps md)) + 4096 - 1) / 4096) by (apply Z.div_pos; lia). lia. }
+  assert (W1 : bv_unsigned (Z_to_bv 64 lo) = lo) by (apply vdso_u64; lia).
+  assert (W2 : bv_unsigned (Z_to_bv 64 (hi - lo)) = hi - lo) by (apply vdso_u64; lia).
+  apply region_free_intro. intros p q Hpq. apply (proj1 Hv) in Hpq. destruct (Hd (p, q) Hpq) as [D|D]; cbn [fst snd] in D;
+    unfold iv_overlap; rewrite W1, W2; apply andb_false_iff; [left | right]; apply Z.ltb_ge; lia.
+Qed.
+
 Section WithSegs.
 Variable segs : list Segment.
 
@@ -38,8 +309,16 @@ S46Q40A1SbS46Q8A1M0A1S9Lx;Vm;R1A1G0S8Lb;S5eR1A1Xbx2La;").
 Definition tp_ok (C : mconsts) (rho : valuation) : Prop := ltac2:(tb__ "0|0|
 S25S29S45Q40S15Vrho;P18A2A2S77VC;A1A3").
 
-Definition MInvR (C : mconsts) (A : MA) (rho : valuation) (md : Model) : Prop := ltac2:(tb__ "0|1|
-S36VC;VA;S66S19Vrho;A1M0A1S67G0A1S2eVmd;A1A5").
+(* LPS 727298f3: with [vdso_ok md] (above). *)
+Definition MInvR (C : mconsts) (A : MA) (rho : valuation) (md : Model) : Prop :=
+  MInv C A (rd_of (rm rho)) (wok_of (rm rho)) (m_vmmaps md) /\ vdso_ok md.
+
+Lemma MInvR_MInv (C : mconsts) (A : MA) (rho : valuation) (md : Model) :
+  MInvR C A rho md -> MInv C A (rd_of (rm rho)) (wok_of (rm rho)) (m_vmmaps md).
+Proof. intros [H _]. exact H. Qed.
+Lemma MInvR_vdso (C : mconsts) (A : MA) (rho : valuation) (md : Model) :
+  MInvR C A rho md -> vdso_ok md.
+Proof. intros [_ H]. exact H. Qed.
 
 Definition errno_range (C : mconsts) (a : Z) : Prop := ltac2:(tb__ "0|1|
 S24S40S73VC;A1M0Va;A2S41Va;S3fG0Z4A2A2A2").
@@ -211,14 +490,17 @@ Sa8OF_;S2S2bA1S2aOF_;F_;S12Sa4Vsegs;R3R2A3Sa7Vsegs;R4Sa3Vsegs;R3S96R2A4Sa2Vsegs;
 Definition objs_client_ok (A : MA) (rho : valuation) (R : list sobj) : Prop := ltac2:(tb__ "0|0|
 SaeS10S10S23Vrho;R1A2S5S29S29A2S29S24S40SdS29S29R2A3R1A2S41R1SeS29S29R2A3A2A2S24S27S35VC;VA;R2A3A1S27S53VC;R2A2A1A2F_;Fa;Tr;Lo;VR;A3").
 
-Definition client_addr_not_owned_stmt : Prop := ltac2:(tb__ "0|0|
-S31S12S2aS29S4cVC;R4R3R2A4S4dVC;R5R2A3S27S35VC;R6R3A3A1F_;F_;Fa;Fmd;Frho;FA;").
+(* LPS 727298f3: the premise is the [MInv] half of [MInvR]; the proof reads nothing else, and a
+   caller after a call whose post keeps no [vdso_ok] still has this half. *)
+Definition client_addr_not_owned_stmt : Prop :=
+  forall (A : MA) (rho : valuation) (md : Model) (a : Z),
+    MInv C A (rd_of (rm rho)) (wok_of (rm rho)) (m_vmmaps md) -> client_addr C A a -> ~ ma_owned C A a.
 
 Lemma mem_kept_weaken : ltac2:(tb__ "0|1|
 S31S31S12S2aS12S2aS46Q40A1SbS46Q8A1A1F_;M0G0S9fS4cVC;R9R7R6A4S4cVC;R9R6R5A4S65VC;RbRaR5R4A5S4eVC;RcRbR6R5A5F_;F_;F_;F_;Fm1;Fm0;Fmd';Frho';Fmd;Frho;FA';FA;").
 Proof using .
   intros A A' rho md rho' md' m0 m1 Hn HM HM' Hk a Ha Hc Hc' He Hs.
-  exact (Hk a Ha (Hn A rho md a HM Hc) (Hn A' rho' md' a HM' Hc') He Hs).
+  exact (Hk a Ha (Hn A rho md a (proj1 HM) Hc) (Hn A' rho' md' a (proj1 HM') Hc') He Hs).
 Qed.
 
 Lemma mem_kept_trans : ltac2:(tb__ "0|2|
@@ -249,6 +531,54 @@ S2S2bA1S2aOF_;F_;S12Sa6Vsegs;Sa3Vsegs;R2S96R1A4Sa2Vsegs;R2S38R1S0S78S7aS91S79A2S
 
 End Contracts.
 End WithSegs.
+
+(* An [MInvR] hypothesis used where its invariant half [MInv] is expected (as every use did while
+   [MInvR] was that half alone) is read through [MInvR_MInv]. *)
+Coercion MInvR_MInv : MInvR >-> MInv.
+#[global] Hint Extern 4 (vdso_ok ?m) =>
+  match goal with H : MInvR _ _ _ _ ?m |- _ => exact (proj2 H) end : typeclass_instances.
+
+(* Closes [vdso_ok m] from the context: a [vdso_ok] hypothesis, the second half of an [MInvR] or
+   [MInvIR] hypothesis, or one of these for a model whose kernel and reserved ledger [m] keeps by
+   computation ([vdso_ok_frame]). *)
+Ltac vdso_close :=
+  lazymatch goal with
+  | |- vdso_ok ?m =>
+    first
+      [ assumption
+      | match goal with H : _ |- _ => exact (proj2 H) end
+      | match goal with V : vdso_ok ?m0 |- _ =>
+          refine (vdso_ok_frame m0 m _ _ _ _ _ V); reflexivity end
+      | match goal with H : _ |- _ =>
+          refine (vdso_ok_frame _ m _ _ _ _ _ (proj2 H)); reflexivity end ]
+  end.
+(* A munmap step: the post model's mappings are [map_remove (vm_maps (m_vmmaps m0)) a], a sublist
+   of the old model's ([vdso_ok_sub]); [V : vdso_ok m0], [a] the unmapped base. *)
+Ltac vdso_munmap V a :=
+  lazymatch goal with
+  | |- vdso_ok ?m =>
+    lazymatch type of V with
+    | vdso_ok ?m0 =>
+      exact (vdso_ok_sub m0 m eq_refl eq_refl eq_refl eq_refl
+               (fun e He => vdso_map_remove_in (vm_maps (m_vmmaps m0)) a e He) V)
+    end
+  end.
+(* An [MInvR] goal: leave its invariant half, close its [vdso_ok] half. *)
+Ltac minvr_split :=
+  lazymatch goal with
+  | |- MInvR _ _ _ _ ?m =>
+      let V := fresh "VDs" in
+      assert (V : vdso_ok m) by vdso_close;
+      unfold MInvR; refine (conj _ V)
+  | _ => fail "minvr_split: the goal is not an MInvR"
+  end.
+(* An [MInvR] hypothesis [H]: [H] keeps the invariant half, a fresh [VD] the [vdso_ok] half. *)
+Ltac minvr_dest H :=
+  let V := fresh "VD" in
+  lazymatch type of H with
+  | MInvR _ _ _ _ _ => unfold MInvR in H; destruct H as [H V]
+  | _ => fail "minvr_dest: not an MInvR"
+  end.
 
 Definition malloc_contract_P : Prop := ltac2:(tb__ "0|0|
 S85S3bS6eS7dA3").

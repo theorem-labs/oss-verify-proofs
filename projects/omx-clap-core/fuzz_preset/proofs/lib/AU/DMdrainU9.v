@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/DMdrainU9.v (commit ce1a656b52b7, file sha256 c43a342ba1ef) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 3 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainU9.v (commit 9259077395a9, Quarantine::Drain walk set; file sha256 bd6674d041da) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py), and 4 pcs named in comments; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainU9.v at commit 257c1d78b5c, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (4 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/DMdrainU9.v (file sha256 c43a342ba1ef) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 3 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainU9.v (Quarantine::Drain walk set; file sha256 bd6674d041da) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py), and 4 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainU9.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (4 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, WalkB1): the INPUT of the drain's shared recycle tail - what each recycle
    arm hands over at Recycle's call of DoRecycle (0x345c8), so that one tail (the cut's invariant, DoRecycle,
    the epilogue, the drain's leaf) serves both the no-merge arm (DMdrainV0) and the merge arm (DMdrainV1).
@@ -11,9 +12,9 @@
    cell words of the transfer list, of gm and of ex, and leaves s0 .. s4 holding Recycle's arguments.  So
    stage 1 is stated over its written set [F1], which must lie inside the cut's window DMiface.dwin_q, with
    presence kept off the quarantine header, every batch's size / count / slot words in place, the six words
-   Recycle's prologue saved (the epilogue's seed, DMdrainT9.v:46-52), the thread header's four zero words, and
-   register equality only on DMsegD.SREGS_M (DMsegD.v:48).  STAGE 2 ends in the released dequeue loop's post
-   DMdeq.ATDR (DMdeq.v:193-207) at DoRecycle's call - through the loop, or, on the merge arm's at_RJX exit, read
+   Recycle's prologue saved (the epilogue's seed, DMdrainT9.v:47-53), the thread header's four zero words, and
+   register equality only on DMsegD.SREGS_M (DMsegD.v:49).  STAGE 2 ends in the released dequeue loop's post
+   DMdeq.ATDR (DMdeq.v:194-208) at DoRecycle's call - through the loop, or, on the merge arm's at_RJX exit, read
    off the call state directly (DMdrainV1's atdr_of_cells).
    rule 24: no function proved (kind: a statement only - the tail's input; the lane's reuse search is
    the internal file LOOKUP-B1-drain.txt, `proof-index MergeBatches Recycle QuarantineCallback_Recycle Drain`
@@ -57,7 +58,7 @@ Definition recyc_cut_in (inst : Z) (ly : alayout) (X : astate) (W : world tfibse
 let sp0 := bv_unsigned (getr regs 2) in
 let S' := set_qglobal gk (set_qthread qc0 X) in
 let m1 := mrestrict (w_H W) mem1 in
-(* the drain's entry and the model's recycle cut (DMiface.drain_recyc, DMiface.v:54-58) *)
+(* the drain's entry and the model's recycle cut (DMiface.drain_recyc, DMiface.v:55-59) *)
 drain_pre_cf B ARX L24 QB inst ly X W regs mem md /\
 drain_recyc X S' P /\
 (* stage 1, the arm's own walk to the dequeue loop's head 0x34558: its written set, inside the cut's window *)

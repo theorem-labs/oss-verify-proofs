@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainMN.v (commit 68fe993efc49, Quarantine::Drain walk set; file sha256 c85a5d64c290) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 1 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); 1 data addresses the tool read as sizes, by the same value MAPS prediction; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainMN.v at commit 257c1d78b5c, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (1 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainMN.v (Quarantine::Drain walk set; file sha256 c85a5d64c290) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 1 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); 1 data addresses the tool read as sizes, by the same value MAPS prediction; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainMN.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (1 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, WalkB1): memnorm safety (MemnormT.mn_safe) of EVERY word the drain walk
    writes, proved at cgif_file's image - not assumed.  The drain writes only its stack window, the quarantine's
    words outside the batch objects (DMiface.qhdr: the image's mutex word and global header, the thread object's
@@ -9,7 +10,7 @@
    0x9d000 (MemnormSafecgif.mn_safe_rw), in a zone-3 object (MemnormLoc.mn_safe_zone3) or in high memory below
    ASAN_CEIL (MemnormHitG.mn_safe_high).
    This replaces the layer's instance facts MemnormT.mn_owned_low / mn_owned_wr / mn_stack in the drain's files:
-   mn_owned_wr is FALSE at cgif_file and at the shared instance (MemnormT.v:28-31: owned statics include bytes of
+   mn_owned_wr is FALSE at cgif_file and at the shared instance (MemnormT.v:29-32: owned statics include bytes of
    the read-only segment [0x10000, 0x30000)), so a theorem that took it was vacuous there.
    rule 24: no function proved (kind: address facts at the image; the lane's reuse search is
    LOOKUP-B1-drain.txt (sha256 c6e48b676fd5; internal record), `proof-index MergeBatches Recycle QuarantineCallback_Recycle Drain`

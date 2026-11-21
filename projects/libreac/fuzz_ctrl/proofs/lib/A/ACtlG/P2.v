@@ -6,18 +6,19 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/R6.v, with its module names and numbers changed; 1086 of its 1232 lines of code are new or changed and 1651 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/R7tail.v; 1150 of its 1202 lines of code are new or changed and 1180 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/R7.v, with its module names changed; 269 of its 325 lines of code are new or changed and 1146 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/P2.v -- GLUE for stage seg_P2 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput (lib/A/ACtl.v:715):
      glue_seg_P2 : forall POST, CF POST C_A81b14 -> CF POST C_A81b10
    with ACtl.v's own CF notation (SK := A.AE2k.tfib_sink_head, FP := []), i.e. exactly ACtl.v's Section hypothesis
    seg_P2.  Written by a Theorem Labs lane (piece W3a: P1, P1_70, P2, P4); single writer.
    rule 24: no function proved (stage glue of a walk).
 
-   THE SEGMENT (Seg/P2.v at U 6a74d5929d2, seg_P2 :119; v1.9 0x81b10 -> 0x81b14): the single instruction
+   THE SEGMENT (Seg/P2.v at U, seg_P2 :119; v1.9 0x81b10 -> 0x81b14): the single instruction
    `sb s2,332(s3)` with s3 = S(fr), one store of one byte into the OWN frame's shadow, at S(fr) + 332.  The exit
    cut C_A81b14 is C_A81b10's body with the stack pointer named (spv) and bounded.
 
-   THE RUN LIFTED: a Theorem Labs lane's footprint run seg_P2_run_F (lib/A/Prog/Seg/P2F.v (at head lib/A/Prog/Seg/P2F.v:76) (an earlier version, blob 75f692c4dba, not in this delivery)) in its
-   route-(C) form seg_P2_run_F_on (lib/A/Prog/Seg/P2F_on.v, this lane's twin; P2F.v's code is unchanged since release c5e779efe8c (comments edited) and differs from the blob above: 39 of its code lines changed or removed, 72 added).  The twin asks for
+   THE RUN LIFTED: a Theorem Labs lane's footprint run seg_P2_run_F (lib/A/Prog/Seg/P2F.v (at head lib/A/Prog/Seg/P2F.v:77) (an earlier version, blob 75f692c4dba, not in this delivery)) in its
+   route-(C) form seg_P2_run_F_on (lib/A/Prog/Seg/P2F_on.v, this lane's twin; P2F.v's code is unchanged since release (comments edited) and differs from the blob above: 39 of its code lines changed or removed, 72 added).  The twin asks for
    the ONE shadow byte it stores, `shadow_rw_on (seg_P2_run_shadow_R fr)`, where the old run asked for the
    universal A.AsanRT.shadow_rw, which route (C)'s cut no longer carries.
 
@@ -46,9 +47,9 @@
 
    CITED BY NAME: a Theorem Labs lane's PROVED A.ProgWorld.ajournal_of_fsteps (ProgWorld.v:1091) and a Theorem Labs lane's PROVED
    A.ACtlG.KitMem.kitmem_rng_frame_sh / kitmem_addressable_mrd / kitmem_mrd_munch / kitmem_input_apart
-   (a working branch 4a56e997c0f + dcdc870e8ff, merged); a Theorem Labs lane's PROVED
-   A.Prog.Seg.P1.p1_sh_bytes_on (Seg/P1.v b2bcfe72edf (the blob this tree had at release c5e779efe8c), taken by path from a working branch
-   a4e0d5b5a2e); a Theorem Labs lane's PROVED, premise-free A.ProgWorld_Fs.ctl_frame_above_img.
+   (a working branch, merged); a Theorem Labs lane's PROVED
+   A.Prog.Seg.P1.p1_sh_bytes_on (Seg/P1.v b2bcfe72edf (the blob this tree had at release), taken by path from a working branch);
+   a Theorem Labs lane's PROVED, premise-free A.ProgWorld_Fs.ctl_frame_above_img.
    SECTION HYPOTHESES (exact text below)
    - LAWS       : the core's AR laws (ACtl.v:183).
 

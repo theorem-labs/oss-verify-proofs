@@ -1,13 +1,25 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3; internal commit ids in comments replaced by public commits or removed. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
-From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+(* The tree-local [Lib] import MUST come last.  [Lib/ITree.v:95] defines
+   [Fixpoint impl {R} (t : itree R) (Q : ...) (ms : machine_state)], which
+   section-discharges to the [impl segs at_node t Q ms] this file and
+   [Spec/Monad.v:52] call; re-importing the LinuxProcessSem modules AFTER
+   it shadows that with a [Prop -> Prop -> Prop] [impl], and [tree_ok]'s
+   [impl segs ...] then reports [segs] "expected to have type Prop"
+   (TopLevel.v:136).  [Vdso] is folded into
+   this line, which is the donor's single LinuxProcessSem line
+   (projects/openssl/bignum/proofs/lib/TopLevel.v:8); the
+   duplicate that used to sit after [Lib] carried nothing else. *)
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Vdso Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Sem.
 From OSSVerify.Proofs.openssl.ct.lib.Lib Require Import PropExec MState Frame Exec ITree Nodes RegsEquiv FP.
+From OSSVerify.Proofs.openssl.ct.lib.Common Require Import RsLift.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope bv_scope.
@@ -22,24 +34,48 @@ Definition prog_tree (R : Type) : Type := ProcInput -> ExecEntry -> itree node R
 (* [comment removed for export] *)
 Definition ms0 (segs : list Segment) (pc : N) (ph : PhdrInfo)
     (en : ExecEntry) (inp : ProcInput) : machine_state :=
-  init_ms segs pc ph (en_sp en) (en_draw en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp).
+  init_ms segs pc ph (en_sp en) (en_mmap_base en) (en_draw en) inp.
 
 Lemma ms0_eq : forall segs pc ph en inp,
   ms0 segs pc ph en inp =
   MS (mkR_init (en_sp en)) bvmap_empty (Z_to_bv 64 (Z.of_N pc)) (Z_to_bv 32 0) None
-     (wrap_mem ph (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en)) (seg_rom segs).
+     (wrap_mem inp (en_mmap_base en) ph (Z_to_bv 64 (Z.of_N pc)) (en_sp en) (en_draw en)) (seg_rom segs).
 Proof. reflexivity. Qed.
 
 (* [comment removed for export] *)
 Definition mo0 (segs : list Segment) (lim : Z) (en : ExecEntry) (inp : ProcInput) : Model :=
-  init_model (segments_reserved segs) (en_brk en) (en_mmap_base en) (en_sp en) lim inp.
+  with_vdso (vdso_run_init (ed_vdso (en_draw en)))
+    (init_model (segments_reserved segs) (en_brk en) (en_mmap_base en) (en_sp en) lim inp).
 
-Lemma init_config_eq : forall segs pc ph lim en inp,
-  init_config segs pc ph (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) lim inp
-  = mkCfg (init_machine_state segs pc ph (en_sp en) (en_draw en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (mo0 segs lim en inp).
+(* The bare-[segs] [init_config_eq] the old shape carried is gone: at the
+   revision [Run.init_machine_state] (75d69e00 theories/LinuxProcessSem/Run.v:1384,
+   discharged out of [Section WithMemImage] at Run.v:339 into
+   [init_machine_state segs pc ph sp mbase draw inp]) takes the mmap base
+   where the old shape passed the draw, and the run's configuration is
+   [init_config_run] below, over [Run.run_segments].  It had no consumer in
+   this tree and the donor does not carry it (the donor's
+   projects/openssl/bignum/proofs/lib/TopLevel.v:30-46). *)
+Lemma m_fds_mo0 : forall segs lim en inp,
+  m_fds (mo0 segs lim en inp)
+  = m_fds (init_model (segments_reserved segs) (en_brk en) (en_mmap_base en) (en_sp en) lim inp).
 Proof. reflexivity. Qed.
 
-(* [comment removed for export] *)
+Lemma m_fs_mo0 : forall segs lim en inp,
+  m_fs (mo0 segs lim en inp)
+  = m_fs (init_model (segments_reserved segs) (en_brk en) (en_mmap_base en) (en_sp en) lim inp).
+Proof. reflexivity. Qed.
+
+Lemma init_config_run : forall segs pc ph lim en inp,
+  init_config (run_segments segs inp (en_sp en) (en_mmap_base en)) pc ph
+    (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) lim inp
+  = mkCfg (init_machine_state (run_segments segs inp (en_sp en) (en_mmap_base en)) pc ph
+             (en_sp en) (en_mmap_base en) (en_draw en) inp)
+          (mo0 segs lim en inp).
+Proof.
+  intros segs pc ph lim en inp. unfold init_config, mo0.
+  rewrite segments_reserved_run_segments. reflexivity.
+Qed.
+
 Lemma mo0_alloc_top : forall segs lim en inp,
   alloc_top (m_vmmaps (mo0 segs lim en inp)) = (bv_unsigned (en_sp en) - stack_max_size)%Z.
 Proof. reflexivity. Qed.
@@ -58,9 +94,15 @@ Qed.
 
 (* [comment removed for export] *)
 Lemma vie_va_size : forall inp, valid_input_either inp -> in_va_size inp = Sv48.
-Proof. intros inp (_ & _ & _ & _ & _ & _ & _ & _ & v & _). exact v. Qed.  (* [comment removed for export] *)
+Proof. intros inp Hv. red in Hv. repeat match goal with H : _ /\ _ |- _ => destruct H end. assumption. Qed.
 
 (* [comment removed for export] *)
+Lemma vie_reader : forall inp, valid_input_either inp -> in_channel_reader inp = true.
+Proof. intros inp Hv. red in Hv. repeat match goal with H : _ /\ _ |- _ => destruct H end. assumption. Qed.
+
+Lemma vie_launch : forall inp, valid_input_either inp -> valid_launch inp.
+Proof. intros inp Hv. red in Hv. repeat match goal with H : _ /\ _ |- _ => destruct H end. assumption. Qed.  (* [comment removed for export] *)
+
 Lemma mo0_not_halted : forall segs lim en inp, m_halted (mo0 segs lim en inp) = None.
 Proof. reflexivity. Qed.
 
@@ -71,8 +113,16 @@ Proof. intros inp (_ & _ & _ & v & _). exact v. Qed.
 Lemma vi_fs_keys : forall inp, valid_input inp -> fs_keys_relative (in_image_fs inp).
 Proof. intros inp (_ & _ & _ & v & _). exact v. Qed.
 
+(* [minv_init] at this revision carries TWO premises (Lib/Nodes.v:566-568:
+   [fs_keys_relative (in_image_fs inp) -> in_channel_reader inp = true]), so
+   discharge both explicitly, as the donor does
+   (projects/openssl/bignum/proofs/lib/TopLevel.v:88-92). *)
 Lemma mo0_minv : forall segs lim en inp, valid_input_either inp -> minv (mo0 segs lim en inp).
-Proof. intros segs lim en inp Hvi. apply minv_init. exact (vie_fs_keys inp Hvi). Qed.
+Proof.
+  intros segs lim en inp Hvi.
+  exact (minv_init (segments_reserved segs) (en_brk en) (en_mmap_base en) (en_sp en) lim inp
+           (vie_fs_keys inp Hvi) (vie_reader inp Hvi)).
+Qed.
 
 Lemma ms0_svc : forall segs pc ph en inp, ms_svc_pending (ms0 segs pc ph en inp) = None.
 Proof. reflexivity. Qed.
@@ -125,22 +175,40 @@ Qed.
 
 Lemma run_eq : forall segs pc ph lim en inp,
   run (mkImage segs pc ph) lim en inp =
-  let c0 := mkCfg (init_machine_state segs pc ph (en_sp en) (en_draw en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (mo0 segs lim en inp) in
-  {| bh_traces := obs_trace segs c0;
-     bh_errors := reaches_error segs c0;
-     bh_all_errors := all_traces_error segs c0;
-     bh_unmodeled := reaches_unmodeled segs c0 |}.
-Proof. intros segs pc ph lim [sp brk mb rnd] inp. reflexivity. Qed.
+  let vsegs := run_segments segs inp (en_sp en) (en_mmap_base en) in
+  let c0 := mkCfg (init_machine_state vsegs pc ph (en_sp en) (en_mmap_base en) (en_draw en) inp) (mo0 segs lim en inp) in
+  {| bh_traces := obs_trace vsegs c0;
+     bh_errors := reaches_error vsegs c0;
+     bh_all_errors := all_traces_error vsegs c0;
+     bh_unmodeled := reaches_unmodeled vsegs c0 |}.
+Proof.
+  (* The rewrite must fire BEFORE the entry record is destructed: at the
+     revision [init_config]'s machine state reads [run_segments segs inp
+     (en_sp en) (en_mmap_base en)], and a [cbn] that reduces those
+     projections first leaves no subterm matching [init_config_run]'s
+     right-hand side.  Donor:
+     projects/openssl/bignum/proofs/lib/TopLevel.v:138-146. *)
+  intros segs pc ph lim en inp. cbv zeta.
+  rewrite <- (init_config_run segs pc ph lim en inp).
+  destruct en as [sp brk mb rnd]. cbn [run en_sp en_brk en_mmap_base en_draw]. reflexivity.
+Qed.
 
 (* [comment removed for export] *)
 Lemma run_scfg_eq : forall cfg segs pc ph lim en inp,
   run_scfg cfg (mkImage segs pc ph) lim en inp =
-  let c0 := mkCfg (init_machine_state segs pc ph (en_sp en) (en_draw en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (mo0 segs lim en inp) in
-  {| bh_traces := obs_trace_cfg segs cfg c0;
-     bh_errors := reaches_error_cfg segs cfg c0;
-     bh_all_errors := all_traces_error_cfg segs cfg c0;
-     bh_unmodeled := reaches_unmodeled_cfg segs cfg c0 |}.
-Proof. intros cfg segs pc ph lim [sp brk mb rnd] inp. reflexivity. Qed.
+  let vsegs := run_segments segs inp (en_sp en) (en_mmap_base en) in
+  let c0 := mkCfg (init_machine_state vsegs pc ph (en_sp en) (en_mmap_base en) (en_draw en) inp) (mo0 segs lim en inp) in
+  {| bh_traces := obs_trace_cfg vsegs cfg c0;
+     bh_errors := reaches_error_cfg vsegs cfg c0;
+     bh_all_errors := all_traces_error_cfg vsegs cfg c0;
+     bh_unmodeled := reaches_unmodeled_cfg vsegs cfg c0 |}.
+Proof.
+  (* Same order as [run_eq]: rewrite under [cbv zeta] with [en] still a
+     variable (projects/openssl/bignum/proofs/lib/TopLevel.v:157-161). *)
+  intros cfg segs pc ph lim en inp. cbv zeta.
+  rewrite <- (init_config_run segs pc ph lim en inp).
+  destruct en as [sp brk mb rnd]. cbn [run_scfg en_sp en_brk en_mmap_base en_draw]. reflexivity.
+Qed.
 
 (* [comment removed for export] *)
 Lemma run_of_tree : forall {R : Type} segs pc ph lim (t : itree node R) (Q : R -> machine_state -> Prop) en inp,
@@ -153,21 +221,34 @@ Lemma run_of_tree : forall {R : Type} segs pc ph lim (t : itree node R) (Q : R -
   /\ ~ bh_unmodeled (run_scfg ncfg (mkImage segs pc ph) lim en inp).
 Proof.
   intros R segs pc ph lim t Q en inp Himpl Hleaves Hsafe Hvi.
-  rewrite run_scfg_eq. cbn [bh_traces bh_errors bh_unmodeled].
-  destruct (init_behaviour_scfg_eqv segs ncfg pc ph (en_sp en) (en_draw en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (mo0 segs lim en inp))
+  rewrite run_scfg_eq. cbv zeta. cbn [bh_traces bh_errors bh_unmodeled].
+  (* The run reads [run_segments segs inp sp mbase] = segs ++ tail
+     (75d69e00 theories/LinuxProcessSem/Run.v:328-330:
+     [Definition run_segments segs inp sp mbase := segs ++ vdso_segments (in_kernel inp) sp mbase]).
+     The walk is over segs; [RsLift.impl_rs_nodes] carries it to segs ++ tail
+     at the state with the run's ROM, which is [ms0 (segs ++ tail)].
+     Donor: projects/openssl/bignum/proofs/lib/TopLevel.v:170-200. *)
+  set (tail := vdso_segments (in_kernel inp) (en_sp en) (en_mmap_base en)).
+  pose proof (vdso_segments_inert (in_kernel inp) (en_sp en) (en_mmap_base en)) as Hin. fold tail in Hin.
+  change (run_segments segs inp (en_sp en) (en_mmap_base en)) with (segs ++ tail).
+  destruct (init_behaviour_scfg_eqv (segs ++ tail) ncfg pc ph (en_sp en) (en_mmap_base en) (en_draw en) inp (mo0 segs lim en inp))
     as (Htr & Herr & _ & Hunm).
-  change (init_ms segs pc ph (en_sp en) (en_draw en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) with (ms0 segs pc ph en inp) in Htr, Herr, Hunm.
-  pose proof (nodes_sound segs) as NS.
+  change (init_ms (segs ++ tail) pc ph (en_sp en) (en_mmap_base en) (en_draw en) inp)
+    with (ms0 (segs ++ tail) pc ph en inp) in Htr, Herr, Hunm.
+  pose proof (impl_rs_nodes segs tail Hin _ t Q (ms0 segs pc ph en inp) Himpl) as Himpl'.
+  change (rs_ms segs tail (ms0 segs pc ph en inp)) with (ms0 (segs ++ tail) pc ph en inp) in Himpl'.
+  pose proof (nodes_sound (segs ++ tail)) as NS.
+  pose proof (mo0_minv segs lim en inp Hvi) as Hminv.
   split; [| split].
   - intros tr. rewrite (Htr tr). unfold tree_traces.
-    apply (impl_run_traces2 node segs ncfg (at_node segs) nstep nexit minv nsafe NS t _ _ _
-             Himpl Hleaves (mo0_not_halted _ _ _ _) (mo0_minv _ _ _ _ Hvi) Hsafe (ms0_svc _ _ _ _ _)).
+    apply (impl_run_traces2 node (segs ++ tail) ncfg (at_node (segs ++ tail)) nstep nexit minv nsafe NS t _ _ _
+             Himpl' Hleaves (mo0_not_halted _ _ _ _) Hminv Hsafe (ms0_svc _ _ _ _ _)).
   - rewrite Herr.
-    apply (impl_run_safe2 node segs ncfg (at_node segs) nstep nexit minv nsafe NS t _ _ _
-             Himpl Hleaves (mo0_not_halted _ _ _ _) (mo0_minv _ _ _ _ Hvi) Hsafe (ms0_svc _ _ _ _ _)).
+    apply (impl_run_safe2 node (segs ++ tail) ncfg (at_node (segs ++ tail)) nstep nexit minv nsafe NS t _ _ _
+             Himpl' Hleaves (mo0_not_halted _ _ _ _) Hminv Hsafe (ms0_svc _ _ _ _ _)).
   - rewrite Hunm.
-    apply (impl_run_modeled2 node segs ncfg (at_node segs) nstep nexit minv nsafe NS t _ _ _
-             Himpl Hleaves (mo0_not_halted _ _ _ _) (mo0_minv _ _ _ _ Hvi) Hsafe (ms0_svc _ _ _ _ _)).
+    apply (impl_run_modeled2 node (segs ++ tail) ncfg (at_node (segs ++ tail)) nstep nexit minv nsafe NS t _ _ _
+             Himpl' Hleaves (mo0_not_halted _ _ _ _) Hminv Hsafe (ms0_svc _ _ _ _ _)).
 Qed.
 
 (* [comment removed for export] *)

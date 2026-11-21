@@ -1,6 +1,6 @@
 # G10: the address checker 0d24592683b6 over the image B files (gate record)
 
-Proves no function (kind: measurement). Run 2026-10-31 on the series base b1afc3e80791 (`run.sh g7 g10`). Its owner
+Proves no function (kind: measurement). Run 2026-10-31 on the series base (`run.sh g7 g10`). Its owner
 installed port_addr_check 0d24592683b6 at 2026-10-30 23:46Z; the G7 (3d2eee813cce) and G1 (efa19b81e92b) records stand
 beside this one, unchanged.
 
@@ -15,8 +15,8 @@ identity-quotients/qscan.py `7baa52331b8c...`, identity-quotients/imgquant.json 
 ## Commands
 (1) The gate: G1's command with the tool replaced, every other argument the same:
 ```
-python3 "$PAC0D" --git "$GIT" --donors-from "$DONORS" --summary --fail-on-flags \
-  --src c8557374ad2e:proofs/cgif/cgif_file_fuzzer/lib --dst b1afc3e80791:proofs/libreac/fuzz_disco/lib \
+python3 "$PAC0D" --git "$GIT" --donors-from "$DONORS" --summary --fail-on-flags \:
+  proofs/cgif/cgif_file_fuzzer/lib:proofs/libreac/fuzz_disco/lib \
   --paired-only --map A/=A/ --map =Reusable/ \
   --src-image A="$CGIF_BIN/cgif_file_fuzzer.asan" --src-image B="$CGIF_BIN/cgif_file_fuzzer.asan-ubsan" \
   --src-image P="$CGIF_BIN/cgif_file_fuzzer.plain" --src-image U="$CGIF_BIN/cgif_file_fuzzer.ubsan" \

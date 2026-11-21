@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: minv is the lazy-list fact and the vDSO ledger fact, so its first half is taken. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -107,7 +108,7 @@ Qed.
 
 (* [comment removed for export] *)
 Lemma ainv_KI A m md : p0_ainv A m md -> KI md.
-Proof. ((first [ intro dR_11; dand3 dR_11 as _ [(L & _ & HK & _) _] _ | intros (_ & [(L & _ & HK & _) _] & _) ])). split; [exact (kl_halt _ _ _ HK)| exact (kl_minv _ _ _ HK)]. Qed.
+Proof. ((first [ intro dR_11; dand3 dR_11 as _ [(L & _ & HK & _) _] _ | intros (_ & [(L & _ & HK & _) _] & _) ])). split; [exact (kl_halt _ _ _ HK)| exact (proj1 (kl_minv _ _ _ HK))]. Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)

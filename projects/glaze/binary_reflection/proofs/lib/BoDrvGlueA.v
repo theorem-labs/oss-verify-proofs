@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the TASK_SIZE carriers fh_SPTOP_task and fh_M0_task, with the stack-window image fact, passed to the cert-soundness lemmas). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -105,6 +106,10 @@ Record file_hyps : Prop := FH {
   fh_bcap : di_B0 I + BCAP <= GBUDGET;
   fh_ccap : di_C0 I + CCAP <= GCOUNT;
   fh_FTOP : Z.of_nat (length (di_HIDF I)) + di_FTOP I <= FMIN;
+  (* The TASK_SIZE carrier the openat nodes take (BoDrvNodesSoundA5.v, [SPTOPc_task]/[M0c_task]):
+     the start frame's stack top and memory, both stated in the model's [TASK_SIZE]. *)
+  fh_SPTOP_task : di_SPTOP I <= TASK_SIZE;
+  fh_M0_task : forall a : word, TASK_SIZE <= bv_unsigned a -> di_M0 I a = None;
   (* [comment removed for export] *)
   fh_GC : forall UX, uxa UX -> forall M0 : word -> option byte,
      gcontracts BSEGS ITA ABOTH NXD PERM_A_lit (di_SPTOP I) fs (di_SHC I) (VSHf (di_HID I) (di_HIDF I)) (AINVg (di_AINVH I) M0) (di_KCAP I) (di_FTOP I) fx_ok
@@ -144,10 +149,12 @@ Theorem run_a : forall (UX : env -> Prop) (UXa : uxa UX) (D : env -> Fs.Fs -> TS
   forall E fx R M model, csA UX E cs fx R M model ->
   RZ (cfgF BSEGS fx R (pc cs) M model) (sd (fun (_ : nat) E0 fs' => D E0 fs') (D E fs) E fs s).
 Proof.
-  intros UX UXa D Dag Dnil hs pl cs s Hgp Hc HH E fx R M model HC. destruct FHY. destruct fh_cells0 as (c1 & c2 & c3).
+  intros UX UXa D Dag Dnil hs pl cs s Hgp Hc HH E fx R M model HC.
+  pose proof (fh_SPTOP_task FHY) as HTs. pose proof (fh_M0_task FHY) as HTm.
+  destruct FHY. destruct fh_cells0 as (c1 & c2 & c3).
   pose proof (drvA_cert_sound_rz (di_SHC I) (di_KCAP I) (di_AINVH I) (di_SWIN I) fh_HP0 fh_SWIN_img0 (di_SPTOP I) (di_HID I) (di_HIDF I) (di_M0 I)
                 (di_B0 I) (di_C0 I) fh_B1 fh_C1 fh_bcap0 fh_ccap0 (di_FTOP I) fh_FTOP0 a0 p fs data UX UXa (fh_GC0 UX UXa) fh_FZN0 fh_FZE0
-                c1 c2 c3 D Dag Dnil hs BF FUEL pl cs s Hgp Hc) as H.
+                c1 c2 c3 HTs HTm D Dag Dnil hs BF FUEL pl cs s Hgp Hc) as H.
   assert (HS : GPS.holes_stmt BSEGS hs PERM_A_lit (di_SPTOP I) fs (di_SHC I) (VSHf (di_HID I) (di_HIDF I)) (AINVg (di_AINVH I) (di_M0 I)) (di_KCAP I) (di_FTOP I) fx_ok
                  (UINVd a0 p fs data UX) (fun (_ : nat) E0 fs' => D E0 fs') RZ).
   { intros h ch Hh E0 fx0 R0 M1 model0 HC0. rewrite (co_fs HC0). exact (HH h ch Hh E0 fx0 R0 M1 model0 HC0). }
@@ -162,9 +169,11 @@ Theorem run_1 : forall (UX : env -> Prop) (UXa : uxa UX) (D : env -> Fs.Fs -> TS
   forall E fx R M model, cs1 UX E cs fx R M model ->
   RZ (cfgF BSEGS fx R (pc cs) M model) (sd (fun (_ : nat) E0 fs' => D E0 fs') (D E fs) E fs s).
 Proof.
-  intros UX UXa D Dag Dnil hs pl cs s Hgp Hc HH E fx R M model HC. destruct FHY. destruct fh_cells2 as (c1 & c2 & c3).
-  pose proof (drvA_cert_sound_zh (di_SHC I) (di_KCAP I) (di_AINVH1 I) (di_SWIN I) fh_HP2 (di_SPTOP I) (di_HID I) (di_HIDF I) (di_M0 I)
-                (di_B0 I) (di_C0 I) (di_FTOP I) a0 p fs data UX UXa (fh_GCC2 UX UXa) c1 c2 c3 D Dag Dnil hs BF FUEL pl cs s Hgp Hc) as H.
+  intros UX UXa D Dag Dnil hs pl cs s Hgp Hc HH E fx R M model HC.
+  pose proof (fh_SPTOP_task FHY) as HTs. pose proof (fh_M0_task FHY) as HTm.
+  destruct FHY. destruct fh_cells2 as (c1 & c2 & c3).
+  pose proof (drvA_cert_sound_zh (di_SHC I) (di_KCAP I) (di_AINVH1 I) (di_SWIN I) fh_HP2 fh_SWIN_img0 (di_SPTOP I) (di_HID I) (di_HIDF I) (di_M0 I)
+                (di_B0 I) (di_C0 I) (di_FTOP I) a0 p fs data UX UXa (fh_GCC2 UX UXa) c1 c2 c3 HTs HTm D Dag Dnil hs BF FUEL pl cs s Hgp Hc) as H.
   assert (HS : GPS.holes_stmt BSEGS hs PERM_A_lit (di_SPTOP I) fs (di_SHC I) (VSHf (di_HID I) (di_HIDF I)) (AINVg (di_AINVH1 I) (di_M0 I)) (di_KCAP I) (di_FTOP I) fx_ok
                  (UINVd a0 p fs data UX) (fun (_ : nat) E0 fs' => D E0 fs') RZ).
   { intros h ch Hh E0 fx0 R0 M1 model0 HC0. rewrite (co_fs HC0). exact (HH h ch Hh E0 fx0 R0 M1 model0 HC0). }

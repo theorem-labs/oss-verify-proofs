@@ -5,10 +5,11 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_K.v, with its module names changed; 259 of its 330 lines of code are new or changed and 1302 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_strkit.v, with its module paths and module names changed; 240 of its 267 lines of code are new or changed and 303 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_ex_head.v, with its module paths and module names changed; 299 of its 342 lines of code are new or changed and 224 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* G4.ExHead.HeadEntry, IMAGE B: the head walk's entry states (st_ok of ss_L, ss_W k s, ss_T, ss_N from ex_at_L) and the
    two region swaps (the word byte for the text byte at 0x8144c, text[i - 1] after the i <> 0 test at 0x81484), and the
    walk tactics the head files share (after FMW_plain.v fw_reg / pl_av / pl_mk / pl_g).
-   Shape after image A's lib/A/FMW_ex_head_e.v (06d82004dc3); B's frame is 240 bytes, s5 (register 21) = text + i,
+   Shape after image A's lib/A/FMW_ex_head_e.v; B's frame is 240 bytes, s5 (register 21) = text + i,
    s7 (register 23) = i, a6 (register 16) = text. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

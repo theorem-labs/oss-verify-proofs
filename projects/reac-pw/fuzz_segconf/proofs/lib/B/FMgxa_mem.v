@@ -1,8 +1,8 @@
 (* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxa_mem.v; relocated to plugin-hostd/fuzz_command.asan by the GXA address relocator (target fuzz_command.asan): module paths changed; 5 address numerals moved (address checker 0767e70e074a, predict mode, fm.asan -> fuzz_command.asan, symbol + offset; the relocator's table for this file); GXA symbol keys kept (0x21334, 0x21738). *)
 (* Modified by Theorem Labs, 2026-10: relocated from lib/A/<same path> to fuzz_command.asan-ubsan by the image-B address relocator (the A-to-B address map, keyed by the image maps' symbol names and by code; GXA symbol keys kept), whose check table lists every changed numeral *)
 (* GXA's interceptor call contracts for memcpy and memset (lib/CJ/RL/GXA/CopyCall.v:29-41 memcpy_stack_contract,
-   SetCall.v:28-37 memset_stack_contract), discharged at the ASan instance A_img (RT_IImgA.v:102) on the pinned
-   fuzz_manifest.asan, and memset also at A_img_vsn (RT_IImgA.v:113), which RT_gxa_inst.v:108 consumes.  The twin of
+   SetCall.v:28-37 memset_stack_contract), discharged at the ASan instance A_img (RT_IImgA.v:103) on the pinned
+   fuzz_manifest.asan, and memset also at A_img_vsn (RT_IImgA.v:114), which RT_gxa_inst.v:108 consumes.  The twin of
    RT_gxa_strnlen.v (strnlen); names, predicates and file shape follow
    proofs/plugin-hostd/fuzz_reply/lib/A/RT_gxa_calls_mem.v.
    The two contract proofs are adapted from the same composition, already Qed at fuzz_manifest.asan under other image
@@ -29,7 +29,7 @@
      tramp_memset (__wrap_memset 0x57674, one `j` to 0x57d58).
    - the CJ / Bz vocabulary bridge lib/A/FMgxa_bzcj.v (bz_cj_evt, mem_inv_cj_bz, mem_inv_bz_cj, chk_ok_of_pf_rng).
    What it adds is glue only: GXA's call targets under A_img (`sym 0x21334` = 0x57678, `sym 0x21738` = 0x57674,
-   RT_IImgA.v:67-68; A_img_vsn has the same 0x21738 row), the CB-cell conversion between the two trees (an Inductive
+   RT_IImgA.v:68-69; A_img_vsn has the same 0x21738 row), the CB-cell conversion between the two trees (an Inductive
    in each; stk, bytes_at, munch and wmono are the same terms in both and cross by `exact`), and the two ready
    predicates.
    The ready predicates are exactly what the interceptor walks ask beyond the contracts' own premises, with the
@@ -100,7 +100,7 @@ Module RTA := OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B.RT_IImgA.
 Module BC := OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B.FMgxa_bzcj.
 Module RMB := OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B.RT_mem_bz.
 
-(* ---- GXA's call targets: the trampolines (RT_IImgA.v:67-68) ---- *)
+(* ---- GXA's call targets: the trampolines (RT_IImgA.v:68-69) ---- *)
 
 (* __wrap_memcpy 0x57678: `j` to the memcpy interceptor 0x58048 (I_tramp.v tramp_memcpy) *)
 Lemma A_sym_memcpy : @CJR.sym RTA.A_img 0x21334 = 0x55968.
@@ -114,7 +114,7 @@ Proof. vm_compute. reflexivity. Qed.
 Lemma A_sym_vsn_memset : @CJR.sym RTA.A_img_vsn 0x21738 = 0x55964.
 Proof. vm_compute. reflexivity. Qed.
 
-(* Both instances' segments are fuzz_manifest.asan's loaded segments (RT_IImgA.v:102, :113), the Bz tree's asegs.
+(* Both instances' segments are fuzz_manifest.asan's loaded segments (RT_IImgA.v:103, :114), the Bz tree's asegs.
    Each is stated against asegs on purpose: `change (img_segs A_img_vsn) with (img_segs A_img)` did not finish in
    300 s (measured), the unifier comparing the two records' sym fields, tsym over two different tables. *)
 Lemma A_segs : @CJR.img_segs RTA.A_img = asegs.
@@ -280,7 +280,7 @@ Proof.
 Qed.
 
 (* musl vsnprintf's instance (RT_gxa_inst.v:108).  A_img_vsn differs from A_img only at 0x7f000400 and has the same
-   segments (RT_IImgA.v:111-113), so once the call target and the segments are rewritten to A_img's the A_img proof
+   segments (RT_IImgA.v:112-114), so once the call target and the segments are rewritten to A_img's the A_img proof
    is the proof. *)
 Theorem memset_stack_contract_Avsn : @GXM.memset_stack_contract RTA.A_img_vsn set_ready.
 Proof.

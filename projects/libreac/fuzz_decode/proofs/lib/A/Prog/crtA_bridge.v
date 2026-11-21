@@ -5,7 +5,7 @@
    lib/Lib/CrtBridge.v; image B's walk uses the same file.  What is left here is image A's instance: decode's run
    state for image A is `ms_of_regs` of lib/A/Prog/LeafCgKit.v:46, whose ROM is lib/A/Img0.v's rsegs.
 
-   The walk's segments are footprint runs: the record on a working branch at dc455613c81 proves them
+   The walk's segments are footprint runs: the record on a working branch proves them
    (proofs/libreac/fuzz_decode/lib/A/Prog/crt_segs_F.v, crt_loopF.v); the ported twins are lib/A/Prog/crtA_segs.v
    and lib/A/Prog/crtA_loop.v.  LeafCgKit.v:101 bridge_evtF_stmt (the kit's Section hypothesis, cgif's SRr_fevt
    read at decode's mstepsF) turns a run into SRr. *)

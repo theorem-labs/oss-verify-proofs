@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the VmState kernel and vDSO fields). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad.
@@ -15,7 +16,8 @@ Definition relim_maps (l : Z) (h : VmMaps) : VmMaps :=
 
 Definition relim (l : Z) (m : Model) : Model :=
   mkModelOf (m_fd m)
-    (mkVmState (relim_maps l (vmst_maps (m_vm m))) (vmst_lazy (m_vm m)) (vmst_materialized (m_vm m)))
+    (mkVmState (relim_maps l (vmst_maps (m_vm m))) (vmst_lazy (m_vm m)) (vmst_materialized (m_vm m))
+       (vmst_kernel (m_vm m)) (vmst_vdso (m_vm m)))
     (m_io m) (m_fsys m) (m_proc m) (m_lim m) (m_time m).
 
 Definition relimo {A} (l : Z) (o : outcome A) : outcome A :=

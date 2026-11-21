@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the VCommon proof library over the revised model); internal commit ids in comments replaced by public commits or removed. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -81,6 +82,12 @@ Theorem stdio_write_loop_ck :
          (ents : list (word * word)) (bss : list (list byte)),
   ms_svc_pending ms = None -> ms_rom ms = seg_rom segs -> ms_pc_val ms = pcw b 0x88 ->
   m_halted model = None ->
+  (* NEW: this wrapper restates stdio_write_loop's signature and passes it through
+     eta-expanded (:107), so it carries the reader premise in the same slot.  Caught by
+     the arity gate, not by a round: AsanSCode is outside the AxSumStdio cone.  No
+     ripple -- `git grep -nw stdio_write_loop_ck` returns only this
+     definition, with swcode_ck firing as the control. *)
+  m_channel_reader model = true ->
   rg ms 17 = Z_to_bv 64 66 -> rg ms 10 = Z_to_bv 64 fd ->
   rg ms 11 = Z_to_bv 64 iovp -> rg ms 19 = Z_to_bv 64 iovp ->
   rg ms 12 = Z_to_bv 64 (Z.of_nat (length ents)) -> rg ms 18 = Z_to_bv 64 (Z.of_nat (length ents)) ->

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (VT3 also fixes vdso_top, and ledger_new_brk takes the kernel field's equality). *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -377,7 +378,7 @@ Hypothesis VR3 : vm_reserved (m_vmmaps md3) = vm_reserved h.
 Hypothesis VS3 : vm_start_brk (m_vmmaps md3) = vm_start_brk h.
 Hypothesis VB3 : bv_unsigned (vm_brk (m_vmmaps md3)) = bv_unsigned b + 2 * PGSZ.
 Hypothesis VL3 : vm_limit (m_vmmaps md3) = vm_limit h.
-Hypothesis VT3 : alloc_top (m_vmmaps md3) = alloc_top h.
+Hypothesis VT3 : (vdso_top (m_vmmaps md3), alloc_top (m_vmmaps md3)) = (vdso_top h, alloc_top h).
 Hypothesis MD3 : m_halted md3 = None /\ m_vm_lazy md3 = [] /\ m_vm_materialized md3 = [].
 Hypothesis MDW3 : exists vm', md3 = with_vmmaps vm' md.
 Let p := SP N PGSZ.
@@ -398,7 +399,9 @@ assert (ROo : forall k, (k < N)%nat -> region_of sBN k = region_of A k) by (intr
 assert (ROhi : forall k rg, region_of sBN k = Some rg -> (k < N)%nat /\ region_of A k = Some rg \/ k = N /\ rg = mkRegion RkBrk (2 * PGSZ) [] true).
 { intros k rg Hk. rewrite RO in Hk. destruct (Nat.ltb_spec k N); [left; auto|]. destruct (Nat.eqb_spec k N); [injection Hk as <-; right; auto | discriminate]. }
 assert (LGX : ledger_ok B L' sBN md3 /\ ledger_x L' sBN md3).
-{ destruct MD3 as (_ & ML3 & MM3). exact (ledger_new_brk B L A md LG LX NN sBN md3 Hbk Gfree ER eq_refl VM3 VN3 VNX3 VR3 VS3 VB3 VL3 VT3 ML3 MM3). }
+{ destruct MD3 as (_ & ML3 & MM3).
+assert (EK3 : m_kernel md3 = m_kernel md) by (destruct MDW3 as [vm' E3]; rewrite E3; reflexivity).
+exact (ledger_new_brk B L A md LG LX NN sBN md3 Hbk Gfree ER eq_refl VM3 VN3 VNX3 VR3 VS3 VB3 VL3 VT3 EK3 ML3 MM3). }
 pose proof (fresh_region L A md LX b (2 * PGSZ) ltac:(lia) ltac:(lia) ltac:(lia) Gfree) as FRG.
 pose proof (fresh_img B L A md LG b (2 * PGSZ) ltac:(lia) ltac:(lia) ltac:(lia) Gfree) as FI.
 assert (Ep : ptr_addr L' p = bv_unsigned b + PGSZ).

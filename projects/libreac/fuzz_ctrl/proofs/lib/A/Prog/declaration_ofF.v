@@ -1135,7 +1135,7 @@ Qed.
    declaration_of_contract_F_on (a Theorem Labs lane's declaration_of_c.v, taken by path) from the footprint _on contracts of
    __asan_memset and __asan_memcpy, a Theorem Labs lane's asan_memset_contract_F_on (asan_memset_cF_on.v) and
    asan_memcpy_contract_F_on (asan_memcpy_cF_on.v). It is the port into this footprint walk of a Theorem Labs lane's Module DAon
-   (declaration_of.v, a working branch 018e976802f): Module DAFon holds Section DA again with the same
+   (declaration_of.v, a working branch): Module DAFon holds Section DA again with the same
    changes DAon makes to its Section DA. MSET and MCPY are the footprint _on contracts; HSW is the region premise
    shadow_rw_on R m0 with R = declaration_of_shadow_R m o; the shadow conjunct of da_rt (and so of Qd, through epi) is
    the region transport (each region the caller holds in m0 it holds in every memory the run reaches writing only
@@ -1152,7 +1152,7 @@ Require OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog.asan_memsetF_on.
 Require OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog.asan_memcpyF_on.
 
 (* The aligned shadow words of n' bytes at p + k, inside the n bytes at p, are inside those of the n bytes. This
-   file's own copy of a Theorem Labs lane's da_sh_word_sub (declaration_of.v (a version not in this delivery; written on a working branch 018e976802f)), which this file does not Require. *)
+   file's own copy of a Theorem Labs lane's da_sh_word_sub (declaration_of.v (a version not in this delivery; written on a working branch)), which this file does not Require. *)
 Lemma da_sh_word_sub : forall p n k n', 0 <= k -> 0 < n' -> k + n' <= n ->
   forall a, A.Prog.sh_word_on.sh_word_on (p + k) n' a -> A.Prog.sh_word_on.sh_word_on p n a.
 Proof.

@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AD1d.v, with its module paths changed, names TfibSyms -> CmdBSyms; the start-up certificate's hole states come from class StartData (A/CmdStartCert.v) and tfib_holes_chkB is the field of class TfibHolesChkB, Section hypotheses until plugin-hostd/fuzz_command's certificate is generated; the visible-zone list AVIS14 has the page of A/AD1g.v's new head map (eDM, the bucket array of ASan's ODR-indicator map) in front of cgif's thirteen, and the musl maps start at index 4; W0 passes A/CmdWorldH8.v's H1_H8 (under its class TfibAvis8) to AD2i.W1 for the world field w_H8. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/AD1d.v, with its module paths and module names changed; 318 of its 405 lines of code are new or changed and 226 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMworldH8.v for plugin-hostd/fuzz_command's ASan+UBSan build, with its module paths changed (lib/A to lib/B, AD1g/AD2i to YD1g/YD2i, image Asan to AsanUbsan); avis8_all is the field of class TfibAvis8 over StartData (CmdStartCertB.v:19) and lib/B/CmdStartInstB.v's cmdB_avis8 is its instance for the hand-off states of YB01.v:617; band_in_maps and band_facts are copied from this harness's lib/B/YD1d.v:114-136; the Section takes the StartData and check-class Context; the image hull ends at 0x606000 (YB12.v:12); poke_no_world takes the world field w_H8 (Reusable/YA0n.v:24) as a Section hypothesis. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3, merging libreac/fuzz_boxreg's port of its copy of this file: the hand-off state is the one of the run's own CONFIG_RSEQ flag (HS_tfib_r) and the computed checks run over both flags' states, the stack invariant is abstract, the entry stack is laid out from the stack VMA's end and the launch premises (valid_launch, entry_launch_ok_va, valid_input) are carried; this unit's own stk_top and frm0 premises are kept. *)
 (* w_H8 (the world field above) for B's entry world W1 (YD2i.v:768): on the two shadow bands, H1 is
    constant on each 8-byte-aligned word.  With the field, YD2i states it as its section hypothesis H1_8
    and this file proves it; YD1d and YD1f pass the proof in.
@@ -53,7 +54,7 @@ Definition avis8_chk (c : acs) : bool :=
 (existsb (fun p => pair_eqb p YD1g.STK_P) (a_vis c)
  && forallb (fun p => pair_eqb p YD1g.STK_P || (pa (fst p) && pa (snd p)))%bool (a_vis c))%bool.
 (* the hand-off states are abstract (StartData), so the check is a class, as TfibHolesChk (YD1g.v:155) *)
-Class TfibAvis8 {SD : StartData} : Prop := { avis8_all : forallb avis8_chk HS_tfib_list = true }.
+Class TfibAvis8 {SD : StartData} : Prop := { avis8_all : forallb avis8_chk HS_tfib_list_all = true }.
 (* the instance for B's hand-off states (YB01.v:617, 50 states) is lib/B/CmdStartInstB.v's cmd_avis8, as A keeps
    its instance in lib/A/CmdStartInst.v: this file stays independent of the generated certificate *)
 
@@ -152,24 +153,36 @@ Hypothesis Hve : valid_envp (in_envp inp).
 Hypothesis Hfit : entry_stack_fits sp (in_argv inp) (in_envp inp).
 Variable h : nat.
 Variables (ch : acs) (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model).
-Hypothesis Hch : HS_tfib h = Some ch.
+Hypothesis Hch : HS_tfib_r (rseq_z (kb_rseq (in_kernel inp))) h = Some ch.
 #[local] Notation argv := (in_argv inp).
 #[local] Notation envp := (in_envp inp).
 #[local] Notation uid := (in_uid inp).
 #[local] Notation hw := (in_hwcap inp).
-#[local] Notation SINV := (YA02.SINV0 TPH sp rdraw brk argv envp uid hw).
-#[local] Notation argH := (YA02.argH0 TPH sp rdraw argv envp uid hw).
+(* The invariant abstract and the input's own fields, as A/YD2i.v. *)
+Variable SINV : env -> (word -> option byte) -> Prop.
+#[local] Notation argH := (YA02.argH0 sp rdraw argv envp
+  (in_image_fs inp) (in_stdin inp) uid (in_gid inp) hw (in_groups inp) (in_net inp)
+  (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp) (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp)).
 #[local] Notation TOP := (YA02.TOP sp).
 #[local] Notation LIM := YA02.LIMIT.
+Hypothesis SINV_sp0 : forall E' M, SINV E' M -> uE E' e_sp0 = TOP + 8388608.
 Hypothesis HC : cs_ok TSEGS TFIB LIM TOP SINV argH (in_fs inp) E ch R FULL model.
 #[local] Notation u := (uE E).
 #[local] Notation usp := (bv_unsigned sp).
 #[local] Notation vm := (vm_maps (m_vmmaps model)).
+Let ARGH : forall E0 (a : word), argH E0 a = true -> TOP <= bv_unsigned a.
+Proof.
+  intros E0 a H. unshelve eapply (YA02.argH0_high sp rdraw argv envp
+    (in_image_fs inp) (in_stdin inp) uid (in_gid inp) hw (in_groups inp) (in_net inp)
+    (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp)
+    (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp)); try exact H; try exact Hva; try exact Hsp; try exact 0%N.
+Qed.
 
 Ltac inst H := try specialize (H SD); try specialize (H HCK); try specialize (H HIF); try specialize (H ECA); try specialize (H AV8);
 try specialize (H sp); try specialize (H rdraw); try specialize (H brk); try specialize (H inp);
 try specialize (H Hsp); try specialize (H Hva); try specialize (H Hve); try specialize (H Hfit); try specialize (H h); try specialize (H ch);
-try specialize (H E); try specialize (H R); try specialize (H FULL); try specialize (H model); try specialize (H Hch); try specialize (H HC).
+try specialize (H E); try specialize (H R); try specialize (H FULL); try specialize (H model); try specialize (H Hch);
+try specialize (H SINV); try specialize (H SINV_sp0); try specialize (H HC).
 Ltac get L := let H := fresh "L" in pose proof L as H; inst H; exact H.
 #[local] Definition band_vals := ltac:(get @YD1g.band_vals).
 #[local] Definition vm_In' := ltac:(get @YD1g.vm_In').
@@ -237,7 +250,7 @@ Qed.
 
 (* ---- the entries of a_vis ch ---- *)
 Lemma avis8_ch : avis8_chk ch = true.
-Proof. exact (proj1 (forallb_forall _ _) avis8_all ch (HS_tfib_In h ch Hch)). Qed.
+Proof. exact (proj1 (forallb_forall _ _) avis8_all ch (HS_tfib_r_In _ h ch Hch)). Qed.
 Lemma stk_in : In YD1g.STK_P (a_vis ch).
 Proof.
 pose proof avis8_ch as X. unfold avis8_chk in X. apply andb_prop in X as [X _].
@@ -345,7 +358,7 @@ destruct (band_facts (Z_to_bv 64 z) ltac:(rewrite UZ; exact Hz)) as (Hna & Hlz &
 rewrite UZ in Hna, Hmp.
 assert (HA : argH E (Z_to_bv 64 z) = false).
 { destruct (argH E (Z_to_bv 64 z)) eqn:Eh; [exfalso|reflexivity].
-  pose proof (YA02.argH0_high TPH sp rdraw argv envp uid hw Hsp Hva E (Z_to_bv 64 z) Eh) as HT.
+  pose proof (ARGH E (Z_to_bv 64 z) Eh) as HT.
   rewrite UZ in HT. unfold YA02.TOP in HT.
   unfold in_band_rw, kLowShadowEnd, kHighShadowEnd in Hz. lia. }
 assert (HH : in_hull TFIB z = false).

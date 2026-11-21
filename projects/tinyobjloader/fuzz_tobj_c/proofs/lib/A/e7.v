@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the decline test place_declined_b of its mmap steps computed from their NULL hint (the mmap inversion wstep_mmap_none_invA derives it from the step's answer instead); the hint-register fact passed to the mmap nodes; ok_pframeA's new system-call premise sys_rob, LPS 75d69e00, closed at each mmap call by RomBase.rob_auto; the NULL-hint mmap witnesses are Linux's own address, place_ok_linux, written as plain text, where the grant goes and which makes the eager request non-refusable; the reserved ledger stated as the image's entries followed by the vDSO/vvar pair, the fixed regions ending below the pair, place_LB_A written as plain text). *)
 (* [comment removed for export] *)
 Local Set Warnings "-require-in-module".
 (* [comment removed for export] *)
@@ -366,8 +367,19 @@ Lemma LB_of_range : ltac2:(tb__ "0|1|
 S37S1S2fZ1000S5cR1A1M0A2S2fG0Z10007fff8000A2A2FlenZ;").
 Proof. intros lenZ. unfold LB_of. destruct (2 ^ 31 <=? lenZ); [lia|]. destruct (0xf000 <? lenZ); lia. Qed.
 
-Lemma place_LB_A : ltac2:(tb__ "0|8|
-S3cS37S1eQ40M0A1M1S69S38R3A1A1S0S22S21G1G1A2M2A1S3bS38R4A1A1S54S1dA1A3S71S2bG2S3bS38R5A1M3A1S3aG3A1A3S70S6fA3S1S31Z0M4R5A2S31R5S32Z2Z3eA2A2A2S0S37S36R6Z1000A2G4A3S67S20G0G4A2R8S20G0R7A2R6A4S1S2fS5cR8A1S1fG0R7A2M5A2S1S2S2fS30G5R8A2M6Z10000A2S2fZ646000G5A2A2S1S2S2fG6S70A2S2fS6fG5A2A2S1S2fG6S48S38R9A1A1M7A2S2fG7S68A2A2A2A2A2F_;F_;F_;F_;F_;F_;Fa;FlenZ;Fm;").
+(* LPS 727298f3: the reserved ledger is stated as the image's prefix and the vDSO/vvar pair (Fw/SysSpec.v
+   [vdso_pair_ok]); only the prefix is read here.  Statement written as plain text. *)
+Lemma place_LB_A : forall (m : Model) (lenZ : Z) (a : word),
+  init_sp_ok (m_vmmaps m) ->
+  (exists V, vm_reserved (m_vmmaps m) = segments_reserved segsA ++ V /\ vdso_pair_ok V) ->
+  band_covered (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) SHADOW_BAND_LO SHADOW_BAND_HI ->
+  0 < lenZ < 2 ^ 62 -> lenZ mod 4096 = 0 ->
+  mmap_place_ok_none (Z_to_bv 64 0) m (Z_to_bv 64 lenZ) a ->
+  LB_of lenZ <= bv_unsigned a
+  /\ (bv_unsigned a + lenZ <= 65536 \/ 6578176 <= bv_unsigned a)
+  /\ (bv_unsigned a + lenZ <= SHADOW_BAND_LO \/ SHADOW_BAND_HI <= bv_unsigned a)
+  /\ bv_unsigned a + lenZ <= alloc_top (m_vmmaps m)
+  /\ alloc_top (m_vmmaps m) <= alloc_ceiling_hi.
 Proof.
   intros m lenZ a Hsp Hres Hband Hlen Hmod Hpl.
   assert (Nv : bv_unsigned (Z_to_bv 64 lenZ) = lenZ) by (apply u64_of_lit; lia).
@@ -376,7 +388,8 @@ Proof.
     pose proof Hmod as Hm'. apply Z.mod_divide in Hm' as [q Hq]; [|lia]. rewrite Hq.
     replace (q * 4096 + 4096 - 1) with (4095 + q * 4096) by lia. rewrite Z.div_add by lia. change (4095 / 4096) with 0. lia. }
   assert (Himg : band_covered (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) IMG_BAND_LO IMG_BAND_HI).
-  { apply img_band_covered. rewrite Hres. intros x Hx. apply in_app_iff. left. exact Hx. }
+  { apply img_band_covered. destruct Hres as (V & EV & _). rewrite EV. intros x Hx.
+    apply in_app_iff. left. apply in_app_iff. left. exact Hx. }
   destruct (place_ok_none_windows m Hsp Himg Hband (Z_to_bv 64 0) (Z_to_bv 64 lenZ) a Hpl ltac:(rewrite Nv; lia)) as (En & Ht & Hhi & W).
   rewrite NZ in Ht, W.
   unfold IMG_BAND_LO, IMG_BAND_HI, SHADOW_BAND_LO, SHADOW_BAND_HI, alloc_ceiling_hi in *.
@@ -434,8 +447,10 @@ S2fS30VaddrZ;VlenZ;A2S66A2").
 Hypothesis Htop : init_sp_ok (m_vmmaps m).
 Hypothesis Hclear : ltac2:(tb__ "0|0|
 S0S24S53VGl;S18VE;A1A2S26A3").
-Hypothesis Hres : ltac2:(tb__ "0|1|
-S0S22S21S1eQ40A1M0G0A2A1S3bS38Vm;A1A1S54S1dA1A3").
+(* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v
+   [vdso_pair_ok]); the fixed region ends below the pair. *)
+Hypothesis Hres : exists V, vm_reserved (m_vmmaps m) = segments_reserved segsA ++ V /\ vdso_pair_ok V.
+Hypothesis Hvfl : addrZ + lenZ <= VDSO_FLOOR.
 Hypothesis Hmaps : ltac2:(tb__ "0|1|
 S1eQ40A1M0G0S4bS21G0G0A2S23G0G0R2R1A4S3aS38Vm;A1A1A3S0S24S3dVa;Vn;R3R2A4S28A3F_;Fs;Fb;").
 
@@ -476,11 +491,15 @@ Proof using All.
   { rewrite Evm. apply region_free_of_forall. exact Hmaps. }
   assert (Hfresh : region_free (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) (ms_gpr ms 0) (mmap_n (ms_gpr ms 1)) = true).
   { rewrite G0, HnZ, Evm. apply region_free_of_forall. intros b s Hin. apply in_app_iff in Hin as [Hin|Hin].
-    - rewrite Hres in Hin. apply (reserved_A_clear a n b s Hin). rewrite Av. exact Hlo.
+    - destruct (resv_pre_split _ _ b s Hres Hin) as [Hin'|Hfl]; [apply (reserved_A_clear a n b s Hin'); rewrite Av; exact Hlo|].
+      (* LPS 727298f3: a pair entry starts above the region ([Hvfl]). *)
+      unfold iv_overlap. apply andb_false_iff. right. apply Z.ltb_ge. rewrite Av, Nv. lia.
     - apply Hmaps. exact Hin. }
   split.
+  (* LPS 75d69e00: [ok_pframeA]'s fourth premise, [RomBase.sys_rob] (Fw3A/SysCallA.v), closed by
+     [RomBase.rob_auto]: mmap (222) is [memfree] (Fw/RomBase.v).  Same at every OKP site below. *)
   - apply (OKP (KxA m B) ltac:(intros; eapply KxA_nil; eassumption) rho tp [] ms md (Z_to_bv 64 222));
-      [split; [reflexivity|split; [exact Hem|exact Hpaid]] | exact Hp |].
+      [split; [reflexivity|split; [exact Hem|exact Hpaid]] | exact Hp | | solve [RomBase.rob_auto]].
     apply (fixed_rw_fresh_only_okA segsA ms md _ H222 Hlen Hshape Hnfn Hnnone Hnrw Hceil' Halign Hpos' Hfresh).
   - intros w' Hw.
     destruct (wstep_fixed_rw_fresh_invA segsA ms md _ Hh H222 Hlen Hshape Hnfn Hnnone Hnrw Hceil' Halign Hpos' Hfresh [] w' Hp Hw)
@@ -576,8 +595,10 @@ S2fS30VaddrZ;VlenZ;A2S66A2").
 Hypothesis Htop : init_sp_ok (m_vmmaps m).
 Hypothesis Hclear : ltac2:(tb__ "0|0|
 S0S24S53VGl;S18VE;A1A2S26A3").
-Hypothesis Hres : ltac2:(tb__ "0|1|
-S0S22S21S1eQ40A1M0G0A2A1S3bS38Vm;A1A1S54S1dA1A3").
+(* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v
+   [vdso_pair_ok]); the fixed region ends below the pair. *)
+Hypothesis Hres : exists V, vm_reserved (m_vmmaps m) = segments_reserved segsA ++ V /\ vdso_pair_ok V.
+Hypothesis Hvfl : addrZ + lenZ <= VDSO_FLOOR.
 Hypothesis Hmaps : ltac2:(tb__ "0|1|
 S1eQ40A1M0G0S4bS21G0G0A2S23G0G0R2R1A4S3aS38Vm;A1A1A3S0S24S3dVa;Vn;R3R2A4S28A3F_;Fs;Fb;").
 
@@ -618,11 +639,13 @@ Proof using All.
   { rewrite Evm. apply region_free_of_forall. exact Hmaps. }
   assert (Hfresh : region_free (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) (ms_gpr ms 0) (mmap_n (ms_gpr ms 1)) = true).
   { rewrite G0, HnZ, Evm. apply region_free_of_forall. intros b s Hin. apply in_app_iff in Hin as [Hin|Hin].
-    - rewrite Hres in Hin. apply (reserved_A_clear a n b s Hin). rewrite Av. exact Hlo.
+    - destruct (resv_pre_split _ _ b s Hres Hin) as [Hin'|Hfl]; [apply (reserved_A_clear a n b s Hin'); rewrite Av; exact Hlo|].
+      (* LPS 727298f3: a pair entry starts above the region ([Hvfl]). *)
+      unfold iv_overlap. apply andb_false_iff. right. apply Z.ltb_ge. rewrite Av, Nv. lia.
     - apply Hmaps. exact Hin. }
   split.
   - apply (OKP (KxA m B) ltac:(intros; eapply KxA_nil; eassumption) rho tp [] ms md (Z_to_bv 64 222));
-      [split; [reflexivity|split; [exact Hem|exact Hpaid]] | exact Hp |].
+      [split; [reflexivity|split; [exact Hem|exact Hpaid]] | exact Hp | | solve [RomBase.rob_auto]].
     apply (fixed_none_fresh_only_okA segsA ms md _ H222 Hlen Hshape Hnnone Hnrw Hceil' Halign Hpos' Hfresh).
   - intros w' Hw.
     destruct (wstep_fixed_none_fresh_invA segsA ms md _ Hh H222 Hlen Hshape Hnnone Hnrw Hceil' Halign Hpos' Hfresh [] w' Hp Hw)
@@ -725,8 +748,8 @@ Hypothesis Hnxt : ltac2:(tb__ "0|0|
 S74SaS18VE;A1A1Vnxt;A2").
 Hypothesis Hclear : ltac2:(tb__ "0|0|
 S0S24S53VGl;S18VE;A1A2S26A3").
-Hypothesis Hres : ltac2:(tb__ "0|1|
-S0S22S21S1eQ40A1M0G0A2A1S3bS38Vm;A1A1S54S1dA1A3").
+(* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v [vdso_pair_ok]). *)
+Hypothesis Hres : exists V, vm_reserved (m_vmmaps m) = segments_reserved segsA ++ V /\ vdso_pair_ok V.
 
 Hypothesis Htop : init_sp_ok (m_vmmaps m).
 Hypothesis Hband : ltac2:(tb__ "0|2|
@@ -758,6 +781,10 @@ Proof using All.
   rewrite R10 in G0. rewrite R11 in G1. rewrite R12 in G2. rewrite R13 in G3. rewrite R14 in G4. rewrite R15 in G5.
   cbn [eval] in G0, G1, G2, G3, G4, G5. fold n in G1.
   assert (H222 : bv_unsigned (Z_to_bv 64 222) = 222%Z) by reflexivity.
+  (* LPS 727298f3: the hint a0 is NULL here (G0), so the decline test is false by computation. *)
+  assert (Hdecl : place_declined_b (m_kernel md) (m_vmmaps md) (ms_gpr ms 0)
+                    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false)
+    by (rewrite G0; exact (place_declined_b_null _ _ _)).
   assert (Hlen : ms_gpr ms 1 <> Z_to_bv 64 0).
   { rewrite G1. intros X. apply (f_equal bv_unsigned) in X. rewrite Nv in X. change (bv_unsigned (Z_to_bv 64 0)) with 0 in X. lia. }
   destruct (mmap_noaccess_b_intro_core (ms_gpr ms 2) (ms_gpr ms 3) (ms_gpr ms 5)) as (Hshape & Hnrw).
@@ -770,8 +797,8 @@ Proof using All.
   assert (HnZ : mmap_n (ms_gpr ms 1) = n) by (unfold mmap_n; rewrite HnZ'; reflexivity).
   split.
   - apply (OKP (KxA m B) ltac:(intros; eapply KxA_nil; eassumption) rho tp [] ms md (Z_to_bv 64 222));
-      [split; [reflexivity|split; [exact Hem|exact Hpaid]] | exact Hp |].
-    apply (mmap_none_only_okA segsA ms md _ Hh H222 Hlen Hshape Hnrw).
+      [split; [reflexivity|split; [exact Hem|exact Hpaid]] | exact Hp | | solve [RomBase.rob_auto]].
+    apply (mmap_none_only_okA segsA ms md _ Hh H222 Hlen Hshape Hnrw Hdecl).
   - intros w' Hw.
     destruct (wstep_mmap_none_invA segsA ms md _ Hh H222 Hlen Hshape Hnrw [] w' Hp Hw) as [-> | (a & Hpl & ->)].
     + left. split; [|split; [reflexivity|split; [exact Hem|exact Hpaid]]].
@@ -886,8 +913,10 @@ S2fS30VaddrZ;VlenZ;A2S66A2").
 Hypothesis Htop : init_sp_ok (m_vmmaps m).
 Hypothesis Hclear : ltac2:(tb__ "0|0|
 S0S24S53VGl;S18VE;A1A2S26A3").
-Hypothesis Hres : ltac2:(tb__ "0|1|
-S0S22S21S1eQ40A1M0G0A2A1S3bS38Vm;A1A1S54S1dA1A3").
+(* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v
+   [vdso_pair_ok]); the fixed region ends below the pair. *)
+Hypothesis Hres : exists V, vm_reserved (m_vmmaps m) = segments_reserved segsA ++ V /\ vdso_pair_ok V.
+Hypothesis Hvfl : addrZ + lenZ <= VDSO_FLOOR.
 Hypothesis Hmaps : ltac2:(tb__ "0|1|
 S1eQ40A1M0G0S4bS21G0G0A2S23G0G0R2R1A4S3aS38Vm;A1A1A3S0S24S3dVa;Vn;R3R2A4S28A3F_;Fs;Fb;").
 
@@ -925,7 +954,9 @@ Proof using All.
   { rewrite Evm. apply region_free_of_forall. exact Hmaps. }
   assert (Hfresh : region_free (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) (ms_gpr ms 0) (mmap_n (ms_gpr ms 1)) = true).
   { rewrite G0, HnZ, Evm. apply region_free_of_forall. intros b s Hin. apply in_app_iff in Hin as [Hin|Hin].
-    - rewrite Hres in Hin. apply (reserved_A_clear a n b s Hin). rewrite Av. exact Hlo.
+    - destruct (resv_pre_split _ _ b s Hres Hin) as [Hin'|Hfl]; [apply (reserved_A_clear a n b s Hin'); rewrite Av; exact Hlo|].
+      (* LPS 727298f3: a pair entry starts above the region ([Hvfl]). *)
+      unfold iv_overlap. apply andb_false_iff. right. apply Z.ltb_ge. rewrite Av, Nv. lia.
     - apply Hmaps. exact Hin. }
   assert (Enr : mmap_noreserve_b (ms_gpr ms 3) = true) by (rewrite G3; apply mmap_noreserve_b_16434; reflexivity).
   assert (Hb : mmap_noreserve_backed_ok (ms_gpr ms 3) md (mmap_nZ (ms_gpr ms 1)) = true) by (unfold mmap_noreserve_backed_ok; rewrite Enr; reflexivity).
@@ -1004,8 +1035,10 @@ S2fS30VaddrZ;VlenZ;A2S66A2").
 Hypothesis Htop : init_sp_ok (m_vmmaps m).
 Hypothesis Hclear : ltac2:(tb__ "0|0|
 S0S24S53VGl;S18VE;A1A2S26A3").
-Hypothesis Hres : ltac2:(tb__ "0|1|
-S0S22S21S1eQ40A1M0G0A2A1S3bS38Vm;A1A1S54S1dA1A3").
+(* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v
+   [vdso_pair_ok]); the fixed region ends below the pair. *)
+Hypothesis Hres : exists V, vm_reserved (m_vmmaps m) = segments_reserved segsA ++ V /\ vdso_pair_ok V.
+Hypothesis Hvfl : addrZ + lenZ <= VDSO_FLOOR.
 Hypothesis Hmaps : ltac2:(tb__ "0|1|
 S1eQ40A1M0G0S4bS21G0G0A2S23G0G0R2R1A4S3aS38Vm;A1A1A3S0S24S3dVa;Vn;R3R2A4S28A3F_;Fs;Fb;").
 
@@ -1043,7 +1076,9 @@ Proof using All.
   { rewrite Evm. apply region_free_of_forall. exact Hmaps. }
   assert (Hfresh : region_free (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) (ms_gpr ms 0) (mmap_n (ms_gpr ms 1)) = true).
   { rewrite G0, HnZ, Evm. apply region_free_of_forall. intros b s Hin. apply in_app_iff in Hin as [Hin|Hin].
-    - rewrite Hres in Hin. apply (reserved_A_clear a n b s Hin). rewrite Av. exact Hlo.
+    - destruct (resv_pre_split _ _ b s Hres Hin) as [Hin'|Hfl]; [apply (reserved_A_clear a n b s Hin'); rewrite Av; exact Hlo|].
+      (* LPS 727298f3: a pair entry starts above the region ([Hvfl]). *)
+      unfold iv_overlap. apply andb_false_iff. right. apply Z.ltb_ge. rewrite Av, Nv. lia.
     - apply Hmaps. exact Hin. }
   assert (Enr : mmap_noreserve_b (ms_gpr ms 3) = true) by (rewrite G3; apply mmap_noreserve_b_16434; reflexivity).
   eexists. split.
@@ -1124,8 +1159,8 @@ Hypothesis Hnxt : ltac2:(tb__ "0|0|
 S74SaS18VE;A1A1Vnxt;A2").
 Hypothesis Hclear : ltac2:(tb__ "0|0|
 S0S24S53VGl;S18VE;A1A2S26A3").
-Hypothesis Hres : ltac2:(tb__ "0|1|
-S0S22S21S1eQ40A1M0G0A2A1S3bS38Vm;A1A1S54S1dA1A3").
+(* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v [vdso_pair_ok]). *)
+Hypothesis Hres : exists V, vm_reserved (m_vmmaps m) = segments_reserved segsA ++ V /\ vdso_pair_ok V.
 Hypothesis Htop : init_sp_ok (m_vmmaps m).
 Hypothesis Hband : ltac2:(tb__ "0|2|
 S71S2bS21S1eQ40A1M0G0A2S3bS38Vm;A1M1A1S3aG1A1A3S70S6fA3").
@@ -1136,8 +1171,10 @@ S8S1eQ40A1S14SaS18VE;A1A1S5bR2S5aScR2A1R1Vn;A3A2Vrho_of;R2R1A2A3Fa;Frho;").
 Hypothesis Hrho_at : ltac2:(tb__ "0|1|
 S8S1eQ40A1M0S0G0SeVrho_of;R2R1A2SaS18VE;A1A1A2R1A3Fa;Frho;").
 
-Hypothesis Hwit : ltac2:(tb__ "0|2|
-S3S1eQ40M0A1M1G1S67S20G0Z0A2Vm;Vn;R1A4La;A2").
+(* LPS 727298f3: the witness is Linux's own address ([place_ok_linux], Fw/SysSpec.v): a granted
+   NULL-hint mmap now goes only there (Fw3A/MmapA.v [wstep_mmap_none_intro_okA]).  Written as plain
+   text (was the bare admissibility [mmap_place_ok_none]). *)
+Hypothesis Hwit : exists a : bv 64, OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysSpec.place_ok_linux m n a.
 
 Theorem lazy_null_none_enode : ltac2:(tb__ "0|5|
 S8S22S1eQ40M0A1M1A1S5S37S4bS21S5S37A2S23S5S37R2R1A4VGl;A3S2S3G1G1S3G1G1S1S4bS21G1G1A2S23G1G1R2R1A4S3aS38Vm;A1M2A1A3S1S2fS1fG0R2A2M3S1fG0S9R7R5A2A2M4A2S2fS30G4R4A2S30G3S1fG0R1A2A2A2A2A2Ls;A2Lb;A2S2fS30S1fG0S9R5R3A2A2R2A2S5cVlenZ;A1A2A2F_;Fsz;Fe;S0S37S1fG0SeR3P1A2A2S1fG0S3eG2A1A2A3S64S1dS4cS1dS4fVm;VB;A2VE;R4R3A5S63S3G1G1S1S67S20G0Z0A2Vm;Vn;R1A4S4cS1dS4fS61VlenZ;Vm;R1A3VB;A2S62VE;VlenZ;Vnxt;A3Vrho_of;R6R1A2R5R2A6A2La;A2Lw;A3F_;F_;Ftp;Frho;").
@@ -1156,6 +1193,10 @@ Proof using All.
   rewrite R10 in G0. rewrite R11 in G1. rewrite R12 in G2. rewrite R13 in G3. rewrite R14 in G4. rewrite R15 in G5.
   cbn [eval] in G0, G1, G2, G3, G4, G5. fold n in G1.
   assert (H222 : bv_unsigned (Z_to_bv 64 222) = 222%Z) by reflexivity.
+  (* LPS 727298f3: the hint a0 is NULL here (G0), so the decline test is false by computation. *)
+  assert (Hdecl : place_declined_b (m_kernel md) (m_vmmaps md) (ms_gpr ms 0)
+                    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false)
+    by (rewrite G0; exact (place_declined_b_null _ _ _)).
   assert (Hlen : ms_gpr ms 1 <> Z_to_bv 64 0).
   { rewrite G1. intros X. apply (f_equal bv_unsigned) in X. rewrite Nv in X. change (bv_unsigned (Z_to_bv 64 0)) with 0 in X. lia. }
   destruct (mmap_noaccess_b_intro_core (ms_gpr ms 2) (ms_gpr ms 3) (ms_gpr ms 5)) as (Hshape & Hnrw).
@@ -1166,11 +1207,17 @@ Proof using All.
     pose proof Hnl as Hnl'. apply Z.mod_divide in Hnl' as [q Hq]; [|lia]. rewrite Hq.
     replace (q * 4096 + 4096 - 1) with (4095 + q * 4096) by lia. rewrite Z.div_add by lia. change (4095 / 4096) with 0. lia. }
   assert (HnZ : mmap_n (ms_gpr ms 1) = n) by (unfold mmap_n; rewrite HnZ'; reflexivity).
-  destruct Hwit as [a Hplm].
+  destruct Hwit as (a & Hplm & Hlx).
   assert (Hpl : mmap_place_ok_none (ms_gpr ms 0) md (ms_gpr ms 1) a).
   { rewrite G0, G1. unfold mmap_place_ok_none in Hplm |- *. rewrite Evm. exact Hplm. }
+  (* LPS 727298f3: Linux's address ([Hwit]), carried from [m] to [md], whose maps and kernel are
+     [m]'s ([KxA]: they differ only in what is materialized). *)
+  assert (Ekr : kb_thp (m_kernel md) = kb_thp (m_kernel m)).
+  { pose proof (f_equal (fun x => kb_thp (m_kernel x)) Hem) as Hk. cbv beta in Hk. unfold erase_mat in Hk.
+    first [ exact Hk | autorewrite with model in Hk; exact Hk | destruct md, m; cbn in Hk |- *; exact Hk ]. }
+  assert (Hlp := Hlx). rewrite <- Evm, <- Ekr in Hlp. rewrite <- G0 in Hlp. rewrite <- G1 in Hlp.
   eexists. split.
-  { exact (wstep_mmap_none_intro_okA segsA ms md _ Hh H222 Hlen Hshape Hnrw [] a Hp Hpl). }
+  { exact (wstep_mmap_none_intro_okA segsA ms md _ Hh H222 Hlen Hshape Hnrw Hdecl [] a Hp Hpl Hlp). }
   exists a. split; [exact Hplm|].
   rewrite G0, G1 in Hpl.
   assert (HnZn : mmap_nZ n = lenZ) by (rewrite <- G1; exact HnZ').
@@ -1287,8 +1334,8 @@ Hypothesis Hnxt : ltac2:(tb__ "0|0|
 S74SaS18VE;A1A1Vnxt;A2").
 Hypothesis Hclear : ltac2:(tb__ "0|0|
 S0S24S53VGl;S18VE;A1A2S26A3").
-Hypothesis Hres : ltac2:(tb__ "0|1|
-S0S22S21S1eQ40A1M0G0A2A1S3bS38Vm;A1A1S54S1dA1A3").
+(* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v [vdso_pair_ok]). *)
+Hypothesis Hres : exists V, vm_reserved (m_vmmaps m) = segments_reserved segsA ++ V /\ vdso_pair_ok V.
 Hypothesis Htop : init_sp_ok (m_vmmaps m).
 Hypothesis Hband : ltac2:(tb__ "0|2|
 S71S2bS21S1eQ40A1M0G0A2S3bS38Vm;A1M1A1S3aG1A1A3S70S6fA3").
@@ -1354,6 +1401,7 @@ Proof using All.
       - apply stableA_KxA.
       - exact Hecall.
       - exact R17.
+      - exact R10.
       - exact R11.
       - exact Hnl.
       - lia.
@@ -1434,15 +1482,16 @@ Hypothesis Hnxt : ltac2:(tb__ "0|0|
 S74SaS18VE;A1A1Vnxt;A2").
 Hypothesis Hclear : ltac2:(tb__ "0|0|
 S0S24S53VGl;S18VE;A1A2S26A3").
-Hypothesis Hres : ltac2:(tb__ "0|1|
-S0S22S21S1eQ40A1M0G0A2A1S3bS38Vm;A1A1S54S1dA1A3").
+(* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v [vdso_pair_ok]). *)
+Hypothesis Hres : exists V, vm_reserved (m_vmmaps m) = segments_reserved segsA ++ V /\ vdso_pair_ok V.
 Hypothesis Htop : init_sp_ok (m_vmmaps m).
 Hypothesis Hband : ltac2:(tb__ "0|2|
 S71S2bS21S1eQ40A1M0G0A2S3bS38Vm;A1M1A1S3aG1A1A3S70S6fA3").
 Hypothesis HBlim : ltac2:(tb__ "0|0|
 S2fS30VB;VlenZ;A2S3fS38Vm;A1A1A2").
-Hypothesis Hwit : ltac2:(tb__ "0|2|
-S3S1eQ40M0A1M1G1S67S20G0Z0A2Vm;Vn;R1A4La;A2").
+(* LPS 727298f3: the witness is Linux's own address ([place_ok_linux], Fw/SysSpec.v), which makes the
+   request non-refusable (Fw/Refusable.v [grant_not_refusable_of]).  Written as plain text. *)
+Hypothesis Hwit : exists a : bv 64, OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysSpec.place_ok_linux m n a.
 
 Lemma paid_ge_used : ltac2:(tb__ "0|0|
 S3cS22S1eQ40A1A1S2fS4aR2A1S89R2R1A2A2Ftp;Fmd;").
@@ -1461,6 +1510,7 @@ Proof using All.
       - apply stableA_KxA.
       - exact Hecall.
       - exact R17.
+      - exact R10.
       - exact R11.
       - exact Hnl.
       - lia.
@@ -1472,14 +1522,24 @@ Proof using All.
         split; [rewrite G2, G3, G5; apply mmap_modeled_b_intro; reflexivity|].
         split; [rewrite G3; reflexivity|].
         split; [unfold headroom; rewrite Evm; lia|].
-        destruct Hwit as [a Hplm]. exists a.
+        destruct Hwit as (a & Hplm & Hlx).
         assert (Hpl : mmap_place_ok (ms_gpr ms 0) (ms_gpr ms 3) md (ms_gpr ms 1) a).
         { rewrite G0, G1, G3. pose proof Hplm as (P1 & P2 & P3 & P4). unfold mmap_place_ok. rewrite Evm.
           split; [exact P1|]. split; [exact P2|]. split; [exact P3|]. split; [exact P4|].
           unfold mmap_noreserve_backed_ok. change (mmap_noreserve_b (Z_to_bv 64 34)) with false. apply Z.leb_le.
           fold n in NZ. rewrite NZ, Evm. pose proof (paid_ge_used md tp). lia. }
-        split; [exact Hpl|].
-        exact (eager_user E lenZ m B Gl HX Hnl Hpos Hsmall Hclear Hres Htop Hband rho tp ms md a HG Hv1 Hsp HK G0 G1 G3 Hpl). }
+        (* LPS 727298f3 (Fw3A/MmapA.v [etriple_mmap_rw_objA], restated): the request is not
+           refusable, as Linux places it ([Hwit]) and its backing fits ([Hpl]); and every admissible
+           address, Linux's among them, gives the post. *)
+        assert (Ekr : kb_thp (m_kernel md) = kb_thp (m_kernel m)).
+        { pose proof (f_equal (fun x => kb_thp (m_kernel x)) Hem) as Hk. cbv beta in Hk. unfold erase_mat in Hk.
+          first [ exact Hk | autorewrite with model in Hk; exact Hk | destruct md, m; cbn in Hk |- *; exact Hk ]. }
+        split.
+        { apply (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.Refusable.grant_not_refusable_of _ _ _ _ a).
+          - rewrite G0, G1, Evm, Ekr. exact Hlx.
+          - pose proof Hpl as (_ & _ & _ & _ & Hbk). exact Hbk. }
+        intros a' Hpl'.
+        exact (eager_user E lenZ m B Gl HX Hnl Hpos Hsmall Hclear Hres Htop Hband rho tp ms md a' HG Hv1 Hsp HK G0 G1 G3 Hpl'). }
   intros w (a & [Hsm [Hpl Hk]]). exists a. split; [exact Hpl|].
   unfold eager_ok.
   change (mkAX (add_facts (eager_facts E lenZ) (S_after (ax_S E) (SVar (ss_next (ax_S E))) (ss_objs (ax_S E) ++ [mmap_obj (ss_next (ax_S E)) lenZ]) nxt)) [] (SLit SHB))
@@ -1552,8 +1612,10 @@ S2fS30VaddrZ;VlenZ;A2S66A2").
 Hypothesis Htop : init_sp_ok (m_vmmaps m).
 Hypothesis Hclear : ltac2:(tb__ "0|0|
 S0S24S53VGl;S18VE;A1A2S26A3").
-Hypothesis Hres : ltac2:(tb__ "0|1|
-S0S22S21S1eQ40A1M0G0A2A1S3bS38Vm;A1A1S54S1dA1A3").
+(* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v
+   [vdso_pair_ok]); the fixed region ends below the pair. *)
+Hypothesis Hres : exists V, vm_reserved (m_vmmaps m) = segments_reserved segsA ++ V /\ vdso_pair_ok V.
+Hypothesis Hvfl : addrZ + lenZ <= VDSO_FLOOR.
 Hypothesis Hmaps : ltac2:(tb__ "0|1|
 S1eQ40A1M0G0S4bS21G0G0A2S23G0G0R2R1A4S3aS38Vm;A1A1A3S0S24S3dVa;Vn;R3R2A4S28A3F_;Fs;Fb;").
 
@@ -1594,11 +1656,13 @@ Proof using All.
   { rewrite Evm. apply region_free_of_forall. exact Hmaps. }
   assert (Hfresh : region_free (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) (ms_gpr ms 0) (mmap_n (ms_gpr ms 1)) = true).
   { rewrite G0, HnZ, Evm. apply region_free_of_forall. intros b s Hin. apply in_app_iff in Hin as [Hin|Hin].
-    - rewrite Hres in Hin. apply (reserved_A_clear a n b s Hin). rewrite Av. exact Hlo.
+    - destruct (resv_pre_split _ _ b s Hres Hin) as [Hin'|Hfl]; [apply (reserved_A_clear a n b s Hin'); rewrite Av; exact Hlo|].
+      (* LPS 727298f3: a pair entry starts above the region ([Hvfl]). *)
+      unfold iv_overlap. apply andb_false_iff. right. apply Z.ltb_ge. rewrite Av, Nv. lia.
     - apply Hmaps. exact Hin. }
   split.
   - apply (OKP (KxA m B) ltac:(intros; eapply KxA_nil; eassumption) rho tp [] ms md (Z_to_bv 64 222));
-      [split; [reflexivity|split; [exact Hem|exact Hpaid]] | exact Hp |].
+      [split; [reflexivity|split; [exact Hem|exact Hpaid]] | exact Hp | | solve [RomBase.rob_auto]].
     apply (noreplace_rw_fresh_only_okA segsA ms md _ H222 Hlen Hshape Hnnrn Hnfrw Hnfn Hnnone Hnrw Hceil' Halign Hpos' Hfresh).
   - intros w' Hw.
     destruct (wstep_noreplace_rw_fresh_invA segsA ms md _ Hh H222 Hlen Hshape Hnnrn Hnfrw Hnfn Hnnone Hnrw Hceil' Halign Hpos' Hfresh [] w' Hp Hw)
@@ -1690,8 +1754,10 @@ S2fS30VaddrZ;VlenZ;A2S66A2").
 Hypothesis Htop : init_sp_ok (m_vmmaps m).
 Hypothesis Hclear : ltac2:(tb__ "0|0|
 S0S24S53VGl;S18VE;A1A2S26A3").
-Hypothesis Hres : ltac2:(tb__ "0|1|
-S0S22S21S1eQ40A1M0G0A2A1S3bS38Vm;A1A1S54S1dA1A3").
+(* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v
+   [vdso_pair_ok]); the fixed region ends below the pair. *)
+Hypothesis Hres : exists V, vm_reserved (m_vmmaps m) = segments_reserved segsA ++ V /\ vdso_pair_ok V.
+Hypothesis Hvfl : addrZ + lenZ <= VDSO_FLOOR.
 Hypothesis Hmaps : ltac2:(tb__ "0|1|
 S1eQ40A1M0G0S4bS21G0G0A2S23G0G0R2R1A4S3aS38Vm;A1A1A3S0S24S3dVa;Vn;R3R2A4S28A3F_;Fs;Fb;").
 
@@ -1732,11 +1798,13 @@ Proof using All.
   { rewrite Evm. apply region_free_of_forall. exact Hmaps. }
   assert (Hfresh : region_free (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) (ms_gpr ms 0) (mmap_n (ms_gpr ms 1)) = true).
   { rewrite G0, HnZ, Evm. apply region_free_of_forall. intros b s Hin. apply in_app_iff in Hin as [Hin|Hin].
-    - rewrite Hres in Hin. apply (reserved_A_clear a n b s Hin). rewrite Av. exact Hlo.
+    - destruct (resv_pre_split _ _ b s Hres Hin) as [Hin'|Hfl]; [apply (reserved_A_clear a n b s Hin'); rewrite Av; exact Hlo|].
+      (* LPS 727298f3: a pair entry starts above the region ([Hvfl]). *)
+      unfold iv_overlap. apply andb_false_iff. right. apply Z.ltb_ge. rewrite Av, Nv. lia.
     - apply Hmaps. exact Hin. }
   split.
   - apply (OKP (KxA m B) ltac:(intros; eapply KxA_nil; eassumption) rho tp [] ms md (Z_to_bv 64 222));
-      [split; [reflexivity|split; [exact Hem|exact Hpaid]] | exact Hp |].
+      [split; [reflexivity|split; [exact Hem|exact Hpaid]] | exact Hp | | solve [RomBase.rob_auto]].
     apply (noreplace_none_fresh_only_okA segsA ms md _ H222 Hlen Hshape Hnfrw Hnfn Hnnone Hnrw Hceil' Halign Hpos' Hfresh).
   - intros w' Hw.
     destruct (wstep_noreplace_none_fresh_invA segsA ms md _ Hh H222 Hlen Hshape Hnfrw Hnfn Hnnone Hnrw Hceil' Halign Hpos' Hfresh [] w' Hp Hw)
@@ -1826,8 +1894,10 @@ S2fS30VaddrZ;VlenZ;A2S66A2").
 Hypothesis Htop : init_sp_ok (m_vmmaps m).
 Hypothesis Hclear : ltac2:(tb__ "0|0|
 S0S24S53VGl;S18VE;A1A2S26A3").
-Hypothesis Hres : ltac2:(tb__ "0|1|
-S0S22S21S1eQ40A1M0G0A2A1S3bS38Vm;A1A1S54S1dA1A3").
+(* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v
+   [vdso_pair_ok]); the fixed region ends below the pair. *)
+Hypothesis Hres : exists V, vm_reserved (m_vmmaps m) = segments_reserved segsA ++ V /\ vdso_pair_ok V.
+Hypothesis Hvfl : addrZ + lenZ <= VDSO_FLOOR.
 Hypothesis Hmaps : ltac2:(tb__ "0|1|
 S1eQ40A1M0G0S4bS21G0G0A2S23G0G0R2R1A4S3aS38Vm;A1A1A3S0S24S3dVa;Vn;R3R2A4S28A3F_;Fs;Fb;").
 
@@ -1865,7 +1935,9 @@ Proof using All.
   { rewrite Evm. apply region_free_of_forall. exact Hmaps. }
   assert (Hfresh : region_free (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) (ms_gpr ms 0) (mmap_n (ms_gpr ms 1)) = true).
   { rewrite G0, HnZ, Evm. apply region_free_of_forall. intros b s Hin. apply in_app_iff in Hin as [Hin|Hin].
-    - rewrite Hres in Hin. apply (reserved_A_clear a n b s Hin). rewrite Av. exact Hlo.
+    - destruct (resv_pre_split _ _ b s Hres Hin) as [Hin'|Hfl]; [apply (reserved_A_clear a n b s Hin'); rewrite Av; exact Hlo|].
+      (* LPS 727298f3: a pair entry starts above the region ([Hvfl]). *)
+      unfold iv_overlap. apply andb_false_iff. right. apply Z.ltb_ge. rewrite Av, Nv. lia.
     - apply Hmaps. exact Hin. }
   assert (Enr : mmap_noreserve_b (ms_gpr ms 3) = true) by (rewrite G3; apply mmap_noreserve_b_0x104022; reflexivity).
   assert (Hb : mmap_noreserve_backed_ok (ms_gpr ms 3) md (mmap_nZ (ms_gpr ms 1)) = true) by (unfold mmap_noreserve_backed_ok; rewrite Enr; reflexivity).
@@ -1944,8 +2016,10 @@ S2fS30VaddrZ;VlenZ;A2S66A2").
 Hypothesis Htop : init_sp_ok (m_vmmaps m).
 Hypothesis Hclear : ltac2:(tb__ "0|0|
 S0S24S53VGl;S18VE;A1A2S26A3").
-Hypothesis Hres : ltac2:(tb__ "0|1|
-S0S22S21S1eQ40A1M0G0A2A1S3bS38Vm;A1A1S54S1dA1A3").
+(* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v
+   [vdso_pair_ok]); the fixed region ends below the pair. *)
+Hypothesis Hres : exists V, vm_reserved (m_vmmaps m) = segments_reserved segsA ++ V /\ vdso_pair_ok V.
+Hypothesis Hvfl : addrZ + lenZ <= VDSO_FLOOR.
 Hypothesis Hmaps : ltac2:(tb__ "0|1|
 S1eQ40A1M0G0S4bS21G0G0A2S23G0G0R2R1A4S3aS38Vm;A1A1A3S0S24S3dVa;Vn;R3R2A4S28A3F_;Fs;Fb;").
 
@@ -1983,7 +2057,9 @@ Proof using All.
   { rewrite Evm. apply region_free_of_forall. exact Hmaps. }
   assert (Hfresh : region_free (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) (ms_gpr ms 0) (mmap_n (ms_gpr ms 1)) = true).
   { rewrite G0, HnZ, Evm. apply region_free_of_forall. intros b s Hin. apply in_app_iff in Hin as [Hin|Hin].
-    - rewrite Hres in Hin. apply (reserved_A_clear a n b s Hin). rewrite Av. exact Hlo.
+    - destruct (resv_pre_split _ _ b s Hres Hin) as [Hin'|Hfl]; [apply (reserved_A_clear a n b s Hin'); rewrite Av; exact Hlo|].
+      (* LPS 727298f3: a pair entry starts above the region ([Hvfl]). *)
+      unfold iv_overlap. apply andb_false_iff. right. apply Z.ltb_ge. rewrite Av, Nv. lia.
     - apply Hmaps. exact Hin. }
   assert (Enr : mmap_noreserve_b (ms_gpr ms 3) = true) by (rewrite G3; apply mmap_noreserve_b_0x104022; reflexivity).
   eexists. split.

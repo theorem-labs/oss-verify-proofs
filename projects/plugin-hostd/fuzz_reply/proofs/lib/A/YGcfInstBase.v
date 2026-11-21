@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* CARRIED from commit 0deb5310273b0d538ec2a1697f391a1c8ad21c34,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YGcfInstBase.v, sha256 c317bf863497bfe13bb096f196c1a83fa5d0cc48d1ee3cd9ab9f5d401a05cde9 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the Require lines only:
    the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
@@ -10,22 +10,23 @@
    change, the module order kept.
 *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The generic cf INSTANCE layer, base file (lane M).
 
    TWO relations, one text for every unit that has the cf model.
    - [ARX_cf] := IOK inst /\ ARcf, the WALK's relation.  The Deallocate interfaces (DIface) are stated at it.  It
      carries NO conjunct that a reachable post can break: not qtight (Deallocate's post-Enqueue / pre-Drain state is
-     over kQuarantineCacheMax, DGif0.v:319-333, DMspec.v:92-93), and not the three ROOM_cf conjuncts (each is spent
-     by some call: one more live secondary, the errbuf map, a batch-class map, YG03cf.v:449-455).  mroom_cf and the
+     over kQuarantineCacheMax, DGif0.v:320-334, DMspec.v:93-94), and not the three ROOM_cf conjuncts (each is spent
+     by some call: one more live secondary, the errbuf map, a batch-class map, YG03cf.v:450-456).  mroom_cf and the
      free-array headroom are not conjuncts either: both follow from ARcf's Wf_cf and qloose
      (YG08cf.mroom_cf_of_live; abudget_room_cf).
    - [ARXq_cf] := ARX_cf /\ qtight, the CALL-SITE relation.  The Allocate interfaces (AIface / AIfaceK / AIfaceM /
      AIfaceS / AIfaceSE) are stated at it, because a malloc does not drain, so the leaf's lpost := qtight needs qtight
-     at the pre-state, and rpre_cfr carries none (YGcfRmodel.v:66-67).  The free contract is lifted to it at the call
+     at the pre-state, and rpre_cfr carries none (YGcfRmodel.v:67-68).  The free contract is lifted to it at the call
      site (pre: drop qtight; post: qtight is the leaf's lpost).
 
    ROOM_cf is the CALLER's obligation, as it already is in the proved compose (rpre := rpre_cfr = universe_ok /\ Wf_cf
-   /\ ROOM_cf, YGcfRmodel.v:66-67; YGcfMallocComposeE.v:96; acall_pre_cf, YG0dcf.v:227-247): YGcfRoomPre.v:7-11 says its
+   /\ ROOM_cf, YGcfRmodel.v:67-68; YGcfMallocComposeE.v:97; acall_pre_cf, YG0dcf.v:227-247): YGcfRoomPre.v:7-11 says its
    three conjuncts "come from the PROGRAM, through the input, and no allocator invariant bounds them".  Against what
    ARX_cf gives (Wf_cf), each has only a non-strict form, and the residue is what a caller supplies at every call:
      sec_arr < cf_sec_live_max    vs wfc_sec_live  (<=, YG01cf.v)    residue: room for ONE more live secondary;
@@ -66,7 +67,7 @@ Variable IOK : Z -> Prop.
    model's maps), is what a secondary grant needs to keep ARmcf's amc_xs_placed: the new extent is disjoint from the
    errbuf only if the errbuf is mapped (YGcfXs.xs_fresh_of_grant, YGcfXs.v:235).  Without it AIfaceS.ifs_post_grant
    is false: errbuf unmapped in md0, the grant overlapping it, every premise true and the post false.  Preset's
-   ARXs_A carries the same conjunct (a Theorem Labs lane F2, lib/A/AIfaceSA.v at ccb2bc98b40).  It holds at every reachable
+   ARXs_A carries the same conjunct (a Theorem Labs lane F2, lib/A/AIfaceSA.v).  It holds at every reachable
    state: none at the start (no errbuf), free never creates or resizes the errbuf, and malloc's class-full path maps
    the capacity entry xs_cf names; YGcfXsMapped.v's keep lemmas re-establish it at each post. *)
 (* The two machine cells (the per-class exhausted byte and the error-message buffer's object: exh_cell_cf,
@@ -116,8 +117,8 @@ Lemma ARX_cf_errb : forall Hp inst ly S W mem md, ARX_cf Hp inst ly S W mem md -
 Proof. intros Hp inst ly S W mem md H. exact (ARcf_errb_cells im_segs B ly S Hp W mem md (ARX_cf_ARcf Hp inst ly S W mem md H)). Qed.
 
 (* The layout facts the SYM cells of Tfib_const read (Main, 2026-10-30; oom_const_t and CONST_APART were refuted at
-   reply's image A for want of them: ReplyImg_oomconst.v @ 0e400063292, ReplyImg_constapart.v @ 507bcceac8e).
-   MEASURED over Tfib_const_sym (YF0m.v:20-26): its cells sit at AT 0..72, AC 8 / 152, ATsd 0, AD 24, ATp and AInst.
+   reply's image A for want of them: ReplyImg_oomconst.v, ReplyImg_constapart.v).
+   MEASURED over Tfib_const_sym (YF0m.v:21-27): its cells sit at AT 0..72, AC 8 / 152, ATsd 0, AD 24, ATp and AInst.
    ATp / AInst are fixed by B.  AT / AC / AD are inside the owned extents (ly_T, kThreadObjSize = 4096),
    (ly_C, 256), (ly_D, 4096) (the widest reaches +80, +160, +32), which layout_ok's lo_disj keeps pairwise apart from
    the primary reserve and from ly_img (static_extents, YG0f.v:295-300, :322); amc_static_img puts the owned static
@@ -185,7 +186,7 @@ Qed.
 
 (* ================================================================================================================ *)
 (* 1b. The buffer's shape, a model invariant: size <= capacity, and the capacity a whole number of pages.  The machine
-   reads both cells: with size > cap and len = 0 Append skips the map that the model asks (YG00cf.v:145-146); with
+   reads both cells: with size > cap and len = 0 Append skips the map that the model asks (YG00cf.v:146-147); with
    cap < size + len Realloc copies `size` bytes from a buffer readable only up to cap.  With cap a page multiple, an
    append that remaps (size + len > cap) gets the next page multiple, so the new cap >= old cap + kPage >= old size +
    kPage: the class-full arm's second append (at most 67 bytes after the first's 33) cannot remap again.
@@ -603,7 +604,7 @@ Definition cf_trace_ok (ly : alayout) (pc0 : Z) (regs : bvmap 5 word) (ch : list
 Definition IOK_ok : Prop := forall i, IOK i -> i = as_inst B.
 
 (* ================================================================================================================ *)
-(* 5. The fixed arguments of the cf instance, in the form YGcfMallocComposeE.v:93-109 states its Props.              *)
+(* 5. The fixed arguments of the cf instance, in the form YGcfMallocComposeE.v:94-110 states its Props.              *)
 Definition U_cf : list Z -> astate -> Prop := cf_tr_ok.
 Definition AOX_cf : alayout -> astate -> Z -> Prop := AOXm_cf B.
 Definition rpre_cf : astate -> Z -> Prop := YGcfRmodel.rpre_cfr B.

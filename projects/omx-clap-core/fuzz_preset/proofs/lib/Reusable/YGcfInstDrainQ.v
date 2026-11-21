@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfInstDrainQ.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the generic cf instance layer, lane F2b: the read fields of DMiface over
    the drain's cut relation, at the cf instance (ARXr := YGcfInstDrainR.ARXr_cf B IOK Hp, AOX := aowned B,
    DRq := YGcfInstDrainR.DRq_cf B).
@@ -175,9 +176,9 @@ split; [|split].
   intros k a Hk Ha. exact (slot_vs_chunk_cf ly X _ z k M SZ (IT k Hk) a Ha).
 Qed.
 
-(* The requar view field as WalkB1 states it (DMwalkIF.di_rview_x_t @ 215f6356933): di_rview_t and the batch class's
+(* The requar view field as WalkB1 states it (DMwalkIF.di_rview_x_t): di_rview_t and the batch class's
    allocated bound.  RMAXD_cf is kFreeArrayOffset: the class's free array begins there, so nothing above it is user
-   memory (DMwalkIF.v:304-308), and the invariant keeps every class's mapped user part inside it.  RMAXD_cf and its
+   memory (DMwalkIF.v:305-309), and the invariant keeps every class's mapped user part inside it.  RMAXD_cf and its
    bound are YGcfInstDrainR's, one text for the three walk constants. *)
 Lemma di_rview_alloc_cf : forall inst ly X W mem md its zs, ARXr inst ly X W mem md -> DRq_cf B kQuarantineMax X its zs ->
 rg_alloc_user (reg X kBatchClass) <= RMAXD_cf.

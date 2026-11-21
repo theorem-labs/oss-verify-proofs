@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the entry stack layout: the pointer struct of `block_items` without the auxiliary vector, and the string area laid down from the stack's top with the exec file name, `string_base_addr`). *)
 
 From Stdlib Require ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase State Monad Specs.
@@ -157,25 +158,45 @@ induction bs as [|b rest IH]; intros m addr; [reflexivity|].
 cbn [write_to_mem wbytes]. apply IH.
 Qed.
 
+(* #38 made auxv_size take the kernel's CONFIG_RSEQ flag (75d69e00 StackLayout.v:277,
+   16 * auxv_count rseq -- 29 pairs with it, 27 without), so the bare `auxv_size`
+   here had type bool -> nat where a nat was wanted.  The same revision moved the
+   auxiliary vector OUT of the pointer struct and into the block below the random
+   bytes, made the pointer struct exactly 8 * block_items (StackLayout.v:385), laid
+   the string area DOWN from the stack VMA's end (string_base_addr, :414) and made
+   the exec file name part of it.  auxv_bytes went from four arguments to eight
+   (:268) and at_random_ptr gained the rseq flag (:425), so two further calls below
+   were stale by arity as well and would have failed as soon as :161 stopped doing so.
+
+   Ported to the model's own measurements rather than given a pinned rseq: a pin
+   would make this a statement about one kernel, and kb_rseq is free in everything
+   that reaches here.  Nothing consumes this block -- not the rest of Mq1, not the
+   module below, and no other file in the unit, each of which carries its own copy
+   (controls: the already-ported QgpE and Qnhz read 0 for auxv_size) -- so the port
+   is confined to these definitions.  The shape is taken from the in-tree port at
+   QgpE.v:272-284 and :351-357, as hunks. *)
 Definition cat_struct_size (av ev : list (list byte)) : nat :=
-(8 + (length av + 1) * 8 + (length ev + 1) * 8 + auxv_size)%nat.
+(8 * block_items av ev)%nat.
 
-Definition cat_string_base (sp : word) (av ev : list (list byte)) : word :=
-sp + nat_to_word (cat_struct_size av ev).
+Definition cat_string_base (top : word) (av ev : list (list byte))
+(execfn : list byte) : word :=
+string_base_addr top av ev execfn.
 
-Definition cat_env_base (sp : word) (av ev : list (list byte)) : word :=
-cat_string_base sp av ev + nat_to_word (total_arg_bytes_nat av).
+Definition cat_env_base (top : word) (av ev : list (list byte))
+(execfn : list byte) : word :=
+cat_string_base top av ev execfn + nat_to_word (total_arg_bytes_nat av).
 
-Definition cat_argv_ptr (sp : word) (av ev : list (list byte)) (k : nat) : word :=
-nth k (fst (string_addrs (cat_string_base sp av ev) av)) (Z_to_bv 64 0).
+Definition cat_argv_ptr (top : word) (av ev : list (list byte))
+(execfn : list byte) (k : nat) : word :=
+nth k (fst (string_addrs (cat_string_base top av ev execfn) av)) (Z_to_bv 64 0).
 
-Definition cat_struct_prefix (ph : PhdrInfo) (sp : word) (av ev : list (list byte))
-(uid : word) (hw : word) : list byte :=
+Definition cat_struct_prefix (top : word) (av ev : list (list byte))
+(execfn : list byte) : list byte :=
 word_le8 (len_word av)
-++ flat_map word_le8 (fst (string_addrs (cat_string_base sp av ev) av))
+++ flat_map word_le8 (fst (string_addrs (cat_string_base top av ev execfn) av))
 ++ word_le8 (Z_to_bv 64 0)
-++ flat_map word_le8 (fst (string_addrs (cat_env_base sp av ev) ev))
-++ word_le8 (Z_to_bv 64 0) ++ auxv_bytes ph (at_random_ptr sp av ev) uid hw.
+++ flat_map word_le8 (fst (string_addrs (cat_env_base top av ev execfn) ev))
+++ word_le8 (Z_to_bv 64 0).
 
 Definition byte_at (s : list byte) (k : nat) : byte :=
 nth k (s ++ [Z_to_bv 8 0]) (Z_to_bv 8 0).

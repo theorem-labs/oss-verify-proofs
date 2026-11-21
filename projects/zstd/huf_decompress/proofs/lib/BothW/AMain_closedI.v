@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (1 recorded proof replaced by written proofs (adrv_of_free)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List.
@@ -19,8 +20,9 @@ Section WithFree.
   Hypothesis FUZZ : fuzz_oneA_stmtB (AI_of FREE) AFake_iface.afake_rng.
 
   Theorem adrv_of_free : adrv_stmt ATsafeMain.A0.
-Proof.
-ltac2:(KReplay.run1 (kr_t_AMain_closedI ()) ["CANSEC1"; "WithFree"] "p;2p;7g0000j25Tg000kj24Tg001hj20Tg002ij21Tg003kj23Tg004mj72Tp,2rcR0p,4FREER1,501401100111011301p,4FUZZF2o"). Qed.
+  Proof.
+    exact (adrv (AI_of FREE) (AI_of_E FREE) (AI_of_CI_OK FREE) (AI_of_DRV_CI FREE) (AI_of_CLI_CI FREE) FUZZ).
+  Qed.
 End WithFree.
 End CANSEC1.
 

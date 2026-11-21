@@ -4,7 +4,7 @@
    release of the class-3 fake frame, the epilogue, `ret` with a0 = s5 = r). Lane CnoA102f (a Theorem Labs lane, #102 plan
    the internal file PLAN-cno-caw-102.md sections 5.0 / 5.1 rows CA10 / CA11).
    rule 24: no function proved. rule 24: proves no function (kind: segment lemma).
-   CONTRACT: lib/A/Prog/Cno102A_Base.v (on the kit cut 7cdbb61b5fa0): the start cut
+   CONTRACT: lib/A/Prog/Cno102A_Base.v (on the kit cut): the start cut
    cn_at_free / CN_FREE (1060, A' 0x81d28), the exit cn_ex_ret (the function's exit, the text's full post cn_Q at the
    wild budget wbudget [] 6, under the kit's fpostFb, which is at the walk's relation wle' SEGS RZ_cf), the image facts
    cn_img. THIS FILE adds the one cut between its two segments, CN_END (1108, A' 0x81d58, after the third free), as
@@ -25,7 +25,7 @@
    PRH_Base.v ef7c8ca98529; PRH_PjOrder.v e5917626b82b; the engine of the cut, YCbqG.v / YCbqGwild.v: the journal at a
    wild budget); the kit of this lane lib/A/Prog/Cno102_FKit.v (pjf_fd_of_node, aj_flag_store_x_inv,
    aj_set_shadow_at_xm, aj_free_null_at_x) and lib/Prog/PvFdZeroR.v (pv_fd_zeroR).
-   PIN: asan 1be0f53d96cb9d6c (facts 8f3e7e1a07f1). PARAMETRIC over {PA : PAImg A_prog_listing}.
+   PIN: asan 1be0f53d96cb9d6c (facts). PARAMETRIC over {PA : PAImg A_prog_listing}.
    THE CODE (the A' disassembly of check_no_overread; DERIVED offsets inside cno; slot kinds re-checked on
    lib/A/Listing_prog.v, the cut's blob 7ed1529926bd, CN_SLOT = 201):
      1060 mv a0, s9 ; 1064 jal pj_free ; 1068 ld a0, 48(s1) ; 1072 jal pj_free ; 1076 mv a0, s3 ; 1080 jal pj_free ;
@@ -45,7 +45,7 @@
    cn_ck_cno_evs. The runtime frees' advance is PROVED (PresetRoomPosKeep room_pos_keep_free).
    NAMED ARGUMENTS (Section hypotheses, owners): HPJFREE (the kit's text tpj_free_specX, owned by the kit); AFREE (the free
    wrapper row in the re-hiding form afree_realizes_cf_rh, lib/Reusable/YG0dcfR.v); SS5M
-   (aset_shadow_realizes_xm at the walk's relation for __asan_set_shadow_f5: the frozen contract FCiface.v:1426 with
+   (aset_shadow_realizes_xm at the walk's relation for __asan_set_shadow_f5: the frozen contract FCiface.v:1427 with
    the memnorm keep, owner a Theorem Labs lane, YGcallMxmn's family 1 has no set_shadow row); IMG (the base's cn_img). No
    other.
    NO STATE PREMISE: the former PJF-TIE (a filled struct's pj_free order list F has the model's pj_frees (okof o) x

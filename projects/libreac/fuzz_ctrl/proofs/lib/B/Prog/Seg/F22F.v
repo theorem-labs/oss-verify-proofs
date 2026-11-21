@@ -3,10 +3,10 @@
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
    source runs: lib/B/Prog/Seg/F22.v f22_loop (:218), f22_lu_evt (:64) and seg_F22's own inline stretch
-     0x827f8 -> 0x8283c (:490-498) at a working branch 3803efccea0
+     0x827f8 -> 0x8283c (:490-498) at a working branch
      (blob d8085fdbbbc09b84b1eb48c4bc32eaebf4ee6c61);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    compare: split stretches.  f22_loop_F re-runs F22.v:246-265 (the 6-turn sum loop and the result test) on the
      lib.Lib engine with StepF in place of the UL engine's Step (F22.f22_lu_msteps shows the two step relations
      have the same body, so this is the same run).  seg_F22_F re-runs F22.v:490-498 (the whole stretch

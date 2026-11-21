@@ -7,10 +7,11 @@
      0x8483c  mv   s5,s4              s5 = &g_s[0]
      0x84840  addi s4,s1,192          &reads[0]
      0x84844  addi s6,s1,208          the loop's end pointer
-   The callee's contract is W6's, taken verbatim (W_contract.v:1466 rig_spec, :1137 rg_place); its journal is at
+   The callee's contract is W6's, taken verbatim (W_contract.v:1467 rig_spec, :1137 rg_place); its journal is at
    G_RIG B fr_RG, lifted to G_fr with ajournal_gx_G_mono under GN_HG_RIG and spliced into the arm's with
    ajournal_gx_sub, as W_LLVMFuzzerTestOneInput_latch.v's lf_seg_latch does at :827-836 for check_bounded.
    The statement is GP3 of lib/A/W_LLVMFuzzerTestOneInput_gone.v, verbatim. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -162,7 +163,7 @@ Variable RINV : lfcx -> Z -> lmod -> Prop.
 (* ---- what the other lanes owe (the texts the base fixes) ---- *)
 Variable MMAX : Z.
 (* relay_instance_gone, W6: W_contract.v's rig_spec (Section s6 at CTX_AFREE := K0's table ACk0.CTX_AFREE; its last
-   premise is the free's caller context [0x82eb8; 0x8483c(; 0x821e8)], W6 fc80eaecde5) and rg_place, verbatim *)
+   premise is the free's caller context [0x82eb8; 0x8483c(; 0x821e8)], W6) and rg_place, verbatim *)
 Hypothesis RIG : rig_spec B MT MMAX fr_RG ACk0.CTX_AFREE (BASE + AF_fr_relay_instance_gone).
 Hypothesis RGP : rg_place B fr_RG.
 (* the model obligations, by the base's names *)
@@ -176,7 +177,7 @@ Hypothesis ERRNO_LOW : GN_ERRNO_LOW B.
 Hypothesis HGCELLS : GN_HGcells G_fr.
 Hypothesis GWR : glob_wr_law G_fr.
 (* the read-only statics the allocator owns are pinned (the base's name); with the apartness below and a
-   vm_compute it gives W_journal.v:396's rom_out at G_RIG (gp3_rom_out), so the cut's rom_view survives
+   vm_compute it gives W_journal.v:397's rom_out at G_RIG (gp3_rom_out), so the cut's rom_view survives
    the callee's journal *)
 Hypothesis HROMPIN : GN_ROM_PIN B.
 (* the four cells of amodel_at relay_instance_gone neither writes nor re-states *)
@@ -188,13 +189,13 @@ Definition gp3_g4 (a : Z) : Prop :=
    (errno = TFIB_ERRNO_A = 0x5d93cc, _G.v HEV): all 18 gn_cells ranges lie below 0x5d93cc or at 0xa1fxx, and
    rom_apart [(0x5d93cc, 4)] = true by vm_compute. *)
 Hypothesis GP3_ERRNO_APART : forall a, gp3_g4 a \/ in_rom segs a -> ~ (as_errno B <= a < as_errno B + 4).
-(* NO HYPOTHESIS FOR THE CANARY, on purpose.  801b78d5521 briefly gave rig_spec a canary-PRESENCE premise,
+(* NO HYPOTHESIS FOR THE CANARY, on purpose. briefly gave rig_spec a canary-PRESENCE premise,
    `forall a, 0x5f94b0 <= a < 0x5f94b0 + 8 -> apresent (w_H W) mem a`, and this piece MEASURED AT THE PIN
    that no text it could state was true: AR's only presence clause (ahs_pres, YG0n.v:442) covers the two
    shadow bands, which the canary is outside; it is not read-only, so rom_view does not reach it; and it is
    in no range of G_fr_c, so the entry's fr_gi presence clause does not cover it.  A Theorem Labs lane ruled at
-   12:04Z that W6 drops the premise (W6's canary switch 92dac370558; on this branch f9b0c351c0c reverts
-   801b78d5521), so the current rig_spec asks nothing of the canary and nothing is needed here. *)
+   12:04Z that W6 drops the premise (W6's canary switch; on this branch reverts),
+   so the current rig_spec asks nothing of the canary and nothing is needed here. *)
 
 (* ------------------------------------------------------------------ the live blocks are distinct and apart *)
 Lemma gp3_nodup_blocks : forall ly S (W : world segs) mem md,
@@ -695,7 +696,7 @@ Proof.
   - exists (hs_fd h'), (hs_open h').
     pose proof Hsl as (Hfd & Hopen & _ & _ & _ & _ & _ & Hop1 & Hfr' & _).
     split; [exact Hfd|]. split; [exact Hopen|].
-    (* aothers_at compares the low 32 bits (W_contract.v:966-970); both fds are in [0, 2^31) (asrc_at) *)
+    (* aothers_at compares the low 32 bits (W_contract.v:967-971); both fds are in [0, 2^31) (asrc_at) *)
     pose proof (HSLOT j Hj) as Hslj. unfold aslot in Hslj. rewrite Hnth in Hslj.
     pose proof Hslj as (_ & _ & _ & _ & _ & _ & _ & _ & Hfrj & _).
     right. rewrite !Z.mod_small by lia. exact (HFDS cx t m i j h' h HRI Hi Hj Hij Ei Hnth).
@@ -1054,7 +1055,7 @@ Proof.
     - exact Btr1.
     - exact Btr2.
     - exact Btr3.
-    - (* rig_spec's room above sp (W6 fc80eaecde5): from the entry's astk_ok through the journal's layout *)
+    - (* rig_spec's room above sp (W6): from the entry's astk_ok through the journal's layout *)
       exact HTOP.
     - (* the free's caller context: K0's CTX_AFREE rows [0x82eb8; 0x8483c(; 0x821e8)]: relay_instance_gone's free
          returns to pc + 652 = 0x82eb8, relay_instance_gone to AF_gp3_ret = 0x8483c, LLVMFuzzerTestOneInput to

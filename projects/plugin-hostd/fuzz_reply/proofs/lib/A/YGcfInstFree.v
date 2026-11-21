@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (lane F2a, a working branch): the generic cf layer's Deallocate interface instances at the
    layer's walk relation YGcfInstBase.ARX_cf: DGif0.DIface, DIfaceR.DIfaceR, ErrnoG.DIfaceE / DIfaceRE and
    MnRecycle.DIfaceREm.  The cf twin of c5's DGif1.v (diface_cgif) and of DGif0cgif.v's role (the image's DImg is the
@@ -14,7 +15,7 @@
    - Proved here, over ARcf, by this lane: di_inst, di_view_n, di_view, di_shape_n, di_shape, di_lpost_d, di_qview,
      di_qowned, di_post_c, di_post_n, di_frame, di_stack, di_owned, di_owned_b, di_owned_i, di_owned_x
      (YGcfInstFreeView / Q / Post / Model); di_view at DGif0's dv_zone bound, which rpreD_small_cf's guard gives
-     (a working branch 002b8cc32f7).
+     (a working branch).
    - The record [DIfaceExt] holds the fields the layer takes from the callee lanes, each a named field at its DGif0
     text: di_depot, di_dpost_aok, di_enqueue (lane F1; its YGcfInstEnq.di_enqueue_cf takes the call-site bridge
     enq_bridge_cf, which this lane proves: YGcfInstFreeMidE.enq_bridge_holds_cf, over YGcfInstFreeMid's model and
@@ -72,7 +73,7 @@ Local Notation AOX := (aowned B).
 Local Notation MP := (fun m => arodata_ok_cf im_segs B m).
 
 (* ================================================================================================================ *)
-(* 1. The fields taken from elsewhere, at DGif0's text (DGif0.v:274-275, :282-329, :331, :344-352, :355-371).      *)
+(* 1. The fields taken from elsewhere, at DGif0's text (DGif0.v:275-276, :283-330, :332, :345-353, :356-372).      *)
 Record DIfaceExt : Prop := {
   ext_depot : forall inst ly S W mem0 md0 tr (regs : bvmap 5 word) (mem : word -> option byte) (md : Model) (buf : Z),
     ARX inst ly S W mem0 md0 -> U tr S ->
@@ -132,8 +133,8 @@ Record DIfaceExt : Prop := {
    are FALSE at a real recycle: the drain (DMspec.drain_spec_cf, a walk whose run recycles) and Recycle
    (DMiface.di_rchunk_t).  They become R3's twins (DIfaceRh.drain_spec_cf_rh, DIfaceRh.di_rchunk_rh_t: amreal' at
    YGcfRehidePost.RZ_cf, acall_post_x_rh).  The other nine are DIfaceExt's text: depot, dpost_aok, enqueue, frame_r,
-   rview, and cdealloc (it frees a primary batch object, unmaps nothing, re-hides nothing; DMiface.v:245-254) and
-   requar_x / r / e (one-world relation facts, no walk, no wle; DMiface.v:208-228). *)
+   rview, and cdealloc (it frees a primary batch object, unmaps nothing, re-hides nothing; DMiface.v:246-255) and
+   requar_x / r / e (one-world relation facts, no walk, no wle; DMiface.v:209-229). *)
 Record DIfaceExtRh : Prop := {
   exr_depot : forall inst ly S W mem0 md0 tr (regs : bvmap 5 word) (mem : word -> option byte) (md : Model) (buf : Z),
     ARX inst ly S W mem0 md0 -> U tr S ->
@@ -336,7 +337,7 @@ End i.
 
 (* ================================================================================================================ *)
 (* 3. The raw, errno and memnorm interfaces at the cf instance: each is the record of the callee lanes' contracts   *)
-(*    (DIfaceR.v:169-178, ErrnoG.v:365-378, MnRecycle.v:106-113), formed at this instance.                         *)
+(*    (DIfaceR.v:170-179, ErrnoG.v:366-379, MnRecycle.v:107-114), formed at this instance.                         *)
 Definition diface_r_cf := Build_DIfaceR B U ARX ARXr AOX rpre lpost fpre dpost dbody L24 QB DRq MP.
 Definition diface_e_cf := ErrnoG.Build_DIfaceE B U ARX ARXr AOX rpre lpost fpre dpost dbody L24 QB DRq MP.
 Definition diface_re_cf := ErrnoG.Build_DIfaceRE B U ARX ARXr AOX rpre lpost fpre dpost dbody L24 QB DRq MP.

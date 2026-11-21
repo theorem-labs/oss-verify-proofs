@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO pair in the reserved ledger); internal commit ids in comments replaced by public commits or removed. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -22,6 +23,16 @@ Section ExportI.
 Variable segs : list Segment.
 Variable pc0 : N.
 Hypothesis Himg : img_ok segs pc0 = true.
+(* [in_segs_reserved] (VCommon/Ax/AxGrant.v:92) lives in a Section whose hypotheses are
+   [Hlow] (AxGrant.v:29) then [Hnk] (AxGrant.v:37), so at the revision it is applied as
+   [in_segs_reserved segs Hlow Hnk z Hs].  The flag is a premise and not derivable from
+   [Himg]: [img_ok] is [forallb seg_ok1 &&& segs_pw &&& two pc tests] and [seg_ok1] says
+   nothing about [seg_kernel_map], so there is no [img_nk] to match [img_low].  It is
+   discharged, not assumed: [segs] is closed at the unit's own ELF image, where the
+   forallb computes -- CtAxBdA/BdAParams.v:43 [bda_segs_nk] and CtAxBdB/BdBParams.v:44
+   [bdb_segs_nk] are exactly that discharge, and BridgeA/BridgeB already Require them.
+   Ported per hunk from openssl/bndiv AxA/AxExportI.v:25-30 (and bignum). *)
+Hypothesis Hnk : forallb (fun s => negb (seg_kernel_map s)) segs = true.
 Variable fs0 : Fs.Fs.
 Variable LIM : Z.
 Variable ρ : valuation.
@@ -41,9 +52,16 @@ Let Hsat : sat ρ (a_facts B) := r_sat _ _ _ _ _ _ _ HR.
 (* [comment removed for export] *)
 Lemma maps_not_segs (z : Z) : inl (vm_maps (m_vmmaps model)) z -> ~ in_segs segs z.
 Proof.
-  intros [p [Hp Hz]] Hs. destruct (in_segs_reserved segs Hlow z Hs) as [q [Hq Hzq]].
-  rewrite <- (mr_res segs fs0 ρ _ model HM) in Hq.
-  pose proof (mr_disj segs fs0 ρ _ model HM p q Hp Hq) as D. unfold iv_disj in D. lia.
+  intros [p [Hp Hz]] Hs. destruct (in_segs_reserved segs Hlow Hnk z Hs) as [q [Hq Hzq]].
+  (* WAS: rewrite <- (mr_res segs fs0 ρ _ model HM) in Hq.
+     [mr_res] is an existential at the revision (VCommon/Ax/AxModelRel.v:48-51); an
+     existential cannot be rewritten with, and this consumer needs membership only,
+     which [in_or_app] supplies from the append form -- the route AxModelRel.v:46
+     names for every consumer but its own two. *)
+  destruct (mr_res segs fs0 ρ _ model HM) as [rx [Hrx _]].
+  assert (Hq' : In q (vm_reserved (m_vmmaps model)))
+    by (rewrite Hrx; apply in_or_app; left; exact Hq).
+  pose proof (mr_disj segs fs0 ρ _ model HM p q Hp Hq') as D. unfold iv_disj in D. lia.
 Qed.
 
 (* [comment removed for export] *)

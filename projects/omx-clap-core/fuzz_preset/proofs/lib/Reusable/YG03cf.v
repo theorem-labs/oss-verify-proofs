@@ -21,7 +21,8 @@
    enqueue_ok_cf take `ck_n kq <= kQuarantineMax` (free_cf's enqueue arm supplies it). *)
 (* Modified by a Theorem Labs lane (DeallocNmaxA), 2026-10-30: free_with_cf takes Quarantine::Put's size test (as YG00cf.free_cf), and
    free_gen_cf proves its recycle side from recycle_chunk_okx_cf; statements unchanged. A change request to a Theorem Labs lane. *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YG03cf.v at commit fec7cbb6287c (the cf layer of record, field rounds 1 + 2), module paths changed; the preset-side hunks kept on top are listed in the round6f report. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YG03cf.v (the cf layer of record, field rounds 1 + 2), module paths changed; the preset-side hunks kept on top are listed in the round6f report. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From Stdlib Require Import Sorting.Permutation.
@@ -53,7 +54,7 @@ atok ns (md s) (fun ns' res => WfP_cf U pp cc bb (snd res) /\ fframe_cf s (snd r
 qc_bytes (st_qthread (snd res)) <= kQuarantineCacheMax /\
 qc_bytes (st_qglobal (snd res)) <= Z.max (qc_bytes (st_qglobal s)) kQuarantineMax /\ unq_cf (snd res) = unq_cf s).
 
-(* cgif's free_post (YG01.v:457-461) with Wf -> Wf_cf. *)
+(* cgif's free_post (YG01.v:458-462) with Wf -> Wf_cf. *)
 Definition free_post_ycf (U : Univ) (s : astate) (p : sptr) (n : Z) (ns : bool) (r : unit * astate) : Prop :=
 let s' := snd r in
 Wf_cf U s' /\ st_nev s' = st_nev s + 1 /\ secs_ext s s' /\ frames s' = frames s /\

@@ -1,18 +1,19 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: copied from projects/libreac/fuzz_grant/proofs/lib/A/Prog/CtrlChecksumVerify.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_ctrl_checksum_verify (fuzz_scene.asan-ubsan 0x839e8, 34 instructions): the contract of the ASan+UBSan
    build's code. It sums the 32 control-block bytes frame[18..50) of the caller's 50-byte frame
    object and returns 0 when the sum is 0 mod 256, else -1. Model: RcModel.blocksum
    (lib/Prog/RcModel.v:12). The walk pb_ctrl_checksum_verify is at the end of Section h, with a note on what it
    changes from the asan walk and how it closes the two UBSan checks.
-   The asan-ubsan twin of lib/A/Prog/P_reac_ctrl_checksum_verify.v (at d9e17010c56):
+   The asan-ubsan twin of lib/A/Prog/P_reac_ctrl_checksum_verify.v:
    the module paths are lib.AU.Prog and every number below is re-measured in this image; the statement text is
    the asan one (the two UBSan checks below need no premise the asan statement does not have).
    The core module YCbq is Required from lib.AU (its asan-ubsan copy: it differs between scene's two images);
    every other core module from lib.Reusable, as in the asan file. U_NotTrap is lib/AU/U_NotTrap.v.
    Numbers: fuzz_scene.asan-ubsan, sha256 e98b1ed286c1aa5c3d558cb2069011d2413d58b2122f741531364382a528833f
-   (projects/libreac/fuzz_scene/harness.yaml at c8557374ad2e); symbols from the .symtab of
+   (projects/libreac/fuzz_scene/harness.yaml); symbols from the .symtab of
    unstripped/fuzz_scene/fuzz_scene.asan-ubsan, whose bytes at 0x839e8..0x83a70 equal the pinned image's.
    - reac_ctrl_checksum_verify = 0x839e8, st_size 136 = 34 instructions (no compressed instruction).
    - LLVMFuzzerTestOneInput = 0x828a4 = the listing's base (SceneAddr.v:16 scene_text), so
@@ -125,8 +126,8 @@ SRr SEGS W (cfg_at SEGS A_ctrl_checksum_verifyP regs mem md)
 (apost_base SEGS B TCKV_STK [] regs ly S W mem md 0
 (fun ly' S' W' regs' mem' md' => ly' = ly /\ S' = S /\ W' = W /\
 getr regs' 10 = w64 (if blocksum (map (Z_to_bv 8) BS) =? 0 then 0 else -1))).
-(* The walk: the asan walk of lib/A/Prog/P_reac_ctrl_checksum_verify.v (at 61afd7acb1d) over
-   this listing. RET takes this listing's PL_scene (lib/AU/Prog/ScenePa.v:36); the shadow-base cell is object 16 and its
+(* The walk: the asan walk of lib/A/Prog/P_reac_ctrl_checksum_verify.v over
+   this listing. RET takes this listing's PL_scene (lib/AU/Prog/ScenePa.v:37); the shadow-base cell is object 16 and its
    GOT word object 1 (ScenePaLib.v pal_got_shadow / pal_cell, got_regionP / bcell_regionP); the stack region is 16 and
    the chunks are frame[18..50), as in the asan walk. The loop counts a5 up from 18 to 50 (bne a5,a6 @0x83a40); `go`
    unrolls it with the counter a literal in each turn. ra comes back from the stack (ld ra,8(sp) @0x83a60).
@@ -134,8 +135,8 @@ getr regs' 10 = w64 (if blocksum (map (Z_to_bv 8) BS) =? 0 then 0 else -1))).
    and `go` walks the other:
    (1) beqz a0 @0x839f0: branch_eq_U and U_atom on atom 10 (E10) turn the taken side into f = 0, against
        HR0 : 4096 <= f (afobj: frame_addr <= f; frames_bounds: 4096 <= frame_addr).
-   (2) bltu a3,a5 @0x83a18, a3 = ~a0, a5 = 18 + i in turn i: kill_not_trap E10 HR of lib/AU/U_NotTrap.v
-       (at bcd4b91d8d9), HR : 0 <= f /\ f + 49 < 2 ^ 64 (afobj: f + 50 <= frame end;
+   (2) bltu a3,a5 @0x83a18, a3 = ~a0, a5 = 18 + i in turn i: kill_not_trap E10 HR of lib/AU/U_NotTrap.v,
+       HR : 0 <= f /\ f + 49 < 2 ^ 64 (afobj: f + 50 <= frame end;
        frames_bounds: frame end <= alloc_ceiling; asan_consts: alloc_ceiling <= 0x7fffff800000).
    The engine decides (1) itself from the fact on atom 10 (lower bound 4096), so the walk stops only at (2), once per turn;
    the branch on (1) in `ckv_kill` covers the case where it stops there too. The false side's branch hypothesis is

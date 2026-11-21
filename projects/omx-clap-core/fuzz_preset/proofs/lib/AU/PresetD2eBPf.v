@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises); the model's channel reader that fdchan asks for beside the descriptor (cs_ok's co_rdr, proved at the launch)); internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the PROOF of runqm_cf_B (lib/AU/PresetD2eB.v, lane CwRunqm's RUNQM for the asan-ubsan image:
    the driver's arm from the payload malloc to the loop head). Nothing in this file is a proof of a function (rule 24:
    the composition / driver layer of a port).
-   This file is section 3 of lib/AU/PresetD2eB.v (lines 183-633 at a working branch a4c03c09af1), MOVED BYTE
+   This file is section 3 of lib/AU/PresetD2eB.v (lines 183-633 at a working branch), MOVED BYTE
    FOR BYTE, with no proof change (a Theorem Labs lane, the parent's order 2026-10-29): PresetD2eB.v keeps the header,
    sections 0-2 (the P8 driver leaf iface_room_at_driver, the leaf type run_QM_tfa_cf and the statement runqm_cf_B),
    so that the driver composition (lib/AU/PresetD1pBPf.v) can cite the statement without this proof. The import block
@@ -35,9 +36,9 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YAkMemnorm 
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YD2mnSeg.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YGcallStackUp.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU Require PresetStkUpB.
-(* The run-level room is a Theorem Labs lane's P8 (a working branch 4ec915e66b6, lib/Spec/PresetP8.v): the state
+(* The run-level room is a Theorem Labs lane's P8 (a working branch, lib/Spec/PresetP8.v): the state
    predicate room_at, not a sum over calls. a8's view of an astate (room_of_cf, q_fifo) is YGcfRoom.v, its free
-   coupling YGcfFrees.v (a working branch 5d91379f2041); the model's run (hruns, hlive, hfrees) is
+   coupling YGcfFrees.v (a working branch); the model's run (hruns, hlive, hfrees) is
    lib/Spec. Names used qualified. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YGcfRoom YGcfFrees.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Spec Require PresetRoom PresetRun PresetReqAt.
@@ -132,7 +133,7 @@ apply List.in_or_app. right. right. left. reflexivity. }
 pose proof (Hdj _ Hz) as D. unfold zdisjoint in D. lia.
 Qed.
 
-(* Lane CwLoopB's lemmas over ARcf (lib/AU/PresetD1rBx.v, YD1y.v:101 / :309, YCe5.v:322 / :1518, YD25.v:685 / :694),
+(* Lane CwLoopB's lemmas over ARcf (lib/AU/PresetD1rBx.v, YD1y.v:102 / :310, YCe5.v:322 / :1518, YD25.v:685 / :694),
    at this image, with a8's AR_laws_ok_cf. *)
 Lemma AR_after_run_w : forall ly S Hp (W : world tfibsegs) E rs (mem mem' : word -> option byte) md mat,
 ARcf tfibsegs B ly S Hp W mem md ->
@@ -175,13 +176,17 @@ ARcf tfibsegs B ly S Hp W mem md -> In (q, m) (ablocks B ly S) -> q <= d -> d + 
 shadow_hull_vis (aview tfibsegs (w_H W) mem) d n.
 Proof. intros. pose proof (YG0lawscf.AR_laws_ok_cf tfibsegs B) as ARL. eapply shadow_hull_vis_of_block'_cf; eassumption. Qed.
 
-Variables (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte).
+(* the entry draw and the launch premises, as the core's AD2e.v Section (727298f3) *)
+Variables (sp brk mbase : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte) (rnd : EntryDraw).
 Hypothesis Hargv : in_argv inp = [a0; p].
 Hypothesis Hsp : valid_sp sp.
-Hypothesis Hva : valid_argv [a0; p].
+Hypothesis Hva : valid_argv (in_argv inp).
 Hypothesis Hve : valid_envp (in_envp inp).
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp.
+Hypothesis Hvi : valid_input inp.
 Hypothesis Hvfs : valid_fs (in_fs inp).
-#[local] Notation EL := (YP08.E0 sp [a0; p] (in_envp inp) xw xd).
+#[local] Notation EL := (YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd).
 #[local] Notation usp := (bv_unsigned sp).
 #[local] Notation envp := (in_envp inp).
 
@@ -195,7 +200,7 @@ bv_unsigned (ew E3 K_PP) = sptr_addr B ly pb + 2 + config_len data ->
 srealizes tfibsegs (mkCfg ms md) (run_shape (LS := LS) (payload data) (calls data) (in_fs inp)).
 Proof.
 intros ws W ms md ly S data pb cap HNRi Hlk Hok Hplpos E3 HT HUP0 E60.
-destruct HT as (HS & E41 & E42 & HR & HAI & HAR & HNP & HTOP & Hbl & Hcap & HLc & HBLK & Hfs & Hfds & Hminv & HFI & HXS & HMN0).
+destruct HT as (HS & E41 & E42 & HR & HAI & HAR & HNP & HTOP & Hbl & Hcap & HLc & HBLK & Hfs & Hfds & Hminv & HFI & HXS & HMN0 & Hcr).
 pose proof (YG0lawscf.AR_laws_ok_cf tfibsegs B) as ARL.
 pose proof (YSRrMemnorm.srr_inv_laws_memnorm_k tfibsegs) as PLAW.
 (* the instance's one-call ROOM_cf S, drawn from the interface's non-primary room; a8's success lemma for the
@@ -222,8 +227,10 @@ rewrite Hreq1 in Hbce, Hpres0.
 assert (NIMGB : forall a, buf <= a < buf + cap -> ~ in_img tfibsegs a).
 { intros a Ha. rewrite <- Hreq1 in Ha. exact (proj2 (alc_client_img _ _ ARL ly S [] W (ms_mem ms) md a HAR (or_introl (ex_intro _ _ (ex_intro _ cap (conj Hin Ha)))))). }
 assert (EL6' : usp <= bv_unsigned (ew EL 6)).
-{ change (ew EL 6) with (Z_to_bv 64 (z_rand usp [a0; p] envp)).
-pose proof (YP08.z_rand_end sp [a0; p] envp Hsp Hva Hve) as Hz.
+{ change (ew EL 6) with (Z_to_bv 64 (z_rand usp (kb_rseq (in_kernel inp)) [a0; p] envp)).
+assert (Hz : z_rand usp (kb_rseq (in_kernel inp)) (in_argv inp) envp + 16 < 2 ^ 63)
+by exact (YP08.z_rand_end TSEGS TPH inp mbase AsanUbsan.M.init_pc sp brk rnd Hsp Hva Hve Hvl Hlau).
+rewrite Hargv in Hz.
 unfold z_rand in *. rewrite u64_lit by lia. lia. }
 assert (E3old : forall j, (j < K_M1)%nat -> ew E3 j = ew EL j).
 { intros j Hj. subst E3. rewrite E_P_old by (unfold K_M1 in Hj; lia). cbn [ew edset]. apply ew_havoc_old. exact Hj. }
@@ -439,7 +446,7 @@ assert (U83_4 : bv_unsigned (ew E4 A_PBLK) = nb) by (rewrite E4old by (unfold K_
 assert (Ed42 : ed E4 2 = data) by (change (ed E4 2) with (ed E3 2); exact Ed2).
 assert (UPL4 : U E4 sv_pl00 = payload_len data).
 { apply (U_pl00 E4 data d0 d1 (d2 :: rest) Ed42 Ed); unfold dlen; [rewrite E4old by (unfold K_PC, A_BUF, A_LEN, K_PP, A_PBLK; lia); rewrite E2old by (unfold K_PM, A_BUF, A_LEN, K_PP; lia); exact E42 | lia | lia]. }
-pose proof (same_but_materialized_frame _ _ Hs4) as (_ & _ & _ & _ & _ & _ & _ & _ & Hfds4 & _ & _ & Hfs4 & _).
+pose proof (same_but_materialized_frame _ _ Hs4) as (_ & _ & _ & _ & _ & Hpr4 & _ & _ & Hfds4 & _ & _ & Hfs4 & _).
 assert (Hwin4 : forall a, usp - 65536 <= a < usp -> apresent (w_H W') mem4 a) by (intros a Ha; apply Hpres4; apply Hwin3; exact Ha).
 (* #102: the live stack across the memcpy (its presence keep) *)
 assert (HUP4 : YGcallStackUp.astack_up_x tfibsegs ly' W' usp mem4)
@@ -508,8 +515,14 @@ intros a Ha. exists nb, (payload_len data). split; [exact Hin2 | rewrite Hreq2; 
 exact (PRUN (w_H W') E4 (WIN (-208) :: rsPM) _ _ usp 0 0 HFr5 WOK E4_0 Ulo HFI4). }
 assert (Hfds5 : m_fds md5 = APSG.fds_std) by (subst md5; rewrite wvb_fds', Hfds4; subst md3; rewrite wvb_fds', Efds; exact Hfds).
 assert (Hfs5 : m_fs md5 = in_fs inp) by (subst md5; rewrite wvb_fs', Hfs4; subst md3; rewrite wvb_fs', Efs; exact Hfs).
+(* The channel reader [fdchan] asks for at LPS 727298f3, carried as [Hfds5] is: the memcpy site's
+   [same_but_materialized] and malloc's [same_io] pin [m_proc], the ledgers leave it (as the core's AD2e.v). *)
+assert (Hcr5 : m_channel_reader md5 = true).
+{ subst md5. rewrite wvb_rdr'. transitivity (m_channel_reader md3); [unfold m_channel_reader; rewrite Hpr4; reflexivity |].
+subst md3. rewrite wvb_rdr'. pose proof Hio as (_ & _ & _ & Hpr2). unfold m_channel_reader. rewrite Hpr2. exact Hcr. }
 change (run_shape (LS := LS) (payload data) (calls data) (in_fs inp)) with (loop_tgt (LS := LS) (payload data) (calls data) 0%nat (calls data) (in_fs inp)).
-apply (LOOPL fx HFRM sp inp xw xd E6 W' ms5 md5 ly' S' a0 p data pb p' cap nb 0%nat (calls data) (in_fs inp) 0 0 Hargv Hsp Hva Hve Hvfs HNRi Hlk ltac:(unfold dlen; lia)).
+apply (LOOPL fx HFRM sp brk mbase inp xw xd E6 W' ms5 md5 ly' S' a0 p data pb p' cap nb 0%nat (calls data) (in_fs inp) 0 0 rnd
+Hsp Hargv Hva Hve Hvl Hlau Hvi Hvfs HNRi Hlk ltac:(unfold dlen; lia)).
 + intros j Hj. rewrite ELold by (unfold K_L, K_M1 in *; lia). rewrite E4old by (unfold K_PC, K_M1 in *; lia). rewrite E2old by (unfold K_PM, K_M1 in *; lia). apply E3old. exact Hj.
 + change (ed E6 2) with (ed E3 2). exact Ed2.
 + rewrite ELold by (unfold K_L, A_BUF, A_LEN, K_PP, A_PBLK; lia). rewrite E4old by (unfold K_PC, A_BUF, A_LEN, K_PP, A_PBLK; lia). rewrite E2old by (unfold K_PM, A_BUF, A_LEN, K_PP; lia). rewrite Hpb'. exact E41.
@@ -546,7 +559,8 @@ apply (LOOPL fx HFRM sp inp xw xd E6 W' ms5 md5 ly' S' a0 p data pb p' cap nb 0%
 + exact HMN5.
 (* #102: the loop's stack invariant, carried from the tail *)
 + exact HUP5.
-+ split; [intros k0; rewrite Hfds5; reflexivity|]. split; [exact Hfs5 | exact (proj1 Hvfs)].
+(* the loop's MDI, its last conjunct the channel reader *)
++ split; [intros k0; rewrite Hfds5; reflexivity|]. split; [exact Hfs5|]. split; [exact (proj1 Hvfs) | exact Hcr5].
 Qed.
 
 End e.
@@ -554,9 +568,10 @@ End e.
 Theorem runqm_cf_B_holds : runqm_cf_B.
 Proof.
 intros fx rc LS ci B NR xst NP sm HNPT HNPS PRUN PSITE PICPT HFRM HB MSITE MCPY LOOPL HWMAX.
-intros sp inp xw xd ws W ms md ly S a0 p data pb cap Hargv Hsp Hva Hve Hvfs HNRi Hlk Hok Hpl E3 HT HUP0 E60.
+intros sp brk mbase inp xw xd ws W ms md ly S a0 p data pb cap rnd
+Hsp Hargv Hva Hve Hvl Hlau Hvi Hvfs HNRi Hlk Hok Hpl E3 HT HUP0 E60.
 exact (runqm_at B NP NR xst sm HFRM HB MSITE MCPY LOOPL HWMAX HNPT HNPS PRUN PSITE PICPT
-sp inp xw xd a0 p Hargv Hsp Hva Hve Hvfs ws W ms md ly S data pb cap HNRi Hlk Hok Hpl HT HUP0 E60).
+sp brk mbase inp xw xd a0 p rnd Hargv Hsp Hva Hve Hvl Hlau Hvi Hvfs ws W ms md ly S data pb cap HNRi Hlk Hok Hpl HT HUP0 E60).
 Qed.
 
 Print Assumptions runqm_cf_B_holds.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the RES0_low hypothesis states the reserved ledger by res0_ok, which also admits the launch's vDSO/vvar pair above the high shadow; munmap's ENOMEM answer is a spurious refusal the configured step drops, as acfg turns munmap's allocation family off (node_off), not a refusal the node never makes). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -170,7 +171,7 @@ Hypothesis HR0_ok : Forall (fun iv => fst iv <= snd iv) HR0 /\ A0_pages HR0 <= 8
 Hypothesis ENV0 : env0_ok5 E0.
 Hypothesis LS_L0 : In (Z_to_bv 64 0x7fff7000, Z_to_bv 64 (2^28)) L0.
 Hypothesis HS_L0 : In (Z_to_bv 64 0x2008fff7000, Z_to_bv 64 0xdfff0001000) L0.
-Hypothesis RES0_low : Forall (fun e => 0x10000 <= elo e /\ ehi e <= 0x603000) RES0.
+Hypothesis RES0_low : Forall (res0_ok E0) RES0.
 #[local] Notation ATOKc := (ATOK E0 FSB0 HR0 L0 RES0 EB0).
 #[local] Notation ATOKuc := (ATOKu E0 FSB0 HR0 L0 RES0 EB0).
 #[local] Notation aSc := (A_bundle.aS E0 FSB0 HR0).
@@ -631,7 +632,7 @@ Proof. aceil.
     eapply (rzA_mm_cfg asegs (aSc (sA a2 s)) (aNc (sA a2 s)) (aEBc (sA a2 s) + L) P4 (NMunmap A L) (munmap_CHK A L) (dec_us A L)
               (umd_post (fun x r u => x = (r, u)) ra (Z_to_bv 64 usp) gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc A L lo m4) _ mo4 K).
     - unfold munmap_CHK. apply mm_node_munmap.
-    - right. intros; reflexivity.
+    - left. reflexivity.
     - eapply (unmap_or_die_specA P4); rewrite ?USP.
       + intros y n H1 H2. exists y, n. split; [reflexivity| right; split; assumption].
       + intros rsp x D. destruct (dec_us_Some _ _ _ _ D) as (r & u & -> & ->). exists r, u. split; reflexivity.

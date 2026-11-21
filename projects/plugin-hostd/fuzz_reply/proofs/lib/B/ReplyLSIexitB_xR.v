@@ -3,9 +3,10 @@
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyLS.v, with its module paths and module names changed; 340 of its 445 lines of code are new or changed and 489 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyB3LS3e.v, with its module names changed; 55 of its 164 lines of code are new or changed and 336 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-31 (a Theorem Labs lane, route R): image B's twin of image A's lib/A/ReplyLSI.v lsi_LS_exit_end_xR
-   (a working branch a35949e2022, :637-665), the exit-end model rule at a world relation R for
-   lib/B/W_LLVMFuzzerTestOneInput_exit_x.v's Section lxxR hypothesis LS_exit_end_R (a working branch 1debddc16d1,
+   (a working branch, :637-665), the exit-end model rule at a world relation R for
+   lib/B/W_LLVMFuzzerTestOneInput_exit_x.v's Section lxxR hypothesis LS_exit_end_R (a working branch,
    :1072-1086): the strict LS_exit_end (lib/B/W_LLVMFuzzerTestOneInput_exit_x.v :172) with its journal premise ajournal_gx_x -> ajournal_gx_xR .. R.
    - LS_exit_end3e_xR: lib/B/ReplyB3LS3e.v LS_exit_end3e (:506-568) with its journal premise at R.  Its proof is the
      strict proof; it reads the journal only for `0 <= k'`, the eighth conjunct of ajournal_xR at every R.
@@ -14,7 +15,7 @@
      PST := []) at k3's LS instance ReplyLS3B_inst.LSI TfibB OUT_MAX4 fr_CAP, for every fr_FP, ARX, G and R, as A's
      lemma quantifies them, and for every XN_LIB (the B top's is ReplyTFIBBcf.XR0; ameter_triv's mo_le holds at every
      bound, and ReplyTFIBBcf is not Required: on this base its closure reaches the 3c base's own errors at
-     B/YGcallcf.v:329, B/YD1icf.v:55, B/YD1mcf.v:56).  fr_live_post3_e OUT_MAX4 is fr_live_post_b's text
+     B/YGcallcf.v:330, B/YD1icf.v:56, B/YD1mcf.v:57).  fr_live_post3_e OUT_MAX4 is fr_live_post_b's text
      (YCfn_cf.OUT_MAX = ReplyLSBo.OUT_MAX4), and fr_surv_e TfibB is fr_surv_b TfibB (the cut's fr_hblks is fr_hblks_b).
    proves no function (kind: route-R lift of an existing model rule). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.

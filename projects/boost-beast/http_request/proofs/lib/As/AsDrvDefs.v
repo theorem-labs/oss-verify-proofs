@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (among others, the target run takes its stack floor, inside the stack window the launch maps, as its last premise). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -257,8 +258,15 @@ Section TargetRun.
     forall (sp : word) (A cap : Z) (data : list byte) (p : bptr) (s : as_St H) (LB : list block)
            (msF : machine_state) (mo : Model) (regs : bvmap 5 word) (mem : word -> option byte) (K : TSet),
       ATRpre sp A cap data p s LB msF mo regs mem ->
+      (* The printf to stdout needs the channel reader (As/AsDrvIO.v:57).  A
+         premise, not an ATRpre field: As/AsTargetRun.v's recorded [as_target_run_ok]
+         eliminates ATRpre positionally (its Scheme at As/AsTargetRun.v:756). *)
+      m_channel_reader mo = true ->
       K [] ->
       (forall regs' mem' msF' mo' s', ATRpost sp A cap data p s LB mo regs mem regs' mem' msF' mo' s' ->
          realizes asegs (mkCfg msF' mo') K) ->
+      (* LPS 727298f3: the run's stack floor [sp - ATR_STACK] is inside the stack window the launch maps
+         ([hceil + 2244096 = sp0 - 6144512] at main), for the wild free the harness reaches *)
+      hceil + 2244096 <= bv_unsigned sp - ATR_STACK ->
       realizes asegs (mkCfg msF mo) (t_emit (W 1 [Z_to_bv 8 48; Z_to_bv 8 10]) K).
 End TargetRun.

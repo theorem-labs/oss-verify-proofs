@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack window below sp; the 27- or 29-pair auxv; the launch's input, mmap base and entry draw); and launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp Require Import gmap.
@@ -138,9 +139,9 @@ End Statics.
 
 Section Windows.
   Context {HC : HasCeiling} {HG : HasGuard}.
-  Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw).
+  Variables (sp0 : word) (argv envp : list (list byte)) (inp : ProcInput) (mbase : word) (rnd : EntryDraw).
   Notation usp0 := (bv_unsigned sp0).
-  Notation IMGB := (build_stack_bytes rph sp0 argv envp uid hw rnd).
+  Notation IMGB := (build_stack_bytes (launch_auxv inp sp0 mbase) rph AENTRY sp0 (ed_top rnd) argv envp (in_execfn inp) (in_uid inp) (in_gid inp) (in_hwcap inp) rnd).
 
   Definition SHZ (mm : mem) : Prop :=
     (shz mm (sh 0x10000) (sh 0x213e0) /\ shr mm (sh 0x10000) (sh 0x213e0 + 8))
@@ -194,9 +195,9 @@ Section AtMainA.
   Variable AI : am_if FI.
 
   Variable PZ : mem -> Prop.
-  Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw).
+  Variables (sp0 : word) (argv envp : list (list byte)) (inp : ProcInput) (mbase : word) (rnd : EntryDraw).
   Notation usp0 := (bv_unsigned sp0).
-  Notation IMGB := (build_stack_bytes rph sp0 argv envp uid hw rnd).
+  Notation IMGB := (build_stack_bytes (launch_auxv inp sp0 mbase) rph AENTRY sp0 (ed_top rnd) argv envp (in_execfn inp) (in_uid inp) (in_gid inp) (in_hwcap inp) rnd).
 
   Definition rat_mainA (msr : machine_state) (g : gst) : Prop :=
     exists (t0 t1 t2 a3 a4 a5 a6 a7 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word) (F : bvmap 5 word) (fc : bv 32)
@@ -209,18 +210,18 @@ Section AtMainA.
       /\ frm0 fc
 
       /\ mem_inv asegs m
-      /\ stk asegs m (usp0 - 8388608) (usp0 + -48)
+      /\ stk asegs m (usp0 - 6144512) (usp0 + -48)
       /\ rw_cells asegs m 0x5e68cc [C4 e0]
       /\ EXITC t m /\ 0 < t < 2^31 /\ wr_at asegs m 0xb0290 1
       /\ MAINC guard_word m
       /\ stdout_file m stdout_init /\ stderr_wfile0 m /\ stdin_file m
       /\ stk asegs m RSVA (RSVA + 65536)
-      /\ IMGK sp0 argv envp uid hw rnd m
+      /\ IMGK sp0 argv envp inp mbase rnd m
 
       /\ RHEAP_A FI AI s [] m /\ RFAKE FI st m /\ asan_env asegs m /\ g = gh FI AI s
       /\ fs_live FI st = [] /\ am_nsec FI AI s = 0
 
-      /\ SHZ sp0 argv envp uid hw rnd m
+      /\ SHZ sp0 argv envp inp mbase rnd m
 
       /\ globals_shadow m /\ PZ m.
 End AtMainA.

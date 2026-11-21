@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 From OSSVerify.Proofs.boost_beast.http_request.lib.Common Require KReplay.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -28,6 +29,10 @@ Definition BO_SREALIZES : Prop :=
     entry_stack_fits sp (in_argv inp) (in_envp inp) ->
     valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
     valid_creds inp -> valid_hwcap (in_hwcap inp) ->
+    (* [Run.valid_input]'s reader and launch clauses and [Run.valid_entry]'s fifth conjunct:
+       the start-up state's [co_rdr] is seeded from the first, and the start-up invariant is
+       read under the other two ([AsanInit.init_cs_ok]). *)
+    in_channel_reader inp = true -> valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
     @srealizes bsegs hunspell_scfg
       (init_config bsegs OSSVerify.boost_beast.http_request.images.AsanUbsan.M.init_pc
                    OSSVerify.boost_beast.http_request.images.AsanUbsan.M.phdrs sp brk mbase rnd target_alloc_limit inp)
@@ -39,6 +44,10 @@ Definition BO_REALIZES : Prop :=
     entry_stack_fits sp (in_argv inp) (in_envp inp) ->
     valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
     valid_creds inp -> valid_hwcap (in_hwcap inp) ->
+    (* [Run.valid_input]'s reader and launch clauses and [Run.valid_entry]'s fifth conjunct:
+       the start-up state's [co_rdr] is seeded from the first, and the start-up invariant is
+       read under the other two ([AsanInit.init_cs_ok]). *)
+    in_channel_reader inp = true -> valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
     @realizes bsegs hunspell_scfg
       (init_config bsegs OSSVerify.boost_beast.http_request.images.AsanUbsan.M.init_pc
                    OSSVerify.boost_beast.http_request.images.AsanUbsan.M.phdrs sp brk mbase rnd target_alloc_limit inp)
@@ -99,15 +108,20 @@ Section Top.
     destruct (as_instance_kit AC sp brk mbase rnd inp c PM)
       as (HCEIL & H & s0 & regs & mem & B & tid & can & HH & DL & (H5 & H5x & H6 & H7 & H8 & ATR) & LIVE & PRE & EFS).
     destruct c as [msF mo]. cbn [cfg_ms cfg_model] in PRE, EFS. rewrite <- EFS.
+    (* the channel reader at main: the start-up state's [co_rdr] *)
+    assert (RDR : m_channel_reader mo = true).
+    { destruct PM as [_ (h & ch & E & R & FULL & model & _ & _ & Hc & HC)].
+      apply (f_equal cfg_model) in Hc. cbn in Hc. rewrite Hc.
+      exact (OSSVerify.Proofs.boost_beast.http_request.lib.As.AsanPlanSound.APS.co_rdr _ _ _ _ _ _ _ _ _ _ _ HC). }
     assert (H6b : asan_rt_hyps6b).
     { exact (@inst_rt_hyps6b HCEIL). }
     apply (as_main_realizes_closed H HH DL (AF HCEIL H HH H5 H5x H6 H6b H7 H8 ATR) sp (in_argv inp) s0 msF mo regs mem B tid can Hva);
-      [rewrite EFS; exact Hfs | exact PRE].
+      [rewrite EFS; exact Hfs | exact PRE | exact RDR].
   Qed.
 
   Theorem bo_realizes_spec : BO_REALIZES.
   Proof.
-    intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hva Hve Hfs [Huid _] Hhw.
+    intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hva Hve Hfs [Huid _] Hhw Hrdr Hlaunch Hlau.
     rewrite <- LIMIT_eq.
     apply (bo_startup_realizes sp brk mbase rnd inp (spec (in_argv inp) (in_fs inp))); try assumption; [apply spec_has_nil|].
     intros c PM. exact (as_main_phase sp brk mbase rnd inp c Hva Hfs PM).
@@ -115,8 +129,8 @@ Section Top.
 
   Theorem bo_srealizes_spec : BO_SREALIZES.
   Proof.
-    intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hva Hve Hfs Hcr Hhw.
-    apply srealizes_of_realizes. exact (bo_realizes_spec sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hva Hve Hfs Hcr Hhw).
+    intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hva Hve Hfs Hcr Hhw Hrdr Hlaunch Hlau.
+    apply srealizes_of_realizes. exact (bo_realizes_spec sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hva Hve Hfs Hcr Hhw Hrdr Hlaunch Hlau).
   Qed.
 End Top.
 

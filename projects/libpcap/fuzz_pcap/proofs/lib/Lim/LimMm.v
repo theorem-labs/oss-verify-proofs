@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-11: copied from projects/openssl/bndiv/proofs/lib/Lib/LimMm.v at commit 874e3397a35, with its module paths changed to libpcap/fuzz_pcap. *)
+(* Modified by Theorem Labs, 2026-11: copied from projects/openssl/bndiv/proofs/lib/Lib/LimMm.v at commit theorem-labs/oss-verify-proofs@f92feaf8b7e6, with its module paths changed to libpcap/fuzz_pcap. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: brk_budget_ok_setL counts brk_grow_bytes, the munmap proof takes the exact arm's injected errno alt and the new partial-cut arm munmap_cut_ok, and the mprotect proof takes the vDSO/vvar gate before the containment test; internal commit ids in comments replaced by public commits or removed. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs.
@@ -76,7 +77,7 @@ Proof. intros. unfold with_brk_next. cbv zeta. rewrite <- forget_vm_ranges_setL.
 Lemma mlim_with_brk_next : forall m req r, mlim (with_brk_next m req r) = mlim m.
 Proof. intros. unfold with_brk_next. cbv zeta. rewrite mlim_forget_vm_ranges. reflexivity. Qed.
 
-Lemma brk_budget_ok_setL : forall L m r, brk_budget_ok (setL L m) r = (vm_backing_used m + bv_unsigned (r - vm_brk (m_vmmaps m)) <=? L)%Z.
+Lemma brk_budget_ok_setL : forall L m r, brk_budget_ok (setL L m) r = (vm_backing_used m + brk_grow_bytes (m_vmmaps m) r <=? L)%Z.
 Proof. reflexivity. Qed.
 
 (* [comment removed for export] *)
@@ -140,14 +141,36 @@ Proof.
   destruct (TASK_SIZE <? bv_unsigned addr + page_round_up_Z (bv_unsigned len))%Z; [at_leaf|].
   cbn [setvl vm_maps vm_reserved vm_noaccess vm_start_brk vm_brk vm_limit vm_mmap_base vm_init_sp].
   destruct (map_has (vm_maps (m_vmmaps m)) addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))).
-  - apply at_bind.
+  (* 215 joined munmap_errnos in the revision, so munmap_spec's map_has arm is
+     now `alt (e <- errno_from munmap_errnos ;; err_ret e) (set_vmmaps ...)`
+     rather than the bind alone.  `apply at_bind` cannot unify against `alt`
+     and reports it as an unsolved motive over `outcome ?B`, which reads as an
+     arithmetic or inference failure and is neither: it is the extra arm.
+     Same cure, same file: :187 does exactly this for mremap's refusal arm, and
+     `at_leaf` (:131) lists `blind_errno_alt` for precisely this shape. *)
+  - apply at_alt; [at_leaf|].
+    apply at_bind.
     + apply at_modify; reflexivity.
     + intros [] m1 evs Hm. apply at_bind.
       * apply at_blind. unfold forget_vm_range. apply lim_blind_modify; reflexivity.
       * intros [] m2 evs2 Hm2. at_leaf.
   - change (munmap_free_ok (setvl L (m_vmmaps m)) addr (page_round_up_Z (bv_unsigned len)))
       with (munmap_free_ok (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len))).
-    destruct (munmap_free_ok (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len))); at_leaf.
+    (* The false branch of munmap_free_ok is no longer a leaf.  At 75d69e00
+       munmap_spec continues `else if munmap_cut_ok h addr nZ then alt
+       (errno_from munmap_errnos >>= err_ret) (modify (with_mmap_destroyed ..)
+       ;; pure ..) else unmodeled` - the partial-unmap arm, carrying the same
+       injected refusal as the exact arm.  `at_leaf` closed it while it WAS a
+       leaf and now reports `No applicable tactic`, which is `at_leaf`'s own
+       `first` running out, not a missing lemma.  The cut arm takes the same
+       shape as the exact one above; `unmodeled` is a leaf via
+       lim_blind_unmodeled, already in at_leaf's list at :131. *)
+    destruct (munmap_free_ok (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len))); [at_leaf|].
+    change (munmap_cut_ok (setvl L (m_vmmaps m)) addr (page_round_up_Z (bv_unsigned len)))
+      with (munmap_cut_ok (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len))).
+    destruct (munmap_cut_ok (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len))); [|at_leaf].
+    apply at_alt; [at_leaf|].
+    apply at_bind; [apply at_modify; reflexivity | intros [] ? ? _; at_leaf].
 Qed.
 
 Lemma madvise_at : forall L i m addr len adv, lim_at L i m (madvise_spec addr len adv) (madvise_spec addr len adv).
@@ -182,6 +205,16 @@ Proof.
   set (n := Z_to_bv 64 (page_round_up_Z (bv_unsigned len))) in *.
   change (vm_noaccess (m_vmmaps (setL L m))) with (vm_noaccess (m_vmmaps m)) in *.
   change (vm_maps (m_vmmaps (setL L m))) with (vm_maps (m_vmmaps m)) in *.
+  (* 75d69e00 Sys/Mm/Mprotect.v:293 and :359: the revision put the vDSO/vvar pair's gate
+     ABOVE the containment test, in the spec and in the budget mark alike -- a request that
+     meets the pair is [unmodeled], which is not a refusal, so the mark answers [false] there
+     rather than reading the budget.  That is why [R1]/[R2] are no longer a bare [negb _ =
+     false] and the gate has to be taken before [negb_false_iff].  [setL] rewrites [m_lim]
+     alone, so the pair's range is the same on both sides. *)
+  change (vdso_reserved (m_kernel (setL L m)) (vdso_top (m_vmmaps (setL L m))))
+    with (vdso_reserved (m_kernel m) (vdso_top (m_vmmaps m))) in *.
+  destruct (negb (region_free (vdso_reserved (m_kernel m) (vdso_top (m_vmmaps m))) addr n));
+    [at_leaf|].
   destruct (map_contains (vm_noaccess (m_vmmaps m)) addr n && map_contains (vm_maps (m_vmmaps m)) addr n).
   - apply negb_false_iff in R1, R2.
     apply at_alt; [at_leaf|].

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the 6 MiB zero-filled stack window): changed knRE0; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Src0ReadErr_defs.v, lines 49-55. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -49,7 +50,13 @@ Definition srRE0 : list expr := Eval vm_compute in sr_after_call_j srRE_base KEP
 (* [comment removed for export] *)
 Definition knRE0 : list kentry :=
   [KAlign (EVar 0) 16; KRange (EVar 0) 0x7fff80000000 0x800000000000;
-   KWr (SA (EVar 0) (-8388608)) 8388608;
+   (* THE ZERO-FILLED WINDOW, old beside new: [KWr (SA (EVar 0) (-8388608)) 8388608] ->
+      [KWr (SA (EVar 0) (- DRV_ZWIN)) DRV_ZWIN], DRV_ZWIN = 6144513 = StoreOk.stack_window_depth
+      (Bs0MainEntry).  The 8 MiB row is FALSE at LPS 75d69e00 (wrap_mem zero-fills only to
+      MemSplit.wok_lo sp0 = sp0 - 6144513).  Discharged by [Bs0ReadErr.know_okRE] from
+      [stack_writable], which Bs0DrvH proves off [Bs0MainEntry.kn_stack]'s narrow row.
+      This run's own stack reach is a few hundred bytes under sp0 ([BUF_LO] = -560). *)
+   KWr (SA (EVar 0) (- DRV_ZWIN)) DRV_ZWIN;
    KRange (EVar 2) 0x7fff80000000 0x800000400000;
    KWr (SA (ELit 0) 0xb6000) 0x34000;
    KImg 0x10000 0xb6f20; KImg 0xb6f21 0xb6f69; KImg 0xc6f69 0xc8910; KImg 0xe89e8 0xe8a08;

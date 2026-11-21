@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (2 recorded proofs replaced by written proofs (zb_app, zb_length)). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -18,11 +19,9 @@ Import ITree.Exc.
 Open Scope Z_scope.
 
 Lemma zb_app : forall a b, zb (a ++ b) = zb a ++ zb b.
-Proof.
-ltac2:(KReplay.run1 (kr_t_F_fwritex_stderr ()) [] "h01ah11bh21zp;1p;2p;5p;3p10000p4p710R0p1000Mp4p710R1p8P0p1000ip4p710R0p8p1001Gp4p7210P0p8p10023p4p710P1p8g002Rj13Tg0032j11Tg003Wj15Tg0045j14Tg004Xj28Tg005>j57Tg005Zj32Tg0067j10Tg0072j36Tg007LR1#3R0P1g007j#1#1#1#5R2#4R3f0R4,82X21f1R2P4D7%33A2124#0%02%0452336eX10W0o"). Qed.
+Proof. intros. unfold zb. apply map_app. Qed.
 Lemma zb_length : forall a, length (zb a) = length a.
-Proof.
-ltac2:(KReplay.run1 (kr_t_F_fwritex_stderr ()) [] "h01ah11zp;1p;2p;4p;3g002Rj18Tg0032j10Tg003Wj13Tg0045j12Tg004Xj27Tg008Oj46Tg0067j14Tg008nj21Tg0072j35Tg007LR0#8P0g007j#0#0#0#3R1#2R2f0R3,71X10P3C6g009N%43,12110335eW0o"). Qed.
+Proof. intros. unfold zb. apply length_map. Qed.
 
 Theorem fwritex_stderr_proof : fwritex_stderr_stmt.
 Proof.

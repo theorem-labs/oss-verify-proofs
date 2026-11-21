@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the auxv cells, which these steps do not use, are no longer read (auxv_cells). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp.bitvector Require Import definitions.
@@ -233,7 +234,6 @@ Proof.
   (* [comment removed for export] *)
   pose proof ES24 as (S_1 & S_2 & S_3 & S_4 & S_5 & S_6 & S_7 & S_8 & S_9 & S_10 & S_11 & S_12 & S_13 & S_14 & S_15 & S_16 & S_17 & S_18 & S_19 & S_20 & S_21 & S_22 & S_23 & S_24 & S_25).
   unfold EH_CAUGHT, EH_UNCAUGHT, SYSCAT_GUARD, UW_FLAGS, TD_LOCALE, LOCALE_MSGCAT, GLOBAL_LOCALE, CANARY, AUXVP in S_1, S_2, S_3, S_4, S_5, S_6, S_7, S_8, S_9, S_10, S_11, S_12, S_13, S_14.
-  pose proof (auxv_cells M24 av uid rnd hw S_18) as (X_0 & X_1 & X_2 & X_3 & X_4 & X_5 & X_6 & X_7 & X_8 & X_9 & X_10 & X_11 & X_12 & X_13 & X_14 & X_15 & X_16 & X_17 & X_18 & X_19).
   unshelve epose proof (e3p5u_conc fx24 R24 M24 (S - 1008) (A + 128) fb344 fb280 fb248 d3 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)
     as (fx25 & R25 & M25 & MS25 & K25 & R25_1 & R25_2 & R25_8 & R25_10 & R25_11 & FR25 & GR25).
   { (* [comment removed for export] *) pr. }
@@ -368,7 +368,7 @@ Proof.
     exact GR25.
     constructor. apply L5PK.wr_scratch; lia.
     constructor. }
-  clear X_0 X_1 X_2 X_3 X_4 X_5 X_6 X_7 X_8 X_9 X_10 X_11 X_12 X_13 X_14 X_15 X_16 X_17 X_18 X_19 S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20 S_21 S_22 S_23 S_24 S_25. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
+  clear S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20 S_21 S_22 S_23 S_24 S_25. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
   clear AG25 FR25 MS25. try clear STAT25. try clear K24.
   try clear c24_Sm424. try clear c24_Sm432. try clear c24_Sm440. try clear c24_Sm72. try clear c24_Sm80. try clear c24_Sm88. try clear c24_Sm96. try clear c24_Sm104. try clear c24_Sm112. try clear c24_Sm120. try clear c24_Sm128. try clear c24_Sm136. try clear c24_Sm144. try clear c24_Sm152. try clear c24_Sm160. try clear c24_Sm168. try clear c24_Sm24. try clear c24_Sm32. try clear c24_Sm8. try clear c24_Sm16. try clear c24_Sm472w1. try clear c24_Sm344w1. try clear c24_Sm280w1. try clear c24_Sm248w1. try clear c24_Sm224. try clear c24_Sm232. try clear c24_Sm200w1. try clear c24_Sm176. try clear c24_Sm184. try clear c24_Sm64w1. try clear c24_Om128z8. try clear c24_Om80z12. try clear c24_Op0. try clear c24_Op8. try clear c24_Fp24. try clear c24_Fp32. try clear c24_Fp40. try clear c24_Fp48. try clear c24_Fp56. try clear c24_Fp64w1. try clear c24_Fp65w1. try clear c24_Fp16w4. try clear c24_Fp8. try clear c24_Fp0. try clear c24_Om8. try clear c24_Om40. try clear c24_Om48. try clear c24_Om56. try clear c24_Om64. try clear c24_Om68w4. try clear c24_Om16. try clear c24_Om120. try clear c24_Om24. try clear c24_Om32. try clear c24_Om88. try clear c24_Om104. try clear c24_Om112. try clear c24_Om96. try clear R24_1. try clear R24_2. try clear R24_3. try clear R24_4. try clear R24_8. try clear R24_9. try clear R24_10. try clear R24_11. try clear R24_18. try clear R24_19. try clear R24_20. try clear R24_21. try clear R24_22. try clear R24_23. try clear R24_24. try clear R24_25. try clear R24_26. try clear R24_27. try clear DEF24. try clear HH24. try clear HQ24. try clear ES24. try clear DEFref_24. try clear DEFA_24. try clear DEFd3_24. try clear DEFd4_24.
   (* [comment removed for export] *)

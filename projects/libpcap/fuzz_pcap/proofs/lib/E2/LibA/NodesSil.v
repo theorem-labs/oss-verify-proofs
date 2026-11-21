@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the madvise step also proves, by RomBase.sys_rob_memfree and memfree_233, that madvise (233) does not read in_mem. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -9,6 +10,7 @@ From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.Lib Require Import PropExec MStat
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.LibA Require Import AcctCore ExecF ModelX MmXfer.
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.LibA Require Import ITreeA NodesA.
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require AllocSim2__Common.
+From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require RomBase.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs.
 From LinuxProcessSemantics.LinuxProcessSem.Checks.Sys Require Import Prelude Dispatch.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -132,7 +134,9 @@ Proof.
   assert (SPEC : syscall_spec (sys_input segs ms (Z_to_bv 64 233)) mo_ (Ok (madv_rsp addr len) nx [])).
   { apply check_syscall_ok_iff. rewrite CHK. unfold madv_rsp. fold a nn.
     change (w_is0 (Z_to_bv 64 0)) with true. rewrite (proj2 (listNN_eqb_eq _ _) eq_refl). reflexivity. }
-  exists nx. split; [| apply madv_next_mrel; exact MR].
+  exists nx. split; [| split; [apply madv_next_mrel; exact MR |]].
+  2:{ (* madvise (233) does not read [in_mem] (LPS 727298f3 [RomBase.memfree_233]) *)
+      apply (RomBase.sys_rob_memfree segs ms mo_ (Z_to_bv 64 233) Hsvc). exact RomBase.memfree_233. }
   split.
   - intros _. unfold nret.
     eapply (sstep_cfg_syscall segs CFG ms mo_ (Z_to_bv 64 233) (madv_rsp addr len) nx nx []);

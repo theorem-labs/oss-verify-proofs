@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: regenerated for libreac/fuzz_pcap's asan image by mkfiles.py (sha256 8e6d8a8535c7; internal record) (the musl instruction table (sysconf .. the end of the executable segment) and the exit guard are this image's own); module paths changed *)
-(* gated: a Theorem Labs lane PASS A+B at c061542723f / 731386609e0.  Every literal is read from the asan image named above; nothing is filled.  Control: mkfiles.py (sha256 8e6d8a8535c7; internal record) --control regenerates the donor's own file byte for byte. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* gated: a Theorem Labs lane PASS A+B.  Every literal is read from the asan image named above; nothing is filled.  Control: mkfiles.py (sha256 8e6d8a8535c7; internal record) --control regenerates the donor's own file byte for byte. *)
 From OSSVerify.libreac.fuzz_pcap Require Symbols.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List.

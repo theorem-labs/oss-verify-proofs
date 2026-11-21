@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/U/Prog/LLVMFuzzerTestOneInput_top.v, with its module paths changed; 465 of its 529 lines of code are new or changed and 233 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* the UBSan walk of fuzz_frame's LLVMFuzzerTestOneInput against its SR contract, with the callee contracts as Section hypotheses. *)
 (* LLVMFuzzerTestOneInput (fuzz_frame.c:265-284) in fuzz_frame.ubsan, 0x12d48, against
    LLVMFuzzerTestOneInput_sr_contract (U/Prog/LLVMFuzzerTestOneInput_c.v), in the form of libreac/fuzz_decode's
-   lib/U/Prog/LLVMFuzzerTestOneInput.v (bf7779f81ed7); the twin of lib/Prog/LLVMFuzzerTestOneInput.v. An input
+   lib/U/Prog/LLVMFuzzerTestOneInput.v; the twin of lib/Prog/LLVMFuzzerTestOneInput.v. An input
    of 2 ^ 26 bytes or more returns at once (LLVMFuzzerTestOneInput_early.v). Else the walk is a chain of
    Exec.evt segments (lt_seg_a.v, lt_seg_b1.v, lt_seg_b2.v, lt_seg_c.v) and calls through the SR contracts of
    malloc, check_round_trip and free (lt_glue.v):

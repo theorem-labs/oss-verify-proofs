@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-10: the malloc/free journal lemmas (aj_free_at, aj_free_at_io, aj_free_null_at, aj_free_null_at_io, aj_malloc_at, aj_malloc_at_io, aj_malloc_at04, aj_malloc_at04_io, aj_malloc, aj_free) no longer take In (call_trace0 ...) (as_universe B); the model laws get the trace length (call_trace_len) and the contracts the event bound. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/Reusable/YCbq.v, with its numbers changed; 205 of its 373 lines of code are new or changed and 3177 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/PaRt.v, with its module paths and module names changed; 430 of its 480 lines of code are new or changed and 323 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3): the helper lemmas of segment B11a's
    RBT cut (lib/B/Prog/pf_seg_B11a_h.v): the snprintf step through the walk's journal and the record after
    snprintf(cur->model, 24, "%s", low) at 0x88a04; the B11a segment lane of the image-B G3 walk owner (a piece sub-lane), 2026-10-30.
@@ -12,7 +13,7 @@
    Pure helper lemmas, no machine run of the segment.
 
    ADAPTED from a working branch + U piece walks; templates lib/B/Prog/pf_seg_B3_t.v (the B3 segment lane,
-   a lane branch 151b4054f431: the snprintf step b3t_*, copied here with the prefix b11ht_, module paths
+   a lane branch: the snprintf step b3t_*, copied here with the prefix b11ht_, module paths
    unchanged: image B's kit and Rt carriers) and lib/B/Prog/pf_seg_B11a_f.v's b11f_rconf_model (the record update
    through the three model windows, here through the one window the first snprintf writes).
    - b11ht_snp_pre, b11ht_snp_post, b11ht_aj_snprintf_FF, b11ht_aj_snprintf_atSF: the snprintf step at row 4

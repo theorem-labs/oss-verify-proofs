@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, target_phase_top and target_phase_k_top take the launch's kernel build (Amb), which target_vm reads. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -10,6 +11,7 @@ From OSSVerify.coturn.FuzzStunClient.images Require Import Plain.
 From OSSVerify.Proofs.coturn.FuzzStunClient.lib.Common Require Import PropExec CatExec StoreOk ShapeAlg.
 From OSSVerify.Proofs.coturn.FuzzStunClient.lib Require Import Spec TargetSpec TargetKDefs SymPlanSoundA RefWorld RefWorldK
   RefTargetPre RefTargetPreK RefTargetAssembly RefTargetHyps RefTargetPhase RefTargetPhaseK VFC_src0.
+From OSSVerify.Proofs.coturn.FuzzStunClient.lib Require Amb.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 (* [comment removed for export] *)
 From OSSVerify.Proofs.coturn.FuzzStunClient.lib.Common Require Import WalkFast.
@@ -35,17 +37,19 @@ Import ListNotations.
 Lemma ref_tphase_hyps_ok : ref_tphase_hyps.
 Proof. exact (ref_tphase_hyps_of fc_src0). Qed.
 
-Theorem target_phase_top :
+(* LPS 08b1429: target_vm(_k) read the launch's kernel build ([init_reserved]), so these quantify
+   the Amb as RefTargetPhase(K) do. *)
+Theorem target_phase_top {AMB : Amb.Amb} :
   forall (sp0 gm area brkv mas tid : Z) (content : list byte)
          (R : bvmap 5 word) (M : word -> option byte) (VM : VmMaps) (model : Model),
     target_pre sp0 gm area brkv mas tid content R M -> target_vm sp0 gm area VM -> SPSA.std_model VM model ->
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x13cb0) M (seg_rom RSEGS)) model) (t_target content (m_fs model)).
-Proof. exact (target_phase ref_tphase_hyps_ok). Qed.
+Proof. exact (@target_phase ref_tphase_hyps_ok AMB). Qed.
 
-Theorem target_phase_k_top :
+Theorem target_phase_k_top {AMB : Amb.Amb} :
   forall k : Z, (1 <= k <= 10)%Z ->
   forall (sp0 B area brkv mas tid : Z) (content : list byte)
          (R : bvmap 5 word) (M : word -> option byte) (VM : VmMaps) (model : Model),
     target_pre_k k sp0 B area brkv mas tid content R M -> target_vm_k k sp0 B area VM -> SPSA.std_model VM model ->
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x13cb0) M (seg_rom RSEGS)) model) (t_target content (m_fs model)).
-Proof. exact (target_phase_k ref_tphase_hyps_ok). Qed.
+Proof. intros k Hk. exact (@target_phase_k ref_tphase_hyps_ok k Hk AMB). Qed.

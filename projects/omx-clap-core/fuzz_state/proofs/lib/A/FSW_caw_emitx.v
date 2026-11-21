@@ -21,7 +21,7 @@
    RULE 24 (no function proved): there is no released ASan-image proof of any fuzz_state function,
    check_as_written included - second-agent check (internal path)
    (checker a Theorem Labs lane 2026-10-28 22:40-22:57Z; ossv proof index v5 built 2026-10-28T21:58:24Z,
-   ossv/recipes@566eb6ffa5df): all 54 functions CONFIRM; re-run for check_as_written 2026-10-29 03:29Z (BRIEF-WalkCaw,
+   ossv/recipes): all 54 functions CONFIRM; re-run for check_as_written 2026-10-29 03:29Z (BRIEF-WalkCaw,
    CONFIRM by a Theorem Labs lane 04:15Z). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

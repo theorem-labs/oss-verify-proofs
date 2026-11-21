@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx-GENERIC twin of ARM_gone's phase p1 on image B (lib/B/W_LLVMFuzzerTestOneInput_gone_p1.v,
-   a Theorem Labs lane's, fee5272ac13: the join to the snprintf call's return, GL1), for the conversion of ARM_gone to the cut
+   a Theorem Labs lane: the join to the snprintf call's return, GL1), for the conversion of ARM_gone to the cut
    invariants of lib/B/W_LLVMFuzzerTestOneInput_cut_x.v.  _gone_p1.v is not edited.
    - CITED from _gone_p1.v: its AR-free names (p1_ib, p1_fp and their lemmas, p1_akept, p1_errno, ...), with the Section
      variables they were generalized over;
    - RESTATED under their names + _x, merged per item with SmallX's image-A twin
-     lib/A/W_LLVMFuzzerTestOneInput_gone_p1_x.v (95a5de32ab2): the lemmas that read AR, and the phase lemma
+     lib/A/W_LLVMFuzzerTestOneInput_gone_p1_x.v: the lemmas that read AR, and the phase lemma
      gp1_join_l1_x.  The fake frame's image-B bound is base_x's frm_off_imgB_x, its 64-alignment W_frame_x's
      frame_al64_x under FRMF (as on image A).
    Section hypotheses beyond cut_x's header: _gone.v's TL, the snprintf contract SNP in its kit _x form
@@ -114,8 +115,8 @@ Variable RINV : lfcx -> Z -> lmod -> Prop.
 (* the allocator instance (W_kit.v): errno's 4 bytes lie in the image (pal_env, Reusable/YCbq.v api_env) *)
 (* @@ RESOLVED Hypothesis TL *)
 Hypothesis TL : PALib B.
-(* snprintf at the interceptor's entry: W_sites.v:308's contract, at image B's two stack-protector cells
-   (FR_GOT_GUARD 0x9ebd8, FR_GUARD 0x5f9a30, W_sites.v:301-302); a callee contract *)
+(* snprintf at the interceptor's entry: W_sites.v:309's contract, at image B's two stack-protector cells
+   (FR_GOT_GUARD 0x9ebd8, FR_GUARD 0x5f9a30, W_sites.v:302-303); a callee contract *)
 (* @@ RESOLVED Hypothesis SNP *)
 Hypothesis SNP : asnprintf_realizes_x B ARx (SIGMA WS_snprintf) FR_GOT_GUARD FR_GUARD.
 (* INSTANCE FACT, _gone_p1.v:92-101's text over ARx: the GOT word FR_GOT_GUARD = 0x9e658 holds &__stack_chk_guard =
@@ -139,7 +140,7 @@ Hypothesis GN_LIT_FMT : ashp_x (PI := PB_fr) ARx (VAL (A_OBJ 17)) 7.
 (* ================================================================== the printf text *)
 (* @@ AX-ONLY Hypothesis BLKN *)
 Hypothesis BLKN : forall ly S Hp (W : world segs) mem md p n, ARx ly S Hp W mem md -> In (p, n) (ablocks B ly S) -> 0 <= n.
-(* W_frame_x.v:105's Section hypothesis FRMF, for frame_al64_x / shadow_hull_vis_of_frame_x *)
+(* W_frame_x.v:106's Section hypothesis FRMF, for frame_al64_x / shadow_hull_vis_of_frame_x *)
 (* @@ AX-ONLY Hypothesis FRMF *)
 Hypothesis FRMF : forall ly S Hp (W : world segs) mem md cid pos, ARx ly S Hp W mem md -> In (cid, pos) (frames S) ->
   ly_F ly mod 4096 = 0 /\ fs_frame_off cid pos mod 64 = 0 /\ 64 <= fs_frame_bytes cid /\ fs_frame_bytes cid mod 64 = 0.

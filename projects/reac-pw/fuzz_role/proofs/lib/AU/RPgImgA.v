@@ -2,13 +2,14 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/bzip2/bzip2_compress_target/lib/Bz/B0Traps.v, with its numbers changed; 131 of its 139 lines of code are new or changed and 155 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgImgA.v at dd9ff534326; the same record
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgImgA.v; the same record
    filled with image B's values (fuzz_headamp.asan-ubsan), each measured on image B, none copied from image A. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/AU/HPgImgB.v, with its module paths, module names, addresses and numbers changed; 89 of its 125 lines of code are new or changed and 103 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgImgA.v at 0de5d668c87; the same record for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgImgA.v; the same record for
    image B (fuzz_role.asan-ubsan), with every value re-measured on image B's own pinned bytes: the side-stack class,
    the four cut pcs, the real frame's size, the four cut lists, the frame's two shadow patterns, the two segments'
    write ranges, the checked real-frame range, the registered globals, the strings and the read-only cells. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_role image B (fuzz_role.asan-ubsan, pinned sha256
    b255d4935da5af137a3967dbe33380ea43be8e78bfe05d1e356e0a2be8a69ff0; symbols, the globals table and the frame
    descriptor from the unstripped twin dc791783f32962615e18a5f5cffae758ba56eb5dc87f70913c3579b101b4406a, whose

@@ -3,13 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: the walk of reac_box_catalogue on fuzz_segconf.asan-ubsan (image B, pin sha256
    c3796c0b38f3, twin 80e82127e8ca; entry 0x8a8a0, 84 bytes, 21 instructions, a 16-byte frame, no side-stack
    frame): reac_box_catalogue_contract of lib/B/Prog/reac_box_catalogue_c.v (image B's copy of the image-A owner's FINAL
-   text at 6f783602b5e3) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
+   text) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
    entry, SRr of apost_base at the return, over `Context {PI : PAImg seg_listing}` of image B's listing,
    lib/B/Prog/SegPa.v).
-   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane, commit
-   434ade288123, both arms): the same entry seeds, token runs and return steps over image B's listing modules and
+   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane,
+    both arms): the same entry seeds, token runs and return steps over image B's listing modules and
    B's kit copies. The UBSan alignment check is read from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_catalogue.v
-   at origin/ossv/recipes 3abc3740de97 (the same image-B code but 4 pc-relative words; caller-journal form, not
+   (the same image-B code but 4 pc-relative words; caller-journal form, not
    copied), whose token run decides it the same way.
    Image B's code differs from image A's by two instructions: `andi a1,a0,7` (0x8a8ac) and `bnez a1,0x8a8ec`
    (0x8a8b0) to `unimp` (0x8a8ec), the UBSan alignment check of the 8-byte store through c.
@@ -37,6 +37,7 @@
    definitions (SegInstA's names at image B): SegInstB.STK_reac_box_catalogue and SegInstB.catA, tied to this walk
    by the lemmas STK_reac_box_catalogue_B (the value 16) and catA_B (listing object 77 of B's seg_objs). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/reac_box_catalogue.v, with its module paths and module names changed; 430 of its 485 lines of code are new or changed and 398 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* m_file on fuzz_segconf.asan (image A), segment S_MF_FRONT, the call pieces of the line head (MF-CUTS-A.md section 4;
    lib/A/Prog/m_file_s_front_m.v's points):
      fr_head  HEAD 0x860d0 `li a1,10; mv a0,s11; jal` the strchr wrapper (trampoline 0x43a28, the interceptor-layer owner's row 6
@@ -47,7 +48,7 @@
      fr_sl    SL 0x860f0 `add s7,s11,a0`: at E with s7 = p + |rest| = p + L (no '\n': the line is the whole text left).
    Each run is over a state of the registers alone (no region: the three pieces read and store no byte themselves),
    so the head's facts cross it by fr_ctx_run. A wrapper call is the step of PaArt.v's aj_art_at (as fuzz_command's
-   check_reply_s2.v:589-612 at 501c0d516c69 steps memchr), at sp = s1 with the wrapper's window below s1 (2 * ESTACK
+   check_reply_s2.v:589-612 steps memchr), at sp = s1 with the wrapper's window below s1 (2 * ESTACK
    for strchr, ESTACK for strlen); its premises come from the text facts the head keeps (m_file_pre's text, the text's
    heap block, the band room amem_range t (|s| + 8)), and the head's facts cross it by m_file_k.v's mf_keep_art0.
    The FRONT call sub-lane of the G2 walk owner's G2. *)

@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cjson/cjson_read_fuzzer/lib/A/F_vsnprintf.v, with its module paths and module names changed; 91 of its 113 lines of code are new or changed and 2118 lines of the source are left out. *)
-(* Image B twin of lib/A/RT_pf_stmt_k.v at d49bd1db505: module paths lib.A -> lib.B; 1 image numeral moved to fuzz_reply.asan-ubsan by symbol + offset, each checked against that image (CHAINB-numerals.tsv sha256 3cedf5e564f7; internal record). *) (* fuzz_reply.asan-ubsan's snprintf interceptor chain, KEEP-FX statements: RT_pf_stmt.v's vsnprintf_icpt_stmt /
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Image B twin of lib/A/RT_pf_stmt_k.v: module paths lib.A -> lib.B; 1 image numeral moved to fuzz_reply.asan-ubsan by symbol + offset, each checked against that image (CHAINB-numerals.tsv sha256 3cedf5e564f7; internal record). *) (* fuzz_reply.asan-ubsan's snprintf interceptor chain, KEEP-FX statements: RT_pf_stmt.v's vsnprintf_icpt_stmt /
    snprintf_icpt_stmt with the floating-point state KEPT and no rounding-mode premise.
 
    Why (SNP-ROUTE.md (sha256 5a5fabe9f628; internal record) section 7.5, the ruling): the integrated W_sites.v asnprintf_realizes returns at the same FP
@@ -66,7 +67,7 @@ Proof.
   split; [intros k _; reflexivity|]. split; [exact ST|]. split; [exact SSP|]. exact DST.
 Qed.
 
-(* ---- ___interceptor_vsnprintf at `entry`: RT_pf_stmt.v:124-154 without frm0, keep-fx post ---- *)
+(* ---- ___interceptor_vsnprintf at `entry`: RT_pf_stmt.v:125-155 without frm0, keep-fx post ---- *)
 Definition vsnprintf_icpt_stmt_k (set_ready : mem -> Z -> Z -> Z -> Prop) (vf_ready : vf_guard) (entry : Z) : Prop :=
   forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
          (F : bvmap 5 word) (fc : bv 32) (m : mem)
@@ -96,7 +97,7 @@ Definition vsnprintf_icpt_stmt_k (set_ready : mem -> Z -> Z -> Z -> Prop) (vf_re
       (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
           F (Z_to_bv 64 entry) fc None m (seg_rom img_segs)).
 
-(* ---- snprintf at __wrap_snprintf 0x42234: RT_pf_stmt.v:158-186 without frm0, keep-fx post ---- *)
+(* ---- snprintf at __wrap_snprintf 0x42234: RT_pf_stmt.v:159-187 without frm0, keep-fx post ---- *)
 Definition snprintf_icpt_stmt_k (set_ready : mem -> Z -> Z -> Z -> Prop) (vf_ready : vf_guard) : Prop :=
   forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
          (F : bvmap 5 word) (fc : bv 32) (m : mem)

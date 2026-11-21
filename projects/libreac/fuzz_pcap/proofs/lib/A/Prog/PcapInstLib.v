@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: the PALib / PALibF / frame-flag subset of cgif c8557374ad2e lib/A/ACed.v
+(* Modified by Theorem Labs, 2026-10: the PALib / PALibF / frame-flag subset of cgif lib/A/ACed.v
    (tfibX_PALib0 :77-87, tfibX_PALibF0 :105-114, tfibX_FFL :133-144), stated for libreac/fuzz_pcap's ASan build at
    B := PcapB (lib/A/AD2l.v) and the listing's image instance PI := PcapEntryTop.PI_pcap, each in the form of
    lib/A/Prog/PcapEntryInst.v's hypothesis (TL, TLF, FFL). Adapted:
@@ -16,6 +16,7 @@
    - The donor's TFIB_IMG_LO / TFIB_IMG_END literals are ACeh's 0x10000 / pcap_img_end = YImgTop.IMG_TOP, and off_img
      is stated with YImgTop.IMG_LO / IMG_TOP (lib/Reusable/YCbq.v:792), so the proofs open those names for lia.
    - Each statement names its RunCeil, listing and image instance explicitly (the @ form PcapEntryInst.v uses). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

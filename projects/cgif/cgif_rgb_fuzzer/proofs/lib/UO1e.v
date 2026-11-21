@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the new kernel-unchanged premise of YO2m.ledger_same supplied at its one call). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -595,7 +596,7 @@ destruct (Wlow _ Wx) as [Hlo|[Hi|(q & Hq & Hqx & _)]]; [unfold CTX_SIZE in *; li
 -- destruct (key_range3 (hd m ms) (CTX + off + Z.of_nat k) (Kh0 Hne) ltac:(lia)) as (NI & _). apply NI. apply (so_ctx_img _ SO). change (ms_ctx B) with CTX. unfold CTX_SIZE in *. lia.
 -- destruct (key_range3 (last ms m) (CTX + off + Z.of_nat k) (Khp Hne) ltac:(lia)) as (NI & _). apply NI. apply (so_ctx_img _ SO). change (ms_ctx B) with CTX. unfold CTX_SIZE in *. lia.
 * destruct (key_range3 q (CTX + off + Z.of_nat k) Hq Hqx) as (NI & _). apply NI. apply (so_ctx_img _ SO). change (ms_ctx B) with CTX. unfold CTX_SIZE in *. lia. }
-pose proof (YO2m.ledger_same B L1 s3 md1 (mid_ledger _ _ _ _ _ HM) (mid_ledgerx _ _ _ _ _ HM) s' md1 Srg Sbrk eq_refl eq_refl eq_refl) as [LG2 LX2].
+pose proof (YO2m.ledger_same B L1 s3 md1 (mid_ledger _ _ _ _ _ HM) (mid_ledgerx _ _ _ _ _ HM) s' md1 Srg Sbrk eq_refl eq_refl eq_refl eq_refl) as [LG2 LX2].
 split.
 - exact SO.
 - exact MR'.

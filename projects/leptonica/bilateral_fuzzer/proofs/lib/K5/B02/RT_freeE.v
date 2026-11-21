@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (recorded (KReplay) proofs re-proved by tactics). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -26,7 +27,10 @@ Open Scope Z_scope.
 (* [comment removed for export] *)
 Lemma artm_eq : forall Σ Σ' mo, lay Σ' = lay Σ -> sec Σ' = sec Σ -> rt_eager Σ' = rt_eager Σ -> ARTM_A Σ mo -> ARTM_A Σ' mo.
 Proof.
-ltac2:(KReplay.run1 (kr_t_RT_freeE ()) [] "h01Hh11zh21lh32A1h42A2h52A3h62A4h72ASh82E1h92E2h:2E3h;2moh<2Σh=3Σ'p;1p;3p;2p;4p;6p10000p4p7210R0p1000\p4p710p8P0g0018R0p4p710p8g001Vj16Tg002Nj31Tg002hj1UTg003Hj1?Tg004@j1ATg005=j2>Tg0066j1;Tg006[j1\Tg0079j1[Tg007\j2YTg008<j12Tg0093j1DTg009ij3ETg00:Dj1XTg00;@j38Tg00;kj1<Tg00<ej1^Tg00=cj25Tg00>^R1j20Tg00?9j2JTg00?Qj17Tg00@Mj3=Tg00@jj1HTg00Ahj2CTg00BDj1TTg00CJj1STg00DKj3QTg00E0j1PTg00Eij2OTg00FSj1GTg00GMj1NTg00HGj1RTg00I?j2BTg00J@j1MTg00K>j1WTg00L<j1VTg00M@j4FTP0j6LTg00M[j1_Tg00NRj2KTg00Noj4]Tg00OKR0f0R2#_g00Oi31p=4f1R3#Hg00PeR4%A2'K'Cp=3f2R51032'0p=9g00Q`R6P3g00R\P2C]p=I1K42p=Zg00SWg00T7712p=@f4R7f3R81032,05'0'0p=:1K42,C3p=a%H3/C2p=`g00TWR4g00URg00VHR9%63%6531%U6R:%?5%?831%A8%A7510f5R;/>8P1g00WF#;#;#;#;#;#;#\R8#[R</Y<R<g00WkR=%27R>#D5E<f6R?#X38%U<R@%<>g00Xd#^RA31%4>137?15?7'0391>?;P2%2?#D9E<=f8R?#X58<f7R7#2R>#<=1@A%4>f9R>,3715>7'039P1%2?R7#<=1@A%47f:R7,3?157?391>7>P2%27#<=1@Af;R7#2#4f=R?,3715?739P1f<R7#2#4f>RB,3715B7'01>B?P2%2B#4f?RBfAR7'3157B'0P1f@R1fBRB'315B11>B7P2fDR1,3BfERCfCRD'5P9fFRE#6RF%2CRG#DRH9E<=RI%?ERJ,J6,I<RK%725=<58<%<G=1@ARL%4GRM%HCRN%AERO#ZRP'CRQ%TCRR%SCRSg00Y\RT=Q<HRH%PG,O8RU%G2510%2E#N%RE5=</B2#@RE%75/B3#@[^10%MC%WC%VC39R5'0D:D:X29P:PJ1J62,I<fGRJ#6R9#7RV5=<98<IPLPMPQPRPSPH%G9910UfI#6#7/B3#@\E^10/05D:R5D:X2:P0PO%?J,J6,I<==<V98<IPLPM1aN2P5D:X10%21R5#DRN9E<=%7F9=<K58<%<5=1@ARA%45R@1`1PRP%T1%S1AQ<TN%P5,O8%GF510%NG%RC5=</B2#@fH#6#7/B3#@[^10%M1%W1%V1'039D:R0'0R<'0RG'0P?PAPGP>P@P<P;PPP0P3P2CFCFCFCF%ACP7EL%?CPBEL%6CPDEL1>C1eW7W6P3P2O2n2001000000121000000W0W5P3P2O2n2001000000121000000W0W4P3P2O2n2001000000121000000W0W3P3P2O2n2001000000121000000W0W:W9W8W;X=4W<o"). Qed.
+  intros Σ Σ' mo E1 E2 E3 (A1 & A2 & A3 & A4 & AS).
+  unfold ARTM_A, artm_sys, confined0, rt_maps in *. rewrite E1, E2, E3. split; [exact A1|]. split; [exact A2|]. split; [exact A3|]. split; [exact A4|].
+  exact AS.
+Qed.
 
 Lemma rt_eager_fp : forall Σ c i n p D' l, 1 <= c <= 31 -> rt_eager (set_ql (free_p Σ c i n p D') l) = rt_eager Σ.
 Proof.

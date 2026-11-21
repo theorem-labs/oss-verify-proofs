@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: only a blank line removed, after OBL_all. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -28,5 +29,4 @@ Definition OBL_brk2 : Prop := brk2_stmt SEGS A nx0 LIMIT TOP SINV argH FS0.
 Definition OBL_sys : Prop := forall y : snode, sys_stmt SEGS A nx0 LIMIT TOP SINV argH FS0 y.
 Definition OBL_exit : Prop := exit_stmt SEGS A LIMIT TOP SINV argH FS0.
 Definition OBL_all : Prop := OBL_mmap2 /\ OBL_mmapin /\ OBL_mprotect2 /\ OBL_brk2 /\ OBL_sys /\ OBL_exit.
-
 End a.

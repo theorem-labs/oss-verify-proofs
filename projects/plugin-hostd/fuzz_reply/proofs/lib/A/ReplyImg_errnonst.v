@@ -2,9 +2,9 @@
    errno_nstatic_t at reply image A, as a CLOSED lemma over the unit's own TfibSyms tables (lib/A/AD2l.v TfibB:
    as_errno := TFIB_ERRNO :26, as_owned_static := Tfib_owned_static :37, both lib/A/AF0m.v).
    The cf layer's name is not in this tree yet, so the statement is the UNFOLDED text of
-     Definition errno_nstatic_t (YGcfInstErrno.v:90, F1)  =
+     Definition errno_nstatic_t (YGcfInstErrno.v:91, F1)  =
      forall a, as_errno B <= a < as_errno B + 4 -> ~ Exists (in_zr a) (as_owned_static B)   at B := TfibB.
-   Proof pattern: cgif's errno_nstatic_cgif (YGcfInstErrnocgif.v:44 @ bdbe5c2a7e55), which destructs the owned list
+   Proof pattern: cgif's errno_nstatic_cgif (YGcfInstErrnocgif.v:44), which destructs the owned list
    entry by entry; here one vm_compute decides "no owned range meets [errno, errno + 4)" for the whole list, with the
    kernel cast recorded (whole-goal vm_compute; reflexivity). Author: a Theorem Labs lane. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.

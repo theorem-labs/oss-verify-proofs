@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (ref_file_path's recorded (KReplay) proof re-proved by tactics, for the argv pointers that no longer take the stack pointer). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool String.
@@ -89,5 +90,18 @@ ltac2:(KReplay.run1 (kr_t_V2MainFile ()) ["MainFile"] "p'0h04__x1h17__arithh24__
     realizes RSEGS (mkCfg (mkst regs0 (Z_to_bv 64 0x17868) mem0 (seg_rom RSEGS)) model0)
              (t_alt2 (t_die (msg_cannot_open path) fs0) (t_opened data fs0)).
 Proof.
-ltac2:(KReplay.run1 (kr_t_V2MainFile ()) ["MainFile"] "h03bufh13caph21jh31th43HDRh52HKh62HLh73HOWh82HRh95Hplenh:4Hpndh;4Hpneh<1Mh=2P0h>2P1h?2P2h@2P5hA1RhB4valsp;1p;3p;2p;Pp;Qp;Np;Bp;5p;4p;Rp;^p;>p;Kp;6g0036j13Tg003[j18Tg00:nj1CTg00CTj1DTg0026j1YTg008<j34Tg00[Oj1>Tg00;Qj27Tg00<Mj11Tg00UKj2[Tg019Vj1XTg01:MlPWTg01;DlQVTg01<=lNUTg01=7lBRTg007@j12Tg001Xj1:Tg0049j2?Tg01>3j1NTg01>oj5MTg01?hj2LTg01@]j1KTg00L4j2<Tg01Agj5JTg01Baj2;Tg01C\j2ITg01D_lBHTg01F3j2OTg01F_j1PTg01GAj26Tg01HEj4QTg01I;j4FTg01J1j4@Tg01Jcj3STg01L3j4kTg01MCj3jTg01N9j2iTg01O1lRhTg01Ool^gTg01Q5l>eTg01QmlKZTg01Rnj1BTg00BSj2\Tg00??j1]Tg00K3j2^Tg01Slj29Tg00Pmj2_Tg005ij2`Tg01Tej6aTg000Lj6bTg00^3j2cTg0000j6dTg01Uhj6TTg01Vij6fTf0R0#3#3p=5%10#1p==%10#1#1#1p=G%10#1#1#1#1#1#1#1p=A%10#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1p=E%10#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1#1p=0g009RR1#3R2#5R3#8#CR4#DR5p,4pathR6%Y434#>g01Wh9456#>1746g013<R5#1R7#1R8#1#=R9#1#GR:#1R;#1#=#A#ER<#1#A#E#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0#0'[p,3AMBR=p,2ALR>p,2CLR?p,3ASRR@p,3sp0RAp,3a0sRBP6p,4envvRCp,3tidRDp,4mem0REp,3fs0RFp,6stdin0RGp,3limRHp,4HvspRIp,4HtidRJp,4dataRKp,7AL_segsRLp,6AL_romRMp,7AL_freeRNp,5AL_tpROp,7AL_globRPp,8AL_grantRQp,8AL_errnoRRp,5AL_roRSp,5AL_rwRTp,5AL_hiRUp,6AL_retRVp,6AL_envRWg01XkRX#Xg00i8RY%33#5#8R3#CRZg008VR[P=P>P?P@PAPBP6PCPDPEPFPGPHPIPJPKPLPMp,9AL_mallocR\POPPPQPRPSPTPUPVPWPXf2RXf1R]P0P=P>P?P@PAPBP6PCPDPEPFPGPHPIPJPKPLPMPNPOPPPQPRPSPTPUPVPWp,2FZPXP]P0MPWMQVW1W0W2MNUP=P>P?P@PAPBP6PCPDPEPFPGPHPKg018_R^PXP]P0MBR^1[^0Z^2YR[eP[g01YbR[g01[4p,5regs0R_%31#2#2#2#2#5#5#2#2#3#2#3#5#:,?3PE%N[DMp,6model0'L%K6/<FR`PFPKP^P;P5DJR;';1IKFRa,;`P=PAPBP6PCPDP_PEp,3brkRbp,5mbaseRcPFPGPHp,3HvaRdp,3HveRePIPJp,2MERfPKP`P;p,5HfileRgf3RhPXP]P=PAPBP6PCPDP_PEPbPcPFPGPHPdPePIPfp,5HfitsMBH%DZ%22#8/OZ%P4\Z17ZX=4Y<16h5=4ZAf4R</67PAPBP6PCCQ54Zf5R7/68PAPBP6PCCF54Zf6R8/69=4ZDP=PBP6f7RZC@g01[l;S8P[P=PBP6f8R[C@P8g01\eCkAjAEZP=P>P?P@PAPBP6PCPDP_PEPbPcPFPGPHPIPJPfp,4HbrkPLPMP\POPPPQPRPSPTPUg01]^PWg0094,?3,i6R3P;P=P>P?P@PAPBP6PCPDPEPbPcPFPGPHPIPJPKPgPLPMP\PNPOPPPQPRPSPTPUPVPWP^f;MRhf:f9P[PZP8P7P<PhPXP]P0M^gW7W5W8W@W?W>W=W6W<WAWBP=PAPBP6PCPDPEPbPcPFPGPHP3P;M>eeMKZP`P`P;Pa%B`g00m=R`g00l=P`%:2%21#3#2#3#:'\174K#]'^g014c/<FP^n0100000020000R419;0X3`P`P41904X3`%B4P;PFPKP^P:P51_5:,`YEaEb1cKFg01^XEd19;aeETEfb4W9W:W;o"). Qed.
+  intros Hpne Hpnd Hplen.
+  eapply rz_conseq.
+  - eapply open_file_pipeline; try eassumption.
+    + eapply open_err_branch_cannot_open; eassumption.
+    + intros vals R M HL P0 P1 P2 P5 HR HK HOW.
+      eapply malloc65536_node; try eassumption; try exact AL_retL.
+      eapply read_phase; try eassumption.
+      intros j buf cap. eapply header_cases; try eassumption.
+      intros j' buf' cap'. eapply trun_entry; try eassumption.
+      eapply tl0_run; eassumption.
+  - apply t_alt2_congr; [apply t_eq_refl|].
+    erewrite rshape_collapse by first [lia | eassumption].
+    unfold t_opened. rewrite <- body_shape. apply t_eq_refl.
+Qed.
 End MainFile.

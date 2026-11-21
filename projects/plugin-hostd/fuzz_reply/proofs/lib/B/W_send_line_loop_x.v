@@ -3,12 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: the loop segment of fuzz_reply's send_line walk on IMAGE B
    (fuzz_reply.asan-ubsan), in the form of the cgif donor's loop over concrete cut states
    (proofs/cgif/cgif_file_fuzzer/lib/A/AC8b.v tcbb_loopX).  Structure ported from image A's
-   lib/A/W_send_line_loop.v (a working branch 9367674296a / ccd62d4c6f6: sl_arm_eintr, sl_arm_dead, sl_arm_data,
-   pb_sl_loop_cut) and from the old image-B walk a working branch 37280b674f71 lib/B/Prog/send_line_loop.v
+   lib/A/W_send_line_loop.v (a working branch: sl_arm_eintr, sl_arm_dead, sl_arm_data,
+   pb_sl_loop_cut) and from the old image-B walk a working branch lib/B/Prog/send_line_loop.v
    and send_line_run.v (the rounds from the loop top 0x828f8). *)
 (* Modified by Theorem Labs, 2026-10-30 (a Theorem Labs lane, row G-BSL-b):
    the ARx-generic room-form twin of W_send_line_loop.v's Section c: pb_sl_loop_cut_x over ARx, the C3 peak re-fit
    and the room threading (the B twin of a Theorem Labs lane's lib/A/W_send_line_loop_x.v) *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the loop segment of fuzz_reply's send_line walk on IMAGE B
    (fuzz_reply.asan-ubsan), in the form of the cgif donor's loop over concrete cut states
    (proofs/cgif/cgif_file_fuzzer/lib/A/AC8b.v tcbb_loopX), over a generic allocator relation (lib/B/W_send_line_loop.v
@@ -28,8 +29,8 @@
    room record RP.  Its Section header is W_send_line_cx_x.v's, verbatim.  On B sl_loop_stmt_x is
    `forall n, sl_loop_at_x n`, so the induction is over n with sl_loop_at_x, as the AR walk's is over sl_loop_at.
    The text is the AR walk lib/B/W_send_line_loop.v (a Theorem Labs lane's B walk with the C3 peak re-fit) under the conversion
-   image A's lib/A/W_send_line_loop.v underwent into lib/A/W_send_line_loop_x.v (a working branch,
-   f3505367c08).  W_send_line_loop.v is not edited; its AR-free lemmas U_rem and sl_canon are cited, not copied, as on
+   image A's lib/A/W_send_line_loop.v underwent into lib/A/W_send_line_loop_x.v (a working branch).
+   W_send_line_loop.v is not edited; its AR-free lemmas U_rem and sl_canon are cited, not copied, as on
    A, but at the Section's B: B's closed W_send_line_loop.U_rem and sl_canon take the AR Section's variable B as their
    first explicit argument (`Arguments W_send_line_loop.U_rem B E ...`), which no statement of theirs names.  The other
    AR-free helpers and the C3 peak lemmas are W_send_line_md.v's, as in the AR walk.  B's numerals, B's UBSan
@@ -100,26 +101,26 @@ Context {hl : Z}.
 Hypothesis LAWS : AR_laws_x SEGS B ARx hl.
 (* a Theorem Labs lane's HP0 ruling: the generic relation holds at the empty ghost list only *)
 Hypothesis HP0 : forall ly S Hp W mem md, ARx ly S Hp W mem md -> Hp = [].
-(* a live block's request is below 2 ^ 30 (image A's BLKM text, W_LLVMFuzzerTestOneInput_exit_x.v:269; the top states it
+(* a live block's request is below 2 ^ 30 (image A's BLKM text, W_LLVMFuzzerTestOneInput_exit_x.v:270; the top states it
    at ARX from the cf instance's AR_blocks_law_cf): the copy half's memcpy at 0x82a34 needs n < 2 ^ 32 *)
 Hypothesis BLKM : forall ly S Hp W mem md p n, ARx ly S Hp W mem md -> In (p, n) (ablocks B ly S) -> n < 2 ^ 30.
-(* W_send_line_cx.v:98-106, AR-free *)
+(* W_send_line_cx.v:99-107, AR-free *)
 Hypothesis HG : gx_ok SEGS B (G_SL B RG).
 Hypothesis HGR : forall a, inG (G_SL B RG) a -> ~ in_rom SEGS a.
 Hypothesis HROMO : rom_out SEGS B (G_SL B RG).
 Hypothesis HGO : gx_ok SEGS B [(rg_client RG, 4); (rg_send_dead RG, 1); (rg_send_max RG, 8)].
 Hypothesis MTL : ameter_laws MT.
 Hypothesis TL : PALib B.
-(* W_send_line_cx.v:108-110, the runtime and allocator sites over ARx (the allocator's at RP) *)
+(* W_send_line_cx.v:109-111, the runtime and allocator sites over ARx (the allocator's at RP) *)
 Hypothesis AERRNO : aerrno_realizes_x B ARx (SIGMA WS_errno_location).
 Hypothesis AMEMCPY : aintrin_realizes_x SEGS B ARx OCpy (SIGMA WS_asan_memcpy).
 (* The realloc site rule in its caller-context form (W_journal_x.v Section hc), as the top's ARE_x states it
    (CTX_AREALLOC, YCk0.v:34, holds [0x829f4]; YCk0.v:175 is send_line's edge to it); send_line hands the rule a cut
-   chain (ch = []), so the trace is the return address alone (image A's a0c781b35e6..0828d5d79f5 form). *)
+   chain (ch = []), so the trace is the return address alone (image A.. form). *)
 Variable CTX_R : list (list Z).
 Hypothesis AREALLOC : arealloc_cf_rule_c_x SEGS B PST ARx MT MMAX RP CTX_R (SIGMA WS_realloc).
 Hypothesis HCTX_slr : In [BASE + AF_fr_send_line + 0x1a0] CTX_R.   (* realloc returns to 0x829f4 *)
-(* W_send_line_cx.v:113-140, AR-free *)
+(* W_send_line_cx.v:114-141, AR-free *)
 Hypothesis HERRNO : as_errno B = as_tp B - 164.
 Hypothesis HERRZ : azs B (as_errno B) 4.
 Hypothesis HERRW : forall i, 0 <= i < 4 -> writable_at SEGS (fun _ => None) (as_errno B + i).
@@ -142,7 +143,7 @@ Hypothesis HRGD : zpairwise_disjoint
  (rg_send_max RG, rg_send_max RG + 8); (rg_nout RG, rg_nout RG + 8);
  (rg_capout RG, rg_capout RG + 8); (rg_out RG, rg_out RG + 8);
  (as_errno B, as_errno B + 4)].
-(* W_send_line_cx.v:141-142, the run chain over the generic journal (W_journal_x.v Section g) *)
+(* W_send_line_cx.v:142-143, the run chain over the generic journal (W_journal_x.v Section g) *)
 Let RUN := paj_run_x_x B PST ARx LAWS (G_SL B RG) HG 0 [].
 Let RUNTO := paj_run_to_x_x B PST ARx LAWS (G_SL B RG) HG 0 [].
 Let BR := paj_branch (PI := PI).
@@ -716,7 +717,7 @@ destruct HI as (lyL & SL & HpL & kL & evL & capL & outL & spent & rest &
   HJ & Hsp & H3 & H4 & Hgp & Htp & HraE & HR & HSP & HSV & Hcl & Hbr & Hsent & Hei1 & Hei2 & Hdd1 & Hev &
   HOUT & HGL & Hline0 & Hline1 & HROM & HLOK & HLG & Hcapq & Hdd2 & HMM & HLM & HAPK & HMOK & HMLE & HCOST & Hspent0 &
   HPerm0 & HPerm1 & HFR & HRM1 & HRM2 & HCNT).
-(* W_send_line_loop_x.v:573 sl_exit_x at R *)
+(* W_send_line_loop_x.v:574 sl_exit_x at R *)
 Lemma sl_exit_xR : forall regsE ly S Hp W mem md c O mx no cap out Bl lyX SX HpX WX regsX memX mdX k out' rest kr,
 ajournal_gx_xR SEGS B PST ARx R (G_SL B RG) 0 [] SL_STK (spZ regsE) (ablocks_fp (aout_blks cap out)) ly S Hp W mem md [] lyX SX HpX WX memX mdX k ->
 spZ regsX = spZ regsE - SL_FRAME -> getr regsX 3 = getr regsE 3 -> getr regsX 4 = getr regsE 4 -> YK0s.ret_ok (getr regsE 1) ->
@@ -748,7 +749,7 @@ intros r _ a _. split.
 - exact (aview_eq_of SEGS (w_H WX) memX mem' a (Hm' _)).
 - unfold arm. apply writable_kept. intros HpA. exact (apresent_grows _ _ _ _ GRX HpA).
 Qed.
-(* W_send_line_loop_x.v:638 sl_arm_eintr_x at R *)
+(* W_send_line_loop_x.v:639 sl_arm_eintr_x at R *)
 Lemma sl_arm_eintr_xR : forall n, sl_loop_at_xR B PST ARx MT RP MMAX RG R n -> forall regsE ly S Hp W mem md c O mx no cap out line Bl WL regsL memL mdL sent eiL kr,
 SLI_xR B PST ARx MT RP MMAX RG R regsE ly S Hp W mem md c O mx no cap out line Bl WL regsL memL mdL sent eiL kr -> eiL <> 0 ->
 2 * (Z.of_nat (length Bl) - sent) + eiL <= Z.of_nat (Datatypes.S n) ->
@@ -1178,7 +1179,7 @@ split; [exact HPerm0|]. split; [exact HPerm1|]. split; [exact HFR|].
 (* the room: the round made no call that allocates, so the state is SL and its budget is unchanged *)
 split; [exact HRM1|]. split; [exact HRM2|]. exact HCNT.
 Qed.
-(* W_send_line_loop_x.v:1966 sl_arm_dead_x at R *)
+(* W_send_line_loop_x.v:1967 sl_arm_dead_x at R *)
 Lemma sl_arm_dead_xR : forall regsE ly S Hp W mem md c O mx no cap out line Bl WL regsL memL mdL sent eiL kr,
 SLI_xR B PST ARx MT RP MMAX RG R regsE ly S Hp W mem md c O mx no cap out line Bl WL regsL memL mdL sent eiL kr -> eiL = 0 -> ct_dd c = 1 ->
 SRrG SEGS R WL (mkCfg (mkst regsL (Z_to_bv 64 (BASE + A_sl_loop)) memL (seg_rom SEGS)) mdL)
@@ -1555,7 +1556,7 @@ apply (sl_exit_xR regsE ly S Hp W mem md c O mx no cap out Bl lyL SL HpL WL (ms_
 - (* the room: a dead send keeps kr (SLI_xR), and the round made no allocating call *)
   exact (HRM2 Hdd).
 Qed.
-(* W_send_line_loop_x.v:1977 sl_arm_data_x at R *)
+(* W_send_line_loop_x.v:1978 sl_arm_data_x at R *)
 Lemma sl_arm_data_xR : sl_copy_stmt_xR B PST ARx MT RP MMAX RG R -> sl_grow_stmt_xR B PST ARx MT RP MMAX RG R -> forall n, sl_loop_at_xR B PST ARx MT RP MMAX RG R n ->
 forall regsE ly S Hp W mem md c O mx no cap out line Bl WL regsL memL mdL sent eiL kr,
 SLI_xR B PST ARx MT RP MMAX RG R regsE ly S Hp W mem md c O mx no cap out line Bl WL regsL memL mdL sent eiL kr -> eiL = 0 -> ct_dd c = 0 ->
@@ -1911,7 +1912,7 @@ psrr_branch_tok RUNG BRR HS SHOK LBspan.
       | intros m Hm; apply YN3v.ew_havoc_old; exact Hm
       | exact X38 | exact HSn | exact HJ | keep_chainW | pres_chain ].
 Qed.
-(* W_send_line_loop_x.v:1990 pb_sl_loop_cut_x at R *)
+(* W_send_line_loop_x.v:1991 pb_sl_loop_cut_x at R *)
 Theorem pb_sl_loop_cut_xR : sl_copy_stmt_xR B PST ARx MT RP MMAX RG R -> sl_grow_stmt_xR B PST ARx MT RP MMAX RG R ->
 sl_loop_stmt_xR B PST ARx MT RP MMAX RG R.
 Proof.

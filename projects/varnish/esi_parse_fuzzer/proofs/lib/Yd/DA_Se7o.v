@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: sbm_reader: materialising lazy pages leaves the process, hence the channel reader, unchanged. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool FunctionalExtensionality.
@@ -247,6 +248,18 @@ Context {Clg : Ceiling}.  (* [comment removed for export] *)
   Lemma sbm_io : forall md md1, same_but_materialized md md1 ->
     m_fs md1 = m_fs md /\ m_fds md1 = m_fds md /\ m_halted md1 = m_halted md.
   Proof. intros md md1 SB. pose proof (same_but_materialized_frame md md1 SB). tauto. Qed.
+
+  (* 08b1429: channel-reader-premise; materialising lazy pages leaves m_proc, hence the reader, alone. *)
+  Lemma sbm_reader : forall md md1, same_but_materialized md md1 ->
+    m_channel_reader md1 = m_channel_reader md.
+  Proof.
+    intros md md1 SB. unfold m_channel_reader.
+    (* LPS 727298f3: take the [m_proc] equation of the frame lemma by its form, not its position *)
+    pose proof (same_but_materialized_frame md md1 SB) as F.
+    repeat match type of F with
+           | _ /\ _ => let F1 := fresh "F" in destruct F as [F1 F]; try (rewrite F1; reflexivity)
+           end.
+  Qed.
 
   (* [comment removed for export] *)
   Lemma view_rdn_real : forall A m md a n bs,

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image A' (asan #102 pin 1be0f53d96cb9d6c, unstripped twin bff8519bbe3ea0e4), the
    walk of same: memory facts, part B: what the calls same makes need of the tree at the current point of the walk.
    - strcmp (the wrapper __wrap_strcmp; YGcallMxmn.v astrcmp_realizes_xrom / aj_strcmp_at_xrom): a string of the tree
@@ -10,8 +11,8 @@
    - the slots of the key array: their shadow is addressable (sma_slot_ra).
    - same itself (the kit's tsame_specX, the induction hypothesis): the i-th kid of a container is a tree there, and its
      footprint is below YM05.alloc_ceiling, so apart from every stack window (sma_kid_tree).
-   Taken from the image-B' file lib/B/Prog/SameB_memB.v (a working branch e95b6ce78e87; the port of the old-A
-   walk's lib/A/Prog/Wsame_memB.v at a working branch 9a0674f0b5f2 to the #102 kit), renamed
+   Taken from the image-B' file lib/B/Prog/SameB_memB.v (a working branch; the port of the old-A
+   walk's lib/A/Prog/Wsame_memB.v at a working branch to the #102 kit), renamed
    smb_ -> sma_, at image A's PrhImg prh_img_A. No image constant, no address. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

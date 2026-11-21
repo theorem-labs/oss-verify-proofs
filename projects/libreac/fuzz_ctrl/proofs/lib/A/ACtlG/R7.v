@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names, addresses and numbers changed; 1684 of its 1797 lines of code are new or changed and 898 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/R6.v, with its module names and numbers changed; 1086 of its 1232 lines of code are new or changed and 1651 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/R7tail.v; 1150 of its 1202 lines of code are new or changed and 1180 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/R7.v -- GLUE for stage seg_R7 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput (lib/A/ACtl.v:674).
    Written by a Theorem Labs lane (piece W2a); single writer.  The pattern is
    glue-pattern.md (a working note, not in this delivery) (worked example lib/A/ACtlG/A5.v).
@@ -17,7 +18,7 @@
    with ACtl.v's own CF notation (SK := A.AE2k.tfib_sink_head, FP := []), i.e. exactly ACtl.v's Section hypothesis
    seg_R7 (the six twin modules and lib/Lib written fully qualified, brief ruling 1).
 
-   SOURCE OF RECORD: a Theorem Labs lane's fixed Seg/R7.v ff604ad21972 (the blob this tree had at release c5e779efe8c) (a working branch 553cd287ffb; this
+   SOURCE OF RECORD: a Theorem Labs lane's fixed Seg/R7.v ff604ad21972 (the blob this tree had at release) (a working branch; this
    branch's lib/A/Prog/Seg/R7.v differs in comments only) seg_R7 :1143-1157, and Seg/R7tail.v r7_tail_run :1242; the runs' footprint twins
    are a Theorem Labs lane's Seg/R7F.v (r7_evt_F :51, r7_latch_evt_F :138) and Seg/R7tailF.v (r7_tail_evt_F :81).
 
@@ -64,11 +65,11 @@
      concrete lists).
    PROVED here, no longer Section hypotheses: CAT_ZSH (the catalogue is a zero-shadow row of the bundle, In (0x9e800,
    0x9f4b8 - 0x9e800) (as_zero_shadow B)), from TFIB_SYMS ts_zsh and a computed check over the branch's AF0m (interim
-   zero-stand-in base 5da74c9c931, lib/A/AF0m.v:2963; the record AF0m e56483f863b has the same row at :2963); and the
+   zero-stand-in base, lib/A/AF0m.v:2964; the record AF0m has the same row at :2963); and the
    block-shadow fact after the malloc, a Theorem Labs lane's PROVED ProgWorldShadow.ctl_block_shadow_of_AR.
 
-   START-UP TABLE VALUES READ (a Theorem Labs lane 05:52Z check against the record AF0m e56483f863b): TFIB_SYMS.ts_code
-   (pc_wrap_malloc = 0x5337c; the same on the record, AF0l.v:10); ts_owned / ts_errno with AF0m's Tfib_owned_static
+   START-UP TABLE VALUES READ (a Theorem Labs lane 05:52Z check against the record AF0m): TFIB_SYMS.ts_code
+   (pc_wrap_malloc = 0x5337c; the same on the record, AF0l.v:11); ts_owned / ts_errno with AF0m's Tfib_owned_static
    and TFIB_ERRNO (r7t_cat_ro: no row meets [0x9e800, 0x9f4b8), errno 0x5db76c; the same on the record); ts_zsh with
    AF0m's Tfib_zero_shadow, ONLY its row (0x9e800, 0x9f4b8 - 0x9e800) (CAT_ZSH; the same row on the record, so the
    ts_zsh CAVEAT of the planning core's coarse row does not apply); ProgWorldCtlRtC.ctl_rt_C_of_AR (a Theorem Labs lane's proof over
@@ -786,7 +787,7 @@ Hypothesis RELRO_IMG : forall a, RLO <= a < RHI -> Reusable.YG0d.in_img segs a.
    its bytes are read through the entry pre's arodata_okS over [RLO, RHI).  The pointwise form the tail arm reads
    (each catalogue byte in [RLO, RHI), outside the bundle's owned statics and errno) is the local lemma r7t_cat_ro:
    the two exclusions by TFIB_SYMS ts_owned / ts_errno and computation over AF0m's concrete lists (the record AF0m
-   e56483f863b's Tfib_owned_static, AF0m.v:2965-2981, has the same rows near the table: (0x9e7d0, 0x30) ends and
+   a commit's Tfib_owned_static, AF0m.v:2966-2982, has the same rows near the table: (0x9e7d0, 0x30) ends and
    (0x9f4b8, 0x328) starts exactly at its bounds; errno 0x5db76c on both). *)
 Hypothesis RELRO_CAT : RLO <= A.Prog.SlotModel.CAT /\ A.Prog.SlotModel.CAT + A.Prog.SlotModel.CAT_N * A.Prog.SlotModel.CAT_ROW <= RHI.
 
@@ -809,8 +810,8 @@ Proof.
 Qed.
 
 (* CAT_ZSH: the catalogue is a zero-shadow row of the bundle.  Proved from TFIB_SYMS ts_zsh and a computed check over
-   the branch's AF0m Tfib_zero_shadow (the interim zero-stand-in base 5da74c9c931: the row (0x9e800, 0x9f4b8 - 0x9e800)
-   at lib/A/AF0m.v:2963, the same row as the record AF0m e56483f863b's AF0m.v:2963). *)
+   the branch's AF0m Tfib_zero_shadow (the interim zero-stand-in base: the row (0x9e800, 0x9f4b8 - 0x9e800)
+   at lib/A/AF0m.v:2964, the same row as the record AF0m's AF0m.v:2964). *)
 Lemma CAT_ZSH : In (0x9e800, 0x9f4b8 - 0x9e800) (Reusable.YG0f.as_zero_shadow B).
 Proof.
   rewrite (A.AF0m.ts_zsh B TFIB_SYMS).
@@ -996,7 +997,7 @@ Proof.
 Qed.
 
 (* ---------------------------------------------------------------------------------------------------------
-   The tail arm, n_6 = 0 and b = 6 (Seg/R7tail.v r7_tail_run :1242): r7_tail_evt_F (R7tailF.v:79; 0x815ec ->
+   The tail arm, n_6 = 0 and b = 6 (Seg/R7tail.v r7_tail_run :1242): r7_tail_evt_F (R7tailF.v:80; 0x815ec ->
    0x8194c -> 0x81990 .. 0x81abc -> 0x81ac8, the 14 frame-shadow stores of 0xf8, and __asan_set_shadow_f8 taken
    through its PROVED footprint contract) to the exit C_A81b10.  The run takes mem_inv, which the cut does not carry,
    so it runs on the normalized memory and comes back by MemNormF.evtF_normalize_ro (as P1_70.v's p1_70_ro_F).

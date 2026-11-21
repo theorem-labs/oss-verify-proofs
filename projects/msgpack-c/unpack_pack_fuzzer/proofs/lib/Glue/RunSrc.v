@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up chains and the file and directory families' certificates per CONFIG_RSEQ value, chosen by the run's own value; the launch's far-end reader; launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef)). *)
 From Stdlib Require Import ZArith NArith Bool List Lia.
 From Stdlib Require Import PrimInt63 Uint63.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
@@ -16,16 +17,22 @@ From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.EH Require Import Pool.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Src2 Require T_Src2 C_S0 C_LE C_LP C_S3.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.SrcN Require T_SrcN C_S0 C_LE C_LP C_S3.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Src2F Require T_Src2F.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Src2FR Require T_Src2F.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Src2A Require T_Src2A.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Src2D Require T_Src2D.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Src2DR Require T_Src2D.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Src2T Require T_Src2T.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.SrcNU Require T_SrcNU.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue Require Import Nodes CertSound StackInit InitLib InitClf RootSrc2 InitSrc2 RootSrcN InitSrcN OblsLib OblsClf
   Ops SysSpec CtrSys StdioWrite DrvShape DrvRoot DrvLib DrvEdges OblsStart DrvTop.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.Run Require Src2F_9 Src2A_5 Src2D_10 Src2T_5 SrcNU_6 Src2F_1 Src2A_1 Src2D_1 Src2T_1 SrcNU_1.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.RunR Require Src2F_9 Src2D_10 Src2F_1 Src2D_1.
 Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Import W64 Val Mem FI St Step Plan ValP StepB StepS PlanS FXN CertS Ops CtrS SW DrvShape DrvRoot DrvLib.
+(* the short name [Mem] above can resolve to another loaded [Mem] library; [region] and its
+   constructors are FX's *)
+Import OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.FX.Mem.Mem.
 Open Scope Z_scope.
 Unset Lia Cache.
 Arguments Uint63.to_Z : simpl never.
@@ -56,6 +63,12 @@ Module HA := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.Run.Src2A_1.
 Module HD := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.Run.Src2D_1.
 Module HT := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.Run.Src2T_1.
 Module HN := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.Run.SrcNU_1.
+Module DFR := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Src2FR.T_Src2F.
+Module DDR := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Cert.Src2DR.T_Src2D.
+Module RFR := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.RunR.Src2F_9.
+Module RDR := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.RunR.Src2D_10.
+Module HFR := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.RunR.Src2F_1.
+Module HDR := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue.RunR.Src2D_1.
 
 Module RunSrc.
 
@@ -87,47 +100,66 @@ Proof.
   apply Exists_cons in X as [X|X]; [cbn [fst snd] in *; lia|]. apply Exists_cons in X as [X|X]; [cbn [fst snd] in *; lia| inversion X].
 Qed.
 
-Definition WNOFF : w64 := wn 9223372036846387200%uint63.
+Definition WNOFF : w64 := wn 9223372036848631295%uint63.
 Lemma WNOFF_val : w2Z WNOFF = two64 - DrvTop.WOFF. Proof. reflexivity. Qed.
 Definition HARGS : list sv := DrvTop.HARGS WNOFF.
 
 Definition BL : list (int * Z) := [(15%uint63, 2147483648)].
 Definition DRVOPS : list opinst := [OpI 7%uint63 [VL wzero]; OpI 1%uint63 HARGS; OpI 5%uint63 []; OpI 3%uint63 [VL wzero; VL wzero]].
 
-Definition R0_2 : region := match IMap.find 0%uint63 (s_regs (t_st T2.T_MAIN2)) with Some r => r | None => Region 0%uint63 (VL wzero) false BGImage IMap.empty end.
-Definition R0_N : region := match IMap.find 0%uint63 (s_regs (t_st TN.T_MAINN)) with Some r => r | None => Region 0%uint63 (VL wzero) false BGImage IMap.empty end.
-Lemma FIND0_2 : IMap.find 0%uint63 (s_regs (t_st T2.T_MAIN2)) = Some R0_2. Proof. vm_compute. reflexivity. Qed.
-Lemma FIND0_N : IMap.find 0%uint63 (s_regs (t_st TN.T_MAINN)) = Some R0_N. Proof. vm_compute. reflexivity. Qed.
-Lemma BG0_2 : rg_bg R0_2 = BGImage. Proof. vm_compute. reflexivity. Qed.
-Lemma BG0_N : rg_bg R0_N = BGImage. Proof. vm_compute. reflexivity. Qed.
-Lemma UNT_FL_2 : DrvTop.range_untouched R0_2 420208 8 = true. Proof. vm_compute. reflexivity. Qed.
-Lemma UNT_FL_N : DrvTop.range_untouched R0_N 420208 8 = true. Proof. vm_compute. reflexivity. Qed.
-Lemma UNT_AST_2 : DrvTop.range_untouched R0_2 AST_LO (AST_HI - AST_LO) = true. Proof. vm_compute. reflexivity. Qed.
-Lemma UNT_AST_N : DrvTop.range_untouched R0_N AST_LO (AST_HI - AST_LO) = true. Proof. vm_compute. reflexivity. Qed.
+(* The start-up chains end in one state per CONFIG_RSEQ value ([C_S3.T_MAIN2 b]); every fact the main phase
+   reads off it is checked at both values. *)
+Definition R0_2 (b : bool) : region := match IMap.find 0%uint63 (s_regs (t_st (S3_2.T_MAIN2 b))) with Some r => r | None => Region 0%uint63 (VL wzero) false BGImage IMap.empty end.
+Definition R0_N (b : bool) : region := match IMap.find 0%uint63 (s_regs (t_st (S3_N.T_MAINN b))) with Some r => r | None => Region 0%uint63 (VL wzero) false BGImage IMap.empty end.
+Lemma FIND0_2 : forall b, IMap.find 0%uint63 (s_regs (t_st (S3_2.T_MAIN2 b))) = Some (R0_2 b). Proof. intros [|]; vm_compute; reflexivity. Qed.
+Lemma FIND0_N : forall b, IMap.find 0%uint63 (s_regs (t_st (S3_N.T_MAINN b))) = Some (R0_N b). Proof. intros [|]; vm_compute; reflexivity. Qed.
+Lemma BG0_2 : forall b, rg_bg (R0_2 b) = BGImage. Proof. intros [|]; vm_compute; reflexivity. Qed.
+Lemma BG0_N : forall b, rg_bg (R0_N b) = BGImage. Proof. intros [|]; vm_compute; reflexivity. Qed.
+Lemma UNT_FL_2 : forall b, DrvTop.range_untouched (R0_2 b) 420208 8 = true. Proof. intros [|]; vm_compute; reflexivity. Qed.
+Lemma UNT_FL_N : forall b, DrvTop.range_untouched (R0_N b) 420208 8 = true. Proof. intros [|]; vm_compute; reflexivity. Qed.
+Lemma UNT_AST_2 : forall b, DrvTop.range_untouched (R0_2 b) AST_LO (AST_HI - AST_LO) = true. Proof. intros [|]; vm_compute; reflexivity. Qed.
+Lemma UNT_AST_N : forall b, DrvTop.range_untouched (R0_N b) AST_LO (AST_HI - AST_LO) = true. Proof. intros [|]; vm_compute; reflexivity. Qed.
 Lemma ZERO_FL : DrvTop.range_zero SEGS 420208 8 = true. Proof. vm_compute. reflexivity. Qed.
 Lemma AST_IMAGE : DrvTop.range_in_image SEGS AST_LO (AST_HI - AST_LO) = true. Proof. vm_compute. reflexivity. Qed.
-Lemma SP_2 : DrvTop.ranged (s_facts (t_st T2.T_MAIN2)) 1%uint63 DrvTop.SPLO DrvTop.WLEN = true. Proof. vm_compute. reflexivity. Qed.
-Lemma SP_N : DrvTop.ranged (s_facts (t_st TN.T_MAINN)) 1%uint63 DrvTop.SPLO DrvTop.WLEN = true. Proof. vm_compute. reflexivity. Qed.
+Lemma SP_2 : forall b, DrvTop.ranged (s_facts (t_st (S3_2.T_MAIN2 b))) 1%uint63 DrvTop.SPLO DrvTop.WLEN = true. Proof. intros [|]; vm_compute; reflexivity. Qed.
+Lemma SP_N : forall b, DrvTop.ranged (s_facts (t_st (S3_N.T_MAINN b))) 1%uint63 DrvTop.SPLO DrvTop.WLEN = true. Proof. intros [|]; vm_compute; reflexivity. Qed.
+Lemma PRIV_2 : forall b, s_priv (t_st (S3_2.T_MAIN2 b)) = []. Proof. intros [|]; reflexivity. Qed.
+Lemma PRIV_N : forall b, s_priv (t_st (S3_N.T_MAINN b)) = []. Proof. intros [|]; reflexivity. Qed.
+Lemma OPS6_2 : forall b, s_ops (t_st (S3_2.T_MAIN2 b)) = [OpI 6%uint63 [VP 1%uint63 (wp 0%uint63)]]. Proof. intros [|]; reflexivity. Qed.
+Lemma OPS6_N : forall b, s_ops (t_st (S3_N.T_MAINN b)) = [OpI 6%uint63 [VP 1%uint63 (wp 0%uint63)]]. Proof. intros [|]; reflexivity. Qed.
 Lemma OPS_F : s_ops DF.T_DRV2 = DRVOPS. Proof. reflexivity. Qed.
+Lemma OPS_FR : s_ops DFR.T_DRV2 = DRVOPS. Proof. reflexivity. Qed.
 Lemma OPS_A : s_ops DA.T_DRV2 = DRVOPS. Proof. reflexivity. Qed.
 Lemma OPS_D : s_ops DD.T_DRV2 = DRVOPS. Proof. reflexivity. Qed.
+Lemma OPS_DR : s_ops DDR.T_DRV2 = DRVOPS. Proof. reflexivity. Qed.
 Lemma OPS_T : s_ops DT.T_DRV2 = DRVOPS. Proof. reflexivity. Qed.
 Lemma OPS_N : s_ops DN.T_DRVN = DRVOPS. Proof. reflexivity. Qed.
 
-Lemma DRV_CHK_F : DrvTop.drv_chk SEGS BL HULL XCLZ PFP RS REMAT 0%uint63 (t_st T2.T_MAIN2) DF.T_DRV2 = true. Proof. vm_compute. reflexivity. Qed.
-Lemma DRV_CHK_A : DrvTop.drv_chk SEGS BL HULL XCLZ PFP RS REMAT 0%uint63 (t_st T2.T_MAIN2) DA.T_DRV2 = true. Proof. vm_compute. reflexivity. Qed.
-Lemma DRV_CHK_D : DrvTop.drv_chk SEGS BL HULL XCLZ PFP RS REMAT 0%uint63 (t_st T2.T_MAIN2) DD.T_DRV2 = true. Proof. vm_compute. reflexivity. Qed.
-Lemma DRV_CHK_T : DrvTop.drv_chk SEGS BL HULL XCLZ PFP RS REMAT 0%uint63 (t_st T2.T_MAIN2) DT.T_DRV2 = true. Proof. vm_compute. reflexivity. Qed.
-Lemma DRV_CHK_N : DrvTop.drv_chk SEGS BL HULL XCLZ PFP RS REMAT 0%uint63 (t_st TN.T_MAINN) DN.T_DRVN = true. Proof. vm_compute. reflexivity. Qed.
+Lemma DRV_CHK_F : DrvTop.drv_chk SEGS BL HULL XCLZ PFP RS REMAT 0%uint63 (t_st (S3_2.T_MAIN2 false)) DF.T_DRV2 = true. Proof. vm_compute. reflexivity. Qed.
+Lemma DRV_CHK_FR : DrvTop.drv_chk SEGS BL HULL XCLZ PFP RS REMAT 0%uint63 (t_st (S3_2.T_MAIN2 true)) DFR.T_DRV2 = true. Proof. vm_compute. reflexivity. Qed.
+Lemma DRV_CHK_A : forall b, DrvTop.drv_chk SEGS BL HULL XCLZ PFP RS REMAT 0%uint63 (t_st (S3_2.T_MAIN2 b)) DA.T_DRV2 = true. Proof. intros [|]; vm_compute; reflexivity. Qed.
+Lemma DRV_CHK_D : DrvTop.drv_chk SEGS BL HULL XCLZ PFP RS REMAT 0%uint63 (t_st (S3_2.T_MAIN2 false)) DD.T_DRV2 = true. Proof. vm_compute. reflexivity. Qed.
+Lemma DRV_CHK_DR : DrvTop.drv_chk SEGS BL HULL XCLZ PFP RS REMAT 0%uint63 (t_st (S3_2.T_MAIN2 true)) DDR.T_DRV2 = true. Proof. vm_compute. reflexivity. Qed.
+Lemma DRV_CHK_T : forall b, DrvTop.drv_chk SEGS BL HULL XCLZ PFP RS REMAT 0%uint63 (t_st (S3_2.T_MAIN2 b)) DT.T_DRV2 = true. Proof. intros [|]; vm_compute; reflexivity. Qed.
+Lemma DRV_CHK_N : forall b, DrvTop.drv_chk SEGS BL HULL XCLZ PFP RS REMAT 0%uint63 (t_st (S3_N.T_MAINN b)) DN.T_DRVN = true. Proof. intros [|]; vm_compute; reflexivity. Qed.
 
-Lemma main2_resv : s_resv (t_st T2.T_MAIN2) = RNone. Proof. reflexivity. Qed.
-Lemma mainN_resv : s_resv (t_st TN.T_MAINN) = RNone. Proof. reflexivity. Qed.
-Lemma s3_eq2 : post_set_tid T2.T_SETTID2 = Some T2.ROOT_S32. Proof. vm_compute. reflexivity. Qed.
-Lemma s3_eqN : post_set_tid TN.T_SETTIDN = Some TN.ROOT_S3N. Proof. vm_compute. reflexivity. Qed.
-Lemma start_obls_LE2 : forallb OblsStart.chk_start_obl LE_2.OBLS = true. Proof. vm_compute. reflexivity. Qed.
-Lemma start_obls_LP2 : forallb OblsStart.chk_start_obl LP_2.OBLS = true. Proof. vm_compute. reflexivity. Qed.
-Lemma start_obls_LEN : forallb OblsStart.chk_start_obl LE_N.OBLS = true. Proof. vm_compute. reflexivity. Qed.
-Lemma start_obls_LPN : forallb OblsStart.chk_start_obl LP_N.OBLS = true. Proof. vm_compute. reflexivity. Qed.
+Lemma main2_resv : forall b, s_resv (t_st (S3_2.T_MAIN2 b)) = RNone. Proof. intros [|]; reflexivity. Qed.
+Lemma mainN_resv : forall b, s_resv (t_st (S3_N.T_MAINN b)) = RNone. Proof. intros [|]; reflexivity. Qed.
+Lemma s3_eq2 : forall b, post_set_tid (LP_2.T_SETTID2 b) = Some (S3_2.ROOT b). Proof. intros [|]; vm_compute; reflexivity. Qed.
+Lemma s3_eqN : forall b, post_set_tid (LP_N.T_SETTIDN b) = Some (S3_N.ROOT b). Proof. intros [|]; vm_compute; reflexivity. Qed.
+Lemma start_obls_LE2 : forall b, forallb OblsStart.chk_start_obl (LE_2.OBLS b) = true. Proof. intros [|]; vm_compute; reflexivity. Qed.
+Lemma start_obls_LP2 : forall b, forallb OblsStart.chk_start_obl (LP_2.OBLS b) = true. Proof. intros [|]; vm_compute; reflexivity. Qed.
+Lemma start_obls_LEN : forall b, forallb OblsStart.chk_start_obl (LE_N.OBLS b) = true. Proof. intros [|]; vm_compute; reflexivity. Qed.
+Lemma start_obls_LPN : forall b, forallb OblsStart.chk_start_obl (LP_N.OBLS b) = true. Proof. intros [|]; vm_compute; reflexivity. Qed.
+(* the loops' measure and plain-cut checks at each CONFIG_RSEQ value (they do not compute at the run's own value) *)
+Lemma vb_LE2 : forall b, PlanS.vars_below (s_next (t_st (S0_2.HEAD_E2 b))) (t_measure (S0_2.HEAD_E2 b)) = true. Proof. intros [|]; vm_compute; reflexivity. Qed.
+Lemma vb_LP2 : forall b, PlanS.vars_below (s_next (t_st (LE_2.HEAD_P2 b))) (t_measure (LE_2.HEAD_P2 b)) = true. Proof. intros [|]; vm_compute; reflexivity. Qed.
+Lemma vb_LEN : forall b, PlanS.vars_below (s_next (t_st (S0_N.HEAD_EN b))) (t_measure (S0_N.HEAD_EN b)) = true. Proof. intros [|]; vm_compute; reflexivity. Qed.
+Lemma vb_LPN : forall b, PlanS.vars_below (s_next (t_st (LE_N.HEAD_PN b))) (t_measure (LE_N.HEAD_PN b)) = true. Proof. intros [|]; vm_compute; reflexivity. Qed.
+Lemma upc_LE2 : forall b, PlanS.uses_plain_cut (LE_2.PLAN b) 10%uint63 = false. Proof. intros [|]; vm_compute; reflexivity. Qed.
+Lemma upc_LP2 : forall b, PlanS.uses_plain_cut (LP_2.PLAN b) 20%uint63 = false. Proof. intros [|]; vm_compute; reflexivity. Qed.
+Lemma upc_LEN : forall b, PlanS.uses_plain_cut (LE_N.PLAN b) 10%uint63 = false. Proof. intros [|]; vm_compute; reflexivity. Qed.
+Lemma upc_LPN : forall b, PlanS.uses_plain_cut (LP_N.PLAN b) 20%uint63 = false. Proof. intros [|]; vm_compute; reflexivity. Qed.
 
 Section TOP.
 
@@ -137,6 +169,10 @@ Hypothesis Hva : valid_argv (in_argv inp).
 Hypothesis Hve : valid_envp (in_envp inp).
 Hypothesis Hhw : valid_hwcap (in_hwcap inp).
 Hypothesis Hsz : in_va_size inp = Sv48.
+(* the launch's caps, for the start state's window below sp (ALib/InitMem.v's stack_window_lo_valid) *)
+Hypothesis Hvl : valid_launch inp.
+(* the launch's far-end reader ([Run.valid_input]): the start model's [mfacts] reads it *)
+Hypothesis Hrdr : in_channel_reader inp = true.
 Hypothesis Hen : valid_entry (mkImage SEGS PC PH) (mkEntry sp brk0 mb rnd) inp.
 
 Definition c0 : config := init_config SEGS PC PH sp brk0 mb rnd lim inp.
@@ -155,7 +191,9 @@ Definition xb (j : int) : list byte :=
   | 14 => LE8 (6 + cfg_len file)
   | _ => []
   end.
-Definition E0 : env := InitLib.E0 sp (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) rnd xb.
+Definition E0 : env := InitLib.E0 PC PH sp mb inp rnd xb.
+(* the run's CONFIG_RSEQ value: the start-up chain and the main phase's start state are this value's *)
+Definition rflag : bool := la_rseq (SI.LA sp mb inp).
 Definition MP (m : Model) : Prop := m_fs m = fs0.
 Definition PB (b : int -> list byte) : Prop := b = eb E0.
 Definition MP0 (m : Model) : Prop := m = model0.
@@ -253,12 +291,14 @@ Lemma TM_cov1 : forall id args a, op_cov1 (CtrSys.OPS HEAPC EXT p1 file RS RS_ra
 Proof. intros id args a []. Qed.
 Lemma TM_plain : plain_table (CtrSys.OPS HEAPC EXT p1 file RS RS_range TM).
 Proof. split; [intros mo; reflexivity| intros a; exact I]. Qed.
+Lemma TM_rdr : forall m, MP m -> op_minv (CtrSys.OPS HEAPC EXT p1 file RS RS_range TM) m -> m_channel_reader m = true.
+Proof. intros m _ H. exact (mf_reader _ (plain_mf _ _ TM_plain H)). Qed.
 
 Definition R : drun :=
   DRun HEAPC EXT a0 p1 file fs0 RS RS_range MP PB MP_fs MP_fds MP_stable heap_fds heap_fp_stage ext_fds ext_fp_stage
        (fun b (H : PB b) => match eq_sym H in (_ = e) return (e 1%uint63 = cstr a0 /\ e 9%uint63 = LE8 (Z.of_nat (length a0) + 1)) with eq_refl => conj eb1 eb9 end)
        (fun b (H : PB b) => match eq_sym H in (_ = e) return (e 3%uint63 = cstr p1 /\ e 10%uint63 = LE8 (Z.of_nat (length p1) + 1)) with eq_refl => conj eb3 eb10 end)
-       a0_len p1_len p1_nz TM TM_fds TM_cov1.
+       a0_len p1_len p1_nz TM TM_fds TM_cov1 TM_rdr.
 Lemma OPS_R : OPS R = CtrSys.OPS HEAPC EXT p1 file RS RS_range TM. Proof. reflexivity. Qed.
 
 Lemma OPS_plain_R : plain_table (OPS R). Proof. exact TM_plain. Qed.
@@ -266,11 +306,11 @@ Lemma file_pb_R : file_pb R. Proof. intros b ->. cbn [r_file R]. repeat split; r
 Lemma HBL : forall E j c, r_PB R (eb E) -> In (j, c) BL -> bv_unsigned (den E (VBlob false j (VL wzero) 8%uint63)) <= c.
 Proof.
   intros E j c HPB [H|[]]. injection H as <- <-. cbn [r_PB R] in HPB. unfold PB in HPB.
-  assert (E15 : eb E 15%uint63 = LE8 (Z.of_nat (length (SI.strarea (in_argv inp) (in_envp inp))))) by (rewrite HPB; reflexivity).
-  pose proof (proj1 (valid_entry_sv48 _ _ _ Hsz) Hen) as (Hsp' & _ & _ & Hfit).
-  pose proof (SI.BSB_top PH sp (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) rnd Hfit) as T. rewrite SI.length_BSB in T.
-  pose proof (SI.length_strarea (in_argv inp) (in_envp inp)) as L. pose proof (SI.SP_lo sp Hsp') as LO.
-  change wzero with (wp 0%uint63). rewrite (OL.den_param8_u E 15%uint63 _ E15); unfold SI.raw_len, SI.SP in *; lia.
+  assert (E15 : eb E 15%uint63 = LE8 (Z.of_nat (length (SI.strarea inp)))) by (rewrite HPB; reflexivity).
+  pose proof (proj1 (valid_entry_sv48 _ _ _ Hsz) Hen) as (Hsp' & _ & _ & _ & Hlau).
+  pose proof (SI.geom sp brk0 mb inp rnd Hlau) as G. pose proof (SI.top_hi sp brk0 mb inp rnd Hlau) as T.
+  pose proof (SI.length_strarea inp) as L. pose proof (SI.SP_lo sp Hsp') as LO.
+  change wzero with (wp 0%uint63). rewrite (OL.den_param8_u E 15%uint63 _ E15); unfold SI.SP in *; lia.
 Qed.
 
 Lemma splink_iff : forall E mem m o, ops_hold (OPS R) E [OpI 6%uint63 [VP 1%uint63 o]] mem m <->
@@ -284,10 +324,10 @@ Qed.
 Lemma splink_tid : forall E mem m tid o, ops_hold (OPS R) E [OpI 6%uint63 [VP 1%uint63 o]] mem m ->
   ops_hold (OPS R) E [OpI 6%uint63 [VP 1%uint63 o]] mem (with_tid tid m).
 Proof. intros E mem m tid o H. apply splink_iff. apply splink_iff in H. exact H. Qed.
-Lemma settid_pure2 : forall E mem m tid, ops_hold (OPS R) E (s_ops T2.T_SETTID2) mem m -> ops_hold (OPS R) E (s_ops T2.T_SETTID2) mem (with_tid tid m).
-Proof. intros E mem m tid. exact (splink_tid E mem m tid (wp 0%uint63)). Qed.
-Lemma settid_pureN : forall E mem m tid, ops_hold (OPS R) E (s_ops TN.T_SETTIDN) mem m -> ops_hold (OPS R) E (s_ops TN.T_SETTIDN) mem (with_tid tid m).
-Proof. intros E mem m tid. exact (splink_tid E mem m tid (wp 0%uint63)). Qed.
+Lemma settid_pure2 : forall b E mem m tid, ops_hold (OPS R) E (s_ops (LP_2.T_SETTID2 b)) mem m -> ops_hold (OPS R) E (s_ops (LP_2.T_SETTID2 b)) mem (with_tid tid m).
+Proof. intros [|] E mem m tid; exact (splink_tid E mem m tid (wp 0%uint63)). Qed.
+Lemma settid_pureN : forall b E mem m tid, ops_hold (OPS R) E (s_ops (LP_N.T_SETTIDN b)) mem m -> ops_hold (OPS R) E (s_ops (LP_N.T_SETTIDN b)) mem (with_tid tid m).
+Proof. intros [|] E mem m tid; exact (splink_tid E mem m tid (wp 0%uint63)). Qed.
 
 Lemma main_sp : forall MAIN E ms tid, s_ops MAIN = [OpI 6%uint63 [VP 1%uint63 (wp 0%uint63)]] ->
   st_ok SEGS (OPS R) E MAIN ms (with_tid tid model0) -> bv_unsigned (ev E 1%uint63) = bv_unsigned sp.
@@ -296,20 +336,20 @@ Proof.
   rewrite (DrvTop.den_VP_zero E 1%uint63 (wp 0%uint63) eq_refl) in H. exact H.
 Qed.
 
-Lemma root_ops2 : forall ms, st_ok SEGS (OPS R) E0 ROOT_Src2 ms model0 -> st_ok SEGS (OPS R) E0 S0_2.ROOT ms model0.
+Lemma root_ops2 : forall b ms, st_ok SEGS (OPS R) E0 (ROOT_Src2 b) ms model0 -> st_ok SEGS (OPS R) E0 (S0_2.ROOT b) ms model0.
 Proof.
-  intros ms HS. apply (with_ops_priv_sound SEGS R E0 ROOT_Src2 RootSrc2.ROOT_OPS RootSrc2.ROOT_PRIV S0_2.ROOT ms model0 HS).
-  - unfold S0_2.ROOT. rewrite InitSrc2.root_eq. reflexivity.
+  intros b ms HS. apply (with_ops_priv_sound SEGS R E0 (ROOT_Src2 b) RootSrc2.ROOT_OPS RootSrc2.ROOT_PRIV (S0_2.ROOT b) ms model0 HS).
+  - rewrite (InitSrc2.root_eq b). reflexivity.
   - apply splink_iff. rewrite (DrvTop.den_VP_zero E0 1%uint63 (wp 0%uint63) eq_refl). reflexivity.
   - apply Forall_cons; [|constructor]. intros a Ha. exfalso. unfold OPS, CtrSys.OPS in Ha. rewrite mk_fp in Ha. cbn [op_id op_args r_heap r_ext r_p1 r_file r_RS r_RSr R] in Ha.
     rewrite (comp_ext HEAPC (FD3 p1 file) (RSTAGE file RS RS_range) FD3DIR FDINIT EXT 6%uint63) in Ha by reflexivity.
     unfold EXT in Ha. cbn in Ha. inversion Ha.
   - intros r g gr c _ _ _ i _ X. inversion X.
 Qed.
-Lemma root_opsN : forall ms, st_ok SEGS (OPS R) E0 ROOT_SrcN ms model0 -> st_ok SEGS (OPS R) E0 S0_N.ROOT ms model0.
+Lemma root_opsN : forall b ms, st_ok SEGS (OPS R) E0 (ROOT_SrcN b) ms model0 -> st_ok SEGS (OPS R) E0 (S0_N.ROOT b) ms model0.
 Proof.
-  intros ms HS. apply (with_ops_priv_sound SEGS R E0 ROOT_SrcN RootSrcN.ROOT_OPS RootSrcN.ROOT_PRIV S0_N.ROOT ms model0 HS).
-  - unfold S0_N.ROOT. rewrite InitSrcN.root_eq. reflexivity.
+  intros b ms HS. apply (with_ops_priv_sound SEGS R E0 (ROOT_SrcN b) RootSrcN.ROOT_OPS RootSrcN.ROOT_PRIV (S0_N.ROOT b) ms model0 HS).
+  - rewrite (InitSrcN.root_eq b). reflexivity.
   - apply splink_iff. rewrite (DrvTop.den_VP_zero E0 1%uint63 (wp 0%uint63) eq_refl). reflexivity.
   - apply Forall_cons; [|constructor]. intros a Ha. exfalso. unfold OPS, CtrSys.OPS in Ha. rewrite mk_fp in Ha. cbn [op_id op_args r_heap r_ext r_p1 r_file r_RS r_RSr R] in Ha.
     rewrite (comp_ext HEAPC (FD3 p1 file) (RSTAGE file RS RS_range) FD3DIR FDINIT EXT 6%uint63) in Ha by reflexivity.
@@ -363,20 +403,20 @@ Proof.
 Qed.
 Lemma RS_R : r_RS R = RS. Proof. reflexivity. Qed.
 
-Lemma pool_init2 : op_init (t_st T2.T_MAIN2) POOLC [VL wzero].
+Lemma pool_init2 : forall b, op_init (t_st (S3_2.T_MAIN2 b)) POOLC [VL wzero].
 Proof.
-  intros E ms m tid HS _. cbn [oc_holds POOLC map den]. rewrite wbv_wzero.
+  intros b E ms m tid HS _. cbn [oc_holds POOLC map den]. rewrite wbv_wzero.
   apply (PoolSnd.pool_holds_fresh SEGS FL (fun _ => True) FL8 FLB). rewrite FLz. intros i Hi.
-  apply (DrvTop.image_zeros SEGS (OPS R) E (t_st T2.T_MAIN2) ms m R0_2 420208 8 HS eq_refl FIND0_2 BG0_2); try lia.
-  - exact UNT_FL_2.
+  apply (DrvTop.image_zeros SEGS (OPS R) E (t_st (S3_2.T_MAIN2 b)) ms m (R0_2 b) 420208 8 HS (PRIV_2 b) (FIND0_2 b) (BG0_2 b)); try lia.
+  - exact (UNT_FL_2 b).
   - exact ZERO_FL.
 Qed.
-Lemma pool_initN : op_init (t_st TN.T_MAINN) POOLC [VL wzero].
+Lemma pool_initN : forall b, op_init (t_st (S3_N.T_MAINN b)) POOLC [VL wzero].
 Proof.
-  intros E ms m tid HS _. cbn [oc_holds POOLC map den]. rewrite wbv_wzero.
+  intros b E ms m tid HS _. cbn [oc_holds POOLC map den]. rewrite wbv_wzero.
   apply (PoolSnd.pool_holds_fresh SEGS FL (fun _ => True) FL8 FLB). rewrite FLz. intros i Hi.
-  apply (DrvTop.image_zeros SEGS (OPS R) E (t_st TN.T_MAINN) ms m R0_N 420208 8 HS eq_refl FIND0_N BG0_N); try lia.
-  - exact UNT_FL_N.
+  apply (DrvTop.image_zeros SEGS (OPS R) E (t_st (S3_N.T_MAINN b)) ms m (R0_N b) 420208 8 HS (PRIV_N b) (FIND0_N b) (BG0_N b)); try lia.
+  - exact (UNT_FL_N b).
   - exact ZERO_FL.
 Qed.
 
@@ -400,19 +440,21 @@ Proof.
     split; [lia|]. split; [lia|]. split; [lia|]. left. split; [reflexivity| lia].
   - apply cw_init.
 Qed.
-Lemma heap_init2 : op_init (t_st T2.T_MAIN2) HEAPC HARGS.
-Proof. exact (heap_init_at (t_st T2.T_MAIN2) R0_2 FIND0_2 BG0_2 eq_refl UNT_AST_2 SP_2 eq_refl). Qed.
-Lemma heap_initN : op_init (t_st TN.T_MAINN) HEAPC HARGS.
-Proof. exact (heap_init_at (t_st TN.T_MAINN) R0_N FIND0_N BG0_N eq_refl UNT_AST_N SP_N eq_refl). Qed.
-Lemma OPS0_F : ops0_ok (t_st T2.T_MAIN2) DF.T_DRV2. Proof. exact (ops0_of_parts _ _ OPS_F pool_init2 heap_init2). Qed.
-Lemma OPS0_A : ops0_ok (t_st T2.T_MAIN2) DA.T_DRV2. Proof. exact (ops0_of_parts _ _ OPS_A pool_init2 heap_init2). Qed.
-Lemma OPS0_D : ops0_ok (t_st T2.T_MAIN2) DD.T_DRV2. Proof. exact (ops0_of_parts _ _ OPS_D pool_init2 heap_init2). Qed.
-Lemma OPS0_T : ops0_ok (t_st T2.T_MAIN2) DT.T_DRV2. Proof. exact (ops0_of_parts _ _ OPS_T pool_init2 heap_init2). Qed.
-Lemma OPS0_N : ops0_ok (t_st TN.T_MAINN) DN.T_DRVN. Proof. exact (ops0_of_parts _ _ OPS_N pool_initN heap_initN). Qed.
+Lemma heap_init2 : forall b, op_init (t_st (S3_2.T_MAIN2 b)) HEAPC HARGS.
+Proof. intros b. exact (heap_init_at (t_st (S3_2.T_MAIN2 b)) (R0_2 b) (FIND0_2 b) (BG0_2 b) (PRIV_2 b) (UNT_AST_2 b) (SP_2 b) (OPS6_2 b)). Qed.
+Lemma heap_initN : forall b, op_init (t_st (S3_N.T_MAINN b)) HEAPC HARGS.
+Proof. intros b. exact (heap_init_at (t_st (S3_N.T_MAINN b)) (R0_N b) (FIND0_N b) (BG0_N b) (PRIV_N b) (UNT_AST_N b) (SP_N b) (OPS6_N b)). Qed.
+Lemma OPS0_F : ops0_ok (t_st (S3_2.T_MAIN2 false)) DF.T_DRV2. Proof. exact (ops0_of_parts _ _ OPS_F (pool_init2 false) (heap_init2 false)). Qed.
+Lemma OPS0_FR : ops0_ok (t_st (S3_2.T_MAIN2 true)) DFR.T_DRV2. Proof. exact (ops0_of_parts _ _ OPS_FR (pool_init2 true) (heap_init2 true)). Qed.
+Lemma OPS0_A : forall b, ops0_ok (t_st (S3_2.T_MAIN2 b)) DA.T_DRV2. Proof. intros b. exact (ops0_of_parts _ _ OPS_A (pool_init2 b) (heap_init2 b)). Qed.
+Lemma OPS0_D : ops0_ok (t_st (S3_2.T_MAIN2 false)) DD.T_DRV2. Proof. exact (ops0_of_parts _ _ OPS_D (pool_init2 false) (heap_init2 false)). Qed.
+Lemma OPS0_DR : ops0_ok (t_st (S3_2.T_MAIN2 true)) DDR.T_DRV2. Proof. exact (ops0_of_parts _ _ OPS_DR (pool_init2 true) (heap_init2 true)). Qed.
+Lemma OPS0_T : forall b, ops0_ok (t_st (S3_2.T_MAIN2 b)) DT.T_DRV2. Proof. intros b. exact (ops0_of_parts _ _ OPS_T (pool_init2 b) (heap_init2 b)). Qed.
+Lemma OPS0_N : forall b, ops0_ok (t_st (S3_N.T_MAINN b)) DN.T_DRVN. Proof. intros b. exact (ops0_of_parts _ _ OPS_N (pool_initN b) (heap_initN b)). Qed.
 
 Section Chain2.
 Hypothesis Hargc2 : length (in_argv inp) = 2%nat.
-Let INIT := InitSrc2.init_ok (OPS R) inp sp brk0 mb rnd lim xb OPS_plain_R Hva Hve Hhw Hsz Hargc2 Hen.
+Let INIT := InitSrc2.init_ok (OPS R) inp sp brk0 mb rnd lim xb OPS_plain_R Hva Hve Hhw Hsz Hvl Hrdr Hargc2 Hen.
 Lemma PB_CLF_of2 : forall b, PB b -> InitClf.PB_CLF b.
 Proof. intros b ->. destruct (proj1 INIT) as (x & e & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & _). exists x, e. repeat split; assumption. Qed.
 Lemma argv_eq : in_argv inp = [a0; p1].
@@ -422,39 +464,40 @@ Proof.
 Qed.
 
 Variable K : TSet.
-Hypothesis main_leaf : tpl_realizes SEGS (OPS R) MP1 K E0 (t_st T2.T_MAIN2).
+Hypothesis main_leaf : tpl_realizes SEGS (OPS R) MP1 K E0 (t_st (S3_2.T_MAIN2 rflag)).
 
-Lemma S3_sound2 : tpl_realizes SEGS (OPS R) MP1 K E0 T2.ROOT_S32.
+Lemma S3_sound2 : tpl_realizes SEGS (OPS R) MP1 K E0 (S3_2.ROOT rflag).
 Proof.
   intros E ms m Heb HMP HS.
-  eapply (cert_sound SEGS (OPS R) S3_2.CTX S3_2.PLAN S3_2.ROOT S3_2.OBLS MP1 PB MP1_stable S3_2.WF ITAB_ok eq_refl S3_2.CHK);
+  eapply (cert_sound SEGS (OPS R) (S3_2.CTX rflag) (S3_2.PLAN rflag) (S3_2.ROOT rflag) S3_2.OBLS MP1 PB MP1_stable (S3_2.WF rflag) ITAB_ok eq_refl (S3_2.CHK rflag));
     [constructor | reflexivity | exact HS | exact Heb | exact HMP |].
   split.
   - intros tid T Hf E' ms' m' Heb' HMP' HS' _. apply imap_of_find_in in Hf. destruct Hf as [Hf|[]]. injection Hf as _ <-.
     exact (main_leaf E' ms' m' ltac:(congruence) HMP' HS').
   - intros eid T Hf. exfalso. apply imap_of_find_in in Hf. exact Hf.
 Qed.
-Lemma settid_leaf2 : forall E ms m, eb E = eb E0 -> MP0 m -> st_ok SEGS (OPS R) E T2.T_SETTID2 ms m ->
-  ecall_at SEGS (s_pc T2.T_SETTID2) -> realizes SEGS (mkCfg ms m) K.
+Lemma settid_leaf2 : forall E ms m, eb E = eb E0 -> MP0 m -> st_ok SEGS (OPS R) E (LP_2.T_SETTID2 rflag) ms m ->
+  ecall_at SEGS (s_pc (LP_2.T_SETTID2 rflag)) -> realizes SEGS (mkCfg ms m) K.
 Proof.
   intros E ms m Heb -> HS Hat.
-  apply (fx_node_set_tid SEGS (OPS R) OPS_plain_R T2.T_SETTID2 T2.ROOT_S32 s3_eq2 settid_pure2 K E ms model0 HS Hat model0_tid).
+  apply (fx_node_set_tid SEGS (OPS R) OPS_plain_R (LP_2.T_SETTID2 rflag) (S3_2.ROOT rflag) (s3_eq2 rflag) (settid_pure2 rflag) K E ms model0 HS Hat model0_tid).
   intros E' ms' m' tid HX HS' Htid ->. apply (S3_sound2 E' ms'); [destruct HX as [Hb _]; congruence | exists tid; reflexivity | exact HS'].
 Qed.
-Lemma LP_sound2 : tpl_realizes SEGS (OPS R) MP0 K E0 (t_st T2.HEAD_P2).
+Lemma LP_sound2 : tpl_realizes SEGS (OPS R) MP0 K E0 (t_st (LE_2.HEAD_P2 rflag)).
 Proof.
-  eapply (loop_sound SEGS (OPS R) LP_2.CTX LP_2.PLAN LP_2.OBLS 20%uint63 T2.HEAD_P2 MP0 PB K E0
-            MP0_stable LP_2.WF ITAB_ok (contracts_ok_empty SEGS (OPS R) LP_2.CTX MP0 PB eq_refl) eq_refl eq_refl LP_2.CHK
-            (OblsStart.obls_start_sound PB LP_2.OBLS PB_CLF_of2 start_obls_LP2) eq_refl eq_refl eq_refl).
+  eapply (loop_sound SEGS (OPS R) (LP_2.CTX rflag) (LP_2.PLAN rflag) (LP_2.OBLS rflag) 20%uint63 (LE_2.HEAD_P2 rflag) MP0 PB K E0
+            MP0_stable (LP_2.WF rflag) ITAB_ok (contracts_ok_empty SEGS (OPS R) (LP_2.CTX rflag) MP0 PB eq_refl) eq_refl eq_refl (LP_2.CHK rflag)
+            (OblsStart.obls_start_sound PB (LP_2.OBLS rflag) PB_CLF_of2 (start_obls_LP2 rflag))
+            (vb_LP2 rflag) (upc_LP2 rflag) eq_refl).
   - intros tid T Hf Hne'. exfalso. apply imap_of_find_in in Hf. destruct Hf as [Hf|[]]. injection Hf as <- _. rewrite Uint63.eqb_refl in Hne'. discriminate.
   - intros eid T Hf E' ms' m' Heb' HMP' HS' Hat'. apply imap_of_find_in in Hf. destruct Hf as [Hf|[]]. injection Hf as _ <-.
     exact (settid_leaf2 E' ms' m' Heb' HMP' HS' Hat').
 Qed.
-Lemma LE_sound2 : tpl_realizes SEGS (OPS R) MP0 K E0 (t_st T2.HEAD_E2).
+Lemma LE_sound2 : tpl_realizes SEGS (OPS R) MP0 K E0 (t_st (S0_2.HEAD_E2 rflag)).
 Proof.
-  eapply (loop_sound SEGS (OPS R) LE_2.CTX LE_2.PLAN LE_2.OBLS 10%uint63 T2.HEAD_E2 MP0 PB K E0
-            MP0_stable LE_2.WF ITAB_ok (contracts_ok_empty SEGS (OPS R) LE_2.CTX MP0 PB eq_refl) eq_refl eq_refl LE_2.CHK
-            (OblsStart.obls_start_sound PB LE_2.OBLS PB_CLF_of2 start_obls_LE2) eq_refl eq_refl eq_refl).
+  eapply (loop_sound SEGS (OPS R) (LE_2.CTX rflag) (LE_2.PLAN rflag) (LE_2.OBLS rflag) 10%uint63 (S0_2.HEAD_E2 rflag) MP0 PB K E0
+            MP0_stable (LE_2.WF rflag) ITAB_ok (contracts_ok_empty SEGS (OPS R) (LE_2.CTX rflag) MP0 PB eq_refl) eq_refl eq_refl (LE_2.CHK rflag)
+            (OblsStart.obls_start_sound PB (LE_2.OBLS rflag) PB_CLF_of2 (start_obls_LE2 rflag)) (vb_LE2 rflag) (upc_LE2 rflag) eq_refl).
   - intros tid T Hf Hne'. apply imap_of_find_in in Hf. destruct Hf as [Hf|[Hf|[]]].
     + exfalso. injection Hf as <- _. rewrite Uint63.eqb_refl in Hne'. discriminate.
     + injection Hf as _ <-. exact LP_sound2.
@@ -462,10 +505,10 @@ Proof.
 Qed.
 Theorem rz_chain2 : realizes SEGS c0 K.
 Proof.
-  pose proof (proj2 (proj2 INIT)) as HS0. change (InitSrc2.E0 _ _ _ _ _ _ _) with E0 in HS0.
+  pose proof (proj2 (proj2 INIT)) as HS0. change (InitSrc2.E0 _ _ _ _ _) with E0 in HS0.
   unfold c0. change (init_config SEGS PC PH sp brk0 mb rnd lim inp) with (mkCfg (cfg_ms c0) model0).
-  eapply (cert_sound SEGS (OPS R) S0_2.CTX S0_2.PLAN S0_2.ROOT S0_2.OBLS MP0 PB MP0_stable S0_2.WF ITAB_ok eq_refl S0_2.CHK);
-    [constructor | reflexivity | exact (root_ops2 _ HS0) | reflexivity | reflexivity |].
+  eapply (cert_sound SEGS (OPS R) (S0_2.CTX rflag) (S0_2.PLAN rflag) (S0_2.ROOT rflag) S0_2.OBLS MP0 PB MP0_stable (S0_2.WF rflag) ITAB_ok eq_refl (S0_2.CHK rflag));
+    [constructor | reflexivity | exact (root_ops2 rflag _ HS0) | reflexivity | reflexivity |].
   split.
   - intros tid T Hf E' ms' m' Heb' HMP' HS' _. apply imap_of_find_in in Hf. destruct Hf as [Hf|[]]. injection Hf as _ <-.
     exact (LE_sound2 E' ms' m' Heb' HMP' HS').
@@ -475,44 +518,44 @@ End Chain2.
 
 Section ChainN.
 Hypothesis HargcN : length (in_argv inp) <> 2%nat.
-Let INIT := InitSrcN.init_ok (OPS R) inp sp brk0 mb rnd lim xb OPS_plain_R Hva Hve Hhw Hsz HargcN Hen.
+Let INIT := InitSrcN.init_ok (OPS R) inp sp brk0 mb rnd lim xb OPS_plain_R Hva Hve Hhw Hsz Hvl Hrdr HargcN Hen.
 Lemma PB_CLF_ofN : forall b, PB b -> InitClf.PB_CLF b.
 Proof. intros b ->. destruct (proj1 INIT) as (x & e & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & _). exists x, e. repeat split; assumption. Qed.
 
 Variable K : TSet.
-Hypothesis main_leaf : tpl_realizes SEGS (OPS R) MP1 K E0 (t_st TN.T_MAINN).
+Hypothesis main_leaf : tpl_realizes SEGS (OPS R) MP1 K E0 (t_st (S3_N.T_MAINN rflag)).
 
-Lemma S3_soundN : tpl_realizes SEGS (OPS R) MP1 K E0 TN.ROOT_S3N.
+Lemma S3_soundN : tpl_realizes SEGS (OPS R) MP1 K E0 (S3_N.ROOT rflag).
 Proof.
   intros E ms m Heb HMP HS.
-  eapply (cert_sound SEGS (OPS R) S3_N.CTX S3_N.PLAN S3_N.ROOT S3_N.OBLS MP1 PB MP1_stable S3_N.WF ITAB_ok eq_refl S3_N.CHK);
+  eapply (cert_sound SEGS (OPS R) (S3_N.CTX rflag) (S3_N.PLAN rflag) (S3_N.ROOT rflag) S3_N.OBLS MP1 PB MP1_stable (S3_N.WF rflag) ITAB_ok eq_refl (S3_N.CHK rflag));
     [constructor | reflexivity | exact HS | exact Heb | exact HMP |].
   split.
   - intros tid T Hf E' ms' m' Heb' HMP' HS' _. apply imap_of_find_in in Hf. destruct Hf as [Hf|[]]. injection Hf as _ <-.
     exact (main_leaf E' ms' m' ltac:(congruence) HMP' HS').
   - intros eid T Hf. exfalso. apply imap_of_find_in in Hf. exact Hf.
 Qed.
-Lemma settid_leafN : forall E ms m, eb E = eb E0 -> MP0 m -> st_ok SEGS (OPS R) E TN.T_SETTIDN ms m ->
-  ecall_at SEGS (s_pc TN.T_SETTIDN) -> realizes SEGS (mkCfg ms m) K.
+Lemma settid_leafN : forall E ms m, eb E = eb E0 -> MP0 m -> st_ok SEGS (OPS R) E (LP_N.T_SETTIDN rflag) ms m ->
+  ecall_at SEGS (s_pc (LP_N.T_SETTIDN rflag)) -> realizes SEGS (mkCfg ms m) K.
 Proof.
   intros E ms m Heb -> HS Hat.
-  apply (fx_node_set_tid SEGS (OPS R) OPS_plain_R TN.T_SETTIDN TN.ROOT_S3N s3_eqN settid_pureN K E ms model0 HS Hat model0_tid).
+  apply (fx_node_set_tid SEGS (OPS R) OPS_plain_R (LP_N.T_SETTIDN rflag) (S3_N.ROOT rflag) (s3_eqN rflag) (settid_pureN rflag) K E ms model0 HS Hat model0_tid).
   intros E' ms' m' tid HX HS' Htid ->. apply (S3_soundN E' ms'); [destruct HX as [Hb _]; congruence | exists tid; reflexivity | exact HS'].
 Qed.
-Lemma LP_soundN : tpl_realizes SEGS (OPS R) MP0 K E0 (t_st TN.HEAD_PN).
+Lemma LP_soundN : tpl_realizes SEGS (OPS R) MP0 K E0 (t_st (LE_N.HEAD_PN rflag)).
 Proof.
-  eapply (loop_sound SEGS (OPS R) LP_N.CTX LP_N.PLAN LP_N.OBLS 20%uint63 TN.HEAD_PN MP0 PB K E0
-            MP0_stable LP_N.WF ITAB_ok (contracts_ok_empty SEGS (OPS R) LP_N.CTX MP0 PB eq_refl) eq_refl eq_refl LP_N.CHK
-            (OblsStart.obls_start_sound PB LP_N.OBLS PB_CLF_ofN start_obls_LPN) eq_refl eq_refl eq_refl).
+  eapply (loop_sound SEGS (OPS R) (LP_N.CTX rflag) (LP_N.PLAN rflag) (LP_N.OBLS rflag) 20%uint63 (LE_N.HEAD_PN rflag) MP0 PB K E0
+            MP0_stable (LP_N.WF rflag) ITAB_ok (contracts_ok_empty SEGS (OPS R) (LP_N.CTX rflag) MP0 PB eq_refl) eq_refl eq_refl (LP_N.CHK rflag)
+            (OblsStart.obls_start_sound PB (LP_N.OBLS rflag) PB_CLF_ofN (start_obls_LPN rflag)) (vb_LPN rflag) (upc_LPN rflag) eq_refl).
   - intros tid T Hf Hne'. exfalso. apply imap_of_find_in in Hf. destruct Hf as [Hf|[]]. injection Hf as <- _. rewrite Uint63.eqb_refl in Hne'. discriminate.
   - intros eid T Hf E' ms' m' Heb' HMP' HS' Hat'. apply imap_of_find_in in Hf. destruct Hf as [Hf|[]]. injection Hf as _ <-.
     exact (settid_leafN E' ms' m' Heb' HMP' HS' Hat').
 Qed.
-Lemma LE_soundN : tpl_realizes SEGS (OPS R) MP0 K E0 (t_st TN.HEAD_EN).
+Lemma LE_soundN : tpl_realizes SEGS (OPS R) MP0 K E0 (t_st (S0_N.HEAD_EN rflag)).
 Proof.
-  eapply (loop_sound SEGS (OPS R) LE_N.CTX LE_N.PLAN LE_N.OBLS 10%uint63 TN.HEAD_EN MP0 PB K E0
-            MP0_stable LE_N.WF ITAB_ok (contracts_ok_empty SEGS (OPS R) LE_N.CTX MP0 PB eq_refl) eq_refl eq_refl LE_N.CHK
-            (OblsStart.obls_start_sound PB LE_N.OBLS PB_CLF_ofN start_obls_LEN) eq_refl eq_refl eq_refl).
+  eapply (loop_sound SEGS (OPS R) (LE_N.CTX rflag) (LE_N.PLAN rflag) (LE_N.OBLS rflag) 10%uint63 (S0_N.HEAD_EN rflag) MP0 PB K E0
+            MP0_stable (LE_N.WF rflag) ITAB_ok (contracts_ok_empty SEGS (OPS R) (LE_N.CTX rflag) MP0 PB eq_refl) eq_refl eq_refl (LE_N.CHK rflag)
+            (OblsStart.obls_start_sound PB (LE_N.OBLS rflag) PB_CLF_ofN (start_obls_LEN rflag)) (vb_LEN rflag) (upc_LEN rflag) eq_refl).
   - intros tid T Hf Hne'. apply imap_of_find_in in Hf. destruct Hf as [Hf|[Hf|[]]].
     + exfalso. injection Hf as <- _. rewrite Uint63.eqb_refl in Hne'. discriminate.
     + injection Hf as _ <-. exact LP_soundN.
@@ -520,10 +563,10 @@ Proof.
 Qed.
 Theorem rz_chainN : realizes SEGS c0 K.
 Proof.
-  pose proof (proj2 INIT) as HS0. change (InitSrcN.E0 _ _ _ _ _ _ _) with E0 in HS0.
+  pose proof (proj2 INIT) as HS0. change (InitSrcN.E0 _ _ _ _ _) with E0 in HS0.
   unfold c0. change (init_config SEGS PC PH sp brk0 mb rnd lim inp) with (mkCfg (cfg_ms c0) model0).
-  eapply (cert_sound SEGS (OPS R) S0_N.CTX S0_N.PLAN S0_N.ROOT S0_N.OBLS MP0 PB MP0_stable S0_N.WF ITAB_ok eq_refl S0_N.CHK);
-    [constructor | reflexivity | exact (root_opsN _ HS0) | reflexivity | reflexivity |].
+  eapply (cert_sound SEGS (OPS R) (S0_N.CTX rflag) (S0_N.PLAN rflag) (S0_N.ROOT rflag) S0_N.OBLS MP0 PB MP0_stable (S0_N.WF rflag) ITAB_ok eq_refl (S0_N.CHK rflag));
+    [constructor | reflexivity | exact (root_opsN rflag _ HS0) | reflexivity | reflexivity |].
   split.
   - intros tid T Hf E' ms' m' Heb' HMP' HS' _. apply imap_of_find_in in Hf. destruct Hf as [Hf|[]]. injection Hf as _ <-.
     exact (LE_soundN E' ms' m' Heb' HMP' HS').
@@ -599,22 +642,22 @@ Qed.
 Lemma ctab_N : ext_ok DN.CONTRACTS [] -> ctab_ok SEGS R DN.CONTRACTS.
 Proof. intros HE. apply (ctab_of _ _ HE). intros cid ct []. Qed.
 
-Lemma bridge2 : forall (D : sstate) (KS : shp), s_ops D = DRVOPS ->
-  DrvTop.drv_chk SEGS BL HULL XCLZ PFP RS REMAT 0%uint63 (t_st T2.T_MAIN2) D = true -> ops0_ok (t_st T2.T_MAIN2) D ->
-  NODE SEGS R D (DR R KS) -> tpl_realizes SEGS (OPS R) MP1 (DR R KS) E0 (t_st T2.T_MAIN2).
+Lemma bridge2 : forall b (D : sstate) (KS : shp), s_ops D = DRVOPS ->
+  DrvTop.drv_chk SEGS BL HULL XCLZ PFP RS REMAT 0%uint63 (t_st (S3_2.T_MAIN2 b)) D = true -> ops0_ok (t_st (S3_2.T_MAIN2 b)) D ->
+  NODE SEGS R D (DR R KS) -> tpl_realizes SEGS (OPS R) MP1 (DR R KS) E0 (t_st (S3_2.T_MAIN2 b)).
 Proof.
-  intros D KS HO HC Hops HN E ms m Heb [tid ->] HS.
-  destruct (DrvTop.drv_bridgeE SEGS R BL HBL WNOFF WNOFF_val HULL XCLZ PFP heap_fp_drv pool_fp_drv RS RS_R REMAT 0%uint63 (t_st T2.T_MAIN2) D E ms _
-              (VL wzero) (VL wzero) (VL wzero) HO HC HS Heb (or_introl main2_resv) (Hops E ms _ tid HS eq_refl)) as (E' & Heb' & HS').
+  intros b D KS HO HC Hops HN E ms m Heb [tid ->] HS.
+  destruct (DrvTop.drv_bridgeE SEGS R BL HBL WNOFF WNOFF_val HULL XCLZ PFP heap_fp_drv pool_fp_drv RS RS_R REMAT 0%uint63 (t_st (S3_2.T_MAIN2 b)) D E ms _
+              (VL wzero) (VL wzero) (VL wzero) HO HC HS Heb (or_introl (main2_resv b)) (Hops E ms _ tid HS eq_refl)) as (E' & Heb' & HS').
   apply (HN E' ms (with_tid tid model0)); [cbn [r_PB R]; unfold PB; congruence | reflexivity | exact HS'].
 Qed.
-Lemma bridgeN : forall (D : sstate) (KS : shp), s_ops D = DRVOPS ->
-  DrvTop.drv_chk SEGS BL HULL XCLZ PFP RS REMAT 0%uint63 (t_st TN.T_MAINN) D = true -> ops0_ok (t_st TN.T_MAINN) D ->
-  NODE SEGS R D (DR R KS) -> tpl_realizes SEGS (OPS R) MP1 (DR R KS) E0 (t_st TN.T_MAINN).
+Lemma bridgeN : forall b (D : sstate) (KS : shp), s_ops D = DRVOPS ->
+  DrvTop.drv_chk SEGS BL HULL XCLZ PFP RS REMAT 0%uint63 (t_st (S3_N.T_MAINN b)) D = true -> ops0_ok (t_st (S3_N.T_MAINN b)) D ->
+  NODE SEGS R D (DR R KS) -> tpl_realizes SEGS (OPS R) MP1 (DR R KS) E0 (t_st (S3_N.T_MAINN b)).
 Proof.
-  intros D KS HO HC Hops HN E ms m Heb [tid ->] HS.
-  destruct (DrvTop.drv_bridgeE SEGS R BL HBL WNOFF WNOFF_val HULL XCLZ PFP heap_fp_drv pool_fp_drv RS RS_R REMAT 0%uint63 (t_st TN.T_MAINN) D E ms _
-              (VL wzero) (VL wzero) (VL wzero) HO HC HS Heb (or_introl mainN_resv) (Hops E ms _ tid HS eq_refl)) as (E' & Heb' & HS').
+  intros b D KS HO HC Hops HN E ms m Heb [tid ->] HS.
+  destruct (DrvTop.drv_bridgeE SEGS R BL HBL WNOFF WNOFF_val HULL XCLZ PFP heap_fp_drv pool_fp_drv RS RS_R REMAT 0%uint63 (t_st (S3_N.T_MAINN b)) D E ms _
+              (VL wzero) (VL wzero) (VL wzero) HO HC HS Heb (or_introl (mainN_resv b)) (Hops E ms _ tid HS eq_refl)) as (E' & Heb' & HS').
   apply (HN E' ms (with_tid tid model0)); [cbn [r_PB R]; unfold PB; congruence | reflexivity | exact HS'].
 Qed.
 
@@ -622,22 +665,31 @@ Record FamHypsF : Prop := FHF {
   fhf_ext : ext_ok DF.CONTRACTS [21; 23; 24]%uint63;
   fhf_mf : mnofork_ok SEGS R 294592%uint63 (c_apply (Contract 294592%uint63 (CtrA.malloc_apply SEGS 422892%uint63 554784%uint63 349792%uint63 554752%uint63 423056%uint63 (VIns 4%uint63 4%uint63 (VIns 2%uint63 2%uint63 (VIns 1%uint63 1%uint63 (VIns 0%uint63 1%uint63 (VL (wp 0%uint63)) (VBlob false 6%uint63 (VL (wp 0%uint63)) 1%uint63)) (VL (wp 0%uint63))) (VBlob false 6%uint63 (VL (wp 2%uint63)) 2%uint63)) (VBlob false 6%uint63 (VL (wp 4%uint63)) 4%uint63)))));
   fhf_lib8 : lib_ok SEGS R (t_st DF.T_LIBGEN_r8) (t_st DF.R_LIBGEN_r8_RET);
-  fhf_lib9 : lib_ok SEGS R (t_st DF.T_LIBGEN_r9) (t_st DF.R_LIBGEN_r9_RET) }.
+  fhf_lib9 : lib_ok SEGS R (t_st DF.T_LIBGEN_r9) (t_st DF.R_LIBGEN_r9_RET);
+  (* the same two library nodes in the certificates of the start state with CONFIG_RSEQ *)
+  fhf_lib8R : lib_ok SEGS R (t_st DFR.T_LIBGEN_r8) (t_st DFR.R_LIBGEN_r8_RET);
+  fhf_lib9R : lib_ok SEGS R (t_st DFR.T_LIBGEN_r9) (t_st DFR.R_LIBGEN_r9_RET) }.
 Theorem rz_file : length (in_argv inp) = 2%nat -> fs_lookup fs0 p1 = Some file -> path_is_dirref p1 = false -> p1 <> [] ->
   (length p1 < 4096)%nat -> FamHypsF -> realizes SEGS c0 (K inp).
 Proof.
-  intros Hargc2 Hfile Hndir Hne Hshort [HE HMF HL8 HL9]. pose proof (ctab_F Hfile HE) as HC.
-  pose proof OPS0_F as HO.
-  assert (HD : HF.hyps R).
-  { refine (HF.Hyps R HC file_pb_R _ _ HMF HL8 HL9).
-    - intros m Hm. cbn [r_p1 r_file R]. rewrite (MP_fs m Hm). exact Hfile.
-    - cbn [r_p1 R]. pose proof p1_noslash as [Hs _]. repeat split; assumption. }
+  intros Hargc2 Hfile Hndir Hne Hshort [HE HMF HL8 HL9 HL8R HL9R]. pose proof (ctab_F Hfile HE) as HC.
+  assert (HCR : ctab_ok SEGS R DFR.CONTRACTS) by exact HC.
   assert (HK : K inp = DR R (FILE file)).
   { unfold K. rewrite (argv_eq Hargc2). unfold DR, K2. cbn [r_fs r_a0 r_p1 R].
     replace (4096 <=? Z.of_nat (length p1)) with false by (symmetry; apply Z.leb_gt; lia).
     replace (path_eqb p1 []) with false by (destruct p1; [exfalso; apply Hne; reflexivity | reflexivity]).
     rewrite Hndir. fold fs0. rewrite Hfile. reflexivity. }
-  rewrite HK. apply (rz_chain2 Hargc2). apply (bridge2 DF.T_DRV2 _ OPS_F DRV_CHK_F HO). exact (RF.N_T_DRV2 R HD).
+  rewrite HK. apply (rz_chain2 Hargc2). unfold rflag. destruct (la_rseq (SI.LA sp mb inp)).
+  - assert (HD : HFR.hyps R).
+    { refine (HFR.Hyps R HCR file_pb_R _ _ HMF HL8R HL9R).
+      - intros m Hm. cbn [r_p1 r_file R]. rewrite (MP_fs m Hm). exact Hfile.
+      - cbn [r_p1 R]. pose proof p1_noslash as [Hs _]. repeat split; assumption. }
+    apply (bridge2 true DFR.T_DRV2 _ OPS_FR DRV_CHK_FR OPS0_FR). exact (RFR.N_T_DRV2 R HD).
+  - assert (HD : HF.hyps R).
+    { refine (HF.Hyps R HC file_pb_R _ _ HMF HL8 HL9).
+      - intros m Hm. cbn [r_p1 r_file R]. rewrite (MP_fs m Hm). exact Hfile.
+      - cbn [r_p1 R]. pose proof p1_noslash as [Hs _]. repeat split; assumption. }
+    apply (bridge2 false DF.T_DRV2 _ OPS_F DRV_CHK_F OPS0_F). exact (RF.N_T_DRV2 R HD).
 Qed.
 
 Record FamHypsD : Prop := FHD {
@@ -646,8 +698,7 @@ Record FamHypsD : Prop := FHD {
 Theorem rz_dir : length (in_argv inp) = 2%nat -> path_is_dirref p1 = true -> FamHypsD -> realizes SEGS c0 (K inp).
 Proof.
   intros Hargc2 Hdir [HE HMF]. pose proof (ctab_D Hdir HE) as HC.
-  pose proof OPS0_D as HO.
-  assert (HDG : HD.hyps R) by (exact (HD.Hyps R HC Hdir HMF)).
+  assert (HCR : ctab_ok SEGS R DDR.CONTRACTS) by exact HC.
   assert (Hp : p1 = [Z_to_bv 8 46]).
   { destruct p1_noslash as [_ Hdd]. unfold path_is_dirref in Hdir. apply orb_prop in Hdir. destruct Hdir as [H1|H2].
     - apply path_eqb_eq in H1. exact H1.
@@ -656,7 +707,11 @@ Proof.
   { unfold K. rewrite (argv_eq Hargc2). unfold DR, K2. cbn [r_fs r_a0 r_p1 R].
     replace (4096 <=? Z.of_nat (length p1)) with false by (rewrite Hp; reflexivity).
     replace (path_eqb p1 []) with false by (rewrite Hp; reflexivity). rewrite Hdir. reflexivity. }
-  rewrite HK. apply (rz_chain2 Hargc2). apply (bridge2 DD.T_DRV2 _ OPS_D DRV_CHK_D HO). exact (RD.N_T_DRV2 R HDG).
+  rewrite HK. apply (rz_chain2 Hargc2). unfold rflag. destruct (la_rseq (SI.LA sp mb inp)).
+  - assert (HDG : HDR.hyps R) by (exact (HDR.Hyps R HCR Hdir HMF)).
+    apply (bridge2 true DDR.T_DRV2 _ OPS_DR DRV_CHK_DR OPS0_DR). exact (RDR.N_T_DRV2 R HDG).
+  - assert (HDG : HD.hyps R) by (exact (HD.Hyps R HC Hdir HMF)).
+    apply (bridge2 false DD.T_DRV2 _ OPS_D DRV_CHK_D OPS0_D). exact (RD.N_T_DRV2 R HDG).
 Qed.
 
 Record FamHypsA : Prop := FHA {
@@ -665,13 +720,13 @@ Theorem rz_absent : length (in_argv inp) = 2%nat -> (length p1 < 4096)%nat -> (p
   FamHypsA -> realizes SEGS c0 (K inp).
 Proof.
   intros Hargc2 Hshort Hcase [HE]. pose proof (ctab_A Hshort Hcase HE) as HC.
-  pose proof OPS0_A as HO. assert (HDG : HA.hyps R) by (exact (HA.Hyps R HC)).
+  assert (HDG : HA.hyps R) by (exact (HA.Hyps R HC)).
   assert (HK : K inp = DR R OPENFAIL).
   { unfold K. rewrite (argv_eq Hargc2). unfold DR, K2. cbn [r_fs r_a0 r_p1 R].
     replace (4096 <=? Z.of_nat (length p1)) with false by (symmetry; apply Z.leb_gt; lia).
     destruct Hcase as [-> | [Hnd Hno]]; [reflexivity|].
     destruct (path_eqb p1 []); [reflexivity|]. rewrite Hnd. fold fs0. rewrite Hno. reflexivity. }
-  rewrite HK. apply (rz_chain2 Hargc2). apply (bridge2 DA.T_DRV2 _ OPS_A DRV_CHK_A HO). exact (RA.N_T_DRV2 R HDG).
+  rewrite HK. apply (rz_chain2 Hargc2). apply (bridge2 rflag DA.T_DRV2 _ OPS_A (DRV_CHK_A rflag) (OPS0_A rflag)). exact (RA.N_T_DRV2 R HDG).
 Qed.
 
 Record FamHypsT : Prop := FHT {
@@ -679,11 +734,11 @@ Record FamHypsT : Prop := FHT {
 Theorem rz_toolong : length (in_argv inp) = 2%nat -> (4096 <= length p1)%nat -> FamHypsT -> realizes SEGS c0 (K inp).
 Proof.
   intros Hargc2 Hlong [HE]. pose proof (ctab_T Hlong HE) as HC.
-  pose proof OPS0_T as HO. assert (HDG : HT.hyps R) by (exact (HT.Hyps R HC)).
+  assert (HDG : HT.hyps R) by (exact (HT.Hyps R HC)).
   assert (HK : K inp = DR R OPENFAIL).
   { unfold K. rewrite (argv_eq Hargc2). unfold DR, K2. cbn [r_fs r_a0 r_p1 R].
     replace (4096 <=? Z.of_nat (length p1)) with true by (symmetry; apply Z.leb_le; lia). reflexivity. }
-  rewrite HK. apply (rz_chain2 Hargc2). apply (bridge2 DT.T_DRV2 _ OPS_T DRV_CHK_T HO). exact (RT.N_T_DRV2 R HDG).
+  rewrite HK. apply (rz_chain2 Hargc2). apply (bridge2 rflag DT.T_DRV2 _ OPS_T (DRV_CHK_T rflag) (OPS0_T rflag)). exact (RT.N_T_DRV2 R HDG).
 Qed.
 
 Record FamHypsN : Prop := FHN {
@@ -691,11 +746,11 @@ Record FamHypsN : Prop := FHN {
 Theorem rz_usage : length (in_argv inp) <> 2%nat -> FamHypsN -> realizes SEGS c0 (K inp).
 Proof.
   intros HargcN [HE]. pose proof (ctab_N HE) as HC.
-  pose proof OPS0_N as HO. assert (HDG : HN.hyps R) by (exact (HN.Hyps R HC)).
+  assert (HDG : HN.hyps R) by (exact (HN.Hyps R HC)).
   assert (HK : K inp = DR R USAGE).
   { unfold K, DR. cbn [r_fs r_a0 r_p1 R]. unfold a0, p1. pose proof HargcN as L. set (l := in_argv inp) in L |- *. clearbody l.
     destruct l as [|x [|y [|z l']]]; cbn [hd tl]; try reflexivity. exfalso. apply L. reflexivity. }
-  rewrite HK. apply (rz_chainN HargcN). apply (bridgeN DN.T_DRVN _ OPS_N DRV_CHK_N HO). exact (RN.N_T_DRVN R HDG).
+  rewrite HK. apply (rz_chainN HargcN). apply (bridgeN rflag DN.T_DRVN _ OPS_N (DRV_CHK_N rflag) (OPS0_N rflag)). exact (RN.N_T_DRVN R HDG).
 Qed.
 
 Record AllHyps : Prop := AH { ah_f : FamHypsF; ah_d : FamHypsD; ah_a : FamHypsA; ah_t : FamHypsT; ah_n : FamHypsN }.

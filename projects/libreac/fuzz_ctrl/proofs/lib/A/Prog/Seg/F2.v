@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 2065 of its 2181 lines of code are new or changed and 895 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F3.v, with its module paths and module names changed; 1051 of its 1229 lines of code are new or changed and 2003 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment F2 of fuzz_ctrl LLVMFuzzerTestOneInput (asan, patched image A): 0x81da4-0x81dcc, 11 instructions.
      81da4 mv s7,a0; 81da8 bnez a0,81db0 (taken: a0 = Phi, the block F1's allocation returned, Phi <> 0, so the
      abort edge 81dac `bnez s2,82bf4` is not reached); 81db0 sltiu s6,s2,50; 81db4 sd s4,216(s1);
@@ -19,7 +20,7 @@
    Tac_slot.sl_fr_cl / ent_munch (after a Theorem Labs lane's R8.v); the b5_CUT carry b5_C is produced by f2_b5C from the
    entry's FLSH, IFS and FLC, the block's AH (b5_PH's placement), FRA (b5_FS, b5_KN: f2_b5fs, f2_b5kn), s7 = Phi,
    the [A + 232] store and the copied record; b5_PF at 0x81e54 is vacuous (flen = 0, so t_big and t_8819 are
-   false). The instruction-level run lemmas are a Theorem Labs lane's (a working branch 6175db87b6e).
+   false). The instruction-level run lemmas are a Theorem Labs lane's (a working branch).
    rule 24: no function proved. *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

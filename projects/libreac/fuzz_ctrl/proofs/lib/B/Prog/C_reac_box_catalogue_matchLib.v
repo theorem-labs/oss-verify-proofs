@@ -17,11 +17,11 @@
    and its post through MemNorm.munch_rel / wmono_rel / ro_agree_of_mem_rel and MemNormTr's *_of_rel (the shadow
    region facts through B.ShadowRwOnT.shadow_rw_on_rel / _of_rel / _normalize): the same
    composition as a Theorem Labs lane's rebase_ro_normalize_stmt (decisions.md item 28 (a working note, not in this delivery); provisional (stand-ins) on A at
-   a working branch 7f07ac65e7b; its B twin is lib/B/ProgWorld.v:821, proved at :844; it is not used by name).  Each post is relative
+   a working branch; its B twin is lib/B/ProgWorld.v:821, proved at :844; it is not used by name).  Each post is relative
    to mb and states ro_agree of the real final memory, never mem_inv.  No proof is copied.
 
    NO SECTION HYPOTHESES.  The normalize lemmas are image B's own, Required: lib/B/MemNormF.v and lib/B/MemNormTr.v
-   (a working branch 0fa3ec38d61, twins of A's files of the same names).  The one
+   (a working branch, twins of A's files of the same names).  The one
    callee contract a stretch uses, bcmp_wrap_c_on.bcmp_wrap_contract_F_on (stretch 4, inside the row's compare; owner
    a Theorem Labs lane, lib/B/Prog/bcmp_wrap_c_on.v), is a premise of that lemma.
 
@@ -38,13 +38,13 @@
      4  model_block return (pc 0x8509c), row i -> row S i's call / exit      cmRB_post_mb        <- cm_post_mb_K
      5  exit (pc 0x850fc) -> the flag store (pc 0x85194)                     cmRB_pre_rel        <- cm_pre_rel
      6  after the store (pc 0x85198) -> ret                                  cmRB_post_rel       <- cm_post_rel
-   (cm_post_parse_K and cm_post_mb_K: a working branch 077bb7bcf14.)  Stretches 3 to 6 are
+   (cm_post_parse_K and cm_post_mb_K: a working branch.)  Stretches 3 to 6 are
    stated for any frame arm nn; the glue uses nn = 1 only (the a0 = 0 arm of the class-2 request is dead in cgif
    form, C_reac_box_catalogue_match.v), where clause (2) holds at every base.
 
    CLAUSE MAP of cmBase mb tp f len Sp FS fb, for the glue to close one for one at each stretch base.  Owner of
    every B twin: a Theorem Labs lane's lib/B/ProgWorld.v, twin of a Theorem Labs lane's lib/A/ProgWorld.v; state on image A at
-   a working branch 7f07ac65e7b.  Image-A files are NOT Required here; each clause swaps for its B
+   a working branch.  Image-A files are NOT Required here; each clause swaps for its B
    twin when that sha lands.
      (1)  asan_cells mb /\ shadow_rw_on (reac_box_catalogue_match_shadow_R f len Sp FS) mb /\ MemNorm.ro_agree rsegs mb
             <- route (C): C_reac_box_catalogue_matchPfV.cmPf_shrwR_of_AR (the region from ctl_rt_C_of_AR, no
@@ -53,7 +53,7 @@
           shadow_rw_on P m' (the `_on` run's cmSRT at its normalized base, moved back by shadow_rw_on_rel / _of_rel).
      (2)  addressable mb (Sp - 9136) 9136
             <- ctl_stack_shadow_of_AR_stmt at lo := Sp - 9136, len := 9136 (its range premises are astk_ok's
-               ly_stk_lo ly <= Sp - 9136 and Sp <= ly_stk_hi ly).  STATEMENT ONLY on A (in the file since 7f07ac65e7b).
+               ly_stk_lo ly <= Sp - 9136 and Sp <= ly_stk_hi ly).  STATEMENT ONLY on A (in the file).
      (3)  fp [0; 1; 2] mb (bv_unsigned tp) FS (Sp - 9136) Sp W D, with fs_place's stk [FS, FS + FS_SIZE) and fp_cls's
           hint words and flag bytes
             <- ctl_fp_of_AR_stmt; the stk, flag and hint parts are also ctl_fs_of_AR_stmt's conclusions.  Both
@@ -67,8 +67,8 @@
             <- RT_used_of_AR_stmt (decisions.md item 29).  STATEMENT ONLY on A.
      (6)  50 <= len -> bytes_at rsegs mb f fb /\ addressable mb f 50
             <- the spec's live-block premises (C_reac_box_catalogue_match.v:87-88) and ctl_block_shadow_of_AR_stmt
-               (provisional (stand-ins) on A: A.ProgWorldShadow.ctl_block_shadow_of_AR, a working branch
-               1f8c45f4527).
+               (provisional (stand-ins) on A: A.ProgWorldShadow.ctl_block_shadow_of_AR, a working branch).
+               
      (7)  bytes_at rsegs mb CM_T CM_TBL
             <- the image: [CM_T, CM_T + 3256) is read-only data, where (1)'s ro_agree gives mrd = seg_rom.
      (8)  cmRB_tbl_addr mb (= addressable mb CM_T 3256)
@@ -95,7 +95,7 @@
        C, (forall x, H x = false -> C (bv_unsigned x) -> ~ in_img segs (bv_unsigned x) -> aview segs H m'
        (bv_unsigned x) = aview segs H m (bv_unsigned x)) -> ctl_kept_vis H m m' C /\ ctl_wmono_vis_off_img H m m'
        C` (ctl_kept_vis, ctl_wmono_vis_off_img: lib/B/ProgWorld.v:942 / :946, also in a Theorem Labs lane's lib/B/Prog/C_reac_ctrl_identity_replyPost.v (not in this delivery),
-       a working branch 1df58ed9045).
+       a working branch).
      stretches 3, 4 (after a walked callee with window [lo, sp2): reac_ctrl_parse lo = sp2 - 8800, reac_box_model_block
        lo = sp2 - 4272): inside [lo, sp2), the callee's post (its stk over its own window); outside it, the window
        kept byte for byte from the call memory m1 (cmRB_kept m1 mb (cmRB_callee_kept ..)), with stk at m1 (the
@@ -104,9 +104,9 @@
      stretches 5, 6: the same run (the exit's cmRB_J; cmRB_AtRel at the store memory).
    STRETCH PREMISES at the base (not ProgWorld clauses):
      cmRB_Fs2 (stretch 2), with fr = fs_frame FS 2 j: 0 <= j < fs_M 2, fr mod 64 = 0, the flag byte 1, the flag word at
-      fr + 248, the 32 zero shadow bytes <- ctl_fs_of_astack_stmt 2, the amended statement (by a Theorem Labs lane, written on a working branch 878cb7afbc4, it
+      fr + 248, the 32 zero shadow bytes <- ctl_fs_of_astack_stmt 2, the amended statement (by a Theorem Labs lane, written on a working branch, it
       gains, after its [sp - ESTACK, sp) presence premise, the request's frame condition YG0d.v:298-299; conclusions
-      unchanged; provisional (stand-ins) on A: lib/A/ProgWorldAstack.v, a working branch d447ec8f286).
+      unchanged; provisional (stand-ins) on A: lib/A/ProgWorldAstack.v, a working branch).
       Stretch 2's 13 saves at [Sp - 104, Sp) are stretch 1's (rw_cells at m1, cmRB_AtSM2), carried by cmRB_win_kept.
       The release store between stretches 5 and 6 is the glue's world rule, ctl_release_of_free_law_stmt
       (provisional (stand-ins) on A in the same lib/A/ProgWorldAstack.v).
@@ -121,8 +121,8 @@
      cmRB_Fr (stretches 5, 6): cmFK; the saves and the flag word <- the same run: stretch 5 from the exit's cmRB_J,
        stretch 6 from stretch 5's premises, kept by stretch 5's munch (which avoids [Sp - 104, Sp) and
        [fr + 248, fr + 256)).
-   The guards of the guarded stk transport (B's MemNormTr.stk_normalize_ro, a working branch
-   0fa3ec38d61; the unguarded form is false, MemNormTr.stk_normalize_ro_unguarded_false): for the window, the named
+   The guards of the guarded stk transport (B's MemNormTr.stk_normalize_ro, a working branch;
+   the unguarded form is false, MemNormTr.stk_normalize_ro_unguarded_false): for the window, the named
    lemma cmRB_win_above_img at every site, through cmRB_stk_normalize; for fp's side stack, MemNormTr.fp_FS_above_img
    inside MemNormTr.fp_transport / fp_normalize.  The
    not-read-only facts this file needs (the saves, the flag byte, the parse buffer) come from wview at the normalized

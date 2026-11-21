@@ -7,7 +7,7 @@
    the kit's aj_art_at (PaArt.v), socket_send through its statement and the call rule (PaNoChain.v cl_callS_wide),
    and the tail jump into the free wrapper through cgif's afree04_rule (PaCall.v afree04_sub). reply has no inline
    check, no loop, no side-stack frame and no UBSan trap site (gen/traps.B.summary row `reply 0`).
-   The B twin of lib/A/Prog/reply.v (a working branch 094fb7cf5be): B's 18 listing slots
+   The B twin of lib/A/Prog/reply.v (a working branch): B's 18 listing slots
    (lib/B/Prog/CmdList.v, AF_reply = 0x7494) are A's (AF_reply = 0x7a30) word for word except the pc-relative fields
    of the three calls; B pc = A pc - 0x550 (0x8df14 + k is 0x8d9c4 + k). The return address of the socket_send call
    is BASE + 0x74c4 (A BASE + 0x7a60). B's numbers: REPLY_STK = 32 + SOCKET_SEND_STK = 16480 (SOCKET_SEND_STK =
@@ -18,10 +18,11 @@
    (also over IMG : cmd_img_facts SEGS B). HB, TL, MTL and SIGP stay record hypotheses, as in A: no base lemma
    proves PALib, cmd_sig_prog of an abstract instance (CmdRecRest's cmd_palib / cmd_sig_prog_PB are at PB_cmd),
    or ameter_laws of an abstract meter.
-   Re-fitted 2026-10-29 to the B wave a working branch f490061c104 (pass 5, a Theorem Labs lane's PASS4-REFIT.md): reply's
+   Re-fitted 2026-10-29 to the B wave a working branch (pass 5, a Theorem Labs lane's PASS4-REFIT.md): reply's
    post stays apost_base and socket_send's post is apost_base, so no call changes the FP state and the old closing
    stands (PASS4-REFIT.md A.3 step 4, first case); astack_pres is gone (section B): socket_send's chain at s0 = the
    text (a heap block) is achain_low, the free wrapper's chain_pre is achain_chain_pre on afn_pre's chain. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

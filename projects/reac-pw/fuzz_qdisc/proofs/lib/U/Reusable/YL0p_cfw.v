@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YL0p.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/reac-pw/fuzz_qdisc/lib/U/Reusable/YL0p.v, with its module paths and module names changed; 7 of its 47 lines of code are new or changed and 7 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput and its entry-launch facts). *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -20,33 +21,41 @@ Open Scope bv_scope.
 Open Scope Z_scope.
 Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Definition usage_hyp_cf : Prop :=
-forall sp argv envp tid rnd ms model,
-valid_sp sp -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp argv envp -> (length argv <> 2)%nat ->
-st_ok src0segs (E_main sp argv envp tid rnd) (add_cond ss_main_f (mkAC BC_NE (SOff 3 0) (SLit 2))) ms ->
-runs_at (bv_unsigned sp) (ms_mem ms) (runs_main false sp argv envp rnd) ->
+forall (sp brk mbase tid : word) (rnd : EntryDraw) (inp : ProcInput) ms model,
+valid_sp sp -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
+(length (in_argv inp) <> 2)%nat ->
+st_ok src0segs (E_main sp inp tid rnd) (add_cond ss_main_f (mkAC BC_NE (SOff 3 0) (SLit 2))) ms ->
+runs_at (bv_unsigned sp) (ms_mem ms) (runs_main false sp inp rnd) ->
 m_halted model = None -> m_vm_lazy model = [] -> fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) model ->
-crealizes src0_msyms (mkCfg ms model) (diag (msg_usage (nth 0 argv [])) (m_fs model)).
+crealizes src0_msyms (mkCfg ms model) (diag (msg_usage (nth 0 (in_argv inp) [])) (m_fs model)).
 Definition cannot_open_hyp_cf : Prop :=
-forall sp a0 path envp tid rnd regs mem model e,
-valid_sp sp -> valid_argv [a0; path] -> valid_envp envp -> entry_stack_fits sp [a0; path] envp ->
+forall (sp brk mbase : word) (inp : ProcInput) (a0 path : list byte) (tid : word)
+(rnd : EntryDraw) regs mem model e,
+valid_sp sp -> in_argv inp = [a0; path] ->
+valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 0 < bv_unsigned tid < 4194304 ->
-regs_ok (E_main sp [a0; path] envp tid rnd) (ss_regs ss_open) regs ->
-mem_ok src0segs (E_main sp [a0; path] envp tid rnd) mem (ss_mem ss_open) ->
-facts_ok (E_main sp [a0; path] envp tid rnd) (ss_facts ss_open) ->
-runs_at (bv_unsigned sp) mem (runs_main true sp [a0; path] envp rnd) ->
+regs_ok (E_main sp inp tid rnd) (ss_regs ss_open) regs ->
+mem_ok src0segs (E_main sp inp tid rnd) mem (ss_mem ss_open) ->
+facts_ok (E_main sp inp tid rnd) (ss_facts ss_open) ->
+runs_at (bv_unsigned sp) mem (runs_main true sp inp rnd) ->
 m_halted model = None -> m_vm_lazy model = [] -> fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) model ->
 0 < e < 4096 ->
 crealizes src0_msyms
 (mkCfg (mkst (regupd regs 10%bv (errno_ret e)) (v_addi (Z_to_bv 64 (ss_pc ss_open)) 4) mem (seg_rom src0segs)) model)
 (diag (msg_cannot_open path) (m_fs model)).
 Definition read_error_hyp_cf : Prop :=
-forall sp a0 path envp tid rnd (E : env) ms model,
-valid_sp sp -> valid_argv [a0; path] -> valid_envp envp -> entry_stack_fits sp [a0; path] envp ->
+forall (sp brk mbase : word) (inp : ProcInput) (a0 path : list byte) (tid : word)
+(rnd : EntryDraw) (E : env) ms model,
+valid_sp sp -> in_argv inp = [a0; path] ->
+valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 0 < bv_unsigned tid < 4194304 ->
 Z.of_nat (length path) <= 60 ->
-env_agree 10 (E_main sp [a0; path] envp tid rnd) E ->
+env_agree 10 (E_main sp inp tid rnd) E ->
 st_ok src0segs E ss_rderr ms ->
-runs_at (bv_unsigned sp) (ms_mem ms) (runs_main true sp [a0; path] envp rnd) ->
+runs_at (bv_unsigned sp) (ms_mem ms) (runs_main true sp inp rnd) ->
 m_halted model = None -> m_vm_lazy model = [] -> fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) model ->
 crealizes src0_msyms (mkCfg ms model) (diag (msg_read_error path) (m_fs model)).
 End a.

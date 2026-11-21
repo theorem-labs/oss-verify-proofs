@@ -8,7 +8,7 @@
    window lies above alloc_ceiling (astk_ok of expected's entry: alloc_ceiling <= ly_stk_lo and
    ly_stk_lo + STK_expected <= sp, STK_expected = 240 + 8224), so the facts below alloc_ceiling survive (FMW_lib.v
    fw_glob_low / fw_rodata_low / fw_cstr_low), and the frame slots [F + 0x28, F + 0xf0) lie above it.
-   Shape after image A's lib/A/FMW_ex_head_x.v (06d82004dc3). *)
+   Shape after image A's lib/A/FMW_ex_head_x.v. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

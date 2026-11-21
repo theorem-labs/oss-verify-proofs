@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainTop.v (commit 67fc7ef5787c2195464dbe4d4f7905278328dc0c, drain recycle tail and top; file sha256 9a622ff4a1a9) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
-(* Theorem Labs, 2026-10-30 (lane B1, WalkB1): the lane's TOP - DMwalkIF.drain_m_cf_t (DMwalkIF.v:530-533),
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainTop.v (drain recycle tail and top; file sha256 9a622ff4a1a9) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10-30 (lane B1, WalkB1): the lane's TOP - DMwalkIF.drain_m_cf_t (DMwalkIF.v:531-534),
    Quarantine::Drain (0x337ec) with the REAL MergeBatches over the shared model's drain tree drain_body_cf, in
    MnDrain.de_drain_m_t's form (DIfaceR.drain_spec_g with MnEnq.acall_raw_em_x), frame-generic over the
    opaque relations ARX / ARXr / AOX / DRq.  The model's first cut (DMdrainM.drain_body_cf_unfold) splits the
@@ -15,7 +16,7 @@
    shared instance DMdrainG4.QBB_of_QB_cf with NMAXD = kQuarantineMax = 2 ^ 28), the batch bound L24 < 2 ^ 40,
    and rmaxd_ok RMAXD (H2's DoRecycle walk takes it); [drain_ok] states them inside the contract
    (DMwalkIF.drain_ok_t).  No memnorm instance fact: every word the drain writes is mn_safe at the image
-   (DMdrainMN); the earlier MemnormT.mn_owned_wr premise was false at the shared instance (MemnormT.v:28-31).
+   (DMdrainMN); the earlier MemnormT.mn_owned_wr premise was false at the shared instance (MemnormT.v:29-32).
    rule 24: proves function __sanitizer::Quarantine::Drain with __sanitizer::QuarantineCache::MergeBatches /
    Recycle / DoRecycle and __asan::QuarantineCallback::Recycle on the real-merge path, frame-generic; the
    lane's reuse search is LOOKUP-B1-drain.txt (sha256 c6e48b676fd5; internal record), `proof-index MergeBatches Recycle

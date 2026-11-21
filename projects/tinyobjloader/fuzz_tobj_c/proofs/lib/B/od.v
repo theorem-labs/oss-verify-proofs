@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the initial stack's zero-mapped window from the model's stack_window_lo, no longer the 8 MiB below the stack pointer, and the image to its page-aligned end, over the new start state's arguments and the launch conjunct; the apartness of the argument region from the main entry's objects over the new argument layout and region, its strings ending at the exec file name's address, launch variable 13, the auxv object at the joined start-up exit's 432 bytes and the parity gap kept above it by the stack pointer's and the random bytes' 16-byte alignment; the main entry's stack cover and presence to the page end above the exec file name, the dropped CONFIG_RSEQ auxv tail, ARG_TAIL, present by a premise; main's argument objects at the hand-off ending nine bytes past that address, vENDL; written as plain text; main_disjoint_low, main_apart_low and main_apart_band proved without those alignment facts, so they keep their arguments). *)
 (* [comment removed for export] *)
 Local Set Warnings "-require-in-module".
 (* [comment removed for export] *)
@@ -184,22 +185,31 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 Local Notation U := bv_unsigned.
 
-Lemma ms0_stack_present : ltac2:(tb__ "0|3|
-S22S44A1S28S43S1Q40M0A1S45S37S27S7S8S0G0R4A2ScS41S35R2A1S36R2A1A2A1A2S9Z2Z2fA2A2S4S7SbS0G0R5A2M1S38A2R2A2SaR2S32S8G1ScS41S35R3A1S36R3A1A2A1A2A1A2A2S7Z0R3A2S5S3S23S1Q8A1M2A1S3aS4aRaR9R8R7R6R5A6S2G0R4A2A2S24G2A1A3A1F_;F_;F_;Fz;Finp;Fdraw;Fsp;Fph;Fpc0;Fsegs;").
+(* LPS 727298f3: the zero-mapped window below [sp] starts at [stack_window_lo] (Run.v
+   [init_machine_state]), at least [stack_window_depth] below [sp] for every admissible launch
+   (the model's StoreOk.v [stack_window_lo_valid], Lib/StackBound.v), no longer the 8 MiB
+   [stack_max_size] below it; the main-phase stack zone needs [STK_FREE] of it (Lib/InitState.v's
+   [ms0_mem_below]).  Above [sp] the image runs to its page-aligned end [sp + img_len]
+   (Lib/InitState.v's [nums]).  Stated over the new start state's arguments and the launch conjunct;
+   written as plain text. *)
+Lemma ms0_stack_present : forall segs pc0 ph (sp brk mb : word) draw inp,
+  valid_sp sp -> valid_input_either inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mb draw) inp ->
+  forall z, U sp - STK_FREE <= z < U sp + Z.of_nat (img_len inp sp draw) ->
+  ms_mem (ms0 segs pc0 ph sp mb draw inp) (Z_to_bv 64 z) <> None.
 Proof.
-  intros segs pc0 ph sp draw inp z Hfit Hz Hz0. rewrite ms0_mem_def. unfold stack_to_mem.
-  pose proof (entry_stack_image_top ph sp (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) draw) as ET.
-  unfold entry_page_top, entry_block_top in ET. pose proof (InitState.length_BSB ph sp draw inp) as LB. unfold bsb in LB. rewrite LB in ET.
-  assert (PT : page_round_up_Z (U sp + Z.of_nat (img_len (in_argv inp) (in_envp inp))) <= 2 ^ 47).
-  { unfold page_round_up_Z, page_size. set (q := U sp + Z.of_nat (img_len (in_argv inp) (in_envp inp))) in *.
-    assert (Q : (q + 4096 - 1) / 4096 <= (2 ^ 47 + 4096 - 1) / 4096) by (apply Z.div_le_mono; lia).
-    change ((2 ^ 47 + 4096 - 1) / 4096) with (2 ^ 35) in Q. change (2 ^ 47) with (2 ^ 35 * 4096). nia. }
+  intros segs pc0 ph sp brk mb draw inp Hsp Hinp Hlau z Hz.
+  pose proof (LEN_fit pc0 ph sp brk mb draw inp Hlau) as LF. cbv zeta in LF. rewrite sp_hi_val in LF.
+  pose proof (sp_bound sp Hsp) as [SB _]. rewrite sp_lo_val in SB. unfold STK_FREE in Hz.
   assert (EZ : U (Z_to_bv 64 z) = z) by (apply Z_to_bv_small; change (bv_modulus 64) with (2 ^ 64); lia).
-  rewrite EZ. destruct (Z.leb (U sp) z) eqn:E1.
-  - apply Z.leb_le in E1. replace (z - U sp <? Z.of_nat (length (entry_stack_image ph sp (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) draw))) with true by (symmetry; apply Z.ltb_lt; lia).
-    destruct (nth_error _ (Z.to_nat (z - U sp))) as [b|] eqn:E2; [discriminate|]. apply nth_error_None in E2. lia.
-  - apply Z.leb_gt in E1. replace (U sp - stack_max_size <=? z) with true by (symmetry; apply Z.leb_le; lia).
-    replace (z <? U sp) with true by (symmetry; apply Z.ltb_lt; lia). discriminate.
+  destruct (Z_lt_ge_dec z (U sp)) as [Hlo|Hhi].
+  - rewrite (ms0_mem_below segs pc0 ph sp brk mb draw inp Hinp Hlau (Z_to_bv 64 z)); [discriminate|].
+    rewrite EZ. unfold STK_FREE. lia.
+  - replace z with (U sp + (z - U sp)) by lia.
+    rewrite (ms0_mem_img segs pc0 ph sp brk mb draw inp Hsp Hinp Hlau (z - U sp)) by lia.
+    intros E. apply nth_error_None in E.
+    pose proof (length_bsb inp mb ph (Z_to_bv 64 (Z.of_N pc0)) sp draw
+                  ltac:(destruct Hlau as (_ & (_ & _ & H) & _); exact H)) as HL.
+    unfold bsb in HL. unfold bsb in E. rewrite HL in E. lia.
 Qed.
 
 Definition has_obj (b lo hi : sv) (objs : list sobj) : bool := ltac2:(tb__ "0|0|
@@ -219,8 +229,19 @@ S10S29S10S2aS11P3A1SfZ3A1A3SfZ8A1A3").
 Definition o_aux_b : sv := ltac2:(tb__ "0|1|
 S10S29S10S29S10S29S11P1A1S10S2aS11P2A1SfZ3A1M0A3A3S10S2aS11P3A1G0A3A3SfZ18A1A3").
 
-Lemma main_stack_objs : ltac2:(tb__ "0|4|
-S20S13S30S2fR1A1A1A1S22S15A1S4S3S20S2bS11P1A1M0SfN100000A1SfN11c0A1R1A4S21A3S4S3S20S2bS10S29G0SfN70A1M1A3SfN1150A1SfZ0A1M2R1A4S21A3S4S3S20S2bG0G1G2R1A4S21A3S4S3S20S2bG0G2SfZ10A1M3R1A4S21A3S4S3S20S2bS2dG2S2eR1A4S21A3S4S3S20S2bS2cG2SfZa0A1R1A4S21A3S4S3S20S2bS11P4A1G2S10S29S11P5A1SfZ1A1A3R1A4S21A3S3S20S2bS11P6A1G2G3R1A4S21A3A2A2A2A2A2A2A2TL;Fv;").
+(* LPS 727298f3: the main entry's auxv object is the joined start-up exit's, 432 bytes (B/StartRegen3.v
+   [K18_join]: the launch's auxv split there, the CONFIG_RSEQ tail dropped); was 160.  Written as
+   plain text. *)
+Lemma main_stack_objs : forall v : bool,
+  let L : list sobj := ss_objs (ax_S (MAIN_of v)) in
+  has_obj (SVar 1%positive) (SLit (-1048576)) (SLit (-4544)) L = true
+  /\ has_obj (SAlu ALU_ADD (SVar 1%positive) (SLit (-112))) (SLit (-4432)) (SLit 0) L = true
+  /\ has_obj (SVar 1%positive) (SLit (-112)) (SLit 0) L = true
+  /\ has_obj (SVar 1%positive) (SLit 0) (SLit 16) L = true
+  /\ has_obj o_env_b (SLit 0) o_env_hi L = true
+  /\ has_obj o_aux_b (SLit 0) (SLit 432) L = true
+  /\ has_obj (SVar 4%positive) (SLit 0) (SAlu ALU_ADD (SVar 5%positive) (SLit 1)) L = true
+  /\ has_obj (SVar 6%positive) (SLit 0) (SLit 16) L = true.
 Proof. intros [|]; vm_cast_no_check (conj (@eq_refl bool true) (conj (@eq_refl bool true) (conj (@eq_refl bool true) (conj (@eq_refl bool true) (conj (@eq_refl bool true) (conj (@eq_refl bool true) (conj (@eq_refl bool true) (@eq_refl bool true)))))))). Qed.
 
 Lemma U_add_neg : ltac2:(tb__ "0|2|
@@ -235,13 +256,22 @@ Variable rho : valuation.
 Hypothesis HX1 : ltac2:(tb__ "0|1|
 S4S7Z7fff80000000S0Q40SeVrho;P1A2A2M0A2S7G0S9Z2Z2fA2A2A2").
 Hypothesis HAL : arg_layout rho.
-Hypothesis H6 : ltac2:(tb__ "0|2|
-S4S7S8S8S0Q40M0SeVrho;P4A2A2S0G0SeVrho;P5A2A2A2Z1A2S0G0SeVrho;P6A2A2M1A2S7S8G1Z10A2S9Z2Z2fA2A2A2").
+(* LPS 727298f3: argv[0]'s string ends at or below the exec file name's address (launch variable 13),
+   nine bytes or more below the stack's end.  Written as plain text. *)
+Hypothesis H6 : U (rw rho 4%positive) + U (rw rho 5%positive) + 1 <= U (rw rho 13%positive)
+  /\ U (rw rho 13%positive) + 9 <= 2 ^ 47.
 
-Lemma main_cover : ltac2:(tb__ "0|2|
-S20S1Q40M0A1S4S7SbS0G0SeVrho;P1A2A2Z100000A2S0G0R1A2M1A2SaG1S32S8S0G0SeVrho;P6A2A2Z10A2A1A2A2S6S31Vrho;S13S30S2fR3A1A1A1R2A3S3fVrho;R2A2A2F_;Fa;Fv;").
-Proof.
-  intros v a Ha. pose proof HAL as (A1 & A2 & A3 & A5 & A4). destruct H6 as [H6a H6b].
+(* LPS 727298f3: the zone runs to the page end above the exec file name (launch variable 13) and its
+   NUL and slot; above the 432-byte auxv object lie, in address order, the dropped auxv tail
+   ([ARG_TAIL], empty when CONFIG_RSEQ is off), the parity gap, the random bytes, [arch_align_stack]'s
+   pad, argv[0] and the strings (B/n1.v StartALibS [ARGF]).  Was: up to the page end above the
+   random bytes, with argv[0] right after a 160-byte auxv.  Written as plain text. *)
+Lemma main_cover : forall (v : bool) (a : bv 64),
+  U (rw rho 1%positive) - 1048576 <= U a /\ U a < page_round_up_Z (U (rw rho 13%positive) + 9) ->
+  in_ranges rho (ss_objs (ax_S (MAIN_of v))) a \/ ARGF rho a \/ ARG_TAIL rho a.
+Proof using HX1 HAL H6.
+  intros v a Ha. pose proof HAL as (A1 & A2 & A3 & A5 & A4 & A6 & A7 & A8). destruct H6 as [H6a H6b].
+  pose proof (ARG_GAP_bound rho) as GB.
   pose proof (main_stack_objs v) as (O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8). cbv zeta in O1, O2, O3, O4, O5, O6, O7, O8.
   pose proof (urange (rw rho 1%positive)) as U1. pose proof (urange (rw rho 2%positive)) as U2. pose proof (urange (rw rho 3%positive)) as U3.
   pose proof (urange (rw rho 4%positive)) as U4. pose proof (urange (rw rho 5%positive)) as U5. pose proof (urange (rw rho 6%positive)) as U6.
@@ -263,7 +293,7 @@ Proof.
   { left. apply (has_obj_sound _ _ _ _ rho a O4). cbn [eval]. rewrite !soff_lit_small by lia. lia. }
 
   destruct (Z_lt_le_dec (U a) (U (rw rho 1%positive) + 16 + 8 * U (rw rho 2%positive))) as [C5|C5].
-  { right. split; [exact C4 | left; exact C5]. }
+  { right; left. split; [exact C4 | left; exact C5]. }
 
   destruct (Z_lt_le_dec (U a) (U (rw rho 1%positive) + 16 + 8 * U (rw rho 2%positive) + 8 * U (rw rho 3%positive) + 8)) as [C6|C6].
   { left. apply (has_obj_sound _ _ _ _ rho a O5). unfold o_env_b, o_env_hi. cbn [eval].
@@ -271,21 +301,27 @@ Proof.
     rewrite soff_lit_small by lia. unfold soff. cbn [eval].
     rewrite signed_small by (rewrite U_add_small; rewrite ?S3; lia). rewrite U_add_small by (rewrite ?S3; lia). rewrite S3. lia. }
 
-  destruct (Z_lt_le_dec (U a) (U (rw rho 4%positive))) as [C7|C7].
+  destruct (Z_lt_le_dec (U a) (U (rw rho 1%positive) + 8 * U (rw rho 2%positive) + 8 * U (rw rho 3%positive) + 24 + 432)) as [C7|C7].
   { left. apply (has_obj_sound _ _ _ _ rho a O6). unfold o_aux_b. cbn [eval]. rewrite !soff_lit_small by lia.
     rewrite U_add_small by (rewrite ?E2; lia). rewrite E2. lia. }
 
-  destruct (Z_lt_le_dec (U a) (U (rw rho 4%positive) + U (rw rho 5%positive) + 1)) as [C8|C8].
-  { left. apply (has_obj_sound _ _ _ _ rho a O7). cbn [eval]. rewrite soff_lit_small by lia. unfold soff. cbn [eval].
-    rewrite signed_small by (rewrite U_add_small; lia). rewrite U_add_small by lia. lia. }
+  destruct (Z_lt_le_dec (U a) (U (rw rho 6%positive) - ARG_GAP rho)) as [C8|C8].
+  { right; right. unfold ARG_TAIL. change (Z.of_nat (LinuxProcessSemantics.LinuxProcessSem.StackLayout.auxv_size false)) with 432. lia. }
 
   destruct (Z_lt_le_dec (U a) (U (rw rho 6%positive))) as [C9|C9].
-  { right. split; [exact C4 | right; split; [exact C8 | left; exact C9]]. }
+  { right; left. split; [exact C4 | right; left; split; [exact C8 | exact C9]]. }
 
   destruct (Z_lt_le_dec (U a) (U (rw rho 6%positive) + 16)) as [C10|C10].
   { left. apply (has_obj_sound _ _ _ _ rho a O8). cbn [eval]. rewrite !soff_lit_small by lia. lia. }
 
-  right. split; [exact C4 | right; split; [exact C8 | right; lia]].
+  destruct (Z_lt_le_dec (U a) (U (rw rho 4%positive))) as [C11|C11].
+  { right; left. split; [exact C4 | right; right; left; split; [exact C10 | exact C11]]. }
+
+  destruct (Z_lt_le_dec (U a) (U (rw rho 4%positive) + U (rw rho 5%positive) + 1)) as [C12|C12].
+  { left. apply (has_obj_sound _ _ _ _ rho a O7). cbn [eval]. rewrite soff_lit_small by lia. unfold soff. cbn [eval].
+    rewrite signed_small by (rewrite U_add_small; lia). rewrite U_add_small by lia. lia. }
+
+  right; left. split; [exact C4 | right; right; right; split; [exact C12 | exact (proj2 Ha)]].
 Qed.
 End Cover.
 
@@ -304,19 +340,32 @@ Proof.
   rewrite Z_to_bv_bv_unsigned in Hb. unfold rd, ms_read_byte in Hb. intros X. rewrite X, ROM, Himg in Hb. discriminate.
 Qed.
 
-Theorem main_zone_present : ltac2:(tb__ "0|e|
-S20S14S14S22S34A1M0S3bS33S1Q40M1A1M2S23S1Q8A1M3A1M4F_;S16S39R6S30S2fR7A1A1S25G0S3cR4S3dR3R2A2A4A4S4S7Z7fff80000000S0G1SeR7P1M5A2A2M6A2S7G6S9Z2Z2fA2M7A2A2S40R8A1S4S7S8S8S0G1SeR9P4A2A2S0G1SeR9P5A2A2A2Z1A2S0G1SeR9P6M8A2A2M9A2S7S8G9Z10MaA2G7A2A2G2S5S31RbS13S30S2fRcA1A1A1R1A3A1S3G4S12RbR2A2S12RcR2A2MbA3F_;Fa;G2S31RcS13S30S2fRdA1A1A1R1A3S3G4GbS3aRaR2A2A3F_;Fa;G2S3fRdR1A2S3G4S12ReR2A2R9R2A1A3F_;Fa;S27S4S7S0G1SeReG5A2A2R1A2SaR1S32S8S0G1SeReG8A2A2GaA2A1A2A2S5S3G4RaS2G1R2A2McA1S24G3A1MdA3A1F_;Fz;S27S4S7SbS0G1SeRfG5A2A2Z100000A2R1A2SaR1S32S8S0G1SeRfG8A2A2GaA2A1A2A2S5S3G4S12RfGcA2GdA3A1F_;Fz;F_;F_;F_;F_;F_;F_;F_;F_;Fm0;Fmd;Fms;Ftr;FrhoM;Frho1;Fv;").
+(* LPS 727298f3: the zone runs to the page end above the exec file name (launch variable 13); the
+   dropped auxv tail ([ARG_TAIL]) is present in the main entry's valuation by the premise the
+   start-up chain carries from B/StartRegen3.v [K18_join].  Was: to the page end above the random
+   bytes.  Written as plain text. *)
+Theorem main_zone_present : forall (v : bool) (rho1 rhoM : valuation) (tr : list event) (ms : machine_state) (md : Model)
+    (m0 : bv 64 -> option (bv 8)),
+  smatch segsA rho1 (ax_S (MAIN_of v)) (tr, mkCfg ms md) ->
+  140735340871680 <= U (rw rho1 1%positive) <= 2 ^ 47 ->
+  arg_layout rho1 ->
+  U (rw rho1 4%positive) + U (rw rho1 5%positive) + 1 <= U (rw rho1 13%positive) /\ U (rw rho1 13%positive) + 9 <= 2 ^ 47 ->
+  (forall a : bv 64, ~ in_ranges rho1 (ss_objs (ax_S (MAIN_of v))) a -> rm rhoM a = rm rho1 a) ->
+  (forall a : bv 64, in_ranges rho1 (ss_objs (ax_S (MAIN_of v))) a -> rm rhoM a = ms_mem ms a) ->
+  (forall a : bv 64, ARGF rho1 a -> rm rho1 a = m0 a) ->
+  (forall a : bv 64, ARG_TAIL rho1 a -> rm rho1 a <> None) ->
+  (forall z : Z, U (rw rho1 1%positive) <= z < page_round_up_Z (U (rw rho1 13%positive) + 9) -> m0 (Z_to_bv 64 z) <> None) ->
+  forall z : Z, U (rw rho1 1%positive) - 1048576 <= z < page_round_up_Z (U (rw rho1 13%positive) + 9) ->
+    rm rhoM (Z_to_bv 64 z) <> None.
 Proof.
-  intros v rho1 rhoM tr ms md m0 Hsm HX1 HAL H6 RMo RMi HRM HM0 z Hz.
-  assert (PT : page_round_up_Z (U (rw rho1 6%positive) + 16) <= 2 ^ 47).
-  { unfold page_round_up_Z, page_size. set (q := U (rw rho1 6%positive) + 16) in *.
-    assert (Q : (q + 4096 - 1) / 4096 <= (2 ^ 47 + 4096 - 1) / 4096) by (apply Z.div_le_mono; lia).
-    change ((2 ^ 47 + 4096 - 1) / 4096) with (2 ^ 35) in Q. change (2 ^ 47) with (2 ^ 35 * 4096). nia. }
+  intros v rho1 rhoM tr ms md m0 Hsm HX1 HAL H6 RMo RMi HRM HTL HM0 z Hz.
+  pose proof (pageup_le_47 _ (proj2 H6)) as PT.
   assert (EZ : U (Z_to_bv 64 z) = z) by (apply Z_to_bv_small; change (bv_modulus 64) with (2 ^ 64); lia).
   destruct (in_ranges_dec rho1 (ss_objs (ax_S (MAIN_of v))) (Z_to_bv 64 z)) as [Hin|Hout].
   - rewrite (RMi _ Hin). apply (smatch_inranges_presentS rho1 _ tr ms md _ Hsm Hin). apply image_byte_none_A. rewrite EZ. lia.
-  - destruct (main_cover rho1 HX1 HAL H6 v (Z_to_bv 64 z) ltac:(rewrite EZ; exact Hz)) as [Hin|Harg]; [exfalso; exact (Hout Hin)|].
-    rewrite (RMo _ Hout), (HRM _ Harg). apply HM0. destruct Harg as [Hlo _]. rewrite EZ in Hlo. lia.
+  - destruct (main_cover rho1 HX1 HAL H6 v (Z_to_bv 64 z) ltac:(rewrite EZ; exact Hz)) as [Hin|[Harg|Htl]]; [exfalso; exact (Hout Hin)| |].
+    + rewrite (RMo _ Hout), (HRM _ Harg). apply HM0. destruct Harg as [Hlo _]. rewrite EZ in Hlo. lia.
+    + rewrite (RMo _ Hout). exact (HTL _ Htl).
 Qed.
 
 Lemma pageup_mono : ltac2:(tb__ "0|0|
@@ -334,21 +383,44 @@ Hypothesis Hent : ltac2:(tb__ "0|0|
 S42S47S3eVsp;Vbrk;Vmb;Vdraw;A4Vinp;A3").
 Hypothesis Hinp : valid_input_either inp.
 
-Theorem main_STKP : ltac2:(tb__ "0|8|
-S20S14S14S22S34A1M0S3bS33S16S39R5S30S2fR6A1A1S25G0S3cR3S3dR2R1A2A4A4S3S1Q40M1A1M2SeR6P1A2Vsp;A3S3G2SeR7P6M3A2S2G1S8S0G1Vsp;A2M4S48Vinp;A1A2A2A3S40R8A1S4S7S8S8S0G1SeR9P4A2A2S0G1SeR9P5A2A2A2Z1A2S0G1SeR9G3A2A2M5A2S7S8G5Z10A2S9Z2Z2fA2A2A2G2S5S31RbS13S30S2fRcA1A1A1R1A3A1S3S23S1Q8A1A1M6S12RbR2A2S12RcR2A2M7A3F_;Fa;G2S31RcS13S30S2fRdA1A1A1R1A3S3G6G7S3aRaR2A2A3F_;Fa;G2S3fRdR1A2S3G6S12ReR2A2S3aS49Vsp;Vdraw;Vinp;A3R2A2A3F_;Fa;S3S27S0G1SeRcP1eA2A2SbG4Z800000A2A3S4bS39RdA2F_;F_;F_;F_;F_;F_;F_;F_;F_;Fmd;Fms;Ftr;FrhoM;Frho1;Fv;").
+(* LPS 727298f3: the image runs to its page-aligned end [sp + LEN] (StartArgBytes.v [arg_nums]), at or
+   above the page end over the exec file name, its NUL and slot (premise [E13], Lib/InitState.v
+   [execfn_nums] at the launch); the dropped auxv tail's presence is the premise carried from the
+   start-up chain.  Was: the random bytes' end as the image's end.  Written as plain text. *)
+Theorem main_STKP : forall (v : bool) (rho1 rhoM : valuation) (tr : list event) (ms : machine_state) (md : Model),
+  smatch segsA rho1 (ax_S (MAIN_of v)) (tr, mkCfg ms md) ->
+  rw rho1 1%positive = sp ->
+  U (rw rho1 13%positive) + 9 <= U sp + StartArgBytes.LEN sp draw inp ->
+  arg_layout rho1 ->
+  U (rw rho1 4%positive) + U (rw rho1 5%positive) + 1 <= U (rw rho1 13%positive) /\ U (rw rho1 13%positive) + 9 <= 2 ^ 47 ->
+  (forall a : bv 64, ~ in_ranges rho1 (ss_objs (ax_S (MAIN_of v))) a -> rm rhoM a = rm rho1 a) ->
+  (forall a : bv 64, in_ranges rho1 (ss_objs (ax_S (MAIN_of v))) a -> rm rhoM a = ms_mem ms a) ->
+  (forall a : bv 64, ARGF rho1 a -> rm rho1 a = ms_mem (StartArgBytes.ms0A sp mb draw inp) a) ->
+  (forall a : bv 64, ARG_TAIL rho1 a -> rm rho1 a <> None) ->
+  U (rw rhoM 30%positive) = U sp - 8388608 ->
+  OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.LibB.p1.TobjJAP.STKP segsA rhoM.
 Proof.
-  intros v rho1 rhoM tr ms md Hsm E1 E6 HAL H6 RMo RMi HRM V30.
-  pose proof (StartArgBytes.arg_nums sp brk mb draw inp Hent Hinp) as (Nsp & Nfit & N16 & Nargc & Nstr & Nstr8 & NA1 & NA1b & Nrnd & Npad & Nrnd8 & Nlen & Nlenb & _).
-  pose proof (Zle_0_nat (tab (in_argv inp))) as T0. pose proof (Zle_0_nat (tab (in_envp inp))) as T1. pose proof (Zle_0_nat (pad_len (in_argv inp) (in_envp inp))) as T2.
-  pose proof (Zle_0_nat (length (in_envp inp))) as T3.
-  assert (U6 : U (rw rho1 6%positive) = U sp + StartArgBytes.RNDo inp) by (rewrite E6; apply Z_to_bv_small; change (bv_modulus 64) with (2 ^ 64); lia).
+  intros v rho1 rhoM tr ms md Hsm E1 E13 HAL H6 RMo RMi HRM HTL V30.
+  pose proof (StartArgBytes.arg_nums sp brk mb draw inp Hent Hinp) as (Nsp & Nfit & N16 & Nargc & Nstr & Npg & NA1 & NA1b & Nrnd & Npad & Nrnd8 & Nlen & Nlenb & _).
+  pose proof Hent as (Hsp0 & _ & _ & _ & Hlau).
   assert (U1 : U (rw rho1 1%positive) = U sp) by (rewrite E1; reflexivity).
-  assert (ELEN : U (rw rho1 6%positive) + 16 = U sp + Z.of_nat (img_len (in_argv inp) (in_envp inp))) by (rewrite U6; unfold StartArgBytes.LEN in Nlen; lia).
+  assert (L0 : 0 <= StartArgBytes.LEN sp draw inp) by (unfold StartArgBytes.LEN; lia).
+  assert (PX : page_round_up_Z (U sp + StartArgBytes.LEN sp draw inp) = U sp + StartArgBytes.LEN sp draw inp).
+  { unfold page_round_up_Z, page_size.
+    pose proof (Z.div_mod (U sp + StartArgBytes.LEN sp draw inp) 4096 ltac:(lia)) as D. rewrite Npg in D.
+    set (k := (U sp + StartArgBytes.LEN sp draw inp) / 4096) in *.
+    replace (U sp + StartArgBytes.LEN sp draw inp + 4096 - 1) with (k * 4096 + 4095) by lia.
+    rewrite Z.div_add_l by lia. change (4095 / 4096) with 0. lia. }
+  assert (PT : page_round_up_Z (U (rw rho1 13%positive) + 9) <= U sp + StartArgBytes.LEN sp draw inp).
+  { rewrite <- PX. apply pageup_mono. exact E13. }
   unfold OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.LibB.p1.TobjJAP.STKP, HB. change (U (rw rhoM V_TOP)) with (U (rw rhoM 30%positive)). rewrite V30. split; [lia|].
   apply PRES_of_present. intros z Hz. unfold OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.LibB.p1.TobjJAP.STK_LO in Hz.
-  apply (main_zone_present v rho1 rhoM tr ms md (ms_mem (StartArgBytes.ms0A sp draw inp)) Hsm ltac:(rewrite U1; lia) HAL H6 RMo RMi HRM).
-  - intros z' Hz'. unfold StartArgBytes.ms0A. rewrite ELEN, U1 in Hz'. apply ms0_stack_present; [unfold StartArgBytes.LEN in Nfit; exact Nfit | rewrite stack_max_size_val; lia | lia].
-  - rewrite U1. split; [lia|]. eapply Z.lt_le_trans; [exact (proj2 Hz)|]. unfold HBz, STK_SPAN. apply pageup_mono. rewrite U6. lia.
+  apply (main_zone_present v rho1 rhoM tr ms md (ms_mem (StartArgBytes.ms0A sp mb draw inp)) Hsm ltac:(rewrite U1; lia) HAL H6 RMo RMi HRM HTL).
+  - intros z' Hz'. unfold StartArgBytes.ms0A. rewrite U1 in Hz'.
+    apply (ms0_stack_present _ _ _ sp brk mb draw inp Hsp0 Hinp Hlau). unfold STK_FREE. unfold StartArgBytes.LEN in PT. lia.
+  - rewrite U1. split; [lia|]. eapply Z.lt_le_trans; [exact (proj2 Hz)|]. unfold HBz, STK_SPAN. apply pageup_mono.
+    pose proof HAL as (_ & _ & _ & _ & A5 & A6 & A7 & _).
+    pose proof (urange (rw rho1 2%positive)). pose proof (urange (rw rho1 3%positive)). pose proof (urange (rw rho1 5%positive)). lia.
 Qed.
 End AtMain.
 End StartHandoffPres.
@@ -591,10 +663,20 @@ Proof.
   - exists (obj_subst [(i, SLit z)] o). split; [apply in_map; exact Hin|]. rewrite (E o). exact Hr.
 Qed.
 
-Lemma rng_aux : ltac2:(tb__ "0|4|
-SbS2bS7A1S21Q40M0A1S4fR3A1S49R4R2A2S8S5S3aS5S3aS5S3aS4P1A1S5S3bS4P2A1S3Z3A1M1A3A3S5S3bS4P3A1G1A3A3S3Z18A1A3S3Z0A1S3Za0A1R4ScA5S2S25S23S1aS31S0S0S9R6R1A2M2A3S20G0R4A2M3A2S1bG3S33S0S0G2A3A2A2A1To;F_;F_;Fa;Fcs;Frho;").
+(* LPS 727298f3: the main entry's auxv object is the joined start-up exit's, 432 bytes (was 160); the
+   parity gap of the argument region (B/n1.v StartALibS [ARGF]) starts at or above its end because the
+   stack pointer and the random bytes (variable 6) are 16-byte aligned (the head's items, the gap and
+   the 432 bytes fill whole 16-byte units).  Written as plain text. *)
+Lemma rng_aux : forall (rho : valuation) (cs : list cell) (a : bv 64),
+  OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.n5.StartArgF.arg_layout rho ->
+  bv_unsigned (rw rho 1%positive) mod 16 = 0 -> bv_unsigned (rw rho 6%positive) mod 16 = 0 ->
+  OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.B.n1.StartALibS.ARGF rho a ->
+  let o : sobj := mkObj (SAlu ALU_ADD (SAlu ALU_ADD (SAlu ALU_ADD (SVar 1%positive) (SAlu ALU_SLL (SVar 2%positive) (SLit 3)))
+                                                 (SAlu ALU_SLL (SVar 3%positive) (SLit 3))) (SLit 24))
+                        (SLit 0) (SLit 432) cs DUnknown in
+  ~ (fst (obj_range rho o) <= bv_unsigned a /\ bv_unsigned a < snd (obj_range rho o)).
 Proof.
-  intros rho cs a HAL Ha. pose proof HAL as (A1 & A2 & A3 & A5 & A4). pose proof Ha as [HaLo HaHi]. cbv zeta.
+  intros rho cs a HAL Hal1 Hal6 Ha. pose proof HAL as (A1 & A2 & A3 & A5 & A4 & A6 & A7 & A8). pose proof Ha as [HaLo HaHi]. pose proof (ARG_GAP_bound rho) as GB. cbv zeta.
   unfold obj_range, obj_lo_of, obj_hi_of. cbn [ob_base ob_lo ob_hi fst snd eval]. rewrite !soff_lit_small by lia.
   pose proof (urange (rw rho 1%positive)) as U1. pose proof (urange (rw rho 2%positive)) as U2. pose proof (urange (rw rho 3%positive)) as U3. pose proof (urange (rw rho 5%positive)) as U5.
   assert (S2 : bv_unsigned (alu64 ALU_SLL (rw rho 2%positive) (Z_to_bv 64 3)) = 8 * bv_unsigned (rw rho 2%positive)) by (apply U_sll3; lia).
@@ -604,6 +686,13 @@ Proof.
   assert (E2 : bv_unsigned (alu64 ALU_ADD (alu64 ALU_ADD (rw rho 1%positive) (alu64 ALU_SLL (rw rho 2%positive) (Z_to_bv 64 3))) (alu64 ALU_SLL (rw rho 3%positive) (Z_to_bv 64 3)))
                = bv_unsigned (rw rho 1%positive) + 8 * bv_unsigned (rw rho 2%positive) + 8 * bv_unsigned (rw rho 3%positive)).
   { rewrite U_add_words by (rewrite E1, S3; lia). rewrite E1, S3. reflexivity. }
+  assert (GAP : bv_unsigned (rw rho 1%positive) + 8 * bv_unsigned (rw rho 2%positive) + 8 * bv_unsigned (rw rho 3%positive) + 24 + 432
+                <= bv_unsigned (rw rho 6%positive) - ARG_GAP rho).
+  { unfold ARG_GAP. set (n := bv_unsigned (rw rho 2%positive) + bv_unsigned (rw rho 3%positive) + 3) in *.
+    pose proof (Z.mod_pos_bound n 2 ltac:(lia)) as GM. pose proof (Z.div_mod n 2 ltac:(lia)) as GD.
+    pose proof (Z.div_mod (bv_unsigned (rw rho 1%positive)) 16 ltac:(lia)) as D1.
+    pose proof (Z.div_mod (bv_unsigned (rw rho 6%positive)) 16 ltac:(lia)) as D6.
+    rewrite Hal1 in D1. rewrite Hal6 in D6. unfold n in GM, GD. lia. }
   rewrite U_add_small by (rewrite ?E2; lia). rewrite E2. clear S2 S3 E1 E2. intros [X Y]. destruct HaHi as [H|H]; lia.
 Qed.
 
@@ -644,8 +733,15 @@ S4aS17S16Vrho;A1S18VS;A1A3").
 Hypothesis H1 : ltac2:(tb__ "0|1|
 S23S1aZ7fff80000000S20Q40SaVrho;P1A2A2M0A2S1aG0S1eZ2Z2fA2A2A2").
 Hypothesis HAL : arg_layout rho.
-Hypothesis H6 : ltac2:(tb__ "0|2|
-S23S1aS1cS1cS20Q40M0SaVrho;P4A2A2S20G0SaVrho;P5A2A2A2Z1A2S20G0SaVrho;P6A2A2M1A2S1aS1cG1Z10A2S1eZ2Z2fA2A2A2").
+(* LPS 727298f3: argv[0]'s string ends at or below the exec file name's address (launch variable 13),
+   nine bytes or more below the stack's end (was: below the random bytes at variable 6, which now
+   lie below argv[0]).  Written as plain text. *)
+Hypothesis H6 : bv_unsigned (rw rho 4%positive) + bv_unsigned (rw rho 5%positive) + 1 <= bv_unsigned (rw rho 13%positive)
+  /\ bv_unsigned (rw rho 13%positive) + 9 <= 2 ^ 47.
+(* LPS 727298f3: the stack pointer and the random bytes (variable 6) are 16-byte aligned (the launch's
+   layout: Lib/InitState.v [nums], B/StartMain.v [rand16_of_Jinit]); [rng_aux] reads them. *)
+Hypothesis Hal1 : bv_unsigned (rw rho 1%positive) mod 16 = 0.
+Hypothesis Hal6 : bv_unsigned (rw rho 6%positive) mod 16 = 0.
 
 Variable qlo : Z.
 Hypothesis Hqlo : 0x800bd000 <= qlo <= kHighMemBeg.
@@ -663,6 +759,9 @@ Proof. clear. subst S. destruct v; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.li
 Lemma main_disjoint_low : ltac2:(tb__ "0|3|
 S21Q40M0A1S0S1aZ0R1A2S0S23S1aS20G0R4A2M1R1A2S1bR1S1cG1R3A2A2A2S44R2A1F_;Fy;S4aS2S2SeS9Vrho;R1A2S2dS0S0S20G0R5A2M2S1cG2R4A2A4A2Lo;VL;A3F_;F_;Fn;Fa;").
 Proof.
+  (* LPS 727298f3: the alignment facts Hal1 / Hal6 are for [main_apart_argf] only; cleared so this
+     lemma keeps its arguments (v rho HF HGlow), as A/g5.v's. *)
+  clear Hal1 Hal6.
   intros a n Hn HZ. apply Forall_forall. intros o Hin.
   destruct (Z.eq_dec n 0) as [->|NZ]. { unfold ranges_disjoint. cbn [fst snd]. lia. }
   apply (objs_clear_e_sound rho GMe S a n HF clearM Hn); [| | | exact Hin].
@@ -674,6 +773,7 @@ Qed.
 Lemma main_apart_low : ltac2:(tb__ "0|1|
 S21Q40M0A1S44S20G0R1A2A1S25S41Vrho;VL;R2A3A1F_;Fa;").
 Proof.
+  clear Hal1 Hal6.
   intros a Ha (o & Hin & Hr). apply (disjoint_point rho o a); [|exact Hr].
   apply (proj1 (Forall_forall _ _) (main_disjoint_low a 1 ltac:(lia) ltac:(intros y Hy; replace y with (bv_unsigned a) by lia; exact Ha)) o Hin).
 Qed.
@@ -681,6 +781,7 @@ Qed.
 Lemma main_apart_band : ltac2:(tb__ "0|2|
 S21Q40M0A1S23S1aVqlo;S20G0R1A2M1A2S1bG1S50A2A2S25S41Vrho;VL;R2A3A1F_;Fa;").
 Proof.
+  clear Hal1 Hal6.
   intros a Ha (o & Hin & Hr). apply (disjoint_point rho o a); [|exact Hr].
   apply (objs_clear_e_sound rho GMe S a 1 HF clearM ltac:(lia)); [| | | exact Hin].
   - left. unfold kHighMemBeg in Ha. lia.
@@ -703,8 +804,11 @@ Proof. clear. subst L. destruct v; vm_compute; eexists; reflexivity. Qed.
 Lemma nth17 : ltac2:(tb__ "0|2|
 S24S2aS2A1S3cS2VL;U11A3S2eS2S8S5S3aS5S3aS4P1M0A1S5S3bS4P2A1S3Z3A1M1A3A3S3Z10A1A3S3Z0A1S5S3aS5S3bS4P3A1G1A3S3Z8A1A3S36S7A1S10G0A1A5A2A3").
 Proof. clear. subst L. destruct v; OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.MemoFast.vmc. Qed.
-Lemma nth18 : ltac2:(tb__ "0|2|
-S26S2bS7A1M0G0S24S2aS2A1S3cS2VL;U12A3S2eS2S8S5S3aS5S3aS5S3aS4P1A1S5S3bS4P2A1S3Z3A1M1A3A3S5S3bS4P3A1G1A3A3S3Z18A1A3S3Z0A1S3Za0A1R1ScA5A2A3Lcs;A2").
+(* LPS 727298f3: the auxv object is the joined start-up exit's, 432 bytes (was 160).  Written as plain text. *)
+Lemma nth18 : exists cs : list cell,
+  nth_error L 18%nat = Some (mkObj (SAlu ALU_ADD (SAlu ALU_ADD (SAlu ALU_ADD (SVar 1%positive) (SAlu ALU_SLL (SVar 2%positive) (SLit 3)))
+                                                           (SAlu ALU_SLL (SVar 3%positive) (SLit 3))) (SLit 24))
+                                   (SLit 0) (SLit 432) cs DUnknown).
 Proof. clear. subst L. destruct v; vm_compute; eexists; reflexivity. Qed.
 Lemma nth19 : ltac2:(tb__ "0|0|
 S24S2aS2A1S3cS2VL;U13A3S2eS2S8S4P4A1S3Z0A1S5S3aS4P5A1S3Z1A1A3S36S7A1S10P2A1A5A2A3").
@@ -722,7 +826,8 @@ Proof. clear. subst L. destruct v; vm_compute; eexists; reflexivity. Qed.
 Lemma main_apart_argf : ltac2:(tb__ "0|0|
 S21Q40A1S49Vrho;R1A2S25S41Vrho;VL;R2A3A1F_;Fa;").
 Proof.
-  intros a Ha. pose proof HAL as (A1 & A2 & A3 & A5 & A4). pose proof Ha as [HaLo HaHi]. pose proof (urange a) as Ua.
+  intros a Ha. pose proof HAL as (A1 & A2 & A3 & A5 & A4 & A6 & A7 & A8). pose proof Ha as [HaLo HaHi]. pose proof (urange a) as Ua.
+  pose proof (ARG_GAP_bound rho) as GB.
   assert (HX1 : ARG_LIM <= bv_unsigned a) by (unfold ARG_LIM; lia).
   apply (objs_far_except_sound rho GMe skipA L a apart_argf_b HX1).
   { intros e sz He. apply (HGargf e sz He). pose proof (urange (rw rho 2%positive)). pose proof (urange (rw rho 3%positive)). pose proof (urange (rw rho 5%positive)). destruct H6 as [H6a H6b]. pose proof (pageup_le_47 _ H6b) as HPT. destruct HaHi; lia. }
@@ -730,7 +835,7 @@ Proof.
   - destruct nth0 as [cs E]. rewrite E in Hn. injection Hn as <-. apply (rng_stack rho (-112) (-4432) 0 cs DUnknown a); try lia. exact Ha.
   - destruct nth16 as [cs E]. rewrite E in Hn. injection Hn as <-. apply (rng_stack1 rho 0 16 cs DUnknown a); try lia. exact Ha.
   - rewrite nth17 in Hn. injection Hn as <-. exact (argf_not_env rho _ _ a HAL Ha).
-  - destruct nth18 as [cs E]. rewrite E in Hn. injection Hn as <-. exact (rng_aux rho cs a HAL Ha).
+  - destruct nth18 as [cs E]. rewrite E in Hn. injection Hn as <-. exact (rng_aux rho cs a HAL Hal1 Hal6 Ha).
   - rewrite nth19 in Hn. injection Hn as <-. exact (argf_not_str0 rho _ _ a HAL Ha).
   - destruct nth20 as [cs E]. rewrite E in Hn. injection Hn as <-. unfold obj_range, obj_lo_of, obj_hi_of. cbn [ob_base ob_lo ob_hi fst snd eval]. rewrite !soff_lit_small by lia.
     pose proof (urange (rw rho 3%positive)). pose proof (urange (rw rho 5%positive)). destruct H6 as [H6a H6b]. lia.
@@ -771,7 +876,10 @@ S0S7ScSdA2M0S1ScSdP2SeZ2A1A4S2G0A1A3").
 
 Definition vA1L : sv := ltac2:(tb__ "0|0|
 S11S26S11S26S10P4A1S10P5A1A3SeZ1A1A3").
-Definition vENDL : sv := SAlu ALU_ADD (SVar 6) (SLit 16).
+(* LPS 727298f3: main's argument objects end nine bytes past the exec file name's address (launch
+   variable 13: the name's bytes or its NUL, then the 8-byte slot; StartArgBytes.v [END9]); was the
+   random bytes' end, the old image end. *)
+Definition vENDL : sv := SAlu ALU_ADD (SVar 13) (SLit 9).
 Definition vL3L : sv := SAlu ALU_SUB vENDL vA1L.
 Definition vL2L : sv := SAlu ALU_SUB vENDL (SVar 4).
 Definition vALL : sv := SAlu ALU_SUB vENDL (SVar 1).

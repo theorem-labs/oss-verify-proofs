@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MemnormG.v (commit 30a1993588f, c5 + memnorm; file sha256 b8514cd1dd81) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/MemnormG.v at commit 789778cb16f, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MemnormG.v (c5 + memnorm; file sha256 b8514cd1dd81) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/MemnormG.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the input-owned, top-anchored launch stack; the vDSO pair and its reserved region; the reserved-region ledger; the node obligation sys_rob and the new system calls). *)
 (* Theorem Labs, 2026-10: memnorm across the runs of the frozen Allocate / Deallocate chain, the shared base of the
    memnorm twins (task MEMNORM, c-asan; integrator ReallocPrimary).  Image-free.
    rule 24: no function proved (kind: generic run invariant + engine lemmas).
@@ -47,7 +48,7 @@ Local Open Scope bv_scope.
 Local Open Scope Z_scope.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* 1a. copy of proofs/omx-clap-core/fuzz_preset/lib/Reusable/YC80x.v:66-121 at 459129c18903 (sha256 c90a27017cc1),  *)
+(* 1a. copy of proofs/omx-clap-core/fuzz_preset/lib/Reusable/YC80x.v:66-121 (sha256 c90a27017cc1),  *)
 (*     byte-identical.                                                                                               *)
 (* The three memory changes of one SRr_msteps run that P must survive. *)
 Record srr_inv_laws (segs : list Segment) (P : (word -> option byte) -> Prop) : Prop := {
@@ -107,7 +108,7 @@ Qed.
 End s.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* 1b. copy of proofs/omx-clap-core/fuzz_preset/lib/Reusable/YSRrMemnorm.v:29-68 at 459129c18903 (sha256 74489f54fb24), *)
+(* 1b. copy of proofs/omx-clap-core/fuzz_preset/lib/Reusable/YSRrMemnorm.v:29-68 (sha256 74489f54fb24), *)
 (*     byte-identical (over this lib's YAkMemnorm.v, the copy of the bytes sha256 b000fb9776e8).                      *)
 (* The memnorm instance, from YAkMemnorm.v's own lemmas (YAkMemnorm requires no file that overrides lia). *)
 Lemma srr_inv_laws_memnorm_k : forall segs : list Segment, srr_inv_laws segs (YAkMemnorm.memnorm segs).
@@ -151,7 +152,7 @@ Lemma srr_inv_mn_imp : forall (segs : list Segment) (mem0 : word -> option byte)
 Proof. intros segs mem0 HMN0 m H. exact (H HMN0). Qed.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* 1c. copy of proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcallMxmn.v:737-795 at 459129c18903 (sha256 4a067e901e80; internal record), *)
+(* 1c. copy of proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcallMxmn.v:736-794 (sha256 4a067e901e80; internal record), *)
 (*     byte-identical (in_img is YG0d.v:482, kLowMemEnd YG0f.v:17, find_segment_some_spec YK04.v:265).              *)
 (* LPS (State.v:4346 region_free, :4341 iv_overlap): a range region_free clears does not overlap a listed extent *)
 Lemma region_free_iv_overlap : forall (l : list (word * word)) (lo n : word) p,
@@ -174,17 +175,43 @@ Qed.
 (* the grant range of a region_free check against segments_reserved segs (Run.v:211-217) holds no segment byte *)
 Lemma region_free_reserved_off_segs : forall (segs : list Segment) (a n x : word),
   (forall s, In s segs -> 0 < Z.of_N (seg_size s) -> Z.of_N (seg_base s) + Z.of_N (seg_size s) + page_size <= 2 ^ 64) ->
+  (* 727298f3: segments_reserved is now
+     map segment_reservation (filter (fun s => negb (seg_kernel_map s)) segs)
+     (Run.v:253-254) -- the kernel's own vDSO text and vvar pages are reserved
+     by State.init_reserved instead, and counting them twice would push
+     valid_brk's reserved_top to the top of the address space.  So a
+     region_free check against segments_reserved says NOTHING about a
+     kernel-mapped segment, and this lemma is FALSE for one.  The premise is
+     what makes it true again; every caller here passes a loader image. *)
+  (forall s, In s segs -> seg_kernel_map s = false) ->
   region_free (segments_reserved segs) a n = true ->
   bv_unsigned a <= bv_unsigned x < bv_unsigned a + bv_unsigned n ->
   find_segment segs (bv_unsigned x) 1 = None.
 Proof.
-intros segs a n x Hsz Hf Hx.
+intros segs a n x Hsz Hker Hf Hx.
 destruct (find_segment segs (bv_unsigned x) 1) as [s|] eqn:Ef; [exfalso | reflexivity].
 destruct (find_segment_some_spec segs (bv_unsigned x) 1 s Ef) as (Hin & Hb & Ht).
 pose proof (bv_unsigned_in_range _ x) as Rx. change (bv_modulus 64) with (2 ^ 64) in Rx.
 pose proof (N2Z.is_nonneg (seg_base s)) as Hb0. pose proof (N2Z.is_nonneg (seg_size s)) as Hs0.
 specialize (Hsz s Hin ltac:(lia)). unfold page_size in Hsz.
-pose proof (region_free_iv_overlap _ a n _ Hf (in_map segment_reservation segs s Hin)) as Hov.
+(* The witness has to be ASSERTED at the folded type.  [region_free_iv_overlap]
+   wants [In ?p (segments_reserved segs)] with ?p still a metavariable, and
+   Rocq will not delta-unfold [segments_reserved] to match an [In _ (map _
+   (filter _ _))] while the head is open -- it reports the two types side by
+   side and they ARE convertible.  Naming the folded type fixes ?p first. *)
+assert (Hmem : In (segment_reservation s) (segments_reserved segs)).
+{ unfold segments_reserved. apply in_map.
+  assert (HK : negb (seg_kernel_map s) = true) by (rewrite (Hker s Hin); reflexivity).
+  clear - Hin HK. revert Hin. generalize segs as l. intros l.
+  (* 727298f3: [Run.segments_reserved] filters the kernel maps out; the model's [filter] is reduced
+     by [cbn], whichever constant it is (as AllocCut.v and Reusable/YG0h.v) *)
+  induction l as [|x l IH]; intros Hin; cbn; [destruct Hin|].
+  destruct Hin as [Ex|Hin].
+  + subst x. first [ rewrite HK; left; reflexivity
+                    | destruct (seg_kernel_map s); cbn in HK |- *; [discriminate HK | left; reflexivity] ].
+  + first [ destruct (negb (seg_kernel_map x)); [right|]; exact (IH Hin)
+          | destruct (seg_kernel_map x); cbn; [|right]; exact (IH Hin) ]. }
+pose proof (region_free_iv_overlap _ a n _ Hf Hmem) as Hov.
 unfold segment_reservation, page_round_down_Z, page_round_up_Z, page_size in Hov. cbn [fst snd] in Hov.
 set (t := Z.of_N (seg_base s) + Z.of_N (seg_size s) + 4096 - 1) in Hov.
 pose proof (Z.div_mod (Z.of_N (seg_base s)) 4096 ltac:(lia)) as D1.
@@ -202,12 +229,13 @@ Qed.
    nonempty segment is in_img, hence below kLowMemEnd, far below 2 ^ 64 - page_size *)
 Lemma region_free_reserved_off_segs_low : forall (segs : list Segment),
   (forall a, in_img segs a -> 0 <= a < kLowMemEnd) ->
+  (forall s, In s segs -> seg_kernel_map s = false) ->
   forall (a n x : word),
   region_free (segments_reserved segs) a n = true ->
   bv_unsigned a <= bv_unsigned x < bv_unsigned a + bv_unsigned n ->
   find_segment segs (bv_unsigned x) 1 = None.
 Proof.
-intros segs Hlow a n x Hf Hx. apply (region_free_reserved_off_segs segs a n x); [|exact Hf | exact Hx].
+intros segs Hlow Hker a n x Hf Hx. apply (region_free_reserved_off_segs segs a n x); [| exact Hker | exact Hf | exact Hx].
 intros s Hin Hsz.
 assert (Hz : in_img segs (Z.of_N (seg_base s) + Z.of_N (seg_size s) - 1)) by (exists s; split; [exact Hin | lia]).
 pose proof (Hlow _ Hz) as Hb. unfold page_size, kLowMemEnd in *. lia.
@@ -246,13 +274,15 @@ Qed.
    YK13.v:203-206), given segs_low (YG0d.v:482 in_img below YG0f.v:17 kLowMemEnd) *)
 Lemma memnorm_zfill_reserved : forall (a n : word) (m : word -> option byte),
   (forall a0, in_img segs a0 -> 0 <= a0 < kLowMemEnd) ->
+  (* 727298f3: [region_free_reserved_off_segs_low]'s loader-image premise *)
+  (forall s, In s segs -> seg_kernel_map s = false) ->
   YAkMemnorm.memnorm segs m ->
   region_free (segments_reserved segs) a n = true ->
   bv_unsigned a + bv_unsigned n <= TASK_SIZE ->
   YAkMemnorm.memnorm segs (zfill a n m).
 Proof.
-intros a n m Hlow H Hf Ht. apply memnorm_zfill; [exact H | exact Ht|].
-intros x Hx. exact (region_free_reserved_off_segs_low segs Hlow a n x Hf Hx).
+intros a n m Hlow Hker H Hf Ht. apply memnorm_zfill; [exact H | exact Ht|].
+intros x Hx. exact (region_free_reserved_off_segs_low segs Hlow Hker a n x Hf Hx).
 Qed.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
@@ -310,13 +340,18 @@ Qed.
 Definition klaw (P : (word -> option byte) -> Prop) (c : config) : Prop :=
   forall e c', sstep_cfg segs ACFG c e (SNext c') -> P (ms_mem (cfg_ms c)) -> P (ms_mem (cfg_ms c')).
 
-(* a machine step (no syscall pending): the only SNext step is sstep_cfg_instr, an msteps run of length one *)
-Lemma klaw_instr : forall P c, srr_inv_laws segs P -> ms_svc_pending (cfg_ms c) = None -> klaw P c.
+(* a machine step (no syscall pending): the only SNext step is sstep_cfg_instr, an msteps run of length one.
+   727298f3: [sstep_cfg] has a vDSO-call arm (Run.v sstep_cfg_vdso_call) at a pc where the image's vDSO text
+   exports a function; an image with no vDSO text (RomStableK.NoVdso) has no such pc. *)
+Lemma klaw_instr : forall P c, srr_inv_laws segs P -> vdso_image segs = None ->
+  ms_svc_pending (cfg_ms c) = None -> klaw P c.
 Proof.
-intros P c PL Hsvc e c' Hs HP. inversion Hs; subst; cbn [cfg_ms] in *; try congruence.
-apply (@sil_msteps segs P PL ms ms'); [|exact HP].
-apply (msteps_one segs ms ms'); [exact Hsvc|].
-eapply mi_account_step_projects. eassumption.
+intros P c PL Hvi Hsvc e c' Hs HP.
+assert (Hnf : forall pc, vdso_entry_fn segs pc = None) by (intros pc; unfold vdso_entry_fn; rewrite Hvi; reflexivity).
+inversion Hs; subst; cbn [cfg_ms] in *; try congruence.
+- apply (@sil_msteps segs P PL ms ms'); [|exact HP].
+  apply (msteps_one segs ms ms'); [exact Hsvc|].
+  eapply mi_account_step_projects. eassumption.
 Qed.
 
 (* a syscall: every SNext step is an outcome's effect (sstep_cfg_syscall) or an exit / kill that keeps the memory *)
@@ -329,6 +364,7 @@ Lemma klaw_syscall : forall P c,
 Proof.
 intros P c Hp Heff e c' Hs HP. inversion Hs; subst; cbn [cfg_ms cfg_model] in *.
 - congruence.
+- (* 727298f3: the vDSO-call arm needs no syscall pending *) congruence.
 - cbn [advance_past_svc ms_mem]. eapply Heff; eassumption.
 - exact HP.
 - exact HP.
@@ -353,7 +389,7 @@ Lemma klaw_node : forall P c (I : Type) (evs : I -> list event) (nx : I -> confi
   (forall i, P (ms_mem (cfg_ms c)) -> P (ms_mem (cfg_ms (nx i)))) ->
   klaw P c.
 Proof.
-intros P c I evs nx [_ Hc] Hk e c' Hs HP. destruct (Hc e (SNext c') Hs) as (i & _ & E).
+intros P c I evs nx [_ [Hc _]] Hk e c' Hs HP. destruct (Hc e (SNext c') Hs) as (i & _ & E).
 injection E as E. subst c'. exact (Hk i HP).
 Qed.
 

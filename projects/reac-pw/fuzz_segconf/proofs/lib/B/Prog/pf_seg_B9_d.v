@@ -4,18 +4,19 @@
 (* Modified by Theorem Labs, 2026-10: the boundary states and segment statements of LLVMFuzzerTestOneInput's ASan+UBSan walk (plugin-hostd/fuzz_command image B, 0x86530), the B twin of lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh6.v (the CL_*_stmtX statements: from a point of the function to its return, under the entry's context) and A/ACf5.v (rtcx, rt_base: the entry's facts bundled once). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths, module names, addresses and numbers changed; 469 of its 518 lines of code are new or changed and 289 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths and module names changed; 148 of its 173 lines of code are new or changed and 493 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca): the SHARED
    VOCABULARY of segment B9 of reac_segconf_parse_file's walk (lib/B/Prog/pf_pieces.v S_B9: KEY 0x883f8 -> ROLE /
    MODEL / IGN / REF3 / HREF / TAIL through KREF, and KREF 0x889a0 -> TAIL; 131 instructions, checks B#9, B#10,
    B#11, B#13, B#14, UBSan trap branches T11, T12, T14, T15, T16; calls strchr, 2 x trim, strlen, 4 x strcasecmp,
    refuse). The B9 segment lane of the image-B G3 walk owner, 2026-10-30. Statement text only: no instruction is walked here.
    proves no function (kind: segment lemma of reac_segconf_parse_file's walk: the internal cuts of segment B9).
-   ADAPTED from a working branch's lib/A/Prog/pf_a9_d.v (00819c5d72b2; A9's cuts K2 / K3 / K5 / K9 and the
+   ADAPTED from a working branch's lib/A/Prog/pf_a9_d.v (A9's cuts K2 / K3 / K5 / K9 and the
    key-below-value conjunct the image-A A9 segment lane found), re-derived on image B's code: B keeps cur in slot 0xc0
    only (A: s4), B puts an internal cut after every call (so each stretch is one straight run to a call or an exit),
    and B's shared key refusal KREF is a cut of pf_pieces.v (A's K9 was internal).
 
-   THE FORM is cross_check_d.v's / chain_words_d.v's (origin/ossv/recipes 501c0d516c69): the cut points of the
+   THE FORM is cross_check_d.v's / chain_words_d.v: the cut points of the
    segment stated over the MACHINE state, so each stretch file builds its own symbolic state; "from this cut the
    walk reaches S_B9's goal" as b9_from; one Prop per stretch (SB9_1 .. SB9_10; the KREF -> TAIL stretch is
    pf_pieces.v's second conjunct of S_B9 itself).

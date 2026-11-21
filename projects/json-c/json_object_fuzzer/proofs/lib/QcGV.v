@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo at the window floor: stk_floor, from the model's stack_window_depth, with stk_floor_facts, floor_ge_ceiling and stk_floor_sp; HEAPA0g's stack from that floor, and the hiA_*0 rules, stk_after and stk_join over it). *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
 From stdpp Require Import gmap.
@@ -169,6 +170,26 @@ Hypothesis L_dpn : 0 <= dl_depot_n DL /\ dl_depot_n DL + 4 <= RC.alloc_ceiling.
 
 Definition hi_top : Z := ae_stack_top RE.
 
+(* The stack window's floor: the model's stack_window_depth below the entry sp (= RC.alloc_ceiling + stack_max_size),
+rounded up to 16. HEAPA0g's stack part and the call rules' frame bottoms start here. *)
+Definition stk_floor : Z :=
+let x := RC.alloc_ceiling + (stack_max_size - OSA.Mq3.stack_window_depth) in x + (- x) mod 16.
+Lemma stk_floor_facts : RC.alloc_ceiling <= stk_floor /\ stk_floor <= 2^47 /\ stk_floor mod 16 = 0.
+Proof.
+pose proof (@RC.alloc_ceiling_range RC__) as Hc. pose proof OSA.Mq3.stack_window_depth_val as Hd.
+unfold stk_floor. cbv zeta. rewrite Hd. unfold stack_max_size. Z.div_mod_to_equations. lia.
+Qed.
+Lemma floor_ge_ceiling : RC.alloc_ceiling <= stk_floor.
+Proof. exact (proj1 stk_floor_facts). Qed.
+(* with the ceiling at the entry sp less stack_max_size, the floor is within 16 bytes above sp - stack_window_depth *)
+Lemma stk_floor_sp : forall usp, RC.alloc_ceiling = usp - stack_max_size ->
+usp - OSA.Mq3.stack_window_depth <= stk_floor < usp - OSA.Mq3.stack_window_depth + 16.
+Proof.
+intros usp Hc. unfold stk_floor. cbv zeta. rewrite Hc.
+replace (usp - stack_max_size + (stack_max_size - OSA.Mq3.stack_window_depth)) with (usp - OSA.Mq3.stack_window_depth) by lia.
+pose proof (Z.mod_pos_bound (- (usp - OSA.Mq3.stack_window_depth)) 16 ltac:(lia)). lia.
+Qed.
+
 Definition blk_of (b : ablock) : HI.blk := (ablk_addr b, ablk_size b).
 Definition fr_of (f : fframe) : JH.frame := (ff_addr f, ff_cls f).
 
@@ -213,7 +234,7 @@ dc_run _ _ _ _ DCo ps LBd FSd RE (mrestrict F m)
 /\ 0 <= JH.bB B /\ 0 <= JH.bD B /\ 0 <= JH.bN B
 
 /\ (exists dn, depot_n segs DL (mrestrict F m) dn /\ dn + zlen LBd + 2 * JH.bN B <= DEPOT_CAP)
-/\ stk segs m RC.alloc_ceiling hi_top
+/\ stk segs m stk_floor hi_top
 /\ QBA ps LBd B.
 
 Definition HEAPA0 (LB LM : list HI.blk) (FR : list JH.frame) (B : JH.bud) (m : word -> option byte) (c : config) : Prop :=
@@ -293,21 +314,21 @@ Qed.
 Lemma stk_sub0 : forall m lo lo' hi, stk segs m lo hi -> lo <= lo' -> stk segs m lo' hi.
 Proof. intros m lo lo' hi (H0 & H1 & HS) Hl. split; [lia|]. split; [exact H1|]. intros a Ha. apply HS. lia. Qed.
 
-Lemma stk_join : forall m lo sp, stk segs m RC.alloc_ceiling hi_top -> stk segs m lo sp ->
-RC.alloc_ceiling <= lo -> lo <= sp - JH.hl_stack_A L -> lo <= hi_top -> stk segs m RC.alloc_ceiling sp.
+Lemma stk_join : forall m lo sp, stk segs m stk_floor hi_top -> stk segs m lo sp ->
+stk_floor <= lo -> lo <= sp - JH.hl_stack_A L -> lo <= hi_top -> stk segs m stk_floor sp.
 Proof.
 intros m lo sp (I0 & I1 & HI) (S0 & S1 & HS) Hlo Hlo2 Htop. split; [exact I0|]. split; [exact S1|]. intros a Ha.
 destruct (Z.lt_ge_cases a hi_top) as [Hlt|Hge]; [apply HI; lia| apply HS; lia].
 Qed.
 
-Lemma unw_readable0 : forall m sp, stk segs m RC.alloc_ceiling hi_top -> RC.alloc_ceiling <= sp -> unw_readable segs RE (mrestrict F m) sp.
+Lemma unw_readable0 : forall m sp, stk segs m stk_floor hi_top -> stk_floor <= sp -> unw_readable segs RE (mrestrict F m) sp.
 Proof.
-intros m sp (_ & _ & HI) Hsp x Hx Hx64. destruct (HI x ltac:(unfold hi_top; lia)) as [_ [b Hb]]. exists b.
+intros m sp (_ & _ & HI) Hsp x Hx Hx64. pose proof floor_ge_ceiling. destruct (HI x ltac:(unfold hi_top; lia)) as [_ [b Hb]]. exists b.
 unfold mrd in *. rewrite (mrestrict_off F m _ (F_above x ltac:(lia))). exact Hb.
 Qed.
 
-Lemma stk_after : forall m m' sp, stk segs m RC.alloc_ceiling hi_top -> stk segs m' RC.alloc_ceiling sp ->
-(forall a, 0 <= a < 2^64 -> sp <= a -> m' (wa a) = m (wa a)) -> stk segs m' RC.alloc_ceiling hi_top.
+Lemma stk_after : forall m m' sp, stk segs m stk_floor hi_top -> stk segs m' stk_floor sp ->
+(forall a, 0 <= a < 2^64 -> sp <= a -> m' (wa a) = m (wa a)) -> stk segs m' stk_floor hi_top.
 Proof.
 intros m m' sp (I0 & I1 & HI) (S0 & S1 & HS) Hag. split; [exact I0|]. split; [exact I1|]. intros a Ha.
 destruct (Z.lt_ge_cases a sp) as [Hlt|Hge]; [apply HS; lia|].
@@ -331,7 +352,7 @@ Theorem hiA_malloc0 : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7
 (Fr : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (c : config) (T : OSA.TSet)
 (LB LM : list HI.blk) (FR : list JH.frame) (B : JH.bud) (n lo : Z) (u : JH.uwd) (g : ghost),
 HEAPA0g g LB LM FR B m c ->
-stk segs m lo (bv_unsigned sp) -> RC.alloc_ceiling <= lo -> lo <= bv_unsigned sp - JH.hl_stack_A L ->
+stk segs m lo (bv_unsigned sp) -> RC.alloc_ceiling <= lo -> stk_floor <= lo -> lo <= bv_unsigned sp - JH.hl_stack_A L ->
 tp = Z_to_bv 64 (HI.hl_tp HL) -> gp = Z_to_bv 64 (JH.hl_gp L) ->
 a0 = Z_to_bv 64 n -> 1 <= n <= 2^26 ->
 lo <= hi_top ->
@@ -354,16 +375,16 @@ AJv segs LV T c
 Fr (Z_to_bv 64 (HI.hl_malloc HL)) fc None m (seg_rom segs)).
 Proof.
 intros ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 Fr fc m c T LB LM FR B n lo u g
-HP Hstk Hlo Hlo2 Htp Hgp Ha0 Hn Htop HbN HbB HbD HbQ HK.
+HP Hstk Hlo Hflo Hlo2 Htp Hgp Ha0 Hn Htop HbN HbB HbD HbQ HK.
 destruct HP as (ps & LBd & FSd & RUN & ELB & EFR & AI & G & Hcap & Hbud & K & HC & Hh & MI & HWR & HLM & Hb0 & Hd0 & Hn0 & HDN & HSTK & HQB).
 destruct L_stack as (Ls1 & Ls2 & Ls3).
 pose proof (@RC.alloc_ceiling_range RC__) as Hceil.
 assert (Hsp64 : bv_unsigned sp <= 2^64) by (destruct Hstk as (_ & H & _); exact H).
-pose proof (stk_join m lo (bv_unsigned sp) HSTK Hstk Hlo Hlo2 Htop) as Hstk0. pose proof (unw_readable0 m (bv_unsigned sp) HSTK ltac:(lia)) as Hur.
+pose proof (stk_join m lo (bv_unsigned sp) HSTK Hstk Hflo Hlo2 Htop) as Hstk0. pose proof (unw_readable0 m (bv_unsigned sp) HSTK ltac:(lia)) as Hur.
 destruct HDN as (dn & HDn & HDcap). pose proof (zlen_nonneg0 _ LBd) as Hz0.
-assert (Hstk' : stk segs (mrestrict F m) RC.alloc_ceiling (bv_unsigned sp)) by (apply stk_hide; [intros x Hx; apply F_above; lia| exact Hstk0]).
+assert (Hstk' : stk segs (mrestrict F m) stk_floor (bv_unsigned sp)) by (apply stk_hide; [intros x Hx; apply F_above; pose proof floor_ge_ceiling; lia| exact Hstk0]).
 pose proof (dc_malloc _ _ _ _ DCo LA ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
-Fr fc (mrestrict F m) ps LBd FSd RE n RC.alloc_ceiling dn RE_L RUN Hstk' (Z.le_refl _) ltac:(lia) (mem_inv_hide segs F m MI)
+Fr fc (mrestrict F m) ps LBd FSd RE n stk_floor dn RE_L RUN Hstk' floor_ge_ceiling ltac:(lia) (mem_inv_hide segs F m MI)
 ltac:(rewrite <- L_tp; exact Htp) ltac:(rewrite <- L_gp; exact Hgp) Hur HDn ltac:(lia) Ha0 ltac:(lia)) as Himpl.
 rewrite <- L_malloc in Himpl.
 match goal with |- AJv _ _ _ _ ?st => set (msv := st) end.
@@ -392,7 +413,7 @@ apply (HK ms'' m'' c1 g' A errv').
 unfold HI.ret_state. exists t0', t1', t2', a1', a2', a3', a4', a5', a6', a7', t3', t4', t5', t6'. exact Ems''.
 -
 destruct Hvo as (V1 & V2 & V3 & V4 & V5 & V6). unfold HI.model_vm_only. repeat split; try assumption. exact (vmst_init_sp _ _ Hvm).
-- exact (stk_sub0 m'' _ lo _ (stk_unhide segs F F_off m'' _ _ Hstk1) Hlo).
+- exact (stk_sub0 m'' _ lo _ (stk_unhide segs F F_off m'' _ _ Hstk1) Hflo).
 -
 intros a Ha Hcl. change (OM.wa a) with (wa a). destruct (F (wa a)) eqn:Fa.
 + assert (E : m'' (wa a) = m (wa a)) by (unfold m''; rewrite (Hhs _ Fa); exact (HF1 _ Fa)).
@@ -441,7 +462,7 @@ Theorem hiA_calloc0 : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7
 (LB LM : list HI.blk) (FR : list JH.frame) (B : JH.bud) (cnt sz lo : Z) (u : JH.uwd) (g : ghost),
 let n := cnt * sz in
 HEAPA0g g LB LM FR B m c ->
-stk segs m lo (bv_unsigned sp) -> RC.alloc_ceiling <= lo -> lo <= bv_unsigned sp - JH.hl_stack_A L ->
+stk segs m lo (bv_unsigned sp) -> RC.alloc_ceiling <= lo -> stk_floor <= lo -> lo <= bv_unsigned sp - JH.hl_stack_A L ->
 tp = Z_to_bv 64 (HI.hl_tp HL) -> gp = Z_to_bv 64 (JH.hl_gp L) ->
 a0 = Z_to_bv 64 cnt -> a1 = Z_to_bv 64 sz -> 0 <= cnt < 2^32 -> 0 <= sz < 2^32 -> 1 <= n <= 2^26 ->
 lo <= hi_top ->
@@ -464,16 +485,16 @@ AJv segs LV T c
 Fr (Z_to_bv 64 (HI.hl_calloc HL)) fc None m (seg_rom segs)).
 Proof.
 intros ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 Fr fc m c T LB LM FR B cnt sz lo u g n
-HP Hstk Hlo Hlo2 Htp Hgp Ha0 Ha1 Hcnt Hsz Hn Htop HbN HbB HbD HbQ HK.
+HP Hstk Hlo Hflo Hlo2 Htp Hgp Ha0 Ha1 Hcnt Hsz Hn Htop HbN HbB HbD HbQ HK.
 destruct HP as (ps & LBd & FSd & RUN & ELB & EFR & AI & G & Hcap & Hbud & K & HC & Hh & MI & HWR & HLM & Hb0 & Hd0 & Hn0 & HDN & HSTK & HQB).
 destruct L_stack as (Ls1 & Ls2 & Ls3).
 pose proof (@RC.alloc_ceiling_range RC__) as Hceil.
 assert (Hsp64 : bv_unsigned sp <= 2^64) by (destruct Hstk as (_ & H & _); exact H).
-pose proof (stk_join m lo (bv_unsigned sp) HSTK Hstk Hlo Hlo2 Htop) as Hstk0. pose proof (unw_readable0 m (bv_unsigned sp) HSTK ltac:(lia)) as Hur.
+pose proof (stk_join m lo (bv_unsigned sp) HSTK Hstk Hflo Hlo2 Htop) as Hstk0. pose proof (unw_readable0 m (bv_unsigned sp) HSTK ltac:(lia)) as Hur.
 destruct HDN as (dn & HDn & HDcap). pose proof (zlen_nonneg0 _ LBd) as Hz0.
-assert (Hstk' : stk segs (mrestrict F m) RC.alloc_ceiling (bv_unsigned sp)) by (apply stk_hide; [intros x Hx; apply F_above; lia| exact Hstk0]).
+assert (Hstk' : stk segs (mrestrict F m) stk_floor (bv_unsigned sp)) by (apply stk_hide; [intros x Hx; apply F_above; pose proof floor_ge_ceiling; lia| exact Hstk0]).
 pose proof (dc_calloc _ _ _ _ DCo LA ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
-Fr fc (mrestrict F m) ps LBd FSd RE cnt sz RC.alloc_ceiling dn RE_L RUN Hstk' (Z.le_refl _) ltac:(lia) (mem_inv_hide segs F m MI)
+Fr fc (mrestrict F m) ps LBd FSd RE cnt sz stk_floor dn RE_L RUN Hstk' floor_ge_ceiling ltac:(lia) (mem_inv_hide segs F m MI)
 ltac:(rewrite <- L_tp; exact Htp) ltac:(rewrite <- L_gp; exact Hgp) Hur HDn ltac:(lia) Ha0 Ha1 Hcnt Hsz ltac:(unfold n in Hn; lia)) as Himpl.
 assert (Hov : calloc_overflows cnt sz = false).
 { unfold calloc_overflows. destruct (Z.eqb_spec sz 0) as [->|Hz]; [reflexivity|]. cbn [negb andb]. apply Z.ltb_ge.
@@ -506,7 +527,7 @@ apply (HK ms'' m'' c1 g' A errv').
 unfold HI.ret_state. exists t0', t1', t2', a1', a2', a3', a4', a5', a6', a7', t3', t4', t5', t6'. exact Ems''.
 -
 destruct Hvo as (V1 & V2 & V3 & V4 & V5 & V6). unfold HI.model_vm_only. repeat split; try assumption. exact (vmst_init_sp _ _ Hvm).
-- exact (stk_sub0 m'' _ lo _ (stk_unhide segs F F_off m'' _ _ Hstk1) Hlo).
+- exact (stk_sub0 m'' _ lo _ (stk_unhide segs F F_off m'' _ _ Hstk1) Hflo).
 -
 intros a Ha Hcl. change (OM.wa a) with (wa a). destruct (F (wa a)) eqn:Fa.
 + assert (E : m'' (wa a) = m (wa a)) by (unfold m''; rewrite (Hhs _ Fa); exact (HF1 _ Fa)).
@@ -616,7 +637,7 @@ Theorem hiA_free0 : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s
 (LB LM : list HI.blk) (FR : list JH.frame) (B : JH.bud) (p n lo : Z) (errv : word) (u : JH.uwd) (g : ghost),
 HEAPA0g g LB LM FR B m c ->
 In (p, n) LB ->
-stk segs m lo (bv_unsigned sp) -> RC.alloc_ceiling <= lo -> lo <= bv_unsigned sp - JH.hl_stack_A L ->
+stk segs m lo (bv_unsigned sp) -> RC.alloc_ceiling <= lo -> stk_floor <= lo -> lo <= bv_unsigned sp - JH.hl_stack_A L ->
 OT.rw_cells segs m (HI.hl_tp HL - 164) [OC.C4 errv] ->
 tp = Z_to_bv 64 (HI.hl_tp HL) -> gp = Z_to_bv 64 (JH.hl_gp L) ->
 a0 = Z_to_bv 64 p ->
@@ -639,15 +660,15 @@ AJv segs LV T c
 Fr (Z_to_bv 64 (HI.hl_free HL)) fc None m (seg_rom segs)).
 Proof.
 intros ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 Fr fc m c T LB LM FR B p n lo errv u g
-HP Hin Hstk Hlo Hlo2 Herr Htp Hgp Ha0 Htop HbD HK.
+HP Hin Hstk Hlo Hflo Hlo2 Herr Htp Hgp Ha0 Htop HbD HK.
 destruct HP as (ps & LBd & FSd & RUN & ELB & EFR & AI & G & Hcap & Hbud & K & HC & Hh & MI & HWR & HLM & Hb0 & Hd0 & Hn0 & HDN & HSTK & HQB).
 destruct L_stack as (Ls1 & Ls2 & Ls3).
 pose proof (@RC.alloc_ceiling_range RC__) as Hceil.
 assert (Hsp64 : bv_unsigned sp <= 2^64) by (destruct Hstk as (_ & H & _); exact H).
 rewrite ELB in Hin. apply in_map_iff in Hin as ([[pid A] nd] & Eb & Hbd). unfold blk_of in Eb. cbn [ablk_addr ablk_size fst snd] in Eb. injection Eb as -> ->.
-pose proof (stk_join m lo (bv_unsigned sp) HSTK Hstk Hlo Hlo2 Htop) as Hstk0. pose proof (unw_readable0 m (bv_unsigned sp) HSTK ltac:(lia)) as Hur.
+pose proof (stk_join m lo (bv_unsigned sp) HSTK Hstk Hflo Hlo2 Htop) as Hstk0. pose proof (unw_readable0 m (bv_unsigned sp) HSTK ltac:(lia)) as Hur.
 destruct HDN as (dn & HDn & HDcap). pose proof (zlen_nonneg0 _ LBd) as Hz0.
-assert (Hstk' : stk segs (mrestrict F m) RC.alloc_ceiling (bv_unsigned sp)) by (apply stk_hide; [intros x Hx; apply F_above; lia| exact Hstk0]).
+assert (Hstk' : stk segs (mrestrict F m) stk_floor (bv_unsigned sp)) by (apply stk_hide; [intros x Hx; apply F_above; pose proof floor_ge_ceiling; lia| exact Hstk0]).
 pose proof (dc_blocks_nodup _ _ _ _ DCo _ _ _ _ _ RUN) as NDid0.
 assert (Hz1 : zlen LBd = 1 + zlen (alb_remove pid LBd)).
 { pose proof (Permutation_length (alb_remove_perm LBd pid p n NDid0 Hbd)) as EL. cbn [length] in EL. rewrite !length_map in EL. unfold zlen. lia. }
@@ -658,7 +679,7 @@ assert (QR : qroom (ps_a ps) pid).
 cbn [map] in EP. rewrite zsum_cons in EP. pose proof (qliveX_nonneg (map ablk_id (alb_remove pid LBd))) as Hq0.
 unfold QBA, qtot, qliveX, qroom in *. unfold kBatchBytes in *. lia. }
 pose proof (dc_free _ _ _ _ DCo LA ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
-Fr fc (mrestrict F m) ps LBd FSd RE pid p n RC.alloc_ceiling dn RE_L RUN Hbd QR Hstk' (Z.le_refl _) ltac:(lia) (mem_inv_hide segs F m MI)
+Fr fc (mrestrict F m) ps LBd FSd RE pid p n stk_floor dn RE_L RUN Hbd QR Hstk' floor_ge_ceiling ltac:(lia) (mem_inv_hide segs F m MI)
 ltac:(rewrite <- L_tp; exact Htp) ltac:(rewrite <- L_gp; exact Hgp) Hur HDn ltac:(lia) Ha0) as Himpl.
 rewrite <- L_free in Himpl.
 match goal with |- AJv _ _ _ _ ?st => set (msv := st) end.
@@ -711,7 +732,7 @@ pose proof (gen_pres (alb_remove pid LBd) FSd _ m m'' Hpres HFm0) as Hgen0.
 apply (HK ms'' m'' c1 g' a0').
 - unfold HI.ret_state. exists t0', t1', t2', a1', a2', a3', a4', a5', a6', a7', t3', t4', t5', t6'. exact Ems''.
 - destruct Hvo as (V1 & V2 & V3 & V4 & V5 & V6). unfold HI.model_vm_only. repeat split; try assumption. exact (vmst_init_sp _ _ Hvm).
-- exact (stk_sub0 m'' _ lo _ (stk_unhide segs F F_off m'' _ _ Hstk1) Hlo).
+- exact (stk_sub0 m'' _ lo _ (stk_unhide segs F F_off m'' _ _ Hstk1) Hflo).
 - exact HPR.
 - exact Hvm.
 - exact HFm0.
@@ -747,7 +768,7 @@ Theorem hiA_free_null0 : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6
 (Fr : bvmap 5 word) (fc : bv 32) (m : word -> option byte) (c : config) (T : OSA.TSet)
 (LB LM : list HI.blk) (FR : list JH.frame) (B : JH.bud) (lo : Z) (errv : word) (u : JH.uwd) (g : ghost),
 HEAPA0g g LB LM FR B m c ->
-stk segs m lo (bv_unsigned sp) -> RC.alloc_ceiling <= lo -> lo <= bv_unsigned sp - JH.hl_stack_A L ->
+stk segs m lo (bv_unsigned sp) -> RC.alloc_ceiling <= lo -> stk_floor <= lo -> lo <= bv_unsigned sp - JH.hl_stack_A L ->
 OT.rw_cells segs m (HI.hl_tp HL - 164) [OC.C4 errv] ->
 tp = Z_to_bv 64 (HI.hl_tp HL) -> gp = Z_to_bv 64 (JH.hl_gp L) ->
 a0 = Z_to_bv 64 0 ->
@@ -767,16 +788,16 @@ AJv segs LV T c
 Fr (Z_to_bv 64 (HI.hl_free HL)) fc None m (seg_rom segs)).
 Proof.
 intros ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 Fr fc m c T LB LM FR B lo errv u g
-HP Hstk Hlo Hlo2 Herr Htp Hgp Ha0 Htop HK.
+HP Hstk Hlo Hflo Hlo2 Herr Htp Hgp Ha0 Htop HK.
 destruct HP as (ps & LBd & FSd & RUN & ELB & EFR & AI & G & Hcap & Hbud & K & HC & Hh & MI & HWR & HLM & Hb0 & Hd0 & Hn0 & HDN & HSTK & HQB).
 destruct L_stack as (Ls1 & Ls2 & Ls3).
 pose proof (@RC.alloc_ceiling_range RC__) as Hceil.
 assert (Hsp64 : bv_unsigned sp <= 2^64) by (destruct Hstk as (_ & H & _); exact H).
-pose proof (stk_join m lo (bv_unsigned sp) HSTK Hstk Hlo Hlo2 Htop) as Hstk0. pose proof (unw_readable0 m (bv_unsigned sp) HSTK ltac:(lia)) as Hur.
+pose proof (stk_join m lo (bv_unsigned sp) HSTK Hstk Hflo Hlo2 Htop) as Hstk0. pose proof (unw_readable0 m (bv_unsigned sp) HSTK ltac:(lia)) as Hur.
 destruct HDN as (dn & HDn & HDcap). pose proof (zlen_nonneg0 _ LBd) as Hz0.
-assert (Hstk' : stk segs (mrestrict F m) RC.alloc_ceiling (bv_unsigned sp)) by (apply stk_hide; [intros x Hx; apply F_above; lia| exact Hstk0]).
+assert (Hstk' : stk segs (mrestrict F m) stk_floor (bv_unsigned sp)) by (apply stk_hide; [intros x Hx; apply F_above; pose proof floor_ge_ceiling; lia| exact Hstk0]).
 pose proof (dc_free_null _ _ _ _ DCo ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
-Fr fc (mrestrict F m) ps LBd FSd RE RC.alloc_ceiling RUN Hstk' (Z.le_refl _) ltac:(lia) (mem_inv_hide segs F m MI)
+Fr fc (mrestrict F m) ps LBd FSd RE stk_floor RUN Hstk' floor_ge_ceiling ltac:(lia) (mem_inv_hide segs F m MI)
 ltac:(rewrite <- L_tp; exact Htp) ltac:(rewrite <- L_gp; exact Hgp) Hur Ha0) as Hevt.
 rewrite <- L_free in Hevt.
 match goal with |- AJv _ _ _ _ ?st => set (msv := st) end.
@@ -797,7 +818,7 @@ split; [exact E|]. unfold wview. rewrite E. auto.
 split; [exact E|]. rewrite !(wview_off _ _ Fa) in W. exact W. }
 apply (HK ms'' m'' a0').
 - unfold HI.ret_state. exists t0', t1', t2', a1', a2', a3', a4', a5', a6', a7', t3', t4', t5', t6'. exact Ems''.
-- exact (stk_sub0 m'' _ lo _ (stk_unhide segs F F_off m'' _ _ Hstk1) Hlo).
+- exact (stk_sub0 m'' _ lo _ (stk_unhide segs F F_off m'' _ _ Hstk1) Hflo).
 - intros a Ha Hcl. change (OM.wa a) with (wa a). apply (Hgen a Ha). intros Fa.
 destruct Hcl as [H|[H|H]]; [left; exact H| right; left; exact (L_static a H)|].
 unfold HI.in_block in H. destruct H as (b & Hb & Hr). apply in_app_iff in Hb as [Hb|Hb].
@@ -982,7 +1003,7 @@ Lemma heapA0g_client_frame : forall g LB LM FR B m m' c, HEAPA0g g LB LM FR B m 
 m' (wa a) = m (wa a)) ->
 (forall x, wview segs m x <> None -> wview segs m' x <> None) ->
 mem_inv segs m' ->
-depot_keep segs DL (mrestrict F m) (mrestrict F m') -> stk segs m' RC.alloc_ceiling hi_top ->
+depot_keep segs DL (mrestrict F m) (mrestrict F m') -> stk segs m' stk_floor hi_top ->
 HEAPA0g g LB LM FR B m' c.
 Proof.
 intros g LB LM FR B m m' c (ps & LBd & FSd & RUN & ELB & EFR & AI & G & Hcap & Hbud & K & HC & Hh & MI & HWR & HLM & Hb) Hsame Hwm MI' HDK' HSTK'.
@@ -1286,8 +1307,8 @@ split.
 { destruct HDN as (dn & HDn & HDcap). exists dn. split; [| exact HDcap]. apply (depot_n_agree (mrestrict F m) _ dn HDn).
 intros x Hx. unfold mrestrict. destruct (F (wa x)); [reflexivity|]. apply Hne; [destruct L_dpn; lia|]. destruct L_dpn_hull. lia. }
 split; [| exact HQB].
-apply (stk_after m m' RC.alloc_ceiling HSTK); [split; [lia|]; split; [lia|]; intros a Ha; lia|].
-intros a Ha Hge. apply Hne; [exact Ha| lia]. }
+apply (stk_after m m' stk_floor HSTK); [pose proof stk_floor_facts; pose proof (@RC.alloc_ceiling_range RC__); split; [lia|]; split; [lia|]; intros a Ha; lia|].
+intros a Ha Hge. pose proof floor_ge_ceiling. apply Hne; [exact Ha| lia]. }
 split; [exact WVm|]. split; [exact Fflag|]. split; [exact HFm|].
 split. { intros a Ha Hcd. apply (Hgen a Ha). intros _. exact (dkeepA_client _ _ _ _ _ _ Hcd). }
 intros a Ha Hcl. change (OM.wa a) with (wa a). apply (Hgen a Ha). intros Fa0.
@@ -1306,7 +1327,7 @@ Theorem hiA_stack_malloc0 : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5
 HEAPA0g g LB LM FR B m c ->
 0 <= k <= 2 \/ (k = 3 /\ JH.hl_stack_malloc L 3 <> 0) -> 0 < size <= ff_size k -> size mod 8 = 0 ->
 Z.of_nat (length FR) < fframe_cap k ->
-stk segs m lo (bv_unsigned sp) -> RC.alloc_ceiling <= lo -> lo <= bv_unsigned sp - JH.hl_stack_A L ->
+stk segs m lo (bv_unsigned sp) -> RC.alloc_ceiling <= lo -> stk_floor <= lo -> lo <= bv_unsigned sp - JH.hl_stack_A L ->
 lo <= hi_top ->
 tp = Z_to_bv 64 (HI.hl_tp HL) -> gp = Z_to_bv 64 (JH.hl_gp L) ->
 a0 = Z_to_bv 64 size ->
@@ -1327,18 +1348,18 @@ AJv segs LV T c
 Fr (Z_to_bv 64 (JH.hl_stack_malloc L k)) fc None m (seg_rom segs)).
 Proof.
 intros ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 Fr fc m c T LB LM FR B k size lo g
-HP Hk Hsz Hsz8 Hcap Hstk Hlo Hlo2 Htop Htp Hgp Ha0 HK.
+HP Hk Hsz Hsz8 Hcap Hstk Hlo Hflo Hlo2 Htop Htp Hgp Ha0 HK.
 destruct HP as (ps & LBd & FSd & RUN & ELB & EFR & AI & G & Hcapn & Hbud & K & HC & Hh & MI & HWR & HLM & Hb0 & Hd0 & Hn0 & HDN & HSTK & HQB).
 pose proof (@RC.alloc_ceiling_range RC__) as Hceil.
 assert (Hsp64 : bv_unsigned sp <= 2^64) by (destruct Hstk as (_ & H & _); exact H).
-pose proof (stk_join m lo (bv_unsigned sp) HSTK Hstk Hlo Hlo2 Htop) as Hstk0. destruct HDN as (dn & HDn & HDcap).
-assert (Hstk' : stk segs (mrestrict F m) RC.alloc_ceiling (bv_unsigned sp)) by (apply stk_hide; [intros x Hx; apply F_above; lia| exact Hstk0]).
+pose proof (stk_join m lo (bv_unsigned sp) HSTK Hstk Hflo Hlo2 Htop) as Hstk0. destruct HDN as (dn & HDn & HDcap).
+assert (Hstk' : stk segs (mrestrict F m) stk_floor (bv_unsigned sp)) by (apply stk_hide; [intros x Hx; apply F_above; pose proof floor_ge_ceiling; lia| exact Hstk0]).
 assert (Hcnt : Z.of_nat (length (filter (fun f => ff_cls f =? k) FSd)) < fframe_cap k).
 { pose proof (length_filter (fun f : fframe => ff_cls f =? k) FSd) as Hl. rewrite EFR, length_map in Hcap. lia. }
 assert (Hk3 : 0 <= k <= 3) by (clear - Hk; lia).
 assert (HkS : 0 <= k <= 2 \/ (k = 3 /\ SM 3 <> 0)) by (rewrite <- (L_sm 3 ltac:(lia)); exact Hk).
 pose proof (df_stack_malloc _ _ _ _ _ _ _ DFs k HkS ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
-Fr fc (mrestrict F m) ps LBd FSd RE size RC.alloc_ceiling RUN Hcnt Hstk' (Z.le_refl _) ltac:(lia) (mem_inv_hide segs F m MI)
+Fr fc (mrestrict F m) ps LBd FSd RE size stk_floor RUN Hcnt Hstk' floor_ge_ceiling ltac:(lia) (mem_inv_hide segs F m MI)
 ltac:(rewrite <- L_tp; exact Htp) ltac:(rewrite <- L_gp; exact Hgp) Ha0 Hsz Hsz8) as Hevt.
 rewrite <- (L_sm k Hk3) in Hevt.
 match goal with |- AJv _ _ _ _ ?st => set (msv := st) end.
@@ -1354,7 +1375,7 @@ assert (HFm : forall x, F x = true -> m'' x = m x) by (intros x Fx; unfold m''; 
 pose proof (gen_pres LBd FSd _ m m'' Hpres HFm) as Hgen.
 apply (HK ms'' m'' Fa junk).
 - unfold HI.ret_state. exists t0', t1', t2', a1', a2', a3', a4', a5', a6', a7', t3', t4', t5', t6'. exact Ems''.
-- exact (stk_sub0 m'' _ lo _ (stk_unhide segs F F_off m'' _ _ Hstk1) Hlo).
+- exact (stk_sub0 m'' _ lo _ (stk_unhide segs F F_off m'' _ _ Hstk1) Hflo).
 - intros a Ha Hcl. change (OM.wa a) with (wa a). apply (Hgen a Ha). intros Fa0.
 destruct Hcl as [H|[H|H]]; [left; exact H| right; left; exact (L_static a H)|].
 unfold HI.in_block in H. destruct H as (b & Hb & Hr). apply in_app_iff in Hb as [Hb|Hb].
@@ -1396,7 +1417,7 @@ let n := Z.of_nat (length str) + 1 in
 HEAPA0g g LB LM FR B m c ->
 In (ab, nb) LB -> ab <= src -> src + Z.of_nat (length str) + 1 <= ab + nb ->
 bytes_at segs m src (str ++ [Z_to_bv 8 0]) -> ~ In (Z_to_bv 8 0) str -> n <= 2^26 ->
-stk segs m lo (bv_unsigned sp) -> RC.alloc_ceiling <= lo -> lo <= bv_unsigned sp - JH.hl_stack_A L ->
+stk segs m lo (bv_unsigned sp) -> RC.alloc_ceiling <= lo -> stk_floor <= lo -> lo <= bv_unsigned sp - JH.hl_stack_A L ->
 tp = Z_to_bv 64 (HI.hl_tp HL) -> gp = Z_to_bv 64 (JH.hl_gp L) ->
 a0 = Z_to_bv 64 src ->
 lo <= hi_top ->
@@ -1419,21 +1440,21 @@ AJv segs LV T c
 Fr (Z_to_bv 64 (JH.hl_strdup L)) fc None m (seg_rom segs)).
 Proof.
 intros ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 Fr fc m c T LB LM FR B src ab nb lo str u g n
-HP Hinb Hs1 Hs2 Hsrc Hnz Hn Hstk Hlo Hlo2 Htp Hgp Ha0 Htop HbN HbB HbD HbQ HK.
+HP Hinb Hs1 Hs2 Hsrc Hnz Hn Hstk Hlo Hflo Hlo2 Htp Hgp Ha0 Htop HbN HbB HbD HbQ HK.
 destruct HP as (ps & LBd & FSd & RUN & ELB & EFR & AI & G & Hcap & Hbud & K & HC & Hh & MI & HWR & HLM & Hb0 & Hd0 & Hn0 & HDN & HSTK & HQB).
 destruct L_t2_stack as (Ls1 & Ls2).
 pose proof (@RC.alloc_ceiling_range RC__) as Hceil.
 assert (Hn1 : 1 <= n) by (unfold n; lia).
 assert (Hsp64 : bv_unsigned sp <= 2^64) by (destruct Hstk as (_ & H & _); exact H).
-pose proof (stk_join m lo (bv_unsigned sp) HSTK Hstk Hlo Hlo2 Htop) as Hstk0. pose proof (unw_readable0 m (bv_unsigned sp) HSTK ltac:(lia)) as Hur.
+pose proof (stk_join m lo (bv_unsigned sp) HSTK Hstk Hflo Hlo2 Htop) as Hstk0. pose proof (unw_readable0 m (bv_unsigned sp) HSTK ltac:(lia)) as Hur.
 destruct HDN as (dn & HDn & HDcap). pose proof (zlen_nonneg0 _ LBd) as Hz0.
-assert (Hstk' : stk segs (mrestrict F m) RC.alloc_ceiling (bv_unsigned sp)) by (apply stk_hide; [intros x Hx; apply F_above; lia| exact Hstk0]).
+assert (Hstk' : stk segs (mrestrict F m) stk_floor (bv_unsigned sp)) by (apply stk_hide; [intros x Hx; apply F_above; pose proof floor_ge_ceiling; lia| exact Hstk0]).
 rewrite ELB in Hinb. apply in_map_iff in Hinb as (bd & Eb & Hbd). unfold blk_of in Eb. injection Eb as Eab Enb.
 destruct (proj1 (Forall_forall _ _) HWR bd Hbd) as [_ Hoffb].
 assert (Hsrc' : bytes_at segs (mrestrict F m) src (str ++ [Z_to_bv 8 0])).
 { apply bytes_at_hide; [| exact Hsrc]. intros x Hx. rewrite length_app in Hx. cbn [length] in Hx. apply Hoffb. lia. }
 pose proof (dt_strdup _ _ _ _ _ _ _ _ _ DT2 LA ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
-Fr fc (mrestrict F m) ps LBd FSd RE bd src RC.alloc_ceiling dn str RE_L RUN Hbd ltac:(lia) ltac:(lia) Hsrc' Hnz Hn Hstk' (Z.le_refl _) ltac:(lia) (mem_inv_hide segs F m MI)
+Fr fc (mrestrict F m) ps LBd FSd RE bd src stk_floor dn str RE_L RUN Hbd ltac:(lia) ltac:(lia) Hsrc' Hnz Hn Hstk' floor_ge_ceiling ltac:(lia) (mem_inv_hide segs F m MI)
 ltac:(rewrite <- L_tp; exact Htp) ltac:(rewrite <- L_gp; exact Hgp) Hur HDn ltac:(lia) Ha0) as Himpl.
 rewrite <- L_strdup in Himpl. fold n in Himpl.
 match goal with |- AJv _ _ _ _ ?st => set (msv := st) end.
@@ -1461,7 +1482,7 @@ assert (Hlenc : Z.of_nat (cells_size [CB (S (length str)) (str ++ [Z_to_bv 8 0])
 apply (HK ms'' m'' c1 g' A errv').
 - unfold HI.ret_state. exists t0', t1', t2', a1', a2', a3', a4', a5', a6', a7', t3', t4', t5', t6'. exact Ems''.
 - destruct Hvo as (V1 & V2 & V3 & V4 & V5 & V6). unfold HI.model_vm_only. repeat split; try assumption. exact (vmst_init_sp _ _ Hvm).
-- exact (stk_sub0 m'' _ lo _ (stk_unhide segs F F_off m'' _ _ Hstk1) Hlo).
+- exact (stk_sub0 m'' _ lo _ (stk_unhide segs F F_off m'' _ _ Hstk1) Hflo).
 - intros a Ha Hcl. change (OM.wa a) with (wa a). apply (Hgen0 a Ha). intros Fa.
 destruct Hcl as [H|[H|H]]; [left; exact H| right; left; exact (L_static a H)|].
 unfold HI.in_block in H. destruct H as (b & Hb & Hr). apply in_app_iff in Hb as [Hb|Hb].
@@ -1500,7 +1521,7 @@ Theorem hiA_realloc0 : forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a
 HEAPA0g g LB LM FR B m c ->
 In (p, n0) LB ->
 OT.rw_cells segs m p [OC.CB (Z.to_nat n0) (old ++ junk0)] ->
-stk segs m lo (bv_unsigned sp) -> RC.alloc_ceiling <= lo -> lo <= bv_unsigned sp - JH.hl_stack_A L ->
+stk segs m lo (bv_unsigned sp) -> RC.alloc_ceiling <= lo -> stk_floor <= lo -> lo <= bv_unsigned sp - JH.hl_stack_A L ->
 tp = Z_to_bv 64 (HI.hl_tp HL) -> gp = Z_to_bv 64 (JH.hl_gp L) ->
 a0 = Z_to_bv 64 p -> a1 = Z_to_bv 64 n -> 1 <= n <= 2^26 ->
 lo <= hi_top ->
@@ -1524,15 +1545,15 @@ AJv segs LV T c
 Fr (Z_to_bv 64 (HI.hl_realloc HL)) fc None m (seg_rom segs)).
 Proof.
 intros ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 Fr fc m c T LB LM FR B p n0 n lo old junk0 u g
-HP Hin Hold Hstk Hlo Hlo2 Htp Hgp Ha0 Ha1 Hn Htop HbN HbB HbD HbQ HK.
+HP Hin Hold Hstk Hlo Hflo Hlo2 Htp Hgp Ha0 Ha1 Hn Htop HbN HbB HbD HbQ HK.
 destruct HP as (ps & LBd & FSd & RUN & ELB & EFR & AI & G & Hcap & Hbud & K & HC & Hh & MI & HWR & HLM & Hb0 & Hd0 & Hn0 & HDN & HSTK & HQB).
 destruct L_t2_stack as (Ls1 & Ls2).
 pose proof (@RC.alloc_ceiling_range RC__) as Hceil.
 assert (Hsp64 : bv_unsigned sp <= 2^64) by (destruct Hstk as (_ & H & _); exact H).
 rewrite ELB in Hin. apply in_map_iff in Hin as ([[pid A0] nd] & Eb & Hbd). unfold blk_of in Eb. cbn [ablk_addr ablk_size fst snd] in Eb. injection Eb as -> ->.
-pose proof (stk_join m lo (bv_unsigned sp) HSTK Hstk Hlo Hlo2 Htop) as Hstk0. pose proof (unw_readable0 m (bv_unsigned sp) HSTK ltac:(lia)) as Hur.
+pose proof (stk_join m lo (bv_unsigned sp) HSTK Hstk Hflo Hlo2 Htop) as Hstk0. pose proof (unw_readable0 m (bv_unsigned sp) HSTK ltac:(lia)) as Hur.
 destruct HDN as (dn & HDn & HDcap). pose proof (zlen_nonneg0 _ LBd) as Hz0.
-assert (Hstk' : stk segs (mrestrict F m) RC.alloc_ceiling (bv_unsigned sp)) by (apply stk_hide; [intros x Hx; apply F_above; lia| exact Hstk0]).
+assert (Hstk' : stk segs (mrestrict F m) stk_floor (bv_unsigned sp)) by (apply stk_hide; [intros x Hx; apply F_above; pose proof floor_ge_ceiling; lia| exact Hstk0]).
 pose proof (dc_blocks_nodup _ _ _ _ DCo _ _ _ _ _ RUN) as NDid.
 assert (Hz1 : zlen LBd = 1 + zlen (alb_remove pid LBd)).
 { pose proof (Permutation_length (alb_remove_perm LBd pid p n0 NDid Hbd)) as EL. cbn [length] in EL. rewrite !length_map in EL. unfold zlen. lia. }
@@ -1551,7 +1572,7 @@ split; [split; [exact Hwf|]|].
 - apply bytes_at_hide; [| exact Hb]. intros x Hx. apply Hsz. destruct Hwf as [Hl _]. cbn [cell_wf] in Hl. cbn [cells_bytes cbytes app] in Hx. rewrite app_nil_r, Hl in Hx. lia.
 - apply wr_at_hide0; [| exact Hw]. exact Hsz. }
 pose proof (dt_realloc _ _ _ _ _ _ _ _ _ DT2 LA ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
-Fr fc (mrestrict F m) ps LBd FSd RE pid p n0 n RC.alloc_ceiling dn old junk0 RE_L RUN Hbd QR Hold' Hstk' (Z.le_refl _) ltac:(lia) (mem_inv_hide segs F m MI)
+Fr fc (mrestrict F m) ps LBd FSd RE pid p n0 n stk_floor dn old junk0 RE_L RUN Hbd QR Hold' Hstk' floor_ge_ceiling ltac:(lia) (mem_inv_hide segs F m MI)
 ltac:(rewrite <- L_tp; exact Htp) ltac:(rewrite <- L_gp; exact Hgp) Hur HDn ltac:(lia) Ha0 Ha1 Hn) as Himpl.
 rewrite <- L_realloc in Himpl.
 match goal with |- AJv _ _ _ _ ?st => set (msv := st) end.
@@ -1582,7 +1603,7 @@ pose proof (gen_pres (alb_remove pid LBd) FSd _ m m'' Hpres HFm) as Hgen0.
 apply (HK ms'' m'' c1 g' A errv').
 - unfold HI.ret_state. exists t0', t1', t2', a1', a2', a3', a4', a5', a6', a7', t3', t4', t5', t6'. exact Ems''.
 - destruct Hvo as (V1 & V2 & V3 & V4 & V5 & V6). unfold HI.model_vm_only. repeat split; try assumption. exact (vmst_init_sp _ _ Hvm).
-- exact (stk_sub0 m'' _ lo _ (stk_unhide segs F F_off m'' _ _ Hstk1) Hlo).
+- exact (stk_sub0 m'' _ lo _ (stk_unhide segs F F_off m'' _ _ Hstk1) Hflo).
 - intros a Ha Hcl. change (OM.wa a) with (wa a). apply (Hgen0 a Ha). intros Fa.
 destruct Hcl as [H|[H|H]]; [left; exact H| right; left; exact (L_static a H)|].
 unfold HI.in_block in H. destruct H as (b & Hb & Hr). apply in_app_iff in Hb as [Hb|Hb].
@@ -1629,7 +1650,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 HEAPA0g g LB LM FR B m c ->
 0 <= k <= 2 \/ (k = 3 /\ JH.hl_stack_malloc L 3 <> 0) -> 0 < size <= ff_size k -> size mod 8 = 0 ->
 Z.of_nat (length FR) < fframe_cap k ->
-stk segs m lo (bv_unsigned sp) -> RC.alloc_ceiling <= lo -> lo <= bv_unsigned sp - JH.hl_stack_A L ->
+stk segs m lo (bv_unsigned sp) -> RC.alloc_ceiling <= lo -> stk_floor <= lo -> lo <= bv_unsigned sp - JH.hl_stack_A L ->
 lo <= hi_top ->
 tp = Z_to_bv 64 (HI.hl_tp HL) -> gp = Z_to_bv 64 (JH.hl_gp L) ->
 a0 = Z_to_bv 64 size ->
@@ -1651,18 +1672,18 @@ Fr (Z_to_bv 64 (JH.hl_stack_malloc L k)) fc None m (seg_rom segs)).
 Proof.
 intros Jf Jf_sc.
 intros ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 Fr fc m c T LB LM FR B k size lo g
-HP Hk Hsz Hsz8 Hcap Hstk Hlo Hlo2 Htop Htp Hgp Ha0 HK.
+HP Hk Hsz Hsz8 Hcap Hstk Hlo Hflo Hlo2 Htop Htp Hgp Ha0 HK.
 destruct HP as (ps & LBd & FSd & RUN & ELB & EFR & AI & G & Hcapn & Hbud & K & HC & Hh & MI & HWR & HLM & Hb0 & Hd0 & Hn0 & HDN & HSTK & HQB).
 pose proof (@RC.alloc_ceiling_range RC__) as Hceil.
 assert (Hsp64 : bv_unsigned sp <= 2^64) by (destruct Hstk as (_ & H & _); exact H).
-pose proof (stk_join m lo (bv_unsigned sp) HSTK Hstk Hlo Hlo2 Htop) as Hstk0. destruct HDN as (dn & HDn & HDcap).
-assert (Hstk' : stk segs (mrestrict F m) RC.alloc_ceiling (bv_unsigned sp)) by (apply stk_hide; [intros x Hx; apply F_above; lia| exact Hstk0]).
+pose proof (stk_join m lo (bv_unsigned sp) HSTK Hstk Hflo Hlo2 Htop) as Hstk0. destruct HDN as (dn & HDn & HDcap).
+assert (Hstk' : stk segs (mrestrict F m) stk_floor (bv_unsigned sp)) by (apply stk_hide; [intros x Hx; apply F_above; pose proof floor_ge_ceiling; lia| exact Hstk0]).
 assert (Hcnt : Z.of_nat (length (filter (fun f => ff_cls f =? k) FSd)) < fframe_cap k).
 { pose proof (length_filter (fun f : fframe => ff_cls f =? k) FSd) as Hl. rewrite EFR, length_map in Hcap. lia. }
 assert (Hk3 : 0 <= k <= 3) by (clear - Hk; lia).
 assert (HkS : 0 <= k <= 2 \/ (k = 3 /\ SM 3 <> 0)) by (rewrite <- (L_sm 3 ltac:(lia)); exact Hk).
 pose proof (df_stack_malloc _ _ _ _ _ _ _ DFs k HkS ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
-Fr fc (mrestrict F m) ps LBd FSd RE size RC.alloc_ceiling RUN Hcnt Hstk' (Z.le_refl _) ltac:(lia) (mem_inv_hide segs F m MI)
+Fr fc (mrestrict F m) ps LBd FSd RE size stk_floor RUN Hcnt Hstk' floor_ge_ceiling ltac:(lia) (mem_inv_hide segs F m MI)
 ltac:(rewrite <- L_tp; exact Htp) ltac:(rewrite <- L_gp; exact Hgp) Ha0 Hsz Hsz8) as Hevt.
 rewrite <- (L_sm k Hk3) in Hevt.
 match goal with |- VJ _ _ _ ?st => set (msv := st) end.
@@ -1678,7 +1699,7 @@ assert (HFm : forall x, F x = true -> m'' x = m x) by (intros x Fx; unfold m''; 
 pose proof (gen_pres LBd FSd _ m m'' Hpres HFm) as Hgen.
 apply (HK ms'' m'' Fa junk).
 - unfold HI.ret_state. exists t0', t1', t2', a1', a2', a3', a4', a5', a6', a7', t3', t4', t5', t6'. exact Ems''.
-- exact (stk_sub0 m'' _ lo _ (stk_unhide segs F F_off m'' _ _ Hstk1) Hlo).
+- exact (stk_sub0 m'' _ lo _ (stk_unhide segs F F_off m'' _ _ Hstk1) Hflo).
 - intros a Ha Hcl. change (OM.wa a) with (wa a). apply (Hgen a Ha). intros Fa0.
 destruct Hcl as [H|[H|H]]; [left; exact H| right; left; exact (L_static a H)|].
 unfold HI.in_block in H. destruct H as (b & Hb & Hr). apply in_app_iff in Hb as [Hb|Hb].

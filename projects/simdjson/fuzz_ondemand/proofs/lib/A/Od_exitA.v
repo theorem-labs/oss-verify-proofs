@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -262,7 +263,7 @@ Proof using LIB_loc AF FDO MST RTF DELA DTOR VDES AFV.
   clear AG3 PR3 ACS3 ACF3 ACH3 ACV3 ACI3 ART2 MI2 WM2.
 
   assert (INF3 : In (F, 3%nat) (rt_frames RT Σ3)) by (rewrite FRS3; exact INF).
-  assert (LOW3 : rt_sp0 RT Σ3 - STACK_WIN <= lo) by (rewrite SP3; exact LOW).
+  assert (LOW3 : rt_sp0 RT Σ3 - STACK_SPAN <= lo) by (rewrite SP3; exact LOW).
   assert (FP3 : fp_ok RT Σ3 lo [(F + 144, F + 152)]).
   { apply Forall_cons; [| apply Forall_nil]. cbn [fst snd]. right; right; left. exists F, 3%nat. split; [exact INF3|].
     change (fs_size 3) with 512. clear. lia. }
@@ -322,7 +323,7 @@ Proof using LIB_loc AF FDO MST RTF DELA DTOR VDES AFV.
   assert (VR5 : vrepA m5 (F + 32) A cap size els).
   { unfold vrepA, zlength. split; [exact VSZ|]. split; [exact VSC|]. split; [exact VCAP|]. split; [exact VA0|]. split; [exact VAT|].
     split; [exact VS|]. right. split; [exact CAP1|]. split; [exact A16|]. split; [exact APOS| exact VEL]. }
-  assert (LOW5 : rt_sp0 RT Σ5 - STACK_WIN <= lo) by (rewrite SP5; exact LOW3).
+  assert (LOW5 : rt_sp0 RT Σ5 - STACK_SPAN <= lo) by (rewrite SP5; exact LOW3).
   rewrite FRS in FRS5.
   eapply (od_tail RT AF PMc FDO MST RTF DTOR VDES AFV Σ5 K usp S1a F lo IMPL IDX OC IA (4 * Z.of_nat (o_icap E)) 8192 1024 A cap size els L0
             cra (o_gp E) cs0 cs1 cs2 cs3 cs4 cs5 cs6 cs7 cs8 cs9 cs10 cs11);

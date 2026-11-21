@@ -6,18 +6,19 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v; 688 of its 728 lines of code are new or changed and 356 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F7.v, with its module names and addresses changed; 174 of its 732 lines of code are new or changed and 170 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F8.v, with its module paths and module names changed; 24 of its 71 lines of code are new or changed and 685 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/Prog/Seg/F8Fon.v -- route (C) twin of the F8 footprint run (lib/A/Prog/Seg/F8F.v f8_evt_F), ADDITIVE beside-file.
    Written by a Theorem Labs lane under the Seg *F.v twin rule (a Theorem Labs lane 12:52Z, agreed; L3 brief
    L3-brief.md (a working note, not in this delivery)).  rule 24: no function proved (kind: segment run).
 
-   BASE: a Theorem Labs lane's fold blob of F8F.v (an earlier version, blob 7901c571efe, not in this delivery), a working branch 4bae33fdf54.  It is the
-   SAME blob a working branch 1502cba0417 / 1899bed1aee carries (diff empty), so the twin is based on both.  F8F.v (not in this delivery) stays
+   BASE: a Theorem Labs lane's fold blob of F8F.v (an earlier version, blob 7901c571efe, not in this delivery), a working branch.  It is the
+   SAME blob a working branch carries (diff empty), so the twin is based on both.  F8F.v (not in this delivery) stays
    byte-identical.
 
    WHAT CHANGES, and nothing else
    - the callee premise is reac_ctrl_kind_name_contract_F_on (lib/A/Prog/reac_ctrl_kind_name_c.v, a Theorem Labs lane's
      statements on a working branch, LANDED 11:24Z / 12:00Z; proved as reac_ctrl_kind_name_holds_F_on in
-     lib/A/Prog/reac_ctrl_kind_nameF.v, a Theorem Labs lane 330e60af39d, a Theorem Labs lane SIGNED 12:04Z), in place of
+     lib/A/Prog/reac_ctrl_kind_nameF.v, a Theorem Labs lane, a Theorem Labs lane SIGNED 12:04Z), in place of
      reac_ctrl_kind_name_contract_F;
    - the premise `shadow_rw m` is REMOVED.  The segment itself (beqz a0, mv a0,s8, the jal) touches no memory, and
      the callee's _on form has no shadow_rw premise (its region is empty: the one shadow byte it reads comes from

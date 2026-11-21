@@ -4,15 +4,15 @@
 A/AD3d.v (knock donor) Requires knock's A/AF0r.v for ONE name, env_agree_Ereg_app; AF0r (knock's class-1 fake-stack walk)
 stays out by ruling (B), and the grant lineage this unit carries has no lemma with that statement (searched: the unit's
 lib holds env_agree_havoc_ge and env_agree_le only). So that lemma's text, statement and proof, is copied VERBATIM from
-KNOCK_AF0R (proofs/libreac/fuzz_knock/lib/A/AF0r.v at 88154566652a, lines 312-318) into its own file, with knock's
+KNOCK_AF0R (proofs/libreac/fuzz_knock/lib/A/AF0r.v, lines 312-318) into its own file, with knock's
 Requires of the kernel modules it reads (YP0m: env / ew; YI04: Ereg, ew_Ereg_extra; YP06:
 env_agree) with
 module paths mapped to this unit. Above the Require lines it copies KNOCK_AF0R's own Copyright and SPDX lines (its
 lines 1-2), byte for byte as read from that file, and it writes no `Modified by` notice: licence-lines --apply adds the
 notice afterwards. The file states no stack class. The script refuses unless lines 1-2 of KNOCK_AF0R are a Copyright
 line and an SPDX line, and lines 312-318 are exactly the lemma (header `Lemma env_agree_Ereg_app` ... `Qed.`).
---image B: lib/B/YD3dEnv.v for B/YD3d.v, from KNOCK_AF0R = knock's image-B twin proofs/libreac/fuzz_knock/lib/AU/YF0r.v at
-88154566652a, whose lemma is lines 313-319 (the same seven lines). --unit-mod M: the unit's lib module path (default
+--image B: lib/B/YD3dEnv.v for B/YD3d.v, from KNOCK_AF0R = knock's image-B twin proofs/libreac/fuzz_knock/lib/AU/YF0r.v,
+whose lemma is lines 313-319 (the same seven lines). --unit-mod M: the unit's lib module path (default
 OssFuzzTheorems.Proofs.reac_repacer.fuzz_wire.lib); the Requires name M.Reusable."""
 import os, sys
 

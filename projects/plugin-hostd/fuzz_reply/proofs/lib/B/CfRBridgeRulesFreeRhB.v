@@ -1,30 +1,31 @@
 (* plugin-hostd/fuzz_reply.asan_ubsan, image B: the image-B twin of lib/A/CfRBridgeRulesFreeRh.v, under lib/B so the B
-   tree is self-contained: the A file's text (a Theorem Labs lane's re-fit, a working branch
-   c9793e3d61f5) with, in its code, the lib/B modules for lib/A's (A's CfParamsReply kept),
+   tree is self-contained: the A file's text (a Theorem Labs lane's re-fit, a working branch)
+   with, in its code, the lib/B modules for lib/A's (A's CfParamsReply kept),
    CfImg_B, YB1v.tfibsegs, ReplyKfMeterB.MT_sec and the B target ReplyAllocTargetsB.afree_target_replyB in the fit Goal.
    The comments below are the A file's and cite lib/A. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (route R, the FREE half of Section TOPK at R; new file). rule 24: proves no function (kind:
    invariant lemma; the route-R free(NULL) crossing rule and the TOPK free rules at R over the journal).
 
-   (a) aj_free_null_at_x_ct_rh is lib/A/CfRBridgeAjFreeN.v:71-88 aj_free_null_at_x_ct at R := wle' segs RZ_cf, the
+   (a) aj_free_null_at_x_ct_rh is lib/A/CfRBridgeAjFreeN.v:72-89 aj_free_null_at_x_ct at R := wle' segs RZ_cf, the
        free(NULL) twin of lib/A/CfRBridgeFreeRh.v aj_free_at_x_ct_rh. Against aj_free_null_at_x_ct's text it changes,
        and only:
-       - the realization afree_realizes_cf is afree_realizes_cf_rh segs B (lib/A/YG0dcfR.v:61; it covers p = PNull,
+       - the realization afree_realizes_cf is afree_realizes_cf_rh segs B (lib/A/YG0dcfR.v:62; it covers p = PNull,
          its premise `p = PNull \/ In (p, n) (blocks S)`);
        - both journals are ajournal_xR segs B PST ARxs (wle' segs RZ_cf), the step is SRrG segs (wle' segs RZ_cf);
-       - the post's leaf free_leaf_x segs B ARxs is free_leaf_cf_rh segs B (YG0dcfR.v:46), as aj_free_at_x_ct_rh does.
+       - the post's leaf free_leaf_x segs B ARxs is free_leaf_cf_rh segs B (YG0dcfR.v:47), as aj_free_at_x_ct_rh does.
        QMm_cf segs B Sc memT is taken BY NAME, unchanged; the proof reads it only through YGcallcf's QMQ_cf and
        acall_pre_x_xs (in afree_realizes_x_xs_rh), so no memnorm use. The proof is aj_free_null_at_x_ct's with
        aj_free_at_x_ct_rh's R steps: afree_realizes_x_xs_rh (CfRBridgeFreeRh.v), amreal'_SRr'04, SRrG_mono, the callee
-       journal from call_effect_journal_rh_cf_pst (lib/A/AjxCallRh.v:183) with the empty footprint, ajournal_x_subR
+       journal from call_effect_journal_rh_cf_pst (lib/A/AjxCallRh.v:184) with the empty footprint, ajournal_x_subR
        with wle'_trans segs RZ_cf, acall_kept_of_journal_xR, and the projection free_leaf_x_xs_cf_rh.
    (b) AFREE_x_kf_rh / AFREEN_x_kf_rh are lib/A/CfRBridgeRules.v Section TOPK's AFREE_x_kf / AFREEN_x_kf at
        R := wle' segs RZ_cf: the conclusions are W_journal_x.v's afree_cf_rule_c_xR / afree_null_cf_rule_c_xR at
        RO := arodata_ok_cf segs TfibB and R := wle' segs RZ_cf, the premise is the primed realizer
        afree_realizes_cf_rh segs TfibB (ReplyAllocTargets.v afree_target_reply's body; the fit Goal at the end). The
-       section header is TOPK's (CfF1's fit, a working branch 9118a6a96818), VERBATIM: top_x's relation
+       section header is TOPK's (CfF1's fit, a working branch), VERBATIM: top_x's relation
        ARX after W1 (its last conjunct arodata_ok_cf on the memory) with TOPK's FIT CHECK Goal, the meter equations
        including MT_ok, and the image rows HRS / HER. The witness Goals at the end (Section W) show the meter
        hypotheses the free rules use at the real instance MT := ReplyKfMeter.MT_sec YGcfNames.nsec_cf cf_kmax.
@@ -46,7 +47,7 @@
    Event terms: st_nev appears only in the journal index k + (st_nev S2 - st_nev Sc) of (a) and, in the proofs, in the
    call journal's index and in free_cf_nev's tick (k + 1), as YGcallx.v / CfRBridgeRules.v (exception 3, the tick
    update). No address, no ledger, no image numeral: 0 is the NULL pointer and the request size, 10 / 1 / 3 / 4 are
-   RISC-V register numbers, 16 / 4096 / 16384 cgif's LENGTH constants (YGcallx.v:88-90), 1024 / 2 ^ 15 (= 32768)
+   RISC-V register numbers, 16 / 4096 / 16384 cgif's LENGTH constants (YGcallx.v:89-91), 1024 / 2 ^ 15 (= 32768)
    top_x's count fields (ReplyCnt.v), 64512 the primary cutoff in TOPK's MT_malloc (ReplyKfMeter.v sec_lit), copied. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -96,10 +97,10 @@ Hypothesis L : AR_laws_cf segs B.
 Hypothesis segs_low : forall a, in_img segs a -> 0 <= a < kLowMemEnd.
 Hypothesis errno_low : api_env segs B.
 Hypothesis HU : universe_ok (as_universe B).
-(* YGcallcf.v's relation, verbatim (CfRBridgeAjFreeN.v:68) *)
+(* YGcallcf.v's relation, verbatim (CfRBridgeAjFreeN.v:69) *)
 Local Abbreviation ARxs := (fun ly S Hp W mem md => ARcf segs B ly S Hp W mem md /\ xs_placed_cf ly S).
 
-(* CfRBridgeAjFreeN.v:71 aj_free_null_at_x_ct at R := wle' segs RZ_cf, re-hiding (changes in the header). *)
+(* CfRBridgeAjFreeN.v:72 aj_free_null_at_x_ct at R := wle' segs RZ_cf, re-hiding (changes in the header). *)
 Lemma aj_free_null_at_x_ct_rh : afree_realizes_cf_rh segs B ->
 forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k (o : Z) raw ch,
 ajournal_xR segs B PST ARxs (wle' segs RZ_cf) STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->
@@ -244,7 +245,7 @@ Hypothesis MO_OK_HULL_F : forall s, mo_ok MT s (mo_free MT) -> cf_hull_ok s.
 Hypothesis HRS : relro_seg_t segs.
 Hypothesis HER : errno_relro_t TfibB.
 
-(* top_x's relation (W_LLVMFuzzerTestOneInput_top_x.v:175-176 after W1: its last conjunct is arodata_ok_cf on the
+(* top_x's relation (W_LLVMFuzzerTestOneInput_top_x.v:176-177 after W1: its last conjunct is arodata_ok_cf on the
    memory) and YGcallcf's (:218). *)
 Local Abbreviation ARX := (fun ly S Hp (W : world segs) mem md =>
   ARcf segs TfibB ly S Hp W mem md /\ Hp = [] /\ arodata_ok_cf segs TfibB mem).
@@ -467,7 +468,7 @@ Hypothesis errno_low : api_env segs TfibB.
 Local Abbreviation ARX := (fun ly S Hp W mem md => ARcf (ci := CfImg_B) (cp := CfParams_reply) segs TfibB ly S Hp W mem md /\ Hp = [] /\
     @arodata_ok_cf CfImg_B segs TfibB mem).
 (* FIT CHECK of the relation: the rules' ARX is top_x's relation after W1, whose text is quoted
-   here VERBATIM from commit b27e847023f8, lib/A/W_LLVMFuzzerTestOneInput_top_x.v:171-172
+   here VERBATIM from lib/A/W_LLVMFuzzerTestOneInput_top_x.v:172-173
    (Definition ARX's body); it closes by reflexivity only if the two are the same term. *)
 Goal ARX = (
   fun ly S Hp W mem md => ARcf (ci := CfImg_B) (cp := CfParams_reply) segs TfibB ly S Hp W mem md /\ Hp = [] /\
@@ -478,14 +479,14 @@ Variable nsec_cf : astate -> Z.
 Hypothesis nsec_malloc_cf : forall n tr s,
   cfx_ipost (malloc_cf n tr s) (fun r => nsec_cf (snd r) <= nsec_cf s + (if from_primary n then 0 else 1)).
 Hypothesis nsec_free_cf : forall p tr s, cfx_ipost (free_cf p tr s) (fun r => nsec_cf (snd r) <= nsec_cf s).
-(* MT_sec's defining equations, its literal text (ReplyKfMeter.v at a968c6e24aec: mkAMeter (fun s m => nsec s + m <= KMAX)
+(* MT_sec's defining equations, its literal text (ReplyKfMeter.v: mkAMeter (fun s m => nsec s + m <= KMAX)
    (fun s s' m => nsec s' <= nsec s + m) (fun n => if 64512 <? n then 1 else 0) 0); each holds by reflexivity at
    MT := MT_sec nsec_cf cf_kmax.  mo_ok is not used by these rules' posts. *)
 Hypothesis MT_malloc : forall n, mo_malloc MT n = if 64512 <? n then 1 else 0.
 Hypothesis MT_free : mo_free MT = 0.
 Hypothesis MT_le : forall s s' m, mo_le MT s s' m <-> nsec_cf s' <= nsec_cf s + m.
-(* MT_sec's fourth defining equation, its mo_ok (MT_ok, the same text route R's TOPK_rh takes, commit
-   07260ccc92a1 lib/A/CfRBridgeRulesRhTop.v:267): at MT := MT_sec YGcfNames.nsec_cf cf_kmax it holds by iff_refl. *)
+(* MT_sec's fourth defining equation, its mo_ok (MT_ok, the same text route R's TOPK_rh takes,
+    lib/A/CfRBridgeRulesRhTop.v:267): at MT := MT_sec YGcfNames.nsec_cf cf_kmax it holds by iff_refl. *)
 Hypothesis MT_ok : forall s m, mo_ok MT s m <-> YGcfNames.nsec_cf s + m <= cf_kmax.
 (* The unit's two image rows (Section B's HRS / HER). *)
 Hypothesis HRS : relro_seg_t segs.

@@ -5,10 +5,11 @@
    386-392, 532-535, for libreac/fuzz_identity's ASan build (lib/A). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_family_stem.v, with its module paths and module names changed; 95 of its 123 lines of code are new or changed and 244 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/fuzz_catalogue_rowA.v; 391 of its 444 lines of code are new or changed and 70 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image A: the loop of fuzz_catalogue_row (0x8a088 .. 0x8a0f4), one lemma per segment, in the
-   form of fuzz_command's lib/A/Prog/rec_shape_of_s.v (origin/ossv/recipes 501c0d516c69; each segment seeded by the
+   form of fuzz_command's lib/A/Prog/rec_shape_of_s.v (each segment seeded by the
    walk kit fuzz_catalogue_rowA_k.v and run by the token executor), with the loop invariant and the row arithmetic
-   of proofs/reac-pw/fuzz_pin/lib/A/PPgRow.v (b4e9443a2b9c; rw_head_seg / rw_next_seg / rw_loop):
+   of proofs/reac-pw/fuzz_pin/lib/A/PPgRow.v (rw_head_seg / rw_next_seg / rw_loop):
    HEAD -> R1  the instrumented check of row i's token-pointer word (decided by the shadow entry of the row's
                first granule, so the error path is not reached), the load of the token pointer, the strlen
                wrapper's call;

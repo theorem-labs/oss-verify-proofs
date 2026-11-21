@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the recorded zero window below the stack pointer is 6144513 bytes, was 8388608, since the model measures the stack window down from the top of the stack mapping. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State.
@@ -45,7 +46,7 @@ Lemma loop_itinerary_okA :
      = (ELit 0x8de7c, EAlu ALU_ADD (EVar 0) (ELit (-288)), ELit 85107, EAlu ALU_ADD (EVar 0) (ELit (-264)), ELit 0)
   (* [comment removed for export] *)
   /\ forallb (fun K => existsb (kentry_eqb K) knPA)
-       [KWr (SA (EVar 0) (-8388608)) 8388608; KWord (SA (EVar 0) (-264)) 8 (ELit 0); KImg 65536 880640; KWord (SA (ELit 0) 6491464) 8 (EVar 3)] = true
+       [KWr (SA (EVar 0) (-6144513)) (6144513); KWord (SA (EVar 0) (-264)) 8 (ELit 0); KImg 65536 880640; KWord (SA (ELit 0) 6491464) 8 (EVar 3)] = true
   /\ sr_vars_lt 134 srPA = true /\ kn_vars_lt 134 knPA = true
   /\ (s_pc (fst (fst rQtA)), snd (fst rQtA), s_log (fst (fst rQtA))) = (0x8dd70, [SCBr true BC_NE (EAluw ALU_ADD (EVar 81) (ELit (-1))) (ELit 0)], [])
   /\ (s_pc (fst (fst rQfA)), snd (fst rQfA), s_log (fst (fst rQfA))) = (0x5fc54, [SCBr false BC_NE (EAluw ALU_ADD (EVar 81) (ELit (-1))) (ELit 0)], [])
@@ -88,7 +89,7 @@ Lemma loop2_itinerary_okA :
   /\ summE rLB2A = summE rLB1A /\ s_regs (fst (fst rLB2A)) = srLBA /\ kn_after rLB2A knLH2A = knLc2A
   /\ summE rP2A = (0x4dbe0, [SCStoreOk (SA (ELit 0) 0x610194) 1], 134%nat, 10%nat) /\ s_regs (fst (fst rP2A)) = srPA
   /\ forallb (fun K => existsb (kentry_eqb K) knP2A)
-       [KWr (SA (EVar 0) (-8388608)) 8388608; KWord (SA (EVar 0) (-264)) 8 (ELit 0); KImg 65536 880640; KWord (SA (ELit 0) 6491464) 8 (EVar 3)] = true
+       [KWr (SA (EVar 0) (-6144513)) (6144513); KWord (SA (EVar 0) (-264)) 8 (ELit 0); KImg 65536 880640; KWord (SA (ELit 0) 6491464) 8 (EVar 3)] = true
   /\ (s_pc (fst (fst rSt2A)), snd (fst rSt2A), s_log (fst (fst rSt2A))) = (0x8dd70, [SCBr true BC_NE (EAluw ALU_ADD (EVar 81) (ELit (-1))) (ELit 0)], [])
   /\ (s_pc (fst (fst rSf2A)), snd (fst rSf2A), s_log (fst (fst rSf2A))) = (0x5fc54, [SCBr false BC_NE (EAluw ALU_ADD (EVar 81) (ELit (-1))) (ELit 0)], [])
   /\ (nth 1 srSf2A (ELit 0), nth 10 srSf2A (ELit 0), nth 21 srSt2A (ELit 0)) = (ELit 0x8ddb0, EVar 83, EAluw ALU_ADD (EVar 81) (ELit (-1)))

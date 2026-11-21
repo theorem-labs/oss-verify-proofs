@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the ledger invariant's new entries_nonzero conjunct; the reserved ledger now holds the launch's vDSO/vvar pair: the kernel invariant's launch-pair half carried over). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require AW_0Gc.
@@ -111,9 +112,9 @@ Section AmodelAfterRefill.
 
   Theorem amodelx_after_refill : AMODELX s2 mo'.
   Proof.
-    destruct AMX as [[AIL [ASV ABU]] AK]. pose proof B as (B1 & B2 & ERB & EFA & B5 & B6 & B7 & B8 & B9 & B10 & M1 & M2 & M3 & M4 & M5 & M6 & M7 & M8).
+    destruct AMX as [[AIL [ASV ABU]] [AK AKR]]. pose proof B as (B1 & B2 & ERB & EFA & B5 & B6 & B7 & B8 & B9 & B10 & M1 & M2 & M3 & M4 & M5 & M6 & M7 & M8).
     assert (NUM := conj B1 (conj B2 (conj ERB (conj EFA (conj B5 (conj B6 (conj B7 (conj B8 (conj B9 (conj B10 M8)))))))))).
-    destruct AIL as (IL1 & IL2 & IL3 & NOV & NW & NWA).
+    destruct AIL as (IL1 & IL2 & IL3 & NOV & NW & NWA & NZ).
     pose proof AK as (K1 & K2 & K3 & K4a & K4b & K4c & K5a & K5b & K5c & K6a & K6b & K7 & K8a & K8b & K8c & K9 & K10 & K11).
 
     set (subU := fun X : list (word * word) => if mu <? mu' then maps_subtract X (RB s c + mu) (RB s c + mu') else X).
@@ -169,7 +170,7 @@ Section AmodelAfterRefill.
         - cbn [mp_base mp_size] in Hx. split; [apply SUBu; [exact NWA| exact LT| clear - Hx; try acb; lia]| apply SUBu; [exact LNW| exact LT| clear - Hx; try acb; lia]]. }
       split.
       { intros sc x Hsc Hx. change (as_sec st2) with (as_sec st) in Hsc. apply SUBf; [exact LNW| exact (IL3 sc x Hsc Hx)]. }
-      split; [exact NOV|]. split; [exact NW|]. apply NWF, NWU. exact NWA.
+      split; [exact NOV|]. split; [exact NW|]. split; [apply NWF, NWU; exact NWA| exact NZ].
     -
       unfold ashadow_visible. change (a_st s2) with st2. change (a_S s2) with S'. destruct ASV as [V1 V2]. split.
       + intros c0 x Hc0 Hx. change (RB s2 c0) with (RB s c0) in Hx. unfold st2 in Hx.
@@ -235,7 +236,9 @@ Section AmodelAfterRefill.
         clear - W1 W2; try acb. lia. }
       unfold page_size in *. clear - AB1 H0 H1 PT EAG NUM K0; try acb. unfold h. lia.
     -
-      unfold akernel. fold h'. rewrite VMR, VML, VMT, VMM, ENs. change (a_thr s2) with (a_thr s). change (a_ctx s2) with (a_ctx s). change (a_sb s2) with (a_sb s).
+      (* LPS 727298f3: [akernel_resx] carries over: the step keeps the ledger and the two bases. *)
+      unfold akernel. split; [| exact (akernel_resx_same s s2 mo mo' eq_refl eq_refl VMR AKR)].
+      fold h'. rewrite VMR, VML, VMT, VMM, ENs. change (a_thr s2) with (a_thr s). change (a_ctx s2) with (a_ctx s). change (a_sb s2) with (a_sb s).
       change (a_pa s2) with (a_pa s). change (a_fsb s2) with (a_fsb s). change (a_Zr s2) with (a_Zr s). change (a_L s2) with L'. change (as_sec (a_st s2)) with (as_sec st).
       replace (RB s2) with (RB s) by reflexivity. rewrite ELs.
       split; [exact K1|]. split; [exact K2|]. split; [exact K3|]. split; [exact K4a|]. split; [exact K4b|]. split; [exact K4c|]. split; [exact K5a|]. split; [exact K5b|].

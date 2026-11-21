@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: srz_sys_lazy discharges srz_silent1u's new RomBase.sys_rob_instr premise, and mmap_rw_check takes the place_declined_b premise, passes the mmap hint to grant_ok_na_pin and unfolds check_mmap_fixed_overflow. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -13,6 +14,7 @@ From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require PropExec__Common. From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require CatSim__Common. From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require StoreOk. From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require AllocSim2__Common. From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require SpinAlg. From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require RefLayout__Common. From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require FileSim__Common. From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require AllocSim. From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require AsanAcct__Common. From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require AsanHexScan__Common. From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require BackingAlgebra MmapSim RefNodes. Import OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.PropExec__Common.PropExec OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.CatSim__Common.CatExec OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.CatSim__Common.CatSim OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.CatSim__Common.SeqExec OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.StoreOk OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.AllocSim2__Common.ShapeAlg OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.SpinAlg OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.RefLayout__Common.AgentLib OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.FileSim__Common.AgentNodes OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.FileSim__Common.Nodes OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.AllocSim OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.AsanAcct__Common.AsanAcct OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.RefLayout__Common.AsanAcctShape OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.AsanHexScan__Common.AsanPlacement OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.BackingAlgebra OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.MmapSim OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.RefNodes.
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require AsanHexScan__Common. Import OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.AsanHexScan__Common.AsanCeil.
+From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common Require RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.  (* [comment removed for export] *)
 Local Instance asanreflect_fx : OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.PropExec__Common.PropExec.FPState := OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Common.PropExec__Common.PropExec.fx0.
 Import ListNotations.
@@ -312,7 +314,7 @@ Qed.
   srealizes segs (mkCfg (mkst regs pc mem rom) model) T.
 Proof.
   intros regs pc mem rom model w T Hh HF HE Hc.
-  eapply srz_silent1u; [apply unfiltered_nosvc; reflexivity | | exact Hc].
+  eapply srz_silent1u; [apply unfiltered_nosvc; reflexivity | | apply RomBase.sys_rob_instr; reflexivity | exact Hc].
   apply node_instr_noacc; [exact Hh | reflexivity | eapply stepacc_ecall_epend; eassumption].
 Qed.
 
@@ -365,23 +367,25 @@ Qed.
   ms_gpr ms 3 = flags -> mmap_flags_core flags = 34%Z ->
   ms_gpr ms 4 = Z_to_bv 64 (-1) -> ms_gpr ms 5 = Z_to_bv 64 0 ->
   let nZ := page_round_up_Z (bv_unsigned (ms_gpr ms 1)) in
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0) nZ = false ->
   check_syscall (sys_input segs ms x8) eff model
   = match eff with
     | mkEffectU r [] zs [] [] [] =>
         if errno_ret_in mmap_errnos r
         then match zs with [] => CheckOk model [] | _ => CheckReject end
-        else if grant_ok_na_pin model r nZ && mmap_noreserve_backed_ok flags model nZ
+        else if grant_ok_na_pin (ms_gpr ms 0) model r nZ && mmap_noreserve_backed_ok flags model nZ
                 && listNN_eqb zs [(r, Z_to_bv 64 nZ)]
         then CheckOk (with_mmap_backing flags r (Z_to_bv 64 nZ) (mmap_model r (Z_to_bv 64 nZ) model)) []
         else CheckReject
     | _ => CheckReject
     end.
 Proof.
-  intros ms x8 model eff flags Hno H1 H2 H3 Hcore H4 H5 nZ.
+  intros ms x8 model eff flags Hno H1 H2 H3 Hcore H4 H5 nZ Hdecl.
   destruct (mmap_gates_core34 flags Hcore) as (Gm & _ & _).
-  rewrite (mmap_check segs ms x8 model eff Hno). unfold check_mmap.
+  rewrite (mmap_check segs ms x8 model eff Hno). unfold check_mmap, check_mmap_fixed_overflow.
   assert (E1 : w_is0 (ms_gpr ms 1) = false) by (unfold w_is0; apply bv_eqb_neq; exact H1).
   rewrite E1, H2, H3, H5, mmap_off_aligned_b_0, (mmap_anon_b_of_core flags _ Hcore eq_refl), Gm. cbn [negb]. cbv beta iota zeta. fold nZ.
+  rewrite Hdecl.
   destruct eff as [r ws zs us cs ci]. destruct ws; [|reflexivity].
   destruct us; [|reflexivity]. destruct cs; [|reflexivity]. destruct ci; [|reflexivity].
   destruct (errno_ret_in mmap_errnos r); [reflexivity|].

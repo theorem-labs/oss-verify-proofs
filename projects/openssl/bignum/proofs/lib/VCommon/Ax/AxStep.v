@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reservation a system-call return or a failing store-conditional clears). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
@@ -410,7 +411,9 @@ Definition astep_d (A : astate M) (d : dinstr) : ares M :=
       if a_budget A + 8192 <=? LIM then
         if a_aligned s wd av then
           match a_resv A with
-          | RNone => ANext (upd A npc (aset m rd (XL w_one)) RNone (a_mem A))
+          (* LPS 08b1429: a failing sc loads and stores back its bytes; the
+             analyzer does not model it and stops there. *)
+          | RNone => AStuck 28 A
           | RSome r =>
               if xv_same r av then
                 match a_store4 segs s (a_mem A) av (bytes_of (match wd with AW => SZ4 | AD => SZ8 end) (aget m rs2)) with
@@ -728,13 +731,7 @@ Proof.
     destruct (a_aligned (a_facts A) w0 (aget (a_regs A) (ri rs1))) eqn:Eal; [|discriminate].
     pose proof (a_aligned_sound ρ _ w0 _ _ Hsat (Hregs rs1) Eal) as Hali.
     destruct (a_resv A) as [|rv|] eqn:Erv; [| |discriminate].
-    +
-      injection Hst as <-. cbn [RResv] in Hres.
-      assert (Hsc : sc_ok (ms_resv ms) (rg ms rs1) = false) by (rewrite Hres; reflexivity).
-      apply (Hnone _ (acc_Sc_fail segs ms w 4 w0 aq rl rd rs1 rs2 Hf He Hd Hali Hsc)).
-      apply (R_build A _ ms _ model model HR); cbn [upd a_pc a_regs a_resv a_mem a_model a_facts a_budget setx ms_pc_val ms_svc_pending ms_resv ms_rom ms_mem];
-        try reflexivity; try assumption.
-      all: first [ pc4 Hpc | (apply RRegs_set; [exact Hregs | apply XL_val; reflexivity]) | (left; split; [reflexivity | lia]) ].
+    + discriminate Hst.
     + destruct (xv_same rv (aget (a_regs A) (ri rs1))) eqn:Esame; [|discriminate].
       destruct (a_store4 segs (a_facts A) (a_mem A) (aget (a_regs A) (ri rs1)) (bytes_of (match w0 with AW => SZ4 | AD => SZ8 end) (aget (a_regs A) (ri rs2))))
         as [mem'|] eqn:Es; [|discriminate]. injection Hst as <-.

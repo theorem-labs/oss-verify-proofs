@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (arootN_st_ok, in both sections, takes entry_launch_ok_va Sv48 and valid_launch in place of entry_stack_fits and states E0 by the new InitLib.E0 of the entry pc, program headers, sp, mmap base and ProcInput, and states the root at a given region 3, the launch's auxv at the run's CONFIG_RSEQ value or the region both values imply, each the ASan images' (AT_PHNUM's value 11), region 3's type FX.Mem's region by a local abbreviation; the new lemma top_200 bounds the stack block's head under 2^47 from the launch's stack geometry; launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef)). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import PrimInt63 Uint63.
 From stdpp Require Import gmap.
@@ -16,6 +17,7 @@ From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.W2 Require ExhFirst.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.AS Require MainEntry.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Common Require Import RunDraw.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.FX Require Import W64 W64Proofs Val ValProofs IMap Instr State Step Plan.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.FX Require Auxv.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Heap Require Import Op.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Ctr Require Import Lib Defs.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Glue Require Import Ops CtrSys StackInit InitLib.
@@ -39,6 +41,19 @@ Module AM := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.ALib.Mem.
 Module ME := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.AS.MainEntry.
 Module R2 := RootAsanN.RootAsanN.
 Module I2 := InitAsanN.InitAsanN.
+(* region 3's type, FX.Mem's region: this file imports FX's other modules but not Mem *)
+Local Notation region := OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.FX.Mem.Mem.region.
+
+(* the stack block's head (at least 472 bytes) lies under the stack VMA's end, which is at most 2^47 *)
+Lemma top_200 : forall en inp, entry_launch_ok_va Sv48 en inp -> bv_unsigned (en_sp en) + 200 <= 2 ^ 47.
+Proof.
+  intros [sp0 brk0 mb0 dr0] inp Hlau. cbn [en_sp].
+  pose proof (SI.geom sp0 brk0 mb0 inp dr0 Hlau) as G. pose proof (SI.top_hi sp0 brk0 mb0 inp dr0 Hlau) as T.
+  pose proof (SI.HEAD_eq sp0 mb0 inp) as HE.
+  assert (AX : 432 <= Z.of_nat (auxv_size (la_rseq (SI.LA sp0 mb0 inp))) <= 464)
+    by (unfold auxv_size, auxv_count; destruct (la_rseq (SI.LA sp0 mb0 inp)); cbn [Nat.mul]; lia).
+  unfold SI.SP in G. lia.
+Qed.
 
 Definition ROOT_OPS (CRED : int) : list opinst :=
   [OpI 1%uint63 (ROOT_HEAP_ARGS CRED); OpI 5%uint63 []; OpI 7%uint63 [VL wzero]; OpI 15%uint63 [VL wzero; VL wzero];
@@ -92,11 +107,12 @@ Proof.
 Qed.
 
 Theorem arootN_st_ok : forall (xb : int -> list byte) (en : ExecEntry) (inp : ProcInput) (ms : machine_state) (mo : Model) (CRED : int)
-    (L : alayout) (RNG : footprint) (sta : astate),
+    (L : alayout) (RNG : footprint) (sta : astate) (R3 : region),
   valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_sp (en_sp en) ->
-  entry_stack_fits (en_sp en) (in_argv inp) (in_envp inp) -> valid_hwcap (in_hwcap inp) ->
+  entry_launch_ok_va Sv48 en inp -> valid_hwcap (in_hwcap inp) -> valid_launch inp ->
   length (in_argv inp) <> 2%nat ->
   ME.amain_at en inp ms mo ->
+  R3 = Auxv.Auxv.R3Tb_asan (la_rseq (SI.LA (en_sp en) (en_mmap_base en) inp)) \/ R3 = Auxv.Auxv.R3A_asan ->
 
   bv_unsigned (en_sp en) = ATOP + 8388608 ->
 
@@ -107,10 +123,10 @@ Theorem arootN_st_ok : forall (xb : int -> list byte) (en : ExecEntry) (inp : Pr
 
   (forall a, (exists seg, find_segment asegs a 1 = Some seg) -> ~ in_ivs IMGX a -> in_priv R2.PRIV a) ->
   exists E : env,
-    eb E = eb (InitLib.E0 (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en) xb) /\
-    st_ok asegs OPSA E (I2.ROOT_with (ROOT_OPS CRED)) ms mo.
+    eb E = eb (InitLib.E0 I2.PCN I2.PH (en_sp en) (en_mmap_base en) inp (en_draw en) xb) /\
+    st_ok asegs OPSA E (I2.ROOT_with R3 (ROOT_OPS CRED)) ms mo.
 Proof.
-  intros xb en inp ms mo CRED L RNG sta Hva Hve Hsp Hfit Hhw Hargc HM USP AH AC HU LZ APR CW0 IMG_APART.
+  intros xb en inp ms mo CRED L RNG sta R3 Hva Hve Hsp Hlau Hhw Hvl Hargc HM HR3 USP AH AC HU LZ APR CW0 IMG_APART.
   pose proof atop_range as ATR. pose proof ATOP_al16 as A16.
   set (usp := bv_unsigned (en_sp en)) in *.
   assert (USPlo : 0x7fff80000000 <= usp <= 0x800000000000) by lia.
@@ -118,13 +134,10 @@ Proof.
   { rewrite USP. replace (ATOP + 8388608) with (ATOP + 524288 * 16) by lia. rewrite Z.mod_add by lia. exact A16. }
   assert (USP8 : usp = 8 * (usp / 8)) by (Z.div_mod_to_equations; lia).
   assert (TOPB : usp + 200 <= 2 ^ 47).
-  { pose proof (SI.BSB_top AImg.a_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en) Hfit) as TOP.
-    pose proof (InitLib.len_BSB AImg.a_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en)) as LEN.
-    pose proof (InitLib.sstruct_val AImg.a_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en)) as SV.
-    unfold SI.SP, SI.argcZ, SI.envcZ in *. fold usp in TOP. lia. }
+  { pose proof (top_200 en inp Hlau) as X. change (bv_unsigned (en_sp en)) with usp in X. exact X. }
 
   pose proof HM as (w0 & V0 & m0 & _ & _ & _ & _ & _ & _ & _ & _ & _ & AMO).
-  destruct (I2.amain_st_ok_ops xb en inp ms mo Hva Hve Hsp Hfit Hhw Hargc HM)
+  destruct (I2.amain_st_ok_ops xb en inp ms mo R3 Hva Hve Hsp Hlau Hhw Hvl Hargc HM HR3)
     as (E & EB & HUL & BH & EV1 & F1 & F2 & F3 & F4 & F5 & F6 & F7 & F8 & FIN).
   fold usp in BH, EV1, F7, F8.
   exists E. split; [exact EB|].
@@ -134,12 +147,12 @@ Proof.
   assert (DEC : decode (map (den E) (ROOT_HEAP_ARGS CRED)) = Some (0, den E (VL (wlit CRED)), ROOT_WS, []))
     by exact (root_decode E CRED USPE).
 
-  assert (BASED : forall a, in_based E R2.REGS a -> in_ws ROOT_WS a \/ (exists a', ATOP <= a' < 2 ^ 47 /\ a = shad a')).
+  assert (BASED : forall a, in_based E (R2.REGS R3) a -> in_ws ROOT_WS a \/ (exists a', ATOP <= a' < 2 ^ 47 /\ a = shad a')).
   { intros a IB. destruct (BH a IB) as [S|T].
     - left. unfold in_ws, ROOT_WS. apply Exists_cons_hd. unfold in_iv, w_iv. cbn [w_lo w_len fst snd]. lia.
     - right. exists (8 * (a - ASHOFF)). unfold ASHOFF.
       split; [lia|]. symmetry. apply shad_unshad. }
-  assert (BASED_HI : forall a, in_based E R2.REGS a -> 0x10006fef8000 <= a).
+  assert (BASED_HI : forall a, in_based E (R2.REGS R3) a -> 0x10006fef8000 <= a).
   { intros a IB. destruct (BH a IB) as [S|T]; lia. }
   apply FIN.
   -
@@ -176,9 +189,6 @@ Proof.
       change (zarg_holds_c [den E (VP 1%uint63 (wlit 16%uint63))] m).
       assert (AZ : bv_unsigned (den E (VP 1%uint63 (wlit 16%uint63))) = usp + 16).
       { rewrite ValP.den_VP, EV1. change (w2Zs (wlit 16%uint63)) with 16. apply Z.mod_small. unfold two64. lia. }
-      pose proof (SI.BSB_top AImg.a_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en) Hfit) as TOP.
-      pose proof (InitLib.len_BSB AImg.a_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en)) as LEN.
-      unfold SI.SP in TOP. fold usp in TOP.
       cbn [zarg_holds_c]. unfold StrReg.zarg_holds. rewrite AZ. split; [clear - USP; lia|]. split; [clear - TOPB; lia|].
       intros s Hs. apply F8. assert (A0 : 0 <= usp + 16 + 7) by (clear - USPlo; lia).
       rewrite (shad_val (usp + 16 + 7) A0) in Hs. unfold Shadow.KHIGH in Hs. clear - Hs. lia.
@@ -331,11 +341,12 @@ Proof.
 Qed.
 
 Theorem arootN_st_ok : forall (xb : int -> list byte) (en : ExecEntry) (inp : ProcInput) (ms : machine_state) (mo : Model) (CRED : int)
-    (L : alayout) (RNG : footprint) (sta : astate),
+    (L : alayout) (RNG : footprint) (sta : astate) (R3 : region),
   valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_sp (en_sp en) ->
-  entry_stack_fits (en_sp en) (in_argv inp) (in_envp inp) -> valid_hwcap (in_hwcap inp) ->
+  entry_launch_ok_va Sv48 en inp -> valid_hwcap (in_hwcap inp) -> valid_launch inp ->
   length (in_argv inp) <> 2%nat ->
   ME.bmain_at en inp ms mo ->
+  R3 = Auxv.Auxv.R3Tb_asan (la_rseq (SI.LA (en_sp en) (en_mmap_base en) inp)) \/ R3 = Auxv.Auxv.R3A_asan ->
 
   bv_unsigned (en_sp en) = ATOP + 8388608 ->
 
@@ -346,10 +357,10 @@ Theorem arootN_st_ok : forall (xb : int -> list byte) (en : ExecEntry) (inp : Pr
 
   (forall a, (exists seg, find_segment bsegs a 1 = Some seg) -> ~ in_ivs IMGX a -> in_priv R2.PRIV a) ->
   exists E : env,
-    eb E = eb (InitLib.E0 (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en) xb) /\
-    st_ok bsegs OPSA E (I2.ROOT_with (ROOT_OPS CRED)) ms mo.
+    eb E = eb (InitLib.E0 I2.PCN I2.PH (en_sp en) (en_mmap_base en) inp (en_draw en) xb) /\
+    st_ok bsegs OPSA E (I2.ROOT_with R3 (ROOT_OPS CRED)) ms mo.
 Proof.
-  intros xb en inp ms mo CRED L RNG sta Hva Hve Hsp Hfit Hhw Hargc HM USP AH AC HU LZ APR CW0 IMG_APART.
+  intros xb en inp ms mo CRED L RNG sta R3 Hva Hve Hsp Hlau Hhw Hvl Hargc HM HR3 USP AH AC HU LZ APR CW0 IMG_APART.
   pose proof atop_range as ATR. pose proof ATOP_al16 as A16.
   set (usp := bv_unsigned (en_sp en)) in *.
   assert (USPlo : 0x7fff80000000 <= usp <= 0x800000000000) by lia.
@@ -357,13 +368,10 @@ Proof.
   { rewrite USP. replace (ATOP + 8388608) with (ATOP + 524288 * 16) by lia. rewrite Z.mod_add by lia. exact A16. }
   assert (USP8 : usp = 8 * (usp / 8)) by (Z.div_mod_to_equations; lia).
   assert (TOPB : usp + 200 <= 2 ^ 47).
-  { pose proof (SI.BSB_top BImg.b_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en) Hfit) as TOP.
-    pose proof (InitLib.len_BSB BImg.b_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en)) as LEN.
-    pose proof (InitLib.sstruct_val BImg.b_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en)) as SV.
-    unfold SI.SP, SI.argcZ, SI.envcZ in *. fold usp in TOP. lia. }
+  { pose proof (top_200 en inp Hlau) as X. change (bv_unsigned (en_sp en)) with usp in X. exact X. }
 
   pose proof HM as (w0 & V0 & m0 & _ & _ & _ & _ & _ & _ & _ & _ & _ & AMO).
-  destruct (I2.amain_st_ok_ops xb en inp ms mo Hva Hve Hsp Hfit Hhw Hargc HM)
+  destruct (I2.amain_st_ok_ops xb en inp ms mo R3 Hva Hve Hsp Hlau Hhw Hvl Hargc HM HR3)
     as (E & EB & HUL & BH & EV1 & F1 & F2 & F3 & F4 & F5 & F6 & F7 & F8 & FIN).
   fold usp in BH, EV1, F7, F8.
   exists E. split; [exact EB|].
@@ -373,12 +381,12 @@ Proof.
   assert (DEC : decode (map (den E) (ROOT_HEAP_ARGS CRED)) = Some (0, den E (VL (wlit CRED)), ROOT_WS, []))
     by exact (root_decode E CRED USPE).
 
-  assert (BASED : forall a, in_based E R2.REGS a -> in_ws ROOT_WS a \/ (exists a', ATOP <= a' < 2 ^ 47 /\ a = shad a')).
+  assert (BASED : forall a, in_based E (R2.REGS R3) a -> in_ws ROOT_WS a \/ (exists a', ATOP <= a' < 2 ^ 47 /\ a = shad a')).
   { intros a IB. destruct (BH a IB) as [S|T].
     - left. unfold in_ws, ROOT_WS. apply Exists_cons_hd. unfold in_iv, w_iv. cbn [w_lo w_len fst snd]. lia.
     - right. exists (8 * (a - ASHOFF)). unfold ASHOFF.
       split; [lia|]. symmetry. apply shad_unshad. }
-  assert (BASED_HI : forall a, in_based E R2.REGS a -> 0x10006fef8000 <= a).
+  assert (BASED_HI : forall a, in_based E (R2.REGS R3) a -> 0x10006fef8000 <= a).
   { intros a IB. destruct (BH a IB) as [S|T]; lia. }
   apply FIN.
   -
@@ -415,9 +423,6 @@ Proof.
       change (zarg_holds_c [den E (VP 1%uint63 (wlit 16%uint63))] m).
       assert (AZ : bv_unsigned (den E (VP 1%uint63 (wlit 16%uint63))) = usp + 16).
       { rewrite ValP.den_VP, EV1. change (w2Zs (wlit 16%uint63)) with 16. apply Z.mod_small. unfold two64. lia. }
-      pose proof (SI.BSB_top BImg.b_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en) Hfit) as TOP.
-      pose proof (InitLib.len_BSB BImg.b_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en)) as LEN.
-      unfold SI.SP in TOP. fold usp in TOP.
       cbn [zarg_holds_c]. unfold StrReg.TwinB.zarg_holds. rewrite AZ. split; [clear - USP; lia|]. split; [clear - TOPB; lia|].
       intros s Hs. apply F8. assert (A0 : 0 <= usp + 16 + 7) by (clear - USPlo; lia).
       rewrite (shad_val (usp + 16 + 7) A0) in Hs. unfold Shadow.KHIGH in Hs. clear - Hs. lia.

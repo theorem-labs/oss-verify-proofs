@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Trevor Hansen, 2026-11: module names. *)
+(* Modified by Theorem Labs, 2026-11: ported toward LPS 727298f3 by the change of the same file of cgif/cgif_rgb_fuzzer, its addresses relocated to this unit's binaries. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From OSSVerify.Proofs.libtasn1.asn1_get_length_der_fuzzer.lib.C Require Import
 YP0j YP0g YP0h.
@@ -31,7 +32,7 @@ match e with
 | (KMmapRW len, z) => if z =? 0 then rs else rs ++ [mkRegion RkMap (page_round len) [] true]
 | (KMmapNone len, z) => if z =? 0 then rs else rs ++ [mkRegion RkMetaRes len [] true]
 | (KBrkGrow 2, z) => if z =? 0 then rs else rs ++ [mkRegion RkBrk (2 * PGSZ) [] true]
-| (KMunmap r len, _) => lupd rs r (mkRegion RkMap (rg_len (nth r rs (mkRegion RkMap 0 [] false))) [] false)
+| (KMunmap r len, z) => if z =? 0 then rs else lupd rs r (mkRegion RkMap (rg_len (nth r rs (mkRegion RkMap 0 [] false))) [] false)
 | (KMremap r ol nl, z) =>
 if z =? 0 then rs
 else lupd (rs ++ [mkRegion RkMap nl [] true]) r (mkRegion RkMap (rg_len (nth r rs (mkRegion RkMap 0 [] false))) [] false)

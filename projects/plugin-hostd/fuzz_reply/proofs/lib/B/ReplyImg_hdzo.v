@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, row img-hdzo-B of a Theorem Labs lane's REPLY-IMG-ROWS.md (sha256 a33a582e3ffd; internal record), for a Theorem Labs lane's cf layer at
    plugin-hostd/fuzz_reply).
    rule 24: no function proved (kind: image row; a closed computation at reply's image B, fuzz_reply.asan-ubsan).
    Reuse search: proof-index hdzo_B HDZO HDZO_cgif (2026-10-30 04:4xZ, exit 0): HDZO only as the layer's
    Hypothesis (YGcfInstHit / HitCore / HitPost / Miss / MissW on unreleased cold/* branches), no discharge at any unit.
 
-   HDZO is the cf layer's Hypothesis of YGcfInstHit.v:142-143 (commit d2e17f315ba, Section b):
+   HDZO is the cf layer's Hypothesis of YGcfInstHit.v:143-144 (Section b):
      forall ly' a, ag_dzone ly' a ->
        Exists (in_zr a) (as_owned_static B) \/ (ly_NB ly' <= a < ly_NB ly' + kNodesBlockSize) \/
        (ly_SB ly' <= a < ly_SB ly' + kStoreBlockSize).
@@ -14,7 +15,7 @@
    class ImgBase.AImg at image B's AImg_reply, B/AGif2reply.v; ImgBaseAG.AGImg at B/AGif0reply.v's AGImg_reply,
    whose ag_dzone is AGis.DZONE), for a B with the image's symbol facts (im_syms = TfibSyms). A consumer closes the
    layer's HDZO with `exact (hdzo_B B TS)` once the layer is on reply. No Definition of the layer is copied here.
-   The proof is cgif's HDZO_cgif (YGcfInstHitcgif.v:65 @ cc4fb1f2a13, AGif5.v:913-917's own_Dg script) at this image:
+   The proof is cgif's HDZO_cgif (YGcfInstHitcgif.v:65, AGif5.v:913-917's own_Dg script) at this image:
    AGis.DZONE's image part [0x178508, 0x5c8c90) (B/AGis.v) lies in the fifth region of Tfib_owned_static (B/YF0m.v,
    ts_owned), checked by vm_compute on the table's entry; its NB and SB parts are the statement's two other arms. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
@@ -34,7 +35,7 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import AGif2reply.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require ImgBaseAG AGis AGif0reply.
 Open Scope Z_scope.
 
-(* HDZO at image B (YGcfInstHit.v:142-143 @ d2e17f315ba). *)
+(* HDZO at image B (YGcfInstHit.v:142-143). *)
 Lemma hdzo_B : forall B, @im_syms AImg_reply B ->
   forall ly' a, @ImgBaseAG.ag_dzone AImg_reply AGif0reply.AGImg_reply ly' a ->
   Exists (in_zr a) (as_owned_static B) \/ (ly_NB ly' <= a < ly_NB ly' + kNodesBlockSize) \/

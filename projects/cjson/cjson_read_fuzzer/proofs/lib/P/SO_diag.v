@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stderr writes give rzt_stdio_writev both halves of chan_ok, the channel and its reader. *)
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -543,7 +544,7 @@ Proof.
       exists ((buf ++ p) ++ e2), buf2. split; [cbn [app] in E2; rewrite E2, !app_assoc; reflexivity|]. split; [exact HB2|].
       rewrite to_bytes_app, map_app.
       eapply rzt_mbind.
-      * apply (rzt_stdio_writev psegs st mo 2 buf p CH). unfold INTERNAL_BUFSIZ in *. lia.
+      * apply (rzt_stdio_writev psegs st mo 2 buf p (proj1 CH) (proj2 CH)). unfold INTERNAL_BUFSIZ in *. lia.
       * intros [] s' Hs. cbn [snd] in Hs. subst s'. exact RZ2.
     + destruct (IH (buf ++ p) st mo CH SM ltac:(rewrite zlength_app'; lia)) as (e2 & buf2 & E2 & HB2 & RZ2).
       exists e2, buf2. split; [rewrite <- E2, app_assoc; reflexivity|]. split; [exact HB2| exact RZ2].
@@ -558,7 +559,7 @@ Proof.
   cbn [app] in E. rewrite E, to_bytes_app, map_app. unfold stderr_fprintf.
   eapply rzt_mbind; [exact RZ|]. intros b s' Hs. injection Hs as -> ->.
   replace (to_bytes buf') with (to_bytes (buf' ++ [])) by (rewrite app_nil_r; reflexivity).
-  apply (rzt_stdio_writev psegs st mo 2 buf' [] CH).
+  apply (rzt_stdio_writev psegs st mo 2 buf' [] (proj1 CH) (proj2 CH)).
   unfold INTERNAL_BUFSIZ, zlength in *. cbn [length]. lia.
 Qed.
 
@@ -567,7 +568,7 @@ Lemma rzt_stderr_fwrite : forall {St} (s : list Z) (st : St) mo,
   rzt (stderr_fwrite s st) mo (map (WriteEv (Z_to_bv 64 2)) (to_bytes s)) (fun r => snd r = st).
 Proof.
   intros St s st mo CH LEN. unfold stderr_fwrite. rewrite (proj2 (Z.ltb_lt 0 (zlength s))) by lia.
-  change (to_bytes s) with (to_bytes ([] ++ s)). apply (rzt_stdio_writev psegs st mo 2 [] s CH).
+  change (to_bytes s) with (to_bytes ([] ++ s)). apply (rzt_stdio_writev psegs st mo 2 [] s (proj1 CH) (proj2 CH)).
   unfold zlength in *. cbn [length]. lia.
 Qed.
 

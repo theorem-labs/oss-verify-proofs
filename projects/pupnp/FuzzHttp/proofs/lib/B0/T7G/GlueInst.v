@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's input, mmap base and entry draw). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run.
@@ -28,7 +29,7 @@ Section Inst.
       fuzz_one_stmtA FI AI J PZ.
 
   #[using="FZ_GEN"] Theorem INST_of_FZ : forall (HC : HasCeiling) (HG : HasGuard) (V : nat -> Z) inp en ms mo,
-    valid_input inp -> valid_entry imgA0 en inp -> alloc_ceiling = LO (en_sp en) -> amain_at_V V en inp ms mo ->
+    valid_input inp -> valid_entry imgA0 en inp -> alloc_ceiling = bv_unsigned (en_sp en) - 8388608 -> amain_at_V V en inp ms mo ->
     exists (FI : fs_if) (AI : am_if FI),
       (forall lo hi, a0_static lo hi -> am_static FI AI lo hi)
       /\ am_contracts FI AI (JA FI AI)

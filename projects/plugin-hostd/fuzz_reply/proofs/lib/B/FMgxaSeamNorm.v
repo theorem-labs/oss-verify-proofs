@@ -1,4 +1,4 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamNorm.v (a working branch 3e35620c52e); relocated to plugin-hostd/fuzz_reply/fuzz_reply.asan-ubsan by a Theorem Labs lane's pfinst/tool (reloc.py target reply-B): module paths changed; 15 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_reply.asan-ubsan, symbol + offset; table pfinst/tool/tables/reply-B/FMgxaSeamNorm.table); GXA symbol keys kept (0x1029e, 0x22e18); names: record RT_IImgA -> ; A-core -> B-core (lib.B): AB1v->YB1v. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamNorm.v (a working branch); relocated to plugin-hostd/fuzz_reply/fuzz_reply.asan-ubsan by a Theorem Labs lane's pfinst/tool (reloc.py target reply-B): module paths changed; 15 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_reply.asan-ubsan, symbol + offset; table pfinst/tool/tables/reply-B/FMgxaSeamNorm.table); GXA symbol keys kept (0x1029e, 0x22e18); names: record RT_IImgA -> ; A-core -> B-core (lib.B): AB1v->YB1v. *)
 (* The NORMALIZATION layer of the GXA seam at musl vfprintf.
 
    GXA's statement (lib/CJ/RL/GXA/VfprintfCall.v:22 vfprintf_guarded_stmt) asks `mem_inv img_segs m`
@@ -9,7 +9,7 @@
    the image (MemNorm.cj_drop, :527).  mem_inv holds of it by construction (mem_inv_cjnorm).  This file
    moves the run and every fact between the two stores:
    1. read agreement (MemNorm.ro_agree, :41) from the contract's own consts_view
-      (FMsnprintfShared.v:115), when the constant list cr covers the image's read-only bytes
+      (FMsnprintfShared.v:116), when the constant list cr covers the image's read-only bytes
       (ro_agree_of_consts; fm's instance ro_covered_fm);
    2. the normalized store and its invariant (cjnorm, mem_inv_cjnorm);
    3. each store premise of GXA's statement and of its guard vf_ready_a, from m to cjnorm H mem.
@@ -122,7 +122,7 @@ intros x Hx. destruct (CJM.ro_addr tfibsegs x) eqn:E; [|reflexivity].
 pose proof (tfib_ro_range x E). lia.
 Qed.
 
-(* GXA's GLOBALS_TOP on A_img (RT_IImgA.v:73) *)
+(* GXA's GLOBALS_TOP on A_img (RT_IImgA.v:74) *)
 Lemma globals_top_A : @GXI.GLOBALS_TOP A_img = 0x5fc000.
 Proof. vm_compute. reflexivity. Qed.
 
@@ -1296,7 +1296,7 @@ destruct ws as [|w ws]; [destruct Hp|]. destruct Hp as [H1 H2]. cbn [map args_ke
 - apply IH; [|exact H2]. intros r Hr. apply Hin. destruct a; cbn [str_rngs]; [exact Hr | exact Hr | right; exact Hr].
 Qed.
 
-(* (ii) under the contract's premises (sh_avfprintf_icpt_realizesUx, FMsnprintfSx.v:210-247),
+(* (ii) under the contract's premises (sh_avfprintf_icpt_realizesUx, FMsnprintfSx.v:211-248),
    seam_drop at the seam's R keeps the shadow hull of every named range whose shadow the walk reads
    (the destination, the format, the stack window [lo, lo + K), the musl prefix, each %s string: all
    carved), for every ly; and it never drops an application byte cjnorm keeps (the data bytes of the

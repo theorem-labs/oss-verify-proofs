@@ -1,4 +1,4 @@
-(* CARRIED from commit ae2fa80b0325f09472155bcfce1c36e649d6ff60,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YG03dcf.v, sha256 9d9edcfab23ecce19ee319682c7ee77e28ae7f37afc1f3802651034ec43a1011 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change made here is the module
    prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
@@ -7,7 +7,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by a Theorem Labs lane (DeallocNmaxA), 2026-10-30: wfr_fields_d3 / wfr_easy_d3 carry the new field wfr_qsize; RI_merge_cf proves it
    (the merge keeps the items). *)
-(* Taken by path from a working branch a0fed4266a1b, provisional. *)
+(* Taken by path from a working branch, provisional. *)
 (* Modified by Theorem Labs, 2026-10: module paths changed from fuzz_preset lib.Reusable to cgif_file_fuzzer lib; the text is otherwise unchanged. *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YG03.v, with its module paths changed; its addresses are still cgif_file_fuzzer.asan's. *)
@@ -17,6 +17,7 @@
    batch selves kept as a multiset, only empty batches extracted, kBatchBytes per extraction, the quarantine's group shape
    kept). The drain proof follows maybe_drain_okx on the event-free invariant of YG03cf.v and recycles the extracted batches
    with the popped ones; ml_free_cf is free_cf's law, from YG03cf.v's ml_free_with_cf. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From Stdlib Require Import Sorting.Permutation.
@@ -62,7 +63,7 @@ set_cache_inited set_internal_inited set_fs]; lia ] end
 | idtac ].
 
 (* ---------------------------------------------------------------------------- *)
-(* 1. merge_batches_cf (YG00cf.v:290-304).                                       *)
+(* 1. merge_batches_cf (YG00cf.v:291-305).                                       *)
 Definition bok_cf (b : batch) : Prop :=
 (1 <= length (b_items b) <= Z.to_nat kBatchSlots)%nat /\ Forall (fun k => 0 <= ck_n k) (b_items b).
 (* The shape wq_groups (YG01.v:406) gives the global list. *)
@@ -191,7 +192,7 @@ destruct F as [|b F1].
 Qed.
 
 (* ---------------------------------------------------------------------------- *)
-(* 2. maybe_drain_cf (YG00cf.v:310-326), with its merge choice and its tail named. *)
+(* 2. maybe_drain_cf (YG00cf.v:311-327), with its merge choice and its tail named. *)
 Definition merge_choice_cf (g : qcache) : qcache * list batch :=
 let L := Z.of_nat (length (qc_list g)) in
 if (kBatchBytes * L <? qc_bytes g) && (qc_bytes g <? 2 * (kBatchBytes * L))

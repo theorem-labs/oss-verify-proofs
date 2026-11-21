@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: only the contract of the stack-frame release entry (astack_free_realizes of proofs/cgif/cgif_rgb_fuzzer/lib/YG0e.v), restated over the asan-state definitions of the cgif_file_fuzzer proof as libreac/fuzz_grant holds them; module names. One change: the shadow span the entry marks released is sf_span cid n, not n / 8. For class cid <= 6 the span is the frame's whole shadow, fs_frame_bytes cid / 8 bytes, for any size argument n; for a higher class it is n / 8 bytes, as cgif_rgb_fuzzer states it. *)
-(* Modified by Theorem Labs, 2026-10: taken by path into libreac/fuzz_ctrl from libreac/fuzz_grant (a working branch c3bfa00452c, the shared text of record); only the module prefix fuzz_grant -> fuzz_ctrl changed. *)
+(* Modified by Theorem Labs, 2026-10: taken by path into libreac/fuzz_ctrl from libreac/fuzz_grant (a working branch, the shared text of record); only the module prefix fuzz_grant -> fuzz_ctrl changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/Reusable/StackFreeDef.v; 11 of its 40 lines of code are new or changed and 2 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

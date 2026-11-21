@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (haltsB_from_tree_gen's new premise segs_top segs <= 0x10000000, proved by computation). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
@@ -17,7 +18,8 @@ Proof.
   intros cfg Hle.
   exact (haltsB_from_tree_gen psegs p_init_pc p_phdrs ShippedBudgets.lim_source EXITS02 (Prog.prog psegs PREAD_STAGE)
            (epost (fun (_ : unit) (_ : machine_state) => True)) cfg Hle
-           plain_tree_ok (fun inp en => prog_texits psegs PREAD_STAGE inp en)).
+           plain_tree_ok (fun inp en => prog_texits psegs PREAD_STAGE inp en)
+           ltac:(apply Z.leb_le; vm_compute; reflexivity)).
 Qed.
 
 (* [comment removed for export] *)

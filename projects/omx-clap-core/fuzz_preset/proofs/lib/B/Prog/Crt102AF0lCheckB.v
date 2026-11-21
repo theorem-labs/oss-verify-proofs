@@ -4,16 +4,16 @@
    read through `as_code B`. The B' port of lib/A/Prog/Crt102AF0lCheck.v 76548b0b655e (the A' check against AF0l).
 
    Crt102EntryB's MARKED STAND-IN `pal_stack_malloc3 : SIGMA AS___asan_stack_malloc_3 = pc_stack_malloc (as_code B) 3`
-   (lib/B/Prog/Crt102EntryB.v 27ad45449ff3 at commit 9179085e57d, :199, SIGMA :=
+   (lib/B/Prog/Crt102EntryB.v 27ad45449ff3, :199, SIGMA :=
    pa_sigma of B_prog_listing at the instance PA) reads the B' code record YF0l.Tfib_code once B is TfibB
    (as_code TfibB := Tfib_code, lib/Reusable/YD2l.v :14). crt102_stack_malloc3_TfibB is that hypothesis at
    PA := PI_prog_B, B := TfibB, by vm_compute: the witness the B' composition cites for it. The other four lemmas check
    the remaining pc fields this lane's frame and call rules bind (the frame classes 0 / 1, the free / malloc wrappers).
 
-   INPUTS OF RECORD (by path; blobs of the base commit 100c8e45583c unless named):
+   INPUTS OF RECORD (by path; blobs of the base unless named):
    - listing (#102 B'): lib/B/Listing_prog.v c97cc46b3e13, lib/B/PAImg_prog.v 15fab93fe702 (PI_prog_B).
    - code record: lib/Reusable/YF0l.v 4a405a3dba65 (generated from the pin d663f82d7f488d30, twin c90d4fa54d43160b).
-   - the B' asyms record, TAKEN BY PATH from the integration commit bedf6e890875: lib/Reusable/YD2l.v
+   - the B' asyms record, TAKEN BY PATH from the integration: lib/Reusable/YD2l.v
      0d0bc856b447 (the #102 B' record; the base had 4deb698ee695, the old pin's cells) and the trace file its
      TfibB_syms needs, lib/Reusable/YCej.v ae866e8addb2 (generated from image B'; the base had 9d858604e7c0, the old
      pin's traces). Crt102PALibCheckB.v names them again with the rest of that file's inputs.

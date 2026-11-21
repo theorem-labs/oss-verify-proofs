@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the open node and the C-string lemmas require the path to end below TASK_SIZE; the new fd kinds are refused in nstep; nsafe's mmap node carries the place_declined_b premise guarded by the model's mmap_modeled_b or mmap_noaccess_b on the node's arguments (place_declined_b_null discharges a NULL hint); nsafe's mremap node bounds alloc_top by TASK_SIZE (a new length above it is the model's -EINVAL). *)
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -135,31 +136,45 @@ Qed.
 (* [comment removed for export] *)
 Lemma read_cstr_aux_bytes_in : forall str fuel mp a,
   (length str < fuel)%nat -> ~ In (Z_to_bv 8 0) str ->
+  (0 <= a)%Z -> (a + Z.of_nat (length str) < TASK_SIZE)%Z ->
   bytes_in mp a (str ++ [Z_to_bv 8 0]) ->
   read_cstr_aux mp (wa a) fuel = CstrOk str.
 Proof.
-  induction str as [|b str IH]; intros fuel mp a Hf Hnz H.
+  (* at 08b1429 [read_cstr_aux] runs [access_ok] on each byte (strncpy_from_user):
+     the bytes must lie below TASK_SIZE *)
+  assert (Hok : forall a, (0 <= a)%Z -> (a < TASK_SIZE)%Z -> access_okb (wa a) 1 = true).
+  { intros a0 H0 H1. rewrite access_okb_one. apply Z.ltb_lt. unfold wa.
+    rewrite Z_to_bv_unsigned. unfold bv_wrap. rewrite Z.mod_small; [exact H1|].
+    unfold TASK_SIZE in *. change (bv_modulus 64) with (2 ^ 64). lia. }
+  induction str as [|b str IH]; intros fuel mp a Hf Hnz H0 Ht H.
   - destruct fuel as [|fuel]; [cbn in Hf; lia|]. cbn [app] in H. apply bytes_in_cons in H as [Hb _].
-    cbn [read_cstr_aux]. rewrite Hb. reflexivity.
+    cbn [length] in Ht. rewrite read_cstr_aux_accepted by (apply Hok; lia).
+    rewrite Hb. reflexivity.
   - destruct fuel as [|fuel]; [cbn in Hf; lia|]. cbn [app] in H. apply bytes_in_cons in H as [Hb H].
-    cbn [read_cstr_aux]. rewrite Hb.
+    cbn [length] in Ht. rewrite read_cstr_aux_accepted by (apply Hok; lia).
+    rewrite Hb.
     assert (Hne : bv_eqb b (Z_to_bv 8 0) = false).
     { destruct (bv_eqb b (Z_to_bv 8 0)) eqn:E; [|reflexivity]. apply bv_eqb_eq in E. exfalso. apply Hnz. left. congruence. }
-    rewrite Hne, wa_succ. rewrite (IH fuel mp (a + 1)); [reflexivity| cbn in Hf; lia | |exact H].
+    rewrite Hne, wa_succ. rewrite (IH fuel mp (a + 1)); [reflexivity| cbn in Hf; lia | | lia | lia | exact H].
     intro Hin. apply Hnz. right. exact Hin.
 Qed.
 
 Lemma read_cstr_aux_toolong_bytes_in : forall fuel str mp a,
   (fuel <= length str)%nat -> ~ In (Z_to_bv 8 0) str ->
+  (0 <= a)%Z -> (a + Z.of_nat fuel <= TASK_SIZE)%Z ->
   bytes_in mp a str ->
   read_cstr_aux mp (wa a) fuel = CstrTooLong.
 Proof.
-  induction fuel as [|fuel IH]; intros str mp a Hf Hnz H; [reflexivity|].
+  assert (Hok : forall a, (0 <= a)%Z -> (a < TASK_SIZE)%Z -> access_okb (wa a) 1 = true).
+  { intros a0 H0 H1. rewrite access_okb_one. apply Z.ltb_lt. unfold wa.
+    rewrite Z_to_bv_unsigned. unfold bv_wrap. rewrite Z.mod_small; [exact H1|].
+    unfold TASK_SIZE in *. change (bv_modulus 64) with (2 ^ 64). lia. }
+  induction fuel as [|fuel IH]; intros str mp a Hf Hnz H0 Ht H; [reflexivity|].
   destruct str as [|b str]; [cbn in Hf; lia|]. apply bytes_in_cons in H as [Hb H].
-  cbn [read_cstr_aux]. rewrite Hb.
+  rewrite read_cstr_aux_accepted by (apply Hok; lia). rewrite Hb.
   assert (Hne : bv_eqb b (Z_to_bv 8 0) = false).
   { destruct (bv_eqb b (Z_to_bv 8 0)) eqn:E; [|reflexivity]. apply bv_eqb_eq in E. exfalso. apply Hnz. left. congruence. }
-  rewrite Hne, wa_succ. rewrite (IH str mp (a + 1)); [reflexivity| cbn in Hf; lia | |exact H].
+  rewrite Hne, wa_succ. rewrite (IH str mp (a + 1)); [reflexivity| cbn in Hf; lia | | lia | lia | exact H].
   intro Hin. apply Hnz. right. exact Hin.
 Qed.
 
@@ -310,7 +325,9 @@ Definition at_node (n : node) (ms : machine_state) : Prop :=
       Z.ldiff (bv_unsigned (areg ms 12)) (O_CLOEXEC + O_LARGEFILE) = 0 /\
       ~ In (Z_to_bv 8 0) path /\
       ms_rom ms = seg_rom segs /\
-      bytes_at segs (ms_mem ms) (bv_unsigned (areg ms 11)) (path ++ [Z_to_bv 8 0])
+      bytes_at segs (ms_mem ms) (bv_unsigned (areg ms 11)) (path ++ [Z_to_bv 8 0]) /\
+      (* at 08b1429 the kernel's strncpy_from_user checks access_ok per byte *)
+      bv_unsigned (areg ms 11) + Z.of_nat (length path) < TASK_SIZE
   | NRead fd buf count =>
       ms_svc_pending ms = Some (Z_to_bv 64 63) /\
       3 <= fd < 2^32 /\
@@ -425,7 +442,8 @@ Definition nstep (n : node) (mo : Model) (eff : resp) (mo' : Model) (evs : list 
               mo' = with_fds (fd_insert (m_fds mo) (Z_to_bv 64 fd) (FdFile p (off + len_word bs)%bv)) mo
           end
       | Some (FdChannel _) | Some (FdFileW _ _) | Some (FdFileA _ _) | Some (FdFileRW _ _)   (* [comment removed for export] *)
-      | Some (FdSocket _) | Some (FdPipe _ _) | Some (FdDevNull _ _) | Some FdUrandom => False   (* [comment removed for export] *)
+      | Some (FdSocket _) | Some (FdPipe _ _) | Some (FdDevNull _ _) | Some FdUrandom
+      | Some (FdStream _ _ _) | Some (FdEventfd _) | Some (FdDgram _) | Some (FdAnon _ _) => False   (* [comment removed for export] *)
       end
   | NClose fd =>
       evs = [] /\ 3 <= fd < 2^32 /\   (* [comment removed for export] *)
@@ -516,7 +534,14 @@ Definition nsafe (n : node) (mo : Model) : Prop :=
           /\ addr mod page_size = 0 /\ 0 < addr
           /\ addr + page_round_up_Z len <= alloc_top h
           /\ region_free (vm_reserved h) (Z_to_bv 64 addr) (Z_to_bv 64 (page_round_up_Z len)) = true
-          /\ map_contains (vm_maps h) (Z_to_bv 64 addr) (Z_to_bv 64 (page_round_up_Z len)) = true))
+          /\ map_contains (vm_maps h) (Z_to_bv 64 addr) (Z_to_bv 64 (page_round_up_Z len)) = true)) /\
+      (* LPS 727298f3 (#144/#146): the two freely placed arms of [mmap_spec] (the model's
+         [mmap_modeled_b] and [mmap_noaccess_b] on the node's arguments) answer [unmodeled]
+         when [place_declined_b] holds; on those arms the node carries its negation, and the
+         walk that fixes the hint proves it (a NULL hint by computation). *)
+      ((mmap_modeled_b (Z_to_bv 64 prot) (Z_to_bv 64 flags) (Z_to_bv 64 0)
+        || mmap_noaccess_b (Z_to_bv 64 prot) (Z_to_bv 64 flags) (Z_to_bv 64 0))%bool = true ->
+       place_declined_b (m_kernel mo) h (Z_to_bv 64 addr) (page_round_up_Z len) = false)
   | NMunmap addr len =>                                               (* [comment removed for export] *)
       0 <= addr /\ addr mod page_size = 0 /\ 0 < len /\
       addr + page_round_up_Z len <= TASK_SIZE /\    (* [comment removed for export] *)
@@ -528,13 +553,26 @@ Definition nsafe (n : node) (mo : Model) : Prop :=
       map_contains (vm_maps h) (Z_to_bv 64 addr) (Z_to_bv 64 (page_round_up_Z len)) = true
   | NMremap old ol nl fl =>                                           (* [comment removed for export] *)
       fl = MREMAP_MAYMOVE /\ 0 < old /\ old mod page_size = 0 /\ 0 < ol /\ 0 < nl /\
-      page_round_up_Z nl < 2^64 /\
+      (* 727298f3: a page-rounded new length above TASK_SIZE is a deterministic -EINVAL
+         (the abstract step [NodesSound.anstep] has that arm); a success arm needs room below
+         [alloc_top h], so it is bounded through [alloc_top h <= TASK_SIZE]. *)
+      page_round_up_Z nl < 2^64 /\ alloc_top h <= TASK_SIZE /\
       old + page_round_up_Z ol <= alloc_top h /\
       region_free (vm_reserved h) (Z_to_bv 64 old) (Z_to_bv 64 (page_round_up_Z ol)) = true /\
       map_has (vm_maps h) (Z_to_bv 64 old) (Z_to_bv 64 (page_round_up_Z ol)) = true /\
       region_free (vm_noaccess h) (Z_to_bv 64 old) (Z_to_bv 64 (page_round_up_Z ol)) = true
   | _ => True
   end.
+
+(* A NULL hint is never declined: [place_declined_b]'s first conjunct is
+   [negb (hint_address hint =? 0)] and [hint_address] of 0 is 0, so the conjunction is
+   [false] by computation.  The discharge a walk whose a0 is the literal 0 uses. *)
+Lemma place_declined_b_null : forall kb h nZ,
+  place_declined_b kb h (Z_to_bv 64 0) nZ = false.
+Proof.
+  intros kb h nZ. unfold place_declined_b, hint_address.
+  rewrite (unsigned_lit 0) by lia. reflexivity.
+Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)

@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/U/Prog/CheckGlue_cg.v, with its module paths changed; 76 of its 158 lines of code are new or changed and 10 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Crash-free (SRcf) glue for the UBSan check functions of fuzz_lock (check_no_overread, check_lookup).
    Relocated from libreac/fuzz_decode's released lib/U/Prog/LLVMFuzzerTestOneInput_cfb.v (llvm_LIVE_BOUND_mono,
    CAP_AG_le, kb_run_cf, room_ag, room_ag_gen, room_ag_big, llvm_limlaw, malloc_contract_ag, malloc_ag_of_cf) and
-   lib/U/Prog/crt_glue_cg.v (crt_run_fp_cf, crt_runA_cf, crt_runQ_cf, crt_runN_cf), release 25e3d17bdb50, same
+   lib/U/Prog/crt_glue_cg.v (crt_run_fp_cf, crt_runA_cf, crt_runQ_cf, crt_runN_cf), release, same
    names and statements; the SR-free glue (crt_seq, crt_drop, crt_stk, ...) is in lib/U/Prog/cno_glue.v.
    Written by Theorem Labs. *)
 From Stdlib Require Import ZArith List Bool Lia.

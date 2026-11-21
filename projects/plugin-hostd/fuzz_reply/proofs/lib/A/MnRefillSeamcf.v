@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MnRefillSeamcf.v (commit f01d79f3fb5, cf refill round 3; file sha256 8c00fdba16cf) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MnRefillSeamcf.v (cf refill round 3; file sha256 8c00fdba16cf) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane W, ReallocPrimary.CfW; a Theorem Labs lane cf layer).  rule 24: no function proved (kind: interface,
    the SEAM between the two halves of the cf refill walk).
 
-   The cf layer's refill walk target YGcfInstRefill.refill_spec_core_cf (d80162ffa5c9) is proved by re-basing c5's memnorm refill
+   The cf layer's refill walk target YGcfInstRefill.refill_spec_core_cf is proved by re-basing c5's memnorm refill
    walk (MnRefillB3 / MnRefillR, cgif's AR + YFl1.refill_pre) on ARXq_cf / ARmcf / cls_ok_cf and the cf tree
    refill_tree_cf.  Two hands, one seam, fixed here:
    - HALF 1 (lane W, CfW): [refill_B3_inner_cf] (the B3 walk from the joined symbolic state R3_J, c5 MnRefillB3.refill_B3
@@ -13,7 +14,7 @@
    - HALF 2 (a Theorem Labs lane): [refill_B2_entry_cf] (the inited cache with enough free chunks: c5 MnRefillR.refill_B2R) and
      [refill_uninit_entry_cf] (the uninited cache: c5 MnRefillR.refill_uninitR, whose B3 case calls
      [refill_B3_inner_cf] at the post-init state, as c5 MnRefillR.v:285 calls MnRefillB3.refill_B3).
-   [refill_spec_core_cf_of_cases] assembles the layer's walk target refill_spec_core_cf (d80162ffa5c9) from the three
+   [refill_spec_core_cf_of_cases] assembles the layer's walk target refill_spec_core_cf from the three
    entry cases; the Allocate-site corollary refill_walk_cf is TkSecLink's.
    Every statement here is over cgif's image (YFk5 / YFk8's names, TfibSyms), the cf model and the layer's
    [refill_leaf_core_cf]; both halves relocate to each cf unit (reply lane W; preset A11) by the agreloc route.
@@ -97,7 +98,7 @@ arodata_ok_cf tfibsegs B mem0 -> cf_hull_ok S ->
 Q mu tot ->
 amreal tfibsegs (refill_tree_cf c S) W (mkCfg msJ (with_vm_backing (m_vm_lazy md0) mat0 md0))
   (refill_leaf_core_cf B Hp ly S c W regs0 mem0 md0).
-(* exh_cell_cf / errb_cells_cf (YGcfInstBase.v:67-80 at 24612d340b0): the class's exhausted byte RI+68 is
+(* exh_cell_cf / errb_cells_cf (YGcfInstBase.v:67-80): the class's exhausted byte RI+68 is
    (if exh_mem_cf S c then 1 else 0), so jex is that value, and the error-message buffer's object cells are the model's
    errb.  Both come from ARX_cf at the call state (ARX_cf :85-88; projections ARX_cf_exh :119, ARX_cf_errb :123), which
    refill_state_gen_cf (YGcfInstRefill.v :115) carries for every caller (Allocate's and Enqueue's miss arms). *)
@@ -110,10 +111,10 @@ Definition refill_B3_classfull_cf : Prop :=
   refill_B3_case_cf (fun mu tot => mu < tot /\ kFreeArrayOffset < mu + kUserMapSize).
 
 (* ================================================================================================================ *)
-(* The three entry cases of the layer's refill_spec_core_cf (YGcfInstRefill.v:171 at d80162ffa5c9): the CALL-SITE-GENERIC
+(* The three entry cases of the layer's refill_spec_core_cf (YGcfInstRefill.v:171): the CALL-SITE-GENERIC
    refill, unticked at the call state, any caller's registers / stack (refill_state_gen_cf :115, refill_call_gen_cf :123),
    the machine leaf refill_leaf_core_cf (acall_post_cf / errno view / raw frame over the class window REP_W c, refill
-   route 2, d94d29d53c8: RSTACK at kBatchClass, REP_STACK otherwise). *)
+   route 2: RSTACK at kBatchClass, REP_STACK otherwise). *)
 Section b.
 Context {IM : AImg} {AG : AGImg}.
 Variable B : asyms.

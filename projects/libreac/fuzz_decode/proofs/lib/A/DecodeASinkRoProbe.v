@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: a probe for lib/A/DecodeClose.v (a working branch
-   45061c42804) row HB_SINK_KEPT (DecodeClose.v:334-337), at image A's instance: segs = decodesegs0, B = GrantB
+(* Modified by Theorem Labs, 2026-10: a probe for lib/A/DecodeClose.v (a working branch)
+   row HB_SINK_KEPT (DecodeClose.v:334-337), at image A's instance: segs = decodesegs0, B = GrantB
    (lib/A/AD2l.v), asink_none = Reusable/YE00.v:126 asink_none, KS = lib/A/AE2k.v:44 tfib_K (the sink names
    lib/A/ACfn.v:46 / :59 fixes for the driver).
    proves no function (kind: probe): it shows that HB_SINK_KEPT, as stated, is FALSE at every entry state of a call.
@@ -10,10 +10,11 @@
    `FdFileW sink_path` entry (Reusable/YI16.v:51 fds_rel), and AR (Reusable/YG0n.v:490) does not read the fd table;
    so from any afn_pre state (Reusable/YCbq.v:336) with asink_none and one free fd, the step that only adds that fd is
    a journal step (Reusable/YCbq.v:350-372), after which asink_none's last conjunct (YE00.v:128) fails. Every entry of
-   LLVMFuzzerTestOneInput has such a state: lib/A/Prog/LLVMFuzzerTestOneInput_cg.v:105-120 dec_lib_pre_x carries
+   LLVMFuzzerTestOneInput has such a state: lib/A/Prog/LLVMFuzzerTestOneInput_cg.v:106-121 dec_lib_pre_x carries
    afn_pre (:107), asink_none (:115) and the free fd alloc_fd (:116). The Theorem Labs lane lemma that keeps asink_none,
    Reusable/YE01.v:85 asink_none_kept, takes `~ YI16.sink_open_fp FP` (:87); so does a Theorem Labs lane's SinkInert
-   (a working branch add754d0ac8, lib/Reusable/SinkInert.v:52 asink_none_os_kept). *)
+   (a working branch, lib/Reusable/SinkInert.v:52 asink_none_os_kept). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed sink_fd_proc). *)
 From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -50,7 +51,7 @@ Definition sink_fd_model (fd : word) (md : Model) : Model :=
   YI16.os_upd (m_vmmaps md) ((fd, FdFileW YI16.sink_path (Z_to_bv 64 0)) :: m_fds md) (m_fs md) (m_statpins md) md.
 
 Lemma sink_fd_proc : forall fd md, proc_but_pins md (sink_fd_model fd md).
-Proof. intros fd [[t p] [v l z] io [fs] [h ti c ss sm ch u sa k sp at_ pins] li tm]. reflexivity. Qed.
+Proof. intros fd [[t p] [v l z kb vd] io [fs] [h ti c ss sm ch u sa k sp at_ pins spp cr spa spt] li tm]. reflexivity. Qed.
 
 (* aos_step at the sink-opening footprint [YI16.sink_token] allows that step (YCbq.v:37-42, YI16.v:51). *)
 Lemma sink_fd_aos : forall fd md, fd_lookup (m_fds md) fd = None ->

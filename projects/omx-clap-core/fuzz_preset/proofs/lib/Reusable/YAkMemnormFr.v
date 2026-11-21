@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-29 (c-omx-alloc, engine owner): memnorm (YAkMemnorm.v) across two run frames. rule 24: proves
    no function (kind: segment lemma). Image-free: no address, no image number.
 
@@ -7,7 +8,7 @@
    (YP09.v), with every write window of rs1 and rs2 inside [lo, hi) below TASK_SIZE and no segment in [lo, hi), keeps
    memnorm. The proof is YAkMemnorm.memnorm_frame_off_segs: a byte off [lo, hi) is in neither window, so both frames
    keep it.
-   SOURCE: h-hreply-k1's row N10-CBAA, origin/cold/h-hreply-k1-p102-N10-CBAA 8419a0f82cf, lib/A/Prog/CheckBoundedAllocA.v
+   SOURCE: h-hreply-k1's row N10-CBAA, lib/A/Prog/CheckBoundedAllocA.v
    :252-256, where the same argument is inlined at the walk's 16-byte stack frame. This file states it once, generic.
    WHY A SEPARATE FILE: frame_of and in_wrange are in YP09.v, which YAkMemnorm.v's Requires do not load. This leaf
    Requires YAkMemnorm and YP09, so YAkMemnorm's closure does not grow.

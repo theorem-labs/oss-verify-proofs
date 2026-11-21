@@ -1,11 +1,11 @@
-(* Modified by Theorem Labs, 2026-10: helpers adapted from proofs/reac-pw/fuzz_role/lib/A/RPgW6aC2h.v at
-   616508a91de2 (c2_notin, c2_nz, c2_af, c2_all256, c2_keep_step, c2_keep, c2_regv, c2_kio renamed c1_*; c2_kio uses
+(* Modified by Theorem Labs, 2026-10: helpers adapted from proofs/reac-pw/fuzz_role/lib/A/RPgW6aC2h.v
+    (c2_notin, c2_nz, c2_af, c2_all256, c2_keep_step, c2_keep, c2_regv, c2_kio renamed c1_*; c2_kio uses
    lib/A/RtPgSteps.v same_io_wvb) for reac-pw/fuzz_rate's image A; the rest of the file is new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6bC1Kit.v at 32f84792c2a6; for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6bC1Kit.v; for image B
    (fuzz_rate.asan-ubsan): the pcs, the shadow offset's register (s4, atom 20), the real frame's bound (R + 0x220),
    the vocab table's address and the read-only check of the bytes after each string are image B's; the prefix c1_
    becomes c1b_; the value of the cell [R+0x100] (the complement of e62.body) and its closed bounds are added. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgW6bC1KitB.v at a191d52e2a9a for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgW6bC1KitB.v for
    reac-pw/fuzz_role's image B (fuzz_role.asan-ubsan): module paths changed (lib/AU/Img0.rsegs, lib/A/RPgBase and
    RPgCSpec, lib/AU/RPgSteps.v rl_ and lib/AU/RPgMem.v rm_ names); the pcs C1B_V 0x813d0, C1B_RSTR 0x813f4 and
    C1B_RCPY 0x81418, the shadow offset's register (s11, atom 27), the vocab strings' addresses (0x20f00 .. 0x21020)

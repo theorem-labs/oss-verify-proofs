@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the node obligation sys_rob and the new system calls); with libreac/fuzz_boxreg's repair of its copy of this file (its proofs/lib/Reusable/YG0c.v). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -18,6 +19,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require Import YK0c 
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require Import YG0f YG0n.
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require Import YM05 YK06.
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require Import YG0b.
+From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require Import RomBase.
 Import ListNotations.
 Import AX2. Import AX2S. Import APG. Import APSG.
 Unset Lia Cache. Unset Nia Cache.
@@ -111,7 +113,8 @@ pose (ms' := fun i : unit => with_mmap_backing flags addr n (mmap_model addr n m
 exists unit, (fun i => mkCfg (advance_past_svc (apply_effect ms (effs i))) (ms' i)), (fun _ => 1), tt.
 split; [| split; [reflexivity |]].
 + apply (YA09.node_chk_grant_mat segs ms md (getr regs 17) unit tt effs ms' _ Hh eq_refl
-(YA09.off222 segs ms _ Hno) (YA09.rb222 segs ms _ md Hno)).
+(YA09.off222 segs ms _ Hno) (YA09.rb222 segs ms _ md Hno)
+(sys_rob_memfree segs ms md (getr regs 17) eq_refl ltac:(rewrite Hno; exact memfree_222))).
 * intros []; cbv beta iota delta [effs ms']; rewrite Hchk.
 rewrite Hnot, bv_eqb_refl, (proj2 (listNN_eqb_eq _ _) eq_refl). reflexivity.
 * intros []. exact Hnot.

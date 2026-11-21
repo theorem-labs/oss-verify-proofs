@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: in both copies the EB' and VB' notations take mbase, and the mfacts record is destructed with its three new fields (mf_resx, mf_kern and mf_rdr). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -51,8 +52,8 @@ Section Theorems16.
   Hypothesis VE : valid_entry IMG (mkEntry sp brk mbase draw) inp.
   Let usp := bv_unsigned sp.
   #[local] Notation bootS' := (bootS sp brk mbase draw lim inp).
-  #[local] Notation EB' := (EB sp draw inp).
-  #[local] Notation VB' := (VB sp draw inp).
+  #[local] Notation EB' := (EB sp mbase draw inp).
+  #[local] Notation VB' := (VB sp mbase draw inp).
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
@@ -68,7 +69,7 @@ Section Theorems16.
     pose proof (sivden_dl _ _ _ HD) as DL.
     assert (HD' : sivden (EB' a tid c pl js) (l_maps L) = sivden (EB' a tid c pl js) (l_maps L')) by (symmetry; exact HD).
     constructor; try assumption.
-    - destruct F as [F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12 F13 F14 F15].
+    - destruct F as [F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12 F13 F14 F15 F16 F17 F18].
       constructor; try assumption.
       + rewrite Hb. exact F6.
       + rewrite DL. exact F8.
@@ -160,8 +161,8 @@ Section Theorems16.
   Hypothesis VE : valid_entry IMG (mkEntry sp brk mbase draw) inp.
   Let usp := bv_unsigned sp.
   #[local] Notation bootS' := (bootS sp brk mbase draw lim inp).
-  #[local] Notation EB' := (EB sp draw inp).
-  #[local] Notation VB' := (VB sp draw inp).
+  #[local] Notation EB' := (EB sp mbase draw inp).
+  #[local] Notation VB' := (VB sp mbase draw inp).
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
@@ -177,7 +178,7 @@ Section Theorems16.
     pose proof (sivden_dl _ _ _ HD) as DL.
     assert (HD' : sivden (EB' a tid c pl js) (l_maps L) = sivden (EB' a tid c pl js) (l_maps L')) by (symmetry; exact HD).
     constructor; try assumption.
-    - destruct F as [F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12 F13 F14 F15].
+    - destruct F as [F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12 F13 F14 F15 F16 F17 F18].
       constructor; try assumption.
       + rewrite Hb. exact F6.
       + rewrite DL. exact F8.

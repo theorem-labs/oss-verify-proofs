@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed ASAN0, asan0_init; internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith NArith List Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.
 From OSSVerify.jsoncons.fuzz_json_cursor.images Require Import AsanUbsan.
@@ -11,7 +12,7 @@ Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 Definition ASAN0 : atable :=
-  {| img_lo := 0x10000; img_hi := 0x6b4000; n_res := 4; shadow_off := 0x7fff8000;
+  {| img_lo := 0x10000; img_hi := 0x6b4000; n_res := 4; n_resx := 2; p_resx := 20; shadow_off := 0x7fff8000;
      a_entry := 0x585d8; rw_lo := 0x14e000; rw_len := 0x566000; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 11;
      x_imemset := 0x92a00; x_imemcpy := 0x92984; x_memset := 0x1468c4; x_memcpy := 0x1464c0; x_memiszero := 0x92f4c;
      x_istrncpy := 0x92e2c; x_sealed := 0x11c06; x_popfree := 0x5ec88;
@@ -20,7 +21,10 @@ Definition ASAN0 : atable :=
      stops_more := [0x5c8fc; 0x5df20; 0x8257c; 0x890c4; 0x890d8; 0x890ec; 0x8ea7c; 0x8eb4c; 0x9c094; 0x9cfa0; 0x9d130; 0xa6e88] |}.
 Definition ASAN0_TEXT_LO : Z := 0x585d8.
 Definition ASAN0_TEXT_N : nat := 250515%nat.
-Definition asan0_init : acs := init_acs_of ASAN0.
+(* the startup plan's initial state at the run's CONFIG_RSEQ flag [rz] (0 or 1);
+   donor:
+   projects/jsoncons/fuzz_bigint/proofs/lib/As0DefsK.v:25 (statement) *)
+Definition asan0_init (rz : Z) : acs := init_acs_of rz ASAN0.
 
 Definition ASEGS0 := AsanUbsan.M.loaded_segments.
 Definition APH0 : PhdrInfo := AsanUbsan.M.phdrs.

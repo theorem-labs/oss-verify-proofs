@@ -1,3 +1,4 @@
+/* Modified by Theorem Labs, 2026-11-14: return -1, not 1, for an input outside the length limits, and 0, not 1, when the temporary file cannot be opened. */
 /* Copyright 2022 Google LLC
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,7 +33,7 @@ int LLVMFuzzerInitialize(int *argc, char ***argv) {
 extern int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
 
   if (Size < kMinInputLength || Size > kMaxInputLength) {
-    return 1;
+    return -1;
   }
 
   // .map extension is required otherwise default pattern validation of
@@ -42,7 +43,7 @@ extern int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
   FILE *fp = fopen(filename, "wb");
   if (!fp) {
     msFree(filename);
-    return 1;
+    return 0;
   }
   fwrite(Data, Size, 1, fp);
   fclose(fp);

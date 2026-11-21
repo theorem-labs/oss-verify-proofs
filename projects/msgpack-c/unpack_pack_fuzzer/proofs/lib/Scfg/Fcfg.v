@@ -18,7 +18,7 @@ Lemma fcfg_family_off : forall i,
   In (bv_unsigned (in_sysno i)) alloc_mark_sysnos -> injected_family_off fcfg i = true.
 Proof.
   intros i H. unfold injected_family_off.
-  destruct H as [E|[E|[E|[E|[]]]]]; rewrite <- E; reflexivity.
+  repeat (destruct H as [E | H]; [rewrite <- E; reflexivity|]). destruct H.
 Qed.
 
 Lemma fcfg_nonalloc_nonspur : forall i m eff,
@@ -85,6 +85,8 @@ Proof.
   intros c e st Hn H. revert Hn. unfold step_nonspur.
   destruct H; cbn [cfg_ms cfg_model]; intros Hn;
     [ eapply sstep_cfg_instr | eapply sstep_cfg_instr_fault | eapply sstep_cfg_instr_unmodeled
+    | eapply sstep_cfg_vdso_call | eapply sstep_cfg_vdso_materialization_fault
+    | eapply sstep_cfg_vdso_unmodeled
     | eapply sstep_cfg_syscall | eapply sstep_cfg_syscall_materialization_fault
     | eapply sstep_cfg_exit | eapply sstep_cfg_killed | eapply sstep_cfg_syscall_unmodeled ];
     eauto.

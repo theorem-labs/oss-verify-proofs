@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YEvtSRr.v, with its module paths changed; 25 of its 59 lines of code are new or changed and 88 lines of the source are left out. *)
 (* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxa_bridge.v; relocated to plugin-hostd/fuzz_command.asan by the GXA address relocator (target fuzz_command.asan): module paths changed; 0 address numerals moved (address checker 0767e70e074a, predict mode, fm.asan -> fuzz_command.asan, symbol + offset; the relocator's table for this file). *)
 (* Modified by Theorem Labs, 2026-10: relocated from lib/A/<same path> to fuzz_command.asan-ubsan by the image-B address relocator (the A-to-B address map, keyed by the image maps' symbol names and by code; GXA symbol keys kept), whose check table lists every changed numeral *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* The bridge from the GXA (ASan printf core) walks to the harness's call-site form.
    GXA ends every walk in the CJ tree's `evt img_segs Q ms`: "some step chain from ms reaches a
    state in Q" (lib/CJ/Lib/Exec.v:41, over `msteps` at Exec.v:21).  The harness continues from
@@ -12,7 +13,7 @@
    Three facts make it one short file, the same three that omx-clap-core/fuzz_manifest's FMbz_bridge.v
    uses for the Bz tree:
    - the two trees name the same image: `@img_segs A_img = tfibsegs` by reflexivity, because
-     RT_IImgA.v:96 builds A_img on tfibsegs;
+     RT_IImgA.v:97 builds A_img on tfibsegs;
    - the two step relations are the same relation: CJ's `mstep` (Exec.v:18) is
      `ms_svc_pending ms = None /\ RiscvSemantics.step segs ms = MachineOk ms'`, which is what each
      step of the harness's `msteps` (lib/Reusable/YK0i.v) asks;

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: both_realizes_entry over the run's segment list (run_segments), with the launch facts valid_launch, entry_launch_ok_va and the channel reader read from the revision's valid_input and valid_entry. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
@@ -19,19 +20,23 @@ Local Existing Instance fx0.
 Section Open.
 
   (* [comment removed for export] *)
+  (* LPS 727298f3 port: the walk is over the run's segment list ([Run.run_segments], which
+     [MustExit.must_exit_in_scfg] reads); the launch facts come from [Run.valid_entry]'s last
+     clause and [Run.valid_input]'s thirteenth and fourteenth. *)
   Lemma both_realizes_entry :
     forall en inp,
       valid_entry BOTHI en inp -> valid_input inp ->
       match en with mkEntry sp brk mbase rnd =>
-        realizes asegs (init_config asegs AsanUbsan.M.init_pc AsanUbsan.M.phdrs sp brk mbase rnd target_alloc_limit inp)
-                 (spec (in_argv inp) (in_fs inp)) end.
+        realizes (run_segments asegs inp sp mbase)
+          (init_config (run_segments asegs inp sp mbase) AsanUbsan.M.init_pc AsanUbsan.M.phdrs sp brk mbase rnd target_alloc_limit inp)
+          (spec (in_argv inp) (in_fs inp)) end.
   Proof.
     intros [sp brk mbase rnd] inp Hen Hvalid.
     pose proof (valid_input_va_size _ Hvalid) as Hsv48.
-    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb Hfit]]].
-    pose proof Hvalid as (Hargv & Henvp & Hfs & _ & Hcreds & _ & _ & Hhw & _).
+    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as (Hsp & Hbrk & Hmb & Hfit & Hlau).
+    pose proof Hvalid as (Hargv & Henvp & Hfs & _ & _ & Hcreds & _ & _ & Hhw & _ & _ & _ & Hvl & Hrdr & _ & _).
     apply realizes_of_srealizes.
-    exact (BothClosed.bs_realizes_closed sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hargv Henvp Hfs Hcreds Hhw).
+    exact (BothClosed.bs_realizes_closed sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hargv Henvp Hfs Hcreds Hhw Hvl Hlau Hrdr).
   Qed.
 
   (* [comment removed for export] *)

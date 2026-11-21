@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YB1p.v (origin/ossv/recipes c8557374ad2e) for libreac/fuzz_knock: module paths changed. fuzz_knock has no port of cgif's YB1e / YB1g / YB19-YB17 memset / memcpy summaries; tfib_fill_spec_memset and tfib_copy_spec_memcpy keep the donor's statements and are proved from this library's lib/AU/YE3d.tfib_memset and lib/AU/YE3c.tfib_memcpy (musl memset 0x8fd50 / memcpy 0x8f94c, = TFIB x_memset / x_memcpy) through the glue lemma tfib_memset_summary and a direct proof. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YB1p.v (theorem-labs/oss-verify-proofs@6b32741d849a) for libreac/fuzz_knock: module paths changed. fuzz_knock has no port of cgif's YB1e / YB1g / YB19-YB17 memset / memcpy summaries; tfib_fill_spec_memset and tfib_copy_spec_memcpy keep the donor's statements and are proved from this library's lib/AU/YE3d.tfib_memset and lib/AU/YE3c.tfib_memcpy (musl memset 0x8fd50 / memcpy 0x8f94c, = TFIB x_memset / x_memcpy) through the glue lemma tfib_memset_summary and a direct proof. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

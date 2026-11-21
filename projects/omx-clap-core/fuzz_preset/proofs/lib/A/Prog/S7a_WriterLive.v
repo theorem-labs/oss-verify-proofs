@@ -3,7 +3,7 @@
    - prhWriter_putN_len_le: a run appends at most its pieces' bytes to the text.
    - prhWriter_newcap_step: the capacity the rest P2 of a run asks from the state after P1 is at most what the whole run
      P1 ++ P2 asks from the first state (the capacities of a run stay in one doubling chain from the entry capacity).
-   The batch kit's e45217a4c7ba removed the kit's entry sums prhWriter_live / LIVE_<fn> (PRH_FnWriter.v's note above
+   The batch kit's removed the kit's entry sums prhWriter_live / LIVE_<fn> (PRH_FnWriter.v's note above
    prhWriter_out: a per-event live room prh_live_evs replaces them), so this file's prhWriter_live_mono /
    prhWriter_live_arith are gone; the live room now composes in S7a_WriterRet.v (prhWriter_live_evs_at).
    Numerals: 4096, 51, 2 ^ 28 (LENGTH: the model's capacity grid and WMAX, PRH_FnWriter.v / prhWriter_out). No ADDRESS. *)

@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Theorem Labs, 2026-10: fuzz_preset, ex_word (fuzz_preset.c :295-305): the BOUNDED text, the PRE-04388d628fb
-   tex_word_specX (lib/A/PRH_FnEx.v blob 76731d160419, kit a3bdeca3920) with ONE added premise, the range of v, stated
-   as an explicit argument. Kit 04388d628fb (PRH_FnEx.v blob d32e3229d5dc) took the range into tex_word_specX itself
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10: fuzz_preset, ex_word (fuzz_preset.c :295-305): the BOUNDED text, the PRE
+   tex_word_specX (lib/A/PRH_FnEx.v blob 76731d160419, kit) with ONE added premise, the range of v, stated
+   as an explicit argument. Kit (PRH_FnEx.v blob d32e3229d5dc) took the range into tex_word_specX itself
    (unconditionally) and made the post an m-form; ExwB.v ex_word_holds_B proves that text. This bounded copy stays
-   while ex_value's EHW cites it (origin/cold/h-rw-pre-7-b-ex_value 30962b8840a, ExvB_Disp.v:39-40).
+   while ex_value's EHW cites it (ExvB_Disp.v:40-41).
    WHY: as written the text admits values of v the code cannot meet (the internal file specX-obstacle.md, BExWord 2026-10-29,
    accepted by K0's owner h-hpreset-7 09:16Z): v = 2 ^ 64 (the register a3 = w64 v = 0, so `beqz s2` at B 0x8497c takes
    the NULL branch while the text, v <> 0, asks in->differs = 1), and v >= sp with v's shadow byte inside ex_word's own
@@ -14,9 +15,9 @@
    (the RunCeil field, YM05.v:21 alloc_ceiling_value) and so under every
    byte ex_word's run writes before the check. ex_value, the one caller in B's listing (B 0x8395c), pays it from its tree
    facts (ExvB_Open_kt.v exv_foot_rng).
-   tex_word_specX_vr below is the pre-04388d628fb tex_word_specX VERBATIM plus the line `ex_word_vrange v ->` after the
-   v clause, at the #102 kit's ledger (prh_ledger with the two #102 cells, arguments most own: walkkit-next
-   decff67d721f, PRH_Base.v blob 3004a98fe2d9); tex_word_specX_vr_of_specX shows that kit's tex_word_specX (PRH_FnEx.v
+   tex_word_specX_vr below is the pre tex_word_specX VERBATIM plus the line `ex_word_vrange v ->` after the
+   v clause, at the #102 kit's ledger (prh_ledger with the two #102 cells, arguments most own: walkkit-next,
+   PRH_Base.v blob 3004a98fe2d9); tex_word_specX_vr_of_specX shows that kit's tex_word_specX (PRH_FnEx.v
    blob 45ddb7a7d5ae) implies it (the range premise from ex_word_vrange, the post weakened: the memnorm keep and S' = S
    dropped). The pcs above are image B' pcs (the #102 pin d663f82d), relocated from the old-pin text 2e2ab2f3deb4.
    Numerals: 4 (LENGTH: v->type), 2 ^ 47 (DERIVED: the user address space top, ly_stk_hi's bound in astk_ok). *)
@@ -44,8 +45,8 @@ Variable ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte
 Variable SK : YI16.sink_head.
 #[local] Abbreviation rdW W mem := (mrestrict (w_H W) mem).
 
-(* PRH_FnEx.v:216-244 (the #102 kit decff67d721f) verbatim but for its range premise `0 <= v /\ v + 4 <= 2 ^ 47` and
-   the post's S' = S / memnorm keep (the pre-04388d628fb shape), plus `ex_word_vrange v ->` after the v clause *)
+(* PRH_FnEx.v:216-244 (the #102 kit) verbatim but for its range premise `0 <= v /\ v + 4 <= 2 ^ 47` and
+   the post's S' = S / memnorm keep (the pre shape), plus `ex_word_vrange v ->` after the v clause *)
 Definition tex_word_specX_vr : Prop :=
   forall ly S Hp W regs mem md ch (q w ty v t x0 i0 d : Z) (wl x : list Z) Lam peak cnt fail ran most own,
   let len := Z.of_nat (length x) in
@@ -73,7 +74,7 @@ Definition tex_word_specX_vr : Prop :=
         (~ hit /\ getr regs' 10 = w64 (-1) /\ prhex_same W mem W' mem' q 8 /\
          prhex_same W mem W' mem' (q + 32) 4)))).
 
-(* kit 04388d628fb's tex_word_specX gives this one: its range premise `0 <= v /\ v + 4 <= 2 ^ 47` follows from
+(* kit's tex_word_specX gives this one: its range premise `0 <= v /\ v + 4 <= 2 ^ 47` follows from
    ex_word_vrange (trivially at v = 0), every other premise is passed through, and its post fpostWm (fpostW at
    fQmn mem Q) gives fpostW at Q by dropping S' = S and the memnorm keep *)
 Lemma tex_word_specX_vr_of_specX : tex_word_specX B ARx SK -> tex_word_specX_vr.

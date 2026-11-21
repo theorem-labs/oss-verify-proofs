@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo at the window floor: hiA_jo_at_main quantifies QrOY.hiA_jo's floor fact r8 (BOTJ <= stk_floor <= TOPJ)). *)
 
 From Stdlib Require ZArith NArith List Lia Bool Permutation.
 From stdpp Require gmap.
@@ -93,15 +94,15 @@ Notation DLj := (@DL_AR (Band_RC RC.rc_canary)).
 Notation DCoj := (DCo_jo RC.rc_canary LV).
 Notation STATj := (STAT_A AY.A4L BOTJ TOPJ jo_STATC).
 
-Theorem hiA_jo_at_main : forall r1 r2 r3 r4 r5 r6 r7
+Theorem hiA_jo_at_main : forall r1 r2 r3 r4 r5 r6 r7 r8
 (LM0 : list HI.blk) (B0 : JH.bud) (mo : Model) (FULL : word -> option byte) (ms0 : machine_state),
 ms_mem ms0 = FULL ->
 handoff_heap AY.A4L LV PERM0 TMAX NMAX DLj RE DCoj FR0 MJ.S_AJ BAUX STATj (JH.bM B0) LM0 B0 (mkCfg ms0 mo) ->
 Forall (fun b : HI.blk => snd b < 2^40) LM0 -> JH.bB B0 + 2^23 <= 2^39 -> 0 <= JH.bQ B0 ->
 forall ms, ms_mem ms = FULL ->
-JH.HEAPA AY.A4L (@hiA_jo RC__ LA LV PERM0 TMAX NMAX RE FR0 BAUX BOTJ TOPJ HS r1 r2 r3 r4 r5 r6 r7) tt [] LM0 [] B0 (view LV mo FULL) (mkCfg ms mo).
+JH.HEAPA AY.A4L (@hiA_jo RC__ LA LV PERM0 TMAX NMAX RE FR0 BAUX BOTJ TOPJ HS r1 r2 r3 r4 r5 r6 r7 r8) tt [] LM0 [] B0 (view LV mo FULL) (mkCfg ms mo).
 Proof.
-intros r1 r2 r3 r4 r5 r6 r7 LM0 B0 mo FULL ms0 E0 HH FLM HBB HQ ms E.
+intros r1 r2 r3 r4 r5 r6 r7 r8 LM0 B0 mo FULL ms0 E0 HH FLM HBB HQ ms E.
 exact (heapA63_at_main_ms AY.A4L LV PERM0 TMAX NMAX DLj RE DCoj FR0 MJ.S_AJ BAUX STATj LM0 B0 mo FULL ms0 E0 HH FLM HBB HQ ms E).
 Qed.
 End JoAtMain.
@@ -225,15 +226,15 @@ Notation DLj := (@DL_AR (Band_RC RC.rc_canary)).
 Notation DCoj := (DCo_jo RC.rc_canary LV).
 Notation STATj := (STAT_A AY.A4L BOTJ TOPJ jo_STATC).
 
-Theorem hiA_jo_at_main : forall r1 r2 r3 r4 r5 r6 r7
+Theorem hiA_jo_at_main : forall r1 r2 r3 r4 r5 r6 r7 r8
 (LM0 : list HI.blk) (B0 : JH.bud) (mo : Model) (FULL : word -> option byte) (ms0 : machine_state),
 ms_mem ms0 = FULL ->
 handoff_heap AY.A4L LV PERM0 TMAX NMAX DLj RE DCoj FR0 MJ.S_AJU BAUX STATj (JH.bM B0) LM0 B0 (mkCfg ms0 mo) ->
 Forall (fun b : HI.blk => snd b < 2^40) LM0 -> JH.bB B0 + 2^23 <= 2^39 -> 0 <= JH.bQ B0 ->
 forall ms, ms_mem ms = FULL ->
-JH.HEAPA AY.A4L (@hiA_jo RC__ LA LV PERM0 TMAX NMAX RE FR0 BAUX BOTJ TOPJ HS r1 r2 r3 r4 r5 r6 r7) tt [] LM0 [] B0 (view LV mo FULL) (mkCfg ms mo).
+JH.HEAPA AY.A4L (@hiA_jo RC__ LA LV PERM0 TMAX NMAX RE FR0 BAUX BOTJ TOPJ HS r1 r2 r3 r4 r5 r6 r7 r8) tt [] LM0 [] B0 (view LV mo FULL) (mkCfg ms mo).
 Proof.
-intros r1 r2 r3 r4 r5 r6 r7 LM0 B0 mo FULL ms0 E0 HH FLM HBB HQ ms E.
+intros r1 r2 r3 r4 r5 r6 r7 r8 LM0 B0 mo FULL ms0 E0 HH FLM HBB HQ ms E.
 exact (heapA63_at_main_ms AY.A4L LV PERM0 TMAX NMAX DLj RE DCoj FR0 MJ.S_AJU BAUX STATj LM0 B0 mo FULL ms0 E0 HH FLM HBB HQ ms E).
 Qed.
 End JoAtMain.

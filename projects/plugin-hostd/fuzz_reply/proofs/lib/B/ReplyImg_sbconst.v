@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs: reply image row img-sbconst-B of the cf layer at plugin-hostd/fuzz_reply.
    rule 24: no function proved (kind: closed image fact over the constant-cell table of reply's image B,
    fuzz_reply.asan-ubsan, pin 10ffb5f9202a).
 
-   SB_CONST, proofs/cgif/cgif_file_fuzzer/lib/YGcfInstDrainQ.v:45 @ 1c81ef042c9 (used as Hypothesis SBC, :154), over the
+   SB_CONST, proofs/cgif/cgif_file_fuzzer/lib/YGcfInstDrainQ.v:45 (used as Hypothesis SBC, :154), over the
    image class's field im_const (Context {IM : AImg}).  Reply does not carry YGcfInstDrainQ.v, so the Lemma states the
-   body of SB_CONST verbatim at reply's instance IM := AImg_reply (B/AGif2reply.v:24, im_const := YF0m.Tfib_const).
+   body of SB_CONST verbatim at reply's instance IM := AImg_reply (B/AGif2reply.v:25, im_const := YF0m.Tfib_const).
    Proof: the space-base cell c8 (AInst o_space) (ASp 0) is found in Tfib_const by cell_lookup, computed by vm_compute
-   (cgif's pattern: YFhl.sb_cell, B/YFhl.v:123-127). *)
+   (cgif's pattern: YFhl.sb_cell, B/YFhl.v:124-128). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -25,7 +26,7 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import ImgBas
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B Require Import AGif2reply.
 Open Scope Z_scope.
 
-(* SB_CONST at image B: YGcfInstDrainQ.v:45 @ 1c81ef042c9, at IM := AImg_reply. *)
+(* SB_CONST at image B: YGcfInstDrainQ.v:45, at IM := AImg_reply. *)
 Lemma SB_CONST_B : forall ly, In (ACell (AInst o_space) 8 (AV (ASp 0))) (@im_const AImg_reply ly).
 Proof.
 intros ly. change (In (ACell (AInst o_space) 8 (AV (ASp 0))) (Tfib_const ly)).

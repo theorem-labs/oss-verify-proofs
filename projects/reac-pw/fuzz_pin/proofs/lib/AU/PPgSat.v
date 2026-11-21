@@ -10,7 +10,7 @@
    satisfiability audit). It holds no Admitted, admit, Axiom or Parameter.
 
    THE METER IS THE REAL ONE. The consumer of PPgLib's statement fixes the meter: lib/A/AD2o.v hands the
-   driver `ameter_triv` (knock's lib/A/AD2o.v:39-41 at origin/ossv/recipes 6ebe35ba632 passes
+   driver `ameter_triv` (knock's lib/A/AD2o.v:39-41 passes
    `ameter_triv APgLib.XL0 APgLib.XL0 APgLib.RO_LO APgLib.RO_HI` into DRV_MAINX, and knock's
    lib/A/APgLib.v:305 states knock_lib_x_all at `TfibB ameter_triv XL0 XL0 RO_LO RO_HI`; fuzz_qdisc's and
    fuzz_grant's closes do the same). Pin's close does the same (lib/A/PPgLib.v pin_lib_x_all). So
@@ -330,7 +330,7 @@ Qed.
 
 (* CA1's and CP1's cell geometry at the real offsets: the count slot is frame + 0x20 of a 64-byte class-0
    frame (image B 0x80cd0 `addi s6,s7,32`), the out-cells are frame + 0x20 and frame + 0x40 of the harness's
-   128-byte class-1 frame (image B 0x808f0 / 0x808f4); frames are 32-aligned (al_frames, lib/Reusable/YG0d.v:460). *)
+   128-byte class-1 frame (image B 0x808f0 / 0x808f4); frames are 32-aligned (al_frames, lib/Reusable/YG0d.v:461). *)
 Lemma pin_sat_frame_cells : forall F0 F1, 0 < F0 -> F0 mod 32 = 0 -> 0 < F1 -> F1 mod 32 = 0 ->
 F0 + 0x20 <> 0 /\ (F0 + 0x20) mod 8 = 0 /\ F0 mod 8 = 0 /\ F0 <= F0 + 0x20 /\ F0 + 0x20 + 8 <= F0 + fs_frame_bytes 0 /\
 (F1 + 0x20) mod 8 = 0 /\ (F1 + 0x40) mod 8 = 0 /\ F1 mod 8 = 0 /\

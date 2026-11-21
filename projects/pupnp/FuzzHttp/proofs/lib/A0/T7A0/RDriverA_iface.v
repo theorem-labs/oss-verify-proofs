@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack window below sp; the launch's input, mmap base and entry draw). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp Require Import gmap.
@@ -153,7 +154,7 @@ Section IFACE.
   Variable FI : fs_if.
   Variable AI : am_if FI.
   Variable PZ : mem -> Prop.
-  Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw) (TID : Z) (S4 S5 S6 S7 S8 S9 S10 S11 : word).
+  Variables (sp0 : word) (argv envp : list (list byte)) (inp : ProcInput) (mbase : word) (rnd : EntryDraw) (TID : Z) (S4 S5 S6 S7 S8 S9 S10 S11 : word).
   Notation usp0 := (bv_unsigned sp0).
   Notation gpv := (Z_to_bv 64 0x10800).
   Notation tpv := (Z_to_bv 64 RATPA).
@@ -193,8 +194,8 @@ Section IFACE.
       /\ rw_cells asegs mm A [CB (length DATA) DATA; CB (Z.to_nat (cap - Z.of_nat (length DATA))) junk]
       /\ rw_cells asegs mm (sh A) (shadow_cells (block_shadow cap))
       /\ TRFRAME mm pad sc (ap_payload_len ap) A L /\ MFRAME sp0 argv mm mpad S7 S6 S5 S4
-      /\ stk asegs mm (usp0 - 8388608) (usp0 + -208)
-      /\ BASE_A2 PZ sp0 argv envp uid hw rnd TID stdout_init mm
+      /\ stk asegs mm (usp0 - 6144512) (usp0 + -208)
+      /\ BASE_A2 PZ sp0 argv envp inp mbase rnd TID stdout_init mm
       /\ rw_cells asegs mm RERRNOA [C4 errv]
       /\ CJ1 mm.
 End IFACE.

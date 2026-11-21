@@ -212,7 +212,7 @@ Qed.
      errno_low : api_env        core, PENDING THE RECORD CORE (Reusable.YCeg.tl_env, YCeg.v:38; YCeg.v:25 refused name)
      ML        : model_laws     core B bundle fact (the core's TfibLib, same pending file)
      SMP       : stack_malloc_progressP, ASM1 : astack_malloc_realizes 1
-                                a Theorem Labs lane's class-1 fake-stack rules, a working branch ff613211c11 (cgif lib/A/ACed.v:125-133)
+                                a Theorem Labs lane's class-1 fake-stack rules, a working branch (cgif lib/A/ACed.v:125-133)
      PC1       : the class-1 entry of B's code table is __asan_stack_malloc_1 (0x3d868); core, the TfibLib code table,
                  same pending file.
    The state is the end state of rrB_to_E1 with fp_regs / fp_csr (the cfg_at form of the spec's entry). ---- *)

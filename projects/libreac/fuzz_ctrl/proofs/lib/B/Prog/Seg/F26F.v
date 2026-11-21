@@ -3,9 +3,9 @@
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
    source run: lib/B/Prog/Seg/F26.v f26_lu_evt (:62) and seg_F26's own inline stretch 0x828a4 -> 0x828b4
-     (:479-495) at a working branch 3803efccea0 (blob dafb3d337f8c529014a0acbf8990acdf34a2e73c);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+     (:479-495) at a working branch (blob dafb3d337f8c529014a0acbf8990acdf34a2e73c);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    compare: f26_lu_evt is the UL bridge that carries the reac_ports_unknown contract into seg_F26's UL run; an
      _F stretch never runs a callee, so the bridge has no footprint twin.  The stretch is split at the call
      instead: seg_F26_pre_F re-runs F26.v:481-482 (0x828a4 -> the callee entry 0x88628, ra = 0x828b4) and

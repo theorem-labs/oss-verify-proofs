@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/Prog/diginet_cursor_init.v at 9bd29914ffdef650a37285056a472ff186b4331a to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/Prog/diginet_cursor_init.v to fuzz_transport's images *)
 (* Walk of diginet_cursor_init (src/diginet_msg.c:10-18 at 835f336c) in fuzz_transport.plain, 0x17d44.
    Written by Theorem Labs. *)
 From Stdlib Require Import ZArith List Lia Bool.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the frees' invariant is MInvR, MInv with the vDSO fact, so the state's well-formedness is read from its MInv half). *)
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
 #[local] Ltac2 tbs__ () := ["@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocLayout"; "C_P"; "@Corelib.Numbers.BinNums"; "Z"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_fslow__G3.Mal_fslow"; "rsv32_stmt"; "nt_contractR_P"; "nt_contractR_d_P"; "nt_contractR_ex_P"; "nt_contractR_exd_P"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.ExampleMemcpy"; "segsP"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymSoundR"; "SPJ"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract"; "EC_P"; "Pre_free"; "Pre_freeI"; "free_contract_P"; "free_contract_ex_P"; "@Corelib.Init.Datatypes"; "pair"; "prod"; "list"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocModel"; "ameta"; "frame"; "sptr"; "FUser"; "astate"; "fkind"; "fr_kind"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "Model"; "event"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.Safety"; "world"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymState"; "valuation"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ContractDrv"; "free_drv_ex_P"; "J_free_drv"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocIface"; "MA"; "@Corelib.Init.Logic"; "eq"; "or"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ContractS"; "J_free_S"; "free_drv_S_P"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.FreeQuickPost"; "quick_case"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocInv"; "WF"; "frame_ptr"; "frames"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_free__G2.Mal_free_quickE"; "J_free_drvST"; "J_free_drvT"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.P.Mal_fslow__G1.Mal_fslow_I"; "slow_case"; "@Stdlib.Lists.List"; "In"].
@@ -49,7 +50,8 @@ Proof.
   intros NTC RSV. apply (free_contract_of_T segsP C_P EC_P). intros ok A Kc rho HS. apply triple_inh. intros w0 [_ (HMI & Hin & _)]. destruct A as [s L].
   unfold ma_blocks, blocks in Hin. cbn [ma_s ma_L] in Hin. apply in_map_iff in Hin as ([q n0] & E & Hub). cbn [fst snd] in E. injection E as E1 E2.
   destruct (user_block_frame s q n0 Hub) as (g & am & i & fr & Hfr & Hk & -> & ->).
-  destruct (quick_or_slow s g am i fr (proj1 HMI) Hfr Hk) as [HQ | HSL].
+  (* LPS 727298f3: [HMI] is an [MInvR] (Malloc/Contract.v: [MInv] and the vDSO fact). *)
+  destruct (quick_or_slow s g am i fr ltac:(first [exact (proj1 (proj1 HMI)) | exact (proj1 HMI)]) Hfr Hk) as [HQ | HSL].
   - exact (free_contract_quick ok (mkMA s L) Kc rho g am i fr HS HQ E1 E2).
   - exact (free_contract_slow_P ok (mkMA s L) Kc rho g am i fr NTC RSV HS HSL E1 E2).
 Qed.
@@ -60,7 +62,7 @@ Proof.
   intros NTC RSV. apply (free_contract_ex_of_T segsP C_P EC_P). intros A Kc rho HVI w0 Hw0. pose proof Hw0 as [_ (HMI & Hin & _)]. destruct A as [s L].
   unfold ma_blocks, blocks in Hin. cbn [ma_s ma_L] in Hin. apply in_map_iff in Hin as ([q n0] & E & Hub). cbn [fst snd] in E. injection E as E1 E2.
   destruct (user_block_frame s q n0 Hub) as (g & am & i & fr & Hfr & Hk & -> & ->).
-  destruct (quick_or_slow s g am i fr (proj1 HMI) Hfr Hk) as [HQ | HSL].
+  destruct (quick_or_slow s g am i fr ltac:(first [exact (proj1 (proj1 HMI)) | exact (proj1 HMI)]) Hfr Hk) as [HQ | HSL].
   - exact (free_contract_quick_ex (mkMA s L) Kc rho g am i fr HQ E1 E2 w0 Hw0).
   - exact (free_contract_slow_ex_P (mkMA s L) Kc rho g am i fr NTC RSV HVI HSL E1 E2 w0 Hw0).
 Qed.
@@ -78,7 +80,7 @@ Proof.
   pose proof Hw0 as [_ ((HMI & Hin & _) & _)]. destruct A as [s L].
   unfold ma_blocks, blocks in Hin. cbn [ma_s ma_L] in Hin. apply in_map_iff in Hin as ([q n0] & E & Hub). cbn [fst snd] in E. injection E as E1 E2.
   destruct (user_block_frame s q n0 Hub) as (g & am & i & fr & Hfr & Hk & -> & ->).
-  destruct (quick_or_slow s g am i fr (proj1 HMI) Hfr Hk) as [HQ | HSL].
+  destruct (quick_or_slow s g am i fr ltac:(first [exact (proj1 (proj1 HMI)) | exact (proj1 HMI)]) Hfr Hk) as [HQ | HSL].
   - exact (free_drv_quick_ex (mkMA s L) k X Kc rho g am i fr HQ E1 E2 w0 Hw0).
   - exact (free_drv_slow_ex_P (mkMA s L) k X Kc rho g am i fr NTC RSV HVI HSL E1 E2 w0 Hw0).
 Qed.
@@ -119,7 +121,7 @@ Proof.
   pose proof Hw0 as [_ ((HMI & Hin & _) & _)]. destruct A as [s L].
   unfold ma_blocks, blocks in Hin. cbn [ma_s ma_L] in Hin. apply in_map_iff in Hin as ([q n0] & E & Hub). cbn [fst snd] in E. injection E as E1 E2.
   destruct (user_block_frame s q n0 Hub) as (g & am & i & fr & Hfr & Hk & -> & ->).
-  destruct (quick_or_slow s g am i fr (proj1 HMI) Hfr Hk) as [HQ | HSL].
+  destruct (quick_or_slow s g am i fr ltac:(first [exact (proj1 (proj1 HMI)) | exact (proj1 HMI)]) Hfr Hk) as [HQ | HSL].
   - exact (P.Mal_free__G2.Mal_free_quickE.free_drv_quick_S ok (mkMA s L) k X Kc rho g am i fr HS HQ E1 E2).
   - pose proof (P.Mal_fslow__G3.Mal_fslow.free_drv_slow_S_P ok (mkMA s L) k X Kc rho g am i fr NTC RSV HS HSL E1 E2) as T. cbn [ma_s ma_L] in T.
     exact T.

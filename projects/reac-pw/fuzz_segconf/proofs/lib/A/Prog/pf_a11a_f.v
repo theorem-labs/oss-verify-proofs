@@ -11,8 +11,8 @@
    - 8. the record update through the ASan reader: the bytes the two snprintf calls and the `sw` of model_set
         leave in the block c hold r_upd cf gi (rs_with_model m file) (a11f_rconf_model).
 
-   Sections 3, 4 and 5 are the plain walk's image-free helpers, lib/Prog/pf_p7_lemmas.v at commit
-   cfdd99183965 (by the plain-build walk owner), copied with the prefix p7_ renamed a11f_. That file's section 1 (list facts) is
+   Sections 3, 4 and 5 are the plain walk's image-free helpers, lib/Prog/pf_p7_lemmas.v
+    (by the plain-build walk owner), copied with the prefix p7_ renamed a11f_. That file's section 1 (list facts) is
    not needed here, and its section 2 (Patch, over the plain build's bytes_at / munch) is not ported. Sections 6, 7
    and 8 are new. Lib.Mem's zxb is named by its full path: this file Requires no lib/Lib/ module itself, and
    Lib.Mem is loaded through pfA_facts. *)
@@ -503,7 +503,7 @@ Qed.
     cur->model_set, 0x88590 snprintf into cur->model_file): every byte of the block [c, c + SEG_C_SIZE) outside
     the three windows is the entry reader's, and the three windows hold the two C strings and the flag. The
     agreement is asked only inside the block, which is all rconf_enc reads and all a caller of snprintf can give:
-    each snprintf keeps nothing in its own scratch window below sp (lib/A/Rt/RtPFCmd.v:341-342). *)
+    each snprintf keeps nothing in its own scratch window below sp (lib/A/Rt/RtPFCmd.v:342-343). *)
 Definition a11f_wrote (rd0 rd : reader) (c : Z) (gi : nat) (m file : list Z) : Prop :=
   (forall a, c <= a < c + seg_spec.SEG_C_SIZE ->
      ~ (seg_spec.rseg_addr c gi + seg_spec.RS_MODEL <= a

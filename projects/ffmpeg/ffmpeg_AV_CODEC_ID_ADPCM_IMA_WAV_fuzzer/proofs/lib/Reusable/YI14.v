@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/YI14.v, with its module paths changed; 15 of its 334 lines of code are new or changed and 3 lines of the source are left out. *)
 (* Modified by Trevor Hansen, 2026-11: copied from projects/zlib/checksum_fuzzer/proofs/lib/Reusable/YI14.v for ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: the FILE sink's fields moved into an option-typed sk_file, since this image links no FILE sink; file_env, file_sink_at and file_addr hold only when sk_file is Some. *)
 From OSSVerify.Proofs.ffmpeg.ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -34,14 +35,17 @@ pose proof (f_equal (fun l => match l with b :: _ => bv_unsigned b | [] => 0 end
 pose proof (f_equal (@tl _) E) as Et. cbn [tl] in Et. cbv beta iota in Exy.
 inversion H1; subst. inversion H2; subst. rewrite !HU in Exy by assumption. f_equal; [exact Exy | apply IH; assumption].
 Qed.
-Class sink_syms : Type := mkSinkSyms {
-sk_ofl_lock : Z;
-sk_threaded : Z;
+Record file_sink_syms : Type := mkFileSinkSyms {
 sk_read : Z; sk_write : Z; sk_seek : Z; sk_close : Z;
 sk_path_addr : Z;
 sk_mode_addr : Z;
 sk_trailer_addr : Z;
-sk_rwa_addr : Z;
+sk_rwa_addr : Z
+}.
+Class sink_syms : Type := mkSinkSyms {
+sk_ofl_lock : Z;
+sk_threaded : Z;
+sk_file : option file_sink_syms;
 sk_highs_addr : Z;
 sk_ones_addr : Z
 }.
@@ -56,11 +60,11 @@ Variable MR : MR_t.
 Context {SH : sink_head} {SK : sink_syms}.
 Local Notation segs := (ms_segs B).
 Local Notation fld mem f off n v := (val_mem segs mem (f + off) n v).
-Definition file_static (mem : word -> option byte) (f fd : Z) : Prop :=
+Definition file_static (F : file_sink_syms) (mem : word -> option byte) (f fd : Z) : Prop :=
 0 <= fd < 2 ^ 31 /\
 fld mem f 0 4 4   /\ fld mem f 8 8 0   /\ fld mem f 16 8 0   /\
-fld mem f 24 8 sk_close /\ fld mem f 48 8 0   /\
-fld mem f 64 8 sk_read /\ fld mem f 72 8 sk_write /\ fld mem f 80 8 sk_seek /\
+fld mem f 24 8 (sk_close F) /\ fld mem f 48 8 0   /\
+fld mem f 64 8 (sk_read F) /\ fld mem f 72 8 (sk_write F) /\ fld mem f 80 8 (sk_seek F) /\
 fld mem f 88 8 (f + FILE_BUF_OFF)   /\ fld mem f 96 8 FILE_BUFSIZ   /\
 fld mem f 104 8 0   /\ fld mem f 112 8 0   /\
 fld mem f 120 4 fd /\ fld mem f 124 4 0   /\ fld mem f 128 8 0   /\
@@ -74,26 +78,34 @@ Definition file_window (mem : word -> option byte) (f : Z) (P : list Z) : Prop :
 (fld mem f 32 8 (f + FILE_BUF_OFF + FILE_BUFSIZ) /\ fld mem f 40 8 (f + FILE_BUF_OFF + Z.of_nat (length P)) /\
 fld mem f 56 8 (f + FILE_BUF_OFF) /\ fld mem f 136 4 U32M1   /\
 garr8 segs mem (f + FILE_BUF_OFF) P /\ Z.of_nat (length P) <= FILE_BUFSIZ).
-Definition file_at (mem : word -> option byte) (f fd : Z) (P : list Z) : Prop :=
-file_static mem f fd /\ file_window mem f P.
+Definition file_at (F : file_sink_syms) (mem : word -> option byte) (f fd : Z) (P : list Z) : Prop :=
+file_static F mem f fd /\ file_window mem f P.
+Definition file_env (F : file_sink_syms) (mem : word -> option byte) : Prop :=
+garr8 segs mem (sk_path_addr F) (sink_path_Z ++ [0]) /\
+garr8 segs mem (sk_mode_addr F) (sink_mode_Z ++ [0]) /\
+garr8 segs mem (sk_trailer_addr F) (sink_trailer_Z ++ [0]) /\
+garr8 segs mem (sk_rwa_addr F) sink_rwa_Z.
 Definition stdio_env (mem : word -> option byte) : Prop :=
 val_mem segs mem sk_threaded 1 0 /\
 val_mem segs mem sk_ofl_lock 4 0 /\
-garr8 segs mem sk_path_addr (sink_path_Z ++ [0]) /\
-garr8 segs mem sk_mode_addr (sink_mode_Z ++ [0]) /\
-garr8 segs mem sk_trailer_addr (sink_trailer_Z ++ [0]) /\
-garr8 segs mem sk_rwa_addr sink_rwa_Z /\
+match sk_file with Some F => file_env F mem | None => True end /\
 garr8 segs mem sk_highs_addr sink_highs_Z /\
 garr8 segs mem sk_ones_addr sink_ones_Z.
 Definition names_sink (e : FdEntry) : Prop :=
 match e with FdFile p _ | FdFileW p _ | FdFileA p _ | FdFileRW p _ => p = sink_path | _ => False end.
-Definition sink_at (mem : word -> option byte) (md : Model) (f : Z) (S : list Z) : Prop :=
+Definition file_sink_at (F : file_sink_syms) (mem : word -> option byte) (md : Model) (f : Z) (S : list Z) : Prop :=
 exists (fd : Z) (W P : list Z),
 S = W ++ P /\ bytes_ok S /\ Z.of_nat (length S) <= SINK_MAX /\
-stdio_env mem /\ file_at mem f fd P /\ word_mem segs mem sk_ofl_head f /\ f <> 0 /\
+stdio_env mem /\ file_at F mem f fd P /\ word_mem segs mem sk_ofl_head f /\ f <> 0 /\
 Fs.fs_lookup (m_fs md) sink_path = Some (bytes W) /\
 fd_lookup (m_fds md) (Z_to_bv 64 fd) = Some (FdFileW sink_path (Z_to_bv 64 (Z.of_nat (length W)))) /\
 Namei.fd_names_path (fd_remove (m_fds md) (Z_to_bv 64 fd)) sink_path = false.
+Definition sink_at (mem : word -> option byte) (md : Model) (f : Z) (S : list Z) : Prop :=
+match sk_file with Some F => file_sink_at F mem md f S | None => False end.
+Lemma sink_at_inv : forall mem md f S, sink_at mem md f S -> exists F, sk_file = Some F /\ file_sink_at F mem md f S.
+Proof. intros mem md f S. unfold sink_at. destruct sk_file as [F|]; [intros H; exists F; split; [reflexivity | exact H] | intros []]. Qed.
+Lemma sink_at_intro : forall F mem md f S, sk_file = Some F -> file_sink_at F mem md f S -> sink_at mem md f S.
+Proof. intros F mem md f S EF H. unfold sink_at. rewrite EF. exact H. Qed.
 (* The checksum harness never opens a GIF sink.  A closed sink therefore
    needs only the musl lock state and empty open-file list; CGIF-specific
    string/table contents remain obligations of stdio_env for sink_at. *)
@@ -120,11 +132,13 @@ Definition sink_gone (md0 md : Model) : Prop :=
 m_fds md = m_fds md0 /\ m_fs md = Fs.fs_remove (m_fs md0) sink_path.
 Definition sink_fp (f : Z) : list (Z * Z) := [sink_token; (f, f + FILE_BLOCK)].
 Definition fp_avoids (FP : list (Z * Z)) (lo hi : Z) : Prop := forall a, lo <= a < hi -> ~ inFP FP a.
+Definition file_addr (F : file_sink_syms) (a : Z) : Prop :=
+(sk_path_addr F <= a < sk_path_addr F + 13) \/ (sk_mode_addr F <= a < sk_mode_addr F + 3) \/
+(sk_trailer_addr F <= a < sk_trailer_addr F + 2) \/ (sk_rwa_addr F <= a < sk_rwa_addr F + 8).
 Definition env_addr (a : Z) : Prop :=
 (sk_ofl_head <= a < sk_ofl_head + 8) \/ a = sk_threaded \/ (sk_ofl_lock <= a < sk_ofl_lock + 4) \/
-(sk_path_addr <= a < sk_path_addr + 13) \/ (sk_mode_addr <= a < sk_mode_addr + 3) \/
-(sk_trailer_addr <= a < sk_trailer_addr + 2) \/
-(sk_rwa_addr <= a < sk_rwa_addr + 8) \/ (sk_highs_addr <= a < sk_highs_addr + 8) \/ (sk_ones_addr <= a < sk_ones_addr + 8).
+match sk_file with Some F => file_addr F a | None => False end \/
+(sk_highs_addr <= a < sk_highs_addr + 8) \/ (sk_ones_addr <= a < sk_ones_addr + 8).
 Class sink_laws : Prop := mkSinkLaws {
 skl_env : forall a, env_addr a ->
 in_img B a /\ ~ static_owned B a /\ ~ (ms_ctx B <= a < ms_ctx B + CTX_SIZE) /\ ~ (errno_addr B <= a < errno_addr B + 4);
@@ -138,21 +152,23 @@ Proof. intros mem mem' a n v Hfr Hv k Hk. rewrite Hfr by lia. exact (Hv k Hk). Q
 Lemma stdio_env_frame : forall (mem mem' : word -> option byte),
 (forall a, env_addr a -> mbyte segs mem' a = mbyte segs mem a) -> stdio_env mem -> stdio_env mem'.
 Proof.
-intros mem mem' Hfr (H1 & H0 & H2 & H3 & H4 & H5 & H6 & H7). split; [|split; [|split; [|split; [|split; [|split; [|split]]]]]].
+intros mem mem' Hfr (H1 & H0 & HF & H6 & H7). split; [|split; [|split; [|split]]].
 - eapply val_mem_frame; [|exact H1]. intros x Hx. apply Hfr. right. left. cbn in Hx. lia.
 - eapply val_mem_frame; [|exact H0]. intros x Hx. apply Hfr. right. right. left. cbn in Hx. lia.
-- eapply garr8_frame; [exact H2|]. intros x Hx. apply Hfr. right. right. right. left. cbn in Hx. lia.
-- eapply garr8_frame; [exact H3|]. intros x Hx. apply Hfr. right. right. right. right. left. cbn in Hx. lia.
-- eapply garr8_frame; [exact H4|]. intros x Hx. apply Hfr. right. right. right. right. right. left. cbn in Hx. lia.
-- eapply garr8_frame; [exact H5|]. intros x Hx. apply Hfr. do 6 right. left. cbn in Hx. lia.
-- eapply garr8_frame; [exact H6|]. intros x Hx. apply Hfr. do 7 right. left. cbn in Hx. lia.
-- eapply garr8_frame; [exact H7|]. intros x Hx. apply Hfr. do 8 right. cbn in Hx. lia.
+- revert HF Hfr. unfold env_addr. destruct sk_file as [F|]; intros HF Hfr; [|exact I].
+  destruct HF as (H2 & H3 & H4 & H5). split; [|split; [|split]].
+  + eapply garr8_frame; [exact H2|]. intros x Hx. apply Hfr. right. right. right. left. left. cbn in Hx. lia.
+  + eapply garr8_frame; [exact H3|]. intros x Hx. apply Hfr. right. right. right. left. right. left. cbn in Hx. lia.
+  + eapply garr8_frame; [exact H4|]. intros x Hx. apply Hfr. right. right. right. left. right. right. left. cbn in Hx. lia.
+  + eapply garr8_frame; [exact H5|]. intros x Hx. apply Hfr. right. right. right. left. right. right. right. cbn in Hx. lia.
+- eapply garr8_frame; [exact H6|]. intros x Hx. apply Hfr. do 4 right. left. cbn in Hx. lia.
+- eapply garr8_frame; [exact H7|]. intros x Hx. apply Hfr. do 5 right. cbn in Hx. lia.
 Qed.
-Lemma file_at_frame : forall (mem mem' : word -> option byte) f fd P,
+Lemma file_at_frame : forall F (mem mem' : word -> option byte) f fd P,
 (forall x, f <= x < f + FILE_BLOCK -> mbyte segs mem' x = mbyte segs mem x) ->
-file_at mem f fd P -> file_at mem' f fd P.
+file_at F mem f fd P -> file_at F mem' f fd P.
 Proof.
-intros mem mem' f fd P Hfr [Hs Hw].
+intros F mem mem' f fd P Hfr [Hs Hw].
 assert (HV : forall off n v, 0 <= off -> off + Z.of_nat n <= FILE_BLOCK -> val_mem segs mem (f + off) n v -> val_mem segs mem' (f + off) n v).
 { intros off n v H0 H1 Hv. eapply val_mem_frame; [|exact Hv]. intros x Hx. apply Hfr. lia. }
 assert (HFB : FILE_BLOCK = 1264) by reflexivity. assert (HBO : FILE_BUF_OFF = 240) by reflexivity. assert (HBS : FILE_BUFSIZ = 1024) by reflexivity.
@@ -171,10 +187,12 @@ Lemma sink_at_frame : forall (mem mem' : word -> option byte) md f S,
 (forall a, f <= a < f + FILE_BLOCK \/ env_addr a -> mbyte segs mem' a = mbyte segs mem a) ->
 sink_at mem md f S -> sink_at mem' md f S.
 Proof.
-intros mem mem' md f S Hfr (fd & W & P & -> & Hok & Hmax & Henv & Hfile & Hhead & Hf0 & Hfs & Hfd & Huniq).
+intros mem mem' md f S Hfr HS.
+apply sink_at_inv in HS as (F & EF & fd & W & P & -> & Hok & Hmax & Henv & Hfile & Hhead & Hf0 & Hfs & Hfd & Huniq).
+apply (sink_at_intro F); [exact EF|].
 exists fd, W, P. split; [reflexivity|]. split; [exact Hok|]. split; [exact Hmax|].
 split; [apply (stdio_env_frame mem mem'); [intros a Ha; apply Hfr; right; exact Ha | exact Henv]|].
-split; [apply (file_at_frame mem mem'); [intros a Ha; apply Hfr; left; exact Ha | exact Hfile]|].
+split; [apply (file_at_frame F mem mem'); [intros a Ha; apply Hfr; left; exact Ha | exact Hfile]|].
 split.
 { apply (val_mem_word_mem segs). apply (val_mem_word_mem segs) in Hhead.
 eapply val_mem_frame; [|exact Hhead]. intros x Hx. apply Hfr. right. left. cbn in Hx. lia. }
@@ -200,24 +218,29 @@ apply (val_mem_word_mem segs). apply (val_mem_word_mem segs) in Hhead.
 eapply val_mem_frame; [|exact Hhead]. intros x Hx. apply Hfr. left. cbn in Hx. lia.
 Qed.
 Lemma sink_at_env : forall mem md f S, sink_at mem md f S -> stdio_env mem.
-Proof. intros mem md f S (fd & W & P & _ & _ & _ & H & _). exact H. Qed.
-Lemma stdio_env_trailer : forall mem, stdio_env mem -> garr8 segs mem sk_trailer_addr sink_trailer_Z.
-Proof. intros mem (_ & _ & _ & _ & Ht & _). exact (proj1 (proj1 (garr8_app _ _ _ _ _) Ht)). Qed.
-Lemma sink_at_trailer : forall mem md f S, sink_at mem md f S -> garr8 segs mem sk_trailer_addr sink_trailer_Z.
-Proof. intros mem md f S H. exact (stdio_env_trailer mem (sink_at_env mem md f S H)). Qed.
+Proof. intros mem md f S HS. apply sink_at_inv in HS as (F & _ & fd & W & P & _ & _ & _ & H & _). exact H. Qed.
+Lemma stdio_env_trailer : forall F mem, sk_file = Some F -> stdio_env mem -> garr8 segs mem (sk_trailer_addr F) sink_trailer_Z.
+Proof.
+intros F mem EF (_ & _ & HF & _). rewrite EF in HF. change (file_env F mem) in HF.
+destruct HF as (_ & _ & Ht & _). exact (proj1 (proj1 (garr8_app _ _ _ _ _) Ht)).
+Qed.
+Lemma sink_at_trailer : forall F mem md f S, sk_file = Some F -> sink_at mem md f S ->
+garr8 segs mem (sk_trailer_addr F) sink_trailer_Z.
+Proof. intros F mem md f S EF H. exact (stdio_env_trailer F mem EF (sink_at_env mem md f S H)). Qed.
 Lemma sink_at_nonnull : forall mem md f S, sink_at mem md f S -> f <> 0.
-Proof. intros mem md f S (fd & W & P & _ & _ & _ & _ & _ & _ & H & _). exact H. Qed.
+Proof. intros mem md f S HS. apply sink_at_inv in HS as (F & _ & fd & W & P & _ & _ & _ & _ & _ & _ & H & _). exact H. Qed.
 Lemma sink_at_bytes_ok : forall mem md f S, sink_at mem md f S -> bytes_ok S.
-Proof. intros mem md f S (fd & W & P & _ & H & _). exact H. Qed.
+Proof. intros mem md f S HS. apply sink_at_inv in HS as (F & _ & fd & W & P & _ & H & _). exact H. Qed.
 Lemma sink_at_max : forall mem md f S, sink_at mem md f S -> Z.of_nat (length S) <= SINK_MAX.
-Proof. intros mem md f S (fd & W & P & _ & _ & H & _). exact H. Qed.
+Proof. intros mem md f S HS. apply sink_at_inv in HS as (F & _ & fd & W & P & _ & _ & H & _). exact H. Qed.
 Lemma sink_kept : forall {SL : sink_laws} STK sp0 FP L A mem md L' A' mem' md' f S,
 journal B MR STK sp0 FP L A mem md L' A' mem' md' ->
 ~ sink_open_fp FP -> In (f, FILE_BLOCK) (blocks L A) -> fp_avoids FP f (f + FILE_BLOCK) ->
 sink_at mem md f S ->
 sink_at mem' md' f S /\ In (f, FILE_BLOCK) (blocks L' A').
 Proof.
-intros SL STK sp0 FP L A mem md L' A' mem' md' f S HJ Hn Hin Hav (fd & W & P & -> & Hok & Hmax & Henv & Hfile & Hhead & Hf0 & Hfs & Hfd & Huniq).
+intros SL STK sp0 FP L A mem md L' A' mem' md' f S HJ Hn Hin Hav HS.
+apply sink_at_inv in HS as (F & EF & fd & W & P & -> & Hok & Hmax & Henv & Hfile & Hhead & Hf0 & Hfs & Hfd & Huniq).
 pose proof HJ as (HH & Hos & Hhigh & Hblk & Hgone & Hst & Herr & Himg).
 assert (HFB : FILE_BLOCK = 1264) by reflexivity.
 assert (Hlive : In (f, FILE_BLOCK) (blocks L' A')).
@@ -233,10 +256,11 @@ assert (Himgb : forall a, in_img B a -> ~ static_owned B a -> ~ (ms_ctx B <= a <
 assert (Himge : forall a, env_addr a -> mbyte segs mem' a = mbyte segs mem a).
 { intros a Ha. destruct (skl_env a Ha) as (T1 & T2 & T3 & T4). exact (Himgb _ T1 T2 T3 T4). }
 destruct (os_step_shielded FP md md' Hos Hn) as (Efd & Efs & _).
+apply (sink_at_intro F); [exact EF|].
 exists fd, W, P. split; [reflexivity|]. split; [exact Hok|]. split; [exact Hmax|].
 split.
 { exact (stdio_env_frame mem mem' Himge Henv). }
-split; [exact (file_at_frame mem mem' f fd P Hfr Hfile)|].
+split; [exact (file_at_frame F mem mem' f fd P Hfr Hfile)|].
 split.
 { apply (val_mem_word_mem segs). apply (val_mem_word_mem segs) in Hhead.
 eapply val_mem_frame; [|exact Hhead]. intros x Hx. apply Himge. left. cbn in Hx. lia. }
@@ -281,10 +305,11 @@ Definition FWRITE_STK : Z := 512.
 Definition FCLOSE_STK : Z := 512 + ALLOC_STACK.
 Definition UNLINK_STK : Z := 64.
 Definition fopen_spec (pc : Z) : Prop :=
+forall F, sk_file = Some F ->
 forall L A (regs : bvmap 5 word) mem md,
 fn_pre B MR FOPEN_STK L A regs mem md -> st_init_done A = true ->
 spZ regs <= 2 ^ 47 ->
-getr regs 10 = Z_to_bv 64 sk_path_addr -> getr regs 11 = Z_to_bv 64 sk_mode_addr ->
+getr regs 10 = Z_to_bv 64 (sk_path_addr F) -> getr regs 11 = Z_to_bv 64 (sk_mode_addr F) ->
 sink_none mem md ->
 SR segs (mkCfg (mkst regs (Z_to_bv 64 pc) mem (seg_rom segs)) md)
 (fun c' => exists L' A' regs' mem' md' (res : Z),
@@ -327,9 +352,10 @@ regs_preserved regs regs' /\ getr regs' 10 = Z_to_bv 64 0 /\
 Permutation (blocks L' A') rest /\
 sink_none mem' md' /\ Fs.fs_lookup (m_fs md') sink_path = Some (bytes S)).
 Definition unlink_spec (pc : Z) : Prop :=
+forall F, sk_file = Some F ->
 forall L A (regs : bvmap 5 word) mem md,
 fn_pre B MR UNLINK_STK L A regs mem md ->
-getr regs 10 = Z_to_bv 64 sk_path_addr ->
+getr regs 10 = Z_to_bv 64 (sk_path_addr F) ->
 sink_none mem md ->
 SR segs (mkCfg (mkst regs (Z_to_bv 64 pc) mem (seg_rom segs)) md)
 (fun c' => exists regs' mem' md',

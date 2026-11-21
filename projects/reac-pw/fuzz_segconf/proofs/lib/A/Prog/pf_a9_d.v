@@ -4,12 +4,13 @@
 (* Modified by Theorem Labs, 2026-10: the boundary states and segment statements of LLVMFuzzerTestOneInput's ASan+UBSan walk (plugin-hostd/fuzz_command image B, 0x86530), the B twin of lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh6.v (the CL_*_stmtX statements: from a point of the function to its return, under the entry's context) and A/ACf5.v (rtcx, rt_base: the entry's facts bundled once). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths, module names, addresses and numbers changed; 469 of its 518 lines of code are new or changed and 289 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths and module names changed; 115 of its 140 lines of code are new or changed and 493 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image A (fuzz_segconf.asan): the SHARED VOCABULARY of segment A9 of
    reac_segconf_parse_file's walk (lib/A/Prog/pf_pieces.v S_A9: KEY 0x87fac -> ROLE / MODEL / IGN / REF3 / TAIL,
    129 instructions, checks 9-11, 14, 15; calls strchr, 2 x trim, strlen, 4 x strcasecmp, refuse).
    Segment A9's proof, by the G3 walk owner, 2026-10-30. Statement text only: no instruction is walked here.
 
-   THE FORM is cross_check_d.v's / chain_words_d.v's (origin/ossv/recipes 501c0d516c69): the cut points of the
+   THE FORM is cross_check_d.v's / chain_words_d.v: the cut points of the
    segment stated over the MACHINE state, not over a symbolic state, so each stretch file builds its own symbolic
    state; "from this cut the walk reaches S_A9's goal" as a9_from; one Prop per stretch (SA9_A .. SA9_E).
 

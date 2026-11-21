@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the generic part of proofs/cgif/cgif_file_fuzzer/lib/YC1i.v for libreac/fuzz_grant's program walk (ceil, alias_srlw_sll, req_size_pos', PTR, Bspan, region_kept_at1) over fuzz_grant's listing; cgif's create_byte_list_block walk is left out; module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: taken by path from a Theorem Labs lane's copy (a working branch cb6eddd4032, proofs/libreac/fuzz_grant/lib/A/Prog/YC1i.v) for libreac/fuzz_decode's
+(* Modified by Theorem Labs, 2026-10: taken by path from a Theorem Labs lane's copy (a working branch, proofs/libreac/fuzz_grant/lib/A/Prog/YC1i.v) for libreac/fuzz_decode's
    program walk: module paths and the listing's names changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

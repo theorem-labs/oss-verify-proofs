@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
-(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/Prog/LLVMFuzzerTestOneInput_c.v at bc49657c087a; module path, this image's values, LLVM_K from check_inject. *)
+(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/Prog/LLVMFuzzerTestOneInput_c.v; module path, this image's values, LLVM_K from check_inject. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_egress/lib/Prog/LLVMFuzzerTestOneInput_c.v, with its module paths, module names, addresses and numbers changed; 10 of its 70 lines of code are new or changed and 7 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Contract of fuzz_frame's LLVMFuzzerTestOneInput (fuzz_frame.c:265-284) in fuzz_frame.ubsan, 0x12d48 (712 bytes),
-   in the form of libreac/fuzz_decode's lib/U/Prog/LLVMFuzzerTestOneInput_c.v (bf7779f81ed7). The function returns
+   in the form of libreac/fuzz_decode's lib/U/Prog/LLVMFuzzerTestOneInput_c.v. The function returns
    0 on every path that returns (fuzz_frame.c:271 and 283; 0x12fdc: mv a0, zero, then ret at 0x12ff4), so the leaf of
    the driver's shape is decode's LL 0. An input of 2 ^ 26 bytes or more (FUZZ_INPUT_MAX, fuzz.h) returns at once
    (0x12d60: srli a1, a1, 0x1a; bnez). Its UBSan checks of pointer arithmetic trap at 0x1300c (unimp).

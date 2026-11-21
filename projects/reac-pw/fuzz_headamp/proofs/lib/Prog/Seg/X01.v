@@ -3,6 +3,7 @@
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/Prog/LLVMFuzzerTestOneInput_fr.v, with its module paths and module names changed; 456 of its 574 lines of code are new or changed and 409 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/Prog/Seg/Tac_slot.v, with its module paths and module names changed; 249 of its 285 lines of code are new or changed and 538 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment X01 of reac-pw/fuzz_headamp LLVMFuzzerTestOneInput (plain): [0x141b4, 0x1421c], the four frees and the
    epilogue. K141b4 -> RET (Prog/LLVMFuzzerTestOneInput_c.v's S_X01).
    The cut is at its own FP state (Tac_b8.b8_cut_open): the frees run at it. Each free goes through
@@ -19,7 +20,7 @@
    (rounding mode 0 from CUTST). The `fld` read the 24 bytes at [S - 128, S - 104), present by FR's stack window.
    The callee-saved registers: sp, gp, tp from FR, s0 .. s11 from the saved bytes.
    Adapted from reac-pw/fuzz_role's Prog/Seg/X01.v (two frees, no FP restore), itself from reac-pw/fuzz_pin's
-   Prog/Seg/X01.v (libreac/fuzz_ctrl's released Seg/C05.v and Seg/X02.v, origin/ossv/recipes 25e3d17bdb50). *)
+   Prog/Seg/X01.v (libreac/fuzz_ctrl's released Seg/C05.v and Seg/X02.v). *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

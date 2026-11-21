@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the bounds below the top of user memory). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -130,7 +131,7 @@ Definition rt_pres_ex (live : list (Z * Z)) (frames : list (Z * nat)) (sp : Z) (
 Definition rng_class (RT : rt_sig) (Σ : rts RT) (s n : Z) : Prop :=
   (exists p k, In (p, k) (rt_live RT Σ) /\ p <= s /\ s + n <= p + k)
   \/ (exists f k, In (f, k) (rt_frames RT Σ) /\ f <= s /\ s + n <= f + fs_size k - 8)
-  \/ (rt_sp0 RT Σ - STACK_WIN + 64 <= s /\ s + n <= USTACK_TOP - 16)
+  \/ (rt_sp0 RT Σ - STACK_WIN + 64 <= s /\ s + n <= USTACK_TOP - 9)
   \/ (0x10000 <= s /\ s + n <= SEGTOP_A).
 
 (* [comment removed for export] *)
@@ -600,7 +601,7 @@ Definition fprintf_stderr_icontract : Prop :=
        /\ bv_unsigned sp <= a
        /\ exists slack, bytes_at asegs m (a + Z.of_nat (length s) + 1) slack
             /\ (- (a + Z.of_nat (length s) + 1)) mod 8 <= Z.of_nat (length slack)
-            /\ a + Z.of_nat (length s) + 1 + Z.of_nat (length slack) <= USTACK_TOP - 16) ->
+            /\ a + Z.of_nat (length s) + 1 + Z.of_nat (length slack) <= USTACK_TOP - 8) ->
   fd_lookup F0 (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
   ERR_rep m -> io_ssp m ->
   ART RT Σ m -> mem_inv asegs m -> call_ok RT Σ m sp lo ->

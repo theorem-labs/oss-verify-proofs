@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (Section RUN takes the launch's execfn, ABASE and RBASE's AIMG take it in place of uid and hw, the IMGB notation is dropped and IMGB_len is passed it; the stack window from usp0 - 6,144,513, the launch's 6,144,513 bytes below sp). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -103,7 +104,7 @@ Proof.
 Qed.
 
 Section RUN.
-  Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw) (arg0 arg1 : list byte)
+  Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw) (execfn : list byte) (arg0 arg1 : list byte)
             (PAD : list byte) (S4 S5 S6 S7 X7 S8 S9 S10 S11 : word).   (* [comment removed for export] *)
   Hypothesis VSP : valid_sp sp0.
   Hypothesis RCSP : rc_sp = bv_unsigned sp0.
@@ -126,9 +127,8 @@ Section RUN.
   Notation usp0 := (bv_unsigned sp0).
   Notation gpv := (Z_to_bv 64 0x10800).
   Notation tpv := (Z_to_bv 64 0x5e1550).
-  Notation IMGB := (build_stack_bytes aph sp0 argv envp uid hw rnd).
   Notation LO' := (LO sp0).
-  Notation ABASE' := (ABASE sp0 argv envp uid hw rnd).
+  Notation ABASE' := (ABASE sp0 argv envp rnd execfn).
   Notation FRAME' mm := (MFRAME sp0 argv mm PAD S7 S6 S5 S4).
   Let PSTK := PSTK sp0 VSP RCSP.
 
@@ -141,7 +141,7 @@ Section RUN.
 
   (* [comment removed for export] *)
   Definition RBASE (mm : mem) : Prop :=
-    stk bsegs mm LO' (usp0 + -208) /\ mem_inv bsegs mm /\ AIMG sp0 argv envp uid hw rnd mm /\ ASTAT mm.
+    stk bsegs mm LO' (usp0 + -208) /\ mem_inv bsegs mm /\ AIMG sp0 argv envp rnd execfn mm /\ ASTAT mm.
 
   Lemma RBASE_heap_pres : forall LB LF m m' SP, RBASE m -> aheap_pres bsegs ACONSTS LB LF SP m m' -> SP <= usp0 + -208 ->
     mem_inv bsegs m' -> stk bsegs m' LO' (usp0 + -208) -> RBASE m'.
@@ -158,7 +158,7 @@ Section RUN.
     (forall a, (usp0 <= a \/ astat_addr a) -> a <> 0x5e0c14 -> P a) ->
     mem_inv bsegs m' -> stk bsegs m' LO' (usp0 + -208) -> rw_cells bsegs m' 0x5e0c14 [C1 (Z_to_bv 8 0)] -> RBASE m'.
   Proof.
-    intros P m m' (ST & MI & IMG & AS) AG HP MI' ST' FL. pose proof (sp_facts sp0 VSP RCSP) as SF. pose proof (IMGB_len sp0 argv envp uid hw rnd VSP VARGV VENVP) as IL. unfold LO in *.
+    intros P m m' (ST & MI & IMG & AS) AG HP MI' ST' FL. pose proof (sp_facts sp0 VSP RCSP) as SF. pose proof (IMGB_len sp0 argv envp uid hw rnd execfn VSP VARGV VENVP) as IL. unfold LO in *.
     split; [exact ST'|]. split; [exact MI'|]. split.
     - eapply AIMG_agree; [exact AG| | exact IMG]. intros a Ha. apply HP; [left; lia| lia].
     - eapply ASTAT_reflag; [exact AG| | exact FL| exact AS]. intros a Ha NE. apply HP; [right; exact Ha| exact NE].
@@ -181,7 +181,7 @@ Section RUN.
   Lemma RBASE_munch : forall W m m', RBASE m -> Forall RWOK W -> munch W m m' -> wmono bsegs m m' ->
     mem_inv bsegs m' -> stk bsegs m' LO' (usp0 + -208) -> RBASE m'.
   Proof.
-    intros W m m' (ST & MI & IMG & AS) HW MU WM MI' ST'. pose proof (sp_facts sp0 VSP RCSP) as SF. pose proof (IMGB_len sp0 argv envp uid hw rnd VSP VARGV VENVP) as IL. unfold LO in *.
+    intros W m m' (ST & MI & IMG & AS) HW MU WM MI' ST'. pose proof (sp_facts sp0 VSP RCSP) as SF. pose proof (IMGB_len sp0 argv envp uid hw rnd execfn VSP VARGV VENVP) as IL. unfold LO in *.
     pose proof (agree_on_of_munch _ _ _ MU WM) as AG.
     split; [exact ST'|]. split; [exact MI'|]. split.
     - eapply AIMG_agree; [exact AG| | exact IMG]. intros a Ha. cbn. apply RWOK_outside; [exact HW| left; lia].
@@ -251,7 +251,7 @@ Section RUN.
       assert (PAYB1 : bytes_at bsegs mf1 T PAY).
       { eapply bytes_at_agree; [exact AG1 | exact (proj1 PAYK) |]. intros a Ha. apply OUT1. destruct (PAYOFF a Ha) as [_ OFF]. lia. }
       (* [comment removed for export] *)
-      eapply (adi_yfuzz _ _ _ _ DI) with (lo := usp0 - 8388608) (T := T) (n := PL) (txt := PAY); try reflexivity.
+      eapply (adi_yfuzz _ _ _ _ DI) with (lo := usp0 - 6144513) (T := T) (n := PL) (txt := PAY); try reflexivity.
       all: rewrite ?(unsigned_lit (usp0 + -208)) by lia.
       - apply ShapeAlg.t_emit_has_nil.
       - exact HK1.
@@ -303,7 +303,7 @@ Section RUN.
         apply (proj1 (rw_cells_app _ _ _ [C8 (Z_to_bv 64 0)] _)) in APC. destruct APC as [APC _].
         replace (usp0 + -288 + Z.of_nat 24) with (usp0 + -264) in APC by lia.
         rewrite <- SOE, <- SOE2.
-        eapply (adi_printf _ _ _ _ DI) with (lo := usp0 - 8388608) (ap := usp0 + -264) (v1 := Z_to_bv 64 0);
+        eapply (adi_printf _ _ _ _ DI) with (lo := usp0 - 6144513) (ap := usp0 + -264) (v1 := Z_to_bv 64 0);
           rewrite ?(unsigned_lit (usp0 + -288)) by lia.
         + apply ShapeAlg.t_emit_has_nil.
         + exact HK3.
@@ -326,7 +326,7 @@ Section RUN.
           rewrite ?(unsigned_lit (usp0 + -288)) in MUc by lia. rewrite SOE2, SOE.
           cbn [c_stdout_F c_stdout_buf ACONSTS] in MUc.
           pose proof (adi_mem_inv _ _ _ _ DI _ _ _ _ _ HK4) as MI4.
-          assert (ST4' : stk bsegs m4 (usp0 - 8388608) (usp0 + -288)) by exact ST4.
+          assert (ST4' : stk bsegs m4 (usp0 - 6144513) (usp0 + -288)) by exact ST4.
           pose proof (agree_on_of_munch _ _ _ MUc WM4) as AG4.
           pose proof (agree_on_of_munch _ _ _ MU3 WM3) as AG3.
           lazymatch type of EFR with rw_cells _ _ _ ?cs =>
@@ -335,7 +335,7 @@ Section RUN.
           (* [comment removed for export] *)
           assert (AG : agree_on (fun a => aclient_addr ACONSTS REST0 [] (usp0 + -208) a /\ a <> 0x5e0c14
                                           /\ (a < 0xa9d58 \/ 0xa9d58 + 232 <= a) /\ (a < 0x601c60 \/ 0x601c60 + 1024 <= a)
-                                          /\ (a < usp0 - 8388608 \/ usp0 + -208 <= a)) mm m4).
+                                          /\ (a < usp0 - 6144513 \/ usp0 + -208 <= a)) mm m4).
           { eapply agree_on_trans; [eapply agree_on_trans; [eapply agree_on_trans|]|].
             - eapply agree_on_mono; [exact AG1|]. intros a (_ & Ha & _). apply OUT1. exact Ha.
             - eapply agree_on_mono; [exact AG2|]. intros a (Ha & _). exact Ha.
@@ -345,7 +345,7 @@ Section RUN.
                            (a < 0xa9d58 \/ 0xa9d58 + 232 <= a) -> (a < 0x601c60 \/ 0x601c60 + 1024 <= a) ->
                            (fun a => aclient_addr ACONSTS REST0 [] (usp0 + -208) a /\ a <> 0x5e0c14
                                           /\ (a < 0xa9d58 \/ 0xa9d58 + 232 <= a) /\ (a < 0x601c60 \/ 0x601c60 + 1024 <= a)
-                                          /\ (a < usp0 - 8388608 \/ usp0 + -208 <= a)) a).
+                                          /\ (a < usp0 - 6144513 \/ usp0 + -208 <= a)) a).
           { intros a H1 H2 H3 H4 H5. cbv beta. split; [right; right; right; exact H2|]. split; [exact H3|]. split; [exact H4|]. split; [exact H5| lia]. }
           assert (TRF4 : TRFRAME m4 pad A L PL SB1).
           { unfold TRFRAME. eapply rw_cells_agree; [exact AG | exact TRF |]. intros ax Ha. cbn in Ha. cbv beta. split; [left; lia| lia]. }
@@ -459,7 +459,7 @@ Section RUN.
       pose proof (PSTK REST0) as PS. pose proof (pol_img REST0) as PI.
       aseg DI HKx. zstepA. zstepA. aleaf. intros moa Haga HKa Efsa Efdsa Hha.
       (* [comment removed for export] *)
-      eapply (adi_free _ _ _ _ DI) with (lo := usp0 - 8388608) (A := OWN);
+      eapply (adi_free _ _ _ _ DI) with (lo := usp0 - 6144513) (A := OWN);
         [ apply KR_nil | exact HKa
         | destruct (Z.eqb_spec OWN 0) as [E0|NE0]; [left; exact E0| right; exists (mkABlock OWN PL); split; [subst REST0; left; reflexivity| reflexivity]]
         | rewrite unsigned_lit by lia; exact ST | aceil; lia
@@ -530,7 +530,7 @@ Section RUN.
       aseg DI HKx. zstepA. zstepA. aleaf. intros moa Haga HKa Efsa Efdsa Hha.
       pose proof (adi_hd_magree _ _ _ _ DI _ _ _ _ _ _ HD Haga) as HDa.
       (* [comment removed for export] *)
-      eapply (adi_malloc _ _ _ _ DI) with (lo := usp0 - 8388608) (n := PL); try reflexivity.
+      eapply (adi_malloc _ _ _ _ DI) with (lo := usp0 - 6144513) (n := PL); try reflexivity.
       all: rewrite ?(unsigned_lit (usp0 + -208)) by lia.
       - apply TPR_nil.
       - exact HKa.
@@ -574,7 +574,7 @@ Section RUN.
         pose proof (PSTK [mkABlock T PL; mkABlock A cap]) as PS2. pose proof (pol_img [mkABlock T PL; mkABlock A cap]) as PI2.
         aseg DI HK2. zstepA. if_cases K1; zify_cond K1; try (exfalso; rewrite ?unsigned_lit in K1 by lia; lia). clear K1.
         zstepA. zstepA. zstepA. zstepA. aleaf. intros mo2a Hag2a HK2a Efs2a Efds2a Hh2a.
-        eapply (adi_memcpy _ _ _ _ DI) with (lo := usp0 - 8388608) (bd := mkABlock T PL) (bsr := mkABlock A cap) (dst := T) (src := A + 6 + L) (n := PL) (bs := PAY);
+        eapply (adi_memcpy _ _ _ _ DI) with (lo := usp0 - 6144513) (bd := mkABlock T PL) (bsr := mkABlock A cap) (dst := T) (src := A + 6 + L) (n := PL) (bs := PAY);
           [ apply TPR_nil | exact HK2a | left; reflexivity | cbn [ab_addr]; lia | cbn [ab_addr ab_size]; lia
           | right; left; reflexivity | cbn [ab_addr]; lia | cbn [ab_addr ab_size]; lia | lia | lia | exact PAYB | exact PLEN | exact NBLK
           | rewrite unsigned_lit by lia; exact ST | aceil; lia
@@ -582,7 +582,7 @@ Section RUN.
         intros w0 w1 w2 d0 d1 d2 d3 d4 d5 d6 d7 w3 w4 w5 w6 F3 fc3 m3 mo3 s3 ST3 NB3 MUc WM3 FRM3 HK3 AS3 SO3 Efs3 Efds3 Hag3.
         rewrite ?(unsigned_lit (usp0 + -208)) in ST3 by lia. rewrite ?(unsigned_lit (usp0 + -208)) in MUc by lia.
         replace (ret_pc (Z_to_bv 64 0x81bf8)) with (Z_to_bv 64 0x81bf8) by (symmetry; rpc).
-        assert (WOKW : Forall RWOK [(usp0 - 8388608, usp0 + -208); (T, T + PL)]).
+        assert (WOKW : Forall RWOK [(usp0 - 6144513, usp0 + -208); (T, T + PL)]).
         { unfold RWOK, LO. aceil. constructor; [cbn [fst snd]; lia|]. constructor; [cbn [fst snd]; lia| constructor]. }
         pose proof (adi_mem_inv _ _ _ _ DI _ _ _ _ _ HK3) as MI3.
         assert (RB3 : RBASE m3) by (eapply RBASE_munch; [exact RB2 | exact WOKW | exact MUc | exact WM3 | exact MI3 | unfold LO; exact ST3]).
@@ -655,7 +655,7 @@ Section RUN.
                 (TPR calls stdout_init).
     Proof.
       intros s mo t0 t1 t2 a4 a5 a6 a7 t3 t4 t5 t6 F fc mm junk FR BA HKx HD HK5 SO0 FS BLK BR FRM.
-      pose proof (sp_facts sp0 VSP RCSP) as SF. unfold LO in SF. pose proof (IMGB_len sp0 argv envp uid hw rnd VSP VARGV VENVP) as IL.
+      pose proof (sp_facts sp0 VSP RCSP) as SF. unfold LO in SF. pose proof (IMGB_len sp0 argv envp uid hw rnd execfn VSP VARGV VENVP) as IL.
       pose proof BA as (ST & MI & IMG & (G & E & (reg & p3 & p4 & FJ & AJ & ATC & INI & FLG))). unfold LO in ST. pose proof FR as FR0. unfold MFRAME in FR.
       pose proof BR as (BR1 & BR2 & BR3 & BR4 & BR5). aceil_in BR4. cbn [c_img_hi ACONSTS] in BR5.
       pose proof BLK as BLKF. apply (proj1 (rw_cells_app _ _ _ [CB (length FILE) FILE] _)) in BLKF. destruct BLKF as [BLKF _].
@@ -741,7 +741,7 @@ Section RUN.
       - (* [comment removed for export] *)
         zstepA. zstepA. zstepA. if_cases K0; zify_cond K0; [| exfalso; apply K0; reflexivity]. clear K0.
         zstepA. zstA. zstepA. zstepA. zstepA.
-        call_spA (aatexit_spec _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (usp0 - 8388608) p3 p4 FJ AJ cdt thr sec tm1 (adrv_acc ACONSTS [mkABlock A cap]));
+        call_spA (aatexit_spec _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (usp0 - 6144513) p3 p4 FJ AJ cdt thr sec tm1 (adrv_acc ACONSTS [mkABlock A cap]));
           [ intros a k H1 H2; apply PS; lia | exact PI | exact ST | aceil; lia | lia | exact MI | unfold atx_cells; exact ATC | exact LCH | reflexivity
           | vm_compute; reflexivity | ].
         zstepA. if_cases K1; zify_cond K1; [| exfalso; apply K1; reflexivity]. clear K1.

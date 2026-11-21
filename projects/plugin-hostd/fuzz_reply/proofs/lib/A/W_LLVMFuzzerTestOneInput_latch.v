@@ -5,6 +5,7 @@
    internal call sites of lib/A/W_check_shape_event.v.  It walks 0x84490-0x844b0: the call to check_bounded
    (fuzz_reply.c:740) and the loop test `ops < 512 && in.n` (fuzz_reply.c:685), from the cut point K to the
    loop head H of operation t + 1, or to the shutdown block X. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -248,7 +249,7 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import W_LLVMFuzzerT
 (* ------------------------------------------------------------------------------------------------
    check_bounded's contract, with the one conjunct this call site needs that this base's lib/A/W_contract.v
    cb_spec does not carry: the caller's memory is kept at every byte outside check_bounded's own 16-byte
-   frame (a working branch 817ce9dd54a adds it to aleafx_post and proves it in pb_check_bounded).
+   frame (a working branch adds it to aleafx_post and proves it in pb_check_bounded).
    check_bounded (0x85304) stores exactly once, `sd ra,8(sp)`, and its only call site in the image is
    0x84490, this latch. *)
 Section cbk.
@@ -293,7 +294,7 @@ Hypothesis HG : gx_ok segs B G_fr.
 Variable LS : lfcx -> Z -> lmod -> alayout -> astate -> Prop.
 Variable RINV : lfcx -> Z -> lmod -> Prop.
 (* check_bounded's contract: cb_spec with the kept conjunct above.  A Section hypothesis until this base's
-   W_contract.v aleafx_post carries the kept clause of a working branch 817ce9dd54a; with it, cbk_spec is
+   W_contract.v aleafx_post carries the kept clause of a working branch; with it, cbk_spec is
    pb_check_bounded's post minus two conjuncts. *)
 Hypothesis W1_check_bounded : cbk_spec B (BASE + AF_fr_check_bounded).
 (* errno's place: an instance fact, as _cut's errno_law is.  The instance's api_env (Reusable/YCbq.v:809,

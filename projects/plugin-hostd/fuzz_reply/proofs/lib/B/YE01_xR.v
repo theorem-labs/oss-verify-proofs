@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/YE01_x.v, with its module paths changed; 13 of its 86 lines of code are new or changed and 23 lines of the source are left out. *)
-(* lib/B/YE01_x.v's two journal lemmas at a world relation R, for lib/B: asink_none_kept_xR (YE01_x.v:64) and
-   ameta_inv_kept_xR (YE01_x.v:95), with the helper aenv_kept_xR (YE01_x.v:54).  Each is its YE01_x text with the
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
+(* lib/B/YE01_x.v's two journal lemmas at a world relation R, for lib/B: asink_none_kept_xR (YE01_x.v:65) and
+   ameta_inv_kept_xR (YE01_x.v:96), with the helper aenv_kept_xR (YE01_x.v:55).  Each is its YE01_x text with the
    journal `ajournal_x segs B PST ARx` -> `ajournal_xR segs B PST ARx R` and nothing else changed; R is a Section
    variable after the sink symbols K and none of its laws is needed.  The proofs read only the journal's conjuncts
    that do not mention R (YCbqG.v ajournal_xR: only its world conjunct reads R), so each proof is its YE01_x proof
@@ -51,7 +52,7 @@ Variable R : world segs -> world segs -> Prop.
 Local Notation AJR := (ajournal_xR segs B PST ARx R).
 Local Notation rd W mem := (mrestrict (w_H W) mem).
 
-(* YE01_x.v:54 aenv_kept_x *)
+(* YE01_x.v:55 aenv_kept_x *)
 Lemma aenv_kept_xR : forall STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k a,
 AJR STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k -> aenv_addr K a -> ~ Exists (in_zr a) PST ->
 fp_spares FP a -> mbyte segs (rd W' mem') a = mbyte segs (rd W mem) a.
@@ -61,7 +62,7 @@ pose proof HJ as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & F3 & _).
 destruct (ail_env _ _ _ AIL a Ha) as (Hi & Hns & He). apply mbyte_kept_of_aview. exact (F3 a Hi Hns He HPa Hsp).
 Qed.
 
-(* YE01_x.v:64 asink_none_kept_x *)
+(* YE01_x.v:65 asink_none_kept_x *)
 Lemma asink_none_kept_xR : forall STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k,
 AJR STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k ->
 (forall a, aenv_addr K a -> ~ Exists (in_zr a) PST) ->
@@ -78,7 +79,7 @@ split; [exact (astdio_env_frame segs K _ _ FR Henv)|]. split.
 - unfold m_fds in *. rewrite Efd. exact Hn.
 Qed.
 
-(* YE01_x.v:95 ameta_inv_kept_x *)
+(* YE01_x.v:96 ameta_inv_kept_x *)
 Lemma ameta_inv_kept_xR : forall STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k M,
 AJR STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k ->
 (forall a, ak_meta_mem K <= a < ak_meta_mem K + 8 -> ~ Exists (in_zr a) PST) ->

@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/AU/PresetDrvTopBStmt.v, with its module paths changed; 2 of its 50 lines of code are new or changed and 2 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch premise entry_launch_ok_va in TFIB_T_room_all_concl_B, as lib/A/PresetD2oA.v's TFIB_T_room_all_concl_A); internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-29: fuzz_preset's asan-ubsan image on the #102 pins (image B', pin d663f82d7f488d30, twin
    c90d4fa54d43160b): the STATEMENTS of the closed driver's room export that the B' halts top (a Theorem Labs lane, lane
-   bp-halts, a working branch 756a34e7c18c, a Theorem Labs lane's note, the internal file HALTS-TOP-Bp-PREMISES.md
+   bp-halts, a working branch, a Theorem Labs lane's note, the internal file HALTS-TOP-Bp-PREMISES.md
    section STOP, rows S1 and S3) composes with. Definitions only; nothing here is proved.
    rule 24: no function proved. rule 24: proves no function (kind: statement).
 
    - TFIB_T_room_all_concl_B: the residual conclusion of the room forms, VERBATIM the old-pin text
-     (a working branch 5f6a2b85e1b9, lib/AU/PresetD2oB.v:162-170). Its home is now this file: the B'
+     (a working branch, lib/AU/PresetD2oB.v:162-170). Its home is now this file: the B'
      composition (PresetD2oB / PresetD2pBPf, restated on #102) imports it from here.
    - np_live_B: the closure's closed choice of the interface's iface_room_np, VERBATIM the old-pin
      PresetD2pBPf.v:76 (a8's room_live_cf at preset's CfParams).
@@ -23,8 +24,8 @@
      at each slot call. The allocator-instance
      rows the driver walk takes (amalloc / afree / aintrin_xm cpy / set / astack_malloc / aread_check) stay named
      Section hypotheses of the proof, as in the old-pin Section closed (PresetD2pBPf.v:83-95, restated on B').
-   - PAYLOAD_ROOM_dec_stmt: S3, VERBATIM the old-pin Hypothesis (lib/AU/HaltsClosedB.v:226 of a Theorem Labs lane's donor
-     2f1789b29f0). PAYLOAD_ROOM is a parameter of the interface (PresetCfnB.v:726): no file of the driver or of the
+   - PAYLOAD_ROOM_dec_stmt: S3, VERBATIM the old-pin Hypothesis (lib/AU/HaltsClosedB.v:226 of a Theorem Labs lane's donor).
+     PAYLOAD_ROOM is a parameter of the interface (PresetCfnB.v:727): no file of the driver or of the
      interface fixes it, so its decidability is a property of the instance the top chooses. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -57,11 +58,13 @@ Open Scope Z_scope.
 (* THE NON-PRIMARY ROOM the closure chooses for the interface's iface_room_np (old-pin PresetD2pBPf.v:76) *)
 Definition np_live_B : astate -> Prop := YGcfRoomLive.room_live_cf (cp := CfParams_preset).
 
-(* the residual conclusion of the room forms (old-pin PresetD2oB.v:162-170, verbatim) *)
+(* the residual conclusion of the room forms (old-pin PresetD2oB.v:162-170, verbatim but the launch premise of
+   LPS 727298f3) *)
 Definition TFIB_T_room_all_concl_B (PAYLOAD_ROOM : list byte -> Prop) : Prop :=
 forall sp brk mbase rnd inp,
 valid_sp sp -> valid_brk presetsegsAU brk -> valid_mmap_base mbase ->
 entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 (forall a0 p data : list byte, in_argv inp = [a0; p] -> Fs.fs_lookup (in_fs inp) p = Some data ->
   PAYLOAD_ROOM (payload data)) ->
 srealizes presetsegsAU

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Theorem Labs, 2026-10: COPY (image-generic, statements and proofs unchanged) of h-hpreset-7's lib/A/Prog/PRW_StepKit.v at origin/cold/h-hpreset-7-walk-S7B 7819c4b4583 (blob 0df3991c13f4), the one home of pa_slot_lt_ceil; copied because the lane may add only lib/B/Prog/PutStringB*.v files and the #102 base lacks it *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10: COPY (image-generic, statements and proofs unchanged) of h-hpreset-7's lib/A/Prog/PRW_StepKit.v (blob 0df3991c13f4), the one home of pa_slot_lt_ceil; copied because the lane may add only lib/B/Prog/PutStringB*.v files and the #102 base lacks it *)
 (* fuzz_preset, program part: the after-call step kit of the program walks, the ONE copy (WalkS7b of h-rw-pre-5;
    every walk lane imports it). A PORT, not a re-authoring: the generic part of cgif's lib/A/AC8j.v
    (origin/ossv/recipes, proofs/cgif/cgif_file_fuzzer/lib/A/AC8j.v) restated over preset's journal YCbqG.v ajournal_x
@@ -334,8 +335,8 @@ eapply (region_kept_stack_ajx _ _ _ _ _);
 Ltac kept_intrin Hfr Hpres2 AG Usp :=
 eapply region_kept_aview; [cbn [ew ewset Nat.eqb]; rewrite ?(AG 2%nat) by lia; exact Usp | intros a Ha; apply Hfr; unfold ESTACK; lia | exact Hpres2].
 
-(* AC8j :249-256 reshok_bx / reshok are NOT ported: their shok_auto lived in Reusable/YC81.v, which the kit removed at
-   2d523216ac5 (the cgif GIF-encoder listing island), and no walk used the port (reshok_sv, removed here). A walk
+(* AC8j :249-256 reshok_bx / reshok are NOT ported: their shok_auto lived in Reusable/YC81.v, which the kit removed
+    (the cgif GIF-encoder listing island), and no walk used the port (reshok_sv, removed here). A walk
    re-seats its shadow tokens with its own sh_ok lemma. *)
 
 (* AC8j :257-273 *)

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: statements written out as text, the system-call robustness premise (sys_rob). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -10,6 +11,10 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib Require Import Scfg RelSpec SimInv ExitSim CatSim MmapSim AllocSim AllocSim2 WallSim.
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib.Lib Require Import Nd.
+(* LPS 727298f3: [rz_node] asks [RomBase.sys_rob], the node's system call reads the same over a
+   larger read-only backing, so that a walk over the binary's own segments lifts to the run's
+   segment list ([Common/Cfg/RomStable.run_init]). *)
+From OSSVerify.Proofs.boost_json.fuzz_parse.lib.Common.Cfg Require RomBase.
 Require Import OSSVerify.Proofs.boost_json.fuzz_parse.lib.Lib.CDef.
 Local Ltac2 zQ s := CDef.cdeft "37Corelib4Init9Datatypes04list3h5LinuxProcessSemanticsfLinuxProcessSem5Statehe5event79OSSVerify6Proofsaboost_jsonafuzz_parse3lib8ShapeAlg4FPX1~~~~~~l44TSet37Corelib4Init5Logicpb3iffl44t_eq03nilpb2eq03apppb3andpb2expb2or3h5LinuxProcessSemanticsfLinuxProcessSem3Runtb9is_prefix37Corelib7Numbers7BinNumshh34Npos3h5LinuxProcessSemanticsfLinuxProcessSem2Fshj42Fs35stdpp9bitvectorbdefinitionshm52bv04conshe6ExitEvl46t_emitl45t_nil03nat37Corelib4Init5Peanohqd2le06length37Corelib4Init6Specifhsf3sigl48wr_indexpb4conjhsf5exist46Stdlib5Arith8PeanoNat3Natig67le_refl37Corelib5Lists7ListDefiic3maphe7WriteEvhsf9proj1_sigiic6firstniic5skipnl45t_alttb6configtb5SNexttb9sstep_cfgtb7step_to69OSSVerify6Proofsaboost_jsonafuzz_parse3lib4Scfg~~~~~~iq38the_scfg69OSSVerify6Proofsaboost_jsonafuzz_parse3lib8ShapeAlg~~~~~~iu64TSet79OSSVerify6Proofsaboost_jsonafuzz_parse3lib8ShapeAlg8WithSegs~~~~~~ji98realizestb8star_cfgtbdobs_trace_cfg04None06optiontb9cfg_modeltb5sstephe8m_haltedpb3nottb6SErrortbh1reaches_error_cfg04unit02ttiu65t_altiu64t_eqji97node_okiu66t_emit03sum03inl03inriu66t_alt23h5LinuxProcessSemanticsfLinuxProcessSemeRiscvSemanticskiedmachine_state04prodtb5mkCfgkie9MachineOkkieemachine_resultkieems_svc_pendingkie4stephe5Modelhe9m_vm_lazy04pairtbfmi_account_step69OSSVerify6Proofsaboost_jsonafuzz_parse3lib6CatSim~~~~~~ku96msteps04Somekie6ms_gprhe4m_fs69OSSVerify6Proofsaboost_jsonafuzz_parse3lib7ExitSim~~~~~~lk3ais_exit_noiu66t_exithm57Z_to_bvhm56bv_and3h5LinuxProcessSemanticsfLinuxProcessSemcMemImageTypelqa7Segment" s.   (* [comment removed for export] *)
 
@@ -142,6 +147,7 @@ Inductive realizes : config -> TSet -> Prop :=
 | rz_node : forall c (I : Type) (evs : I -> list event) (nx : I -> config)
                    (T : I -> TSet) (i0 : I),
     node_ok c I evs nx ->
+    RomBase.sys_rob segs c ->
     (forall i, realizes (nx i) (T i)) ->
     realizes c (t_alt (fun i => t_emit (evs i) (T i)))
 | rz_halt : forall c,
@@ -154,7 +160,7 @@ Inductive realizes : config -> TSet -> Prop :=
 
 Lemma realizes_nonempty : ltac2:(zQ "50!rc!inc!kc!ji1!jmd>1c$1>1T$3>0@2$4^2^1@1^2@1$0$2").
 Proof.
-  intros c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq].
+  intros c T H; induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq].
   - exists i0. left. apply is_prefix_nil.
   - reflexivity.
   - apply Heq. exact IH.
@@ -162,7 +168,7 @@ Qed.
 
 Lemma realizes_pclosed : ltac2:(zQ "60!kc!h8!inc!hg7!ji1!jmd>1c$2>1T$4>0@2$5^2^1>2tr@1$1$0>3tr'@1$1$0>0@1^4^2>0@3$3$0^2^3@1^6^3").
 Proof.
-  intros c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+  intros c T H; induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq];
     intros tr tr' HT Hp.
   - destruct HT as [i [Hpre | (tr0 & -> & HT0)]]; exists i.
     + left. eapply is_prefix_trans; eauto.
@@ -177,7 +183,7 @@ Qed.
 
 Lemma realizes_star_only : ltac2:(zQ "70!inc!h8!jn9!kc!ita!ji1!jmd>1c$0>1T$5>0@2$6^2^1>2tr@1$1$3>2c'$0>0@5$2?4segs@1$4?2SC^5^2^1@1^5^3").
 Proof.
-  intros c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+  intros c T H; induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq];
     intros tr c' Hstar.
   - inversion Hstar as [|c1 e c2 tr2 c3 Hss Hstar2]; subst.
     + exists i0. left. apply is_prefix_nil.
@@ -199,7 +205,7 @@ Qed.
 
 Lemma realizes_admits : ltac2:(zQ "70!h8!inc!jo4!kc!ita!ji1!jmd>1c$1>1T$5>0@2$6^2^1>2tr@1$0$3>0@1^3^1@4$2?4segs@1$4?2SC^5^2").
 Proof.
-  intros c T H; induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+  intros c T H; induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq];
     intros tr HT.
   - destruct Hnode as [Hcomp _].
     destruct HT as [i [Hpre | (tr0 & -> & HT0)]].
@@ -231,7 +237,7 @@ Proof. intros c e st H. eapply sstep_halted_none, sstep_cfg_sub; exact H. Qed.
 Lemma realizes_step : ltac2:(zQ "90!ji1!inc!jmd!h8!t1!io5!iod!kc!ita>1c$1>1T$0>1e@1$3$7>2c'$1>0@2$2^4^3>0@5$6?4segs@1$8?2SC^5^3@1$5^2@2$4$0\2T'$0@2$2^4^1").
 Proof.
   intros c T e c' H; revert e c';
-  induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+  induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq];
     intros e c' Hss.
   - destruct Hnode as [_ Hsound].
     ndestruct (Hsound e (SNext c') Hss) as (i & _ & Heq2).
@@ -243,7 +249,7 @@ Qed.
 Lemma realizes_no_sserror : ltac2:(zQ "90!h8!js1!js7!inc!iod!kc!ita!ji1!jmd>1c$3>1T$7>1e@1$0$5>0@2$8^3^2@1$1@5$4?4segs@1$6?2SC^4^2$2").
 Proof.
   intros c T e H; revert e;
-  induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+  induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq];
     intros e Hss.
   - destruct Hnode as [_ Hsound].
     ndestruct (Hsound e SError Hss) as (i & _ & Hbad). discriminate.
@@ -283,11 +289,13 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma rz_silent1 : ltac2:(zQ "70!ju5!inc!jmd!rc!kc!ji1!kg0>1c$1>2c'$1>1T$5>0@4$6^3$0\0$0@1$3$4\0$0^3>0@2$2^3^2@2$2^5^3").
+Lemma rz_silent1 : forall (c c' : config) (T : TSet),
+  node_ok c unit (fun _ => []) (fun _ => c') -> RomBase.sys_rob segs c ->
+  realizes c' T -> realizes c T.
 Proof.
-  intros c c' T Hnode Hc.
+  intros c c' T Hnode Hrob Hc.
   apply (rz_conseq c (t_alt (fun _ : unit => t_emit [] T))).
-  - apply (rz_node c unit (fun _ => []) (fun _ => c') (fun _ => T) tt Hnode).
+  - apply (rz_node c unit (fun _ => []) (fun _ => c') (fun _ => T) tt Hnode Hrob).
     intros []; exact Hc.
   - eapply t_eq_trans;
       [ apply (t_alt_unit (fun _ : unit => t_emit [] T))
@@ -295,26 +303,31 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma rz_emit1 : ltac2:(zQ "80!ju5!inc!jmd!h8!kc!ji1!kg0!kgb>1c$1>2c'$1>1e@1$3$4>1T$5>0@4$6^4$0\0$0^3\0$0^4>0@2$2^4^2@2$2^6@2$7^4^3").
+Lemma rz_emit1 : forall (c c' : config) (e : list event) (T : TSet),
+  node_ok c unit (fun _ => e) (fun _ => c') -> RomBase.sys_rob segs c ->
+  realizes c' T -> realizes c (t_emit e T).
 Proof.
-  intros c c' e T Hnode Hc.
+  intros c c' e T Hnode Hrob Hc.
   apply (rz_conseq c (t_alt (fun _ : unit => t_emit e T))).
-  - apply (rz_node c unit (fun _ => e) (fun _ => c') (fun _ => T) tt Hnode).
+  - apply (rz_node c unit (fun _ => e) (fun _ => c') (fun _ => T) tt Hnode Hrob).
     intros []; exact Hc.
   - apply t_alt_unit.
 Qed.
 
 (* [comment removed for export] *)
-Lemma rz_alt2 : ltac2:(zQ "a0!kh5!jmd!inc!ji1!kha!khf!rc!kc!kg0!ki4>1c$2>2IAT>2IBT>2nx>0@2$0^2^1$2>1A$3>1B$3>2a0^5>2b0^5>0@4$8^8@2$0^7^6\0@2$0^7^6@1$6$7^5>0>1i^8@2$1@1^7@3$4^9^8^1^6>0>1i^8@2$1@1^8@3$5^a^9^1^6@2$1^b@2$9^7^6").
+Lemma rz_alt2 : forall (c : config) (IA IB : Type) (nx : IA + IB -> config) (A B : TSet),
+  IA -> IB -> node_ok c (IA + IB) (fun _ => []) nx -> RomBase.sys_rob segs c ->
+  (forall i : IA, realizes (nx (inl i)) A) -> (forall i : IB, realizes (nx (inr i)) B) ->
+  realizes c (t_alt2 A B).
 Proof.
-  intros c IA IB nx A B a0 b0 Hnode HA HB.
+  intros c IA IB nx A B a0 b0 Hnode Hrob HA HB.
   assert (HA0 : A []) by (eapply realizes_nonempty; apply (HA a0)).
   assert (HB0 : B []) by (eapply realizes_nonempty; apply (HB b0)).
   apply (rz_conseq c
     (t_alt (fun i : IA + IB =>
               t_emit [] (match i with inl _ => A | inr _ => B end)))).
   - apply (rz_node c (IA + IB) (fun _ => []) nx
-             (fun i => match i with inl _ => A | inr _ => B end) (inl a0) Hnode).
+             (fun i => match i with inl _ => A | inr _ => B end) (inl a0) Hnode Hrob).
     intros [i|i]; [apply HA | apply HB].
   - intro tr. unfold t_alt2. split.
     + intros [[i|i] Hi];
@@ -353,7 +366,7 @@ Qed.
 Lemma rz_step : ltac2:(zQ "h31!hic!ho2!s1!km5!jp4!jpa!kn6!knc!jmd!h8!rc!ko4!kp1!kq3!kr5!krd!jr6!ks5!ji1&@2$6@1$1@1$0#k0@1$1@1$0#k0>2ms$3>5model$f>3ms'$3>1T$h2>0@3$2@1$5@1$1@1$0#k0@1$h0^3@1$4@1$1@1$0#k0>0@3$2@1$9~0@1$h1^4@1$a~0>0@3$2@1$5@1$1@1$0#k0@1$d^6@1$4@1$1@1$0#k0>0@3$2@1$c$3@2$e?4segs^7@2$b$3^5>0@2$8@2$7^6^7^5@2$8@2$7^9^8^6").
 Proof.
   intros ms model ms' T Hh Hlazy Hsvc Hstep Hc.
-  eapply rz_silent1; [apply node_instr; eassumption | exact Hc].
+  eapply rz_silent1; [apply node_instr; eassumption | apply RomBase.sys_rob_instr; exact Hsvc | exact Hc].
 Qed.
 
 Lemma rz_msteps : ltac2:(zQ "h01!hic!ho2!kn6!s1!km5!knc!jmd!jp4!h8!rc!jpa!krd!jr6!ks5!li2!ji1&@2$2@1$1@1$0#k0@1$1@1$0#k0>2ms$4>3ms'$4>5model$b>1T$f>0@3$3@1$a@1$1@1$0#k0@1$c^2@1$7@1$1@1$0#k0>0@3$3@1$8~0@1$d^3@1$9~0>0@3$e?4segs^6^5>0@2$6@2$5^6^5^4@2$6@2$5^8^6^5").
@@ -387,6 +400,7 @@ Proof.
     + intros e st Hss. apply sstep_cfg_sub in Hss.
       destruct (sstep_exit_inv segs ms model x8 e st Hh Hsvc Hx8 Hss) as [-> ->].
       exists tt. split; reflexivity.
+  - exact (RomBase.sys_rob_exit segs ms model x8 Hsvc Hx8).
   - apply rz_halt. cbn. discriminate.
 Qed.
 

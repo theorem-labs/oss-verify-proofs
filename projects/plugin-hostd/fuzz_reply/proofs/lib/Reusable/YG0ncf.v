@@ -1,4 +1,4 @@
-(* CARRIED from commit ef59884ff3b253ed0d7cd40347e9e12f81402e5d,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YG0ncf.v, sha256 617375b1f6ec4a673a23c0750ed1ce5b8084596b306f900cb41b3c2a8751f66d (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the Require lines only:
    the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
@@ -6,9 +6,10 @@
 *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Taken by path from a working branch a0fed4266a1b, provisional. *)
+(* Taken by path from a working branch, provisional. *)
 (* Modified by Theorem Labs, 2026-10: module paths changed from fuzz_preset lib.Reusable to cgif_file_fuzzer lib; the text is otherwise unchanged. *)
-(* Modified by a Theorem Labs lane (ReallocPrimary.TkSecLink), 2026-10-30: the `Ltac ... ::=` overrides made #[local], the DELTA of a working branch 432757103df6 (a Theorem Labs lane's fix) applied 3-way; no other text of that commit taken. *)
+(* Modified by a Theorem Labs lane (ReallocPrimary.TkSecLink), 2026-10-30: the `Ltac ... ::=` overrides made #[local], the DELTA of a working branch (a Theorem Labs lane's fix) applied 3-way; no other text of that commit taken. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (ALedger_cf's reservations are the image's followed by the vDSO/vvar tail, res_tail_ok); internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the event-free second allocator instance (suffix cf), the RELATIONAL LAYER.
    ARmcf / ARcf are FRESH records, never a wrapper around cgif's ARm / AR: a wrapper would inherit am_wf : Wf,
    which is false for both units (preset's class 17 maps 3,584 MiB against cgif's 2 GiB bound).
@@ -99,7 +100,7 @@ Proof. intros S x Hx. exact Hx. Qed.
    own ly_sec slot (the last entry tagged ERRB_CAP_TAG, matching errb_e in YG00cf.v), with
    length errb_cap_cf S. 0 or 1 entries. It is the one mapped extent the ledger covers
    besides lazy_zones and sec_extents (the errbuf map, errb_map_cf, is a KMmapSec with no
-   chunk), i.e. c-asan's placement xs (SecGrantP.v:114 at 820536849e5). Its length is
+   chunk), i.e. c-asan's placement xs (SecGrantP.v:114). Its length is
    at most cf_nob by Wf_cf's wsc_lens, since it is an st_secs entry's sm_len. *)
 Fixpoint last_cap_idx (l : list secmap) (i : nat) (acc : option nat) : option nat :=
 match l with
@@ -552,7 +553,10 @@ Record ALedger_cf (S : astate) (md : Model) : Prop := {
 alc_img : forall sg, In sg segs -> fst (ly_img ly) <= Z.of_N (seg_base sg) /\
 Z.of_N (seg_base sg) + Z.of_N (seg_size sg) <= fst (ly_img ly) + snd (ly_img ly);
 alc_limit : ASAN_VM_LMIN <= vm_limit (m_vmmaps md);
-alc_reserved : vm_reserved (m_vmmaps md) = segments_reserved segs;
+(* 727298f3: the reservations are the image's followed by the tail [YG0n.res_tail_ok] bounds (the vDSO/vvar pair),
+   as cgif's al_reserved states them. *)
+alc_reserved : exists rx : list (word * word),
+vm_reserved (m_vmmaps md) = segments_reserved segs ++ rx /\ res_tail_ok ly rx;
 alc_prim : exists pieces, prim_pieces_ok ly S pieces /\
 (forall p, In p pieces <-> (In (wiv p) (vm_maps (m_vmmaps md)) /\ 0 < snd p /\ ly_prim ly <= fst p /\
 fst p + snd p <= ly_prim ly + kPrimResvSize));

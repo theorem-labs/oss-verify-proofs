@@ -16,11 +16,11 @@
       (A/AD1ycf.v:42, the driver's image windows start at 0xa1f78, above cf_relro_hi = 0x9f000).
    2. relro_seg_reply_A: round 3's relro_seg_t (Reusable/YG0ncf.v:646-647) at tfibsegs: one segment holds the range.
    3. errno_relro_reply_A: round 3's errno_relro_t (Reusable/YG0ncf.v:648) at TfibSyms: errno (TFIB_ERRNO) is above.
-   4. pf_ial_apart_reply_A: the layer's pf_ial_apart_t (Reusable/YG0ncf.v:189 on this base, a working branch
-      b38406ef4b14) at TfibSyms: Printf's two cells lie outside the internal allocator's arena and its flag.
+   4. pf_ial_apart_reply_A: the layer's pf_ial_apart_t (Reusable/YG0ncf.v:189 on this base, a working branch)
+      at TfibSyms: Printf's two cells lie outside the internal allocator's arena and its flag.
    5. dzone_static_text_A: the FIRST disjunct of AFgi.DZONE (A/AFgi.v:484-485) is [dzone_static_lo, dzone_static_hi),
       by reflexivity. DZONE writes the two bounds as inline numerals; the names here are other files' names for the
-      same addresses: dzone_static_lo := TFIB_STORE (A/AF0m.v:18, __sanitizer::stackStore), dzone_static_hi :=
+      same addresses: dzone_static_lo := TFIB_STORE (A/AF0m.v:19, __sanitizer::stackStore), dzone_static_hi :=
       AD20.RS_LO (A/AD20.v:46, the start of the driver's global read_stage). Both read from the unstripped twin's
       .symtab for this file: stackStore 0x177f88 (size 0x10010); read_stage 0x5c8710 (size 0x10000), right after
       __ubsan::ubsan_flags, which ends at 0x5c8710.
@@ -42,7 +42,7 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YM05.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require AF0x DGbase ImgBaseDG DGgm DGgi DGif0.
 Open Scope Z_scope.
 
-(* Image A's CfImg for the texts below, as A/ReplyATopX.v:133 takes it. *)
+(* Image A's CfImg for the texts below, as A/ReplyATopX.v:134 takes it. *)
 #[local] Existing Instance CfImg_A.
 
 (* 1. RELRO geometry. *)
@@ -113,7 +113,7 @@ Qed.
 (* 8. zones_miss_relro_reply_A (field round 3 part 3; the statement is a Theorem Labs lane's, 18:21Z, agreed with DeallocNmaxA, whose
    lib/A/DGmpcf.v is to Require this file and close its zones_miss_relro by exact): the unit image row behind the
    Deallocate walks' keep law of arodata_ok_cf (cgif: DGmpcf.zones_miss_relro_cgif, proofs/cgif/
-   cgif_file_fuzzer/lib/DGmpcf.v:82-117 at e8a7dd66acf; its proof with CfImg_cgif -> CfImg_A and YF0x -> AF0x). At the
+   cgif_file_fuzzer/lib/DGmpcf.v:82-117; its proof with CfImg_cgif -> CfImg_A and YF0x -> AF0x). At the
    seed's geometry (DGgm.free_hyps), no non-owned byte of the RELRO range lies in the walk's window (DGif0.dwin_m), the
    depot zone (DGgi.DZONE), the internal allocator's zone (DGgi.IZONE) or the freed block's shadow (DGif0.dshadow).
    Part 3c: the covered set is YG0dcf.aro_addr_cf (the RELRO range and the report reads cf_ro_reads).

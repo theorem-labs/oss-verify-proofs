@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack-image lemmas restated over the launch's ProcInput, mmap base and entry point; build_stack_bytes_within_span replaced by length_entry_stack_image_launch and entry_stack_image_no_wrap, the image now running exactly from sp to the stack VMA's end; entry_page_top_within_window and wrap_mem's zero-fill floor taken from the launch; new lemmas lifting segment lookups to the run's segment list and keeping stores clear of the vDSO pair; encoded (CDefT) statements written out in plain text, using annotations dropped, comments added); and launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -2357,40 +2358,110 @@ Proof.
   rewrite string_addrs_fst_structure. cbn [length]. rewrite IH. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma build_stack_bytes_within_span : ltac2:(CDefT.buildp (gd_tbl_PropExec ()) "Pph,$6;.Psp,(9.&40.)Pa,(8.(8.(9.&8.)))Pe,(8.(8.(9.&8.)))Puid,(9.&40.)Phw,(9.&40.)Prnd,$6<.(1.(?.(10.(9.&8.)(6=.R7.R6.R5.R4.R3.R2.R1.)))(6>.R5.R4.))")
-(* [comment removed for export] *).
+(** The image IS the block.  [Run.entry_stack_image] is
+    [StackLayout.build_stack_bytes] at the launch's own auxv facts, so
+    a read-back lemma can be stated against either; this is the step
+    between the two, and it is a conversion. *)
+Lemma entry_stack_image_block : forall inp mbase ph entry (sp : word) draw,
+  entry_stack_image inp mbase ph entry sp draw
+  = build_stack_bytes (launch_auxv inp sp mbase) ph entry sp (ed_top draw)
+      (in_argv inp) (in_envp inp) (in_execfn inp)
+      (in_uid inp) (in_gid inp) (in_hwcap inp) draw.
+Proof. reflexivity. Qed.
+
+(** CONFIG_RSEQ is the one launch fact that moves the vector's length,
+    and [Run.launch_auxv] copies it straight out of the kernel build.
+    Named so the length arithmetic below can state its premises over
+    [State.kb_rseq], which is what [Run.launch_sp_hi] reads. *)
+Lemma la_rseq_launch_auxv : forall inp sp mbase,
+  la_rseq (launch_auxv inp sp mbase) = kb_rseq (in_kernel inp).
+Proof. reflexivity. Qed.
+
+(** THE ENTRY STACK IMAGE IS EXACTLY [ed_top - sp] BYTES.
+
+    [Run.entry_stack_image] lays Linux's own block, from the entry
+    stack pointer up to the stack VMA's end ([setup_arg_pages],
+    fs/exec.c, Linux v6.18.46, commit 1f99e9ab748f), so its size is not
+    something a closed form bounds — it IS the distance between the two
+    ends.  [Run] cannot prove that itself: the layout arithmetic lives
+    here.
+
+    The one thing to check is the pad.  [StackLayout.block_pad_len] is
+    "whatever is left over", clamped at 0 by [Z.to_nat] so that the
+    block is defined for every [sp] and [top], and the clamp is what
+    would break the sum.  It never bites under the launch conjunct: the
+    sp rule of [Run.valid_launch_sp] puts [sp] at or below
+    [align_down16 (top - 8 - L) - C], and [align_down16] only ever
+    rounds down, so [top - 8 - L - sp - C] is at or above zero.
+
+    This REPLACES [build_stack_bytes_within_span], which bounded the
+    model's old, shorter block by [Run.entry_stack_span].  That bound is
+    false for the kernel's block: a launch whose [arch_align_stack] pad
+    is near 4095 bytes lays a block longer than the span, and the span
+    says nothing about the strings' NULs or the exec file name the
+    model now publishes.  Everything that needs a size for the initial
+    stack image goes through this lemma. *)
+Lemma length_entry_stack_image_launch :
+  forall v inp mbase ph entry (sp brk : word) draw,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw))
+  = (bv_unsigned (ed_top draw) - bv_unsigned sp)%Z.
 Proof.
-  intros ph sp a e uid hw rnd.
-  unfold entry_stack_span, build_stack_bytes. cbv zeta.
-  rewrite (string_addrs_pair a). cbv beta iota.
-  rewrite (string_addrs_pair e). cbv beta iota.
-  rewrite !length_app, repeat_length, !length_flat_map_le8,
-    !length_string_addrs_fst, !length_n_to_le_8, length_auxv_bytes,
-    !length_flatten_strings, length_at_random_bytes.
-  rewrite !total_arg_bytes_Z.
-  match goal with
-  | |- context [Z.to_nat ?pd] =>
-      assert (Hpd : (0 <= pd < 8)%Z) by (apply Z.mod_pos_bound; lia)
-  end.
-  unfold auxv_size. lia.
+  intros v inp mbase ph entry sp brk draw Hok.
+  cbn [entry_launch_ok_va] in Hok.
+  destruct Hok as (_ & (_ & _ & Hhi) & _).
+  unfold entry_stack_image.
+  rewrite length_build_stack_bytes, la_rseq_launch_auxv.
+  unfold launch_sp_hi, align_down16 in Hhi.
+  pose proof (Z.mod_pos_bound
+    (bv_unsigned (ed_top draw) - 8
+     - Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp)
+                                     (in_execfn inp)))
+    16 ltac:(lia)) as Hm.
+  unfold block_pad_len.
+  rewrite !Nat2Z.inj_add.
+  rewrite Z2Nat.id by lia.
+  lia.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-#[using="Type"] Lemma bsb_argc_prefix : ltac2:(CDefT.buildp (gd_tbl_PropExec ()) "Pph,$6;.Psp,(9.&40.)Pargv,(8.(8.(9.&8.)))Penvp,(8.(8.(9.&8.)))Puid,(9.&40.)Phw,(9.&40.)Prnd,$6<.(6?.(8.(9.&8.))Ltl,(8.(9.&8.))(2.(8.(9.&8.))(6=.R8.R7.R6.R5.R4.R3.R2.)(;.(9.&8.)(70.(71.(8.(9.&8.))R6.))R1.)))")
-(* [comment removed for export] *).
+(** The image does not wrap the address space, with no premise beyond
+    the launch conjunct: its top is [ed_top], a user address.  This is
+    the side condition every read-back lemma below carries, so a
+    consumer that has [Run.entry_launch_ok_va] never has to do the
+    arithmetic again. *)
+Lemma entry_stack_image_no_wrap :
+  forall v inp mbase ph entry (sp brk : word) draw,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  (bv_unsigned sp
+   + Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw))
+     < 2 ^ 64)%Z.
 Proof.
-  intros ph sp argv envp uid hw rnd. unfold build_stack_bytes.
+  intros v inp mbase ph entry sp brk draw Hok.
+  rewrite (length_entry_stack_image_launch v inp mbase ph entry sp brk draw Hok).
+  pose proof (u64_range (ed_top draw)) as Hr. lia.
+Qed.
+
+(* ================================================================= *)
+(* Stack read corollaries                                            *)
+(* ================================================================= *)
+
+Lemma bsb_argc_prefix :
+  forall la ph entry (sp top : word) argv envp execfn uid gid hwcap draw,
+  exists tl,
+  build_stack_bytes la ph entry sp top argv envp execfn uid gid hwcap draw
+  = word_le8 (len_word argv) ++ tl.
+Proof.
+  intros la ph entry sp top argv envp execfn uid gid hwcap draw.
+  unfold build_stack_bytes. cbv zeta.
   rewrite (string_addrs_pair argv). cbv beta iota.
   rewrite (string_addrs_pair envp). cbv beta iota.
   eexists. rewrite <- !app_assoc. reflexivity.
 Qed.
 
-#[using="Type"] Lemma read_at_offset : ltac2:(CDefT.buildp (gd_tbl_PropExec ()) "Psegs,(8.$36.)Psp,(9.&40.)Pbytes,(8.(9.&8.))Ppre,(8.(9.&8.))Pmid,(8.(9.&8.))Ppost,(8.(9.&8.))Pk,$5=.P,(2.(8.(9.&8.))R5.(;.(9.&8.)R4.(;.(9.&8.)R3.R2.)))P,(2.$5=.(10.(9.&8.)R4.)R2.)P,(6.(56.(11.&40.R8.)(?.(10.(9.&8.)R7.)))(7.+2.+40.))(2.(16.(8.(9.&8.)))(63.R:.(64.R9.R8.)(31.&40.R9.(69.(10.(9.&8.)R7.)))R4.)(39.(8.(9.&8.))R6.))")
-(* [comment removed for export] *).
+Lemma read_at_offset : forall segs (sp : word) bytes pre mid post k,
+  bytes = pre ++ mid ++ post -> length mid = k ->
+  (bv_unsigned sp + Z.of_nat (length bytes) < 2^64)%Z ->
+  rdn segs (stack_to_mem sp bytes) (sp + nat_to_word (length pre)) k = Some mid.
 Proof.
   intros segs sp bytes pre mid post k Hb Hk Hnw.
   pose proof (u64_range sp) as Hsp64.
@@ -2412,45 +2483,65 @@ Proof.
   cbn [firstn]. rewrite app_nil_r. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma rdn_image_in_block : ltac2:(CDefT.buildp (gd_tbl_PropExec ()) "Psegs,(8.$36.)Pph,$6;.Psp,(9.&40.)Pargv,(8.(8.(9.&8.)))Penvp,(8.(8.(9.&8.)))Puid,(9.&40.)Phwcap,(9.&40.)Pdraw,$6<.Pa,(9.&40.)Pn,$5=.P,(1.(56.(11.&40.R2.)(?.R1.))(72.R8.(6=.R9.R8.R7.R6.R5.R4.R3.)))P,(1.(56.(11.&40.R3.)(?.R2.))(7.+2.+40.))(2.(16.(8.(9.&8.)))(63.R<.(64.R:.(73.R;.R:.R9.R8.R7.R6.R5.))R4.R3.)(63.R<.(64.R:.(6=.R;.R:.R9.R8.R7.R6.R5.))R4.R3.))")
-(* [comment removed for export] *).
-Proof.
-  intros segs ph sp argv envp uid hwcap draw a n Hin Hnw.
-  apply rdn_ext; [exact Hnw|].
-  intros x Hx. apply stack_to_mem_image_in_block. lia.
-Qed.
+(** A read of the image is a read of the block, because the image IS
+    the block: [Run.entry_stack_image] stops at [StackLayout.ed_top]
+    and nothing is mapped above it.  The lemma used to carry a bound
+    saying the read stayed below the block's top, because the image
+    then ran on to the next page boundary; it needs none now, and the
+    consumers that passed the bound can drop it. *)
+Lemma rdn_image_in_block :
+  forall segs inp mbase ph entry (sp : word) draw (a : word) n,
+  rdn segs (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw)) a n
+  = rdn segs (stack_to_mem sp
+        (build_stack_bytes (launch_auxv inp sp mbase) ph entry sp (ed_top draw)
+           (in_argv inp) (in_envp inp) (in_execfn inp)
+           (in_uid inp) (in_gid inp) (in_hwcap inp) draw)) a n.
+Proof. reflexivity. Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma read_at_offset_image : ltac2:(CDefT.buildp (gd_tbl_PropExec ()) "Psegs,(8.$36.)Pph,$6;.Psp,(9.&40.)Pargv,(8.(8.(9.&8.)))Penvp,(8.(8.(9.&8.)))Puid,(9.&40.)Phwcap,(9.&40.)Pdraw,$6<.Ppre,(8.(9.&8.))Pmid,(8.(9.&8.))Ppost,(8.(9.&8.))Pk,$5=.P,(2.(8.(9.&8.))(6=.R;.R:.R9.R8.R7.R6.R5.)(;.(9.&8.)R4.(;.(9.&8.)R3.R2.)))P,(2.$5=.(10.(9.&8.)R4.)R2.)P,(6.(56.(11.&40.R<.)(?.(10.(9.&8.)(6=.R=.R<.R;.R:.R9.R8.R7.))))(7.+2.+40.))(2.(16.(8.(9.&8.)))(63.R?.(64.R=.(73.R>.R=.R<.R;.R:.R9.R8.))(31.&40.R=.(69.(10.(9.&8.)R7.)))R4.)(39.(8.(9.&8.))R6.))")
-(* [comment removed for export] *).
+(** [read_at_offset] against the mapped image.  It is [read_at_offset]
+    itself now: the image and the block are one list, so there is no
+    step between them and no premise beyond the no-wrap side condition
+    [entry_stack_image_no_wrap] discharges. *)
+Lemma read_at_offset_image :
+  forall segs inp mbase ph entry (sp : word) draw pre mid post k,
+  entry_stack_image inp mbase ph entry sp draw = pre ++ mid ++ post ->
+  length mid = k ->
+  (bv_unsigned sp
+   + Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw))
+     < 2 ^ 64)%Z ->
+  rdn segs (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw))
+      (sp + nat_to_word (length pre)) k
+  = Some mid.
 Proof.
-  intros segs ph sp argv envp uid hwcap draw pre mid post k Hb Hk Hnw.
-  pose proof (u64_range sp) as Hsp64.
-  assert (Hlen : (length pre + length mid <= length (build_stack_bytes ph sp argv envp uid hwcap draw))%nat)
-    by (rewrite Hb, !length_app; lia).
-  assert (Hu : bv_unsigned (sp + nat_to_word (length pre))
-               = (bv_unsigned sp + Z.of_nat (length pre))%Z).
-  { unfold nat_to_word. rewrite bv_add_unsigned, Z_to_bv_unsigned.
-    rewrite bv_wrap_add_idemp_r, bv_wrap64_mod. apply Z.mod_small. lia. }
-  rewrite rdn_image_in_block
-    by (unfold entry_block_top; rewrite Hu; lia).
+  intros segs inp mbase ph entry sp draw pre mid post k Hb Hk Hnw.
   exact (read_at_offset segs sp _ pre mid post k Hb Hk Hnw).
 Qed.
 
-#[using="Type"] Lemma read_argc : ltac2:(CDefT.buildp (gd_tbl_PropExec ()) "Pph,$6;.Psegs,(8.$36.)Psp,(9.&40.)Pargv,(8.(8.(9.&8.)))Penvp,(8.(8.(9.&8.)))Puid,(9.&40.)Phw,(9.&40.)Prnd,$6<.P,(6.(56.(11.&40.R6.)(?.(10.(9.&8.)(6=.R8.R6.R5.R4.R3.R2.R1.))))(7.+2.+40.))(2.(16.(8.(9.&8.)))(63.R8.(64.R7.(73.R9.R7.R6.R5.R4.R3.R2.))R7.#8.)(39.(8.(9.&8.))(70.(71.(8.(9.&8.))R6.))))")
-(* [comment removed for export] *).
+Lemma read_argc : forall inp mbase ph entry segs (sp : word) draw,
+  (bv_unsigned sp
+   + Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw))
+     < 2 ^ 64)%Z ->
+  rdn segs (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw))
+      sp 8%nat
+  = Some (word_le8 (len_word (in_argv inp))).
 Proof.
-  intros ph segs sp argv envp uid hw rnd Hnw.
-  destruct (bsb_argc_prefix ph sp argv envp uid hw rnd) as [tl E].
-  pose proof (read_at_offset_image segs ph sp argv envp uid hw rnd [] (word_le8 (len_word argv)) tl 8%nat) as H.
+  intros inp mbase ph entry segs sp draw Hnw.
+  destruct (bsb_argc_prefix (launch_auxv inp sp mbase) ph entry sp (ed_top draw)
+              (in_argv inp) (in_envp inp) (in_execfn inp)
+              (in_uid inp) (in_gid inp) (in_hwcap inp) draw) as [tl E].
+  rewrite <- entry_stack_image_block in E.
+  pose proof (read_at_offset_image segs inp mbase ph entry sp draw
+                [] (word_le8 (len_word (in_argv inp))) tl 8%nat) as H.
   cbn [length] in H.
   rewrite word_add_0 in H.
-  apply H; [rewrite E; reflexivity|reflexivity|exact Hnw].
+  apply H; [exact E|reflexivity|exact Hnw].
 Qed.
 
-#[using="Type"] Lemma read_byte_at : ltac2:(CDefT.buildp (gd_tbl_PropExec ()) "Psegs,(8.$36.)Psp,(9.&40.)Pbytes,(8.(9.&8.))Ppre,(8.(9.&8.))Ps,(8.(9.&8.))Ppost,(8.(9.&8.))Pj,$5=.P,(2.(8.(9.&8.))R5.(;.(9.&8.)R4.(;.(9.&8.)R3.R2.)))P,(74.R2.(10.(9.&8.)R4.))P,(6.(56.(11.&40.R8.)(?.(10.(9.&8.)R7.)))(7.+2.+40.))(2.(16.(8.(9.&8.)))(63.R:.(64.R9.R8.)(31.&40.R9.(69.(61.(10.(9.&8.)R7.)R4.)))#1.)(39.(8.(9.&8.))(13.(9.&8.)(75.(9.&8.)R4.R6.(2?.&8.=))(14.(9.&8.)))))")
-(* [comment removed for export] *).
+Lemma read_byte_at : forall segs (sp : word) bytes pre s post j,
+  bytes = pre ++ s ++ post -> (j < length s)%nat ->
+  (bv_unsigned sp + Z.of_nat (length bytes) < 2^64)%Z ->
+  rdn segs (stack_to_mem sp bytes) (sp + nat_to_word (length pre + j)) 1%nat
+  = Some [nth j s (Z_to_bv 8 0)].
 Proof.
   intros segs sp bytes pre s post j Hb Hj Hnw.
   destruct (nth_error_skipn_cons s j Hj) as [b [Hnth Hskip]].
@@ -2464,80 +2555,327 @@ Proof.
   rewrite Hb. rewrite Hsj at 1. rewrite <- !app_assoc. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma read_byte_at_image : ltac2:(CDefT.buildp (gd_tbl_PropExec ()) "Psegs,(8.$36.)Pph,$6;.Psp,(9.&40.)Pargv,(8.(8.(9.&8.)))Penvp,(8.(8.(9.&8.)))Puid,(9.&40.)Phwcap,(9.&40.)Pdraw,$6<.Ppre,(8.(9.&8.))Ps,(8.(9.&8.))Ppost,(8.(9.&8.))Pj,$5=.P,(2.(8.(9.&8.))(6=.R;.R:.R9.R8.R7.R6.R5.)(;.(9.&8.)R4.(;.(9.&8.)R3.R2.)))P,(74.R2.(10.(9.&8.)R4.))P,(6.(56.(11.&40.R<.)(?.(10.(9.&8.)(6=.R=.R<.R;.R:.R9.R8.R7.))))(7.+2.+40.))(2.(16.(8.(9.&8.)))(63.R?.(64.R=.(73.R>.R=.R<.R;.R:.R9.R8.))(31.&40.R=.(69.(61.(10.(9.&8.)R7.)R4.)))#1.)(39.(8.(9.&8.))(13.(9.&8.)(75.(9.&8.)R4.R6.(2?.&8.=))(14.(9.&8.)))))")
-(* [comment removed for export] *).
+(** [read_byte_at] against the mapped image, for the same reason as
+    [read_at_offset_image]. *)
+Lemma read_byte_at_image :
+  forall segs inp mbase ph entry (sp : word) draw pre s post j,
+  entry_stack_image inp mbase ph entry sp draw = pre ++ s ++ post ->
+  (j < length s)%nat ->
+  (bv_unsigned sp
+   + Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw))
+     < 2 ^ 64)%Z ->
+  rdn segs (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw))
+      (sp + nat_to_word (length pre + j)) 1%nat
+  = Some [nth j s (Z_to_bv 8 0)].
 Proof.
-  intros segs ph sp argv envp uid hwcap draw pre s post j Hb Hj Hnw.
-  destruct (nth_error_skipn_cons s j Hj) as [b [Hnth Hskip]].
-  assert (Hsj : s = firstn j s ++ b :: skipn (S j) s)
-    by (rewrite <- Hskip; symmetry; apply firstn_skipn).
-  pose proof (read_at_offset_image segs ph sp argv envp uid hwcap draw
-                (pre ++ firstn j s) [b] (skipn (S j) s ++ post) 1%nat) as H.
-  rewrite length_app in H.
-  rewrite firstn_length_le in H by lia.
-  replace (nth j s (Z_to_bv 8 0)) with b by (symmetry; apply (nth_error_nth _ _ _ Hnth)).
-  apply H; [|reflexivity|exact Hnw].
-  rewrite Hb. rewrite Hsj at 1. rewrite <- !app_assoc. reflexivity.
+  intros segs inp mbase ph entry sp draw pre s post j Hb Hj Hnw.
+  exact (read_byte_at segs sp _ pre s post j Hb Hj Hnw).
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma nth_app0_bound : forall (a1 : list byte) j,
+(** Bytes are typed: every byte is below 256 by construction, with no
+    need for a separate [Forall (fun b => b < 256)] hypothesis. *)
+Lemma nth_app0_bound : forall (a1 : list byte) j,
   (bv_unsigned (nth j (a1 ++ [Z_to_bv 8 0]) (Z_to_bv 8 0)) < 256)%Z.
 Proof.
   intros a1 j. apply u8_range.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ================================================================= *)
+(* THE WRAPPER BRIDGE                                                 *)
+(*                                                                   *)
+(* This repo's [init_machine_state] sets [ms_mem] to a wrapper that,  *)
+(* for stack addresses below [sp] (and at or above                    *)
+(* [Run.stack_window_lo]), returns [Some 0], else defers to the raw   *)
+(* [stack_to_mem].  Every                                             *)
+(* read the binaries perform is at [addr >= sp], where the zero-fill  *)
+(* guard is false, so the wrapper agrees with [stack_to_mem].         *)
+(* ================================================================= *)
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma entry_page_top_within_window : ltac2:(CDefT.buildp (gd_tbl_PropExec ()) "Pph,$6;.Psp,(9.&40.)Pargv,(8.(8.(9.&8.)))Penvp,(8.(8.(9.&8.)))Puid,(9.&40.)Phwcap,(9.&40.)Pdraw,$6<.P,(76.R6.R5.R4.)(1.(77.R7.(6=.R8.R7.R6.R5.R4.R3.R2.))$78.)")
-(* [comment removed for export] *).
+(** The stack VMA's end is inside the user address space.
+
+    [Run.entry_page_top] is [StackLayout.ed_top] itself: the image runs
+    from [sp] to the VMA's end and there is no page tail above it, so
+    this is the second part of [Run.valid_stack_top_va] — the rule
+    [setup_arg_pages] (fs/exec.c, Linux v6.18.46, commit 1f99e9ab748f)
+    imposes.  [stack_top] starts at [STACK_TOP] and
+    [randomize_stack_top] (mm/util.c) and [arch_align_stack]
+    (arch/riscv/kernel/process.c) only ever move it DOWN.
+
+    It used to be a computation: the model laid a block shorter than
+    the kernel's, bounded its length by [Run.entry_stack_span] and
+    rounded the top up to a page.  With the kernel's own block the top
+    is a launch fact, so mapping the whole stack VMA still needs no
+    narrowing of the entry quantifier — the soundness hole
+    [Run.valid_entry]'s own note argues against. *)
+Lemma entry_page_top_within_window :
+  forall v inp mbase (sp brk : word) draw,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  (entry_page_top draw <= va_stack_top v)%Z.
 Proof.
-  intros ph sp argv envp uid hwcap draw Hfit.
-  pose proof (build_stack_bytes_within_span ph sp argv envp uid hwcap draw) as Hlen.
-  unfold entry_stack_fits in Hfit. unfold entry_page_top.
-  apply page_round_up_Z_le; [ unfold entry_block_top; lia | reflexivity ].
+  intros v inp mbase sp brk draw Hok.
+  cbn [entry_launch_ok_va] in Hok.
+  destruct Hok as ((_ & Htop & _) & _ & _).
+  unfold entry_page_top. exact Htop.
 Qed.
 
-Definition wrap_mem (ph : PhdrInfo) (sp : word) (argv envp : list (list byte))
-    (uid : word) (hw : word) (rnd : EntryDraw) : word -> option byte :=
+(** The proof-side mirror of [Run.init_machine_state]'s [ms_mem].  Its
+    arguments are the launch's, in [Run.entry_stack_image]'s own order:
+    the inputs (which now carry the kernel build and the exec file
+    name), the mmap base that the auxv's AT_SYSINFO_EHDR and the
+    window's guard-gap floor read, the program headers, the entry
+    point, the stack pointer and the entry draw. *)
+Definition wrap_mem (inp : ProcInput) (mbase : word) (ph : PhdrInfo)
+    (entry sp : word) (draw : EntryDraw) : word -> option byte :=
   fun addr =>
-    match stack_to_mem sp (entry_stack_image ph sp argv envp uid hw rnd) addr with
+    match stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw) addr with
     | Some b => Some b
     | None =>
-      if andb (Z.leb (bv_unsigned sp - stack_max_size) (bv_unsigned addr))
+      if andb (Z.leb (stack_window_lo (in_kernel inp) mbase draw)
+                     (bv_unsigned addr))
               (Z.ltb (bv_unsigned addr) (bv_unsigned sp))
       then Some (Z_to_bv 8 0) else None
     end.
 
-#[using="Type"] Lemma init_mkst : ltac2:(CDefT.buildp (gd_tbl_PropExec ()) "Psegs,(8.$36.)Ppc,$28.Pph,$6;.Psp,(9.&40.)Pargv,(8.(8.(9.&8.)))Penvp,(8.(8.(9.&8.)))Puid,(9.&40.)Phw,(9.&40.)Prnd,$6<.(2.$18.(79.R9.R8.R7.R6.R1.R5.R4.R3.R2.)(1:.$7:.(7;.(7;.(7<.&5.(9.&40.))(50.&5.+:.$51.)(2?.&40.=))(50.&5.+2.$51.)R6.)(2?.&40.(7=.R8.))(7>.R7.R6.R5.R4.R3.R2.R1.)(7?.R9.)))")
-(* [comment removed for export] *).
+Lemma init_mkst : forall segs (pc : N) ph (sp mbase : word) draw inp,
+  init_machine_state segs pc ph sp mbase draw inp =
+  @mkst fx0 (regupd (regupd bvmap_empty 10 (Z_to_bv 64 0)) 2 sp)
+       (Z_to_bv 64 (Z.of_N pc))
+       (wrap_mem inp mbase ph (Z_to_bv 64 (Z.of_N pc)) sp draw)
+       (seg_rom segs).
 Proof. intros. reflexivity. Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma wrap_above_sp : ltac2:(CDefT.buildp (gd_tbl_PropExec ()) "Pph,$6;.Psp,(9.&40.)Pargv,(8.(8.(9.&8.)))Penvp,(8.(8.(9.&8.)))Px,(9.&40.)Puid,(9.&40.)Phw,(9.&40.)Prnd,$6<.P,(1.(11.&40.R7.)(11.&40.R4.))(2.(16.(9.&8.))(7>.R9.R8.R7.R6.R4.R3.R2.R5.)(64.R8.(73.R9.R8.R7.R6.R4.R3.R2.)R5.))")
-(* [comment removed for export] *).
+(** Above (or at) [sp], the wrapper equals the raw [stack_to_mem]:
+    the zero-fill branch is gated by [addr < sp], which is false. *)
+Lemma wrap_above_sp : forall inp mbase ph entry (sp : word) draw (x : word),
+  (bv_unsigned sp <= bv_unsigned x)%Z ->
+  wrap_mem inp mbase ph entry sp draw x
+  = stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw) x.
 Proof.
-  intros ph sp argv envp x uid hw rnd Hx. unfold wrap_mem.
-  destruct (stack_to_mem sp (entry_stack_image ph sp argv envp uid hw rnd) x) as [b|] eqn:E; [reflexivity|].
-  assert (Hltf : Z.ltb (bv_unsigned x) (bv_unsigned sp) = false) by (apply Z.ltb_ge; lia).
+  intros inp mbase ph entry sp draw x Hx. unfold wrap_mem.
+  destruct (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw) x)
+    as [b|] eqn:E; [reflexivity|].
+  assert (Hltf : Z.ltb (bv_unsigned x) (bv_unsigned sp) = false)
+    by (apply Z.ltb_ge; lia).
   rewrite Hltf, andb_false_r. reflexivity.
 Qed.
 
-#[using="Type"] Lemma rdn_wrap_stack_above : ltac2:(CDefT.buildp (gd_tbl_PropExec ()) "Psegs,(8.$36.)Pph,$6;.Psp,(9.&40.)Pargv,(8.(8.(9.&8.)))Penvp,(8.(8.(9.&8.)))Pa,(9.&40.)Pn,$5=.Puid,(9.&40.)Phw,(9.&40.)Prnd,$6<.P,(1.(11.&40.R8.)(11.&40.R5.))P,(1.(56.(11.&40.R6.)(?.R5.))(7.+2.+40.))(2.(16.(8.(9.&8.)))(63.R<.(7>.R;.R:.R9.R8.R5.R4.R3.)R7.R6.)(63.R<.(64.R:.(73.R;.R:.R9.R8.R5.R4.R3.))R7.R6.))")
-(* [comment removed for export] *).
+Lemma rdn_wrap_stack_above :
+  forall segs inp mbase ph entry (sp : word) draw (a : word) n,
+  (bv_unsigned sp <= bv_unsigned a)%Z ->
+  (bv_unsigned a + Z.of_nat n <= 2 ^ 64)%Z ->
+  rdn segs (wrap_mem inp mbase ph entry sp draw) a n
+  = rdn segs (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw)) a n.
 Proof.
-  intros segs ph sp argv envp a n uid hw rnd Hsp Hnw.
+  intros segs inp mbase ph entry sp draw a n Hsp Hnw.
   apply rdn_ext; [exact Hnw|].
   intros x Hx. apply wrap_above_sp. lia.
 Qed.
 End WithFP3.
+
+
+(* ================================================================= *)
+(* SEGMENT-PREFIX LIFTING (LPS 08b1429, #61 vDSO pages)               *)
+(*                                                                   *)
+(* [Run.run_segments segs inp sp mbase] is [segs ++ vdso_segments     *)
+(* (in_kernel inp) sp mbase].  Every lookup the machine performs      *)
+(* ([RiscvSemantics.find_segment]) returns the FIRST segment whose    *)
+(* range covers the address, so a lookup that already answers in      *)
+(* [segs] answers the same over [segs ++ tail], whatever the tail is. *)
+(* That is what lets a walk keep its concrete [vm_compute] fetch      *)
+(* fact over the binary's own segments after the statement moves to   *)
+(* the run's segment list.                                           *)
+(* ================================================================= *)
+
+Lemma find_segment_app_some : forall segs tail a n seg,
+  find_segment segs a n = Some seg ->
+  find_segment (segs ++ tail) a n = Some seg.
+Proof.
+  induction segs as [|s rest IH]; intros tail a n seg H; [discriminate H|].
+  cbn [find_segment app] in H |- *.
+  destruct (Z.leb (Z.of_N (seg_base s)) a
+            && Z.leb (a + n) (Z.of_N (seg_base s) + Z.of_N (seg_size s)))%bool;
+    [exact H | exact (IH tail a n seg H)].
+Qed.
+
+Lemma code_read_app : forall segs tail (a : word) n bs,
+  code_read segs a n = Some bs -> code_read (segs ++ tail) a n = Some bs.
+Proof.
+  intros segs tail a n bs H. unfold code_read in H |- *.
+  destruct (find_segment segs (bv_unsigned a) (Z.of_N n)) as [seg|] eqn:E;
+    [|discriminate H].
+  rewrite (find_segment_app_some segs tail _ _ seg E). exact H.
+Qed.
+
+Lemma fetch_word_app : forall segs tail (a : word) w,
+  fetch_word segs a = Some w -> fetch_word (segs ++ tail) a = Some w.
+Proof.
+  intros segs tail a w H. unfold fetch_word in H |- *.
+  destruct (negb (Z.eqb (bv_unsigned a mod 2) 0)%Z); [discriminate H|].
+  destruct (code_read segs a 4) as [bs|] eqn:E; [|discriminate H].
+  rewrite (code_read_app segs tail a 4 bs E). exact H.
+Qed.
+
+Lemma memory_read_app : forall segs tail (a : word) n bs,
+  memory_read segs a n = Some bs -> memory_read (segs ++ tail) a n = Some bs.
+Proof.
+  intros segs tail a n bs H. unfold memory_read in H |- *.
+  destruct (find_segment segs (bv_unsigned a) (Z.of_N n)) as [seg|] eqn:E;
+    [|discriminate H].
+  rewrite (find_segment_app_some segs tail _ _ seg E). exact H.
+Qed.
+
+Lemma seg_rom_app : forall segs tail (a : word) b,
+  seg_rom segs a = Some b -> seg_rom (segs ++ tail) a = Some b.
+Proof.
+  intros segs tail a b H. unfold seg_rom in H |- *.
+  destruct (memory_read segs a 1) as [bs|] eqn:E; [|discriminate H].
+  rewrite (memory_read_app segs tail a 1 bs E). exact H.
+Qed.
+
+
+(* ================================================================= *)
+(* THE STORE HALF: the run's segment list adds the vDSO pair, and a   *)
+(* store has to avoid it                                             *)
+(*                                                                   *)
+(* [Run.run_segments segs inp sp mbase] appends                      *)
+(* [Run.vdso_segments (in_kernel inp) sp mbase], and BOTH of its      *)
+(* segments are mapped "r--", so [RiscvSemantics.range_avoids_ro_segs] *)
+(* no longer follows from the binary's own list alone.  The pair      *)
+(* occupies [[vdso_pair_top - vdso_len kb, vdso_pair_top)] and        *)
+(* nothing else, so a store at or above the pair's top avoids it, and *)
+(* so does a store that ends at or below its base.  Those are the two *)
+(* sides every store in this tree is on: the stack window starts at   *)
+(* [Run.stack_window_lo], which is at or above the mmap base and so   *)
+(* above the pair; the image and the heap end far below it.          *)
+(* ================================================================= *)
+
+Local Transparent vdso_segments.
+
+(** The pair's top: [Run.vdso_segments]' own [top], named so the two
+    bounds below can be stated without unfolding it at each use. *)
+Definition vdso_pair_top (sp mbase : word) : Z :=
+  page_round_down_Z
+    (Z.min (bv_unsigned mbase)
+           (page_round_down_Z (bv_unsigned sp - stack_max_size))).
+
+Lemma page_round_down_Z_le : forall n, (page_round_down_Z n <= n)%Z.
+Proof.
+  intro n. unfold page_round_down_Z, page_size.
+  pose proof (Z.div_mod n 4096 ltac:(lia)) as Hdm.
+  pose proof (Z.mod_pos_bound n 4096 ltac:(lia)) as Hmb. lia.
+Qed.
+
+Lemma vdso_pair_top_le_mbase : forall (sp mbase : word),
+  (vdso_pair_top sp mbase <= bv_unsigned mbase)%Z.
+Proof.
+  intros sp mbase. unfold vdso_pair_top.
+  pose proof (page_round_down_Z_le
+    (Z.min (bv_unsigned mbase)
+           (page_round_down_Z (bv_unsigned sp - stack_max_size)))) as H.
+  pose proof (Z.le_min_l (bv_unsigned mbase)
+    (page_round_down_Z (bv_unsigned sp - stack_max_size))). lia.
+Qed.
+
+(** The stack window's floor is at or above the pair's top: it is at or
+    above [mbase + stack_guard_gap], and the pair sits below [mbase]. *)
+Lemma vdso_pair_top_le_window_lo : forall kb (sp mbase : word) draw,
+  (vdso_pair_top sp mbase <= stack_window_lo kb mbase draw)%Z.
+Proof.
+  intros kb sp mbase draw.
+  pose proof (vdso_pair_top_le_mbase sp mbase).
+  pose proof (stack_guard_gap_pages_bounds kb) as Hgg.
+  unfold stack_window_lo, stack_guard_gap_bytes, page_size in *.
+  pose proof (Z.le_max_r (bv_unsigned (ed_top draw) - stack_max_size)
+    (bv_unsigned mbase + 4096 * stack_guard_gap_pages kb)%Z). lia.
+Qed.
+
+(** A store at or above the pair's top avoids both of its segments. *)
+Lemma vdso_segments_avoid_above : forall kb (sp mbase : word) a n,
+  (vdso_pair_top sp mbase <= a)%Z ->
+  range_avoids_ro_segs (vdso_segments kb sp mbase) a n = true.
+Proof.
+  intros kb sp mbase a n Ha.
+  pose proof (vdso_text_pages_pos kb) as Htp.
+  pose proof (vdso_pair_top_le_mbase sp mbase) as Htop. pose proof (u64_range mbase) as Hmb.
+  unfold vdso_segments, Run.vdso_text_base, vdso_pair_top, Run.vdso_pair_top in *. cbv zeta.
+  destruct (Z.ltb
+    (page_round_down_Z
+       (Z.min (bv_unsigned mbase)
+              (page_round_down_Z (bv_unsigned sp - stack_max_size)))
+     - vdso_len kb) page_size) eqn:Esmall; [reflexivity|].
+  apply Z.ltb_ge in Esmall.
+  unfold vdso_len, vdso_vvar_pages, page_size in *.
+  unfold range_avoids_ro_segs. apply forallb_forall.
+  intros seg Hin. apply orb_true_intro. right.
+  apply negb_true_iff. apply andb_false_intro2. apply Z.ltb_ge.
+  cbn [In] in Hin.
+  destruct Hin as [Hs | [Hs | []]]; subst seg; cbn [seg_base seg_size];
+    rewrite ?Z_to_bv_unsigned, ?bv_wrap64_mod, ?Z.mod_small by lia; rewrite !Z2N.id by lia; lia.
+Qed.
+
+(** A store that ends at or below the pair's base avoids it. *)
+Lemma vdso_segments_avoid_below : forall kb (sp mbase : word) a n,
+  (a + n <= vdso_pair_top sp mbase - vdso_len kb)%Z ->
+  range_avoids_ro_segs (vdso_segments kb sp mbase) a n = true.
+Proof.
+  intros kb sp mbase a n Ha.
+  pose proof (vdso_text_pages_pos kb) as Htp.
+  pose proof (vdso_pair_top_le_mbase sp mbase) as Htop. pose proof (u64_range mbase) as Hmb.
+  unfold vdso_segments, Run.vdso_text_base, vdso_pair_top, Run.vdso_pair_top in *. cbv zeta.
+  destruct (Z.ltb
+    (page_round_down_Z
+       (Z.min (bv_unsigned mbase)
+              (page_round_down_Z (bv_unsigned sp - stack_max_size)))
+     - vdso_len kb) page_size) eqn:Esmall; [reflexivity|].
+  apply Z.ltb_ge in Esmall.
+  unfold vdso_len, vdso_vvar_pages, page_size in *.
+  unfold range_avoids_ro_segs. apply forallb_forall.
+  intros seg Hin. apply orb_true_intro. right.
+  apply negb_true_iff. apply andb_false_intro1. apply Z.ltb_ge.
+  cbn [In] in Hin.
+  destruct Hin as [Hs | [Hs | []]]; subst seg; cbn [seg_base];
+    rewrite ?Z_to_bv_unsigned, ?bv_wrap64_mod, ?Z.mod_small by lia; rewrite !Z2N.id by lia; lia.
+Qed.
+
+Lemma range_avoids_ro_segs_app : forall segs tail a n,
+  range_avoids_ro_segs segs a n = true ->
+  range_avoids_ro_segs tail a n = true ->
+  range_avoids_ro_segs (segs ++ tail) a n = true.
+Proof.
+  intros segs tail a n H1 H2. unfold range_avoids_ro_segs in *.
+  rewrite forallb_app, H1, H2. reflexivity.
+Qed.
+
+(** The two forms a walk over [Run.run_segments] needs: keep the
+    binary's own concrete check and add the side the store is on. *)
+Lemma range_avoids_run_segments_above : forall segs inp (sp mbase : word) a n,
+  range_avoids_ro_segs segs a n = true ->
+  (vdso_pair_top sp mbase <= a)%Z ->
+  range_avoids_ro_segs (run_segments segs inp sp mbase) a n = true.
+Proof.
+  intros segs inp sp mbase a n Hsegs Ha. unfold run_segments.
+  apply range_avoids_ro_segs_app;
+    [exact Hsegs | exact (vdso_segments_avoid_above _ sp mbase a n Ha)].
+Qed.
+
+Lemma range_avoids_run_segments_below : forall segs inp (sp mbase : word) a n,
+  range_avoids_ro_segs segs a n = true ->
+  (a + n <= vdso_pair_top sp mbase - vdso_len (in_kernel inp))%Z ->
+  range_avoids_ro_segs (run_segments segs inp sp mbase) a n = true.
+Proof.
+  intros segs inp sp mbase a n Hsegs Ha. unfold run_segments.
+  apply range_avoids_ro_segs_app;
+    [exact Hsegs | exact (vdso_segments_avoid_below _ sp mbase a n Ha)].
+Qed.
+
+(** A stack store, stated the way the tree has it: at or above the
+    window floor [Run.stack_window_lo]. *)
+Lemma range_avoids_run_segments_stack : forall segs inp (sp mbase : word) draw a n,
+  range_avoids_ro_segs segs a n = true ->
+  (stack_window_lo (in_kernel inp) mbase draw <= a)%Z ->
+  range_avoids_ro_segs (run_segments segs inp sp mbase) a n = true.
+Proof.
+  intros segs inp sp mbase draw a n Hsegs Ha.
+  apply (range_avoids_run_segments_above segs inp sp mbase a n Hsegs).
+  pose proof (vdso_pair_top_le_window_lo (in_kernel inp) sp mbase draw). lia.
+Qed.

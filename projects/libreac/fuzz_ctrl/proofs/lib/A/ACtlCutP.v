@@ -4,7 +4,7 @@
    Admitted, no tactic.
 
    WHAT THIS FILE IS
-   ctrl's cut text of record is lib/A/Prog/SlotInv.v at d5e20dfd330 (3114 lines).  Its shells (FRA :334,
+   ctrl's cut text of record is lib/A/Prog/SlotInv.v (3114 lines).  Its shells (FRA :334,
    FRAH :448, ENT :378, CUTST :436, CUTST0 :490, CUTSTR :496, PREF :943) speak the Theorem Labs lane frame vocabulary this
    walk replaces, so they are NOT transcribed: ACtlCut.v's ctl_base (the core's own lib pre), ctl_from and
    ctl_rt state them in the donor's form (the translation section of
@@ -14,7 +14,7 @@
    letters dropped from the name (they are the record's idx argument): row "A815cc_at b" is C_A815cc_at.
 
    RULE 24 (released proofs first).  proof-index LLVMFuzzerTestOneInput (index v5, built 2026-10-28
-   20:16:23Z from e966c513ee6, ossv/recipes@a8831f7c5c): 30 files named for it, 1290 uses of its address,
+   20:16:23Z, ossv/recipes): 30 files named for it, 1290 uses of its address,
    105 related; released proofs for seven other units, as ASan for bluez/fuzz_hci and for the donor
    cgif/cgif_file_fuzzer.  Second-agent check a Theorem Labs lane, 21:10Z: CONFIRM -- cgif is the only released ASan
    donor matching this unit on branch (ossv/recipes), LPS (2afba80c) and framework (afn_pre / ajournal); the
@@ -134,7 +134,7 @@
      FORBIDDEN: 62 files (listed below)
    all reached through ONE edge: lib/A/Prog/bcmp_wrap_c.v:59 `From ...lib.A Require Contract.` (its IMG_HI is
    Contract.GT), from lib/A/Contract.v on to lib/A/MemNorm.v and lib/A/Reusable/*.  The earlier output here
-   (206 files, FORBIDDEN: [], planning core 5a85b67a5d8) predates that Require.  The fixed scan's absolute-Require
+   (206 files, FORBIDDEN: [], planning core) predates that Require.  The fixed scan's absolute-Require
    reading adds one file to the From-only scan's 277: lib/Img0.v.  The names it does not resolve on disk are
    Asan, OSSVerify.libreac.fuzz_ctrl.images.Asan, OSSVerify.libreac.fuzz_ctrl.images.Plain (the
    statements' generated image modules, outside proofs/).
@@ -345,9 +345,9 @@
    The thread-pointer word and the frame header's entry word are NOT new names: they are Reusable.YG0f.as_tp B
    (the core's own symbol-bundle field, which its pre states) and A.ACfn.A_LLVMF.
 
-   BUILD STATE (honest): the core is in this tree (lib/Reusable, lib/A/AE2k.v), and this file is built with it (lib/dune takes every .v file; lib/A/ACtl.v and lib/A/ACtlG/A1.v Require this file); before it landed this file was a labelled stand-in that TYPECHECKED on the image-A PLANNING core (a working branch
-   5a85b67a5d8, merged on a working branch; TYPE-CHECK ONLY, its values did not count):
-   `cb build` on the packed fuzz_ctrl base 362baf478bf5 (FACTS ed6b6b7b0ab, PAU pau-libreac-v190), with the
+   BUILD STATE (honest): the core is in this tree (lib/Reusable, lib/A/AE2k.v), and this file is built with it (lib/dune takes every .v file; lib/A/ACtl.v and lib/A/ACtlG/A1.v Require this file); before it landed this file was a labelled stand-in that TYPECHECKED on the image-A PLANNING core (a working branch,
+   merged on a working branch; TYPE-CHECK ONLY, its values did not count):
+   `cb build` on the packed fuzz_ctrl base (FACTS, PAU pau-libreac-v190), with the
    core's undefined `port_core_refused_<hex>` names (lib/A/AE2k.v, which A.ACfn Imports) replaced by the hex
    literal in the build workspace only -- a core-file error, reported to the porter a Theorem Labs lane and never edited
    on this branch.  No Axiom, no Parameter, no Admitted. *)
@@ -412,7 +412,7 @@ Module AMC := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog.asan_memset_c.
 Module SFA := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Spec.StrFun.
 
 (* The core's segment list, as ACtlCut.v takes it: a notation, not a Variable, so that `world segs` is the
-   pre's type and not a new one (ACtlCut.v, 22:37Z; the donor's A/AB1v.v:11). *)
+   pre's type and not a new one (ACtlCut.v, 22:37Z; the donor's A/AB1v.v:12). *)
 Local Notation segs := A.AB1v.tfibsegs.
 
 Section CtlCutP.
@@ -482,7 +482,7 @@ Definition ixn (k : nat) (idx : list Z) : nat := Z.to_nat (nth k idx 0).
 Definition ixz (k : nat) (idx : list Z) : Z := nth k idx 0.
 
 (* ---------------------------------------------------------------------------------------------------------
-   1. The body predicates ctrl's cuts share, transcribed from SlotInv.v at d5e20dfd330 with their names kept.
+   1. The body predicates ctrl's cuts share, transcribed from SlotInv.v with their names kept.
    The first six are ctrl's own readers (:282-285, :296, :786-787), the rest are its cut bundles.  Each carries
    its source line; the conjuncts dropped from each are listed in the transcription report, bundle by bundle. *)
 
@@ -1098,10 +1098,10 @@ Definition FRAHC (cx : ctlcx) (fr sel hdr : Z) (regs : bvmap 5 word)
     q64 m (fr + 4088) (OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable.YG0f.flag_addr (c_ly cx) 6 (c_fpos cx)).
 
 (* FAKE-FRAME TRAILER WORD (added by a Theorem Labs lane, the twin of image B's FRAC / FRAHC at
-   a working branch a218ac85be5; a MEANING change, announced to every image-A stage lane): the
+   a working branch; a MEANING change, announced to every image-A stage lane): the
    last conjunct of FRAC and FRAHC.  The class-6 frame's last word, at fr + fs_frame_bytes 6 - 8 = fr + 4088, holds
    the frame's flag address.  The core's frame allocator post gives it (Reusable/YG0d.v:296; aj_stack_malloc_at,
-   Reusable/YCbq.v:1764), and the frame release needs it (the astack_free_realizes premise, StackFreeDef.v:25 as
+   Reusable/YCbq.v:1764), and the frame release needs it (the astack_free_realizes premise, StackFreeDef.v:26 as
    image B's note cites it).  Neither AR nor ajournal carries it for the walk's OWN frame, so every body that
    carries FRAC or FRAHC carries it, in raw form like the other frame words.  The program writes only
    [fr, fr + FRAME_BYTES) of the frame, and FRAME_BYTES < 4088.  From batch 4 (item B5.3) the two PREFC cuts after
@@ -1111,7 +1111,7 @@ Definition FRAHC (cx : ctlcx) (fr sel hdr : Z) (regs : bvmap 5 word)
    NON-STRICT TOP OF THE ENTRY SP (batch 4, item B5.4; image B's twin at a working branch): FRAC,
    FRAHC and PREFC state `c_sp cx <= ART.APPMEM_END`, in the place where ctrl's `S < APPMEM_END` was.  Nothing in
    the core's pre gives the strict bound: afn_pre's astk_ok gives sp0 <= ly_stk_hi <= kHighMemEnd (found by the
-   ENTRY glue, lib/A/ACtlG/A1.v:21-22). *)
+   ENTRY glue, lib/A/ACtlG/A1.v:22-23). *)
 
 (* PREF's CARRY part (SlotInv.v:944-974), for the two pre-frame cuts A80f54 and A80f88: the same pins without
    the frame (no fr, no s3, no header, no frame shadow), with PREF's own spill-base window S - 432 <= A and
@@ -1163,7 +1163,7 @@ Definition b7_body (cx : ctlcx) (j : nat) (bl : list (Z * Z)) (fr : Z)
 (* ---------------------------------------------------------------------------------------------------------
    3. The 100 cuts, in the address order of the cut map, one record per row of
    cut-table-A.tsv (a working note, not in this delivery).  Each record's comment gives the row's cut
-   name, its SlotInv.v definition and line at d5e20dfd330, ctrl's shell, the pc, the index shape, the event
+   name, its SlotInv.v definition and line, ctrl's shell, the pc, the index shape, the event
    bound, the frame list and the W piece, plus the table's superseded note where it has one.
 
    EVERY CUT FROM A4's FRAME ALLOCATION TO ITS RELEASE OWNS THE CLASS-6 FAKE FRAME (own6).  The class-full
@@ -1183,7 +1183,7 @@ Definition C_ENTRY : ctlcut := mkCtlCut
      Permutation bl (Reusable.YG0d.ablocks B (c_ly cx) (c_S cx)) /\
      Reusable.YG0d.spZ (c_regs cx) = c_sp cx /\
      (* the entry cut's registers ARE the contract's entry registers (batch 4, item B5.1): without it the
-        ENTRY stage cannot pin the run's sp, gp, saved registers or a0 / a1 (lib/A/ACtlG/A1.v:19-20);
+        ENTRY stage cannot pin the run's sp, gp, saved registers or a0 / a1 (lib/A/ACtlG/A1.v:20-21);
         the top closes it by reflexivity at regs3 := c_regs cx *)
      regs = c_regs cx).
 

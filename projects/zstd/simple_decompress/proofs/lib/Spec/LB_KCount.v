@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap's exact arm and subtracted range; brk grows by whole pages; the brk area misses the reserved ledger by KL_resv_free_brk; band_arith2 added and N_band_le restated to lcnt L + 2, for the vDSO pair in the reserved ledger). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
@@ -148,6 +149,15 @@ Proof.
   pose proof (kl_start _ _ _ HK) as (S1 & S2 & S3 & S4). pose proof (kl_phase _ _ _ HK) as P.
   pose proof HL as (C & (T1 & T2 & T3) & HBR).
   set (h := m_vmmaps mo) in *.
+  (* LPS 727298f3: a brk grow installs whole pages; this tree grows by whole pages *)
+  assert (AL : bv_unsigned (vm_brk h) mod 4096 = 0 /\ req mod 4096 = 0).
+  { destruct Hpre as [(cur & Hph & ->)|(b & l & Hph & Hreg & ->)]; rewrite Hph in P.
+    - destruct P as (Ecur & Ebrk & _ & _).
+      rewrite round_up_pg_aligned by (rewrite Ecur; unfold PGSZ in S2; exact S2).
+      unfold PGSZ in *. rewrite Ebrk, Ecur. split; [exact S2|]. rewrite Z.add_mod, S2 by lia. reflexivity.
+    - destruct P as (b' & l' & Hreg' & Ebrk & _). rewrite Hreg in Hreg'. inversion Hreg'; subst b' l'.
+      pose proof (kl_brkreg _ _ _ HK b l Hreg) as (R1 & R2 & R3 & R4 & R5 & _). unfold PGSZ in *. rewrite Ebrk.
+      split; [rewrite Z.add_mod, R2, R4 by lia; reflexivity| rewrite Z.add_mod, (Z.add_mod b l), R2, R4 by lia; reflexivity]. }
   assert (PH : bv_unsigned (vm_brk h) = pbrk /\ 0 < pbrk /\ pbrk < req /\ req + PGSZ <= FLOOR /\ req <> 0
                /\ (forall v, lcnt (set_brkph v L) = lcnt L)
                /\ ld_brkreg (set_brkph BPDead L) = ld_brkreg L).
@@ -166,7 +176,7 @@ Proof.
   destruct a.
   - (* [comment removed for export] *)
     rewrite Ersp in SH. assert (Er : r = Z_to_bv 64 req) by (inversion SH; reflexivity). subst r.
-    destruct (brk_model_next_grown h req ltac:(lia) ltac:(lia)) as (Eres & Emaps & _ & Esb & _).
+    destruct (brk_model_next_grown h req ltac:(lia) ltac:(lia) (proj1 AL) (proj2 AL)) as (Eres & Emaps & _ & Esb & _).
     rewrite Z.eqb_refl. rewrite Emo', with_brk_next_noshrink by (rewrite unsigned_lit by lia; fold h; lia).
     split; [|split].
     + rewrite m_vmmaps_with_vmmaps, Emaps, kcnt_cons.
@@ -268,7 +278,7 @@ Proof.
   assert (Ua : bv_unsigned (Z_to_bv 64 a) = a) by (apply unsigned_lit; unfold PGSZ in *; lia).
   assert (Un : bv_unsigned (Z_to_bv 64 PGSZ) = PGSZ) by (apply unsigned_lit; unfold PGSZ; lia).
   split; [exact Ha|]. split; [exact Ecur|]. split; [lia|]. split; [lia|]. split; [rewrite Ha, Ecur; exact S2|]. split.
-  - apply region_free_above. intros e He. rewrite Ua, Ha, Ecur. apply (kl_resv_top _ _ _ HK). exact He.
+  - apply (KL_resv_free_brk L pbrk mo); [exact HK | rewrite Ua, Ha, Ecur; reflexivity | rewrite Un; unfold PGSZ; lia].
   - unfold map_contains. apply existsb_exists. exists e0. split; [exact He0|]. rewrite Ua, Un. unfold elo, ehi in He0l, He0h.
     rewrite (proj2 (Z.leb_le _ _)) by lia. rewrite (proj2 (Z.leb_le _ _)) by (unfold PGSZ in *; lia). reflexivity.
 Qed.
@@ -306,8 +316,10 @@ Proof.
   assert (Hlen3 : 0 < len < 2^64 /\ mmap_len len = mmap_len l0).
   { destruct Hlen as [-> | ->]; [split; [lia| reflexivity]| split; [lia| exact Hnn]]. }
   destruct Hlen3 as [Hlen1 Hlen2].
-  pose proof (nstep_munmap_exact a len l0 mo rsp mo' evs A2 ltac:(unfold PGSZ in A3; exact A3) ltac:(lia) ltac:(lia) Hlen1 Hlen2 A5 Hst) as Emaps.
-  destruct (nstep_dec_munmap a len mo rsp mo' evs ltac:(lia) ltac:(lia) ltac:(lia) Hst) as (_ & _ & x & _ & Hx).
+  pose proof (nstep_munmap_exact a len l0 mo rsp mo' evs A2 ltac:(unfold PGSZ in A3; exact A3) ltac:(lia) ltac:(lia) Hlen1 Hlen2 A5 (kl_wf _ _ _ HK) Hst) as Emaps.
+  destruct (nstep_dec_munmap a len mo rsp mo' evs ltac:(lia) ltac:(lia) ltac:(lia)
+              ltac:(rewrite Hlen2; exact (map_has_of_In _ _ _ A5))
+              ltac:(rewrite Hlen2; exact (maps_subtract_vmwf _ _ _ (kl_wf _ _ _ HK) A5)) Hst) as (_ & _ & x & _ & Hx).
   unfold went, wz in A5.
   assert (NOTSAME : mo' = mo -> False).
   { intros ->. assert (HinR : In (Z_to_bv 64 a, Z_to_bv 64 (mmap_len l0)) (map_remove (vm_maps (m_vmmaps mo)) (Z_to_bv 64 a))) by (rewrite <- Emaps; exact A5).
@@ -394,20 +406,29 @@ Definition RMAX : Z := 10 * 2^26 + 2^14.
 Lemma band_arith : (NMAX + 1) * (RMAX + 4095) + 2^35 <= CEIL - FLOOR.
 Proof. rewrite CEIL_val, FLOOR_val. unfold NMAX, RMAX. cbn. lia. Qed.
 
+(* LPS 727298f3: room for the two entries of the vDSO pair, which the reserved ledger holds in the band *)
+Lemma band_arith2 : (NMAX + 1 + 1) * (RMAX + 4095) + 2^35 <= CEIL - FLOOR.
+Proof. rewrite CEIL_val, FLOOR_val. unfold NMAX, RMAX. cbn. lia. Qed.
+
 (* [comment removed for export] *)
+(* LPS 727298f3: the reserved ledger's image entries end below the band; its vDSO pair, the two
+   entries above them, may lie in the band *)
 Lemma N_band_le L pbrk mo : KL L pbrk mo -> LN L mo ->
-  Z.of_nat (length (List.filter in_band_b (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)))) <= lcnt L.
+  Z.of_nat (length (List.filter in_band_b (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)))) <= lcnt L + 2.
 Proof.
   intros HK (C & (S1 & _ & _) & _).
-  rewrite filter_app, length_app, Nat2Z.inj_add.
-  assert (R0 : length (List.filter in_band_b (vm_reserved (m_vmmaps mo))) = 0%nat).
-  { pose proof (kl_resv_top _ _ _ HK) as RT.
-    assert (G : forall e, In e (vm_reserved (m_vmmaps mo)) -> in_band_b e = false).
-    { intros e He. specialize (RT e He). unfold in_band_b, ghi, glo, gsz. unfold ehi in RT.
+  destruct (kl_resv_vdso _ _ _ HK) as (R & ER & BR).
+  rewrite filter_app, length_app, Nat2Z.inj_add, ER, filter_app, length_app, Nat2Z.inj_add.
+  assert (R0 : length (List.filter in_band_b R) = 0%nat).
+  { assert (G : forall e, In e R -> in_band_b e = false).
+    { intros e He. specialize (BR e He). unfold in_band_b, ghi, glo, gsz. unfold ehi in BR.
       rewrite andb_false_iff. right. apply Z.ltb_ge. unfold PGSZ in S1. lia. }
-    revert G. clear. generalize (vm_reserved (m_vmmaps mo)). intros l G.
+    revert G. clear. generalize R. intros l G.
     induction l as [|e r IH]; [reflexivity|]. cbn. rewrite (G e (or_introl eq_refl)). apply IH.
     intros e' He'. apply G. right. exact He'. }
+  assert (V2 : (length (List.filter in_band_b (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo)))) <= 2)%nat).
+  { eapply Nat.le_trans; [apply length_filter_le|]. unfold vdso_reserved. cbv zeta.
+    destruct (_ <? _); cbn [length]; lia. }
   rewrite R0. cbn [Z.of_nat].
   assert (M : (length (List.filter in_band_b (vm_maps (m_vmmaps mo))) <= length (List.filter abovef (vm_maps (m_vmmaps mo))))%nat).
   { clear. induction (vm_maps (m_vmmaps mo)) as [|e r IH]; cbn; [lia|].

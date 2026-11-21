@@ -18,9 +18,9 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/ZZwvB_arm.v, with its module names changed; 286 of its 336 lines of code are new or changed and 635 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: the lib/B (fs.asan-ubsan) CONTAINER ARMS of write_value - the two lemmas
    wv_arr / wv_obj that lib/B/FSW_write_value.v (a Theorem Labs lane) takes as hypotheses, proved here against fs's S0 spec
-   write_value_spec_at (lib/B/FSH_Fn_writer.v, statement set a working branch 50968be8342). Image A's
+   write_value_spec_at (lib/B/FSH_Fn_writer.v, statement set a working branch). Image A's
    arms are NOT proved anywhere (A's write_value_holds is Qed over them as hypotheses); the A pieces this file
-   mirrors are a working branch 1a5dc5b2e7c lib/A/ZZwv_*.v, whose lemma names the lib/B twins
+   mirrors are a working branch lib/A/ZZwv_*.v, whose lemma names the lib/B twins
    ZZwvB_*.v keep.
    rule 24: proves no function (kind: segment lemma) - the two container arms of write_value B, not the whole
    function (the closing theorem is a Theorem Labs lane's).
@@ -53,6 +53,7 @@
    wvc_SH0 / wvc_SHK (the node's 56 bytes and the key slot's 8), i.e. from pobj and the keys block's liveness.
    Rule 24 (proof-index, a Theorem Labs lane, unpiped): write_value has RELEASED proofs for fs's PLAIN and UBSAN
    builds only (lib/Prog, lib/U/Prog), none for an ASan image; 0x84010 is not in the released set. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the ASan table gains the n_resx and p_resx fields, and the initial state is a function of the rseq flag. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List.
 From OSSVerify.Proofs.simdjson.fuzz_dump_raw_tape.lib.AS Require Import AxSymExec3 AsanPlanCore.
@@ -9,7 +10,7 @@ Open Scope Z_scope.
 Import APC.
 
 Definition ASAN_B : atable :=
-  {| img_lo := 0x10000; img_hi := 0x6ce000; n_res := 4; shadow_off := 0x7fff8000;
+  {| img_lo := 0x10000; img_hi := 0x6ce000; n_res := 4; n_resx := 2; p_resx := 20; shadow_off := 0x7fff8000;
      a_entry := 0x583dc; rw_lo := 0x168000; rw_len := 0x566000; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 11;
      x_imemset := 0x92128; x_imemcpy := 0x920ac; x_memset := 0x161214; x_memcpy := 0x160e10; x_memiszero := 0x92674;
      x_istrncpy := 0x92554; x_sealed := 0x11b35; x_popfree := 0x5ea8c;
@@ -21,4 +22,5 @@ Definition ASAN_B : atable :=
 Definition ASAN_B_TEXT_LO : Z := 0x583dc.
 Definition ASAN_B_TEXT_N : nat := 277787.
 Definition ASAN_B_MAIN : Z := 0xae7cc.
-Definition asan_b_init : acs := init_acs_of ASAN_B.
+(* See the A twin: init_acs_of takes rz first, so this is a function of rz. *)
+Definition asan_b_init (rz : Z) : acs := init_acs_of rz ASAN_B.

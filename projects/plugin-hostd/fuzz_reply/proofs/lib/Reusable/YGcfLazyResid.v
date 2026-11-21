@@ -1,4 +1,4 @@
-(* CARRIED from commit 0deb5310273b0d538ec2a1697f391a1c8ad21c34,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YGcfLazyResid.v, sha256 3451971d9497fe16919d0613a5d2910740ff1b7a02b3ceb6e0c281ef628f64b3 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the Require lines only:
    the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
@@ -6,9 +6,10 @@
 *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30: the lazy-residue argument at cgif's types, ported from the fuzz_manifest kit
    (omx-clap-core/fuzz_manifest lib/A/LazyResid.v, LazyResidPf.v, LazyResidPf2.v, LazyEvictPf.v on
-   a working branch 7bb12afd3646; owner a Theorem Labs lane, a Theorem Labs lane 05:00Z / 05:09Z).
+   a working branch; owner a Theorem Labs lane, a Theorem Labs lane 05:00Z / 05:09Z).
    The world keeps every dead secondary's shadow hull in w_A, so MInv's mat <= A_bytes (w_A W) grows by a hull
    per recycle. The materialized pages are bounded here instead by a CANONICAL set read from the allocator state:
    the base (the at-main allowance A0, the whole primary reservation, the pointer-array reservation and every

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: statements written out as text, the launch's channel reader. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib Require Ref0Gc. (* [comment removed for export] *)
@@ -36,6 +37,8 @@ Section HCW.
     - apply hx_krel_vm_proof.
     - intros s LB m RH. npose (hx_statics_proof s LB m (proj1 RH)) as (H1 & H2 & H3).
       split; [exact H1|]. split; [exact H2|]. exists hcanary. split; [exact H3 | hsb; lia].
+    - (* LPS 727298f3 port: the reader the kernel relation carries *)
+      intros s mo K. exact (KM_reader s mo K).
   Qed.
 
   (* [comment removed for export] *)
@@ -57,6 +60,8 @@ Section HCW.
     - apply RHEAP_perm_proof.
     - apply rauxv_frame_proof.
     - apply MallocMF.lb_remove_laws_proof.
+    - (* LPS 727298f3: KLBM's [km_rdr] *)
+      intros s mo K. destruct K as (L & _ & K). exact (km_rdr _ _ _ K).
   Qed.
 
   (* [comment removed for export] *)
@@ -74,7 +79,12 @@ Section HCW.
   Definition AUXINIT_HS : ltac2:(zQ "50!joe!hpc!jp3!k0!ju5>1m$1>1B$0>0@4$4?5HCEIL?4HSEC^2^1@3$2@2$3?5HCEIL?4HSEC^3^2") := ltac2:(zQ "10!jv1@2$0?5HCEIL?4HSEC").
 
   (* [comment removed for export] *)
-  Theorem KINIT_HS : ltac2:(zQ "h50!jvf!ki4!km7!joe!ko4!kr6!ksc!kt9!lh3!li0!lie!lk0!lo7!lp0!k0!lpb!lq6!lsb!lt1!lt8!ltf>3tid@1$1@1$0#k0>3brk@1$1@1$0#k0>5mbase@1$1@1$0#k0>2sp@1$1@1$0#k0>3lim$3>2pi$8>0@2$6$2^5>0@1$7^4>0@2$h1@2$h2+2+i2^4>0@3$4$3@2$h3@2$h4@1$0#k0^6$a@1$c?5HCEIL@3$d@2$e?5HCEIL?4HSEC@3$f?5HCEIL?4HSEC@1$h0$2@2$b^a@6$9@1$5$2^9^8^7^6^5").
+  (* LPS 727298f3 port: restated with the launch's channel reader, which [KM_init] now
+     takes because the kernel relation carries it *)
+  Theorem KINIT_HS : forall tid brk mbase sp lim pi,
+    valid_brk rsegs brk -> valid_sp sp -> 2 ^ 34 <= lim -> bv_unsigned sp - stack_max_size = hceil ->
+    in_channel_reader pi = true ->
+    hs_KREL HS (ps_init (reservedZ rsegs)) (with_tid tid (init_model (segments_reserved rsegs) brk mbase sp lim pi)).
   Proof. cbn [hs_KREL HS]. intros. apply KM_init; assumption. Qed.
 
   (* [comment removed for export] *)

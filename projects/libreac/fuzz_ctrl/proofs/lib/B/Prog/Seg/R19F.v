@@ -1,10 +1,10 @@
 (* Provenance (route (a) bridge input, lead 22:18Z; auditor a Theorem Labs lane):
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
-   source runs: lib/B/Prog/Seg/R19.v r19_evt_n, r19_evt at a working branch 3803efccea0
+   source runs: lib/B/Prog/Seg/R19.v r19_evt_n, r19_evt at a working branch
      (blob f86f9ca14323887a025e0986c8d7c8e9a83daa74);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    compare: both source runs call the bcmp wrapper, so they are split at the call (parent a Theorem Labs lane, binding).
      r19_pre_F re-runs R19.v:128-130 (0x81a50 up to the wrapper_bcmp entry 0x42aac, ra = 0x81a68); it is the
      stretch of BOTH r19_evt_n (:93-154) and r19_evt (:157-245), which differ only in the memory the wrapper

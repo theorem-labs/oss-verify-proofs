@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's CONFIG_RSEQ flag): changed ss_pf_demo, exit_demo_E, exit_demo_F. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -133,8 +134,14 @@ sym_transport src0segs E ss s5 ms' HS HF
 end
 end end.
 Section c. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+(* [YN3e.ss_main_f] is indexed by the run's own rseq flag now (YN3e.v:155), because the
+   auxv block the entry stack carries is one pair longer when it is set.  The three states
+   below are this file's own demonstrations -- nothing outside UN3d/YN3d mentions
+   [ss_pf_demo], [ss_flush_demo], [exit_demo_E] or [exit_demo_F] -- so the flag is pinned
+   to the rseq-on state here, the state the old unindexed [ss_main_f] was, exactly as
+   YL0p.v:21-23 pins it.  No published statement and no consumer sees the choice. *)
 Definition ss_pf_demo : sstate :=
-set_regs_pc ss_main_f [(2%bv : reg, SOff 0 (-208)); (10%bv : reg, SLit 0); (8%bv : reg, SLit 7);
+set_regs_pc (ss_main_f true) [(2%bv : reg, SOff 0 (-208)); (10%bv : reg, SLit 0); (8%bv : reg, SLit 7);
 (9%bv : reg, SLit 0x300a0); (18%bv : reg, SLit 0); (19%bv : reg, SLit 0);
 (20%bv : reg, SLit 0x30090); (21%bv : reg, SLit 2); (22%bv : reg, SLit 0)] 0x12cd4.
 Lemma pf_demo_first : forall E ms model ch T,
@@ -171,7 +178,7 @@ Proof.
 intros E ms model ch HS Hh Hlz Hch.
 src0_diag_exit_tac HS Hch 21%nat.
 Qed.
-Definition exit_demo_E : sstate := set_regs_pc ss_main_f [(10%bv : reg, SLit 3)] SRC1_EXIT.
+Definition exit_demo_E : sstate := set_regs_pc (ss_main_f true) [(10%bv : reg, SLit 3)] SRC1_EXIT.
 Lemma exit_demo_E_ok : exit_run_check src0segs src0tbl exit_demo_E 3 = true.
 Proof. vm_compute. reflexivity. Qed.
 Definition stdout_dirty (rs : smem) : smem :=
@@ -190,8 +197,8 @@ match store_region rs4 None (SRC1_STDOUT_FILE + 144) 4 (CVal 4 (SLit 4294967295)
 | None => [] end
 | None => [] end.
 Definition exit_demo_F : sstate :=
-add_atom (mkSS SRC1_EXIT (sr_sets (ss_regs ss_main_f) [(10%bv : reg, SLit 0)])
-(stdout_dirty (ss_mem ss_main_f)) None (ss_facts ss_main_f))
+add_atom (mkSS SRC1_EXIT (sr_sets (ss_regs (ss_main_f true)) [(10%bv : reg, SLit 0)])
+(stdout_dirty (ss_mem (ss_main_f true))) None (ss_facts (ss_main_f true)))
 10 (mkAF 1 6 0).
 Lemma exit_demo_F_ok :
 match run_to_check src0segs src0tbl SRC1_STDIO_WRITE exit_demo_F with

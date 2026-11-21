@@ -5,10 +5,11 @@
    [ff04_leaf]) copied from proofs/cgif/cgif_file_fuzzer/lib/YG0u.v:13-205, with its module paths changed; that file
    is not relocated to this unit's lib/Reusable.  Everything after them is new. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_decode/lib/YGCallocModel.v (donor image sha256 5973b76807d8), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The allocator-model side of calloc's contract (lib/Reusable/YGCalloc.v).
 
    calloc(nm, sz) in its in-range arm is the allocator's malloc tree at n = nm * sz (YG00.v:411 [malloc]); c-asan's
-   Allocate statement (lib/Reusable/YGAlloc.v:106-117 [alloc_leaf]) hands its caller the reached result [r] together
+   Allocate statement (lib/Reusable/YGAlloc.v:107-118 [alloc_leaf]) hands its caller the reached result [r] together
    with [exists trc, apath (mt n tr S) trc r /\ gflag trc = true]: [r] is the end of a path of the model tree on
    which every kernel answer was granted.  This file proves what the allocator model says about such an [r], at
    n = nm * sz.  No machine code is involved.

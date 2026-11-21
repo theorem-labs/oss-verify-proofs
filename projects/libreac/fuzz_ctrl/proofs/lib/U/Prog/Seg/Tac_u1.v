@@ -943,7 +943,7 @@ Proof.
     unfold mbyte. rewrite (HI a (u1_relro_img a Ha)). reflexivity. }
   split.
   { destruct (mr_model B _ (aa_laws API) _ _ _ _ HM) as (Hh & Hl & Hmat).
-    eapply (mr_frame B (aa_MR API) (aa_laws API)); [exact HM | | | | reflexivity | exact Hh | exact Hl | exact Hmat].
+    eapply (mr_frame B (aa_MR API) (aa_laws API)); [exact HM | reflexivity | | | | reflexivity | exact Hh | exact Hl | exact Hmat].
     - intros a Ho. pose proof (mr_owned_low B (aa_MR API) (aa_laws API) _ _ _ _ a HM Ho) as Ha.
       unfold mbyte. rewrite (HL a Ha (fun Hc => Hnown a Hc Ho)). reflexivity.
     - intros a Ho [bb Hb]. pose proof (mr_owned_low B (aa_MR API) (aa_laws API) _ _ _ _ a HM Ho) as Ha.

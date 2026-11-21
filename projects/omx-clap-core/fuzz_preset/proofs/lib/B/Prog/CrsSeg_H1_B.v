@@ -1,20 +1,21 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumC.v, with its module names changed; 683 of its 755 lines of code are new or changed and 856 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image B' (the #102 pins, asan-ubsan): segment H1 of the walk of check_reject_clean_starved against the kit's
    text tcheck_reject_clean_starved_specX, row H1_B (a Theorem Labs lane's internal file BRIEF-crcs-Bprime-seg.md; lane CrsX1H1,
    a working branch). It proves exactly the row's closing lemma
      crs_seg_H1_B : LAWS -> crs_from_X1_B .. -> crs_from_R_B .. -> crs_from_W1_B .. -> crs_from_H1_B ..
-   over the FROZEN B' kit lib/B/Prog/CrsKitBp.v (a working branch a179cedc95a7, blob 1dd89c0383ac).
+   over the FROZEN B' kit lib/B/Prog/CrsKitBp.v (a working branch, blob 1dd89c0383ac).
    rule 24: proves function check_reject_clean_starved on image B' (reuse search: `proof-index
    check_reject_clean_starved 0x82160`, the internal file index-crcs-Aprime.out, and an internal record of that lookup;
    CONFIRM by checker LookupCheckCrcsAp. At that search origin/ossv/recipes had no lib/A or lib/B, its released rows
    were lib/Prog (plain) and lib/U/Prog (ubsan) only, and no released asan Proof.v existed for
    check_reject_clean_starved). This file is one SEGMENT of that walk (kind: segment lemma); it is new.
-   DONOR (rule 24, reuse): this lane's A' file lib/A/Prog/CrsSeg_H1.v (a working branch 5a39b8409c94): the
+   DONOR (rule 24, reuse): this lane's A' file lib/A/Prog/CrsSeg_H1.v (a working branch): the
    same step kit, loop invariant and closing proof, with the kit's `_B` names and every number re-read at B'.
    INPUTS.
-   - Pin B' asan-ubsan sha256 d663f82d7f488d30 (harness.yaml of release/fuzz-preset-ran-out-pins 8f3e7e1a07f1).
+   - Pin B' asan-ubsan sha256 d663f82d7f488d30 (harness.yaml).
    - Listing lib/B/Listing_prog.v blob c97cc46b3e13 + lib/B/PAImg_prog.v blob 15fab93fe702 (a Theorem Labs lane's listings v3).
      Entry 0x820e0 = slot 645 (B_entry_check_reject_clean_starved). H1 is slots 719 .. 748 and the one slot 763 (X1's
      last instruction, `beqz s3`, which H1's took = 0 arm runs); the loop's UBSan arms go to slot 929 (+1136, `unimp`).
@@ -43,7 +44,7 @@
    hypothesis) and the three continuations (H1 makes no call).
    THE STEP KIT (section d below: the hand steps over crs_cfg_B, the word arithmetic) is generic over the listing slot
    and is Required by CrsSeg_X1_B.v; it follows lane CnoA102fA's lib/A/Prog/Cno102A_FA.v cfa_step / cfa_hs_* (origin/
-   a working branch 574c27759c8), restated over the kit's crs_cfg_B and PL_prog_B's slot table; h_sltu /
+   a working branch), restated over the kit's crs_cfg_B and PL_prog_B's slot table; h_sltu /
    h_sltiu / h_xor are the B'-only steps of the UBSan checks.
    Numerals: offsets +296 .. +1136 (LENGTH: 4 * slot); 5381, 33, 32, 8, 7, 3, 5, 1 (WORD: djb2's seed and multiplier,
    the shift amounts, the granule mask and the sltiu bound the listing's words carry); 2 ^ 20 .. 2 ^ 64 (LENGTH / WORD

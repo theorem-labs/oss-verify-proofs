@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (anon_node: grant_ok_na_pin takes the NULL hint, the place_declined_b decline is proved false for that hint, grant_na_pin_not_errno takes its new size premises, and the node proves its sys_rob part; RomBase import). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -12,6 +13,7 @@ From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import
 YK16 YK0o YK11 YK0i YK0j YK14 YK1c YK0v YK02 YK0q YK15 YK18 YK0y YK1b YK00 YK01 YK13 YQ0k YK05 YK06 YA0i YA0l YA05 YA09 YK0h YA08 YG0b.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YG0h YG0u.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YN05.
+From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import RomBase.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Open Scope bv_scope.
@@ -31,14 +33,14 @@ getr regs 11 = Z_to_bv 64 len -> 0 < len < 2 ^ 64 ->
 getr regs 12 = Z_to_bv 64 3 -> getr regs 13 = flags -> mmap_flags_core flags = 34 ->
 getr regs 14 = Z_to_bv 64 (-1) -> getr regs 15 = Z_to_bv 64 0 ->
 let nZ := page_round_up_Z len in let n := Z_to_bv 64 nZ in
-(exists a, grant_ok_na_pin md a nZ = true) -> mmap_noreserve_backed_ok flags md nZ = true ->
+(exists a, grant_ok_na_pin (Z_to_bv 64 0) md a nZ = true) -> mmap_noreserve_backed_ok flags md nZ = true ->
 exists (I : Type) (nx : I -> config) (bit : I -> Z) (ga : I -> word) (i0 i1 : I),
 node_ok segs (mkCfg (pend_at regs pc mem rom) md) I (fun _ => []) nx /\
 bit i0 = 1 /\ bit i1 = 0 /\
 forall i, exists md_i,
 m_halted md_i = None /\ same_io md md_i /\
 ( (bit i = 0 /\ nx i = mkCfg (mkst (regupd regs 10 (errno_ret ENOMEM)) (v_addi pc 4) mem rom) md_i /\ md_i = md)
-\/ (bit i = 1 /\ grant_ok_na_pin md (ga i) nZ = true /\
+\/ (bit i = 1 /\ grant_ok_na_pin (Z_to_bv 64 0) md (ga i) nZ = true /\
 nx i = mkCfg (mkst (regupd regs 10 (ga i)) (v_addi pc 4) (zfill (ga i) n mem) rom) md_i /\
 md_i = with_mmap_backing flags (ga i) n (mmap_model (ga i) n md))).
 Proof.
@@ -51,14 +53,24 @@ assert (ZF : forall r a k, advance_past_svc (apply_effect (pend_at regs pc mem r
 pose proof (pend_gpr1 regs pc mem rom) as G1. pose proof (pend_gpr2 regs pc mem rom) as G2.
 pose proof (pend_gpr3 regs pc mem rom) as G3. pose proof (pend_gpr4 regs pc mem rom) as G4. pose proof (pend_gpr5 regs pc mem rom) as G5.
 rewrite H11 in G1. rewrite H12 in G2. rewrite H13 in G3. rewrite H14 in G4. rewrite H15 in G5.
+pose proof (pend_gpr0 regs pc mem rom) as G0. rewrite H10 in G0.
 set (ms := pend_at regs pc mem rom) in *.
 assert (Hl1 : bv_unsigned (ms_gpr ms 1) = len) by (rewrite G1; apply u64_lit; lia).
 assert (Hne1 : ms_gpr ms 1 <> Z_to_bv 64 0).
 { rewrite G1. intros E. apply (f_equal bv_unsigned) in E. rewrite !u64_lit in E by lia. lia. }
-pose proof (fun eff => mmap_rw_check segs ms (getr regs 17) md eff flags Hno Hne1 G2 G3 Hcore G4 G5) as Hchk.
-cbv zeta in Hchk. rewrite Hl1 in Hchk. fold nZ n in Hchk. rewrite Hb0 in Hchk.
+(* The hint is a literal zero here (H10), and [Mmap.place_declined_b]'s first
+conjunct is [negb (hint_address hint =? 0)] with [hint_address] =
+[page_round_down_Z (bv_unsigned hint)] (727298f3 Sys/Mm/Mmap.v:1195,:1373-1382),
+so the conjunction collapses on the left and no premise is needed. *)
+assert (Hdecl : place_declined_b (m_kernel md) (m_vmmaps md) (ms_gpr ms 0)
+(page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false).
+{ rewrite G0. unfold place_declined_b. cbv zeta.
+replace (hint_address (Z_to_bv 64 0)) with 0%Z by (vm_compute; reflexivity).
+reflexivity. }
+pose proof (fun eff => mmap_rw_check segs ms (getr regs 17) md eff flags Hno Hne1 G2 G3 Hcore G4 G5 Hdecl) as Hchk.
+cbv zeta in Hchk. rewrite Hl1 in Hchk. fold nZ n in Hchk. rewrite Hb0 in Hchk. rewrite G0 in Hchk.
 assert (Hn0 : 0 <= nZ) by (unfold nZ; apply page_round_up_Z_nonneg; lia).
-pose (IB := {a : word | grant_ok_na_pin md a nZ = true}).
+pose (IB := {a : word | grant_ok_na_pin (Z_to_bv 64 0) md a nZ = true}).
 pose (effs := fun i : unit + IB => match i with
 | inl _ => mkEffectU (errno_ret ENOMEM) [] [] [] [] []
 | inr (exist _ a _) => mkEffectU a [] [(a, n)] [] [] [] end).
@@ -73,22 +85,23 @@ split; [| split; [reflexivity | split; [reflexivity |]]].
 - apply (node_chk_noacc segs ms md (getr regs 17) (unit + IB) effs ms' Hh eq_refl).
 + intros [[] | [a Ha]]; cbn [effs ms']; rewrite Hchk.
 * rewrite (errno_ret_in_intro _ _ ENOMEM_in_mmap_errnos). reflexivity.
-* rewrite (grant_na_pin_not_errno md a nZ Hn0 Ha), Ha. cbn [andb]. rewrite (proj2 (listNN_eqb_eq _ _) eq_refl). reflexivity.
+* rewrite (grant_na_pin_not_errno (Z_to_bv 64 0) md a nZ ltac:(unfold nZ; pose proof (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.page_round_up_Z_ge len); lia) ltac:(apply LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.page_round_up_Z_aligned) Ha), Ha. cbn [andb]. rewrite (proj2 (listNN_eqb_eq _ _) eq_refl). reflexivity.
 + intros [r ws zs us cs ci] m' evs Hc. rewrite Hchk in Hc.
 destruct ws; [|discriminate]. destruct us; [|discriminate]. destruct cs; [|discriminate]. destruct ci; [|discriminate].
 destruct (errno_ret_in mmap_errnos r) eqn:Er.
 * destruct zs; [|discriminate]. injection Hc as <- <-.
 destruct (proj1 (errno_ret_in_true _ _) Er) as (e & He & ->). rewrite (mmap_errnos_ENOMEM e He). exists (inl tt). repeat split; reflexivity.
-* destruct (grant_ok_na_pin md r nZ) eqn:Hg; [|discriminate]. cbn [andb] in Hc.
+* destruct (grant_ok_na_pin (Z_to_bv 64 0) md r nZ) eqn:Hg; [|discriminate]. cbn [andb] in Hc.
 destruct (listNN_eqb zs [(r, n)]) eqn:Hl; [|discriminate].
 apply listNN_eqb_eq in Hl. subst zs. injection Hc as <- <-.
 exists (inr (exist _ r Hg)). repeat split; reflexivity.
 + intros [r ws zs us cs ci] Hc. rewrite Hchk in Hc.
 destruct ws; [|discriminate]. destruct us; [|discriminate]. destruct cs; [|discriminate]. destruct ci; [|discriminate].
 destruct (errno_ret_in mmap_errnos r); [destruct zs; discriminate|].
-destruct (grant_ok_na_pin md r nZ && true && listNN_eqb zs [(r, n)])%bool; discriminate.
+destruct (grant_ok_na_pin (Z_to_bv 64 0) md r nZ && true && listNN_eqb zs [(r, n)])%bool; discriminate.
 + intros [[] | [a Ha]]; cbn [ms']; [exact Hh | rewrite with_mmap_backing_halted; unfold mmap_model; rewrite with_vmmaps_halted; exact Hh].
 + intros [[] | [a Ha]]; reflexivity.
++ exact (sys_rob_memfree segs ms md (getr regs 17) eq_refl ltac:(rewrite Hno; exact memfree_222)).
 - intros [[] | [a Ha]]; cbn [effs ms'].
 + exists md. split; [exact Hh|]. split; [apply same_io_refl|]. left. split; [reflexivity|]. split; [| reflexivity].
 subst ms. rewrite RT. reflexivity.

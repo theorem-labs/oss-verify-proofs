@@ -3,15 +3,16 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YCbq.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-10: off_img's image bounds cite fuzz_knock's image (YImgTop.IMG_LO, YImgTop.IMG_TOP = 0x5f3000, both knock ASan builds) in place of cgif's 0x10000 and 0x5fb000. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YCbq.v at origin/ossv/recipes 6ebe35ba632 (fuzz_knock's released ASan tree); module paths changed to reac-pw/fuzz_headamp. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YCbq.v (fuzz_knock's released ASan tree); module paths changed to reac-pw/fuzz_headamp. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/Reusable/YCbq.v, with its module paths and module names changed; 986 of its 1333 lines of code are new or changed and 2813 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: the journal lemmas rdp_aj_write_U, rdp_ecall_preU_k and rdp_aj_roU of
-   proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_rd_pre_k.v (lines 494-584 at origin/ossv/recipes 09c6822d886), the
+   proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_rd_pre_k.v (lines 494-584), the
    frame law ARU_frame of lib/A/FMupoison.v (lines 166-187) and the post rt_post_roU of lib/A/FMH_Rt.v (lines 97-104)
    of the same tree, restated for a hole in the shadow of a real-stack frame in place of fuzz_manifest's user-poisoned
    heap granules; the chunk runners SRr_chain_tok_AJ / SRr_run_tok_AJ / SRr_run_to_tok_AJ / SRr_chain_AJ /
    SRr_run_AJ / SRr_run_to_AJ of lib/Reusable/YCbq.v (lines 2408-2546) restated with the journal over the unpoisoned
    memory. The rest is new. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp: THE FRAME HOLE of reac_headamp_prop_parse_result. Proves no function (kind: segment lemma).
 
    WHY. The parse (image A 0x845b4, image B 0x849ac) takes `addi sp,sp,-0x100; andi sp,sp,-0x20` and keeps one ASan
@@ -523,8 +524,8 @@ SRr segs W (cfg_at segs pc regs mem md)
   aview segs (w_H W) mem' a = aview segs (w_H W) mem a) /\
  (forall a, apresent (w_H W) mem a -> apresent (w_H W) mem' a)).
 
-(* plugin-hostd/fuzz_command lib/A/Rt/RtNumber.v:81-111 astrtol_realizes at origin/ossv/recipes 09c6822d886 (the same
-   text at 2d2ff01bb6f), with RtDefs.v's ecall_pre_stk, aread_ok, awrite_ok, astr_at, atail_vis, aguard_ok, art_post,
+(* plugin-hostd/fuzz_command lib/A/Rt/RtNumber.v:82-112 astrtol_realizes (the same
+   text), with RtDefs.v's ecall_pre_stk, aread_ok, awrite_ok, astr_at, atail_vis, aguard_ok, art_post,
    aerrno_cell and rt_rom_view (lines 25-147) unfolded; s10_val / s10_end / s10_errno are headamp's copy of
    fuzz_command's plain model, lib/Prog/__intscan_c.v (fuzz_command's lib/Prog/__intscan_c.v with module paths and
    the plain image's __intscan address changed). In hole form. *)
@@ -575,7 +576,7 @@ SRr segs W (cfg_at segs pc regs mem md)
  (forall a, apresent (w_H W) mem a -> apresent (w_H W) mem' a) /\
  (forall a, spZ regs - 3 * ESTACK <= a < spZ regs -> apresent (w_H W) mem' a)).
 
-(* libreac/fuzz_identity lib/Reusable/AStrcmpDef.v:44-64 astrcmp_realizes at origin/ossv/recipes 09c6822d886, with
+(* libreac/fuzz_identity lib/Reusable/AStrcmpDef.v:45-65 astrcmp_realizes, with
    str_meet (:37-42) and strcmp_res (:34) unfolded, in hole form. *)
 Definition hd_astrcmp_hole (pc : Z) : Prop :=
 forall ly S W regs mem md x y k c1 c2 (fr : Z) (pat : list Z),
@@ -921,7 +922,7 @@ Qed.
 End s.
 
 (* Modified by Theorem Labs, 2026-10: proofs/plugin-hostd/fuzz_command/lib/A/Prog/numberK.v (ajournal_after_write_errno
-   :33-180, aj_strtol_atS :189-268) at origin/ossv/recipes 09c6822d886, restated on this tree's kit (whose awr_byte has
+   :33-180, aj_strtol_atS :189-268), restated on this tree's kit (whose awr_byte has
    no frame-list argument; the proof is lib/Reusable/YCbq.v ajournal_after_write's, :519-637, with the errno case added
    to each frame clause) and, for the call, in hole form. *)
 (* ======================================== the strtol call inside the hole ========================================

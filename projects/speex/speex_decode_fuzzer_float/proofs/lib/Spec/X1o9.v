@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (Hown_fds also takes the step's kernel-build equality, which own_after_node reads off nstep_kernel, because the invariant's vDSO/vvar facts read the kernel build). *)
 From Stdlib Require Import ZArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Fs Require Import Namei.
@@ -83,8 +84,10 @@ Hypothesis Hcount : forall X, mspec (own X) alloc_count (fun _ => own X).
 Hypothesis Hrun : forall X cfg payload, bytes_ok payload -> mspec (own X) (run cfg payload) (fun _ => own X).
 
 Hypothesis Hown_minv : forall X s mo, own X s mo -> minv mo /\ m_halted mo = None.
+(* the kernel build sits in the VM state, so [m_vmmaps] does not fix it; the
+   invariant's vDSO/vvar facts read it *)
 Hypothesis Hown_fds : forall X s mo mo', own X s mo ->
-m_vmmaps mo' = m_vmmaps mo -> minv mo' -> m_halted mo' = None -> own X s mo'.
+m_vmmaps mo' = m_vmmaps mo -> minv mo' -> m_halted mo' = None -> m_kernel mo' = m_kernel mo -> own X s mo'.
 
 #[using="Hown_minv Hown_fds"] Lemma own_after_node : forall X s mo n rsp mo' evs,
 own X s mo -> nstep n mo rsp mo' evs -> m_vmmaps mo' = m_vmmaps mo ->
@@ -92,7 +95,8 @@ match n with NMmap _ _ _ flags => mmap_noreserve_b (Z_to_bv 64 flags) = false | 
 own X s mo'.
 Proof.
 intros X s mo n rsp mo' evs Ho Hst Hvm Hfl. destruct (Hown_minv _ _ _ Ho) as [Hmi Hh].
-destruct (minv_preserved n mo rsp mo' evs Hfl Hmi Hh Hst) as [Hh' Hmi']. eapply Hown_fds; eauto.
+destruct (minv_preserved n mo rsp mo' evs Hfl Hmi Hh Hst) as [Hh' Hmi'].
+eapply Hown_fds; [exact Ho| exact Hvm| exact Hmi'| exact Hh'| exact (nstep_kernel n mo rsp mo' evs Hfl Hst)].
 Qed.
 
 Definition rd_inv (X : list ptr) (st : rd_st) : assn St := fun s mo =>

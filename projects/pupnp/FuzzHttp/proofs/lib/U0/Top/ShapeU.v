@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/pupnp/FuzzHttp/lib/A0/T7/ShapeA0.v, with its module names changed; 101 of its 160 lines of code are new or changed and 143 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's vDSO pair; the channel-reader fact; the launch's input, mmap base and entry draw). *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap Mprotect.
@@ -107,13 +108,15 @@ Section ShapeU.
   Qed.
 End ShapeU.
 
-Theorem PI_init_U (CP : HasCeiling) (sp brk mb : word) (inp : ProcInput) (t : Z) (k : nat) :
+(* LPS 727298f3: the start model is [with_vdso v (init_model ..)] ([Run.init_config]); [with_vdso]
+   leaves every field KL / PK read unchanged. *)
+Theorem PI_init_U (CP : HasCeiling) (sp brk mb : word) (inp : ProcInput) (t : Z) (k : nat) (v : Vdso.VdsoRun) :
   valid_input inp -> valid_sp sp -> valid_brk rsU brk -> valid_mmap_base mb ->
   @alloc_ceiling CP = bv_unsigned sp - stack_max_size -> 0 < t < PID_MAX_ENVELOPE -> (k <= KTOP)%nat ->
   KNonNull.PI k [] (ps_init (reservedZ rsU) (@alloc_ceiling CP))
-     (with_tid (Z_to_bv 64 t) (init_model (segments_reserved rsU) brk mb sp target_alloc_limit inp)).
+     (with_tid (Z_to_bv 64 t) (with_vdso v (init_model (segments_reserved rsU) brk mb sp target_alloc_limit inp))).
 Proof.
-  intros _ (SP1 & SP2 & _) (LO & HI & AL) (MB & _ & _) EC Ht Hk.
+  intros VI (SP1 & SP2 & _) (LO & HI & AL) (MB & _ & _) EC Ht Hk.
   assert (TOP : reserved_top (segments_reserved rsU) = 0x5d000) by (vm_compute; reflexivity). rewrite TOP in LO, HI.
   assert (BAM : brk_aslr_max = 1073741824) by (vm_compute; reflexivity).
   assert (PG : page_size = PGSZ) by (vm_compute; reflexivity). rewrite PG in AL.
@@ -125,9 +128,13 @@ Proof.
     exists (led_init (map wwZ (segments_reserved rsU)) (bv_unsigned sp - stack_max_size)). split; [| split; [| intros x []]].
     + unfold ps_init. cbn [ps_m]. apply c2_init. unfold alloc_ceiling_max, sp_window_hi, stack_max_size in *. lia.
     + unfold ps_init. cbn [ps_brk]. apply KL_with_tid; [| exact Ht'].
-      apply KL_init; [| lia| exact AL| unfold sp_window_lo, stack_max_size, PGSZ in *; lia| lia].
+      lazymatch goal with |- KL ?L ?pb (with_vdso _ ?m) =>
+        cut (KL L pb m); [intros KI; destruct KI; constructor; assumption|] end.
+      apply KL_init; [| lia| exact AL| unfold sp_window_lo, stack_max_size, PGSZ in *; lia| lia| unfold PGSZ, mmap_base_min in *; lia| exact (valid_input_channel_reader _ VI)].
       intros e He. pose proof (reserved_top_ehi _ _ He) as H. rewrite TOP in H. lia.
-  - apply PK_with_tid. eapply PK_weaken; [apply PK_init| | |].
+  - apply PK_with_tid.
+    apply (PK_vm_eq _ _ _ _ (init_model (segments_reserved rsU) brk mb sp target_alloc_limit inp)); [| reflexivity| reflexivity].
+    eapply PK_weaken; [apply PK_init| | |].
     + vm_compute. cbn. lia.
     + unfold SBMAX. lia.
     + unfold BACKTOP, target_alloc_limit. cbn. lia.
@@ -141,30 +148,38 @@ Qed.
 Lemma HNMAX_K : 2^26 <= KNonNull.NMAX.
 Proof. unfold KNonNull.NMAX, MBound.NMAX. apply Z.pow_le_mono_r; lia. Qed.
 
-Theorem T_P0g_eq : forall (CPA CPB : HasCeiling) (rsvP rsvU : Z) (spA brkA mbA spB brkB mbB : word) (inp : ProcInput),
+Theorem T_P0g_eq : forall (CPA CPB : HasCeiling) (rsvP rsvU : Z) (spA brkA mbA spB brkB mbB : word) (vA vB : Vdso.VdsoRun) (inp : ProcInput),
   valid_input inp ->
   valid_sp spA -> valid_brk rsP brkA -> valid_mmap_base mbA -> @alloc_ceiling CPA = bv_unsigned spA - stack_max_size ->
   valid_sp spB -> valid_brk rsU brkB -> valid_mmap_base mbB -> @alloc_ceiling CPB = bv_unsigned spB - stack_max_size ->
-  @T_P0g CPA rsvP rsP (in_argv inp) (init_model (segments_reserved rsP) brkA mbA spA source_alloc_limit inp) [] ->
-  @T_P0g CPB rsvU rsU (in_argv inp) (init_model (segments_reserved rsU) brkB mbB spB target_alloc_limit inp) [] ->
-  t_eq (@T_P0g CPA rsvP rsP (in_argv inp) (init_model (segments_reserved rsP) brkA mbA spA source_alloc_limit inp))
-       (@T_P0g CPB rsvU rsU (in_argv inp) (init_model (segments_reserved rsU) brkB mbB spB target_alloc_limit inp)).
+  @T_P0g CPA rsvP rsP (in_argv inp) (with_vdso vA (init_model (segments_reserved rsP) brkA mbA spA source_alloc_limit inp)) [] ->
+  @T_P0g CPB rsvU rsU (in_argv inp) (with_vdso vB (init_model (segments_reserved rsU) brkB mbB spB target_alloc_limit inp)) [] ->
+  t_eq (@T_P0g CPA rsvP rsP (in_argv inp) (with_vdso vA (init_model (segments_reserved rsP) brkA mbA spA source_alloc_limit inp)))
+       (@T_P0g CPB rsvU rsU (in_argv inp) (with_vdso vB (init_model (segments_reserved rsU) brkB mbB spB target_alloc_limit inp))).
 Proof.
-  intros CPA CPB rsvP rsvU spA brkA mbA spB brkB mbB inp VI VSA VBA VMA CEA VSB VBB VMB CEB NA NB.
-  set (moA := init_model (segments_reserved rsP) brkA mbA spA source_alloc_limit inp) in *.
-  set (moB := init_model (segments_reserved rsU) brkB mbB spB target_alloc_limit inp) in *.
-  assert (MIA : minv moA) by (unfold moA; apply minv_init; destruct VSA as (V1 & V2 & _); split; [exact V1| exact V2]).
-  assert (MIB : minv moB) by (unfold moB; apply minv_init; destruct VSB as (V1 & V2 & _); split; [exact V1| exact V2]).
-  assert (HA : m_halted moA = None) by (unfold moA; apply m_halted_init_model).
-  assert (HB : m_halted moB = None) by (unfold moB; apply m_halted_init_model).
+  intros CPA CPB rsvP rsvU spA brkA mbA spB brkB mbB vA vB inp VI VSA VBA VMA CEA VSB VBB VMB CEB NA NB.
+  set (moA := with_vdso vA (init_model (segments_reserved rsP) brkA mbA spA source_alloc_limit inp)) in *.
+  set (moB := with_vdso vB (init_model (segments_reserved rsU) brkB mbB spB target_alloc_limit inp)) in *.
+  (* [with_vdso] rebuilds only the vDSO run field: the accessors read here are init_model's *)
+  assert (MIA : minv moA).
+  { destruct VSA as (V1 & V2 & _).
+    exact (minv_init (segments_reserved rsP) brkA mbA spA source_alloc_limit inp (conj V1 V2) (valid_input_channel_reader _ VI)). }
+  assert (MIB : minv moB).
+  { destruct VSB as (V1 & V2 & _).
+    exact (minv_init (segments_reserved rsU) brkB mbB spB target_alloc_limit inp (conj V1 V2) (valid_input_channel_reader _ VI)). }
+  assert (HA : m_halted moA = None) by (exact (m_halted_init_model (segments_reserved rsP) brkA mbA spA source_alloc_limit inp)).
+  assert (HB : m_halted moB = None) by (exact (m_halted_init_model (segments_reserved rsU) brkB mbB spB target_alloc_limit inp)).
   assert (STA : @STARTg CPA rsP KNonNull.PI 0 moA moA).
-  { unfold STARTg, moA. split; [apply m_tid_init_model|]. split; [exact MIA|]. split; [exact HA|].
-    split; [intros t Ht; apply (KNonNull.PI_init CPA spA brkA mbA inp t _ VI VSA VBA VMA CEA Ht); unfold DRV_BUDGET, KTOP; cbn; lia|].
+  { unfold STARTg. split; [exact (m_tid_init_model (segments_reserved rsP) brkA mbA spA source_alloc_limit inp)|].
+    split; [exact MIA|]. split; [exact HA|].
+    split; [intros t Ht; apply (KNonNull.PI_init CPA spA brkA mbA inp t _ vA VI VSA VBA VMA CEA Ht); unfold DRV_BUDGET, KTOP; cbn; lia|].
     split; [reflexivity|]. split; [reflexivity|]. split; [exact MIA| exact HA]. }
   assert (STB : @STARTg CPB rsU KNonNull.PI 0 moB moA).
-  { unfold STARTg, moA, moB. split; [apply m_tid_init_model|]. split; [exact MIB|]. split; [exact HB|].
-    split; [intros t Ht; apply (PI_init_U CPB spB brkB mbB inp t _ VI VSB VBB VMB CEB Ht); unfold DRV_BUDGET, KTOP; cbn; lia|].
-    split; [rewrite !m_fds_init_model; reflexivity|]. split; [rewrite !m_fs_init_model; reflexivity|].
+  { unfold STARTg. split; [exact (m_tid_init_model (segments_reserved rsU) brkB mbB spB target_alloc_limit inp)|].
+    split; [exact MIB|]. split; [exact HB|].
+    split; [intros t Ht; apply (PI_init_U CPB spB brkB mbB inp t _ vB VI VSB VBB VMB CEB Ht); unfold DRV_BUDGET, KTOP; cbn; lia|].
+    (* both start models' fd tables and file systems are init_model's ([State.m_fds_init_model]) *)
+    split; [reflexivity|]. split; [reflexivity|].
     split; [exact MIA| exact HA]. }
   destruct (@shape_incl0_g CPA 0 rsvP rsP KNonNull.PI KNonNull.NMAX HNMAX_K PI_mo PI_soupd PI_fdupd PI_perm PI_weaken
               raw_malloc_stwf raw_malloc_px raw_free_stwf raw_free_px 0%nat (in_argv inp) moA moA STA) as [A1 A2].

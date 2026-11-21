@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor lo is rt_sp0 - STACK_WOK, the bottom of the stack the launch zero-maps, instead of rt_sp0 - STACK_WIN). *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.openssl.bignum.lib.BgLib Require Import ImageBgA.
 
@@ -53,7 +54,7 @@ Hypothesis ATXW_off : forall x, in_ranges ATX_W x -> outside IO_FP x.
 #[local] Notation LIB := lib_exit_cells.
 #[local] Notation LIB_loc := lib_exit_loc.
 
-Local Ltac ul := unfold SEGTOP_A, STACK_WIN, USTACK_TOP, RT_STACK, FUZZ_STACK, FUZZ_COST, CREDIT_DRV, g_read_stage in *; lia.
+Local Ltac ul := unfold SEGTOP_A, STACK_WIN, STACK_WOK, USTACK_TOP, RT_STACK, FUZZ_STACK, FUZZ_COST, CREDIT_DRV, g_read_stage in *; lia.
 
 Lemma tr_later : forall n k j usp buf cap x0 x1 x2 x3 x4 x5 x6 x7, Z.to_nat k = n -> 1 <= k <= 4 -> (j + n < 499)%nat ->
   cpsE bgbsegs (TLOOP RT OUT_rep ERR_rep XENV1 LIBA fs k (so_lines j) usp buf cap x0 x1 x2 x3 x4 x5 x6 x7) []
@@ -81,7 +82,7 @@ Proof using AF FRE FRN OUT_loc ERR_loc XENV1_loc IO_img XENV1_img.
   pose proof HT as (ART0 & MI0 & CLX0 & FR0 & TF0 & ST0 & B16 & ULO & USP0 & SPW & LV & FRS & PL & PB & BD & P0 & P1 & CAP0 & UT0 & LB0 & IC0).
   assert (ICS : forall x, TR_INIT + 1 <= x < TR_INIT + 5 -> client_static x) by (intros x Hx; apply client_static_intro; unfold TR_INIT in Hx; lia).
   pose proof (af_sp0_range RT AF Σ m ART0) as SP0R.
-  set (lo := rt_sp0 RT Σ - STACK_WIN) in *.
+  set (lo := rt_sp0 RT Σ - STACK_WOK) in *.
   assert (EU : bv_unsigned (Z_to_bv 64 (usp - 160)) = usp - 160) by (apply unsigned_lit; ul).
   assert (B16' : (usp - 80) mod 16 = 0) by (apply Z.mod_divide; [lia|]; apply Z.mod_divide in B16; [| lia]; destruct B16 as (q & ->); exists (q - 5); lia).
   assert (INB : In (buf, cap) (rt_live RT Σ)).

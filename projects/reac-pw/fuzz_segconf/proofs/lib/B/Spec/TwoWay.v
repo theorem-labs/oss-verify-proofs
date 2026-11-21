@@ -1,4 +1,4 @@
-(* Ported by RtStr from cold/c-asan-rt-fmio-n affce6489c8 proofs/omx-clap-core/fuzz_manifest/lib/A/Spec/TwoWay.v, unchanged. *)
+(* Ported by RtStr from proofs/omx-clap-core/fuzz_manifest/lib/A/Spec/TwoWay.v, unchanged. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/omx-clap-core/fuzz_manifest/lib/A/Spec/TwoWay.v for reac-pw/fuzz_segconf.asan-ubsan (image B), with its module paths changed. *)
 From Stdlib Require Import ZArith Arith List Lia Bool.
 Import ListNotations.

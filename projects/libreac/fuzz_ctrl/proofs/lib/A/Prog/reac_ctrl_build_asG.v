@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 440 of its 488 lines of code are new or changed and 963 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_ctrl image A (ASan build): the glue proof of reac_ctrl_build_as (0x848ac, AF 0x39d0) in the cgif
    caller-journal form, `pb_reac_ctrl_build_as` for A/Prog/C_reac_ctrl_build_as.v `pb_reac_ctrl_build_as_stmt`.
 
@@ -16,7 +17,7 @@
       present by the journal; the image shadow is visible by HIMGSH.
    2. The stretch's post has go = true (o > 0, md > 0, kind <= 6), so the state is at ctrl_emit_as (0x849d8) with
       memory mu, where `munch [(sp - 4640, sp)] memc mu`.
-   3. The caller's journal at mu: GE_jrnl.ge_jrnl (a Theorem Labs lane 8b1bb6bdd1e, taken by path); the read-only data at mu:
+   3. The caller's journal at mu: GE_jrnl.ge_jrnl (a Theorem Labs lane, taken by path); the read-only data at mu:
       GE_jrnl.ge_ro_keep. build_as logs no event and takes no side-stack frame, so k and Sc do not change.
    4. TEMIT (tctrl_emit_as_spec) at the jump state. Every premise about the world's memory moves from memc to mu
       because each of those bytes lies below the window (frames and blocks below alloc_ceiling, the image, the

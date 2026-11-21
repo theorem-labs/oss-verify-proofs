@@ -5,7 +5,7 @@
    lane and published in the base), with the class-3 fake frame live (own = [(3, pos)]).
 
    rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from a working branch
-   d25a984c903 proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_stdefs.v St17 :521 / St18 :535 and
+   proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_stdefs.v St17 :521 / St18 :535 and
    check_round_trip_sd16.v crt16_runB :541 (the stretch 0x82274 .. the entry of fuzz_free: the length check of the
    second decode, the bcmp wrapper, and the empty-body arm crt_skipbcmp2) and crt16_runA :392 (0x82248 .. the decoder's
    entry at 0x8481c with ra 0x82274), with check_round_trip_sd17.v and check_round_trip_sd18.v for the two fuzz_free

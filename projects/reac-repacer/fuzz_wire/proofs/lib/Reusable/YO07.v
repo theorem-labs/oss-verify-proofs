@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YO07.v (release 2026.10.0), with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/Reusable/YO07.v at 4f87de75d677 (donor image sha256 c2c7559b29bd), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/Reusable/YO07.v at theorem-labs/oss-verify-proofs@f92feaf8b7e6 (donor image sha256 c2c7559b29bd), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List Bool Lia FMapPositive.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.

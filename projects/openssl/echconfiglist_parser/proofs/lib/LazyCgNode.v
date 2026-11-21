@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the clock_gettime node's access_ok bound is carried through the restriction). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -44,12 +45,12 @@ Lemma cg_at_node_restrictL : forall L S msF tp,
   cg_at_node segs (CGRealtime tp) (restrict L S msF) ->
   cg_at_node segs (CGRealtime tp) msF /\ (forall i, (0 <= i < 16)%Z -> hiddenb L S (wa (tp + i)) = false).
 Proof.
-  intros L S msF tp HL (SV & A0 & A1 & ROM & WR).
+  intros L S msF tp HL (SV & A0 & A1 & ROM & WR & TS).
   rewrite ms_mem_restrict in WR. destruct (wr_at_restrictL L S (ms_mem msF) tp 16 HL WR) as [WRF VIS].
   split; [| exact VIS].
   destruct msF as [rg fr pcv svc rv fc mm rom].
   unfold cg_at_node, OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Lib.Nodes.areg, restrict, restrict_by, with_mem in *.
-  cbn in SV, A0, A1, ROM, WRF |- *. exact (conj SV (conj A0 (conj A1 (conj ROM WRF)))).
+  cbn in SV, A0, A1, ROM, WRF |- *. exact (conj SV (conj A0 (conj A1 (conj ROM (conj WRF TS))))).
 Qed.
 
 (* [comment removed for export] *)
@@ -67,7 +68,7 @@ Proof.
   intros L S Zr msF1 mo ms ts Q Hok Hr AT Hk.
   pose proof (lzok_ranges Hok) as HL.
   rewrite <- Hr in AT. destruct (cg_at_node_restrictL L S msF1 ts HL AT) as [ATF VIS16].
-  pose proof ATF as (SV & A0 & A1 & ROM & WR). destruct WR as (T0 & T16 & _).
+  pose proof ATF as (SV & A0 & A1 & ROM & WR & _). destruct WR as (T0 & T16 & _).
   destruct (cg_input segs ts msF1 (Z_to_bv 64 113) mo ATF SV) as (NO & _ & _ & _ & SP).
   assert (Emem : restrict_mem L S (ms_mem msF1) = ms_mem ms) by (rewrite <- Hr; symmetry; apply ms_mem_restrict).
   set (eff := fun bs : list byte => mkEffect (Z_to_bv 64 0) [(Z_to_bv 64 ts, bs)] []).
@@ -99,7 +100,8 @@ Proof.
     - intros o (bs & Hbs & ->). exists (exist _ bs Hbs). reflexivity.
     - intros _. exact (lzok_halted Hok).
     - intros [bs Hbs]. unfold MAT. cbn [proj1_sig]. destruct (AFTER bs Hbs) as (mo' & E & _). rewrite E. reflexivity. }
-  apply (sreach_node segs (mkCfg msF1 mo) I _ (exist _ (repeat (Z_to_bv 8 0) 16) realtime_ok_zeros) Q NODE).
+  apply (sreach_node segs (mkCfg msF1 mo) I _ (exist _ (repeat (Z_to_bv 8 0) 16) realtime_ok_zeros) Q NODE
+           (cg_rob segs (CGRealtime ts) msF1 mo ATF)).
   intros [bs Hbs]. cbn [proj1_sig].
   destruct (AFTER bs Hbs) as (mo' & E & SBM & OK' & HS).
   unfold MAT. cbn [proj1_sig]. rewrite E.

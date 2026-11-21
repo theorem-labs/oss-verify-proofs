@@ -1,29 +1,30 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Theorem Labs, 2026-10: the image-B twin of fuzz_manifest's lib/A/FMworldH8.v (origin/cold/port-fm-wh8
-   1d4efc438a0) and of W8-A's lib/A/PWorldH8.v (origin/cold/h-small-a6-p102-W8-A d00c913d34d5), with the same lemma
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises); the input-owned, top-anchored launch stack; the start-up certificate per CONFIG_RSEQ flag with states computed in the build); internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10: the image-B twin of fuzz_manifest's lib/A/FMworldH8.v
+    and of W8-A's lib/A/PWorldH8.v, with the same lemma
    names and Section shape, over image B's core: Reusable/YD2i (generated), YD1g, YB01, YB12, YB1h, YB13.
-   First written by h-rw-pca-3 on the five-field W8-core head of the old pins (this file is blob 2feb3f83fd56 of
-   origin/cold/h-rw-pca-3-p102-w8b-5f 857ef7fffd0c).  Ported here to the #102 asan-ubsan image B' (pinned sha256
-   d663f82d7f488d30, base origin/cold/h-pre-b3-yd2i-w8bp ee27c27c7652, whose YD2i.v is gen_ad2_ww.py's --w-h8
+   First written by h-rw-pca-3 on the five-field W8-core head of the old pins (this file is blob 2feb3f83fd56).
+   Ported here to the #102 asan-ubsan image B' (pinned sha256
+   d663f82d7f488d30, base, whose YD2i.v is gen_ad2_ww.py's --w-h8
    emission): every image fact this file uses was re-measured on that head.  One changed in value: the image hull
-   end, img_hi of YB12.TFIB (YB12.v:13), is 0x601000 here, one page above the old pins' value, and poke_H_off now
+   end, img_hi of YB12.TFIB (YB12.v:14), is 0x601000 here, one page above the old pins' value, and poke_H_off now
    names it YImgTop.IMG_TOP_B (YImgTop.v:23) where the old file wrote the old literal.  The others did not change in
    value: the two KRWLAZY bands of YD1g.TFIB_TAIL12, STK_P, usp_range, shadow_off, YA02.argH0_high; avis8_all holds
    over the regenerated HS_tfib_list.
 
-   w_H8 (YA0n.v:25, the W8-core field) for preset's entry world W1 at image B (YD2i.v:768): on the two shadow
+   w_H8 (YA0n.v:26, the W8-core field) for preset's entry world W1 at image B (YD2i.v:768): on the two shadow
    bands, H1 (YD2i.v:506) is constant on each 8-byte-aligned word.  YD2i states it as its section hypothesis H1_8
    (:507), and this file proves it; W1's callers pass AU.PWorldH8.H1_H8 in by name (YD1d.v:232, YD1f.v:99, :275).
-   Against the four-field form of this file (origin/cold/h-rw-pca-3-p102-W8-B cc0d82eb68b8, proved on s1b
-   459129c18903) two things differ: (1) the local Notation SINV applies YA02.SINV0 (YA02.v:89) to TSEGS as its first
-   argument (route R1, h-hpreset-7 bad7e00334f; YA02.SINV0 carries memnorm over the section variable segs, as
+   Against the four-field form of this file (proved on s1b)
+   two things differ: (1) the local Notation SINV applies YA02.SINV0 (YA02.v:89) to TSEGS as its first
+   argument (route R1, h-hpreset-7; YA02.SINV0 carries memnorm over the section variable segs, as
    YD1g.v:279 and YD2i.v:165 do); (2) poke_no_world is fm's own form (FMworldH8.v:474-475), proved by `w_H8 W`.
    H1_H8 names only YD2i.H1 and YG0f.in_band_rw.
 
    Why it holds.  On a band byte every disjunct of vis (YA0e.v:139-145) but in_allow is decided:
    band_facts below says the byte is mapped, is not noaccess and is lazy (the two KRWLAZY maps of
-   YD1g.TFIB_TAIL12, YD1g.v:39), the image hull ends at img_hi TFIB = YImgTop.IMG_TOP_B (YB12.v:13), TOP =
+   YD1g.TFIB_TAIL12, YD1g.v:39), the image hull ends at img_hi TFIB = YImgTop.IMG_TOP_B (YB12.v:14), TOP =
    usp - 8388608 (YA02.TOP, YA02.v:71) lies above both bands, and every argH byte lies at or above TOP
    (YA02.argH0_high, YA02.v:94).  So there H1 = negb (in_allow || sliverb).
    in_allow runs over a_vis ch (YA0e.v:132-136).  Every entry of every a_vis of HS_tfib_list (YB01.v:602) has a
@@ -43,7 +44,7 @@ From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
 From OSSVerify.omx_clap_core.fuzz_preset.images Require Import AsanUbsan.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import
 YK11 YP09 YK00 YK04 YA0i YA0n YK0g YK0c YK0d YK0e YK0f YK09 YA01 YA0c YA0e YA0d YA02 YA0j.
-From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YB12 YB1h YB13 YB01.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YB12 YB1h YB13 YB01r.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import
 YG00 YG01 YG0f YG0v YG0n YG0r YM05 YD1h.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YD1g.
@@ -68,7 +69,7 @@ end.
 Definition avis8_chk (c : acs) : bool :=
 (existsb (fun p => pair_eqb p YD1g.STK_P) (a_vis c)
  && forallb (fun p => pair_eqb p YD1g.STK_P || (pa (fst p) && pa (snd p)))%bool (a_vis c))%bool.
-Lemma avis8_all : forallb avis8_chk HS_tfib_list = true.
+Lemma avis8_all : forallb avis8_chk HS_tfib_list_all = true.
 Proof. vm_compute. reflexivity. Qed.
 
 Lemma existsb_orb : forall (X : Type) (f g : X -> bool) (l : list X),
@@ -179,15 +180,20 @@ Hypothesis Hve : valid_envp (in_envp inp).
 Hypothesis Hfit : entry_stack_fits sp (in_argv inp) (in_envp inp).
 Variable h : nat.
 Variables (ch : acs) (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model).
-Hypothesis Hch : HS_tfib h = Some ch.
+Hypothesis Hch : HS_tfib_r (rseq_z (kb_rseq (in_kernel inp))) h = Some ch.
 #[local] Notation argv := (in_argv inp).
 #[local] Notation envp := (in_envp inp).
 #[local] Notation uid := (in_uid inp).
 #[local] Notation hw := (in_hwcap inp).
-#[local] Notation SINV := (YA02.SINV0 TSEGS TPH sp rdraw brk argv envp uid hw).
-#[local] Notation argH := (YA02.argH0 TPH sp rdraw argv envp uid hw).
+(* LPS 727298f3: the start-up invariant is abstract, as in the core sections (A/AD2i.v, A/AD1g.v),
+   with the stack-top fact the drivers read; the hidden stack bytes read the input's fields. *)
+Variable SINV : env -> (word -> option byte) -> Prop.
+#[local] Notation argH := (YA02.argH0 sp rdraw argv envp
+  (in_image_fs inp) (in_stdin inp) uid (in_gid inp) hw (in_groups inp) (in_net inp)
+  (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp) (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp)).
 #[local] Notation TOP := (YA02.TOP sp).
 #[local] Notation LIM := YA02.LIMIT.
+Hypothesis SINV_sp0 : forall E' M, SINV E' M -> uE E' e_sp0 = TOP + 8388608.
 Hypothesis HC : cs_ok TSEGS TFIB LIM TOP SINV argH (in_fs inp) E ch R FULL model.
 #[local] Notation u := (uE E).
 #[local] Notation usp := (bv_unsigned sp).
@@ -195,7 +201,8 @@ Hypothesis HC : cs_ok TSEGS TFIB LIM TOP SINV argH (in_fs inp) E ch R FULL model
 
 Ltac inst H := try specialize (H sp); try specialize (H rdraw); try specialize (H brk); try specialize (H inp);
 try specialize (H Hsp); try specialize (H Hva); try specialize (H Hve); try specialize (H Hfit); try specialize (H h); try specialize (H ch);
-try specialize (H E); try specialize (H R); try specialize (H FULL); try specialize (H model); try specialize (H Hch); try specialize (H HC).
+try specialize (H E); try specialize (H R); try specialize (H FULL); try specialize (H model); try specialize (H Hch);
+try specialize (H SINV); try specialize (H SINV_sp0); try specialize (H HC).
 Ltac get L := let H := fresh "L" in pose proof L as H; inst H; exact H.
 #[local] Definition band_vals := ltac:(get @YD1g.band_vals).
 #[local] Definition vm_In' := ltac:(get @YD1g.vm_In').
@@ -264,7 +271,7 @@ Qed.
 
 (* ---- the entries of a_vis ch ---- *)
 Lemma avis8_ch : avis8_chk ch = true.
-Proof. exact (proj1 (forallb_forall _ _) avis8_all ch (HS_tfib_In h ch Hch)). Qed.
+Proof. exact (proj1 (forallb_forall _ _) avis8_all ch (HS_tfib_r_In _ h ch Hch)). Qed.
 Lemma stk_in : In YD1g.STK_P (a_vis ch).
 Proof.
 pose proof avis8_ch as X. unfold avis8_chk in X. apply andb_prop in X as [X _].
@@ -357,7 +364,11 @@ destruct (band_facts (Z_to_bv 64 z) ltac:(rewrite UZ; exact Hz)) as (Hna & Hlz &
 rewrite UZ in Hna, Hmp.
 assert (HA : argH E (Z_to_bv 64 z) = false).
 { destruct (argH E (Z_to_bv 64 z)) eqn:Eh; [exfalso|reflexivity].
-  pose proof (YA02.argH0_high TPH sp rdraw argv envp uid hw Hsp Hva E (Z_to_bv 64 z) Eh) as HT.
+  assert (HT : YA02.TOP sp <= bv_unsigned (Z_to_bv 64 z)).
+  { unshelve eapply (YA02.argH0_high sp rdraw argv envp
+      (in_image_fs inp) (in_stdin inp) uid (in_gid inp) hw (in_groups inp) (in_net inp)
+      (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp)
+      (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp)); try exact Eh; try exact Hva; try exact Hsp; try exact 0%N. }
   rewrite UZ in HT. unfold YA02.TOP in HT. lia. }
 assert (HH : in_hull TFIB z = false).
 { unfold in_hull. cbn [img_lo img_hi TFIB]. apply andb_false_iff. right. apply Z.ltb_ge. lia. }
@@ -457,13 +468,13 @@ End f.
 
 (* ---- negative control: a one-byte change of a hidden set breaks w_H8 ----
    Hpoke hides exactly kHighShadowBeg + 1 and nothing else.  It satisfies the world's other law on
-   its hidden set, w_Hoff = H_off_segments (YA0n.v:23), because that address lies outside every
-   segment of preset's asan-ubsan image (whose hull ends at img_hi TFIB = YImgTop.IMG_TOP_B, YB12.v:13); w_H8 is
+   its hidden set, w_Hoff = H_off_segments (YA0n.v:24), because that address lies outside every
+   segment of preset's asan-ubsan image (whose hull ends at img_hi TFIB = YImgTop.IMG_TOP_B, YB12.v:14); w_H8 is
    what stops it.  So no world over TSEGS has Hpoke as its hidden set, and the field is not vacuous.  poke_no_world
    is fm's own form (FMworldH8.v:474-475), proved by `w_H8 W`.  It needs the field: on the four-field world of s1b
-   459129c18903 it is false, because `mkW TSEGS Hpoke [] poke_H_off (Forall_nil _)` is a world with w_H = Hpoke
+   it is false, because `mkW TSEGS Hpoke [] poke_H_off (Forall_nil _)` is a world with w_H = Hpoke
    (built and checked there, h-rw-pca-3 2026-10-29).  The four-field record of the argument form, which takes the H8
-   property of W as a premise, is origin/cold/h-rw-pca-3-p102-W8-B cc0d82eb68b8. *)
+   property of W as a premise, is. *)
 Definition POKE : Z := kHighShadowBeg + 1.
 Definition Hpoke : word -> bool := fun a => Z.eqb (bv_unsigned a) POKE.
 Lemma poke_H_off : H_off_segments TSEGS Hpoke.

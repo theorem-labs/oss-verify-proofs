@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Theorem Labs, 2026-10: RELOCATED to the #102 pins (image A' = asan 1be0f53d96cb, twin bff8519bbe3e) from a working branch cb44bc9b99c (old-pin image A) by the relocation script reloc_A2.py (named with its outputs in the commit that added this line): every code address moved by symbol + offset (reloc_A2.out), the walk's functions checked by bytecmp 1480ca2faea0 + a target pass (measure_A2.out); data addresses come by name from int102's A' tables; ARXs_cf / ARmcf follow a Theorem Labs lane's a2b14794b6e6 (xs_placed is ARmcf's field amc_xs_placed). *)
+(* Theorem Labs, 2026-10: RELOCATED to the #102 pins (image A' = asan 1be0f53d96cb, twin bff8519bbe3e) from a working branch (old-pin image A) by the relocation script reloc_A2.py (named with its outputs in the commit that added this line): every code address moved by symbol + offset (reloc_A2.out), the walk's functions checked by bytecmp 1480ca2faea0 + a target pass (measure_A2.out); data addresses come by name from int102's A' tables; ARXs_cf / ARmcf follow a Theorem Labs lane's (xs_placed is ARmcf's field amc_xs_placed). *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFh1.v, with its module paths changed; its address literals moved to omx-clap-core/fuzz_preset's ASan build where h-mani-a2's maps/reloc-cgif-preset.A.tsv maps them; the literals it does not map are still cgif_file_fuzzer.asan's (listed in the commit that moved them). *)
 (* Modified by Theorem Labs, 2026-10: copied from lib/A/AFh1.v segN (the free interceptor's NULL-site walk) as the CALL SEGMENT of the image-A free interceptor walk over ARcf (a Theorem Labs lane's Record wrap_free_walk_cf): __wrap_free's entry 0x53de8 to Deallocate's entry 0x318c4, for a symbolic freed pointer p over lib/A/WrapFreeAEnv.v. The changes:
@@ -8,6 +8,7 @@
    a1 = p >> 47 and a2 = atom 37 are pinned after 0x53e28 and at 0x53e3c as lib/A/AFga.v:264-275 does;
    after the unwinder's return the run stops at Deallocate's entry 0x318c4 (through 0x53f88-0x53f98 and asan_free 0x3189c-0x318c0),
    and at_DEALLOC is proved from that state as lib/AU/WrapMallocBCall.v:430-508 (a working branch) proves its at_ALLOC. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

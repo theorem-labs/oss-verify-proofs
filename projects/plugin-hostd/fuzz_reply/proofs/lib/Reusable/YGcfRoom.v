@@ -1,14 +1,15 @@
-(* CARRIED from commit ae2fa80b0325f09472155bcfce1c36e649d6ff60,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YGcfRoom.v, sha256 3a302160c1db455442e1257ce9dd9206bbf39d753a28cf97687a18d91b3456b7 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change made here is the module
    prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
    (lib.Spec -> fuzz_reply.lib.Spec). *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Taken by path from a working branch a0fed4266a1b, provisional. *)
+(* Taken by path from a working branch, provisional. *)
 (* Modified by a Theorem Labs lane, 2026-10-30: freed_cf appends only a quarantined chunk (ck_n <= kQuarantineMax); FREEG gains the recycle disjunct (recycle_chunk_cq); free_cf_gen / free_cf_room_inv / free_cf_fifo cover it. freed_cf and FREEG statements changed. A change request to a Theorem Labs lane. *)
 (* Modified by Theorem Labs, 2026-10: module paths changed from fuzz_preset lib.Reusable to cgif_file_fuzzer lib; the text is otherwise unchanged. *)
-(* Modified by a Theorem Labs lane (ReallocPrimary.TkSecLink), 2026-10-30: the `Ltac ... ::=` overrides made #[local], the DELTA of a working branch 432757103df6 (a Theorem Labs lane's fix) applied 3-way; no other text of that commit taken. *)
+(* Modified by a Theorem Labs lane (ReallocPrimary.TkSecLink), 2026-10-30: the `Ltac ... ::=` overrides made #[local], the DELTA of a working branch (a Theorem Labs lane's fix) applied 3-way; no other text of that commit taken. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset's event-free allocator instance (suffix cf), the ROOM FACTS that
    c-frame-alloc's lib/Spec/PresetRoom.v (P8 part C) asks of the instance's state.
    PresetRoom.v is not on this branch, so its definitions are copied VERBATIM into the module PresetRoom below
@@ -45,7 +46,7 @@ Local Open Scope Z_scope.
 
 (* ================================================================ PresetRoom.v *)
 (* c-frame-alloc's lib/Spec/PresetRoom.v is now a file of this unit (lib/Spec/PresetRoom.v, copied by path from
-   c-frame-alloc-p8 4ec915e66b6): the class map, room_state, quar_bytes_ok, null_full, room_ok, acct_size and
+   c-frame-alloc-p8): the class map, room_state, quar_bytes_ok, null_full, room_ok, acct_size and
    fifo_ok below are ITS definitions, not a copy of them. Every statement here names them qualified. *)
 
 (* ================================================================ the room view of an astate *)
@@ -423,7 +424,7 @@ Proof.
   - destruct (fa_pop size l) as [[off l']|]; [|discriminate]. apply (IH _ _ _ _ _ _ H). left. discriminate.
 Qed.
 
-(* The arm's test (YG00cf.v:167) fails only when the request does not fit below kFreeArrayOffset: the mapped
+(* The arm's test (YG00cf.v:168) fails only when the request does not fit below kFreeArrayOffset: the mapped
    size and kFreeArrayOffset are both multiples of kUserMapSize. *)
 Lemma arm_of_full : forall m total, m mod kUserMapSize = 0 -> m < total ->
   kFreeArrayOffset < m + round_up (total - m) kUserMapSize -> kFreeArrayOffset < total.

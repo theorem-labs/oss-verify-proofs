@@ -5,8 +5,9 @@
 (* Modified by Theorem Labs, 2026-10: the malloc/free journal lemmas (aj_free_at, aj_free_at_io, aj_free_null_at, aj_free_null_at_io, aj_malloc_at, aj_malloc_at_io, aj_malloc_at04, aj_malloc_at04_io, aj_malloc, aj_free) no longer take In (call_trace0 ...) (as_universe B); the model laws get the trace length (call_trace_len) and the contracts the event bound. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/Reusable/YCbq.v, with its numbers changed; 205 of its 373 lines of code are new or changed and 3177 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/PaRt.v, with its module paths and module names changed; 418 of its 454 lines of code are new or changed and 337 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan image A: the parts of the snprintf / vsnprintf calls refuse's walk shares (the
-   interceptor lane's interface rows 4 and 5, its interface record at commit e45889d6935a), FFR (the family fact
+   interceptor lane's interface rows 4 and 5, its interface record), FFR (the family fact
    refuse's walk uses of segconf's printf grammar) with its proof at the interceptor lane's family FR_seg, and the
    bridge from FFR's premises to row 4's released family FR_cmd at refuse's two address prefixes. Statement and
    proof text of the image-A refuse walk, 2026-10-30.
@@ -63,7 +64,7 @@ match xs, ws with
 | _ :: _, [] => False
 end.
 (* The format at f: an image literal (SegABase.sa_lit's reader part) below the GOT word gotw (the place
-   fuzz_command's FR_cmd asks, RtPFCmd.v:94-95), its bytes, NUL and slack, its shadow, 8 bytes past its NUL in
+   fuzz_command's FR_cmd asks, RtPFCmd.v:95-96), its bytes, NUL and slack, its shadow, 8 bytes past its NUL in
    application memory, and its read span apart from rs. *)
 Definition ffr_fmt (segs : list Segment) (B : asyms) (gotw : Z) (rd : reader) (rs : list (Z * Z)) (f : Z)
 (fmt : list Z) : Prop :=
@@ -81,7 +82,7 @@ ffr_fmt segs B gotw rd rs f fmt -> ffr_args rd rs ws xs ->
 FF rd rs f ws (SegModel.fmt fmt xs).
 
 (* ======== the parts of the snprintf / vsnprintf steps through a program walk's journal ========
-   From fuzz_command's cwc_aj_snprintf_atSF (lib/A/Prog/PaRt.v at origin/ossv/recipes 501c0d516c69), with the
+   From fuzz_command's cwc_aj_snprintf_atSF (lib/A/Prog/PaRt.v), with the
    window K as a parameter. r_snp_pre builds a row's pre-state from the journal (PaArt.v's ecall_pre_stk_at), its
    dest_ok from the per-byte awr_byte premise (YCbq.v's awr_byte_present), and the range facts at the written
    length; r_snp_post rebuilds the journal from the row's post with YCbq.v's ajournal_after_write: the call writes

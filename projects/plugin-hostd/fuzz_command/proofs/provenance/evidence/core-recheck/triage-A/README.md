@@ -14,7 +14,7 @@ Images (pin = bytes and headers, twin = symbol table and DWARF; one link):
 | cgif_file_fuzzer.asan (pin) | 7093581aab04 |
 | cgif_file_fuzzer.asan twin | 488e39500746 |
 
-Trees: ours = the series head plugin-hostd/fuzz_command tree (git tree 86ee7833f146; internal record); donor = cgif_file_fuzzer at c8557374ad2e.
+Trees: ours = the series head plugin-hostd/fuzz_command tree (git tree 86ee7833f146; internal record); donor = cgif_file_fuzzer.
 
 ## Result
 

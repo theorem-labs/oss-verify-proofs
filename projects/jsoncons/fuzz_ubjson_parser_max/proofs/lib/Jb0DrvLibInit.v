@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: lib_init_at_call becomes a plain theorem with its auxv pointer taken from register 5 rather than p0 minus 160, and its proof now destructs the auxv_launch record and the CONFIG_RSEQ auxv count, as in fuzz_bigint's copy; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Bo0DrvLibInit.v, lines 62-72, 95-96, 110-118. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -18,7 +19,7 @@ Import SX2. Import SX2S.
 Definition LIBINIT_KN : list kentry :=
 [KImg 65536 1269760; KImg 6746257 6746260; KImg 6746261 6752752; KImg 1280728 1280896; KImg 6884744 6884792;
 KWord (SA (ELit 0) 6884096) 8 (EVar 3); KWord (SA (ELit 0) 6752760) 8 (ELit 6752760); KWord (SA (ELit 0) 6752792) 4 (EVar 4); KRange (EVar 4) 1 4194303;
-KWord (SA (ELit 0) 6752944) 8 (EVar 3); KWord (SA (ELit 0) 6752912) 8 (ELit 6884744); KWord (SA (ELit 0) 6884696) 8 (EAlu ALU_ADD (EVar 1) (ELit (-160)));
+KWord (SA (ELit 0) 6752944) 8 (EVar 3); KWord (SA (ELit 0) 6752912) 8 (ELit 6884744); KWord (SA (ELit 0) 6884696) 8 (EVar 5);
 KWord (SA (ELit 0) 6884112) 1 (ELit 0); KWord (SA (ELit 0) 6884116) 4 (ELit 0); KWord (SA (ELit 0) 6884120) 4 (ELit 2); KWord (SA (ELit 0) 6884128) 8 (ELit 6884136);
 KWord (SA (ELit 0) 6884136) 8 (ELit 0); KWord (SA (ELit 0) 6884144) 8 (ELit 1136392); KWord (SA (ELit 0) 6884400) 8 (ELit 618204); KWord (SA (ELit 0) 6884152) 8 (ELit 1136392); KWord (SA (ELit 0) 6884408) 8 (ELit 686244);
 KWord (SA (ELit 0) 6884691) 1 (ELit 0); KWord (SA (ELit 0) 6884912) 4 (ELit 0)].
@@ -57,25 +58,17 @@ Hypothesis LayL : lla_L Lay = L.
 Hypothesis DLC : drv_lib_cellsA Lay.
 #[local] Notation dinvA := (dinv ar HI sp0 M0).
 #[local] Notation usp := (bv_unsigned sp0).
-Section SE.
-Local Abbreviation SEC_T_lib_init_at_call := (forall vals ebs kn LB LK cr A M (model : Model) (p0 : word), know_ok ASEGS (Env (vals_ev vals) ebs) (mrestrict (ahid A model) M) kn ->
+Theorem lib_init_at_call : forall vals ebs kn LB LK cr A M (model : Model) (auxvp : word),
+know_ok ASEGS (Env (vals_ev vals) ebs) (mrestrict (ahid A model) M) kn ->
 forallb (fun K => existsb (kentry_eqb K) kn) LIBINIT_KN = true ->
-vals_ev vals 1 = p0 ->
-dinvA LB LK cr A M model -> auxv_atA sp0 p0 M0 ->
-exists av uid rnd tid canary hw, lib_init_factsA Lay ar av uid rnd tid canary hw M) (only parsing).
-Variable vals : ltac:(sec_ty2 constr:(SEC_T_lib_init_at_call) 0%nat 0%nat).
-Variable ebs : ltac:(sec_ty2 constr:(SEC_T_lib_init_at_call) 1%nat 0%nat).
-Variable kn : ltac:(sec_ty2 constr:(SEC_T_lib_init_at_call) 2%nat 0%nat).
-Variable LB : ltac:(sec_ty2 constr:(SEC_T_lib_init_at_call) 3%nat 0%nat).
-Variable LK : ltac:(sec_ty2 constr:(SEC_T_lib_init_at_call) 4%nat 0%nat).
-Variable cr : ltac:(sec_ty2 constr:(SEC_T_lib_init_at_call) 5%nat 0%nat).
-Variable A : ltac:(sec_ty2 constr:(SEC_T_lib_init_at_call) 6%nat 0%nat).
-Variable M : ltac:(sec_ty2 constr:(SEC_T_lib_init_at_call) 7%nat 0%nat).
-Variable model : ltac:(sec_ty2 constr:(SEC_T_lib_init_at_call) 8%nat 0%nat).
-Variable p0 : ltac:(sec_ty2 constr:(SEC_T_lib_init_at_call) 9%nat 0%nat).
-Theorem lib_init_at_call : ltac:(sec_stmt2 constr:(SEC_T_lib_init_at_call) 10%nat 0%nat).
+vals_ev vals 5 = auxvp ->
+dinvA LB LK cr A M model -> auxv_atA sp0 auxvp M0 ->
+exists av uid rnd tid canary hw, lib_init_factsA Lay ar av uid rnd tid canary hw M.
 Proof.
-intros HK HB P1 D (uidz & rnd & hwz & AW & AU & AH & AR1 & AR2 & AP & AP8).
+intros vals ebs kn LB LK cr A M model auxvp HK HB P5 D
+(uidz & rnd & hwz & la & ph & entry & gidw & ae & PA & PE & PN & AB & AW & AU & AH & AR1 & AR2 & AP & AP8).
+assert (C27 : (27 <= StackLayout.auxv_count (StackLayout.la_rseq la))%nat)
+by (unfold StackLayout.auxv_count; destruct (StackLayout.la_rseq la); lia).
 pose proof Hsp as Hsp'. set (E := Env (vals_ev vals) ebs) in *. set (MV := mrestrict (ahid A model) M) in *.
 pose proof (dinv_lzinv scfg L ar C IL HI HIok sp0 DL M0 _ _ _ _ _ _ D) as (HOFF & _).
 rewrite forallb_forall in HB.
@@ -93,17 +86,13 @@ pose proof (KW 6752760 8%nat (ELit 6752760) ltac:(unfold LIBINIT_KN; cbn [In]; t
 pose proof (KW 6752792 4%nat (EVar 4) ltac:(unfold LIBINIT_KN; cbn [In]; tauto) ltac:(apply Z.leb_le; reflexivity) ltac:(apply Z.leb_le; reflexivity)) as CT.
 pose proof (KW 6752944 8%nat (EVar 3) ltac:(unfold LIBINIT_KN; cbn [In]; tauto) ltac:(apply Z.leb_le; reflexivity) ltac:(apply Z.leb_le; reflexivity)) as CC.
 pose proof (KW 6752912 8%nat (ELit 6884744) ltac:(unfold LIBINIT_KN; cbn [In]; tauto) ltac:(apply Z.leb_le; reflexivity) ltac:(apply Z.leb_le; reflexivity)) as CL.
-pose proof (KW 6884696 8%nat (EAlu ALU_ADD (EVar 1) (ELit (-160))) ltac:(unfold LIBINIT_KN; cbn [In]; tauto) ltac:(apply Z.leb_le; reflexivity) ltac:(apply Z.leb_le; reflexivity)) as CA.
+pose proof (KW 6884696 8%nat (EVar 5) ltac:(unfold LIBINIT_KN; cbn [In]; tauto) ltac:(apply Z.leb_le; reflexivity) ltac:(apply Z.leb_le; reflexivity)) as CA.
 assert (TR : 1 <= bv_unsigned (vals_ev vals 4) <= 4194303).
 { pose proof (KB (KRange (EVar 4) 1 4194303) ltac:(unfold LIBINIT_KN; cbn [In]; tauto)) as Hb.
 apply existsb_exists in Hb as (K & Hin & Heq). apply kentry_eqb_eq in Heq. subst K.
 pose proof (proj1 (Forall_forall _ _) HK _ Hin) as X. cbn [kentry_ok edenot ev E] in X. exact X. }
-cbn [edenot ev E] in CG, CS, CT, CC, CL, CA. rewrite P1 in CA.
-assert (EA : alu64 ALU_ADD p0 (Z_to_bv 64 (-160)) = Z_to_bv 64 (bv_unsigned p0 - 160)).
-{ rewrite alu_add. unfold v_add. apply bv_eq. rewrite !Z_to_bv_unsigned, !bv_wrap64_mod. rewrite Zplus_mod_idemp_r. reflexivity. }
-rewrite EA in CA.
-set (av := bv_unsigned p0 - 160) in *.
-exists av, uidz, rnd, (bv_unsigned (vals_ev vals 4)), (bv_unsigned (vals_ev vals 3)), hwz.
+cbn [edenot ev E] in CG, CS, CT, CC, CL, CA. rewrite P5 in CA.
+exists (bv_unsigned auxvp), uidz, rnd, (bv_unsigned (vals_ev vals 4)), (bv_unsigned (vals_ev vals 3)), hwz.
 destruct DLC as [d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 dimg _ _ dcells].
 assert (CELLS : Forall (fun c => cellz ASEGS M (fst (fst c)) (Z.to_nat (snd (fst c))) (snd c)) INIT_CELLS_A).
 { unfold INIT_CELLS_A.
@@ -133,15 +122,16 @@ split; [exact CS|]. split; [exact CT|]. split; [lia|]. split; [exact CL|].
 split. { intros k Hk. apply (img_cell M _ 8%nat _ (locale_imgA k Hk)); [lia | cbn; lia|].
 intros i Hi. apply (NONE 6884744 6884792); [unfold LIBINIT_KN; cbn [In]; tauto | lia | lia | cbn in Hi; lia]. }
 split; [exact CC|]. split; [exact CG|]. split; [pose proof (bv_unsigned_in_range _ (vals_ev vals 3)) as X; change (bv_modulus 64) with (2 ^ 64) in X; lia|].
-split; [exact CA|]. split; [unfold av; lia|]. split; [unfold av; lia|].
-split. { unfold av. rewrite <- Zminus_mod_idemp_l, AP8. reflexivity. }
-split. { intros j Hj. unfold auxv_words. cbn [lib_view ll_phdr ll_phent ll_phnum]. rewrite d8, d9, d10.
-apply (rdn_tr M0 M _ 8%nat _ (AW j Hj)); [unfold av; lia | unfold av; cbn; lia|].
-intros i Hi. apply (di_above _ _ _ _ _ _ _ _ _ _ D). unfold av in *. cbn in Hi. lia. }
+split; [exact CA|]. split; [lia|]. split; [lia|].
+split; [exact AP8|].
+split. { unfold auxv_launch. exists la, ph, entry, gidw, ae.
+cbn [lib_view ll_phdr ll_phent ll_phnum]. rewrite d8, d9, d10.
+split; [exact PA|]. split; [exact PE|]. split; [exact PN|]. split; [exact AB|].
+intros j Hj. unfold cellz. apply (rdn_tr M0 M _ 8%nat _ (AW j Hj)); [lia | cbn; lia|].
+intros i Hi. apply (di_above _ _ _ _ _ _ _ _ _ _ D). cbn in Hi. lia. }
 split; [lia|]. split; [lia|]. split; [lia|]. split; [lia|].
 cbn [lib_view ll_init_cells]. rewrite dcells. intros c Hc. unfold init_cells_view in Hc. apply in_map_iff in Hc as (c0 & <- & Hin). cbn [fst snd].
 exact (proj1 (Forall_forall _ _) CELLS c0 Hin).
 Qed.
-End SE.
 End LibInit.
 End FPX_1.

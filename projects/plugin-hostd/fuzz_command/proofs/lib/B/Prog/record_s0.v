@@ -2,13 +2,14 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the two seeds of record's ASan+UBSan walk (plugin-hostd/fuzz_command,
-   fuzz_command.asan-ubsan), after A's spa_seedA / spa_meet_seed (lib/A/Prog/sup_pin_accept_s4.v, a working branch
-   3cc8391594b) and spa_shok (sup_pin_accept_s1.v), at B's frame (32 bytes: ra, s0, s1, s2) and registers (s1 = the
+   fuzz_command.asan-ubsan), after A's spa_seedA / spa_meet_seed (lib/A/Prog/sup_pin_accept_s4.v, a working branch)
+   and spa_shok (sup_pin_accept_s1.v), at B's frame (32 bytes: ra, s0, s1, s2) and registers (s1 = the
    slot, s2 = the shadow base): the entry state (the frame the prologue writes, the shadow-base GOT word and cell,
    g_rec.ncalls) and the state where record()'s two arms meet (0x8a7ac). The GOT word's and the cell's values are
    AR's constant cells (AR_const_law) at the record's addresses (a Theorem Labs lane's CmdRecCells.v cmd_cf_got / cmd_cf_cell, from
    CmdBSyms and cmd_val_objs); g_rec's and the slot's write windows are writable by prog_rw (CmdRecCells.v
    PROG_WRITABLE); the slot's shadow entry is CmdRecCells.v cmd_cf_grec / CmdRecBase.v cmd_addressable_chk. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.B.Prog Require Import record_aux.
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith NArith List Lia Bool Permutation.

@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumA.v, with its module names changed; 97 of its 134 lines of code are new or changed and 741 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset image A, slice S6 (WalkS6): pj_free's walk COMPOSED (rule 24: proves pj_free (kind: walk composition;
    the segment files carry the instructions: S6PjFreeEnt.v, S6PjFreeLH.v, S6PjFreeLKC.v, S6PjFreeTail.v).
    RULE-24 CONFIRM (lead 18:00Z, checker PjFreeR24): no released and no unreleased proof of pj_free on image A, old
-   pin (entry 0x85fa8, lib/A/PAImg_prog.v:452 A_entry_pj_free): the released lib/Prog/pj_free.v pj_free_holds is the
+   pin (entry 0x85fa8, lib/A/PAImg_prog.v:453 A_entry_pj_free): the released lib/Prog/pj_free.v pj_free_holds is the
    PLAIN image (0x156c0); the unreleased lib/A walks at 0x85df4 are a different asan binary (harness pins asan
    1288455872ab, not d83eb25d). The census-1 sweep covered 14,805 cold heads twice (17:44-17:47Z, 17:56-17:59Z;
    positive control: S6PjFreeEnt.v 4f0dc65c26fd); classification a Theorem Labs lane's worker record, the internal file pjfree-r24.tsv.
@@ -12,20 +13,20 @@
      FX / PB with fuzz_free's instrumented text) at EVERY depth n, by induction on n (the recursive call at slot 38
      cites the text at n - 1 through pf_seg_LH) and, inside a node, by induction on the slots left (pf_seg_LH,
      pf_seg_LK, pf_seg_LC), entered by pf_seg_entry and left by pf_seg_LX / pf_seg_EP.
-   - pj_free_holds: the kit's tpj_free_specX (lib/A/PRH_FnPj.v 5aca5cbe2cfb on the kit's cut 7cdbb61b5fa0: the
+   - pj_free_holds: the kit's tpj_free_specX (lib/A/PRH_FnPj.v 5aca5cbe2cfb on the kit's cut: the
      order list F (PRH_PjOrder.pj_foR), (v <> 0 -> class-24 bound) at entry, no position at entry, and the
      POST-IMPLICATION position transfer for every model run with the exact advance i + length (prhPj_free_evs F)) at
      every depth, from pj_free_walkP at P := memnorm (tpj_free_specO_of_P) by PjFreeCommon.v's generic
      pf_specX_of_walk (observer pf_FXk / pf_PBk; one copy with image B).
    SECTION HYPOTHESES: LAWS (AR_laws_x at cf_head) and TL (PALib), witnessed at the A' instance by lib/A/PALibA.v
-   (88c72c8175cf on the kit's cut 7cdbb61b5fa0) palib_laws_A / palib_A; VISF (YGcfFsVis.ARx_frame_hull_vis, the instance's
+   (88c72c8175cf on the kit's cut) palib_laws_A / palib_A; VISF (YGcfFsVis.ARx_frame_hull_vis, the instance's
    ARx_frame_hull_vis_cf_ok); the image facts Hent, Hobj, PAB, pal_pst_img, pal_pst_ro, pal_ret_free, each witnessed by
    vm_compute at PI_prog_A in lib/A/Prog/S6ImgWit.v; the memset row AIM (YGcallMxmn.v aintrin_realizes_xm, a callee
    text; A' row of a Theorem Labs lane, PRowSet.v prow_asan_memset_xm_A); and the fuzz_free text FREE (PRH_FnAlloc.v
    4d8aeba047e5 on the cut). The old-pin FREEFIX premise (the open text tfuzz_free_specX_FIX) is GONE since f97c:
    the kit's tfuzz_free_specX takes no position at entry and moves a bulk sub-position in its post, which is all pj_free's
    frees need.
-   RELOCATED A -> A' (asan d83eb25d -> 1be0f53d) from donor cold/h-hpreset-7-walk-S6 b4d577c07502; the old-pin CONFIRM
+   RELOCATED A -> A' (asan d83eb25d -> 1be0f53d) from donor; the old-pin CONFIRM
    above quotes old-pin addresses (A' entry: the listing's A_entry_pj_free).
    THE RE-HIDING MOVE: the kit's texts tfuzz_free_specX and tpj_free_specX conclude SRr' segs RZ_cf with their posts at
    wle', and so do the walk's texts and segments; the composition's cut assertions are at SRr' SEGS RZ_cf. *)
@@ -161,12 +162,12 @@ induction n as [|d' IH];
   exact (LOOP _ 0 ly1 S1 Hp1 W1 regs1 mem1 md1 k1 eq_refl HLH).
 Qed.
 
-(* The kit's fuzz_free text, a callee text (PRH_FnAlloc.v 4d8aeba047e5 on the kit's cut 7cdbb61b5fa0: admits at the call and
+(* The kit's fuzz_free text, a callee text (PRH_FnAlloc.v 4d8aeba047e5 on the kit's cut: admits at the call and
    the budgeted post, which PjFreeCommon.pf_ff_of_kit absorbs; the hull budget at a non-NULL free and the hull use in
    the post, which pf_ff_of_kit carries in the observer pf_PBk / pf_FXk) *)
 Hypothesis FREE : PRH_FnAlloc.tfuzz_free_specX (cp := CP) (PI := prh_img_A) (PA := PA) B ARx SK.
 
-(* ======== The kit's tpj_free_specX (PRH_FnPj.v 5aca5cbe2cfb on the kit's cut 7cdbb61b5fa0: no run words DW, the premise
+(* ======== The kit's tpj_free_specX (PRH_FnPj.v 5aca5cbe2cfb on the kit's cut: no run words DW, the premise
    prh_head_wide, which pf_specX_of_walk hands the walk; the hull budget at entry (v <> 0) and the hull use in the
    post, which pf_specX_of_walk gives through the observer: pfk_safe, pfk_reach_hull) at every depth ======== *)
 Theorem pj_free_holds : forall CTX0 n, tpj_free_specX (cp := CP) (PI := prh_img_A) (PA := PA) B ARx SK CTX0 n.

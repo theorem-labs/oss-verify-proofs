@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: the jo_preA premise of the OADD calls proves it; PE_STATIC_A's conjunct HBTs). *)
 
 From Stdlib Require ZArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -76,7 +77,7 @@ s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (Z_to_bv 64 0x9be64) fc None m (s
 Proof.
 intros until fc. intros STC BSL INV PBK BK Hl Hst Hcs FRM FRN RA K.
 assert (Hop : lvl_closed l = false) by (apply lvl_closed_open_st; rewrite Hst; reflexivity).
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 pose proof INV as [CORE REST1].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK1 & FR1).
 pose proof REST1 as (HP1 & LV1 & OBJ1 & ST1 & ERR1 & _ & _ & _ & _ & _ & G1 & _).
@@ -108,7 +109,7 @@ eapply OADD with (LB := LBk) (OBS := tl_cbs l) (VBS := t_objbs ts) (p := tl_cur 
 (lo := lo) (errv := errv) (FRS := (pa_F pa, 2) :: FRS);
 [ | exact (GA_lh _ G1) | exact J | exact JOB | left; reflexivity | exact CSTR | lia | exact FRM | cbn [length]; rewrite Nat2Z.inj_succ; clear - FRN; lia | reflexivity | reflexivity | reflexivity | exact COST | exact COSTR
 | exact (proj2 (heapA_budget A4L HIx _ _ _ _ _ _ _ HP1)) | ].
-{ unfold jo_preA. rewrite !unsigned_lit by lia. split; [exact HPa|]. split; [exact ST1|]. split; [exact LO|]. split; [exact SPF1|]. split; [exact SPF2|]. split; [exact SPF3|].
+{ unfold jo_preA. rewrite !unsigned_lit by lia. split; [exact HPa|]. split; [exact ST1|]. split; [exact LO|]. split; [first [assumption | lia]|]. split; [exact SPF1|]. split; [exact SPF2|]. split; [exact SPF3|].
 split; [exact ERR1|]. split; [reflexivity | exact RA]. }
 intros ms2 md2 m2 r A2 B2 (RS2 & VM2 & ST2 & HPR2 & (errv2 & ERR2)) LG2 HD2 OUT.
 destruct RS2 as (w0 & w1 & w2 & w3 & w4 & w5 & w6 & w7 & w8 & w9 & w10 & w11 & w12 & w13 & F2 & fc2 & -> & FS2 & FRM2).
@@ -241,7 +242,7 @@ Proof.
 induction n as [|n IH].
 - split; [| split; [| split]]; intros until fc; intros M; exfalso; lia.
 - pose proof IH as IHall. destruct IH as (IHL & IHR & IHB & IHA).
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR).
 split; [| split; [| split]].
 +
 intros ts m md A B cb nb pj errv gp t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 s5 t4 F fc M INV NN SP TD CLT PBK BK NA FS FRM.
@@ -466,7 +467,7 @@ PE_WINX pf pa q LB0 LM FRS payload me lo m2 md2 A2 B2 ts p2 s2 BS2 rc2 errv2 FRX
 Proof.
 intros pf pa q LB0 LM FRS payload me lo m1 m2 md md2 A A2 B B2 ts p s BS rc p2 s2 BS2 rc2 errv errv2 FRX FRX' STC (CORE & BASE & LVo & CUR & Eobj & PP) VM HPR HP2 ST2 ERR2 PP2 FR2.
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR).
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR).
 set (RB := pe_blocksA pf q LB0 ts) in *.
 assert (INtk : In (pf_tk pf, 72) RB) by (unfold RB, pe_blocksA; apply in_or_app; right; left; reflexivity).
 assert (INq : In (q, 32 * pf_mxd pf) RB) by (unfold RB, pe_blocksA; apply in_or_app; right; right; left; reflexivity).
@@ -489,7 +490,7 @@ pe_s0 sv = Z_to_bv 64 v2 -> pe_ra sv = Z_to_bv 64 ra2 ->
 uw_at (hiA_top A4L HIx) m (pf_spf pf) (pa_sp0 pa) (UWfp ra2 v2).
 Proof.
 intros pf pa lo m nb pj sv v2 ra2 ffc shc STC (_ & _ & SV & _) S0V RAV HV HR.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & _). pose proof GEO as (Gspf & Gsp0 & Gle & _).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & _). pose proof GEO as (Gspf & Gsp0 & Gle & _).
 cbn [uw_at]. split; [lia|]. split; [clear - Gsp0; Z.div_mod_to_equations; lia|]. split; [lia|]. split; [| split; [exact HV | exact HR]].
 unfold pe_savedA_cells in SV. destruct SV as [[_ SVB] _].
 cbn [cells_bytes cbytes app] in SVB. rewrite <- ?app_assoc in SVB.
@@ -572,7 +573,7 @@ s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (Z_to_bv 64 0x9d820) fc None m (s
 Proof.
 intros until fc. intros STC BSL INV PBK BK Hl Hst Hcs FRM FRN RA K.
 assert (Hop : lvl_closed l = false) by (apply lvl_closed_open_st; rewrite Hst; reflexivity).
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 pose proof INV as [CORE REST1].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK1 & FR1).
 pose proof REST1 as (HP1 & LV1 & OBJ1 & ST1 & ERR1 & _ & _ & _ & _ & _ & G1 & _).
@@ -604,7 +605,7 @@ eapply OADD with (LB := LBk) (OBS := tl_cbs l) (VBS := t_objbs ts) (p := tl_cur 
 (lo := lo) (errv := errv) (FRS := (pa_F pa, 2) :: FRS);
 [ | exact (GA_lh _ G1) | exact J | exact JOB | left; reflexivity | exact CSTR | lia | exact FRM | cbn [length]; rewrite Nat2Z.inj_succ; clear - FRN; lia | reflexivity | reflexivity | reflexivity | exact COST | exact COSTR
 | exact (proj2 (heapA_budget A4L HIx _ _ _ _ _ _ _ HP1)) | ].
-{ unfold jo_preA. rewrite !unsigned_lit by lia. split; [exact HPa|]. split; [exact ST1|]. split; [exact LO|]. split; [exact SPF1|]. split; [exact SPF2|]. split; [exact SPF3|].
+{ unfold jo_preA. rewrite !unsigned_lit by lia. split; [exact HPa|]. split; [exact ST1|]. split; [exact LO|]. split; [first [assumption | lia]|]. split; [exact SPF1|]. split; [exact SPF2|]. split; [exact SPF3|].
 split; [exact ERR1|]. split; [reflexivity | exact RA]. }
 intros ms2 md2 m2 r A2 B2 (RS2 & VM2 & ST2 & HPR2 & (errv2 & ERR2)) LG2 HD2 OUT.
 destruct RS2 as (w0 & w1 & w2 & w3 & w4 & w5 & w6 & w7 & w8 & w9 & w10 & w11 & w12 & w13 & F2 & fc2 & -> & FS2 & FRM2).
@@ -707,7 +708,7 @@ Hypothesis GA_pres : forall LB SP m m', heap_pres A4H LB SP m m' -> GA m -> GA m
 Hypothesis MAPP : memappend_A_stmt2 HIx.
 
 Ltac pe_openA STC INV :=
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
 destruct INV as [CORE REST];
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR);
 pose proof REST as (HP & LV & OBJ & ST & ERR & STR & PLEN & SBin & HPR & MDV & G & BUD).
@@ -955,7 +956,7 @@ AJ5 A4L HIx A T md
 (pe_msA asegs pf pa 0x9914c (pf_len pf - 1) gp t0 (Z_to_bv 64 (q + 32 * Z.of_nat (t_depth ts))) a1 a2 (Z_to_bv 64 (q / 8 + 4 * Z.of_nat (t_depth ts) + A_SB)) (Z_to_bv 64 0) a5 a6 a7 s3 (Z_to_bv 64 q) s6 s7 (Z_to_bv 64 (Z.of_nat (t_depth ts))) s9 s11 t3 t4 t5 t6 F fc m).
 Proof.
 intros until fc. intros STC INV Heof Kout Kcont. pose proof INV as INV0.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 destruct INV as [CORE REST].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR).
 pose proof REST as (HP & LV & _).
@@ -1074,7 +1075,7 @@ Proof.
 induction n as [|n IH]; intros until fc; intros STC FL0 INV PBK CSTR Hl Hst Hco Hc Hn Kpop Ksl Keof.
 { exfalso. destruct INV as [(_ & _ & CO & _) _]. cbn in Hn. lia. }
 pose proof INV as INV0.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 destruct INV as [CORE REST].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR).
 pose proof REST as (HP & LV & OBJ & ST & ERR & STR & PLEN & SBin & HPR & MDV & G & BUD).
@@ -1321,7 +1322,7 @@ AJ5 A4L HIx A T md
 (pe_msA asegs pf pa (pe_jtA ST_eatws) (t_co ts) gp t0 (Z_to_bv 64 (q + 32 * Z.of_nat (t_depth ts))) (Z_to_bv 64 (tl_st l)) (Z_to_bv 64 0) (Z_to_bv 64 (q / 8 + 4 * Z.of_nat (t_depth ts) + A_SB)) (Z_to_bv 64 0) a5 (Z_to_bv 64 APE_JTAB) a7 s3 (Z_to_bv 64 q) s6 s7 (Z_to_bv 64 (Z.of_nat (t_depth ts))) s9 s11 t3 t4 t5 t6 F fc m).
 Proof.
 intros until fc. intros STC BSL FL0 INV PBK BK CSTR Hl Hst Hco Hc Kredo Kbreak Kerr16 Kout Kcont. pose proof INV as INV0.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR).
 destruct INV as [CORE REST].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR).
 pose proof (proj1 REST) as HP.
@@ -1426,7 +1427,7 @@ Proof.
 induction n as [|n IH].
 - split; [| split; [| split]]; intros until fc; intros M; exfalso; lia.
 - pose proof IH as IHall. destruct IH as (IHL & IHR & IHB & IHA).
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR).
 assert (KB : KBRKx (S n)).
 {
 intros ts m md A B cb nb pj errv gp t0 a0 a1 a2 a3 a4 a5 a6 a7 s3 s6 s7 s8 s9 s11 t3 t4 t5 t6 F fc M INV Hco Hcb NN SP TD PBK BK NA FS FRM.
@@ -1640,7 +1641,7 @@ PE_WINX pf pa q LB0 LM FRS payload me lo m2 md2 A2 B2 ts p2 s2 BS2 rc2 errv2 FRX
 Proof.
 intros pf pa q LB0 LM FRS payload me lo m1 m2 md md2 A A2 B B2 ts p s BS rc p2 s2 BS2 rc2 errv errv2 FRX FRX' STC (CORE & BASE & LVo & CUR & Eobj & PP) VM HPR HP2 ST2 ERR2 PP2 FR2.
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR).
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR).
 set (RB := pe_blocksA pf q LB0 ts) in *.
 assert (INtk : In (pf_tk pf, 72) RB) by (unfold RB, pe_blocksA; apply in_or_app; right; left; reflexivity).
 assert (INq : In (q, 32 * pf_mxd pf) RB) by (unfold RB, pe_blocksA; apply in_or_app; right; right; left; reflexivity).
@@ -1663,7 +1664,7 @@ pe_s0 sv = Z_to_bv 64 v2 -> pe_ra sv = Z_to_bv 64 ra2 ->
 uw_at (hiA_top A4L HIx) m (pf_spf pf) (pa_sp0 pa) (UWfp ra2 v2).
 Proof.
 intros pf pa lo m nb pj sv v2 ra2 ffc shc STC (_ & _ & SV & _) S0V RAV HV HR.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & _). pose proof GEO as (Gspf & Gsp0 & Gle & _).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & _). pose proof GEO as (Gspf & Gsp0 & Gle & _).
 cbn [uw_at]. split; [lia|]. split; [clear - Gsp0; Z.div_mod_to_equations; lia|]. split; [lia|]. split; [| split; [exact HV | exact HR]].
 unfold pe_savedA_cells in SV. destruct SV as [[_ SVB] _].
 cbn [cells_bytes cbytes app] in SVB. rewrite <- ?app_assoc in SVB.
@@ -1739,7 +1740,7 @@ Hypothesis GA_pres : forall LB SP m m', heap_pres A4H LB SP m m' -> GA m -> GA m
 Hypothesis MAPP : memappend_A_stmt2 HIx.
 
 Ltac pe_openA STC INV :=
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
 destruct INV as [CORE REST];
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR);
 pose proof REST as (HP & LV & OBJ & ST & ERR & STR & PLEN & SBin & HPR & MDV & G & BUD).
@@ -1987,7 +1988,7 @@ AJ5 A4L HIx A T md
 (Z_to_bv 64 (Z.of_nat (t_depth ts))) (Z_to_bv 64 q) (Z_to_bv 64 (pa_F pa + 64)) F fc m).
 Proof.
 intros until fc. intros STC INV Heof Kout. pose proof INV as INV0.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 destruct INV as [CORE REST].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR).
 pose proof REST as (HP & LV & _).
@@ -2121,7 +2122,7 @@ Proof.
 induction n as [|n IH]; intros until fc; intros STC FL0 INV PBK CSTR Hl Hst Hco Hc Hn Kpop Ksl Keof.
 { exfalso. destruct INV as [(_ & _ & CO & _) _]. cbn in Hn. lia. }
 pose proof INV as INV0.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR). pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk).
 destruct INV as [CORE REST].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR).
 pose proof REST as (HP & LV & OBJ & ST & ERR & STR & PLEN & SBin & HPR & MDV & G & BUD).
@@ -2359,7 +2360,7 @@ AJ5 A4L HIx A T md
 (Z_to_bv 64 (Z.of_nat (t_depth ts))) (Z_to_bv 64 q) (Z_to_bv 64 (pa_F pa + 64)) F fc m).
 Proof.
 intros until fc. intros STC BSL FL0 INV PBK BK CSTR Hl Hst Hco Hc Kredo Kbreak Kerr16 Kout. pose proof INV as INV0.
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR).
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR).
 destruct INV as [CORE REST].
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR).
 pose proof (proj1 REST) as HP.

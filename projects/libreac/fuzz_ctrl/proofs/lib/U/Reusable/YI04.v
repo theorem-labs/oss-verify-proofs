@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YI04.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed interp_eff0_grows, fetch_failure_not_ok, journal_exec). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -32,7 +33,8 @@ Proof.
 induction t as [c0| | | | | |n a k IH|n a v k IH]; intros m c1 m' H; cbn [interp_eff0] in H;
 try discriminate.
 - injection H as <- <-. apply mem_grows_refl.
-- destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|discriminate]. eapply IH. exact H.
+- destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|];
+[|destruct (range_meets_vvar segs a (width_bytes n)); discriminate]. eapply IH. exact H.
 - destruct (store_ok segs m a (width_bytes n)); [|discriminate].
 eapply mem_grows_trans; [apply write_to_mem_grows|]. eapply IH. exact H.
 Qed.
@@ -49,6 +51,13 @@ Qed.
 Lemma fetch_failure_not_ok : forall m a st', fetch_failure segs m a = MachineOk st' -> False.
 Proof.
 intros m a st' H. unfold fetch_failure in H.
+(* LPS 08b1429: fetch_failure gained a LEADING arm, vdso_text_at addr, answering
+   MachineUnmodeled before the alignment test, so there are THREE tests now, not two
+   (75d69e00:theories/LinuxProcessSem/RiscvSemantics.v:1156-1181).  Donor: this tree's own
+   Reusable/YI04.v:62, character-identical.  Deliberately NOT a `repeat match ... destruct b`:
+   that form stops silently when a `destruct` fails and hands `discriminate` the original
+   symptom, so a real breakage would wear this family's error text. *)
+destruct (vdso_text_at _); [discriminate|].
 destruct (negb _); [discriminate|]. destruct (_ || _ || _)%bool; discriminate.
 Qed.
 Lemma step_mem_grows : forall st st',
@@ -607,7 +616,7 @@ change (2 ^ Z.of_N 64) with (2 ^ 64). rewrite Z.mod_small by lia. exact HWa. }
 split.
 { destruct HH as (HM & HW' & HB). split; [|split; assumption].
 destruct (mr_model B MR LAWS _ _ _ _ HM) as (Hh & Hl & Hmat).
-eapply (mr_frame B MR LAWS); [exact HM | | | | reflexivity | exact Hh | exact Hl | exact Hmat].
+eapply (mr_frame B MR LAWS); [exact HM | reflexivity | | | | reflexivity | exact Hh | exact Hl | exact Hmat].
 - intros a Ho. apply mbyte_eq_of. pose proof (mr_owned_low B MR LAWS _ _ _ _ a HM Ho).
 apply Heqw; [lia|]. intros HWa. exact (proj2 (HWlow a HWa) Ho).
 - intros a Ho Hp. eapply present_grows; eauto.

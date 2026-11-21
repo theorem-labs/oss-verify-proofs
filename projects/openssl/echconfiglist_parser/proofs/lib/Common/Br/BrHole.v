@@ -1,11 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: Section Hole is generic in the Leaf class of its realizes_cfg walks, so fx_hole and fx_hole_chk take it. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From stdpp Require Import bitvector.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType RiscvSemantics Fs State Run.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import Leaf.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import ShapeAlgBase ShapeCfg NodesCfg.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.FX Require Import
   W64 ITrie FxSpec FxInstr FxState FxMem FxExec FxRel FxImage FxRun FxRn FxHandoff.
@@ -20,6 +22,7 @@ Open Scope Z_scope.
 Section Hole.
 Variable cfg : SpuriousCfg.
 Variable segs : list Segment.
+Context {LF : Leaf}.
 Variable IM : fimage.
 Variable code : itrie finstr.
 Hypothesis Hcode : code_ok segs code.
@@ -39,6 +42,8 @@ Hypothesis NX0_spw : APC.expr_vars_lt nx0 APC.e_sp0_early = true.
 Hypothesis argH_agree : forall E E' (a : word), AxSymRun3.env_agree nx0 E E' -> argH E a = argH E' a.
 Hypothesis SINV_agree : forall E E' M, AxSymRun3.env_agree nx0 E E' -> SINV E M -> SINV E' M.
 Hypothesis SINV_frame : forall E M M', (forall a, argH E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
+(* LPS c0dd863a: [APS.cs_ok_agree]'s transport of [co_ehdr] *)
+Hypothesis EHDR_lt : APC.V_EHDR_below nx0.
 
 Definition fx_hole (START END : APC.acs) : Prop :=
   forall E R FULL m (T : ShapeAlgBase.TSet),
@@ -61,7 +66,7 @@ Theorem fx_hole_chk TT n shapes cuts classes START d bs bp k F' r cnt VT END :
 Proof.
   intros Hchk Hside Hk Hrun Eend E R FULL m T HCS HK.
   apply (fx_transform_chk cfg segs IM code Hcode HIM HWR A Lim SINV argH ISP FS0 SEGS_in_hull HULL_ok argH_high
-           nx0 NX0_spw argH_agree SINV_agree SINV_frame TT n shapes cuts classes START d bs bp k F' r cnt VT
+           nx0 NX0_spw argH_agree SINV_agree SINV_frame EHDR_lt TT n shapes cuts classes START d bs bp k F' r cnt VT
            (AX2.s_pc (APC.a_ss END)) (AX2.s_regs (APC.a_ss END)) (APC.kn END) (APC.nxt END) E R FULL m T
            HCS Hchk Hside Hk Hrun).
   intros E1 R1 FULL1 m1 Hag HCS1 Hfs. rewrite Eend in HCS1. exact (HK E1 R1 FULL1 m1 Hag HCS1 Hfs).

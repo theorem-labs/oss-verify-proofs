@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (erase_mat_shape over the VM state record's two new fields). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -69,7 +70,7 @@ Proof.
   destruct md as [fd [maps lz mat] io fs proc lim tm].
   destruct m as [fd' [maps' lz' mat'] io' fs' proc' lim' tm'].
   unfold with_vm_backing, m_vmmaps, m_vm_lazy, m_vm_materialized in *. cbn in *.
-  injection H as -> -> -> -> -> -> -> ->. reflexivity.
+  injection H; intros; subst; reflexivity.
 Qed.
 
 Lemma erase_mat_cong_lazy : ltac2:(tb__ "0|1|

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the mmap check's new fixed-overflow test unfolded; node_ok's third conjunct, sys_rob, discharged at the mmap call; import of RomBase). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -14,6 +15,7 @@ From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.ABoot Require Import
   AsanAcct AsanAcctShape AsanPlacement BackingAlgebra MmapSim RefNodes NoReserve.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.ABoot Require Import AxSymExec3 AxSymExec3Sound AxSymRun3 AsanPlanCore AsanPlan AsanPlanSound.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.ABoot Require Import AsanCeil AsanNodesLibE AsanNodesMmLib.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Common.Cfg Require RomBase.
 Local Instance asanreflect_fx : PropExec.FPState := PropExec.fx0.
 Import ListNotations.
 Open Scope Z_scope.
@@ -65,7 +67,7 @@ Proof.
   assert (E1 : w_is0 (ms_gpr ms 1) = false).
   { unfold w_is0. apply bv_eqb_neq. intros E. apply (f_equal bv_unsigned) in E.
     rewrite Hu1 in E. change (bv_unsigned (Z_to_bv 64 0)) with 0%Z in E. lia. }
-  rewrite (mmap_check segs ms x8 model eff Hno). unfold check_mmap.
+  rewrite (mmap_check segs ms x8 model eff Hno). unfold check_mmap, check_mmap_fixed_overflow.
   rewrite E1, H2, H3, H5, H0, Hu1, mmap_off_aligned_b_0, (mmap_anon_b_of_core flags _ Hcore eq_refl), Gm, Gn, Gfn, Gfr, Gnn, Gnr. cbn [negb]. cbv beta iota zeta.
   rewrite G1, G2, G3, G4. fold nZ. fold n.
   rewrite Hrf.
@@ -146,6 +148,7 @@ Proof.
       destruct (bv_eqb r addr && listNN_eqb zs [(addr, n)] && true)%bool; discriminate.
     + intros [[] | []]; cbn [ms']; [exact Hh | rewrite with_mmap_backing_halted; unfold mmap_model; rewrite with_vmmaps_halted; exact Hh].
     + intros [[] | []]; reflexivity.
+    + apply (RomBase.sys_rob_memfree segs ms model (getr regs 17) eq_refl). rewrite Hno. exact RomBase.memfree_222.
   - intros []. exact (eq_trans (Hrb (inl tt)) (errno_ret_in_intro _ _ ENOMEM_in_mmap_errnos)).
   - exact (eq_trans (Hrb (inr tt)) Hna).
   - intros []. cbn [effs ms']. unfold ms. rewrite adv_ret_epend. exact HA.
@@ -179,7 +182,7 @@ Proof.
   assert (E1 : w_is0 (ms_gpr ms 1) = false).
   { unfold w_is0. apply bv_eqb_neq. intros E. apply (f_equal bv_unsigned) in E.
     rewrite Hu1 in E. change (bv_unsigned (Z_to_bv 64 0)) with 0%Z in E. lia. }
-  rewrite (mmap_check segs ms x8 model eff Hno). unfold check_mmap.
+  rewrite (mmap_check segs ms x8 model eff Hno). unfold check_mmap, check_mmap_fixed_overflow.
   rewrite E1, H2, H3, H5, H0, Hu1, mmap_off_aligned_b_0, (mmap_anon_b_of_core flags _ Hcore eq_refl), Gm, Gn, Gfn, Gfr, Gnn. cbn [negb]. cbv beta iota zeta.
   rewrite G1, G2, G3, G4. fold nZ. fold n.
   rewrite Hrf.
@@ -260,6 +263,7 @@ Proof.
       destruct (bv_eqb r addr && listNN_eqb us [(addr, n)])%bool; discriminate.
     + intros [[] | []]; cbn [ms']; [exact Hh | rewrite with_mmap_backing_halted; unfold noaccess_model; rewrite with_vmmaps_halted; exact Hh].
     + intros [[] | []]; reflexivity.
+    + apply (RomBase.sys_rob_memfree segs ms model (getr regs 17) eq_refl). rewrite Hno. exact RomBase.memfree_222.
   - intros []. exact (eq_trans (Hrb (inl tt)) (errno_ret_in_intro _ _ ENOMEM_in_mmap_errnos)).
   - exact (eq_trans (Hrb (inr tt)) Hna).
   - intros []. cbn [effs ms']. unfold ms. rewrite adv_ret_epend. exact HA.

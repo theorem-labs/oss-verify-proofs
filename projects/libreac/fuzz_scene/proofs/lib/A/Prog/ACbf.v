@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the generic part of proofs/cgif/cgif_file_fuzzer/lib/A/ACbf.v for libreac/fuzz_scene's program walk, over fuzz_scene's listing; cgif's own walk of cgif_raw_new (img_facts, img_hull_facts, awrR, fs_ro, fs_rw, oblF, oblG, oblR, wrangeR, exitR, aconsts, keptR, keptF, keptI, rn_prelude, wcb_site) is left out (SceneACja holds the generic img_factsF, awrFL, fs_roF, fs_rwF, aconstsF and keptFL); norm_ss, field_of_region, st_ok_region_nth and aview_kept_frame come from SceneACjr in place of cgif's lib/A/AC8j and ACbc; module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: copied by path from a Theorem Labs lane's proofs/libreac/fuzz_grant/lib/A/Prog/ACbf.v (a working branch acae397d926) for libreac/fuzz_scene's program walk; the module path and the listing's names changed. *)
+(* Modified by Theorem Labs, 2026-10: copied by path from a Theorem Labs lane's proofs/libreac/fuzz_grant/lib/A/Prog/ACbf.v (a working branch) for libreac/fuzz_scene's program walk; the module path and the listing's names changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

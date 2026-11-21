@@ -7,8 +7,9 @@
    ra_spec_x; pb_relay_add keeps its statement and is its corollary at ARi0, PST = [] (Section cAR). *)
 (* Modified by Theorem Labs, 2026-10-30 (a Theorem Labs lane, a Theorem Labs lane room round F3): pb_relay_add_x takes the room record RP
    (ra_spec_x's rp_RM budget and cnt_ok_pk peak), the laws RPF / RMM, and threads them to the realloc; the fake-frame
-   seat is W_frame_x.v's aj_stack_malloc_pres_at_raw_x, which states S2 = set_fs f Sc (commit cb71685bcb2; the local
+   seat is W_frame_x.v's aj_stack_malloc_pres_at_raw_x, which states S2 = set_fs f Sc (the local
    twin this file carried until then is removed). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

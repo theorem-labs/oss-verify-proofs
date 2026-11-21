@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: the serializer sections take it as HBTlo; the calls of memappend_A_cps_nf, the child spec, stack_malloc_full and hiA_free discharge it; the jo_get_double_A_stmt proofs name jo_preA's conjunct; PE_STATIC_A's conjunct HBTs). *)
 
 From Stdlib Require ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -31,7 +32,7 @@ Forall (fun iv => snd iv <= hl_img_lo A4H \/ hl_img_hi A4H <= fst iv) W -> GA m'
 Let PRW := PE_REST_A_private_write HIx GA GA_outside.
 
 Ltac pe_openA STC INV :=
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
 destruct INV as [CORE REST];
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR);
 pose proof REST as (HP & LV & OBJ & ST & ERR & STR & PLEN & SBin & HPR & MDV & G & BUD).
@@ -207,6 +208,7 @@ Variables (sp gp : word) (m0 : word -> option byte) (md0 : config) (LB LM : list
 Variables (bpos0 cap0 w : Z).
 Let usp := bv_unsigned sp.
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis HT : usp <= hiA_top A4L HIx.
 Hypothesis CAP0 : 32 <= cap0 < 2^30.
 Hypothesis TXT : bpos0 + w < 2^28.
@@ -290,6 +292,7 @@ rewrite ?U2.
 - exact UPS.
 - exact ST.
 - exact LO.
+- first [assumption | lia].
 - lia.
 - exact FAA.
 - unfold usp in *. lia.
@@ -385,6 +388,7 @@ rewrite ?U2.
 - exact FRN.
 - exact ST.
 - exact LO.
+- first [assumption | lia].
 - exact LOS.
 - exact FAA.
 - unfold usp in *. lia.
@@ -493,7 +497,7 @@ Definition GD_STK_A : Z := 128 + ASTRTOD_DEPTH.
 
 Lemma get_double_A : jo_get_double_A_stmt HIx 0x9dde4 GD_STK_A 512 0.
 Proof.
-unfold jo_get_double_A_stmt. intros until errv. intros (HP & ST & LO & LOS & SPA16 & HT & ERR & TP & RA) JO FRN BB BD SPA FRM A0 K.
+unfold jo_get_double_A_stmt. intros until errv. intros (HP & ST & LO & HBT & LOS & SPA16 & HT & ERR & TP & RA) JO FRN BB BD SPA FRM A0 K.
 unfold GD_STK_A, ASTRTOD_DEPTH in LOS. subst a0 tp.
 assert (FRMfp : Qc3B.frm0 fc) by exact FRM.
 pose proof (bv_unsigned_in_range 64 sp) as SPR. change (bv_modulus 64) with (2^64) in SPR.
@@ -524,6 +528,7 @@ all: rewrite ?unsigned_lit by lia.
 1: lia.
 1: exact ST.
 1: exact LO.
+1: first [assumption | lia].
 1: cbn [hl_stack_A A4L]; lia.
 1: clear - SPA; Z.div_mod_to_equations; lia.
 1: lia.
@@ -874,7 +879,7 @@ pose proof (XHPg A1 B md1 m1' mc HP1 MUc WMc MIc) as HPf.
 pose proof (XPD m1' mc PD1 A1 md1 B HP1 MUc WMc) as PDf.
 evt_done5.
 eapply (hiA_free A4L HIx) with (p := 0) (u := UWpaid) (lo := lo) (errv := ec);
-[ exact HPf | left; reflexivity | rewrite unsigned_lit by lia; exact STc | exact LO | rewrite unsigned_lit by lia; cbn [hl_stack_A A4L]; lia
+[ exact HPf | left; reflexivity | rewrite unsigned_lit by lia; exact STc | exact LO | first [assumption | lia] | rewrite unsigned_lit by lia; cbn [hl_stack_A A4L]; lia
 | rewrite unsigned_lit by lia; clear - SPA; Z.div_mod_to_equations; lia | rewrite unsigned_lit by lia; lia | exact ERRc | reflexivity | reflexivity
 | split; cbn; exact I | exact BB | cbn; exact BD | ].
 intros ms3 m3 md3 A3 r3 RS3 VM3 ST3 HPR3 ERR3 HP3. open_ret RS3.
@@ -1020,7 +1025,7 @@ Forall (fun iv => snd iv <= hl_img_lo A4H \/ hl_img_hi A4H <= fst iv) W -> GA m'
 Let PRW := PE_REST_A_private_write HIx GA GA_outside.
 
 Ltac pe_openA STC INV :=
-pose proof STC as (LO & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
+pose proof STC as (LO & HBTs & LOS & GEO & HT & SP0 & LEN & SB0 & SBL & RR & LENR); pose proof GEO as (Gspf & Gsp0 & Gle & GF & GF0 & GFc & Gtk);
 destruct INV as [CORE REST];
 destruct CORE as (LEN32 & D32 & CO & CHOFF & TOK & PB & Hpb & TSK & FR);
 pose proof REST as (HP & LV & OBJ & ST & ERR & STR & PLEN & SBin & HPR & MDV & G & BUD).
@@ -1183,6 +1188,7 @@ Variables (sp gp : word) (m0 : word -> option byte) (md0 : config) (LB LM : list
 Variables (bpos0 cap0 w : Z).
 Let usp := bv_unsigned sp.
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis HT : usp <= hiA_top A4L HIx.
 Hypothesis CAP0 : 32 <= cap0 < 2^30.
 Hypothesis TXT : bpos0 + w < 2^28.
@@ -1266,6 +1272,7 @@ rewrite ?U2.
 - exact UPS.
 - exact ST.
 - exact LO.
+- first [assumption | lia].
 - lia.
 - exact FAA.
 - unfold usp in *. lia.
@@ -1361,6 +1368,7 @@ rewrite ?U2.
 - exact FRN.
 - exact ST.
 - exact LO.
+- first [assumption | lia].
 - exact LOS.
 - exact FAA.
 - unfold usp in *. lia.
@@ -1506,7 +1514,7 @@ Definition GD_STK_A : Z := 128 + ASTRTOD_DEPTH.
 
 Lemma get_double_A : jo_get_double_A_stmt HIx 0x9f8e4 GD_STK_A 512 0.
 Proof.
-unfold jo_get_double_A_stmt. intros until errv. intros (HP & ST & LO & LOS & SPA16 & HT & ERR & TP & RA) JO FRN BB BD SPA FRM A0 K.
+unfold jo_get_double_A_stmt. intros until errv. intros (HP & ST & LO & HBT & LOS & SPA16 & HT & ERR & TP & RA) JO FRN BB BD SPA FRM A0 K.
 unfold GD_STK_A, ASTRTOD_DEPTH in LOS. subst a0 tp.
 assert (FRMfp : Qc3B.frm0 fc) by exact FRM.
 pose proof (bv_unsigned_in_range 64 sp) as SPR. change (bv_modulus 64) with (2^64) in SPR.
@@ -1537,6 +1545,7 @@ all: rewrite ?unsigned_lit by lia.
 1: lia.
 1: exact ST.
 1: exact LO.
+1: first [assumption | lia].
 1: cbn [hl_stack_A A4L]; lia.
 1: clear - SPA; Z.div_mod_to_equations; lia.
 1: lia.
@@ -1889,7 +1898,7 @@ pose proof (XHPg A1 B md1 m1' mc HP1 MUc WMc MIc) as HPf.
 pose proof (XPD m1' mc PD1 A1 md1 B HP1 MUc WMc) as PDf.
 evt_done5.
 eapply (hiA_free A4L HIx) with (p := 0) (u := UWpaid) (lo := lo) (errv := ec);
-[ exact HPf | left; reflexivity | rewrite unsigned_lit by lia; exact STc | exact LO | rewrite unsigned_lit by lia; cbn [hl_stack_A A4L]; lia
+[ exact HPf | left; reflexivity | rewrite unsigned_lit by lia; exact STc | exact LO | first [assumption | lia] | rewrite unsigned_lit by lia; cbn [hl_stack_A A4L]; lia
 | rewrite unsigned_lit by lia; clear - SPA; Z.div_mod_to_equations; lia | rewrite unsigned_lit by lia; lia | exact ERRc | reflexivity | reflexivity
 | split; cbn; exact I | exact BB | cbn; exact BD | ].
 intros ms3 m3 md3 A3 r3 RS3 VM3 ST3 HPR3 ERR3 HP3. open_ret RS3.

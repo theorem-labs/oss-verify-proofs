@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Copyright 2026 Theorem Labs *)
 (* rp_uci_int_cgW_runs: the footprint runs (lib/Lib/ExecF.v evtF) of rp_uci_int in image A (fuzz_uci.asan 0x7fef0,
    133 instructions, every one stepped), in the segment form of libreac/fuzz_decode's released
-   lib/A/Prog/crtA_segs.v and check_braid_F.v (origin/ossv/recipes 88154566652a) and the loop form of this unit's
+   lib/A/Prog/crtA_segs.v and check_braid_F.v and the loop form of this unit's
    plain walk lib/Prog/rp_uci_int.v, whose model lemmas are used as they are. lib/A/Prog/rp_uci_int_cgW.v carries the
    runs into the cgif walk.
    - rui_seg_zero: the prologue (frame 0x30; ra s0 s1 s2 s3 saved at +0x28 .. +0x8), `beqz a1` at 0x7ff0c taken

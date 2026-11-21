@@ -5,6 +5,7 @@
    Amendment 11 (a Theorem Labs lane): the first-use arm's last conjunct states X fresh against every map of Store's entry model md (Forall over vm_maps (m_vmmaps md)), from S2's new last conjunct at Alloc's call model md1 = with_vm_backing (m_vm_lazy md) mat md, which keeps m_vmmaps (m_vmmaps_wvb).
    rule 24: proves function StackStore::Store (reused from proofs/libreac/fuzz_knock/lib/A/AD3a.v, the copy note below). *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/A/AD3a.v (donor image sha256 61768cf4739b), with its module paths changed, names TfibSyms -> WireSyms and its addresses moved to reac-repacer/fuzz_wire's ASan build. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -25,7 +26,7 @@ Unset Lia Cache. Unset Nia Cache.
 Local Set Warnings "-abstract-large-number".
 Local Open Scope Z_scope.
 
-(* knock's Store (A image, sha256 61768cf4739b..., read from the packed base c8557374's Asan_seg_001.hex; the AU twin's
+(* knock's Store (A image, sha256 61768cf4739b..., read from the packed base's Asan_seg_001.hex; the AU twin's
    numbers come from AU's own tables):
      0x6e8f4  frame 64 (ra, s0-s5 saved); s3 := a1 (the StackTrace); s4 := size (lw 8(a1)); s5 := tag (lw 12(a1))
      0x6e924  size | tag = 0 -> return 0
@@ -45,7 +46,7 @@ Local Open Scope Z_scope.
 Section g. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 
 Section kd.
-(* The layout step, as S3 states it (AD3c.v:164-168, amendment 8): the first Put's growth is the placeholder relation
+(* The layout step, as S3 states it (AD3c.v:165-169, amendment 8): the first Put's growth is the placeholder relation
    layout_grow_kd, swapped by name when the owner fixes the signature. Satisfiable: fun _ _ => True. *)
 Variable layout_grow_kd : alayout -> alayout -> Prop.
 Variable B : asyms.
@@ -135,17 +136,17 @@ Definition store_post (W : world tfibsegs) (ly : alayout) (S : astate) (regs : b
      proved there), from WireSyms B, Wf (as_universe B) S, In tr (as_universe B) and
      F <= 32 + depot_frames S, with n := length tr.
    - 0 <= ly_SB ly < 2 ^ 64 (amendment 3): 0 while the store block is unmapped (a Theorem Labs lane's encoding); once mapped,
-     knock-branch lo_app (YG0f.v:436) gives in_app (ly_SB ly) kStoreBlockSize, so 4096 <= ly_SB ly < ASAN_CEIL.
+     knock-branch lo_app (YG0f.v:437) gives in_app (ly_SB ly) kStoreBlockSize, so 4096 <= ly_SB ly < ASAN_CEIL.
    - md_takes md (SS, 32), kHighMemBeg <= ly_stk_lo ly, md_takes's 0 < snd e (amendment 1): as cited in AD3c.v's
-     header: asyms_areas (YG0f.v:255-258) / aso_cover (YG0f.v:262) / am_static_img (YG0n.v:399) /
-     al_imgcov (YG0n.v:615-616) / al_reserved (YG0n.v:597); lo_top (YG0f.v:439-441).
+     header: asyms_areas (YG0f.v:256-259) / aso_cover (YG0f.v:263) / am_static_img (YG0n.v:399) /
+     al_imgcov (YG0n.v:615-616) / al_reserved (YG0n.v:597); lo_top (YG0f.v:440-442).
    - ivs_wf, ceil_of_top and the mnr_cell_extents takes (amendment 8): as cited in AD3c.v's header;
      ly_stk_hi ly <= kHighMemEnd, which amendment 8 adds to Create's pre, was already a premise here.
-   - the later-call slot (amendment 2): layout_ok's lo_app (YG0f.v:436: in_app (ly_SB ly) kStoreBlockSize, the SB entry
-     of owned_extents), lo_disj (YG0f.v:438: (ly_SB ly, kStoreBlockSize) disjoint from the stack extent and from ly_img
-     in static_extents), img_cover (AF0x.v:56: ly_img covers the image, where as_store B = TFIB_STORE lies, so the
-     store cells are off SB), lo_SB_al (YG0f.v:432); the slot's presence from depot_mem_ok's range_vis of
-     (ASB 0, kStoreBlockSize) (AFl0.v:66-68), SB being off the image. *)
+   - the later-call slot (amendment 2): layout_ok's lo_app (YG0f.v:437: in_app (ly_SB ly) kStoreBlockSize, the SB entry
+     of owned_extents), lo_disj (YG0f.v:439: (ly_SB ly, kStoreBlockSize) disjoint from the stack extent and from ly_img
+     in static_extents), img_cover (AF0x.v:57: ly_img covers the image, where as_store B = TFIB_STORE lies, so the
+     store cells are off SB), lo_SB_al (YG0f.v:433); the slot's presence from depot_mem_ok's range_vis of
+     (ASB 0, kStoreBlockSize) (AFl0.v:67-69), SB being off the image. *)
 Definition tfib_store_spec : Prop :=
   forall (W : world tfibsegs) (ly : alayout) (S : astate) (regs : bvmap 5 word) (mem : word -> option byte) (md : Model)
     (targ buf pk F std alloc : Z) (tr : list Z),

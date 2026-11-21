@@ -10,9 +10,9 @@
 #   B-fs-ranges.patch  YF0r.v's code table without fuzz_grant's __asan_stack_malloc_0 / _2 / _4 ranges (fuzz_uci links
 #                      class 1 only; the class-1 code calls none of them: BYTECMP.md)
 # Inputs (each named by sha):
-#   REL    port_core 0e4e065eab9f: git archive 7f0e4b05267 tools/pg-reloc/0e4e065eab9f
-#   DON    fuzz_grant's RELEASED lib at origin/ossv/recipes 4f87de75d67, normalised by ../core-B/mkdon.sh:
-#            mkdon.sh 4f87de75d67 fuzz_grant B $DONROOT ; DON=$DONROOT/proofs/libreac/fuzz_grant/lib
+#   REL    port_core 0e4e065eab9f: git archive tools/pg-reloc/0e4e065eab9f
+#   DON    fuzz_grant's RELEASED lib, normalised by ../core-B/mkdon.sh:
+#            mkdon.sh fuzz_grant B $DONROOT ; DON=$DONROOT/proofs/libreac/fuzz_grant/lib
 #          (lib/B/Rt/YF0r.v and YF0s.v are Rt/YF0r.v and Rt/YF0s.v there, lib/Reusable/YF0v.v is YF0v.v)
 #   SYMS   ../core-B/fuzz_grant.asan-ubsan.syms.txt (mksyms.py over the donor's unstripped twin, sha256 5a5ee7c02b4e)
 #   P, R   the pinned image trees: P holds libreac's fuzz_grant (asan-ubsan fde52226dc48, asan c2c7559b29bd), R holds

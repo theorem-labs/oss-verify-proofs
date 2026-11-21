@@ -5,9 +5,10 @@
    skip_ws #2 (0x84ffc, ra 0x85000), whose call-site state is pib_IW (this file):
      pi_step_G2 : pib_IW -> skip_ws #2 (FSW_parse_items_sws.pis_loop_sw) -> segment D 0x85000 .. parse_string
                   (FSW_parse_items_seg.pib_run_D, the byte at in->p is the key's opening quote) -> pib_IP.
-   The B form of the A walk's pi_step_G / piG_gen (a working branch 4480a5df1ae
+   The B form of the A walk's pi_step_G / piG_gen (a working branch
    lib/A/FSW_parse_items_stG.v), whose post-run half it follows; B calls skip_ws where A inlines the white space.
    rule 24: proves no function (kind: step lemmas). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -110,7 +111,7 @@ destruct Hin as [<-|[<-|[<-|[<-|[<-|[]]]]]];
 Qed.
 
 (* an address no image byte lies at; equal views of an off-image byte are equal raw bytes (the A walk's piG_not_img /
-   piG_raw_of_aview, lib/A/FSW_parse_items_stG.v 4480a5df1ae, renamed) *)
+   piG_raw_of_aview, lib/A/FSW_parse_items_stG.v, renamed) *)
 Lemma pib_not_img : forall a, FS_IMG_END <= a -> ~ in_img tfibsegs a.
 Proof. intros a Ha Hi. pose proof (fs_segs_img a Hi). lia. Qed.
 Lemma pib_raw_of_aview : forall (H H' : word -> bool) (m m' : word -> option byte) a, 0 <= a < 2 ^ 64 ->

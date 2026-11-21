@@ -4,12 +4,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names and numbers changed; 1421 of its 1489 lines of code are new or changed and 943 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/R21.v, with its module paths, module names, addresses and numbers changed; 626 of its 715 lines of code are new or changed and 1400 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/R21.v 0dfe757c0918 (the blob this tree had at release c5e779efe8c) at fdd2ed9f9d7.
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   FACTS, PAU pau-libreac-v190. Source: Seg/R21.v 0dfe757c0918 (the blob this tree had at release).
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: each <r>_of_F re-derives R21.<r> at ExecF.RNG_all; <r>_of_F_verbatim checks by constr_eq that its type is
    the type of R21.<r>. Mechanical re-run, route (a) (lead 22:15Z); input to the ported walk only. *)
 
@@ -541,7 +542,7 @@ Qed.
    - r21_tail_evt_of_pre_post_on: the only use of `shadow_rw m` is the strcmp wrapper call at 0x81abc (a0 = S5 + 3,
      a1 = nm, sx = sy = sx), after the move to MemNorm.normalize. So R is the callee's own region at the call's
      arguments, strcmp_wrap_c_on.strcmp_wrap_shadow_R (S5 + 3) nm (Z.of_nat (strcmp_k sx sx) + 1) (a Theorem Labs lane's leaf
-     lib/A/Prog/strcmp_wrap_c_on.v 0156a822960 (the blob this tree had at release c5e779efe8c) at 49e1a946522), moved to normalize m by
+     lib/A/Prog/strcmp_wrap_c_on.v 0156a822960 (the blob this tree had at release)), moved to normalize m by
      A.ShadowRwOnT.shadow_rw_on_rel; the callee hypothesis is strcmp_wrap_c_on.strcmp_wrap_contract_on. The run's
      post states no shadow_rw, so it is unchanged. ==== *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A Require ShadowRwOn ShadowRwOnT.

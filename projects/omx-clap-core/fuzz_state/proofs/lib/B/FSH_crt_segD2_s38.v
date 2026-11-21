@@ -3,13 +3,14 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/YCbo.v, with its module paths and module names changed; 256 of its 314 lines of code are new or changed and 2409 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/FSH_crt_segD2_s39.v, with its module names changed; 50 of its 124 lines of code are new or changed and 240 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_round_trip 0x81b9c, fs.asan-ubsan (image tfibsegs = lib/B/YB1v.v), lane D2, SEGMENT 38: the first
    `__wrap_free` thunk. B twin of lib/A/FSH_crt_segD2_s38.v.
-   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from 6cf61486dca lib/A/FSH_crt_segD2_s38.v)
-   rule 24: proves no function (kind: segment lemmas of check_round_trip's walk, PORTED from 1ab57ca7ad7) - RT : CrtRt B,
-   crt_fr_free B RT (a working branch 1ab57ca7ad7).
-   Port source: a working branch 6cf61486dca proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segD2_s38.v (CTX-free),
-   itself PORTED from a working branch d25a984c903 proofs/omx-clap-core/fuzz_state/lib/A/Prog/
+   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from lib/A/FSH_crt_segD2_s38.v)
+   rule 24: proves no function (kind: segment lemmas of check_round_trip's walk, PORTED) - RT : CrtRt B,
+   crt_fr_free B RT (a working branch).
+   Port source: a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segD2_s38.v (CTX-free),
+   itself PORTED from a working branch proofs/omx-clap-core/fuzz_state/lib/A/Prog/
    check_round_trip_sd23.v, stage St23 - the same __wrap_free thunk (on fs.asan at 0x82348), freeing the raw interceptor
    block `want`. The function-level lookup is the one quoted in the lane head
    (internal path) (checker a Theorem Labs lane, role check, CONFIRM). Same

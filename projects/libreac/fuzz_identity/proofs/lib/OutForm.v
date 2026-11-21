@@ -7,6 +7,7 @@ From OSSVerify.Proofs.libreac.fuzz_identity.lib Require Import Contract TraceHal
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require Import
   YK11 YK0h YK0i YK14 YK1b YK1a YK1i YK15 YK0n YP0n YP0m YP02 YH00 YN3f.
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require Import YK0o YK0s YM06 YP09.
+From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require Import RomBase.
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require Import YO0i YO0f YO0d YO05
   YO0p YO0j YO0m YO0l YO0n YO0k YO0o YO09.
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require Import YL01 YL00 YL0g YI06 YI16 YI14.
@@ -131,8 +132,8 @@ Proof.
   exact (rz_silent_allI segs c I nx i0 _ Hn (fun i => H i T HK)).
 Qed.
 
-Lemma SRO_cut : forall c out (Q : config -> Prop), budget_refused_at segs c -> SRO c out Q.
-Proof. intros c out Q Hb T _. apply rz_cut. exact Hb. Qed.
+Lemma SRO_cut : forall c out (Q : config -> Prop), budget_refused_at segs c -> sys_rob segs c -> SRO c out Q.
+Proof. intros c out Q Hb Hrb T _. apply rz_cut; assumption. Qed.
 
 Lemma SRO_case : forall (A : Prop) c out (Q : config -> Prop),
   (A \/ ~ A) -> (A -> SRO c out Q) -> (~ A -> SRO c out Q) -> SRO c out Q.

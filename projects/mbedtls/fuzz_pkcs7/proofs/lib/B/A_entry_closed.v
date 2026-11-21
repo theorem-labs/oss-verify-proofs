@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap layout is built at the stack floor sp - 6144512, the bottom of the window the launch maps below sp). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -30,7 +31,7 @@ Theorem entry_bridge_closed : ltac2:(CDefT.buildp (gd_tbl_A_entry_closed ()) "Ps
 (* [comment removed for export] *).
 Proof.
   intros sp brk0 rdraw argv envp fs uid hw Hsp Hva Hve Hfit.
-  pose (STKLO := bv_unsigned sp - 2 ^ 23).
+  pose (STKLO := bv_unsigned sp - 6144512).
   pose (LO := @A_link_R0.a_layout_ok_R0 (A_entry_bridge.arun_of sp Hsp) STKLO).
   pose (HO := @A_link_R0.a_hia_ok_R0 (A_entry_bridge.arun_of sp Hsp) STKLO (A_entry_bridge.STKLO_OK_of sp Hsp) AW_B12WalkP.b12_walk AW_ModDieT.mod_die_walk
                 (@AW_FreePhPZ.freeH (A_entry_bridge.arun_of sp Hsp) STKLO (A_entry_bridge.STKLO_OK_of sp Hsp))).

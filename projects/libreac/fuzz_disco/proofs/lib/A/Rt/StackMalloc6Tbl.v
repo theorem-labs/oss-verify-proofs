@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/Rt/StackMalloc4Tbl.v of a working branch 5251b347350, with its code table from AF0r.v and the frame-ownership lemmas of YF0v.v of the same tree, for stack_malloc_6 at 0x3dac0 of libreac/fuzz_disco's ASan build: class-6 frame constants (256 frames of 4096 bytes, hint at +48, flags at +0x8e00, frames at +0x609000), a 192-byte stack window and the code ranges measured on this image, the probe loop's registers (mask a5, flag pointer a4), the frame address in a0, a region for the 512 shadow bytes of the 64-step fill loop; module names. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/Rt/StackMalloc4Tbl.v of a working branch, with its code table from AF0r.v and the frame-ownership lemmas of YF0v.v of the same tree, for stack_malloc_6 at 0x3dac0 of libreac/fuzz_disco's ASan build: class-6 frame constants (256 frames of 4096 bytes, hint at +48, flags at +0x8e00, frames at +0x609000), a 192-byte stack window and the code ranges measured on this image, the probe loop's registers (mask a5, flag pointer a4), the frame address in a0, a region for the 512 shadow bytes of the 64-step fill loop; module names. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

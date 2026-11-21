@@ -16,7 +16,7 @@
    - ajournal_gx_after_write: W_journalG.v's ajournal_gx_exec for a step whose effect is given by a runtime
      contract (views kept outside the write set, presence kept, AR at the end) instead of by the program runner.
      Each written byte is an awr_byte of the journal's own window, a byte of G, or an out cell: the per-byte
-     condition of ajournal_gx_exec (W_journalG.v:303-304), which is link_amem.v's `ajw` unfolded. Proof: the G
+     condition of ajournal_gx_exec (W_journalG.v:304-305), which is link_amem.v's `ajw` unfolded. Proof: the G
      bytes are moved into the start memory by W_journalG.v's ajournal_rebase, the other bytes go through the donor's
      ajournal_after_write (YCbq.v:514), at the AR the contract gives.
    - aj_gx_ecall_pre: the runtime-call pre-state (YG0d.v:285 ecall_pre, and a scratch window of w bytes below the

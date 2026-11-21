@@ -3,11 +3,12 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the contracts of the string entries that plugin-hostd/fuzz_command calls and cgif_file_fuzzer does not (strlen, strcmp, strncmp, strspn, strcspn, strcat and musl's strtok_r), in the form cgif_file_fuzzer's lib/YG0d.v states its memcmp, bcmp, memchr and strnlen contracts; the value each one returns is the one fuzz_command's own plain proof states for the same entry. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Rt/RtString.v, with its module paths, module names and numbers changed; 93 of its 155 lines of code are new or changed and 119 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The NEW interceptor contracts of reac-pw/fuzz_segconf's ASan+UBSan image B (fuzz_segconf.asan-ubsan): the image-B
-   twin of lib/A/Rt/RtSeg.v (commit 80d098bd1905, sha256 ce2e38d10fc0, rows 3 and 6-12 of
-   proofs/reac-pw/fuzz_segconf/provenance/evidence/interceptors/INTERFACE-A-interceptors.md (commit 7068323e2626)), in the form
-   fuzz_command states its string and number entries (lib/A/Rt/RtString.v, lib/A/Rt/RtNumber.v at
-   origin/ossv/recipes 501c0d516c69): the premises are RtDefs.v's parts (ecall_pre_stk, aread_ok, awrite_ok,
+   twin of lib/A/Rt/RtSeg.v (sha256 ce2e38d10fc0, rows 3 and 6-12 of
+   proofs/reac-pw/fuzz_segconf/provenance/evidence/interceptors/INTERFACE-A-interceptors.md), in the form
+   fuzz_command states its string and number entries (lib/A/Rt/RtString.v, lib/A/Rt/RtNumber.v):
+   the premises are RtDefs.v's parts (ecall_pre_stk, aread_ok, awrite_ok,
    astr_at, atail_vis, rt_rom_view, aguard_ok) and the conclusion is RtDefs.v's art_post. Statements only; no walk,
    no proof.
 

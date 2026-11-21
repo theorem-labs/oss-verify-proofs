@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/glaze/binary_reflection/lib/BvWfKernel.v; 1 of its 13 lines of code is new or changed and 1 line of the source is left out. *)
-(* copied by path from a working branch 51f06361767, unchanged *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* copied by path from a working branch, unchanged *)
 (* [comment removed for export] *)
 From stdpp Require Import bitvector.definitions.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.

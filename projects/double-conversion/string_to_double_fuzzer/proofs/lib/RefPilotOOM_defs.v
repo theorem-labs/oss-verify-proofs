@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the new initial stack layout; the start-up taken per CONFIG_RSEQ value). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -41,10 +42,27 @@ Definition logA : list sentry := Eval vm_compute in s_log (fst (fst rA)).
 
 (* [comment removed for export] *)
 Definition srB0 : list expr := sr_upd srA (ridx 10) (ELit 3).
-Definition ssB0 : sym_state := SS 0xa763c srB0 [] knA 38.
-Definition rB := Eval vm_compute in run scr0 ssB0.
-Definition srB : list expr := Eval vm_compute in s_regs (fst (fst rB)).
-Definition knB : list kentry := Eval vm_compute in kn_after rB knA.
+(* LPS 727298f3: block B runs musl's malloc-init auxv scan (walk libc.auxv for AT_RANDOM to
+   AT_NULL).  [kn_main] records the first 26 pairs (RefMainEntry.kn_auxv); pair 26 is
+   AT_RSEQ_FEATURE_SIZE iff the input's free CONFIG_RSEQ flag is set, else AT_NULL
+   ([StackLayout.auxv_entries]).  So the block is run once per flag value, each with that flag's
+   tail words; [rB_rseq_free] shows both runs reach 0xa6728 with the SAME registers and the SAME
+   knowledge plus the tail, so every block after B keeps its numbering and lists.  Coturn's
+   RefPilotOOM_defs block C. *)
+Definition kn_tail (r : bool) : list kentry :=
+  if r then [KWord (SA (EVar 3) 416) 8 (ELit 27); KWord (SA (EVar 3) 432) 8 (ELit 28);
+             KWord (SA (EVar 3) 448) 8 (ELit 0)]
+  else [KWord (SA (EVar 3) 416) 8 (ELit 0)].
+Definition ssB0r (r : bool) : sym_state := SS 0xa763c srB0 [] (knA ++ kn_tail r) 38.
+Definition rBt := Eval vm_compute in run scr0 (ssB0r true).
+Definition rBf := Eval vm_compute in run scr0 (ssB0r false).
+Definition srB : list expr := Eval vm_compute in s_regs (fst (fst rBf)).
+Definition knB : list kentry := Eval vm_compute in removelast (kn_after rBf (knA ++ kn_tail false)).
+Lemma rB_rseq_free : forall r : bool,
+  run scr0 (ssB0r r) = (if r then rBt else rBf)
+  /\ s_regs (fst (fst (if r then rBt else rBf))) = srB
+  /\ kn_after (if r then rBt else rBf) (knA ++ kn_tail r) = knB ++ kn_tail r.
+Proof. intros []; (split; [vm_compute; reflexivity | split; vm_compute; reflexivity]). Qed.
 
 (* [comment removed for export] *)
 Definition mc_store : sentry := SE (SA (EVar 0) (-384)) 8 (EVar 7).   (* [comment removed for export] *)
@@ -53,10 +71,18 @@ Definition knB2 : list kentry := Eval vm_compute in fst (fst (carry [mc_store] k
 Definition srC0 : list expr := Eval vm_compute in sr_after_call_j srB (map ridx callee_kept) 38.
 
 (* [comment removed for export] *)
-Definition ssC0 : sym_state := SS 0x98a8c srC0 [] knB2 70.
-Definition rC := Eval vm_compute in run scr0 ssC0.
-Definition srC : list expr := Eval vm_compute in s_regs (fst (fst rC)).
-Definition knC : list kentry := Eval vm_compute in kn_after rC knB2.
+(* LPS 727298f3: block C continues musl's auxv walk past pair 25 too, so it is run per CONFIG_RSEQ
+   value as block B is; [rC_rseq_free] gives the common end. *)
+Definition ssC0r (r : bool) : sym_state := SS 0x98a8c srC0 [] (knB2 ++ kn_tail r) 70.
+Definition rCt := Eval vm_compute in run scr0 (ssC0r true).
+Definition rCf := Eval vm_compute in run scr0 (ssC0r false).
+Definition srC : list expr := Eval vm_compute in s_regs (fst (fst rCf)).
+Definition knC : list kentry := Eval vm_compute in removelast (kn_after rCf (knB2 ++ kn_tail false)).
+Lemma rC_rseq_free : forall r : bool,
+  run scr0 (ssC0r r) = (if r then rCt else rCf)
+  /\ sr_upd (s_regs (fst (fst (if r then rCt else rCf)))) 12 (ELit 0) = sr_upd srC 12 (ELit 0)   (* a2 alone differs: the walk's pointer *)
+  /\ kn_after (if r then rCt else rCf) (knB2 ++ kn_tail r) = knC ++ kn_tail r.
+Proof. intros []; (split; [vm_compute; reflexivity | split; vm_compute; reflexivity]). Qed.
 
 (* [comment removed for export] *)
 Definition b_expr : expr := EVar 70.
@@ -105,8 +131,10 @@ Definition knG : list kentry := Eval vm_compute in kn_after rG knG0.
 (* [comment removed for export] *)
 Lemma itinerary_ok :
   (s_pc (fst (fst rA)), snd (fst rA)) = (0xa7638%Z, [])
-  /\ (s_pc (fst (fst rB)), snd (fst rB)) = (0xa6728%Z, [])
-  /\ (s_pc (fst (fst rC)), snd (fst rC)) = (0x98b54%Z, [])
+  /\ (s_pc (fst (fst rBt)), snd (fst rBt)) = (0xa6728%Z, [])
+  /\ (s_pc (fst (fst rBf)), snd (fst rBf)) = (0xa6728%Z, [])
+  /\ (s_pc (fst (fst rCt)), snd (fst rCt)) = (0x98b54%Z, [])
+  /\ (s_pc (fst (fst rCf)), snd (fst rCf)) = (0x98b54%Z, [])
   /\ (s_pc (fst (fst rD)), snd (fst rD)) = (0x98b78%Z, [])
   /\ (s_pc (fst (fst rE)), snd (fst rE)) = (0x9a1ec%Z, [SCBr true BC_NE b_expr (EAlu ALU_ADD b_expr (ELit 8192))])
   /\ (s_pc (fst (fst rF)), snd (fst rF)) = (0x9ba34%Z, [])

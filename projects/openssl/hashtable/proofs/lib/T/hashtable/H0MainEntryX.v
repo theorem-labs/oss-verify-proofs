@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the exec environment's values take the process input). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -24,17 +25,17 @@ Definition kn_exec : list kentry := Eval vm_compute in (kn_main_noblob ++ kn_rnd
 Definition ENVX (a0s path : list byte) (rdraw : EntryDraw) (vals : list word) : env :=
   Env (vals_ev vals) (blobs_ev (blobs0 a0s path rdraw)).
 Definition valsX (sp0 : word) (a0s path : list byte) (envv : list (list byte)) (rdraw : EntryDraw) (tid : word)
-    (regs0 : bvmap 5 word) : list word :=
-  vals0 sp0 a0s path envv tid regs0 ++ [rndw0 rdraw; rndw1 rdraw; can rdraw].
+    (regs0 : bvmap 5 word) (inp : ProcInput) : list word :=
+  vals0 sp0 a0s path envv rdraw tid regs0 inp ++ [rndw0 rdraw; rndw1 rdraw; can rdraw].
 
-Lemma valsX_length : forall sp0 a0s path envv rdraw tid regs0, length (valsX sp0 a0s path envv rdraw tid regs0) = 41%nat.
+Lemma valsX_length : forall sp0 a0s path envv rdraw tid regs0 inp, length (valsX sp0 a0s path envv rdraw tid regs0 inp) = 41%nat.
 Proof. intros. unfold valsX, vals0. rewrite !length_app, junk_vals_length. reflexivity. Qed.
 
-Lemma regs_exec_of_main : forall sp0 a0s path envv rdraw tid regs0,
-  regs_ok (E0 sp0 a0s path envv rdraw tid regs0) sr_main regs0 ->
-  regs_ok (ENVX a0s path rdraw (valsX sp0 a0s path envv rdraw tid regs0)) sr_main regs0.
+Lemma regs_exec_of_main : forall sp0 a0s path envv rdraw tid regs0 inp,
+  regs_ok (E0 sp0 a0s path envv rdraw tid regs0 inp) sr_main regs0 ->
+  regs_ok (ENVX a0s path rdraw (valsX sp0 a0s path envv rdraw tid regs0 inp)) sr_main regs0.
 Proof.
-  intros sp0 a0s path envv rdraw tid regs0 HR. unfold ENVX, valsX, E0 in *.
+  intros sp0 a0s path envv rdraw tid regs0 inp HR. unfold ENVX, valsX, E0 in *.
   apply env_app_regs; [|exact HR]. unfold vals0. rewrite length_app, junk_vals_length. vm_compute. reflexivity.
 Qed.
 
@@ -58,14 +59,14 @@ Proof.
   rewrite <- (Nat2Z.id j) at 2. apply Hb. lia.
 Qed.
 
-Lemma know_exec_of_main : forall sp0 a0s path envv rdraw tid regs0 mem,
-  know_ok RSEGS (E0 sp0 a0s path envv rdraw tid regs0) mem kn_main ->
-  know_ok RSEGS (ENVX a0s path rdraw (valsX sp0 a0s path envv rdraw tid regs0)) mem kn_exec.
+Lemma know_exec_of_main : forall sp0 a0s path envv rdraw tid regs0 inp mem,
+  know_ok RSEGS (E0 sp0 a0s path envv rdraw tid regs0 inp) mem kn_main ->
+  know_ok RSEGS (ENVX a0s path rdraw (valsX sp0 a0s path envv rdraw tid regs0 inp)) mem kn_exec.
 Proof.
-  intros sp0 a0s path envv rdraw tid regs0 mem HK.
-  set (E := E0 sp0 a0s path envv rdraw tid regs0) in HK.
-  set (E' := ENVX a0s path rdraw (valsX sp0 a0s path envv rdraw tid regs0)).
-  assert (HLv : length (vals0 sp0 a0s path envv tid regs0) = 38%nat)
+  intros sp0 a0s path envv rdraw tid regs0 inp mem HK.
+  set (E := E0 sp0 a0s path envv rdraw tid regs0 inp) in HK.
+  set (E' := ENVX a0s path rdraw (valsX sp0 a0s path envv rdraw tid regs0 inp)).
+  assert (HLv : length (vals0 sp0 a0s path envv rdraw tid regs0 inp) = 38%nat)
     by (unfold vals0; rewrite length_app, junk_vals_length; reflexivity).
   (* [comment removed for export] *)
   assert (HK1 : know_ok RSEGS E' mem kn_main_noblob).
@@ -85,13 +86,13 @@ Proof.
   destruct Brnd as (Fr & Lr & Br). destruct Bcan1 as (F1 & L1 & B1). destruct Bcan2 as (F2 & L2 & B2).
   assert (Ev4 : ev E' 4 = ev E 4) by reflexivity.
   assert (E38 : ev E' 38 = rndw0 rdraw).
-  { unfold E', ENVX, valsX. cbn [ev]. replace 38%nat with (length (vals0 sp0 a0s path envv tid regs0) + 0)%nat by (rewrite HLv; reflexivity).
+  { unfold E', ENVX, valsX. cbn [ev]. replace 38%nat with (length (vals0 sp0 a0s path envv rdraw tid regs0 inp) + 0)%nat by (rewrite HLv; reflexivity).
     rewrite vals_ev_app_r. reflexivity. }
   assert (E39 : ev E' 39 = rndw1 rdraw).
-  { unfold E', ENVX, valsX. cbn [ev]. replace 39%nat with (length (vals0 sp0 a0s path envv tid regs0) + 1)%nat by (rewrite HLv; reflexivity).
+  { unfold E', ENVX, valsX. cbn [ev]. replace 39%nat with (length (vals0 sp0 a0s path envv rdraw tid regs0 inp) + 1)%nat by (rewrite HLv; reflexivity).
     rewrite vals_ev_app_r. reflexivity. }
   assert (E40 : ev E' 40 = can rdraw).
-  { unfold E', ENVX, valsX. cbn [ev]. replace 40%nat with (length (vals0 sp0 a0s path envv tid regs0) + 2)%nat by (rewrite HLv; reflexivity).
+  { unfold E', ENVX, valsX. cbn [ev]. replace 40%nat with (length (vals0 sp0 a0s path envv rdraw tid regs0 inp) + 2)%nat by (rewrite HLv; reflexivity).
     rewrite vals_ev_app_r. reflexivity. }
   assert (Lf : length (firstn 8 (rnd16 rdraw)) = 8%nat) by (rewrite length_firstn; lia).
   assert (Ls : length (skipn 8 (rnd16 rdraw)) = 8%nat) by (rewrite length_skipn; lia).

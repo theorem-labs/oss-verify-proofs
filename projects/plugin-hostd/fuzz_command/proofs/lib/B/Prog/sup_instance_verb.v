@@ -3,18 +3,19 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk of sup_instance_verb (plugin-hostd/fuzz_command, image
    fuzz_command.asan-ubsan, entry BASE + AF_sup_instance_verb = 0x8b8f8, 141 instructions): it proves
-   `tsup_instance_verb_spec` (lib/B/Prog/sup_instance_verb_c.v, the frozen statement of a working branch 707acd856cb,
-   byte-identical on the B base fc8bcbd8b42 this walk builds on) in the form of
-   cgif_file_fuzzer's per-function walks, after lib/A/Prog/answer_code.v (a working branch 2ba4488ce71: a
+   `tsup_instance_verb_spec` (lib/B/Prog/sup_instance_verb_c.v, the frozen statement of a working branch,
+   byte-identical on the B base this walk builds on) in the form of
+   cgif_file_fuzzer's per-function walks, after lib/A/Prog/answer_code.v (a working branch: a
    class-N side-stack frame taken by __asan_stack_malloc_N, its header and shadow, and its release by the flag
-   store) and lib/B/Prog/socket_send.v (a working branch a470f91dbfb: the B kit's runs, calls and
-   return). It is the B re-walk of the ASan walk lib/A/Prog/sup_instance_verb.v (a working branch
-   2beecf4cd76), at B's addresses and B's shape: B calls record() and arg_s() where A inlined record(), and
+   store) and lib/B/Prog/socket_send.v (a working branch: the B kit's runs, calls and
+   return). It is the B re-walk of the ASan walk lib/A/Prog/sup_instance_verb.v (a working branch),
+   at B's addresses and B's shape: B calls record() and arg_s() where A inlined record(), and
    inlines arg_i (the snprintf of the ledger into the class-0 side-stack frame), and it calls answer and releases
    its frame instead of A's tail jump. The function has no ASan report call; its two UBSan trap branches (0x8ba50
    `bltu s4,s3` and 0x8ba60 `beqz a0`, both of `line += strspn(line, " \t")`, both to the unimp at 0x8bb28) are
    refuted where the walk meets them, by sivb_br_8ba50 and sivb_br_8ba60 (sup_instance_verb_aux.v) from the line's
    block premise and strspn's count <= |line|. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -71,7 +72,7 @@ Variable B : asyms.
 Variable MT : ameter_ops.
 #[local] Notation RLO := CMD_RLO.
 #[local] Notation RHI := CMD_RHI.
-(* the statement's Section hypotheses (lib/B/Prog/sup_instance_verb_c.v on a working branch 357b1f0783f), verbatim *)
+(* the statement's Section hypotheses (lib/B/Prog/sup_instance_verb_c.v on a working branch), verbatim *)
 Hypothesis TRECORD : forall fx0 : YK11.FPState, @trecord_spec fx0 rc SK PI B MT.
 Hypothesis TARG_LINE : forall fx0 : YK11.FPState, @targ_line_spec fx0 rc SK PI B MT.
 Hypothesis TARG_S : forall fx0 : YK11.FPState, @targ_s_spec fx0 rc SK PI B MT.

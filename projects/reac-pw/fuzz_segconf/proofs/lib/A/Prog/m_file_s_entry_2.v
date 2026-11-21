@@ -3,14 +3,15 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the first segment of check_reply's walk (fuzz_command.asan, 0x86d78), from the
    entry to the memchr call 0x86ef8 (cr_s1 : CR_MC_stmt -> CR_ENTRY_stmt, lib/A/Prog/check_reply_m.v), ported from
-   proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v (cgif_close) at
-   c8557374ad2e, with the class-1 side-stack frame steps of A/ACa2.v (cgif_raw_addframe) and A/AChf.v (flushFrame):
+   proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v (cgif_close),
+   with the class-1 side-stack frame steps of A/ACa2.v (cgif_raw_addframe) and A/AChf.v (flushFrame):
    the entry seed cr_entry (check_reply_k.v); a token run over the prologue to the call of __asan_stack_malloc_1; the
    call through aj_stack_malloc_atS; the state after it (the kept stack and GOT regions, the frame F as a0's atom 46,
    fresh atoms 58 = F's flag cell and 59 = F's shadow, the frame's header, tail and shadow, g_rec's GOT word and
    fields, the reply's NUL byte); a plain run over the frame set-up; the frame's shadow made read-only and a token run
    over the inline checks #1..#4 to 0x86ef8; there the registers and the regions' fields give cr_mid and cr_regs_at. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_reply_s1.v, with its module paths, module names and numbers changed; 375 of its 436 lines of code are new or changed and 466 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* S_MF_ENTRY, part 2: m_file's walk on fuzz_segconf.asan (image A, m_file at 0x85ebc) from the entry to the inner
    cut ENT_LBL at the label test 0x85ff4 (m_file_s_entry_c.v), lemma mf_entry_walk. From the entry seed
    (m_file_s_entry_1.v, mf_entry_seed): the prologue run 0x85ebc-0x85f2c, whose `beqz` on the use-after-return
@@ -19,7 +20,7 @@
    it); the frame's atoms, facts and regions; the run 0x85f34-0x85ff0 that writes the frame header and its 16
    shadow bytes; and the facts ENT_LBL asks, read back from the symbolic state (registers, low.i's shadow, the
    saved registers, the flag pointer, the mconf block's bytes).
-   A lane of the G2 walk owner. Closed against G2 FINAL (the image-A owner's contracts 6f783602b5e3). *)
+   A lane of the G2 walk owner. Closed against G2 FINAL (the image-A owner's contracts). *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -135,7 +136,7 @@ cbn zeta in UU. destruct UU as (U2 & U33 & U10 & U11 & U34 & U35 & U36 & U37 & U
 set (E := MfE (mv_regs v) (as_uar_cell B) (mc_gen (mv_mc v)) (mf_b0 (mv_s v)) (mf_lptr (mv_lp v) (mv_lab v)))
   in *.
 assert (HEI : img_env VAL A_LIM E) by (subst E; unfold MfE; apply Eimg_env).
-(* the seed is at this file's ambient FP state; the statement is at fx0 (PaFx.v:74) *)
+(* the seed is at this file's ambient FP state; the statement is at fx0 (PaFx.v:75) *)
 pose proof (st_ok_pi_restrict_xfx _ fx0 _ _ _ _ _ _ _ _ _ HS) as HS0. clear HS. rename HS0 into HS.
 (* the run lemmas at fx0, the FP state of the statement *)
 pose (RUN0 := paj_run (fx := fx0) B LAWS).

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the state invariants take the launch record [LaunchX], and the argument area is read from it). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -37,11 +38,12 @@ Section FeHole.
   Variables argv envp : list (list byte).
   Variable fs : Fs.Fs.
   Variables uid hw : word.
+  Context {L : LaunchX}.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Let c := content_of argv fs.
-  #[local] Notation SV := (SINVm HAPH sp rdraw brk0 argv envp uid hw c).
-  #[local] Notation argH := (argH0 HAPH sp rdraw argv envp uid hw).
+  #[local] Notation SV := (SINVm HAPH sp rdraw brk0 argv envp uid hw L c).
+  #[local] Notation argH := (argH0 sp rdraw argv envp (lx_kb L) (lx_execfn L)).
   #[local] Notation ISP := (bv_unsigned sp).
 
   Theorem fe_hole_k6os : HAChain.fx_hole SV argH ISP fs nk6os_tfe nk6osfee.
@@ -49,10 +51,10 @@ Section FeHole.
     pose proof (fx_hole_chk CxRel.cfg0 HASEGS IM code (build_code_ok HASEGS fe_pcs code code_eq)
                   (mk_fimage_ok HASEGS IM IM_eq) (mk_fimage_wr_ok HASEGS IM IM_eq)
                   HAT AsanInit.LIMIT SV argH ISP fs hat_in_hull hat_hull_ok
-                  (argH0_high HAPH sp rdraw argv envp uid hw Hsp Hva) APC.NX0 eq_refl
-                  (argH0_agree HAPH sp rdraw argv envp uid hw)
-                  (SINVm_agree HAPH sp rdraw brk0 argv envp uid hw c)
-                  (SINVm_frame HAPH sp rdraw brk0 argv envp uid hw c)
+                  (argH0_high sp rdraw argv envp (lx_kb L) (lx_execfn L) Hsp Hva) APC.NX0 eq_refl
+                  (argH0_agree sp rdraw argv envp (lx_kb L) (lx_execfn L))
+                  (SINVm_agree HAPH sp rdraw brk0 argv envp uid hw L c)
+                  (SINVm_frame HAPH sp rdraw brk0 argv envp uid hw L c)
                   TT 1000%uint63 shapes [] [] START d bs BP 20 F' RS CNT VT END
                   fe_tr_check fe_side ltac:(lia) fe_run fe_end) as Hh.
     exact Hh.

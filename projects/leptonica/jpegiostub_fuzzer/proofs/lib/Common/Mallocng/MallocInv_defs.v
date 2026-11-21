@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (HeapTop's heap_resx, the launch's extra reservations (the vDSO/vvar pair); the reservation ledger res_ok, now VMok's vm_res). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -18,7 +19,10 @@ Local Open Scope Z_scope.
 (* [comment removed for export] *)
 Class HeapTop := {
   alloc_ceiling : Z;
-  alloc_ceiling_range : 0x7fff7f800000 <= alloc_ceiling <= 0x7fffff800000
+  alloc_ceiling_range : 0x7fff7f800000 <= alloc_ceiling <= 0x7fffff800000;
+  (** the reservations the launch appends after the image's, run-constant
+      ([State.init_reserved] appends the vDSO/vvar pair at 08b1429) *)
+  heap_resx : list (word * word)
 }.
 
 Section WithLayout.
@@ -613,6 +617,17 @@ Fixpoint maps_pw (l : list (word * word)) : Prop :=
 Definition mcov (l : list (word * word)) (x n : Z) : Prop :=
   exists b sz, In (b, sz) l /\ bv_unsigned b <= x /\ x + n <= bv_unsigned b + bv_unsigned sz.
 
+(** The reserved ledger is the image's reservations followed by the launch's
+    extra ones ([State.init_reserved] appends the vDSO/vvar pair at 08b1429:
+    at most two entries of at most 0x14000 bytes in all; the same shape as
+    the ASan runtime's [artm_res]), and every mapping is apart from the whole
+    ledger (a grant proves its range free of it, nothing widens a mapping).
+    [mprotect_spec]'s vDSO gate is discharged from the last part. *)
+Definition res_ok (h : VmMaps) : Prop :=
+  (vm_reserved h = segments_reserved ml_segs ++ heap_resx /\
+     (length heap_resx <= 2)%nat /\ live_bytes heap_resx <= 0x14000) /\
+  (forall b sz, In (b, sz) (vm_maps h) -> region_free (vm_reserved h) b sz = true).
+
 Record VMok (A : astate) (h : VmMaps) : Prop := {
   (* [comment removed for export] *)
   vm_grp : forall ma mt aib slots, a_meta A ma = Some mt -> mt_role mt = RGroup aib slots ->
@@ -631,7 +646,7 @@ Record VMok (A : astate) (h : VmMaps) : Prop := {
      map_contains (vm_noaccess h) (Z_to_bv 64 (a_ctx A KAareas)) (Z_to_bv 64 (4096 * a_ctx A KAac)) = true;
   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  vm_res : vm_reserved h = segments_reserved ml_segs;
+  vm_res : res_ok h;
   (* [comment removed for export] *)
   vm_brk_valid : 0 < bv_unsigned (vm_brk h) /\ bv_unsigned (vm_start_brk h) <= bv_unsigned (vm_brk h) /\
                  page_aligned (bv_unsigned (vm_brk h)) /\ bv_unsigned (vm_brk h) <= alloc_ceiling;

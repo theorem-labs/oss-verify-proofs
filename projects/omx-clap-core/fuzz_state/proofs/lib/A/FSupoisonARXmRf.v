@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGif1m.v (a working branch ced28ed2383, file sha256 a8ba029fc832) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; its 6 image addresses moved by code-verified function pairs (6 port_addr_check 16f8a030c869 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGif1m.v (a working branch, file sha256 a8ba029fc832) onto omx-clap-core/fuzz_state's asan image (unstripped fuzz_state.asan, sha256 7c4afaee248b); module paths changed; its 6 image addresses moved by code-verified function pairs (6 port_addr_check 16f8a030c869 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
 (* Modified by Theorem Labs, 2026-10: the instance's trace premise is fs's `fun tr S => tr_admit (as_universe B) S tr` (FS-INSTANCE.md 1.4, L; fs's YG07.malloc_ok takes tr_admit), and post_miss_cgif / post_miss_k_cgif / depot_miss_cgif take it at the entry state S0; depot_miss_cgif gives AGif1.depot_cgif its areq_ok premise by YG01.tr_admit_len (the depot premise does not read the state; FS-INSTANCE.md 2.1, if_depot_miss). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/AGif1m.v; 95 of its 188 lines of code are new or changed and 352 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_state image A: the ARU (any-user-poison) form of AGif1m.refill_cgif, the callee field [if_refill] of AIfaceM at
    fs's instance ARX_ARU (a Theorem Labs lane, 2026-10-29).
 
@@ -16,13 +17,13 @@
      forall B, TfibSyms B -> tfib_refill_specURaw B -> forall Up,
        FSupoisonARXmA.if_refill_t B (ARX_ARU im_segs B TFIB_INST Up) (aowned B) FS_rpreA qtight AFl1.refill_tree.
    [fs_refill_U_closed] is the same statement without the premise: FSupoisonAllocRt.tfib_refill_okU gives it once
-   FSupoisonAllocR.refill_leafU carries the raw conjunct (a working branch 8593de5d3aa).
+   FSupoisonAllocR.refill_leafU carries the raw conjunct (a working branch).
    FS_rpreA (lib/A/FSRealloc_rmodel.v:63) is AllocGcgif.rpre_cgif (lib/A/AllocGcgif.v:25) by its text,
-   aregime S /\ qmeter S.  Its proof [refill_aru] is AGif1m.refill_cgif's (lib/A/AGif1m.v:163-261) line for line; the
+   aregime S /\ qmeter S.  Its proof [refill_aru] is AGif1m.refill_cgif's (lib/A/AGif1m.v:164-262) line for line; the
    changed steps:
-   - AR is read on FSupoison.unpoison Up of each memory (FSupoison.ARU).  AR at the call-time memory (AGif1m.v:190-210)
+   - AR is read on FSupoison.unpoison Up of each memory (FSupoison.ARU).  AR at the call-time memory (AGif1m.v:191-211)
      moves across the unpoisoning pointwise (FSupoisonARXm.aview_unpoison_eq, unpoison_eq, apresent_unpoison_fwd);
-   - the refill's pre is FSupoisonAllocR.refill_preU: refill_pre at the unpoisoned call-time memory (AGif1m.v:211-225),
+   - the refill's pre is FSupoisonAllocR.refill_preU: refill_pre at the unpoisoned call-time memory (AGif1m.v:212-226),
      upoison_ok at the post-tick state (the tick keeps every block), and Up's shadow bytes at 247 in the call-time
      memory (they lie in the shadow band, below the stack window, where the call-time memory reads as the entry
      memory: FSupoisonARXm.ush_band);
@@ -31,26 +32,26 @@
      ones (FSupoisonARXm.aview_unpoison_off);
    - the post's presence: the refill's stack window is off Up (FSupoisonARXm.stack_off_ush,
      apresent_unpoison_bwd);
-   - errno (AGif1m.v:247-255) and the raw conjunct (AGif1m.v:258) read the premise's raw frame, as AGif1m reads
-     CLrefillR's (RAWF, AGif1m.v:230).
+   - errno (AGif1m.v:248-256) and the raw conjunct (AGif1m.v:259) read the premise's raw frame, as AGif1m reads
+     CLrefillR's (RAWF, AGif1m.v:231).
    No step reads as_dhash: the lift takes TfibSyms only (ts_tp, ts_errno), so it carries no
    (forall t, as_dhash B t = tfib_dhash t) premise.
 
    THE PREMISE [tfib_refill_specURaw] (the gap; a Theorem Labs lane owns the walk).  if_refill_t's post is AGif0n.rleaf
-   (lib/Reusable/AGif0n.v:254-269).  It carries a raw-memory frame (:266-267: mem' x = mem x off the owned bytes and
+   (lib/Reusable/AGif0n.v:255-270).  It carries a raw-memory frame (:266-267: mem' x = mem x off the owned bytes and
    the callee's stack window) and an aview frame that does not exclude errno (:263-264).
-   - AR side: CLrefill0.tfib_refill_specR (lib/A/CLrefill0.v:35-38).  Its leaf refill_leafR (:27-34) is refill_leaf
-     plus the raw frame; CLrefillR.tfib_refill_okR proves it, and AGif1m.refill_cgif reads it at AGif1m.v:230 (RAWF),
+   - AR side: CLrefill0.tfib_refill_specR (lib/A/CLrefill0.v:36-39).  Its leaf refill_leafR (:27-34) is refill_leaf
+     plus the raw frame; CLrefillR.tfib_refill_okR proves it, and AGif1m.refill_cgif reads it at AGif1m.v:231 (RAWF),
      :247-255 (errno, through rw_not_hidden) and :258 (the raw conjunct).
-   - U side: FSupoisonAllocRt.tfib_refill_okU (lib/A/FSupoisonAllocRt.v:889) proves FSupoisonAllocR.tfib_refill_specU
+   - U side: FSupoisonAllocRt.tfib_refill_okU (lib/A/FSupoisonAllocRt.v:890) proves FSupoisonAllocR.tfib_refill_specU
      (lib/A/FSupoisonAllocR.v:385-388).  Its leaf refill_leafU (:379-384) is FSupoisonU.acall_postU
      (lib/A/FSupoisonU.v:171-176): YG0d.acall_post's aview frame (lib/Reusable/YG0d.v:243-251) on the unpoisoned
      memories, which excludes ascratch (YG0d.v:216-217: the stack window and the errno cells), and no raw frame.
    - The walk has the raw frame and drops it: the B2 leaf FSupoisonAllocRt.LEAF_B2U destructs at_RET2's raw clause
-     MEQ' (lib/A/FSupoisonAllocRt.v:497) and concludes refill_leafU; the B3 leaves conclude LEAFQU :=
-     FSupoisonAllocR.refill_leafU (lib/A/FSupoisonAllocRf.v:930).
+     MEQ' (lib/A/FSupoisonAllocRt.v:498) and concludes refill_leafU; the B3 leaves conclude LEAFQU :=
+     FSupoisonAllocR.refill_leafU (lib/A/FSupoisonAllocRf.v:931).
    [tfib_refill_specURaw] is tfib_refill_specU with refill_leafU's text (FSupoisonAllocR.v:381-384) plus, as the LAST
-   conjunct inside its `exists regs' mem' md'`, the raw frame of CLrefill0.refill_leafR (CLrefill0.v:33-34) on the
+   conjunct inside its `exists regs' mem' md'`, the raw frame of CLrefill0.refill_leafR (CLrefill0.v:34-35) on the
    machine's (real) memory: the text of (internal path) (refill_leafU, a Theorem Labs lane 19:00Z),
    character for character.  Once FSupoisonAllocR.refill_leafU carries that conjunct, tfib_refill_specURaw B is
    FSupoisonAllocR.tfib_refill_specU B by conversion, and FSupoisonAllocRt.tfib_refill_okU closes it by one exact.
@@ -100,7 +101,7 @@ Local Open Scope am_scope.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
 (* 1. The missing U-raw refill contract: FSupoisonAllocR.refill_leafU / tfib_refill_specU (FSupoisonAllocR.v:379-388)*)
-(*    with the raw frame of CLrefill0.refill_leafR (CLrefill0.v:33-34) on the machine's memory as the last conjunct. *)
+(*    with the raw frame of CLrefill0.refill_leafR (CLrefill0.v:34-35) on the machine's memory as the last conjunct. *)
 (* ---------------------------------------------------------------------------------------------------------------- *)
 
 Section s.
@@ -159,7 +160,7 @@ set (S1 := set_nev (st_nev S0 + 1) S0).
 set (md1 := with_vm_backing (m_vm_lazy md0) mat md0).
 pose proof (AR_tick B ly S0 W (FSP.unpoison Up mem0) md0 HAR0 Hev) as HAR1. fold S1 in HAR1.
 pose proof (WfP_tick _ S0 (am_wf _ _ _ _ HARm0) Hev) as WfP1. fold S1 in WfP1.
-(* AR at the call-time memory read unpoisoned (AGif1m.v:190-210, each step through the pointwise unpoisoning) *)
+(* AR at the call-time memory read unpoisoned (AGif1m.v:191-211, each step through the pointwise unpoisoning) *)
 assert (HARc : AR tfibsegs B ly S1 W (FSP.unpoison Up mem) md1).
 { apply (AR_frame_law_ok tfibsegs B ly S1 W (FSP.unpoison Up mem0) md0 (FSP.unpoison Up mem) md1 HAR1).
   - intros a Ha Ho. apply (XM.aview_unpoison_eq tfibsegs (w_H W) Up mem0 mem a).
@@ -181,7 +182,7 @@ assert (HARc : AR tfibsegs B ly S1 W (FSP.unpoison Up mem) md1).
     unfold YG0d.w64, YG0n.w64 in *. apply XM.unpoison_eq. apply RAW1; rewrite unsigned_lit_small by exact Ha'.
     + clear - HB K1 Hlo. unfold kHighMemBeg, AFSTACK in *. lia.
     + clear - TH. unfold t_unwinding, kThreadObjSize in *. lia. }
-(* the refill's pre over U (FSupoisonAllocR.refill_preU): AGif1m.v:211-225 at the unpoisoned memory, U's invariants *)
+(* the refill's pre over U (FSupoisonAllocR.refill_preU): AGif1m.v:212-226 at the unpoisoned memory, U's invariants *)
 assert (PRE : FAR.refill_preU B ly S1 Up W regs mem md1 cl).
 { unfold FAR.refill_preU. split; [|split].
   - pose proof HAR0 as (_ & _ & [BUD _] & _).
@@ -262,9 +263,9 @@ Theorem fs_refill_U : forall B, TfibSyms B -> tfib_refill_specURaw B -> forall U
     AFl1.refill_tree.
 Proof. intros B TS HRU Up. exact (refill_aru B TS HRU Up). Qed.
 
-(* The closure: at a working branch 8593de5d3aa, FSupoisonAllocR.refill_leafU ends with RAW-TEXT.md's
+(* The closure: at a working branch, FSupoisonAllocR.refill_leafU ends with RAW-TEXT.md's
    refill conjunct (FSupoisonAllocR.v:386-388), so tfib_refill_specURaw B is FSupoisonAllocR.tfib_refill_specU B by
-   conversion and FSupoisonAllocRt.tfib_refill_okU (FSupoisonAllocRt.v:902) gives it. *)
+   conversion and FSupoisonAllocRt.tfib_refill_okU (FSupoisonAllocRt.v:903) gives it. *)
 Theorem fs_refill_U_closed : forall B, TfibSyms B -> forall Up,
   FSupoisonARXmA.if_refill_t B (XM.ARX_ARU ImgBase.im_segs B TFIB_INST Up) (aowned B) FSRealloc_rmodel.FS_rpreA qtight
     AFl1.refill_tree.

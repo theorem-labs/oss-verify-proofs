@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/YL0t.v, with its module paths changed; 2 of its 183 lines of code are new or changed and 2 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/Reusable/YL0t.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_frame; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_frame.lib. *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/Reusable/YL0t.v for libdiginet/fuzz_frame; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_frame.lib. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader conjunct of fdchan in the read-loop invariant; the read loop's environment without the a0 and path variables); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_frame.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -41,8 +42,8 @@ Lemma env_top_post : forall E k regs g, (1 <= k)%nat -> env_top E -> env_top (po
 Proof. intros E k regs g Hk H. eapply env_top_agree; [exact Hk | apply post_env_agree | exact H]. Qed.
 Lemma env_top_ewset : forall E n v, (n <> 0)%nat -> env_top E -> env_top (ewset E n v).
 Proof. intros E n v Hn H. unfold env_top. rewrite ew_ewset_other by lia. exact H. Qed.
-Lemma env_top_lp : forall sp tid a0 path inp data rnd J buf g len cap,
-bv_unsigned sp <= 2 ^ 47 -> env_top (E_lp sp tid a0 path inp data rnd J buf g len cap).
+Lemma env_top_lp : forall sp tid inp data rnd J buf g len cap,
+bv_unsigned sp <= 2 ^ 47 -> env_top (E_lp sp tid inp data rnd J buf g len cap).
 Proof. intros. unfold env_top. rewrite ew_lp. cbn. exact H. Qed.
 Ltac etop_sync HS HT :=
 lazymatch type of HS with
@@ -51,30 +52,32 @@ lazymatch type of HS with
 | _ => idtac
 end.
 Section b. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {LS : lib_shape}.
+(* 727298f3: [fdchan] also asks [m_channel_reader model = true] (Common/CatSim.v), so the
+   invariant carries it; every step below keeps it ([with_vmmaps], [os_upd]). *)
 Definition md_invX (fs : Fs) (md : Model) : Prop :=
 (forall k, fd_lookup (m_fds md) k = fd_lookup STDFDS k) /\
 fd_names_path (m_fds md) sink_path = false /\
-m_fs md = fs /\ Fs.fs_sorted fs = true.
+m_fs md = fs /\ Fs.fs_sorted fs = true /\ m_channel_reader md = true.
 Lemma md_invX_inv : forall fs md, md_invX fs md -> md_inv fs md.
 Proof.
-intros fs md (H1 & H2 & H3 & H4). unfold md_inv, fdchan. rewrite !H1. cbn. repeat split; try reflexivity; try discriminate. exact H3.
+intros fs md (H1 & H2 & H3 & H4 & H5). unfold md_inv, fdchan. rewrite !H1. cbn. repeat split; try reflexivity; try discriminate; try exact H5. exact H3.
 Qed.
 Lemma md_invX_ch1 : forall fs md, md_invX fs md -> fdchan (Z_to_bv 64 1) ch_stdout md.
 Proof. intros fs md H. exact (md_inv_ch1 _ _ (md_invX_inv _ _ H)). Qed.
 Lemma md_invX_fs : forall fs md, md_invX fs md -> m_fs md = fs.
 Proof. intros fs md (_ & _ & H & _). exact H. Qed.
 Lemma md_invX_sorted : forall fs md, md_invX fs md -> Fs.fs_sorted (m_fs md) = true.
-Proof. intros fs md (_ & _ & -> & H). exact H. Qed.
+Proof. intros fs md (_ & _ & -> & H & _). exact H. Qed.
 Lemma md_invX_names : forall fs md, md_invX fs md -> fd_names_path (m_fds md) sink_path = false.
 Proof. intros fs md (_ & H & _). exact H. Qed.
 Lemma md_invX_vm : forall fs md vm, md_invX fs md -> md_invX fs (with_vmmaps vm md).
-Proof. intros fs md vm (H1 & H2 & H3 & H4). unfold md_invX. autorewrite with model. repeat split; assumption. Qed.
+Proof. intros fs md vm (H1 & H2 & H3 & H4 & H5). unfold md_invX. autorewrite with model. repeat split; assumption. Qed.
 Lemma md_invX_ex : forall fs md md', md_invX fs md -> (exists vm, md' = with_vmmaps vm md) -> md_invX fs md'.
 Proof. intros fs md md' H [vm ->]. apply md_invX_vm. exact H. Qed.
 Lemma md_invX_of_post : forall inp md, valid_fs (in_fs inp) -> md_post inp md -> md_invX (in_fs inp) md.
 Proof.
-intros inp md Hv (_ & _ & Hfs & Hfds). unfold md_invX. rewrite Hfds. split; [reflexivity|]. split; [reflexivity|].
-split; [exact Hfs|]. destruct Hv as (Hs & _). exact Hs.
+intros inp md Hv ([_ [_ Hr]] & _ & Hfs & Hfds). unfold md_invX. rewrite Hfds. split; [reflexivity|]. split; [reflexivity|].
+split; [exact Hfs|]. destruct Hv as (Hs & _). split; [exact Hs | exact Hr].
 Qed.
 Lemma alloc_fd_aux_ext : forall f1 f2, (forall k, fd_lookup f1 k = fd_lookup f2 k) -> forall fuel c, alloc_fd_aux f1 c fuel = alloc_fd_aux f2 c fuel.
 Proof. intros f1 f2 H. induction fuel as [|fuel IH]; intros c; cbn; [reflexivity|]. rewrite H. destruct (fd_lookup f2 c); [apply IH | reflexivity]. Qed.
@@ -88,8 +91,9 @@ md_invX fs md ->
 sink_none src0_msyms mem' md' -> Fs.fs_sorted fs' = true ->
 md_invX fs' md'.
 Proof.
-intros fs md md' fs' mem' (H1 & H2 & H3 & H4) (vm' & fds' & pins' & -> & Hl) (_ & _ & Hn) Hs'.
-unfold md_invX. rewrite os_upd_fds, os_upd_fs in *. split; [intros k; rewrite Hl; apply H1|]. split; [exact Hn|]. split; [reflexivity | exact Hs'].
+intros fs md md' fs' mem' (H1 & H2 & H3 & H4 & H5) (vm' & fds' & pins' & -> & Hl) (_ & _ & Hn) Hs'.
+unfold md_invX. rewrite os_upd_fds, os_upd_fs in *. split; [intros k; rewrite Hl; apply H1|]. split; [exact Hn|]. split; [reflexivity|].
+split; [exact Hs' | exact H5].
 Qed.
 Lemma payload_len_length : forall data, 6 + config_len data <= dlen data -> payload_len data = Z.of_nat (length (payload data)).
 Proof. intros data H. symmetry. apply payload_length. unfold HDR_MIN. exact H. Qed.

@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset, the memnorm-keeping twin of the generic realloc(NULL, n) call rule
    aj_realloc_null_at_x, over YGcallRx.v's text, and of its cf lift arealloc_null_realizes_x_cf (both in
-   lib/A/Prog/TxPut102A_Rnull.v at ossv/recipes 87c4b944683b; this tree has only the twins below).
+   lib/A/Prog/TxPut102A_Rnull.v; this tree has only the twins below).
    rule 24: proves no function (kind: invariant lemma).
    1. THE LEAF (Section gr): malloc_leaf_x_keep is YGcallx.v's malloc_leaf_x with the memnorm keep
       `YAkMemnorm.memnorm segs mem -> YAkMemnorm.memnorm segs mem'` as the LAST conjunct, flat, after the raw frame: the

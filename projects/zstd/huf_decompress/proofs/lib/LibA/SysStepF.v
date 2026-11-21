@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (3 recorded proofs replaced by written proofs (implF_from_evtF, implF_post_evtF, implF_epost_evtF)). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -26,8 +27,7 @@ Notation implA segs RNG t Q ms := (@implF node segs (at_nodeA segs) fstepA _ RNG
 Lemma implF_from_evtF : forall {node : Type} segs (atn : node -> footprint -> machine_state -> Prop)
     (fst : node -> resp -> footprint -> footprint -> Prop) {R} RNG (t : itree node R) Q ms,
   evtF segs RNG (fun ms' => implF segs atn fst RNG t Q ms') ms -> implF segs atn fst RNG t Q ms.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SysStepF ()) [] "h03ms'h11Hh22H'h31Qh41Rh53RNGh63atnh73fsth82msh94nodeh:4segsh;1tp;1p;2p;9p;4p;<p200R0g0000R1p4p710p8P0g000fR2p4p710p8p203R3P2p4p7511110p8P3g001\R4p4p7511110p8g002Wj14TP1j23TP2l90Tg0037j41TP4l<2Tg003k#4f1R4g004jR2g005cR1p-0R5[[R6[f2R7g006jP5\2\2[[f5R5/34P6\7f7R6f3R8f9R9f8R:P6f6R;P5f4R<P8P7f0R=M90X01P=C1P9P:P6P;P5P<P8P7f:R7P9P:P6P;P5P<P8P=M90X01P4P=f;P7P9P:P6P;P5P<P=M90X01P=O1P=W2X01M<2W1X81W3W;X52X43W7W6W:X90o"). Qed.
+Proof. intros node segs atn fst R RNG t Q ms H. eapply implF_evtF; [exact H|]. intros ms' H'; exact H'. Qed.
 
 Ltac iprefix := apply implF_from_evtF.
 Ltac ihere := apply evtF_done.
@@ -221,7 +221,11 @@ Lemma implF_post_evtF : forall {node : Type} segs (atn : node -> footprint -> ma
   (forall r RNG' ms', Q' r RNG' ms' -> evtF segs RNG' (Q r RNG') ms') ->
   implF segs atn fst RNG t Q ms.
 Proof.
-ltac2:(KReplay.run1 (kr_t_SysStepF ()) [] "h04RNG'h13rsph21Qh32Q'h43RNGh52msh63ms1h73ms'h81rh91Hh:2H0h;2HQh<1th=1xh>2HFh?3Hath@2HkhA2IHhB1RhC3atnhD3fsthE1khF1nhG4nodehH4segshI2x0p;1p;2p;9p;4p;3p;7p;6p200R0g0000R1p4p710p8P0g000fR2p4p710p8p203R3g007]R4p4p7210p8P3P2p4p7511110p8g002Wj1;TP1j23TP2l90Tg0037j45Tg008Uj36Tg009Kj7:Tg00:Cj44Tg00;9j21Tg00;lR2j22Tg00<Gj48Tg00<bj77TP4j69Tg003k#;f1R4g004jR1g005cR5p-0R6[R7[R8[f2R9g006jR:P6\1\1[[f4R6f0R;'3f5R<P413<4f3R=P7^I1R7]=R>P8\6R?f:R@f9RAf8RBf7RCf6RDP=P6P4P;M90P<P9P4P;O3REf>RFP9PCP=P9O2RGP4C5[^75^01^8CRHf<RIf;RJP@PAPBP<PDP6P9M90[[^55]3]2^41W<P@PAPBPCPDP=A6@D6P4P;M90PJP<P=PDP<O2P6PDP<O2P9P4P6PCPDP;O3P9PBPCP4P;O4W:X75F:PIPJP@PAPBP<A6IBDP6P9M90eX;HW9X55X3?X2>X41X8413C=\:P7^=<R7P8\DR8PIPJP@PAPBP=P<P6O1P4P;M90f@R>P9PGP4C5\E^75^01^8AREPFf=RGPIPJP@P<PCPDO1P6P9M90[[^55]3]2^41\:PIPJP@PAPBP=PIPBPDP<C4P4P;M90PGP<PGPAPDP;O3RDPFPJP4PBP;O4R?fBRHfARKP>f?RLPFP4PJP9O1RMPC11=9RNM90[^01^1:'2X65PHPKP>PLPFP4PMPBPNM90\?^01^1:,2DX65P9P4PFP@PCP;O3PLPIP4PAP;O4RDfCR?PHPKP>PLP4PIP9O1RMPBPNM90[^01^1:'2X65P;O1P2PFP@PCP4O3P?PHPKP>PLP4PMPB1169M90\D^01^1:PLPJPBP9O3P>PGP4P@P;O4fDRDP?PHPKP>P4PGP9O1P@11<9M90[^01^1:'2P;P>PIPAP=O3PHPLP4PIP;O4fFRKfERMPDP?PHP4PLP9O1PJ11C9M90[^01^1:PHPFPJP<O3P?P>P4PGP;O4RHfGPKPMPDP?P4P>P9O1PG11B9R>M90[^01^1:P4PLP9P4PGPIP>P=P9P4P;O3PAO7X>HX01X1:C8W@W?P4P;O2n2001000000120000000W:X65F7PFPGPIPJP@P<PFP@PBPCC4P6P9M90eX;EW9X55X38X27X41WAWEXF<P;E9W<XB3WDWCWHXG0o"). Qed.
+  intros node segs atn fst R t; induction t as [r|n k IH]; intros RNG Q Q' ms H HQ; cbn in *.
+  - eapply evtF_cut; eauto.
+  - eapply evtF_mono; [exact H|]. intros ms1 [Hat Hk]. split; [exact Hat|].
+    intros rsp RNG' HF. eapply IH; eauto.
+Qed.
 
 Lemma implF_epost_evtF : forall {node : Type} segs (atn : node -> footprint -> machine_state -> Prop)
     (fst : node -> resp -> footprint -> footprint -> Prop) {A} (t : itree node (exc A)) RNG Q Q' ms,
@@ -229,7 +233,9 @@ Lemma implF_epost_evtF : forall {node : Type} segs (atn : node -> footprint -> m
   (forall a RNG' ms', Q' a RNG' ms' -> evtF segs RNG' (Q a RNG') ms') ->
   implF segs atn fst RNG t (epostF Q) ms.
 Proof.
-ltac2:(KReplay.run1 (kr_t_SysStepF ()) [] "p'0h04RNG'h13ms'h22Hph31ai001ah41Ah51Hh62HQh71Qh82Q'h93RNGh:3atnh;3fsth<2msh=4nodeh>1rh?4segsh@1thA1xhB2x0i011ep;1p;2p;9p;4p;5p;<p200R0g00=[R1p4p710p8P0g0000R2p4p710p8P0g000fR3p4p710p8p203R4P1p4p7511110p8P4P3p4p7511110p8P4g00>]R5p4p710p8g002Wj1;Tg00?TR6j14TP2j29TP5j23j51j42TP3l9:Tg0037j40Tg00@Lj16Tg00ADj58Tg00B=j25TP1l<7Tg003k#;f1R1g004jR3g005cR5p-0R2[R7[R8[f2R9g006jP2\3\3[[f4R2f0R:#4'9P7^B3^A9f3R7P8[f9R8f8R;f7R<f6R=f5R>#4P7P213>1P:M9:P>P9P1P:O3f=R?P9P<P7P9O2P1C0[^15^03^3=f;R@f:RAP8P;%4<RBP=P>13<213<7P9P1P6P;P@P<P9P1P:D1f?P9f<R<P8P7P9C2P1C0[^15^03P:PAP=%6AP1P:D1f>R6P9P@P;%6@P9C2R@P1g00C5D8P6P9P@P1C0eW2X15X03P<P;15<9P1P:D1P=P7P9P1P:O4f@P9P?PA15?7P9C2P1C0eW2X15X03X38P:O1n10110100020010100X>BM<7W6W5X<5W8W7X93W@X44W;W:W?X=0o"). Qed.
+  intros node segs atn fst A t RNG Q Q' ms H HQ. eapply implF_post_evtF; [exact H|].
+  intros [|a] RNG' ms' Hp; cbn in *; [apply evtF_done; exact I | apply HQ; exact Hp].
+Qed.
 
 (* [comment removed for export] *)
 Tactic Notation "icall" uconstr(SPEC) :=

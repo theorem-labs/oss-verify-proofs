@@ -21,8 +21,8 @@ Theorem hu_combine : forall KT,
 Proof.
   intros KT HP HU. apply ShapeCfg.shape_cfg_universal. intros en_s en_t inp Hs Ht Hv _.
   exists (spec_g KT (in_argv inp) (in_fs inp)). split.
-  - exact (HtHaltsLib.full_stmt_init_cfg _ _ _ _ en_s inp HP Hs Hv).
-  - exact (HtHaltsLib.full_stmt_init_cfg _ _ _ _ en_t inp HU Ht Hv).
+  - exact (HtHaltsLib.full_stmt_init_cfg ConeCfg.CFG P0 ShippedBudgets.lim_source KT en_s inp eq_refl HP Hs Hv).
+  - exact (HtHaltsLib.full_stmt_init_cfg ConeCfg.CFG U0 ShippedBudgets.lim_target KT en_t inp eq_refl HU Ht Hv).
 Qed.
 
 Theorem hu_base : H0FiTail.leaf_tail_stmt HTSpec.t_target_ht -> hu_full_stmt ->

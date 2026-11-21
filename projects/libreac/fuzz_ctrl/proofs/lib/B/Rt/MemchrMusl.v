@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: cgif_file_fuzzer lib/A/AE3a.v's walk of musl memchr, generalised to any byte c in a1 and to a window that may hold no c at all (the count runs out); AE3a's fetch/decode lemmas, constants and step tactics are used as AE3a states them. *)
-(* Modified by Theorem Labs, 2026-10: relocated from libreac/fuzz_disco lib/A/Rt/MemchrMusl.v at 3b8a77d146c to libreac/fuzz_ctrl's ASan build; module paths only, the walk names musl memchr through tfib_A_musl_memchr and the splat constants through their tfib_D_const_ names. *)
+(* Modified by Theorem Labs, 2026-10: relocated from libreac/fuzz_disco lib/A/Rt/MemchrMusl.v to libreac/fuzz_ctrl's ASan build; module paths only, the walk names musl memchr through tfib_A_musl_memchr and the splat constants through their tfib_D_const_ names. *)
 (* Modified by Theorem Labs, 2026-10: the image-B twin of this branch's lib/A/Rt/MemchrMusl.v, made from it by moving every address to libreac/fuzz_ctrl's asan-ubsan build (v1.9.0) by symbol (both images' nm; every function compared with elfdis.py --diff, level 3 "identical except PC-relative fields"), and by taking the core modules from lib/Reusable's Y twins. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

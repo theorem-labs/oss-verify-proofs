@@ -3,13 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: the walk of reac_box_catalogue on fuzz_segconf.asan-ubsan (image B, pin sha256
    c3796c0b38f3, twin 80e82127e8ca; entry 0x8a8a0, 84 bytes, 21 instructions, a 16-byte frame, no side-stack
    frame): reac_box_catalogue_contract of lib/B/Prog/reac_box_catalogue_c.v (image B's copy of the image-A owner's FINAL
-   text at 6f783602b5e3) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
+   text) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
    entry, SRr of apost_base at the return, over `Context {PI : PAImg seg_listing}` of image B's listing,
    lib/B/Prog/SegPa.v).
-   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane, commit
-   434ade288123, both arms): the same entry seeds, token runs and return steps over image B's listing modules and
+   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane,
+    both arms): the same entry seeds, token runs and return steps over image B's listing modules and
    B's kit copies. The UBSan alignment check is read from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_catalogue.v
-   at origin/ossv/recipes 3abc3740de97 (the same image-B code but 4 pc-relative words; caller-journal form, not
+   (the same image-B code but 4 pc-relative words; caller-journal form, not
    copied), whose token run decides it the same way.
    Image B's code differs from image A's by two instructions: `andi a1,a0,7` (0x8a8ac) and `bnez a1,0x8a8ec`
    (0x8a8b0) to `unimp` (0x8a8ec), the UBSan alignment check of the 8-byte store through c.
@@ -37,13 +37,14 @@
    definitions (SegInstA's names at image B): SegInstB.STK_reac_box_catalogue and SegInstB.catA, tied to this walk
    by the lemmas STK_reac_box_catalogue_B (the value 16) and catA_B (listing object 77 of B's seg_objs). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/reac_box_catalogue.v, with its module paths and module names changed; 387 of its 459 lines of code are new or changed and 381 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_segconf_ignored on fuzz_segconf image B (fuzz_segconf.asan-ubsan, entry 0x89b78 = BASE +
    AF_reac_segconf_ignored, 26 instructions, 16-byte frame, no side-stack frame): the walk that proves its contract
-   (lib/B/Prog/reac_segconf_ignored_c.v, image B's copy of the FINAL contract 6f783602b5e3). It is the image-B port of
-   lib/A/Prog/reac_segconf_ignored.v (commit 5be18a4b2783), written from that walk's step plan
-   (plan-reac_segconf_ignored.md (image A's walk record) at da1732b794c6) before the A walk's text landed: the Rocq text is
-   in the form of image A's closed walk of the sibling query lib/A/Prog/reac_segconf_role.v
-   (commit 3e8a17ad1bc0): an entry seed, the shadow-token executor (paj_run_tok,
+   (lib/B/Prog/reac_segconf_ignored_c.v, image B's copy of the FINAL contract). It is the image-B port of
+   lib/A/Prog/reac_segconf_ignored.v, written from that walk's step plan
+   (plan-reac_segconf_ignored.md (image A's walk record)) before the A walk's text landed: the Rocq text is
+   in the form of image A's closed walk of the sibling query lib/A/Prog/reac_segconf_role.v:
+   an entry seed, the shadow-token executor (paj_run_tok,
    psrr_branch_tok), the call of reac_segconf_find through its contract (PaNoChain.cl_callS_wide) and the return
    through paj_ret_at. The landed A walk keeps the same symbolic states (the field region on atom 44 at [24, 28)
    with the literal flag, its shadow entry, atom 44's fact).

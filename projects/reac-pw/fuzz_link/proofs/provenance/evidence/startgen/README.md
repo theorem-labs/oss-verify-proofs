@@ -34,3 +34,5 @@ startgen/AF0m.owned-with-bss-globals.v, sha256 855f0996314d4c751b7187c0d57f151db
 `../af/` holds the script checks of lib/A/AStackApi.v (af_stack_classes.py with its output and two controls;
 bypath_check.py with its output and control). lib/A/AStackApi.v (lines 4 and 30) cites them at `provenance/af/`; the
 files in `../af/` are byte-identical copies of those.
+
+The internal commit ids in these files were replaced by public commits or removed, so the output of `run.sh` differs from the shipped tables in those columns only.

@@ -2,12 +2,18 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Trevor Hansen, 2026-11: module names. *)
+(* Modified by Theorem Labs, 2026-11: ported toward LPS 727298f3 by the change of the same file of cgif/cgif_rgb_fuzzer, its addresses relocated to this unit's binaries, and the three-part node_ok of YK15 in rz_split. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.libtasn1.asn1_get_length_der_fuzzer.lib.C Require Import YK11 YK0s YK0j YK15 YN06 YN02 YQ0b.
 From OSSVerify.Proofs.libtasn1.asn1_get_length_der_fuzzer.lib.C Require Import YP0j YP0g YP0r.
 From OSSVerify.Proofs.libtasn1.asn1_get_length_der_fuzzer.lib.C Require Import YN05.
+(* #38: the auxv claim table and [AUXSZ] live with the PLAN that uses them
+   (YK0a's [APC]), so this file's mirror of them cannot drift from it.  [YK0a]'s
+   own imports are [YK11 YK0d YK0e], none of which reaches this file, so the
+   edge is acyclic. *)
+From OSSVerify.Proofs.libtasn1.asn1_get_length_der_fuzzer.lib.C Require Import YK0a.
 From OSSVerify.Proofs.libtasn1.asn1_get_length_der_fuzzer.lib.C Require Export YN0b.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
@@ -62,19 +68,33 @@ Definition word_mem (segs : list Segment) (mem : word -> option byte) (a v : Z) 
 forall k, (k < 8)%nat -> mbyte segs mem (a + Z.of_nat k) = Some (Z_to_bv 8 (le_byte v 8 k)).
 Definition in_img (B : malloc_syms) (a : Z) : Prop := ms_segs B <> [] /\ exists s, In s (segments_reserved (ms_segs B)) /\
 bv_unsigned (fst s) <= a < bv_unsigned (fst s) + bv_unsigned (snd s).
-Definition AUXV_TYPES : list Z := [3; 4; 5; 16; 6; 11; 12; 23; 25; 0].
+(* The auxv mirror: what [get_random_secret] reads of the vector.  musl walks
+   it from pair 0 to AT_NULL reading every KEY, and reads AT_RANDOM's VALUE, so
+   this states every pair's key ([APC.AUXV_KEYS r], pair k at byte [16 * k])
+   and AT_RANDOM's value word, 392 = 16 * 24 + 8, in both CONFIG_RSEQ cases.
+   It was ten pairs at [16 * k] and AT_RANDOM at 136, the pre-revision
+   ten-pair layout.
+
+   The flag is EXISTENTIAL here rather than a parameter, which keeps this
+   predicate's arity: none of the sites that carry the hypothesis
+   [st_init_done A = false -> auxv_pre B (ly_sec L) ...] needs to know which
+   build it is.  What the predicate says is "the memory holds one of the two
+   real auxv layouts".  The span bound is written at [APC.AUXSZ 1], the LARGER
+   of the two layouts, so it is rseq-free and the stronger of the two bounds;
+   it was 160 = 16 * 10. *)
 Definition auxv_pre (B : malloc_syms) (sec : Z) (lo : Z) (mem : word -> option byte) : Prop :=
-exists av ar,
+exists av ar r,
+0 <= r <= 1 /\
 word_mem (ms_segs B) mem (ms_libc B + 8) av /\
-(forall k, (k < 10)%nat -> word_mem (ms_segs B) mem (av + 16 * Z.of_nat k) (nth k AUXV_TYPES 0)) /\
-word_mem (ms_segs B) mem (av + 16 * 8 + 8) ar /\
+(forall k, (k < length (APC.AUXV_KEYS r))%nat -> word_mem (ms_segs B) mem (av + 16 * Z.of_nat k) (nth k (APC.AUXV_KEYS r) 0)) /\
+word_mem (ms_segs B) mem (av + APC.AT_RANDOM_VOFF) ar /\
 word_mem (ms_segs B) mem (ar + 8) sec /\
-4096 <= av /\ av + 160 <= 2 ^ 63 /\ 4096 <= ar /\ ar + 16 <= 2 ^ 63 /\
+4096 <= av /\ av + APC.AUXSZ 1 <= 2 ^ 63 /\ 4096 <= ar /\ ar + 16 <= 2 ^ 63 /\
 lo <= av /\ lo <= ar.
 Lemma auxv_pre_mono : forall B sec lo lo' mem, lo' <= lo -> auxv_pre B sec lo mem -> auxv_pre B sec lo' mem.
 Proof.
-intros B sec lo lo' mem Hle (av & ar & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10).
-exists av, ar. repeat (split; [assumption|]). split; lia.
+intros B sec lo lo' mem Hle (av & ar & r & Hr & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10).
+exists av, ar, r. repeat (split; [assumption|]). split; lia.
 Qed.
 Definition static_owned (B : malloc_syms) (a : Z) : Prop :=
 (ms_lock B <= a < ms_lock B + 4) \/
@@ -223,11 +243,11 @@ node_ok segs c I (fun _ => []) nx ->
 (forall i, bit i = 1 -> realizes segs (nx i) TB) ->
 realizes segs c (t_alt2 TA TB).
 Proof.
-intros c I nx bit TA TB [Hsnd Hcmp] Hbits [ia Hia] [ib Hib] HA HB.
+intros c I nx bit TA TB [Hsnd [Hcmp Hrob]] Hbits [ia Hia] [ib Hib] HA HB.
 set (IA := {i : I | bit i = 0}). set (IB := {i : I | bit i = 1}).
 set (nx' := fun j : IA + IB => match j with inl (exist _ i _) => nx i | inr (exist _ i _) => nx i end).
 apply (rz_alt2 segs c IA IB nx' TA TB (exist _ ia Hia) (exist _ ib Hib)).
-- split.
+- split; [| split; [| exact Hrob]].
 + intros [[i Hi]|[i Hi]]; cbn; apply Hsnd.
 + intros e st Hst. destruct (Hcmp e st Hst) as (i & -> & ->).
 destruct (Hbits i) as [Hi|Hi].
@@ -269,9 +289,11 @@ intros i Hi; (eapply IH; [rewrite <- Hi; apply Hc | apply Hs; exact I | | | appl
 destruct Hj as [Hj0 Hj1]. destruct Hg as (G & Hg0 & Hg1).
 eapply rz_split; [exact Hn | exact Hbits | exact H0 | apply H1; exact G | |];
 intros i Hi; (eapply IH; [rewrite <- Hi; apply Hc | apply Hs; exact I | | | apply HKz; auto]); assumption.
-+   destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hb).
-apply (rz_silent_all c1 J nx i0); [exact Hn|]. intros i.
-eapply IH; [rewrite <- (Hb i); apply Hc | apply Hs; exact I | exact Hj | exact Hg | apply HKz; reflexivity].
++   (* KMunmap: fallible at 08b1429 (injected -ENOMEM), so a two-way split like the other grants *)
+destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hbits & H0 & H1).
+destruct Hj as [Hj0 Hj1]. destruct Hg as (G & Hg0 & Hg1).
+eapply rz_split; [exact Hn | exact Hbits | exact H0 | apply H1; exact G | |];
+intros i Hi; (eapply IH; [rewrite <- Hi; apply Hc | apply Hs; exact I | | | apply HKz; auto]); assumption.
 +   destruct Hk as (J & nx & bit & i0 & Hn & Hc & Hbits & H0 & H1).
 destruct Hj as [Hj0 Hj1]. destruct Hg as (G & Hg0 & Hg1).
 eapply rz_split; [exact Hn | exact Hbits | exact H0 | apply H1; exact G | |];
@@ -429,7 +451,13 @@ call_pre_k REALLOC_STACK L A regs mem md ->
 In (p, nold) (user_blocks A) ->
 getr regs 10 = Z_to_bv 64 (ptr_addr L p) -> getr regs 11 = Z_to_bv 64 n ->
 MMAP_THRESHOLD <= n -> MMAP_THRESHOLD < nold   ->
-nold + PGSZ <= n < 2 ^ 62 ->
+(* 2^46, not 2^62: alloc_ceiling is 0x7fff7f800000 (YK07.v:13) and the model's
+TASK_SIZE is 0x800000000000 = 2^47 (727298f3 State.v:403), so 2^46 is the
+largest power of two strictly below the ceiling this allocator can place under.
+The old 2^62 admitted request sizes no mapping can ever be found for. The same
+bound is on the three consumers of this assumption -- UI4g/YI4g cg_realloc and
+jrealloc_at, YP0d realloc_SR -- and the four must move together. *)
+nold + PGSZ <= n < 2 ^ 46 ->
 mreal segs (mkCfg (mkst regs (Z_to_bv 64 pc) mem (seg_rom segs)) md)
 (realloc (Some p) n A)
 (realloc_leaf L A regs mem md p nold n).
@@ -504,11 +532,17 @@ hp_vm    : vm_maps (m_vmmaps md) = [] /\ vm_noaccess (m_vmmaps md) = [] /\
 vm_brk (m_vmmaps md) = vm_start_brk (m_vmmaps md) /\
 valid_brk segs (vm_brk (m_vmmaps md)) /\
 bv_unsigned (vm_brk (m_vmmaps md)) + 2 * 4096 <= alloc_ceiling /\
-vm_reserved (m_vmmaps md) = segments_reserved segs /\
+(* 08b1429: the launch reserves the image and then the vDSO pair (State.init_reserved) *)
+(exists rx : list (word * word), vm_reserved (m_vmmaps md) = segments_reserved segs ++ rx
+/\ Forall (fun e => bv_unsigned (vm_brk (m_vmmaps md)) + 3 * 4096 <= bv_unsigned (fst e) /\ 0 < bv_unsigned (snd e) <= 0x14000) rx
+/\ (length rx <= 2)%nat) /\
 SRC_LIM_MIN <= vm_limit (m_vmmaps md) /\
 vm_backing_used md <= 0;
 hp_model : m_halted md = None /\ m_vm_lazy md = [] /\ m_vm_materialized md = [];
-hp_ceil : YN05.ceil_of_top (alloc_top (m_vmmaps md))
+hp_ceil : YN05.ceil_of_top (alloc_top (m_vmmaps md));
+(* 08b1429: the launch's vDSO pair is in the reserved ledger (State.vm_reserved_init_model); mprotect's
+   vDSO gate (Checks/Sys/Mm/Mprotect.v:35) reads it *)
+hp_vin : incl (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) (vm_reserved (m_vmmaps md))
 }.
 End y.
 End d.

@@ -1,10 +1,11 @@
-(* CARRIED from commit 13dada94373d48ba230c171e98126b88ba98118e,
+(* CARRIED from
    proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfPristine.v, sha256 e00bc69f896f5fe4fbddfdaa239d2cd4c4e5132364df95f17564782b59a0c982 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change made here is the module
    prefix OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by a Theorem Labs lane (DeallocNmaxA), 2026-10-30 (free_cf's size test, Quarantine::Put): free_tail_cf takes free_cf's size test (definition); yp_free_tail covers the recycle side (yp_recycle_chunk); yp_free_tail_nodrain and free_cf_keeps_pristine_norecycle take the enqueue side's premise (STATEMENT CHANGES; no consumer outside this file); pristine_free_norecycle_cf keeps its statement and derives that premise from Wf_cf. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset's event-free allocator instance (suffix cf), cgif's "pristine primary
    classes" lemmas (YG0k.v: pristine_malloc_sec :395, pristine_free_null :404, pristine_free_norecycle :418)
    ported to the cf model (YG00cf.v: malloc_cf, free_cf with maybe_drain_cf). prim_pristine_except and
@@ -765,7 +766,7 @@ End WF.
 (* cgif's malloc_refusal_sec (YG0k.v:16) and malloc_refusal_prim (YG0k.v:38), statement for statement with
    malloc -> malloc_cf and Wf -> Wf_cf. A secondary request's first ask is cgif's sec_alloc KMmapSec. A pristine
    primary class's first ask is KMapUser c 0 kUserMapSize in both arms of populate_cf: kBatchClass keeps cgif's
-   map_more_user, and every other class reaches map_more_user_cf's map arm (YG00cf.v:174), never its class-full
+   map_more_user, and every other class reaches map_more_user_cf's map arm (YG00cf.v:175), never its class-full
    arm (:176), since kUserMapSize <= kFreeArrayOffset. A refusal (answer 0) leaves the state unchanged and
    cache_alloc_cf returns None, so malloc_cf returns PNull. Model lemmas only (rule 24). *)
 Definition yrf_offer {A} (t : itree astate A) (P : A -> Prop) : Prop :=

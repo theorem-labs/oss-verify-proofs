@@ -1,7 +1,7 @@
 (* Theorem Labs, 2026-10: the frame-area contracts with the memnorm keep of fuzz_preset's ASan image A in the form the
    #102 A' walks take them: at ARcfx (ARcf with the error-buffer extents placed, YGcallcf.v ARxs) over the A' program
    instance PAImg_prog.PI_prog_A, for any B with TfibSyms B. These are the texts of the Section hypotheses
-   Cno102A_EC.v:77 ASM3 (CN_CID = 3, Cno102A_Base.v:122) and Cno102A_FE.v SS5M (c-omx-hpreset's cno A' top, R7-5) at
+   Cno102A_EC.v:77 ASM3 (CN_CID = 3, Cno102A_Base.v:123) and Cno102A_FE.v SS5M (c-omx-hpreset's cno A' top, R7-5) at
    SEGS := pa_segs PI_prog_A and SIGMA := pa_sigma PI_prog_A; the A' instance (Cno102A_TopA.v) takes B := AD2l.TfibB and
    TfibSyms from proj2 AD2l.TfibB_pair.
    - stack_malloc3_contract_xm_cfx: FCm3xm.stack_malloc3_contract_xm at ARx := ARcf tfibsegs B (fs_iface from

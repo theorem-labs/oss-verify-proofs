@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -53,6 +54,12 @@ Proof.
   exfalso. pose proof (Hro (bv_unsigned a) ltac:(lia)) as E. rewrite Z_to_bv_bv_unsigned in E. congruence.
 Qed.
 
+(* The launch maps only [wok_lo sp0, sp0) below sp0 ([RefStartup.main_entry_win_mapped],
+   [MemSplit.v:122-123]); the main stack floor of this file and of MainLoop.v,
+   [sp0 - 6144512], is at or above it. *)
+Lemma wok_of_old : forall (sp0 : word) (x : Z), bv_unsigned sp0 - 6144512 <= x -> wok_lo sp0 <= x.
+Proof. intros sp0 x H. unfold wok_lo, stack_window_reach, stack_max_size. lia. Qed.
+
 Section Top.
   Context {HCEIL : HeapCeil}.
   Variable HS : hsr.
@@ -90,7 +97,17 @@ Section Top.
     Hypothesis Hve : valid_envp envv.
     Hypothesis Hvsp : valid_sp sp0.
     Hypothesis Htid : 0 < bv_unsigned tid < 2 ^ 22.
-    Hypothesis ME : main_entry sp0 [a0s; path] envv rdraw tid regs0 mem0.
+    (** 75d69e00: [main_entry] is a RECORD over the run's whole input
+        ([RefStartup.v:82]); the input is the one this section already builds
+        for [model0], entry as [RefStartup.v:148] spells it. *)
+    Let inp : ProcInput := mkProcInputC [a0s; path] envv fs0 stdin0.
+    Let entryw : word := (0x2ab1c : word).
+    Hypothesis ME : main_entry inp mbase entryw sp0 rdraw tid regs0 mem0.
+    (** OpensslResume's published export, at the [RefStartup -> MainTop]
+        boundary.  No new Section Variable: [v] is the literal [Sv48], [mbase]
+        is already one, [ph]/[entry] are [bsb_bound]'s own binders. *)
+    Hypothesis Hvl  : valid_launch inp.
+    Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp0 brk mbase rdraw) inp.
     Hypothesis RH0 : hs_RHEAP HS ps0 [] mem0.
     Hypothesis AUX0 : hs_rauxv_ok HS mem0 B.
     Hypothesis HB : bv_unsigned sp0 <= B.
@@ -98,12 +115,13 @@ Section Top.
     Hypothesis HCE : hceil + 8388608 <= bv_unsigned sp0.
     Hypothesis Hfit : entry_stack_fits sp0 [a0s; path] envv.
 
-    Let model0 : Model := MainDefs.model0 tid brk mbase sp0 lim (mkProcInputC [a0s; path] envv fs0 stdin0).
+    Let model0 : Model := MainDefs.model0 tid brk mbase sp0 rdraw lim inp.
     Let SPlo : 0x7fff80000000 <= bv_unsigned sp0 := proj1 Hvsp.
     Let SPhi : bv_unsigned sp0 <= 0x800000000000 := proj1 (proj2 Hvsp).
-    Let pp : word := p1 sp0 a0s path envv.
+    Let pp : word := p1 inp a0s path envv rdraw.
     Let spm : Z := bv_unsigned sp0 - 128.
-    Let lo : Z := bv_unsigned sp0 - 8388608.
+    (* the floor MainLoop.v's [statics] states, at or above [wok_lo sp0] ([wok_of_old]). *)
+    Let lo : Z := bv_unsigned sp0 - 6144512.
     Let tidZ : Z := bv_unsigned tid.
 
     Hypothesis KR0 : hs_KREL HS ps0 model0.
@@ -114,14 +132,19 @@ Section Top.
     Proof. reflexivity. Qed.
 
     (* [comment removed for export] *)
+    (* At this revision the launch maps [wok_lo sp0, sp0) only ([RefStartup.v:326-331]),
+       so the floor is [wok_lo sp0]; [main_entry_win_mapped] takes the record binders
+       [inp mbase entry sp0 rnd tid regs mem] then [ME] (RefStartup.v:295-306). *)
     Lemma stk_at_open : forall M l h, frame_mod mem0 M (regA_w sp0) ->
-      bv_unsigned sp0 - stack_max_size <= l -> h <= bv_unsigned sp0 -> stk rsegs M l h.
+      wok_lo sp0 <= l -> h <= bv_unsigned sp0 -> stk rsegs M l h.
     Proof.
-      intros M l h [_ Hg] Hl Hh. pose proof SPlo as Hlo. pose proof SPhi as Hhi. rewrite stack_max_size_val in Hl.
+      intros M l h [_ Hg] Hl Hh. pose proof SPlo as Hlo. pose proof SPhi as Hhi.
+      unfold wok_lo, stack_window_reach, stack_max_size in Hl.
       apply (stk_grows sp0 mem0 M); [| lia | exact Hg].
       split; [lia|]. split; [lia|]. intros x Hx.
       assert (NE : mem0 (wa x) <> None).
-      { apply (main_entry_win_mapped sp0 _ _ rdraw tid regs0 mem0 ME). rewrite wa_eq, u_small by lia. rewrite stack_max_size_val. lia. }
+      { apply (main_entry_win_mapped _ _ _ sp0 rdraw tid regs0 mem0 ME). rewrite wa_eq, u_small by lia.
+        unfold wok_lo, stack_window_reach, stack_max_size. lia. }
       destruct (mem0 (wa x)) as [b|] eqn:E; [|congruence]. split.
       + unfold wview. rewrite E. discriminate.
       + exists b. unfold mrd. rewrite E. reflexivity.
@@ -132,7 +155,7 @@ Section Top.
     Lemma main_entry_none_bss : forall i, (0x90c70 <= i < 0x90c90 \/ 0x90d30 <= i < 0x91af0 \/ 0xb26a0 <= i < 0xb28c0) -> mem0 (Z_to_bv 64 i) = None.
     Proof.
       intros i Hi. pose proof SPlo as Hlo. pose proof (u64_range tid).
-      rewrite (main_entry_mem_data sp0 [a0s; path] envv rdraw tid regs0 mem0 ME) by (rewrite stack_max_size_val, u_small by lia; lia).
+      rewrite (main_entry_mem_data _ _ _ sp0 rdraw tid regs0 mem0 ME) by (rewrite stack_max_size_val, u_small by lia; lia).
       unfold D_main, D_cx, D_fd, D_ssp, D_tls, D_tlsB, D_tlsA, D_libc.
       repeat (rewrite wbytes_outside by
         (rewrite ?length_N_to_le_bytes; cbn [length Z.of_nat Pos.of_succ_nat Pos.succ]; rewrite !u_small by lia; lia)).
@@ -141,7 +164,7 @@ Section Top.
     Lemma main_entry_prist : prist_none mem0.
     Proof.
       intros i Hi. unfold prist_range in Hi. destruct Hi as [Hi|Hi].
-      - apply (main_entry_none_below sp0 _ _ rdraw tid regs0 mem0 Hvsp ME). lia.
+      - apply (main_entry_none_below _ _ _ sp0 rdraw tid regs0 mem0 Hvsp ME). lia.
       - apply main_entry_none_bss. lia.
     Qed.
 
@@ -154,18 +177,18 @@ Section Top.
       pose proof FM as [Hout Hg].
       split.
       - eapply mem_inv_frame; [| exact FM |].
-        + apply ro_none_mem_inv. exact (main_entry_ro_none sp0 _ _ rdraw tid regs0 mem0 Hvsp ME).
+        + apply ro_none_mem_inv. exact (main_entry_ro_none _ _ _ sp0 rdraw tid regs0 mem0 Hvsp ME).
         + apply Forall_forall. intros r Hr. destruct (RS r Hr) as [E1 E2]. rewrite E1, E2. lia.
-      - apply stk_at_open; [exact FM | rewrite stack_max_size_val; lia | lia].
-      - apply stk_at_open; [exact FM | rewrite stack_max_size_val; lia | lia].
-      - eapply cells_ok_frame; [apply diag_cells_wf | exact (cells_ok_main_entry sp0 _ _ rdraw tid regs0 mem0 Hvsp ME) | exact FM |].
+      - apply stk_at_open; [exact FM | first [apply wok_of_old; lia | unfold wok_lo, stack_window_reach, stack_max_size; lia] | lia].
+      - apply stk_at_open; [exact FM | first [apply wok_of_old; lia | unfold wok_lo, stack_window_reach, stack_max_size; lia] | lia].
+      - eapply cells_ok_frame; [apply diag_cells_wf | exact (cells_ok_main_entry _ _ _ sp0 rdraw tid regs0 mem0 Hvsp ME) | exact FM |].
         eapply Forall_impl; [| apply diag_cells_range]. intros [[a w] v] [R1 R2] r Hr. destruct (RS r Hr) as [E1 E2]. rewrite E1, E2. lia.
-      - eapply cells_ok_frame; [apply pf1_cells_wf | exact (pf1_cells_main_entry sp0 _ _ rdraw tid regs0 mem0 Hvsp ME) | exact FM |].
+      - eapply cells_ok_frame; [apply pf1_cells_wf | exact (pf1_cells_main_entry _ _ _ sp0 rdraw tid regs0 mem0 Hvsp ME) | exact FM |].
         eapply Forall_impl; [| apply pf1_cells_range]. intros [[a w] v] [R1 R2] r Hr. destruct (RS r Hr) as [E1 E2]. rewrite E1, E2. lia.
       - eapply rdn_frame; [exact FM | | unorm; lia |].
-        + subst tidZ. rewrite Z_to_bv_bv_unsigned. apply (RefStartupFacts.main_entry_tid sp0 _ _ rdraw tid Hlo regs0 mem0 ME).
+        + subst tidZ. rewrite Z_to_bv_bv_unsigned. apply (RefStartupFacts.main_entry_tid _ sp0 rdraw tid Hlo _ _ regs0 mem0 ME).
         + intros r Hr. unorm. destruct (RS r Hr) as [E1 E2]. rewrite E1, E2. lia.
-      - intros i Hi. rewrite (Hout (Z_to_bv 64 i)); [apply (main_entry_none_below sp0 _ _ rdraw tid regs0 mem0 Hvsp ME); lia |].
+      - intros i Hi. rewrite (Hout (Z_to_bv 64 i)); [apply (main_entry_none_below _ _ _ sp0 rdraw tid regs0 mem0 Hvsp ME); lia |].
         apply outside_of_disjoint. intros r Hr. destruct (RS r Hr) as [E1 E2]. rewrite E1, E2, u_small by lia. lia.
       - exact FA.
       - eapply AUF; [exact AUX0 | apply frame_mod_munch; exact FM | exact (frame_mod_wmono _ _ _ FM) |].
@@ -205,7 +228,7 @@ Section Top.
     Proof.
       intros vals R M mo K HL P0 P2 HR HK ST RH KR HKK. pose proof SPlo as Hlo. pose proof SPhi as Hhi. hcb.
       destruct (KRELh ps0 mo KR) as [Hh Hlazy].
-      eapply (seg_C sp0 a0s path envv Hvsp vals R M mo K Hh Hlazy HL P0 P2 HR HK).
+      eapply (seg_C sp0 a0s path envv rdraw fs0 stdin0 Hvsp vals R M mo K Hh Hlazy HL P0 P2 HR HK).
       intros R' Q1 Q2 Q4 Q8 Q10 Q18 Q20 Q21.
       destruct (errno_rw M R' Q4) as [errv ERR].
       change (Z_to_bv 64 0x68018) with (Z_to_bv 64 RMALLOC_SYM).
@@ -288,7 +311,7 @@ Section Top.
     Proof.
       intros e vals R M He HSC HL P0 P2 HR HK ST RH ABOVE. pose proof SPlo as Hlo. pose proof SPhi as Hhi. hcb.
       destruct (KRELh ps0 model0 KR0) as [Hh Hlazy].
-      eapply (seg_F sp0 a0s path envv Hvsp e vals R M model0 _ Hh Hlazy He HSC HL P0 P2 HR HK).
+      eapply (seg_F sp0 a0s path envv rdraw fs0 stdin0 Hvsp e vals R M model0 _ Hh Hlazy He HSC HL P0 P2 HR HK).
       intros R' M' Q2 Q4 Q18 FM.
       assert (RS : forall r, In r (regF_w sp0) -> (bv_unsigned (fst r) = bv_unsigned sp0 - 240 /\ snd r = 16) \/ (bv_unsigned (fst r) = 0x925ac /\ snd r = 4)).
       { intros r Hr. unfold regF_w in Hr. cbn [In] in Hr. destruct Hr as [<-|[<-|[]]]; cbn [fst snd]; rewrite u_small by lia; lia. }
@@ -301,13 +324,22 @@ Section Top.
         + left. lia.
         + right. left. unfold RERRNO, RLIBC, RCTX, RSSP_GUARD, RGOT_SSP, RVMLOCK. lia. }
       destruct (hx_statics HS HX _ _ _ RH') as (_ & _ & [can Hcan]).
-      destruct (path_facts sp0 a0s path envv rdraw tid regs0 mem0 Hva Hve Hvsp ME) as (Sr & Slo & Shi & Sfit & t8 & Ht8).
+      destruct (path_facts sp0 a0s path envv rdraw tid regs0 mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid ME Hvl Hlau) as (Sr & Slo & Shi & Sfit & t8 & Ht8).
       fold pp in Sr, Slo, Shi, Sfit, Ht8. pose proof (u64_range pp) as Hpr. pose proof (path_len a0s path Hva) as HPl.
+      (* [path_facts] states these bounds over [MainOpen]'s input term, which [fold pp] does
+         not match through this section's [inp]; restated over [pp] by conversion for [lia]. *)
+      pose proof (Slo : bv_unsigned sp0 <= bv_unsigned pp) as Slo'. clear Slo. rename Slo' into Slo.
+      pose proof (Shi : bv_unsigned pp <= bv_unsigned sp0 + 2107576) as Shi'. clear Shi. rename Shi' into Shi.
+      pose proof (Sfit : entry_stack_fits sp0 [a0s; path] envv -> bv_unsigned pp + Z.of_nat (length path) + 8 <= 0x800000000000)
+        as Sfit'. clear Sfit. rename Sfit' into Sfit.
+      pose proof (Sr : rdn RSEGS mem0 pp (length path + 1) = Some (path ++ [Z_to_bv 8 0])) as Sr'. clear Sr. rename Sr' into Sr.
+      pose proof (Ht8 : rdn RSEGS mem0 (Z_to_bv 64 (bv_unsigned pp + Z.of_nat (length path))) 8 = Some t8) as Ht8'.
+      clear Ht8. rename Ht8' into Ht8.
       assert (ABOVE' : forall x : word, bv_unsigned sp0 <= bv_unsigned x -> M' x = mem0 x).
       { intros x Hx. rewrite <- (ABOVE x Hx). apply (proj1 FM x). apply outside_of_disjoint. intros r Hr.
         destruct (RS r Hr) as [[E1 E2]|[E1 E2]]; rewrite E1, E2; lia. }
       rewrite <- model0_fs.
-      refine (ref_cannot_open sp0 [] model0 Hvsp Hh Hlazy eq_refl pp tidZ can R' M' Q2 Q4 Q18 _ _ _ _ _ _ _ path t8 _ _ _ _ _ _).
+      refine (ref_cannot_open sp0 [] model0 Hvsp Hh Hlazy eq_refl (hx_krel_rdr HS HX _ _ KR0) pp tidZ can R' M' Q2 Q4 Q18 _ _ _ _ _ _ _ path t8 _ _ _ _ _ _).
       - assert (STK' : stk rsegs M' lo spm) by (apply (stk_grows sp0 M M'); [exact STK | lia | exact (proj2 FM)]).
         eapply stk_stk_ok; [exact STK' | unfold RefOpenFailCS_defs.OF_STK; rewrite u_small by lia; lia | rewrite u_small by lia; lia | unfold RefOpenFailCS_defs.OF_STK; lia | lia].
       - intros i Hi. rewrite (proj1 FM (Z_to_bv 64 i)); [apply mem_inv_ro_none; [exact INV | exact Hi] |].
@@ -458,6 +490,7 @@ Section Top.
       (forall mem' model' regs', tstat cs mem' -> P mem' -> (exists s' LB', hs_RHEAP HS s' LB' mem') ->
           m_halted model' = None -> m_vm_lazy model' = [] ->
           fd_lookup (m_fds model') (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)) ->
+          m_channel_reader model' = true ->
           getr regs' 2 = Z_to_bv 64 (bv_unsigned sp0 - 48) -> getr regs' 4 = Z_to_bv 64 0x92650 -> getr regs' 10 = status ->
           exit_pre regs' mem' model' status pending) ->
       realizes RSEGS (mkCfg (mkst regs (Z_to_bv 64 0x2ae5c) mem (seg_rom RSEGS)) model)
@@ -496,6 +529,7 @@ Section Top.
       - exact Hh2.
       - exact Hlazy2.
       - rewrite FDS2. exact FD1.
+      - exact (hx_krel_rdr HS HX _ _ HKR2).
       - rewrite T2. f_equal. rewrite u_small by lia. lia.
       - rewrite T4. exact S4.
       - exact T10.
@@ -617,7 +651,7 @@ Section Top.
           apply Forall_forall. intros iv Hiv. unfold ivls in Hiv. apply in_map_iff in Hiv. destruct Hiv as (r & <- & Hr). cbn [fst snd].
           unfold RAUXV_CELL. destruct (RS r Hr) as [[E1 E2]|[E1 E2]]; rewrite E1, E2; lia.
       - (* [comment removed for export] *)
-        intros memx modelx regsx TSx _ [sx [LBx RHx]] Hhx Hlazyx FD1x X2 X4 X10.
+        intros memx modelx regsx TSx _ [sx [LBx RHx]] Hhx Hlazyx FD1x RDx X2 X4 X10.
         destruct TSx as [INVx STKx TOPx CELLSx [t [TIDx Ht]] FRx AUXx].
         pose proof (cells_ok_in _ _ CELLSx) as CI.
         destruct (hx_statics HS HX _ _ _ RHx) as (NL & _ & _).
@@ -685,7 +719,7 @@ Section Top.
       - intros m m' LB HPm HPR. eapply (rdn_client_heap LB m m'); [exact HPR | exact HPm |].
         unfold client_cell, RLIBC, RCTX, RERRNO, RSSP_GUARD, RGOT_SSP, RVMLOCK. lia.
       - (* [comment removed for export] *)
-        intros memx modelx regsx TSx HPx [sx [LBx RHx]] Hhx Hlazyx FD1x X2 X4 X10.
+        intros memx modelx regsx TSx HPx [sx [LBx RHx]] Hhx Hlazyx FD1x RDx X2 X4 X10.
         destruct TSx as [INVx STKx TOPx CELLSx [t [TIDx Ht]] FRx AUXx].
         pose proof (cells_ok_in _ _ CELLSx) as CI.
         destruct (hx_statics HS HX _ _ _ RHx) as (NL & _ & [can Hcan]).
@@ -699,7 +733,7 @@ Section Top.
         + destruct k as [|k'].
           * left. split; [reflexivity|]. exists (Z_to_bv 64 0xb2d28), (Z_to_bv 64 0). repeat split; by_cell CI.
           * right. exists 0xb2d28, (0xb2d28 + 2 * Z.of_nat (S k')), (Z_to_bv 64 0xb2d28), (Z_to_bv 64 1024), (Z_to_bv 64 0), (Z_to_bv 64 can).
-            split; [| exact FD1x]. split; try by_cell CI.
+            split; [| split; [exact FD1x | exact RDx]]. split; try by_cell CI.
             -- lia.
             -- rewrite zero_lines_length. lia.
             -- rewrite zero_lines_length. unfold rw_bytes_max. lia.
@@ -733,13 +767,19 @@ Section Top.
                (t_die (msg_cannot_open path) (fsC fs0)).
     Proof.
       intros Hlong. pose proof SPlo as Hlo. pose proof SPhi as Hhi.
-      apply (seg_A sp0 a0s path envv rdraw tid regs0 mem0 brk mbase lim fs0 stdin0 Hva Hve Hvsp Htid ME).
+      apply (seg_A sp0 a0s path envv rdraw tid regs0 mem0 brk mbase lim fs0 stdin0 Hva Hve Hvsp Htid ME Hvl Hlau).
       intros vals R M HL P0 P2 P5 HR HK FM FA.
       pose proof (statics_at_open M FM FA) as ST. pose proof (heap_at_open M FM) as RH. pose proof (above_at_open M FM) as ABOVE.
-      destruct (openat_regs' sp0 a0s path envv vals R P2 HR) as (H17 & H10 & H11 & Hfl).
+      destruct (openat_regs' a0s path envv rdraw fs0 stdin0 vals R P2 HR) as (H17 & H10 & H11 & Hfl).
       destruct (KRELh ps0 model0 KR0) as [Hh Hlazy].
-      destruct (path_facts sp0 a0s path envv rdraw tid regs0 mem0 Hva Hve Hvsp ME) as (Sr & Slo & Shi & _).
+      destruct (path_facts sp0 a0s path envv rdraw tid regs0 mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid ME Hvl Hlau) as (Sr & Slo & Shi & Sfit & _).
       pose proof (u64_range pp) as Hpr. fold pp in Sr, Slo, Shi. pose proof (path_len a0s path Hva) as HPl.
+      (* as in [open_fail]: the bounds over [pp] by conversion *)
+      pose proof (Slo : bv_unsigned sp0 <= bv_unsigned pp) as Slo'. clear Slo. rename Slo' into Slo.
+      pose proof (Shi : bv_unsigned pp <= bv_unsigned sp0 + 2107576) as Shi'. clear Shi. rename Shi' into Shi.
+      pose proof (Sr : rdn RSEGS mem0 pp (length path + 1) = Some (path ++ [Z_to_bv 8 0])) as Sr'. clear Sr. rename Sr' into Sr.
+      pose proof (Sfit : entry_stack_fits sp0 [a0s; path] envv -> bv_unsigned pp + Z.of_nat (length path) + 8 <= 0x800000000000)
+        as Sfit'. clear Sfit. rename Sfit' into Sfit.
       eapply (rz_openat_toolong RSEGS R (Z_to_bv 64 0x75f78) M model0 ECALLW ECALL_7611c is_ecall_ECALLW Hh Hlazy H17 H10 Hfl (firstn 4096 path)).
       - rewrite H11.
         replace (firstn 4096 path) with (firstn 4096 (path ++ [Z_to_bv 8 0]))
@@ -747,8 +787,24 @@ Section Top.
         apply (rdn_firstn RSEGS M (length path + 1)); [| lia].
         rewrite <- Sr. apply rdn_agree. intros j Hj. apply ABOVE. rewrite u_small by lia. lia.
       - intros Hin. apply (path_nonul a0s path Hva). rewrite <- (firstn_skipn 4096 path). apply in_app_iff. left. exact Hin.
+      - (* [rz_openat_toolong]'s TASK_SIZE bound on the 4096-byte read: the path's end
+           is below TASK_SIZE ([path_facts]' fourth conjunct, under [Hfit]) *)
+        rewrite H11. unfold TASK_SIZE. specialize (Sfit Hfit).
+        (* H11's right side is [MainOpen]'s inlined spelling of [pp]: state the bound over [pp]
+           and close by conversion *)
+        assert (Hpp : bv_unsigned pp + 4096 <= 0x800000000000) by lia. exact Hpp.
       - rewrite AgentLib.v_addi_lit by lia. change (0x75f78 + 4)%Z with 0x75f7c%Z.
         apply (open_fail ENAMETOOLONG vals R M ltac:(unfold ENAMETOOLONG; lia) scF_ENAMETOOLONG HL P0 P2 HR HK ST RH ABOVE).
+    Qed.
+
+    (* [rz_openat_empty]/[_absent]/[_file]/[_dot] take a TASK_SIZE bound on the path's
+       address and length (RefNodes.v); it is [path_facts]' fourth conjunct under [Hfit],
+       stated over [pp] by conversion. *)
+    Lemma path_below_task : bv_unsigned pp + Z.of_nat (length path) + 8 <= 0x800000000000.
+    Proof.
+      destruct (path_facts sp0 a0s path envv rdraw tid regs0 mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid ME Hvl Hlau)
+        as (_ & _ & _ & Sfit & _).
+      exact (Sfit Hfit).
     Qed.
 
     Theorem ref_open_fail_empty :
@@ -757,14 +813,17 @@ Section Top.
                (t_die (msg_cannot_open path) (fsC fs0)).
     Proof.
       intros Hnil. pose proof SPlo as Hlo. pose proof SPhi as Hhi.
-      apply (seg_A sp0 a0s path envv rdraw tid regs0 mem0 brk mbase lim fs0 stdin0 Hva Hve Hvsp Htid ME).
+      apply (seg_A sp0 a0s path envv rdraw tid regs0 mem0 brk mbase lim fs0 stdin0 Hva Hve Hvsp Htid ME Hvl Hlau).
       intros vals R M HL P0 P2 P5 HR HK FM FA.
       pose proof (statics_at_open M FM FA) as ST. pose proof (heap_at_open M FM) as RH. pose proof (above_at_open M FM) as ABOVE.
-      destruct (openat_regs' sp0 a0s path envv vals R P2 HR) as (H17 & H10 & H11 & Hfl).
+      destruct (openat_regs' a0s path envv rdraw fs0 stdin0 vals R P2 HR) as (H17 & H10 & H11 & Hfl).
       destruct (KRELh ps0 model0 KR0) as [Hh Hlazy].
-      destruct (path_at_A sp0 a0s path envv rdraw tid regs0 mem0 Hva Hve Hvsp ME M FM ltac:(rewrite Hnil; cbn; lia)) as (PA1 & PA2 & PA3).
+      destruct (path_at_A sp0 a0s path envv rdraw tid regs0 mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid ME Hvl Hlau M FM ltac:(rewrite Hnil; cbn; lia)) as (PA1 & PA2 & PA3).
       eapply (rz_openat_empty RSEGS R (Z_to_bv 64 0x75f78) M model0 ECALLW ECALL_7611c is_ecall_ECALLW Hh Hlazy H17 H10 Hfl).
-      - rewrite Hnil in PA3. split; [cbn; lia|]. split; [intros [] |]. rewrite H11. exact PA3.
+      - (* the read address first ([H11]), so that [Hnil] rewrites only the length and bytes *)
+        rewrite <- H11 in PA3. rewrite Hnil in PA3. split; [cbn; lia|]. split; [intros [] |]. exact PA3.
+      - rewrite H11. unfold TASK_SIZE. pose proof path_below_task as Hb.
+        assert (Hpp : bv_unsigned pp < 0x800000000000) by lia. exact Hpp.
       - rewrite AgentLib.v_addi_lit by lia. change (0x75f78 + 4)%Z with 0x75f7c%Z.
         apply (open_fail ENOENT vals R M ltac:(unfold ENOENT; lia) scF_ENOENT HL P0 P2 HR HK ST RH ABOVE).
     Qed.
@@ -776,14 +835,17 @@ Section Top.
                (t_die (msg_cannot_open path) (fsC fs0)).
     Proof.
       intros Hlen Hne Hsl Hnd Hfs. pose proof SPlo as Hlo. pose proof SPhi as Hhi.
-      apply (seg_A sp0 a0s path envv rdraw tid regs0 mem0 brk mbase lim fs0 stdin0 Hva Hve Hvsp Htid ME).
+      apply (seg_A sp0 a0s path envv rdraw tid regs0 mem0 brk mbase lim fs0 stdin0 Hva Hve Hvsp Htid ME Hvl Hlau).
       intros vals R M HL P0 P2 P5 HR HK FM FA.
       pose proof (statics_at_open M FM FA) as ST. pose proof (heap_at_open M FM) as RH. pose proof (above_at_open M FM) as ABOVE.
-      destruct (openat_regs' sp0 a0s path envv vals R P2 HR) as (H17 & H10 & H11 & Hfl).
+      destruct (openat_regs' a0s path envv rdraw fs0 stdin0 vals R P2 HR) as (H17 & H10 & H11 & Hfl).
       destruct (KRELh ps0 model0 KR0) as [Hh Hlazy].
-      destruct (path_at_A sp0 a0s path envv rdraw tid regs0 mem0 Hva Hve Hvsp ME M FM Hlen) as (PA1 & PA2 & PA3).
+      destruct (path_at_A sp0 a0s path envv rdraw tid regs0 mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid ME Hvl Hlau M FM Hlen) as (PA1 & PA2 & PA3).
       eapply (rz_openat_absent RSEGS R (Z_to_bv 64 0x75f78) M model0 ECALLW ECALL_7611c is_ecall_ECALLW Hh Hlazy H17 H10 Hfl path);
-        [split; [exact PA1 | split; [exact PA2 | rewrite H11; exact PA3]] | exact Hne | exact Hsl | exact Hnd | exact Hfs |].
+        [split; [exact PA1 | split; [exact PA2 | rewrite H11; exact PA3]]
+        | rewrite H11; unfold TASK_SIZE; pose proof path_below_task as Hb;
+          assert (Hpp : bv_unsigned pp + Z.of_nat (length path) < 0x800000000000) by lia; exact Hpp
+        | exact Hne | exact Hsl | exact Hnd | exact Hfs |].
       rewrite AgentLib.v_addi_lit by lia. change (0x75f78 + 4)%Z with 0x75f7c%Z.
       apply (open_fail ENOENT vals R M ltac:(unfold ENOENT; lia) scF_ENOENT HL P0 P2 HR HK ST RH ABOVE).
     Qed.
@@ -814,7 +876,7 @@ Section Top.
         + eapply (statics_frame HS HH sp0 tidZ B Hvsp HB); [exact XST | exact FM | left; reflexivity].
         + eapply (heap_frame HS HH); [exact XRH | exact FM | apply (regL_w_hi sp0 Hvsp HCE)].
         + exact XKR. + exact XFS. + exact XFD1.
-        + intros K can HF K0 HK. exact (hdr_short_fwrite model Hh Hlazy XFD2 regs' mem' _ tidZ can K HF K0 HK).
+        + intros K can HF K0 HK. exact (hdr_short_fwrite model Hh Hlazy XFD2 (hx_krel_rdr HS HX _ _ XKR) regs' mem' _ tidZ can K HF K0 HK).
       - destruct (Nat.ltb_spec (length data) (6 + Z.to_nat (hdr_cfg data))) as [LO|LO].
         + (* [comment removed for export] *)
           eapply (seg_Ho sp0 model Hvsp Hh Hlazy regs mem pp A cap data _ XR L6 ltac:(lia) ltac:(lia) ltac:(lia) ltac:(unfold MSTK; lia) BB STK RO XRA).
@@ -823,7 +885,7 @@ Section Top.
           * eapply (statics_frame HS HH sp0 tidZ B Hvsp HB); [exact XST | exact FM | left; reflexivity].
           * eapply (heap_frame HS HH); [exact XRH | exact FM | apply (regL_w_hi sp0 Hvsp HCE)].
           * exact XKR. * exact XFS. * exact XFD1.
-          * intros K can HF K0 HK. exact (hdr_overrun_fwrite model Hh Hlazy XFD2 regs' mem' _ tidZ can K HF K0 HK).
+          * intros K can HF K0 HK. exact (hdr_overrun_fwrite model Hh Hlazy XFD2 (hx_krel_rdr HS HX _ _ XKR) regs' mem' _ tidZ can K HF K0 HK).
         + (* [comment removed for export] *)
           eapply (seg_Hk sp0 model Hvsp Hh Hlazy regs mem pp A cap data _ XR ltac:(lia) ltac:(lia) ltac:(lia) BB STK RO XRA).
           intros regs' mem' TC FM STK'.
@@ -865,15 +927,19 @@ Section Top.
                (t_alt2 (t_die (msg_cannot_open path) (fsC fs0)) (t_opened data (fsC fs0))).
     Proof.
       intros Hlen Hne Hsl Hnd. pose proof SPlo as Hlo. pose proof SPhi as Hhi.
-      apply (seg_A sp0 a0s path envv rdraw tid regs0 mem0 brk mbase lim fs0 stdin0 Hva Hve Hvsp Htid ME).
+      apply (seg_A sp0 a0s path envv rdraw tid regs0 mem0 brk mbase lim fs0 stdin0 Hva Hve Hvsp Htid ME Hvl Hlau).
       intros vals R M HL P0 P2 P5 HR HK FM FA.
       pose proof (statics_at_open M FM FA) as ST. pose proof (heap_at_open M FM) as RH. pose proof (above_at_open M FM) as ABOVE.
-      destruct (openat_regs' sp0 a0s path envv vals R P2 HR) as (H17 & H10 & H11 & Hfl).
-      destruct (path_at_A sp0 a0s path envv rdraw tid regs0 mem0 Hva Hve Hvsp ME M FM Hlen) as (PA1 & PA2 & PA3).
+      destruct (openat_regs' a0s path envv rdraw fs0 stdin0 vals R P2 HR) as (H17 & H10 & H11 & Hfl).
+      destruct (path_at_A sp0 a0s path envv rdraw tid regs0 mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid ME Hvl Hlau M FM Hlen) as (PA1 & PA2 & PA3).
       destruct (KRELh ps0 model0 KR0) as [Hh Hlazy].
       unfold t_opened.
       eapply (rz_openat_file RSEGS R (Z_to_bv 64 0x75f78) M model0 ECALLW ECALL_7611c is_ecall_ECALLW Hh Hlazy H17 H10 Hfl
-                eq_refl path data); [split; [exact PA1 | split; [exact PA2 | rewrite H11; exact PA3]] | exact Hne | exact Hsl | exact Hnd | exact Hdata | |].
+                eq_refl path data);
+        [split; [exact PA1 | split; [exact PA2 | rewrite H11; exact PA3]]
+        | rewrite H11; unfold TASK_SIZE; pose proof path_below_task as Hb;
+          assert (Hpp : bv_unsigned pp + Z.of_nat (length path) < 0x800000000000) by lia; exact Hpp
+        | exact Hne | exact Hsl | exact Hnd | exact Hdata | |].
       - intros e He. apply (open_fail e vals R M (openat_errnos_range e He) (scF_openat e He) HL P0 P2 HR HK ST RH ABOVE).
       - rewrite AgentLib.v_addi_lit by lia. change (0x75f78 + 4)%Z with 0x75f7c%Z.
         change (alloc_fd (m_fds model0)) with (Z_to_bv 64 3).
@@ -894,15 +960,18 @@ Section Top.
     Proof.
       intros Hdot. pose proof SPlo as Hlo. pose proof SPhi as Hhi. hcb.
       assert (Hlen : (length path <= 4095)%nat) by (rewrite Hdot; cbn; lia).
-      apply (seg_A sp0 a0s path envv rdraw tid regs0 mem0 brk mbase lim fs0 stdin0 Hva Hve Hvsp Htid ME).
+      apply (seg_A sp0 a0s path envv rdraw tid regs0 mem0 brk mbase lim fs0 stdin0 Hva Hve Hvsp Htid ME Hvl Hlau).
       intros vals R M HL P0 P2 P5 HR HK FM FA.
       pose proof (statics_at_open M FM FA) as ST. pose proof (heap_at_open M FM) as RH. pose proof (above_at_open M FM) as ABOVE.
-      destruct (openat_regs' sp0 a0s path envv vals R P2 HR) as (H17 & H10 & H11 & Hfl).
-      destruct (path_at_A sp0 a0s path envv rdraw tid regs0 mem0 Hva Hve Hvsp ME M FM Hlen) as (PA1 & PA2 & PA3).
+      destruct (openat_regs' a0s path envv rdraw fs0 stdin0 vals R P2 HR) as (H17 & H10 & H11 & Hfl).
+      destruct (path_at_A sp0 a0s path envv rdraw tid regs0 mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid ME Hvl Hlau M FM Hlen) as (PA1 & PA2 & PA3).
       destruct (KRELh ps0 model0 KR0) as [Hh Hlazy].
       unfold t_opened_dir.
       eapply (rz_openat_dot RSEGS R (Z_to_bv 64 0x75f78) M model0 ECALLW ECALL_7611c is_ecall_ECALLW Hh Hlazy H17 H10 Hfl eq_refl path);
-        [split; [exact PA1 | split; [exact PA2 | rewrite H11; exact PA3]] | rewrite Hdot; reflexivity | |].
+        [split; [exact PA1 | split; [exact PA2 | rewrite H11; exact PA3]]
+        | rewrite H11; unfold TASK_SIZE; pose proof path_below_task as Hb;
+          assert (Hpp : bv_unsigned pp + Z.of_nat (length path) < 0x800000000000) by lia; exact Hpp
+        | rewrite Hdot; reflexivity | |].
       - intros e He. apply (open_fail e vals R M (openat_errnos_range e He) (scF_openat e He) HL P0 P2 HR HK ST RH ABOVE).
       - rewrite AgentLib.v_addi_lit by lia. change (0x75f78 + 4)%Z with 0x75f7c%Z.
         change (alloc_fd (m_fds model0)) with (Z_to_bv 64 3).
@@ -933,8 +1002,14 @@ Section Top.
         { intros x Hx. rewrite <- (ABOVE x Hx), <- (ABOVE2 x Hx).
           apply (proj1 FM3 x). apply outside_of_disjoint. intros r Hr. unfold regLe_w, MSTK in Hr. cbn [In] in Hr.
           destruct Hr as [<-|[<-|[]]]; cbn [fst snd]; rewrite u_small by lia; lia. }
-        destruct (path_facts sp0 a0s path envv rdraw tid regs0 mem0 Hva Hve Hvsp ME) as (Sr & Slo & Shi & _ & t8 & Ht8).
+        destruct (path_facts sp0 a0s path envv rdraw tid regs0 mem0 brk mbase fs0 stdin0 Hva Hve Hvsp Htid ME Hvl Hlau) as (Sr & Slo & Shi & _ & t8 & Ht8).
         pose proof (u64_range pp) as Hpr. fold pp in Sr, Slo, Shi, Ht8.
+        (* as in [open_fail]: the bounds over [pp] by conversion *)
+        pose proof (Slo : bv_unsigned sp0 <= bv_unsigned pp) as Slo'. clear Slo. rename Slo' into Slo.
+        pose proof (Shi : bv_unsigned pp <= bv_unsigned sp0 + 2107576) as Shi'. clear Shi. rename Shi' into Shi.
+        pose proof (Sr : rdn RSEGS mem0 pp (length path + 1) = Some (path ++ [Z_to_bv 8 0])) as Sr'. clear Sr. rename Sr' into Sr.
+        pose proof (Ht8 : rdn RSEGS mem0 (Z_to_bv 64 (bv_unsigned pp + Z.of_nat (length path))) 8 = Some t8) as Ht8'.
+        clear Ht8. rename Ht8' into Ht8.
         replace (fsC fs0) with (m_fs model') by (rewrite FS'; reflexivity).
         assert (FD2' : fd_lookup (m_fds model') (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2))).
         { rewrite FDS'. cbv delta [mo]. rewrite with_fds_fds, fd_lookup_insert_neq, model0_fds; [reflexivity | intros E; apply (f_equal bv_unsigned) in E; discriminate]. }
@@ -945,7 +1020,7 @@ Section Top.
         { rewrite <- Sr. apply rdn_ext; [rewrite LP; cbn [Nat.add Z.of_nat Pos.of_succ_nat Pos.succ]; lia|]. intros x Hx. apply ABOVE3. lia. }
         assert (Ht83 : rdn RSEGS mem3 (Z_to_bv 64 (bv_unsigned pp + Z.of_nat (length path))) 8 = Some t8).
         { rewrite <- Ht8. apply rdn_ext; [unorm; lia|]. intros x Hx. apply ABOVE3. revert Hx. unorm. intros Hx. lia. }
-        exact (ref_read_error sp0 [] model' Hvsp Hh' Hlazy' FD2' pp tidZ can regs3 mem3 Q2 Q4 Q18 STK3'
+        exact (ref_read_error sp0 [] model' Hvsp Hh' Hlazy' FD2' (hx_krel_rdr HS HX _ _ KR') pp tidZ can regs3 mem3 Q2 Q4 Q18 STK3'
                  (mem_inv_ro_none _ (st_inv _ _ _ _ _ ST3)) (st_cells _ _ _ _ _ ST3) (st_tid _ _ _ _ _ ST3) Htid Hcan Slo
                  path t8 (path_nonul a0s path Hva) ltac:(rewrite LP; cbn; lia) ltac:(rewrite LP; cbn [Z.of_nat Pos.of_succ_nat]; lia) Sr3 Ht83).
     Qed.
@@ -967,39 +1042,52 @@ Section Top.
     Hypothesis Hve : valid_envp envv.
     Hypothesis Hvsp : valid_sp sp0.
     Hypothesis Htid : 0 < bv_unsigned tid < 2 ^ 22.
-    Hypothesis ME : main_entry sp0 av envv rdraw tid regs0 mem0.
+    (** as in the first section; this one's argv term is [av]. *)
+    Let inp : ProcInput := mkProcInputC av envv fs0 stdin0.
+    Let entryw : word := (0x2ab1c : word).
+    Hypothesis ME : main_entry inp mbase entryw sp0 rdraw tid regs0 mem0.
+    Hypothesis Hvl  : valid_launch inp.
+    Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp0 brk mbase rdraw) inp.
     Hypothesis Hargc : length av <> 2%nat.
     Hypothesis Hfit : entry_stack_fits sp0 av envv.
-    Let model0 : Model := MainDefs.model0 tid brk mbase sp0 lim (mkProcInputC av envv fs0 stdin0).
+    Let model0 : Model := MainDefs.model0 tid brk mbase sp0 rdraw lim inp.
+    (* 08b1429: the launch's stdout/stderr reader; the caller has it from [Run.valid_input] *)
+    Hypothesis Hrd0 : m_channel_reader model0 = true.
 
     Theorem ref_usage :
       realizes RSEGS (mkCfg (mkst regs0 (Z_to_bv 64 0x2ac68) mem0 (seg_rom RSEGS)) model0) (t_die (msg_usage (hd [] av)) (fsC fs0)).
     Proof.
       pose proof (proj1 Hvsp : 0x7fff80000000 <= bv_unsigned sp0) as Hlo. pose proof (proj1 (proj2 Hvsp) : bv_unsigned sp0 <= 0x800000000000) as Hhi.
       assert (Hh : m_halted model0 = None) by reflexivity. assert (Hlazy : m_vm_lazy model0 = []) by reflexivity.
-      apply (seg_U sp0 av envv rdraw tid regs0 mem0 model0 Hva Hve Hvsp Htid ME Hargc Hh Hlazy).
+      (* [seg_U] is in [MainOpen]'s [Section Usage], which builds no input and
+         takes [inp]/[mbase]/[brk]/[entryw] with [av]/[envv] tied by
+         [Hargv]/[Henvp]; here [inp] IS that term, so both ties are [eq_refl]. *)
+      apply (seg_U sp0 av envv rdraw tid regs0 mem0 model0 inp mbase brk entryw
+               Hva Hve Hvsp Htid eq_refl eq_refl Hvl Hlau ME Hargc Hh Hlazy).
       intros R M Q2 Q4 Q8 Q11 FM (Fra & [s0v Fs0] & F1 & F2 & F3 & F4 & F5 & F6 & F7) Margv.
       assert (RS : forall r, In r (regU_w sp0) -> bv_unsigned (fst r) = bv_unsigned sp0 - 128 /\ snd r = 80).
       { intros r Hr. unfold regU_w in Hr. cbn [In] in Hr. destruct Hr as [<-|[]]. cbn [fst snd]. rewrite u_small by lia. split; reflexivity. }
       assert (ABOVE : forall x : word, bv_unsigned sp0 <= bv_unsigned x -> M x = mem0 x).
       { intros x Hx. apply (proj1 FM). apply outside_of_disjoint. intros r Hr. destruct (RS r Hr) as [E1 E2]. rewrite E1, E2. lia. }
-      destruct (arg0_facts sp0 av envv rdraw tid regs0 mem0 Hva Hve Hvsp ME) as (Sr & Slo & Shi & Slen & [t8 Ht8] & Sfit & Snul).
-      set (pp := cat_argv_ptr sp0 av envv 0) in *. set (a0s := nth 0 av []) in *.
+      destruct (arg0_facts sp0 av envv rdraw tid regs0 mem0 inp mbase brk entryw
+                  Hva Hve Hvsp Htid eq_refl eq_refl Hvl Hlau ME) as (Sr & Slo & Shi & Slen & [t8 Ht8] & Sfit & Snul).
+      set (pp := cat_argv_ptr (ed_top rdraw) av envv (in_execfn inp) 0) in *. set (a0s := nth 0 av []) in *.
       pose proof (u64_range pp) as Hpr.
       replace (hd [] av) with a0s by (subst a0s; destruct av; reflexivity).
       change (fsC fs0) with (m_fs model0).
-      refine (ref_usage_cs sp0 model0 Hvsp Hh Hlazy eq_refl pp (bv_unsigned tid) (bv_unsigned (canary_w rdraw)) s0v R M Q2 Q4 Q8 Q11
+      refine (ref_usage_cs sp0 model0 Hvsp Hh Hlazy eq_refl Hrd0 pp (bv_unsigned tid) (bv_unsigned (canary_w rdraw)) s0v R M Q2 Q4 Q8 Q11
                 _ _ _ _ Htid _ Margv Slo Fra Fs0 F1 F2 F3 F4 F5 F6 F7 a0s t8 Snul Slen _ _ _ _).
       - intros a n Ha Hn. rewrite u_small in Ha, Hn by lia. eapply frame_mod_store_ok; [exact FM|].
-        apply (main_entry_store_ok_win sp0 av envv rdraw tid regs0 mem0 ME); unfold RefUsageCS_defs.US_STK in *; rewrite ?stack_max_size_val; lia.
-      - intros i Hi. rewrite (proj1 FM (Z_to_bv 64 i)); [apply (main_entry_ro_none sp0 _ _ rdraw tid regs0 mem0 Hvsp ME); exact Hi |].
+        apply (main_entry_store_ok_win _ _ _ sp0 rdraw tid regs0 mem0 ME);
+          unfold RefUsageCS_defs.US_STK, wok_lo, stack_window_reach, stack_max_size in *; lia.
+      - intros i Hi. rewrite (proj1 FM (Z_to_bv 64 i)); [apply (main_entry_ro_none _ _ _ sp0 rdraw tid regs0 mem0 Hvsp ME); exact Hi |].
         apply outside_of_disjoint. intros r Hr. destruct (RS r Hr) as [E1 E2]. rewrite E1, E2, u_small by lia. lia.
-      - eapply cells_ok_frame; [apply diag_cells_wf | exact (cells_ok_main_entry sp0 _ _ rdraw tid regs0 mem0 Hvsp ME) | exact FM |].
+      - eapply cells_ok_frame; [apply diag_cells_wf | exact (cells_ok_main_entry _ _ _ sp0 rdraw tid regs0 mem0 Hvsp ME) | exact FM |].
         eapply Forall_impl; [| apply diag_cells_range]. intros [[a w] v] [R1 R2] r Hr. destruct (RS r Hr) as [E1 E2]. rewrite E1, E2. lia.
       - eapply rdn_frame; [exact FM | | unorm; lia |].
-        + rewrite Z_to_bv_bv_unsigned. apply (RefStartupFacts.main_entry_tid sp0 _ _ rdraw tid Hlo regs0 mem0 ME).
+        + rewrite Z_to_bv_bv_unsigned. apply (RefStartupFacts.main_entry_tid _ sp0 rdraw tid Hlo _ _ regs0 mem0 ME).
         + intros r Hr. unorm. destruct (RS r Hr) as [E1 E2]. rewrite E1, E2. lia.
-      - split; [| apply u64_range]. eapply rdn_frame; [exact FM | exact (proj1 (canary_ok_main_entry sp0 _ _ rdraw tid regs0 mem0 Hvsp ME)) | unfold CANARY; unorm; lia |].
+      - split; [| apply u64_range]. eapply rdn_frame; [exact FM | exact (proj1 (canary_ok_main_entry _ _ _ sp0 rdraw tid regs0 mem0 Hvsp ME)) | unfold CANARY; unorm; lia |].
         intros r Hr. unfold CANARY. unorm. destruct (RS r Hr) as [E1 E2]. rewrite E1, E2. lia.
       - lia.
       - specialize (Sfit Hfit). lia.
@@ -1013,33 +1101,40 @@ Section Top.
   (* [comment removed for export] *)
   Theorem main_realizes : main_realizes_stmt HS.
   Proof.
-    intros sp0 tid brk mbase rnd lim [argv envp fs0 stdin0 uid gid groups net nf sm hw abt vasz urnd tmp0] regs mem ps0 B Hsp Hfit Hva Hve Hfs Htid HCE ME RH0 KR0 AUX0 [HB HB64] TR.
+    (* 08b1429: [ProcInput] has twenty fields and [mkProcInput_full] is the record's own
+       constructor, so the five after in_tmp are named and passed back FROM THE INPUT. *)
+    (* [main_realizes_stmt] carries the launch facts [Hvl]/[Hlau] after [ME] (MainDefs.v);
+       each arm passes them to its Section, which states them over the same input. *)
+    intros sp0 tid brk mbase rnd lim [argv envp fs0 stdin0 uid gid groups net nf sm hw abt vasz urnd tmp0
+                                      kern execfn chrdr sigdfl sigterm] regs mem ps0 B Hsp Hfit Hva Hve Hfs Htid HCE ME Hvl Hlau RH0 KR0 AUX0 [HB HB64] TR.
     unfold in_fs in *. cbn [in_argv in_envp in_image_fs in_tmp in_stdin] in *.
     (* [comment removed for export] *)
-    pose (AMB := amb_of (mkProcInput_full argv envp fs0 stdin0 uid gid groups net nf sm hw abt vasz urnd tmp0)).
+    pose (AMB := amb_of (mkProcInput_full argv envp fs0 stdin0 uid gid groups net nf sm hw abt vasz urnd tmp0
+                           kern execfn chrdr sigdfl sigterm)).
     change (amb_of _) with AMB in ME.
-    unfold model0. change (mkProcInput_full argv envp fs0 stdin0 uid gid groups net nf sm hw abt vasz urnd tmp0) with (@mkProcInputC AMB argv envp fs0 stdin0) in KR0 |- *.
+    unfold model0. change (mkProcInput_full argv envp fs0 stdin0 uid gid groups net nf sm hw abt vasz urnd tmp0
+                             kern execfn chrdr sigdfl sigterm) with (@mkProcInputC AMB argv envp fs0 stdin0) in KR0 |- *.
     change (fs_seed_tmp fs0 tmp0) with (@fsC AMB fs0) in Hfs |- *.
     destruct argv as [|a0s [|path [|x l]]].
-    - apply (ref_usage sp0 [] envp rnd tid regs mem brk mbase lim fs0 stdin0 Hva Hve Hsp Htid ME ltac:(cbn; lia) Hfit).
-    - apply (ref_usage sp0 [a0s] envp rnd tid regs mem brk mbase lim fs0 stdin0 Hva Hve Hsp Htid ME ltac:(cbn; lia) Hfit).
+    - apply (ref_usage sp0 [] envp rnd tid regs mem brk mbase lim fs0 stdin0 Hva Hve Hsp Htid ME Hvl Hlau ltac:(cbn; lia) Hfit (hx_krel_rdr HS HX _ _ KR0)).
+    - apply (ref_usage sp0 [a0s] envp rnd tid regs mem brk mbase lim fs0 stdin0 Hva Hve Hsp Htid ME Hvl Hlau ltac:(cbn; lia) Hfit (hx_krel_rdr HS HX _ _ KR0)).
     - cbn [spec].
       pose proof Hva as (_ & _ & _ & _ & Htl). cbn [tl] in Htl. inversion Htl as [|x l [Hsl Hdd] _]; subst.
       destruct (Nat.leb_spec0 4096 (length path)) as [Hlong|Hshort].
-      + apply (ref_open_fail_toolong sp0 a0s path envp rnd tid regs mem brk mbase lim fs0 stdin0 ps0 B Hva Hve Hsp Htid ME RH0 AUX0 HB HCE Hfit KR0 Hlong).
+      + apply (ref_open_fail_toolong sp0 a0s path envp rnd tid regs mem brk mbase lim fs0 stdin0 ps0 B Hva Hve Hsp Htid ME Hvl Hlau RH0 AUX0 HB HCE Hfit KR0 Hlong).
       + destruct (list_byte_eqb path []) eqn:Hemp.
         * apply list_byte_eqb_eq in Hemp.
-          apply (ref_open_fail_empty sp0 a0s path envp rnd tid regs mem brk mbase lim fs0 stdin0 ps0 B Hva Hve Hsp Htid ME RH0 AUX0 HB HCE Hfit KR0 Hemp).
+          apply (ref_open_fail_empty sp0 a0s path envp rnd tid regs mem brk mbase lim fs0 stdin0 ps0 B Hva Hve Hsp Htid ME Hvl Hlau RH0 AUX0 HB HCE Hfit KR0 Hemp).
         * assert (Hne : path <> []) by (intros E; apply list_byte_eqb_eq in E; rewrite E in Hemp; discriminate).
           destruct (list_byte_eqb path dot_path) eqn:Hdot.
           -- apply list_byte_eqb_eq in Hdot.
-             apply (ref_dir sp0 a0s path envp rnd tid regs mem brk mbase lim fs0 stdin0 ps0 B Hva Hve Hsp Htid ME RH0 AUX0 HB HCE Hfit KR0 Hdot).
+             apply (ref_dir sp0 a0s path envp rnd tid regs mem brk mbase lim fs0 stdin0 ps0 B Hva Hve Hsp Htid ME Hvl Hlau RH0 AUX0 HB HCE Hfit KR0 Hdot).
           -- assert (Hnd : path <> dot_path) by (intros E; apply list_byte_eqb_eq in E; rewrite E in Hdot; discriminate).
              assert (Hdr : path_is_dirref path = false).
              { unfold path_is_dirref. rewrite (path_eqb_neq _ _ Hnd), Hdd. reflexivity. }
              destruct (fs_lookup (fsC fs0) path) as [data|] eqn:Hlk.
-             ++ apply (ref_file sp0 a0s path envp rnd tid regs mem brk mbase lim fs0 stdin0 ps0 B Hva Hve Hsp Htid ME RH0 AUX0 HB HB64 HCE Hfit KR0 data Hlk TR ltac:(lia) Hne Hsl Hdr).
-             ++ apply (ref_open_fail_absent sp0 a0s path envp rnd tid regs mem brk mbase lim fs0 stdin0 ps0 B Hva Hve Hsp Htid ME RH0 AUX0 HB HCE Hfit KR0 ltac:(lia) Hne Hsl Hdr Hlk).
-    - apply (ref_usage sp0 (a0s :: path :: x :: l) envp rnd tid regs mem brk mbase lim fs0 stdin0 Hva Hve Hsp Htid ME ltac:(cbn; lia) Hfit).
+             ++ apply (ref_file sp0 a0s path envp rnd tid regs mem brk mbase lim fs0 stdin0 ps0 B Hva Hve Hsp Htid ME Hvl Hlau RH0 AUX0 HB HB64 HCE Hfit KR0 data Hlk TR ltac:(lia) Hne Hsl Hdr).
+             ++ apply (ref_open_fail_absent sp0 a0s path envp rnd tid regs mem brk mbase lim fs0 stdin0 ps0 B Hva Hve Hsp Htid ME Hvl Hlau RH0 AUX0 HB HCE Hfit KR0 ltac:(lia) Hne Hsl Hdr Hlk).
+    - apply (ref_usage sp0 (a0s :: path :: x :: l) envp rnd tid regs mem brk mbase lim fs0 stdin0 Hva Hve Hsp Htid ME Hvl Hlau ltac:(cbn; lia) Hfit (hx_krel_rdr HS HX _ _ KR0)).
   Qed.
 End Top.

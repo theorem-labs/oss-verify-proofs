@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-11-05: copied whole from projects/cgif/cgif_rgb_fuzzer/proofs/lib/LimSimMv.v at c395a1e0dfa, with
+(* Modified by Theorem Labs, 2026-11-05: copied whole from projects/cgif/cgif_rgb_fuzzer/proofs/lib/LimSimMv.v at theorem-labs/oss-verify-proofs@c5665593c2d8, with
    every occurrence of the module path OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib replaced by
    OSSVerify.Proofs.coturn.FuzzStunClient.lib.Corpus and that file lead comment replaced by this line; no other change. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the mremap proof MV_OK_wf cuts the source range with maps_subtract as the model does, with a comment of this file's own on that, nwr_filter, which nothing here uses, is removed, and the cited source commit is named by its public id. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From stdpp Require Import bitvector.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Run Specs.
@@ -144,9 +145,6 @@ Proof.
   pose proof (word_range a). pose proof (word_range n). apply IH. apply nwr_maps_subtract; [lia|lia|exact NW].
 Qed.
 
-Lemma nwr_filter : forall f P, nwr P -> nwr (List.filter f P).
-Proof. intros f P H. unfold nwr in *. rewrite Forall_forall in H |- *. intros p Hp. apply List.filter_In in Hp as [Hp _]. exact (H p Hp). Qed.
-
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -176,7 +174,11 @@ Proof.
   change (m_vm_materialized (with_vm_backing ?lz ?mt ?mm)) with mt.
   change (m_vmmaps (with_vmmaps ?hh m)) with hh. cbn [vm_maps vm_noaccess].
   change (m_vm_lazy (with_vmmaps ?hh m)) with (m_vm_lazy m). change (m_vm_materialized (with_vmmaps ?hh m)) with (m_vm_materialized m).
-  set (M := map_remove (vm_maps h) old). set (NA := vm_noaccess h). set (LZ := m_vm_lazy m). set (MT := m_vm_materialized m).
+  (* LPS 75d69e00: [mremap_maps_next] and [mremap_move_charge] both cut the source with
+     [maps_subtract (vm_maps h) old (old + old_n)], not [map_remove (vm_maps h) old];
+     [M] names that common term, and [NWM]/[FREE_M] below follow it. *)
+  set (M := maps_subtract (vm_maps h) (bv_unsigned old) (bv_unsigned old + bv_unsigned old_n)).
+  set (NA := vm_noaccess h). set (LZ := m_vm_lazy m). set (MT := m_vm_materialized m).
   set (sl := mremap_source_lazy_b m old old_n).
   set (olo := bv_unsigned old). set (dlo := bv_unsigned dst).
   set (KL := maps_subtract LZ olo (olo + bv_unsigned old_n)).
@@ -188,7 +190,8 @@ Proof.
   assert (LEN2 : length (if sl then List.map (move_page_base old dst) FL else []) = length (if sl then FL else [])) by (destruct sl; [apply length_map | reflexivity]).
   rewrite LEN2.
   (* [comment removed for export] *)
-  assert (NWM : nwr M) by (subst M; unfold map_remove; apply nwr_filter; exact HWF).
+  pose proof (word_range old) as Rold. pose proof (word_range old_n) as Roldn.
+  assert (NWM : nwr M) by (unfold M; apply nwr_maps_subtract; [lia | lia | exact HWF]).
   assert (NWD : nwr ((dst, new_n) :: M)) by (constructor; [unfold phi, plo, psz; cbn [fst snd]; fold dlo; rewrite Rn; lia | exact NWM]).
   rewrite (live_bytes_zsum (maps_subtract_all (maps_subtract_all ((dst, new_n) :: M) NA) _)) by (apply nwr_maps_subtract_all, nwr_maps_subtract_all; exact NWD).
   rewrite (live_bytes_zsum (maps_subtract_all (maps_subtract_all M NA) KL)) by (apply nwr_maps_subtract_all, nwr_maps_subtract_all; exact NWM).
@@ -196,9 +199,10 @@ Proof.
   assert (IND : zsum (fun x => if (dlo <=? x) && (x <? dlo + nnz) then 1 else 0) 0 N64 = nnz) by (rewrite zsum_indicator; rewrite ?N64_Z; lia).
   (* [comment removed for export] *)
   assert (FREE_M : forall x, dlo <= x < dlo + nnz -> owners M x = 0%nat).
-  { intros x Hx. pose proof (owners_filter_le (fun p => negb (bv_eqb (fst p) old)) (vm_maps h) x) as LE.
-    change (List.filter (fun p => negb (bv_eqb (fst p) old)) (vm_maps h)) with M in LE.
-    rewrite (region_free_no_owner (vm_maps h) dst new_n x (region_free_app_r _ _ _ _ FREE)) in LE; [lia|].
+  { intros x Hx. unfold M.
+    rewrite owners_maps_subtract; [| lia | lia | right; exact HWF].
+    rewrite (region_free_no_owner (vm_maps h) dst new_n x (region_free_app_r _ _ _ _ FREE));
+      [destruct ((bv_unsigned old <=? x) && (x <? bv_unsigned old + bv_unsigned old_n))%bool; reflexivity|].
     apply owns_intro; fold dlo; [lia | rewrite Rn; lia]. }
   (* [comment removed for export] *)
   enough (PW : forall x,

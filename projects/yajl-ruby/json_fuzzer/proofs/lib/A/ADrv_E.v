@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (Sections E and E2 take the launch's execfn, az_main_usage, az_main2, a_main_drv and a_main_spec state AENTRY with execfn in place of uid and hw, and main_usage, main_to_test and the read and loop lemmas are passed it; az_main2 takes the exec name). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -39,7 +40,7 @@ Proof.
 Qed.
 
 Section E.
-  Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw).
+  Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw) (execfn : list byte).
   Hypothesis VSP : valid_sp sp0.
   Hypothesis RCSP : rc_sp = bv_unsigned sp0.
   Hypothesis EFIT : entry_stack_fits sp0 argv envp.
@@ -59,10 +60,10 @@ Section E.
   Hypothesis MOFD : m_fds MO = dfds_std.
 
   (* [comment removed for export] *)
-  Theorem az_main_usage : forall s ms, AENTRY sp0 argv envp uid hw rnd D MO s ms -> Z.of_nat (length argv) <> 2 ->
+  Theorem az_main_usage : forall s ms, AENTRY sp0 argv envp rnd execfn D MO s ms -> Z.of_nat (length argv) <> 2 ->
     realizes_cfg acfg asegs (mkCfg ms MO) (TDIE (pieces_usage (map bv_unsigned (hd [] argv))) stdout_init FS0).
   Proof.
-    intros s ms AE HARGC. pose proof (main_usage sp0 argv envp uid hw rnd VSP RCSP EFIT VARGV VENVP D DI DIx MO s ms AE HARGC) as U.
+    intros s ms AE HARGC. pose proof (main_usage sp0 argv envp uid hw rnd execfn VSP RCSP EFIT VARGV VENVP D DI DIx MO s ms AE HARGC) as U.
     unfold TUSAGE in U. unfold TDIE, TEXIT2. rewrite <- MOFS. exact U.
   Qed.
 
@@ -94,27 +95,27 @@ Section E.
       destruct (fs_lookup FS0 _); [| apply TDIE_nil]. apply TFIN_nil. apply KDONE_nil.
     Qed.
 
-    Theorem az_main2 : forall s ms, AENTRY sp0 argv envp uid hw rnd D MO s ms -> realizes_cfg acfg asegs (mkCfg ms MO) ADRV2.
+    Theorem az_main2 : forall s ms, AENTRY sp0 argv envp rnd execfn D MO s ms -> realizes_cfg acfg asegs (mkCfg ms MO) ADRV2.
     Proof.
       intros s ms AE.
       assert (ARGC : argc argv = 2) by (unfold argc; rewrite EARGV; reflexivity).
-      eapply (main_to_test sp0 argv envp uid hw rnd VSP RCSP VARGV VENVP D DI MO s ms); [exact AE|].
+      eapply (main_to_test sp0 argv envp uid hw rnd execfn VSP RCSP VARGV VENVP D DI MO s ms); [exact AE|].
       intros t0 t1 t2 a3 a4 a5 a6 a7 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc mm mo' pad FR BA HK0 FRM SO0 HD0 Efs Efds.
       unfold ADRV2.
       assert (OC' : open_classify arg1 mo' = open_classify arg1 MO) by (unfold open_classify; rewrite Efs; reflexivity).
       rewrite <- OC'.
-      apply (az_read_all_head sp0 argv envp uid hw rnd arg0 arg1 pad s4 s5 s6 s7 s8 s9 s10 s11 VSP RCSP VARGV VENVP EARGV D DI DIx FS0 KLOOP s mo'
+      apply (az_read_all_head sp0 argv envp uid hw rnd execfn arg0 arg1 pad s4 s5 s6 s7 s8 s9 s10 s11 VSP RCSP VARGV VENVP EARGV D DI DIx FS0 KLOOP s mo'
                t0 t1 t2 a3 a4 a5 a6 a7 t3 t4 t5 t6 F fc mm FR BA HK0 SO0 FRM ltac:(rewrite Efs; exact MOFS) HD0 ltac:(rewrite Efds; exact MOFD) KLOOP_nil).
       intros ent s' mo ms' P1v OC HP1 P1R RI.
       destruct (open_classify_may _ _ _ OC) as [-> | (d & -> & FSL)].
       - (* [comment removed for export] *)
-        exact (az_loop_dir sp0 argv envp uid hw rnd arg0 arg1 pad s4 s5 s6 s7 s8 s9 s10 s11 VSP RCSP VARGV VENVP EARGV D DI DIx FS0 P1v HP1 P1R s' mo ms' RI).
+        exact (az_loop_dir sp0 argv envp uid hw rnd execfn arg0 arg1 pad s4 s5 s6 s7 s8 s9 s10 s11 VSP RCSP VARGV VENVP EARGV D DI DIx FS0 P1v HP1 P1R s' mo ms' RI).
       - (* [comment removed for export] *)
         unfold KLOOP. rewrite Efs, MOFS in FSL. rewrite FSL.
-        apply (az_loop0 sp0 argv envp uid hw rnd arg0 arg1 pad s4 s5 s6 s7 s8 s9 s10 s11 VSP RCSP EFIT VARGV VENVP EARGV D DI DIx FS0 P1v arg1 d
+        apply (az_loop0 sp0 argv envp uid hw rnd execfn arg0 arg1 pad s4 s5 s6 s7 s8 s9 s10 s11 VSP RCSP EFIT VARGV VENVP EARGV D DI DIx FS0 P1v arg1 d
                  (KDONE FS0 d) (KDONE_nil FS0 d)) with (s := s').
         + intros cap s'' mo'' ms'' RB LTC.
-          exact (az_after_loop sp0 argv envp uid hw rnd arg0 arg1 pad s4 s5 s6 s7 s8 s9 s10 s11 VSP RCSP EFIT VARGV VENVP EARGV D DI DIx FS0 P1v arg1 d cap s'' mo'' ms'' RB LTC).
+          exact (az_after_loop sp0 argv envp uid hw rnd execfn arg0 arg1 pad s4 s5 s6 s7 s8 s9 s10 s11 VSP RCSP EFIT VARGV VENVP EARGV D DI DIx FS0 P1v arg1 d cap s'' mo'' ms'' RB LTC).
         + exact RI.
         + destruct RI as (x1 & u0 & u1 & u2 & b0 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & x23 & u3 & u4 & u5 & u6 & F' & fc' & mm' & A & _ & RC & _).
           destruct RC as (junk & H & _ & _ & _ & _ & _ & _ & FS & _). rewrite FS. exact FSL.
@@ -162,7 +163,7 @@ Proof.
 Qed.
 
 Section E2.
-  Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw).
+  Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw) (execfn : list byte).
   Hypothesis VSP : valid_sp sp0.
   Hypothesis RCSP : rc_sp = bv_unsigned sp0.
   Hypothesis EFIT : entry_stack_fits sp0 argv envp.
@@ -175,17 +176,17 @@ Section E2.
   Hypothesis MOFS : m_fs MO = FS0.
   Hypothesis MOFD : m_fds MO = dfds_std.
 
-  Theorem a_main_drv : forall s ms, AENTRY sp0 argv envp uid hw rnd D MO s ms -> realizes_cfg acfg asegs (mkCfg ms MO) (ADRV MO FS0 argv).
+  Theorem a_main_drv : forall s ms, AENTRY sp0 argv envp rnd execfn D MO s ms -> realizes_cfg acfg asegs (mkCfg ms MO) (ADRV MO FS0 argv).
   Proof.
     intros s ms AE. unfold ADRV.
     destruct (Z.eq_dec (Z.of_nat (length argv)) 2) as [E2 | NE2].
     - revert VARGV EFIT AE. destruct argv as [|a0 [|a1 [|a2 l]]]; try (exfalso; cbn in E2; lia). intros VARGV EFIT AE.
-      exact (az_main2 sp0 [a0; a1] envp uid hw rnd VSP RCSP EFIT VARGV VENVP D DI DIx MO FS0 MOFS MOFD a0 a1 eq_refl s ms AE).
-    - pose proof (az_main_usage sp0 argv envp uid hw rnd VSP RCSP EFIT VARGV VENVP D DI DIx MO FS0 MOFS s ms AE NE2) as U.
+      exact (az_main2 sp0 [a0; a1] envp uid hw rnd execfn VSP RCSP EFIT VARGV VENVP D DI DIx MO FS0 MOFS MOFD a0 a1 eq_refl s ms AE).
+    - pose proof (az_main_usage sp0 argv envp uid hw rnd execfn VSP RCSP EFIT VARGV VENVP D DI DIx MO FS0 MOFS s ms AE NE2) as U.
       revert U. destruct argv as [|a0 [|a1 [|a2 l]]]; intros U; try exact U. exfalso. cbn in NE2. lia.
   Qed.
 
-  Theorem a_main_spec : forall s ms, AENTRY sp0 argv envp uid hw rnd D MO s ms -> realizes_cfg acfg asegs (mkCfg ms MO) (spec argv FS0).
+  Theorem a_main_spec : forall s ms, AENTRY sp0 argv envp rnd execfn D MO s ms -> realizes_cfg acfg asegs (mkCfg ms MO) (spec argv FS0).
   Proof.
     intros s ms AE. eapply rz_conseq_cfg; [apply (a_main_drv s ms AE)|].
     rewrite ADRV_DRV. apply RDrv_spec.DRV_spec; [exact MOFS | exact VARGV].

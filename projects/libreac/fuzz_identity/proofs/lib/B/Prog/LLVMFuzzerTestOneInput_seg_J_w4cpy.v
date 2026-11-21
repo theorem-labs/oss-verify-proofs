@@ -4,6 +4,7 @@
    projects/cgif/cgif_file_fuzzer/proofs/lib/YN13.v:121-125; projects/cgif/cgif_rgb_fuzzer/proofs/lib/YC1n.v:201-203, for
    libreac/fuzz_identity's asan-ubsan build (lib/B). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/B/Prog/LLVMFuzzerTestOneInput_seg_D1.v, with its addresses changed; 647 of its 768 lines of code are new or changed and 5944 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment J of LLVMFuzzerTestOneInput's build-B walk (fuzz_identity.asan-ubsan): the loop that appends the
    four width digits `w4` (SF+688) to the expected name `exp_nm` (SF+528) at offset ld, 0x81db8 .. 0x81dfc
    (BASE + 0x1644 .. BASE + 0x1688), to its join at 0x81e2c (BASE + 0x16b8).
@@ -36,7 +37,7 @@
    j_w4cpy_tok_go_len and j_w4cpy_TK_len are the same-named helpers of
    lib/B/Prog/LLVMFuzzerTestOneInput_seg_J_dpcpy.v (which took them from
    lib/B/Prog/LLVMFuzzerTestOneInput_seg_J_pre.v and lib/Prog/Seg/Tac_sh1.v); j_w4cpy_firstn_snoc is
-   origin/main 2f680b0d9c66 proofs/tcpreplay/fuzz_services/lib/S1Strtol.v:62 firstn_S_app. *)
+   proofs/tcpreplay/fuzz_services/lib/S1Strtol.v:62 firstn_S_app. *)
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require Import YImgTop.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation String.

@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/A/AZ03.v (agreement) and lib/Halts_tfib.v (halting), by way of proofs/libreac/fuzz_grant/lib/A/AsanTop.v, for fuzz_command's ASan statements: the plain side is fuzz_command's released realization built as lib/AgreeFrame.v builds it from lib/AgreeCmd.v's slot, brought to the statement's plain budget by shape_strong_equiv_efs_relim; the halting proof takes srealizes (halts_budgets_of_srealizes); names and module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/AsanTop.v (origin/ossv/recipes 501c0d516c69) for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths; cmd_shape -> seg_shape, CmdShape / CmdTFIB / HaltsSpecC -> SegShape / SegTFIB / HaltsSpecS, cmd_ -> seg_ in the lemma names; the plain side's slot is segconf's plain lane's lib/AgreeSeg.v plain_slot_ag (commit cfdd99183965, lines 51-64: the plain slot at ag_shape checksum_shape over the plain segment lemmas), taken as a Section hypothesis of exactly its statement in place of lib/AgreeCmd.v's ag_slot (the plain tree that holds it is merged at the close's last step); its G and GI are segconf's frame_G and SlotFR.GI_SLOT (longl[120] = 0), whose G_local_c / G_img_c facts are proved as lib/AgreeSeg.v proves them. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/AsanTop.v for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths; cmd_shape -> seg_shape, CmdShape / CmdTFIB / HaltsSpecC -> SegShape / SegTFIB / HaltsSpecS, cmd_ -> seg_ in the lemma names; the plain side's slot is segconf's plain lane's lib/AgreeSeg.v plain_slot_ag (lines 51-64: the plain slot at ag_shape checksum_shape over the plain segment lemmas), taken as a Section hypothesis of exactly its statement in place of lib/AgreeCmd.v's ag_slot (the plain tree that holds it is merged at the close's last step); its G and GI are segconf's frame_G and SlotFR.GI_SLOT (longl[120] = 0), whose G_local_c / G_img_c facts are proved as lib/AgreeSeg.v proves them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader conjunct of fdchan; the launch's ProcInput); internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_command's two ASan statements from the ASan side TFIB_T (CmdTFIB.v), in the form of
    proofs/cgif/cgif_file_fuzzer/lib/A/AZ03.v (agreement) and lib/Halts_tfib.v (halting):
    - asan_agrees: shape_strong_equiv_efs_relim (Reusable/YM09.v) over the plain build's proved realization of SPECX
@@ -35,8 +36,8 @@ Open Scope Z_scope.
    cmd_shape = ag_shape checksum_shape. *)
 Section p.
 (* segconf: the plain slot of segconf's ubsan agreement at the agreement shape, in the place of lib/AgreeCmd.v's
-   ag_slot: G = frame_G (longl), GI = SlotFR.GI_SLOT. plain_slot_ag below is lib/AgreeSeg.v:51-58's statement at
-   commit cfdd99183965, byte for byte (with that file's abbreviation AGS), a Section hypothesis until the
+   ag_slot: G = frame_G (longl), GI = SlotFR.GI_SLOT. plain_slot_ag below is lib/AgreeSeg.v:51-58's statement,
+   byte for byte (with that file's abbreviation AGS), a Section hypothesis until the
    plain tree is merged; AgreeSeg proves it from Prog/SegSlotAG.slot_of_lemmas_ag. *)
 Local Abbreviation AGS := (ag_shape checksum_shape).
 Hypothesis plain_slot_ag : forall CP : cut_preds,
@@ -95,12 +96,12 @@ Proof.
   destruct en_s as [sp brk mb rnd].
   pose proof (valid_input_va_size _ Hinp) as Hsv48.
   unfold Images.asan in Hent.
-  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent. destruct Hent as [Hsp' [Hbrk' [Hmb' Hfit']]].
+  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent. destruct Hent as [Hsp' [Hbrk' [Hmb' [Hfit' Hlau']]]].
   exact (shape_strong_equiv_efs_relim SanitizerBudgets.lim_source ShippedBudgets.lim_source SanitizerBudgets.lim_target
     Plain.M.loaded_segments Plain.M.init_pc Plain.M.phdrs sp brk mb rnd
     segsegs0 Asan.M.init_pc Asan.M.phdrs sp' brk' mb' rnd'
     (SPECX (LS:=seg_shape) inp) (SPECX (LS:=seg_shape) inp) inp
-    asan_lim_source_le SWB HP (TFIB sp' brk' mb' rnd' inp Hsp' Hbrk' Hmb' Hfit' Hinp) (t_eq_refl _)).
+    asan_lim_source_le SWB HP (TFIB sp' brk' mb' rnd' inp Hsp' Hbrk' Hmb' Hfit' Hinp Hlau') (t_eq_refl _)).
 Qed.
 
 Theorem seg_asan_halts_of_tfib : Statements.asan_halts.
@@ -112,8 +113,8 @@ Proof.
     target_alloc_limit ShippedBudgets.lim_source lim_source_le_target (forced_only_cfg_least _)).
   intros sp brk mb rnd inp Hen Hinp. exists (SPECX (LS:=seg_shape) inp). split.
   - pose proof (valid_input_va_size _ Hinp) as Hsv48.
-    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb Hfit]]].
-    exact (TFIB sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hinp).
+    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb [Hfit Hlau]]]].
+    exact (TFIB sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau).
   - exact (SPECX_shape_ok inp).
 Qed.
 End a.

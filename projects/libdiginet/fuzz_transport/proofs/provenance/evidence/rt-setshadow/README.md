@@ -11,7 +11,7 @@ are lib/A/Rt/RtSetShadow.v (theorems transport_set_shadow_00 / _f5 / _f8) and it
 lib/A/Rt/RtSSF5Cg.v and lib/A/Rt/RtSSF8Cg.v.
 
 These proofs were relocated from the released proof of libreac/fuzz_grant: its lib/A/Rt/SetShadow.v
-(projects/libreac/fuzz_grant/proofs/lib/A/Rt/SetShadow.v at recipes commit c3777b3715d0, file sha256
+(projects/libreac/fuzz_grant/proofs/lib/A/Rt/SetShadow.v at recipes, file sha256
 50fd0fe8abe7c18130f67648857f15aa2d4e02a788fe5036490c2684729f2afe), theorems grant_set_shadow_00 at line 190,
 grant_set_shadow_f5 at line 192 and grant_set_shadow_f8 at line 194, over the donor entries 0x546bc, 0x547c4 and
 0x547dc (lines 28-30). A relocated walk holds for this image only when this image's code is the donor's code. So the
@@ -130,4 +130,4 @@ equal to the first-run record except the image path on line 1.
   from the donor file and walk-header.txt (sha256 b0456227180a; internal record); RtSetShadow.v (sha256 f7c8737affff;
   internal record), byte for byte lib/A/Rt/RtSetShadow.v of this unit (git blob 621cfe869fd1); RtSSAudit.v (sha256
   3c9f2f6377a4; internal record), an audit file that is not part of the build; grant-SetShadow.v (sha256
-  50fd0fe8abe7; internal record), the donor file at c3777b3715d0.
+  50fd0fe8abe7; internal record), the donor file.

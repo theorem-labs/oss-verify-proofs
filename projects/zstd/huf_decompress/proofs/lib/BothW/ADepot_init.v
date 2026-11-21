@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main entry's recorded facts read as the main entry keeps them: AMKNW, AMKN, APKN; ported by content from zstd_frame_info's file of the same role, with this binary's addresses and names). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -143,9 +144,9 @@ Proof.
 Qed.
 
 Theorem adepot_init : forall (V : nat -> Z) (w : bool) (U : list (list Z)) (m : amem),
-  Forall (mfact_ok bsegs V m) asan_mem_facts ->
-  Forall (mfact_ok bsegs V m) (asan_mem_facts_w w) ->
-  Forall (pfact_ok V) asan_pure_facts ->
+  Forall (mfact_ok bsegs V m) AMKN ->
+  Forall (mfact_ok bsegs V m) (AMKNW w) ->
+  Forall (pfact_ok V) APKN ->
   (length U <= 4096)%nat -> Forall (fun u => (length u <= 254)%nat) U ->
   32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat - 8388608 = ATOP ->      (* [comment removed for export] *)
   ADEPOTi (mkALayout (LV V) w U) m.
@@ -156,15 +157,18 @@ Proof.
   assert (ES : al_store L = 4096 * V 454%nat) by reflexivity.
   assert (EU : al_U L = U) by reflexivity.
   exists (D0 w). split; [rewrite EU; apply D0_wf; assumption|].
+  (* [comment removed for export] *)
   pf V HP (PVar 453 1551 34359736064) P469. pf V HP (PVar 454 1551 34359734272) P470.
   pf V HP (PVar 0 4294901760 4294967295) P0. pf V HP (PVar 6 0 255) P6. pf V HP (PVar 10 0 7) P10.
   pf V HP (PDisj (ZMul (ZLit 4096) (ZV 453)) 1048576 (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZMul (ZLit 4096) (ZV 10))) (ZLit (-8388608))) 140737496743936) DW469.
   pf V HP (PDisj (ZMul (ZLit 4096) (ZV 454)) 8388608 (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZMul (ZLit 4096) (ZV 10))) (ZLit (-8388608))) 140737496743936) DW470.
   pf V HP (PDisj (ZMul (ZLit 4096) (ZV 453)) 1048576 (ZMul (ZLit 4096) (ZV 454)) 8388608) D56.
   split.
-  2:{ unfold dlayout. rewrite EN, ES. unfold ABase.AIMG_HI. repeat split; try (clear - P469 P470 P0 P6 P10 DW469 DW470 D56 HAT; lia).
+  2:{ unfold dlayout. rewrite EN, ES. unfold ABase.AIMG_HI.
+repeat split; try (clear - P469 P470 P0 P6 P10 DW469 DW470 D56 HAT; lia).
       all: rewrite Z.mul_comm; apply Z_mod_mult. }
   clear DW469 DW470.
+  (* [comment removed for export] *)
   mf V m HM (MCell (ZLit 1622488) 8 (ZMul (ZLit 4096) (ZV 454))) CPTR.
   mf V m HM (MCell (ZLit 5882328) 4 (ZLit 1)) CNU.
   mf V m HM (MCell (ZLit 5882344) 8 (ZMul (ZLit 4096) (ZV 453))) CMAP.
@@ -174,6 +178,7 @@ Proof.
   mf V m HM (MWr (ZMul (ZLit 4096) (ZV 453)) 1048576) WN.
   mf V m HM (MWr (ZMul (ZLit 4096) (ZV 454)) 8388608) WS.
   mf V m HM (MCell (ZAdd (ZMul (ZLit 4096) (ZV 454)) (ZLit 8)) 8 (ZLit 255728)) CS8.
+  (* [comment removed for export] *)
   assert (WF : rw_cells bsegs m 1622472 [C8 (Z_to_bv 64 (tf0 w))]
             /\ rw_cells bsegs m 1622496 [C4 (Z_to_bv 64 (tf0 w))]
             /\ rw_cells bsegs m (1688024 + 4 * bw0 w) [C4 (Z_to_bv 64 1)]
@@ -182,7 +187,7 @@ Proof.
             /\ rw_cells bsegs m (4096 * V 453%nat + 16) [C8 (Z_to_bv 64 (hw0 w))]
             /\ rw_cells bsegs m (4096 * V 454%nat) [C8 (Z_to_bv 64 (if w then 2 else 1))]
             /\ stk bsegs m (4096 * V 454%nat + 16) (4096 * V 454%nat + 8388608)).
-  { destruct w; cbn [tf0 bw0 hw0] in *; unfold asan_mem_facts_w in HMW.
+  { destruct w; cbn [tf0 bw0 hw0] in *; unfold AMKNW in HMW.
     - mf V m HMW (MCell (ZLit 1622472) 8 (ZLit 3)) F1. mf V m HMW (MCell (ZLit 1622496) 4 (ZLit 3)) F2.
       mf V m HMW (MCell (ZLit 3505248) 4 (ZLit 1)) F3. mf V m HMW (MImg 1622504 3505248) F4. mf V m HMW (MImg 3505252 5882328) F5.
       mf V m HMW (MCell (ZAdd (ZMul (ZLit 4096) (ZV 453)) (ZLit 16)) 8 (ZLit 7621950865793281698)) F6.

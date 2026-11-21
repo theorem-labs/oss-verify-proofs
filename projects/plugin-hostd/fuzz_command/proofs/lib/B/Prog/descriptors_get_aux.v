@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the B (fuzz_command.asan-ubsan) twin of the image and model facts of
-   lib/A/Prog/descriptors_get_s3.v (a working branch 565c61eeead: dg_verb_lit, dg_shape, dg_fits, dg_verb_val,
+   lib/A/Prog/descriptors_get_s3.v (a working branch: dg_verb_lit, dg_shape, dg_fits, dg_verb_val,
    dg_sig_*, dg_not_owned_b, dg_verb_unowned, dg_abytes_prefix, dg_verb_arg) at B's addresses, over a Theorem Labs lane's lib/B/Prog
-   kit (a working branch 917ca7ac6b1). *)
+   kit (a working branch). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* The facts the walk of descriptors_get on fuzz_command.asan-ubsan takes from the image and the model, none of which
    depends on a callee's statement.
@@ -124,7 +125,7 @@ Proof. decide equality; apply Z.eq_dec. Defined.
 
 (* the reader-only transports: a field, a byte list, a string, a recorded call and the whole recorder state keep
    their meaning over a reader that agrees on the bytes they read (lib/B/Prog/rec_clear's aval_mem_kept /
-   rabytes_kept / rastr_kept / acall_at_kept / rc_arep_kept, a working branch dd331f1aac9; the same
+   rabytes_kept / rastr_kept / acall_at_kept / rc_arep_kept, a working branch; the same
    lemmas as lib/A/Prog/descriptors_get_s1.v's) *)
 Lemma dgb_aval_mem_kept : forall (rd rd' : reader) a n v, aval_mem rd a n v ->
 (forall k, (k < n)%nat -> rd' (a + Z.of_nat k) = rd (a + Z.of_nat k)) -> aval_mem rd' a n v.
@@ -342,7 +343,7 @@ split; [|split; [|split; [|split]]].
 Qed.
 
 (* a string argument over a reader that keeps its bytes: the read-only arm's other conditions (cmd_addr_b,
-   cmd_hull_b, the literal's end) read no memory on a Theorem Labs lane 917ca7ac6b1, so only the string's bytes have to be kept *)
+   cmd_hull_b, the literal's end) read no memory on a Theorem Labs lane, so only the string's bytes have to be kept *)
 Lemma dgb_argA_kept : forall Bx ly S (rd rd' : reader) ro O q v,
 astr_argA Bx ly S rd ro O q (Some v) ->
 (forall i, 0 <= i < Z.of_nat (length v) + 1 -> rd' (q + i) = rd (q + i)) ->

@@ -9,6 +9,7 @@
    variable K instead of decode's CRT_STACK, and with cr_frame_call generalised from decode's fixed frame cell list
    to any (base, cells): so fuzz_uci's check_no_overread and check_value, whose frames differ, share one copy. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/Prog/CheckGlue.v, with its module paths changed; 52 of its 299 lines of code are new or changed and 244 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.reac_repacer.fuzz_egress.lib.Lib Require
@@ -26,7 +27,7 @@ From OSSVerify.Proofs.reac_repacer.fuzz_egress.lib Require Import Contract KindB
 From OSSVerify.Proofs.reac_repacer.fuzz_egress.lib.Lib Require Regs6ss RegisterBridge.
 Local Open Scope Z_scope.
 
-(* The allocator-call glue of decode's check_round_trip (crt_glue.v, check_round_trip.v at 25e3d17bdb50),
+(* The allocator-call glue of decode's check_round_trip (crt_glue.v, check_round_trip.v),
    shared by check_restamp, check_mute and check_inject. *)
 Lemma eg_vm : forall vm1 vm2 md, with_vmmaps vm2 (with_vmmaps vm1 md) = with_vmmaps vm2 md.
 Proof. intros vm1 vm2 [f [mp lz mt] io fs pr li ti]. reflexivity. Qed.

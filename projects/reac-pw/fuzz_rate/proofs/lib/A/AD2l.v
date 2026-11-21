@@ -4,8 +4,8 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AD2l.v, with its module paths changed and its addresses moved to libreac/fuzz_scene's ASan build. *)
 (* Modified by Theorem Labs, 2026-10-29: libreac/fuzz_scene's concrete start-up record B for the asan image, the
    instance of `TfibSyms` (lib/A/AF0m.v:906-930) that lib/A/SceneBCertB.v gives to the start-up certificate.
-   Its tables are pre-6's (lib/A/AF0l.v, lib/A/AF0m.v at origin/cold/h-rw-pre-6-scestart a00b0ed6266) and its trace
-   universe is h-rw-sce-1's measured one (lib/A/ACej.v at origin/cold/h-rw-sce-1-sceall 1c79108a270). The five
+   Its tables are pre-6's (lib/A/AF0l.v, lib/A/AF0m.v) and its trace
+   universe is h-rw-sce-1's measured one (lib/A/ACej.v). The five
    literals were measured on fuzz_scene.asan (unstripped sha256 6ed872f7cc8c1e42..., stripped 43654a025fd02e1f...,
    by an ELF symtab / .got / PT_LOAD read): each is scene's, none is cgif's.
      as_shadow_cell 0xa37f8 = st_value of __asan_shadow_memory_dynamic_address (.bss, 8 bytes) + 0;
@@ -18,7 +18,7 @@
    The two .bss cells hold SHADOW_OFF and 1 only after start-up; their values are the start-up certificate's
    cells Tfib_const_abs[49] and [50] (AF0m.v:83-84), not file bytes. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_scene/lib/A/AD2l.v (donor image sha256 43654a025fd0), with its module paths changed and its addresses moved to reac-pw/fuzz_rate's ASan build. *)
-(* ZERO-MARGIN facts of this record's Tfib_owned_static (AF0m.v:894-901), measured on fuzz_scene.asan, for whoever
+(* ZERO-MARGIN facts of this record's Tfib_owned_static (AF0m.v:895-902), measured on fuzz_scene.asan, for whoever
    next edits these tables: each is a premise of the entry statement that holds with no byte to spare.
      - trailer window [0x20e00, 0x20e28): the owned row (0x20dd2, 0x2e) ends exactly at 0x20e00, and (0x20e2c, 0x14)
        starts right after the trailer bytes [0x20e20, 0x20e2c) (HRO_TT, proved in lib/A/SceneBCertB.v);
@@ -27,7 +27,7 @@
        which includes the 0x8b8-byte redzone, and a range of that length overlaps (0x23148, 0x8b8);
      - the .got word 0x9c388 that holds the placeholder's address (loaded by auipc 0x82bb0 + ld 0x82bb4): the next
        owned row (0x9c390, 0x10) starts exactly at its end.
-   MEASURED by h-rw-pre-6 (04:19Z): TFIB_TP 0x5d6798 is tp in all 50 hand-off states of lib/A/AB01.v (a00b0ed6266),
+   MEASURED by h-rw-pre-6 (04:19Z): TFIB_TP 0x5d6798 is tp in all 50 hand-off states of lib/A/AB01.v,
    builtin_tls + 0xc8; TFIB_ERRNO 0x5d66f4 = tp - 0xa4, from __errno_location (0x8af18): mv a0, tp;
    addi a0, a0, -0xa4; ret. *)
 (* Modified by Theorem Labs, 2026-10 (--patch, reac-pw/fuzz_rate): the two blocks above record what the DONOR measured on
@@ -46,6 +46,7 @@
    Rate registers 57 globals and none of them has an ODR indicator (every descriptor at asan_globals 0xa0720 holds
    odr_indicator -1), so the donor's placeholder and .got-word items above have no counterpart here. The zero-margin
    facts of rate's own Tfib_owned_static are the start-up layer's (A/AF0m.v), not this file's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.Reusable Require Import YG00 YG01 YG0f.

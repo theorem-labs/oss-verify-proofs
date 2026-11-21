@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: both main sections take (inp, mb, ph, entry, sp0, rnd) for sp0, argv, envp, uid, hw and rnd, with entry_stack_image as the stack image and a new IMGTOP premise that it ends at the 8-aligned ed_top, and both args sections take entry_launch_ok_va with an args object of the image length less 8 (was 16). *)
 (* [comment removed for export] *)
 From Stdlib Require Lia.
 (* [comment removed for export] *)
@@ -76,9 +77,19 @@ Section Compose.
   Variable TP : tparams.
   Variable fflagA : alayout -> fframe -> Z -> Z.
   #[local] Abbreviation PS := (PState H hptr).
-  Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw).
+  (* PORTED to 75d69e00: the entry-image tuple is E2/Musl/InitMem.v's
+     [Section Layout] tuple (inp, mb, ph, entry, sp, rnd); argv, envp, the exec
+     file name, the credentials and CONFIG_RSEQ are read off [inp].  The old
+     seven-argument [build_stack_bytes a_phdrs sp0 argv envp uid hw rnd] is
+     gone: [StackLayout.build_stack_bytes] takes twelve
+     (75d69e00:theories/LinuxProcessSem/StackLayout.v:483) and
+     [Run.entry_stack_image] six (Run.v:1344).  [kb_rseq] stays symbolic. *)
+  Variables (inp : ProcInput) (mb : word) (ph : PhdrInfo) (entry : word)
+            (sp0 : word) (rnd : EntryDraw).
   Notation USP := (bv_unsigned sp0).
-  Notation SBK := (build_stack_bytes a_phdrs sp0 argv envp uid hw rnd).
+  Notation argv := (in_argv inp).
+  Notation envp := (in_envp inp).
+  Notation SBK := (entry_stack_image inp mb ph entry sp0 rnd).
   Variables (L : alayout) (LO : Z).
   (* [comment removed for export] *)
   Hypothesis GL : gia_laws FO GIOA fflagA.
@@ -99,6 +110,19 @@ Section Compose.
   Hypothesis TOP_lo : (USP - 160 <= al_top L)%Z.
   Hypothesis TOP47 : (al_top L <= 2^47)%Z.
   Hypothesis USP47 : (USP + Z.of_nat (length SBK) <= 2^47)%Z.
+  (* The image ENDS at [ed_top]: [Run.entry_stack_image_top] is deleted at
+     75d69e00 (0 rows; control [entry_page_top] 11) and the exact length is
+     [ed_top - sp] by [length_entry_stack_image_launch] (E2/Lib/PropExec.v:2449),
+     whose premise is [Run.entry_launch_ok_va] (Run.v:3723).  This section has
+     no entry record, so the fact is a premise here; MainEntryA__A3D's
+     [me_geometry] discharges it from that conjunct.  It is what gives
+     [F_main_AA]'s [span_ok], the [SPAN] the ported Printf_kit needs.  The
+     second conjunct is [ed_top]'s page alignment ([Run.valid_stack_top_va],
+     Run.v:3611), which replaces the old [usp mod 8 = 0] argument: the image
+     now ends AT [ed_top], so [sp]'s alignment says nothing about its end.
+     Same shape as F_main_AA.v:273, which consumes it. *)
+  Hypothesis IMGTOP : (USP + Z.of_nat (length SBK) = bv_unsigned (ed_top rnd)
+                       /\ bv_unsigned (ed_top rnd) mod 8 = 0)%Z.
   Hypothesis TRD : traces_drv L.
   Hypothesis TRF : traces_fuzz_one TP L RA_FUZZ [].
   (* [comment removed for export] *)
@@ -113,7 +137,7 @@ Section Compose.
   Hypothesis GX : forall RNG s CL FB m, GIOA L RNG s CL FB [] m ->
     (exists t, exit_ci t m) /\ (exists (Hh : aholes) st LB, AHEAP_P Hh L RNG st LB m) /\ SX s RNG m.
 
-  #[using="argv envp uid hw rnd GA LO_lo USP47 stdio_exit_fits GX"] Lemma at_exit_of_gioa : forall (ra sp gp t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
+  #[using="inp mb ph entry sp0 rnd GA LO_lo USP47 stdio_exit_fits GX"] Lemma at_exit_of_gioa : forall (ra sp gp t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
       (F : bvmap 5 word) (fc : bv 32) (m : mem) (RNG : footprint) (s : PS) (CL FB : list (@cblock hptr)) (code : Z),
     GIOA L RNG s CL FB [] m -> mem_inv asegs m -> stk asegs m LO (bv_unsigned sp) -> (LO + MAIN_STACK <= bv_unsigned sp)%Z ->
     (bv_unsigned sp <= USP - 48)%Z -> (bv_unsigned sp mod 16 = 0)%Z -> rngs sp0 L LO RNG ->
@@ -133,15 +157,15 @@ Section Compose.
     split; [eapply rng_sub'; [exact R2| lia]|]. split; [exact R3|]. split; [exact R4| exact R5].
   Qed.
 
-  #[using="TP fflagA GL GD GA MALLOC FREE EPR_USAGE EPR_OPEN EPR_READ EPR_BIG EFW SITE_RS TRUN LO_lo LO_hi USP16 TOP_lo TOP47 USP47 TRD TRF SX stdio_exit_frame stdio_exit_frame_nonneg stdio_exit_fits SX_frame STDIO_EXIT GX"] Theorem prog_main_impl : forall (s : PS) (RNG : footprint) (Q : Empty_set -> PS -> footprint -> machine_state -> Prop) (ms : machine_state),
-    main_entry GIOA sp0 argv envp uid hw rnd L LO s RNG ms ->
+  #[using="TP fflagA GL GD GA MALLOC FREE EPR_USAGE EPR_OPEN EPR_READ EPR_BIG EFW SITE_RS TRUN LO_lo LO_hi USP16 TOP_lo TOP47 USP47 IMGTOP TRD TRF SX stdio_exit_frame stdio_exit_frame_nonneg stdio_exit_fits SX_frame STDIO_EXIT GX"] Theorem prog_main_impl : forall (s : PS) (RNG : footprint) (Q : Empty_set -> PS -> footprint -> machine_state -> Prop) (ms : machine_state),
+    main_entry GIOA inp mb ph entry sp0 rnd L LO s RNG ms ->
     implMG RNG (prog_main HO FO sites (argv_Z argv)) s Q ms.
   Proof.
     intros s RNG Q ms ME. unfold prog_main.
     eapply implMG_bind.
     - (* [comment removed for export] *)
-      eapply (main_spec HO FO sites GIOA TP fflagA sp0 argv envp uid hw rnd L LO (at_exit_closedA SX stdio_exit_frame));
-        [ exact GL | exact GD | exact MALLOC | exact FREE | exact EPR_USAGE | exact EPR_OPEN | exact EPR_READ | exact EPR_BIG | exact EFW | exact SITE_RS | exact TRUN | exact LO_lo | exact LO_hi | exact USP16 | exact TOP_lo | exact TOP47 | exact USP47 | exact TRD | exact TRF | exact at_exit_of_gioa | exact ME ].
+      eapply (main_spec HO FO sites GIOA TP fflagA inp mb ph entry sp0 rnd L LO (at_exit_closedA SX stdio_exit_frame));
+        [ exact GL | exact GD | exact MALLOC | exact FREE | exact EPR_USAGE | exact EPR_OPEN | exact EPR_READ | exact EPR_BIG | exact EFW | exact SITE_RS | exact TRUN | exact LO_lo | exact LO_hi | exact USP16 | exact TOP_lo | exact TOP47 | exact USP47 | exact IMGTOP | exact TRD | exact TRF | exact at_exit_of_gioa | exact ME ].
     - intros code s' RNG' ms' AE. unfold main_post in AE.
       eapply (exit_closedA (@s_stdio_exit H hptr) SX stdio_exit_frame stdio_exit_frame_nonneg SX_frame STDIO_EXIT). exact AE.
   Qed.
@@ -176,9 +200,13 @@ Section Compose.
   Variable TP : tparams.
   Variable fflagA : alayout -> fframe -> Z -> Z.
   #[local] Abbreviation PS := (PState H hptr).
-  Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw).
+  (* PORTED to 75d69e00; see the twin at :79. *)
+  Variables (inp : ProcInput) (mb : word) (ph : PhdrInfo) (entry : word)
+            (sp0 : word) (rnd : EntryDraw).
   Notation USP := (bv_unsigned sp0).
-  Notation SBK := (build_stack_bytes a_phdrs sp0 argv envp uid hw rnd).
+  Notation argv := (in_argv inp).
+  Notation envp := (in_envp inp).
+  Notation SBK := (entry_stack_image inp mb ph entry sp0 rnd).
   Variables (L : alayout) (LO : Z).
   (* [comment removed for export] *)
   Hypothesis GL : gia_laws FO GIOA fflagA.
@@ -199,6 +227,9 @@ Section Compose.
   Hypothesis TOP_lo : (USP - 160 <= al_top L)%Z.
   Hypothesis TOP47 : (al_top L <= 2^47)%Z.
   Hypothesis USP47 : (USP + Z.of_nat (length SBK) <= 2^47)%Z.
+  (* see the twin at :102 *)
+  Hypothesis IMGTOP : (USP + Z.of_nat (length SBK) = bv_unsigned (ed_top rnd)
+                       /\ bv_unsigned (ed_top rnd) mod 8 = 0)%Z.
   Hypothesis TRD : traces_drv L.
   Hypothesis TRF : traces_fuzz_one TP L RA_FUZZ [].
   (* [comment removed for export] *)
@@ -213,7 +244,7 @@ Section Compose.
   Hypothesis GX : forall RNG s CL FB m, GIOA L RNG s CL FB [] m ->
     (exists t, exit_ci t m) /\ (exists (Hh : aholes) st LB, AHEAP_P Hh L RNG st LB m) /\ SX s RNG m.
 
-  #[using="argv envp uid hw rnd GA LO_lo USP47 stdio_exit_fits GX"] Lemma at_exit_of_gioa : forall (ra sp gp t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
+  #[using="inp mb ph entry sp0 rnd GA LO_lo USP47 stdio_exit_fits GX"] Lemma at_exit_of_gioa : forall (ra sp gp t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
       (F : bvmap 5 word) (fc : bv 32) (m : mem) (RNG : footprint) (s : PS) (CL FB : list (@cblock hptr)) (code : Z),
     GIOA L RNG s CL FB [] m -> mem_inv asegs m -> stk asegs m LO (bv_unsigned sp) -> (LO + MAIN_STACK <= bv_unsigned sp)%Z ->
     (bv_unsigned sp <= USP - 48)%Z -> (bv_unsigned sp mod 16 = 0)%Z -> rngs sp0 L LO RNG ->
@@ -233,15 +264,15 @@ Section Compose.
     split; [eapply rng_sub'; [exact R2| lia]|]. split; [exact R3|]. split; [exact R4| exact R5].
   Qed.
 
-  #[using="TP fflagA GL GD GA MALLOC FREE EPR_USAGE EPR_OPEN EPR_READ EPR_BIG EFW SITE_RS TRUN LO_lo LO_hi USP16 TOP_lo TOP47 USP47 TRD TRF SX stdio_exit_frame stdio_exit_frame_nonneg stdio_exit_fits SX_frame STDIO_EXIT GX"] Theorem prog_main_impl : forall (s : PS) (RNG : footprint) (Q : Empty_set -> PS -> footprint -> machine_state -> Prop) (ms : machine_state),
-    main_entry GIOA sp0 argv envp uid hw rnd L LO s RNG ms ->
+  #[using="TP fflagA GL GD GA MALLOC FREE EPR_USAGE EPR_OPEN EPR_READ EPR_BIG EFW SITE_RS TRUN LO_lo LO_hi USP16 TOP_lo TOP47 USP47 IMGTOP TRD TRF SX stdio_exit_frame stdio_exit_frame_nonneg stdio_exit_fits SX_frame STDIO_EXIT GX"] Theorem prog_main_impl : forall (s : PS) (RNG : footprint) (Q : Empty_set -> PS -> footprint -> machine_state -> Prop) (ms : machine_state),
+    main_entry GIOA inp mb ph entry sp0 rnd L LO s RNG ms ->
     implMG RNG (prog_main HO FO sites (argv_Z argv)) s Q ms.
   Proof.
     intros s RNG Q ms ME. unfold prog_main.
     eapply implMG_bind.
     - (* [comment removed for export] *)
-      eapply (main_spec HO FO sites GIOA TP fflagA sp0 argv envp uid hw rnd L LO (at_exit_closedA SX stdio_exit_frame));
-        [ exact GL | exact GD | exact MALLOC | exact FREE | exact EPR_USAGE | exact EPR_OPEN | exact EPR_READ | exact EPR_BIG | exact EFW | exact SITE_RS | exact TRUN | exact LO_lo | exact LO_hi | exact USP16 | exact TOP_lo | exact TOP47 | exact USP47 | exact TRD | exact TRF | exact at_exit_of_gioa | exact ME ].
+      eapply (main_spec HO FO sites GIOA TP fflagA inp mb ph entry sp0 rnd L LO (at_exit_closedA SX stdio_exit_frame));
+        [ exact GL | exact GD | exact MALLOC | exact FREE | exact EPR_USAGE | exact EPR_OPEN | exact EPR_READ | exact EPR_BIG | exact EFW | exact SITE_RS | exact TRUN | exact LO_lo | exact LO_hi | exact USP16 | exact TOP_lo | exact TOP47 | exact USP47 | exact IMGTOP | exact TRD | exact TRF | exact at_exit_of_gioa | exact ME ].
     - intros code s' RNG' ms' AE. unfold main_post in AE.
       eapply (exit_closedA (@s_stdio_exit H hptr) SX stdio_exit_frame stdio_exit_frame_nonneg SX_frame STDIO_EXIT). exact AE.
   Qed.
@@ -567,13 +598,16 @@ Section Init.
   Hypothesis HU : (length U <= Z.to_nat AUMAX)%nat.
   Hypothesis A0I : forall p : word, bv_unsigned p mod 4096 = 0 -> aallowed (allow_of 2147450880 V asan_vis) p -> AL p.
   Hypothesis VI : valid_input inp.
+  (* [Run.valid_entry_va]'s fifth conjunct; see MainEntryA__A3D.v's header. *)
+  Hypothesis VE : entry_launch_ok_va Sv48 en inp.
   Hypothesis VSP : valid_sp (en_sp en).
   Hypothesis FITS : entry_stack_fits (en_sp en) (in_argv inp) (in_envp inp).
 
   Notation USP := (bv_unsigned (en_sp en)).
   Notation L := (mkALayout (LV V) w U).
   Notation RNG := (fp_ok lz AL).
-  Notation SBK := (build_stack_bytes a_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en)).
+  Notation ENTRYW := (Z_to_bv 64 (Z.of_N a_init_pc)).
+  Notation SBK := (entry_stack_image inp (en_mmap_base en) a_phdrs ENTRYW (en_sp en) (en_draw en)).
   #[local] Notation cblk := (@cblock aptr).
   #[local] Notation PS := (PState aheap aptr).
 
@@ -611,20 +645,20 @@ Section Init.
   Qed.
 
   (* [comment removed for export] *)
-  #[using="rc tlsI lim w V ms mo AM HAT HTLS U HU A0I VSP FITS HMP"] Lemma args_init : forall (L0 : alayout) (s : PS) (FB : list cblk), args_P USP (Z.of_nat (length SBK) - 16) L0 RNG s FB m.
+  #[using="rc tlsI lim w V ms mo AM HAT HTLS U HU A0I VE VSP FITS HMP"] Lemma args_init : forall (L0 : alayout) (s : PS) (FB : list cblk), args_P USP (Z.of_nat (length SBK) - 8) L0 RNG s FB m.
   Proof.
     intros L0 s FB. destruct HMP as [HM HP]. (pose proof AM as ndP__; nd_pre ndP__ 11%nat; intros _ _ _ _ _ _ _ _ _ _ SH1; nd_post).
     pose proof (me_atop _ _ _ _ _ _ _ _ AM HAT U HU) as A.
-    (nd_pre (me_geometry _ _ _ _ _ _ _ _ AM HAT U HU VSP FITS) 6%nat; intros _ _ U16 _ _ B47; nd_post). pose proof atop_range as AR.
+    (nd_pre (me_geometry _ _ _ _ _ _ _ _ AM HAT U HU VE VSP FITS) 6%nat; intros _ _ U16 _ _ B47; nd_post). pose proof atop_range as AR.
     pose proof (alayout_ok_init V w U HP HU HAT HTLS) as ALO.
     (pose proof (ao_res L ALO) as ndP__; nd_pre ndP__ 4%nat; intros _ _ RESHI _; nd_post). (pose proof (ao_ctx L ALO) as ndP__; nd_pre ndP__ 4%nat; intros _ _ CTXHI _; nd_post).
     change (al_res L) with (4096 * V 208%nat) in RESHI. rewrite LV_ctx in CTXHI.
     pose proof (tls_at_tp V HTLS) as HTP. pose proof ATPv_hi as THI. rewrite HTP in THI.
     pf V HP (PVar 209 0 15) P209.
-    pose proof (raw_len_nonneg a_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en)) as RN.
-    pose proof (build_stack_bytes_length a_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en)) as BL.
-    set (n := Z.of_nat (length SBK) - 16) in *.
-    assert (N8 : 8 <= n) by (subst n; rewrite BL; unfold raw_len, struct_size, InitMem.argc, InitMem.envc; clear - RN; lia).
+    pose proof (raw_len_nonneg inp (en_sp en) (en_draw en)) as RN.
+    pose proof (build_stack_bytes_length inp (en_mmap_base en) a_phdrs ENTRYW (en_sp en) (en_draw en)) as BL.
+    set (n := Z.of_nat (length SBK) - 8) in *.
+    assert (N8 : 8 <= n) by (subst n; rewrite BL; clear - RN; lia).
     change (2^47) with 140737488355328 in B47.
     destruct (args_sh USP n) as [E1 E2]. unfold args_P. rewrite E1, E2.
     assert (LEN : 0 < 2147450880 + 8 * ((USP + n + 63) / 64) - (2147450880 + 8 * (USP / 64))) by (clear - N8; Z.div_mod_to_equations; lia).
@@ -683,13 +717,16 @@ Section Init.
   Hypothesis HU : (length U <= Z.to_nat AUMAX)%nat.
   Hypothesis A0I : forall p : word, bv_unsigned p mod 4096 = 0 -> aallowed (allow_of 2147450880 V asan_vis) p -> AL p.
   Hypothesis VI : valid_input inp.
+  (* [Run.valid_entry_va]'s fifth conjunct; see MainEntryA__A3D.v's header. *)
+  Hypothesis VE : entry_launch_ok_va Sv48 en inp.
   Hypothesis VSP : valid_sp (en_sp en).
   Hypothesis FITS : entry_stack_fits (en_sp en) (in_argv inp) (in_envp inp).
 
   Notation USP := (bv_unsigned (en_sp en)).
   Notation L := (mkALayout (LV V) w U).
   Notation RNG := (fp_ok lz AL).
-  Notation SBK := (build_stack_bytes a_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en)).
+  Notation ENTRYW := (Z_to_bv 64 (Z.of_N a_init_pc)).
+  Notation SBK := (entry_stack_image inp (en_mmap_base en) a_phdrs ENTRYW (en_sp en) (en_draw en)).
   #[local] Notation cblk := (@cblock aptr).
   #[local] Notation PS := (PState aheap aptr).
 
@@ -727,20 +764,20 @@ Section Init.
   Qed.
 
   (* [comment removed for export] *)
-  #[using="rc tlsI lim w V ms mo AM HAT HTLS U HU A0I VSP FITS HMP"] Lemma args_init : forall (L0 : alayout) (s : PS) (FB : list cblk), args_P USP (Z.of_nat (length SBK) - 16) L0 RNG s FB m.
+  #[using="rc tlsI lim w V ms mo AM HAT HTLS U HU A0I VE VSP FITS HMP"] Lemma args_init : forall (L0 : alayout) (s : PS) (FB : list cblk), args_P USP (Z.of_nat (length SBK) - 8) L0 RNG s FB m.
   Proof.
     intros L0 s FB. destruct HMP as [HM HP]. (pose proof AM as ndP__; nd_pre ndP__ 11%nat; intros _ _ _ _ _ _ _ _ _ _ SH1; nd_post).
     pose proof (me_atop _ _ _ _ _ _ _ _ AM HAT U HU) as A.
-    (nd_pre (me_geometry _ _ _ _ _ _ _ _ AM HAT U HU VSP FITS) 6%nat; intros _ _ U16 _ _ B47; nd_post). pose proof atop_range as AR.
+    (nd_pre (me_geometry _ _ _ _ _ _ _ _ AM HAT U HU VE VSP FITS) 6%nat; intros _ _ U16 _ _ B47; nd_post). pose proof atop_range as AR.
     pose proof (alayout_ok_init V w U HP HU HAT HTLS) as ALO.
     (pose proof (ao_res L ALO) as ndP__; nd_pre ndP__ 4%nat; intros _ _ RESHI _; nd_post). (pose proof (ao_ctx L ALO) as ndP__; nd_pre ndP__ 4%nat; intros _ _ CTXHI _; nd_post).
     change (al_res L) with (4096 * V 208%nat) in RESHI. rewrite LV_ctx in CTXHI.
     pose proof (tls_at_tp V HTLS) as HTP. pose proof ATPv_hi as THI. rewrite HTP in THI.
     pf V HP (PVar 209 0 15) P209.
-    pose proof (raw_len_nonneg a_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en)) as RN.
-    pose proof (build_stack_bytes_length a_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en)) as BL.
-    set (n := Z.of_nat (length SBK) - 16) in *.
-    assert (N8 : 8 <= n) by (subst n; rewrite BL; unfold raw_len, struct_size, InitMem.argc, InitMem.envc; clear - RN; lia).
+    pose proof (raw_len_nonneg inp (en_sp en) (en_draw en)) as RN.
+    pose proof (build_stack_bytes_length inp (en_mmap_base en) a_phdrs ENTRYW (en_sp en) (en_draw en)) as BL.
+    set (n := Z.of_nat (length SBK) - 8) in *.
+    assert (N8 : 8 <= n) by (subst n; rewrite BL; clear - RN; lia).
     change (2^47) with 140737488355328 in B47.
     destruct (args_sh USP n) as [E1 E2]. unfold args_P. rewrite E1, E2.
     assert (LEN : 0 < 2147450880 + 8 * ((USP + n + 63) / 64) - (2147450880 + 8 * (USP / 64))) by (clear - N8; Z.div_mod_to_equations; lia).

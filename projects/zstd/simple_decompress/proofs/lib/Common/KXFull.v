@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (loads that meet the vvar range). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -133,7 +134,8 @@ Lemma interp_full : forall t, eff_full t -> forall m r,
 Proof.
   induction 1 as [c Hc| | | | | |n a k Hk IH|n a v k Hk IH]; intros m r Hr; cbn [interp_eff_accesses] in Hr; try discriminate.
   - injection Hr as <-. exact Hc.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|discriminate].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|];
+      [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) m) as [rep| |] eqn:E; try discriminate.
     injection Hr as <-. cbn. exact (IH _ _ _ E).
   - destruct (store_ok segs m a (width_bytes n)); [|discriminate].
@@ -147,7 +149,8 @@ Lemma interp_mem_inv : forall t m r,
 Proof.
   induction t as [c|c|c|c|c|c|n a k IH|n a v k IH]; intros m r Hr MI; cbn [interp_eff_accesses] in Hr; try discriminate.
   - injection Hr as <-. exact MI.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|discriminate].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|];
+      [|destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) m) as [rep| |] eqn:E; try discriminate.
     injection Hr as <-. cbn. exact (IH _ _ _ E MI).
   - destruct (store_ok segs m a (width_bytes n)) eqn:Hok; [|discriminate].
@@ -190,7 +193,9 @@ Proof.
     try (cbn [interp_eff_accesses] in Hr; injection Hr as <-; reflexivity).
   - (* [comment removed for export] *)
     destruct sz0; cbn [interp_eff_accesses] in Hr;
-      (destruct (ov_read_bytes segs m _ _) as [bs|]; [|discriminate Hr]);
+      (lazymatch type of Hr with context [ov_read_bytes segs m ?a ?w] =>
+         destruct (ov_read_bytes segs m a w) as [bs|];
+         [|destruct (range_meets_vvar segs a w); discriminate Hr] end);
       cbn [interp_eff_accesses] in Hr; injection Hr as <-; reflexivity.
   - (* [comment removed for export] *)
     destruct sz0; cbn [interp_eff_accesses] in Hr;

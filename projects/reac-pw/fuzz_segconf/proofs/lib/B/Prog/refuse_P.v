@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: number's walk on the ASan build of plugin-hostd/fuzz_command, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v and ACam.v (a walk segment, the side-stack frame's release): from strtol's return (0x8e534) to number's return, the four paths of number's tests (the word's first byte, the end pointer's byte, the range of the value) and the release of the class-0 frame. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/numberB.v, with its module paths and module names changed; 646 of its 709 lines of code are new or changed and 368 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan+UBSan image B (fuzz_segconf.asan-ubsan, pin sha256 c3796c0b38f3...): refuse's prefix
    walk, from the cut RB_PRE (0x894ac) through the two snprintf arms to the canonical cut state ss_txt at RB_TEXT
    (0x894e4), and on through refuse_Pt.v's rbp_txt (the vsnprintf call, checks 4 and 5, the UBSan traps T4 and T5,
@@ -11,7 +12,7 @@
 
    proves no function (kind: segment lemma of refuse's image-B walk): Theorem rb_pre : RB_PRE_stmt (refuse_K.v).
    Rule 24: ref-common.md "Rule 24" (no released proof of refuse). ADAPTED from plugin-hostd/fuzz_command
-   lib/B/Prog/check_reply_s4.v (origin/ossv/recipes 501c0d516c69: an snprintf call through PaFx.srr_after_artF and
+   lib/B/Prog/check_reply_s4.v (an snprintf call through PaFx.srr_after_artF and
    the walk at the FP state the wrapper returns), numberA.v (the re-seat jafter_call_keep_hi), and the image-A
    parse_file piece pf_a10b_s.v (the image-A G3 walk owner); the record facts are refuse_f.v / refuse_Pf.v's, the step lemma
    refuse_Ps.rbs_aj_snprintf_atSF.

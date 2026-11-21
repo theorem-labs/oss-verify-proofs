@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: mmap_placeable means Linux's own placement for the NULL hint (place_facts, mmap_place_dec, mmap_placeable_of_gap), the forced mmap theorems prove place_declined_b for the NULL hint, the call nodes take the robustness premise, munmap's -ENOMEM is a spurious refusal under ACFG, and the 2^64 bound on alloc_top is read off the model's two_pow_64; mm_unmap is the model's own next state (maps_subtract of the maps), and LOK keeps the launch's reservations apart from the maps through mm_add_map_LOK, which takes the region free of the whole ledger, and through the cut (sub_maps_subtract). *)
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -18,6 +19,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Monad.
 From LinuxProcessSemantics.LinuxProcessSem Require Specs.
 From LinuxProcessSemantics.LinuxProcessSem Require Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Mmap.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Placement.
 From LinuxProcessSemantics.Riscv Require Prelude.
 From LinuxProcessSemantics.Riscv Require Instr.
 From LinuxProcessSemantics.Riscv Require Decode.
@@ -47,6 +49,7 @@ From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.LRT Require LRz.
 From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.LRT Require LRelSpec.
 From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.LRT Require LGap04.
 From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.Lib Require Cfg.
+From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib Require RomBase.
 Module LNodesMM.
 (* [comment removed for export] *)
 
@@ -147,10 +150,19 @@ Proof. intros. repeat split; reflexivity. Qed.
 
 Lemma mm_add_map_LOK : forall a n mo, LOK segs mo ->
   bv_unsigned a + bv_unsigned n <= alloc_ceiling ->
-  region_free (vm_maps (m_vmmaps mo)) a n = true ->
+  region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a n = true ->
   LOK segs (mm_add_map a n mo).
 Proof.
-  intros a n mo HO Hc Hf. destruct HO. constructor; rewrite ?mm_add_map_vmmaps, ?mm_add_map_lazy; cbn; try assumption.
+  intros a n mo HO Hc Hf0.
+  assert (Hf : region_free (vm_maps (m_vmmaps mo)) a n = true).
+  { rewrite region_free_app in Hf0. apply andb_true_iff in Hf0. exact (proj2 Hf0). }
+  destruct (lok_resv _ _ HO) as (rx & Erx & Drx).
+  destruct HO. constructor; rewrite ?mm_add_map_vmmaps, ?mm_add_map_lazy; cbn; try assumption.
+  - exists rx. split; [exact Erx|]. intros [c s] e Hr [<-|He]; [| exact (Drx (c, s) e Hr He)].
+    rewrite region_free_app, Erx, region_free_app in Hf0. apply andb_true_iff in Hf0 as [Hf0 _].
+    apply andb_true_iff in Hf0 as [_ Hf0]. pose proof (region_free_In _ a n c s Hf0 Hr) as Ho.
+    unfold iv_overlap in Ho. unfold rdisj, uz. cbn [fst snd].
+    apply andb_false_iff in Ho as [Ho|Ho]; apply Z.ltb_ge in Ho; lia.
   - intros b k [Hin|Hin]; [injection Hin as <- <-; exact Hc| eauto].
   - apply pwd_cons_free; assumption.
   - intros x Hx. cbn [in_rangesb existsb fst snd]. fold (in_rangesb (vm_maps (m_vmmaps mo)) x).
@@ -185,15 +197,51 @@ Definition mmap_grant (mo : Model) (a : word) (n : Z) : Prop :=
   bv_unsigned a mod page_size = 0 /\ 0 < bv_unsigned a /\ bv_unsigned a + n <= alloc_ceiling /\
   region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 n) = true.
 
-(* [comment removed for export] *)
+(* LPS 727298f3: an anonymous NULL-hint mmap is granted where Linux places it
+   ([Mmap.linux_place]), not at any free address, so the call is placeable exactly when
+   Linux has an address for it ([Placement.linux_place_b] decides it). *)
 Definition mmap_placeable (mo : Model) (n : Z) : Prop :=
-  exists a : word, mmap_grant mo a n.
+  exists a : Z, linux_place (m_vmmaps mo) (kb_thp (m_kernel mo)) (Z_to_bv 64 0) n a.
 
-(* [comment removed for export] *)
-Lemma mmap_placeable_gap : forall mo n, LOK segs mo ->
-  (mmap_placeable mo n <-> vm_gap_available (m_vmmaps mo) n = true).
+(* The facts of the old grant guard, read off Linux's address ([Placement.linux_place_admissible]). *)
+Lemma place_facts : forall mo n (a : word), 0 < n -> n mod 4096 = 0 ->
+  linux_place (m_vmmaps mo) (kb_thp (m_kernel mo)) (Z_to_bv 64 0) n (bv_unsigned a) ->
+  bv_unsigned a mod page_size = 0 /\ 0 < bv_unsigned a /\ bv_unsigned a + n <= alloc_top (m_vmmaps mo)
+  /\ region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 n) = true.
 Proof.
-  intros mo n HO. rewrite vm_gap_available_iff. rewrite (lok_top _ _ HO). unfold mmap_placeable, mmap_grant. reflexivity.
+  intros mo n a Hn Hna HL.
+  destruct (Placement.linux_place_admissible _ _ _ _ _ Hn ltac:(rewrite page_size_eq; exact Hna) HL)
+    as (A1 & A2 & A3 & A4).
+  rewrite Z_to_bv_bv_unsigned in A4. repeat split; assumption.
+Qed.
+
+(* Either Linux has an address for the call, or it is not placeable. *)
+Lemma mmap_place_dec : forall mo n, 0 < n -> n mod 4096 = 0 ->
+  (exists a : word, linux_place (m_vmmaps mo) (kb_thp (m_kernel mo)) (Z_to_bv 64 0) n (bv_unsigned a))
+  \/ ~ mmap_placeable mo n.
+Proof.
+  intros mo n Hn Hna.
+  assert (Hna' : n mod page_size = 0) by (rewrite page_size_eq; exact Hna).
+  destruct (Placement.linux_place_b_spec (m_vmmaps mo) (kb_thp (m_kernel mo)) (Z_to_bv 64 0) n Hn Hna')
+    as [Hs Hnone].
+  destruct (Placement.linux_place_b (m_vmmaps mo) (kb_thp (m_kernel mo)) (Z_to_bv 64 0) n) as [z|] eqn:Ez.
+  - left. pose proof (proj1 (Hs z) eq_refl) as HL.
+    destruct (Placement.linux_place_admissible _ _ _ _ _ Hn Hna' HL) as (_ & A2 & A3 & _).
+    pose proof (Placement.alloc_top_lt_two_pow_64 (m_vmmaps mo)) as Hat.
+    change State.two_pow_64 with 18446744073709551616%Z in Hat.
+    exists (Z_to_bv 64 z). rewrite (unsigned_lit z) by lia. exact HL.
+  - right. intros (z & HL). exact (proj1 Hnone eq_refl z HL).
+Qed.
+
+(* A free gap in Linux's bottom-up window makes the call placeable ([LGap04.linux_place_of_gap]). *)
+Lemma mmap_placeable_of_gap : forall mo n g, 0 < n -> n mod 4096 = 0 ->
+  task_unmapped_base <= g -> g mod 4096 = 0 -> g + n <= alloc_top (m_vmmaps mo) ->
+  region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) (Z_to_bv 64 g) (Z_to_bv 64 n) = true ->
+  mmap_placeable mo n.
+Proof.
+  intros mo n g Hn Hna Hlo Hal Hhi Hfree.
+  exact (LGap04.linux_place_of_gap (m_vmmaps mo) (kb_thp (m_kernel mo)) (Z_to_bv 64 0) n g
+           Hn ltac:(rewrite page_size_eq; exact Hna) Hlo ltac:(rewrite page_size_eq; exact Hal) Hhi Hfree).
 Qed.
 
 (* [comment removed for export] *)
@@ -223,14 +271,14 @@ Proof.
   clearbody n. destruct Hn as (Hn1 & Hn2 & Hn3 & En).
   assert (Hun : bv_unsigned (Z_to_bv 64 n : word) = n).
   { apply unsigned_lit. lia. }
-  apply (lscps_sysnode segs P (fun _ => false) ms mo (mkG G R) (Z_to_bv 64 222) Hsvc).
+  apply (lscps_sysnode segs P (fun _ => false) ms mo (mkG G R) (Z_to_bv 64 222) Hsvc
+           (lsys_lit segs _ _ _ 222 Hsvc ltac:(lia) RomBase.memfree_222)).
   intros mr mat HI. pose proof HI as ([HWX HO] & HB & HLR & [HM HVD]).
   pose proof (lok_top _ _ HO) as HTOP.
   (* [comment removed for export] *)
   assert (SPEC : forall o, syscall_spec (sys_input segs (msw ms mr) (Z_to_bv 64 222)) (real mo mat) o <->
             mmap_err_out (real mo mat) o
-            \/ exists a, ((bv_unsigned a mod page_size = 0) /\ (0 < bv_unsigned a) /\ (bv_unsigned a + n <= alloc_top (m_vmmaps mo))
-                          /\ region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 n) = true
+            \/ exists a, (linux_place (m_vmmaps mo) (kb_thp (m_kernel mo)) (Z_to_bv 64 0) n (bv_unsigned a)
                           /\ mmap_noreserve_backed_ok (Z_to_bv 64 mm_flags_anon) (real mo mat) n = true)
                          /\ o = Ok (mkEffect a [] [(a, Z_to_bv 64 n)]) (real (mm_add_map a (Z_to_bv 64 n) mo) mat) []).
   { intros o. rewrite (syscall_spec_222 _ _ o) by reflexivity.
@@ -244,7 +292,8 @@ Proof.
     cbv zeta in RW. rewrite (unsigned_lit len) in RW by lia. rewrite <- En in RW. rewrite real_vmmaps in RW.
     assert (E1 : w_is0 (Z_to_bv 64 len) = false).
     { unfold w_is0. apply bv_eqb_neq. intros E. apply (f_equal bv_unsigned) in E. rewrite !unsigned_lit in E by lia. lia. }
-    specialize (RW eq_refl eq_refl E1 eq_refl). rewrite RW. reflexivity. }
+    (* the hint is the literal 0, so the call is never declined *)
+    specialize (RW eq_refl eq_refl E1 eq_refl (place_declined_b_null _ _ _)). rewrite RW. reflexivity. }
   pose proof (bv_unsigned_in_range 64) as UR.
   assert (HBK : mmap_noreserve_backed_ok (Z_to_bv 64 mm_flags_anon) (real mo mat) n = true).
   { apply (real_backed_ok (mkG G R)); assumption. }
@@ -256,19 +305,17 @@ Proof.
   assert (Hhr : m_halted (real mo mat) = None) by (rewrite real_halted; exact (lok_halt _ _ HO)).
   split.
   - (* [comment removed for export] *)
-    intros o Ho. apply SPEC in Ho. destruct Ho as [(e & He & ->) | (a & (C1 & C2 & C3 & C4 & C5) & ->)].
+    intros o Ho. apply SPEC in Ho. destruct Ho as [(e & He & ->) | (a & (HL & C5) & ->)].
     + (* [comment removed for export] *)
-      destruct (vm_gap_available (m_vmmaps mo) n) eqn:EG.
-      { right. pose proof (proj1 (vm_gap_available_iff _ _) EG) as (a & C1 & C2 & C3 & C4).
+      destruct (mmap_place_dec mo n ltac:(lia) Hn2) as [(a & HL) | HNP].
+      { right. pose proof (place_facts mo n a ltac:(lia) Hn2 HL) as (C1 & C2 & C3 & C4).
         eexists _, _, _. split; [reflexivity|]. split; [|exact Hhr].
         apply (refusal_spurious_of_grant ACFG _ _ _ (mkEffect a [] [(a, Z_to_bv 64 n)]) (real (mm_add_map a (Z_to_bv 64 n) mo) mat) []);
           [exact Hoff
           | rewrite HR; cbn [eff_ret]; apply ret_in_errnos_errno; exact He
-          | apply SPEC; right; exists a; split; [repeat split; assumption | reflexivity]
+          | apply SPEC; right; exists a; split; [split; assumption | reflexivity]
           | rewrite HR; cbn [eff_ret]; apply mmap_grant_ret_nonrefusal; exact C1]. }
       left.
-      assert (HNP : ~ mmap_placeable mo n).
-      { intros HP. apply (mmap_placeable_gap mo n HO) in HP. congruence. }
       exists (efferr e), mo, (mkG G R), (ms_mem ms), mat.
       split; [reflexivity|]. split; [reflexivity|]. split; [apply vm_only_refl|]. split.
       { unfold efferr, eff0. rewrite mem_nret_plain. cbn [ms_mem msw]. exact HI. }
@@ -276,6 +323,7 @@ Proof.
       rewrite <- (mem_nret_plain ms (errno_ret e)), msw_nret_self.
       right; split; [reflexivity | exact K].
     + (* [comment removed for export] *)
+      pose proof (place_facts mo n a ltac:(lia) Hn2 HL) as (C1 & C2 & C3 & C4).
       left. rewrite HTOP in C3.
       set (nw := (Z_to_bv 64 n : word)) in *.
       assert (Hfm : region_free (vm_maps (m_vmmaps mo)) a nw = true).
@@ -288,7 +336,7 @@ Proof.
         assert (AZ : forall m x, apply_zeros m [(a, nw)] x = if in_range (bv_unsigned a) n x then Some (Z_to_bv 8 0) else m x).
         { intros m x. rewrite <- (Z_to_bv_bv_unsigned a) at 1. change (Z_to_bv 64 (bv_unsigned a)) with (wa (bv_unsigned a)).
           unfold nw. apply apply_zeros_spec; ceilb; lia. }
-        split; [split; [exact HWX| apply mm_add_map_LOK; [exact HO| rewrite Hun; exact C3| exact Hfm]]|].
+        split; [split; [exact HWX| apply mm_add_map_LOK; [exact HO| rewrite Hun; exact C3| exact C4]]|].
         split.
         { destruct HB as (HBw & HBr & HBe). unfold BINV. cbn [g_win g_res] in *. split; [exact HBw|]. split; [lia|].
           pose proof (mm_add_map_eager a nw mo HO ltac:(rewrite Hun; exact C3)). rewrite Hun in H.
@@ -315,21 +363,19 @@ Proof.
       rewrite <- (mem_nret_zeros ms a (a, nw) []), msw_nret_self. cbn [eff_ret].
       right. split; [reflexivity | exact K].
   - (* [comment removed for export] *)
-    destruct (vm_gap_available (m_vmmaps mo) n) eqn:EG.
-    + pose proof (proj1 (vm_gap_available_iff _ _) EG) as (a & C1 & C2 & C3 & C4).
+    destruct (mmap_place_dec mo n ltac:(lia) Hn2) as [(a & HL) | HNP].
+    + pose proof (place_facts mo n a ltac:(lia) Hn2 HL) as (C1 & C2 & C3 & C4).
       exists (mkEffect a [] [(a, Z_to_bv 64 n)]), (real (mm_add_map a (Z_to_bv 64 n) mo) mat), [].
-      split; [apply SPEC; right; exists a; split; [repeat split; assumption | reflexivity]|].
+      split; [apply SPEC; right; exists a; split; [split; assumption | reflexivity]|].
       split; [| reflexivity].
       apply spurious_refusal_not_refusal. rewrite HR. cbn [eff_ret]. apply mmap_grant_ret_nonrefusal. exact C1.
     + exists (efferr ENOMEM), (real mo mat), [].
       split; [apply SPEC; left; exists ENOMEM; split; [apply ENOMEM_in| reflexivity]|].
       split; [| reflexivity].
       apply nsp_forced. intros eff' m' evs' Hs'. rewrite HR.
-      apply SPEC in Hs'. destruct Hs' as [(e & He & Heq) | (a & (C1 & C2 & C3 & C4 & C5) & Heq)].
+      apply SPEC in Hs'. destruct Hs' as [(e & He & Heq) | (a & (HL & C5) & Heq)].
       * apply Ok_inj in Heq as (-> & _ & _). cbn [eff_ret]. apply ret_in_errnos_errno. exact He.
-      * exfalso. assert (EG' : vm_gap_available (m_vmmaps mo) n = true).
-        { apply vm_gap_available_iff. exists a. repeat split; assumption. }
-        congruence.
+      * exfalso. apply HNP. exists (bv_unsigned a). exact HL.
 Qed.
 
 (* [comment removed for export] *)
@@ -429,15 +475,13 @@ Lemma mm_add_lazy_LOK : forall a n mo, LOK segs mo -> no_wx segs ->
   LOK segs (mm_add_lazy a n mo).
 Proof.
   intros a n mo HO HWX Hc Hf.
-  assert (Hfm : region_free (vm_maps (m_vmmaps mo)) a n = true).
-  { rewrite region_free_app in Hf. apply andb_true_iff in Hf. exact (proj2 Hf). }
-  pose proof (mm_add_map_LOK a n mo HO Hc Hfm) as HO'. pose proof (lok_resv _ _ HO) as Hresv.
+  pose proof (mm_add_map_LOK a n mo HO Hc Hf) as HO'. destruct (lok_resv _ _ HO) as (rx & Hresv & _).
   destruct HO' as [A1 A2 A3 A4 A5 A6 A7 A8 A9 A10]. constructor; rewrite ?mm_add_lazy_vmmaps, ?mm_add_lazy_lazy; try assumption.
   - intros lo sz [Hin|Hin]; [injection Hin as <- <-; exact Hc| exact (lok_lazy_ceil _ _ HO lo sz Hin)].
   - intros x Hx. cbn [in_rangesb existsb fst snd] in Hx. fold (in_rangesb (m_vm_lazy mo) x) in Hx.
     apply orb_true_iff in Hx as [Hx|Hx]; [| exact (lok_lazy_noseg _ _ HO x Hx)].
     apply andb_true_iff in Hx as [A B]. apply Z.leb_le in A. apply Z.ltb_lt in B.
-    rewrite Hresv in Hf. eapply region_free_noseg; [exact HWX| exact Hf| lia].
+    rewrite Hresv, <- app_assoc in Hf. eapply region_free_noseg; [exact HWX| exact Hf| lia].
   - intros x Hx. rewrite mm_add_map_vmmaps. cbn [vm_maps in_rangesb existsb fst snd] in Hx |- *.
     fold (in_rangesb (m_vm_lazy mo) x) in Hx. fold (in_rangesb (vm_maps (m_vmmaps mo)) x).
     apply orb_true_iff in Hx as [Hx|Hx]; [rewrite Hx; reflexivity|].
@@ -476,13 +520,13 @@ Proof.
   clearbody n. destruct Hn as (Hn1 & Hn2 & Hn3 & En).
   assert (Hun : bv_unsigned (Z_to_bv 64 n : word) = n).
   { apply unsigned_lit. lia. }
-  apply (lscps_sysnode segs P (fun _ => false) ms mo (mkG G R) (Z_to_bv 64 222) Hsvc).
+  apply (lscps_sysnode segs P (fun _ => false) ms mo (mkG G R) (Z_to_bv 64 222) Hsvc
+           (lsys_lit segs _ _ _ 222 Hsvc ltac:(lia) RomBase.memfree_222)).
   intros mr mat HI. pose proof HI as ([HWX HO] & HB & HLR & [HM HVD]).
   pose proof (lok_top _ _ HO) as HTOP.
   assert (SPEC : forall o, syscall_spec (sys_input segs (msw ms mr) (Z_to_bv 64 222)) (real mo mat) o <->
             mmap_err_out (real mo mat) o
-            \/ exists a, ((bv_unsigned a mod page_size = 0) /\ (0 < bv_unsigned a) /\ (bv_unsigned a + n <= alloc_top (m_vmmaps mo))
-                          /\ region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 n) = true
+            \/ exists a, (linux_place (m_vmmaps mo) (kb_thp (m_kernel mo)) (Z_to_bv 64 0) n (bv_unsigned a)
                           /\ mmap_noreserve_backed_ok (Z_to_bv 64 mm_flags_anon_nr) (real mo mat) n = true)
                          /\ o = Ok (mkEffect a [] [(a, Z_to_bv 64 n)])
                                   (vm_add_lazy a (Z_to_bv 64 n) (mm_add_map a (Z_to_bv 64 n) (real mo mat))) []).
@@ -497,7 +541,7 @@ Proof.
     cbv zeta in RW. rewrite (unsigned_lit len) in RW by lia. rewrite <- En in RW. rewrite real_vmmaps in RW.
     assert (E1 : w_is0 (Z_to_bv 64 len) = false).
     { unfold w_is0. apply bv_eqb_neq. intros E. apply (f_equal bv_unsigned) in E. rewrite !unsigned_lit in E by lia. lia. }
-    specialize (RW eq_refl eq_refl E1 eq_refl). rewrite RW. reflexivity. }
+    specialize (RW eq_refl eq_refl E1 eq_refl (place_declined_b_null _ _ _)). rewrite RW. reflexivity. }
   pose proof (bv_unsigned_in_range 64) as UR.
   assert (Hno : bv_unsigned (in_sysno (sys_input segs (msw ms mr) (Z_to_bv 64 222))) = 222) by reflexivity.
   assert (HR : forall r, refusal_b (sys_input segs (msw ms mr) (Z_to_bv 64 222)) (real mo mat) r = ret_in_errnos mmap_errnos r)
@@ -506,26 +550,25 @@ Proof.
     by (apply acfg_family_off_alloc; right; right; left; exact Hno).
   assert (Hhr : m_halted (real mo mat) = None) by (rewrite real_halted; exact (lok_halt _ _ HO)).
   split.
-  - intros o Ho. apply SPEC in Ho. destruct Ho as [(e & He & ->) | (a & (C1 & C2 & C3 & C4 & C5) & ->)].
-    + destruct (vm_gap_available (m_vmmaps mo) n) eqn:EG.
-      { right. pose proof (proj1 (vm_gap_available_iff _ _) EG) as (a & C1 & C2 & C3 & C4).
+  - intros o Ho. apply SPEC in Ho. destruct Ho as [(e & He & ->) | (a & (HL & C5) & ->)].
+    + destruct (mmap_place_dec mo n ltac:(lia) Hn2) as [(a & HL) | HNP].
+      { right. pose proof (place_facts mo n a ltac:(lia) Hn2 HL) as (C1 & C2 & C3 & C4).
         eexists _, _, _. split; [reflexivity|]. split; [|exact Hhr].
         apply (refusal_spurious_of_grant ACFG _ _ _ (mkEffect a [] [(a, Z_to_bv 64 n)])
                  (vm_add_lazy a (Z_to_bv 64 n) (mm_add_map a (Z_to_bv 64 n) (real mo mat))) []);
           [exact Hoff
           | rewrite HR; exact (ret_in_errnos_errno _ _ He)
-          | apply SPEC; right; exists a; split; [repeat split; assumption | reflexivity]
+          | apply SPEC; right; exists a; split; [split; [exact HL | first [assumption | reflexivity]] | reflexivity]
           | rewrite HR; cbn [eff_ret]; apply mmap_grant_ret_nonrefusal; exact C1]. }
       left.
-      assert (HNP : ~ mmap_placeable mo n).
-      { intros HP. apply (mmap_placeable_gap mo n HO) in HP. congruence. }
       exists (efferr e), mo, (mkG G R), (ms_mem ms), mat.
       split; [reflexivity|]. split; [reflexivity|]. split; [apply vm_only_refl|]. split.
       { unfold efferr, eff0. rewrite mem_nret_plain. cbn [ms_mem msw]. exact HI. }
       pose proof (Href e He HNP) as K. unfold efferr, eff0 in K |- *. cbn [eff_ret].
       rewrite <- (mem_nret_plain ms (errno_ret e)), msw_nret_self.
       right; split; [reflexivity | exact K].
-    + left. rewrite HTOP in C3.
+    + pose proof (place_facts mo n a ltac:(lia) Hn2 HL) as (C1 & C2 & C3 & C4).
+      left. rewrite HTOP in C3.
       set (nw := (Z_to_bv 64 n : word)) in *.
       pose proof (UR a) as Ra. change (bv_modulus 64) with (2^64) in Ra.
       assert (EL : lazy_interior a nw = [(a, nw)]).
@@ -541,7 +584,8 @@ Proof.
       { intros x Hx. destruct (ms_mem ms x) eqn:Ex; [|reflexivity]. exfalso.
         destruct (HVD x ltac:(congruence)) as [A|[A|A]].
         - ceilb. lia.
-        - apply A. rewrite (lok_resv _ _ HO) in C4. eapply region_free_noseg; [exact HWX| exact C4| rewrite Hun; exact Hx].
+        - apply A. destruct (lok_resv _ _ HO) as (rx & Hrx & _). rewrite Hrx, <- app_assoc in C4.
+          eapply region_free_noseg; [exact HWX| exact C4| rewrite Hun; exact Hx].
         - apply in_rangesb_true in A as (b' & k & Hin & Hbx).
           assert (Hfm : region_free (vm_maps (m_vmmaps mo)) a nw = true).
           { rewrite region_free_app in C4. apply andb_true_iff in C4. exact (proj2 C4). }
@@ -581,21 +625,19 @@ Proof.
         rewrite A. apply orb_true_r. }
       pose proof (Hgrant a (conj C1 (conj C2 (conj C3 C4)))) as K. cbn [eff_ret].
       right. split; [reflexivity | exact K].
-  - destruct (vm_gap_available (m_vmmaps mo) n) eqn:EG.
-    + pose proof (proj1 (vm_gap_available_iff _ _) EG) as (a & C1 & C2 & C3 & C4).
+  - destruct (mmap_place_dec mo n ltac:(lia) Hn2) as [(a & HL) | HNP].
+    + pose proof (place_facts mo n a ltac:(lia) Hn2 HL) as (C1 & C2 & C3 & C4).
       eexists (mkEffect a [] [(a, Z_to_bv 64 n)]), _, [].
-      split; [apply SPEC; right; exists a; split; [repeat split; assumption | reflexivity]|].
+      split; [apply SPEC; right; exists a; split; [split; [exact HL | first [assumption | reflexivity]] | reflexivity]|].
       split; [| reflexivity].
       apply spurious_refusal_not_refusal. rewrite HR. cbn [eff_ret]. apply mmap_grant_ret_nonrefusal. exact C1.
     + exists (efferr ENOMEM), (real mo mat), [].
       split; [apply SPEC; left; exists ENOMEM; split; [apply ENOMEM_in| reflexivity]|].
       split; [| reflexivity].
       apply nsp_forced. intros eff' m' evs' Hs'. rewrite HR.
-      apply SPEC in Hs'. destruct Hs' as [(e & He & Heq) | (a & (C1 & C2 & C3 & C4 & C5) & Heq)].
+      apply SPEC in Hs'. destruct Hs' as [(e & He & Heq) | (a & (HL & C5) & Heq)].
       * apply Ok_inj in Heq as (-> & _ & _). cbn [eff_ret]. apply ret_in_errnos_errno. exact He.
-      * exfalso. assert (EG' : vm_gap_available (m_vmmaps mo) n = true).
-        { apply vm_gap_available_iff. exists a. repeat split; assumption. }
-        congruence.
+      * exfalso. apply HNP. exists (bv_unsigned a). exact HL.
 Qed.
 
 
@@ -664,6 +706,18 @@ Lemma ceil_maps_subtract : forall l lo hi,
   forall b k, In (b, k) (maps_subtract l lo hi) -> bv_unsigned b + bv_unsigned k <= alloc_ceiling.
 Proof. intros l lo hi. apply bound_maps_subtract. ceilb. lia. Qed.
 
+(* every piece of a cut lies inside the entry it was cut from *)
+Lemma sub_maps_subtract : forall l lo hi, nowrap l -> forall e, In e (maps_subtract l lo hi) ->
+  exists e0, In e0 l /\ uz (fst e0) <= uz (fst e) /\ uz (fst e) + uz (snd e) <= uz (fst e0) + uz (snd e0).
+Proof.
+  intros l lo hi. induction l as [|[a sz] l IH]; intros Hnw e Hin; cbn [maps_subtract] in Hin; [destruct Hin|].
+  apply in_app_or in Hin as [Hin|Hin].
+  - destruct (iv_subtract_sub a sz lo hi e (Hnw a sz (or_introl eq_refl)) Hin) as [A B].
+    exists (a, sz). split; [left; reflexivity|]. cbn [fst snd]. split; assumption.
+  - destruct (IH (fun b k H => Hnw b k (or_intror H)) e Hin) as (e0 & H0 & A & B).
+    exists e0. split; [right; exact H0|]. split; assumption.
+Qed.
+
 Lemma wf_maps_subtract : forall l lo hi,
   (forall b k, In (b, k) l -> bv_unsigned b + bv_unsigned k <= 2^64) ->
   forall b k, In (b, k) (maps_subtract l lo hi) -> bv_unsigned b + bv_unsigned k <= 2^64.
@@ -686,8 +740,8 @@ Lemma region_free_reserved_noseg : forall (a n x : word) mo, no_wx segs -> LOK s
   region_free (vm_reserved (m_vmmaps mo)) a n = true ->
   bv_unsigned a <= bv_unsigned x < bv_unsigned a + bv_unsigned n -> noseg segs x.
 Proof.
-  intros a n x mo HWX HO Hf Hx. rewrite (lok_resv _ _ HO) in Hf.
-  apply (region_free_noseg segs [] a n x HWX); [rewrite app_nil_r; exact Hf| exact Hx].
+  intros a n x mo HWX HO Hf Hx. destruct (lok_resv _ _ HO) as (rx & Hrx & _). rewrite Hrx in Hf.
+  apply (region_free_noseg segs rx a n x HWX); [exact Hf| exact Hx].
 Qed.
 
 (* [comment removed for export] *)
@@ -796,7 +850,8 @@ Proof.
   assert (Hun : bv_unsigned (Z_to_bv 64 n : word) = n) by (apply unsigned_lit; lia).
   assert (HuA : bv_unsigned (Z_to_bv 64 A : word) = A) by (apply unsigned_lit; ceilb; lia).
   set (nw := (Z_to_bv 64 n : word)) in *. set (Aw := (Z_to_bv 64 A : word)) in *.
-  apply (lscps_sysnode segs P (fun _ => false) ms mo (mkG G R) (Z_to_bv 64 222) Hsvc).
+  apply (lscps_sysnode segs P (fun _ => false) ms mo (mkG G R) (Z_to_bv 64 222) Hsvc
+           (lsys_lit segs _ _ _ 222 Hsvc ltac:(lia) RomBase.memfree_222)).
   intros mr mat HI. pose proof HI as ([HWX HO] & HB & HLR & [HM HVD]).
   pose proof (lok_top _ _ HO) as HTOP.
   assert (SPEC : forall o, syscall_spec (sys_input segs (msw ms mr) (Z_to_bv 64 222)) (real mo mat) o <->
@@ -905,32 +960,55 @@ Proof. intros spin P ms mo G R A len HA H0 H1 n HS HR _ Hg. eapply lscps_mmap_fi
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
+(* LPS 727298f3: munmap's exact arm leaves the model's mmap_fixed_destroyed_next, which cuts the
+   range out of the maps with maps_subtract (it used to drop the entry with map_remove). *)
 Definition mm_unmap (addr n : word) (mo : Model) : Model :=
-  let h := m_vmmaps mo in
-  with_mmap_destroyed addr n
-    (mkVmMapsFull (vm_reserved h) (map_remove (vm_maps h) addr)
-       (maps_subtract (vm_noaccess h) (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n))
-       (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h)) mo.
+  with_mmap_destroyed addr n (mmap_fixed_destroyed_next (m_vmmaps mo) addr n) mo.
 
 Lemma mm_unmap_real : forall addr n mo mat,
-  with_mmap_destroyed addr n
-    (mkVmMapsFull (vm_reserved (m_vmmaps (real mo mat))) (map_remove (vm_maps (m_vmmaps (real mo mat))) addr)
-       (maps_subtract (vm_noaccess (m_vmmaps (real mo mat))) (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n))
-       (vm_start_brk (m_vmmaps (real mo mat))) (vm_brk (m_vmmaps (real mo mat))) (vm_limit (m_vmmaps (real mo mat)))
-       (vm_mmap_base (m_vmmaps (real mo mat))) (vm_init_sp (m_vmmaps (real mo mat)))) (real mo mat)
+  with_mmap_destroyed addr n (mmap_fixed_destroyed_next (m_vmmaps (real mo mat)) addr n) (real mo mat)
   = real (mm_unmap addr n mo) (mfilter (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n) mat).
 Proof. reflexivity. Qed.
 
 Lemma mm_unmap_lazy : forall addr n mo,
   m_vm_lazy (mm_unmap addr n mo) = maps_subtract (m_vm_lazy mo) (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n).
 Proof. reflexivity. Qed.
-Lemma mm_unmap_maps : forall addr n mo, vm_maps (m_vmmaps (mm_unmap addr n mo)) = map_remove (vm_maps (m_vmmaps mo)) addr.
+Lemma mm_unmap_maps : forall addr n mo,
+  vm_maps (m_vmmaps (mm_unmap addr n mo)) = maps_subtract (vm_maps (m_vmmaps mo)) (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n).
 Proof. reflexivity. Qed.
 Lemma mm_unmap_na : forall addr n mo,
   vm_noaccess (m_vmmaps (mm_unmap addr n mo)) = maps_subtract (vm_noaccess (m_vmmaps mo)) (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n).
 Proof. reflexivity. Qed.
 Lemma mm_unmap_vm_only : forall addr n mo, vm_only mo (mm_unmap addr n mo).
 Proof. intros. repeat split; reflexivity. Qed.
+
+(* An entry apart from munmap's cut comes out of maps_subtract whole (the cut's own arms in
+   iv_subtract, as Spec/KRaw.v's iv_subtract_outside_k reads them). *)
+Lemma iv_subtract_apart : forall (b s : word) lo hi,
+  0 < bv_unsigned s -> lo < hi ->
+  bv_unsigned b + bv_unsigned s <= lo \/ hi <= bv_unsigned b ->
+  iv_subtract b s lo hi = [(b, s)].
+Proof.
+  intros b s lo hi Hs Hlh Hd. unfold iv_subtract. cbv zeta.
+  destruct Hd as [Hd|Hd].
+  - rewrite (proj2 (Z.ltb_lt (bv_unsigned b) lo)) by lia.
+    rewrite (proj2 (Z.ltb_ge hi (bv_unsigned b + bv_unsigned s))) by lia.
+    rewrite Z.min_l by lia. rewrite Z_to_bv_bv_unsigned. reflexivity.
+  - rewrite (proj2 (Z.ltb_ge (bv_unsigned b) lo)) by lia.
+    rewrite (proj2 (Z.ltb_lt hi (bv_unsigned b + bv_unsigned s))) by lia.
+    rewrite Z.max_l by lia.
+    replace (bv_unsigned b + bv_unsigned s - bv_unsigned b) with (bv_unsigned s) by lia.
+    rewrite !Z_to_bv_bv_unsigned. reflexivity.
+Qed.
+
+Lemma In_maps_subtract_kept : forall l lo hi e, In e l -> iv_subtract (fst e) (snd e) lo hi = [e] ->
+  In e (maps_subtract l lo hi).
+Proof.
+  induction l as [|[c t] l IH]; intros lo hi e Hin He; [destruct Hin|]. cbn [maps_subtract]. apply in_or_app.
+  destruct Hin as [<-|Hin].
+  - left. cbn [fst snd] in He. rewrite He. left. reflexivity.
+  - right. exact (IH lo hi e Hin He).
+Qed.
 
 Lemma map_has_In : forall maps (a n : word), map_has maps a n = true -> In (a, n) maps.
 Proof.
@@ -1020,17 +1098,20 @@ Lemma mm_unmap_LOK : forall addr n mo, LOK segs mo -> map_has (vm_maps (m_vmmaps
 Proof.
   intros addr n mo HO Hh Hn. pose proof (map_has_In _ _ _ Hh) as Hin.
   pose proof (nowrap_of_wf _ (lok_na_ceil _ _ HO)) as Hna. pose proof (nowrap_of_ceil _ (lok_lazy_ceil _ _ HO)) as Hlz.
-  pose proof (lok_maps_pwd _ _ HO) as Hp.
+  pose proof (lok_maps_pwd _ _ HO) as Hp. pose proof (lok_maps_nowrap mo HO) as Hmw.
   destruct HO as [Oh Or Ob Omc Opwd Onc Olc Ons Olm Onm]. constructor; rewrite ?mm_unmap_maps, ?mm_unmap_na, ?mm_unmap_lazy; try assumption.
-  - intros b k Hbk. apply In_map_remove in Hbk. apply Omc. exact (proj1 Hbk).
-  - apply pwd_filter. exact Opwd.
+  - destruct Or as (rx & Erx & Drx). exists rx. split; [exact Erx|]. intros r e Hr He.
+    destruct (sub_maps_subtract _ _ _ Hmw e He) as (e0 & He0 & S1 & S2). pose proof (Drx r e0 Hr He0) as R.
+    unfold rdisj in *. lia.
+  - eapply ceil_maps_subtract. exact Omc.
+  - apply pwd_maps_subtract; [exact Hmw| lia| exact Opwd].
   - eapply wf_maps_subtract. exact Onc.
   - eapply ceil_maps_subtract. exact Olc.
   - intros x Hx. rewrite inzr_maps_subtract in Hx by (try exact Hlz; lia). apply andb_true_iff in Hx as [Hx _]. exact (Ons x Hx).
   - intros x Hx. rewrite (inzr_maps_subtract (m_vm_lazy mo)) in Hx by (try exact Hlz; lia).
-    rewrite (inzr_map_remove _ addr n x Hp Hin Hn). apply andb_true_iff in Hx as [Hx Hr]. rewrite (Olm x Hx), Hr. reflexivity.
+    rewrite (inzr_maps_subtract (vm_maps (m_vmmaps mo))) by (try exact Hmw; lia). apply andb_true_iff in Hx as [Hx Hr]. rewrite (Olm x Hx), Hr. reflexivity.
   - intros x Hx. rewrite (inzr_maps_subtract (vm_noaccess (m_vmmaps mo))) in Hx by (try exact Hna; lia).
-    rewrite (inzr_map_remove _ addr n x Hp Hin Hn). apply andb_true_iff in Hx as [Hx Hr]. rewrite (Onm x Hx), Hr. reflexivity.
+    rewrite (inzr_maps_subtract (vm_maps (m_vmmaps mo))) by (try exact Hmw; lia). apply andb_true_iff in Hx as [Hx Hr]. rewrite (Onm x Hx), Hr. reflexivity.
 Qed.
 
 (* [comment removed for export] *)
@@ -1045,14 +1126,14 @@ Proof.
   pose proof (bv_unsigned_in_range 64 addr) as Ha. pose proof (bv_unsigned_in_range 64 n) as Hnr. change (bv_modulus 64) with (2^64) in *.
   pose proof (lok_maps_ceil _ _ HO addr n Hin) as Hc. ceilb.
   assert (Hnw' : nowrap (vm_maps (m_vmmaps (mm_unmap addr n mo)))).
-  { rewrite mm_unmap_maps. intros b k Hbk. apply In_map_remove in Hbk. apply Hnw. exact (proj1 Hbk). }
+  { rewrite mm_unmap_maps. apply nowrap_maps_subtract. exact Hnw. }
   rewrite (eager_used_total' (mm_unmap addr n mo) Hnw'), (eager_used_total' _ Hnw).
   rewrite mm_unmap_maps, mm_unmap_na, mm_unmap_lazy.
   match goal with |- total ?f1 + _ <= total ?f2 =>
     enough (HH : total f1 + total (ind (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n)) <= total f2)
       by (rewrite total_ind in HH by lia; lia) end.
   rewrite <- total_add. apply total_le. intros x Hx. unfold eagerf.
-  rewrite (cov_map_remove _ addr n x Hp Hin Hn Hnw), !nz_maps_subtract by (try assumption; lia). unfold uz.
+  rewrite cov_maps_subtract, !nz_maps_subtract by (try assumption; lia). unfold uz.
   pose proof (cov_le_1 _ x Hp) as H1. pose proof (cov_nonneg (vm_maps (m_vmmaps mo)) x) as H0.
   unfold ind. destruct (Z.leb_spec0 (bv_unsigned addr) x); destruct (Z.ltb_spec0 x (bv_unsigned addr + bv_unsigned n)); cbn [andb];
     try (destruct (nz_01 (vm_noaccess (m_vmmaps mo)) x) as [-> | ->]; destruct (nz_01 (m_vm_lazy mo) x) as [-> | ->]; lia).
@@ -1087,10 +1168,14 @@ Proof.
   assert (Hun : bv_unsigned (Z_to_bv 64 n : word) = n) by (apply unsigned_lit; lia).
   assert (HuA : bv_unsigned (Z_to_bv 64 A : word) = A) by (apply unsigned_lit; ceilb; lia).
   set (nw := (Z_to_bv 64 n : word)) in *. set (Aw := (Z_to_bv 64 A : word)) in *.
-  apply (lscps_sysnode segs P (fun _ => false) ms mo (mkG G R) (Z_to_bv 64 215) Hsvc).
+  apply (lscps_sysnode segs P (fun _ => false) ms mo (mkG G R) (Z_to_bv 64 215) Hsvc
+           (lsys_lit segs _ _ _ 215 Hsvc ltac:(lia) RomBase.memfree_215)).
   intros mr mat HI. pose proof HI as ([HWX HO] & HB & HLR & [HM HVD]).
+  (* LPS 727298f3: the exact arm of munmap_spec may also answer -ENOMEM (an injected refusal);
+     under ACFG it is spurious, since the success arm is there. *)
   assert (SPEC : forall o, syscall_spec (sys_input segs (msw ms mr) (Z_to_bv 64 215)) (real mo mat) o <->
-     o = Ok (mkEffectU (Z_to_bv 64 0) [] [] [(Aw, nw)] [] []) (real (mm_unmap Aw nw mo) (mfilter A (A + n) mat)) []).
+     (exists e, In e munmap_errnos /\ o = Ok (mkEffect (errno_ret e) [] []) (real mo mat) [])
+     \/ o = Ok (mkEffectU (Z_to_bv 64 0) [] [] [(Aw, nw)] [] []) (real (mm_unmap Aw nw mo) (mfilter A (A + n) mat)) []).
   { intros o. rewrite (syscall_spec_215 _ _ o) by reflexivity.
     rewrite !in_a0_si, !in_a1_si. change (areg (msw ms mr) 10) with (areg ms 10). change (areg (msw ms mr) 11) with (areg ms 11).
     rewrite Ha0, Ha1.
@@ -1111,8 +1196,24 @@ Proof.
     rewrite HuA, Hun. unfold in_range.
     destruct (in_rangesb (m_vm_lazy mo) x); destruct (in_rangesb (vm_noaccess (m_vmmaps mo)) x);
       destruct ((A <=? bv_unsigned x) && (bv_unsigned x <? A + n))%bool; reflexivity. }
+  assert (Hno : bv_unsigned (in_sysno (sys_input segs (msw ms mr) (Z_to_bv 64 215))) = 215) by reflexivity.
+  assert (HR : forall r, refusal_b (sys_input segs (msw ms mr) (Z_to_bv 64 215)) (real mo mat) r = ret_in_errnos munmap_errnos r)
+    by (intros r; exact (refusal_b_215 _ _ r Hno)).
+  assert (Hoff : injected_family_off ACFG (sys_input segs (msw ms mr) (Z_to_bv 64 215)) = true)
+    by (apply acfg_family_off_215; exact Hno).
+  assert (Hhr : m_halted (real mo mat) = None) by (rewrite real_halted; exact (lok_halt _ _ HO)).
+  assert (HGS : syscall_spec (sys_input segs (msw ms mr) (Z_to_bv 64 215)) (real mo mat)
+                  (Ok (mkEffectU (Z_to_bv 64 0) [] [] [(Aw, nw)] [] []) (real (mm_unmap Aw nw mo) (mfilter A (A + n) mat)) []))
+    by (apply SPEC; right; reflexivity).
+  assert (HGR : refusal_b (sys_input segs (msw ms mr) (Z_to_bv 64 215)) (real mo mat)
+                  (eff_ret (mkEffectU (Z_to_bv 64 0) [] [] [(Aw, nw)] [] [])) = false)
+    by (rewrite HR; vm_compute; reflexivity).
   split.
-  - intros o Ho. left. apply SPEC in Ho. subst o.
+  - intros o Ho. apply SPEC in Ho. destruct Ho as [(e & He & ->) | ->].
+    { right. eexists _, _, _. split; [reflexivity|]. split; [|exact Hhr].
+      refine (refusal_spurious_of_grant ACFG _ _ _ _ _ _ Hoff _ HGS HGR).
+      rewrite HR. exact (ret_in_errnos_errno _ _ He). }
+    left.
     exists (mkEffectU (Z_to_bv 64 0) [] [] [(Aw, nw)] [] []), (mm_unmap Aw nw mo), (mkG G (R + n)), (apply_unmaps (ms_mem ms) [(Aw, nw)]), (mfilter A (A + n) mat).
     split; [reflexivity|]. split; [reflexivity|]. split; [apply mm_unmap_vm_only|]. split.
     { rewrite mem_nret_unmaps. cbn [ms_mem msw].
@@ -1131,14 +1232,15 @@ Proof.
           rewrite HuA, Hun in Hl. apply andb_true_iff in Hl as [Hl Hr]. rewrite (AU (ms_mem ms) x).
           unfold in_range. destruct ((A <=? bv_unsigned x) && (bv_unsigned x <? A + n))%bool; [reflexivity|].
           apply Hhid; assumption. }
-      intros x Hx. rewrite (AU (ms_mem ms) x) in Hx. rewrite mm_unmap_maps, (inzr_map_remove _ Aw nw x (lok_maps_pwd _ _ HO) Hin) by (rewrite Hun; lia).
+      intros x Hx. rewrite (AU (ms_mem ms) x) in Hx.
+      rewrite mm_unmap_maps, (inzr_maps_subtract (vm_maps (m_vmmaps mo))) by (try exact (lok_maps_nowrap mo HO); rewrite ?HuA, ?Hun; lia).
       rewrite HuA, Hun. unfold in_range in Hx.
       destruct ((A <=? bv_unsigned x) && (bv_unsigned x <? A + n))%bool; [congruence|].
       destruct (HVD x Hx) as [B|[B|B]]; [left; exact B| right; left; exact B| right; right; rewrite B; reflexivity]. }
     cbn [eff_ret]. rewrite <- (mem_nret_unmaps ms (Z_to_bv 64 0) (Aw, nw) []), msw_nret_self.
     right. split; [reflexivity| exact Hk].
-  - eexists (mkEffectU (Z_to_bv 64 0) [] [] [(Aw, nw)] [] []), _, []. split; [apply SPEC; reflexivity|].
-    split; [exact (nsp_no segs _ (Z_to_bv 64 215) _ _ _ eq_refl eq_refl) | reflexivity].
+  - exists (mkEffectU (Z_to_bv 64 0) [] [] [(Aw, nw)] [] []), (real (mm_unmap Aw nw mo) (mfilter A (A + n) mat)), [].
+    split; [exact HGS|]. split; [| reflexivity]. apply spurious_refusal_not_refusal. exact HGR.
 Qed.
 
 
@@ -1148,37 +1250,39 @@ Qed.
 
 Lemma mmap_placeable_of_free : forall mo n g0,
   LOK segs mo -> 0 < n -> n mod 4096 = 0 ->
-  g0 mod 4096 = 0 -> 0 < g0 ->
+  task_unmapped_base <= g0 -> g0 mod 4096 = 0 ->
   g0 + n <= alloc_ceiling ->
   region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) (Z_to_bv 64 g0) (Z_to_bv 64 n) = true ->
   mmap_placeable mo n.
 Proof.
-  intros mo n g0 HO Hn Hna Hga Hgp Hgb Hgf. exists (Z_to_bv 64 g0).
-  assert (Hug : bv_unsigned (Z_to_bv 64 g0 : word) = g0) by (apply unsigned_lit; ceilb; lia).
-  unfold mmap_grant. rewrite Hug, page_size_eq. repeat split; assumption.
+  intros mo n g0 HO Hn Hna Hgp Hga Hgb Hgf.
+  apply (mmap_placeable_of_gap mo n g0 Hn Hna Hgp Hga); [rewrite (lok_top _ _ HO); exact Hgb | exact Hgf].
 Qed.
 
 (* [comment removed for export] *)
 Lemma mmap_placeable_of_bounds : forall mo n K S,
-  LOK segs mo -> 0 <= n ->
+  LOK segs mo -> 0 < n -> n mod 4096 = 0 ->
   Z.of_nat (length (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo))) <= K ->
   LGap04.zsumf LGap04.esz (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) <= S ->
-  4096 + S + K * (n + 4095) + n <= alloc_ceiling ->
+  task_unmapped_base + S + K * (n + 4095) + n <= alloc_ceiling ->
   mmap_placeable mo n.
 Proof.
-  intros mo n K S HO Hn HK HS Hroom. apply (mmap_placeable_gap mo n HO).
-  apply (LGap04.vm_gap_available_of_bounds (m_vmmaps mo) n K S Hn HK HS). rewrite (lok_top _ _ HO). exact Hroom.
+  intros mo n K S HO Hn Hna HK HS Hroom.
+  apply (LGap04.linux_place_of_sum (m_vmmaps mo) (kb_thp (m_kernel mo)) (Z_to_bv 64 0) n Hn
+           ltac:(rewrite page_size_eq; exact Hna)).
+  rewrite LGap04.zsumf_jcost, (lok_top _ _ HO). nia.
 Qed.
 
 (* [comment removed for export] *)
 Lemma mmap_placeable_of_sum_from : forall mo n a0,
-  LOK segs mo -> 0 <= n -> 4096 <= a0 -> a0 mod 4096 = 0 ->
+  LOK segs mo -> 0 < n -> n mod 4096 = 0 -> task_unmapped_base <= a0 -> a0 mod 4096 = 0 ->
   (forall e, In e (vm_reserved (m_vmmaps mo)) -> LGap04.elo e + LGap04.esz e <= a0) ->
   a0 + LGap04.zsumf (LGap04.jcost n) (vm_maps (m_vmmaps mo)) + n <= alloc_ceiling ->
   mmap_placeable mo n.
 Proof.
-  intros mo n a0 HO Hn Ha0 Hal Hres Hroom. apply (mmap_placeable_gap mo n HO).
-  apply (LGap04.vm_gap_available_of_sum_from (m_vmmaps mo) n a0 Hn Ha0 Hal Hres). rewrite (lok_top _ _ HO). exact Hroom.
+  intros mo n a0 HO Hn Hna Ha0 Hal Hres Hroom.
+  apply (LGap04.linux_place_of_sum_from (m_vmmaps mo) (kb_thp (m_kernel mo)) (Z_to_bv 64 0) n a0 Hn
+           ltac:(rewrite page_size_eq; exact Hna) Ha0 Hal Hres). rewrite (lok_top _ _ HO). exact Hroom.
 Qed.
 
 (* [comment removed for export] *)
@@ -1268,13 +1372,13 @@ Proof.
   clearbody n. destruct Hn as (Hn1 & Hn2 & Hn3 & En).
   assert (Hun : bv_unsigned (Z_to_bv 64 n : word) = n).
   { apply unsigned_lit. lia. }
-  apply (lscps_sysnode segs P (fun _ => false) ms mo (mkG G R) (Z_to_bv 64 222) Hsvc).
+  apply (lscps_sysnode segs P (fun _ => false) ms mo (mkG G R) (Z_to_bv 64 222) Hsvc
+           (lsys_lit segs _ _ _ 222 Hsvc ltac:(lia) RomBase.memfree_222)).
   intros mr mat HI. pose proof HI as ([HWX HO] & HB & HLR & [HM HVD]).
   pose proof (lok_top _ _ HO) as HTOP.
   assert (SPEC : forall o, syscall_spec (sys_input segs (msw ms mr) (Z_to_bv 64 222)) (real mo mat) o <->
             mmap_err_out (real mo mat) o
-            \/ exists a, ((bv_unsigned a mod page_size = 0) /\ (0 < bv_unsigned a) /\ (bv_unsigned a + n <= alloc_top (m_vmmaps mo))
-                          /\ region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 n) = true
+            \/ exists a, (linux_place (m_vmmaps mo) (kb_thp (m_kernel mo)) (Z_to_bv 64 0) n (bv_unsigned a)
                           /\ mmap_noreserve_backed_ok (Z_to_bv 64 mm_flags_anon_nr) (real mo mat) n = true)
                          /\ o = Ok (mkEffect a [] [(a, Z_to_bv 64 n)])
                                   (vm_add_lazy a (Z_to_bv 64 n) (mm_add_map a (Z_to_bv 64 n) (real mo mat))) []).
@@ -1289,7 +1393,7 @@ Proof.
     cbv zeta in RW. rewrite (unsigned_lit len) in RW by lia. rewrite <- En in RW. rewrite real_vmmaps in RW.
     assert (E1 : w_is0 (Z_to_bv 64 len) = false).
     { unfold w_is0. apply bv_eqb_neq. intros E. apply (f_equal bv_unsigned) in E. rewrite !unsigned_lit in E by lia. lia. }
-    specialize (RW eq_refl eq_refl E1 eq_refl). rewrite RW. reflexivity. }
+    specialize (RW eq_refl eq_refl E1 eq_refl (place_declined_b_null _ _ _)). rewrite RW. reflexivity. }
   pose proof (bv_unsigned_in_range 64) as UR.
   assert (Hno : bv_unsigned (in_sysno (sys_input segs (msw ms mr) (Z_to_bv 64 222))) = 222) by reflexivity.
   assert (HR : forall r, refusal_b (sys_input segs (msw ms mr) (Z_to_bv 64 222)) (real mo mat) r = ret_in_errnos mmap_errnos r)
@@ -1298,26 +1402,25 @@ Proof.
     by (apply acfg_family_off_alloc; right; right; left; exact Hno).
   assert (Hhr : m_halted (real mo mat) = None) by (rewrite real_halted; exact (lok_halt _ _ HO)).
   split.
-  - intros o Ho. apply SPEC in Ho. destruct Ho as [(e & He & ->) | (a & (C1 & C2 & C3 & C4 & C5) & ->)].
-    + destruct (vm_gap_available (m_vmmaps mo) n) eqn:EG.
-      { right. pose proof (proj1 (vm_gap_available_iff _ _) EG) as (a & C1 & C2 & C3 & C4).
+  - intros o Ho. apply SPEC in Ho. destruct Ho as [(e & He & ->) | (a & (HL & C5) & ->)].
+    + destruct (mmap_place_dec mo n ltac:(lia) Hn2) as [(a & HL) | HNP].
+      { right. pose proof (place_facts mo n a ltac:(lia) Hn2 HL) as (C1 & C2 & C3 & C4).
         eexists _, _, _. split; [reflexivity|]. split; [|exact Hhr].
         apply (refusal_spurious_of_grant ACFG _ _ _ (mkEffect a [] [(a, Z_to_bv 64 n)])
                  (vm_add_lazy a (Z_to_bv 64 n) (mm_add_map a (Z_to_bv 64 n) (real mo mat))) []);
           [exact Hoff
           | rewrite HR; exact (ret_in_errnos_errno _ _ He)
-          | apply SPEC; right; exists a; split; [repeat split; assumption | reflexivity]
+          | apply SPEC; right; exists a; split; [split; [exact HL | first [assumption | reflexivity]] | reflexivity]
           | rewrite HR; cbn [eff_ret]; apply mmap_grant_ret_nonrefusal; exact C1]. }
       left.
-      assert (HNP : ~ mmap_placeable mo n).
-      { intros HP. apply (mmap_placeable_gap segs mo n HO) in HP. congruence. }
       exists (efferr e), mo, (mkG G R), (ms_mem ms), mat.
       split; [reflexivity|]. split; [reflexivity|]. split; [apply vm_only_refl|]. split.
       { unfold efferr, eff0. rewrite mem_nret_plain. cbn [ms_mem msw]. exact HI. }
       pose proof (Href e He HNP) as K. unfold efferr, eff0 in K |- *. cbn [eff_ret].
       rewrite <- (mem_nret_plain ms (errno_ret e)), msw_nret_self.
       right; split; [reflexivity | exact K].
-    + left. rewrite HTOP in C3.
+    + pose proof (place_facts mo n a ltac:(lia) Hn2 HL) as (C1 & C2 & C3 & C4).
+      left. rewrite HTOP in C3.
 set (nw := (Z_to_bv 64 n : word)) in *.
       pose proof (UR a) as Ra. change (bv_modulus 64) with (2^64) in Ra.
       assert (EL : lazy_interior a nw = [(a, nw)]).
@@ -1333,7 +1436,8 @@ set (nw := (Z_to_bv 64 n : word)) in *.
       { intros x Hx. destruct (ms_mem ms x) eqn:Ex; [|reflexivity]. exfalso.
         destruct (HVD x ltac:(congruence)) as [A|[A|A]].
         - ceilb. lia.
-        - apply A. rewrite (lok_resv _ _ HO) in C4. eapply region_free_noseg; [exact HWX| exact C4| rewrite Hun; exact Hx].
+        - apply A. destruct (lok_resv _ _ HO) as (rx & Hrx & _). rewrite Hrx, <- app_assoc in C4.
+          eapply region_free_noseg; [exact HWX| exact C4| rewrite Hun; exact Hx].
         - apply in_rangesb_true in A as (b' & k & Hin & Hbx).
           assert (Hfm : region_free (vm_maps (m_vmmaps mo)) a nw = true).
           { rewrite region_free_app in C4. apply andb_true_iff in C4. exact (proj2 C4). }
@@ -1378,21 +1482,19 @@ set (nw := (Z_to_bv 64 n : word)) in *.
         all: destruct (HVD x Hx) as [A|[A|A]]; [left; exact A| right; left; exact A| right; right; rewrite A; rewrite ?orb_true_r; reflexivity]. }
       pose proof (Hgrant a (conj C1 (conj C2 (conj C3 C4)))) as K. cbn [eff_ret].
       right. split; [reflexivity | exact K].
-  - destruct (vm_gap_available (m_vmmaps mo) n) eqn:EG.
-    + pose proof (proj1 (vm_gap_available_iff _ _) EG) as (a & C1 & C2 & C3 & C4).
+  - destruct (mmap_place_dec mo n ltac:(lia) Hn2) as [(a & HL) | HNP].
+    + pose proof (place_facts mo n a ltac:(lia) Hn2 HL) as (C1 & C2 & C3 & C4).
       eexists (mkEffect a [] [(a, Z_to_bv 64 n)]), _, [].
-      split; [apply SPEC; right; exists a; split; [repeat split; assumption | reflexivity]|].
+      split; [apply SPEC; right; exists a; split; [split; [exact HL | first [assumption | reflexivity]] | reflexivity]|].
       split; [| reflexivity].
       apply spurious_refusal_not_refusal. rewrite HR. cbn [eff_ret]. apply mmap_grant_ret_nonrefusal. exact C1.
     + exists (efferr ENOMEM), (real mo mat), [].
       split; [apply SPEC; left; exists ENOMEM; split; [apply ENOMEM_in| reflexivity]|].
       split; [| reflexivity].
       apply nsp_forced. intros eff' m' evs' Hs'. rewrite HR.
-      apply SPEC in Hs'. destruct Hs' as [(e & He & Heq) | (a & (C1 & C2 & C3 & C4 & C5) & Heq)].
+      apply SPEC in Hs'. destruct Hs' as [(e & He & Heq) | (a & (HL & C5) & Heq)].
       * apply Ok_inj in Heq as (-> & _ & _). cbn [eff_ret]. apply ret_in_errnos_errno. exact He.
-      * exfalso. assert (EG' : vm_gap_available (m_vmmaps mo) n = true).
-        { apply vm_gap_available_iff. exists a. repeat split; assumption. }
-        congruence.
+      * exfalso. apply HNP. exists (bv_unsigned a). exact HL.
 Qed.
 (* [comment removed for export] *)
 Theorem lscps_mmap_rw_nr_gen2 : forall (spin : bool) (P : machine_state -> Model -> lghost -> Prop) ms mo G R len,
@@ -1544,7 +1646,8 @@ Proof.
   assert (Hun : bv_unsigned (Z_to_bv 64 n : word) = n) by (apply unsigned_lit; lia).
   assert (HuA : bv_unsigned (Z_to_bv 64 A : word) = A) by (apply unsigned_lit; ceilb; lia).
   set (nw := (Z_to_bv 64 n : word)) in *. set (Aw := (Z_to_bv 64 A : word)) in *.
-  apply (lscps_sysnode segs P (fun _ => false) ms mo (mkG G R) (Z_to_bv 64 233) Hsvc).
+  apply (lscps_sysnode segs P (fun _ => false) ms mo (mkG G R) (Z_to_bv 64 233) Hsvc
+           (lsys_lit segs _ _ _ 233 Hsvc ltac:(lia) RomBase.memfree_233)).
   intros mr mat HI. pose proof HI as ([HWX HO] & HB & HLR & [HM HVD]).
   assert (SPEC : forall o, syscall_spec (sys_input segs (msw ms mr) (Z_to_bv 64 233)) (real mo mat) o <->
      o = Ok (mkEffect (Z_to_bv 64 0) [] [(Aw, nw)]) (real mo (mfilter A (A + n) mat)) []).
@@ -1633,18 +1736,18 @@ Local Abbreviation LRZ := (LRz.LRZ segs).
 (* [comment removed for export] *)
 
 Lemma srz_alt2_spin : forall c (I : Type) (nx : I -> config) (cls : I -> option bool) (TA TB : TSet) (ia ib : I),
-  node_ok segs c I (fun _ => []) nx ->
+  node_ok segs c I (fun _ => []) nx -> RomBase.sys_rob segs c ->
   cls ia = Some true -> cls ib = Some false ->
   (forall i, cls i = None -> jspinning segs (nx i)) ->
   (forall i, cls i = Some true -> srealizes segs (nx i) TA) ->
   (forall i, cls i = Some false -> srealizes segs (nx i) TB) ->
   srealizes segs c (t_alt2 TA TB).
 Proof.
-  intros c I nx cls TA TB ia ib Hnode Hia Hib Hsp HA HB.
+  intros c I nx cls TA TB ia ib Hnode Hrob Hia Hib Hsp HA HB.
   assert (HA0 : TA []) by (eapply srealizes_nonempty; apply (HA ia Hia)).
   assert (HB0 : TB []) by (eapply srealizes_nonempty; apply (HB ib Hib)).
   apply (srz_conseq segs c (t_alt (fun i : I => t_emit [] (match cls i with None => t_nil | Some true => TA | Some false => TB end)))).
-  - apply (srz_node segs c I (fun _ => []) nx (fun i => match cls i with None => t_nil | Some true => TA | Some false => TB end) ia Hnode).
+  - apply (srz_node segs c I (fun _ => []) nx (fun i => match cls i with None => t_nil | Some true => TA | Some false => TB end) ia Hnode Hrob).
     intros i. destruct (cls i) as [[|]|] eqn:E.
     + apply HA. exact E.
     + apply HB. exact E.
@@ -1779,18 +1882,18 @@ Definition outcome_ok2 (PA PB : machine_state -> Model -> lghost -> Prop) (cls :
 (* [comment removed for export] *)
 
 Lemma srz_alt2_spin2 : forall c (I : Type) (nx : I -> config) (cls : I -> option bool) (TA TB : TSet) (ia ib : I),
-  node_ok segs c I (fun _ => []) nx ->
+  node_ok segs c I (fun _ => []) nx -> RomBase.sys_rob segs c ->
   cls ia = Some true -> cls ib = Some false ->
   (forall i, cls i = None -> jspinning segs (nx i)) ->
   (forall i, cls i = Some true -> srealizes segs (nx i) TA) ->
   (forall i, cls i = Some false -> srealizes segs (nx i) (t_alt2 TA TB)) ->
   srealizes segs c (t_alt2 TA TB).
 Proof.
-  intros c I nx cls TA TB ia ib Hnode Hia Hib Hsp HA HB.
+  intros c I nx cls TA TB ia ib Hnode Hrob Hia Hib Hsp HA HB.
   assert (HA0 : TA []) by (eapply srealizes_nonempty; apply (HA ia Hia)).
   assert (HAB0 : t_alt2 TA TB []) by (eapply srealizes_nonempty; apply (HB ib Hib)).
   apply (srz_conseq segs c (t_alt (fun i : I => t_emit [] (match cls i with None => t_nil | Some true => TA | Some false => t_alt2 TA TB end)))).
-  - apply (srz_node segs c I (fun _ => []) nx (fun i => match cls i with None => t_nil | Some true => TA | Some false => t_alt2 TA TB end) ia Hnode).
+  - apply (srz_node segs c I (fun _ => []) nx (fun i => match cls i with None => t_nil | Some true => TA | Some false => t_alt2 TA TB end) ia Hnode Hrob).
     intros i. destruct (cls i) as [[|]|] eqn:E.
     + apply HA. exact E.
     + apply HB. exact E.

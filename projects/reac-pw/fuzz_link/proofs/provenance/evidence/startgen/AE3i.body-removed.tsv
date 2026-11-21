@@ -1,4 +1,4 @@
-donor line	in cgif_file_fuzzer A/AE3i.v c8557374ad2e?	verbatim text
+donor line	in cgif_file_fuzzer A/AE3i.v?	verbatim text
 4	no	(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AE3i.v, with its module paths changed and its addresses moved to libreac/fuzz_pcap's ASan build. *)
 24	no	(* [IMG_RO_LO, IMG_RO_HI) is the whole read-only PT_LOAD of fuzz_pcap.asan (sha256 b7a91d9b1fb0...): p_vaddr 0x10000,
 25	no	   p_memsz 0x1ef70, so it ends at 0x2ef70.  Its sections are .note.gnu.build-id [0x102a8, 0x102cc), .rodata

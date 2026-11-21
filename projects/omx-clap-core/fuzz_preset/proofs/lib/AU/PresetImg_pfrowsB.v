@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyImg_pfrowsB.v (commit 4d286b2e618d, file sha256 1cd72098ecb6) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal, jump-table offsets and list indices by the same stage map), 2 list indices re-picked, and 0 addresses named in comments; facts preset already states are cited, not restated; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyImg_pfrowsB.v (file sha256 1cd72098ecb6) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal, jump-table offsets and list indices by the same stage map), 2 list indices re-picked, and 0 addresses named in comments; facts preset already states are cited, not restated; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a prior worker, for a Theorem Labs lane's cf layer round 3 at plugin-hostd/fuzz_reply).
    rule 24: no function proved (kind: image rows; closed facts about reply's image B, fuzz_reply.asan-ubsan, pin
    10ffb5f9202a; no function walk).
 
-   Image B's twin of A/ReplyImg_pfrows.v: the two unit rows round 3's ARcf_nil_init (Reusable/YGcfNilInit.v:100-101)
+   Image B's twin of A/ReplyImg_pfrows.v: the two unit rows round 3's ARcf_nil_init (Reusable/YGcfNilInit.v:101-102)
    takes at the image's symbol facts:
    - errb_ial_apart_preset_B: the layer's errb_ial_apart_t (Reusable/YG0ncf.v:160): the error-message-buffer object
      [cf_errbuf_obj, + 56) lies below the internal allocator's arena (TFIB_IAL_LO) and so outside the arena and its

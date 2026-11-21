@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the 6144513-byte zero-filled stack window): changed dg_init_of, dg_machine_pre; added vmc_refl; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/Pm9DiagArmRefuse.v, lines 18, 86-87, 118. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -21,6 +22,7 @@ Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope Z_scope.
 Import SX2. Import SX2S.
+Local Ltac vmc_refl := first [ lazymatch goal with |- _ = ?b => vm_cast_no_check (@eq_refl _ b) end | vm_compute; reflexivity ].
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
 
@@ -91,7 +93,8 @@ Section Arm.
     intros vals kn LB LK cr A M model can S HK OKb P0 P3 D HS1 HS2 HS16 MV. pose proof Hsp as Hsp'.
     unfold dg_kn_ok in OKb. apply andb_prop in OKb as (OKb & HW). rewrite forallb_forall in OKb.
     assert (KB : forall K, In K (DG_KN ++ XKN) -> existsb (kentry_eqb K) kn = true) by (intros K HKin; exact (OKb K HKin)).
-    assert (WIN : forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
+    (* WINDOW, old beside new (here and the lemma below): was [usp - 8388608 <= a]; DRV_ZWIN (stk_wr). *)
+    assert (WIN : forall a n, usp - DRV_ZWIN <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
       by (intros a n Ha Hn d k Hd Hk; exact (stk_wr sp0 Hsp vals _ MV kn a n HK HW P0 Ha Hn d k Hd Hk)).
     pose proof (kimg_clear (ENVG vals) MV kn 1477960 1478200 HK (KB (KImg 1477960 1478200) ltac:(unfold DG_KN; cbn [In app]; tauto))) as CLe.
     assert (ICe : forall a (n : nat) bs, rdn ASEGS (fun _ => None) (Z_to_bv 64 a) n = Some bs -> (1477960 <=? a) && (a + Z.of_nat n <=? 1478200) = true -> rdn ASEGS MV (Z_to_bv 64 a) n = Some bs).
@@ -120,10 +123,9 @@ Section Arm.
     exact (wsg_writable sp0 Hsp M0 MV 1477960 152%nat wseg_stderr ltac:(lia) ltac:(cbn; lia)).
   Qed.
 
-  (* [comment removed for export] *)
   Lemma dg_init_of : forall vals kn (MV : word -> option byte),
     know_ok ASEGS (ENVG vals) MV kn -> dg_kn_ok kn = true -> vals_ev vals 0 = sp0 ->
-    (forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
+    (forall a n, usp - DRV_ZWIN <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
     /\ (forall i, 65536 <= i < 1466368 -> MV (Z_to_bv 64 i) = None)
     /\ exitA (bv_unsigned (vals_ev vals 4)) MV /\ stdoutPA MV.
   Proof.
@@ -141,7 +143,6 @@ Section Arm.
     exact (ICo 1478216 8%nat (word_to_le_bytes 8 (Z_to_bv 64 0)) ltac:(img_rd) eq_refl).
   Qed.
 
-  (* [comment removed for export] *)
   Lemma refuse_chain : forall (fxq : PropExec.FPState) R (MV : word -> option byte) (S can : Z),
     getr R 1%bv = Z_to_bv 64 723940 -> getr R 2%bv = Z_to_bv 64 S -> getr R 4%bv = Z_to_bv 64 6953104 ->
     getr R 10%bv = Z_to_bv 64 1477960 -> getr R 11%bv = Z_to_bv 64 112088 -> getr R 12%bv = Z_to_bv 64 67108864 ->

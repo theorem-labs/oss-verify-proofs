@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: generated for reac-pw/fuzz_segconf image B by ae3i.py 3cf49addef7e from fuzz_segconf.asan-ubsan and lib/B/YF0m.v's Tfib_owned_static (IMG_RO_HI = this image's read-only PT_LOAD end), template proofs/cgif/cgif_file_fuzzer/lib/YE3i.v at c8557374ad2e; module paths changed (Requires placed in lib/Reusable / lib/B) *)
+(* Modified by Theorem Labs, 2026-10: generated for reac-pw/fuzz_segconf image B by ae3i.py 3cf49addef7e from fuzz_segconf.asan-ubsan and lib/B/YF0m.v's Tfib_owned_static (IMG_RO_HI = this image's read-only PT_LOAD end), template proofs/cgif/cgif_file_fuzzer/lib/YE3i.v at theorem-labs/oss-verify-proofs@6b32741d849a; module paths changed (Requires placed in lib/Reusable / lib/B) *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_segconf.asan-ubsan (reac-pw/fuzz_segconf asan-ubsan) sha256 c3796c0b38f3666f32a3ecff43c9fdb55ead356833af6013a07c404bd0254509; unstripped twin sha256 80e82127e8ca1e8b2ee142f113e0e529fd7b8052d654e8dfc120fd8d4ae40a21 *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.

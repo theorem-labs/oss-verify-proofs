@@ -1,6 +1,6 @@
 (* LLVMFuzzerTestOneInput_seg_turnb_lib: what the turn_b segment of fuzz_wire.asan-ubsan's LLVMFuzzerTestOneInput
    (+0x108 .. +0x150, lib/B/Prog/LLVMFuzzerTestOneInput_segs.v u_turn_b_stmt) needs apart from the runs of the Pa
-   engine, in the form of fuzz_uci's lib/B/Prog/LLVMFuzzerTestOneInput_seg_turnb_lib.v (recipes commit 0295462466b2: a callee
+   engine, in the form of fuzz_uci's lib/B/Prog/LLVMFuzzerTestOneInput_seg_turnb_lib.v (recipes: a callee
    rule or contract composed into the walk, its premises at the call, its post moved to the next state):
    - tb_st_m / tb_st_c / tb_st_r: the states at the return of the malloc of c (+0x110), at the join after the copy
      into c (+0x12c) and at the return of check_copy (+0x13c);

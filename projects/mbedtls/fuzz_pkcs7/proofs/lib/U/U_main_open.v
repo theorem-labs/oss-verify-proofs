@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (model0, model1g, open_err_branch and file_seg2_kont_g written out from their encoded forms, model0 now carrying the launch's vDSO and model1g the vDSO reservation, with model1g_resv added; the argv pointers taken from the entry draw; the path read also proved to end below TASK_SIZE; below_win and file_seg1's below-window proof use sp0 - 6144512, the floor of the stack the launch maps (was sp0 - 8388608)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -101,12 +102,31 @@ Section Pilot.
   Definition fds0 : list (word * FdEntry) := ltac2:(CDefT.buildp (gd_tbl_P_main_open ()) "(14.(15.(1.&40.)$16.)(17.(1.&40.)$16.(18.&40.=)(19.(18.&40.=)))(14.(15.(1.&40.)$16.)(17.(1.&40.)$16.(18.&40.+1.)(19.(18.&40.+1.)))(14.(15.(1.&40.)$16.)(17.(1.&40.)$16.(18.&40.+2.)(19.(18.&40.+2.)))(1:.(15.(1.&40.)$16.)))))")
 (* [comment removed for export] *).
   (* [comment removed for export] *)
-  Definition model0 : Model := ltac2:(CDefT.buildp (gd_tbl_P_main_open ()) "(1;.Vtid,(1<.(1=.$1>.)Vbrk,Vmbase,Vsp0,(1?.VLM,)(20.VAMB,(14.(3.(1.&8.))Va0s,(14.(3.(1.&8.))Vpath,(1:.(3.(1.&8.)))))Venvv,Vfs0,Vstdin0,)))")
-(* [comment removed for export] *).
+  (* 08b1429: [Run.init_config] starts from the launch's vDSO run, which the ambient
+     record carries ([Amb.a_vdso]) *)
+  Definition model0 : Model :=
+    with_tid tid (with_vdso a_vdso (init_model (segments_reserved Ubsan.M.loaded_segments) brk mbase sp0 (@LIM LM) (mkProcInputC [a0s; path] envv fs0 stdin0))).
   (* [comment removed for export] *)
   Definition fds1g (fd3 : FdEntry) : list (word * FdEntry) := fd_insert fds0 (Z_to_bv 64 3) fd3.
-  Definition model1g (fd3 : FdEntry) : Model := ltac2:(CDefT.buildp (gd_tbl_P_main_open ()) "(21.VAMB,(22.O1.)(23.(1=.$1>.)(1:.(15.(1.&40.)(1.&40.)))(1:.(15.(1.&40.)(1.&40.)))Vbrk,Vbrk,(1?.VLM,)Vmbase,Vsp0,)Vstdin0,Vfs0,(24.(1.&40.))(25.(1.&40.)Vtid,)(24.(3.(1.&8.))))")
-(* [comment removed for export] *).
+  (* plain text (was serialised).  At 08b1429 [init_model] reserves the
+     image's segments and then the launch's vDSO/vvar pair
+     ([State.init_reserved]); the start-up keeps that ledger, so the model
+     after it does too (BB/Amb.v [init_model_C]). *)
+  Definition model1g (fd3 : FdEntry) : Model :=
+    @mkModelC AMB (fds1g fd3)
+      (mkVmMapsFull (init_reserved (segments_reserved Ubsan.M.loaded_segments) mbase sp0 (@a_kernel AMB))
+                    [] [] brk brk (@LIM LM) mbase sp0)
+      stdin0 fs0 None (Some tid) None.
+  #[using="Type"] Lemma model1g_resv (fd3 : FdEntry) :
+    vm_reserved (m_vmmaps (model1g fd3))
+    = segments_reserved Ubsan.M.loaded_segments
+      ++ vdso_reserved (m_kernel (model1g fd3)) (vdso_top (m_vmmaps (model1g fd3))).
+  Proof.
+    change (vdso_top (m_vmmaps (model1g fd3)))
+      with (vdso_top (m_vmmaps (init_model (segments_reserved Ubsan.M.loaded_segments) brk mbase sp0 (@LIM LM)
+                                           (@mkProcInputC AMB [] [] fs0 stdin0)))).
+    rewrite vdso_top_init_model. reflexivity.
+  Qed.
   Definition fds1 : list (word * FdEntry) := fds1g (FdFile path (Z_to_bv 64 0)).
   Definition model1 : Model := model1g (FdFile path (Z_to_bv 64 0)).
 
@@ -116,7 +136,7 @@ Section Pilot.
 
   (* [comment removed for export] *)
   Definition below_win (M : word -> option byte) : Prop :=
-    forall a : word, (bv_unsigned a < bv_unsigned sp0 - 8388608)%Z -> M a = mem0 a.
+    forall a : word, (bv_unsigned a < bv_unsigned sp0 - 6144512)%Z -> M a = mem0 a.
 
   
   (* [comment removed for export] *)
@@ -178,12 +198,10 @@ Section Pilot.
   (* [comment removed for export] *)
 
   (* [comment removed for export] *)
-  Definition open_err_branch (KA : TSet) : Prop := ltac2:(CDefT.buildp (gd_tbl_P_main_open ()) "Pe,$6.Pvals,(3.(1.&40.))PR,(2:.&5.(1.&40.))PM,P,(1.&40.)(2.(1.&8.))P,(2;.$6.R4.$2<.)P,(7.$5.(2=.(1.&40.)R4.)#27.)P,(7.(1.&40.)(26.R5.#0.)Vsp0,)P,(7.(1.&40.)(26.R6.#26.)(2>.R7.))P,(7.(1.&40.)(26.R7.#1.)(2?.Vsp0,Va0s,Vpath,Venvv,))P,(7.(1.&40.)(26.R8.#2.)(30.Vsp0,Va0s,Vpath,Venvv,))P,(7.(1.&40.)(26.R9.#5.)Vtid,)P,(31.(29.R:.)(32.$33.(34.(35.&5.+:.$36.))(37.#26.))R9.)P,(38.$1>.(29.R;.)R9.$39.)P,Px,(1.&40.)P,(<.(?.&40.Vsp0,)(?.&40.R1.))(7.(2.(1.&8.))A1.R<.R2.A1.Vmem0,R2.)(3:.$1>.(3;.(3<.$3=.R<.(18.&40.+4729<.)R;.(3>.$1>.))$3?.)O1.)")
-(* [comment removed for export] *).
+  Definition open_err_branch (KA : TSet) : Prop := (forall e : Z, (forall vals : (list word), (forall R : (bvmap (5)%N word), (forall M : (word -> (option byte)), ((In e openat_errnos) -> (((length vals) = (39)%nat) -> (((vals_ev vals (0)%nat) = sp0) -> (((vals_ev vals (38)%nat) = (errno_ret e)) -> (((vals_ev vals (1)%nat) = (p0 a0s path envv rd)) -> (((vals_ev vals (2)%nat) = (p1 a0s path envv rd)) -> (((vals_ev vals (5)%nat) = tid) -> ((regs_ok (ENV vals) (sr_upd srA (ridx (10%bv : bv 5)) (EVar (38)%nat)) R) -> ((know_ok RSEGS (ENV vals) M knA) -> ((forall x : word, ((Z.le (bv_unsigned sp0) (bv_unsigned x)) -> ((M x) = (mem0 x)))) -> (realizes RSEGS (mkCfg (mkst R (Z_to_bv (64)%N 0x4729c%Z) M (seg_rom RSEGS)) model0) KA))))))))))))))).
 
   (* [comment removed for export] *)
-  Definition file_seg2_kont_g (fd3 : FdEntry) (KB : TSet) : Prop := ltac2:(CDefT.buildp (gd_tbl_P_main_open ()) "Pvals,(3.(1.&40.))PR,(2:.&5.(1.&40.))PM,P,(1.&40.)(2.(1.&8.))P,(7.$5.(2=.(1.&40.)R3.)#26.)P,(7.(1.&40.)(26.R4.#0.)Vsp0,)P,(7.(1.&40.)(26.R5.#1.)(2?.Vsp0,Va0s,Vpath,Venvv,))P,(7.(1.&40.)(26.R6.#2.)(30.Vsp0,Va0s,Vpath,Venvv,))P,(7.(1.&40.)(26.R7.#5.)Vtid,)P,(31.(29.R8.)$40.R7.)P,(38.$1>.(29.R9.)R7.$39.)P,(28.R8.)P,(41.R9.)(3:.$1>.(3;.(3<.$3=.R;.(18.&40.+4729<.)R:.(3>.$1>.))(42.O2.))O1.)")
-(* [comment removed for export] *).
+  Definition file_seg2_kont_g (fd3 : FdEntry) (KB : TSet) : Prop := (forall vals : (list word), (forall R : (bvmap (5)%N word), (forall M : (word -> (option byte)), (((length vals) = (38)%nat) -> (((vals_ev vals (0)%nat) = sp0) -> (((vals_ev vals (1)%nat) = (p0 a0s path envv rd)) -> (((vals_ev vals (2)%nat) = (p1 a0s path envv rd)) -> (((vals_ev vals (5)%nat) = tid) -> ((regs_ok (ENV vals) srB0 R) -> ((know_ok RSEGS (ENV vals) M knA) -> ((above_sp0 M) -> ((below_win M) -> (realizes RSEGS (mkCfg (mkst R (Z_to_bv (64)%N 0x4729c%Z) M (seg_rom RSEGS)) (model1g fd3)) KB))))))))))))).
   Definition file_seg2_kont : TSet -> Prop := file_seg2_kont_g (FdFile path (Z_to_bv 64 0)).
 
   Local Ltac2 Set LiaOrc.tbl := fun () => "00G0?L11800014584.51L22307226813.39L22973606012.50L22973606012.53L29670166300.47L30224815755.51L34927224505.49L34929503351.47L36107553247.50L36107553247.53L38841990246.51L41663852402.50L41663852402.53L41665739397.46L4419303106.51 L50387686011.46L51594537528.51L54438946794.51L63382998904.46L64160615017.51L67502449517.51L7374777705.47 L7377053607.49 00000D00X01501R02<02P02d03803Z04<04Y05605S06006M07707T07h08M08a09509I09]S4path5Hplen4vals2HLS4path5Hplen4vals2HLS3sp04path5Hplen4vals2HL1x2HxS3sp04path5Hplen4vals2HL1x2HxS3sp03a0s4path4envv5Hplen4SPhi4vals2HL3ShiS4path5Hplen4vals2HLS4path5Hplen4vals2HLS4path5Hplen4vals2HLS3sp04path5Hplen4SPlo4vals2HL1x2HxS3sp04path5Hplen4SPlo4vals2HL1x2HxS3sp04path5Hplen4SPhi4vals2HLS3sp04path5Hplen4SPlo4vals2HLS3sp04path5Hplen4SPlo4vals2HLS3sp04path5Hplen4SPlo4vals2HLS3sp04path5Hplen4SPlo4vals2HLS3sp03a0s4path4envv5Hplen4SPlo4vals2HL3SloS3sp04path5Hplen4vals2HL1x2HxS4path5Hplen4vals2HLS3sp03a0s4path4envv5Hplen4vals2HL3SloS4path5Hplen4vals2HLS4path5Hplen4vals2HLS4path5Hplen4vals2HLS4path5Hplen4vals2HL". (* [comment removed for export] *)
@@ -199,8 +217,8 @@ Section Pilot.
     set (vals := vals0 sp0 a0s path envv tid rd regs0) in *.
     assert (HL : length vals = 38%nat) by (subst vals; apply vals0_length).
     assert (P0 : vals_ev vals 0 = sp0) by reflexivity.
-    assert (P1 : vals_ev vals 1 = p0 sp0 a0s path envv) by reflexivity.
-    assert (P2 : vals_ev vals 2 = p1 sp0 a0s path envv) by reflexivity.
+    assert (P1 : vals_ev vals 1 = p0 a0s path envv rd) by reflexivity.
+    assert (P2 : vals_ev vals 2 = p1 a0s path envv rd) by reflexivity.
     assert (P5t : vals_ev vals 5 = tid) by reflexivity.
     ddestruct (main_str sp0 a0s path envv tid rd regs0 mem0 Hva Hve Hvsp ME 1%nat ltac:(lia)) as (Sr & Slo & Shi & Slen).
     cbn [nth] in Sr, Slo, Shi, Slen.
@@ -208,10 +226,10 @@ Section Pilot.
     (* [comment removed for export] *)
     run_block_keep scr0 38%nat.
     (* [comment removed for export] *)
-    assert (Sr' : rdn RSEGS M (p1 sp0 a0s path envv) (length path + 1) = Some (path ++ [Z_to_bv 8 0])).
+    assert (Sr' : rdn RSEGS M (p1 a0s path envv rd) (length path + 1) = Some (path ++ [Z_to_bv 8 0])).
     { rewrite EQM. unfold p1. rewrite (rdn_mem_denot_above RSEGS (ENV vals) mem0 _ 0%nat 0x7e000);
         [exact Sr | vm_compute; reflexivity | cbn [ev ENV]; rewrite P0; lia | cbn [ev ENV]; rewrite P0; lia | lia
-        | pose proof (u64_range (cat_argv_ptr sp0 [a0s; path] envv 1)); lia]. }
+        | pose proof (u64_range (cat_argv_ptr (ed_top rd) [a0s; path] envv a_execfn 1)); lia]. }
     (* [comment removed for export] *)
     eapply (rz_openat_file RSEGS _ _ _ model0 ECALLW); try apply is_ecall_ECALLW.
     - vm_compute. reflexivity.
@@ -222,7 +240,10 @@ Section Pilot.
     - regv HR (12 : reg). vm_compute. reflexivity.
     - (* [comment removed for export] *) rewrite m0_fds. rewrite alloc_fd_fds0. apply fd_lookup_fds0_3.
     - (* [comment removed for export] *) split; [exact Hplen|]. split; [apply path_nonul|].
-      regv HR (11 : reg). cbn [edenot ev ENV]. rewrite P2. exact Sr'.
+      regv HR (11 : reg). cbn [edenot ev ENV]. rewrite P2. split; [exact Sr'|].
+      (* LPS revision: read_cstr refuses a byte at or above TASK_SIZE; the path ends below the stack top *)
+      pose proof (main_str_top sp0 a0s path envv tid rd regs0 mem0 Hva Hve Hvsp ME 1%nat ltac:(lia)) as HT.
+      cbn [nth] in HT. unfold p1, TASK_SIZE. lia.
     - exact Hpne.
     - exact Hpnd.
     - exact (proj1 path_noslash).
@@ -256,7 +277,7 @@ Section Pilot.
       { intros x Hx. rewrite EQM. apply (mem_denot_above (ENV vals) mem0 _ 0%nat 0x7e000);
           [vm_compute; reflexivity | cbn [ev ENV]; rewrite P0; lia | cbn [ev ENV]; rewrite P0; lia | lia]. }
       assert (HB : below_win M).
-      { intros x Hx. rewrite EQM. apply (mem_denot_below (ENV vals) mem0 _ 0%nat (-8388608));
+      { intros x Hx. rewrite EQM. apply (mem_denot_below (ENV vals) mem0 _ 0%nat (-6144512));
           [vm_compute; reflexivity | lia | cbn [ev ENV]; rewrite P0; lia | cbn [ev ENV]; rewrite P0; lia | cbn [ev ENV]; rewrite P0; lia]. }
       eapply (HKB vals); try eassumption.
   Qed.

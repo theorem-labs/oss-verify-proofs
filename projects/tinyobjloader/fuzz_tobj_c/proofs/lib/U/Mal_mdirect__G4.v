@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the post Jo and the lifted world predicate carry the vDSO fact, kept across the grant; the NULL-hint mmap's place_declined_b premise; TR_munmap's exact cut, maps_subtract equals map_remove; the grant at Linux's address, the request non-refusable and the room kept by RoomK, the stack objects kept clear of that address through the layout's top; MInvR, which pairs malloc's invariant with the vDSO fact, projected to that invariant where the proof reads only it). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
 #[local] Ltac2 tbs__ () := ["@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Mal_mdirect__G1.Mal_mdirect_runs.RP"; "segs"; "E_mm"; "@Corelib.Init.Logic"; "and"; "eq"; "ex"; "not"; "or"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.Safety"; "assn"; "etriple"; "world"; "triple"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Mal_mdirect__G2.Mal_mdirect_E"; "C"; "E"; "J_pre"; "QF"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.ExampleMemcpy"; "segsU"; "NF"; "@stdpp.bitvector.definitions"; "bv_unsigned"; "bv"; "@Corelib.Init.Datatypes"; "list"; "true"; "pair"; "bool"; "prod"; "cons"; "nil"; "nat"; "option"; "None"; "Some"; "andb"; "app"; "false"; "fst"; "snd"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "Model"; "event"; "VmMaps"; "m_vmmaps"; "vm_maps"; "vm_reserved"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymState"; "sv"; "valuation"; "rw"; "sstate"; "SVar"; "smatch"; "sobj"; "SLit"; "eval"; "ob_base"; "ob_hi"; "ob_lo"; "rm"; "ro_addr"; "ss_facts"; "ss_next"; "ss_objs"; "ss_pc"; "@Corelib.Numbers.BinNums"; "Z"; "positive"; "@Stdlib.ZArith.BinInt.Z"; "le"; "lt"; "add"; "leb"; "of_N"; "modulo"; "of_nat"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract"; "Pre_malloc"; "EC_U"; "vm_insensitive"; "L_malloc_ok"; "top_high"; "top_var"; "V_DEPTH"; "ok_sideK"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocIface"; "MA"; "ma_s"; "MInv"; "ma_L"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymCall"; "ok_pframe"; "ok_pframeJ"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymSoundR"; "SPJ"; "liftK"; "ok_frame"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymSummary"; "jpost"; "LQP"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocLayout"; "C_U"; "mc_img_hi"; "mc_img_lo"; "topL"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Mal_mdirect__G4.Mal_mdirect_DX"; "am_servable"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysSpec"; "mmap_nZ"; "mmap_rw_vm"; "@LinuxProcessSemantics.LinuxProcessSem.MemImageType"; "Segment"; "seg_base"; "seg_size"; "@LinuxProcessSemantics.Riscv.Instr"; "instr"; "Ecall"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ContractAM"; "alloc_meta_avail_ex"; "alloc_meta_sumI_U"; "alloc_meta_sumI_ex_U"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ContractDrv"; "JLi_ok"; "J_payload_ex"; "drv_reach"; "malloc_big_ex"; "DRV_OPS"; "drvN"; "vm_room"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocDirectPost"; "direct_case"; "md_s2"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocModel"; "MMAP_THRESHOLD"; "sptr"; "st_init_done"; "astate"; "st_avail_meta_count"; "st_free_meta_head"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Mal_mdirect__G2.Mal_mdirect_C"; "IEC"; "@Corelib.Lists.ListDef"; "map"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymStep"; "instr_at"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.CallocLib"; "inclb"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Glue"; "rd_of"; "wok_of"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Mal_malloc__G1.Mal_malloc_direct_runs"; "MD_NEXT"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Mal_malloc__G1.Mal_malloc_fast_runs"; "reg"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Mal_mdirect__G1.Mal_mdirect_runs";
-"D_win_facts"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Mal_mdirect__G4.Mal_mdirect"; "segs_inside"; "@Stdlib.Lists.List"; "In"; "forallb"].
+"D_win_facts"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Mal_mdirect__G4.Mal_mdirect"; "segs_inside"; "@Stdlib.Lists.List"; "In"; "forallb"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract"; "vdso_ok"].
 #[local] Ltac2 tb__ s := OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.TermBlob.dec2 (tbs__ ()) s.
 Require Stdlib.ZArith.ZArith.
 Require Stdlib.NArith.NArith.
@@ -95,6 +96,7 @@ Require OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Mal_mdirect__G3.
 Require OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.LiaFast.
 Require OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.ContractDrv.
 Require OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.VmRoom.
+Require OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.RoomK.
 Require OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.MallocDirectRun.
 Require OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.DrvReach.
 Require OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.U.Mal_ameta__G6.
@@ -172,8 +174,8 @@ S13S24A1S23OF_;F_;").
 Definition okK (ok : world -> Prop) (K : list event -> Model -> Prop) : Prop := ltac2:(tb__ "0|0|
 S2S54S0Vok;VK;A3S50S0Vok;VK;A3A2").
 
-Definition Jo (rho0 rho1 : valuation) (a : word) : jpred := ltac2:(tb__ "0|9|
-S2aS13S24A1S23S4S25S25S2S4eSbVA;S79S0S35Vrho0;A1M0A2S7aS0G0A2R1A5S2S2S3S3bS42S11Q40M1Va;A2M2Z1000A2Z0M3A3S2S3eG3G2A2S2S3dS3fG2S5cS31Vrho1;S7cS1UbA2A2M4A1A2M5S5aS4fVA;A1A1A2S17S12G1A1M6G6A2M7S7fG7R1S1fG7S28R2A1S27R2A1A3A3S3bS2S3dS11G1S21G6G6R3A3A2M8R1A2S3eR1S3fG8S11G1S22G6G6R3A3A2A2A2A2S5S2S3dG2R2A2S3eR2G5A2A2A1F_;Fx;F_;Fe;A2A2A2S2VKc;R3R2A2S3S25S26R2A1S5dR1G4Va;A3A3A2A2A2Lvm0;A2Lmd;Ltr;L_;").
+Definition Jo (rho0 rho1 : valuation) (a : word) : jpred := ltac2:(tb__ "0|0|
+S2aS13S24A1S23S4S25S25S2S4eSbVA;S79S0S35Vrho0;A1A2S7aS0S35Vrho0;A1A2R1A5S2S2S3S3bS42S11Q40Va;A2Z1000A2Z0A3S2S3eZ0S11Q40Va;A2A2S2S3dS3fS11Q40Va;A2S5cS31Vrho1;S7cS1UbA2A2A1A2S5aS4fVA;A1A1A2S17S12Q40A1S12Q40A1A2S7fS17S12Q40A1S12Q40A1A2R1S1fS17S12Q40A1S12Q40A1A2S28R2A1S27R2A1A3A3S3bS2S3dS11Q40S21S12Q40A1S12Q40A1R3A3A2R1A2S3eR1S3fS11Q40S21S12Q40A1S12Q40A1R3A3A2S11Q40S22S12Q40A1S12Q40A1R3A3A2A2A2A2S5S2S3dS11Q40Va;A2R2A2S3eR2S3fS11Q40Va;A2S5cS31Vrho1;S7cS1UbA2A2A1A2A2A2A1F_;Fx;F_;Fe;A2A2A2S2VKc;R3R2A2S2S3S25S26R2A1S5dR1S31Vrho1;S7cS1UbA2A2Va;A3A3S81R2A1A2A2A2A2Lvm0;A2Lmd;Ltr;L_;").
 
 Theorem malloc_direct_sound : ltac2:(tb__ "0|0|
 S9OF_;S2aS4bS0R2VKc;A3S6dS11Q40S2bR2PcA2A2A1S64SaS0R5S52S0SdVA;VKc;A2S44ScA1R4A4SeVA;VKc;R4A3A4F_;F_;F_;Frho0;Fok;").
@@ -194,6 +196,8 @@ Proof using .
        /\ ms_gpr ms 1 <> Z_to_bv 64 0
        /\ (bv_unsigned (ms_gpr ms 0) + mmap_nZ (ms_gpr ms 1) <= TASK_SIZE)%Z
        /\ map_has (vm_maps (m_vmmaps md)) (ms_gpr ms 0) (mmap_n (ms_gpr ms 1)) = true
+       /\ maps_subtract (vm_maps (m_vmmaps md)) (bv_unsigned (ms_gpr ms 0)) (bv_unsigned (ms_gpr ms 0) + bv_unsigned (mmap_n (ms_gpr ms 1)))
+          = map_remove (vm_maps (m_vmmaps md)) (ms_gpr ms 0)
        /\ (forall o, In o (ss_objs S) -> SymState.ranges_disjoint (obj_range rho o) (bv_unsigned (ms_gpr ms 0), bv_unsigned (ms_gpr ms 0) + mmap_nZ (ms_gpr ms 1)))
        /\ K' tr (munmap_model md (ms_gpr ms 0) (mmap_n (ms_gpr ms 1)))) ->
     triple segs ok (SP segs K S rho) (SP segs K' (S_ret_lit S 0) (set_rm rho (unmap_range (rm rho) (eval rho (reg_sv S 10)) (mmap_n (eval rho (reg_sv S 11))))))).
@@ -221,19 +225,20 @@ Proof using .
     change (reg_sv E_mm 11) with (reg E_mm 11) in G1. change (reg_sv E_mm 12) with (reg E_mm 12) in G2. change (reg_sv E_mm 13) with (reg E_mm 13) in G3.
     change (reg_sv E_mm 14) with (reg E_mm 14) in G4. change (reg_sv E_mm 15) with (reg E_mm 15) in G5. change (reg_sv E_mm 10) with (reg E_mm 10) in G0.
     rewrite M10 in G0. rewrite M12 in G2. rewrite M13 in G3. rewrite M14 in G4. rewrite M15 in G5. cbn [eval] in G0, G2, G3, G4, G5. fold lenw in G1.
+    split; [rewrite G0; exact (place_declined_b_null _ _ _)|].
     split; [rewrite G1; intros E0; apply (f_equal bv_unsigned) in E0; rewrite Hlen in E0; change (bv_unsigned (Z_to_bv 64 0)) with 0 in E0; pose proof Hn as [N1 _]; unfold MallocModel.MMAP_THRESHOLD in N1; lia|].
     split; [apply mmap_modeled_b_intro; [rewrite G2; reflexivity | rewrite G3; reflexivity | rewrite G5; reflexivity]|].
     split; [rewrite G3; apply mmap_noreserve_b_34; reflexivity|].
     split; [split; [exact HKc | exact HMI]|].
     intros a Hpl. pose proof Hpl as (Hal & Hpos & HceilT & Hfree & _). rewrite G1 in HceilT, Hfree |- *.
     destruct (mmap_nw _ a lenw HceilT) as [En Hnw].
-    pose proof HceilT as Hceil. rewrite <- (vm_ok_top _ _ _ (proj1 (proj2 (proj2 (proj2 (proj2 HMI)))))) in Hceil.
+    pose proof HceilT as Hceil. rewrite <- (vm_ok_top _ _ _ (proj1 (proj2 (proj2 (proj2 (proj2 (proj1 HMI))))))) in Hceil.
     assert (FREE : forall e, In e (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) ->
               forall y, bv_unsigned (fst e) <= y < bv_unsigned (fst e) + bv_unsigned (snd e) -> ~ (bv_unsigned a <= y < bv_unsigned a + mmap_nZ lenw)).
     { intros [ea esz] He y Hy Hin. pose proof (region_free_In _ _ _ _ _ Hfree He) as OV. unfold iv_overlap in OV. cbn [fst snd] in Hy.
       rewrite En in OV. apply Bool.andb_false_iff in OV. destruct OV as [OV|OV]; apply Z.ltb_ge in OV; lia. }
     assert (MISS : forall y, mc_img_lo C <= y < mc_img_hi C -> ~ (bv_unsigned a <= y < bv_unsigned a + mmap_nZ lenw)).
-    { intros y Hy. pose proof HMI as X. unfold MInv in X. cbn zeta in X. destruct X as (_ & _ & _ & _ & _ & _ & _ & _ & HIR & _).
+    { intros y Hy. pose proof (proj1 HMI) as X. unfold MInv in X. cbn zeta in X. destruct X as (_ & _ & _ & _ & _ & _ & _ & _ & HIR & _).
       destruct (HIR y Hy) as (e & He & Hey). exact (FREE e ltac:(apply in_app_iff; left; exact He) y Hey). }
     split.
     -
@@ -246,7 +251,7 @@ Proof using .
       unfold obj_range, obj_lo_of, obj_hi_of. rewrite Eb, El, Eh. unfold V_DEPTH in *. cbn [eval]. rewrite WS, soff_lit_small by lia. unfold SymState.ranges_disjoint. cbn [fst snd]. lia.
     - split.
       + intros y Hy. apply ro_addr_outside_image. intros Himg. exact (MISS (bv_unsigned y) Himg Hy).
-      + cbn [liftK]. exists (m_vmmaps md). split; [exact HMI|]. split; [|split; [exact (vm_insensitive_maps Kc HVI _ _ _ HKc) | reflexivity]].
+      + cbn [liftK]. exists (m_vmmaps md). split; [exact (proj1 HMI)|]. split; [|split; [exact (vm_insensitive_maps Kc HVI _ _ _ HKc) | split; [reflexivity | refine (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.vdso_ok_grant md _ (vm_maps (m_vmmaps md)) a (mmap_n lenw) _ _ _ _ _ Hfree (proj2 HMI)); reflexivity]]].
         split; [exact Hal|]. split; [exact Hpos|]. split; [exact Hceil|]. exact FREE. }
 
   apply triple_disj.
@@ -349,6 +354,8 @@ Proof using .
        /\ ms_gpr ms 1 <> Z_to_bv 64 0
        /\ (bv_unsigned (ms_gpr ms 0) + mmap_nZ (ms_gpr ms 1) <= TASK_SIZE)%Z
        /\ map_has (vm_maps (m_vmmaps md)) (ms_gpr ms 0) (mmap_n (ms_gpr ms 1)) = true
+       /\ maps_subtract (vm_maps (m_vmmaps md)) (bv_unsigned (ms_gpr ms 0)) (bv_unsigned (ms_gpr ms 0) + bv_unsigned (mmap_n (ms_gpr ms 1)))
+          = map_remove (vm_maps (m_vmmaps md)) (ms_gpr ms 0)
        /\ (forall o, In o (ss_objs S) -> SymState.ranges_disjoint (obj_range rho o) (bv_unsigned (ms_gpr ms 0), bv_unsigned (ms_gpr ms 0) + mmap_nZ (ms_gpr ms 1)))
        /\ K' tr (munmap_model md (ms_gpr ms 0) (mmap_n (ms_gpr ms 1)))) ->
     etriple segs (SP segs K S rho) (SP segs K' (S_ret_lit S 0) (set_rm rho (unmap_range (rm rho) (eval rho (reg_sv S 10)) (mmap_n (eval rho (reg_sv S 11))))))).
@@ -374,19 +381,20 @@ Proof using .
     change (reg_sv E_mm 11) with (reg E_mm 11) in G1. change (reg_sv E_mm 12) with (reg E_mm 12) in G2. change (reg_sv E_mm 13) with (reg E_mm 13) in G3.
     change (reg_sv E_mm 14) with (reg E_mm 14) in G4. change (reg_sv E_mm 15) with (reg E_mm 15) in G5. change (reg_sv E_mm 10) with (reg E_mm 10) in G0.
     rewrite M10 in G0. rewrite M12 in G2. rewrite M13 in G3. rewrite M14 in G4. rewrite M15 in G5. cbn [eval] in G0, G2, G3, G4, G5. fold lenw in G1.
+    split; [rewrite G0; exact (place_declined_b_null _ _ _)|].
     split; [rewrite G1; intros E0; apply (f_equal bv_unsigned) in E0; rewrite Hlen in E0; change (bv_unsigned (Z_to_bv 64 0)) with 0 in E0; pose proof Hn as [N1 _]; unfold MallocModel.MMAP_THRESHOLD in N1; lia|].
     split; [apply mmap_modeled_b_intro; [rewrite G2; reflexivity | rewrite G3; reflexivity | rewrite G5; reflexivity]|].
     split; [rewrite G3; apply mmap_noreserve_b_34; reflexivity|].
     split; [intros _; split; [exact HKc | exact HMI]|].
     intros a Hpl. pose proof Hpl as (Hal & Hpos & HceilT & Hfree & _). rewrite G1 in HceilT, Hfree |- *.
     destruct (mmap_nw _ a lenw HceilT) as [En Hnw].
-    pose proof HceilT as Hceil. rewrite <- (vm_ok_top _ _ _ (proj1 (proj2 (proj2 (proj2 (proj2 HMI)))))) in Hceil.
+    pose proof HceilT as Hceil. rewrite <- (vm_ok_top _ _ _ (proj1 (proj2 (proj2 (proj2 (proj2 (proj1 HMI))))))) in Hceil.
     assert (FREE : forall e, In e (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) ->
               forall y, bv_unsigned (fst e) <= y < bv_unsigned (fst e) + bv_unsigned (snd e) -> ~ (bv_unsigned a <= y < bv_unsigned a + mmap_nZ lenw)).
     { intros [ea esz] He y Hy Hin. pose proof (region_free_In _ _ _ _ _ Hfree He) as OV. unfold iv_overlap in OV. cbn [fst snd] in Hy.
       rewrite En in OV. apply Bool.andb_false_iff in OV. destruct OV as [OV|OV]; apply Z.ltb_ge in OV; lia. }
     assert (MISS : forall y, mc_img_lo C <= y < mc_img_hi C -> ~ (bv_unsigned a <= y < bv_unsigned a + mmap_nZ lenw)).
-    { intros y Hy. pose proof HMI as X. unfold MInv in X. cbn zeta in X. destruct X as (_ & _ & _ & _ & _ & _ & _ & _ & HIR & _).
+    { intros y Hy. pose proof (proj1 HMI) as X. unfold MInv in X. cbn zeta in X. destruct X as (_ & _ & _ & _ & _ & _ & _ & _ & HIR & _).
       destruct (HIR y Hy) as (e & He & Hey). exact (FREE e ltac:(apply in_app_iff; left; exact He) y Hey). }
     split.
     -
@@ -399,7 +407,7 @@ Proof using .
       unfold obj_range, obj_lo_of, obj_hi_of. rewrite Eb, El, Eh. unfold V_DEPTH in *. cbn [eval]. rewrite WS, soff_lit_small by lia. unfold SymState.ranges_disjoint. cbn [fst snd]. lia.
     - split.
       + intros y Hy. apply ro_addr_outside_image. intros Himg. exact (MISS (bv_unsigned y) Himg Hy).
-      + cbn [liftK]. exists (m_vmmaps md). split; [exact HMI|]. split; [|split; [exact (vm_insensitive_maps Kc HVI _ _ _ HKc) | reflexivity]].
+      + cbn [liftK]. exists (m_vmmaps md). split; [exact (proj1 HMI)|]. split; [|split; [exact (vm_insensitive_maps Kc HVI _ _ _ HKc) | split; [reflexivity | refine (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.vdso_ok_grant md _ (vm_maps (m_vmmaps md)) a (mmap_n lenw) _ _ _ _ _ Hfree (proj2 HMI)); reflexivity]]].
         split; [exact Hal|]. split; [exact Hpos|]. split; [exact Hceil|]. exact FREE. }
 
   apply etriple_disj.
@@ -552,19 +560,23 @@ Proof using AMX DRA DRI.
     change (reg_sv E_mm 11) with (reg E_mm 11) in G1. change (reg_sv E_mm 12) with (reg E_mm 12) in G2. change (reg_sv E_mm 13) with (reg E_mm 13) in G3.
     change (reg_sv E_mm 14) with (reg E_mm 14) in G4. change (reg_sv E_mm 15) with (reg E_mm 15) in G5. change (reg_sv E_mm 10) with (reg E_mm 10) in G0.
     rewrite M10 in G0. rewrite M12 in G2. rewrite M13 in G3. rewrite M14 in G4. rewrite M15 in G5. cbn [eval] in G0, G2, G3, G4, G5. fold lenw in G1.
+    split; [rewrite G0; exact (place_declined_b_null _ _ _)|].
     split; [rewrite G1; intros E0; apply (f_equal bv_unsigned) in E0; rewrite Hlen in E0; change (bv_unsigned (Z_to_bv 64 0)) with 0 in E0; pose proof Hn as [N1 _]; unfold MallocModel.MMAP_THRESHOLD in N1; lia|].
     split; [apply mmap_modeled_b_intro; [rewrite G2; reflexivity | rewrite G3; reflexivity | rewrite G5; reflexivity]|].
     split; [rewrite G3; apply mmap_noreserve_b_34; reflexivity|].
 
-    destruct (vm_room_grant md X lenw Hroom ltac:(clear - Hlen UR; lia) ltac:(clear - Hlen UR N26 NZ1; lia) ltac:(clear - Hlen UR NZ1 Hcost; lia))
-      as (a & Hal & Hpos & _ & Hceil & En & Hfree & _ & Hplace & _ & HroomA & _).
-    exists a. rewrite G0, G1, G3. split; [apply Hplace; apply mmap_noreserve_b_34; reflexivity|].
+    (* LPS 727298f3: Linux's address, not the room's (Fw3/SymHeap.v's [etriple_mmap_rw_okJ]): the
+       request is non-refusable and every admissible address keeps the room (Malloc/RoomK.v). *)
+    split; [rewrite G1; exact (RoomK.vm_room_rw_not_refusable md X lenw (ms_gpr ms 3) (ms_gpr ms 0) Hroom ltac:(clear - Hlen UR; lia) ltac:(clear - Hlen UR NZ1 Hcost; lia) ltac:(rewrite G3; apply mmap_noreserve_b_34; reflexivity))|].
+    intros a Hpl. rewrite G0, G1, G3 in *.
+    pose proof Hpl as (Hal & Hpos & Hceil & Hfree & _). destruct (mmap_nw _ a lenw Hceil) as [En _].
+    pose proof (RoomK.vm_room_grant_rw md X lenw a _ _ Hroom ltac:(clear - Hlen UR; lia) ltac:(clear - Hlen UR NZ1 Hcost; lia) Hpl) as HroomA.
     assert (FREE : forall e, In e (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) ->
               forall y, bv_unsigned (fst e) <= y < bv_unsigned (fst e) + bv_unsigned (snd e) -> ~ (bv_unsigned a <= y < bv_unsigned a + mmap_nZ lenw)).
     { intros [ea esz] He y Hy Hin. pose proof (region_free_In _ _ _ _ _ Hfree He) as OV. unfold iv_overlap in OV. cbn [fst snd] in Hy.
       rewrite En in OV. apply Bool.andb_false_iff in OV. destruct OV as [OV|OV]; apply Z.ltb_ge in OV; lia. }
     assert (MISS : forall y, mc_img_lo C <= y < mc_img_hi C -> ~ (bv_unsigned a <= y < bv_unsigned a + mmap_nZ lenw)).
-    { intros y Hy. pose proof HMI as XM. unfold MInv in XM. cbn zeta in XM. destruct XM as (_ & _ & _ & _ & _ & _ & _ & _ & HIR & _).
+    { intros y Hy. pose proof (proj1 HMI) as XM. unfold MInv in XM. cbn zeta in XM. destruct XM as (_ & _ & _ & _ & _ & _ & _ & _ & HIR & _).
       destruct (HIR y Hy) as (e & He & Hey). exact (FREE e ltac:(apply in_app_iff; left; exact He) y Hey). }
     split.
     -
@@ -572,11 +584,13 @@ Proof using AMX DRA DRI.
       pose proof (smatch_pending_mem segs _ _ _ _ _ Hsp) as (Hall & _ & _). pose proof (smatch_pending_facts segs _ _ _ _ _ Hsp) as Hfacts. cbn [fst snd cfg_ms cfg_model] in Hall, Hfacts.
       assert (HF3 : Forall (SymState.holds rho1) D_win_facts) by (apply (Forall_inclb rho1 _ (ss_facts E_mm)); [exact Mfacts | exact Hfacts]).
       pose proof (window_facts segs rho1 ms malloc_stack o ltac:(unfold malloc_stack; lia) HF3 Eb El (proj1 (Forall_forall _ _) Hall o Ho)) as (W1 & W2 & W3 & W4 & W5 & W6 & WS).
+      pose proof Hceil as HceilL. rewrite <- (vm_ok_top _ _ _ (proj1 (proj2 (proj2 (proj2 (proj2 (proj1 HMI))))))) in HceilL.
+      assert (TOPW1 : topL (ma_L A) <= bv_unsigned (rw rho1 10%positive) + toS 64 (bv_unsigned (rw rho1 15%positive))) by (pose proof Htop0 as T; unfold top_high, V_DEPTH in T; rewrite <- (proj1 Hag1 10%positive), <- (proj1 Hag1 15%positive) by (cbv; reflexivity); exact T).
       unfold obj_range, obj_lo_of, obj_hi_of. rewrite Eb, El, Eh. unfold V_DEPTH in *. cbn [eval]. rewrite WS, soff_lit_small by lia. unfold SymState.ranges_disjoint. cbn [fst snd]. lia.
     - split.
       + intros y Hy. apply ro_addr_outside_image. intros Himg. exact (MISS (bv_unsigned y) Himg Hy).
-      + cbn [liftK]. exists (m_vmmaps md). split; [exact HMI|]. split; [|split; [split; [exact (vm_insensitive_maps Kc HVI _ _ _ HKc) | exact HroomA] | reflexivity]].
-        split; [exact Hal|]. split; [exact Hpos|]. split; [eapply Z.le_trans; [exact Hceil|]; pose proof (vm_ok_top _ _ _ (proj1 (proj2 (proj2 (proj2 (proj2 HMI)))))) as ET; destruct Hroom as (_ & _ & _ & _ & HR5); clear - ET HR5; lia|]. exact FREE. }
+      + cbn [liftK]. exists (m_vmmaps md). split; [exact (proj1 HMI)|]. split; [|split; [split; [exact (vm_insensitive_maps Kc HVI _ _ _ HKc) | exact HroomA] | split; [reflexivity | refine (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.vdso_ok_grant md _ (vm_maps (m_vmmaps md)) a (mmap_n lenw) _ _ _ _ _ Hfree (proj2 HMI)); reflexivity]]].
+        split; [exact Hal|]. split; [exact Hpos|]. split; [eapply Z.le_trans; [exact Hceil|]; pose proof (vm_ok_top _ _ _ (proj1 (proj2 (proj2 (proj2 (proj2 (proj1 HMI))))))) as ET; destruct Hroom as (_ & _ & _ & _ & HR5); clear - ET HR5; lia|]. exact FREE. }
 
   apply etriple_ex. intros a.
   apply etriple_SPJ_ex. intros vm0. apply etriple_SPJ_pure_and. intros HMIv. apply etriple_SPJ_pure_and. intros (Hal & Hpos & Hceil & Hfree).
@@ -695,19 +709,23 @@ Proof using AMX.
     change (reg_sv E_mm 11) with (reg E_mm 11) in G1. change (reg_sv E_mm 12) with (reg E_mm 12) in G2. change (reg_sv E_mm 13) with (reg E_mm 13) in G3.
     change (reg_sv E_mm 14) with (reg E_mm 14) in G4. change (reg_sv E_mm 15) with (reg E_mm 15) in G5. change (reg_sv E_mm 10) with (reg E_mm 10) in G0.
     rewrite M10 in G0. rewrite M12 in G2. rewrite M13 in G3. rewrite M14 in G4. rewrite M15 in G5. cbn [eval] in G0, G2, G3, G4, G5. fold lenw in G1.
+    split; [rewrite G0; exact (place_declined_b_null _ _ _)|].
     split; [rewrite G1; intros E0; apply (f_equal bv_unsigned) in E0; rewrite Hlen in E0; change (bv_unsigned (Z_to_bv 64 0)) with 0 in E0; pose proof Hn as [N1 _]; unfold MallocModel.MMAP_THRESHOLD in N1; lia|].
     split; [apply mmap_modeled_b_intro; [rewrite G2; reflexivity | rewrite G3; reflexivity | rewrite G5; reflexivity]|].
     split; [rewrite G3; apply mmap_noreserve_b_34; reflexivity|].
 
-    destruct (vm_room_grant md X lenw Hroom ltac:(clear - Hlen UR; lia) ltac:(clear - Hlen UR N26 NZ1; lia) ltac:(clear - Hlen UR NZ1 Hcost; lia))
-      as (a & Hal & Hpos & _ & Hceil & En & Hfree & _ & Hplace & _ & HroomA & _).
-    exists a. rewrite G0, G1, G3. split; [apply Hplace; apply mmap_noreserve_b_34; reflexivity|].
+    (* LPS 727298f3: Linux's address, not the room's (Fw3/SymHeap.v's [etriple_mmap_rw_okJ]): the
+       request is non-refusable and every admissible address keeps the room (Malloc/RoomK.v). *)
+    split; [rewrite G1; exact (RoomK.vm_room_rw_not_refusable md X lenw (ms_gpr ms 3) (ms_gpr ms 0) Hroom ltac:(clear - Hlen UR; lia) ltac:(clear - Hlen UR NZ1 Hcost; lia) ltac:(rewrite G3; apply mmap_noreserve_b_34; reflexivity))|].
+    intros a Hpl. rewrite G0, G1, G3 in *.
+    pose proof Hpl as (Hal & Hpos & Hceil & Hfree & _). destruct (mmap_nw _ a lenw Hceil) as [En _].
+    pose proof (RoomK.vm_room_grant_rw md X lenw a _ _ Hroom ltac:(clear - Hlen UR; lia) ltac:(clear - Hlen UR NZ1 Hcost; lia) Hpl) as HroomA.
     assert (FREE : forall e, In e (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) ->
               forall y, bv_unsigned (fst e) <= y < bv_unsigned (fst e) + bv_unsigned (snd e) -> ~ (bv_unsigned a <= y < bv_unsigned a + mmap_nZ lenw)).
     { intros [ea esz] He y Hy Hin. pose proof (region_free_In _ _ _ _ _ Hfree He) as OV. unfold iv_overlap in OV. cbn [fst snd] in Hy.
       rewrite En in OV. apply Bool.andb_false_iff in OV. destruct OV as [OV|OV]; apply Z.ltb_ge in OV; lia. }
     assert (MISS : forall y, mc_img_lo C <= y < mc_img_hi C -> ~ (bv_unsigned a <= y < bv_unsigned a + mmap_nZ lenw)).
-    { intros y Hy. pose proof HMI as XM. unfold MInv in XM. cbn zeta in XM. destruct XM as (_ & _ & _ & _ & _ & _ & _ & _ & HIR & _).
+    { intros y Hy. pose proof (proj1 HMI) as XM. unfold MInv in XM. cbn zeta in XM. destruct XM as (_ & _ & _ & _ & _ & _ & _ & _ & HIR & _).
       destruct (HIR y Hy) as (e & He & Hey). exact (FREE e ltac:(apply in_app_iff; left; exact He) y Hey). }
     split.
     -
@@ -715,11 +733,13 @@ Proof using AMX.
       pose proof (smatch_pending_mem segs _ _ _ _ _ Hsp) as (Hall & _ & _). pose proof (smatch_pending_facts segs _ _ _ _ _ Hsp) as Hfacts. cbn [fst snd cfg_ms cfg_model] in Hall, Hfacts.
       assert (HF3 : Forall (SymState.holds rho1) D_win_facts) by (apply (Forall_inclb rho1 _ (ss_facts E_mm)); [exact Mfacts | exact Hfacts]).
       pose proof (window_facts segs rho1 ms malloc_stack o ltac:(unfold malloc_stack; lia) HF3 Eb El (proj1 (Forall_forall _ _) Hall o Ho)) as (W1 & W2 & W3 & W4 & W5 & W6 & WS).
+      pose proof Hceil as HceilL. rewrite <- (vm_ok_top _ _ _ (proj1 (proj2 (proj2 (proj2 (proj2 (proj1 HMI))))))) in HceilL.
+      assert (TOPW1 : topL (ma_L A) <= bv_unsigned (rw rho1 10%positive) + toS 64 (bv_unsigned (rw rho1 15%positive))) by (pose proof Htop0 as T; unfold top_high, V_DEPTH in T; rewrite <- (proj1 Hag1 10%positive), <- (proj1 Hag1 15%positive) by (cbv; reflexivity); exact T).
       unfold obj_range, obj_lo_of, obj_hi_of. rewrite Eb, El, Eh. unfold V_DEPTH in *. cbn [eval]. rewrite WS, soff_lit_small by lia. unfold SymState.ranges_disjoint. cbn [fst snd]. lia.
     - split.
       + intros y Hy. apply ro_addr_outside_image. intros Himg. exact (MISS (bv_unsigned y) Himg Hy).
-      + cbn [liftK]. exists (m_vmmaps md). split; [exact HMI|]. split; [|split; [split; [exact (vm_insensitive_maps Kc HVI _ _ _ HKc) | exact HroomA] | reflexivity]].
-        split; [exact Hal|]. split; [exact Hpos|]. split; [eapply Z.le_trans; [exact Hceil|]; pose proof (vm_ok_top _ _ _ (proj1 (proj2 (proj2 (proj2 (proj2 HMI)))))) as ET; destruct Hroom as (_ & _ & _ & _ & HR5); clear - ET HR5; lia|]. exact FREE. }
+      + cbn [liftK]. exists (m_vmmaps md). split; [exact (proj1 HMI)|]. split; [|split; [split; [exact (vm_insensitive_maps Kc HVI _ _ _ HKc) | exact HroomA] | split; [reflexivity | refine (OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.vdso_ok_grant md _ (vm_maps (m_vmmaps md)) a (mmap_n lenw) _ _ _ _ _ Hfree (proj2 HMI)); reflexivity]]].
+        split; [exact Hal|]. split; [exact Hpos|]. split; [eapply Z.le_trans; [exact Hceil|]; pose proof (vm_ok_top _ _ _ (proj1 (proj2 (proj2 (proj2 (proj2 (proj1 HMI))))))) as ET; destruct Hroom as (_ & _ & _ & _ & HR5); clear - ET HR5; lia|]. exact FREE. }
 
   apply etriple_ex. intros a.
   apply etriple_SPJ_ex. intros vm0. apply etriple_SPJ_pure_and. intros HMIv. apply etriple_SPJ_pure_and. intros (Hal & Hpos & Hceil & Hfree).

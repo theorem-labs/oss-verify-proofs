@@ -5,13 +5,14 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module names and numbers changed; 1592 of its 1709 lines of code are new or changed and 894 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F12.v, with its module paths, module names and addresses changed; 1175 of its 1288 lines of code are new or changed and 1596 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F17b.v, with its module paths, module names, addresses and numbers changed; 510 of its 556 lines of code are new or changed and 1242 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/R5.v blob ae88d9629939 at the glue base f32c86d5c0b9
+   FACTS, PAU pau-libreac-v190. Source: Seg/R5.v blob ae88d9629939 at the glue base
    (a working branch).
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: R5.v states NO run lemma (seg_R5 :444 steps its run inline with Tac_slot.sl_run, :508-583), so there is
    no R5.<r> of evt type for a constr_eq pin. INSTEAD (a Theorem Labs lane, 04:1xZ): seg_R5_of_F below re-derives R5.v's own
    seg_R5 from r5_evt_F at ExecF.RNG_all (R5.v's proof, with the inline evt replaced by r5_evt_of_F), and
@@ -32,7 +33,7 @@
                                   A + 112 (0x81594), A (0x8159c), A + 104 (0x815b4), A + 96 (0x815bc), A + 64
                                   (0x815c4); the region of the run's own premise ULMem.wr_at rsegs mem A 120
      ExecF.rng RNG (A + 128) 8    the load ld a0,128(s1) (0x815c8), the cell of the premise q64 mem (A + 128) ..
-   Instruction fetch is not an access. R5.v's code is unchanged since release c5e779efe8c (comments edited); it differs from the source blob above: 53 of its code lines changed or removed, 53 added.
+   Instruction fetch is not an access. R5.v's code is unchanged since release (comments edited); it differs from the source blob above: 53 of its code lines changed or removed, 53 added.
    R5.v's run is on the UL engine (lib/A/Tk/UL: UL Exec.evt, UL MState.MS, UL Mem's wa / le8 / wr_at); StepF steps
    lib.Lib's machine state. As Seg/A2F.v and Seg/F10F.v do: the twin states lib.Lib's MS (the same record by delta),
    its post names R5.v's own constants (ULMem.wa / ULMem.le8, Sem.reg_get, mrow), and r5F_evtF_evt carries lib.Lib's
@@ -92,7 +93,7 @@ Proof.
   eapply OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Tk.UL.Exec.msteps_cons; [exact Hs | exact IH].
 Qed.
 
-(* mkR_of regs as the explicit lib.Lib 31-slot register map StepF's simp_regs reads (F10F.v:88). *)
+(* mkR_of regs as the explicit lib.Lib 31-slot register map StepF's simp_regs reads (F10F.v:89). *)
 Lemma r5F_mkR_of_expand : forall regs, Regs6ss.mkR_of regs =
   OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.Frame.mkR
   (OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Reusable.YK11.getr regs 1)
@@ -279,7 +280,7 @@ Module AF := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.FrameAPI.
 Module LF := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.Frame.
 Module LM := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.Mem.
 
-(* ---- The inline run's own form (the UL Exec.evt sl_run takes at R5.v:508-525, with g_in g := inp), from
+(* ---- The inline run's own form (the UL Exec.evt sl_run takes at R5.v:509-526, with g_in g := inp), from
    r5_evt_F at ExecF.RNG_all; each rng premise from A's bound. ---- *)
 Section O.
 Context {fx : YK11.FPState}.
@@ -342,7 +343,7 @@ Context {SH : sink_head} {SK : sink_syms}.
 Variables ra empty : Z.
 Hypothesis FF : frame_facts B APIf LS SH SK ra empty.
 
-(* R5.v's r5_keep_cells (R5.v:432-442), verbatim: R5.v defines it inside its Section R5, so it does not survive
+(* R5.v's r5_keep_cells (R5.v:433-443), verbatim: R5.v defines it inside its Section R5, so it does not survive
    that Section's End and is restated here (a frame cell the six stores miss: the frame lies below A). *)
 Ltac r5_keep_cells Hc :=
   let k := fresh "k" in let Hk := fresh "Hk" in

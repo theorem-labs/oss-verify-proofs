@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (main's context over the process input and the mmap base; the stack floor is 6144512 bytes below sp). *)
 From Stdlib Require Import ZArith List Lia Bool Permutation Strings.String.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run.
@@ -122,12 +123,12 @@ Qed.
 
 Section C.
 Context {RCEIL : RunCeiling}.
-Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw) (arg0 arg1 : list byte) (TID : Z) (S4 S5 S6 S7 S8 S9 S10 S11 : word).
+Variables (sp0 mbase : word) (rnd : EntryDraw) (inp : ProcInput) (arg0 arg1 : list byte) (TID : Z) (S4 S5 S6 S7 S8 S9 S10 S11 : word).
 Hypothesis VSP : valid_sp sp0.
-Hypothesis HCEIL : alloc_ceiling = LO sp0.
-Hypothesis VARGV : valid_argv argv.
-Hypothesis VENVP : valid_envp envp.
-Hypothesis EARGV : argv = [arg0; arg1].
+Hypothesis HCEIL : alloc_ceiling = bv_unsigned sp0 - 8388608.
+Hypothesis VARGV : valid_argv (in_argv inp).
+Hypothesis VENVP : valid_envp (in_envp inp).
+Hypothesis EARGV : in_argv inp = [arg0; arg1].
 Hypothesis HT : 0 < TID < 4194304.
 Hypothesis RHF : rheap_frame_stmt.
 Hypothesis RND : rheap_blocks_nodup_stmt.
@@ -145,11 +146,12 @@ Hypothesis TOW : towrite_stmt.
 Notation usp0 := (bv_unsigned sp0).
 Notation gpv := (Z_to_bv 64 0x10800).
 Notation tpv := (Z_to_bv 64 RATP).
-Notation IMGB := (build_stack_bytes rph sp0 argv envp uid hw rnd).
+Notation argv := (in_argv inp).
+Notation IMGB := (entry_stack_image inp mbase rph (Z_to_bv 64 (Z.of_N Plain.M.init_pc)) sp0 rnd).
 Notation LO' := (LO sp0).
-Notation BASE' := (BASE sp0 argv envp uid hw rnd TID).
-Notation FRAME' mm := (exists pad, MFRAME sp0 argv mm pad S7 S6 S5 S4).
-Notation RDONE' := (RDONE sp0 argv envp uid hw rnd TID S4 S5 S6 S7 S8 S9 S10 S11).
+Notation BASE' := (BASE sp0 mbase rnd inp TID).
+Notation FRAME' mm := (exists pad, MFRAME sp0 inp mm pad S7 S6 S5 S4).
+Notation RDONE' := (RDONE sp0 mbase rnd inp TID S4 S5 S6 S7 S8 S9 S10 S11).
 Ltac hyps := first [exact VSP | exact HCEIL | exact VARGV | exact VENVP | exact EARGV | exact HT | exact RHF | exact RND | exact RBD | exact RBR | exact MALLOC | exact FREE | exact FKP | exact FPR | exact FWX | exact SWF | exact FWR | exact TOW].
 
 Notation GST pc x1 t0 t1 t2 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 t3 t4 t5 t6 F fc mm :=
@@ -232,7 +234,7 @@ rewrite ED.
 unfold implM. iprefix. zstep. apply evt_done.
 lazymatch goal with |- impl _ _ (?tm _) _ ?msx => change (implM rsegs tm s Q msx) end.
 eapply implM_bind.
-{ eapply (FWR) with (lo := usp0 - 8388608) (canary := run_canary) (s := msg);
+{ eapply (FWR) with (lo := usp0 - 6144512) (canary := run_canary) (s := msg);
 [exact TOW| exact SE| rewrite unsigned_lit by lia; apply rodata_bytes; [exact MI| exact RO| lia| lia]
 | exact RNG | rewrite ML; lia| rewrite ML; reflexivity| reflexivity| reflexivity
 | rewrite unsigned_lit by lia; exact ST
@@ -245,9 +247,9 @@ first [ sf_destruct 24%nat PO as u0 u1 u2 b0 b1 b2 b3 b4 b5 b6 b7 u3 u4 u5 u6 m1
 ua. rewrite !unsigned_lit in MUc by lia. rewrite !unsigned_lit in ST1 by lia.
 replace (ret_pc (Z_to_bv 64 0x1bc64)) with (Z_to_bv 64 0x1bc64) by (symmetry; rpc).
 pose proof (agree_on_of_munch _ _ _ MUc WMc) as AG.
-assert (OUT : forall a, (usp0 - 128 <= a /\ ~ (0x35c00 <= a < 0x35c00 + 232)) -> (fun a0 : Z => outside [(usp0 - 8388608, usp0 + -128); (0x35c00, 0x35c00 + 232)] a0) a).
+assert (OUT : forall a, (usp0 - 128 <= a /\ ~ (0x35c00 <= a < 0x35c00 + 232)) -> (fun a0 : Z => outside [(usp0 - 6144512, usp0 + -128); (0x35c00, 0x35c00 + 232)] a0) a).
 { intros a Ha. cbn. lia. }
-assert (OUT2 : forall a, (0x10000 <= a < 0x67000 /\ ~ (0x35c00 <= a < 0x35c00 + 232)) -> (fun a0 : Z => outside [(usp0 - 8388608, usp0 + -128); (0x35c00, 0x35c00 + 232)] a0) a).
+assert (OUT2 : forall a, (0x10000 <= a < 0x67000 /\ ~ (0x35c00 <= a < 0x35c00 + 232)) -> (fun a0 : Z => outside [(usp0 - 6144512, usp0 + -128); (0x35c00, 0x35c00 + 232)] a0) a).
 { intros a Ha. cbn. lia. }
 apply (rw_cells_agree rsegs _ _ _ _ _ AG) in FR; [| intros a Ha; apply OUT; cbn in Ha; lia].
 apply (rw_cells_agree rsegs _ _ _ _ _ AG) in ERR; [| intros a Ha; apply OUT2; cbn in Ha; lia].
@@ -266,7 +268,7 @@ unfold implM. iprefix. zstep. zstep. apply evt_done.
 lazymatch goal with |- impl _ _ (?tm _) _ ?msx => change (implM rsegs tm s Q msx) end.
 eapply implM_bind.
 { unfold rfree_stmt in FREE.
-eapply FREE with (lo := usp0 - 8388608) (B := usp0) (p := bufp) (A := A) (n := cap); try reflexivity; unfold RATP;
+eapply FREE with (lo := usp0 - 6144512) (B := usp0) (p := bufp) (A := A) (n := cap); try reflexivity; unfold RATP;
 rewrite ?(unsigned_lit 286528) by lia; rewrite ?(unsigned_lit (usp0 + -128)) by lia;
 first [ exact P1 | left; reflexivity | exact AUX1 | exact ST1 | exact MI1 | exact ERR | unfold RFREE_STACK; lia | lia ]. }
 cbv beta. intros [] s2 ms2 PO.
@@ -275,9 +277,9 @@ rewrite ?(unsigned_lit (usp0 + -128)) in ST3 by lia. rewrite ?(unsigned_lit (usp
 replace (ret_pc (Z_to_bv 64 0x1bc6c)) with (Z_to_bv 64 0x1bc6c) by (symmetry; rpc).
 cbn [lb_remove filter bptr_eqb fst snd] in HEAP3, HPR3.
 apply implM_ret. apply (evt_mono rsegs (rat_exit 2 s2)); [| intros msq Hq; exact (HQ _ _ Hq)].
-eapply (main_return sp0 argv TID VSP HCEIL HT 2 s2).
+eapply (main_return sp0 inp TID VSP HCEIL HT 2 s2).
 - unfold MFRAME. eapply rheap_pres_rw_cells; [exact HPR3| exact FR| left; cbn; lia].
-- unfold LO. first [exact ST3| replace (usp0 - 8388608) with (usp0 + -8388608) by lia; exact ST3].
+- unfold LO. first [exact ST3| replace (usp0 - 6144512) with (usp0 + -6144512) by lia; exact ST3].
 - eapply RSTAT_heap_pres; [exact HPR3| exact RS1].
 - rewrite bptr_eqb_refl in HEAP3 || idtac. exact HEAP3.
 - rewrite SOE3, SO. eapply stdout_file_heap_pres; [exact HPR3| exact SOF1].

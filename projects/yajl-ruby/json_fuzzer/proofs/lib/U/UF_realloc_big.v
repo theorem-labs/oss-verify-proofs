@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (rbig_proof carries rauxv_ok's new shape (the auxv address, a pair list and the AT_RANDOM address) across the reallocation). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -616,8 +617,8 @@ Proof.
       apply evt_done. unfold rreallocT_post. rewrite RESF. cbn [fst snd]. do 15 eexists. exists mF, errv.
       split; [reflexivity|]. split; [exact MRF|]. split; [exact MI2|]. split; [exact ST2|].
       split. { eapply rw_cells_transport; [exact ERRf| exact MUF| exact WMF|]. rewrite ETP. cbn. clear -GB3 NI OFF0 NDR N P' E'. lia. }
-      split. { destruct AUX1 as (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & AC & AB1 & AB2 & ABB & ABA & AAV & ABR & ARN & REST).
-               exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. split; [| split; [| split; [| repeat (split; [assumption|]); exact REST]]].
+      split. { destruct AUX1 as (av & vs & rnd & AC & AB1 & AB2 & (ABB & ABA & AAV & ABR & ARN & RR) & REST).
+               exists av, vs, rnd. split; [| split; [| split; [| split; [repeat (split; [assumption|]); exact RR | exact REST]]]].
                - eapply rw_cells_transport; [| exact MUF| exact WMF| cbn; unfold RAUXV_CELL; clear -GB3 NI OFF0 NDR N P' E'; lia].
                  eapply rrw_cells_agree; [exact AC|]. intros y Hy. cbn in Hy. apply AGf; unfold RAUXV_CELL, RERRNO in *; clear -Hy OI NI CLO SLO R4096 GML; lia.
                - eapply bytes_at_transport; [| exact MUF| cbn; unfold alloc_ceiling in *; clear -GB2 NBC ABB ABA SB P' E'; lia].

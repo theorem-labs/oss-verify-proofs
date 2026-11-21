@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFjt.v (donor image sha256 7093581aab04), with its module paths changed and its addresses moved to libreac/fuzz_scene's ASan build. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_scene/lib/A/AFjt.v (donor image sha256 43654a025fd0), with its module paths changed and its addresses moved to reac-pw/fuzz_role's ASan build. *)
 (* Modified by Theorem Labs, 2026-10: derived from lib/A/AFjt.v of this library by derive_y.py: module names A.Axyz -> AU.Yxyz, addresses moved from reac-pw/fuzz_role's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/AFjt.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved tail past the image's segments (the vvar/vDSO pair) and the maps' freedom from it). *)
 From OSSVerify.Proofs.reac_pw.fuzz_role.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -707,7 +708,7 @@ idx = res ->
 at_N Wy md1 WIN (PSR Wy SH2 R) S_V Wy c1 -> AI tfibsegs (w_H Wy) (w_A Wy) (cfg_model c1) ->
 (forall m m' : word -> option byte, (forall x : word, ~ QR (bv_unsigned x) -> m' x = m x) -> R m -> R m') ->
 amwf (cfg_model c1) ->
-vm_reserved (m_vmmaps (cfg_model c1)) = segments_reserved tfibsegs ->
+(exists rx, vm_reserved (m_vmmaps (cfg_model c1)) = segments_reserved tfibsegs ++ rx /\ region_free rx (w64 Qb) (w64 kPtrArrayResv) = true) ->
 (forall sg, In sg tfibsegs -> 4096 <= Z.of_N (seg_base sg) /\ Z.of_N (seg_base sg) + Z.of_N (seg_size sg) <= kImgEnd) ->
 In (wiv (Qb, kPtrArrayResv)) (vm_maps (m_vmmaps (cfg_model c1))) ->
 eager_used (cfg_model c1) + A_bytes (w_A Wy) + 2 ^ 19 <= vm_limit (m_vmmaps (cfg_model c1)) ->
@@ -759,9 +760,16 @@ assert (CEILT : bv_unsigned (w64 QSv) + page_round_up_Z 131072 <= alloc_top (m_v
 assert (PLACE : region_free (vm_reserved (m_vmmaps mdN)) (w64 QSv) (Z_to_bv 64 (page_round_up_Z 131072)) = true /\
 map_contains (vm_maps (m_vmmaps mdN)) (w64 QSv) (Z_to_bv 64 (page_round_up_Z 131072)) = true).
 { rewrite pru17. split.
-- rewrite RSV. pose proof high_facts as (_ & _ & _ & _ & _ & _ & _ & _ & F9z & _).
+- (* 727298f3: the reservations past the image's are clear of the pointer-array mapping
+     ([YG0n.res_tail_ok]), and QSv's range lies inside it. *)
+destruct RSV as (rx & Hrx & RQx).
+rewrite Hrx, YK13.region_free_app. apply andb_true_iff. split.
++ pose proof high_facts as (_ & _ & _ & _ & _ & _ & _ & _ & F9z & _).
 apply (tfib_region_free_reserved QSv 131072); [clear; zlia | clear - F9 F10 Q5 E1; ceil; unfold ASAN_CEIL, kPtrArrayResv in *; try unfold Qb in *; zlia |].
 clear - F9z F9 Q5 E1. unfold zone3, zone3cases, TFIB_IMG_LO, TFIB_IMG_END, kLowShadowBeg, kHighMemBeg, kPtrArrayResv in *. try unfold Qb in *. zlia.
++ apply (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.region_free_shrink rx (w64 Qb) (w64 kPtrArrayResv)); [exact RQx | |];
+unfold w64; rewrite !unsigned_lit_small by (clear - F9 F10 Q5 E1; ceil; unfold zone3, TFIB_IMG_LO, kLowShadowBeg, kHighMemBeg, ASAN_CEIL, kPtrArrayResv in *; try unfold Qb in *; zlia);
+clear - Q5 E1 Heq F9; unfold kPtrArrayResv in *; try unfold Qb in *; zlia.
 - apply (YA09.map_contains_intro _ (w64 QSv) (w64 131072) (w64 Qb) (w64 kPtrArrayResv) INQ);
 unfold w64; rewrite !unsigned_lit_small by (clear - F9 F10 Q5 E1; ceil; unfold zone3, TFIB_IMG_LO, kLowShadowBeg, kHighMemBeg, ASAN_CEIL, kPtrArrayResv in *; try unfold Qb in *; zlia);
 clear - Q5 E1 Heq F9; unfold kPtrArrayResv in *; try unfold Qb in *; zlia. }

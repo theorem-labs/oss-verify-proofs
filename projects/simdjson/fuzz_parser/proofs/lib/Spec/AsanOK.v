@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: FR_with_vmmaps_strip also asks the mmap base unchanged, which vm_only_with_vmmaps now needs. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
@@ -66,11 +67,11 @@ Proof. intros m1 m2 m3 (A1&A2&A3&A4) (B1&B2&B3&B4). unfold FR. split; [intros H;
 
 (* [comment removed for export] *)
 Lemma FR_with_vmmaps_strip : forall mo mo' h, strip mo' = with_vmmaps h (strip mo) ->
-  vm_init_sp h = vm_init_sp (m_vmmaps mo) ->
+  vm_init_sp h = vm_init_sp (m_vmmaps mo) -> vm_mmap_base h = vm_mmap_base (m_vmmaps mo) ->
   m_fds mo' = m_fds mo -> m_fs mo' = m_fs mo -> m_halted mo' = m_halted mo -> FR mo mo'.
 Proof.
-  intros mo mo' h Hs Hsp Hf Hfs Hh. unfold FR. split; [| split; [exact Hf| split; [exact Hfs| exact Hh]]].
-  intros Hmi. rewrite Hs. eapply minv_vm_only; [apply vm_only_with_vmmaps; exact Hsp| exact Hmi].
+  intros mo mo' h Hs Hsp Hmb Hf Hfs Hh. unfold FR. split; [| split; [exact Hf| split; [exact Hfs| exact Hh]]].
+  intros Hmi. rewrite Hs. eapply minv_vm_only; [apply vm_only_with_vmmaps; [exact Hsp| exact Hmb]| exact Hmi].
 Qed.
 
 Lemma apost_FR : forall atop e mo z mo', apost atop e mo z mo' -> FR mo mo'.
@@ -80,6 +81,7 @@ Proof.
     + destruct H as (_ & _ & _ & _ & ->). unfold grant_model. eapply FR_with_vmmaps_strip; try reflexivity.
     + destruct H as (_ & ->). unfold fixed_model. eapply (FR_with_vmmaps_strip _ _ (mmap_fixed_rw_next (m_vmmaps mo) (Z_to_bv 64 addr) (Z_to_bv 64 (mmap_len len)))).
       * rewrite strip_with_mmap_replacement. apply strip_with_vmmaps.
+      * reflexivity.
       * reflexivity.
       * unfold with_mmap_replacement, with_mmap_backing. destruct (mmap_noreserve_b _); reflexivity.
       * unfold with_mmap_replacement, with_mmap_backing. destruct (mmap_noreserve_b _); reflexivity.

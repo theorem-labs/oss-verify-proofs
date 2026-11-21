@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_box_model_block (0x85b44) on fuzz_ctrl's ASan build, image A: the GLUE PROOF of the cgif caller-journal contract
    whose statement is lib/A/Prog/C_reac_box_model_block.v (pb_reac_box_model_block_stmt, treac_box_model_block_spec).
    Callers Require only the statement file; this file Requires it qualified.  rule 24: no function is proved here (glue
@@ -40,7 +41,7 @@ Open Scope Z_scope.
 (* =========================================================================================================
    THE GLUE PROOF of pb_reac_box_model_block (a Theorem Labs lane).  rule 24: no function is proved here;
    this is the cgif-form glue of an already-proved run.  The run is a Theorem Labs lane's proved v1.9 run of
-   reac_box_model_block (a working branch d69f7c708f6), re-run over lib/Lib/StepF as the footprint
+   reac_box_model_block (a working branch), re-run over lib/Lib/StepF as the footprint
    (_F) files of this family; each silent stretch is lifted into the cgif world through the kit bridge
    (Reusable/YA0nR.v SRr_fevt_hid, footprint RNG_W (w_H W) of A/ProgBridge.v or a sub-footprint of it) on the
    normalized memory (A/MemNormF.v evtF_normalize_ro).  The function run holds two allocator events, so it is cut:
@@ -809,7 +810,7 @@ Qed.
 
 (* The callee contracts of S2 (main_mid_F's Section MainF), in their proved route (C) _F_on forms: a Theorem Labs lane's
    asan_memset_holds_F_on / asan_memcpy_holds_F_on and a Theorem Labs lane's build_dt1_single_F_holds_on_closed (all carried by
-   path from a working branch d6c918af46f). *)
+   path from a working branch). *)
 Let HMSF := A.Prog.asan_memsetF_on.asan_memset_holds_F_on A.Prog.memset.memset_holds.
 Let HMCF := A.Prog.asan_memcpyF_on.asan_memcpy_holds_F_on.
 Let HBDF := A.Prog.build_dt1_singleF.build_dt1_single_F_holds_on_closed.
@@ -1269,9 +1270,9 @@ Proof.
 Qed.
 
 
-(* The thread cells at an AR state: ProgWorld_Fs.ctl_fp_of_AR's construction (a Theorem Labs lane, 7f07ac65e7b, lines 389-438),
+(* The thread cells at an AR state: ProgWorld_Fs.ctl_fp_of_AR's construction (a Theorem Labs lane, lines 389-438),
    one row of the bundle's const table per cell (A/AF0m.v rows :24-27, :89-90, :100-102, :111, :116-117, :134, :136,
-   :173, :185; each line is the same at the record e56483f863b). *)
+   :173, :185; each line is the same at the record). *)
 Ltac bmb_mem := repeat (first [apply in_eq | apply in_cons]).
 Ltac bmb_sym := apply A.ProgWorld_Fs.pw_in_sym; unfold A.AF0m.Tfib_const_sym; bmb_mem.
 Ltac bmb_abs := apply A.ProgWorld_Fs.pw_in_abs; unfold A.AF0m.Tfib_const_abs; bmb_mem.
@@ -1389,7 +1390,7 @@ Qed.
 
 (* The class-0 frame facts S2 (main_mid_F) takes at the return memory of __asan_stack_malloc_0, from AR at the new
    state and two pieces of the allocator's post (zero_shadow, the flag back-pointer).  The proof follows
-   A/ProgWorldAstack.v ctl_fs_of_astack (a Theorem Labs lane, d447ec8f286) lines 229-311 for cid = 0, L = 64, without its
+   A/ProgWorldAstack.v ctl_fs_of_astack (a Theorem Labs lane) lines 229-311 for cid = 0, L = 64, without its
    ecall_pre / frame-condition premises, which only its last conjunct (the caller's stack) needs. *)
 Lemma bmb_frame_facts : forall ly S' (W : YA0n.world AB1v.tfibsegs) mem' md' pos l,
   AR AB1v.tfibsegs B ly S' W mem' md' -> frames S' = (0, pos) :: l ->

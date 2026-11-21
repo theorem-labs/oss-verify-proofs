@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -174,7 +175,7 @@ Lemma annshrink_cps :
   rt_live RT Σ = l1 ++ ann_block b n (16 * k) ++ L0 -> Forall (fun e => fst e <> b) l1 ->
   0 <= v' <= n -> 0 <= k -> 16 * k <= n -> v' mod 16 = 0 -> n mod 16 = 0 -> 1 <= n <= 0x20001000 ->
   ART RT Σ m -> mem_inv asegs m ->
-  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + 16 + RT_STACK <= bv_unsigned sp ->
+  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + 16 + RT_STACK <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 -> frm0 fc ->
   cps_f (ASTA RT Σ PMc (eq (entry_st ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11
                                          t3 t4 t5 t6 F fc VB_ANNSHRINK m)))
@@ -299,7 +300,7 @@ Proof using AF RTF ANN.
   { apply (rw_cells_agree asegs m1 m2 _ _ VC1'); [| exact WM2]. intros a Ha. unfold vcells in Ha. cbn [cells_size csize Nat.add] in Ha.
     apply PR2. right. exists f, kf. split; [exact INF| lia]. }
   pose proof (fobj_pres RT AF Σ Σ1 (rt_live RT Σ) (usp + -32) m1 m2 V 24 ART1 FOBJ1 PRES2 FRS1) as FOBJ2.
-  assert (LOW1 : rt_sp0 RT Σ1 - STACK_WIN <= lo) by (rewrite SP1; exact LOW).
+  assert (LOW1 : rt_sp0 RT Σ1 - STACK_SPAN <= lo) by (rewrite SP1; exact LOW).
   assert (FPC1 : fp_client RT Σ1 lo [(usp - 32, usp)]) by (constructor; [left; cbn [fst snd]; ul| constructor]).
   assert (SHX2 : x_shz [(usp - 32, usp)] m2 C 8).
   { intros m' MU WM. apply (shz_stackv RT AF Σ1 m' C 8 (art_fp_client RT AF Σ1 m2 m' lo _ ART2 LOW1 FPC1 MU WM)); rewrite ?SP1; ul. }
@@ -336,7 +337,7 @@ Proof using AF RTF ANN.
   { apply (rw_cells_agree asegs m2 m3 _ _ VC2); [| exact WM3]. intros a Ha. unfold vcells in Ha. cbn [cells_size csize Nat.add] in Ha.
     apply PR3. right. exists f, kf. split; [exact INF| lia]. }
   pose proof (fobj_pres RT AF Σ1 Σ2 (rt_live RT Σ1) (usp + -32) m2 m3 V 24 ART2 FOBJ2 PRES3 ltac:(rewrite FRS2; reflexivity)) as FOBJ3.
-  assert (LOW2 : rt_sp0 RT Σ2 - STACK_WIN <= lo) by (rewrite SP2; exact LOW1).
+  assert (LOW2 : rt_sp0 RT Σ2 - STACK_SPAN <= lo) by (rewrite SP2; exact LOW1).
   assert (FPC2 : fp_client RT Σ2 lo [(usp - 32, usp)]) by (constructor; [left; cbn [fst snd]; ul| constructor]).
   assert (SHX3 : x_shz [(usp - 32, usp)] m3 C 8).
   { intros m' MU WM. apply (shz_stackv RT AF Σ2 m' C 8 (art_fp_client RT AF Σ2 m3 m' lo _ ART3 LOW2 FPC2 MU WM)); rewrite ?SP2, ?SP1; ul. }

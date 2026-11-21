@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Prog/pod_nearest.v at ca77675ebeb; the walk ported to image A's pod_nearest 0x82ccc (fuzz_role.asan): frame 0x40 with s4, the .got / shadow-cell loads and the instrumented check before the store of r. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Prog/pod_nearest.v; the walk ported to image A's pod_nearest 0x82ccc (fuzz_role.asan): frame 0x40 with s4, the .got / shadow-cell loads and the instrumented check before the store of r. *)
 (** pod_nearest of fuzz_role's ASan image A (fuzz_role.asan, 0x82ccc, 312 bytes, 78 instructions): proof of
     lib/A/RPgNearC.v's [pod_nearest_A_contract] from the binary128 value facts [near_sf_facts].
 

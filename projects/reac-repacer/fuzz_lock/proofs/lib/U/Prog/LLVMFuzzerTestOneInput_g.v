@@ -1,5 +1,5 @@
 (* From the SR contract of fuzz_lock.ubsan's LLVMFuzzerTestOneInput to U/Prog/FrameRet.v's lib_contract_gr for the
-   return lock_ret: libreac/fuzz_decode's released lib/U/Prog/LLVMFuzzerTestOneInput_g.v (25e3d17bdb50) with
+   return lock_ret: libreac/fuzz_decode's released lib/U/Prog/LLVMFuzzerTestOneInput_g.v with
    lib_post_r / lib_post_gr. Written by Theorem Labs. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

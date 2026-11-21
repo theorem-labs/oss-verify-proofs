@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (one more name in the destructuring of the heap invariant HKv, for its new last conjunct AMark.heap_mark; the call of room_gen discharges its new premise S <= AMark.GRANT_MAX). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State.
@@ -133,13 +134,14 @@ Proof. intros k. exact (@eq_refl bool (let S := 4096 * k in SEC_MIN_COST * (STAT
 (* [comment removed for export] *).
 Proof.
   intros AL h mo S A K VR HV HS SAL EBUD.
-  dpose K as (Hh & ND & GD & LZ & LIM & EB & BUD0 & WF & TBL & (CE1 & CE2 & CE3 & CE4) & RS & RC & VW & AT).
+  dpose K as (Hh & ND & GD & LZ & LIM & EB & BUD0 & WF & TBL & (CE1 & CE2 & CE3 & CE4) & RS & RC & VW & AT & MK).
   pose proof A as B. pose proof A as ([WL _] & _). unfold wf_L in WL.
   assert (E : l_ctxlen (h_L h) = 65536) by (decompose [and] WL; assumption).
   pose proof (Z.div_mod S 4096 ltac:(lia)) as DS. rewrite SAL, Z.add_0_r in DS.
   set (JZ := WINDOW / S).
   assert (J0 : 0 <= JZ) by (subst JZ; apply Z.div_pos; unfold WINDOW; lia).
-  apply (room_gen AL (vst_of h) mo S JZ 0x22 K); [lia| exact SAL| exact J0| | |].
+  (* slot 6 is room_gen's new premise S <= AMark.GRANT_MAX (2^29); HS bounds S by 2^28 + 16384 *)
+  apply (room_gen AL (vst_of h) mo S JZ 0x22 K); [lia| exact SAL| exact J0| | | unfold AMark.GRANT_MAX; lia|].
   - subst JZ. pose proof (Z.mul_div_le WINDOW S ltac:(lia)) as MD. pose proof WINDOW_ok as WE. clear - MD WE. lia.
   - eapply Z.le_lt_trans; [apply (cb_of_ok S h); [lia| exact CE2]|].
     pose proof (vst_cb_gen h S (2^32) B HV ltac:(lia)) as X. rewrite E in X.

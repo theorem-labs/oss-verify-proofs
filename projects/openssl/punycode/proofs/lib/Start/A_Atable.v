@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the image table states the launch-extra reservation bounds n_resx and p_resx, the vDSO/vvar pair). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -14,7 +15,7 @@ Open Scope Z_scope.
 
 (* [comment removed for export] *)
 Definition A_T : atable :=
-  {| img_lo := 0x10000; img_hi := 0xbca000; n_res := 4; shadow_off := 0x7fff8000;
+  {| img_lo := 0x10000; img_hi := 0xbca000; n_res := 4; n_resx := 2; p_resx := 20; shadow_off := 0x7fff8000;
      a_entry := 0x199a74; rw_lo := 0x532000; rw_len := 0x698000; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 11;
      x_imemset := 0x1d4ee8; x_imemcpy := 0x1d4e6c; x_memset := 0x52a8ec; x_memcpy := 0x52a4b8; x_memiszero := 0x1d5418;
      x_istrncpy := 0x1d5314; x_sealed := 0x13fe3; x_popfree := 0x1a023c;

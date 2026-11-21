@@ -4,10 +4,11 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 3817 of its 3853 lines of code are new or changed and 212 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module names changed; 85 of its 151 lines of code are new or changed and 3787 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/reac_box_catalogue_match_lib.v, with its module paths and module names changed; 717 of its 758 lines of code are new or changed and 110 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment F31 of fuzz_ctrl LLVMFuzzerTestOneInput (asan, image A): the range 0x82798-0x827d4 (the classify branch,
    three not-taken instrumented checks and the bcmp wrapper call at 0x827d4).  rule 24: no function proved.
    v1.9 STATUS (2026-10-28): UNVERIFIED.  No build without probes has checked this file on v1.9.0.  It closed only
-   in an ITERATION-ONLY build on the v1.9 bytes (FACTS 0bfe9aa0d452) with probes in Seg/Tac_slot.v and
+   in an ITERATION-ONLY build on the v1.9 bytes (FACTS) with probes in Seg/Tac_slot.v and
    Seg/Tac_fsfree.v.  It waits for Seg/Tac_slot.v / Tac_fsfree.v re-fit to the regenerated Contract.v and FrameAPI.v.
 
    Entry Inv_A82798_at (SlotInv.v), exits Inv_A827d8_at (the bcmp wrapper returned) and Inv_A82800_at (the target of
@@ -53,7 +54,7 @@ Module RIM := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Prog.RcIdentModel.
 Module RF := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Prog.RcFrag.
 
 (* The bcmp wrapper's and memcmp's constants, the v1.9.0 values of Prog/bcmp_wrap_c.v and Prog/memcmp_c.v
-   (a Theorem Labs lane 3eade53eef2). *)
+   (a Theorem Labs lane). *)
 Local Definition BCMP_WRAP_K := 4560.
 Local Definition BCMP := 0x97b0c.
 Local Definition REAL_BCMP := 0xa17f0.

@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (F_node and F_store written out in plain text with the new placement premise ASys.placed_at, passed on to HK_node and HK_store; their old encoded statements kept as ZZ_F_node_old and ZZ_F_store_old, with lemmas proving them equal to the plain statements without that premise). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State.
@@ -403,29 +404,84 @@ Section Inst.
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
+  (* LPS #38: [HK_node] and [HK_store] now take the checker's placement test
+     [ASys.placed_at], and nothing in this section implies it, so [F_node] and
+     [F_store] take it too, last, as [AW_FreeK.ff_node]/[ff_store] do.  Each old
+     blob is kept verbatim and certified equal to the plain statement without
+     that premise. *)
+  Definition ZZ_F_node_old : Prop := ltac2:(CDefT.buildp (gd_tbl_AInstFree ()) "Ph,$15.Pnb,(0.$16.)Pbl,(0.$16.)Pmo,$1;.Pa,(2.&40.)P,(23.VhAR,R5.)P,(<.(5.(0.$16.)R5.(5?.(60.R6.)))(5.(0.$16.)R4.(61.(60.R6.))))P,(1<.(62.R7.R6.R5.)R4.)P,(5.$16.(2:.(4.&40.R4.)+1000.)=)P,(3.=(4.&40.R5.))P,(=.(10.(4.&40.R6.)(>.+2.+14.))(20.VhAR,))P,(5.$6.(9.(:.(1.(2.&40.)(2.&40.))(1=.(1>.R8.))(1?.(1>.R8.)))R7.(3=.&40.(>.+2.+14.)))$8.)(<.(1<.(62.R<.(:.$16.R;.(59.$16.(4.&40.R8.)(5:.$16.)))R:.)(63.+22.R8.(>.+2.+14.)R9.))(17.(1:.(62.R<.(:.$16.R;.(59.$16.(4.&40.R8.)(5:.$16.)))R:.))(4.&40.R8.)(>.+2.+14.)))").
+
+  Lemma ZZ_F_node_faithful : ZZ_F_node_old =
+    (forall (h : ahst) (nb bl : list Z) (mo : Model) (a : word),
+      WFK h ->
+      nb = d_nb (h_dep h) /\ bl = d_bl (h_dep h) ->
+      fK (hdep h nb bl) mo ->
+      bv_unsigned a mod 4096 = 0 ->
+      0 < bv_unsigned a ->
+      bv_unsigned a + 2 ^ 20 <= ACEIL ->
+      region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 20)) = true ->
+      fK (hdep h (nb ++ [bv_unsigned a]) bl) (anon_grant 0x22 a (2 ^ 20) mo)
+      /\ crange (fCS (hdep h (nb ++ [bv_unsigned a]) bl)) (bv_unsigned a) (2 ^ 20)).
+  Proof. exact eq_refl. Qed.
+
   Local Ltac2 Set LiaOrc.tbl := fun () => "0040?L33099671509.2 L38106990475.3 L48103380298.2 L50308331596.1800000700B00H00RS1a3BNDS3hAR1a3ACES1a2A0S3hAR2AL1a". (* [comment removed for export] *)
-  #[using="ASB IMLE IMH GOT64 GSB64"] Theorem F_node : ltac2:(CDefT.buildp (gd_tbl_AInstFree ()) "Ph,$15.Pnb,(0.$16.)Pbl,(0.$16.)Pmo,$1;.Pa,(2.&40.)P,(23.VhAR,R5.)P,(<.(5.(0.$16.)R5.(5?.(60.R6.)))(5.(0.$16.)R4.(61.(60.R6.))))P,(1<.(62.R7.R6.R5.)R4.)P,(5.$16.(2:.(4.&40.R4.)+1000.)=)P,(3.=(4.&40.R5.))P,(=.(10.(4.&40.R6.)(>.+2.+14.))(20.VhAR,))P,(5.$6.(9.(:.(1.(2.&40.)(2.&40.))(1=.(1>.R8.))(1?.(1>.R8.)))R7.(3=.&40.(>.+2.+14.)))$8.)(<.(1<.(62.R<.(:.$16.R;.(59.$16.(4.&40.R8.)(5:.$16.)))R:.)(63.+22.R8.(>.+2.+14.)R9.))(17.(1:.(62.R<.(:.$16.R;.(59.$16.(4.&40.R8.)(5:.$16.)))R:.))(4.&40.R8.)(>.+2.+14.)))")
-(* [comment removed for export] *).
+  #[using="ASB IMLE IMH GOT64 GSB64"] Theorem F_node :
+    forall (h : ahst) (nb bl : list Z) (mo : Model) (a : word),
+      WFK h ->
+      nb = d_nb (h_dep h) /\ bl = d_bl (h_dep h) ->
+      fK (hdep h nb bl) mo ->
+      bv_unsigned a mod 4096 = 0 ->
+      0 < bv_unsigned a ->
+      bv_unsigned a + 2 ^ 20 <= ACEIL ->
+      region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 20)) = true ->
+      ASys.placed_at (2 ^ 20) mo a ->
+      fK (hdep h (nb ++ [bv_unsigned a]) bl) (anon_grant 0x22 a (2 ^ 20) mo)
+      /\ crange (fCS (hdep h (nb ++ [bv_unsigned a]) bl)) (bv_unsigned a) (2 ^ 20).
   Proof.
-    intros h nb bl mo a W [-> ->] K AAL A0 ACE RF. pose proof (WFK_bwf h W) as B.
+    intros h nb bl mo a W [-> ->] K AAL A0 ACE RF FL. pose proof (WFK_bwf h W) as B.
     assert (SL : v_eb (vst_of (hdep h (d_nb (h_dep h)) (d_bl (h_dep h)))) + 4096 * vnb (vst_of (hdep h (d_nb (h_dep h)) (d_bl (h_dep h)))) + CN <= VLIMIT).
     { rewrite hdep_same. apply vst_slack; [exact B| exact (WFK_havol h W)| unfold CN, npg_shadow, kDepotBlockBytes; cbn; lia]. }
-    destruct (HK_node AL ASB IML IMH _ mo a _ K AAL A0 ACE RF SL (hdep_grow h _ _ [bv_unsigned a] [])) as (K' & C' & A68 & BND).
+    destruct (HK_node AL ASB IML IMH _ mo a _ K AAL A0 ACE RF SL (hdep_grow h _ _ [bv_unsigned a] []) FL) as (K' & C' & A68 & BND).
     rewrite app_nil_r in K', C'. split; [exact K'|].
     apply fcrange; [exact C'| clear - A0; lia| clear - ACE; lia| clear - BND; lia| right; exact A68].
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
+  Definition ZZ_F_store_old : Prop := ltac2:(CDefT.buildp (gd_tbl_AInstFree ()) "Ph,$15.Pnb,(0.$16.)Pbl,(0.$16.)Pmo,$1;.Pa,(2.&40.)P,(23.VhAR,R5.)P,(<.(5.(0.$16.)R4.(61.(60.R6.)))(?.(5.(0.$16.)R5.(5?.(60.R6.)))(64.$16.Lx,$16.(5.(0.$16.)R6.(:.$16.(5?.(60.R7.))(59.$16.R1.(5:.$16.)))))))P,(1<.(62.R7.R6.R5.)R4.)P,(5.$16.(2:.(4.&40.R4.)+1000.)=)P,(3.=(4.&40.R5.))P,(=.(10.(4.&40.R6.)(>.+2.+17.))(20.VhAR,))P,(5.$6.(9.(:.(1.(2.&40.)(2.&40.))(1=.(1>.R8.))(1?.(1>.R8.)))R7.(3=.&40.(>.+2.+17.)))$8.)(<.(1<.(62.R<.R;.(:.$16.R:.(59.$16.(4.&40.R8.)(5:.$16.))))(63.+4022.R8.(>.+2.+17.)R9.))(17.(1:.(62.R<.R;.(:.$16.R:.(59.$16.(4.&40.R8.)(5:.$16.)))))(4.&40.R8.)(>.+2.+17.)))").
+
+  Lemma ZZ_F_store_faithful : ZZ_F_store_old =
+    (forall (h : ahst) (nb bl : list Z) (mo : Model) (a : word),
+      WFK h ->
+      bl = d_bl (h_dep h) /\ (nb = d_nb (h_dep h) \/ exists x : Z, nb = d_nb (h_dep h) ++ [x]) ->
+      fK (hdep h nb bl) mo ->
+      bv_unsigned a mod 4096 = 0 ->
+      0 < bv_unsigned a ->
+      bv_unsigned a + 2 ^ 23 <= ACEIL ->
+      region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 23)) = true ->
+      fK (hdep h nb (bl ++ [bv_unsigned a])) (anon_grant 0x4022 a (2 ^ 23) mo)
+      /\ crange (fCS (hdep h nb (bl ++ [bv_unsigned a]))) (bv_unsigned a) (2 ^ 23)).
+  Proof. exact eq_refl. Qed.
+
   Local Ltac2 Set LiaOrc.tbl := fun () => "0050?L19576226618.20L33099671509.2 L48103380298.2 L66300325492.2 L9930400379.3  00000:00A00G00N00YS3hAR2AL1aS1a3BNDS1a2A0S1h3SL0S3hAR1a3ACE". (* [comment removed for export] *)
-  #[using="ASB IMLE IMH GOT64 GSB64"] Theorem F_store : ltac2:(CDefT.buildp (gd_tbl_AInstFree ()) "Ph,$15.Pnb,(0.$16.)Pbl,(0.$16.)Pmo,$1;.Pa,(2.&40.)P,(23.VhAR,R5.)P,(<.(5.(0.$16.)R4.(61.(60.R6.)))(?.(5.(0.$16.)R5.(5?.(60.R6.)))(64.$16.Lx,$16.(5.(0.$16.)R6.(:.$16.(5?.(60.R7.))(59.$16.R1.(5:.$16.)))))))P,(1<.(62.R7.R6.R5.)R4.)P,(5.$16.(2:.(4.&40.R4.)+1000.)=)P,(3.=(4.&40.R5.))P,(=.(10.(4.&40.R6.)(>.+2.+17.))(20.VhAR,))P,(5.$6.(9.(:.(1.(2.&40.)(2.&40.))(1=.(1>.R8.))(1?.(1>.R8.)))R7.(3=.&40.(>.+2.+17.)))$8.)(<.(1<.(62.R<.R;.(:.$16.R:.(59.$16.(4.&40.R8.)(5:.$16.))))(63.+4022.R8.(>.+2.+17.)R9.))(17.(1:.(62.R<.R;.(:.$16.R:.(59.$16.(4.&40.R8.)(5:.$16.)))))(4.&40.R8.)(>.+2.+17.)))")
-(* [comment removed for export] *).
+  #[using="ASB IMLE IMH GOT64 GSB64"] Theorem F_store :
+    forall (h : ahst) (nb bl : list Z) (mo : Model) (a : word),
+      WFK h ->
+      bl = d_bl (h_dep h) /\ (nb = d_nb (h_dep h) \/ exists x : Z, nb = d_nb (h_dep h) ++ [x]) ->
+      fK (hdep h nb bl) mo ->
+      bv_unsigned a mod 4096 = 0 ->
+      0 < bv_unsigned a ->
+      bv_unsigned a + 2 ^ 23 <= ACEIL ->
+      region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 23)) = true ->
+      ASys.placed_at (2 ^ 23) mo a ->
+      fK (hdep h nb (bl ++ [bv_unsigned a])) (anon_grant 0x4022 a (2 ^ 23) mo)
+      /\ crange (fCS (hdep h nb (bl ++ [bv_unsigned a]))) (bv_unsigned a) (2 ^ 23).
   Proof.
-    intros h nb bl mo a W [-> NB] K AAL A0 ACE RF. pose proof (WFK_bwf h W) as B.
+    intros h nb bl mo a W [-> NB] K AAL A0 ACE RF FL. pose proof (WFK_bwf h W) as B.
     assert (SL : v_eb (vst_of (hdep h nb (d_bl (h_dep h)))) + 4096 * vnb (vst_of (hdep h nb (d_bl (h_dep h)))) + CSB <= VLIMIT).
     { pose proof (vst_slack h (CN + CSB) B (WFK_havol h W) ltac:(unfold CN, CSB, npg_shadow, kDepotBlockBytes, kStoreBlockBytes; cbn; lia)) as SL0.
       destruct NB as [-> |(x & ->)]; [rewrite hdep_same; clear - SL0; unfold CN, npg_shadow, kDepotBlockBytes in *; lia|].
       destruct (node_numbers h x _ (hdep_node h x)) as (E1 & E2 & _). rewrite E1, E2. unfold CN, npg_shadow, kDepotBlockBytes in SL0. clear - SL0. lia. }
-    destruct (HK_store AL ASB IML IMH _ mo a _ K AAL A0 ACE RF SL (hdep_grow h _ _ [] [bv_unsigned a])) as (K' & C' & A68 & BND).
+    destruct (HK_store AL ASB IML IMH _ mo a _ K AAL A0 ACE RF SL (hdep_grow h _ _ [] [bv_unsigned a]) FL) as (K' & C' & A68 & BND).
     rewrite app_nil_r in K', C'. split; [exact K'|].
     apply fcrange; [exact C'| clear - A0; lia| clear - ACE; lia| clear - BND; lia| right; exact A68].
   Qed.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the launch's argument-block layout and its string and pointer reads, munmap over maps_subtract, Linux's mmap placement, and the step's new arms; and launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -137,6 +138,37 @@ Proof.
   induction bs as [|b rest IH]; intros m addr; [reflexivity|].
   cbn [write_to_mem wbytes]. apply IH.
 Qed.
+Lemma launch_string_base_arith : forall v inp mbase (sp brk : word) draw,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  (bv_unsigned sp
+   + Z.of_nat (block_head_size (kb_rseq (in_kernel inp)) (in_argv inp)
+                 (in_envp inp))
+   + Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp)
+                 (in_execfn inp))
+   + 8 <= bv_unsigned (ed_top draw))%Z.
+Proof.
+  intros v inp mbase sp brk draw Hlaunch.
+  cbn [entry_launch_ok_va] in Hlaunch.
+  destruct Hlaunch as (_ & (_ & _ & Hhi) & _).
+  unfold launch_sp_hi, align_down16 in Hhi.
+  pose proof (Z.mod_pos_bound
+    (bv_unsigned (ed_top draw) - 8
+     - Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp)
+                   (in_execfn inp))) 16 ltac:(lia)).
+  lia.
+Qed.
+Lemma launch_sp_le_ed_top : forall v inp mbase (sp brk : word) draw,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  (bv_unsigned sp <= bv_unsigned (ed_top draw))%Z.
+Proof.
+  intros v inp mbase sp brk draw Hlaunch.
+  pose proof (launch_string_base_arith v inp mbase sp brk draw Hlaunch).
+  pose proof (Nat2Z.is_nonneg
+    (block_head_size (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp))).
+  pose proof (Nat2Z.is_nonneg
+    (launch_string_bytes (in_argv inp) (in_envp inp) (in_execfn inp))).
+  lia.
+Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -202,6 +234,38 @@ Proof.
   - destruct l as [|s rest]; [cbn; lia|].
     cbn [firstn]. rewrite !total_arg_bytes_cons. specialize (IH rest). lia.
 Qed.
+Lemma total_arg_bytes_firstn_within : forall (l : list (list byte)) k,
+  (k < length l)%nat ->
+  (total_arg_bytes_nat (firstn k l) + length (nth k l []) + 1
+   <= total_arg_bytes_nat l)%nat.
+Proof.
+  intros l. induction l as [|s rest IH]; intros k Hk; [cbn in Hk; lia|].
+  destruct k as [|k'].
+  - cbn [firstn nth]. change (total_arg_bytes_nat []) with 0%nat.
+    rewrite total_arg_bytes_cons. lia.
+  - cbn [firstn nth]. rewrite !total_arg_bytes_cons.
+    specialize (IH k' ltac:(cbn in Hk; lia)). lia.
+Qed.
+Lemma u_Z2bv_lt : forall z, (0 <= z)%Z -> (z < 2 ^ 64)%Z ->
+  bv_unsigned (Z_to_bv 64 z) = z.
+Proof.
+  intros z H0 H1. rewrite Z_to_bv_unsigned, bv_wrap64_mod.
+  apply Z.mod_small. lia.
+Qed.
+Lemma word_add_nat_Z2bv : forall (a : word) (n : nat),
+  a + nat_to_word n = Z_to_bv 64 (bv_unsigned a + Z.of_nat n).
+Proof.
+  intros a n. apply bv_eq. unfold nat_to_word.
+  rewrite bv_add_unsigned, !Z_to_bv_unsigned, !bv_wrap64_mod.
+  apply Zplus_mod_idemp_r.
+Qed.
+Lemma word_sub_nat : forall (a : word) (n : nat),
+  a - nat_to_word n = Z_to_bv 64 (bv_unsigned a - Z.of_nat n).
+Proof.
+  intros a n. apply bv_eq. unfold nat_to_word.
+  rewrite bv_sub_unsigned, !Z_to_bv_unsigned, !bv_wrap64_mod.
+  apply Zminus_mod_idemp_r.
+Qed.
 
 (* [comment removed for export] *)
 
@@ -214,17 +278,24 @@ Qed.
 (* [comment removed for export] *)
 
 Definition cat_struct_size (av ev : list (list byte)) : nat :=
-  (8 + (length av + 1) * 8 + (length ev + 1) * 8 + auxv_size)%nat.  (* [comment removed for export] *)
+  (8 * block_items av ev)%nat.
 
-Definition cat_string_base (sp : word) (av ev : list (list byte)) : word :=
-  sp + nat_to_word (cat_struct_size av ev).
+Definition cat_string_base (top : word) (av ev : list (list byte))
+    (execfn : list byte) : word :=
+  string_base_addr top av ev execfn.
 
-Definition cat_env_base (sp : word) (av ev : list (list byte)) : word :=
-  cat_string_base sp av ev + nat_to_word (total_arg_bytes_nat av).
+Definition cat_env_base (top : word) (av ev : list (list byte))
+    (execfn : list byte) : word :=
+  cat_string_base top av ev execfn + nat_to_word (total_arg_bytes_nat av).
 
 (* [comment removed for export] *)
-Definition cat_argv_ptr (sp : word) (av ev : list (list byte)) (k : nat) : word :=
-  nth k (fst (string_addrs (cat_string_base sp av ev) av)) (Z_to_bv 64 0).
+Definition cat_argv_ptr (top : word) (av ev : list (list byte))
+    (execfn : list byte) (k : nat) : word :=
+  nth k (fst (string_addrs (cat_string_base top av ev execfn) av)) (Z_to_bv 64 0).
+
+Definition cat_string_off (rseq : bool) (sp top : word)
+    (av ev : list (list byte)) (execfn : list byte) : nat :=
+  (block_head_size rseq av ev + block_pad_len rseq sp top av ev execfn)%nat.
 
 Lemma nth_string_addrs : forall strs (base : word) k, (k < length strs)%nat ->
   nth k (fst (string_addrs base strs)) (Z_to_bv 64 0)
@@ -241,77 +312,169 @@ Proof.
     f_equal. f_equal. lia.
 Qed.
 
-Lemma cat_argv_ptr_offset : forall sp av ev k, (k < length av)%nat ->
-  cat_argv_ptr sp av ev k
-  = cat_string_base sp av ev + nat_to_word (total_arg_bytes_nat (firstn k av)).
+Lemma cat_argv_ptr_offset : forall top av ev execfn k, (k < length av)%nat ->
+  cat_argv_ptr top av ev execfn k
+  = cat_string_base top av ev execfn
+    + nat_to_word (total_arg_bytes_nat (firstn k av)).
 Proof. intros. unfold cat_argv_ptr. apply nth_string_addrs. assumption. Qed.
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
-Definition cat_struct_prefix (ph : PhdrInfo) (sp : word) (av ev : list (list byte))
-    (uid : word) (hw : word) : list byte :=
-  word_le8 (len_word av)
-  ++ flat_map word_le8 (fst (string_addrs (cat_string_base sp av ev) av))
-  ++ word_le8 (Z_to_bv 64 0)
-  ++ flat_map word_le8 (fst (string_addrs (cat_env_base sp av ev) ev))
-  ++ word_le8 (Z_to_bv 64 0) ++ auxv_bytes ph (at_random_ptr sp av ev) uid hw.
-
-Lemma length_cat_struct_prefix : forall ph sp av ev uid hw,
-  length (cat_struct_prefix ph sp av ev uid hw) = cat_struct_size av ev.
+Lemma u_cat_string_base : forall v inp mbase (sp brk : word) draw,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  bv_unsigned (cat_string_base (ed_top draw) (in_argv inp) (in_envp inp)
+                 (in_execfn inp))
+  = (bv_unsigned (ed_top draw) - 8
+     - Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp)
+                   (in_execfn inp)))%Z.
 Proof.
-  intros ph sp av ev uid hw. unfold cat_struct_prefix, cat_struct_size.
-  rewrite !length_app, !length_flat_map_le8, !length_string_addrs_fst,
-    !length_n_to_le_8, length_auxv_bytes.
-  lia.
+  intros v inp mbase sp brk draw Hlaunch.
+  pose proof (launch_string_base_arith v inp mbase sp brk draw Hlaunch) as HA.
+  pose proof (u64_range sp). pose proof (u64_range (ed_top draw)).
+  pose proof (Nat2Z.is_nonneg
+    (block_head_size (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp))).
+  unfold cat_string_base, string_base_addr. rewrite word_sub_nat.
+  assert (Hz : (0 <= bv_unsigned (ed_top draw)
+                     - Z.of_nat (8 + launch_string_bytes (in_argv inp)
+                                       (in_envp inp) (in_execfn inp))
+                < 2 ^ 64)%Z).
+  { rewrite Nat2Z.inj_add. change (Z.of_nat 8) with 8%Z. lia. }
+  rewrite (u_Z2bv_lt _ (proj1 Hz) (proj2 Hz)).
+  rewrite Nat2Z.inj_add. change (Z.of_nat 8) with 8%Z. lia.
+Qed.
+Lemma cat_string_base_offset : forall v inp mbase (sp brk : word) draw,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  cat_string_base (ed_top draw) (in_argv inp) (in_envp inp) (in_execfn inp)
+  = sp + nat_to_word (cat_string_off (kb_rseq (in_kernel inp)) sp (ed_top draw)
+                        (in_argv inp) (in_envp inp) (in_execfn inp)).
+Proof.
+  intros v inp mbase sp brk draw Hlaunch.
+  pose proof (launch_string_base_arith v inp mbase sp brk draw Hlaunch) as HA.
+  pose proof (u_cat_string_base v inp mbase sp brk draw Hlaunch) as Hu.
+  pose proof (u64_range sp). pose proof (u64_range (ed_top draw)).
+  apply bv_eq. rewrite Hu, word_add_nat_Z2bv.
+  unfold cat_string_off, block_pad_len.
+  rewrite u_Z2bv_lt
+    by (rewrite Nat2Z.inj_add; rewrite Z2Nat.id by lia; lia).
+  rewrite Nat2Z.inj_add. rewrite Z2Nat.id by lia. lia.
 Qed.
 
 (* [comment removed for export] *)
-Lemma bsb_argv_prefix : forall ph (sp : word) av ev uid hw rnd, exists tail,
-  build_stack_bytes ph sp av ev uid hw rnd =
-    word_le8 (len_word av)
-    ++ flat_map word_le8 (fst (string_addrs (cat_string_base sp av ev) av))
-    ++ tail.
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
+(* [comment removed for export] *)
+Definition cat_struct_prefix (top : word) (av ev : list (list byte))
+    (execfn : list byte) : list byte :=
+  word_le8 (len_word av)
+  ++ flat_map word_le8 (fst (string_addrs (cat_string_base top av ev execfn) av))
+  ++ word_le8 (Z_to_bv 64 0)
+  ++ flat_map word_le8 (fst (string_addrs (cat_env_base top av ev execfn) ev))
+  ++ word_le8 (Z_to_bv 64 0).
+
+Lemma length_cat_struct_prefix : forall top av ev execfn,
+  length (cat_struct_prefix top av ev execfn) = cat_struct_size av ev.
 Proof.
-  intros ph sp av ev uid hw rnd. unfold build_stack_bytes.
+  intros top av ev execfn.
+  unfold cat_struct_prefix, cat_struct_size, block_items.
+  rewrite !length_app, !length_flat_map_le8, !length_string_addrs_fst,
+    !length_n_to_le_8.
+  lia.
+Qed.
+Definition cat_block_head (la : LaunchAuxv) (ph : PhdrInfo)
+    (entry sp top : word) (av ev : list (list byte)) (execfn : list byte)
+    (uid gid hw : word) (draw : EntryDraw) : list byte :=
+  block_below_random la ph entry sp top av ev execfn uid gid hw
+  ++ at_random_bytes (ed_random draw)
+  ++ repeat (Z_to_bv 8 0) (block_pad_len (la_rseq la) sp top av ev execfn).
+
+
+Lemma length_cat_block_head :
+  forall la ph entry sp top av ev execfn uid gid hw draw,
+  length (cat_block_head la ph entry sp top av ev execfn uid gid hw draw)
+  = cat_string_off (la_rseq la) sp top av ev execfn.
+Proof.
+  intros la ph entry sp top av ev execfn uid gid hw draw.
+  unfold cat_block_head, block_below_random, cat_string_off. cbv zeta.
   rewrite (string_addrs_pair av). cbv beta iota.
   rewrite (string_addrs_pair ev). cbv beta iota.
+  rewrite !length_app, !repeat_length, !length_flat_map_le8,
+    !length_string_addrs_fst, length_auxv_bytes, length_at_random_bytes,
+    !length_n_to_le_8.
+  unfold block_head_size, block_items. lia.
+Qed.
+(* [comment removed for export] *)
+Lemma bsb_argv_prefix : forall inp mbase ph entry (sp : word) draw, exists tail,
+  entry_stack_image inp mbase ph entry sp draw =
+    word_le8 (len_word (in_argv inp))
+    ++ flat_map word_le8
+         (fst (string_addrs
+                 (cat_string_base (ed_top draw) (in_argv inp) (in_envp inp)
+                    (in_execfn inp))
+                 (in_argv inp)))
+    ++ tail.
+Proof.
+  intros inp mbase ph entry sp draw.
+  rewrite entry_stack_image_block.
+  unfold build_stack_bytes, cat_string_base. cbv zeta.
+  rewrite (string_addrs_pair (in_argv inp)). cbv beta iota.
+  rewrite (string_addrs_pair (in_envp inp)). cbv beta iota.
   eexists. rewrite <- !app_assoc. reflexivity.
 Qed.
 
 (* [comment removed for export] *)
-Lemma bsb_ptr_k : forall ph (sp : word) av ev k uid hw rnd, (k < length av)%nat -> exists post,
-  build_stack_bytes ph sp av ev uid hw rnd =
-    (word_le8 (len_word av)
-      ++ flat_map word_le8 (firstn k (fst (string_addrs (cat_string_base sp av ev) av))))
-    ++ word_le8 (nth k (fst (string_addrs (cat_string_base sp av ev) av)) (Z_to_bv 64 0))
+Lemma bsb_ptr_k : forall inp mbase ph entry (sp : word) draw k,
+  (k < length (in_argv inp))%nat -> exists post,
+  entry_stack_image inp mbase ph entry sp draw =
+    (word_le8 (len_word (in_argv inp))
+      ++ flat_map word_le8
+           (firstn k (fst (string_addrs
+                             (cat_string_base (ed_top draw) (in_argv inp)
+                                (in_envp inp) (in_execfn inp))
+                             (in_argv inp)))))
+    ++ word_le8 (nth k (fst (string_addrs
+                               (cat_string_base (ed_top draw) (in_argv inp)
+                                  (in_envp inp) (in_execfn inp))
+                               (in_argv inp))) (Z_to_bv 64 0))
     ++ post.
 Proof.
-  intros ph sp av ev k uid hw rnd Hk.
-  destruct (bsb_argv_prefix ph sp av ev uid hw rnd) as [tail E].
-  assert (Hk' : (k < length (fst (string_addrs (cat_string_base sp av ev) av)))%nat)
+  intros inp mbase ph entry sp draw k Hk.
+  destruct (bsb_argv_prefix inp mbase ph entry sp draw) as [tail E].
+  assert (Hk' : (k < length (fst (string_addrs
+                   (cat_string_base (ed_top draw) (in_argv inp) (in_envp inp)
+                      (in_execfn inp)) (in_argv inp))))%nat)
     by (rewrite length_string_addrs_fst; exact Hk).
   rewrite (flat_map_le8_decomp _ k Hk') in E.
   eexists. rewrite E. rewrite <- !app_assoc. reflexivity.
 Qed.
 
-Lemma read_argv_ptr_k : forall ph segs (sp : word) av ev k uid hw rnd, (k < length av)%nat ->
-  (bv_unsigned sp + Z.of_nat (length (build_stack_bytes ph sp av ev uid hw rnd)) < 2^64)%Z ->
-  rdn segs (stack_to_mem sp (entry_stack_image ph sp av ev uid hw rnd))
+Lemma read_argv_ptr_k : forall segs inp mbase ph entry (sp : word) draw k,
+  (k < length (in_argv inp))%nat ->
+  (bv_unsigned sp
+   + Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw))
+     < 2 ^ 64)%Z ->
+  rdn segs (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw))
       (sp + nat_to_word (8 + 8 * k)) 8%nat
-  = Some (word_le8 (cat_argv_ptr sp av ev k)).
+  = Some (word_le8 (cat_argv_ptr (ed_top draw) (in_argv inp) (in_envp inp)
+                      (in_execfn inp) k)).
 Proof.
-  intros ph segs sp av ev k uid hw rnd Hk Hnw.
-  destruct (bsb_ptr_k ph sp av ev k uid hw rnd Hk) as [post E].
-  pose proof (read_at_offset_image segs ph sp av ev uid hw rnd
-    (word_le8 (len_word av)
-      ++ flat_map word_le8 (firstn k (fst (string_addrs (cat_string_base sp av ev) av))))
-    (word_le8 (nth k (fst (string_addrs (cat_string_base sp av ev) av)) (Z_to_bv 64 0)))
+  intros segs inp mbase ph entry sp draw k Hk Hnw.
+  destruct (bsb_ptr_k inp mbase ph entry sp draw k Hk) as [post E].
+  pose proof (read_at_offset_image segs inp mbase ph entry sp draw
+    (word_le8 (len_word (in_argv inp))
+      ++ flat_map word_le8
+           (firstn k (fst (string_addrs
+                             (cat_string_base (ed_top draw) (in_argv inp)
+                                (in_envp inp) (in_execfn inp))
+                             (in_argv inp)))))
+    (word_le8 (nth k (fst (string_addrs
+                             (cat_string_base (ed_top draw) (in_argv inp)
+                                (in_envp inp) (in_execfn inp))
+                             (in_argv inp))) (Z_to_bv 64 0)))
     post 8%nat E (length_n_to_le_8 _) Hnw) as H'.
-  assert (Hlen : length (word_le8 (len_word av)
-      ++ flat_map word_le8 (firstn k (fst (string_addrs (cat_string_base sp av ev) av))))
+  assert (Hlen : length (word_le8 (len_word (in_argv inp))
+      ++ flat_map word_le8
+           (firstn k (fst (string_addrs
+                             (cat_string_base (ed_top draw) (in_argv inp)
+                                (in_envp inp) (in_execfn inp))
+                             (in_argv inp)))))
     = (8 + 8 * k)%nat).
   { rewrite length_app, length_n_to_le_8, length_flat_map_le8, firstn_length_le;
       [reflexivity | rewrite length_string_addrs_fst; lia]. }
@@ -320,44 +483,67 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma bsb_strings_split : forall ph (sp : word) av ev uid hw rnd, exists tail,
-  build_stack_bytes ph sp av ev uid hw rnd = cat_struct_prefix ph sp av ev uid hw ++ flatten_strings av ++ tail.
+Lemma bsb_strings_split : forall inp mbase ph entry (sp : word) draw, exists tail,
+  entry_stack_image inp mbase ph entry sp draw
+  = cat_block_head (launch_auxv inp sp mbase) ph entry sp (ed_top draw)
+      (in_argv inp) (in_envp inp) (in_execfn inp)
+      (in_uid inp) (in_gid inp) (in_hwcap inp) draw
+    ++ flatten_strings (in_argv inp) ++ tail.
 Proof.
-  intros ph sp av ev uid hw rnd. unfold build_stack_bytes, cat_struct_prefix, cat_env_base, cat_string_base.
-  rewrite (string_addrs_pair av). cbv beta iota.
-  rewrite (string_addrs_pair ev). cbv beta iota.
+  intros inp mbase ph entry sp draw.
+  rewrite entry_stack_image_block, build_stack_bytes_split_random.
+  unfold cat_block_head, block_above_random.
   eexists. rewrite <- !app_assoc. reflexivity.
 Qed.
 
-Lemma bsb_byte_k : forall ph (sp : word) av ev k uid hw rnd, (k < length av)%nat -> exists pre post,
-  build_stack_bytes ph sp av ev uid hw rnd = pre ++ (nth k av [] ++ [Z_to_bv 8 0]) ++ post
-  /\ length pre = (cat_struct_size av ev + total_arg_bytes_nat (firstn k av))%nat.
+Lemma bsb_byte_k : forall inp mbase ph entry (sp : word) draw k,
+  (k < length (in_argv inp))%nat -> exists pre post,
+  entry_stack_image inp mbase ph entry sp draw
+  = pre ++ (nth k (in_argv inp) [] ++ [Z_to_bv 8 0]) ++ post
+  /\ length pre
+     = (cat_string_off (kb_rseq (in_kernel inp)) sp (ed_top draw)
+          (in_argv inp) (in_envp inp) (in_execfn inp)
+        + total_arg_bytes_nat (firstn k (in_argv inp)))%nat.
 Proof.
-  intros ph sp av ev k uid hw rnd Hk.
-  destruct (bsb_strings_split ph sp av ev uid hw rnd) as [tail E].
-  rewrite (flatten_strings_decomp av k Hk) in E.
-  exists (cat_struct_prefix ph sp av ev uid hw ++ flatten_strings (firstn k av)).
+  intros inp mbase ph entry sp draw k Hk.
+  destruct (bsb_strings_split inp mbase ph entry sp draw) as [tail E].
+  rewrite (flatten_strings_decomp (in_argv inp) k Hk) in E.
+  exists (cat_block_head (launch_auxv inp sp mbase) ph entry sp (ed_top draw)
+            (in_argv inp) (in_envp inp) (in_execfn inp)
+            (in_uid inp) (in_gid inp) (in_hwcap inp) draw
+          ++ flatten_strings (firstn k (in_argv inp))).
   eexists.
   split.
   - rewrite E. rewrite <- !app_assoc. reflexivity.
-  - rewrite length_app, length_cat_struct_prefix, length_flatten_strings. reflexivity.
+  - rewrite length_app, length_cat_block_head, length_flatten_strings.
+    reflexivity.
 Qed.
 
-Lemma read_argv_byte_k : forall ph segs (sp : word) av ev k j uid hw rnd,
-  (k < length av)%nat -> (j <= length (nth k av []))%nat ->
-  (bv_unsigned sp + Z.of_nat (length (build_stack_bytes ph sp av ev uid hw rnd)) < 2^64)%Z ->
-  rdn segs (stack_to_mem sp (entry_stack_image ph sp av ev uid hw rnd))
-      (cat_argv_ptr sp av ev k + nat_to_word j) 1%nat
-  = Some [nth j (nth k av [] ++ [Z_to_bv 8 0]) (Z_to_bv 8 0)].
+Lemma read_argv_byte_k :
+  forall v segs inp mbase ph entry (sp brk : word) draw k j,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  (k < length (in_argv inp))%nat ->
+  (j <= length (nth k (in_argv inp) []))%nat ->
+  rdn segs (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw))
+      (cat_argv_ptr (ed_top draw) (in_argv inp) (in_envp inp) (in_execfn inp) k
+       + nat_to_word j) 1%nat
+  = Some [nth j (nth k (in_argv inp) [] ++ [Z_to_bv 8 0]) (Z_to_bv 8 0)].
 Proof.
-  intros ph segs sp av ev k j uid hw rnd Hk Hj Hnw.
-  destruct (bsb_byte_k ph sp av ev k uid hw rnd Hk) as [pre [post [E Hlen]]].
-  pose proof (read_byte_at_image segs ph sp av ev uid hw rnd
-    pre (nth k av [] ++ [Z_to_bv 8 0]) post j E) as H'.
+  intros v segs inp mbase ph entry sp brk draw k j Hlaunch Hk Hj.
+  pose proof (entry_stack_image_no_wrap v inp mbase ph entry sp brk draw Hlaunch)
+    as Hnw.
+  destruct (bsb_byte_k inp mbase ph entry sp draw k Hk) as [pre [post [E Hlen]]].
+  pose proof (read_byte_at_image segs inp mbase ph entry sp draw
+    pre (nth k (in_argv inp) [] ++ [Z_to_bv 8 0]) post j E) as H'.
   rewrite Hlen in H'.
-  replace (cat_argv_ptr sp av ev k + nat_to_word j)
-    with (sp + nat_to_word (cat_struct_size av ev + total_arg_bytes_nat (firstn k av) + j)).
-  2:{ rewrite (cat_argv_ptr_offset sp av ev k Hk). unfold cat_string_base.
+  replace (cat_argv_ptr (ed_top draw) (in_argv inp) (in_envp inp)
+             (in_execfn inp) k + nat_to_word j)
+    with (sp + nat_to_word
+                 (cat_string_off (kb_rseq (in_kernel inp)) sp (ed_top draw)
+                    (in_argv inp) (in_envp inp) (in_execfn inp)
+                  + total_arg_bytes_nat (firstn k (in_argv inp)) + j)).
+  2:{ rewrite (cat_argv_ptr_offset _ _ _ _ k Hk),
+        (cat_string_base_offset v inp mbase sp brk draw Hlaunch).
       rewrite !nat_to_word_add_merge. f_equal. f_equal. lia. }
   apply H'; [rewrite length_app; cbn [length]; lia | exact Hnw].
 Qed.
@@ -837,8 +1023,6 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-Definition argv_layout_slack : Z := 4300000%Z.
-
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -1307,6 +1491,8 @@ Inductive to_wall : machine_state -> list byte -> (machine_state -> Prop) -> Pro
     bv_unsigned x8 = 64%Z ->
     ms_gpr ms 0 = fd ->
     ms_read_bytes ms (ms_gpr ms 1) (ms_gpr ms 2) = Some rest ->
+    (* the range [vfs_write]'s [access_ok] accepts; see [CatSim.write1_check_n] *)
+    access_okb (ms_gpr ms 1) (bv_unsigned (ms_gpr ms 2)) = true ->
     (1 <= length rest)%nat ->
     (forall n, (1 <= n)%nat -> (n <= length rest)%nat ->
        to_wall_tail (advance_past_svc (set_gpr0 ms (len_word (firstn n rest))))
@@ -1557,7 +1743,7 @@ Open Scope bv_scope.
 (* [comment removed for export] *)
 Definition M_loop (model : Model) : Prop :=
   fd_lookup (m_fds model) (Z_to_bv 64 0) = Some (FdChannel (Z_to_bv 64 0)) /\
-  fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)) /\
+  fd1chan model /\
   m_halted model = None /\
   m_vm_lazy model = [].
 
@@ -2100,7 +2286,9 @@ Qed.
 Lemma brk_grants_grow : forall req r old,
   req <> Z_to_bv 64 0 ->
   (0 < bv_unsigned old)%Z -> (bv_unsigned old < bv_unsigned r)%Z ->
-  brk_grants req r old = [(old, r - old)].
+  brk_grants req r old =
+    brk_page_range (page_round_up_Z (bv_unsigned old))
+                   (page_round_up_Z (bv_unsigned r)).
 Proof.
   intros req r old Hreq Hold Hlt. unfold brk_grants, brk_is_grow.
   assert (E1 : w_is0 req = false)
@@ -2109,6 +2297,9 @@ Proof.
   assert (E3 : (bv_unsigned old <? bv_unsigned r)%Z = true) by (apply Z.ltb_lt; lia).
   rewrite E1, E2, E3. reflexivity.
 Qed.
+Lemma brk_grants_is_brk_zeros : forall req r old,
+  brk_grants req r old = brk_zeros req r old.
+Proof. reflexivity. Qed.
 
 Lemma brk_zeros_query : forall r old, brk_zeros (Z_to_bv 64 0) r old = [].
 Proof.
@@ -2246,7 +2437,8 @@ Definition growable (reserved : list (word * word)) (lim top : Z) (t r : word)
                                (bv_unsigned r + bv_unsigned t)
                               + page_size - page_round_up_Z (bv_unsigned r)))
       else true)
-     && (bv_unsigned t <=? lim)%Z)%bool = true)).
+     && (Z.max 0 (page_round_up_Z (bv_unsigned r + bv_unsigned t)
+                  - page_round_up_Z (bv_unsigned r)) <=? lim)%Z)%bool = true)).
 
 (* [comment removed for export] *)
 Definition T1 (reserved : list (word * word)) (lim top : Z) (t : word)
@@ -2803,21 +2995,31 @@ Definition mrb (segs : list Segment) (mem : word -> option byte)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-Lemma read_argv_cstr_k : forall ph segs (sp : word) av ev k uid hw rnd,
-  (k < length av)%nat ->
-  (bv_unsigned sp + Z.of_nat (length (build_stack_bytes ph sp av ev uid hw rnd)) < 2^64)%Z ->
-  rdn segs (stack_to_mem sp (entry_stack_image ph sp av ev uid hw rnd))
-      (cat_argv_ptr sp av ev k) (length (nth k av []) + 1)
-  = Some (nth k av [] ++ [Z_to_bv 8 0]).
+Lemma read_argv_cstr_k :
+  forall v segs inp mbase ph entry (sp brk : word) draw k,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  (k < length (in_argv inp))%nat ->
+  rdn segs (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw))
+      (cat_argv_ptr (ed_top draw) (in_argv inp) (in_envp inp) (in_execfn inp) k)
+      (length (nth k (in_argv inp) []) + 1)
+  = Some (nth k (in_argv inp) [] ++ [Z_to_bv 8 0]).
 Proof.
-  intros ph segs sp av ev k uid hw rnd Hk Hnw.
-  destruct (bsb_byte_k ph sp av ev k uid hw rnd Hk) as [pre [post [E Hlen]]].
-  pose proof (read_at_offset_image segs ph sp av ev uid hw rnd
-    pre (nth k av [] ++ [Z_to_bv 8 0]) post (length (nth k av []) + 1)) as H.
+  intros v segs inp mbase ph entry sp brk draw k Hlaunch Hk.
+  pose proof (entry_stack_image_no_wrap v inp mbase ph entry sp brk draw Hlaunch)
+    as Hnw.
+  destruct (bsb_byte_k inp mbase ph entry sp draw k Hk) as [pre [post [E Hlen]]].
+  pose proof (read_at_offset_image segs inp mbase ph entry sp draw
+    pre (nth k (in_argv inp) [] ++ [Z_to_bv 8 0]) post
+    (length (nth k (in_argv inp) []) + 1)) as H.
   rewrite Hlen in H.
-  replace (cat_argv_ptr sp av ev k)
-    with (sp + nat_to_word (cat_struct_size av ev + total_arg_bytes_nat (firstn k av))).
-  2:{ rewrite (cat_argv_ptr_offset sp av ev k Hk). unfold cat_string_base.
+  replace (cat_argv_ptr (ed_top draw) (in_argv inp) (in_envp inp)
+             (in_execfn inp) k)
+    with (sp + nat_to_word
+                 (cat_string_off (kb_rseq (in_kernel inp)) sp (ed_top draw)
+                    (in_argv inp) (in_envp inp) (in_execfn inp)
+                  + total_arg_bytes_nat (firstn k (in_argv inp)))).
+  2:{ rewrite (cat_argv_ptr_offset _ _ _ _ k Hk),
+        (cat_string_base_offset v inp mbase sp brk draw Hlaunch).
       rewrite nat_to_word_add_merge. reflexivity. }
   apply H; [exact E | | exact Hnw].
   rewrite length_app. cbn [length]. lia.
@@ -3100,6 +3302,7 @@ Module Hoare.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Placement.  (* 08b1429: LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is, read qualified *)
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require PropExec.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require CatSim.
 Import OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.PropExec OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.MmapSim.CatExec OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.CatSim OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.MmapSim.SeqExec.
@@ -3395,18 +3598,56 @@ Proof. intros a n m x Hx. exact (zmem_out m a n x Hx). Qed.
 (* [comment removed for export] *)
 
 Definition munmap_model (addr n : word) (m : Model) : Model :=
-  with_mmap_destroyed addr n
-    (mkVmMapsFull (vm_reserved (m_vmmaps m))
-               (map_remove (vm_maps (m_vmmaps m)) addr)
-               (maps_subtract (vm_noaccess (m_vmmaps m))
-                  (bv_unsigned addr)
-                  (bv_unsigned addr + bv_unsigned n))
-               (vm_start_brk (m_vmmaps m))
-               (vm_brk (m_vmmaps m))
-               (vm_limit (m_vmmaps m))
-               (vm_mmap_base (m_vmmaps m))
-               (vm_init_sp (m_vmmaps m))) m.
+  with_mmap_destroyed addr n (mmap_fixed_destroyed_next (m_vmmaps m) addr n) m.
 
+Lemma iv_subtract_outside : forall (b s : word) lo hi,
+  (0 < bv_unsigned s)%Z -> (lo < hi)%Z ->
+  (bv_unsigned b + bv_unsigned s <= lo \/ hi <= bv_unsigned b)%Z ->
+  iv_subtract b s lo hi = [(b, s)].
+Proof.
+  intros b s lo hi Hs Hlh Hd. unfold iv_subtract. cbv zeta.
+  destruct Hd as [Hd|Hd].
+  - rewrite (proj2 (Z.ltb_lt (bv_unsigned b) lo)) by lia.
+    rewrite (proj2 (Z.ltb_ge hi (bv_unsigned b + bv_unsigned s))) by lia.
+    rewrite Z.min_l by lia. rewrite Z_to_bv_bv_unsigned. reflexivity.
+  - rewrite (proj2 (Z.ltb_ge (bv_unsigned b) lo)) by lia.
+    rewrite (proj2 (Z.ltb_lt hi (bv_unsigned b + bv_unsigned s))) by lia.
+    rewrite Z.max_l by lia.
+    replace (bv_unsigned b + bv_unsigned s - bv_unsigned b)%Z
+      with (bv_unsigned s) by lia.
+    rewrite !Z_to_bv_bv_unsigned. reflexivity.
+Qed.
+Lemma maps_subtract_exact : forall l (a n : word),
+  (0 < bv_unsigned n)%Z ->
+  (forall b s, In (b, s) l -> (0 < bv_unsigned s)%Z) ->
+  (forall b s, In (b, s) l -> b = a -> s = n) ->
+  (forall b s, In (b, s) l -> b <> a ->
+     (bv_unsigned b + bv_unsigned s <= bv_unsigned a
+      \/ bv_unsigned a + bv_unsigned n <= bv_unsigned b)%Z) ->
+  maps_subtract l (bv_unsigned a) (bv_unsigned a + bv_unsigned n)
+  = map_remove l a.
+Proof.
+  induction l as [|[b s] r IH]; intros a n Hn Hpos Hu Hd; [reflexivity|].
+  assert (IHr : maps_subtract r (bv_unsigned a) (bv_unsigned a + bv_unsigned n)
+                = map_remove r a).
+  { apply IH; [exact Hn
+              | intros b' s' H; apply (Hpos b' s'); right; exact H
+              | intros b' s' H; apply (Hu b' s'); right; exact H
+              | intros b' s' H; apply (Hd b' s'); right; exact H]. }
+  cbn [maps_subtract]. rewrite IHr.
+  unfold map_remove. cbn [List.filter fst]. fold (map_remove r a).
+  destruct (bv_eqb b a) eqn:E; cbn [negb].
+  - apply bv_eqb_eq in E. subst b.
+    rewrite (Hu a s (or_introl eq_refl) eq_refl).
+    unfold iv_subtract. cbv zeta.
+    rewrite (proj2 (Z.ltb_ge _ _) (Z.le_refl (bv_unsigned a))).
+    rewrite (proj2 (Z.ltb_ge _ _) (Z.le_refl (bv_unsigned a + bv_unsigned n))).
+    reflexivity.
+  - assert (Hne : b <> a) by (intros ->; rewrite bv_eqb_refl in E; discriminate).
+    rewrite (iv_subtract_outside b s); [reflexivity | | lia |].
+    + exact (Hpos b s (or_introl eq_refl)).
+    + exact (Hd b s (or_introl eq_refl) Hne).
+Qed.
 Definition mmap_model (a n : word) (m : Model) : Model :=
   with_vmmaps (mkVmMapsFull (vm_reserved (m_vmmaps m))
                ((a, n) :: vm_maps (m_vmmaps m))
@@ -3423,11 +3664,26 @@ Definition page_round_up (len : word) : word :=
 
 (* [comment removed for export] *)
 Definition grant_ok (hint : word) (m : Model) (a : word) (n : Z) : bool :=
-  (bv_unsigned a mod page_size =? 0)%Z && (0 <? bv_unsigned a)%Z
+  LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint n a
+  && (bv_unsigned a mod page_size =? 0)%Z && (0 <? bv_unsigned a)%Z
   && (bv_unsigned a + n <=? alloc_top (m_vmmaps m))%Z
   && region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 n)
   && (vm_backing_used m + n <=? vm_limit (m_vmmaps m))%Z.
 
+Lemma grant_ok_intro : forall hint m a n,
+  (0 < n)%Z -> (n mod page_size = 0)%Z ->
+  LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint n a = true ->
+  (vm_backing_used m + n <= vm_limit (m_vmmaps m))%Z ->
+  grant_ok hint m a n = true.
+Proof.
+  intros hint m a n Hn Hnal Hpl Hbud.
+  destruct (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is_admissible _ _ _ _ _ Hn Hnal Hpl)
+    as (Hal & Hpos & Htop & Hfree).
+  unfold grant_ok. rewrite Hpl, Hfree.
+  rewrite (proj2 (Z.eqb_eq _ _) Hal), (proj2 (Z.ltb_lt _ _) Hpos),
+    (proj2 (Z.leb_le _ _) Htop), (proj2 (Z.leb_le _ _) Hbud).
+  reflexivity.
+Qed.
 Lemma munmap_model_halted : forall addr n m, m_halted (munmap_model addr n m) = m_halted m.
 Proof. reflexivity. Qed.
 (* [comment removed for export] *)
@@ -3446,6 +3702,13 @@ Proof. reflexivity. Qed.
 Lemma mmap_model_lazy : forall a n m,
   m_vm_lazy (mmap_model a n m) = m_vm_lazy m.
 Proof. reflexivity. Qed.
+Lemma grant_ok_place : forall hint m a n,
+  grant_ok hint m a n = true ->
+  LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint n a = true.
+Proof.
+  intros hint m a n H. unfold grant_ok in H.
+  rewrite !andb_true_iff in H. tauto.
+Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -3522,8 +3785,13 @@ Lemma munmap_check_modeled : forall ms model eff,
   check_munmap (ms_gpr ms 0) (ms_gpr ms 1) eff model
   = match eff with
     | mkEffectU r [] [] us [] [] =>
-        if w_is0 r
-           && listNN_eqb us [(ms_gpr ms 0, page_round_up (ms_gpr ms 1))]
+        if errno_ret_in munmap_errnos r
+        then match us with
+             | [] => CheckOk model []
+             | _ => CheckReject
+             end
+        else if w_is0 r
+                && listNN_eqb us [(ms_gpr ms 0, page_round_up (ms_gpr ms 1))]
         then CheckOk (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) []
         else CheckReject
     | _ => CheckReject
@@ -3548,17 +3816,35 @@ Proof.
   intros segs ms x8 model Hno Ha.
   apply (proj2 (syscall_spec_munmap _ _ _ _ _ Hno)). apply check_munmap_sound_ok.
   rewrite (munmap_check_modeled ms model _ Ha).
-  unfold munmap_eff, w_is0. rewrite bv_eqb_refl.
+  unfold munmap_eff, w_is0.
+  replace (errno_ret_in munmap_errnos (Z_to_bv 64 0)) with false by reflexivity.
+  cbv beta iota. rewrite bv_eqb_refl.
   rewrite (proj2 (listNN_eqb_eq _ _) eq_refl). reflexivity.
 Qed.
+Lemma munmap_fail_ok : forall segs ms x8 model e,
+  bv_unsigned x8 = 215%Z ->
+  munmap_args_ok ms model ->
+  In e munmap_errnos ->
+  syscall_spec (sys_input segs ms x8) model
+    (Ok (mkEffect (errno_ret e) [] []) model []).
+Proof.
+  intros segs ms x8 model e Hno Ha HIn.
+  apply (proj2 (syscall_spec_munmap _ _ _ _ _ Hno)). apply check_munmap_sound_ok.
+  rewrite (munmap_check_modeled ms model _ Ha).
+  rewrite errno_ret_in_intro by assumption. reflexivity.
+Qed.
+Lemma ENOMEM_in_munmap_errnos : In ENOMEM munmap_errnos.
+Proof. left. reflexivity. Qed.
 
 Lemma munmap_ok_inv : forall segs ms x8 model eff model' evs,
   bv_unsigned x8 = 215%Z ->
   munmap_args_ok ms model ->
   syscall_spec (sys_input segs ms x8) model (Ok eff model' evs) ->
-  eff = munmap_eff ms /\
-  model' = munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model
-  /\ evs = [].
+  evs = [] /\
+  ((exists e, In e munmap_errnos /\
+     eff = mkEffect (errno_ret e) [] [] /\ model' = model)
+   \/ (eff = munmap_eff ms /\
+       model' = munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model)).
 Proof.
   intros segs ms x8 model eff model' evs Hno Ha Hspec.
   apply (proj1 (syscall_spec_munmap _ _ _ _ _ Hno)) in Hspec.
@@ -3567,14 +3853,19 @@ Proof.
   destruct eff as [r ws zs us cs copyins]; destruct ws as [|? ?];
     [destruct zs as [|? ?]|]; try discriminate.
   destruct cs as [|? ?]; [destruct copyins as [|? ?]|]; try discriminate.
-  destruct (w_is0 r
-            && listNN_eqb us [(ms_gpr ms 0, page_round_up (ms_gpr ms 1))])
-    eqn:HC; [|discriminate].
-  inversion Hspec; clear Hspec; subst.
-  apply andb_true_iff in HC as [Hr Hus].
-  unfold w_is0 in Hr. apply bv_eqb_eq in Hr; subst r.
-  apply listNN_eqb_eq in Hus; subst us.
-  unfold munmap_eff. auto.
+  destruct (errno_ret_in munmap_errnos r) eqn:He.
+  - destruct us as [|? ?]; [|discriminate].
+    inversion Hspec; clear Hspec; subst.
+    apply errno_ret_in_true in He. destruct He as (e & HIn & ->).
+    split; [reflexivity|]. left. exists e. auto.
+  - destruct (w_is0 r
+              && listNN_eqb us [(ms_gpr ms 0, page_round_up (ms_gpr ms 1))])
+      eqn:HC; [|discriminate].
+    inversion Hspec; clear Hspec; subst.
+    apply andb_true_iff in HC as [Hr Hus].
+    unfold w_is0 in Hr. apply bv_eqb_eq in Hr; subst r.
+    apply listNN_eqb_eq in Hus; subst us.
+    split; [reflexivity|]. right. unfold munmap_eff. auto.
 Qed.
 
 Lemma munmap_no_unmodeled : forall segs ms x8 model,
@@ -3587,6 +3878,9 @@ Proof.
   apply (check_munmap_complete_unmodeled _ _ _ _ (mkEffect (Z_to_bv 64 0) [] []))
     in Hspec.
   rewrite (munmap_check_modeled ms model _ Ha) in Hspec.
+  replace (errno_ret_in munmap_errnos (Z_to_bv 64 0)) with false in Hspec
+    by reflexivity.
+  cbv beta iota in Hspec.
   destruct (w_is0 (Z_to_bv 64 0)
             && listNN_eqb [] [(ms_gpr ms 0, page_round_up (ms_gpr ms 1))]);
     discriminate.
@@ -3668,6 +3962,8 @@ Inductive twm : machine_state -> Model -> list (list byte) -> word -> Prop :=
     ms_svc_pending ms = Some x8 ->
     bv_unsigned x8 = 215%Z ->
     munmap_args_ok ms model ->
+    (forall e, In e munmap_errnos ->
+       twm (advance_past_svc (set_gpr0 ms (errno_ret e))) model bufs code) ->
     twm (advance_past_svc (apply_effect ms (munmap_eff ms)))
         (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) bufs code ->
     twm ms model bufs code
@@ -3676,13 +3972,19 @@ Inductive twm : machine_state -> Model -> list (list byte) -> word -> Prop :=
     RiscvSemantics.step segs ms = MachineOk ms' ->
     twm ms' model bufs code ->
     twm ms model bufs code
-(* [comment removed for export] *)
+(** The put-style retry loop realizing one buffer: a write-pending state
+    offering the remainder [rest]; the environment delivers any nonempty
+    prefix, the loop reissues on the rest.  The trace contribution of the
+    whole node is exactly the FULL buffer (WallSim's [to_wall] shape,
+    inlined here because the continuation is the mutual [twm]). *)
 with twm_pend : machine_state -> Model -> list byte -> list (list byte) -> word -> Prop :=
 | twmp_write : forall ms model x8 rest bufs code,
     ms_svc_pending ms = Some x8 ->
     bv_unsigned x8 = 64%Z ->
     ms_gpr ms 0 = Z_to_bv 64 1 ->
     ms_read_bytes ms (ms_gpr ms 1) (ms_gpr ms 2) = Some rest ->
+    (* the range [vfs_write]'s [access_ok] accepts; see [CatSim.write1_check_n] *)
+    access_okb (ms_gpr ms 1) (bv_unsigned (ms_gpr ms 2)) = true ->
     (1 <= length rest)%nat ->
     (forall n, (1 <= n)%nat -> (n <= length rest)%nat ->
        twm_tail (advance_past_svc (set_gpr0 ms (len_word (firstn n rest)))) model
@@ -3750,66 +4052,85 @@ Lemma sstep_munmap_inv : forall ms model x8 evs st,
   munmap_args_ok ms model ->
   sstep segs (mkCfg ms model) evs st ->
   evs = [] /\
-  st = SNext (mkCfg (advance_past_svc (apply_effect ms (munmap_eff ms)))
-                    (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model)).
+  ((exists e, In e munmap_errnos /\
+      st = SNext (mkCfg (advance_past_svc (set_gpr0 ms (errno_ret e))) model)) \/
+   st = SNext (mkCfg (advance_past_svc (apply_effect ms (munmap_eff ms)))
+                     (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model))).
 Proof.
   intros ms model x8 evs st Hh Hlazy Hsvc Hno Hargs Hss.
   inversion Hss; subst; try congruence.
-  - (* [comment removed for export] *)
+  - (* sstep_syscall *)
     match goal with
     | H2 : ms_svc_pending ms = Some ?x,
       H3 : syscall_spec (sys_input segs ms ?x) model (Ok ?eff ?model' ?evs0) |- _ =>
       assert (Hx : x = x8) by congruence; subst x;
-      (first [ pose proof ((munmap_ok_inv segs ms x8 model eff model' evs0 Hno Hargs H3)) as dR_5; dand3 dR_5 as Heff Hm Hevs | destruct (munmap_ok_inv segs ms x8 model eff model' evs0 Hno Hargs H3) as (Heff & Hm & Hevs) ]);
-      subst eff model' evs0
+      destruct (munmap_ok_inv segs ms x8 model eff model' evs0 Hno Hargs H3)
+        as (Hevs & Hcase);
+      subst evs0
     end.
-    match goal with
-    | Hmat : materialize_model_accesses
-        (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) _ = Some _ |- _ =>
-      rewrite (materialize_model_accesses_no_lazy _ _
-        (munmap_model_no_lazy _ _ _ Hlazy)) in Hmat;
-      inversion Hmat; subst
-    end.
-    split; reflexivity.
-  - (* [comment removed for export] *)
+    split; [reflexivity|].
+    destruct Hcase as [(e & HIn & -> & ->) | (-> & ->)].
+    + left. exists e.
+      match goal with
+      | Hmat : materialize_model_accesses model _ = Some _ |- _ =>
+        rewrite (materialize_model_accesses_no_lazy _ _ Hlazy) in Hmat;
+        inversion Hmat; subst
+      end.
+      split; [assumption |].
+      rewrite apply_effect_no_write. reflexivity.
+    + right.
+      match goal with
+      | Hmat : materialize_model_accesses
+          (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) _ = Some _ |- _ =>
+        rewrite (materialize_model_accesses_no_lazy _ _
+          (munmap_model_no_lazy _ _ _ Hlazy)) in Hmat;
+        inversion Hmat; subst
+      end.
+      reflexivity.
+  - (* sstep_syscall_materialization_fault: no lazy range can fault *)
     exfalso.
     match goal with
     | H3 : syscall_spec (sys_input segs ms ?x) model (Ok ?eff ?model' ?evs0),
       Hmat : materialize_model_accesses ?model' _ = None |- _ =>
       assert (Hx : x = x8) by congruence; subst x;
-      (first [ pose proof ((munmap_ok_inv segs ms x8 model eff model' evs0 Hno Hargs H3)) as dR_6; dand3 dR_6 as Heff Hm Hevs | destruct (munmap_ok_inv segs ms x8 model eff model' evs0 Hno Hargs H3)
-        as (Heff & Hm & Hevs) ]); subst eff model' evs0;
-      rewrite (materialize_model_accesses_no_lazy _ _
-        (munmap_model_no_lazy _ _ _ Hlazy)) in Hmat;
+      destruct (munmap_ok_inv segs ms x8 model eff model' evs0 Hno Hargs H3)
+        as (_ & Hcase);
+      destruct Hcase as [(? & ? & -> & ->) | (-> & ->)];
+      [ rewrite (materialize_model_accesses_no_lazy _ _ Hlazy) in Hmat
+      | rewrite (materialize_model_accesses_no_lazy _ _
+          (munmap_model_no_lazy _ _ _ Hlazy)) in Hmat ];
       discriminate
     end.
-  - (* [comment removed for export] *)
+  - (* sstep_exit : munmap leaves haltedness unchanged *)
     exfalso.
     match goal with
     | H2 : ms_svc_pending ms = Some ?x,
       H3 : syscall_spec (sys_input segs ms ?x) model (Ok ?eff ?model' ?evs0),
       H6 : m_halted ?model' = Some ?code |- _ =>
       assert (Hx : x = x8) by congruence; subst x;
-      (first [ pose proof ((munmap_ok_inv segs ms x8 model eff model' evs0 Hno Hargs H3)) as dR_7; dand3 dR_7 as _ Hm _ | destruct (munmap_ok_inv segs ms x8 model eff model' evs0 Hno Hargs H3) as (_ & Hm & _) ]);
-      subst model'; rewrite munmap_model_halted, Hh in H6; discriminate
+      destruct (munmap_ok_inv segs ms x8 model eff model' evs0 Hno Hargs H3)
+        as (_ & Hcase);
+      destruct Hcase as [(? & ? & _ & ->) | (_ & ->)];
+      [ rewrite Hh in H6
+      | rewrite munmap_model_halted, Hh in H6 ];
+      discriminate
     end.
-  - (* [comment removed for export] *)
+  - (* sstep_killed : munmap leaves it unkilled for the same reason *)
     exfalso.
     match goal with
     | H2 : ms_svc_pending ms = Some ?x,
       H3 : syscall_spec (sys_input segs ms ?x) model (Ok ?eff ?model' ?evs0),
       H6 : m_killed ?model' = Some ?sig |- _ =>
       assert (Hx : x = x8) by congruence; subst x;
-      (first [ pose proof ((munmap_ok_inv segs ms x8 model eff model' evs0 Hno Hargs H3)) as dR_8; dand3 dR_8 as _ Hm _ | destruct (munmap_ok_inv segs ms x8 model eff model' evs0 Hno Hargs H3)
-        as (_ & Hm & _) ]);
-      subst model';
-      assert (Hhn : m_halted
-                      (munmap_model (ms_gpr ms 0)
-                         (page_round_up (ms_gpr ms 1)) model) = None)
-        by (rewrite munmap_model_halted; exact Hh);
-      rewrite (m_killed_of_m_halted_none _ Hhn) in H6; discriminate
+      destruct (munmap_ok_inv segs ms x8 model eff model' evs0 Hno Hargs H3)
+        as (_ & Hcase);
+      destruct Hcase as [(? & ? & _ & ->) | (_ & ->)];
+      [ rewrite (m_killed_of_m_halted_none _ Hh) in H6
+      | rewrite m_killed_of_m_halted_none in H6;
+        [| rewrite munmap_model_halted; exact Hh] ];
+      discriminate
     end.
-  - (* [comment removed for export] *)
+  - (* sstep_syscall_unmodeled *)
     exfalso.
     match goal with
     | H2 : ms_svc_pending ms = Some ?x,

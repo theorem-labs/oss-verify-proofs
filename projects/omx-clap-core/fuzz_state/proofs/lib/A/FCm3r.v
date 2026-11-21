@@ -12,7 +12,8 @@
    FDE [0x3e0bc,0x3e268), 107/107 instructions equal to preset's _3 in opcode and registers (98 identical words; the rest
    pc-relative and call fields), measured by FDE-paired masked body match. Its released proof (R_fs3.v) is another
    framework, so the proof text follows cgif_file's AF0t. *)
-(* Modified by Theorem Labs, 2026-10: relocated from omx-clap-core/fuzz_preset (a working branch b120217aa206) to omx-clap-core/fuzz_state's ASan image A as the class-3 walk of fuzz_state's __asan_stack_malloc_3 at 0x3d788: module paths and the image numerals of A/FCimg.v (generated from fuzz_state.asan), nothing else. *)
+(* Modified by Theorem Labs, 2026-10: relocated from omx-clap-core/fuzz_preset (a working branch) to omx-clap-core/fuzz_state's ASan image A as the class-3 walk of fuzz_state's __asan_stack_malloc_3 at 0x3d788: module paths and the image numerals of A/FCimg.v (generated from fuzz_state.asan), nothing else. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

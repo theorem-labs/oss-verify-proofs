@@ -1,4 +1,4 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfGk0.v (a working branch 3e35620c52e); relocated to libreac/fuzz_disco.asan by reloc.py (target disco-A): module paths changed; 5 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table: this file's rows in provenance/evidence/g9-gxa/g9tool/g9-table-disco-A.tsv). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfGk0.v (a working branch); relocated to libreac/fuzz_disco.asan by reloc.py (target disco-A): module paths changed; 5 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table: this file's rows in provenance/evidence/g9-gxa/g9tool/g9-table-disco-A.tsv). *)
 (* Hand fix (a Theorem Labs lane, 2026-10-29): g_ranges' first word count 39 -> 36: disco's __wrap_* trampoline block runs
    0x429c4 .. 0x42a54 (next function ___interceptor_strlen), 3 trampolines fewer than fm's (no strncmp / strncasecmp /
    strstr interceptors); the tool keeps counts as non-address numerals. The other four counts measure equal on disco A. *)

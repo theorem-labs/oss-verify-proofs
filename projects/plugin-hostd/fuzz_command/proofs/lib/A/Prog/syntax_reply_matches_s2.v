@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: ported from proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v and lib/A/AC8b.v at
-   c8557374ad2e: the walk of syntax_reply_matches on fuzz_command.asan, the segments after a word of the reply is
+(* Modified by Theorem Labs, 2026-10: ported from proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v and lib/A/AC8b.v:
+   the walk of syntax_reply_matches on fuzz_command.asan, the segments after a word of the reply is
    matched: JOIN (0x88708: step the reply past the word, checks C4 and C5) and JOIN2 (0x88748: back to the item loop or
    return). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

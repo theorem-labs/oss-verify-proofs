@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Trevor Hansen, 2026-11: module names. *)
+(* Modified by Theorem Labs, 2026-11: ported toward LPS 727298f3 by the change of the same file of cgif/cgif_rgb_fuzzer, its addresses relocated to this unit's binaries. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -369,4 +370,38 @@ ss_mem SST2 = reg_lock :: mkRegion (Some aTP) (-164) (-160) (-164) (-160) [mkChu
 mkChunk (-40) (CVal 8 (SOff 19 0)); mkChunk (-32) (CVal 8 (SOff 18 0)); mkChunk (-24) (CVal 8 (SOff 9 0));
 mkChunk (-16) (CVal 8 (SOff 8 0)); mkChunk (-8) (CVal 8 (SOff aRA 0))]].
 Proof. vm_compute. repeat split; reflexivity. Qed.
+
+(* 08b1429: munmap may answer an injected -ENOMEM (Sys/Mm/Mmap.v munmap_spec); musl's free ignores the result,
+   so the refused path resumes with a0 = -ENOMEM and runs the same tail to FREE_RET. *)
+Definition ss_post_ecall_r : sstate := resume SST1 (SLit 18446744073709551604) (ss_mem SST1) (ss_facts SST1).
+(* The refused tail is short (__syscall_ret's errno store, then free's return); run it with a small fuel so that
+   a run that misses FREE_RET fails at once instead of spending the global FUEL. *)
+Definition RFUEL : N := 60%N.
+Definition SST2r : sstate := fst (sym_run_toN ubs2segs ubs2tbl RFUEL FREE_RET ss_post_ecall_r).
+Lemma free_tail2r_run_ok : sym_run_toN ubs2segs ubs2tbl RFUEL FREE_RET ss_post_ecall_r = (SST2r, RS_running) /\ ss_pc SST2r = FREE_RET.
+Proof. split; vm_compute; reflexivity. Qed.
+Theorem free_tail2r_run : forall E ms model,
+st_ok ubs2segs E ss_post_ecall_r ms -> m_halted model = None -> m_vm_lazy model = [] ->
+SR ubs2segs (mkCfg ms model)
+(fun c' => exists ms1, c' = mkCfg ms1 model /\ st_ok ubs2segs E SST2r ms1 /\
+frame_of E (ss_mem ss_post_ecall_r) (ms_mem ms) (ms_mem ms1)).
+Proof.
+intros E ms model HS Hh Hlz.
+eapply (SR_run_to_gen ubs2segs ubs2tbl ubs2tbl_ok RFUEL FREE_RET E ss_post_ecall_r SST2r RS_running ms model _ Hh Hlz HS (proj1 free_tail2r_run_ok)).
+intros ms1 HS1 HF. apply SR_ret. exists ms1. auto.
+Qed.
+(* The refused tail's store differs from the unmapped one only in the errno value; the region layout
+   (lock, errno word at tp-164, stack frame) is the same, which is all the leaf needs. *)
+Lemma SST2r_shape :
+ss_pc SST2r = FREE_RET /\ ss_resv SST2r = None /\ callee_view SST2r = callee_view0 /\
+exists c1 c2, ss_mem SST2r = reg_lock :: mkRegion (Some aTP) (-164) (-160) (-164) (-160) c1
+:: [mkRegion (Some aSP) (-8192) 0 (-8192) 0 c2].
+Proof.
+split; [vm_compute; reflexivity|]. split; [vm_compute; reflexivity|]. split; [vm_compute; reflexivity|].
+let v := eval vm_compute in (ss_mem SST2r) in
+lazymatch v with
+| [_; ?r1; ?r2] => exists (r_chunks r1), (r_chunks r2); vm_compute; reflexivity
+end.
+Qed.
+
 End a.

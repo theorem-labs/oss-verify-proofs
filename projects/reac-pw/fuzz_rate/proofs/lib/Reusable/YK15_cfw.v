@@ -26,24 +26,37 @@ Qed.
 Lemma cut_free_node : forall c (I : Type) evs nx,
 node_ok segs c I evs nx -> ~ budget_refused_at segs c -> (forall i, cut_free segs (nx i)) -> cut_free segs c.
 Proof using.
-intros c I evs nx [_ Hc] Hb H. apply (cut_free_of_succ c Hb). intros e c' Hs.
+intros c I evs nx [_ [Hc _]] Hb H. apply (cut_free_of_succ c Hb). intros e c' Hs.
 destruct (Hc e (SNext c') Hs) as (i & _ & E). injection E as ->. apply H.
 Qed.
 Lemma alloc_refused_false : forall i m, ~ In (bv_unsigned (in_sysno i)) alloc_mark_sysnos ->
 alloc_budget_refused_b i m = false.
 Proof using.
 intros i m Hn. unfold alloc_budget_refused_b.
-destruct (Z.eqb_spec (bv_unsigned (in_sysno i)) 214) as [E|_]; [exfalso; apply Hn; rewrite E; vm_compute; auto|].
-destruct (Z.eqb_spec (bv_unsigned (in_sysno i)) 216) as [E|_]; [exfalso; apply Hn; rewrite E; vm_compute; auto|].
-destruct (Z.eqb_spec (bv_unsigned (in_sysno i)) 222) as [E|_]; [exfalso; apply Hn; rewrite E; vm_compute; auto|].
-destruct (Z.eqb_spec (bv_unsigned (in_sysno i)) 226) as [E|_]; [exfalso; apply Hn; rewrite E; vm_compute; auto|].
+(* 727298f3:theories/LinuxProcessSem/Run.v:1865 -- [alloc_mark_sysnos] is
+   [[214; 215; 216; 222; 226]], and the dispatcher at [Run.v:1867] has the
+   matching [munmap_budget_refused_b] arm, so a four-number case split does
+   not exhaust it.  NOT caused by #146: the list is BYTE-IDENTICAL at
+   75d69e00 and 727298f3 (`git diff 75d69e00 727298f3 -- theories` names it
+   zero times), so 215 predates the revision window and this split was
+   already wrong at the old image -- pre-existing debt, reachable now.
+   Arms in the dispatcher's own order.
+   [tauto] rather than [auto]: after [vm_compute] the goal is a
+   five-way disjunction and [auto]'s default depth 5 runs out on the LAST
+   member, which is how this read as "the relation or is not a declared
+   reflexive relation" on the [reflexivity] below. *)
+destruct (Z.eqb_spec (bv_unsigned (in_sysno i)) 214) as [E|_]; [exfalso; apply Hn; rewrite E; vm_compute; tauto|].
+destruct (Z.eqb_spec (bv_unsigned (in_sysno i)) 215) as [E|_]; [exfalso; apply Hn; rewrite E; vm_compute; tauto|].
+destruct (Z.eqb_spec (bv_unsigned (in_sysno i)) 216) as [E|_]; [exfalso; apply Hn; rewrite E; vm_compute; tauto|].
+destruct (Z.eqb_spec (bv_unsigned (in_sysno i)) 222) as [E|_]; [exfalso; apply Hn; rewrite E; vm_compute; tauto|].
+destruct (Z.eqb_spec (bv_unsigned (in_sysno i)) 226) as [E|_]; [exfalso; apply Hn; rewrite E; vm_compute; tauto|].
 reflexivity.
 Qed.
 Lemma nr_node_sys : forall ms model x8 (I : Type) evs nx,
 node_ok segs (mkCfg ms model) I evs nx -> ms_svc_pending ms = Some x8 -> alloc_no_b (bv_unsigned x8) = false ->
 ~ budget_refused_at segs (mkCfg ms model).
 Proof using.
-intros ms model x8 I evs nx [_ Hc] Hsvc Hno (Hh & [(Hn & _) | (y8 & Hy8 & [Hb | (eff & m' & evs' & Hspec & Hh' & Hmat)])]);
+intros ms model x8 I evs nx [_ [Hc _]] Hsvc Hno (Hh & [(Hn & _) | (y8 & Hy8 & [Hb | (eff & m' & evs' & Hspec & Hh' & Hmat)])]);
 cbn [cfg_ms cfg_model] in *.
 - congruence.
 - rewrite Hsvc in Hy8. injection Hy8 as <-.
@@ -71,7 +84,7 @@ Qed.
 Lemma uniform_node : forall c (I : Type) evs nx,
 node_ok segs c I evs nx -> place_uniform segs c -> canon_fit_at segs c -> (forall i, uniform segs (nx i)) -> uniform segs c.
 Proof using.
-intros c I evs nx [_ Hc] Hp Hf H. apply (uniform_intro segs c Hp Hf). intros e c' Hs.
+intros c I evs nx [_ [Hc _]] Hp Hf H. apply (uniform_intro segs c Hp Hf). intros e c' Hs.
 destruct (Hc e (SNext c') Hs) as (i & _ & E). injection E as ->. apply H.
 Qed.
 Lemma place_uniform_sys : forall ms model x8,

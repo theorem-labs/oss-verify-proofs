@@ -2,13 +2,14 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the closing file of the ASan+UBSan walk of arg_line (plugin-hostd/fuzz_command,
    fuzz_command.asan-ubsan), the pattern of a Theorem Labs lane's PASS4-REFIT.md section F (lib/A/Prog/SupRemoveAllRefitClosed.v,
-   a working branch e84227c9553; a Theorem Labs lane's lib/A/Prog/RecBClosed.v, a working branch f349bdaedba): the
+   a working branch; a Theorem Labs lane's lib/A/Prog/RecBClosed.v, a working branch): the
    walk's targ_line_holds (lib/B/Prog/arg_line.v) with the per-binary facts it names as Section hypotheses discharged
    at the pinned image (lib/B/Prog/CmdImg.v's instance PB_cmd, whose segments are tfibsegs, and the sink head
    YE2k.tfib_sink_head): cmd_val_objs_PB, cmd_sig_prog_PB and PRW (cmd_prw_tfib: the program's statics lie in
    tfibsegs' read-write window) are CmdRecRest's lemmas, cmd_img_facts_tfib is CmdRecImg's. What remains is the
    statement's own hypotheses (rec_canonical's contract and the strlen wrapper's, each at every FP state), HB and
    MTL. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

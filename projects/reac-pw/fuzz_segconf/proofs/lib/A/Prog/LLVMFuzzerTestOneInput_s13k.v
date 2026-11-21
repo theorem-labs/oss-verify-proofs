@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: the first stretch of the inlined words_of of LLVMFuzzerTestOneInput's ASan+UBSan walk (plugin-hostd/fuzz_command image B, 0x86760 .. 0x867b4: strnlen of the message, the three mallocs stored at 120/128/136(sp) and their NULL tests reloaded from the frame), the B twin of lib/A/Prog/LLVMFuzzerTestOneInput_s41.v, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh2.v (a call and back, the caller's facts carried past it) and A/ACh6.v (a segment from one point of the function to the next, the next point's statement a premise). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/LLVMFuzzerTestOneInput_s41.v, with its module paths, module names and numbers changed; 2758 of its 2894 lines of code are new or changed and 886 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/LLVMFuzzerTestOneInput_s20.v, with its module paths, module names and numbers changed; 348 of its 449 lines of code are new or changed and 2793 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan image A (fuzz_segconf.asan, pin sha256 48c5355bdacb): the kit of file group _s13
    (segment S03 of the walk of the test harness's entry function LLVMFuzzerTestOneInput, K84f98 -> K85024 at turn 0;
    the segment lemma is lt_seg_S03 in LLVMFuzzerTestOneInput_s13.v). It holds the two symbolic seeds (0x84f98 and
@@ -11,8 +12,8 @@
    blocks, lt_img under an agreement on the image bytes, lt_frame under an agreement on its bytes), the call step
    of reac_segconf_init (s13_call, PaCall.v's cl_callS with the callee's contract), and the run tactics.
 
-   proves function LLVMFuzzerTestOneInput (reuse search: origin/main@6e24fa4d602c origin/ossv/recipes@3abc3740de97
-   origin/ossv/candidates@ee89628c9971 origin/release/pau-projects-recipes@b6a0088adcb4 / the stream's proof index
+   proves function LLVMFuzzerTestOneInput (reuse search: origin/main origin/ossv/recipes
+   origin/ossv/candidates origin/release/pau-projects-recipes / the stream's proof index
    LLVMFuzzerTestOneInput + four-ref git grep; checker (fresh, read-only): CONFIRM; none: written new) *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

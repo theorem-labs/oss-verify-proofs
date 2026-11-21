@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -200,8 +201,18 @@ Record KL (L : mled) (pbrk : Z) (mo : Model) : Prop := mkKL {
   kl_minv : minv mo;
   kl_halt : m_halted mo = None;
   kl_wf : vmwf (vm_maps (m_vmmaps mo));
-  kl_resv : ld_resv L = map wwZ (vm_reserved (m_vmmaps mo));
-  kl_resv_top : forall e, In e (vm_reserved (m_vmmaps mo)) -> ehi e <= bv_unsigned (vm_start_brk (m_vmmaps mo));
+  (* At the revision [init_model]'s reserved list is the binary's segments
+     followed by the vDSO/vvar pair ([State.init_reserved]); the pair sits
+     just below [vdso_top], inside the mmap window, not below the break.  So
+     a reserved entry is below the break or one of at most two small entries
+     (4 + at most 16 pages, [vdso_text_pages_le]); and no mapping meets any
+     reserved entry (every grant checks [region_free] over
+     [vm_reserved ++ vm_maps]).  Both facts read the ledger only. *)
+  kl_resv : incl (ld_resv L) (map wwZ (vm_reserved (m_vmmaps mo)));
+  kl_resv_top : exists V, (length V <= 2)%nat /\ live_bytes V <= 20 * 4096 /\
+      (forall e, In e (vm_reserved (m_vmmaps mo)) ->
+         ehi e <= bv_unsigned (vm_start_brk (m_vmmaps mo)) \/ In e V);
+  kl_vdso : forall r, In r (vm_reserved (m_vmmaps mo)) -> forall e, In e (vm_maps (m_vmmaps mo)) -> edisj e r;
   kl_start : 0 < bv_unsigned (vm_start_brk (m_vmmaps mo))
       /\ bv_unsigned (vm_start_brk (m_vmmaps mo)) mod PGSZ = 0
       /\ bv_unsigned (vm_start_brk (m_vmmaps mo)) <= bv_unsigned (vm_brk (m_vmmaps mo))

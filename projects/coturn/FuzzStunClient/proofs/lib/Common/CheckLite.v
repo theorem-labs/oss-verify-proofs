@@ -1,21 +1,26 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, ioctl's check takes the syscall input, and sys_rob_of_lite_check gives the read-only-backing premise from this file's check_syscall. *)
 From Stdlib Require Import ZArith List Bool Lia.
-From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs Run.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType RiscvSemantics Fs State Monad Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Checks.Sys Require Export
   Prelude Uaccess Fs.ReadWrite Fs.Ioctl Mm.Mmap Mm.Mprotect Kernel.Exit Kernel.Fork.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 (* [comment removed for export] *)
 From LinuxProcessSemantics.LinuxProcessSem.Checks.Sys Require Export Fs.Open.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
+(* (B2): [sys_rob_of_lite_check] at the end of this file needs
+   [RomBase]'s [sys_rob], [wrom] and [rom_ext].  Required without Import, so none of its short
+   names enters this file's scope. *)
+Require OSSVerify.Proofs.coturn.FuzzStunClient.lib.Common.Cfg.RomBase.
 Import ListNotations.
 Open Scope bv_scope.
 Open Scope sys_scope.
 
 Definition check_syscall (i : SyscallInput) (eff : SyscallEffect) (m : Model) : check_result :=
   match bv_unsigned (in_sysno i) with
-  | 29%Z => check_ioctl (fd32 (in_arg i 0)) (cmd32 (in_arg i 1)) eff m
+  | 29%Z => check_ioctl i (fd32 (in_arg i 0)) (cmd32 (in_arg i 1)) eff m
   | 56%Z => check_openat i (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) eff m
   | 57%Z => check_close (fd32 (in_arg i 0)) eff m
   | 63%Z => check_read i (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) eff m
@@ -50,7 +55,7 @@ Proof.
   exfalso. apply H. apply check_syscall_unlisted. exact E.
 Qed.
 
-Lemma chk_at_29 : forall i eff m, bv_unsigned (in_sysno i) = 29%Z -> check_syscall i eff m = check_ioctl (fd32 (in_arg i 0)) (cmd32 (in_arg i 1)) eff m.
+Lemma chk_at_29 : forall i eff m, bv_unsigned (in_sysno i) = 29%Z -> check_syscall i eff m = check_ioctl i (fd32 (in_arg i 0)) (cmd32 (in_arg i 1)) eff m.
 Proof. intros i eff m H. unfold check_syscall. rewrite H. reflexivity. Qed.
 Lemma spec_at_29 : forall i m o, bv_unsigned (in_sysno i) = 29%Z -> syscall_spec i m o = ioctl_spec (fd32 (in_arg i 0)) (cmd32 (in_arg i 1)) i m o.
 Proof. intros i m o H. unfold syscall_spec, dispatch. rewrite H. reflexivity. Qed.
@@ -218,6 +223,35 @@ Proof. intros i eff m Hl. split; [apply check_syscall_sound_unmodeled; exact Hl 
 (* [comment removed for export] *)
 Lemma lite_no_at : forall i n, bv_unsigned (in_sysno i) = n -> lite_no n = true -> lite_no (bv_unsigned (in_sysno i)) = true.
 Proof. intros i n -> H. exact H. Qed.
+
+(* Bridge (B2).  [RomBase.sys_rob_of_check] is stated
+   over the MODEL's [Checks.ExecutableSpecs.check_syscall]; every node in this tree is stated
+   over the [check_syscall] of THIS file, which is a DIFFERENT CONSTANT WEARING THE SAME NAME.
+   A rewrite across the two finds no subterm (the goal prints the qualified name, the pattern the
+   unqualified one).  So the lite version is its own
+   lemma, over this file's own [check_syscall_ok_iff] and [check_syscall_err_iff]; both ask
+   [lite_no], which holds at every number coturn issues. *)
+Lemma sys_rob_of_lite_check : forall segs ms m x8,
+  ms_svc_pending ms = Some x8 ->
+  lite_no (bv_unsigned x8) = true ->
+  (forall r v eff, RomBase.rom_ext (ms_rom ms) r ->
+     check_syscall (sys_input segs (RomBase.wrom ms r) x8) eff (with_vdso v m)
+     = check_syscall (sys_input segs ms x8) eff (with_vdso v m)) ->
+  RomBase.sys_rob segs (mkCfg ms m).
+Proof.
+  intros segs ms m x8 Hs Hl H r x8' Hr Hs' v o. cbn [cfg_ms cfg_model] in *.
+  assert (Ex : x8' = x8) by congruence. subst x8'.
+  assert (Hin : forall ms0, lite_no (bv_unsigned (in_sysno (sys_input segs ms0 x8))) = true)
+    by (intros ms0; exact Hl).
+  destruct o as [eff m' evs|].
+  - rewrite <- (check_syscall_ok_iff _ eff _ m' evs (Hin (RomBase.wrom ms r))).
+    rewrite <- (check_syscall_ok_iff _ eff _ m' evs (Hin ms)).
+    rewrite (H r v eff Hr). reflexivity.
+  - set (e0 := mkEffect (Z_to_bv 64 0) [] []).
+    rewrite <- (check_syscall_err_iff _ e0 _ (Hin (RomBase.wrom ms r))).
+    rewrite <- (check_syscall_err_iff _ e0 _ (Hin ms)).
+    rewrite (H r v e0 Hr). reflexivity.
+Qed.
 
 
 (* [comment removed for export] *)

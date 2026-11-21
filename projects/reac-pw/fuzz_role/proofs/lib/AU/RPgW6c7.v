@@ -2,16 +2,16 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/YFen.v, with its module paths and module names changed; 600 of its 644 lines of code are new or changed and 174 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6c7.v at cb9cdc023f20; image B's code
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6c7.v; image B's code
    (fuzz_rate.asan-ubsan): its pcs, registers and real-frame cells, the pod e62 (F + 0x210) of the class-4 frame for
    locals instead of e (F + 0xf0) of the class-3 one, the multiplier cell R + 0x0, and the UBSan trap branches
    0x81890, 0x81ed4 (decided by the engine from the facts) and 0x81f24 (split, the trap arm refuted). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_rate/lib/AU/RtPgW6c7B.v, with its module paths, module names, addresses and numbers changed; 208 of its 599 lines of code are new or changed and 253 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6c7.v at cb9cdc023f20; image B's code
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6c7.v; image B's code
    (fuzz_rate.asan-ubsan): its pcs, registers and real-frame cells, the pod e62 (F + 0x210) of the class-4 frame for
    locals instead of e (F + 0xf0) of the class-3 one, the multiplier cell R + 0x0, and the UBSan trap branches
    0x81890, 0x81ed4 (decided by the engine from the facts) and 0x81f24 (split, the trap arm refuted). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgW6c7B.v at 05426fac6916 for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgW6c7B.v for
    reac-pw/fuzz_role's image B (fuzz_role.asan-ubsan): module paths changed (lib/AU/Img0.rsegs, lib/A/RPgBase and
    RPgCSpec, lib/AU/RPgMem / RPgSteps rm_ / rl_ names, lib/AU/RPgW6cBase.v); every pc is role B's (the case entry
    0x81050, the no-byte block 0x813a0, the second byte 0x816cc, the size store 0x8170c, __asan_memcpy 0x5116c with
@@ -21,6 +21,7 @@
    slot 35); the post gives s6 = pp + 0x4000, s8 = the source + n and s4 = |r2| - n; the second byte's trap test
    0x816d0 is `bgeu s4,a1` to the trap and the last one 0x81720 is `bltu a0,a2` to the trap, so at 0x81720 the taken
    arm is the one refuted; the two remainders are lib/AU/RPgW6c7A.v's closed expressions w6cb_e7t / w6cb_e7s. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_role image B (fuzz_role.asan-ubsan, pinned sha256
    b255d4935da5af137a3967dbe33380ea43be8e78bfe05d1e356e0a2be8a69ff0; every address measured on the unstripped twin
    dc791783f32962615e18a5f5cffae758ba56eb5dc87f70913c3579b101b4406a, same loaded bytes): the block lemma w6cb_h7 of

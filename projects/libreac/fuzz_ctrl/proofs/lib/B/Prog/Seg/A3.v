@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 1137 of its 1175 lines of code are new or changed and 210 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_box_model_block.v; 1090 of its 1202 lines of code are new or changed and 1063 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P5.v, with its module paths, module names, addresses and numbers changed; 1009 of its 1131 lines of code are new or changed and 1080 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment A3 of fuzz_ctrl LLVMFuzzerTestOneInput (asan-ubsan, image B, libreac v1.9.0): cut Inv_B810c4 (v1.9 pc
    0x810c4) -> cut Inv_B81220 (0x81220): the frame header writes and the first 255 of the 392 shadow
    bytes of the side-stack frame area (plan-asan-ubsan 3.3, A3).
@@ -997,7 +998,7 @@ Proof.
     assert (Hfr8 : fr mod 8 = 0) by (pose proof (Z.mod_eq fr 32 ltac:(lia)) as X; rewrite Hfrm in X;
                                      replace fr with ((4 * (fr / 32)) * 8) by lia; apply Z_mod_mult).
     pose proof (a3_shadow_off fr) as Hshfr.
-    (* PREF's input facts across the run (de2516edf5): for n > 0 the input block is a live entry block, so
+    (* PREF's input facts across the run: for n > 0 the input block is a live entry block, so
        each of its bytes is app memory below stklo <= S - SLOT_STACK < A and off the frame (real arm: stklo <= fr;
        side arm: not in the FakeStack, which holds the frame), and neither it nor its shadow byte is one of the
        three written ranges (fra_in_keep_sh). *)

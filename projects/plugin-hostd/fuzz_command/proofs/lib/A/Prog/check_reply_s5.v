@@ -4,7 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: the fifth segment of check_reply's walk (fuzz_command.asan, 0x86d78), the
    strcmp call of the refusal path (0x86fb8) and the branch into the epilogue, ported from
    proofs/cgif/cgif_file_fuzzer/lib/A/ACh2.v (the step through a call and back) and A/ACh5.v (a segment that ends
-   in another segment's statement), at c8557374ad2e.
+   in another segment's statement).
 
    The code of the segment is
      0x86fb8  jal  wrapper_strcmp       a0 = g_rec.reply, a1 = s3 = F + 32, which holds "resp <code>"
@@ -16,6 +16,7 @@
    The walk runs with the symbolic regions dropped (`st_ok_pi_submem` with []): the two instructions write no
    memory, so the engine's frame is empty and every byte the walk reads is the byte of the state the segment was
    entered in. The interceptor's own writes are the ones its contract allows, inside its scratch window below sp. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -168,10 +168,10 @@ Qed.
 
 (* ------------------------------------------------------------------------------------------------------------ *)
 (* Route (C) (a Theorem Labs lane 2026-10-29 09:20Z; wave lead a Theorem Labs lane; a Theorem Labs lane's brief dt1-on-B): the _on twins of the two
-   statements above. Image-B twin of A's (a working branch ec2ad5b4f4f, lib/A/Prog/build_dt1_single_c.v
+   statements above. Image-B twin of A's (a working branch, lib/A/Prog/build_dt1_single_c.v
    blob 80b1de9255d): A's text with lib.A -> lib.B and the comment `asan-ubsan`. The run uses the universal
-   `shadow_rw m` premise ONLY through the shadow premises of its two callees (measured on a working branch
-   5c355e74408: build_dt1_singleF.v HSW :121 feeds only bdbF_rt :206, whose shadow_rw goes to the post :325, to
+   `shadow_rw m` premise ONLY through the shadow premises of its two callees (measured on a working branch:
+   build_dt1_singleF.v HSW :121 feeds only bdbF_rt :206, whose shadow_rw goes to the post :325, to
    __asan_memcpy's premise :579 and to dt1_head's premise :675; build_dt1_single.v :90 / :145 the same). dt1_head's _on
    contract (dt1_head_c.v) has NO shadow premise (dropped: dt1_head reads its shadow through addressable). The call
    __asan_memcpy(o + 20, d, n), whose _on contract (asan_memcpy_c_on.v / asan_memcpy_cF_on.v) takes the region

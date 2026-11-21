@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: statements written out as text. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -107,7 +108,18 @@ Section AllocSec.
   Hypothesis NW : ltac2:(zQ "30!jnb!jpd!ria@1$2@1$1@1$0?2mo"). Hypothesis NWA : ltac2:(zQ "30!jnb!jm2!ria@1$2@1$1@1$0?2mo").
   Hypothesis NOV : ltac2:(zQ "30!jnb!jpd!rjc@1$2@1$1@1$0?2mo").
   Hypothesis BUD : ltac2:(zQ "90!q9!rk9!ij8!jnb!jp1!kh6!rl6!ivd!ko0@2$8@2$0@2$0@2$0@2$0@1$5?2mo@2$2@1$6?1S$1?3msz@2$2@2$0@2$7?3msz+ogg0+2$1+iggg0@1$4@1$3?2mo").
-  Hypothesis GAP : ltac2:(zQ "h60!m4!oc!jl5!jnb!hh7!jlc!hi5!jja!ipe!mmb!lqd!mb!rm5!rk9!mq7!jpd!jr8!ij2!q9!ko0!pm4!ouc@2$a@1$1@1$0#k0\1g@1$1@1$0#k0@2$2@3$5$b@2$h5@2$4@1$0#k0^1$dZ@2$2@2$h4Z@2$4@1$0#k0^1@2$2@2$h3@2$h2@2$4@1$0#k0^1?3msz@1$c@1$3?2mo@3$5$7@3$e@3$6@2$8@1$1@1$0#k0@1$1@1$0#k0@1$h0@1$3?2mo@1$f@1$3?2mo^1@1$h1?3msz$9").
+  (* LPS revision repair (75d69e00, checker 2c6b6db8).  GAP written out as explicit text (rule 11,
+     never re-encoded), with the disjunct the revision added to Bs/SecLazy.v:140-143's
+     sr_mmap_kernel_MS, exactly as As//Bs AS_CombinedLarge.v now carry it: combined_large_sreach,
+     which this file applies, demands it as its 84th argument, and g is GAP's own witness, so it
+     must come from above.
+     FAITHFULNESS CONTROL (rule 22c): `About GAP` on the encoded original here, printed by
+     a farm round (image 2c6b6db8), reads this text minus the last
+     conjunct, character for character, and identically on both sides.  It carries no address and
+     no literal. *)
+  Hypothesis GAP : exists g : word, bv_unsigned g mod page_size = 0 /\ 0 < bv_unsigned g /\ bv_unsigned g + msz <= alloc_top (m_vmmaps mo)
+                                    /\ region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) g (wz msz) = true
+                                    /\ (bv_unsigned g + msz <= mmap_top (m_vmmaps mo) \/ task_unmapped_base <= bv_unsigned g).
   (* [comment removed for export] *)
   Hypothesis IMGR : ltac2:(zQ "e0!m4!hh7!jja!mmb!jl5!jlc!jnb!jr8!rn2!qi2!rnd!ko0!pm4!oc>1x@1$d@1$0#k0>0@2$4@2$b$8@2$1@1$0#k0^1@2$c@2$1@1$0#k0^1$9@3$5$2@2$a^2@1$7@1$6?2mo$3").
   Hypothesis SHLAND : ltac2:(zQ "e0!m4!hh7!jja!mmb!jl5!jlc!jnb!jpd!qm2!rob!rnd!ko0!pm4!oc>1x@1$d@1$0#k0>0@2$4@2$b$9@2$1@1$0#k0^1@2$c@2$1@1$0#k0^1$8@3$5$2@2$a^2@1$7@1$6?2mo$3").

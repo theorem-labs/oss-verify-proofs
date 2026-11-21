@@ -81,14 +81,14 @@ Definition arealloc_leafU (Un : list (list Z)) (Up : list (Z * Z)) (ly : alayout
    TRACE PREMISE in the C5 form with realloc's two inner events counted: the call's trace is in the universe OR two
    events remain (`st_nev S + 2 < EV_MAX`), because Allocate runs one event and Deallocate two events after realloc's
    entry, and the callees take fs's standard C5 premise `In .. \/ st_nev _ < EV_MAX` at THEIR states (a Theorem Labs lane's c5 text,
-   ReallocG.v:24-26; measured by a Theorem Labs lane: with only `st_nev S < EV_MAX` the callees' premise is false at S1 / S2). A caller
+   ReallocG.v:25-27; measured by a Theorem Labs lane: with only `st_nev S < EV_MAX` the callees' premise is false at S1 / S2). A caller
    discharges it from its own budget premise (ALLOC's fsw_aj_reallocU already has `st_nev Sc + 2 < EV_MAX`,
-   FSW_realloc.v:511). Its left arm is FSH_ReallocModelG's plain `In .. U` form.
+   FSW_realloc.v:512). Its left arm is FSH_ReallocModelG's plain `In .. U` form.
    STACK MARGIN `ly_bot ly + 0x8a0 < spZ regs`: realloc's own four frames (interceptor 0x7f0, the GetCurrentPc / unwind
    frame 0x70, asan_realloc 0x10, Reallocate 0x30 = 0x8a0, identical on A and B; the stack note at
    lib/A/FSH_ReallocModel.v:37-45) lie between its entry sp and the inner Allocate / Deallocate calls, whose contracts
-   need `ly_bot ly < sp_callee` (AllocG.v:75,
-   DeallocG.v:81); c5's realloc_pre carries the same bound as RSTACK (ReallocG.v:121). acall_preU's `ly_bot ly < spZ regs`
+   need `ly_bot ly < sp_callee` (AllocG.v:76,
+   DeallocG.v:82); c5's realloc_pre carries the same bound as RSTACK (ReallocG.v:122). acall_preU's `ly_bot ly < spZ regs`
    alone cannot give it (measured by a Theorem Labs lane). A caller discharges it from its own stack window. *)
 Definition arealloc_realizesU (Un : list (list Z)) (pc pc0 : Z) : Prop :=
   forall ly S Up W regs mem md p n_old n ch,

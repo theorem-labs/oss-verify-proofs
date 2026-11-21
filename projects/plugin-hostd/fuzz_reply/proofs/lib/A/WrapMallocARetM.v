@@ -1,12 +1,13 @@
-(* CARRIED BY PATH from commit 9e87119fcf60, proofs/omx-clap-core/fuzz_preset/lib/A/WrapMallocARetM.v, sha256 b09ced17981b; internal record; image numerals relocated to fuzz_reply image A by alreloc frozen-a5c53bb2bed4ad03; one added module, AB1wMalloc, for 4 preset-AB1w symbols. *)
+(* CARRIED BY PATH from proofs/omx-clap-core/fuzz_preset/lib/A/WrapMallocARetM.v, sha256 b09ced17981b; internal record; image numerals relocated to fuzz_reply image A by alreloc frozen-a5c53bb2bed4ad03; one added module, AB1wMalloc, for 4 preset-AB1w symbols. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: omx-clap-core/fuzz_preset image A (asan, pin 1be0f53d96cb, unstripped twin bff8519bbe3e;
    relocated from d83eb25d by symbol + offset, RELOC102-A1.md (sha256 71246b15a2f6; internal record)), the
    MACHINE RUNS of the malloc interceptor's RETURN segment: Allocate's return into asan_malloc (RA_ALLOC, A 0x32588)
    -> the wrapper's return to its caller, register / memory facts in, register / memory facts out (no allocator
    invariant here; WrapMallocARet.v is the glue to the record field wm_ret).
-   Method: plugin-hostd/fuzz_reply's lib/A/RGthinM2.v m6a / m6b at a working branch 66a127cb11e (the same
+   Method: plugin-hostd/fuzz_reply's lib/A/RGthinM2.v m6a / m6b at a working branch (the same
    SRr framework, asan_realloc's NULL-input call there), ported onto asan_malloc's and ___interceptor_malloc's
    epilogues; SetErrnoToENOMEM and __errno_location are the same code. Rule 24: RULE24-W6PRE.md (sha256 17e6b9ded9a9; internal record).
    THE CODE (capstone over the pinned image 1be0f53d; RV64, no compressed instructions), read through

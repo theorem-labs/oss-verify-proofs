@@ -1,6 +1,7 @@
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Written by Theorem Labs, 2026-10 (a Theorem Labs lane), for libreac/fuzz_pcap v1.9.0, asan-ubsan build.
    lib/B/Stdio/PStdioImgB.v: the asan-ubsan image's stdio pcs, ONE file per image (a Theorem Labs lane 02:27Z
    ruling (b); the asan twin is a Theorem Labs lane's lib/A/Stdio/PStdioImgA.v). It holds ONLY numerals: no
@@ -32,7 +33,7 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    CONTROL: the same rule on the asan pin gives 0x8e870 / 0x8e90c / 0x8ee5c / 0x8e638 / 0x8ea40 / 0x51510, the
    values lib/A/Stdio/PStdioImgA.v states; and 0x8ec28 / 0x8ecc4 / 0x8e214 / 0x8e43c / 0x415c8 / 0x415cc for
    the six entries above.
-   NAMES keep the _U suffix on purpose: until a Theorem Labs lane's step 2 (a working branch beb05bac2a3)
+   NAMES keep the _U suffix on purpose: until a Theorem Labs lane's step 2 (a working branch)
    lib/A/Stdio/PFmemopenM.v defined the asan PFMEMOPEN, and a short name that two Required files define
    resolves by Require order; that is how this lane's walk once called the asan fmemopen. The suffix keeps
    every B pc distinct from its lib/A/Stdio/PStdioImgA.v name. This is the single home of pcap's

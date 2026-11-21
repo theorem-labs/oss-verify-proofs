@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx-GENERIC twin of ARM_gone's PHASE 3 (lib/A/W_LLVMFuzzerTestOneInput_gone_p3.v,
-   a Theorem Labs lane's, adapted to integ at commit 95cae0d4740), for the conversion of ARM_gone to
+   a Theorem Labs lane's, adapted to integ), for the conversion of ARM_gone to
    the cut invariants of lib/A/W_LLVMFuzzerTestOneInput_cut_x.v (a Theorem Labs lane's route (b), step 7):
    GRG_x 0x84834 -> GC1_x 0 0x84848, the call relay_instance_gone(id) (fuzz_reply.c:642).  _gone_p3.v is not edited.
    - Its AR-free lemmas and definitions are CITED from it (with their section arguments, through local abbreviations);
      each one that reads AR is restated here under its name + _x with _gone_p3.v's proof, over ARx at the ghost list []
      (cut_x's HP0): gp3_nodup_blocks_x, gp3_apart_x, gp3_fp_spares_x, gp3_not_fp_shadow_x, gp3_not_fp_frame_x,
      gp3_inner_x, gp3_keeps_x, gp3_slot_kept_x, gp3_afn_pre_x, and the phase lemma gp3_rig_c1_x.
-   - The callee's contract is W_contract_x.v:975 rig_spec_x at K0's ACk0.CTX_AFREE (_gone_p3.v's RIG over ARx), applied
+   - The callee's contract is W_contract_x.v:976 rig_spec_x at K0's ACk0.CTX_AFREE (_gone_p3.v's RIG over ARx), applied
      at Hp = []; its post's journal carries Hp', which HP0 makes [] (hp0g).  rg_place and the base's GN_* texts are
      verbatim; GN_LS_rig takes cut_x's LSx.
    - Section hypotheses beyond _gone_p3.v's: BLKN (OWED: kit _x twin of al_blocks' last conjunct, W_kit_x.v's text, as
@@ -95,7 +96,7 @@ Variable MMAX : Z.
 (* the room round (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) (d)): the room predicate the callees are taken at (RM := fun S _ => NP S at the
    instance; RPNP below) *)
 Variable RP : roomp.
-(* relay_instance_gone, W6: _gone_p3.v:166's RIG over ARx, W_contract_x.v:975 rig_spec_x at K0's table
+(* relay_instance_gone, W6: _gone_p3.v:166's RIG over ARx, W_contract_x.v:976 rig_spec_x at K0's table
    ACk0.CTX_AFREE (its last premise is the free's caller context [0x82eb8; 0x8483c(; 0x821e8)]); rg_place verbatim *)
 Hypothesis RIG : rig_spec_x B PST ARx MT RP MMAX fr_RG ACk0.CTX_AFREE (BASE + AF_fr_relay_instance_gone).
 Hypothesis RGP : rg_place B fr_RG.
@@ -108,7 +109,7 @@ Hypothesis HLSRIG : GN_LS_rig MT LSx RINV MMAX.
    RM := fun S _ => NP S (so RPNP holds by conversion) and the counts are ReplyCnt's.  gn_pk is the arm's peak
    (s5-r1d's pk_gone).  LSCNT is the arm's count row GN_LS_cnt_x (_gone_base_x.v: s5-r1d's fr_LS3cp_cnt_gone's guards,
    ReplyCnt.msz_ok among them).  CNTRIG is the arm's model count rule GN_CNT_rig (_gone_base.v) at relay_instance_gone's
-   premise peak, rig_spec_x's rig_pk of its trace (W_contract_x.v:312) ---- *)
+   premise peak, rig_spec_x's rig_pk of its trace (W_contract_x.v:313) ---- *)
 Variable gn_pk : lfcx -> lmod -> list (hsrc * nat) -> (Z -> bool) -> nat.
 Hypothesis RPNP : forall S k, rp_RM RP S k <-> NP S.
 Hypothesis CNTRIG : GN_CNT_rig gn_pk (fun cx m hs =>
@@ -994,7 +995,7 @@ Variable R : world segs -> world segs -> Prop.
 Hypothesis R_refl : forall W, R W W.
 Hypothesis R_trans : forall W1 W2 W3, R W1 W2 -> R W2 W3 -> R W1 W3.
 Hypothesis WLE_R : forall W W', wle W W' -> R W W'.
-(* relay_instance_gone at R (W_contract_xR_relay.v:140 rig_spec_xR): the strict RIG's arguments, R after ARx *)
+(* relay_instance_gone at R (W_contract_xR_relay.v:141 rig_spec_xR): the strict RIG's arguments, R after ARx *)
 Hypothesis RIG_R : rig_spec_xR B PST ARx R MT RP MMAX fr_RG ACk0.CTX_AFREE (BASE + AF_fr_relay_instance_gone).
 Local Notation AJ0R G XO OUT STK sp0 FP ly S W mem md own ly' S' W' mem' md' k :=
   (ajournal_gx_xR segs B PST ARx R G XO OUT STK sp0 FP ly S [] W mem md own ly' S' [] W' mem' md' k).

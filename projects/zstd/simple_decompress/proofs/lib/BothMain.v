@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (bmain_open follows bmain_at: the pad pin, the remade facts (bmf, bpf), the 6,144,513-byte stack window, the launch's hidden argument block and the argv pointer cells). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia.
@@ -48,14 +49,15 @@ Definition bmain_open (en : ExecEntry) (inp : ProcInput) (w : bool) (V : nat -> 
         /\ 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat = usp
         /\ V 1%nat = argc /\ V 2%nat = envc
         /\ V 3%nat = Z.of_nat (length (nth 0 (in_argv inp) [])) /\ V 7%nat = Z.of_nat (length (nth 1 (in_argv inp) []))
-        /\ V 4%nat = Wblk en inp /\ V 5%nat = bv_unsigned (en_brk en) / 4096 /\ V 8%nat = bv_unsigned (in_uid inp)
+        /\ V 4%nat = Wpad en inp /\ V 5%nat = bv_unsigned (en_brk en) / 4096 /\ V 8%nat = bv_unsigned (in_uid inp)
         /\ V 9%nat = bv_unsigned (in_hwcap inp))
-    /\ Forall (mfact_ok bsegs V m) (both_mem_facts ++ both_mem_facts_w w)
-    /\ Forall (pfact_ok V) (both_pure_facts ++ both_pure_facts_w w)
+    /\ Forall (mfact_ok bsegs V m) (bmf (RZ_of inp) w)
+    /\ Forall (pfact_ok V) (bpf (RZ_of inp) w)
     /\ mem_inv bsegs m
-    /\ stk bsegs m (usp - 8388608) usp
+    /\ stk bsegs m (usp - 6144513) usp
     /\ (forall a, hidden_arg en inp a ->
-          m (wa a) = wrap_mem b_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en) (wa a))
+          m (wa a) = wrap_mem inp (en_mmap_base en) b_phdrs (Z_to_bv 64 (Z.of_N b_init_pc)) (en_sp en) (en_draw en) (wa a))
+    /\ argv_cells en inp m
     /\ bshadow0 V m
     /\ bmodel V (en_sp en) (in_fs inp) mo.
 

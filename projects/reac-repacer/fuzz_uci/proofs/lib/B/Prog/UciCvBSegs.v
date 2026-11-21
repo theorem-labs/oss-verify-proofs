@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/boost-beast/http_request/lib/Spec/StrFun.v; 242 of its 278 lines of code are new or changed and 428 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* UciCvBSegs: the footprint (ExecF.evtF) runs of the straight-line segments of check_value in image B
    (fuzz_uci.asan-ubsan 0x7f6b0), each from a cut point of lib/B/Prog/UciCvBIface.v to the next call, stepped by
    lib/Lib/StepF.v. The image-B twin of lib/A/Prog/UciCvSegs.v (in the form and with the helpers of
-   proofs/libreac/fuzz_decode/lib/A/Prog/crtA_segs.v and ReacDecodeLib.v rd_all at recipes commit 88154566652a), with
+   proofs/libreac/fuzz_decode/lib/A/Prog/crtA_segs.v and ReacDecodeLib.v rd_all at recipes), with
    image B's offsets and registers (s3 = n, s4 = r):
      cv_seg1_F   entry -> malloc(n + (n == 0)): the 0x40-byte frame (s5 .. s0, ra at 8(sp) .. 0x38(sp)), the shadow
                  offset through GOT_CELL_K -> CELL_K, s0 := cur, s3 := n, s4 := r;

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the write-certified stack window; the bounds below the top of user memory). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -131,12 +132,12 @@ Definition argv_rep (m : mem) (ap : Z) : Prop :=
   exists ptrs : list word, u64arr asegs m ap ptrs /\ length ptrs = Nat.min 2 (length argvb)   (* [comment removed for export] *)
     /\ (forall i s p, nth_error argvb i = Some s -> nth_error ptrs i = Some p ->
          bytes_at asegs m (bv_unsigned p) (s ++ [Z_to_bv 8 0])
-         /\ ap + 8 * Z.of_nat (length argvb) <= bv_unsigned p /\ bv_unsigned p + Z.of_nat (length s) + 1 <= USTACK_TOP - 16)
+         /\ ap + 8 * Z.of_nat (length argvb) <= bv_unsigned p /\ bv_unsigned p + Z.of_nat (length s) + 1 <= USTACK_TOP - 9)
     (* [comment removed for export] *)
     /\ (forall i s p, nth_error argvb i = Some s -> nth_error ptrs i = Some p ->
          exists slack, bytes_at asegs m (bv_unsigned p + Z.of_nat (length s) + 1) slack
            /\ (- (bv_unsigned p + Z.of_nat (length s) + 1)) mod 8 <= Z.of_nat (length slack)
-           /\ bv_unsigned p + Z.of_nat (length s) + 1 + Z.of_nat (length slack) <= USTACK_TOP - 16).
+           /\ bv_unsigned p + Z.of_nat (length s) + 1 + Z.of_nat (length slack) <= USTACK_TOP - 8).
 
 (* [comment removed for export] *)
 Definition CREDIT_DRV : Z := 2^36.   (* [comment removed for export] *)
@@ -156,8 +157,23 @@ Definition START (c : config) : Prop :=
              (Z_to_bv 64 (Z.of_nat (length argvb))) (Z_to_bv 64 ap) a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11
              t3 t4 t5 t6 F fc a_main m)) c
     /\ ART RT Σ m /\ mem_inv asegs m /\ CLX stdout_init m /\ argv_rep m ap
-    /\ stk asegs m (rt_sp0 RT Σ - STACK_WIN) usp /\ sigma0_ok Σ usp
-    /\ usp mod 16 = 0 /\ usp < ap /\ rt_sp0 RT Σ - STACK_WIN + 0x100000 <= usp.
+    (* OLD: /\ stk asegs m (rt_sp0 RT Σ - STACK_WIN) usp
+       NEW: the write-certified sub-window.  The old bound is FALSE at the revision, not
+       merely unproved: [MemSplit.cmem] reads J over the whole mapping but [MemSplit.wfJ]
+       guarantees J is defined only on [in_win] = [wok_lo sp0, sp0), and [wview]'s
+       fallback is over [mi_loaded_segments], which the kernel-created stack is not in -
+       so below wok_lo nothing supplies [wview <> None].  STACK_WIN itself is untouched:
+       it is the MAPPING and the mapping did not change. *)
+    /\ stk asegs m (rt_sp0 RT Σ - STACK_WOK) usp /\ sigma0_ok Σ usp
+    (* OLD: /\ ... /\ rt_sp0 RT Σ - STACK_WIN + 0x100000 <= usp.
+       NEW: the headroom conjunct is measured from the SAME floor as the [stk] conjunct
+       above, so it follows the window in.  It says usp sits at least 1 MiB above the
+       floor; stated against the mapping floor while [stk] starts at the write-certified
+       floor it no longer supplies what its consumers read it for (D_usage needs
+       [lo + 0x100000 <= usp] for the lo that [stk] actually begins at).  The new form is
+       STRONGER, and the start-up certificate delivers it: the hand-off usp is the main
+       frame's, within a few KB of sp0. *)
+    /\ usp mod 16 = 0 /\ usp < ap /\ rt_sp0 RT Σ - STACK_WOK + 0x100000 <= usp.
 
 (* [comment removed for export] *)
 Definition main_frame (m : mem) (usp : Z) (s0 s1 s2 s3 s4 s5 s6 s7 : word) : Prop :=
@@ -166,8 +182,14 @@ Definition main_frame (m : mem) (usp : Z) (s0 s1 s2 s3 s4 s5 s6 s7 : word) : Pro
 (* [comment removed for export] *)
 Definition MAINCTX (Σ : rts RT) (so : stdout_st) (usp ap : Z) (c0 c1 c2 c3 c4 c5 c6 c7 : word) (m : mem) : Prop :=
   ART RT Σ m /\ mem_inv asegs m /\ CLX so m /\ argv_rep m ap /\ main_frame m usp c0 c1 c2 c3 c4 c5 c6 c7
-  /\ stk asegs m (rt_sp0 RT Σ - STACK_WIN) (usp - 80)
-  /\ usp mod 16 = 0 /\ usp < ap /\ rt_sp0 RT Σ - STACK_WIN + 0x100000 <= usp /\ usp <= rt_sp0 RT Σ.
+  (* OLD: /\ stk asegs m (rt_sp0 RT Σ - STACK_WIN) (usp - 80)
+     NEW: same narrowing as START above.  MAINCTX carries the identical conjunct and the
+     error named only START, so patching what the compiler pointed at would have left
+     this one false. *)
+  /\ stk asegs m (rt_sp0 RT Σ - STACK_WOK) (usp - 80)
+  (* OLD: /\ ... /\ rt_sp0 RT Σ - STACK_WIN + 0x100000 <= usp /\ ...
+     NEW: the headroom conjunct follows the window, as in START above. *)
+  /\ usp mod 16 = 0 /\ usp < ap /\ rt_sp0 RT Σ - STACK_WOK + 0x100000 <= usp /\ usp <= rt_sp0 RT Σ.
 
 (* [comment removed for export] *)
 Definition path_b : list byte := nth 1 argvb [].
@@ -176,7 +198,7 @@ Definition path_b : list byte := nth 1 argvb [].
 Definition path_slack (m : mem) (path : Z) : Prop :=
   exists slack, bytes_at asegs m (path + Z.of_nat (length path_b) + 1) slack
     /\ (- (path + Z.of_nat (length path_b) + 1)) mod 8 <= Z.of_nat (length slack)
-    /\ path + Z.of_nat (length path_b) + 1 + Z.of_nat (length slack) <= USTACK_TOP - 16.
+    /\ path + Z.of_nat (length path_b) + 1 + Z.of_nat (length slack) <= USTACK_TOP - 8.
 
 (* [comment removed for export] *)
 Definition OPEN (c : config) : Prop :=
@@ -187,7 +209,7 @@ Definition OPEN (c : config) : Prop :=
              (Z_to_bv 64 path) (Z_to_bv 64 0) a2 a3 a4 a5 a6 a7 (Z_to_bv 64 path) s3 s4 s5 s6 s7 s8 s9 s10 s11
              t3 t4 t5 t6 F fc e_open m)) c
     /\ MAINCTX Σ stdout_init usp ap c0 c1 c2 c3 c4 c5 c6 c7 m /\ sigma0_ok Σ usp
-    /\ bytes_at asegs m path (path_b ++ [Z_to_bv 8 0]) /\ ap < path /\ path + Z.of_nat (length path_b) + 1 <= USTACK_TOP - 16
+    /\ bytes_at asegs m path (path_b ++ [Z_to_bv 8 0]) /\ ap < path /\ path + Z.of_nat (length path_b) + 1 <= USTACK_TOP - 9
     /\ path_slack m path.
 
 (* [comment removed for export] *)
@@ -197,7 +219,7 @@ Definition FAILED (c : config) : Prop :=
       (ret_st (Z_to_bv 64 RET_OPEN) (Z_to_bv 64 (usp - 80)) gp (Z_to_bv 64 TP_A) (Z_to_bv 64 2) s1 (Z_to_bv 64 path)
               s3 s4 s5 s6 s7 s8 s9 s10 s11 (Z_to_bv 64 (-1)) m) c
     /\ MAINCTX Σ stdout_init usp ap c0 c1 c2 c3 c4 c5 c6 c7 m /\ sigma0_ok Σ usp
-    /\ bytes_at asegs m path (path_b ++ [Z_to_bv 8 0]) /\ ap < path /\ path + Z.of_nat (length path_b) + 1 <= USTACK_TOP - 16
+    /\ bytes_at asegs m path (path_b ++ [Z_to_bv 8 0]) /\ ap < path /\ path + Z.of_nat (length path_b) + 1 <= USTACK_TOP - 9
     /\ path_slack m path.
 
 (* [comment removed for export] *)
@@ -207,7 +229,7 @@ Definition OPENED (c : config) : Prop :=
       (ret_st (Z_to_bv 64 RET_OPEN) (Z_to_bv 64 (usp - 80)) gp (Z_to_bv 64 TP_A) (Z_to_bv 64 2) s1 (Z_to_bv 64 path)
               s3 s4 s5 s6 s7 s8 s9 s10 s11 (Z_to_bv 64 3) m) c
     /\ MAINCTX Σ stdout_init usp ap c0 c1 c2 c3 c4 c5 c6 c7 m /\ sigma0_ok Σ usp
-    /\ bytes_at asegs m path (path_b ++ [Z_to_bv 8 0]) /\ ap < path /\ path + Z.of_nat (length path_b) + 1 <= USTACK_TOP - 16
+    /\ bytes_at asegs m path (path_b ++ [Z_to_bv 8 0]) /\ ap < path /\ path + Z.of_nat (length path_b) + 1 <= USTACK_TOP - 9
     /\ open_ent path_b fs = Some ent /\ path_slack m path.
 
 (* [comment removed for export] *)

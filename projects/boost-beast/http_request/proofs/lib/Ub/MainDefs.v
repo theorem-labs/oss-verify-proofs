@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -11,6 +12,7 @@ From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
+From LinuxProcessSemantics.LinuxProcessSem Require Vdso.
 From OSSVerify.boost_beast.http_request.images Require Import Ubsan.
 From OSSVerify.Proofs.boost_beast.http_request.lib Require Import Amb PropExec CatExec CatSim SeqExec StoreOk ShapeAlg Nodes AgentLib Frame StreamSim FileSim SymRun Hoare Spec SReach RefLayout HeapCeil.
 From OSSVerify.Proofs.boost_beast.http_request.lib.Ub Require Import LibDiagKn RefStartupDefs RefStartupFacts RefStartup RefStdioDefs RefExitBase.
@@ -211,22 +213,31 @@ Record heap_extra (HS : hsr) : Prop := HEX {
   (* [comment removed for export] *)
   hx_krel_vm : forall s mo mo', hs_KREL HS s mo ->
       m_halted mo' = m_halted mo -> m_vm_lazy mo' = m_vm_lazy mo ->
-      m_vm_materialized mo' = m_vm_materialized mo -> m_vmmaps mo' = m_vmmaps mo -> hs_KREL HS s mo';
+      m_vm_materialized mo' = m_vm_materialized mo -> m_vmmaps mo' = m_vmmaps mo ->
+      (* the kernel relation's vDSO fields read [m_kernel]; no step changes it *)
+      m_kernel mo' = m_kernel mo ->
+      m_channel_reader mo' = m_channel_reader mo -> hs_KREL HS s mo';
   (* [comment removed for export] *)
   hx_statics : forall s LB m, hs_RHEAP HS s LB m ->
       rdn RSEGS m (Z_to_bv 64 0xb6c03) 1 = Some [Z_to_bv 8 0]
       /\ rdn RSEGS m (Z_to_bv 64 0x83b30) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 0xb69b0))
-      /\ exists can, canary_ok m can }.
+      /\ exists can, canary_ok m can;
+  (* 08b1429: a write to a channel without a reader is SIGPIPE; the kernel relation carries the
+     launch's reader, which no step writes *)
+  hx_krel_rdr : forall s mo, hs_KREL HS s mo -> m_channel_reader mo = true }.
 
 Lemma hx_krel_fds : forall HS, heap_extra HS -> forall s mo f, hs_KREL HS s mo -> hs_KREL HS s (with_fds f mo).
-Proof. intros HS HX s mo f K. eapply (hx_krel_vm HS HX); [exact K | | | |]; destruct mo; reflexivity. Qed.
+Proof. intros HS HX s mo f K. eapply (hx_krel_vm HS HX); [exact K | | | | | |]; destruct mo; reflexivity. Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-Definition model0 (tid brk mbase sp0 : word) (lim : Z) (inp : ProcInput) : Model :=
-  with_tid tid (init_model (segments_reserved RSEGS) brk mbase sp0 lim inp).
+(* The model [Ub.RefStartup.ref_startup] hands to [main]: the launch's vDSO draw is copied
+   in by [with_vdso], as [Run.init_config] does, so the draw [rnd] is an argument. *)
+Definition model0 (tid brk mbase sp0 : word) (rnd : EntryDraw) (lim : Z) (inp : ProcInput) : Model :=
+  with_tid tid (with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+                  (init_model (segments_reserved RSEGS) brk mbase sp0 lim inp)).
 
 Section MainStmt.
   Context {HCEIL : HeapCeil}.
@@ -237,10 +248,26 @@ Section MainStmt.
       valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
       0 < bv_unsigned tid < 2 ^ 22 ->
       hceil + 8388608 <= bv_unsigned sp0 ->                      (* [comment removed for export] *)
-      @main_entry (amb_of inp) sp0 (in_argv inp) (in_envp inp) rnd tid regs mem ->
-      hs_RHEAP HS ps0 [] mem -> hs_KREL HS ps0 (model0 tid brk mbase sp0 lim inp) ->
+      (* 75d69e00 EXPLODED-PROCINPUT CLASS: [main_entry] is a RECORD over the run's whole
+         input ([Ub/RefStartup.v:73]), taking [inp mbase entry sp0 rnd tid regs mem].  The
+         pre-#38 call passed the EXPLODED [sp0 av envv …], so [sp0] landed in [inp]'s
+         position - the reported "sp0 has type word while it is expected to have type
+         ProcInput".  [entry] is NOT a new binder: it is this image's literal, exactly as
+         the PRODUCER of this hypothesis spells it at [Ub/RefStartup.v:269]
+         (@main_entry (amb_of inp) inp mbase (0x2b9a0 : word) sp rnd tid regs mem), so the
+         two sides stay syntactically identical and the consumer chain at UbTop.v:315
+         typechecks unchanged.  [inp], [mbase], [sp0], [rnd], [tid], [regs], [mem] are all
+         already in this statement's binder list; nothing is added, nothing is narrowed. *)
+      @main_entry (amb_of inp) inp mbase (0x2b9a0 : word) sp0 rnd tid regs mem ->
+      (* The launch facts the stack-image layer states its reads under ([RefLayout.v:130-135],
+         [ArgvEnv.v:32-37]); [main_entry] carries no launch field, so they are premises here,
+         over the same input and entry the start-up takes them over (Ub/RefStartup.v).  The
+         caller has both from the launch: [Run.valid_input_launch] and the last conjunct of
+         [Run.valid_entry] ([Run.valid_entry_sv48]). *)
+      valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp0 brk mbase rnd) inp ->
+      hs_RHEAP HS ps0 [] mem -> hs_KREL HS ps0 (model0 tid brk mbase sp0 rnd lim inp) ->
       hs_rauxv_ok HS mem B -> bv_unsigned sp0 <= B < 2 ^ 64 ->
       target_run_stmt HS ->
-      realizes RSEGS (mkCfg (mkst regs (Z_to_bv 64 0x2baec) mem (seg_rom RSEGS)) (model0 tid brk mbase sp0 lim inp))
+      realizes RSEGS (mkCfg (mkst regs (Z_to_bv 64 0x2baec) mem (seg_rom RSEGS)) (model0 tid brk mbase sp0 rnd lim inp))
                (spec (in_argv inp) (in_fs inp)).
 End MainStmt.

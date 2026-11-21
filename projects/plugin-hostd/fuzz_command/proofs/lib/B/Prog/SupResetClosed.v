@@ -4,12 +4,13 @@
 (* Modified by Theorem Labs, 2026-10: the closing of sup_reset's ASan+UBSan walk (plugin-hostd/fuzz_command,
    fuzz_command.asan-ubsan; lib/B/Prog/sup_reset.v, tsup_reset_holds) at the pinned image: lib/B/Prog/CmdImg.v's
    instance PB_cmd, whose segments are tfibsegs, and the sink head YE2k.tfib_sink_head. The pattern of
-   a Theorem Labs lane's PASS4-REFIT.md section F (A's lib/A/Prog/SupRemoveAllRefitClosed.v:50-60 on a working branch e84227c9553,
-   a Theorem Labs lane's lib/A/Prog/RecBClosed.v:163-191 on a working branch f349bdaedba), with a Theorem Labs lane's B
-   CmdRecFacts (a working branch fc8bcbd8b42): the walk's per-binary image facts are CmdRecImg.cmd_img_facts_tfib, its
+   a Theorem Labs lane's PASS4-REFIT.md section F (A's lib/A/Prog/SupRemoveAllRefitClosed.v:50-60 on a working branch,
+   a Theorem Labs lane's lib/A/Prog/RecBClosed.v:163-191 on a working branch), with a Theorem Labs lane's B
+   CmdRecFacts (a working branch): the walk's per-binary image facts are CmdRecImg.cmd_img_facts_tfib, its
    object bridge is CmdRecRest.cmd_val_objs_PB and its call targets are CmdRecRest.cmd_sig_prog_PB. The walk names no
    PALib (no inline check) and no program-static write (no PRW). What remains is the allocator record HB, the meter's
    laws MTL and the four callee contracts at every FP state. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

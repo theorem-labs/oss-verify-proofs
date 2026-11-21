@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Reusable/DriverSlots.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_transport; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_transport.lib. *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Reusable/DriverSlots.v for libdiginet/fuzz_transport; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_transport.lib. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import
   YK11 YM05 YM02 YO0i YO0f YO0g YO0x YO0d YO05 YO0j YO0m YO0o YO03 YO04.

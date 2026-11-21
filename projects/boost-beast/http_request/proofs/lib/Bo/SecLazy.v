@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3; internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.boost_beast.http_request.lib.Common Require KReplay.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -96,8 +97,11 @@ End Unfill.
 Definition ECALLW : bv 32 := Z_to_bv 32 0x73.
 Lemma is_ecall_ECALLW : is_ecall ECALLW = true. Proof. reflexivity. Qed.
 
+(* [sysret] clears [ms_resv] since LPS 08b1429 (As/LazyNodes.v:563-590); the
+   right-hand side says so.  The PRE-syscall [MSsvc ... rv ...] keeps a generic
+   reservation - it is the RETURN that drops it. *)
 Lemma sysret_MSsvc : forall R F pc x8 fc rv m ro r M,
-  sysret (MSsvc R F pc x8 fc rv m ro) r M = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4) fc rv M ro.
+  sysret (MSsvc R F pc x8 fc rv m ro) r M = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4) fc None M ro.
 Proof. reflexivity. Qed.
 
 Section CjNodes.
@@ -132,10 +136,16 @@ Section CjNodes.
     let h := m_vmmaps mo in
     x11 <> Z_to_bv 64 0 ->
     x12 = Z_to_bv 64 (kprot na) -> x13 = Z_to_bv 64 (kflags nr) -> x14 = Z_to_bv 64 (-1) -> x15 = Z_to_bv 64 0 ->
+    (* 727298f3 (#144/#146): the decline at this call's hint [x10]. *)
+    place_declined_b (m_kernel mo) (m_vmmaps mo) x10 nZ = false ->
     entries_nowrap (vm_maps h) ->
     (na = false -> nr = false -> eager_used mo + pages_total S * page_size + nZ <= vm_limit h) ->
+    (* #38: old text is the first four conjuncts, unchanged; the fifth is the
+       window premise [Checks.Placement.linux_place_exists] consumes.  Pins no
+       kernel field.  Forwarded verbatim to [sreach_mmap_kernel_lazy]. *)
     (exists g : word, bv_unsigned g mod page_size = 0 /\ 0 < bv_unsigned g /\ bv_unsigned g + nZ <= alloc_top h
-                      /\ region_free (vm_reserved h ++ vm_maps h) g n = true) ->
+                      /\ region_free (vm_reserved h ++ vm_maps h) g n = true
+                      /\ (bv_unsigned g + nZ <= mmap_top h \/ task_unmapped_base <= bv_unsigned g)) ->
     (nr = true -> forall a : word, region_free (vm_reserved h) a n = true -> bv_unsigned a + nZ <= alloc_top h -> lazy_range_okb bsegs (a, n) = true) ->
     (forall (a : word) (msF' : machine_state),
        bv_unsigned a mod page_size = 0 -> 0 < bv_unsigned a -> bv_unsigned a + nZ <= alloc_top h ->
@@ -143,20 +153,21 @@ Section CjNodes.
        let mo' := grant_model (Z_to_bv 64 (kflags nr)) a n na mo in
        lzok bsegs ((if nr then [(a, n)] else []) ++ L) S ((if nr && negb na then [(a, n)] else []) ++ Zr) (mkCfg msF' mo') ->
        restrict ((if nr then [(a, n)] else []) ++ L) S msF'
-         = MS (Ra a) F (Z_to_bv 64 (pc + 4)) fc rv (if na || nr then unfill a n m else zfill a n m) (seg_rom bsegs) ->
+         = MS (Ra a) F (Z_to_bv 64 (pc + 4)) fc None (if na || nr then unfill a n m else zfill a n m) (seg_rom bsegs) ->
        hid_same L S msF msF' ->
        eager_used mo' <= eager_used mo + (if na || nr then 0 else nZ) ->
        sreach bsegs Q (mkCfg msF' mo')) ->
     sreach bsegs Q (mkCfg msF mo).
   Proof.
-    intros na nr msF mo Q OK VIS H17. cbv zeta. intros LEN H12 H13 H14 H15 NW BUD GAP ROK K.
+    intros na nr msF mo Q OK VIS H17. cbv zeta. intros LEN H12 H13 H14 H15 DECL NW BUD GAP ROK K.
     eapply (sreach_mmap_kernel_lazy bsegs na nr L S Zr msF _ mo x17 Q OK VIS eq_refl); [ rewrite H17; reflexivity | ..];
+    change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom bsegs)) 0) with x10;
     change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom bsegs)) 1) with x11;
     change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom bsegs)) 2) with x12;
     change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom bsegs)) 3) with x13;
     change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom bsegs)) 4) with x14;
     change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom bsegs)) 5) with x15;
-      [ exact LEN | exact H12 | exact H13 | exact H14 | exact H15 | exact NW | exact BUD | exact GAP | exact ROK | ].
+      [ exact LEN | exact H12 | exact H13 | exact H14 | exact H15 | exact DECL | exact NW | exact BUD | exact GAP | exact ROK | ].
     intros a msF'.
     change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom bsegs)) 1) with x11.
     change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom bsegs)) 0) with x10.
@@ -189,15 +200,40 @@ Section CjNodes.
        let L' := (if nr then [(addr, n)] else []) ++ maps_subtract L (bv_unsigned addr) (bv_unsigned addr + nZ) in
        lzok bsegs L' S Zr (mkCfg msF' mo') ->
        restrict L' S msF'
-         = MS (Ra addr) F (Z_to_bv 64 (pc + 4)) fc rv
+         = MS (Ra addr) F (Z_to_bv 64 (pc + 4)) fc None
               (if nr then (fun x => if zin_rangeb (bv_unsigned x) (addr, n) && in_rangesb x S then Some (Z_to_bv 8 0) else m x)
                else zfill addr n m) (seg_rom bsegs) ->
        hid_same L' S msF msF' ->
        eager_used mo' <= eager_used mo + (if nr then 0 else nZ) ->
        sreach bsegs Q (mkCfg msF' mo')) ->
     sreach bsegs Q (mkCfg msF mo).
+  (* LPS revision repair (75d69e00, checker 2c6b6db8).  The KReplay body this replaces was
+     recorded before [sysret] cleared [ms_resv] (LPS 08b1429), so its [eq_ind_r] motive carries
+     [fc rv] where [sysret_MSsvc] (:101-103) now produces [fc None] - a stale proof TERM, which
+     no change to this lemma's STATEMENT can repair (the statement is already right).  The
+     replacement is the IN-TREE donor: the As/ twin's explicit text at As/SecLazy.v:206-222,
+     which is GREEN (a source round, image
+     sha256:2c6b6db8...e590fe, "built .../As/SecLazy.vo").  Transcribed verbatim with [asegs]
+     replaced by [bsegs]; the two statements are character-identical apart from that word.
+     Nothing is decoded and nothing is re-encoded. *)
   Proof.
-    ltac2:(KReplay.run [|constr:(@Corelib.Init.Datatypes.bool); constr:(@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.machine_state); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.Model); constr:(@LinuxProcessSemantics.LinuxProcessSem.Run.config); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazySR.lzok); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.BSegs.bsegs); constr:(L); constr:(S); constr:(Zr); constr:(@LinuxProcessSemantics.LinuxProcessSem.Run.mkCfg); constr:(@Corelib.Init.Logic.eq); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyRestrict.restrict); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Lib.MState.MSsvc); constr:(R); constr:(F); constr:(@stdpp.bitvector.definitions.Z_to_bv); constr:(@Corelib.Numbers.BinNums.Npos); constr:(@Corelib.Numbers.BinNums.xO); constr:(@Corelib.Numbers.BinNums.xH); constr:(pc); constr:(x17); constr:(fc); constr:(rv); constr:(m); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Lib.PropExec.seg_rom); constr:(@stdpp.bitvector.definitions.bv); constr:(@Corelib.Numbers.BinNums.Zpos); constr:(@Corelib.Numbers.BinNums.xI); constr:(@Corelib.Init.Logic.not); constr:(x11); constr:(@Corelib.Numbers.BinNums.Z0); constr:(x12); constr:(x13); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyNodes.fflags); constr:(x14); constr:(@Corelib.Numbers.BinNums.Zneg); constr:(x15); constr:(@Stdlib.ZArith.BinInt.Z.le); constr:(@Stdlib.ZArith.BinInt.Z.add); constr:(@stdpp.bitvector.definitions.bv_unsigned); constr:(x10); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.page_round_up_Z); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.alloc_top); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.m_vmmaps); constr:(@Corelib.Numbers.BinNums.Z); constr:(@Stdlib.ZArith.BinInt.Z.modulo); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.page_size); constr:(@Stdlib.ZArith.BinInt.Z.lt); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.region_free); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.vm_reserved); constr:(@Corelib.Init.Datatypes.true); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.map_contains); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.vm_maps); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyLedger.entries_nowrap); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.vm_noaccess); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyLedger.nooverlap); constr:(@Corelib.Init.Datatypes.false); constr:(@Corelib.Init.Logic.and); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyRestrict.in_rangesb); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyRestrict.lazy_range_okb); constr:(@Corelib.Init.Datatypes.pair); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyRestrict.eager_used); constr:(@Stdlib.ZArith.BinInt.Z.mul); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyRestrict.pages_total); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.vm_limit); constr:(@Corelib.Init.Datatypes.app); constr:(@Corelib.Init.Datatypes.prod); constr:(@Corelib.Init.Datatypes.list); constr:(@Corelib.Init.Datatypes.cons); constr:(@Corelib.Init.Datatypes.nil); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.maps_subtract); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyLedger.commit_model); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Lib.MState.MS); constr:(Ra); constr:(@Corelib.Init.Datatypes.option); constr:(@Corelib.Init.Datatypes.andb); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyRestrict.zin_rangeb); constr:(@Corelib.Init.Datatypes.Some); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.MmapSim.zfill); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazySR.hid_same); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.SReach.sreach); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Scfg.hunspell_scfg); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyNodes.sreach_mmap_fixed_commit_lazy); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Scfg.hunspell_alloc_forced); constr:(@Corelib.Init.Logic.eq_refl); constr:(@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.ms_svc_pending); constr:(@Corelib.Init.Logic.eq_ind_r); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyNodes.sysret); constr:(@LinuxProcessSemantics.Riscv.Prelude.bvmap_set); constr:(@stdpp.bitvector.definitions.BV); constr:(@Corelib.Init.Logic.I); constr:(@stdpp.bitvector.definitions.bv_add); constr:(@LinuxProcessSemantics.Riscv.Prelude.bvmap); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Lib.Frame.mkR); constr:(x1); constr:(x2); constr:(x3); constr:(x4); constr:(x5); constr:(x6); constr:(x7); constr:(x8); constr:(x9); constr:(x16); constr:(x18); constr:(x19); constr:(x20); constr:(x21); constr:(x22); constr:(x23); constr:(x24); constr:(x25); constr:(x26); constr:(x27); constr:(x28); constr:(x29); constr:(x30); constr:(x31); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Lib.MState.lit_add_lit); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Lib.SysStep.mkR_set_a0); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.SecLazy.sysret_MSsvc); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.VmMaps)|] [|@x; @nr; @msF'; @x17; @m; @b; @EAG; @HS'; @VIS'; @OK'; @L'; @mo'; @K; @BUD; @ROK; @ZT; @ZF; @NOV; @NWA; @NW; @MC; @RF; @POS; @AL; @CE; @H15; @H14; @H13; @H12; @LEN; @h; @n; @nZ; @addr; @H17; @VIS; @OK; @Q; @mo; @msF|] "#'-#E$c#H#p#I#O#M#z###<#f$$#V#]#^#t#=#%#$#\#'#P#6#8#9#;#?#N#_#,#/$=#&#e#+#h#>#:#(#4#-#B#Z#[#U#g#j#l#v#7#5#@#J#.#*#a#r#u#y#x#0#{#1#2#~#3$#$&$'$,$0$2$5$6$8$7$:#A$D$J$K$L$M$N$O$P$Q$R$S$T$U$V$W$X$Y$Z$[$\$]$^$_$`$a#)#K#E#`#T#d#k#q$+$*$.$/$1$9$A$E$F$G$H$I$b$c$d$>$?#D$e#R#W#n#m#Y#o#s$)$4#Q#c#i#|$-#S#w$3$B#L#b#}$($;$<#X$%$@$C?$G&$H%$I%$J%$K$$L%$M$$N$$O*$P%$Q$$R$$S$$T&$U&$V%$W($X)$Y($Z$$[$$\'$]'$^'$_$$`%$a%$b&k##SySz,RS#5GS,FS&#1S,FS1'S;'#'#'#'#'#;#$#S<US{G\S|S=M$S$NOS-##E-#USH'-S;'#-#-#-#-#'#6#$0##,S$#$2K#.S2#US}#6/$6##2S>#.S3$9##5S4#US~S;$<##8S?##9S@.(?D(@S2UT##%%#)S.USI#&%#VSJ)SA#P#K2K+)S/USK#$s#+,WSL$D##C#H)SM/#WSN#D'#C#H)SO/#7#)SPUSQ#7#)SR/#USS##CS'L(s#<I&@#2$><$#VSTS#S&#C#Lk##%#k#$s#>#k##+##CSBH#C(Hk##*#k#$s#C#k##&##CS(H8s#Fs#FDBVSUG##C#Hk##&##CS)L*S(UT$FVT%#SA%%#%#s#5)S(USV#&%#k##+#VT&s#Ts#TUT'#UT($WSW%3#nC#$#%%S*#%###$WSXS,s#As#>0($#.S*$s#a#3#Ds#9LS),I#5G'FS&#nC#$#%-J#%#+#,0/#*1#FS#USYD6s#n%S<#$s#k#;s#pUSH#USZ#k##s#j#VS[s#6s#'VSTIFVS\$#$)KVT))#US-InC#$##*&#%#$##j#$s#r#WS]Ds#OS-nC#$#%,J#%#$##+4M1NO#s#x#E6#nC#$#%s#$Q#%#B#s##0s#&#A9#FJR.S5$s$$#3#Ds#XLJ*#*JnC#$#%PS5#%#K#s#e%$#&&#.S+$s$,#3#Ds#`LQ,S%#:GS0J#k##(#k##1#k##5#k##s#-#k#&E#USZs$0UT*s$3=$##Ps#Zs$+j#'s$4#=Ps$-4s$6s$-$#S$SC.J$s$=#3#Ds#qLS6,I#5Gs#8FS&#1BFS#nC#$#%s#1Q#%#s#)#s#(>s$@D##E%#nC#$#%s#IS5#%#s#G#s#H0s#K#s#F9#FQR*=*QnC#$#%PS+#%#K#s$+%$#&&#nC#$#%s#<SD#%#s#4#s#3>s$KD#nC#$#%s#>S^#%#s#6#s#5+s#FMs#CNO#s$N#EI#j#(E#-s$Y;#'$6#WT+%#T,YS_&s$S#DS=$s$Ys#NWT-s$Zs$Y#+%M#NO0s$YVT.*s$Wi#BT/S`SaSbScSdSeSfSgShDS2S>S4S?S@SiS$SjSkSlSmSnSoSpSqSrSsStSuSvSw+IM&NO1s$\#E#1j#)&#+&MINO4s$_#E#4j#)s$^#+s#ZMs#WNO9s$b=E#VT0S<s#[4s$bs#Z&$/#YS_6s$c3D-i#CT1S`SaSbScSdSeSfSgShDS2S>S4S?S@SiS$SjSkSlSmSnSoSpSqSrSsStSuSvSwD40/,%$##E2)m#$#^T2S=Ms$lS$NOS-s$kDB4E5>$B#nC#$#%s#sSD#%#s#q#s#r0s#u#s#p1#FS%4Es#&B&#RYS7S%S1#S#Ij#*s#*#j#+s#0#j#,s#4#j#-s#9#5GIFS&s%%1S#FS1nC#$#%s#iS+#%#s#a#s#`>s$xD##E%#9RFS+S%*S%*S+nC#$#%PS^#%#K#s$a%$#&&#,SxS7:GS0S+#k##%#k##+#k##-#k##2#l#.s#js$1#l#/s#NSE#m#6#j#&E#i#ET3GS0T4S*S,FS&S6s%.S)S$S(SBS's#Xs#TS8SRSPSOSMS/SFS9S.S3SGSxS7S%S1RS##j#0s#\#j#1s$9#j#2s$D#j#3s$J#j#4s$P#j#5s$[#j#6s$_#j#7s$c#j#8s$g#j#9s$l#j#:s$r#j#;s$t#j#<s$w#j#=s%##j#>s%%#j#?s%)#j#@s%-#j#As%1#$s%DI)SG.S/$s%G##s%CS4#(s%IS3%#SGUSIS7&$#(s%MS.VSJ#SA#P#K(s%PS92K#USKS3WSL#SFS.#C#H/S.WSN#S/S9#C#H/S97#USQSF7#/S/USS##CS6L(s%_SC&#s%&%$S82s%(#<%#k###s%%k#$s%`#k##*##CS*H(s%hS'&#s%/%$SC2s%1#<%#k###s%)k#$s%i#k##*##CJH8s%ls%lS'S8VSUG##C#Hk##&##CQL%s$Qs%&%#S'USVS8&$#k##'#3s$QS(S'LQ8s%ws%wS)SBWSWs%&#s%$nC#$#%s%&SD#%###s%%(s&#S)%#S(WSXS,$#0s%+&#USYS*8s&#s&#JS6VS[s%K#VS\#s$snC#$##s$w##%#s$q#s$pj#$s&'#WS]S*S)S-nC#$#%s$yS:#%#$##+*Ms$~NO#s&-#Es#q#9RFS:S%*S:nC#$#%PT5#%#K#J%$#&s#q#:GS0S:s#mk##$#k##)#k##+#k##s#|#l#.7s%?#l#/?SE#k#&E#,S5Q:GS0J#k##%#k##s#%#k##s#,#k##s#2#k##s#<#k##s#F#k##s#I#k##s#L#k##s#O#k##s#S#k##s#W#k##s#Z#k##s#^#k##s&1#k##s&3#k##s#e#k##s&;#k##s&?#l#Bs#kT6#l#Cs#ms&N#l#Ds&5P#l#EDs&P#m#s#q#j#Fs&H#j#Gs&T#j#Hs&a#j#Is&d#j#JSE#j#KE#j#%C##"). Qed.
+    intros nr msF mo Q OK VIS H17. cbv zeta. intros LEN H12 H13 H14 H15 CE AL POS RF MC NW NWA NOV ZF ZT ROK BUD K.
+    eapply (sreach_mmap_fixed_commit_lazy bsegs nr L S Zr msF _ mo x17 Q OK VIS eq_refl); [ rewrite H17; reflexivity | ..];
+    change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom bsegs)) 0) with x10;
+    change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom bsegs)) 1) with x11;
+    change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom bsegs)) 2) with x12;
+    change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom bsegs)) 3) with x13;
+    change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom bsegs)) 4) with x14;
+    change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom bsegs)) 5) with x15;
+      [ exact LEN | exact H12 | exact H13 | exact H14 | exact H15 | exact CE | exact AL | exact POS
+      | exact RF | exact MC | exact NW | exact NWA | exact NOV | exact ZF | exact ZT | exact ROK | exact BUD | ].
+    intros msF'.
+    change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom bsegs)) 1) with x11.
+    change (ms_gpr (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom bsegs)) 0) with x10.
+    change (ms_mem (MSsvc R F (Z_to_bv 64 pc) x17 fc rv m (seg_rom bsegs))) with m.
+    cbv zeta. intros OK' VIS' HS' EAG. apply (K msF' OK'); [| exact HS' | exact EAG].
+    rewrite VIS', sysret_MSsvc. unfold R. rewrite mkR_set_a0, lit_add_lit. reflexivity.
+  Qed.
 
   (* [comment removed for export] *)
   Lemma sr_munmap_MS : forall msF mo (Q : config -> Prop),
@@ -216,7 +252,7 @@ Section CjNodes.
        let mo' := munmap_model a n mo in
        lzok bsegs (maps_subtract L (bv_unsigned a) (bv_unsigned a + nZ)) S Zr (mkCfg msF' mo') ->
        restrict (maps_subtract L (bv_unsigned a) (bv_unsigned a + nZ)) S msF'
-         = MS (Ra (Z_to_bv 64 0)) F (Z_to_bv 64 (pc + 4)) fc rv (unfill a n m) (seg_rom bsegs) ->
+         = MS (Ra (Z_to_bv 64 0)) F (Z_to_bv 64 (pc + 4)) fc None (unfill a n m) (seg_rom bsegs) ->
        hid_same L S msF msF' ->
        (forall x, hiddenb (maps_subtract L (bv_unsigned a) (bv_unsigned a + nZ)) S x = hiddenb L S x) ->
        eager_used mo' + rem (a, n) (cuts mo) <= eager_used mo ->
@@ -351,8 +387,10 @@ Proof.
 Qed.
 Lemma nonvm_same_munmap : forall a n mo, nonvm_same mo (munmap_model a n mo).
 Proof.
-  intros. rewrite munmap_model_eqL. pose proof (munmap_modelL_nonvm a n mo) as (?&?&?&?&?&?). unfold nonvm_same.
-  rewrite munmap_modelL_vmmaps. repeat split; try assumption.
+  (* 75d69e00: proved from [with_mmap_destroyed]'s own projections, which both
+     ledger builders apply identically, so this type is untouched. *)
+  intros. rewrite munmap_model_eqD. pose proof (munmap_modelD_nonvm a n mo) as (?&?&?&?&?&?). unfold nonvm_same.
+  rewrite munmap_modelD_vmmaps. repeat split; try assumption.
 Qed.
 (* [comment removed for export] *)
 Lemma nonvm_same_atop : forall mo mo', nonvm_same mo mo' -> alloc_top (m_vmmaps mo') = alloc_top (m_vmmaps mo).

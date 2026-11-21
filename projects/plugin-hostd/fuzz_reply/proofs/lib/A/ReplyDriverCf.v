@@ -229,12 +229,25 @@ End br.
 (* ---- TFIB_T from W8's contract at ReplyATopX.v's parameters: LIBROOM := LIBROOM_fr, NP := room_live_cf (the cf
    instance's non-primary room, a8's laws under rl_param_ok, closed at CfParams_reply), the cf allocator's realizers;
    the start-up covered range is reply_handoff_cov.  ReplyTFIBcf.v reply_TFIB_T_of_cf_rl does the driver half. ---- *)
-(* the start-up covered range (AD1pcf.v handoff_cov) is a Theorem Labs lane's AStkCov.entry_stk_cov (B4a, a working branch
-   f9031cc9018, file taken by path): the same statement *)
+(* the start-up covered range (AD1pcf.v handoff_cov) is a Theorem Labs lane's AStkCov.entry_stk_cov (B4a, a working branch,
+   file taken by path): the same statement *)
+(* LPS 727298f3: over AD1pcf.v's new binders, the launch premise valid_launch read off valid_input (its thirteenth
+   conjunct, as A/AD1pcf.v tfib_drv_main reads it); AStkCov's section lemma specialized at this proof's names in its
+   section's order (the form of B/YD1pcf.v's YStkCov call), an argument it does not take skipped: three of them are
+   words (sp, brk, mbase), which an eassumption over evars does not tell apart *)
 Lemma reply_handoff_cov : handoff_cov.
 Proof.
-  intros sp rdraw brk inp h ch E R FULL model Hsp Hva Hve Hfit Hch HC HE HM a Ha.
-  exact (AStkCov.entry_stk_cov sp rdraw brk inp Hsp Hva Hve Hfit h ch E R FULL model Hch HC HE HM a Ha).
+  intros sp rdraw brk mbase inp h ch E R FULL model SINV Hsp Hva Hve Hfit Hinp Hlau Hch SP0 HC HE HM a Ha.
+  pose proof Hinp as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & Hvl & _).
+  pose proof (@AStkCov.entry_stk_cov) as L. try specialize (L YK11.fx0); try specialize (L TfibB);
+  try specialize (L TfibB_syms); try specialize (L sp); try specialize (L rdraw);
+  try specialize (L brk); try specialize (L mbase); try specialize (L inp);
+  try specialize (L Hsp); try specialize (L Hva); try specialize (L Hve); try specialize (L Hfit);
+  try specialize (L Hvl); try specialize (L Hlau); try specialize (L Hinp);
+  try specialize (L h); try specialize (L ch); try specialize (L E); try specialize (L R); try specialize (L FULL);
+  try specialize (L model); try specialize (L Hch); try specialize (L SINV); try specialize (L SP0);
+  try specialize (L HC); try specialize (L HE); try specialize (L HM).
+  exact (L a Ha).
 Qed.
 
 (* field round 3 (Part A; part 3c): the cf driver's read-only image fact (A/AD1vcf.v relro_ok) at CfImg_A: the RELRO

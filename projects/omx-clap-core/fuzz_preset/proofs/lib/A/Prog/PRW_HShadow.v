@@ -4,9 +4,9 @@
    over the concrete `ARcf segs B`; it takes the twin over its ARx as a hypothesis, and at assembly (ARx := ARcf segs B)
    the twin is convertible to a Theorem Labs lane's law (unfold both; the bodies are the same term) and that lane's proof discharges it.
    (1) ARx_hshadow_law: ADOPTED as YCbqG.v's ARx_hshadow_law / AR_laws_x field 14 alx_hshadow (journal blob
-       83da015952be, engine c-omx-alloc 63997a07aa6), so it is REMOVED here; cite LAWS's alx_hshadow.
-   (2) ARx_img_shadow_vis segs B ARx: h-mani-a8's img_shadow_vis_cf (origin/cold/h-mani-a8-preset-alloc 91d0544ad13,
-       lib/Reusable/YGcfAmx2.v:47-49, the text taken verbatim with ARcf segs B -> ARx; bounds YImgTop's IMG_LO /
+       83da015952be, engine c-omx-alloc), so it is REMOVED here; cite LAWS's alx_hshadow.
+   (2) ARx_img_shadow_vis segs B ARx: h-mani-a8's img_shadow_vis_cf (
+       lib/Reusable/YGcfAmx2.v:48-50, the text taken verbatim with ARcf segs B -> ARx; bounds YImgTop's IMG_LO /
        IMG_TOP by name): the image's shadow bytes are present in the view. a8 states it as a unit-supplied fact (not
        proved in YGcfAmx2.v); its discharge is the unit's supply of img_shadow_vis_cf.
    Numerals: none. *)

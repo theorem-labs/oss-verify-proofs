@@ -2,8 +2,8 @@
    (0x856bc .. 0x857b8: the probe loop, the "nosuch0" pair, checks 25 and 26, calloc(cap + 1, 18)) and S12 (0x857bc ..
    0x857c8: calloc(cap + 1, 20)) of the test harness's entry function LLVMFuzzerTestOneInput (0x84d34).
 
-   proves function LLVMFuzzerTestOneInput (reuse search: origin/main@6e24fa4d602c origin/ossv/recipes@3abc3740de97
-   origin/ossv/candidates@ee89628c9971 origin/release/pau-projects-recipes@b6a0088adcb4 / the stream's proof index
+   proves function LLVMFuzzerTestOneInput (reuse search: origin/main origin/ossv/recipes
+   origin/ossv/candidates origin/release/pau-projects-recipes / the stream's proof index
    LLVMFuzzerTestOneInput + four-ref git grep; output pasted verbatim in
    the walk's shared brief; checker (fresh, read-only): CONFIRM; none: written new)
 

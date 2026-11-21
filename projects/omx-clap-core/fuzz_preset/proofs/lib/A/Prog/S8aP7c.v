@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumE.v, with its module paths and module names changed; 2503 of its 2694 lines of code are new or changed and 1724 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aP7a.v; 543 of its 663 lines of code are new or changed and 2574 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, slice S8a EX-VALUE, image A' (asan #102, pin 1be0f53d, unstripped twin bff8519b): piece 7 SEG 1 of the walk of
    ex_value (A' 0x832a4), sub-lane S8aP7c of EvItems: ev7_seg1_A, S8aItems.v's ev7_seg1_stmt at L := A_prog_listing,
    PA := PI_prog_A. From P_STEP (0x837ec, EV_STEP) to C_KID (0x83878, EV_KID), listing lines 340-374 and the
@@ -12,7 +13,7 @@
                        (kid 0, s7 1, in->differs = 1);
      v' <> 0, n < v->n  : 0x837ec-0x83814, 0x83818-0x83848 (kid = v->kids + 56 n, s7 0).
    The symbolic states (p7c_ssZ for v' = 0, p7c_ssV for v' <> 0) are written for this segment; they are VARIANTS of
-   S8aItemsWalk.v's ev7_ss / ev7_entry at e3200869f2e (not copies, and S8aItemsWalk.v is not Required): ev7_entry
+   S8aItemsWalk.v's ev7_ss / ev7_entry (not copies, and S8aItemsWalk.v is not Required): ev7_entry
    takes `a1 = length x` where P_STEP has a1 = n (ev_at_step), and its node premise `v' + 48 <= alloc_ceiling` fails
    on prhex_home's caller-stack arm; here the node's separation from the body's frame and `struct ex` comes from
    ev_pre's footprint clause (all three home arms), and the shadow checks are engine TOKENS (YCbn: each leaves an
@@ -45,7 +46,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YK04
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YG0v.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YG00 YG0a YG01 YG0f YG0n YG0d YCbq.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YM05 YI16 YG0p YK0o YCbqG.
-(* the caller-window call kit is Reusable/YCbqGcallW.v (walkkit b77223726823's engine set) *)
+(* the caller-window call kit is Reusable/YCbqGcallW.v (walkkit's engine set) *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YP0d YP0c YC80 YPsym YC4aP YC1fP YC80x YC1fPx.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YImgTop YGcfNames YG0dcf YGcallMx FCiface.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Prog Require Ledger.
@@ -82,12 +83,12 @@ Context {RL : PrhRoomLive}.
 (* the kit's allocator laws at ARx, at the harness head length cf_head (YCbqG.v journal 83da015952be; at ARx := ARcf
    this is YGcallcf.v's AR_laws_x_cf) *)
 Hypothesis LAWS : AR_laws_x SEGS B ARx cf_head.
-(* the shared whitespace loop, PROVED (no longer a stand-in): WalkS8a's S8aWs.ev_ws_loop (ws-rawframe 91e4dffbfb7),
+(* the shared whitespace loop, PROVED (no longer a stand-in): WalkS8a's S8aWs.ev_ws_loop (ws-rawframe),
    whose only Section hypothesis is LAWS *)
 Lemma WS : ev_ws_loop_spec_FIX (fx := fx) (L := A_prog_listing) (PA := PA) B ARx SK.
 Proof. exact (S8aWs.ev_ws_loop B ARx SK LAWS). Qed.
 (* HSH is DERIVED (c-omx-hpreset 10:43Z): ev_hshadow_law is AR_laws_x's field alx_hshadow at hl := cf_head (journal
-   83da015952be, YCbqG.v:163); S8aItems.v ev_hshadow_of_laws *)
+   83da015952be, YCbqG.v:164); S8aItems.v ev_hshadow_of_laws *)
 Lemma HSH : ev_hshadow_law (L := A_prog_listing) (PA := PA) B ARx.
 Proof. exact (ev_hshadow_of_laws B ARx LAWS). Qed.
 (* STAND-IN: a Theorem Labs lane, the image binding of PrhImg: alloc.c's statics (prh_pst) are image bytes (true at prh_img_A: PRH_Img.v,
@@ -96,7 +97,7 @@ Hypothesis PSTI : forall z, Exists (in_zr z) PST -> in_img SEGS z.
 
 (* ======== LOCAL KIT (EvItems) ======== *)
 
-(* The CALL of a caller-window callee: PRW_CallerJ.v (by path from walk-S4 036034006eb0) aj_call_xW / aj_call_xWF over
+(* The CALL of a caller-window callee: PRW_CallerJ.v (by path from walk-S4) aj_call_xW / aj_call_xWF over
    fp_sub_xW, instantiated at the piece's float state. *)
 Let ev_segs_low : forall a, in_img SEGS a -> 0 <= a < kLowMemEnd := @pa_segs_low _ A_prog_listing PA.
 
@@ -107,7 +108,7 @@ Let ev_segs_low : forall a, in_img SEGS a -> 0 <= a < kLowMemEnd := @pa_segs_low
 
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YN0d.
 
-(* STAND-IN (lane FRAME: S8aItemsWalk.v FRAME KIT ev_mid_frame, Qed at e3200869f2e; the internal file FRAME.md's statement verbatim;
+(* STAND-IN (lane FRAME: S8aItemsWalk.v FRAME KIT ev_mid_frame, Qed; the internal file FRAME.md's statement verbatim;
    S8aP7 discharges it at composition). Its last premise, memnorm at the new memory, is ev_mid's last conjunct
    (S8aIface.v, the memnorm interface), as in S8aItemsWalk.ev_mid_frame. *)
 Hypothesis MIDF : forall (a : ev_act) ly S Hp W mem md k p dep dl mem' md' p' dep' dl' (Wr : Z -> Prop),
@@ -122,7 +123,7 @@ Hypothesis MIDF : forall (a : ev_act) ly S Hp W mem md k p dep dl mem' md' p' de
   prhex_cur W mem' (ea_q a) p' (ea_x0 a + ea_len a) dep' (ea_scr a) dl' ->
   YAkMemnorm.memnorm SEGS mem' ->
   ev_mid B ARx SK a ly S Hp W mem' md' k p' dep' dl'.
-(* STAND-IN (lane FRAME: S8aItemsWalk.v FRAME KIT ev_bounds, Qed at e3200869f2e; the internal file FRAME.md's statement verbatim) *)
+(* STAND-IN (lane FRAME: S8aItemsWalk.v FRAME KIT ev_bounds, Qed; the internal file FRAME.md's statement verbatim) *)
 Hypothesis BNDS : forall (a : ev_act), ev_pre (fx := fx) B ARx a ->
   alloc_ceiling <= ea_sp0 a - ea_STK a /\ ea_sp0 a - ea_STK a <= ea_S1 a /\ ea_S1 a + 152 <= ea_sp0 a /\
   ea_S1 a mod 32 = 0 /\ ea_sp0 a <= ea_q a /\ ea_q a + 40 <= ea_sp0 a + ea_d a /\ ea_sp0 a + ea_d a <= 2 ^ 47 /\
@@ -177,7 +178,7 @@ replace (BASE + 7364 + off) with (BASE + (7364 + off)) by lia. reflexivity.
 Qed.
 
 (* the byte of a little-endian value; a chunk as val_mem (copies of lane NEXT's ev8_byte_eq / ev8_val_of_chunk,
-   S8aItemsWalk.v at cb3bf00de8c, Qed text) *)
+   S8aItemsWalk.v, Qed text) *)
 Lemma p7c_byte_eq : forall v (n k : nat), (k < n)%nat -> (n <= 8)%nat ->
   Z_to_bv 8 (YG0f.le_byte v n k) = byte_of_word (Z_to_bv 64 v) (Z.of_nat k).
 Proof.

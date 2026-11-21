@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (exit_preA written out in plain text from its encoded (CDefT) form, its pending branch now also requiring a reader on the output channel, which the revision's writev reads; the CDefT name table, then unused, removed). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -14,9 +15,6 @@ Import ListNotations.
 Open Scope bv_scope.
 
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
-From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require CDefT.
-From Ltac2 Require Ltac2.
-Ltac2 gd_tbl_A_exit_defs () : Init.string Init.list := ["Corelib.Init.Logic.ex"; "Corelib.Numbers.BinNums.Z"; "stdpp.bitvector.definitions.bv"; "Corelib.Init.Logic.and"; "exit_commonA"; "Corelib.Init.Logic.or"; "Corelib.Init.Logic.eq"; "Corelib.Init.Datatypes.list"; "Corelib.Init.Datatypes.nil"; "OSSVerify.KrLib.B.A_exit_base.file_clean"; "stdout_pendingA"; "Corelib.Init.Datatypes.option"; "LinuxProcessSemantics.LinuxProcessSem.State.FdEntry"; "LinuxProcessSemantics.LinuxProcessSem.State.fd_lookup"; "LinuxProcessSemantics.LinuxProcessSem.State.m_fds"; "stdpp.bitvector.definitions.Z_to_bv"; "Corelib.Init.Datatypes.Some"; "LinuxProcessSemantics.LinuxProcessSem.State.FdChannel"].
 
 
 (* [comment removed for export] *)
@@ -65,7 +63,9 @@ Record stdout_pendingA (mem : word -> option byte) (wb wp : Z) (bufp bufsz rp1 c
 
 (* [comment removed for export] *)
 Definition exit_preA (su : Z) (regs : bvmap 5 word) (mem : word -> option byte) (mo : Model)
-           (code : word) (pending : list byte) : Prop := ltac2:(CDefT.buildp (gd_tbl_A_exit_defs ()) "(0.$1.Ltid,$1.(0.(2.&40.)Lwp0,(2.&40.)(0.(2.&40.)Lrp0,(2.&40.)(0.(2.&40.)Lwp2,(2.&40.)(0.(2.&40.)Lrp2,(2.&40.)(3.(4.O5.O4.O6.O2.R5.R4.R3.R2.R1.)(5.(3.(6.(7.(2.&8.))O1.(8.(2.&8.)))(0.(2.&40.)Lwp1,(2.&40.)(0.(2.&40.)Lrp1,(2.&40.)(9.O4.+?:578.R2.R1.))))(0.$1.Lwb,$1.(0.$1.Lwp,$1.(0.(2.&40.)Lbufp,(2.&40.)(0.(2.&40.)Lbufsz,(2.&40.)(0.(2.&40.)Lrp1,(2.&40.)(0.(2.&40.)Lcan,(2.&40.)(3.(:.O4.R6.R5.R4.R3.R2.R1.O1.)(6.(;.$<.)(=.(>.O3.)(?.&40.+1.))(10.$<.(11.(?.&40.+1.))))))))))))))))))")
+           (code : word) (pending : list byte) : Prop :=
+  (* plain text: the pending branch also carries the channel reader the revision's writev reads *)
+  (@Corelib.Init.Logic.ex (@Corelib.Numbers.BinNums.Z) (fun tid : (@Corelib.Numbers.BinNums.Z) => (@Corelib.Init.Logic.ex (@stdpp.bitvector.definitions.bv 64%N) (fun wp0 : (@stdpp.bitvector.definitions.bv 64%N) => (@Corelib.Init.Logic.ex (@stdpp.bitvector.definitions.bv 64%N) (fun rp0 : (@stdpp.bitvector.definitions.bv 64%N) => (@Corelib.Init.Logic.ex (@stdpp.bitvector.definitions.bv 64%N) (fun wp2 : (@stdpp.bitvector.definitions.bv 64%N) => (@Corelib.Init.Logic.ex (@stdpp.bitvector.definitions.bv 64%N) (fun rp2 : (@stdpp.bitvector.definitions.bv 64%N) => (@Corelib.Init.Logic.and (@exit_commonA regs mem su code tid wp0 rp0 wp2 rp2) (@Corelib.Init.Logic.or (@Corelib.Init.Logic.and (@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.list (@stdpp.bitvector.definitions.bv 8%N)) pending (@Corelib.Init.Datatypes.nil (@stdpp.bitvector.definitions.bv 8%N))) (@Corelib.Init.Logic.ex (@stdpp.bitvector.definitions.bv 64%N) (fun wp1 : (@stdpp.bitvector.definitions.bv 64%N) => (@Corelib.Init.Logic.ex (@stdpp.bitvector.definitions.bv 64%N) (fun rp1 : (@stdpp.bitvector.definitions.bv 64%N) => (@OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.B.A_exit_base.file_clean mem 1025400%Z wp1 rp1)))))) (@Corelib.Init.Logic.ex (@Corelib.Numbers.BinNums.Z) (fun wb : (@Corelib.Numbers.BinNums.Z) => (@Corelib.Init.Logic.ex (@Corelib.Numbers.BinNums.Z) (fun wp : (@Corelib.Numbers.BinNums.Z) => (@Corelib.Init.Logic.ex (@stdpp.bitvector.definitions.bv 64%N) (fun bufp : (@stdpp.bitvector.definitions.bv 64%N) => (@Corelib.Init.Logic.ex (@stdpp.bitvector.definitions.bv 64%N) (fun bufsz : (@stdpp.bitvector.definitions.bv 64%N) => (@Corelib.Init.Logic.ex (@stdpp.bitvector.definitions.bv 64%N) (fun rp1 : (@stdpp.bitvector.definitions.bv 64%N) => (@Corelib.Init.Logic.ex (@stdpp.bitvector.definitions.bv 64%N) (fun can : (@stdpp.bitvector.definitions.bv 64%N) => (@Corelib.Init.Logic.and (@stdout_pendingA mem wb wp bufp bufsz rp1 can pending) (@Corelib.Init.Logic.and (@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.option (@LinuxProcessSemantics.LinuxProcessSem.State.FdEntry)) (@LinuxProcessSemantics.LinuxProcessSem.State.fd_lookup (@LinuxProcessSemantics.LinuxProcessSem.State.m_fds mo) (@stdpp.bitvector.definitions.Z_to_bv 64%N 1%Z)) (@Corelib.Init.Datatypes.Some (@LinuxProcessSemantics.LinuxProcessSem.State.FdEntry) (@LinuxProcessSemantics.LinuxProcessSem.State.FdChannel (@stdpp.bitvector.definitions.Z_to_bv 64%N 1%Z)))) (@Corelib.Init.Logic.eq (@Corelib.Init.Datatypes.bool) (@LinuxProcessSemantics.LinuxProcessSem.State.m_channel_reader mo) (@Corelib.Init.Datatypes.true))))))))))))))))))))))))))))
 (* [comment removed for export] *).
 
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).

@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported from proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v and lib/A/AC8b.v (the
-   loop by fuel induction, tcbb_loopX) at c8557374ad2e: the walk of syntax_reply_matches on fuzz_command.asan, the
+   loop by fuel induction, tcbb_loopX): the walk of syntax_reply_matches on fuzz_command.asan, the
    search of an item for '<' (L3, 0x886b4, check C3), the strcspn wrapper's call (CALL1, 0x88694) and its result
    (RET1, 0x886a0). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

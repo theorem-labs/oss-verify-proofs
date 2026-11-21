@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the new launch (process input, auxv, group id, exec file name); the run over the run's segments; the BMode context. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
@@ -13,7 +14,7 @@ From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S9 Require PropExec.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
-#[local] Existing Instance BMode.bm_off_inst | 0.
+#[local] Existing Instance OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S9.BMode.bm_off_inst | 0.
 
 Definition ev_not_kill (e : event) : Prop :=
   match e with KillEv _ _ => False | _ => True end.
@@ -82,7 +83,7 @@ Proof.
 Qed.
 
 Lemma srealizes_not_dies_by_signal : forall scfg segs pc ph sp brk0 mb rnd lim inp T,
-  srealizes0 segs scfg (init_config segs pc ph sp brk0 mb rnd lim inp) T ->
+  srealizes0 (run_segments segs inp sp mb) scfg(init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) T ->
   kill_free T ->
   ~ dies_by_signal (run_scfg scfg (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp).
 Proof.
@@ -93,7 +94,7 @@ Proof.
 Qed.
 
 Lemma srealizes_error_free_unkilled : forall scfg segs pc ph sp brk0 mb rnd lim inp T,
-  srealizes0 segs scfg (init_config segs pc ph sp brk0 mb rnd lim inp) T ->
+  srealizes0 (run_segments segs inp sp mb) scfg(init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) T ->
   kill_free T ->
   error_free_unkilled (run_scfg scfg (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp).
 Proof.

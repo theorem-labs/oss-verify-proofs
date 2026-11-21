@@ -11,7 +11,7 @@
      gn_pair_ok source is at slot k (fr_RINV's distinct fds, RI_fds_holds), so after relay_instance_gone slot k holds
      rig_post's source for entry j, which rig_rel's dr_rel leaves drained (pending list empty, offset 0).
    - RI_gone_read_sat: one state meets all of RI_gone_read's premises (and RI_gone_pairs's).
-   - Section collapse / collapse2: the records of rounds 1 and 2 of the gone rules' texts (bb9dae5d905, a1a3591c77c),
+   - Section collapse / collapse2: the records of rounds 1 and 2 of the gone rules' texts,
      which were false at the instance; machine-checked counter-instances, not proofs of the rows.
    Part 2 (over W_LLVMFuzzerTestOneInput_gone_base.v's own model): RI_gone_pairs_plug / RI_gone_read_plug restate
    part 1 at gone_base's GN_RI_pairs / GN_RI_read; then the step and end rows.
@@ -19,25 +19,26 @@
      check_no_loss and check_shape_ends left of what relay_instance_gone left there; when gone = 0, `at` is the
      entry's position in the stream relay_instance_gone sent (rg_acc_pos), which is the entries' drained lines and
      then their ended keys' end lines (rg_rel_dec, rg_strm).
-   - RI_gone_step_holds(_c): GN_RI_step of a working branch a39b599f92e (copied verbatim as
+   - RI_gone_step_holds(_c): GN_RI_step of a working branch (copied verbatim as
      GN_RI_step_d) at MT := ameter_triv, RINV := fr_RINV, MMAX := WR_MMAX, LS := fr_LS3 B / fr_LS3c B.  The LS-side
-     conjunct cnl_room is a Theorem Labs lane's gx6_step_room(_c) (ReplyLS3cTopxGoneF.v at b25d82fcf04); mo_ok is True at
+     conjunct cnl_room is a Theorem Labs lane's gx6_step_room(_c) (ReplyLS3cTopxGoneF.v); mo_ok is True at
      ameter_triv; the rest is RINV-side (rg_step_rinv_side).
-   - RI_gone_end_holds_q5(_c): GN_RI_end of a39b599f92e (copied as GN_RI_end_q5) with REQ5 (no held list's capacity
-     shrinks from m to mc) as one more, last, premise: s5-r1d's gx6_end_LS3(_c) needs it, and a39b599f92e's gn_cnl_ok
+   - RI_gone_end_holds_q5(_c): GN_RI_end (copied as GN_RI_end_q5) with REQ5 (no held list's capacity
+     shrinks from m to mc) as one more, last, premise: s5-r1d's gx6_end_LS3(_c) needs it, and's gn_cnl_ok
      does not carry `hl_cap (hs_held h) <= hl_cap H'` from which ReplyLS3cTopxGoneH.v's gxh_req5 derives it.
-   - GN_RI_step_r3 (Section rg3): the record of round 3 (aa34c06e82c): without re_U NUL-free the step row is false.
+   - GN_RI_step_r3 (Section rg3): the record of round 3: without re_U NUL-free the step row is false.
    Local helpers rg_lines_nz / rg_upds_in / rg_W_read_lines_nz state what a Theorem Labs lane's ReplyRINV_a12.v
    (lines_nul_free / upds_nul_free) states; they stay local. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyRINV_gone.v, with its module paths and module names changed; 362 of its 481 lines of code are new or changed and 2804 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* proves no function (rule 24; kind: segment lemma): the SATISFIABILITY witnesses of the premises that the gone
    arm's re-fitted text (REQ1-REQ5, C1, C2) added to lib/B/W_LLVMFuzzerTestOneInput_gone_base.v's GN_RI_step,
    GN_RI_end, gn_cnl_ok and GN_CNT_step, at image B's real instance. *)
 (* VERIFY's rule (2026-10-29 21:38Z): before a statement text fans out to several provers, its owner shows it
    satisfiable AT THE REAL INSTANCE, not at a trivial one.  The B text re-fitted to A's gone arm
    (lib/B/W_LLVMFuzzerTestOneInput_gone_base.v, sha256 6e72185dcc4d; internal record, as the room branch
-   a working branch 85038211e65 carries it: cand13 commit 2 63bca49e574 + the arms base
-   6fbfc8c80e3b + this text, merged here)
+   a working branch carries it: cand13 commit 2 + the arms base
+   + this text, merged here)
    fans out to the phase walks (gone_base_x, p0..p6, gone_tk, gone) and to the two RI rows, so every premise it added
    needs a state where all of them hold TOGETHER.  This file gives that state and fires each statement at it:
    GN_RI_step, GN_RI_end, GN_CNT_step, GN_CNT_rig (the count rule of the relay_instance_gone call, which a Theorem Labs lane
@@ -52,7 +53,7 @@
    THE INSTANCE.  B := TfibB (lib/B/YD2l.v, the image-B start-up instance); RINV := ReplyRINVB.fr_RINV;
    LS := ReplyLSB.fr_LS TfibB CR, the LS the B top names at its own check (lib/B/W_LLVMFuzzerTestOneInput_top_x.v
    :819 `Local Notation LSx := (ReplyLSB.fr_LS TfibB CR)`), at every call room CR the driver's room fits in
-   (rn_LS_room: the B driver's 2 ^ 33, YCfn_cf.CALL_ROOM_B at a Theorem Labs lane's 6dd1d8ad0dfe, is one); MT := ANY
+   (rn_LS_room: the B driver's 2 ^ 33, YCfn_cf.CALL_ROOM_B at a Theorem Labs lane, is one); MT := ANY
    LAWFUL METER (ameter_laws, YC5d.v), not ameter_triv: the witness needs only mo_le_refl; MMAX := ANY (no premise
    of the four statements reads it).  The state is A's, at B's records: one operation done (t = 1), the gone op
    (byte 5) next at lm_k = 1 of a 2-byte input, one relay entry whose line buffer is allocated (an earlier drain),
@@ -60,10 +61,10 @@
    the source's partial buffer, each a chunk of the allocator state.
 
    NOT v3.  A's witness states its LS fact at A's v3 (ReplyLS3.fr_LS3).  B's v3 twin lib/B/ReplyB3LS3.v
-   (6dd1d8ad0dfe, sha256 50eb7bb8b605; internal record) STILL CANNOT BE LOADED on cand13: it Requires
+   (sha256 50eb7bb8b605; internal record) STILL CANNOT BE LOADED on cand13: it Requires
    lib/B/W_op_add.v, and its helper ReplyB3Base.v Requires lib/B/W_LLVMFuzzerTestOneInput_arm_event.v; both are on
-   a Theorem Labs lane's own list of files that fail in the whole-B build of the kit tree (cand13 3b4d6e514910,
-   whole-B-breaks.txt (sha256 207433003b15; internal record): W_op_add.v:302 and W_list_push.v:339 "has type list (list Z) while it
+   a Theorem Labs lane's own list of files that fail in the whole-B build of the kit tree (cand13,
+   whole-B-breaks.txt (sha256 207433003b15; internal record): W_op_add.v:303 and W_list_push.v:340 "has type list (list Z) while it
    is expected to have type roomp", arm_event.v:2880), and a build of ReplyB3LS3.vo on this tree reproduces all
    three.  They are B-walk consumers of the room round, not files this file reads.  So the LS fact below is the v2
    instance the B top names.  WHEN THOSE LAND, restate rn_LS at ReplyB3LS3.fr_LS3 TfibB YCfn_cf.CALL_ROOM_B (the
@@ -72,7 +73,7 @@
    model-side.
 
    NOT DUPLICATED.  RI_gone_read_sat (GN_RI_read's premises) and the old text's rn_common already exist at B in
-   lib/B/ReplyRINVB_gone.v (a working branch 40b5ea53c631, Module RG); this file does not copy them.
+   lib/B/ReplyRINVB_gone.v (a working branch, Module RG); this file does not copy them.
    A's rg2 / rgc counter-instances (A :444-570, :580-704) belong to the FINDINGS of the old rows, not to the new
    premises, and are not relocated either.
 
@@ -291,7 +292,7 @@ Qed.
 Lemma rn_LS_room : 2 + ATABLE + 8192 + APARTIAL + 2 ^ 33 <= LIVE_MAX.
 Proof. unfold ATABLE, APARTIAL, LIVE_MAX. lia. Qed.
 
-(* ================================================================== KF-COUNT (gone_base 187cede058c): gn_cst's bound
+(* ================================================================== KF-COUNT (gone_base): gn_cst's bound
    cst <= r + q at this state needs relay_instance_gone's meter cost r to be non-negative.  A trace whose requests all
    have a non-negative size costs at least 0 at a lawful meter (mo_malloc_nonneg / mo_free_nonneg, Reusable/YC5d.v
    :32 / :34), and relay_instance_gone's trace at this state is such a trace. *)
@@ -516,7 +517,7 @@ Proof.
   exact (HC rn_cx rn_m [(rn_h, 0%nat)] P).
 Qed.
 
-(* ================================================================== GN_LS_rig (the re-taken text, A 3d17f490d56's
+(* ================================================================== GN_LS_rig (the re-taken text, A
    TX_GN_LS_rig: gn_op, the per-slot pending-offset premise and the entry's CAPOUT clause are new, and it concludes
    two more facts).  Its three premises beyond rn_common's: *)
 Lemma rn_U_le : Forall (fun e => Z.of_nat (length (re_U e)) <= APARTIAL) (lm_es rn_m).
@@ -564,9 +565,9 @@ End nsat.
 
 (* ================================================================== THE WITNESSES AT THE IMAGE-B INSTANCE
    B := TfibB (lib/B/YD2l.v, the image-B start-up instance), with the B driver's own call room 2 ^ 33
-   (YCfn_cf.CALL_ROOM_B at a Theorem Labs lane's 6dd1d8ad0dfe).  Each is one application of the Section's lemma: the
+   (YCfn_cf.CALL_ROOM_B at a Theorem Labs lane).  Each is one application of the Section's lemma: the
    Section proves them for EVERY asyms, so the image's own symbol table is one case.  (These lemmas waited for
-   lib/B/YCej.v, which cand13 commit 2, a working branch 63bca49e574 on the room branch, fixed.) *)
+   lib/B/YCej.v, which cand13 commit 2, a working branch on the room branch, fixed.) *)
 Section inst.
 Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 Lemma gone_B_LS_sat : ReplyLSB.fr_LS YD2l.TfibB (2 ^ 33) (rn_cx YD2l.TfibB) 1 (rn_m YD2l.TfibB) rs_ly rs_S.

@@ -72,14 +72,14 @@ Definition dt1_head_contract_F : Prop :=
           F (Z_to_bv 64 DT1_HEAD) fc None m (seg_rom rsegs)).
 
 (* Route (C) (a Theorem Labs lane 2026-10-29 09:20Z; wave lead a Theorem Labs lane; a Theorem Labs lane's brief dt1-on-B): this run reads and
-   stores NO shadow byte THROUGH the universal `shadow_rw m` premise. Measured (from a working branch 5c355e74408):
+   stores NO shadow byte THROUGH the universal `shadow_rw m` premise. Measured (from a working branch):
    dt1_head.v (a version not in this delivery) / dt1_head_F.v (a version not in this delivery) introduce it as HSW and dt1_head.v (a version not in this delivery) / dt1_head_F.v (a version not in this delivery) clear it unused; the
    20 shadow checks read their bytes through `addressable m a0 20` (rt_shadow_rd / rt_addressable of RcAsanRT.v), and
    the run stores no shadow byte (its munch is the 16-byte frame and the 20 bytes at a0). So the _on forms DROP the
    premise and name no region: they are the two statements above WITHOUT `shadow_rw m ->` (the line
    `asan_cells m -> shadow_rw m ->` becomes `asan_cells m ->`); nothing else changes, and the posts never mention
    shadow_rw. Image A has no twin (lib/A/Prog has no dt1_head file; A's build_dt1_single takes no dt1_head
-   contract); the form is the dropped one of image B's other leaves (a working branch 5c355e74408). The old
+   contract); the form is the dropped one of image B's other leaves (a working branch). The old
    statements follow by the bridges dt1_head_contract_of_on and dt1_head_contract_F_of_on. *)
 Definition dt1_head_contract_on : Prop :=
   forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)

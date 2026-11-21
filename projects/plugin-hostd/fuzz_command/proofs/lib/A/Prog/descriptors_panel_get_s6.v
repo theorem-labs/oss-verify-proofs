@@ -2,15 +2,16 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk of sup_instance_info (plugin-hostd/fuzz_command,
-   fuzz_command.asan-ubsan, 0x8bb70, 122 instructions), after lib/A/Prog/answer_code.v (a working branch
-   2ba4488ce71: a side-stack frame taken by __asan_stack_malloc_N, its header and shadow, the snprintf call and the
-   release by the flag store) and lib/A/Prog/sup_instance_info.v (a working branch 0de7ca03d26: the
+   fuzz_command.asan-ubsan, 0x8bb70, 122 instructions), after lib/A/Prog/answer_code.v (a working branch:
+   a side-stack frame taken by __asan_stack_malloc_N, its header and shadow, the snprintf call and the
+   release by the flag store) and lib/A/Prog/sup_instance_info.v (a working branch: the
    recorder's chain through record, arg_s, rec_shape_of and answer and the post), re-derived on B's code, against
-   a Theorem Labs lane's statement (a working branch f490061c104). The snprintf step through the shared contract and the change of FP
-   state after it follow a working branch 07b554c4785 (lib/B/Prog/answer_code.v:943-1070), the release
-   by the flag store answer_code.v's end, the post's block algebra a working branch b5e1a22725a
-   (descriptors_panel_get_aux.v dpgb_post_of), the calls after record a working branch c79a9f2daf7. *)
+   a Theorem Labs lane's statement (a working branch). The snprintf step through the shared contract and the change of FP
+   state after it follow a working branch (lib/B/Prog/answer_code.v:944-1071), the release
+   by the flag store answer_code.v's end, the post's block algebra a working branch
+   (descriptors_panel_get_aux.v dpgb_post_of), the calls after record a working branch. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/sup_instance_info.v, with its module paths and module names changed; 141 of its 266 lines of code are new or changed and 1697 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The model and block-list steps of descriptors_panel_get's walk (plugin-hostd/fuzz_command.asan).
 
    record()'s two arms as the recorder's state sees them (dpg_nargs0, dpg_hrec_slot, dpg_hrec_spill: the slot

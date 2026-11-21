@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/YN03.v, with its module paths and numbers changed; 1 of its 535 lines of code are new or changed and 2 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed in_img, ledger_ok, MRc_laws, MRc_init; added ledger_vdso_free, mres_ok, region_free_app_l, mres_cons_free, mres_cons_sub, mres_incl and 1 more). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -9,6 +10,7 @@ BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YK11 YK0h YK15 YM06 YM02 YP09 YO0d.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YO0i YO0f YO0x YO10 YO0s YO0u YO15.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YM05.
+From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable.R Require Import Cfg.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Local Open Scope Z_scope.
@@ -17,6 +19,10 @@ Definition w64 (z : Z) : word := Z_to_bv 64 z.
 End d.
 Notation in_img := YO0d.in_img (only parsing).
 Section e. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+(* The allocation mode: [ledger_ok]'s three counting fields hold in the forced mode ([amf = false]) only.
+   Under may-fail munmap may answer ENOMEM with the mapping kept, so the model can hold more and larger
+   mappings than the live regions of the abstract state. *)
+Context {AM : AllocMode}.
 Definition in_img_unfold (B : malloc_syms) (a : Z) : in_img B a = (ms_segs B <> [] /\ exists s, In s (segments_reserved (ms_segs B)) /\
 bv_unsigned (fst s) <= a < bv_unsigned (fst s) + bv_unsigned (snd s)) := eq_refl.
 Record syms_ok (B : malloc_syms) : Prop := {
@@ -93,7 +99,8 @@ st_tables : forall a, table_addr a -> mbyte segs mem a = seg_rom segs (w64 a);
 st_vmlock : forall i, 0 <= i < vml_len B -> mbyte segs mem (vml_lo B + i) = Some (Z_to_bv 8 0)
 }.
 Record ledger_ok (L : layout) (A : astate) (md : Model) : Prop := {
-lg_reserved : vm_reserved (m_vmmaps md) = segments_reserved segs;
+lg_reserved : exists rx, vm_reserved (m_vmmaps md) = segments_reserved segs ++ rx
+/\ rx_ok (ly_brk0 L) rx;
 lg_limit : SRC_LIM_MIN <= vm_limit (m_vmmaps md);
 lg_rclim : vm_limit (m_vmmaps md) = rc_lim;
 lg_maps : forall r rg, region_of A r = Some rg -> rg_live rg = true -> rg_kind rg <> RkBrk ->
@@ -113,11 +120,79 @@ end;
 lg_placed : forall r rg, region_of A r = Some rg -> rg_live rg = true ->
 ly_reg L r mod PGSZ = 0 /\ 4096 <= ly_reg L r /\ ly_reg L r + rg_len rg <= alloc_ceiling /\
 (forall a, ly_reg L r <= a < ly_reg L r + rg_len rg -> ~ in_img B a);
-lg_count : Z.of_nat (length (vm_maps (m_vmmaps md))) <= nslots A;
-lg_sizes : Forall (fun p => bv_unsigned (snd p) <= live_bytes A) (vm_maps (m_vmmaps md));
-lg_backing : vm_backing_used md <= live_bytes A;
-lg_ceil : YM05.ceil_of_top (alloc_top (m_vmmaps md))
+lg_count : @amf AM = false -> Z.of_nat (length (vm_maps (m_vmmaps md))) <= nslots A;
+lg_sizes : @amf AM = false -> Forall (fun p => bv_unsigned (snd p) <= live_bytes A) (vm_maps (m_vmmaps md));
+lg_backing : @amf AM = false -> vm_backing_used md <= live_bytes A;
+lg_ceil : YM05.ceil_of_top (alloc_top (m_vmmaps md));
+(* LPS 08b1429: mprotect answers CheckUnmodeled on a range meeting the vDSO/vvar pair, so the
+   ledger carries the two facts that make a live region miss it. Same shape as the A-path's
+   YA0e.co_res (co_mres, with YA0e.iv_disjoint unfolded, and co_vdso), and as simdjson's
+   KLink.kl_mres / kl_vin. *)
+lg_mres : Forall (fun iv => Forall (fun q =>
+  bv_unsigned (fst iv) + bv_unsigned (snd iv) <= bv_unsigned (fst q)
+  \/ bv_unsigned (fst q) + bv_unsigned (snd q) <= bv_unsigned (fst iv)) (vm_reserved (m_vmmaps md)))
+  (vm_maps (m_vmmaps md));
+lg_vin : incl (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) (vm_reserved (m_vmmaps md))
 }.
+(** A sub-range of a live region misses the vDSO/vvar pair: the region is a map entry
+    ([lg_maps]), every map entry misses every reserved entry ([lg_mres]), and the pair is
+    reserved ([lg_vin]). *)
+Lemma ledger_vdso_free : forall L A md r rg (lo : Z) (n : Z),
+  ledger_ok L A md -> region_of A r = Some rg -> rg_live rg = true -> rg_kind rg <> RkBrk ->
+  ly_reg L r <= lo -> 0 <= n -> lo + n <= ly_reg L r + rg_len rg ->
+  0 <= ly_reg L r -> ly_reg L r + rg_len rg < 2 ^ 64 -> lo + n < 2 ^ 64 ->
+  region_free (vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md))) (w64 lo) (w64 n) = true.
+Proof.
+  intros L A md r rg lo n G Hr Hl Hk H1 H2 H3 H4 H5 H6.
+  apply State.region_free_intro. intros a sz Hin.
+  pose proof (lg_vin _ _ _ G (a, sz) Hin) as Hres.
+  pose proof (proj1 (Forall_forall _ _) (lg_mres _ _ _ G) _ (lg_maps _ _ _ G r rg Hr Hl Hk)) as Hm.
+  pose proof (proj1 (Forall_forall _ _) Hm (a, sz) Hres) as D. cbn [fst snd] in D.
+  assert (Ur : bv_unsigned (w64 (ly_reg L r)) = ly_reg L r) by (unfold w64; rewrite Z_to_bv_unsigned; unfold bv_wrap; change (bv_modulus 64) with (2 ^ 64); apply Z.mod_small; lia).
+  assert (Ul : bv_unsigned (w64 (rg_len rg)) = rg_len rg) by (unfold w64; rewrite Z_to_bv_unsigned; unfold bv_wrap; change (bv_modulus 64) with (2 ^ 64); apply Z.mod_small; lia).
+  assert (Ulo : bv_unsigned (w64 lo) = lo) by (unfold w64; rewrite Z_to_bv_unsigned; unfold bv_wrap; change (bv_modulus 64) with (2 ^ 64); apply Z.mod_small; lia).
+  assert (Un : bv_unsigned (w64 n) = n) by (unfold w64; rewrite Z_to_bv_unsigned; unfold bv_wrap; change (bv_modulus 64) with (2 ^ 64); apply Z.mod_small; lia).
+  rewrite Ur, Ul in D. unfold iv_overlap. rewrite Ulo, Un.
+  apply andb_false_iff. destruct D as [D|D]; [right | left]; apply Z.ltb_ge; lia.
+Qed.
+(** [lg_mres] as a predicate of the ledger alone, and how it survives the steps that touch the
+    maps: a fresh entry the placement found free of the reserved list, and any change that only
+    drops or keeps entries. *)
+Definition mres_ok (h : VmMaps) : Prop :=
+  Forall (fun iv => Forall (fun q =>
+    bv_unsigned (fst iv) + bv_unsigned (snd iv) <= bv_unsigned (fst q)
+    \/ bv_unsigned (fst q) + bv_unsigned (snd q) <= bv_unsigned (fst iv)) (vm_reserved h)) (vm_maps h).
+Lemma region_free_app_l : forall R M (lo n : word), region_free (R ++ M) lo n = true -> region_free R lo n = true.
+Proof.
+  intros R M lo n H. apply State.region_free_intro. intros a sz Hin.
+  exact (State.region_free_In _ _ _ _ _ H ltac:(apply in_or_app; left; exact Hin)).
+Qed.
+Lemma mres_cons_free : forall h h' (lo n : word),
+  vm_reserved h' = vm_reserved h -> vm_maps h' = (lo, n) :: vm_maps h ->
+  region_free (vm_reserved h) lo n = true -> mres_ok h -> mres_ok h'.
+Proof.
+  intros h h' lo n ER EM RF M. unfold mres_ok in *. rewrite ER, EM. constructor; [|exact M].
+  apply Forall_forall. intros [a sz] Hin. pose proof (State.region_free_In _ _ _ _ _ RF Hin) as D.
+  unfold iv_overlap in D. cbn [fst snd]. apply andb_false_iff in D.
+  destruct D as [D|D]; apply Z.ltb_ge in D; lia.
+Qed.
+Lemma mres_cons_sub : forall h h' (lo n lo' n' : word),
+  vm_reserved h' = vm_reserved h -> vm_maps h' = (lo', n') :: vm_maps h ->
+  region_free (vm_reserved h) lo n = true ->
+  bv_unsigned lo <= bv_unsigned lo' -> bv_unsigned lo' + bv_unsigned n' <= bv_unsigned lo + bv_unsigned n ->
+  mres_ok h -> mres_ok h'.
+Proof.
+  intros h h' lo n lo' n' ER EM RF H1 H2 M. unfold mres_ok in *. rewrite ER, EM. constructor; [|exact M].
+  apply Forall_forall. intros [a sz] Hin. pose proof (State.region_free_In _ _ _ _ _ RF Hin) as D.
+  unfold iv_overlap in D. cbn [fst snd]. apply andb_false_iff in D.
+  destruct D as [D|D]; apply Z.ltb_ge in D; lia.
+Qed.
+Lemma mres_incl : forall h h',
+  vm_reserved h' = vm_reserved h -> incl (vm_maps h') (vm_maps h) -> mres_ok h -> mres_ok h'.
+Proof.
+  intros h h' ER EI M. unfold mres_ok in *. rewrite ER. apply Forall_forall. intros iv Hin.
+  exact (proj1 (Forall_forall _ _) M iv (EI iv Hin)).
+Qed.
 Record MRc (L : layout) (A : astate) (mem : word -> option byte) (md : Model) : Prop := {
 mc_syms : syms_ok B;
 mc_wf : WF A;
@@ -272,7 +347,7 @@ destruct (lg_placed _ _ _ _ (mc_ledger _ _ _ _ _ M) k rg Hrg Hlive) as (_ & H1 &
 -   intros L A mem md M. unfold blocks.
 rewrite <- (map_ext (block_range L) (fun b => (ptr_addr L (fst b), snd b))) by (intros [q k]; reflexivity).
 apply user_blocks_disjoint; [exact (mc_wf _ _ _ _ _ M) | exact (mc_layout _ _ _ _ _ M)].
--   intros L A mem mem' md md' M Hown Hpres Hblk Hvm Hh Hlz Hmat.
+-   intros L A mem mem' md md' M Hkn Hown Hpres Hblk Hvm Hh Hlz Hmat.
 pose proof (mc_wf _ _ _ _ _ M) as HW. pose proof (mc_layout _ _ _ _ _ M) as HL.
 split; try (exact (mc_syms _ _ _ _ _ M) || exact HW || exact HL || exact (mc_bounded _ _ _ _ _ M) ||
 exact (mc_ctx _ _ _ _ _ M) || exact (mc_sec _ _ _ _ _ M) || exact (mc_tail_geom _ _ _ _ _ M)).
@@ -311,12 +386,36 @@ split.
 * intros a Ha. rewrite HS; [apply (st_tables _ _ S); exact Ha | unfold static_owned; unfold table_addr in Ha; lia].
 * intros i Hi. rewrite HS; [apply (st_vmlock _ _ S); exact Hi | unfold static_owned; lia].
 +   pose proof (mc_ledger _ _ _ _ _ M) as G. destruct (mc_md _ _ _ _ _ M) as (_ & Hlz0 & Hmat0).
-split; rewrite ?Hvm; try (apply G).
+split; rewrite ?Hvm, ?Hkn; try (apply G).
 rewrite (vm_backing_used_ext md md' Hvm) by congruence. apply G.
 +   auto.
 -   intros L A mem md a M Ho. exact (owned_low L A mem md a M Ho).
 -   intros L A mem md M. exact (mc_md _ _ _ _ _ M).
 -   intros L A mem md M. exact (lg_ceil _ _ _ _ (mc_ledger _ _ _ _ _ M)).
+Qed.
+(* A state with fewer live regions over the same model: the fields about live regions or about the
+   model alone still hold, and under may-fail the three counting fields are vacuous.  This is the
+   ledger after a free whose munmap answered ENOMEM with the mapping kept (YN06, YN0c). *)
+Lemma ledger_ok_fewer_live : forall L A A' md, @amf AM = true -> ledger_ok B L A md ->
+st_brk A' = st_brk A ->
+(forall r rg, region_of A' r = Some rg -> rg_live rg = true -> region_of A r = Some rg) ->
+ledger_ok B L A' md.
+Proof.
+intros L A A' md Ham G EB SUB. split.
+- exact (lg_reserved _ _ _ _ G).
+- exact (lg_limit _ _ _ _ G).
+- exact (lg_rclim _ _ _ _ G).
+- intros r rg Hr Hl Hk. exact (lg_maps _ _ _ _ G r rg (SUB r rg Hr Hl) Hl Hk).
+- intros r rg off Hr Hl Hk. exact (lg_noaccess _ _ _ _ G r rg off (SUB r rg Hr Hl) Hl Hk).
+- exact (lg_brk0 _ _ _ _ G).
+- rewrite EB. exact (lg_brk _ _ _ _ G).
+- intros r rg Hr Hl. exact (lg_placed _ _ _ _ G r rg (SUB r rg Hr Hl) Hl).
+- intros E. rewrite Ham in E. discriminate E.
+- intros E. rewrite Ham in E. discriminate E.
+- intros E. rewrite Ham in E. discriminate E.
+- exact (lg_ceil _ _ _ _ G).
+- exact (lg_mres _ _ _ _ G).
+- exact (lg_vin _ _ _ _ G).
 Qed.
 End h.
 Section j.
@@ -385,10 +484,12 @@ intros k Hk. rewrite le_byte_0. rewrite <- Z.add_assoc. apply (hp_ctx _ _ _ HP).
 + pose proof (so_rtop _ SO). unfold PGSZ, page_size in *. rewrite Hbrk in *. repeat split; lia.
 + reflexivity.
 + intros r rg Hr. unfold region_of in Hr. cbn in Hr. destruct r; discriminate.
-+ rewrite Hmaps. cbn. lia.
-+ rewrite Hmaps. constructor.
-+ cbn. lia.
++ intros _. rewrite Hmaps. cbn. lia.
++ intros _. rewrite Hmaps. constructor.
++ intros _. cbn. lia.
 +   exact (hp_ceil _ _ _ HP).
++   rewrite Hmaps. constructor.
++   exact (hp_vin _ _ _ HP).
 - exact (hp_model _ _ _ HP).
 Qed.
 Corollary MRc_init_ex : forall mem md sec,

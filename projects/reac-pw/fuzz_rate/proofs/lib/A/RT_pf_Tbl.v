@@ -1,7 +1,7 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/RT_pf_Tbl.v (cold/port-fm-rtprintf-param 3e35620c52e); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 2 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/RT_pf_Tbl.table). *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/RT_pf_Tbl.v at 2d2ff01bb6f2 relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/RT_pf_Tbl.v; relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 2 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/RT_pf_Tbl.table). *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/RT_pf_Tbl.v relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
 (* The numerals of fuzz_manifest.asan's printf_common call (RT_pf_bz.v), one name each, in the form of port-reply's
-   lib/A/RT_pf_Tbl.v (origin/cold/port-reply-pf-chain 970f7d733a4) restricted to printf_common.
+   lib/A/RT_pf_Tbl.v restricted to printf_common.
    MEASURED from fm.asan's unstripped twin (a lane record (fuzz_manifest.asan),
    symbol table and disassembly), keyed on the symbol, never on a bare address of another image:
 

@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the growth half of a data round of fuzz_reply's send_line loop on IMAGE B
-   (fuzz_reply.asan-ubsan).  Structure ported from image A's lib/A/W_send_line_grow.v (a working branch
-   a78a220dc8e: sl_grow, its seat and its block / byte lemmas), with the run tactics of W_send_line_loop.v. *)
+   (fuzz_reply.asan-ubsan).  Structure ported from image A's lib/A/W_send_line_grow.v (a working branch:
+   sl_grow, its seat and its block / byte lemmas), with the run tactics of W_send_line_loop.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* W_send_line_cx.v sl_grow_stmt: from SLN at N = 0x829cc (A_sl_n) to the join J = 0x82a08 (A_sl_join), where the
    continuation takes SLM:
      run 1  0x829cc PLdHi s4 <- g_nout (through s6 = hi23); ld a0,16(sp) (the spilled hi24); ld a0,1976(a0)

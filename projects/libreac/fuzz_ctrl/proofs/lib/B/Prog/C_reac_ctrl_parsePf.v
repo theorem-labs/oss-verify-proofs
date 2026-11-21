@@ -52,7 +52,7 @@ Variable B : lib.Reusable.YG0f.asyms.
 (* As a Theorem Labs lane's Section Journal (lib/B/Prog/GlueLift.v): YCbq's Section premises for B's
    bundle.  LAWS, segs_low, errno_low, ML: core, PENDING THE RECORD CORE (Reusable.YCeg.tfib_segs_low / tl_env /
    TfibLib, YCeg.v; its line 25 records the relocation's refused starts).  SMP, ASM1: a Theorem Labs lane's class-1 fake-stack
-   rules (a working branch ff613211c11).  PC1: the class-1 entry of B's code table; core, the TfibLib code table. *)
+   rules (a working branch).  PC1: the class-1 entry of B's code table; core, the TfibLib code table. *)
 Hypothesis LAWS : lib.Reusable.YG0d.AR_laws rsegs B.
 Hypothesis segs_low : forall a, lib.Reusable.YG0d.in_img rsegs a -> 0 <= a < lib.Reusable.YG0f.kLowMemEnd.
 Hypothesis errno_low : lib.Reusable.YCbq.api_env rsegs B.
@@ -347,7 +347,7 @@ End PBH.
 Section PB.
 Context {fx : lib.Reusable.YK11.FPState} {rc : lib.Reusable.YM05.RunCeil}.
 (* The journal's sink head is generic: lib.B.ProgWorldAstack.ctl_release_of_free_law is generic in SK since B ProgWorld
-   (6ea7ff50f8f, Section Fs's Context); a Theorem Labs lane's consumer instantiates SK := Reusable.YE2k.tfib_sink_head. *)
+   (Section Fs's Context); a Theorem Labs lane's consumer instantiates SK := Reusable.YE2k.tfib_sink_head. *)
 Context {SK : lib.Reusable.YI16.sink_head}.
 Variable B : lib.Reusable.YG0f.asyms.
 Variables RLO RHI : Z.
@@ -374,7 +374,7 @@ Hypothesis ASF : lib.Reusable.YG0d.astack_free_law rsegs B.
 Hypothesis TS : lib.Reusable.YF0m.CtrlTSyms B.
 (* .str.4 (REAC_CTRL_PARSE_BC, the 6 bytes the bcmp wrapper reads): its shadow is zero, and its 8-aligned shadow cover is
    visible, at every AR state: ProgBridgeData's facts ctl_parse_bc_addressable / ctl_parse_bc_shadow_vis (BridgeDataB,
-   a working branch 7b1b48d7262; they take CtrlTSyms B = TS). *)
+   a working branch; they take CtrlTSyms B = TS). *)
 Lemma rcpB_str4_sh : forall ly S (W : lib.Reusable.YA0n.world rsegs) m md,
   lib.Reusable.YG0n.AR rsegs B ly S W m md -> addressable m REAC_CTRL_PARSE_BC 6.
 Proof using TS. exact (lib.B.ProgBridgeData.ctl_parse_bc_addressable B TS). Qed.

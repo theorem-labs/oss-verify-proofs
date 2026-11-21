@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the hand-off stack check hs_stk_ok, hi_stk and hi_usp over the guaranteed span STACK_SPAN; module paths qualified as K5.AS.PropExec where a twin module shadows them). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -21,7 +22,7 @@ Import ListNotations.
 Import AX2. Import AX2S. Import AP.
 Open Scope Z_scope.
 
-Local Instance hi_fx : PropExec.FPState := PropExec.fx0.
+Local Instance hi_fx : K5.AS.PropExec.FPState := K5.AS.PropExec.fx0.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -78,7 +79,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma hi_usp : (sp0 - USP_OFF) mod 16 = 0 /\ sp0 - USP_OFF < sp0 + 8 /\ sp0 - STACK_WIN + 0x100000 <= sp0 - USP_OFF
+Lemma hi_usp : (sp0 - USP_OFF) mod 16 = 0 /\ sp0 - USP_OFF < sp0 + 8 /\ sp0 - STACK_SPAN + 0x100000 <= sp0 - USP_OFF
                /\ sp0 - USP_OFF <= sp0 /\ 0x7fff80000000 <= sp0.
 Proof.
   destruct hi_sp0 as [Hsp [Hlo Hhi]]. unfold sp_window_lo, sp_window_hi in *.
@@ -242,7 +243,11 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Definition hs_stk_ok (ch : acs) : bool := kwr_cover (kn ch) e_sp0 (-8388608) (- USP_OFF) (S (length (kn ch))).
+(* LPS 727298f3: the start state claims [StoreOk.stack_window_depth] = 6144513 writable bytes below
+   sp, not 8 MiB, so the hand-off checks the guaranteed span 0x5D0000 = 6094848
+   ([RT_iface.STACK_SPAN]).  Old text:
+     kwr_cover (kn ch) e_sp0 (-8388608) (- USP_OFF) (S (length (kn ch))) *)
+Definition hs_stk_ok (ch : acs) : bool := kwr_cover (kn ch) e_sp0 (-6094848) (- USP_OFF) (S (length (kn ch))).
 
 Lemma rdn1_mrd : forall segs m a b, L_rdn segs m a 1 = Some [b] -> mrd segs m a = Some b.
 Proof.
@@ -282,7 +287,7 @@ Proof.
   change (Z.of_nat 0) with 0 in W. rewrite Z.add_0_r in W. exact W.
 Qed.
 
-Theorem hi_stk : hs_stk_ok ch = true -> stk SEGS (mH FULL model A') (sp0 - 8388608) (sp0 - USP_OFF).
+Theorem hi_stk : hs_stk_ok ch = true -> stk SEGS (mH FULL model A') (sp0 - 6094848) (sp0 - USP_OFF).
 Proof.
   intros H. destruct (APS.cs_isp SEGS A nx0 LIMIT SINV argH FS0 E ch R FULL model HC) as [Hsp [Hlo Hhi]].
   pose proof HULL_ok as (H0 & H1 & H2 & H3). unfold KHI in H3. unfold sp_window_lo, sp_window_hi in *. unfold USP_OFF.

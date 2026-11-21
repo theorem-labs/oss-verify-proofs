@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the place_declined_b premise of the mmap decline; the syscall-return and channel-reader fields of the model's state; the model's placement by linux_place and its reserved-ledger changes; the model's munmap and grant_ok changes). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs.
@@ -366,23 +367,24 @@ Lemma munmap_exact_outcome : forall addr len i m o,
   let n := Z_to_bv 64 (page_round_up_Z (bv_unsigned len)) in
   map_has (vm_maps (m_vmmaps m)) addr n = true ->
   munmap_spec addr len i m o <->
-  o = Ok (mkEffectU (Z_to_bv 64 0) [] [] [(addr, n)] [] [])
+  (exists e, In e munmap_errnos /\ o = Ok (mkEffect (errno_ret e) [] []) m [])
+  \/ o = Ok (mkEffectU (Z_to_bv 64 0) [] [] [(addr, n)] [] [])
          (with_mmap_destroyed addr n
-            (mkVmMapsFull (vm_reserved (m_vmmaps m))
-               (map_remove (vm_maps (m_vmmaps m)) addr)
-               (maps_subtract (vm_noaccess (m_vmmaps m))
-                  (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n))
-               (vm_start_brk (m_vmmaps m)) (vm_brk (m_vmmaps m))
-               (vm_limit (m_vmmaps m)) (vm_mmap_base (m_vmmaps m)) (vm_init_sp (m_vmmaps m))) m) [].
+            (mmap_fixed_destroyed_next (m_vmmaps m) addr n) m) [].
 Proof.
   intros addr len i m o Hal Hlen Hnw. cbv zeta. intros Hhas. unfold munmap_spec.
   rewrite (proj2 (Z.eqb_eq _ _) Hal), Hlen. cbn [negb orb].
-  rewrite (proj2 (Z.ltb_ge _ _) Hnw). unfold with_mmap_destroyed. sys_unfold.
+  rewrite (proj2 (Z.ltb_ge _ _) Hnw). sys_unfold.
   split.
-  - destruct o as [x m' evs|]; intros H; inv_sys; rewrite Hhas in *; inv_sys. reflexivity.
-  - intros ->. eexists _, _, _, _. split; [reflexivity|]. rewrite Hhas.
-    split; [|reflexivity]. eexists _, _, _, _. split; [reflexivity|].
-    split; [|reflexivity]. eexists _, _, _, _. repeat split; reflexivity.
+  - destruct o as [x m' evs|]; intros H; inv_sys; rewrite Hhas in *; inv_sys;
+      solve [ left; eexists; split; [eassumption|reflexivity] | right; reflexivity ].
+  - intros [(e & He & ->) | ->].
+    + eexists _, _, _, _. split; [reflexivity|]. rewrite Hhas.
+      split; [|reflexivity]. left. eexists _, _, _, _.
+      split; [exists e; split; [exact He|reflexivity]|]. split; reflexivity.
+    + eexists _, _, _, _. split; [reflexivity|]. rewrite Hhas.
+      split; [|reflexivity]. right. eexists _, _, _, _. split; [reflexivity|].
+      split; [|reflexivity]. eexists _, _, _, _. repeat split; reflexivity.
 Qed.
 
 Definition mmap_err_out (m : Model) (o : outcome SyscallEffect) : Prop :=
@@ -393,15 +395,17 @@ Lemma mmap_rw_outcome : forall addr len prot flags fd off i m o,
   mmap_anon_b flags = true ->
   w_is0 len = false ->
   mmap_modeled_b prot flags off = true ->
+  (* LPS 727298f3 (#144/#146): [mmap_spec] tests [place_declined_b] OUTSIDE the [alt],
+     so a declined hint answers [unmodeled] and the equivalence below holds only off
+     the decline.  727298f3:theories/LinuxProcessSem/Sys/Mm/Mmap.v:2144-2147. *)
+  place_declined_b (m_kernel m) (m_vmmaps m) addr
+    (page_round_up_Z (bv_unsigned len)) = false ->
   let h := m_vmmaps m in
   let nZ := page_round_up_Z (bv_unsigned len) in
   let n := Z_to_bv 64 nZ in
   mmap_spec addr len prot flags fd off i m o <->
   mmap_err_out m o
-  \/ exists a, ((bv_unsigned a mod page_size = 0)%Z
-                /\ (0 < bv_unsigned a)%Z
-                /\ (bv_unsigned a + nZ <= alloc_top h)%Z
-                /\ region_free (vm_reserved h ++ vm_maps h) a n = true
+  \/ exists a, (linux_place h (kb_thp (m_kernel m)) addr nZ (bv_unsigned a)
                 /\ mmap_noreserve_backed_ok flags m nZ = true)
                /\ o = Ok (mkEffect a [] [(a, n)])
                         (with_mmap_backing flags a n
@@ -410,8 +414,13 @@ Lemma mmap_rw_outcome : forall addr len prot flags fd off i m o,
                                (vm_noaccess h) (vm_start_brk h) (vm_brk h) (vm_limit h)
                                (vm_mmap_base h) (vm_init_sp h)) m)) [].
 Proof.
-  intros addr len prot flags fd off i m o Hoff Hanon Hlen Hmod. cbv zeta. unfold mmap_spec.
+  intros addr len prot flags fd off i m o Hoff Hanon Hlen Hmod Hdecl. cbv zeta. unfold mmap_spec.
   rewrite Hoff, Hanon, Hlen, Hmod. cbn [negb].
+  (* [Sys] is RELATIONAL: unfolding [bind] leaves the continuation's model
+     existentially quantified, so a hypothesis about [m] matches nothing inside it.
+     [Monad.bind_get_model] is the model's own collapse of this exact bind.  Only after
+     it is [m] the continuation's model. *)
+  eapply iff_trans; [apply bind_get_model|]. cbv beta zeta. rewrite Hdecl.
 
   unfold mmap_err_out. sys_unfold.
   split.
@@ -421,9 +430,12 @@ Proof.
   - intros [(e & He & ->) | (a & Ha & ->)].
     + left. exists e, m, [], []. split; [exists e; split; [exact He|reflexivity]|].
       split; reflexivity.
-    + right. exists m, m, [], []. split; [reflexivity|]. split; [|reflexivity].
-      eexists a, m, [], []. split; [exists a; split; [exact Ha|reflexivity]|].
-      split; [|reflexivity]. eexists _, _, [], []. split; [reflexivity|]. split; reflexivity.
+    + (* Collapsing the [get_model] bind puts the [choose] FIRST, so the opening
+         component is the existential over the placed address, not an equation. *)
+      right. exists a, m, [], [].
+      split; [exists a; split; [exact Ha | reflexivity]|].
+      split; [| reflexivity].
+      eexists _, _, _, _. split; [reflexivity|]. split; reflexivity.
 Qed.
 
 Lemma read_dir_outcome : forall fd buf count i m o,
@@ -711,13 +723,16 @@ Lemma writev_chan_outcome : forall fd iov iovcnt i m o ch iovs bs,
   (iovs_total iovs <= MAX_RW_COUNT)%Z ->
   gather_iovecs (in_mem i) iovs = Some bs ->
   (1 <= Z.of_nat (length bs))%Z ->
+  (* At LPS 08b1429 a nonempty writev to a channel whose reader is gone raises SIGPIPE
+     (ReadWrite.v [writev_spec]); the launch's [in_channel_reader] seeds this flag. *)
+  m_channel_reader m = true ->
   let CA := import_iovecs_accesses (in_mem i) iov (iovcnt32 iovcnt) in
   writev_spec fd iov iovcnt i m o <->
   exists k, (1 <= k <= length bs)%nat /\
     o = Ok (mkEffectU (Z_to_bv 64 (Z.of_nat k)) [] [] [] [] (CA ++ iov_prefix_accesses iovs k))
            m (map (WriteEv ch) (firstn k bs)).
 Proof.
-  intros fd iov iovcnt i m o ch iovs bs Hfd Hch Himp Htot Hg Hbs1.
+  intros fd iov iovcnt i m o ch iovs bs Hfd Hch Himp Htot Hg Hbs1 Hrd.
   cbv zeta.
   pose proof (gather_iovecs_length _ _ _ Hg) as Hlen.
   pose proof (cap_iovecs_id_rw _ Htot) as Hcap.
@@ -746,7 +761,7 @@ Proof.
     replace (length bs =? 0)%nat with false by (symmetry; apply Nat.eqb_neq; lia).
     replace (addr_is_error_b (len_word bs)) with false
       by (symmetry; rewrite <- (firstn_all bs); rewrite (Herrk (length bs)) by lia; reflexivity).
-    reflexivity. }
+    rewrite Hrd. reflexivity. }
   rewrite Hcap. sys_unfold.
   split.
   - destruct o as [x m' evs|]; intros H; inv_sys.

@@ -1,4 +1,4 @@
-(* Image B twin of lib/A/RT_gxak_eq.v at 2c1f180a413 (sha256 9be41bcf007f; internal record): module paths lib.A -> lib.B; image-generic, no numeral. *) (* The keep-FP twin (lib/CJ/RL/{GK,GXK,GXAK}, provenance/keepfx/README.md) against the released GXA vocabulary, one
+(* Image B twin of lib/A/RT_gxak_eq.v (sha256 9be41bcf007f; internal record): module paths lib.A -> lib.B; image-generic, no numeral. *) (* The keep-FP twin (lib/CJ/RL/{GK,GXK,GXAK}, provenance/keepfx/README.md) against the released GXA vocabulary, one
    lemma for each twin name that the keep-fx chain (RT_gxa_inst_k.v, RT_pf_*_k.v) uses in place of a released name.
 
    VERBATIM COPIES (the twin's text is the released text; the lemma is `reflexivity`, so a drift of either side breaks

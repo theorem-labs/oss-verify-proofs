@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: restates text of proofs/reac-pw/fuzz_rate/lib/A/RtPgLeaf.v at 09da091ee285
-   (lf_kept_run, here ccs_kept_run) and of proofs/reac-pw/fuzz_rate/lib/A/RtPgCheckList.v at 09da091ee285 (the .got
+(* Modified by Theorem Labs, 2026-10: restates text of proofs/reac-pw/fuzz_rate/lib/A/RtPgLeaf.v
+   (lf_kept_run, here ccs_kept_run) and of proofs/reac-pw/fuzz_rate/lib/A/RtPgCheckList.v (the .got
    and cell regions of cl_entry, here in ccs_p1_entry), for the walk of check_csv's segment S0 on image A. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgCcsvS0.v at dbace9c0dafc; the same segment
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgCcsvS0.v; the same segment
    for image B (fuzz_rate.asan-ubsan): the image is images.AsanUbsan, the cut, kit and step layers are image B's
    (RtPgCcsvCutB, RtPgCcsvKitB, RtPgStepsB, RtPgMemB); the code table, the own frame (192), the class-2 allocation
    entry and its return pc, the .got words and their cells are image B's; the registers the prologue keeps across the
    call (s2 = buf, s3 = the list length) and the realigned frame's cells (R1 + 24, 32, 40, 48, 56, 80) are image B's;
    no register holds F at the loop head, so F is read only from the cells and the offsets of its atom. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14; every address below is measured on its unstripped
    twin sha256 a1e5fa55ae27e657ea2719297ec4c037110f10fa9047c3ea7bb6ea7fcb358cb1, whose loaded bytes are the same): segment

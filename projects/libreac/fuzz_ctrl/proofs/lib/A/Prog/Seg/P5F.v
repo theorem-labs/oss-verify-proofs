@@ -4,12 +4,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 1137 of its 1175 lines of code are new or changed and 210 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_box_model_block.v; 1090 of its 1202 lines of code are new or changed and 1063 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P5.v; 422 of its 634 lines of code are new or changed and 990 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/P5.v blob 30d4e20a1163 at fdd2ed9f9d7.
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   FACTS, PAU pau-libreac-v190. Source: Seg/P5.v blob 30d4e20a1163.
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: each <r>_of_F re-derives P5.<r> at ExecF.RNG_all; <r>_of_F_verbatim checks by constr_eq that its type is
    the type of P5.<r>. Mechanical re-run, route (a) (lead 22:15Z); input to the ported walk only. *)
 
@@ -28,7 +29,7 @@
      bytes of `rw_cells rsegs m S [CB 392 sh]`), the spill loads [A + 280, A + 288) and [A + 240, A + 248)
      (`ro_cells` premises) and the one code byte [Y, Y + 1) (`rw_cells rsegs m Y [CB 1 jy]`): four rng premises.
      The call's regions follow, through p5_memset_ro_F, at this call site (D, 32, spv).
-   P5.v's code is unchanged since release c5e779efe8c (comments edited); it differs from the source blob above: 5 of its code lines changed or removed, 182 added. *)
+   P5.v's code is unchanged since release (comments edited); it differs from the source blob above: 5 of its code lines changed or removed, 182 added. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Import PropExec MState Mem Exec Frame Cells Step Tac Bytes.
@@ -36,8 +37,8 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A Require Import Img0 AsanRT AsanRTF
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A Require MemNorm MemNormF.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import asan_memset_c asan_memset_cF.
 (* route (C) (p5_memset_ro_F_on / p5_evt_F_on and their RNG_all twins): the memset's region-restricted footprint
-   contract (a Theorem Labs lane 83ab88c3325, taken by path) and the form (lib/A/ShadowRwOn.v, ShadowRwOnT.v; a Theorem Labs lane
-   9ec78006def); P5.p5_shadow_rw_on is a Theorem Labs lane's (Seg/P5.v f227e521dc4, taken by path). *)
+   contract (a Theorem Labs lane, taken by path) and the form (lib/A/ShadowRwOn.v, ShadowRwOnT.v; a Theorem Labs lane);
+   P5.p5_shadow_rw_on is a Theorem Labs lane's (Seg/P5.v, taken by path). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import asan_memset_c_on asan_memset_cF_on.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require A.ShadowRwOn A.ShadowRwOnT.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog.Seg Require P5.
@@ -526,7 +527,7 @@ Qed.
    `rw_cells rsegs m Y [CB 1 jy]`, not through shadow_rw. Its shadow premise HSW has one use: the memset's premise
    at the call (a0 = D from the spill load ld s5,240(s1); a2 = 32 from li a2,32), carried across the stores by
    P5.p5_shadow_rw (here a Theorem Labs lane's P5.p5_shadow_rw_on, forall P). So R is the callee p5_memset_ro_F_on's region at the
-   call's arguments. The same region as P5.v's plain twin (p5_evt_shadow_R D, a Theorem Labs lane f227e521dc4). *)
+   call's arguments. The same region as P5.v's plain twin (p5_evt_shadow_R D, a Theorem Labs lane). *)
 Definition p5_evt_F_shadow_R (D : Z) : Z -> Prop :=
   fun a => p5_memset_ro_F_shadow_R (Z_to_bv 64 D) (Z_to_bv 64 32) a.
 

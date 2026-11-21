@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch facts the start state reads: the launch's caps and the far-end reader). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit FinInput Classifier.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -26,7 +27,11 @@ Definition UBS : Image := mkImage UBS_SEGS UBS_PC UBS_PH.
 Definition valid_core (inp : ProcInput) : Prop :=
   valid_argv (in_argv inp) /\ valid_envp (in_envp inp) /\ valid_fs (in_fs inp)
   /\ valid_creds inp /\ valid_nofile (in_nofile inp) /\ valid_sigmask inp /\ valid_hwcap (in_hwcap inp)
-  /\ in_va_size inp = Sv48.
+  /\ in_va_size inp = Sv48
+  (* the launch's caps: the start state's window below sp needs them (ALib/InitMem.v's stack_window_lo_valid) *)
+  /\ valid_launch inp
+  (* the far-end reader: the start model's [mfacts] reads it *)
+  /\ in_channel_reader inp = true.
 Lemma valid_core_of_input : forall inp, valid_input inp -> valid_core inp.
 Proof. intros inp H. unfold valid_input in H. unfold valid_core. tauto. Qed.
 Lemma valid_core_of_abort : forall inp, valid_input_abort inp -> valid_core inp.
@@ -37,10 +42,12 @@ Section TOP.
   Hypothesis K_kill_free : forall inp, valid_core inp -> kill_free (K inp).
   Hypothesis RZ_SRC : forall sp brk0 mb rnd inp,
     valid_core inp -> valid_entry SRC (mkEntry sp brk0 mb rnd) inp ->
-    realizes SRC_SEGS (init_config SRC_SEGS SRC_PC SRC_PH sp brk0 mb rnd source_alloc_limit inp) (K inp).
+    realizes (run_segments SRC_SEGS inp sp mb)
+      (init_config (run_segments SRC_SEGS inp sp mb) SRC_PC SRC_PH sp brk0 mb rnd source_alloc_limit inp) (K inp).
   Hypothesis RZ_UBS : forall sp brk0 mb rnd inp,
     valid_core inp -> valid_entry UBS (mkEntry sp brk0 mb rnd) inp ->
-    realizes UBS_SEGS (init_config UBS_SEGS UBS_PC UBS_PH sp brk0 mb rnd target_alloc_limit inp) (K inp).
+    realizes (run_segments UBS_SEGS inp sp mb)
+      (init_config (run_segments UBS_SEGS inp sp mb) UBS_PC UBS_PH sp brk0 mb rnd target_alloc_limit inp) (K inp).
 
   Theorem base_ubsan :
     strong_universal_error_free_T_scfg_budgets_abort (mkSpuriousCfg false true true true true true)

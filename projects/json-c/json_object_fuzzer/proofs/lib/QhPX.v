@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: the sections that hold alloc_ceiling <= lo as LO also take it as HBTlo, and pass it to descend_objA). *)
 
 From Stdlib Require ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -31,6 +32,7 @@ Variable HIx : heap_iface_A A4L.
 Notation HEAPAx := (HEAPA A4L HIx).
 Variables (sp gp : word) (lo : Z) (errv : word) (LM : list blk) (FRS : list frame).
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis LOS : lo <= bv_unsigned sp + -112 - 4352.
 Hypothesis SPA : bv_unsigned sp mod 16 = 0.
 Hypothesis HT : bv_unsigned sp <= hiA_top A4L HIx.
@@ -232,7 +234,7 @@ reenterA asegs A4L HIx asegs_wx HP3.
 step. step. if_truex.
 evt_done5.
 destruct c as [| | | |ck|ck]; cbn in ZC; try contradiction.
-all: eapply (descend_objA HIx sp gp lo errv LM FRS LO LOS SPA HT DEL _ kids KD HEADK) with (e2 := with_v e 0);
+all: eapply (descend_objA HIx sp gp lo errv LM FRS LO HBTlo LOS SPA HT DEL _ kids KD HEADK) with (e2 := with_v e 0);
 [exact HP3 | exact ZC | exact Z3 | exact Hes2 | exact ST3 | exact ERR3 | |].
 all: try (clear - BB BB3 EX; subst XBS1; rewrite EX in BB; cbn [length app] in *; rewrite ?length_app in *; cbn [length] in *; rewrite ?length_app in *; unfold blk in *; lia).
 all: intros ms' md' A' NP; apply K; eapply next_postA_w; [exact FS3 | exact FRM3 | exact VM3 | exact HPR23 | | exact BD3 | exact NP |];
@@ -279,6 +281,7 @@ Variable HIx : heap_iface_A A4L.
 Notation HEAPAx := (HEAPA A4L HIx).
 Variables (sp gp : word) (lo : Z) (errv : word) (LM : list blk) (FRS : list frame).
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis LOS : lo <= bv_unsigned sp + -112 - 4352.
 Hypothesis SPA : bv_unsigned sp mod 16 = 0.
 Hypothesis HT : bv_unsigned sp <= hiA_top A4L HIx.
@@ -509,6 +512,7 @@ Hypothesis HP0 : HEAPAx A LB LM FRS B0 m0 md.
 Hypothesis INt : In (t, 56) LB.
 Hypothesis INb : In (tbl, 40 * size) LB.
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis LOS : lo <= bv_unsigned sp - 96 - 4096.
 Hypothesis SPA : bv_unsigned sp mod 16 = 0.
 Hypothesis HT : bv_unsigned sp <= hiA_top A4L HIx.
@@ -659,6 +663,7 @@ Variable HIx : heap_iface_A A4L.
 Notation HEAPAx := (HEAPA A4L HIx).
 Variables (sp gp : word) (lo : Z) (errv : word) (LM : list blk) (FRS : list frame).
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis LOS : lo <= bv_unsigned sp + -112 - 4352.
 Hypothesis SPA : bv_unsigned sp mod 16 = 0.
 Hypothesis HT : bv_unsigned sp <= hiA_top A4L HIx.
@@ -878,7 +883,7 @@ bstep. bstep. if_truex.
 ub_skip.
 evt_done5.
 destruct c as [| | | |ck|ck]; cbn in ZC; try contradiction.
-all: eapply (descend_objA HIx sp gp lo errv LM FRS LO LOS SPA HT DEL _ kids KD HEADK) with (e2 := with_v e 0);
+all: eapply (descend_objA HIx sp gp lo errv LM FRS LO HBTlo LOS SPA HT DEL _ kids KD HEADK) with (e2 := with_v e 0);
 [exact HP3 | exact ZC | exact Z3 | exact Hes2 | exact ST3 | exact ERR3 | | spl |].
 all: try (clear - BB BB3 EX; subst XBS1; rewrite EX in BB; cbn [length app] in *; rewrite ?length_app in *; cbn [length] in *; rewrite ?length_app in *; unfold blk in *; lia).
 all: intros ms' md' A' NP; apply K; eapply next_postA_w; [exact FS3 | exact FRM3 | exact VM3 | hpw HPR23 | | exact BD3 | exact NP |];
@@ -923,6 +928,7 @@ Variable HIx : heap_iface_A A4L.
 Notation HEAPAx := (HEAPA A4L HIx).
 Variables (sp gp : word) (lo : Z) (errv : word) (LM : list blk) (FRS : list frame).
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis LOS : lo <= bv_unsigned sp + -112 - 4352.
 Hypothesis SPA : bv_unsigned sp mod 16 = 0.
 Hypothesis HT : bv_unsigned sp <= hiA_top A4L HIx.
@@ -1194,6 +1200,7 @@ Hypothesis HP0 : HEAPAx A LB LM FRS B0 m0 md.
 Hypothesis INt : In (t, 56) LB.
 Hypothesis INb : In (tbl, 40 * size) LB.
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis LOS : lo <= bv_unsigned sp - 96 - 4096.
 Hypothesis SPA : bv_unsigned sp mod 16 = 0.
 Hypothesis HT : bv_unsigned sp <= hiA_top A4L HIx.

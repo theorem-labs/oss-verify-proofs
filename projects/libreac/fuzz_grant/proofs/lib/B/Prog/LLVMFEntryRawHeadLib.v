@@ -4,7 +4,8 @@
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntrySetGa0), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_grant/lib/A/Prog/GrantEntrySetGa0.v; 132 of its 161 lines of code are new or changed and 150 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_grant/lib/A/Prog/GrantEntryRawHeadLib.v, with its module paths and numbers changed; 34 of its 170 lines of code are new or changed and 25 lines of the source are left out. *)
-(* Ported from lib/A/Prog/GrantEntryRawHeadLib.v of a working branch 7c8c67da870 (blob 1b078c663e7). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Ported from lib/A/Prog/GrantEntryRawHeadLib.v of a working branch (blob 1b078c663e7). *)
 (* What the cases of the head of the hand-built allocation phase of LLVMFuzzerTestOneInput
    (image B, 0x81824 .. 0x818b4, GR_hd0I / GR_hd1I / GR_hd2I to GR_malI) share, and what
    the head itself (LLVMFEntryRawHead.v) uses.

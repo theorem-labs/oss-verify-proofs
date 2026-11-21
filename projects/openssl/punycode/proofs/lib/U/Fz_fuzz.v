@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the auxv witnesses of rauxv_ok are read by their own pattern, and the arm bounds unfold GLOBALS_TOP and LX_FUZZ_STACK before lia). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From stdpp Require Import gmap.
@@ -117,11 +118,29 @@ Section FZ.
     split; [exact (T1 LXS)|]. split; [exact LXF'|]. split; [exact (T2 SEW)|].
     split.
     { eapply rauxv_ok_frame; [exact AUX| exact MU| exact WM|]. eapply Forall_impl; [| exact FW]. intros [l h] Hiv. cbn [fst snd].
-      pose proof AUX as (? & ? & ? & ? & ? & ? & ? & ? & ? & ? & _ & _ & _ & AUXB & _).
+      (* as P/Fz_fuzz.v: rauxv_ok (MallocU/RMallocTree.v:322-329) binds five witnesses, not
+         three; the old pattern cleared execfn and r, which the bytes_at conjunct uses. *)
+      pose proof AUX as (? & ? & ? & ? & ? & _ & _ & _ & _ & AUXB & _).
+      (* LPS revision repair, the U twin of P/Fz_fuzz.v:125.  The P-side probe printed arm
+         2's goal after the injection as
+             3052352 + 1 <= B /\ (3052352 + 1 <= 3195168 \/ 3195168 + 8 <= 3052352)
+         - the arm count was never the problem.  The first conjunct needs GLOBALS_TOP and
+         LX_FUZZ_STACK as numbers (LOG : GLOBALS_TOP <= lo, LOSP : lo <= usp -
+         LX_FUZZ_STACK, SPB : usp <= B), and they are opaque Definitions.  Unfolded here the
+         way this file already does two blocks below.  Probe removed with the repair. *)
       unfold RAUXV_CELL. destruct Hiv as [(H1 & H2)|[E|(b & Hb & H1 & H2)]]; cbn [fst snd] in *.
       - split; [lia|]. right. lia.
-      - injection E as -> ->. unfold LX_FLAGS. split; [lia|]. left. lia.
-      - pose proof (LH_block_range _ _ _ b HP ltac:(apply in_or_app; left; exact Hb)) as (_ & _ & _ & R4 & R5). split; [lia|]. lia. }
+      - injection E as -> ->. unfold LX_FLAGS, GLOBALS_TOP, LX_FUZZ_STACK in *.
+        split; [lia|]. left. lia.
+      (* As P/Fz_fuzz.v:139-155: ARM 3 needs arm 2's unfold and did not get it.  The round's
+         first error in this file is :134 chars 120-123 - the `lia` inside `split; [lia|]`
+         on THIS arm.  Its first conjunct is the same `GLOBALS_TOP + 1 <= B`, discharged by
+         LOG/LOSP/SPB only once GLOBALS_TOP and LX_FUZZ_STACK stop being opaque
+         Definitions.  Arm 1 at :131 does not need it because its own H1/H2 give the
+         bound. *)
+      - pose proof (LH_block_range _ _ _ b HP ltac:(apply in_or_app; left; exact Hb)) as (_ & _ & _ & R4 & R5).
+        unfold LX_FLAGS, GLOBALS_TOP, LX_FUZZ_STACK in *.
+        split; [lia | lia]. }
     split.
     { exists errv. eapply rw_cells_agree; [exact AG| exact ERR|]. intros a Ha. cbn in Ha. apply OUT. right; left.
       unfold LX_ERRNO, RATP, GLOBALS_TOP, flags_addr, LX_FLAGS in *. lia. }

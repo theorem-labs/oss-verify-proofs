@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB; taken in part from projects/simdjson/fuzz_dump/proofs/lib/A/Pj_loc_impA.v, line 86. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -59,7 +60,7 @@ Definition imp_ctor_postA (Σ : rts RT) (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 
 
 Lemma imp_ctor_aevt : forall Σ K ra sp gp tp t0 t1 t2 s0 s1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6
     (F : bvmap 5 word) fc (m : word -> option byte) (lo : Z) (canary : word),
-  stk asegs m lo (bv_unsigned sp) -> (lo + 544 + RT_STACK <= bv_unsigned sp)%Z -> (rt_sp0 RT Σ - STACK_WIN <= lo)%Z ->
+  stk asegs m lo (bv_unsigned sp) -> (lo + 544 + RT_STACK <= bv_unsigned sp)%Z -> (rt_sp0 RT Σ - STACK_SPAN <= lo)%Z ->
   (bv_unsigned sp + 16 <= USTACK_TOP)%Z -> (bv_unsigned sp mod 16 = 0)%Z -> (bv_unsigned sp < 2^62)%Z ->
   rw_cells asegs m 0x6a50e8 imp0_A -> rw_cells asegs m 0x6a52e0 imp0_B ->
   ro_cells asegs m 0x16aa40 [C8 (Z_to_bv 64 0x6c68e8)] -> ro_cells asegs m 0x6c68e8 [C8 canary] ->

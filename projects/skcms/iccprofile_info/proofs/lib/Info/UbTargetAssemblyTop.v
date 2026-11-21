@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the entry takes the launch's channel reader (Mrdr, for cs_ok's co_rdr and exit_pre's flush), the ledger is the image's entries then the launch's vDSO pair (ResLaunch.res_launch_split), munmap's ledger is a maps_subtract, grants lead with linux_place_is, the mmap decline test is discharged from the NULL hint, and the stack window is 6144513 bytes, was 8388608. *)
 From OSSVerify.Proofs.skcms.iccprofile_info.lib.H Require GcFlushY07.  (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require ZArith NArith List Lia Bool.
@@ -8,6 +9,7 @@ From LinuxProcessSemantics.EquivalenceDefinition Require Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType StackLayout Fs State Run.
 From LinuxProcessSemantics.Riscv Require Instr.
 From OSSVerify.skcms.iccprofile_info.images Require Ubsan.
+From OSSVerify.Proofs.skcms.iccprofile_info.lib.Info Require ResLaunch.
 From OSSVerify.Proofs.skcms.iccprofile_info.lib.Info Require PropExec CatExec ShapeAlg Spec UbWorld UbTargetPre UbWorldK UbTargetPreK SymExec3 SymExec3Sound SymRun3 SymDrive3 SymPlan UbSymPlanSoundA.
 From LinuxProcessSemantics.LinuxProcessSem Require Monad Specs.
 From LinuxProcessSemantics.Riscv Require Prelude Decode DecodeC Sem.
@@ -705,8 +707,10 @@ Proof.
   rewrite (munmap_model_simple _ _ model (co_lazy _ _ _ _ _ HC) (co_mat _ _ _ _ _ HC)).
   apply HK; [|reflexivity].
   (* [comment removed for export] *)
-  destruct HC as [HR HK0 HL Hh Hlz Hmt Hfd HV0 HS0].
-  constructor; cbn [c_ss s_regs s_know s_log c_maps c_nmaps c_live c_slots].
+  destruct HC as [HR HK0 HL Hh Hlz Hmt Hfd HV0 HS0 Hcr].
+  (* [co_rdr] (LPS #38, in 727298f3) is the same model here, so [exact Hcr] closes it wherever
+     [constructor] puts it; it fails harmlessly on every other field. *)
+  constructor; cbn [c_ss s_regs s_know s_log c_maps c_nmaps c_live c_slots]; try exact Hcr.
   - replace (sr_upd (s_regs (c_ss cs)) 10 (ELit 0)) with (sr_upd (s_regs (c_ss cs)) (ridx (10%bv : bv 5)) (ELit 0)) by reflexivity.
     apply regs_ok_set; [exact HR | intros X; apply (f_equal bv_unsigned) in X; discriminate | reflexivity].
   - rewrite HNw. apply know_ok_unfill; [exact HK0|]. fold N. unfold flat, estart. cbn [a_base a_off]. lia.
@@ -717,7 +721,27 @@ Proof.
   - exact Hfd.
   - (* [comment removed for export] *)
     destruct HV0 as [Vres Vmaps Vlen Vlive Vsmall Vnw Vseps Vlim Vsp Vspr].
-    rewrite m_vmmaps_with_vmmaps. constructor; cbn [vm_reserved vm_maps vm_limit vm_live_bytes].
+    rewrite m_vmmaps_with_vmmaps.
+    (* LPS #38's munmap ledger, as in the Ref twin: see RefTargetAssemblyTop.v:722. *)
+    assert (Hsub : vm_maps (mmap_fixed_destroyed_next (m_vmmaps model) (edenot E b) (Z_to_bv 64 N))
+                   = map_remove (vm_maps (m_vmmaps model)) (edenot E b)).
+    { unfold mmap_fixed_destroyed_next. cbn [vm_maps].
+      apply maps_subtract_exact.
+      - pose proof (proj1 (Forall_forall _ _) Vsmall _ Hin) as HS. cbn [snd] in HS. lia.
+      - intros b0 s0 H0. pose proof (proj1 (Forall_forall _ _) Vsmall _ H0) as HS. cbn [snd] in HS. lia.
+      - intros b0 s0 H0 Hb0.
+        (* [Hq] is already taken in this context, as in the Ref twin. *)
+        destruct (seps_In2 _ _ _ Vseps H0 Hin) as [Hsq | Hdj].
+        + injection Hsq as Hsq1 Hsq2. first [exact Hsq2 | exact Hsq1].
+        + exfalso. unfold iv_disjoint in Hdj. cbn [fst snd] in Hdj. rewrite Hb0 in Hdj.
+          pose proof (proj1 (Forall_forall _ _) Vsmall _ H0) as H1. cbn [snd] in H1.
+          pose proof (proj1 (Forall_forall _ _) Vsmall _ Hin) as H2. cbn [snd] in H2. lia.
+      - intros b0 s0 H0 Hne.
+        destruct (seps_In2 _ _ _ Vseps H0 Hin) as [Hsq | Hdj].
+        + injection Hsq as Hsq1 Hsq2. exfalso. apply Hne. first [exact Hsq1 | exact Hsq2].
+        + unfold iv_disjoint in Hdj. cbn [fst snd] in Hdj. exact Hdj. }
+    (* After the [constructor], as in the Ref twin: see RefTargetAssemblyTop.v:750. *)
+    constructor; cbn [vm_reserved vm_maps vm_limit vm_live_bytes]; rewrite ?Hsub.
     + exact Vres.
     + (* [comment removed for export] *)
       apply Forall_forall. intros m Hm. unfold remove_exact in Hm. apply filter_In in Hm as [Hm_in Hnm].
@@ -739,7 +763,8 @@ Proof.
         -- unfold iv_disjoint in Hdisj. cbn [fst snd] in Hdisj. rewrite u64_lit in Hdisj by (unfold two64 in *; lia).
            apply (f_equal bv_unsigned) in Heq. pose proof (u64_range sz). lia.
     + pose proof (map_remove_length (vm_maps (m_vmmaps model)) (edenot E b)). lia.
-    + unfold vm_live_bytes in Vlive |- *. cbn [vm_maps].
+    + (* [Hsub] again, as in the Ref twin: see RefTargetAssemblyTop.v:776. *)
+      unfold vm_live_bytes in Vlive |- *. cbn [vm_maps]. rewrite ?Hsub.
       pose proof (live_bytes_map_remove_le (vm_maps (m_vmmaps model)) (edenot E b)). lia.
     + rewrite map_remove_filter. apply Forall_filter. exact Vsmall.
     + rewrite map_remove_filter. apply Forall_filter. exact Vnw.
@@ -863,7 +888,7 @@ Proof.
 Qed.
 
 Lemma grant_ok_facts : forall hint model (a : word) n,
-  vm_reserved (m_vmmaps model) = segments_reserved RSEGS -> (0 < n < 2 ^ 64)%Z ->
+  ResLaunch.res_launch (segments_reserved RSEGS) (m_vmmaps model) -> (0 < n < 2 ^ 64)%Z ->
   grant_ok hint model a n = true ->
   (bv_unsigned a mod page_size = 0)%Z /\ (0x1000 <= bv_unsigned a)%Z /\ (bv_unsigned a + n <= alloc_top (m_vmmaps model))%Z
   /\ (bv_unsigned a + n <= 0x10000 \/ 0x52000 <= bv_unsigned a)%Z
@@ -873,9 +898,17 @@ Lemma grant_ok_facts : forall hint model (a : word) n,
 Proof.
   intros hint model a n Hres Hn Hg. unfold grant_ok in Hg.
   apply andb_prop in Hg as [Hg Hl]. apply andb_prop in Hg as [Hg Hrf]. apply andb_prop in Hg as [Hg Hc].
-  apply andb_prop in Hg as [Hal Hpos].
+  (* LPS #38's leading [linux_place_is] conjunct, as in the Ref twin: see
+     RefTargetAssemblyTop.v:914. *)
+  apply andb_prop in Hg as [Hg Hpos]. apply andb_prop in Hg as [Hpl Hal].
   apply Z.eqb_eq in Hal. apply Z.ltb_lt in Hpos. apply Z.leb_le in Hc. apply Z.leb_le in Hl.
-  rewrite Hres in Hrf. destruct (region_free_image _ a n Hn Hrf) as [Himg Hmaps].
+  (* LPS 727298f3: the ledger is the image entries then the vdso/vvar pair; the pair is
+     consumed with the maps and only the maps' facts are kept. *)
+  destruct (ResLaunch.res_launch_split _ _ Hres) as (vx & Hresx & _ & _).
+  rewrite Hresx, <- app_assoc in Hrf. destruct (region_free_image _ a n Hn Hrf) as [Himg Hmaps0].
+  assert (Hmaps : forall b s, In (b, s) (vm_maps (m_vmmaps model)) ->
+            (bv_unsigned a + n <= bv_unsigned b \/ bv_unsigned b + bv_unsigned s <= bv_unsigned a)%Z)
+    by (intros b s Hin; apply Hmaps0; apply in_or_app; right; exact Hin).
   repeat split; try assumption.
   unfold page_size in Hal. pose proof (Z.div_mod (bv_unsigned a) 4096 ltac:(lia)). nia.
 Qed.
@@ -1037,14 +1070,30 @@ Proof.
   pose proof (co_vm _ _ _ _ _ HC) as HV. destruct HV as [Vres Vmaps Vlen Vlive Vsmall Vnw Vseps Vlim Vsp Vspr].
   unfold cfg_of.
   eapply (rz_mmap_anon RSEGS R (Z_to_bv 64 (pc cs)) M model w len TB Hf He (co_halt _ _ _ _ _ HC) (co_lazy _ _ _ _ _ HC) R17 R11);
-    [lia | exact R12 | exact R13 | | exact R15 | |].
+    (* the sixth slot is LPS 727298f3's decline gate: the hint is register 10,
+       pinned to the literal 0 at :1065, and [place_declined_b]'s leading conjunct
+       is [negb (hint_address hint =? 0)] ([c0dd863a:theories/LinuxProcessSem/Sys/Mm/Mmap.v:1373-1381]). *)
+    [lia | exact R12 | exact R13 | | exact R15
+    | (* [R10] names the register as [Z_to_bv 5 (Z.of_nat 10)], the goal as the literal; they
+         convert, so the hint is replaced by [exact], not by a syntactic [rewrite] *)
+      lazymatch goal with |- place_declined_b _ _ ?h _ = false =>
+        replace h with (Z_to_bv 64 0) by (first [exact R10 | symmetry; exact R10]) end;
+      apply place_declined_b_null0 | |].
   { etransitivity; [exact R14|]. rewrite Hm1. apply bv_eq. rewrite !Z_to_bv_unsigned, !bv_wrap64_mod. reflexivity. }
   { (* [comment removed for export] *)
-    fold n. apply (grant_exists_gen _ model (2 ^ 30) n 1004); try lia.
+    (* LPS 727298f3: the ledger holds the vdso/vvar pair too (at most two entries), so the
+       entry count bound is two more than the image's four plus the maps' 1000. *)
+    fold n. apply (grant_exists_gen _ model (2 ^ 30) n 1006); try lia.
     - reflexivity.
-    - rewrite Vres, reserved_val. repeat apply Forall_cons; try (cbn [snd]; rewrite u64_lit by lia; lia).
+    - (* [grant_exists_gen] also asks the request page-aligned *)
+      first [ exact (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.page_round_up_Z_aligned len)
+            | unfold n, page_round_up_Z; apply Z_mod_mult ].
+    - destruct (ResLaunch.res_launch_split _ _ Vres) as (vx & Vresx & Vxs & _).
+      rewrite Vresx, reserved_val, <- app_assoc. repeat apply Forall_cons; try (cbn [snd]; rewrite u64_lit by lia; lia).
+      apply Forall_app. split; [exact Vxs|].
       apply Forall_forall. intros [b sz] Hin. cbn [snd]. exact (proj2 (proj1 (Forall_forall _ _) Vsmall _ Hin)).
-    - rewrite length_app, Vres, reserved_val. cbn [length]. lia.
+    - destruct (ResLaunch.res_launch_split _ _ Vres) as (vx & Vresx & _ & Vxl).
+      rewrite Vresx, reserved_val, !length_app. cbn [length]. lia.
     - rewrite cand_base_val. rewrite alloc_top_val. lia.
     - apply grant_budget_intro; [exact (co_lazy _ _ _ _ _ HC) | exact (co_mat _ _ _ _ _ HC) | lia]. }
   (* [comment removed for export] *)
@@ -1065,8 +1114,8 @@ Proof.
   { cbn [edenot]. symmetry. apply Hag. lia. }
   assert (Gsp : (bv_unsigned a + n <= bv_unsigned (edenot E' (EVar 0)) - 8388608)%Z) by (rewrite Hsp0; exact Gceil).
   rewrite Vsp in Vspr.
-  destruct HC as [HR HK HL Hh Hlz Hmt Hfd _ HSL].
-  constructor; cbn [c_ss s_regs s_know s_log c_maps c_nmaps c_live c_slots pc s_pc].
+  destruct HC as [HR HK HL Hh Hlz Hmt Hfd _ HSL Hcr].
+  constructor; cbn [c_ss s_regs s_know s_log c_maps c_nmaps c_live c_slots pc s_pc]; try exact Hcr.
   - (* [comment removed for export] *)
     replace (sr_upd (s_regs (c_ss cs)) 10 (EVar v)) with (sr_upd (s_regs (c_ss cs)) (ridx (10%bv : bv 5)) (EVar v)) by reflexivity.
     apply regs_ok_set; [| intros X; apply (f_equal bv_unsigned) in X; discriminate | apply ext1_at].
@@ -1475,7 +1524,7 @@ Proof.
       with (mem_denot E M [SE (SA b k) 4 new]).
     2:{ cbn [mem_denot]. f_equal. rewrite <- Hnew, (mkAluK_denot RSEGS E M _ _ _ _ (co_know _ _ _ _ _ HC)), Hve, alu_or.
         apply w2b4_or_sext. }
-    apply HK. destruct HC as [HR HKN HL Hh Hlz Hmt Hfd HV HSL].
+    apply HK. destruct HC as [HR HKN HL Hh Hlz Hmt Hfd HV HSL Hcr].
     constructor; cbn [c_ss s_regs s_know s_log c_maps c_nmaps c_live c_slots]; try assumption; try reflexivity.
     + apply (REGS _ R' [15; 13; 12; 10]%nat).
       * intros r Hm. split.
@@ -1514,7 +1563,7 @@ Proof.
       with (mem_denot E M [SE (SA b k) 4 new]).
     2:{ cbn [mem_denot]. f_equal. rewrite <- Hnew, (mkAluK_denot RSEGS E M _ _ _ _ (co_know _ _ _ _ _ HC)), Hve, alu_and.
         apply w2b4_and_sext. }
-    apply HK. destruct HC as [HR HKN HL Hh Hlz Hmt Hfd HV HSL].
+    apply HK. destruct HC as [HR HKN HL Hh Hlz Hmt Hfd HV HSL Hcr].
     constructor; cbn [c_ss s_regs s_know s_log c_maps c_nmaps c_live c_slots]; try assumption; try reflexivity.
     + apply (REGS _ R' [17; 16; 15; 14]%nat).
       * intros r Hm. split.
@@ -1556,7 +1605,7 @@ Proof.
     replace (Z_to_bv 64 (t_cas_lock_k INFOUB)) with (0x1758c%bv : word) in HK by (apply bv_eq; reflexivity).
     replace (wbytes M (adenot E (SA b k)) (word_to_le_bytes 4 (edenot E (reg cs 12))))
       with (mem_denot E M [SE (SA b k) 4 new]) by (cbn [mem_denot]; rewrite <- Hnew; reflexivity).
-    apply HK. destruct HC as [HR HKN HL Hh Hlz Hmt Hfd HV HSL].
+    apply HK. destruct HC as [HR HKN HL Hh Hlz Hmt Hfd HV HSL Hcr].
     constructor; cbn [c_ss s_regs s_know s_log c_maps c_nmaps c_live c_slots]; try assumption; try reflexivity.
     + apply (REGS _ R' [15; 14]%nat).
       * intros r Hm. split.
@@ -2024,8 +2073,8 @@ Proof.
   apply andb_prop in Hfresh as [Hfresh Hmv].
   apply andb_prop in Hfresh as [Hsv _].
   split; [|reflexivity].
-  destruct HC as [HR HK HL Hh Hlz Hmt Hfd HV HSL].
-  constructor; cbn [set_slots c_ss s_regs s_know s_log c_maps c_nmaps c_live c_slots].
+  destruct HC as [HR HK HL Hh Hlz Hmt Hfd HV HSL Hcr].
+  constructor; cbn [set_slots c_ss s_regs s_know s_log c_maps c_nmaps c_live c_slots]; try exact Hcr.
   - apply (regs_after_call E (s_regs (c_ss cs)) R R'); [exact HR | exact Hsv | exact Hkept |].
     destruct rv as [e|]; [split; [exact Hrvv | exact Hrv] | exact I].
   - eapply know_ok_ext; [apply ext_call_agree | exact Hkv | exact HK'].
@@ -2458,7 +2507,7 @@ Definition sr_T : list expr :=
 Definition kn_T0 : list kentry :=
   [KAlign (EVar 0) 16;
    KRange (EVar 0) 0x7fff80000000 0x800000000000;
-   KWr (SA (EVar 0) (-8388608)) (ELit 8388608);
+   KWr (SA (EVar 0) (-6144513)) (ELit 6144513);
    KWord (SA (EVar 0) (-56)) 8 (ELit 0x16fe4);
    KWord (SA (EVar 0) (-64)) 8 (EAlu ALU_ADD (EVar 0) (ELit 8));
    KWord (SA (EVar 0) (-72)) 8 (ELit 2);
@@ -2720,6 +2769,8 @@ Section Entry.
   Hypothesis Mhalt : m_halted model = None.
   Hypothesis Mlazy : m_vm_lazy model = [].
   Hypothesis Mmat : m_vm_materialized model = [].
+  (* LPS #38 (in 727298f3): [cs_ok] carries [co_rdr], so the entry needs the launch's reader. *)
+  Hypothesis Mrdr : m_channel_reader model = true.
   Hypothesis Hn : nlo <= hdr_paylen content <= nhi.
   Variable e : Z.
   Hypothesis He : 0 <= e < 2 ^ 32.
@@ -2773,7 +2824,7 @@ Section Entry.
   Ltac karith := anorm; lia.
   Ltac kflat := apply flat_intro; unfold elenZ; enorm; rewrite ?u_small by lia; lia.
   Ltac kwr_stack Hst := split; [kflat|]; intros d m Hd Hm; unfold elenZ in Hm; cbn [edenot] in Hm; rewrite ?u_small in Hm by lia; anorm;
-                    replace (sp0 + -8388608 + d) with (sp0 - 8388608 + d) by lia; apply Hst; lia.
+                    replace (sp0 + -6144513 + d) with (sp0 - 6144513 + d) by lia; apply Hst; lia.
   Ltac kwr_def Hdef := split; [kflat|]; intros d m Hd Hm; unfold elenZ in Hm; cbn [edenot] in Hm; rewrite ?u_small in Hm by lia; anorm; rewrite ?Z.add_0_r;
                     first [ apply (store_ok_of_defined _ _ _ Hdef); lia
                           | replace (area + 0 + d) with (area + d) by lia; apply (store_ok_of_defined _ _ _ Hdef); lia
@@ -2826,7 +2877,7 @@ Section Entry.
     change (0 + 32 * res_code 4060) with 160 in Pm3.
     specialize (Pzr ltac:(lia)). specialize (Pe5 ltac:(lia)). specialize (Pe4 ltac:(lia)).
     specialize (Ps3 ltac:(lia)). specialize (Ps2 ltac:(lia)).
-    constructor.
+    constructor; try exact Mrdr.   (* LPS #38 (in 727298f3): [co_rdr], wherever the record puts it *)
     - (* [comment removed for export] *)
       intros r. unfold sr_get. destruct (bv_eqb r 0) eqn:Hr0.
       { assert (r = 0%bv) by (apply bv_eq; unfold bv_eqb in Hr0; lia). subst r. reflexivity. }
@@ -3005,14 +3056,15 @@ Theorem target_entry_ok :
     target_vm sp0 gm area VM ->
     m_fds model = fds_std -> m_vmmaps model = VM -> m_halted model = None ->
     m_vm_lazy model = [] -> m_vm_materialized model = [] ->
+    m_channel_reader model = true ->   (* LPS #38 (in 727298f3) *)
     nlo <= hdr_paylen content <= nhi ->
     exists e, 0 <= e < 2 ^ 32 /\
       cs_ok (E_T sp0 gm area tid content brkv mas e sec cnr R) (cs_T nlo nhi) R M model.
 Proof.
-  intros sp0 gm area brkv mas tid sec cnr content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Hn.
+  intros sp0 gm area brkv mas tid sec cnr content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Mr Hn.
   destruct (w_errno _ _ _ _ _ _ _ _ (tp_world _ _ _ _ _ _ _ _ _ _ _ TP)) as (e & He & Ce).
   exists e. split; [exact He|].
-  apply (target_entry_ok_e sp0 gm area brkv mas tid sec cnr content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Hn e He Ce).
+  apply (target_entry_ok_e sp0 gm area brkv mas tid sec cnr content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Mr Hn e He Ce).
 Qed.
 End WithFP1.
 
@@ -3077,7 +3129,7 @@ Definition sr_Tk (k : Z) : list expr :=
 Definition kn_Tk0 (k : Z) : list kentry :=
   [KAlign (EVar 0) 16;
    KRange (EVar 0) 0x7fff80000000 0x800000000000;
-   KWr (SA (EVar 0) (-8388608)) (ELit 8388608);
+   KWr (SA (EVar 0) (-6144513)) (ELit 6144513);
    KWord (SA (EVar 0) (-56)) 8 (ELit 0x16fe4);
    KWord (SA (EVar 0) (-64)) 8 (EAlu ALU_ADD (EVar 0) (ELit 8));
    KWord (SA (EVar 0) (-72)) 8 (ELit 2);
@@ -3234,6 +3286,8 @@ Section EntryK.
   Hypothesis Mhalt : m_halted model = None.
   Hypothesis Mlazy : m_vm_lazy model = [].
   Hypothesis Mmat : m_vm_materialized model = [].
+  (* LPS #38 (in 727298f3): [cs_ok] carries [co_rdr], so the entry needs the launch's reader. *)
+  Hypothesis Mrdr : m_channel_reader model = true.
   Hypothesis Hn : nlo <= hdr_paylen content <= nhi.
   Variable e : Z.
   Hypothesis He : 0 <= e < 2 ^ 32.
@@ -3288,7 +3342,7 @@ Section EntryK.
   Ltac karith := anorm; klia.
   Ltac kflat := apply flat_intro; unfold elenZ; enorm; rewrite ?u_small by klia; klia.
   Ltac kwr_stack Hst := split; [kflat|]; intros d m Hd Hm; unfold elenZ in Hm; cbn [edenot] in Hm; rewrite ?u_small in Hm by klia; anorm;
-                    replace (sp0 + -8388608 + d) with (sp0 - 8388608 + d) by lia; apply Hst; lia.
+                    replace (sp0 + -6144513 + d) with (sp0 - 6144513 + d) by lia; apply Hst; lia.
   Ltac kwr_def Hdef := split; [kflat|]; intros d m Hd Hm; unfold elenZ in Hm; cbn [edenot] in Hm; rewrite ?u_small in Hm by klia; anorm; rewrite ?Z.add_0_r;
                     lazymatch goal with |- store_ok _ _ (Z_to_bv 64 ?a) _ = true =>
                       lazymatch type of Hdef with (forall i, _ -> ?MM (Z_to_bv 64 (?base + i)) <> None) =>
@@ -3358,7 +3412,7 @@ Section EntryK.
     specialize (Pzr ltac:(lia)). specialize (Pe5 ltac:(lia)). specialize (Pe4 ltac:(lia)).
     specialize (Ps3 ltac:(lia)). specialize (Ps2 ltac:(lia)).
     unfold slotC, slotF, offk, nbk, resk, Wk in *.
-    constructor.
+    constructor; try exact Mrdr.   (* LPS #38 (in 727298f3): [co_rdr], wherever the record puts it *)
     - (* [comment removed for export] *)
       intros r. unfold sr_get. destruct (bv_eqb r 0) eqn:Hr0.
       { assert (r = 0%bv) by (apply bv_eq; unfold bv_eqb in Hr0; lia). subst r. reflexivity. }
@@ -3554,14 +3608,15 @@ Theorem target_entry_k_ok :
     target_vm_k k sp0 B area VM ->
     m_fds model = fds_std -> m_vmmaps model = VM -> m_halted model = None ->
     m_vm_lazy model = [] -> m_vm_materialized model = [] ->
+    m_channel_reader model = true ->   (* LPS #38 (in 727298f3) *)
     nlo <= hdr_paylen content <= nhi ->
     exists e, 0 <= e < 2 ^ 32 /\
       cs_ok (E_T sp0 B area tid content brkv mas e sec cnr R) (cs_Tk k nlo nhi) R M model.
 Proof.
-  intros k sp0 B area brkv mas tid sec cnr content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Hn.
+  intros k sp0 B area brkv mas tid sec cnr content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Mr Hn.
   destruct (wk_errno _ _ _ _ _ _ _ _ _ (tk_world _ _ _ _ _ _ _ _ _ _ _ _ TP)) as (e & He & Ce).
   exists e. split; [exact He|].
-  apply (target_entry_k_ok_e k sp0 B area brkv mas tid sec cnr content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Hn e He Ce).
+  apply (target_entry_k_ok_e k sp0 B area brkv mas tid sec cnr content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Mr Hn e He Ce).
 Qed.
 End WithFP1.
 
@@ -4570,8 +4625,8 @@ Proof.
   rewrite Ecs in HK. unfold cfg_of in HK. cbn [pc c_ss s_pc] in HK.
   replace (Z_to_bv 64 (t_freepro_k INFOUB)) with (0x17980%bv : word) in HK by (apply bv_eq; reflexivity).
   apply HK. clear HK.
-  destruct HC as [HR HKc HL Hhalt Hlz Hmt Hfd HV HSLc].
-  constructor; cbn [c_ss s_regs s_know s_log c_maps c_nmaps c_live c_slots].
+  destruct HC as [HR HKc HL Hhalt Hlz Hmt Hfd HV HSLc Hcr].
+  constructor; cbn [c_ss s_regs s_know s_log c_maps c_nmaps c_live c_slots]; try exact Hcr.
   - (* [comment removed for export] *)
     change (sr_upd (sr_upd (sr_upd (sr_upd (sr_upd (sr_upd (sr_upd (sr_fresh (s_regs (c_ss cs)) caller_saved nx) 2 spm) 9 (reg cs 10))
               8 (ELit idx)) 10 ge) 11 We) 14 reserved) 15 e12)
@@ -4725,8 +4780,8 @@ Proof.
   apply andb_prop in Hf as [Hf Hnx]. apply andb_prop in Hf as [Hf Hslv]. apply andb_prop in Hf as [Hf Hmv].
   apply andb_prop in Hf as [Hsv Hkv].
   pose proof (ext1_agree E (s_next (c_ss cs)) a) as Hag.
-  destruct HC as [HR HK HL Hh Hlz Hmt Hfd HV HSL].
-  constructor; cbn [bump_next c_ss s_regs s_know s_log c_maps c_nmaps c_live c_slots].
+  destruct HC as [HR HK HL Hh Hlz Hmt Hfd HV HSL Hcr].
+  constructor; cbn [bump_next c_ss s_regs s_know s_log c_maps c_nmaps c_live c_slots]; try exact Hcr.
   - eapply regs_ok_ext; [exact Hag | exact Hsv | exact HR].
   - eapply know_ok_ext; [exact Hag | exact Hkv | exact HK].
   - reflexivity.
@@ -5496,6 +5551,7 @@ Definition ref_stdio_write_stmt : Prop :=
   ssp_cells mem can ->
   (0 < fd < 2147483648)%Z ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  m_channel_reader model = true ->
   m_halted model = None -> m_vm_lazy model = [] ->
   (0 <= wb <= wp)%Z -> (wp <= 2 ^ 47)%Z ->
   (wp - wb = Z.of_nat (length pending))%Z ->
@@ -5750,6 +5806,7 @@ Proof.
   - split; [rewrite Rcg, Hcgv; reflexivity | exact Rcan].
   - lia.
   - apply fd_lookup_std1. exact (co_fds _ _ _ _ _ HC).
+  - exact (co_rdr _ _ _ _ _ HC).
   - exact (co_halt _ _ _ _ _ HC).
   - exact (co_lazy _ _ _ _ _ HC).
   - lia.
@@ -6758,8 +6815,8 @@ Proof.
   unfold cfg_of in HK. cbn [pc c_ss s_pc] in HK.
   replace (Z_to_bv 64 (t_main_join INFOUB)) with (0x12cdc%bv : word) in HK by (apply bv_eq; reflexivity).
   apply HK. clear HK.
-  destruct HC as [HR HKN HL Hh Hlz Hmt Hfd HV HSL].
-  constructor; cbn [c_ss s_regs s_know s_log c_maps c_nmaps c_live c_slots].
+  destruct HC as [HR HKN HL Hh Hlz Hmt Hfd HV HSL Hcr].
+  constructor; cbn [c_ss s_regs s_know s_log c_maps c_nmaps c_live c_slots]; try exact Hcr.
   - (* [comment removed for export] *)
     apply regs_ok_pointwise. intros r Hr0. rewrite !nth_sr_upd.
     pose proof (ridx_range r) as Hrr.
@@ -7033,7 +7090,9 @@ Proof.
     apply ref_exit_Z. exists sp, (Z_to_bv 64 tp), (bv_unsigned (edenot E tide)), (edenot E w2), (edenot E r2).
     split; [exact EC|]. split; [exact (co_halt _ _ _ _ _ HC)|]. split; [exact (co_lazy _ _ _ _ _ HC)|].
     right. exists wb, wp, (edenot E bufp), (edenot E bufsz), (edenot E rp), (edenot E canv).
-    split; [| apply fd_lookup_std1; exact (co_fds _ _ _ _ _ HC)].
+    (* LPS #38 (in 727298f3): [exit_pre]'s flush disjunct also carries the reader, which
+       [cs_ok]'s own [co_rdr] supplies. *)
+    split; [| split; [apply fd_lookup_std1; exact (co_fds _ _ _ _ _ HC) | exact (co_rdr _ _ _ _ _ HC)]].
     constructor.
     + exact Rlock.
     + exact Rwp.
@@ -7127,8 +7186,8 @@ Theorem target_class_sound : forall (bfuel fuel : nat) (nlo nhi : Z) (p : plan) 
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x12db8) M (seg_rom RSEGS)) model)
              (t_target content (m_fs model)).
 Proof.
-  intros bfuel fuel nlo nhi p s HC HS H0 Hz sp0 gm area brkv mas tid sec cnr content R M VM model TP TV [Mf Mv Mh Ml Mm] Hn.
-  destruct (target_entry_ok sp0 gm area brkv mas tid sec cnr content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Hn) as (e & He & CS).
+  intros bfuel fuel nlo nhi p s HC HS H0 Hz sp0 gm area brkv mas tid sec cnr content R M VM model TP TV [Mf Mv Mh Ml Mm Mr] Hn.
+  destruct (target_entry_ok sp0 gm area brkv mas tid sec cnr content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Mr Hn) as (e & He & CS).
   eapply rz_conseq.
   - exact (check_sound_all NX0 fuel bfuel p (cs_T nlo nhi) s ltac:(cbv; lia) HC _ R M _ CS).
   - rewrite (npos_class nlo nhi content H0 Hz Hn) in HS.
@@ -7148,8 +7207,8 @@ Theorem target_class_sound_k : forall (k : Z) (bfuel fuel : nat) (nlo nhi : Z) (
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x12db8) M (seg_rom RSEGS)) model)
              (t_target content (m_fs model)).
 Proof.
-  intros k bfuel fuel nlo nhi p s HC HS H0 Hz sp0 B area brkv mas tid sec cnr content R M VM model TP TV [Mf Mv Mh Ml Mm] Hn.
-  destruct (target_entry_k_ok k sp0 B area brkv mas tid sec cnr content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Hn) as (e & He & CS).
+  intros k bfuel fuel nlo nhi p s HC HS H0 Hz sp0 B area brkv mas tid sec cnr content R M VM model TP TV [Mf Mv Mh Ml Mm Mr] Hn.
+  destruct (target_entry_k_ok k sp0 B area brkv mas tid sec cnr content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Mr Hn) as (e & He & CS).
   eapply rz_conseq.
   - exact (check_sound_all NX0k fuel bfuel p (cs_Tk k nlo nhi) s ltac:(cbv; lia) HC _ R M _ CS).
   - rewrite (npos_class nlo nhi content H0 Hz Hn) in HS.
@@ -7203,8 +7262,8 @@ Theorem target_class_sound_top : forall (bfuel fuel : nat) (nlo nhi : Z) (p : pl
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x12db8) M (seg_rom RSEGS)) model)
              (t_target content (m_fs model)).
 Proof.
-  intros bfuel fuel nlo nhi p s HC HS Htop sp0 gm area brkv mas tid sec cnr content R M VM model TP TV [Mf Mv Mh Ml Mm] Hn.
-  destruct (target_entry_ok sp0 gm area brkv mas tid sec cnr content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Hn) as (e & He & CS).
+  intros bfuel fuel nlo nhi p s HC HS Htop sp0 gm area brkv mas tid sec cnr content R M VM model TP TV [Mf Mv Mh Ml Mm Mr] Hn.
+  destruct (target_entry_ok sp0 gm area brkv mas tid sec cnr content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Mr Hn) as (e & He & CS).
   pose proof (tp_len _ _ _ _ _ _ _ _ _ _ _ TP) as HL.
   assert (CR : 0 <= hdr_cfglen content < 32768) by (unfold hdr_cfglen; apply Z.mod_pos_bound; lia).
   assert (C0 : hdr_cfglen content = 0) by (unfold hdr_paylen in Hn; lia).
@@ -7227,8 +7286,8 @@ Theorem target_class_sound_top_k : forall (k : Z) (bfuel fuel : nat) (nlo nhi : 
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x12db8) M (seg_rom RSEGS)) model)
              (t_target content (m_fs model)).
 Proof.
-  intros k bfuel fuel nlo nhi p s HC HS Htop sp0 B area brkv mas tid sec cnr content R M VM model TP TV [Mf Mv Mh Ml Mm] Hn.
-  destruct (target_entry_k_ok k sp0 B area brkv mas tid sec cnr content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Hn) as (e & He & CS).
+  intros k bfuel fuel nlo nhi p s HC HS Htop sp0 B area brkv mas tid sec cnr content R M VM model TP TV [Mf Mv Mh Ml Mm Mr] Hn.
+  destruct (target_entry_k_ok k sp0 B area brkv mas tid sec cnr content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Mr Hn) as (e & He & CS).
   pose proof (tk_len _ _ _ _ _ _ _ _ _ _ _ _ TP) as HL. pose proof (tk_L _ _ _ _ _ _ _ _ _ _ _ _ TP) as HK.
   pose proof (capk_pos (k - 1) ltac:(pose proof (wk_k _ _ _ _ _ _ _ _ _ (tk_world _ _ _ _ _ _ _ _ _ _ _ _ TP)); lia)) as Hc.
   assert (CR : 0 <= hdr_cfglen content < 32768) by (unfold hdr_cfglen; apply Z.mod_pos_bound; lia).
@@ -7253,8 +7312,8 @@ Theorem target_class_sound_low_k : forall (k : Z) (bfuel fuel : nat) (nlo nhi : 
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x12db8) M (seg_rom RSEGS)) model)
              (t_target content (m_fs model)).
 Proof.
-  intros k bfuel fuel nlo nhi p s HC HS Hlow H0 Hz sp0 B area brkv mas tid sec cnr content R M VM model TP TV [Mf Mv Mh Ml Mm] Hn.
-  destruct (target_entry_k_ok k sp0 B area brkv mas tid sec cnr content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Hn) as (e & He & CS).
+  intros k bfuel fuel nlo nhi p s HC HS Hlow H0 Hz sp0 B area brkv mas tid sec cnr content R M VM model TP TV [Mf Mv Mh Ml Mm Mr] Hn.
+  destruct (target_entry_k_ok k sp0 B area brkv mas tid sec cnr content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Mr Hn) as (e & He & CS).
   pose proof (tk_len _ _ _ _ _ _ _ _ _ _ _ _ TP) as HL. pose proof (tk_L _ _ _ _ _ _ _ _ _ _ _ _ TP) as HK.
   assert (C1 : 1 <= hdr_cfglen content) by (unfold hdr_paylen in Hn; lia).
   eapply rz_conseq.

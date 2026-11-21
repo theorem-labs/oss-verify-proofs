@@ -4,7 +4,7 @@
    fuzz_decode.asan-ubsan, and one bound serves both).  Files that need the image's extent cite these two names;
    the measured values appear only in the checks below, which [vm_compute] decides against the image modules.
 
-   Same role as proofs/libreac/fuzz_disco/lib/Reusable/YImgTop.v (origin/ossv/recipes a0d2491b460), which
+   Same role as proofs/libreac/fuzz_disco/lib/Reusable/YImgTop.v (theorem-labs/oss-verify-proofs@8c835db8a5a9), which
    fuzz_disco's YCbq.v and YCe5.v cite in off_img; this file computes its two values instead of stating them, so
    no range literal is written by hand anywhere outside the checks.
 

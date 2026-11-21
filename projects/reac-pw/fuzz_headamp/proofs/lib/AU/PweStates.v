@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: the entry-state shape of proofs/reac-pw/fuzz_role/lib/A/RPgPropIntB.v at 5afd8b87436 (its regions, atom facts, assumed branch conditions and alias fact) for reac-pw/fuzz_rate's image B: the four states are pod_write_ent's own, measured on its code. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/PweStates.v at d75b4b9c2458; module paths changed to reac-pw/fuzz_headamp; the run pcs PWE_P1, PWE_P2, PWE_P3, PWE_RET, PWE_RA1, PWE_RA2 moved to fuzz_headamp's image B (pod_write_ent at 0x84634, the same 194 words up to their pc-relative fields: every pc keeps its offset from the entry); comments' addresses and image hashes moved with them. *)
+(* Modified by Theorem Labs, 2026-10: the entry-state shape of proofs/reac-pw/fuzz_role/lib/A/RPgPropIntB.v (its regions, atom facts, assumed branch conditions and alias fact) for reac-pw/fuzz_rate's image B: the four states are pod_write_ent's own, measured on its code. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/PweStates.v; module paths changed to reac-pw/fuzz_headamp; the run pcs PWE_P1, PWE_P2, PWE_P3, PWE_RET, PWE_RA1, PWE_RA2 moved to fuzz_headamp's image B (pod_write_ent at 0x84634, the same 194 words up to their pc-relative fields: every pc keeps its offset from the entry); comments' addresses and image hashes moved with them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The four engine states of pod_write_ent's walk on image B (fuzz_headamp.asan-ubsan, pinned sha256
    53edda9bdeeba1803865babfecb1af6732babe47ab83c64d38cc59a90d717a94). Proves no function (kind: statement text):
    this file only names the states; lib/AU/PweWalk.v proves the function against them.

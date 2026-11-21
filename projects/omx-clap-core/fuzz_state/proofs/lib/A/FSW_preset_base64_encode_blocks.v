@@ -17,7 +17,7 @@
 
    Rule 24 (proof-index v5 built 2026-10-28T21:58:24Z, exit 0, read from a file, not a pipe):
    preset_base64_encode has RELEASED proofs for fs's PLAIN and UBSAN builds only (lib/Prog, lib/U/Prog,
-   ossv/recipes@566eb6ffa5, release/pau-projects-recipes@b6a0088adc), none for an ASan build; the plain contract
+   ossv/recipes, release/pau-projects-recipes), none for an ASan build; the plain contract
    lib/Prog/preset_base64_encode_c.v:35 is the template for the functional content, not a drop-in. Lemma names
    (git grep -w over the four released refs, under proofs/): enc_mulhu, enc_ix1, enc_ix2, enc_ix3, b64_enc_app,
    b64_enc_len, b64_list_nth: no hit. *)

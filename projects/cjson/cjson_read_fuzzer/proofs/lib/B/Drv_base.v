@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: chan_ok also states that the channel has a reader, and DMOD has a fourth field dm_rdr for it, which DMOD_chan passes into chan_ok and DMOD_with_fds keeps. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -214,19 +215,23 @@ Lemma FDS3_3 : forall e, fd_lookup (FDS3 e) (wz 3) = Some e. Proof. reflexivity.
 
 (* [comment removed for export] *)
 Definition chan_ok (mo : Model) (fd : Z) : Prop :=
-  fd_lookup (m_fds mo) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)).
+  fd_lookup (m_fds mo) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd))
+  (* 08b1429: a write to a channel needs a reader (Sys.Fs.ReadWrite.write_spec's channel arm) *)
+  /\ m_channel_reader mo = true.
 
 (* [comment removed for export] *)
 Record DMOD (fs : Fs) (F : list (word * FdEntry)) (mo : Model) : Prop := mkDMOD {
-  dm_fds : m_fds mo = F; dm_fs : m_fs mo = fs; dm_halt : m_halted mo = None }.
+  dm_fds : m_fds mo = F; dm_fs : m_fs mo = fs; dm_halt : m_halted mo = None;
+  (* the channel has a reader (08b1429 write_spec): pinned by the launch, kept by every step here *)
+  dm_rdr : m_channel_reader mo = true }.
 
 Lemma DMOD_chan : forall fs F mo, DMOD fs F mo -> (F = FDS0 \/ exists e, F = FDS3 e) -> chan_ok mo 1 /\ chan_ok mo 2.
 Proof.
-  intros fs F mo [HF _ _] H. unfold chan_ok. rewrite HF. destruct H as [-> | [e ->]]; split; reflexivity.
+  intros fs F mo [HF _ _ HR] H. unfold chan_ok. rewrite HF. destruct H as [-> | [e ->]]; split; split; first [reflexivity | exact HR].
 Qed.
 
 Lemma DMOD_with_fds : forall fs F F' mo, DMOD fs F mo -> DMOD fs F' (with_fds F' mo).
-Proof. intros fs F F' mo [HF HS HH]. split; [reflexivity| exact HS| exact HH]. Qed.
+Proof. intros fs F F' mo [HF HS HH HR]. split; [reflexivity| exact HS| exact HH| exact HR]. Qed.
 
 (* [comment removed for export] *)
 Lemma with_fds_vm : forall F mo,

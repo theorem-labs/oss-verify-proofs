@@ -3,9 +3,10 @@
 (* Modified by Theorem Labs, 2026-10: the start-up facts that lib/B/Prog/IdentEntryLink.v keeps open for
    libreac/fuzz_identity's ASan+UBSan build (image B): GM, IV, ZS_STEM, ZS_NAME, HUMM, HUMF and HUMB. The checks and
    their lemmas are fuzz_grant's (proofs/libreac/fuzz_grant/lib/A/Prog/GrantCloseChk.v :19-151 and GrantClose.v
-   :200-287 at d110b9a519a: zfind, vscan, vscan_ok, is_shc, is_shv, le_byte1, in_zs_of_b, grant_shadow_cell,
+   :200-287: zfind, vscan, vscan_ok, is_shc, is_shv, le_byte1, in_zs_of_b, grant_shadow_cell,
    grant_zs_rd, grant_img_shadow_vis, grant_globs_marked, grant_zs_ROW), with module paths changed, the glob check
    relaxed (glob_chk_r below) and the universe checks (hum_chk, humb_chk) added. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* No function is proved here: each lemma is a fact of the start-up data. The B core's record is ReusableB/YD2l.v:12
    IdentB (the AD2l twin); in this file, as in lib/B/IdentHimgOwned.v, the record is a Section Variable and each
    of its fields that a proof reads enters as a premise of the form that record meets by eq_refl:

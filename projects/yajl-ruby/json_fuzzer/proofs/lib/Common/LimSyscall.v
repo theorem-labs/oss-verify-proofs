@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the table entries of set_robust_list 99, clock_getres 114 and pwritev2 287). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -243,6 +244,11 @@ Proof.
   { intros i m Hn HF HL Hb. cbn [sa_no] in Hn. cbn [sa_spec].
     apply (FR_eta i m (fun i => futex_spec (in_arg i 0) (in_arg i 1) (in_arg i 2) (in_arg i 3))); cbv beta.
     exact (fr_arm_98 L i m). }
+  (* LPS 727298f3: set_robust_list (99) joined the table *)
+  apply Forall_cons.
+  { intros i m Hn HF HL Hb. cbn [sa_no] in Hn. cbn [sa_spec].
+    apply (FR_eta i m (fun i => set_robust_list_spec (in_arg i 1))); cbv beta.
+    exact (fr_arm_99 L i m). }
   (* [comment removed for export] *)
   apply Forall_cons.
   { intros i m Hn HF HL Hb. cbn [sa_no] in Hn. cbn [sa_spec].
@@ -253,6 +259,11 @@ Proof.
   { intros i m Hn HF HL Hb. cbn [sa_no] in Hn. cbn [sa_spec].
     apply (FR_eta i m (fun i => clock_gettime_spec (clockid32 (in_arg i 0)) (in_arg i 1))); cbv beta.
     exact (fr_arm_113 L i m). }
+  (* LPS 727298f3: clock_getres (114) joined the table *)
+  apply Forall_cons.
+  { intros i m Hn HF HL Hb. cbn [sa_no] in Hn. cbn [sa_spec].
+    apply (FR_eta i m (fun i => clock_getres_spec (clockid32 (in_arg i 0)) (in_arg i 1))); cbv beta.
+    exact (fr_arm_114 L i m). }
   (* [comment removed for export] *)
   apply Forall_cons.
   { intros i m Hn HF HL Hb. cbn [sa_no] in Hn. cbn [sa_spec].
@@ -503,6 +514,11 @@ Proof.
   { intros i m Hn HF HL Hb. cbn [sa_no] in Hn. cbn [sa_spec].
     apply (FR_eta i m (fun i => getrandom_spec (in_arg i 0) (in_arg i 1) (in_arg i 2))); cbv beta.
     exact (fr_arm_278 L i m). }
+  (* LPS 727298f3: pwritev2 (287) joined the table *)
+  apply Forall_cons.
+  { intros i m Hn HF HL Hb. cbn [sa_no] in Hn. cbn [sa_spec].
+    apply (FR_eta i m (fun i => pwritev2_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (flag32 (in_arg i 5)))); cbv beta.
+    exact (fr_arm_287 L i m). }
   (* [comment removed for export] *)
   apply Forall_cons.
   { intros i m Hn HF HL Hb. cbn [sa_no] in Hn. cbn [sa_spec].

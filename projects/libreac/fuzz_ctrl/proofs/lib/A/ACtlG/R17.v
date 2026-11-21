@@ -6,9 +6,10 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW4e2.v, with its module paths and module names changed; 4090 of its 4391 lines of code are new or changed and 2544 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW4c.v, with its module names and addresses changed; 578 of its 611 lines of code are new or changed and 4358 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/F25.v, with its module names and addresses changed; 497 of its 569 lines of code are new or changed and 539 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/R17.v -- GLUE for stage seg_R17 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput
-   (lib/A/ACtl.v (at head lib/A/ACtl.v:698) (an earlier version, blob c4edf0be7fe, not in this delivery), the same text as on a Theorem Labs lane's route (C) walk shell (from a working branch 1899bed1aee)
-   and in ACtl.v:517 on the glue base 46eb24cd4b3, blob 84ef756918c).  Written by
+   (lib/A/ACtl.v (at head lib/A/ACtl.v:698) (an earlier version, blob c4edf0be7fe, not in this delivery), the same text as on a Theorem Labs lane's route (C) walk shell (from a working branch)
+   and in ACtl.v:517 on the glue base, blob 84ef756918c).  Written by
    a Theorem Labs lane (route (C) switch by a Theorem Labs lane); single writer of this file.
    rule 24: no function proved (stage glue of a walk; kind: segment lemma).
 
@@ -22,14 +23,14 @@
    The call writes the 12 output bytes at q = fr + 2528 and 16 stack bytes below sp, and nothing else.
 
    THE ROUTE (decided by a Theorem Labs lane; glue-pattern.md section 8 (a working note, not in this delivery) is SUPERSEDED for this stage).
-   The run r17_evt_F_on (lib/A/Prog/Seg/R17Fon.v:60-148, Qed; this lane's route (C) twin of a Theorem Labs lane's
+   The run r17_evt_F_on (lib/A/Prog/Seg/R17Fon.v:61-149, Qed; this lane's route (C) twin of a Theorem Labs lane's
    A.Prog.Seg.R17F.r17_evt_F, see ROUTE (C) below) does NOT stop at the callee entry: it runs THROUGH the call and
    takes the callee's footprint contract as its FIRST premise.  There is no _F for a pre-stretch ending at the
    callee entry, so the superseded part's (section 8's) split cannot be taken without re-proving a run.  So the WHOLE segment run is
    lifted ONCE, at footprint RNG := A.ProgBridge.RNG_W (Reusable.YA0n.w_H W3), with
    Reusable.YA0nR.SRr_fevt_hid (YA0nR.v:64-75); the contract premise is discharged by the callee's own closed
-   theorem A.Prog.reac_ports_parseF.reac_ports_parse_F_holds_on (reac_ports_parseF.v 00b9eb3405b (the blob this tree had at release c5e779efe8c), :436, Qed),
-   of A.Prog.reac_ports_parse_c.reac_ports_parse_contract_F_on (reac_ports_parse_c.v 3cb58b9552c (the blob this tree had at release c5e779efe8c), :141).
+   theorem A.Prog.reac_ports_parseF.reac_ports_parse_F_holds_on (reac_ports_parseF.v 00b9eb3405b (the blob this tree had at release), :436, Qed),
+   of A.Prog.reac_ports_parse_c.reac_ports_parse_contract_F_on (reac_ports_parse_c.v 3cb58b9552c (the blob this tree had at release), :141).
    reac_ports_parse_SRr_at is NOT used: it takes the callee contract as a premise, so citing it for the premise
    would be circular.
 
@@ -42,7 +43,7 @@
    is SUPPLIED by keeping the regions (recipe section 2(d), route (i)): the exit cut has the entry's ly3 S3, so
    asan_cells and ro_agree are kept as before, and Hcut / Himg are carried across the run's write set
    [sp - 16, sp) U [fr + 2528, fr + 2540), which is app memory and so misses the shadow (HSVout), by
-   A.ShadowRwOnK.fl_shadow_rw_on (ShadowRwOnK.v 07ccb82106b (the blob this tree had at release c5e779efe8c), :12).  No Section hypothesis is added; no universal
+   A.ShadowRwOnK.fl_shadow_rw_on (ShadowRwOnK.v 07ccb82106b (the blob this tree had at release), :12).  No Section hypothesis is added; no universal
    shadow_rw is derived anywhere in this file.
 
    THE PROOF, step by step
@@ -50,7 +51,7 @@
        the index is a NAT index (ACtlCutP.ixn), and the body pins b = 0.
    G2  the run's 36 premises.  Registers from the body's rgv / a0v conjuncts and from FRAC; the two spill loads
        as ro_cells (R17.r17_spill_ro); the 20 port bytes from RFb's block bytes (r17g_pbs_at below, which is
-       R17.v:449-464's argument); the geometry (frame vs stack window, frame vs image, block vs frame) from the
+       R17.v:450-465's argument); the geometry (frame vs stack window, frame vs image, block vs frame) from the
        core's AR laws, the journal's astk_ok and YG0f's alloc_ceiling bounds, never from a hypothesis; the
        visibility premises from ProgWorldVisWin.win_vis / ProgWorldVisFrame.frame_vis /
        ProgWorldVisHeap.heap_vis(+_sh) and ProgBridge.img_vis_W, narrowed with ProgBridge.range_visible_sub and
@@ -89,7 +90,7 @@
      section 9.  Unchanged by the route (C) switch: it is the ONLY Section hypothesis, before and after.
    - NO kit placeholder: the two image facts come from the shared kit, Required qualified and cited by name,
      A.ACtlG.Kit.kit_wx (wx_segs_nowrap segs, for SRr_fevt_hid) and A.ACtlG.Kit.kit_segs_low (the image
-     placement premise of ajournal_exec); Kit.v (an earlier version, blob 9ce90f0b988, not in this delivery) on a working branch 1899bed1aee.  kit_frac_move
+     placement premise of ajournal_exec); Kit.v (an earlier version, blob 9ce90f0b988, not in this delivery) on a working branch.  kit_frac_move
      is not used (FRAC is destructured and rebuilt, because this run writes memory) and kit_RNG0 is not used
      (the footprint is RNG_W).
    CITED BY NAME, NOT HYPOTHESES: the callee contract proof (reac_ports_parse_F_holds_on), the run
@@ -110,7 +111,7 @@
    Lib.Frame once, by conversion (MUL / WML), as it did for R17F's post.
 
    BUILD STATE: types-only.  Built with pgbc make (a build machine; the commit message names the log and rc) on
-   a working branch = the interim glue + a working branch 1899bed1aee + the callee files by path (5541f8cc3cd).
+   a working branch = the interim glue + a working branch + the callee files by path.
    Print Assumptions glue_seg_R17: Rocq primitives (PrimInt63 / PrimString / PrimArray) and
    FunctionalExtensionality.functional_extensionality_dep only.
 
@@ -226,7 +227,7 @@ Proof.
   apply (HIN 0xa1000 0x55d000); [right; right; right; left; reflexivity | lia].
 Qed.
 
-(* The 20 port bytes of the round trip: rt_pbs inp = firstn 20 (skipn 18 (rt_F inp 0)) (R17.v:449-464). *)
+(* The 20 port bytes of the round trip: rt_pbs inp = firstn 20 (skipn 18 (rt_F inp 0)) (R17.v:450-465). *)
 Lemma r17g_pbs_at : forall (inp : list byte) (m : word -> option byte) (phi : Z),
   (50 <= length (A.Prog.SlotModel.rt_F inp 0))%nat ->
   lib.Lib.Mem.bytes_at A.Img0.rsegs m phi (A.Prog.SlotModel.rt_F inp 0) ->

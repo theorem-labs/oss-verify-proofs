@@ -2,29 +2,30 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk (image B, fuzz_reply.asan-ubsan) of fuzz_reply's
    relay_finish, a NEW walk over lib/B/W_listing.v (B's body is not A's up to relocation: VERDICT.md (sha256 810ca1df9ca9; internal record)),
-   after lib/A/W_relay_finish_h.v (a working branch a3987bff22c: its loop rf_loop and its tail rf_tail), in the
-   form of the B walks lib/B/W_check_bounded.v (a working branch 7e062bb9b9c) and lib/B/W_gse_loop.v
-   (a working branch bb5ed8a0689). *)
+   after lib/A/W_relay_finish_h.v (a working branch: its loop rf_loop and its tail rf_tail), in the
+   form of the B walks lib/B/W_check_bounded.v (a working branch) and lib/B/W_gse_loop.v
+   (a working branch). *)
 (* Modified by Theorem Labs, 2026-10: the room `_x` form (a Theorem Labs lane, RoomRFB): the walk is pb_relay_finish_x,
    stated over any allocator relation ARx with its laws as W_contract_x.v rf_spec_x (Section c below: PST / ARx / hl /
    LAWS / HP0 / BLKN, the callees' and the allocator rules' `_x` twins, PSTR / PSTC), and it threads rf_spec_x's room
    round: the budget rp_RM RP (each round: the free's 1, then gestures_end's charge) and the count premise
    cnt_ok_pk RP rf_pk (rf_pk = 5) to the free (cnt_ok) and to gestures_end (gse_pk = 4); the round's room bound follows
    rf_room's `- cap` threading (the round frees the old g_out block).  The room argument is lib/A/W_relay_finish_h.v's
-   (a working branch 9e4f84a8fb9), the ARx form that of lib/B/W_list_free.v / W_source_reset.v
-   (a working branch dfa1a225350).
+   (a working branch), the ARx form that of lib/B/W_list_free.v / W_source_reset.v
+   (a working branch).
    B's relay_finish sets no frame pointer and calls no __asan_stack_malloc, so A's fake-frame seat, its set_fs step and rp_RPF across the seat do not apply.
    pb_relay_finish keeps its statement, byte-identical, and its Section hypotheses (the same terms in the same order;
    HPLAIN / HWSEG write rf_cells as rf_cells RG GTU GL): it is re-derived from pb_relay_finish_x at ARx := ARi0,
    PST := [], RP := RP_AR (Section cAR); pb_relay_finish_fr / _fr_tfib are unchanged. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/W_relay_finish.v, with its module paths and module names changed; 30 of its 116 lines of code are new or changed and 4257 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: LX0 for image B (asan-ubsan) of plugin-hostd/fuzz_reply, the B twin of lib/A/ReplyATop.v
-   atop_LX0 (commit 5ab58d26200, :176).  One writer: a Theorem Labs lane (a Theorem Labs lane's placement, 2026-10-30 00:30Z).
+   atop_LX0 (176).  One writer: a Theorem Labs lane (a Theorem Labs lane's placement, 2026-10-30 00:30Z).
 
    LX0 is the laws a re-derived (ARx) walk takes in place of LAWS : AR_laws, stated at cgif's AR with an empty ghost list
    (W_journal_x.v ARi0).  The Section lx below is WBIntegrate's draft (LX0-B-draft.v),
-   taken whole: the B-side restatement of lib/A/W_laws_x.v AR_laws_x_ARi0_of (XcfFinish, commit
-   17dd7592e52) and of the lemma it rests on, lib/A/W_alloc_tail.v alloc_tail (W7 / a Theorem Labs lane).  Both are generic in
+   taken whole: the B-side restatement of lib/A/W_laws_x.v AR_laws_x_ARi0_of (XcfFinish)
+   and of the lemma it rests on, lib/A/W_alloc_tail.v alloc_tail (W7 / a Theorem Labs lane).  Both are generic in
    segs and B and use Reusable modules only, so the text is A's with names prefixed lx_; lib/B carries neither file.
    AR_laws_x_of_AR (Reusable/YCbqG.v) takes three facts beyond AR_laws, each a theorem of cgif's AR itself: the 8-aligned
    stack bounds (layout_ok's lo_top, carried by ARm's am_layout), a live block's tail granule viewable (lx_alloc_tail),
@@ -59,9 +60,9 @@ Open Scope bv_scope.
 Open Scope Z_scope.
 
 (* ---- LX0, the laws a re-derived (ARx) walk takes in place of LAWS : AR_laws.  B-side twin of lib/A/W_laws_x.v
-   AR_laws_x_ARi0_of (XcfFinish, commit 17dd7592e52) and of the lemma it rests on,
+   AR_laws_x_ARi0_of (XcfFinish) and of the lemma it rests on,
    lib/A/W_alloc_tail.v alloc_tail (W7 / a Theorem Labs lane).  Both are generic in segs and B and use Reusable modules only, so
-   the text is A's; lib/B carries neither file, hence the restatement here.  AR_laws_x_of_AR (Reusable/YCbqG.v:1677)
+   the text is A's; lib/B carries neither file, hence the restatement here.  AR_laws_x_of_AR (Reusable/YCbqG.v:1678)
    takes three facts beyond AR_laws, each a theorem of cgif's AR itself: the 8-aligned stack bounds (layout_ok's lo_top,
    carried by ARm's am_layout), a live block's tail granule viewable (lx_alloc_tail), and the const cells (am_const). ---- *)
 Section lx. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.

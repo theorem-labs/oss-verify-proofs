@@ -37,10 +37,10 @@ Open Scope Z_scope.
     names.
 
     Callee contracts its walk takes as premises:
-    - strrchr_contract (Prog/strrchr_c.v under lib/U, STRRCHR = 0x1f8fc, STRRCHR_K = 32;
-      commit 65bf41870056): the string, its NUL and its slack apart from its 32 bytes of stack;
-    - strtol_null_contract (Prog/strtol_null_c.v under lib/U, STRTOL = 0x1e638; commit
-      06702a5f1f22): the tail and its NUL below 2^64 - 1, 368 bytes of stack, the errno cell rw_cells (tp - 164) [C4
+    - strrchr_contract (Prog/strrchr_c.v under lib/U, STRRCHR = 0x1f8fc, STRRCHR_K = 32):
+      the string, its NUL and its slack apart from its 32 bytes of stack;
+    - strtol_null_contract (Prog/strtol_null_c.v under lib/U, STRTOL = 0x1e638):
+      the tail and its NUL below 2^64 - 1, 368 bytes of stack, the errno cell rw_cells (tp - 164) [C4
       ev], the stack-protector GOT cell and guard (seg_env.ssp_ok), each apart from the stack, the errno cell apart
       from the guard;
     - strlen_contract (Prog/strlen_c.v under lib/U, STRLEN = 0x1f5cc): the string and its slack;

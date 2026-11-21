@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from projects/cgif/cgif_file_fuzzer/proofs/lib/YK0f.v, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YK0f.v at origin/ossv/recipes 4b6f0df50aa7 (fuzz_knock's released ASan tree); module paths changed to libdiginet/fuzz_codec. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YK0f.v (fuzz_knock's released ASan tree); module paths changed to libdiginet/fuzz_codec. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput and its premises; the top-anchored stack strings); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -273,11 +274,16 @@ Qed.
 Lemma stk_ok_mem_denot : forall segs E mem log sp K,
 stk_ok segs mem sp K -> stk_ok segs (mem_denot E mem log) sp K.
 Proof. intros. eapply stk_ok_grows; [eassumption | apply mem_denot_grows]. Qed.
-Lemma stk_ok_init : forall segs ph sp argv envp uid hw (rdraw : EntryDraw),
-stk_ok segs (wrap_mem ph sp argv envp uid hw rdraw) sp stack_max_size.
+Lemma stk_ok_init : forall segs inp mbase ph entry (sp brk0 : word)
+    (rdraw : EntryDraw),
+  valid_launch inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) inp ->
+  stk_ok segs (wrap_mem inp mbase ph entry sp rdraw) sp stack_window_depth.
 Proof.
-intros segs ph sp argv envp uid hw rdraw a n H1 H2.
-apply store_ok_wrap_window; assumption.
+  intros segs inp mbase ph entry sp brk0 rdraw Hvl Hlau a n H1 H2.
+  unfold stack_window_depth in H1.
+  apply (store_ok_wrap_window_valid segs inp mbase ph entry sp brk0 a n rdraw
+           Hvl Hlau); lia.
 Qed.
 Lemma kwr_of_stk_ok : forall segs E mem (e : expr) (sp : word) K,
 edenot E e = sp -> stk_ok segs mem sp K -> (0 <= K <= bv_unsigned sp)%Z ->
@@ -327,17 +333,25 @@ Proof.
 intros segs E mem e a off n k bs He Hb Hn H1 H1' H2 Hz. cbn [kentry_ok]. unfold flat, elenZ, estart.
 cbn [a_base a_off]. rewrite He, Hn, Hb. split; [lia|]. split; [reflexivity | exact Hz].
 Qed.
-Lemma wrap_mem_none_low : forall ph sp argv envp uid hw (rdraw : EntryDraw) (i : Z),
-(0 <= i)%Z -> (i < bv_unsigned sp - stack_max_size)%Z ->
-wrap_mem ph sp argv envp uid hw rdraw (Z_to_bv 64 i) = None.
+Lemma wrap_mem_none_low :
+  forall v inp mbase ph entry (sp brk0 : word) (rdraw : EntryDraw) (i : Z),
+  entry_launch_ok_va v (mkEntry sp brk0 mbase rdraw) inp ->
+  (0 <= i)%Z -> (i < bv_unsigned sp - stack_max_size)%Z ->
+  wrap_mem inp mbase ph entry sp rdraw (Z_to_bv 64 i) = None.
 Proof.
-intros ph sp argv envp uid hw rdraw i H0 Hi. unfold wrap_mem.
-pose proof (u64_range sp) as Hsp.
-assert (Hu : bv_unsigned (Z_to_bv 64 i) = i) by (apply u_small; unfold stack_max_size in Hi; lia).
-unfold stack_to_mem. rewrite Hu.
-replace (Z.leb (bv_unsigned sp) i) with false by (symmetry; apply Z.leb_gt; unfold stack_max_size in Hi; lia).
-replace (Z.leb (bv_unsigned sp - stack_max_size) i) with false by (symmetry; apply Z.leb_gt; lia).
-reflexivity.
+  intros v inp mbase ph entry sp brk0 rdraw i Hlau H0 Hi. unfold wrap_mem.
+  pose proof (u64_range sp) as Hsp.
+  pose proof (launch_sp_le_ed_top v inp mbase sp brk0 rdraw Hlau) as Htop.
+  pose proof (Z.le_max_l (bv_unsigned (ed_top rdraw) - stack_max_size)
+                (bv_unsigned mbase + stack_guard_gap_bytes (in_kernel inp))) as Hmax.
+  assert (Hu : bv_unsigned (Z_to_bv 64 i) = i)
+    by (apply u_small; unfold stack_max_size in Hi; lia).
+  unfold stack_to_mem. rewrite Hu.
+  replace (Z.leb (bv_unsigned sp) i) with false
+    by (symmetry; apply Z.leb_gt; unfold stack_max_size in Hi; lia).
+  replace (Z.leb (stack_window_lo (in_kernel inp) mbase rdraw) i) with false
+    by (symmetry; apply Z.leb_gt; unfold stack_window_lo in *; lia).
+  reflexivity.
 Qed.
 Lemma ext_val_zx_id : forall n (v : word),
 (bv_unsigned v < 2 ^ (8 * Z.of_nat n))%Z -> ext_val false 0 n v = v.

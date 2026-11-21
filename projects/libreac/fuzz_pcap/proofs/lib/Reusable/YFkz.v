@@ -3,8 +3,9 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YFkz.v, with its module paths changed, names TfibSyms -> PcapSyms and its addresses moved to libreac/fuzz_pcap's ASan build. *)
-(* Modified by Theorem Labs, 2026-10: the low-shadow band of the constant cells ends at 0x800b3000, as lib/A's twin states it (lib/A/AFkz.v at a working branch 037a4ee7080): the generated YF0m's Tfib_const_shadow reaches 0x800b27cf on this image, so cgif's 0x80050000 did not cover it. *)
+(* Modified by Theorem Labs, 2026-10: the low-shadow band of the constant cells ends at 0x800b3000, as lib/A's twin states it (lib/A/AFkz.v at a working branch): the generated YF0m's Tfib_const_shadow reaches 0x800b27cf on this image, so cgif's 0x80050000 did not cover it. *)
 (* Modified by Theorem Labs, 2026-10: the primary-chunk bound of cfacts (kFreeArrayOffset) is unfolded where lia needs its value, and mapped user bounds come from YG06Free.mapped_user_le_free_array, so no proof here reads EV_MAX's value. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

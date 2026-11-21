@@ -15,7 +15,7 @@ Module ExF := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.ExecF.
 (* Footprint form (D) of the checked fill helper __asan_memset at ASAN_MEMSET = 0x524c4.
 
    FORM (ROUTE1.md (a working note, not in this delivery), which USES
-   a working branch 71968bf11a; and a Theorem Labs lane's rewalk-F-policy.md (a working note, not in this delivery)):
+   a working branch; and a Theorem Labs lane's rewalk-F-policy.md (a working note, not in this delivery)):
    the binders, the premises and the post of asan_memset_contract (asan_memset_c.v) are repeated UNCHANGED --
    that file is frozen and this one does not touch it -- with
      - the footprint RNG universally quantified, FIRST among the binders;

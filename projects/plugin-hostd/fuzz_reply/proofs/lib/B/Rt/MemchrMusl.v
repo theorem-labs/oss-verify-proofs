@@ -3,8 +3,9 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: cgif_file_fuzzer lib/YE3a.v's walk of musl memchr, generalised to any byte c in a1 and to a window that may hold no c at all (the count runs out); YE3a's fetch/decode lemmas, constants and step tactics are used as YE3a states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_disco/lib/A/Rt/MemchrMusl.v
-   (a working branch 3b8a77d146c, the general memchr), with its module paths changed (it carries no address: the musl memchr body is YE3a.v's fetch/decode lemmas, already at the image's musl memchr: fuzz_reply.asan 0x963d0 in lib/A, fuzz_reply.asan-ubsan 0x96950 in this file, through YE3a.v). *)
-(* Modified by Theorem Labs, 2026-10: the asan-ubsan twin of lib/A/Rt/MemchrMusl.v (a working branch b499e5453f1): lib/A's cgif-layer modules replaced by their lib/B twins; it carries no address. *)
+   (a working branch, the general memchr), with its module paths changed (it carries no address: the musl memchr body is YE3a.v's fetch/decode lemmas, already at the image's musl memchr: fuzz_reply.asan 0x963d0 in lib/A, fuzz_reply.asan-ubsan 0x96950 in this file, through YE3a.v). *)
+(* Modified by Theorem Labs, 2026-10: the asan-ubsan twin of lib/A/Rt/MemchrMusl.v (a working branch): lib/A's cgif-layer modules replaced by their lib/B twins; it carries no address. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

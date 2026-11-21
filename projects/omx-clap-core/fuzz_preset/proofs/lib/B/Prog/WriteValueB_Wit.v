@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset image B' (#102 asan-ubsan pin d663f82d, unstripped twin c90d4fa54d43), lane
    WriteValueB (h-rw-pre-7): the INSTANCE WITNESSES of the image facts the write_value walk keeps as Section hypotheses
    (lib/B/Prog/WriteValueB_Base.v Section h, lib/B/Prog/WriteValueB_Leaf.v Section cl). rule 24: no function proved
@@ -22,7 +23,7 @@
      (wvw_ro_byte_b); soundness lemmas are generic.
    - wvw_hpstro (HPSTRO): citation, S1ImgB.pst_not_ro_B (the S1ImgA.pst_not_ro_A template on this base).
    - wvw_hlit (HLIT): the GENERIC STEP wvw_lit_rd, PORTED from image-A lane h-rw-pre-5 WalkS7aR's S7a_indent_wit.v
-     s7w_lit_rd (origin/cold/h-rw-pre-5-walk-s7a-put c2f1ac7094cb, blob 0792f0b58114; its own source WalkS10's
+     s7w_lit_rd (blob 0792f0b58114; its own source WalkS10's
      s10_src_img), with s7w_val1_of_aview, s7w_ro_b's role taken by S1ImgCheck.in_ro_b and s7w_zr_b; the change: kept_img
      now states the instance's pa_lo / pa_hi (PRH_Base.v blob fdb45545469b), so the two numeric facts the template read
      off IMG_LO / IMG_TOP are premises (4096 <= pa_lo, pa_hi <= kLowMemEnd), each closed here by vm_compute. Route:
@@ -31,7 +32,7 @@
      shadow hull. The per-literal facts are one closed boolean wvw_lit_b (all ten by forallb over wv_lits): the bounds,
      the byte checks (wvw_lit_byte_b, with ro_shadow_ok decided by wvw_rso_b over as_zero_shadow TfibB and
      YF0m.Tfib_const_shadow), the ROM bytes (wvw_romb, PORTED from PvB_ImgFacts.v pvi_romb / pvi_romb_sound,
-     origin/cold/h-rw-pre-7-bp-parse_value 522b151df78a, blob 3fdd18a3ae21) and the hull cover.
+      blob 3fdd18a3ae21) and the hull cover.
      wvw_const_incl / wvw_zs_al are PvB_Inst.v's pvI_const_incl / pvI_zs_al (same branch, blob df4d9b627aa3).
    - wvw_strlen (STRLEN, Leaf): citation of the PROVED row lib/AU/PSstrRo.v ps_strlen_xrom_xs_B (blob 45e63604063e,
      c-libc-stdio lane: astrlen_realizes_xrom at ARcf /\ xs_placed_cf, any rlo / rhi, from PSstrlen.v
@@ -217,7 +218,7 @@ intros B zs cs x Iz Ic H. unfold ro_shadow_ok, in_zs. unfold wvw_rso_b in H. app
 Qed.
 
 (* ======================= 2. THE GENERIC STEP (any B, any ARx with AR_laws_x, any PAImg) =======================
-   PORTED from S7a_indent_wit.v s7w_val1_of_aview / s7w_lit_rd (origin/cold/h-rw-pre-5-walk-s7a-put c2f1ac7094cb,
+   PORTED from S7a_indent_wit.v s7w_val1_of_aview / s7w_lit_rd (
    blob 0792f0b58114): an image literal under kept_img (route (a)) with its ROM bytes and a cover of its shadow hull is
    a readable, kept source at any ARx state with arodata_okP. The one change: the template's IMG_LO / IMG_TOP
    arithmetic is the instance's pa_lo / pa_hi, bounded by the two premises PLO / PHI. *)

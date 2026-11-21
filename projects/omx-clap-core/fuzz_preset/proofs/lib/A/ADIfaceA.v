@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: the event-free allocator instance of c-asan's Deallocate interface DIface (Reusable/
    YGcfDIface.v, image-free) AT IMAGE A, preset's ASan binary (suffix _A).
    - DImg_A: the Deallocate image class of a Theorem Labs lane's image-free interface files (ImgBaseDG.DImg, a copy of
@@ -17,7 +18,7 @@
     di_lpost_d_A, di_post_n_inst_A (from A/ADIfacePostNA.v's di_post_n_A, whose dmem_n_A is DGif0's dmem_n at DImg_A
     up to conversion), di_frame_A, di_stack_A, di_owned_A, di_owned_b_A, di_owned_i_A, di_owned_x_A. EXCEPT di_shape_A:
     it is the enqueue side only (it takes the OPEN premise req_size n <= kQuarantineMax, free_cf's size test), so it no
-    longer has DGif0.v:279's di_shape type; the big blocks take the big Deallocate arm (DGbigIF.DIfaceBig, lib/Reusable/DGbigIF.v:146).
+    longer has DGif0.v:280's di_shape type; the big blocks take the big Deallocate arm (DGbigIF.DIfaceBig, lib/Reusable/DGbigIF.v:147).
    No address of preset's image is typed here. Nothing here is a function's proof (rule 24). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -124,7 +125,7 @@ Qed.
 (* ================================================================================================================ *)
 (* The DIface model fields at the instance, for every ghost set Hp (ARX := ARXs_cf B im_segs Hp, AOX := aowned B,   *)
 (* rpre := rpre_dealloc_cf B, fpre := fpre_cf B Hp, lpost := qtight, ft := free_cf, dbody := drain_body_cf,           *)
-(* U := admits (as_universe B); di_lpost_d_A / di_post_n_inst_A below, YGcfDIface.v:9).                              *)
+(* U := admits (as_universe B); di_lpost_d_A / di_post_n_inst_A below, YGcfDIface.v:10).                              *)
 Theorem di_inst_A : forall B, TfibSyms B ->
 forall Hp inst ly S W mem md, ARXs_cf B im_segs Hp inst ly S W mem md -> dg_inst_ok inst.
 Proof. intros B TB Hp inst ly S W mem md (Hi & _). rewrite dg_inst_ok_A, Hi, (ts_inst _ TB). exact inst_ok_TFIB_INST_A. Qed.
@@ -138,7 +139,7 @@ Proof. exact di_shape_n_cf. Qed.
 
 (* Modified by a Theorem Labs lane (DeallocNmaxA), 2026-10-30: the enqueue side of free_cf's size test only
    (`req_size n <= kQuarantineMax`, as YGcfDIface.di_shape_cf); the larger blocks take the big Deallocate arm
-   (DGbigIF.DIfaceBig, lib/Reusable/DGbigIF.v:146). *)
+   (DGbigIF.DIfaceBig, lib/Reusable/DGbigIF.v:147). *)
 Theorem di_shape_A : forall B p n tr S k, p <> PNull -> rpre_dealloc_cf B S n -> req_size n <= kQuarantineMax ->
 In (p, n) (blocks S) -> find_user (st_chunks S) p = Some k -> ck_state k = CAllocated ->
 free_cf p tr S = (depot_put tr ;; modify (fun s => set_chunks (upd_chunk (st_chunks s) (qk k)) s) ;; enqueue (qk k) ;; dmd drain_body_cf) (dtick S).

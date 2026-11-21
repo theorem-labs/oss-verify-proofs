@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made from G_HARNESS_U of proofs/libreac/fuzz_pcap/lib/B/Prog/PcapEntry.v:52
-   (origin/ossv/recipes 198234fa4d3) for libdiginet/fuzz_transport's ASan+UBSan image: the harness's own globals. *)
+   for libdiginet/fuzz_transport's ASan+UBSan image: the harness's own globals. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* rule 24: proves no function (a constant: the harness globals' payload ranges of the ASan+UBSan image).
 
    G_HARNESS_B: the (start, length) ranges of fuzz_transport's writable harness globals in the ASan+UBSan image

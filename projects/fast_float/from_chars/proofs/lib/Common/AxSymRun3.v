@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput; the launch premises valid_launch and entry_launch_ok_va). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -187,7 +188,7 @@ Context {fx : PropExec.FPState}.
 Variable segs : list Segment.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma st_ok_entry : forall E base rom pc sr kn nx regs,
+Lemma st_ok_entry : forall E base rom pc sr kn nx regs,
   regs_ok E sr regs -> know_ok segs E base kn ->
   st_ok segs E base rom (SS pc sr [] kn nx) (mkst regs (Z_to_bv 64 pc) base rom).
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -223,11 +224,11 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma eagree_env_agree : forall b E E', eagree b E E' <-> env_agree b E E'.
+Lemma eagree_env_agree : forall b E E', eagree b E E' <-> env_agree b E E'.
 Proof. LiaFast.lf_pins LiaFast.u0. intros b E E'. unfold eagree, env_agree. tauto. Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma st_okX_entry : forall E base rom pc sr kn nx regs,
+Lemma st_okX_entry : forall E base rom pc sr kn nx regs,
   regs_ok E sr regs -> know_ok segs E base kn ->
   sr_vars_lt nx sr = true -> kn_vars_lt nx kn = true ->
   forall E', eagree nx E E' -> st_ok segs E' base rom (SS pc sr [] kn nx) (mkst regs (Z_to_bv 64 pc) base rom).
@@ -239,7 +240,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Theorem runTX_sound : forall t K fuel stops pc sr kn nx E base rom regs,
+Theorem runTX_sound : forall t K fuel stops pc sr kn nx E base rom regs,
   itab_sound segs t ->
   regs_ok E sr regs -> know_ok segs E base kn ->
   sr_vars_lt nx sr = true -> kn_vars_lt nx kn = true ->
@@ -263,18 +264,18 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Theorem carry_after : forall E base log kn hints kn' scs hs',
+Theorem carry_after : forall E base log kn hints kn' scs hs',
   carry log kn hints = (kn', scs, hs') ->
   log_flat E log -> know_ok segs E base kn -> scs_denot segs base E scs ->
   know_ok segs E (mem_denot E base log) kn'.
 Proof. LiaFast.lf_pins LiaFast.u0. intros. eapply carry_sound; eauto. Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma reg_val : forall E sr R (r : reg), regs_ok E sr R -> getr R r = edenot E (sr_get sr r).
+Lemma reg_val : forall E sr R (r : reg), regs_ok E sr R -> getr R r = edenot E (sr_get sr r).
 Proof. LiaFast.lf_pins LiaFast.u0. intros E sr R r HR. apply HR. Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma regs_ok_set : forall E sr R (rd : reg) v e,
+Lemma regs_ok_set : forall E sr R (rd : reg) v e,
   regs_ok E sr R -> rd <> 0%bv -> edenot E e = v ->
   regs_ok E (sr_upd sr (ridx rd) e) (regupd R rd v).
 Proof. LiaFast.lf_pins LiaFast.u0.
@@ -356,11 +357,16 @@ Lemma stk_ok_mem_denot : forall segs E mem log sp K,
 Proof. intros. eapply stk_ok_grows; [eassumption | apply mem_denot_grows]. Qed.
 
 (* [comment removed for export] *)
-Lemma stk_ok_init : forall segs ph sp argv envp uid hw (rdraw : EntryDraw),
-  stk_ok segs (wrap_mem ph sp argv envp uid hw rdraw) sp stack_max_size.
+Lemma stk_ok_init : forall segs inp mbase ph entry (sp brk0 : word)
+    (rdraw : EntryDraw),
+  valid_launch inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) inp ->
+  stk_ok segs (wrap_mem inp mbase ph entry sp rdraw) sp stack_window_depth.
 Proof.
-  intros segs ph sp argv envp uid hw rdraw a n H1 H2.
-  apply store_ok_wrap_window; assumption.
+  intros segs inp mbase ph entry sp brk0 rdraw Hvl Hlau a n H1 H2.
+  unfold stack_window_depth in H1.
+  apply (store_ok_wrap_window_valid segs inp mbase ph entry sp brk0 a n rdraw
+           Hvl Hlau); lia.
 Qed.
 
 Lemma kwr_of_stk_ok : forall segs E mem (e : expr) (sp : word) K,
@@ -420,16 +426,24 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma wrap_mem_none_low : forall ph sp argv envp uid hw (rdraw : EntryDraw) (i : Z),
+Lemma wrap_mem_none_low :
+  forall v inp mbase ph entry (sp brk0 : word) (rdraw : EntryDraw) (i : Z),
+  entry_launch_ok_va v (mkEntry sp brk0 mbase rdraw) inp ->
   (0 <= i)%Z -> (i < bv_unsigned sp - stack_max_size)%Z ->
-  wrap_mem ph sp argv envp uid hw rdraw (Z_to_bv 64 i) = None.
+  wrap_mem inp mbase ph entry sp rdraw (Z_to_bv 64 i) = None.
 Proof.
-  intros ph sp argv envp uid hw rdraw i H0 Hi. unfold wrap_mem.
+  intros v inp mbase ph entry sp brk0 rdraw i Hlau H0 Hi. unfold wrap_mem.
   pose proof (u64_range sp) as Hsp.
-  assert (Hu : bv_unsigned (Z_to_bv 64 i) = i) by (apply u_small; unfold stack_max_size in Hi; lia).
+  pose proof (launch_sp_le_ed_top v inp mbase sp brk0 rdraw Hlau) as Htop.
+  pose proof (Z.le_max_l (bv_unsigned (ed_top rdraw) - stack_max_size)
+                (bv_unsigned mbase + stack_guard_gap_bytes (in_kernel inp))) as Hmax.
+  assert (Hu : bv_unsigned (Z_to_bv 64 i) = i)
+    by (apply u_small; unfold stack_max_size in Hi; lia).
   unfold stack_to_mem. rewrite Hu.
-  replace (Z.leb (bv_unsigned sp) i) with false by (symmetry; apply Z.leb_gt; unfold stack_max_size in Hi; lia).
-  replace (Z.leb (bv_unsigned sp - stack_max_size) i) with false by (symmetry; apply Z.leb_gt; lia).
+  replace (Z.leb (bv_unsigned sp) i) with false
+    by (symmetry; apply Z.leb_gt; unfold stack_max_size in Hi; lia).
+  replace (Z.leb (stack_window_lo (in_kernel inp) mbase rdraw) i) with false
+    by (symmetry; apply Z.leb_gt; unfold stack_window_lo in *; lia).
   reflexivity.
 Qed.
 

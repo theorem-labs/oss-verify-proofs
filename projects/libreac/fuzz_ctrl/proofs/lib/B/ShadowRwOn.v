@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/ShadowRwOn.v 3412525be9c (the blob this tree had at release c5e779efe8c) (a working branch ea8776b2302): character-identical to this tree's A apart from the image prefix (A.AsanRT / A.Img0 -> B.AsanRT / B.Img0; lib/A/ -> lib/B/ in the comment).  The comment's line references are A's text unchanged: AsanRT.v:28-29 is the same in B; B's twin of ProgWorldRtShadow.v:57-60 is lib/B/ProgWorldRtShadow.v:58-61. *)
+(* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/ShadowRwOn.v 3412525be9c (the blob this tree had at release) (a working branch): character-identical to this tree's A apart from the image prefix (A.AsanRT / A.Img0 -> B.AsanRT / B.Img0; lib/A/ -> lib/B/ in the comment).  The comment's line references are A's text unchanged: AsanRT.v:28-29 is the same in B; B's twin of ProgWorldRtShadow.v:57-60 is lib/B/ProgWorldRtShadow.v:58-61. *)
 (* lib/B/ShadowRwOn.v -- route (C) (a Theorem Labs lane DECISION 09:20Z): the region-restricted form of B.AsanRT.shadow_rw, as a LEAF
    file so callee contracts (lib/B/Prog/*_c.v, *F.v) can state it without Requiring the walk (a Theorem Labs lane 09:23Z, wave
    lead).  ONE WRITER: a Theorem Labs lane.  Moved text-unchanged from lib/B/ACtlCutC.v, which now Requires this file.
@@ -7,7 +7,7 @@
    shadow_rw_on P m is B.AsanRT.shadow_rw's body (AsanRT.v:28-29) under the guard P, guard FIRST.  Narrowing a premise
    `shadow_rw m` to `shadow_rw_on R m` weakens it, so every existing caller still closes it with one
    shadow_rw_on_of_shadow_rw. *)
-(* This delivery then edited comment text only: the code is unchanged from release c5e779efe8c, the comments are not. *)
+(* This delivery then edited comment text only: the code is unchanged from release, the comments are not. *)
 From Stdlib Require Import ZArith.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require B.AsanRT B.Img0.

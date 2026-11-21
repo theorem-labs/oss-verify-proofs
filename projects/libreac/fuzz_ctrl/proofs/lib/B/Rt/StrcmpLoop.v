@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: relocated from proofs/libreac/fuzz_grant/lib/A/Rt/StrcmpLoop.v (a working branch 97c611eec86) by port_core.py, with its module paths changed and its addresses moved to libreac/fuzz_ctrl's ASan build. *)
+(* Modified by Theorem Labs, 2026-10: relocated from proofs/libreac/fuzz_grant/lib/A/Rt/StrcmpLoop.v (a working branch) by port_core.py, with its module paths changed and its addresses moved to libreac/fuzz_ctrl's ASan build. *)
 (* Modified by Theorem Labs, 2026-10: the image-B twin of this branch's lib/A/Rt/StrcmpLoop.v, made from it by moving every address to libreac/fuzz_ctrl's asan-ubsan build (v1.9.0) by symbol (both images' nm; every function compared with elfdis.py --diff, level 3 "identical except PC-relative fields"), and by taking the core modules from lib/Reusable's Y twins. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Written by Theorem Labs, 2026-10, for libreac/fuzz_grant's ASan build: the byte loop of ___interceptor_strcmp,
    as a plain machine walk (msteps), in the form of Reusable/YE3a.v's byte loop (mc_tail). MEASURED on
    fuzz_grant.asan.debug with elfdis.py (fuzz_ctrl's code is EQUAL-mod-pcrel to it by comparison kit 86da41d3ef68, strictcmp3 65688e94214a):

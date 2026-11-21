@@ -1,7 +1,7 @@
 (* check_no_overread 0x811c8 (fs.asan), a Theorem Labs lane: the three runtime call steps of the walk between the second
    past_nul return (0x81310) and the first decode call (0x81398), proved against the shared call-step interface of
    FSW_check_no_overread.v (cno_base / cno_site / cno_ret, Section I; statements cno_call_mal_T, cno_call_mcpy_T,
-   cno_call_mset_T, a Theorem Labs lane's text adopted verbatim by a Theorem Labs lane at 3500db3ca5c):
+   cno_call_mset_T, a Theorem Labs lane's text adopted verbatim by a Theorem Labs lane):
    - cno_call_mal   __wrap_malloc (n + 18) at 0x8131c (callee 0x53074, ra 0x81320): FSW_malloc_free.fsw_aj_malloc04U on
      the call-relative journal (YCbq.ajournal_sub_init), composed back into the walk's journal (YCbq.ajournal_sub). The
      model's malloc answers a block at 4096 <= t (amalloc04: non-NULL), so the post carries t <> 0.
@@ -16,7 +16,7 @@
      (__asan_report_store1): UNTAKEN. cno_call_mset's post gives range_addressable (aview (w_H W) mem') SHADOW_OFF t
      (n + 18), which covers t + n + 17; it is the shadow entry of the top file's token run 0x81358 -> 0x81368 (a Theorem Labs lane
      owns that run and the 1-byte region of t + n + 17 the store 0x81374 needs).
-   Template (text only): fs's past_nul walk lib/A/FSW_past_nul.v on a working branch c535009186d
+   Template (text only): fs's past_nul walk lib/A/FSW_past_nul.v on a working branch
    (pn_img, pn_ra_raw, pn_hull_raw, pn_ush_src, pn_garr8, pn_aview_of_garr8, pn_glob_kept, the memcpy / memset steps of
    pn_mid / pn_tail); stage facts read off the bespoke lib/A/Prog/check_no_overread_mid_r1.v (a working branch,
    CnoSt_2 / CnoSt_3). Kit lemmas are used by path, none copied. *)

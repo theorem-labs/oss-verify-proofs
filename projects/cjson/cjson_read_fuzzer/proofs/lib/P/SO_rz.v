@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the silent ioctl and writev steps and the writev node prove the new sys_rob premise, that the syscall's outcome is the same over any extended read-only backing, importing RomBase and RomWrite for it; rz_at_writev_wall, rzt_wv_loop and rzt_stdio_writev take the channel-reader premise. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -13,6 +14,7 @@ From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.Lib Require Import NodesSound.
 From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.Lib Require RzNodesImpl.
 Import OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.Lib.RzNodesImpl.RzNodes.
 From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.Lib Require Import RzNodesImpl.
+From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib Require Import RomBase RomWrite.
 From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.Spec Require Import Prelim Monad Stdio.
 From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.P Require Import SO_model.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -135,7 +137,9 @@ Lemma rz_at_ioctl : forall ms mo (fd req : Z) e K,
 Proof.
   intros ms mo fd req e K Hat [Hh Hl] Hlk Hnd HK.
   cbn [at_node] in Hat. destruct Hat as (Hsvc & Hfd & -> & H10 & H11).
-  eapply rz_det_silent; [exact Hh | exact Hsvc | | | | exact HK]; [| exact Hh | exact Hl].
+  eapply rz_det_silent; [exact Hh | exact Hsvc | | | | | exact HK]; [| | exact Hh | exact Hl].
+  { apply (ioctl_rob_tty segs ms mo (Z_to_bv 64 29) Hsvc); [apply u64_lit; lia |].
+    change (ms_gpr ms 1) with (areg ms 11). rewrite H11. vm_compute. reflexivity. }
   intros o. rewrite (syscall_spec_29 _ mo o) by (rewrite in_sysno_pending; reflexivity).
   rewrite in_a0_si, in_a1_si, H10, H11, fd32_id by (rewrite u64_lit; lia).
   apply (ioctl_tty_outcome (Z_to_bv 64 fd) _ _ mo e o Hlk Hnd). vm_compute. reflexivity.
@@ -164,6 +168,7 @@ Qed.
 Lemma rz_at_writev_wall : forall ms mo (fd : Z) bufs K,
   at_node segs (NWritev fd bufs) ms -> MOK mo ->
   fd_lookup (m_fds mo) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  m_channel_reader mo = true ->   (* LPS 08b1429: writev to a channel with no reader raises SIGPIPE *)
   (1 <= length bufs)%nat ->
   let bs := concat bufs in
   1 <= Z.of_nat (length bs) <= 67108864 ->   (* [comment removed for export] *)
@@ -172,11 +177,11 @@ Lemma rz_at_writev_wall : forall ms mo (fd : Z) bufs K,
      realizes segs (mkCfg (nret ms (eff0 (Z_to_bv 64 (Z.of_nat k)))) mo) (t_emit (map (WriteEv (Z_to_bv 64 fd)) (skipn k bs)) K)) ->
   realizes segs (mkCfg ms mo) (t_emit (map (WriteEv (Z_to_bv 64 fd)) bs) K).
 Proof.
-  intros ms mo fd bufs K Hat [Hh Hl] Hlk Hlen bs Hb HK0 HK.
+  intros ms mo fd bufs K Hat [Hh Hl] Hlk Hrdr0 Hlen bs Hb HK0 HK.
   destruct (at_node_writev_facts _ _ _ Hat) as (Hsvc & Hfd & H10 & H12 & Hcnt & Hlen63 & iovs & Htask & Hbtask & Harr & Hbufs).
   assert (Hnb : (1 <= length bs)%nat) by lia.
   pose proof (Forall2_length Hbufs) as Hleneq.
-  unshelve epose proof (writev_outcome_i (sys_input segs ms (Z_to_bv 64 66)) mo fd (areg ms 11) iovs bufs _ _ _ Hlk _ _ _ _ _ _ _ _ _) as Hiff.
+  unshelve epose proof (writev_outcome_i (sys_input segs ms (Z_to_bv 64 66)) mo fd (areg ms 11) iovs bufs _ _ _ Hlk Hrdr0 _ _ _ _ _ _ _ _ _) as Hiff.
   { rewrite in_sysno_pending; apply u64_lit; lia. }
   { rewrite in_a0_si; exact H10. }
   { lia. }
@@ -191,12 +196,21 @@ Proof.
   { subst bs; lia. }
   cbv zeta in Hiff. fold bs in Hiff.
   set (CA := copy_iovecs_accesses _ _ _) in Hiff.
+  assert (Hrob : sys_rob segs (mkCfg ms mo)).
+  { apply (sys_rob_of_spec segs ms mo (Z_to_bv 64 66)
+             (fun o => exists k, (1 <= k <= length bs)%nat /\
+                o = LinuxProcessSemantics.LinuxProcessSem.Monad.Ok (mkEffectU (Z_to_bv 64 (Z.of_nat k)) [] [] [] [] (CA ++ iov_prefix_accesses iovs k))
+                       mo (map (WriteEv (Z_to_bv 64 fd)) (firstn k bs))) Hsvc).
+    intros r Hr o.
+    exact (writev_outcome_wrom segs ms r (Z_to_bv 64 66) mo fd iovs bufs Hr
+             ltac:(apply u64_lit; lia) H10 ltac:(lia) Hlk Hrdr0 ltac:(rewrite Hleneq; exact H12) ltac:(lia)
+             Harr Hbufs ltac:(rewrite Hleneq; exact Htask) Hbtask ltac:(subst bs; lia) ltac:(subst bs; lia) o). }
   eapply rz_conseq.
   - apply (rz_outcomes segs ms mo (Z_to_bv 64 66) (wr_index bs)
              (fun i => mkEffectU (Z_to_bv 64 (Z.of_nat (proj1_sig i))) [] [] [] [] (CA ++ iov_prefix_accesses iovs (proj1_sig i)))
              (fun _ => mo)
              (fun i => map (WriteEv (Z_to_bv 64 fd)) (firstn (proj1_sig i) bs))
-             (fun i => t_emit (map (WriteEv (Z_to_bv 64 fd)) (skipn (proj1_sig i) bs)) K) (wr_full bs Hnb) Hh Hsvc eq_refl).
+             (fun i => t_emit (map (WriteEv (Z_to_bv 64 fd)) (skipn (proj1_sig i) bs)) K) (wr_full bs Hnb) Hh Hsvc Hrob eq_refl).
     + intros o. rewrite Hiff. split.
       * intros (k & Hk & ->). exists (exist _ k Hk). reflexivity.
       * intros [[k Hk] ->]. exists k. split; [exact Hk | reflexivity].
@@ -220,25 +234,37 @@ Proof.
   pose proof (iovs_total_ok _ _ _ Hbufs) as Htot. rewrite Hnil in Htot. cbn in Htot.
   assert (Hwn : word_to_nat (Z_to_bv 64 (Z.of_nat (length iovs))) = length iovs).
   { unfold word_to_nat. rewrite u64_lit by lia. apply Nat2Z.id. }
-  apply (rz_det_silent segs ms mo (Z_to_bv 64 66)
-           (with_copyins (copy_iovecs_accesses (in_mem (sys_input segs ms (Z_to_bv 64 66))) (areg ms 11)
-                            (word_to_nat (Z_to_bv 64 (Z.of_nat (length iovs)))))
-                         (mkEffect (Z_to_bv 64 0) [] [])) mo); [exact Hh | exact Hsvc | | exact Hh | exact Hl | exact HK].
-  intros o. rewrite (syscall_spec_66 _ mo o) by (rewrite in_sysno_pending; apply u64_lit; lia).
-  rewrite in_a0_si, in_a1_si, in_a2_si, H10, H12, fd32_id by (rewrite u64_lit; lia).
-  apply (writev_chan_zero_outcome _ _ _ _ mo o (Z_to_bv 64 fd) iovs Hlk).
-  - apply w_is0_pos. rewrite u64_lit; lia.
-  - unfold iovcnt32, abi_low32. rewrite u64_lit by lia. rewrite Z.mod_small by lia. reflexivity.
-  - apply w_is0_pos. rewrite u64_lit; lia.
-  - unfold IOV_MAX. rewrite u64_lit; lia.
-  - rewrite Hwn, in_mem_si. rewrite <- (wa_unsigned_id (areg ms 11)). apply copy_iovecs_aux_bytes_in; [exact Harr|].
-    eapply Forall_impl; [|exact (Forall2_iov_ok_lens _ _ _ Hbufs)]. intros [b l] Hb. cbn [snd] in *. rewrite Hnil in Hb. cbn in Hb. lia.
-  - apply access_okb_intro_Z; rewrite u64_lit by lia; lia.
-  - unfold iovs_access_okb. apply forallb_forall. intros [b l] Hin.
-    rewrite Forall_forall in Hbtask. specialize (Hbtask _ Hin). cbn [fst snd] in *.
-    apply access_okb_intro. exact Hbtask.
-  - exact Htot.
-  - vm_compute. discriminate.
+  set (A := copy_iovecs_accesses (ms_read_byte ms) (areg ms 11) (word_to_nat (Z_to_bv 64 (Z.of_nat (length iovs))))).
+  assert (Hcopy : copy_iovecs_aux (ms_read_byte ms) (areg ms 11) (word_to_nat (Z_to_bv 64 (Z.of_nat (length iovs)))) = ImpOk iovs).
+  { rewrite Hwn. rewrite <- (wa_unsigned_id (areg ms 11)). apply copy_iovecs_aux_bytes_in; [exact Harr|].
+    eapply Forall_impl; [|exact (Forall2_iov_ok_lens _ _ _ Hbufs)]. intros [b l] Hb. cbn [snd] in *. rewrite Hnil in Hb. cbn in Hb. lia. }
+  (* LPS 08b1429: the same outcome over any larger read-only backing *)
+  assert (Hz : forall r, rom_ext (ms_rom ms) r -> forall o,
+             syscall_spec (sys_input segs (wrom ms r) (Z_to_bv 64 66)) mo o <->
+             o = LinuxProcessSemantics.LinuxProcessSem.Monad.Ok (with_copyins A (mkEffect (Z_to_bv 64 0) [] [])) mo []).
+  { intros r Hr o. pose proof (mem_ext_read_byte_wrom ms r Hr) as Hx.
+    unfold A. rewrite <- (copy_iovecs_accesses_ext _ _ _ _ _ Hx Hcopy).
+    rewrite (syscall_spec_66 _ mo o) by (rewrite in_sysno_pending; apply u64_lit; lia).
+    change (in_arg (sys_input segs (wrom ms r) (Z_to_bv 64 66)) 0) with (areg ms 10).
+    change (in_arg (sys_input segs (wrom ms r) (Z_to_bv 64 66)) 1) with (areg ms 11).
+    change (in_arg (sys_input segs (wrom ms r) (Z_to_bv 64 66)) 2) with (areg ms 12).
+    rewrite H10, H12, fd32_id by (rewrite u64_lit; lia).
+    change (ms_read_byte (wrom ms r)) with (in_mem (sys_input segs (wrom ms r) (Z_to_bv 64 66))).
+    apply (writev_chan_zero_outcome _ _ _ _ mo o (Z_to_bv 64 fd) iovs Hlk).
+    - apply w_is0_pos. rewrite u64_lit; lia.
+    - unfold iovcnt32, abi_low32. rewrite u64_lit by lia. rewrite Z.mod_small by lia. reflexivity.
+    - apply w_is0_pos. rewrite u64_lit; lia.
+    - unfold IOV_MAX. rewrite u64_lit; lia.
+    - exact (copy_iovecs_aux_ext _ _ _ _ _ Hx Hcopy).
+    - apply access_okb_intro_Z; rewrite u64_lit by lia; lia.
+    - unfold iovs_access_okb. apply forallb_forall. intros [b l] Hin.
+      rewrite Forall_forall in Hbtask. specialize (Hbtask _ Hin). cbn [fst snd] in *.
+      apply access_okb_intro. exact Hbtask.
+    - exact Htot.
+    - vm_compute. discriminate. }
+  assert (Hiff := Hz (ms_rom ms) (rom_ext_refl _)). rewrite wrom_eta in Hiff.
+  exact (rz_det_silent segs ms mo (Z_to_bv 64 66) (with_copyins A (mkEffect (Z_to_bv 64 0) [] [])) mo K
+           Hh Hsvc (sys_rob_of_spec segs ms mo (Z_to_bv 64 66) _ Hsvc Hz) Hiff Hh Hl HK).
 Qed.
 
 (* [comment removed for export] *)
@@ -270,12 +296,12 @@ Proof. intros. unfold to_bytes. apply length_map. Qed.
 
 (* [comment removed for export] *)
 Lemma rzt_wv_loop : forall {St} (st : St) mo (fd : Z) (fuel : nat) (iov : list (list Z)),
-  fd_lookup (m_fds mo) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  fd_lookup (m_fds mo) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) -> m_channel_reader mo = true ->
   (length iov = 1%nat \/ length iov = 2%nat) ->
   wv_total iov < Z.of_nat fuel -> wv_total iov <= 67108864 ->   (* [comment removed for export] *)
   rzt (mloop fuel (wv_body fd) iov st) mo (map (WriteEv (Z_to_bv 64 fd)) (to_bytes (concat iov))) (fun p => snd p = st).
 Proof.
-  intros St st mo fd fuel. induction fuel as [|fuel IH]; intros iov Hlk Hsh Hfuel Hmax.
+  intros St st mo fd fuel. induction fuel as [|fuel IH]; intros iov Hlk Hrdr Hsh Hfuel Hmax.
   { pose proof (wv_total_nonneg iov). lia. }
   intros Q ms K HM Hi HK Hc.
   cbn [mloop] in Hi. cbn -[mloop dec_wv wv_total wv_advance to_bytes] in Hi.
@@ -295,7 +321,7 @@ Proof.
     cbn [to_bytes map]. apply rz_emit_nil.
     eapply rz_evt; [exact HM| exact Hk|]. intros ms2 HQ. apply (Hc _ _ HQ). reflexivity.
   - rewrite <- to_bytes_concat.
-    eapply rz_at_writev_wall; [exact Hat| exact HM| exact Hlk| exact Hlen| lia| exact HK|].
+    eapply rz_at_writev_wall; [exact Hat| exact HM| exact Hlk| exact Hrdr| exact Hlen| lia| exact HK|].
     intros k Hk1. assert (K1 : 1 <= Z.of_nat k <= wv_total iov) by lia.
     specialize (Hk (eff0 (Z_to_bv 64 (Z.of_nat k)))). rewrite (dec_wv_val (wv_total iov) (Z.of_nat k)) in Hk by lia.
     cbn -[mloop dec_wv wv_total wv_advance to_bytes] in Hk.
@@ -311,18 +337,18 @@ Proof.
       rewrite to_bytes_concat, <- to_bytes_skipn.
       replace (skipn k (concat iov)) with (concat (wv_advance iov (Z.of_nat k))).
       2:{ rewrite wv_advance_concat by lia. f_equal. lia. }
-      apply (IH (wv_advance iov (Z.of_nat k)) Hlk (wv_advance_shape _ _ Hsh)
+      apply (IH (wv_advance iov (Z.of_nat k)) Hlk Hrdr (wv_advance_shape _ _ Hsh)
                ltac:(rewrite wv_advance_total by lia; lia) ltac:(rewrite wv_advance_total by lia; lia) Q _ K HM Hk HK Hc).
 Qed.
 
 (* [comment removed for export] *)
 Lemma rzt_stdio_writev : forall {St} (st : St) mo (fd : Z) (buf s : list Z),
-  fd_lookup (m_fds mo) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  fd_lookup (m_fds mo) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) -> m_channel_reader mo = true ->
   zlength buf + zlength s <= 67108864 ->   (* [comment removed for export] *)
   rzt (stdio_writev fd buf s st) mo (map (WriteEv (Z_to_bv 64 fd)) (to_bytes (buf ++ s))) (fun p => snd p = st).
 Proof.
-  intros St st mo fd buf s Hlk Hmax. unfold stdio_writev.
+  intros St st mo fd buf s Hlk Hrdr Hmax. unfold stdio_writev.
   replace (buf ++ s) with (concat (wv_init buf s)) by (unfold wv_init; destruct buf; cbn; rewrite ?app_nil_r; reflexivity).
-  apply rzt_wv_loop; [exact Hlk| apply wv_init_shape| rewrite wv_total_init; unfold zlength; lia| rewrite wv_total_init; exact Hmax].
+  apply rzt_wv_loop; [exact Hlk| exact Hrdr| apply wv_init_shape| rewrite wv_total_init; unfold zlength; lia| rewrite wv_total_init; exact Hmax].
 Qed.
 End WithSegs.

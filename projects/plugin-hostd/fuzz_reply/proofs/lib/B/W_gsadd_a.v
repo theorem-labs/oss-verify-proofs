@@ -4,9 +4,9 @@
    (image B, fuzz_reply.asan-ubsan) of fuzz_reply's drain (0x83ba0 .. 0x83bfc, relay.c:112-116 inlined):
    gs_adda : gs_addb_stmt -> gs_add_stmt (lib/B/W_drain_gs.v gs_add_stmt, cut GAR of lib/B/W_gsadd_cx.v).
    Proves no function (kind: segment lemma of drain's image-B walk, GS piece gs_add).  The structure is image A's
-   lib/A/W_gsadd_scratch.v (a working branch 0c06ccc287f); every pc, register, frame slot and trap
+   lib/A/W_gsadd_scratch.v (a working branch); every pc, register, frame slot and trap
    below is image B's own (fuzz_reply.objdump.txt (sha256 17f5c434bf57; internal record) 0x83ba0 .. 0x83c00), and the same-image geometry agrees with
-   the old-framework walk a working branch 89040c52421 lib/B/Prog/drain_p_seen_add_a.v.
+   the old-framework walk a working branch lib/B/Prog/drain_p_seen_add_a.v.
 
    GA (0x83ba0) -> DLN (S q) (0x839d4) or GAR (0x83c00):
      0x83ba0 .. 0x83ba8  s5 = SA, s6 = SA + 24, s4 = SA + 16 restored from 144 / 136 / 128 (sp);
@@ -22,6 +22,7 @@
    The model: kd = GBegin (bg = 0) owes seen_tr's realloc (8 (nheld + 1)) and strndup (|x| + 1); the first is
    charged here, the second is GARfut's head.  The arm's traps in this half: 0x83bc4 ADDW1 (decided by the
    runner).  The Section header is lib/B/W_drain_gs.v's (= lib/B/W_drain_cx.v's), verbatim. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -1787,7 +1788,7 @@ End a.
 
 (* ============================================================================================================
    THE ARx-GENERIC TWIN of this file (image B's DR_x slice D, 2026-10-30; the B twin of lib/A/W_gsadd_scratch.v's
-   Section cx at a working branch 50623273289): gs_adda over lib/B/W_drain_cx_x.v's Section variables
+   Section cx at a working branch): gs_adda over lib/B/W_drain_cx_x.v's Section variables
    (B PST ARx MT RP MMAX RG), with the entry's ghost list Hp and budget kr after cx and the cut's own ghost list Hp1
    after S1, against the interfaces lib/B/W_drain_gs.v's GA_x / gs_add_stmt_x and lib/B/W_gsadd_cx.v's GAR_x / GARB_x /
    gs_addb_stmt_x.  Everything above this line is unchanged, so every AR statement of this file keeps its text and its
@@ -1797,7 +1798,7 @@ End a.
      has its twin here (NAME_x), its proof the AR one with the AR -> ARx dictionary (alx_blocks for al_blocks,
      blk_img_x, sep_blocks_perm_x of lib/B/W_drain_cx_x.v Section t, ...).
    - lib/B/W_drain_gs_aux.v's _x twins gs_cut_facts_x / gs_dgs_dnext_signs_x / region_kept_stack_aj_x are cited (the
-     root lane's 56eb8efeca9).
+     root lane).
    - The one allocator call is realloc #2: `jal realloc` at 0x83be8, returning to 0x83bec = drain + 0x974, in its
      caller-context form (AREALLOC, HCTX_re2).  The room round: the cut's dbud_x room holds MT_rk's charge 2 of
      seen_tr's first request on top of the budget of the requests after it (W_drain_room_x.gs_rm_take), so the rule
@@ -1836,11 +1837,11 @@ Variable RP : roomp.
 Variable MMAX : Z.
 Variable RG : rep_globals.
 Context {hl : Z}.
-(* lib/B/W_drain_cx_x.v:154 *)
+(* lib/B/W_drain_cx_x.v:155 *)
 Hypothesis LAWS : AR_laws_x SEGS B ARx hl.
 (* a Theorem Labs lane's shared text (lib/A/W_gsadd_scratch.v's Section cx) *)
 Hypothesis HP0 : forall ly S Hp W mem md, ARx ly S Hp W mem md -> Hp = [].
-(* lib/B/W_drain_cx_x.v:156-216, the ones this file's proofs use, in that file's order and text *)
+(* lib/B/W_drain_cx_x.v:157-217, the ones this file's proofs use, in that file's order and text *)
 Hypothesis HG : gx_ok SEGS B (G_DR B RG).
 Hypothesis HGR : forall a, inG (G_DR B RG) a -> ~ in_rom SEGS a.
 Hypothesis HROMO : rom_out SEGS B (G_DR B RG).
@@ -1850,7 +1851,7 @@ Hypothesis HGSB : 0x10000 <= rg_s RG /\ rg_s RG + 4 * ASRC <= IMG_TOP /\ rg_s RG
 Hypothesis HV9 : VAL (A_OBJ 9) = rg_client RG.
 Hypothesis HSD : 0x10000 <= rg_send_dead RG /\ rg_send_dead RG + 1 <= IMG_TOP.
 Hypothesis HSM : 0x10000 <= rg_send_max RG /\ rg_send_max RG + 8 <= IMG_TOP.
-(* the realloc rule in its caller-context form over the generic journal (lib/B/W_drain_cx_x.v:219, :220, :224), and
+(* the realloc rule in its caller-context form over the generic journal (lib/B/W_drain_cx_x.v:220, :221, :225), and
    its one call site here (drain = 0x83278; jal realloc 0x83be8) *)
 Variable CTX_R : list (list Z).
 Hypothesis AREALLOC : arealloc_cf_rule_c_x SEGS B PST ARx MT MMAX RP CTX_R (SIGMA WS_realloc).

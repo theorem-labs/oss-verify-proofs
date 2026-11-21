@@ -4,7 +4,7 @@
    M_FILE_FP (m_file_c.v) and m_refuse_W (m_refuse_c.v). The HDRB walk (m_find; found: the gen test and m_refuse;
    new: n < 32, memset, memcpy; full: overflow++ and m_refuse) uses them.
 
-   SOURCES. Copied lemmas cite their line in the plain / image-B owner's files at commit 2cff17c0d0ee:
+   SOURCES. Copied lemmas cite their line in the plain / image-B owner's files:
    - "mfu" = proofs/reac-pw/fuzz_segconf/lib/Prog/mfu_facts.v (build-independent model facts);
    - "mfp" = proofs/reac-pw/fuzz_segconf/lib/Prog/mfp_mconf.v (byte-list encoding lemmas; only its list-level
      lemmas are copied, none of its memory-level bytes_at / mconf_atp lemmas).

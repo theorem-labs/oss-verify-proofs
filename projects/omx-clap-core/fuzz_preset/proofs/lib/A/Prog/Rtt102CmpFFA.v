@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumA.v, with its module names changed; 689 of its 743 lines of code are new or changed and 724 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image A' (asan, sha256 1be0f53d96cb9d6c, unstripped twin bff8519bbe3ea0e4): the LAST INNER SEGMENT of
    stretch CMP of round_trip_text's walk ON THE #102 PINS (lane CmpFF of RttCmp, WalkRtt102, the text owner):
    cmp_ff : rtt_seg RT_O2 rtt_at_o2 -> cf_head = PresetReqAt.HEAD ->
             from Rtt102CmpDefs.v's cut cmp_at_pn at +788 (RT_C3) to Rtt102Cut.v's RT_O2 (+808).
-   RE-FITTED TO THE BATCH KIT'S CUT 7cdbb61b5fa0 on WalkRtt102b's shared layer 80a1d52c32c7: the text takes prh_cons_from at
+   RE-FITTED TO THE BATCH KIT'S CUT on WalkRtt102b's shared layer: the text takes prh_cons_from at
    entry and states r = 0, so the cut is GRANTED ONLY - cmp_at_pn / cmp_out and rtt_rb have no refusal arm
    (parse_noting's ran-out outcome is refuted at its call, upstream of this segment), and the read-back blocks are
-   stated up to permutation over the reader's own rd_blocks (passed through). The pre-cut form was green at
-   5a13ff1076b (pins102 97c76900674).
+   stated up to permutation over the reader's own rd_blocks (passed through). The pre-cut form was green
+    (pins102).
    tfuzz_free_specX is in the POST-IMPLICATION form (no position at entry); fpre states frm_zero at entry (from the
    cut's rtt_fx).
    rule 24: no function proved. rule 24: proves no function (kind: segment lemma); the function-level lookup
@@ -25,7 +26,7 @@
    YCbqG.admits_ct_fix; its call memory's QMm from QMR at the cut's room, hull budget and read-only view; its caller
    journal at `[] ++ [the free's trace]`, whose fixed trace YCbqG.ajournal_xw_fix1R drops, which is Rtt102Cut.rtt_Jc at
    the call state); its memnorm keep from the call post by POST_MN (the leaf free_leaf_xA keeps only the raw frame,
-   and the raw frame cannot give memnorm: owned statics lie in a read-only segment at preset, MemnormT.v:29-34); its
+   and the raw frame cannot give memnorm: owned statics lie in a read-only segment at preset, MemnormT.v:30-35); its
    room by PrhRoomFree.RF_free, the carried state by Rtt102FR1Kit.v rtt_free_keep; fuzz_free by the kit's fr_call_at
    at the kit's tfuzz_free_specX (taken at every float state: the call is made at the cut's fxc; its hull budget from the
    run's position, ff_hull), whose post is budgeted at its own FIXED trace (wbudget [trace] 0), read back as the plain
@@ -197,7 +198,7 @@ Variables (CTX0 : list (list Z)).
 #[local] Notation CMP_PN := (cmp_at_pn (fx := fx) (PI := prh_img_A) (L := A_prog_listing) (PA := PA) B ARx SK).
 
 (* ---- THE CLASS-24 COUNT ACROSS A FREE: ccnt24 counts the class-24 requests of the allocator's live blocks
-   (YGcfRoomLive.v:1141), and ablocks keeps each block's request (YG0d.v:421-422), so a block list that loses one
+   (YGcfRoomLive.v:1142), and ablocks keeps each block's request (YG0d.v:421-422), so a block list that loses one
    block does not raise it ---- *)
 Lemma ff_ccnt24_drop : forall ly S ly2 S2 (l1 l2 : list (Z * Z)) x,
   ablocks B ly S = l1 ++ x :: l2 -> ablocks B ly2 S2 = l1 ++ l2 ->
@@ -353,7 +354,7 @@ apply (rcl_nodeR_move SEGS t _ _ (prh_lin Lamc) (prh_lin Lam2) _ Db HN HA).
 intros a kk HinD _. unfold prh_lin. exact (HD2 _ HinD).
 Qed.
 
-(* the read-back tree's free order at back, across such a call (PRH_PjOrder.v:298 pj_foR_frame) *)
+(* the read-back tree's free order at back, across such a call (PRH_PjOrder.v:299 pj_foR_frame) *)
 Lemma ff_fo_keep : forall D fxc lyc Sc Hpc Wc regsc memc mdc kc ly2 S2 Hp2 W2 regs2 mem2 md2 k2 pos slo shi E P
     Lamc peakc cntc failc ranc mostc ownc Lam2 peak2 cnt2 fail2 ran2 most2 own2 (d : nat) Db (FL : list Z),
   RCARRY D fxc lyc Sc Hpc Wc regsc memc mdc kc pos ->

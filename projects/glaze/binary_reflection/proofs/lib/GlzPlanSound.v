@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO reservation in the reserved ledger: co_res's three facts with co_resx, co_mres and co_vdso; cs_ok gains the co_rdr and co_vdso fields). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -609,6 +610,23 @@ Qed.
 
 
 
+(* LPS 08b1429: ported from leptonica/bilateral_fuzzer
+   proofs/lib/K5/AS/AsanPlanCore.v:71-73 and AsanPlanSound.v:283-289 at
+   the donor's revision.  The donor's [atable] argument is dropped: [A] is a Section
+   variable here and neither constant reads it.  [resx_entry_ok] is the
+   size/alignment/2^47 bound and is NOT what separates a vDSO interval from this
+   tree's ASan slot space -- see the comment on [co_res]. *)
+Definition n_resx : nat := 2%nat.
+Definition p_resx : nat := 20%nat.
+Definition resx_bytes : Z := Z.of_nat p_resx * 4096.
+Definition resx_entry_ok (iv : word * word) : Prop :=
+  0 < bv_unsigned (snd iv)
+  /\ bv_unsigned (fst iv) mod 4096 = 0
+  /\ bv_unsigned (snd iv) mod 4096 = 0
+  /\ img_hi A <= bv_unsigned (fst iv)
+  /\ KHI + 4096 <= bv_unsigned (fst iv)
+  /\ bv_unsigned (fst iv) + bv_unsigned (snd iv) <= 2 ^ 47.
+
 Record cs_ok (E : env) (cs : acs) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model) : Prop := CS_OK {
   (* [comment removed for export] *)
   co_regs  : regs_ok E (s_regs (a_ss cs)) R;
@@ -619,7 +637,23 @@ Record cs_ok (E : env) (cs : acs) (R : bvmap 5 word) (FULL : word -> option byte
   co_fds   : fds_ok E (a_fd cs) model;
   co_fs    : m_fs model = FS0;
   co_tid   : a_tidset cs = false -> m_tid model = None;
-  co_res   : vm_reserved (m_vmmaps model) = segments_reserved SEGS;
+  (* LPS 08b1429: the reserved ledger is the image's segments followed by the
+     launch's vDSO reservation ([State.init_reserved]; AsSInit.v:754-781 proves
+     the appended shape).  Three facts in ONE field so [cs_ok] keeps its arity;
+     projections [co_resx], [co_mres], [co_vdso] below the record.  Ported from
+     leptonica/bilateral_fuzzer proofs/lib/K5/AS/AsanPlanSound.v:291-313 at
+     the donor's revision.  The MIDDLE conjunct is what carries [AsKSys7b.res_low] and
+     [AsKSys10.res_in_hull] in this tree: no CONSTANT separates the vDSO pair
+     from the ASan slot space, so [resx_entry_ok] cannot. *)
+  co_res   : (exists rx : list (word * word),
+                vm_reserved (m_vmmaps model) = segments_reserved SEGS ++ rx
+                /\ Forall resx_entry_ok rx
+                /\ (length rx <= n_resx)%nat
+                /\ sum_sizes rx <= resx_bytes)
+             /\ Forall (fun iv => Forall (iv_disjoint iv) (vm_reserved (m_vmmaps model)))
+                       (vm_maps (m_vmmaps model))
+             /\ incl (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model)))
+                     (vm_reserved (m_vmmaps model));
   co_limit : vm_limit (m_vmmaps model) = LIMIT;
   (* [comment removed for export] *)
   co_maps  : maps_match E (a_maps cs) (vm_maps (m_vmmaps model));
@@ -657,6 +691,32 @@ Record cs_ok (E : env) (cs : acs) (R : bvmap 5 word) (FULL : word -> option byte
                FULL a = Some (Z_to_bv 8 0);
   co_sinv  : SINV E FULL
 }.
+
+(* LPS 08b1429: the three projections of [co_res].  Ported from
+   leptonica/bilateral_fuzzer proofs/lib/K5/AS/AsanPlanSound.v:368-382 at
+   the donor's revision. *)
+Lemma co_resx : forall E cs R FULL model, cs_ok E cs R FULL model ->
+  exists rx : list (word * word),
+    vm_reserved (m_vmmaps model) = segments_reserved SEGS ++ rx
+    /\ Forall resx_entry_ok rx
+    /\ (length rx <= n_resx)%nat
+    /\ sum_sizes rx <= resx_bytes.
+Proof using . intros E cs R FULL model HC. exact (proj1 (co_res _ _ _ _ _ HC)). Qed.
+
+Lemma co_mres : forall E cs R FULL model, cs_ok E cs R FULL model ->
+  Forall (fun iv => Forall (iv_disjoint iv) (vm_reserved (m_vmmaps model))) (vm_maps (m_vmmaps model)).
+Proof using . intros E cs R FULL model HC. exact (proj1 (proj2 (co_res _ _ _ _ _ HC))). Qed.
+
+Lemma co_vdso : forall E cs R FULL model, cs_ok E cs R FULL model ->
+  incl (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) (vm_reserved (m_vmmaps model)).
+Proof using . intros E cs R FULL model HC. exact (proj2 (proj2 (co_res _ _ _ _ _ HC))). Qed.
+
+(* LPS 08b1429: the [KHI] clause of [resx_entry_ok] against the literal, so
+   consumers need not have [APC.KHI] in scope.  [KHI = 0x10007fff8000]
+   (AzPlanCore.v:102) is the same literal as [AsVocab.AS_HEAPLO]
+   (AsVocab.v:1621). *)
+Lemma resx_above_heap : forall iv, resx_entry_ok iv -> 0x10007fff8000 <= bv_unsigned (fst iv).
+Proof using . intros iv (_ & _ & _ & _ & H & _). unfold KHI in H. lia. Qed.
 
 
 
@@ -3659,7 +3719,14 @@ Record cs_ok (E : env) (cs : acs) (fx : FX) (R : bvmap 5 word) (M : word -> opti
   co_perm  : wins_den E (a_ghost cs) = PERMc;
   co_top   : sptop_den E (a_brk cs) = SPTOPc;
   co_mat   : m_vm_materialized model = [];     (* [comment removed for export] *)
-  co_floor : floor_sem E (acs_floor (a_maps cs)) (a_brk cs) (a_ylo cs)   (* [comment removed for export] *)
+  co_floor : floor_sem E (acs_floor (a_maps cs)) (a_brk cs) (a_ylo cs);   (* [comment removed for export] *)
+  (* LPS 75d69e00: the far end of the standard channels has a reader.  [init_model] seeds it
+     from [in_channel_reader], which the launch predicate pins, and no model setter writes
+     it ([m_channel_reader] is a projection of [m_proc], State.v:4912-4913); [writev_spec]'s
+     channel arm reads it, so every node that flushes stdout needs it. Appended metadata
+     fields preserve the short [destruct ... as [CR .. CT]] patterns across the plain lane. *)
+  co_rdr   : m_channel_reader model = true;
+  co_vdso  : incl (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) (vm_reserved (m_vmmaps model))
 }.
 Arguments co_regs {E cs fx R M model} _.
 Arguments co_log {E cs fx R M model} _.
@@ -3675,6 +3742,8 @@ Arguments co_perm {E cs fx R M model} _.
 Arguments co_top {E cs fx R M model} _.
 Arguments co_mat {E cs fx R M model} _.
 Arguments co_floor {E cs fx R M model} _.
+Arguments co_rdr {E cs fx R M model} _.
+Arguments co_vdso {E cs fx R M model} _.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -5969,4 +6038,6 @@ Arguments co_perm {SEGS RC PERMc SPTOPc FS0 FDS0 AINV FXOK UINV E cs fx R M mode
 Arguments co_top {SEGS RC PERMc SPTOPc FS0 FDS0 AINV FXOK UINV E cs fx R M model} _.
 Arguments co_mat {SEGS RC PERMc SPTOPc FS0 FDS0 AINV FXOK UINV E cs fx R M model} _.
 Arguments co_floor {SEGS RC PERMc SPTOPc FS0 FDS0 AINV FXOK UINV E cs fx R M model} _.
+Arguments co_rdr {SEGS RC PERMc SPTOPc FS0 FDS0 AINV FXOK UINV E cs fx R M model} _.
+Arguments co_vdso {SEGS RC PERMc SPTOPc FS0 FDS0 AINV FXOK UINV E cs fx R M model} _.
 End GPS.

@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the IMAGE-B twin of lib/A/W_rr_all.v (text unchanged but the imports): the composition of the ASan walk of fuzz_reply's relay_remove: the segment
    statements of lib/A/W_relay_remove_cx.v give rr_spec (rr_all_stmt), by plain application at the cut points. *)
-(* Modified by Theorem Labs, 2026-10: ROUTE (b), STEP 3 (lane RRX, the image-A twin a Theorem Labs lane f4cd818e98d
+(* Modified by Theorem Labs, 2026-10: ROUTE (b), STEP 3 (lane RRX, the image-A twin a Theorem Labs lane
    lib/A/W_rr_all.v): the composition concludes the generic rr_spec_x (any ARx, PST, room record RP); the entry record
    takes the head set Hp and the room budget kr. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

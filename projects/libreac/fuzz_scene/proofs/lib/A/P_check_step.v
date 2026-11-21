@@ -2,13 +2,13 @@
    segment lemmas cs_S0 .. cs_S4 of lib/A/P_check_step_S0.v .. S4.v, EVERY ONE OF THEM PROVED, and frame_setup and
    afobj_of_own (P_check_step_frame.v) are proved too; `Print Assumptions pb_check_stepX` leaves only the
    primitive-integer / -string axioms and Stdlib's functional_extensionality_dep (toolchain/allowed-axioms.txt:94).
-   Evidence, from fresh worktrees of the integration branch at e03c203366b8 and bfcf9aa68da6: for this image
+   Evidence, from fresh worktrees of the integration branch: for this image
    build-20261029T005135Z.log (sha256 ba74856c8e19; internal record): rc=0, 83 files; for the asan-ubsan twin
    build-20261029T014523Z.log (sha256 d855378b10ce; internal record): rc=0, 87 files.
 
    The ASan walk of libreac/fuzz_scene's check_step, in cgif_file_fuzzer's released per-function form
-   (c8557374ad2e lib/YC21.v:33 taddframe_specX / :90 tnewgif_specXJ: `afn_pre ... STK` -> `SRr ... (apost_base ...)`),
-   over the position-abstract kit at 97abd4838840 (Context {PI : PAImg scene_listing}).
+   (theorem-labs/oss-verify-proofs@6b32741d849a lib/YC21.v:33 taddframe_specX / :90 tnewgif_specXJ: `afn_pre ... STK` -> `SRr ... (apost_base ...)`),
+   over the position-abstract kit (Context {PI : PAImg scene_listing}).
    Plan of record: a Theorem Labs lane's HAND1-PLAN.md section 2.1, 2.3, 3, 4.1. The constants, the entry facts and the cut
    states are in P_check_step_cut.v (exported).
 
@@ -144,8 +144,8 @@ Hypothesis HB_ADDR : A_CS_TRAILER = 0x20d80 /\ A_CS_CFRAME = 0x20da0.
 (* the image bytes of the two globals (arodata_okP gives them in every state). *)
 Hypothesis HRO_TR : ro_bytes SEGS pa_relro_lo pa_relro_hi B A_CS_TRAILER scene_trailer.
 Hypothesis HRO_CF : ro_bytes SEGS pa_relro_lo pa_relro_hi B A_CS_CFRAME cs_frame_init.
-(* -- the program's callees: reac_ctrl_parse (a Theorem Labs lane 63ad3e6dcfa), reac_ctrl_checksum_verify
-   (a Theorem Labs lane, 61afd7acb1d) -- *)
+(* -- the program's callees: reac_ctrl_parse (a Theorem Labs lane), reac_ctrl_checksum_verify
+   (a Theorem Labs lane) -- *)
 Hypothesis PARSE : tctrl_parse_spec (SK := SK) B.
 Hypothesis CKV : tctrl_checksum_verify_spec (SK := SK) B.
 Theorem pb_check_stepX : tcheck_step_specX.

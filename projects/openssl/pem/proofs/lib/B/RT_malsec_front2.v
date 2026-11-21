@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the place_declined_b premise of mmap). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -74,6 +75,8 @@ Proof using FDO MST Hn Hcr HA GN.
     split; [reflexivity|].
     split; [transitivity (Z_to_bv 64 (roundup4k (sa_msz (needed2 n)))); [reflexivity | rewrite E2; reflexivity]|].
     split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].
+    (* the NULL hint [grant_node] now declares: this walk's a0 is the literal 0 *)
+    split; [reflexivity|].
     intros P _. exists (MSsvc (mod_regs (Z_to_bv 64 sa_retA) (Z_to_bv 64 (bv_unsigned (Z_to_bv 64 (B + -192)) - 96)) gp (Z_to_bv 64 tpA)
                           t0' t1' t2' a6' (sa_msz (needed2 n)) (Z_to_bv 64 sec_name) (Z_to_bv 64 (needed2 n)) (Z_to_bv 64 (rz_size n))
                           (Z_to_bv 64 8) (Z_to_bv 64 INST) (Z_to_bv 64 B) (Z_to_bv 64 7) (Z_to_bv 64 7) (Z_to_bv 64 (l_T (lay Σ)))

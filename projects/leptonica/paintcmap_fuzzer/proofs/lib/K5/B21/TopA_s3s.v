@@ -1,52 +1,57 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up symbolic in CONFIG_RSEQ: HS_asan_ok over the two hand-off tables, hs_tab_ok_0 and hs_tab_ok_1, and startup_shape_holes at each value; the run-segments lift RUNSEG as a hypothesis of s3s_A; imports; lemmas hs_ok_0, hs_ok_1000, hs_ok_2000, hs_ok_3000 and hs_if_some_ok removed). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType State Run.
+From OSSVerify.Proofs.leptonica.paintcmap_fuzzer.lib.K5.AS Require Import ShapeAlg SpinAlg.
+From OSSVerify.Proofs.leptonica.paintcmap_fuzzer.lib.K5.ASB21 Require Import AsanPlanImages.
 From OSSVerify.leptonica.paintcmap_fuzzer.images Require Import AsanUbsan.
-From OSSVerify.Proofs.leptonica.paintcmap_fuzzer.lib.K5.AS Require Import AxSymExec3 AsanPlanCore AsanPlan.
-From OSSVerify.Proofs.leptonica.paintcmap_fuzzer.lib.K5.ASB21 Require Import AsanTablesA AsanStartup StartupHSAsan StartupPlanAsan AsanStartupCert.
+From OSSVerify.Proofs.leptonica.paintcmap_fuzzer.lib.K5.AS Require Import AxSymExec3 AsanPlanCore AsanPlan StartupCoGen.
+From OSSVerify.Proofs.leptonica.paintcmap_fuzzer.lib.K5.ASB21 Require Import AsanTablesA AsanStartup StartupPlanAsan StartupGenAsan StartupGenAsan0 StartupGenAsan1 StartupHSAsan AsanStartupCert.
 From OSSVerify.Proofs.leptonica.paintcmap_fuzzer.lib.K5.B21 Require Import RT_iface RT_rep D_libiface TopA_iodefs RT_io TopA_start TopA.
 From OSSVerify.Proofs.leptonica.paintcmap_fuzzer.lib.K5.Top Require Import TopLevelA.
 Import ListNotations. Import AX2. Import AP.
 
-(* [comment removed for export] *)
-Lemma hs_ok_0 : hs_all_ok HS_asan_0 = true.
+(* every computed hand-off state passes the main program's boolean test, at each CONFIG_RSEQ value *)
+Lemma hs_tab_ok_1 : forallb (fun e => hs_all_ok (snd (fst e))) (go_H startup_tabs_1) = true.
 Proof. vm_cast_no_check (eq_refl true). Qed.
-Lemma hs_ok_1000 : hs_all_ok HS_asan_1000 = true.
-Proof. vm_cast_no_check (eq_refl true). Qed.
-Lemma hs_ok_2000 : hs_all_ok HS_asan_2000 = true.
-Proof. vm_cast_no_check (eq_refl true). Qed.
-Lemma hs_ok_3000 : hs_all_ok HS_asan_3000 = true.
+Lemma hs_tab_ok_0 : forallb (fun e => hs_all_ok (snd (fst e))) (go_H startup_tabs_0) = true.
 Proof. vm_cast_no_check (eq_refl true). Qed.
 
-(* [comment removed for export] *)
-Lemma hs_if_some_ok : forall (P : acs -> Prop) (b : bool) (s : acs) (r : option acs) (ch : acs),
-  P s -> (r = Some ch -> P ch) -> (if b then Some s else r) = Some ch -> P ch.
-Proof. intros P b s r ch Ps Pr H. destruct b; [injection H as <-; exact Ps | exact (Pr H)]. Qed.
-
-Lemma HS_asan_ok : forall h ch, HS_asan h = Some ch -> hs_all_ok ch = true.
+Lemma HS_asan_ok : forall b h ch, HS_asan b h = Some ch -> hs_all_ok ch = true.
 Proof.
-  intros h ch. unfold HS_asan.
-  apply (hs_if_some_ok (fun c => hs_all_ok c = true)); [exact hs_ok_3000|].
-  apply (hs_if_some_ok (fun c => hs_all_ok c = true)); [exact hs_ok_2000|].
-  apply (hs_if_some_ok (fun c => hs_all_ok c = true)); [exact hs_ok_1000|].
-  apply (hs_if_some_ok (fun c => hs_all_ok c = true)); [exact hs_ok_0| discriminate].
+  intros b h ch. unfold HS_asan, startup_tabs.
+  destruct b; apply gc_get_forallb; [exact hs_tab_ok_1 | exact hs_tab_ok_0].
 Qed.
 
 (* [comment removed for export] *)
-Lemma startup_shape_holes : holes_only startup_shape = true.
-Proof. reflexivity. Qed.
+Lemma startup_shape_holes : forall b, holes_only (startup_shape b) = true.
+Proof. intros [|]; vm_cast_no_check (eq_refl true). Qed.
 
 (* [comment removed for export] *)
+Section RunPremises.
+(* RUNSEG: the run-segments lift.  There is no kernel premise: the start-up takes the kernel of
+   record from [Run.valid_input] ([Run.valid_input_recorded_kernel]) and the certificate at the
+   run's own [kb_rseq].  KERNEL WAS [forall inp, valid_input inp -> in_kernel inp = default_kernel],
+   REFUTED at LPS 75d69e00 by any valid input with [kb_rseq = false] ([Run.recorded_kernel] passes
+   [kb_rseq] through, Run.v:4575-4581). *)
+Hypothesis RUNSEG : forall en inp T,
+  valid_entry (mkImage ASEGS AsanUbsan.M.init_pc APH) en inp -> valid_input inp ->
+  srealizes ASEGS (init_config ASEGS AsanUbsan.M.init_pc APH (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en)
+                               target_alloc_limit inp) T ->
+  srealizes (run_segments ASEGS inp (en_sp en) (en_mmap_base en))
+            (init_config (run_segments ASEGS inp (en_sp en) (en_mmap_base en)) AsanUbsan.M.init_pc APH
+                         (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) target_alloc_limit inp) T.
+
 Theorem s3s_A : fuzz_one_cps RTA LIB_A -> rt_contracts RTA -> (forall Σ m, ART RTA Σ m -> io_consts m) ->
   S3s_stmt AsanUbsan.M.loaded_segments AsanUbsan.M.init_pc AsanUbsan.M.phdrs.
 Proof.
   intros FZ RC IOC.
-  exact (s3s_A_of IT0 IT0_ok HS_asan startup_plan startup_shape KC0 BFUEL FUEL startup_cert startup_shape_holes HS_asan_ok FZ RC IOC).
+  exact (s3s_A_of IT0 IT0_ok HS_asan startup_plan_r startup_shape KC0 BFUEL FUEL startup_cert startup_shape_holes HS_asan_ok FZ RC IOC RUNSEG).
 Qed.
 
 
@@ -64,3 +69,5 @@ Proof.
   intros FZ. exact (s3s_A_rc FZ (rta_contracts (refill_ok fixed_commit_ok) (mal_core_sec grant_node_ok fixed_commit_pab_ok)
                    (rta_free (drain_ok fixed_commit_ok ((fun MN AN p HOK => item_sec_ok p MN AN HOK) munmap_ok madvise_ok)) fixed_commit_ok))).
 Qed.
+
+End RunPremises.

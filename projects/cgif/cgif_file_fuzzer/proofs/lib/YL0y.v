@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch premises entry_launch_ok_va and valid_input; the run's CONFIG_RSEQ flag; the start-up stack anchored at its top; AT_EXECFN): changed sp, argv, Hva, Hve, Hargc, src0_usage, src0_usage_hyp; added inp, Hvl, Hlau, Hvi, envp, efn; removed Hfits. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -22,34 +23,56 @@ Section b. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Lemma msg_usage_eq : forall a, msg_usage a = strB "usage: " ++ a ++ strB " INPUT" ++ nl.
 Proof. intros a. unfold msg_usage. vm_compute. reflexivity. Qed.
 Section c.
-Variable sp : word.
-Variable argv envp : list (list byte).
+Variable sp brk mbase : word.
+Variable inp : ProcInput.
 Variable tid : word.
 Variable rnd : EntryDraw.
 Hypothesis Hsp : valid_sp sp.
-Hypothesis Hva : valid_argv argv.
-Hypothesis Hve : valid_envp envp.
-Hypothesis Hfits : entry_stack_fits sp argv envp.
-Hypothesis Hargc : (length argv <> 2)%nat.
+Hypothesis Hva : valid_argv (in_argv inp).
+Hypothesis Hve : valid_envp (in_envp inp).
+(* [entry_stack_fits] no longer determines the stack image, so it is REPLACED here by the
+   three premises the new initial-state theorem asks for, exactly as in YN3e's Section f
+   (YN3e.v:184-194).  [valid_input] already carries [valid_launch] as its conjunct 13
+   (75d69e00:theories/LinuxProcessSem/Run.v:4596), but YN3e takes the two separately and so
+   does this. *)
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp.
+Hypothesis Hvi : valid_input inp.
+Hypothesis Hargc : (length (in_argv inp) <> 2)%nat.
+#[local] Notation argv := (in_argv inp).
+#[local] Notation envp := (in_envp inp).
+#[local] Notation efn := (in_execfn inp).
 Theorem src0_usage : forall ms model,
-st_ok src0segs (E_main sp argv envp tid rnd) (add_cond ss_main_f (mkAC BC_NE (SOff 3 0) (SLit 2))) ms ->
-runs_at (bv_unsigned sp) (ms_mem ms) (runs_main false sp argv envp rnd) ->
+st_ok src0segs (E_main sp inp argv envp efn tid rnd) (add_cond (ss_canon false) (mkAC BC_NE (SOff 3 0) (SLit 2))) ms ->
+runs_at (bv_unsigned sp) (ms_mem ms) (runs_main (kb_rseq (in_kernel inp)) false sp (ed_top rnd) argv envp efn) ->
 m_halted model = None -> m_vm_lazy model = [] -> fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) model ->
 realizes src0segs (mkCfg ms model) (diag (msg_usage (nth 0 argv [])) (m_fs model)).
 Proof.
 intros ms model HS HR Hh Hlz Hfd2.
 unfold diag, wr, ex, ch_stderr. rewrite msg_usage_eq.
-pose proof (argc_bounds argv Hva) as HA.
-pose proof (layout_facts sp argv envp Hsp Hva Hve) as L. unfold SP_LO, SP_HI in L.
-pose proof (z_argv_bounds sp argv envp 0 ltac:(lia)) as B0.
-pose proof (argv_no_nul argv Hva 0 ltac:(lia)) as Hnul.
-pose proof (argv_str_len argv Hva 0 ltac:(lia)) as Hlen0.
-pose proof (ewm1 sp argv envp Hsp Hva Hve rnd tid) as H1.
-pose proof (ew0 sp argv envp (xw_main sp argv envp tid rnd) (xd_main rnd)) as H0.
-change (E0 _ _ _ _ _) with (E_main sp argv envp tid rnd) in H0.
-pose proof (ew3 sp argv envp Hva (xw_main sp argv envp tid rnd) (xd_main rnd)) as H3.
-change (E0 _ _ _ _ _) with (E_main sp argv envp tid rnd) in H3.
-pose proof (z_argv_fits sp argv envp Hfits 0 ltac:(lia)) as F0. unfold SP_HI in F0.
+pose proof (proj1 Hva) as HA.
+(* [YP08.layout_facts] lost [z_rand zsp av ev + 16 < 2^63] and gained
+   [z_rand zsp rs av ev + 16 <= z_strs ztop av ev efn] (YP08.v:757).  The 2^63 bound is NOT
+   lost to the [lia]s below: conjuncts 4, 6 and 7 chain
+   [z_rand + 16 <= z_strs <= ztop <= SP_HI], and [SP_HI] is 0x800000000000 = 2^47
+   (YP08.v:311), which the [unfold] on the next line puts in front of [lia] as a literal. *)
+pose proof (LF inp mbase sp brk rnd Hsp Hva Hve Hvl Hlau Hvi) as L. unfold SP_LO, SP_HI in L.
+(* [YL0v.bsb_over_read]'s ceiling premise is discharged against the end of the tail ([STE]). *)
+pose proof (STE inp mbase sp brk rnd Hsp Hva Hve Hvl Hlau Hvi) as STE0.
+(* [AUXV_BYTES] of the run's flag is an atom to [lia]; its range bounds the strings from below. *)
+pose proof (YP08.auxv_bytes_range (kb_rseq (in_kernel inp))) as ARL.
+pose proof (ZAB inp mbase sp brk rnd Hsp Hva Hve Hvl Hlau Hvi 0 ltac:(lia)) as B0.
+pose proof (ANN inp mbase sp brk rnd Hsp Hva Hve Hvl Hlau Hvi 0 ltac:(lia)) as Hnul.
+assert (Hlen0 : Z.of_nat (length (nth 0 argv [])) <= 131071)
+by (eapply YP08.argv_str_len; first [eassumption | lia]).
+pose proof (ewm1 inp mbase sp brk rnd Hsp Hva Hve Hvl Hlau Hvi tid) as H1.
+assert (H0 : bv_unsigned (ew (E_main sp inp argv envp efn tid rnd) 0) = bv_unsigned sp) by reflexivity.
+assert (H3 : bv_unsigned (ew (E_main sp inp argv envp efn tid rnd) 3) = Z.of_nat (length argv))
+by (unfold E_main; eapply YP08.ew3; eassumption).
+assert (F0 : z_argv (bv_unsigned (ed_top rnd)) argv envp efn 0
++ Z.of_nat (length (nth 0 argv [])) + 1 <= SP_HI - 9)
+by (eapply YP08.z_argv_fits; first [eassumption | lia]).
+unfold SP_HI in F0.
 sym_norm HS.
 sym_run_to_with src0tbl_ok HS 0x1d8a4.
 fpf_memchr HS HR 1%nat 2%nat 1%nat 10%nat (nth 0 argv []).
@@ -143,7 +166,7 @@ Qed.
 End c.
 Theorem src0_usage_hyp : usage_hyp.
 Proof.
-unfold usage_hyp. intros sp argv envp tid rnd ms model Hsp Hva Hve Hfits Hargc HS HR Hh Hlz Hch.
-exact (src0_usage sp argv envp tid rnd Hsp Hva Hve Hfits Hargc ms model HS HR Hh Hlz Hch).
+unfold usage_hyp. intros sp brk mbase tid rnd inp ms model Hsp Hva Hve Hvl Hlau Hvi Hargc HS HR Hh Hlz Hch.
+exact (src0_usage sp brk mbase inp tid rnd Hsp Hva Hve Hvl Hlau Hvi Hargc ms model HS HR Hh Hlz Hch).
 Qed.
 End b.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the section restated over the whole process input, mmap base and entry; pn_w, rnd_w and the new execfn_w read the draw's stack top, the CONFIG_RSEQ flag and the exec file name; J_aux re-laid as musl stores the 27 or 29 auxv pairs, with rseq_w; every encoded (CDefT) definition and guard_read written out, and the CDefT table removed); and launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -14,9 +15,6 @@ Import ListNotations.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require Import PropExec.
 #[local] Existing Instance PropExec.fx0.
 Open Scope bv_scope.
-From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require CDefT.
-From Ltac2 Require Ltac2.
-Ltac2 gd_tbl_P_startup_defs () : Init.string Init.list := ["OSSVerify.KrLib.BB.CatExec.wbytes"; "stdpp.bitvector.definitions.bv"; "Corelib.Init.Datatypes.None"; "stdpp.bitvector.definitions.Z_to_bv"; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.word_to_le_bytes"; "Defs.envp_w"; "Defs.auxv_w"; "Defs.pn_w"; "Defs.progname_w"; "Stdlib.ZArith.BinInt.Z.sub"; "stdpp.bitvector.definitions.bv_unsigned"; "Defs.argv_w"; "Defs.argc_w"; "Defs.aux_base"; "OSSVerify.KrLib.BB.ZStores.zeros"; "Defs.rnd_w"; "Corelib.Init.Datatypes.cons"; "Corelib.Init.Datatypes.nil"; "Defs.guard_lo"; "Defs.guard_hi"; "Defs.canary_w"; "Corelib.Init.Datatypes.list"; "LinuxProcessSemantics.LinuxProcessSem.MemImageType.Segment"; "Corelib.Init.Datatypes.option"; "Corelib.Init.Logic.eq"; "OSSVerify.KrLib.Lib.PropExec.rdn"; "Corelib.Init.Datatypes.Some"; "Defs.canary_bytes"].
 
 
 Abbreviation RPH := Ubsan.M.phdrs.
@@ -33,10 +31,16 @@ Definition progname_off (s : list byte) : nat := after_last_slash s 0 0.
 
 Section Defs.
   Variable sp0 : word.
-  Variables av ev : list (list byte).
-  Variable uid : word.
-  Variable hw : word.          (* [comment removed for export] *)
+  Variable inp : ProcInput.    (* argv, envp, uid, gid, AT_HWCAP, the kernel build and the exec file name *)
+  Variable mbase : word.       (* the mmap base the auxv's AT_SYSINFO_EHDR reads *)
+  Variable entry : word.       (* AT_ENTRY *)
   Variable rdraw : EntryDraw.  (* [comment removed for export] *)
+  Local Notation av := (in_argv inp).
+  Local Notation ev := (in_envp inp).
+  Local Notation uid := (in_uid inp).
+  Local Notation gid := (in_gid inp).
+  Local Notation hw := (in_hwcap inp).
+  Local Notation rseq := (kb_rseq (in_kernel inp)).
 
   (* [comment removed for export] *)
   Definition aux_base : word := Z_to_bv 64 (bv_unsigned sp0 - 368).
@@ -45,13 +49,14 @@ Section Defs.
   Definition envp_w : word := Z_to_bv 64 (bv_unsigned sp0 + 16 + 8 * Z.of_nat (length av)).
   Definition auxv_w : word :=
     Z_to_bv 64 (bv_unsigned sp0 + 24 + 8 * Z.of_nat (length av) + 8 * Z.of_nat (length ev)).
-  Definition argc_w : word := argcN av.
+  Definition argc_w : word := argcN inp.
   (* [comment removed for export] *)
-  Definition pn_w : word := cat_argv_ptr sp0 av ev 0.
+  Definition pn_w : word := cat_argv_ptr (ed_top rdraw) av ev (in_execfn inp) 0.
   Definition progname_w : word :=
     Z_to_bv 64 (bv_unsigned pn_w + Z.of_nat (progname_off (nth 0 av []))).
   (* [comment removed for export] *)
-  Definition rnd_w : word := at_random_ptr sp0 av ev.
+  Definition rnd_w : word := at_random_ptr sp0 rseq av ev.
+  Definition execfn_w : word := at_execfn_ptr (ed_top rdraw) (in_execfn inp).
   (* [comment removed for export] *)
   Definition rnd_bytes : list byte := at_random_bytes (ed_random rdraw).
   Definition guard_lo_bytes : list byte := firstn 4 rnd_bytes.
@@ -68,34 +73,105 @@ Section Defs.
   Definition secret_w : word := Z_to_bv 64 (bytes_le_to_Z secret_bytes).
 
   (* [comment removed for export] *)
-  Definition D_libc : word -> option byte := ltac2:(CDefT.buildp (gd_tbl_P_startup_defs ()) "(0.(0.(0.(0.(0.(0.L,(1.&40.)(2.(1.&8.))(3.&40.+5<??8.)(4.#8.$5.))(3.&40.+7=358.)(4.#8.$6.))(3.&40.+7=3;8.)(4.#8.Vhw,))(3.&40.+7=380.)(4.#8.(3.&40.+1000.)))(3.&40.+7=348.)(4.#8.$7.))(3.&40.+7=340.)(4.#8.$8.))")
-(* [comment removed for export] *).      (* [comment removed for export] *)
+  Definition D_libc : word -> option byte :=
+    wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (fun _ => None)
+      (Z_to_bv 64 0x5cff8) (word_to_le_bytes 8 envp_w))
+      (Z_to_bv 64 0x7d358) (word_to_le_bytes 8 auxv_w))
+      (Z_to_bv 64 0x7d3b8) (word_to_le_bytes 8 hw))
+      (Z_to_bv 64 0x7d380) (word_to_le_bytes 8 (Z_to_bv 64 4096)))
+      (Z_to_bv 64 0x7d348) (word_to_le_bytes 8 pn_w))
+      (Z_to_bv 64 0x7d340) (word_to_le_bytes 8 progname_w).
 
   (* [comment removed for export] *)
-  Definition J_lsm (J : word -> option byte) : word -> option byte := ltac2:(CDefT.buildp (gd_tbl_P_startup_defs ()) "(0.(0.(0.(0.(0.(0.(0.(0.O1.(3.&40.(9.(:.&40.Vsp0,)+8.))(4.#8.(3.&40.=)))(3.&40.(9.(:.&40.Vsp0,)+10.))(4.#8.(3.&40.=)))(3.&40.(9.(:.&40.Vsp0,)+18.))(4.#8.(3.&40.=)))(3.&40.(9.(:.&40.Vsp0,)+20.))(4.#8.(3.&40.=)))(3.&40.(9.(:.&40.Vsp0,)+28.))(4.#8.(3.&40.+3?238.)))(3.&40.(9.(:.&40.Vsp0,)+30.))(4.#8.$;.))(3.&40.(9.(:.&40.Vsp0,)+38.))(4.#8.$<.))(3.&40.(9.(:.&40.Vsp0,)+40.))(4.#8.(3.&40.+1=24<.)))")
-(* [comment removed for export] *).
+  Definition J_lsm (J : word -> option byte) : word -> option byte :=
+    wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes J
+      (Z_to_bv 64 (bv_unsigned sp0 - 8)) (word_to_le_bytes 8 (Z_to_bv 64 0)))
+      (Z_to_bv 64 (bv_unsigned sp0 - 16)) (word_to_le_bytes 8 (Z_to_bv 64 0)))
+      (Z_to_bv 64 (bv_unsigned sp0 - 24)) (word_to_le_bytes 8 (Z_to_bv 64 0)))
+      (Z_to_bv 64 (bv_unsigned sp0 - 32)) (word_to_le_bytes 8 (Z_to_bv 64 0)))
+      (Z_to_bv 64 (bv_unsigned sp0 - 40)) (word_to_le_bytes 8 (Z_to_bv 64 0x3f238)))
+      (Z_to_bv 64 (bv_unsigned sp0 - 48)) (word_to_le_bytes 8 argv_w))
+      (Z_to_bv 64 (bv_unsigned sp0 - 56)) (word_to_le_bytes 8 argc_w))
+      (Z_to_bv 64 (bv_unsigned sp0 - 64)) (word_to_le_bytes 8 (Z_to_bv 64 0x1d24c)).
 
   (* [comment removed for export] *)
-  Definition J_aux (Jf : word -> option byte) : word -> option byte := ltac2:(CDefT.buildp (gd_tbl_P_startup_defs ()) "(0.(0.(0.(0.(0.(0.(0.(0.(0.(0.O1.$=.(>.#130.))(3.&40.(9.(:.&40.Vsp0,)+158.))(4.#8.(3.&40.+10040.)))(3.&40.(9.(:.&40.Vsp0,)+150.))(4.#8.(3.&40.+38.)))(3.&40.(9.(:.&40.Vsp0,)+148.))(4.#8.(3.&40.+:.)))(3.&40.(9.(:.&40.Vsp0,)+?0.))(4.#8.Vhw,))(3.&40.(9.(:.&40.Vsp0,)+140.))(4.#8.(3.&40.+1000.)))(3.&40.(9.(:.&40.Vsp0,)+118.))(4.#8.Vuid,))(3.&40.(9.(:.&40.Vsp0,)+110.))(4.#8.Vuid,))(3.&40.(9.(:.&40.Vsp0,)+;8.))(4.#8.(3.&40.=)))(3.&40.(9.(:.&40.Vsp0,)+:8.))(4.#8.$?.))")
-(* [comment removed for export] *).                  (* [comment removed for export] *)
+  (* musl's __init_libc stores aux[t] = v for each auxv pair with t < AUX_CNT (38), in the
+     kernel's order ([StackLayout.auxv_entries]); the cache words (types 40-47) and
+     AT_MINSIGSTKSZ (51) are skipped, and aux[k] sits at aux_base + 8 k.  The two CONFIG_RSEQ
+     slots (aux[27], aux[28]) hold the kernel's values when the build has rseq; without it they
+     keep the memset's zeros, which is what [rseq_w] states, so the image has one shape for
+     both builds (the wbytes layers are the walk's store sequence, so the order is forced). *)
+  Definition rseq_w (z : Z) : word := if rseq then Z_to_bv 64 z else Z_to_bv 64 0.
+
+  Definition J_aux (Jf : word -> option byte) : word -> option byte :=
+    wbytes (wbytes
+    (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes
+    (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes
+      (wbytes Jf aux_base (zeros 304))
+      (Z_to_bv 64 (bv_unsigned sp0 - 104)) (word_to_le_bytes 8 (la_sysinfo_ehdr (launch_auxv inp sp0 mbase))))
+      (Z_to_bv 64 (bv_unsigned sp0 - 240)) (word_to_le_bytes 8 hw))
+      (Z_to_bv 64 (bv_unsigned sp0 - 320)) (word_to_le_bytes 8 (Z_to_bv 64 4096)))
+      (Z_to_bv 64 (bv_unsigned sp0 - 232)) (word_to_le_bytes 8 (Z_to_bv 64 100)))
+      (Z_to_bv 64 (bv_unsigned sp0 - 344)) (word_to_le_bytes 8 (Z_to_bv 64 0x10040)))
+      (Z_to_bv 64 (bv_unsigned sp0 - 336)) (word_to_le_bytes 8 (Z_to_bv 64 56)))
+      (Z_to_bv 64 (bv_unsigned sp0 - 328)) (word_to_le_bytes 8 (Z_to_bv 64 10)))
+      (Z_to_bv 64 (bv_unsigned sp0 - 312)) (word_to_le_bytes 8 (Z_to_bv 64 0)))
+      (Z_to_bv 64 (bv_unsigned sp0 - 304)) (word_to_le_bytes 8 (Z_to_bv 64 0)))
+      (Z_to_bv 64 (bv_unsigned sp0 - 296)) (word_to_le_bytes 8 entry))
+      (Z_to_bv 64 (bv_unsigned sp0 - 280)) (word_to_le_bytes 8 uid))
+      (Z_to_bv 64 (bv_unsigned sp0 - 272)) (word_to_le_bytes 8 uid))
+      (Z_to_bv 64 (bv_unsigned sp0 - 264)) (word_to_le_bytes 8 gid))
+      (Z_to_bv 64 (bv_unsigned sp0 - 256)) (word_to_le_bytes 8 gid))
+      (Z_to_bv 64 (bv_unsigned sp0 - 184)) (word_to_le_bytes 8 (Z_to_bv 64 0)))
+      (Z_to_bv 64 (bv_unsigned sp0 - 168)) (word_to_le_bytes 8 rnd_w))
+      (Z_to_bv 64 (bv_unsigned sp0 - 120)) (word_to_le_bytes 8 execfn_w))
+      (Z_to_bv 64 (bv_unsigned sp0 - 152)) (word_to_le_bytes 8 (rseq_w 28)))
+      (Z_to_bv 64 (bv_unsigned sp0 - 144)) (word_to_le_bytes 8 (rseq_w 32)).
 
   (* [comment removed for export] *)
-  Definition D_tlsA (D : word -> option byte) : word -> option byte := ltac2:(CDefT.buildp (gd_tbl_P_startup_defs ()) "(0.(0.(0.(0.(0.(0.(0.(0.(0.(0.O1.(3.&40.+7=0?0.)(4.#8.(3.&40.=)))(3.&40.+7=100.)(4.#8.(3.&40.=)))(3.&40.+7=0?8.)(4.#8.(3.&40.+8.)))(3.&40.+7=368.)(4.#8.(3.&40.+>0.)))(3.&40.+7=370.)(4.#8.(3.&40.+8.)))(3.&40.+5=0=8.)(4.#8.(3.&40.=)))(3.&40.+5=0<0.)(4.#8.(3.&40.+5=0=8.)))(3.&40.+5=000.)(4.#8.(3.&40.+5=000.)))(3.&40.+7=350.)(10.(1.&8.)(3.&8.+1.)(11.(1.&8.))))(3.&40.+5=028.)(4.#4.(3.&40.+2.)))")
-(* [comment removed for export] *).        (* [comment removed for export] *)
+  Definition D_tlsA (D : word -> option byte) : word -> option byte :=
+    wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes D
+      (Z_to_bv 64 0x7d0f0) (word_to_le_bytes 8 (Z_to_bv 64 0)))
+      (Z_to_bv 64 0x7d100) (word_to_le_bytes 8 (Z_to_bv 64 0)))
+      (Z_to_bv 64 0x7d0f8) (word_to_le_bytes 8 (Z_to_bv 64 8)))
+      (Z_to_bv 64 0x7d368) (word_to_le_bytes 8 (Z_to_bv 64 224)))
+      (Z_to_bv 64 0x7d370) (word_to_le_bytes 8 (Z_to_bv 64 8)))
+      (Z_to_bv 64 0x5d0d8) (word_to_le_bytes 8 (Z_to_bv 64 0)))
+      (Z_to_bv 64 0x5d0c0) (word_to_le_bytes 8 (Z_to_bv 64 0x5d0d8)))
+      (Z_to_bv 64 0x5d000) (word_to_le_bytes 8 (Z_to_bv 64 0x5d000)))
+      (Z_to_bv 64 0x7d350) [Z_to_bv 8 1])
+      (Z_to_bv 64 0x5d028) (word_to_le_bytes 4 (Z_to_bv 64 2)).
 
-  Definition D_tlsB (tid : word) (D : word -> option byte) : word -> option byte := ltac2:(CDefT.buildp (gd_tbl_P_startup_defs ()) "(0.(0.(0.(0.(0.(0.O1.(3.&40.+5=020.)(4.#4.O2.))(3.&40.+5=098.)(4.#8.(3.&40.+7=388.)))(3.&40.+5=078.)(4.#8.(3.&40.+5=078.)))(3.&40.+5=008.)(4.#8.(3.&40.+5=000.)))(3.&40.+5=010.)(4.#8.(3.&40.+5=000.)))(3.&40.+5=018.)(4.#8.(3.&40.=)))")
-(* [comment removed for export] *).        (* [comment removed for export] *)
+  Definition D_tlsB (tid : word) (D : word -> option byte) : word -> option byte :=
+    wbytes (wbytes (wbytes (wbytes (wbytes (wbytes D
+      (Z_to_bv 64 0x5d020) (word_to_le_bytes 4 tid))
+      (Z_to_bv 64 0x5d098) (word_to_le_bytes 8 (Z_to_bv 64 0x7d388)))
+      (Z_to_bv 64 0x5d078) (word_to_le_bytes 8 (Z_to_bv 64 0x5d078)))
+      (Z_to_bv 64 0x5d008) (word_to_le_bytes 8 (Z_to_bv 64 0x5d000)))
+      (Z_to_bv 64 0x5d010) (word_to_le_bytes 8 (Z_to_bv 64 0x5d000)))
+      (Z_to_bv 64 0x5d018) (word_to_le_bytes 8 (Z_to_bv 64 0)).
 
   Definition D_tls (tid : word) (D : word -> option byte) : word -> option byte :=
     D_tlsB tid (D_tlsA D).
 
   (* [comment removed for export] *)
-  Definition J_tls (J : word -> option byte) (ra s0 s1 s2 s3 s4 s5 : word) : word -> option byte := ltac2:(CDefT.buildp (gd_tbl_P_startup_defs ()) "(0.(0.(0.(0.(0.(0.(0.O8.(3.&40.(9.(:.&40.Vsp0,)+1:8.))(4.#8.O7.))(3.&40.(9.(:.&40.Vsp0,)+1;0.))(4.#8.O6.))(3.&40.(9.(:.&40.Vsp0,)+1;8.))(4.#8.O5.))(3.&40.(9.(:.&40.Vsp0,)+1<0.))(4.#8.O4.))(3.&40.(9.(:.&40.Vsp0,)+1<8.))(4.#8.O3.))(3.&40.(9.(:.&40.Vsp0,)+1=0.))(4.#8.O2.))(3.&40.(9.(:.&40.Vsp0,)+1=8.))(4.#8.O1.))")
-(* [comment removed for export] *).
+  Definition J_tls (J : word -> option byte) (ra s0 s1 s2 s3 s4 s5 : word) : word -> option byte :=
+    wbytes (wbytes (wbytes (wbytes (wbytes (wbytes (wbytes J
+      (Z_to_bv 64 (bv_unsigned sp0 - 424)) (word_to_le_bytes 8 ra))
+      (Z_to_bv 64 (bv_unsigned sp0 - 432)) (word_to_le_bytes 8 s0))
+      (Z_to_bv 64 (bv_unsigned sp0 - 440)) (word_to_le_bytes 8 s1))
+      (Z_to_bv 64 (bv_unsigned sp0 - 448)) (word_to_le_bytes 8 s2))
+      (Z_to_bv 64 (bv_unsigned sp0 - 456)) (word_to_le_bytes 8 s3))
+      (Z_to_bv 64 (bv_unsigned sp0 - 464)) (word_to_le_bytes 8 s4))
+      (Z_to_bv 64 (bv_unsigned sp0 - 472)) (word_to_le_bytes 8 s5).
 
   (* [comment removed for export] *)
-  Definition D_ssp (D : word -> option byte) : word -> option byte := ltac2:(CDefT.buildp (gd_tbl_P_startup_defs ()) "(0.(0.(0.(0.O1.(3.&40.+7=330.)(4.#4.$12.))(3.&40.+7=334.)(4.#4.$13.))(3.&40.+7=331.)(10.(1.&8.)(3.&8.=)(11.(1.&8.))))(3.&40.+5=0;8.)(4.#8.$14.))")
-(* [comment removed for export] *).         (* [comment removed for export] *)
+  Definition D_ssp (D : word -> option byte) : word -> option byte :=
+    wbytes (wbytes (wbytes (wbytes D
+      (Z_to_bv 64 0x7d330) (word_to_le_bytes 4 guard_lo))
+      (Z_to_bv 64 0x7d334) (word_to_le_bytes 4 guard_hi))
+      (Z_to_bv 64 0x7d331) [Z_to_bv 8 0])
+      (Z_to_bv 64 0x5d0b8) (word_to_le_bytes 8 canary_w).
 
   (* [comment removed for export] *)
   #[using="Type"] Lemma length_rnd_bytes : length rnd_bytes = 16%nat.
@@ -188,8 +264,11 @@ Section Defs.
   Qed.
 
   (* [comment removed for export] *)
-  #[using="Type"] Lemma guard_read : ltac2:(CDefT.buildp (gd_tbl_P_startup_defs ()) "Psegs,(15.$16.)PDD,P,(1.&40.)(17.(1.&8.))(18.(17.(15.(1.&8.)))(19.R2.(0.(0.(0.R1.(3.&40.+7=330.)(4.#4.$12.))(3.&40.+7=334.)(4.#4.$13.))(3.&40.+7=331.)(10.(1.&8.)(3.&8.=)(11.(1.&8.))))(3.&40.+7=330.)#8.)(1:.(15.(1.&8.))$1;.))")
-(* [comment removed for export] *).
+  #[using="Type"] Lemma guard_read : forall segs (DD : word -> option byte),
+    rdn segs (wbytes (wbytes (wbytes DD (Z_to_bv 64 0x7d330) (word_to_le_bytes 4 guard_lo))
+                                        (Z_to_bv 64 0x7d334) (word_to_le_bytes 4 guard_hi))
+                                (Z_to_bv 64 0x7d331) [Z_to_bv 8 0]) (Z_to_bv 64 0x7d330) 8
+    = Some canary_bytes.
   Proof.
     intros segs DD. rewrite guard_lo_store, guard_hi_store.
     unfold canary_bytes, guard_lo_bytes, guard_hi_bytes, rnd_bytes, at_random_bytes.

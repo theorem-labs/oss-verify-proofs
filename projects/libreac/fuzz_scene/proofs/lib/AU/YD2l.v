@@ -3,10 +3,10 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD2l.v, with its module paths changed and its addresses moved to libreac/fuzz_scene's asan-ubsan build. *)
 (* Modified by Theorem Labs, 2026-10-29: libreac/fuzz_scene's concrete start-up record B for the asan-ubsan image,
-   the instance of `TfibSyms` (lib/AU/YF0m.v:906-930) that lib/AU/SceneBCertBU.v gives to the start-up certificate.
+   the instance of `TfibSyms` (lib/AU/YF0m.v:907-931) that lib/AU/SceneBCertBU.v gives to the start-up certificate.
    The names are the record's own (TfibB, TfibB_ok, TfibB_syms), as YF0m.v and SceneBCertU.v state them.
-   Its tables are a Theorem Labs lane's (lib/AU/YF0l.v, lib/AU/YF0m.v at a working branch a00b0ed6266) and its
-   trace universe is a Theorem Labs lane's measured one (lib/AU/YCej.v at a working branch 1c79108a270). The
+   Its tables are a Theorem Labs lane's (lib/AU/YF0l.v, lib/AU/YF0m.v at a working branch) and its
+   trace universe is a Theorem Labs lane's measured one (lib/AU/YCej.v at a working branch). The
    five literals were measured on fuzz_scene.asan-ubsan (unstripped sha256 ef0b41158fe08b45..., stripped
    e98b1ed286c1aa5c..., by an ELF symtab / .got / PT_LOAD read): each is scene's, none is cgif's.
      as_shadow_cell 0xa3af8 = st_value of __asan_shadow_memory_dynamic_address (.bss, 8 bytes) + 0;
@@ -17,8 +17,9 @@
                               (in __asan_stack_malloc_1) loads it;
      as_junk row    (0xa0748, 40) = TFIB_INST + o_comb_stats = st_value of __asan::instance 0xa0498 + 0x2b0 (YG0f.v:207).
    The two .bss cells hold SHADOW_OFF and 1 only after start-up; their values are the start-up certificate's
-   cells Tfib_const_abs[49] and [50] (YF0m.v:83-84), not file bytes. *)
-(* ZERO-MARGIN facts of this record's Tfib_owned_static (YF0m.v:894-901), measured on fuzz_scene.asan-ubsan, for
+   cells Tfib_const_abs[49] and [50] (YF0m.v:84-85), not file bytes. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* ZERO-MARGIN facts of this record's Tfib_owned_static (YF0m.v:895-902), measured on fuzz_scene.asan-ubsan, for
    whoever next edits these tables: each is a premise of the entry statement that holds with no byte to spare.
      - trailer window [0x20e00, 0x20e28): the owned row (0x20dd2, 0x2e) ends exactly at 0x20e00, and (0x20e2c, 0x14)
        starts right after the trailer bytes [0x20e20, 0x20e2c) (HRO_TT, proved in lib/AU/SceneBCertBU.v);
@@ -27,7 +28,7 @@
        which includes the 0x8b8-byte redzone, and a range of that length overlaps (0x23148, 0x8b8);
      - the .got word 0x9c6b8 that holds the placeholder's address (loaded by auipc 0x82c64 + ld 0x82c68): the next
        owned row (0x9c6c0, 0x10) starts exactly at its end.
-   MEASURED by a Theorem Labs lane (04:19Z): TFIB_TP 0x5d6a98 is tp in all 50 hand-off states of lib/AU/YB01.v (a00b0ed6266),
+   MEASURED by a Theorem Labs lane (04:19Z): TFIB_TP 0x5d6a98 is tp in all 50 hand-off states of lib/AU/YB01.v,
    builtin_tls + 0xc8; TFIB_ERRNO 0x5d69f4 = tp - 0xa4, from __errno_location (0x8b24c): mv a0, tp;
    addi a0, a0, -0xa4; ret. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require YZ00.

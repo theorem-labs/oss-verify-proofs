@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the string-end bound below USTACK_TOP in rta_shw_stack). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.LibA Require Import X1di X1cy X1cp X1cj X1dd X1cg X1cs X1da.
@@ -149,7 +150,7 @@ split.
 - unfold region_in_mem, kLowMemEnd, kHighShadowEnd, kHighMemEnd, K_LOW_SHADOW_lo, K_HIGH_SHADOW_hi in *. destruct G4 as [G4|G4]; [left | right]; lia.
 Qed.
 
-Lemma rta_shw_stack : forall s n, rtA_sp0 Σ - STACK_WIN + 64 <= s -> s + n <= USTACK_TOP - 16 -> 1 <= n -> qc_words m s n /\ region_in_mem s n.
+Lemma rta_shw_stack : forall s n, rtA_sp0 Σ - STACK_WIN + 64 <= s -> s + n <= USTACK_TOP - 9 -> 1 <= n -> qc_words m s n /\ region_in_mem s n.
 Proof.
 intros s n H1 H2 Hn. pose proof (ART_shadow Σ m HA) as (_ & S & _ & _). pose proof (rta_sp0 Σ m HA) as ((Y1 & Y2) & _).
 unfold rtA_sp0, sp_window_hi, sp_window_lo, l_ACEIL, STACK_WIN, USTACK_TOP in *.
@@ -319,7 +320,7 @@ split.
 - unfold region_in_mem, kLowMemEnd, kHighShadowEnd, kHighMemEnd, K_LOW_SHADOW_lo, K_HIGH_SHADOW_hi in *. destruct G4 as [G4|G4]; [left | right]; lia.
 Qed.
 
-Lemma rta_shw_stack : forall s n, rtA_sp0 Σ - STACK_WIN + 64 <= s -> s + n <= USTACK_TOP - 16 -> 1 <= n -> qc_words m s n /\ region_in_mem s n.
+Lemma rta_shw_stack : forall s n, rtA_sp0 Σ - STACK_WIN + 64 <= s -> s + n <= USTACK_TOP - 9 -> 1 <= n -> qc_words m s n /\ region_in_mem s n.
 Proof.
 intros s n H1 H2 Hn. pose proof (ART_shadow Σ m HA) as (_ & S & _ & _). pose proof (rta_sp0 Σ m HA) as ((Y1 & Y2) & _).
 unfold rtA_sp0, sp_window_hi, sp_window_lo, l_ACEIL, STACK_WIN, USTACK_TOP in *.

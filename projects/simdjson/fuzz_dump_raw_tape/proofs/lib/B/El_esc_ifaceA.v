@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -35,7 +36,7 @@ Definition esc_cpsA : Prop :=
   rw_cells bsegs m SV [C8 (wz P); C8 (wz L)] -> q <= SV -> SV + 16 <= USTACK_TOP - 16 -> SV mod 8 = 0 ->
   bytes_at bsegs m P bs -> Z.of_nat (length bs) = L -> 0 <= L ->
   In (p, n8) (rt_live RT Σ) -> p mod 8 = 0 -> n8 mod 8 = 0 -> p <= P -> P + L <= p + n8 ->
-  ART RT Σ m -> mem_inv bsegs m -> stk bsegs m lo q -> rt_sp0 RT Σ - STACK_WIN <= lo -> 0x7fff7f800000 <= lo -> lo + EL_ESC_STACK_A <= q ->
+  ART RT Σ m -> mem_inv bsegs m -> stk bsegs m lo q -> rt_sp0 RT Σ - STACK_SPAN <= lo -> 0x7fff7f800000 <= lo -> lo + EL_ESC_STACK_A <= q ->
   q + 16 <= USTACK_TOP -> q mod 32 = 0 ->
   (length (rt_frames RT Σ) + 4 <= FRAMES_MAX)%nat -> esc_costA L <= rt_credit RT Σ ->
   (forall (Σ' : rts RT) t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' (FR' : bvmap 5 word) (fc' : bv 32) m',

@@ -1,7 +1,7 @@
 (* fuzz_lock.ubsan's slot contract of LLVMFuzzerTestOneInput in crash-free form (AgreeRet.v lib_contract_cgr
    with the return lock_ret) at the image's own allocator and sink (src0_msyms, zlib_API, src0_sink_head,
-   src0_sink), in the form of libreac/fuzz_decode's lib/U/Prog/LLVMFuzzerTestOneInput_cgt.v (release
-   25e3d17bdb50), and the twin of the plain lib/Prog/LLVMFuzzerTestOneInput_gfr.v. *)
+   src0_sink), in the form of libreac/fuzz_decode's lib/U/Prog/LLVMFuzzerTestOneInput_cgt.v (release),
+   and the twin of the plain lib/Prog/LLVMFuzzerTestOneInput_gfr.v. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

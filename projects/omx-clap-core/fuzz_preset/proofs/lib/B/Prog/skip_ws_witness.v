@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Theorem Labs, 2026-10: non-vacuity witness of skip_ws_x.v's Section hypothesis TL: PALibCore at the per-function listing PI_skip_ws holds of the generated asyms record of image B' (the #102 pin d663f82d7f48), lib/Reusable/YD2l.v TfibB (blob 95803a8b9493), each field closed by vm_compute there. RELOCATED from origin/cold/h-verbs-1-skip-union ad1c5072e3e7 (blob b5bf059e2d9f); the errno field cites lib/B/PALibB.v's exvi_eh_errno (computed from the record) instead of the old typed errno address, so this file holds no image numeral. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10: non-vacuity witness of skip_ws_x.v's Section hypothesis TL: PALibCore at the per-function listing PI_skip_ws holds of the generated asyms record of image B' (the #102 pin d663f82d7f48), lib/Reusable/YD2l.v TfibB (blob 95803a8b9493), each field closed by vm_compute there. RELOCATED (blob b5bf059e2d9f); the errno field cites lib/B/PALibB.v's exvi_eh_errno (computed from the record) instead of the old typed errno address, so this file holds no image numeral. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

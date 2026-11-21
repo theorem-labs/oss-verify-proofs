@@ -1,16 +1,17 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported from proofs/cgif/cgif_file_fuzzer/lib/A/AC8b.v (a loop by fuel induction,
-   tcbb_loopX) and lib/A/AChd.v at c8557374ad2e: the walk of syntax_reply_matches on fuzz_command.asan, the scan of one
+   tcbb_loopX) and lib/A/AChd.v: the walk of syntax_reply_matches on fuzz_command.asan, the scan of one
    item of the shape (the plain scan_loop, lib/Prog/syntax_reply_matches.v): L2 (0x88634, the end test at depth 0),
    L2D (0x8863c, the depth update) and L2T (0x88664, check C2 and the next byte). *)
-(* Modified by Theorem Labs, 2026-10: re-walked from lib/A/Prog/syntax_reply_matches_s6.v (a working branch
-   db7d4effe38) for fuzz_command.asan-ubsan: L2 0x8895c (the ' ' test first, then the depth), L2D 0x88964 with the
+(* Modified by Theorem Labs, 2026-10: re-walked from lib/A/Prog/syntax_reply_matches_s6.v (a working branch)
+   for fuzz_command.asan-ubsan: L2 0x8895c (the ' ' test first, then the depth), L2D 0x88964 with the
    UBSan check of `depth++` (0x88980: depth + 1 < depth, excluded since depth < 2^31 - 1), L2T 0x88994 with the
    UBSan check of `p++` (0x88994: s2 = -1, decided by s2 <= CEIL_HI); '[' = 91 is in a6, ']' = 93 in s1, 'Z' = 90
    in s10, '<' = 60 in s9. *)
-(* Modified by Theorem Labs, 2026-10: onto a working branch 713692f1e0c (statement pass 4b): ABCMP and ASTRCSPN hold at
+(* Modified by Theorem Labs, 2026-10: onto a working branch (statement pass 4b): ABCMP and ASTRCSPN hold at
    every FP state, as the statement has them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -121,7 +122,7 @@ Let BR := paj_branch (PI := PI).
 
 (* The scan loop's head L2 (0x8895c): s2 = P + k' + q, a2 = the shape's byte there, a4 = the depth d, a0 = s2 + 1,
    s3 = s4 = P + k' (the item's start). L = ilen 0 (skipn k' shape) is the item's length (lib/Prog/
-   syntax_reply_matches.v:76), so that L = q + ilen d (skipn (k' + q) shape) on the way; the facts the strcspn call
+   syntax_reply_matches.v:77), so that L = q + ilen d (skipn (k' + q) shape) on the way; the facts the strcspn call
    needs (CALL1, syntax_reply_matches_s5.v) are carried as they are. *)
 Definition L2_stmt (x : srm_ctx) (n t : nat) : Prop :=
   forall regs m md k' q d j f'', INV x regs m md ->

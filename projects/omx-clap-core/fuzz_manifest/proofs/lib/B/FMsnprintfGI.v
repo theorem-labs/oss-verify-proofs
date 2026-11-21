@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMsnprintfGI.v at a working branch 5d8d8a15571, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMsnprintfGI.v at a working branch, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
 (* fm's snprintf glue, interface: the contracts of the walks above printf_core at fm.asan addresses, in FMsnprintfI's
    frame (sp0 = musl vfprintf's entry sp). MEASURED from the unstripped twin of fm.asan:
      __wrap_snprintf 0x41374: j 0x45cf0

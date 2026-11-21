@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgSiteA.v at ea8335784b52 for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgSiteA.v for image B
    (fuzz_rate.asan-ubsan): image B's record RtPgImgB.rate_himg_B and its lists rate_B_L23_tl / rate_B_L56_tl /
    rate_B_strs / rate_B_i32 / rate_B_u64 / rate_B_globs in place of image A's; the names rate_A_X become rate_B_X;
    image A's check_csv stack bound and its segment-start string lemma are left out (image B states the bound as

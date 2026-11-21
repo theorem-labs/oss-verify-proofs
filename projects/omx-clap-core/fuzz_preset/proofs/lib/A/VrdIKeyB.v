@@ -30,10 +30,10 @@
    prh_cw_ok at q - 8: A''s code word (clause 4a, a fixed trace) or a trace of CW (clause 4b, admitted from the room
    the position has for CW); the post is budgeted at that one trace and goes back to the journal's budget CW.
 
-   SET: the kit's cut 7cdbb61b5fa0 (PRH_Base.v ef7c8ca98529, PRH_FnParse.v f0d92dcec7e9, PRH_FnReader.v f1ae32e3b2cd,
+   SET: the kit's cut (PRH_Base.v ef7c8ca98529, PRH_FnParse.v f0d92dcec7e9, PRH_FnReader.v f1ae32e3b2cd,
    PRH_FnAlloc.v 4d8aeba047e5, PRH_Reader.v 4266e709561a), over the relocated A' listing (lane P102Reloc2,
-   a working branch 43e0d7669c5b). Build (route of record, pins102): zfb-targets with PAU pau-preset-102 and
-   facts 8f3e7e1a07f1 - never cb, whose facts predate the A' image.
+   a working branch). Build (route of record, pins102): zfb-targets with PAU pau-preset-102 and
+   facts - never cb, whose facts predate the A' image.
    Numerals: listing slots (DERIVED, VrdIElem.v), 58 = ':' (the grammar's byte, PjGrammar), 8 / 24 / 144 (LENGTH:
    a word, the cursor, parse_items' frame). No ADDRESS literal. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.

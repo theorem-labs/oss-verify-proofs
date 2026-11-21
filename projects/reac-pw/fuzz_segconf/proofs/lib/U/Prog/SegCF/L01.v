@@ -3,8 +3,9 @@
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/Prog/LLVMFuzzerTestOneInput_fr.v, with its module paths and module names changed; 457 of its 575 lines of code are new or changed and 409 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/U/Prog/SegCF/Tac_slot.v, with its module paths and module names changed; 479 of its 546 lines of code are new or changed and 508 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Cut-free (agreement) copy of lib/U/Prog/Seg/L01.v over U/Prog/SlotInvCF.v (SR := SRcf), as reac-pw/fuzz_pin's
-   U/Prog/SegCF/*.v copy its U/Prog/Seg/*.v (commit a2a7540da98): the same text with
+   U/Prog/SegCF/*.v copy its U/Prog/Seg/*.v: the same text with
    SlotInvCF imported after SlotFR / SlotInv, Seg -> SegCF for the slot's tactic files, frame_facts_ubsan ->
    SlotInvCF.frame_facts_cf and the allocator contracts in their cut-free forms (frame_allocator_cf,
    malloc_contract_cfg, free_contract_cf, calloc_contract_cfg); the closing theorem states SlotTopCF.seg_L01_cf_stmt.

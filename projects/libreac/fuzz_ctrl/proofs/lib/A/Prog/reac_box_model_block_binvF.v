@@ -3,10 +3,11 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 773 of its 787 lines of code are new or changed and 234 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/reac_box_model_block_binv.v; 267 of its 906 lines of code are new or changed and 148 lines of the source are left out. *)
-(* Footprint (_F) re-run of reac_box_model_block_binv.v at a working branch d69f7c708f6 (proved v1.9 run
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Footprint (_F) re-run of reac_box_model_block_binv.v at a working branch (proved v1.9 run
    of record) over lib/Lib/StepF, in route (C) form (narrowed SR0): six proofs are the source scripts up to _F names, thirteen add `hide_sec.`, four move it to the head of the script, exit_r_F adds it and applies HKR where the source applies epi, bv_jx_F alone makes the narrowed-shadow change (shadow_rw_on_mono_mem for B.shadow_rw_mono) and adds no `hide_sec.`, and five declarations with a proof are new (one helper, two OfF bounds and two corollaries), with seven Lets.
    Image: fuzz_ctrl.asan (libreac v1.9.0), ELF sha256
-   78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd. FACTS ed6b6b7b0ab.
+   78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd. FACTS.
    Const cells checked against the v1.9.0 image bytes: none read. exit_r_F re-packages the body-end invariant onto
    the frame release and takes no step; fin1_F takes the single step 0x864bc `li s5, 1` (bytes 93 0a 10 00 at file
    offset 0x754bc of fuzz_ctrl.debug, a register write); every other lemma here is a pure memory fact.
@@ -15,7 +16,7 @@
      1. each _F is a MECHANICAL re-derivation of an already-PROVED v1.9 run: the same proof script over StepF, and
         no new proof obligation;
      2. the _F output feeds ONLY the ported cgif-form walk;
-     3. the source runs are on ctrl's v1.9 record (FACTS ed6b6b7b0ab), with no stale AsanRT / off_img literal /
+     3. the source runs are on ctrl's v1.9 record (FACTS), with no stale AsanRT / off_img literal /
         wrong-image cell; the const cells are checked against fuzz_ctrl's v1.9.0 image bytes;
      4. provenance in this header; the auditor a Theorem Labs lane signs it against its proved run;
      5. a StepF "uncovered access" error means STOP: report it, never widen the footprint.
@@ -135,8 +136,8 @@ Section MainF.
   Hypothesis NDJ : p <> 0 -> (b = 5 \/ b = 6) -> has row <> 0 -> rname row <> 0 ->
     fp_dj [(rname row, rname row + Z.of_nat (length nb))] (fp_w [0%nat] FS).
 
-  (* The footprint and the regions the runs of this function read or write (the nine of
-     3c9fcc93205 reac_box_model_blockF.v:147-159), then the data-region facts every F file of this family carries. *)
+  (* The footprint and the regions the runs of this function read or write (the nine
+      reac_box_model_blockF.v:148-160), then the data-region facts every F file of this family carries. *)
   Variable RNG : footprint.
   Hypothesis Rimg : rng RNG 0x10000 0x5ee000.
   Hypothesis Rwin : rng RNG (bv_unsigned sp - REAC_BOX_MODEL_BLOCK_K) REAC_BOX_MODEL_BLOCK_K.
@@ -968,7 +969,7 @@ End MainF.
    reac_box_model_block_post_on and the continuation HKR := reac_box_model_block_epiF.bmb_KR_Q0. This is the check
    that each _F statement is the proved one plus footprint premises, nothing weaker. The section keeps the WIDE
    shadow_rw premise and narrows it on the spot, so the premise list is the proved file's
-   (pattern of reac_box_model_block_cF_on.v:99-116). Text of all_rng: reac_box_model_block_epiF.v:879-950. *)
+   (pattern of reac_box_model_block_cF_on.v:99-116). Text of all_rng: reac_box_model_block_epiF.v:880-951. *)
 Section OfF.
   Variables (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32)
     (m : word -> option byte) (p b o FS off A : Z) (row nb ob : list byte).

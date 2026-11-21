@@ -2,13 +2,15 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YK0n.v, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Reusable/YK0n.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_frame; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_frame.lib. *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Reusable/YK0n.v for libdiginet/fuzz_frame; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_frame.lib. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (YK0n's vDSO arms and the mkst state; YK0n and YK0j ported by lemma name); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_frame.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit OmniEquivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run OmniRun.
 From OSSVerify.Proofs.libdiginet.fuzz_frame.lib.Reusable Require Import YK16.
+From LinuxProcessSemantics.LinuxProcessSem Require Import Vdso.
 Unset Lia Cache. Unset Nia Cache.
 Import ListNotations.
 Open Scope bv_scope.
@@ -135,32 +137,44 @@ unfold step_accesses. rewrite Hfetch. unfold ms1. reflexivity.
 + exact Hcode.
 Qed.
 Lemma sstep_instr_inv : forall ms model ms' evs st,
-m_vm_lazy model = [] ->
-ms_svc_pending ms = None ->
-RiscvSemantics.step segs ms = MachineOk ms' ->
-sstep segs (mkCfg ms model) evs st ->
-evs = [] /\ st = SNext (mkCfg ms' model).
+  m_vm_lazy model = [] ->
+  ms_svc_pending ms = None ->
+  RiscvSemantics.step segs ms = MachineOk ms' ->
+  sstep segs (mkCfg ms model) evs st ->
+  evs = [] /\ st = SNext (mkCfg ms' model).
 Proof.
-intros ms model ms' evs st Hlazy Hsvc Hstep Hss.
-inversion Hss; subst.
--
-match goal with H : mi_account_step segs ms model = MachineOk _ |- _ =>
-rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
-rewrite Hstep in H; inversion H; subst end.
-split; reflexivity.
--
-match goal with H : mi_account_step segs ms model = MachineFault |- _ =>
-rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
-rewrite Hstep in H; discriminate end.
--
-match goal with H : mi_account_step segs ms model = MachineUnmodeled |- _ =>
-rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
-rewrite Hstep in H; discriminate end.
--   congruence.
--   congruence.
--   congruence.
--   congruence.
--   congruence.
+  intros ms model ms' evs st Hlazy Hsvc Hstep Hss.
+  inversion Hss; subst.
+  - (* sstep_instr *)
+    match goal with H : mi_account_step segs ms model = MachineOk _ |- _ =>
+      rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
+      rewrite Hstep in H; inversion H; subst end.
+    split; reflexivity.
+  - (* sstep_instr_fault *)
+    match goal with H : mi_account_step segs ms model = MachineFault |- _ =>
+      rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
+      rewrite Hstep in H; discriminate end.
+  - (* sstep_instr_unmodeled *)
+    match goal with H : mi_account_step segs ms model = MachineUnmodeled |- _ =>
+      rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
+      rewrite Hstep in H; discriminate end.
+  - (* sstep_vdso_call: its first premise is the same [MachineUnmodeled] *)
+    match goal with H : mi_account_step segs ms model = MachineUnmodeled |- _ =>
+      rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
+      rewrite Hstep in H; discriminate end.
+  - (* sstep_vdso_materialization_fault *)
+    match goal with H : mi_account_step segs ms model = MachineUnmodeled |- _ =>
+      rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
+      rewrite Hstep in H; discriminate end.
+  - (* sstep_vdso_unmodeled *)
+    match goal with H : mi_account_step segs ms model = MachineUnmodeled |- _ =>
+      rewrite (mi_account_step_no_lazy segs ms model Hlazy) in H;
+      rewrite Hstep in H; discriminate end.
+  - (* sstep_syscall *) congruence.
+  - (* sstep_syscall_materialization_fault *) congruence.
+  - (* sstep_exit *) congruence.
+  - (* sstep_killed *) congruence.
+  - (* sstep_syscall_unmodeled *) congruence.
 Qed.
 Lemma sstep_exit_inv : forall ms model x8 evs st,
 m_halted model = None ->
@@ -387,88 +401,97 @@ destruct (Z.ltb (Z.of_nat i) (Z.of_nat (length bytes))) eqn:E2.
 - apply Z.ltb_ge in E2. lia.
 Qed.
 Lemma build_stack_starts_with_argc :
-forall ph sp argv envp uid hw rnd,
-exists rest,
-build_stack_bytes ph sp argv envp uid hw rnd =
-word_le8 (nat_to_word (length argv)) ++ rest.
+  forall inp mbase ph entry (sp : word) draw,
+  exists rest,
+    entry_stack_image inp mbase ph entry sp draw =
+    word_le8 (nat_to_word (length (in_argv inp))) ++ rest.
 Proof.
-intros ph sp argv envp uid hw rnd. unfold build_stack_bytes, len_word, nat_to_word.
-destruct (string_addrs _ argv) as [? ?]. destruct (string_addrs _ envp) as [? ?].
-eexists. exact (eq_sym (app_assoc _ _ _)).
+  intros inp mbase ph entry sp draw.
+  unfold entry_stack_image, build_stack_bytes, len_word, nat_to_word.
+  cbv zeta.
+  destruct (string_addrs _ (in_argv inp)) as [? ?].
+  destruct (string_addrs _ (in_envp inp)) as [? ?].
+  eexists. exact (eq_sym (app_assoc _ _ _)).
 Qed.
 Lemma word_le8_length : forall v, length (word_le8 v) = 8%nat.
 Proof. intro v. reflexivity. Qed.
-Lemma build_stack_min_length : forall ph sp argv envp uid hw rnd,
-(8 <= length (build_stack_bytes ph sp argv envp uid hw rnd))%nat.
+Lemma build_stack_min_length : forall inp mbase ph entry (sp : word) draw,
+  (8 <= length (entry_stack_image inp mbase ph entry sp draw))%nat.
 Proof.
-intros ph sp argv envp uid hw rnd.
-destruct (build_stack_starts_with_argc ph sp argv envp uid hw rnd) as [rest Hr].
-rewrite Hr, length_app, word_le8_length. lia.
+  intros inp mbase ph entry sp draw.
+  destruct (build_stack_starts_with_argc inp mbase ph entry sp draw)
+    as [rest Hr].
+  rewrite Hr, length_app, word_le8_length. lia.
 Qed.
 Lemma init_first8 :
-forall segs init_pc ph init_sp init_rnd argv envp addr i uid hw, (i < 8)%nat ->
-bv_unsigned addr = (bv_unsigned init_sp + Z.of_nat i)%Z ->
-ms_mem (init_machine_state segs init_pc ph init_sp init_rnd argv envp uid hw) addr =
-nth_error (word_le8 (nat_to_word (length argv))) i.
+  forall segs init_pc ph init_sp mbase init_rnd inp addr i, (i < 8)%nat ->
+  bv_unsigned addr = (bv_unsigned init_sp + Z.of_nat i)%Z ->
+  ms_mem (init_machine_state segs init_pc ph init_sp mbase init_rnd inp) addr =
+  nth_error (word_le8 (nat_to_word (length (in_argv inp)))) i.
 Proof.
-intros segs init_pc ph init_sp init_rnd argv envp addr i uid hw Hi Haddr.
-assert (Hstk : stack_to_mem init_sp (entry_stack_image ph init_sp argv envp uid hw init_rnd) addr
-= nth_error (word_le8 (nat_to_word (length argv))) i).
-{ rewrite stack_to_mem_image_in_block
-by (pose proof (build_stack_min_length ph init_sp argv envp uid hw init_rnd);
-unfold entry_block_top; lia).
-rewrite (stm_at init_sp _ addr i);
-[ | pose proof (build_stack_min_length ph init_sp argv envp uid hw init_rnd); lia
-| exact Haddr ].
-destruct (build_stack_starts_with_argc ph init_sp argv envp uid hw init_rnd) as [rest Hr].
-rewrite Hr. apply nth_error_app1. rewrite word_le8_length. lia. }
-change (ms_mem (init_machine_state segs init_pc ph init_sp init_rnd argv envp uid hw) addr)
-with (match stack_to_mem init_sp (entry_stack_image ph init_sp argv envp uid hw init_rnd) addr with
-| Some b => Some b
-| None =>
-if andb (Z.leb (bv_unsigned init_sp - stack_max_size)
-(bv_unsigned addr))
-(Z.ltb (bv_unsigned addr) (bv_unsigned init_sp))
-then Some (Z_to_bv 8 0) else None
-end).
-rewrite Hstk.
-destruct (nth_error (word_le8 (nat_to_word (length argv))) i) eqn:E; [reflexivity|].
-apply nth_error_None in E. rewrite word_le8_length in E. lia.
+  intros segs init_pc ph init_sp mbase init_rnd inp addr i Hi Haddr.
+  assert (Hstk : stack_to_mem init_sp
+                   (entry_stack_image inp mbase ph
+                      (Z_to_bv 64 (Z.of_N init_pc)) init_sp init_rnd) addr
+                 = nth_error (word_le8 (nat_to_word (length (in_argv inp)))) i).
+  { rewrite (stm_at init_sp _ addr i);
+      [ | pose proof (build_stack_min_length inp mbase ph
+                        (Z_to_bv 64 (Z.of_N init_pc)) init_sp init_rnd); lia
+        | exact Haddr ].
+    destruct (build_stack_starts_with_argc inp mbase ph
+                (Z_to_bv 64 (Z.of_N init_pc)) init_sp init_rnd) as [rest Hr].
+    rewrite Hr. apply nth_error_app1. rewrite word_le8_length. lia. }
+  change (ms_mem (init_machine_state segs init_pc ph init_sp mbase init_rnd inp)
+            addr)
+    with (match stack_to_mem init_sp
+                  (entry_stack_image inp mbase ph
+                     (Z_to_bv 64 (Z.of_N init_pc)) init_sp init_rnd) addr with
+          | Some b => Some b
+          | None =>
+              if andb (Z.leb (stack_window_lo (in_kernel inp) mbase init_rnd)
+                             (bv_unsigned addr))
+                      (Z.ltb (bv_unsigned addr) (bv_unsigned init_sp))
+              then Some (Z_to_bv 8 0) else None
+          end).
+  rewrite Hstk.
+  destruct (nth_error (word_le8 (nat_to_word (length (in_argv inp)))) i) eqn:E;
+    [reflexivity|].
+  apply nth_error_None in E. rewrite word_le8_length in E. lia.
 Qed.
 Lemma actual_mem_is_overlay :
-forall segs init_pc ph init_sp init_rnd argv envp uid hw,
-ms_mem (init_machine_state segs init_pc ph init_sp init_rnd argv envp uid hw) =
-overlay_argc_bytes init_sp (length argv)
-(ms_mem (init_machine_state segs init_pc ph init_sp init_rnd argv envp uid hw)).
+  forall segs init_pc ph init_sp mbase init_rnd inp,
+  ms_mem (init_machine_state segs init_pc ph init_sp mbase init_rnd inp) =
+  overlay_argc_bytes init_sp (length (in_argv inp))
+    (ms_mem (init_machine_state segs init_pc ph init_sp mbase init_rnd inp)).
 Proof.
-intros segs init_pc ph init_sp init_rnd argv envp uid hw.
-apply functional_extensionality. intro addr.
-unfold overlay_argc_bytes.
-destruct ((bv_unsigned addr =? bv_unsigned init_sp)%Z) eqn:E0;
-[ apply Z.eqb_eq in E0;
-apply (init_first8 segs init_pc ph init_sp init_rnd argv envp addr 0 uid hw); lia | ].
-destruct ((bv_unsigned addr =? bv_unsigned init_sp + 1)%Z) eqn:E1;
-[ apply Z.eqb_eq in E1;
-apply (init_first8 segs init_pc ph init_sp init_rnd argv envp addr 1 uid hw); lia | ].
-destruct ((bv_unsigned addr =? bv_unsigned init_sp + 2)%Z) eqn:E2;
-[ apply Z.eqb_eq in E2;
-apply (init_first8 segs init_pc ph init_sp init_rnd argv envp addr 2 uid hw); lia | ].
-destruct ((bv_unsigned addr =? bv_unsigned init_sp + 3)%Z) eqn:E3;
-[ apply Z.eqb_eq in E3;
-apply (init_first8 segs init_pc ph init_sp init_rnd argv envp addr 3 uid hw); lia | ].
-destruct ((bv_unsigned addr =? bv_unsigned init_sp + 4)%Z) eqn:E4;
-[ apply Z.eqb_eq in E4;
-apply (init_first8 segs init_pc ph init_sp init_rnd argv envp addr 4 uid hw); lia | ].
-destruct ((bv_unsigned addr =? bv_unsigned init_sp + 5)%Z) eqn:E5;
-[ apply Z.eqb_eq in E5;
-apply (init_first8 segs init_pc ph init_sp init_rnd argv envp addr 5 uid hw); lia | ].
-destruct ((bv_unsigned addr =? bv_unsigned init_sp + 6)%Z) eqn:E6;
-[ apply Z.eqb_eq in E6;
-apply (init_first8 segs init_pc ph init_sp init_rnd argv envp addr 6 uid hw); lia | ].
-destruct ((bv_unsigned addr =? bv_unsigned init_sp + 7)%Z) eqn:E7;
-[ apply Z.eqb_eq in E7;
-apply (init_first8 segs init_pc ph init_sp init_rnd argv envp addr 7 uid hw); lia | ].
-reflexivity.
+  intros segs init_pc ph init_sp mbase init_rnd inp.
+  apply functional_extensionality. intro addr.
+  unfold overlay_argc_bytes.
+  destruct ((bv_unsigned addr =? bv_unsigned init_sp)%Z) eqn:E0;
+    [ apply Z.eqb_eq in E0;
+      apply (init_first8 segs init_pc ph init_sp mbase init_rnd inp addr 0); lia | ].
+  destruct ((bv_unsigned addr =? bv_unsigned init_sp + 1)%Z) eqn:E1;
+    [ apply Z.eqb_eq in E1;
+      apply (init_first8 segs init_pc ph init_sp mbase init_rnd inp addr 1); lia | ].
+  destruct ((bv_unsigned addr =? bv_unsigned init_sp + 2)%Z) eqn:E2;
+    [ apply Z.eqb_eq in E2;
+      apply (init_first8 segs init_pc ph init_sp mbase init_rnd inp addr 2); lia | ].
+  destruct ((bv_unsigned addr =? bv_unsigned init_sp + 3)%Z) eqn:E3;
+    [ apply Z.eqb_eq in E3;
+      apply (init_first8 segs init_pc ph init_sp mbase init_rnd inp addr 3); lia | ].
+  destruct ((bv_unsigned addr =? bv_unsigned init_sp + 4)%Z) eqn:E4;
+    [ apply Z.eqb_eq in E4;
+      apply (init_first8 segs init_pc ph init_sp mbase init_rnd inp addr 4); lia | ].
+  destruct ((bv_unsigned addr =? bv_unsigned init_sp + 5)%Z) eqn:E5;
+    [ apply Z.eqb_eq in E5;
+      apply (init_first8 segs init_pc ph init_sp mbase init_rnd inp addr 5); lia | ].
+  destruct ((bv_unsigned addr =? bv_unsigned init_sp + 6)%Z) eqn:E6;
+    [ apply Z.eqb_eq in E6;
+      apply (init_first8 segs init_pc ph init_sp mbase init_rnd inp addr 6); lia | ].
+  destruct ((bv_unsigned addr =? bv_unsigned init_sp + 7)%Z) eqn:E7;
+    [ apply Z.eqb_eq in E7;
+      apply (init_first8 segs init_pc ph init_sp mbase init_rnd inp addr 7); lia | ].
+  reflexivity.
 Qed.
 Lemma machine_state_eta : forall ms : machine_state,
 ms = {| ms_regs := ms_regs ms; ms_fregs := ms_fregs ms; ms_pc_val := ms_pc_val ms;
@@ -476,121 +499,125 @@ ms_svc_pending := ms_svc_pending ms; ms_resv := ms_resv ms; ms_fcsr := ms_fcsr m
 ms_mem := ms_mem ms; ms_rom := ms_rom ms |}.
 Proof. intros []; reflexivity. Qed.
 Definition enum_state (segs : list Segment) (init_pc : N) (ph : PhdrInfo)
-(init_sp : word) (init_rnd : EntryDraw) (argc : nat)
-(base : word -> option byte) (uid : word)
-(hw : word) : machine_state :=
-{| ms_regs       := ms_regs (init_machine_state segs init_pc ph init_sp init_rnd nil nil uid hw); ms_fregs := ms_fregs (init_machine_state segs init_pc ph init_sp init_rnd nil nil uid hw);
-ms_pc_val     := ms_pc_val (init_machine_state segs init_pc ph init_sp init_rnd nil nil uid hw);
-ms_svc_pending := ms_svc_pending (init_machine_state segs init_pc ph init_sp init_rnd nil nil uid hw);
-ms_resv       := ms_resv (init_machine_state segs init_pc ph init_sp init_rnd nil nil uid hw); ms_fcsr := ms_fcsr (init_machine_state segs init_pc ph init_sp init_rnd nil nil uid hw);
-ms_mem        := overlay_argc_bytes init_sp argc base;
-ms_rom        := ms_rom (init_machine_state segs init_pc ph init_sp init_rnd nil nil uid hw) |}.
+    (init_sp mbase : word) (init_rnd : EntryDraw) (inp : ProcInput)
+    (argc : nat) (base : word -> option byte) : machine_state :=
+  {| ms_regs       := ms_regs (init_machine_state segs init_pc ph init_sp mbase init_rnd inp);
+     ms_fregs      := ms_fregs (init_machine_state segs init_pc ph init_sp mbase init_rnd inp);
+     ms_pc_val     := ms_pc_val (init_machine_state segs init_pc ph init_sp mbase init_rnd inp);
+     ms_svc_pending := ms_svc_pending (init_machine_state segs init_pc ph init_sp mbase init_rnd inp);
+     ms_resv       := ms_resv (init_machine_state segs init_pc ph init_sp mbase init_rnd inp);
+     ms_fcsr       := ms_fcsr (init_machine_state segs init_pc ph init_sp mbase init_rnd inp);
+     ms_mem        := overlay_argc_bytes init_sp argc base;
+     ms_rom        := ms_rom (init_machine_state segs init_pc ph init_sp mbase init_rnd inp) |}.
 Lemma init_eq_enum_state :
-forall segs init_pc ph init_sp init_rnd argv envp uid hw,
-init_machine_state segs init_pc ph init_sp init_rnd argv envp uid hw =
-enum_state segs init_pc ph init_sp init_rnd (length argv)
-(ms_mem (init_machine_state segs init_pc ph init_sp init_rnd argv envp uid hw)) uid hw.
+  forall segs init_pc ph init_sp mbase init_rnd inp,
+  init_machine_state segs init_pc ph init_sp mbase init_rnd inp =
+  enum_state segs init_pc ph init_sp mbase init_rnd inp
+    (length (in_argv inp))
+    (ms_mem (init_machine_state segs init_pc ph init_sp mbase init_rnd inp)).
 Proof.
-intros segs init_pc ph init_sp init_rnd argv envp uid hw. unfold enum_state.
-rewrite (machine_state_eta (init_machine_state segs init_pc ph init_sp init_rnd argv envp uid hw)) at 1.
-f_equal; try reflexivity. apply actual_mem_is_overlay.
+  intros segs init_pc ph init_sp mbase init_rnd inp. unfold enum_state.
+  rewrite (machine_state_eta
+             (init_machine_state segs init_pc ph init_sp mbase init_rnd inp)) at 1.
+  f_equal; try reflexivity. apply actual_mem_is_overlay.
 Qed.
 Lemma exit_omni_run : forall segs pc ph sp brk0 mb rnd lim code inp F,
-sim_c segs code F (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) = true ->
-omni_run (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp
-(exit_post code (in_fs inp)).
+  sim_c (run_segments segs inp sp mb) code F (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp) = true ->
+  omni_run (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp
+    (exit_post code (in_fs inp)).
 Proof.
-intros segs pc ph sp brk0 mb rnd lim code inp F Hsim.
-cbn [omni_run]. unfold init_config.
-exact (to_exit_exec segs code
-(init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-(init_model (segments_reserved segs) brk0 mb sp lim inp)
-eq_refl eq_refl (sim_c_to_exit segs code F _ Hsim)).
+  intros segs pc ph sp brk0 mb rnd lim code inp F Hsim.
+  cbn [omni_run]. unfold init_config.
+  exact (to_exit_exec (run_segments segs inp sp mb) code
+           (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp)
+           (with_vdso (vdso_run_init (ed_vdso rnd))
+              (init_model (segments_reserved (run_segments segs inp sp mb)) brk0 mb sp lim inp))
+           eq_refl eq_refl (sim_c_to_exit (run_segments segs inp sp mb) code F _ Hsim)).
 Qed.
 Lemma exit_obs_iff : forall segs pc ph sp brk0 mb rnd lim code inp F,
-sim_c segs code F (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) = true ->
-forall tr, obs_trace segs (init_config segs pc ph sp brk0 mb rnd lim inp) tr
-<-> is_prefix tr [ExitEv (bv_and code (Z_to_bv 64 255)) (in_fs inp)].
+  sim_c (run_segments segs inp sp mb) code F (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp) = true ->
+  forall tr, obs_trace (run_segments segs inp sp mb) (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) tr
+             <-> is_prefix tr [ExitEv (bv_and code (Z_to_bv 64 255)) (in_fs inp)].
 Proof.
-intros segs pc ph sp brk0 mb rnd lim code inp F Hsim tr.
-apply exec_obs_iff.
-eapply exec_conseq; [exact (exit_omni_run segs pc ph sp brk0 mb rnd lim code inp F Hsim) |].
-intros tr' o (Heq & Hx). split; [exact Heq | exact (exits_with_never_errors _ _ _ Hx)].
+  intros segs pc ph sp brk0 mb rnd lim code inp F Hsim tr.
+  apply exec_obs_iff.
+  eapply exec_conseq; [exact (exit_omni_run segs pc ph sp brk0 mb rnd lim code inp F Hsim) |].
+  intros tr' o (Heq & Hx). split; [exact Heq | exact (exits_with_never_errors _ _ _ Hx)].
 Qed.
 Lemma exit_no_error_run : forall segs pc ph sp brk0 mb rnd lim code inp F,
-sim_c segs code F (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) = true ->
-~ reaches_error segs (init_config segs pc ph sp brk0 mb rnd lim inp).
+  sim_c (run_segments segs inp sp mb) code F (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp) = true ->
+  ~ reaches_error (run_segments segs inp sp mb) (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp).
 Proof.
-intros segs pc ph sp brk0 mb rnd lim code inp F Hsim. apply exec_no_error.
-eapply exec_conseq; [exact (exit_omni_run segs pc ph sp brk0 mb rnd lim code inp F Hsim) |].
-intros tr o (_ & Hx). exact (exits_with_never_errors _ _ _ Hx).
+  intros segs pc ph sp brk0 mb rnd lim code inp F Hsim. apply exec_no_error.
+  eapply exec_conseq; [exact (exit_omni_run segs pc ph sp brk0 mb rnd lim code inp F Hsim) |].
+  intros tr o (_ & Hx). exact (exits_with_never_errors _ _ _ Hx).
 Qed.
 Lemma exit_must_exit_with : forall segs pc ph sp brk0 mb rnd lim code inp F,
-sim_c segs code F (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) = true ->
-must_exit_with (bv_and code (Z_to_bv 64 255)) (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp.
+  sim_c (run_segments segs inp sp mb) code F (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp) = true ->
+  must_exit_with (bv_and code (Z_to_bv 64 255)) (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp.
 Proof.
-intros segs pc ph sp brk0 mb rnd lim code inp F Hsim. apply must_exit_with_iff.
-eapply exec_conseq; [exact (exit_omni_run segs pc ph sp brk0 mb rnd lim code inp F Hsim) |].
-intros tr o (_ & Hx). exact Hx.
+  intros segs pc ph sp brk0 mb rnd lim code inp F Hsim. apply must_exit_with_iff.
+  eapply exec_conseq; [exact (exit_omni_run segs pc ph sp brk0 mb rnd lim code inp F Hsim) |].
+  intros tr o (_ & Hx). exact Hx.
 Qed.
 Lemma exit_omni_run_code_unique : forall segs pc ph sp brk0 mb rnd lim code inp F code',
-sim_c segs code F (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) = true ->
-omni_run (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp (exits_with code') ->
-code' = bv_and code (Z_to_bv 64 255).
+  sim_c (run_segments segs inp sp mb) code F (init_machine_state (run_segments segs inp sp mb) pc ph sp mb rnd inp) = true ->
+  omni_run (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp (exits_with code') ->
+  code' = bv_and code (Z_to_bv 64 255).
 Proof.
-intros segs pc ph sp brk0 mb rnd lim code inp F code' Hsim Hex.
-pose proof (exit_omni_run segs pc ph sp brk0 mb rnd lim code inp F Hsim) as Hrun.
-cbn [omni_run] in Hrun, Hex.
-destruct (exec_realizes _ _ _ Hrun) as (tr & [c' | c'] & Hm & _ & Hx); [| destruct Hx].
-pose proof (exec_sound _ _ _ Hex _ _ Hm) as Hx'.
-cbn [exits_with] in Hx, Hx'. destruct Hx as (Hx & _). destruct Hx' as (Hx' & _).
-rewrite Hx in Hx'. injection Hx' as Hx'. symmetry. exact Hx'.
+  intros segs pc ph sp brk0 mb rnd lim code inp F code' Hsim Hex.
+  pose proof (exit_omni_run segs pc ph sp brk0 mb rnd lim code inp F Hsim) as Hrun.
+  cbn [omni_run] in Hrun, Hex.
+  destruct (exec_realizes _ _ _ Hrun) as (tr & [c' | c'] & Hm & _ & Hx); [| destruct Hx].
+  pose proof (exec_sound _ _ _ Hex _ _ Hm) as Hx'.
+  cbn [exits_with] in Hx, Hx'. destruct Hx as (Hx & _). destruct Hx' as (Hx' & _).
+  rewrite Hx in Hx'. injection Hx' as Hx'. symmetry. exact Hx'.
 Qed.
 Lemma exit_omni_strong_equiv :
-forall source_segs rpc rph rsp rbrk rmb rrnd target_segs apc aph asp abrk amb arnd code inp FR FA,
-sim_c source_segs code FR
-(init_machine_state source_segs rpc rph rsp rrnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) = true ->
-sim_c target_segs code FA
-(init_machine_state target_segs apc aph asp arnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) = true ->
-omni_strong_equiv (mkImage source_segs rpc rph) (mkImage target_segs apc aph)
-(mkEntry rsp rbrk rmb rrnd) (mkEntry asp abrk amb arnd) inp.
+  forall source_segs rpc rph rsp rbrk rmb rrnd target_segs apc aph asp abrk amb arnd code inp FR FA,
+  sim_c (run_segments source_segs inp rsp rmb) code FR
+    (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp) = true ->
+  sim_c (run_segments target_segs inp asp amb) code FA
+    (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp) = true ->
+  omni_strong_equiv (mkImage source_segs rpc rph) (mkImage target_segs apc aph)
+                    (mkEntry rsp rbrk rmb rrnd) (mkEntry asp abrk amb arnd) inp.
 Proof.
-intros source_segs rpc rph rsp rbrk rmb rrnd target_segs apc aph asp abrk amb arnd code inp FR FA
-Hsource Htarget.
-split.
-{ cbn [img_segments].
-eapply coexec_conseq;
-[apply exec_coexec;
-exact (exit_omni_run source_segs rpc rph rsp rbrk rmb rrnd source_alloc_limit code inp FR Hsource) |].
-intros tr o (_ & Hx).
-exact (never_errors_covered _ _ _ (exits_with_never_errors _ _ _ Hx)). }
-right. split.
-- apply trace_equiv_iff_omni. intro tr. cbn.
-rewrite (exit_obs_iff source_segs rpc rph rsp rbrk rmb rrnd source_alloc_limit code inp FR Hsource tr).
-rewrite (exit_obs_iff target_segs apc aph asp abrk amb arnd target_alloc_limit code inp FA Htarget tr).
-reflexivity.
-- apply bh_errors_iff. cbn.
-apply (exit_no_error_run target_segs apc aph asp abrk amb arnd target_alloc_limit code inp FA Htarget).
+  intros source_segs rpc rph rsp rbrk rmb rrnd target_segs apc aph asp abrk amb arnd code inp FR FA
+    Hsource Htarget.
+  split.
+  { cbn [image_run_segments img_segments en_sp en_mmap_base].
+    eapply coexec_conseq;
+      [apply exec_coexec;
+       exact (exit_omni_run source_segs rpc rph rsp rbrk rmb rrnd source_alloc_limit code inp FR Hsource) |].
+    intros tr o (_ & Hx).
+    exact (never_errors_covered _ _ _ (exits_with_never_errors _ _ _ Hx)). }
+  right. split.
+  - apply trace_equiv_iff_omni. intro tr. cbn.
+    rewrite (exit_obs_iff source_segs rpc rph rsp rbrk rmb rrnd source_alloc_limit code inp FR Hsource tr).
+    rewrite (exit_obs_iff target_segs apc aph asp abrk amb arnd target_alloc_limit code inp FA Htarget tr).
+    reflexivity.
+  - apply bh_errors_iff. cbn.
+    apply (exit_no_error_run target_segs apc aph asp abrk amb arnd target_alloc_limit code inp FA Htarget).
 Qed.
 Lemma exit_strong_equiv :
-forall source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim code inp FR FA,
-sim_c source_segs code FR
-(init_machine_state source_segs rpc rph rsp rrnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) = true ->
-sim_c target_segs code FA
-(init_machine_state target_segs apc aph asp arnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) = true ->
-Equivalence.modeled (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
-/\ Equivalence.equiv (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
-(run (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp).
+  forall source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim code inp FR FA,
+  sim_c (run_segments source_segs inp rsp rmb) code FR
+    (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp) = true ->
+  sim_c (run_segments target_segs inp asp amb) code FA
+    (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp) = true ->
+  Equivalence.modeled (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
+  /\ Equivalence.equiv (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
+                       (run (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp).
 Proof.
-intros source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim code inp FR FA
-Hsource Htarget.
-split.
-{ apply no_error_run_modeled.
-apply (exit_no_error_run source_segs rpc rph rsp rbrk rmb rrnd rlim code inp FR Hsource). }
-right. split.
-- intro tr. cbn.
-rewrite (exit_obs_iff source_segs rpc rph rsp rbrk rmb rrnd rlim code inp FR Hsource tr).
-rewrite (exit_obs_iff target_segs apc aph asp abrk amb arnd alim code inp FA Htarget tr).
-reflexivity.
-- cbn. apply (exit_no_error_run target_segs apc aph asp abrk amb arnd alim code inp FA Htarget).
+  intros source_segs rpc rph rsp rbrk rmb rrnd rlim target_segs apc aph asp abrk amb arnd alim code inp FR FA
+    Hsource Htarget.
+  split.
+  { apply no_error_run_modeled.
+    apply (exit_no_error_run source_segs rpc rph rsp rbrk rmb rrnd rlim code inp FR Hsource). }
+  right. split.
+  - intro tr. cbn.
+    rewrite (exit_obs_iff source_segs rpc rph rsp rbrk rmb rrnd rlim code inp FR Hsource tr).
+    rewrite (exit_obs_iff target_segs apc aph asp abrk amb arnd alim code inp FA Htarget tr).
+    reflexivity.
+  - cbn. apply (exit_no_error_run target_segs apc aph asp abrk amb arnd alim code inp FA Htarget).
 Qed.

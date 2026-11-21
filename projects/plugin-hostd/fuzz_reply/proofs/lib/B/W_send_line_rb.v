@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: a symbolic-state lemma for fuzz_reply's ASan walks, over the region form of
    Reusable/YP09.v and the pi state of Reusable/YP0d.v.  IMAGE B copy, byte for byte below this comment, of
-   lib/A/W_rebase.v at a working branch 9367674296a (7aaf61c32d4): that file is not on the B integration
+   lib/A/W_rebase.v at a working branch: that file is not on the B integration
    base (a working branch), and it requires only lib/Reusable, so B's send_line walk
    (lib/B/W_send_line_*.v) carries it under its own name. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Rebasing a region.  The symbolic engine finds a region by its base atom syntactically (Reusable/YP09.v
    find_region / obase_eqb; Reusable/YP0l.v addr_of (SOff n z) = (Some n, z)).  A program that reads a global with a
    PLdHi slot addresses it through the object atom, (Some (A_OBJ i), off) (Reusable/YP0a.v sym_step_pi), and stores

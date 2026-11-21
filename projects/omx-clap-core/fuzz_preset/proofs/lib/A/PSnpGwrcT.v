@@ -11,10 +11,10 @@
    FMsnprintfGwrc's state r1_*_e1 / r2*_e1) are new and every later run is FMsnprintfGwrc's; theorem vsn_wr_check_srrUT. *)
 (* Modified by Theorem Labs, 2026-10: restated over the engine's generic ARx with the ghost list Hp fixed (route (a),
    c-omx-hpreset 10:51Z) and re-pinned at preset image A (fuzz_preset.asan d83eb25d; symbols from its unstripped twin
-   f0d2e8d4), from origin/cold/port-fm-rtprintf-param 7e395de08f5 proofs/omx-clap-core/fuzz_manifest/lib/A/
+   f0d2e8d4), proofs/omx-clap-core/fuzz_manifest/lib/A/
    FMsnprintfGwrcT.v, over lib/A/PSnpGwrc.v (the restated FMsnprintfGwrc.v). The same ARx changes as PSnpGwrc: Section
    f takes B, ARx, alx_frame, alx_stack, alx_const_cells and stk_bounds_x (the exact statement of the engine lemma
-   YCbqG.stk_bounds_x, 7792959a2abb YCbqG.v:308; the instance passes `YCbqG.stk_bounds_x segs B ARx LAWS`) as
+   YCbqG.stk_bounds_x, YCbqG.v:309; the instance passes `YCbqG.stk_bounds_x segs B ARx LAWS`) as
    hypotheses, the ghost list Hpl : list Z for U (named Hpl because the
    Section already has Hp : 0 <= p), HAR : ARx ..; POSTr's post is ARx ..; `basics`' unused ARm conjunct -> ARx ..;
    finishR: ARU_frame / ARU_stack -> alx_frame / alx_stack, am_layout's lo_top -> stk_bounds_x; ent_ro cites
@@ -28,9 +28,10 @@
                                                   0x54758   0x55388 (= 349064)
    Not addresses, kept: SHADOW_OFF 2147450880, 2^47 - 1, 2147450879, the instruction words 472835 / 505731, the frame
    offsets 64 / 72. *)
-(* Modified by Theorem Labs, 2026-10: moved to the #102 pins, image A' (fuzz_preset.asan 1be0f53d, unstripped bff8519b), from the old-pin donor origin/cold/c-libc-stdio-presetsnp-vfp ac1750cac8be: every code numeral by symbol + offset by c-asan's alreloc of record (frame/alreloc.py.frozen-c4338d099cfb8025, --src omx-clap-core/fuzz_preset --src-pin d83eb25d --assume-source; the chain's code is equal old -> #102); kept as written: the IImg record keys (fm addresses), the instruction words and the segment sizes; audited by port_addr_check 0767e70e074a (only the record keys flag). Per-numeral table: c-libc-stdio scratch/p102/reloc/A/PSnpGwrcT.v.reloc.tsv. Comment numerals are as written (sentences above that name preset A's addresses describe the old pin). *)
+(* Modified by Theorem Labs, 2026-10: moved to the #102 pins, image A' (fuzz_preset.asan 1be0f53d, unstripped bff8519b), from the old-pin donor: every code numeral by symbol + offset by c-asan's alreloc of record (frame/alreloc.py.frozen-c4338d099cfb8025, --src omx-clap-core/fuzz_preset --src-pin d83eb25d --assume-source; the chain's code is equal old -> #102); kept as written: the IImg record keys (fm addresses), the instruction words and the segment sizes; audited by port_addr_check 0767e70e074a (only the record keys flag). Per-numeral table: c-libc-stdio scratch/p102/reloc/A/PSnpGwrcT.v.reloc.tsv. Comment numerals are as written (sentences above that name preset A's addresses describe the old pin). *)
 (* Modified by Theorem Labs, 2026-10: the Zify flag reset is Local and follows the Require of PSnpGwrc (global_settings
    v10 439f8e3bd463: ESCAPES 0). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -112,7 +113,7 @@ Variable ARx : alayout -> astate -> list Z -> world tfibsegs -> (word -> option 
 Hypothesis alx_frame : ARx_frame_law tfibsegs B ARx.
 Hypothesis alx_stack : ARx_stack_law tfibsegs B ARx.
 Hypothesis alx_const_cells : ARx_const_cells_law tfibsegs B ARx.
-(* the stack bound: the exact statement of the engine lemma YCbqG.stk_bounds_x (7792959a2abb YCbqG.v:308, from field
+(* the stack bound: the exact statement of the engine lemma YCbqG.stk_bounds_x (YCbqG.v:309, from field
    18 alx_layout_ok); the instance passes `YCbqG.stk_bounds_x segs B ARx LAWS` *)
 Hypothesis stk_bounds_x : forall ly S Hp W mem md, ARx ly S Hp W mem md ->
   kHighMemBeg <= ly_stk_lo ly /\ ly_stk_hi ly <= kHighMemEnd.

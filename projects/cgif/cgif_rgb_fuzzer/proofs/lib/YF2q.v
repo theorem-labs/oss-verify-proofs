@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap's refused answer, -ENOMEM: the new die_at_ecall walks that child through the munmap-failure report to its self-jump spin, the walk being a check, die_walk_ok, computed on the ecall state its callers hold, and at_MUN carries that walk, at_DIE, beside the unmapping arm; the walk starts with a region for the image's zero cell that the report reads, whose value is the new free_hyps field fh_gate; YK0k required, without import, for is_self_jump). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -17,6 +18,16 @@ From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YF8r YF8s YF8t.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YP09.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YF64 YF8x YF0k YF0q YF0o YF1g YF7y.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YF04.
+(* #38: [is_self_jump] and [is_self_jump_to_spin] are this unit's OWN
+   (YK0k.v:255 and :269, inside [Section f]'s [Variable segs], hence the leading
+   [tfxsegs] at the call sites).  YK0k is already in this file's transitive
+   Require closure but was never IMPORTED, so the names were out of scope and
+   :431 read "The variable is_self_jump was not found in the current
+   environment".  Required without Import and qualified at the three use sites,
+   per the stream's solved REFERENCE-NOT-FOUND class (fuzz_pcap's
+   stack_window_depth, libdiginet's ivs_bytes): no numeral, binder, carrier or
+   published delta.  Not Import, to avoid disturbing the 30 import lines above. *)
+From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require YK0k.
 From OSSVerify.Proofs.cgif.cgif_rgb_fuzzer.lib Require Import YN05.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
@@ -194,6 +205,7 @@ fh_tsd : val_mem tfxsegs m0 TFX_TSD 8 (ly_C ly) /\ val_mem tfxsegs m0 (ly_C ly +
 fh_jst : val_mem tfxsegs m0 (T + t_stats + 88) 8 j5 /\ val_mem tfxsegs m0 (T + t_stats + 96) 8 j6 /\ 0 <= j5 < 2 ^ 64 /\ 0 <= j6 < 2 ^ 64 /\
 (forall a, T + t_stats + 88 <= a < T + t_stats + 104 -> apresent (w_H W) mem0 a);
 fh_sh_pres : forall a, SHAv map <= a < SHAv map + CNTv len -> apresent (w_H W) mem0 a;
+fh_gate : val_mem tfxsegs m0 (0x13bcdc + D_10c0) 4 0;
 fh_SEED : st_ok tfxsegs E0 SS0 (restrict (w_H W) (mkst regs0 (w64 (0x34140 + D_150)) mem0 (seg_rom tfxsegs)))
 }.
 Hypothesis FH : free_hyps.
@@ -370,14 +382,192 @@ val_mem tfxsegs mr (A_ALLOCATOR + 128) 1 0 /\
 (exists v, val_mem tfxsegs mr (A_ALLOCATOR + 704) 8 v) /\ (exists v, val_mem tfxsegs mr (A_ALLOCATOR + 712) 8 v) /\
 val_mem tfxsegs mr qi 8 lst /\
 (own = false -> val_mem tfxsegs mr (lst + 24) 8 idx /\ forall a, lst + 24 <= a < lst + 32 -> apresent (w_H W) mem' a).
+(* 75d69e00 Sys/Mm/Munmap.v: [check_munmap] dispatches [errno_ret_in munmap_errnos] before the
+   exact-unmap arm, so the node at the munmap ecall carries refusal children beside the unmapping
+   one (YF1h.v:37).  [munmap_errnos] is the singleton [ENOMEM] and [errno_ret ENOMEM] is 2^64-12,
+   so a refusal child resumes at 0x64c98 + D_2c4 with a0 = -12 and with memory and model unchanged.
+   That child SPINS: internal_munmap (0x64c90..0x64c9c, YB10.v:302) returns into UnmapOrDie
+   (0x664d4..0x66550, YB10.v:345), whose internal_iserror (0x64c64..0x64c84, YB10.v:300) test takes
+   the die arm into ReportMunmapFailureAndDie (0x605a8..0x60644, YB10.v:258), and 0x605d0 is that
+   function's self-jump and an image stop -- tra records it at YB06.v:16, trb at YB11.v:16 as
+   0x60894 = 0x605d0 + 0x2c4 = 0x605d0 + D_2c4 (YF00.v:43).  The one img-generic address is a stop
+   in both images, so this walk needs no trb twin.  No ecall lies on the way, so the trace is
+   [t_nil]; the mmap sibling closes the same way at 0x60500 (YF60.v:1056-1066, YF00.v:143
+   [pc_spin_mmapdie]).
+   The walk runs with [tfxtbl_rtD], not the [tfxtbl_rtM] the success arm uses: rtD carries 0x604d0
+   for 93 instructions (YB0u.v:27), spanning both report functions, plus 0x64c64 for 27 and
+   0x66460 for 128; rtM (YB0x.v:27) covers neither report function.
+   It lives beside [at_MUN] because the walk needs the symbolic state at the ecall: the [mem1] that
+   [at_MUN] binds carries no memory invariant at all, so nothing about this walk is derivable from
+   [at_MUN] downstream.  [YF12.segGD] and [YF12a.segGD_f] supply it at their four ecall sites, and
+   [YF23.plumbing] discharges the refusal child straight from it (YF23.v:376) -- no premise. *)
+Definition ENOMEM_RET : Z := 18446744073709551604.
+Definition at_DIE (regs1 : bvmap 5 word) (mem1 : word -> option byte) (mat1 : list word) : Prop :=
+forall e : Z, In e munmap_errnos ->
+AI tfxsegs (w_H W) (w_A W) (with_vm_backing (m_vm_lazy md0) mat1 md0) ->
+srealizesM tfxsegs false
+(mkCfg (mkst (regupd regs1 10 (errno_ret e)) (v_addi (w64 (0x64c94 + D_2c4)) 4) mem1 (seg_rom tfxsegs))
+(with_vm_backing (m_vm_lazy md0) mat1 md0)) t_nil.
+Lemma errno_ENOMEM_ret : errno_ret ENOMEM = Z_to_bv 64 ENOMEM_RET.
+Proof. clear. unfold ENOMEM_RET. img_apply bv_eq. vm_compute. img_refl. Qed.
+Lemma pc_after_ecall : v_addi (w64 (0x64c94 + D_2c4)) 4 = Z_to_bv 64 (0x64c98 + D_2c4).
+Proof.
+(* #38 added [unsigned_lit_small]'s side condition [0 <= 0x64c94 + D_2c4 < 2^64]
+   (measured: a build of this unit printed it).  It is an ARITHMETIC
+   goal, and [vm_compute] normalises [<=] and [<] into their [Z.compare]
+   unfoldings ([Lt <> Gt], [Lt = Lt]), which carry no atom for [lia] -- so every
+   arm of [img_lia] fails and [img_try] exhausts ("No applicable tactic").  The
+   [vm_compute] on the NEXT line is right, because that goal is an EQUALITY and
+   its finisher is [img_refl].  Verified against the printed obligation by
+   a later build, which also proves the old tactic fails. *)
+clear. unfold v_addi, w64. rewrite unsigned_lit_small by (img_try (img_case; cbn [D_2c4]; img_lia)).
+img_try ((img_case; vm_compute); img_refl).
+Qed.
+(* The refusal walk reads one image cell before its self-jump: ReportMunmapFailureAndDie loads the
+   4-byte zero cell at 0x13bcdc + D_10c0 at 0x605c8 + D_2c4 (auipc a0, 0xdb; lw a0, 0x718(a0); in trb
+   auipc a0, 0xdc; lw a0, 0x514(a0)), and its bnez at 0x605cc + D_2c4 falls through to the self-jump
+   on zero.  The ecall state has no region for that cell, so [die_run] adds [R_gate2], the region the
+   mmap-failure walk adds for the same cell (YF4f.v:71, YF60.v:758-761).  The cell's value is
+   [fh_gate], which YF13.DSEED proves from the allocator invariant's constant table; the ecall memory
+   agrees with [mem0] outside [WIN2] ([gate_cell]); [gate_free_b] is the check, computed by the
+   callers, that the ecall state's regions are disjoint from the cell ([gate_disjoint]). *)
+Definition R_gate2 {imgk : img} : YQ0b.region := flit4 (0x13bcdc + D_10c0) 0.
+Definition gate_free_b {imgk : img} (r : YQ0b.region) : bool :=
+match YQ0b.r_base r with
+| None => (YQ0b.r_hi r <=? 0x13bcdc + D_10c0) || (0x13bce0 + D_10c0 <=? YQ0b.r_lo r)
+| Some k => (Nat.eqb k 2 && (-16384 <=? YQ0b.r_lo r)) ||
+((0 <=? YQ0b.r_lo r) && ((Nat.eqb k 32 && (YQ0b.r_hi r <=? 4096)) || (Nat.eqb k 33 && (YQ0b.r_hi r <=? 256)) ||
+(Nat.eqb k 34 && (YQ0b.r_hi r <=? 8192)) || (Nat.eqb k 39 && (YQ0b.r_hi r <=? 8)) ||
+(Nat.eqb k 40 && (YQ0b.r_hi r <=? 8)) || (Nat.eqb k 41 && (YQ0b.r_hi r <=? 8192))))
+end.
+(* The image constant is unfolded before [img_case]: [vm_compute] under an undetermined image
+   leaves its arithmetic stuck on [D_10c0] and its normal form grows without bound. *)
+Lemma R_gate2_wf : YQ0b.region_wf R_gate2 = true.
+Proof. clear. unfold R_gate2, flit4. img_try ((img_case; vm_compute); img_refl). Qed.
+Lemma gate_out : forall a, 0x13bcdc + D_10c0 <= a < 0x13bce0 + D_10c0 -> ~ WIN2 a.
+Proof.
+open_FH. intros a Ha Hw. pose proof derived_ranges as DR. pose proof LYB as (F1 & _).
+destruct Harr as (_ & _ & _ & _ & A5 & _). destruct Hlst as (X1 & _).
+clear SEED Hpres Hmaph Hqi Hql Hlsth Htsd Hsh_pres Hown. unfold WIN2, WIN, WINS, GDEPTH in *.
+destruct Hw as [[Hw|[Hw|[Hw|[Hw|[Hw|[Hw|[Hw|Hw]]]]]]]|Hw];
+[ img_try (clear - Ha Hw DR) | img_try (clear - Ha Hw DR) | img_try (clear - Ha Hw DR) | img_try (clear - Ha Hw DR) | img_try (clear - Ha Hw DR)
+| img_try (clear - Ha Hw DR A5) | img_try (clear - Ha Hw DR F1) | img_try (clear - Ha Hw DR X1) | img_try (clear - Ha Hw DR) ];
+numconst; unfold sp0, T in *; img_lia.
+Qed.
+Lemma gate_cell : forall m, MEQP WIN2 m -> val_mem tfxsegs (mrestrict (w_H W) m) (0x13bcdc + D_10c0) 4 0.
+Proof.
+intros m M. img_apply (YF8r.val_mem_frame (w_H W) mem0 m); [| img_try (img_exact (fh_gate FH))].
+intros k Hk. img_apply M. rewrite unsigned_lit_small by img_lia. img_apply gate_out. img_lia.
+Qed.
+Lemma gate_region_ok : forall (E : env) (m : word -> option byte), val_mem tfxsegs m (0x13bcdc + D_10c0) 4 0 ->
+YQ0b.region_ok tfxsegs E m R_gate2.
+Proof.
+intros E m Hv. unfold R_gate2, flit4, YQ0b.region_ok. cbn [YQ0b.r_base YQ0b.r_lo YQ0b.r_hi YQ0b.r_wlo YQ0b.r_whi YQ0b.r_chunks base_val].
+split; [img_try (img_lia)|]. split; [img_try (img_lia)|]. split; [img_try (intros o Ho; img_lia)|].
+img_apply Forall_cons; [|img_try (img_apply Forall_nil)].
+eapply YI00.chunk_ok_val; [img_refl | img_try (cbn; img_lia) | img_try (cbn; img_lia) | img_try (rewrite Z.add_0_l; img_exact Hv)].
+Qed.
+Lemma gate_disjoint : forall (E : env) (rs : smem), (forall k, (k < aHAVf)%nat -> ew E k = ew E0 k) ->
+forallb gate_free_b rs = true -> YQ0b.all_disjoint E R_gate2 rs.
+Proof.
+open_FH. intros E rs HE. pose proof derived_ranges as DR. pose proof LYB as (F1 & F2 & _ & F4 & F5 & _).
+destruct Hmap as (M1 & M2 & _ & M4 & _). destruct Harr as (A1 & A2 & A3 & A4 & A5 & A6 & _). destruct Hlst as (X1 & X2 & _).
+induction rs as [|r rs IH]; intros Hb; cbn [YQ0b.all_disjoint]; [exact I|].
+cbn [forallb] in Hb. apply andb_prop in Hb as [Hr Hb]. split; [|exact (IH Hb)].
+unfold YQ0b.extent_disjoint, R_gate2, flit4. cbn [YQ0b.r_base YQ0b.r_lo YQ0b.r_hi base_val].
+unfold gate_free_b in Hr. destruct (YQ0b.r_base r) as [k|]; cbn [base_val].
+- apply Bool.orb_prop in Hr. destruct Hr as [Hr|Hr].
++ apply andb_prop in Hr as [Hk Hl]. apply Nat.eqb_eq in Hk. subst k. apply Z.leb_le in Hl. left.
+rewrite (HE 2%nat ltac:(unfold aHAVf; lia)), E2. clear - Hl DR. numconst. unfold sp0, T in *. img_lia.
++ apply andb_prop in Hr as [Hl Hr]. apply Z.leb_le in Hl.
+repeat (apply Bool.orb_prop in Hr; destruct Hr as [Hr|Hr]); apply andb_prop in Hr as [Hk Hh]; apply Nat.eqb_eq in Hk; subst k; apply Z.leb_le in Hh.
+* rewrite (HE 32%nat ltac:(unfold aHAVf; lia)), EqT. unfold w64. rewrite unsigned_lit_small by (clear - F1 F2; numconst; unfold T in *; img_lia).
+clear - Hl Hh F1. numconst. unfold T in *. img_lia.
+* rewrite (HE 33%nat ltac:(unfold aHAVf; lia)), EqC. unfold w64. rewrite unsigned_lit_small by (clear - F4 F5; numconst; img_lia).
+clear - Hl Hh F4. numconst. img_lia.
+* rewrite (HE 34%nat ltac:(unfold aHAVf; lia)), EqMAP. unfold w64. rewrite unsigned_lit_small by (clear - M1 M2 M4; numconst; img_lia).
+clear - Hl Hh M1 M4. numconst. img_lia.
+* rewrite (HE 39%nat ltac:(unfold aHAVf; lia)), EqQI. unfold w64. rewrite unsigned_lit_small by (clear - A1 A2 A3 A5 A6; numconst; img_lia).
+clear - Hl Hh A1 A2 A3 A5. numconst. img_lia.
+* rewrite (HE 40%nat ltac:(unfold aHAVf; lia)), EqQL. unfold w64. rewrite unsigned_lit_small by (clear - A1 A2 A4 A5 A6; numconst; img_lia).
+clear - Hl Hh A1 A2 A4 A5. numconst. img_lia.
+* rewrite (HE 41%nat ltac:(unfold aHAVf; lia)), EqLAST. unfold w64. rewrite unsigned_lit_small by (clear - X1 X2; numconst; img_lia).
+clear - Hl Hh X1. numconst. img_lia.
+- apply Bool.orb_prop in Hr. destruct Hr as [Hr|Hr]; apply Z.leb_le in Hr; img_lia.
+Qed.
+(* The walk is run on the CONCRETE ecall state each caller holds.  On an abstract [ss] the
+   symbolic run cannot take a step (every register, region and fact is unknown), and its
+   normal form under [vm_compute] grows without bound.  [die_walk_ok] runs it and checks that
+   it stops at the self-jump with no reservation; the four callers in YF12 and YF12a discharge
+   it, and [gate_free_b], by [vm_compute] on their own state, as they do the other premises, and
+   give the environment agreement and [MEQP WIN2] they already hold at the ecall. *)
+Definition die_run (ss : sstate) : sstate * run_status :=
+sym_run_toN_sh tfxsegs tfxtbl_rtD YQ04.FUEL (0x605d0 + D_2c4)
+(YF3w.addreg R_gate2 (YF7z.setpc (YF3w.pin ss 10%bv (SLit ENOMEM_RET)) (0x64c98 + D_2c4))).
+Definition die_walk_ok (ss : sstate) : bool :=
+match die_run ss with
+| (ssF, RS_running) => (ss_pc ssF =? 0x605d0 + D_2c4) && match ss_resv ssF with None => true | Some _ => false end
+| _ => false
+end.
+Lemma die_at_ecall : forall (E : env) (ss : sstate) (ms : machine_state) (mat : list word),
+(forall k, (k < aHAVf)%nat -> ew E k = ew E0 k) -> MEQP WIN2 (ms_mem ms) ->
+st_ok_ecall tfxsegs E ss (restrict (w_H W) ms) -> ss_resv ss = None ->
+ss_pc ss = 0x64c94 + D_2c4 -> no_cdata (ss_mem ss) = true -> die_walk_ok ss = true -> forallb gate_free_b (ss_mem ss) = true ->
+at_DIE (ms_regs ms) (ms_mem ms) mat.
+Proof.
+intros E ss ms mat HE MQ HS Hrv Hpc Hnc Hwalk Hfree.
+revert Hwalk. unfold die_walk_ok. destruct (die_run ss) as [ssF stF] eqn:Hrun. intros Hwalk.
+destruct stF as [| |why]; cbv beta iota in Hwalk; try discriminate Hwalk.
+apply andb_prop in Hwalk as [HpcF HrvF]. apply Z.eqb_eq in HpcF.
+assert (HrvF' : ss_resv ssF = None).
+{ revert HrvF. destruct (ss_resv ssF); intros X; [cbv beta iota in X; discriminate X | reflexivity]. }
+clear HrvF. unfold die_run in Hrun.
+intros e He HAI.
+cbn [munmap_errnos In] in He. destruct He as [<-|[]].
+pose proof (@YF8r.Hwx_tfa imgk) as Hwx.
+assert (KEPT : Forall (region_kept tfxsegs E (mrestrict (w_H W) (ms_mem ms)) (mrestrict (w_H W) (ms_mem ms))) (ss_mem ss))
+by (img_try (img_apply Forall_forall; intros rr _; img_apply region_kept_ext; intros z _; img_refl)).
+pose proof (st_node_cont (w_H W) E ss ms (SLit ENOMEM_RET) ENOMEM_RET (0x64c98 + D_2c4) (ms_mem ms)
+HS Hrv eq_refl Hnc KEPT) as HD.
+clear KEPT.
+assert (HG : val_mem tfxsegs (mrestrict (w_H W) (ms_mem ms)) (0x13bcdc + D_10c0) 4 0) by (img_exact (gate_cell (ms_mem ms) MQ)).
+assert (HRG : YQ0b.region_ok tfxsegs E (ms_mem (restrict (w_H W) (mkst (regupd (ms_regs ms) 10%bv (Z_to_bv 64 ENOMEM_RET)) (Z_to_bv 64 (0x64c98 + D_2c4)) (ms_mem ms) (seg_rom tfxsegs)))) R_gate2)
+by (img_apply gate_region_ok; img_exact HG).
+assert (HDJ : YQ0b.all_disjoint E R_gate2 (ss_mem (YF7z.setpc (YF3w.pin ss 10%bv (SLit ENOMEM_RET)) (0x64c98 + D_2c4))))
+by (img_exact (gate_disjoint E (ss_mem ss) HE Hfree)).
+assert (HWF : YQ0b.region_wf R_gate2 = true) by (img_exact R_gate2_wf).
+assert (HD2 : st_ok tfxsegs E (YF3w.addreg R_gate2 (YF7z.setpc (YF3w.pin ss 10%bv (SLit ENOMEM_RET)) (0x64c98 + D_2c4)))
+(restrict (w_H W) (mkst (regupd (ms_regs ms) 10%bv (Z_to_bv 64 ENOMEM_RET)) (Z_to_bv 64 (0x64c98 + D_2c4)) (ms_mem ms) (seg_rom tfxsegs))))
+by (img_exact (YF8r.st_ok_add_region E _ _ R_gate2 HD HWF HRG HDJ)).
+clear HD HG HRG HDJ HWF. rename HD2 into HD.
+rewrite errno_ENOMEM_ret, pc_after_ecall.
+assert (SR : SRr tfxsegs W
+(mkCfg (mkst (regupd (ms_regs ms) 10%bv (Z_to_bv 64 ENOMEM_RET)) (Z_to_bv 64 (0x64c98 + D_2c4)) (ms_mem ms) (seg_rom tfxsegs))
+(with_vm_backing (m_vm_lazy md0) mat md0))
+(fun (W'' : world tfxsegs) (c'' : config) => YK0k.is_self_jump tfxsegs (cfg_ms c'') = true)).
+{ eapply (YA0n.SRr_run_to_sh_gen tfxsegs tfxtbl_rtD (@tfxtbl_rtD_ok imgk) Hwx W YQ04.FUEL (0x605d0 + D_2c4)
+E _ ssF RS_running _ _ _ HD Hrun).
+intros ms' mat' HS' _ _.
+img_apply SRr_ret.
+pose proof (st_ok_restrict_mkst tfxsegs (w_H W) E ssF ms' HS' HrvF') as SHf.
+pose proof (f_equal ms_svc_pending SHf) as Hsv. pose proof (f_equal ms_pc_val SHf) as Hpcf.
+cbn [ms_svc_pending ms_pc_val YK11.mkst] in Hsv, Hpcf.
+rewrite HpcF in Hpcf.
+unfold YK0k.is_self_jump, ms_pc. cbn [cfg_ms]. rewrite Hsv, Hpcf.
+rewrite (tfxtbl_rtD_ok (0x605d0 + D_2c4) 111 ltac:(img_try ((try img_inst; img_case; vm_compute); img_refl))).
+img_case; vm_compute. all: img_refl. }
+img_apply (SR false HAI t_nil). intros W' c' _ HI' HJ. img_apply srz_spinning.
+split; [img_try (img_apply YK0k.is_self_jump_to_spin; img_exact HJ) | img_try (img_exact (AI_halted _ _ _ _ HI'))].
+Qed.
 Definition at_MUN (W' : world tfxsegs) (c' : config) : Prop :=
 W' = W /\ exists regs1 mem1 mat1,
 c' = mkCfg (pend_at regs1 (w64 (0x64c94 + D_2c4)) mem1 (seg_rom tfxsegs)) (with_vm_backing (m_vm_lazy md0) mat1 md0) /\
 getr regs1 17 = w64 215 /\ getr regs1 10 = w64 map /\ getr regs1 11 = w64 len /\
-let md1 := with_vm_backing (m_vm_lazy md0) mat1 md0 in
+(let md1 := with_vm_backing (m_vm_lazy md0) mat1 md0 in
 SRr tfxsegs W (mkCfg (mkst (regupd regs1 10 (w64 0)) (w64 (0x64c98 + D_2c4)) (unfill (w64 map) (w64 len) mem1) (seg_rom tfxsegs))
 (munmap_model (w64 map) (w64 len) md1))
-(at_RET (munmap_model (w64 map) (w64 len) md1)).
+(at_RET (munmap_model (w64 map) (w64 len) md1))) /\
+at_DIE regs1 mem1 mat1.
 Definition at_PS (W' : world tfxsegs) (c' : config) : Prop :=
 W' = W /\ exists regs' mem' mat,
 c' = mkCfg (mkst regs' (w64 (0x542ec + D_2c4)) mem' (seg_rom tfxsegs)) (with_vm_backing (m_vm_lazy md0) mat md0) /\

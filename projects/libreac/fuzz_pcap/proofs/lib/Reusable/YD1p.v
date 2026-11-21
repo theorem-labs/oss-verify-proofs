@@ -2,7 +2,8 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD1p.v (origin/ossv/recipes c8557374ad2e), with its module paths changed, names TfibSyms -> PcapSyms and its addresses moved to libreac/fuzz_pcap's asan-ubsan build (pinned image fuzz_pcap.asan-ubsan sha256 9e66f771f22a, symbols from its unstripped twin fuzz_pcap.asan-ubsan sha256 c969d83cdd59). It is the asan-ubsan twin of a Theorem Labs lane's lib/A/AD1p.v (a working branch 9700d736a50; commit a6de9c745b9), every hunk mirrored. ADAPTED to pcap's program contract (the porter, 2026-10-28: "the program contract is tfib_lib_contract_x_all {rc} (SK : YI16.sink_head) stk G B MT XM_LIB XN_LIB RLO RHI KS, SK EXPLICIT, never inferred"): the donor's LIBC (cgif YCfn.v tfib_lib_contract_x, YD1p.v:47) is the image-free lib/A/Prog/PcapEntry.v's at the asan-ubsan instance lib/B/Prog/PcapEntry.v (SK explicit, G_HARNESS_U, the asan-ubsan pcap_KS of lib/B/Stdio/PSourceK.v; RLO / RHI fixed to lib/B/Prog/PcapRelro.v's PCAP_RLO / PCAP_RHI = 0x99198 / 0x9a3f0, the window Reusable/YCeg.v's in_ro_tfa names, so the donor's RO_IN goes); the output shape is fixed to AgreePcap.ag_out_shape (the one PcapEntry.v states LIBK at) instead of the donor's generic {LS}; the sink head is the Section's SK with pcap_head (Reusable/YD1u.v). The fprintf formats are .rodata 0x1d631 "cli: cannot open ", 0x1d646 "cli: read error on ", 0x1581c "usage: " (same addresses in both builds, bytes checked in the asan-ubsan pin). cgif's YCfl / YCfn / YE2k are dropped from the Require (not ported). The proof of tfib_drv_main is the donor's. rule 24: no function proved anew. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD1p.v (theorem-labs/oss-verify-proofs@6b32741d849a), with its module paths changed, names TfibSyms -> PcapSyms and its addresses moved to libreac/fuzz_pcap's asan-ubsan build (pinned image fuzz_pcap.asan-ubsan sha256 9e66f771f22a, symbols from its unstripped twin fuzz_pcap.asan-ubsan sha256 c969d83cdd59). It is the asan-ubsan twin of a Theorem Labs lane's lib/A/AD1p.v (a working branch), every hunk mirrored. ADAPTED to pcap's program contract (the porter, 2026-10-28: "the program contract is tfib_lib_contract_x_all {rc} (SK : YI16.sink_head) stk G B MT XM_LIB XN_LIB RLO RHI KS, SK EXPLICIT, never inferred"): the donor's LIBC (cgif YCfn.v tfib_lib_contract_x, YD1p.v:47) is the image-free lib/A/Prog/PcapEntry.v's at the asan-ubsan instance lib/B/Prog/PcapEntry.v (SK explicit, G_HARNESS_U, the asan-ubsan pcap_KS of lib/B/Stdio/PSourceK.v; RLO / RHI fixed to lib/B/Prog/PcapRelro.v's PCAP_RLO / PCAP_RHI = 0x99198 / 0x9a3f0, the window Reusable/YCeg.v's in_ro_tfa names, so the donor's RO_IN goes); the output shape is fixed to AgreePcap.ag_out_shape (the one PcapEntry.v states LIBK at) instead of the donor's generic {LS}; the sink head is the Section's SK with pcap_head (Reusable/YD1u.v). The fprintf formats are .rodata 0x1d631 "cli: cannot open ", 0x1d646 "cli: read error on ", 0x1581c "usage: " (same addresses in both builds, bytes checked in the asan-ubsan pin). cgif's YCfl / YCfn / YE2k are dropped from the Require (not ported). The proof of tfib_drv_main is the donor's. rule 24: no function proved anew. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed HDIR, tfib_drv_main). *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -10,7 +11,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.libreac.fuzz_pcap.images Require Import AsanUbsan.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require Import YK11 YK15 YK18 YK0c YK0e YK09 YA0c YA0e YA01 YA02 YA00.
-From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require Import YB12 YB1h YB01 YB1n.
+From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require Import YB12 YB1h YB01r YB1n.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require Import YG0f YG00 YG01 YG0n.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require Import YF0m.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require Import YP0m YP09 YP0l YP08 YP03 YN3q YK04 YA0i YA0n YA0o YA0p.
@@ -93,25 +94,41 @@ Let RDD : rd0_dir_tfa B := tfib_rd0_dir B HB ARL RDERR.
 Let RDF : rd0_file_tfa B := tfib_rd0_file B HB ARL ML MSITE RCHK MCPY FREE REFUSED HDR.
 Let HFILE : file_arm_tfa B := tfib_file_arm B HB ARL ML MSITE RDF.
 Let HDIR : dir_arm_tfa B := tfib_dir_arm B HB ARL ML MSITE RDD.
-Theorem tfib_drv_main : forall (sp : word) (rdraw : EntryDraw) (brk : word) (inp : ProcInput) (h : nat) (ch : acs) (E : env) (R : bvmap 5 word)
-(FULL : word -> option byte) (model : Model),
+(* LPS 727298f3: the driver's main over the hand-off state of the run's own CONFIG_RSEQ flag ([HS_tfib_r]), with
+   the stack invariant abstract and the launch's fifth [valid_entry] conjunct given, as the driver's parts
+   (YD1g, the hand-off lemmas, the arms) are stated now; their section arguments are found by [eassumption]. *)
+Theorem tfib_drv_main : forall (sp : word) (rdraw : EntryDraw) (brk mbase : word) (inp : ProcInput) (h : nat) (ch : acs)
+(E : env) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model) (SINV : env -> (word -> option byte) -> Prop),
 valid_sp sp -> valid_brk TSEGS brk -> entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) inp ->
 YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
-HS_tfib h = Some ch ->
-cs_ok TSEGS TFIB YA02.LIMIT (YA02.TOP sp)
-(YA02.SINV0 TPH sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-(YA02.argH0 TPH sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model ->
-(forall n, (n < NX0G)%nat -> ev E n = ev (YA02.E0 TPH sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) n) ->
-(forall a, YA02.argH0 TPH sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) E a = true ->
-FULL a = wrap_mem TPH sp (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) rdraw a) ->
+HS_tfib_r (rseq_z (kb_rseq (in_kernel inp))) h = Some ch ->
+(forall E' M, SINV E' M -> uE E' e_sp0 = YA02.TOP sp + 8388608) ->
+cs_ok TSEGS TFIB YA02.LIMIT (YA02.TOP sp) SINV
+(YA02.argH0 sp rdraw (in_argv inp) (in_envp inp) (in_image_fs inp) (in_stdin inp) (in_uid inp) (in_gid inp) (in_hwcap inp)
+  (in_groups inp) (in_net inp) (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp) (in_kernel inp)
+  (in_execfn inp) (in_sigpipe_default inp)) (in_fs inp) E ch R FULL model ->
+(forall n, (n < NX0G)%nat -> ev E n = ev (YA02.E0 sp rdraw brk (in_argv inp) (in_envp inp) (in_image_fs inp) (in_stdin inp)
+  (in_uid inp) (in_gid inp) (in_hwcap inp) (in_groups inp) (in_net inp) (in_nofile inp) (in_sigmask inp) (in_urandom inp)
+  (in_tmp inp) (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp)) n) ->
+(forall a, YA02.argH0 sp rdraw (in_argv inp) (in_envp inp) (in_image_fs inp) (in_stdin inp) (in_uid inp) (in_gid inp) (in_hwcap inp)
+  (in_groups inp) (in_net inp) (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp) (in_kernel inp)
+  (in_execfn inp) (in_sigpipe_default inp) E a = true ->
+FULL a = wrap_mem inp mbase TPH (Z_to_bv 64 (Z.of_N AsanUbsan.M.init_pc)) sp rdraw a) ->
 srealizes TSEGS (cfg_of TSEGS R (pc ch) FULL model) (CLOSEDX inp).
 Proof.
-intros sp rdraw brk inp h ch E R FULL model Hsp Hbrk Hfit (Hva & Hve & Hvfs & _) Hceil Hch HC HE HM.
-pose proof (tfib_main_entry sp rdraw brk inp Hsp Hva Hve Hfit h ch E R FULL model Hch HC HE HM (sliver_allowed sp rdraw brk inp Hsp Hva Hve Hfit h ch E R FULL model Hch HC Hceil)    ) as (Hpc & HST & HAI & Hfs & Hfds & _).
+intros sp rdraw brk mbase inp h ch E R FULL model SINV Hsp Hbrk Hfit Hinp Hlau Hceil Hch SP0 HC HE HM.
+pose proof Hinp as (Hva & Hve & Hvfs & _ & _ & _ & _ & _ & _ & _ & _ & _ & Hvl & _).
+assert (SLA : forall a, sliverb sp a = true -> page_allowedb (allowA TFIB E ch) (page_base a) = true)
+  by (intros a Ha; eapply sliver_allowed; eassumption).
+edestruct tfib_main_entry as (Hpc & HST & HAI & Hfs & Hfds & _); try eassumption.
+(* The hand-off model's channel reader, which [fdchan] asks for at LPS 727298f3 beside the
+   descriptor: [cs_ok]'s [co_rdr], proved at the launch.  The arms carry it to their sites. *)
+assert (Hcr : m_channel_reader model = true) by (eapply co_rdr; exact HC).
 set (ly := YD1g.ly0 ch E model).
-assert (HAR : AR TSEGS B ly init_state (W1 sp rdraw inp Hsp Hva ch E model) FULL model) by (eapply (tfib_AR B HB); eassumption).
+assert (HAR : AR TSEGS B ly init_state (W1 sp rdraw inp Hsp Hva ch E model) FULL model) by (eapply tfib_AR; eassumption).
 assert (HTOP : YD1v.top_ok (bv_unsigned sp) ly) by (eapply tfib_top_ok; eassumption).
-assert (HFI : FINV ly (w_H (W1 sp rdraw inp Hsp Hva ch E model)) FULL) by exact (tfib_finv_handoff sp rdraw brk inp Hsp Hva h ch E R FULL model Hch HC).
+assert (HFI : FINV ly (w_H (W1 sp rdraw inp Hsp Hva ch E model)) FULL) by (eapply tfib_finv_handoff; eassumption).
 rewrite Hpc. change (cfg_of TSEGS R TFIB_MAIN FULL model) with (mkCfg (mkst R (Z_to_bv 64 TFIB_MAIN) FULL (seg_rom tfibsegs)) model).
 change TSEGS with tfibsegs in HST, HAI, HAR |- *. unfold CLOSEDX.
 destruct (Nat.eq_dec (length (in_argv inp)) 2) as [Hlen|Hlen].
@@ -120,14 +137,13 @@ destruct (Nat.eq_dec (length (in_argv inp)) 2) as [Hlen|Hlen].
 destruct Hargv as (a0 & p & Hargv).
 destruct (HST true ltac:(unfold two_ok; rewrite Hargv; cbn; lia)) as [HS HR].
 replace (CLOSEDX_args (in_argv inp) (in_fs inp)) with (CLOSEDX_args [a0; p] (in_fs inp)) by (rewrite Hargv; reflexivity).
-exact (tfib_arm_argv2 B HB ARL HCO HFILE HDIR sp inp (xwE E R) (xdE inp)
+exact (tfib_arm_argv2 B HB ARL HCO HFILE HDIR sp brk mbase inp rdraw _ _
 (W1 sp rdraw inp Hsp Hva ch E model) (mkst R (Z_to_bv 64 TFIB_MAIN) FULL (seg_rom tfibsegs)) model ly a0 p
-Hargv Hsp Hva Hve Hfit Hvfs HS HR HAI HAR HTOP HFI Hfs Hfds).
+Hsp Hargv Hva Hve Hvl Hlau Hinp Hvfs HS HR HAI HAR HTOP HFI Hfs Hfds Hcr).
 - destruct (HST false I) as [HS HR].
 replace (CLOSEDX_args (in_argv inp) (in_fs inp)) with (diag (msg_usage (nth 0 (in_argv inp) [])) (in_fs inp)).
 2:{ clear -Hlen. unfold CLOSEDX_args. destruct (in_argv inp) as [|x [|y [|z r]]]; try reflexivity. cbn in Hlen. lia. }
-exact (tfib_usage B HB ARL xst est XFR ESTF FPU EXS sp inp (xwE E R) (xdE inp) (W1 sp rdraw inp Hsp Hva ch E model) (mkst R (Z_to_bv 64 TFIB_MAIN) FULL (seg_rom tfibsegs))
-model ly Hsp Hva Hve Hfit Hlen HS HR HAI HAR HTOP Hfs Hfds).
+eapply tfib_usage; eassumption.
 Qed.
 End c.
 End b.

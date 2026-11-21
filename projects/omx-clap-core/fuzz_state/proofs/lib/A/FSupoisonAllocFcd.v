@@ -27,6 +27,7 @@
      object, thread context, region info, free array, the chunk's extent, the image) and, for recycle_chunk, the
      shadow of the recycled chunk's user granules, which no live block meets. *)
 (* Modified by Theorem Labs, 2026-10: tfib_cdealloc_okU and tfib_rchunk_primU prove their leaves' raw frame from the runs' frames and the donors' window lemmas: raw memory frame re-exported for the ARU lift of route 1. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -392,7 +393,7 @@ Qed.
 (*PART2*)
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* 4. The two walks (the donor arms lib/A/AFg0.v:290 and lib/A/AFg7.v:294, with the U steps above).                  *)
+(* 4. The two walks (the donor arms lib/A/AFg0.v:291 and lib/A/AFg7.v:294, with the U steps above).                  *)
 (* ---------------------------------------------------------------------------------------------------------------- *)
 Theorem tfib_cdealloc_okU : forall B, AR_laws tfibsegs B -> TfibSyms B -> forall ly X c off UP W regs mem md,
   FK.cd_preU B ly X c off UP W regs mem md -> ly_tsd ly = TFIB_TSD ->

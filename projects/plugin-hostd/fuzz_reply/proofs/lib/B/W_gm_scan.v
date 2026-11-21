@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30: the ROOM round (an internal work row), A's re-fit git diff f6bfd4d6ab5 f6038f3d481
-   of lib/A/W_gm_scan.v applied by three-way merge onto lane W4's ARx text (a working branch 0d0105eaf4d) at
+(* Modified by Theorem Labs, 2026-10-30: the ROOM round (an internal work row), A's re-fit git diff
+   of lib/A/W_gm_scan.v applied by three-way merge onto lane W4's ARx text (a working branch) at
    B's names: pb_gm_scan_x takes the room parameter RP and the three room premises (kr, rp_RM, cnt_ok_pk) and passes
    them to GMFOUND_X and the loop's induction hypothesis. The AR statements (Section r) are W4's, unchanged. *)
 (* Modified by Theorem Labs, 2026-10: the IMAGE B (asan-ubsan) scan loop of fuzz_reply's gesture_model, lane W4: the
@@ -29,6 +29,7 @@
    pb_gm_scan, statement unchanged, at ARx := W_journal_x.ARi0 with B's old list (LX0 in place of LAWS, and
    GMFOUND : gm_found_at B MT MMAX G (BASE + A_gm_found), lib/B/W_gm_cut.v:136, frozen). *)
 (* Modified by Theorem Labs, 2026-10: the meter and room texts at the KF-COUNT kit's gm_cost H ln (statements only) *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

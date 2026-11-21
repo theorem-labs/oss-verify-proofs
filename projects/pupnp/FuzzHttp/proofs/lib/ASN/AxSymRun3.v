@@ -1,23 +1,20 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's input, mmap base and entry draw). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.ASN Require Import PropExec CatExec CatSim SeqExec StoreOk SymExec.
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.ASN Require Import AxSymExec3 AxSymExec3Sound.
-
 Unset Lia Cache.
 Local Instance asanreflect_fx : PropExec.FPState := PropExec.fx0.
 Import ListNotations.
 Open Scope bv_scope.
 Import AX2. Import AX2S.
-
 Definition vals_ev (vals : list word) : nat -> word :=
   fun n => nth n vals (Z_to_bv 64 0).
-
 Fixpoint expr_vars_lt (b : nat) (e : expr) : bool :=
   match e with
   | ELit _ => true
@@ -26,12 +23,9 @@ Fixpoint expr_vars_lt (b : nat) (e : expr) : bool :=
   | EExt _ _ _ x => expr_vars_lt b x
   | EBlob _ _ _ _ => true
   end.
-
 Definition saddr_vars_lt (b : nat) (a : saddr) : bool := expr_vars_lt b (a_base a).
-
 Fixpoint sr_vars_lt (b : nat) (sr : list expr) : bool :=
   match sr with [] => true | e :: r => expr_vars_lt b e && sr_vars_lt b r end.
-
 Definition kentry_vars_lt (b : nat) (K : kentry) : bool :=
   match K with
   | KWord a _ v => saddr_vars_lt b a && expr_vars_lt b v
@@ -45,19 +39,15 @@ Definition kentry_vars_lt (b : nat) (K : kentry) : bool :=
   | KFill a n _ => saddr_vars_lt b a && expr_vars_lt b n
   | KUnk a n => saddr_vars_lt b a && expr_vars_lt b n
   end.
-
 Fixpoint kn_vars_lt (b : nat) (kn : list kentry) : bool :=
   match kn with [] => true | K :: r => kentry_vars_lt b K && kn_vars_lt b r end.
-
 Fixpoint log_vars_lt (b : nat) (log : list sentry) : bool :=
   match log with
   | [] => true
   | SE a _ v :: r => saddr_vars_lt b a && expr_vars_lt b v && log_vars_lt b r
   end.
-
 Definition env_agree (b : nat) (E E' : env) : Prop :=
   (forall n, (n < b)%nat -> ev E n = ev E' n) /\ eb E = eb E'.
-
 Lemma edenot_agree : forall b E E' e,
   env_agree b E E' -> expr_vars_lt b e = true -> edenot E e = edenot E' e.
 Proof.
@@ -71,13 +61,11 @@ Proof.
   - apply Nat.ltb_lt in H. apply Hv. exact H.
   - rewrite Hb. reflexivity.
 Qed.
-
 Lemma adenot_agree : forall b E E' a,
   env_agree b E E' -> saddr_vars_lt b a = true -> adenot E a = adenot E' a.
 Proof.
   intros b E E' a Ha H. unfold adenot. rewrite (edenot_agree b E E' _ Ha H). reflexivity.
 Qed.
-
 Lemma regs_ok_agree : forall b E E' sr regs,
   env_agree b E E' -> sr_vars_lt b sr = true -> regs_ok E sr regs -> regs_ok E' sr regs.
 Proof.
@@ -90,7 +78,6 @@ Proof.
       destruct i; [exact He | apply IH; exact Ht]. }
   apply (edenot_agree b); [exact Ha | apply Hnth].
 Qed.
-
 Lemma mem_denot_agree : forall b E E' base log,
   env_agree b E E' -> log_vars_lt b log = true -> mem_denot E base log = mem_denot E' base log.
 Proof.
@@ -100,14 +87,12 @@ Proof.
     rewrite IH by exact H3. rewrite (adenot_agree b E E' a Ha H1), (edenot_agree b E E' v Ha H2).
     reflexivity.
 Qed.
-
 Lemma flat_agree : forall b E E' a n,
   env_agree b E E' -> saddr_vars_lt b a = true -> flat E a n <-> flat E' a n.
 Proof.
   intros b E E' a n Ha H. unfold flat, estart.
   rewrite (edenot_agree b E E' (a_base a) Ha H). tauto.
 Qed.
-
 Lemma log_flat_agree : forall b E E' log,
   env_agree b E E' -> log_vars_lt b log = true -> log_flat E log -> log_flat E' log.
 Proof.
@@ -118,7 +103,6 @@ Proof.
     + apply (flat_agree b E E' a _ Ha H1). exact Hf.
     + apply IH; assumption.
 Qed.
-
 Lemma know_ok_agree : forall segs b E E' base kn,
   env_agree b E E' -> kn_vars_lt b kn = true -> know_ok segs E base kn -> know_ok segs E' base kn.
 Proof.
@@ -161,17 +145,14 @@ Proof.
       destruct Hk1 as [A B]. split; [|exact B].
       unfold flat, estart in *. rewrite <- (edenot_agree b E E' (a_base a) (conj Hv Hb) H1). exact A.
 Qed.
-
 Lemma vals_app_agree : forall vals extra ebs,
   env_agree (length vals) (Env (vals_ev vals) ebs) (Env (vals_ev (vals ++ extra)) ebs).
 Proof.
   intros vals extra ebs. split; [|reflexivity]. intros n Hn. cbn [ev]. unfold vals_ev.
   rewrite app_nth1 by exact Hn. reflexivity.
 Qed.
-
 Section Run.
 Variable segs : list Segment.
-
 #[using="Type"] Lemma st_ok_entry : forall E base rom pc sr kn nx regs,
   regs_ok E sr regs -> know_ok segs E base kn ->
   st_ok segs E base rom (SS pc sr [] kn nx) (mkst regs (Z_to_bv 64 pc) base rom).
@@ -179,7 +160,6 @@ Proof.
   intros E base rom pc sr kn nx regs HR HK. exists regs. cbn [s_pc s_log s_regs s_know mem_denot].
   split; [reflexivity|]. split; [exact HR|]. split; [exact I | exact HK].
 Qed.
-
 #[using="Type"] Theorem run_sound : forall fuel stops scr pc sr kn nx ss' scs scr' E base rom regs,
   sym_exec segs fuel true stops scr (SS pc sr [] kn nx) [] = (ss', scs, scr') ->
   regs_ok E sr regs -> know_ok segs E base kn ->
@@ -192,10 +172,8 @@ Proof.
   intros fuel stops scr pc sr kn nx ss' scs scr' E base rom regs Hex HR HK Hsc.
   eapply sym_exec_ex; [exact Hex | exact Hsc | apply st_ok_entry; assumption].
 Qed.
-
 #[using="Type"] Lemma eagree_env_agree : forall b E E', eagree b E E' <-> env_agree b E E'.
 Proof. intros b E E'. unfold eagree, env_agree. tauto. Qed.
-
 #[using="Type"] Lemma st_okX_entry : forall E base rom pc sr kn nx regs,
   regs_ok E sr regs -> know_ok segs E base kn ->
   sr_vars_lt nx sr = true -> kn_vars_lt nx kn = true ->
@@ -206,7 +184,6 @@ Proof.
   - eapply regs_ok_agree; [exact Ha | exact Hsr | exact HR].
   - eapply know_ok_agree; [exact Ha | exact Hkn | exact HK].
 Qed.
-
 #[using="Type"] Theorem runTX_sound : forall t K fuel stops pc sr kn nx E base rom regs,
   itab_sound segs t ->
   regs_ok E sr regs -> know_ok segs E base kn ->
@@ -229,16 +206,13 @@ Proof.
   split; [exact HR'|]. split; [exact Hlf|]. split; [exact HK'|]. split; [exact Hms|].
   intros E'' Ha''. apply HALL. apply eagree_env_agree. exact Ha''.
 Qed.
-
 #[using="Type"] Theorem carry_after : forall E base log kn hints kn' scs hs',
   carry log kn hints = (kn', scs, hs') ->
   log_flat E log -> know_ok segs E base kn -> scs_denot segs base E scs ->
   know_ok segs E (mem_denot E base log) kn'.
 Proof. intros. eapply carry_sound; eauto. Qed.
-
 #[using="Type"] Lemma reg_val : forall E sr R (r : reg), regs_ok E sr R -> getr R r = edenot E (sr_get sr r).
 Proof. intros E sr R r HR. apply HR. Qed.
-
 #[using="Type"] Lemma regs_ok_set : forall E sr R (rd : reg) v e,
   regs_ok E sr R -> rd <> 0%bv -> edenot E e = v ->
   regs_ok E (sr_upd sr (ridx rd) e) (regupd R rd v).
@@ -249,15 +223,12 @@ Proof.
   { unfold bv_eqb. apply Z.eqb_neq. intros Hc. apply Hrd. apply bv_eq. exact Hc. }
   rewrite Hb in H. exact H.
 Qed.
-
 End Run.
-
 Definition sr_init : list expr :=
   [ELit 0; ELit 0; EVar 0; ELit 0; ELit 0; ELit 0; ELit 0; ELit 0;
    ELit 0; ELit 0; ELit 0; ELit 0; ELit 0; ELit 0; ELit 0; ELit 0;
    ELit 0; ELit 0; ELit 0; ELit 0; ELit 0; ELit 0; ELit 0; ELit 0;
    ELit 0; ELit 0; ELit 0; ELit 0; ELit 0; ELit 0; ELit 0; ELit 0].
-
 Lemma regs_ok_init : forall (sp : word) rest ebs,
   regs_ok (Env (vals_ev (sp :: rest)) ebs) sr_init
           (regupd (regupd bvmap_empty 10 (Z_to_bv 64 0)) 2 sp).
@@ -271,13 +242,11 @@ Proof.
     do 32 (destruct n as [|n]; [vm_compute in Hr0 |- *; first [discriminate | reflexivity] |]).
     exfalso. lia.
 Qed.
-
 Definition stk_ok (segs : list Segment) (mem : word -> option byte) (sp : word) (K : Z) : Prop :=
   forall (a : word) (n : nat),
     (bv_unsigned sp - K <= bv_unsigned a)%Z ->
     (bv_unsigned a + Z.of_nat n <= bv_unsigned sp)%Z ->
     store_ok segs mem a n = true.
-
 Lemma stk_ok_vaddi : forall segs mem sp K off n,
   stk_ok segs mem sp K -> (K <= bv_unsigned sp)%Z ->
   (- K <= off)%Z -> (off + Z.of_nat n <= 0)%Z ->
@@ -286,7 +255,6 @@ Proof.
   intros segs mem sp K off n Hs HK H1 H2. pose proof (u64_range sp).
   apply Hs; unfold v_addi; rewrite u_small by lia; lia.
 Qed.
-
 Lemma stk_ok_lit : forall segs mem sp K z n,
   stk_ok segs mem sp K ->
   (bv_unsigned sp - K <= z)%Z -> (z + Z.of_nat n <= bv_unsigned sp)%Z -> (0 <= z)%Z ->
@@ -295,24 +263,25 @@ Proof.
   intros segs mem sp K z n Hs H1 H2 H3. pose proof (u64_range sp).
   apply Hs; rewrite u_small by lia; lia.
 Qed.
-
 Lemma stk_ok_grows : forall segs mem mem' sp K,
   stk_ok segs mem sp K -> mem_grows mem mem' -> stk_ok segs mem' sp K.
 Proof.
   intros segs mem mem' sp K Hs Hg a n H1 H2. eapply store_ok_mono; [exact Hg | apply Hs; assumption].
 Qed.
-
 Lemma stk_ok_mem_denot : forall segs E mem log sp K,
   stk_ok segs mem sp K -> stk_ok segs (mem_denot E mem log) sp K.
 Proof. intros. eapply stk_ok_grows; [eassumption | apply mem_denot_grows]. Qed.
-
-Lemma stk_ok_init : forall segs ph sp argv envp uid hw (rdraw : EntryDraw),
-  stk_ok segs (wrap_mem ph sp argv envp uid hw rdraw) sp stack_max_size.
+Lemma stk_ok_init : forall segs inp mbase ph entry (sp brk0 : word)
+    (rdraw : EntryDraw),
+  valid_launch inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) inp ->
+  stk_ok segs (wrap_mem inp mbase ph entry sp rdraw) sp stack_window_depth.
 Proof.
-  intros segs ph sp argv envp uid hw rdraw a n H1 H2.
-  apply store_ok_wrap_window; assumption.
+  intros segs inp mbase ph entry sp brk0 rdraw Hvl Hlau a n H1 H2.
+  unfold stack_window_depth in H1.
+  apply (store_ok_wrap_window_valid segs inp mbase ph entry sp brk0 a n rdraw
+           Hvl Hlau); lia.
 Qed.
-
 Lemma kwr_of_stk_ok : forall segs E mem (e : expr) (sp : word) K,
   edenot E e = sp -> stk_ok segs mem sp K -> (0 <= K <= bv_unsigned sp)%Z ->
   kentry_ok segs E mem (KWr (SA e (- K)) (ELit K)).
@@ -321,7 +290,6 @@ Proof.
   pose proof (u64_range sp). rewrite u_small by lia. split; [lia|].
   intros d m Hd Hm. apply Hs; rewrite u_small by lia; lia.
 Qed.
-
 Lemma kword_intro : forall segs E mem (e : expr) (a : word) off w (v : expr) (x : word),
   edenot E e = a -> edenot E v = x -> (1 <= w)%nat -> (w <= 8)%nat ->
   (0 <= bv_unsigned a + off)%Z -> (bv_unsigned a + off + Z.of_nat w <= 2 ^ 64)%Z ->
@@ -331,21 +299,17 @@ Proof.
   intros segs E mem e a off w v x He Hv Hw1 Hw H1 H2 Hr. cbn [kentry_ok]. unfold flat, estart, adenot, v_addi.
   cbn [a_base a_off]. rewrite He, Hv. split; [exact Hw|]. split; [lia | exact Hr].
 Qed.
-
 Lemma krange_intro : forall segs E mem (e : expr) lo hi,
   (lo <= bv_unsigned (edenot E e) <= hi)%Z -> kentry_ok segs E mem (KRange e lo hi).
 Proof. intros. cbn [kentry_ok]. lia. Qed.
-
 Lemma kalign_intro : forall segs E mem (e : expr) m,
   (0 < m)%Z -> (bv_unsigned (edenot E e) mod m = 0)%Z -> kentry_ok segs E mem (KAlign e m).
 Proof. intros. cbn [kentry_ok]. auto. Qed.
-
 Lemma kimg_intro : forall segs E mem lo hi,
   (0 <= lo)%Z -> (hi <= 2 ^ 64)%Z ->
   (forall i, (lo <= i < hi)%Z -> mem (Z_to_bv 64 i) = None) ->
   kentry_ok segs E mem (KImg lo hi).
 Proof. intros. cbn [kentry_ok]. auto. Qed.
-
 Lemma kzero_intro : forall segs E mem (e : expr) (a : word) off (n : expr) len,
   edenot E e = a -> bv_unsigned (edenot E n) = len ->
   (0 <= bv_unsigned a + off)%Z -> (0 < len)%Z -> (bv_unsigned a + off + len <= 2 ^ 64)%Z ->
@@ -355,7 +319,6 @@ Proof.
   intros segs E mem e a off n len He Hn H1 H2 H3 Hz. cbn [kentry_ok]. unfold flat, elenZ, estart.
   cbn [a_base a_off]. rewrite He, Hn. split; [lia | exact Hz].
 Qed.
-
 Lemma kblob_intro : forall segs E mem (e : expr) (a : word) off (n : expr) k bs,
   edenot E e = a -> eb E k = bs -> bv_unsigned (edenot E n) = Z.of_nat (length bs) ->
   (0 <= bv_unsigned a + off)%Z -> (bv_unsigned a + off < 2 ^ 64)%Z ->
@@ -367,20 +330,26 @@ Proof.
   intros segs E mem e a off n k bs He Hb Hn H1 H1' H2 Hz. cbn [kentry_ok]. unfold flat, elenZ, estart.
   cbn [a_base a_off]. rewrite He, Hn, Hb. split; [lia|]. split; [reflexivity | exact Hz].
 Qed.
-
-Lemma wrap_mem_none_low : forall ph sp argv envp uid hw (rdraw : EntryDraw) (i : Z),
+Lemma wrap_mem_none_low :
+  forall v inp mbase ph entry (sp brk0 : word) (rdraw : EntryDraw) (i : Z),
+  entry_launch_ok_va v (mkEntry sp brk0 mbase rdraw) inp ->
   (0 <= i)%Z -> (i < bv_unsigned sp - stack_max_size)%Z ->
-  wrap_mem ph sp argv envp uid hw rdraw (Z_to_bv 64 i) = None.
+  wrap_mem inp mbase ph entry sp rdraw (Z_to_bv 64 i) = None.
 Proof.
-  intros ph sp argv envp uid hw rdraw i H0 Hi. unfold wrap_mem.
+  intros v inp mbase ph entry sp brk0 rdraw i Hlau H0 Hi. unfold wrap_mem.
   pose proof (u64_range sp) as Hsp.
-  assert (Hu : bv_unsigned (Z_to_bv 64 i) = i) by (apply u_small; unfold stack_max_size in Hi; lia).
+  pose proof (launch_sp_le_ed_top v inp mbase sp brk0 rdraw Hlau) as Htop.
+  pose proof (Z.le_max_l (bv_unsigned (ed_top rdraw) - stack_max_size)
+                (bv_unsigned mbase + stack_guard_gap_bytes (in_kernel inp))) as Hmax.
+  assert (Hu : bv_unsigned (Z_to_bv 64 i) = i)
+    by (apply u_small; unfold stack_max_size in Hi; lia).
   unfold stack_to_mem. rewrite Hu.
-  replace (Z.leb (bv_unsigned sp) i) with false by (symmetry; apply Z.leb_gt; unfold stack_max_size in Hi; lia).
-  replace (Z.leb (bv_unsigned sp - stack_max_size) i) with false by (symmetry; apply Z.leb_gt; lia).
+  replace (Z.leb (bv_unsigned sp) i) with false
+    by (symmetry; apply Z.leb_gt; unfold stack_max_size in Hi; lia).
+  replace (Z.leb (stack_window_lo (in_kernel inp) mbase rdraw) i) with false
+    by (symmetry; apply Z.leb_gt; unfold stack_window_lo in *; lia).
   reflexivity.
 Qed.
-
 Lemma ext_val_zx_id : forall n (v : word),
   (bv_unsigned v < 2 ^ (8 * Z.of_nat n))%Z -> ext_val false 0 n v = v.
 Proof.
@@ -388,7 +357,6 @@ Proof.
   change (2 ^ (8 * Z.of_nat 0))%Z with 1%Z. rewrite Z.div_1_r, Z.mod_small by lia.
   apply Z_to_bv_bv_unsigned.
 Qed.
-
 Lemma ext_val_sx_id : forall n (v : word),
   (1 <= n)%nat -> (bv_unsigned v < 2 ^ (8 * Z.of_nat n - 1))%Z -> ext_val true 0 n v = v.
 Proof.
@@ -403,49 +371,42 @@ Proof.
     with (bv_unsigned v) by lia.
   apply Z_to_bv_bv_unsigned.
 Qed.
-
 Lemma branch_eq_lit : forall (v : word) z,
   (0 <= z < 2 ^ 64)%Z ->
   branch_taken BC_EQ v (Z_to_bv 64 z) = Z.eqb (bv_unsigned v) z.
 Proof.
   intros v z Hz. cbn [branch_taken]. unfold bv_eqb. rewrite u_small by lia. reflexivity.
 Qed.
-
 Lemma branch_ne_lit : forall (v : word) z,
   (0 <= z < 2 ^ 64)%Z ->
   branch_taken BC_NE v (Z_to_bv 64 z) = negb (Z.eqb (bv_unsigned v) z).
 Proof.
   intros v z Hz. cbn [branch_taken]. unfold bv_eqb. rewrite u_small by lia. reflexivity.
 Qed.
-
 Lemma branch_ltu_lit_r : forall (v : word) z,
   (0 <= z < 2 ^ 64)%Z ->
   branch_taken BC_LTU v (Z_to_bv 64 z) = Z.ltb (bv_unsigned v) z.
 Proof.
   intros v z Hz. cbn [branch_taken]. unfold bv_ltu. rewrite u_small by lia. reflexivity.
 Qed.
-
 Lemma branch_ltu_lit_l : forall (v : word) z,
   (0 <= z < 2 ^ 64)%Z ->
   branch_taken BC_LTU (Z_to_bv 64 z) v = Z.ltb z (bv_unsigned v).
 Proof.
   intros v z Hz. cbn [branch_taken]. unfold bv_ltu. rewrite u_small by lia. reflexivity.
 Qed.
-
 Lemma branch_geu_lit_r : forall (v : word) z,
   (0 <= z < 2 ^ 64)%Z ->
   branch_taken BC_GEU v (Z_to_bv 64 z) = negb (Z.ltb (bv_unsigned v) z).
 Proof.
   intros v z Hz. cbn [branch_taken]. unfold bv_ltu. rewrite u_small by lia. reflexivity.
 Qed.
-
 Lemma branch_geu_lit_l : forall (v : word) z,
   (0 <= z < 2 ^ 64)%Z ->
   branch_taken BC_GEU (Z_to_bv 64 z) v = negb (Z.ltb z (bv_unsigned v)).
 Proof.
   intros v z Hz. cbn [branch_taken]. unfold bv_ltu. rewrite u_small by lia. reflexivity.
 Qed.
-
 Ltac split_scs :=
   lazymatch goal with
   | |- scs_denot _ _ _ [] => constructor
@@ -453,7 +414,6 @@ Ltac split_scs :=
   | |- Forall _ [] => constructor
   | |- Forall _ (_ :: _) => constructor; [| split_scs]
   end.
-
 Ltac ground_mod :=
   repeat match goal with
   | |- context [ (?a mod ?b)%Z ] =>
@@ -465,12 +425,10 @@ Ltac ground_mod :=
              end
       end
   end.
-
 Ltac sc_unfold :=
   unfold sc_denot, flat, estart, elenZ, adenot;
   cbn [a_base a_off edenot ev eb vals_ev nth];
   rewrite ?Z_to_bv_unsigned, ?bv_wrap64_mod; ground_mod.
-
 Ltac lit_u :=
   repeat match goal with
   | |- context [bv_unsigned (Z_to_bv 64 ?z)] =>
@@ -479,7 +437,6 @@ Ltac lit_u :=
       | _ => rewrite (u_small z) by (cbn; lia)
       end
   end.
-
 Ltac sc_store :=
   match goal with
   | Hs : stk_ok _ _ _ _ |- store_ok _ _ (v_addi _ _) _ = true =>
@@ -487,7 +444,6 @@ Ltac sc_store :=
   | Hs : stk_ok _ _ _ _ |- store_ok _ _ (Z_to_bv 64 _) _ = true =>
       apply (stk_ok_lit _ _ _ _ _ _ Hs); lia
   end.
-
 Ltac sc_auto extra :=
   sc_unfold;
   first [ lia
@@ -495,7 +451,6 @@ Ltac sc_auto extra :=
         | extra
         | match goal with |- _ /\ _ => repeat split; first [lia | sc_store | extra] end
         | idtac ].
-
 Ltac sym_run_tac segs fuel stops scr nx HR HK R' HR' Hlf Hms extra :=
   lazymatch type of HR with
   | regs_ok ?E ?sr ?regs =>

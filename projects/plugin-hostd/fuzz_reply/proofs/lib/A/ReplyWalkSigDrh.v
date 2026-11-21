@@ -1,6 +1,6 @@
 (* Reply's Deallocate walk under the re-hide at image A (fuzz_reply.asan), at the cf layer's round 3 part 3: an instance
    of CfF2a's record YGcfInstFreeSig.WalkSigDrh at the free top's instance, in the form the primed top
-   YGcfInstFreeTopRh.adealloc_realizes_raw_cf_em_m_rh_cf takes it (a cgif working branch 79a2b02e47fd,
+   YGcfInstFreeTopRh.adealloc_realizes_raw_cf_em_m_rh_cf takes it (a cgif working branch,
    YGcfInstFreeTopRh.v:247-252): AFREE_CF premise #12, consumed by the primed ReplyDeallocInst.
    rule 24: no function proved (kind: instance of a record of walk tops from the unit's arm theorems).
 

@@ -1,6 +1,6 @@
 (* The shared vocabulary of the walk of cross_check (image A fuzz_segconf.asan 0x89218, 724 bytes, 181
    instructions, real frame 128 bytes, no side-stack frame of its own), in the form of
-   plugin-hostd/fuzz_command's lib/A/Prog/chain_words_d.v at origin/ossv/recipes 501c0d516c69 (the context
+   plugin-hostd/fuzz_command's lib/A/Prog/chain_words_d.v (the context
    record, the entry facts, the post and the "from a cut point" predicates), with the cut points stated over the
    machine state, not over a symbolic state: each segment file builds its own symbolic state.
 
@@ -166,7 +166,7 @@ Record cc_un (B : asyms) (lit : list Z -> Z) (gotw guard STK_REF : Z) (v : ccx) 
   un_heap : sa_heap B ly3 S3 (x_c v) seg_spec.SEG_C_SIZE }.
 (* pass i of the loop, at its head 0x892ac. The ASan loop is rotated: the head is reached only with i < n, and
    n is reloaded from c->n at the latch (0x893c0), so the invariant carries the record after i passes.
-   Registers (the unit's internal record, commit dfb49d6ad789, path records/segp/plans/
+   Registers (the unit's internal record, path records/segp/plans/
    PLAN-small-asan.md section 4.1): s0 = c, s1 = &c->n, s2 = F_xmodel, s3 = the shadow base,
    s9 = 356 i, s10 = i, s11 = the shadow byte address of &c->n; the two spills sp+8 = ((c + RC_N) & 7) + 3 = 3
    (c is 16-aligned and RC_N is a multiple of 8) and sp+0x10 = F_xbox. *)

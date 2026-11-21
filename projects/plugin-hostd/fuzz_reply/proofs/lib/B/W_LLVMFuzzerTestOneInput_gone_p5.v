@@ -3,14 +3,15 @@
 (* Modified by Theorem Labs, 2026-10: ARM_gone of the ASan+UBSan walk of fuzz_reply's LLVMFuzzerTestOneInput on image B,
    PHASE 5: the table-order loop of fuzz_reply.c:646-653, fuzz_reply.asan-ubsan 0x84b78 (GT0) to check_shape_done's
    call at 0x84c84 (GCSD), gp5_t0_csd at the end of this file.  A PORT of image A's
-   lib/A/W_LLVMFuzzerTestOneInput_gone_p5.v (a working branch 32b23a20c3e) gp5_inner / gp5_outer /
+   lib/A/W_LLVMFuzzerTestOneInput_gone_p5.v (a working branch) gp5_inner / gp5_outer /
    gp5_t0_csd, over part a (W_LLVMFuzzerTestOneInput_gone_p5a.v: the cut points P5OH / P5IH / P5T / P5C / P5OT and the
    walks gp5_t0 / gp5_oh / gp5_ih / gp5_it / gp5_ot) and part b (W_LLVMFuzzerTestOneInput_gone_p5b.v: the calls gp5_c8 /
-   gp5_c3), on the base lib/B/W_LLVMFuzzerTestOneInput_gone_base.v (a working branch 85b530db754).
+   gp5_c3), on the base lib/B/W_LLVMFuzzerTestOneInput_gone_base.v (a working branch).
    Section hypotheses (each the base's or the cut's text): GN_CNL, GN_CSHE (the kit's cnl_spec / cshe_spec per slot),
    GN_RI_step, GN_RI_end (the model's obligations), GN_HGs, GN_HGcells, GN_ROM_PIN, GN_HZS, GN_CELLS_ERRNO,
    GN_ERRNO_LOW (the instance's facts), ameter_laws, the cut's glob_wr_law (:316) and errno_law (:318).
    check_no_loss's readable-stack premise comes from the cut's STKR (base gn_stkr), not a hypothesis. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

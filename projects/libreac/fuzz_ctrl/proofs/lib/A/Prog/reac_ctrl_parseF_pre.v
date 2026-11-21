@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 3501 of its 3539 lines of code are new or changed and 210 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_ctrl_parseF.v, with its module paths, module names, addresses and numbers changed; 264 of its 382 lines of code are new or changed and 3421 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_ctrl_parse, image A (asan, fuzz_ctrl v1.9.0): the stretch [entry 0x83578 .. the jal __asan_stack_malloc_1
    at 0x835e8] of the footprint run of reac_ctrl_parseF.v, ending at the entry of __asan_stack_malloc_1 (PreCall of
    reac_ctrl_parseF_bnd.v). Route (a): the proof is the script of reac_ctrl_parseF.v's entry (:1550-1579, then the
@@ -29,7 +30,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import reac_ctrl_pars
 Local Ltac OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.StepF.acc_hint ::= acc_hintF.
 Local Ltac OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.StepF.mem_after_store_opt ::= rcpF_store_opt.
 
-(* reac_ctrl_parseF.v:373-383, the store tracking of the rd_mono facts, here as this file's own. *)
+(* reac_ctrl_parseF.v:374-384, the store tracking of the rd_mono facts, here as this file's own. *)
 Local Ltac footprint_after_store segs m a bs ::=
   repeat match goal with
   | MU : munch ?Wq ?mq m |- _ =>
@@ -244,7 +245,7 @@ End PreF.
    (the region lemmas srw_* / frame_in_R; the post's forall-P form). Section PreF above keeps its code byte-identical.
    rule 24: no function proved beyond reac_ctrl_parseF.v's own run (proof-index reac_ctrl_parse 2026-10-29
    00:3xZ, exit 0: 12 named files + 8 lemma rows, plain / ubsan builds of other units; checker a Theorem Labs lane: CONFIRM). ==== *)
-(* This delivery then edited comment text only: the code is unchanged from release c5e779efe8c, the comments are not. *)
+(* This delivery then edited comment text only: the code is unchanged from release, the comments are not. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A Require Import ShadowRwOn.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Import asan_memset_cF_on
   asan_memcpy_cF_on bcmp_wrap_c_on.

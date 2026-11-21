@@ -3,15 +3,16 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the ASan walk of check_refusal (plugin-hostd/fuzz_command, 0x87f08, 52 instructions), in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACbk.v (pb_wcb: entry, branch, return) and A/ACh2.v:122-290 (a program call through cl_callS and back). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_refusal.v, with its module paths and module names changed; 430 of its 471 lines of code are new or changed and 275 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan image A (fuzz_segconf.asan, pin sha256 48c5355bdacb...; unstripped twin
    4362701197e4...): the walk of reac_box_catalogue_by_token (catalogue.c:47-50; entry 0x8a148 = BASE +
    AF_reac_box_catalogue_by_token = 0x84d34 + 0x5414, 64 bytes, 16 instructions, a 16-byte real-stack frame, no
    side-stack frame) against the image-A owner's reac_box_catalogue_by_token_contract (lib/A/Prog/
-   reac_box_catalogue_by_token_c.v, G2 FINAL 6f783602b5e3) at image A's numbers (lib/A/Prog/SegInstA.v), in
+   reac_box_catalogue_by_token_c.v, G2 FINAL) at image A's numbers (lib/A/Prog/SegInstA.v), in
    plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the entry, SRr of apost_base at the return, over
    `Context {PI : PAImg seg_listing}` of image A's listing).
-   Reuse: adapted from the image-B walk proofs/reac-pw/fuzz_segconf/lib/B/Prog/reac_box_catalogue_by_token.v at
-   commit 19a3e64ad91d (the same 16 words but for the two pc-relative ones): image A's module
+   Reuse: adapted from the image-B walk proofs/reac-pw/fuzz_segconf/lib/B/Prog/reac_box_catalogue_by_token.v
+    (the same 16 words but for the two pc-relative ones): image A's module
    paths, SegInstA's numbers, image A's strlen return offset, and the frame case of tk_loc_low by the image-A kit's
    frames_bounds. Every listing offset below is image A's (dis/reac_box_catalogue_by_token.fuzz_segconf.asan.s and
    SegList.v :5430-:5445).

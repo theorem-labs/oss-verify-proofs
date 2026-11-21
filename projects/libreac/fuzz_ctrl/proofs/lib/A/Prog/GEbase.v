@@ -46,7 +46,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A Require Export Img0 AsanRT AsanRTF
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Export PropExec MState Mem Exec Frame Cells Step.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require ExecF.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require Export RcAsanFP RcAsanFPLib asan_stack_malloc_c.
-(* The frozen PA layer's memory normalization (a Theorem Labs lane 57578a3ab32): a walk's real memory keeps read-only
+(* The frozen PA layer's memory normalization (a Theorem Labs lane): a walk's real memory keeps read-only
    bytes, so it has `ro_agree`, not `mem_inv`; a footprint run that takes `mem_inv` goes on `normalize rsegs m`. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A Require Export MemNorm MemNormTr.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A Require MemNormF.

@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumC.v, with its module paths and module names changed; 312 of its 359 lines of code are new or changed and 881 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset: the IMAGE-GENERIC concrete steps of round_trip_text's register-only code, over {L : ptable asym}
    {PL : PAListing L} {PA : PAImg L}. Lane RttFR1 (WalkRtt102 for the text owner).
-   WHY THIS FILE REPLACES Rtt102FR1KitA.v's STEPS. The B' R5 porter's B' port of this lane (the B' row R5 port at
-   d1f87944c9fe, Rtt102JalB.v) measured the defect: RttFR1's first steps took the slot's word and the decoded fields
+   WHY THIS FILE REPLACES Rtt102FR1KitA.v's STEPS. The B' R5 porter's B' port of this lane (the B' row R5 port,
+   Rtt102JalB.v) measured the defect: RttFR1's first steps took the slot's word and the decoded fields
    as EVARS and discharged `plookup pl_tpi k = Some (PW ?w)` / `decode_any (Z_to_bv 32 ?w) = Some (.., ?imm, 4)` by
    `vm_compute; reflexivity`. A vm_compute over a goal with evars cannot run on the bytecode VM; at B' it TIMES OUT,
    and at A' it was this lane's whole build cost. THE FIX, as the B' R5 porter did it for addi and jal: state each slot's
@@ -12,8 +13,8 @@
    goal, and read a call's / a relocated slot's facts off the LISTING'S OWN CERTIFICATE (YP0b.v pi_slot_check through
    YC1fP.v cert_slot) instead of recomputing them per image. rttb_jal_pcall / rttb_addi are the B' R5 porter's (B' row R5);
    the branch, auipc (PHi) and load (PLdHi) steps here are the same construction for the slots F needs, which no B'
-   row had a twin for. The step proofs themselves are H5RttS4.v :118-255 (the H2H5 walk head
-   1934271f1f40) through this lane's copy, at the checked word.
+   row had a twin for. The step proofs themselves are H5RttS4.v :118-255 (the H2H5 walk head)
+   through this lane's copy, at the checked word.
    A RELOCATED PAIR, GENERICALLY: `auipc rd, %hi(g)` then `l?u rd', off(rd)` is a PHi / PLdHi slot pair of the
    listing. PHi's certificate says the word is `auipc rd imm` with auipc_val pc imm = pa_val (A_HI j); PLdHi's says
    the word is a load of the asked size and sign with pa_val (A_HI j) + bv_signed imm = pa_val a + off. So the load's

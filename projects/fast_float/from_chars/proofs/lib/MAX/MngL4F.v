@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the sc_alloc premise the munmap case needs). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -27,6 +28,8 @@ Section FA.
 Variable cfg : SpuriousCfg.
 Variable HTOP : Z.
 Context {fx : FPState}.
+(* Needed by [free_contract_grpU]; see MngL4grp.v. *)
+Hypothesis Hoff : sc_alloc cfg = false.
 
 (* [comment removed for export] *)
 #[using="Type"] Theorem free_contract_null_k : forall hs regs m md (k : Z) ret K,
@@ -55,11 +58,11 @@ Proof. LiaFast.lf_pins LiaFast.u0.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Theorem free_contract_live : forall hs regs m md p k ret K g am i fr,
+#[using="Hoff"] Theorem free_contract_live : forall hs regs m md p k ret K g am i fr,
   free_entry HTOP hs regs m md p k ret g am i fr -> getr regs 4 = wa 0x75bd0 ->
   free_cont cfg HTOP hs regs m md p k ret K ->
   realizes_cfg SEGS cfg (mkCfg (@mkst fx regs (Z_to_bv 64 0x511d0) m (seg_rom SEGS)) md) K.
-Proof. LiaFast.lf_pins LiaFast.u0.
+Proof. LiaFast.lf_pins (fun (Hoff : LiaFast.U) => LiaFast.u0).
   intros hs regs m md p k ret K g am i fr FE HR4 CONT.
   assert (CASES : (am_freed am <> 0 /\ Z.lor (am_freed am) (am_avail am) + bit i <> ones (am_last am)) \/
                   (am_freed am = 0 \/ Z.lor (am_freed am) (am_avail am) + bit i = ones (am_last am))).
@@ -74,7 +77,7 @@ Proof. LiaFast.lf_pins LiaFast.u0.
     pose proof H0 as (HW & _ & _).
     destruct mi as [[r len]|].
     + pose proof (free_ntf_some (hs_s hs) g am i fr s' r len HW HF Hnt Hnt3) as Hit.
-      exact (free_contract_grpU cfg HTOP hs regs m md p k ret K g am i fr s' r len _ FE HR4 Hnt Hit CONT).
+      exact (free_contract_grpU cfg HTOP Hoff hs regs m md p k ret K g am i fr s' r len _ FE HR4 Hnt Hit CONT).
     + pose proof (free_ntf_none (hs_s hs) g am i fr s' HW HF Hnt Hnt3) as Hit.
       exact (free_contract_grp0 cfg HTOP hs regs m md p k ret K g am i fr s' FE HR4 Hnt Hit CONT).
 Qed.
@@ -82,10 +85,10 @@ Qed.
 End FA.
 
 (* [comment removed for export] *)
-Theorem free_contract_L4 : forall (cfg : SpuriousCfg) (HTOP : Z) (GP : word),
+Theorem free_contract_L4 : forall (cfg : SpuriousCfg) (HTOP : Z) (GP : word), sc_alloc cfg = false ->
   free_contract SEGS cfg HS (Heap HTOP) blocks owned GP (wa 0x75bd0) HTOP P_KEEP 0x511d0 FNEED.
 Proof.
-  intros cfg HTOP GP. unfold free_contract.
+  intros cfg HTOP GP Hoff. unfold free_contract.
   intros fx0 regs m md hs p k ret K HP MD Ha0 Hpk Hra Hret HGP HTP AL Hsp47 HT ST CONT.
   destruct (Z.eq_dec p 0) as [->|Hp0].
   - apply (@free_contract_null_k cfg HTOP fx0 hs regs m md k ret K HP MD Ha0 Hra Hret ST).
@@ -99,7 +102,7 @@ Proof.
     assert (HF : In (g, am, i, fr) (frames (hs_s hs))).
     { apply frames_intro; [exact HW | | exact Hi | exact Hfr].
       apply (used_metas_iff (hs_s hs) g am (proj1 (inv_keys HW))). exact Hu. }
-    apply (@free_contract_live cfg HTOP fx0 hs regs m md p k ret K g am i fr).
+    apply (@free_contract_live cfg HTOP fx0 Hoff hs regs m md p k ret K g am i fr).
     + unfold free_entry. exact (conj HP (conj MD (conj Ha0 (conj Hra (conj Hret (conj AL (conj Hsp47 (conj HT (conj ST (conj HF (conj Hk (conj Ep Ek)))))))))))).
     + exact HTP.
     + unfold free_cont, free_k. intros fx' regs' m'' md' hs' Hfc HP' MD' Hvm HU HKP Hbd Hcs HMU ST'.
@@ -108,13 +111,13 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Theorem heap_ok_L4 : forall (cfg : SpuriousCfg) (HTOP : Z) (GP : word), 0x97000 <= HTOP ->
+Theorem heap_ok_L4 : forall (cfg : SpuriousCfg) (HTOP : Z) (GP : word), sc_alloc cfg = false -> 0x97000 <= HTOP ->
   malloc_contract SEGS cfg HS (Heap HTOP) blocks owned GP (wa 0x75bd0) HTOP P_KEEP 0x51310 MNEED ->
   P_heap_ok cfg (HI HTOP) GP (wa 0x75bd0) HTOP STATIC_P.
 Proof.
-  intros cfg HTOP GP HT MC. unfold P_heap_ok, heap_ok, P_IMG_LO, P_IMG_END, P_PC_MALLOC, P_MNEED, P_PC_FREE, P_FNEED.
+  intros cfg HTOP GP Hoff HT MC. unfold P_heap_ok, heap_ok, P_IMG_LO, P_IMG_END, P_PC_MALLOC, P_MNEED, P_PC_FREE, P_FNEED.
   split; [split; [lia | exact static_in_image]|].
   split; [exact MC|].
-  split; [exact (free_contract_L4 cfg HTOP GP)|].
+  split; [exact (free_contract_L4 cfg HTOP GP Hoff)|].
   split; [exact (heap_frame_L4 HTOP) | exact (heap_blocks_ok_L4 HTOP)].
 Qed.

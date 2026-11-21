@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: lemmas for the LINK of image B's skip_ws leaf walk (lib/B/Prog/skip_ws_x.v, B' = the #102 pin
-   d663f82d7f48) to the caller-facing text tskip_ws_specX (lib/A/PRH_FnReader.v at the kit of record f97c8b2f046b, blob
+   d663f82d7f48) to the caller-facing text tskip_ws_specX (lib/A/PRH_FnReader.v at the kit of record, blob
    c30f1da6a2d1). The link itself, skip_ws_holds, is proved in lib/B/Prog/skip_ws_mn.v from skip_ws_x_holds_mnI: the text
    has the m-form post fpostWm, whose memnorm keep the plain leaf cannot give. This file holds the two lemmas it uses,
-   skwb_skip_len and skwb_init. RELOCATED unchanged (no image numeral) from origin/cold/h-verbs-1-skip-union ad1c5072e3e7
+   skwb_skip_len and skwb_init. RELOCATED unchanged (no image numeral)
    (blob 753c58f4cf41).
    THE INSTANCE: the text is image-parametric; image B's walks state it at (PA := PI_prog_B, PI := prh_img_B). The leaf
    is stated at the PER-FUNCTION listing PI_skip_ws, so the library fact is transported: PALibCore (PI := PI_prog_B) B
@@ -60,7 +61,7 @@ Hypothesis LAWS : AR_laws_x rsegs B ARx HL.
 Hypothesis TLP : PALibCore (PI := PI_prog_B) B.
 
 (* the kit's start-of-walk journal at a WIDENED caller window: YCbqG.v ajournal_x_init's text over the window
-   [sp - STK, sp + e) (the kit's own form is lib/Reusable/YCbqGcallW.v:269 ajournal_x_init_W), built
+   [sp - STK, sp + e) (the kit's own form is lib/Reusable/YCbqGcallW.v:270 ajournal_x_init_W), built
    with the journal's constructor YCbqG.ajx_intro; the stretch stores no trace (S' = S), so its wild-trace budget is
    closed by YCbqG.wild_part_same. *)
 Lemma skwb_init : forall PST STK e FP ly S Hp W regs mem md ch,

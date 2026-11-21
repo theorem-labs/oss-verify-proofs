@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the PURE facts of pj_free's image-B walk (lib/B/Prog/pj_free_defs.v), machine-free:
    - the observer: pf_reach composes (pf_reach_trans), lifts past a suffix (pf_reach_app), one step each
      (pf_reach_free1 / pf_reach_null1); pf_safe at the start (pf_safe_here), after a stretch (pf_safe_after), on a
@@ -12,11 +13,11 @@
      (pj_free_fo).
    proves no function (kind: pure lemmas). No machine state, no image constant, no address.
    MOVED, statements and proofs unchanged, from h-rw-man-5's image-B lane (h-rw-man-5's YES 2026-10-29, relayed by
-   h-rw-pre-5): lib/B/Prog/pj_free_pure.v blob b54814f20036 at origin/cold/h-rw-man-5-b-pjfree-rb ab365ca51d3, lines
+   h-rw-pre-5): lib/B/Prog/pj_free_pure.v blob b54814f20036, lines
    1-338 (Sections reach and shape up to pf_oitemsR_frame), byte-identical except this header paragraph and the one Require line: `lib.B.Prog Require Import
    pj_free_defs` is now `lib.A.Prog Require Import PjFreeCommon`, which holds
-   pj_free_defs.v :76-190 unchanged (PjFreeCommon.v blob 58ecccbd017b, origin/cold/h-hpreset-7-walk-S6 c47e66122d3).
-   CUT OVER 2026-10-29 (kit-oldpin bd0d3c3a486b, announced 17:42Z): the kit took pj_free_pure.v's whole Section shape
+   pj_free_defs.v :76-190 unchanged (PjFreeCommon.v blob 58ecccbd017b).
+   CUT OVER 2026-10-29 (kit-oldpin, announced 17:42Z): the kit took pj_free_pure.v's whole Section shape
    (lib/A/PRH_PjOrder.v e5917626b82b); this file keeps only Section reach (the observer's lemmas) and cites the kit
    for the rest. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
@@ -79,5 +80,5 @@ apply (H (F' ++ R) ly' S'). apply pf_reach_app. exact Hr.
 Qed.
 End reach.
 
-(* ---- the ordered shape: the KIT's now (lib/A/PRH_PjOrder.v e5917626b82b Section shape, kit-oldpin bd0d3c3a486b),
+(* ---- the ordered shape: the KIT's now (lib/A/PRH_PjOrder.v e5917626b82b Section shape, kit-oldpin),
    cited, not copied ---- *)

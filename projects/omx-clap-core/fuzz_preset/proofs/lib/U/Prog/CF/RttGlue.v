@@ -96,8 +96,8 @@ Proof using SEG AX FG.
 Qed.
 
 (* #102: the four alloc.c words are LedgerCells' GL_ cells (Ledger's G_LIVE .. G_FAIL are the GL_ names); frame_G =
-   LedgerCells.GL_runs = [(GL_FAIL, 16); (GL_OWN_RAN_OUT, 40)] (lib/U/FrameAPI.v 517070f9f0c9 = cold/h-rw-pre-4-rw102-ent
-   bfd74483ce6c).  g_live / g_peak / g_count sit in the second run, g_fail_at in the first. *)
+   LedgerCells.GL_runs = [(GL_FAIL, 16); (GL_OWN_RAN_OUT, 40)] (lib/U/FrameAPI.v 517070f9f0c9 =).
+   g_live / g_peak / g_count sit in the second run, g_fail_at in the first. *)
 Lemma statics_img : forall a, alloc_statics a -> in_img B a /\ never_owned B API a.
 Proof using SEG AX FG.
   intros a Ha. unfold alloc_statics, G_LIVE, G_PEAK, G_COUNT, G_FAIL in Ha. split.

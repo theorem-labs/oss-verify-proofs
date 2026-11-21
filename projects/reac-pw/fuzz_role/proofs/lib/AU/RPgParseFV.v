@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: the run plumbing of proofs/reac-pw/fuzz_role/lib/A/RPgCfgChanges.v at 964efd2f474 (cfg_keep, cfg_kwr_ro and the same_io chain of cfg_leaf, as l_keep, l_kwr and l_post) and of proofs/reac-pw/fuzz_qdisc/lib/A/QPgCheck.v at b0f706c04a1 (awr_stk, as l_awr: the writable window is the frame [F, F + 0x60) at atom 2), for a segment of reac_role_prop_parse's walk that starts and ends at the cuts of lib/A/RPgParseBase.v; the entry states, exits, string lemmas and the walk below are new. *)
+(* Modified by Theorem Labs, 2026-10: the run plumbing of proofs/reac-pw/fuzz_role/lib/A/RPgCfgChanges.v (cfg_keep, cfg_kwr_ro and the same_io chain of cfg_leaf, as l_keep, l_kwr and l_post) and of proofs/reac-pw/fuzz_qdisc/lib/A/QPgCheck.v (awr_stk, as l_awr: the writable window is the frame [F, F + 0x60) at atom 2), for a segment of reac_role_prop_parse's walk that starts and ends at the cuts of lib/A/RPgParseBase.v; the entry states, exits, string lemmas and the walk below are new. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_role/lib/A/RPgParseL.v; 492 of its 562 lines of code are new or changed and 844 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_role/lib/A/RPgParseF.v, with its module paths and module names changed; 2013 of its 2077 lines of code are new or changed and 498 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/U/Prog/Seg/ParseValue.v at 3e9fc5c8969; the model
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/U/Prog/Seg/ParseValue.v; the model
    lemmas pv_range, pv_body, pv_res_big, pv_res_bad, pv_res_bool, pv_res_int, pv_res_flt kept, with the module paths
    changed and the names prefixed pbV_. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseFV.v at afaa3cb55c1; the one-instruction
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseFV.v; the one-instruction
    forms fvw_ld / fvw_addi / fvw_auipc / fvw_jal0 / fvw_beq_tk / fvw_beq_ft and the double steps restated over image
    B's table and code (pbV_tw_*, pbV_fA / pbV_fB / pbV_fC / pbV_fRef). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/AU/HPgParseV.v, with its module paths changed; 1091 of its 1238 lines of code are new or changed and 1930 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_role_prop_parse 0x83130 of reac-pw/fuzz_role's image B (fuzz_role.asan-ubsan), segment FV: the inlined
    reac_float_nearest double steps 0x83524 .. 0x83590 from the cut FV to T (0x83488), or to the shared epilogue
    0x83598 .. 0x835c4 with a0 = -1:
@@ -57,16 +58,16 @@ Local Set Warnings "-abstract-large-number".
 Open Scope bv_scope.
 Open Scope Z_scope.
 
-(* Modified by Theorem Labs, 2026-10: the exact flt.d / fcvt.d.wu steps of proofs/libreac/fuzz_disco/lib/Rt/FpStep.v at
-   origin/ossv/recipes a34e09bd40c1 (fp_step_flt_d, fp_step_fcvt_d_wu) restated for fle.d, fcvt.d.s, fadd.d, fcvt.l.d and
+(* Modified by Theorem Labs, 2026-10: the exact flt.d / fcvt.d.wu steps of proofs/libreac/fuzz_disco/lib/Rt/FpStep.v
+    (fp_step_flt_d, fp_step_fcvt_d_wu) restated for fle.d, fcvt.d.s, fadd.d, fcvt.l.d and
    fcvt.d.l. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseFV.v at d428443238a; for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseFV.v; for image B
    (fuzz_role.asan-ubsan): image B's pcs, instruction words (from its listing, written in hex), immediates, auipc
    values and read-only cells (role_B_dcs, five cells); both -1 returns enter image B's epilogue at 0x83594 li a0,-1;
    the cast bounds 0x83554 .. 0x83570 (fv_cast), and fv_tail's integer in a1 with the branch to T at 0x83580, the
    `r--` check 0x83588 and the mv / j at 0x8358c / 0x83590 in place of A's subw / j (fvw_bge_ft); these follow
-   proofs/reac-pw/fuzz_rate/lib/AU/RtPgParseFVB.v at a570b84c20b3, whose uc_bv_mod, uc_signed, uc_t0, uc_dec, uc_lts
-   and uc_hw (from proofs/reac-pw/fuzz_rate/lib/U/Prog/reac_rate_prop_parse.v at 09704c734de1) are copied here with
+   proofs/reac-pw/fuzz_rate/lib/AU/RtPgParseFVB.v, whose uc_bv_mod, uc_signed, uc_t0, uc_dec, uc_lts
+   and uc_hw (from proofs/reac-pw/fuzz_rate/lib/U/Prog/reac_rate_prop_parse.v) are copied here with
    ParseFP.role_consts. *)
 (* ---- exact steps of the double instructions (any float state F / fc) ---- *)
 Lemma fv_step_fcvt_d_s : forall (F : bvmap 5 word) (fc : bv 32) segs regs pc mem rom w (rd rs : bv 5) (rm : bv 3),

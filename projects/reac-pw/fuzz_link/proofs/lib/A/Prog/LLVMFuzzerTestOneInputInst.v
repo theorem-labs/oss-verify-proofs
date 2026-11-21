@@ -1,7 +1,7 @@
 (* The instance of LLVMFuzzerTestOneInput's image-A walk: link's image (LinkImgInst.v `PI_link`), link's
    asyms (lib/A/AD2l.v `PcapB`), link's sink head and memory FILE (lib/A/AMemFile.v `link_asink_head`,
    `link_amf`), and the meter the ASan driver's closing passes (`YCbp.ameter_triv` with
-   XM_LIB = XN_LIB = fun _ => 0, staged AD2o.v:53). It discharges every hypothesis of
+   XM_LIB = XN_LIB = fun _ => 0, staged AD2o.v:54). It discharges every hypothesis of
    lib/A/Prog/LLVMFuzzerTestOneInput.v's Section `top` but LF_WHOLE, so that the walk's remaining obligation is
    exactly the six phase lanes' lemmas.
 

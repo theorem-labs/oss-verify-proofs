@@ -1,12 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: Sections Drive3J and Drive3J7 are generic in the Leaf class of their realizes_cfg walks. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From stdpp Require Import bitvector bitvector.tactics.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType RiscvSemantics State Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap Mprotect.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import Leaf.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import
   ShapeAlgBase ShapeCfg NodesCfg LedgerCfg AllocCfg LazyCfg LazyAccCfg AllocLazyCfg EagerCfg CountCfg.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.FX Require Import
@@ -342,6 +344,7 @@ End Drive3JDefs.
 Section Drive3J.
 Variable cfg : SpuriousCfg.
 Variable segs : list Segment.
+Context {LF : Leaf}.
 Variable IM : fimage.
 Variable code : itrie finstr.
 Hypothesis Hcode : code_ok segs code.
@@ -902,6 +905,7 @@ Qed.
 Section Drive3J7.
 Variable cfg : SpuriousCfg.
 Variable segs : list Segment.
+Context {LF : Leaf}.
 Variable IM : fimage.
 Variable code : itrie finstr.
 Hypothesis Hcode : code_ok segs code.

@@ -6,7 +6,7 @@
    lib/B/Prog/arg_line_c.v, proved as stated, over its callee contract rec_canonical_c and the strlen wrapper, each
    taken at the walk's FP state (the statement states them at every FP state).
 
-   The B re-walk of the A walk lib/A/Prog/arg_line.v (a Theorem Labs lane a60bdbabd8f), on B's code as measured with capstone
+   The B re-walk of the A walk lib/A/Prog/arg_line.v (a Theorem Labs lane), on B's code as measured with capstone
    (symbol-keyed; B adds five UBSan trap branches and a fourth inline check, the store4 of c->nargs; the calls and the
    shadow-check pattern are A's). arg_line(c, line) (recorder.c:229-233): c in a0, line in a1; s1 = c, s0 = c + 4,
    s4 = the shadow byte address of c + 4, s3 = the shadow base (through the GOT word 0xa5f50 = A_OBJ 0 and the cell
@@ -43,6 +43,7 @@
    cmd_cf_cell and cmd_cf_env. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/arg_line.v, with its module paths, module names and addresses changed; 923 of its 1002 lines of code are new or changed and 649 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/sup_add_s3a.v, with its module paths and module names changed; 113 of its 161 lines of code are new or changed and 954 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* sup_add's walk on the ASan+UBSan build of plugin-hostd/fuzz_command, stage M1 (0x8a538) -> M2 (0x8a554):
    arg_s(c, uri).
 

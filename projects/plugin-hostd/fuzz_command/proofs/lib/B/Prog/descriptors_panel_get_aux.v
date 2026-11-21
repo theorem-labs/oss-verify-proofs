@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: the shared part of descriptors_panel_get's ASan+UBSan walk (plugin-hostd/fuzz_command.asan-ubsan, 0x8ccfc, 22 instructions), re-made at B's addresses from the ASan walk's segments lib/A/Prog/descriptors_panel_get_s1.v .. _s8.v (a working branch 2db68b2223b); the recorder-state transports copied from its _s2.v. *)
+(* Modified by Theorem Labs, 2026-10: the shared part of descriptors_panel_get's ASan+UBSan walk (plugin-hostd/fuzz_command.asan-ubsan, 0x8ccfc, 22 instructions), re-made at B's addresses from the ASan walk's segments lib/A/Prog/descriptors_panel_get_s1.v .. _s8.v (a working branch); the recorder-state transports copied from its _s2.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* descriptors_panel_get on B (recorder.c:554-560; listing slots AF_descriptors_panel_get + 0x0 .. + 0x54):
      +0x00 addi sp,sp,-32   +0x04 sd ra,24(sp)   +0x08 sd s0,16(sp)   +0x0c sd s1,8(sp)

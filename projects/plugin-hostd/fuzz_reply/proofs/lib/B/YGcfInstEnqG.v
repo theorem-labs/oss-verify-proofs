@@ -1,13 +1,14 @@
-(* CARRIED from commit af0289e23fe22dee392685c3fca02473a52c792c,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YGcfInstEnqG.v, sha256 443f3508e1ddbfe0170b27b2b2e9a71429ed1559ef97f4a822d4b190cae91865 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the
    module paths only: OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib M -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable M, except lib.A for: DMspec DMiface DeallocG ImgBaseAG ImgBaseDG DGif0 DIfaceR YGcfInstErrno YGcfInstEnq EnqGbase YFl1. *)
 (* Copyright 2026 Anthropic PBC *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/YGcfInstEnqG.v at commit cb892d2cb61, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/YGcfInstEnqG.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane F1 of the generic cf instance layer; integrator ReallocPrimary).
-   The cf instance's MODEL fields of lane B2's frame-generic Enqueue interface (EnqGbase.v at commit
-   d371f1553a2, taken by path, byte-identical: EnqIfaceRoom :153, EnqIfaceHit :193), at
+   The cf instance's MODEL fields of lane B2's frame-generic Enqueue interface (EnqGbase.v,
+   taken by path, byte-identical: EnqIfaceRoom :153, EnqIfaceHit :193), at
      segs := im_segs, A_ENQ := dg_enqueue, ARX := any relation giving ARcf at Hp (YGcfInstBase.ARX_cf B IOK Hp),
      AOX := aowned B, EPRE := YGcfInstEnq.enq_pre_cf, RMAXD := kFreeArrayOffset, and B2's own STRICT block-size
      parameter := [ENQ_NMAX_STRICT] (= kQuarantineMax + 1).  The layer's NMAXD is the INCLUSIVE quarantine-entry bound
@@ -16,7 +17,7 @@
    rule 24: no function proved (kind: interface-instance discharge, model fields only).
    - [enq_nmax_cf]: ir_nmax / ih_nmax (enq_pre_cf's guard conjunct, and 0 <= ck_req from chunk_ok_cf);
    - [rmaxd_ok_cf]: ih_rmaxd_ok at RMAXD := kFreeArrayOffset;
-   - [enq_rmax_cf]: ih_rmax (from enq_pre_cf's batch_room_cf, YG00cf.v:349-350);
+   - [enq_rmax_cf]: ih_rmax (from enq_pre_cf's batch_room_cf, YG00cf.v:350-351);
    - [Shit_cf], [enq_inited_cf], [enq_hit_eq_cf], [ih_shape_cf]: the hit arm's end state (YFf2.S''s text) and its
      step equation (YFg5.enqueue_hit_eq's script), the cache's initialization from Wf_cf (wrc_cache);
    - Main's instance checks: [enq_nmax_strict_ok] (ENQ_NMAX_STRICT <= 2 ^ 30, B2's window) and the
@@ -59,7 +60,7 @@ Local Open Scope am_scope.
 (* ---------------------------------------------------------------------------------------------------------------- *)
 (* 1. Main's instance checks that read no relation.                                                                 *)
 
-(* RMAXD's window at the cf instance (EnqGbase.v:201 ih_rmaxd_ok at RMAXD := kFreeArrayOffset). *)
+(* RMAXD's window at the cf instance (EnqGbase.v:202 ih_rmaxd_ok at RMAXD := kFreeArrayOffset). *)
 Lemma rmaxd_ok_cf : 2 ^ 31 <= kFreeArrayOffset <= kFreeArrayOffset.
 Proof. unfold kFreeArrayOffset. lia. Qed.
 
@@ -124,12 +125,12 @@ Qed.
 (* ---------------------------------------------------------------------------------------------------------------- *)
 (* 2. The hit arm's end state and step equation (model only).                                                       *)
 
-(* YFf2.S' (YFf2.v:57-62): the class-24 cache's last chunk becomes the new batch holding [k]. *)
+(* YFf2.S' (YFf2.v:58-63): the class-24 cache's last chunk becomes the new batch holding [k]. *)
 Definition Shit_cf (X : astate) (k : chunk) (l : list Z) : astate :=
 set_qthread (qc_push (st_qthread X) k (Some (region_off kBatchClass + last l 0)))
   (upd_pc kBatchClass (mkPC (pc_max (cache X kBatchClass)) (YG00.removelast l)) X).
 
-(* YFg5.enqueue_hit_eq (YFg5.v:410-417), its script. *)
+(* YFg5.enqueue_hit_eq (YFg5.v:411-418), its script. *)
 Lemma enq_hit_eq_cf : forall X k l, st_cache_inited X = true -> need_new_batch (st_qthread X) = true ->
 pc_chunks (cache X kBatchClass) = l -> l <> [] -> enqueue k X = IRet (tt, Shit_cf X k l).
 Proof.

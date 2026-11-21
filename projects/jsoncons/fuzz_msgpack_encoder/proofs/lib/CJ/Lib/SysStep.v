@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: changed nret_MSsvc. *)
 From OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib Require BvWfKernel.
 (* [comment removed for export] *)
 
@@ -47,9 +48,8 @@ Ltac step_ecall :=
 
 Lemma nret_MSsvc : forall R F pc x8 fc rv m ro r ws zs us ci,
   nret (MSsvc R F pc x8 fc rv m ro) (mkEffectU r ws zs us [] ci)
-  = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4) fc rv (apply_writes (apply_zeros (apply_unmaps m us) zs) ws) ro.
-Proof.
-ltac2:(KReplay.run1 (kr_t_SysStep ()) [] "h01Fh11Rh22cih32fch41mh52pch61rh72roh82rvh92ush:2wsh;2x8h<2zsp;1p;2p;3p;5p;7p10000p4p710R0p1000Mp4p710p8P0p1000ip4p710R0p8g001GR1p4p7210P0p8g002Sj10Tg0038j1ATg003]j11Tg004;j14TP1j2@Tg004^j16Tg0023j12Tg00K2j23Tg008dj15Tg009Bj38Tg00KRj57Tg005@j29Tg00LBj3:Tg00Lgj2?Tg00M`j2>Tg00NXj2<Tg00;Oj7;Tg00A@j2=Tg00Gn#0R1#AR0#1R2%01R1#0R3#0#0R4#0#1R5#4R6'@R7%14#4%66%13#4R3#6\6R4%23,36#21366#2R3g00OQ,36#2g00FgP2P6%00#5g00J1582f4f<D7f;f:%51,955:5f8f7f6f1'?f2'>f3'<f5F;'=W2X93W<W:X66X74W4W8W3X;6X56X07W1o"). Qed.
+  = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4) fc None (apply_writes (apply_zeros (apply_unmaps m us) zs) ws) ro.
+Proof. reflexivity. Qed.
 
 Lemma mkR_set_a0 : forall x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31 v,
   bvmap_set 10 v (mkR x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 x24 x25 x26 x27 x28 x29 x30 x31)

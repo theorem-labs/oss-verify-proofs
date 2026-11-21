@@ -10,8 +10,8 @@
      which AR bounds by ASAN_CEIL (YG0s.v cfacts).
    The statement and proof are image-generic (the allocator model of the shared core) over B's tfibsegs.
    rule 24: proves function LLVMFuzzerTestOneInput (shared kit of the entry walk's segments S3 / S5 / S6; reuse search:
-   proof-index LLVMFuzzerTestOneInput, ported from a working branch 08ad70da3bf).
-   Ported from: lib/A/FSW_entry_ar.v (a working branch 0d34d65d2b7), A's names, AB1v replaced by B's YB1v.
+   proof-index LLVMFuzzerTestOneInput, ported from a working branch).
+   Ported from: lib/A/FSW_entry_ar.v (a working branch), A's names, AB1v replaced by B's YB1v.
    RELOC-B hypotheses: none. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.

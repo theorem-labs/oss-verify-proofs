@@ -3,12 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the release of number's class-0 side-stack frame (0x8e5a0..0x8e618, cgif's exitRA in A/ACam.v) and number's return. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/numberR.v, with its module paths and module names changed; 109 of its 138 lines of code are new or changed and 187 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_arity on image B (fuzz_command.asan-ubsan): the 18 matched rows of g_parsed whose run from the matched-row
    entry CA_SEG (0x87478) to the `ret` (CA_RET, 0x87998) makes no call: rows 1, 2, 4-7, 9-13 and 15-17 (syntax arm,
    syntax_arity inlined) and 18-21 (format arm, syntax_format_arity inlined). Rows 0, 3, 8 and 14 call bcmp and are
    in check_arity_r0/r3/r8/r14.
 
-   Port of a Theorem Labs lane's A walk lib/A/Prog/check_arity_s4.v (a working branch 9c6410fb32e). The row
+   Port of a Theorem Labs lane's A walk lib/A/Prog/check_arity_s4.v (a working branch). The row
    interface (ca_post, ca_row_pre, ca_row_open, ca_final_ok, ca_regs_back), which A has at the head of its s4, is in
    B's check_arity_s3.v; this file holds the row lemmas only. B changes: the frame is 144 bytes (the frame region's
    offset from the entry sp is -144 in ca_awr), and s3 holds read = min(w->n, 64) at CA_SEG, so ca_row_pre bounds
@@ -22,50 +23,50 @@
 
    UBSan trap edges in this range, each refuted at its branch:
    - 0x874ac (`beqz s4`, syntax nonnull, format arm): refuted by the run of ca_row_18, ca_row_19, ca_row_20, ca_row_21
-     at check_arity_s4.v:125 (ca_row's paj_run_shc; lemmas at :140-245), from s4 is the row's syntax word, a literal >=
+     at check_arity_s4.v:126 (ca_row's paj_run_shc; lemmas at :140-245), from s4 is the row's syntax word, a literal >=
      0x21140 (ca_gparsed of ca_seed, from cmd_ro_ok). Visits per row (row (count)): 18 (1), 19 (1), 20 (1), 21 (1).
    - 0x87654 (`beqz s4`, syntax nonnull, syntax arm): refuted by the run of ca_row_1 .. ca_row_17 (rows 1, 2, 4, 5, 6,
-     7, 9, 10, 11, 12, 13, 15, 16, 17) at check_arity_s4.v:125 (ca_row's paj_run_shc; lemmas at :140-245), from as
+     7, 9, 10, 11, 12, 13, 15, 16, 17) at check_arity_s4.v:126 (ca_row's paj_run_shc; lemmas at :140-245), from as
      0x874ac. Visits per row (row (count)): 1 (1), 2 (1), 4 (1), 5 (1), 6 (1), 7 (1), 9 (1), 10 (1), 11 (1), 12 (1), 13
      (1), 15 (1), 16 (1), 17 (1).
    - 0x87560 (`beq a0,s6`, p + 1 overflow, format skip-spaces): refuted by the run of ca_row_18, ca_row_19, ca_row_20
-     at check_arity_s4.v:125 (ca_row's paj_run_shc; lemmas at :140-245), from p is a literal address in the row's
+     at check_arity_s4.v:126 (ca_row's paj_run_shc; lemmas at :140-245), from p is a literal address in the row's
      syntax string (ca_syn of ca_seed, from cmd_ro_ok), < 0x218c0. Visits per row (row (count)): 18 (1), 19 (2), 20
      (2).
    - 0x875c4 (`beq s5,s6`, p + 1 overflow, format item scan): refuted by the run of ca_row_18, ca_row_19, ca_row_20 at
-     check_arity_s4.v:125 (ca_row's paj_run_shc; lemmas at :140-245), from as 0x87560. Visits per row (row (count)): 18
+     check_arity_s4.v:126 (ca_row's paj_run_shc; lemmas at :140-245), from as 0x87560. Visits per row (row (count)): 18
      (2), 19 (4), 20 (4).
    - 0x879f8 (`beq s5,a6`, p + 1 overflow, format first item): refuted by the run of ca_row_18, ca_row_19, ca_row_20,
-     ca_row_21 at check_arity_s4.v:125 (ca_row's paj_run_shc; lemmas at :140-245), from as 0x87560. Visits per row (row
+     ca_row_21 at check_arity_s4.v:126 (ca_row's paj_run_shc; lemmas at :140-245), from as 0x87560. Visits per row (row
      (count)): 18 (6), 19 (7), 20 (10), 21 (4).
    - 0x87630 (`blt a0,t0`, min + 1 overflow, format arm): refuted by the run of ca_row_18, ca_row_19, ca_row_20 at
-     check_arity_s4.v:125 (ca_row's paj_run_shc; lemmas at :140-245), from min is a literal counter <= 80. Visits per
+     check_arity_s4.v:126 (ca_row's paj_run_shc; lemmas at :140-245), from min is a literal counter <= 80. Visits per
      row (row (count)): 18 (1), 19 (2), 20 (2).
    - 0x876bc (`beq s4,s6`, p + 1 overflow, token scan): refuted by the run of ca_row_4 .. ca_row_13 (rows 4, 5, 6, 7,
-     9, 10, 13) at check_arity_s4.v:125 (ca_row's paj_run_shc; lemmas at :140-245), from as 0x87560. Visits per row
+     9, 10, 13) at check_arity_s4.v:126 (ca_row's paj_run_shc; lemmas at :140-245), from as 0x87560. Visits per row
      (row (count)): 4 (1), 5 (2), 6 (1), 7 (2), 9 (1), 10 (1), 13 (1).
    - 0x87720 (`beq s4,s6`, p + 1 overflow, item scan): refuted by the run of ca_row_2 .. ca_row_17 (rows 2, 4, 5, 6, 7,
-     9, 10, 11, 12, 13, 15, 16, 17) at check_arity_s4.v:125 (ca_row's paj_run_shc; lemmas at :140-245), from as
+     9, 10, 11, 12, 13, 15, 16, 17) at check_arity_s4.v:126 (ca_row's paj_run_shc; lemmas at :140-245), from as
      0x87560. Visits per row (row (count)): 2 (10), 4 (11), 5 (16), 6 (21), 7 (32), 9 (6), 10 (42), 11 (5), 12 (10), 13
      (27), 15 (7), 16 (5), 17 (5).
    - 0x87788 (`beq a4,s6`, p + 1 overflow, '|' skip): refuted by the run of ca_row_4, ca_row_5, ca_row_9 at
-     check_arity_s4.v:125 (ca_row's paj_run_shc; lemmas at :140-245), from as 0x87560. Visits per row (row (count)): 4
+     check_arity_s4.v:126 (ca_row's paj_run_shc; lemmas at :140-245), from as 0x87560. Visits per row (row (count)): 4
      (1), 5 (1), 9 (1).
    - 0x877f0 (`beq a1,s6`, p + 1 overflow, '|' next item): refuted by the run of ca_row_4, ca_row_5, ca_row_9 at
-     check_arity_s4.v:125 (ca_row's paj_run_shc; lemmas at :140-245), from as 0x87560. Visits per row (row (count)): 4
+     check_arity_s4.v:126 (ca_row's paj_run_shc; lemmas at :140-245), from as 0x87560. Visits per row (row (count)): 4
      (3), 5 (11), 9 (3).
    - 0x8770c (`blt a5,a4`, depth + 1 overflow): refuted by the run of ca_row_2 .. ca_row_17 (rows 2, 4, 5, 6, 7, 9, 10,
-     11, 12, 13, 15, 16, 17) at check_arity_s4.v:125 (ca_row's paj_run_shc; lemmas at :140-245), from depth is a
+     11, 12, 13, 15, 16, 17) at check_arity_s4.v:126 (ca_row's paj_run_shc; lemmas at :140-245), from depth is a
      literal counter <= 80. Visits per row (row (count)): 2 (1), 4 (1), 5 (1), 6 (2), 7 (3), 9 (1), 10 (2), 11 (1), 12
      (1), 13 (3), 15 (1), 16 (1), 17 (1).
-   - 0x877dc (`blt a3,a2`, depth + 1 overflow, '|' next item): refuted by the run of ca_row_5 at check_arity_s4.v:125
+   - 0x877dc (`blt a3,a2`, depth + 1 overflow, '|' next item): refuted by the run of ca_row_5 at check_arity_s4.v:126
      (ca_row's paj_run_shc; lemmas at :140-245), from as 0x8770c. Visits per row (row (count)): 5 (1).
    - 0x87918 (`blt a0,t0`, min + 1 overflow, syntax arm): refuted by the run of ca_row_2 .. ca_row_17 (rows 2, 4, 5, 6,
-     7, 9, 10, 11, 12, 13, 15, 16, 17) at check_arity_s4.v:125 (ca_row's paj_run_shc; lemmas at :140-245), from as
+     7, 9, 10, 11, 12, 13, 15, 16, 17) at check_arity_s4.v:126 (ca_row's paj_run_shc; lemmas at :140-245), from as
      0x87630. Visits per row (row (count)): 2 (1), 4 (1), 5 (2), 6 (2), 7 (3), 9 (1), 10 (2), 11 (1), 12 (1), 13 (2),
      15 (1), 16 (1), 17 (1).
    - 0x87954 (`addiw a0,s3,-1; bge a0,s3`, read - 1 overflow): refuted by the run of ca_row_1 .. ca_row_21 (rows 1, 2,
-     4, 5, 6, 7, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19, 20, 21) at check_arity_s4.v:125 (ca_row's paj_run_shc; lemmas
+     4, 5, 6, 7, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19, 20, 21) at check_arity_s4.v:126 (ca_row's paj_run_shc; lemmas
      at :140-245), from s3 is atom 32 = s3v with the fact [mn + 1, mx + 1] (ca_ss's ca_facts), inside [1, 64] by
      ca_row_pre's mn <= s3v - 1 <= mx and 1 <= s3v <= 64; read - 1 = atom - 1 does not wrap 32 bits and is below read.
      Visits per row (row (count)): 1 (1), 2 (1), 4 (1), 5 (1), 6 (1), 7 (1), 9 (1), 10 (1), 11 (1), 12 (1), 13 (1), 15

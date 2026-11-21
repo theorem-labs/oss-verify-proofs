@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the node statements carry the flag of the flagged relation SpinAlg.srealizesM. *)
 From Stdlib Require Import ZArith List Lia Bool.
 From Stdlib Require Import Logic.FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -57,6 +58,7 @@ Definition put_specG (SEGS : list Segment) (DP SB IH : Z) : Prop :=
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Section Sound.
+Context {sfl : bool}.   (* the flag of [SpinAlg.srealizesM] *)
 Variable SEGS : list Segment.
 Variable A : atable.
 Variable nx0 : N.
@@ -186,7 +188,7 @@ Proof.
 Qed.
 
 Theorem node_put_sound : forall args0,
-  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 always (fun cs => DPN.node_put nx0 DP SB IH cs args0).
+  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl always (fun cs => DPN.node_put nx0 DP SB IH cs args0).
 Proof.
   intros args0 cs cs' E R FULL model TT HC _ Hn Hk.
   pose proof HC as HKN. apply co_know in HKN.
@@ -446,7 +448,7 @@ Proof.
 Qed.
 
 Theorem node_init_sound : forall args0,
-  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 always (fun cs => DPN.node_init SEGS DP SB IH cs args0).
+  node1_stmt SEGS A nx0 LIMIT SINV argH FS0 sfl always (fun cs => DPN.node_init SEGS DP SB IH cs args0).
 Proof.
   intros args0 cs cs' E R FULL model TT HC _ Hn Hk.
   pose proof HC as HKN. apply co_know in HKN.
@@ -560,6 +562,7 @@ Qed.
 End Sound.
 
 Section Table.
+Context {sfl : bool}.   (* the flag of [SpinAlg.srealizesM] *)
 Variable SEGS : list Segment.
 Variable A : atable.
 Variable nx0 : N.
@@ -582,7 +585,7 @@ Hypothesis LAYOUT : 2 ^ 16 <= DP /\ DP + 4194328 <= IH /\ 2 ^ 16 <= SB /\ SB + 2
 Hypothesis IMG0 : forall x : word, DP <= bv_unsigned x < DP + 4194304 -> seg_rom SEGS x = Some (Z_to_bv 8 0).
 Hypothesis PSPEC : put_specG SEGS DP SB IH.
 
-Theorem dpn_xn_sound : ext_stmt SEGS A nx0 LIMIT (DPN.xn SEGS nx0 DP SB IH) SINV argH FS0.
+Theorem dpn_xn_sound : ext_stmt SEGS A nx0 LIMIT (DPN.xn SEGS nx0 DP SB IH) SINV argH FS0 sfl.
 Proof.
   intros id args. unfold DPN.xn.
   destruct (Nat.eqb id 113); [apply node_put_sound; assumption|].

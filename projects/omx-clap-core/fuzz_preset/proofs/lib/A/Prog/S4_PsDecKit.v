@@ -3,12 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_decode/lib/B/Prog/LLVMFuzzerTestOneInput_segX_exit_td.v, with its module paths, module names and numbers changed; 635 of its 665 lines of code are new or changed and 322 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S4_PsRet.v, with its module names changed; 738 of its 816 lines of code are new or changed and 587 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3; internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset lib/A, slice S4 (parse_string's decode stretch): the WALK KIT of S4_PsDec.v. The symbolic states the
    stretch runs from (one per cut: the decode loop head PS_DEC, the hex loop head PS_HEX, the \u tail, the returns of
    hex4 and put_utf8) built from concrete facts, and the facts a run's leaf hands back.
-   FILE SET: as the kit's cut 7cdbb61b5fa0 carries it (YCbqG blob 219748197d6b); WalkS4's set of record was base
-   83f3e37ac7e, a working branch 63997a07aa6, the kit walkkit b7722372682, listing 7c8ffeba5035.
-   THE GENERIC-P FORM (a Theorem Labs lane 12:18Z / 12:22Z; base 44a91d58bb5, S4_PsBase.v
+   FILE SET: as the kit's cut carries it (YCbqG blob 219748197d6b); WalkS4's set of record was base,
+   a working branch, the kit walkkit, listing.
+   THE GENERIC-P FORM (a Theorem Labs lane 12:18Z / 12:22Z; base, S4_PsBase.v
    a59ce5bfcbe3): Section d takes an invariant P of the memory (Variable P right after SK). The cut lemmas (dec_facts,
    dec_entry, dec_keep, retok_close, dec_close1, free_close, dec_tmp_w) are over ps_at_decP .. P; the keep lemmas take
    P mem' right after the journal premise (the run's own HPM, YSRrMemnorm's runner twin at P), never derived from where
@@ -344,7 +345,7 @@ Proof.
     assert (Hne : (b - cf_head, m + cf_head) <> (out - cf_head, Z.of_nat Q + 1 + cf_head)).
     { intros E. injection E as E1 _. cbn [map fst] in HND. inversion HND as [|x l HN HND2]; subst. apply HN.
       assert (Hi : In out (map fst (pi_Lam D))) by (apply in_map_iff; exists (b, m); split; [cbn [fst]; lia | exact Hin]).
-      first [ apply list_elem_of_In; exact Hi | apply elem_of_list_In; exact Hi ]. }
+      first [ apply list_elem_of_In; exact Hi | apply list_elem_of_In; exact Hi ]. }
     pose proof (sep_blocks_x segs B ARx LAWS ly S Hp W mem md _ _ _ _ HAR Hab Hin_o Hne) as Hd.
     pose proof (req_size_pos (m + cf_head) (Z.add_nonneg_nonneg _ _ Hm0 Hh0)) as [_ Rm].
     unfold zdisjoint in Hd. cbn [fst snd] in Hd. rewrite Ro in Hd. lia.
@@ -593,7 +594,7 @@ Proof.
         assert (Hne : (a - cf_head, kk + cf_head) <> (out - cf_head, Z.of_nat Q + 1 + cf_head)).
         { intros E. injection E as E1 _. cbn [map fst] in HND. inversion HND as [|x l HN HND2]; subst. apply HN.
           assert (Hi2 : In out (map fst (pi_Lam D))) by (apply in_map_iff; exists (a, kk); split; [cbn [fst]; lia | exact Hin]).
-          first [ apply list_elem_of_In; exact Hi2 | apply elem_of_list_In; exact Hi2 ]. }
+          first [ apply list_elem_of_In; exact Hi2 | apply list_elem_of_In; exact Hi2 ]. }
         pose proof (sep_blocks_x segs B ARx LAWS ly S Hp W mem md _ _ _ _ HAR Hab Hin_o Hne) as Hd.
         unfold zdisjoint in Hd. cbn [fst snd] in Hd. rewrite !ps_req in Hd by lia. lia.
     + split.

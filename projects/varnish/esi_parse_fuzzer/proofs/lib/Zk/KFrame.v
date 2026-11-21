@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: mremap's post-state takes the source length. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -81,7 +82,7 @@ Proof.
   - destruct HS as [-> ->]. unfold munmap_model, with_mmap_destroyed.
     eapply same_env_trans; [| apply same_env_vm_forget_range]. apply same_env_with_vmmaps; reflexivity.
   - destruct HS as [(e & _ & _ & ->)|(_ & _ & ->)]; [apply same_env_refl|]. unfold mprotect_model. apply same_env_with_vmmaps; reflexivity.
-  - destruct HS as [(_ & _ & ->)|[_ [(e & _ & _ & ->)|[(_ & _ & ->)|[(_ & _ & _ & ->)|(_ & dst & _ & _ & ->)]]]]];
+  - destruct HS as [(_ & _ & ->)|[_ [(e & _ & _ & ->)|[(_ & _ & ->)|[(_ & _ & _ & ->)|(_ & _ & dst & _ & _ & ->)]]]]];
       try apply same_env_refl; unfold mremap_model_next;
       (eapply same_env_trans; [| apply same_env_vm_resize_backing]); apply same_env_with_vmmaps; reflexivity.
 Qed.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revised entry stack block, with the strings at its top, and the launch facts; the model's channel reader as a premise of the writes; the walk over the image's own segments lifted to the run's segment list (run_segments, with the vDSO pair)). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -31,11 +32,13 @@ Proof.
   pose proof (valid_input_va_size _ Hvalid) as Hsv48.
   rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen1. rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen2.
   destruct en1 as [rsp rbrk rmb rrnd]; destruct en2 as [asp abrk amb arnd].
-  destruct Hen1 as (Hsp1 & Hbrk1 & _ & Hfit1); destruct Hen2 as (Hsp2 & Hbrk2 & _ & Hfit2).
+  destruct Hen1 as (Hsp1 & Hbrk1 & _ & Hfit1 & Hlau1); destruct Hen2 as (Hsp2 & Hbrk2 & _ & Hfit2 & Hlau2).
+  assert (Hvl : valid_launch inp) by (clear - Hvalid; red in Hvalid; tauto).
+  assert (Hrd : in_channel_reader inp = true) by (clear - Hvalid; red in Hvalid; tauto).
   destruct Hvalid as (Hva & Hve & _).
   exists (spec (in_argv inp) (in_fs inp)). split.
-  - exact (s1_main_inst rsp rbrk rmb rrnd inp LIB1 Hsp1 Hbrk1 Hva Hve Hfit1).
-  - exact (u1_main_inst asp abrk amb arnd inp LIB2 Hsp2 Hbrk2 Hva Hve Hfit2).
+  - exact (s1_main_run rsp rbrk rmb rrnd inp LIB1 Hsp1 Hbrk1 Hva Hve Hfit1 Hvl Hlau1 Hrd).
+  - exact (u1_main_run asp abrk amb arnd inp LIB2 Hsp2 Hbrk2 Hva Hve Hfit2 Hvl Hlau2 Hrd).
 Qed.
 
 Theorem base_ubsan_abort :
@@ -55,10 +58,12 @@ Proof.
   pose proof (valid_input_abort_va_size _ Hvalid) as Hsv48.
   rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen1. rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen2.
   destruct en1 as [rsp rbrk rmb rrnd]; destruct en2 as [asp abrk amb arnd].
-  destruct Hen1 as (Hsp1 & Hbrk1 & _ & Hfit1); destruct Hen2 as (Hsp2 & Hbrk2 & _ & Hfit2).
+  destruct Hen1 as (Hsp1 & Hbrk1 & _ & Hfit1 & Hlau1); destruct Hen2 as (Hsp2 & Hbrk2 & _ & Hfit2 & Hlau2).
+  assert (Hvl : valid_launch inp) by (clear - Hvalid; red in Hvalid; tauto).
+  assert (Hrd : in_channel_reader inp = true) by (clear - Hvalid; red in Hvalid; tauto).
   destruct Hvalid as (Hva & Hve & _).
   exists (spec (in_argv inp) (in_fs inp)). split; [| split].
-  - exact (s1_main_inst rsp rbrk rmb rrnd inp LIB1 Hsp1 Hbrk1 Hva Hve Hfit1).
-  - exact (u1_main_inst asp abrk amb arnd inp LIB2 Hsp2 Hbrk2 Hva Hve Hfit2).
+  - exact (s1_main_run rsp rbrk rmb rrnd inp LIB1 Hsp1 Hbrk1 Hva Hve Hfit1 Hvl Hlau1 Hrd).
+  - exact (u1_main_run asp abrk amb arnd inp LIB2 Hsp2 Hbrk2 Hva Hve Hfit2 Hvl Hlau2 Hrd).
   - apply spec_nokill.
 Qed.

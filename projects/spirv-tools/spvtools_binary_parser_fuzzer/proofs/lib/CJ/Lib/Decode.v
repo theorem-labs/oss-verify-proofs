@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the lemma region_free_In, which the revised ledger proofs use). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -267,6 +268,136 @@ Qed.
 Definition covered (maps : list (word * word)) (iv : Z * Z) : Prop :=
   exists e sz, In (e, sz) maps /\ (bv_unsigned e <= fst iv)%Z /\ (snd iv <= bv_unsigned e + bv_unsigned sz)%Z.
 
+(* DO NOT TIDY THE SPELLING OF [region_free_In] AT ANY SITE IN THIS UNIT.
+   The name resolves SEVEN ways here and two of the candidates differ in their
+   CONCLUSION while agreeing in arity, so a mis-resolution raises no arity error and
+   surfaces later as a regression in a file nobody edited.
+
+   HARMLESS GROUP, four local declarations, each BYTE-IDENTICAL to the model's
+   theories/Common/RefNodes.v:793 down to the first line of proof
+   ([induction l as [|[b' s'] l IH]]):
+     bpA/HF/HRefNodes.v:271 · bpA/Start/AsanRefNodes.v:298
+     bpB/HF/BRefNodes.v:270 · bpB/Start/BothRefNodes.v:297
+   Unqualified resolution AMONG THESE is safe because the candidates do not differ.
+
+   THE HAZARD, and it is the pair to leave alone:
+     THIS lemma, the [Lemma region_free_In] immediately below this comment — five
+       arguments [maps a n e sz], conclusion a
+       DISJUNCTION of two [bv_unsigned] inequalities.
+     the model's LinuxProcessSem/State.v:6336 — ALSO five arguments [maps lo n a sz],
+       nearly the same binder shape, conclusion the BOOLEAN [iv_overlap lo n a sz = false].
+   Same name, same arity, different proposition. Qualifying a site here onto [State.]
+   — or unqualifying a [State.]-qualified site into this scope — type-checks at the
+   application and fails at its consumer.  This unit mirrors bpA into bpB, so any
+   such edit lands twice.
+
+   THE THREE SITES THAT REACH THE BOOLEAN FORM, AND THEY ARE THE ONES NOT TO TOUCH:
+     CJ/Lib/NodesMM.v:202   pose proof (State.region_free_In maps lo n a sz H Hin)
+     bpA/HF/LazyNodes.v:398 pose proof (State.region_free_In maps a n lo sz Hf Hin)
+     bpB/HF/BazyNodes.v:394 pose proof (State.region_free_In maps a n lo sz Hf Hin)
+   Each is followed by a use of [iv_overlap], which is how you can tell from the
+   application alone that it is the boolean form and not this one.
+
+   A FOURTH SITE REACHES THE BOOLEAN FORM AND IT IS UNQUALIFIED, WHICH MAKES IT THE
+   MOST EXPOSED OF THE FOUR:
+     Common/BudgetBridge/BBMCharge.v:272
+   Nothing in its spelling says which lemma it means.  It was resolved by the
+   consuming tactic, which is the cheap discriminator for this name: a site whose
+   result feeds [lia] is the DISJUNCTION form, because [lia] cannot consume
+   [iv_overlap _ _ _ _ = false]; a site followed by [unfold iv_overlap] is the
+   BOOLEAN form.  Qualifying that line onto either local RefNodes copy would swap a
+   boolean for a disjunction and typecheck at the edit.
+
+   ONE MITIGATION, MEASURED, SO THE RISK IS NOT OVERSTATED: each of the three
+   [State.]-qualified sites is the ONLY occurrence of the name in its file, so the
+   usual trigger -- a qualified site sitting beside an unqualified neighbour and
+   reading as an inconsistency to clean up -- DOES NOT OCCUR HERE.  The danger is a
+   unit-wide normalisation pass, not a local edit.
+
+   Measured 2026-11-07 by RepairG3bLead4.SpirvRed5 at model sha 75d69e0079f9.
+   CANDIDATES ENUMERATED FROM THE MODEL AS WELL AS THIS TREE, BOTH MODEL
+   DECLARATIONS: Common/RefNodes.v:793 (disjunction) and LinuxProcessSem/State.v:6336
+   (boolean).  The five local declarations are POSITION-ALIGNED with the model's
+   disjunction, not merely equal in arity -- [maps a n e sz] against [l lo n b s]
+   binds list, base, length, entry-base, entry-size in that order in both -- so the
+   locals are alpha-equivalent to each other and harmless among themselves.  The
+   lethal axis here is CONCLUSION, against the model's boolean, not binder order.
+   Spellings: 14 qualified onto a local copy ([HRefNodes.] 7, [BRefNodes.] 7), 3 onto
+   [State.], 22 unqualified tokens of which 10 are application lines.  Of those 10 the
+   tactic discriminator was run at THREE window widths, which is the test that
+   matters and which I had not run when I first wrote this paragraph:
+       3 lines   BOOLEAN 2   DISJUNCTION 5   unresolved 3
+       6 lines   BOOLEAN 2   DISJUNCTION 7   unresolved 1
+      12 lines   BOOLEAN 2   DISJUNCTION 8   unresolved 0
+   THE BOOLEAN COLUMN SATURATES IMMEDIATELY -- flat at 2 across a 4x widening -- so
+   those two are LOCAL hits and are established.  THE DISJUNCTION COLUMN NEVER
+   PLATEAUS: 5, 7, 8, still climbing at the widest window tried.  That is the
+   signature of SCAVENGING, not of resolving: [lia] is ubiquitous, so a wider window
+   keeps admitting [lia]s that belong to OTHER hypotheses in the same proof.
+   **SO THE DISJUNCTION COLUMN IS NOT ESTABLISHED AT ANY WINDOW IN THIS NOTE.** The
+   conservative 3-line reading is kept deliberately; the 12-line map looks complete
+   and is less true.  Only BOOLEAN 2 is a result.
+   The IN-SCOPE DECLARATION COUNT -- cheaper than the tactic test and subsuming it
+   where a file has a singleton -- separately settles CJ/Spec/KLink.v:289 and :594 as
+   BOOLEAN, those two files reaching only [State] directly.
+   The INTRO-PATTERN test ([as [H|H]] destructures a disjunction and cannot be a
+   boolean, and it reads the site's own line so it is window-independent) was run and
+   settles NOTHING here: no site in this unit uses that form.
+   SEVEN OF TEN RESOLVED.  THE REMAINING THREE ARE NOT RESOLVED AND MUST NOT BE READ
+   AS PROBABLY FINE: bpA/Start/AsanNodesMmA.v:517 and :523 and
+   bpB/Start/BothNodesMmA.v:512 have BOTH candidates reachable, so what they take is
+   decided by import ORDER -- see the scope table below.  An earlier draft of this
+   note claimed all ten, on a same-line grep that missed a [State] arriving on a
+   continuation line; the three are listed here as unresolved rather than guessed.
+   No single instrument reaches all of them: the tactic window is blind where the
+   next tactic is [eauto] or a bullet, the in-scope count is blind where two
+   candidates are reachable, and both are blind where the name arrives transitively.
+
+   AND THE SECOND AND THIRD PROHIBITIONS, BOTH MORE DANGEROUS THAN THE FIRST BECAUSE
+   ADDING AN IMPORT OR REORDERING ONE IS AN ORDINARY THING TO DO AND RENAMING A
+   SPELLING IS NOT.  THE SCOPE TABLE SPLITS THIS UNIT TWO WAYS -- a unit-level
+   verdict on this axis is wrong whichever way you take it:
+
+     FRAGILE, CLASS WITHDRAWN -- I had these two as "one candidate in scope, correct
+     by absence".  THAT ROW IS WITHDRAWN AND THE REASON MATTERS MORE THAN THE ROW:
+       Common/BudgetBridge/BBMCharge.v   direct imports: [State], no RefNodes
+       CJ/Spec/KLink.v                   direct imports: [State], no RefNodes
+     The absence was measured over each file's OWN import sentences.  It is not a
+     transitive answer, and this unit uses [Require Export] 101 times -- including
+     [CJ/Lib/SysStep.v:12 Require Export Decode], which exports THIS FILE and with it
+     the disjunction declaration, and [Drv/{S1,U1}ExitBase.v:13 Require Export
+     SumWalkTac RefNodes].  So a carrier can arrive at a file that never names one.
+     UNTIL SOMEONE ENUMERATES THE TRANSITIVE CLOSURE FOR THESE TWO, TREAT THEM AS
+     FRAGILE WITH THE CLASS UNDETERMINED: do not add a [Require], do not reorder the
+     imports, and qualify any site you touch.  Both prohibitions, because I cannot
+     yet say which one applies.
+
+     ALREADY AMBIGUOUS -- BOTH candidates in scope TODAY, so which one an unqualified
+     site takes is decided by IMPORT ORDER.  There is nothing to add that would break
+     these; the instability is live now.
+       bpA/Start/AsanNodesMmA.v          [State] AND a RefNodes copy both reachable
+       bpB/Start/BothNodesMmA.v          same, the twin
+     DO NOT REORDER THE IMPORTS IN THESE TWO, and qualify any site you touch.
+
+   HOW THAT TABLE WAS CORRECTED, because the first version of this note had the last
+   two in the wrong class: a same-line grep for [Require .* State] reported State
+   ABSENT from both, and a SENTENCE-AWARE read -- terminating at a period followed by
+   whitespace rather than at a newline -- finds it PRESENT, arriving on a
+   CONTINUATION LINE of a wrapped import list.  Both files wrap.  A unit whose import
+   lists wrap cannot answer this question by line-oriented grep at all, and the files
+   most at risk are the ones with the longest import blocks, which are exactly the
+   ones that wrap.
+
+   Note the consequence for the two fragile-by-absence files, which runs against the
+   intuition: a normalising pass there would not RESOLVE an ambiguity -- it would
+   CREATE one, by bringing a second declaration into a file that has exactly one.
+
+   Both tests were run and they disagree, which is the point: the PROSE test passes
+   at about 3 per cent, so the figure is almost all real application text, and it dies
+   on the RESOLUTION test instead.  The predictor for which test will kill a figure is
+   one grep -- count the LOCAL declarations: five here, so resolution was always the
+   risk and the prose ratio was never going to matter.  The token total is a count of
+   a NAME and not of a lemma; do not quote it as a use count. *)
 Lemma region_free_In : forall maps a n e sz,
   region_free maps a n = true -> In (e, sz) maps ->
   (bv_unsigned a + bv_unsigned n <= bv_unsigned e \/ bv_unsigned e + bv_unsigned sz <= bv_unsigned a)%Z.

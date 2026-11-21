@@ -1,6 +1,6 @@
 (* Satisfiability witness of reply's driver hypothesis NS_START (KF-COUNT #7), ONE copy for both images.
    The hypothesis is the driver's (a Theorem Labs lane for image A: lib/A/AD1pcf.v, AD1qcf.v, AD2dcf.v on
-   a working branch 458a2b5da2a; a Theorem Labs lane mirrors it for image B):
+   a working branch; a Theorem Labs lane mirrors it for image B):
      Hypothesis NS_START : NS init_state + 12 + 4 * XNMAX <= NRUN.
    12 is image A's measured prefix count before the loop's first library call (1 input-buffer malloc, at most 10
    grows, 1 payload malloc) and 4 * XNMAX pays the loop's at most 4 calls; image B takes its own prefix count.

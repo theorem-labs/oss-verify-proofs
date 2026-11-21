@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch values (launchT) and the entry stack block up to the stack VMA's end; launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -23,7 +24,7 @@ Open Scope Z_scope.
 Section Compose.
   Hypothesis STDIO_EXIT : stdio_exit_spec_stmt ps_so set_so_ps.
   (* [comment removed for export] *)
-  Hypothesis MAIN : forall rc : runConstT, @pmain_stmt rc.
+  Hypothesis MAIN : forall (rc : runConstT) (lx : launchT), @pmain_stmt rc lx.
 
   (* [comment removed for export] *)
   Lemma pexit_from_pat_exit : forall (s : PState) (Q : Empty_set -> PState -> machine_state -> Prop) code ms,
@@ -40,7 +41,7 @@ Section Compose.
   Qed.
 
   (* [comment removed for export] *)
-  Lemma pmain_exit_from_pat_main : forall (rc : runConstT) (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (draw : EntryDraw) ms
+  Lemma pmain_exit_from_pat_main : forall (rc : runConstT) (lx : launchT) (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (draw : EntryDraw) ms
       (Q : Empty_set -> PState -> machine_state -> Prop),
     dvalid_sp sp0 argv envp -> valid_argv argv -> valid_envp envp -> SECRET = InitMem.draw_secret draw ->
     pat_main sp0 argv envp uid hw draw CAN ms ->
@@ -49,9 +50,9 @@ Section Compose.
              (fun code => exit_model Prog.io code))
       (ps_init (reservedZ usegs) ATOP) Q ms.
   Proof.
-    intros rc sp0 argv envp uid hw draw ms Q VSP VARGV VENVP HSEC AM.
+    intros rc lx sp0 argv envp uid hw draw ms Q VSP VARGV VENVP HSEC AM.
     eapply (Monad.implM_bind usegs).
-    - exact (MAIN rc sp0 argv envp uid hw draw ms VSP VARGV VENVP HSEC AM).
+    - exact (MAIN rc lx sp0 argv envp uid hw draw ms VSP VARGV VENVP HSEC AM).
     - intros code s' ms'' AE. cbn in AE. apply pexit_from_pat_exit. exact AE.
   Qed.
 
@@ -63,14 +64,16 @@ Section Compose.
            (ms0 usegs u_init_pc u_phdrs en inp).
   Proof.
     intros [sp0 brk mb draw] inp VE VI.
+    pose proof (valid_input_either_launch _ VI) as VLAUNCH.
     rewrite (valid_entry_either _ _ _ _ _ _ _ _ VI) in VE.   (* [comment removed for export] *)
-    destruct VE as (VSP & _ & _ & VFIT). destruct VI as (VARGV & VENVP & _).
-    destruct inp as [argv envp fs sin uid gid grps net nof sigm hw abt vasz].
-    cbn [en_sp en_draw in_argv in_envp in_uid in_hwcap in_fs en_brk] in *.
-    unfold ms0. cbn [en_sp en_draw in_argv in_envp in_uid in_hwcap].
-    unfold Prog.prog, Prog.prog_itree. cbn [in_argv].
+    destruct VE as (VSP & _ & _ & VFIT & VOK). destruct VI as (VARGV & VENVP & _).
+    (* 08b1429: the block runs from sp0 to the stack VMA's end ed_top. *)
+    pose proof (launch_facts inp sp0 brk mb draw VLAUNCH VOK) as (_ & HPAD & HDEP & HTOP & _ & _).
+    unfold ms0. cbn [en_sp en_draw en_mmap_base].
+    unfold Prog.prog, Prog.prog_itree.
     (* [comment removed for export] *)
     set (rc := run_consts_of (mkEntry sp0 brk mb draw) (pcanary draw) VSP).
+    set (lx := launch_of inp sp0 mb draw).
     change (entry_atop (mkEntry sp0 brk mb draw)) with (@ATOP rc).
     set (s0 := PState.ps_init (Image.reservedZ usegs) (@ATOP rc)).
     eapply (impl_ebind _ _ _ _ _ (fun (_ : Empty_set * PState) (_ : machine_state) => True)).
@@ -78,11 +81,17 @@ Section Compose.
     unfold Prog.prog_with, Prog.startup.
     change (implM usegs
               (mbind (mbind (msys NSetTid dec_set_tid) (fun _ => mret tt))
-                     (fun _ => mbind (main_model Prog.io raw_malloc raw_free UREAD_STAGE Prog.alloc_init Prog.run Prog.alloc_count (argv_Z argv))
+                     (fun _ => mbind (main_model Prog.io raw_malloc raw_free UREAD_STAGE Prog.alloc_init Prog.run Prog.alloc_count (argv_Z (in_argv inp)))
                                      (fun code => exit_model Prog.io code)))
-              s0 (fun _ _ _ => True) (init_ms usegs u_init_pc u_phdrs sp0 argv envp uid hw draw)).
-    eapply (startup_implM_of usegs s0 _ _ (pat_main sp0 argv envp uid hw draw (pcanary draw))).
-    - exact (pstartup_spec sp0 argv envp uid hw draw VSP VARGV VENVP).
-    - intros ms' AM. apply (pmain_exit_from_pat_main rc sp0 argv envp uid hw draw ms' _ ltac:(split; [exact VSP| split; [reflexivity| exact VFIT]]) VARGV VENVP eq_refl AM).
+              s0 (fun _ _ _ => True) (init_ms usegs u_init_pc u_phdrs sp0 mb draw inp)).
+    eapply (startup_implM_of usegs s0 _ _
+              (@pat_main lx sp0 (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) draw (pcanary draw))).
+    - eapply (pstartup_spec inp mb brk sp0 draw); eassumption.
+    - intros ms' AM.
+      assert (DV : @dvalid_sp rc lx sp0 (in_argv inp) (in_envp inp)).
+      { split; [exact VSP|]. split; [reflexivity|]. split; [exact VFIT|].
+        split; [exact HPAD|]. split; [exact HDEP| exact HTOP]. }
+      apply (pmain_exit_from_pat_main rc lx sp0 (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) draw ms' _
+               DV VARGV VENVP eq_refl AM).
   Qed.
 End Compose.

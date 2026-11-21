@@ -7,7 +7,7 @@
 #   run-knock.sh <workdir>
 #
 #   REL  port_core release 0e4e065eab9f (as run.sh)
-#   DONK libreac/fuzz_knock's released lib at the release commit 88154566652a in repository layout, NORMALISED as the grant
+#   DONK libreac/fuzz_knock's released lib at the release in repository layout, NORMALISED as the grant
 #        donor: Reusable/* (files and the R/, Z/ directories) moved to the lib root and the module text
 #        ...fuzz_knock.lib.Reusable -> ...fuzz_knock.lib in every .v (lib/AU is not read)
 #   PK   the libreac result directory: bin/fuzz_knock/fuzz_knock.asan, sha256 61768cf4739b7641c99c825dde45eddafc55b601d41109555be0272fc7ca4118

@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/A/AD2o.v (tfib_srealizesX_rc, tfib_srealizesX_top, TFIB_T_of_partsXF) and the XL0 of its A/ACfi.v for plugin-hostd/fuzz_command, in the form of libreac/fuzz_grant's lib/A/AGrantT.v and lib/A/GrantTop.v: TFIB_T of lib/A/CmdTFIB.v from one hypothesis on the program, the contract tfib_lib_contract_x_all of lib/A/ACfn.v (fuzz_command's call index and GI_cmdA) at every run ceiling and call index, instead of cgif's three library-function contracts; the allocator laws, the allocator and interceptor contracts and the driver's sites are discharged as AD2o.v discharges them, on fuzz_command's ASan image; the start-up certificate classes of lib/A/CmdStartCert.v and the module destructor's contract (class DtorExit of lib/A/AE37.v) are Section hypotheses (with the certificate checks' classes of AD1g.v, AD2i.v, AD1d.v, AD1f.v, AD2k.v and the a_vis alignment check class TfibAvis8 of CmdWorldH8.v); the driver's free, printf and exit sites are discharged at every float state; the plain build's sink instances are removed as GrantTop.v removes them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the launch premise entry_launch_ok_va is passed to the start-up. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -80,24 +81,26 @@ Let EXS : forall fy : YK11.FPState, exit_site_tfa (fx := fy) B est xst := fun fy
 Lemma cmd_srealizesX_rc : forall sp rdraw brk mb inp,
 valid_sp sp -> valid_brk TSEGS brk -> valid_mmap_base mb ->
 entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
 YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
 srealizes TSEGS (init_config TSEGS Asan.M.init_pc TPH sp brk mb rdraw target_alloc_limit inp) (SPECX inp).
 Proof.
-intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil.
+intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil.
 change target_alloc_limit with YA02.LIMIT.
 exact (tfib_srealizesX B HB AMALLOC AFREE AICPY ARDCHK ameter_triv XL0 XL0 CMD_RLO CMD_RHI MT_FREE RO_IN (LIBX rc) xst XFR PF1 PFN est ESTI ESTF FWS RFS FPO FPR FPU EXS
-sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil).
+sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil).
 Qed.
 End RC.
 Theorem cmd_srealizesX_top : forall sp rdraw brk mb inp,
 valid_sp sp -> valid_brk TSEGS brk -> valid_mmap_base mb ->
 entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
 srealizes TSEGS (init_config TSEGS Asan.M.init_pc TPH sp brk mb rdraw target_alloc_limit inp) (SPECX inp).
 Proof.
-intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp.
-exact (@cmd_srealizesX_rc (YM05.RunCeilOf (bv_unsigned sp) (valid_sp_windowX sp Hsp)) sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp (YM05.ceil_of_top_run _)).
+intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau.
+exact (@cmd_srealizesX_rc (YM05.RunCeilOf (bv_unsigned sp) (valid_sp_windowX sp Hsp)) sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau (YM05.ceil_of_top_run _)).
 Qed.
 (* Shared contract C2: the driver and the start-up over the program contract. *)
 Theorem cmd_TFIB_T_of_lib : TFIB_T.
-Proof. intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp. exact (cmd_srealizesX_top sp rnd brk mbase inp Hsp Hbrk Hmb Hfit Hinp). Qed.
+Proof. intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau. exact (cmd_srealizesX_top sp rnd brk mbase inp Hsp Hbrk Hmb Hfit Hinp Hlau). Qed.
 End b.

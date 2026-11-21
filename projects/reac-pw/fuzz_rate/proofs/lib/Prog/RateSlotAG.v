@@ -3,14 +3,15 @@
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/Prog/LLVMFuzzerTestOneInput_fr.v, with its module paths and module names changed; 456 of its 574 lines of code are new or changed and 409 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/Prog/Seg/Tac_slot.v, with its module paths and module names changed; 64 of its 101 lines of code are new or changed and 537 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The plain slot of reac-pw/fuzz_rate LLVMFuzzerTestOneInput at the agreement frame's shape, for ubsan_agrees
    (AgreeRate.v). Model: reac-pw/fuzz_role's Prog/RoleSlotAG.v, itself
    reac-pw/fuzz_pin's Prog/PinSlotAG.v, at rate's names and five segments.
    Prog/RateSlot.v proves the slot obligation under FrameAPI.frame_facts_plain, whose room conjunct is the halts
    frame's (lib_room -> sb_cap = CAPMAX); the agreement frame's shape AgreeShape.ag_shape has sb_cap = CAP_AG (1024),
    so frame_facts_plain does not hold at it. The slot needs only SlotFR.slot_room (128 <= sb_cap <= CAPMAX), the
-   bound libreac/fuzz_ctrl's released plain slot carried in its own frame_facts for this reason (Prog/SlotInv.v:71 at
-   origin/ossv/recipes 25e3d17bdb50). Neither the segment statements (LLVMFuzzerTestOneInput_c.seg_lemmas) nor
+   bound libreac/fuzz_ctrl's released plain slot carried in its own frame_facts for this reason (Prog/SlotInv.v:71).
+   Neither the segment statements (LLVMFuzzerTestOneInput_c.seg_lemmas) nor
    RateSlot.slot_early mention the shape, so both are taken at a halts shape LSh (any shape with frame_facts_plain),
    and RateSlot's Section Bridge (slot_lib, with Seg/Tac_slot.sl_post_g) is restated here, word for word, at a shape
    LS with frame_facts_plain's LIBK and lib_delta conjuncts and lib_room LS b n -> slot_room b.

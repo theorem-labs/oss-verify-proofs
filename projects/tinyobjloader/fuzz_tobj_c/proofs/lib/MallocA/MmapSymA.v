@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the two mmap triples take a NULL hint, from which the decline test place_declined_b is computed (the mmap inversion wstep_mmap_invA derives it from the step's answer instead); etriple_mmap_rw_symA written as plain text, asking the request's non-refusability and its premise of every admissible address, so the grant is at Linux's address; the frame obligation's new cases closed by RomBase's tactics). *)
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
 #[local] Ltac2 tbs__ () := ["@Corelib.Init.Logic"; "eq"; "and"; "not"; "ex"; "or"; "@stdpp.bitvector.definitions"; "bv_unsigned"; "bv"; "Z_to_bv"; "@Corelib.Numbers.BinNums"; "Z"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymState"; "sv"; "sobj"; "eval"; "ss_next"; "ss_objs"; "SVar"; "reg_sv"; "valuation"; "SLit"; "obj_range"; "ranges_disjoint"; "ro_addr"; "sv_below"; "ss_pc"; "DZero"; "cell"; "mkObj"; "smatch"; "sstate"; "@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics"; "ms_gpr"; "machine_state"; "ms_mem"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.StepA"; "ax_S"; "axst"; "ax_X"; "ax_base"; "ax_setS"; "shadow_addr"; "@Stdlib.ZArith.BinInt.Z"; "lt"; "add"; "le"; "pow"; "modulo"; "ge"; "@Corelib.Init.Datatypes"; "bool"; "pair"; "list"; "false"; "true"; "nil"; "app"; "cons"; "fst"; "prod"; "snd"; "Some"; "option"; "@LinuxProcessSemantics.LinuxProcessSem.Run"; "config"; "mkCfg"; "@Stdlib.Lists.List"; "In"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "Model"; "event"; "m_vmmaps"; "with_vmmaps"; "ENOMEM"; "errno_ret"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymCall"; "rho_set_rw"; "S_after"; "smatch_pending"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.SoundA"; "SPA"; "jpredA"; "stableA"; "ok_frameA"; "smatchA"; "@LinuxProcessSemantics.Riscv.Instr"; "instr"; "Ecall"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.SysCallA"; "smatch_pendingA"; "A_after"; "ok_pframeA"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocA.MmapSymA.M"; "mmap_obj_sym"; "@Stdlib.PArith.BinPos.Pos"; "succ"; "@LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap"; "mmap_noreserve_b"; "mmap_modeled_b"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.Safety"; "world"; "etriple"; "model_idle"; "triple1"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysSpec"; "mmap_place_ok"; "mmap_nZ"; "mmap_rw_vm"; "mmap_n"; "mmap_rw_model"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.Virt"; "headroom"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysStep"; "after_sys_mem"; "zero_range"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3.SymStep"; "instr_at"].
@@ -11,7 +12,30 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
-From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw Require Import Safety SysSpec SysStep.
+(* [mmap_grant_refusable] lives in Fw/Refusable.v; `Require Import SysSpec` does not
+   re-export it, so this file must name it.  Without it the build stops
+   at MmapSymA.v:226 -- "The reference mmap_grant_refusable was not found
+   in the current environment" -- once the restatement at :183 uses it.
+   The class is REFERENCE-NOT-FOUND -> LOOK IN THE UNIT'S OWN MODULES FIRST:
+   Malloc/HeapEx.v:13-23 has the same class and the same kind of fix, and the next
+   name below (linux_place_is) is one more case.  The EXISTING Fw sentence is extended
+   rather than a new one added, and this file is NOT among the seven whose unqualified
+   [region_free_In] sites are correct-by-absence (clause (b) of the list of those
+   files), so the addition cannot flip a resolution there. *)
+From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw Require Import Safety SysSpec SysStep RomBase Refusable.
+(* The same class again, for the next name of the same restatement:
+   MmapSymA.v:274 "The variable linux_place_is was not found in the current
+   environment" without this line.  The Refusable line above brings in
+   mmap_grant_refusable, and the restatement also uses [linux_place_is], which
+   lives in Checks.Placement and which `Require Import SysSpec` likewise does not
+   re-export.  Malloc/HeapEx.v has exactly this line for the same reason.
+   THE PROCEDURE: when a restatement introduces names, check EVERY new name's home
+   against this file's own Require block IN ONE PASS, before the file is built; checking
+   one name at a time finds them one build at a time (mmap_grant_refusable, then
+   linux_place_is).
+   Clause (b) re-checked for THIS line too: this file is not among the seven whose
+   unqualified [region_free_In] sites are correct-by-absence. *)
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3 Require Import SymState SymStep SymSoundA SymSoundB SymSoundV SymSoundM SymSoundR SymSoundL SymComplete SymCall SymExit Glue3 SymHeap.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A Require Import Restrict BackingAlgebra Virt StepA SoundA LedgerA SysCallA MmapA.
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib Require LiaFast.
@@ -160,10 +184,15 @@ Proof using .
     rewrite Z.div_add by lia. change (4095 / 4096) with 0. lia.
 Qed.
 
-Theorem triple1_mmap_rw_symA : ltac2:(tb__ "0|10|
-S52OF_;S45S45S6Q40M0A1M1S45F_;S20S10S2dG1A1S9S8S47Vsegs;R9R8A3S4dVsegs;RaR9A3S46Vsegs;ScS1fR7A1A1RaA3S0S37S49A1S5eVsegs;S16S1fR8A1A1A2S36S49S4aA2A3S0S9SfS1fR9A1Z11A2S11ZdeA1A3S0S9SfS1fRaA1ZbA2R7A3S0S2bS15ScS1fRbA1A1R8A2S2fA3S0S8S5G0SbRbR9A2A2R8A3S0S8S29R9Z1000A2Z0M2A3S1S25G2RaA2S25RaS28Z2Z3eA2A2A2S2dS3cA1M3S1dS3bS4bVsegs;R11R10R12S2cG3S38R3S39R2R1A2A4A5R16R12R11R4R2A4S1S0S2bS51S1cR4U2A2S1cR4U3M4A2M5S1cR4U5A2A3S2fA3S1S0S2bS50G5A1S2eA3S1S2aS5bR3R12A2R10A2S1R16R13R12R5R3A4G1S56S1cR5U0A2S1cR5G4A2R4S1cR5U1M6A2R1A5S1SaS3aSaR1SdS1fR17A1A1A3S13S12R17R2A2S2cS8S8S5G0R4A2M7S26G7R14A2A4A2F_;Fo;S1G1S1S27S5G0R3A2M8S5G0R1A2M9A2S25G9S26G8R13A2A2A2S0S2bS14Vsegs;R2A2S2eA3F_;Fx;S1S34S9S9A2MaS8S3aGaR2S21R18A1A3S1S27S5G0SbR18S33S9S9R3A3A2A2MbR2A2S25R2S26GbS5G0SbR18S35S9S9R3A3A2A2A2A2A2S2S1S27S5G0R6A2McS5G0S24S5G0SbR19S22R1aA1A2A2R3A2A2MdA2S25GdS26GcR16A2A2A2A1F_;F_;Fy;Fr;R17R2S41R15ScS1fR16A1A1R2A3R14R7S3eS58S3dR5A1S1cR6G6A2R2A3R5A2A5A2A2A2F_;Fa;A2A2A2A2F_;F_;Fmd;Fms;Ftr;S55Vsegs;R14S44Vsegs;R13R10RfReA5S52S4S44Vsegs;R13S4cR11S11S5G0S40S3fA1A2A1A2R10RfR1A6S3G1G1S44Vsegs;R13R1A1S23R12S42S1fR12A1MeSeScGeA1MfA1S31SaSdGeA1S32SaS4eGfRfA2S30SaA1A3A3S4fGfA1A4A2S41R11GfR1A3R10R2A6La;A2A2Lw;A4F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;Fnlit;Felen;Ftp;Frho;FA;FJo;FJf;FJ;Fok;").
+(* LPS 727298f3: a premise [reg_sv (ax_S A) 10 = SLit 0] (the hint a0 is NULL) is inserted right
+   after the [reg_sv (ax_S A) 17 = SLit 222] premise, and nothing else changed (decoded with this
+   file's [tbs__] table, the premise added, re-encoded).  The decline test [place_declined_b ... =
+   false] of [mmap_only_okA] is computed from it.  The same premise is added
+   to [etriple_mmap_rw_symA] below. *)
+Theorem triple1_mmap_rw_symA : ltac2:(tb__ "0|0|
+S52OF_;S45S45S6Q40A1S45F_;S20S10S2dS6Q40A1A1S9S8S47Vsegs;R9R8A3S4dVsegs;RaR9A3S46Vsegs;ScS1fR7A1A1RaA3S0S37S49A1S5eVsegs;S16S1fR8A1A1A2S36S49S4aA2A3S0S9SfS1fR9A1Z11A2S11ZdeA1A3S0S9SfS1fRaA1ZaA2S11Z0A1A3S0S9SfS1fRbA1ZbA2R8A3S0S2bS15ScS1fRcA1A1R9A2S2fA3S0S8S5Q40SbRcRaA2A2R9A3S0S8S29RaZ1000A2Z0A3S1S25Z0RbA2S25RbS28Z2Z3eA2A2A2S2dS3cA1S1dS3bS4bVsegs;R12R11R13S2cS2dS3cA1S38R3S39R2R1A2A4A5R17R13R12R4R2A4S1S0S2bS51S1cR4U2A2S1cR4U3A2S1cR4U5A2A3S2fA3S1S0S2bS50S1cR4U3A2A1S2eA3S1S2aS5bR3R13A2R11A2S1R17R14R13R5R3A4S6Q40A1S56S1cR5U0A2S1cR5U3A2R4S1cR5U1A2R1A5S1SaS3aSaR1SdS1fR18A1A1A3S13S12R18R2A2S2cS8S8S5Q40R4A2S26S5Q40R4A2R15A2A4A2F_;Fo;S1S6Q40A1S1S27S5Q40R3A2S5Q40R1A2A2S25S5Q40R1A2S26S5Q40R3A2R14A2A2A2S0S2bS14Vsegs;R2A2S2eA3F_;Fx;S1S34S9S9A2S8S3aS34S9S9A2R2S21R19A1A3S1S27S5Q40SbR19S33S9S9R3A3A2A2R2A2S25R2S26S5Q40SbR19S33S9S9R3A3A2A2S5Q40SbR19S35S9S9R3A3A2A2A2A2A2S2S1S27S5Q40R6A2S5Q40S24S5Q40SbR1aS22R1bA1A2A2R3A2A2A2S25S5Q40S24S5Q40SbR1aS22R1bA1A2A2R3A2A2S26S5Q40R6A2R17A2A2A2A1F_;F_;Fy;Fr;R18R2S41R16ScS1fR17A1A1R2A3R15R7S3eS58S3dR5A1S1cR6U1A2R2A3R5A2A5A2A2A2F_;Fa;A2A2A2A2F_;F_;Fmd;Fms;Ftr;S55Vsegs;R15S44Vsegs;R14R11R10RfA5S52S4S44Vsegs;R14S4cR12S11S5Q40S40S3fA1A2A1A2R11R10R1A6S3S6Q40A1S6Q40A1S44Vsegs;R14R1A1S23R13S42S1fR13A1SeScS1fR13A1A1A1S31SaSdS1fR13A1A1S32SaS4eScS1fR13A1A1R10A2S30SaA1A3A3S4fScS1fR13A1A1A1A4A2S41R12ScS1fR13A1A1R1A3R11R2A6La;A2A2Lw;A4F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;Fnlit;Felen;Ftp;Frho;FA;FJo;FJf;FJ;Fok;").
 Proof using .
-  intros ok J Jf Jo A rho tp elen nlit Hokf Hokp Hst Hi H17 H11 Hbel Helen Hmod Hn HJ.
+  intros ok J Jf Jo A rho tp elen nlit Hokf Hokp Hst Hi H17 H10 H11 Hbel Helen Hmod Hn HJ.
   apply triple1_ecall_detA; [exact Hokf | exact Hst | exact Hi |].
   intros tr ms md Hsp Hk.
   pose proof (smatch_pendingA_pending segs _ _ _ _ _ _ Hsp) as Hp. rewrite H17 in Hp. cbn [eval] in Hp.
@@ -171,8 +200,12 @@ Proof using .
   destruct (mmap_len_sym rho tp A tr ms md elen nlit Hsp H11 Helen Hmod Hn) as [Hlen HnZ].
   destruct (HJ tr ms md Hsp Hk) as (Hmodb & Hnr & Hroom & HJf & HOK).
   assert (H222 : bv_unsigned (Z_to_bv 64 222) = 222%Z) by reflexivity.
+  assert (Hdecl : place_declined_b (m_kernel md) (m_vmmaps md) (ms_gpr ms 0)
+                    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false).
+  { destruct (pending_argsA segs rho tp A tr ms md Hsp) as (G0 & _). rewrite G0, H10.
+    exact (place_declined_b_null _ _ _). }
   split.
-  - eapply Hokp; [exact Hk | exact Hp |]. apply (mmap_only_okA segs ms md _ Hh H222 Hlen Hmodb).
+  - eapply Hokp; try exact Hk; try exact Hp; try (solve [RomBase.rob_auto | eapply RomBase.sys_rob_exit; eassumption]). apply (mmap_only_okA segs ms md _ Hh H222 Hlen Hmodb Hdecl).
   - intros w' Hw. destruct (wstep_mmap_invA segs ms md _ Hh H222 Hlen Hmodb tr w' Hp Hw) as [-> | (a & Hpl & ->)].
     + left. split; [|exact HJf]. eapply smatchA_after_ret_lit; [exact Hsp | exact Hh | apply vm_same_refl].
     + right. exists a. destruct (HOK a Hpl) as (Hdisj & Hnro & Hxs & HJo). split.
@@ -180,19 +213,97 @@ Proof using .
       * cbn [w_tr w_cfg fst snd cfg_model]. unfold mmap_rw_model. rewrite (with_mmap_backing_plain _ _ _ _ Hnr). exact HJo.
 Qed.
 
-Theorem etriple_mmap_rw_symA : ltac2:(tb__ "0|10|
-S45S6Q40M0A1M1S45F_;S20S10S2dG1A1S9S8S46Vsegs;ScS1fR5A1A1R7A3S0S37S49A1S5eVsegs;S16S1fR6A1A1A2S36S49S4aA2A3S0S9SfS1fR7A1Z11A2S11ZdeA1A3S0S9SfS1fR8A1ZbA2R5A3S0S2bS15ScS1fR9A1A1R6A2S2fA3S0S8S5G0SbR9R7A2A2R6A3S0S8S29R7Z1000A2Z0M2A3S1S25G2R8A2S25R8S28Z2Z3eA2A2A2S2dS3cA1M3S1dS3bS4bVsegs;RfReR10S2cG3S38R3S39R2R1A2A4A5R13R10RfR4R2A4S1S0S2bS51S1cR4U2A2S1cR4U3M4A2M5S1cR4U5A2A3S2fA3S1S0S2bS50G5A1S2eA3S1S2aS5bR3R10A2ReA2S3G1G1S1S56S1cR5U0A2S1cR5G4A2R4S1cR5U1A2M6R1A5S1SaS3aSaR1SdS1fR14A1A1A3S13S12R14R2A2S2cS8S8S5G0R3A2M7S26G7R11A2A4A2F_;Fo;S1G1S1S27S5G0R2A2M8S5G0R1A2M9A2S25G9S26G8R10A2A2A2S0S2bS14Vsegs;R2A2S2eA3F_;Fx;S1S34S9S9A2MaS8S3aGaR2S21R15A1A3S1S27S5G0SbR15S33S9S9R3A3A2A2MbR2A2S25R2S26GbS5G0SbR15S35S9S9R3A3A2A2A2A2A2S2S1S27S5G0R5A2McS5G0S24S5G0SbR16S22R17A1A2A2R3A2A2MdA2S25GdS26GcR13A2A2A2A1F_;F_;Fy;Fr;R14R1S41R12ScS1fR13A1A1R1A3R11R6S3eS58S3dR4A1G6R1A3R4A2A5A2A2A2A2La;A2A2A2A2F_;F_;Fmd;Fms;Ftr;S53Vsegs;S44Vsegs;R10ReRdRcA5S52S3G1G1S44Vsegs;R11R1A1S23R10S42S1fR10A1MeSeScGeA1MfA1S31SaSdGeA1S32SaS4eGfRdA2S30SaA1A3A3S4fGfA1A4A2S41RfGfR1A3ReR2A6La;A2Lw;A3F_;F_;F_;F_;F_;F_;F_;F_;F_;Fnlit;Felen;Ftp;Frho;FA;FJo;FJ;").
+(* RESTATED.  The old statement fails (measured) at
+   MmapSymA.v:194.  This file builds only once Fw3A/MmapA.v compiles, so the error
+   shows only then: it is the same residual in a changed FORM, not a new one
+   (the residual does not grow).
+   SAME CAUSE AND SAME CURE AS Fw3A/MmapA.v:245, the same family as
+   this file: [wstep_mmap_intro_okA] (Fw3A/MmapA.v:105-117) takes
+   Linux's own placement test as its last premise, and [mmap_place_ok] is strictly
+   weaker -- every free, aligned, in-range, budget-ok address -- so no [a] the old
+   existential names can discharge it.
+     old:  ... /\ exists a, mmap_place_ok ... a /\ DISJ a /\ RO a /\ XS a /\ Jo a ...
+     new:  ... /\ mmap_grant_refusable (ms_gpr ms 3) (ms_gpr ms 0) md
+                   (mmap_nZ (ms_gpr ms 1)) = false
+                /\ forall a, mmap_place_ok ... a -> DISJ a /\ RO a /\ XS a /\ Jo a ...
+   Linux's address then comes from [mmap_rw_not_refusable_place] (Fw/SysSpec.v:1909-1911)
+   and the caller's universal is instantiated at it.  The call below is written in the
+   arity-robust form (`Proof using Hlen` means Hlen may or may not be explicit), which
+   is the defect measured at MmapA.v:314, where that form compiles (measured).
+   THE GUARANTEE IS NOT WEAKENED: both changes are to a HYPOTHESIS, the postcondition
+   is untouched, and the universal half is STRONGER than the existential half for any
+   caller that already quantifies over its address.
+   Decoded from this file's own [tbs__] table and written out; NOTHING RE-ENCODED, so
+   the re-emission type-identity guard does not apply -- the text IS the statement.
+   Decoder fixture-validated (triple1_mprotect_exposeJ's blob at an earlier revision decodes
+   to its hand-written text at the tip, conjunct for conjunct).  NO IMAGE-DERIVED
+   NUMERAL IS INTRODUCED: the only numerals here are 222, 17, 11, 4096 and 2^62, every
+   one carried over unchanged from the decoded text, and none is address-shaped. *)
+Theorem etriple_mmap_rw_symA :
+  forall (J : jpredA) (Jo : word -> jpredA) (A : axst) (rho : valuation)
+         (tp : list word) (elen : sv) (nlit : Z),
+    stableA segs (ss_next (ax_S A)) J ->
+    instr_at segs (ss_pc (ax_S A)) = Some Ecall ->
+    reg_sv (ax_S A) 17 = SLit 222 ->
+    reg_sv (ax_S A) 10 = SLit 0 ->
+    reg_sv (ax_S A) 11 = elen ->
+    sv_below (ss_next (ax_S A)) elen = true ->
+    bv_unsigned (eval rho elen) = nlit ->
+    nlit mod 4096 = 0 ->
+    0 < nlit < 2 ^ 62 ->
+    (forall tr ms md,
+        smatch_pendingA segs rho tp A (tr, mkCfg ms md) ->
+        J rho tp tr md ->
+        mmap_modeled_b (ms_gpr ms 2) (ms_gpr ms 3) (ms_gpr ms 5) = true
+        /\ mmap_noreserve_b (ms_gpr ms 3) = false
+        /\ headroom md tp >= nlit
+        /\ mmap_grant_refusable (ms_gpr ms 3) (ms_gpr ms 0) md
+             (mmap_nZ (ms_gpr ms 1)) = false
+        /\ (forall a,
+              mmap_place_ok (ms_gpr ms 0) (ms_gpr ms 3) md (ms_gpr ms 1) a ->
+              (forall o, In o (ss_objs (ax_S A)) ->
+                 ranges_disjoint (obj_range rho o)
+                   (bv_unsigned a, bv_unsigned a + nlit))
+              /\ (forall x, bv_unsigned a <= bv_unsigned x < bv_unsigned a + nlit ->
+                    ro_addr segs x = false)
+              /\ (forall (r : sv * sv) (y : Z),
+                    In r (ax_X A) ->
+                    bv_unsigned (eval rho (fst r)) <= y
+                      < bv_unsigned (eval rho (fst r)) + bv_unsigned (eval rho (snd r)) ->
+                    ~ (bv_unsigned a
+                         <= bv_unsigned (shadow_addr (bv_unsigned (eval rho (ax_base A))) y)
+                         < bv_unsigned a + nlit))
+              /\ Jo a (rho_set_rw rho (ss_next (ax_S A)) a) tp tr
+                   (with_vmmaps (mmap_rw_vm (m_vmmaps md) (ms_gpr ms 1) a) md))) ->
+    etriple segs (SPA segs J A rho tp)
+      (fun w => exists a,
+         SPA segs (Jo a)
+           (ax_setS A (S_after (ax_S A) (SVar (ss_next (ax_S A)))
+                         (ss_objs (ax_S A) ++ [mmap_obj_sym (ss_next (ax_S A)) elen])
+                         (Pos.succ (ss_next (ax_S A)))))
+           (rho_set_rw rho (ss_next (ax_S A)) a) tp w).
 Proof using .
-  intros J Jo A rho tp elen nlit Hst Hi H17 H11 Hbel Helen Hmod Hn HJ.
+  intros J Jo A rho tp elen nlit Hst Hi H17 H10 H11 Hbel Helen Hmod Hn HJ.
   apply etriple_ecall_detA; [exact Hst | exact Hi |].
   intros tr ms md Hsp Hk.
   pose proof (smatch_pendingA_pending segs _ _ _ _ _ _ Hsp) as Hp. rewrite H17 in Hp. cbn [eval] in Hp.
   pose proof (smatch_pendingA_halted segs _ _ _ _ _ _ Hsp) as Hh.
   destruct (mmap_len_sym rho tp A tr ms md elen nlit Hsp H11 Helen Hmod Hn) as [Hlen HnZ].
-  destruct (HJ tr ms md Hsp Hk) as (Hmodb & Hnr & Hroom & a & Hpl & Hdisj & Hnro & Hxs & HJo).
+  destruct (HJ tr ms md Hsp Hk) as (Hmodb & Hnr & Hroom & Hrf & HOK).
   assert (H222 : bv_unsigned (Z_to_bv 64 222) = 222%Z) by reflexivity.
-  eexists. split; [exact (wstep_mmap_intro_okA segs ms md _ Hh H222 Hlen Hmodb tr a Hp Hpl)|].
-  exists a. split.
+  destruct (ltac:(first
+    [ exact (@mmap_rw_not_refusable_place (sys_input segs ms (Z_to_bv 64 222)) md Hlen Hrf)
+    | exact (@mmap_rw_not_refusable_place (sys_input segs ms (Z_to_bv 64 222)) md Hrf) ])
+    : exists a, mmap_place_ok (ms_gpr ms 0) (ms_gpr ms 3) md (ms_gpr ms 1) a
+                /\ linux_place_is (m_vmmaps md) (kb_thp (m_kernel md)) (ms_gpr ms 0)
+                     (mmap_nZ (ms_gpr ms 1)) a = true) as (a & Hpl & Hlp).
+  change (mmap_place_ok (ms_gpr ms 0) (ms_gpr ms 3) md (ms_gpr ms 1) a) in Hpl.
+  assert (Hdecl : place_declined_b (m_kernel md) (m_vmmaps md) (ms_gpr ms 0)
+                    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false).
+  { destruct (pending_argsA segs rho tp A tr ms md Hsp) as (G0 & _). rewrite G0, H10.
+    exact (place_declined_b_null _ _ _). }
+  eexists. split; [exact (wstep_mmap_intro_okA segs ms md _ Hh H222 Hlen Hmodb Hdecl tr a Hp Hpl Hlp)|].
+  exists a. destruct (HOK a Hpl) as (Hdisj & Hnro & Hxs & HJo). split.
   - eapply smatchA_after_mmap_obj_sym; eauto.
   - cbn [w_tr w_cfg fst snd cfg_model]. unfold mmap_rw_model. rewrite (with_mmap_backing_plain _ _ _ _ Hnr). exact HJo.
 Qed.

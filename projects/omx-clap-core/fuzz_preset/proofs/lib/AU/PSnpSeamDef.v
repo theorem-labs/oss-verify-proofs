@@ -1,7 +1,7 @@
 (* THE SEAM'S FAMILY, and why the seam's statement has the shape it has.
 
-   The statement, `sh_avfprintf_icpt_realizesUx`, has one home: RtPrintf.Param's lib/A/FMsnprintfSx.v
-   (cold/port-fm-rtprintf-param 53d633d5fe5), copied verbatim from this file's earlier text.  It is
+   The statement, `sh_avfprintf_icpt_realizesUx`, has one home: RtPrintf.Param's lib/A/FMsnprintfSx.v,
+   copied verbatim from this file's earlier text.  It is
    Param's `sh_avfprintf_icpt_realizesU` (here lib/Reusable/FMsnprintfShared.v:333) with
 
    FOUR PREMISES ADDED, each a fact the released GXA statement asks for
@@ -18,7 +18,7 @@
    The contract's dest_off_globals (the destination off the image range (ilo, ihi), which the caller
    names) gives GXA's `D + dn <= 65536 \/ GLOBALS_TOP <= D` (VfprintfCall.v:41, second disjunction)
    when ilo <= 65536 and GLOBALS_TOP <= ihi.
-   The post's FP state is existential, as Param's text already states it (since 401616133a7): fa0
+   The post's FP state is existential, as Param's text already states it: fa0
    is caller-saved and printf_core writes it through pop_arg for a double argument, so the released
    theorem states only `reg_get Ft k = reg_get F k` for k <> 10 and `frm0 fc'`
    (G_vfprintf_snf.v:69-70), while the harness's `cfg_at` pins both to the ambient FPState.  The
@@ -30,8 +30,8 @@
    (`65536 <= A /\ A + |fmt| <= sym 0x22e18`, G_vfprintf_snf.v:210 and vf_ready_a:221), and it reads
    the slack word past each string, so pf_family's `amem_range w (|s| + 1)` must cover `str_end w s`.
    Both constrain only f and ws, which the family sees, so they stay on this side of the seam. *)
-(* Modified by Theorem Labs, 2026-10: c-libc-stdio's copy for fuzz_preset image A (L3-V2, the GXA seam over ARx; parent c-libc-stdio 14:3xZ) of proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamDef.v at origin/cold/port-fm-rtprintf-param 3e35620c52e: module paths fuzz_manifest -> fuzz_preset; the image record RT_IImgA.A_img -> preset's rebuilt-pin lib/CJ/RL/I/IImgA.v N_img_asan (taken by path by c-libc-str, f697dea427f); FMupoison is not imported (no U item here); the family constructors fmt_at / pf_args_asan / pf_prec_pos / pf_family come from lib/Reusable/PSnpPfFam.v (P2's copy of FMsnprintfShared.v:42-69, :83-97), the contract from PSnpSx.v. pf_args_slack, pf_family_ro and pf_family_ro_sub are unchanged. The sentences above name fm's files and addresses (preset: ilo = 0x10000, ihi = PSnpI / N_img_asan's GLOBALS_TOP). *)
-(* Modified by Theorem Labs, 2026-10: image B twin (fuzz_preset.asan-ubsan f8f98a95) of lib/A/PSnpSeamDef.v, by the unit's image-B convention (lib/AU/FCxA.v's rule): the image record CJ.RL.I.IImgA.N_img_asan -> CJ.RL.I.IImgB.N_img_asan (rebuilt pin, by path from h-hpreset-7-pvN-B 16345363f93d via c-libc-str f697dea427f), lib/A/PSnpBz -> lib/AU/PSnpBz, the image-A core A<x> -> image B's Y<x> (lib/Reusable), the PSnp seam files lib/A -> lib/AU. Sentences above that name image A or fm describe the A twin. *)
+(* Modified by Theorem Labs, 2026-10: c-libc-stdio's copy for fuzz_preset image A (L3-V2, the GXA seam over ARx; parent c-libc-stdio 14:3xZ) of proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamDef.v: module paths fuzz_manifest -> fuzz_preset; the image record RT_IImgA.A_img -> preset's rebuilt-pin lib/CJ/RL/I/IImgA.v N_img_asan (taken by path by c-libc-str); FMupoison is not imported (no U item here); the family constructors fmt_at / pf_args_asan / pf_prec_pos / pf_family come from lib/Reusable/PSnpPfFam.v (P2's copy of FMsnprintfShared.v:42-69, :83-97), the contract from PSnpSx.v. pf_args_slack, pf_family_ro and pf_family_ro_sub are unchanged. The sentences above name fm's files and addresses (preset: ilo = 0x10000, ihi = PSnpI / N_img_asan's GLOBALS_TOP). *)
+(* Modified by Theorem Labs, 2026-10: image B twin (fuzz_preset.asan-ubsan f8f98a95) of lib/A/PSnpSeamDef.v, by the unit's image-B convention (lib/AU/FCxA.v's rule): the image record CJ.RL.I.IImgA.N_img_asan -> CJ.RL.I.IImgB.N_img_asan (rebuilt pin, by path from h-hpreset-7-pvN-B via c-libc-str), lib/A/PSnpBz -> lib/AU/PSnpBz, the image-A core A<x> -> image B's Y<x> (lib/Reusable), the PSnp seam files lib/A -> lib/AU. Sentences above that name image A or fm describe the A twin. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

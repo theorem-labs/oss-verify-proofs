@@ -1,9 +1,9 @@
-(* Image B twin of lib/A/RT_pf_kit.v at d49bd1db505: module paths lib.A -> lib.B; no image numeral (CHAINB-numerals.tsv sha256 3cedf5e564f7; internal record). *) (* Small helpers shared by fuzz_reply.asan-ubsan's snprintf chain proofs (RT_pf_vsn.v, RT_pf_snf.v, RT_pf_vf.v), in their
+(* Image B twin of lib/A/RT_pf_kit.v: module paths lib.A -> lib.B; no image numeral (CHAINB-numerals.tsv sha256 3cedf5e564f7; internal record). *) (* Small helpers shared by fuzz_reply.asan-ubsan's snprintf chain proofs (RT_pf_vsn.v, RT_pf_snf.v, RT_pf_vf.v), in their
    own file so that the three can be built - and proved by different hands - independently.  No function is proved
    here.
 
    THE MEASUREMENT THAT SHAPES THIS FILE.  The chain meets GXA at TWO instances of the same image: A_img and
-   A_img_vsn (RT_IImgA.v:96 and :107), which differ in ONE symbol-map row, 0x7f000400.  A fact proved at one and
+   A_img_vsn (RT_IImgA.v:97 and :108), which differ in ONE symbol-map row, 0x7f000400.  A fact proved at one and
    used at the other therefore needs a CONVERSION of the two records - and that conversion is catastrophic: a
    single `exact H` crossing them (ssp_cells at A_img_vsn used at A_img) ran 16 MINUTES without finishing on
    a build machine, and the same crossing inside a `first [ ... ]` over GXA's 29 premises did not finish in 25
@@ -19,9 +19,9 @@
      every disjunctive hypothesis in context, and each chain statement carries two (the destination's separation
      premises), so a proof that leaves them visible pays the split at every arithmetic side condition.
    - cj_bz_msteps / cj_bz_evt: the CJ -> Bz direction of RT_gxa_calls.v's vocabulary bridge (that file, and
-     a Theorem Labs lane's relocated copy FMgxa_bzcj.v on a working branch 534b701a600, prove only Bz -> CJ).
+     a Theorem Labs lane's relocated copy FMgxa_bzcj.v on a working branch, prove only Bz -> CJ).
    - pf_evt_fwd: one step forward past a trampoline when the post does not already hold (the donor's pattern,
-     omx-clap-core/fuzz_state lib/A/Prog/snprintf_wrap.v snp_evt_fwd at 840c4afa7e2).
+     omx-clap-core/fuzz_state lib/A/Prog/snprintf_wrap.v snp_evt_fwd).
    - the segment list and the stack-protector / GLOBALS_TOP numerals at BOTH instances, and ssp_cells_vsn proved
      by rewriting to them. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B.Bz Require BvWfKernel.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the argument pieces of a start whose argv is empty (extra_pieces_sound_nil)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -450,7 +451,7 @@ Section NodesArg.
 
   Hypothesis Lay : 0x7fff80000000 <= usp /\ usp + 192 <= STR0 /\ STR0 + L0 + 1 <= TOP
                    /\ (2 <= argc -> STR1 + L1 + 1 <= TOP)
-                   /\ TOP mod 8 = 0 /\ TOP + 16 <= 2 ^ 47 /\ L0 <= 131071 /\ L1 <= 131071 /\ 1 <= argc <= 1024.
+                   /\ TOP mod 8 = 0 /\ TOP + 8 <= 2 ^ 47 /\ L0 <= 131071 /\ L1 <= 131071 /\ 1 <= argc <= 1024.
   Hypothesis Hnz : forall i j, (j < length (ARG i))%nat -> bv_unsigned (byte_at (ARG i) j) <> 0.
 
   Hypothesis SINV_vals : forall E M, SINV E M ->
@@ -1609,6 +1610,93 @@ Section NodesArg.
     destruct l as [z| | | | | | |];
       try (apply (GEN None); [intros z Hz; discriminate | exact H]).
     (* [comment removed for export] *)
+    cbv beta iota zeta in H.
+    destruct (Z.eq_dec (z mod two64) 0) as [Z0|Z0].
+    - rewrite Z0 in H. injection H as <-. exists []. cbn. rewrite Z.add_0_r.
+      split; [reflexivity|]. split; [reflexivity|]. split; [cbn [edenot]; rewrite Z_to_bv_unsigned, bv_wrap64_mod; exact Z0|].
+      split; [lia|]. left. reflexivity.
+    - apply (GEN (Some (z mod two64))).
+      + intros z' Hz'. injection Hz' as <-. cbn [edenot]. rewrite Z_to_bv_unsigned, bv_wrap64_mod. unfold two64 in *.
+        pose proof (Z.mod_pos_bound z (2 ^ 64) ltac:(lia)). split; [reflexivity | lia].
+      + destruct (z mod two64) as [|p|p]; [exfalso; apply Z0; reflexivity | exact H | exact H].
+  Qed.
+
+  (* LPS c0dd863a: the same, for a start invariant that fixes no argument string: argc 1 and an empty
+     argv[0] ([SINV_vals] / [SINV_str] are not needed; the plain chain's families, whose states name no
+     launch string, use this one) *)
+  Lemma extra_pieces_sound_nil :
+    (forall E M, SINV E M ->
+       edenot E (EVar V_L0) = Z_to_bv 64 0 /\ edenot E (EVar V_ARGC) = Z_to_bv 64 1 /\ eb E 1%nat = []) ->
+    forall E cs model FULL k s l ps,
+    SINV E FULL -> know_ok SEGS E (Mr A argH E cs model FULL) k ->
+    extra_pieces SEGS k s l = Some ps ->
+    exists extra, pbytes E ps = extra
+      /\ rdn SEGS FULL (edenot E s) (length extra) = Some extra
+      /\ bv_unsigned (edenot E l) = Z.of_nat (length extra)
+      /\ bv_unsigned (edenot E s) + Z.of_nat (length extra) <= 2 ^ 64
+      /\ (extra = [] \/ (exists i, arg_ok i /\ bv_unsigned (edenot E s) = STR i /\ extra = ARG i)
+          \/ rdn SEGS (Mr A argH E cs model FULL) (edenot E s) (length extra) = Some extra).
+  Proof.
+    intros NIL E cs model FULL k s l ps HS HK H. unfold extra_pieces in H.
+    set (MR := Mr A argH E cs model FULL) in *.
+    pose proof (u64_range (edenot E s)) as Hsr.
+    destruct (NIL E FULL HS) as (V0 & V1 & B1).
+    assert (GEN : forall lz,
+      (forall z, lz = Some z -> bv_unsigned (edenot E l) = z /\ 0 < z < two64) ->
+      (if (eeq k s (str_e 0) && eeq k l (len_e 0))%bool then Some [SPBlob (blob_of 0)]
+       else if (eeq k s (str_e 1) && eeq k l (len_e 1) && argc_ok k 1)%bool then Some [SPBlob (blob_of 1)]
+       else let '(sb, sk) := split_lit s in
+            match find_blob k sb sk with
+            | Some (n, b) => if eeq k n l then Some [SPBlob b] else None
+            | None => match lz with
+                      | Some z => if flat_x k sb sk (ELit z) then
+                                    match kread_bytes SEGS (Z.to_nat z) k sb sk with Some bs => Some [SPLit bs] | None => None end
+                                  else None
+                      | None => None
+                      end
+            end) = Some ps ->
+      exists extra, pbytes E ps = extra
+        /\ rdn SEGS FULL (edenot E s) (length extra) = Some extra
+        /\ bv_unsigned (edenot E l) = Z.of_nat (length extra)
+        /\ bv_unsigned (edenot E s) + Z.of_nat (length extra) <= 2 ^ 64
+        /\ (extra = [] \/ (exists i, arg_ok i /\ bv_unsigned (edenot E s) = STR i /\ extra = ARG i)
+            \/ rdn SEGS MR (edenot E s) (length extra) = Some extra)).
+    { intros lz LZ HH.
+      destruct (eeq k s (str_e 0) && eeq k l (len_e 0))%bool eqn:C0.
+      { apply andb_prop in C0 as [_ El]. injection HH as <-. exists [].
+        pose proof (eeq_sound SEGS E MR k _ _ HK El) as Vl. cbn [len_e] in Vl.
+        split; [cbn [pbytes flat_map piece_den blob_of]; rewrite app_nil_r; exact B1|].
+        split; [reflexivity|].
+        split; [rewrite Vl, V0, u64_lit by lia; reflexivity|].
+        split; [cbn [length]; lia|]. left. reflexivity. }
+      destruct (eeq k s (str_e 1) && eeq k l (len_e 1) && argc_ok k 1)%bool eqn:C1.
+      { apply andb_prop in C1 as [_ Hac]. destruct (argc_ok_sound SEGS E MR k 1 HK Hac) as [Hc|Hc]; [discriminate|].
+        rewrite V1, u64_lit in Hc by lia. lia. }
+      destruct (split_lit s) as [sb sk] eqn:Hsp.
+      destruct (find_blob k sb sk) as [[n b]|] eqn:Hfb.
+      - destruct (eeq k n l) eqn:Enl; [|discriminate]. injection HH as <-.
+        pose proof (find_blob_sound E MR k sb sk n b HK Hfb) as KB.
+        pose proof KB as KB'. cbn [kentry_ok] in KB'. destruct KB' as (Hfl & Hlen & Hby).
+        pose proof (u_of_split E s sb sk Hsp ltac:(destruct Hfl as (?&?&?&?); lia)) as Us.
+        exists (eb E b). cbn [pbytes flat_map piece_den]. rewrite app_nil_r.
+        pose proof (kblob_rdn E MR sb sk n b KB) as RB. rewrite <- Us, Z_to_bv_bv_unsigned in RB.
+        split; [reflexivity|]. split; [apply (rdn_Mr_FULL E cs model FULL); exact RB|].
+        split; [rewrite <- (eeq_sound SEGS E MR k _ _ HK Enl); unfold elenZ in Hlen; lia|].
+        split; [destruct Hfl as (?&?&?&?); unfold elenZ in *; lia|]. right. right. exact RB.
+      - destruct lz as [z|]; [|discriminate]. destruct (LZ z eq_refl) as [Vl Hz].
+        destruct (flat_x k sb sk (ELit z)) eqn:Hfx; [|discriminate].
+        destruct (kread_bytes SEGS (Z.to_nat z) k sb sk) as [bs|] eqn:Hkb; [|discriminate]. injection HH as <-.
+        pose proof (flat_x_sound SEGS E MR k sb sk (ELit z) HK Hfx) as Hfl0. rewrite edenot_lit, u64_lit in Hfl0 by (unfold two64 in Hz; lia).
+        destruct (kread_bytes_rdn E MR k (Z.to_nat z) sb sk bs HK Hkb ltac:(unfold estart in Hfl0; cbn [a_base a_off] in Hfl0; lia)
+                    ltac:(unfold estart in Hfl0; cbn [a_base a_off] in Hfl0; lia)) as [RB Lbs].
+        pose proof (u_of_split E s sb sk Hsp ltac:(lia)) as Us. unfold estart in Us; cbn [a_base a_off] in Us.
+        rewrite <- Us, Z_to_bv_bv_unsigned in RB.
+        exists (map (fun z0 => Z_to_bv 8 z0) bs). cbn [pbytes flat_map piece_den]. rewrite app_nil_r, length_map, Lbs.
+        split; [reflexivity|]. split; [apply (rdn_Mr_FULL E cs model FULL); exact RB|].
+        split; [rewrite Vl, Z2Nat.id by lia; reflexivity|].
+        split; [unfold estart in Hfl0; cbn [a_base a_off] in Hfl0; rewrite Z2Nat.id by lia; lia|]. right. right. exact RB. }
+    destruct l as [z| | | | | | |];
+      try (apply (GEN None); [intros z Hz; discriminate | exact H]).
     cbv beta iota zeta in H.
     destruct (Z.eq_dec (z mod two64) 0) as [Z0|Z0].
     - rewrite Z0 in H. injection H as <-. exists []. cbn. rewrite Z.add_0_r.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch input ProcInput, the CONFIG_RSEQ flag, the new auxv layout and the init stack window); and launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -295,6 +296,26 @@ Proof. intro x. exact (bv_unsigned_in_range _ x). Qed.
 
 Lemma u8_range : forall b : byte, (0 <= bv_unsigned b < 256)%Z.
 Proof. intro b. exact (bv_unsigned_in_range _ b). Qed.
+
+(* le_word_1 and b_extract8_id: carried verbatim from this tree's own
+   Common/PropExec.v:241-245 and :254-262.  ct states them in VCommon/PropExec.v,
+   which is where VCommon/BootWitness/BootLayout.v reads them from; bignum keeps
+   them in Common/ only, so the carried BootLayout.v could not see them. *)
+Lemma le_word_1 : forall b : byte, le_bytes_to_word [b] = Z_to_bv 64 (bv_unsigned b).
+Proof.
+  intro b. unfold le_bytes_to_word. cbn [bytes_le_to_Z].
+  rewrite Z.shiftl_0_l, Z.lor_0_r. reflexivity.
+Qed.
+
+Lemma b_extract8_id : forall b : byte, bv_extract 0 8 (Z_to_bv 64 (bv_unsigned b)) = b.
+Proof.
+  intro b. apply bv_eq.
+  rewrite bv_extract_unsigned, Z_to_bv_unsigned, Z.shiftr_0_r.
+  pose proof (bv_unsigned_in_range _ b) as Hb.
+  change (bv_modulus 8) with 256%Z in Hb.
+  rewrite (bv_wrap_small 64) by (change (bv_modulus 64) with (2^64)%Z; lia).
+  apply bv_wrap_small. change (bv_modulus 8) with 256%Z. lia.
+Qed.
 
 Lemma u6_range : forall s : bv 6, (0 <= bv_unsigned s < 64)%Z.
 Proof. intro s. exact (bv_unsigned_in_range _ s). Qed.
@@ -1680,44 +1701,74 @@ Proof.
   rewrite string_addrs_fst_structure. cbn [length]. rewrite IH. reflexivity.
 Qed.
 
-Lemma build_stack_bytes_within_span : forall ph (sp : word) a e uid hw rnd,
-  (Z.of_nat (length (build_stack_bytes ph sp a e uid hw rnd))
-   <= entry_stack_span a e)%Z.
+(* build_stack_bytes_within_span: deleted, as at LPS 08b1429. Its span bound is false for the kernel's
+   stack block; length_entry_stack_image_launch gives the exact length instead. *)
+
+Lemma entry_stack_image_block : forall inp mbase ph entry (sp : word) draw,
+  entry_stack_image inp mbase ph entry sp draw
+  = build_stack_bytes (launch_auxv inp sp mbase) ph entry sp (ed_top draw)
+      (in_argv inp) (in_envp inp) (in_execfn inp)
+      (in_uid inp) (in_gid inp) (in_hwcap inp) draw.
+Proof. reflexivity. Qed.
+
+Lemma la_rseq_launch_auxv : forall inp sp mbase,
+  la_rseq (launch_auxv inp sp mbase) = kb_rseq (in_kernel inp).
+Proof. reflexivity. Qed.
+
+Lemma length_entry_stack_image_launch :
+  forall v inp mbase ph entry (sp brk : word) draw,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw))
+  = (bv_unsigned (ed_top draw) - bv_unsigned sp)%Z.
 Proof.
-  intros ph sp a e uid hw rnd.
-  unfold entry_stack_span, build_stack_bytes. cbv zeta.
-  rewrite (string_addrs_pair a). cbv beta iota.
-  rewrite (string_addrs_pair e). cbv beta iota.
-  rewrite !length_app, repeat_length, !length_flat_map_le8,
-    !length_string_addrs_fst, !length_n_to_le_8, length_auxv_bytes,
-    !length_flatten_strings, length_at_random_bytes.
-  rewrite !total_arg_bytes_Z.
-  match goal with
-  | |- context [Z.to_nat ?pd] =>
-      assert (Hpd : (0 <= pd < 8)%Z) by (apply Z.mod_pos_bound; lia)
-  end.
-  unfold auxv_size. lia.
+  intros v inp mbase ph entry sp brk draw Hok.
+  cbn [entry_launch_ok_va] in Hok.
+  destruct Hok as (_ & (_ & _ & Hhi) & _).
+  unfold entry_stack_image.
+  rewrite length_build_stack_bytes, la_rseq_launch_auxv.
+  unfold launch_sp_hi, align_down16 in Hhi.
+  pose proof (Z.mod_pos_bound
+    (bv_unsigned (ed_top draw) - 8
+     - Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp)
+                                     (in_execfn inp)))
+    16 ltac:(lia)) as Hm.
+  unfold block_pad_len.
+  rewrite !Nat2Z.inj_add.
+  rewrite Z2Nat.id by lia.
+  lia.
+Qed.
+
+Lemma entry_stack_image_no_wrap :
+  forall v inp mbase ph entry (sp brk : word) draw,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  (bv_unsigned sp
+   + Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw))
+     < 2 ^ 64)%Z.
+Proof.
+  intros v inp mbase ph entry sp brk draw Hok.
+  rewrite (length_entry_stack_image_launch v inp mbase ph entry sp brk draw Hok).
+  pose proof (u64_range (ed_top draw)) as Hr. lia.
 Qed.
 
 Lemma entry_page_top_within_window :
-  forall ph (sp : word) argv envp uid hwcap draw,
-  entry_stack_fits sp argv envp ->
-  (entry_page_top sp (build_stack_bytes ph sp argv envp uid hwcap draw)
-   <= sp_window_hi)%Z.
+  forall v inp mbase (sp brk : word) draw,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  (entry_page_top draw <= va_stack_top v)%Z.
 Proof.
-  intros ph sp argv envp uid hwcap draw Hfit.
-  pose proof (build_stack_bytes_within_span ph sp argv envp uid hwcap draw) as Hlen.
-  unfold entry_stack_fits in Hfit. unfold entry_page_top.
-  apply page_round_up_Z_le; [ unfold entry_block_top; lia | reflexivity ].
+  intros v inp mbase sp brk draw Hok.
+  cbn [entry_launch_ok_va] in Hok.
+  destruct Hok as ((_ & Htop & _) & _ & _).
+  unfold entry_page_top. exact Htop.
 Qed.
 
-Definition wrap_mem (ph : PhdrInfo) (sp : word) (argv envp : list (list byte))
-    (uid : word) (hw : word) (rnd : EntryDraw) : word -> option byte :=
+Definition wrap_mem (inp : ProcInput) (mbase : word) (ph : PhdrInfo)
+    (entry sp : word) (draw : EntryDraw) : word -> option byte :=
   fun addr =>
-    match stack_to_mem sp (entry_stack_image ph sp argv envp uid hw rnd) addr with
+    match stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw) addr with
     | Some b => Some b
     | None =>
-      if andb (Z.leb (bv_unsigned sp - stack_max_size) (bv_unsigned addr))
+      if andb (Z.leb (stack_window_lo (in_kernel inp) mbase draw)
+                     (bv_unsigned addr))
               (Z.ltb (bv_unsigned addr) (bv_unsigned sp))
       then Some (Z_to_bv 8 0) else None
     end.

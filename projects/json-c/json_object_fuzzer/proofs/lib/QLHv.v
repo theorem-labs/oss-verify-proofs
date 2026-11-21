@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: the parse_i64_A_stmt proofs name it; the OBL_STACK_MALLOC_FULL calls discharge it). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run Fs.
@@ -105,7 +106,7 @@ Qed.
 
 Lemma json_parse_uint64_A : parse_i64_A_stmt HIx 0xa3c68.
 Proof.
-unfold parse_i64_A_stmt. intros until errv. intros HP ST LO LOS SPA HT ERR TP RA A0 A1 STR NUL INB UNP INR RC UNR RAL FRN K.
+unfold parse_i64_A_stmt. intros until errv. intros HP ST LO HBT LOS SPA HT ERR TP RA A0 A1 STR NUL INB UNP INR RC UNR RAL FRN K.
 unfold PI64_STK_A in LOS. subst a0 a1 tp.
 pose proof (bv_unsigned_in_range 64 sp) as SPR. change (bv_modulus 64) with (2^64) in SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
@@ -145,6 +146,7 @@ all: rewrite ?unsigned_lit by lia.
 1: lia.
 1: exact ST.
 1: exact LO.
+1: first [assumption | lia].
 1: cbn [hl_stack_A A4L]; lia.
 1: clear - SPA; Z.div_mod_to_equations; lia.
 1: lia.
@@ -204,7 +206,7 @@ assert (E : img_shadow_val (hl_reg_globals A4L) (6434236 / 8) = 0) by (vm_comput
 cbn [hl_sb A4L hl_img_lo hl_img_hi hla_base A4H] in X. unfold A_SB in X.
 specialize (X ltac:(vm_compute; discriminate) ltac:(vm_compute; discriminate)).
 change (6434236 / 8 + 2147450880) with 2148255159 in X.
-eapply bytes_at_transport; [exact X | exact MU |]. cbn [disjoint_from length]. change (Z.of_nat 1) with 1. unfold sh. clear - HFimg HFapp HF0 HFc ACR LO LOS SPR HFcapp HFc1 HFc2 FSP HFc0. Z.div_mod_to_equations. lia. }
+eapply bytes_at_transport; [exact X | exact MU |]. cbn [disjoint_from length]. change (Z.of_nat 1) with 1. unfold sh. clear - HFimg HFapp HF0 HFc ACR LO HBT LOS SPR HFcapp HFc1 HFc2 FSP HFc0. Z.div_mod_to_equations. lia. }
 step.
 eapply evt_cut; [eapply ERRNOL; reflexivity |]. intros ms9 ->.
 replace (ret_pc (Z_to_bv 64 0xa3d70)) with (Z_to_bv 64 0xa3d70) by (symmetry; apply ret_pc_even; [lia | reflexivity]).
@@ -381,7 +383,7 @@ replace (ret_pc (Z_to_bv 64 671212)) with (Z_to_bv 64 671212) by (symmetry; appl
 assert (UNR3 : unpoisoned asegs m3 A_SB R 8).
 { eapply unpoisoned_transport; [exact UNRc2 | exact MU3 |]. intros a kk Ha Hkk. cbn [disjoint_from]. unfold shadow_span_lo, A_SB in Ha. unfold shadow_span_hi, A_SB in Hkk.
 change ((2 ^ 47 - 1) / 8 + 2147450880 + 1) with 17594333495296 in *.
-clear - Ha Hkk HFcapp HFc1 HFc2 FSP HFc0 HFcc HFapp HF0 HFc ACR LO LOS SPR HFhi RAL. repeat split; Z.div_mod_to_equations; lia. }
+clear - Ha Hkk HFcapp HFc1 HFc2 FSP HFc0 HFcc HFapp HF0 HFc ACR LO HBT LOS SPR HFhi RAL. repeat split; Z.div_mod_to_equations; lia. }
 pose proof (unpoisoned8_cell asegs _ A_SB R UNR3 RAL) as SHR8. unfold A_SB in SHR8.
 clear MU3 WM3.
 step. step.
@@ -581,7 +583,7 @@ Qed.
 
 Lemma json_parse_uint64_A : parse_i64_A_stmt HIx 0xa62ec.
 Proof.
-unfold parse_i64_A_stmt. intros until errv. intros HP ST LO LOS SPA HT ERR TP RA A0 A1 STR NUL INB UNP INR RC UNR RAL FRN K.
+unfold parse_i64_A_stmt. intros until errv. intros HP ST LO HBT LOS SPA HT ERR TP RA A0 A1 STR NUL INB UNP INR RC UNR RAL FRN K.
 unfold PI64_STK_A in LOS. subst a0 a1 tp.
 pose proof (bv_unsigned_in_range 64 sp) as SPR. change (bv_modulus 64) with (2^64) in SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI.
@@ -621,6 +623,7 @@ all: rewrite ?unsigned_lit by lia.
 1: lia.
 1: exact ST.
 1: exact LO.
+1: first [assumption | lia].
 1: cbn [hl_stack_A A4L]; lia.
 1: clear - SPA; Z.div_mod_to_equations; lia.
 1: lia.
@@ -680,7 +683,7 @@ assert (E : img_shadow_val (hl_reg_globals A4L) (6444156 / 8) = 0) by (vm_comput
 cbn [hl_sb A4L hl_img_lo hl_img_hi hla_base A4H] in X. unfold A_SB in X.
 specialize (X ltac:(vm_compute; discriminate) ltac:(vm_compute; discriminate)).
 change (6444156 / 8 + 2147450880) with 2148256399 in X.
-eapply bytes_at_transport; [exact X | exact MU |]. cbn [disjoint_from length]. change (Z.of_nat 1) with 1. unfold sh. clear - HFimg HFapp HF0 HFc ACR LO LOS SPR HFcapp HFc1 HFc2 FSP HFc0. Z.div_mod_to_equations. lia. }
+eapply bytes_at_transport; [exact X | exact MU |]. cbn [disjoint_from length]. change (Z.of_nat 1) with 1. unfold sh. clear - HFimg HFapp HF0 HFc ACR LO HBT LOS SPR HFcapp HFc1 HFc2 FSP HFc0. Z.div_mod_to_equations. lia. }
 bstep.
 eapply evt_cut; [eapply ERRNOL; reflexivity |]. intros ms9 ->.
 replace (ret_pc (Z_to_bv 64 0xa63f4)) with (Z_to_bv 64 0xa63f4) by (symmetry; apply ret_pc_even; [lia | reflexivity]).
@@ -859,7 +862,7 @@ replace (ret_pc (Z_to_bv 64 681096)) with (Z_to_bv 64 681096) by (symmetry; appl
 assert (UNR3 : unpoisoned asegs m3 A_SB R 8).
 { eapply unpoisoned_transport; [exact UNRc2 | exact MU3 |]. intros a kk Ha Hkk. cbn [disjoint_from]. unfold shadow_span_lo, A_SB in Ha. unfold shadow_span_hi, A_SB in Hkk.
 change ((2 ^ 47 - 1) / 8 + 2147450880 + 1) with 17594333495296 in *.
-clear - Ha Hkk HFcapp HFc1 HFc2 FSP HFc0 HFcc HFapp HF0 HFc ACR LO LOS SPR HFhi RAL. repeat split; Z.div_mod_to_equations; lia. }
+clear - Ha Hkk HFcapp HFc1 HFc2 FSP HFc0 HFcc HFapp HF0 HFc ACR LO HBT LOS SPR HFhi RAL. repeat split; Z.div_mod_to_equations; lia. }
 pose proof (unpoisoned8_cell asegs _ A_SB R UNR3 RAL) as SHR8. unfold A_SB in SHR8.
 clear MU3 WM3.
 bstep. bstep.

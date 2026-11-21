@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's channel reader, which a write to the standard channels needs, carried as a premise to the writes). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require As0Gc.
@@ -138,6 +139,7 @@ Section Sound.
     length vals = 34%nat -> vals_ev vals 0 = sp0 ->
     regs_ok (ENV vals) rf_sr R -> know_ok RSEGS (ENV vals) M rf_kn ->
     fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+    m_channel_reader mo = true ->
     lzok RSEGS L S Zr (mkCfg msF mo) -> restrict L S msF = mkst R (Z_to_bv 64 0xe89f4) M (seg_rom RSEGS) ->
     KX [] ->
     (forall Rj R' M' msF' mo',
@@ -149,7 +151,7 @@ Section Sound.
        realizes RSEGS (mkCfg msF' mo') KX) ->
     realizes RSEGS (mkCfg msF mo) (t_emit (W 2 msg_refused) KX).
   Proof.
-    intros vals R M msF mo KX HL P0 HR HK Hfd2 OK RS HKnil HCONT.
+    intros vals R M msF mo KX HL P0 HR HK Hfd2 Hrd2 OK RS HKnil HCONT.
     pose proof (know_nth RSEGS _ _ rf_kn 1%nat _ HK eq_refl) as Hrg; cbn [kentry_ok edenot ev ENV] in Hrg; rewrite P0 in Hrg.
     pose proof (know_nth RSEGS _ _ rf_kn 0%nat _ HK eq_refl) as Hal; cbn [kentry_ok edenot ev ENV] in Hal; rewrite P0 in Hal.
     unfold ASP_LO, ASP_HI in Hrg.
@@ -187,6 +189,7 @@ Section Sound.
     - rewrite P0, !alu_add, !vadd_wZ. unorm. replace (bv_unsigned sp0 + -464)%Z with (bv_unsigned sp0 - 464)%Z in MSG by lia. exact MSG.
     - reflexivity.
     - rewrite (same_but_materialized_fds _ _ SBA). exact Hfd2.
+    - rewrite (same_but_materialized_reader _ _ SBA). exact Hrd2.
     - exact OKA.
     - exact RSA.
     - exact HKnil.
@@ -310,6 +313,7 @@ Section Plain.
     rfH regs mem sp can ->
     lzok RSEGS L S Zr (mkCfg msF mo) -> restrict L S msF = mkst regs (Z_to_bv 64 0xe89f4) mem (seg_rom RSEGS) ->
     fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+    m_channel_reader mo = true ->
     KX [] ->
     (forall regs' mem' msF' mo', rfPost regs mem sp can regs' mem' ->
        lzok RSEGS L S Zr (mkCfg msF' mo') -> same_but_materialized mo mo' -> hid_same L S msF msF' ->
@@ -317,12 +321,12 @@ Section Plain.
        realizes RSEGS (mkCfg msF' mo') KX) ->
     realizes RSEGS (mkCfg msF mo) (t_emit (W 2 msg_refused) KX).
   Proof.
-    intros regs mem msF mo sp can KX PH OK RS Hfd2 HKnil HCONT.
+    intros regs mem msF mo sp can KX PH OK RS Hfd2 Hrd2 HKnil HCONT.
     pose proof (rf_regs_ok regs mem sp can PH) as HR; pose proof (rf_know_ok regs mem sp can PH) as HK.
     destruct PH; pose proof (u64_range sp) as Hsp; unfold ASP_LO, ASP_HI in *.
     apply (rf_sound sp L S Zr (rf_vals regs sp can) regs mem msF mo KX);
       [ unfold rf_vals; rewrite length_app, junk_vals_length; reflexivity | reflexivity | exact HR | exact HK
-      | exact Hfd2 | exact OK | exact RS | exact HKnil |].
+      | exact Hfd2 | exact Hrd2 | exact OK | exact RS | exact HKnil |].
     clear HR HK; intros Rj R' M' msF' mo' HR HK FM OK' SB' HS' RS'.
     set (vals' := rf_vals regs sp can ++ junk_vals Rj) in *.
     assert (P0 : vals_ev vals' 0 = sp) by reflexivity.

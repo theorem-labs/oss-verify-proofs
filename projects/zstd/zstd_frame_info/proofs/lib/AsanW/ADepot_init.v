@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main entry's recorded facts read as the main entry keeps them: AMKNW, AMKN, APKN). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -148,9 +149,9 @@ assert (HW : 0 <= hw0 w < 2^64) by (destruct w; cbn; lia).
 Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
 
 #[using="Type"] Theorem adepot_init : forall (V : nat -> Z) (w : bool) (U : list (list Z)) (m : amem),
-  Forall (mfact_ok asegs V m) asan_mem_facts ->
-  Forall (mfact_ok asegs V m) (asan_mem_facts_w w) ->
-  Forall (pfact_ok V) asan_pure_facts ->
+  Forall (mfact_ok asegs V m) AMKN ->
+  Forall (mfact_ok asegs V m) (AMKNW w) ->
+  Forall (pfact_ok V) APKN ->
   (length U <= 4096)%nat -> Forall (fun u => (length u <= 254)%nat) U ->
   32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat - 8388608 = ATOP ->      (* [comment removed for export] *)
   ADEPOTi (mkALayout (LV V) w U) m.
@@ -191,7 +192,7 @@ repeat split; try (clear - P469 P470 P0 P6 P10 DW469 DW470 D56 HAT; lia).
             /\ rw_cells asegs m (4096 * V 453%nat + 16) [C8 (Z_to_bv 64 (hw0 w))]
             /\ rw_cells asegs m (4096 * V 454%nat) [C8 (Z_to_bv 64 (if w then 2 else 1))]
             /\ stk asegs m (4096 * V 454%nat + 16) (4096 * V 454%nat + 8388608)).
-  { destruct w; cbn [tf0 bw0 hw0] in *; unfold asan_mem_facts_w in HMW.
+  { destruct w; cbn [tf0 bw0 hw0] in *; unfold AMKNW in HMW.
     - mf V m HMW (MCell (ZLit 1518920) 8 (ZLit 3)) F1. mf V m HMW (MCell (ZLit 1518944) 4 (ZLit 3)) F2.
       mf V m HMW (MCell (ZLit 2889532) 4 (ZLit 1)) F3. mf V m HMW (MImg 1518952 2889532) F4. mf V m HMW (MImg 2889536 5778776) F5.
       mf V m HMW (MCell (ZAdd (ZMul (ZLit 4096) (ZV 453)) (ZLit 16)) 8 (ZLit 34334334068783737)) F6.

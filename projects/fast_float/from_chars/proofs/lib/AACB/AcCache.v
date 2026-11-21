@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's reservations with the vDSO pair). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -107,8 +108,9 @@ Proof. LiaFast.lf_pins LiaFast.u0.
   pose proof (HRG R HR) as (Hz0 & Hz1 & _). fold (rsz E R). split; [exact Hz1|].
   destruct (pri_sep_t_route E (s_facts S) (sm_maps M) model (sm_sp M) _ HF0 (dn_maps _ _ _ _ _ _ _ _ _ Hd) (dn_pd _ _ _ _ _ _ _ _ _ Hd)
               (dn_gsh _ _ _ _ _ _ _ _ _ Hd) (dn_gtop _ _ _ _ _ _ _ _ _ Hd) (dn_sp _ _ _ _ _ _ _ _ _ Hd) (proj2 (dn_spok _ _ _ _ _ _ _ _ _ Hd))
-              (proj1 (dn_spok _ _ _ _ _ _ _ _ _ Hd)) (dn_mres _ _ _ _ _ _ _ _ _ Hd) ASEGSR (dn_res _ _ _ _ _ _ _ _ _ Hd) gq_res a mem0 HI jP jT _ _
-              Hgp eq_refl eq_refl Hgt eq_refl eq_refl (po_sep _ _ _ _ HP0) R Hz0 Hz1 Hck) as [X|X]; [exact X | rewrite X in Hx; discriminate].
+              (proj1 (dn_spok _ _ _ _ _ _ _ _ _ Hd)) (dn_mres _ _ _ _ _ _ _ _ _ Hd) (ASEGSR ++ vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model)))
+              (dn_res _ _ _ _ _ _ _ _ _ Hd) (FxChSep.in_res_b_app _ _ _ _ gq_res) a mem0 HI jP jT _ _
+              Hgp eq_refl eq_refl Hgt eq_refl eq_refl (po_sep _ _ _ _ HP0) R Hz0 Hz1 (pri_sep_t_app _ _ _ _ _ _ _ _ _ Hck)) as [X|X]; [exact X | rewrite X in Hx; discriminate].
 Qed.
 
 #[using="Type"] Theorem ncachedrop_node : forall n S M a S' M' a', apost_cachedrop n S M a = Some (S', M', a') ->

@@ -4,7 +4,7 @@
    walks of proofs/cgif/cgif_file_fuzzer/lib/A/ACk1.v (prologue, stack_malloc, exit), lib/A/AC8h.v (call sites) and
    lib/A/ACfj.v:157-163 (a loop closed by induction on its trip count). *)
 (* Modified by Theorem Labs, 2026-10: lane W5 relay_finish_h (a Theorem Labs lane): started from W_relay_finish.v's text at
-   a working branch 273def0a61d, which stops after the pthread_mutex_lock call; this file walks the rest. *)
+   a working branch, which stops after the pthread_mutex_lock call; this file walks the rest. *)
 (* Modified by Theorem Labs, 2026-10: ROUTE (b), STEP 3 (CONVERSION.md (sha256 1015972e02a9; internal record)), row C1 of
    a Theorem Labs lane's pool (a Theorem Labs lane): the walk is pb_relay_finish_h_x, stated over any allocator relation ARx with its laws
    (W_contract_x.v rf_spec_x; Section c below, the AR Section's hypotheses as their twins plus PST / ARx / hl / LAWS /
@@ -16,6 +16,7 @@
    cnt_ok_pk count premise to the free and to gestures_end; the fake frame's seat and release keep the room by roomp's
    law rp_RPF; the seat is W_frame_x.v's aj_stack_malloc_pres_at_raw_x, whose post states S2 = set_fs f Sc. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_relay_finish_h.v, with its module names changed; 26 of its 130 lines of code are new or changed and 6075 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Satisfiability at the real image A of the R contract texts (W_contract_xR.v), at R := wle' SEGS RZ_cf: each
    lemma derives the R form from the existing strict walk, under that walk's own Section hypotheses. The import block
    is the walk file's (W_relay_finish_h.v), so each hypothesis reads as there. *)

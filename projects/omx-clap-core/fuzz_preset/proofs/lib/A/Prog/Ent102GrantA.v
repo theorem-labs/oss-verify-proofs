@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset (both images; generic over the listing and the PAImg): THE ONE HOME of the PROVISIONAL
    GRANTED forms of the kit texts the walk of LLVMFuzzerTestOneInput calls after check_no_overread (a Theorem Labs lane's request
    18:21Z). Each is replaced by the kit's restated text (with its grant condition) by citation when it lands; the kit owner proves its
    corollaries against exactly these bytes.
-   WHY (a Theorem Labs lane's decision 18:08Z, record fix 9a4f89c34639): after cut_cno the cuts keep only the no-refusal arms; a
+   WHY (a Theorem Labs lane's decision 18:08Z, record fix): after cut_cno the cuts keep only the no-refusal arms; a
    the kit text's refusal arm is not yet excluded by ec_hyps' ech_noref, because the texts do not take a grant condition.
    Until the kit owner restates them, a row that meets such an arm carries ONE named theorem argument: that text word for word
    with the refusal disjunct deleted.
-   DECISION (A) (owner 22:35Z; the rule-2 review of 1301c67aaef0): the batch kit states the refusal arm DEAD under named
+   DECISION (A) (owner 22:35Z; the rule-2 review): the batch kit states the refusal arm DEAD under named
    premises (the entry-keyed crt / crcs texts under rp_sm = jr_strtod and the consumer window prh_cons_from; the
    post-form texts' outcome clauses under the window and the pick condition), so the granted forms of
    check_round_trip and check_reject_clean_starved are RETIRED (rows LL4 / LL5b / LL5c cite ec_texts' batch-kit texts). What
@@ -130,7 +131,7 @@ Definition tparse_noting_grantedX (CTX0 : list (list Z)) : Prop :=
            getr regs' 10 = w64 0 /\
            exists D, Permutation Lam' (D ++ Lam) /\
              Permutation (map snd D) (map Z.of_nat (ReaderRes.lsz tr)) /\ Z.of_nat (length D) = ReaderRes.nlive tr /\
-             (* THE KIT'S TWO TREE CONJUNCTS, VERBATIM (kit candidate de5e947c224b PRH_FnCheck.v tparse_noting_specX
+             (* THE KIT'S TWO TREE CONJUNCTS, VERBATIM (kit candidate PRH_FnCheck.v tparse_noting_specX
                 :714-724 at the batch kit; the kit owner confirmed 21:22Z): the blocks up to permutation over the reader's own list, and THE BUILT
                 TREE'S FREE ORDER (the cut file's ec_pjf is supplied from it). CFHEAD-16 guards both. *)
              (cf_head = PresetReqAt.HEAD -> Permutation (map (fun b => snd b + cf_head) D)
@@ -169,7 +170,7 @@ Definition tcheck_as_written_grantX (CTX0 : list (list Z)) : Prop :=
      [HMal (n + 1); HFr (n + 1)], PresetReqAt.v:272: a raw __wrap_malloc, no head); supplied by
      LLVMFuzzerTestOneInput's walk *)
   prh_run_at rp_sm rp_x rp_os rp_i [PresetReqAt.HMal (size + 1); PresetReqAt.HFr (size + 1)] ->
-  (* The batch kit (21:3xZ, its batch ec4020b3da9c / 56d62ccaf185): the kit excludes the scratch's refusal arm ONLY when its two
+  (* The batch kit (21:3xZ, its batch): the kit excludes the scratch's refusal arm ONLY when its two
      events are CONSUMER events of the run, so the grant text takes that window at entry *)
   PRH_Base.prh_cons_from rp_sm rp_x rp_os rp_i 2 ->
   (* THE FLAGS ARE CLEAR AT ENTRY (h-hpreset-7's ruling on the third #102 defect, 2026-10-29): g_own_ran_out = 0 and

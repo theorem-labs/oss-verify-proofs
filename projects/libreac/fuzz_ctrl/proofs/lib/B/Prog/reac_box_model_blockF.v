@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 722 of its 760 lines of code are new or changed and 210 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The footprint twin of reac_box_model_block.v (image B, asan-ubsan; RECIPE.md step 1, route 2 (a working note, not in this delivery)): the
    same runs as ExecF.evtF under a footprint RNG, by the scripts of the plain files over StepF's step.  This file is
    the twin of lib/B/Prog/reac_box_model_block.v and the prelude the other F files of this function share: the
@@ -12,9 +13,9 @@
    mentions `evt`.
 
    Callee footprint forms: __asan_memcpy and __asan_memset from their owner's files asan_memcpy_cF.v /
-   asan_memset_cF.v (a working branch 71a8e88cc7e, merged into this branch); name_field from
-   name_field_c.v (a working branch 40a1a45d985, merged); dt1_head from dt1_head_c.v and
-   build_dt1_single from build_dt1_single_c.v (a working branch 6939dc6611d, taken by
+   asan_memset_cF.v (a working branch, merged into this branch); name_field from
+   name_field_c.v (a working branch, merged); dt1_head from dt1_head_c.v and
+   build_dt1_single from build_dt1_single_c.v (a working branch, taken by
    path with its build_dt1_singleF.v; build_dt1_single_c.v's form is still a working branch text, one more
    change pending from its owner); __asan_stack_malloc's is kept once below, marked.  __asan_memcpy's and
    __asan_memset's forms carry RngBytes.rng_bytes, so reac_box_model_block_contract_F does. *)
@@ -28,8 +29,8 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B Require Import Img0 AsanRT.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require Import RcAsanRT RcAsanFP RcAsanFPLib
   asan_stack_malloc_c asan_memset_c asan_memcpy_c build_dt1_single_c dt1_head_c name_field_c reac_box_model_block_c
   reac_box_model_block.
-(* The owners' footprint forms of __asan_memcpy / __asan_memset (a Theorem Labs lane 9869f1d1f86, with IMG_LO / IMG_HI of
-   its ImgBounds.v); name_field's (a Theorem Labs lane dbe8f2b8dec) is in name_field_c above. *)
+(* The owners' footprint forms of __asan_memcpy / __asan_memset (a Theorem Labs lane, with IMG_LO / IMG_HI of
+   its ImgBounds.v); name_field's (a Theorem Labs lane) is in name_field_c above. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require Export asan_memcpy_cF asan_memset_cF.
 (* Last: StepF's step / if_false / mem_after_store (evtF goals) shadow Step's (evt goals). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Import ExecF StepF.
@@ -80,8 +81,8 @@ Local Ltac OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.StepF.mem_after_store_opt 
 (* The one callee footprint form that has no published owner text yet, kept ONCE here, as the one text the Section
    hypotheses of this proof name (to be replaced by a Require of its owner's file when it lands):
    - asan_stack_malloc_contract_F (with fs_shadow_area): LOCAL COPY, OWNER PENDING (fake-stack owners a Theorem Labs lane /
-     a Theorem Labs lane publish only the cgif-world astack_malloc_realizes); text (from a working branch d0b3606c9c9) of
-     lib/B/Prog/reac_ctrl_parseF.v (at head lib/B/Prog/reac_ctrl_parseF.v:53) (a Theorem Labs lane's narrow form, itself a local copy there), instantiated at class 0
+     a Theorem Labs lane publish only the cgif-world astack_malloc_realizes); text (from a working branch) of
+     lib/B/Prog/reac_ctrl_parseF.v (at head lib/B/Prog/reac_ctrl_parseF.v:54) (a Theorem Labs lane's narrow form, itself a local copy there), instantiated at class 0
      below.  A result that rests on it is conditional (F6). *)
 Definition fs_shadow_area (c : nat) : Z := fs_M c * fs_B c / 8.
 Definition asan_stack_malloc_contract_F (c : nat) (entry K : Z) : Prop :=
@@ -237,7 +238,7 @@ Proof.
 Qed.
 
 (* The 8-aligned shadow word cover in the form __asan_memcpy's (mbF_shw) and __asan_memset's (mbF_shws) footprint
-   forms name (sh_word_rng of rng_asan.v, its one home since a Theorem Labs lane 78b8d116a58, with its N = 0 guard), for a range
+   forms name (sh_word_rng of rng_asan.v, its one home since a Theorem Labs lane, with its N = 0 guard), for a range
    inside a region with a shkov. *)
 Lemma mbF_shw : forall RG p n q k, shkov RG p n -> 0 <= k -> p <= q -> q + k <= p + n ->
   rng_asan.sh_word_rng RG q k.

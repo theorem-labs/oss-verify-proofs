@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the release of number's class-0 side-stack frame (0x8e5a0..0x8e618, cgif's exitRA in A/ACam.v) and number's return. *)
-(* Modified by Theorem Labs, 2026-10: copied from lib/A/Prog/numberR.v (a working branch a7e5999afe4) for fuzz_command.asan-ubsan: module paths and the release's addresses in that image (0x8e0ac..0x8e124, the same code as A's 0x8e5a0..0x8e618). *)
+(* Modified by Theorem Labs, 2026-10: copied from lib/A/Prog/numberR.v (a working branch) for fuzz_command.asan-ubsan: module paths and the release's addresses in that image (0x8e0ac..0x8e124, the same code as A's 0x8e5a0..0x8e618). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

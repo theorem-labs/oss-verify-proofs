@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported from proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v (the leaf walk) and
-   lib/A/AC8b.v (a loop by fuel induction) at c8557374ad2e: the walk of syntax_reply_matches on fuzz_command.asan.
+   lib/A/AC8b.v (a loop by fuel induction): the walk of syntax_reply_matches on fuzz_command.asan.
    This file: the walk's state (the entry facts, the invariant every segment carries, the post-condition) and the
    epilogue segment. *)
-(* Modified by Theorem Labs, 2026-10: re-walked from lib/A/Prog/syntax_reply_matches_s1.v (a working branch
-   db7d4effe38) for fuzz_command.asan-ubsan: module paths, the B program points, the constants the B prologue loads
+(* Modified by Theorem Labs, 2026-10: re-walked from lib/A/Prog/syntax_reply_matches_s1.v (a working branch)
+   for fuzz_command.asan-ubsan: module paths, the B program points, the constants the B prologue loads
    (s7 = -1, s8 = the shadow base, s9 = 60, s10 = 90, s1 = 93; a6 = 91 is caller-saved and is carried with a5),
    the strcspn set .str.5 at 0x21160, the stack-protector cells 0xa6bf8 / 0x604158, and the tail's UBSan null check. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

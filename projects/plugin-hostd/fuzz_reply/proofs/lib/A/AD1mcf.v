@@ -20,6 +20,7 @@
      (not `NS S <= NRUN`): at MT_sec, mo_ok MT S (XM_LIB n) is nsec S + XM_LIB n <= KMAX, so `NS S <= NRUN` would force
      NRUN + XM_LIB n <= KMAX on top of NS_START's NRUN >= 12 + 4 * XNMAX, i.e. 5 * SEC_CALL + 12 <= cf_kmax, false at
      reply's 2 ^ 23 (a Theorem Labs lane's measurement; a Theorem Labs lane's ruling 2026-10-30 15:16Z). *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -58,7 +59,7 @@ Definition CF_LIB_FR : Z := 2 ^ 33.
 Definition LIBROOM_fr {cp : CfParams} (S : astate) : Prop := LIB_ROOM abudget_cf CF_LIB_FR S.
 
 (* preset's lib_room_of_wf (PresetCfnA.v): the room holds before every call from the state invariant and, since field
-   round 3, the call's hull admission cf_hull_ok (Reusable/YG08cf.v:312 abudget_room_cf). *)
+   round 3, the call's hull admission cf_hull_ok (Reusable/YG08cf.v:313 abudget_room_cf). *)
 Lemma lib_room_fr_of_wf : forall (cp : CfParams) U pp cc bb s, @WfP_cf cp U pp cc bb s -> qloose s ->
   @cf_hull_ok cp s -> @LIBROOM_fr cp s.
 Proof.

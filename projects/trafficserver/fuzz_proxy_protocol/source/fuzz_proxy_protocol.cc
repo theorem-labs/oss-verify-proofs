@@ -1,3 +1,4 @@
+// Modified by Theorem Labs, 2026-11-14: return -1, not 1, for an input outside the length limits.
 /** @file
 
    fuzzing iocore/net/ProxyProtocol
@@ -28,7 +29,7 @@ extern "C" int
 LLVMFuzzerTestOneInput(const uint8_t *input_data, size_t size_data)
 {
   if (size_data < kMinInputLength || size_data > kMaxInputLength) {
-    return 1;
+    return -1;
   }
 
   swoc::TextView tv(reinterpret_cast<char *>((char *)input_data), size_data);

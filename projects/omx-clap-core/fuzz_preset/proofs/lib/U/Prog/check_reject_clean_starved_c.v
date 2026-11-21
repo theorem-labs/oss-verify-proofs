@@ -15,7 +15,7 @@ Import ListNotations.
 Local Open Scope Z_scope.
 
 (* Measured in the symtab of the #102 twin pau-preset-102/omx-clap-core/unstripped/fuzz_preset/fuzz_preset.ubsan (sha256
-   27566683952ebd54...), the unstripped twin of the pinned fuzz_preset.ubsan 45b0357d18ff66cd... (facts 8f3e7e1a07f1):
+   27566683952ebd54...), the unstripped twin of the pinned fuzz_preset.ubsan 45b0357d18ff66cd... (facts):
      check_reject_clean_starved FUNC LOCAL 0x13c3c size 600; frame 112 (addi sp, sp, -0x70), saves ra and s0-s5;
      the third fuzz_pick (compact starved write) is the out-of-line call `jal fuzz_pick` at 0x13e50 (fuzz_pick FUNC
      0x152d0 size 100), the first two stay inline;

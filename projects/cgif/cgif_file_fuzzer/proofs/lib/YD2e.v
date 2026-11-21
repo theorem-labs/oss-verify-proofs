@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch premises entry_launch_ok_va and valid_input; the run's CONFIG_RSEQ flag; the start-up stack anchored at its top; AT_EXECFN; the channel-reader flag that fdchan asks for): changed LOOPL, Hva, EL, EL6, tfib_run_QM_at, tfib_run_QM; added Hvl, Hlau, Hvi. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -147,20 +148,34 @@ Variable xst : nat -> (word -> bool) -> (word -> option byte) -> Prop.
 Hypothesis EXITL : exit_leaf_tfa B xst.
 Hypothesis XFR : xst_frame_tfa xst.
 Hypothesis LOOPL : loop_L_x B xst.
-Variables (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte).
+Variables (sp brk mbase : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte) (rnd : EntryDraw).
+(* Shape copied from the in-tree ported donor YD1v.v:119-125 / YL0q.v Section b: binders
+   [sp brk mbase] .. [inp] .. [a0 p] .. [rnd], premises
+   [valid_sp; in_argv =; valid_argv (in_argv inp); valid_envp; valid_launch;
+    entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp; valid_input].
+   [entry_stack_fits] is DROPPED: implied by [entry_launch_ok_va]
+   ([entry_launch_ok_va_fits], 75d69e00 Run.v:3718-3722); this section never carried it. *)
 Hypothesis Hargv : in_argv inp = [a0; p].
 Hypothesis Hsp : valid_sp sp.
-Hypothesis Hva : valid_argv [a0; p].
+Hypothesis Hva : valid_argv (in_argv inp).
 Hypothesis Hve : valid_envp (in_envp inp).
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp.
+Hypothesis Hvi : valid_input inp.
 Hypothesis Hvfs : valid_fs (in_fs inp).
-#[local] Notation EL := (YP08.E0 sp [a0; p] (in_envp inp) xw xd).
+(* [YP08.E0] is TOP-anchored and launch-indexed at 75d69e00 (YP08.v:209-210). *)
+#[local] Notation EL := (YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd).
 #[local] Notation usp := (bv_unsigned sp).
 #[local] Notation envp := (in_envp inp).
 Let HWXi : wx_segs_nowrap tfibsegs := Hwx_tfa.
+(* [z_rand] gained the rseq flag and [YP08.z_rand_end] is now discharged over YP08's own
+   section list, in its own order; [eapply] lets unification choose the instance. *)
 Lemma EL6 : usp <= bv_unsigned (ew EL 6).
 Proof.
-change (ew EL 6) with (Z_to_bv 64 (z_rand usp [a0; p] envp)).
-pose proof (YP08.z_rand_end sp [a0; p] envp Hsp Hva Hve) as Hz. pose proof (u64_range sp).
+change (ew EL 6) with (Z_to_bv 64 (z_rand usp (kb_rseq (in_kernel inp)) [a0; p] envp)).
+assert (Hz : z_rand usp (kb_rseq (in_kernel inp)) (in_argv inp) envp + 16 < 2 ^ 63)
+by (eapply YP08.z_rand_end; eassumption).
+rewrite Hargv in Hz. pose proof (u64_range sp).
 unfold z_rand in *. rewrite u64_lit by lia. lia.
 Qed.
 Lemma PM_img_facts : forall E (H : word -> bool) m,
@@ -384,7 +399,7 @@ bv_unsigned (ew E3 K_PP) = sptr_addr B ly pb + 2 + config_len data ->
 srealizes tfibsegs (mkCfg ms md) (run_shape (payload data) (calls data) (in_fs inp)).
 Proof.
 intros ws W ms md ly S data pb cap Hlk Hok Hplpos E3 HT E60.
-destruct HT as (HS & E41 & E42 & HR & HAI & HAR & HTOP & Hbl & Hnev & Hcap & HLc & HBLK & Hfs & Hfds & Hminv & HFI).
+destruct HT as (HS & E41 & E42 & HR & HAI & HAR & HTOP & Hbl & Hnev & Hcap & HLc & HBLK & Hfs & Hfds & Hcr & Hminv & HFI).
 pose proof Hsp as (Ulo & Uhi & U16). pose proof (u64_range sp) as Usp. pose proof (proj1 (@YM05.alloc_ceiling_value rc)) as CV.
 pose proof (top_ok_ceil _ _ HTOP) as HCT. pose proof (YM05.ceil_le_top _ HCT) as CLE. unfold stack_max_size in CLE.
 set (buf := sptr_addr B ly pb) in *. set (c0 := config_len data =? 0) in *. set (k := Z.of_nat (calls data)) in *.
@@ -618,8 +633,11 @@ intros a Ha. exists nb, (payload_len data). split; [exact Hin2 | rewrite Hreq2; 
 exact (finv_run B ly' S' W' mem4 md4 (w_H W') E4 (WIN (-208) :: rsPM) _ _ usp HAR4 HFr5 WOK E4_0 Ulo Uhi HTOP' HFI4). }
 assert (Hfds5 : m_fds md5 = APSG.fds_std) by (subst md5; rewrite wvb_fds', Hfds4; subst md3; rewrite wvb_fds', Efds; exact Hfds).
 assert (Hfs5 : m_fs md5 = in_fs inp) by (subst md5; rewrite wvb_fs', Hfs4; subst md3; rewrite wvb_fs', Efs; exact Hfs).
+assert (Hcr5 : m_channel_reader md5 = true).
+{ subst md5. rewrite YK04.wvb_channel_reader, (YK04.sbm_channel_reader _ _ Hs4). subst md3.
+rewrite YK04.wvb_channel_reader, (same_io_channel_reader _ _ Hio). exact Hcr. }
 change (run_shape (payload data) (calls data) (in_fs inp)) with (loop_tgt (payload data) (calls data) 0%nat (calls data) (in_fs inp)).
-apply (LOOPL sp inp xw xd E6 W' ms5 md5 ly' S' a0 p data pb p' cap nb 0%nat (calls data) (in_fs inp) Hargv Hsp Hva Hve Hvfs Hlk ltac:(unfold dlen; lia)).
+apply (LOOPL sp brk mbase inp xw xd E6 W' ms5 md5 ly' S' a0 p data pb p' cap nb 0%nat (calls data) (in_fs inp) rnd Hsp Hargv Hva Hve Hvl Hlau Hvi Hvfs Hlk ltac:(unfold dlen; lia)).
 + intros j Hj. rewrite ELold by (unfold K_L, K_M1 in *; lia). rewrite E4old by (unfold K_PC, K_M1 in *; lia). rewrite E2old by (unfold K_PM, K_M1 in *; lia). apply E3old. exact Hj.
 + change (ed E6 2) with (ed E3 2). exact Ed2.
 + rewrite ELold by (unfold K_L, A_BUF, A_LEN, K_PP, A_PBLK; lia). rewrite E4old by (unfold K_PC, A_BUF, A_LEN, K_PP, A_PBLK; lia). rewrite E2old by (unfold K_PM, A_BUF, A_LEN, K_PP; lia). rewrite Hpb'. exact E41.
@@ -645,7 +663,8 @@ apply (LOOPL sp inp xw xd E6 W' ms5 md5 ly' S' a0 p data pb p' cap nb 0%nat (cal
 + left. split; [reflexivity | exact HIMG5].
 + exact HRO5.
 + exact HFI5.
-+ split; [intros k0; rewrite Hfds5; reflexivity|]. split; [rewrite Hfds5; reflexivity|]. split; [exact Hfs5 | exact (proj1 Hvfs)].
++ split; [intros k0; rewrite Hfds5; reflexivity|]. split; [exact Hcr5|].
+split; [rewrite Hfds5; reflexivity|]. split; [exact Hfs5 | exact (proj1 Hvfs)].
 Qed.
 End e.
 Theorem tfib_run_QM (B : asyms) (HB : TfibSyms B) (ARL : AR_laws tfibsegs B) (ML : model_laws (as_universe B))
@@ -653,8 +672,9 @@ Theorem tfib_run_QM (B : asyms) (HB : TfibSyms B) (ARL : AR_laws tfibsegs B) (ML
 (xst : nat -> (word -> bool) -> (word -> option byte) -> Prop)
 (EXITL : exit_leaf_tfa B xst) (XFR : xst_frame_tfa xst) (LOOPL : loop_L_x B xst) : run_QM_tfa B.
 Proof.
-intros sp inp xw xd ws W ms md ly S a0 p data pb cap Hargv Hsp Hva Hve Hvfs Hlk Hok Hpl E3 HT E60.
-exact (tfib_run_QM_at B HB ARL ML MSITE MCPY xst LOOPL sp inp xw xd a0 p Hargv Hsp Hva Hve Hvfs
+intros sp brk mbase inp xw xd ws W ms md ly S a0 p data pb cap rnd
+Hsp Hargv Hva Hve Hvl Hlau Hvi Hvfs Hlk Hok Hpl E3 HT E60.
+exact (tfib_run_QM_at B HB ARL ML MSITE MCPY xst LOOPL sp brk mbase inp xw xd a0 p rnd Hargv Hsp Hva Hve Hvl Hlau Hvi Hvfs
 ws W ms md ly S data pb cap Hlk Hok Hpl HT E60).
 Qed.
 End b.

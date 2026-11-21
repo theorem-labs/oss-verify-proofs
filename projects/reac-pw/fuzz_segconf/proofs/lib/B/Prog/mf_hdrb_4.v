@@ -4,11 +4,12 @@
 (* Modified by Theorem Labs, 2026-10: the boundary states and segment statements of LLVMFuzzerTestOneInput's ASan+UBSan walk (plugin-hostd/fuzz_command image B, 0x86530), the B twin of lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh6.v (the CL_*_stmtX statements: from a point of the function to its return, under the entry's context) and A/ACf5.v (rtcx, rt_base: the entry's facts bundled once). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths, module names, addresses and numbers changed; 469 of its 518 lines of code are new or changed and 289 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths and module names changed; 85 of its 105 lines of code are new or changed and 498 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* m_file on fuzz_segconf.asan-ubsan (image B, pin c3796c0b38f3), the segment S_MF_HDRB: the MODEL step of each of
    its four paths, and what the tail's mf_loop needs from the model at the end of the segment. A walk lane of
    the image-B m_file-family owner's G2B. No instruction is executed here and no reader is read: every lemma is about SegModel's mconf,
    m_file_m.v's mh_find / mf_fin / mf_loop and mf_hdrb_2.v's hb_mod.
-   ADAPTED from image A's lib/A/Prog/m_file_s_hdrb_4.v (commit d8beabc2758c): its lemmas word
+   ADAPTED from image A's lib/A/Prog/m_file_s_hdrb_4.v: its lemmas word
    for word, plus hb4_mod_head, hb4_mod_cur and hb4_mod_grow, which image B needs because its join stores the
    cursor itself (0x86bb4): the cut points before the join carry the head's cursor cur0 with hb_mod of the current
    model.
@@ -140,7 +141,7 @@ Proof.
   repeat split; try assumption; lia.
 Qed.
 
-(* the head's model fact at the tail: mf_fin IS the tail's `fst (m_lines ...)` (m_file_m.v:125) *)
+(* the head's model fact at the tail: mf_fin IS the tail's `fst (m_lines ...)` (m_file_m.v:126) *)
 Lemma hb4_fin_unfold : forall st line rest,
   mf_fin st line rest = fst (m_lines st (line + 1) (lines (mf_rest rest))).
 Proof. intros st line rest. reflexivity. Qed.

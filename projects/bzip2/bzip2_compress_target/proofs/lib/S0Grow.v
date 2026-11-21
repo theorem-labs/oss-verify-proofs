@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the m_channel_reader premise, the vDSO pair in the reserved ledger, the new auxv and the init stack window). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -47,10 +48,11 @@ Lemma modelG_canon : forall path stdin0 fs0 tid off V MD,
   vm_only (modelG path stdin0 fs0 tid off V) MD -> m_vm_lazy MD = [] -> m_vm_materialized MD = [] ->
   MD = modelG path stdin0 fs0 tid off (m_vmmaps MD).
 Proof.
-  (intros path stdin0 fs0 tid off V MD; cps_intros (E1 & E2 & E3 & E4 & E5 & E6); intros HL HM).   (* [comment removed for export] *)
+  (intros path stdin0 fs0 tid off V MD; cps_intros (E1 & E2 & E3 & E4 & E5 & E6 & E7 & E8); intros HL HM).   (* [comment removed for export] *)
   destruct MD as [fd vm io fsys proc lim tm]. cbn in *.
   unfold m_vm_lazy, m_vm_materialized, m_vmmaps in *. cbn in HL, HM |- *.
-  destruct vm as [maps lazy mat]. cbn in *. subst. reflexivity.
+  (* LPS 75d69e00: VmState also carries the kernel build and the vDSO run; [vm_only] fixes both *)
+  destruct vm as [maps lazy mat kb vd]. unfold m_kernel, m_vdso in E7, E8. cbn in *. subst. reflexivity.
 Qed.
 
 (* [comment removed for export] *)
@@ -131,6 +133,8 @@ Section Grow.
     Variable hw : Z.                                            (* [comment removed for export] *)
     Hypothesis HWR : 0 <= hw < 2 ^ 64.
     Hypothesis alloc_ceiling_val : alloc_ceiling = spz - 8388608. (* [comment removed for export] *)
+    (* LPS 75d69e00: [run_cps] takes [fds_ok]; the reader half is this *)
+    Hypothesis HRDR : ia_channel_reader stdin0 = true.
 
     Local Notation modelG := (OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.S0ReadChunk.S0ReadStage.modelG path stdin0 fs0 tid).
     (* [comment removed for export] *)
@@ -155,7 +159,7 @@ Section Grow.
       \/ (0x3a638 <= a < 0x3a63c) \/ (0x3a618 <= a < 0x3a620) \/ (0x5a950 <= a < 0x5a958) \/ (0x5a9a0 <= a < 0x5a9a8) \/ (0x5a9d8 <= a < 0x5a9e0).
 
     Record kit (M : word -> option byte) : Prop := KIT {
-      k_stk : stk s0segs M (spz - 8388608) (spz - 128);
+      k_stk : stk s0segs M (spz - 6144513) (spz - 128);   (* #38: the init window, [S0ReadBase.stack_writable] *)
       k_top : wr_at s0segs M (spz - 48) 48;
       k_mi : mem_inv s0segs M;
       k_err : exists e, rw_cells s0segs M 0x3a63c [C4 e];
@@ -210,7 +214,7 @@ Section Grow.
     (* [comment removed for export] *)
     Lemma kit_pres : forall P M M' e',
       kit M -> pres P M M' -> (forall a, kit_addr a -> P a) ->
-      stk s0segs M' (spz - 8388608) (spz - 128) -> mem_inv s0segs M' -> rw_cells s0segs M' 0x3a63c [C4 e'] -> kit M'.
+      stk s0segs M' (spz - 6144513) (spz - 128) -> mem_inv s0segs M' -> rw_cells s0segs M' 0x3a63c [C4 e'] -> kit M'.
     Proof.
       intros P M M' e' [ST TOP MI ERR STAT SO LEAF] HP HS ST' MI' ERR'. pose proof SP0 as [SPR _].
       constructor.
@@ -226,7 +230,7 @@ Section Grow.
     (* [comment removed for export] *)
     Lemma kit_alloc : forall LB M M' e',
       kit M -> heap_pres s0segs L LB (spz - 128) M M' -> mem_inv s0segs M' ->
-      stk s0segs M' (spz - 8388608) (spz - 128) -> rw_cells s0segs M' (errno_cell L) [C4 e'] -> kit M'.
+      stk s0segs M' (spz - 6144513) (spz - 128) -> rw_cells s0segs M' (errno_cell L) [C4 e'] -> kit M'.
     Proof.
       intros LB M M' e' K HP MI' ST' ERR'. eapply (kit_pres _ M M' e' K (pres_of_heap_pres _ _ _ _ _ HP)); [| exact ST'| exact MI'| exact ERR'].
       intros a Ha. apply kit_addr_client. exact Ha.
@@ -280,13 +284,13 @@ Section Grow.
     Lemma stack_writable_of : forall M, kit M -> stack_writable M sp0.
     Proof.
       intros M K. pose proof SP0 as [SPR _]. pose proof (k_stk M K) as ST. pose proof (k_top M K) as TOP. pose proof (st_mf _ _ _ (k_stat M K)) as FR.
-      assert (W : forall a, spz - 8388608 <= a < spz -> wview s0segs M (wa a) <> None).
+      assert (W : forall a, spz - 6144513 <= a < spz -> wview s0segs M (wa a) <> None).
       { intros a Ha. destruct (Z.lt_ge_cases a (spz - 128)) as [A|A]; [| destruct (Z.lt_ge_cases a (spz - 48)) as [B|B]].
         - cps_destruct ST as (_ & _ & ST3). apply (proj1 (ST3 a ltac:(lia))).
         - destruct FR as [junk8 [_ (_ & _ & WR)]]. cbn [cells_size csize Nat.add] in WR. replace a with (spz - 128 + (a - (spz - 128))) by lia. apply WR. lia.
         - cps_destruct TOP as (_ & _ & WR). replace a with (spz - 48 + (a - (spz - 48))) by lia. apply WR. lia. }
       intros d m Hd Hm. change (bv_unsigned sp0) with spz.
-      pose proof (wr_at_store_ok s0segs M (spz - 8388608) 8388608 d m) as X.
+      pose proof (wr_at_store_ok s0segs M (spz - 6144513) 6144513 d m) as X.
       unfold wa in X. apply X; [| lia| lia]. split; [lia|]. split; [lia|]. intros i Hi. apply W. lia.
     Qed.
 
@@ -296,12 +300,15 @@ Section Grow.
     Lemma ref_leaf : forall (R : bvmap 5 word) M MD,
       getr R 2 = Z_to_bv 64 (spz - 128) -> getr R 3 = Z_to_bv 64 0x10800 -> getr R 4 = Z_to_bv 64 0x3a6e0 ->
       kit M -> m_halted MD = None -> m_vm_lazy MD = [] ->
-      fd_lookup (m_fds MD) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) -> m_fs MD = fs0 ->
+      fd_lookup (m_fds MD) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+      (* LPS 75d69e00: [refused_tail_stmt] now asks for the far end's reader, because
+         the tail writes [msg_refused] on fd 2.  Passed straight through to REF. *)
+      m_channel_reader MD = true -> m_fs MD = fs0 ->
       realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x13790) M (seg_rom RSEGS)) MD) TREF.
     Proof.
-      intros R M MD R2 R3 R4 K Hh Hl Hfd Hfs. unfold TREF. rewrite <- Hfs.
+      intros R M MD R2 R3 R4 K Hh Hl Hfd Hrdr Hfs. unfold TREF. rewrite <- Hfs.
       cps_destruct (k_leaf M K) as (IMG & C1 & C2 & C3 & C4 & C5).
-      apply (REF sp0 MD tidz hw R M Hvsp Hh Hl Hfd R2 R3 R4 (stack_writable_of M K) IMG C1 TID C2 C3 C4 C5 HWR).
+      apply (REF sp0 MD tidz hw R M Hvsp Hh Hl Hfd Hrdr R2 R3 R4 (stack_writable_of M K) IMG C1 TID C2 C3 C4 C5 HWR).
     Qed.
 
     (* [comment removed for export] *)
@@ -380,6 +387,8 @@ Section Grow.
       - left. reflexivity.
       - lia.
       - intros n Hn. apply (at_sys AT INV TI). unfold MAX_REQ. lia.
+      - (* [fds_ok]: stdout is the channel, and its far end reads *)
+        split; [reflexivity | exact HRDR].
     Qed.
 
     (* [comment removed for export] *)
@@ -472,7 +481,7 @@ Section Grow.
       assert (BLO : 0x5c000 <= r) by lia.
       apply (chunk_loop_mid path content stdin0 fs0 tid V Hfile (Z.to_nat cap') R M spz r cap cap' K); try lia.
       - repeat split; assumption.
-      - apply (store_ok_of_stk M (spz - 8388608) (spz - 128)); [exact (k_stk M K0)| lia| cbn; lia].
+      - apply (store_ok_of_stk M (spz - 6144513) (spz - 128)); [exact (k_stk M K0)| lia| cbn; lia].
       - destruct B2 as [_ WR]. cbn [cells_size csize] in WR. rewrite Nat.add_0_r in WR.
         pose proof (wr_at_store_ok s0segs M (r + cap) _ 0 (Z.to_nat (cap' - cap)) WR ltac:(lia) ltac:(lia)) as X.
         unfold wa in X. replace (r + cap + 0) with (r + cap) in X by lia. exact X.
@@ -548,7 +557,7 @@ Section Grow.
         rewrite CAP in *. cbn [SHF].
         apply realizes_to_mkR. unfold mkR_of. rewrite R2, R3, R4, R19, R20, R21, R22, R23.
         eapply (evt_realizes s0segs); [reflexivity | reflexivity | apply growR |].
-        intros ms' ->. rewrite MS_mkst. apply ref_leaf; try reflexivity. exact K0.
+        intros ms' ->. rewrite MS_mkst. apply ref_leaf; try reflexivity; try exact HRDR. exact K0.
       - (* [comment removed for export] *)
         pose proof (cap_of_pos j ltac:(lia)) as CP. pose proof (cap_of_succ j ltac:(lia)) as CS. pose proof (cap_of_le (j + 1) ltac:(lia)) as CL.
         set (cap := cap_of j) in *. set (cap' := cap_of (j + 1)) in *.
@@ -562,10 +571,10 @@ Section Grow.
         eapply (evt_realizes s0segs); [reflexivity | reflexivity | apply growA; lia |].
         intros ms' ->. rewrite <- CS.
         (* [comment removed for export] *)
-        eapply (at_malloc_big AT) with (s := s) (LB := [(pb, bufA, cap)]) (n := cap') (lo := spz - 8388608) (B := spz) (errv := e)
+        eapply (at_malloc_big AT) with (s := s) (LB := [(pb, bufA, cap)]) (n := cap') (lo := spz - 6144513) (B := spz) (errv := e)
                                         (Tok := if Lc <? cap' then KT else SHF n (j + 1));
           [ exact INV | exact TI | reflexivity | unfold MMAP_THRESHOLD_Z, MAX_REQ; lia | exact AUX
-          | rewrite u64_lit by lia; lia | rewrite u64_lit by lia; exact (k_stk M K0) | exact ACS
+          | rewrite u64_lit by lia; lia | rewrite u64_lit by lia; exact (k_stk M K0) | pose proof ACS; lia
           | rewrite u64_lit by lia; cbn [al_stack S0_layout]; lia | exact ERR | exact (k_mi M K0) | reflexivity | reflexivity | ].
         + (* [comment removed for export] *)
           intros s' m' MD' rr p t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' errv' junk INV' TI' VMO MI' ST' ERR' AUX' HP Hr BOK' NIN RW.
@@ -608,9 +617,9 @@ Section Grow.
           eapply (evt_realizes s0segs); [exact Hh' | exact Hl' | apply growC |].
           intros ms' ->.
           destruct (k_err m'' K2) as [e2 ERR2].
-          eapply (at_free AT) with (s := s') (LB := (p, rr, cap') :: [(pb, bufA, cap)]) (p := pb) (A := bufA) (n := cap) (lo := spz - 8388608) (B := spz) (errv := e2);
+          eapply (at_free AT) with (s := s') (LB := (p, rr, cap') :: [(pb, bufA, cap)]) (p := pb) (A := bufA) (n := cap) (lo := spz - 6144513) (B := spz) (errv := e2);
             [ exact INV2 | exact TI' | reflexivity | right; left; reflexivity | exact AUX2
-            | rewrite u64_lit by lia; lia | rewrite u64_lit by lia; exact (k_stk m'' K2) | exact ACS
+            | rewrite u64_lit by lia; lia | rewrite u64_lit by lia; exact (k_stk m'' K2) | pose proof ACS; lia
             | rewrite u64_lit by lia; cbn [al_stack S0_layout]; lia | exact ERR2 | exact MI'' | reflexivity | reflexivity |].
           intros s3 m3 MD3 t0c t1c t2c a0c a1c a2c a3c a4c a5c a6c a7c t3c t4c t5c t6c INV3 TI3 VMO3 MI3 ST3 ERR3 AUX3 HP3.
           rewrite u64_lit in ST3, HP3 by lia. rewrite ret_pc_lit by lia.
@@ -683,12 +692,12 @@ Section Grow.
         apply nth_error_None in N. pose proof (image_bytes_length s0segs n A bs HI). lia.
     Qed.
 
-    Lemma gw_stk_all : forall M, stack_writable M sp0 -> stk s0segs M (spz - 8388608) spz.
+    Lemma gw_stk_all : forall M, stack_writable M sp0 -> stk s0segs M (spz - 6144513) spz.
     Proof.
       intros M SW. pose proof SP0 as [SPR _].
-      pose proof (SW 0 (Z.to_nat 8388608) ltac:(lia) ltac:(lia)) as S. change (bv_unsigned sp0) with spz in S. rewrite Z.add_0_r in S.
-      pose proof (stk_of_store_ok_off M (spz - 8388608) (Z.to_nat 8388608) ltac:(lia) ltac:(lia) ltac:(lia) S) as K.
-      replace (spz - 8388608 + Z.of_nat (Z.to_nat 8388608)) with spz in K by lia. exact K.
+      pose proof (SW 0 (Z.to_nat 6144513) ltac:(lia) ltac:(lia)) as S. change (bv_unsigned sp0) with spz in S. rewrite Z.add_0_r in S.
+      pose proof (stk_of_store_ok_off M (spz - 6144513) (Z.to_nat 6144513) ltac:(lia) ltac:(lia) ltac:(lia) S) as K.
+      replace (spz - 6144513 + Z.of_nat (Z.to_nat 6144513)) with spz in K by lia. exact K.
     Qed.
 
     Lemma kit_of_world : forall (R : bvmap 5 word) M area brkv mas,
@@ -701,7 +710,7 @@ Section Grow.
       { intros lo hi Hin a Ha. pose proof (proj1 (Forall_forall _ _) IMG _ Hin) as Cc. cbn in Cc. apply Cc. exact Ha. }
       assert (P1 : img_pristine M 0x10000 0x2a590) by (apply PR; cbv; tauto).
       constructor.
-      - exact (proj1 (stk_split s0segs M (spz - 8388608) (spz - 128) spz STALL ltac:(lia))).
+      - exact (proj1 (stk_split s0segs M (spz - 6144513) (spz - 128) spz STALL ltac:(lia))).
       - eapply wr_at_of_stk; [exact STALL| lia| lia| lia].
       - apply gw_mem_inv_of_pristine. intros a Ha. apply P1. lia.
       - destruct (rp_errno _ _ _ _ _ _ RP) as [e He]. exists e. apply rw_cells_C4_of_rdn; [exact He|].
@@ -732,8 +741,8 @@ Section Grow.
           destruct MF as [Mra Ms0 Ms1 Ms2 Ms3 Ms4 Ms5 Ms6 Ms7]. unfold S0World.cell in *.
           assert (WR : forall A, spz - 128 <= A -> A + 8 <= spz - 48 -> wr_at s0segs M A 8).
           { intros A HA HB. eapply wr_at_of_stk; [exact STALL | lia | lia | lia]. }
-          destruct (stk_carve s0segs M (spz - 8388608) (spz - 120) 8
-                      (proj1 (stk_split s0segs M (spz - 8388608) (spz - 120) spz STALL ltac:(lia))) ltac:(lia)) as [_ [junk8 JK]].
+          destruct (stk_carve s0segs M (spz - 6144513) (spz - 120) 8
+                      (proj1 (stk_split s0segs M (spz - 6144513) (spz - 120) spz STALL ltac:(lia))) ltac:(lia)) as [_ [junk8 JK]].
           replace (spz - 120 - Z.of_nat 8) with (spz - 128) in JK by lia.
           exists junk8.
           repeat match goal with
@@ -764,11 +773,11 @@ Section Grow.
     (* [comment removed for export] *)
 
     Lemma gw_target_vm : forall (VM : VmMaps) (area : Z),
-      area = (bv_unsigned mb + 4096)%Z -> vm_pre VM mb gm -> vm_small6 VM gm -> target_vm (bv_unsigned gm) area VM.
+      area = (bv_unsigned mb + 4096)%Z -> vm_pre VM mb gm -> vm_small6 (ia_kernel stdin0) VM gm -> target_vm (bv_unsigned gm) area VM.
     Proof.
       (intros VM area Harea; cps_intros (Pr & Pl & Ph & Pf & Pn & Plive & (q & Pin & Pne & Plo & Phi) & Pseps); cps_intros (Vr & Vl & Vn & Vin & Vf & Vs)).
       constructor.
-      - exact Vr.
+      - exact Pr.
       - rewrite Z_to_bv_bv_unsigned. exact Vin.
       - exists (fst q), (snd q). destruct q as [lo sz]. cbn [fst snd] in *. split; [exact Pin|]. lia.
       - exact Vn.
@@ -780,7 +789,7 @@ Section Grow.
     Lemma big_file_run : forall (R : bvmap 5 word) (M : word -> option byte) (area brkv mas : Z) (VM : VmMaps),
       area = bv_unsigned mb + 4096 ->
       read_pre sp0 p1 mb gm R M -> world0 area (bv_unsigned gm) brkv mas tidz hw M -> main_frame spz M ->
-      vm_pre VM mb gm -> vm_small6 VM gm -> target_vmx spz (bv_unsigned gm) area brkv mas VM -> auxv0 spz M ->
+      vm_pre VM mb gm -> vm_small6 (ia_kernel stdin0) VM gm -> target_vmx spz (bv_unsigned gm) area brkv mas VM -> auxv0 spz M ->
       realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x1359c) M (seg_rom RSEGS)) (model_pre path VM stdin0 fs0 tid))
                (t_body04 content fs0).
     Proof.
@@ -789,7 +798,7 @@ Section Grow.
       set (gmz := bv_unsigned gm) in *.
       pose proof (kit_of_world R M area brkv mas RP W MF) as K0.
       cps_destruct (HE0W spz gmz area brkv mas tidz hw M VM (modelG 0 VM) W (conj (proj1 SPR) (proj2 SPR)) (gw_target_vm VM area Harea VP VS) VX AX
-                  (atop_of_vmx _ _ _ _ _ _ VX ACV ltac:(lia)) eq_refl eq_refl eq_refl eq_refl) as (s & pb & INV & TI & AUX).
+                  (atop_of_vmx _ _ _ _ _ _ VX ACV ltac:(lia)) eq_refl eq_refl eq_refl eq_refl (proj1 VS)) as (s & pb & INV & TI & AUX).
       (* [comment removed for export] *)
       rewrite t_body_FINAL. apply (rz_conseq RSEGS _ (SHF 10 0)); [| apply (SHF_norm 10 0); [reflexivity| lia| change (cap_of 0) with 65536; exact HL| lia]].
       (* [comment removed for export] *)
@@ -813,7 +822,7 @@ Section Grow.
         cbn [cells_size csize Nat.add]. split; [lia|]. split; [lia|]. intros i Hi. lia. }
       apply (chunk_loop_mid path content stdin0 fs0 tid VM Hfile (Z.to_nat 65536) _ M spz (gmz + 32) 0 65536 (SHF 10 0)); try lia.
       - repeat split; reflexivity.
-      - apply (store_ok_of_stk M (spz - 8388608) (spz - 128)); [exact (k_stk M K0)| lia| cbn; lia].
+      - apply (store_ok_of_stk M (spz - 6144513) (spz - 128)); [exact (k_stk M K0)| lia| cbn; lia].
       - apply (store_ok_of_stk M (gmz + 32) (gmz + 32 + 65536)); [exact GST| lia| lia].
       - (* [comment removed for export] *)
         (intros _ R' M'; cps_intros (P2 & P9 & P23 & P19 & PK); intros PM). destruct PM as [FM RD].
@@ -844,8 +853,8 @@ Section Grow.
 
   Theorem big_file_cps : big_file_stmt.
   Proof.
-    intros sp0 p1 mb gm R M area brkv mas hw VM path content stdin0 fs0 tid Hfile HL Harea RP W MF VP VS VX AX ACV.
-    apply (big_file_run sp0 p1 mb gm tid path content stdin0 fs0 Hfile HL (rp_sp0 _ _ _ _ _ _ RP) (w_tidr _ _ _ _ _ _ _ W) hw (w_ghs _ _ _ _ _ _ _ W) ACV
+    intros sp0 p1 mb gm R M area brkv mas hw VM path content stdin0 fs0 tid Hfile HL Harea RP W MF VP VS VX AX ACV RDR.
+    apply (big_file_run sp0 p1 mb gm tid path content stdin0 fs0 Hfile HL (rp_sp0 _ _ _ _ _ _ RP) (w_tidr _ _ _ _ _ _ _ W) hw (w_ghs _ _ _ _ _ _ _ W) ACV RDR
              R M area brkv mas VM Harea RP W MF VP VS VX AX).
   Qed.
 End Grow.

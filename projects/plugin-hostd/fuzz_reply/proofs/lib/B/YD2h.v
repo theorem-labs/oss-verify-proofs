@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD2h.v, with its module paths changed, and its fuzz_reply.asan-ubsan addresses relocated from cgif_file_fuzzer.asan-ubsan (8 numerals; per-numeral report). *)
-(* Modified by Theorem Labs, 2026-10: img_sub_SHORT / img_sub_OVR skip 3 + 57 = 60 regions, the generated IMG_REGIONS of B/YD2j.v having 57 (cgif: 3 + 33 = 36). As lib/A/AD2h.v (RelocA 06694574952). *)
+(* Modified by Theorem Labs, 2026-10: img_sub_SHORT / img_sub_OVR skip 3 + 57 = 60 regions, the generated IMG_REGIONS of B/YD2j.v having 57 (cgif: 3 + 33 = 36). As lib/A/AD2h.v (RelocA). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

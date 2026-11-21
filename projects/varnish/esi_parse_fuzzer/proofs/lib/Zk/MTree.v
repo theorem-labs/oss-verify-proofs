@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the auxv is the 27/29-pair vector of LPS 727298f3 (auxv_keys, auxv_wl, auxv_list, auxv_ok and their lemmas). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -395,23 +396,39 @@ Definition ptr_rel (p : optr) (r : option bptr) : Prop :=
 
 (* [comment removed for export] *)
 
-Definition auxv_list (x3 x4 x5 hw x6 x11 x12 x23 rnd : Z) : list word :=
-  map wz [3; x3; 4; x4; 5; x5; 16; hw; 6; x6; 11; x11; 12; x12; 23; x23; 25; rnd; 0; 0].
+(* DriverKit's auxv_keys, copied here because MTree does not import DriverKit: the AT_* types of the auxv
+   Linux builds at LPS 727298f3 (StackLayout.auxv_entries), pairs 0..25, then AT_RSEQ_FEATURE_SIZE and
+   AT_RSEQ_ALIGN when the kernel has CONFIG_RSEQ. *)
+Definition auxv_keys (rs : bool) : list Z :=
+  [33; 40; 41; 42; 43; 44; 45; 46; 47; 51; 16; 6; 17; 3; 4; 5; 7; 8; 9; 11; 12; 13; 14; 23; 25; 31]
+  ++ (if rs then [27; 28] else []).
+(* DriverKit's auxv_wlist (same copy): pair j is (key j, its value); pair 24, AT_RANDOM, carries [rnd];
+   then AT_NULL's two zeros. *)
+Definition auxv_wl (rs : bool) (v : nat -> Z) (rnd : Z) : list Z :=
+  flat_map (fun kj => [fst kj; if Nat.eqb (snd kj) 24 then rnd else v (snd kj)])
+           (combine (auxv_keys rs) (seq 0 (length (auxv_keys rs))))
+  ++ [0; 0].
+Definition auxv_list (rs : bool) (v : nat -> Z) (rnd : Z) : list word := map wz (auxv_wl rs v rnd).
 (* [comment removed for export] *)
 
 Definition auxv_ok (m : mem) (B : Z) : Prop :=
-  exists av x3 x4 x5 hw x6 x11 x12 x23 rnd,
+  exists av (rs : bool) (v : nat -> Z) rnd,
     rw_cells rsegs m AUXV_CELL [C8 (wz av)]
-    /\ bytes_at rsegs m av (u64s (auxv_list x3 x4 x5 hw x6 x11 x12 x23 rnd))
+    /\ bytes_at rsegs m av (u64s (auxv_list rs v rnd))
     /\ bytes_at rsegs m (rnd + 8) (le8 (wz run_secret))
-    /\ alloc_ceiling <= B /\ B <= av /\ av + 160 <= 2^64 /\ B <= rnd + 8 /\ rnd + 16 <= 2^64
-    /\ 0 <= x3 < 2^64 /\ 0 <= x4 < 2^64 /\ 0 <= x5 < 2^64 /\ 0 <= hw < 2^64 /\ 0 <= x6 < 2^64
-    /\ 0 <= x11 < 2^64 /\ 0 <= x12 < 2^64 /\ 0 <= x23 < 2^64 /\ 0 <= rnd < 2^64.
+    /\ alloc_ceiling <= B /\ B <= av /\ av + 464 <= 2^64 /\ B <= rnd + 8 /\ rnd + 16 <= 2^64
+    /\ (forall j, 0 <= v j < 2^64) /\ 0 <= rnd < 2^64.
+
+(* The vector is 432 bytes, or 464 under CONFIG_RSEQ. *)
+Lemma auxv_list_bytes : forall rs v rnd,
+  Z.of_nat (length (u64s (auxv_list rs v rnd))) = if rs then 464 else 432.
+Proof. intros rs v rnd. destruct rs; unfold auxv_list; rewrite u64s_length, map_length; reflexivity. Qed.
 
 Lemma auxv_ok_weaken : forall m B B', auxv_ok m B -> alloc_ceiling <= B' <= B -> auxv_ok m B'.
 Proof.
-  (intros m B B'; (first [ intro dR_12; dex10 dR_12 as av x3 x4 x5 hw x6 x11 x12 x23 rnd; rename dR_12 into H | intro dR_12; dand11 dR_12 as av x3 x4 x5 hw x6 x11 x12 x23 rnd H | intros (av & x3 & x4 & x5 & hw & x6 & x11 & x12 & x23 & rnd & H) ]); intros HB).
-  exists av, x3, x4, x5, hw, x6, x11, x12, x23, rnd. repeat (split; [tauto|]). lia.
+  intros m B B' (av & rs & v & rnd & C & A1 & A2 & HB0 & HBav & HAV & HBr & HR16 & HV & HR) HB.
+  exists av, rs, v, rnd. split; [exact C|]. split; [exact A1|]. split; [exact A2|].
+  split; [lia|]. split; [lia|]. split; [lia|]. split; [lia|]. split; [lia|]. split; [exact HV| exact HR].
 Qed.
 
 Lemma Forall_disjoint_from : forall (P : Z * Z -> Prop) W a n,
@@ -425,10 +442,10 @@ Lemma auxv_ok_frame : forall m m' B W,
   Forall (fun iv : Z * Z => snd iv <= B /\ (snd iv <= AUXV_CELL \/ AUXV_CELL + 8 <= fst iv)) W ->
   auxv_ok m' B.
 Proof.
-  (intros m m' B W; (first [ intro dR_13; dex10 dR_13 as av x3 x4 x5 hw x6 x11 x12 x23 rnd; dand4 dR_13 as C A1 A2 H | intro dR_13; dand14 dR_13 as av x3 x4 x5 hw x6 x11 x12 x23 rnd C A1 A2 H | intros (av & x3 & x4 & x5 & hw & x6 & x11 & x12 & x23 & rnd & C & A1 & A2 & H) ]); intros MU WM FW).
-  exists av, x3, x4, x5, hw, x6, x11, x12, x23, rnd. split; [|split; [|split; [|exact H]]].
+  intros m m' B W (av & rs & v & rnd & C & A1 & A2 & HB0 & HBav & HAV & HBr & HR16 & HV & HR) MU WM FW.
+  exists av, rs, v, rnd. split; [|split; [|split; [|exact (conj HB0 (conj HBav (conj HAV (conj HBr (conj HR16 (conj HV HR))))))]]].
   - eapply rw_cells_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [_ ?]. lia.
-  - eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [? _]. lia.
+  - eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn -[auxv_list u64s]. intros lo hi [? _]. lia.
   - eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [? _]. lia.
 Qed.
 
@@ -457,7 +474,7 @@ Qed.
 Definition auxv_okd (d : Z) (m : mem) (B : Z) : Prop := alloc_ceiling <= B /\ (d <> 0 \/ auxv_ok m B).
 
 Lemma auxv_okd_of_ok d m B : auxv_ok m B -> auxv_okd d m B.
-Proof. intros H. split; [| right; exact H]. (first [ dex10 H as av x3 x4 x5 hw x6 x11 x12 x23 rnd; dand5 H as _ _ _ HB _ | dand15 H as av x3 x4 x5 hw x6 x11 x12 x23 rnd _ _ _ HB _ | destruct H as (av & x3 & x4 & x5 & hw & x6 & x11 & x12 & x23 & rnd & _ & _ & _ & HB & _) ]). exact HB. Qed.
+Proof. intros H. split; [| right; exact H]. destruct H as (av & rs & v & rnd & _ & _ & _ & HB & _). exact HB. Qed.
 
 Lemma auxv_okd_done d m B : d <> 0 -> alloc_ceiling <= B -> auxv_okd d m B.
 Proof. intros Hd HB. split; [exact HB| left; exact Hd]. Qed.

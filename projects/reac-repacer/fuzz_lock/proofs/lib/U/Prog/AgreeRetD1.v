@@ -3,8 +3,9 @@
 (* Modified by Theorem Labs: the twin of lib/Reusable/YL0i.v (posts, contracts), lib/Reusable/YL05.v (lib_post_state) and lib/Reusable/YL06.v (call site) for a return value of the fuzz target of 0 or -1 *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_lock/lib/Prog/FrameRetD1.v, with its module paths changed; 76 of its 245 lines of code are new or changed and 365 lines of the source are left out. *)
 (* Modified by Theorem Labs: the twin of lib/U/Reusable/YL0i_cfw.v (lib_contract_x_Rc), lib/U/Reusable/YL06_cfw.v (lib_site_x_R_cf) and lib/U/AgreeZlib.v (lib_contract_x_Rc_of_cg) (no licence line) for a return value of the fuzz target of 0 or -1 *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Donor: reac-repacer/fuzz_lock, proofs/reac-repacer/fuzz_lock/lib/U/Reusable/YL0i_cfw.v, U/Reusable/YL06_cfw.v and
-   U/AgreeZlib.v at 901d1549395.
+   U/AgreeZlib.v.
    Module: OSSVerify.Proofs.reac_repacer.fuzz_lock.lib.U.Prog.AgreeRetD1. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

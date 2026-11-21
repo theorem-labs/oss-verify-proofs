@@ -1,11 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: Sections Run, FxTransform and FxTransformChk are generic in the Leaf class of their realizes_cfg walks. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From stdpp Require Import bitvector.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType RiscvSemantics Fs State Run.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import Leaf.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import ShapeAlgBase ShapeCfg NodesCfg LedgerCfg LazyCfg.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.FX Require Import
   W64 ITrie FxSpec FxInstr FxState FxMem FxExec FxRel FxKind FxMemSound FxImage FxRun FxRn FxHandoff FxLazy FxCellFrame.
@@ -42,6 +44,7 @@ Qed.
 
 Section Run.
 Variable segs : list Segment.
+Context {LF : Leaf}.
 
 Lemma account_step_mat_lazy ms m ms' m' :
   mi_account_step segs ms m = MachineOk (ms', m') -> mat_lazy m -> mat_lazy m'.
@@ -1218,6 +1221,7 @@ End DressChk.
 Section FxTransform.
 Variable cfg : SpuriousCfg.
 Variable segs : list Segment.
+Context {LF : Leaf}.
 Variable IM : fimage.
 Variable code : itrie finstr.
 Hypothesis Hcode : code_ok segs code.
@@ -1237,6 +1241,8 @@ Hypothesis NX0_spw : APC.expr_vars_lt nx0 APC.e_sp0_early = true.
 Hypothesis argH_agree : forall E E' (a : word), AxSymRun3.env_agree nx0 E E' -> argH E a = argH E' a.
 Hypothesis SINV_agree : forall E E' M, AxSymRun3.env_agree nx0 E E' -> SINV E M -> SINV E' M.
 Hypothesis SINV_frame : forall E M M', (forall a, argH E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
+(* LPS c0dd863a: [APS.cs_ok_agree]'s transport of [co_ehdr] *)
+Hypothesis EHDR_lt : APC.V_EHDR_below nx0.
 
 (* [comment removed for export] *)
 Variable TT : ttab_e.
@@ -1360,7 +1366,7 @@ Proof.
   apply andb_prop in Hf as [_ Fkn]. apply Nat.leb_le in Hle.
   assert (Fallow : APC.pairs_vars_lt (APC.nxt CS) (APC.a_vis CS ++ APC.a_ghost CS) = true).
   { unfold APC.pairs_vars_lt in *. rewrite forallb_app, Fvis, Fgh. reflexivity. }
-  pose proof (CXI.cs_ok_agree segs A nx0 Lim NX0_spw SINV argH ISP argH_agree SINV_agree FS0 E E' CS R FULL m Hag Hfresh0 HCS) as HCS'.
+  pose proof (CXI.cs_ok_agree segs A nx0 Lim NX0_spw SINV argH ISP argH_agree SINV_agree EHDR_lt FS0 E E' CS R FULL m Hag Hfresh0 HCS) as HCS'.
   pose proof (APS.hid_agree A nx0 argH argH_agree (APC.nxt CS) E E' CS m Hag Hle Fallow) as Ehid.
   pose proof (APS.allowA_agree A (APC.nxt CS) E E' CS Hag Fallow) as EA.
   (* [comment removed for export] *)
@@ -1565,6 +1571,7 @@ End Side.
 Section FxTransformChk.
 Variable cfg : SpuriousCfg.
 Variable segs : list Segment.
+Context {LF : Leaf}.
 Variable IM : fimage.
 Variable code : itrie finstr.
 Hypothesis Hcode : code_ok segs code.
@@ -1584,6 +1591,7 @@ Hypothesis NX0_spw : APC.expr_vars_lt nx0 APC.e_sp0_early = true.
 Hypothesis argH_agree : forall E E' (a : word), AxSymRun3.env_agree nx0 E E' -> argH E a = argH E' a.
 Hypothesis SINV_agree : forall E E' M, AxSymRun3.env_agree nx0 E E' -> SINV E M -> SINV E' M.
 Hypothesis SINV_frame : forall E M M', (forall a, argH E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
+Hypothesis EHDR_lt : APC.V_EHDR_below nx0.
 
 Theorem fx_transform_chk TT n shapes cuts classes CS d bs bp k F' r cnt VT pc' regs' kn' nxt' E R FULL m T :
   CXI.cs_ok segs A Lim SINV argH ISP FS0 E CS R FULL m ->
@@ -1613,7 +1621,7 @@ Proof.
   pose proof (APS.lazy_cover_cs segs A Lim (fun _ => None) (fun _ _ _ => None) (fun _ _ _ => None) (fun _ _ _ => None)
                 HULL_ok SINV argH FS0 0%nat E CS R FULL m (CXI.cs_ok_aps _ _ _ _ _ _ _ _ _ _ _ _ HCS)) as Hcover.
   apply (fx_transform cfg segs IM code Hcode HIM HWR A Lim SINV argH ISP FS0 SEGS_in_hull HULL_ok argH_high nx0 NX0_spw
-           argH_agree SINV_agree SINV_frame TT n shapes cuts classes CS d bs bp k F' r cnt VT pc' regs' kn' nxt' E R FULL m
+           argH_agree SINV_agree SINV_frame EHDR_lt TT n shapes cuts classes CS d bs bp k F' r cnt VT pc' regs' kn' nxt' E R FULL m
            HCS Hchk Hk Hrun); [ | | exact HK].
   - exact (side_LZ segs IM A E TT (APC.kn CS) _ FULL d _ _ HTT Hnoseg Hkn0 Hhull Hcover Hmem0 Hside).
   - exact (side_cw segs IM A E TT (APC.kn CS) _ FULL d HTT Hnoseg Hkn0 Hhull Hmem0 Hside).

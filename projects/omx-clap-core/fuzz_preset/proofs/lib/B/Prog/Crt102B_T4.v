@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths and module names changed; 3520 of its 3599 lines of code are new or changed and 435 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* On the Step-1 contract texts (the re-hiding move): every journal of this row is the engine's R form at R := YA0nH.wle'
    SEGS YGcfRehidePost.RZ_cf (the notations AJ / AJW, as Crt102KitB.v) and every segment statement (CRTB_* / CRT4_*,
    T4_GOAL_PJW, t4_goal_pn) concludes YA0nH.SRr' SEGS YGcfRehidePost.RZ_cf (the glue's crt_live_journal and QF are
@@ -17,32 +18,32 @@
    proves no function (kind: segment lemma).
 
    INPUTS OF RECORD (taken by path):
-   - base commit 5e7e7aa75c4e (merged; glue Records, the landing cut 7cdbb61b5fa0, Crt102Img / Crt102ImgB split):
+   - base (merged; glue Records, the landing cut, Crt102Img / Crt102ImgB split):
      the glue lib/A/Prog/Crt102Glue.v (crt_side 6 wide;
      crt_pos with the strtod tie and prh_cons_from; CRT_W0_OFF_B; the frozen B' boundaries crt_at_W_B with copy's
      guarded blocks against tblk and depth, crt_at_J_B / crt_at_X_B with r = 0, crt_at_L0_B with copy's and back's
      blocks over Permutation and back's free order (pj_foR .. = fo crt_tc) on the granted arm, crt_bregs_B,
      crt_dregs_B, CRT_SP_*_B, CRT_OWN_LO_B), Crt102Img.v and Crt102ImgB.v, Crt102Model.v, the image-B kit Crt102KitB.v (twelve
      helpers cited), and the contract texts
-     the base carries (commit 3ac20a5c9e30: the ledger with g_most / g_own_ran_out as fields; tpj_write_specX;
+     the base carries (the ledger with g_most / g_own_ran_out as fields; tpj_write_specX;
      tparse_noting_specX in the post-implication form with its outcome clause; tfuzz_alloc_ran_out_specX; fpre with
      frm_zero at entry), consumed unchanged;
      lib/Reusable/YImgTop.v is the base's record blob (IMG_TOP_B = 0x601000), so the segment is stated at PI_prog_B.
-   - the A' twins: Crt102Arms.v 97a937b1e61 (the call / live / chain templates), Crt102Rewrite.v 370f759b180.
+   - the A' twins: Crt102Arms.v (the call / live / chain templates), Crt102Rewrite.v.
    - pins: A' asan 1be0f53d96cb9d6c (twin bff8519bbe3ea0e4), B' asan-ubsan d663f82d7f488d30 (twin c90d4fa54d43160b).
-   - listing: lib/B/Listing_prog.v 8bcc2c9e7809 (commit d42e123915ae). The body was decoded
+   - listing: lib/B/Listing_prog.v 8bcc2c9e7809. The body was decoded
      word by word from the pin itself: a lane record (the internal file decode-T4.txt) (+0x288 ..
      +0x34c, every word equal to the listing's, sha256 faffcb209b9bc977), the internal file decode-L0.txt (+0x470 .. +0x4c0).
    - engine: the s1b set (YCbqG, YCbqGcall, YGcallMx, YGcallMxmn, YC1fPx) as the lane base carries it; the segment
      environment lib/A/Prog/S10Env.v.
-   - build route pins102: the internal file zfb-targets.dc6f8f60073340be.sh, FACTS 8f3e7e1a07f1,
+   - build route pins102: the internal file zfb-targets.dc6f8f60073340be.sh, FACTS,
      PAU pau-preset-102.
    - rule 24: no released ASan proof of check_round_trip by name (the 13:37Z lookup: the released proofs are plain/ubsan
      only; re-checked 2026-10-31 12:14Z by name and by a recipes git grep). The row's address lookups are no evidence
      here (fuzz_preset's released builds carry no symbol table), so none is cited; written new. The census-1
      cold/* sweep (15:56Z, a lane record (the internal file census-T4.out) sha256 61997a9902375ef2) found no
      other walk of this segment.
-   - kb round (on the A' head a54cc6d36c2c with the kb Glue): the glue's crt_live
+   - kb round (on the A' head with the kb Glue): the glue's crt_live
      with its budget kb and its journal at a budget WS with wbudget [] kb WS, QF at the text's budget
      prh_wk F_check_round_trip = 66 (Crt102Glue.v G1 - G4: W_B at 64, L0_B / J_B / X_B at 66); Crt102KitB.v at the
      kb glue (cb4_ff / cb4_chain at any budget, cb4_live_call over budgeted journals, cb4_live_mono); the A' twins
@@ -122,7 +123,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.B.Prog Require Crt102KitB.
    crt_run_to_xw_inv, the runners over a journal at a wild-trace budget, and crt_jw_wild), cited by qualified name *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A.Prog Require Crt102Kit.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require PresetCfnA.
-(* the model supply lemmas (the base's lib/A/PRH_Supply.v, from commit d7c502629be9 at a508dcbd0df) *)
+(* the model supply lemmas (the base's lib/A/PRH_Supply.v) *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require PRH_Supply.
 (* the re-hiding move's world and step relations (YA0nH), the step lemmas (YSRrG), the zone
    (YGcfRehidePost.RZ_cf); the hull budget (PresetHullBudget, PresetHullPay) and the counts it is paid from *)
@@ -166,7 +167,7 @@ Lemma crt4_kb_pn :
 Proof. cbn. lia. Qed.
 
 (* ======================================================================================================== *)
-(* PART 1, image-free: the freeable-tree facts (Crt102Rewrite.v b96772c578f :37-231, prefix crt102rw_ renamed cb4_).
+(* PART 1, image-free: the freeable-tree facts (Crt102Rewrite.v :37-231, prefix crt102rw_ renamed cb4_).
    cb4_nodeR_fdR: a represented tree is freeable at its depth; cb4_fdR_mono: freeable at d is freeable at every
    d' >= d; cb4_fdR_frame: a freeable tree whose footprint keeps its bytes (and writability) is the same tree. *)
 Section rd.
@@ -500,7 +501,7 @@ Variables (ly : alayout) (S : astate) (Hp : list Z) (W : world SEGS) (regs : bvm
   (CTX0 : list (list Z)) (a_mod_at a_stamp : Z).
 #[local] Notation sp0 := (spZ regs).
 #[local] Notation sp1 := (@CRT_sp1 regs).
-(* crt_live / crt_side carry no room position since 11c39f7e88b7 (so they take no rp_* argument); the position
+(* crt_live / crt_side carry no room position (so they take no rp_* argument); the position
    travels as crt_pos on the r = 0-path boundaries only *)
 #[local] Notation liveB := (crt_live (rc := rc) (PI := prh_img_B) (RL := RL) (SK := SK) (L := B_prog_listing)
   (PA := PA) (B := B) (ARx := ARx) (ly := ly) (S := S) (Hp := Hp) (W := W) (regs := regs) (mem := mem) (md := md)
@@ -560,7 +561,7 @@ Ltac cb4_rd_dregs HDR R2 R3 R4 R8 R9 R18 R20 R19 R23 R25 R27 R22 :=
   pose proof (crt_dregs_B_s6 HDR) as R22.
 
 (* ======================================================================================================== *)
-(* THE SEGMENT STATEMENTS: each boundary is `the run from this configuration reaches QF` (Crt102Glue.v:244-247),
+(* THE SEGMENT STATEMENTS: each boundary is `the run from this configuration reaches QF` (Crt102Glue.v:245-248),
    over the frozen B' boundaries crt_at_J_B / crt_at_X_B / crt_at_L0_B, at the re-hiding move's
    step relation YA0nH.SRr' SEGS YGcfRehidePost.RZ_cf (the glue's CRT_B_AT_* are there) *)
 Definition CRTB_J : Prop :=
@@ -707,12 +708,12 @@ Hypothesis HOS4 : (length rp_os <= 4)%nat.
    the allocator engine's notes, the internal file FIELD-BATCH.md:134-137, not in this tree) lands as AR_laws_x's last field in the P''
    engine landing; this hypothesis is then discharged by citation. It paid tparse_noting_specX's src_rd clause
    `text + |tb| + 8 <= alloc_ceiling` for pj_write's buffer (q - cf_head, cap + cf_head) at +0x2e8. At the landing cut
-   (7cdbb61b5fa0) src_rd asks `text + |tb| <= alloc_ceiling`, which the block bound of alx_blocks already gives, so
+   src_rd asks `text + |tb| <= alloc_ceiling`, which the block bound of alx_blocks already gives, so
    NO lemma of this file uses ALX_CEIL8 any more (reported to the row owner; the hypothesis is not deleted here). *)
 Hypothesis ALX_CEIL8 : forall ly' S' Hp' W' mem' md' p n, ARx ly' S' Hp' W' mem' md' ->
   In (p, n) (ablocks B ly' S') -> p + req_size n + 8 <= YM05.alloc_ceiling.
-(* THE CALLEE TEXTS (owners: the contract texts' owner for the PRH_Fn* texts the base carries, as at the kit tip
-   3ac20a5c9e30; the libc stdio row for the strlen wrapper's xrom statement, as for T5's astrcmp_realizes_xrom), each
+(* THE CALLEE TEXTS (owners: the contract texts' owner for the PRH_Fn* texts the base carries, as at the kit tip;
+   the libc stdio row for the strlen wrapper's xrom statement, as for T5's astrcmp_realizes_xrom), each
    at ANY float state (a callee is entered at the float state the previous one returned in). pj_write's call is taken
    through the named goal T4_GOAL_PJW (below), which t4_goal_pjw proves from PJW. *)
 Hypothesis PN : forall fxk : YK11.FPState,
@@ -888,9 +889,9 @@ Qed.
 
 (* ======================================================================================================== *)
 (* SHARED CALL INFRASTRUCTURE of the W walk (every call of T4 is made at sp = s1 = CRT_sp1 with s0 = the entry sp).
-   B' twins of Crt102Arms.v 97a937b1e61 (arms_dregs_pres / _eq). cb4_fregs_trans, cb4_rdword_of_val_mem,
+   B' twins of Crt102Arms.v (arms_dregs_pres / _eq). cb4_fregs_trans, cb4_rdword_of_val_mem,
    cb4_fpchain_keep, cb4_chain and cb4_live_call (the twins of arms_fregs_trans .. arms_chain and of Crt102Rewrite.v
-   370f759b180 crt102rw_live_call) are Crt102KitB.v's. *)
+   crt102rw_live_call) are Crt102KitB.v's. *)
 
 (* the kept registers carry the B' register snapshot across a call (callee-saved) *)
 Lemma cb4_dregs_pres : forall rg rg' F, dregsB rg F -> aregs_preserved rg rg' -> dregsB rg' F.
@@ -1028,7 +1029,7 @@ lazymatch goal with |- YA0nH.SRr' _ _ _ {| cfg_ms := mkst _ (Z_to_bv 64 (_ + ?n)
   change n with (CRT_PC_B + CRT_J_OFF_B) end.
 apply (HJmp fxk lyc Sc Hpc Wc (ms_mem ms) _ kj pos Lamc peakc cntc ownc ranc Dc (ms_regs ms) r).
 (* copy's footprint (its node and Dc's blocks) is off the re-poison's writes, so its bytes and their writability are
-   kept: this carries pj_fdR and, on J's r = 0 arm, the named tree pj_nodeR (glue f1c3354d1d8); the tblk equality,
+   kept: this carries pj_fdR and, on J's r = 0 arm, the named tree pj_nodeR (glue); the tblk equality,
    the depth bound and crt_pos read no memory *)
 assert (HAGc : forall y, pj_footR (F + CRT_OFF_COPY) Dc y ->
   mbyte SEGS (mrestrict (w_H Wc) (ms_mem ms)) y = mbyte SEGS (mrestrict (w_H Wc) memc) y /\
@@ -1142,7 +1143,7 @@ intros y Hy. rewrite K; [exact (H7 y Hy) | lia].
 Qed.
 
 (* ---- the document's home keeps its 56 addressable bytes at every state the journal from the entry reaches
-   (Crt102Arms.v 97a937b1e61 arms_home_keep, :476-504, at B') ---- *)
+   (Crt102Arms.v arms_home_keep, :476-504, at B') ---- *)
 Lemma cb4w_home_keep : forall own lyc Sc Hpc Wc memc mdc kj {WS : list (list Z)},
   AJW STKC sp0 [] ly S Hp W mem md own lyc Sc Hpc Wc memc mdc kj WS -> ck_obj_home lyc Sc Wc memc doc.
 Proof.
@@ -3030,7 +3031,7 @@ apply Hsh. unfold SHADOW_OFF in *. lia.
 Qed.
 (* ======================================================================================================== *)
 (* THE parse_noting CALL OF THIS SEGMENT, AS ONE NAMED GOAL (`t4_goal_pn`).
-   It is tparse_noting_specX (PRH_FnCheck.v:586-713 at commit 3ac20a5c9e30, PRH_FnCheck 0844ed8c0608) at this
+   It is tparse_noting_specX (PRH_FnCheck.v:586-713, PRH_FnCheck 0844ed8c0608) at this
    call site's binders - fail = SIZE_MAXZ, ran = 0, own = 0, its post verbatim (the refusal peak prh_refused_peak and
    prh_oks over prh_ev_reqs as the text states them) - read at the site's own position: the goal takes the reading's
    run events at the entry position (`prh_run_at .. ii (parse_evs ..)`), the run hypothesis over that window
@@ -3142,7 +3143,7 @@ apply (PresetHullPay.hull_budget_of_room_pos ReaderRes.jr_strtod rp_x rp_os ii r
 Qed.
 
 (* ======================================================================================================== *)
-(* BACK'S BLOCKS AGAINST tblk crt_tc UP TO PERMUTATION (crt_at_L0_B's Some arm, base eda8876a8e89), from the
+(* BACK'S BLOCKS AGAINST tblk crt_tc UP TO PERMUTATION (crt_at_L0_B's Some arm), from the
    parse_noting post's multiset `Permutation (map snd D) (map Z.of_nat (ReaderRes.lsz tr))`: a Some reading of the
    writer's text wdoc crt_tc true is the all-granted run (PjGrammar.G7_1 / G7_2), whose trace is ttrace crt_tc
    (PjRoundTrip.G9_trace); lsz of a reader trace shifted by HEAD is the live list of its heap events (cb4_lsz_hlive);
@@ -3191,10 +3192,10 @@ rewrite map_map. unfold ReaderRes.lsz. rewrite (cb4_lsz_hlive (PjRoundTrip.ttrac
 exact (PresetReqAtNoMiss.ttrace_blocks tcB).
 Qed.
 
-(* ---- back's FREE ORDER at L0 (crt_at_L0_B's granted arm, base 7281359fe8bc): a Some reading of the writer's text
+(* ---- back's FREE ORDER at L0 (crt_at_L0_B's granted arm): a Some reading of the writer's text
    is the all-granted run (G7_1 / G7_2), its tree is crt_tc (G9), so its depth is copy's (cm_crt_depth_doc), and
    pj_free's reader-side list at the post's grant list is the list at [] (PresetFreeFo.pj_frees_acc,
-   taken by path from commit f8c50a8d2d5: the PRH_FnPj.v:414-416 OWED (d) fact), which is fo crt_tc
+   taken by path: the PRH_FnPj.v:414-416 OWED (d) fact), which is fo crt_tc
    (PresetFreeFo.pj_frees_wdoc_t) ---- *)
 Lemma cb4_back_fo : forall okr tv tr,
   PjGrammar.jr_run ReaderRes.jr_strtod tbB okr = (Some tv, tr) ->
@@ -4049,8 +4050,8 @@ Qed.
    text's OUTCOME CLAUSE (:673-682) at the site's position, whose run hypothesis prh_cons_from (:677) and strtod tie
    the goal takes from crt_pos, and RQ_pj_parse tb <= most (:632) is the goal's premise, paid at the site from HRQA
    (Crt102Model.cm_rqa_read). The two pkR room counts (:642-645) come from the room position and the run window by
-   PresetRoomCounts.peak_sec_of_room_pos / peak_c24_of_room_pos (taken by path, 5b877a834be4). AT THE LANDING
-   CUT (7cdbb61b5fa0) THE DW PREMISE IS GONE (UNIV-END retired; the closure's clause
+   PresetRoomCounts.peak_sec_of_room_pos / peak_c24_of_room_pos (taken by path). AT THE LANDING
+   CUT THE DW PREMISE IS GONE (UNIV-END retired; the closure's clause
    4b holds the cursor free traces at every word). AT THE kb ROUND the two items the cut left open are the goal's
    own kb form: the text's wild room premise (:638) is t4_goal_pn's premise in the text's place (the call site pays
    it out of the text's entry room HWR0, crt4_lane_S_at), and the text's budgeted post fpostFbm .. (wbudget []
@@ -4103,8 +4104,8 @@ Qed.
    at +0x2e8 through t4_goal_pn (t4_goal_pn_holds, from the text PN; its wild room paid from the text's entry room
    HWR0 in crt4_lane_S_at), the pj_write call at +0x2b8 through T4_GOAL_PJW (t4_goal_pjw, from the callee text
    tpj_write_specX).
-   The r = 1 exit FF -> X (+0x300 .. +0x30c) is UNREACHABLE (crt_at_J_B / crt_at_X_B now carry r = 0, glue
-   80a20e4edde): every way into FF is a refusal (g_ran_out = 1), and each is refuted at its source - a refused
+   The r = 1 exit FF -> X (+0x300 .. +0x30c) is UNREACHABLE (crt_at_J_B / crt_at_X_B now carry r = 0, glue):
+   every way into FF is a refusal (g_ran_out = 1), and each is refuted at its source - a refused
    pj_write by T4_GOAL_PJW (its ranw = 0), a granted pj_write leaving ran = 1 by its own prh_oks (cb4w_granted_ran),
    a refused reading by tparse_noting_specX's outcome clause (t4_goal_pn's ran' = 0). So the walk from W exits at L0
    only, and no J premise is needed. copy's blocks against tblk (under crt_at_W_B's cf_head guard, discharged by

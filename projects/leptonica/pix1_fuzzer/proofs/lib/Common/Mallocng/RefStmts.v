@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the THP-flag and vdso_ok premises of every statement, whose postcondition keeps vframe and the THP flag in place of alloc_top). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -20,7 +21,7 @@ Context {fx : FPState} {ML : MallocLayout}.
 Definition getmeta_stmt : Prop :=
   forall md regs mm rom (s : mstate) (p sp ret : word)
          (P : word -> mstate -> Prop) (L : word -> mstate -> TSet),
-  md_pure md -> ms_vm s = m_vmmaps md -> magree s mm ->
+  md_pure md -> ms_vm s = m_vmmaps md -> ms_thp s = kb_thp (m_kernel md) -> vdso_ok md -> magree s mm ->
   getr regs 2 = sp -> bv_unsigned sp mod 16 = 0 ->
   0 <= ms_lo s -> ms_lo s <= bv_unsigned sp - 0 -> bv_unsigned sp <= ms_hi s -> ms_hi s <= 2^64 ->
   wtop s ->
@@ -29,7 +30,8 @@ Definition getmeta_stmt : Prop :=
   tsafe (m_get_meta p s) P ->
   (forall r s' mm' regs',
      P r s' -> magree s' mm' -> ms_lo s' = ms_lo s -> ms_hi s' = ms_hi s ->
-     alloc_top (ms_vm s') = alloc_top (ms_vm s) ->
+     vframe (ms_vm s') (ms_vm s) ->
+     ms_thp s' = ms_thp s ->
      getr regs' 10 = r -> getr regs' 2 = sp ->
      (forall x, callee_saved x -> getr regs' x = getr regs x) ->
      (forall a, ms_lo s <= bv_unsigned a < ms_hi s ->
@@ -42,7 +44,7 @@ Definition getmeta_stmt : Prop :=
 Definition enframe_stmt : Prop :=
   forall md regs mm rom (s : mstate) (g idx n ctr sp ret : word)
          (P : word -> mstate -> Prop) (L : word -> mstate -> TSet),
-  md_pure md -> ms_vm s = m_vmmaps md -> magree s mm ->
+  md_pure md -> ms_vm s = m_vmmaps md -> ms_thp s = kb_thp (m_kernel md) -> vdso_ok md -> magree s mm ->
   getr regs 2 = sp -> bv_unsigned sp mod 16 = 0 ->
   0 <= ms_lo s -> ms_lo s <= bv_unsigned sp - 0 -> bv_unsigned sp <= ms_hi s -> ms_hi s <= 2^64 ->
   wtop s ->
@@ -52,7 +54,8 @@ Definition enframe_stmt : Prop :=
   tsafe (m_enframe g idx n ctr s) P ->
   (forall r s' mm' regs',
      P r s' -> magree s' mm' -> ms_lo s' = ms_lo s -> ms_hi s' = ms_hi s ->
-     alloc_top (ms_vm s') = alloc_top (ms_vm s) ->
+     vframe (ms_vm s') (ms_vm s) ->
+     ms_thp s' = ms_thp s ->
      getr regs' 10 = r -> getr regs' 2 = sp ->
      (forall x, callee_saved x -> getr regs' x = getr regs x) ->
      (forall a, ms_lo s <= bv_unsigned a < ms_hi s ->
@@ -65,7 +68,7 @@ Definition enframe_stmt : Prop :=
 Definition munmap_stmt : Prop :=
   forall md regs mm rom (s : mstate) (addr len sp ret : word)
          (P : word -> mstate -> Prop) (L : word -> mstate -> TSet),
-  md_pure md -> ms_vm s = m_vmmaps md -> magree s mm ->
+  md_pure md -> ms_vm s = m_vmmaps md -> ms_thp s = kb_thp (m_kernel md) -> vdso_ok md -> magree s mm ->
   getr regs 2 = sp -> bv_unsigned sp mod 16 = 0 ->
   0 <= ms_lo s -> ms_lo s <= bv_unsigned sp - 32 -> bv_unsigned sp <= ms_hi s -> ms_hi s <= 2^64 ->
   wtop s ->
@@ -75,7 +78,8 @@ Definition munmap_stmt : Prop :=
   tsafe (sys_munmap addr len s) P ->
   (forall r s' mm' regs',
      P r s' -> magree s' mm' -> ms_lo s' = ms_lo s -> ms_hi s' = ms_hi s ->
-     alloc_top (ms_vm s') = alloc_top (ms_vm s) ->
+     vframe (ms_vm s') (ms_vm s) ->
+     ms_thp s' = ms_thp s ->
      getr regs' 10 = r -> getr regs' 2 = sp ->
      (forall x, callee_saved x -> getr regs' x = getr regs x) ->
      (forall a, ms_lo s <= bv_unsigned a < ms_hi s ->
@@ -91,7 +95,7 @@ Definition mmap_prot (k : mmkind) : Z := match k with MMrw => 3 | MMnone => 0 en
 Definition mmap_stmt (k : mmkind) : Prop :=
   forall md regs mm rom (s : mstate) (len sp ret : word)
          (P : word -> mstate -> Prop) (L : word -> mstate -> TSet),
-  md_pure md -> ms_vm s = m_vmmaps md -> magree s mm ->
+  md_pure md -> ms_vm s = m_vmmaps md -> ms_thp s = kb_thp (m_kernel md) -> vdso_ok md -> magree s mm ->
   getr regs 2 = sp -> bv_unsigned sp mod 16 = 0 ->
   0 <= ms_lo s -> ms_lo s <= bv_unsigned sp - 80 -> bv_unsigned sp <= ms_hi s -> ms_hi s <= 2^64 ->
   wtop s ->
@@ -102,7 +106,8 @@ Definition mmap_stmt (k : mmkind) : Prop :=
   tsafe (sys_mmap k len s) P ->
   (forall r s' mm' regs',
      P r s' -> magree s' mm' -> ms_lo s' = ms_lo s -> ms_hi s' = ms_hi s ->
-     alloc_top (ms_vm s') = alloc_top (ms_vm s) ->
+     vframe (ms_vm s') (ms_vm s) ->
+     ms_thp s' = ms_thp s ->
      getr regs' 10 = r -> getr regs' 2 = sp ->
      (forall x, callee_saved x -> getr regs' x = getr regs x) ->
      (forall a, ms_lo s <= bv_unsigned a < ms_hi s ->
@@ -116,7 +121,7 @@ Definition mmap_stmt (k : mmkind) : Prop :=
 Definition mmap_fixed_stmt : Prop :=
   forall md regs mm rom (s : mstate) (addr len sp ret : word)
          (P : word -> mstate -> Prop) (L : word -> mstate -> TSet),
-  md_pure md -> ms_vm s = m_vmmaps md -> magree s mm ->
+  md_pure md -> ms_vm s = m_vmmaps md -> ms_thp s = kb_thp (m_kernel md) -> vdso_ok md -> magree s mm ->
   getr regs 2 = sp -> bv_unsigned sp mod 16 = 0 ->
   0 <= ms_lo s -> ms_lo s <= bv_unsigned sp - 80 -> bv_unsigned sp <= ms_hi s -> ms_hi s <= 2^64 ->
   wtop s ->
@@ -127,7 +132,8 @@ Definition mmap_fixed_stmt : Prop :=
   tsafe (sys_mmap_fixed_none addr len s) P ->
   (forall r s' mm' regs',
      P r s' -> magree s' mm' -> ms_lo s' = ms_lo s -> ms_hi s' = ms_hi s ->
-     alloc_top (ms_vm s') = alloc_top (ms_vm s) ->
+     vframe (ms_vm s') (ms_vm s) ->
+     ms_thp s' = ms_thp s ->
      getr regs' 10 = r -> getr regs' 2 = sp ->
      (forall x, callee_saved x -> getr regs' x = getr regs x) ->
      (forall a, ms_lo s <= bv_unsigned a < ms_hi s ->
@@ -141,7 +147,7 @@ Definition mmap_fixed_stmt : Prop :=
 Definition mprotect_stmt : Prop :=
   forall md regs mm rom (s : mstate) (addr len sp ret : word) (pgbs : list byte)
          (P : word -> mstate -> Prop) (L : word -> mstate -> TSet),
-  md_pure md -> ms_vm s = m_vmmaps md -> magree s mm ->
+  md_pure md -> ms_vm s = m_vmmaps md -> ms_thp s = kb_thp (m_kernel md) -> vdso_ok md -> magree s mm ->
   getr regs 2 = sp -> bv_unsigned sp mod 16 = 0 ->
   0 <= ms_lo s -> ms_lo s <= bv_unsigned sp - 32 -> bv_unsigned sp <= ms_hi s -> ms_hi s <= 2^64 ->
   wtop s ->
@@ -152,7 +158,8 @@ Definition mprotect_stmt : Prop :=
   tsafe (sys_mprotect_rw addr len s) P ->
   (forall r s' mm' regs',
      P r s' -> magree s' mm' -> ms_lo s' = ms_lo s -> ms_hi s' = ms_hi s ->
-     alloc_top (ms_vm s') = alloc_top (ms_vm s) ->
+     vframe (ms_vm s') (ms_vm s) ->
+     ms_thp s' = ms_thp s ->
      getr regs' 10 = r -> getr regs' 2 = sp ->
      (forall x, callee_saved x -> getr regs' x = getr regs x) ->
      (forall a, ms_lo s <= bv_unsigned a < ms_hi s ->
@@ -166,7 +173,7 @@ Definition mprotect_stmt : Prop :=
 Definition ntfree_stmt : Prop :=
   forall md regs mm rom (s : mstate) (fuel : nat) (g i sp ret : word)
          (P : word * word -> mstate -> Prop) (L : word * word -> mstate -> TSet),
-  md_pure md -> ms_vm s = m_vmmaps md -> magree s mm ->
+  md_pure md -> ms_vm s = m_vmmaps md -> ms_thp s = kb_thp (m_kernel md) -> vdso_ok md -> magree s mm ->
   getr regs 2 = sp -> bv_unsigned sp mod 16 = 0 ->
   0 <= ms_lo s -> ms_lo s <= bv_unsigned sp - 96 * Z.of_nat fuel -> bv_unsigned sp <= ms_hi s -> ms_hi s <= 2^64 ->
   wtop s ->
@@ -176,7 +183,8 @@ Definition ntfree_stmt : Prop :=
   tsafe (m_nontrivial_free fuel g i s) P ->
   (forall r s' mm' regs',
      P r s' -> magree s' mm' -> ms_lo s' = ms_lo s -> ms_hi s' = ms_hi s ->
-     alloc_top (ms_vm s') = alloc_top (ms_vm s) ->
+     vframe (ms_vm s') (ms_vm s) ->
+     ms_thp s' = ms_thp s ->
      getr regs' 10 = fst r ->
      getr regs' 11 = snd r ->
      getr regs' 2 = sp ->
@@ -191,7 +199,7 @@ Definition ntfree_stmt : Prop :=
 Definition free_stmt : Prop :=
   forall md regs mm rom (s : mstate) (p sp ret : word)
          (P : unit -> mstate -> Prop) (L : unit -> mstate -> TSet),
-  md_pure md -> ms_vm s = m_vmmaps md -> magree s mm ->
+  md_pure md -> ms_vm s = m_vmmaps md -> ms_thp s = kb_thp (m_kernel md) -> vdso_ok md -> magree s mm ->
   getr regs 2 = sp -> bv_unsigned sp mod 16 = 0 ->
   0 <= ms_lo s -> ms_lo s <= bv_unsigned sp - ALLOC_STACK -> bv_unsigned sp <= ms_hi s -> ms_hi s <= 2^64 ->
   wtop s ->
@@ -201,7 +209,8 @@ Definition free_stmt : Prop :=
   tsafe (m_free p s) P ->
   (forall r s' mm' regs',
      P r s' -> magree s' mm' -> ms_lo s' = ms_lo s -> ms_hi s' = ms_hi s ->
-     alloc_top (ms_vm s') = alloc_top (ms_vm s) ->
+     vframe (ms_vm s') (ms_vm s) ->
+     ms_thp s' = ms_thp s ->
      getr regs' 2 = sp ->
      (forall x, callee_saved x -> getr regs' x = getr regs x) ->
      (forall a, ms_lo s <= bv_unsigned a < ms_hi s ->
@@ -217,7 +226,7 @@ Definition alloc_slot_D (fuel : nat) : Z := 144 * Z.of_nat fuel + 144.
 Definition alloc_meta_stmt : Prop :=
   forall md regs mm rom (s : mstate) (sp ret : word)
          (P : word -> mstate -> Prop) (L : word -> mstate -> TSet),
-  md_pure md -> ms_vm s = m_vmmaps md -> magree s mm ->
+  md_pure md -> ms_vm s = m_vmmaps md -> ms_thp s = kb_thp (m_kernel md) -> vdso_ok md -> magree s mm ->
   getr regs 2 = sp -> bv_unsigned sp mod 16 = 0 ->
   0 <= ms_lo s -> ms_lo s <= bv_unsigned sp - 144 -> bv_unsigned sp <= ms_hi s -> ms_hi s <= 2^64 ->
   wtop s ->
@@ -226,7 +235,8 @@ Definition alloc_meta_stmt : Prop :=
   tsafe (m_alloc_meta (at_ sp (-64)) s) P ->
   (forall r s' mm' regs',
      P r s' -> magree s' mm' -> ms_lo s' = ms_lo s -> ms_hi s' = ms_hi s ->
-     alloc_top (ms_vm s') = alloc_top (ms_vm s) ->
+     vframe (ms_vm s') (ms_vm s) ->
+     ms_thp s' = ms_thp s ->
      getr regs' 10 = r ->
      getr regs' 2 = sp ->
      (forall x, callee_saved x -> getr regs' x = getr regs x) ->
@@ -240,7 +250,7 @@ Definition alloc_meta_stmt : Prop :=
 Definition alloc_slot_stmt : Prop :=
   forall md regs mm rom (s : mstate) (fuel : nat) (sc req sp ret : word)
          (P : word -> mstate -> Prop) (L : word -> mstate -> TSet),
-  md_pure md -> ms_vm s = m_vmmaps md -> magree s mm ->
+  md_pure md -> ms_vm s = m_vmmaps md -> ms_thp s = kb_thp (m_kernel md) -> vdso_ok md -> magree s mm ->
   getr regs 2 = sp -> bv_unsigned sp mod 16 = 0 ->
   0 <= ms_lo s -> ms_lo s <= bv_unsigned sp - alloc_slot_D fuel -> bv_unsigned sp <= ms_hi s -> ms_hi s <= 2^64 ->
   wtop s ->
@@ -250,7 +260,8 @@ Definition alloc_slot_stmt : Prop :=
   tsafe (m_alloc_slot fuel (at_ sp (-144)) sc req s) P ->
   (forall r s' mm' regs',
      P r s' -> magree s' mm' -> ms_lo s' = ms_lo s -> ms_hi s' = ms_hi s ->
-     alloc_top (ms_vm s') = alloc_top (ms_vm s) ->
+     vframe (ms_vm s') (ms_vm s) ->
+     ms_thp s' = ms_thp s ->
      getr regs' 10 = r ->
      getr regs' 2 = sp ->
      (forall x, callee_saved x -> getr regs' x = getr regs x) ->
@@ -264,7 +275,7 @@ Definition alloc_slot_stmt : Prop :=
 Definition malloc_stmt : Prop :=
   forall md regs mm rom (s : mstate) (n sp ret : word)
          (P : word -> mstate -> Prop) (L : word -> mstate -> TSet),
-  md_pure md -> ms_vm s = m_vmmaps md -> magree s mm ->
+  md_pure md -> ms_vm s = m_vmmaps md -> ms_thp s = kb_thp (m_kernel md) -> vdso_ok md -> magree s mm ->
   getr regs 2 = sp -> bv_unsigned sp mod 16 = 0 ->
   0 <= ms_lo s -> ms_lo s <= bv_unsigned sp - ALLOC_STACK -> bv_unsigned sp <= ms_hi s -> ms_hi s <= 2^64 ->
   wtop s ->
@@ -274,7 +285,8 @@ Definition malloc_stmt : Prop :=
   tsafe (m_malloc (at_ sp (-48)) n s) P ->
   (forall r s' mm' regs',
      P r s' -> magree s' mm' -> ms_lo s' = ms_lo s -> ms_hi s' = ms_hi s ->
-     alloc_top (ms_vm s') = alloc_top (ms_vm s) ->
+     vframe (ms_vm s') (ms_vm s) ->
+     ms_thp s' = ms_thp s ->
      getr regs' 10 = r ->
      getr regs' 2 = sp ->
      (forall x, callee_saved x -> getr regs' x = getr regs x) ->
@@ -288,7 +300,7 @@ Definition malloc_stmt : Prop :=
 Definition allzerop_stmt : Prop :=
   forall md regs mm rom (s : mstate) (p sp ret : word)
          (P : word -> mstate -> Prop) (L : word -> mstate -> TSet),
-  md_pure md -> ms_vm s = m_vmmaps md -> magree s mm ->
+  md_pure md -> ms_vm s = m_vmmaps md -> ms_thp s = kb_thp (m_kernel md) -> vdso_ok md -> magree s mm ->
   getr regs 2 = sp -> bv_unsigned sp mod 16 = 0 ->
   0 <= ms_lo s -> ms_lo s <= bv_unsigned sp - 0 -> bv_unsigned sp <= ms_hi s -> ms_hi s <= 2^64 ->
   wtop s ->
@@ -297,7 +309,8 @@ Definition allzerop_stmt : Prop :=
   tsafe (m_allzerop p s) P ->
   (forall r s' mm' regs',
      P r s' -> magree s' mm' -> ms_lo s' = ms_lo s -> ms_hi s' = ms_hi s ->
-     alloc_top (ms_vm s') = alloc_top (ms_vm s) ->
+     vframe (ms_vm s') (ms_vm s) ->
+     ms_thp s' = ms_thp s ->
      getr regs' 10 = r -> getr regs' 2 = sp ->
      (forall x, callee_saved x -> getr regs' x = getr regs x) ->
      (forall a, ms_lo s <= bv_unsigned a < ms_hi s ->
@@ -310,7 +323,7 @@ Definition allzerop_stmt : Prop :=
 Definition memset0_stmt : Prop :=
   forall md regs mm rom (s : mstate) (d n sp ret : word)
          (P : word -> mstate -> Prop) (L : word -> mstate -> TSet),
-  md_pure md -> ms_vm s = m_vmmaps md -> magree s mm ->
+  md_pure md -> ms_vm s = m_vmmaps md -> ms_thp s = kb_thp (m_kernel md) -> vdso_ok md -> magree s mm ->
   getr regs 2 = sp -> bv_unsigned sp mod 16 = 0 ->
   0 <= ms_lo s -> ms_lo s <= bv_unsigned sp - 0 -> bv_unsigned sp <= ms_hi s -> ms_hi s <= 2^64 ->
   wtop s ->
@@ -320,7 +333,8 @@ Definition memset0_stmt : Prop :=
   tsafe (m_memset0 d n s) P ->
   (forall r s' mm' regs',
      P r s' -> magree s' mm' -> ms_lo s' = ms_lo s -> ms_hi s' = ms_hi s ->
-     alloc_top (ms_vm s') = alloc_top (ms_vm s) ->
+     vframe (ms_vm s') (ms_vm s) ->
+     ms_thp s' = ms_thp s ->
      getr regs' 10 = r -> getr regs' 2 = sp ->
      (forall x, callee_saved x -> getr regs' x = getr regs x) ->
      (forall a, ms_lo s <= bv_unsigned a < ms_hi s ->
@@ -336,7 +350,7 @@ Definition CALLOC_D : Z := ALLOC_STACK + 32.
 Definition calloc_stmt : Prop :=
   forall md regs mm rom (s : mstate) (fuel : nat) (m n sp ret : word)
          (P : word -> mstate -> Prop) (L : word -> mstate -> TSet),
-  md_pure md -> ms_vm s = m_vmmaps md -> magree s mm ->
+  md_pure md -> ms_vm s = m_vmmaps md -> ms_thp s = kb_thp (m_kernel md) -> vdso_ok md -> magree s mm ->
   getr regs 2 = sp -> bv_unsigned sp mod 16 = 0 ->
   0 <= ms_lo s -> ms_lo s <= bv_unsigned sp - CALLOC_D -> bv_unsigned sp <= ms_hi s -> ms_hi s <= 2^64 ->
   wtop s ->
@@ -346,7 +360,8 @@ Definition calloc_stmt : Prop :=
   tsafe (m_calloc fuel (at_ sp (-32)) m n s) P ->
   (forall r s' mm' regs',
      P r s' -> magree s' mm' -> ms_lo s' = ms_lo s -> ms_hi s' = ms_hi s ->
-     alloc_top (ms_vm s') = alloc_top (ms_vm s) ->
+     vframe (ms_vm s') (ms_vm s) ->
+     ms_thp s' = ms_thp s ->
      getr regs' 10 = r ->
      getr regs' 2 = sp ->
      (forall x, callee_saved x -> getr regs' x = getr regs x) ->

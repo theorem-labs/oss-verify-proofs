@@ -3,11 +3,12 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/YE05.v, with its module paths changed; 2671 of its 2756 lines of code are new or changed and 333 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segA.v; 266 of its 340 lines of code are new or changed and 2682 lines of the source are left out. *)
-(* rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from 82a1d1bf3a6 lib/A/FSH_crt_segD1_bcmp.v)
-   rule 24: proves no function (kind: segment lemmas of check_round_trip's walk, PORTED from 1ab57ca7ad7) - CrtRt B for
-   FsRt, crt_fr_bcmp B RT for fr_bcmp tfibsegs B RT (a working branch 1ab57ca7ad7).
-   Port source: a working branch 82a1d1bf3a6 proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segD1_bcmp.v (helper
-   lemmas of check_round_trip's D1 segment lemma), itself PORTED from a working branch d25a984c903
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from lib/A/FSH_crt_segD1_bcmp.v)
+   rule 24: proves no function (kind: segment lemmas of check_round_trip's walk, PORTED) - CrtRt B for
+   FsRt, crt_fr_bcmp B RT for fr_bcmp tfibsegs B RT (a working branch).
+   Port source: a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segD1_bcmp.v (helper
+   lemmas of check_round_trip's D1 segment lemma), itself PORTED from a working branch
    check_round_trip_sd16.v / sd17.v / sd18.v. Same Lemma names and statement shapes as the A file, over image B
    (lib/B/YB1v.v tfibsegs, fs.asan-ubsan sha256 5ac5ce0954f8...), on the B interface lib/B/FSH_crt_base.v. A new file:
    no licence lines.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved-interval ledger, the rseq-dependent auxv): changed ASAN0, asan0_init; internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -16,7 +17,7 @@ Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 Definition ASAN0 : atable :=
-  {| img_lo := 0x10000; img_hi := 0x696000; n_res := 4; shadow_off := 0x7fff8000;
+  {| img_lo := 0x10000; img_hi := 0x696000; n_res := 4; n_resx := 2; p_resx := 20; shadow_off := 0x7fff8000;
      a_entry := 0x513a0; rw_lo := 0x131000; rw_len := 0x564480; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 11;
      x_imemset := 0x8b460; x_imemcpy := 0x8b3e4; x_memset := 0x129d04; x_memcpy := 0x129900; x_memiszero := 0x8b9ac;
      x_istrncpy := 0x8b88c; x_sealed := 0x11b38; x_popfree := 0x57a50;
@@ -25,7 +26,10 @@ Definition ASAN0 : atable :=
      stops_more := [0x556c4; 0x56ce8; 0x7afdc; 0x81b24; 0x81b38; 0x81b4c; 0x874dc; 0x875ac; 0x94af4; 0x95a00; 0x95b90; 0x9f8e8] |}.
 Definition ASAN0_TEXT_LO : Z := 0x513a0.
 Definition ASAN0_TEXT_N : nat := 228401%nat.   (* [comment removed for export] *)
-Definition asan0_init : acs := init_acs_of ASAN0.
+(* [init_acs_of] took the run's CONFIG_RSEQ flag when the K plan cone did;
+   this call was never updated and had been one argument short
+   since.  Donor jsoncons/fuzz_bigint Bo0DefsK.v:26. *)
+Definition asan0_init (rz : Z) : acs := init_acs_of rz ASAN0.
 
 Definition ASEGS0 := AsanUbsan.M.loaded_segments.
 Definition APH0 : PhdrInfo := AsanUbsan.M.phdrs.

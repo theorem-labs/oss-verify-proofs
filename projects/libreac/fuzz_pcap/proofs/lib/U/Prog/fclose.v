@@ -285,14 +285,16 @@ Proof.
     split; [rewrite G4; exact HTP|].
     split; [intros a Ha; rewrite HSEG; apply WM1; apply HERR; exact Ha|].
     intros HI. specialize (HAUX HI). rewrite SP2.
-    destruct HAUX as (av & ar & W1 & W2 & W3 & W4 & B1 & B2 & B3 & B4 & L1 & L2).
-    exists av, ar.
+    destruct HAUX as (av & ar & ar0 & W1 & W2 & W3 & W4 & B1 & B2 & B3 & B4 & L1 & L2).
+    exists av, ar, ar0.
     refine (conj _ (conj _ (conj _ (conj _ (conj B1 (conj B2 (conj B3 (conj B4 (conj _ _))))))))).
     - eapply word_mem_munch; [exact MU1 | | exact W1]. intros k Hk. rewrite PIN_LIBC.
       split; [lia|]. apply out3; lia.
     - intros k Hk. eapply word_mem_munch; [exact MU1 | | exact (W2 k Hk)]. intros k' Hk'.
       split; [lia|]. apply out3; lia.
-    - eapply word_mem_munch; [exact MU1 | | exact W3]. intros k Hk. split; [lia|]. apply out3; lia.
+    - eapply word_mem_munch; [exact MU1 | | exact W3]. intros k Hk.
+      pose proof (OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable.YO0d.auxv_types_len_ge av) as LGE. unfold OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable.YO0d.AUXV_RAND_K in *.
+      split; [lia|]. apply out3; lia.
     - eapply word_mem_munch; [exact MU1 | | exact W4]. intros k Hk. split; [lia|]. apply out3; lia.
     - lia.
     - lia. }

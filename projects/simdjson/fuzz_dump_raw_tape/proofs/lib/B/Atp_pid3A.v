@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB; taken in part from projects/simdjson/fuzz_dump/proofs/lib/B/Atp_pid3A.v, lines 68, 228. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -64,7 +65,7 @@ Theorem pid_tail : forall (Σ3 : rts RT) PMc (ra sp gp s0 s1 s2 s3 s4 s5 s6 s7 s
   impl mod 16 = 0 -> idx mod 16 = 0 -> oc mod 16 = 0 -> ia mod 16 = 0 -> tape mod 16 = 0 -> sbuf mod 16 = 0 -> copy mod 16 = 0 ->
   (length (rt_frames RT Σ3) + S2A_FRAMES <= FRAMES_MAX)%nat -> S2A_COST (blen bsz) <= rt_credit RT Σ3 -> Z.of_nat (length (rt_live RT Σ3)) < LIVE_MAX ->
   bv_unsigned sp <= RES -> RES + 40 <= USTACK_TOP ->
-  rt_sp0 RT Σ3 - STACK_WIN <= lo -> lo + PID_STACK <= bv_unsigned sp -> bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 -> frm0 fc ->
+  rt_sp0 RT Σ3 - STACK_SPAN <= lo -> lo + PID_STACK <= bv_unsigned sp -> bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 -> frm0 fc ->
   cps_f (ASTA RT Σ3 PMc (eq (MS (PIREGT rax (Z_to_bv 64 (bv_unsigned sp + -112)) gp (Z_to_bv 64 0x6abde8) t0 t1 t2 RES P BUF (blen bsz) a0 a1 a2 a3 a4 a5 a6 a7
                                         s1v (Z_to_bv 64 0) (Z_to_bv 64 0) (Z_to_bv 64 cap) t3 t4 t5 t6)
                                 F (Z_to_bv 64 0xafa8c) fc None m (seg_rom bsegs))))
@@ -224,7 +225,7 @@ Proof using AF MSET PARSE AFV.
     destruct (ASTA_unpack_f RT Σ4 _ _ c2 Hc2 FC2) as (ms2 & (m2 & v & RS2 & V64 & OK2 & (ART2 & MI2 & ST2) & PRES2 & (nsi' & nxt' & bufv' & lenv' & docv' & IC2)) & FRM2 & Hc2'). clear Hc2.
     destruct RS2 as (u0 & u1 & u2 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & u3 & u4 & u5 & u6 & F2 & fc2 & ->).
     cbn [ms_fcsr] in FRM2. rewrite EU2 in ST2, PRES2. rewrite (ret_pc_even 0xafb14) in Hc2' by (clear; lia).
-    assert (LOW4 : rt_sp0 RT Σ4 - STACK_WIN <= lo) by (rewrite SP4; exact LOW).
+    assert (LOW4 : rt_sp0 RT Σ4 - STACK_SPAN <= lo) by (rewrite SP4; exact LOW).
     assert (INF4 : In (f, k) (rt_frames RT Σ4)) by (rewrite FRS4; exact INF).
 
     assert (OUTX : forall x, ~ in_live (rt_live RT Σ3) x ->

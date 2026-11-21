@@ -1,5 +1,5 @@
 (* the UBSan walk of diginet_body_check against its contract. *)
-(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/diginet_body_check.v at 9bd29914ffdef650a37285056a472ff186b4331a to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/diginet_body_check.v to fuzz_transport's images *)
 (* Walk of diginet_body_check (src/diginet_codec.c:47-64 at 835f336c) in fuzz_transport.ubsan,
    0x186cc..0x18814. The prologue saves ra and s0..s7 in the 144-byte frame and leaves the
    message at sp - 144, the cursor at sp - 104 and those nine saved registers at sp - 72;

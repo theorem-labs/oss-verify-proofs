@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the failing store-conditional cases close by the engine's new stop instead of the old failure step). *)
 From Stdlib Require Import ZArith Bool List Lia.
 From Stdlib Require Import PrimInt63 Uint63.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
@@ -161,7 +162,7 @@ Proof.
     pose proof (so_resv _ _ _ _ _ _ HS) as RV.
     cbn [Sem.exec] in HI. rewrite AA in HI. cbn [negb] in HI. cbn [c_resv core_of] in HI.
     destruct (s_resv st) as [|a'|] eqn:SR; cbn [resv_ok] in RV; [| |discriminate].
-    + rewrite RV in HI. rewrite (interp_acc_EDone _ _ _ HI). constructor.
+    + discriminate Hx.
     + rewrite RV in HI.
       destruct (decide_eq (s_facts st) a' (getr st s)) as [[|]|] eqn:D; [| |discriminate].
       * destruct (do_store segs (setresv st RNone) (getr st s) (awidth_bytes w) (getr st s2)) as [st1|why] eqn:DS; [|discriminate].
@@ -170,10 +171,7 @@ Proof.
         pose proof (do_store_acc0 E (setresv st RNone) (ms_mem ms) _ _ _ st1 (so_zero _ _ _ _ _ _ HS) (so_facts _ _ _ _ _ _ HS)
                       (so_reg _ _ _ _ _ _ HS) (awidth_wok w) DS) as ACC.
         replace (Z.of_nat (Acc.aw_nat w)) with (to_Z (awidth_bytes w)) by (destruct w; reflexivity). exact ACC.
-      * apply (decide_eq_sound E _ (so_facts _ _ _ _ _ _ HS)) in D. apply (proj1 (eqb_iff _ _ false)) in D.
-        destruct (Z.eqb_spec (bv_unsigned (den E a')) (bv_unsigned (rget (core_of ms) rs1))) as [X|X].
-        { exfalso. apply D. apply bv_eq. rewrite X. rewrite (getr_den segs OPS E st ms model s rs1 HS Hrs1). reflexivity. }
-        rewrite (interp_acc_EDone _ _ _ HI). constructor.
+      * discriminate Hx.
   -
     unfold of_instr in Hof. destruct (r5_of_reg rd) as [d|] eqn:Hrd; [|discriminate]. destruct (r5_of_reg rs1) as [s|] eqn:Hrs1; [|discriminate].
     destruct (r5_of_reg rs2) as [s2|] eqn:Hrs2; [|discriminate].

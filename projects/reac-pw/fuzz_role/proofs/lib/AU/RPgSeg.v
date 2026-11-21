@@ -1,5 +1,5 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgSeg.v at 3c7e900fc63, restated in the shape
-   of proofs/reac-pw/fuzz_rate/lib/AU/RtPgSegB.v at 24c66d54276 (its lines 1-1264: the same cut predicates, list
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgSeg.v, restated in the shape
+   of proofs/reac-pw/fuzz_rate/lib/AU/RtPgSegB.v (its lines 1-1264: the same cut predicates, list
    helpers, continuations and piece statements, argument for argument) for reac-pw/fuzz_role image B
    (fuzz_role.asan-ubsan): image B's pcs, registers, real-frame cells and frame objects, each list measured on image B's
    code; the record is lib/AU/RPgImgA.v's and the frame's shadow lib/AU/RPgMem.v's; the Int-7 piece enters the latch

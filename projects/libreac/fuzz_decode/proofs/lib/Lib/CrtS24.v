@@ -7,7 +7,7 @@
    post_step, step does not rename the fcsr after an FP instruction, and the next FP step fails. A file with FP
    steps (lib/A/Prog/crtA_conv.v) therefore Requires this file, not lib/Lib/CrtEnc.v; CrtEnc.v re-exports it.
 
-   PORT of a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_convert.v:11-13,58-59 (s24, byte_range) and a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_enc.v:45,230-260 (rb_byte, s24_mod,
+   PORT of a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_convert.v:11-13,58-59 (s24, byte_range) and a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_enc.v:45,230-260 (rb_byte, s24_mod,
    z8_self, s24_byte); each block below cites its lines. Names, statements and proofs are the record's. *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -15,19 +15,19 @@ From OSSVerify.Proofs.libreac.fuzz_decode.lib.Lib Require Import PropExec MState
 Import ListNotations.
 Open Scope Z_scope.
 
-(* s24: verbatim from a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_convert.v:11-13. *)
+(* s24: verbatim from a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_convert.v:11-13. *)
 Definition s24 (b0 b1 b2 : byte) : Z :=
   bv_unsigned b0 + 256 * bv_unsigned b1 + 65536 * bv_unsigned b2
   - (if 128 <=? bv_unsigned b2 then 16777216 else 0).
 
-(* byte_range: verbatim from a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_convert.v:58-59. *)
+(* byte_range: verbatim from a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_convert.v:58-59. *)
 Lemma byte_range : forall b : byte, 0 <= bv_unsigned b < 256.
 Proof. intros b. pose proof (bv_unsigned_in_range 8 b) as H. change (bv_modulus 8) with 256 in H. exact H. Qed.
 
-(* rb_byte: verbatim from a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_enc.v:45-45. *)
+(* rb_byte: verbatim from a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_enc.v:45-45. *)
 Definition rb_byte (x j : Z) : Z := if j =? 0 then x mod 256 else if j =? 1 then x / 256 mod 256 else x / 65536.
 
-(* s24_mod, z8_self, s24_byte: verbatim from a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_enc.v:230-260. *)
+(* s24_mod, z8_self, s24_byte: verbatim from a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_enc.v:230-260. *)
 Lemma s24_mod : forall b0 b1 b2, s24 b0 b1 b2 mod 2^24 = bv_unsigned b0 + 256 * bv_unsigned b1 + 65536 * bv_unsigned b2.
 Proof.
   intros b0 b1 b2. unfold s24. pose proof (byte_range b0). pose proof (byte_range b1). pose proof (byte_range b2).

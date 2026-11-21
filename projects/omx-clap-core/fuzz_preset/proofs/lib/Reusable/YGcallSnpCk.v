@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the two CHECKS of YGcallSnp.v's snprintf row asnprintf_realizes_xrom. Image-free: no address,
    no image class instance.
 
    (a) asnprintf_cf_of_xrom: at ARx := ARcf segs B the text IMPLIES port-fm's cf twin sh_asnprintf_realizes_cf
-       (FMsnprintfSharedCf.v:32-67, blob 878a56df57de, by path from origin/cold/port-fm-rtprintf-param 0ddf65fd8cc),
+       (FMsnprintfSharedCf.v:32-67, blob 878a56df57de, by path),
        at every format family, window, canary cells, image range, read-only ranges and pc, GIVEN THE READ-ONLY BRIDGE
-       snp_ro_bridge rlo rhi. h-mani-a8's field aa_snprintf_cf (YGcfNames.v:443 / :469 at a8439a761af0) at preset's
-       instance pa_snprintf_cf (CfApiPreset.v:90-93 there) states the earlier twin (blob d9695b89e004), whose
+       snp_ro_bridge rlo rhi. h-mani-a8's field aa_snprintf_cf (YGcfNames.v:443 / :469) at preset's
+       instance pa_snprintf_cf (CfApiPreset.v:91-94 there) states the earlier twin (blob d9695b89e004), whose
        destination premise is amem_range8 d w; amem8_of_amem_range8 (FMsnprintfSharedCf.v:71) turns that premise into
        this twin's amem_range d (w + 8). Direction: text -> twin only. Two things differ, in the twin's favour or the
        text's:
@@ -22,10 +23,10 @@
        - the post's memnorm keep, which the twin does not state (forgotten).
        Every other premise, the destination's amem_range d (w + 8) included, and the rest of the post are the same
        terms.
-   (b) The stand-in h-hpreset-7 uses today, PRW_S7bKit.asnprintf_esc_realizes_x (origin/cold/h-hpreset-7-walk-S7B
-       7ffbb0405d3, PRW_S7bKit.v:58-100), copied VERBATIM below as snp_esc_realizes_x with the one image name
+   (b) The stand-in h-hpreset-7 uses today, PRW_S7bKit.asnprintf_esc_realizes_x (
+       PRW_S7bKit.v:58-100), copied VERBATIM below as snp_esc_realizes_x with the one image name
        STK_RT_PRINTF (PRH_Base.v:165, = 4 * ESTACK) made the parameter Kp: at Kp := STK_RT_PRINTF the copy and the
-       stand-in are the same term (`reflexivity`, scratch build against 7ffbb0405d3's file, 2026-10-29). The stand-in
+       stand-in are the same term (`reflexivity`, scratch build against's file, 2026-10-29). The stand-in
        does NOT follow from the text:
        - its post keeps the WHOLE float state (c' = cfg_at .. at the caller's fx); the text's post (the shared top's)
          gives some fx' that keeps every f register but f10, and frm = 0;
@@ -33,11 +34,11 @@
          arodata_okP).
        snp_esc_realizes_xrom is the stand-in with exactly those changes plus the text's memnorm keep as the last post
        conjunct, and snp_esc_of_xrom proves it from the text at
-       FF_esc lo hi, which is a8's FF_preset (CfSnprintfPreset.v:33-41, blob 29945739be86) with its two image bounds
+       FF_esc lo hi, which is a8's FF_preset (CfSnprintfPreset.v:34-42, blob 29945739be86) with its two image bounds
        (cf_img_lo, cf_got_stack_chk_guard) made the parameters lo, hi: FF_preset = FF_esc (@cf_img_lo CfImg_A)
-       (@cf_got_stack_chk_guard CfImg_A) by `reflexivity` (scratch build at a8439a761af0, 2026-10-29). The consumers
+       (@cf_got_stack_chk_guard CfImg_A) by `reflexivity` (scratch build, 2026-10-29). The consumers
        re-point to snp_esc_realizes_xrom and discharge it with one citation of snp_esc_of_xrom (side conditions K <= Kp
-       and ESTACK <= Kp; snp_K_A = 8160 by `reflexivity` at a8439a761af0, STK_RT_PRINTF = 16384).
+       and ESTACK <= Kp; snp_K_A = 8160 by `reflexivity`, STK_RT_PRINTF = 16384).
 
    Numerals: 92 37 99 117 48 52 120 (WORD: the format bytes, PRW_S7bKit.v:59-60); 8 (LENGTH: the escape buffer size,
    and the canary cell width); 16 (LENGTH: the destination 8 plus the text's 8-byte slack; the hex base); 10, 11, 12,
@@ -108,7 +109,7 @@ End a.
 
 (* ---------------------------------------------------------------------------- *)
 (* (b) h-hpreset-7's stand-in, and what the text gives in its place.               *)
-(* a8's FF_preset (CfSnprintfPreset.v:33-41) with its image bounds as parameters *)
+(* a8's FF_preset (CfSnprintfPreset.v:34-42) with its image bounds as parameters *)
 Definition pf_esc_piece (p : pf_piece) : Prop :=
   match p with PLit _ | Pc | Px04 => True | _ => False end.
 Definition FF_esc (lo hi : Z) : fmt_fam := fun rd rs f ws T =>

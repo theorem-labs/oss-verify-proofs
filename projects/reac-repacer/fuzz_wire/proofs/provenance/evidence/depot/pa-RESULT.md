@@ -1,7 +1,7 @@
 # Print Assumptions: wire image-A tree vs fuzz_grant's release (corrected record)
 
-Trees: wire at f921ad8b3805 (its parents e06a69e09264 and 88b42b3e7e49; the lib/A tops are the same theorems as at
-4483a8de6e6f), built by cb (rc 0, 1635 targets); fuzz_grant's release, recipes 4f87de75d677, its own dune build (rc 0,
+Trees: wire (its parents; the lib/A tops are the same theorems as),
+built by cb (rc 0, 1635 targets); fuzz_grant's release, recipes, its own dune build (rc 0,
 396/396). pa_probe.py (committed beside this file) runs Print Assumptions on every Theorem / Lemma of the 21
 composition files and A/AE37.v in each tree, one compile per file under a 3600 s limit.
 
@@ -17,5 +17,5 @@ Classical_Prop.classic; no Section variable, no Admitted, no Parameter. Present 
 by the AD1j patch: fuzz_wire registers 0 globals), grant AD2l.GrantB_ok / GrantB_syms = wire AD2l.WireB_ok / WireB_syms
 (the record-name renames), grant AE37.zi8_14ea00 / zi8_14f970 (grant's two shadow-byte lemmas; wire's AE37 writes none,
 its image has no such bytes), wire AD1v.top_ok_gle (the grown-layout lemma), wire ACej.TRACES_check_copy_U (the U-side
-name). An independent fresh CACHE=none build of 88b42b3e7e49 with its own Print Assumptions run (217 tops) agrees with
+name). An independent fresh CACHE=none build with its own Print Assumptions run (217 tops) agrees with
 pa-wire.tsv on every one of its 217 rows.

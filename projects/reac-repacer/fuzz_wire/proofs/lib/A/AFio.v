@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFio.v at 25e3d17bdb50 into libreac/fuzz_knock, with its module paths changed, A/AWalkFw0 imported for A/AB1v and its addresses moved to libreac/fuzz_knock's ASan build; D1 stated as AD3j.tfib_depot_put_any_spec over layout_grow, with DPOST over the layout, world and model after the Put and the NB / SB apartness stated with KnBlockExt.nb_ext / sb_ext, for fuzz_knock's depot model. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/A/AFio.v at 88154566652a (donor image sha256 61768cf4739b), with its module paths changed, A/AB1v imported for A/AWalkFw0, names TfibSyms -> WireSyms and its addresses moved to reac-repacer/fuzz_wire's ASan build; Zify's Euclidean-division option is set locally (Zify.zify_convert_to_euclidean_division_equations_flag). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFio.v at theorem-labs/oss-verify-proofs@6b32741d849a into libreac/fuzz_knock, with its module paths changed, A/AWalkFw0 imported for A/AB1v and its addresses moved to libreac/fuzz_knock's ASan build; D1 stated as AD3j.tfib_depot_put_any_spec over layout_grow, with DPOST over the layout, world and model after the Put and the NB / SB apartness stated with KnBlockExt.nb_ext / sb_ext, for fuzz_knock's depot model. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/A/AFio.v (donor image sha256 61768cf4739b), with its module paths changed, A/AB1v imported for A/AWalkFw0, names TfibSyms -> WireSyms and its addresses moved to reac-repacer/fuzz_wire's ASan build; Zify's Euclidean-division option is set locally (Zify.zify_convert_to_euclidean_division_equations_flag). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's mmap grant test); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -214,7 +215,7 @@ assert (EA : a = w64 A) by (unfold w64, A; symmetry; apply Z_to_bv_bv_unsigned).
 rewrite EA in GOK, AI2, MW2, IO2, EG2, VM2. rewrite EA.
 pose proof (AFjm.size_facts n Nrange) as (Z1 & Z2 & Z3 & Z4 & Z5 & Z6 & Z7 & Z8 & Z9 & _).
 assert (MSB : 0 < AFjm.MSv n <= MALLOC_MAX + 4 * 4096) by (clear - Z1 Z8; unfold MALLOC_MAX in *; lia).
-pose proof (AFia.grant_parts _ (w64 A) _ GOK) as (GP1 & GP2 & GP3 & _).
+pose proof (AFia.grant_parts _ (w64 A) _ MSB Z9 GOK) as (GP1 & GP2 & GP3 & _).
 pose proof (AFia.grant_zone B ly S _ _ (w64 A) _ HARm L1 MSB Z9 GOK) as GH.
 pose proof (AFia.grant_apart B ly S _ _ (w64 A) _ HARm L1 MSB Z9 GOK) as GA.
 assert (UA : bv_unsigned (w64 A) = A) by (rewrite <- EA; reflexivity). rewrite UA in GP1, GP2, GP3, GH, GA.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (nret_MSsvc_gen restated for the revision's model; 9 recorded proofs replaced by written proofs (nret_MSsvc_gen, eff_mem_efferr, eff_mem_eff0 and 6 more), those of this unit's BothW/RT_stubs.v). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -29,31 +30,23 @@ Definition eff_mem (m : word -> option byte) (e : resp) : word -> option byte :=
   apply_writes (apply_copies m (apply_zeros (apply_unmaps m (eff_unmaps e)) (eff_zeros e)) (eff_copies e)) (eff_writes e).
 
 Lemma nret_MSsvc_gen : forall R F pc x8 fc rv m ro e,
-  nret (MSsvc R F pc x8 fc rv m ro) e = MS (bvmap_set 10 (eff_ret e) R) F (pc + Z_to_bv 64 4) fc rv (eff_mem m e) ro.
-Proof.
-ltac2:(KReplay.run1 (kr_t_RT_stubs ()) ["CANSEC1"] "p'0h01Fh11Rh21eh3:eff_copiesi00:eff_copiesh4;eff_copyinsi01;eff_copyinsh57eff_reti027eff_reth6:eff_unmapsi03:eff_unmapsh7:eff_writesi04:eff_writesh89eff_zerosi059eff_zerosh92fch:1mh;2pch<2roh=2rvh>2x8i061sp;1p;2p;8p;3p;5p;7p;6g0000R0p4p7210p1000\p4p710p8g001:j10Tg001_j1DTg002Dj12Tg002bj14TP0j2CTg003Ej19Tg003gj8?Tg004\j2>Tg005Oj16Tg005mj3=Tg006Pj15Tg007Fj58Tg0086j2<Tg008\j3;Tg009Aj2:Tg00:<j77Tg00:nj3BTg00;Hj11Tg00;hj23Tg00<Hj6@Tg00=Fj2ATg00=`#0R0#DR1#2R2%00R0#0R3#0#0R4#0#2R5#4R6'CR7%24#4%96%23#4R3#9\6R4g00>Eg00?8g00@6R8f9R9f8R:f7R;f6f5R<f4R=f3R>f2R?G?f0R@'>P2P6%01#6g00A=5=2R1%5@P9D8P:%60,<5R09;5;P<P=1:>@P?F73BP@%13,36#11366#1R3g00AY#1g00BQ,36#1P2P6P1P<P=P>P?f1R1P@E@R2#5fDD8fCfB=;50f@f?f>/:2f=F7,A8W4W3X63W8W7X56P<P=P>P?P1P@O6n01106000160102104105103100101W2X<4W:W=W9X>6X;6X07W1o"). Qed.
+  nret (MSsvc R F pc x8 fc rv m ro) e = MS (bvmap_set 10 (eff_ret e) R) F (pc + Z_to_bv 64 4) fc None (eff_mem m e) ro.
+Proof. intros. destruct e. reflexivity. Qed.
 
 Lemma eff_mem_efferr : forall m ci e, eff_mem m (efferr_ci ci e) = m.
-Proof.
-ltac2:(KReplay.run1 (kr_t_RT_stubs ()) ["CANSEC1"] "h02cih11eh21mp;1p;2g001:j10Tg002Dj12Tg002bj11Tg003Ej13Tg00;hj26Tg00;Hj15Tg00=Fj24Tg00=`#0#0#0R0#0#0#0#2#1R1%20#1#3[R0g00BQ,61#5g00C0f2,40W1W0W2o"). Qed.
+Proof. reflexivity. Qed.
 Lemma eff_mem_eff0 : forall m ci r, eff_mem m (eff0_ci ci r) = m.
-Proof.
-ltac2:(KReplay.run1 (kr_t_RT_stubs ()) ["CANSEC1"] "h02cih11mh21rp;1p;2g001:j10Tg002Dj12Tg002bj11Tg003Ej13Tg00;hj26Tg00;Hj15Tg00=Fj24Tg00=`#0#0#0R0#0#0#0#2#1R1%20#1#3[R0g00BQ,61#5f2,40X21W0W1o"). Qed.
+Proof. reflexivity. Qed.
 Lemma eff_mem_zeros : forall m r z ci, eff_mem m (mkEffectU r [] [z] [] [] ci) = apply_zeros m [z].
-Proof.
-ltac2:(KReplay.run1 (kr_t_RT_stubs ()) ["CANSEC1"] "h02cih11mh21rh31zp;1p;2p;3g001:j10Tg002Dj11Tg002bj12Tg003Ej14Tg00;hj23Tg00;Hj19Tg00CNj18Tg00Cnj35Tg00DNj26Tg00=Fj27Tg00=`#0#0#0R0#0#0#0#1#2R1%10#2#4[R01311R2g00BQ,31#9f3f1%82552'6,70W0W3X21W1o"). Qed.
+Proof. reflexivity. Qed.
 Lemma eff_mem_unmaps : forall m r u ci, eff_mem m (mkEffectU r [] [] [u] [] ci) = apply_unmaps m [u].
-Proof.
-ltac2:(KReplay.run1 (kr_t_RT_stubs ()) ["CANSEC1"] "h02cih11mh21rh31up;1p;2p;3g001:j10Tg002Dj11Tg002bj12Tg003Ej14Tg00;hj23Tg00;Hj19Tg00CNj18Tg00Cnj35Tg00EFj26Tg00=Fj27Tg00=`#0#0#0R0#0#0#0#1#2R1%10#2#4[R01311R2g00BQ,31#9f3f1%82552'6,70W0W3X21W1o"). Qed.
+Proof. reflexivity. Qed.
 Lemma eff_mem_rstrip : forall m e, eff_mem m (rstrip e) = eff_mem m e.
-Proof.
-ltac2:(KReplay.run1 (kr_t_RT_stubs ()) ["CANSEC1"] "p'0h02cih12csh21eh31mh41rh52ush62wsh72zsi00:eff_copiesi01;eff_copyinsi027eff_reti03:eff_unmapsi04:eff_writesi059eff_zerosi061sp;1p;2p;3p;6g001:j10Tg002Dj15Tg002bj14Tg003Ej16Tg00F?j1:Tg009Aj23Tg00:nj39Tg00;Hj11Tg00;hj22Tg00<Hj67Tg00=Fj28Tg00=`#0#0#0R0#0#0#0#5#4R1%50#4R0#6[R2g00>Eg00?8f2R3f0R4#:'31334592P4%10,21#11211#1R0g00AY#1g00BQ,21#1f=f5R5f4R6f3R7P3f1R8P4E7'3,82W0W1X50W7W6X41P5P6P7P3P8P4O6n01106000160102104105103100101W2W3o"). Qed.
+Proof. intros m [r ws zs us cs ci]. reflexivity. Qed.
 Lemma eff_ret_rstrip : forall e, eff_ret (rstrip e) = eff_ret e.
-Proof.
-ltac2:(KReplay.run1 (kr_t_RT_stubs ()) ["CANSEC1"] "p'0h02cih12csh21eh31rh42ush52wsh62zsi00:eff_copiesi01;eff_copyinsi027eff_reti03:eff_unmapsi04:eff_writesi059eff_zerosi061sp;1p;3p;2p;6g001:j10Tg002Dj15Tg002bj14Tg00F?j16Tg006Pj13Tg00:nj39Tg00;Hj11Tg00;hj22Tg00<Hj68Tg00=Fj27Tg00>Eg00?8g00=`#0#0#0R0#0#0#0#5#4R1f0R2#6#3%3239P2%50#4#1,21#11211#1R0g00AY#1g00BQ,21#1f5R3f4R4f3R5f2R6f1R7P2E8#3,71W0W1X40W6W5X31P3P4P5P6P7P2O6n01106000160102104105103100101W2o"). Qed.
+Proof. intros [r ws zs us cs ci]. reflexivity. Qed.
 Lemma fstepA_rstrip : forall n e R R', fstepA n (rstrip e) R R' <-> fstepA n e R R'.
-Proof.
-ltac2:(KReplay.run1 (kr_t_RT_stubs ()) ["CANSEC1"] "p'0h01Hh12fdi002fdh24addri014addrh33leni023lenh42H1h51bh61jh74proti034proth83reqi043reqh92H0h:2H2h;2H3h<1Rh=2R'h>2bsi052bsh?3bufi063bufh@4bufsi074bufshA4codei084codehB5counti095counthC1ehD5flagsi0:5flagshE1ni0;1nhF4pathi0<4pathp;1p;4p;2p;3p;5g00F?j1:Tg001:j17Tg002Dj1ATg002bj1TTg00;Hj1BTg00G4j42Tg00GOj2MTg00HDj2KTg00I9j1HTg00Inj3FTg00Jcj1ETg00KXj2STg00LMj1RTg00MBj24Tg00N8j1PTg00Nmj2?Tg00:nj36Tg006Pj19Tg00OJj21Tg00P4j2=Tg0086j28Tg00PTj15Tg00QRj3;Tg00REj2@Tg00R`j5LTg00S=j4JTg00T2j1ITg00TRj2>Tg00Tnj2CTg00UHj2GTg00V=j3NTg00W2j2OTg00Wgj4DTg00X^j2QTf7R0f6R1f5R2f4R3CDf3R4f2R5f1R6f0R7CD'Qp=0g00Y7R8?667p=3g00C0R9g00Z0767p=<g00ZNR:g00>EP:P7%:4P5P6P7P4P5P6G0P4g00=`#7#7#7R:#A#T#BR;1332R<1321[R=P=P7X0<R<P<C2R<1M67R=%:1R>P2P3P=P1P2P3G0eW>X19P6P7O2%B;P<1K67R=P>P2P3P=P1P2P3G0eW@X19P6P7O21354R=1343[R?P?P7X0=R=P=C2R=%H7R?%:3R@P4P5P?P3P4P5G0eXF;P7O11310R;f8R?,30[RAPAP7X0;R;P;C2AF567R;%:?RAP0P1P;P?P0P1G0eXB9X?9X19P5P6P7O3P=%E7R;P@P4P5P;P3P4P5G0eX19P7O1P<1S67R;P>P2P3P;P1P2P3G0eX89X19P6P7O21376R;1365[RBPBP7X0;R;P;C2g00[CR;%:5P6P7P;P5P6P7G0eP=%R7R=P@P4P5P=P3P4P5G0eXA9P7O11445R=1434[R;P;P7X0=R=P=C2%P7R=P@P4P5P=P3P4P5G0eX89P7O1f9R=/4?g00\8g00]3'?R@9696%7:#7#7#AR:f;R;#9'1g00]oRB'=#<f:RCf<RD#9,1:RE18:3,1:RF#5RG3;[['@RH14C=RIA695@1=EB#<f=RE#9,1:RJ18:2,1:RK#55;;[[RL'@RM[RNPNPIPLPMA694@1=JB#<f>RJ#9,1:RM18:1,1:#55;D[[14D;A693@R@1=MB#<RMf?#9,1:RD18:0,1:#55;E[[P6P5P6O11=DB#<f@#9,1:18:?,1:#55;JRJ[P7P6O1PJP7b4b;X:MX0@C2W4X9IP7DLX0HRHPHC2P4P5P6P7CJRH%:CP=P?PHPCP=P?G0eXD9X79X39X29P4P5P6P7O4g00BQRCP0P6P7O2%I6,?5RH/>F18:4,1:#5,?F/>5'CP?P4P5O2[[]6^59RFP?P6P7O21>HK1?KG/>5'CP=P4P5O2[[^6C^59[RCPCP7X0FRFPFC21G67RFP>P2P3PFP1P2P3G0eX39X29P6P7O21401RF14?0[RCPCP7X0FRFPFC2AN567RFPAP0P1PFP?P0P1G0eX79X39X29P5P6P7O3P<1O67R<P>P2P3P<P1P2P3G0eX39X29P6P7O2n0110;000=20100105201001071010<3010010610910100201001040010108101044110110210310:211011023010110210320101102X=8X<8WCWEo"). Qed.
+Proof. intros n e R R'. destruct n; cbn; rewrite ?eff_ret_rstrip; tauto. Qed.
 
 (* [comment removed for export] *)
 Lemma rt_mmap_grant : forall addr len flags avoid rsp a R R',
@@ -61,7 +54,15 @@ Lemma rt_mmap_grant : forall addr len flags avoid rsp a R R',
   dec_mmap ATOP len avoid rsp = Some (MmOk a) -> (0 <= len)%Z ->     (* [comment removed for export] *)
   rng R' a (mmap_len len).
 Proof.
-ltac2:(KReplay.run1 (kr_t_RT_stubs ()) ["CANSEC1"] "p'0h01Hh14__p1h24__x1h34__x2h44__x3h54__x4h61Gh72HFh84Hdech92cih:7__arithh;4__ffh<8__varmaph=5__with>3rsph?1zh@2ARhA1EhB2H0hC2HAhD2HChE3HokhF3LENhG2MLhH1RhI2R'hJ2_HhK1ai001ahL4addrhM5avoidhN1ei011ehO5flagshP3leni021xp&0p;2p;1p;4p;3p;6p;5p;7p;8g00;hj2STg00;Hj1RTg00Nmj2?Tg00S=j4TTg00Wgj4\Tg003Ek107Tg00^gj1~Tg00_]j4WTg00`Uj1HTg00aOj2YTg00:nj3>Tg00TRj27Tg00b1j6nTg001:j11Tg002Dj1lTg002bj1iTg00bnk205Tg005Oj1FTg001_j19Tg00RER0j25Tg00CNj1NTg00cgj10Tg0086j2DTg00d_j4BTg00e[R1j2pTg00QRj33Tg00f5j5oTg00g6j3ITg00glk109Tg00hok108Tg00imj1JTg00jLj2GTg00k5j2kTg00Cnj3OTg00kaj2jTg00l?k106Tg00l]j4gTg00m;k104Tg00mYk103Tg00nDk602Tg00nhj2PTg00oKj2XTg00onj1}Tg010Pj3bTg0113j3|Tg011Vj2{Tg00=Fj2zTg0128j2yTg012dj3xTg013Cj4wTg0145j2vTg014Rj2`Tg014nj2_Tg006Pj1VTg00OJj2ETg015jj7uTg00PTj1KTg016lj6]Tg000\j8tTg017Hj1cTg0187j4hTg00<Hj6sTg00P4k200Tg018Wk301Tg019@j4eTg019kj7rTg01:Oj7qTg01;3j8UTf0R2#1#1p=[g00>ER3f1R4;>2p=C%92#9p=^%92#9#9#9p=Af2R51742'5p==f5R6f4R7f3R8%c5P4Ch;O2p=ff6R9/D6P7P8P5P4P2Esp=4g01;WR:g01<7R;7>2p=2P6P7%c81D54Ch=O92p=;g00C0R<g00]o-002g00Z0R=3>p=81`=2p=:1?54/72p=L%12#1#1#1p=m%12#1#1#1#1#1#1#1p=QB01<42p=<P<P4g01<WP2Cep=@P4g01=>R>g01=]R?P?g01>=R@P2g01>]Frp=6P5P>P?P?P@P4P2Fqp=dP<P4g01?=P2Cep=ZP8P>P?P?P@P5P4P2GUp=aP9P>P?P?P@P6P7P8P>P?P?P@P5P4P2GUGUp=M1S<<#Rg00Y7RAf7RBP9g00\8g00]3'?RCP6CTP8P4P2C\g01?dRD$07REp,2rcRF#~RGPBP6P7CW%H8,YD3>f8RH,7=PGf9RIPBP9%H6P4Eng00=`RJ#1RK#1RL#1RM#1#[RN#lRO#iRPg00BQ'S#RRQPDp-0RR%H920542,CH%FJ/72%9JRS#^#A#ART#F7=2'5POP2%lM#i#R,SP#NRM1SPPRUPPPPP2f;RV#0RW,DORX%NURYEfPYg00AY#NRZP4F4,CHPGPVPIP2CB#2'5n0110200021010110100X9Q'pP1PQPOPBPMPUPPPPPBPXPYEfPYPZP2F4,CHPGPVPIPBCB#2'5X9QA36BWP2f:RWPOPIPMPUPPPPPIPOf=RB#0PYF;PYPZP2F4'CPGPBPVPICB#2'5P0POPWPMPUPPPPPWPOf>RX#0PYF;PYPZP4F4,CVPGPXf<R1PWCB#2f?R[#093IVP2POP1PMPUPPPPP1POf@R\#0PYF;PYPZP8F4,CBP3POPBPMPUPPPPPBPOfAR]#0PYF;PYPZP7F4R^fCR_fBR`PCP]CTP2PBP1C\PGP_P]P4CW%H[,YD5>EPGfDRBP`P\CB#2fERa#0Rb93[][]8]7X>3P`P]PCP\CTP^P1PVC\PGP`P\POPXPMPUPPPPPXPO%0`PYF;PYPZP6F4CW%HX,YD5>EPGP_P]P[CB#2PGPBP`P\P2Do%8\%:\%0BR[,?\;=G'5AI\[`#2'5P0%8]%:]1?]b;=G'5AI]b_#2fFRb#093\`P2%8_%:_fGR\#0,?_;=G'5P0%8B%:BfHR_#0,?B;=GfIR]#0=Ia\#2fJRa#093Bb[P2%8b%:\fKRB#0,?\;=GP0%:_fLR0#0=L_GfM#0=I]B#2fNR]#093_a[P2%:afORa#0=LBGfPRB#0=I0]#2fQR[$09%0[,7[&08FRF%9T#^RT#1#A#A#1#[#m#Q#Q#F/7GRE%9T#A#A#1#[#m#Q#Q#FRT7=GRDPFPDg01@^RVg01AJR^#JRC#JRc#JRd#JRe#J,G<Rf1G<eRe1G<dRd1G<C1G<^R^'<'<'<'<g01AiRC'k%NVRg3O%RVRhP<P<1j<7P5&06<CgP41j<8CgRi&04<Rj&03<RkPkP>P?P?P@P9J021P<LRL1X<T'@,6k5dkR>%}?R?Pk1P<KRl1P<SRS'@,6kP?Pk1P<JRJ=b<S/@L,6kP?Pk1X<=Rm/ZJ,6kP?Pk1@ml,6kP?1@mJ,6kRn%FKRK,X<=|<O,ZJ,6k5dkRoCaFMFM1{k@R@P2P51z:;1y25#2dAx<=4CwR;b;b<b=X2<X3<X4<X5<X1RA=78TRT1758AL576%:817=6R5%FN,vK,`6,55R5[[[[[^2<^3<^4<^5<^1RP2PEPGfURK#0RNPKP[P4P8P6P9P0O:b:b0,_aPOPaPMPUPPPPPaPOfSR0#0PYF;PYPZPbF4#V,EO=><aRbePbPKfTRbP0POPBPMPUPPPPPBPO%0bPYF;PYPZP\F4R\PaP]P`Fu%V\,EO#8POP[PMPUPPPPP[POPNPYF;PYPZP_F4#V,EOR_1DOK,EO#K53a[P<P_%82fWR_,DO,EO#K93[4[X?<P2P[P4E]%8[fRRKfVRZ,DO,EORO#K53B[P<PO%80%K493Kb[X?<P2PZPFPD1G<c/<^,<d,<e,<f/kC=OVgPhPiPjPkP>P?Pk1@JS,6kP?PkAb<lS/@L,6kP?Pk1Zml,6kP?PkPnP?PoCaFMFMP@P;b;b<b=X2<X3<X4<X5<X1R1748AL876%:717=7P5[[[[\T^2<^3<^4<^5<^1RP2PEPGfXRG#0PbPGP4P9PHPIPaO:b:b0,_ZE]%8K%K_93[0[P2P1O1b6b6b6bAb@bGWJWDWBP4P2O2n2001000000121000000W0WCP4P2O2n2001000000121000000W0P4P2O2n2001000000121000000b0WEW8W7PXP2PWPIGtW0P4P2O2n2001000000121000000W0X9QP4P2O2n2001000000121102000bNWFW8W7XIAWHXK<X>3WMXO<XP<XL<o"). Qed.
+  intros addr len flags avoid rsp a R R' HF Hdec LEN.
+  destruct (dec_mmap_Some _ _ _ _ _ Hdec) as [ci [-> Hok]].
+  pose proof (mmap_addr_ok_true _ _ _ _ Hok) as ((HA & H0 & HC) & _).
+  pose proof (mmap_len_ge len) as ML. pose proof atop_range as AR.
+  assert (E : bv_unsigned (eff_ret (mkEffectU (Z_to_bv 64 a) [] [(wa a, Z_to_bv 64 (mmap_len len))] [] [] ci)) = a).
+  { cbn [eff_ret]. apply unsigned_lit. clear -H0 HC ML LEN. lia. }
+  pose proof (fstepA_mmap_grant addr len flags _ R R' HF) as G. rewrite E in G.
+  rewrite (unsigned_lit len) in G by (clear -H0 HC ML LEN; lia). apply G. exact HA.
+Qed.
 
 Section STUBS.
 Variables (ra sp gp tp t0 t1 t2 s0 s1 a6 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)

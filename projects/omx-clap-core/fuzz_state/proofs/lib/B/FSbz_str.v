@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/PSbz_str.v, with its module paths and module names changed; 54 of its 213 lines of code are new or changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Image B (fs.asan-ubsan) twin of lib/A/FSbz_str.v, itself
-   Ported from: a working branch cedf3d02589 proofs/omx-clap-core/fuzz_manifest/lib/A/FMbz_str.v (a Theorem Labs lane).
+   Ported from: a working branch proofs/omx-clap-core/fuzz_manifest/lib/A/FMbz_str.v (a Theorem Labs lane).
    Changes from A's twin (a Theorem Labs lane, 2026-10-29): the Bz tree is image B's (lib/B/Bz, a Theorem Labs lane's, by path from
-   a working branch 51f06361767) and the donor's segments are B's (lib/B/YB1v.v tfibsegs =
+   a working branch) and the donor's segments are B's (lib/B/YB1v.v tfibsegs =
    AsanUbsan.M.loaded_segments = lib/B/Bz/Lib/ImageA.v asegs); FSupoison stays lib/A's (image-generic); proofs unchanged. *)
 (* The shadow half of the bridge between the donor's ASan state and the string walks'
    memory vocabulary.  The walks ask for `chk_ok m p n` (lib/B/Bz/A/I_qck.v:30) - what the
@@ -14,7 +15,7 @@
 
    It is stated over the reader `aview_of H mem`, which is `aview tfibsegs H mem` written
    out (YG0n.v:17), so that it does not depend on the part of the core that is still in
-   flight (YG0n -> YA0n -> YK18, which does not compile on a working branch bad0693aadc
+   flight (YG0n -> YA0n -> YK18, which does not compile on a working branch
    yet).  `aview_eq` closes that gap in one line as soon as it does.
 
    a Theorem Labs lane owns the rest of the bridge (lib/A/FMbz_bridge.v: evt/msteps -> SRr and the frame

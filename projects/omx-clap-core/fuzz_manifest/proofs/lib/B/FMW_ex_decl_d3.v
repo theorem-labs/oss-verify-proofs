@@ -8,8 +8,9 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_hp_kit.v, with its module paths and module names changed; 305 of its 367 lines of code are new or changed and 869 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/B/FMW_ex_tok_base.v; 567 of its 633 lines of code are new or changed and 301 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/B/FMW_ex_decl_base.v; 247 of its 299 lines of code are new or changed and 581 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* G4.ExDecl, IMAGE B: expected's D3 loop (0x815d8..0x81630, fuzz_manifest.c:154-156) on fm.asan-ubsan, dseg_D3 of
-   FMW_ex_decl_base.v. B twin of lib/A/FMW_ex_decl_d3.v (06d82004dc3); B's code (fm_b_expected_iface.out lines
+   FMW_ex_decl_base.v. B twin of lib/A/FMW_ex_decl_d3.v; B's code (fm_b_expected_iface.out lines
    229-251): the spaces after the declaration's ':' at p2: the byte c = text[S p2 + m] is checked (a0 = s8 - 1, shadow
    check, error path 0x81614.. not reached) and loaded from 0(a2) (a2 = text + 1 + p2 + m, s8 = a2 + 1);
    0x815f4 `bgeu c - 9, s3 (= 5)` and 0x8160c `bne c, s11 (= ' ')` decide ex_space: a space goes 0x815f8..0x81600

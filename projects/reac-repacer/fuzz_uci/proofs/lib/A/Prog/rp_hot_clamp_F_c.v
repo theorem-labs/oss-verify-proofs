@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs: the footprint form of lib/A/Prog/rp_hot_clamp_c.v rp_hot_clamp_contract, in the form of proofs/libreac/fuzz_decode/lib/A/Prog/reac_frame_is_reac_F_c.v (origin/ossv/recipes 88154566652a) without its shadow_rw premise (as that unit's _F_nosh contracts state it), so that its cgif-form translation (lib/A/Prog/rp_hot_clamp_cg.v) takes no premise a caller cannot discharge. *)
+(* Modified by Theorem Labs: the footprint form of lib/A/Prog/rp_hot_clamp_c.v rp_hot_clamp_contract, in the form of proofs/libreac/fuzz_decode/lib/A/Prog/reac_frame_is_reac_F_c.v without its shadow_rw premise (as that unit's _F_nosh contracts state it), so that its cgif-form translation (lib/A/Prog/rp_hot_clamp_cg.v) takes no premise a caller cannot discharge. *)
 (* Footprint form of rp_hot_clamp_contract (A image, entry 0x7fc64). The run is an ExecF.evtF run under a footprint
    RNG: every data access of every step lies in RNG. The code (DIS of image A)
      - stores ra at sp - 8 and loads it back (stack frame [sp - 16, sp));

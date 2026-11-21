@@ -2,7 +2,7 @@
    facts of the segment, build-independent (SegModel and m_file_m.v's line terms only). Index forms of what the
    compiled loops compute: memchr's result as SegModel.memchr, the key strip (0x86354-0x86488, 0x8654c), the value
    strip (0x86550-0x865ec), the quotes (0x865f0-0x86654), and m_key's two cases (mk_disp, or the refusal).
-   Copied lemmas, each from the plain / image-B owner's plain proof at commit dec616e11c2f (a file outside this
+   Copied lemmas, each from the plain / image-B owner's plain proof (a file outside this
    tree; m_file_m.v restates the line terms they use): blank_gt32, blank_mask, slice_slice, slice_nth,
    slice_length, mff_line_split, mf_line_nth, mf_line_firstn, memchr_some, memchr_none, memchr_idx,
    memchr_none_idx, all_blank, dropwhile_blank_idx, h_strip_idx, mff_last_nth, mff_rl_tl, h_unquote_idx,

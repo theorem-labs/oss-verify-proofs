@@ -1,10 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main entry's recorded facts read as the main entry keeps them: BMKN; imports MainEntryAsan, where they live). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From OSSVerify.Proofs.zstd.simple_decompress.lib.AS Require Import MainEntryAsan.
 From OSSVerify.Proofs.zstd.simple_decompress.lib.Lib Require Import Tac Image Mem Cells Frame.
 From OSSVerify.Proofs.zstd.simple_decompress.lib.LibA Require Import ExecF Shadow.
 From OSSVerify.Proofs.zstd.simple_decompress.lib.Spec Require Import AsanEmbed.
@@ -85,13 +87,13 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma aro_clientM_init : forall V m, Forall (mfact_ok bsegs V m) both_mem_facts -> aro_clientM m.
+Lemma aro_clientM_init : forall V m, Forall (mfact_ok bsegs V m) BMKN -> aro_clientM m.
 Proof.
   intros V m HM. split.
-  - assert (C : forallb (fun p => unp_checkb both_mem_facts (fst p) (snd p)) ACLIENT_RO = true) by (vm_compute; reflexivity).
+  - assert (C : forallb (fun p => unp_checkb BMKN (fst p) (snd p)) ACLIENT_RO = true) by (vm_compute; reflexivity).
     intros A n HIn. rewrite forallb_forall in C. specialize (C (A, n) HIn). cbn [fst snd] in C.
     destruct (aclient_bounds A n HIn) as (B1 & B2 & B3).
-    exact (unp_of_checkb V m both_mem_facts A n HM ltac:(lia) ltac:(lia) ltac:(lia) C).
+    exact (unp_of_checkb V m BMKN A n HM ltac:(lia) ltac:(lia) ltac:(lia) C).
   - mf V m HM (MWr (ZLit 2147459072) 797184) W.
     replace (shad ACLIENT_HLO) with 2147467808 by reflexivity. replace (shad ACLIENT_HHI) with 2147468600 by reflexivity.
     eapply wr_at_sub'; [exact W | lia | lia | lia].

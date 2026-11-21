@@ -16,7 +16,8 @@
      0x89fb4 and 0x89fec (a + 56i < a, b + 56i < b unsigned) and 0x8a064, 0x8a068 (~(a[i].args) < 8k, ~(b[i].args) < 8k)
      are refuted at the branch from the values of their operands. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/rec_calls_equal.v, with its module paths, module names and numbers changed; 241 of its 346 lines of code are new or changed and 1487 lines of the source are left out. *)
-(* The image-B port of lib/A/Prog/check_segments.v (commit 4173a03b8db0).
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* The image-B port of lib/A/Prog/check_segments.v.
    The walk of check_segments on fuzz_segconf.asan-ubsan (image B, 0x86f58, 104 instructions), part 2: the loop
    0x87040 .. 0x87068 (UBSan's three tests, a0 := c + s3, a1 := m + s4, the strcmp wrapper, `bnez a0`, the cursors
    s4 += 256, s3 += 356, s8 -= 1, `bne s7,s4`), proved by induction on the segments left, and the theorem

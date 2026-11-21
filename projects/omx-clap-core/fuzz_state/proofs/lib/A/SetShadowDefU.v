@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: only the contract of the shadow-fill entries (__asan_set_shadow_XX): proofs/cgif/cgif_rgb_fuzzer/lib/YG0e.v:48-61@c8557374ad2e (aset_shadow_realizes) restated over the asan-state definitions of the cgif_file_fuzzer proof as omx-clap-core/fuzz_state holds them, as libreac/fuzz_grant did (a working branch a1ee3c81405 lib/A/Rt/SetShadowDef.v); module names. *)
+(* Modified by Theorem Labs, 2026-10: only the contract of the shadow-fill entries (__asan_set_shadow_XX): proofs/cgif/cgif_rgb_fuzzer/lib/YG0e.v:48-61@theorem-labs/oss-verify-proofs@6b32741d849a (aset_shadow_realizes) restated over the asan-state definitions of the cgif_file_fuzzer proof as omx-clap-core/fuzz_state holds them, as libreac/fuzz_grant did (a working branch lib/A/Rt/SetShadowDef.v); module names. *)
 (* Modified by Theorem Labs, 2026-10: the frame clause exempts the callee's own stack window [sp - ESTACK, sp), as aintrin_realizesU / apoison16 do (a Theorem Labs lane's R1 audit; a shadow-fill path that spills keeps the contract); the post keeps presence monotone over all memory (last conjunct), as FSupoisonU.aintrin_realizesU does. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/SetShadowDef.v; 20 of its 58 lines of code are new or changed and 11 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* SetShadowDef.aset_shadow_realizes (the contract of the shadow-fill entries __asan_set_shadow_XX) for any set U of
 (* The frame clause exempts the callee's own stack window [sp - ESTACK, sp), as aintrin_realizesU / apoison16 do (a Theorem Labs lane's R1 audit); the post keeps presence monotone over all memory (last conjunct), as FSupoisonU.aintrin_realizesU does. *)
    user-poisoned heads: the precondition is FSupoison.ecall_preU and the post's invariant FSupoison.ARU; every other

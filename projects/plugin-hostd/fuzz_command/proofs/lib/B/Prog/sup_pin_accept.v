@@ -3,8 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk of sup_lv2_worker_set (plugin-hostd/fuzz_command, image
    fuzz_command.asan-ubsan, entry BASE + AF_sup_lv2_worker_set = 0x8c0cc, 28 instructions, 112 bytes): it proves
-   a Theorem Labs lane's `tsup_lv2_worker_set_spec` (lib/B/Prog/sup_lv2_worker_set_c.v; statement from a Theorem Labs lane f490061c104, over
-   a Theorem Labs lane c022a2f6a88) in the form of cgif_file_fuzzer's per-function walks: afn_pre at the entry, the symbolic
+   a Theorem Labs lane's `tsup_lv2_worker_set_spec` (lib/B/Prog/sup_lv2_worker_set_c.v; statement from a Theorem Labs lane, over
+   a Theorem Labs lane) in the form of cgif_file_fuzzer's per-function walks: afn_pre at the entry, the symbolic
    executor over the position-abstract listing up to each call (the plain runs of lib/B/Prog/PaCallRun.v, no shadow
    access in the function), the callee contracts of record, arg_s and rec_shape_of (taken at the entry's FP state,
    which these apost_base callees keep) through cl_callS_wide / cl_callS_na (lib/B/Prog/PaNoChain.v), and answer's
@@ -12,10 +12,10 @@
    apost_baseF. The frame chains (pass 5, no astack_pres): s0 = worker (a heap pointer) at the four program calls,
    achain_low; at the tail jump s0 and sp are the entry's, afn_pre's chain moved by achain_kept / achain_ly_top.
    It is the B re-walk of the A walk
-   lib/A/Prog/sup_lv2_worker_set.v + _s0 .. _s3 (a working branch 5c647899d9f), whose rec_shape_of call,
+   lib/A/Prog/sup_lv2_worker_set.v + _s0 .. _s3 (a working branch), whose rec_shape_of call,
    tail call of answer and post assembly (sup_lv2_worker_set_s2.v slw_D2 / slw_D3) it follows; B calls record and
    arg_s where A inlines them, so A's segments A, B and s3 become one contract step each. The Generation-N B walk
-   lib/B/Prog/sup_lv2_worker_set.v on a working branch 543f2c3645b (template only, not ported) cuts the same
+   lib/B/Prog/sup_lv2_worker_set.v on a working branch (template only, not ported) cuts the same
    code at the same return addresses.
 
    B code (MEASURED from the pinned fuzz_command.asan-ubsan with pyelftools and capstone, symbol-keyed; a Theorem Labs lane's
@@ -29,9 +29,10 @@
    (record 4, arg_s 5, answer 5 trap sites, rec_shape_of 2 inline checks), refuted in their own walks, whose
    contracts this walk uses. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/sup_lv2_worker_set.v, with its module names and numbers changed; 801 of its 959 lines of code are new or changed and 946 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The ASan+UBSan walk of sup_pin_accept (plugin-hostd/fuzz_command, image fuzz_command.asan-ubsan, entry
    BASE + AF_sup_pin_accept = 0x8be78): it proves a Theorem Labs lane's `tsup_pin_accept_spec` (lib/B/Prog/sup_pin_accept_c.v,
-   statement from a Theorem Labs lane 713692f1e0c) in the form of cgif_file_fuzzer's per-function walks: afn_pre at the entry, the
+   statement from a Theorem Labs lane) in the form of cgif_file_fuzzer's per-function walks: afn_pre at the entry, the
    symbolic executor over the position-abstract listing up to each call, the callee contracts record_c, arg_s_c and
    rec_shape_of_c at the three calls (cl_callS_wide, cl_callS_na; each callee contract taken at the entry's FP state,
    which those apost_base callees keep), answer_c at the tail jump (PaFx.v's callS_wideF at this function's entry
@@ -39,7 +40,7 @@
    ly_top is assumed; the callees' frame chains are achain's empty case at record and arg_s (s0 = uri, a heap
    address below alloc_ceiling) and afn_pre's own chain at the tail jump (s0 restored).
 
-   It is the B re-walk of the A walk lib/A/Prog/sup_pin_accept.v (a working branch 6293aadbb38, with
+   It is the B re-walk of the A walk lib/A/Prog/sup_pin_accept.v (a working branch, with
    its halves sup_pin_accept_s4.v / _s2.v and the recorder lemmas of sup_pin_accept_r.v), at B's code
    (lib/B/Prog/sup_pin_accept_aux.v; 22 instructions, 0x8be78 .. 0x8bed0, listing CmdList.v:5793-5814):
    - prologue (32-byte frame, ra s0 s1 saved); `mv s0,a0`; `li a0,13`; `jal record` (0x8be90);
@@ -50,7 +51,7 @@
    checks); B calls record and arg_s, which carry those checks. B's code has no conditional branch, no
    `jal __asan_report_*` and no `unimp`: there is no report or UBSan trap edge in this function (measured with
    capstone on the pinned image, sha256 658cefbe...df401; the statement's header agrees: gen/funcs.tsv 0 reports,
-   gen/traps.B.summary 0 trap sites). The Generation-N walk of the same B code (a working branch 543f2c3645b
+   gen/traps.B.summary 0 trap sites). The Generation-N walk of the same B code (a working branch
    lib/B/Prog/sup_pin_accept.v) is a template only, not ported.
 
    The recorder lemmas of the A walk's sup_pin_accept_r.v / _s2.v are restated here for B (module paths, B's
@@ -425,7 +426,7 @@ Hypothesis VOBJS : cmd_val_objs.
 Hypothesis HB : CmdBSyms B.
 Hypothesis MTL : ameter_laws MT.
 Hypothesis cmd_sig_prog_PB : cmd_sig_prog.
-(* the per-binary record facts: a Theorem Labs lane's B CmdRecFacts groups (a working branch 713692f1e0c). Their lemmas are
+(* the per-binary record facts: a Theorem Labs lane's B CmdRecFacts groups (a working branch). Their lemmas are
    stated for any segments and allocator record, from AR's laws (LAWS), HB and the image facts
    IMG : cmd_img_facts segs B, so the walk uses them by exact: CmdRecRest.cmd_prog_img (:65),
    CmdRecRest.cmd_ro_prog_apart (:56), CmdRecRo.ROB (:73), CmdRecRo.RELRO_IMG (:64), CmdRecRo.cmd_ro_ok_of_aro

@@ -6,7 +6,7 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    libreac_fuzz_fopen (0x812f8, lib/B/Prog/PcapSourceOpenPhF.v's cut op_fopen_ret) to the two cuts of
    lib/B/Prog/PcapSourceOpenPh.v, 0x813f8 (op_gi_null) and 0x8138c (op_gi_read). op_from_fopen proves PhF's
    op_from_fopen_stmt from Ph's two `op_from`s (lib/B/Prog/PcapSourceOpenB.v proves those); lib/B/Prog/PcapSourceOpen.v
-   composes. At ossv/recipes 25e3d17bdb50 (2026-10-29), this image had no released proof (rule 24; a Theorem Labs lane, 22:35Z); the released v1.8 UBSan proof
+   composes. At (2026-10-29), this image had no released proof (rule 24; a Theorem Labs lane, 22:35Z); the released v1.8 UBSan proof
    lib/U/Prog/pcap_source_open.v is the guard template only.
 
    THE STRETCH, at this image's pcs:
@@ -32,13 +32,13 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    statement's ps mod 8 = 0). The deciding steps are those of lib/B/Prog/PcapSourceClose.v:18-27.
      0x812f8 (G5a `beqz s3`): refuted by decide_cond2 (Reusable/YP0e.v:932) through decide_eq (Reusable/YP0m.v:658-672),
               whose SOff / SLit arm (:665-666) finds ps's range [4096, ...] disjoint from 0. Template:
-              lib/U/Prog/pcap_source_open.v:114 (open_null) and :334 (open_mid) at c8557374ad2e, premise
+              lib/U/Prog/pcap_source_open.v:114 (open_null) and :334 (open_mid), premise
               bv_unsigned s0 <> 0 at :93 / :290.
      0x81304 (G5b `andi a0,s3,7` / `bnez a0`): s_and_ptr (Reusable/YP0m.v:969-980) rewrites ps & 7 to 0 from the
               alignment fact, so the BC_NE test is refuted as G5a's. Template :115 / :335, premise bv_unsigned s0 mod 8
               = 0 at :93 / :290.
-   The earlier walk of this image, pcap_source_open_fo.v (sha256 b7425f5b4c84; internal record) on a working branch
-   a8ccd33b1a7, decides the same branches at :66 / :68 (pso_fo_null) and :132 / :134 (pso_fo_hit).
+   The earlier walk of this image, pcap_source_open_fo.v (sha256 b7425f5b4c84; internal record) on a working branch,
+   decides the same branches at :66 / :68 (pso_fo_null) and :132 / :134 (pso_fo_hit).
 
    THE REPORT EDGES (FORM A). Every shadow test of the stretch reads through ps's shadow entry pm_SH = [mkSHE 19 0 24]
    (pm_shent_ok, from op_fopen_ret's range_addressable of ps's 24 bytes; ps is 8-aligned, so each shadow byte read is
@@ -54,6 +54,7 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    The section hypotheses are named as the other walk files name them: LAWS (AR_laws), ASIL (asource_img_laws), and
    AFREAD (the fread wrapper's contract at the trampoline). getr / mkst / seg_rom come from YK11; nothing from lib/Lib
    is imported. Every number is read from the pin fuzz_pcap.asan-ubsan (sha256 9e66f771f22af67a...). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From Stdlib Require Import FunctionalExtensionality.
@@ -106,7 +107,7 @@ Definition pm_SH : list shent := [mkSHE 19 0 24].
 Definition pm_keepN : list (bv 5) := [2; 3; 4; 8; 9; 18; 19; 20; 21; 22; 25; 26; 27]%bv.
 Definition pm_keepR : list (bv 5) := [2; 3; 4; 8; 9; 18; 19; 21; 22; 26; 27]%bv.
 
-(* A register's symbolic value, not normalized (PcapSourceOpen.v:96-106). *)
+(* A register's symbolic value, not normalized (PcapSourceOpen.v:97-107). *)
 Ltac pm_prreg_raw HS r Hr :=
   lazymatch type of HS with
   | st_ok_pi ?segs ?val ?E ?ss (restrict ?H ?ms) =>
@@ -119,7 +120,7 @@ Ltac pm_prreg_raw HS r Hr :=
     cbn [ms_regs restrict mkst] in Hr
   end.
 Ltac pm_norm_pi HS := lazymatch type of HS with st_ok_pi ?a ?b ?c ?ss ?d => let v := eval vm_compute in ss in change ss with v in HS end.
-(* A region's window closed (PcapSourceOpen.v:157-164): the token engine's cells_safe_b (YCbn.v:115-119) refuses a
+(* A region's window closed (PcapSourceOpen.v:158-165): the token engine's cells_safe_b (YCbn.v:115-119) refuses a
    window in the shadow band that no shadow entry covers. *)
 Ltac pm_set_ro HS i :=
   lazymatch type of HS with st_ok_pi _ _ ?Ex ?ssx ?msx =>
@@ -207,7 +208,7 @@ destruct Hr as [Hr|Hr]; [left | right].
 - apply Z.div_le_lower_bound; lia.
 Qed.
 
-(* osp1 is 32-aligned, at most 127 below the entry sp (lib/B/Prog/PcapSourceOpenB.v:1072-1077). *)
+(* osp1 is 32-aligned, at most 127 below the entry sp (lib/B/Prog/PcapSourceOpenB.v:1073-1078). *)
 Lemma pm_osp1_facts : forall x, 0 <= x -> x mod 16 = 0 ->
   x - 127 <= 32 * ((x - 96) / 32) <= x - 96 /\ (32 * ((x - 96) / 32)) mod 16 = 0.
 Proof.
@@ -243,7 +244,7 @@ Context {PI : PAImg pcap_listing}.
 #[local] Abbreviation BASE := (@pa_val _ pcap_listing PI A_TEXT).
 #[local] Abbreviation rdW W mem := (mrestrict (w_H W) mem).
 
-(* A symbolic state over a machine state given by its fields (lib/B/Prog/PcapSourceOpenB.v:173-185). *)
+(* A symbolic state over a machine state given by its fields (lib/B/Prog/PcapSourceOpenB.v:174-186). *)
 Lemma pm_mid_st_ok : forall E pc sr (rs : smem) (G : facts) H (ms : machine_state),
   ms_fregs ms = fp_regs -> ms_pc_val ms = Z_to_bv 64 (BASE + pc) -> ms_svc_pending ms = None -> ms_resv ms = None ->
   ms_fcsr ms = fp_csr -> ms_rom ms = seg_rom SEGS ->
@@ -266,7 +267,7 @@ intros B STK sp0 FP ly S W0 mem0 md0 own ly' S' W' mem' md' k (_ & Hly & _).
 destruct Hly as (_ & _ & _ & _ & _ & EF & _). unfold frame_addr, flag_addr. rewrite EF. split; reflexivity.
 Qed.
 
-(* ---- what a byte-wise memory equality carries (lib/B/Prog/PcapSourceOpenB.v:196-283) ---- *)
+(* ---- what a byte-wise memory equality carries (lib/B/Prog/PcapSourceOpenB.v:197-284) ---- *)
 Lemma pm_vm_frame : forall (m m' : word -> option byte) a n v,
   (forall x, a <= x < a + Z.of_nat n -> mbyte SEGS m' x = mbyte SEGS m x) ->
   val_mem SEGS m a n v -> val_mem SEGS m' a n v.
@@ -380,7 +381,7 @@ Hypothesis AFREAD : afread_spec SK SEGS B K (SIGMA PS___interceptor_trampoline_f
 Lemma pm_src_env_img : forall a, asrc_env_addr K a -> 0x10000 <= a < pcap_img_end.
 Proof. intros a Ha. exact (pa_img_range a (proj1 (asil_env _ _ _ _ ASIL a Ha))). Qed.
 
-(* The bytes of this call's frame F and of its 16 shadow bytes are none of the caller's (PcapSourceOpenB.v:587-660,
+(* The bytes of this call's frame F and of its 16 shadow bytes are none of the caller's (PcapSourceOpenB.v:588-661,
    without the flag). *)
 Lemma pm_apart : forall (cx : ocx) fpos ly3 S3 W3 mem3 md3 kk a,
   op_pre SK B K MT FM_RA CTX roimg cx ->
@@ -448,7 +449,7 @@ destruct Ha as [Ha | Ha]; unfold SHADOW_OFF in *.
 - split; [lia|]. rewrite EFc8, Enc8, EF8 in *. lia.
 Qed.
 
-(* The kept clauses survive a run that writes only addresses in Zs (PcapSourceOpenB.v:664-698). *)
+(* The kept clauses survive a run that writes only addresses in Zs (PcapSourceOpenB.v:665-699). *)
 Lemma pm_topen_kept_upd : forall lyc Sc W memc mdc W2 m2 m2' slo shi (Ek Zs : Z -> Prop),
   AR SEGS B lyc Sc W memc mdc ->
   topen_kept SK SEGS B lyc Sc W memc W2 m2 slo shi Ek ->
@@ -495,7 +496,7 @@ split; [exact K3|]. split; [intros c q a Hin Hr _; exact (K4 c q a Hin Hr (fun H
 Qed.
 
 (* The kept clauses across a call that keeps, against the call state, every byte outside its window [lo, hi) and
-   the bytes Er (rread_kept, lib/A/Stdio/PFreadM.v:344-360). *)
+   the bytes Er (rread_kept, lib/A/Stdio/PFreadM.v:345-361). *)
 Lemma pm_topen_kept_rk : forall lyc Sc W memc ly2 S2 W2 mem2 W3 mem3 slo shi lo hi (Ek Er : Z -> Prop),
   topen_kept SK SEGS B lyc Sc W memc W2 mem2 slo shi Ek ->
   (forall a, alloc_ceiling <= a < 2 ^ 64 -> ~ (lo <= a < hi) -> ~ Er a ->
@@ -1302,9 +1303,9 @@ clear HEdef EL ER.
    HPTR 3, lo 4096 (pm_facts; pm_entry proves it from op_pre's frame of ps, frames_bounds). G5b, 0x81300
    `andi a0,s3,7` / 0x81304 `bnez a0` to 0x8153c: s_and_ptr (Reusable/YP0m.v:969-980) gives 0 from the same
    fact's alignment 2^3 (op_pre's ps mod 8 = 0), so the branch is NOT taken. Templates: the released UBSan proof of
-   the v1.8 image, lib/U/Prog/pcap_source_open.v at c8557374ad2e, :114 and :115 (premise :93) in open_null and :334
-   and :335 (premise :290) in open_mid; the earlier walk of this image, on a working branch
-   a8ccd33b1a7, pcap_source_open_fo.v (sha256 b7425f5b4c84; internal record) :66 / :68 and :132 / :134.
+   the v1.8 image, lib/U/Prog/pcap_source_open.v, :114 and :115 (premise :93) in open_null and :334
+   and :335 (premise :290) in open_mid; the earlier walk of this image, on a working branch,
+   pcap_source_open_fo.v (sha256 b7425f5b4c84; internal record) :66 / :68 and :132 / :134.
    The shadow tests 0x81310 `lbu` / 0x81314 `bnez` (report_store8 at 0x81598), 0x81328 `lb` / 0x8132c `bnez` (slow
    block 0x81540), 0x81340 / 0x81344 (0x81550) and 0x81358 / 0x8135c (0x81560) read the shadow of ps, ps + 12,
    ps + 16 and ps + 20 through ps's shadow entry pm_SH (pm_shent_ok, from op_fopen_ret's range_addressable of ps's

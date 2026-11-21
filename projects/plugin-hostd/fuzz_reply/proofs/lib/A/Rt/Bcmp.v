@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: the bcmp interceptor's contract at fuzz_reply.asan's trampoline 0x421ac, in the
    site form the W walks take (Reusable/YG0d.v abcmp_realizes at `SIGMA WS_bcmp`: lib/A/W_list_find.v ABCMP,
    lib/A/W_has_prefix.v ABCMP).  The proof is cgif_file_fuzzer's released bcmp_icpt_contract (lib/A/AE2s.v:710 at
-   origin/ossv/recipes c8557374ad2e) and its chain lib/A/AE3b.v AE6z.v AE70.v AE2z.v, relocated onto this image by
+   theorem-labs/oss-verify-proofs@6b32741d849a) and its chain lib/A/AE3b.v AE6z.v AE70.v AE2z.v, relocated onto this image by
    port_core.py (sha256 718254b3f4dd; internal record) with five --override rows (bcmp's REAL is musl `bcmp`, 0x963cc, a `j` to the
    memcmp trampoline 0x421a8, so the chain carries the memcmp interceptor's contract too).  PB_fr's segments are the
    image's (W_tbl.v frsegs = Asan.M.loaded_segments = AB1v.v tfibsegs), so the site form is the relocated
@@ -13,6 +13,7 @@
    (<name>_x, and POSTr_x / POSTC_x for the section posts); every theorem or lemma that took AR_laws keeps its
    statement byte for byte (its post definition too) and is re-proved from its _x at ARx := AR_x B
    (AE2y.icpt_laws_x_AR), in a section named <section>A. Contract texts over ARx: lib/A/IcptRealizesX.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

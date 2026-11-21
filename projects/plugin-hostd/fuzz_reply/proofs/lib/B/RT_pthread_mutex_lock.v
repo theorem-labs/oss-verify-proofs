@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the runtime site contract alock_realizes (lib/B/W_sites.v) proved for
    fuzz_reply.asan-ubsan's musl pthread_mutex_lock at 0x98dbc. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/RT_pthread_mutex_lock.v at commit f1fb3bc1169, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (56 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/RT_pthread_mutex_lock.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (56 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The code (fuzz_reply.asan-ubsan 0x98dbc, the same bytes as the plain build's lib/Prog/pthread_mutex_lock.v):
      lbu a1,0(a0); andi a1,a1,15; bnez a1,slow; addi a2,a0,4; li a3,16;
      lr.w.aqrl a4,(a2); bne a4,a1,out; sc.w.aqrl a5,a3,(a2); bnez a5,retry;

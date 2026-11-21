@@ -3,10 +3,11 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/ExvB_Disp_word.v, with its module paths and module names changed; 116 of its 154 lines of code are new or changed and 465 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/Caw102A_Kit.v, with its module names changed; 989 of its 1073 lines of code are new or changed and 70 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/Caw102B_WB2.v; 55 of its 120 lines of code are new or changed and 1008 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image B' (asan-ubsan, harness fix #102: pin sha256 d663f82d7f488d30, twin c90d4fa54d43160b): WB_Top,
    the composition of check_as_written's segment walk (Caw102B.v and its segment files) into the text
    tcheck_as_written_specX as this tree states it (lib/A/PRH_FnCheck.v:1313-1402: c40cf3fdcd2a :832-902 @ the kit's cut
-   7cdbb61b5fa0 plus hull_budget and HPOS, SRr' for SRr), with the memnorm invariant instantiated ONCE: P := fun m =>
+   plus hull_budget and HPOS, SRr' for SRr), with the memnorm invariant instantiated ONCE: P := fun m =>
    memnorm SEGS mem -> memnorm SEGS m (YSRrMemnorm srr_inv_laws_imp at srr_inv_laws_memnorm_k, srr_inv_call_imp,
    srr_inv_mn_imp). Lane CawA102R; the A' twin is Caw102A_Top.v's caw_A_top.
    rule 24: no function proved. rule 24: proves no function (kind: segment lemma; the composition of the segments).

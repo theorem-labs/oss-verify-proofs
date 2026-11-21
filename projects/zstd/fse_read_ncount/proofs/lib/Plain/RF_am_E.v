@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (ram_entry re-proved over the new auxv vector: its scan for AT_RANDOM now steps over the launch's auxv entries, 27 pairs or 29 with CONFIG_RSEQ, in one case per value of the CONFIG_RSEQ flag). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -105,7 +106,14 @@ unfold RCTX, RGOT_SSP, RSSP_GUARD, RPAGE_SIZE in *. atop_facts. unfold wz in G4.
 pose proof (munch_refl [(bv_unsigned sp - 64, bv_unsigned sp); (RCTX, RCTX + 16)]%Z m) as MU.
 pose proof (wmono_refl psegs m) as WM. unfold RCTX in MU.
 pose proof (munch_refl [(bv_unsigned sp - 64, bv_unsigned sp)]%Z m) as MUh.
-destruct AUX as (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & AVC & AVL & RND & AB & BAV & AVH & BR & RH & X3 & X4 & X5 & X16 & X6 & X11 & X12 & X23 & XR).
+  destruct AUX as (av & rnd & la & ent & uid & gid & hw & efn & AVC & AVL & RND & AB & BAV & AVH & BR & RH & XR).
+  unfold rauxv_list, auxv_entries in AVL.
+  unfold AT_SYSINFO_EHDR, AT_L1I_CACHESIZE, AT_L1I_CACHEGEOMETRY, AT_L1D_CACHESIZE, AT_L1D_CACHEGEOMETRY,
+    AT_L2_CACHESIZE, AT_L2_CACHEGEOMETRY, AT_L3_CACHESIZE, AT_L3_CACHEGEOMETRY, AT_MINSIGSTKSZ,
+    AT_HWCAP, AT_PAGESZ, AT_CLKTCK, AT_PHDR, AT_PHENT, AT_PHNUM, AT_BASE, AT_FLAGS, AT_ENTRY,
+    AT_UID, AT_EUID, AT_GID, AT_EGID, AT_SECURE, AT_RANDOM, AT_EXECFN,
+    AT_RSEQ_FEATURE_SIZE, AT_RSEQ_ALIGN, AT_NULL in AVL.
+  assert (AC : (27 <= auxv_count (la_rseq la))%nat) by (destruct (la_rseq la); cbv; lia).
 pose proof sec_range as SECR'.
 unfold RAUXV_CELL in AVC.
 st1. Local Ltac2 Set LiaHints.tbl := fun () => "02=0?11552300008.92 11552300008.93 11552300008.94 11552300008.95 11552300008.96 11555595221.10811801586693.10711805467289.92 11805467289.93 11805467289.94 11805467289.95 11805467289.96 11912744615.93 12280974733.89 12281056739.10412367362435.93 15045097248.87 15224239576.92 15224239576.93 15224239576.94 15224239576.95 15224239576.96 1527479463.92  15330105832.92 15330105832.93 15330105832.94 15330105832.95 15330105832.96 15457446739.92 15457446739.93 15457446739.94 15457446739.95 16496876345.10716576854504.92 16576854504.93 16576854504.94 16576854504.95 16576854504.96 17210337356.87 17351860214.10617646078182.85 17805285100.87 17937675779.11317937675779.11719591727510.10219937319914.10221135219446.10621918414723.93 23811967384.86 24696263440.11324696263440.11725071629079.11325071629079.11725071629079.92 25071629079.93 25071629079.94 25071629079.95 25071629079.96 25314760359.94 26113657110.10727289923224.11327289923224.11727923971379.96 30985415188.87 31787418571.10732799535606.10633039531175.94 34489533625.10735040571675.10335040571675.88 35536403216.11335536403216.11735587154027.11335587154027.11736244065544.88 36671707196.88 36993589379.94 3945979267.94  40356513836.87 40825509068.87 41416020844.87 41809558659.92 42484794827.10743057235856.83 43060403331.95 43928033258.96 46029161400.10646704670696.92 46704670696.93 46704670696.94 46704670696.95 46704670696.96 47439602414.107476165835.107  48484971280.11348484971280.11749705053714.92 49705053714.93 49705053714.94 49705053714.95 49705053714.96 51163085556.11351163085556.11751425718543.11051425718543.96 51481786499.94 51576684520.92 51576684520.93 51576684520.94 51576684520.95 51576684520.96 53427322480.87 53562484459.11353562484459.11753990005404.87 56228262055.93 56537577096.88 58766074614.10659715610898.11360025031335.95 60542728832.88 60561126859.10761252852049.92 61252852049.93 61252852049.94 61252852049.95 61252852049.96 62965819126.10663368099340.87 63370196603.88 6361280528.113 6361280528.117 63967261868.87 64205834651.10764248730225.11765502198668.87 67800801447.94 68314956937.11368314956937.1178374241300.88  9243500491.107 00000=00J00W00d01101401501901=01A01E01I01J01K01L01M01N01V01^01f01n02602702D02Q02^02k03803<03@03D03H03I03V03c04004=04J04K04U04V04W04X04Y04Z04[04e04f04l04m04n04o05005405805<05@05D05E05J05X05f05g06506606@06A06B06K06T06U06V06`06j06n07807907:07;07<07=07>07?07E07F07J07K07X07e08208?08L08M08N08O08P08X08`08h09009809909:09;09<09=09J09W09d0:10:>0:E0:O0:Y0:Z0:[0:`0:j0:k0:l0;00;10;80;?0;F0;M0;T0;^0;_0;`0;a0;b0;c0;g0;h0;i0;j0<70<D0<H0<IS2AB5ATOPR2HBS2AB5ATOPR2HBS2AB5ATOPR2HBS2AB5ATOPR2HBS2AB5ATOPR2HBS1HFS2HBS2HBS2HBS2HBS2HBSSSSSS3BAV2HBS3BAV2HBS3BAV2HBS3BAV2HBS3BAV2HBSS2AB5ATOPR2HBS2AB5ATOPR2HBS2AB5ATOPR2HBS2AB5ATOPR2HBS2AB5ATOPR2HBS2HBS2HBS2HBS2HBSS2AB5ATOPR2HBS2AB5ATOPR2HBS2AB5ATOPR2HBS2AB5ATOPR2HBS2AB5ATOPR2HBSS2AB5ATOPRSSSSSSS2AB5ATOPRSS4INITSSSSS2HBS2HBS2HBS2HBS2HBSS3BAVS2AB3BAV5ATOPRS2AB3BAV5ATOPRSS2AB3SPR5ATOPRSS2AB5ATOPRSFS2LO4LOLES2LO4LOLESSS2AB5ATOPRS2AB5ATOPRS2XRS2AB5ATOPRSSSSSSSS4LOLESS2HBSS2AB5ATOPR2HBS2AB5ATOPR2HBS2AB5ATOPR2HBS2AB5ATOPR2HBS2AB5ATOPR2HBSSSSS3SPR2HBS3SPR2HBS3SPR2HBS3SPR2HBS3SPR2HBSSSSSS2AB5ATOPR2HBS2AB5ATOPR2HBS2AB5ATOPR2HBS2AB5ATOPR2HBS2AB5ATOPR2HBS2RH2XRS2AB5ATOPRS2AB5ATOPRSSS3SPRS2AB5ATOPRSSS2RHSS2BR2HBS2BR2HBS2BR2HBS2BR2HBS2BR2HBS2AB5ATOPRSSSSSS2BRSSSS2AB2BR5ATOPRS2AB2BR5ATOPRS2BRS".
@@ -133,16 +141,21 @@ st1; try clear RD;
 st1; change (bv_eqb (wz key) (Z_to_bv 64 25)) with false; cbv iota;
 st1; change (negb (bv_eqb (wz key) (Z_to_bv 64 0))) with true; cbv iota;
 st1.
-skip_iter 0 3 AVL.
-skip_iter 2 4 AVL. skip_iter 4 5 AVL. skip_iter 6 16 AVL. skip_iter 8 6 AVL.
-skip_iter 10 11 AVL. skip_iter 12 12 AVL. skip_iter 14 23 AVL.
-st1.
+  (* Both kernels: CONFIG_RSEQ adds two pairs after AT_EXECFN. *)
+  destruct (la_rseq la) eqn:HRS; try rewrite HRS in AVL; cbv zeta in AVL; cbn [app flat_map fst snd] in AVL.
+  all: skip_iter 0 33 AVL; skip_iter 2 40 AVL; skip_iter 4 41 AVL; skip_iter 6 42 AVL; skip_iter 8 43 AVL.
+  all: skip_iter 10 44 AVL; skip_iter 12 45 AVL; skip_iter 14 46 AVL; skip_iter 16 47 AVL; skip_iter 18 51 AVL.
+  all: skip_iter 20 16 AVL; skip_iter 22 6 AVL; skip_iter 24 17 AVL; skip_iter 26 3 AVL; skip_iter 28 4 AVL.
+  all: skip_iter 30 5 AVL; skip_iter 32 7 AVL; skip_iter 34 8 AVL; skip_iter 36 9 AVL; skip_iter 38 11 AVL.
+  all: skip_iter 40 12 AVL; skip_iter 42 13 AVL; skip_iter 44 14 AVL; skip_iter 46 23 AVL.
+  (* CONFIG_RSEQ: two more pairs before AT_NULL. *)
+  - st1.
 lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
-pose proof (ru64s_read mX _ _ 16 (wz 25) (wa (_ + 8 * 16)) AVL eq_refl ltac:(lia) eq_refl) as RD end.
+      pose proof (ru64s_read mX _ _ 48 (wz 25) (wa (_ + 8 * 48)) AVL eq_refl ltac:(lia) eq_refl) as RD end.
 st1. try clear RD.
 st1. change (bv_eqb (wz 25) (Z_to_bv 64 25)) with true. cbv iota.
 lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
-pose proof (ru64s_read mX _ _ 17 (wz rnd) (wa (_ + 8 * 17)) AVL eq_refl ltac:(lia) eq_refl) as RD end.
+      pose proof (ru64s_read mX _ _ 49 (wz rnd) (wa (_ + 8 * 49)) AVL eq_refl ltac:(lia) eq_refl) as RD end.
 st1. try clear RD. st1. st1. st1.
 lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
 lazymatch type of FR with rw_cells _ _ _ (?c1 :: ?rest) =>
@@ -158,9 +171,77 @@ call rmemcpy_callZ3.
 1:{ lazymatch goal with H : mem_inv psegs ?mX |- mem_inv psegs ?mX => exact H end. }
 lazymatch goal with H : rw_cells psegs ?mX (bv_unsigned sp + -64) [CB _ (le8 (wz SECRET))] |- _ => rename H into DST end.
 st1. st1.
+    skip_iter 50 31 AVL. skip_iter 52 27 AVL. skip_iter 54 28 AVL.
 st1.
 lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
-pose proof (ru64s_read mX _ _ 18 (wz 0) (wa (_ + 8 * 18)) AVL eq_refl ltac:(lia) eq_refl) as RD end.
+      pose proof (ru64s_read mX _ _ 56 (wz 0) (wa (_ + 8 * 56)) AVL eq_refl ltac:(lia) eq_refl) as RD end.
+    st1. try clear RD.
+    st1. change (bv_eqb (wz 0) (Z_to_bv 64 25)) with false. cbv iota.
+    st1. change (negb (bv_eqb (wz 0) (Z_to_bv 64 0))) with false. cbv iota.
+    lazymatch type of DST with rw_cells _ ?mX _ _ =>
+      assert (DST8 : rw_cells psegs mX (bv_unsigned sp + -64) [C8 (wz SECRET)])
+        by (destruct DST as [[_ B] W]; cbn [cells_bytes cbytes app] in B; rewrite app_nil_r in B;
+            split; [split; [cbn; tauto| cbn [cells_bytes cbytes app]; rewrite app_nil_r; exact B]| exact W]);
+      clear DST end.
+    st1.
+    st1.
+    lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
+      assert (MRX : rmrep st mX) by (eapply rmrep_transport_high; [exact MR| exact MUh| exact WM|]; intros l h [E|[]]; inversion E; subst; atop_facts; lia);
+      pose proof (munch_refl [(RCTX, RCTX + 16)]%Z mX) as MUc; pose proof (wmono_refl psegs mX) as WMc end.
+    clear MUh. unfold RCTX in MUc.
+    st1. st1.
+    set (stI := upd_ctx (fun c => set_init_done 1 (set_secret 0 c)) st).
+    lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) => assert (MRI : rmrep stI mX) end.
+    { eapply (rmrep_ctx_frameW st stI _ _ _ MRX MUc WMc); try reflexivity.
+      - intros lo' hi' [E|[]]; inversion E; subst; unfold RCTX; lia.
+      - left. unfold rctx_head_cells, rsecw, RCTX. cbn [ctx stI upd_ctx s_ctx set_init_done set_secret c_secret c_init_done c_mmap_counter c_free_meta_head c_avail_meta
+              c_avail_meta_count c_avail_meta_area_count c_meta_alloc_shift c_meta_area_head c_meta_area_tail c_avail_meta_areas].
+        change (pw stI ?q) with (pw st q). unfold wz at 2. rewrite Z.mul_1_r.
+        lazymatch goal with H : rw_cells psegs ?mX 323400 _ |- _ => exact H end.
+      - right. split; [reflexivity|]. intros lo' hi' [E|[]]; inversion E; subst; unfold RCTX; lia.
+      - right. split; [reflexivity|]. intros lo' hi' [E|[]]; inversion E; subst; unfold RCTX; lia.
+      - right. split; [reflexivity|]. intros lo' hi' [E|[]]; inversion E; subst; unfold RCTX; lia.
+      - right. split; [reflexivity|]. intros lo' hi' [E|[]]; inversion E; subst; unfold RCTX; lia.
+      - right. split; [reflexivity|]. intros lo' hi' [E|[]]; inversion E; subst; unfold RCTX; lia. }
+    clear MUc WMc MRX.
+    st1. st1. st1. change (bv_ltu (Z_to_bv 64 4096) (wz 4096)) with false. cbv iota. st1.
+    lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
+      lazymatch goal with Hm : rw_cells psegs mX (bv_unsigned sp + -64) ?csm, Hc : rw_cells psegs mX (bv_unsigned sp + -56) ?csc |- _ =>
+        pose proof (rrw_cells_app_join mX _ csm csc Hm ltac:(cbn [cells_size csize Nat.add]; replace (bv_unsigned sp + -64 + Z.of_nat 8) with (bv_unsigned sp + -56) by lia; exact Hc)) as J2;
+        cbn [app] in J2; clear Hm Hc;
+        lazymatch type of J2 with rw_cells _ _ _ (?c1 :: ?rest) =>
+          apply (rw_cells_merge psegs mX _ [] [c1] rest) in J2; cbn [cells_size csize Nat.add cells_bytes cbytes app] in J2; rewrite app_nil_r in J2 end
+      end end.
+    apply evt_done. unfold ram_entry_post, RCTX, RSSP_GUARD, RMLOCK. do 20 eexists. split; [reflexivity|].
+    split; [exact MU|]. split; [exact WM|]. split; [assumption|]. split; [exact J2|]. split; [exact ST|].
+    unfold am_init_st. rewrite I0, SEC0. cbn [Z.eqb]. exact MRI.
+  (* No CONFIG_RSEQ. *)
+  - st1.
+    lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
+      pose proof (ru64s_read mX _ _ 48 (wz 25) (wa (_ + 8 * 48)) AVL eq_refl ltac:(lia) eq_refl) as RD end.
+    st1. try clear RD.
+    st1. change (bv_eqb (wz 25) (Z_to_bv 64 25)) with true. cbv iota.
+    lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
+      pose proof (ru64s_read mX _ _ 49 (wz rnd) (wa (_ + 8 * 49)) AVL eq_refl ltac:(lia) eq_refl) as RD end.
+    st1. try clear RD. st1. st1. st1.
+    lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
+      lazymatch type of FR with rw_cells _ _ _ (?c1 :: ?rest) =>
+        destruct (rrw_cells_app_split mX _ [c1] rest FR) as [FRm FRc];
+        cbn [cells_size csize Nat.add] in FRc;
+        replace (bv_unsigned sp + -64 + Z.of_nat 8) with (bv_unsigned sp + -56) in FRc by lia;
+        apply (rw_cells_merge psegs mX _ [] [c1] []) in FRm; cbn [cells_size csize Nat.add cells_bytes cbytes app] in FRm;
+        rewrite app_nil_r in FRm; clear FR
+      end end.
+    st1.
+    call rmemcpy_callZ3.
+    1:{ exact RND. } 1:{ reflexivity. } 1:{ exact FRm. } 1:{ lia. } 1:{ lia. } 1:{ lia. } 1:{ lia. } 1:{ lia. } 1:{ lia. }
+    1:{ lazymatch goal with H : mem_inv psegs ?mX |- mem_inv psegs ?mX => exact H end. }
+    lazymatch goal with H : rw_cells psegs ?mX (bv_unsigned sp + -64) [CB _ (le8 (wz SECRET))] |- _ => rename H into DST end.
+    st1. st1.
+    skip_iter 50 31 AVL.
+    st1.
+    lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
+      pose proof (ru64s_read mX _ _ 52 (wz 0) (wa (_ + 8 * 52)) AVL eq_refl ltac:(lia) eq_refl) as RD end.
 st1. try clear RD.
 st1. change (bv_eqb (wz 0) (Z_to_bv 64 25)) with false. cbv iota.
 st1. change (negb (bv_eqb (wz 0) (Z_to_bv 64 0))) with false. cbv iota.

@@ -24,7 +24,7 @@
      0x81d68: s_and_ptr (Reusable/YP0m.v:969-980) rewrites ps & 7 to 0 from the alignment fact, so `bnez` sees 0 and is
               not taken.
    These are the decisions of the released UBSan proof for the v1.8 image (proofs/libreac/fuzz_pcap/lib/U/Prog/
-   pcap_source_close.v on origin/ossv/recipes c8557374ad2e): close_closed :43 (if_false, premise bv_unsigned a0 <> 0 at
+   pcap_source_close.v): close_closed :43 (if_false, premise bv_unsigned a0 <> 0 at
    :23) and :45-46 (ub_align A8, premise bv_unsigned a0 mod 8 = 0 at :23), close_pro :82 and :84-85 (premises :58).
 
    The contract is lib/A's, not a copy (the shared-text rule): pb_pcap_source_closeX proves lib/A's image-generic
@@ -39,11 +39,12 @@
    getr / mkst / seg_rom come from YK11; nothing from lib/Lib is imported. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_pcap/lib/B/Prog/PcapSourceClose.v, with its module names changed; 3497 of its 3557 lines of code are new or changed and 570 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_pcap/lib/A/Prog/PcapHarnessTail.v, with its module names changed; 2018 of its 2157 lines of code are new or changed and 3418 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_pcap's entry function LLVMFuzzerTestOneInput (0x807c8, listing offset 0x90) on the ASan build of
    libreac v1.9.0: the walks of its first part, between the cut pcs of PcapEntryDefs.v, in the form
    PcapEntryPhases.v fixes (`pe_from POST GI_next -> pe_from POST GI_self`, cgif_file_fuzzer's per-function form).
 
-   Walks of this file (PcapEntryDefs.v:217-235):
+   Walks of this file (PcapEntryDefs.v:218-236):
      B       PP_K2 (0x809a0) -> the harness's check of the open's verdict (0x809a0..0x80aa0) -> accepted: malloc
              0x80ab8 -> PP_K3 (h_B_malloc); refused: free 0x80a84 -> j PP_K12r (h_B_free): pe_B. Every branch to
              PP_abort (0x80a3c / 0x80a40 / 0x80a50 / 0x80a70 / 0x80aa0) is refuted from GI_K2's verdict a0, p_good and

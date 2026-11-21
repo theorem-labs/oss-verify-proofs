@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_contract_x.v; 35 of its 124 lines of code are new or changed and 1923 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Contract texts of lib/A/W_contract_x.v at a world relation R, for list_drop (ldrop_post_x :602, ldrop_spec_x :622).
    A beside-file of W_contract_xR.v (a Theorem Labs lane's), in its form: R is a Section variable right after ARx, with its laws
    R_refl, R_trans, WLE_R (the definitions use none of them), and the SAME R is in the post journal
@@ -71,7 +72,7 @@ Hypothesis WLE_R : forall W W', wle W W' -> R W W'.
 Variable MT : ameter_ops.
 Variable RP : roomp.
 Variable G : list (Z * Z).
-(* W_contract_x.v:602 ldrop_post_x at R *)
+(* W_contract_x.v:603 ldrop_post_x at R *)
 Definition ldrop_post_xR (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
 (LA : Z) (l : HarnessRep.hlist) (lines : bool) (i : nat) (kr : nat) : world SEGS -> config -> Prop :=
 fun W' c' => exists ly' S' Hp' regs' mem' md',
@@ -88,7 +89,7 @@ alist_at B ly' S' W' mem' LA (ldrop_list l i) lines /\
 (exists b1 b2, ablocks B ly S = b1 ++ (fst (nth i (HarnessRep.hl_recs l) (0, [])),
  Z.of_nat (length (snd (nth i (HarnessRep.hl_recs l) (0, [])))) + 1) :: b2 /\ ablocks B ly' S' = b1 ++ b2) /\
 mo_le MT S S' (mo_free MT) /\ rp_RM RP S' kr.
-(* W_contract_x.v:622 ldrop_spec_x at R *)
+(* W_contract_x.v:623 ldrop_spec_x at R *)
 Definition ldrop_spec_xR (pc : Z) : Prop :=
 forall W ly S Hp regs mem md ch LA l lines i,
 afn_pre_x SEGS B ARx LDROP_STK ly S Hp W regs mem md ch ->

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the CONFIG_RSEQ flag of the start-up layer: PIECES_A and PIECES_B over the four main-entry states of HSCLASS_S, with the per-value piece certificates). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From stdpp Require gmap.
@@ -28,9 +29,9 @@ Open Scope Z_scope.
 Set Default Proof Using "All".
 
 Lemma PIECES_A : forall ch, HSCLASS_S true ch -> pieces_check_A (kn_view ch) = true.
-Proof. intros ch [-> | ->]; [exact PIECES_HS2sA_1_ok | exact PIECES_HS2sA_2_ok]. Qed.
+Proof. intros ch [-> | [-> | [-> | ->]]]; [exact PIECES_HS2sA_1_ok | exact PIECES_HS2sA_2_ok | exact PIECES_HS2sA_1R_ok | exact PIECES_HS2sA_2R_ok]. Qed.
 Lemma PIECES_B : forall ch, HSCLASS_S false ch -> pieces_check_B (kn_view ch) = true.
-Proof. intros ch [-> | ->]; [exact PIECES_HS2sB_3_ok | exact PIECES_HS2sB_4_ok]. Qed.
+Proof. intros ch [-> | [-> | [-> | ->]]]; [exact PIECES_HS2sB_3_ok | exact PIECES_HS2sB_4_ok | exact PIECES_HS2sB_3R_ok | exact PIECES_HS2sB_4R_ok]. Qed.
 
 Lemma STATICS_w : img_w_b JOB6SEGS QXEH.RMLOCK 4 = true /\ img_w_b JOB6SEGS QXEH.RNEED_LOCKS 1 = true /\ img_w_b JOB6SEGS QXEH.RPAGE_SIZE 8 = true
 /\ img_w_b JOB6SEGS QXEH.RGOT_SSP 8 = true /\ img_w_b JOB6SEGS QXEH.RSSP_GUARD 8 = true /\ img_w_b JOB6SEGS QXEH.RVMLOCK 4 = true
@@ -129,9 +130,9 @@ Open Scope Z_scope.
 Set Default Proof Using "All".
 
 Lemma PIECES_A : forall ch, HSCLASS_S true ch -> pieces_check_A (kn_view ch) = true.
-Proof. intros ch [-> | ->]; [exact PIECES_HS2sA_1_ok | exact PIECES_HS2sA_2_ok]. Qed.
+Proof. intros ch [-> | [-> | [-> | ->]]]; [exact PIECES_HS2sA_1_ok | exact PIECES_HS2sA_2_ok | exact PIECES_HS2sA_1R_ok | exact PIECES_HS2sA_2R_ok]. Qed.
 Lemma PIECES_B : forall ch, HSCLASS_S false ch -> pieces_check_B (kn_view ch) = true.
-Proof. intros ch [-> | ->]; [exact PIECES_HS2sB_3_ok | exact PIECES_HS2sB_4_ok]. Qed.
+Proof. intros ch [-> | [-> | [-> | ->]]]; [exact PIECES_HS2sB_3_ok | exact PIECES_HS2sB_4_ok | exact PIECES_HS2sB_3R_ok | exact PIECES_HS2sB_4R_ok]. Qed.
 
 Lemma STATICS_w : img_w_b JO6SEGS QW7x.Mq0.RMLOCK 4 = true /\ img_w_b JO6SEGS QW7x.Mq0.RNEED_LOCKS 1 = true /\ img_w_b JO6SEGS QW7x.Mq0.RPAGE_SIZE 8 = true
 /\ img_w_b JO6SEGS QW7x.Mq0.RGOT_SSP 8 = true /\ img_w_b JO6SEGS QW7x.Mq0.RSSP_GUARD 8 = true /\ img_w_b JO6SEGS QW7x.Mq0.RVMLOCK 4 = true

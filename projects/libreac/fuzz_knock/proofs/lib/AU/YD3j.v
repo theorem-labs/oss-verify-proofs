@@ -24,6 +24,7 @@
    rule 24: proves function StackDepotPut (first Put, 0x70ef0 tail-jumping to StackDepotBase<StackDepotNode,1,20>::Put
    0x70f10), asan-ubsan (reuse search: proof-index tfib_depot_first_put_ok depot_put_early_ok tfib_depot_put_any
    0x70ef0 0x70f10, no lib/AU Qed proof on any ref; a Theorem Labs lane CONFIRM, 2026-10-29). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed depot_room_at, AR_but_depot). *)
 (* The text is AD3j's under the AU name map only: lib/A/AXyz -> lib/AU/YXyz (lib/AU keeps the name AWalkFw0), so
    AF0m AF0x AB1w AB13 AFl0 AFem AF0w -> YF0m YF0x YB1w YB13 YFl0 YFem YF0w and AD3a AD3b AD3c AD3d AD3g AD3h AD3i AD3k
    -> YD3a YD3b YD3c YD3d YD3g YD3h YD3i YD3k; the Reusable Requires are unchanged; every name, Section premise and
@@ -98,7 +99,7 @@
    placeholder depot_ok_kd; and the layout step layout_grow_kd ly ly' with ly' = set_ly_SB (set_ly_NB ly nb) sb.
 
    PLACEHOLDERS (kd_inst below instantiates the Section variables and hypotheses of the first two items with rev6b's kernel terms; the third item is fixed text):
-   - layout_grow_kd, kd_grow_NB, kd_grow_SB: the S-pieces' (YD3g.v:74-75, YD3c.v:100-101); kd_grow_trans: a Theorem Labs lane's
+   - layout_grow_kd, kd_grow_NB, kd_grow_SB: the S-pieces' (YD3g.v:75-76, YD3c.v:101-102); kd_grow_trans: a Theorem Labs lane's
      layout_grow_trans (YG0f.v:99-124 of rev3 / rev5). Satisfiable: fun _ _ => True.
    - depot_ok_kd stands for YG0n.depot_ok (rev5); depot_ok_pre_kd / depot_ok_post_kd for rev5's depot_ok_pre (YG0n.v:231)
      and depot_ok_post (YG0n.v:242) with knock's depot_ids (length (st_depot S)), depot_traces (st_depot S) and
@@ -131,7 +132,7 @@
      presence, false at the first Put since stored_ is never-written .bss, is gone with amendment 9.)
    - am_const after the first Put: as_const's allocated_ row (YF0m.v:128 in Tfib_const_abs: ACell (ANum 0x170450) 0
      (AV (ANum 0)), = as_store + ss_alloc; BlockInfo::Create's amoadd.d makes allocated_ kStoreBlockSize, S3's
-     post, YD3c.v:153) has width 0, so it holds at any value (kd_alloc_row_rev6). The POST keeps every as_const cell but that one and states allocated_ =
+     post, YD3c.v:154) has width 0, so it holds at any value (kd_alloc_row_rev6). The POST keeps every as_const cell but that one and states allocated_ =
      kStoreBlockSize, and kd_const gives am_const from the two; rev6b's knock depot cells hold allocated_ (0 / kStoreBlockSize by
      st_depot S, YG0n.v:119 / :121).
 
@@ -208,12 +209,12 @@ Definition aareas_depot_kd (S : astate) : list (aexp * Z) :=
 Definition depot_junk_kd : list (aexp * Z) := [(ADepot (d_nuniq + 4), 12); (AStore 8, 8); (AStore 24, 8)].
 
 (* The cells the first Put's callees read as 0 that no kernel cell fixes (see the header): the nodes-map mutex word
-   (TwoLevelMap::Create's lock, YD3g.v:96), stored_ (Store's stored_ += n + 1, YD3a.v:179) and mtx_ of blocks_[0]
-   (BlockInfo::Create's lock, YD3c.v:128). *)
+   (TwoLevelMap::Create's lock, YD3g.v:97), stored_ (Store's stored_ += n + 1, YD3a.v:180) and mtx_ of blocks_[0]
+   (BlockInfo::Create's lock, YD3c.v:129). *)
 Definition put_zero_cells : list acell :=
   [ z4 (ADepot tlm_mu) 0; z4 (AStore YD3a.bi0_stored) 0; z4 (AStore bi0_mtx) 0 ].
 
-(* The extents the two new blocks must miss (S7's P3 list, YD3g.v:100 / :112): the static extents without NB / SB
+(* The extents the two new blocks must miss (S7's P3 list, YD3g.v:101 / :113): the static extents without NB / SB
    (ext_but_NB, with ly_SB ly = 0), the extras, the secondaries and the shadow bands. *)
 Definition first_put_avoid (ly : alayout) (S : astate) : list (Z * Z) :=
   ext_but_NB ly ++ ly_extra ly ++ sec_extents ly S ++ band_maps.
@@ -223,7 +224,8 @@ Definition first_put_avoid (ly : alayout) (S : astate) : list (Z * Z) :=
    walk's own X / k). *)
 Definition depot_room_at (W : world tfibsegs) (md : Model) : Prop :=
   ((exists g, g mod 4096 = 0 /\ 0 < g /\ g + kNodesBlockSize <= alloc_top (m_vmmaps md) /\
-      region_free (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) (Z_to_bv 64 g) (Z_to_bv 64 kNodesBlockSize) = true) /\
+      region_free (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) (Z_to_bv 64 g) (Z_to_bv 64 kNodesBlockSize) = true /\
+      LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.task_unmapped_base <= g) /\
    eager_used md + A_bytes (w_A W) + 2 * kNodesBlockSize <= vm_limit (m_vmmaps md)) /\
   eager_used md + A_bytes (w_A W) + 3 * kNodesBlockSize + kStoreBlockSize <= vm_limit (m_vmmaps md) /\
   (forall (xw nw : word) (md' : Model) (Wx' : world tfibsegs),
@@ -234,7 +236,8 @@ Definition depot_room_at (W : world tfibsegs) (md : Model) : Prop :=
     (forall e, In e (vm_maps (m_vmmaps md')) -> e = (xw, nw) \/ In e (vm_maps (m_vmmaps md))) ->
     eager_used md' <= eager_used md + kNodesBlockSize -> A_bytes (w_A Wx') <= A_bytes (w_A W) + kNodesBlockSize ->
     (exists g, g mod 4096 = 0 /\ 0 < g /\ g + kStoreBlockSize <= alloc_top (m_vmmaps md') /\
-      region_free (vm_reserved (m_vmmaps md') ++ vm_maps (m_vmmaps md')) (Z_to_bv 64 g) (Z_to_bv 64 kStoreBlockSize) = true) /\
+      region_free (vm_reserved (m_vmmaps md') ++ vm_maps (m_vmmaps md')) (Z_to_bv 64 g) (Z_to_bv 64 kStoreBlockSize) = true /\
+      LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.task_unmapped_base <= g) /\
     eager_used md' + A_bytes (w_A Wx') + kStoreBlockSize <= vm_limit (m_vmmaps md')).
 
 (* rev5 section 4's two knock branches of YG0n.depot_ok (depot_ids / depot_traces at their knock meanings, section
@@ -691,7 +694,7 @@ Ltac b2z := cbv beta in *; b2_keepz;
     TFIB_IMG_LO, YImgTop.IMG_TOP, YImgTop.IMG_LO, TFIB_DEPOT, TFIB_STORE, kNodesBlockSize, kStoreBlockSize, d_nuniq, d_map1,
     MOD_STK, MNR_STK, s_total, s_block0, ss_alloc, bi0_mtx, YD3a.bi0_stored, d_tab_words in *; lia.
 Section kd.
-(* PLACEHOLDER, the S-pieces' (YD3g.v:74-75, YD3c.v:100-101): the first Put's layout growth and its two intro lemmas,
+(* PLACEHOLDER, the S-pieces' (YD3g.v:75-76, YD3c.v:101-102): the first Put's layout growth and its two intro lemmas,
    plus a Theorem Labs lane's layout_grow_trans (B2 composes S7's step ly -> set_ly_NB ly nb with S1's set_ly_NB ly nb -> ly').
    Satisfiable: layout_grow_kd := fun _ _ => True. kd_inst instantiates them with a Theorem Labs lane's layout_grow, layout_grow_NB, layout_grow_SB,
    layout_grow_trans (YG0f.v:99-124). *)
@@ -708,7 +711,7 @@ Hypothesis depot_ok_pre_kd : forall B ly rd S, st_depot S = [] -> (depot_ok_kd B
 Hypothesis depot_ok_post_kd : forall B ly rd S, st_depot S <> [] -> (depot_ok_kd B ly rd S <-> depot_ok_post_text B ly rd S).
 
 (* INTERIM: as_const without its allocated_ row (YF0m.v:128, ACell (ANum 0x170450) 0 (AV (ANum 0)), = as_store B +
-   ss_alloc), which the first Put makes kStoreBlockSize (S3's post, YD3c.v:153). The row has width 0 already; as_const_g2 is
+   ss_alloc), which the first Put makes kStoreBlockSize (S3's post, YD3c.v:154). The row has width 0 already; as_const_g2 is
    not swapped to as_const by name (the value of allocated_ is in knock's depot cells in rev6b: 0 before the first Put,
    kStoreBlockSize after, YG0n.v:119 / :121). Satisfiable: as_const_g2 B ly := filter of as_const B ly by c_at c <> that address. *)
 Variable as_const_g2 : asyms -> alayout -> list acell.
@@ -721,7 +724,7 @@ Hypothesis as_const_g2_def : forall B ly c, In c (as_const_g2 B ly) <-> In c (as
    tfib_depot_spec's post states it).
    Right arm, the first Put (B2): both blocks unmapped before (ly_NB ly = ly_SB ly = 0), mapped at nb, sb <> 0 after;
    ly' = set_ly_SB (set_ly_NB ly nb) sb with the layout step layout_grow_kd ly ly'; W grows by exactly the two blocks
-   (w_A consed, w_H unchanged outside them); the model as S7 (YD3g.v:116-117) and S1 (YD3a.v:115-116) state it after
+   (w_A consed, w_H unchanged outside them); the model as S7 (YD3g.v:117-118) and S1 (YD3a.v:116-117) state it after
    the two maps: no I/O change, the maps of mmap_model sb (mmap_model nb md), the store block lazy.
    put_effect_refl: the left arm. put_effect_trans: left-left by wvb_wvb (YA0o.v:20), left-right / right-left because
    the right arm reads md only through m_vmmaps, m_vm_lazy and same_io, which with_vm_backing keeps; right-right is
@@ -1160,7 +1163,9 @@ Definition AR_but_depot (B : asyms) (ly' : alayout) (S : astate) (W : world tfib
   (* ALedger *)
   (forall sg, In sg tfibsegs -> fst (ly_img ly') <= Z.of_N (seg_base sg) /\
      Z.of_N (seg_base sg) + Z.of_N (seg_size sg) <= fst (ly_img ly') + snd (ly_img ly')) /\
-  ASAN_VM_LMIN <= vm_limit (m_vmmaps md) /\ vm_reserved (m_vmmaps md) = segments_reserved tfibsegs /\
+  ASAN_VM_LMIN <= vm_limit (m_vmmaps md) /\
+  (* the image's reservations followed by a tail, as [YG0n.ALedger]'s [al_reserved] states it *)
+  (exists rx, vm_reserved (m_vmmaps md) = segments_reserved tfibsegs ++ rx /\ res_tail_ok ly' rx) /\
   (exists pieces, prim_pieces_ok ly' S pieces /\ (forall p, In p pieces <-> (In (wiv p) (vm_maps (m_vmmaps md)) /\
      0 < snd p /\ ly_prim ly' <= fst p /\ fst p + snd p <= ly_prim ly' + kPrimResvSize))) /\
   In (wiv (ly_Q ly', kPtrArrayResv)) (vm_maps (m_vmmaps md)) /\
@@ -1326,7 +1331,7 @@ Proof using.
 Qed.
 
 (* am_const, the allocated_ row (YF0m.v:128, ACell (ANum 0x170450) 0 (AV (ANum 0)) at as_store B + ss_alloc): rev5's as_const pins it to 0,
-   the first Put makes it kStoreBlockSize (S3's post, YD3c.v:153), so on rev5 this step is FALSE. In this tree it holds:
+   the first Put makes it kStoreBlockSize (S3's post, YD3c.v:154), so on rev5 this step is FALSE. In this tree it holds:
    rev6b moves allocated_ into knock's depot_cells (YG0n.v:119 / :121, s_alloc 0 / kStoreBlockSize), and YF0m.v:128
    lists the row in Tfib_const_abs with width 0, so it holds for every reader (the proof checks by vm_compute that every
    Tfib_const row at that address with a plain value has width 0). *)
@@ -2219,7 +2224,7 @@ Proof using kd_grow_NB kd_grow_SB kd_grow_trans depot_ok_pre_kd depot_ok_post_kd
 Qed.
 
 (* 'empty -> post-Put depot_ok': from an empty depot, the section 7 facts give the post-Put depot_ok (rev5 section 7:
-   cgif's init_facts with tr0 := tr1, so the proof is the one-trace depot_init, YG0r.v:209-221, true branch:
+   cgif's init_facts with tr0 := tr1, so the proof is the one-trace depot_init, YG0r.v:210-222, true branch:
    heads := fun b => if b =? b1 then 1 else 0, links := fun _ => 0). *)
 Lemma depot_ok_first_put : forall B ly' rd' S tr,
   st_depot S = [] -> depot_first_put_facts B ly' (depot_after 1 tr S) tr rd' ->

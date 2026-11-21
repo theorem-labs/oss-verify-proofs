@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -35,7 +36,7 @@ Definition padI_cps : Prop :=
   rw_cells asegs m BUF [CB (Z.to_nat CAP) bs] -> 0 <= N <= CAP -> 0 < BUF -> BUF + CAP <= lo -> acc asegs m BUF N ->
   ((exists p k, In (p, k) L /\ p <= BUF /\ BUF + CAP <= p + k) \/ (fO <= BUF /\ BUF + CAP <= fO + fs_size kO - 8)) -> (BUF + CAP <= O \/ O + 264 <= BUF) ->
   0 <= FILL < 256 -> oa_w st + N <= PJ_OUTMAX len ->
-  ART RT Σ m -> mem_inv asegs m -> stk asegs m lo S -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + IMP_PAD_STACK_A <= S ->
+  ART RT Σ m -> mem_inv asegs m -> stk asegs m lo S -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + IMP_PAD_STACK_A <= S ->
   S + 16 <= USTACK_TOP -> S mod 32 = 0 ->
   (length (rt_frames RT Σ) + 1 <= FRAMES_MAX2)%nat -> rt_frames RT Σ <> [] ->
   Z.of_nat (length L) + 2 <= LIVE_MAX -> 1 + os_psi len st <= rt_credit RT Σ ->

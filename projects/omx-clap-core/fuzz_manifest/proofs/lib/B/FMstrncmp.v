@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMstrncmp.v at a working branch 5d8d8a15571, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMstrncmp.v at a working branch, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
 (* fm's runtime contract for the strncmp interceptor in the donor's form: astrncmp_realizes (FMH_Rt.v:124) at
    PC_strncmp = 0x41334, the one-instruction trampoline `j 0x41e24` (A/Bz/A/I_tramp.v tramp_strncmp) in front of
    the interceptor body, whose effect A/Bz/A/I_strncmp.v istrncmp_spec states (its range check's Section
@@ -7,7 +7,7 @@
      runtime's fixed cells) and writes the call site's registers out as the walk states them (bz_canon);
    - post side: FMrt_lift.v reads the walk at the call site (srr_of_canon_bz) and gives the donor-form post
      (rt_post_ro_win); FMrt_pre.v bz_window gives its window facts;
-   - the answer: the walk returns strncmp_res (A/Bz/A/IcptSpec.v:38), which is 0 exactly when the compared
+   - the answer: the walk returns strncmp_res (A/Bz/A/IcptSpec.v:39), which is 0 exactly when the compared
      prefixes of the two strings with their NULs agree (strn_eq, FMH_Rt.v:24); proved here on the byte values,
      as FMspec_str.v does for strncasecmp. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require YZ00.

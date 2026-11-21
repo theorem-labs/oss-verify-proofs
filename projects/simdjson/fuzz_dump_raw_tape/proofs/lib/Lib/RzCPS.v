@@ -1,11 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: ast_nodeI takes a sys_rob premise, that the call's check is unchanged when the read-only backing grows, and passes it to rz_node; taken in part from projects/simdjson/fuzz_ondemand/proofs/lib/Lib/RzCPS.v, lines 9, 404, 416-419. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Monad Specs Run.
 From OSSVerify.Proofs.simdjson.fuzz_dump_raw_tape.lib.AS Require Import CatSim ShapeAlg AsanAcct AsanAcctShape.
+From OSSVerify.Proofs.simdjson.fuzz_dump_raw_tape.lib.AS Require Import RomBase.
 From OSSVerify.Proofs.simdjson.fuzz_dump_raw_tape.lib.Lib Require Import Exec.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
@@ -400,6 +402,7 @@ Theorem ast_nodeI : forall A Pm PM (I : Type) (i0 : I) (evs : I -> list event)
     (eff : I -> SyscallEffect) (mdl : I -> Model),
   AST segtop A Pm PM (mkCfg ms mo) ->
   ms_svc_pending ms = Some x8 ->
+  sys_rob segs (mkCfg ms mo) ->
   (forall i, syscall_spec_acfg (sys_input segs ms x8) mo (Ok (eff i) (mdl i) (evs i))) ->
   (forall r, syscall_spec_acfg (sys_input segs ms x8) mo r -> exists i, r = Ok (eff i) (mdl i) (evs i)) ->
   (forall i, vm_same mo (mdl i)) ->
@@ -411,10 +414,10 @@ Theorem ast_nodeI : forall A Pm PM (I : Type) (i0 : I) (evs : I -> list event)
   (forall i c', AST segtop A (K i) (KM i) c' -> realizes segs c' (T i)) ->
   realizes segs (mkCfg ms mo) (t_alt (fun i => t_emit (evs i) (T i))).
 Proof.
-  intros A Pm PM I i0 evs K KM T ms mo x8 eff mdl Hc Hsvc Hsound Hcompl Hvm Hio Hav HK HKM Hms Hk.
+  intros A Pm PM I i0 evs K KM T ms mo x8 eff mdl Hc Hsvc Hrob Hsound Hcompl Hvm Hio Hav HK HKM Hms Hk.
   destruct (ast_node_core A Pm PM I evs K KM ms mo x8 eff mdl Hc Hsvc Hsound Hcompl Hvm Hio Hav HK HKM Hms)
     as (nx & Hnode & Hnx).
-  apply (rz_node segs _ I evs nx T i0 Hnode). intros i. exact (Hk i (nx i) (Hnx i)).
+  apply (rz_node segs _ I evs nx T i0 Hnode Hrob). intros i. exact (Hk i (nx i) (Hnx i)).
 Qed.
 
 End IONode.

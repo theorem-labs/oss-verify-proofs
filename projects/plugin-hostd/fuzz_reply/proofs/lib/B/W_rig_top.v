@@ -6,12 +6,13 @@
    is W_rig_top_p1.v (the entry pointer and its traps, the eof check, drain), its second W_rig_top_p2.v (snprintf,
    strlen, the nheld test).  The lemma tracks are W_rig_top_bud.v / _bytes.v (budget), _rep.v (representation),
    _live.v (keeping), _gin.v (the cut invariants) and _calls.v (the two runtime calls).
-   ROUTE (b), STEP 3 (the image-A twin: a Theorem Labs lane's RIG_x round of lib/A/W_rig_top.v, commit f4cd818e98d): TOP over
+   ROUTE (b), STEP 3 (the image-A twin: a Theorem Labs lane's RIG_x round of lib/A/W_rig_top.v): TOP over
    any allocator relation ARx with its laws and the room record RP, at W_relay_instance_gone_cx.v's generic Section c
    (its list copied verbatim in every TOP file); the AR statement is dropped (no consumer).  rig_top_proof is
-   rig_top_of_cnt at drain's count lemma lib/B/W_rr_m_dcnt.v rmc_dr_cnt.  HLITGOT (the window's 4d3f3ddb1df, verbatim)
+   rig_top_of_cnt at drain's count lemma lib/B/W_rr_m_dcnt.v rmc_dr_cnt.  HLITGOT (the window, verbatim)
    is W_rig_top_calls.v's, for snp_call (the narrowed snprintf contract's location premises M1 / M3).
    Proves no function (kind: segment lemma). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

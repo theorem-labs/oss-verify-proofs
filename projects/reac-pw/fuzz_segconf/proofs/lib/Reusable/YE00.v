@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YE00.v, with its module paths changed; asink_none takes aclosed_stdio_env (the lock state and stack guard, without cgif's four sink-file strings), with its address set aclosed_env_addr and frame lemma, after plugin-hostd/fuzz_command's lib/Reusable/YI14.v closed_stdio_env, since fuzz_command's harness opens no sink file; astdio_env stays for asink_at. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the four new process-state fields). *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State.
@@ -57,9 +58,11 @@ Definition os_kept (md md' : Model) : Prop :=
 m_io md' = m_io md /\ m_pipes md' = m_pipes md /\
 m_proc md' = mkProcState (procst_halted (m_proc md)) (procst_tid (m_proc md)) (procst_creds (m_proc md)) (procst_setsid_succeeded (m_proc md))
 (procst_sigmask (m_proc md)) (procst_children (m_proc md)) (procst_utsname (m_proc md)) (procst_sigaltstack_installed (m_proc md))
-(procst_killed (m_proc md)) (procst_sigabrt_pending (m_proc md)) (procst_abort_terminal (m_proc md)) (m_statpins md').
+(procst_killed (m_proc md)) (procst_sigabrt_pending (m_proc md)) (procst_abort_terminal (m_proc md)) (m_statpins md')
+(procst_sigpipe_pending (m_proc md)) (procst_channel_reader (m_proc md))
+(procst_sigpipe_action (m_proc md)) (procst_sigpipe_terminal (m_proc md)).
 Lemma os_kept_refl : forall md, os_kept md md.
-Proof. intros [fd vm io fs [h ti c ss sm ch u sa k sp at_ pins] li tm]. repeat split; reflexivity. Qed.
+Proof. intros [fd vm io fs [h ti c ss sm ch u sa k sp at_ pins spp cr spa spt] li tm]. repeat split; reflexivity. Qed.
 Lemma os_kept_trans : forall m1 m2 m3, os_kept m1 m2 -> os_kept m2 m3 -> os_kept m1 m3.
 Proof.
 intros m1 m2 m3 (A1 & A2 & A3) (B1 & B2 & B3). split; [rewrite B1; exact A1|]. split; [rewrite B2; exact A2|].
@@ -68,12 +71,12 @@ Qed.
 Lemma os_kept_sbm : forall m m', same_but_materialized m m' -> os_kept m m'.
 Proof.
 intros m m' Hs. pose proof (same_but_materialized_frame m m' Hs) as (_ & _ & _ & Hio & _ & Hproc & _ & _ & _ & Hpipes & _).
-split; [exact Hio|]. split; [exact Hpipes|]. unfold m_statpins. rewrite Hproc. destruct m as [fd vm io fs [h ti c ss sm ch u sa k sp at_ pins] li tm]. reflexivity.
+split; [exact Hio|]. split; [exact Hpipes|]. unfold m_statpins. rewrite Hproc. destruct m as [fd vm io fs [h ti c ss sm ch u sa k sp at_ pins spp cr spa spt] li tm]. reflexivity.
 Qed.
 Lemma os_kept_with_fds : forall fds m, os_kept m (with_fds fds m).
-Proof. intros fds [fd vm io fs [h ti c ss sm ch u sa k sp at_ pins] li tm]. repeat split; reflexivity. Qed.
+Proof. intros fds [fd vm io fs [h ti c ss sm ch u sa k sp at_ pins spp cr spa spt] li tm]. repeat split; reflexivity. Qed.
 Lemma os_kept_with_fs : forall fs' m, os_kept m (with_fs fs' m).
-Proof. intros fs' m. rewrite with_fs_os_upd. destruct m as [fd vm io fs [h ti c ss sm ch u sa k sp at_ pins] li tm]. repeat split; reflexivity. Qed.
+Proof. intros fs' m. rewrite with_fs_os_upd. destruct m as [fd vm io fs [h ti c ss sm ch u sa k sp at_ pins spp cr spa spt] li tm]. repeat split; reflexivity. Qed.
 Section b.
 Variable segs : list Segment.
 Variable K : asink_syms.
@@ -107,7 +110,7 @@ garr8 segs m (ak_mode K) (sink_mode_Z ++ [0]) /\
 garr8 segs m (ak_rwa K) (sink_rwa_Z ++ [0]) /\
 garr8 segs m (ak_trailer K) (sink_trailer_Z ++ [0]) /\
 (exists cval, 0 <= cval < 2 ^ 64 /\ val_mem segs m (ak_canary K) 8 cval).
-(* fuzz_command's harness opens no GIF sink, so a closed sink needs only the musl lock state and the stack
+(* reac-pw/fuzz_segconf's harness opens no GIF sink, so a closed sink needs only the musl lock state and the stack
    guard (after lib/Reusable/YI14.v closed_stdio_env); the sink-file strings stay in astdio_env, for asink_at. *)
 Definition aclosed_stdio_env (m : word -> option byte) : Prop :=
 val_mem segs m (ak_threaded K) 1 0 /\

@@ -18,7 +18,7 @@ Local Open Scope Z_scope.
 (* The check_round_trip stage of LLVMFuzzerTestOneInput on the #102 plain pin (fuzz_preset.c:832-833: `if
    (!check_round_trip(&doc)) check_reject_clean_starved(data, size, count, &doc);`). check_round_trip (0x13fe4) is called
    at 0x13758 with doc = sp = S - 112 and returns to 0x1375c. The entry hands it both flag bytes 0 (ent_flags), so its
-   contract (check_round_trip_c @ rw102-crt e0ca34385157) gives the normal arm: a0 = 0, the flags stay 0; the ran-out arm
+   contract (check_round_trip_c @ rw102-crt) gives the normal arm: a0 = 0, the flags stay 0; the ran-out arm
    (a0 = 1) needs a flag set and is false here. The branch `bnez a0` at 0x1375c is then not taken and the code sets up
    check_reject_clean_starved(data, size, took, &doc) (EntSegA.ent_segE2), the next stage stg_crs1_st. *)
 

@@ -6,13 +6,14 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segC.v, with its module names and addresses changed; 1881 of its 1980 lines of code are new or changed and 485 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segB2.v, with its module paths and module names changed; 298 of its 424 lines of code are new or changed and 1854 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/FSH_crt_segD2_s34.v, with its addresses changed; 62 of its 178 lines of code are new or changed and 308 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_round_trip (fs.asan-ubsan 0x81b9c, build B), WALK LANE D2, SEGMENT 35: from the boundary crtD2_INV_35 (B 0x82410,
    the return of pj_free (&back)) over `ld a0, 0x38(s1)` and `jal pj_free` (B 0x82414, a0 = the s1 slot 0x38 =
    F + 0x20 = &doc) to the boundary crtD2_INV_36 (B 0x82418, the return of pj_free (&doc)).
 
-   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from 6cf61486dca lib/A/FSH_crt_segD2_s35.v)
-   PORT SOURCE: a working branch 6cf61486dca proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segD2_s35.v, itself
-   PORTED from a working branch d25a984c903 proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_sd20.v
+   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from lib/A/FSH_crt_segD2_s35.v)
+   PORT SOURCE: a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segD2_s35.v, itself
+   PORTED from a working branch proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_sd20.v
    (the function-level lookup is the one quoted in the lane head (internal path),
    checker a Theorem Labs lane, role check, CONFIRM). Same Definition / Lemma names and statement shapes as the A file, over
    image B; B twin written by a Theorem Labs lane.
@@ -26,7 +27,7 @@
    for segment 36's `mv s4, s2` and the tail's crt_INV_T; A's s10 = &doc is gone, B reads &doc from the slot), so a0 is
    read off the slot atom (FSH_crt_segD2_s34.crtD2pf_obj_denot); rom_view at the next boundary is FSH_crt_site.crt_rom.
 
-   This file ports the CONTENT of d25a984c903's St20 step (pj_free frees the document's tree D20; text's and back's
+   This file ports the CONTENT of's St20 step (pj_free frees the document's tree D20; text's and back's
    blocks and the frame survive) into S0's ajournal / ARU / U form, with the same kit as segment 34
    (FSH_crt_segD2_s34.v): pj_free_spec at level 0, v = F + 0x20, D = Ddoc. The document is crt_doc tb2, an object of
    depth 2 (its one nested object holds strings only), so its tree is freeable at depth 2 with no further premise. The

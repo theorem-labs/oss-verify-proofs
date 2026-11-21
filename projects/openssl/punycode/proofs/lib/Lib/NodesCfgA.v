@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the decided-node proof also covers munmap with node_decided_munmap). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -117,10 +118,8 @@ Qed.
 (* [comment removed for export] *)
 Lemma node_decided_of_noerr : forall n mo, node_noerr n mo -> node_alloc n = true -> node_decided n mo.
 Proof.
-  intros n mo H Ha. destruct n; try discriminate Ha.
-  - apply node_decided_brk.
-  - apply node_decided_of_live. exact (proj2 H).
-  - apply node_decided_of_live. exact (proj2 H).
+  intros n mo H Ha. destruct n; try discriminate Ha;
+    first [apply node_decided_brk | apply node_decided_munmap | apply node_decided_of_live; exact (proj2 H)].
 Qed.
 
 Lemma tsafe_nsafe_c : forall {R} (t : itree node R) mo,

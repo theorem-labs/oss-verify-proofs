@@ -8,15 +8,16 @@
    of the class-7 frame (__asan_stack_free_7, 0x8acd8, a1 = 4256), the jump over the real-stack release (0x8acdc) and
    the epilogue, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh2.v (cl_AFT2_okX: a seed over the saved
    registers, a program call through cl_callS, the frame's regions kept over it, and the return through
-   paj_ret_at). The B twin of lib/A/Prog/answer_t.v (a working branch d28426fbb96, A 0x8a734 .. 0x8a7bc; B's
-   code is A's instruction for instruction at +0x20 function-relative). Changes from A, for a Theorem Labs lane's statement at
-   f490061c104: the callee and runtime hypotheses are taken at every FP state and used at the ambient one (the
+   paj_ret_at). The B twin of lib/A/Prog/answer_t.v (a working branch, A 0x8a734 .. 0x8a7bc; B's
+   code is A's instruction for instruction at +0x20 function-relative). Changes from A, for a Theorem Labs lane's statement:
+   the callee and runtime hypotheses are taken at every FP state and used at the ambient one (the
    segment calls no code that changes it), the walk proves A's apost_base post and closes with PaFx.v's
    apost_baseF_of_base; hand_back's statement has no astack_pres premise (statement pass 5), so A's presence block
    is gone; the record facts are a Theorem Labs lane's CmdRecFacts lemmas over cmd_img_facts_tfib's statement at this walk's
    segments (ML: CmdRecRest.cmd_model_laws; FFL: CmdRecRest.cmd_frame_flag_law, stated there at tfibsegs, so a Section
    hypothesis under that name at this walk's segments; HPROG: CmdRecAns.rca_HPROG), and the realignment's arithmetic
    is CmdSnText.v's snt_sp1_facts. The cut statement is lib/B/Prog/answer_s1.v's AN_JOIN_stmt. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

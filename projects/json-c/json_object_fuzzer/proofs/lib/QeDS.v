@@ -1,10 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (RomBase.sys_rob at the system-call nodes: srz_node and J_nclosed take the node's robust-call check, from nsA_rob or sys_rob_instr). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Monad Specs Run.
 From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QQIi QdTb QHWH Q1lV Qcrs QUcd QCUT QwAs Qc6I Qsn5 QNqr.
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib.Cfg Require RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 Module Mq0.
@@ -129,7 +131,8 @@ exists (exist _ ([ExitEv code (m_fs mo')], mkCfg ms1 mo') Hst). exact I. }
 destruct Hi0 as [i0 _].
 eapply srz_conseq.
 { apply (srz_node segs c1 Ix (fun i => fst (proj1_sig i)) (fun i => snd (proj1_sig i))
-(fun i => obs_trace_cfg segs (alloc_only_cfg false) (snd (proj1_sig i))) i0 Hnode Hcont). }
+(fun i => obs_trace_cfg segs (alloc_only_cfg false) (snd (proj1_sig i))) i0 Hnode
+(nsA_rob _ _ _ _ _ _ _ _ _ _ _ NS n ms1 mo1 Hsp Hat1 Hh1 HC1 Hns1) Hcont). }
 intros tr. rewrite (HT mo1 Hd1 tr). split.
 - intros [[[e [ms' mo']] Hst] Hem]. cbn [fst snd proj1_sig] in Hem.
 destruct (nsA_complete _ _ _ _ _ _ _ _ _ _ _ NS n ms1 mo1 e _ Hsp Hat1 Hh1 HC1 Hns1 Hst)
@@ -228,13 +231,15 @@ Notation cinvA := (cinv L xinv jinv).
 Notation nstA := (nstepA L nstep_raw).
 
 Variable J : config -> Prop.
+(* LPS 727298f3: a closure under nodes needs the node's [RomBase.sys_rob] *)
 Hypothesis J_nclosed : forall c (I : Type) (nx : I -> config) (i0 : I),
-node_ok segs c I (fun _ => []) nx -> (forall i, J (nx i)) -> J c.
+node_ok segs c I (fun _ => []) nx -> RomBase.sys_rob segs c -> (forall i, J (nx i)) -> J c.
 
 Lemma J_silent_closed : silent_closed L segs J.
 Proof.
-intros ms mo ms' mo' Hnode _ _ _ _ HJ.
-apply (J_nclosed (mkCfg ms mo) unit (fun _ => mkCfg ms' mo') tt Hnode). intros []. exact HJ.
+intros ms mo ms' mo' Hnode Hsvc _ _ _ _ HJ.
+apply (J_nclosed (mkCfg ms mo) unit (fun _ => mkCfg ms' mo') tt Hnode (RomBase.sys_rob_instr segs (mkCfg ms mo) Hsvc)).
+intros []. exact HJ.
 Qed.
 
 Fixpoint tcps {R} (t : itree node R) (mo : Model) : Prop :=
@@ -303,7 +308,8 @@ assert (Hi0 : exists i : Ix, True).
 exists (exist _ (evs, mkCfg ms' mo2) Hst). exact I.
 - exfalso. exact (Hnx mo1 code mo' Hd01 Hx). }
 destruct Hi0 as [i0 _].
-apply (J_nclosed c1 Ix (fun i => snd (proj1_sig i)) i0 Hnode).
+apply (J_nclosed c1 Ix (fun i => snd (proj1_sig i)) i0 Hnode
+(nsA_rob _ _ _ _ _ _ _ _ _ _ _ NS n ms1 mo1 Hsp Hat1 Hh1 HC1 Hns1)).
 intros [[e c'] Hst]. cbn [fst snd proj1_sig].
 destruct (Hexpl e _ Hst) as (rsp & ms' & mo' & E & -> & Hv' & Hr & HC' & Hh'). injection E as ->.
 assert (HstA : nstA n mo0 rsp mo' []) by (exists mo1; split; assumption).

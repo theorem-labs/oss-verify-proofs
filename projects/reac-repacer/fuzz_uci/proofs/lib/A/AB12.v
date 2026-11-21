@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs: generated for reac-repacer/fuzz_uci's asan image by tools/startup/atable.py (commit 8cd71d3a4bb, frozen 2d236e51ad70) from fuzz_uci.asan and its unstripped twin: image fields from the program headers, code fields as symbol + offset, TFIB_TEXT_N from the .text section size, stops_more the image's 13 self-loops; cgif_file_fuzzer's A/AB12.v at origin/ossv/recipes c8557374ad2e gives the text only. *)
+(* Modified by Theorem Labs: generated for reac-repacer/fuzz_uci's asan image by tools/startup/atable.py (frozen 2d236e51ad70) from fuzz_uci.asan and its unstripped twin: image fields from the program headers, code fields as symbol + offset, TFIB_TEXT_N from the .text section size, stops_more the image's 13 self-loops; cgif_file_fuzzer's A/AB12.v at theorem-labs/oss-verify-proofs@6b32741d849a gives the text only. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_uci.asan (reac-repacer/fuzz_uci asan) sha256 6ea017c24525e6946fa06dc7e3075459ad2c5146d59af49873bf3c51a46e885d; unstripped twin sha256 56822e263d767986a76ec862cbfbee7571b0e64df2413ad18d7201205a7563fb *)
 From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List.

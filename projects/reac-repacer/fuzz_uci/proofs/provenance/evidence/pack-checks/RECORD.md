@@ -13,22 +13,22 @@ file named below is in this directory.
   - `control-checker-line.txt`: one MANIFEST line deleted; the checker gives rc 1 and names the file.
   - `control-checker-sha.txt`: one sha256 field zeroed; the checker gives rc 1 and names both hashes.
   - `control-sha256.txt`: one byte appended to one file; `sha256sum -c` gives rc 1 and names the file.
-- The index is written only by mk_top_manifest.py a0ba0eb66d66 (commit 1d2d6eab3320,
+- The index is written only by mk_top_manifest.py a0ba0eb66d66 (
   tools/mk_top_manifest/a0ba0eb66d66/mk_top_manifest.py), run unmodified at every merge; no MANIFEST line is written by
   hand.
 
 ## 2. Plain and UBSan files equal the merged plain PR
 
-The parent commit merges the plain / UBSan PR's merge commit e10f488c53fc, whose fuzz_uci files are the tree that PR's
-release check passed (4617ea9f0b7b). Against e10f488c53fc nothing outside proofs/reac-repacer/fuzz_uci/ differs. In the
+The parent commit merges the plain / UBSan PR's merge, whose fuzz_uci files are the tree that PR's
+release check passed. Against nothing outside proofs/reac-repacer/fuzz_uci/ differs. In the
 unit, the only changed file outside lib/A, lib/B, lib/AZ, provenance/ and the four ASan statement directories is
 lib/Theorems.v (the four new entries); the other differences are 131 added files and no deleted file.
 
 ## 3. Build and assumptions
 
-- The lib and the seven statement directories of the parent commit are byte-identical to those of 4cf8a03f103;
+- The lib and the seven statement directories of the parent commit are byte-identical to those;
   theories/ and toolchain/ are unchanged, and under projects/reac-repacer/ only README.md files differ.
-- Build of 4cf8a03f103 (cb, dune cache allowed): rc 0, wall 2540 s, 15 targets compiled, 2187 restored from the
+- Build (cb, dune cache allowed): rc 0, wall 2540 s, 15 targets compiled, 2187 restored from the
   cache, 0 failed; the four binaries are the pins (4 PINNED, 0 MISMATCH, 0 MISSING).
 - Print Assumptions of the seven lib/Theorems.v entries (plain_halts, ubsan_halts, ubsan_agrees, asan_halts,
   asan_agrees, asan_ubsan_halts, asan_ubsan_agrees), from a scratch file in the same build, deleted after: seven blocks,
@@ -40,7 +40,7 @@ lib/Theorems.v (the four new entries); the other differences are 131 added files
 
 Scope: lib/, provenance/evidence/ and the seven statement directories of the parent commit (the directories the PR
 takes). Result: 0 blocking rows in provenance/evidence/. In lib/, 32 blocking rows on 14 lines; every one of those
-lines is byte-identical to a line of a released file at ossv/recipes 2fceb489f4aa (`binscan-lines.tsv`: file, line,
+lines is byte-identical to a line of a released file (`binscan-lines.tsv`: file, line,
 the released file that has the same line). No blocking row is in a line written for this unit.
 
 ## 5. Comparison records and the comparison kit 86da41d3ef68

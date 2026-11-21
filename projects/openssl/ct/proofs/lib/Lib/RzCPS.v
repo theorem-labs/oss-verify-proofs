@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -9,6 +10,7 @@ From Stdlib Require Import FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Monad Specs Run.
 From OSSVerify.Proofs.openssl.ct.lib.AS Require Import CatSim ShapeAlg AsanAcct AsanAcctShape.
 From OSSVerify.Proofs.openssl.ct.lib.Lib Require Import Exec.
+From OSSVerify.Proofs.openssl.ct.lib.VCommon.Cfg Require RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 
@@ -261,7 +263,7 @@ Proof.
   exact (lazy_cover_mkH (m_vm_lazy mo) A (m_vm_lazy mo) (incl_refl _) w Hl Hw).
 Qed.
 
-Lemma msteps_CatSim : forall ms ms', Exec.msteps segs ms ms' -> CatSim.msteps segs ms ms'.
+Lemma msteps_CatSim : forall ms ms', Exec.msteps segs ms ms' -> AS.CatSim.msteps segs ms ms'.
 Proof.
   induction 1 as [ms|ms ms1 ms2 [Hsvc Hst] _ IH]; [apply mst_refl|]. eapply mst_step; [exact Hsvc| exact Hst| exact IH].
 Qed.
@@ -440,6 +442,7 @@ Theorem ast_nodeI : forall A Pm PM (I : Type) (i0 : I) (evs : I -> list event)
   AST segtop A Pm PM (mkCfg ms mo) ->
   ms_svc_pending ms = Some x8 ->
   ~ In (bv_unsigned x8) alloc_mark_sysnos ->
+  RomBase.sys_rob segs (mkCfg ms mo) ->   (* LPS 08b1429: the node reads the same over a larger backing *)
   (forall i, syscall_spec (sys_input segs ms x8) mo (Ok (eff i) (mdl i) (evs i))) ->
   (forall r, syscall_spec (sys_input segs ms x8) mo r -> exists i, r = Ok (eff i) (mdl i) (evs i)) ->
   (forall i, vm_same mo (mdl i)) ->
@@ -451,10 +454,10 @@ Theorem ast_nodeI : forall A Pm PM (I : Type) (i0 : I) (evs : I -> list event)
   (forall i c', AST segtop A (K i) (KM i) c' -> realizes segs c' (T i)) ->
   realizes segs (mkCfg ms mo) (t_alt (fun i => t_emit (evs i) (T i))).
 Proof.
-  intros A Pm PM I i0 evs K KM T ms mo x8 eff mdl Hc Hsvc Hna Hsound Hcompl Hvm Hio Hav HK HKM Hms Hk.
+  intros A Pm PM I i0 evs K KM T ms mo x8 eff mdl Hc Hsvc Hna Hrob Hsound Hcompl Hvm Hio Hav HK HKM Hms Hk.
   destruct (ast_node_core A Pm PM I evs K KM ms mo x8 eff mdl Hc Hsvc Hna Hsound Hcompl Hvm Hio Hav HK HKM Hms)
     as (nx & Hnode & Hnx).
-  apply (rz_node segs _ I evs nx T i0 Hnode). intros i. exact (Hk i (nx i) (Hnx i)).
+  apply (rz_node segs _ I evs nx T i0 Hnode Hrob). intros i. exact (Hk i (nx i) (Hnx i)).
 Qed.
 
 End IONode.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (tglob_prog_u and equiv_PU re-proved: minv_init and GI_init take the launch's channel-reader premise (valid_input_either_reader), GI_init also the mmap base and the reserved ledger's room for the vDSO pair (resv_ubsan); GI_init's state is moved to the run's initial model (init_model with the vDSO draw installed) by GI_with_vdso). *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
@@ -22,7 +23,8 @@ Lemma tglob_prog_u : forall rs en inp,
   tglob nstep PhiP (prog usegs rs inp en) (mo0 usegs target_alloc_limit en inp).
 Proof.
   intros rs en inp He Hi. apply tglob_PhiP_intro.
-  - unfold mo0. apply minv_init. destruct en as [sp ? ? ?]. rewrite (valid_entry_either _ _ _ _ _ _ _ _ Hi) in He.
+  - unfold mo0. apply minv_init; [| exact (valid_input_either_reader _ Hi)].
+    destruct en as [sp ? ? ?]. rewrite (valid_entry_either _ _ _ _ _ _ _ _ Hi) in He.
     destruct He as ((Hsp1 & Hsp2 & _) & _). cbn [en_sp]. split; [exact Hsp1| exact Hsp2].
   - destruct en; reflexivity.
   - exact (proj2 (prog_model_ok_ubsan rs en inp He Hi)).
@@ -30,19 +32,19 @@ Proof.
 Qed.
 
 Theorem equiv_PU : forall rs rs' en en' inp,
-  valid_entry (mkImage psegs p_init_pc p_phdrs) en inp -> valid_entry (mkImage usegs u_init_pc u_phdrs) en' inp -> valid_input_either inp ->
-  trace_equiv (tree_traces (prog psegs rs inp en) (mo0 psegs source_alloc_limit en inp))
-              (tree_traces (prog usegs rs' inp en') (mo0 usegs target_alloc_limit en' inp)).
+valid_entry (mkImage psegs p_init_pc p_phdrs) en inp -> valid_entry (mkImage usegs u_init_pc u_phdrs) en' inp -> valid_input_either inp ->
+trace_equiv (tree_traces (prog psegs rs inp en) (mo0 psegs source_alloc_limit en inp))
+(tree_traces (prog usegs rs' inp en') (mo0 usegs target_alloc_limit en' inp)).
 Proof.
-  intros rs rs' en en' inp He He' Hi. apply trees_equiv_of_ttrace.
-  change (prog usegs rs' inp en') with (treeA PasA rs' startup (ps_init (reservedZ usegs) (entry_atop en')) (argv_Z (in_argv inp))).
-  apply (equiv_core_pre PasA nstep PhiP minv rs rs' KP source_alloc_limit lim_p startup startup_startup en inp _ _ He Hi).
-  - pose proof He' as He''. destruct en' as [sp brk0 mbase rnd]. rewrite (valid_entry_either _ _ _ _ _ _ _ _ Hi) in He''.
-    destruct He'' as ((Hsp1 & Hsp2 & _) & Hbrk & _ & _). unfold mo0, entry_atop. cbn [en_brk en_mmap_base en_sp AI KP]. unfold AIP. cbn [map].
-    eapply OWN_weakG; [apply (GI_init usegs brk0 mbase sp target_alloc_limit inp _ Hbrk ltac:(rewrite reserved_top_ubsan; lia) ltac:(split; [exact Hsp1| exact Hsp2]) eq_refl ceil_ubsan)|]. intros _; exact I.
-  - reflexivity.
-  - apply m_fds_mo0.
-  - apply m_fs_mo0.
-  - change (treeA PasA rs' startup (ps_init (reservedZ usegs) (entry_atop en')) (argv_Z (in_argv inp))) with (prog usegs rs' inp en').
-    apply tglob_prog_u; assumption.
+intros rs rs' en en' inp He He' Hi. apply trees_equiv_of_ttrace.
+change (prog usegs rs' inp en') with (treeA PasA rs' startup (ps_init (reservedZ usegs) (entry_atop en')) (argv_Z (in_argv inp))).
+apply (equiv_core_pre PasA nstep PhiP minv rs rs' KP source_alloc_limit lim_p startup startup_startup en inp _ _ He Hi).
+- pose proof He' as He''. destruct en' as [sp brk0 mbase rnd]. rewrite (valid_entry_either _ _ _ _ _ _ _ _ Hi) in He''.
+destruct He'' as ((Hsp1 & Hsp2 & _) & Hbrk & Hmb & _). unfold mo0, entry_atop. cbn [en_brk en_mmap_base en_sp AI KP]. unfold AIP. cbn [map].
+eapply OWN_weakG; [apply GI_with_vdso; apply (GI_init usegs brk0 mbase sp target_alloc_limit inp _ Hbrk ltac:(rewrite reserved_top_ubsan; lia) ltac:(split; [exact Hsp1| exact Hsp2]) eq_refl ceil_ubsan (valid_input_either_reader _ Hi) Hmb resv_ubsan)|]. intros _; exact I.
+- reflexivity.
+- apply m_fds_mo0.
+- apply m_fs_mo0.
+- change (treeA PasA rs' startup (ps_init (reservedZ usegs) (entry_atop en')) (argv_Z (in_argv inp))) with (prog usegs rs' inp en').
+apply tglob_prog_u; assumption.
 Qed.

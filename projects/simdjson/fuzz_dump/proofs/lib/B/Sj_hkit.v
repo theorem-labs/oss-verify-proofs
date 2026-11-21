@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB; taken in part from projects/simdjson/fuzz_ondemand/proofs/lib/B/Sj_hkit.v, lines 105-108, 117. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -100,10 +101,10 @@ Definition fp_client (Σ : rts RT) (lo : Z) (W : list (Z * Z)) : Prop :=
   Forall (fun r => (lo <= fst r /\ snd r <= USTACK_TOP) \/ (exists p k, In (p, k) (rt_live RT Σ) /\ p <= fst r /\ snd r <= p + k)
                    \/ (exists f c, In (f, c) (rt_frames RT Σ) /\ f <= fst r /\ snd r <= f + fs_size c - 8)) W.
 
-Lemma art_fp_client : forall Σ (m m' : mem) lo W, ART RT Σ m -> rt_sp0 RT Σ - STACK_WIN <= lo -> fp_client Σ lo W ->
+Lemma art_fp_client : forall Σ (m m' : mem) lo W, ART RT Σ m -> rt_sp0 RT Σ - STACK_SPAN <= lo -> fp_client Σ lo W ->
   munch W m m' -> wmono bsegs m m' -> ART RT Σ m'.
 Proof using AF.
-  intros Σ m m' lo W HA LO FP MU WM. apply (art_client_write RT AF Σ m m' lo HA LO); [| exact WM].
+  intros Σ m m' lo W HA LO FP MU WM. apply (art_client_write RT AF Σ m m' lo HA ltac:(lia)); [| exact WM].
   intros a Ha. apply MU. clear MU. induction W as [|[wl wh] W IH]; [exact I|]. inversion FP as [|? ? H1 H2]; subst.
   cbn [outside]. split; [| exact (IH H2)]. intros Hin. apply Ha. cbn [fst snd] in H1.
   destruct H1 as [H1|[(p & k & Hp & P1 & P2)|(f & c & Hf & P1 & P2)]].
@@ -112,7 +113,7 @@ Proof using AF.
   - right; right; right; left. exists f, c. split; [exact Hf| lia].
 Qed.
 
-Lemma fobj_munch : forall Σ m m' lo W a n, ART RT Σ m -> rt_sp0 RT Σ - STACK_WIN <= lo -> fp_client Σ lo W ->
+Lemma fobj_munch : forall Σ m m' lo W a n, ART RT Σ m -> rt_sp0 RT Σ - STACK_SPAN <= lo -> fp_client Σ lo W ->
   munch W m m' -> fobj Σ m a n -> fobj Σ m' a n.
 Proof using AF.
   intros Σ m m' lo W a n HA LO FP MU FO.

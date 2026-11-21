@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the run's CONFIG_RSEQ flag RZ added as a section variable and passed to x_stmt; the proofs are unchanged; taken in part from projects/simdjson/fuzz_ondemand/proofs/lib/AS/SumsBothClose.v, lines 43-53, 62. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -38,6 +39,17 @@ Proof. exact asan_popfree_spec. Qed.
 Section AsanNodes.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+(* The run's CONFIG_RSEQ flag as 0 or 1 ([rseq_z]).  [x_stmt] reads it through
+   [node_x ASEGS ASAN_B nx0 RZ x args] (AS/AsanPlanSound.v:2118, AS/AsanPlan.v:33,125); none
+   of the seven branches proved below (the memset/memcpy/miz/istrncpy/popfree
+   summaries, AS/AsanPlan.v:127-134) uses the flag, so the proofs are unchanged.
+   Declared immediately after [LIMIT], the slot AS/AsanPlanSound.v:115 puts it in, so
+   each export discharges as
+   [asan_node_x_sound_X* nx0 LIMIT RZ SINV argH ... FS0] and the consumer
+   AS/AsanStartupB.v:62-71 supplies its own [RZ] there.  A section [Variable] and not a
+   [Let]: nothing here derives the flag, and a literal would pin it when both
+   values are reachable.  Image A's twin is AS/SumsAsanClose.v. *)
+Variable RZ : Z.
 Variable SINV : AX2.env -> (word -> option byte) -> Prop.
 Variable argH : AX2.env -> word -> bool.
 Hypothesis argH_high : forall E (a : word), argH E a = true -> AP.CEIL <= bv_unsigned a.
@@ -46,7 +58,7 @@ Hypothesis SINV_frame : forall E M M', (forall a, argH E a = true -> M' a = M a)
 Hypothesis SINV_agree : forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E' M.
 Variable FS0 : Fs.Fs.
 
-#[local] Notation XSTMT := (APS.x_stmt ASEGS ASAN_B nx0 LIMIT SINV argH FS0).
+#[local] Notation XSTMT := (APS.x_stmt ASEGS ASAN_B nx0 LIMIT RZ SINV argH FS0).
 
 #[local] Ltac close_with NODE SPEC :=
   eapply NODE; try eassumption;

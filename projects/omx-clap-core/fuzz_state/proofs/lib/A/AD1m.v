@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AD1m.v, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: the library contract carries the library invariant LI (A/ACfn.v tfib_lib_contract_xI), passed through to lib_site_x (ported from: a working branch 4e5e8a3dde1 A/AD1m.v). *)
+(* Modified by Theorem Labs, 2026-10: the library contract carries the library invariant LI (A/ACfn.v tfib_lib_contract_xI), passed through to lib_site_x (ported from: a working branch A/AD1m.v). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

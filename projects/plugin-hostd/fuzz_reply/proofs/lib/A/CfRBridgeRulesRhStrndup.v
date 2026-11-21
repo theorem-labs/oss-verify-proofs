@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/CfRBridgeRulesFreeRh.v, with its module names changed; 19 of its 67 lines of code are new or changed and 390 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* plugin-hostd/fuzz_reply.asan, image A: top_x's strndup rule at route R, at its room record RP_cf and the KF meter
    (a Theorem Labs lane R, CfRBridgeRules.v Section TOPK at R, the strndup part; new file). Rule 24: proves no function
    (kind: bridge lemma between existing contract forms).
    ASTRNDUP_x_kf_rh is CfRStrndup.v's ASTRNDUP_x_kf (W_journal_x.v astrndup_cf_rule_c_x at top_x's instance and the
    strndup pc of the listing) lifted to R := wle' segs RZ_cf by CfRBridgeRulesRh.astrndup_cf_rule_c_xR_lift_xs over
    YGcallcf's ARxs (strndup crosses no re-hide; top_x's ARX lies in ARxs, CfRBridgeRulesRhTop.ARX_in_xs_rh). At CfF1's A
-   rule fit (fu2-mp 9118a6a96818): Section TOPK_rh is CfRBridgeRules.v Section TOPK's header verbatim (top_x's ARX
+   rule fit (fu2-mp): Section TOPK_rh is CfRBridgeRules.v Section TOPK's header verbatim (top_x's ARX
    with arodata_ok_cf on the memory, MT_ok, HRS, HER), as CfRBridgeRulesRhTop.v's.
    Stated against the names of CfRStrndup.v and CfRBridgeRulesRhTop.v (through it, CfRBridgeRules.v). Numeral 0x427b8
    is CfRStrndup.v's text. No address. *)
@@ -57,7 +58,7 @@ Hypothesis errno_low : api_env segs TfibB.
 Local Abbreviation ARX := (fun ly S Hp W mem md => ARcf (ci := CfImg_A) (cp := CfParams_reply) segs TfibB ly S Hp W mem md /\ Hp = [] /\
     @arodata_ok_cf CfImg_A segs TfibB mem).
 (* FIT CHECK of the relation: the rules' ARX is top_x's relation after W1, whose text is quoted
-   here VERBATIM from commit b27e847023f8, lib/A/W_LLVMFuzzerTestOneInput_top_x.v:171-172
+   here VERBATIM from lib/A/W_LLVMFuzzerTestOneInput_top_x.v:172-173
    (Definition ARX's body); it closes by reflexivity only if the two are the same term. *)
 Goal ARX = (
   fun ly S Hp W mem md => ARcf (ci := CfImg_A) (cp := CfParams_reply) segs TfibB ly S Hp W mem md /\ Hp = [] /\
@@ -68,14 +69,14 @@ Variable nsec_cf : astate -> Z.
 Hypothesis nsec_malloc_cf : forall n tr s,
   cfx_ipost (malloc_cf n tr s) (fun r => nsec_cf (snd r) <= nsec_cf s + (if from_primary n then 0 else 1)).
 Hypothesis nsec_free_cf : forall p tr s, cfx_ipost (free_cf p tr s) (fun r => nsec_cf (snd r) <= nsec_cf s).
-(* MT_sec's defining equations, its literal text (ReplyKfMeter.v at a968c6e24aec: mkAMeter (fun s m => nsec s + m <= KMAX)
+(* MT_sec's defining equations, its literal text (ReplyKfMeter.v: mkAMeter (fun s m => nsec s + m <= KMAX)
    (fun s s' m => nsec s' <= nsec s + m) (fun n => if 64512 <? n then 1 else 0) 0); each holds by reflexivity at
    MT := MT_sec nsec_cf cf_kmax.  mo_ok is not used by these rules' posts. *)
 Hypothesis MT_malloc : forall n, mo_malloc MT n = if 64512 <? n then 1 else 0.
 Hypothesis MT_free : mo_free MT = 0.
 Hypothesis MT_le : forall s s' m, mo_le MT s s' m <-> nsec_cf s' <= nsec_cf s + m.
-(* MT_sec's fourth defining equation, its mo_ok (MT_ok, the same text route R's TOPK_rh takes, commit
-   07260ccc92a1 lib/A/CfRBridgeRulesRhTop.v:267): at MT := MT_sec YGcfNames.nsec_cf cf_kmax it holds by iff_refl. *)
+(* MT_sec's fourth defining equation, its mo_ok (MT_ok, the same text route R's TOPK_rh takes,
+    lib/A/CfRBridgeRulesRhTop.v:267): at MT := MT_sec YGcfNames.nsec_cf cf_kmax it holds by iff_refl. *)
 Hypothesis MT_ok : forall s m, mo_ok MT s m <-> YGcfNames.nsec_cf s + m <= cf_kmax.
 (* The unit's two image rows (Section B's HRS / HER). *)
 Hypothesis HRS : relro_seg_t segs.

@@ -1,26 +1,26 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Reusable/YCbq.v aj_intrin_at at 28fdc66416e (the call of
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Reusable/YCbq.v aj_intrin_at (the call of
    __asan_memcpy in the journal) restated as hd_memcpy with the wrapper's same_but_materialized kept in the post as
-   same_io, and proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v at 9e73ed57244 (m2_img_zone, m2_cstr_kept, the .rodata
+   same_io, and proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v (m2_img_zone, m2_cstr_kept, the .rodata
    zone of m2_szone) restated as hd_img_zone / hd_cstr_kept / hd_szone for the .rodata range only; the rest of the
    file is new. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_role/lib/A/RPgScanHead.v, with its module paths and module names changed; 428 of its 517 lines of code are new or changed and 925 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_role/lib/A/RPgW6cTail.v, with its addresses and numbers changed; 228 of its 404 lines of code are new or changed and 341 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6cTail.v at 4c23b042570d for reac-pw/fuzz_rate's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6cTail.v for reac-pw/fuzz_rate's
    image A: module paths changed; the pcs, the code table and the statements move to lib/A/RtPgW6cBase.v (rate's
    pcs: the memcpy 0x51860 returning to the `j J` at 0x81cdc, the memset 0x51cfc returning to 0x81c00); rate's join
    keeps the cursor in s9 and what is left in s8 (registers, no frame cell) and s6 = the shadow address of &pp->len,
    so the memset tail is `mv s8,s6; ld s6,0xe8(s1); j J` and the join's post names s6, s8, s9 and no cell; the
    intrinsic adapter is RtPgSteps.rts_intrin_at; role's RPgMem / RPgCfgChanges names become rate's RtPgMem /
    RtPgSteps ones; the frame's shadow flags are rate's seven. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6cTail.v at cb9cdc023f20; image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6cTail.v; image B
    (fuzz_rate.asan-ubsan): the statements are lib/AU/RtPgW6cBaseB.v's; the intrinsics are __asan_memcpy 0x518b8
    (return 0x81f40) and __asan_memset 0x51d54 (return 0x81d84) by RtPgStepsB.rtsb_intrin_at; the pod is e62 =
    F + 0x210 (destination F + 0x218, its shadow from rsb_PJ by RtPgMemB.rtmb_B_ra_e62); the frame for locals is
    class 4 (1024 bytes, 128 shadow bytes, write rights by RtPgStepsB.rtsb_awr_fobj); both tails read s2 back from the
    cell R + 0x158 (one region at s1, no write window), and the join's post names t1, s2, s6 and s10. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgW6cTailB.v at 05426fac6916 for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgW6cTailB.v for
    reac-pw/fuzz_role's image B (fuzz_role.asan-ubsan): module paths changed (lib/AU/Img0.rsegs, lib/A/RPgBase and
    RPgCSpec, lib/AU/RPgMem / RPgSteps / RPgSeg names); the statements are lib/AU/RPgW6cBase.v's; the intrinsics are
    __asan_memcpy 0x5116c (return 0x81738) and __asan_memset 0x51608 (return 0x81584) by RPgSteps.rl_intrin_at; the
@@ -28,6 +28,7 @@
    ld s6,0x130(s1); j 0x81740; ld a5,0x140(s1); j J`, so the tails read pp (and the memset tail pp + 0x4000) from
    the real frame's cells [R+0x140] and [R+0x130] (one region at s1 each, no write window, the values extra atoms 32
    and 33), and the join's post names t1, a3, s6 and a5; the real frame is 0x200 bytes. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_role image B (fuzz_role.asan-ubsan, pinned sha256
    b255d4935da5af137a3967dbe33380ea43be8e78bfe05d1e356e0a2be8a69ff0; every address measured on the unstripped twin
    dc791783f32962615e18a5f5cffae758ba56eb5dc87f70913c3579b101b4406a, same loaded bytes): the two calls that end

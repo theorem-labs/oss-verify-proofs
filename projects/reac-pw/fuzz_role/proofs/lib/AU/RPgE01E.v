@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgX01.v at 9bffaa83ff88 (the register readers rx_reg_atom / rx_reg_lit and the tactics rx_atom / rx_lit, kept as e01e_reg_atom / e01e_reg_lit / e01e_atom / e01e_lit), proofs/libreac/fuzz_boxreg/lib/A/Prog/BoxLxEntry.v at 09c6822d8861 (eb_land_m32 and eb_denot_and_m32, kept as e01e_land_m32 and e01e_denot_and_m32; the plan of gb_entry_a) and proofs/libreac/fuzz_boxreg/lib/A/Prog/BoxFrame.v at 09c6822d8861 (val_mem_of_rd32, kept as e01e_val_mem_rd32) [Apache-2.0 OR MIT, used under Apache-2.0]; module paths changed to reac_pw.fuzz_rate, the walk of part ENT of reac-pw/fuzz_rate's segment S_E01 below is new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgE01E.v at ba6d82f81177 for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgX01.v (the register readers rx_reg_atom / rx_reg_lit and the tactics rx_atom / rx_lit, kept as e01e_reg_atom / e01e_reg_lit / e01e_atom / e01e_lit), proofs/libreac/fuzz_boxreg/lib/A/Prog/BoxLxEntry.v (eb_land_m32 and eb_denot_and_m32, kept as e01e_land_m32 and e01e_denot_and_m32; the plan of gb_entry_a) and proofs/libreac/fuzz_boxreg/lib/A/Prog/BoxFrame.v (val_mem_of_rd32, kept as e01e_val_mem_rd32) [Apache-2.0 OR MIT, used under Apache-2.0]; module paths changed to reac_pw.fuzz_rate, the walk of part ENT of reac-pw/fuzz_rate's segment S_E01 below is new. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgE01E.v for image B
    (fuzz_rate.asan-ubsan): image B's code of part ENT (the frame 0x220, the GOT words 0x9c1c8 / 0x9c170 and their
    cells 0xa4f40 / 0xa4f38, s2 = p, s4 = the shadow offset), the class-4 call __asan_stack_malloc_4 (its flag pointer
    word at F + 0x3f8), the harness records of lib/AU (rhb_ / rsb_ / rtsb_ names), the names e01e_ renamed e01eb_. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgE01EB.v at 48db065d2b9c; for reac-pw/fuzz_role
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgE01EB.v; for reac-pw/fuzz_role
    image B (fuzz_role.asan-ubsan): module paths fuzz_rate -> fuzz_role; role B's code of part ENT (the frame 0x200,
    the GOT words 0x9ab28 / 0x9aad0 and their cells 0xa3680 / 0xa3678, s2 = n, s5 = p, s11 = the shadow offset, the
    frame entry 0x3cc74 with ra 0x80094); the harness records of lib/AU/RPgHarn.v and the kit of lib/AU/RPgSteps.v
    (rh_ / rl_ names); the stack bound 0x210; the fake-stack progress law derived from the model laws. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_role image B (fuzz_role.asan-ubsan, pinned sha256
    b255d4935da5af137a3967dbe33380ea43be8e78bfe05d1e356e0a2be8a69ff0; every address measured on the unstripped twin
    dc791783f32962615e18a5f5cffae758ba56eb5dc87f70913c3579b101b4406a, same loaded bytes): PART ENT of segment S_E01 of

@@ -116,8 +116,8 @@ Proof.
   rewrite E. exact (Hro a Ha).
 Qed.
 
-(* #102: struct text gains `int failed` at offset 24 (24 -> 32 bytes); tx_put_c's text_rec (cold/h-rw-pre-4-rw102-txp
-   f441f17d4895) = the three words + t + 28 <= 2 ^ 64 + failed = 0 (4 bytes at t + 24). *)
+(* #102: struct text gains `int failed` at offset 24 (24 -> 32 bytes); tx_put_c's text_rec
+    = the three words + t + 28 <= 2 ^ 64 + failed = 0 (4 bytes at t + 24). *)
 Lemma ra_rec : forall m t b len cap,
   LM.bytes_at (ms_segs B) m t (LM.le8 (Z_to_bv 64 b)) ->
   LM.bytes_at (ms_segs B) m (t + 8) (LM.le8 (Z_to_bv 64 len)) ->
@@ -403,7 +403,7 @@ Proof.
     pose proof (ra_blow L A mem md (a - 16) (n + 16) MRc Hblk). lia.
 Qed.
 
-(* #102 rtt_regs (RttBase at cold/h-rw-pre-4-rw102-rtt 133613731c31): sp = S-112, s0 = copy, s1 = regs0 a0,
+(* #102 rtt_regs (RttBase): sp = S-112, s0 = copy, s1 = regs0 a0,
    s2..s5 = s2v..s5v, gp / tp kept, s6..s11 kept. *)
 Lemma ra_regs_pres : forall regs0 regs1 regs2 copy s2v s3v s4v s5v,
   rtt_regs regs0 regs1 copy s2v s3v s4v s5v -> regs_preserved regs1 regs2 ->

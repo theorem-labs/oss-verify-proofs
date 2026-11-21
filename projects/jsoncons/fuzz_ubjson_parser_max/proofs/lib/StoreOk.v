@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: decoded statements written out plainly; wrap_mem_window_defined and store_ok_wrap_window re-stated over launch input, mmap base and entry draw, with new stack-window bound lemmas and store_ok_wrap_window_valid, as in fuzz_bigint's copy; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/StoreOk.v, 214 lines within its lines 21-523. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -9,15 +10,16 @@ From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require Import PropExe
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Local Open Scope Z_scope.
-From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require TCodec.
-Ltac2 tcn__StoreOk () := ([""; "Corelib.Init.Datatypes."; "Corelib.Init.Logic."; "Corelib.Numbers.BinNums."; "LinuxProcessSemantics.LinuxProcessSem.BvBase."; "LinuxProcessSemantics.LinuxProcessSem.MemImageType."; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics."; "LinuxProcessSemantics.LinuxProcessSem.Run."; "LinuxProcessSemantics.LinuxProcessSem.StackLayout."; "LinuxProcessSemantics.LinuxProcessSem.State."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AllocSim."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.CatExec."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Footprint."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.PropExec."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.StoreOk."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.StreamSim."; "Stdlib.ZArith.BinInt.Z."; "stdpp.bitvector.definitions."], [["1None"; "1Some"; "1bool"; "1list"; "1nat"; "1nil"; "1option"; "1prod"; "1true"; "2and"; "2eq"; "2ex"; "2not"; "3Z"; "4word_to_nat"; "5PhdrInfo"]; ["5Segment"; "5seg_base"; "5seg_bytes"; "5seg_writable"; "6find_segment"; "6machine_state"; "6ms_mem"; "6ms_writable_byte"; "6segment_byte_at"; "6store_ok"; "6write_to_mem"; "6wview"; "7apply_writes"; "7apply_zeros"; "7zeros_cover"; "8EntryDraw"]; ["9read_bytes_aux"; "9read_bytes_map"; "9stack_max_size"; "0N"; ":zmem"; ";wbytes"; "<covers"; "<heap_rg"; "=wrap_mem"; ">mem_grows"; ">store_grant_ok"; "?wseg_ok"; "@add"; "@le"; "@lt"; "@of_N"]; ["@of_nat"; "@pow"; "@sub"; "@to_N"; "0a"; "0argv"; "0b"; "0base"; "0bs"; "0buf"; "0cnt"; "0cur"; "0envp"; "0hi"; "0hw"; "0l"]; ["0lo"; "0logical"; "0m"; "0m'"; "0m1"; "0m2"; "0m3"; "0ms"; "0n"; "0ph"; "0physical"; "0rnd"; "0seg"; "0segs"; "0sp"; "Abv"]; ["Abv_unsigned"; "0uid"; "0w"; "0ws"; "0x"; "0zs"]]).
 Definition mem_grows (m m' : word -> option byte) : Prop :=
 forall x, m x <> None -> m' x <> None.
-Lemma mem_grows_refl : ltac2:(TCodec.tc2 tcn__StoreOk "<'R?yR0%211'6y8%511%311p051&Q9r1%2211pT641").
+Lemma mem_grows_refl : forall m, mem_grows m m.
 Proof. intros m x H. exact H. Qed.
-Lemma mem_grows_trans : ltac2:(TCodec.tc2 tcn__StoreOk "C'R?yR0%211'6y8%511%311p051&Q9r3r2%3221r5%5214p031p041pT>91pT<:1pT:;1").
+Lemma mem_grows_trans : forall m1 m2 m3,
+mem_grows m1 m2 -> mem_grows m2 m3 -> mem_grows m1 m3.
 Proof. intros m1 m2 m3 H12 H23 x Hx. apply H23, H12, Hx. Qed.
-Lemma wview_grows : ltac2:(TCodec.tc2 tcn__StoreOk "Q3'3'@%211'R?yR0%211'6y8%511%311p051&Q9r3r2%3221&<':&Kr5r4%33217(0%11>%73>31%911r6%9317>%;3B15%=11p051p0@1pU:J1pT8F1pT6G1pTLQ01").
+Lemma wview_grows : forall segs m m' x,
+mem_grows m m' ->
+wview segs m x <> None -> wview segs m' x <> None.
 Proof.
 intros segs m m' x Hg Hx. unfold wview in *.
 destruct (m' x) as [b'|] eqn:Hm'; [discriminate|].
@@ -25,7 +27,9 @@ destruct (m x) as [b|] eqn:Hm.
 - exfalso. apply (Hg x); [rewrite Hm; discriminate|exact Hm'].
 - exact Hx.
 Qed.
-Lemma store_ok_mono : ltac2:(TCodec.tc2 tcn__StoreOk "Q3'3'@%211'4'R?yR0%211'6y8%511%311p051&Q9r3r2%3221':'2&Ir6r4r5%443281(8%83721r7%8416=7%;3:14p041p0>1pS:H1pT8D1pT6E1pTBN1pTLQ01").
+Lemma store_ok_mono : forall segs n m m' a,
+mem_grows m m' ->
+store_ok segs m a n = true -> store_ok segs m' a n = true.
 Proof.
 intros segs n; induction n as [|n IH]; intros m m' a Hg H; [reflexivity|].
 cbn [store_ok] in *.
@@ -34,37 +38,42 @@ destruct (wview segs m' a) as [b'|] eqn:Hv'.
 - apply (IH m m'); assumption.
 - exfalso. apply (wview_grows segs m m' a Hg); [rewrite Hv; discriminate|exact Hv'].
 Qed.
-Lemma wbytes_grows : ltac2:(TCodec.tc2 tcn__StoreOk "D'3'R?y8%211%411yR0%511'6%115p031&Q9r2&Q5r1r3%33421%6251pS:;1pT691pSB?1").
+Lemma wbytes_grows : forall bs m a, mem_grows m (wbytes m a bs).
 Proof.
 induction bs as [|b rest IH]; intros m a x Hx; [exact Hx|].
 cbn [wbytes]. apply IH.
 destruct (bv_eqb x a); [discriminate|exact Hx].
 Qed.
-Lemma apply_zeros_grows : ltac2:(TCodec.tc2 tcn__StoreOk "D'3'7'R?yR0%211%4211%611'6y8%711%311p071&Q9r1&Mr2%2231%5241pT671pU<=1").
+Lemma apply_zeros_grows : forall zs m, mem_grows m (apply_zeros m zs).
 Proof.
 intros zs m x Hx. unfold apply_zeros.
 destruct zs as [|z zs']; [exact Hx|].
 destruct (zeros_cover (z :: zs') x); [discriminate|exact Hx].
 Qed.
-Lemma zmem_grows : ltac2:(TCodec.tc2 tcn__StoreOk "B'R?yR0%211'6y8%511%311p051&Q9r3&Q4r2r1%33421%6251pT0=1pS>>1pT6:1").
+Lemma zmem_grows : forall m b l, mem_grows m (zmem m b l).
 Proof.
 intros m b l x Hx. unfold zmem.
 destruct (Z.leb _ _ && Z.ltb _ _)%bool; [discriminate|exact Hx].
 Qed.
-Lemma write_to_mem_grows : ltac2:(TCodec.tc2 tcn__StoreOk "D'3'R?y8%211%411yR0%511'6%115p031&Q9r2&Jr1r3%33421%6251pS:;1pT691pSB?1").
+Lemma write_to_mem_grows : forall bs m a, mem_grows m (write_to_mem m a bs).
 Proof.
 induction bs as [|b rest IH]; intros m a x Hx; [exact Hx|].
 cbn [write_to_mem]. apply IH.
 destruct (bv_eqb x a); [discriminate|exact Hx].
 Qed.
-Lemma apply_writes_grows : ltac2:(TCodec.tc2 tcn__StoreOk "E'3'7'R?yR0%211y8%411%711%7241%911'6%115p081&Q9r1&Lr2%2231%5241pT671pU8;1").
+Lemma apply_writes_grows : forall ws m, mem_grows m (apply_writes m ws).
 Proof.
 induction ws as [|w ws' IH]; intros m x Hx.
 - exact Hx.
 - destruct w as [a bs]. cbn [apply_writes].
 apply IH. apply write_to_mem_grows. exact Hx.
 Qed.
-Lemma store_ok_of_all : ltac2:(TCodec.tc2 tcn__StoreOk "QL'3'@%211'4'R?yR0%211'6y8%511%311p051&Q=&Q<&R@r1%22;1&Q@r3%211%7241&QA+2+R0%3221%=251'9%=2F9%@21<&Q>r5%>11%C251%42A1%8261&<':&Kr7r2%332:1(0%11Q1%73Q131%911p0;1pU:Q81'2&Ir6r4%3421Q1E(8%A3621p081p0N1pS:QB1pT6Q>1pTBQG1pTLQI1").
+Lemma store_ok_of_all : forall segs n m a,
+bv_unsigned a + Z.of_nat n <= 2 ^ 64 ->
+(forall x : word,
+bv_unsigned a <= bv_unsigned x < bv_unsigned a + Z.of_nat n ->
+wview segs m x <> None) ->
+store_ok segs m a n = true.
 Proof.
 intros segs n; induction n as [|n IH]; intros m a Hnw Hall; [reflexivity|].
 cbn [store_ok].
@@ -79,24 +88,171 @@ apply IH.
 - intros x Hx. rewrite Hu1 in Hx. apply Hall.
 rewrite Nat2Z.inj_succ. lia.
 Qed.
-Lemma wrap_mem_window_defined : ltac2:(TCodec.tc2 tcn__StoreOk "QB'?'R?yR0%211'3y8%511%311%411'O&Q=&QB&R@r7%22<1&Q2%5221r4%62@1%9231&Q>r5%:2D1r8%<2F1%5231&<':'6%11G&Q8r:r9r3r6%5843<F>B21(0%11O%;3931%=11p0?1p0F1pTHQ11pSNQ81pU4Q91pU:Q:1pSJQ61pS<Q71pTNQ=1pTDQA1").
+Lemma wrap_mem_window_defined :
+forall inp mbase ph entry sp (x : word) draw,
+stack_window_lo (in_kernel inp) mbase draw <= bv_unsigned x ->
+bv_unsigned x < bv_unsigned sp ->
+wrap_mem inp mbase ph entry sp draw x <> None.
 Proof.
-intros ph sp argv envp x uid hw rnd Hlo Hhi. unfold wrap_mem.
-destruct (stack_to_mem sp (entry_stack_image ph sp argv envp uid hw rnd) x) as [b|];
-[discriminate|].
+intros inp mbase ph entry sp x draw Hlo Hhi. unfold wrap_mem.
+destruct (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw) x)
+as [b|]; [discriminate|].
 rewrite (proj2 (Z.leb_le _ _) Hlo), (proj2 (Z.ltb_lt _ _) Hhi).
 cbn. discriminate.
 Qed.
-Lemma store_ok_wrap_window : ltac2:(TCodec.tc2 tcn__StoreOk "QJ'3'@%211'?'R?yR0%211y8%411%911%:11'4'O&Q=&QB&R@r8%22<1&Q2%5221r5%62@1%9231&Q<r6%:2D1&Q@%117%5231r9%?2I1%B231':'2&Ir<&Q8r;r:r4r3%5743<IE21r7%94821C(8%=3<21p0?1p0I1pTHQ41pSNQ;1pU4Q<1pTBQ81pS:Q>1pSJQ;1pS<Q<1pTNQA1pTDQE1pTLQG1").
+Lemma store_ok_wrap_window :
+forall segs inp mbase ph entry sp a n draw,
+stack_window_lo (in_kernel inp) mbase draw <= bv_unsigned a ->
+bv_unsigned a + Z.of_nat n <= bv_unsigned sp ->
+store_ok segs (wrap_mem inp mbase ph entry sp draw) a n = true.
 Proof.
-intros segs ph sp argv envp a n uid hw rnd Hlo Hhi.
+intros segs inp mbase ph entry sp a n draw Hlo Hhi.
 assert (Hsp : bv_unsigned sp < 2 ^ 64) by apply bv_unsigned_in_range.
 apply store_ok_of_all; [lia|].
 intros x Hx. unfold wview.
-destruct (wrap_mem ph sp argv envp uid hw rnd x) as [b|] eqn:Hw; [discriminate|].
+destruct (wrap_mem inp mbase ph entry sp draw x) as [b|] eqn:Hw;
+[discriminate|].
 exfalso. revert Hw. apply wrap_mem_window_defined; lia.
 Qed.
-Lemma store_ok_zeros_hit : ltac2:(TCodec.tc2 tcn__StoreOk "R6'3'@%211'R?yR0%211'6y8%511%311p051'7%1277%=11'4&<':r3(5%117%43731%611&Q=&Q<&R@%12E8&Q@r2%211%6241&QA+2+R0%3221%<251'9r5%=2Q11r1%?2Q31%B231&Q>r4%A11%E271%4261%;261'2&Nr7%221G(8%Q43521p071pU:QA1&Ir8&Mr6%22:1%5441HB%Q=3>1:p081p0M1p0Q;1pTBQC1pS:QM1pU<QF1pT6QJ1pTLR31").
+Definition stack_window_reach : Z := 2244095.
+Definition stack_window_depth : Z := stack_max_size - stack_window_reach.
+Lemma stack_window_depth_val : stack_window_depth = 6144513.
+Proof. vm_compute. reflexivity. Qed.
+Lemma page_round_up_Z_fixed : forall n,
+(n mod page_size = 0)%Z -> page_round_up_Z n = n.
+Proof.
+intros n Hn. unfold page_round_up_Z, page_size in *.
+apply Z.mod_divide in Hn; [|lia]. destruct Hn as [k Hk]. subst n.
+replace (k * 4096 + 4096 - 1)%Z with (k * 4096 + 4095)%Z by lia.
+rewrite Z.div_add_l by lia.
+replace (4095 / 4096)%Z with 0%Z by reflexivity. lia.
+Qed.
+Lemma mmap_gap_sv48 : forall kb,
+mmap_gap Sv48 kb
+= (let g := (stack_max_size + (stack_guard_gap_bytes kb
++ if kb_aslr kb then stack_rnd_max else 0))%Z in
+if (g <? mmap_min_gap)%Z then mmap_min_gap else g).
+Proof.
+intros kb. pose proof (stack_guard_gap_bytes_bounds kb) as Hgg.
+unfold mmap_gap. cbv zeta.
+rewrite Z.mod_small
+by (unfold two_pow_64, stack_max_size, stack_rnd_max;
+destruct (kb_aslr kb); lia).
+assert (Hmax : mmap_max_gap Sv48 = 117281240296105%Z)
+by (vm_compute; reflexivity).
+rewrite !Hmax.
+unfold mmap_min_gap in *. rewrite !Z.gtb_ltb.
+destruct (kb_aslr kb); cbv beta iota delta [andb];
+[ destruct (stack_max_size
+<? stack_max_size + (stack_guard_gap_bytes kb + stack_rnd_max))%Z
+eqn:Ein
+| destruct (stack_max_size
+<? stack_max_size + (stack_guard_gap_bytes kb + 0))%Z
+eqn:Ein ];
+try apply Z.ltb_lt in Ein; try apply Z.ltb_ge in Ein;
+cbv beta iota delta [andb];
+repeat (match goal with
+| |- context [(?x <? ?y)%Z] =>
+let E := fresh "E" in destruct (x <? y)%Z eqn:E;
+[ apply Z.ltb_lt in E | apply Z.ltb_ge in E ]
+end;
+cbv beta iota delta [andb]);
+unfold stack_max_size, stack_rnd_max in *; lia.
+Qed.
+Lemma mmap_gap_sv48_mod : forall kb,
+(mmap_gap Sv48 kb mod page_size = 0)%Z.
+Proof.
+intros kb.
+assert (H4096 : forall x : Z, ((4096 * x) mod 4096 = 0)%Z)
+by (intro x; rewrite Z.mul_comm; apply Z_mod_mult).
+rewrite mmap_gap_sv48. cbv zeta.
+unfold stack_guard_gap_bytes, mmap_min_gap, stack_max_size,
+stack_rnd_max, page_size.
+destruct (_ <? _)%Z;
+[ replace (128 * 1024 * 1024)%Z with (4096 * 32768)%Z by reflexivity;
+apply H4096 |].
+destruct (kb_aslr kb);
+[ replace (8 * 1024 * 1024
++ (4096 * stack_guard_gap_pages kb + 1073737728))%Z
+with (4096 * (264191 + stack_guard_gap_pages kb))%Z by lia
+| replace (8 * 1024 * 1024 + (4096 * stack_guard_gap_pages kb + 0))%Z
+with (4096 * (2048 + stack_guard_gap_pages kb))%Z by lia ];
+apply H4096.
+Qed.
+Lemma stack_window_lo_ge_sp : forall inp (sp brk0 mbase : word) draw,
+entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase draw) inp ->
+(bv_unsigned sp - stack_max_size
+<= stack_window_lo (in_kernel inp) mbase draw)%Z.
+Proof.
+intros inp sp brk0 mbase draw (_ & Hsp & _).
+pose proof (launch_sp_le_top inp (ed_top draw) sp Hsp).
+unfold stack_window_lo.
+apply Z.le_trans with (bv_unsigned (ed_top draw) - stack_max_size)%Z;
+[lia | apply Z.le_max_l].
+Qed.
+Lemma launch_base_gap_le : forall kb mbase,
+valid_launch_base Sv48 kb mbase ->
+(bv_unsigned mbase + stack_guard_gap_bytes kb
+<= va_stack_top Sv48
+- (if kb_aslr kb then 0x407ff000 else 8 * 1024 * 1024))%Z.
+Proof.
+intros kb mbase (r & Hr & _ & _ & Heq).
+pose proof (stack_guard_gap_bytes_bounds kb) as Hgg.
+rewrite Heq. unfold mmap_base_of.
+assert (Hdiv : (page_size
+| va_stack_top Sv48 - mmap_gap Sv48 kb - page_size * r)%Z).
+{ apply Z.divide_sub_r; [apply Z.divide_sub_r|].
+- exists 34359738368%Z. vm_compute. reflexivity.
+- apply Z.mod_divide; [unfold page_size; lia|]. apply mmap_gap_sv48_mod.
+- exists r. unfold page_size. lia. }
+rewrite page_round_up_Z_fixed
+by (apply Z.mod_divide; [unfold page_size; lia | exact Hdiv]).
+rewrite mmap_gap_sv48. cbv zeta.
+unfold mmap_min_gap, va_stack_top, sp_window_hi, stack_max_size,
+stack_rnd_max, page_size in *.
+destruct (kb_aslr kb); cbv beta iota;
+repeat (match goal with
+| |- context [(?x <? ?y)%Z] =>
+let E := fresh "E" in destruct (x <? y)%Z eqn:E;
+[ apply Z.ltb_lt in E | apply Z.ltb_ge in E ]
+end;
+cbv beta iota);
+lia.
+Qed.
+Lemma stack_window_lo_valid : forall inp (sp brk0 mbase : word) draw,
+valid_launch inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase draw) inp ->
+stack_window_lo (in_kernel inp) mbase draw
+<= bv_unsigned sp + stack_window_reach - stack_max_size.
+Proof.
+intros inp sp brk0 mbase draw Hlaunch (Htop & Hsp & Hbase).
+pose proof (launch_top_minus_sp inp (ed_top draw) sp Hlaunch Hsp) as Hd.
+pose proof (launch_base_gap_le (in_kernel inp) mbase Hbase) as Hg.
+destruct Htop as (_ & Hhi & Hlo).
+unfold stack_window_lo, stack_window_reach, stack_max_size,
+va_stack_top, sp_window_hi, stack_rnd_max, page_size in *.
+destruct (kb_aslr (in_kernel inp)); cbv beta iota in Hg, Hlo;
+apply Z.max_lub; lia.
+Qed.
+Lemma store_ok_wrap_window_valid :
+forall segs inp mbase ph entry (sp brk0 : word) a n draw,
+valid_launch inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase draw) inp ->
+bv_unsigned sp + stack_window_reach - stack_max_size <= bv_unsigned a ->
+bv_unsigned a + Z.of_nat n <= bv_unsigned sp ->
+store_ok segs (wrap_mem inp mbase ph entry sp draw) a n = true.
+Proof.
+intros segs inp mbase ph entry sp brk0 a n draw Hvl Hlau Hlo Hhi.
+apply store_ok_wrap_window; [|exact Hhi].
+pose proof (stack_window_lo_valid inp sp brk0 mbase draw Hvl Hlau). lia.
+Qed.
+Lemma store_ok_zeros_hit : forall segs m zs a n,
+zs <> [] ->
+bv_unsigned a + Z.of_nat n <= 2 ^ 64 ->
+(forall x : word,
+bv_unsigned a <= bv_unsigned x < bv_unsigned a + Z.of_nat n ->
+zeros_cover zs x = true) ->
+store_ok segs (apply_zeros m zs) a n = true.
 Proof.
 intros segs m zs a n Hne Hnw Hcov.
 apply store_ok_of_all; [exact Hnw|].
@@ -104,7 +260,11 @@ intros x Hx. unfold wview, apply_zeros.
 destruct zs as [|z zs']; [contradiction|].
 rewrite (Hcov x Hx). discriminate.
 Qed.
-Lemma store_ok_zmem : ltac2:(TCodec.tc2 tcn__StoreOk "QK'3'@%211'R?yR0%211'6y8%511%311p051'4&Q=&Q<&R@r2%22<1&Q@r1%211%7241&QA+2+R0%3221%=251r5%=2G1r3%?2I1%B231r4%B2L1%@15%E221r6%F2Q01%H21:%J241':'2&Ir9&Q4r8r7%3321;%6451E@(8%:3921p0<1p0E1p0K1pTBQ:1pS:QA1pT0QB1pS>QC1pT6Q?1pTLQH1").
+Lemma store_ok_zmem : forall segs m (b l a : word) (n : nat),
+bv_unsigned a + Z.of_nat n <= 2 ^ 64 ->
+bv_unsigned b <= bv_unsigned a ->
+bv_unsigned a + Z.of_nat n <= bv_unsigned b + bv_unsigned l ->
+store_ok segs (zmem m b l) a n = true.
 Proof.
 intros segs m b l a n Hnw Hlo Hhi.
 apply store_ok_of_all; [exact Hnw|].
@@ -119,21 +279,36 @@ forall (a : word) (n : nat),
 bv_unsigned b <= bv_unsigned a ->
 bv_unsigned a + Z.of_nat n <= bv_unsigned b + bv_unsigned l ->
 store_ok segs m a n = true.
-Lemma store_grant_zmem : ltac2:(TCodec.tc2 tcn__StoreOk "Q4'3'@%211'R?yR0%211'6y8%511%311p051&Q=&Q<&R@r2%22;1r1%42=1%6231&QA+2+R0%3221%<251&Q:r5&Q4r4r3%3321?%64512@p081pT0K1pS>L1pT6H1pTLQ11").
+Lemma store_grant_zmem : forall segs m b l,
+bv_unsigned b + bv_unsigned l <= 2 ^ 64 ->
+store_grant_ok segs (zmem m b l) b l.
 Proof.
 intros segs m b l Hnw a n Hlo Hhi. apply store_ok_zmem; lia.
 Qed.
-Lemma store_grant_zmem_prefix : ltac2:(TCodec.tc2 tcn__StoreOk "Q:'3'@%211'R?yR0%211'6y8%511%311p051&Q=&R@r2%22:1r1%42<1%6231&Q<r4%82@1%3217&QA+2+R0%3221%?251&Q:r7&Q4r6r5r3%43321%74613?p091p0C1pTFQ01pT4Q11pS>Q21pT6N1pTLQ71").
+Lemma store_grant_zmem_prefix : forall segs m b logical physical,
+(bv_unsigned logical <= bv_unsigned physical)%Z ->
+(bv_unsigned b + bv_unsigned physical <= 2 ^ 64)%Z ->
+store_grant_ok segs (zmem m b physical) b logical.
 Proof.
 intros segs m b logical physical Hle Hnw a n Hlo Hhi.
 apply store_ok_zmem; lia.
 Qed.
-Lemma store_grant_mono : ltac2:(TCodec.tc2 tcn__StoreOk "M'3'@%211'R?yR0%211'6y8%511%311p051&Q9r4r3%3221&Q:r6r5r2%443261r7%641498p031p091pT0C1pS>D1pT8@1pT6A1pTLJ1").
+Lemma store_grant_mono : forall segs m m' b l,
+mem_grows m m' -> store_grant_ok segs m b l -> store_grant_ok segs m' b l.
 Proof.
 intros segs m m' b l Hg H a n Hlo Hhi.
 eapply store_ok_mono; [exact Hg|]. apply H; assumption.
 Qed.
-Lemma store_ok_seg_writable : ltac2:(TCodec.tc2 tcn__StoreOk "RG'3'@%211'R?yR0%211'6y8%511%311p051'4&Q=&Q<&R@r2%22<1&Q@r1%211%7241&QA+2+R0%3221%=251'9r4%>2H1%?2I;%B221&Q>r3%@11%E261%4261%:261';':%Q11Q6&Dr8%L2Q6:+1%43321(1%12Q=L%93831'2&C%11Q0(8%>3421&<&H&B%11Q6&QC&QB&Q?&A%11Q;%311%52E1%711%;291(0%11QK%N3QK31%@11%Q<2B1%Q=2H1qTJR71%Q42R81p0Q61pU:R61&Ir6r5%3421QDQ?%Q:3Q01Mp061p0QI1pTBR81pS:R?1pT6R;1pTLRD1").
+Lemma store_ok_seg_writable : forall segs m a n,
+bv_unsigned a + Z.of_nat n <= 2 ^ 64 ->
+(forall x : word,
+bv_unsigned a <= bv_unsigned x < bv_unsigned a + Z.of_nat n ->
+exists seg,
+find_segment segs (bv_unsigned x) 1 = Some seg /\
+seg_writable seg = true /\
+segment_byte_at (seg_bytes seg)
+(Z.to_N (bv_unsigned x - Z.of_N (seg_base seg))) <> None) ->
+store_ok segs m a n = true.
 Proof.
 intros segs m a n Hnw Hall.
 apply store_ok_of_all; [exact Hnw|].
@@ -142,7 +317,8 @@ destruct (m x) as [b|]; [discriminate|].
 destruct (Hall x Hx) as [seg [Hfind [Hw Hb]]].
 rewrite Hfind, Hw. exact Hb.
 Qed.
-Lemma store_ok_wseg : ltac2:(TCodec.tc2 tcn__StoreOk "O'3'@%211'R?yR0%211'6y8%511%311p051'4':'2&Q;r4r2r1%43321(8%83721&Ir5r3%342918%=3<16p061pTB@1pS:G1pT6C1pTLL1").
+Lemma store_ok_wseg : forall segs m a n,
+wseg_ok segs a n = true -> store_ok segs m a n = true.
 Proof.
 intros segs m a n; revert a m; induction n as [|n IH]; intros a m H; [reflexivity|].
 cbn [wseg_ok] in H.
@@ -156,7 +332,12 @@ cbn [store_ok]. unfold wview at 1.
 destruct (m a) as [b0|]; [apply IH, Hrec|].
 rewrite Hseg, Hwr, Hb. apply IH, Hrec.
 Qed.
-Lemma store_ok_all : ltac2:(TCodec.tc2 tcn__StoreOk "QL'3'@%211'R?yR0%211'6y8%511%311p051'4&Q=&Q<&R@r1%22<1&Q@r2%211%7241&QA+2+R0%3221%=251':'2&Ir5r4r3%4432>1(8%83721'9%F2Q06%I21E&Q>%F1:%K241%32I1%7251&<&Kr8r7%3321M(0%11Q9%H3Q931%811p0:1pU:Q@1p0D1p0N1pS:QC1pTBQ>1pT6Q@1pTLQI1").
+Lemma store_ok_all : forall segs m n a,
+bv_unsigned a + Z.of_nat n <= 2 ^ 64 ->
+store_ok segs m a n = true ->
+forall x : word,
+bv_unsigned a <= bv_unsigned x < bv_unsigned a + Z.of_nat n ->
+wview segs m x <> None.
 Proof.
 intros segs m n; induction n as [|n IH]; intros a Hnw H x Hx;
 [cbn in Hx; lia|].
@@ -170,18 +351,32 @@ assert (Hn : (1 <= Z.of_nat n)%Z) by lia.
 assert (Hu1 : bv_unsigned (a + 1) = bv_unsigned a + 1) by (apply u_add1; lia).
 eapply IH; [ | exact H | ]; lia.
 Qed.
-Lemma store_ok_sub : ltac2:(TCodec.tc2 tcn__StoreOk "QK'3'@%211'R?yR0%211'6y8%511%311p051'4&Q=&Q<&R@r4%22<1&Q@r2%211%7241&QA+2+R0%3221%=251':'2&Ir7r6r5r3%544321(8%93821%F2Q06%G2Q16%J221%F1H%K241%K2Q5<%I1;%N221%Q0241r:r9%C421B@%F3E1>p051p0<1p0@1p0K1pTBQ:1pR8Q;1pS:QB1pT2QC1pT6Q?1pTLQH1").
+Lemma store_ok_sub : forall segs m (lo a : word) (N n : nat),
+bv_unsigned lo + Z.of_nat N <= 2 ^ 64 ->
+store_ok segs m lo N = true ->
+bv_unsigned lo <= bv_unsigned a ->
+bv_unsigned a + Z.of_nat n <= bv_unsigned lo + Z.of_nat N ->
+store_ok segs m a n = true.
 Proof.
 intros segs m lo a N n Hnw Hok Hl Hh.
 apply store_ok_of_all; [lia|].
 intros x Hx. apply (store_ok_all segs m N lo Hnw Hok). lia.
 Qed.
-Lemma store_ok_window : ltac2:(TCodec.tc2 tcn__StoreOk "R3'3'@%211'R?yR0%211'6y8%511%311p051'4'=':&R@r6%22<1r2%53621&Q<r3&Q@r5%211%5241%<3=18&Q=&QA+2+R0%3221%52;1'2&Q;r;r9r7%43321(8%J3721%J2Q45%?2J1r:%M2Q71r8%H11%K231%E21Q0&Ir>r=%3421A@%Q73D1>p061p0=1p0@1p0I1p0Q01p0Q81pSLQ?1pS@Q@1pTBQB1pR8QC1pS:QJ1pT2QK1pT6QG1pTLR01").
+Lemma store_ok_window : forall segs m (lo a : word) (N n : nat) (base hi : Z),
+bv_unsigned lo = base ->
+base + Z.of_nat N = hi ->
+hi <= 2 ^ 64 ->
+wseg_ok segs lo N = true ->
+base <= bv_unsigned a ->
+bv_unsigned a + Z.of_nat n <= hi ->
+store_ok segs m a n = true.
 Proof.
 intros segs m lo a N n base hi Hbase Htop Hnw Hw Hl Hh.
 eapply store_ok_sub; [ | apply store_ok_wseg, Hw | | ]; lia.
 Qed.
-Lemma store_ok_read_aux : ltac2:(TCodec.tc2 tcn__StoreOk "Q9'3'@%211'R?yR0%211'6y8%511%311p051'4':'2&Ir4r3r1r2%544321(8%93821';%G1?%B11&Q0&Kr6r5%3221%531>?(1%129?%E3931qU6;1%=2<1p0?1pS:Q01pTBK1pT6M1pTLQ61").
+Lemma store_ok_read_aux : forall segs m n (a : word),
+store_ok segs m a n = true ->
+exists w, read_bytes_aux (wview segs m) a n = Some w.
 Proof.
 intros segs m n; induction n as [|n IH]; intros a H.
 - exists []. reflexivity.
@@ -189,29 +384,45 @@ intros segs m n; induction n as [|n IH]; intros a H.
 destruct (wview segs m a) as [b|] eqn:Hv; [|discriminate].
 destruct (IH (a + 1)%bv H) as [w Hw]. rewrite Hw. exists (b :: w). reflexivity.
 Qed.
-Lemma store_ok_wbuf : ltac2:(TCodec.tc2 tcn__StoreOk "Q;'3'@%211'E'R?yR0%211':'2&Ir4&Fr3%211r2&>r1%211%948541(8%=3<21';y8%C11%H11'6%112&Q1&Gr6r5%3221%531FD(1%12:B%L3931qU6<1%@2=1p0B1pSFQ11pSDQ21pT@Q61pTLQ81").
+Lemma store_ok_wbuf : forall segs ms (buf cnt : word),
+store_ok segs (ms_mem ms) buf (word_to_nat cnt) = true ->
+exists w, read_bytes_map (ms_writable_byte segs ms) buf cnt = Some w.
 Proof.
 intros segs ms buf cnt H.
 rewrite read_bytes_map_eq. unfold ms_writable_byte.
 apply store_ok_read_aux. exact H.
 Qed.
-Lemma of_nat_word_to_nat : ltac2:(TCodec.tc2 tcn__StoreOk ">'R?yR0%211':'=&Q@&>r1%211%411&R@%12:4%93831pU6;1").
+Lemma of_nat_word_to_nat : forall w : word,
+Z.of_nat (word_to_nat w) = bv_unsigned w.
 Proof.
 intro w. unfold word_to_nat. pose proof (u64_range w). lia.
 Qed.
-Lemma store_grant_wbuf : ltac2:(TCodec.tc2 tcn__StoreOk "QF'3'@%211'E'R?yR0%211&Q:r6&Fr5%211r4r3%746321&Q=&R@%12<7%22=5%4221&Q<%52@9%2214%72B?%4217%:231';y8%H11%M11':'6%113&Q1&Gr:r9%3221%531NL(1r1%22<1%<3:41qU6>1%B2?1p0D1p0K1p0Q11pSFQ:1pSDQ;1pT0Q<1pS>Q=1pT@QA1pTLQC1").
+Lemma store_grant_wbuf : forall segs ms (b l buf cnt : word),
+store_grant_ok segs (ms_mem ms) b l ->
+bv_unsigned b <= bv_unsigned buf ->
+bv_unsigned buf + bv_unsigned cnt <= bv_unsigned b + bv_unsigned l ->
+exists w, read_bytes_map (ms_writable_byte segs ms) buf cnt = Some w.
 Proof.
 intros segs ms b l buf cnt Hg Hlo Hhi.
 apply store_ok_wbuf, Hg; rewrite ?of_nat_word_to_nat; lia.
 Qed.
-Lemma heap_rg_wbuf : ltac2:(TCodec.tc2 tcn__StoreOk "QN'3'@%211'E'R?yR0%211'=&Q:r7&Fr6%211r5r4%746321&Q=r2&QB&Q<&R@%12@:%22A9%4221%6213%9281&Q6&Q7r3%22D1&>%11A%633C1';y8%O11%Q411':'6%113&Q1&Gr;r:%3221%531Q4Q2(1r1%22<1%<3:41qU6>1%B2?1p0D1p0L1p0Q71pSHQ@1pSFQB1pSDQC1pT0QD1pS>QE1pT@QI1pTLQK1").
+Lemma heap_rg_wbuf : forall segs ms (b l buf cnt : word) (cur : Z),
+store_grant_ok segs (ms_mem ms) b l ->
+cur <= bv_unsigned b + bv_unsigned l - bv_unsigned b ->
+covers (heap_rg b cur) buf (word_to_nat cnt) ->
+exists w, read_bytes_map (ms_writable_byte segs ms) buf cnt = Some w.
 Proof.
 intros segs ms b l buf cnt cur Hg Hcur Hc.
 destruct Hc as [Hlo Hhi]. cbn [heap_rg rg_lo rg_hi] in Hlo, Hhi.
 rewrite of_nat_word_to_nat in Hhi.
 eapply store_grant_wbuf; [exact Hg | lia | lia].
 Qed.
-Lemma zmem_wbuf : ltac2:(TCodec.tc2 tcn__StoreOk "R2'3'@%211'E'R?yR0%211'6y8%511%311p051&Q9&Q4r5r4r3%43321&Fr6%211%9241&Q=&Q<&R@%12D;%22E;%4221&QA+2+R0%3221%:251%92L>%<218r7%<2O1%>214%@2;1';%Q81O':%Q312&Q1&Gr<r;%3221%531=M(1r1%22;1%;3:41qU6=1%?2>1p0A1p0F1p0I1p0Q51pSFQE1pSDQF1pT0QG1pS>QH1pT6QD1pT@QM1pTLQO1").
+Lemma zmem_wbuf : forall segs ms m (b l buf cnt : word),
+mem_grows (zmem m b l) (ms_mem ms) ->
+bv_unsigned b + bv_unsigned l <= 2 ^ 64 ->
+bv_unsigned b <= bv_unsigned buf ->
+bv_unsigned buf + bv_unsigned cnt <= bv_unsigned b + bv_unsigned l ->
+exists w, read_bytes_map (ms_writable_byte segs ms) buf cnt = Some w.
 Proof.
 intros segs ms m b l buf cnt Hgr Hnw Hlo Hhi.
 eapply store_grant_wbuf; [ | exact Hlo | exact Hhi ].
@@ -236,7 +447,10 @@ repeat first
 | eapply store_ok_mono; [apply apply_writes_grows|] ].
 Ltac store_ok_base :=
 first
-[ apply store_ok_wrap_window; unfold stack_max_size; u_norm; lia
+[ eapply store_ok_wrap_window_valid;
+[ eassumption | eassumption
+| unfold stack_window_reach, stack_max_size; u_norm; lia
+| u_norm; lia ]
 | eapply store_ok_zeros_hit;
 [ discriminate | u_norm; lia | intros; u_norm; lia ]
 | apply store_ok_zmem; u_norm; lia ].

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed XSTMT; added rz; internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.jsoncons.fuzz_json_cursor.images Require Import Asan.
@@ -38,6 +39,9 @@ Section AsanNodes.
 Variable scfg : SpuriousCfg.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+(* the run's CONFIG_RSEQ flag as 0 or 1: [APSK.x_stmt] takes it after [LIMIT]
+   (the rz thread through the soundness layer).  OLD: no [rz]. *)
+Variable rz : Z.
 Variable SINV : AX2K.env -> (word -> option byte) -> Prop.
 Variable argH : AX2K.env -> word -> bool.
 Hypothesis argH_high : forall E (a : word), argH E a = true -> APK.CEIL <= bv_unsigned a /\ APSK.uE E APCK.e_sp0 <= bv_unsigned a.
@@ -47,7 +51,7 @@ Hypothesis SINV_frame : forall E M M', (forall a, argH E a = true -> M' a = M a)
 Hypothesis SINV_agree : forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E' M.
 Variable FS0 : Fs.Fs.
 
-#[local] Notation XSTMT := (APSK.x_stmt ASEGS0 scfg ASAN0 nx0 LIMIT SINV argH FS0).
+#[local] Notation XSTMT := (APSK.x_stmt ASEGS0 scfg ASAN0 nx0 LIMIT rz SINV argH FS0).
 
 #[local] Ltac close_with NODE SPEC :=
   eapply NODE; try eassumption;

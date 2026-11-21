@@ -9,7 +9,7 @@
    FMH_Fn.v:101-180), over YCbqG's journal and PRH_Base.v's kit: fpre (YCbqG's afn_pre_x + the read-only view), the
    argument registers, the allocation traces in the image's universe (the writer grows its buffer through
    fuzz_realloc), the alloc.c ledger (prh_ledger), and SRr' segs RZ_cf to the return address. Every conclusion is
-   `srealizes` through SRr' segs RZ_cf (lib/Reusable/YA0nH.v:163, over SRrG :27-30 at wle' :147).
+   `srealizes` through SRr' segs RZ_cf (lib/Reusable/YA0nH.v:164, over SRrG :27-30 at wle' :147).
    IMAGE-PARAMETRIC: the image is the listing class (YC4aP PAImg L); each entry is pa_sigma AS_<fn>; no image constant
    is named here (the addresses in comments are image A's, for the reader only).
    ALLOCATOR-PARAMETRIC: ARx is an explicit argument; the walks instantiate it at the allocator-model owner's ARcf segs B.
@@ -70,7 +70,7 @@
      gives these addresses (no numeral address in a text), so the walks need them as an image fact (FMH_Fn.v:45-60
      fm_img_facts form).
    - THE FAKE FRAME: put_string takes a frame_alloc_0 frame (A 0x87ea0) only when the runtime's use-after-return flag
-     is nonzero: A 0x87e84 loads the GOT word at 0xa1b28 (listing v3 703cc4a8796d A_OBJ 1), and 0x87e8c `lw a2, 0(a2)`
+     is nonzero: A 0x87e84 loads the GOT word at 0xa1b28 (listing v3 A_OBJ 1), and 0x87e8c `lw a2, 0(a2)`
      reads the 4-byte flag `__asan_option_detect_stack_use_after_return` at 0xaa8c0 (f0d2e8d4 .symtab,
      the ranout-image asan pin's nm listing the internal file fuzz_preset.nm.txt:443). It is NOT the shadow-base cell
      `__asan_shadow_memory_dynamic_address` (0xaa8b8, the internal file nm.txt:701, reached by the GOT word 0xa1ad0 at 0x87e88).
@@ -78,7 +78,7 @@
      (frames-count premise, YG0d.v:300 at cid 0); the walk takes the flag's value (1 on the rebuilt images, to be
      re-derived from the image) and `as_got_uar B = VAL (A_OBJ 1)`, a marked hypothesis until the core owner rules on
      pal_got_uar. The PALib witnesses of record are PALibA 88c72c8175cf (A', every field by vm_compute on AF0l
-     dfca6bb1a8d7) and PALibB 5baa19c890f7 (B', pin-neutral, commit ed438196d17c): PAL,
+     dfca6bb1a8d7) and PALibB 5baa19c890f7 (B', pin-neutral): PAL,
      pal_pst_ok, pal_uar_img and pal_stack_malloc* are discharged by citing them (no kit text carries them).
    Statements only.
    THE MODEL-RUN POSITION (the kit owner's ruling, 2026-10-29): every text below that makes allocator calls in its
@@ -460,7 +460,7 @@ Definition tput_specX (CTX0 : list (list Z)) : Prop :=
      - the slice walker's witness at indent's loop call (A 0x881f0): word[o - 16] = o + 8 and word[o] = 0 at entry
      make `achain .. o [(o, ra, o + 8)]` hold, and after the first put grows the buffer word[o] >= 4096 and no
      one-record chain from o exists. The ra bound that closes CASE 2 is fpre's `raZ regs < YM05.alloc_ceiling`;
-     its one-copy discharge is PRW_StepKit.pa_slot_lt_ceil (commit c3a0b928f54,
+     its one-copy discharge is PRW_StepKit.pa_slot_lt_ceil (
      lib/A/Prog/PRW_StepKit.v:235). *)
   (spZ regs + 16 <= o ->
      exists ra, rdword (aview segs (w_H W) mem) (o - 8) = Some ra /\
@@ -816,7 +816,7 @@ Definition tput_string_specX (CTX0 : list (list Z)) : Prop :=
      - the slice walker's witness at indent's loop call (A 0x881f0): word[o - 16] = o + 8 and word[o] = 0 at entry
      make `achain .. o [(o, ra, o + 8)]` hold, and after the first put grows the buffer word[o] >= 4096 and no
      one-record chain from o exists. The ra bound that closes CASE 2 is fpre's `raZ regs < YM05.alloc_ceiling`;
-     its one-copy discharge is PRW_StepKit.pa_slot_lt_ceil (commit c3a0b928f54,
+     its one-copy discharge is PRW_StepKit.pa_slot_lt_ceil (
      lib/A/Prog/PRW_StepKit.v:235). *)
   (spZ regs + 16 <= o ->
      exists ra, rdword (aview segs (w_H W) mem) (o - 8) = Some ra /\
@@ -986,7 +986,7 @@ Definition twrite_value_specX (CTX0 : list (list Z)) (n : nat) : Prop :=
      - the slice walker's witness at indent's loop call (A 0x881f0): word[o - 16] = o + 8 and word[o] = 0 at entry
      make `achain .. o [(o, ra, o + 8)]` hold, and after the first put grows the buffer word[o] >= 4096 and no
      one-record chain from o exists. The ra bound that closes CASE 2 is fpre's `raZ regs < YM05.alloc_ceiling`;
-     its one-copy discharge is PRW_StepKit.pa_slot_lt_ceil (commit c3a0b928f54,
+     its one-copy discharge is PRW_StepKit.pa_slot_lt_ceil (
      lib/A/Prog/PRW_StepKit.v:235). *)
   (spZ regs + 16 <= o ->
      exists ra, rdword (aview segs (w_H W) mem) (o - 8) = Some ra /\

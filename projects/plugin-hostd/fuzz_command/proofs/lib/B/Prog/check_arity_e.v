@@ -6,13 +6,14 @@
    projects/cgif/cgif_file_fuzzer/proofs/lib/YCbo.v:707-710, 1570-1572 [Apache-2.0 OR MIT], for libreac/fuzz_identity's
    asan-ubsan build (lib/B). The [Apache-2.0 OR MIT] text is used under Apache-2.0. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_name_seg_mid.v, with its module paths and module names changed; 3261 of its 3422 lines of code are new or changed and 2622 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_arity on the ASan+UBSan build of plugin-hostd/fuzz_command (image fuzz_command.asan-ubsan, pin bbe55d24):
    the entry walk (0x87268 to the scan head 0x87448, and every return before it), the scan of g_parsed (22 passes,
    each a call of the strcmp wrapper, run concretely), the dispatch into the matched row's lemma at 0x87478
    (check_arity_s3.v's ca_row_pre), the no-match return, and the assembled proof of the B statement
    tcheck_arity_spec (lib/B/Prog/check_arity_c.v).
 
-   Port of a Theorem Labs lane's A walk (lib/A/Prog/check_arity_e.v, a working branch 5519f6fa753)
+   Port of a Theorem Labs lane's A walk (lib/A/Prog/check_arity_e.v, a working branch)
    to image B. What changes from A:
    - the frame is 144 bytes (A: 112): the saved registers are at entry sp - 8 - 8 j as on A, the walk's own stack
      window is [sp0 - 144, sp0), and the frame's write window in the rows is [sp, sp + 40) (A: [sp, sp + 8));
@@ -53,7 +54,7 @@
    v = name_k (check_arity_s0.v's ca_find_k), from arity_ok. Not equal: the state at 0x87448 is ca_lpre (k + 1), or
    after pass 21 the epilogue (0x87960) and `ret` (0x87998). No libc or ASan runtime code is walked.
 
-   Template (read only, not a source): a working branch fd8e07f77cd lib/B/Prog/check_arity.v, an
+   Template (read only, not a source): a working branch lib/B/Prog/check_arity.v, an
    old-route B walk in the lib/Lib MState framework against the old check_arity_contract. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -277,7 +278,7 @@ Context {PI : PAImg cmd_listing}.
 
 Definition EC (regs : bvmap 5 word) (t q nc fn0 ww p0 : Z) : env := Eimg (Ereg regs (ce_extra t q nc fn0 ww p0)).
 
-(** ** Memory facts the walk carries (after check_words_pin_set.v:160-285, at this call's stack) *)
+(** ** Memory facts the walk carries (after check_words_pin_set.v:161-286, at this call's stack) *)
 (* the memory outside this call's stack window is the entry memory *)
 Definition ce_kept (W : world SEGS) (mem m : word -> option byte) (sp0 : Z) : Prop :=
 forall a, 0 <= a < 2 ^ 64 -> ~ (sp0 - CHECK_ARITY_STK <= a < sp0) -> aview SEGS (w_H W) m a = aview SEGS (w_H W) mem a.

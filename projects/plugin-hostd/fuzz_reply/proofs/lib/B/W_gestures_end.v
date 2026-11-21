@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk (image B, fuzz_reply.asan-ubsan) of fuzz_reply's gestures_end,
-   a NEW walk over lib/B/W_listing.v after lib/A/W_gestures_end.v (a working branch 8cdde8f679f), in the form of the
+   a NEW walk over lib/B/W_listing.v after lib/A/W_gestures_end.v (a working branch), in the form of the
    cgif walks of proofs/cgif/cgif_file_fuzzer/lib/A/AC8b.v (a loop lemma from the loop head, a test lemma, the stretch
    over the loop), lib/A/AC8h.v (free call sites) and lib/A/ACh2.v (an internal call).  pb_gestures_end runs the entry
    at 0x82618 to the `blez` at 0x8267c and hands the state to the cut points of lib/B/W_gse_cut.v, Section hypotheses
@@ -14,6 +14,7 @@
    The walk is proved over any allocator relation ARx (route (b), step 3; CONVERSION.md (sha256 1015972e02a9; internal record)) as
    pb_gestures_end_x : gse_spec_x, with the cut points' generic forms GSE_LOOP_X / GSE_TAIL_X; pb_gestures_end, the AR
    statement, is re-derived from it at ARi0 (Section cAR). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -992,9 +993,9 @@ Proof. eapply (pb_gestures_end_xR (@wle SEGS)); wle_inst. Qed.
 End c.
 
 (* ---- THE AR JOURNAL HELPERS, kept under their AR names for the files that cite them (image A's W_rig_top.v cites
-   gse_callS / gse_keep_img / gse_pres / gse_keep_high / gse_nodup at `B LAWS` / `B`; A's e954f0c83e4 keeps them, and
+   gse_callS / gse_keep_img / gse_pres / gse_keep_high / gse_nodup at `B LAWS` / `B`; A's keeps them, and
    so does this twin for the B port of that walk).  The ARx conversion above proves their _x twins (gse_callS_x ..);
-   these five are the AR statements and proofs of the B AR walk (e43cf0c7bef's lib/B/W_gestures_end.v), word for
+   these five are the AR statements and proofs of the B AR walk (a commit's lib/B/W_gestures_end.v), word for
    word, over the AR journal and AR_laws. ---- *)
 Section ark.
 Variable B : asyms.

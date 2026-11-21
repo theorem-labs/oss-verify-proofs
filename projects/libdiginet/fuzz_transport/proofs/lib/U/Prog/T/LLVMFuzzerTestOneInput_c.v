@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/Prog/LLVMFuzzerTestOneInput_c.v, with its module paths, addresses and numbers changed; 65 of its 99 lines of code are new or changed and 32 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The slot contracts of LLVMFuzzerTestOneInput (fuzz/fuzz_transport.c:1124-1218) in the ubsan image, the forms the
    frame consumes (U/FrameAPI.v frame_ubsan: lib_contract_g, for ubsan_halts; AgreeFrame.v: lib_contract_cg, the
    cut-free form, for ubsan_agrees; both with G = frame_G, R = frame_RELRO, GI), and the contracts its walk proves
@@ -84,7 +85,7 @@ Definition llvm_ls_laws_cf : Prop :=
    room_cf, the budget of malloc_contract_cf, asks of the model's vm_limit. *)
 Definition llvm_limlaw : Prop := forall L A mem md, MR L A mem md -> 2 ^ 34 <= vm_limit (m_vmmaps md).
 
-(* The slot, halting form (the kit's lib_contract_g, U/Contract.v:320); with stk = SLOT_STACK and j < 4 it is the
+(* The slot, halting form (the kit's lib_contract_g, U/Contract.v:321); with stk = SLOT_STACK and j < 4 it is the
    premise of U/FrameAPI.v frame_ubsan. *)
 Definition LLVMFuzzerTestOneInput_contract : Prop :=
   llvm_binds -> llvm_ls_laws ->

@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: am_after_write_win is the text of lib/Reusable/YCbq.v's ajournal_after_write
-   (lines 519-637, copied there from proofs/libreac/fuzz_knock/lib/Reusable/YCbq.v at origin/ossv/recipes 4b6f0df50aa7)
+   (lines 519-637, copied there from proofs/libreac/fuzz_knock/lib/Reusable/YCbq.v)
    with its presence premise narrowed to the journal's stack window, as
-   proofs/libreac/fuzz_identity/lib/A/Prog/LLVMFuzzerTestOneInput_L.v:105-226 (L_after_write_win, origin/ossv/recipes
-   4b6f0df50aa7) states it; am_set_shadow_at is that file's L_set_shadow_at (:230-276); both for
+   proofs/libreac/fuzz_identity/lib/A/Prog/LLVMFuzzerTestOneInput_L.v:105-226 (L_after_write_win)
+   states it; am_set_shadow_at is that file's L_set_shadow_at (:230-276); both for
    libdiginet/fuzz_codec's ASan build (image A). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* A call of the runtime's shadow fill (__asan_set_shadow_XX) over a range of one of the caller's own side-stack
    frames' shadow, in journal form: the fill's contract (lib/A/Rt/SetShadowDef.v aset_shadow_realizes) keeps only the
    presence of its own stack window, so the journal step after it takes presence of the journal's window only. *)

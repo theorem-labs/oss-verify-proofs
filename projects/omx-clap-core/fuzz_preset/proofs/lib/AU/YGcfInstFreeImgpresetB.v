@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/YGcfInstFreeImgreplyB.v (commit 4d286b2e618d, file sha256 1dfcde04a302) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 6 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal, jump-table offsets and list indices by the same stage map), 1 list indices re-picked, and 11 addresses named in comments; facts preset already states are cited, not restated; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/YGcfInstFreeImgreplyB.v (file sha256 1dfcde04a302) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 6 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal, jump-table offsets and list indices by the same stage map), 1 list indices re-picked, and 11 addresses named in comments; facts preset already states are cited, not restated; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (a Theorem Labs lane's AFREE_CF at image B, the image rows of a prior worker's ReplyDeallocPartsRh: rdr_FP_IZONE_ROM /
    rdr_FP_DSTAT / rdr_FP_DZONE_FP / rdr_FP_CONST): the four image premises of the generic cf layer's Deallocate post
    (lib/B/YGcfInstFreePost section 0) DISCHARGED at plugin-hostd / fuzz_reply's asan-ubsan image B: the image classes are
    reply B's (lib/B AGif2cgif.AImg_cgif, DGif0cgif.DImg_cgif) and the symbol table is any B with reply B's symbol facts
-   (YF0m.TfibSyms B).  The B twin of lib/A/YGcfInstFreeImgreply.v (48710ff6f0c), itself relocated
+   (YF0m.TfibSyms B).  The B twin of lib/A/YGcfInstFreeImgreply.v, itself relocated
    from cgif_file's YGcfInstFreeImgcgif.v (lane F2a): same proofs, B's module twins (YB13, YF0m, YF0x,
    YFfl, YFfy, YD2l) and B's numerals; cgif's DGif1.cloc / const_loc (reply has no DGif1.v) restated here over reply B's
    YFfy.Tfib_const_loc.  rule 24: no function proved (kind: image facts of a fixed binary).
@@ -15,12 +16,12 @@
    commit message):
    - TFIB_INST 0xa8098 (asan::instance, 3632 bytes), TFIB_DEPOT 0x188518 (theDepot), TFIB_STORE 0x17d5c8 (stackStore),
      TFIB_IAL_LO 0xac900 (internal_alloc_placeholder), TFIB_IAL_HI 0x128870 (placeholder + 0x81030), TFIB_IAL_FLAG 0x1360c8
-     (internal_allocator_initialized) (YF0m.v:16-19);
+     (internal_allocator_initialized) (YF0m.v:17-20);
    - the one owned static range that holds the depot, the store and the internal allocator's zone and flag is
-     Tfib_owned_static's 5th row (0xaaf50, 0x5cdd50 - 0xaaf50) (YF0m.v:827); the depot's static data ends at
+     Tfib_owned_static's 5th row (0xaaf50, 0x5cdd50 - 0xaaf50) (YF0m.v:828); the depot's static data ends at
      0x188518 + d_map1 + 8 * 32768 = 0x5c8528 <= 0x5cdd50 (hand decision: derived, not a symbol);
-   - DGgi.DZONE's static part is [0x17d5c8, 0x5cdd50) (DGgi.v:515-516); DGgi.IZONE is [IAL_LO, IAL_HI) + [IAL_FLAG, +4)
-     (DGgi.v:517);
+   - DGgi.DZONE's static part is [0x17d5c8, 0x5cdd50) (DGgi.v:516-517); DGgi.IZONE is [IAL_LO, IAL_HI) + [IAL_FLAG, +4)
+     (DGgi.v:518);
    - the image window [TFIB_IMG_LO, TFIB_IMG_END) = [0x10000, 0x601000) (YF0x.v:25,37), so TFIB_IMG_END / 8 = 0xc0200 (hand
      decision: an image-derived count, not an address); YB13.tfib_rom_all covers it.
    One closed lemma per premise; CfImg / CfParams stay generic (no premise reads them). *)

@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_state image A (projects/omx-clap-core/bin/fuzz_state/fuzz_state.asan,
    sha256 64b53ff86172bb07f93f146e67b81a0354bca88e0a580e93fb1da01406fb76e0): the MACHINE WALK of realloc's
    thin segment S2a, from Allocate's return 0x32994 to the `jalr a3` 0x32a08 that enters musl memcpy 0x98a20.
    No allocator invariant appears here: register/memory facts in, register/memory facts out.
 
    Rule 24 (released-proof lookup).  a Theorem Labs lane (internal path; ossv
-   proof index v5, 2026-10-28T21:58:24Z, ossv/recipes@566eb6ffa5df) answered CONFIRM for fuzz_state's realloc
+   proof index v5, 2026-10-28T21:58:24Z, ossv/recipes) answered CONFIRM for fuzz_state's realloc
    chain: no released ASan-image proof of any fuzz_state function.  This file is a PORT of the released donor
    proof proofs/cgif/cgif_rgb_fuzzer/lib/YF67.v -- its `R_HDR` (:24-25), `F_C1` (:26), `SM1` (:27),
    `denot_by_zev` (:151-155) and `c1_copy` (:156-261) -- which walks the same machine code at cgif_rgb's

@@ -5,11 +5,12 @@
    the free / exit states built on it) of fuzz_reply.asan, with fuzz_reply's program globals G_fr_c TfibB CLIPPED OUT
    (GF_RANGES below; W_LLVMFuzzerTestOneInput_G.v G_fr_obj ++ [(TFIB_ERRNO_A, 4)]), because the cf program contract lets
    LLVMFuzzerTestOneInput write them on every call (its journal's PST, A/AD1w_cf.v:163).  A/AD2f.v keeps the donor's
-   views for the donor contract.  Form of omx-clap-core/fuzz_state's clipL (a working branch 86d3792c013,
-   a Theorem Labs lane's c3a3d1e1d86 + 2d1ebd16550), with FS_PSTAT_FP replaced by GF_IVS.  Counts read by vm_compute on
+   views for the donor contract.  Form of omx-clap-core/fuzz_state's clipL (a working branch,
+   a Theorem Labs lane), with FS_PSTAT_FP replaced by GF_IVS.  Counts read by vm_compute on
    a build machine: IMG_LF / IMG_LCF 41 regions (IMG_L / IMG_LC 59): eighteen of G_fr's objects are whole regions of
    AD2j.v and go, g_thread (0x5d8740, 8) cuts the tail of R_A5a_1 and g_wake (0xa1fa0, 8) the tail of R_A3_1; errno
    (0x5d93cc) lies in no image region. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

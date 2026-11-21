@@ -4,7 +4,7 @@
    of plugin-hostd/fuzz_command (fuzz_command.asan-ubsan): cw_S6 of lib/B/Prog/chain_words_d.v, from the join
    after the recorder call (KJ, +0x2fc = 0x8dd80) to the return (+0x498 = 0x8df1c), 60 instructions on the path
    (the real-stack release +0x3a8..+0x454, 44 instructions, is dead). The B twin of lib/A/Prog/chain_words_s6.v
-   (a working branch 5e2cdad423e): B's code here is A's from A +0x2b0 shifted by +0x4c.
+   (a working branch): B's code here is A's from A +0x2b0 shifted by +0x4c.
 
    What the code does there: the recorder's answer is in s4 already, it poisons the shadow of ids[64] with 0xf8
    (32 byte stores through s2 = the frame's shadow), writes the frame's magic word at frame + 0 (through s6),
@@ -29,6 +29,7 @@
    astr_atR cross it (rec_repA_agree / astr_atR_agree below); the release keeps the blocks, so
    4096 <= p < 2 ^ 64, the block facts and the live-byte bound carry over unchanged, and the meter crosses
    stack_free_state by MTFL. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* the environment of the two copied blocks below (the imports their sources compiled under) *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -204,7 +205,7 @@ End f.
 End d.
 
 (* ---- the journal step of the shadow-fill entry __asan_set_shadow_f5: copied verbatim from
-   lib/A/Prog/PaRt.v:52-244 of a working branch (commit 474a8f474e6, the walk of
+   lib/A/Prog/PaRt.v:52-244 of a working branch (the walk of
    check_words_chain on the same base): ajournal_after_write_stk (YCbq.v's ajournal_after_write with the
    presence premise narrowed to the journal's own stack window, which is all the shadow-fill contract gives)
    and aj_set_shadow_atS (the call step, on the model of PaCall.v's aj_intrin_atS) ---- *)

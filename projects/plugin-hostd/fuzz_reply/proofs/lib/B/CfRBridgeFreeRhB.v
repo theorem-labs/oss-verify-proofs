@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10-30 (row M3, route R; new file). IMAGE B TWIN of lib/A/CfRBridgeFreeRh.v: the same text with
    lib/B's YGcfRehidePost, YG0dcfR and AjxCallRh (the B convention of lib/B/CfRBridgeAjFreeNB.v). The A text follows.
    rule 24: proves no function (kind: invariant lemma; the route-R
@@ -8,24 +9,24 @@
    aj_free_at_x_ct_rh is the route-R twin of lib/Reusable/YGcallx.v aj_free_at_x_ctR (:715-821) at
    R := wle' segs RZ_cf, for the RE-HIDING cf free (the shape agreed in
    CROSSING-SHAPE-PROPOSAL.md (sha256 25c63e2cb70b; internal record) section 2). It is stated in Section n at the shape of
-   lib/B/CfRBridgeAjFreeNB.v: ARx := ARxs (Reusable/YGcallcf.v:252, ARcf /\ xs_placed_cf), QMm := QMm_cf segs B,
+   lib/B/CfRBridgeAjFreeNB.v: ARx := ARxs (Reusable/YGcallcf.v:253, ARcf /\ xs_placed_cf), QMm := QMm_cf segs B,
    ft := free_cf, code := as_code B, with the Section r laws of YGcallx.v from YGcallcf.v (LAWS := AR_laws_x_xs L,
    OWNLOW := ARx_owned_low_law_xs L, WFL := ARx_wf_law_xs, the model laws := alloc_model_laws_x_cf HU). Against
    aj_free_at_x_ctR's text it changes, and only:
-   - the realization `afree_realizes_xR R` is `afree_realizes_cf_rh segs B` (lib/B/YG0dcfR.v:61, primed);
+   - the realization `afree_realizes_xR R` is `afree_realizes_cf_rh segs B` (lib/B/YG0dcfR.v:62, primed);
    - both journals are `ajournal_xR segs B PST ARxs (wle' segs RZ_cf)`, the step is `SRrG segs (wle' segs RZ_cf)`;
    - the call's QM premise `QMm Sc memT` is `QMm_cf segs B Sc memT`, by name (it carries arodata_ok_cf at the call
      memory, and since part 3c no memnorm; no separate premise at the lemma level, proposal row 5);
-   - the leaf `free_leaf_xR R` is `free_leaf_cf_rh segs B` (lib/B/YG0dcfR.v:46);
+   - the leaf `free_leaf_xR R` is `free_leaf_cf_rh segs B` (lib/B/YG0dcfR.v:47);
    - R_trans is not a premise: R is fixed, and wle'_trans segs RZ_cf discharges it.
    QMm_cf is never unfolded here: the proof reads it only through YGcallcf's QMQ_cf and acall_pre_x_xs; no memnorm use.
    Event terms: st_nev appears only in the journal index k + (st_nev S2 - st_nev Sc) and, inside the proof, in the
-   call journal's index st_nev S2 - st_nev Sc, both as YGcallx.v:722 / :791 (exception 3, the tick update).
+   call journal's index st_nev S2 - st_nev Sc, both as YGcallx.v:723 / :792 (exception 3, the tick update).
 
-   The proof is aj_free_at_x_ctR's, with: the callee journal from call_effect_journal_rh_cf_pst (lib/B/AjxCallRh.v:183;
+   The proof is aj_free_at_x_ctR's, with: the callee journal from call_effect_journal_rh_cf_pst (lib/B/AjxCallRh.v:184;
    its world and frame premises are the primed post's two changed conjuncts, its ARcf premise is the call state's
-   HAR); amreal'_SRr'04 (Reusable/YG0dH.v:224) in place of amrealG_SRrG04; SRrG_mono; ajournal_x_subR with
-   wle'_trans segs RZ_cf; acall_kept_of_journal_xR (Reusable/YGcallx.v:676) for the kept conjunct.
+   HAR); amreal'_SRr'04 (Reusable/YG0dH.v:225) in place of amrealG_SRrG04; SRrG_mono; ajournal_x_subR with
+   wle'_trans segs RZ_cf; acall_kept_of_journal_xR (Reusable/YGcallx.v:677) for the kept conjunct.
 
    The realization lifts at R. A re-hiding leaf is not an acall_post_xR post at any R (its frame also excepts the
    call's dead set dead_shadow_new), so the YGcallx forms at R do not hold it. free_leaf_x_rh / afree_realizes_x_rh below
@@ -35,7 +36,7 @@
    free_leaf_cf_xs_rh (:355 free_leaf_cf_xs), afree_realizes_x_xs_rh (:392 afree_realizes_x_xs, by YG0dHc.v
    amreal'_apostg and YGcfXs.v free_cf_frame in place of amreal_ipost), free_leaf_x_xs_cf_rh (:411 free_leaf_x_xs_cf).
    No address, no ledger, no image numeral: 10 / 1 / 3 / 4 are RISC-V register numbers, 16 / 4096 / 16384 cgif's
-   LENGTH constants (YGcallx.v:84-86). *)
+   LENGTH constants (YGcallx.v:85-87). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -68,13 +69,13 @@ Variable segs : list Segment.
 Variable B : asyms.
 
 (* ---------------------------------------------------------------------------- *)
-(* The primed free forms at a generic ARx (the re-hide twins of YGcallx.v:254 / :279).                       *)
+(* The primed free forms at a generic ARx (the re-hide twins of YGcallx.v:255 / :280).                       *)
 Section x.
 Variable ARx : alayout -> astate -> list Z -> world segs -> (word -> option byte) -> Model -> Prop.
 Variable QMm : astate -> (word -> option byte) -> Prop.
 Variable ft : sptr -> list Z -> YG00.M unit.
 
-(* YGcallx.free_leaf_x with the re-hide post: acall_post_cf_rh's body (YGcfRehidePost.v:330-338) at ARx in place of
+(* YGcallx.free_leaf_x with the re-hide post: acall_post_cf_rh's body (YGcfRehidePost.v:331-339) at ARx in place of
    ARcf; every other conjunct is free_leaf_x's (= YG0dcfR.free_leaf_cf_rh's). *)
 Definition free_leaf_x_rh (ly : alayout) (S : astate) (Hp : list Z) (W : world segs) (regs : bvmap 5 word)
 (mem : word -> option byte) (md : Model) (p : sptr) (n : Z)
@@ -108,21 +109,21 @@ amreal' segs RZ_cf (ft p (call_trace ly (pc_free_ra0 (as_code B)) regs ch) S) W
 (free_leaf_x_rh ly S Hp W regs mem md p n).
 End x.
 
-(* YGcallcf.v:92 free_leaf_cf_x, primed. *)
+(* YGcallcf.v:93 free_leaf_cf_x, primed. *)
 Lemma free_leaf_cf_x_rh :
 free_leaf_cf_rh segs B = free_leaf_x_rh (fun ly S Hp W mem md => ARcf segs B ly S Hp W mem md).
 Proof. reflexivity. Qed.
 
-(* YGcallcf.v:96 afree_realizes_cf_x, primed. *)
+(* YGcallcf.v:97 afree_realizes_cf_x, primed. *)
 Lemma afree_realizes_cf_x_rh :
 afree_realizes_cf_rh segs B =
 afree_realizes_x_rh (fun ly S Hp W mem md => ARcf segs B ly S Hp W mem md) (QMm_cf segs B) free_cf.
 Proof. reflexivity. Qed.
 
-(* YGcallcf.v:253's relation, verbatim *)
+(* YGcallcf.v:254's relation, verbatim *)
 Local Abbreviation ARxs := (fun ly S Hp W mem md => ARcf segs B ly S Hp W mem md /\ xs_placed_cf ly S).
 
-(* YGcallcf.v:427 free_leaf_cf_xs, primed: the leaf at ARxs from the primed cf leaf, xs_placed_cf at the call and
+(* YGcallcf.v:428 free_leaf_cf_xs, primed: the leaf at ARxs from the primed cf leaf, xs_placed_cf at the call and
    free_cf's state frame. *)
 Lemma free_leaf_cf_xs_rh : forall ly S Hp W regs mem md ch p n r W' c',
 acall_pre_cf segs B ly S Hp W regs mem md ch -> xs_placed_cf ly S -> free_frame_cf S (snd r) ->
@@ -137,7 +138,7 @@ assert (HX : xs_placed_cf ly' (snd r)).
 exists ly', regs', mem', md'. exact (conj Hc (conj (conj (conj A1 HX) (conj A2 R)) HQ)).
 Qed.
 
-(* YGcallcf.v:464 afree_realizes_x_xs, primed: the primed cf text, lifted to ARxs; no premise beyond it. free_cf's
+(* YGcallcf.v:465 afree_realizes_x_xs, primed: the primed cf text, lifted to ARxs; no premise beyond it. free_cf's
    state frame on every granted path (YGcfXs.v free_cf_frame) rides through amreal' by amreal'_apostg (YG0dHc.v). *)
 Lemma afree_realizes_x_xs_rh : afree_realizes_cf_rh segs B -> afree_realizes_x_rh ARxs (QMm_cf segs B) free_cf.
 Proof.
@@ -151,7 +152,7 @@ eapply amreal'_mono; [|exact HR].
 intros r W' c' [HFr Hl]. exact (free_leaf_cf_xs_rh ly S Hp W regs mem md ch p n r W' c' Hpc HX HFr Hl).
 Qed.
 
-(* YGcallcf.v:483 free_leaf_x_xs_cf, primed: the projection from the ARxs leaf to the primed cf leaf. *)
+(* YGcallcf.v:484 free_leaf_x_xs_cf, primed: the projection from the ARxs leaf to the primed cf leaf. *)
 Lemma free_leaf_x_xs_cf_rh : forall ly S Hp W regs mem md p n r W' c',
 free_leaf_x_rh ARxs ly S Hp W regs mem md p n r W' c' -> free_leaf_cf_rh segs B ly S Hp W regs mem md p n r W' c'.
 Proof.
@@ -168,7 +169,7 @@ Hypothesis segs_low : forall a, in_img segs a -> 0 <= a < kLowMemEnd.
 Hypothesis errno_low : api_env segs B.
 Hypothesis HU : universe_ok (as_universe B).
 
-(* YGcallx.v:707 aj_free_at_x_ctR at R := wle' segs RZ_cf, re-hiding (changes in the header). *)
+(* YGcallx.v:708 aj_free_at_x_ctR at R := wle' segs RZ_cf, re-hiding (changes in the header). *)
 Lemma aj_free_at_x_ct_rh : afree_realizes_cf_rh segs B ->
 forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k pa n (o : Z) raw ch,
 ajournal_xR segs B PST ARxs (wle' segs RZ_cf) STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->

@@ -4,22 +4,22 @@ Written by mkdiffs.py. Each copy below is the script these records ran. A change
 
 | tool | copy sha256 | original sha256 | source | changed lines |
 |---|---|---|---|---|
-| `bytecmp-1480ca2faea0.py` | `0ac2ec8db277b17e34a4a0e35804270157525dbacbc6b0283f95134dbfe129de` | `1480ca2faea075e866800faab4e18aea5fb4a96dcea17ef1fe8981f1bdd0f98f` | tool registry commit 797e8971d27d, tools/bytecmp/1480ca2faea0/bytecmp.py (its lines 39-151 are insnflow a36c2b82eb44, tools/insnflow/a36c2b82eb44/insnflow.py at the same commit) | 11 removed, 11 added (195 lines in, 195 lines out) |
+| `bytecmp-1480ca2faea0.py` | `0ac2ec8db277b17e34a4a0e35804270157525dbacbc6b0283f95134dbfe129de` | `1480ca2faea075e866800faab4e18aea5fb4a96dcea17ef1fe8981f1bdd0f98f` | tool registry, tools/bytecmp/1480ca2faea0/bytecmp.py (its lines 39-151 are insnflow a36c2b82eb44, tools/insnflow/a36c2b82eb44/insnflow.py at the same commit) | 11 removed, 11 added (195 lines in, 195 lines out) |
 | `cietable.py` | `c82414f4b6d78d45d1fc214f8634985143635cdc03e512a7b4f7bee102eaa845` | - | written for these records: reads parseCIE's jump table | - |
-| `closure.py` | `b50998fb3bd3db5ec374b380157492a819044f992c3fd895d3cb2f2764578f77` | `b50998fb3bd3db5ec374b380157492a819044f992c3fd895d3cb2f2764578f77` | image-B donor survey scripts (repacer/B-DONORS.md): closure.py (the same bytes as commit 7af39d3f61c, proofs/reac-repacer/fuzz_uci/provenance/evidence/uci-b-memcpy/closure.py) | unchanged |
-| `drvcmp.py` | `1b13206c79dd0721a7dfdefa2ab6cff9c2d5d2666920e46e449065ffaa56dd79` | `27f7a0e92bb9fdd59033bcdc5e7fcb349a20e97f7c02c43f3f5ffbb55347f89e` | commit 7af39d3f61c, proofs/reac-repacer/fuzz_uci/provenance/evidence/uci-b-memcpy/drvcmp.py (the drvcmp.py of the image-B donor survey scripts (repacer/B-DONORS.md) with bytecmp switched to 1480ca2faea0) | 8 removed, 8 added (70 lines in, 70 lines out) |
+| `closure.py` | `b50998fb3bd3db5ec374b380157492a819044f992c3fd895d3cb2f2764578f77` | `b50998fb3bd3db5ec374b380157492a819044f992c3fd895d3cb2f2764578f77` | image-B donor survey scripts (repacer/B-DONORS.md): closure.py (the same bytes as, proofs/reac-repacer/fuzz_uci/provenance/evidence/uci-b-memcpy/closure.py) | unchanged |
+| `drvcmp.py` | `1b13206c79dd0721a7dfdefa2ab6cff9c2d5d2666920e46e449065ffaa56dd79` | `27f7a0e92bb9fdd59033bcdc5e7fcb349a20e97f7c02c43f3f5ffbb55347f89e` |, proofs/reac-repacer/fuzz_uci/provenance/evidence/uci-b-memcpy/drvcmp.py (the drvcmp.py of the image-B donor survey scripts (repacer/B-DONORS.md) with bytecmp switched to 1480ca2faea0) | 8 removed, 8 added (70 lines in, 70 lines out) |
 | `jtcheck.py` | `f95cc8e243d16f89845ff3cc4d66831c9768d0a19b5437519cd393df19c6fa18` | `2e2f9c2126b21aa300f44228af1af74298db3c6e196da97b0038c12a3acfebce` | image-B donor survey scripts (repacer/B-DONORS.md): jtcheck.py | 3 removed, 5 added (183 lines in, 185 lines out) |
 | `mkdiffs.py` | `bd50962aa1a601d02cfa593e15dc9e45bb82686258d8e77a0f858327d33eef4d` | - | written for these records: the writer of this DIFFS.md | - |
-| `paircl.py` | `a88c2822a0f2b5fd223a96a5e8dc3bb476a776a2162bf0920786d0e78e3608de` | `a88c2822a0f2b5fd223a96a5e8dc3bb476a776a2162bf0920786d0e78e3608de` | tool registry commit b73d10eb732, tools/paircl/a88c2822a0f2/paircl.py (supersedes 16e1466be22d: target names are compared first; Y's unstripped twin is its 5th argument) | unchanged |
+| `paircl.py` | `a88c2822a0f2b5fd223a96a5e8dc3bb476a776a2162bf0920786d0e78e3608de` | `a88c2822a0f2b5fd223a96a5e8dc3bb476a776a2162bf0920786d0e78e3608de` | tool registry, tools/paircl/a88c2822a0f2/paircl.py (supersedes 16e1466be22d: target names are compared first; Y's unstripped twin is its 5th argument) | unchanged |
 | `pairtable.py` | `f5760dd50c20f831769d87c9a6393522c555a623df6185b5035561bc30903819` | - | written for these records: runs paircl.py via runpy; one TSV row per pair | - |
-| `repin_check-e5487165abb8.py` | `f268a01b33c56759fc3bef8a840116580ef1cb29eb4fb046f4ea3fd8d480bebc` | `e5487165abb8dfb7a39518a418fc24a0e815cea74918943bafbf35667c70ed11` | tool registry commit f69e6d74ebe, tools/repin_check/e5487165abb8/repin_check.py (supersedes 9cbc3553c09e: two different named targets are a difference) | 9 removed, 9 added (349 lines in, 349 lines out) |
+| `repin_check-e5487165abb8.py` | `f268a01b33c56759fc3bef8a840116580ef1cb29eb4fb046f4ea3fd8d480bebc` | `e5487165abb8dfb7a39518a418fc24a0e815cea74918943bafbf35667c70ed11` | tool registry, tools/repin_check/e5487165abb8/repin_check.py (supersedes 9cbc3553c09e: two different named targets are a difference) | 9 removed, 9 added (349 lines in, 349 lines out) |
 | `scrub_out.py` | `4ee202522d7858dbffb751c5ce50d2c067a19d71359ec4dcd281de88bd71582e` | - | written for these records: the one writer of the committed slice | - |
 | `syms.py` | `ebf764d5cdf2407a8172a220e5a9ac605a3a95b1b6341abb91bfdc4fb7d4100c` | - | written for these records: symbol lookup | - |
 
 ## bytecmp-1480ca2faea0.py
 
 - copy sha256 `0ac2ec8db277b17e34a4a0e35804270157525dbacbc6b0283f95134dbfe129de`
-- original sha256 `1480ca2faea075e866800faab4e18aea5fb4a96dcea17ef1fe8981f1bdd0f98f`: tool registry commit 797e8971d27d, tools/bytecmp/1480ca2faea0/bytecmp.py (its lines 39-151 are insnflow a36c2b82eb44, tools/insnflow/a36c2b82eb44/insnflow.py at the same commit)
+- original sha256 `1480ca2faea075e866800faab4e18aea5fb4a96dcea17ef1fe8981f1bdd0f98f`: tool registry, tools/bytecmp/1480ca2faea0/bytecmp.py (its lines 39-151 are insnflow a36c2b82eb44, tools/insnflow/a36c2b82eb44/insnflow.py at the same commit)
 - sha256 of the unredacted diff: `f1e81d36c95e547346054f743cb1455b09bfa5c6ec8a2404cdfff1affc99b0ed`
 
 ```diff
@@ -32,7 +32,7 @@ Written by mkdiffs.py. Each copy below is the script these records ran. A change
 -# ---- insnflow block begin (owner <redacted>). The same bytes as <redacted> (record: <redacted>
 -# tools/insnflow/). symreloc.py and elfdis.py CARRY this block instead of importing it, so that a tool's sha fixes its
 +# ---- insnflow block begin. The same bytes as insnflow a36c2b82eb44 (tools/insnflow/a36c2b82eb44/insnflow.py, tool
-+# registry commit 797e8971d27d) apart from comments. symreloc.py and elfdis.py CARRY this block instead of importing it, so that a tool's sha fixes its
++# registry) apart from comments. symreloc.py and elfdis.py CARRY this block instead of importing it, so that a tool's sha fixes its
 @@ -76,4 +76,4 @@
 -    A linear scan is wrong in both directions, as two lanes measured on 2026-10-29: it pairs an auipc with a word that is a
 -    jump-table case entered from elsewhere (<redacted>, printf_core+0x890: a false differing reference), and it drops a
@@ -58,7 +58,7 @@ Written by mkdiffs.py. Each copy below is the script these records ran. A change
 ## drvcmp.py
 
 - copy sha256 `1b13206c79dd0721a7dfdefa2ab6cff9c2d5d2666920e46e449065ffaa56dd79`
-- original sha256 `27f7a0e92bb9fdd59033bcdc5e7fcb349a20e97f7c02c43f3f5ffbb55347f89e`: commit 7af39d3f61c, proofs/reac-repacer/fuzz_uci/provenance/evidence/uci-b-memcpy/drvcmp.py (the drvcmp.py of the image-B donor survey scripts (repacer/B-DONORS.md) with bytecmp switched to 1480ca2faea0)
+- original sha256 `27f7a0e92bb9fdd59033bcdc5e7fcb349a20e97f7c02c43f3f5ffbb55347f89e`:, proofs/reac-repacer/fuzz_uci/provenance/evidence/uci-b-memcpy/drvcmp.py (the drvcmp.py of the image-B donor survey scripts (repacer/B-DONORS.md) with bytecmp switched to 1480ca2faea0)
 - sha256 of the unredacted diff: `bc826d17df5d4afccdeb6161f9ed0c8dc2507027896c2e55b89489751895c9c2`
 
 ```diff
@@ -66,15 +66,15 @@ Written by mkdiffs.py. Each copy below is the script these records ran. A change
 +++ b/drvcmp.py
 @@ -4,2 +4,2 @@
 -Reuses, verbatim and without running their mains:
--  - bytecmp.py 1480ca2faea0 (<redacted> 96d2c32e2879 tools/bytecmp/1480ca2faea0/bytecmp.py; was 7daa0e2a03d9 in <redacted>'s copy): load / words /
+-  - bytecmp.py 1480ca2faea0 (<redacted> tools/bytecmp/1480ca2faea0/bytecmp.py; was 7daa0e2a03d9 in <redacted>'s copy): load / words /
 +Reuses, without running their mains (these copies differ only in comments and in host paths read from the environment):
-+  - bytecmp.py 1480ca2faea0 (tool registry commit 797e8971d27d, tools/bytecmp/1480ca2faea0/bytecmp.py): load / words /
++  - bytecmp.py 1480ca2faea0 (tool registry, tools/bytecmp/1480ca2faea0/bytecmp.py): load / words /
 @@ -7,4 +7,4 @@
 -  - repin_check.py 9cbc3553c09e (same commit, tools/repin_check/9cbc3553c09e/repin_check.py): class Img (lines 31-59)
 -    and sx / targets / tcmp / w_off (lines 188-237), its target pass: every pc-relative target (jal, auipc+lo12 bound
 -    by bytecmp's MUST dataflow) is resolved to symbol+offset on both images and compared; a target with no symbol is
 -    compared by its bytes.
-+  - repin_check.py e5487165abb8 (tool registry commit f69e6d74ebe, tools/repin_check/e5487165abb8/repin_check.py): class
++  - repin_check.py e5487165abb8 (tool registry, tools/repin_check/e5487165abb8/repin_check.py): class
 +    Img (lines 31-59) and sx / targets / tcmp / w_off (lines 188-247), its target pass: every pc-relative target (jal, auipc+lo12 bound
 +    by bytecmp's MUST dataflow) is resolved to symbol+offset on both images and compared; two different names, or a name
 +    on one side only, are a difference; a target with no symbol on either side is compared by its bytes.
@@ -111,7 +111,7 @@ Written by mkdiffs.py. Each copy below is the script these records ran. A change
 ## repin_check-e5487165abb8.py
 
 - copy sha256 `f268a01b33c56759fc3bef8a840116580ef1cb29eb4fb046f4ea3fd8d480bebc`
-- original sha256 `e5487165abb8dfb7a39518a418fc24a0e815cea74918943bafbf35667c70ed11`: tool registry commit f69e6d74ebe, tools/repin_check/e5487165abb8/repin_check.py (supersedes 9cbc3553c09e: two different named targets are a difference)
+- original sha256 `e5487165abb8dfb7a39518a418fc24a0e815cea74918943bafbf35667c70ed11`: tool registry, tools/repin_check/e5487165abb8/repin_check.py (supersedes 9cbc3553c09e: two different named targets are a difference)
 - sha256 of the unredacted diff: `4ded988ecc5673e0d79b98ec5f274c5dc4860a9e72e6fa23c98a25a0e3fe91e9`
 
 ```diff
@@ -119,9 +119,9 @@ Written by mkdiffs.py. Each copy below is the script these records ran. A change
 +++ b/repin_check-e5487165abb8.py
 @@ -2,2 +2,2 @@
 -"""repin_check.py -- independent check of <redacted>'s PSnp* restatement/re-pin (<redacted>
--17a8581f30c) against <redacted> (<redacted> 7e395de08f5).  Read-only.
-+"""repin_check.py -- independent check of a PSnp* restatement/re-pin (commit 17a8581f30c) against the fm restatement
-+(commit 7e395de08f5).  Read-only.
+-) against <redacted> (<redacted>).  Read-only.
++"""repin_check.py -- independent check of a PSnp* restatement/re-pin against the fm restatement
++.  Read-only.
 @@ -16,6 +16,6 @@
 -IMG = {'A': '<redacted>',
 -       'B': '<redacted>',

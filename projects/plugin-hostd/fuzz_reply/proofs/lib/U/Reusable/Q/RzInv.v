@@ -15,7 +15,7 @@ Lemma realizes_pkg : forall c X, realizes segs c X -> ~ budget_refused_at segs c
 exists p, pk_good c X p.
 Proof using.
 intros c X H.
-induction H as [c I evs nx T i0 Hn Hc IH | c Hh | c T T' H IH Heq | c I nx T i0 Hn Hc IH | c T Hb];
+induction H as [c I evs nx T i0 Hn Hc IH | c Hh | c T T' H IH Heq | c I nx T i0 Hn Hc IH | c T Hb Hrb];
 intros Hnb Hnh.
 - exists (RzPkg I evs nx T i0). split; [exact Hn|]. split; [exact Hc|]. left. apply t_eq_refl.
 - exfalso. exact (Hh Hnh).
@@ -25,6 +25,21 @@ intros Hnb Hnh.
 - exists (RzPkg I (fun _ => []) nx T i0). split; [exact Hn|]. split; [exact Hc|].
 right. split; [reflexivity | apply t_eq_refl].
 - exfalso. exact (Hnb Hb).
+Qed.
+(* 727298f3: [YK15.node_ok] gained a third conjunct, [sys_rob], and [rz_cut] a second premise of
+   the same shape.  Every [realizes] derivation but [rz_halt] therefore carries [sys_rob] at its own
+   configuration, so a cut is available at any realized configuration that has not halted. *)
+Lemma realizes_cut_inv : forall c X, realizes segs c X -> m_halted (cfg_model c) = None ->
+forall T, budget_refused_at segs c -> realizes segs c T.
+Proof using.
+intros c X H.
+induction H as [c I evs nx T i0 Hn Hc IH | c Hh | c T T' H IH Heq | c I nx T i0 Hn Hc IH | c T Hb Hrb];
+intros Hnh T0 Hbr.
+- destruct Hn as (_ & _ & Hrb). exact (rz_cut segs c T0 Hbr Hrb).
+- exfalso. exact (Hh Hnh).
+- exact (IH Hnh T0 Hbr).
+- destruct Hn as (_ & _ & Hrb). exact (rz_cut segs c T0 Hbr Hrb).
+- exact (rz_cut segs c T0 Hbr Hrb).
 Qed.
 Lemma realizes_union : forall c (I : Type) (T : I -> TSet) (i0 : I),
 ~ budget_refused_at segs c -> m_halted (cfg_model c) = None ->
@@ -44,11 +59,15 @@ assert (Hch : forall k, realizes segs (knx k) (kT k)).
 assert (Hcomp : forall k, sstep_cfg segs ACFG c (kevs k) (SNext (knx k))).
 { intros [i j]. unfold knx, kevs. cbn [projT1 projT2]. destruct (G i) as ([Hc _] & _ & _). apply Hc. }
 assert (Hsnd : forall e st, sstep_cfg segs ACFG c e st -> exists k, e = kevs k /\ st = SNext (knx k)).
-{ intros e st Hs. destruct (G i0) as ([_ Hs0] & _ & _). destruct (Hs0 e st Hs) as (j & -> & ->).
+{ intros e st Hs. destruct (G i0) as ([_ [Hs0 _]] & _ & _). destruct (Hs0 e st Hs) as (j & -> & ->).
 exists (@existT I P i0 j). split; reflexivity. }
+(* 727298f3: node_ok is now Hcomp /\ (Hsnd /\ RomBase.sys_rob segs c), so
+rz_node wants the third component too.  It comes from the same G. *)
+assert (Hrob : RomBase.sys_rob segs c).
+{ destruct (G i0) as ([_ [_ H]] & _ & _). exact H. }
 destruct (classic (exists i, T i [])) as [[i1 Hi1] | Hnone].
 - apply (rz_conseq segs c (t_alt (fun k => t_emit (kevs k) (kT k)))).
-+ exact (rz_node segs c K kevs knx kT k0 (conj Hcomp Hsnd) Hch).
++ exact (rz_node segs c K kevs knx kT k0 (conj Hcomp (conj Hsnd Hrob)) Hch).
 + intros tr. split.
 * intros [[i j] Ht]. unfold kevs, kT in Ht. cbn [projT1 projT2] in Ht.
 destruct (G i) as (_ & _ & [E | [E1 E]]).
@@ -67,7 +86,11 @@ apply (rz_conseq segs c (t_alt kT)).
 + apply (rz_silent segs c K knx kT k0); [split|exact Hch].
 * intros [i j]. pose proof (Hcomp (@existT I P i j)) as Hc. unfold kevs in Hc. cbn [projT1 projT2] in Hc.
 rewrite (proj1 (S i) j) in Hc. exact Hc.
-* intros e st Hs. destruct (Hsnd e st Hs) as ([i j] & -> & ->). exists (@existT I P i j).
+(* node_ok's second component is itself (Hsnd /\ sys_rob) at 727298f3, so the
+split above leaves a conjunction here, not a forall -- which is why the error
+is "No product even after head-reduction" and not an arity complaint. *)
+* split; [|exact Hrob].
+intros e st Hs. destruct (Hsnd e st Hs) as ([i j] & -> & ->). exists (@existT I P i j).
 split; [unfold kevs; cbn [projT1 projT2]; exact (proj1 (S i) j) | reflexivity].
 + intros tr. split.
 * intros [[i j] Ht]. exists i. apply (proj2 (S i)). exists j. exact Ht.
@@ -78,11 +101,14 @@ node_ok segs c unit (fun _ => []) (fun _ => c') ->
 ~ budget_refused_at segs c -> m_halted (cfg_model c) = None -> m_halted (cfg_model c') = None ->
 realizes segs c T -> realizes segs c' T.
 Proof using.
-intros c c' T [_ Hdet] Hnb Hnh Hnh' H.
-destruct (classic (budget_refused_at segs c')) as [Hb' | Hnb']; [apply rz_cut; exact Hb'|].
+intros c c' T [_ [Hdet _]] Hnb Hnh Hnh' H.
 destruct (realizes_pkg c T H Hnb Hnh) as (p & [Hc _] & Hch & HE).
 assert (D : forall j, pk_evs p j = [] /\ pk_nx p j = c').
 { intros j. destruct (Hdet _ _ (Hc j)) as ([] & E1 & E2). injection E2 as E2. split; [exact E1 | exact E2]. }
+assert (Hr0 : realizes segs c' (pk_T p (pk_j0 p))).
+{ pose proof (Hch (pk_j0 p)) as Hr. rewrite (proj2 (D (pk_j0 p))) in Hr. exact Hr. }
+destruct (classic (budget_refused_at segs c')) as [Hb' | Hnb'];
+[exact (realizes_cut_inv c' (pk_T p (pk_j0 p)) Hr0 Hnh' T Hb')|].
 destruct HE as [E | [_ E]].
 - apply (rz_conseq segs c' (t_alt (fun j => t_emit [] (pk_T p j)))).
 + apply (realizes_union c' (pk_J p) _ (pk_j0 p) Hnb' Hnh'). intros j. apply realizes_emit_nil.

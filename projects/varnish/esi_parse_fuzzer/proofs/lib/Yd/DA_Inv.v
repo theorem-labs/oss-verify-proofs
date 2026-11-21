@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the argument facts read the launch's argument layout, the slack after each argument string is 8 bytes, and the stack-depth margin fits the 6144512-byte mapped stack. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -36,7 +37,7 @@ Definition in_ranges (l : list (Z * Z)) (a : Z) : Prop := exists lo hi, In (lo, 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Section S.
-  Context {Clg : Ceiling} {AI : AsanAlloc LPA}.   (* [comment removed for export] *)
+  Context {Clg : Ceiling} {AI : AsanAlloc LPA} {LAY : ArgLayout}.   (* [comment removed for export] *)
   Variable usp : Z.
   Variables argv envp : list (list byte).
   Variable fs : Fs.
@@ -54,10 +55,10 @@ Section S.
     aa_s0 : bytes_at rsegs v p0a (nth 0 argv [] ++ [Z_to_bv 8 0]);
     aa_s1 : 2 <= argc -> bytes_at rsegs v p1a (nth 1 argv [] ++ [Z_to_bv 8 0]);
     (* [comment removed for export] *)
-    aa_k0 : exists sl, length sl = 16%nat /\ bytes_at rsegs v (p0a + e_L0 argv + 1) sl;
-    aa_k1 : 2 <= argc -> exists sl, length sl = 16%nat /\ bytes_at rsegs v (p1a + e_L1 argv + 1) sl;
-    aa_b0 : usp + 24 <= p0a /\ p0a + e_L0 argv + 1 + 16 <= usp + span;
-    aa_b1 : 2 <= argc -> p1a + e_L1 argv + 1 + 16 <= usp + span;
+    aa_k0 : exists sl, length sl = 8%nat /\ bytes_at rsegs v (p0a + e_L0 argv + 1) sl;
+    aa_k1 : 2 <= argc -> exists sl, length sl = 8%nat /\ bytes_at rsegs v (p1a + e_L1 argv + 1) sl;
+    aa_b0 : usp + 24 <= p0a /\ p0a + e_L0 argv + 1 + 8 <= usp + span;
+    aa_b1 : 2 <= argc -> p1a + e_L1 argv + 1 + 8 <= usp + span;
     aa_usp : sp_window_lo <= usp /\ usp + span <= 2^47 /\ usp mod 16 = 0 /\ 0 <= span
   }.
 
@@ -81,20 +82,24 @@ Section S.
     di_fds   : m_fds md = fds;
     di_frames : forall ff, a_frame A ff = None;
     di_stk   : stk rsegs (aview A m) (STK_LO usp) spc;
-    di_spc   : STK_LO usp + 0x700000 <= spc <= usp;
+    (* LPS 727298f3: the mapped stack is 6144512 bytes ([STK_LO]); the margin WAS 0x700000 of 8 MiB *)
+    di_spc   : STK_LO usp + 0x500000 <= spc <= usp;
     di_stksh : forall a, STKSH_LO <= a < STKSH_HI -> aview A m (wz a) = Some (Z_to_bv 8 0);
     di_cells : exists tid, ccells (aview A m) tid sof ini;
     di_sspgot : ro_cells rsegs (aview A m) SSP_GOT [C8 (wz SSP_GUARD)];
-    di_args  : args_at (aview A m)
+    di_args  : args_at (aview A m);
+    di_rdr   : m_channel_reader md = true   (* 08b1429: channel-reader-premise, from cs_ok's co_rdr *)
   }.
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
 
   (* [comment removed for export] *)
-  Lemma dinv_of_main_view : forall A m md, main_view usp argv envp fs A m md -> dinv A m md usp fds_std SO_pristine 0.
+  Lemma dinv_of_main_view : forall A m md, main_view usp argv envp fs A m md ->
+    m_channel_reader md = true ->   (* 08b1429: channel-reader-premise; main_view is built from entry_raw, which has no reader, so the caller brings it from cs_ok's co_rdr *)
+    dinv A m md usp fds_std SO_pristine 0.
   Proof.
-    intros A m md MV. destruct MV. (first [ pose proof (mv_usp) as dR_1; dand4 dR_1 as U1 U2 U3 U4 | pose proof mv_usp as (U1 & U2 & U3 & U4) ]). unfold sp_window_lo in U1.
+    intros A m md MV RDR. destruct MV. (first [ pose proof (mv_usp) as dR_1; dand4 dR_1 as U1 U2 U3 U4 | pose proof mv_usp as (U1 & U2 & U3 & U4) ]). unfold sp_window_lo in U1.
     constructor; try assumption.
     - exact (ea_frames _ _ _ mv_A0).
     - unfold STK_LO. lia.
@@ -279,8 +284,8 @@ Ltac heapish_case :=
   (* [comment removed for export] *)
   Definition in_args (a : Z) : Prop :=
        (usp + 8 <= a < usp + 16) \/ (2 <= argc /\ usp + 16 <= a < usp + 24)
-    \/ (p0a <= a < p0a + e_L0 argv + 1 + 16)
-    \/ (2 <= argc /\ p1a <= a < p1a + e_L1 argv + 1 + 16).
+    \/ (p0a <= a < p0a + e_L0 argv + 1 + 8)
+    \/ (2 <= argc /\ p1a <= a < p1a + e_L1 argv + 1 + 8).
 
   Ltac eun2 := unfold in_args, e_p1a in *; unfold e_p0a, e_L0, e_L1, e_argc, e_envc, e_span, sp_window_lo in *.
 
@@ -309,12 +314,12 @@ Ltac heapish_case :=
     apply (proj2 (bytes_at_app rsegs v pa _ _)). split; [exact H1|]. rewrite length_app. cbn [length].
     replace (pa + Z.of_nat (length arg + 1)) with (pa + Z.of_nat (length arg) + 1) by lia. exact H2.
   Qed.
-  Lemma aa_s0k : forall v, args_at v -> exists sl, length sl = 16%nat /\ bytes_at rsegs v p0a (nth 0 argv [] ++ Z_to_bv 8 0 :: sl).
+  Lemma aa_s0k : forall v, args_at v -> exists sl, length sl = 8%nat /\ bytes_at rsegs v p0a (nth 0 argv [] ++ Z_to_bv 8 0 :: sl).
   Proof.
     intros v AR. (first [ pose proof ((aa_k0 _ AR)) as dR_8; dex1 dR_8 as sl; destruct dR_8 as [L B] | pose proof ((aa_k0 _ AR)) as dR_8; dand3 dR_8 as sl L B | destruct (aa_k0 _ AR) as (sl & L & B) ]). exists sl. split; [exact L|]. apply arg_slack; [exact (aa_s0 _ AR)|].
     unfold e_L0 in B. exact B.
   Qed.
-  Lemma aa_s1k : forall v, args_at v -> 2 <= argc -> exists sl, length sl = 16%nat /\ bytes_at rsegs v p1a (nth 1 argv [] ++ Z_to_bv 8 0 :: sl).
+  Lemma aa_s1k : forall v, args_at v -> 2 <= argc -> exists sl, length sl = 8%nat /\ bytes_at rsegs v p1a (nth 1 argv [] ++ Z_to_bv 8 0 :: sl).
   Proof.
     intros v AR H2. (first [ pose proof ((aa_k1 _ AR H2)) as dR_9; dex1 dR_9 as sl; destruct dR_9 as [L B] | pose proof ((aa_k1 _ AR H2)) as dR_9; dand3 dR_9 as sl L B | destruct (aa_k1 _ AR H2) as (sl & L & B) ]). exists sl. split; [exact L|]. apply arg_slack; [exact (aa_s1 _ AR H2)|].
     unfold e_L1 in B. exact B.

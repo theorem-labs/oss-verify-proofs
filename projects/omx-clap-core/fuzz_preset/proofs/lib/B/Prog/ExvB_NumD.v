@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Rebound on the old-pin kit of record 4f18c75d4900 (rebind base a9d3e245c2b): memnorm enters only as EXN_keepM's
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Rebound on the old-pin kit of record (rebind base): memnorm enters only as EXN_keepM's
    step keep across the one store of the piece (the fsd at exv_pc 0x8dc), YAkMemnorm.memnorm_write under the step's
    own store_ok; the generic helpers come from ExvB_Num_eng (ex_ws_x's, same names). *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B (asan-ubsan, rebuilt pin f8f98a95bc52, unstripped twin 3b5e1a099b53),

@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/Prog/LLVMFuzzerTestOneInput_c.v, with its module paths changed; 150 of its 167 lines of code are new or changed and 50 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_lock/lib/Prog/FrameRet.v, with its module paths, addresses and numbers changed; 130 of its 161 lines of code are new or changed and 136 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap's refusal under a may-fail allocator: the may-fail facts over an allocator record at MayFail). *)
+(* Copyright 2026 Theorem Labs *)
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.U.Reusable Require Import YK11 YM05 YO0f YO0d YO09 YL0g YL0i YI14 YI16 YL01.
@@ -100,7 +101,8 @@ Proof.
   unfold frame_facts_ubsan. tauto.
 Qed.
 
-Definition frame_allocator_mf {rc : RunCeil} {fx : FPState} (B : malloc_syms) (API : AllocAPI B) : Prop :=
+(* 08b1429: the may-fail facts are over a record at MayFail (YO0d.AllocAPI carries its mode; ZAllocatorMF). *)
+Definition frame_allocator_mf {rc : RunCeil} {fx : FPState} (B : malloc_syms) (API : AllocAPI (AM:=MayFail) B) : Prop :=
   block_slack_present B API /\ ctx_owned B API /\ blocks_low B API /\ blocks_nodup B API /\ blocks_writable B API /\ errno_unowned B API /\
   guard_rw B API /\ libc_no_locks B API /\
   AllocExtra B (aa_MR API) /\
@@ -108,7 +110,7 @@ Definition frame_allocator_mf {rc : RunCeil} {fx : FPState} (B : malloc_syms) (A
   (forall L A mem md a, aa_MR API L A mem md -> in_globals frame_RELRO a -> ~ owned B L A a).
 
 Definition frame_ubsan_mf : Prop :=
-  exists (B : malloc_syms) (API : forall rc : RunCeil, AllocAPI B)
+  exists (B : malloc_syms) (API : forall rc : RunCeil, AllocAPI (AM:=MayFail) B)
          (LS : lib_shape) (SH : sink_head) (SK : sink_syms) (ra empty : Z),
     ms_segs B = rsegs /\ ra mod 2 = 0 /\
     ms_malloc B = 0x16de0 /\ ms_free B = 0x16ca0 /\ ms_realloc B = None /\ ms_calloc B = None /\
@@ -137,7 +139,7 @@ Definition frame_ubsan_mf : Prop :=
           @lib_contract_gm MayFail fx rc LS B (API rc) SH SK G frame_RELRO GI j ENTRY ra empty SLOT_STACK) ->
        Statements.ubsan_halts_may_fail).
 
-Definition frame_facts_ubsan_mf (B : malloc_syms) (API : forall rc : RunCeil, AllocAPI B)
+Definition frame_facts_ubsan_mf (B : malloc_syms) (API : forall rc : RunCeil, AllocAPI (AM:=MayFail) B)
     (LS : lib_shape) (SH : sink_head) (SK : sink_syms) (ra empty : Z) : Prop :=
     ms_segs B = rsegs /\ ra mod 2 = 0 /\
     ms_malloc B = 0x16de0 /\ ms_free B = 0x16ca0 /\ ms_realloc B = None /\ ms_calloc B = None /\
@@ -160,7 +162,7 @@ Definition frame_facts_ubsan_mf (B : malloc_syms) (API : forall rc : RunCeil, Al
     (forall (rc : RunCeil) (fx : FPState), @frame_allocator_mf rc fx B (API rc)).
 
 Lemma frame_ubsan_mf_split : frame_ubsan_mf ->
-  exists (B : malloc_syms) (API : forall rc : RunCeil, AllocAPI B)
+  exists (B : malloc_syms) (API : forall rc : RunCeil, AllocAPI (AM:=MayFail) B)
     (LS : lib_shape) (SH : sink_head) (SK : sink_syms) (ra empty : Z),
     frame_facts_ubsan_mf B API LS SH SK ra empty /\
     (forall (G : list (Z * Z)) (GI : nat -> (word -> option byte) -> Prop),

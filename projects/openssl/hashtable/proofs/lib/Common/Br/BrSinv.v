@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (argv[0]'s address check moved to the plain chain's glue, which places its own string block). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From stdpp Require Import bitvector.
@@ -41,15 +42,8 @@ Definition is_lit_var (x : nat) (z : Z) : bool :=
 Definition is_ext_var (x : nat) : bool :=
   match vt_get VT x with None | Some VExt => true | _ => false end.
 
-Definition str0_check : bool :=
-  match tl_get TL ts with
-  | Some td =>
-      let l := elin VT CAP.e_str0 in
-      let l' := AX2.ladd (tag_lin td) (AX2.snorm (td_c td + 192), [(8, AX2.EVar 2)]) in
-      (td_c td =? tc) && terms_eqb (snd l) (snd l') && (AX2.snorm (fst l - fst l') =? 0)
-  | None => false
-  end.
-
+(* LPS c0dd863a: no argv[0] check here: [CAP.e_str0] is the c0dd863a launch's argv[0], which a plain family
+   state does not name; the plain glue (H0BrGlue2 / HUBrGlue2) places its own string area. *)
 Definition sinv_check : bool :=
   is_lit_var 1 1 && is_lit_var 3 0 && is_lit_var 7 0 && is_ext_var 2
   && match aview VT M TL XT (AX2.SA CAP.e_sp0 0) with
@@ -59,8 +53,7 @@ Definition sinv_check : bool :=
   && match pgview VT M TL ts tc (AX2.SA CAP.e_pgsp 0) with
      | Some k => k =? 0
      | None => false
-     end
-  && str0_check.
+     end.
 
 Lemma is_lit_var_sound x z : is_lit_var x z = true -> 0 <= z < 2 ^ 64 -> AX2.edenot E (AX2.EVar x) = Z_to_bv 64 z.
 Proof.
@@ -80,13 +73,12 @@ Theorem sinv_facts : sinv_check = true ->
   /\ AX2S.uE E CAP.e_pgsp = ISP - ISP mod 4096
   /\ AX2.edenot E (AX2.EVar 1) = Z_to_bv 64 1
   /\ AX2.edenot E (AX2.EVar 3) = Z_to_bv 64 0
-  /\ AX2.edenot E (AX2.EVar 7) = Z_to_bv 64 0
-  /\ AX2S.eqm (AX2S.uE E CAP.e_str0) (ISP + 192 + 8 * bv_unsigned (xv 2)).
+  /\ AX2.edenot E (AX2.EVar 7) = Z_to_bv 64 0.
 Proof.
   unfold sinv_check. intros H.
-  apply andb_prop in H as [H Hstr]. apply andb_prop in H as [H Hpg]. apply andb_prop in H as [H Hsp].
+  apply andb_prop in H as [H Hpg]. apply andb_prop in H as [H Hsp].
   apply andb_prop in H as [H Hx2]. apply andb_prop in H as [H H7]. apply andb_prop in H as [H1 H3].
-  split; [|split; [|split; [|split; [|split]]]].
+  split; [|split; [|split; [|split]]].
   - destruct (aview VT M TL XT (AX2.SA CAP.e_sp0 0)) as [[t o]|] eqn:Hav; [|discriminate].
     apply andb_prop in Hsp as [Ht Ho]. apply Uint63.eqb_spec in Ht. apply Z.eqb_eq in Ho. subst t o.
     pose proof (aview_sound rho xv xb VT M TL XT HM Hrho0 HTL HXT _ ts tc Hav) as Hs.
@@ -99,24 +91,6 @@ Proof.
   - apply is_lit_var_sound; [exact H1 | lia].
   - apply is_lit_var_sound; [exact H3 | lia].
   - apply is_lit_var_sound; [exact H7 | lia].
-  - unfold str0_check in Hstr. destruct (tl_get TL ts) as [td|] eqn:Hg; [|discriminate].
-    apply andb_prop in Hstr as [Hstr Hc]. apply andb_prop in Hstr as [Htc Hte].
-    apply Z.eqb_eq in Htc, Hc. apply terms_eqb_eq in Hte.
-    pose proof (elin_sound rho xv xb VT Hrho0 CAP.e_str0) as Hl.
-    pose proof (tag_lin_sound rho xv xb VT M HM ts td (tl_In_ok VT M TL HTL ts td (tl_get_In TL ts td Hg))) as Ht.
-    set (l := elin VT CAP.e_str0) in *.
-    set (l' := AX2.ladd (tag_lin td) (AX2.snorm (td_c td + 192), [(8, AX2.EVar 2)])) in *.
-    assert (Hll : AX2S.eqm (AX2S.lden E l) (AX2S.lden E l')).
-    { unfold AX2S.lden. rewrite Hte. destruct (AX2S.eqm_snorm (fst l - fst l')) as [q Hq]. rewrite Hc in Hq.
-      exists (- q). lia. }
-    eapply AX2S.eqm_trans; [apply AX2S.eqm_sym; exact Hl|].
-    eapply AX2S.eqm_trans; [exact Hll|].
-    eapply AX2S.eqm_trans; [apply AX2S.ladd_sound|].
-    replace (ISP + 192 + 8 * bv_unsigned (xv 2)) with (bv_unsigned (rho ts) + (tc + 192 + 8 * bv_unsigned (xv 2))) by lia.
-    apply AX2S.eqm_add; [exact Ht|].
-    unfold AX2S.lden. cbn [fst snd AX2S.tden]. unfold AX2S.uE. cbn [AX2.edenot].
-    rewrite (is_ext_var_sound 2 Hx2). rewrite Htc.
-    destruct (AX2S.eqm_snorm (tc + 192)) as [q Hq]. exists q. lia.
 Qed.
 
 End Sinv.

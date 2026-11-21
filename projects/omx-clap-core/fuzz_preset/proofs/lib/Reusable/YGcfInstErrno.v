@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstErrno.v at bdbe5c2a7e55299b2ed4d02c360fe593e2335000 (cold/c-asan-cf-f1, lane F1 of the cf layer), with its module paths changed; the text is otherwise unchanged. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstErrno.v (cold/c-asan-cf-f1, lane F1 of the cf layer), with its module paths changed; the text is otherwise unchanged. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfInstErrno.v, with its module paths changed; 6 of its 124 lines of code are new or changed and 7 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (lane F1 of the generic cf instance layer; integrator ReallocPrimary).
-   The cf twin of proofs/cgif/cgif_file_fuzzer/lib/ErrnoApartcgif.v at c5 30a1993588f (with AGif1m.v's
+   The cf twin of proofs/cgif/cgif_file_fuzzer/lib/ErrnoApartcgif.v at c5 (with AGif1m.v's
    errno_not_owned_cgif and CLenqcgifE.v's errno_kept_view / enq_errno_kept, the errno facts the cgif arms read
    beside it), feeding ErrnoGcf.v.
    rule 24: no function proved (kind: interface-instance discharge: errno's image facts and errno kept at the cf
@@ -32,7 +33,7 @@
    - [errno_kept_g_gcf] / [errno_kept_gcf_g] / [errno_kept_cf_g] / [errno_kept_g_cf]: ErrnoG.errno_kept,
      ErrnoGcf.errno_kept and YGcfMallocCompose.errno_kept_cf are one text (conversion).
    The image window comes from the ledger through the kit's image premise YGcfDIface.IMG_COVER (ALedger_cf ->
-   im_img_cover; preset's Reusable/YGcfDIface.v:266, carried by path in the layer): one name for that fact.
+   im_img_cover; preset's Reusable/YGcfDIface.v:267, carried by path in the layer): one name for that fact.
    EVENT-FREE: no event count, event ceiling, regime or cgif meter term appears here (the internal file CF-LAYER-LANES.md's gate). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.

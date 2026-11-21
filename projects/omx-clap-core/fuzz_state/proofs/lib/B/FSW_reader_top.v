@@ -1,8 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the IMAGE B (fs.asan-ubsan, UBSan trap mode) walk of parse_value against
-   lib/B/FSH_Fn_reader.v parse_value_spec (CTX-free; the text of a working branch 035561e0fd4 = a working branch
-   311139dc663: skip_ws_spec's post keeps [sp, ot) but [q, q + 8), parse_value_spec's k = 0 arm
+   lib/B/FSH_Fn_reader.v parse_value_spec (CTX-free; the text of a working branch = a working branch:
+   skip_ws_spec's post keeps [sp, ot) but [q, q + 8), parse_value_spec's k = 0 arm
    `q = spZ regs + 8 /\ raZ regs <= q`; both rulings a Theorem Labs lane and after the k = 0 gap report): the
    COMPOSITION, parse_value_holds : parse_value_spec tfibsegs B k (stages: FSW_parse_value.v; decode table:
    FSW_parse_value_tbl.v).
@@ -16,14 +16,15 @@
        working heads
      proof-index: 0x82fcc: 0 named, 0 by address, 0 related, 0 released lemma(s), 0 by file name, an earlier delivery 0 named and
        0 name(s) holding it, 0 UNRELEASED working-branch file(s) in the lemma index, 105 UNRELEASED hit(s) on live working heads
-   Port source (Lookup result): ported from a working branch 75e39a1f41d:proofs/omx-clap-core/fuzz_state/lib/
+   Port source (Lookup result): ported from a working branch:proofs/omx-clap-core/fuzz_state/lib/
    B/Prog/{parse_value_disp,PvStr,PvItems,PvJoin,PvStep,PvHolds,ParseUnit}.v (COMPLETE old-form image-B walk of
    parse_value: entry/fake frame/skip_ws call pv_pro + pv_disp, parse_string arm pv_str_ok, parse_items arm pv_items_ok,
    epilogue pv_join + pvs_none, composition parse_value_step / parse_value_holds_b; all Qed, no admit), restated against
    parse_value_spec's frame lemma by lemma, NOT Required, NOT bridged; new-frame shape from image A's walk
-   a working branch (ebb53c68f7d .. 00c6d1886e6: lib/A/FSH_parse_value.v pv_grant / pv_resume_sm /
+   a working branch (..: lib/A/FSH_parse_value.v pv_grant / pv_resume_sm /
    pv_seg0 / pv_sm / pv_epi / pv_strcall, lib/A/FSW_parse_value_calls.v pvc_objcall), copied and re-measured for B. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/Prog/FSW_parse_value_holds.v; 27 of its 62 lines of code are new or changed and 2122 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_state image B (fs.asan-ubsan): the reader's closing theorem, the B twin of lib/A/FSW_reader_top.v.
 
    rule 24: proves no function (kind: segment lemma: the descending-depth composition of parse_value / parse_items
@@ -35,10 +36,10 @@
      parse_value 1  <- parse_items 1
      parse_items 0  <- parse_value 1
      parse_value 0  <- parse_items 0.
-   parse_value_holds B is the theorem lib/B/Prog/FSW_parse_value_holds.v:2300 (a working branch
-   e2df2faf212): five reader premises plus the nine runtime facts of the class-0 fake frame, which this Section takes.
-   parse_items_holds B is the theorem lib/B/Prog/FSW_parse_items_holds.v:431 (a working branch
-   f7399137189): the memset contract in place of FsRt, as A's. No Section hypothesis stands for a holds any more. *)
+   parse_value_holds B is the theorem lib/B/Prog/FSW_parse_value_holds.v:2301 (a working branch):
+   five reader premises plus the nine runtime facts of the class-0 fake frame, which this Section takes.
+   parse_items_holds B is the theorem lib/B/Prog/FSW_parse_items_holds.v:432 (a working branch):
+   the memset contract in place of FsRt, as A's. No Section hypothesis stands for a holds any more. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -71,7 +72,7 @@ Hypothesis HSS : FsShadowSyms B.
 Hypothesis HSW : @skip_ws_spec fx rc SK tfibsegs B.
 Hypothesis HGROW : @grow_spec fx rc SK tfibsegs B.
 Hypothesis HPS : @parse_string_spec fx rc SK tfibsegs B.
-(* the one runtime contract parse_items uses (memset), not FsRt whole (a Theorem Labs lane 13:43Z; A's c9df5c4a92e) *)
+(* the one runtime contract parse_items uses (memset), not FsRt whole (a Theorem Labs lane 13:43Z; A) *)
 Hypothesis MS : FSupoisonU.aintrin_realizesU tfibsegs B OSet PC_memset.
 (* the runtime facts of parse_value's class-0 fake frame (a Theorem Labs lane 13:29Z) *)
 Hypothesis IMG : fs_img_facts tfibsegs B.

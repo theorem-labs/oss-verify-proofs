@@ -1,6 +1,6 @@
 (* check_round_trip_cg: the ASan walk contract of check_round_trip (fuzz_decode.asan-ubsan, listing
    name DB_check_round_trip, AF_check_round_trip of lib/B/Prog/DecodeBList.v), in cgif_file_fuzzer's program-contract form, as
-   STATEMENTS only (no proof). Form: cgif's allocator-calling caller-journal contract (origin/ossv/recipes c8557374ad2e,
+   STATEMENTS only (no proof). Form: cgif's allocator-calling caller-journal contract (theorem-labs/oss-verify-proofs@6b32741d849a,
    proofs/cgif/cgif_file_fuzzer/lib/YCey.v:167 trfc_specX, lib/YC20.v:350 tlzw_spec): the caller's journal is the
    premise, the post extends it by the call's events, the allocations are metered (mo_ok / mo_le), and the blocks the
    call allocates are all freed (Permutation of ablocks). A callee (reac_braid_encode, and the float code of
@@ -49,7 +49,7 @@ Definition DEC_CRT_EV : Z := 6.
 Definition DEC_CRT_LIVE : Z := 2 ^ 13.
 
 (* The trace the allocator records at a call: the call's return address and the return addresses of the
-   frame-pointer chain after it (YG00.v:375 unwind_of_chain; YG0d.v call_trace0 and YGCalloc.v:216 ctrace0 are this at
+   frame-pointer chain after it (YG00.v:376 unwind_of_chain; YG0d.v call_trace0 and YGCalloc.v:216 ctrace0 are this at
    ras = raZ regs :: spine ch). *)
 Definition dec_utrace (pc0 : Z) (ras : list Z) : list Z :=
   firstn kUnwindMax (pc0 :: flat_map (fun ra => if ra =? pc0 then [] else [ra]) ras).
@@ -344,7 +344,7 @@ Definition dec_leaf_wr_at
     ly_stk_lo ly_stk_hi YK0s.ret_ok (as_gp B) (as_tp B) (aowned B).
 
 (* The traces the six allocator calls record, which the call rules ask to be in the trace universe (YC5d.v:66, :86;
-   YGCalloc.v:240). Which chain each call sees is fixed by s0 at the call (YG0d.v:218-223 chain_pre, YG00.v:367
+   YGCalloc.v:240). Which chain each call sees is fixed by s0 at the call (YG0d.v:218-223 chain_pre, YG00.v:368
    bad_next):
    - the tail free (+0x2e8): the epilogue has restored ra and s0, so the trace is the free's pc followed by the entry
      context c = raZ :: spine ch itself (cgif's HUCTX form, lib/A/AC8s.v:79-83);

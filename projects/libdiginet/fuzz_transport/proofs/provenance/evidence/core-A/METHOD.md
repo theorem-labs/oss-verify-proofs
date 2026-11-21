@@ -14,12 +14,12 @@ The run of record is `run.sh` (this directory) on the run directory WORK, with:
 
     REL=<port_core 83f5203d2a2f release> DON=<fuzz_grant's released lib, normalised> PG=<fuzz_grant's images>
     P=<fuzz_transport's images> EV=<this directory> SYMS=<fuzz_grant.asan.syms.txt, sha256 b46268790c46>
-    LIB=<the unit's lib, below> GRANTB=<B/YA09.v, B/YA0e.v of fuzz_grant's released lib, recipes 4f87de75d67>
+    LIB=<the unit's lib, below> GRANTB=<B/YA09.v, B/YA0e.v of fuzz_grant's released lib, recipes>
     sh run.sh WORK
 
 - REL: the port_core 83f5203d2a2f release (port_core.py, sha256 83f5203d2a2f; README.md, sha256 299fda276079; internal
   records); the copy the run used equals it file for file (20 of 20 sha256 equal). `versions.txt` (the run's own) lists port_core.py 83f5203d2a2f and the sha256 of every helper.
-- DON: fuzz_grant's released lib at origin/ossv/recipes 25e3d17bdb50, normalised as fuzz_frame's and fuzz_decode's runs
+- DON: fuzz_grant's released lib, normalised as fuzz_frame's and fuzz_decode's runs
   do (Reusable/* at the lib root, module text `...fuzz_grant.lib.Reusable` -> `...fuzz_grant.lib`).
 - LIB: the lib the run read: the unit's lib on the new pin (with libdiginet/fuzz_transport lib/A/TransportShape.v, file
   sha256 caa68b81b1f5; donor not released) with the 19 start-up files of row T3r's cut layer (records/startup-layer.tsv: each
@@ -103,8 +103,8 @@ override-not-found rows (overrides.tsv and required.tsv byte-equal to the record
 in the provenance line's tool sha, 0 value cells. One FAIL row is the record's only (A/AFem.v:206 value-role-conflict,
 which e0e94a04094b leaves out because an override row writes the value). An earlier run of the same tag on work-rec4's
 inputs gave the same result.
-`--src-rev 25e3d17bdb50`: 83f5203d2a2f's item 92 writes one registered provenance line per staged file, and only with
---src-rev: `(* Relocated from <donor file> at 25e3d17bdb50 by port_core 83f5203d2a2f onto libdiginet/fuzz_transport
+``: 83f5203d2a2f's item 92 writes one registered provenance line per staged file, and only with
+--src-rev: `(* Relocated from <donor file> by port_core 83f5203d2a2f onto libdiginet/fuzz_transport
 (asan). *)`, directly under the donor's notice block, which stays byte for byte; no `Modified by` line. `hdrcheck.py`
 checks exactly that on every staged file (the donor's notice block first, then the registered line, no other provenance
 or `Modified by Theorem Labs` line): `492 files, 492 in form, 0 refused`. It takes the place of D9's hdrform.py, whose
@@ -135,8 +135,8 @@ stand-in (libdiginet/fuzz_transport lib/A/AF0m.v, file sha256 3b58b624cb9e; dono
 ## Trunk files the run needs
 
 - The composition kit: the 17 files port_core expects in the trunk lib and the new-pin base lacks (A/RelimCut.v,
-  Reusable/YK0j YK0t YK18 YK1e YK1g YM08 YM09 YQ00..YQ06 from fuzz_grant's released lib at 25e3d17bdb50;
-  Reusable/HaltsKitB.v and YJ00.v from libreac/fuzz_decode's at bf7779f81ed7), written by `add-kit.sh` with one change
+  Reusable/YK0j YK0t YK18 YK1e YK1g YM08 YM09 YQ00..YQ06 from fuzz_grant's released lib;
+  Reusable/HaltsKitB.v and YJ00.v from libreac/fuzz_decode), written by `add-kit.sh` with one change
   per file, the module path. `kit-rec.tsv` is its table for the run of record: per file the donor path and commit, the
   donor blob, the written blob, the number of module paths changed; byte-equal to the dry runs' table. Measured: 17 of 17
   written blobs equal the files of the LIB the run read and of this tree's lib. The run

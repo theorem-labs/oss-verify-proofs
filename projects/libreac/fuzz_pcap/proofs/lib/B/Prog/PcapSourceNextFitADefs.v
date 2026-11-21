@@ -24,7 +24,7 @@
      0x81d68: s_and_ptr (Reusable/YP0m.v:969-980) rewrites ps & 7 to 0 from the alignment fact, so `bnez` sees 0 and is
               not taken.
    These are the decisions of the released UBSan proof for the v1.8 image (proofs/libreac/fuzz_pcap/lib/U/Prog/
-   pcap_source_close.v on origin/ossv/recipes c8557374ad2e): close_closed :43 (if_false, premise bv_unsigned a0 <> 0 at
+   pcap_source_close.v): close_closed :43 (if_false, premise bv_unsigned a0 <> 0 at
    :23) and :45-46 (ub_align A8, premise bv_unsigned a0 mod 8 = 0 at :23), close_pro :82 and :84-85 (premises :58).
 
    The contract is lib/A's, not a copy (the shared-text rule): pb_pcap_source_closeX proves lib/A's image-generic
@@ -58,9 +58,10 @@
    and nx_mid's registers s5 = ps, s7 = cap, s10 = the shadow address of ps, s11 = ps + 8. The stream stands after
    the 16-byte header (q + 16); `ph` is in scope (NSH_ph). s3 (ph), s4 and the a / t registers are not read before
    they are written on the fit path (s3 := F at 0x8198c, s4 := buf at 0x819e4). *)
-(* Modified by Theorem Labs, 2026-10: the lib/B twin of lib/A/Prog/PcapSourceNextFitADefs.v (a working branch
-   b5b98d94ebb): the cut, the registers and the slot are lib/B's (NP_fit 0x1200; s2 / s6 / s8 and NS_SEC instead of
+(* Modified by Theorem Labs, 2026-10: the lib/B twin of lib/A/Prog/PcapSourceNextFitADefs.v (a working branch):
+   the cut, the registers and the slot are lib/B's (NP_fit 0x1200; s2 / s6 / s8 and NS_SEC instead of
    lib/A's header bytes in a2 .. a5 and s9 / s11), over lib/B's nx_mid. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

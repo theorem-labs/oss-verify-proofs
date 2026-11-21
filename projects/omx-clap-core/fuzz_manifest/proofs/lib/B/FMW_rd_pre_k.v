@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/AF0x.v, with its module paths and module names changed; 571 of its 675 lines of code are new or changed and 468 lines of the source are left out. *)
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_rd_pre_k.v on a working branch e2e59892bef: adapted to B's entry segment (registers, the one-record frame chain helpers). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_rd_pre_k.v on a working branch: adapted to B's entry segment (registers, the one-record frame chain helpers). *)
 (* lv2_locate_manifest_readings, entry segment (0x81e94 .. RD_R / RD_L): the segment's own lemmas.
    The poison window: fuzz_malloc returns whole with its 16-byte head user-poisoned (U = [(whole - 16, 16)]); the
    journal is kept over `unpoison U mem` (FMupoison.v), the runtime contracts inside the window (snprintf, strstr) take
@@ -373,7 +374,7 @@ destruct (Z_lt_le_dec a (b + m)) as [Hlt | Hge].
 Qed.
 
 (* ---- a caller's C string across a program call (G5 FMW_kitS.v cstr_ok_kept; cstr_kept's image arm is
-   suffix-closed, hdesign cce35be4cf7) ---- *)
+   suffix-closed, hdesign) ---- *)
 Lemma rdp_word_end_mono : forall x y, x <= y -> x - x mod 8 + 8 <= y - y mod 8 + 8.
 Proof.
 intros x y H. pose proof (Z.div_mod x 8 ltac:(lia)) as Dx. pose proof (Z.div_mod y 8 ltac:(lia)) as Dy.

@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AD1p.v, with its module paths changed, names TfibSyms -> CmdBSyms and its addresses moved to plugin-hostd/fuzz_command's ASan build; the program contract is taken at every call index j with fuzz_command's GI_cmdA (lib/A/Prog/CmdGlob.v) and at every float state, since a call may return in another one (C3's pass 5b), so the sites the loop reaches after a call (the contract, printf, free, exit) are hypotheses for all float states; main's entry gives the arms frm0 (fx0's fcsr is 0) and stk_top (AD1v.v): [sp, sp + 24) from argc/argv in the entry state, and [sp + 24, stack top) from the hand-off's argH0 equation with wrap_mem_present (the kernel maps the entry stack to the page boundary above its image) where argH0 holds, from StartStkAuxG.stk_aux_present (the hole states' auxv and AT_RANDOM words) where it does not; the start-up certificate's hole states come from class StartData (A/CmdStartCert.v) and its checks from classes TfibHolesChk, TfibHolesIf, EntryCheckAll, TfibHolesChkB, TfibHolesImgsh, FinvCheckAll, TfibHolesStkAux and TfibAvis8 (A/CmdWorldH8.v), Section hypotheses until plugin-hostd/fuzz_command's certificate is generated; the entry world W1 takes A/CmdWorldH8.v's H1_H8 for the world field w_H8. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/AD1p.v (donor image sha256 c0661b96b5bd), with its module paths changed, names CmdBSyms -> SegBSyms and its addresses moved to reac-pw/fuzz_segconf's ASan build. *)
 (* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/A/AD1p.v, derived mechanically (derive_y.py b7b132fb12a7; every changed numeral checked against alreloc.py a5c53bb2bed4 and against image B), with its module paths changed (lib/A to lib/B) and its addresses moved to reac-pw/fuzz_segconf's ASan+UBSan build. The comments are the A file's. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader conjunct of fdchan; the auxv layout over the CONFIG_RSEQ flag; the start-up hand-off states computed per CONFIG_RSEQ flag; the launch's ProcInput; the image and mmap-base arguments of YA02's start-up lemmas); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -11,7 +12,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.reac_pw.fuzz_segconf.images Require Import AsanUbsan.
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import YK11 YK15 YK18 YK0c YK0e YK09 YA0c YA0e YA01 YA02 YA00.
-From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B Require Import YB12 YB1h YB01 StartStkAuxG StartStkAux.
+From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B Require Import YB12 YB1h YB01r StartStkAuxG StartStkAux.
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B Require Import YG0f.
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import YG00 YG01.
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.B Require Import YG0n.
@@ -56,43 +57,47 @@ rewrite Hbase in Hb. replace (usp + YP09.c_off c + (a - usp - YP09.c_off c)) wit
 unfold mbyte in Hb. rewrite (YF0x.seg_rom_none_high a) in Hb by (unfold YF0x.TFIB_IMG_END; lia).
 destruct (m (Z_to_bv 64 a)); [discriminate | discriminate Hb].
 Qed.
-(* Every byte of the kernel's entry stack, from the entry sp up to the page boundary above its image,
-   is mapped in the exec state: the image is build_stack_bytes followed by the slack that fills the page
-   (LPS Run.v entry_stack_image / entry_stack_image_top, StackLayout.v stack_to_mem). *)
-Lemma wrap_mem_present : forall ph (sp : word) argv envp (uid hw : word) rnd a,
-valid_sp sp -> entry_stack_fits sp argv envp ->
-bv_unsigned sp <= a < entry_page_top sp (build_stack_bytes ph sp argv envp uid hw rnd) ->
-wrap_mem ph sp argv envp uid hw rnd (Z_to_bv 64 a) <> None.
+(* Every byte of the kernel's entry stack, from the entry sp up to the stack VMA's end [ed_top], is mapped in the
+   exec state: at 727298f3 the image is Linux's block, sp .. [ed_top] exactly
+   (PropExec.length_entry_stack_image_launch, PropExec.wrap_above_sp, StackLayout.stack_to_mem). *)
+Lemma wrap_mem_present : forall inp mbase ph entry (sp brk : word) rnd a,
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
+bv_unsigned sp <= a < bv_unsigned (ed_top rnd) ->
+wrap_mem inp mbase ph entry sp rnd (Z_to_bv 64 a) <> None.
 Proof.
-intros ph sp argv envp uid hw rnd a Hsp Hfit Ha.
-pose proof (entry_page_top_within_window ph sp argv envp uid hw rnd Hfit) as HW.
-pose proof Hsp as (Ulo & Uhi & _). unfold sp_window_lo, sp_window_hi in *.
-assert (Ha64 : 0 <= a < 2 ^ 64) by lia.
-pose proof (entry_stack_image_top ph sp argv envp uid hw rnd) as HT.
-rewrite (wrap_above_sp ph sp argv envp (Z_to_bv 64 a) uid hw rnd) by (rewrite YK00.u64_lit by lia; lia).
-unfold stack_to_mem. rewrite YK00.u64_lit by lia.
+intros inp mbase ph entry sp brk rnd a Hlau Ha.
+pose proof (length_entry_stack_image_launch Sv48 inp mbase ph entry sp brk rnd Hlau) as HL.
+pose proof (u64_range (ed_top rnd)) as HT. pose proof (u64_range sp) as HS.
+rewrite (wrap_above_sp inp mbase ph entry sp rnd (Z_to_bv 64 a)) by (rewrite YK00.u64_lit by lia; lia).
+unfold stack_to_mem. cbv zeta. rewrite YK00.u64_lit by lia.
 destruct (Z.leb_spec (bv_unsigned sp) a) as [_|Hgt]; [| lia].
-destruct (Z.ltb_spec (a - bv_unsigned sp) (Z.of_nat (length (entry_stack_image ph sp argv envp uid hw rnd)))) as [_|Hge]; [| lia].
+destruct (Z.ltb_spec (a - bv_unsigned sp) (Z.of_nat (length (entry_stack_image inp mbase ph entry sp rnd)))) as [_|Hge]; [| lia].
 apply (proj2 (nth_error_Some _ _)). lia.
 Qed.
-(* The driver's stack top (AD1v.TOPF, the page boundary ly_top of AD1g.ly0) is at or below that boundary. *)
-Lemma TOPF_le_page_top : forall ph (sp : word) argv envp (uid hw : word) rnd,
-YD1v.TOPF (bv_unsigned sp) <= entry_page_top sp (build_stack_bytes ph sp argv envp uid hw rnd).
+(* The driver's stack top (YD1v.TOPF, the page boundary ly_top of YD1g.ly0) is at or below any page boundary at
+   or above usp - 160: the stack VMA's end [ed_top] is one (Run.valid_stack_top_va). *)
+Lemma TOPF_le_top : forall usp t, usp - 160 <= t -> t mod 4096 = 0 -> YD1v.TOPF usp <= t.
 Proof.
-intros ph sp argv envp uid hw rnd. unfold YD1v.TOPF, entry_page_top, page_round_up_Z, page_size, entry_block_top.
-pose proof (Z.div_le_mono (bv_unsigned sp - 160 + 4095)
-(bv_unsigned sp + Z.of_nat (length (build_stack_bytes ph sp argv envp uid hw rnd)) + 4096 - 1) 4096 ltac:(lia) ltac:(lia)). lia.
+intros usp t H Hm. unfold YD1v.TOPF.
+pose proof (Z.div_mod (usp - 160 + 4095) 4096 ltac:(lia)) as D.
+pose proof (Z.mod_pos_bound (usp - 160 + 4095) 4096 ltac:(lia)) as M.
+pose proof (Z.div_mod t 4096 ltac:(lia)) as Dt. rewrite Hm in Dt.
+lia.
 Qed.
+(* The driver world's hidden set YD2i.H1 (HID && not argH && not sliver) is false where HID is false whenever
+   argH is: above TOP (YA0j.ho_hid_high). *)
+Lemma H1_high_false : forall (hd ah sl : word -> bool) (x : word), (ah x = false -> hd x = false) ->
+(hd x && negb (ah x) && negb (sl x))%bool = false.
+Proof.
+intros hd ah sl x H. destruct (ah x) eqn:Ha.
+- rewrite andb_false_r. reflexivity.
+- rewrite (H eq_refl). reflexivity.
+Qed.
+#[local] Notation AH inp sp rdraw := (YA02.argH0 sp rdraw (in_argv inp) (in_envp inp) (in_image_fs inp) (in_stdin inp)
+  (in_uid inp) (in_gid inp) (in_hwcap inp) (in_groups inp) (in_net inp) (in_nofile inp) (in_sigmask inp) (in_urandom inp)
+  (in_tmp inp) (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp)).
 #[local] Existing Instance YK11.fx0.
 Section b. Context {rc : YM05.RunCeil} {LS : lib_shape}.
-Lemma W1_high_visible : forall sp rdraw inp (Hsp : valid_sp sp) (Hva : valid_argv (in_argv inp)) ch E model H8 (a : word),
-YA02.TOP sp <= bv_unsigned a -> w_H (W1 sp rdraw inp Hsp Hva ch E model H8) a = false.
-Proof.
-intros sp rdraw inp Hsp Hva ch E model H8 a Ha. cbn [w_H W1]. unfold YD2i.H1. cbv beta.
-destruct (YA02.argH0 TPH sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) E a) eqn:Hg.
-- cbn [negb]. rewrite andb_false_r. reflexivity.
-- rewrite YA0j.ho_hid_high; [reflexivity | exact Ha | exact Hg].
-Qed.
 Section c.
 Variable B : asyms.
 Hypothesis HB : SegBSyms B.
@@ -143,26 +148,50 @@ Let RDD : rd0_dir_tfa B := tfib_rd0_dir B HB ARL RDERR.
 Let RDF : rd0_file_tfa B := tfib_rd0_file B HB ARL ML MSITE RCHK MCPY FREE REFUSED HDR.
 Let HFILE : file_arm_tfa B := tfib_file_arm B HB ARL ML MSITE RDF.
 Let HDIR : dir_arm_tfa B := tfib_dir_arm B HB ARL ML MSITE RDD.
-Theorem tfib_drv_main : forall (sp : word) (rdraw : EntryDraw) (brk : word) (inp : ProcInput) (h : nat) (ch : acs) (E : env) (R : bvmap 5 word)
-(FULL : word -> option byte) (model : Model),
+(* LPS 727298f3: the driver's main over the hand-off state of the run's own CONFIG_RSEQ flag
+   ([AB01r.HS_tfib_r]), with the stack invariant abstract and the launch's [entry_launch_ok_va],
+   the statement [AD1q.drv_mainX_stmt] reads (as libreac/fuzz_boxreg's A/AD1q.v).  The section
+   lemmas of AD1g/AD1f/AD2i/AD2k are taken at this lemma's arguments, whatever subset each one
+   abstracts ([inst]), as AU/YD1d.v does. *)
+Theorem tfib_drv_main : forall (sp : word) (rdraw : EntryDraw) (brk mbase : word) (inp : ProcInput) (h : nat) (ch : acs) (E : env) (R : bvmap 5 word)
+(FULL : word -> option byte) (model : Model) (SINV : env -> (word -> option byte) -> Prop),
 valid_sp sp -> valid_brk TSEGS brk -> entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) inp ->
 YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
-HS_tfib h = Some ch ->
-cs_ok TSEGS TFIB YA02.LIMIT (YA02.TOP sp)
-(YA02.SINV0 TPH sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-(YA02.argH0 TPH sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model ->
-(forall n, (n < NX0G)%nat -> ev E n = ev (YA02.E0 TPH sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) n) ->
-(forall a, YA02.argH0 TPH sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) E a = true ->
-FULL a = wrap_mem TPH sp (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) rdraw a) ->
+HS_tfib_r (rseq_z (kb_rseq (in_kernel inp))) h = Some ch ->
+(forall E' M, SINV E' M -> uE E' e_sp0 = YA02.TOP sp + 8388608) ->
+cs_ok TSEGS TFIB YA02.LIMIT (YA02.TOP sp) SINV
+(YA02.argH0 sp rdraw (in_argv inp) (in_envp inp) (in_image_fs inp) (in_stdin inp) (in_uid inp) (in_gid inp) (in_hwcap inp)
+  (in_groups inp) (in_net inp) (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp) (in_kernel inp)
+  (in_execfn inp) (in_sigpipe_default inp)) (in_fs inp) E ch R FULL model ->
+(forall n, (n < NX0G)%nat -> ev E n = ev (YA02.E0 sp rdraw brk (in_argv inp) (in_envp inp) (in_image_fs inp) (in_stdin inp)
+  (in_uid inp) (in_gid inp) (in_hwcap inp) (in_groups inp) (in_net inp) (in_nofile inp) (in_sigmask inp) (in_urandom inp)
+  (in_tmp inp) (in_kernel inp) (in_execfn inp) (in_sigpipe_default inp)) n) ->
+(forall a, YA02.argH0 sp rdraw (in_argv inp) (in_envp inp) (in_image_fs inp) (in_stdin inp) (in_uid inp) (in_gid inp) (in_hwcap inp)
+  (in_groups inp) (in_net inp) (in_nofile inp) (in_sigmask inp) (in_urandom inp) (in_tmp inp) (in_kernel inp)
+  (in_execfn inp) (in_sigpipe_default inp) E a = true ->
+FULL a = wrap_mem inp mbase TPH (Z_to_bv 64 (Z.of_N AsanUbsan.M.init_pc)) sp rdraw a) ->
 srealizes TSEGS (cfg_of TSEGS R (pc ch) FULL model) (CLOSEDX inp).
 Proof.
-intros sp rdraw brk inp h ch E R FULL model Hsp Hbrk Hfit (Hva & Hve & Hvfs & _) Hceil Hch HC HE HM.
-pose (H8 := CmdWorldH8.H1_H8 sp rdraw brk inp Hsp Hva Hve Hfit h ch E R FULL model Hch HC).
-pose proof (tfib_main_entry sp rdraw brk inp Hsp Hva Hve Hfit h ch E R FULL model Hch HC HE HM (sliver_allowed sp rdraw brk inp Hsp Hva Hve Hfit h ch E R FULL model Hch HC Hceil) H8) as (Hpc & HST & HAI & Hfs & Hfds & _).
-set (ly := YD1g.ly0 ch E model).
-assert (HAR : AR TSEGS B ly init_state (W1 sp rdraw inp Hsp Hva ch E model H8) FULL model) by (eapply (tfib_AR B HB); eassumption).
-assert (HTOP : YD1v.top_ok (bv_unsigned sp) ly) by (eapply tfib_top_ok; eassumption).
-assert (HFI : FINV ly (w_H (W1 sp rdraw inp Hsp Hva ch E model H8)) FULL) by exact (tfib_finv_handoff sp rdraw brk inp Hsp Hva h ch E R FULL model Hch HC).
+intros sp rdraw brk mbase inp h ch E R FULL model SINV Hsp Hbrk Hfit Hvi Hlau Hceil Hch SINV_sp0 HC HE HM.
+pose proof Hvi as (Hva & Hve & Hvfs & _).
+assert (Hvl : valid_launch inp) by (unfold valid_input in Hvi; tauto).
+pose proof YD1g.sliver_allowed as SLA.
+pose proof CmdWorldH8.H1_H8 as H8.
+pose proof YD2i.tfib_main_entry as ME.
+pose proof tfib_AR as HAR.
+pose proof tfib_top_ok as HTOP.
+pose proof tfib_finv_handoff as HFI.
+(* The section lemmas at this proof's names, whatever subset of their section arguments each one abstracts.
+   The tactic is local to this proof: a top-level [Ltac] resolves each name it uses where it is defined,
+   and these names exist only after the [intros] above (OSSV-648's fuzz_pcap). *)
+let inst H := (try specialize (H B); try specialize (H HB); try specialize (H sp); try specialize (H rdraw); try specialize (H brk); try specialize (H mbase); try specialize (H inp); try specialize (H Hsp); try specialize (H Hva); try specialize (H Hve); try specialize (H Hfit); try specialize (H Hvl); try specialize (H Hlau); try specialize (H Hvi); try specialize (H h); try specialize (H ch); try specialize (H E); try specialize (H R); try specialize (H FULL); try specialize (H model); try specialize (H Hch); try specialize (H SINV); try specialize (H SINV_sp0); try specialize (H HC); try specialize (H HE); try specialize (H HM); try specialize (H SLA); try specialize (H rc); try specialize (H Hceil); try specialize (H H8)) in
+(inst SLA; inst H8; inst ME; inst HAR; inst HTOP; inst HFI).
+destruct ME as (Hpc & HST & HAI & Hfs & Hfds & _).
+(* LPS 727298f3: [fdchan]'s third conjunct.  [cs_ok]'s last field [co_rdr] (YA0e.v:250)
+   carries the launch's channel-reader flag, which [YA02.init_cs_ok] proves by
+   computation; [eapply] leaves the projection's other arguments to [HC]. *)
+assert (Hcr : m_channel_reader model = true) by (eapply co_rdr; exact HC).
 rewrite Hpc. change (cfg_of TSEGS R TFIB_MAIN FULL model) with (mkCfg (mkst R (Z_to_bv 64 TFIB_MAIN) FULL (seg_rom tfibsegs)) model).
 change TSEGS with tfibsegs in HST, HAI, HAR |- *. unfold CLOSEDX.
 destruct (Nat.eq_dec (length (in_argv inp)) 2) as [Hlen|Hlen].
@@ -172,38 +201,59 @@ destruct Hargv as (a0 & p & Hargv).
 destruct (HST true ltac:(unfold two_ok; rewrite Hargv; cbn; lia)) as [HS HR].
 (* the stack from the entry sp to the stack top is present: argc, argv[0], argv[1] from the entry state's R_hdr;
    above them every byte is either an argH0 byte (the hand-off pins it to wrap_mem, which maps the whole entry
-   stack up to its page boundary) or one of the certificate's known auxv / AT_RANDOM words *)
-assert (HTK : stk_top (bv_unsigned sp) (mrestrict (w_H (W1 sp rdraw inp Hsp Hva ch E model H8)) FULL)).
-{ pose proof (st_ok_mem_ok tfibsegs _ _ _ HS) as HMEM. cbn [restrict ms_mem ss_main ss_mem] in HMEM.
+   block up to the stack VMA's end) or one of the auxv / AT_RANDOM bytes the hand-off knowledge covers *)
+assert (HFRM : YD1v.frm0) by (unfold YD1v.frm0; vm_compute; reflexivity).
 pose proof Hsp as (Ulo & Uhi & _).
-pose proof (TOPF_le_page_top TPH sp (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) rdraw) as HPT.
+pose proof Ulo as Ulo'. unfold sp_window_lo in Ulo'.
+assert (HFC0 : forall x : word, bv_unsigned sp + 24 <= bv_unsigned x < bv_unsigned (ed_top rdraw) -> AH inp sp rdraw E x = false ->
+  (uE E (fst e_auxb) + snd e_auxb <= bv_unsigned x < uE E (fst e_auxb) + snd e_auxb + AUXSZ (rseq_z (kb_rseq (in_kernel inp))))
+  \/ (uE E (fst (e_atrb (rseq_z (kb_rseq (in_kernel inp))))) + snd (e_atrb (rseq_z (kb_rseq (in_kernel inp)))) <= bv_unsigned x
+      < uE E (fst (e_atrb (rseq_z (kb_rseq (in_kernel inp))))) + snd (e_atrb (rseq_z (kb_rseq (in_kernel inp)))) + 16)).
+{ intros x Hx Hgx.
+  (* 727298f3: [YA02.argH0_false_den] abstracts the image ([segs A ph]) and [mbase] before and after [sp rdraw brk]
+     (Reusable/YA02.v Section c's order; R22 measured [segs] first).  Each Section variable is given by type, in that
+     order, and skipped where the lemma does not abstract it; the premises are closed from this proof's facts. *)
+  pose proof YA02.argH0_false_den as D.
+  try specialize (D TSEGS); try specialize (D TFIB); try specialize (D TPH);
+  try specialize (D sp); try specialize (D rdraw); try specialize (D brk); try specialize (D mbase);
+  try specialize (D (in_argv inp)); try specialize (D (in_envp inp)); try specialize (D (in_image_fs inp));
+  try specialize (D (in_stdin inp)); try specialize (D (in_uid inp)); try specialize (D (in_gid inp));
+  try specialize (D (in_hwcap inp)); try specialize (D (in_groups inp)); try specialize (D (in_net inp));
+  try specialize (D (in_nofile inp)); try specialize (D (in_sigmask inp)); try specialize (D (in_urandom inp));
+  try specialize (D (in_tmp inp)); try specialize (D (in_kernel inp)); try specialize (D (in_execfn inp));
+  try specialize (D (in_sigpipe_default inp)); try specialize (D AsanUbsan.M.init_pc).
+  unshelve eapply D;
+  first [ exact tfib_img_facts | exact Hsp | exact Hbrk | exact Hva | exact Hve | exact Hfit | exact Hvl | exact Hlau
+        | exact HE | exact Hx | exact Hgx | reflexivity | idtac ]. }
+assert (HTU : YD1v.TOPF (bv_unsigned sp) <= bv_unsigned (ed_top rdraw)).
+{ pose proof (length_entry_stack_image_launch Sv48 inp mbase TPH (Z_to_bv 64 (Z.of_N AsanUbsan.M.init_pc)) sp brk rdraw Hlau) as HL.
+  pose proof Hlau as (HTV & _ & _). destruct HTV as (Hal & _ & _). unfold page_size in Hal.
+  apply TOPF_le_top; [| exact Hal].
+  pose proof (Nat2Z.is_nonneg (length (entry_stack_image inp mbase TPH (Z_to_bv 64 (Z.of_N AsanUbsan.M.init_pc)) sp rdraw))). lia. }
+lazymatch type of HS with context [w_H ?W] =>
+assert (HTK : stk_top (bv_unsigned sp) (mrestrict (w_H W) FULL)) end.
+{ pose proof (st_ok_mem_ok tfibsegs _ _ _ HS) as HMEM. cbn [restrict ms_mem ss_main ss_mem] in HMEM.
 intros a Ha Ha2. destruct (Z.lt_ge_cases a (bv_unsigned sp + 24)) as [Hl|Hl].
 - apply (hdr_stk_present _ _ (smem_main true) (bv_unsigned sp) HMEM);
 [unfold smem_main; right; left; reflexivity | reflexivity | exact Ulo | unfold sp_window_hi in Uhi; lia | lia].
-- unfold mrestrict. rewrite W1_high_visible by (rewrite YK00.u64_lit by (unfold sp_window_lo in Ulo; lia); unfold YA02.TOP; lia).
-destruct (YA02.argH0 TPH sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) E (Z_to_bv 64 a)) eqn:Hg.
-* rewrite (HM (Z_to_bv 64 a) Hg).
-apply (wrap_mem_present TPH sp (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) rdraw a Hsp Hfit). lia.
-* assert (HFC : (bv_unsigned sp + 8 * Z.of_nat (length (in_argv inp)) + 8 * Z.of_nat (length (in_envp inp)) + 24 <= bv_unsigned (Z_to_bv 64 a)
-< bv_unsigned sp + 8 * Z.of_nat (length (in_argv inp)) + 8 * Z.of_nat (length (in_envp inp)) + 184)
-\/ (bv_unsigned sp + Z.of_nat (length (build_stack_bytes TPH sp (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) rdraw)) - 16 <= bv_unsigned (Z_to_bv 64 a)
-< bv_unsigned sp + Z.of_nat (length (build_stack_bytes TPH sp (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) rdraw)))).
-{ (* the section variables argH0_false_cases does not read are filled with the run's own values *)
-apply (YA02.argH0_false_cases TSEGS TFIB TPH sp rdraw brk brk (in_argv inp) (in_envp inp) (in_fs inp) (in_stdin inp) (in_uid inp) (in_gid inp)
-(in_hwcap inp) (in_groups inp) (in_net inp) (in_nofile inp) (in_nofile inp) (in_stdin inp) (in_fs inp) Hva Hve E (Z_to_bv 64 a));
-[rewrite YK00.u64_lit by (unfold sp_window_lo in Ulo; lia); lia | exact Hg]. }
-rewrite YK00.u64_lit in HFC by (unfold sp_window_lo in Ulo; lia).
-pose proof (proj1 (forallb_forall _ _) tfib_holes_stkaux ch (HS_tfib_In h ch Hch)) as Hchk.
-exact (stk_aux_present sp rdraw brk inp ch E R FULL model Hsp Hva Hve Hfit Hchk HC a HFC). }
+- unfold mrestrict.
+  match goal with |- context [w_H ?W (Z_to_bv 64 a)] => assert (Hw : w_H W (Z_to_bv 64 a) = false) end.
+  { cbn [w_H W1]. unfold YD2i.H1. cbv beta. apply H1_high_false. intros Hg0.
+    rewrite YA0j.ho_hid_high; [reflexivity | rewrite YK00.u64_lit by lia; unfold YA02.TOP; lia | exact Hg0]. }
+  rewrite Hw. cbv iota.
+  destruct (AH inp sp rdraw E (Z_to_bv 64 a)) eqn:Hg.
+  * rewrite (HM (Z_to_bv 64 a) Hg).
+    apply (wrap_mem_present inp mbase TPH (Z_to_bv 64 (Z.of_N AsanUbsan.M.init_pc)) sp brk rdraw a Hlau). lia.
+  * pose proof (HFC0 (Z_to_bv 64 a) ltac:(rewrite YK00.u64_lit by lia; lia) Hg) as HFC.
+    rewrite YK00.u64_lit in HFC by lia.
+    pose proof (stkaux_of (kb_rseq (in_kernel inp)) h ch Hch) as Hchk.
+    exact (stk_aux_present YA02.LIMIT (YA02.TOP sp) SINV _ (in_fs inp) ch E R FULL model _ HC Hchk a HFC ltac:(lia)). }
 replace (CLOSEDX_args (in_argv inp) (in_fs inp)) with (CLOSEDX_args [a0; p] (in_fs inp)) by (rewrite Hargv; reflexivity).
-exact (tfib_arm_argv2 B HB ARL HCO HFILE HDIR sp inp (xwE E R) (xdE inp)
-(W1 sp rdraw inp Hsp Hva ch E model H8) (mkst R (Z_to_bv 64 TFIB_MAIN) FULL (seg_rom tfibsegs)) model ly a0 p
-Hargv Hsp Hva Hve Hfit Hvfs HS HR HTK ltac:(unfold YD1v.frm0; vm_compute; reflexivity) HAI HAR HTOP HFI Hfs Hfds).
+eapply (tfib_arm_argv2 B HB ARL HCO HFILE HDIR sp brk mbase inp rdraw); eassumption.
 - destruct (HST false I) as [HS HR].
 replace (CLOSEDX_args (in_argv inp) (in_fs inp)) with (diag (msg_usage (nth 0 (in_argv inp) [])) (in_fs inp)).
 2:{ clear -Hlen. unfold CLOSEDX_args. destruct (in_argv inp) as [|x [|y [|z r]]]; try reflexivity. cbn in Hlen. lia. }
-exact (tfib_usage B HB ARL xst est XFR ESTF FPU (EXS _) sp inp (xwE E R) (xdE inp) (W1 sp rdraw inp Hsp Hva ch E model H8) (mkst R (Z_to_bv 64 TFIB_MAIN) FULL (seg_rom tfibsegs))
-model ly Hsp Hva Hve Hfit Hlen HS HR HAI HAR HTOP Hfs Hfds).
+eapply (tfib_usage B HB ARL xst est XFR ESTF FPU (EXS _) sp brk mbase inp rdraw); eassumption.
 Qed.
 End c.
 End b.

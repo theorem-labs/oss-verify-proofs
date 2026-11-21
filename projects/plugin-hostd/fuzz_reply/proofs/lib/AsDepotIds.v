@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Adapted by Theorem Labs, 2026-10-28 (h-hreply-k2), for plugin-hostd/fuzz_reply. Donor text, all at
-   origin/ossv/recipes 754c3cdb4cc (Apache-2.0 OR MIT; the three lines above are the donors' header):
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Adapted by Theorem Labs, 2026-10-28 (h-hreply-k2), for plugin-hostd/fuzz_reply. Donor text, all
+    (Apache-2.0 OR MIT; the three lines above are the donors' header):
    proofs/cgif/cgif_file_fuzzer/lib/YG01.v:140-142 (universe_ok: name, signature and its last two clauses) and :337
    (wf_depot: name and the NoDup /\ incl form); YFem.v:33-36 (depot_len_bound: name and the NoDup_incl_length step);
    YG00.v:36 (kUnwindMax); proofs/boost-beast/http_request/lib/As/AsIface.v:295-296 (trace_ok's body, as sites_ok),
@@ -13,7 +14,7 @@
    it holds no address of either image and no trace list. Each build instantiates it with its own list
    (lib/A/Prog/AsDepotIds_a.v, lib/B/Prog/AsDepotIds_b.v).
 
-   Shape: the released cgif route (origin/ossv/recipes 754c3cdb4cc, proofs/cgif/cgif_file_fuzzer/lib/):
+   Shape: the released cgif route (proofs/cgif/cgif_file_fuzzer/lib/):
    universe_ok (YG01.v:140-142), wf_depot = NoDup depot /\ incl depot U (YG01.v:337), depot_len_bound
    (YFem.v:33-36). Two changes, each because of the image:
    - The depot here is keyed by the 64-bit hash, not by the trace. Put (llvmorg-20.1.8 sanitizer_stackdepotbase.h:

@@ -1,7 +1,8 @@
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: copied from fuzz_grant's lib/A/Rt/StrcmpTbl.v (file sha256 cd94185b81fd; donor not released; a working branch 97c611eec86), with its module paths changed, GrantSyms renamed PcapSyms and its addresses moved to libreac/fuzz_pcap's v1.9.0 ASan build. *)
+(* Modified by Theorem Labs, 2026-10: copied from fuzz_grant's lib/A/Rt/StrcmpTbl.v (file sha256 cd94185b81fd; donor not released; a working branch), with its module paths changed, GrantSyms renamed PcapSyms and its addresses moved to libreac/fuzz_pcap's v1.9.0 ASan build. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Written by Theorem Labs, 2026-10, for libreac/fuzz_pcap's v1.9.0 ASan build: the code table of the strcmp interceptor
    walk (lib/A/Rt/Strcmp.v) and the A/AE2y.v phase lemmas over it (icpt_phase, icpt_phase_to, icpt_ld8 with
    tbl_icpt replaced by tbl_sc; same proofs). The table is A/AE34.v's tbl_icpt plus the 333 four-byte words from

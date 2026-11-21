@@ -1,4 +1,4 @@
-(* CARRIED from commit 7fb5e1d920f1a960ba591aa28cade9497d873d3c,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YG0qcf.v, sha256 b11d2f0e120b98c77f751146abd7705e83723c845fd80bff72ec201d8ccca054 (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the Require lines only:
    the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
@@ -6,8 +6,9 @@
 *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Taken by path from a working branch a0fed4266a1b, provisional. *)
+(* Taken by path from a working branch, provisional. *)
 (* Modified by Theorem Labs, 2026-10: module paths changed from fuzz_preset lib.Reusable to cgif_file_fuzzer lib; the text is otherwise unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the event-free second allocator instance (suffix cf). Copied from YG0q.v (cgif's
    ownership helpers and AR_frame_law_ok), re-stated over the FRESH record ARmcf / ARcf of YG0ncf.v with the
    naming contract's substitutions only: ARm B ly S rd -> ARmcf B ly S Hp rd, AR -> ARcf, ALedger -> ALedger_cf,
@@ -673,7 +674,7 @@ intros ly S Hp S' H mem mem' IMG M [HA HZ] VIS HK CL SE AG. split.
 - exact (ahz_transfer segs ly S S' H mem mem' IMG HZ SE HK AG).
 Qed.
 (* The two machine cells' bytes are owned (field round 2: ARmcf's amc_exh_cell / amc_errb_cells). From CfF2a's
-   YGcfInstFreeView.v section x (cf-f2a 78e7ba371b9d: x_exh_where, x_K, x_owned), over the two unit image rows the
+   YGcfInstFreeView.v section x (cf-f2a: x_exh_where, x_K, x_owned), over the two unit image rows the
    frame law takes: the exhausted byte's offset (YGcfImgRows.EXH_OFF_t: the byte stays in its RegionInfo slot, in
    the primary reserve past the space) and the errbuf object in the owned static data (YG0ncf.errb_obj_owned_t). *)
 Lemma exh_byte_where_cf : forall ly S Hp rd c, ARmcf B ly S Hp rd -> EXH_OFF_t -> 1 <= c <= 31 ->

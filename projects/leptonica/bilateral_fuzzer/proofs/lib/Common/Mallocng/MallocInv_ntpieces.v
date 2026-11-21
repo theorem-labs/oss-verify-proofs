@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (recorded (KReplay) proofs re-proved by tactics). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -6,8 +7,6 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
 From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib.Common Require Import
   PropExec CatExec Hoare StoreOk MmapSim AllocSim ShapeAlg ShapeNodes VmLedger.
 From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib.Common.Mallocng Require Import MallocLayout MallocTree MallocOps.
-From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib Require KReplay.
-Ltac2 kr_t_MallocInv_ntpieces () := "C69OSSVerify5KrLib6Common8Mallocng:MallocTree5mbindC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common8Mallocng:MallocTree1MC1?~~~~~~~~~~~~~~~K47Corelib7Numbers7BinNums8positive02K47Corelib7Numbers7BinNums1N02I45stdpp9bitvector;definitions2bv00K47Corelib7Numbers7BinNums1Z02C59OSSVerify5KrLib6Common5Hoare3at_C1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common8Mallocng:MallocTree4m_sdC1?~~~~~~~~~~~~~~~K47Corelib7Numbers7BinNums8positive01C69OSSVerify5KrLib6Common8Mallocng:MallocTree4m_ldC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common8Mallocng9MallocOps3is0C1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common8Mallocng:MallocTree7massertC1?~~~~~~~~~~~~~~~c69OSSVerify5KrLib6Common8MallocngBMallocInv_ntpieces8nt_queueC1?~~~~~~~~~~~~~~~K47Corelib4Init5Logic2eq01I47Corelib4Init9Datatypes4unit00K47Corelib7Numbers7BinNums8positive03C69OSSVerify5KrLib6Common8Mallocng9MallocOps2w0C1?~~~~~~~~~~~~~~~I47Corelib4Init9Datatypes4prod00C69OSSVerify5KrLib6Common8Mallocng9MallocOps=m_canary_loadC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common8Mallocng:MallocTree4m_lwC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common8Mallocng9MallocOps4wlitC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib6Common8PropExec6v_sllwC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib6Common8PropExec4v_orC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib6Common8PropExec6v_slliC1?~~~~~~~~~~~~~~~C59OSSVerify5KrLib6Common8PropExec6v_srliC1?~~~~~~~~~~~~~~~c69OSSVerify5KrLib6Common8MallocngBMallocInv_ntpieces9nt_okcompC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common8Mallocng9MallocOpsAm_nontrivial_freeC1?~~~~~~~~~~~~~~~c69OSSVerify5KrLib6Common8MallocngBMallocInv_ntpieces:nt_freegrpC1?~~~~~~~~~~~~~~~c69OSSVerify5KrLib6Common8MallocngBMallocInv_ntpieces7nt_keepC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common8Mallocng9MallocOps>m_canary_checkC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common8Mallocng:MallocTree4mretC1?~~~~~~~~~~~~~~~I47Corelib4Init9Datatypes3nat00I47Corelib4Init9Datatypes4bool00C69OSSVerify5KrLib6Common8Mallocng:MallocTree6mcrashC1?~~~~~~~~~~~~~~~".
 Import ListNotations.
 Local Open Scope Z_scope.
 Local Open Scope malloc_scope.
@@ -169,8 +168,7 @@ Lemma m_free_meta_unfold : forall hda g,
    pv <- m_ld g ;; massert (is0 pv) ;;
    hd <- m_ld hda ;;
    nt_queue hda g hd).
-Proof.
-ltac2:(KReplay.run1 (kr_t_MallocInv_ntpieces ()) ["WithLayout"] "h01gh12hdh23hdah32nxh42pvp;1p;2p;3p;4g0000R0p4p7210g0015R1p4p710p8g0026j10Tg002[j1>Tg0039j1<TP1j17Tg003\j15Tg004:j23Tg004oj32Tg0063j1;Tg006Xj26Tg007\j1:Tg008^j18Tg009ej39TP0j44Tg00;5j2=Tg00;OR0P0f1R1f0R2C4p=1g00;oR3#0#0#0R4#0R5#0R6#0#>#<R7%70p,2MLR8%54R4,32g00<TR932A2819f2%55'3=289f3%;3#0#0#0#5'3=289f4%56'3=289P7P0f5/34,68%:2#8R4P7P0f7,68P7P0f:R9,68f;?992X17C4V0,14X47C4V0'1X37C4V0'1V0'1V0'1V0'1V0'1'=X07W2o"). Qed.
+Proof. intros. reflexivity. Qed.
 
 Lemma m_free_meta_ag_unfold : forall hda g,
   m_free_meta_ag hda g =
@@ -179,8 +177,7 @@ Lemma m_free_meta_ag_unfold : forall hda g,
    pv <- m_ld g ;; massert (is0 pv) ;;
    hd <- m_ld hda ;;
    nt_queue hda g hd).
-Proof.
-ltac2:(KReplay.run1 (kr_t_MallocInv_ntpieces ()) ["WithLayout"] "h01gh12hdh23hdah32nxh42pvp;1p;2p;3p;4g0026j10Tg002[j1>Tg0039j1<Tg0015j17Tg003\j15Tg004:j23Tg004oj32Tg0063j1;Tg006Xj26Tg007\j1:Tg008^j18Tg009ej39Tg0000j44Tg00;5j2=Tg00;OR0P0f1R1f0R2C4p=1g00;oR3#0#0#0R4#0R5#0R6#0#>#<R7%70p,2MLR8%54R4,32g00<TR932%56,31=289f2%;3#0#0#0#5'3=289f3%55'3=289f4=289P7P0f5/34,68%:2#8R4P7P0f7,68P7P0f:R9,68f;?992X17C4V0,14X47C4V0'1X37C4V0'1V0'1V0'1V0'1V0'1'=X07W2o"). Qed.
+Proof. intros. reflexivity. Qed.
 
 Lemma m_ntfree_unfold : forall fuel (g i : word),
   m_nontrivial_free (S fuel) g i =
@@ -196,12 +193,10 @@ Lemma m_ntfree_unfold : forall fuel (g i : word),
    res <- (if ok then nt_freegrp (m_nontrivial_free fuel) g w sc else nt_keep g mask self sc) ;;
    m_canary_check gp cg ;;
    mret res).
-Proof.
-ltac2:(KReplay.run1 (kr_t_MallocInv_ntpieces ()) ["WithLayout"] "p'0h02avh12cci002cch22frh34fuelh41gh51ih64maskh72oki012okh83resh92sch:4selfh;1wi022cgi032gpp;1p;2p;5p;4p;3g0026j10Tg002[j1GTg0039j1;Tg00=UR0j26Tg0015j1FTg00>5j1@Tg003\j12Tg004:j24Tg006Xj27Tg0063j13Tg00?Aj25Tg00@Ej18Tg00AHj29Tg00BCj2ETg00C<j2DTg00D7j2CTg00E2j5?Tg00FCj2=Tg00GSj4>Tg00Hej4<Tg00J4j3ATg00KAj2BTg0000j41Tg00;5j2:Tg00LEg00;oR1#0#0#0#0#0R2#0#G#;R31633R4#FR5P4P4p,2MLR6#@P0P3P3P5f0R0P3P4f4R7%22'4,76P3P4f5R2%31R8#3#0R9#0#2'4,56P3P4f6R:%08R8#0#0#2'4,56%21#8/9:P3f1R1f2R;'EP3%38#0#0#2,D7%39#0#2'CP3g00LdR9P4f:P2P1P;P0D?P4P4P9P5P0f<,=6f;R0P:P1C>P0P;f3P1C<n0110100020000g00;OR;P4f9f85A61B41V;C1X84C1X79C1b9b6b:X03C1X23C1X;3C1n2001100000121103102X14C1':X53W4W3o"). Qed.
+Proof. intros. reflexivity. Qed.
 
 Lemma m_ntfree_O : forall (g i : word), m_nontrivial_free O g i = mcrash.
-Proof.
-ltac2:(KReplay.run1 (kr_t_MallocInv_ntpieces ()) ["WithLayout"] "h01gh11ip;1p;2g0026j10Tg002[j16Tg0039j12Tg00=Uj21Tg0015j15Tg00MDj14Tg00;5j23Tg00;o#0#0#0#0#0#0#6#2R01100R1#5%41'3X10W0o"). Qed.
+Proof. intros. reflexivity. Qed.
 
 End WithLayout.
 

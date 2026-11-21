@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (vm_model added; brk_grants_grow restated: a grow grants the page-rounded range between the breaks (brk_page_range); brk_grants_is_brk_zeros added; growable counts the growth in whole pages, page-rounded, against the limit; brk_grow_ok and brk_r_ok added, Mmap's brk checks on vm_model). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence OmniEquivalence.
@@ -48,6 +49,8 @@ Proof.
 intros segs ms x8 model o Hno. unfold syscall_spec, dispatch.
 rewrite in_sysno_sys_input214, Hno. reflexivity.
 Qed.
+Definition vm_model (h : VmMaps) : Model :=
+  mkModel [] h IEof [] None None None.
 Definition brk_resolution_ok (m : Model) (req r : word) : Prop :=
 Mmap.brk_r_ok m req r = true.
 Definition brk_model (req r : word) (m : Model) : Model :=
@@ -152,7 +155,9 @@ Qed.
 #[using="Type"] Lemma brk_grants_grow : forall req r old,
 req <> Z_to_bv 64 0 ->
 (0 < bv_unsigned old)%Z -> (bv_unsigned old < bv_unsigned r)%Z ->
-brk_grants req r old = [(old, r - old)].
+brk_grants req r old =
+brk_page_range (page_round_up_Z (bv_unsigned old))
+(page_round_up_Z (bv_unsigned r)).
 Proof.
 intros req r old Hreq Hold Hlt. unfold brk_grants, brk_is_grow.
 assert (E1 : w_is0 req = false)
@@ -161,6 +166,10 @@ assert (E2 : (0 <? bv_unsigned old)%Z = true) by (apply Z.ltb_lt; lia).
 assert (E3 : (bv_unsigned old <? bv_unsigned r)%Z = true) by (apply Z.ltb_lt; lia).
 rewrite E1, E2, E3. reflexivity.
 Qed.
+Lemma brk_grants_is_brk_zeros : forall req r old,
+  brk_grants req r old = brk_zeros req r old.
+Proof. reflexivity. Qed.
+
 #[using="Type"] Lemma brk_zeros_query : forall r old, brk_zeros (Z_to_bv 64 0) r old = [].
 Proof.
 intros r old. unfold brk_zeros, brk_is_grow, w_is0.
@@ -217,20 +226,21 @@ pose proof (Z.mod_pos_bound (z + 4096 - 1) 4096 ltac:(lia)) as Hmod.
 lia.
 Qed.
 Definition growable (reserved : list (word * word)) (lim top : Z) (t r : word)
-: Prop :=
-r <> Z_to_bv 64 0 /\ (bv_unsigned r + bv_unsigned t < 2 ^ 64)%Z /\
-(t = Z_to_bv 64 0 \/
-(((if (page_round_up_Z (bv_unsigned r)
-<? page_round_up_Z (bv_unsigned r + bv_unsigned t))%Z
-then (page_round_up_Z (bv_unsigned r + bv_unsigned t)
-<=? top)%Z
-&& region_free reserved
-(Z_to_bv 64 (page_round_up_Z (bv_unsigned r)))
-(Z_to_bv 64 (page_round_up_Z
-(bv_unsigned r + bv_unsigned t)
-+ page_size - page_round_up_Z (bv_unsigned r)))
-else true)
-&& (bv_unsigned t <=? lim)%Z)%bool = true)).
+    : Prop :=
+  r <> Z_to_bv 64 0 /\ (bv_unsigned r + bv_unsigned t < 2 ^ 64)%Z /\
+  (t = Z_to_bv 64 0 \/
+   (((if (page_round_up_Z (bv_unsigned r)
+          <? page_round_up_Z (bv_unsigned r + bv_unsigned t))%Z
+      then (page_round_up_Z (bv_unsigned r + bv_unsigned t)
+            <=? top)%Z
+           && region_free reserved
+                (Z_to_bv 64 (page_round_up_Z (bv_unsigned r)))
+                (Z_to_bv 64 (page_round_up_Z
+                               (bv_unsigned r + bv_unsigned t)
+                              + page_size - page_round_up_Z (bv_unsigned r)))
+      else true)
+     && (Z.max 0 (page_round_up_Z (bv_unsigned r + bv_unsigned t)
+                  - page_round_up_Z (bv_unsigned r)) <=? lim)%Z)%bool = true)).
 Definition T1 (reserved : list (word * word)) (lim top : Z) (t : word)
 (bufs : list (list byte))
 (r : word) : (list (list byte) * word) -> Prop :=
@@ -295,3 +305,8 @@ syscall_spec (sys_input segs ms x8) model (Ok eff model' evs)
 to_outcomes ms model U.
 End WithSegs.
 End WithFP1.
+
+Definition brk_grow_ok (h : VmMaps) (req r : word) : bool :=
+  Mmap.brk_grow_ok (vm_model h) req r.
+Definition brk_r_ok (h : VmMaps) (req r : word) : Prop :=
+  Mmap.brk_r_ok (vm_model h) req r = true.

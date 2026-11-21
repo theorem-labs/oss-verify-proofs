@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the input's kernel build and exec file name; the start-up facts stated over the launch's ProcInput). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -28,10 +29,10 @@ Definition regs_init (sp0 : word) : bvmap 5 word :=
 
 Section P1.
   Variable sp0 : word.
-  Variables av ev : list (list byte).
-  Variable uid : word.   (* [comment removed for export] *)
-  Variable hw : word.    (* [comment removed for export] *)
+  Variable inp : ProcInput.
   Variable rdraw : EntryDraw.  (* [comment removed for export] *)
+  Local Notation av := (in_argv inp).
+  Local Notation ev := (in_envp inp).
   Hypothesis Hva : valid_argv av.
   Hypothesis Hve : valid_envp ev.
   Hypothesis Hlo : (0x7fff80000000 <= bv_unsigned sp0)%Z.
@@ -40,13 +41,13 @@ Section P1.
 
 
 
-  Let argc : word := argcN av.
+  Let argc : word := argcN inp.
   Local Notation argvp := (Z_to_bv 64 (bv_unsigned sp0 + 8)) (only parsing).
-  Let envp : word := envp_ptr sp0 av.
-  Let pn : word := cat_argv_ptr sp0 av ev 0.
+  Let envp : word := envp_ptr inp sp0.
+  Let pn : word := cat_argv_ptr (ed_top rdraw) av ev (in_execfn inp) 0.
 
   Lemma u_argc : bv_unsigned argc = Z.of_nat (length av).
-  Proof. exact (u_argcN av Hva). Qed.
+  Proof. exact (u_argcN inp Hva). Qed.
 
   Lemma len_av : (1 <= Z.of_nat (length av) <= 1024)%Z.
   Proof. destruct Hva as [[H1 H2] _]. lia. Qed.

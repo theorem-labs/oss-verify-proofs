@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the shadow-fill entries __asan_set_shadow_00 (0x546bc) and __asan_set_shadow_f5 (0x547c4) of libreac/fuzz_grant, over the asan-state definitions and the musl memset walk of the cgif_file_fuzzer proof as libreac/fuzz_grant holds them; one image instead of the two-image selector; addresses; module names. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/Rt/SetShadow.v (a working branch 38f35780be6) for libreac/fuzz_disco: the entries __asan_set_shadow_00 (0x54f50) and __asan_set_shadow_f5 (0x55058) at fuzz_disco.asan's addresses, and __asan_set_shadow_f8 (0x55070) added as cgif_rgb_fuzzer's YF8u.v states it; the memset cells of fuzz_disco.asan (GOT 0xa0530, real_memset 0xa2378, memset 0x99b74); module paths. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/Rt/SetShadow.v (a working branch) for libreac/fuzz_disco: the entries __asan_set_shadow_00 (0x54f50) and __asan_set_shadow_f5 (0x55058) at fuzz_disco.asan's addresses, and __asan_set_shadow_f8 (0x55070) added as cgif_rgb_fuzzer's YF8u.v states it; the memset cells of fuzz_disco.asan (GOT 0xa0530, real_memset 0xa2378, memset 0x99b74); module paths. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require YImgTop.
 From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.

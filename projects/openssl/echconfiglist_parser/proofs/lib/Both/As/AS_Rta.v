@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved-ledger premise RESF covers the class's primary region only, the range it is applied to, since the launch's vDSO/vvar pair is reserved above AHI_LO). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -144,7 +145,9 @@ Section Rta.
   Hypothesis FAJ : stk asegs m (FAB + 4 * nf) (FAB + mfa).
   Hypothesis SRC : u32arr asegs m CH ws.
   (* [comment removed for export] *)
-  Hypothesis RESF : forall (a k : word), AHI_LO <= bv_unsigned a -> region_free (vm_reserved (m_vmmaps mo)) a k = true.
+  (* LPS 727298f3: the reserved ledger is free on the class's region (the range the runtime maps
+     here); above [AHI_LO] in general it is not, since the launch's vDSO/vvar pair is reserved there *)
+  Hypothesis RESF : forall (a k : word), rbeg <= bv_unsigned a -> bv_unsigned a + bv_unsigned k <= rbeg + 2^32 -> region_free (vm_reserved (m_vmmaps mo)) a k = true.
   Hypothesis PRIM : forall (a k : word), rbeg <= bv_unsigned a -> bv_unsigned a + bv_unsigned k <= rbeg + 2^32 -> map_contains (vm_maps (m_vmmaps mo)) a k = true.
   Hypothesis NW : entries_nowrap (vm_maps (m_vmmaps mo)). Hypothesis NWA : entries_nowrap (vm_noaccess (m_vmmaps mo)).
   Hypothesis NOV : nooverlap (vm_maps (m_vmmaps mo)).
@@ -367,7 +370,7 @@ Section Rta.
     { rewrite (nonvm_same_atop _ _ NVS1), ATOP. clear - CUR1 CUR2 BND BNDL; try acb; tlia. }
     { unfold page_size. rewrite BQ. clear. Z.div_mod_to_equations. tlia. }
     { clear - CUR1 BND BNDL; try acb. tlia. }
-    { apply RESF. unfold AHI_LO. rewrite ECUR. clear - CUR1 BND BNDL; try acb. tlia. }
+    { apply RESF; rewrite ?ECUR, ?E256; clear - CUR1 CUR2 BNDL; try acb; tlia. }
     { apply PRIM; rewrite ?ECUR, ?E256; clear - CUR1 CUR2 BNDL; try acb; tlia. }
     { exact NW. }
     { exact NWA. }

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made from the TFIB_T definition of proofs/cgif/cgif_file_fuzzer/lib/A/AZ03.v for fuzz_preset's ASan image and checksum_shape (lib/ZTraceSpec.v, the library shape of fuzz_preset's ubsan agreement), with one more premise (below); module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises)). *)
 (* What the ASan side of fuzz_preset's ASan agreement proves: from every valid start, the ASan build realizes the
    same trace set SPECX as the plain build (lib/Reusable/YK18.v srealizes, no cut), on every input on which the plain
    build is never refused memory at the agreement's plain budget.
@@ -25,6 +26,7 @@ Definition TFIB_T : Prop :=
 forall sp brk mbase rnd inp (en_p : ExecEntry),
 valid_sp sp -> valid_brk presetsegs0 brk -> valid_mmap_base mbase ->
 entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+    entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 ~ run_scfg_budget_refused Env.alloc_forced_only Images.plain Budgets.Asan.lim_source en_p inp ->
 srealizes presetsegs0
 (init_config presetsegs0 Asan.M.init_pc Asan.M.phdrs sp brk mbase rnd target_alloc_limit inp)

@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx-GENERIC twin of lib/B/W_drain_cx.v, the shared context of image B's drain walk family
-   (step 2), the image-B twin of lib/A/W_drain_cx_x.v (sha256 8d1e9699d0e9; internal record: the file at 3d17f490d56 (sha256 edfd77859c8e; internal record), the
-   bridges of a Theorem Labs lane's 301e00df93c4 and sep_blocks_perm_x of 35e3f98858e), stated against lib/B/W_drain_cx.v.
+   (step 2), the image-B twin of lib/A/W_drain_cx_x.v (sha256 8d1e9699d0e9; internal record: the file (sha256 edfd77859c8e; internal record), the
+   bridges of a Theorem Labs lane's and sep_blocks_perm_x), stated against lib/B/W_drain_cx.v.
    W_drain_cx.v is NOT edited: this file sits beside it, and every walk that cites W_drain_cx.v builds unchanged.
    - Each AR-stated definition or lemma NAME of W_drain_cx.v has its twin NAME_x here, in W_drain_cx.v's Section
      nesting, over a Section relation `ARx` (its third argument the ghost list Hp), the laws
@@ -39,7 +40,7 @@
      the post and the epilogue's journal carry DRAIN_STK_x (W_contract_x.v, DRAIN_STK + 128, a Theorem Labs lane 2026-10-30;
      measured on image B as on A: the strndup interceptor's frame is 2032 + 128 bytes before its inner malloc) where
      W_drain_cx.v's carry DRAIN_STK, so they have no bridge to W_drain_cx.v; the AR walks keep their own proofs.
-     (a Theorem Labs lane's A cut 7e440345053, mirrored.)
+     (a Theorem Labs lane's A cut, mirrored.)
    - THE ROOM ROUND: the rules and the callee specs take the room parameter RP (W_journal_x.roomp, a Section variable
      after MT); the entry carries the budget kr of dr_spec_x (dPOST_x, DBASE_x, every cut predicate and every segment
      statement take it right after Hp); DBASE_x is dr_spec_x's premises (tr_peak, the room
@@ -87,13 +88,13 @@ Local Set Warnings "-abstract-large-number".
 Open Scope bv_scope.
 Open Scope Z_scope.
 
-(* W_drain_cx.v:266, the plain model's trace type *)
+(* W_drain_cx.v:267, the plain model's trace type *)
 #[local] Abbreviation dtrace := (list (RelayRunT.rev YO0i.sptr)).
 
 Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Context {SK : YI16.sink_head}.
 
-(* ---- W_drain_cx.v:320 ALLOC_TAIL over ARx, a theorem of the laws (AR_laws_x field alx_blocks_tail): the range
+(* ---- W_drain_cx.v:321 ALLOC_TAIL over ARx, a theorem of the laws (AR_laws_x field alx_blocks_tail): the range
    p + req_size n - 1 < a < p + req_size n - 1 - (p + req_size n - 1) mod 8 + 8 is the field's
    p + req_size n <= a < (p + req_size n + 7) / 8 * 8. ---- *)
 Section t.
@@ -114,7 +115,7 @@ assert (E : (p + req_size n + 7) / 8 * 8 = p + req_size n - 1 - (p + req_size n 
   rewrite Z.div_add by lia. pose proof (Z.div_mod (p + req_size n - 1) 8 ltac:(lia)). lia. }
 rewrite E. lia.
 Qed.
-(* DR_x: YCbq.v:2584 sep_blocks_perm over ARx (the drain walks cite it over AR), W_relay_add.v:575
+(* DR_x: YCbq.v:2584 sep_blocks_perm over ARx (the drain walks cite it over AR), W_relay_add.v:576
    ra_sep_blocks_perm_x's proof from YGcallx.v's sep_blocks_pos_x *)
 Lemma sep_blocks_perm_x : forall ly S Hp W mem md x y l,
 ARx ly S Hp W mem md -> Permutation (ablocks B ly S) (x :: y :: l) ->
@@ -152,14 +153,14 @@ Variable RG : rep_globals.
 Context {hl : Z}.
 (* the instance's laws *)
 Hypothesis LAWS : AR_laws_x SEGS B ARx hl.
-(* W_drain_cx.v:305-310, AR-free *)
+(* W_drain_cx.v:306-311, AR-free *)
 Hypothesis HG : gx_ok SEGS B (G_DR B RG).
 Hypothesis HGR : forall a, inG (G_DR B RG) a -> ~ in_rom SEGS a.
 Hypothesis HROMO : rom_out SEGS B (G_DR B RG).
 Hypothesis HGO : gx_ok SEGS B [(rg_client RG, 4); (rg_send_dead RG, 1); (rg_send_max RG, 8)].
 Hypothesis MTL : ameter_laws MT.
 Hypothesis TL : PALib B.
-(* W_drain_cx.v:311-319, the runtime entries over ARx (W_sites_x.v's sites and its two runtime contracts,
+(* W_drain_cx.v:312-320, the runtime entries over ARx (W_sites_x.v's sites and its two runtime contracts,
    W_contract_x.v's astrlen_realizes_x) *)
 Hypothesis AERRNO : aerrno_realizes_x B ARx (SIGMA WS_errno_location).
 Hypothesis AMEMCPY : aintrin_realizes_x SEGS B ARx OCpy (SIGMA WS_asan_memcpy).
@@ -170,36 +171,36 @@ Hypothesis ASTRRCHR : astrrchr_realizes_x B ARx (SIGMA WS_strrchr).
 Hypothesis ASTRNCMP : astrncmp_realizes_x B ARx (SIGMA WS_strncmp).
 Hypothesis ASTRCMP : astrcmp_realizes_x B ARx (SIGMA WS_strcmp).
 Hypothesis ASTRLEN : astrlen_realizes_x B ARx (SIGMA WS_strlen).
-(* W_drain_cx.v:320 ALLOC_TAIL over ARx (Hp after S); alloc_tail_x proves it from LAWS *)
+(* W_drain_cx.v:321 ALLOC_TAIL over ARx (Hp after S); alloc_tail_x proves it from LAWS *)
 Hypothesis ALLOC_TAIL : forall ly S Hp W mem md p n a,
 ARx ly S Hp W mem md -> In (p, n) (ablocks B ly S) ->
 p + req_size n - 1 < a < p + req_size n - 1 - (p + req_size n - 1) mod 8 + 8 ->
 aview SEGS (w_H W) mem a <> None.
-(* W_drain_cx.v:324-325, the callees' specs over ARx (W_contract_x.v), at RP *)
+(* W_drain_cx.v:325-326, the callees' specs over ARx (W_contract_x.v), at RP *)
 Hypothesis SLSPEC : sl_spec_x B PST ARx MT RP MMAX RG (BASE + AF_fr_send_line).
 Hypothesis LPSPEC : lp_spec_g_x B PST ARx MT RP MMAX (BASE + AF_fr_list_push).
 (* The room round's budget law in a callee-spec Section (RMM, budget monotonicity; at every instance
    RM ignores the budget, so the law is trivial there).  The walk needs it: MT_rk charges a malloc / strndup request of
    dr_cost 2 (mo_malloc + mo_free) where its rule consumes 1, and dr_post_x's `rp_RM RP S' kr` drops what is left. *)
 Hypothesis RMM : forall S k k', (k' <= k)%nat -> rp_RM RP S k -> rp_RM RP S k'.
-(* W_drain_cx.v:326-331, AR-free *)
+(* W_drain_cx.v:327-332, AR-free *)
 Hypothesis HERRNO : as_errno B = as_tp B - 164.
 Hypothesis HERRZ : azs B (as_errno B) 4.
 Hypothesis HERRW : forall i, 0 <= i < 4 -> writable_at SEGS (fun _ => None) (as_errno B + i).
 Hypothesis HERRAL : as_errno B mod 4 = 0.
 Hypothesis HGSZ : azs B (rg_s RG) (4 * ASRC).
 Hypothesis HVS : VAL (A_OBJ 19) = rg_s RG.
-(* W_drain_cx.v:332 dlit_at, its shadow conjunct W_contract_x.v's ashp_x (A's W_drain_cx_x.v:172-176 text) *)
+(* W_drain_cx.v:333 dlit_at, its shadow conjunct W_contract_x.v's ashp_x (A's W_drain_cx_x.v:173-177 text) *)
 Definition dlit_at_x (i : nat) (l : list Z) : Prop :=
 (forall k, (k < length l)%nat ->
    seg_rom SEGS (Z_to_bv 64 (VAL (A_OBJ i) + Z.of_nat k)) = option_map (Z_to_bv 8) (nth_error l k)) /\
 (forall x, VAL (A_OBJ i) <= x < VAL (A_OBJ i) + Z.of_nat (length l) -> YG0d.in_rom SEGS x) /\
 ashp_x ARx (VAL (A_OBJ i)) (Z.of_nat (length l)).
-(* W_drain_cx.v:337-339, image B's literal objects A_OBJ 18 / 20 / 21 (A: 21 / 23 / 24) *)
+(* W_drain_cx.v:338-340, image B's literal objects A_OBJ 18 / 20 / 21 (A: 21 / 23 / 24) *)
 Hypothesis HLIT5 : dlit_at_x 18 (K_GESTURE ++ [0]).
 Hypothesis HLIT6 : dlit_at_x 20 (W_BEGIN ++ [0]).
 Hypothesis HLIT7 : dlit_at_x 21 (W_END ++ [0]).
-(* W_drain_cx.v:340-353, AR-free *)
+(* W_drain_cx.v:341-354, AR-free *)
 Hypothesis HRGD : zpairwise_disjoint
 [(VAL (A_OBJ 0), VAL (A_OBJ 0) + 8); (VAL (A_OBJ 30), VAL (A_OBJ 30) + 8);
  (rg_s RG, rg_s RG + 4 * ASRC);
@@ -214,7 +215,7 @@ Hypothesis HMMAX : 0 < MMAX <= 2 ^ 30.
 Hypothesis HV9 : VAL (A_OBJ 9) = rg_client RG.
 Hypothesis HSD : 0x10000 <= rg_send_dead RG /\ rg_send_dead RG + 1 <= IMG_TOP.
 Hypothesis HSM : 0x10000 <= rg_send_max RG /\ rg_send_max RG + 8 <= IMG_TOP.
-(* W_drain_cx.v:354-362, the allocator's site rules over the generic journal (W_journal_x.v Section hc, the _c twins
+(* W_drain_cx.v:355-363, the allocator's site rules over the generic journal (W_journal_x.v Section hc, the _c twins
    with the caller-context tables), at RP; the call-site facts at image B's own offsets *)
 Variables CTX_R CTX_F CTX_S : list (list Z).
 Hypothesis AREALLOC : arealloc_cf_rule_c_x SEGS B PST ARx MT MMAX RP CTX_R (SIGMA WS_realloc).
@@ -226,7 +227,7 @@ Hypothesis HCTX_fr2 : In [BASE + AF_fr_drain + 0xa58] CTX_F.
 Hypothesis HCTX_sd : In [BASE + AF_fr_drain + 0x994] CTX_S.
 Hypothesis HCTX_ld : In [BASE + AF_fr_list_drop + 0x9c] CTX_F.
 
-(* W_drain_cx.v:370 amem_range_near_block, from the blocks law alx_blocks *)
+(* W_drain_cx.v:371 amem_range_near_block, from the blocks law alx_blocks *)
 Lemma amem_range_near_block_x : forall ly S Hp W mem md q n a,
 ARx ly S Hp W mem md -> In (q, n) (ablocks B ly S) -> q <= a -> a <= q + req_size n -> amem_range a 8.
 Proof.
@@ -239,7 +240,7 @@ unfold amem_range, kLowMemEnd, kLowShadowBeg, kHighMemBeg, kHighMemEnd, ASAN_CEI
 Qed.
 
 
-(* W_drain_cx.v:447 DBASE, with dr_spec_x's room premises at the entry's budget kr *)
+(* W_drain_cx.v:448 DBASE, with dr_spec_x's room premises at the entry's budget kr *)
 Definition DBASE_x (cx : dcx) (Hp : list Z) (kr : nat) : Prop :=
 afn_pre_x SEGS B ARx DRAIN_STK_x (dxly cx) (dxS cx) Hp (dxW cx) (dxregs cx) (dxmem cx) (dxmd cx) (dxch cx) /\
 getr (dxregs cx) 10 = w64 (dxSA cx) /\
@@ -267,7 +268,7 @@ mo_ok MT (dxS cx) (dcost MT cx) /\
 rp_RM RP (dxS cx) (Z.to_nat (dcost MT_rk cx) + kr) /\
 cnt_ok_pk RP (dr_pk (dxc cx) (dxmx cx) (dxno cx) (dxcap cx) (dxe cx) (dxh cx)) (ablocks B (dxly cx) (dxS cx)).
 
-(* W_drain_cx.v:481 dbud, with the room the requests still owed need (the trace specs' form of W_contract_x.v): the
+(* W_drain_cx.v:482 dbud, with the room the requests still owed need (the trace specs' form of W_contract_x.v): the
    room invariant at the cut's allocator state with MT_rk's count of those requests on top of the entry's kr, and the
    live counts plus dr_pk's shape over those requests under the bounds: their own peak count tr_peakP plus 2, the
    largest premise constant of an inner callee (send_line's sl_pk, list_push's lp_peak <= 2; W_contract_x.v dr_pk).
@@ -279,7 +280,7 @@ cnt_ok_pk RP (fun P => (Z.to_nat (tr_peakP P tl) + 2)%nat) (ablocks B ly1 S1).
 
 
 
-(* ---- The eight cut predicates (W_drain_cx.v:669-854), the cut's ghost list Hp1 an existential after S1. ---- *)
+(* ---- The eight cut predicates (W_drain_cx.v:670-855), the cut's ghost list Hp1 an existential after S1. ---- *)
 
 
 
@@ -290,7 +291,7 @@ cnt_ok_pk RP (fun P => (Z.to_nat (tr_peakP P tl) + 2)%nat) (ablocks B ly1 S1).
 
 
 
-(* ---- The segment statements (W_drain_cx.v:856-929), over the entry's ghost list Hp and budget kr. ---- *)
+(* ---- The segment statements (W_drain_cx.v:857-930), over the entry's ghost list Hp and budget kr. ---- *)
 
 
 
@@ -302,7 +303,7 @@ cnt_ok_pk RP (fun P => (Z.to_nat (tr_peakP P tl) + 2)%nat) (ablocks B ly1 S1).
 
 
 
-(* ---- The compositions (W_drain_cx.v:931-955). ---- *)
+(* ---- The compositions (W_drain_cx.v:932-956). ---- *)
 
 
 
@@ -356,7 +357,7 @@ DLINK sv e1 h1 /\ DSAME cx e1 h1 /\
 DHIST cx sv (D ++ ddata s1) (D ++ ddata s1) sent kl h1 LB1 nk /\
 RSTART cx s1 D /\ dbud_x cx kr ly1 S1 spent tl.
 
-(* ---- The eight cut predicates (W_drain_cx.v:669-854), the cut's ghost list Hp1 an existential after S1. ---- *)
+(* ---- The eight cut predicates (W_drain_cx.v:670-855), the cut's ghost list Hp1 an existential after S1. ---- *)
 
 (* R twin of DI_x *)
 Definition DI_xR (cx : dcx) (Hp : list Z) (kr : nat) (s1 : drain_b_c.dstate) (D : list Z) (W1 : world SEGS) (c1 : config)
@@ -554,7 +555,7 @@ dsfut cx (dnext (dlive cx) (dxmx cx) s1) a (dlH cx s1 p) (dlka cx s1 p) (dline s
      (Z.of_nat (length (dline s1 p q)) + 1))
   (drlq s1 (S q)) jb o ha ks tl.
 
-(* ---- The segment statements (W_drain_cx.v:856-929), over the entry's ghost list Hp and budget kr. ---- *)
+(* ---- The segment statements (W_drain_cx.v:857-930), over the entry's ghost list Hp and budget kr. ---- *)
 
 (* R twin of dr_pro_stmt_x *)
 Definition dr_pro_stmt_xR : Prop :=
@@ -645,7 +646,7 @@ SRrG SEGS R W1 c1 (dPOST_xR cx Hp kr).
 (* R twin of dr_end_stmt_x *)
 Definition dr_end_stmt_xR : Prop := dr_epi_stmt_xR -> dr_end_concl_xR.
 
-(* ---- The compositions (W_drain_cx.v:931-955). ---- *)
+(* ---- The compositions (W_drain_cx.v:932-956). ---- *)
 
 (* R twin of dr_feeds_concl_x *)
 Definition dr_feeds_concl_xR : Prop :=
@@ -687,110 +688,110 @@ dr_pro_stmt_xR -> dr_outer_concl_xR -> dr_spec_xR B PST ARx R MT RP MMAX RG A_dr
 
 End wR.
 (* ---- The entry context: W_drain_cx.v's dcx, with the entry's ghost list Hp beside it. ---- *)
-(* W_drain_cx.v:443 dPOST, at the entry's budget kr *)
+(* W_drain_cx.v:444 dPOST, at the entry's budget kr *)
 Definition dPOST_x (cx : dcx) (Hp : list Z) (kr : nat) : world SEGS -> config -> Prop :=
 dPOST_xR (@wle SEGS) cx Hp kr.
-(* ---- The memory core of every cut (W_drain_cx.v:566 DMEM), the cut's ghost list Hp1 after S1. ---- *)
+(* ---- The memory core of every cut (W_drain_cx.v:567 DMEM), the cut's ghost list Hp1 after S1. ---- *)
 Definition DMEM_x (cx : dcx) (Hp : list Z) (ly1 : alayout) (S1 : astate) (Hp1 : list Z) (W1 : world SEGS)
 (m1 : word -> option byte) (md1 : Model) (k1 : Z) (e1 : rentry) (h1 : hsrc) (s1 : drain_b_c.dstate) (out1 ev1 : Z)
 (sent : list (list Z)) (LB1 : list byte) : Prop :=
 DMEM_xR (@wle SEGS) cx Hp ly1 S1 Hp1 W1 m1 md1 k1 e1 h1 s1 out1 ev1 sent LB1.
-(* W_drain_cx.v:650 LCORE *)
+(* W_drain_cx.v:651 LCORE *)
 Definition LCORE_x (cx : dcx) (Hp : list Z) (kr : nat) (s1 : drain_b_c.dstate) (D : list Z) (sent kl : list (list Z))
 (H : list (list Z)) (ka no oc nk : Z) (sk : bool)
 (ly1 : alayout) (S1 : astate) (Hp1 : list Z) (W1 : world SEGS) (m1 : word -> option byte) (md1 : Model) (k1 : Z)
 (e1 : rentry) (h1 : hsrc) (out1 ev1 : Z) (LB1 : list byte) (spent : Z) (tl : dtrace) : Prop :=
 LCORE_xR (@wle SEGS) cx Hp kr s1 D sent kl H ka no oc nk sk ly1 S1 Hp1 W1 m1 md1 k1 e1 h1 out1 ev1 LB1 spent tl.
-(* W_drain_cx.v:669 DI *)
+(* W_drain_cx.v:670 DI *)
 Definition DI_x (cx : dcx) (Hp : list Z) (kr : nat) (s1 : drain_b_c.dstate) (D : list Z) (W1 : world SEGS) (c1 : config)
 : Prop :=
 DI_xR (@wle SEGS) cx Hp kr s1 D W1 c1.
-(* W_drain_cx.v:681 DEND *)
+(* W_drain_cx.v:682 DEND *)
 Definition DEND_x (cx : dcx) (Hp : list Z) (kr : nat) (s1 : drain_b_c.dstate) (D : list Z) (W1 : world SEGS)
 (c1 : config) : Prop :=
 DEND_xR (@wle SEGS) cx Hp kr s1 D W1 c1.
-(* W_drain_cx.v:697 DRB *)
+(* W_drain_cx.v:698 DRB *)
 Definition DRB_x (cx : dcx) (Hp : list Z) (kr : nat) (s1 : drain_b_c.dstate) (D : list Z) (k : nat) (W1 : world SEGS)
 (c1 : config)
 : Prop :=
 DRB_xR (@wle SEGS) cx Hp kr s1 D k W1 c1.
-(* W_drain_cx.v:738 DE *)
+(* W_drain_cx.v:739 DE *)
 Definition DE_x (cx : dcx) (Hp : list Z) (kr : nat) (s1 : drain_b_c.dstate) (D : list Z) (W1 : world SEGS)
 (c1 : config) : Prop :=
 DE_xR (@wle SEGS) cx Hp kr s1 D W1 c1.
-(* W_drain_cx.v:778 DLC *)
+(* W_drain_cx.v:779 DLC *)
 Definition DLC_x (cx : dcx) (Hp : list Z) (kr : nat) (s1 : drain_b_c.dstate) (D : list Z) (p : nat)
 (ly1 : alayout) (S1 : astate) (Hp1 : list Z) (W1 : world SEGS) (m1 : word -> option byte) (md1 : Model) (k1 : Z)
 (e1 : rentry) (h1 : hsrc) (out1 ev1 : Z) (LB1 : list byte) (spent : Z) (tl : dtrace) : Prop :=
 DLC_xR (@wle SEGS) cx Hp kr s1 D p ly1 S1 Hp1 W1 m1 md1 k1 e1 h1 out1 ev1 LB1 spent tl.
-(* W_drain_cx.v:785 DLL *)
+(* W_drain_cx.v:786 DLL *)
 Definition DLL_x (cx : dcx) (Hp : list Z) (kr : nat) (s1 : drain_b_c.dstate) (D : list Z) (p q : nat)
 (W1 : world SEGS)
 (c1 : config) : Prop :=
 DLL_xR (@wle SEGS) cx Hp kr s1 D p q W1 c1.
-(* W_drain_cx.v:801 DLN *)
+(* W_drain_cx.v:802 DLN *)
 Definition DLN_x (cx : dcx) (Hp : list Z) (kr : nat) (s1 : drain_b_c.dstate) (D : list Z) (p : nat)
 (W1 : world SEGS)
 (c1 : config) : Prop :=
 DLN_xR (@wle SEGS) cx Hp kr s1 D p W1 c1.
-(* W_drain_cx.v:813 DLR *)
+(* W_drain_cx.v:814 DLR *)
 Definition DLR_x (cx : dcx) (Hp : list Z) (kr : nat) (s1 : drain_b_c.dstate) (D : list Z) (p : nat)
 (W1 : world SEGS)
 (c1 : config) : Prop :=
 DLR_xR (@wle SEGS) cx Hp kr s1 D p W1 c1.
-(* W_drain_cx.v:828 DGS *)
+(* W_drain_cx.v:829 DGS *)
 Definition DGS_x (cx : dcx) (Hp : list Z) (kr : nat) (s1 : drain_b_c.dstate) (D : list Z) (p q : nat)
 (W1 : world SEGS)
 (c1 : config) : Prop :=
 DGS_xR (@wle SEGS) cx Hp kr s1 D p q W1 c1.
-(* W_drain_cx.v:856 dr_pro_stmt *)
+(* W_drain_cx.v:857 dr_pro_stmt *)
 Definition dr_pro_stmt_x : Prop :=
 dr_pro_stmt_xR (@wle SEGS).
-(* W_drain_cx.v:862 dr_top_stmt *)
+(* W_drain_cx.v:863 dr_top_stmt *)
 Definition dr_top_stmt_x : Prop :=
 dr_top_stmt_xR (@wle SEGS).
-(* W_drain_cx.v:870 dr_feed_stmt *)
+(* W_drain_cx.v:871 dr_feed_stmt *)
 Definition dr_feed_stmt_x : Prop :=
 dr_feed_stmt_xR (@wle SEGS).
-(* W_drain_cx.v:877 dr_drop_stmt *)
+(* W_drain_cx.v:878 dr_drop_stmt *)
 Definition dr_drop_stmt_x : Prop :=
 dr_drop_stmt_xR (@wle SEGS).
-(* W_drain_cx.v:884 dr_linea_stmt *)
+(* W_drain_cx.v:885 dr_linea_stmt *)
 Definition dr_linea_stmt_x : Prop :=
 dr_linea_stmt_xR (@wle SEGS).
-(* W_drain_cx.v:891 dr_gs_stmt *)
+(* W_drain_cx.v:892 dr_gs_stmt *)
 Definition dr_gs_stmt_x : Prop :=
 dr_gs_stmt_xR (@wle SEGS).
-(* W_drain_cx.v:897 dr_next_stmt *)
+(* W_drain_cx.v:898 dr_next_stmt *)
 Definition dr_next_stmt_x : Prop :=
 dr_next_stmt_xR (@wle SEGS).
-(* W_drain_cx.v:904 dr_rest_stmt *)
+(* W_drain_cx.v:905 dr_rest_stmt *)
 Definition dr_rest_stmt_x : Prop :=
 dr_rest_stmt_xR (@wle SEGS).
-(* W_drain_cx.v:910 dr_epi_stmt: the journal at the entry's Hp and the epilogue's Hp1, which it keeps *)
+(* W_drain_cx.v:911 dr_epi_stmt: the journal at the entry's Hp and the epilogue's Hp1, which it keeps *)
 Definition dr_epi_stmt_x : Prop :=
 dr_epi_stmt_xR (@wle SEGS).
-(* W_drain_cx.v:925 dr_end_concl, :929 dr_end_stmt *)
+(* W_drain_cx.v:926 dr_end_concl, :929 dr_end_stmt *)
 Definition dr_end_concl_x : Prop :=
 dr_end_concl_xR (@wle SEGS).
 Definition dr_end_stmt_x : Prop :=
 dr_end_stmt_xR (@wle SEGS).
-(* W_drain_cx.v:931 dr_feeds_concl, :936 dr_feeds_stmt *)
+(* W_drain_cx.v:932 dr_feeds_concl, :936 dr_feeds_stmt *)
 Definition dr_feeds_concl_x : Prop :=
 dr_feeds_concl_xR (@wle SEGS).
 Definition dr_feeds_stmt_x : Prop :=
 dr_feeds_stmt_xR (@wle SEGS).
-(* W_drain_cx.v:938 dr_lines_concl, :944 dr_lines_stmt *)
+(* W_drain_cx.v:939 dr_lines_concl, :944 dr_lines_stmt *)
 Definition dr_lines_concl_x : Prop :=
 dr_lines_concl_xR (@wle SEGS).
 Definition dr_lines_stmt_x : Prop :=
 dr_lines_stmt_xR (@wle SEGS).
-(* W_drain_cx.v:947 dr_outer_concl, :951 dr_outer_stmt *)
+(* W_drain_cx.v:948 dr_outer_concl, :951 dr_outer_stmt *)
 Definition dr_outer_concl_x : Prop :=
 dr_outer_concl_xR (@wle SEGS).
 Definition dr_outer_stmt_x : Prop :=
 dr_outer_stmt_xR (@wle SEGS).
-(* W_drain_cx.v:954 dr_all_stmt: the prologue and the outer loop's conclusion give W_contract_x.v's dr_spec_x *)
+(* W_drain_cx.v:955 dr_all_stmt: the prologue and the outer loop's conclusion give W_contract_x.v's dr_spec_x *)
 Definition dr_all_stmt_x : Prop :=
 dr_all_stmt_xR (@wle SEGS).
 
@@ -828,13 +829,13 @@ Qed.
 
 (* the lemma twins at that instance give W_drain_cx.v's statements *)
 Hypothesis LX : AR_laws_x SEGS B ARI 0.
-(* W_drain_cx.v:320 ALLOC_TAIL, the hypothesis, at AR *)
+(* W_drain_cx.v:321 ALLOC_TAIL, the hypothesis, at AR *)
 Lemma alloc_tail_AR : forall ly S W mem md p n a,
 AR SEGS B ly S W mem md -> In (p, n) (ablocks B ly S) ->
 p + req_size n - 1 < a < p + req_size n - 1 - (p + req_size n - 1) mod 8 + 8 ->
 aview SEGS (w_H W) mem a <> None.
 Proof. intros ly S W mem md p n a. exact (alloc_tail_x SEGS B ARI LX ly S [] W mem md p n a). Qed.
-(* W_drain_cx.v:370 amem_range_near_block, with its HGSB premise *)
+(* W_drain_cx.v:371 amem_range_near_block, with its HGSB premise *)
 Lemma amem_range_near_block_AR :
 0x10000 <= rg_s RG /\ rg_s RG + 4 * ASRC <= IMG_TOP /\ rg_s RG mod 8 = 0 ->
 forall ly S W mem md q n a,

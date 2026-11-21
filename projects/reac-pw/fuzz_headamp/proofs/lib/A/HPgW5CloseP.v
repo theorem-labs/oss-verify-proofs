@@ -1,16 +1,17 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPropKit.v at a529a88a618 (the plumbing of
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPropKit.v (the plumbing of
    the property loop's block lemmas: pa_chunk8, pa_keep, pa_kwr_ro, pa_run, pa_runb, pa_branch, pa_reg, pa_leaf),
-   proofs/reac-pw/fuzz_role/lib/A/RPgCfgChanges.v at a529a88a618 (kept_run) and proofs/reac-pw/fuzz_role/lib/A/RPgProp.v
-   at a529a88a618 (its section g and its tactics: the (location, value) facts of a cut, the journal-and-frame step,
+   proofs/reac-pw/fuzz_role/lib/A/RPgCfgChanges.v (kept_run) and proofs/reac-pw/fuzz_role/lib/A/RPgProp.v
+   (its section g and its tactics: the (location, value) facts of a cut, the journal-and-frame step,
    the segment's write set, the first block's bounds and pod_put, the model of a shape-7 property, the start facts
    and the input at a cut) for reac-pw/fuzz_headamp's image B: rs_ / rl_ / rm_ -> hsu_ / hd_ / hm_, role's image A
    record and code -> fuzz_headamp.asan-ubsan's (lib/AU/Img0U.v rsegs, HPgImgB.headamp_himg_B: class-4 frame of
    1024 bytes, real frame of 0x220 bytes, write set [F+0x20, F+0x278) / 116 shadow bytes / [R, R+0x198)), the block
    post HPgSteps.hdu_blk_postE in place of pa_post, one table over the four pieces of image B. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/AU/HPgPropKit.v, with its module paths and module names changed; 158 of its 204 lines of code are new or changed and 365 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW5CloseP.v at 164759458cd; module paths changed, rs_ -> hs_, rm_ -> hm_, rl_ -> hd_, the cuts of image A of fuzz_headamp (CL 0x82a14 -> LATCH 0x82ac0, the cells R+0xc0 / 0xe8 / 0x78 / 0x58); the latch's cursor is rebuilt from the core's s11 = the cursor (hs_cur2's register 27) instead of a frame cell, so the write set has no frame cell and every real-frame cell is kept; the frame's shadow is the 80-byte hs_P0; the AR_laws Section hypothesis dropped (the kernel theorem YG0q.AR_laws_ok, inside HPgW5Close / HPgW5Seg). *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW5CloseP.v; module paths changed, rs_ -> hs_, rm_ -> hm_, rl_ -> hd_, the cuts of image A of fuzz_headamp (CL 0x82a14 -> LATCH 0x82ac0, the cells R+0xc0 / 0xe8 / 0x78 / 0x58); the latch's cursor is rebuilt from the core's s11 = the cursor (hs_cur2's register 27) instead of a frame cell, so the write set has no frame cell and every real-frame cell is kept; the frame's shadow is the 80-byte hs_P0; the AR_laws Section hypothesis dropped (the kernel theorem YG0q.AR_laws_ok, inside HPgW5Close / HPgW5Seg). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image A (fuzz_headamp.asan, pinned sha256
    f3e0669d2819724922df0556b11c2dcd22d1e16fe7e0fe1535ce784b34436c47; addresses from the unstripped twin
    b5f352154c54a97c66fd92dfa228e8a854498f6cd313dba0107900546b043f9a, same loaded bytes except .note.gnu.build-id): the piece lemma of the params

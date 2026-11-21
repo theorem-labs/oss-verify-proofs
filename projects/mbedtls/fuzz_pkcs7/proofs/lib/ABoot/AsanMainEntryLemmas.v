@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (me_init_E0 written out in plain text from its encoded (CDefT) form, over the launch input that me_init now takes as a parameter and over all twelve slots me_init pins; sp0w_eq reproved directly from me_init's two slots; sp0w_eq, me_regs_sp and main_entry_A_lowshadow take that input; new lemmas launch_stkhi_facts, the stack VMA's end at main's entry from the launch, valid_execfn_len and RZI_range). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -10,13 +11,14 @@ From OSSVerify.mbedtls.fuzz_pkcs7.images Require Import Asan.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.ABoot Require Import
   PropExec StoreOk AgentLib AsanAcct AxSymExec3 AxSymExec3Sound AxSymRun3
   AsanPlanCore AsanPlan AsanPlanSound AsanCertDefs AsanPlanImages AsanInit AsanMainEntryKit AsanMainEntryFacts.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.ABoot Require StepTac CatExec.
 Local Instance asanreflect_fx : PropExec.FPState := PropExec.fx0.
 Import ListNotations.
 Import AX2. Import AX2S. Import APC. Import AP. Import APS.
 Open Scope Z_scope.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require CDefT.
 From Ltac2 Require Ltac2.
-Ltac2 gd_tbl_AsanMainEntryLemmas () : Init.string Init.list := ["Corelib.Init.Datatypes.list"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.ct"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.at_"; "Corelib.Init.Datatypes.nat"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.wt"; "Corelib.Init.Logic.eq"; "Corelib.Init.Datatypes.option"; "lookup_word"; "Corelib.Init.Datatypes.Some"; "Corelib.Lists.ListDef.Forall"; "OSSVerify.KrLib.ABoot.AsanMainEntryKit.cell"; "OSSVerify.KrLib.ABoot.AsanMainEntryKit.cell_ok"; "Corelib.Lists.ListDef.map"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.cinst"; "OSSVerify.KrLib.ABoot.AsanMainEntryKit.CWord"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.ainst"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.winst"; "lookup_zero"; "OSSVerify.KrLib.ABoot.AsanMainEntryKit.CZero"; "lookup_wr"; "OSSVerify.KrLib.ABoot.AsanMainEntryKit.CWr"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.me_params"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.me_init"; "Corelib.Init.Peano.lt"; "OSSVerify.KrLib.ABoot.AsanPlan.AP.NX0"; "stdpp.bitvector.definitions.bv"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.pget"; "Corelib.Lists.ListDef.nth"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.pv"; "Corelib.Init.Datatypes.cons"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.v_s1"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.v_argc"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.v_envc"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.v_len0"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.v_wblk"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.v_brk0pg"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.v_s2"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.v_len1"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.v_uidw"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.v_hwd"; "Corelib.Init.Datatypes.nil"; "OSSVerify.KrLib.ABoot.AxSymExec3.AX2.ev"; "OSSVerify.KrLib.ABoot.AsanInit.E0"; "OSSVerify.KrLib.ABoot.AsanPlanImages.APH"; "LinuxProcessSemantics.Riscv.Prelude.bvmap"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.me_regs"; "Corelib.Init.Logic.and"; "OSSVerify.KrLib.ABoot.PropExec.getr"; "stdpp.bitvector.definitions.BV"; "Corelib.Init.Logic.I"; "stdpp.bitvector.definitions.Z_to_bv"; "LinuxProcessSemantics.Riscv.Sem.alu64"; "LinuxProcessSemantics.Riscv.Instr.ALU_ADD"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.argc"; "OSSVerify.KrLib.ABoot.AsanCertDefs.ASEGS"; "Corelib.Numbers.BinNums.Z"; "Stdlib.ZArith.BinInt.Z.le"; "stdpp.bitvector.definitions.bv_unsigned"; "Stdlib.ZArith.BinInt.Z.lt"; "Stdlib.ZArith.BinInt.Z.add"; "Corelib.Init.Datatypes.bool"; "OSSVerify.KrLib.ABoot.AsanPlanSound.APS.in_hull"; "OSSVerify.KrLib.ABoot.AsanPlan.AP.ASAN"; "Corelib.Init.Datatypes.false"; "Corelib.Init.Logic.not"; "Corelib.Init.Datatypes.None"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.cells_bss_allocator_instance"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.cells_bss_runtime"; "Page"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.v_prim"; "SpaceBeg"; "RegionInfoA"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.v_secv"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.cells_map_prim"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.cells_map_thr"; "OSSVerify.KrLib.ABoot.PropExec.v_addi"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.v_thr"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.v_treg"; "StackTop"; "StackBottom"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.v_fstk"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.cells_map_fstk"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.cells_bss_depot"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.cells_bss_stackstore"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.v_dnodes"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.v_dstore"; "lsh_cell_byte"; "lsh_lookup"; "Corelib.Init.Logic.ex"; "Stdlib.Lists.List.In"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.cells_lowshadow"; "LSH_LO"; "LSH_HI"; "img_shb"; "Stdlib.ZArith.BinInt.Z.mul"; "nz_clear"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.CELLS_lowshadow"; "Corelib.Init.Datatypes.true"; "LinuxProcessSemantics.LinuxProcessSem.State.Model"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.main_entry_A"].
+Ltac2 gd_tbl_AsanMainEntryLemmas () : Init.string Init.list := ["Corelib.Init.Datatypes.list"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.ct"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.at_"; "Corelib.Init.Datatypes.nat"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.wt"; "Corelib.Init.Logic.eq"; "Corelib.Init.Datatypes.option"; "lookup_word"; "Corelib.Init.Datatypes.Some"; "Corelib.Lists.ListDef.Forall"; "OSSVerify.KrLib.ABoot.AsanMainEntryKit.cell"; "OSSVerify.KrLib.ABoot.AsanMainEntryKit.cell_ok"; "Corelib.Lists.ListDef.map"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.cinst"; "OSSVerify.KrLib.ABoot.AsanMainEntryKit.CWord"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.ainst"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.winst"; "lookup_zero"; "OSSVerify.KrLib.ABoot.AsanMainEntryKit.CZero"; "lookup_wr"; "OSSVerify.KrLib.ABoot.AsanMainEntryKit.CWr"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.me_params"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.me_init"; "Corelib.Init.Peano.lt"; "OSSVerify.KrLib.ABoot.AsanPlan.AP.NX0"; "stdpp.bitvector.definitions.bv"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.pget"; "Corelib.Lists.ListDef.nth"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.pv"; "Corelib.Init.Datatypes.cons"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.v_s1"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.v_argc"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.v_envc"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.v_len0"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.v_wblk"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.v_brk0pg"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.v_s2"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.v_len1"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.v_uidw"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.v_hwd"; "Corelib.Init.Datatypes.nil"; "OSSVerify.KrLib.ABoot.AxSymExec3.AX2.ev"; "OSSVerify.KrLib.ABoot.AsanInit.E0"; "OSSVerify.KrLib.ABoot.AsanPlanImages.APH"; "LinuxProcessSemantics.Riscv.Prelude.bvmap"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.me_regs"; "Corelib.Init.Logic.and"; "OSSVerify.KrLib.ABoot.PropExec.getr"; "stdpp.bitvector.definitions.BV"; "Corelib.Init.Logic.I"; "stdpp.bitvector.definitions.Z_to_bv"; "LinuxProcessSemantics.Riscv.Sem.alu64"; "LinuxProcessSemantics.Riscv.Instr.ALU_ADD"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.argc"; "OSSVerify.KrLib.ABoot.AsanCertDefs.ASEGS"; "Corelib.Numbers.BinNums.Z"; "Stdlib.ZArith.BinInt.Z.le"; "stdpp.bitvector.definitions.bv_unsigned"; "Stdlib.ZArith.BinInt.Z.lt"; "Stdlib.ZArith.BinInt.Z.add"; "Corelib.Init.Datatypes.bool"; "OSSVerify.KrLib.ABoot.AsanPlanSound.APS.in_hull"; "OSSVerify.KrLib.ABoot.AsanPlan.AP.ASAN"; "Corelib.Init.Datatypes.false"; "Corelib.Init.Logic.not"; "Corelib.Init.Datatypes.None"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.cells_bss_allocator_instance"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.cells_bss_runtime"; "Page"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.v_prim"; "SpaceBeg"; "RegionInfoA"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.v_secv"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.cells_map_prim"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.cells_map_thr"; "OSSVerify.KrLib.ABoot.PropExec.v_addi"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.v_thr"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.v_treg"; "StackTop"; "StackBottom"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.v_fstk"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.cells_map_fstk"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.cells_bss_depot"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.cells_bss_stackstore"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.v_dnodes"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.v_dstore"; "lsh_cell_byte"; "lsh_lookup"; "Corelib.Init.Logic.ex"; "Stdlib.Lists.List.In"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.cells_lowshadow"; "LSH_LO"; "LSH_HI"; "img_shb"; "Stdlib.ZArith.BinInt.Z.mul"; "nz_clear"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.CELLS_lowshadow"; "Corelib.Init.Datatypes.true"; "LinuxProcessSemantics.LinuxProcessSem.State.Model"; "OSSVerify.KrLib.ABoot.AsanMainEntryFacts.main_entry_A"; "LinuxProcessSemantics.LinuxProcessSem.State.ProcInput"].
 
 
 (* [comment removed for export] *)
@@ -196,27 +198,46 @@ Section WithRun.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
 
   (* [comment removed for export] *)
-  #[using="Type"] Lemma me_init_E0 : ltac2:(CDefT.buildp (gd_tbl_AsanMainEntryLemmas ()) "Pp,$15.P,(16.Vsp,Vbrk0,Vrdraw,Vargv,Venvp,Vuid,Vhw,R1.)Pk,$3.P,(17.R1.$18.)(5.(19.&40.)(1:.R4.(1;.$1<.R2.(1=.$1<.$1>.(1=.$1<.$1?.(1=.$1<.$20.(1=.$1<.$21.(1=.$1<.$22.(1=.$1<.$23.(1=.$1<.$24.(1=.$1<.$25.(1=.$1<.$26.(1=.$1<.$27.(28.$1<.)))))))))))$1>.))(29.(2:.$2;.Vsp,Vrdraw,Vbrk0,Vargv,Venvp,Vuid,Vhw,)R2.))")
-(* [comment removed for export] *).
+  (** #38: [AsanInit.E0] discharges over the launch's WHOLE input ([E0 sp rdraw brk0 inp]).  The
+      encoded statement applied [E0] to the pre-#38 list [APH sp rdraw brk0 argv envp uid hw] and
+      no longer typechecks, so it is restated in explicit text.  LPS 727298f3: [me_init] takes the
+      launch input [main_entry_A] names as a parameter and pins all twelve of [AsanInit.vals0]'s
+      slots ([NX0] is 12: V_G and V_GID are the last two), so this ranges over [k < 12]. *)
+  #[using="Type"] Lemma me_init_E0 : forall (inp : ProcInput) (p : me_params),
+    me_init sp brk0 rdraw inp p ->
+    forall k : nat, (k < 12)%nat ->
+      pget p (nth k [v_s1; v_argc; v_envc; v_len0; v_wblk; v_brk0pg; v_s2; v_len1; v_uidw; v_hwd; v_vg; v_vgid] v_s1)
+      = ev (AsanInit.E0 sp rdraw brk0 inp) k.
   Proof.
-    intros p (H0 & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9) k Hk.
-    destruct k as [|[|[|[|[|[|[|[|[|[|k]]]]]]]]]]; cbn [nth pget]; try (unfold NX0 in Hk; lia);
-      first [exact H0 | exact H1 | exact H2 | exact H3 | exact H4 | exact H5 | exact H6 | exact H7 | exact H8 | exact H9].
+    intros inp p (H0 & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10 & H11) k Hk.
+    destruct k as [|[|[|[|[|[|[|[|[|[|[|[|k]]]]]]]]]]]]; cbn [nth pget]; try lia;
+      first [exact H0 | exact H1 | exact H2 | exact H3 | exact H4 | exact H5 | exact H6 | exact H7 | exact H8 | exact H9
+            | exact H10 | exact H11].
   Qed.
 
-  #[using="Hsp Hva Hve Hfit"] Lemma sp0w_eq : forall p, me_init sp brk0 rdraw argv envp uid hw p -> sp0w p = sp.
+  (** [sp0w p] is [sp]: the plan's stack pointer is [32768 * s1 + 16 * s2], and [me_init] pins
+      [s1 = sp / 32768] and [s2 = (sp mod 32768) / 16]; [valid_sp] makes [sp] 16-aligned.  The
+      old proof went through [AsanInit.edenot_e_sp0], whose discharged arguments #38 changed
+      to the whole-input section (and which now needs that section's launch hypotheses); the
+      arithmetic is short enough to do here directly from [me_init]'s two slots (LPS 727298f3:
+      over the launch input [main_entry_A] names). *)
+  #[using="uid hw Hsp Hva Hve Hfit"] Lemma sp0w_eq : forall inp p, me_init sp brk0 rdraw inp p -> sp0w p = sp.
   Proof.
-    intros p HI. rewrite <- (edenot_e_sp0 APH sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit).
-    unfold sp0w, SP0. cbn [winst pget edenot e_sp0 eadd escale mkAlu mkMd].
-    rewrite (me_init_E0 p HI 0%nat ltac:(unfold NX0; lia) : s1 p = _), (me_init_E0 p HI 6%nat ltac:(unfold NX0; lia) : s2 p = _).
-    reflexivity.
+    intros inp p (H0 & _ & _ & _ & _ & _ & H6 & _).
+    pose proof (u64_range sp) as Hr. destruct Hsp as (_ & _ & Hal).
+    unfold sp0w, SP0. cbn [winst pget]. rewrite H0, H6.
+    (* the division and modulus by constants need [lia]'s euclidean mode (a build
+       of this port said "Cannot find witness" without it) *)
+    Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
+    apply bv_eq. rewrite u_add64, !u_mul64, !u64_lit by lia. lia.
+    Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
   Qed.
 
   (* [comment removed for export] *)
-  #[using="Hsp Hva Hve Hfit"] Lemma me_regs_sp : ltac2:(CDefT.buildp (gd_tbl_AsanMainEntryLemmas ()) "Pp,$15.PR,(2<.&5.(19.&40.))P,(16.Vsp,Vbrk0,Vrdraw,Vargv,Venvp,Vuid,Vhw,R2.)P,(2=.R3.R2.)(2>.(5.(19.&40.)(2?.R3.(30.&5.+1.$31.))(32.&40.+==6=<.))(2>.(5.(19.&40.)(2?.R3.(30.&5.+2.$31.))(33.$34.Vsp,(32.&40.-30.)))(2>.(5.(19.&40.)(2?.R3.(30.&5.+3.$31.))(32.&40.+10800.))(2>.(5.(19.&40.)(2?.R3.(30.&5.+4.$31.))(32.&40.+639690.))(2>.(5.(19.&40.)(2?.R3.(30.&5.+:.$31.))(35.R4.))(2>.(5.(19.&40.)(2?.R3.(30.&5.+;.$31.))(33.$34.Vsp,(32.&40.+8.)))(2>.(5.(19.&40.)(2?.R3.(30.&5.+8.$31.))(33.$34.Vsp,(32.&40.+8.)))(2>.(5.(19.&40.)(2?.R3.(30.&5.+9.$31.))(35.R4.))(2>.(5.(19.&40.)(2?.R3.(30.&5.+12.$31.))(32.&40.+96;6<.))(2>.(5.(19.&40.)(2?.R3.(30.&5.+14.$31.))(32.&40.=))(2>.(5.(19.&40.)(2?.R3.(30.&5.+15.$31.))(32.&40.=))(2>.(5.(19.&40.)(2?.R3.(30.&5.+16.$31.))(32.&40.=))(2>.(5.(19.&40.)(2?.R3.(30.&5.+17.$31.))(32.&40.=))(2>.(5.(19.&40.)(2?.R3.(30.&5.+18.$31.))(32.&40.=))(2>.(5.(19.&40.)(2?.R3.(30.&5.+19.$31.))(32.&40.=))(2>.(5.(19.&40.)(2?.R3.(30.&5.+1:.$31.))(32.&40.=))(5.(19.&40.)(2?.R3.(30.&5.+1;.$31.))(32.&40.=))))))))))))))))))")
+  #[using="uid hw Hsp Hva Hve Hfit"] Lemma me_regs_sp : ltac2:(CDefT.buildp (gd_tbl_AsanMainEntryLemmas ()) "Pinp,$64.Pp,$15.PR,(2<.&5.(19.&40.))P,(16.Vsp,Vbrk0,Vrdraw,R3.R2.)P,(2=.R3.R2.)(2>.(5.(19.&40.)(2?.R3.(30.&5.+1.$31.))(32.&40.+==6=<.))(2>.(5.(19.&40.)(2?.R3.(30.&5.+2.$31.))(33.$34.Vsp,(32.&40.-30.)))(2>.(5.(19.&40.)(2?.R3.(30.&5.+3.$31.))(32.&40.+10800.))(2>.(5.(19.&40.)(2?.R3.(30.&5.+4.$31.))(32.&40.+639690.))(2>.(5.(19.&40.)(2?.R3.(30.&5.+:.$31.))(35.R4.))(2>.(5.(19.&40.)(2?.R3.(30.&5.+;.$31.))(33.$34.Vsp,(32.&40.+8.)))(2>.(5.(19.&40.)(2?.R3.(30.&5.+8.$31.))(33.$34.Vsp,(32.&40.+8.)))(2>.(5.(19.&40.)(2?.R3.(30.&5.+9.$31.))(35.R4.))(2>.(5.(19.&40.)(2?.R3.(30.&5.+12.$31.))(32.&40.+96;6<.))(2>.(5.(19.&40.)(2?.R3.(30.&5.+14.$31.))(32.&40.=))(2>.(5.(19.&40.)(2?.R3.(30.&5.+15.$31.))(32.&40.=))(2>.(5.(19.&40.)(2?.R3.(30.&5.+16.$31.))(32.&40.=))(2>.(5.(19.&40.)(2?.R3.(30.&5.+17.$31.))(32.&40.=))(2>.(5.(19.&40.)(2?.R3.(30.&5.+18.$31.))(32.&40.=))(2>.(5.(19.&40.)(2?.R3.(30.&5.+19.$31.))(32.&40.=))(2>.(5.(19.&40.)(2?.R3.(30.&5.+1:.$31.))(32.&40.=))(5.(19.&40.)(2?.R3.(30.&5.+1;.$31.))(32.&40.=))))))))))))))))))")
 (* [comment removed for export] *).
   Proof.
-    intros p R HI HR. pose proof (sp0w_eq p HI) as S. unfold sp0w, SP0 in S. cbn [winst pget] in S.
+    intros inp p R HI HR. pose proof (sp0w_eq inp p HI) as S. unfold sp0w, SP0 in S. cbn [winst pget] in S.
     unfold me_regs in HR. cbn [winst pget] in HR. rewrite !S in HR.
     decompose [and] HR. repeat split; assumption.
   Qed.
@@ -525,10 +546,10 @@ Section FromMain.
   #[using="Type"] Lemma Forall_app_r {X} (P : X -> Prop) (l1 l2 : list X) : Forall P (l1 ++ l2) -> Forall P l2.
   Proof. intros H. apply Forall_app in H. tauto. Qed.
 
-  #[using="Type"] Lemma main_entry_A_lowshadow : ltac2:(CDefT.buildp (gd_tbl_AsanMainEntryLemmas ()) "PR,(2<.&5.(19.&40.))Pmem,P,(19.&40.)(6.(19.&8.))Pmd,$62.P,(63.Vsp,Vbrk0,Vrdraw,Vargv,Venvp,Vfs,Vuid,Vhw,R3.R2.R1.)(58.$15.Lp,$15.(2>.(16.Vsp,Vbrk0,Vrdraw,Vargv,Venvp,Vuid,Vhw,R1.)(9.$:.(;.$36.R4.)(5:.R1.))))")
+  #[using="Type"] Lemma main_entry_A_lowshadow : ltac2:(CDefT.buildp (gd_tbl_AsanMainEntryLemmas ()) "PR,(2<.&5.(19.&40.))Pmem,P,(19.&40.)(6.(19.&8.))Pmd,$62.P,(63.Vsp,Vbrk0,Vrdraw,Vargv,Venvp,Vfs,Vuid,Vhw,R3.R2.R1.)(58.$64.Linp,$64.(58.$15.Lp,$15.(2>.(16.Vsp,Vbrk0,Vrdraw,R2.R1.)(9.$:.(;.$36.R5.)(5:.R1.)))))")
 (* [comment removed for export] *).
   Proof.
-    intros R mem md (p & HI & _ & _ & _ & HM). exists p. split; [exact HI|].
+    intros R mem md (inp & mb & p & _ & _ & _ & _ & _ & _ & HI & _ & _ & _ & HM). exists inp, p. split; [exact HI|].
     destruct HM as (HC & _). unfold cells_common in HC.
     repeat match type of HC with
       | Forall _ (cells_lowshadow _ ++ _) => exact (Forall_app_l _ _ _ HC)
@@ -539,13 +560,50 @@ Section FromMain.
 
   #[using="Type"] Theorem me_img_shadow_main : ltac2:(CDefT.buildp (gd_tbl_AsanMainEntryLemmas ()) "PR,(2<.&5.(19.&40.))Pmem,P,(19.&40.)(6.(19.&8.))Pmd,$62.P,(63.Vsp,Vbrk0,Vrdraw,Vargv,Venvp,Vfs,Vuid,Vhw,R3.R2.R1.)Pz,$37.P,(2>.(38.$5;.R1.)(3:.R1.$5<.))(5.(6.(19.&8.))A1.R5.(32.&40.R2.)(8.(19.&8.)(5=.R2.)))")
 (* [comment removed for export] *).
-  Proof. intros R mem md H. destruct (main_entry_A_lowshadow R mem md H) as (p & _ & HF). exact (me_img_shadow mem p HF). Qed.
+  Proof. intros R mem md H. destruct (main_entry_A_lowshadow R mem md H) as (inp & p & _ & HF). exact (me_img_shadow mem p HF). Qed.
 
   (* [comment removed for export] *)
   #[using="Type"] Theorem me_img_shadow_zero_main : ltac2:(CDefT.buildp (gd_tbl_AsanMainEntryLemmas ()) "PP,P,$37.$3<.P,(5.$3<.(5?.R1.$60.)$61.)PR,(2<.&5.(19.&40.))Pmem,P,(19.&40.)(6.(19.&8.))Pmd,$62.P,(63.Vsp,Vbrk0,Vrdraw,Vargv,Venvp,Vfs,Vuid,Vhw,R3.R2.R1.)Pg,$37.P,(5.$3<.A1.R7.R1.$61.)P,(2>.(38.+10000.(5>.+8.R2.))(3:.(5>.+8.R2.)+65;000.))(5.(6.(19.&8.))A1.R6.(32.&40.(3;.+7???8000.R3.))(8.(19.&8.)(32.&8.=)))")
 (* [comment removed for export] *).
-  Proof. intros P HP R mem md H. destruct (main_entry_A_lowshadow R mem md H) as (p & _ & HF). exact (me_img_shadow_zero P HP mem p HF). Qed.
+  Proof. intros P HP R mem md H. destruct (main_entry_A_lowshadow R mem md H) as (inp & p & _ & HF). exact (me_img_shadow_zero P HP mem p HF). Qed.
 End FromMain.
+
+(* LPS 727298f3: the stack VMA's end [Run.entry_page_top] (= [ed_top]) at main's entry, from the
+   launch: page aligned, at most 2^47, above sp by the block's head, strings and top slot
+   ([CatExec.launch_string_base_arith]), and at most 2101782 bytes above sp ([StepTac.bsb_bound]). *)
+Lemma launch_stkhi_facts : forall (sp brk0 mb : word) (rdraw : EntryDraw) (inp : ProcInput),
+  valid_launch inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk0 mb rdraw) inp ->
+  entry_page_top rdraw mod 4096 = 0
+  /\ entry_page_top rdraw <= 2 ^ 47
+  /\ bv_unsigned sp + Z.of_nat (block_head_size (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp))
+     + Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp) (in_execfn inp)) + 8 <= entry_page_top rdraw
+  /\ entry_page_top rdraw - bv_unsigned sp <= 2101782.
+Proof.
+  intros sp brk0 mb rdraw inp Hvl Hlau.
+  pose proof (CatExec.launch_string_base_arith Sv48 inp mb sp brk0 rdraw Hlau) as HA.
+  pose proof (StepTac.bsb_bound Sv48 inp mb APH (Z_to_bv 64 0) sp brk0 rdraw Hvl Hlau) as HB.
+  rewrite (length_entry_stack_image_launch Sv48 inp mb APH (Z_to_bv 64 0) sp brk0 rdraw Hlau) in HB.
+  pose proof (entry_page_top_within_window Sv48 inp mb sp brk0 rdraw Hlau) as HW.
+  assert (Hv : va_stack_top Sv48 <= 2 ^ 47) by (unfold Z.le; vm_compute; discriminate).
+  pose proof Hlau as H2. cbn [entry_launch_ok_va] in H2. destruct H2 as ((Hpg & _ & _) & _).
+  unfold page_size in Hpg. unfold entry_page_top in *.
+  repeat split; lia.
+Qed.
+
+(* LPS 727298f3: a valid exec file name has at least one byte ([Run.valid_execfn]), so the strings
+   end at least two bytes (the name and its NUL) below the top slot *)
+Lemma valid_execfn_len : forall fn : list byte, valid_execfn fn -> (1 <= length fn)%nat.
+Proof.
+  intros fn [[L _] | [(ds & -> & _) | (ds & rest & -> & _)]].
+  - lia.
+  - unfold dev_fd_prefix. cbn [app length]. lia.
+  - unfold dev_fd_prefix. cbn [app length]. lia.
+Qed.
+
+(* the run's CONFIG_RSEQ value is 0 or 1 *)
+Lemma RZI_range : forall inp : ProcInput, 0 <= RZI inp <= 1.
+Proof. intros inp. unfold RZI. apply rseq_z_range. Qed.
 
 (* [comment removed for export] *)
 Goal map (fun z => bv_unsigned (img_shb z)) [0x7fffc978; 0x7fffc979; 0x7fffc97a; 0x7fffa000; 0x800c35ff] = [0; 2; 249; 0; 0].

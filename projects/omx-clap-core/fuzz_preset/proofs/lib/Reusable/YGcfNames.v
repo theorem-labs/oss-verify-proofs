@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfNames.v at commit fec7cbb6287c (the cf layer of record, field rounds 1 + 2), module paths changed; the preset-side hunks kept on top are listed in the round6f report. *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfNames.v at commit d0377850faab (the cf layer of record, field round 3 + the hull round + pf_ial_apart_t), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfNames.v (the cf layer of record, field rounds 1 + 2), module paths changed; the preset-side hunks kept on top are listed in the round6f report. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfNames.v (the cf layer of record, field round 3 + the hull round + pf_ial_apart_t), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* Theorem Labs, 2026-10: the event-free SECOND allocator instance (suffix cf), shared side.
    ONE instance shared by several units: everything a unit fixes is a PARAMETER here
    (CfImg for the image, CfParams for the sizes and the class set), never baked into the shared text.
@@ -101,7 +102,7 @@ Definition secs_errb_grow (l l' : list secmap) : Prop :=
 (forall i sm', (length l <= i)%nat -> nth_error l' i = Some sm' -> sm_size sm' < 0 /\ 0 <= sm_len sm').
 
 (* THE ONE errbuf filter of the hull meters (Main 2026-10-30): an st_secs entry is a USER secondary iff its sm_size
-   is >= 0; the errbuf's control entries carry a negative sm_size (YG00cf.v:56-63) and stay out of every meter (the
+   is >= 0; the errbuf's control entries carry a negative sm_size (YG00cf.v:57-64) and stay out of every meter (the
    errbuf is eager: eager_cf counts it by esec and errb_cap_cf charges it; it has no lazy hull). *)
 Definition sec_user_cf (e : secmap) : bool := 0 <=? sm_size e.
 
@@ -114,7 +115,8 @@ Definition sec_user_cf (e : secmap) : bool := 0 <=? sm_size e.
 (*     (YF06.v:133, :171) where a unit needs a larger secondary.            *)
 (*     cf_place_limit is c-asan's counting limit for the LPS placement      *)
 (*     lemma at cf_nob (the internal file LPS-PLACEMENT-REUSE.md §5: 80,953 at 2 ^ 29;        *)
-(*     37,264 at 2 ^ 30), supplied by the instance from c-asan's lemma.     *)
+(*     37,264 at 2 ^ 30; at 727298f3 two less, 80,951 and 37,262, for the    *)
+(*     two reservation-tail entries, SecGrantP.v), supplied by the instance. *)
 (*     Each unit's instance (lib/A/CfParams<unit>.v) records its values and  *)
 (*     their sources. The request bound is n < cf_malloc_max, so the         *)
 (*     admissible n runs to cf_malloc_max - 1, and cf_sizes_ok must hold     *)
@@ -189,17 +191,19 @@ Class CfParams := MkCfParams {
      can start at p + cf_head (p is 16-aligned); 0 for a harness that hides no head. *)
   cf_head_al : cf_head mod 8 = 0;
   cf_fs_classes_ok : Forall (fun c => 0 <= c <= 10) cf_fs_classes;
-  (* c-asan's LPS placement lemma (commit 820536849e5, SecGrantP.v):
+  (* c-asan's LPS placement lemma (SecGrantP.v):
      its NOB bounds and its counting condition at cf_place_limit (c-asan's limits: 80,953
-     at NOB 2 ^ 29, 37,264 at 2 ^ 30; 80,954 fails at 2 ^ 29). *)
+     at NOB 2 ^ 29, 37,264 at 2 ^ 30; 80,954 fails at 2 ^ 29).  At 727298f3 the condition counts the
+     two entries of the reservation tail too (the vDSO/vvar pair, YG0n.res_tail_ok; SecGrantP.v), so the
+     limits are 80,951 and 37,262. *)
   cf_nob_lo : 536870912 <= cf_nob;
   cf_nob_al : cf_nob mod 4096 = 0;
-  cf_place_ok : 0x2aaaaaaab000 + (257 * 25 + cf_place_limit) * (2 * cf_nob) + cf_nob <= 0x7fff7f800000;
+  cf_place_ok : 0x2aaaaaaab000 + (257 * 25 + cf_place_limit + 2) * (2 * cf_nob) + cf_nob <= 0x7fff7f800000;
   (* at least one secondary may be live, so ROOM_cf holds at the allocator's initial state *)
   cf_sec_live_pos : 0 < cf_sec_live_max;
   (* the unit's bound on the USER st_secs entries of a run, N = nsec_cf S (:133 above; sec_user_cf): preset's meter
      (YG0ncf.sec_meter_ok_cf) and reply's admission, which bounds kf = D + qsec_cf S (D its recycled secondaries) since
-     D + qsec_cf S <= nsec_cf S (YGcfCount.kf_le_nsec_cf, YGcfCount.v:289). Each unit's instance
+     D + qsec_cf S <= nsec_cf S (YGcfCount.kf_le_nsec_cf, YGcfCount.v:290). Each unit's instance
      records its value and its source (fuzz_reply 2 ^ 23: 16384 * 2 ^ 23 fits the room, measured 5.56e6 evictions,
      frame the internal file SHADOW-REFUND.md:83; preset 2 ^ 17, frame the internal file PRESET-KMAX.md). *)
   cf_kmax : Z;
@@ -274,7 +278,7 @@ Class CfParams := MkCfParams {
 
 (* Content constants, no address and no unit: ERRB_INIT is kErrorMessageBufferSize;
    exh_len1 / exh_len2 are the two Printf lengths of the class-full report
-   (msgpack Spec/AsanCtrl.v:335, :361, :362, at release ref b6a0088adc). *)
+   (msgpack Spec/AsanCtrl.v:335, :361, :362, at release ref). *)
 Definition ERRB_INIT : Z := 65536.
 Definition ndigits (z : Z) : Z :=
   if z <? 10 then 1 else if z <? 100 then 2 else if z <? 1000 then 3 else if z <? 10000 then 4 else 5.
@@ -319,7 +323,7 @@ Definition FA_GROW_MAX : Z := 32 * kFreeArrayMax.
    cgif's abudget_ok implies ours at the conversion point ARcf_nil, once class 1's shadow
    band is exposed at the new world W' and sec_hulls S + cls1_band_bytes_cf fits the credit:
    EV_A * st_nev S < EV_A * EV_MAX whenever aregime holds in its small branch
-   (YG01.v:201-202). A_BASE = 2 ^ 32 (YG0n.v:378), EV_A = 2 ^ 20 (:379),
+   (YG01.v:202-203). A_BASE = 2 ^ 32 (YG0n.v:378), EV_A = 2 ^ 20 (:379),
    EV_MAX = 2 ^ 13 (YG00.v:38), so A_BASE_CF = 2 ^ 32 + 2 ^ 33 = 12,884,901,888. *)
 Definition A_BASE_CF : Z := A_BASE + EV_A * EV_MAX.
 
@@ -337,7 +341,7 @@ Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : CfParams}.
 
 (* ---------------------------------------------------------------------- *)
 (* 1. The state invariant: YG01cf.v (written, green).                       *)
-(*    WfP_cf = cgif's WfP (YG01.v:324-346), field by field:                 *)
+(*    WfP_cf = cgif's WfP (YG01.v:325-347), field by field:                 *)
 (*      KEPT    the four event fields, which are LOWER bounds on st_nev     *)
 (*              (:331, :332, :335, :344) and so survive any event count;    *)
 (*      DROPPED wf_regime (:345), an UPPER bound on st_nev;                 *)
@@ -345,7 +349,7 @@ Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : CfParams}.
 (*              `rg_mapped_user r <= kFreeArrayOffset`, the bound the real  *)
 (*              class-full arm maintains (it tests + map_size BEFORE the    *)
 (*              map, YG00.v:285), in place of the 2 GiB `kUserMapSize *     *)
-(*              EV_MAX` of YG01.v:273;                                      *)
+(*              EV_MAX` of YG01.v:274;                                      *)
 (*      CHANGED wf_fa_room, whose slack 2 * (EV_MAX - st_nev) goes negative *)
 (*              past EV_MAX, to the constant FA_SLACK;                      *)
 (*      ADDED   wfc_compl0 (Compl0), which funds the free array in place of *)
@@ -388,7 +392,7 @@ Variable exh_mem_cf : forall (s : astate) (c : Z), bool.
 (*    allocator returns and unpoisoned before the block goes back, and      *)
 (*    blocks the runtime allocates for itself never have one.               *)
 (*    Hp : list Z is a GHOST list of currently hidden block bases, carried  *)
-(*    as an explicit argument. Not a field: cgif's `world` (YA0n.v:18-22)   *)
+(*    as an explicit argument. Not a field: cgif's `world` (YA0n.v:19-23)   *)
 (*    and `astate` (YG00.v:154-168) are records this instance keeps, and an *)
 (*    existential inside ARmcf would not let a poison step NAME the set it  *)
 (*    grows. A unit whose harness hides nothing takes Hp = [], and          *)
@@ -502,7 +506,7 @@ Variable ahead_poison_law : Prop.
 Variable ahead_unpoison_law : Prop.
 Variable realloc_cf_hp_post_ok : Prop.
 Variable realloc_cf_hp_post_null : Prop.
-(* The realloc contract: the instances of c-asan's ReallocP.v P forms (91224afc3ad) at
+(* The realloc contract: the instances of c-asan's ReallocP.v P forms at
    mt := malloc_cf, cpre := acall_pre_cf at a fixed Hp, rpre := fun _ _ => True (no
    aregime), nmax := cf_malloc_max, lmax := LIVE_MAX, rleaf / mleaf := our leaves, with
    the Hp effects (d) / (e) in the post. arealloc_null_realizes_cf takes no B, as
@@ -512,7 +516,7 @@ Variable arealloc_realizes_cf : Prop.
 Variable arealloc_realizes_cf_rh : Prop.
 Variable arealloc_null_realizes_cf : Prop.
 (* The harness's two shadow calls over ARcf, in port-fm's shape
-   (FMupoison.v at 8d043571f33: upoison_ok_one :202, ARU_poison_step :263,
+   (FMupoison.v: upoison_ok_one :202, ARU_poison_step :263,
    ARU_unpoison_step :333; its ARU_nil :37 is the precedent for shadow_ok_cf_nil).
    A poison of [p, p + cf_head) adds p to Hp, an unpoison removes it: laws (b) / (c).
    The pcs are per-image code-table fields, never literals here. *)
@@ -593,7 +597,7 @@ Variable aset_shadow_realizes_cf : forall (segs : list Segment) (B : asyms) (pc 
 Variable aintrin_realizes_cf : forall (segs : list Segment) (B : asyms) (op : memop) (pc : Z), Prop.
 Variable amemcmp_realizes_cf : forall (segs : list Segment) (B : asyms) (pc : Z), Prop.
 Variable abcmp_realizes_cf : forall (segs : list Segment) (B : asyms) (pc : Z), Prop.
-(* c-libc-stdio's interceptor contracts (YGcfStr.v, commit 3e37c5476fed), cgif's call-form
+(* c-libc-stdio's interceptor contracts (YGcfStr.v), cgif's call-form
    shape over ARcf. *)
 Variable astrcmp_realizes_cf : forall (segs : list Segment) (B : asyms) (pc : Z), Prop.
 Variable astrlen_realizes_cf : forall (segs : list Segment) (B : asyms) (pc : Z), Prop.

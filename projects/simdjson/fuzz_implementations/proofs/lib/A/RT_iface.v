@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the fd/fs predicate PMfd also requires the channel-reader flag, and the stability premise on predicates of fds and fs also takes that flag; STACK_SPAN (0x5D0000 bytes) is the stack span the start state guarantees below sp, and call_ok's stack floor is measured by it instead of STACK_WIN; a stack range of rng_class may end at USTACK_TOP - 9 and a printed string's padding at USTACK_TOP - 8 (argv's strings now sit at the top of the start block) instead of USTACK_TOP - 16; taken in part from projects/simdjson/fuzz_ondemand/proofs/lib/A/RT_iface.v, lines 23-40, 93-97, 131-135, 488-492, 588. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -19,6 +20,24 @@ Definition SEGTOP_A : Z := 0x6d2000.
 
 Definition USTACK_TOP : Z := 0x800000000000.
 Definition STACK_WIN : Z := 0x800000.
+(* LPS 727298f3: STACK_WIN had two roles.  (a) The allocator ceiling
+   [l_ACEIL = l_sp0 - STACK_WIN] = [alloc_top = usp - stack_max_size], and the
+   facts that keep grants, live objects, frames and the zero shadow below or
+   above it: still 8 MiB, unchanged.  (b) The stack span the start state
+   GUARANTEES mapped below sp: [Run.init_machine_state] zero-maps only
+   [stack_window_lo, sp), and the start state claims [StoreOk.stack_window_depth]
+   = 6144513 bytes ([AsanPlanCore.init_kn_with]'s [KWr (SA e_sp0 (-6144513)) ..]),
+   so 8 MiB below sp is false for some launches.  STACK_SPAN is role (b),
+   0x5D0000 = 6094848 <= 6144513 (the value bzip2/bzip2_compress_target's port
+   uses): the floor of every [stk lo sp] a contract hands down, of [call_ok],
+   of the start's stack and of [RT_rep.shadow_rep]'s stack window.  Written as
+   [STACK_WIN - 0x230000] so that [lia] relates the two with STACK_WIN folded
+   or unfolded. *)
+Notation STACK_SPAN := (STACK_WIN - 0x230000)%Z (only parsing).
+Lemma STACK_SPAN_val : STACK_SPAN = 6094848.
+Proof. reflexivity. Qed.
+Lemma STACK_SPAN_le : STACK_SPAN <= STACK_WIN.
+Proof. unfold STACK_WIN. lia. Qed.
 
 Definition RT_STACK : Z := 0x10000.
 
@@ -71,8 +90,11 @@ Record rt_sig : Type := mkRTS {
   rt_credit : rts -> Z
 }.
 
+(* LPS 08b1429: [PMfd] also carries the channel-reader flag (a nonempty writev needs it), so a
+   predicate "of fds and fs only" may also read that flag, which no step changes. *)
 Definition fdfs_only (PMc : Model -> Prop) : Prop :=
-  forall mo mo', m_fds mo' = m_fds mo -> m_fs mo' = m_fs mo -> PMc mo -> PMc mo'.
+  forall mo mo', m_fds mo' = m_fds mo -> m_fs mo' = m_fs mo -> m_channel_reader mo' = m_channel_reader mo ->
+  PMc mo -> PMc mo'.
 
 Definition ASTA (RT : rt_sig) (Σ : rts RT) (PMc : Model -> Prop) (Pm : machine_state -> Prop) : config -> Prop :=
   AST SEGTOP_A (rt_allow RT Σ) Pm (fun mo => ARTM RT Σ mo /\ PMc mo).
@@ -106,11 +128,11 @@ Definition rt_pres_ex (live : list (Z * Z)) (frames : list (Z * nat)) (sp : Z) (
 Definition rng_class (RT : rt_sig) (Σ : rts RT) (s n : Z) : Prop :=
   (exists p k, In (p, k) (rt_live RT Σ) /\ p <= s /\ s + n <= p + k)
   \/ (exists f k, In (f, k) (rt_frames RT Σ) /\ f <= s /\ s + n <= f + fs_size k - 8)
-  \/ (rt_sp0 RT Σ - STACK_WIN + 64 <= s /\ s + n <= USTACK_TOP - 16)
+  \/ (rt_sp0 RT Σ - STACK_WIN + 64 <= s /\ s + n <= USTACK_TOP - 9)
   \/ (0x10000 <= s /\ s + n <= SEGTOP_A).
 
 Definition call_ok (RT : rt_sig) (Σ : rts RT) (m : mem) (sp : word) (lo : Z) : Prop :=
-  stk asegs m lo (bv_unsigned sp) /\ rt_sp0 RT Σ - STACK_WIN <= lo /\ lo + RT_STACK <= bv_unsigned sp
+  stk asegs m lo (bv_unsigned sp) /\ rt_sp0 RT Σ - STACK_SPAN <= lo /\ lo + RT_STACK <= bv_unsigned sp
   /\ bv_unsigned sp + 16 <= USTACK_TOP /\ bv_unsigned sp mod 16 = 0.
 
 Definition unwind_ok (ra s0 sp : word) : Prop :=
@@ -464,10 +486,11 @@ Record rt_contracts : Prop := mkRTC {
 
 End Contracts.
 
-Definition PMfd (F0 : list (word * FdEntry)) (fs0 : Fs) : Model -> Prop := fun mo => m_fds mo = F0 /\ m_fs mo = fs0.
+Definition PMfd (F0 : list (word * FdEntry)) (fs0 : Fs) : Model -> Prop :=
+  fun mo => m_fds mo = F0 /\ m_fs mo = fs0 /\ m_channel_reader mo = true.
 
 Lemma PMfd_fdfs_only : forall F0 fs0, fdfs_only (PMfd F0 fs0).
-Proof. intros F0 fs0 mo mo' E1 E2 [H1 H2]. split; congruence. Qed.
+Proof. intros F0 fs0 mo mo' E1 E2 E3 (H1 & H2 & H3). split; [congruence| split; congruence]. Qed.
 
 Definition rt_pres_fp (live : list (Z * Z)) (frames : list (Z * nat)) (sp : Z) (W : list (Z * Z)) (m m' : mem) : Prop :=
   forall a : word, aclient live frames sp (bv_unsigned a) -> outside W (bv_unsigned a) -> m' a = m a.
@@ -563,7 +586,7 @@ Definition fprintf_stderr_icontract : Prop :=
        /\ bv_unsigned sp <= a
        /\ exists slack, bytes_at asegs m (a + Z.of_nat (length s) + 1) slack
             /\ (- (a + Z.of_nat (length s) + 1)) mod 8 <= Z.of_nat (length slack)
-            /\ a + Z.of_nat (length s) + 1 + Z.of_nat (length slack) <= USTACK_TOP - 16) ->
+            /\ a + Z.of_nat (length s) + 1 + Z.of_nat (length slack) <= USTACK_TOP - 8) ->
   fd_lookup F0 (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
   ERR_rep m -> io_ssp m ->
   ART RT Σ m -> mem_inv asegs m -> call_ok RT Σ m sp lo -> frm0 fc ->

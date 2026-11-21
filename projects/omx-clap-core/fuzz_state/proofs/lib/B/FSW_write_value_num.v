@@ -4,13 +4,14 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACer.v, with its module paths and module names changed; 1338 of its 1373 lines of code are new or changed and 261 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_K.v; 1536 of its 1692 lines of code are new or changed and 1217 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_write_value.v, with its module paths, addresses and numbers changed; 11 of its 318 lines of code are new or changed and 1385 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* write_value's NUMBER arm (fs.asan-ubsan 0x84010, preset_file.c:525-575, case PJ_NUMBER), image B, against
-   lib/B/FSH_Fn_writer.v's write_value_spec_at (statement set a working branch 50968be8342, no CTX).
+   lib/B/FSH_Fn_writer.v's write_value_spec_at (statement set a working branch, no CTX).
    rule 24 (02:59Z form): proves no function (kind: segment lemma) - the number arm of write_value B.
-   Template for the S0 statement shape: image A's wv_num (a working branch 9e8a0cdbf33,
-   lib/A/FSW_write_value.v:1512-1812, on the same CTX-drop statement set), with the helpers only it uses
+   Template for the S0 statement shape: image A's wv_num (a working branch,
+   lib/A/FSW_write_value.v:1513-1813, on the same CTX-drop statement set), with the helpers only it uses
    (wv_aview_unpoison_eq, wv_apresent_unpoison, wv_rt_post_conv, wv_chunk_move, wv_saved / wv_xsR / wv_cs0, wv_frameR,
-   wv_garr8_prefix), same names. Template for image B's code: a working branch 4309d52a177
+   wv_garr8_prefix), same names. Template for image B's code: a working branch
    lib/B/Prog/write_value_leaf.v (bespoke statements, template only; no bridge).
    B's code, MEASURED on the pinned fuzz_state.asan-ubsan (sha256 5ac5ce09..., fuzz_state.objdump.txt):
      0x84010 addi sp,sp,-192 (frame 192 = FRAME_write_value); ra / s0 .. s11 saved at 184, 176, 168, 160 .. 88;
@@ -48,7 +49,7 @@
    Section hypotheses: FsShadowSyms (HSS), fs_img_facts (IMG), the tail callee put_spec (HPUT, through
    FSW_write_value_entry.wv_tail_put) and the strlen interceptor astrlen_realizesU at B's PC_strlen (HSLEN), as A's
    walk. The entry part (wv_start, wv_awr0, wv_frame0, wv_tail_put, wv_spec_on, ...) is a Theorem Labs lane's
-   lib/B/FSW_write_value_entry.v (c00814d3d74), imported. *)
+   lib/B/FSW_write_value_entry.v, imported. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

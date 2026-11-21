@@ -9,13 +9,14 @@
 
    It is stated over the reader `aview_of H mem`, which is `aview tfibsegs H mem` written
    out (YG0n.v:17), so that it does not depend on the part of the core that is still in
-   flight (YG0n -> YA0n -> YK18, which does not compile on cold/port-fm-reloc bad0693aadc
+   flight (YG0n -> YA0n -> YK18, which does not compile
    yet).  `aview_eq` closes that gap in one line as soon as it does.
 
    RtScan owns the rest of the bridge (lib/A/PSnpBzBridge.v: evt/msteps -> SRr and the frame
    vocabulary); this file is only about the shadow. *)
-(* Modified by Theorem Labs, 2026-10: c-libc-stdio's copy for fuzz_preset image A (route (a) P2, ASan's printf_common over ARx; parent c-libc-stdio 13:0xZ) of proofs/omx-clap-core/fuzz_manifest/lib/A/FMbz_str.v at origin/cold/port-fm-rtprintf-param 7e395de08f5: module paths fuzz_manifest -> fuzz_preset, lib/A/Bz -> lib/A/PSnpBz (the Bz files relocated to image A by c-asan's alreloc), FM glue modules -> their PSnp twins; chk_ok_of_AR and chk_ok_of_ARU (the AR and user-poison forms) are left out: the printf_common contract over ARx (PSnpPcom.v) reaches only chk_ok_of_view and the reader lemmas. No numeral changes. *)
+(* Modified by Theorem Labs, 2026-10: c-libc-stdio's copy for fuzz_preset image A (route (a) P2, ASan's printf_common over ARx; parent c-libc-stdio 13:0xZ) of proofs/omx-clap-core/fuzz_manifest/lib/A/FMbz_str.v: module paths fuzz_manifest -> fuzz_preset, lib/A/Bz -> lib/A/PSnpBz (the Bz files relocated to image A by c-asan's alreloc), FM glue modules -> their PSnp twins; chk_ok_of_AR and chk_ok_of_ARU (the AR and user-poison forms) are left out: the printf_common contract over ARx (PSnpPcom.v) reaches only chk_ok_of_view and the reader lemmas. No numeral changes. *)
 (* Modified by Theorem Labs, 2026-10: image B twin (fuzz_preset.asan-ubsan f8f98a95) of lib/A/PSnpBzStr.v, by the unit's image-B convention (lib/AU/FCxA.v's rule): module paths lib/A/PSnpBz -> lib/AU/PSnpBz (alreloc's image-B relocation), the image-A core A<x> -> image B's Y<x> (lib/Reusable), lib/A/Img0 -> lib/B/Img0, the PSnp glue lib/A -> lib/AU. Sentences above that name image A describe the A twin. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout State Run.

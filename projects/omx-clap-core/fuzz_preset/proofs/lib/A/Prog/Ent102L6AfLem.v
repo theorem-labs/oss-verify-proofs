@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image A' (asan, harness fix #102, PIN sha256
    1be0f53d96cb9d6c2d5c92820c254e9db28e4830054a02631390e27c9547dc44): the SUPPORT LEMMAS of segment L6f of
    LLVMFuzzerTestOneInput (entry 0x815e0), the FREE lane +0x1bc `mv a0,s5` / +0x1c0 `jal pj_free` (return site +0x1c4),
@@ -12,15 +13,15 @@
    PL_102_A of lib/A/Ent102PLA.v (blob a55fa7414ddf); lib/A/PAImg_prog.v is not loaded, no vm_compute on pa_val /
    pa_sigma (only the listing's own slots are computed).
    THE KIT TEXTS: lib/A/PRH_Base.v 966b522cc722 (names only), lib/A/PRH_FnPj.v 838c63d8cd16 (the class-24 premise of
-   tpj_free_specX this file's l6f_ccnt24 supplies; the assignment's 43642538e741 moved to the kit 00b50c5745fb's text).
+   tpj_free_specX this file's l6f_ccnt24 supplies; the assignment's 43642538e741 moved to the kit's text).
    rule 24: proves function LLVMFuzzerTestOneInput, segment L6f (reuse search: main / ossv/recipes / ossv/candidates /
    release/pau-projects-recipes + cold/* lemma index / proof-index LLVMFuzzerTestOneInput exit=0, checker CONFIRM;
    NEW walk on the #102 pins). This file: support lemmas of that segment only.
    TAKEN BY PATH (image-free; each restated under an l6f_ name):
    - l6f_land_neg32: lib/A/Prog/Ent102L0A.v l0_land_neg32 (a Theorem Labs lane; from
-     a working branch d63027f077c5 lib/A/H6_Base.v);
+     a working branch lib/A/H6_Base.v);
    - l6f_rd64_val / l6f_geom: lib/A/Prog/Ent102L6AEnt.v l6_rd64_val / l6_geom (a working branch);
-   - l6f_step_addi: lib/B/Prog/pj_set_seg_tail.v pjs_step_addi (a working branch f910e41607f), the
+   - l6f_step_addi: lib/B/Prog/pj_set_seg_tail.v pjs_step_addi (a working branch), the
      fetch taken from the PAListing (YC1fP.v pa_fetch_pw) in place of the image table; l6f_step_call is its jal twin
      over a PCall slot, the target read off the certificate (YP0d.v cert_slot, as YP0d.v sym_step_pi_call does);
    - l6f_slot_img: YC1fP.v pa_slot_img's proof, ending at in_img;

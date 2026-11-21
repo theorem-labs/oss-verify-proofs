@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx-GENERIC twin of lib/A/W_journal.v (a Theorem Labs lane's step 1 of route (b), 2026-10-29
    14:18Z / 14:22Z). W_journal.v is NOT edited: this file sits beside it, and every walk that cites W_journal.v builds
    unchanged.
@@ -35,7 +36,7 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YAkMemnorm.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YCe5x.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import W_syms W_kit W_journal.
 (* the count names of the room round, ONE definition each (acnt, tr_peakP, Psec / Pcls / P24, ...):
-   lib/A/ReplyCnt.v, taken by path from commit caaa86be8d4 *)
+   lib/A/ReplyCnt.v, taken by path *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require Import ReplyCnt.
 Import ListNotations.
 Local Unset Lia Cache. Local Unset Nia Cache.
@@ -43,7 +44,7 @@ Local Set Warnings "-abstract-large-number".
 Open Scope bv_scope.
 Open Scope Z_scope.
 (* the strndup rules' frame room below the call (the interceptor's frame, then the inner malloc's body to Allocate,
-   whose entry asks ly_bot < sp; AllocG.v:75): transparent local constants until the layer's own names land beside
+   whose entry asks ly_bot < sp; AllocG.v:76): transparent local constants until the layer's own names land beside
    STRNDUP_FRAME_CF in Reusable/YG0dcf.v; left-nested in the premise so `+ 2160 + 2144` converts by delta *)
 Local Definition STRNDUP_FRAME_CF_x : Z := 2160.
 Local Definition MALLOC_BODY_FRAME_CF_x : Z := 2144.
@@ -60,7 +61,7 @@ Hypothesis LAWS : AR_laws_x segs B ARx hl.
 Hypothesis segs_low : forall a, in_img segs a -> 0 <= a < kLowMemEnd.
 Local Notation AJ := (ajournal_x segs B PST ARx).
 
-(* W_journal.v:149 ajournal_rebase *)
+(* W_journal.v:150 ajournal_rebase *)
 Lemma ajournal_rebase_xR {R : world segs -> world segs -> Prop} : forall G STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k memc',
 gx_ok segs B G ->
 (ajournal_xR segs B PST ARx R) STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k ->
@@ -109,7 +110,7 @@ mem_grows (mrestrict (w_H Wc) memc) (mrestrict (w_H Wc) memc') ->
 AJ STK sp0 FP ly S Hp W (gover G mem memc') md own lyc Sc Hpc Wc memc' mdc k.
 Proof. exact (@ajournal_rebase_xR (@wle segs)). Qed.
 
-(* W_journal.v:189 ajournal_start_ext *)
+(* W_journal.v:190 ajournal_start_ext *)
 Lemma ajournal_start_ext_xR {R : world segs -> world segs -> Prop} : forall STK sp0 FP ly S Hp W mem mem' md own lyc Sc Hpc Wc memc mdc k,
 (ajournal_xR segs B PST ARx R) STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k ->
 (forall a, aview segs (w_H W) mem' a = aview segs (w_H W) mem a) ->
@@ -132,7 +133,7 @@ AJ STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k ->
 AJ STK sp0 FP ly S Hp W mem' md own lyc Sc Hpc Wc memc mdc k.
 Proof. exact (@ajournal_start_ext_xR (@wle segs)). Qed.
 
-(* THE JOURNAL: W_journal.v:209 ajournal_g and :214 ajournal_gx over AJ. *)
+(* THE JOURNAL: W_journal.v:210 ajournal_g and :214 ajournal_gx over AJ. *)
 Definition ajournal_g_xR (R : world segs -> world segs -> Prop) (G : list (Z * Z)) (STK sp0 : Z) (FP : list (Z * Z))
 (ly : alayout) (S : astate) (Hp : list Z) (W : world segs) (mem : word -> option byte) (md : Model)
 (own : list (Z * Z))
@@ -162,7 +163,7 @@ ajournal_g_x G (STK + XO) (sp0 + XO) FP ly S Hp W mem md own ly' S' Hp' W' mem' 
 (* ajournal_gx_x keeps its body, for the proofs that unfold it; ajournal_gx_x_wle checks that it is ajournal_gx_xR at wle *)
 Lemma ajournal_gx_x_wle : ajournal_gx_x = ajournal_gx_xR (@wle segs). Proof. reflexivity. Qed.
 
-(* W_journal.v:224 ajournal_gx_nil *)
+(* W_journal.v:225 ajournal_gx_nil *)
 Lemma ajournal_gx_nil_xR {R : world segs -> world segs -> Prop} : forall STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k,
 (ajournal_gx_xR R) [] 0 [] STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k <->
 (ajournal_xR segs B PST ARx R) STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k.
@@ -178,7 +179,7 @@ Lemma ajournal_gx_nil_x : forall STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' m
 ajournal_gx_x [] 0 [] STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k <->
 AJ STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k.
 Proof. exact (@ajournal_gx_nil_xR (@wle segs)). Qed.
-(* W_journal.v:235 ajournal_gx_pack *)
+(* W_journal.v:236 ajournal_gx_pack *)
 Lemma ajournal_gx_pack_xR {R : world segs -> world segs -> Prop} : forall G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k memS,
 0 <= STK -> 0 <= XO ->
 (ajournal_xR segs B PST ARx R) (STK + XO) (sp0 + XO) FP ly S Hp W memS md own ly' S' Hp' W' mem' md' k -> gagree G (w_H W) mem memS ->
@@ -195,7 +196,7 @@ AJ (STK + XO) (sp0 + XO) FP ly S Hp W memS md own ly' S' Hp' W' mem' md' k -> ga
 ajournal_gx_x G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k.
 Proof. exact (@ajournal_gx_pack_xR (@wle segs)). Qed.
 
-(* W_journal.v:250 ajournal_gx_init *)
+(* W_journal.v:251 ajournal_gx_init *)
 Lemma ajournal_gx_init_xR {R : world segs -> world segs -> Prop} (R_refl : forall W, R W W) : forall G XO OUT STK FP ly S Hp W regs mem md ch,
 afn_pre_x segs B ARx STK ly S Hp W regs mem md ch ->
 0 <= XO -> XO mod 16 = 0 -> spZ regs + XO <= ly_top ly ->
@@ -222,7 +223,7 @@ afn_pre_x segs B ARx STK ly S Hp W regs mem md ch ->
 ajournal_gx_x G XO OUT STK (spZ regs) FP ly S Hp W mem md [] ly S Hp W mem md 0.
 Proof. exact (@ajournal_gx_init_xR (@wle segs) (wle_refl segs)). Qed.
 
-(* W_journal.v:309 ajournal_gx_exec, over YCbqG's ajournal_x_exec *)
+(* W_journal.v:310 ajournal_gx_exec, over YCbqG's ajournal_x_exec *)
 Lemma ajournal_gx_exec_xR {R : world segs -> world segs -> Prop} : forall G XO OUT STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k memc' mdc' (Wr : Z -> Prop),
 gx_ok segs B G ->
 (ajournal_gx_xR R) G XO OUT STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k ->
@@ -278,7 +279,7 @@ same_but_materialized mdc mdc' ->
  inG G a \/ (inFP OUT a /\ sp0 <= a < sp0 + XO)) ->
 ajournal_gx_x G XO OUT STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc' mdc' k.
 Proof. exact (@ajournal_gx_exec_xR (@wle segs)). Qed.
-(* W_journal.v:353 ajournal_gx_materialize *)
+(* W_journal.v:354 ajournal_gx_materialize *)
 Lemma ajournal_gx_materialize_xR {R : world segs -> world segs -> Prop} : forall G XO OUT STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k X,
 (ajournal_gx_xR R) G XO OUT STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k ->
 (ajournal_gx_xR R) G XO OUT STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc (with_vm_backing (m_vm_lazy mdc) X mdc) k.
@@ -291,7 +292,7 @@ Lemma ajournal_gx_materialize_x : forall G XO OUT STK sp0 FP ly S Hp W mem md ow
 ajournal_gx_x G XO OUT STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k ->
 ajournal_gx_x G XO OUT STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc (with_vm_backing (m_vm_lazy mdc) X mdc) k.
 Proof. exact (@ajournal_gx_materialize_xR (@wle segs)). Qed.
-(* W_journal.v:362 ajournal_gx_inner *)
+(* W_journal.v:363 ajournal_gx_inner *)
 Lemma ajournal_gx_inner_xR {R : world segs -> world segs -> Prop} : forall G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k,
 (ajournal_gx_xR R) G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k ->
 exists memS, (ajournal_xR segs B PST ARx R) (STK + XO) (sp0 + XO) FP ly S Hp W memS md own ly' S' Hp' W' mem' md' k /\
@@ -305,14 +306,14 @@ ajournal_gx_x G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k 
 exists memS, AJ (STK + XO) (sp0 + XO) FP ly S Hp W memS md own ly' S' Hp' W' mem' md' k /\
 (forall a, ~ inG G (bv_unsigned (Z_to_bv 64 a)) -> aview segs (w_H W) memS a = aview segs (w_H W) mem a).
 Proof. exact (@ajournal_gx_inner_xR (@wle segs)). Qed.
-(* W_journal.v:370 ajournal_gx_AR *)
+(* W_journal.v:371 ajournal_gx_AR *)
 Lemma ajournal_gx_AR_xR {R : world segs -> world segs -> Prop} : forall G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k,
 (ajournal_gx_xR R) G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k -> ARx ly' S' Hp' W' mem' md'.
 Proof. intros G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k (_ & _ & (memS & HJ & _) & _). exact (proj1 HJ). Qed.
 Lemma ajournal_gx_AR_x : forall G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k,
 ajournal_gx_x G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k -> ARx ly' S' Hp' W' mem' md'.
 Proof. exact (@ajournal_gx_AR_xR (@wle segs)). Qed.
-(* W_journal.v:382 rom_pinned_view, from the const-cells law (field 16) *)
+(* W_journal.v:383 rom_pinned_view, from the const-cells law (field 16) *)
 Lemma rom_pinned_view_x : forall ly S Hp W mem md a, ARx ly S Hp W mem md -> rom_pinned segs B a ->
 aview segs (w_H W) mem a = option_map (fun b : byte => bv_unsigned b) (seg_rom segs (Z_to_bv 64 a)).
 Proof.
@@ -323,7 +324,7 @@ specialize (Hh (Z.to_nat (a - aeval B ly (c_at c))) ltac:(lia)).
 rewrite Z2Nat.id in Hh by lia. replace (aeval B ly (c_at c) + (a - aeval B ly (c_at c))) with a in Hh by lia.
 rewrite Hh. exact He.
 Qed.
-(* W_journal.v:399 ajournal_gx_rom_view; the ROM bytes must lie outside PST (always true at PST = []) *)
+(* W_journal.v:400 ajournal_gx_rom_view; the ROM bytes must lie outside PST (always true at PST = []) *)
 Lemma ajournal_gx_rom_view_xR {R : world segs -> world segs -> Prop} : forall G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k,
 (ajournal_gx_xR R) G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k ->
 rom_out segs B G -> (forall a, in_rom segs a -> ~ Exists (in_zr a) PST) ->
@@ -349,7 +350,7 @@ ajournal_gx_x G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k 
 rom_out segs B G -> (forall a, in_rom segs a -> ~ Exists (in_zr a) PST) ->
 rom_view segs W mem -> rom_view segs W' mem'.
 Proof. exact (@ajournal_gx_rom_view_xR (@wle segs)). Qed.
-(* W_journal.v:419 acall_kept_rom_view *)
+(* W_journal.v:420 acall_kept_rom_view *)
 Lemma acall_kept_rom_view_x : forall lyc Sc W memc W2 mem2 slo shi E ly2 S2 Hp2 md2,
 ARx ly2 S2 Hp2 W2 mem2 md2 ->
 acall_kept segs B lyc Sc W memc W2 mem2 slo shi E ->
@@ -367,7 +368,7 @@ destruct (Exists_dec (in_zr a) (as_owned_static B) Hd) as [Hown | Hno].
 assert (Hi : in_img segs a) by (destruct Ha as (sg & Hsg & _ & Hr); exists sg; split; [exact Hsg | exact Hr]).
 rewrite (proj1 (proj2 (proj2 HK)) a Hi Hno Hne). exact (Hrv a Ha).
 Qed.
-(* W_journal.v:436 ajournal_gx_G_mono *)
+(* W_journal.v:437 ajournal_gx_G_mono *)
 Lemma ajournal_gx_G_mono_xR {R : world segs -> world segs -> Prop} : forall G G' XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k,
 (forall a, inG G a -> inG G' a) ->
 (ajournal_gx_xR R) G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k ->
@@ -383,7 +384,7 @@ ajournal_gx_x G XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k 
 ajournal_gx_x G' XO OUT STK sp0 FP ly S Hp W mem md own ly' S' Hp' W' mem' md' k.
 Proof. exact (@ajournal_gx_G_mono_xR (@wle segs)). Qed.
 
-(* W_journal.v:461 ajournal_sub_g: the inner journals, a callee's inside its caller's (same PST). *)
+(* W_journal.v:462 ajournal_sub_g: the inner journals, a callee's inside its caller's (same PST). *)
 Lemma ajournal_sub_g_xR {R : world segs -> world segs -> Prop} (R_trans : forall W1 W2 W3, R W1 W2 -> R W2 W3 -> R W1 W3) : forall G STK sp0 FP ly S Hp W memS0 md own lyc Sc Hpc Wc memc mdc k memS1
 STK1 sp1 FP1 nf ly2 S2 Hp2 W2 mem2 md2 k1,
 gx_ok segs B G ->
@@ -484,7 +485,7 @@ sp0 - STK <= sp1 - STK1 -> sp1 <= sp0 ->
  in_tmp_block (ablocks B ly S) (ablocks B lyc Sc) a) ->
 AJ STK sp0 FP ly S Hp W (gover G memS0 memS1) md (nf ++ own) ly2 S2 Hp2 W2 mem2 md2 (k + k1).
 Proof. exact (@ajournal_sub_g_xR (@wle segs) (wle_trans segs)). Qed.
-(* W_journal.v:553 ajournal_gx_sub *)
+(* W_journal.v:554 ajournal_gx_sub *)
 Lemma ajournal_gx_sub_xR {R : world segs -> world segs -> Prop} (R_trans : forall W1 W2 W3, R W1 W2 -> R W2 W3 -> R W1 W3) : forall G STK sp0 XO0 OUT0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k
 STK1 sp1 XO1 OUT1 FP1 nf ly2 S2 Hp2 W2 mem2 md2 k1,
 (ajournal_gx_xR R) G XO0 OUT0 STK sp0 FP ly S Hp W mem md own lyc Sc Hpc Wc memc mdc k ->
@@ -642,7 +643,7 @@ Qed.
    `HP0 : forall ly S Hp W mem md, ARx ly S Hp W mem md -> Hp = []` - in place of a per-contract "no hidden head in
    this block" premise, which could not be re-established after a callee returns an existential Hp'. True at
    fuzz_reply's cf instance: Hp grows only by a poison step (YGcfNames.v:499) and the program calls no poison routine
-   (lib/A/W_syms.v), so the instance parameter is Hp = [] (W_journal.v:745-748, YGcfNames.v:400). The AR side
+   (lib/A/W_syms.v), so the instance parameter is Hp = [] (W_journal.v:746-749, YGcfNames.v:400). The AR side
    instantiates at ARi0 (Section br), not ARi, under which HP0 is false. *)
 Section hp0.
 Variable segs : list Segment.
@@ -672,7 +673,7 @@ exact (shadow_hull_vis_of_block_x segs B ARx LAWS ly S Hp W mem md p m d n HAR H
 Qed.
 End hp0.
 
-(* W_journal.v:586-704, the run chain of Reusable/YC80.v:54-142 over ajournal_gx_x. *)
+(* W_journal.v:587-705, the run chain of Reusable/YC80.v:54-142 over ajournal_gx_x. *)
 Section e.
 Variable psym : Type.
 Variable segs : list Segment.
@@ -852,7 +853,7 @@ awr_ok_x E (ss_mem ss) G XO OUT STK sp0 FP (ablocks B ly S) (ablocks B lyc Sc) l
 run_post_pi_tok_AJX_x W E K Bx SH ss st' r ms STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k Q ->
 SRr segs W (mkCfg ms mdc) Q.
 Proof. exact (@SRr_run_to_pi_tok_AJX_xR (@wle segs)). Qed.
-(* route R: the step relation of the runs over R is SRrG segs R (Reusable/YA0nH.v:31); a straight-line run does not move
+(* route R: the step relation of the runs over R is SRrG segs R (Reusable/YA0nH.v:32); a straight-line run does not move
    the world, so the G twins below take no hypothesis on R. SRrG_msteps_x is SRr_msteps (Reusable/YA0n.v:151) at SRrG,
    with its proof: that proof never reads the relation. At R := wle each G twin is its strict twin by conversion. *)
 Lemma SRrG_msteps_x {R : world segs -> world segs -> Prop} : forall W ms msr' model Q,
@@ -964,7 +965,7 @@ destruct r; cbn [ptok_post] in HP; first [exact HP | destruct HP].
 Qed.
 End e.
 
-(* W_journal.v:709 Section g: the instances at fuzz_reply's listing (the GUIDE's RUN / RUNTO), over ARx. *)
+(* W_journal.v:710 Section g: the instances at fuzz_reply's listing (the GUIDE's RUN / RUNTO), over ARx. *)
 Section g.
 Context {L : ptable wsym} {PL : PAListing L} {PI : PAImg L}.
 Variable B : asyms.
@@ -1069,7 +1070,7 @@ Proof.
   split; [pose proof (Hle (rp_P24 RP)); lia|]. intros c Hc. pose proof (Hle (rp_Pcls RP c)). specialize (H3 c Hc). lia.
 Qed.
 
-(* W_journal.v:770 Section h: THE ALLOCATOR'S SITE RULES over AJ. The text of each rule is W_journal.v's with the
+(* W_journal.v:771 Section h: THE ALLOCATOR'S SITE RULES over AJ. The text of each rule is W_journal.v's with the
    journal AJ (Hp after S in the premise; the post's journal at some Hp2 after S2). Nothing else changes. *)
 Section h.
 Variable segs : list Segment.
@@ -1404,7 +1405,7 @@ rp_RM RP S2 kr /\
  ~ (res <= a < res + req_size (n + 1)) -> apresent (w_H W) memT a -> apresent (w_H W2) mem2 a)).
 (* astrndup_cf_rule_x keeps its body, for the proofs that unfold it; astrndup_cf_rule_x_wle checks that it is astrndup_cf_rule_xR at wle *)
 Lemma astrndup_cf_rule_x_wle : astrndup_cf_rule_x = astrndup_cf_rule_xR (@wle segs). Proof. reflexivity. Qed.
-(* ---- W_journal.v Section hc (a working branch 4d6dcd568a5, :900-1036): the beside-forms with the caller-context
+(* ---- W_journal.v Section hc (a working branch, :900-1036): the beside-forms with the caller-context
    premise. Each is its rule's twin above with `In (raZ regsT :: spine ch) CTX ->` inserted after chain_pre and nothing
    else changed; `<rule>_c_weak_x` shows each is implied by the twin without the premise. ---- *)
 Section hc.

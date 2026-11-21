@@ -9,7 +9,7 @@
      wview (LinuxProcessSem RiscvSemantics.v:528-540) falls back to WRITABLE segments only, mbyte (YP09.v:18-21) to
      any segment, so a byte that appears in mem' at a read-only image address agrees on mbyte but is writable only at
      W'. The forward direction (pske_writable_fwd) needs nothing beyond the agreement.
-   Templates: FSW_strkit.v:152-219 (cstr_ok_unpoison / cstr_ok_poison, the conjunct-by-conjunct transport). *)
+   Templates: FSW_strkit.v:153-220 (cstr_ok_unpoison / cstr_ok_poison, the conjunct-by-conjunct transport). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -63,7 +63,7 @@ Proof. intros s n t H0 H1 Ht. unfold shadow_addr, SHADOW_OFF in Ht. Z.div_mod_to
 Lemma pske_tail : forall y a, y < a < y - y mod 8 + 8 -> y < a < y + 8.
 Proof. intros y a H. pose proof (Z.mod_pos_bound y 8 ltac:(lia)). lia. Qed.
 
-(* cstr_ok's ceiling conjunct is `p + len + 1 <= alloc_ceiling` (a Theorem Labs lane 2d9cdf6a160; was `+ 8`): the bytes this
+(* cstr_ok's ceiling conjunct is `p + len + 1 <= alloc_ceiling` (a Theorem Labs lane; was `+ 8`): the bytes this
    file transports reach p + len + 7 (the word holding the NUL), still inside the address space *)
 Lemma pske_ar_cstr : forall c s n x, c < 2 ^ 47 -> 4096 <= s -> s + n + 1 <= c -> s <= x < s + n + 8 ->
   0 <= x < 2 ^ 64.

@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the IMAGE-B twin of lib/A/W_rig_all.v (text unchanged but the imports): the composition of the ASan walk of fuzz_reply's relay_instance_gone: the
    segment statements of lib/A/W_relay_instance_gone_cx.v give rig_spec (rig_all_stmt), by plain application at the
-   cut points.  Route (b), step 3 (the image-A twin's RIG_x round, a Theorem Labs lane f4cd818e98d): over any allocator relation
+   cut points.  Route (b), step 3 (the image-A twin's RIG_x round, a Theorem Labs lane): over any allocator relation
    ARx, the program statics PST and the room record RP; the entry record carries rig_spec_x's head set Hp and room
    budget kr; the conclusion is rig_spec_x. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

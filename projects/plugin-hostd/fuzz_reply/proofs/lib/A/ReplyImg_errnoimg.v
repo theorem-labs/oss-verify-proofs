@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs: an image row of the cf layer at plugin-hostd/fuzz_reply image A.
    rule 24: no function proved (kind: image row; an instance discharge at reply's image A from reply's own proved lemmas).
 
    The cf layer's row ErrnoImgCf is the Record YGcfInstErrno.ErrnoImgCf
-   (proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfInstErrno.v:63-73 at commit 9ac4e6bed4f7): one field per
+   (proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfInstErrno.v:63-73): one field per
    ErrnoApart Prop, over the image classes ImgBase.AImg / ImgBaseAG.AGImg / ImgBaseDG.DImg.  Reply does not carry that
    layer file yet, so [errno_img_cf_A] states the Record's UNFOLDED text: the conjunction of its nine fields, in the
    field order of the Record (ei_in_img, ei_unhidden, ei_dzone_ag, ei_shadow_ag, ei_inst_ag, ei_dzone_d, ei_izone,
@@ -28,7 +29,7 @@ Open Scope Z_scope.
 
 Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 
-(* ErrnoImgCf (YGcfInstErrno.v:63-73), unfolded, at image A. *)
+(* ErrnoImgCf (YGcfInstErrno.v:64-74), unfolded, at image A. *)
 Theorem errno_img_cf_A :
   errno_in_img (IM := AImg_reply) /\
   errno_unhidden (IM := AImg_reply) /\

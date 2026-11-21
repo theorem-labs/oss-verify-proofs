@@ -1,20 +1,20 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: restates text of proofs/reac-pw/fuzz_role/lib/A/RPgX01.v at 9bffaa83ff88
+(* Modified by Theorem Labs, 2026-10: restates text of proofs/reac-pw/fuzz_role/lib/A/RPgX01.v
    [Apache-2.0] (rx_reg_atom / rx_reg_ext / rx_ew_reg / rx_st_region / rx_chunk_zero / rx_flag0_of, the saved-slot
    chunk list rx_sv_chunks, the numeral tactics z5 / z5g and the flag-store tactic rx_run_flag, which passes
-   aj_flag_store its sixteen journal arguments) and of proofs/reac-pw/fuzz_role/lib/A/RPgCheck.v at 77f59d02b018
+   aj_flag_store its sixteen journal arguments) and of proofs/reac-pw/fuzz_role/lib/A/RPgCheck.v
    [Apache-2.0] (the shape of a `ret` leaf into a callee post), for reac-pw/fuzz_rate's image A: the walk is
    check_csv's release and epilogue, the side-stack class is 2 instead of 3, and the post is RtPgCSpec.rt_cpost_o,
    whose owned-set conjunct is discharged from the cut's layout, chunk and frame equalities. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_rate/lib/A/RtPgCcsvS3.v, with its module names changed; 654 of its 695 lines of code are new or changed and 285 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6aC3h.v at e4c0f4bfc262; ported to
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6aC3h.v; ported to
    reac-pw/fuzz_rate's image A: module paths changed; rate's pcs, floats table (0x21140) and registers (the input left
    in s8, the cursor in s9, the input left before the kind byte in a5, the shadow offset in s2, the reloaded shadow
    address in s6); one frame cell [R+0xe8] read instead of role's [R+0xb0] and [R+0xf8]; the post is RtPgSteps.v's
    rts_blk_post and the chaining its rts_blk_seq; AR_laws comes from the kit's AR_laws_ok instead of a Section
    hypothesis; the copy of RtPgSteps' st_ok_pin_sv is dropped. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6aC3h.v at 88912827c774 for the same unit's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6aC3h.v for the same unit's
    image B (fuzz_rate.asan-ubsan): images.AsanUbsan, lib/AU/RtPgStepsB.v and RtPgW6aBaseB.v; image B's pcs and
    registers (the cursor s2, what is left s6, s10 = c - 1, t1 = |r| + 1, a6 = 1, the shadow offset s4); the head also
    passes the pointer-overflow test of s2 (decided by the engine from s2's and a6's atom ranges); the cell [R+0x150]
@@ -22,6 +22,7 @@
    and holds the out-of-range test `bgeu` whose other arm is the `unimp` (split, its trap arm refuted over the 256
    values of m); the load block also sets a4 := 4; AR_laws is a Section hypothesis; the branch and index arithmetic
    are checked over the 256 values of m in an environment that maps the atom to m. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14; every address measured on the unstripped twin
    a1e5fa55ae27e657ea2719297ec4c037110f10fa9047c3ea7bb6ea7fcb358cb1, same loaded bytes): the proof of w6b_c3h

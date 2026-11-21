@@ -1,12 +1,12 @@
 (* fuzz_preset, slice S8a EX-VALUE, image A' (asan #102, pin 1be0f53d, unstripped twin bff8519b): the WALKS of pieces 7 and 8 of
    ex_value (A' 0x832a4), at L := A_prog_listing, PA := PI_prog_A, against the statements of S8aItems.v (the interface)
-   and S8aIface.v (iface 67f35bb5f4bb: walkkit b77223726823 and its certified engine set). Engine: YC1fPx.v paj_run_x /
+   and S8aIface.v (iface: walkkit and its certified engine set). Engine: YC1fPx.v paj_run_x /
    paj_run_to_x over YCbqG's ajournal_x; the caller-window call rule is Reusable/YCbqGcallW.v's aj_call_xWF.
    Section hypotheses (each a marked stand-in, owner in its comment): LAWS (AR_laws_x at head length cf_head), WS
    (ev_ws_loop_spec_FIX, slice S8a), PSTI (statics are image bytes, a Theorem Labs lane). HSH is derived from LAWS's field alx_hshadow. The recursion's IH (tex_value_specX n' at every float state) and ev_mid across
    the recursive call (ev7_midcall_stmt, S8aP7a's p7a_mid_call) are premises of ev7_seg4_A; S8aItemsTop.v
    instantiates the segments.
-   MEMNORM (S8aIface on walkkit old-pin be60d536d2af: ev_pre's and ev_mid's last conjunct `YAkMemnorm.memnorm segs mem`):
+   MEMNORM (S8aIface on walkkit old-pin: ev_pre's and ev_mid's last conjunct `YAkMemnorm.memnorm segs mem`):
    ev_mid_frame takes it at the new memory (a writing stretch's YC1fPx *_inv runner gives it: SEG K); a read-only run
    leaves the memory equal; across the recursive call SEG 4 takes it from the IH's m-form post (fpostWFm's keep), and
    ev7_midcall_stmt takes it as a premise. The callee's fpre has the kit's two new conjuncts (the sp bound, the ra
@@ -27,7 +27,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YK04
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YG0v.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YG00 YG0a YG01 YG0f YG0n YG0d YCbq.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YM05 YI16 YG0p YK0o YCbqG.
-(* The caller-window call rule is YCbqGcallW.v's aj_call_xWF (the engine set of walkkit b77223726823; WalkS4's
+(* The caller-window call rule is YCbqGcallW.v's aj_call_xWF (the engine set of walkkit; WalkS4's
    PRW_CallerJ.v, landed in Reusable, over YCbqG's own fp_sub_x). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YP0d YP0c YC80 YPsym YC4aP YC1fP YC80x YC1fPx.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YImgTop YGcfNames YG0dcf YGcallMx FCiface.
@@ -64,7 +64,7 @@ Context {RL : PrhRoomLive}.
 (* the kit's allocator laws at ARx, at the harness head length cf_head (YCbqG.v journal 83da015952be; at ARx := ARcf
    this is YGcallcf.v's AR_laws_x_cf) *)
 Hypothesis LAWS : AR_laws_x SEGS B ARx cf_head.
-(* the shared whitespace loop, PROVED (no longer a stand-in): WalkS8a's S8aWs.ev_ws_loop (ws-rawframe 91e4dffbfb7),
+(* the shared whitespace loop, PROVED (no longer a stand-in): WalkS8a's S8aWs.ev_ws_loop (ws-rawframe),
    whose only Section hypothesis is LAWS *)
 Lemma WS : ev_ws_loop_spec_FIX (fx := fx) (L := A_prog_listing) (PA := PA) B ARx SK.
 Proof. exact (S8aWs.ev_ws_loop B ARx SK LAWS). Qed.
@@ -526,8 +526,8 @@ intros off. unfold ev8_k, ev8_BASE. change BASE with A_prog_base.
 change (SIGMA AS_ex_value) with (A_prog_sigma AS_ex_value). lia.
 Qed.
 
-(* the byte of a little-endian value (the form of h-w6-2's S8aClose.v s8c_byte_eq, origin/cold/h-w6-2-s8ac
-   75b5516c838, re-proved over Stdlib's bit lemmas) *)
+(* the byte of a little-endian value (the form of h-w6-2's S8aClose.v s8c_byte_eq,
+    re-proved over Stdlib's bit lemmas) *)
 Lemma ev8_byte_eq : forall v (n k : nat), (k < n)%nat -> (n <= 8)%nat ->
   Z_to_bv 8 (YG0f.le_byte v n k) = byte_of_word (Z_to_bv 64 v) (Z.of_nat k).
 Proof.
@@ -1734,7 +1734,7 @@ Proof. intros f1 f2 f3 H12 H23 r Hr. rewrite (H23 r Hr). exact (H12 r Hr). Qed.
 
 Definition ev7_e1 (a : ev_act) : Z := ea_sp0 a + ea_d a - ea_S1 a.
 
-(* ev_mid across a caller-window call: S8aP7a's p7a_mid_call (S8aP7a.v:554), its statement plus the callee's
+(* ev_mid across a caller-window call: S8aP7a's p7a_mid_call (S8aP7a.v:555), its statement plus the callee's
    (room_live_cf S -> room_live_cf S2) and its hull use hull_used S S2 [] for ev_mid's room conjunct (the pair; the
    hull composed with ev_mid's by hull_used_app), its run-position keep
    (iface_room_pos .. S -> iface_room_pos .. S2) for ev_mid's position conjunct, and memnorm at the call's end memory
@@ -1821,7 +1821,7 @@ Qed.
 (* the chain at a mid-body call of the activation (sp = S1, s0 = sp0): ex_value's own record (sp0, its entry ra, the
    caller's s0) on top of the entry chain, for any reader that agrees with the current memory off struct ex. With
    rd'' = the current view it is aj_call_xWF's achain premise; as a whole it is the callee's prhex_ch_apart. The entry
-   chain's separation from struct ex is ev_pre's prhex_ch_apart conjunct (S8aIface 67f35bb5f4bb). *)
+   chain's separation from struct ex is ev_pre's prhex_ch_apart conjunct (S8aIface). *)
 Lemma ev7_chain_call : forall (a : ev_act) ly S Hp W mem md k p dep dl,
   ev_pre (fx := fx) B ARx a -> ev_mid B ARx SK a ly S Hp W mem md k p dep dl ->
   forall rd'' : reader, (forall x, ~ (ea_q a <= x < ea_q a + 40) -> rd'' x = aview SEGS (w_H W) mem x) ->
@@ -2015,7 +2015,7 @@ eapply SRr_mono.
   - intros HPRE HWIN.
     eapply (IH fxc ly S Hp W regsc mem _ ch1 (ea_q a) kid (ea_x0 a) (Z.of_nat iv) (ea_dep a + 1) dl2
       (ea_scr a) (ev7_e1 a) (ea_x a) tk Dk (ea_Lam a) (ea_peak a) (ea_cnt a) (ea_fail a) (ea_ran a) (ea_most a) (ea_own a)).
-    + (* the callee's fpre (walkkit 4951e104ca2e: afn_pre_x, arodata_okP, the sp bound, the ra bound) *)
+    + (* the callee's fpre (walkkit: afn_pre_x, arodata_okP, the sp bound, the ra bound) *)
       split; [exact HPRE|].
       split.
       { eapply ev_aro_kept; [exact HJ0 | | exact ev7_pst_not_ro | exact HARO].
@@ -2031,7 +2031,7 @@ eapply SRr_mono.
           assert (HB : BASE + 9332 < 2 ^ 31) by (vm_compute; reflexivity).
           assert (HB0 : 0 <= BASE + 9332) by (vm_compute; discriminate).
           unfold raZ. rewrite RA1, unsigned_lit_small by lia. lia. }
-        (* FRM0-ENTRY (kit f97c8b2f046b, PRH_Base.v fdb45545469b: fpre's last conjunct): the rounding mode at the
+        (* FRM0-ENTRY (kit, PRH_Base.v fdb45545469b: fpre's last conjunct): the rounding mode at the
            recursive entry is the caller's, frm 0 by ev_fx *)
         exact Hfz. }
     + (* memnorm at the call: ev_mid's, the run before the jal is read-only *)
@@ -2066,7 +2066,7 @@ eapply SRr_mono.
   - intros z Hz. left. exact Hz. }
 (* ---- the call's post: P_NEXT ---- *)
 cbv beta. intros W2 c2 _ (fx' & ly2 & S2 & Hp2 & regs2 & mem2 & md2 & k1 & -> & HFZ & HFK & HJ2 & HJ1 & HX & HPres & HK).
-(* the callee's post (walkkit 4951e104ca2e: fpostWFm, its Q with the hull use second and the run-position keep third) *)
+(* the callee's post (walkkit: fpostWFm, its Q with the hull use second and the run-position keep third) *)
 destruct HK as ((HRL & HHU & HRPOS & r & p' & dep' & dl' & H10r & HCur2 & Hdl' & HHp2 & HAb2 & HLed2 & HMatch) & HMNk).
 pose proof (HMNk HMN0) as HMN2.
 assert (HX' : forall z, ea_S1 a <= z < ea_S1 a + ev7_e1 a -> ~ inFP (ea_FP a) z ->

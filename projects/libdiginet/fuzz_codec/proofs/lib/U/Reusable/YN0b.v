@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN0b.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap's refusal under a may-fail allocator). *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -316,6 +317,22 @@ intros E ms model HS Hh Hlz.
 eapply SR_mono; [eapply (SR_run_to FREE_RET); [exact HS | apply free_tail2_run_ok | exact Hh | exact Hlz]|].
 intros c' (ms1 & -> & HS1 & HF). exists ms1. split; [reflexivity|]. split; [exact HS1 | exact HF].
 Qed.
+(* 08b1429: under a may-fail mode the munmap of a mapped group can answer -ENOMEM (munmap_errnos = [ENOMEM]);
+   free ignores the answer (it saves and restores errno around the call) and runs the same tail with a0 = -12. *)
+Definition ss_post_err : sstate := resume SST1 (SLit (2 ^ 64 - 12)) (ss_mem SST1) (ss_facts SST1).
+Definition SST2e : sstate := fst (sym_run_toN src0segs src0tbl FUEL FREE_RET ss_post_err).
+Lemma free_tail2e_run_ok : run_to_ok FREE_RET ss_post_err SST2e.
+Proof. split; vm_compute; reflexivity. Qed.
+Theorem free_tail2e_run : forall E ms model,
+st_ok src0segs E ss_post_err ms -> m_halted model = None -> m_vm_lazy model = [] ->
+SR src0segs (mkCfg ms model)
+(fun c' => exists ms1, c' = mkCfg ms1 model /\ st_ok src0segs E SST2e ms1 /\
+frame_of E (ss_mem ss_post_err) (ms_mem ms) (ms_mem ms1)).
+Proof.
+intros E ms model HS Hh Hlz.
+eapply SR_mono; [eapply (SR_run_to FREE_RET); [exact HS | apply free_tail2e_run_ok | exact Hh | exact Hlz]|].
+intros c' (ms1 & -> & HS1 & HF). exists ms1. split; [reflexivity|]. split; [exact HS1 | exact HF].
+Qed.
 Definition callee_view (ss : sstate) : list sv :=
 map (fun i => sr_get (ss_regs ss) (Z_to_bv 5 (Z.of_nat i))) [1; 2; 3; 4; 8; 9; 18; 19; 20; 21; 22; 23; 24; 25; 26; 27]%nat.
 Definition callee_view0 : list sv :=
@@ -368,5 +385,12 @@ Lemma SST2_shape :
 ss_pc SST2 = FREE_RET /\ ss_resv SST2 = None /\ callee_view SST2 = callee_view0 /\
 ss_mem SST2 = [reg_lock; mkRegion (Some aTP) (-164) (-160) (-164) (-160) SST2_err;
 mkRegion (Some aSP) (-8192) 0 (-8192) 0 SST2_stk] ++ vml_mem.
+Proof. vm_compute. repeat split; reflexivity. Qed.
+Definition SST2e_err : list chunk := Eval vm_compute in r_chunks (nth 1 (ss_mem SST2e) reg_errno).
+Definition SST2e_stk : list chunk := Eval vm_compute in r_chunks (nth 2 (ss_mem SST2e) reg_stk).
+Lemma SST2e_shape :
+ss_pc SST2e = FREE_RET /\ ss_resv SST2e = None /\ callee_view SST2e = callee_view0 /\
+ss_mem SST2e = [reg_lock; mkRegion (Some aTP) (-164) (-160) (-164) (-160) SST2e_err;
+mkRegion (Some aSP) (-8192) 0 (-8192) 0 SST2e_stk] ++ vml_mem.
 Proof. vm_compute. repeat split; reflexivity. Qed.
 End a.

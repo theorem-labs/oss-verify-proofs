@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the step's soundness passes sym_step's stop at an sc with no reservation and sym_load's vvar guard; the vDSO arms of sstep and unmodeled_at's new vDSO-call arm in the step lemmas). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -42,6 +43,7 @@ Theorem sym_step_sound : ltac2:(tb__ "0|1|
 S10S11S6S23A1M0S1bS22S15Vsegs;R4R5S9G0S40R3S3fR2R1A2A4A4S2fOLx;S33Vsegs;R6A2S10S5bVsegs;R7R1R6R5R4R3A7LS';S10S10S2S54Vsegs;R8R2R7R6R5R4A7S54Vsegs;R8R1R7R6R5R4A7A2LS2;LS1;S32S3Lr;X2fx3F_;Fmd;Fms;Ftr;Frho;FS;").
 Proof using .
   intros S rho tr ms md Hsm. unfold sym_step.
+  destruct (sc_unres_b segs S) eqn:Hsc; [exact I|]. unfold sym_step0.
   destruct (instr_at segs (ss_pc S)) as [i|] eqn:Hi; [|exact I].
   destruct i; try exact I.
   - apply step_rel_of_next. eapply case_lui; eauto.
@@ -75,7 +77,8 @@ Proof using .
     + destruct (sv_eqb e (get_reg S rs1)) eqn:Heq; [|exact I].
       destruct (sym_store (set_resv S None) (get_reg S rs1) (amo_k w) (get_reg S rs2)) as [S'|] eqn:Hs; [|exact I].
       apply step_rel_of_next. eapply case_sc_ok; eauto.
-    + apply step_rel_of_next. eapply case_sc_fail; eauto.
+    + (* the sc guard: an sc with no reservation stops the engine (LPS 08b1429) *)
+      exfalso. unfold sc_unres_b in Hsc. rewrite Hi, Hr in Hsc. discriminate Hsc.
   -   destruct (sym_csr S op rd (match op with CSR_RW => true | _ => negb (is_x0 rs1) end) csr) as [S'| |] eqn:Hc;
       [apply step_rel_of_next; eapply case_csr; eauto | | exact I].
     exfalso. unfold sym_csr in Hc. destruct (ss_fcsr S); [|discriminate].
@@ -127,7 +130,11 @@ Lemma wstep_step_inv : ltac2:(tb__ "0|2|
 S6S23A1M0S1bS22S1bS24S26R3A1S0S8S48Q40A1M1A1S1eR5A1ScG1A1A3S0S1cS1bA1S1dVsegs;R6A2S20S1bR4A2A3S28Vsegs;S9G0S40R8S3fR7R6A2A4R4A3S0S24R5S9G0S40R9S3fR6R7A2A4A3F_;F_;F_;F_;Fw';Fms';Fmd;Fms;Ftr;").
 Proof using .
   intros tr ms md ms' [tr' c'] [Hh Hl] Hp Hs Hw. destruct Hw as [evs [Hst Heq]]. cbn in Hst, Heq.
-  inversion Hst; subst; try congruence.
+  inversion Hst; subst; try congruence;
+    (* LPS 08b1429: the three vDSO arms of sstep carry mi_account_step = MachineUnmodeled,
+       which this step's own result contradicts. *)
+    try (match goal with H : mi_account_step segs ms md = MachineUnmodeled |- _ =>
+           rewrite (mi_account_step_lazy_nil segs ms md Hl), Hs in H; discriminate H end).
   match goal with H : mi_account_step segs ms md = MachineOk ?x |- _ =>
     rewrite (mi_account_step_lazy_nil segs ms md Hl), Hs in H; inversion H; subst end.
   rewrite app_nil_r. reflexivity.
@@ -137,7 +144,11 @@ Lemma wstep_fault_none : ltac2:(tb__ "0|2|
 S6S23A1M0S1bS22S24S26R2A1S0S8S48Q40A1M1A1S1eR4A1ScG1A1A3S0S1cS1bA1S1dVsegs;R5A2S1fS1bA1A3S5S28Vsegs;S9G0S40R7S3fR6R5A2A4R4A3A1F_;F_;F_;Fw';Fmd;Fms;Ftr;").
 Proof using .
   intros tr ms md [tr' c'] [Hh Hl] Hp Hs [evs [Hst Heq]]. cbn in Hst.
-  inversion Hst; subst; try congruence.
+  inversion Hst; subst; try congruence;
+    (* LPS 08b1429: the three vDSO arms of sstep carry mi_account_step = MachineUnmodeled,
+       which this step's own result contradicts. *)
+    try (match goal with H : mi_account_step segs ms md = MachineUnmodeled |- _ =>
+           rewrite (mi_account_step_lazy_nil segs ms md Hl), Hs in H; discriminate H end).
   match goal with H : mi_account_step segs ms md = MachineOk ?x |- _ =>
     rewrite (mi_account_step_lazy_nil segs ms md Hl), Hs in H; inversion H end.
 Qed.
@@ -201,8 +212,10 @@ Lemma ok_frame_src : ltac2:(tb__ "0|1|
 S6S23A1M0OF_;S49S29Vsegs;R1A2G0S22S27R3R2A2L_;Ltr;A2FSpec;").
 Proof using .
   intros Spec tr ms md ms' Hk [Hh Hl] Hp Hs. split; [exact Hk|].
-  cbn. intros [_ [[Hp' Hu] | [x8 [Hp' _]]]]; cbn in *; [|congruence].
-  rewrite (mi_account_step_lazy_nil segs ms md Hl), Hs in Hu. discriminate.
+  (* LPS 08b1429: [unmodeled_at] has three arms; the new middle one (a vDSO call the model does
+     not describe) carries the same [mi_account_step = MachineUnmodeled]. *)
+  cbn. intros [_ [[Hp' [Hu _]] | [[Hp' [Hu _]] | [x8 [Hp' _]]]]]; cbn in *; [| |congruence].
+  all: rewrite (mi_account_step_lazy_nil segs ms md Hl), Hs in Hu; discriminate.
 Qed.
 
 Lemma ok_frame_tgt : ltac2:(tb__ "0|1|
@@ -217,14 +230,16 @@ Lemma ok_fault_src : ltac2:(tb__ "0|1|
 S6S23A1M0OF_;S4dS29Vsegs;R1A2G0S22S27R3R2A2L_;Ltr;A2FSpec;").
 Proof using .
   intros Spec tr ms md Hk [Hh Hl] Hp Hs. split; [exact Hk|].
-  cbn. intros [_ [[Hp' Hu] | [x8 [Hp' _]]]]; cbn in *; [|congruence].
-  rewrite (mi_account_step_lazy_nil segs ms md Hl), Hs in Hu. discriminate.
+  (* LPS 08b1429: [unmodeled_at] has three arms; the new middle one (a vDSO call the model does
+     not describe) carries the same [mi_account_step = MachineUnmodeled]. *)
+  cbn. intros [_ [[Hp' [Hu _]] | [[Hp' [Hu _]] | [x8 [Hp' _]]]]]; cbn in *; [| |congruence].
+  all: rewrite (mi_account_step_lazy_nil segs ms md Hl), Hs in Hu; discriminate.
 Qed.
 
 Lemma sym_load_next : ltac2:(tb__ "0|0|
 S10S14S44S7S14S10S0S37S3dVsegs;R6R5R4R3A5S35R2R1A2A3S1S47S12R7A1S12R2A1A2S0S7S13R2A1S13R7A1A3A2F_;FS';Fv;Fsgn;Fk;Fae;FS;").
 Proof using .
-  intros S ae k sgn v S' H. unfold sym_load in H. lazy zeta in H.
+  intros S ae k sgn v S' H. unfold sym_load in H. destruct (segs_novvar segs) eqn:Hnv; [|discriminate H]. unfold sym_load0 in H. lazy zeta in H.
   revert H.
   destruct (match ae with SLit a => ro_load segs (a mod 2 ^ 64) (Z.to_nat k) | _ => None end) as [z|]; intros H.
   { apply lrok_inj in H as [_ <-]. split; [lia | reflexivity]. }
@@ -291,6 +306,7 @@ Lemma sym_step_shape : ltac2:(tb__ "0|6|
 S10S2fOLx;S33Vsegs;R1A2S10S1S47S12R2A1M0S12R1A1M1A2S0S7S13R1A1M2S13R2A1M3A3A2LS';S10S10S1S1S47S12R3A1M4G0A2S0S7G3S13R3A1M5A3A2S1S47G4G1A2S0S7G2G5A3A2A2LS2;LS1;S32S3Lr;X2fx3FS;").
 Proof using .
   intros S. unfold sym_step.
+  destruct (sc_unres_b segs S); [exact I|]. unfold sym_step0.
   destruct (instr_at segs (ss_pc S)) as [i|]; [|exact I].
   destruct i; try exact I; cbn [ss_next ss_lenient set_pc]; rewrite ?ss_next_set_reg, ?ss_lenient_set_reg; try (split; [lia | reflexivity]).
   - destruct (mk_addk (get_reg S rs1) (immI imm)); try exact I. cbn. rewrite ss_next_set_reg, ss_lenient_set_reg. split; [lia | reflexivity].

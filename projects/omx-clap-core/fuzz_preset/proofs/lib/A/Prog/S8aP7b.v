@@ -2,15 +2,16 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumC.v; 1219 of its 1297 lines of code are new or changed and 850 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aEntry.v, with its module paths and module names changed; 1189 of its 1363 lines of code are new or changed and 1123 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, slice S8a EX-VALUE, image A' (asan #102, pin 1be0f53d, unstripped twin bff8519b): SEGMENT 3 of piece 7
    (ev_item_step) of the walk of ex_value (A' 0x832a4), at L := A_prog_listing, PA := PI_prog_A, in the SRr /
    srealizes form, against S8aItems.v's cut interface. Hand: h-walk-ctrl's EvItems, sub-lane S8aP7b.
    The stretch: C_KEY (A' 0x839a0, EV_KEY) -> C_CALL (A' 0x83a4c, EV_CALL), with the refusal join 0x83b54 ->
-   P_EXIT (A' 0x83d48). C source fuzz_preset.c @0b89c6c1bd :270-273 (`ex_ws(in); if (in->p >= in->end ||
+   P_EXIT (A' 0x83d48). C source fuzz_preset.c :270-273 (`ex_ws(in); if (in->p >= in->end ||
    *in->p != ':') return -1; in->p++;`) and the kid reload 0x83a48 that the recursive call takes as its second
    argument. The inlined ex_ws at 0x839c0-0x83a08 is NOT walked: the Section hypothesis WS
    (ev_ws_loop_spec_FIX) covers it at b = 0x71c, e = 0x768, and its report arms 0x839e8 and 0x83a04 are its own.
-   `ev_at_key`'s name clause was corrected at the request of this lane (S8aItems.v 26bb6a56313 :248-257): the cut
+   `ev_at_key`'s name clause was corrected at the request of this lane (S8aItems.v :248-257): the cut
    is proved against the published text, with no twin.
 
    Report checks in range, each NOT TAKEN with the fact that makes it so:
@@ -34,10 +35,10 @@
    refusal result), register numbers 2-27 (RISC-V ABI). No ADDRESS literal: addresses come from pa_sigma / pa_val.
 
    p7b_vm .. p7b_nodeR_frame, p7b_sh_lt, p7b_ra_kept, p7b_lamb and p7b_fr_bounds are COPIES (renamed) of Qed texts of
-   S8aItemsWalk.v's FRAME KIT at sha ebf0edf14b4 (evf_vm / evf_garr8 / evf_hdr / evf_cstr / evf_nodeP /
+   S8aItemsWalk.v's FRAME KIT at sha (evf_vm / evf_garr8 / evf_hdr / evf_cstr / evf_nodeP /
    evf_items_frame / evf_mems_frame / evf_nodeR_frame / evf_sh_lt / evf_ra, and the LAMB / flag-word steps of
-   ev_mid_frame); p7b_denot_atom .. p7b_regs_kept, p7b_inp and the state / run idiom are S8aDisp.v's at
-   85194de74e52, renamed. Neither file is Required (S8aP7 owns S8aItemsWalk.v; S8aDisp.v is another slice's).
+   ev_mid_frame); p7b_denot_atom .. p7b_regs_kept, p7b_inp and the state / run idiom are S8aDisp.v,
+   renamed. Neither file is Required (S8aP7 owns S8aItemsWalk.v; S8aDisp.v is another slice's).
    Hypotheses beyond the shared five: MIDF / BNDS, lane FRAME's ev_mid_frame / ev_bounds verbatim (the internal file FRAME.md). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -90,7 +91,7 @@ Context {RL : PrhRoomLive}.
 (* the kit's allocator laws at ARx, at the harness head length cf_head (YCbqG.v journal 83da015952be; at ARx := ARcf
    this is YGcallcf.v's AR_laws_x_cf) *)
 Hypothesis LAWS : AR_laws_x SEGS B ARx cf_head.
-(* the shared whitespace loop, PROVED (no longer a stand-in): WalkS8a's S8aWs.ev_ws_loop (ws-rawframe 91e4dffbfb7),
+(* the shared whitespace loop, PROVED (no longer a stand-in): WalkS8a's S8aWs.ev_ws_loop (ws-rawframe),
    whose only Section hypothesis is LAWS *)
 Lemma WS : ev_ws_loop_spec_FIX (fx := fx) (L := A_prog_listing) (PA := PA) B ARx SK.
 Proof. exact (S8aWs.ev_ws_loop B ARx SK LAWS). Qed.
@@ -98,7 +99,7 @@ Proof. exact (S8aWs.ev_ws_loop B ARx SK LAWS). Qed.
 (* STAND-IN: a Theorem Labs lane, the image binding of PrhImg: alloc.c's statics (prh_pst) are image bytes (true at prh_img_A: PRH_Img.v,
    below kLowMemEnd by pa_segs_low, so apart from the stack); without it a generic PrhImg could put them in `struct ex` *)
 Hypothesis PSTI : forall z, Exists (in_zr z) PST -> in_img SEGS z.
-(* STAND-IN: lane FRAME, S8aItemsWalk.v's FRAME KIT (Qed at 26bb6a56313): the ev_mid transport of a straight
+(* STAND-IN: lane FRAME, S8aItemsWalk.v's FRAME KIT (Qed): the ev_mid transport of a straight
    stretch and the frame arithmetic of an activation, verbatim from the internal file FRAME.md. S8aP7 discharges both. MIDF's last
    premise, memnorm at the new memory, is ev_mid's last conjunct (S8aIface.v, the memnorm interface), as in
    S8aItemsWalk.ev_mid_frame. *)
@@ -146,7 +147,7 @@ Ltac p7b_cfg_to off :=
   lazymatch goal with |- SRr _ _ {| cfg_ms := YK11.mkst ?r (Z_to_bv 64 (pa_val A_TEXT + ?n)) ?m _; cfg_model := ?d |} _ =>
     rewrite (p7b_cfg_eq _ r off m d n ltac:(rewrite p7b_pc_eq; vm_compute; reflexivity)) end.
 
-(* ======== small byte / env helpers (S8aDisp.v at 85194de74e52, renamed) ======== *)
+(* ======== small byte / env helpers (S8aDisp.v, renamed) ======== *)
 Lemma p7b_denot_atom : forall E n v, ew E n = w64 v -> 0 <= v < 2 ^ 64 -> sv_denot E (SOff n 0) = Z_to_bv 64 v.
 Proof.
 intros E n v H Hv. apply bv_eq. rewrite denot_SOff, H. unfold w64. rewrite !unsigned_lit_small by lia.
@@ -231,7 +232,7 @@ intros E n v z H Hv Hz. rewrite branch_ne_U, U_SLit, (U_atom E n v H) by zl.
 rewrite zcanon_id by (unfold M64; zl). reflexivity.
 Qed.
 
-(* ======== bounds and shadow transports (S8aItemsWalk.v FRAME KIT at ebf0edf14b4, renamed) ======== *)
+(* ======== bounds and shadow transports (S8aItemsWalk.v FRAME KIT, renamed) ======== *)
 Lemma p7b_sh_lt : forall x, 0 <= x < 2 ^ 47 -> 0 <= shadow_addr x /\ shadow_addr x + 8 <= alloc_ceiling.
 Proof.
 intros x Hx. pose proof asan_consts as ((C1 & _) & _).
@@ -248,7 +249,7 @@ intros y Hy. destruct (p7b_sh_lt y ltac:(lia)) as [A0 A1]. apply E.
 unfold shadow_of_addr. unfold shadow_addr in A0, A1. lia.
 Qed.
 
-(* prhex_tree's shadow-hull conjunct (walkkit b77223726823), kept the same way (S8aItemsWalk.v evf_hull, renamed) *)
+(* prhex_tree's shadow-hull conjunct (walkkit), kept the same way (S8aItemsWalk.v evf_hull, renamed) *)
 Lemma p7b_hull_kept : forall (rd rd' : Z -> option Z) x n, 0 <= x -> 0 < n -> x + n <= 2 ^ 47 ->
   (forall s, 0 <= s < alloc_ceiling -> rd' s = rd s) ->
   shadow_hull_vis rd x n -> shadow_hull_vis rd' x n.
@@ -263,7 +264,7 @@ rewrite E by lia. exact (H s Hs).
 Qed.
 
 (* ======== the reader's tree: pj_nodeR is kept when its node bytes and its lblk blocks are
-   (S8aItemsWalk.v evf_vm .. evf_nodeR_frame at ebf0edf14b4, renamed) ======== *)
+   (S8aItemsWalk.v evf_vm .. evf_nodeR_frame, renamed) ======== *)
 Lemma p7b_vm : forall (m m' : word -> option byte) a n v,
   (forall z, a <= z < a + Z.of_nat n -> mbyte SEGS m' z = mbyte SEGS m z) ->
   val_mem SEGS m a n v -> val_mem SEGS m' a n v.

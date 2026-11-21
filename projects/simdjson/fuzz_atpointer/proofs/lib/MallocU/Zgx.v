@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up auxv values as the list the model's launch writes). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
@@ -126,7 +127,7 @@ Proof. try (pose proof ceil_window_holds as CEIL_RANGE__).
   pose proof (munch_refl [(bv_unsigned sp - 64, bv_unsigned sp); (RCTX, RCTX + 16)]%Z m) as MU.
   pose proof (wmono_refl usegs m) as WM. unfold RCTX in MU.
   pose proof (munch_refl [(bv_unsigned sp - 64, bv_unsigned sp)]%Z m) as MUh.
-  destruct AUX as (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & AVC & AVL & RND & AB & BAV & AVH & BR & RH & X3 & X4 & X5 & X16 & X6 & X11 & X12 & X23 & XR).
+  destruct AUX as (av & vs & rnd & r & AVC & AVL & RND & AB & BAV & AVH & BR & RH & XR).
   unfold RAUXV_CELL in AVC.
 
   st1. carve_frame 64%nat ST. st1. st1. st1. st1. st1. st1.
@@ -160,18 +161,32 @@ Proof. try (pose proof ceil_window_holds as CEIL_RANGE__).
     st1; change (negb (bv_eqb (wz key) (Z_to_bv 64 0))) with true; cbv iota;
     st1.
 
-  skip_iter 0 3 AVL.
-  skip_iter 2 4 AVL. skip_iter 4 5 AVL. skip_iter 6 16 AVL. skip_iter 8 6 AVL.
-  skip_iter 10 11 AVL. skip_iter 12 12 AVL. skip_iter 14 23 AVL.
+  (* [Run.valid_input_either] leaves [kb_rseq] free (75d69e00 Run.v:4575-4577),
+     so mallocng's auxv scan runs over whichever table the kernel laid.  The
+     two arms are the SAME walk and part only after AT_EXECFN: the CONFIG_RSEQ
+     table has the AT_RSEQ_FEATURE_SIZE / AT_RSEQ_ALIGN pair at indices 52-55
+     and AT_NULL at 56, the other has AT_NULL at 52.  Twin arms rather than one
+     walk under a binder, for the reason [Malloc/Zf4.v] gives at [auxv_tab]:
+     [ru64s_read]'s [eq_refl] side conditions need the list reduced. *)
+  unfold auxv_tab in AVL. destruct r.
+
+  - (* CONFIG_RSEQ: [auxv_list], 29 pairs. *)
+  skip_iter 0 33 AVL.
+  skip_iter 2 40 AVL. skip_iter 4 41 AVL. skip_iter 6 42 AVL. skip_iter 8 43 AVL.
+  skip_iter 10 44 AVL. skip_iter 12 45 AVL. skip_iter 14 46 AVL. skip_iter 16 47 AVL.
+  skip_iter 18 51 AVL. skip_iter 20 16 AVL. skip_iter 22 6 AVL. skip_iter 24 17 AVL.
+  skip_iter 26 3 AVL. skip_iter 28 4 AVL. skip_iter 30 5 AVL. skip_iter 32 7 AVL.
+  skip_iter 34 8 AVL. skip_iter 36 9 AVL. skip_iter 38 11 AVL. skip_iter 40 12 AVL.
+  skip_iter 42 13 AVL. skip_iter 44 14 AVL. skip_iter 46 23 AVL.
 
   st1.
   lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
-    pose proof (ru64s_read mX _ _ 16 (wz 25) (wa (_ + 8 * 16)) AVL eq_refl ltac:(lia) eq_refl) as RD end.
+    pose proof (ru64s_read mX _ _ 48 (wz 25) (wa (_ + 8 * 48)) AVL eq_refl ltac:(lia) eq_refl) as RD end.
   st1. try clear RD.
   st1. change (bv_eqb (wz 25) (Z_to_bv 64 25)) with true. cbv iota.
 
   lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
-    pose proof (ru64s_read mX _ _ 17 (wz rnd) (wa (_ + 8 * 17)) AVL eq_refl ltac:(lia) eq_refl) as RD end.
+    pose proof (ru64s_read mX _ _ 49 (wz rnd) (wa (_ + 8 * 49)) AVL eq_refl ltac:(lia) eq_refl) as RD end.
   st1. try clear RD. st1. st1. st1.
 
   lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
@@ -191,9 +206,104 @@ Proof. try (pose proof ceil_window_holds as CEIL_RANGE__).
 
   st1. st1.
 
+  (* AT_EXECFN and the CONFIG_RSEQ pair follow AT_RANDOM. *)
+  skip_iter 50 31 AVL. skip_iter 52 27 AVL. skip_iter 54 28 AVL.
+
   st1.
   lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
-    pose proof (ru64s_read mX _ _ 18 (wz 0) (wa (_ + 8 * 18)) AVL eq_refl ltac:(lia) eq_refl) as RD end.
+    pose proof (ru64s_read mX _ _ 56 (wz 0) (wa (_ + 8 * 56)) AVL eq_refl ltac:(lia) eq_refl) as RD end.
+  st1. try clear RD.
+  st1. change (bv_eqb (wz 0) (Z_to_bv 64 25)) with false. cbv iota.
+  st1. change (negb (bv_eqb (wz 0) (Z_to_bv 64 0))) with false. cbv iota.
+
+  lazymatch type of DST with rw_cells _ ?mX _ _ =>
+    assert (DST8 : rw_cells usegs mX (bv_unsigned sp + -64) [C8 rr_secret])
+      by (destruct DST as [[_ B] W]; cbn [cells_bytes cbytes app] in B; rewrite app_nil_r in B;
+          split; [split; [cbn; tauto| cbn [cells_bytes cbytes app]; rewrite app_nil_r; exact B]| exact W]);
+    clear DST end.
+  st1.
+
+  st1.
+  lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
+    assert (MRX : rmrep st mX) by (eapply rmrep_transport_high; [exact MR| exact MUh| exact WM|]; intros l h [E|[]]; inversion E; subst; unfold OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.Spec.Malloc.MCEIL; try (pose proof ceil_window_holds as CEIL_RANGE__); unfold ceil_window in *; lia);
+    pose proof (munch_refl [(RCTX, RCTX + 16)]%Z mX) as MUc; pose proof (wmono_refl usegs mX) as WMc end.
+  clear MUh. unfold RCTX in MUc.
+
+  st1. st1.
+  set (stI := upd_ctx (fun c => set_init_done 1 (set_secret 0 c)) st).
+  lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) => assert (MRI : rmrep stI mX) end.
+  { eapply (rmrep_ctx_frameW st stI _ _ _ MRX MUc WMc); try reflexivity.
+    - intros lo' hi' [E|[]]; inversion E; subst; unfold RCTX; lia.
+    - left. unfold rctx_head_cells, RCTX. cbn [ctx stI upd_ctx s_ctx set_init_done set_secret c_secret c_init_done c_mmap_counter c_free_meta_head c_avail_meta
+            c_avail_meta_count c_avail_meta_area_count c_meta_alloc_shift c_meta_area_head c_meta_area_tail c_avail_meta_areas].
+      change (pw stI ?q) with (pw st q).
+
+      replace (wz (rsec 1 0)) with rr_secret by (unfold rsec, wz; cbn [Z.eqb]; rewrite Z.add_0_l; symmetry; apply Z_to_bv_bv_unsigned).
+      unfold wz at 1.
+      lazymatch goal with H : rw_cells usegs ?mX 738616 _ |- _ => exact H end.
+    - right. split; [reflexivity|]. intros lo' hi' [E|[]]; inversion E; subst; unfold RCTX; lia.
+    - right. split; [reflexivity|]. intros lo' hi' [E|[]]; inversion E; subst; unfold RCTX; lia.
+    - right. split; [reflexivity|]. intros lo' hi' [E|[]]; inversion E; subst; unfold RCTX; lia.
+    - right. split; [reflexivity|]. intros lo' hi' [E|[]]; inversion E; subst; unfold RCTX; lia.
+    - right. split; [reflexivity|]. intros lo' hi' [E|[]]; inversion E; subst; unfold RCTX; lia. }
+  clear MUc WMc MRX.
+
+  st1. st1. st1. change (bv_ltu (Z_to_bv 64 4096) (wz 4096)) with false. cbv iota. st1.
+
+  lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
+    lazymatch goal with Hm : rw_cells usegs mX (bv_unsigned sp + -64) ?csm, Hc : rw_cells usegs mX (bv_unsigned sp + -56) ?csc |- _ =>
+      pose proof (rrw_cells_app_join mX _ csm csc Hm ltac:(cbn [cells_size csize Nat.add]; replace (bv_unsigned sp + -64 + Z.of_nat 8) with (bv_unsigned sp + -56) by lia; exact Hc)) as J2;
+      cbn [app] in J2; clear Hm Hc;
+      lazymatch type of J2 with rw_cells _ _ _ (?c1 :: ?rest) =>
+        apply (rw_cells_merge usegs mX _ [] [c1] rest) in J2; cbn [cells_size csize Nat.add cells_bytes cbytes app] in J2; rewrite app_nil_r in J2 end
+    end end.
+  apply evt_done. unfold ram_entry_post, RCTX, RSSP_GUARD, RMLOCK. do 20 eexists. split; [reflexivity|].
+  split; [exact MU|]. split; [exact WM|]. split; [assumption|]. split; [exact J2|]. split; [exact ST|].
+  unfold am_init_st. rewrite I0, SEC0. cbn [Z.eqb]. exact MRI.
+
+  - (* no CONFIG_RSEQ: [auxv_list27], 27 pairs.  Identical up to AT_EXECFN;
+       AT_NULL is then the key at index 52, not 56. *)
+  skip_iter 0 33 AVL.
+  skip_iter 2 40 AVL. skip_iter 4 41 AVL. skip_iter 6 42 AVL. skip_iter 8 43 AVL.
+  skip_iter 10 44 AVL. skip_iter 12 45 AVL. skip_iter 14 46 AVL. skip_iter 16 47 AVL.
+  skip_iter 18 51 AVL. skip_iter 20 16 AVL. skip_iter 22 6 AVL. skip_iter 24 17 AVL.
+  skip_iter 26 3 AVL. skip_iter 28 4 AVL. skip_iter 30 5 AVL. skip_iter 32 7 AVL.
+  skip_iter 34 8 AVL. skip_iter 36 9 AVL. skip_iter 38 11 AVL. skip_iter 40 12 AVL.
+  skip_iter 42 13 AVL. skip_iter 44 14 AVL. skip_iter 46 23 AVL.
+
+  st1.
+  lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
+    pose proof (ru64s_read mX _ _ 48 (wz 25) (wa (_ + 8 * 48)) AVL eq_refl ltac:(lia) eq_refl) as RD end.
+  st1. try clear RD.
+  st1. change (bv_eqb (wz 25) (Z_to_bv 64 25)) with true. cbv iota.
+
+  lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
+    pose proof (ru64s_read mX _ _ 49 (wz rnd) (wa (_ + 8 * 49)) AVL eq_refl ltac:(lia) eq_refl) as RD end.
+  st1. try clear RD. st1. st1. st1.
+
+  lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
+    lazymatch type of FR with rw_cells _ _ _ (?c1 :: ?rest) =>
+      destruct (rrw_cells_app_split mX _ [c1] rest FR) as [FRm FRc];
+      cbn [cells_size csize Nat.add] in FRc;
+      replace (bv_unsigned sp + -64 + Z.of_nat 8) with (bv_unsigned sp + -56) in FRc by lia;
+      apply (rw_cells_merge usegs mX _ [] [c1] []) in FRm; cbn [cells_size csize Nat.add cells_bytes cbytes app] in FRm;
+      rewrite app_nil_r in FRm; clear FR
+    end end.
+
+  st1.
+  call rmemcpy_callZ3.
+  1:{ exact RND. } 1:{ reflexivity. } 1:{ exact FRm. } 1:{ lia. } 1:{ lia. } 1:{ lia. } 1:{ lia. } 1:{ lia. } 1:{ lia. }
+  1:{ lazymatch goal with H : mem_inv usegs ?mX |- mem_inv usegs ?mX => exact H end. }
+  lazymatch goal with H : rw_cells usegs ?mX (bv_unsigned sp + -64) [CB _ (le8 rr_secret)] |- _ => rename H into DST end.
+
+  st1. st1.
+
+  (* AT_EXECFN follows AT_RANDOM, then AT_NULL: no rseq pair in this table. *)
+  skip_iter 50 31 AVL.
+
+  st1.
+  lazymatch goal with |- evt _ _ (MS _ _ _ _ _ ?mX _) =>
+    pose proof (ru64s_read mX _ _ 52 (wz 0) (wa (_ + 8 * 52)) AVL eq_refl ltac:(lia) eq_refl) as RD end.
   st1. try clear RD.
   st1. change (bv_eqb (wz 0) (Z_to_bv 64 25)) with false. cbv iota.
   st1. change (negb (bv_eqb (wz 0) (Z_to_bv 64 0))) with false. cbv iota.

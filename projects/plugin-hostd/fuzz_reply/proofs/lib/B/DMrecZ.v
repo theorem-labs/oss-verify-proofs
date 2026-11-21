@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrecZ.v (commit 67fc7ef5787, lane B1 drain composition, DoRecycle chain; the chain's two function pairs, Quarantine::DoRecycle and LocalCache::Deallocate, re-checked EQUAL-mod-pcrel by cmpkit 4bbd3a74be89 strictcmp2 16982e3ef42b; file sha256 9fb76ab6a60c) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 3 image addresses moved by code-verified function pairs (3 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 13 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrecZ.v (lane B1 drain composition, DoRecycle chain; the chain's two function pairs, Quarantine::DoRecycle and LocalCache::Deallocate, re-checked EQUAL-mod-pcrel by cmpkit 4bbd3a74be89 strictcmp2 16982e3ef42b; file sha256 9fb76ab6a60c) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 3 image addresses moved by code-verified function pairs (3 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 13 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1 of ReallocPrimary's Theorem Labs lane walk lanes, slice H2, a Theorem Labs lane; interface
-   DMwalkIF.v at a working branch 3e29c198d40): the COUNT-0 batch arm of Quarantine::DoRecycle (0x33cf8) at
+   DMwalkIF.v at a working branch): the COUNT-0 batch arm of Quarantine::DoRecycle (0x33cf8) at
    cgif_file_fuzzer's asan-ubsan image, the segment the released walk (YFes / YFhi / YFhk) never runs because its
    RIx demands 1 <= count, while MergeBatches extracts EMPTY batches.
    From 0x33d70 (the outer loop's batch pop, DMrec.RZ.SS0) with the batch's count word = 0: the pop (two cases on the
@@ -14,7 +15,7 @@
    B2's in-place weakening): the proof reads it through RZ.derived_ranges and needs only that it is < 2 ^ 32.
    rule 24: proves function __sanitizer::Quarantine<__asan::QuarantineCallback, __asan::AsanChunk>::DoRecycle (the
    count-0 arm segment; lane B1 reuse search LOOKUP-B1-drain.txt (sha256 c6e48b676fd5; internal record), rule-24 check B1LookupCheck CONFIRM). *)
-(* Theorem Labs, 2026-10-30 (a Theorem Labs lane): the image-B (asan-ubsan) twin of lib/A/DMrecZ.v at a working branch 14a6b2561a69, relocated by a Theorem Labs lane's alreloc a5c53bb2bed4ad03 (every moved numeral a DoRecycle / LocalCache::Deallocate pc, +0x58) with the A twins A<r> renamed to the B twins Y<r>; the comment blocks above keep the A file's text and its A pcs. *)
+(* Theorem Labs, 2026-10-30 (a Theorem Labs lane): the image-B (asan-ubsan) twin of lib/A/DMrecZ.v at a working branch, relocated by a Theorem Labs lane's alreloc a5c53bb2bed4ad03 (every moved numeral a DoRecycle / LocalCache::Deallocate pc, +0x58) with the A twins A<r> renamed to the B twins Y<r>; the comment blocks above keep the A file's text and its A pcs. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -40,7 +41,7 @@ Ltac numconst := ceil; unfold zone3, zone3cases, TFIB_IMG_LO, kLowShadowBeg, kHi
 t_qc, t_cache, t_cache_stats, t_unwinding, t_stats, ASTACK, QSTACK, RSTACK, DSTACK, DRSTACK, KSTACK, LFRAME, TFIB_IMG_END, kBatchBytes, kBatchSlots, kBatchClass, SHADOW_OFF, TFIB_TP, TFIB_TSD,
 A_QUAR, A_ALLOCATOR, A_RChunk, A_CDealloc, o_quar, kQuarantineMax, kQuarantineMin, kQuarantineCacheMax, kFreeArrayOffset, DMrec.RZ.YFRAME in *.
 #[local] Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
-(* YFhk.A2_val (YFhk.v:101-110), restated here because YFhk's copy carries its Section's variables *)
+(* YFhk.A2_val (YFhk.v:102-111), restated here because YFhk's copy carries its Section's variables *)
 Lemma A2_val0 : forall (rho : nat -> Z) sb p cc rel, rho 34%nat = sb -> rho 40%nat = p -> p - sb = cc * 2 ^ 32 + rel -> 0 <= rel < 2 ^ 32 -> 0 <= cc < 32 ->
 0 <= sb -> sb <= p < 2 ^ 64 -> zev rho YFhk.A2T = cc.
 Proof.

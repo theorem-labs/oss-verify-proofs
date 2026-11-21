@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* omx-clap-core/fuzz_preset, image B' (asan-ubsan, harness fix #102, PIN sha256
    d663f82d7f488d30f8e8d7496cb814e595a2f3cbbf16bde81a65cb3ea9af0994, unstripped twin c90d4fa54d43160b): segments L0a
    and L0b of the walk of LLVMFuzzerTestOneInput (B' 0x816cc, 201 instructions).
-   PORTED from lib/A/Prog/Ent102L0A.v (seg_L0a_A / seg_L0b_A, a working branch 93021b38e93b) by
+   PORTED from lib/A/Prog/Ent102L0A.v (seg_L0a_A / seg_L0b_A, a working branch) by
    port/a2b.py (sha256 f5113cbc90e503da, no --map). Hand fixes: the Require routing (lib.B Listing_prog Ent102PLB,
    lib.AU Ent102CutsB) and A_prog_listing -> B_prog_listing. The six literals a2b leaves untranslated are no image
    literals: 0x5c / 0x60 / 0x74 / 0x124 / 0x1c4 are body offsets from EC_BASE (the same on both images,
@@ -14,8 +15,8 @@
    Slots 0 .. 72 (+0x000 .. +0x120) of the B' listing are the A' slots, with ONE difference: slot 48 (+0x0c0, the
    frame descriptor `PAddHi a1, a1, A_OBJ 2`) has the pc-relative addend 0xdebd (A' 0xdeb7). The engine runs the
    slot symbolically, and no conjunct of cut_s1 / cut_exit reads the descriptor word, so the proof text is the A' one.
-   STATEMENT: lib/AU/Ent102CutsB.v (read at blob a74a7497b9d0, commit
-   b1ed4e6c944d): seg_L0a_stmt / seg_L0b_stmt over `ec_hyps` (no data-word argument); ec_inv's last binder is
+   STATEMENT: lib/AU/Ent102CutsB.v (read at blob a74a7497b9d0):
+   seg_L0a_stmt / seg_L0b_stmt over `ec_hyps` (no data-word argument); ec_inv's last binder is
    the cut's spent WILD BUDGET wk (0 at cut_frame / cut_s1, ec_wk_exit at cut_exit) with the journal
    `exists WS, ajournal_xw .. WS /\ YCbqGwild.wbudget [] wk WS`. L0 calls no budgeted callee: its journal stays at
    the empty budget WS = [] (ajournal_x), every wbudget [] wk [] holds (l0_wb_nil), and at a cut of budget 0 the
@@ -23,8 +24,8 @@
    are not needed: no cut L0 starts from has spent a budget (so no ec_journal_rebase / _unbase / ec_inv_wk_grow), and
    L0's one call, __asan_stack_malloc_1, is no prh_fn text (so no ec_room_at). The count / live budgets of cut_frame /
    cut_s1 / cut_exit come from the record laws ech_ccut_ok / ech_lcut_ok (bound at 0, antitone in the cut index).
-   RE-FIT from this file's proof on the record 4c2c1c7e4b21 (792dbc98678c), first proved on 1d8b9491bb66
-   (9f03aa2e0ef7): ec_pre / ec_inv are read BY NAME (section 2': lib/AU/Prog/Ent102CallB.v's projections, blob
+   RE-FIT from this file's proof on the record, first proved:
+   ec_pre / ec_inv are read BY NAME (section 2': lib/AU/Prog/Ent102CallB.v's projections, blob
    1c7a402519bc, where it has one, else the l0_pre_* / l0_inv_* projections picked by type with its ec_conj_pick),
    never by position; the ledger is `exists most own, prh_ledger .. most own` in ec_pre and ec_inv, and
    l0_glob_keep carries g_most / g_own_ran_out as PST cells. cut_frame / cut_s1 are at the entry index e_i0 over
@@ -44,7 +45,7 @@
    from ec_pre's frames S = []. The three conditional branches of L0 (the option test `beqz a2` at +0x068 and
    `bnez s2` at +0x084 inside the runs, the size guard `bltu a0, s3` at +0x120 by psrr_branch_tok) are symbolic-run
    steps of the engine; no listing-slot branch lemma and no shared call-site file is used.
-   Image-free arithmetic as in the A' file (ported BY PATH there from a working branch d63027f077c5
+   Image-free arithmetic as in the A' file (ported BY PATH there from a working branch
    lib/A/H6_Base.v: l0_land_m32 / l0_and_m32 / l0_val_mem_of_rd32 / l1_alias_U).
    rule 24: proves function LLVMFuzzerTestOneInput, segments L0a / L0b on B' (reuse search
    a Theorem Labs lane record, the internal file idx-llvm-newpin.txt exit=0; NEW walk; proof-index seg_L0a_B / seg_L0b_B:
@@ -91,7 +92,7 @@ Open Scope bv_scope.
 Open Scope Z_scope.
 
 (* ---------------------------------------------------------------------- *)
-(* 1. Image-free arithmetic the prologue needs (ported BY PATH from a working branch d63027f077c5,
+(* 1. Image-free arithmetic the prologue needs (ported BY PATH from a working branch,
       lib/A/H6_Base.v:66-98 h6_land_m32 / h6_and_m32 / h6_add0, and :41-47 h6_val_mem_of_rd32; the old image's
       numbers are not carried, only these pure lemmas). *)
 Lemma l0_land_m32 : forall x, 0 <= x < 2 ^ 64 -> Z.land x (2 ^ 64 - 32) = x / 32 * 32.
@@ -511,7 +512,7 @@ intros H m m' a v Hag Hr k Hk. rewrite (Hag (Z.of_nat k) ltac:(lia)). exact (Hr 
 Qed.
 
 (* The kit's ledger cells are PST: a memory change that keeps the view on PST keeps prh_glob. The proof reads prh_glob's
-   cells by shape (every val_mem conjunct is one PST cell, g_most / g_own_ran_out's included since the kit decff67d721f),
+   cells by shape (every val_mem conjunct is one PST cell, g_most / g_own_ran_out's included since the kit),
    not by position, so a cell the kit owner adds is carried too. *)
 Lemma l0_glob_keep : forall (W0 : world SEGS) (m m' : word -> option byte) live peak cnt fail ran most own,
   (forall a, Exists (in_zr a) PST -> aview SEGS (w_H W0) m' a = aview SEGS (w_H W0) m a) ->

@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/HaltsSpecX.v for fuzz_grant: the library shape is grant_shape (each call returns 0 and writes nothing), so cgif's lemmas for its file-writing shape are replaced by the one-line case of grant_shape; module paths changed. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/HaltsSpecG.v for fuzz_command, whose library shape is cmd_shape (ag_shape checksum_shape: each call returns 0 and writes nothing); names and module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/HaltsSpecC.v (origin/ossv/recipes 501c0d516c69) for reac-pw/fuzz_segconf's image A, whose library shape is seg_shape (lib/A/SegShape.v, ag_shape checksum_shape as fuzz_command's) over segconf's lib/ZTraceSpec.v (fuzz_command's up to module paths); module paths; cmd_shape -> seg_shape. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/HaltsSpecC.v for reac-pw/fuzz_segconf's image A, whose library shape is seg_shape (lib/A/SegShape.v, ag_shape checksum_shape as fuzz_command's) over segconf's lib/ZTraceSpec.v (fuzz_command's up to module paths); module paths; cmd_shape -> seg_shape. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Specs Run.
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import YK11 YK15 YO0i YO0f YM02 YM05 YO05 YO09 YO06.

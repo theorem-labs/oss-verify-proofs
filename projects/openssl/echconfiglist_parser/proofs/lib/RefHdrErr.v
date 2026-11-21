@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise is a section hypothesis of Sections Sound and Plain, passed to the sound lemma). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -121,6 +122,8 @@ Section Sound.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  (* 08b1429: a write to a channel without a reader is SIGPIPE; init_model seeds the reader and no step writes it *)
+  Hypothesis Hrdr : m_channel_reader model = true.
 
   Definition ENV (vals : list word) : env := Env (vals_ev vals) (blobs_ev []).
 
@@ -187,7 +190,7 @@ Section Sound.
         rewrite (kimg_rdn RSEGS (ENV vals) _ knA ltac:(let i := kidx knA (is_kimg_cov a 31) in exact i)
                    _ _ a 31 HK eq_refl) by (cbn; lia) end;
       apply MSG_IMG
-    | exact Hfd2
+    | exact Hfd2 | exact Hrdr
     | exact Hh
     | exact Hlazy
     | exact HKnil
@@ -258,6 +261,8 @@ Section Plain.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  (* 08b1429: Section Plain consumes Section Sound's hs_sound/ho_sound via hf_plain *)
+  Hypothesis Hrdr : m_channel_reader model = true.
 
   (* [comment removed for export] *)
   Record hfH (regs : bvmap 5 word) (mem : word -> option byte) (sp : word) (tid can : Z) : Prop := HFH {
@@ -339,7 +344,7 @@ Section Plain.
     intros regs mem sp tid can K PH HKnil HCONT;
     pose proof (h_regs_ok regs mem sp tid can PH) as HR; pose proof (h_know_ok regs mem sp tid can PH) as HK;
     destruct PH; pose proof (u64_range sp) as Hsp;
-    apply (SOUND sp model Hh Hlazy Hfd2 (h_vals regs sp tid can) regs mem K);
+    apply (SOUND sp model Hh Hlazy Hfd2 Hrdr (h_vals regs sp tid can) regs mem K);
       [ unfold h_vals; rewrite length_app, junk_vals_length; reflexivity | reflexivity | exact HR | exact HK | exact HKnil |];
     clear HR HK; intros Rj R' M' HR HK FM;
     try rewrite hso_srF in HR;

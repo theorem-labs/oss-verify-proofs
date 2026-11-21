@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's vDSO pair; the channel-reader fact; the launch's input, mmap base and entry draw; the page-granular brk grant). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Specs Run.
@@ -181,7 +182,8 @@ Proof.
   - apply mfol_sys. intros s mo rsp mo' evs a (-> & -> & K & P) ST _.
     destruct (brk_grow_facts _ _ _ _ K PRE NZ) as (B1 & A1 & _ & S1 & R1 & T1).
     assert (H1 : bv_unsigned (vm_brk (m_vmmaps mo)) < req <= bv_unsigned (vm_brk (m_vmmaps mo)) + 2 * PGSZ) by (unfold PGSZ in *; lia).
-    exact (PK_brk_grow false wb wm wp mo _ _ _ req B1 S1 H1 Wb Wm Wp P ST).
+    assert (HRA : req mod 4096 = 0) by (destruct R1 as [E|E]; rewrite E; unfold PGSZ; rewrite Z.add_mod, A1 by lia; reflexivity).
+    exact (PK_brk_grow false wb wm wp mo _ _ _ req B1 S1 H1 A1 HRA Wb Wm Wp P ST).
   - intros [|].
     + eapply mfol_bind with (Q1 := fun _ s mo => PK false (wb - 2 * PGSZ) (wm - 1) (wp - 2) mo).
       * eapply mfol_conseq; [apply mfol_upd| intros s mo H; exact H| intros ? s mo (s2 & _ & H); exact H].
@@ -413,18 +415,26 @@ Proof.
   pose proof (minv_alloc_top mo (kl_minv _ _ _ K)) as [_ TOP].
   unfold nmmap_refusable in NF.
   set (nZ := page_round_up_Z (bv_unsigned (Z_to_bv 64 len))) in *. set (n := Z_to_bv 64 nZ). set (h := m_vmmaps mo).
+  assert (NE : nZ = round_up_pg len).
+  { unfold nZ. rewrite unsigned_lit by (unfold LMAX in Hl; lia). rewrite <- KStep.round_up_pg_eq. reflexivity. }
+  assert (HnZpos : 0 < nZ) by (rewrite NE; pose proof (MBound.round_up_pg_ge len); lia).
+  assert (HnZal : nZ mod page_size = 0) by (rewrite NE, page_size_val; exact (MBound.round_up_pg_mod len)).
   destruct Hp as [-> | ->].
   - change (mmap_modeled_b (Z_to_bv 64 PROT_NONE) (Z_to_bv 64 MAPF) (Z_to_bv 64 0)) with false in NF.
     change (mmap_noaccess_b (Z_to_bv 64 PROT_NONE) (Z_to_bv 64 MAPF) (Z_to_bv 64 0)) with true in NF. cbv iota in NF.
-    destruct (mmap_reserve_unforced _ _ NF) as (a & Q1 & Q2 & Q3 & Q4).
+    destruct (mmap_reserve_unforced _ _ _ HnZpos HnZal NF) as (a & Hpl).
+    destruct (Placement.linux_place_admissible _ _ _ _ _ HnZpos HnZal Hpl) as (Q1 & Q2 & Q3 & Q4).
+    rewrite Z_to_bv_bv_unsigned in Q4.
     eexists (mkEffectU a [] [] [(a, n)] [] []), _. cbn [nstep]. split; [reflexivity|]. right; right; left.
     split; [reflexivity|]. split; [reflexivity|]. exists a.
-    split; [split; [exact Q1| split; [exact Q2| split; [cbv delta [nZ] in Q3; lia| split; [exact Q4| exact Q3]]]]|].
+    split; [split; [exact Q1| split; [exact Q2| split; [cbv delta [nZ] in Q3; lia| split; [exact Q4| split; [exact Q3| exact Hpl]]]]]|].
     rewrite strip_mk. split; reflexivity.
   - change (mmap_modeled_b (Z_to_bv 64 PROT_RW) (Z_to_bv 64 MAPF) (Z_to_bv 64 0)) with true in NF. cbv iota in NF.
-    destruct (mmap_grant_unforced _ _ _ NF) as (HB & a & Q1 & Q2 & Q3 & Q4).
+    destruct (mmap_grant_unforced _ _ _ _ HnZpos HnZal NF) as (HB & a & Hpl).
+    destruct (Placement.linux_place_admissible _ _ _ _ _ HnZpos HnZal Hpl) as (Q1 & Q2 & Q3 & Q4).
+    rewrite Z_to_bv_bv_unsigned in Q4.
     eexists (mkEffect a [] [(a, n)]), _. cbn [nstep]. split; [reflexivity|]. right; left. split; [reflexivity|].
-    exists a. split; [split; [exact Q1| split; [exact Q2| split; [cbv delta [nZ] in Q3; lia| split; [exact Q4| exact Q3]]]]|].
+    exists a. split; [split; [exact Q1| split; [exact Q2| split; [cbv delta [nZ] in Q3; lia| split; [exact Q4| split; [exact Q3| exact Hpl]]]]]|].
     split; [exact HB|]. split; reflexivity.
 Qed.
 
@@ -571,13 +581,15 @@ Proof.
   unfold VI, VIv, cview. cbn -[Z.le Z.mul Z.add Vs]. unfold Vs, NSLOTS. cbn. lia.
 Qed.
 
-Theorem PI_init (CP : HasCeiling) (sp brk mb : word) (inp : ProcInput) (t : Z) (k : nat) :
+(* LPS 727298f3: the start model is [with_vdso v (init_model ..)] ([Run.init_config]); [with_vdso]
+   leaves every field KL / PK read unchanged. *)
+Theorem PI_init (CP : HasCeiling) (sp brk mb : word) (inp : ProcInput) (t : Z) (k : nat) (v : Vdso.VdsoRun) :
   valid_input inp -> valid_sp sp -> valid_brk P0.Segs.rsegs brk -> valid_mmap_base mb ->
   @alloc_ceiling CP = bv_unsigned sp - stack_max_size -> 0 < t < PID_MAX_ENVELOPE -> (k <= KTOP)%nat ->
   PI k [] (ps_init (reservedZ P0.Segs.rsegs) (@alloc_ceiling CP))
-     (with_tid (Z_to_bv 64 t) (init_model (segments_reserved P0.Segs.rsegs) brk mb sp source_alloc_limit inp)).
+     (with_tid (Z_to_bv 64 t) (with_vdso v (init_model (segments_reserved P0.Segs.rsegs) brk mb sp source_alloc_limit inp))).
 Proof.
-  intros _ (SP1 & SP2 & _) (LO & HI & AL) (MB & _ & _) EC Ht Hk.
+  intros VI (SP1 & SP2 & _) (LO & HI & AL) (MB & _ & _) EC Ht Hk.
   assert (TOP : reserved_top (segments_reserved P0.Segs.rsegs) = 0x5c000) by (vm_compute; reflexivity). rewrite TOP in LO, HI.
   assert (BAM : brk_aslr_max = 1073741824) by (vm_compute; reflexivity).
   assert (PG : page_size = PGSZ) by (vm_compute; reflexivity). rewrite PG in AL.
@@ -589,9 +601,13 @@ Proof.
     exists (led_init (map wwZ (segments_reserved P0.Segs.rsegs)) (bv_unsigned sp - stack_max_size)). split; [| split; [| intros x []]].
     + unfold ps_init. cbn [ps_m]. apply c2_init. unfold alloc_ceiling_max, sp_window_hi, stack_max_size in *. lia.
     + unfold ps_init. cbn [ps_brk]. apply KL_with_tid; [| exact Ht'].
-      apply KL_init; [| lia| exact AL| unfold sp_window_lo, stack_max_size, PGSZ in *; lia| lia].
+      lazymatch goal with |- KL ?L ?pb (with_vdso _ ?m) =>
+        cut (KL L pb m); [intros KI; destruct KI; constructor; assumption|] end.
+      apply KL_init; [| lia| exact AL| unfold sp_window_lo, stack_max_size, PGSZ in *; lia| lia| unfold PGSZ, mmap_base_min in *; lia| exact (valid_input_channel_reader _ VI)].
       intros e He. pose proof (reserved_top_ehi _ _ He) as H. rewrite TOP in H. lia.
-  - apply PK_with_tid. eapply PK_weaken; [apply PK_init| | |].
+  - apply PK_with_tid.
+    apply (PK_vm_eq _ _ _ _ (init_model (segments_reserved P0.Segs.rsegs) brk mb sp source_alloc_limit inp)); [| reflexivity| reflexivity].
+    eapply PK_weaken; [apply PK_init| | |].
     + vm_compute. cbn. lia.
     + unfold SBMAX. lia.
     + unfold BACKTOP, source_alloc_limit. cbn. lia.
@@ -621,16 +637,16 @@ Theorem P0_drv_nonnull :
             (fun r mo' => exists s', r = Ok (tt, s') /\ PI k X s' mo' /\ ps_so s' = ps_so s
                                      /\ m_fds mo' = m_fds mo /\ m_fs mo' = m_fs mo))
     /\ (forall k X p s mo, PI k (p :: X) s mo -> exists s' mo', tpaths (raw_free p s) mo [] (Ok (tt, s')) mo')
-    /\ (forall (CP : HasCeiling) (sp brk mb : word) (inp : ProcInput) (t : Z),
+    /\ (forall (CP : HasCeiling) (sp brk mb : word) (inp : ProcInput) (t : Z) (v : Vdso.VdsoRun),
           valid_input inp -> valid_sp sp -> valid_brk P0.Segs.rsegs brk -> valid_mmap_base mb ->
           @alloc_ceiling CP = bv_unsigned sp - stack_max_size ->
           0 < t < PID_MAX_ENVELOPE ->
           PI (DriverSim.DRV_BUDGET 0) [] (ps_init (reservedZ P0.Segs.rsegs) (@alloc_ceiling CP))
-             (with_tid (Z_to_bv 64 t) (init_model (segments_reserved P0.Segs.rsegs) brk mb sp source_alloc_limit inp))).
+             (with_tid (Z_to_bv 64 t) (with_vdso v (init_model (segments_reserved P0.Segs.rsegs) brk mb sp source_alloc_limit inp)))).
 Proof.
   exists PI, NMAX. split; [unfold NMAX, MBound.NMAX; apply Z.pow_le_mono_r; lia|].
   split; [exact PI_mo|]. split; [exact PI_soupd|]. split; [exact PI_fdupd|]. split; [exact PI_perm|]. split; [exact PI_weaken|].
   split; [exact raw_malloc_stwf|]. split; [exact raw_malloc_px|]. split; [exact raw_free_stwf|]. split; [exact raw_free_px|].
-  intros CP sp brk mb inp t VI VS VB VM EC Ht. apply (PI_init CP sp brk mb inp t _ VI VS VB VM EC Ht).
+  intros CP sp brk mb inp t v VI VS VB VM EC Ht. apply (PI_init CP sp brk mb inp t _ v VI VS VB VM EC Ht).
   unfold DriverSim.DRV_BUDGET, KTOP. cbn. lia.
 Qed.

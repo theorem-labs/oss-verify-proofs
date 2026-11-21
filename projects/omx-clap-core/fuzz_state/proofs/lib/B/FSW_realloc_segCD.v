@@ -4,10 +4,11 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACf1.v, with its module paths and module names changed; 639 of its 687 lines of code are new or changed and 451 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_fuzz_free.v, with its module paths changed; 469 of its 535 lines of code are new or changed and 621 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/FSW_fuzz_malloc.v, with its numbers changed; 409 of its 516 lines of code are new or changed and 428 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs ASan+UBSan (image B: fs.asan-ubsan), group ALLOC, a Theorem Labs lane: fuzz_realloc's SEG-CD (B 0x82bc4, alloc.c:75-94),
    from the realloc call point fsr_at_realloc to arm (c) of fuzz_realloc_spec (lib/B/FSW_realloc_pn.v's interface).
-   proves function fuzz_realloc (B 0x82bc4) (reuse search: proof-index on main@f4cc67298b7 / ossv/recipes@5121fb8693b
-   / ossv/candidates@ee89628c997 / release/pau-projects-recipes@b6a0088adcb, by address on those four refs, and on named
+   proves function fuzz_realloc (B 0x82bc4) (reuse search: proof-index on main / ossv/recipes
+   / ossv/candidates / release/pau-projects-recipes, by address on those four refs, and on named
    lane branches / `proof-index fuzz_realloc`, `git grep -i -e <addr>`, `git grep -E '^(Theorem|Lemma)
    .*fuzz_realloc_spec'`; B 0x82bc4: 0 hits, CONFIRM).
 

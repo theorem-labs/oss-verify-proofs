@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the section also takes the run's launch class (runLaunchT), the stack region's lower bound is 4 MiB below the entry sp instead of 8 MiB, and sp_atop states ATOP <= LO instead of an equality. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation.
@@ -25,14 +26,14 @@ Ltac rpc := apply ret_pc_even; [lia| reflexivity].
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
-Section CANSEC1. Context {rc : runConstT}.
+Section CANSEC1. Context {rc : runConstT} {rl : runLaunchT}.
 Section CTX.
   Variables (sp0 : word) (argv envp : list (list byte)) (TID : Z).
   Notation usp0 := (bv_unsigned sp0).
   Notation gpv := (Z_to_bv 64 0x10800).
   Notation tpv := (Z_to_bv 64 RATP).
 
-  Definition LO : Z := usp0 - 8388608.
+  Definition LO : Z := usp0 - 4194304.
 
   (* [comment removed for export] *)
   Definition MFRAME (mm : mem) (j8 : list byte) (s7v s6v s5v s4v : word) : Prop :=
@@ -284,10 +285,10 @@ Section EXITS.
   Hypothesis VSP : dvalid_sp sp0 argv envp.
   Hypothesis HT : 0 < TID < 4194304.
 
-  Lemma sp_facts : 0x7fff80000000 <= usp0 <= 0x800000000000 /\ usp0 mod 16 = 0 /\ ATOP <= LO sp0 /\ LO sp0 + 8388608 = usp0 /\ 0xb3000 <= LO sp0.
+  Lemma sp_facts : 0x7fff80000000 <= usp0 <= 0x800000000000 /\ usp0 mod 16 = 0 /\ ATOP <= LO sp0 /\ LO sp0 + 4194304 = usp0 /\ 0xb3000 <= LO sp0.
   Proof. destruct VSP as ((A & B & C) & HATOP & _). unfold LO, sp_window_lo, sp_window_hi, stack_max_size in *. repeat split; lia. Qed.
-  Lemma sp_atop : ATOP = LO sp0.
-  Proof. destruct VSP as (_ & HATOP & _). unfold LO. exact HATOP. Qed.
+  Lemma sp_atop : ATOP <= LO sp0.
+  Proof. destruct VSP as (_ & HATOP & _). unfold LO. lia. Qed.
 
   (* [comment removed for export] *)
   Lemma pat_exit_intro : forall (code : Z) (s : PState) (LB : list block) (SP : Z) (ra t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)

@@ -5,8 +5,9 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 1114 of its 1252 lines of code are new or changed and 873 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F34.v, with its module paths and module names changed; 702 of its 781 lines of code are new or changed and 1173 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/F34.v, with its module paths, module names and numbers changed; 516 of its 625 lines of code are new or changed and 672 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/F35.v -- GLUE for stage seg_F35 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput (lib/A/ACtl.v (at head lib/A/ACtl.v:850),
-   which carries a Theorem Labs lane's Batch3 (from a working branch d36efc6152d; glue base from a working branch 8ee48574229; an earlier ACtl.v from a working branch 524d38bbd10);
+   which carries a Theorem Labs lane's Batch3 (from a working branch; glue base from a working branch; an earlier ACtl.v from a working branch);
    the statement is unchanged).  Written by a Theorem Labs lane (branch
    a working branch), re-fitted to Batch3 by a Theorem Labs lane; single
    writer.  The pattern is
@@ -80,7 +81,7 @@
    facts used once: f35_sh_low, f35_mrd_high, f35_hull.
 
    FRAC AND BATCH3'S TRAILER WORD.  This stage PRODUCES FRAC at its exit C_A8289c_at [j; i] at the run's new memory
-   mem', and since Batch3 (a Theorem Labs lane, d36efc6152d) FRAC's last conjunct is the fake-frame trailer word
+   mem', and since Batch3 (a Theorem Labs lane) FRAC's last conjunct is the fake-frame trailer word
    `q64 m (fr + 4088) (flag_addr (c_ly cx) 6 (c_fpos cx))` (ACtlCutP.v:997).  FRAC's text is not restated:
    f35_frac_keep moves FRAC's memory conjuncts by a tactic over FRAC's own unfolding (every q64 conjunct inside the
    frame [fr, fr + 4096) or at or above spZ; no conjunct is counted), so it proves the trailer word with no edit: its
@@ -92,21 +93,21 @@
    CLOSURE (glue closure rule): every project Require below names its FULL directory in the From clause; no
    statement names a frame-route identifier.  The closure reaches the frame route only through Seg/F35F.v ->
    Seg/F35.v (SlotInv, AsanRTInv, Contract, FrameAPI, MemNorm, ...), as closure rule 1 allows.  A.ProgWorld /
-   A.ProgWorldRt (for RT_OF_CORE) Require lib/Lib's Mem by its full directory (a Theorem Labs lane's fec8db0a380 form), the
+   A.ProgWorldRt (for RT_OF_CORE) Require lib/Lib's Mem by its full directory (a Theorem Labs lane's form), the
    copy L_Mem names.
 
    SHADOWED NAMES: getr / mkst / seg_rom / cfg_at are YK11 / YG0d-qualified everywhere; YK11, YK1b, YM05, YO09 (in
    both lib/Reusable and lib/A/Reusable) are named by their FULL path; the lib/Lib modules (15 of which also exist
    under lib/A/Bz/Lib, lib/AZ/Lib, lib/B/Bz/Lib) by full-path module aliases L_*.
 
-   BUILD STATE (2026-10-29): TYPE-CHECK ON INTERIM 5da74c9c931, CLOSURE REACHES NO STAND-IN, not acceptance.  The
-   glue base a working branch 121bf608343 carries a Theorem Labs lane's stand-in-free 29ddfc3ea99 (a Theorem Labs lane's interim core
-   5da74c9c931 + Batch3 + a Theorem Labs lane's ProgWorld files): the closure's lib/A/AE2k.v (Required here for the sink head),
+   BUILD STATE (2026-10-29): TYPE-CHECK ON INTERIM, CLOSURE REACHES NO STAND-IN, not acceptance.  The
+   glue base a working branch carries a Theorem Labs lane's stand-in-free (a Theorem Labs lane's interim core
+   + Batch3 + a Theorem Labs lane's ProgWorld files): the closure's lib/A/AE2k.v (Required here for the sink head),
    lib/A/AF0m.v (Required here for CtrlTSyms) and lib/A/AF0l.v hold no port_core_refused name, and the build
-   substitutes nothing.  F35.vo compiles from a fresh clone through cb (BASE 23b918fe0c2e; the lane report
+   substitutes nothing.  F35.vo compiles from a fresh clone through cb (BASE; the lane report
    names the commit, log and .vo mtime); Print Assumptions glue_seg_F35 = Rocq primitives +
    functional_extensionality_dep (LAWS and TFIB_SYMS are its Section-hypothesis arguments).  No Axiom, no Parameter,
-   no Admitted.  The Batch3 re-fit itself type-checked first on 8ee48574229 with the stand-ins. *)
+   no Admitted.  The Batch3 re-fit itself type-checked first with the stand-ins. *)
 
 From Coq Require Import ZArith List Lia Permutation Setoid.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

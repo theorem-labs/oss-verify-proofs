@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (PropExec qualified as K5.AS.PropExec where a twin module shadows it). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -9,7 +10,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics 
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC.
 From OSSVerify.leptonica.pix1_fuzzer.images Require Import AsanUbsan.
 From OSSVerify.Proofs.leptonica.pix1_fuzzer.lib.K5.AS Require Import PropExec.
-Local Instance asanreflect_fx : PropExec.FPState := PropExec.fx0.
+Local Instance asanreflect_fx : K5.AS.PropExec.FPState := K5.AS.PropExec.fx0.
 From OSSVerify.Proofs.leptonica.pix1_fuzzer.lib.K5.AS Require Import CatSim SeqExec StoreOk ShapeAlg SpinAlg AgentLib AsanAcct AsanAcctShape.
 From OSSVerify.Proofs.leptonica.pix1_fuzzer.lib.K5.AS Require Import AxSymExec3 AxSymExec3Sound AxSymRun3 AsanPlanCore AsanPlan AsanPlanSound.
 From OSSVerify.Proofs.leptonica.pix1_fuzzer.lib.K5.ASB22 Require Import AsanTablesA.

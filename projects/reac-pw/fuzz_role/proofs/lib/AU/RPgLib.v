@@ -2,24 +2,25 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: made for libreac/fuzz_knock's ASan image (fuzz_knock.asan, sha256
-   61768cf4739b7641c99c825dde45eddafc55b601d41109555be0272fc7ca4118) from proofs/cgif/cgif_file_fuzzer/lib/A at
-   c8557374ad2e: ACfn.v lines 22-72 (the contract tfib_lib_contract_x / _all), ACfj.v lines 180-255 (its proof
+   61768cf4739b7641c99c825dde45eddafc55b601d41109555be0272fc7ca4118) from proofs/cgif/cgif_file_fuzzer/lib/A:
+   ACfn.v lines 22-72 (the contract tfib_lib_contract_x / _all), ACfj.v lines 180-255 (its proof
    tfib_lib_x_body / tfib_lib_x, with lx_leaf_fail's post), ACfh.v lines 29-50 and 153-164 (ajournal_fp_nil,
    srz_enter, ajournal_closed_io, ajournal_nil_io) and ACfi.v lines 56-140 (XL0, the links,
    tfib_lib_x_closed / tfib_lib_x_all), with their module paths changed. rule 24: no function proved (a port of the
    released cgif_file_fuzzer program part). *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/A/APgLib.v at origin/ossv/recipes 6ebe35ba632
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/A/APgLib.v
    (lines 73-75 and 111-124, the names XL0, RO_LO, RO_HI, the contract and its _all form; lines 368-371, the adapter)
    for reac-pw/fuzz_role image A: the contract is lib/A/RPgCSpec.v's rl_lib_contract_x at image A's segments, sink
    and harness constants, in fuzz_grant's exists-fx' form (role's harness changes float registers), so the adapter
    goes to ACfn.tfib_lib_contract_xf_all; the proof of the contract is not here: role_lib_x_all_stmt states it, with
    the allocator's two operations as premises (role's harness allocates and frees two blocks), for the closing to
    take as a Section variable until the walk proves it. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgLib.v at d428443238a, for reac-pw/fuzz_role's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgLib.v, for reac-pw/fuzz_role's
    image B (fuzz_role.asan-ubsan, pinned sha256 b255d4935da5af137a3967dbe33380ea43be8e78bfe05d1e356e0a2be8a69ff0;
    section headers of the unstripped twin dc791783f32962615e18a5f5cffae758ba56eb5dc87f70913c3579b101b4406a): the
    image-A modules AB1v / AD2l / AE2k / ACfn are image B's lib/AU/YB1v / YD2l / YE2k / YCfn; RO_LO / RO_HI are image B's
    .data.rel.ro start 0x9a3c0 and .got end 0x9b7c8 (0x9aa70 + 0xd58); the shared text lib/A/RPgCSpec.v is the same. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_role image B (fuzz_role.asan-ubsan): the whole-run contract of LLVMFuzzerTestOneInput (0x80020,
    10848 bytes) as image B's closing consumes it, and its statement.
    Statement text and the adapter only: rule 24, proves no function (kind: statement text).

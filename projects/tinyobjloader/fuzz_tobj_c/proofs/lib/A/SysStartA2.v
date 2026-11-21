@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap's exact arm: the premise that its cut removes exactly the entry, and its answer, which may now also refuse, read over the step relation that filters the spurious refusal, LPS 08b1429). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -41,6 +42,10 @@ S0S1cS20SeQ40Vaddr;A2S16A2Z0A3").
 S1fS1eSeQ40Vaddr;A2SbVlen;A1A2S13A2").
   Hypothesis Hhas : ltac2:(tb__ "0|0|
 S0S5S15S17S14Vm;A1A1Vaddr;Vn;A3S6A3").
+  (* LPS 08b1429: the exact arm cuts with [maps_subtract]; this says the cut removes exactly the entry
+     (see [SysSpec.maps_subtract_exact]). *)
+  Hypothesis Hrm : maps_subtract (vm_maps (m_vmmaps m)) (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n)%Z
+                   = map_remove (vm_maps (m_vmmaps m)) addr.
 
   Lemma munmap_model_halted : ltac2:(tb__ "0|1|
 ScQ40A1M0G0S0S2G0A1S12SaVm;R2R1A3A1S12Vm;A1A3Fk;Fa;").
@@ -50,19 +55,20 @@ ScQ40A1M0G0S0S2G0A1S12SaVm;R2R1A3A1S12Vm;A1A3Fk;Fa;").
 
   Lemma munmap_exact_only_okA : ltac2:(tb__ "0|0|
 S1dS9Vsegs;Vms;Vx8;A3Vm;A2").
-  Proof using Halign Hhas Hlen Hno Hwrap.
-    eapply only_okA_of_inv; [intros R HR; exact (@munmap_exact_inv (sys_input segs ms x8) m Hno Halign Hlen Hwrap R Hhas HR)| |].
-    - intros E; discriminate.
-    - intros eff m' evs E _; inversion E; subst;
+  Proof using Halign Hhas Hlen Hno Hrm Hwrap.
+    eapply only_okA_of_inv;
+      [intros R HR; exact (@munmap_exact_inv (sys_input segs ms x8) m Hno Halign Hlen Hwrap R Hhas Hrm HR)| |].
+    - intros [E|E]; discriminate E.
+    - intros eff m' evs [E|E] _; inversion E; subst;
         cbn [syscall_effect_accesses eff_copyins eff_writes write_accesses app]; rewrite materialize_nil; discriminate.
   Qed.
 
   Lemma wstep_munmap_exact_invA : ltac2:(tb__ "0|3|
 S4S11A1M0S18S0S2ScQ40M1A1M2A1S10Vms;A1S3G2Vx8;A2A3S19Vsegs;S1G0S7R3S8Vms;Vm;A2A4R2A3S0S18R3S1G0S7R4S8S1aVms;SdG1Z0A2S1bSfVms;A1Vaddr;Vn;A3A3SaVm;Vaddr;Vn;A3A2A4A3F_;F_;Fw';Ftr;").
-  Proof using Halign Hh Hhas Hlen Hno Hwrap.
+  Proof using Halign Hh Hhas Hlen Hno Hrm Hwrap.
     intros tr w' Hp Hw.
-    destruct (wstep_pending_inv Hp Hh Hw) as (eff & m' & evs0 & Hspec & Hcases).
-    apply (@munmap_exact_inv (sys_input segs ms x8) m Hno Halign Hlen Hwrap _ Hhas) in Hspec.
+    destruct (wstep_pending_inv_ns Hp Hh Hw) as (eff & m' & evs0 & Hspec & Hcases).
+    apply (@munmap_exact_inv_ns (sys_input segs ms x8) m Hno Halign Hlen Hwrap _ Hhas Hrm) in Hspec.
     inversion Hspec; subst.
     destruct Hcases as [(Hh' & m'' & Hm & ->) | (code & Hcd & _)].
     - cbn [syscall_effect_accesses eff_copyins eff_writes write_accesses app] in Hm. rewrite materialize_nil in Hm.
@@ -72,9 +78,9 @@ S4S11A1M0S18S0S2ScQ40M1A1M2A1S10Vms;A1S3G2Vx8;A2A3S19Vsegs;S1G0S7R3S8Vms;Vm;A2A4
 
   Lemma wstep_munmap_exact_introA : ltac2:(tb__ "0|3|
 S4S11A1M0S0S2ScQ40M1A1M2A1S10Vms;A1S3G2Vx8;A2A3S19Vsegs;S1G0S7R2S8Vms;Vm;A2A4S1G0S7R2S8S1aVms;SdG1Z0A2S1bSfVms;A1Vaddr;Vn;A3A3SaVm;Vaddr;Vn;A3A2A4A3F_;Ftr;").
-  Proof using Halign Hh Hhas Hlen Hno Hwrap.
+  Proof using Halign Hh Hhas Hlen Hno Hrm Hwrap.
     intros tr Hp.
-    pose proof (@munmap_exact_intro (sys_input segs ms x8) m Hno Halign Hlen Hwrap Hhas) as Hs.
+    pose proof (@munmap_exact_intro (sys_input segs ms x8) m Hno Halign Hlen Hwrap Hhas Hrm) as Hs.
     pose proof (wstep_pending_runA segs tr ms m x8 _ _ _ [] Hp Hh Hs ltac:(rewrite munmap_model_halted; exact Hh) (materialize_nil _)) as W.
     rewrite app_nil_r, advance_apply_unmap1 in W. exact W.
   Qed.

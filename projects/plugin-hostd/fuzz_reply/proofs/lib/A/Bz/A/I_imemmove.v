@@ -1,5 +1,5 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_pcap/lib/A/Bz/A/I_imemmove.v
-   (a working branch eabce720039), with its module paths changed and its three code addresses moved
+   (a working branch), with its module paths changed and its three code addresses moved
    from fuzz_pcap.asan's __sanitizer_internal_memmove (0x63c18) to fuzz_reply.asan's (0x651ac): the 22 words are
    identical, so each pc keeps its offset (+0x0, +0x10, +0x38). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A.Bz Require BvWfKernel.

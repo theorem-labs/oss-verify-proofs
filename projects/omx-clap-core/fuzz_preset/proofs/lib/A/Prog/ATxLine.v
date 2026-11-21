@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image A' (asan, #102 pin 1be0f53d96cb): the walk of tx_line (merged fuzz_preset.c :432-439; entry A'
    0x85654, slot 4125 of lib/A/Listing_prog.v, A_entry_tx_line of lib/A/PAImg_prog.v;
    27 instructions to the `ret` at 0x856bc) against the draft's text ttx_line_specX (lib/A/PRH_FnTx.v
@@ -44,10 +45,10 @@
    proof of tx_line at image A' (the TX_LINE address constants and tx_line_contract texts of the plain / UBSan
    images, their walks tx_line_holds and link lemmas lu_tx_line / lp_tx_line, the model's tx_line and its lemmas, the B' walk
    lib/B/Prog/BTxLine.v and B' BTxValue.v's TXLINE, the old text ttx_line_specX); git grep -F -w of
-   tx_line_A_holds, ATxLine and ttx_line_specX over origin/main, origin/ossv/recipes c3777b3715d0,
+   tx_line_A_holds, ATxLine and ttx_line_specX over origin/main,
    origin/ossv/candidates and origin/release/pau-projects-recipes, path-scoped to omx-clap-core/fuzz_preset: 0 files
    for the first two; ttx_line_specX only on recipes, at lib/A/PRH_FnTx.v:407 (the old text, with the retired DW
-   argument), PRH_NamesCheck.v:410, and the image-B' files lib/B/Prog/BTxLine.v and lib/B/Prog/BTxValue.v:2236.
+   argument), PRH_NamesCheck.v:410, and the image-B' files lib/B/Prog/BTxLine.v and lib/B/Prog/BTxValue.v:2237.
    Record: reuse-search-tx_line-A.txt (sha256 6005e8fcc56d; internal record). No by-address search is cited:
    preset's released builds carry no symbol table. An unreleased old-pin walk of tx_line at image A exists,
    S10TxLine.v (sha256 e418238d3ae3; internal record): it walks the old A pin d83eb25d against the pre-#102 text, not

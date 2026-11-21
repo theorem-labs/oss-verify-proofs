@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main_ms premises and the a_main_spec application pass the launch's in_execfn; the spec is reached on the run's segments by RomStable.run_init, the binary carrying no vDSO segment). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -46,7 +47,7 @@ Section TopA.
             (FULL : mem) (model : Model) (ms : machine_state),
         env0_ok5 E0 -> pl0_ok5 E0 PL0 -> main_facts5 FULL model E0 FSB0 PL0 HR0 L0 RES0 EB0 ->
         m_fs model = in_fs inp -> m_fds model = dfds_std ->
-        main_ms (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en) FULL ms ->
+        main_ms (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en) (in_execfn inp) FULL ms ->
         realizes_cfg acfg asegs (mkCfg ms model) T) ->
     realizes_cfg acfg asegs
       (init_config asegs a_init_pc a_phdrs (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) target_alloc_limit inp) T.
@@ -127,7 +128,7 @@ Section TopA.
            (FULL : mem) (model : Model) (ms : machine_state),
       env0_ok5 E0 -> pl0_ok5 E0 PL0 -> main_facts5 FULL model E0 FSB0 PL0 HR0 L0 RES0 EB0 ->
       m_fs model = in_fs inp -> m_fds model = dfds_std ->
-      main_ms (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en) FULL ms ->
+      main_ms (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en) (in_execfn inp) FULL ms ->
       realizes_cfg acfg asegs (mkCfg ms model) (spec (in_argv inp) (in_fs inp)).
   Proof.
     intros en inp RC VE VI E0 FSB0 PL0 HR0 L0 RES0 EB0 FULL model ms ENV0 PL0OK MF MOFS MOFD MM.
@@ -144,7 +145,7 @@ Section TopA.
     assert (DIx : a_drv_iface5x asegs ACONSTS D).
     { subst D. exact (A_inst5.DIx5 E0 FSB0 PL0 HR0 L0 RES0 EB0 ENV0 PL0OK HS_tot). }
     destruct (AHK_birth5 FULL model E0 FSB0 PL0 HR0 L0 RES0 EB0 MF) as (AH0 & SO0 & CR0).
-    eapply (a_main_spec (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en) VSP RCSP EFIT VA VEN D DI DIx
+    eapply (a_main_spec (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en) (in_execfn inp) VSP RCSP EFIT VA VEN D DI DIx
               model (in_fs inp) MOFS MOFD (aps_init E0 FSB0) ms).
     destruct MM as (t0 & t1 & t2 & a3 & a4 & a5 & a6 & a7 & s4 & s5 & s6 & s7 & s8 & s9 & s10 & s11 & t3 & t4 & t5 & t6 & F & fc & Ems & STK & MI & IMG & STAT & FRM).
     unfold AENTRY. exists t0, t1, t2, a3, a4, a5, a6, a7, s4, s5, s6, s7, s8, s9, s10, s11, t3, t4, t5, t6, F, fc, FULL.
@@ -156,6 +157,9 @@ Section TopA.
     realizes_spec_cfg acfg asegs a_init_pc a_phdrs target_alloc_limit (fun inp => spec (in_argv inp) (in_fs inp)).
   Proof.
     apply realizes_spec_cfg_intro. intros en inp VE VI.
+    (* the run starts on the run's segments; the binary carries no vDSO segment (RomStable.run_init) *)
+    apply (RomStable.run_init acfg asegs inp (en_sp en) (en_mmap_base en) a_init_pc a_phdrs (en_brk en) (en_draw en) target_alloc_limit _
+             ltac:(vm_compute; reflexivity)).
     apply (A_MAIN_REACH en inp (spec (in_argv inp) (in_fs inp)) VE VI (spec_nil _ _)).
     intros E0 FSB0 PL0 HR0 L0 RES0 EB0 FULL model ms ENV0 PL0OK MF MOFS MOFD MM.
     exact (a_main_rz en inp VE VI E0 FSB0 PL0 HR0 L0 RES0 EB0 FULL model ms ENV0 PL0OK MF MOFS MOFD MM).

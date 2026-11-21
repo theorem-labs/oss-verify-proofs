@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's placement by linux_place and its reserved-ledger changes). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import Permutation.
@@ -507,7 +508,22 @@ Proof. intros l H. induction H as [|p l Hf Hs IH]; constructor; [exact Hf | exac
 
 Lemma ri_artm : LIMIT = VMLIMIT -> ARTM_A (sigma0 A E ch model) model.
 Proof.
-  intros Hlim. unfold ARTM_A. split; [exact (Permutation_refl _)|]. split; [exact (APS.co_res _ _ _ _ _ _ _ _ _ _ _ _ HC)|].
+  intros Hlim. unfold ARTM_A. split; [exact (Permutation_refl _)|].
+  (* LPS 75d69e00: ARTM_A's reserved clause is [co_res]'s first three components plus
+     [co_mres]'s content restricted to the tail.  This is the ONLY place the clause is ever
+     established -- Zku consumes [cs_ok] (Hypothesis HC at :243) and constructs none -- so
+     everything the ARTM layer needs of the vDSO pair has to come through here. *)
+  split.
+  { destruct (APS.co_res _ _ _ _ _ _ _ _ _ _ _ _ HC) as (rx & Hres & Hcnt & Hrx & _).
+    exists rx. split; [exact Hres|]. split; [exact Hcnt|]. split; [exact Hrx|].
+    pose proof (APS.co_mres _ _ _ _ _ _ _ _ _ _ _ _ HC) as HM.
+    apply Forall_forall. intros q Hq.
+    pose proof (proj1 (Forall_forall _ _) HM q Hq) as F.
+    apply Forall_forall. intros iv Hiv.
+    assert (Hin : In iv (vm_reserved (m_vmmaps model)))
+      by (rewrite Hres; apply in_or_app; right; exact Hiv).
+    pose proof (proj1 (Forall_forall _ _) F iv Hin) as D.
+    unfold APS.iv_disjoint in D. unfold iv_apart. exact D. }
   split; [rewrite (APS.co_limit _ _ _ _ _ _ _ _ _ _ _ _ HC); exact Hlim|].
   split.
   { pose proof (APS.co_eager _ _ _ _ _ _ _ _ _ _ _ _ HC) as He. pose proof ri_test as (_ & _ & _ & Hea & _).

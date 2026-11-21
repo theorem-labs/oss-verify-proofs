@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the write lemmas carry the flag of the flagged relation SpinAlg.srealizesM and, for LPS 727298f3, take the channel reader (m_channel_reader) the writev nodes read. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -31,7 +32,7 @@ Open Scope bv_scope.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
 (* [comment removed for export] *)
-Lemma srz_emit_nil : forall c K, srealizes ASEGS c K -> srealizes ASEGS c (t_emit [] K).
+Lemma srz_emit_nil {sfl : bool} : forall c K, srealizesM ASEGS sfl c K -> srealizesM ASEGS sfl c (t_emit [] K).
 Proof.
   intros c K H. eapply srz_conseq; [exact H|].
   apply t_eq_sym. apply t_emit_nil_eq. exact (srealizes_nonempty _ _ _ H).
@@ -61,6 +62,7 @@ Proof.
 Qed.
 
 Section Loop.
+Context {sfl : bool}.   (* the flag of [SpinAlg.srealizesM] *)
   Variables (su f fd : Z) (l bufp bufsz can ret : word).
   Variables (e8 e9 e18 e19 e20 e21 e22 g3 g4 g23 g24 g25 g26 g27 : word).
   Variable mem1 : word -> option byte.   (* [comment removed for export] *)
@@ -74,6 +76,8 @@ Section Loop.
   Hypothesis Fhi : (f + 232 <= 0xaf730)%Z.
   Hypothesis FD : (0 < fd < 2147483648)%Z.
   Hypothesis Hfd : fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)).
+  (* LPS revision: [writev_check_nc] / [check_writev] read the channel reader *)
+  Hypothesis Hcr : m_channel_reader model = true.
   Hypothesis Hh : m_halted model = None.
   Hypothesis HH : H_off_segments ASEGS HS.
   Hypothesis HL : lazy_all_hidden HS model.
@@ -107,7 +111,7 @@ Section Loop.
      getr regs' 24 = g24 -> getr regs' 25 = g25 -> getr regs' 26 = g26 ->
      getr regs' 27 = g27 -> getr regs' 3 = g3 -> getr regs' 4 = g4 ->
      LM m -> mclean HS (mem_sw2 m f bufp bufsz) ->
-     srealizes ASEGS (mkCfg (mkst regs' ret (munrestrict HS F (mem_sw2 m f bufp bufsz)) (seg_rom ASEGS)) model) K.
+     srealizesM ASEGS sfl (mkCfg (mkst regs' ret (munrestrict HS F (mem_sw2 m f bufp bufsz)) (seg_rom ASEGS)) model) K.
 
   (* [comment removed for export] *)
   Definition RI (regs : bvmap 5 word) : Prop :=
@@ -161,7 +165,7 @@ Section Loop.
   (* [comment removed for export] *)
   #[using="bufp bufsz can ret e8 e9 e18 e19 e20 e21 e22 SUlo SUhi Flo Fhi Hh HH HL Hret M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz HK"] Lemma finish : forall regs m,
     RI regs -> LM m -> mclean HS m ->
-    srealizes ASEGS (mkCfg (mkst regs (0x9ff38 : word) (munrestrict HS F m) (seg_rom ASEGS)) model) K.
+    srealizesM ASEGS sfl (mkCfg (mkst regs (0x9ff38 : word) (munrestrict HS F m) (seg_rom ASEGS)) model) K.
   Proof.
     intros regs m RIr LMm MCm.
     destruct RIr as (R2 & R8 & R9 & R21 & R3 & R4 & R23 & R24 & R25 & R26 & R27).
@@ -182,7 +186,7 @@ Section Loop.
 
   #[using="bufp bufsz can ret e8 e9 e18 e19 e20 e21 e22 SUlo SUhi Flo Fhi Hh HH HL Hret M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz HK"] Lemma finish_nil : forall regs m,
     RI regs -> LM m -> mclean HS m ->
-    srealizes ASEGS (mkCfg (mkst regs (0x9ff38 : word) (munrestrict HS F m) (seg_rom ASEGS)) model) (t_emit [] K).
+    srealizesM ASEGS sfl (mkCfg (mkst regs (0x9ff38 : word) (munrestrict HS F m) (seg_rom ASEGS)) model) (t_emit [] K).
   Proof. intros. apply srz_emit_nil. apply finish; assumption. Qed.
 
 
@@ -191,7 +195,7 @@ Section Loop.
   Proof. apply bv_eq; vm_compute; reflexivity. Qed.
 
   (* [comment removed for export] *)
-  #[using="bufp bufsz can ret e8 e9 e18 e19 e20 e21 e22 SUlo SUhi Flo Fhi FD Hfd Hh HH HL Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK"] Lemma loop1 : forall n regs m (k : nat) (b : word) (bs : list byte),
+  #[using="bufp bufsz can ret e8 e9 e18 e19 e20 e21 e22 SUlo SUhi Flo Fhi FD Hfd Hcr Hh HH HL Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK"] Lemma loop1 : forall n regs m (k : nat) (b : word) (bs : list byte),
     (length bs <= n)%nat ->
     RI regs -> LM m -> mclean HS m ->
     getr regs 10 = Z_to_bv 64 (Z.of_nat k) ->
@@ -204,7 +208,7 @@ Section Loop.
     (bv_unsigned b + Z.of_nat (length bs) <= su - 112 \/ su <= bv_unsigned b)%Z ->
     (bv_unsigned b + Z.of_nat (length bs) <= 2 ^ 47)%Z ->
     (Z.of_nat (length bs) <= 2 ^ 30)%Z ->
-    srealizes ASEGS (mkCfg (mkst regs (0x9ffc4 : word) (munrestrict HS F m) (seg_rom ASEGS)) model)
+    srealizesM ASEGS sfl (mkCfg (mkst regs (0x9ffc4 : word) (munrestrict HS F m) (seg_rom ASEGS)) model)
              (t_emit (map (WriteEv (Z_to_bv 64 fd)) (skipn k bs)) K).
   Proof.
     induction n as [|n IH]; intros regs m k b bs LEN RIr LMm MCm Ha0 Hs6 Hs2 Hs3 Kb Mb Mn Bbs DISJ NW M30.
@@ -229,7 +233,7 @@ Section Loop.
     eapply (srz_writev1_wall_R ASEGS HS HH Asan_wx_nowrap' F regs1 (0x9ffb4 : word) m' model W_9ffb4 fd
               (Z_to_bv 64 (su - 88)) (Z_to_bv 64 (bv_unsigned b + Z.of_nat k))
               (Z_to_bv 64 (Z.of_nat (length bs) - Z.of_nat k)) (skipn k bs) K);
-      [ exact F_9ffb4 | exact E_9ffb4 | exact HL | exact Hh | exact MC1 | exact Hfd | exact FD
+      [ exact F_9ffb4 | exact E_9ffb4 | exact HL | exact Hh | exact MC1 | exact Hfd | exact Hcr | exact FD
       | exact Q17 | exact Q10 | exact Q11 | exact Q12 | | | | | | | | exact HKnil | ].
     - subst m'. rdn_solve.
     - subst m'. u_norm. replace (su - 88 + 8)%Z with (su - 80)%Z by lia. rdn_solve.
@@ -288,7 +292,7 @@ Section Loop.
 
 
   (* [comment removed for export] *)
-  #[using="bufp bufsz can ret e8 e9 e18 e19 e20 e21 e22 SUlo SUhi Flo Fhi FD Hfd Hh HH HL Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK"] Lemma loop2 : forall n regs m (k : nat) (b0 : word) (bs0 : list byte) (b1 : word) (bs1 : list byte),
+  #[using="bufp bufsz can ret e8 e9 e18 e19 e20 e21 e22 SUlo SUhi Flo Fhi FD Hfd Hcr Hh HH HL Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK"] Lemma loop2 : forall n regs m (k : nat) (b0 : word) (bs0 : list byte) (b1 : word) (bs1 : list byte),
     (length bs0 + length bs1 <= n)%nat ->
     RI regs -> LM m -> mclean HS m ->
     getr regs 10 = Z_to_bv 64 (Z.of_nat k) ->
@@ -306,7 +310,7 @@ Section Loop.
     (bv_unsigned b1 + Z.of_nat (length bs1) <= su - 112 \/ su <= bv_unsigned b1)%Z ->
     (bv_unsigned b1 + Z.of_nat (length bs1) <= 2 ^ 47)%Z ->
     (Z.of_nat (length bs0) + Z.of_nat (length bs1) <= 2 ^ 30)%Z ->
-    srealizes ASEGS (mkCfg (mkst regs (0x9ffc4 : word) (munrestrict HS F m) (seg_rom ASEGS)) model)
+    srealizesM ASEGS sfl (mkCfg (mkst regs (0x9ffc4 : word) (munrestrict HS F m) (seg_rom ASEGS)) model)
              (t_emit (map (WriteEv (Z_to_bv 64 fd)) (skipn k (bs0 ++ bs1))) K).
   Proof.
     induction n as [|n IH]; intros regs m k b0 bs0 b1 bs1 LEN RIr LMm MCm Ha0 Hs6 Hs2 Hs3 Kb
@@ -334,7 +338,7 @@ Section Loop.
                 (Z_to_bv 64 (su - 104)) (Z_to_bv 64 (bv_unsigned b0 + Z.of_nat k))
                 (Z_to_bv 64 (Z.of_nat (length bs0) - Z.of_nat k))
                 b1 (Z_to_bv 64 (Z.of_nat (length bs1))) (skipn k bs0) bs1 K);
-        [ exact F_9ffb4 | exact E_9ffb4 | exact HL | exact Hh | exact MC1 | exact Hfd | exact FD
+        [ exact F_9ffb4 | exact E_9ffb4 | exact HL | exact Hh | exact MC1 | exact Hfd | exact Hcr | exact FD
         | exact Q17 | exact Q10 | exact Q11 | exact Q12 | | | | | | | | | | | | exact HKnil | ].
       + subst m'. rdn_solve.
       + subst m'. u_norm. replace (su - 104 + 8)%Z with (su - 96)%Z by lia. rdn_solve.
@@ -423,7 +427,7 @@ Section Loop.
                 (Z_to_bv 64 (su - 88)) (Z_to_bv 64 (bv_unsigned b1 + Z.of_nat (k - length bs0)))
                 (Z_to_bv 64 (Z.of_nat (length bs1) - Z.of_nat (k - length bs0)))
                 (skipn (k - length bs0) bs1) K);
-        [ exact F_9ffb4 | exact E_9ffb4 | exact HL | exact Hh | exact MC1 | exact Hfd | exact FD
+        [ exact F_9ffb4 | exact E_9ffb4 | exact HL | exact Hh | exact MC1 | exact Hfd | exact Hcr | exact FD
         | exact Q17 | exact Q10 | exact Q11 | exact Q12 | | | | | | | | exact HKnil | ].
       + subst m'. rdn_solve.
       + subst m'. u_norm. replace (su - 88 + 8)%Z with (su - 80)%Z by lia. rdn_solve.
@@ -547,7 +551,7 @@ Qed.
 Lemma pc_9fbf0 : v_addi (0x9ff2c : word) 4 = (0x9ff30 : word).
 Proof. apply bv_eq; vm_compute; reflexivity. Qed.
 
-Theorem asan_stdio_write_Rs :
+Theorem asan_stdio_write_Rs {sfl : bool} :
   forall (H : word -> bool) (F : word -> option byte) regs mR model (su f wb wp fd : Z) (s l bufp bufsz can ret : word)
          (pending extra : list byte) (K : TSet),
   H_off_segments ASEGS H ->
@@ -562,6 +566,7 @@ Theorem asan_stdio_write_Rs :
   ssp_cells mR can ->
   (0 < fd < 2147483648)%Z ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  m_channel_reader model = true ->   (* LPS revision: the writev nodes read it *)
   m_halted model = None ->
   (0 <= wb <= wp)%Z -> (wp <= 2 ^ 47)%Z ->
   (wp - wb = Z.of_nat (length pending))%Z ->
@@ -582,13 +587,13 @@ Theorem asan_stdio_write_Rs :
      getr regs' 24 = getr regs 24 -> getr regs' 25 = getr regs 25 -> getr regs' 26 = getr regs 26 ->
      getr regs' 27 = getr regs 27 -> getr regs' 3 = getr regs 3 -> getr regs' 4 = getr regs 4 ->
      sw_post mR su f bufp bufsz mR' -> mclean H mR' ->
-     srealizes ASEGS (mkCfg (mkst regs' ret (munrestrict H F mR') (seg_rom ASEGS)) model) K) ->
-  srealizes ASEGS (mkCfg (mkst regs (0x9fea4 : word) (munrestrict H F mR) (seg_rom ASEGS)) model)
+     srealizesM ASEGS sfl (mkCfg (mkst regs' ret (munrestrict H F mR') (seg_rom ASEGS)) model) K) ->
+  srealizesM ASEGS sfl (mkCfg (mkst regs (0x9fea4 : word) (munrestrict H F mR) (seg_rom ASEGS)) model)
            (t_emit (map (WriteEv (Z_to_bv 64 fd)) (pending ++ extra)) K).
 Proof.
   intros H F regs mR model su f wb wp fd s l bufp bufsz can ret pending extra K
          HH HL MC0
-         Hsp Ha0 Ha1 Ha2 Hra SUlo SUhi SOK Flo Fhi SWF SSP FD Hfd Hh WBP WPhi
+         Hsp Ha0 Ha1 Ha2 Hra SUlo SUhi SOK Flo Fhi SWF SSP FD Hfd Hcr Hh WBP WPhi
          LENP LENE M30 DISJP DISJE SNW RDP RDE Hret HKnil HK.
   pose proof (u64_range s) as Hs. pose proof (u64_range l) as Hl.
   pose proof SWF as SWF'. pose proof SSP as SSP'.
@@ -631,7 +636,7 @@ Proof.
      getr regs' 24 = getr regs 24 -> getr regs' 25 = getr regs 25 -> getr regs' 26 = getr regs 26 ->
      getr regs' 27 = getr regs 27 -> getr regs' 3 = getr regs 3 -> getr regs' 4 = getr regs 4 ->
      LM su mem1 m -> mclean H (mem_sw2 m f bufp bufsz) ->
-     srealizes ASEGS (mkCfg (mkst regs' ret (munrestrict H F (mem_sw2 m f bufp bufsz)) (seg_rom ASEGS)) model) K).
+     srealizesM ASEGS sfl (mkCfg (mkst regs' ret (munrestrict H F (mem_sw2 m f bufp bufsz)) (seg_rom ASEGS)) model) K).
   { intros. apply HK. all: try assumption.
     eapply sw_post_of_LM; [exact SUlo | exact SUhi | exact Flo | exact Fhi | ].
     match goal with HLM : LM _ _ _ |- _ => exact HLM end. }
@@ -642,11 +647,11 @@ Proof.
   pose proof (loop1 su f fd l bufp bufsz can ret (getr regs 8) (getr regs 9) (getr regs 18) (getr regs 19)
                 (getr regs 20) (getr regs 21) (getr regs 22) (getr regs 3) (getr regs 4) (getr regs 23)
                 (getr regs 24) (getr regs 25) (getr regs 26) (getr regs 27) mem1 H F model K
-                SUlo SUhi Flo Fhi FD Hfd Hh HH HL Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK') as L1.
+                SUlo SUhi Flo Fhi FD Hfd Hcr Hh HH HL Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK') as L1.
   pose proof (loop2 su f fd l bufp bufsz can ret (getr regs 8) (getr regs 9) (getr regs 18) (getr regs 19)
                 (getr regs 20) (getr regs 21) (getr regs 22) (getr regs 3) (getr regs 4) (getr regs 23)
                 (getr regs 24) (getr regs 25) (getr regs 26) (getr regs 27) mem1 H F model K
-                SUlo SUhi Flo Fhi FD Hfd Hh HH HL Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK') as L2.
+                SUlo SUhi Flo Fhi FD Hfd Hcr Hh HH HL Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK') as L2.
   pose proof (LM_refl su mem1) as LM1.
   destruct (Z.eq_dec wb wp) as [EQ|NEQ].
   - (* [comment removed for export] *)
@@ -656,7 +661,7 @@ Proof.
       as (regs1 & RUN1 & R17 & R10 & R11 & R12 & R2 & R8 & R9 & R18 & R19 & R21 & R22 & R3 & R4 & R23 & R24 & R25 & R26 & R27);
       try assumption; try lia.
     eapply (srz_msteps_R ASEGS H HH Asan_wx_nowrap' F); [exact HL | exact Hh | exact MC0 | exact RUN1 |]; clear RUN1.
-    lazymatch goal with |- _ -> srealizes _ (mkCfg (mkst _ _ (munrestrict _ _ ?M) _) _) _ =>
+    lazymatch goal with |- _ -> srealizesM _ _ (mkCfg (mkst _ _ (munrestrict _ _ ?M) _) _) _ =>
       replace M with mem1 by (subst mem1; rewrite Z.sub_diag; reflexivity) end.
     intros MC1'.
     rewrite Z.sub_diag in M96.
@@ -667,6 +672,9 @@ Proof.
     + (* [comment removed for export] *)
       cbn [length] in HlZ. change (Z.of_nat 0) with 0%Z in HlZ. cbn [map].
       eapply (srz_writev1_zero_R ASEGS H HH Asan_wx_nowrap' F regs1 (0x9ff2c : word) mem1 model W_9ff2c fd (Z_to_bv 64 (su - 88)) s (t_emit [] K));
+        (* zero-length write: [srz_writev1_zero_R] has NO [m_channel_reader] premise -- no
+           bytes leave, so the model never consults the reader.  DO NOT add [exact HCR]
+           here; the `exact Hfd | exact FD` adjacency over-matches this site. *)
         [ exact F_9ff2c | exact E_9ff2c | exact HL | exact Hh | exact MC1' | exact Hfd | exact FD
         | exact R17 | exact R10 | exact R11 | exact R12 | exact M88 | | unfold TASK_SIZE; u_norm; lia | unfold TASK_SIZE; lia | unfold rw_bytes_max; lia | ].
       { u_norm. replace (su - 88 + 8)%Z with (su - 80)%Z by lia. rewrite <- HlZ. exact M80. }
@@ -682,7 +690,7 @@ Proof.
     + (* [comment removed for export] *)
       eapply (srz_writev1_wall_R ASEGS H HH Asan_wx_nowrap' F regs1 (0x9ff2c : word) mem1 model W_9ff2c fd
                 (Z_to_bv 64 (su - 88)) s l (x0 :: extra') K);
-        [ exact F_9ff2c | exact E_9ff2c | exact HL | exact Hh | exact MC1' | exact Hfd | exact FD
+        [ exact F_9ff2c | exact E_9ff2c | exact HL | exact Hh | exact MC1' | exact Hfd | exact Hcr | exact FD
         | exact R17 | exact R10 | exact R11 | exact R12 | exact M88 | | | | | | | exact HKnil | ].
       * u_norm. replace (su - 88 + 8)%Z with (su - 80)%Z by lia. exact M80.
       * unfold word_to_nat. rewrite LENE, Nat2Z.id. exact Be.
@@ -732,7 +740,7 @@ Proof.
     { unfold RI. repeat split; assumption. }
     eapply (srz_writev2_wall_R ASEGS H HH Asan_wx_nowrap' F regs1 (0x9ff2c : word) mem1 model W_9ff2c fd
               (Z_to_bv 64 (su - 104)) (Z_to_bv 64 wb) (Z_to_bv 64 (wp - wb)) s l pending extra K);
-      [ exact F_9ff2c | exact E_9ff2c | exact HL | exact Hh | exact MC1' | exact Hfd | exact FD
+      [ exact F_9ff2c | exact E_9ff2c | exact HL | exact Hh | exact MC1' | exact Hfd | exact Hcr | exact FD
       | exact R17 | exact R10 | exact R11 | exact R12 | exact M104 | | | | | | | | | | | exact HKnil | ].
     + u_norm. replace (su - 104 + 8)%Z with (su - 96)%Z by lia. exact M96.
     + u_norm. replace (su - 104 + 16)%Z with (su - 88)%Z by lia. exact M88.
@@ -783,7 +791,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Theorem asan_stdio_write_s :
+Theorem asan_stdio_write_s {sfl : bool} :
   forall (H : word -> bool) regs mem model (su f wb wp fd : Z) (s l bufp bufsz can ret : word)
          (pending extra : list byte) (K : TSet),
   H_off_segments ASEGS H ->
@@ -800,6 +808,7 @@ Theorem asan_stdio_write_s :
   ssp_cells mem can ->
   (0 < fd < 2147483648)%Z ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  m_channel_reader model = true ->   (* LPS revision: the writev nodes read it *)
   m_halted model = None ->
   (0 <= wb <= wp)%Z -> (wp <= 2 ^ 47)%Z ->
   (wp - wb = Z.of_nat (length pending))%Z ->
@@ -820,13 +829,13 @@ Theorem asan_stdio_write_s :
      getr regs' 24 = getr regs 24 -> getr regs' 25 = getr regs 25 -> getr regs' 26 = getr regs 26 ->
      getr regs' 27 = getr regs 27 -> getr regs' 3 = getr regs 3 -> getr regs' 4 = getr regs 4 ->
      sw_post mem su f bufp bufsz mem' ->
-     srealizes ASEGS (mkCfg (mkst regs' ret mem' (seg_rom ASEGS)) model) K) ->
-  srealizes ASEGS (mkCfg (mkst regs (0x9fea4 : word) mem (seg_rom ASEGS)) model)
+     srealizesM ASEGS sfl (mkCfg (mkst regs' ret mem' (seg_rom ASEGS)) model) K) ->
+  srealizesM ASEGS sfl (mkCfg (mkst regs (0x9fea4 : word) mem (seg_rom ASEGS)) model)
            (t_emit (map (WriteEv (Z_to_bv 64 fd)) (pending ++ extra)) K).
 Proof.
   intros H regs mem model su f wb wp fd s l bufp bufsz can ret pending extra K
          HH HL AVF AVP AVE
-         Hsp Ha0 Ha1 Ha2 Hra SUlo SUhi SOK0 Flo Fhi SWF0 SSP0 FD Hfd Hh WBP WPhi
+         Hsp Ha0 Ha1 Ha2 Hra SUlo SUhi SOK0 Flo Fhi SWF0 SSP0 FD Hfd Hcr Hh WBP WPhi
          LENP LENE M30 DISJP DISJE SNW RDP0 RDE0 Hret HKnil HK.
   rewrite <- (munrestrict_mrestrict H mem).
   apply (asan_stdio_write_Rs H mem regs (mrestrict H mem) model su f wb wp fd s l bufp bufsz can ret pending extra K);

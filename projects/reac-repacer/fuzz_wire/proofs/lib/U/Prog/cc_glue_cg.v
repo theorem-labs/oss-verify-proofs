@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Copyright 2026 Theorem Labs *)
 (* New for reac-repacer/fuzz_wire: the cut-free (SRcf) twins of lib/U/Prog/cc_glue.v's four run lemmas (ccg_run_fp,
-   ccg_runA, ccg_runQ, ccg_runN), as libreac/fuzz_decode's released lib/U/Prog/crt_glue_cg.v (25e3d17bdb5) has them
+   ccg_runA, ccg_runQ, ccg_runN), as libreac/fuzz_decode's released lib/U/Prog/crt_glue_cg.v has them
    for crt_glue.v; the proofs are cc_glue.v's with evt_SR_canon / kb_run replaced by evt_SRcf_canon / kb_run_cf. The
    rest of cc_glue.v (the list lemmas and the frame invariant cc_mid with its lemmas) never mentions SR, so the cf walk
    of check_copy (check_copy_cg.v) uses it as it is. *)

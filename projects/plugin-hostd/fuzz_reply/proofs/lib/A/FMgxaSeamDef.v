@@ -1,8 +1,8 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamDef.v (a working branch 3e35620c52e); relocated to plugin-hostd/fuzz_reply/fuzz_reply.asan by a Theorem Labs lane's pfinst/tool (reloc.py target reply-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_reply.asan, symbol + offset; table pfinst/tool/tables/reply-A/FMgxaSeamDef.table). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamDef.v (a working branch); relocated to plugin-hostd/fuzz_reply/fuzz_reply.asan by a Theorem Labs lane's pfinst/tool (reloc.py target reply-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_reply.asan, symbol + offset; table pfinst/tool/tables/reply-A/FMgxaSeamDef.table). *)
 (* THE SEAM'S FAMILY, and why the seam's statement has the shape it has.
 
-   The statement, `sh_avfprintf_icpt_realizesUx`, has one home: RtPrintf.Param's lib/A/FMsnprintfSx.v
-   (cold/port-fm-rtprintf-param 53d633d5fe5), copied verbatim from this file's earlier text.  It is
+   The statement, `sh_avfprintf_icpt_realizesUx`, has one home: RtPrintf.Param's lib/A/FMsnprintfSx.v,
+   copied verbatim from this file's earlier text.  It is
    Param's `sh_avfprintf_icpt_realizesU` (lib/A/FMsnprintfShared.v) with
 
    FOUR PREMISES ADDED, each a fact the released GXA statement asks for
@@ -19,7 +19,7 @@
    The contract's dest_off_globals (the destination off the image range (ilo, ihi), which the caller
    names) gives GXA's `D + dn <= 65536 \/ GLOBALS_TOP <= D` (VfprintfCall.v:41, second disjunction)
    when ilo <= 65536 and GLOBALS_TOP <= ihi.
-   The post's FP state is existential, as Param's text already states it (since 401616133a7): fa0
+   The post's FP state is existential, as Param's text already states it: fa0
    is caller-saved and printf_core writes it through pop_arg for a double argument, so the released
    theorem states only `reg_get Ft k = reg_get F k` for k <> 10 and `frm0 fc'`
    (G_vfprintf_snf.v:69-70), while the harness's `cfg_at` pins both to the ambient FPState.  The
@@ -57,7 +57,7 @@ Fixpoint pf_args_slack (ws : list Z) (args : list pf_arg) : Prop :=
   | _ :: _, [] => False
   end.
 
-(* pf_family (FMsnprintfShared.v:95) refined by where the format lives and by that slack.
+(* pf_family (FMsnprintfShared.v:96) refined by where the format lives and by that slack.
    ilo / ihi are the image range the caller names; at fm.asan, 0x10000 and sym 0x35000 = 0x5f7000. *)
 Definition pf_family_ro (PK : pf_piece -> Prop) (ilo ihi : Z) : fmt_fam := fun rd rs f ws T =>
   exists (fmt : list Z) (ps : list pf_piece) (args : list pf_arg),

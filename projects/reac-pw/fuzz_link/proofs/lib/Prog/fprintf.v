@@ -2,7 +2,7 @@
    `fprintf_contract` (lib/Prog/fprintf_c.v) from `vfprintf_contract` (lib/Prog/vfprintf_c.v).
 
    The walk is the shape of libpcap/fuzz_pcap lib/E2/S3/F_printf_core__S3.v Section FprintfFile
-   (ossv/recipes 4b6f0df50aa; the code of fprintf is the same in both images: ident_wide.py
+   (the code of fprintf is the same in both images: ident_wide.py
    libpcap/fuzz_pcap plain fprintf, "instructions 25 ... IDENTICAL"), restated in lib/Lib's vocabulary over
    `mkR` and closed with `leaf_fp_intro` (lib/Prog/mk_leaf_fp.v). `step` reads each instruction from the
    image the proof loads (rsegs); no instruction list is written here.

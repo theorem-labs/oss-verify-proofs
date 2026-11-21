@@ -4,7 +4,7 @@
    constant value is the image's little-endian word there. The fact is decided by ro_pins_ok, a boolean check over
    pin's own tables and segments (vm_compute), and ro_pins_sound reads it as the proposition.
    rule 24 (reuse): no function is proved here. The shape is libreac/fuzz_boxreg's lib/A/Rt/StrncmpViewInst.v
-   box_ro_owned_pinned (origin/ossv/recipes f26f9fbd8777), which takes the same fact from boxreg's AF0mCheck.v
+   box_ro_owned_pinned, which takes the same fact from boxreg's AF0mCheck.v
    gate; pin has no such gate file, so the check is written here over StrncmpView.v's own ro_img_word. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Bool Lia.

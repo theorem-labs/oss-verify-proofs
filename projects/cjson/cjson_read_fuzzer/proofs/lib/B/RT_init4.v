@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: FRONTR_main's room counts from FR_FLOOR, the floor of Linux's bottom-up placement window; art_init_d takes the launch input and its premises as art_init_stmt states them, and FRONTR_main counts the launch's own reservations (at most two, am_reserved) in the ledger. *)
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -150,13 +151,14 @@ Proof. reflexivity. Qed.
 Lemma FRONTR_main : FRONTR mo (g_res g).
 Proof.
   rewrite HG. cbn [g_res]. pose proof (usp_facts w V sp0 fs mo HU HPW HM HC) as UF. cbv zeta in UF. destruct UF as (U1 & U2 & U3). fold usp in U1, U2, U3.
-  apply (FRONTR_intro mo AMAIN_R0 (Z.of_nat (length (segments_reserved bsegs)) + 17) both_totsz).
+  apply (FRONTR_intro mo AMAIN_R0 (Z.of_nat (length (segments_reserved bsegs)) + 19) both_totsz).
   - rewrite R0_val. unfold both_eager, both_abytes. lia.
-  - rewrite (am_reserved _ _ _ _ HM). rewrite length_app. pose proof (ledger_len V _ _ (am_maps _ _ _ _ HM)) as LL.
+  - destruct (am_reserved _ _ _ _ HM) as (rx & Erx & Lrx). rewrite Erx, !length_app.
+    pose proof (ledger_len V _ _ (am_maps _ _ _ _ HM)) as LL.
     change (length both_ledger) with 17%nat in LL. lia.
   - rewrite zsumf_esz_ivs_sum. exact (am_totsz _ _ _ _ HM).
   - assert (EL : Z.of_nat (length (segments_reserved bsegs)) <= 16) by (apply Nat2Z.inj_le with (m := 16%nat); cbv; repeat constructor).
-    rewrite R0_val, HC. unfold both_totsz, both_eager, both_abytes, FR_NMAX, FR_COEF. lia.
+    rewrite R0_val, HC, FR_FLOOR_val. unfold both_totsz, both_eager, both_abytes, FR_NMAX, FR_COEF. lia.
   - assert (EL : Z.of_nat (length (segments_reserved bsegs)) <= 16) by (apply Nat2Z.inj_le with (m := 16%nat); cbv; repeat constructor).
     rewrite R0_val, LIMIT_val. unfold both_eager, both_abytes, FR_KW. lia.
   - exact NAPOS.
@@ -256,18 +258,20 @@ Proof.
 Qed.
 
 Theorem art_init_d : amodel_napos_stmt ->
-  forall (w : bool) (V : nat -> Z) (sp0 brk0 mbase : word) (rdraw : EntryDraw) (argv envp : list (list byte))
-         (uid hw : word) (fs : Fs.Fs) (regs : bvmap 5 word) (m : word -> option byte) (mo : Model) (g : lghost),
+  forall (w : bool) (V : nat -> Z) (sp0 brk0 mbase : word) (rdraw : EntryDraw) (inp : ProcInput)
+         (fs : Fs.Fs) (regs : bvmap 5 word) (m : word -> option byte) (mo : Model) (g : lghost),
     valid_sp sp0 -> valid_brk bsegs brk0 -> valid_mmap_base mbase ->
-    valid_argv argv -> valid_envp envp -> valid_fs fs -> entry_stack_fits sp0 argv envp -> valid_id uid -> valid_hwcap hw ->
+    valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_fs fs -> entry_stack_fits sp0 (in_argv inp) (in_envp inp) ->
+    valid_id (in_uid inp) -> valid_hwcap (in_hwcap inp) ->
+    valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp0 brk0 mbase rdraw) inp ->
     alloc_ceiling = bv_unsigned sp0 - 8388608 ->
-    a_main_entry w V sp0 brk0 rdraw argv envp uid hw fs regs m mo g ->
+    a_main_entry w V sp0 brk0 mbase rdraw inp fs regs m mo g ->
     LOK bsegs mo -> BINV mo g ->
     exists B0, DRV_B_MAIN <= B0
                /\ ARTd (bv_unsigned sp0) (bv_unsigned sp0 - 48) [] [] [] B0 m mo g
                /\ ADRVd DRV_CALLS m mo g.
 Proof.
-  intros NAP w V sp0 brk0 mbase rdraw argv envp uid hw fs regs m mo g Vsp _ _ _ _ _ _ _ _ HC HE LK BI.
+  intros NAP w V sp0 brk0 mbase rdraw inp fs regs m mo g Vsp _ _ _ _ _ _ _ _ _ _ HC HE LK BI.
   destruct HE as (HV & _ & HFW & HPW & _ & HM & HG & HWIN & _).
   assert (HU : bv_unsigned sp0 = 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat).
   { destruct HV as (_ & _ & _ & _ & H & _). unfold IX_S1, IX_SP, IX_S2 in H. lia. }

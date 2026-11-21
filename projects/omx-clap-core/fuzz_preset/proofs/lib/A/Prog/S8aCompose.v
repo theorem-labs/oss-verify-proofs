@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumWalk.v, with its module names changed; 118 of its 137 lines of code are new or changed and 25 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, slice S8a EX-VALUE, image A' (asan #102): the COMPOSITION of ex_value's eleven pieces into the text
    tex_value_specX (lib/A/PRH_FnEx.v). ex_value_compose takes the eleven pieces as the lanes' specs
    (S8aIface.v: ev_entry_spec, ev_disp_spec, ev_number_spec, ev_items_open_spec, ev_item_spec, ev_items_close_spec,
@@ -8,7 +9,7 @@
    ev_items_loop over the remaining text (pieces 7 + 8 + 9 + 10) and the outer one on the nesting n (the recursion,
    where ev_item_spec n' is discharged from the IH tex_value_specX n'). Engine-free: only SRr_bind / SRr_mono and the
    piece specs. No number is image-dependent here. #102: the kit's tex_value_specX quantifies the ledger's two new cells
-   (`.. fail ran most own`, walkkit-next decff67d721f), so the activation takes them as ea_most / ea_own. *)
+   (`.. fail ran most own`, walkkit-next), so the activation takes them as ea_most / ea_own. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

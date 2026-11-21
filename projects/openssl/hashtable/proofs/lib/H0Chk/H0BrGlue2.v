@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved ledger is the launch's, with the vDSO/vvar pair; the output channel keeps a reader; argv[0]'s address is the plain bridge's own [H0Sinv.e_str0t], proved from the stack pointer's view and [V_ENVC]). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63.
 From stdpp Require Import bitvector.
@@ -109,6 +110,8 @@ Section H0Br.
   Variables (sp0 : word) (k buf : Z) (can : word) (content : list byte) (VM : VmMaps) (R : bvmap 5 word) (M : word -> option byte).
   Variables (stdin0 : AmbIn) (fs0 : Fs.Fs) (tid : word).
   Hypothesis TF : tgt_entry_full sp0 k buf can content VM R M.
+  (* LPS 08b1429: the output channel keeps a reader (from the launch's [valid_input_channel_reader]) *)
+  Hypothesis Hrdr0 : ia_channel_reader stdin0 = true.
   Variable fuel : nat.
   (* [comment removed for export] *)
   Variable envc : Z.
@@ -228,6 +231,44 @@ Section H0Br.
     Lemma lf_xi : same_but_vm fim m'.
     Proof. destruct HD as ((_ & _ & _ & _ & _ & _ & _ & _ & HXI & _) & _). exact HXI. Qed.
 
+    (* LPS 727298f3: the reserved ledger the drive carries is the launch's, the binary's reservations
+       and the vDSO/vvar pair *)
+    Lemma lf_res : res_vm VM.
+    Proof. exact (fr_res _ _ _ _ _ _ _ _ _ _ _ _ _ HR). Qed.
+
+    Lemma lf_res_cover : forall z, CAP.img_lo H0T <= z < CAP.img_hi H0T -> CXS.in_ivs z (vm_reserved VM) = true.
+    Proof.
+      intros z Hz. rewrite (proj1 lf_res). unfold CXS.in_ivs. rewrite existsb_app.
+      pose proof (h0t_res_cover z Hz) as H. unfold CXS.in_ivs in H. apply orb_true_iff. left. exact H.
+    Qed.
+
+    Lemma lf_HR0 : exists rx : list (word * word),
+      vm_reserved VM = segments_reserved RSEGS ++ rx /\ Forall (CXS.resx_entry_ok H0T) rx
+      /\ (length rx <= CAP.n_resx H0T)%nat /\ CXS.sum_sizes rx <= CAP.resx_bytes H0T.
+    Proof.
+      destruct lf_res as (Hr & Ht & Hal). exists (vpair (vdso_top VM)). split; [exact Hr|].
+      pose proof h0t_img_hi as Ehi. unfold H0_IMG_HI in Ehi.
+      assert (A1 : (vdso_top VM - 24576) mod 4096 = 0).
+      { replace (vdso_top VM - 24576) with (vdso_top VM + (-6) * 4096) by lia. rewrite Z_mod_plus_full. exact Hal. }
+      assert (A2 : (vdso_top VM - 8192) mod 4096 = 0).
+      { replace (vdso_top VM - 8192) with (vdso_top VM + (-2) * 4096) by lia. rewrite Z_mod_plus_full. exact Hal. }
+      unfold vpair. split; [|split].
+      - apply Forall_cons; [|apply Forall_cons; [|apply Forall_nil]]; unfold CXS.resx_entry_ok; cbn [fst snd];
+          rewrite ?Z_to_bv_small by (unfold bv_modulus, mmap_base_min in *; lia);
+          unfold APC.KHI, mmap_base_min in *; repeat split; first [exact A1 | exact A2 | reflexivity | lia].
+      - unfold H0T. cbn. lia.
+      - vm_compute. congruence.
+    Qed.
+
+    Lemma lf_vdso : incl (vdso_reserved (m_kernel m') (vdso_top (m_vmmaps m'))) (vm_reserved VM).
+    Proof.
+      destruct lf_xi as (_ & _ & _ & _ & _ & _ & Ek & Et). rewrite Ek, Et.
+      exact (res_vm_vdso_incl VM _ lf_res).
+    Qed.
+
+    Lemma lf_rdr : m_channel_reader m' = true.
+    Proof. destruct lf_xi as (_ & _ & _ & Ep & _). unfold m_channel_reader. rewrite Ep. exact Hrdr0. Qed.
+
     Lemma lf_zero : ms_mem ms' (Z_to_bv 64 STR0) = Some (Z_to_bv 8 0).
     Proof.
       rewrite (DInvX_high _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ (Z_to_bv 64 STR0) HD); [exact Hzero|].
@@ -290,18 +331,18 @@ Section H0Br.
         /\ PropExec.seg_rom RSEGS (adr rho' 3%uint63 i) = None.
       Proof.
         intros i Hi.
-        destruct (br_kept_mem ConeCfg.CFG RSEGS IMH (segments_reserved RSEGS) RB LIM RTgt KEEP M
+        destruct (br_kept_mem ConeCfg.CFG RSEGS IMH (vm_reserved VM) RB LIM RTgt KEEP M
                     (XI_frame fim) [] (ms_fregs (fi_ms R M)) (ms_fcsr (fi_ms R M)) (FxMisc.seg_rom RSEGS)
-                    (fun x => bv_unsigned sp0 <= bv_unsigned x) (proj1 res_bounds) H0T (argHt STR0) (bv_unsigned sp0)
-                    h0t_res_cover eq_refl bd (XV CS) XB n' rho' F' L' ms' m' CS (kfacts k) HD eq_refl eq_refl eq_refl Hbc
+                    (fun x => bv_unsigned sp0 <= bv_unsigned x) H0T (argHt STR0) (bv_unsigned sp0)
+                    bd (XV CS) XB n' rho' F' L' ms' m' CS (kfacts k) HD eq_refl eq_refl eq_refl Hbc
                     (fi_ms R M) eq_refl lf_isp rs_isp2 rs_argH 3%uint63 0 (hnb k) ltac:(left; reflexivity) rs_vis i Hi)
           as [Hm Hu].
         rewrite Z.add_0_l in Hm, Hu. split; [exact Hm|]. split; [lia|].
         apply seg_rom_noseg.
-        pose proof (br_nosegb_sound ConeCfg.CFG RSEGS IMH (segments_reserved RSEGS) RB LIM RTgt KEEP M
+        pose proof (br_nosegb_sound ConeCfg.CFG RSEGS IMH (vm_reserved VM) RB LIM RTgt KEEP M
                     (XI_frame fim) [] (ms_fregs (fi_ms R M)) (ms_fcsr (fi_ms R M)) (FxMisc.seg_rom RSEGS)
-                    (fun x => bv_unsigned sp0 <= bv_unsigned x) (proj1 res_bounds) H0T (argHt STR0) (bv_unsigned sp0)
-                    h0t_in_hull h0t_res_cover h0t_hull_ne eq_refl bd (XV CS) XB n' rho' F' L' ms' m' CS (kfacts k) HD eq_refl eq_refl eq_refl Hbc
+                    (fun x => bv_unsigned sp0 <= bv_unsigned x) H0T (argHt STR0) (bv_unsigned sp0)
+                    h0t_in_hull lf_res_cover h0t_hull_ne bd (XV CS) XB n' rho' F' L' ms' m' CS (kfacts k) HD eq_refl eq_refl eq_refl Hbc
                     (fi_ms R M) eq_refl lf_isp rs_isp2 rs_argH 3%uint63 0 (hnb k)) as NS.
         rewrite <- (Z.add_0_l i). apply NS; [|exact Hi].
         unfold nosegb. apply orb_true_iff. right. pose proof rs_vis as Hv. unfold ledger_vis_b in Hv.
@@ -484,23 +525,31 @@ Section H0Br.
       assert (Hsinv : SINVx CS E (ms_mem ms')).
       { split; [|exact (HPHI CS bd F' L' rho' HCS Hx lf_rho0)].
         destruct (sinv_facts rho' (XV CS) XB (bd_vt bd) (f_mem F') (bd_tl bd) (bd_xt bd) 1%uint63 8388608 lf_rho0 lf_regions
-                    (bridge_check_tl _ _ _ _ _ _ _ _ _ _ Hbc) HXT Hsv) as (S1 & S2 & S3 & S4 & S5 & S6).
-        fold E in S1, S2, S3, S4, S5, S6. rewrite <- Hisp2 in S1, S2, S6.
+                    (bridge_check_tl _ _ _ _ _ _ _ _ _ _ Hbc) HXT Hsv) as (S1 & S2 & S3 & S4 & S5).
+        fold E in S1, S2, S3, S4, S5. rewrite <- Hisp2 in S1, S2.
+        (* LPS c0dd863a: argv[0]'s address is [e_sp0 + 192 + 8 * V_ENVC] (H0Sinv.e_str0t), with [V_ENVC]
+           external to the leaf and [envc] in [XV] *)
+        assert (Hx2 : is_ext_var (bd_vt bd) 2 = true).
+        { pose proof Hsv as Hs. unfold sinv_check in Hs. apply andb_prop in Hs as [Hs _]. apply andb_prop in Hs as [Hs _].
+          apply andb_prop in Hs as [_ Hs]. exact Hs. }
+        pose proof (is_ext_var_sound rho' (XV CS) XB (bd_vt bd) 2 Hx2) as Hev. fold E in Hev.
         unfold SINVt. split; [exact S1|]. split.
-        { apply br_eqm_small.
-          - eapply AX2S.eqm_trans; [exact S6|]. unfold XV. cbn [Nat.eqb].
-            rewrite Z_to_bv_small by (unfold bv_modulus; lia). apply AX2S.eqm_refl.
-          - apply br_u64.
-          - lia. }
+        { unfold e_str0t, CAP.eadd, CAP.eaddz, CAP.escale, APC.eadd, APC.eaddz, APC.escale, CXS.uE, AX2S.uE.
+          rewrite !AX2S.mkAlu_denot, AX2S.mkMd_denot, !AX2S.edenot_lit. cbn [AX2.edenot].
+          unfold CAP.V_ENVC, APC.V_ENVC. rewrite Hev.
+          unfold AX2S.uE in S1. rewrite !AX2S.u_add64, AX2S.u_mul64, S1. unfold XV. cbn [Nat.eqb].
+          rewrite !Z_to_bv_small by (unfold bv_modulus; lia).
+          rewrite (Z.mod_small (bv_unsigned sp0 + 192)) by lia. rewrite (Z.mod_small (8 * envc)) by lia.
+          apply Z.mod_small. lia. }
         split; [exact S4|]. split; [exact S3|]. split; [exact S5|].
         split; [exact (proj1 XB12)|]. split; [exact (proj2 XB12)|].
         split; [unfold CAP.pgdown; exact S2 | exact lf_zero]. }
       (* [comment removed for export] *)
-      assert (HB := bridge_sound ConeCfg.CFG RSEGS IMH (segments_reserved RSEGS) RB LIM RTgt KEEP M
+      assert (HB := bridge_sound ConeCfg.CFG RSEGS IMH (vm_reserved VM) RB LIM RTgt KEEP M
                       (XI_frame fim) [] (ms_fregs (fi_ms R M)) (ms_fcsr (fi_ms R M)) (FxMisc.seg_rom RSEGS)
-                      (fun x => bv_unsigned sp0 <= bv_unsigned x) (proj1 res_bounds)
-                      H0T (SINVx CS) (argHt STR0) (bv_unsigned sp0) fs0 h0t_in_hull h0t_res_cover h0t_hull_ne eq_refl
-                      bd (XV CS) XB n' rho' F' L' ms' m' CS (kfacts k) HD eq_refl eq_refl eq_refl Hbc).
+                      (fun x => bv_unsigned sp0 <= bv_unsigned x) (proj1 (res_bounds_vm VM lf_res))
+                      H0T (SINVx CS) (argHt STR0) (bv_unsigned sp0) fs0 h0t_in_hull lf_res_cover h0t_hull_ne lf_HR0
+                      bd (XV CS) XB n' rho' F' L' ms' m' CS (kfacts k) HD lf_vdso lf_rdr eq_refl eq_refl eq_refl Hbc).
       rewrite Etb, Eteq, Eah, Hts, Htc in HB.
       specialize (HB lf_tb lf_teq HXT (fi_ms R M) (mk_fimage_ok RSEGS IMH IMH_eq) eq_refl lf_kf lf_isp Hisp2).
       assert (HargH : forall a, argHt STR0 E a = true -> bv_unsigned sp0 + 192 <= bv_unsigned a).
@@ -578,10 +627,10 @@ Section Top.
   Theorem h0br_leaf_tail : leaf_tail_stmt KT.
   Proof.
     unfold leaf_tail_stmt.
-    intros sp0 k buf can content VM R M stdin0 fs0 tid Hsp Htid TF [(envc & He0 & He1 & Hz) Hbrk]
+    intros sp0 k buf can content VM R M stdin0 fs0 tid Hsp Htid Hrdr0 TF [(envc & He0 & He1 & Hz) Hbrk]
            mb bw B sec tdz err HR F' L' n' r rho' ms' m' Hleaf HD Hext _.
     pose proof (chk_leaf k _ (tgt_k_range _ _ _ _ _ _ _ _ TF) Hleaf) as Hlc.
-    apply (h0br_leaf sp0 k buf can content VM R M stdin0 fs0 tid TF FUEL envc (conj He0 He1) Hz (TB k) (HTBlt k)
+    apply (h0br_leaf sp0 k buf can content VM R M stdin0 fs0 tid TF Hrdr0 FUEL envc (conj He0 He1) Hz (TB k) (HTBlt k)
              (fun mb0 bw0 B0 sec0 tdz0 err0 HR0 => HTB sp0 k buf can content VM R M mb0 bw0 B0 sec0 tdz0 err0 Hsp TF
                                                      (conj (ex_intro _ envc (conj He0 (conj He1 Hz))) Hbrk) HR0)
              (CSL k) PHI (KT content fs0) (EOK content k envc)

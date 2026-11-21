@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the ledger invariant's entries_nonzero conjunct; the reserved ledger now holds the launch's vDSO/vvar pair: the allocator windows' ledger premise (RESF_pre)). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BW_0Gc.
@@ -791,7 +792,8 @@ Definition amaps_in_ledger (s : ast) (mo : Model) : Prop :=
           in_rangesb x (vm_noaccess h) = false /\ in_rangesb x (a_L s) = false)
   /\
      (forall sc x, In sc (as_sec st) -> sc_map_beg sc <= bv_unsigned x < sc_map_beg sc + sc_map_size sc -> in_rangesb x (a_L s) = false)
-  /\ nooverlap (vm_maps h) /\ entries_nowrap (vm_maps h) /\ entries_nowrap (vm_noaccess h).
+  /\ nooverlap (vm_maps h) /\ entries_nowrap (vm_maps h) /\ entries_nowrap (vm_noaccess h)
+  /\ entries_nonzero (vm_maps h).
 
 Definition ashadow_visible (s : ast) : Prop :=
   let st := a_st s in
@@ -821,3 +823,11 @@ Qed.
 
 End HCW3.
 
+
+(* LPS 727298f3: the reserved ledger holds the launch's vDSO/vvar pair ([State.init_model]), which
+   lies above [AHI_LO], so a window above [AHI_LO] misses the ledger only when it is known to lie
+   apart from the pair.  The allocator's [RESF] premise ([BS_Refill2], [BS_Refill3], [BS_Refill4],
+   [BS_Rta], [BS_LcDealloc], [BS_RecyclePrim]) asks for windows inside the primary allocator's
+   space [sb, sb + kSpaceSize), which the pair lies apart from ([BllocRepX.ak_resf_hi]). *)
+Definition RESF_pre (sb : Z) (a k : word) : Prop :=
+  AHI_LO <= bv_unsigned a /\ sb <= bv_unsigned a /\ bv_unsigned a + bv_unsigned k <= sb + kSpaceSize.

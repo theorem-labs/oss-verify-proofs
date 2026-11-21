@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths, module names and numbers changed; 918 of its 1024 lines of code are new or changed and 408 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* THE FREE / REALLOC MOVE (S3 phase B, a Theorem Labs lane; plan rows B-2 .. B-14, rule F12): tx_put's grow frees the old
    buffer, so the kit's ttx_put_specX / ttx_line_specX conclude SRr' segs RZ_cf with the post's journal at
    WR := wle' SEGS RZ_cf (PRH_Base fpostWb is fpostW_xbR at WR, so QF below is already the primed post). The walk
@@ -9,9 +10,9 @@
    each tx_put call is Tx102Glue's s10_call_WbmR at WR. The return step (paj_ret_at, a plain SRr step that frees
    nothing) is lifted by YA0nH.SRr_SRr'. HULL (R2320): the text's `(length rp_os <= 4)%nat` is the Section-g
    hypothesis HOS, passed to each tx_put text. *)
-(* INT102-READY on the kit's cut 7cdbb61b5fa0 (it replaces the signed record walk ce6b0b3e4a7c
-   of a working branch 02fc33de3e82, which the cut carries as int102's copy): the same walk re-fitted to the batch kit's
-   texts, a working branch 4dcec0343c87 (lib/A/PRH_FnTx.v 88468bf162d8, lib/A/PRH_Base.v
+(* INT102-READY on the kit's cut (it replaces the signed record walk ce6b0b3e4a7c
+   of a working branch, which the cut carries as int102's copy): the same walk re-fitted to the batch kit's
+   texts, a working branch (lib/A/PRH_FnTx.v 88468bf162d8, lib/A/PRH_Base.v
    fbe6513ce9cd; at the cut PRH_FnTx.v 88468bf162d8 and PRH_Base.v ef7c8ca98529). What the batch changed, and
    what this file does about it (each change forced by the batch text; every lemma name kept):
    - DW is gone (prh_univ_closure B CTX0; ttx_*_specX B ARx SK CTX0);
@@ -32,11 +33,11 @@
 (* fuzz_preset, image B' (asan-ubsan, #102 pin d663f82d, unstripped twin c90d4fa54d43): the walk of tx_line (merged
    fuzz_preset.c :432-439, body instruction-equal to the base's :398-405; entry B' 0x85c34, slot 4442 of
    lib/B/Listing_prog.v, B_entry_tx_line of lib/B/PAImg_prog.v; 27 instructions to the `ret` at 0x85c9c) against K0's
-   #102 text ttx_line_specX (lib/A/PRH_FnTx.v 88468bf162d8 at the kit's cut 7cdbb61b5fa0, with the batch changes above;
+   #102 text ttx_line_specX (lib/A/PRH_FnTx.v 88468bf162d8 at the kit's cut, with the batch changes above;
    first walked against PRH_FnTx.v blob a52a78336898: the
    record's `int failed`, the run premise `f0 = 0 -> prh_run_at rp_sm rp_x rp_os rp_i (prhtx_evs len0 cap0 ks)`, ONE
    fpostWm post naming the outcome prhtx_out (DONE / FAILED AT ENTRY / REFUSED, no abort arm) and the position
-   `exists j hist', ..`), at PI := prh_img_B. RELOCATED from the old-pin walk cold/h-rw-pre-5-b-txl 79ea3b230f09 (blob
+   `exists j hist', ..`), at PI := prh_img_B. RELOCATED from the old-pin walk (blob
    a082c52b0694, Qed at image B f8f98a95) by alreloc frozen-c4338d099cfb8025, then RE-FITTED to the #102 texts.
    MODEL: image A's walk lib/A/Prog/S10TxLine.v (cold/h-hpreset-7-walk-S10-fold, WalkS10) - its cut structure (the
    prologue to the first call, the `blez`, the loop head, the loop call, `addiw` / `bnez`, the tail). tx_line's B' body
@@ -72,16 +73,16 @@
    widths 5 / 64 (DERIVED: RISC-V); atom indices 2 / 8-18 / 32-63 / 243 (DERIVED: the engine's numbering, A_OBJ 2).
    No ADDRESS literal in a statement: addresses are pa_sigma / pa_val of PAImg_prog.v; the image bounds are the
    instance's pa_lo / pa_hi and the CfImg's cf_img_lo / cf_img_top (never image A's YImgTop bounds).
-   RULE 24 (tx_line, image B' d663f82d, ttx_line_specX of f97c8b2f046b): proof-index tx_line 19:15:34Z (rc=0, index
+   RULE 24 (tx_line, image B' d663f82d, ttx_line_specX): proof-index tx_line 19:15:34Z (rc=0, index
    v5 built 19:12:20Z, lemma index 18:36:17Z): `6 named, 10 by address, 0 related, 3 released lemma(s), an earlier delivery 0 named,
    6 UNRELEASED cold/* file(s), 0 UNRELEASED hit(s) on live working heads`; the released hits are the plain / UBSan
    contract texts (plain 0x14f7c, ubsan 0x155d4: other images), the unreleased ones contract programs TX_LINE (lib/A,
    lib/B, lib/AZ, lib/Prog/CF), BRttStgNlF.v's Module tx_line and PresetReqAt.v's model tx_line - none a walk at B'.
    The census-1 cold/* + release/* sweep 19:16Z (15709 refs, 15268 with fuzz_preset, 2149 unique trees, 26260 blobs;
    patterns tx_line / ttx_line_specX / TxLine / 85c34 / 17768 ..) found the positive control (tx_line_B_holds with
-   0x85c34) only at cold/h-rw-pre-5-r102-txB 123fe3cd3ec4, this lane's relocation; 85c34 occurs elsewhere only in B''s
+   0x85c34) only, this lane's relocation; 85c34 occurs elsewhere only in B''s
    listing and image tables (PAImg_prog, PAImg_leaves, PRH_ImgB, YB1w). No released or unreleased proof of tx_line at
-   B' exists; the old-pin walk 79ea3b230f09 (image B f8f98a95) is this file's donor. *)
+   B' exists; the old-pin walk (image B f8f98a95) is this file's donor. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -1225,7 +1226,7 @@ Qed.
 End g.
 End p.
 
-(* ==== The batch kit's text ttx_line_specX (lib/A/PRH_FnTx.v at a working branch 4dcec0343c87, blob
+(* ==== The batch kit's text ttx_line_specX (lib/A/PRH_FnTx.v at a working branch, blob
    88468bf162d8) at image B': the walk at P := fun m => memnorm SEGS mem -> memnorm SEGS m (YSRrMemnorm.v
    srr_inv_laws_imp / srr_inv_call_imp); at that P, QF IS the text's post (fpostWbmR .. WR .. QT = fpostWb ..
    (fQmn mem QT), both fpostW_xbR at WR) and P mem is the identity; the walk's SRW is the text's SRr' segs RZ_cf ==== *)

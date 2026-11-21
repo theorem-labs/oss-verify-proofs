@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_rd_pre_e.v (a working branch e2e59892bef),
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_rd_pre_e.v (a working branch),
    re-walked on B (0x81e94 .. 0x81f00 = A's same stretch shifted by 0x290, registers renamed). *)
 (* lv2_locate_manifest_readings, PRE entry piece (0x81e94 .. RD_C2 and the exits uri_len = 0 / NULL; B-readings.lst
    lines 1-28): prologue (13 saves), s0 = rp, s2 = uri, s11 = the shadow base loaded through GOT 0x99c98, s6 = text;

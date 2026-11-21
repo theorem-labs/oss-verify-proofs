@@ -1,4 +1,4 @@
-(* Theorem Labs, 2026-10: W_frame_x.v:71's flag law frame_flag_lawP_x at reply image A's cf allocator relation, the
+(* Theorem Labs, 2026-10: W_frame_x.v:72's flag law frame_flag_lawP_x at reply image A's cf allocator relation, the
    relation of W_LLVMFuzzerTestOneInput_top_x.v Definition ARX (ARcf at CfParams_reply, ghost list empty). lib/A/W_LLVMFuzzerTestOneInput_top_x.v takes
    it as the Section hypothesis FFL (and pro_x / exit_x / relay_add / relay_finish_h as FFL), since no lemma concluded
    it at the cf instance.

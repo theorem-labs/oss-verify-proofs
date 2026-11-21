@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: relocated by R4Printf.BzPrintfPort (a Theorem Labs lane) onto plugin-hostd/fuzz_reply.asan from a working branch 840c4afa7e2 proofs/omx-clap-core/fuzz_state/lib/A/Bz/A/F_achk.v: module paths only (no fuzz_state.asan address numerals). *)
+(* Modified by Theorem Labs, 2026-10: relocated by R4Printf.BzPrintfPort (a Theorem Labs lane) onto plugin-hostd/fuzz_reply.asan from a working branch proofs/omx-clap-core/fuzz_state/lib/A/Bz/A/F_achk.v: module paths only (no fuzz_state.asan address numerals). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A.Bz Require BvWfKernel.
 (* [comment removed for export] *)
@@ -29,7 +30,7 @@ Proof.
   exists w1, w2. rewrite Z.add_0_r in W1. replace (p + (n - 1)) with (p + n - 1) in W2 by lia. split; assumption.
 Qed.
 
-(* Prefixes only (p' = p; ct: p <= p'): this tree's region_in_mem (I_consts.v:22-23) also bounds b + 7, which a
+(* Prefixes only (p' = p; ct: p <= p'): this tree's region_in_mem (I_consts.v:23-24) also bounds b + 7, which a
    later start p' does not keep. The one use (I_pcxchk2.v, the strnlen prefix of a %.Ns string) has p' = p. *)
 Lemma chkr_sub : forall m p n p' n', chkr m p n -> p' = p -> p' + n' <= p + n -> 0 <= n' -> chkr m p' n'.
 Proof.

@@ -1,4 +1,4 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfSeamI.v (a working branch 0ddf65fd8cc); relocated to libreac/fuzz_disco.asan-ubsan by reloc.py (target disco-Y): module paths changed; 4 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan-ubsan, symbol + offset; table: this file's rows in provenance/evidence/g9-gxa/g9tool/g9-table-disco-Y.tsv); GXA symbol keys kept (0x22e18, 0x34288, 0x7f000400); names: record RT_IImgA -> A_img RecAsanVfB.N_img_asan_ubsan_vf; A-core -> Y-core (lib.Reusable): AB1v->YB1v, AF0m->YF0m; hand checks: FMgxa_mem STOP: names differ: fm FMgxa_mem.copy_ready/set_ready = disco lib/<img>/RT_gxa_calls_mem.copy_ready/set_ready; fm memcpy_stack_contract_A/memset_stack_contract_A (at A_img) = disco lib/<img>/RT_gxa_calls_mem_vf.memcpy_stack_contract_Avf/_Avf (Y: _Bvf); map each use by hand. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfSeamI.v (a working branch); relocated to libreac/fuzz_disco.asan-ubsan by reloc.py (target disco-Y): module paths changed; 4 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan-ubsan, symbol + offset; table: this file's rows in provenance/evidence/g9-gxa/g9tool/g9-table-disco-Y.tsv); GXA symbol keys kept (0x22e18, 0x34288, 0x7f000400); names: record RT_IImgA -> A_img RecAsanVfB.N_img_asan_ubsan_vf; A-core -> Y-core (lib.Reusable): AB1v->YB1v, AF0m->YF0m; hand checks: FMgxa_mem STOP: names differ: fm FMgxa_mem.copy_ready/set_ready = disco lib/<img>/RT_gxa_calls_mem.copy_ready/set_ready; fm memcpy_stack_contract_A/memset_stack_contract_A (at A_img) = disco lib/<img>/RT_gxa_calls_mem_vf.memcpy_stack_contract_Avf/_Avf (Y: _Bvf); map each use by hand. *)
 (* THE GXA SEAM AT fm.asan's MUSL VFPRINTF, INSTANTIATED: FMgxaSeam.fm_vfprintf_seam with fm's three interceptor
    call contracts (FMgxa_mem.memcpy_stack_contract_A, FMgxa_mem.memset_stack_contract_A,
    RT_gxa_strnlen.strnlen_stack_contract_A) and their ready predicates, fm's format family pf_family_ro
@@ -27,7 +27,7 @@ From OSSVerify.Proofs.libreac.fuzz_disco.lib.B Require Import FMgxaSeamGuard.
 From OSSVerify.Proofs.libreac.fuzz_disco.lib.B Require FMgxaSeamNorm.
 From OSSVerify.Proofs.libreac.fuzz_disco.lib.A Require FMgxaSeamPf.
 (* FMgxa_mem (a STOP module of reloc.py): fm's Require of it is dropped, because this file names nothing from it (the call
-   contracts enter through FMgxaSeamFm.fm_vfprintf_seam_closedP). Same hand edit as P7-Y-close f2f16dc7669 and the A twin. *)
+   contracts enter through FMgxaSeamFm.fm_vfprintf_seam_closedP). Same hand edit as P7-Y-close and the A twin. *)
 From OSSVerify.Proofs.libreac.fuzz_disco.lib.B Require FMgxaSeam FMgxaSeamFm RT_gxa_strnlen FMH_Base FMsnprintfImg.
 Import ListNotations.
 Local Open Scope Z_scope.

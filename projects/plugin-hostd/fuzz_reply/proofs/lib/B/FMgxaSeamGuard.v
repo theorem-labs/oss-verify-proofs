@@ -1,4 +1,4 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamGuard.v (a working branch 3e35620c52e); relocated to plugin-hostd/fuzz_reply/fuzz_reply.asan-ubsan by a Theorem Labs lane's pfinst/tool (reloc.py target reply-B): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_reply.asan-ubsan, symbol + offset; table pfinst/tool/tables/reply-B/FMgxaSeamGuard.table); GXA symbol keys kept (0x22e18); names: record RT_IImgA -> . *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamGuard.v (a working branch); relocated to plugin-hostd/fuzz_reply/fuzz_reply.asan-ubsan by a Theorem Labs lane's pfinst/tool (reloc.py target reply-B): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_reply.asan-ubsan, symbol + offset; table pfinst/tool/tables/reply-B/FMgxaSeamGuard.table); GXA symbol keys kept (0x22e18); names: record RT_IImgA -> . *)
 (* The GUARD of the GXA seam at musl vfprintf: GXA's vf_ready_a (lib/CJ/RL/GXA/G_vfprintf_snf.v:219),
    from facts that hold where the harness calls vfprintf.
 

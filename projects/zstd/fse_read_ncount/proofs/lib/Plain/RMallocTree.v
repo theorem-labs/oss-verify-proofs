@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (rauxv_list now auxv_entries of the launch auxv record and the entry, uid, gid, hwcap, random and exec-name values, not a fixed ten-pair list; rauxv_ok restated over them, its span sized by auxv_count of the CONFIG_RSEQ flag, per-value range premises dropped; rauxv_list_length (2 * auxv_count) added; 2 recorded proofs replaced by written proofs (rauxv_ok_weaken, rauxv_ok_frame); imports StackLayout). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -13,6 +14,7 @@ From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Plain Require Export RMallocRep.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Spec Require Import STree Malloc MallocCtrl Monad.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Malloc Require Import ProgDeps.
 From OSSVerify.Proofs.zstd.fse_read_ncount.lib.Plain Require Import RunDraw.
+From LinuxProcessSemantics.LinuxProcessSem Require Import StackLayout.
 Import ListNotations.
 Import ITree.Exc.
 Open Scope Z_scope.
@@ -229,35 +231,35 @@ pose proof (IH z s' Q ms') as IH1; unfold rimplT, implM in IH1;
 eapply impl_epost_mono; [apply IH1; exact H1|];
 intros [[o1 r] s2] ms2; cbn; intros [HQ HL]; split; [exact HQ| apply (leaf_of_vis o _ k z); [exact I| exact HL]].
 Qed.
-Definition rauxv_list (x3 x4 x5 x16 x6 x11 x12 x23 rnd : Z) : list word :=
-map wz [3; x3; 4; x4; 5; x5; 16; x16; 6; x6; 11; x11; 12; x12; 23; x23; 25; rnd; 0; 0].
+Definition rauxv_list (la : LaunchAuxv) (entry uid gid hw efn : word) (rnd : Z) : list word :=
+  flat_map (fun e => [fst e; snd e]) (auxv_entries la PImg.p_phdrs entry uid gid hw (wz rnd) efn).
 Definition rauxv_ok (m : mem) (B : Z) : Prop :=
-exists av x3 x4 x5 x16 x6 x11 x12 x23 rnd,
-rw_cells psegs m RAUXV_CELL [C8 (wz av)]
-/\ bytes_at psegs m av (u64s (rauxv_list x3 x4 x5 x16 x6 x11 x12 x23 rnd))
-/\ bytes_at psegs m (rnd + 8) (le8 (wz SECRET))
-/\ ATOP <= B /\ B <= av /\ av + 160 <= 2^64 /\ B <= rnd + 8 /\ rnd + 16 <= 2^64
-/\ 0 <= x3 < 2^64 /\ 0 <= x4 < 2^64 /\ 0 <= x5 < 2^64 /\ 0 <= x16 < 2^64 /\ 0 <= x6 < 2^64
-/\ 0 <= x11 < 2^64 /\ 0 <= x12 < 2^64 /\ 0 <= x23 < 2^64 /\ 0 <= rnd < 2^64.
+  exists av rnd la entry uid gid hw efn,
+    rw_cells psegs m RAUXV_CELL [C8 (wz av)]
+    /\ bytes_at psegs m av (u64s (rauxv_list la entry uid gid hw efn rnd))
+    /\ bytes_at psegs m (rnd + 8) (le8 (wz SECRET))
+    /\ ATOP <= B /\ B <= av /\ av + 16 * Z.of_nat (auxv_count (la_rseq la)) <= 2^64 /\ B <= rnd + 8 /\ rnd + 16 <= 2^64
+    /\ 0 <= rnd < 2^64.
+#[using="Type"] Lemma rauxv_list_length : forall la entry uid gid hw efn rnd,
+  length (rauxv_list la entry uid gid hw efn rnd) = (2 * auxv_count (la_rseq la))%nat.
+Proof. intros [ehdr c msz [|]] entry uid gid hw efn rnd; reflexivity. Qed.
 #[using="Type"] Lemma rauxv_ok_weaken : forall m B B', rauxv_ok m B -> ATOP <= B' <= B -> rauxv_ok m B'.
 Proof.
-intros m B B' (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & H) HB.
-exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. repeat (split; [tauto|]). Local Ltac2 Set LiaHints.tbl := fun () => "0010>21988031899.17000006S1H2HB".
-lia.
-Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
+  intros m B B' (av & rnd & la & ent & uid & gid & hw & efn & H) HB.
+  exists av, rnd, la, ent, uid, gid, hw, efn. repeat (split; [tauto|]). lia.
+Qed.
 #[using="Type"] Lemma rauxv_ok_frame : forall m m' B W,
 rauxv_ok m B -> munch W m m' -> wmono psegs m m' ->
 Forall (fun iv : Z * Z => snd iv <= B /\ (snd iv <= RAUXV_CELL \/ RAUXV_CELL + 8 <= fst iv)) W ->
 rauxv_ok m' B.
 Proof.
-intros m m' B W (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & C & A1 & A2 & H) MU WM FW.
-exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. split; [|split; [|split; [|exact H]]].
-- eapply rw_cells_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [_ ?]. Local Ltac2 Set LiaHints.tbl := fun () => "0030>18269244616.2659023033216.267064069613.26 00000400:00@S2H0S1H2H0S1H2H0".
-lia.
+  intros m m' B W (av & rnd & la & ent & uid & gid & hw & efn & C & A1 & A2 & H) MU WM FW.
+  exists av, rnd, la, ent, uid, gid, hw, efn. split; [|split; [|split; [|exact H]]].
+  - eapply rw_cells_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [_ ?]. lia.
 - eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [? _]. lia.
 - eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [? _].
 rewrite ?length_le8. cbn [length]. lia.
-Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
+Qed.
 #[using="Type"] Lemma rraw_free_bridge : forall st s (p : bptr) (pf : aptr) (o : mem) Q1 Q ms,
 strip st = ps_m s -> s_atop (ps_m s) = ATOP ->
 hdr_ok pans_mem pupd_mem st pf (fst p) ->

@@ -1,6 +1,6 @@
 (* plain_halts of reac-pw/fuzz_role from the frame and the slot of LLVMFuzzerTestOneInput: reac-pw/fuzz_pin's
-   Prog/PinEnd.v (libreac/fuzz_ctrl's released Prog/Seg/Segs.v + Prog/Seg/SlotLink.v, origin/ossv/recipes
-   25e3d17bdb50) for role's four segments.
+   Prog/PinEnd.v (libreac/fuzz_ctrl's released Prog/Seg/Segs.v + Prog/Seg/SlotLink.v)
+   for role's four segments.
    - The segment lemmas, each as its segment file states it once its Section closes (Section hypotheses:
      FrameAPI.frame_facts_plain, then the one contract the segment takes): seg_E01_stmt (Seg/E01.v: the prologue and
      malloc(pp), malloc from frame_allocator inside frame_facts_plain), seg_M01_stmt (Seg/M01.v: role_build_contract,

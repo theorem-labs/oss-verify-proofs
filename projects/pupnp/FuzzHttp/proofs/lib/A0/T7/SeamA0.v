@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (walks lifted to the run's segment list). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -11,6 +12,7 @@ From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Top Require Import Realize SafeReach Br
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.ASN Require Import AsanAcct.
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.LZ Require Import ITreeLZ BridgeLZ NodesLZ NodesLZSound NodesLZMm.
 From OSSVerify.Proofs.pupnp.FuzzHttp.lib.A0.T7 Require Import RealizeS A0Prog.
+From OSSVerify.Proofs.pupnp.FuzzHttp.lib.Top Require RomBase.
 Import ListNotations.
 Import ITree.Exc.
 Open Scope Z_scope.
@@ -139,6 +141,15 @@ Proof.
     destruct (nsl_exit _ _ _ _ _ _ _ _ _ NSL (LNode n) msF mo H P code moE' HAT HF HZ Hsafe Hex) as (mo' & EQ & Hh & Hss).
     exists mo'. auto.
   - destruct (nsl_progress _ _ _ _ _ _ _ _ _ NSL (LNode n) msF mo H P HAT HF HZ Hsafe) as [L | R]; [left; exact L | right; exact R].
+Qed.
+
+(* LPS 727298f3: each fd node's system call reads the same over every larger read-only backing. *)
+Theorem ROB_A : forall n ms mo a,
+  fdn n -> ATNA n ms a -> INVA (mkCfg ms mo) a -> RomBase.sys_rob asegs (mkCfg ms mo).
+Proof.
+  intros n msF mo [H P Vg] Hn HAT (HF & HZ & HV). unfold ATNA, VA, INVA in *. cbn [g_H g_P g_V cfg_ms cfg_model] in *.
+  change (at_node asegs n (restrict H msF)) with (at_nodeL asegs (LNode n) (restrict H msF)) in HAT.
+  exact (nsl_rob _ _ _ _ _ _ _ _ _ NSL (LNode n) msF mo H P HAT HF HZ (fdn_nsafeL n (perase P mo) Hn)).
 Qed.
 
 Local Notation SEAM := (RealizeS.SEAM asegs gst VA INVA).

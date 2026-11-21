@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO; the THP flag of the mmap placement). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import decidable.
@@ -103,7 +104,8 @@ Definition MAL0_WL : list Z := [0;1;5;6;7;9;10;11;12;13;14;15;16;17;28;29;30;31]
 
 Lemma mal0_run {B} : forall fuel (p pp : word) md (R : bvmap 5 word) mm rom (s0 s : mstate) (sp : word)
     (K : word -> M B) (P : B -> mstate -> Prop) (L : B -> mstate -> TSet),
-  md_pure md -> magree s mm -> minv s0 s ->
+  md_pure md -> vdso_ok (with_vmmaps (ms_vm s0) md) -> ms_thp s0 = kb_thp (m_kernel md) ->
+  magree s mm -> minv s0 s ->
   getr R 8 = p -> getr R 10 = pp -> getr R 2 = v_addi sp (-32) -> getr R 4 = A_TP ->
   bv_unsigned sp mod 16 = 0 ->
   ms_lo s0 <= bv_unsigned sp - CALLOC_D -> bv_unsigned sp <= ms_hi s0 ->
@@ -118,10 +120,10 @@ Lemma mal0_run {B} : forall fuel (p pp : word) md (R : bvmap 5 word) mm rom (s0 
   realizes ml_segs (mkCfg (mkst R (pc+ PC_CALLOC 0xb0) mm rom) (with_vmmaps (ms_vm s) md))
            (tshape (MallocTree.mbind (m_mal0_loop fuel p pp) K s) L).
 Proof.
-  induction fuel as [|fuel IH]; intros p pp md R mm rom s0 s sp K P L Hp Hag HI H8 H10 H2 H4 Hal Hlo Hhi HS HK.
+  induction fuel as [|fuel IH]; intros p pp md R mm rom s0 s sp K P L Hp Hvdo Hthp Hag HI H8 H10 H2 H4 Hal Hlo Hhi HS HK.
   { exfalso. clear -HS. cbn [m_mal0_loop MallocTree.mbind mcrash tbind tsafe] in HS. exact HS. }
   pose proof I as Hret. pose proof Hlo as HloD. unfold CALLOC_D, ALLOC_STACK in Hlo.
-  pose proof HI as HI0. destruct HI0 as (_ & _ & _ & Hlo0 & _ & Hhi64 & _).
+  pose proof HI as HI0. destruct HI0 as (_ & _ & _ & _ & Hlo0 & _ & Hhi64 & _).
   pose proof (mwin_init s0 mm sp 0 ltac:(intros a Ha; lia)) as HW. note_win HI.
   unfold m_mal0_loop in HS |- *; fold m_mal0_loop in HS |- *. unfold MAL0_WL. munf. mnorm HS.
   (* [comment removed for export] *)
@@ -141,7 +143,7 @@ Proof.
     lazymatch goal with
     | |- realizes _ (mkCfg (mkst ?Rc _ ?mc _) _) (tshape (MallocTree.mbind (m_mal0_loop ?f ?p' ?pp') _ ?sb) _) =>
         eapply (IH p' pp' md Rc mc rom s0 sb sp);
-          [ exact Hp | exact Hag | exact HI | val_tac | val_tac | val_tac | val_tac | exact Hal | exact HloD | exact Hhi | exact HS | ]
+          [ exact Hp | exact Hvdo | exact Hthp | exact Hag | exact HI | val_tac | val_tac | val_tac | val_tac | exact Hal | exact HloD | exact Hhi | exact HS | ]
     end.
     clear HS. intros x s' mm' R'' Hag' HI' HJ Hkeep'' Hx HS.
     eapply (HK x s'); [ exact Hag' | exact HI' | | | exact Hx | exact HS ].
@@ -156,7 +158,7 @@ Proof.
     lazymatch goal with
     | |- realizes _ (mkCfg (mkst ?Rc _ ?mc _) _) (tshape (MallocTree.mbind (m_mal0_loop ?f ?p' ?pp') _ ?sb) _) =>
         eapply (IH p' pp' md Rc mc rom s0 sb sp);
-          [ exact Hp | exact Hag | exact HI | val_tac | val_tac | val_tac | val_tac | exact Hal | exact HloD | exact Hhi | exact HS | ]
+          [ exact Hp | exact Hvdo | exact Hthp | exact Hag | exact HI | val_tac | val_tac | val_tac | val_tac | exact Hal | exact HloD | exact Hhi | exact HS | ]
     end.
     clear HS. intros x s' mm' R'' Hag' HI' HJ Hkeep'' Hx HS.
     eapply (HK x s'); [ exact Hag' | exact HI' | | | exact Hx | exact HS ].
@@ -178,7 +180,7 @@ Ltac calloc_tail Hp HS Hag HI HW HK Hret :=
 Theorem calloc_refines : calloc_stmt.
 Proof.
   unfold calloc_stmt.
-  intros md regs mm rom s fuel m n sp ret P L Hp Hvm Hag H2 Hal Hlo0 Hlo Hhi Hhi64 Hwt Hstk H1 Hret H4 H10 H11 HS HK.
+  intros md regs mm rom s fuel m n sp ret P L Hp Hvm Hthp Hvdo Hag H2 Hal Hlo0 Hlo Hhi Hhi64 Hwt Hstk H1 Hret H4 H10 H11 HS HK.
   unfold CALLOC_D, ALLOC_STACK in *.
   pose proof (minv_init s sp (1024 + 32) Hlo0 Hlo ltac:(lia) Hhi Hhi64 Hwt) as HI.
   pose proof (mwin_init s mm sp (1024 + 32) Hstk) as HW.
@@ -207,7 +209,7 @@ Proof.
   all: lazymatch goal with
     | |- realizes _ (mkCfg (mkst ?Rc _ ?mc ?rom) (with_vmmaps _ ?md)) (tshape (MallocTree.mbind (m_mal0_loop ?f ?p' ?pp') ?Kc ?sb) _) =>
         eapply (mal0_run f p' pp' md Rc mc rom s sb sp Kc);
-          [ exact Hp | exact Hag | exact HI | val_tac | val_tac | val_tac | val_tac | exact Hal
+          [ exact Hp | vdso_side HI | exact Hthp | exact Hag | exact HI | val_tac | val_tac | val_tac | val_tac | exact Hal
           | cbn [ms_lo ms_hi ms_mem ms_vm upd]; unfold CALLOC_D, ALLOC_STACK; alia
           | cbn [ms_lo ms_hi ms_mem ms_vm upd]; alia
           | exact HS | ]

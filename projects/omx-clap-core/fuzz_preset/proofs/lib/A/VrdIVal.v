@@ -4,17 +4,17 @@
    VrdIElem.tvrd_ival_aP Pm - tvrd_ival_a's premises plus Pm (ip_mem P), and its post plus Pm on the reached memory
    and the PROGRESS conjunct ip_n P' = ip_n P + 1 at the comma (vrd_ival_holds_P inside Section VI, which holds
    exactly Pm and its three laws).
-   A'STEP (the kit's #102 reader text, a working branch 3ac20a5c9e30: PRH_FnParse.v blob 94232293d483,
-   PRH_FnReader.v fb7b12dfa169, PRH_Base.v ee2f5cd7ed35, PRH_FnAlloc.v 95e26ff95e63, taken once by lane A2Num as
-   6b723d760c66): prh_ledger takes most own; rd_ledger_move takes most and the all-granted trace (parse_value's
+   A'STEP (the kit's #102 reader text, a working branch: PRH_FnParse.v blob 94232293d483,
+   PRH_FnReader.v fb7b12dfa169, PRH_Base.v ee2f5cd7ed35, PRH_FnAlloc.v 95e26ff95e63, taken once by lane A2Num as):
+   prh_ledger takes most own; rd_ledger_move takes most and the all-granted trace (parse_value's
    prhPv_gtrace at the call, the whole call's prhPi_gtrace at the position, split by vv_gt_val); parse_value's post
    is the POST-IMPLICATION form (no entry room position; the live requests, the position transfer and the OUTCOME
    are post conjuncts, composed by VrdCallPos's vc_xfer / vc_live / vc_outc); the refusal exit's OUTCOME is the
    callee's (vv_outc_callee), the text exits' is the granted prefix's (vc_outc_granted); fpre gains the return slot
    bound (vv_ret_slot_ceil) and frm_zero; the live counts at parse_value's inner calls come from vrd_ient_ok's along
    the call's granted events (VrdIStep.vi_pk_mid).
-   The kit's CUT (lane RItems, a working branch 7cdbb61b5fa0: PRH_FnParse.v f0d92dcec7e9, PRH_Base.v
-   ef7c8ca98529; RBase's VrdIElem / VrdIStep / VrdIFd at c1ae1218f628). DW is CW. rd_room's live room is per event
+   The kit's CUT (lane RItems, a working branch: PRH_FnParse.v f0d92dcec7e9, PRH_Base.v
+   ef7c8ca98529; RBase's VrdIElem / VrdIStep / VrdIFd). DW is CW. rd_room's live room is per event
    (vv_room_prefix by VrdLedgerStep.vl_live_evs_prefix; vl_room_tail on the callee's live move). Every position's
    journal is at the budget ie_CW E (VrdIElem.vrd_ijrn): the runners run from it rebased (vrd_ijrn_base) and the
    transports take it back (vrd_ijrn_unbase), so the transport lemmas' journal premises are budgeted. Row 231 calls
@@ -57,9 +57,9 @@
    `fun m => memnorm segs mem0 -> memnorm segs m` (srr_inv_laws_imp, srr_inv_call_imp, srr_inv_mn_imp with parse_items'
    own entry premise PRH_FnParse.v:252).
    NO Pm := True COROLLARY OF THE OLD STATEMENT: the premises moved because of a callee's TEXT, not for Pm's sake.
-   parse_value's record text (PRH_FnParse.v blob 6ece0e8567fe, a working branch ee649e1b39d) takes
+   parse_value's record text (PRH_FnParse.v blob 6ece0e8567fe, a working branch) takes
    `YAjMemnorm.memnorm segs mem` at entry (:181); vrd_ient_ok and vrd_islot_a (VrdIElem.v blob 5c5bb8aae5c5,
-   a working branch 6372b90e841) give memnorm of no memory, and fpre / ajournal_x / ARx do not imply it.
+   a working branch) give memnorm of no memory, and fpre / ajournal_x / ARx do not imply it.
    Counterexample to tvrd_ival_a (VrdIElem.v:446) from parse_value's text (then the Section hypothesis H_parse_value):
    take E, P, nm with vrd_ient_ok and vrd_islot_a and add one overlay byte at an address at or above TASK_SIZE outside
    every segment, in ie_mem E and every later memory. MemNorm.task_mem fails, so memnorm fails; no named fact changes
@@ -68,7 +68,7 @@
    last conjunct gives it through vv_maxd_succ.)
 
    SECTION HYPOTHESES (each is carried by name; none is a stand-in for this step's own proof):
-   - NO parse_value hypothesis: VrdIElem's tvrd_ival_aP (A2Ipro's b6d759e9b2b9) takes parse_value's text at the
+   - NO parse_value hypothesis: VrdIElem's tvrd_ival_aP (A2Ipro) takes parse_value's text at the
      element's own nesting S (ie_d E) as its first premise, the one the parse_items / parse_value descending induction
      on d can supply (check 2's finding on this file, 2026-10-30; the earlier all-depths H_parse_value is deleted);
    - H_checked_memset: __asan_memset by the kit's intrinsic text in the m-form (YGcallMxmn.aintrin_realizes_xm OSet),
@@ -80,12 +80,12 @@
    - H_head (8 <= cf_head /\ HL = cf_head): the kit's prh_head_wide (a Theorem Labs lane's preset_head_wide) and IelemE's H_HL;
    - H_pst (S1ImgA.pst_in_img_A), H_pst_ro (S1ImgA.pst_not_ro_A), H_zsal, H_imgvis: IelemE's VrdIStep.v image facts,
      same names and statements.
-   SET: a working branch on the S3 walk's a9cece7b4d8 (ielem 6372b90e841: VrdIElem.v blob 5c5bb8aae5c5; VrdCallPos.v
-   ec329a9d5256; VrdArm.v f1a084bbd44f), the record texts a working branch ee649e1b39d (PRH_FnParse.v blob
-   6ece0e8567fe) on the kit's preview walkkit-next 2d523216ac5 (PRH_Base.v 54a99f16629c). Engine files by path:
-   YSRrMemnorm.v a1c1ece77b14 and YAkMemnorm.v 96c72061b4d4 (a working branch 161f89a71b4d), YC80xf_inv.v
-   082f0c430210 (a working branch 1941d76deca), YGcallMxmn.v 2b01e06e3fc4 (a working branch
-   36d44407fa94; its header table's memset rule aj_intrin_at_xm). A-only: B sites not measured.
+   SET: a working branch on the S3 walk's (ielem: VrdIElem.v blob 5c5bb8aae5c5; VrdCallPos.v
+   ec329a9d5256; VrdArm.v f1a084bbd44f), the record texts a working branch (PRH_FnParse.v blob
+   6ece0e8567fe) on the kit's preview walkkit-next (PRH_Base.v 54a99f16629c). Engine files by path:
+   YSRrMemnorm.v a1c1ece77b14 and YAkMemnorm.v 96c72061b4d4 (a working branch), YC80xf_inv.v
+   082f0c430210 (a working branch), YGcallMxmn.v 2b01e06e3fc4 (a working branch;
+   its header table's memset rule aj_intrin_at_xm). A-only: B sites not measured.
    Numerals: slots and row numbers (LISTING INDEX), 144 / 56 / 24 / 8 / 4096 (LENGTH: frame, node, cursor, word, page),
    2 ^ 64 / 2 ^ 47 (LENGTH: bounds); A 0x... in this comment only (ADDRESS, the image above). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
@@ -730,7 +730,7 @@ Proof. intros n. unfold req_size. destruct (Z.eqb_spec n 0); lia. Qed.
    run makes, as the run itself does (PjGrammar.agrees). COPIED, names prefixed, PjGrammar names qualified:
    vv_split_call_uniq / vv_agrees_det are lib/Prog/parse_items_model.v split_call_uniq / agrees_det (that file is not in
    this unit's import graph); vv_bind_det / vv_jfc_det / vv_jf_det are a Theorem Labs lane's PItems_value_model.v pvm_bind_det
-   / pvm_jfc_det / pvm_jf_det (a working branch 34d46afa0965, Qed there) ---- *)
+   / pvm_jfc_det / pvm_jf_det (a working branch, Qed there) ---- *)
 Lemma vv_split_call_uniq : forall P1 e R P1' e' R', P1 ++ e :: R = P1' ++ e' :: R' ->
   PjGrammar.calls P1 = PjGrammar.calls P1' -> PjGrammar.is_call e = true -> PjGrammar.is_call e' = true ->
   P1 = P1' /\ e = e'.
@@ -3032,7 +3032,7 @@ Qed.
 
 (* ==== THE KIT'S CUT: THE BATCH KIT'S LAYER ACROSS THE VALUE (the free order and the capacities of the completed slots, the
    slot the value filled, and the refused partial slot; a Theorem Labs lane's B' twins PItems_value_aftv.v / PItems_forder.v
-   pis_fo_snoc / pis_fo_item on a working branch 34d46afa0965) ==== *)
+   pis_fo_snoc / pis_fo_item on a working branch) ==== *)
 
 (* the bytes the completed slots read at a value slot (the members' slots, the key slots, the members' blocks) are
    bytes of the position's blocks off the free slot kids[n]: vv_old_keep's HGood, for any extra block list Dx and
@@ -7085,7 +7085,7 @@ Qed.
 
 
 (* ==== THE ELEMENT STEP ==== *)
-(* VrdIElem.v's tvrd_ival_aP (A2Ipro's text, VrdIElem.v at b6d759e9b2b9: parse_value at the element's nesting
+(* VrdIElem.v's tvrd_ival_aP (A2Ipro's text, VrdIElem.v: parse_value at the element's nesting
    S (ie_d E) is its first premise), PROVED for the Section's Pm: the slot premises, Pm (ip_mem P), and the post with
    the PROGRESS conjunct ip_n P' = ip_n P + 1 at the comma (the count store adds the element: vv_postB) and Pm at the
    reached memory. The local tvrd_ival_aP this file used to carry is DELETED (its comma arm had no count), and the old

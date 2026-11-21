@@ -1,26 +1,26 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Reusable/YCbq.v aj_intrin_at at 28fdc66416e (the call of
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Reusable/YCbq.v aj_intrin_at (the call of
    __asan_memcpy in the journal) restated as hd_memcpy with the wrapper's same_but_materialized kept in the post as
-   same_io, and proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v at 9e73ed57244 (m2_img_zone, m2_cstr_kept, the .rodata
+   same_io, and proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v (m2_img_zone, m2_cstr_kept, the .rodata
    zone of m2_szone) restated as hd_img_zone / hd_cstr_kept / hd_szone for the .rodata range only; the rest of the
    file is new. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_role/lib/A/RPgScanHead.v, with its module paths, module names and addresses changed; 1120 of its 1233 lines of code are new or changed and 901 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW3a.v at 00820c285b0 for reac-pw/fuzz_headamp image A: module paths changed, rs_ -> hs_, rm_ -> hm_, rl_ -> hd_, role -> headamp; every pc moved to headamp's twin; the input cursor is in s11 (role: R+0xc8) and pp in R+0xf0 (role: s11), so run 1 stores pp at R+0xf0 and run 2 reads it into its own atom 32 (role's atom 27 is s11 = the cursor here); role's real-frame cells R+0x90 / 0x98 / 0xb0 / 0xe8 / 0xf8 moved to R+0xb0 / 0xb8 / 0xd0 / 0x108 / 0x118; the memset step is HPgIntrin.hd_memset_at (role: its own copy); the header cut also carries the cap (s8), the null flag (R+0x40), pp (R+0xf0) and the frame for locals in s10. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW3a.v for reac-pw/fuzz_headamp image A: module paths changed, rs_ -> hs_, rm_ -> hm_, rl_ -> hd_, role -> headamp; every pc moved to headamp's twin; the input cursor is in s11 (role: R+0xc8) and pp in R+0xf0 (role: s11), so run 1 stores pp at R+0xf0 and run 2 reads it into its own atom 32 (role's atom 27 is s11 = the cursor here); role's real-frame cells R+0x90 / 0x98 / 0xb0 / 0xe8 / 0xf8 moved to R+0xb0 / 0xb8 / 0xd0 / 0x108 / 0x118; the memset step is HPgIntrin.hd_memset_at (role: its own copy); the header cut also carries the cap (s8), the null flag (R+0x40), pp (R+0xf0) and the frame for locals in s10. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/A/HPgW3a.v, with its module paths changed; 573 of its 644 lines of code are new or changed and 1162 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgE01Hk.v at ba6d82f81177 for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgE01Hk.v for image B
    (fuzz_rate.asan-ubsan): image B's pcs, code table and registers (cursor s2, shadow offset s4), the real frame's
    write window R+0x30 .. R+0x150, the six header slots and the registers of the leaf, class-4 frame bounds and the
    harness records of lib/AU/RtPgSegB.v. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgE01Ha.v at ba6d82f81177 for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgE01Ha.v for image B
    (fuzz_rate.asan-ubsan): image B's pcs (HD 0x809bc, the malloc trampoline 0x52c0c), registers (cursor s2 = x18,
    shadow offset s4 = x20), the leaf's registers 1 10 18 21 22 23 26 and slots R+0x30 .. R+0x148, and the write
    window R+0x30 .. R+0x150. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgE01H.v at ba6d82f81177 for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgE01H.v for image B
    (fuzz_rate.asan-ubsan): image B's part statement lib/AU/RtPgE01DB.v e01b_hdr_stmt, pcs and stack bound, and the
    kit and arms of lib/AU/RtPgE01HkB.v and lib/AU/RtPgE01HaB.v. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgE01HkB.v, RtPgE01HaB.v and RtPgE01HB.v at
-   48db065d2b9c, in one file for reac-pw/fuzz_role image B (fuzz_role.asan-ubsan): module paths fuzz_rate ->
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgE01HkB.v, RtPgE01HaB.v and RtPgE01HB.v,
+   in one file for reac-pw/fuzz_role image B (fuzz_role.asan-ubsan): module paths fuzz_rate ->
    fuzz_role; role's one header byte in place of rate's seven (the input-length arms n = 0, n = 1 .. 7 and n >= 8,
    each one engine run; the extra atoms the shadow byte's address and byte 0; the seven reads, the constant at
    0x10330 and its read-only view, buflen's mod 24 and the static law dropped); role B's pcs (HD 0x80270, the malloc
@@ -28,6 +28,7 @@
    registers (n in s2 = x18, the cursor p in s5 = x21, the shadow offset in s11 = x27), the leaf's registers
    1 10 18 20 21 22 and slot R+0x40, the write window R+0x40 .. R+0x48; the records of lib/AU/RPgHarn.v (rh_hdr's
    rh_u8, rl_env) and the kits of lib/AU/RPgMem.v and RPgSteps.v (rm_ / rl_ names); the stack bound 0x210. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_role image B (fuzz_role.asan-ubsan, pinned sha256
    b255d4935da5af137a3967dbe33380ea43be8e78bfe05d1e356e0a2be8a69ff0; every address measured on the unstripped twin
    dc791783f32962615e18a5f5cffae758ba56eb5dc87f70913c3579b101b4406a, same loaded bytes): part HDR of segment S_E01

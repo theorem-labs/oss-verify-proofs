@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (ASAN_H gains n_resx and p_resx for the launch's vDSO/vvar pair; hinit is init_acs_r over the kernel build's CONFIG_RSEQ). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -14,7 +15,7 @@ Definition HPH := AsanUbsan.M.phdrs.
 
 (* [comment removed for export] *)
 Definition ASAN_H : atable :=
-  {| img_lo := 0x10000; img_hi := 0xc04000; n_res := 4; shadow_off := 0x7fff8000;
+  {| img_lo := 0x10000; img_hi := 0xc04000; n_res := 4; n_resx := 2; p_resx := 20; shadow_off := 0x7fff8000;
      a_entry := 0x195ba8; rw_lo := 0x571000; rw_len := 0x693000; ph_addr_z := 0x10040; ph_ent_z := 56; ph_num_z := 11;
      x_imemset := 0x1d101c; x_imemcpy := 0x1d0fa0; x_memset := 0x569e10; x_memcpy := 0x5699dc; x_memiszero := 0x1d154c;
      x_istrncpy := 0x1d1448; x_sealed := 0x140d1; x_popfree := 0x19c370; x_smear := 0x1d2748;
@@ -23,7 +24,9 @@ Definition ASAN_H : atable :=
      stops_more := [0x199fe4; 0x19b608; 0x1c0b84; 0x1c73e8; 0x1c73fc; 0x1c7410; 0x1cd098; 0x1cd168; 0x1dbc68; 0x1dcba0; 0x1dcd30; 0x1e6adc] |}.
 
 Definition HLIMIT : Z := target_alloc_limit.
-Definition hinit : acs := init_acs_of ASAN_H.
+(* LPS 727298f3: the start state of a run whose kernel build's CONFIG_RSEQ is [r] (0/1),
+   [AsanPlanCore.init_acs_r]; the start-up certificate is checked at both values. *)
+Definition hinit (r : Z) : acs := init_acs_r r ASAN_H.
 
 (* [comment removed for export] *)
 Definition res_code (r : cres) : Z := match r with COk _ => -1 | CErr c _ _ => c end.

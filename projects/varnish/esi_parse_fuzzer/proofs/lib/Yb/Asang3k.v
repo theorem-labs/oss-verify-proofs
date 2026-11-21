@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the start-up certificate lemma, written against the released model's checker and recorded hand-off states, is removed here (the certificate is now proved, per CONFIG_RSEQ flag, where its hand-off and join states are computed from the run), and the instruction table names the image's segments directly, so this data file no longer loads the start-up proof files. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -8,7 +9,8 @@
 From Stdlib Require Import ZArith List Bool.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require AxSyioe Asanz3l AsanPlan.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require AsanPlan.
-From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Asanqlm Asanjze AsanInit.
+From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Asanqlm.
+From OSSVerify.varnish.esi_parse_fuzzer.images Require Asan.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Asanlzb.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Asanlzb.
 
@@ -624,7 +626,7 @@ Definition startup_plan_ranges : list (Z * nat) := [(0x35f58, 386%nat); (0x38460
 End Startjo.
 
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Staruoz.
-Import OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AxSyioe OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanz3l OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan.Asanfbz OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanqlm OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanjze OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanInit OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanlzb.Asankdu OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanlzb OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asang3k.Startjo OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Staruoz.
+Import OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AxSyioe OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanz3l OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.AsanPlan.Asanfbz OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanqlm OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanlzb.Asankdu OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asanlzb OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Asang3k.Startjo OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb.Staruoz.
 From OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Yb Require Import Bootzb6.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations. Import AX2. Import APC. Import AP.
@@ -641,12 +643,9 @@ Definition KC0 : nat := 0.
 Definition FUEL : nat := 3000.
 
 (* [comment removed for export] *)
-Definition IT0 : itab := mk_itab_ranges ASEGS startup_plan_ranges.
-Lemma IT0_ok : itab_sound ASEGS IT0.
+(* The image's segments, [Asanjze.ASEGS] by definition. *)
+Definition IT0 : itab := mk_itab_ranges OSSVerify.varnish.esi_parse_fuzzer.images.Asan.M.loaded_segments startup_plan_ranges.
+Lemma IT0_ok : itab_sound OSSVerify.varnish.esi_parse_fuzzer.images.Asan.M.loaded_segments IT0.
 Proof. apply APS.mk_itab_ranges_sound. Qed.
 
 Definition startup_shape : shape := SCase (EVar 6) 10 (SCase (EVar 5) 524277 (SHole 0) (SHole 1)) (SCase (EVar 6) 1802 (SCase (EVar 5) 524277 (SHole 0) (SHole 1)) (SCase (EVar 5) 524277 (SHole 0) (SHole 1))).
-
-Lemma startup_cert :
-  check ASEGS IT0 ASAN NX0 AsanInit.LIMIT (XNa2 NX0) XE0 XB0 HS_asan KC0 BFUEL FUEL None asan_init startup_plan = COk startup_shape.
-Proof. ltac1:(cert_f). cert_refl constr:(COk startup_shape). Qed.

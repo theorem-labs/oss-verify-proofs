@@ -3,31 +3,32 @@
 (* Modified by Theorem Labs, 2026-10: the start-up facts of libreac/fuzz_identity's ASan build (image A) that
    lib/A/Prog/IdentEntryLink.v (Section L) takes as the Hypotheses GM (:250), IV (:251), ZS_STEM (:340), ZS_NAME (:341),
    HUMM (:680) and HUMF (:683), each proved here with that Hypothesis's text as its conclusion. The checks and their
-   lemmas are ported from fuzz_grant's closer (d110b9a519a, proofs/libreac/fuzz_grant/lib/A/Prog/
-   GrantCloseChk.v:38-145 and GrantClose.v:200-287); the universe check is cgif's ACee.v:80 pattern (c8557374ad2e) in
+   lemmas are ported from fuzz_grant's closer (proofs/libreac/fuzz_grant/lib/A/Prog/
+   GrantCloseChk.v:38-145 and GrantClose.v:200-287); the universe check is cgif's ACee.v:80 pattern in
    the start-up AD2l.v's In_of_existsb form. One change in substance: the glob check is RELAXED (see glob_chk_relaxed). *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_identity/lib/A/IdentStartupFacts.v
-   (origin/ossv/recipes 4b6f0df50aa7) for libdiginet/fuzz_codec's ASan build (image A, fuzz_codec.asan sha256
+   for libdiginet/fuzz_codec's ASan build (image A, fuzz_codec.asan sha256
    7d470194ffdb...): module paths changed; the copied tables are fuzz_codec.asan's; the facts are GM and IV over the 40
    registered globals CODEC_GLOBS (lib/A/Prog/CodecGlobs.v) and any segment list; identity's ZS_STEM / ZS_NAME
    (two of its tables) become one decision lemma codec_in_zs_of_b for any range, and its HUMM / HUMF (allocator
    traces) are dropped with their premises HUNIV / HRA0M / HRA0F, because fuzz_codec's harness calls no allocator.
    Added: a closed satisfiability lemma, codec_startup_sat, at the start state's shadow as the copied tables state it. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The record: premises, not the core. As fuzz_identity's file does, the facts are stated in a Section over
    `Variable CodecB : asyms` with one premise per record field the proofs read, against verbatim copies of the start-up
    tables below (lib/A/CodecStartupClose.v discharges both premises at the start-up record TfibB, lib/A/AD2l.v):
      HZS    : as_zero_shadow CodecB = TFIB_ZERO_SHADOW_A                           (GM, IV, codec_in_zs_of_b)
      HCONST : forall ly, exists pre, as_const CodecB ly = pre ++ TFIB_CONST_SHADOW_A (GM, IV)
    HCONST asks only that the copied shadow cells are the tail of the record's const list, because the proofs read no
-   other const cell: AF0m.v:1204 has Tfib_const ly := Tfib_const_sym ++ Tfib_const_abs ++ Tfib_const_shadow. No AR law
+   other const cell: AF0m.v:1205 has Tfib_const ly := Tfib_const_sym ++ Tfib_const_abs ++ Tfib_const_shadow. No AR law
    is a premise: the zero-shadow ranges and the const cells are fields of AR's first conjunct ARm (am_zshadow,
    am_const: Reusable/YG0n.v), so LAWS (AR_laws) is not needed.
-   A record that is an instance of AF0m.v's TfibSyms meets both premises: HZS from ts_zsh (AF0m.v:1239) and the
-   copy's equality to Tfib_zero_shadow; HCONST from ts_const (AF0m.v:1235) with
+   A record that is an instance of AF0m.v's TfibSyms meets both premises: HZS from ts_zsh (AF0m.v:1240) and the
+   copy's equality to Tfib_zero_shadow; HCONST from ts_const (AF0m.v:1236) with
    pre := Tfib_const_sym ++ Tfib_const_abs and app_assoc.
    Sources of the copies (each body below is the source's text, line for line):
-     TFIB_ZERO_SHADOW_A  = Tfib_zero_shadow,  lib/A/AF0m.v:1206
-     TFIB_CONST_SHADOW_A = Tfib_const_shadow, lib/A/AF0m.v:716-1203 (488 one-byte cells)
+     TFIB_ZERO_SHADOW_A  = Tfib_zero_shadow,  lib/A/AF0m.v:1207
+     TFIB_CONST_SHADOW_A = Tfib_const_shadow, lib/A/AF0m.v:717-1204 (488 one-byte cells)
        (AF0m.v sha256 fd60b6ac24a5e72f2231d580c534209268a3f2b9805aceddbc7c3a890e910ad0, generated from fuzz_codec.asan).
    Measured against the image (a pyelftools read of fuzz_codec.asan's asan_globals section): for each of the 40
    descriptors, every granule of [beg, beg + size_with_redzone) has, in these two tables, the shadow byte the runtime's

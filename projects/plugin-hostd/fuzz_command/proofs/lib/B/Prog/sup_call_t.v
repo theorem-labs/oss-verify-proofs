@@ -5,6 +5,7 @@
    record()'s arms to the tail jump into answer, after proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v and ACh2.v (a walk
    segment: run, call out by cl_callS, resume) over fuzz_command's listing. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/descriptors_get_s3.v, with its module paths and module names changed; 464 of its 502 lines of code are new or changed and 975 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* sup_call's walk on the ASan+UBSan build of plugin-hostd/fuzz_command (fuzz_command.asan-ubsan, entry 0x8af34),
    part t (sup_call_s3.v SC_L_stmt): from answer's entry (the `jal answer` at 0x8b08c taken, sc_at_l) to sup_call's
    post. answer(c, "resp 0", 1) runs through its contract (answer_c.v tanswer_spec at the walk's FP state) by PaFx.v's
@@ -54,12 +55,12 @@ Local Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(fa
 Open Scope bv_scope.
 Open Scope Z_scope.
 
-(* after each symbolic run the model is left as `with_vm_backing (m_vm_lazy md) mat md` (sup_resp.v:50-54) *)
+(* after each symbolic run the model is left as `with_vm_backing (m_vm_lazy md) mat md` (sup_resp.v:51-55) *)
 Ltac sc_t_collapse_md :=
 lazymatch goal with |- SRr _ _ (mkCfg _ ?mdl) _ =>
 first [ is_var mdl | let mdv := fresh "mdv" in set (mdv := mdl) in *; clearbody mdv ] end.
 
-(* ---- the recorder's representation: CmdRecAns.v's rca_* (the kit's text of sup_remove_all_s1.v:33-91 at 721a33d7c2d) ---- *)
+(* ---- the recorder's representation: CmdRecAns.v's rca_* (the kit's text of sup_remove_all_s1.v:33-91) ---- *)
 (* the recorder's blocks are live blocks *)
 Lemma sc_t_rep_live : forall B ly S rd R O pn, rec_repA B ly S rd R O -> In pn O -> In pn (ablocks B ly S).
 Proof. intros B ly S rd R O pn (Q & HQ & HO) Hin. exact (rca_rep_blocks _ _ _ _ _ _ pn HQ (proj1 (HO pn) Hin)). Qed.
@@ -75,7 +76,7 @@ Context {PI : PAImg cmd_listing}.
 #[local] Notation BASE := (@pa_val _ cmd_listing PI A_TEXT).
 #[local] Notation rdW W mem := (aview SEGS (w_H W) mem).
 
-(* a byte outside a run's write windows keeps its view (sup_resp.v:66-69) *)
+(* a byte outside a run's write windows keeps its view (sup_resp.v:67-70) *)
 Lemma sc_t_frame_kept : forall E rs H (m m' : word -> option byte) a,
   frame_of E rs (mrestrict H m) (mrestrict H m') -> 0 <= a < 2 ^ 64 -> ~ in_wrange E rs a ->
   aview SEGS H m' a = aview SEGS H m a.

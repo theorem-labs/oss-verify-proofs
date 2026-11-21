@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reader bit in mm_answer, and mm_at_rob over a larger read-only backing). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -14,6 +15,7 @@ From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem
 From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Common Require Import ShapeAlg ShapeAlgCfg.
 From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Lib Require Import PropExec MState Mem Cells Step Frame Exec ITree Nodes NodesCfg SysStep.
 From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.LibA Require Import ExecA LazyModel ITreeA NodesA ImplRzA NodesA_mm.
+From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Common.Cfg Require Import RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Import ITree.Exc.
@@ -155,10 +157,12 @@ Lemma check_madvise_only : forall addr len advice eff m m' evs,
   check_madvise addr len advice eff m = CheckOk m' evs -> mm_answer m eff m' evs.
 Proof.
   intros until evs; intros H. unfold check_madvise in H. crush_checkA H;
-    try (split; [apply vm_only_refl| split; [reflexivity| split; [reflexivity| split; reflexivity]]]).
+    (* [mm_answer] has six conjuncts since the reader bit was added (LPS 08b1429). *)
+    try (split; [apply vm_only_refl| split; [reflexivity| split; [reflexivity| split; [reflexivity| split; [reflexivity| reflexivity]]]]]).
+  (* LPS 08b1429: mm_answer also records that the reader bit is unchanged *)
   split; [unfold madvise_dontneed_next; apply vm_only_with_vm_backing|].
   split; [unfold madvise_dontneed_next; rewrite m_vmmaps_with_vm_backing; reflexivity|].
-  split; [reflexivity| split; reflexivity].
+  split; [reflexivity| split; [reflexivity| split; [reflexivity| reflexivity]]].
 Qed.
 
 End RC__1.
@@ -232,8 +236,23 @@ Variable P : acc -> Prop.
 #[warnings="-notation-for-abbreviation"] Local Notation KIPn := (KIP S N EB P).
 
 (* [comment removed for export] *)
+(* LPS 08b1429: a node whose precondition reads only registers and the pending call (it holds
+   for any read-only backing) reads the same input over a larger backing ([RomBase.sys_rob]). *)
+Lemma mm_at_rob : forall at_ CHK ms mo,
+  mm_at at_ CHK -> (forall ms1 r, at_ ms1 -> at_ (wrom ms1 r)) -> at_ ms ->
+  sys_rob segs (mkCfg ms mo).
+Proof.
+  intros at_ CHK ms mo Hmm Hw Hat. apply sys_rob_of_check. intros r x8 Hr Hs eff.
+  destruct (Hmm ms mo Hat) as (x1 & Hs1 & Hc1 & _).
+  destruct (Hmm (wrom ms r) mo (Hw ms r Hat)) as (x2 & Hs2 & Hc2 & _).
+  change (ms_svc_pending (wrom ms r)) with (ms_svc_pending ms) in Hs2.
+  rewrite Hs in Hs1, Hs2. injection Hs1 as <-. injection Hs2 as <-.
+  rewrite Hc1, Hc2. reflexivity.
+Qed.
+
 Theorem rzA_at_cfg : forall at_ CHK (Sh : resp -> Prop) (Q : resp -> machine_state -> Prop) ms mo (K : TSet),
   mm_at at_ CHK ->
+  (forall ms1 r, at_ ms1 -> at_ (wrom ms1 r)) ->
   evtA segs P (fun ms1 => at_ ms1 /\ forall rsp, Sh rsp -> evtA segs P (Q rsp) (nret ms1 rsp)) ms ->
   KIPn mo -> K [] ->
   (forall mo1, magree mo mo1 -> KIA S N EB mo1 ->
@@ -246,7 +265,7 @@ Theorem rzA_at_cfg : forall at_ CHK (Sh : resp -> Prop) (Q : resp -> machine_sta
                (forall x, P x -> acc_ok (m_vm_lazy moa') S' x) -> realizes_cfg acfg segs (mkCfg ms' moa') K)) ->
   realizes_cfg acfg segs (mkCfg ms mo) K.
 Proof.
-  intros at_ CHK Sh Q ms mo K Hmm IM HKP HK HUSER.
+  intros at_ CHK Sh Q ms mo K Hmm Hw IM HKP HK HUSER.
   eapply (rzA_seg_cfg segs S N EB P); [exact IM| exact HKP|].
   intros ms1 mo1 [Hat Hcont] Hag [HK1 HPS1]. pose proof HK1 as (HLI1 & Hmi1 & Hh1).
   destruct (HUSER mo1 Hag HK1) as (Hnu & HALL).
@@ -267,6 +286,7 @@ Proof.
         -- rewrite (mm_answer_halted _ _ _ _ (Hans _ _ _ Hc)). exact Hh1.
       * intros e st Hst. destruct (Hcomp e st (sstep_cfg_sub _ _ _ _ _ Hst)) as (eff & mo' & -> & -> & Hc).
         exists (exist _ (eff, mo') Hc). split; reflexivity.
+    + exact (mm_at_rob at_ CHK ms1 mo1 Hmm Hw Hat).
     + intros [[eff mo'] Hc]; cbn [fst snd] in *; cbn.
       destruct (HALL _ _ Hc) as (HSh & S' & N' & EB' & HLI' & HPS' & CONT).
       specialize (Hcont eff HSh).
@@ -298,6 +318,7 @@ Proof.
   intros addr len Q ms mo K HA AA HL HE IM HKP HK HUSER.
   eapply (rzA_at_cfg (at_madvise addr len) (madvise_CHK addr len) (fun rsp => rsp = madv_eff addr (page_round_up_Z len)) (fun _ => Q) ms mo K).
   - apply mm_at_madvise.
+  - intros ms1 r Hat. exact Hat.
   - eapply evtA_mono; [exact IM|]. intros ms1 [Hat Hc]. split; [exact Hat|]. intros rsp ->. exact Hc.
   - exact HKP.
   - exact HK.

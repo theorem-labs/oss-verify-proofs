@@ -4,12 +4,13 @@
 (* Modified by Theorem Labs, 2026-10: the call of send_message in LLVMFuzzerTestOneInput's ASan walk (plugin-hostd/fuzz_command, jal at 0x86714, back at 0x86718), in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh2.v:122-290 (a program call through cl_callS, the callee's statement applied, the caller's facts carried past it). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/LLVMFuzzerTestOneInput_s30.v, with its module paths and module names changed; 622 of its 671 lines of code are new or changed and 292 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_s20k.v, with its module paths and module names changed; 789 of its 861 lines of code are new or changed and 599 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan image A (fuzz_segconf.asan, pin sha256 48c5355bdacb): the kit of segment S06 of the
    walk of the test harness's entry function LLVMFuzzerTestOneInput (0x85208 .. 0x853b8, the inlined m_cross loop
    0x8523c <- 0x85330 with its two m_refuse calls, fuzz_segconf.c:296-310).
 
-   rule 24: proves function LLVMFuzzerTestOneInput (reuse search: origin/main@6e24fa4d602c
-   origin/ossv/recipes@3abc3740de97 origin/ossv/candidates@ee89628c9971 origin/release/pau-projects-recipes@b6a0088adcb4
+   rule 24: proves function LLVMFuzzerTestOneInput (reuse search: origin/main
+   origin/ossv/recipes origin/ossv/candidates origin/release/pau-projects-recipes
    / the stream's proof index LLVMFuzzerTestOneInput + four-ref git grep; output pasted verbatim in
    the walk's shared brief; checker (fresh, read-only): CONFIRM; none: written new).
    This file holds the parts of the walk that do not run code; LLVMFuzzerTestOneInput_s16.v holds the runs.
@@ -21,8 +22,8 @@
    - The memory: the 4-byte fields of m->seg[i] and m->n through the reader (s16_rd_n, s16_rd_role, ...), and
      struct mconf after the loop's `sw zero` stores: model_set = 0 (0x852d4) holds m_upd mc i ms_drop_model,
      role_set = 0 then role = 0 (0x852f8, 0x85304) hold m_upd mc i ms_drop_role (s16_mconf_drop_model,
-     s16_mconf_drop_role). The byte-list part follows the plain / UBSan owner's plain lib/Prog/Seg/L02W_mx.v
-     (commit 260365aea42b), restated over the reader.
+     s16_mconf_drop_role). The byte-list part follows the plain / UBSan owner's plain lib/Prog/Seg/L02W_mx.v,
+     restated over the reader.
    - The inner cuts of the loop, each a statement over K85208's premises with m holding the model so far
      (s16_inv, or s16_inv0 for K85208's own form): LT16_KH_stmt (0x8523c, the head of pass i), LT16_KL_stmt
      (0x85310, its latch), LT16_KP1_stmt / LT16_KP2_stmt (0x852c0 / 0x852f0, after the two m_refuse calls).

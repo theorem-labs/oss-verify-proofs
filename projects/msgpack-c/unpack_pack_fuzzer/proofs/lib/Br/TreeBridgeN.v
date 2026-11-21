@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (NrobM, NodeSound.mm_rob, passed as TreeBridge's new Nrob hypothesis, RomBase.sys_rob at each node). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Specs Run.
@@ -22,6 +23,7 @@ Definition NmodelM := mm_model.
 Definition NsoundM := mm_sound segs.
 Definition NcompleteM := mm_complete segs.
 Definition NprogressM := mm_progress.
+Definition NrobM := mm_rob segs.
 
 Lemma twf_TB : forall {R} (t : itree node R) mo P, MSafe.twf t mo P -> TreeBridge.twf nstep nsafe t mo P.
 Proof.
@@ -43,7 +45,7 @@ Proof.
   intros c s POST Pm Qm ms mo Kof Himpl Hspec HP Hmo HK.
   pose proof (twf_TB _ _ _ (Hspec s mo HP)) as Htwf.
   eapply ShapeAlg.rz_conseq.
-  - apply (impl_twf_realizes' segs (at_node segs) nstep nsafe NmodelM NsoundM NcompleteM NprogressM
+  - apply (impl_twf_realizes' segs (at_node segs) nstep nsafe NmodelM NsoundM NcompleteM NprogressM NrobM
              (c s) _ _ ms mo
              (fun r => match r with Ok p => Kof (fst p) (snd p) | Unr => t_nil end) Himpl Htwf Hmo).
     intros [|[a s']] ms' mo' HQ HPm Hp Hmo' Hva; cbn in HQ, HPm; [destruct HPm|].
@@ -71,7 +73,7 @@ Theorem implM_mspec_realizes_silent {St A} : forall (c : M St A) (s : St) POST (
 Proof.
   intros c s POST Pm Qm ms mo K Himpl Hspec HP Hmo HK.
   pose proof (twf_TB _ _ _ (Hspec s mo HP)) as Htwf.
-  apply (impl_twf_realizes_silent segs (at_node segs) nstep nsafe NmodelM NsoundM NcompleteM NprogressM
+  apply (impl_twf_realizes_silent segs (at_node segs) nstep nsafe NmodelM NsoundM NcompleteM NprogressM NrobM
            (c s) _ _ ms mo K Himpl Htwf Hmo).
   intros [|[a s']] ms' mo' HQ HPm Hp Hmo' Hva; cbn in HQ, HPm; [destruct HPm|].
   apply (HK a s' ms' mo' HQ HPm Hp Hmo' Hva).
@@ -90,7 +92,7 @@ Theorem implM_mspec_realizes_alt2 {St A} : forall (c : M St A) (s : St) POST (Pm
 Proof.
   intros c s POST Pm Qm ms mo cls KA KB Himpl Hspec HP Hmo (a1 & s1 & mo1 & Hp1 & Hc1) (a2 & s2 & mo2 & Hp2 & Hc2) HK.
   pose proof (twf_TB _ _ _ (Hspec s mo HP)) as Htwf.
-  apply (impl_twf_realizes_alt2 segs (at_node segs) nstep nsafe NmodelM NsoundM NcompleteM NprogressM
+  apply (impl_twf_realizes_alt2 segs (at_node segs) nstep nsafe NmodelM NsoundM NcompleteM NprogressM NrobM
            (c s) _ _ ms mo (fun r => match r with Ok p => cls (fst p) | Unr => false end) KA KB Himpl Htwf Hmo).
   - exists (Ok (a1, s1)), mo1. split; [exact Hp1 | exact Hc1].
   - exists (Ok (a2, s2)), mo2. split; [exact Hp2 | exact Hc2].

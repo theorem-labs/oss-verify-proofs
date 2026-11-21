@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YK1d.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (M_loop with fd1chan and init_M_loop's in_channel_reader premise; the stream lemmas over init_machine_state's launch input ProcInput and mmap base, run_segments and the run's vDSO initial model, each taking in_channel_reader inp = true). *)
 From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence OmniEquivalence.
@@ -45,17 +46,24 @@ Lemma m_vm_lazy_with_stdin : forall s m,
 m_vm_lazy (with_stdin s m) = m_vm_lazy m.
 Proof. reflexivity. Qed.
 Definition M_loop (model : Model) : Prop :=
-fd_lookup (m_fds model) (Z_to_bv 64 0) = Some (FdChannel (Z_to_bv 64 0)) /\
-fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)) /\
-m_halted model = None /\
-m_vm_lazy model = [].
+  fd_lookup (m_fds model) (Z_to_bv 64 0) = Some (FdChannel (Z_to_bv 64 0)) /\
+  fd1chan model /\
+  m_halted model = None /\
+  m_vm_lazy model = [].
 Lemma init_M_loop : forall reserved brk0 mb sp lim inp,
-M_loop (init_model reserved brk0 mb sp lim inp).
-Proof. intros reserved brk0 mb sp lim inp. repeat split. Qed.
+  in_channel_reader inp = true ->
+  M_loop (init_model reserved brk0 mb sp lim inp).
+Proof.
+  intros reserved brk0 mb sp lim inp Hr.
+  split; [reflexivity | split; [apply init_model_fd1chan; exact Hr | split; reflexivity]].
+Qed.
 Lemma M_loop_take : forall k model,
-M_loop model ->
-M_loop (with_stdin (snd (stream_take (m_stdin model) k)) model).
-Proof. intros k model (H0 & H1 & Hh & Hlazy). repeat split; assumption. Qed.
+  M_loop model ->
+  M_loop (with_stdin (snd (stream_take (m_stdin model) k)) model).
+Proof.
+  intros k model (H0 & H1 & Hh & Hlazy).
+  split; [exact H0 | split; [exact H1 | split; assumption]].
+Qed.
 Lemma M_loop_fd1chan : forall model, M_loop model -> fd1chan model.
 Proof. intros model (H0 & H1 & Hh & Hlazy). exact H1. Qed.
 Fixpoint wseg_ok (segs : list Segment) (a : word) (n : nat) : bool :=
@@ -869,38 +877,42 @@ apply (inv_no_reaches_error segs sinv sinv_step sinv_no_error).
 left; cbn; auto.
 Qed.
 Lemma stream_obs_iff : forall pc ph sp brk0 mb rnd lim inp,
-to_rd (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
-forall tr, obs_trace segs (init_config segs pc ph sp brk0 mb rnd lim inp) tr
-<-> stream_traces cnt (in_fs inp) (in_stdin inp) tr.
+  to_rd (init_machine_state segs pc ph sp mb rnd inp) ->
+  in_channel_reader inp = true ->
+  forall tr, obs_trace segs (init_config segs pc ph sp brk0 mb rnd lim inp) tr
+             <-> stream_traces cnt (in_fs inp) (in_stdin inp) tr.
 Proof.
-intros pc ph sp brk0 mb rnd lim inp Hrd tr.
-set (fs0 := in_fs inp) in *; set (stdin0 := in_stdin inp) in *.
-unfold init_config.
-set (ms0 := init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) in *.
-pose proof (init_M_loop (segments_reserved segs) brk0 mb sp lim inp) as HM0.
-set (model0 := init_model (segments_reserved segs) brk0 mb sp lim inp) in *.
-assert (Hst0 : m_stdin model0 = stdin0) by reflexivity.
-assert (Hfs0 : m_fs model0 = fs0) by reflexivity.
-split.
-- intros (tr' & c & Hstar & Hp).
-destruct (proj1 (star_loop_only _ _ _ Hstar ms0 model0 eq_refl HM0) Hrd)
-as (blocks & s' & HC & Hp').
-rewrite Hst0 in HC. rewrite Hfs0 in Hp'.
-apply (stream_traces_prefix_closed cnt fs0 stdin0 tr'); [|exact Hp].
-exists blocks, s'. split; assumption.
-- intros (blocks & s' & HC & Hp).
-destruct (stream_star_admits stdin0 blocks s' HC ms0 model0 HM0 Hst0 Hrd)
-as [c Hstar].
-rewrite Hfs0 in Hstar.
-exists (flat_map iter_ev blocks ++ eof_tail s' fs0), c.
-split; assumption.
+  intros pc ph sp brk0 mb rnd lim inp Hrd Hrdr tr.
+  set (fs0 := in_fs inp) in *; set (stdin0 := in_stdin inp) in *.
+  unfold init_config.
+  set (ms0 := init_machine_state segs pc ph sp mb rnd inp) in *.
+  pose proof (init_M_loop (segments_reserved segs) brk0 mb sp lim inp Hrdr) as HM0'.
+  set (model0 := with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+                   (init_model (segments_reserved segs) brk0 mb sp lim inp)) in *.
+  assert (HM0 : M_loop model0) by exact HM0'.
+  assert (Hst0 : m_stdin model0 = stdin0) by reflexivity.
+  assert (Hfs0 : m_fs model0 = fs0) by reflexivity.
+  split.
+  - intros (tr' & c & Hstar & Hp).
+    destruct (proj1 (star_loop_only _ _ _ Hstar ms0 model0 eq_refl HM0) Hrd)
+      as (blocks & s' & HC & Hp').
+    rewrite Hst0 in HC. rewrite Hfs0 in Hp'.
+    apply (stream_traces_prefix_closed cnt fs0 stdin0 tr'); [|exact Hp].
+    exists blocks, s'. split; assumption.
+  - intros (blocks & s' & HC & Hp).
+    destruct (stream_star_admits stdin0 blocks s' HC ms0 model0 HM0 Hst0 Hrd)
+      as [c Hstar].
+    rewrite Hfs0 in Hstar.
+    exists (flat_map iter_ev blocks ++ eof_tail s' fs0), c.
+    split; assumption.
 Qed.
 Lemma stream_no_error : forall pc ph sp brk0 mb rnd lim inp,
-to_rd (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
-~ reaches_error segs (init_config segs pc ph sp brk0 mb rnd lim inp).
+  to_rd (init_machine_state segs pc ph sp mb rnd inp) ->
+  in_channel_reader inp = true ->
+  ~ reaches_error segs (init_config segs pc ph sp brk0 mb rnd lim inp).
 Proof.
-intros pc ph sp brk0 mb rnd lim inp Hrd.
-apply to_rd_no_error; [apply init_M_loop | exact Hrd].
+  intros pc ph sp brk0 mb rnd lim inp Hrd Hrdr.
+  apply to_rd_no_error; [apply init_M_loop; exact Hrdr | exact Hrd].
 Qed.
 Lemma to_rd_coexec : forall ms model,
 M_loop model -> to_rd ms -> OmniRun.coexec segs (mkCfg ms model) never_errors.
@@ -909,67 +921,80 @@ intros ms model HM Hrd.
 apply (inv_coexec segs sinv sinv_step sinv_no_error). left; cbn; auto.
 Qed.
 Lemma stream_omni_corun : forall pc ph sp brk0 mb rnd lim inp,
-to_rd (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
-omni_corun (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp never_errors.
+  to_rd (init_machine_state segs pc ph sp mb rnd inp) ->
+  in_channel_reader inp = true ->
+  OmniRun.coexec segs (init_config segs pc ph sp brk0 mb rnd lim inp) never_errors.
 Proof.
-intros pc ph sp brk0 mb rnd lim inp Hrd. cbn [omni_corun]. unfold init_config.
-apply to_rd_coexec; [apply init_M_loop | exact Hrd].
+  intros pc ph sp brk0 mb rnd lim inp Hrd Hrdr. unfold init_config.
+  set (model0 := with_vdso (Vdso.vdso_run_init (ed_vdso rnd))
+                   (init_model (segments_reserved segs) brk0 mb sp lim inp)) in *.
+  assert (HM0 : M_loop model0)
+    by exact (init_M_loop (segments_reserved segs) brk0 mb sp lim inp Hrdr).
+  apply to_rd_coexec; [exact HM0 | exact Hrd].
 Qed.
 Lemma stream_omni_cosafe : forall pc ph sp brk0 mb rnd lim inp,
-to_rd (init_machine_state segs pc ph sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
-omni_cosafe (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp
-(stream_traces cnt (in_fs inp) (in_stdin inp)).
+  to_rd (init_machine_state segs pc ph sp mb rnd inp) ->
+  in_channel_reader inp = true ->
+  OmniRun.cosafe segs (init_config segs pc ph sp brk0 mb rnd lim inp)
+    (stream_traces cnt (in_fs inp) (in_stdin inp)).
 Proof.
-intros pc ph sp brk0 mb rnd lim inp Hrd. cbn [omni_cosafe].
-apply cosafe_obs_iff.
-- intros t t' Ht Hp. eapply stream_traces_prefix_closed; eauto.
-- intros tr Hobs. apply (stream_obs_iff pc ph sp brk0 mb rnd lim inp Hrd). exact Hobs.
+  intros pc ph sp brk0 mb rnd lim inp Hrd Hrdr.
+  apply cosafe_obs_iff.
+  - intros t t' Ht Hp. eapply stream_traces_prefix_closed; eauto.
+  - intros tr Hobs. apply (stream_obs_iff pc ph sp brk0 mb rnd lim inp Hrd Hrdr). exact Hobs.
 Qed.
 End d.
 Lemma stream_omni_strong_equiv :
-forall cnt : word, (0 < bv_unsigned cnt <= rw_bytes_max)%Z ->
-forall source_segs rLH rpc rph rsp rbrk rmb rrnd target_segs aLH apc aph asp abrk amb arnd inp,
-(forall ms, rLH ms -> to_rd source_segs rLH cnt ms) ->
-(forall ms, aLH ms -> to_rd target_segs aLH cnt ms) ->
-to_rd source_segs rLH cnt (init_machine_state source_segs rpc rph rsp rrnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
-to_rd target_segs aLH cnt (init_machine_state target_segs apc aph asp arnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
-omni_strong_equiv (mkImage source_segs rpc rph) (mkImage target_segs apc aph)
-(mkEntry rsp rbrk rmb rrnd) (mkEntry asp abrk amb arnd) inp.
+  forall cnt : word, (0 < bv_unsigned cnt <= rw_bytes_max)%Z ->
+  forall source_segs rLH rpc rph rsp rbrk rmb rrnd target_segs aLH apc aph asp abrk amb arnd inp,
+  (forall ms, rLH ms -> to_rd (run_segments source_segs inp rsp rmb) rLH cnt ms) ->
+  (forall ms, aLH ms -> to_rd (run_segments target_segs inp asp amb) aLH cnt ms) ->
+  to_rd (run_segments source_segs inp rsp rmb) rLH cnt
+    (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp) ->
+  to_rd (run_segments target_segs inp asp amb) aLH cnt
+    (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp) ->
+  in_channel_reader inp = true ->
+  omni_strong_equiv (mkImage source_segs rpc rph) (mkImage target_segs apc aph)
+                    (mkEntry rsp rbrk rmb rrnd) (mkEntry asp abrk amb arnd) inp.
 Proof.
-intros cnt Hcnt source_segs rLH rpc rph rsp rbrk rmb rrnd target_segs aLH apc aph asp abrk amb arnd
-inp HrLH HaLH Hr Ha.
-split.
-{ cbn [img_segments].
-eapply coexec_conseq;
-[exact (stream_omni_corun source_segs rLH cnt Hcnt HrLH rpc rph rsp rbrk rmb rrnd
-source_alloc_limit inp Hr) | apply never_errors_covered]. }
-right. split.
-- apply trace_equiv_iff_omni. intro tr. cbn.
-rewrite (stream_obs_iff source_segs rLH cnt Hcnt HrLH rpc rph rsp rbrk rmb rrnd source_alloc_limit inp Hr tr).
-rewrite (stream_obs_iff target_segs aLH cnt Hcnt HaLH apc aph asp abrk amb arnd target_alloc_limit inp Ha tr).
-reflexivity.
-- exact (stream_omni_corun target_segs aLH cnt Hcnt HaLH apc aph asp abrk amb arnd target_alloc_limit inp Ha).
+  intros cnt Hcnt source_segs rLH rpc rph rsp rbrk rmb rrnd target_segs aLH apc aph asp abrk amb arnd
+         inp HrLH HaLH Hr Ha Hrdr.
+  split.
+  { cbn [img_segments].
+    eapply coexec_conseq;
+      [exact (stream_omni_corun (run_segments source_segs inp rsp rmb) rLH cnt Hcnt HrLH
+                rpc rph rsp rbrk rmb rrnd
+                source_alloc_limit inp Hr Hrdr) | apply never_errors_covered]. }
+  right. split.
+  - apply trace_equiv_iff_omni. intro tr. cbn.
+    rewrite (stream_obs_iff (run_segments source_segs inp rsp rmb) rLH cnt Hcnt HrLH rpc rph rsp rbrk rmb rrnd source_alloc_limit inp Hr Hrdr tr).
+    rewrite (stream_obs_iff (run_segments target_segs inp asp amb) aLH cnt Hcnt HaLH apc aph asp abrk amb arnd target_alloc_limit inp Ha Hrdr tr).
+    reflexivity.
+  - exact (stream_omni_corun (run_segments target_segs inp asp amb) aLH cnt Hcnt HaLH apc aph asp abrk amb arnd target_alloc_limit inp Ha Hrdr).
 Qed.
 Lemma stream_strong_equiv :
-forall cnt : word, (0 < bv_unsigned cnt <= rw_bytes_max)%Z ->
-forall source_segs rLH rpc rph rsp rbrk rmb rrnd rlim target_segs aLH apc aph asp abrk amb arnd alim inp,
-(forall ms, rLH ms -> to_rd source_segs rLH cnt ms) ->
-(forall ms, aLH ms -> to_rd target_segs aLH cnt ms) ->
-to_rd source_segs rLH cnt (init_machine_state source_segs rpc rph rsp rrnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
-to_rd target_segs aLH cnt (init_machine_state target_segs apc aph asp arnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) ->
-Equivalence.modeled (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
-/\ Equivalence.equiv (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
-(run (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp).
+  forall cnt : word, (0 < bv_unsigned cnt <= rw_bytes_max)%Z ->
+  forall source_segs rLH rpc rph rsp rbrk rmb rrnd rlim target_segs aLH apc aph asp abrk amb arnd alim inp,
+  (forall ms, rLH ms -> to_rd (run_segments source_segs inp rsp rmb) rLH cnt ms) ->
+  (forall ms, aLH ms -> to_rd (run_segments target_segs inp asp amb) aLH cnt ms) ->
+  to_rd (run_segments source_segs inp rsp rmb) rLH cnt
+    (init_machine_state (run_segments source_segs inp rsp rmb) rpc rph rsp rmb rrnd inp) ->
+  to_rd (run_segments target_segs inp asp amb) aLH cnt
+    (init_machine_state (run_segments target_segs inp asp amb) apc aph asp amb arnd inp) ->
+  in_channel_reader inp = true ->
+  Equivalence.modeled (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
+  /\ Equivalence.equiv (run (mkImage source_segs rpc rph) rlim (mkEntry rsp rbrk rmb rrnd) inp)
+                       (run (mkImage target_segs apc aph) alim (mkEntry asp abrk amb arnd) inp).
 Proof.
-intros cnt Hcnt source_segs rLH rpc rph rsp rbrk rmb rrnd rlim target_segs aLH apc aph asp abrk amb arnd alim
-inp HrLH HaLH Hr Ha.
-split.
-{ apply no_error_run_modeled.
-apply (stream_no_error source_segs rLH cnt Hcnt HrLH rpc rph rsp rbrk rmb rrnd rlim inp Hr). }
-right. split.
-- intro tr. cbn.
-rewrite (stream_obs_iff source_segs rLH cnt Hcnt HrLH rpc rph rsp rbrk rmb rrnd rlim inp Hr tr).
-rewrite (stream_obs_iff target_segs aLH cnt Hcnt HaLH apc aph asp abrk amb arnd alim inp Ha tr).
-reflexivity.
-- cbn. apply (stream_no_error target_segs aLH cnt Hcnt HaLH apc aph asp abrk amb arnd alim inp Ha).
+  intros cnt Hcnt source_segs rLH rpc rph rsp rbrk rmb rrnd rlim target_segs aLH apc aph asp abrk amb arnd alim
+         inp HrLH HaLH Hr Ha Hrdr.
+  split.
+  { apply no_error_run_modeled.
+    apply (stream_no_error (run_segments source_segs inp rsp rmb) rLH cnt Hcnt HrLH rpc rph rsp rbrk rmb rrnd rlim inp Hr Hrdr). }
+  right. split.
+  - intro tr. cbn.
+    rewrite (stream_obs_iff (run_segments source_segs inp rsp rmb) rLH cnt Hcnt HrLH rpc rph rsp rbrk rmb rrnd rlim inp Hr Hrdr tr).
+    rewrite (stream_obs_iff (run_segments target_segs inp asp amb) aLH cnt Hcnt HaLH apc aph asp abrk amb arnd alim inp Ha Hrdr tr).
+    reflexivity.
+  - cbn. apply (stream_no_error (run_segments target_segs inp asp amb) aLH cnt Hcnt HaLH apc aph asp abrk amb arnd alim inp Ha Hrdr).
 Qed.

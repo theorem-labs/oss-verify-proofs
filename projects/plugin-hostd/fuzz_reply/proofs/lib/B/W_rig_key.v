@@ -4,15 +4,15 @@
    (fuzz_reply.asan-ubsan 0x82f08 .. 0x830c4: one held key of the inner loop), against the frozen segment interface
    lib/B/W_relay_instance_gone_cx.v rig_key_stmt.  A new walk of B's code (UBSan trap mode); the proof shape, the
    model, budget, keep and representation lemmas (lib/B/W_rig_key_b / _k / _r.v) follow k3's image-A
-   lib/A/W_rig_key.v (a working branch 8cfff43c147); the seats are lib/B/W_rig_key_s.v, the end arm's
+   lib/A/W_rig_key.v (a working branch); the seats are lib/B/W_rig_key_s.v, the end arm's
    calls lib/B/W_rig_key_e.v, its cut lib/B/W_rig_key_c.v.
    C3 (the peak form; the image-A twin's re-fit of lib/A/W_rig_key.v, mirrored): each key's gesture_end takes its room
    from the remaining trace's prefix (W_rig_key_b.v rkb_ge_room), and after the key the live bytes move by the NET
    change of its gesture_end (W_rig_key_b.v rkb_ge_net: g_out's growth) less the freed |key| + 1. *)
 (* Modified by Theorem Labs, 2026-10: ROUTE (b), STEP 3 (CONVERSION.md (sha256 1015972e02a9; internal record)), the RIGX round on
-   image B, as the image-A twin's RIG_x round (lib/A/W_rig_key.v, a Theorem Labs lane f4cd818e98d): KEY over any allocator
+   image B, as the image-A twin's RIG_x round (lib/A/W_rig_key.v, a Theorem Labs lane): KEY over any allocator
    relation ARx with its laws and the room record RP, against the cx file's generic Section
-   (lib/B/W_relay_instance_gone_cx.v, commit 258ee8f57ad; its Section c copied below).  Every ARx state of this walk
+   (lib/B/W_relay_instance_gone_cx.v; its Section c copied below).  Every ARx state of this walk
    is read at the empty head set (HP0: ARh below, with Local wrappers of the laws), so each journal runs from [] to
    [] at the kit's RIG_STK_x (= RIG_STK + 128); GLIVE's head sets are [] (rk_jhp0, rk_gxHp).  The runs are
    paj_run_x_x / paj_run_to_x_x.  strncmp at astrncmp_realizes_x; gesture_end by lib/B/W_rig_key_e.v rk_ge (ge_spec_x)
@@ -23,6 +23,7 @@
    from the key's count change (rkc_end_cnt) in rkb_gin_end / rkb_gout_end.  The journal's image clause exempts PST:
    the image bytes kept through gesture_end's journal take `~ Exists (in_zr a) PST` (rk_keep_img).  The fake frame
    lies off image B's band by rk_frm_off_imgB_x below (W_frame_b.v frm_off_imgB over ARx). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -401,7 +402,7 @@ Hypothesis PSTG : forall a,
 #[local] Notation rkc_cnt_out_le := (W_rig_key_b.rkc_cnt_out_le B PST ARx MT RP MMAX RG CTX_AFREE LAWS HP0 TL TLF MLAW IMGC BLKN OWNLOW WFx WFL SFREE SMALLOC ASMP ASF FFL MO_FR HGRIG HH41 HH42 HRGP HRGI HROMO ALLOC_TAIL ALOCK AUNLOCK AFREE ASNPRINTF ASTRLEN ASTRNCMP DRAIN GE HEND5L HGOTG HCANR HLIT17 HLIT18 HLIT28 PSTR PSTG) (only parsing).
 #[local] Notation rkc_end_cnt := (W_rig_key_b.rkc_end_cnt B PST ARx MT RP MMAX RG CTX_AFREE LAWS HP0 TL TLF MLAW IMGC BLKN OWNLOW WFx WFL SFREE SMALLOC ASMP ASF FFL MO_FR HGRIG HH41 HH42 HRGP HRGI HROMO ALLOC_TAIL ALOCK AUNLOCK AFREE ASNPRINTF ASTRLEN ASTRNCMP DRAIN GE HEND5L HGOTG HCANR HLIT17 HLIT18 HLIT28 PSTR PSTG) (only parsing).
 
-(* ==== the generic relation at the empty head set (the image-A twin's lib/A/W_rig_key.v:236-280; Local here, as every
+(* ==== the generic relation at the empty head set (the image-A twin's lib/A/W_rig_key.v:237-281; Local here, as every
    key file that needs them defines its own) ==== *)
 (* HP0: every ARx state this walk meets has the head set [], so the walk states its facts at ARh (= ARx at []) and
    each journal from [] to [] (a callee's post state is brought to [] as it arrives).  The wrappers keep the AR walk's
@@ -1845,7 +1846,7 @@ Hypothesis GE_R : ge_spec_xR B PST ARx R MT RP MMAX RG (BASE + AF_fr_gesture_end
 Let RUNG := paj_run_x_xG B PST ARx LAWS R (G_RIG B RG) HGRIG 0 [].
 Let RUNTOG := paj_run_to_x_xG B PST ARx LAWS R (G_RIG B RG) HGRIG 0 [].
 Let BRR := paj_branch_xR (PI := PI) (R := R).
-(* ==== the generic relation at the empty head set (the image-A twin's lib/A/W_rig_key.v:236-280; Local here, as every
+(* ==== the generic relation at the empty head set (the image-A twin's lib/A/W_rig_key.v:237-281; Local here, as every
    key file that needs them defines its own) ==== *)
 (* HP0: every ARx state this walk meets has the head set [], so the walk states its facts at ARh (= ARx at []) and
    each journal from [] to [] (a callee's post state is brought to [] as it arrives).  The wrappers keep the AR walk's

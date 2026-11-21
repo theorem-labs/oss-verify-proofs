@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the place_declined_b premise of the mmap decline; the CONFIG_RSEQ flag; the vDSO; the reserved-range ledger; the hole path of the fixed mmap; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/AsanNodesMmAK.v, 42 lines within its lines 121-943. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -31,6 +31,7 @@ Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Section Nodes.
 Variable SEGS : list Segment. Variable scfg : SpuriousCfg. Hypothesis Halloc : sc_alloc scfg = false.            Variable A : atable.
 Variable nx0 : nat.                      Variable LIMIT : Z.
+Variable rz : Z.
 Variable SINV : env -> (word -> option byte) -> Prop.
 Variable argH : env -> word -> bool.     Variable FS0 : Fs.Fs.
 Hypothesis SEGS_wx : wx_segs_nowrap SEGS.
@@ -111,7 +112,7 @@ Let mmap_fixed_old_facts := AsanNodesMmLibK.mmap_fixed_old_facts SEGS A nx0 LIMI
 Let mmap_fixed_hole_facts := AsanNodesMmLibK.mmap_fixed_hole_facts SEGS A LIMIT SINV argH FS0 RES_len HULL_ok SHADOW_ok HULL_lt.
 Let fixed_pre := AsanNodesMmLibK.fixed_pre SEGS A LIMIT SINV argH FS0 RES_len HULL_ok HULL_lt.
 Let mmap_len_sound := AsanNodesMmLibK.mmap_len_sound SEGS A LIMIT SINV argH FS0 RES_len HULL_ok.
-Let mmap_null_cs1 := AsanNodesMmLibK.mmap_null_cs1 SEGS A nx0 LIMIT SINV argH FS0 RES_len HULL_ok SHADOW_ok argH_high e_sp0_init argH_agree SINV_frame SINV_agree HULL_tiled HULL_lt.
+Let mmap_null_cs1 := AsanNodesMmLibK.mmap_null_cs1 SEGS A nx0 LIMIT rz SINV argH FS0 RES_len HULL_ok SHADOW_ok argH_high e_sp0_init argH_agree SINV_frame SINV_agree HULL_tiled HULL_lt.
 Let overlap_sum_contained := AsanNodesMmLibK.overlap_sum_contained SEGS A RES_len HULL_ok.
 Let page_aligned_sound := AsanNodesMmLibK.page_aligned_sound SEGS A RES_len.
 Let refuse_cont := AsanNodesMmLibK.refuse_cont SEGS scfg A nx0 LIMIT SINV argH FS0 RES_len SINV_frame.
@@ -122,7 +123,7 @@ Let reserved_free_above := AsanNodesMmLibK.reserved_free_above SEGS A RES_len RE
 Let safe_range_apart := AsanNodesMmLibK.safe_range_apart SEGS A RES_len HULL_ok.
 Let seps_map_disjoint := AsanNodesMmLibK.seps_map_disjoint SEGS A RES_len.
 Let shadow_facts_new_ok := AsanNodesMmLibK.shadow_facts_new_ok SEGS A LIMIT SINV argH FS0 RES_len HULL_ok SHADOW_ok.
-Let slice_args := AsanNodesMmLibK.slice_args SEGS A LIMIT SINV argH FS0 RES_len RES_hull HULL_ok HULL_lt.
+Let slice_args := AsanNodesMmLibK.slice_args SEGS A LIMIT SINV argH FS0 RES_len HULL_ok HULL_lt.
 Let slice_hyps := AsanNodesMmLibK.slice_hyps SEGS A LIMIT SINV argH FS0.
 Let split_flat_estart := AsanNodesMmLibK.split_flat_estart SEGS A RES_len HULL_ok.
 Let vis_add_inv := AsanNodesMmLibK.vis_add_inv A LIMIT.
@@ -144,7 +145,7 @@ Let sl_vis_in_G := AsanNodesMmLibK.sl_vis_in_G SEGS A LIMIT SINV argH FS0 RES_le
 Let sl_vis_out := AsanNodesMmLibK.sl_vis_out SEGS A LIMIT SINV argH FS0 RES_len HULL_ok.
 Let sl_wf' := AsanNodesMmLibK.sl_wf' SEGS A LIMIT SINV argH FS0 RES_len HULL_ok.
 Let slice_cs1_ok := AsanNodesMmLibK.slice_cs1_ok SEGS A LIMIT SINV argH FS0 RES_len HULL_ok SHADOW_ok argH_high SINV_frame.
-Let mmap_null_eq := AsanNodesMmLibK.mmap_null_eq A nx0 LIMIT.
+Let mmap_null_eq := AsanNodesMmLibK.mmap_null_eq A nx0 LIMIT rz.
 Let null_kend_ok := AsanNodesMmLibK.null_kend_ok SEGS A RES_len HULL_ok.
 Let null_kend_pure := AsanNodesMmLibK.null_kend_pure.
 Let grant_hull_apart := AsanNodesMmLibK.grant_hull_apart SEGS A RES_len HULL_ok HULL_tiled HULL_lt.
@@ -159,7 +160,7 @@ Let lit_ivs_apart := AsanNodesMmLibK.lit_ivs_apart SEGS A RES_len HULL_ok.
 Let runs_apart_grant := AsanNodesMmLibK.runs_apart_grant SEGS A RES_len HULL_ok.
 Let null_grant_facts := AsanNodesMmLibK.null_grant_facts SEGS A LIMIT SINV argH FS0 RES_len HULL_ok HULL_tiled HULL_lt.
 Let u_e_stk_len := AsanNodesMmLibK.u_e_stk_len SEGS A RES_len HULL_ok.
-Let null_kfacts_ok := AsanNodesMmLibK.null_kfacts_ok SEGS A LIMIT SINV argH FS0 RES_len HULL_ok SHADOW_ok HULL_tiled HULL_lt.
+Let null_kfacts_ok := AsanNodesMmLibK.null_kfacts_ok SEGS A LIMIT rz SINV argH FS0 RES_len HULL_ok SHADOW_ok HULL_tiled HULL_lt.
 Let kdisj_shadow_twin_pure := AsanNodesMmLibK.kdisj_shadow_twin_pure A.
 Let null_kd_pure := AsanNodesMmLibK.null_kd_pure A.
 Let null_kfacts_pure := AsanNodesMmLibK.null_kfacts_pure A.
@@ -185,7 +186,7 @@ Lemma mmap_null_sound2 : forall (split : bool) cs kd (eager visible : bool) csa 
   reg_lit cs 14 = Some (two64 - 1) -> reg_lit cs 15 = Some 0 ->
   (kind_none kd || kind_lazy kd = negb eager)%bool -> is_tok_kind kd = false ->
   visible = negb (kind_none kd) ->
-  mmap_null A nx0 LIMIT split cs kd eager visible = Some (csa, csb) ->
+  mmap_null A nx0 LIMIT rz split cs kd eager visible = Some (csa, csb) ->
   (forall E' R' FULL' model', env_agree nx0 E E' /\ env_agree (nxt cs) E E' -> CSOK E' csa R' FULL' model' -> m_fs model' = m_fs model ->
       srealizes SEGS scfg (cfg R' (pc csa) FULL' model') TB) ->
   (forall E' R' FULL' model', env_agree nx0 E E' /\ env_agree (nxt cs) E E' -> CSOK E' csb R' FULL' model' -> m_fs model' = m_fs model ->
@@ -216,7 +217,8 @@ Proof.
   set (len := bv_unsigned (edenot E (reg cs 11))) in *. set (nZ := page_round_up_Z len) in *.
   set (n := Z_to_bv 64 nZ).
 
-  destruct (gap_ok_sound E cs R FULL model nhi nZ HC Hgap ltac:(lia)) as [a0 Ha0].
+  destruct (gap_ok_sound E cs R FULL model nhi nZ HC Hgap ltac:(lia)
+              ltac:(first [exact HnZal | unfold page_size; exact HnZal])) as [a0 Ha0].
   pose proof (co_halt _ _ _ _ _ _ _ _ _ _ _ HC) as Hhalt.
 
   assert (CONT : forall (a : word) model' FULL',
@@ -229,7 +231,8 @@ Proof.
     fold len nZ n in HC1, HneE', Un, HaT, Hnlh, HnZpos, Hvlo, Hvhi, Hapart, NEW.
     rewrite (v_addi_pc (pc cs) Hp0 Hp4). rewrite bv5_10.
     set (E' := ext1 E (nxt cs) (Z_to_bv 64 (bv_unsigned a / 4096))) in *.
-    set (cs1 := null_cs1 A cs kd eager ne nlo nhi) in *.
+    (* [null_cs1] is stated over [AsanNodesMmLibK]'s section variables [A] and [rz] *)
+    set (cs1 := null_cs1 A rz cs kd eager ne nlo nhi) in *.
     pose proof (u64_range a) as Ra.
 
     assert (FINOK : forall c0 c, CSOK E' c0 (regupd R (Z_to_bv 5 (Z.of_nat 10)) a) FULL' model' ->
@@ -297,8 +300,12 @@ Proof.
   destruct kd; cbn [kind_none kind_lazy negb orb] in *; [| | | | discriminate Hkfog | discriminate Hkfog].
   -
     destruct eager; [|discriminate].
-    eapply (srz_mmap_rw1 SEGS scfg Halloc R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 34) TB Hf He Hhalt R17 R11 Hlen R12 R13 mmap_flags_core_22 R14 R15).
-    + exists a0. exact Ha0.
+    (* route (b): this node's own statement pins the hint, [:194 reg_lit cs 10 =
+       Some 0], and [R10] carries it, so the decline closes outright and the
+       published [x_stmt] interface does not move. *)
+    eapply (srz_mmap_rw1 SEGS scfg Halloc R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 34) TB Hf He Hhalt R17 R11 Hlen R12 R13 mmap_flags_core_22 R14 R15
+              ltac:(rewrite R10; apply place_declined_b_null)).
+    + exists a0. rewrite R10. exact Ha0.
     + unfold mmap_noreserve_backed_ok. rewrite mmap_noreserve_b_22.
       apply Z.leb_le. cbn in Hbud. eapply Z.le_trans; [|eapply (budget_slack E cs R FULL model nhi HC Hbud)]. fold nZ. lia.
     + intros a Hg. rewrite (with_mmap_backing_plain _ _ _ _ mmap_noreserve_b_22). apply (CONT a); [exact Hg | | | reflexivity].
@@ -306,8 +313,9 @@ Proof.
       * split; [intros x Hx; apply zfill_out; exact Hx | intros x Hx; apply zfill_in; exact Hx].
   -
     destruct eager; [discriminate|].
-    eapply (srz_mmap_rw1 SEGS scfg Halloc R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 16418) TB Hf He Hhalt R17 R11 Hlen R12 R13 mmap_flags_core_4022 R14 R15).
-    + exists a0. exact Ha0.
+    eapply (srz_mmap_rw1 SEGS scfg Halloc R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 16418) TB Hf He Hhalt R17 R11 Hlen R12 R13 mmap_flags_core_4022 R14 R15
+              ltac:(rewrite R10; apply place_declined_b_null)).
+    + exists a0. rewrite R10. exact Ha0.
     + unfold mmap_noreserve_backed_ok. rewrite mmap_noreserve_b_4022. reflexivity.
     + intros a Hg. rewrite (with_mmap_backing_lazy _ _ _ _ mmap_noreserve_b_4022). apply (CONT a); [exact Hg | | | reflexivity].
       * destruct (grant_ok_na_pin_parts model a nZ Hg) as (Hal & Hpos & Htop & _).
@@ -317,15 +325,17 @@ Proof.
       * split; [intros x Hx; apply zfill_out; exact Hx | intros x Hx; apply zfill_in; exact Hx].
   -
     destruct eager; [discriminate|].
-    eapply (srz_mmap_none1 SEGS scfg Halloc R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 34) TB Hf He Hhalt R17 R11 Hlen R12 R13 mmap_flags_core_22 R14 R15).
-    + exists a0. exact Ha0.
+    eapply (srz_mmap_none1 SEGS scfg Halloc R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 34) TB Hf He Hhalt R17 R11 Hlen R12 R13 mmap_flags_core_22 R14 R15
+              ltac:(rewrite R10; apply place_declined_b_null)).
+    + exists a0. rewrite R10. exact Ha0.
     + intros a Hg. rewrite (with_mmap_backing_plain _ _ _ _ mmap_noreserve_b_22). apply (CONT a); [exact Hg | | | reflexivity].
       * constructor; reflexivity.
       * split; [intros x Hx; apply unfill_out; exact Hx | intros x Hx; apply unfill_in; exact Hx].
   -
     destruct eager; [discriminate|].
-    eapply (srz_mmap_none1 SEGS scfg Halloc R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 16418) TB Hf He Hhalt R17 R11 Hlen R12 R13 mmap_flags_core_4022 R14 R15).
-    + exists a0. exact Ha0.
+    eapply (srz_mmap_none1 SEGS scfg Halloc R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 16418) TB Hf He Hhalt R17 R11 Hlen R12 R13 mmap_flags_core_4022 R14 R15
+              ltac:(rewrite R10; apply place_declined_b_null)).
+    + exists a0. rewrite R10. exact Ha0.
     + intros a Hg. rewrite (with_mmap_backing_lazy _ _ _ _ mmap_noreserve_b_4022). apply (CONT a); [exact Hg | | | reflexivity].
       * destruct (grant_ok_na_pin_parts model a nZ Hg) as (Hal & Hpos & Htop & _).
         rewrite (alloc_top_eq E cs R FULL model HC) in Htop. pose proof (co_isp _ _ _ _ _ _ _ _ _ _ _ HC) as [_ [ISP _]]. unfold uE, sp_window_lo, sp_window_hi in ISP, Htop.
@@ -490,15 +500,26 @@ Proof.
   unfold mmap_fixed_free in Hn.
   destruct (mmap_fixed_free1 A LIMIT cs kd eager visible) as [c|] eqn:Hn1; [|discriminate]. injection Hn as _ <-.
   unfold mmap_fixed_free1 in Hn1.
-  destruct (fixed_args A cs CEIL) as [[[[[b off] ne] nlo] nhi]|] eqn:HFA; [|discriminate].
-
-  match type of Hn1 with (if ?c then _ else _) = _ => destruct c eqn:Hcond; [|discriminate] end.
-  apply andb_prop in Hcond as [Hcond Hav]. apply andb_prop in Hcond as [Hcond Hnev].
-  apply andb_prop in Hcond as [Hcond Hbud]. apply andb_prop in Hcond as [Hnf Hall].
-  destruct (mmap_fixed_old_facts cs b off ne nlo nhi E R FULL model HC HFA Hnf Hall) as (HC0 & Hrf & Hholes).
-  eapply (mmap_fixed_grant_sound2 cs (a_maps cs) CEIL b off ne nlo nhi kd eager visible flg c E R FULL model TB
-            HC Hec H17 H12 H13 Hflg Hcore Hnr H14 H15 Hkind Hkfog Hvisible HFA ltac:(lia) Hbud
-            HC0 Hrf Hholes Hn1 HK).
+  (* The free path reads [fixed_args cs (resx_clear cs)]; its None branch is the HOLE path over
+     [fixed_args cs CEIL], proved from [mmap_fixed_hole_facts] (jsoncons/fuzz_bigint's AsanNodesMmAK.v). *)
+  destruct (fixed_args A cs (resx_clear cs)) as [[[[[b off] ne] nlo] nhi]|] eqn:HFA.
+  - match type of Hn1 with (if ?c then _ else _) = _ => destruct c eqn:Hcond; [|discriminate] end.
+    apply andb_prop in Hcond as [Hcond Hav]. apply andb_prop in Hcond as [Hcond Hnev].
+    apply andb_prop in Hcond as [Hcond Hbud]. apply andb_prop in Hcond as [Hnf Hall].
+    destruct (mmap_fixed_old_facts cs b off ne nlo nhi E R FULL model HC HFA Hnf Hall) as (HC0 & Hrf & Hholes).
+    eapply (mmap_fixed_grant_sound2 cs (a_maps cs) (resx_clear cs) b off ne nlo nhi kd eager visible flg c E R FULL model TB
+              HC Hec H17 H12 H13 Hflg Hcore Hnr H14 H15 Hkind Hkfog Hvisible HFA
+              ltac:(unfold resx_clear; pose proof (Z.le_min_l KHI (a_ylo cs)); unfold KHI, CEIL in *; lia) Hbud
+              HC0 Hrf Hholes Hn1 HK).
+  - destruct (fixed_args A cs CEIL) as [[[[[b off] ne] nlo] nhi]|] eqn:HFA2; [|discriminate].
+    destruct (find_hole (kn cs) (a_maps cs) (reg cs 10) ne) as [h|] eqn:Hfh; [|discriminate].
+    match type of Hn1 with (if ?c then _ else _) = _ => destruct c eqn:Hcond; [|discriminate] end.
+    apply andb_prop in Hcond as [Hcond Hav]. apply andb_prop in Hcond as [Hcond Hnev].
+    apply andb_prop in Hcond as [Hap Hbud].
+    destruct (mmap_fixed_hole_facts cs b off ne nlo nhi h E R FULL model HC HFA2 Hfh Hap) as (HC0 & Hrf & Hholes).
+    eapply (mmap_fixed_grant_sound2 cs (unhole (a_maps cs) h) CEIL b off ne nlo nhi kd eager visible flg c E R FULL model TB
+              HC Hec H17 H12 H13 Hflg Hcore Hnr H14 H15 Hkind Hkfog Hvisible HFA2 ltac:(lia) Hbud
+              HC0 Hrf Hholes Hn1 HK).
 Qed.
 
 Lemma node_mprotect_sound2 : forall cs cs' E R FULL model TB,
@@ -543,6 +564,9 @@ Proof.
   eapply (srz_mprotect1 SEGS scfg Halloc R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w addr len TB Hf He Hhalt R17 R10 Hal R11 ltac:(lia)).
   - unfold two_pow_64. fold nZ. lia.
   - exact R12.
+  - 
+    cbv zeta. apply region_free_intro. intros a' sz Hin.
+    exact (region_free_In _ _ _ a' sz Hrfres (co_vdso _ _ _ _ _ _ _ _ _ _ _ HC (a', sz) Hin)).
   - exact Hna.
   - exact Hmc.
   - apply mprotect_budget_ok_intro_gen; [exact Hwf|]. pose proof (budget_slack E cs R FULL model nhi HC ltac:(unfold budget_ok; apply Z.leb_le; exact Hbud)). fold nZ n. lia.
@@ -609,7 +633,7 @@ Proof.
   destruct (reg_lit cs 10) as [[|p10|p10]|]; intros H; try discriminate H. reflexivity.
 Qed.
 
-Theorem node_mmap2_sound : forall split : bool, mm2_stmt SEGS scfg A nx0 LIMIT SINV argH FS0 (node_mmap2 A nx0 LIMIT split).
+Theorem node_mmap2_sound : forall split : bool, mm2_stmt SEGS scfg A nx0 LIMIT SINV argH FS0 (node_mmap2 A nx0 LIMIT rz split).
 Proof.
   intros split cs csa csb E R FULL model TB HC Hec Hn HKA HKB.
   unfold node_mmap2 in Hn.
@@ -619,10 +643,10 @@ Proof.
   injection Hn as ->.
   destruct isnull.
   - specialize (H10 eq_refl).
-    assert (ARMS : (prot = 3 /\ flags = 34 /\ mmap_null A nx0 LIMIT split cs KRW true true = Some (csa, csb))
-                   \/ (prot = 3 /\ flags = 16418 /\ mmap_null A nx0 LIMIT split cs KRWLAZY false true = Some (csa, csb))
-                   \/ (prot = 0 /\ flags = 34 /\ mmap_null A nx0 LIMIT split cs KNONE false false = Some (csa, csb))
-                   \/ (prot = 0 /\ flags = 16418 /\ mmap_null A nx0 LIMIT split cs KNONELAZY false false = Some (csa, csb))).
+    assert (ARMS : (prot = 3 /\ flags = 34 /\ mmap_null A nx0 LIMIT rz split cs KRW true true = Some (csa, csb))
+                   \/ (prot = 3 /\ flags = 16418 /\ mmap_null A nx0 LIMIT rz split cs KRWLAZY false true = Some (csa, csb))
+                   \/ (prot = 0 /\ flags = 34 /\ mmap_null A nx0 LIMIT rz split cs KNONE false false = Some (csa, csb))
+                   \/ (prot = 0 /\ flags = 16418 /\ mmap_null A nx0 LIMIT rz split cs KNONELAZY false false = Some (csa, csb))).
     { repeat match type of HG with context [match ?x with _ => _ end] => destruct x; try discriminate end; tauto. }
     destruct ARMS as [(-> & -> & Hm)|[(-> & -> & Hm)|[(-> & -> & Hm)|(-> & -> & Hm)]]].
     + eapply (mmap_null_sound2 split cs KRW true true); eauto; reflexivity.
@@ -860,7 +884,7 @@ Qed.
 
 End Nodes.
 
-Theorem node_mmap2_sound_OBL : forall SEGS scfg A nx0 LIMIT SINV argH FS0,
+Theorem node_mmap2_sound_OBL : forall SEGS scfg A nx0 LIMIT rz SINV argH FS0,
   sc_alloc scfg = false ->
   wx_segs_nowrap SEGS ->
   (forall a : word, in_hull A (bv_unsigned a) = false -> find_segment SEGS (bv_unsigned a) 1 = None) ->
@@ -874,7 +898,7 @@ Theorem node_mmap2_sound_OBL : forall SEGS scfg A nx0 LIMIT SINV argH FS0,
   (forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E' M) ->
   (forall z, img_lo A <= z < img_hi A -> in_ivs z (segments_reserved SEGS) = true) ->
   hull_lt A ->
-  OBL_mmap2 SEGS scfg A nx0 LIMIT SINV argH FS0.
+  OBL_mmap2 SEGS scfg A nx0 LIMIT rz SINV argH FS0.
 Proof. intros. unfold OBL_mmap2. intros split. eapply node_mmap2_sound; eauto. Qed.
 
 Theorem node_mprotect2_sound_OBL : forall SEGS scfg A nx0 LIMIT SINV argH FS0,

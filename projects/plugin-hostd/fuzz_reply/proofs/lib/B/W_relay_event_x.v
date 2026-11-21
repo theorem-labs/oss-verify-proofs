@@ -2,14 +2,15 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10-30 (a Theorem Labs lane, row G-BRE): the image-B (asan-ubsan) walk of plugin-hostd's
    relay_event in the `_x` + room form, pb_relay_event_x : re_spec_x B PST ARx MT RP MMAX G RG (BASE +
-   AF_fr_relay_event).  A three-way merge: base lib/A/W_relay_event.v at a working branch 26a1ccdf1c1 (the AR walk
-   lib/B/W_relay_event.v was ported from), one side lib/B/W_relay_event.v (image B's numerals, 01344381e6c), the
-   other lib/A/W_relay_event.v at 9f5567c9e80 (a Theorem Labs lane row C1: the walk over any allocator relation ARx with BLKM
+   AF_fr_relay_event).  A three-way merge: base lib/A/W_relay_event.v at a working branch (the AR walk
+   lib/B/W_relay_event.v was ported from), one side lib/B/W_relay_event.v (image B's numerals), the
+   other lib/A/W_relay_event.v (a Theorem Labs lane row C1: the walk over any allocator relation ARx with BLKM
    and HLPST; a Theorem Labs lane room round F3: RP after MT, re_spec_x's room premises kr / RM / the counts at relay_event's
    peak handed to send_line unchanged, the post's RM at S' send_line's).  Both originals are in the form of the cgif walks of
    proofs/cgif/cgif_file_fuzzer/lib/A/AC8h.v (runtime call sites) and lib/A/ACh2.v with lib/YC85.v cl_callS (the
    internal call), here over lib/B/W_journal_x.v's ajournal_gx_x.  This is the one generic walk: lib/B/W_relay_event.v's
    AR statement pb_relay_event is its corollary at ARx := ARi0, PST := [], RP := RP_AR (a Theorem Labs lane, Section cAR). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Image B's relay_event (0x82804, lib/B/W_listing.v AF_fr_relay_event 0x4c0) is image A's (0x826e4) instruction for
    instruction (fuzz_reply.asan-ubsan sha256 10ffb5f9202a): UBSan adds no check here.  What moves: the lock is the
    listing's object 3 (A: 6; ew index 244, A: 247), the return address of the lock call is BASE + 0x4e4 (1252; A:
@@ -609,7 +610,7 @@ eapply (SRrG_bind SEGS R R_trans).
     AOUT1 ROM3 GAR1 ltac:(pose proof (HBOUT line ltac:(lia)); lia)
     ltac:(rewrite HLB; unfold re_len; pose proof (HBOUT line ltac:(lia)); lia)
     ltac:(right; left; exists q, m; split; [exact Hq | split; [exact Hqo | split; [exact Hql | rewrite HLB; unfold re_len; lia]]])
-    (* W7's new premise (a working branch 14d97d478bb): the line is no byte of G_SL.  It lies in the live
+    (* W7's new premise (a working branch): the line is no byte of G_SL.  It lies in the live
        block q, and a heap byte is not an image byte, while every G_SL byte is one. *)
     ltac:(intros a Ha Hin; rewrite HLB in Ha; unfold re_len in Ha;
           exact (HBNI a ltac:(clear - Ha Hql HINB; lia) (proj1 (HG a (HSLG a Hin)))))

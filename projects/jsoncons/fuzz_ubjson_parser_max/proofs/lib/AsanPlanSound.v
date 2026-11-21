@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: encoded TCodec statements replaced by plain statements (pagedown/pageup, holes, cs_ok_frame, know_ok_havoc, kentry_apart lemmas), SE sections turned into plain lemmas with using attributes, and a CONFIG_RSEQ rz variable passed to AP.check; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/AsanPlanSound.v, 271 lines within its lines 90-4425. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -14,8 +15,6 @@ AsanAcct AsanAcctShape AsanPlacement BackingAlgebra.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require Import AxSymExec3 AxSymExec3Sound AxSymRun3 AsanPlan.
 Import ListNotations.
 Open Scope Z_scope.
-From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require TCodec.
-Ltac2 tcn__AsanPlanSound () := ([""; "Corelib.Init.Datatypes."; "Corelib.Init.Logic."; "Corelib.Init.Nat."; "Corelib.Init.Peano."; "Corelib.Lists.ListDef."; "Corelib.Numbers.BinNums."; "LinuxProcessSemantics.LinuxProcessSem.Fs."; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics."; "LinuxProcessSemantics.LinuxProcessSem.State."; "LinuxProcessSemantics.Riscv.Instr."; "LinuxProcessSemantics.Riscv.Prelude."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AsanAcct."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AsanPlan.AP."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AsanPlanSound.APS."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AsanPlanSound.APS.FPX_1."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AsanPlanSound.APS.FPX_3."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AsanPlanSound.APS.FPX_3.Sound."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AsanPlanSound.APS.FPX_3.Sound.Rename."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AsanPlanSound.APS.FPX_3.Sound.RenameCS."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AxSymExec3.AX2."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AxSymExec3Sound.AX2S."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.AxSymRun3."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.DivergeSim."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.PropExec."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.ShapeAlg."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.SpinAlg."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.StoreOk."; "Stdlib.Lists.List."; "Stdlib.ZArith.BinInt.Z."; "stdpp.bitvector.definitions."], [["0A"; "1None"; "1O"; "1S"; "1Some"; "1andb"; "1app"; "1bool"; "1cons"; "1false"; "1fst"; "1length"; "1list"; "1nat"; "1negb"; "1nil"]; ["1option"; "1pair"; "1prod"; "1snd"; "1true"; "2False"; "2True"; "2and"; "2eq"; "2ex"; "2iff"; "2not"; "2or"; "3add"; "4le"; "4lt"]; ["5Forall"; "5map"; "5nth"; "6Z"; "0D"; "0E"; "0E'"; "0E1"; "0E2"; "0E3"; "0FULL"; "0FULL'"; "0H"; "0H1"; "0H2"; "0HS"]; ["0IT"; "0J"; "0K"; "0KC"; "0LIMIT"; "7Fs"; "8fetch_word"; "8machine_state"; "8ms_pc"; "8ms_svc_pending"; "8wview"; "9Model"; "9event"; "9m_fs"; "9m_vm_lazy"; "9m_vmmaps"]; ["9map_remove"; "9page_base"; "9page_in_ranges"; "9vm_limit"; ":aluop"; ":mulop"; ";bvmap"; "0M"; "0M'"; "0M0"; "0N"; "0P"; "0R"; "0R'"; "<A_bytes"; "<A_wf"]; ["<H_off_segments"; "<MInv"; "<eager_used"; "<lazy_cover"; "<mrestrict"; "<munrestrict"; "<page_allowedb"; "<same_but_materialized"; "=ACS"; "=AM"; "=COk"; "=SPIN_WORD"; "=a_brk"; "=a_fd"; "=a_ghost"; "=a_maps"]; ["=a_ss"; "=a_vis"; "=acs"; "=add_kn"; "=afd"; "=afd_eqb"; "=am_base"; "=am_len"; "=amap"; "=amap_eqb"; "=asubst"; "=check"; "=check_all"; "=cover1"; "=cover_x"; "=cres"]; ["=cs_gc"; "=csvars_all"; "=cutout1"; "=cutout1p"; "=deand"; "=disj_side_fact"; "=drop_ixs"; "=entails"; "=entails_h"; "=erename"; "=esubst"; "=evars_all"; "=expr_vars_lt"; "=fact_ok"; "=fd_vars_lt"; "=find_disj"]; ["=flat_x"; "=fog_token"; "=fresh_ok"; "=fsubst"; "=havoc1"; "=havoc1p"; "=hw_apply"; "=hw_go"; "=hw_val"; "=inst"; "=is_fog"; "=is_hole"; "=is_tok_kind"; "=kentry_apart_b"; "=kentry_apart_bp"; "=kentry_eqb"]; ["=kentry_eqb_h"; "=kentry_vars_lt"; "=kflat_h"; "=kimg_clip"; "=kn"; "=kn_bigsubst"; "=kn_contra"; "=kn_cutout"; "=kn_havoc"; "=kn_incl_h"; "=kn_vars_lt"; "=krename"; "=ksubst"; "=kunk_covered"; "=kvars_all"; "=kwr_cut"]; ["=kzero_x"; "=listZ_eqb"; "=list_insert_nth"; "=list_set_nth"; "=lit_of"; "=loop_ok"; "=loopctx"; "=maps_vars_lt"; "=mk_bwd"; "=mk_fwd"; "=mk_itab_ranges"; "=mk_itab_ranges_acc"; "=mkind"; "=mkind_eqb"; "=mrename"; "=msubst"]; ["=no_fog"; "=node_abstractcell"; "=node_bump"; "=node_casedisj"; "=node_compact"; "=node_diamond_join"; "=node_droprange"; "=node_fog"; "=node_fognew"; "=node_ghost"; "=node_havoc"; "=node_havocbig"; "=node_havocbrk"; "=node_havocwords"; "=node_intro"; "=node_rename"]; ["=node_respell"; "=node_shdisj"; "=node_unvis"; "=nt_get"; "=nxt"; "=pair_eqb"; "=pairs_vars_lt"; "=pc"; "=plan"; "=reg"; "=reg_lit"; "=regs_match_h"; "=rename_cs"; "=residue_fact"; "=respell_ok"; "=run_block"]; ["=run_block_gc"; "=salt2"; "=set_kn"; "=set_regs"; "=shadow_of"; "=shadow_off"; "=shape"; "=shape_eqb"; "=shape_vars_lt"; "=spiece"; "=spieces_eqb"; "=sr_fresh"; "=sr_vars_lt"; "=vis_add"; "=vis_cost"; "=vis_here"]; ["=with_ss"; "=xb2"; "=xhi1"; "=xhi2"; "=xlo1"; "=xlo2"; "?pagedown"; "ALCOK"; "AMr"; "Bren_env"; "Bren_ok"; "Cpvars_all"; "Aallow1"; "AallowA"; "Aamap_den"; "Acs_ok"]; ["Aext1"; "Aext_list"; "Afds_ok"; "Afresh_stmt"; "Ahenv"; "Ahid"; "Ahole_ok"; "Ain_allow"; "Ain_ghost"; "Ais_havoc"; "Akfoot_apart"; "Akimg_in_hull"; "Akn_bigexprs"; "Alc_guard"; "Amaps_match"; "Apw_kind"]; ["Aren_env"; "Aren_ok"; "Asd"; "Aupd"; "Avis"; "@cfg_of"; "@in_hull"; "@in_ivs"; ">pagedown"; ">pageup"; ">uE"; "DELit"; "DEVar"; "DKRange"; "DKWr"; "DSA"]; ["Dadenot"; "Daluop_eqb"; "Deb"; "Dedenot"; "Denv"; "Derange"; "Dev"; "Dexpr"; "Dexpr_eqb"; "Ditab"; "Ditab_sound"; "Dkcut"; "Dkentry"; "Dmk_sprep"; "Dmulop_eqb"; "Dridx"]; ["Ds_know"; "Ds_log"; "Ds_regs"; "Dsaddr"; "Dsentry"; "Dsplit_lit"; "Dsr_upd"; "Dsym_state"; "Dtwo64"; "Dxhi"; "EelenZ"; "Eestart"; "Ekentry_ok"; "Eknow_ok"; "Eregs_ok"; "Ezf_kind"]; ["Fenv_agree"; "Fexpr_vars_lt"; "Fkentry_vars_lt"; "Fkn_vars_lt"; "Fsr_vars_lt"; "Gis_self_jump"; "Hgetr"; "Hrdn"; "Hregupd"; "Hseg_rom"; "ITSet"; "It_alt2"; "It_eq"; "It_exit"; "It_nil"; "Jsrealizes"]; ["Kmem_grows"; "0SEGS"; "LIn"; "LNoDup"; "Lfilter"; "Lflat_map"; "Lforallb"; "Lnth_error"; "Madd"; "Mdiv"; "Mle"; "Mlt"; "Mmodulo"; "Mmul"; "Mof_nat"; "Mpow"]; ["Msub"; "0T"; "0TA"; "0TA'"; "0TB"; "0TB'"; "0X"; "0XB"; "0XE"; "0XN"; "0XON"; "0a"; "0ab"; "0allkn"; "0b"; "0b'"]; ["0b1"; "0b2"; "0bfuel"; "0bnd"; "0brk"; "0bs"; "0bw"; "0byteof"; "0c1"; "0c2"; "0cA"; "0cB"; "0ca"; "0cb"; "0ch"; "0chk"]; ["0code"; "0cs"; "0cs'"; "0cs1"; "0cs2"; "0csa"; "0csb"; "0csj"; "0css"; "0d"; "0e"; "0e'"; "0eg"; "0f"; "0fd"; "0fs"]; ["0fuel"; "0fw"; "0gb"; "0gh"; "0hi"; "0i"; "0i'"; "0inv"; "0iv"; "0ixs"; "0j"; "0joinpc"; "0k"; "0k'"; "0k1"; "0k2"]; ["0kb"; "0kk"; "0l"; "0l'"; "0l1"; "0l2"; "0lc"; "0len"; "0lo"; "0m"; "0m'"; "0m0"; "0mid"; "0mk"; "0model"; "0model'"]; ["0ms"; "0n"; "0n1"; "0n2"; "0nA"; "0ne"; "0nhi"; "0nx"; "0nx0"; "0o"; "0o1"; "0o2"; "0oA"; "0oB"; "0off"; "0p"]; ["0r"; "0rho"; "0rs"; "0s"; "0sb"; "0scfg"; "0seen"; "0sk"; "0sn"; "0sr"; "0sr'"; "0ss"; "0ss'"; "NZ_to_bv"; "Nbv"; "Nbv_unsigned"]; ["0stop"; "0stops"; "0sz"; "0t"; "0tid"; "0tk"; "0tot"; "0ts"; "0ub"; "0uk"; "0un"; "0v"; "0vals"; "0w"; "0w'"; "0wb"]; ["0wk"; "0wn"; "0x"; "0y"; "0y'"; "0ylo"; "0z"]]).
 Module APS.
 Import AX2. Import AX2S. Import AP.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -26,18 +25,18 @@ Section FPX_1. Context {fx : PropExec.FPState}.
 Definition uE (E : env) (e : expr) : Z := bv_unsigned (edenot E e).
 Definition pagedown (z : Z) : Z := z / 4096 * 4096.
 Definition pageup (z : Z) : Z := (z + 4095) / 4096 * 4096.
-#[using="Type"] Lemma pagedown_le : ltac2:(TCodec.tc2 tcn__AsanPlanSound "7'Q3&Z:&W6r1%211%4212pm>61").
+#[using="Type"] Lemma pagedown_le : forall z, pagedown z <= z.
 Proof. intros z. unfold pagedown. Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true). lia. Qed.
 End FPX_1.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
 Section FPX_2. Context {fx : PropExec.FPState}.
-#[using="Type"] Lemma pageup_ge : ltac2:(TCodec.tc2 tcn__AsanPlanSound "7'Q3&Z:r1&X9%112%4231pm>61").
+#[using="Type"] Lemma pageup_ge : forall z, z <= pageup z.
 Proof. intros z. unfold pageup. lia. Qed.
-#[using="Type"] Lemma pagedown_mod : ltac2:(TCodec.tc2 tcn__AsanPlanSound ";'Q3'H&Z<&X8r1%211+TP0%5221z%83921pm>:1").
+#[using="Type"] Lemma pagedown_mod : forall z, pagedown z mod 4096 = 0.
 Proof. intros z. unfold pagedown. rewrite Z.mod_mul. reflexivity. lia. Qed.
-#[using="Type"] Lemma pageup_mod : ltac2:(TCodec.tc2 tcn__AsanPlanSound ";'Q3'H&Z<&X9r1%211+TP0%5221z%83921pm>:1").
+#[using="Type"] Lemma pageup_mod : forall z, pageup z mod 4096 = 0.
 Proof. intros z. unfold pageup. apply Z.mod_mul. lia. Qed.
-#[using="Type"] Lemma pageup_minus_pagedown : ltac2:(TCodec.tc2 tcn__AsanPlanSound "D'Q3&Z:r2r1%3221&Z@&X9%115&X8r3%211%6241&Z8%82;4+XP0%3221%?251p0=1peNB1peHC1").
+#[using="Type"] Lemma pageup_minus_pagedown : forall a b, a <= b -> pageup b - pagedown a <= b - a + 8192.
 Proof. intros a b H. unfold pageup, pagedown. lia. Qed.
 End FPX_2.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
@@ -63,6 +62,7 @@ Hypothesis IT_ok : itab_sound SEGS IT.
 Variable A : atable.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+Variable rz : Z.
 Variable HS : nat -> option acs.
 Variable XN : nat -> list expr -> acs -> option acs.
 Variable XE : nat -> list expr -> acs -> option (Z * list spiece * acs).
@@ -88,7 +88,7 @@ Hypothesis HOLES_agree : forall h E E' fs, env_agree nx0 E E' -> HOLES h E fs = 
 Hypothesis HOLES_nil : forall h E fs, HOLES h E fs [].
 Variable FS0 : Fs.Fs.
 Variable KC : nat.
-#[local] Notation CHECK := (AP.check SEGS IT A nx0 LIMIT XN XE XB XON HS KC).
+#[local] Notation CHECK := (AP.check SEGS IT A nx0 LIMIT rz XN XE XB XON HS KC).
 #[local] Notation cfg := (cfg_of SEGS).
 Definition Wz (fd : Z) (bs : list Z) : list event := map (fun z => WriteEv (Z_to_bv 64 fd) (Z_to_bv 8 z)) bs.
 Definition piece_den (E : env) (p : spiece) : list byte :=
@@ -159,17 +159,19 @@ is_hole m = true ->
 (forall iv, In iv l -> bv_unsigned (fst iv) + bv_unsigned (snd iv) <= uE E (am_base m)
 \/ uE E (am_base m) + uE E (am_len m) <= bv_unsigned (fst iv))
 /\ (uE E (am_base m) + uE E (am_len m) <= KHI \/ ylo <= uE E (am_base m)).
-#[using="Type"] Lemma holes_mono : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q0'XD'Q3'<'B']NyR0%211%4211%611'S8%811'Q0&WFr5r4r2%43321r1%73921&Z:%1267r7%:3198r3%=3?21p051p081pj2A1pi6D1pm:L1pm8M1pR<O1").
+#[using="Type"] Lemma holes_mono : forall E y y' l ms,
+Forall (hole_ok E y l) ms -> y' <= y -> Forall (hole_ok E y' l) ms.
 Proof.
 intros E y y' l ms H Hy. apply Forall_forall. intros m Hm Hh.
 destruct (proj1 (Forall_forall _ _) H m Hm Hh) as [H1 H2]. split; [exact H1 | lia].
 Qed.
-#[using="Type"] Lemma holes_sublist : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q4'XD'Q3'<'B']NyR0%211%4211%611'S8%811'Q0&WFr5r4r3%43321r1%73921&Z2%13=36r2r6%43@21p041phBB1r7%?315=%A3C1=p041p0<1pj2E1pi8H1pi6I1pm8Q11pR<Q31").
+#[using="Type"] Lemma holes_sublist : forall E y l l' ms,
+Forall (hole_ok E y l) ms -> (forall iv, In iv l' -> In iv l) -> Forall (hole_ok E y l') ms.
 Proof.
 intros E y l l' ms H Hs. apply Forall_forall. intros m Hm Hh.
 destruct (proj1 (Forall_forall _ _) H m Hm Hh) as [H1 H2]. split; [intros iv Hiv; apply H1; apply Hs; exact Hiv | exact H2].
 Qed.
-#[using="Type"] Lemma holes_none : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q1'XD'Q3'<'B']NyR0%211%4211%611'S8%811'Q0'H'7&T;r1%211(9%63521qiD:1%93;15&WFr5r4r3%43321r2%@3B21p081pj2C1pi6F1pm8N1pR<Q01").
+#[using="Type"] Lemma holes_none : forall E y l ms, Forall (fun m => is_hole m = false) ms -> Forall (hole_ok E y l) ms.
 Proof. intros E y l ms H. apply Forall_forall. intros m Hm Hh. pose proof (proj1 (Forall_forall _ _) H m Hm) as X. congruence. Qed.
 Record cs_ok (E : env) (cs : acs) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model) : Prop := CS_OK {
 co_regs : regs_ok E (s_regs (a_ss cs)) R;
@@ -214,7 +216,7 @@ in_ghost E cs (bv_unsigned a) = false ->
 FULL a = Some (Z_to_bv 8 0);
 co_sinv : SINV E FULL
 }.
-#[using="HS XN XE XB KC"] Lemma A_wf_allowA : ltac2:(TCodec.tc2 tcn__AsanPlanSound ":'XD'S2&R?&W=r2r1%3221%511pg471pR<91").
+#[using="HS XN XE XB KC"] Lemma A_wf_allowA : forall E cs, A_wf (allowA E cs).
 Proof.
 intros E cs. unfold A_wf, allowA. apply Forall_forall. intros iv Hin.
 apply in_flat_map in Hin as [p [_ Hin]]. unfold allow1 in Hin.
@@ -227,7 +229,9 @@ Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
 split; [lia|]. split; [apply pagedown_mod | apply pageup_mod].
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Qed.
-#[using="HS XN XE XB KC"] Lemma page_base_le : ltac2:(TCodec.tc2 tcn__AsanPlanSound "J']NyR0%211'G&Z:&]O&R1r1%211%4281%5293%7221&Z;&Z8+TP0%2261%4261'H'Q3&Z<%12;6z%53421%D271%E2=1peHG1").
+#[using="HS XN XE XB KC"] Lemma page_base_le : forall a : word, bv_unsigned (page_base a) <= bv_unsigned a
+/\ bv_unsigned a < bv_unsigned (page_base a) + 4096
+/\ bv_unsigned (page_base a) mod 4096 = 0.
 Proof.
 intros a. unfold page_base, page_base_of, page_size. pose proof (u64_range a) as Ha.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
@@ -235,22 +239,20 @@ assert (H : 0 <= bv_unsigned a / 4096 * 4096 <= bv_unsigned a) by lia.
 rewrite u64_lit by lia. split; [lia|]. split; [lia|]. rewrite Z.mod_mul by lia. reflexivity.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Qed.
-#[using="HS XN XE XB KC"] Lemma page_in_ranges_bounds : ltac2:(TCodec.tc2 tcn__AsanPlanSound "QE']NyR0%211'<'B%1233%311'Q3'Q0'G&Z:r3&]O&:r1%23==1%42?1%7261&Z8&C%13BB6%92D1%4261r2%>221%@281qhBE1%C3F1@'H'7&R2&R1r5%211r4%5221(D%93821r6%K2Q61%N261+1%H231+SoO%J2Q11%Q3231%Q5261p0:1p0E1ph:Q:1piBQ;1pi6Q=1peHQB1").
+#[using="HS XN XE XB KC"] Lemma page_in_ranges_bounds : forall (a : word) l lo hi,
+Forall (fun iv => lo <= bv_unsigned (fst iv) /\ bv_unsigned (fst iv) + bv_unsigned (snd iv) <= hi) l ->
+page_in_ranges (page_base a) l = true ->
+lo <= bv_unsigned a /\ bv_unsigned a + 1 <= hi + 4095.
 Proof.
 intros a l lo hi Hl Hp. unfold page_in_ranges in Hp. apply existsb_exists in Hp as [iv [Hin Hb]].
 apply andb_prop in Hb as [H1 H2]. apply Z.leb_le in H1. apply Z.leb_le in H2.
 pose proof (proj1 (Forall_forall _ _) Hl iv Hin) as [L1 L2].
 pose proof (page_base_le a) as (P1 & P2 & P3). unfold page_size in H2. lia.
 Qed.
-Section SE.
-Local Abbreviation SEC_T_lazy_cover_cs := (ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q4'XD'S2&R6y5']NyR0%211%5241'@y8%611%311p061'QK'W?r5r4r3r2r1%6554321&RC&WEr6%23196&QN%118&W=%125=%83531p0:1piNB1pRFD1pTJJ1pg4Q11pR<Q31")) (only parsing).
-Variable E : ltac:(sec_ty2 constr:(SEC_T_lazy_cover_cs) 0%nat 0%nat).
-Variable cs : ltac:(sec_ty2 constr:(SEC_T_lazy_cover_cs) 1%nat 0%nat).
-Variable R : ltac:(sec_ty2 constr:(SEC_T_lazy_cover_cs) 2%nat 0%nat).
-Variable FULL : ltac:(sec_ty2 constr:(SEC_T_lazy_cover_cs) 3%nat 0%nat).
-Variable model : ltac:(sec_ty2 constr:(SEC_T_lazy_cover_cs) 4%nat 0%nat).
-Lemma lazy_cover_cs : ltac:(sec_stmt2 constr:(SEC_T_lazy_cover_cs) 5%nat 0%nat).
-Proof using HS XN XE XB HULL_ok KC E cs R FULL model.
+#[using="HS XN XE XB HULL_ok KC"] Lemma lazy_cover_cs : forall E cs R FULL model,
+cs_ok E cs R FULL model -> lazy_cover (hid E cs model) (m_vm_lazy model) (allowA E cs).
+Proof.
+intros E cs R FULL model.
 intros HC w Hlz Hh.
 unfold hid in Hh. apply orb_false_iff in Hh as [Ha Hv].
 apply negb_false_iff in Hv. unfold vis in Hv.
@@ -282,8 +284,7 @@ exists (pagedown (sh_lo E p), pageup (sh_hi E p)). split.
 * cbn [fst snd]. apply andb_true_intro. split; apply Z.leb_le; unfold pagedown, pageup; lia.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Qed.
-End SE.
-#[using="SEGS_in_hull HULL_ok argH_high"] Lemma H_off_segments_cs : ltac2:(TCodec.tc2 tcn__AsanPlanSound ">'XD'S2'QK&R@vZ1&WEr3r2r1%43321%7261piN91pg4;1pR<=1").
+#[using="SEGS_in_hull HULL_ok argH_high"] Lemma H_off_segments_cs : forall E cs model, H_off_segments SEGS (hid E cs model).
 Proof.
 intros E cs model a Hh. unfold hid in Hh. apply orb_prop in Hh as [Ha|Hv].
 - apply SEGS_in_hull. unfold in_hull. pose proof (argH_high _ _ Ha). pose proof HULL_ok as HU; unfold hull_ok in HU; destruct HU as (?&?&?&?).
@@ -291,25 +292,38 @@ unfold CEIL, KHI in *. apply andb_false_iff. right. apply Z.ltb_ge. lia.
 - apply negb_true_iff in Hv. unfold vis in Hv. apply orb_false_iff in Hv as [Hv _]. apply orb_false_iff in Hv as [Hv _].
 apply SEGS_in_hull. exact Hv.
 Qed.
-#[using="Type"] Lemma mrestrict_munrestrict_clean : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q2']NyR0%211'7p021'@y8%711%311p071pm682'Hr4r1%211(D%53=21r3r2%211(1%11>%;3>31p071peHF1&RD&RE%13?:9%32@1%B3D1;p061piFE1pRFG1pRJM1").
+#[using="Type"] Lemma mrestrict_munrestrict_clean : forall (H : word -> bool) FULL m',
+(forall a, H a = true -> m' a = None) ->
+mrestrict H (munrestrict H FULL m') = m'.
 Proof.
 intros H FULL m' Hc. apply functional_extensionality. intros a.
 unfold mrestrict, munrestrict. destruct (H a) eqn:Ha; [symmetry; apply Hc; exact Ha | reflexivity].
 Qed.
-#[using="Type"] Lemma vis_same : ltac2:(TCodec.tc2 tcn__AsanPlanSound "I'XD'S2'QK&RGr2r1%3221'H']NyR0%211'7peH21&X4r5r4%3321<r3%53431%<3731p0>1pj0C1piND1pg4F1pR<H1").
+#[using="Type"] Lemma vis_same : forall E cs model model',
+same_but_materialized model model' -> vis E cs model' = vis E cs model.
 Proof.
 intros E cs model model' Hs. pose proof (same_but_materialized_frame _ _ Hs) as Hfr.
 apply functional_extensionality. intros a. unfold vis.
 replace (m_vmmaps model') with (m_vmmaps model) by (symmetry; apply Hfr).
 replace (m_vm_lazy model') with (m_vm_lazy model) by (symmetry; apply Hfr). reflexivity.
 Qed.
-#[using="Type"] Lemma hid_same : ltac2:(TCodec.tc2 tcn__AsanPlanSound "I'XD'S2'QK&RGr2r1%3221'H']NyR0%211'7peH21&WEr5r4%3321<r3%53431%<3731p0>1pj0C1piND1pg4F1pR<H1").
+#[using="Type"] Lemma hid_same : forall E cs model model',
+same_but_materialized model model' -> hid E cs model' = hid E cs model.
 Proof. intros. unfold hid. apply functional_extensionality. intros a. rewrite (vis_same _ _ _ _ H). reflexivity. Qed.
-#[using="Type"] Lemma vis_ext : ltac2:(TCodec.tc2 tcn__AsanPlanSound "O'XD'S2'QK'H'<'B'XG%2211%411&S1r2%211r3%411%;3631']NyR0%211'7peH21&X4r5%231:<r4%4331>%F3631p0<1piNI1pg6K1pg4L1pR<N1").
+#[using="Type"] Lemma vis_ext : forall E cs cs' model,
+a_vis cs' = a_vis cs -> vis E cs' model = vis E cs model.
 Proof. intros E cs cs' model Ha. apply functional_extensionality. intros a. unfold vis, in_allow, in_vis, in_sh. rewrite Ha. reflexivity. Qed.
-#[using="Type"] Lemma hid_ext : ltac2:(TCodec.tc2 tcn__AsanPlanSound "O'XD'S2'QK'H'<'B'XG%2211%411&S1r2%211r3%411%;3631']NyR0%211'7peH21&WEr5%231:<r4%4331>%F3631p0<1piNI1pg6K1pg4L1pR<N1").
+#[using="Type"] Lemma hid_ext : forall E cs cs' model,
+a_vis cs' = a_vis cs -> hid E cs' model = hid E cs model.
 Proof. intros. unfold hid. apply functional_extensionality. intros a. rewrite (vis_ext _ _ _ _ H). reflexivity. Qed.
-#[using="SINV_frame"] Lemma cs_ok_frame : ltac2:(TCodec.tc2 tcn__AsanPlanSound "RG'XD'S2&R6y5']NyR0%211%5241'@y8%611%311p061'QK'Y7'W?r9r8r7r6r5%6554321&RGr2%2251'RA&W=r;r:%3221r3%6221&Y>r<&Y2%11A%4331A'H'<'Y4%211&Y1%11I(?%115%83531&Y=vZ1r>&W8r=%2431GQ1&Y0%11Q5%847631'7&WEr@r?r1%4432K1(D%I3721%Q31Q8%@1Q9%L3QF21p041peHQM1&W0%12;Q:%QG5=1Q:QFQEp041p0B1p0L1p0Q61p0Q<1p0QD1p0QH1pj0R11pRHR31pTLR91pkJR31piNR51pRFR71pTJR=1pg4RD1pR<RF1").
+#[using="SINV_frame"] Lemma cs_ok_frame : forall E cs R FULL model ss' R' FULL' model',
+cs_ok E cs R FULL model ->
+same_but_materialized model model' ->
+MInv (allowA E cs) model' ->
+regs_ok E (s_regs ss') R' -> s_log ss' = [] ->
+know_ok SEGS E (Mr E cs model FULL') (s_know ss') ->
+(forall a, hid E cs model a = true -> FULL' a = FULL a) ->
+cs_ok E (with_ss cs ss') R' FULL' model'.
 Proof.
 intros E cs R FULL model ss' R' FULL' model' HC Hs Hinv HR HL HK Hhid.
 pose proof (same_but_materialized_frame _ _ Hs) as Hfr.
@@ -328,37 +342,39 @@ replace (m_fs model') with (m_fs model) by (symmetry; apply Hfr). assumption.
 - intros a Hh. rewrite (hid_same _ _ _ _ Hs) in Hh. rewrite (Hhid a Hh). auto.
 - eapply SINV_frame; [|eassumption]. intros a Ha. apply Hhid. unfold hid. rewrite Ha. reflexivity.
 Qed.
-#[using="Type"] Lemma know_ok_filter : ltac2:(TCodec.tc2 tcn__AsanPlanSound "N'XD']NyR0%211'@y8%511%311p051'XL'7p021'<%114&Y=vZ1r4r3r1%544321r5&Z4r2%23>61%:49481p061phJ=1pgL@1pT@D1pR<M1").
+#[using="Type"] Lemma know_ok_filter : forall E M f k, know_ok SEGS E M k -> know_ok SEGS E M (List.filter f k).
 Proof.
 intros E M f k HK. unfold know_ok in *. apply Forall_forall. intros K Hin.
 apply filter_In in Hin as [Hin _]. exact (proj1 (Forall_forall _ _) HK K Hin).
 Qed.
-#[using="Type"] Lemma cs_ok_set_kn : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q:'XD'S2&R6y5']NyR0%211%5241'@y8%611%311p061'QK'<'XL%211'W?r6r5r4r3r2%6554321&Y=vZ1r7&W8%142:78%544317r8&VB%126;%@531?>=p051p0<1phLD1piNH1pRFJ1pTJQ01pg4Q71pR<Q91").
+#[using="Type"] Lemma cs_ok_set_kn : forall E cs R FULL model k',
+cs_ok E cs R FULL model -> know_ok SEGS E (Mr E cs model FULL) k' ->
+cs_ok E (set_kn cs k') R FULL model.
 Proof.
 intros E cs R FULL model k' HC HK.
 destruct HC; constructor; cbn [set_kn with_ss a_ss a_maps a_totsz a_ylo a_eager a_vis a_abytes a_brk a_fd a_tidset kn mk_ss s_regs s_log s_know];
 try assumption; reflexivity.
 Qed.
-#[using="Type"] Lemma cs_gc_ok : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q2'='XD'S2&R6y5']NyR0%211%5241'@y8%611%311p061'QK'W?r5r4r3r2r1%6554321r6&S@r7%2219%;541987p061piN>1pRF@1pTJF1pg4M1pR<O1ph6Q11").
+#[using="Type"] Lemma cs_gc_ok : forall gb E cs R FULL model, cs_ok E cs R FULL model -> cs_ok E (cs_gc gb cs) R FULL model.
 Proof.
 intros gb E cs R FULL model HC. unfold cs_gc. destruct (split_lit (reg cs 2)) as [spb spk].
 apply cs_ok_set_kn; [exact HC|]. apply know_ok_filter. exact (co_know _ _ _ _ _ HC).
 Qed.
-#[using="Type"] Lemma mk_itab_ranges_acc_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "C'<'B'Q3'=%3221%511&XI&XJvZ1r1%3221&U;r3r2%33621%8271p061pl8;1pk6=1").
+#[using="Type"] Lemma mk_itab_ranges_acc_sound : forall rs t, itab_sound SEGS t -> itab_sound SEGS (mk_itab_ranges_acc SEGS rs t).
 Proof.
 induction rs as [|[lo n] rs IH]; intros t Ht; cbn [mk_itab_ranges_acc]; [exact Ht|].
 apply IH. apply mk_itab_fuel_sound. exact Ht.
 Qed.
-#[using="Type"] Lemma mk_itab_ranges_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "='<'B'Q3'=%3221%511&XJvZ1&U:r1%2231%5241pk671").
+#[using="Type"] Lemma mk_itab_ranges_sound : forall rs, itab_sound SEGS (mk_itab_ranges SEGS rs).
 Proof.
 intros rs. unfold mk_itab_ranges. apply mk_itab_ranges_acc_sound.
 intros pc i. unfold itab_lookup. destruct pc; try discriminate. rewrite pt_get_leaf. discriminate.
 Qed.
-#[using="Type"] Lemma pc_set_kn : ltac2:(TCodec.tc2 tcn__AsanPlanSound "@'S2'<'XL%211'H'Q3&V7&VBr2r1%3221%511%614%93821phJ;1pg4?1").
+#[using="Type"] Lemma pc_set_kn : forall cs k, pc (set_kn cs k) = pc cs.
 Proof. reflexivity. Qed.
-#[using="Type"] Lemma pc_cs_gc : ltac2:(TCodec.tc2 tcn__AsanPlanSound ">'='S2'H'Q3&V7&S@r2r1%3221%511%613%93821pg4;1ph6=1").
+#[using="Type"] Lemma pc_cs_gc : forall gb cs, pc (cs_gc gb cs) = pc cs.
 Proof. intros gb cs. unfold cs_gc. destruct (split_lit (reg cs 2)); reflexivity. Qed.
-#[using="Type"] Lemma drop_ixs_incl : ltac2:(TCodec.tc2 tcn__AsanPlanSound "C'<'=%211'XL%411&Z2r1&SFr4r3r2%43321%73961%83:34p021pS6<1phJ<1ph<@1phD@1").
+#[using="Type"] Lemma drop_ixs_incl : forall ixs i k K, In K (drop_ixs ixs i k) -> In K k.
 Proof.
 intros ixs i k. revert i. induction k as [|K' r IH]; intros i K Hin; cbn [drop_ixs] in Hin.
 - exact Hin.
@@ -366,7 +382,8 @@ intros ixs i k. revert i. induction k as [|K' r IH]; intros i K Hin; cbn [drop_i
 + right. eapply IH. exact Hin.
 + destruct Hin as [<-|Hin]; [left; reflexivity | right; eapply IH; exact Hin].
 Qed.
-#[using="Type"] Lemma forget_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q8'XD'S2&R6y5']NyR0%211%5241'@y8%611%311p061'QK'<'=%211'W?r6r5r4r3r2%6554321r7&VB&SF(2&TD%11;%43831%62=1%?581=<;p0:1phDB1piNF1pRFH1pTJN1pg4Q51pR<Q71").
+#[using="Type"] Lemma forget_sound : forall E cs R FULL model ixs,
+cs_ok E cs R FULL model -> cs_ok E (set_kn cs (drop_ixs ixs 0 (kn cs))) R FULL model.
 Proof.
 intros E cs R FULL model ixs HC. apply cs_ok_set_kn; [exact HC|].
 unfold know_ok. apply Forall_forall. intros K Hin. apply drop_ixs_incl in Hin.
@@ -388,13 +405,12 @@ match kfoot E K with
 | None => True
 | Some (s, l) => (s + l <= lo \/ lo + n <= s)%Z
 end.
-Section SE.
-Local Abbreviation SEC_T_kentry_keep_sem := (ltac2:(TCodec.tc2 tcn__AsanPlanSound "QD'XD']NyR0%211'@y8%511%311p051pm662'XL'Q3&Y<vZ1r6r5r3%544321&WJr7r4r2%443261'L&Z;&]Or1%22I1%421=&Z:&Z8%12@;%3215%:251'Hr8%11?r9%11A%53Q031p071pm6Q61%N4M5GLp021p0F1p0L1pj4Q31piBQ41pS6Q61pTBQ81pT@Q:1pR<QC1")) (only parsing).
-Variable E : ltac:(sec_ty2 constr:(SEC_T_kentry_keep_sem) 0%nat 0%nat).
-Variable M : ltac:(sec_ty2 constr:(SEC_T_kentry_keep_sem) 1%nat 0%nat).
-Variable M' : ltac:(sec_ty2 constr:(SEC_T_kentry_keep_sem) 2%nat 0%nat).
-Lemma kentry_keep_sem : ltac:(sec_stmt2 constr:(SEC_T_kentry_keep_sem) 3%nat 0%nat).
-Proof using Type E M M'.
+#[using="Type"] Lemma kentry_keep_sem : forall E M M' K lo n,
+kentry_ok SEGS E M K -> kfoot_apart E K lo n ->
+(forall x : word, (bv_unsigned x < lo \/ lo + n <= bv_unsigned x)%Z -> M' x = M x) ->
+kentry_ok SEGS E M' K.
+Proof.
+intros E M M'.
 intros K lo n HK Hap Hout.
 assert (RD : forall (a : word) k, (bv_unsigned a + Z.of_nat k <= 2 ^ 64)%Z ->
 (bv_unsigned a + Z.of_nat k <= lo \/ lo + n <= bv_unsigned a)%Z ->
@@ -427,10 +443,11 @@ intros x Hx. rewrite u64_lit in Hx by lia.
 unfold wview. rewrite Hout by lia. fold (wview SEGS M x).
 eapply (store_ok_all SEGS M (Datatypes.S m')); [| exact H |]; rewrite u64_lit by lia; lia.
 Qed.
-End SE.
-#[using="Type"] Lemma elenZ_lit : ltac2:(TCodec.tc2 tcn__AsanPlanSound "I'XD'Q3'G&Z:zr1%3221&Z;&Z?+2+R0%3221%5271%;271'H&Y:r3(X;r2%211%5241%73D13p091pm>F1pR<H1").
+#[using="Type"] Lemma elenZ_lit : forall E z, (0 <= z < 2 ^ 64)%Z -> elenZ E (ELit z) = z.
 Proof. intros E z Hz. unfold elenZ. cbn [edenot]. rewrite u64_lit by lia. reflexivity. Qed.
-#[using="Type"] Lemma kentry_apart_b_sem : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q?'XD']NyR0%211'@y8%511%311p051'<'XL%211'XG'Q3&Y=vZ1r7r6r5%544321'H'7&T=r4r3r2%4593218(D%83721&WJr9&Y;(X?%12?:%3241&Y:%126<%847D31p0:1p0D1plFL1plDL1plBN1pS6Q11peLQ11pT@Q51pR<Q>1").
+#[using="Type"] Lemma kentry_apart_b_sem : forall E M allkn K ub uk un,
+know_ok SEGS E M allkn -> kentry_apart_b allkn ub uk un K = true ->
+kfoot_apart E K (estart E (SA ub uk)) (elenZ E un).
 Proof.
 intros E M allkn K ub uk un Hall Hb. unfold kfoot_apart, kfoot.
 destruct K as [[b k] w v|[b k] nn|[b k] nn kb|ilo ihi|e m|e rlo rhi|[b k] nn|a1 n1 a2 n2|[b k] nn fc|[b k] nn]; cbn [kentry_apart_b] in Hb;
@@ -450,12 +467,22 @@ unfold estart in Hd at 2 3. cbn [a_base a_off edenot] in Hd.
 rewrite !u64_lit in Hd by lia. lia.
 - pose proof (ranges_apart_x_sound SEGS E M allkn _ _ _ _ _ _ Hall Hb). lia.
 Qed.
-#[using="Type"] Lemma kentry_apart_keep : ltac2:(TCodec.tc2 tcn__AsanPlanSound "R8'XD']NyR0%211'@y8%511%311p051pm662'<'XL%211'XG'Q3&Y=vZ1r8r7r5%544321&Y<r9%247164'H'7&T=r4r3r6%45<;321(D%83721'L&Z;&]Or1%22Q31&Y;r<(X?%12G<%4231%9261&Z:&Z8&Y:%128L%3261%521<%A271r;r2%211%?12%O3Q@21p061pm6QF1r:%Q64Q;D1Q:p031p0M1p0Q71p0Q;1plFQC1plDQC1plBQE1pS6QH1peLQH1pTBQL1pT@QN1pR<R71").
+#[using="Type"] Lemma kentry_apart_keep : forall E M M' allkn K (ub : expr) uk un,
+know_ok SEGS E M allkn -> kentry_ok SEGS E M K ->
+kentry_apart_b allkn ub uk un K = true ->
+(forall x : word, (bv_unsigned x < estart E (SA ub uk) \/ estart E (SA ub uk) + elenZ E un <= bv_unsigned x)%Z ->
+M' x = M x) ->
+kentry_ok SEGS E M' K.
 Proof.
 intros E M M' allkn K ub uk un Hall HK Hb Hout.
 eapply kentry_keep_sem; [exact HK | eapply kentry_apart_b_sem; [exact Hall | exact Hb] | exact Hout].
 Qed.
-#[using="Type"] Lemma know_ok_filter_apart : ltac2:(TCodec.tc2 tcn__AsanPlanSound "RA'XD']NyR0%211'@y8%511%311p051'<'XL%211'7p031'XG'Q3&Y=vZ1r8r7r5%544321&Z2r1%23>15'Hr2%811(D%43A21'L&T=r9r6r3%453@2?1%;3H18&Y<r<r:%34G216%;251p0=1p0C1pS6Q21&Z;&]O%12Q=H&Y;r;(X?%12BO%4231%8261&Z:&Z8&Y:r4%2291%4271%621=%O281%G1Q4%>1Q5%Q73QI21p041pm6QO1&Z4%13QJQAQB%QE4QDDQ51p041p0K1p0QC1plFQK1plDQK1plBQM1pgLQO1phJR21pTBR61pT@R71pR<R@1").
+#[using="Type"] Lemma know_ok_filter_apart : forall E M M' k (f : kentry -> bool) (ub : expr) uk un,
+know_ok SEGS E M k ->
+(forall K, In K k -> f K = true -> kentry_apart_b k ub uk un K = true \/ kentry_ok SEGS E M' K) ->
+(forall x : word, (bv_unsigned x < estart E (SA ub uk) \/ estart E (SA ub uk) + elenZ E un <= bv_unsigned x)%Z ->
+M' x = M x) ->
+know_ok SEGS E M' (List.filter f k).
 Proof.
 intros E M M' k f ub uk un HK Hf Hout. unfold know_ok. apply Forall_forall. intros K Hin.
 apply filter_In in Hin as [Hin Hfk].
@@ -463,14 +490,20 @@ pose proof (proj1 (Forall_forall _ _) HK K Hin) as HKK.
 destruct (Hf K Hin Hfk) as [Hap | Hdone]; [|exact Hdone].
 eapply kentry_apart_keep; eassumption.
 Qed.
-#[using="Type"] Lemma kentry_apart_bp_eq : ltac2:(TCodec.tc2 tcn__AsanPlanSound "H'<'XL%211'XG'Q3'H'7&T>r5&XMr4r3r2%445321r1%86725431&T=%1597653%=3<31pS6B1plFA1plDA1plBC1peLE1").
+#[using="Type"] Lemma kentry_apart_bp_eq : forall allkn ub uk un K,
+kentry_apart_bp allkn (mk_sprep allkn ub uk un) ub uk un K = kentry_apart_b allkn ub uk un K.
 Proof.
 intros allkn ub uk un K. destruct K as [[kb kk] w' v|[kb kk] len|[kb kk] len bk|lo hi|e' m'|e' lo' hi'|[eb ek] en|c1 m1 c2 m2|[kb kk] len fc|[kb kk] len];
 cbn [kentry_apart_bp kentry_apart_b]; rewrite ?ranges_apart_p_eq; reflexivity.
 Qed.
-#[using="Type"] Lemma havoc1p_eq : ltac2:(TCodec.tc2 tcn__AsanPlanSound "G'<'XL%211'XG'Q3'H&T5r5&XMr4r3r2%445321r1%86725431&T4%1597653%<3?31pS6A1plF@1plD@1plBB1phJD1").
+#[using="Type"] Lemma havoc1p_eq : forall k ub uk un K,
+havoc1p k (mk_sprep k ub uk un) ub uk un K = havoc1 k ub uk un K.
 Proof. intros. unfold havoc1p, havoc1. rewrite kentry_apart_bp_eq. reflexivity. Qed.
-#[using="Type"] Lemma know_ok_havoc : ltac2:(TCodec.tc2 tcn__AsanPlanSound "R1'XD']NyR0%211'@y8%511%311p051pm662'<'XL%211'XG'Q3&Y=vZ1r7r6r4%544321'L&Z;&]Or1%22G1&Y;r9(X?r5%221;%5241%:271&Z:&Z8&Y:r3%22:1%4271%621>%C281'Hr8r2%211%B12%53Q721p071pm6Q=1&Z0%128Q1r:&TH%14Q4Q3HQ2%Q74Q63<1p051p081p0Q51pj4Q=1pjDQ=1peNQ?1phJQA1pTBQE1pT@QG1pR<R01").
+#[using="Type"] Lemma know_ok_havoc : forall E M M' k b o n,
+know_ok SEGS E M k ->
+(forall x : word, (bv_unsigned x < estart E (SA b o) \/ estart E (SA b o) + elenZ E n <= bv_unsigned x)%Z -> M' x = M x) ->
+mem_grows M M' ->
+know_ok SEGS E M' (kn_havoc k b o n).
 Proof.
 intros E M M' k b o n HK Hout Hg. unfold kn_havoc, know_ok. cbv zeta.
 apply Forall_flat_map. apply Forall_forall. intros K Hin.
@@ -491,9 +524,9 @@ Definition pw_kind (mk : saddr -> expr -> kentry) (P : (word -> option byte) -> 
 forall E M a n,
 kentry_ok SEGS E M (mk a n)
 <-> (flat E a (elenZ E n) /\ forall i, (0 <= i < elenZ E n)%Z -> P M (Z_to_bv 64 (estart E a + i))).
-#[using="Type"] Lemma pw_kind_zf : ltac2:(TCodec.tc2 tcn__AsanPlanSound "O'Y3'XG'XLp021p041'@']Ny8%211%411!p021&Y?vZ1r2r1%43321&WOr3yR0%>11p01<r4%918%211qm651qT@51%:291p0<1pf@B1piLJ1").
+#[using="Type"] Lemma pw_kind_zf : forall mk byteof, zf_kind SEGS mk byteof -> pw_kind mk (fun M x => byteof (M x)).
 Proof. intros mk byteof H E M a n. exact (H E M a n). Qed.
-#[using="Type"] Lemma pw_kind_wr : ltac2:(TCodec.tc2 tcn__AsanPlanSound "H&WO(X>']NyR0%211'@y8%511%311p051&K'H&QJvZ1r2r1%43321(1%11;%83;31%:11qm6A1qT@=1%G2F1").
+#[using="Type"] Lemma pw_kind_wr : pw_kind KWr (fun M x => wview SEGS M x <> None).
 Proof.
 intros E M a n. cbn [kentry_ok]. split; intros [Hfl H]; split; try exact Hfl.
 - intros i Hi. pose proof (H i 1%nat ltac:(lia) ltac:(cbn; lia)) as S1. cbn [store_ok] in S1.
@@ -507,7 +540,14 @@ intros x Hx. replace x with (Z_to_bv 64 (estart E a + (bv_unsigned x - estart E 
 + apply H. lia.
 + apply bv_eq. rewrite u_small; [lia|]. pose proof (u64_range x). lia.
 Qed.
-#[using="Type"] Lemma kcut_pw_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "RI'Y3'XG'XLp021p041']NyR0%211'@y8%511%311p051!p071p031'XD'<%11@'Q3&WOr=r<%3221&Y=vZ1r;r8%443621&Y<r?(X?r5r4%3221r3%6221%84<@;1'L&Z;&]Or1%22Q41&Y;r:r9%?221%42A1%9261&Z:&Z8&Y:%12FI%3261%521<%A271rAr>r2%3221rB%124Jp031p081pm6QI1'Q0%Q53Q9Q4Q<&XKr7r6%38>Q<JIQ;21Q6%63R551p081p0Q41p0Q>1p0QD1pi@R;1pi4QJ1pi2R=1pm4R>1pm2QM1pm0R@1peLR01pTBR71pT@R81pTDR91pR<R61pTHR81piLRD1").
+#[using="Type"] Lemma kcut_pw_sound : forall mk P E M0 M M' allkn wb wk wn kb kk len,
+pw_kind mk P ->
+know_ok SEGS E M0 allkn ->
+kentry_ok SEGS E M (mk (SA kb kk) len) ->
+(forall x : word,
+(bv_unsigned x < estart E (SA wb wk) \/ estart E (SA wb wk) + elenZ E wn <= bv_unsigned x)%Z ->
+P M x -> P M' x) ->
+Forall (kentry_ok SEGS E M') (kcut mk allkn wb wk wn kb kk len).
 Proof.
 intros mk P E M0 M M' allkn wb wk wn kb kk len Hkind Hall HK Hout.
 apply (proj1 (Hkind E M _ _)) in HK. destruct HK as [Hfl Hz].
@@ -587,14 +627,24 @@ rewrite u_small; unfold flat, estart, elenZ in *; cbn [a_base a_off] in *; lia.
 with (estart E (SA kb kk) + (estart E (SA wb wk) + elenZ E wn - estart E (SA kb kk) + i))%Z by lia.
 apply Hz. unfold estart, elenZ in *; cbn [a_base a_off] in *. lia.
 Qed.
-#[using="Type"] Lemma kwr_cut_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "R>'XD']NyR0%211'@y8%511%311p051pm662'<'XL%211'XG'Q3&Y=vZ1r;r:r7%544321&Y<r<(X>(X?r4r3%3221r2%6221%94>8<1'L&Z;&]Or1%22Q11&Y;r>r9r8%@221%5241%:271&Z:&Z8&Y:%129K%3261%521=%B271'H%M1Gr=%11I%43Q?31p061pm6QE1'Q0%Q53Q:EQ9&TOr6r5%37Q<HGQ;21Q5%63QD51p081p0Q31p0Q>1pi@QF1pi4QF1pi2QH1pm4QI1pm2QI1pm0QK1peLQM1pTBR11pT@R31pTDR41pR<R=1").
+#[using="Type"] Lemma kwr_cut_sound : forall E M0 M M' allkn wb wk wn kb kk len,
+know_ok SEGS E M0 allkn ->
+kentry_ok SEGS E M (KWr (SA kb kk) len) ->
+(forall x : word,
+(bv_unsigned x < estart E (SA wb wk) \/ estart E (SA wb wk) + elenZ E wn <= bv_unsigned x)%Z ->
+M' x = M x) ->
+Forall (kentry_ok SEGS E M') (kwr_cut allkn wb wk wn kb kk len).
 Proof.
 intros. eapply (kcut_pw_sound KWr _ E M0 M M'); [apply pw_kind_wr | eassumption | eassumption |].
 intros x Hx HP. unfold wview in *. rewrite (H1 x Hx). exact HP.
 Qed.
-#[using="Type"] Lemma cutout1p_eq : ltac2:(TCodec.tc2 tcn__AsanPlanSound "G'<'XL%211'XG'Q3'H&SCr5&XMr4r3r2%445321r1%86725431&SB%1597653%<3?31pS6A1plF@1plD@1plBB1phJD1").
+#[using="Type"] Lemma cutout1p_eq : forall k ub uk un K,
+cutout1p k (mk_sprep k ub uk un) ub uk un K = cutout1 k ub uk un K.
 Proof. intros. unfold cutout1p, cutout1. rewrite kentry_apart_bp_eq. reflexivity. Qed.
-#[using="Type"] Lemma know_ok_cutout : ltac2:(TCodec.tc2 tcn__AsanPlanSound "QM'XD']NyR0%211'@y8%511%311p051pm662'<'XL%211'XG'Q3&Y=vZ1r7r6r4%544321'L&Z;&]Or1%22G1&Y;r9(X?r5%221;%5241%:271&Z:&Z8&Y:r3%22:1%4271%621>%C281'Hr8r2%211%B12%53Q721p071pm6Q=1&TG%14Q0EO>%Q44Q3HQ21p041p0Q11pj4Q91pjDQ91peNQ;1phJQ=1pTBQA1pT@QC1pR<QL1").
+#[using="Type"] Lemma know_ok_cutout : forall E M M' k b o n,
+know_ok SEGS E M k ->
+(forall x : word, (bv_unsigned x < estart E (SA b o) \/ estart E (SA b o) + elenZ E n <= bv_unsigned x)%Z -> M' x = M x) ->
+know_ok SEGS E M' (kn_cutout k b o n).
 Proof.
 intros E M M' k b o n HK Hout. unfold kn_cutout, know_ok. cbv zeta.
 apply Forall_flat_map. apply Forall_forall. intros K Hin.
@@ -608,21 +658,23 @@ destruct (kentry_apart_b k b o n K) eqn:Hf.
 + eapply kfill_cut_sound; [exact HK | exact HKK | exact Hout].
 + eapply kunk_cut_sound; [exact HK | exact HKK | exact Hout].
 Qed.
-#[using="Type"] Lemma droprange_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q3'XD'S2&R6y5']NyR0%211%5241'@y8%611%311p061'QK'XG'W?r7r6r5r4r3%6554321r8&UFr2%23951%;541987p061pj4>1peN?1piNA1pRFC1pTJI1pg4Q01pR<Q21").
+#[using="Type"] Lemma droprange_sound : forall E cs R FULL model b n,
+cs_ok E cs R FULL model -> cs_ok E (node_droprange cs b n) R FULL model.
 Proof.
 intros E cs R FULL model b n HC. unfold node_droprange. destruct (split_lit b) as [bb bk].
 apply cs_ok_set_kn; [exact HC|]. eapply know_ok_havoc; [exact (co_know _ _ _ _ _ HC) | intros; reflexivity | apply mem_grows_refl].
 Qed.
-#[using="Type"] Lemma bump_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "QA'XD'S2&R6y5']NyR0%211%5241'@y8%611%311p061'QK'='W?r7r6r5r4r3%6554321'H%?1F&UB%1295(4r2%22K1%73641'Gr9%A51<@?>'Q3&V7%11?r8%311%@3531%9271p0;1p0D1pg6Q91piDM1piNO1pRFQ11pTJQ71pg4Q>1pR<Q@1").
+#[using="Type"] Lemma bump_sound : forall E cs R FULL model m cs',
+cs_ok E cs R FULL model -> node_bump cs m = Some cs' -> cs_ok E cs' R FULL model /\ pc cs' = pc cs.
 Proof.
 intros E cs R FULL model m cs' HC H. unfold node_bump in H. destruct (Nat.leb (nxt cs) m); [|discriminate]. injection H as <-.
 split; [|reflexivity].
 destruct HC; constructor; cbn [bump with_ss a_ss mk_ss s_regs s_log s_know kn a_maps a_totsz a_ylo a_eager a_vis a_abytes a_brk a_fd a_tidset];
 try assumption; reflexivity.
 Qed.
-#[using="Type"] Lemma mkind_eqb_eq : ltac2:(TCodec.tc2 tcn__AsanPlanSound ">'U<'H'7&U=r2r1%3221(D%73621r3%93:16p031peN<1peH=1").
+#[using="Type"] Lemma mkind_eqb_eq : forall a b, mkind_eqb a b = true -> a = b.
 Proof. intros [] []; cbn; intros; first [reflexivity | discriminate]. Qed.
-#[using="Type"] Lemma kentry_eqb_eq : ltac2:(TCodec.tc2 tcn__AsanPlanSound ">'XL'H'7&T?r2r1%3221(D%73621r3%93:16p031pm8<1pm6=1").
+#[using="Type"] Lemma kentry_eqb_eq : forall x y, kentry_eqb x y = true -> x = y.
 Proof.
 intros x y H. destruct x, y; cbn [kentry_eqb] in H; try discriminate;
 repeat match goal with
@@ -635,18 +687,18 @@ repeat match goal with
 | H : Z.eqb _ _ = true |- _ => apply Z.eqb_eq in H
 end; subst; reflexivity.
 Qed.
-#[using="Type"] Lemma amap_eqb_eq : ltac2:(TCodec.tc2 tcn__AsanPlanSound ">'S8'H'7&S9r2r1%3221(D%73621r3%93:16p031pm8<1pm6=1").
+#[using="Type"] Lemma amap_eqb_eq : forall x y, amap_eqb x y = true -> x = y.
 Proof.
 intros [b l k] [b' l' k'] H. unfold amap_eqb in H. cbn [am_base am_len am_kind] in H.
 apply andb_prop in H as [H H3]. apply andb_prop in H as [H1 H2].
 apply expr_eqb_eq in H1. apply expr_eqb_eq in H2. apply mkind_eqb_eq in H3. congruence.
 Qed.
-#[using="Type"] Lemma pair_eqb_eq : ltac2:(TCodec.tc2 tcn__AsanPlanSound "@'B'XG%2211'H'7&V5r2r1%3221(D%73621r3%93:16p031pm8<1pm6=1").
+#[using="Type"] Lemma pair_eqb_eq : forall x y, pair_eqb x y = true -> x = y.
 Proof.
 intros [a b] [a' b'] H. unfold pair_eqb in H. cbn [fst snd] in H. apply andb_prop in H as [H1 H2].
 apply expr_eqb_eq in H1. apply expr_eqb_eq in H2. congruence.
 Qed.
-#[using="Type"] Lemma afd_eqb_eq : ltac2:(TCodec.tc2 tcn__AsanPlanSound ">'S4'H'7&S5r2r1%3221(D%73621r3%93:16p031pm8<1pm6=1").
+#[using="Type"] Lemma afd_eqb_eq : forall x y, afd_eqb x y = true -> x = y.
 Proof.
 intros [|k l o|] [|k' l' o'|] H; cbn [afd_eqb] in H; try discriminate; try reflexivity.
 apply andb_prop in H as [H H3]. apply andb_prop in H as [H1 H2].
@@ -660,24 +712,27 @@ apply andb_prop in H as [H1 H2]. rewrite (Heq _ _ H1), (IH _ H2). reflexivity.
 Qed.
 Definition kimg_in_hull (k : list kentry) : Prop :=
 Forall (fun K => match K with KImg lo hi => img_lo A <= lo /\ hi <= img_hi A | _ => True end) k.
-#[using="Type"] Lemma kimg_clip_in_hull : ltac2:(TCodec.tc2 tcn__AsanPlanSound ":'<'XL%211&WK&TCv0r1%3221%511phJ71").
+#[using="Type"] Lemma kimg_clip_in_hull : forall k, kimg_in_hull (kimg_clip A k).
 Proof.
 intros k. unfold kimg_in_hull, kimg_clip. apply Forall_forall. intros K Hin. apply filter_In in Hin as [_ Hb].
 destruct K; try exact I. apply andb_prop in Hb as [Hb H3]. apply andb_prop in Hb as [H1 H2].
 apply Z.leb_le in H1. apply Z.leb_le in H3. lia.
 Qed.
-#[using="Type"] Lemma kimg_clip_incl : ltac2:(TCodec.tc2 tcn__AsanPlanSound "?'<'XL%211&Z2r1&TCv0r2%3221%63851r3%83:41p031pS6<1phJ<1").
+#[using="Type"] Lemma kimg_clip_incl : forall k K, In K (kimg_clip A k) -> In K k.
 Proof. intros k K H. unfold kimg_clip in H. apply filter_In in H as [H _]. exact H. Qed.
-#[using="Type"] Lemma kimg_in_hull_app : ltac2:(TCodec.tc2 tcn__AsanPlanSound "?'<'XL%211&WKr2%211&6r4r3%33821%711p061p071pi0;1phN<1").
+#[using="Type"] Lemma kimg_in_hull_app : forall k1 k2, kimg_in_hull k1 -> kimg_in_hull k2 -> kimg_in_hull (k1 ++ k2).
 Proof. intros. unfold kimg_in_hull in *. apply Forall_app. auto. Qed.
-#[using="HULL_ok argH_high"] Lemma hid_hull : ltac2:(TCodec.tc2 tcn__AsanPlanSound "M'XD'S2'QK']NyR0%211'H'7&X6v0&]Or1%2281%5241(D%93821&WEr5r4r3r2%544321(9%A3@21p091peHD1piNH1pg4J1pR<L1").
+#[using="HULL_ok argH_high"] Lemma hid_hull : forall E cs model (a : word), in_hull A (bv_unsigned a) = true -> hid E cs model a = false.
 Proof.
 intros E cs model a Hh. unfold hid, vis. rewrite Hh. cbn [orb].
 destruct (argH E a) eqn:Ha; [|reflexivity]. exfalso.
 pose proof (argH_high _ _ Ha). unfold in_hull in Hh. apply andb_prop in Hh as [_ Hh]. apply Z.ltb_lt in Hh.
 pose proof HULL_ok as HU; unfold hull_ok in HU; destruct HU as (?&?&?&?). unfold CEIL, KHI in *. lia.
 Qed.
-#[using="Type"] Lemma rdn_visible : ltac2:(TCodec.tc2 tcn__AsanPlanSound "QI']NyR0%211'7p021'@y8%711%311p071'='<%115&R@vZ1r5%3221'H%=16&YG&RDr6%2217r4r3%64;321(4r2%22@1%<3;41'G&Z:&]O%12Q0<r1%32Q21%5231&Z;&Z8&Z>%11I%3281%5271%=271r9%11B(9%N3Q<21p051pm6Q?1p0E1p0Q31pf<Q81plLQ;1peHQD1pRFQ>1pRJQD1").
+#[using="Type"] Lemma rdn_visible : forall (H : word -> bool) FULL (a : word) w bs,
+H_off_segments SEGS H ->
+rdn SEGS (mrestrict H FULL) a w = Some bs ->
+forall x : word, bv_unsigned a <= bv_unsigned x < bv_unsigned a + Z.of_nat w -> H x = false.
 Proof.
 intros H FULL a w. revert a. induction w as [|w IH]; intros a bs HH Hr x Hx; [lia|].
 cbn [rdn] in Hr. unfold mrestrict in Hr at 1.
@@ -695,7 +750,12 @@ pose proof (u64_range x).
 assert (Hu1 : bv_unsigned (a + 1)%bv = bv_unsigned a + 1) by (apply u_add1; lia).
 eapply (IH (a + 1)%bv rest HH Hr2). rewrite Hu1. lia.
 Qed.
-#[using="Type"] Lemma know_ok_unhide : ltac2:(TCodec.tc2 tcn__AsanPlanSound "QO'XD']NyR0%211'7p021'@y8%711%311p071'<'XL%211&R@vZ1r4%3221&WKr2%211'Hr6r1%211(D%53F21r8%119%83I14p041peHL1&X6v0&]O%12Q1<%4231%@3Q11<r9%11D(9%D3Q521p051peHQ81&Y=&RD%12CHr5%44Q1:21r:r7%62H1%84Q531Np051p0;1p0H1p0Q41p0Q81phJQ=1pRFQA1pRNQG1pRLQH1pR<QN1").
+#[using="Type"] Lemma know_ok_unhide : forall E (H1 H2 : word -> bool) FULL k,
+H_off_segments SEGS H1 ->
+kimg_in_hull k ->
+(forall a, H2 a = true -> H1 a = true) ->
+(forall a : word, in_hull A (bv_unsigned a) = true -> H1 a = false) ->
+know_ok SEGS E (mrestrict H1 FULL) k -> know_ok SEGS E (mrestrict H2 FULL) k.
 Proof.
 intros E H1 H2 FULL k HH1 Hki Hsub Hhull HK.
 assert (AG : forall a, H1 a = false -> mrestrict H2 FULL a = mrestrict H1 FULL a).
@@ -731,20 +791,24 @@ eapply store_ok_mono; [exact GR | apply Hs; assumption].
 pose proof (Hz i Hi) as Hzi. rewrite AG; [exact Hzi|].
 unfold mrestrict in Hzi. destruct (H1 _); [discriminate | reflexivity].
 Qed.
-#[using="Type"] Lemma vis_mono : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q4'XD'S2'QK']NyR0%211'Q3'H'7&WGr6r5r1%43321(D%83721r7r2%93271%<3;15p051pm>?1&X4r3%24>=17%B3A1;r4%54;@14%E3D1>p041p091peHJ1piNN1pg6Q01pg4Q11pR<Q31").
+#[using="Type"] Lemma vis_mono : forall E cs cs' model a,
+(forall z, in_allow E cs z = true -> in_allow E cs' z = true) ->
+vis E cs model a = true -> vis E cs' model a = true.
 Proof.
 intros E cs cs' model a Hm H. unfold vis in *.
 apply orb_true_iff in H. apply orb_true_iff. destruct H as [H|H]; [left; exact H|]. right.
 apply andb_true_iff in H as [H1 H2]. apply andb_true_iff. split; [exact H1|].
 apply orb_true_iff in H2. apply orb_true_iff. destruct H2 as [H2|H2]; [left; exact H2|]. right. apply Hm. exact H2.
 Qed.
-#[using="Type"] Lemma in_allow_cons : ltac2:(TCodec.tc2 tcn__AsanPlanSound "QF'XD'S2'B'XG%2211'Y7'Q3'<%114'S4'7'H&WGr=r<r1%43321(D%73821r>(RHr;&RO%11:r:r9r8(8&S1%11@%33J@1r7r6r5r4r3%@;?=<;:654321r2%J3C21%L3M1Fp0F1pm>Q31pl:Q01pgNQ21pf:Q91peJQ71ph8Q61pgJQ91pm<Q:1pl>Q;1pkHQ=1pk0Q?1pg4QC1pR<QE1").
+#[using="Type"] Lemma in_allow_cons : forall E cs p ss tot ylo eg gh ab brk fd tid z,
+in_allow E cs z = true -> in_allow E (ACS ss (a_maps cs) tot ylo eg (p :: a_vis cs) gh ab brk fd tid) z = true.
 Proof.
 intros. unfold in_allow, in_vis, in_sh in *. cbn [a_vis existsb].
 apply orb_true_iff in H. apply orb_true_iff.
 destruct H as [H|H]; [left|right]; apply orb_true_iff; right; exact H.
 Qed.
-#[using="Type"] Lemma hid_cons_sub : ltac2:(TCodec.tc2 tcn__AsanPlanSound "QL'XD'S2'B'XG%2211'QK']NyR0%211'Y7'Q3'<%118'S4'7'H&WEr>(RHr9&ROr=%211r8r7r6(8r<&S1%118%43J31r5r4r3r2r1%B;A>=<;654321r;r:%G4F321(D%J3K21r?%K41J@6%M3N14p041pl:Q01pgNQ21pf:Q=1peJQ71ph8Q61pgJQ91pm<Q:1pl>Q;1pkHQ=1peHQ?1piNQC1pk0QE1pg4QI1pR<QK1").
+#[using="Type"] Lemma hid_cons_sub : forall E cs p model a ss tot ylo eg gh ab brk fd tid,
+hid E (ACS ss (a_maps cs) tot ylo eg (p :: a_vis cs) gh ab brk fd tid) model a = true -> hid E cs model a = true.
 Proof.
 intros E cs p model a ss tot ylo eg gh ab brk fd tid H. unfold hid in *.
 apply orb_true_iff in H. apply orb_true_iff. destruct H as [H|H]; [left; exact H|]. right.
@@ -752,26 +816,25 @@ apply negb_true_iff in H. apply negb_true_iff.
 destruct (vis E cs model a) eqn:Hv; [|reflexivity].
 rewrite (vis_mono E cs _ model a (fun z Hz => in_allow_cons E cs p ss tot ylo eg gh ab brk fd tid z Hz) Hv) in H. discriminate.
 Qed.
-#[using="Type"] Lemma A_bytes_app : ltac2:(TCodec.tc2 tcn__AsanPlanSound "C'<'B'Q3%2211%411'H&R>&6r2r1%33721%511&Z8%715%815%3221%;3>51pi<=1pi:>1").
+#[using="Type"] Lemma A_bytes_app : forall l1 l2, A_bytes (l1 ++ l2) = A_bytes l1 + A_bytes l2.
 Proof. intros l1 l2. induction l1; cbn [A_bytes app]; [lia|]. rewrite IHl1. lia. Qed.
-#[using="Type"] Lemma page_allowedb_app_r : ltac2:(TCodec.tc2 tcn__AsanPlanSound "J'<'B'Q3%2211%411']NyR0%211'H'7&RFr2r1%3221(D%73621&6r4r3%33@21%:219%=3<17p071pk0@1pi<D1pi:E1").
+#[using="Type"] Lemma page_allowedb_app_r : forall l1 l2 p, page_allowedb l2 p = true -> page_allowedb (l1 ++ l2) p = true.
 Proof. intros. unfold page_allowedb in *. rewrite existsb_app, H. apply orb_true_r. Qed.
-#[using="Type"] Lemma MInv_app : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q2'<'B'Q3%2211%411'QK'RAr2r1%3221&Z:&Z8&RB%116&R>&6r4r3%33?21%511%9271&R3&QO%11@%311%?251r5%<3H1;%F21;p041p0E1piDJ1pi<L1pi:M1").
+#[using="Type"] Lemma MInv_app : forall l1 l2 m, MInv l2 m -> eager_used m + A_bytes (l1 ++ l2) <= vm_limit (m_vmmaps m) -> MInv (l1 ++ l2) m.
 Proof.
 intros l1 l2 m [N1 N2 N3 N4 N5] Hb. constructor; try assumption.
 intros p Hp. apply page_allowedb_app_r. apply N3. exact Hp.
 Qed.
-#[using="Type"] Lemma in_ivs_true : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q:'Q3'<'B']NyR0%211%4211%611&J'H'7&X7r2r1%3221(D%73621'I'G&Z2%13>78&Z:&]O&:%13CC;%32E1r3%6221&Z;&Z8&C%13JJB%:2L1%4281%6281%A281%B2@1qhBO1%E2Q01%O2G1pi6Q11pm>Q91").
+#[using="Type"] Lemma in_ivs_true : forall z l, in_ivs z l = true <-> exists iv, In iv l /\ bv_unsigned (fst iv) <= z < bv_unsigned (fst iv) + bv_unsigned (snd iv).
 Proof.
 intros z l. unfold in_ivs. rewrite existsb_exists. split.
 - intros [iv [Hin Hb]]. apply andb_prop in Hb as [H1 H2]. apply Z.leb_le in H1. apply Z.ltb_lt in H2. eauto.
 - intros [iv [Hin Hb]]. exists iv. split; [exact Hin|]. apply andb_true_intro. split; [apply Z.leb_le | apply Z.ltb_lt]; lia.
 Qed.
-Section SE.
-Local Abbreviation SEC_T_split_lit_denot := (ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q2'XD'XG'Q3'H'B%1243&Y5r3%211(Ar2r1%34;:21%:3851']NyR0%211&XCr5r4%3221&]M&Z8&]O%726A%22:1%421@%62<1%I3<81p0@1phJL1peNN1pgFO1pR<Q11")) (only parsing).
-Variable E : ltac:(sec_ty2 constr:(SEC_T_split_lit_denot) 0%nat 0%nat).
-Lemma split_lit_denot : ltac:(sec_stmt2 constr:(SEC_T_split_lit_denot) 1%nat 0%nat).
-Proof using Type E.
+#[using="Type"] Lemma split_lit_denot : forall E e b k, split_lit e = (b, k) ->
+edenot E e = Z_to_bv 64 (bv_unsigned (edenot E b) + k).
+Proof.
+intros E.
 intros e b k H.
 assert (G : forall e' : expr, edenot E e' = Z_to_bv 64 (bv_unsigned (edenot E e') + 0)).
 { intros e'. rewrite Z.add_0_r. symmetry. apply Z_to_bv_bv_unsigned. }
@@ -783,8 +846,9 @@ lazymatch type of H with (match ?y with _ => _ end = _) => destruct y end; try (
 injection H as <- <-. cbn [edenot]. rewrite alu_add. unfold v_add. apply bv_eq.
 rewrite !Z_to_bv_unsigned, !bv_wrap64_mod. rewrite Z.add_mod_idemp_r by lia. reflexivity.
 Qed.
-End SE.
-#[using="Type"] Lemma flat_x_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "QL'XD']NyR0%211'@y8%511%311p051'<'XL%211'XG'Q3&Y=vZ1r6r5r4%544321'H'7&T0r3r2%348721(D%73621'G&Z:z&Y;r8(X?%12A@%4231%7261&Z8&]O&XC%128A%32Q71%5271&Z?+2+R0%3221%B251&Z;%12C8%F231%G2?1p0I1p0Q21pj4Q:1pjNQ:1peNQ<1phJQ>1pT@QB1pR<QK1").
+#[using="Type"] Lemma flat_x_sound : forall E M k b off n,
+know_ok SEGS E M k -> flat_x k b off n = true ->
+0 <= estart E (SA b off) /\ estart E (SA b off) + bv_unsigned (edenot E n) <= 2 ^ 64 /\ 0 < bv_unsigned (edenot E n).
 Proof.
 intros E M k b off n HK H. unfold flat_x in H.
 destruct (base_range k b) as [[lo hi]|] eqn:Hb; [|discriminate].
@@ -794,18 +858,20 @@ apply Z.leb_le in H1. apply Z.leb_le in H2. apply Z.ltb_lt in Hn. unfold two64 i
 pose proof (base_range_sound SEGS E M k b lo hi HK Hb). pose proof (xlo_sound SEGS E M k n nl HK Hnl). pose proof (xhi_sound SEGS E M k n nh HK Hnh).
 unfold estart. cbn [a_base a_off]. lia.
 Qed.
-#[using="Type"] Lemma u_of_split : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q>'XD'XG'Q3'H'B%1243&Y5r3%211(Ar2r1%34;:21%:3851'G&Z:z&Y;r5(X?%12=:%4231%7261&Z;&Z?+2+R0%3221%5271%?271&]OyR0&XCr6%221@%5241r4%B21N%E251%Q43Q541p0;1p0L1phJQ81peNQ:1pgFQ;1pR<Q=1").
+#[using="Type"] Lemma u_of_split : forall E e b k, split_lit e = (b, k) ->
+0 <= estart E (SA b k) < 2 ^ 64 -> bv_unsigned (edenot E e) = estart E (SA b k).
 Proof.
 intros E e b k Hs Hr. rewrite (split_lit_denot E e b k Hs). unfold estart in *. cbn [a_base a_off] in *.
 apply u64_lit. lia.
 Qed.
-#[using="HS XN XE XB KC"] Lemma pageup_pagedown_gap : ltac2:(TCodec.tc2 tcn__AsanPlanSound "D'Q3&Z:r2r1%3221&Z@&X9%115&X8r3%211%6241&Z8%82;4+WoN%3221%?251p0=1peNB1peHC1").
+#[using="HS XN XE XB KC"] Lemma pageup_pagedown_gap : forall a b, a <= b -> pageup b - pagedown a <= b - a + 8190.
 Proof.
 intros a b H. unfold pageup, pagedown.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true). lia.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Qed.
-#[using="nx0 HS XN XE XB"] Lemma maps_match_exact : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q0'XD'<'S8%211'B']NyR0%211%4211%811'H'7&U@r2%211(D%63521&J&WNr4r3%33218&Q1&W>%115%34GA15%@3A=1%:261p0<1pi6D1pj2K1pR<O1").
+#[using="nx0 HS XN XE XB"] Lemma maps_match_exact : forall E ms l,
+no_fog ms = true -> (maps_match E ms l <-> l = map (amap_den E) ms).
 Proof.
 intros E ms. induction ms as [|m ms IH]; intros l Hnf; cbn [maps_match map].
 - tauto.
@@ -814,7 +880,8 @@ split.
 + intros (l' & -> & Hm'). f_equal. apply (proj1 (IH l' Hr)). exact Hm'.
 + intros ->. exists (map (amap_den E) ms). split; [reflexivity|]. apply (proj2 (IH _ Hr)). reflexivity.
 Qed.
-#[using="Type"] Lemma maps_match_In : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q3'XD'<'S8%211'B']NyR0%211%4211%811&WNr4r3r2%43321&Z2%13>35'H'7&T:%118(9%53421&W>r7%221>r5%<3C21p061p0=1p0@1piDM1pi6G1pj2N1pR<Q21").
+#[using="Type"] Lemma maps_match_In : forall E ms l m,
+maps_match E ms l -> In m ms -> is_fog m = false -> In (amap_den E m) l.
 Proof.
 intros E ms. induction ms as [|m0 ms IH]; intros l m HM Hin Hf; [destruct Hin|].
 cbn [maps_match] in HM. destruct Hin as [<-|Hin].
@@ -823,16 +890,21 @@ cbn [maps_match] in HM. destruct Hin as [<-|Hin].
 + destruct HM as [HM|(iv & l' & -> & _ & HM)]; [exact (IH _ _ HM Hin Hf) | right; exact (IH _ _ HM Hin Hf)].
 + destruct HM as (l' & -> & HM). right. exact (IH _ _ HM Hin Hf).
 Qed.
-#[using="Type"] Lemma in_ivs_maps_match : ltac2:(TCodec.tc2 tcn__AsanPlanSound "QI'XD'<'S8%211'B']NyR0%211%4211%811'Q3&WNr5r4r3%43321&Z2%13?35'H'7&T:%118(9%53421'G&Z:&]O&XCr8&S6%11B%4231%62J1%821D&Z;&Z8&S7%11I%;2:1%=2Q11%5281%72L1%B291&X7r7%22Q11(D%M3L21p061p0J1p0Q11p0Q41pm>Q:1piDQC1pi6Q=1pj2QD1pR<QH1").
+#[using="Type"] Lemma in_ivs_maps_match : forall E ms l m z,
+maps_match E ms l -> In m ms -> is_fog m = false ->
+bv_unsigned (edenot E (am_base m)) <= z < bv_unsigned (edenot E (am_base m)) + bv_unsigned (edenot E (am_len m)) ->
+in_ivs z l = true.
 Proof.
 intros E ms l m z HM Hin Hf Hz. apply (proj2 (in_ivs_true z _)). exists (amap_den E m).
 split; [exact (maps_match_In E ms l m HM Hin Hf) | exact Hz].
 Qed.
-#[using="Type"] Lemma maps_match_cons : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q>'XD'<'S8%211'B']NyR0%211%4211%811'XG'U<'H'7&T<r1%211(9%63521&WNr7r6r5%43321r8(8(RIr4r3%33721%53L1:(A&XC%129;%22:7%44LL21%;3L1?%B3=71p0?1p0E1phJM1pj4O1peNQ01pi6Q21pj2Q91pR<Q=1").
+#[using="Type"] Lemma maps_match_cons : forall E ms l b n k,
+is_tok_kind k = false -> maps_match E ms l ->
+maps_match E (AM b n k :: ms) ((edenot E b, edenot E n) :: l).
 Proof.
 intros E ms l b n k Hk HM. cbn [maps_match]. unfold is_fog. cbn [am_kind]. rewrite Hk. exists l. split; [reflexivity | exact HM].
 Qed.
-#[using="Type"] Lemma maps_match_length : ltac2:(TCodec.tc2 tcn__AsanPlanSound "H'XD'<'S8%211'B']NyR0%211%4211%811&WNr3r2r1%43321'N&;%1295%22@7%4221p061pi6<1pj2C1pR<G1").
+#[using="Type"] Lemma maps_match_length : forall E ms l, maps_match E ms l -> (length l <= length ms)%nat.
 Proof.
 intros E ms. induction ms as [|m ms IH]; intros l HM; cbn [maps_match] in HM.
 - subst l. cbn. lia.
@@ -840,7 +912,9 @@ intros E ms. induction ms as [|m ms IH]; intros l HM; cbn [maps_match] in HM.
 + destruct HM as [HM|(iv & l' & -> & _ & HM)]; [pose proof (IH _ HM); lia | cbn; pose proof (IH _ HM); lia].
 + destruct HM as (l' & -> & HM). cbn. pose proof (IH _ HM). lia.
 Qed.
-#[using="Type"] Lemma maps_match_elem : ltac2:(TCodec.tc2 tcn__AsanPlanSound "QI'XD'<'S8%211'B']NyR0%211%4211%811&WNr4r3r2%43321&Z2%13834'I'Gr1r6%63C21'L'H'7&T:%117(9%53421&W>r7%221<%93HE1%?251(D%<3;91&Z:&]O&C%13Q0Q0L%32Q21&X:&S7%11H%32>1%9251%L2;1%I2>1%N2K1qiDQ?1%Q12Q@1p0Q31p0Q61phBQ=1pi6Q=1pj2QD1pR<QH1").
+#[using="Type"] Lemma maps_match_elem : forall E ms l iv,
+maps_match E ms l -> In iv l ->
+exists m, In m ms /\ ((is_fog m = false /\ iv = amap_den E m) \/ (is_fog m = true /\ bv_unsigned (snd iv) <= uE E (am_len m))).
 Proof.
 intros E ms. induction ms as [|m ms IH]; intros l iv HM Hin; cbn [maps_match] in HM.
 - subst l. destruct Hin.
@@ -854,7 +928,9 @@ intros E ms. induction ms as [|m ms IH]; intros l iv HM Hin; cbn [maps_match] in
 * exists m. split; [left; reflexivity|]. left. split; [exact Hf | reflexivity].
 * destruct (IH _ _ HM Hin) as (m' & Hm' & H'). exists m'. split; [right; exact Hm' | exact H'].
 Qed.
-#[using="Type"] Lemma maps_match_rekind : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q@'XD'<'S8%211'B']NyR0%211%4211%811p088'G'H'XG&S6r2r1%211%411%513%83721&S7%115%217%<3;21'7&T:%11:%21<%A3421%C261%D2;1piDN1&WNr5r4r3%43321r6&Q1%14Q6Q646%83316p051p0;1pgLQ21pi6Q41pj2Q;1pR<Q?1").
+#[using="Type"] Lemma maps_match_rekind : forall E ms l (f : amap -> amap),
+(forall m, am_base (f m) = am_base m /\ am_len (f m) = am_len m /\ is_fog (f m) = is_fog m) ->
+maps_match E ms l -> maps_match E (map f ms) l.
 Proof.
 intros E ms. induction ms as [|m ms IH]; intros l f Hf HM; cbn [maps_match map] in *; [exact HM|].
 destruct (Hf m) as (Hb & Hn & Hk). rewrite Hk. unfold uE, amap_den in *. rewrite Hb, Hn.
@@ -868,27 +944,30 @@ Proof.
 intros T f l H. induction l as [|x l IH]; [reflexivity|]. cbn. rewrite (H x (or_introl eq_refl)).
 rewrite IH by (intros y Hy; apply H; right; exact Hy). reflexivity.
 Qed.
-#[using="Type"] Lemma aluop_eqb_refl' : ltac2:(TCodec.tc2 tcn__AsanPlanSound "9'R4'H'7&XAr1%2211(D%63521pjD81").
+#[using="Type"] Lemma aluop_eqb_refl' : forall o, aluop_eqb o o = true.
 Proof. intros []; reflexivity. Qed.
-#[using="Type"] Lemma mulop_eqb_refl' : ltac2:(TCodec.tc2 tcn__AsanPlanSound "9'R5'H'7&XNr1%2211(D%63521pjD81").
+#[using="Type"] Lemma mulop_eqb_refl' : forall o, mulop_eqb o o = true.
 Proof. intros []; reflexivity. Qed.
-#[using="Type"] Lemma expr_eqb_refl' : ltac2:(TCodec.tc2 tcn__AsanPlanSound "9'XG'H'7&XHr1%2211(D%63521pgF81").
+#[using="Type"] Lemma expr_eqb_refl' : forall e, expr_eqb e e = true.
 Proof.
 induction e; cbn; rewrite ?aluop_eqb_refl', ?mulop_eqb_refl', ?IHe1, ?IHe2, ?IHe, ?Z.eqb_refl, ?Nat.eqb_refl, ?Bool.eqb_reflx; reflexivity.
 Qed.
-#[using="Type"] Lemma amap_eqb_refl' : ltac2:(TCodec.tc2 tcn__AsanPlanSound "9'S8'H'7&S9r1%2211(D%63521piD81").
+#[using="Type"] Lemma amap_eqb_refl' : forall m, amap_eqb m m = true.
 Proof. intros [b l k]. unfold amap_eqb. cbn. rewrite !expr_eqb_refl'. destruct k; reflexivity. Qed.
-#[using="Type"] Lemma map_remove_notin' : ltac2:(TCodec.tc2 tcn__AsanPlanSound "L'<'B']NyR0%211%4211%611&Z2(Ar2r1%347721r4%63821&K'Hr3%23=15%411p061pl6@1peNA1&R0%127>%93B18p041peHF1pi6E1").
+#[using="Type"] Lemma map_remove_notin' : forall l (a : word),
+(forall b sz, In (b, sz) l -> b <> a) -> map_remove l a = l.
 Proof.
 induction l as [|[b sz] l IH]; intros a H; [reflexivity|].
 unfold map_remove in *. cbn [List.filter fst]. rewrite (bv_eqb_neq b a) by (apply (H b sz); left; reflexivity). cbn [negb].
 f_equal. apply IH. intros b' s' Hin. apply (H b' s'). right. exact Hin.
 Qed.
-Section SE.
-Local Abbreviation SEC_T_maps_match_remove := (ltac2:(TCodec.tc2 tcn__AsanPlanSound "R4'XD'<'S8%211'B']NyR0%211%4211%811&WNr4r3r2%43321&Z2%13>35'H'7&T:%118(9%53421'Z3r5%22A1r1r7%=3D21&:%13GGA&XCr:&S6%117%4231%C3M61&W>r;r8%3221%H3Q1M1p061p0?1phBQ41r9&Z4&>&S9%12GF%311qiFQA1%63QB1=&R0r6%F11%I2;1%42N1%Q@3=61p0?1p0Q31p0Q71p0Q>1p0QA1piDQN1pi6QH1pj2QO1pR<R31")) (only parsing).
-Variable E : ltac:(sec_ty2 constr:(SEC_T_maps_match_remove) 0%nat 0%nat).
-Lemma maps_match_remove : ltac:(sec_stmt2 constr:(SEC_T_maps_match_remove) 1%nat 0%nat).
-Proof using Type E.
+#[using="Type"] Lemma maps_match_remove : forall E ms l m,
+maps_match E ms l -> In m ms -> is_fog m = false ->
+List.NoDup l ->
+(forall iv, In iv l -> fst iv = edenot E (am_base m) -> iv = amap_den E m) ->
+maps_match E (List.filter (fun m' => negb (amap_eqb m' m)) ms) (map_remove l (edenot E (am_base m))).
+Proof.
+intros E.
 intros ms.
 induction ms as [|m0 ms IH]; intros l m HM Hin Hf Hnd Huniq; [destruct Hin|].
 cbn [maps_match] in HM. cbn [List.filter].
@@ -926,8 +1005,10 @@ unfold map_remove. cbn [List.filter]. rewrite Hne. cbn [negb]. fold (map_remove 
 exists (map_remove l' (edenot E (am_base m))). split; [reflexivity|].
 apply (IH _ _ HM Hin Hf Hnd'). intros x Hx. apply Huniq. right. exact Hx.
 Qed.
-End SE.
-#[using="Type"] Lemma in_ivs_map_den : ltac2:(TCodec.tc2 tcn__AsanPlanSound "QB'XD'<'S8%211'Q3&Z2r2r3%33621'G&Z:&]OyR0&XCr5&S6%119%4231%7261%921=&Z;&Z8&S7%11@%;2:1%>2=1%5281%72E1%C291'H'7&X7&Q1'B']N%11G%3211&W>r6%211%84Q641J%:2Q21(D%>3=21p0@1p0Q51pm>Q:1piDQ=1pj2Q=1pR<QA1").
+#[using="Type"] Lemma in_ivs_map_den : forall E ms m z,
+In m ms ->
+bv_unsigned (edenot E (am_base m)) <= z < bv_unsigned (edenot E (am_base m)) + bv_unsigned (edenot E (am_len m)) ->
+in_ivs z (map (amap_den E) ms) = true.
 Proof.
 intros E ms m z Hin Hz. apply (proj2 (in_ivs_true z _)). exists (amap_den E m). split; [apply in_map; exact Hin | exact Hz].
 Qed.
@@ -936,19 +1017,13 @@ Proof.
 intros T f l H. induction l as [|x l IH]; [reflexivity|]. cbn [existsb].
 rewrite (H x (or_introl eq_refl)). cbn [orb]. apply IH. intros y Hy. apply H. right. exact Hy.
 Qed.
-Section SE.
-Local Abbreviation SEC_T_vis_add_sound := (ltac2:(TCodec.tc2 tcn__AsanPlanSound "QJ'XD'S2'XG'<'XL%211&R6y5']NyR0%211%5241'@y8%611%311p061'QK'H%71B&VMv0vQDr8r7r6r5%76654321(4r4%22M1%=3<41'W?r:r9r3r2%5543821&Y=vZ1r;&W8%142A7=%54431Cr<%=51EDC@p031p0:1p0A1piNQ01pRFQ21pTJQ81pg:QC1phJQ@1pj4QD1peNQE1pg4QG1pR<QI1")) (only parsing).
-Variable E : ltac:(sec_ty2 constr:(SEC_T_vis_add_sound) 0%nat 0%nat).
-Variable cs : ltac:(sec_ty2 constr:(SEC_T_vis_add_sound) 1%nat 0%nat).
-Variable b : ltac:(sec_ty2 constr:(SEC_T_vis_add_sound) 2%nat 0%nat).
-Variable n : ltac:(sec_ty2 constr:(SEC_T_vis_add_sound) 3%nat 0%nat).
-Variable k : ltac:(sec_ty2 constr:(SEC_T_vis_add_sound) 4%nat 0%nat).
-Variable cs2 : ltac:(sec_ty2 constr:(SEC_T_vis_add_sound) 5%nat 0%nat).
-Variable R : ltac:(sec_ty2 constr:(SEC_T_vis_add_sound) 6%nat 0%nat).
-Variable FULL : ltac:(sec_ty2 constr:(SEC_T_vis_add_sound) 7%nat 0%nat).
-Variable model : ltac:(sec_ty2 constr:(SEC_T_vis_add_sound) 8%nat 0%nat).
-Lemma vis_add_sound : ltac:(sec_stmt2 constr:(SEC_T_vis_add_sound) 9%nat 0%nat).
-Proof using HS XN XE XB SHADOW_ok argH_high KC E cs b n k cs2 R FULL model.
+#[using="HS XN XE XB SHADOW_ok argH_high KC"] Lemma vis_add_sound : forall E cs b n k cs2 R FULL model,
+vis_add A LIMIT cs b n k = Some cs2 ->
+cs_ok E cs R FULL model ->
+know_ok SEGS E (Mr E cs2 model FULL) k ->
+cs_ok E cs2 R FULL model.
+Proof.
+intros E cs b n k cs2 R FULL model.
 intros Hv HC HKk.
 rewrite vis_add_eq in Hv. unfold vis_add_ref in Hv.
 destruct (split_lit b) as [bb bk] eqn:Hsplit.
@@ -1108,41 +1183,41 @@ apply Forall_app. split; [exact HKsh | exact HKk].
 - rewrite HA. apply MInv_app; [exact co_minv0|]. rewrite A_bytes_app, co_limit0. lia.
 - intros a Ha. apply co_zero0. apply SUB. exact Ha.
 Qed.
-End SE.
 Definition ext1 (E : env) (v : nat) (a : word) : env :=
 Env (fun n => if Nat.eqb n v then a else ev E n) (eb E).
-#[using="Type"] Lemma ext1_agree : ltac2:(TCodec.tc2 tcn__AsanPlanSound "?'XD'=']NyR0%211&Y@r2r3&W@r1%23341%63541peH81plH<1pR<>1").
+#[using="Type"] Lemma ext1_agree : forall E v a, env_agree v E (ext1 E v a).
 Proof.
 intros E v a. split; [|reflexivity]. intros n Hn. cbn [ext1 ev].
 destruct (Nat.eqb_spec n v); [lia | reflexivity].
 Qed.
-#[using="Type"] Lemma ext1_at : ltac2:(TCodec.tc2 tcn__AsanPlanSound "A'XD'=']NyR0%211'H&XF&W@r3r2r1%43321%6213%83913peH:1plH>1pR<@1").
+#[using="Type"] Lemma ext1_at : forall E v a, ev (ext1 E v a) v = a.
 Proof. intros. cbn [ext1 ev]. rewrite Nat.eqb_refl. reflexivity. Qed.
-#[using="Type"] Lemma env_agree_le : ltac2:(TCodec.tc2 tcn__AsanPlanSound "C'='XD&Y@r3r2r1%43321'Nr5r4%3221r6%:3139p031p081pR>>1pR<?1pf0A1peNB1").
+#[using="Type"] Lemma env_agree_le : forall b b' E E', env_agree b' E E' -> (b <= b')%nat -> env_agree b E E'.
 Proof. intros b b' E E' [H1 H2] Hle. split; [|exact H2]. intros n Hn. apply H1. lia. Qed.
-#[using="Type"] Lemma env_agree_refl : ltac2:(TCodec.tc2 tcn__AsanPlanSound "8'='XD&Y@r2r1%33211pR<51peN71").
+#[using="Type"] Lemma env_agree_refl : forall b E, env_agree b E E.
 Proof. intros. split; [intros; reflexivity | reflexivity]. Qed.
-#[using="Type"] Lemma env_agree_trans : ltac2:(TCodec.tc2 tcn__AsanPlanSound "A'='XD&Y@r4r3r2%43321r5%63143r6%83136p031p061pRD<1pRB=1pR@>1peN@1").
+#[using="Type"] Lemma env_agree_trans : forall b E1 E2 E3, env_agree b E1 E2 -> env_agree b E2 E3 -> env_agree b E1 E3.
 Proof. intros b E1 E2 E3 [A1 B1] [A2 B2]. split; [intros n Hn; rewrite A1 by lia; apply A2; lia | congruence]. Qed.
-#[using="Type"] Lemma expr_vars_lt_eq : ltac2:(TCodec.tc2 tcn__AsanPlanSound "='='XG'H'7&SLr2r1%3221&YA%1243%83731pgF:1peN<1").
+#[using="Type"] Lemma expr_vars_lt_eq : forall b e, AP.expr_vars_lt b e = AxSymRun3.expr_vars_lt b e.
 Proof. intros b e. induction e; cbn; try rewrite IHe1, IHe2; try rewrite IHe; reflexivity. Qed.
-#[using="Type"] Lemma kentry_vars_lt_eq : ltac2:(TCodec.tc2 tcn__AsanPlanSound "='='XL'H'7&TAr2r1%3221&YB%1243%83731pS6:1peN<1").
+#[using="Type"] Lemma kentry_vars_lt_eq : forall b K, AP.kentry_vars_lt b K = AxSymRun3.kentry_vars_lt b K.
 Proof.
 intros b K. destruct K as [[? ?] | [? ?] | [? ?] | | | | [? ?] | [? ?] ? [? ?] ?| [? ?] ? ?| [? ?] ?];
 cbn -[AP.expr_vars_lt AxSymRun3.expr_vars_lt]; unfold AP.saddr_vars_lt, AxSymRun3.saddr_vars_lt; cbn [a_base];
 rewrite ?expr_vars_lt_eq; reflexivity.
 Qed.
-#[using="Type"] Lemma kn_vars_lt_eq : ltac2:(TCodec.tc2 tcn__AsanPlanSound "?'='<'XL%211'H'7&TJr2r1%3221&YC%1243%83731phJ:1peN>1").
+#[using="Type"] Lemma kn_vars_lt_eq : forall b k, AP.kn_vars_lt b k = AxSymRun3.kn_vars_lt b k.
 Proof. intros b k. induction k; cbn [AP.kn_vars_lt AxSymRun3.kn_vars_lt]; [reflexivity|]. rewrite kentry_vars_lt_eq, IHk. reflexivity. Qed.
-#[using="Type"] Lemma sr_vars_lt_eq : ltac2:(TCodec.tc2 tcn__AsanPlanSound "?'='<'XG%211'H'7&VLr2r1%3221&YD%1243%83731pkD:1peN>1").
+#[using="Type"] Lemma sr_vars_lt_eq : forall b sr, AP.sr_vars_lt b sr = AxSymRun3.sr_vars_lt b sr.
 Proof. intros b sr. induction sr; cbn [AP.sr_vars_lt AxSymRun3.sr_vars_lt]; [reflexivity|]. rewrite expr_vars_lt_eq, IHsr. reflexivity. Qed.
-#[using="Type"] Lemma edenot_agree' : ltac2:(TCodec.tc2 tcn__AsanPlanSound "L'='XD'XG&Y@r4r3r2%43321'H'7&SLr5%2216(D%63521']NyR0%211&XC%128>%22@?%=3421p081p0@1pgFF1pR>H1pR<I1peNK1").
+#[using="Type"] Lemma edenot_agree' : forall b E E' e, env_agree b E E' -> AP.expr_vars_lt b e = true -> edenot E e = edenot E' e.
 Proof. intros. eapply edenot_agree; [eassumption | rewrite <- expr_vars_lt_eq; assumption]. Qed.
-#[using="Type"] Lemma know_ok_agree' : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q6'='XD']NyR0%211'@y8%511%311p051'<'XL%211&Y@r5r4r3%43321'H'7&TJr6r2%3221(D%73621&Y=vZ1%2417=<%3428?>p021p061p0?1phJE1pT@I1pR>Q21pR<Q31peNQ51").
+#[using="Type"] Lemma know_ok_agree' : forall b E E' M k, env_agree b E E' -> AP.kn_vars_lt b k = true -> know_ok SEGS E M k -> know_ok SEGS E' M k.
 Proof. intros. eapply know_ok_agree; [eassumption | rewrite <- kn_vars_lt_eq; eassumption | assumption]. Qed.
-#[using="Type"] Lemma regs_ok_agree' : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q2'='XD'<'XG%211&R6y5']NyR0%211%5241&Y@r5r4r3%43321'H'7&VLr6%2216(D%63521&Y>%135;:%236=<p021p051p0=1pTJC1pkDJ1pR>N1pR<O1peNQ11").
+#[using="Type"] Lemma regs_ok_agree' : forall b E E' sr R, env_agree b E E' -> AP.sr_vars_lt b sr = true -> regs_ok E sr R -> regs_ok E' sr R.
 Proof. intros. eapply regs_ok_agree; [eassumption | rewrite <- sr_vars_lt_eq; eassumption | assumption]. Qed.
-#[using="HOLES_agree"] Lemma sd_agree : ltac2:(TCodec.tc2 tcn__AsanPlanSound "N&YJ'XD&QE'VF&Y@v]8r4r3%43321'H'7&VHr2%2281(D%63521&X2r7r6%3421=<r5%5441?>%=3F31p081p0@1pk8F1ph0H1pR>J1pR<K1pR:M1").
+#[using="HOLES_agree"] Lemma sd_agree : forall D E E' fs s,
+env_agree nx0 E E' -> shape_vars_lt nx0 s = true -> sd D E fs s = sd D E' fs s.
 Proof.
 intros D E E' fs s Hag. induction s; cbn [shape_vars_lt sd]; intros H; try reflexivity.
 - rewrite IHs by exact H. unfold Wp. replace (flat_map (piece_den E') ps) with (flat_map (piece_den E) ps); [reflexivity|].
@@ -1152,9 +1227,9 @@ apply flat_map_ext. intros [bs|k]; cbn [piece_den]; [reflexivity|]. destruct Hag
 rewrite IHs1, IHs2 by assumption. rewrite (edenot_agree' nx0 E E' e Hag H1). reflexivity.
 - apply HOLES_agree. exact Hag.
 Qed.
-#[using="Type"] Lemma t_exit_has_nil : ltac2:(TCodec.tc2 tcn__AsanPlanSound "=']NyR0%211&QE&YMr2r1(?'QL%211%63541ph081pg2:1").
+#[using="Type"] Lemma t_exit_has_nil : forall code fs, t_exit code fs [].
 Proof. intros. unfold t_exit. apply t_emit_has_nil. Qed.
-#[using="HOLES_nil"] Lemma sd_has_nil : ltac2:(TCodec.tc2 tcn__AsanPlanSound "F'<'QL%211!pm621'XD&QE'VFr4(?%119%311&X2r5r3r2%4538216p061pk8;1ph0=1pR<?1pR:A1").
+#[using="HOLES_nil"] Lemma sd_has_nil : forall D E fs s, D [] -> sd D E fs s [].
 Proof.
 intros D E fs s HD. induction s; cbn [sd].
 - reflexivity.
@@ -1165,15 +1240,16 @@ intros D E fs s HD. induction s; cbn [sd].
 - apply HOLES_nil.
 - exact HD.
 Qed.
-#[using="Type"] Lemma t_alt2_nil_l : ltac2:(TCodec.tc2 tcn__AsanPlanSound ">&YJr1(?'QL%211%411&YL&YK&YNr2%3221%5212p071pe4=1").
+#[using="Type"] Lemma t_alt2_nil_l : forall T : TSet, T [] -> t_eq (t_alt2 t_nil T) T.
 Proof. intros T HT tr. unfold t_alt2, t_nil. split; [intros [->|H]; assumption | intros H; right; exact H]. Qed.
-#[using="Type"] Lemma t_alt2_nil_r : ltac2:(TCodec.tc2 tcn__AsanPlanSound ">&YJr1(?'QL%211%411&YL&YKr2&YN%3221%5213p071pe4=1").
+#[using="Type"] Lemma t_alt2_nil_r : forall T : TSet, T [] -> t_eq (t_alt2 T t_nil) T.
 Proof. intros T HT tr. unfold t_alt2, t_nil. split; [intros [H| ->]; assumption | intros H; left; exact H]. Qed.
-#[using="Type"] Lemma t_eq_alt2 : ltac2:(TCodec.tc2 tcn__AsanPlanSound "C&YJ&YLr4r3%3221r2%5231&YKr6%2217r5%4218%;231p071p0:1pe<?1pe:@1pe8A1pe6B1").
+#[using="Type"] Lemma t_eq_alt2 : forall TA TA' TB TB' : TSet, t_eq TA TA' -> t_eq TB TB' -> t_eq (t_alt2 TA TB) (t_alt2 TA' TB').
 Proof. intros TA TA' TB TB' HA HB tr. unfold t_alt2. split; (intros [H|H]; [left; apply HA | right; apply HB]; exact H). Qed.
-#[using="nx0 HS XN XE XB"] Lemma t_eq_refl' : ltac2:(TCodec.tc2 tcn__AsanPlanSound "5&YJ&YLr1%2211pe441").
+#[using="nx0 HS XN XE XB"] Lemma t_eq_refl' : forall T : TSet, t_eq T T.
 Proof. intros T tr. tauto. Qed.
-#[using="nx0 HS XN XE XB HOLES_nil"] Lemma sd_salt2 : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q0'<'QL%211!pm621'XD&QE'VFr5(?%119%311&YL&YK&X2r6r4r3%443:21r2%645<41%8231&VA%1264%:49@81%=241p0?1peND1peHE1ph0G1pR<I1pR:K1").
+#[using="nx0 HS XN XE XB HOLES_nil"] Lemma sd_salt2 : forall D E fs a b, D [] ->
+t_eq (t_alt2 (sd D E fs a) (sd D E fs b)) (sd D E fs (salt2 a b)).
 Proof.
 intros D E fs a b HD.
 assert (Ha : sd D E fs a []) by (apply sd_has_nil; exact HD).
@@ -1181,7 +1257,7 @@ assert (Hb : sd D E fs b []) by (apply sd_has_nil; exact HD).
 unfold salt2. destruct a; destruct b; cbn [sd] in *;
 first [ apply t_alt2_nil_l; assumption | apply t_alt2_nil_r; assumption | apply t_eq_refl' ].
 Qed.
-#[using="Type"] Lemma salt2_vars : ltac2:(TCodec.tc2 tcn__AsanPlanSound "G'='VF'H'7&VHr3r2%3221(D%73621r4%7215%:3914r5&VA%125:%<231%?3>19p061p0:1pm8C1pm6D1peNF1").
+#[using="Type"] Lemma salt2_vars : forall b x y, shape_vars_lt b x = true -> shape_vars_lt b y = true -> shape_vars_lt b (salt2 x y) = true.
 Proof.
 intros b x y Hx Hy. unfold salt2.
 destruct x; destruct y; cbn [shape_vars_lt] in *; rewrite ?Hx, ?Hy; try reflexivity; try assumption.
@@ -1195,7 +1271,7 @@ srealizes SEGS scfg (cfg R' (pc cs') FULL' model') T) ->
 srealizes SEGS scfg (cfg R (pc cs) FULL model) T.
 Definition always (cs : acs) : bool := true.
 Definition sys_stmt (y : snode) : Prop := node1_stmt (is_ecall_at SEGS) (node_sys A nx0 y).
-Definition x_stmt (x : xnode) : Prop := forall args, node1_stmt always (node_x SEGS A nx0 x args).
+Definition x_stmt (x : xnode) : Prop := forall args, node1_stmt always (node_x SEGS A nx0 rz x args).
 Definition fresh_stmt : Prop := forall r logc base, node1_stmt always (fun cs => node_fresh nx0 cs r logc base).
 Definition join_stmt : Prop := forall b off n, node1_stmt always (fun cs => node_join SEGS cs b off n).
 Definition brk2_stmt : Prop :=
@@ -1269,20 +1345,19 @@ Hypothesis node_ext_sound : ext_stmt.
 Hypothesis node_emit_sound : emit_stmt.
 Hypothesis node_ext2_sound : ext2_stmt.
 Hypothesis HS_sound : holes_stmt.
-#[using="Type"] Lemma split_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "RB'S2'XG'Q3'XD&R6y5']NyR0%211%5241'@y8%611%311p061'QK'W?r4r9r3r2r1%6554321'H'B%12GG%@11&XE&TDr:%211%421=(4(Ar7r6%34Q2Q221%52<1%?3<71'G&Z:&]O&XC%128>%32Q51%521K&VBr<(8'XL(X=r;%231Q2G%I16%63521%9281r5%Q95G2F1Q8p0=1&Z;%12Q:@&Z8+1%22Q21r8%?3>21%B3A1=%E2D1%QD5Q21Q1<QCp091%O2<1p0Q11p0QB1piNQJ1pRFQL1pTJR21pR<R91ph:R;1piBR<1piJR=1pgFR?1pg4RA1").
+#[using="Type"] Lemma split_sound : forall cs e mid lo hi E R FULL model,
+cs_ok E cs R FULL model -> erange (kn cs) e = Some (lo, hi) ->
+(bv_unsigned (edenot E e) <= mid -> cs_ok E (set_kn cs (KRange e lo mid :: kn cs)) R FULL model)
+/\ (mid < bv_unsigned (edenot E e) -> cs_ok E (set_kn cs (KRange e (mid + 1) hi :: kn cs)) R FULL model).
 Proof.
 intros cs e mid lo hi E R FULL model HC Hr.
 pose proof (erange_sound SEGS E _ (kn cs) e lo hi (co_know _ _ _ _ _ HC) Hr) as Hb.
 split; intros Hm; apply cs_ok_set_kn; [exact HC| |exact HC|];
 (constructor; [cbn [kentry_ok]; lia | exact (co_know _ _ _ _ _ HC)]).
 Qed.
-Section SE.
-Local Abbreviation SEC_T_kn_contra_sound := (ltac2:(TCodec.tc2 tcn__AsanPlanSound "N'XD']NyR0%211'@y8%511%311p051'<'XL%211&Y=vZ1r3r2r1%544321'H'7&TF%116(D%53421'Ep021p091phJ@1pT@D1pR<M1")) (only parsing).
-Variable E : ltac:(sec_ty2 constr:(SEC_T_kn_contra_sound) 0%nat 0%nat).
-Variable M : ltac:(sec_ty2 constr:(SEC_T_kn_contra_sound) 1%nat 0%nat).
-Variable k : ltac:(sec_ty2 constr:(SEC_T_kn_contra_sound) 2%nat 0%nat).
-Lemma kn_contra_sound : ltac:(sec_stmt2 constr:(SEC_T_kn_contra_sound) 3%nat 0%nat).
-Proof using Type E M k.
+#[using="Type"] Lemma kn_contra_sound : forall E M k, know_ok SEGS E M k -> kn_contra k = true -> False.
+Proof.
+intros E M k.
 intros HK H.
 unfold kn_contra in H. apply existsb_exists in H as (K & Hin & HKb).
 pose proof (proj1 (Forall_forall _ _) HK K Hin) as HKK.
@@ -1304,16 +1379,11 @@ apply orb_prop in Hd as [Hd|Hd]; apply Z.ltb_lt in Hd; lia. }
 destruct e; try discriminate;
 (destruct (lin_of _) as [c [|t1 [|t2 ts]]] eqn:Hle; try discriminate; exact (GEN _ _ eq_refl HKb)).
 Qed.
-End SE.
-#[using="Type"] Lemma estart_SA : ltac2:(TCodec.tc2 tcn__AsanPlanSound "F'XD'XG'Q3'H&Y;r3(X?r2r1%3221%6251&Z8&]OyR0&XC%12:8%4231%6219%?3@81phJA1peNC1pR<E1").
+#[using="Type"] Lemma estart_SA : forall E b k, estart E (SA b k) = bv_unsigned (edenot E b) + k.
 Proof. reflexivity. Qed.
-Section SE.
-Local Abbreviation SEC_T_xlo1_sound := (ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q:'XD']NyR0%211'@y8%511%311p051'<'XL%211'XG'Q3&Y=vZ1r5r4r3%544321'H%A18&W4%1265(4r2%22=1%73641&Z:&]O&XCr7%221?%42O1%62@1p081p0A1piBH1pgFJ1phJL1pT@Q01pR<Q91")) (only parsing).
-Variable E : ltac:(sec_ty2 constr:(SEC_T_xlo1_sound) 0%nat 0%nat).
-Variable M : ltac:(sec_ty2 constr:(SEC_T_xlo1_sound) 1%nat 0%nat).
-Variable k : ltac:(sec_ty2 constr:(SEC_T_xlo1_sound) 2%nat 0%nat).
-Lemma xlo1_sound : ltac:(sec_stmt2 constr:(SEC_T_xlo1_sound) 3%nat 0%nat).
-Proof using Type E M k.
+#[using="Type"] Lemma xlo1_sound : forall E M k e lo, know_ok SEGS E M k -> xlo1 k e = Some lo -> lo <= bv_unsigned (edenot E e).
+Proof.
+intros E M k.
 intros e lo HK H.
 unfold xlo1 in H.
 assert (LIT : forall z, e = ELit z -> Some (zlit64 z) = Some lo -> lo <= bv_unsigned (edenot E e)).
@@ -1324,14 +1394,9 @@ destruct (lin_brange k _) as [[l2 h2]|] eqn:Hb; [pose proof (lin_brange_sound SE
 [..| destruct (lin_srange k _) as [[l3 h3]|] eqn:Hs; [pose proof (lin_srange_sound SEGS E M k _ l3 h3 HK Hs)|]];
 try discriminate; injection H as <-; lia).
 Qed.
-End SE.
-Section SE.
-Local Abbreviation SEC_T_xhi1_sound := (ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q:'XD']NyR0%211'@y8%511%311p051'<'XL%211'XG'Q3&Y=vZ1r5r4r3%544321'H%A18&W2%1265(4r2%22=1%73641&Z:&]O&XCr7%221?%42O1%621@p081p0A1ph:H1pgFJ1phJL1pT@Q01pR<Q91")) (only parsing).
-Variable E : ltac:(sec_ty2 constr:(SEC_T_xhi1_sound) 0%nat 0%nat).
-Variable M : ltac:(sec_ty2 constr:(SEC_T_xhi1_sound) 1%nat 0%nat).
-Variable k : ltac:(sec_ty2 constr:(SEC_T_xhi1_sound) 2%nat 0%nat).
-Lemma xhi1_sound : ltac:(sec_stmt2 constr:(SEC_T_xhi1_sound) 3%nat 0%nat).
-Proof using Type E M k.
+#[using="Type"] Lemma xhi1_sound : forall E M k e hi, know_ok SEGS E M k -> xhi1 k e = Some hi -> bv_unsigned (edenot E e) <= hi.
+Proof.
+intros E M k.
 intros e hi HK H.
 unfold xhi1 in H.
 assert (LIT : forall z, e = ELit z -> Some (zlit64 z) = Some hi -> bv_unsigned (edenot E e) <= hi).
@@ -1342,12 +1407,10 @@ destruct (lin_brange k _) as [[l2 h2]|] eqn:Hb; [pose proof (lin_brange_sound SE
 [..| destruct (lin_srange k _) as [[l3 h3]|] eqn:Hs; [pose proof (lin_srange_sound SEGS E M k _ l3 h3 HK Hs)|]];
 try discriminate; injection H as <-; lia).
 Qed.
-End SE.
-Section SE.
-Local Abbreviation SEC_T_deand_sound := (ltac2:(TCodec.tc2 tcn__AsanPlanSound "QB'XD'XG'Q3'H'B%1243&SDr3%211(Ar2r1%34;:21%:3851'G&Z:z%2217'I%4238%529=%7221&]OyR0&XCr6r5%3221%6251&Z<&Z@r4%8271%;2:1%421G&Z?+2+R0%3221%:251%Q53Q6<1%K2D1qk4Q81%I2Q91%N2K1p0Q01pk8Q<1pgHQ>1pgFQ?1pR<QA1")) (only parsing).
-Variable E : ltac:(sec_ty2 constr:(SEC_T_deand_sound) 0%nat 0%nat).
-Lemma deand_sound : ltac:(sec_stmt2 constr:(SEC_T_deand_sound) 1%nat 0%nat).
-Proof using Type E.
+#[using="Type"] Lemma deand_sound : forall E e e' s, deand e = (e', s) ->
+0 <= s /\ exists rho, 0 <= rho <= s /\ bv_unsigned (edenot E e) = (bv_unsigned (edenot E e') - rho) mod 2 ^ 64.
+Proof.
+intros E.
 intros e.
 induction e as [z|n|op a IHa b IHb|op a IHa b IHb|op a IHa b IHb|op a IHa b IHb|u w sx a IHa|bk bo bn bw];
 intros e' s Hd;
@@ -1397,12 +1460,9 @@ set (r := X mod 2 ^ j) in *. clearbody r.
 rewrite Ea. rewrite Ea in HX. nia.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Qed.
-End SE.
-Section SE.
-Local Abbreviation SEC_T_deand_vars := (ltac2:(TCodec.tc2 tcn__AsanPlanSound "N'='XG'Q3'H'B%1243&SDr3%211(Ar2r1%34;:21%:3851'7&SLr5r4%3221(D%A3621r6%7215%D3914p041p0<1pk8H1pgHJ1pgFK1pf8M1")) (only parsing).
-Variable bnd : ltac:(sec_ty2 constr:(SEC_T_deand_vars) 0%nat 0%nat).
-Lemma deand_vars : ltac:(sec_stmt2 constr:(SEC_T_deand_vars) 1%nat 0%nat).
-Proof using Type bnd.
+#[using="Type"] Lemma deand_vars : forall bnd e e' s, deand e = (e', s) -> AP.expr_vars_lt bnd e = true -> AP.expr_vars_lt bnd e' = true.
+Proof.
+intros bnd.
 intros e.
 induction e as [z|n|op a IHa b IHb|op a IHa b IHb|op a IHa b IHb|op a IHa b IHb|u w sx a IHa|bk bo bn bw];
 intros e' s Hd Hv; try (cbn [deand] in Hd; injection Hd as <- <-; exact Hv).
@@ -1417,8 +1477,8 @@ cbv zeta in Hd.
 destruct (Z.eqb _ _ && Z.leb _ 48)%bool; [|injection Hd as <- <-; exact Hv0].
 destruct (deand a) as [a' s0] eqn:Ha. injection Hd as <- <-. exact (IHa a' s0 eq_refl Hva).
 Qed.
-End SE.
-#[using="Type"] Lemma xb2_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "QC'XD']NyR0%211'@y8%511%311p051'<'XL%211'XG'Q3&Y=vZ1r6r5r4%544321'H'B%1299%C11&W1%1287(4(Ar3r2%34AA21%5291%<3971'G&Z:&]O&XCr8%221E%42Q51%62F1%722=%9221p0;1p0I1ph:Q01piBQ11pgFQ31phJQ51pT@Q91pR<QB1").
+#[using="Type"] Lemma xb2_sound : forall E M k e lo hi, know_ok SEGS E M k -> xb2 k e = Some (lo, hi) ->
+lo <= bv_unsigned (edenot E e) <= hi.
 Proof.
 intros E M k e lo hi HK H. unfold xb2 in H.
 set (plain := match xlo1 k e, xhi1 k e with Some lo, Some hi => Some (lo, hi) | _, _ => None end) in H.
@@ -1439,17 +1499,21 @@ destruct plain as [[l0 h0]|].
 - specialize (HP l0 h0 eq_refl). injection H as <- <-. lia.
 - injection H as <- <-. lia.
 Qed.
-#[using="Type"] Lemma xlo2_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q:'XD']NyR0%211'@y8%511%311p051'<'XL%211'XG'Q3&Y=vZ1r5r4r3%544321'H%A18&W5%1265(4r2%22=1%73641&Z:&]O&XCr7%221?%42O1%62@1p081p0A1piBH1pgFJ1phJL1pT@Q01pR<Q91").
+#[using="Type"] Lemma xlo2_sound : forall E M k e lo, know_ok SEGS E M k -> xlo2 k e = Some lo -> lo <= bv_unsigned (edenot E e).
 Proof.
 intros E M k e lo HK H. unfold xlo2 in H. destruct (xb2 k e) as [[l h]|] eqn:Hb; [|discriminate].
 injection H as <-. exact (proj1 (xb2_sound E M k e l h HK Hb)).
 Qed.
-#[using="Type"] Lemma xhi2_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q:'XD']NyR0%211'@y8%511%311p051'<'XL%211'XG'Q3&Y=vZ1r5r4r3%544321'H%A18&W3%1265(4r2%22=1%73641&Z:&]O&XCr7%221?%42O1%621@p081p0A1ph:H1pgFJ1phJL1pT@Q01pR<Q91").
+#[using="Type"] Lemma xhi2_sound : forall E M k e hi, know_ok SEGS E M k -> xhi2 k e = Some hi -> bv_unsigned (edenot E e) <= hi.
 Proof.
 intros E M k e hi HK H. unfold xhi2 in H. destruct (xb2 k e) as [[l h]|] eqn:Hb; [|discriminate].
 injection H as <-. exact (proj2 (xb2_sound E M k e l h HK Hb)).
 Qed.
-#[using="Type"] Lemma residue_fact_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "QK'XD']NyR0%211'@y8%511%311p051'<'XL%211'XG&Y=vZ1r7r5r3%544321'H&XCr2%2271r8%4217%63F31'Q3'B%12@2&SDr6%211(Ar1%24F8=1%@3741r;%A21Dr<%C21F%E3Q531p061pk8@1pgHO1r9&V=r4%23AO1%Q34Q24Q11p061p0I1p0Q11pj<Q81pgFQ91phJQ;1pTBQ?1pT@Q@1pR>QI1pR<QJ1").
+#[using="Type"] Lemma residue_fact_sound : forall E E' M M' k e ne,
+know_ok SEGS E M k ->
+edenot E' ne = edenot E e ->
+(forall e' s, deand e = (e', s) -> edenot E' e' = edenot E e') ->
+know_ok SEGS E' M' (residue_fact k e ne).
 Proof.
 intros E E' M M' k e ne HK Hne Hag. unfold residue_fact.
 destruct (deand e) as [e' s] eqn:Hd. destruct (Z.ltb 0 s) eqn:Hs; [|constructor].
@@ -1462,7 +1526,7 @@ assert (Hue : bv_unsigned (edenot E e) = bv_unsigned (edenot E e') - rho) by (re
 rewrite Hue. replace (bv_unsigned (edenot E e') - (bv_unsigned (edenot E e') - rho)) with rho by lia.
 rewrite Z.mod_small by lia. lia.
 Qed.
-#[using="Type"] Lemma fact_ok_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q2'XD']NyR0%211'@y8%511%311p051'<'XL%211&Y=vZ1r4r3r2%544321'H'7&SM%1265(D%53421&Y<r6r5%34>21<p051p0<1pS6D1phJD1pT@H1pR<Q11").
+#[using="Type"] Lemma fact_ok_sound : forall E M k K, know_ok SEGS E M k -> fact_ok k K = true -> kentry_ok SEGS E M K.
 Proof.
 intros E M k K HK H. destruct K as [| | | |e m|e lo hi| |[b1 k1] n1 [b2 k2] n2| |]; try discriminate; cbn [fact_ok] in H.
 - apply andb_prop in H as [H H3]. apply andb_prop in H as [H1 H2].
@@ -1474,23 +1538,18 @@ apply andb_prop in H as [H1 H2]. apply Z.leb_le in H1. apply Z.leb_le in H2.
 pose proof (xlo2_sound E M k e l HK Hl). pose proof (xhi2_sound E M k e h HK Hh). cbn [kentry_ok]. lia.
 - cbn [kentry_ok]. exact (ranges_apart_x_sound SEGS E M k b1 k1 n1 b2 k2 n2 HK H).
 Qed.
-#[using="Type"] Lemma fact_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q?'XD'S2&R6y5']NyR0%211%5241'@y8%611%311p061'QK'XL'W?r6r5r4r3r2%6554321'H'7&SM&TD%11:%3217(D%73621r8&S3r7(8(?%11E%33FA1%6251%G581FEDp0:1p0C1pS6K1piNM1pRFO1pTJQ51pg4Q<1pR<Q>1").
+#[using="Type"] Lemma fact_sound : forall E cs R FULL model K,
+cs_ok E cs R FULL model -> fact_ok (kn cs) K = true -> cs_ok E (add_kn cs [K]) R FULL model.
 Proof.
 intros E cs R FULL model K HC H. unfold add_kn. apply cs_ok_set_kn; [exact HC|].
 constructor; [eapply fact_ok_sound; [exact (co_know _ _ _ _ _ HC) | exact H] | exact (co_know _ _ _ _ _ HC)].
 Qed.
-#[using="Type"] Lemma regs_ok_ext_eq : ltac2:(TCodec.tc2 tcn__AsanPlanSound "J'XD'<'XG%211&R6y5']NyR0%211%5241'Hr3r2%33:21&Y>r5r4%33215r6%53138p031p081pTJ=1pkFD1pkDE1pR<I1").
+#[using="Type"] Lemma regs_ok_ext_eq : forall E sr sr' R, sr = sr' -> regs_ok E sr R -> regs_ok E sr' R.
 Proof. intros; subst; assumption. Qed.
-Section SE.
-Local Abbreviation SEC_T_entails_sound := (ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q>'XD'S2&R6y5']NyR0%211%5241'@y8%611%311p061'QK'W?r6r5r3r2r1%6554321'H'7&SG%1298(D%53421'Gr8r4%@52?>1='Q3&V7%11Br7%311%?3531%:271p0<1p0C1piNK1pRFM1pTJQ31pfNQ:1pg4Q;1pR<Q=1")) (only parsing).
-Variable E : ltac:(sec_ty2 constr:(SEC_T_entails_sound) 0%nat 0%nat).
-Variable cs : ltac:(sec_ty2 constr:(SEC_T_entails_sound) 1%nat 0%nat).
-Variable ch : ltac:(sec_ty2 constr:(SEC_T_entails_sound) 2%nat 0%nat).
-Variable R : ltac:(sec_ty2 constr:(SEC_T_entails_sound) 3%nat 0%nat).
-Variable FULL : ltac:(sec_ty2 constr:(SEC_T_entails_sound) 4%nat 0%nat).
-Variable model : ltac:(sec_ty2 constr:(SEC_T_entails_sound) 5%nat 0%nat).
-Lemma entails_sound : ltac:(sec_stmt2 constr:(SEC_T_entails_sound) 6%nat 0%nat).
-Proof using Type E cs ch R FULL model.
+#[using="Type"] Lemma entails_sound : forall E cs ch R FULL model,
+cs_ok E cs R FULL model -> entails cs ch = true -> cs_ok E ch R FULL model /\ pc ch = pc cs.
+Proof.
+intros E cs ch R FULL model.
 intros HC H.
 unfold entails in H.
 repeat match type of H with (_ && _)%bool = true => apply andb_prop in H as [H ?X] end.
@@ -1518,13 +1577,14 @@ apply kentry_eqb_eq in Heq. subst K'. exact (proj1 (Forall_forall _ _) co_know0 
 - lia.
 - intros a. rewrite HH. replace (in_ghost E ch) with (in_ghost E cs) by (unfold in_ghost; rewrite Hghost; reflexivity). exact (co_zero0 a).
 Qed.
-End SE.
-#[using="Type"] Lemma ridx_lit : ltac2:(TCodec.tc2 tcn__AsanPlanSound "A'=&Or1uQ0%3221'H&XO&]My5&Z>r2%211%5241%711%93>14p0;1pj4@1").
+#[using="Type"] Lemma ridx_lit : forall n, (n < 32)%nat -> ridx (Z_to_bv 5 (Z.of_nat n)) = n.
 Proof.
 intros n Hn. unfold ridx. rewrite Z_to_bv_unsigned. unfold bv_wrap.
 change (bv_modulus 5) with 32%Z. rewrite Z.mod_small by lia. lia.
 Qed.
-#[using="Type"] Lemma reg_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "QC'XD'S2&R6y5']NyR0%211%5241'@y8%611%311p061'QK'='W?r6r5r4r3r2%6554321'G&O(2%2215uQ0%4271%6231'H&YF&]M&Z>%11>%32O1%52C1&XCr8&V9r7%221E%5241%=3Q471p0?1p0G1pj4O1piNQ11pRFQ31pTJQ91pg4Q@1pR<QB1").
+#[using="Type"] Lemma reg_sound : forall E cs R FULL model n,
+cs_ok E cs R FULL model -> (0 < n < 32)%nat ->
+getr R (Z_to_bv 5 (Z.of_nat n)) = edenot E (reg cs n).
 Proof.
 intros E cs R FULL model n HC Hn. rewrite (co_regs _ _ _ _ _ HC). unfold sr_get, reg.
 assert (Hnz : bv_eqb (Z_to_bv 5 (Z.of_nat n)) 0%bv = false).
@@ -1533,19 +1593,23 @@ change (bv_modulus 5) with 32%Z. rewrite Z.mod_small by lia.
 replace (bv_unsigned (0%bv : bv 5)) with 0%Z by reflexivity. lia. }
 rewrite Hnz. rewrite ridx_lit by lia. reflexivity.
 Qed.
-#[using="Type"] Lemma lit_of_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q4'XD'XG'Q3'H'@%113&U4r2%211(4r1%2291%93741'G']NyR0%211&XCr4r3%3221&]M%127?%D3731&Z:z%221C&Z;&Y8%22F1%A241%B281p0D1pm>O1pgFQ11pR<Q31").
+#[using="Type"] Lemma lit_of_sound : forall E e z, lit_of e = Some z -> edenot E e = Z_to_bv 64 z /\ (0 <= z < two64)%Z.
 Proof.
 intros E e z H. destruct e; try discriminate. cbn [lit_of] in H. injection H as <-.
 split; [| unfold two64; apply Z.mod_pos_bound; lia].
 cbn [edenot]. apply bv_eq. rewrite !Z_to_bv_unsigned, !bv_wrap64_mod. unfold two64.
 rewrite Z.mod_mod by lia. reflexivity.
 Qed.
-#[using="Type"] Lemma reg_lit_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "R0'XD'S2&R6y5']NyR0%211%5241'@y8%611%311p061'QK'='Q3'W?r7r6r5r4r3%6554321'G&O(2%2215uQ0%4271%6231'H%G1@&V:r8%221>(4%12E?%73631&YF&]M&Z>%11F%32Q71%52:1%52Q7H%?3Q721&Z:z%221L&Z;&Y8%22O1%M241%N281p0A1p0J1p0Q21pm>Q:1pj4Q<1piNQ>1pRFQ@1pTJQF1pg4QM1pR<QO1").
+#[using="Type"] Lemma reg_lit_sound : forall E cs R FULL model n z,
+cs_ok E cs R FULL model -> (0 < n < 32)%nat -> reg_lit cs n = Some z ->
+getr R (Z_to_bv 5 (Z.of_nat n)) = Z_to_bv 64 z /\ (0 <= z < two64)%Z.
 Proof.
 intros E cs R FULL model n z HC Hn H. unfold reg_lit in H.
 destruct (lit_of_sound E (reg cs n) z H) as [He Hz]. rewrite (reg_sound E cs R FULL model n HC Hn), He. auto.
 Qed.
-#[using="Type"] Lemma regs_ok_respell : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q?'XD'<'XG%211&R6y5']NyR0%211%5241'=&Y>r5r4r3%43321'G&O(2%2215uQ0%4271%6231'H&XCr7%221<&Q2r6(X;z%211%54NC41%9281%;3J81r8&Y6%13<IH%K331:p051p0B1p0J1pgFQ81pj4Q11pTJQ31pkDQ:1pR<Q>1").
+#[using="Type"] Lemma regs_ok_respell : forall E sr R n e,
+regs_ok E sr R -> (0 < n < 32)%nat -> edenot E e = edenot E (nth n sr (ELit 0)) ->
+regs_ok E (sr_upd sr n e) R.
 Proof.
 intros E sr R n e HR Hn He.
 replace (sr_upd sr n e) with (sr_upd sr (ridx (Z_to_bv 5 (Z.of_nat n))) e) by (rewrite ridx_lit by lia; reflexivity).
@@ -1557,7 +1621,9 @@ change (bv_modulus 5) with 32%Z. rewrite Z.mod_small by lia.
 replace (bv_unsigned (0%bv : bv 5)) with 0%Z by reflexivity. lia. }
 rewrite Hnz, ridx_lit by lia. symmetry. exact He.
 Qed.
-#[using="Type"] Lemma regs_ok_set_n : ltac2:(TCodec.tc2 tcn__AsanPlanSound "QA'XD'<'XG%211&R6y5']NyR0%211%5241'=&Y>r6r5r4%43321'G&O(2%2215uQ0%4271%6231'H&XCr8%221<r3%53D21r9&Y6%136CB&YHr7&]M&Z>%11H%32Q01%6351H%L3:81p0<1p0C1p0K1plHQ31pgFQ:1pj4Q31pTJQ51pkDQ<1pR<Q@1").
+#[using="Type"] Lemma regs_ok_set_n : forall E sr R n e v,
+regs_ok E sr R -> (0 < n < 32)%nat -> edenot E e = v ->
+regs_ok E (sr_upd sr n e) (regupd R (Z_to_bv 5 (Z.of_nat n)) v).
 Proof.
 intros E sr R n e v HR Hn He.
 replace (sr_upd sr n e) with (sr_upd sr (ridx (Z_to_bv 5 (Z.of_nat n))) e) by (rewrite ridx_lit by lia; reflexivity).
@@ -1566,27 +1632,25 @@ intros Hz. apply (f_equal bv_unsigned) in Hz. rewrite Z_to_bv_unsigned in Hz. un
 change (bv_modulus 5) with 32%Z in Hz. rewrite Z.mod_small in Hz by lia.
 replace (bv_unsigned (0%bv : bv 5)) with 0%Z in Hz by reflexivity. lia.
 Qed.
-#[using="Type"] Lemma fresh_ok_parts : ltac2:(TCodec.tc2 tcn__AsanPlanSound "QN'S2'H'7&T2v]8r1%3221(D%73621'G&VL&V4r2%211&Y2&S0%114%311%8251%B3A1<&TJ&TD%11:%32:1%G3F1A&U7&RO%11?%32?1%L3K1F&V6&6'B'XG%2211&S1%11H&RN%11J%83531%:2K1%Q83Q71Q2&SL&RL%11Q0%32Q01%Q=3Q<1Q7&SN&RM%11Q5%32Q51%QB3QA1Q<'N%12QAQ8%Q=231%Q>291%Q?2?1%Q@2L1%QA2Q21%QB2Q81p0QD1pg4QM1").
+#[using="Type"] Lemma fresh_ok_parts : forall cs, fresh_ok nx0 cs = true ->
+AP.sr_vars_lt (nxt cs) (s_regs (a_ss cs)) = true /\ AP.kn_vars_lt (nxt cs) (kn cs) = true
+/\ maps_vars_lt (nxt cs) (a_maps cs) = true /\ pairs_vars_lt (nxt cs) (a_vis cs ++ a_ghost cs) = true
+/\ AP.expr_vars_lt (nxt cs) (a_brk cs) = true /\ fd_vars_lt (nxt cs) (a_fd cs) = true /\ (nx0 <= nxt cs)%nat.
 Proof.
 intros cs H. unfold fresh_ok in H.
 repeat match type of H with (_ && _)%bool = true => apply andb_prop in H as [H ?X] end.
 apply Nat.leb_le in X. repeat split; try assumption.
 unfold pairs_vars_lt in *. rewrite forallb_app. apply andb_true_intro. split; assumption.
 Qed.
-#[using="Type"] Lemma allowA_agree : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q6'='XD'S2&Y@r4r3r2%43321'H'7&V6r5&6'B'XG%2211&S1%11;&RN%11=%83531%;2:1(D%?3>21'<'Q3%=211%311&W=%12IH%22CI%G3421p091p0J1pg4Q01pR>Q21pR<Q31peNQ51").
+#[using="Type"] Lemma allowA_agree : forall b E E' cs, env_agree b E E' -> pairs_vars_lt b (a_vis cs ++ a_ghost cs) = true -> allowA E' cs = allowA E cs.
 Proof.
 intros b E E' cs Hag H. unfold allowA. rewrite !flat_map_concat_map. f_equal. apply map_ext_in. intros p Hin.
 pose proof (proj1 (forallb_forall _ _) H p Hin) as Hp. apply andb_prop in Hp as [H1 H2].
 unfold allow1, sh_lo, sh_hi, uE. rewrite <- (edenot_agree' b E E' _ Hag H1), <- (edenot_agree' b E E' _ Hag H2). reflexivity.
 Qed.
-Section SE.
-Local Abbreviation SEC_T_in_allow_agree := (ltac2:(TCodec.tc2 tcn__AsanPlanSound "M'='XD'S2&Y@r4r3r2%43321'H'7&V6r5&S1%117%4231(D%83721'Q3pm>19&WG%12@?%22:@%>3421p071p0A1pg4G1pR>I1pR<J1peNL1")) (only parsing).
-Variable b : ltac:(sec_ty2 constr:(SEC_T_in_allow_agree) 0%nat 0%nat).
-Variable E : ltac:(sec_ty2 constr:(SEC_T_in_allow_agree) 1%nat 0%nat).
-Variable E' : ltac:(sec_ty2 constr:(SEC_T_in_allow_agree) 2%nat 0%nat).
-Variable cs : ltac:(sec_ty2 constr:(SEC_T_in_allow_agree) 3%nat 0%nat).
-Lemma in_allow_agree : ltac:(sec_stmt2 constr:(SEC_T_in_allow_agree) 4%nat 0%nat).
-Proof using Type b E E' cs.
+#[using="Type"] Lemma in_allow_agree : forall b E E' cs, env_agree b E E' -> pairs_vars_lt b (a_vis cs) = true -> in_allow E' cs = in_allow E cs.
+Proof.
+intros b E E' cs.
 intros Hag H.
 apply functional_extensionality. intros z. unfold in_allow, in_vis, in_sh. unfold pairs_vars_lt in H.
 induction (a_vis cs) as [|p l IH]; [reflexivity|]. cbn [existsb forallb] in H |- *.
@@ -1596,8 +1660,8 @@ pose proof (IH Hl) as E1. apply (f_equal negb) in E1. rewrite !negb_orb in E1.
 apply (f_equal negb) in E1. rewrite !negb_andb, !negb_involutive in E1.
 destruct (existsb _ l), (existsb _ l), (existsb _ l), (existsb _ l); cbn in E1 |- *; rewrite ?orb_true_r, ?orb_false_r; try reflexivity; try discriminate.
 Qed.
-End SE.
-#[using="Type"] Lemma in_ghost_agree : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q4'='XD'S2&Y@r4r3r2%43321'H'7&V6r5&6'B'XG%2211&S1%11;&RN%11=%83531%;2:1(D%?3>21'Q3pm>1@&WH%12GF%22AG%E3421p071p0H1pg4N1pR>Q01pR<Q11peNQ31").
+#[using="Type"] Lemma in_ghost_agree : forall b E E' cs, env_agree b E E' -> pairs_vars_lt b (a_vis cs ++ a_ghost cs) = true ->
+in_ghost E' cs = in_ghost E cs.
 Proof.
 intros b E E' cs Hag H. apply functional_extensionality. intros z. unfold in_ghost.
 unfold pairs_vars_lt in H. rewrite forallb_app in H. apply andb_prop in H as [_ H].
@@ -1605,20 +1669,22 @@ induction (a_ghost cs) as [|p l IH]; [reflexivity|]. cbn [existsb forallb] in H 
 apply andb_prop in H as [Hp Hl]. apply andb_prop in Hp as [H1 H2].
 unfold uE in *. rewrite <- (edenot_agree' b E E' _ Hag H1), <- (edenot_agree' b E E' _ Hag H2), (IH Hl). reflexivity.
 Qed.
-#[using="argH_agree"] Lemma hid_agree : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q='='XD'S2'QK&Y@r5r4r3%43321'Nv]8r6%3221'H'7&V6r7&6'B'XG%2211&S1%11@&RN%11B%83531%;2:1(D%?3>21']NyR0%211peH1B&WE%13GML%23CNM%G3421p091p0J1p0O1piNQ51pg4Q71pR>Q91pR<Q:1peNQ<1").
+#[using="argH_agree"] Lemma hid_agree : forall b E E' cs model, env_agree b E E' -> (nx0 <= b)%nat -> pairs_vars_lt b (a_vis cs ++ a_ghost cs) = true ->
+hid E' cs model = hid E cs model.
 Proof.
 intros b E E' cs model Hag Hle H. apply functional_extensionality. intros a. unfold hid, vis.
 assert (H' : pairs_vars_lt b (a_vis cs) = true).
 { unfold pairs_vars_lt in *. rewrite forallb_app in H. apply andb_prop in H as [H _]. exact H. }
 rewrite (in_allow_agree b E E' cs Hag H'). rewrite (argH_agree E E' a) by (eapply env_agree_le; eassumption). reflexivity.
 Qed.
-#[using="Type"] Lemma maps_den_agree : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q4'='XD'<'S8%211&Y@r4r3r2%43321'H'7&U7r5%2216(D%63521'B']NyR0%211%4211%D11&Q1&W>%11C%34G51C%31>%54I71E%C3731p0>1p0F1pj2L1pR>Q01pR<Q11peNQ31").
+#[using="Type"] Lemma maps_den_agree : forall b E E' ms, env_agree b E E' -> maps_vars_lt b ms = true -> map (amap_den E') ms = map (amap_den E) ms.
 Proof.
 intros b E E' ms Hag H. apply map_ext_in. intros m Hin.
 pose proof (proj1 (forallb_forall _ _) H m Hin) as Hm. apply andb_prop in Hm as [H1 H2].
 unfold amap_den. rewrite <- (edenot_agree' b E E' _ Hag H1), <- (edenot_agree' b E E' _ Hag H2). reflexivity.
 Qed.
-#[using="Type"] Lemma maps_match_agree : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q2'='XD'<'S8%211'B']NyR0%211%4211%811&Y@r5r4r3%43321'H'7&U7r6%2216(D%63521&WN%135;:%236=<p021p051p0=1pi6C1pj2J1pR>N1pR<O1peNQ11").
+#[using="Type"] Lemma maps_match_agree : forall b E E' ms l, env_agree b E E' -> maps_vars_lt b ms = true ->
+maps_match E ms l -> maps_match E' ms l.
 Proof.
 intros b E E' ms. induction ms as [|m ms IH]; intros l Hag H HM; cbn [maps_match] in *; [exact HM|].
 cbn [maps_vars_lt forallb] in H. apply andb_prop in H as [Hm Hr]. apply andb_prop in Hm as [H1 H2].
@@ -1628,14 +1694,16 @@ destruct (is_fog m).
 exists iv, l'. split; [reflexivity|]. split; [exact Hsz | exact (IH _ Hag Hr HM)].
 - destruct HM as (l' & -> & HM). exists l'. split; [reflexivity | exact (IH _ Hag Hr HM)].
 Qed.
-#[using="Type"] Lemma holes_agree : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q9'='XD'Q3'<'B']NyR0%211%4211%611'S8%811&Y@r6r5r4%43321'H'7&U7r7r2%3221(D%73621'Q0&WF%137=<r3%43C21%43:A@%63E1@p031p091p0B1pj2H1pi6K1pm8Q31pR>Q51pR<Q61peNQ81").
+#[using="Type"] Lemma holes_agree : forall b E E' y l ms,
+env_agree b E E' -> maps_vars_lt b ms = true -> Forall (hole_ok E y l) ms -> Forall (hole_ok E' y l) ms.
 Proof.
 intros b E E' y l ms Hag Hv H. apply Forall_forall. intros m Hin Hh.
 pose proof (proj1 (forallb_forall _ _) Hv m Hin) as Hm. apply andb_prop in Hm as [H1 H2].
 unfold hole_ok, uE in *. rewrite <- (edenot_agree' b E E' _ Hag H1), <- (edenot_agree' b E E' _ Hag H2).
 exact (proj1 (Forall_forall _ _) H m Hin Hh).
 Qed.
-#[using="Type"] Lemma fds_ok_agree : ltac2:(TCodec.tc2 tcn__AsanPlanSound "K'='XD'S4'QK&Y@r5r4r3%43321'H'7&SNr6%2216(D%63521&WB%135;:%236=<p021p051p0=1piNC1pgLE1pR>G1pR<H1peNJ1").
+#[using="Type"] Lemma fds_ok_agree : forall b E E' f model,
+env_agree b E E' -> fd_vars_lt b f = true -> fds_ok E f model -> fds_ok E' f model.
 Proof.
 intros b E E' f model Hag Hv H. destruct f as [|k len off|]; try exact H.
 cbn [fd_vars_lt] in Hv. apply andb_prop in Hv as [Hl Ho].
@@ -1643,7 +1711,9 @@ destruct H as [p [c (H1 & H2 & H3 & H4 & H5)]]. exists p, c.
 unfold uE in *. rewrite <- (edenot_agree' b E E' _ Hag Hl), <- (edenot_agree' b E E' _ Hag Ho).
 destruct Hag as [_ Heb]. rewrite <- Heb. repeat split; assumption.
 Qed.
-#[using="argH_agree SINV_agree"] Lemma cs_ok_agree : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q;'XD'S2&R6y5']NyR0%211%5241'@y8%611%311p061'QK&Y@&V4r4%211r6r5%63321'H'7&T2v]8%2216(D%63521'W?r8r3%352=<?1r7%5541?>Ap031p081p0@1piNH1pRFJ1pTJQ01pg4Q71pR>Q91pR<Q:1").
+#[using="argH_agree SINV_agree"] Lemma cs_ok_agree : forall E E' cs R FULL model,
+env_agree (nxt cs) E E' -> fresh_ok nx0 cs = true ->
+cs_ok E cs R FULL model -> cs_ok E' cs R FULL model.
 Proof.
 intros E E' cs R FULL model Hag Hf HC.
 destruct (fresh_ok_parts cs Hf) as (Fsr & Fkn & Fmaps & Fallow & Fbrk & Ffd & Fle).
@@ -1667,14 +1737,20 @@ exact (proj1 (Forall_forall _ _) co_kinds0 m Hin Hk a Ha).
 - intros a. rewrite HH, (in_ghost_agree (nxt cs) E E' cs Hag Fallow). exact (co_zero0 a).
 - eapply SINV_agree; [eapply env_agree_le; [exact Hag | exact Fle] | assumption].
 Qed.
-#[using="Type"] Lemma fresh_ok_mono : ltac2:(TCodec.tc2 tcn__AsanPlanSound "C'='S2'Nv]8r2%3221'H'7&T2r3%2216(D%63521%52:4%83713p031p0;1pg4@1ph6B1").
+#[using="Type"] Lemma fresh_ok_mono : forall gb cs, (nx0 <= gb)%nat -> fresh_ok gb cs = true -> fresh_ok nx0 cs = true.
 Proof.
 intros gb cs Hle H. unfold fresh_ok in *.
 repeat match type of H with (_ && _)%bool = true => apply andb_prop in H as [H ?X] end.
 apply Nat.leb_le in X.
 repeat (apply andb_true_intro; split); try assumption. apply Nat.leb_le. lia.
 Qed.
-#[using="IT_ok HS XN XE XB SEGS_wx SEGS_in_hull HULL_ok argH_high argH_agree SINV_frame SINV_agree"] Lemma run_block_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "RK'='<'Q3%211'S2'XD&R6y5']NyR0%211%5241'@y8%611%311p061'QK&YJ'Nv]8r:%3221'H%<1D&V?vZ1vQ@r;vQCr9r8%776543;21(4r7%22O1%=3<41'W?r6r5r4%457;321'G&Y@r<%23I15&V4r>%211%63159%8251r3r2%@5>6=21&QE&QM%115%21M%Q33421'YOv]E&X5&V7r@%211%45Q7K1JI%74Q861Q6p091p0?1p0C1pj0QE1pRHQG1pTLQM1pR>R41%<1Q>%>5QAQ<1Q9Q5%A4QB@1Q5p041p0Q51p0Q;1p0QJ1pe4QO1piNR11pRFR31pTJR91pR<R@1pg6RB1pg4RC1pl4RE1pf6RI1ph6RJ1").
+#[using="IT_ok HS XN XE XB SEGS_wx SEGS_in_hull HULL_ok argH_high argH_agree SINV_frame SINV_agree"] Lemma run_block_sound : forall gb bfuel stops cs cs' E R FULL model T,
+(nx0 <= gb)%nat ->
+run_block SEGS IT gb KC bfuel stops cs = Some cs' -> cs_ok E cs R FULL model ->
+(forall E' R' FULL' model',
+env_agree nx0 E E' /\ env_agree (nxt cs) E E' -> cs_ok E' cs' R' FULL' model' -> m_fs model' = m_fs model ->
+srealizes SEGS scfg (cfg R' (pc cs') FULL' model') T) ->
+srealizes SEGS scfg (cfg R (pc cs) FULL model) T.
 Proof.
 intros gb bfuel stops cs cs' E R FULL model T Hgb Hrb HC Hk.
 rewrite run_block_eq in Hrb. unfold run_block_ref in Hrb.
@@ -1720,21 +1796,27 @@ apply Hk.
 + intros a Ha. rewrite HH in Ha. unfold FULL', munrestrict. rewrite Ha. reflexivity.
 - pose proof (same_but_materialized_frame _ _ Hsame) as Hfr. apply Hfr.
 Qed.
-#[using="IT_ok HS XN XE XB SEGS_wx SEGS_in_hull HULL_ok argH_high argH_agree SINV_frame SINV_agree"] Lemma run_block_gc_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "RK'='<'Q3%211'S2'XD&R6y5']NyR0%211%5241'@y8%611%311p061'QK&YJ'Nv]8r:%3221'H%<1D&V@vZ1vQ@r;vQCr9r8%776543;21(4r7%22O1%=3<41'W?r6r5r4%457;321'G&Y@r<%23I15&V4r>%211%63159%8251r3r2%@5>6=21&QE&QM%115%21M%Q33421'YOv]E&X5&V7r@%211%45Q7K1JI%74Q861Q6p091p0?1p0C1pj0QE1pRHQG1pTLQM1pR>R41%<1Q>%>5QAQ<1Q9Q5%A4QB@1Q5p041p0Q51p0Q;1p0QJ1pe4QO1piNR11pRFR31pTJR91pR<R@1pg6RB1pg4RC1pl4RE1pf6RI1ph6RJ1").
+#[using="IT_ok HS XN XE XB SEGS_wx SEGS_in_hull HULL_ok argH_high argH_agree SINV_frame SINV_agree"] Lemma run_block_gc_sound : forall gb bfuel stops cs cs' E R FULL model T,
+(nx0 <= gb)%nat ->
+run_block_gc SEGS IT gb KC bfuel stops cs = Some cs' -> cs_ok E cs R FULL model ->
+(forall E' R' FULL' model',
+env_agree nx0 E E' /\ env_agree (nxt cs) E E' -> cs_ok E' cs' R' FULL' model' -> m_fs model' = m_fs model ->
+srealizes SEGS scfg (cfg R' (pc cs') FULL' model') T) ->
+srealizes SEGS scfg (cfg R (pc cs) FULL model) T.
 Proof.
 intros gb bfuel stops cs cs' E R FULL model T Hgb H HC Hk. unfold run_block_gc in H.
 destruct (run_block SEGS IT gb KC bfuel stops cs) as [cs1|] eqn:Hrb; [|discriminate]. injection H as <-.
 eapply run_block_sound; [exact Hgb | exact Hrb | exact HC |].
 intros E' R' FULL' model' Hag HC1 Hfs. rewrite <- (pc_cs_gc gb cs1). apply (Hk E' R' FULL' model'); [exact Hag | apply cs_gc_ok; exact HC1 | exact Hfs].
 Qed.
-#[using="Type"] Lemma u_small : ltac2:(TCodec.tc2 tcn__AsanPlanSound "G'Q3'G&Z:zr1%3221&Z;&Z?+2+R0%3221%5271%;271'H&]OyR0&]Mr2%2231%5241%73D13p091pm>F1").
+#[using="Type"] Lemma u_small : forall z, (0 <= z < 2 ^ 64)%Z -> bv_unsigned (Z_to_bv 64 z) = z.
 Proof. intros. apply u64_lit. assumption. Qed.
-#[using="Type"] Lemma nth_sr_vars_lt : ltac2:(TCodec.tc2 tcn__AsanPlanSound "N'='<'XG%211'H'7&VLr3r2%3221(D%73621&OuQ0%2261&SLr5&Q2r4(X;z%211%54D?41%8271%D3C1>p0;1p0?1pk2K1pkDI1peNM1").
+#[using="Type"] Lemma nth_sr_vars_lt : forall b sr r, AP.sr_vars_lt b sr = true -> (r < 32)%nat -> AP.expr_vars_lt b (nth r sr (ELit 0)) = true.
 Proof.
 intros b sr. induction sr as [|x t IH]; intros r H Hr; [destruct r; reflexivity|].
 cbn [AP.sr_vars_lt] in H. apply andb_prop in H as [H1 H2]. destruct r as [|r]; [exact H1|]. cbn [nth]. apply IH; [exact H2 | lia].
 Qed.
-#[using="argH_agree SINV_agree"] Lemma node_fresh_sound_pf : ltac2:(TCodec.tc2 tcn__AsanPlanSound "1&WC").
+#[using="argH_agree SINV_agree"] Lemma node_fresh_sound_pf : fresh_stmt.
 Proof.
 intros r logc base cs cs' E R FULL model T HC _ Hn Hk. cbv beta in Hn. unfold node_fresh in Hn.
 set (b := match base with Some b => b | None => ELit 0 end) in Hn.
@@ -1798,12 +1880,12 @@ rewrite Z.mod_small by lia. reflexivity.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 - reflexivity.
 Qed.
-#[using="Type"] Lemma listZ_eqb_eq : ltac2:(TCodec.tc2 tcn__AsanPlanSound "@'<'Q3%211'H'7&U1r2r1%3221(D%73621r3%93:16p031pm8<1pm6=1").
+#[using="Type"] Lemma listZ_eqb_eq : forall x y, listZ_eqb x y = true -> x = y.
 Proof.
 induction x as [|a x IH]; intros [|b y] H; cbn [listZ_eqb] in H; try discriminate; [reflexivity|].
 apply andb_prop in H as [H1 H2]. apply Z.eqb_eq in H1. rewrite (IH y H2), H1. reflexivity.
 Qed.
-#[using="Type"] Lemma spieces_eqb_eq : ltac2:(TCodec.tc2 tcn__AsanPlanSound "@'<'VI%211'H'7&VJr2r1%3221(D%73621r3%93:16p031pm8<1pm6=1").
+#[using="Type"] Lemma spieces_eqb_eq : forall x y, spieces_eqb x y = true -> x = y.
 Proof.
 induction x as [|a x IH]; intros [|b y] H; cbn [spieces_eqb] in H; try discriminate; [reflexivity|].
 apply andb_prop in H as [H1 H2]. rewrite (IH y H2). f_equal.
@@ -1811,7 +1893,7 @@ destruct a as [l|k], b as [l'|k']; cbn [spiece_eqb] in H1; try discriminate.
 - apply listZ_eqb_eq in H1. congruence.
 - apply Nat.eqb_eq in H1. congruence.
 Qed.
-#[using="Type"] Lemma shape_eqb_eq : ltac2:(TCodec.tc2 tcn__AsanPlanSound ">'VF'H'7&VGr2r1%3221(D%73621r3%93:16p031pm8<1pm6=1").
+#[using="Type"] Lemma shape_eqb_eq : forall x y, shape_eqb x y = true -> x = y.
 Proof.
 induction x; intros y H; destruct y; cbn [shape_eqb] in H; try discriminate;
 repeat match type of H with (_ && _)%bool = true => apply andb_prop in H as [H ?X] end; try reflexivity.
@@ -1821,12 +1903,11 @@ repeat match type of H with (_ && _)%bool = true => apply andb_prop in H as [H ?
 - apply expr_eqb_eq in H. apply Z.eqb_eq in X1. rewrite (IHx1 _ X0), (IHx2 _ X). congruence.
 - apply Nat.eqb_eq in H. congruence.
 Qed.
-Section SE.
-Local Abbreviation SEC_T_find_disj_sound := (ltac2:(TCodec.tc2 tcn__AsanPlanSound "R='XD']NyR0%211'@y8%511%311p051'<'XL%211'XG'Q3&Y=vZ1r;r:r9%544321'H'B%12:9%221;%321<%421<%521>%G11&SOr8%23=<1(4(Ar7r6%34GF21r5%54?I21r4%74@K21r3%94AL21r2%;4BO21%=2B1%I3B?1'L&Z:&Z8&Y;r=(X?%12GC%4231&Y:%125E%8231%62EC%9281%<231%62:D%=231%?219%A241p0C1p0Q>1pj8QF1pjHQF1pfDQH1pj6QI1pjFQI1pfBQK1pf4QL1pf2QM1phJQO1pT@R31pR<R<1")) (only parsing).
-Variable E : ltac:(sec_ty2 constr:(SEC_T_find_disj_sound) 0%nat 0%nat).
-Variable M : ltac:(sec_ty2 constr:(SEC_T_find_disj_sound) 1%nat 0%nat).
-Lemma find_disj_sound : ltac:(sec_stmt2 constr:(SEC_T_find_disj_sound) 2%nat 0%nat).
-Proof using Type E M.
+#[using="Type"] Lemma find_disj_sound : forall E M k b1 b2 c1 o1 n1 c2 o2 n2,
+know_ok SEGS E M k -> find_disj k b1 b2 = Some (c1, o1, n1, c2, o2, n2) ->
+estart E (SA c1 o1) + elenZ E n1 <= estart E (SA c2 o2) \/ estart E (SA c2 o2) + elenZ E n2 <= estart E (SA c1 o1).
+Proof.
+intros E M.
 intros k b1 b2 c1 o1 n1 c2 o2 n2 HK.
 induction k as [|K k IH]; intros H; [discriminate|].
 inversion HK as [|K' k' HKK HK']; subst.
@@ -1837,8 +1918,11 @@ destruct (expr_eqb d1 b1 && expr_eqb d2 b2)%bool.
 - destruct (expr_eqb d1 b2 && expr_eqb d2 b1)%bool; [|exact (IH HK' H)].
 injection H as <- <- <- <- <- <-. cbn [kentry_ok] in HKK. lia.
 Qed.
-End SE.
-#[using="Type"] Lemma disj_side_fact_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "R='XD']NyR0%211'@y8%511%311p051'<'XL%211'XG'Q3&Y=vZ1r9r8r7%544321'H%A1;&SEr6r5r4r3%56:94321(4r2%22D1%;3:41&Z:z&Y;r;(X?%12DC%4231%7261&Z;r<%62CB%9221&Z?+2+R0%3221%8251&Z8r=r:%@21Q4%C231&Y:%125Q6%7231%E2Q7Q2%H281%K231&Y<r>%24Q?1<Q7p041p0@1p0J1p0Q31p0Q@1pS6QJ1pjLQH1pfHQJ1pj:QK1pjJQK1pfFQM1phJQO1pT@R31pR<R<1").
+#[using="Type"] Lemma disj_side_fact_sound : forall E M k cA oA nA cB oB K,
+know_ok SEGS E M k -> disj_side_fact k cA oA nA cB oB = Some K ->
+0 <= estart E (SA cA oA) -> estart E (SA cB oB) < 2 ^ 64 ->
+estart E (SA cA oA) + elenZ E nA <= estart E (SA cB oB) ->
+kentry_ok SEGS E M K.
 Proof.
 intros E M k cA oA nA cB oB K HK H HA HB Hle. unfold disj_side_fact in H.
 destruct (xlo2 k nA) as [n|] eqn:Hn; [|discriminate].
@@ -1859,7 +1943,9 @@ assert (E2 : (uA + oA mod 2 ^ 64) mod 2 ^ 64 = uA + oA).
 rewrite E1, E2. rewrite Z.mod_small by lia. lia.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Qed.
-#[using="Type"] Lemma casedisj_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "R0'S2'XG'XD&R6y5']NyR0%211%5241'@y8%611%311p061'QK'W?r4r9r3r2r1%6554321'H'B%12HH%@11&UCr:r8%332<1(4(Ar7r6%34Q2Q221%52;1%>3;71'L'Gr5%I57<1HF'Q3&V7%11?r;%311%H3531%9271%Q15?@9Q0N%71A%L3915%=231%?251p0A1p0Q11piNQ91pRFQ;1pTJQA1pR<QH1pg>QK1pg<QL1pf4QL1pf2QM1pg4QO1").
+#[using="Type"] Lemma casedisj_sound : forall cs b1 b2 csa csb E R FULL model,
+cs_ok E cs R FULL model -> node_casedisj cs b1 b2 = Some (csa, csb) ->
+(cs_ok E csa R FULL model /\ pc csa = pc cs) \/ (cs_ok E csb R FULL model /\ pc csb = pc cs).
 Proof.
 intros cs b1 b2 csa csb E R FULL model HC H. unfold node_casedisj in H.
 pose proof (co_know _ _ _ _ _ HC) as HK.
@@ -1878,7 +1964,11 @@ eapply disj_side_fact_sound; [exact HK | exact D1 | lia | unfold elenZ in *; lia
 - right. split; [|reflexivity]. unfold add_kn. apply cs_ok_set_kn; [exact HC|]. constructor; [|exact HK].
 eapply disj_side_fact_sound; [exact HK | exact D2 | lia | unfold elenZ in *; lia | exact Hd].
 Qed.
-#[using="SHADOW_ok"] Lemma shadow_of_val : ltac2:(TCodec.tc2 tcn__AsanPlanSound "RB'XD']NyR0%211'@y8%511%311p051'<'XL%211'XG'Q3&Y=vZ1r8r7r6%544321'H'B%12:9%221;&VDv0r5%342:91(Ar4r3%34CB21r2%54;E21%>3;71'7&T0%14E;87(D%C3421'G&Y;r;(X?%12JB%4231&Z<&Z8&Z9&]O&XC%129Q3%32QB1+8%6221&VE%11O%:231&Z?+2+R0%3221%@251%Q;3QBB1&Y:%12GQ4%@2HQA%B2R11%D21?%QA3QH41%N271p0Q01p0Q61p0QF1pkBQN1pk@QN1pk:R01pj4R11peNR21phJR41pT@R81pR<RA1").
+#[using="SHADOW_ok"] Lemma shadow_of_val : forall E M k b n sb sk sn,
+know_ok SEGS E M k -> shadow_of A k b n = (sb, sk, sn) ->
+flat_x k sb sk sn = true ->
+estart E (SA sb sk) = (bv_unsigned (edenot E b) / 8 + shadow_off A) mod 2 ^ 64
+/\ elenZ E sn = bv_unsigned (edenot E n) / 8.
 Proof.
 intros E M k b n sb sk sn HK Hs Hf. unfold shadow_of in Hs.
 destruct (split_lit (eadd (mkSrl k b 3) (ELit (shadow_off A)))) as [sb' sk'] eqn:Hsp. injection Hs as E1 E2 E3. subst sb' sk'. rewrite <- E3 in *.
@@ -1897,7 +1987,8 @@ unfold two64 in *. rewrite (Z.mod_small (bv_unsigned (edenot E sb) + sk)) in Hd 
 rewrite <- Hd. reflexivity.
 - unfold elenZ. apply S3.
 Qed.
-#[using="SHADOW_ok"] Lemma shdisj_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "QI'S2'XG'XD&R6y5']NyR0%211%5241'@y8%611%311p061'QK'W?r4r:r3r2r1%6554321'H%>1G&V1v0r;r9r8r7%6654=321(4r6%22Q11%<3;41'Gr5%F5581EC'Q3&V7%11;r<%311%E3531%9271p0;1p0I1piNQ11pRFQ31pTJQ91pR<Q@1pg6QC1pj8QC1pf4QD1pj6QE1pf2QF1pg4QH1").
+#[using="SHADOW_ok"] Lemma shdisj_sound : forall cs b1 n1 b2 n2 cs' E R FULL model,
+cs_ok E cs R FULL model -> node_shdisj A cs b1 n1 b2 n2 = Some cs' -> cs_ok E cs' R FULL model /\ pc cs' = pc cs.
 Proof.
 intros cs b1 n1 b2 n2 cs' E R FULL model HC H. rewrite node_shdisj_eq in H. unfold node_shdisj_ref in H.
 pose proof (co_know _ _ _ _ _ HC) as HK.
@@ -1935,18 +2026,18 @@ rewrite !Z.div_mul by lia. intros AP0.
 rewrite (Z.mod_small (q1 + shadow_off A)) by lia. rewrite (Z.mod_small (q3 + shadow_off A)) by lia.
 clear - AP0 Rb1 Rb2 Rn1 Rn2 SO. lia.
 Qed.
-#[using="Type"] Lemma expr_vars_lt_mono : ltac2:(TCodec.tc2 tcn__AsanPlanSound "D'='XG'H'7&SLr3r1%3221(D%73621'Nr4%2217%9228%<3;16p031p071pgF@1pf0B1peNC1").
+#[using="Type"] Lemma expr_vars_lt_mono : forall b b' e, AP.expr_vars_lt b e = true -> (b <= b')%nat -> AP.expr_vars_lt b' e = true.
 Proof.
 intros b b' e H Hle. induction e; cbn [AP.expr_vars_lt] in *; try reflexivity;
 try (apply andb_prop in H as [H1 H2]; rewrite (IHe1 H1), (IHe2 H2); reflexivity); try (apply IHe; exact H).
 apply Nat.ltb_lt in H. apply Nat.ltb_lt. lia.
 Qed.
-#[using="Type"] Lemma sr_vars_lt_mono : ltac2:(TCodec.tc2 tcn__AsanPlanSound "F'='<'XG%211'H'7&VLr3r1%3221(D%73621'Nr4%2217%9228%<3;16p031p071pkD@1pf0D1peNE1").
+#[using="Type"] Lemma sr_vars_lt_mono : forall b b' sr, AP.sr_vars_lt b sr = true -> (b <= b')%nat -> AP.sr_vars_lt b' sr = true.
 Proof.
 intros b b' sr H Hle. induction sr; cbn [AP.sr_vars_lt] in *; [reflexivity|].
 apply andb_prop in H as [H1 H2]. rewrite (expr_vars_lt_mono _ _ _ H1 Hle), (IHsr H2). reflexivity.
 Qed.
-#[using="Type"] Lemma sr_vars_lt_upd : ltac2:(TCodec.tc2 tcn__AsanPlanSound "L'='<'XG%211'H'7&VLr4r3%3221(D%73621&SLr5r2%3221%<3;16r6&Y6%136<;%>231%A3@1;p061p0<1pgFF1pj4I1pkDG1peNK1").
+#[using="Type"] Lemma sr_vars_lt_upd : forall b sr n e, AP.sr_vars_lt b sr = true -> AP.expr_vars_lt b e = true -> AP.sr_vars_lt b (sr_upd sr n e) = true.
 Proof.
 intros b sr n e. revert sr. induction n as [|n IH]; intros sr Hsr He.
 - destruct sr; cbn [sr_upd AP.sr_vars_lt]; cbn [AP.sr_vars_lt] in Hsr; rewrite He; [reflexivity|].
@@ -1960,13 +2051,13 @@ match vals with
 | [] => E
 | v :: rest => ext_list (ext1 E nx v) (Datatypes.S nx) rest
 end.
-#[using="Type"] Lemma ext_list_agree : ltac2:(TCodec.tc2 tcn__AsanPlanSound "A'XD'='<']NyR0%211%411&Y@r2r3&WAr1%23341%63541plJ81pj@>1pR<@1").
+#[using="Type"] Lemma ext_list_agree : forall E nx vals, env_agree nx E (ext_list E nx vals).
 Proof.
 intros E nx vals. revert E nx. induction vals as [|v rest IH]; intros E nx; cbn [ext_list].
 - apply env_agree_refl.
 - eapply env_agree_trans; [apply ext1_agree|]. eapply env_agree_le; [apply IH | lia].
 Qed.
-#[using="Type"] Lemma ext_list_at : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q2'XD'='<']NyR0%211%411&Or1&;r2%2261%5241'H&XF&WAr5r4r3%43321&M%124;%8231&Q2&]Mz%22F1%44FA91%?3G61p0A1ph<M1plJI1pj@O1pR<Q11").
+#[using="Type"] Lemma ext_list_at : forall E nx vals i, (i < length vals)%nat -> ev (ext_list E nx vals) (nx + i) = nth i vals (Z_to_bv 64 0).
 Proof.
 intros E nx vals. revert E nx. induction vals as [|v rest IH]; intros E nx i Hi; cbn [length] in Hi; [lia|].
 cbn [ext_list]. destruct i as [|i].
@@ -1974,7 +2065,9 @@ cbn [ext_list]. destruct i as [|i].
 rewrite <- Hag by lia. cbn [nth]. apply ext1_at.
 - replace (nx + Datatypes.S i)%nat with (Datatypes.S nx + i)%nat by lia. cbn [nth]. apply IH. lia.
 Qed.
-#[using="Type"] Lemma regs_ok_sr_fresh : ltac2:(TCodec.tc2 tcn__AsanPlanSound "QL'XD'<'XG%211&R6y5']NyR0%211%5241'=%:11&Y>r5r4r3%43321'H'7&VLr2%2218(D%63521'Q0'G&O(2r1%3221uQ0%5231%7231qk2G1%:3H1D&WAr8&Q1&YFr7&]M&Z>%11>%32Q61%6251qk2Q31%94Q4Q61Q1%<3;Q11&VK%13:Q4Q3r6%Q73421p0B1p0N1p0Q61pj@Q=1pk6Q=1pTJQ@1pkDQG1pR<QK1").
+#[using="Type"] Lemma regs_ok_sr_fresh : forall E sr R rs nx,
+regs_ok E sr R -> AP.sr_vars_lt nx sr = true -> Forall (fun r => 0 < r < 32)%nat rs ->
+regs_ok (ext_list E nx (map (fun r => getr R (Z_to_bv 5 (Z.of_nat r))) rs)) (sr_fresh sr rs nx) R.
 Proof.
 intros E sr R rs. revert E sr. induction rs as [|r rest IH]; intros E sr nx HR Hsr Hrs; cbn [sr_fresh map ext_list].
 - exact HR.
@@ -1994,7 +2087,9 @@ rewrite Hnz, ridx_lit by lia. reflexivity.
 + apply sr_vars_lt_upd; [eapply sr_vars_lt_mono; [exact Hsr | lia] |]. cbn [AP.expr_vars_lt]. apply Nat.ltb_lt. lia.
 + exact Hrest.
 Qed.
-#[using="argH_agree SINV_agree"] Lemma havoc_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "R0'XD'S2&R6y5']NyR0%211%5241'@y8%611%311p061'QK'<'=%211'W?r7r6r5r4r3%6554321'H%A1H&UJv]8%231:6(4r2%22N1%83741'I'G&Y@r:r1%33;21&V4r9%211%73165%9251r8%L58H1KJ'Q3&V7%11K%219%J3421%A261%B291qR>QE1%E2QF1p0G1p0Q11pg6QH1pk6Q:1piNQ>1pRFQ@1pTJQF1pg4QM1pR<QO1").
+#[using="argH_agree SINV_agree"] Lemma havoc_sound : forall E cs R FULL model rs cs',
+cs_ok E cs R FULL model -> node_havoc nx0 cs rs = Some cs' ->
+exists E', (env_agree nx0 E E' /\ env_agree (nxt cs) E E') /\ cs_ok E' cs' R FULL model /\ pc cs' = pc cs.
 Proof.
 intros E cs R FULL model rs cs' HC H. unfold node_havoc in H.
 destruct (fresh_ok nx0 cs && forallb (fun r => Nat.ltb 0 r && Nat.ltb r 32) rs)%bool eqn:Hc; [|discriminate].
@@ -2015,7 +2110,7 @@ match k with
 | KWord a w v :: r => if bigb K v then v :: kn_bigexprs K r else kn_bigexprs K r
 | _ :: r => kn_bigexprs K r
 end.
-#[using="Type"] Lemma kentry_vars_lt_mono : ltac2:(TCodec.tc2 tcn__AsanPlanSound "D'='XL'H'7&TAr3r1%3221(D%73621'Nr4%2217%9228%<3;16p031p071pS6@1pf0B1peNC1").
+#[using="Type"] Lemma kentry_vars_lt_mono : forall b b' K, AP.kentry_vars_lt b K = true -> (b <= b')%nat -> AP.kentry_vars_lt b' K = true.
 Proof.
 intros b b' K H Hle.
 assert (E1 : forall e, AP.expr_vars_lt b e = true -> AP.expr_vars_lt b' e = true) by (intros; eapply expr_vars_lt_mono; eassumption).
@@ -2027,12 +2122,12 @@ repeat match goal with
 | Y : AP.saddr_vars_lt b ?a = true |- _ => rewrite (A1 a Y); clear Y
 end; reflexivity.
 Qed.
-#[using="Type"] Lemma kn_vars_lt_mono' : ltac2:(TCodec.tc2 tcn__AsanPlanSound "F'='<'XL%211'H'7&TJr3r1%3221(D%73621'Nr4%2217%9228%<3;16p031p071phJ@1pf0D1peNE1").
+#[using="Type"] Lemma kn_vars_lt_mono' : forall b b' k, AP.kn_vars_lt b k = true -> (b <= b')%nat -> AP.kn_vars_lt b' k = true.
 Proof.
 intros b b' k H Hle. induction k as [|K k IH]; [reflexivity|]. cbn [AP.kn_vars_lt] in *. apply andb_prop in H as [H1 H2].
 rewrite (kentry_vars_lt_mono b b' K H1 Hle), (IH H2). reflexivity.
 Qed.
-#[using="Type"] Lemma kn_bigsubst_len : ltac2:(TCodec.tc2 tcn__AsanPlanSound "E'='<'XL%211'H&C&TEr3r2r1%43321%638;1&;'XG&WL%1287%4231%=3A61pj@B1phJ@1pS6D1").
+#[using="Type"] Lemma kn_bigsubst_len : forall K k nx, snd (kn_bigsubst K k nx) = length (kn_bigexprs K k).
 Proof.
 intros K k. induction k as [|x r IH]; intros nx; [reflexivity|].
 cbn [kn_bigsubst kn_bigexprs]. destruct x as [a w v| | | | | | | | |]; try (specialize (IH nx); destruct (kn_bigsubst K r nx); cbn in *; exact IH).
@@ -2040,11 +2135,12 @@ destruct (bigb K v).
 - specialize (IH (Datatypes.S nx)). destruct (kn_bigsubst K r (Datatypes.S nx)). cbn in *. rewrite IH. reflexivity.
 - specialize (IH nx). destruct (kn_bigsubst K r nx). cbn in *. exact IH.
 Qed.
-Section SE.
-Local Abbreviation SEC_T_kn_bigsubst_sound := (ltac2:(TCodec.tc2 tcn__AsanPlanSound "R1'='<'XL%211'XD']NyR0%211'@y8%511%311p051&Y=vZ1r2r1r4%544321'H'7&TJr5%2261(D%63521&O&;'XG&WLr8r7%3221%6251%82B1&XFr6&M%127G%4231&XC&Q2r9%>21=(X;z%211%64CQ041%82<1%N3Q::1p0@1ph<QC1&:&TE%13HGB%33QDQG1%Q;4Q:Q2Q71p061p0Q11p0Q91pT@Q@1pRBQI1pj@QN1phJQL1pS6R01")) (only parsing).
-Variable K : ltac:(sec_ty2 constr:(SEC_T_kn_bigsubst_sound) 0%nat 0%nat).
-Lemma kn_bigsubst_sound : ltac:(sec_stmt2 constr:(SEC_T_kn_bigsubst_sound) 1%nat 0%nat).
-Proof using Type K.
+#[using="Type"] Lemma kn_bigsubst_sound : forall K k nx E2 M,
+know_ok SEGS E2 M k -> AP.kn_vars_lt nx k = true ->
+(forall i, (i < length (kn_bigexprs K k))%nat -> ev E2 (nx + i) = edenot E2 (nth i (kn_bigexprs K k) (ELit 0))) ->
+know_ok SEGS E2 M (fst (kn_bigsubst K k nx)).
+Proof.
+intros K.
 intros k.
 induction k as [|x r IH]; intros nx E2 M HK Hv Hvals; [constructor|].
 inversion HK as [|x' r' Hx Hr]; subst. cbn [AP.kn_vars_lt] in Hv. apply andb_prop in Hv as [Hvx Hvr].
@@ -2060,24 +2156,17 @@ destruct (kn_bigsubst K r (Datatypes.S nx)) as [r' c] eqn:Hs. cbn [fst]. constru
 rewrite H3. f_equal. f_equal. cbn [edenot]. symmetry. replace nx with (nx + 0)%nat by lia. rewrite (Hvals 0%nat ltac:(cbn; lia)). reflexivity.
 - apply IH'. intros i Hi. replace (Datatypes.S nx + i)%nat with (nx + Datatypes.S i)%nat by lia. rewrite (Hvals (Datatypes.S i) ltac:(cbn; lia)). reflexivity.
 Qed.
-End SE.
-#[using="Type"] Lemma node_havoc_nxt : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q4'S2'<'=%211'H'@%116&UJv]8r3r2%43321(4r1%22>1%;3941'G&V4%118&Mr4%411&;%12E>%5231%E3G71'Q3&V7%11B%219%J3421%?261p0A1pg8Q11pk6O1pg4Q31").
+#[using="Type"] Lemma node_havoc_nxt : forall cs rs cs1, node_havoc nx0 cs rs = Some cs1 -> nxt cs1 = (nxt cs + length rs)%nat /\ pc cs1 = pc cs.
 Proof.
 intros cs rs cs1 H. unfold node_havoc in H.
 destruct (fresh_ok nx0 cs && forallb (fun r : nat => Nat.ltb 0 r && Nat.ltb r 32) rs)%bool; [|discriminate].
 injection H as <-. split; reflexivity.
 Qed.
-Section SE.
-Local Abbreviation SEC_T_havocbig_sound := (ltac2:(TCodec.tc2 tcn__AsanPlanSound "QN'XD'S2&R6y5']NyR0%211%5241'@y8%611%311p061'QK'='W?r7r6r5r4r3%6554321'H%?1F&UKv]8%231:6(4r2%22L1%83741'I'G&Y@r:r1%33;21&V4r9%211%73165%9251r8%L58H1KJ'Q3&V7%11K%219%J3421%A261%B291qR>QC1%E2QD1p0G1p0Q11pg6QF1pS6Q:1piNQ<1pRFQ>1pTJQD1pg4QK1pR<QM1")) (only parsing).
-Variable E : ltac:(sec_ty2 constr:(SEC_T_havocbig_sound) 0%nat 0%nat).
-Variable cs : ltac:(sec_ty2 constr:(SEC_T_havocbig_sound) 1%nat 0%nat).
-Variable R : ltac:(sec_ty2 constr:(SEC_T_havocbig_sound) 2%nat 0%nat).
-Variable FULL : ltac:(sec_ty2 constr:(SEC_T_havocbig_sound) 3%nat 0%nat).
-Variable model : ltac:(sec_ty2 constr:(SEC_T_havocbig_sound) 4%nat 0%nat).
-Variable K : ltac:(sec_ty2 constr:(SEC_T_havocbig_sound) 5%nat 0%nat).
-Variable cs' : ltac:(sec_ty2 constr:(SEC_T_havocbig_sound) 6%nat 0%nat).
-Lemma havocbig_sound : ltac:(sec_stmt2 constr:(SEC_T_havocbig_sound) 7%nat 0%nat).
-Proof using argH_agree SINV_agree E cs R FULL model K cs'.
+#[using="argH_agree SINV_agree"] Lemma havocbig_sound : forall E cs R FULL model K cs',
+cs_ok E cs R FULL model -> node_havocbig nx0 cs K = Some cs' ->
+exists E', (env_agree nx0 E E' /\ env_agree (nxt cs) E E') /\ cs_ok E' cs' R FULL model /\ pc cs' = pc cs.
+Proof.
+intros E cs R FULL model K cs'.
 intros HC H.
 unfold node_havocbig in H.
 destruct (node_havoc nx0 cs _) as [cs1|] eqn:Hh; [|discriminate].
@@ -2110,9 +2199,8 @@ destruct x as [a w v| | | | | | | | |]; try (apply IH; assumption).
 destruct (bigb K v); [|apply IH; assumption].
 destruct i as [|i]; cbn [nth]; [cbn [AP.kentry_vars_lt] in Hx; apply andb_prop in Hx as [_ Hx]; exact Hx | apply IH; [exact Hr | cbn [length] in Hi; lia]].
 Qed.
-End SE.
 Definition upd (E : env) (J : nat) (w : word) : env := Env (fun n => if Nat.eqb n J then w else ev E n) (eb E).
-#[using="Type"] Lemma esubst_denot : ltac2:(TCodec.tc2 tcn__AsanPlanSound "H'XD'='XG'H']NyR0%211&XCr4&SJr3r2r1%43321%7261&X3%9285%23971%;216%@3=51pm6B1pgFC1pS4E1pR<G1").
+#[using="Type"] Lemma esubst_denot : forall E J e x, edenot E (esubst J e x) = edenot (upd E J (edenot E e)) x.
 Proof.
 intros E J e x. induction x as [z|n|op a IHa b IHb|op a IHa b IHb|op a IHa b IHb|op a IHa b IHb|sx lo n a IHa|sx k i n];
 cbn [esubst edenot]; try reflexivity.
@@ -2123,75 +2211,69 @@ cbn [esubst edenot]; try reflexivity.
 - rewrite mkMdw_denot, IHa, IHb. reflexivity.
 - rewrite IHa. reflexivity.
 Qed.
-#[using="Type"] Lemma upd_agree : ltac2:(TCodec.tc2 tcn__AsanPlanSound "?'XD'=']NyR0%211&Y@r2r3&X3r1%23341%63541plL81pS4<1pR<>1").
+#[using="Type"] Lemma upd_agree : forall E J w, env_agree J E (upd E J w).
 Proof. intros E J w. split; [|reflexivity]. intros n Hn. cbn [upd ev]. destruct (Nat.eqb_spec n J); [lia|reflexivity]. Qed.
-#[using="Type"] Lemma upd_at : ltac2:(TCodec.tc2 tcn__AsanPlanSound "A'XD'=']NyR0%211'H&XF&X3r3r2r1%43321%6213%83913plL:1pS4>1pR<@1").
+#[using="Type"] Lemma upd_at : forall E J w, ev (upd E J w) J = w.
 Proof. intros. cbn [upd ev]. rewrite Nat.eqb_refl. reflexivity. Qed.
-#[using="Type"] Lemma upd_same : ltac2:(TCodec.tc2 tcn__AsanPlanSound "<'XD'='H&X3r2r1&XF%1232%53431%73915pS491pR<;1").
+#[using="Type"] Lemma upd_same : forall E J, upd E J (ev E J) = E.
 Proof. intros [f g] J. unfold upd. cbn [ev eb]. f_equal. apply functional_extensionality. intros n. destruct (Nat.eqb_spec n J); [subst; reflexivity|reflexivity]. Qed.
-#[using="Type"] Lemma upd_upd : ltac2:(TCodec.tc2 tcn__AsanPlanSound "C'XD'=']NyR0%211'H&X3r4r3r2%43321r1%63241%73652%93>21plN;1plL<1pS4@1pR<B1").
+#[using="Type"] Lemma upd_upd : forall E J w w', upd (upd E J w) J w' = upd E J w'.
 Proof. intros [f g] J w w'. unfold upd. cbn [ev eb]. f_equal. apply functional_extensionality. intros n. destruct (Nat.eqb n J); reflexivity. Qed.
-#[using="Type"] Lemma estart_asubst : ltac2:(TCodec.tc2 tcn__AsanPlanSound "H'XD'='XG'Y3'H'Q3&Y;r4&S:r3r2r1%43321%7261&X3&XC%1296%33:81%<217%?3>61peHA1pgFC1pS4E1pR<G1").
+#[using="Type"] Lemma estart_asubst : forall E J e a, estart E (asubst J e a) = estart (upd E J (edenot E e)) a.
 Proof. intros E J e [b o]. unfold asubst, estart. cbn [a_base a_off]. rewrite esubst_denot. reflexivity. Qed.
-#[using="Type"] Lemma adenot_asubst : ltac2:(TCodec.tc2 tcn__AsanPlanSound "J'XD'='XG'Y3'H']NyR0%211&X@r4&S:r3r2r1%43321%7261&X3&XC%1296%33:81%<217%A3>61peHC1pgFE1pS4G1pR<I1").
+#[using="Type"] Lemma adenot_asubst : forall E J e a, adenot E (asubst J e a) = adenot (upd E J (edenot E e)) a.
 Proof. intros E J e [b o]. unfold asubst, adenot. cbn [a_base a_off]. rewrite esubst_denot. reflexivity. Qed.
-Section SE.
-Local Abbreviation SEC_T_kentry_ok_ksubst := (ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q2'XD'='XG']NyR0%211'@y8%511%311p051'XL&J&Y<vZ1r5r2&TLr4r3r1%43321%948761&X3&XC%12:6%33;81%>4=1;7%@261pS6B1pT@D1pgFM1pS4O1pR<Q11")) (only parsing).
-Variable E : ltac:(sec_ty2 constr:(SEC_T_kentry_ok_ksubst) 0%nat 0%nat).
-Variable J : ltac:(sec_ty2 constr:(SEC_T_kentry_ok_ksubst) 1%nat 0%nat).
-Variable e : ltac:(sec_ty2 constr:(SEC_T_kentry_ok_ksubst) 2%nat 0%nat).
-Variable M : ltac:(sec_ty2 constr:(SEC_T_kentry_ok_ksubst) 3%nat 0%nat).
-Lemma kentry_ok_ksubst : ltac:(sec_stmt2 constr:(SEC_T_kentry_ok_ksubst) 4%nat 0%nat).
-Proof using Type E J e M.
+#[using="Type"] Lemma kentry_ok_ksubst : forall E J e M K,
+kentry_ok SEGS E M (ksubst J e K) <-> kentry_ok SEGS (upd E J (edenot E e)) M K.
+Proof.
+intros E J e M.
 intros K.
 set (E' := upd E J (edenot E e)).
 destruct K as [a w v|a n|a n k|lo hi|x m|x lo hi|a n|a1 n1 a2 n2|a n c|a n]; cbn [ksubst kentry_ok];
 unfold flat, elenZ; rewrite ?estart_asubst, ?adenot_asubst, ?esubst_denot; fold E'; tauto.
 Qed.
-End SE.
-#[using="Type"] Lemma know_ok_ksubst : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q6'XD'='XG']NyR0%211'@y8%511%311p051'<'XL%211&J&Y=vZ1r5r2&Q1&TLr4r3%3221r1%64==21%;4:981&X3&XC%12<7%33=91%@4?1=7%B261phJD1pT@H1pgFQ11pS4Q31pR<Q51").
+#[using="Type"] Lemma know_ok_ksubst : forall E J e M k,
+know_ok SEGS E M (map (ksubst J e) k) <-> know_ok SEGS (upd E J (edenot E e)) M k.
 Proof.
 intros E J e M k. unfold know_ok. induction k as [|K k IH]; [split; intros; constructor|].
 cbn [map]. split; intros H; inversion H; subst; constructor; try (apply IH; assumption);
 apply (kentry_ok_ksubst E J e M K); assumption.
 Qed.
-#[using="Type"] Lemma inst_allowA : ltac2:(TCodec.tc2 tcn__AsanPlanSound "L'XD'='XG'S2'H'<'B'Q3%2211%411&W=r4&T9r1r3r2%43321%7261&X3&XC%1295%33:71%<219%C3>61ph@E1pgFG1pS4I1pR<K1").
+#[using="Type"] Lemma inst_allowA : forall E J e inv, allowA E (inst inv J e) = allowA (upd E J (edenot E e)) inv.
 Proof.
 intros E J e inv. unfold allowA, inst. cbn [a_vis a_ghost]. rewrite <- map_app, flat_map_concat_map, flat_map_concat_map, map_map.
 f_equal. apply map_ext. intros [b n]. unfold allow1, psubst, sh_lo, sh_hi, uE. cbn [fst snd]. rewrite !esubst_denot. reflexivity.
 Qed.
 #[using="Type"] Lemma existsb_map' : forall {X Y} (f : Y -> bool) (g : X -> Y) l, existsb f (map g l) = existsb (fun x => f (g x)) l.
 Proof. intros X Y f g l. induction l as [|x l IH]; [reflexivity|]. cbn. rewrite IH. reflexivity. Qed.
-#[using="Type"] Lemma inst_in_allow : ltac2:(TCodec.tc2 tcn__AsanPlanSound "J'XD'='XG'S2'H'Q3'7pm>21&WGr4&T9r1r3r2%43321%7261&X3&XC%1295%33:71%<219%A3>61ph@C1pgFE1pS4G1pR<I1").
+#[using="Type"] Lemma inst_in_allow : forall E J e inv, in_allow E (inst inv J e) = in_allow (upd E J (edenot E e)) inv.
 Proof.
 intros E J e inv. apply functional_extensionality. intros z. unfold in_allow, in_vis, in_sh, inst. cbn [a_vis].
 rewrite !existsb_map'. f_equal; f_equal; apply functional_extensionality; intros [b n];
 unfold psubst, sh_lo, sh_hi, uE; cbn [fst snd]; rewrite !esubst_denot; reflexivity.
 Qed.
-#[using="Type"] Lemma inst_in_ghost : ltac2:(TCodec.tc2 tcn__AsanPlanSound "J'XD'='XG'S2'H'Q3'7pm>21&WHr4&T9r1r3r2%43321%7261&X3&XC%1295%33:71%<219%A3>61ph@C1pgFE1pS4G1pR<I1").
+#[using="Type"] Lemma inst_in_ghost : forall E J e inv, in_ghost E (inst inv J e) = in_ghost (upd E J (edenot E e)) inv.
 Proof.
 intros E J e inv. apply functional_extensionality. intros z. unfold in_ghost, inst. cbn [a_ghost].
 induction (a_ghost inv) as [|[b n] l IH]; [reflexivity|]. cbn [map existsb fst snd psubst].
 unfold uE in *. cbn [fst snd]. rewrite !esubst_denot, IH. reflexivity.
 Qed.
-#[using="argH_agree"] Lemma inst_hid : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q3'XD'='XG'S2'QK'Nv]8r4%3221'H']NyR0%211'7peH21&WEr6&T9r3r5%3321=r2%73621&X3&XC%129B%33:71%<3196%C3>61p0E1piNJ1ph@L1pgFN1pS4Q01pR<Q21").
+#[using="argH_agree"] Lemma inst_hid : forall E J e inv model, (nx0 <= J)%nat ->
+hid E (inst inv J e) model = hid (upd E J (edenot E e)) inv model.
 Proof.
 intros E J e inv model HJ. apply functional_extensionality. intros a. unfold hid, vis.
 rewrite inst_in_allow. rewrite (argH_agree E (upd E J (edenot E e)) a); [|eapply env_agree_le; [apply upd_agree | exact HJ]].
 unfold inst. cbn [a_maps]. reflexivity.
 Qed.
-#[using="Type"] Lemma inst_maps : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q5'XD'='XG'S2'H'<'B']NyR0%211%4211%611&Q1'S8&W>r4%211&RO&T9r1r3r2%43321%611%<4;>81&X3&XC%12<6%33=81%?11%=1;%C4BE21%L3E81ph@N1pgFQ01pS4Q21pR<Q41").
+#[using="Type"] Lemma inst_maps : forall E J e inv, map (amap_den E) (a_maps (inst inv J e)) = map (amap_den (upd E J (edenot E e))) (a_maps inv).
 Proof.
 intros. unfold inst. cbn [a_maps]. rewrite map_map. apply map_ext. intros m. unfold amap_den, msubst. cbn [am_base am_len].
 rewrite !esubst_denot. reflexivity.
 Qed.
-Section SE.
-Local Abbreviation SEC_T_maps_match_msubst := (ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q3'XD'='XG'<'S8%211'B']NyR0%211%4211%811&J&WNr5&Q1&U?r4r3%3221r2%64AA21r1%:3921&X3&XC%12<8%33=:1%?3186%A261pi6C1pj2J1pgFN1pS4Q01pR<Q21")) (only parsing).
-Variable E : ltac:(sec_ty2 constr:(SEC_T_maps_match_msubst) 0%nat 0%nat).
-Variable J : ltac:(sec_ty2 constr:(SEC_T_maps_match_msubst) 1%nat 0%nat).
-Variable e : ltac:(sec_ty2 constr:(SEC_T_maps_match_msubst) 2%nat 0%nat).
-Lemma maps_match_msubst : ltac:(sec_stmt2 constr:(SEC_T_maps_match_msubst) 3%nat 0%nat).
-Proof using Type E J e.
+#[using="Type"] Lemma maps_match_msubst : forall E J e ms l,
+maps_match E (map (msubst J e) ms) l <-> maps_match (upd E J (edenot E e)) ms l.
+Proof.
+intros E J e.
 intros ms.
 induction ms as [|m ms IH]; intros l; cbn [maps_match map]; [tauto|].
 unfold is_fog, msubst, uE, amap_den. cbn [am_kind am_base am_len]. rewrite !esubst_denot.
@@ -2199,8 +2281,8 @@ destruct (is_tok_kind (am_kind m)).
 - split; (intros [HM|(iv & l' & -> & Hsz & HM)]; [left; apply IH; exact HM | right; exists iv, l'; split; [reflexivity|]; split; [exact Hsz | apply IH; exact HM]]).
 - split; (intros (l' & -> & HM); exists l'; split; [reflexivity | apply IH; exact HM]).
 Qed.
-End SE.
-#[using="Type"] Lemma holes_msubst : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q9'XD'='XG'Q3'<'B']NyR0%211%4211%611'S8%811&J'Q0&WFr6r3r2%43321&Q1&U?r5r4%3221r1%64??21%=3@81&X3&XC%12>7%33?91%A31?>%C3F18%E271pj2G1pi6J1pm8Q21pgFQ41pS4Q61pR<Q81").
+#[using="Type"] Lemma holes_msubst : forall E J e y l ms,
+Forall (hole_ok E y l) (map (msubst J e) ms) <-> Forall (hole_ok (upd E J (edenot E e)) y l) ms.
 Proof.
 intros E J e y l ms. induction ms as [|m ms IH]; cbn [map].
 - split; intros; constructor.
@@ -2209,9 +2291,11 @@ assert (X : hole_ok E y l (msubst J e m) <-> hole_ok (upd E J (edenot E e)) y l 
 { unfold hole_ok, is_hole, msubst, uE. cbn [am_kind am_base am_len]. rewrite !esubst_denot. tauto. }
 rewrite X. tauto.
 Qed.
-#[using="Type"] Lemma inst_maps_match : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q3'XD'='XG'S2'<'B']NyR0%211%4211%611&J&WNr5&RO&T9r2r4r3%43321%611r1%:3921&X3&XC%12<7%33=91%=1;%@3217%B271pi6D1ph@L1pgFN1pS4Q01pR<Q21").
+#[using="Type"] Lemma inst_maps_match : forall E J e inv l,
+maps_match E (a_maps (inst inv J e)) l <-> maps_match (upd E J (edenot E e)) (a_maps inv) l.
 Proof. intros. unfold inst. cbn [a_maps]. apply maps_match_msubst. Qed.
-#[using="Type"] Lemma regs_ok_inst : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q2'XD'='XG'<%112&R6y5']NyR0%211%5241&J&Y>r5&Q1&SJr4r3%3221r2%64BB21r1%:3921&X3&XC%12<8%33=:1%?3186%A261pTJC1pkDJ1pgFM1pS4O1pR<Q11").
+#[using="Type"] Lemma regs_ok_inst : forall E J e sr R,
+regs_ok E (map (esubst J e) sr) R <-> regs_ok (upd E J (edenot E e)) sr R.
 Proof.
 intros E J e sr R. unfold regs_ok, sr_get.
 assert (G : forall r, edenot E (if bv_eqb r 0 then ELit 0 else nth (ridx r) (map (esubst J e) sr) (ELit 0))
@@ -2220,12 +2304,13 @@ assert (G : forall r, edenot E (if bv_eqb r 0 then ELit 0 else nth (ridx r) (map
 replace (ELit 0) with (esubst J e (ELit 0)) at 1 by reflexivity. rewrite map_nth. apply esubst_denot. }
 split; intros H r; [rewrite <- G | rewrite G]; apply H.
 Qed.
-#[using="Type"] Lemma fds_ok_inst : ltac2:(TCodec.tc2 tcn__AsanPlanSound "J'XD'='XG'S4'QK&J&WBr5&T3r4r3r2%43321r1%83721&X3&XC%12:7%33;91%=3186%?261piNA1pgLC1pgFE1pS4G1pR<I1").
+#[using="Type"] Lemma fds_ok_inst : forall E J e f model, fds_ok E (fsubst J e f) model <-> fds_ok (upd E J (edenot E e)) f model.
 Proof.
 intros E J e f model. destruct f as [|k l o|]; cbn [fsubst fds_ok]; try tauto.
 unfold uE. rewrite !esubst_denot. cbn [eb upd]. tauto.
 Qed.
-#[using="argH_agree SINV_agree"] Lemma cs_ok_inst : ltac2:(TCodec.tc2 tcn__AsanPlanSound "QI'XD'='XG'S2&R6y5']NyR0%211%5241'@y8%611%311p061'QK'Nv]8r6%3221'H'<'Y4%211&Y1&S0r5%211%411(?%118%;3831&J'W?r9&T9r8r7%33D21r4r3%8573?21&X3&XC%12:7%33;91%=51LD76%?261p0A1p0N1piNQ31pRFQ51pTJQ;1ph@QB1pgFQD1pS4QF1pR<QH1").
+#[using="argH_agree SINV_agree"] Lemma cs_ok_inst : forall E J e inv R FULL model, (nx0 <= J)%nat -> s_log (a_ss inv) = [] ->
+cs_ok E (inst inv J e) R FULL model <-> cs_ok (upd E J (edenot E e)) inv R FULL model.
 Proof.
 intros E J e inv R FULL model HJ Hlog.
 pose proof (inst_hid E J e inv model HJ) as HH. pose proof (inst_allowA E J e inv) as HA. pose proof (inst_maps E J e inv) as HM.
@@ -2266,13 +2351,10 @@ exact (proj1 (Forall_forall _ _) co_kinds0 m Hin Hk a Ha).
 - intros a. unfold Mr in *. rewrite HH. first [rewrite <- HG | rewrite HG]. exact (co_zero0 a).
 - eapply SINV_agree; [|eassumption]. destruct AG as [AG1 AG2]. split; [intros n Hn; symmetry; apply AG1; exact Hn | symmetry; exact AG2].
 Qed.
-Section SE.
-Local Abbreviation SEC_T_kentry_eqb_h_sound := (ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q:'XD']NyR0%211'@y8%511%311p051'<'XL%211&Y=vZ1r5r4r3%544321&Y<r6%247164'H'7&T@%1298(D%53421&TB%129=%83714r9r8%>4C21Bp041p081p0?1p0C1pS6K1pe>L1phJL1pT@Q01pR<Q91")) (only parsing).
-Variable E : ltac:(sec_ty2 constr:(SEC_T_kentry_eqb_h_sound) 0%nat 0%nat).
-Variable M : ltac:(sec_ty2 constr:(SEC_T_kentry_eqb_h_sound) 1%nat 0%nat).
-Variable k : ltac:(sec_ty2 constr:(SEC_T_kentry_eqb_h_sound) 2%nat 0%nat).
-Lemma kentry_eqb_h_sound : ltac:(sec_stmt2 constr:(SEC_T_kentry_eqb_h_sound) 3%nat 0%nat).
-Proof using Type E M k.
+#[using="Type"] Lemma kentry_eqb_h_sound : forall E M k X K,
+know_ok SEGS E M k -> kentry_ok SEGS E M X -> kentry_eqb_h X K = true -> kflat_h k K = true -> kentry_ok SEGS E M K.
+Proof.
+intros E M k.
 intros X K HK HX Heq Hfl.
 unfold kentry_eqb_h in Heq. apply orb_prop in Heq as [Heq|Heq].
 { apply kentry_eqb_eq in Heq. subst. exact HX. }
@@ -2310,15 +2392,17 @@ pose proof (SAD b o b' o' _ _ Heq H1 Hfl) as ES. split; [unfold flat in *; rewri
 - apply expr_eqb_eq in X. subst n'. destruct HX as [H1 H2].
 pose proof (SAD b o b' o' _ _ Heq H1 Hfl) as ES. split; [unfold flat in *; rewrite ES; exact H1|]. rewrite ES. exact H2.
 Qed.
-End SE.
-#[using="SEGS_in_hull"] Lemma seg_rom_off_hull : ltac2:(TCodec.tc2 tcn__AsanPlanSound "J']NyR0%211'H'7&X6v0&]Or1%2281%5241(9%93821'@y8%?11%311&YIvZ1r2%3221(1%117%D3731p0<1peHG1").
+#[using="SEGS_in_hull"] Lemma seg_rom_off_hull : forall a : word, in_hull A (bv_unsigned a) = false -> seg_rom SEGS a = None.
 Proof.
 intros a Ha. unfold seg_rom.
 rewrite (memory_read1_hidden SEGS (fun x => negb (in_hull A (bv_unsigned x)))); [reflexivity| |].
 - intros x Hx. apply SEGS_in_hull. apply negb_true_iff in Hx. exact Hx.
 - rewrite Ha. reflexivity.
 Qed.
-#[using="SEGS_in_hull"] Lemma rdn_bytes_some : ltac2:(TCodec.tc2 tcn__AsanPlanSound "QK']NyR0%211'@y8%511%311p051'='<%115'H%912&YGvZ1r4r3r2%544321(4r1%22;1%;3:41'G&Z:&]Or5%22J1%32K8%5221&Z;&Z8&Z>%11B%3271%5271%=271'7&X6v0%?2Q7G%3221(9%Q03621&Kr8%11N(1%11Q;%Q63Q;31%611p081p0@1pm6QC1p0Q01pf<Q=1plLQ@1peHQG1pT@QC1").
+#[using="SEGS_in_hull"] Lemma rdn_bytes_some : forall M (a : word) w bs,
+rdn SEGS M a w = Some bs ->
+forall x : word, (bv_unsigned a <= bv_unsigned x < bv_unsigned a + Z.of_nat w)%Z ->
+in_hull A (bv_unsigned x) = false -> M x <> None.
 Proof.
 intros M a w. revert a. induction w as [|w IH]; intros a bs Hr x Hx Hh; [lia|].
 cbn [rdn] in Hr.
@@ -2331,12 +2415,12 @@ pose proof (u64_range x).
 assert (Hu1 : bv_unsigned (a + 1)%bv = (bv_unsigned a + 1)%Z) by (apply u_add1; lia).
 eapply (IH (a + 1)%bv rest Hr2); [rewrite Hu1; lia | exact Hh].
 Qed.
-Section SE.
-Local Abbreviation SEC_T_cover1_sound := (ltac2:(TCodec.tc2 tcn__AsanPlanSound "RB'XD']NyR0%211'@y8%511%311p051'<'XL%211'XG'Q3&Y=vZ1r6r5r4%544321'H%A18&S=r3%23761(4r2%22>1%83741'G&Z;%12=8&Z:r1%22A1%522A%7221'7&X6v0&Z8&X:r:r7%3221%521C%8271(9%L3;21zr;r8%;221%=21N%F251&Z?+2+R0%3221%M261%O261&K&]M%12QM:%F11(1%11QL%Q?3QL31%711%Q8291p0F1p0Q31phFQK1%Q<2Q:1p0Q>1p0QH1pgFQO1ph<R01peNR21phJR41pT@R81pR<RA1")) (only parsing).
-Variable E : ltac:(sec_ty2 constr:(SEC_T_cover1_sound) 0%nat 0%nat).
-Variable M : ltac:(sec_ty2 constr:(SEC_T_cover1_sound) 1%nat 0%nat).
-Lemma cover1_sound : ltac:(sec_stmt2 constr:(SEC_T_cover1_sound) 2%nat 0%nat).
-Proof using SEGS_in_hull E M.
+#[using="SEGS_in_hull"] Lemma cover1_sound : forall E M k b i e,
+know_ok SEGS E M k -> cover1 k b i = Some e ->
+(i < e)%Z /\ forall j, (i <= j < e)%Z -> in_hull A (uE E b + j) = false ->
+(0 <= uE E b + j < 2 ^ 64)%Z /\ M (Z_to_bv 64 (uE E b + j)) <> None.
+Proof.
+intros E M.
 intros k b i e HK.
 induction k as [|K r IH]; intros H; [discriminate|].
 inversion HK as [|K' r' HKK Hr]; subst. cbn [cover1] in H.
@@ -2375,8 +2459,10 @@ eapply (ZF kb kk l (fun x => exists b0, x = Some b0)); [split; [exact Hfl | intr
 - eapply (ZF kb kk l (fun x => x = Some (Z_to_bv 8 fc))); [exact HKK | intros x ->; discriminate | exact Hhit].
 - eapply (ZF kb kk l (fun x => x <> None)); [exact HKK | intros x Hx; exact Hx | exact Hhit].
 Qed.
-End SE.
-#[using="SEGS_in_hull"] Lemma cover_x_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "R@'='XD']NyR0%211'@y8%511%311p051'<'XL%211'XG'Q3&Y=vZ1r6r5r4%544321'H'7&S>r8r3r2%4539821(D%83721'G&Z:r1%22?1&Z;%123@%6231&X6v0&Z8&X:r:r7%3221%521B%8271(9%J3I21zr;%:21J%<21J%E241&Z?+2+R0%3221%G261%L261&K&]M%12QJ:%E11(1%11QI%Q<3QI31%711%Q5291p0E1p0Q11phFQH1p0Q:1p0QD1pl2QK1ph<QL1peNQN1phJR01pT@R41pR<R=1ph2R?1").
+#[using="SEGS_in_hull"] Lemma cover_x_sound : forall fuel E M k b i stop,
+know_ok SEGS E M k -> cover_x fuel k b i stop = true ->
+forall j, (i <= j < stop)%Z -> in_hull A (uE E b + j) = false ->
+(0 <= uE E b + j < 2 ^ 64)%Z /\ M (Z_to_bv 64 (uE E b + j)) <> None.
 Proof.
 induction fuel as [|f IH]; intros E M k b i stop HK H j Hj Hh; [discriminate|].
 cbn [cover_x] in H. destruct (Z.leb_spec stop i); [lia|].
@@ -2387,13 +2473,9 @@ destruct (Z.lt_ge_cases j e).
 - apply Hcov; [lia | exact Hh].
 - eapply IH; [exact HK | exact H | lia | exact Hh].
 Qed.
-Section SE.
-Local Abbreviation SEC_T_kunk_covered_sound := (ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q3'XD']NyR0%211'@y8%511%311p051'<'XL%211&Y=vZ1r4r3r2%544321'H'7&TMv0%23176(D%63521&Y<r6r5%34?21=p051p0=1pS6E1phJE1pT@I1pR<Q21")) (only parsing).
-Variable E : ltac:(sec_ty2 constr:(SEC_T_kunk_covered_sound) 0%nat 0%nat).
-Variable M : ltac:(sec_ty2 constr:(SEC_T_kunk_covered_sound) 1%nat 0%nat).
-Variable k : ltac:(sec_ty2 constr:(SEC_T_kunk_covered_sound) 2%nat 0%nat).
-Lemma kunk_covered_sound : ltac:(sec_stmt2 constr:(SEC_T_kunk_covered_sound) 3%nat 0%nat).
-Proof using SEGS_in_hull HULL_ok E M k.
+#[using="SEGS_in_hull HULL_ok"] Lemma kunk_covered_sound : forall E M k K, know_ok SEGS E M k -> kunk_covered A k K = true -> kentry_ok SEGS E M K.
+Proof.
+intros E M k.
 intros K HK H.
 unfold kunk_covered in H.
 destruct K as [| | | | | | | | |[b o] [n| | | | | | |]]; try discriminate.
@@ -2413,15 +2495,9 @@ apply (cover_x_sound _ E M k b o (o + n) HK X); [lia|].
 unfold in_hull, uE. apply andb_false_iff.
 destruct AP0 as [AP0|AP0]; [left; apply Z.leb_gt; lia | right; apply Z.ltb_ge; lia].
 Qed.
-End SE.
-Section SE.
-Local Abbreviation SEC_T_kn_incl_h_sound := (ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q2'XD']NyR0%211'@y8%511%311p051'<'XL%211&Y=vZ1r4r3r2%544321'H'7&TIv0%23176(D%63521r6r5%?4>21<p041p0<1pl<C1phJD1pT@H1pR<Q11")) (only parsing).
-Variable E : ltac:(sec_ty2 constr:(SEC_T_kn_incl_h_sound) 0%nat 0%nat).
-Variable M : ltac:(sec_ty2 constr:(SEC_T_kn_incl_h_sound) 1%nat 0%nat).
-Variable k : ltac:(sec_ty2 constr:(SEC_T_kn_incl_h_sound) 2%nat 0%nat).
-Variable tk : ltac:(sec_ty2 constr:(SEC_T_kn_incl_h_sound) 3%nat 0%nat).
-Lemma kn_incl_h_sound : ltac:(sec_stmt2 constr:(SEC_T_kn_incl_h_sound) 4%nat 0%nat).
-Proof using SEGS_in_hull HULL_ok E M k tk.
+#[using="SEGS_in_hull HULL_ok"] Lemma kn_incl_h_sound : forall E M k tk, know_ok SEGS E M k -> kn_incl_h A k tk = true -> know_ok SEGS E M tk.
+Proof.
+intros E M k tk.
 intros HK H.
 unfold kn_incl_h in H. apply Forall_forall. intros K Hin.
 pose proof (proj1 (forallb_forall _ _) H K Hin) as HK1. unfold kn_incl1_h in HK1.
@@ -2440,7 +2516,6 @@ eapply kentry_eqb_h_sound; [exact HK | exact (proj1 (Forall_forall _ _) HK X Hin
 + destruct (kimg_sub_covered k K) eqn:Himg; [exact (IMG eq_refl)|]. eapply kunk_covered_sound; [exact HK | exact HK1].
 - destruct (kimg_sub_covered k K) eqn:Himg; [exact (IMG eq_refl)|]. eapply kunk_covered_sound; [exact HK | exact HK1].
 Qed.
-End SE.
 Definition is_havoc (lo hi : nat) (t : expr) : option nat :=
 match t with EVar v => if (Nat.leb lo v && Nat.ltb v hi)%bool then Some v else None | _ => None end.
 Fixpoint henv (lo hi : nat) (E : env) (rs ts : list expr) : env :=
@@ -2450,31 +2525,32 @@ let E1 := henv lo hi E rs' ts' in
 match is_havoc lo hi t with Some v => upd E1 v (edenot E r) | None => E1 end
 | _, _ => E
 end.
-#[using="Type"] Lemma is_havoc_range : ltac2:(TCodec.tc2 tcn__AsanPlanSound "N'='XG'H'@%114&WIr4r3r2%43321(4r1%22<1%;3941'G(X<%118%?3@:1'Nr5%221<&O%12>@%9231%:271p0<1plHJ1pl8J1ph:L1piBM1").
+#[using="Type"] Lemma is_havoc_range : forall lo hi t v, is_havoc lo hi t = Some v -> t = EVar v /\ (lo <= v < hi)%nat.
 Proof.
 intros lo hi t v H. destruct t; try discriminate. cbn [is_havoc] in H.
 destruct (Nat.leb lo n && Nat.ltb n hi)%bool eqn:Hc; [|discriminate]. injection H as <-.
 apply andb_prop in Hc as [H1 H2]. apply Nat.leb_le in H1. apply Nat.ltb_lt in H2. split; [reflexivity | lia].
 Qed.
-#[using="Type"] Lemma henv_agree : ltac2:(TCodec.tc2 tcn__AsanPlanSound "C'='XD'<'XG%211&Y@r5r3&WDr4r2r1%4563521%83761pl@:1pk6;1pR<?1ph:A1piBB1").
+#[using="Type"] Lemma henv_agree : forall lo hi E rs ts, env_agree lo E (henv lo hi E rs ts).
 Proof.
 intros lo hi E rs. induction rs as [|r rs IH]; intros [|t ts]; cbn [henv]; try apply env_agree_refl.
 destruct (is_havoc lo hi t) as [v|] eqn:Hv; [|apply IH].
 apply is_havoc_range in Hv as [_ Hv]. eapply env_agree_trans; [apply IH|]. eapply env_agree_le; [apply upd_agree | lia].
 Qed.
-#[using="Type"] Lemma henv_high : ltac2:(TCodec.tc2 tcn__AsanPlanSound "O'='XD'<'XG%211'Nr5r1%3221'H']NyR0%211&XF&WDr7r6r4r3%5543=21r2%8221%92@2%>3;21p0@1pj4I1pl@F1pk6G1pR<K1ph:M1piBN1").
+#[using="Type"] Lemma henv_high : forall lo hi E rs ts n, (hi <= n)%nat -> ev (henv lo hi E rs ts) n = ev E n.
 Proof.
 intros lo hi E rs. induction rs as [|r rs IH]; intros [|t ts] n Hn; cbn [henv]; try reflexivity.
 destruct (is_havoc lo hi t) as [v|] eqn:Hv; [|apply IH; exact Hn].
 apply is_havoc_range in Hv as [_ Hv]. cbn [upd ev]. destruct (Nat.eqb_spec n v); [lia|]. apply IH. exact Hn.
 Qed.
-Section SE.
-Local Abbreviation SEC_T_regs_match_h_char := (ltac2:(TCodec.tc2 tcn__AsanPlanSound "R@'='<%112'XG%311'H'7&V;r5r4r3r2r1%6554321(D%:3921'G&;%12?8%22@8%?3D21&O%12:4'L'I'@%11J&WIr9r8&Q2(X;z%211%44OHJ1%83761(4%12Q5I%Q13<31&K&Z2r7%23Q:N1%411%G2Q0Q3r;r:%A4Q<Q46>%E3321%=2QAQ7%Q=3H21%<11p081ph>QE1%Q62;1%Q72A1qlHQH1%Q12QI1%L4QGQ?QAI%Q03NB1(1%11QM%QI3Q431%Q14QLQDQGN%QK3QM61&SL%12Q58%QN3QM1QE%QD241%QE271%Q?2=1p0QA1ph<R81%QI2QE1p0QK1pl@R71pk6R81pk>R;1ph:R>1piBR?1")) (only parsing).
-Variable lo : ltac:(sec_ty2 constr:(SEC_T_regs_match_h_char) 0%nat 0%nat).
-Variable hi : ltac:(sec_ty2 constr:(SEC_T_regs_match_h_char) 1%nat 0%nat).
-Variable seen : ltac:(sec_ty2 constr:(SEC_T_regs_match_h_char) 2%nat 0%nat).
-Lemma regs_match_h_char : ltac:(sec_stmt2 constr:(SEC_T_regs_match_h_char) 3%nat 0%nat).
-Proof using Type lo hi seen.
+#[using="Type"] Lemma regs_match_h_char : forall lo hi seen rs ts, regs_match_h lo hi seen rs ts = true ->
+length rs = length ts /\
+forall i, (i < length ts)%nat ->
+(exists v, is_havoc lo hi (nth i ts (ELit 0)) = Some v /\ ~ In v seen /\
+forall i', (i' < i)%nat -> is_havoc lo hi (nth i' ts (ELit 0)) <> Some v)
+\/ (is_havoc lo hi (nth i ts (ELit 0)) = None /\ nth i ts (ELit 0) = nth i rs (ELit 0) /\ AP.expr_vars_lt lo (nth i ts (ELit 0)) = true).
+Proof.
+intros lo hi seen.
 intros rs.
 revert seen. induction rs as [|r rs IH]; intros seen [|t ts] H; cbn [regs_match_h length] in H |- *; try discriminate.
 - split; [reflexivity | intros i Hi; lia].
@@ -2507,14 +2583,13 @@ destruct (STEP seen Hm ltac:(intros; assumption) ltac:(intros v' Hv'; discrimina
 split; [rewrite Hlen; reflexivity|]. intros [|i] Hi; [|exact (Hc i Hi)].
 right. cbn [nth]. split; [exact Hv|]. split; [reflexivity | exact Hvl].
 Qed.
-End SE.
-Section SE.
-Local Abbreviation SEC_T_henv_havoc := (ltac2:(TCodec.tc2 tcn__AsanPlanSound "R3'='XD'<'XG%211'H&;r4%2251r3%4271%63;31&O%1245'@%11?&WIr9r8&Q2r5(X;z%211%54EA41%93871(4%12KB%G3=31r1r6%C221&Kr<r;r2%A4Q11B=%E3431%<2Q68%Q23H21%811p0:1ph>Q:1']NyR0%211&XF&WDr:r7%35@2Q1Q01%521O&XC%Q24QBGQ3N%22Q51%QB3:41p0>1p0M1p0Q=1p0Q@1plHQL1ph<QM1pl@QJ1pk6QK1pR<QO1ph:R11piBR21")) (only parsing).
-Variable lo : ltac:(sec_ty2 constr:(SEC_T_henv_havoc) 0%nat 0%nat).
-Variable hi : ltac:(sec_ty2 constr:(SEC_T_henv_havoc) 1%nat 0%nat).
-Variable E : ltac:(sec_ty2 constr:(SEC_T_henv_havoc) 2%nat 0%nat).
-Lemma henv_havoc : ltac:(sec_stmt2 constr:(SEC_T_henv_havoc) 3%nat 0%nat).
-Proof using Type lo hi E.
+#[using="Type"] Lemma henv_havoc : forall lo hi E rs ts i v,
+length rs = length ts -> (i < length ts)%nat ->
+is_havoc lo hi (nth i ts (ELit 0)) = Some v ->
+(forall i', (i' < i)%nat -> is_havoc lo hi (nth i' ts (ELit 0)) <> Some v) ->
+ev (henv lo hi E rs ts) v = edenot E (nth i rs (ELit 0)).
+Proof.
+intros lo hi E.
 intros rs.
 induction rs as [|r rs IH]; intros [|t ts] i v Hlen Hi Hv Hbefore; cbn [length] in *; try lia.
 cbn [henv]. destruct i as [|i]; cbn [nth] in *.
@@ -2525,8 +2600,8 @@ cbn [henv]. destruct i as [|i]; cbn [nth] in *.
 * apply IH; [lia | lia | exact Hv |]. intros i' Hi'. exact (Hbefore (Datatypes.S i') ltac:(lia)).
 + apply IH; [lia | lia | exact Hv |]. intros i' Hi'. exact (Hbefore (Datatypes.S i') ltac:(lia)).
 Qed.
-End SE.
-#[using="Type"] Lemma regs_match_h_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q='='XD'<'XG%211&R6y5']NyR0%211%5241'H'7&V;r6r5(?%11Ar3r2%7565321(D%;3:21&;%12E6uQ0%?3J21&Y>%13>=:&WDr9r8r7%45321CBr4%832D1p081p0;1p0@1pTJM1pl@Q41pk6Q51pR<Q91ph:Q;1piBQ<1").
+#[using="Type"] Lemma regs_match_h_sound : forall lo hi E rs ts R,
+regs_match_h lo hi [] rs ts = true -> length ts = 32%nat -> regs_ok E rs R -> regs_ok (henv lo hi E rs ts) ts R.
 Proof.
 intros lo hi E rs ts R H Hlen HR. destruct (regs_match_h_char lo hi [] rs ts H) as [Hl Hc].
 intros r. unfold sr_get. destruct (bv_eqb r 0) eqn:Hr0; [exact (eq_trans (HR r) ltac:(unfold sr_get; rewrite Hr0; reflexivity))|].
@@ -2535,7 +2610,12 @@ destruct (Hc (ridx r) ltac:(lia)) as [[v (Hv & _ & Hbefore)]|(Hn & Heq & Hvl)].
 - destruct (is_havoc_range _ _ _ _ Hv) as [Et _]. rewrite Et. cbn [edenot]. symmetry. apply (henv_havoc lo hi E rs ts (ridx r) v Hl ltac:(lia) Hv Hbefore).
 - rewrite Heq in Hvl |- *. eapply (edenot_agree' lo); [apply henv_agree | exact Hvl].
 Qed.
-#[using="argH_agree SINV_agree"] Lemma cs_ok_reenv : ltac2:(TCodec.tc2 tcn__AsanPlanSound "RN'='XD'S2'<'XG%211&R6y5']NyR0%211%5241'@y8%611%311p061'QK'W?r7r5r3r2r1%6554321&Y@r9r8%33219'Nv]8r:%3221'H'7&TJr;&TD%11;%4231(D%83721&U7r<&RO%11C%4231%>3=17&V6r=&6'B%12Q@Q@&S1%11G&RN%11I%73531%:291%J3I1C&SLr>&RL%11K%4231%Q03O1I&SNr?&RM%11J%4231%Q63Q51O&Y>%13<NQ5&VC%12>J%QJ591Q1Q8Q=p041p071p0>1p0E1p0Q21p0Q91p0QC1p0QH1p0QM1piNR51pRFR71pTJR=1pkFRD1pg4RH1pR>RJ1pR<RK1peNRM1").
+#[using="argH_agree SINV_agree"] Lemma cs_ok_reenv : forall b E E' cs sr' R FULL model,
+cs_ok E cs R FULL model -> env_agree b E E' -> (nx0 <= b)%nat ->
+AP.kn_vars_lt b (kn cs) = true -> maps_vars_lt b (a_maps cs) = true -> pairs_vars_lt b (a_vis cs ++ a_ghost cs) = true ->
+AP.expr_vars_lt b (a_brk cs) = true -> fd_vars_lt b (a_fd cs) = true ->
+regs_ok E' sr' R ->
+cs_ok E' (set_regs cs sr') R FULL model.
 Proof.
 intros b E E' cs sr' R FULL model HC Hag Hb Hkn Hmaps Hallow Hbrk Hfd HR.
 pose proof (hid_agree b E E' cs model Hag Hb Hallow) as HH.
@@ -2560,14 +2640,11 @@ exact (proj1 (Forall_forall _ _) co_kinds0 m Hin Hk a Ha).
 - intros a. rewrite HH. change (in_ghost E' (set_regs cs sr')) with (in_ghost E' cs). rewrite (in_ghost_agree b E E' cs Hag Hallow). exact (co_zero0 a).
 - eapply SINV_agree; [eapply env_agree_le; [exact Hag | exact Hb] | assumption].
 Qed.
-Section SE.
-Local Abbreviation SEC_T_entails_h_sound := (ltac2:(TCodec.tc2 tcn__AsanPlanSound "RA'='XD'S2&R6y5']NyR0%211%5241'@y8%611%311p061'QK'W?r6r5r3r2r1%6554321'H'7&SHv0r9r8%45321<;(D%83721'Nv]8r:%3221&;'XG&Y2&S0r7%211%411%7261uQ0%F3Q<21'I'G&Y@r=r;%3321N%D23O&XF%12Q3Q2%226Q3%Q13Q@21p051pj4QI1%Q;5Q6Q0OCQ:'Q3&V7%11Q3%21M%Q93421%B261%C281%D2@1qR>R21%G2R31p0I1p0Q41p0Q91p0QC1piNQK1pRFQM1pTJR31pe4R:1pg4R;1pR<R=1ph:R?1piBR@1")) (only parsing).
-Variable lo : ltac:(sec_ty2 constr:(SEC_T_entails_h_sound) 0%nat 0%nat).
-Variable hi : ltac:(sec_ty2 constr:(SEC_T_entails_h_sound) 1%nat 0%nat).
-Variable E : ltac:(sec_ty2 constr:(SEC_T_entails_h_sound) 2%nat 0%nat).
-Variable cs : ltac:(sec_ty2 constr:(SEC_T_entails_h_sound) 3%nat 0%nat).
-Lemma entails_h_sound : ltac:(sec_stmt2 constr:(SEC_T_entails_h_sound) 4%nat 0%nat).
-Proof using SEGS_in_hull HULL_ok argH_agree SINV_agree lo hi E cs.
+#[using="SEGS_in_hull HULL_ok argH_agree SINV_agree"] Lemma entails_h_sound : forall lo hi E cs T R FULL model,
+cs_ok E cs R FULL model -> entails_h A lo hi cs T = true -> (nx0 <= lo)%nat -> length (s_regs (a_ss T)) = 32%nat ->
+exists E', env_agree lo E E' /\ (forall n, (hi <= n)%nat -> ev E' n = ev E n) /\ cs_ok E' T R FULL model /\ pc T = pc cs.
+Proof.
+intros lo hi E cs.
 intros T R FULL model HC H Hlo Hlen.
 unfold entails_h in H.
 repeat match type of H with (_ && _)%bool = true => apply andb_prop in H as [H ?X] end.
@@ -2605,17 +2682,14 @@ rewrite ET at 1. eapply (cs_ok_reenv lo); try eassumption.
 - unfold pairs_vars_lt, Tc. cbn [set_regs with_ss a_vis a_ghost]. rewrite forallb_app. apply andb_true_intro; split; assumption.
 - apply regs_match_h_sound; [exact Hregs | exact Hlen | exact (co_regs _ _ _ _ _ HC)].
 Qed.
-End SE.
-Section SE.
-Local Abbreviation SEC_T_diamond_join_sound := (ltac2:(TCodec.tc2 tcn__AsanPlanSound "R@'='Q3'<%113'S2'H'@%113&UEv0v]8r6r5r4r3r2%877654321(4r1%22?1%?3=41'G'XD&R6y5']NyR0%211%5241y8%511%I11p051'QK'W?r8%25G1FEB'I&Y@%13MLEr=%331NG%E231%95I8ONM&V7%11:r:%311%Q;3Q?31%L261%M281qR>M1%?2N1p0A1piNE1pRFG1pTJL1pR<Q31r7%I5Q>1Q=Q<Q9r9%A11%QI3QMA1%Q:2D1%Q;2F1qR>Q;1%M2Q<1p081piNQ31pRFQ51pTJQ:1pR<QA1%QC2?1p0QE1pg@R61pfLR71pfJR81pk6R:1phHR=1pj@R?1")) (only parsing).
-Variable nx : ltac:(sec_ty2 constr:(SEC_T_diamond_join_sound) 0%nat 0%nat).
-Variable joinpc : ltac:(sec_ty2 constr:(SEC_T_diamond_join_sound) 1%nat 0%nat).
-Variable rs : ltac:(sec_ty2 constr:(SEC_T_diamond_join_sound) 2%nat 0%nat).
-Variable ca : ltac:(sec_ty2 constr:(SEC_T_diamond_join_sound) 3%nat 0%nat).
-Variable cb : ltac:(sec_ty2 constr:(SEC_T_diamond_join_sound) 4%nat 0%nat).
-Variable csj : ltac:(sec_ty2 constr:(SEC_T_diamond_join_sound) 5%nat 0%nat).
-Lemma diamond_join_sound : ltac:(sec_stmt2 constr:(SEC_T_diamond_join_sound) 6%nat 0%nat).
-Proof using SEGS_in_hull HULL_ok argH_agree SINV_agree nx joinpc rs ca cb csj.
+#[using="SEGS_in_hull HULL_ok argH_agree SINV_agree"] Lemma diamond_join_sound : forall nx joinpc rs ca cb csj,
+node_diamond_join A nx0 nx joinpc rs ca cb = Some csj ->
+(forall E R FULL model, cs_ok E ca R FULL model ->
+exists E', (env_agree nx0 E E' /\ env_agree nx E E') /\ cs_ok E' csj R FULL model /\ pc csj = pc ca)
+/\ (forall E R FULL model, cs_ok E cb R FULL model ->
+exists E', (env_agree nx0 E E' /\ env_agree nx E E') /\ cs_ok E' csj R FULL model /\ pc csj = pc cb).
+Proof.
+intros nx joinpc rs ca cb csj.
 intros H.
 unfold node_diamond_join in H.
 match type of H with (if ?c then _ else _) = _ => destruct c eqn:Hc; [|discriminate] end.
@@ -2631,16 +2705,13 @@ exists E'. split; [split; eapply env_agree_le; [exact Hag | lia | exact Hag | li
 destruct (entails_h_sound lo hi E cb T R FULL model HC Hea Hn0 Hlen) as (E' & Hag & _ & HC' & Hpc) end.
 exists E'. split; [split; eapply env_agree_le; [exact Hag | lia | exact Hag | lia] | split; [exact HC' | exact Hpc]].
 Qed.
-End SE.
-Section SE.
-Local Abbreviation SEC_T_loop_ok_facts := (ltac2:(TCodec.tc2 tcn__AsanPlanSound "R9'S2'='XG'Q3'H'@%113&U5v]8r5r4r3r2%6554321(4r1%22=1%=3;41'G'7&T2r6%22>1(D%D3521'N&V4%116%321C&O%41C%22F1'<'Y4%211&Y1&S0%11J%311(?%117%Q53731&;&Y2%117%32Q;1uQ0%Q;3Q>21&SL%12FQ7%Q>3O1K&Y9&TD%11Q0%321Q<%Q92QDQ;%QD3QB21&Z;&Y8%22Q?1%Q:241%Q;2;1%Q<2?1%Q=2F1%Q>2Q11%Q?2Q51%Q@2Q:1p0QB1pj>R11ph@R51pTFR41pS4R61pg4R81")) (only parsing).
-Variable cs : ltac:(sec_ty2 constr:(SEC_T_loop_ok_facts) 0%nat 0%nat).
-Variable J : ltac:(sec_ty2 constr:(SEC_T_loop_ok_facts) 1%nat 0%nat).
-Variable N : ltac:(sec_ty2 constr:(SEC_T_loop_ok_facts) 2%nat 0%nat).
-Variable inv : ltac:(sec_ty2 constr:(SEC_T_loop_ok_facts) 3%nat 0%nat).
-Variable nhi : ltac:(sec_ty2 constr:(SEC_T_loop_ok_facts) 4%nat 0%nat).
-Lemma loop_ok_facts : ltac:(sec_stmt2 constr:(SEC_T_loop_ok_facts) 5%nat 0%nat).
-Proof using Type cs J N inv nhi.
+#[using="Type"] Lemma loop_ok_facts : forall cs J N inv nhi,
+loop_ok nx0 cs J N inv = Some nhi ->
+fresh_ok nx0 cs = true /\ (nxt cs <= J)%nat /\ (J < nxt inv)%nat /\ s_log (a_ss inv) = [] /\
+length (s_regs (a_ss inv)) = 32%nat /\ AP.expr_vars_lt (nxt cs) N = true /\
+xhi (kn cs) N = Some nhi /\ nhi < two64.
+Proof.
+intros cs J N inv nhi.
 intros H.
 unfold loop_ok in H.
 match type of H with (if ?c then _ else _) = _ => destruct c eqn:Hc; [|discriminate] end.
@@ -2651,17 +2722,15 @@ apply Nat.leb_le in X12. apply Nat.ltb_lt in X11.
 destruct (s_log (a_ss inv)); [|discriminate]. apply Nat.eqb_eq in X7.
 repeat split; try assumption; reflexivity.
 Qed.
-End SE.
-#[using="Type"] Lemma pc_inst : ltac2:(TCodec.tc2 tcn__AsanPlanSound "A'S2'='XG'H'Q3&V7&T9r3r2r1%43321%611%715%:3921pgF<1pS4>1ph@@1").
+#[using="Type"] Lemma pc_inst : forall inv J e, pc (inst inv J e) = pc inv.
 Proof. reflexivity. Qed.
-#[using="Type"] Lemma nxt_inst : ltac2:(TCodec.tc2 tcn__AsanPlanSound "@'S2'='XG'H&V4&T9r3r2r1%43321%611%715%93;21pgF;1pS4=1ph@?1").
+#[using="Type"] Lemma nxt_inst : forall inv J e, nxt (inst inv J e) = nxt inv.
 Proof. reflexivity. Qed.
-Section SE.
-Local Abbreviation SEC_T_check_all_ok := (ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q='S2'V8'S?p021p041'<%116'VF'H&S<v0r4r3r2%544321(RJr1%211%:3@41'G'I&Z2%13F6;r6r5%2291%;1>%C3I21'F%:221%;281qg8O1%<2Q01r7%12E;%D1H%L3Q221p0?1pg4Q61%D271p0F1pk8Q21pgBQ41phJQ:1pg0Q81")) (only parsing).
-Variable chk : ltac:(sec_ty2 constr:(SEC_T_check_all_ok) 0%nat 0%nat).
-Variable k : ltac:(sec_ty2 constr:(SEC_T_check_all_ok) 1%nat 0%nat).
-Lemma check_all_ok : ltac:(sec_stmt2 constr:(SEC_T_check_all_ok) 2%nat 0%nat).
-Proof using Type chk k.
+#[using="Type"] Lemma check_all_ok : forall (chk : acs -> plan -> cres) k css s,
+check_all A rz chk k css = COk s ->
+(exists cs1, In cs1 css /\ chk cs1 k = COk s /\ True) /\ (forall cs, In cs css -> chk cs k = COk s).
+Proof.
+intros chk k.
 intros css s H.
 unfold check_all in H. destruct css as [|cs0 rest]; [discriminate|].
 destruct (chk cs0 k) as [s0|] eqn:H0; [|discriminate].
@@ -2680,12 +2749,10 @@ apply GEN in H as [E0 Hrest]. injection E0 as ->.
 split; [exists cs0; split; [left; reflexivity | split; [exact H0 | exact I]]|].
 intros cs [<-|Hin]; [exact H0 | apply Hrest; exact Hin].
 Qed.
-End SE.
-Section SE.
-Local Abbreviation SEC_T_check_vars := (ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q;'='@'U6%211'V8'S2'VF'H'S?&S;vZ1vQ@v0v]8vQDvZIvZHvZGvZJvQ?vQCr6r5r4r2r3%A@@?>=<;:987654321(RJr1%211%G3F41'7&VH%12D9(D%L3421p061pk8O1pg4Q11pk0Q31pi>Q51ph2Q91pf6Q:1")) (only parsing).
-Variable bfuel : ltac:(sec_ty2 constr:(SEC_T_check_vars) 0%nat 0%nat).
-Lemma check_vars : ltac:(sec_stmt2 constr:(SEC_T_check_vars) 1%nat 0%nat).
-Proof using Type bfuel.
+#[using="Type"] Lemma check_vars : forall bfuel fuel lc p cs s,
+CHECK bfuel fuel lc cs p = COk s -> shape_vars_lt nx0 s = true.
+Proof.
+intros bfuel.
 intros fuel.
 induction fuel as [|fuel IH]; intros lc p cs s Hc; [discriminate|].
 cbn [AP.check] in Hc.
@@ -2731,7 +2798,7 @@ injection Hc as <-. apply salt2_vars; [exact (IH _ ma _ sa H1) | exact (IH _ mb 
 - destruct (is_ecall_at SEGS cs); [|discriminate]. destruct (node_mmapin A LIMIT false cs) as [[[csa csb] cscs]|]; [|discriminate].
 destruct (CHECK bfuel fuel lc csa ia) as [sa|] eqn:H1; [|discriminate].
 destruct (CHECK bfuel fuel lc csb ib) as [sb|] eqn:H2; [|discriminate].
-destruct (check_all A (CHECK bfuel fuel lc) ic cscs) as [sc|] eqn:H3; [|discriminate].
+destruct (check_all A rz (CHECK bfuel fuel lc) ic cscs) as [sc|] eqn:H3; [|discriminate].
 injection Hc as <-.
 destruct (check_all_ok _ _ _ _ H3) as [(cs1 & Hin1 & Hc1 & _) _].
 apply salt2_vars; [exact (IH _ ia _ sa H1) | apply salt2_vars; [exact (IH _ ib _ sb H2) | exact (IH _ ic _ sc Hc1)]].
@@ -2743,7 +2810,7 @@ injection Hc as <-. apply salt2_vars; [exact (IH _ qa _ sa H1) | exact (IH _ qb 
 destruct (CHECK bfuel fuel lc csa ka) as [sa|] eqn:H1; [|discriminate].
 destruct (CHECK bfuel fuel lc csb kb) as [sb|] eqn:H2; [|discriminate].
 injection Hc as <-. apply salt2_vars; [exact (IH _ ka _ sa H1) | exact (IH _ kb _ sb H2)].
-- destruct (XON x); [|discriminate]. destruct (node_x SEGS A nx0 x args cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
+- destruct (XON x); [|discriminate]. destruct (node_x SEGS A nx0 rz x args cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
 - destruct (XN xid xargs cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
 - destruct (XE eid eargs cs) as [[[fd ps] cs1]|]; [|discriminate].
 destruct (CHECK bfuel fuel lc cs1 k) as [s1|] eqn:H1; [|discriminate].
@@ -2790,13 +2857,15 @@ injection Hc as <-. apply andb_prop in Ht as [Ht _]. apply andb_prop in Ht as [_
 destruct (is_ecall_at SEGS cs); [|discriminate]. destruct (node_mmapin A LIMIT true cs) as [[[csa csb] cscs]|]; [|discriminate].
 destruct (CHECK bfuel fuel lc csa iha) as [sa|] eqn:H1; [|discriminate].
 destruct (CHECK bfuel fuel lc csb ihb) as [sb|] eqn:H2; [|discriminate].
-destruct (check_all A (CHECK bfuel fuel lc) ihc cscs) as [sc|] eqn:H3; [|discriminate].
+destruct (check_all A rz (CHECK bfuel fuel lc) ihc cscs) as [sc|] eqn:H3; [|discriminate].
 injection Hc as <-.
 destruct (check_all_ok _ _ _ _ H3) as [(cs1 & Hin1 & Hc1 & _) _].
 apply salt2_vars; [exact (IH _ iha _ sa H1) | apply salt2_vars; [exact (IH _ ihb _ sb H2) | exact (IH _ ihc _ sc Hc1)]].
 Qed.
-End SE.
-#[using="Type"] Lemma list_set_nth_maps_match : ltac2:(TCodec.tc2 tcn__AsanPlanSound "R3'XD'<'S8%211'B']NyR0%211%4211%811'='Q3'H'@%11<&Z7r5r3%33@21(4r2%22C1%:3841'7&T:%118(9%?3421'G&Z:z%221>&Z;&Y8%22A1%7241&]O&XCr9&S7%11H%4231%62Q41r4%?221&WNr:r8%332:1r;&U3&T1r6%211%44QD718%:361Ap081p0=1p0G1p0Q01p0Q61pl6QB1piDQL1ph<QE1pi6QG1pj2QN1pR<R21").
+#[using="Type"] Lemma list_set_nth_maps_match : forall E ms l i m sz,
+nth_error ms i = Some m -> is_fog m = false -> 0 <= sz < two64 ->
+bv_unsigned (edenot E (am_len m)) <= sz ->
+maps_match E ms l -> maps_match E (list_set_nth i (fog_token sz) ms) l.
 Proof.
 intros E ms. induction ms as [|m0 ms IH]; intros l i m sz Hn Hf Hsz Hle HM; [destruct i; discriminate|].
 destruct i as [|i]; cbn [nth_error] in Hn; cbn [list_set_nth maps_match] in *.
@@ -2808,7 +2877,8 @@ split; [reflexivity|]. split; [|exact HM]. unfold uE, amap_den. cbn [snd edenot]
 exists iv, l'. split; [reflexivity|]. split; [exact Hs | eapply IH; eassumption].
 + destruct HM as (l' & -> & HM). exists l'. split; [reflexivity | eapply IH; eassumption].
 Qed.
-#[using="Type"] Lemma list_insert_nth_maps_match : ltac2:(TCodec.tc2 tcn__AsanPlanSound "N'XD'<'S8%211'B']NyR0%211%4211%811'='Q3&WNr5r4r3%43321r6&U2&T1r2%211%44D719%;3619p081pl6>1ph<@1pi6B1pj2I1pR<M1").
+#[using="Type"] Lemma list_insert_nth_maps_match : forall E ms l i sz,
+maps_match E ms l -> maps_match E (list_insert_nth i (fog_token sz) ms) l.
 Proof.
 intros E ms. induction ms as [|m0 ms IH]; intros l i sz HM.
 - destruct i; cbn [list_insert_nth maps_match]; unfold fog_token, is_fog; cbn [am_kind mkind_eqb]; left; exact HM.
@@ -2855,7 +2925,8 @@ cbn [a_ss a_maps a_totsz a_ylo a_eager a_vis a_ghost a_abytes a_brk a_fd a_tidse
 + rewrite Hm in Hk. cbn in Hk. discriminate.
 + exact (proj1 (Forall_forall _ _) co_kinds0 m Hm Hk).
 Qed.
-#[using="Type"] Lemma fog_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "QC'XD'S2&R6y5']NyR0%211%5241'@y8%611%311p061'QK'='Q3'W?r8r7r6r5r4%6554321'H%@1G&UGr3%23:61(4r2%22M1%83741'Gr:%B518A@?&V7%11:r9%311%@3H31%8261p0:1p0D1pg6Q:1pl6M1ph<O1piNQ11pRFQ31pTJQ91pg4Q@1pR<QB1").
+#[using="Type"] Lemma fog_sound : forall E cs R FULL model i sz cs',
+cs_ok E cs R FULL model -> node_fog cs i sz = Some cs' -> cs_ok E cs' R FULL model /\ pc cs' = pc cs.
 Proof.
 intros E cs R FULL model i sz cs' HC H. unfold node_fog in H.
 destruct (nth_error (a_maps cs) i) as [m|] eqn:Hn; [|discriminate].
@@ -2869,7 +2940,8 @@ apply cs_ok_with_maps; [exact HC | |].
 - eapply list_set_nth_maps_match; [exact Hn | exact Hnf | lia | lia | exact (co_maps _ _ _ _ _ HC)].
 - intros m' Hin. destruct (In_list_set_nth _ _ _ _ Hin) as [->|Hin']; [left; reflexivity | right; exact Hin'].
 Qed.
-#[using="Type"] Lemma fognew_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "QC'XD'S2&R6y5']NyR0%211%5241'@y8%611%311p061'QK'='Q3'W?r8r7r6r5r4%6554321'H%@1G&UHr3%23:61(4r2%22M1%83741'Gr:%B518A@?&V7%11:r9%311%@3H31%8261p0:1p0D1pg6Q:1pl6M1ph<O1piNQ11pRFQ31pTJQ91pg4Q@1pR<QB1").
+#[using="Type"] Lemma fognew_sound : forall E cs R FULL model i sz cs',
+cs_ok E cs R FULL model -> node_fognew cs i sz = Some cs' -> cs_ok E cs' R FULL model /\ pc cs' = pc cs.
 Proof.
 intros E cs R FULL model i sz cs' HC H. unfold node_fognew in H.
 match type of H with (if ?c then _ else _) = _ => destruct c eqn:Hc; [|discriminate] end.
@@ -2877,14 +2949,14 @@ injection H as <-. split; [|reflexivity].
 apply cs_ok_with_maps; [exact HC | apply list_insert_nth_maps_match; exact (co_maps _ _ _ _ _ HC) |].
 intros m' Hin. destruct (In_list_insert_nth _ _ _ _ Hin) as [->|Hin']; [left; reflexivity | right; exact Hin'].
 Qed.
-#[using="Type"] Lemma page_allowedb_app_l : ltac2:(TCodec.tc2 tcn__AsanPlanSound "J'<'B'Q3%2211%411']NyR0%211'H'7&RFr3r1%3221(D%73621&6r4%23?17r2%:221%=3<17p071pk0@1pi<D1pi:E1").
+#[using="Type"] Lemma page_allowedb_app_l : forall l1 l2 p, page_allowedb l1 p = true -> page_allowedb (l1 ++ l2) p = true.
 Proof. intros. unfold page_allowedb in *. rewrite existsb_app, H. reflexivity. Qed.
-#[using="Type"] Lemma MInv_app_r : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q2'<'B'Q3%2211%411'QK'RAr3r1%3221&Z:&Z8&RBr2%211&R>&6r4%23?1;%411%9261&R3&QO%11:%311%?251r5%;3H1:%F21Ep041p0E1piDJ1pi<L1pi:M1").
+#[using="Type"] Lemma MInv_app_r : forall l1 l2 m, MInv l1 m -> eager_used m + A_bytes (l1 ++ l2) <= vm_limit (m_vmmaps m) -> MInv (l1 ++ l2) m.
 Proof.
 intros l1 l2 m [N1 N2 N3 N4 N5] Hb. constructor; try assumption.
 intros p Hp. apply page_allowedb_app_l. apply N3. exact Hp.
 Qed.
-#[using="HS XN XE XB SHADOW_ok KC"] Lemma allow1_cost : ltac2:(TCodec.tc2 tcn__AsanPlanSound "M'XD'XG'Q3&Z:&]OyR0&XCr4r2%3221%6251r1%9221&R>&W<r5(Ar3%24AA;1%5241%711&VN%11>%D231p0<1pj>G1pj4I1peNJ1pR<L1").
+#[using="HS XN XE XB SHADOW_ok KC"] Lemma allow1_cost : forall E b n nhi, bv_unsigned (edenot E n) <= nhi -> A_bytes (allow1 E (b, n)) <= vis_cost nhi.
 Proof.
 intros E b n nhi Hn. unfold allow1, vis_cost. cbn [A_bytes fst snd]. unfold sh_lo, sh_hi. cbn [fst snd].
 pose proof (u64_range (edenot E b)) as Rb. pose proof (u64_range (edenot E n)) as Rn. unfold uE in *. pose proof SHADOW_ok as So. unfold shadow_ok in So.
@@ -2896,7 +2968,8 @@ assert (G3 : (bv_unsigned (edenot E b) + bv_unsigned (edenot E n)) / 8 - bv_unsi
 lia.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Qed.
-#[using="HS XN XE XB SHADOW_ok KC"] Lemma ghost_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "QD'XD'S2&R6y5']NyR0%211%5241'@y8%611%311p061'QK'XG'W?r8r7r6r5r4%6554321'H%?1F&UIvQDr3%342;71(4r2%22M1%93841'Gr:%C518BA@'Q3&V7%11;r9%311%B3531%9271p0;1p0F1pg6Q;1pj4O1peNQ01piNQ21pRFQ41pTJQ:1pg4QA1pR<QC1").
+#[using="HS XN XE XB SHADOW_ok KC"] Lemma ghost_sound : forall E cs R FULL model b n cs',
+cs_ok E cs R FULL model -> node_ghost LIMIT cs b n = Some cs' -> cs_ok E cs' R FULL model /\ pc cs' = pc cs.
 Proof.
 intros E cs R FULL model b n cs' HC H. unfold node_ghost in H.
 destruct (xhi (kn cs) n) as [nhi|] eqn:Hx; [|discriminate].
@@ -2918,13 +2991,13 @@ cbn [a_ss a_maps a_totsz a_ylo a_eager a_vis a_ghost a_abytes a_brk a_fd a_tidse
 - intros a H1 H2 H3 H4 H5. apply (co_zero0 a H1 H2 H3 H4).
 unfold in_ghost in H5 |- *. cbn [a_ghost] in H5. rewrite existsb_app in H5. apply orb_false_iff in H5 as [H5 _]. exact H5.
 Qed.
-Section SE.
-Local Abbreviation SEC_T_kzero_x_sound0 := (ltac2:(TCodec.tc2 tcn__AsanPlanSound "RA'XD']NyR0%211'@y8%511%311p051'<'XL%211'XG'Q3&Y=vZ1r7r6r5%544321r8%746153'H'7&U0r4r3%35;:921(D%73621'G&Z:zr1%3221&Z;&Y:r;%221D%4261%:261&]M&Z8&Y;r<(X?%12JN%4231r2%7221%92Q@1%>11(4%<2Q@E%22Q@1%Q13Q@41p0@1ph<Q<1r:%>2Q:Q9%A221%N2M1%J24Q5%E231&Z?+2+R0%3221%Q5251%Q7281%Q82=1p0Q:1p0QC1p0QF1pj4QN1pjNQN1peNR01phJR21peLR31pT@R71pR<R@1")) (only parsing).
-Variable E : ltac:(sec_ty2 constr:(SEC_T_kzero_x_sound0) 0%nat 0%nat).
-Variable M : ltac:(sec_ty2 constr:(SEC_T_kzero_x_sound0) 1%nat 0%nat).
-Variable allkn : ltac:(sec_ty2 constr:(SEC_T_kzero_x_sound0) 2%nat 0%nat).
-Lemma kzero_x_sound0 : ltac:(sec_stmt2 constr:(SEC_T_kzero_x_sound0) 3%nat 0%nat).
-Proof using Type E M allkn.
+#[using="Type"] Lemma kzero_x_sound0 : forall E M allkn k b off n,
+know_ok SEGS E M allkn ->
+know_ok SEGS E M k -> kzero_x allkn k b off n = true ->
+(forall i, 0 <= i < elenZ E n -> M (Z_to_bv 64 (estart E (SA b off) + i)) = Some (Z_to_bv 8 0))
+/\ 0 <= estart E (SA b off) /\ estart E (SA b off) + elenZ E n <= 2 ^ 64.
+Proof.
+intros E M allkn.
 intros k b off n Hall HK H.
 induction k as [|K rest IH]; [discriminate|].
 apply Forall_cons_iff in HK as [HKK Hrest].
@@ -2955,13 +3028,14 @@ apply CORE; unfold elenZ in *; lia.
 - pose proof (xinside_sound SEGS E M allkn b off n zb zk zn Hall H) as [A0 B0].
 unfold estart in A0, B0. cbn [a_base a_off] in A0, B0. apply CORE; lia.
 Qed.
-End SE.
-#[using="Type"] Lemma A_bytes_fm_split : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q5'XD'B'XG%2211'7p021'<%114'H'Q3&R>&Z5%;233&W<r3%211r1%64>521%811&Z8&Z4r2%23C16%<4D;81%>11&>%<1:%211qk0I1%93J1=%C4KB?1%E11%=281%I3H?1pi6K1pgLN1pR<Q41").
+#[using="Type"] Lemma A_bytes_fm_split : forall E (f : expr * expr -> bool) l,
+A_bytes (flat_map (allow1 E) l)
+= A_bytes (flat_map (allow1 E) (List.filter f l)) + A_bytes (flat_map (allow1 E) (List.filter (fun p => negb (f p)) l)).
 Proof.
 intros E f l. induction l as [|p l IH]; cbn [flat_map List.filter]; [reflexivity|].
 rewrite A_bytes_app, IH. destruct (f p); cbn [negb flat_map]; rewrite ?A_bytes_app; lia.
 Qed.
-#[using="Type"] Lemma A_bytes_allow1_nonneg : ltac2:(TCodec.tc2 tcn__AsanPlanSound "?'XD'B'XG%2211&Z:z&R>&W<r2r1%3221%511%8271pk0:1pR<>1").
+#[using="Type"] Lemma A_bytes_allow1_nonneg : forall E p, 0 <= A_bytes (allow1 E p).
 Proof.
 intros E p. unfold allow1. cbn [A_bytes fst snd].
 pose proof (pagedown_le (uE E (fst p))). pose proof (pageup_ge (uE E (fst p) + uE E (snd p))).
@@ -2971,17 +3045,19 @@ Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
 lia.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Qed.
-#[using="Type"] Lemma vis_here_eq : ltac2:(TCodec.tc2 tcn__AsanPlanSound "D'XG'B%1222'H'7&VOr3r2r1%43321(D%83721(Ar4%24>>18%<3=81p051pk0?1pj4B1peNC1").
+#[using="Type"] Lemma vis_here_eq : forall b n p, vis_here b n p = true -> p = (b, n).
 Proof.
 intros b n [pb pn] H. unfold vis_here in H. cbn [fst snd] in H. apply andb_prop in H as [H1 H2].
 apply expr_eqb_eq in H1. apply expr_eqb_eq in H2. subst. reflexivity.
 Qed.
-#[using="Type"] Lemma A_bytes_fm_here : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q8'XD'XG'<'B%1233%311'Q0'Hr1(Ar4r3%34;;21%63951qk0:1%93;17'Q3&R>&Z5%@233&W<r5%211r2%64D521%811&Z=&Z>&;%12I6%311%;2:C%?11%7231%K3B91p0D1pi6O1pj4Q41peNQ51pR<Q71").
+#[using="Type"] Lemma A_bytes_fm_here : forall E b n l,
+Forall (fun p => p = (b, n)) l -> A_bytes (flat_map (allow1 E) l) = Z.of_nat (length l) * A_bytes (allow1 E (b, n)).
 Proof.
 intros E b n l H. induction l as [|p l IH]; [reflexivity|].
 apply Forall_cons_iff in H as [-> H]. cbn [flat_map length]. rewrite A_bytes_app, (IH H). rewrite Nat2Z.inj_succ. lia.
 Qed.
-#[using="SHADOW_ok"] Lemma unvis_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "QD'XD'S2&R6y5']NyR0%211%5241'@y8%611%311p061'QK'XG'W?r8r7r6r5r4%6554321'H%?1F&V2v0r3%342;71(4r2%22M1%93841'Gr:%C518BA@'Q3&V7%11;r9%311%B3531%9271p0;1p0F1pg6Q;1pj4O1peNQ01piNQ21pRFQ41pTJQ:1pg4QA1pR<QC1").
+#[using="SHADOW_ok"] Lemma unvis_sound : forall E cs R FULL model b n cs',
+cs_ok E cs R FULL model -> node_unvis A cs b n = Some cs' -> cs_ok E cs' R FULL model /\ pc cs' = pc cs.
 Proof.
 intros E cs R FULL model b n cs' HC H. rewrite node_unvis_eq in H. unfold node_unvis_ref in H.
 destruct (split_lit b) as [bb bk] eqn:Hsp.
@@ -3146,7 +3222,9 @@ unfold M, Mr, mrestrict in Z0. rewrite Hh in Z0. exact Z0.
 * rewrite (HID_eq a NA ltac:(lia)) in H1. rewrite Hh in H1. discriminate.
 * rewrite (HID_eq a NA ltac:(lia)) in H1. rewrite Hh in H1. discriminate.
 Qed.
-#[using="argH_agree SINV_agree"] Lemma havocbrk_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "QO'XD'S2&R6y5']NyR0%211%5241'@y8%611%311p061'QK'Q3'W?r8r7r6r5r4%6554321'H%?1F&ULv]8r3%342;71(4r2%22M1%93841'I'G&Y@r;r1%33<21&V4r:%211%73165%9251r9%M58H1LK&V7%11J%218%J3Q221%@251%A281qR>QC1%D2QD1p0F1p0Q11pg6QF1ph:Q:1piBQ;1piNQ=1pRFQ?1pTJQE1pg4QL1pR<QN1").
+#[using="argH_agree SINV_agree"] Lemma havocbrk_sound : forall E cs R FULL model lo hi cs',
+cs_ok E cs R FULL model -> node_havocbrk nx0 cs lo hi = Some cs' ->
+exists E', (env_agree nx0 E E' /\ env_agree (nxt cs) E E') /\ cs_ok E' cs' R FULL model /\ pc cs' = pc cs.
 Proof.
 intros E cs R FULL model lo hi cs' HC H. unfold node_havocbrk in H.
 destruct (xlo (kn cs) (a_brk cs)) as [l|] eqn:Hl; [|discriminate].
@@ -3172,7 +3250,9 @@ try assumption; try reflexivity.
 - constructor; [|exact co_know0]. cbn [kentry_ok]. rewrite Hv, HB0. lia.
 - symmetry. exact Hv.
 Qed.
-#[using="argH_agree SINV_agree"] Lemma intro_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "QO'XD'S2&R6y5']NyR0%211%5241'@y8%611%311p061'QK'Q3'W?r8r7r6r5r4%6554321'H%?1F&UNv]8r3%342;71(4r2%22M1%93841'I'G&Y@r;r1%33<21&V4r:%211%73165%9251r9%M58H1LK&V7%11J%218%J3Q221%@251%A281qR>QC1%D2QD1p0F1p0Q11pg6QF1ph:Q:1piBQ;1piNQ=1pRFQ?1pTJQE1pg4QL1pR<QN1").
+#[using="argH_agree SINV_agree"] Lemma intro_sound : forall E cs R FULL model lo hi cs',
+cs_ok E cs R FULL model -> node_intro nx0 cs lo hi = Some cs' ->
+exists E', (env_agree nx0 E E' /\ env_agree (nxt cs) E E') /\ cs_ok E' cs' R FULL model /\ pc cs' = pc cs.
 Proof.
 intros E cs R FULL model lo hi cs' HC H. unfold node_intro in H.
 match type of H with (if ?c then _ else _) = _ => destruct c eqn:Hc; [|discriminate] end.
@@ -3199,7 +3279,7 @@ Variable m : list (nat * nat).
 Variables fw bw : list (option nat).
 Hypothesis Hfw : mk_fwd m = Some fw.
 Hypothesis Hbw : mk_bwd m = Some bw.
-#[using="Type"] Lemma mk_fwd_spec_gen : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q2'<'B'=%2211%411'@%114%711'H%412&U9r2%211(4r1%2281%83741&J&V3r4%2219%82C7%>3@21&Z2(A%14GG>;r5%43H21%;261pgDK1pk8L1p0?1pl8I1piHM1").
+#[using="Type"] Lemma mk_fwd_spec_gen : forall m0 t, mk_fwd m0 = Some t -> forall s d, nt_get t s = Some d <-> In (s, d) m0.
 Proof.
 induction m0 as [|[s0 d0] rest IH]; intros t H s d; cbn [mk_fwd] in H.
 - injection H as <-. unfold nt_get. cbn. split; [destruct s; discriminate | tauto].
@@ -3212,7 +3292,7 @@ destruct (Nat.eqb_spec s s0) as [->|NE].
 * intros [X|X]; [congruence|]. apply IH in X. congruence.
 + rewrite IH. cbn. split; [tauto|]. intros [X|X]; [congruence|exact X].
 Qed.
-#[using="Type"] Lemma mk_bwd_spec_gen : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q2'<'B'=%2211%411'@%114%711'H%412&U8r2%211(4r1%2281%83741&J&V3r4%2216%82C:%>3@21&Z2(A%14GG>;r5%43H21%;261pgDK1pk8L1p0?1pl8I1piHM1").
+#[using="Type"] Lemma mk_bwd_spec_gen : forall m0 t, mk_bwd m0 = Some t -> forall s d, nt_get t d = Some s <-> In (s, d) m0.
 Proof.
 induction m0 as [|[s0 d0] rest IH]; intros t H s d; cbn [mk_bwd] in H.
 - injection H as <-. unfold nt_get. cbn. split; [destruct d; discriminate | tauto].
@@ -3225,15 +3305,15 @@ destruct (Nat.eqb_spec d d0) as [->|NE].
 * intros [X|X]; [congruence|]. apply IH in X. congruence.
 + rewrite IH. cbn. split; [tauto|]. intros [X|X]; [congruence|exact X].
 Qed.
-#[using="Hfw"] Lemma fw_in : ltac2:(TCodec.tc2 tcn__AsanPlanSound "G'=&J'H'@%114&V3v\1r2%3221(4r1%22;1%:3841&Z2'B%12??(A%14AA:7v\I%63421%C281pgDE1pk8F1").
+#[using="Hfw"] Lemma fw_in : forall s d, nt_get fw s = Some d <-> In (s, d) m.
 Proof. exact (mk_fwd_spec_gen m fw Hfw). Qed.
-#[using="Hbw"] Lemma bw_in : ltac2:(TCodec.tc2 tcn__AsanPlanSound "G'=&J'H'@%114&V3v[6r1%3221(4r2%22;1%:3841&Z2'B%12??(A%14AA7:v\I%63421%C281pgDE1pk8F1").
+#[using="Hbw"] Lemma bw_in : forall s d, nt_get bw d = Some s <-> In (s, d) m.
 Proof. exact (mk_bwd_spec_gen m bw Hbw). Qed.
 Definition ren_env (E : env) : env :=
 Env (fun w => match nt_get bw w with Some s => ev E s | None => ev E w end) (eb E).
 Definition ren_ok (v : nat) : bool :=
 match nt_get fw v with Some _ => true | None => match nt_get bw v with Some _ => false | None => true end end.
-#[using="m Hfw Hbw"] Lemma edenot_rename : ltac2:(TCodec.tc2 tcn__AsanPlanSound "K'XD'XG'H'7&SK&W:r1%3221(D%73621']NyR0%211&XC&W9r3%211&SIv\1r2%3221%8251%9273%E3;21p0?1pgFH1pR<J1").
+#[using="m Hfw Hbw"] Lemma edenot_rename : forall E e, evars_all ren_ok e = true -> edenot (ren_env E) (erename fw e) = edenot E e.
 Proof.
 intros E e. induction e; cbn [evars_all erename edenot]; intros H;
 try reflexivity;
@@ -3256,7 +3336,7 @@ Variable gb : nat.
 Hypothesis Hgb : (nx0 <= gb)%nat.
 Hypothesis Hm : forallb (fun p => Nat.leb gb (fst p) && Nat.leb gb (snd p)) m = true.
 Let ER := edenot_rename m fw bw Hfw Hbw.
-#[using="m Hbw Hm"] Lemma ren_agree : ltac2:(TCodec.tc2 tcn__AsanPlanSound "9'XD&Y@v\2r1&X0v[6%2213%63541pR<81").
+#[using="m Hbw Hm"] Lemma ren_agree : forall E, env_agree gb E (ren_env bw E).
 Proof.
 intros E. split; [|reflexivity]. intros n Hn. cbn [ren_env ev].
 destruct (nt_get bw n) as [s|] eqn:Eb; [|reflexivity].
@@ -3264,9 +3344,9 @@ apply (bw_in m bw Hbw) in Eb. exfalso.
 pose proof (proj1 (forallb_forall _ _) Hm (s, n) Eb) as X. cbn [fst snd] in X.
 apply andb_prop in X as [_ X]. apply Nat.leb_le in X. clear Hgb. lia.
 Qed.
-#[using="m Hfw Hbw ER"] Lemma uE_rename : ltac2:(TCodec.tc2 tcn__AsanPlanSound "K'XD'XG'H'7&SK&X1v\1v[6%3221r1%6221(D%:3921'Q3&X:&X0r3%22:1&SIr2%22>1%7241%8263%E3:21p0<1pgFH1pR<J1").
+#[using="m Hfw Hbw ER"] Lemma uE_rename : forall E e, evars_all (ren_ok fw bw) e = true -> uE (ren_env bw E) (erename fw e) = uE E e.
 Proof. intros. unfold uE. rewrite (ER E e H). reflexivity. Qed.
-#[using="m Hfw Hbw ER"] Lemma regs_ok_rename : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q8'XD'<'XG%211&R6y5']NyR0%211%5241'H'7&Z6&SK&X1v\1v[6%3221%511r2%83B21(D%<3;21&Y>r4r3%33217&X0r5%22=1&Q1&SI%11A%34OO19%;3519p091p0>1pTJL1pkDQ31pR<Q71").
+#[using="m Hfw Hbw ER"] Lemma regs_ok_rename : forall E sr R, forallb (evars_all (ren_ok fw bw)) sr = true -> regs_ok E sr R -> regs_ok (ren_env bw E) (map (erename fw) sr) R.
 Proof.
 intros E sr R Hsr HR r. rewrite (HR r). unfold sr_get. destruct (bv_eqb r 0); [reflexivity|].
 revert Hsr. generalize (ridx r) as i. clear HR r.
@@ -3274,14 +3354,11 @@ induction sr as [|e t IH]; intros i Hsr; [destruct i; reflexivity|].
 cbn [forallb] in Hsr. apply andb_prop in Hsr as [He Ht].
 destruct i as [|i]; cbn [map nth]; [symmetry; exact (ER E e He) | apply IH; exact Ht].
 Qed.
-#[using="Type"] Lemma eb_ren : ltac2:(TCodec.tc2 tcn__AsanPlanSound "B'XD'H'='<']Ny8%211%411p061&XB&X0v[6r1%3221%511%613%?3821pR<A1").
+#[using="Type"] Lemma eb_ren : forall E, eb (ren_env bw E) = eb E.
 Proof. reflexivity. Qed.
-Section SE.
-Local Abbreviation SEC_T_kentry_ok_rename := (ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q6'XD']NyR0%211'@y8%511%311p051'XL'H'7&TN&X1v\1v[6%3221r1%6221(D%:3921&Y<vZ1r4r3r2%544321&X0r5%22>1&TK%12A7%;4:391p071p0>1pS6J1pT@L1pR<Q51")) (only parsing).
-Variable E : ltac:(sec_ty2 constr:(SEC_T_kentry_ok_rename) 0%nat 0%nat).
-Variable M : ltac:(sec_ty2 constr:(SEC_T_kentry_ok_rename) 1%nat 0%nat).
-Lemma kentry_ok_rename : ltac:(sec_stmt2 constr:(SEC_T_kentry_ok_rename) 2%nat 0%nat).
-Proof using m Hfw Hbw ER E M.
+#[using="m Hfw Hbw ER"] Lemma kentry_ok_rename : forall E M K, kvars_all (ren_ok fw bw) K = true -> kentry_ok SEGS E M K -> kentry_ok SEGS (ren_env bw E) M (krename fw K).
+Proof.
+intros E M.
 intros K HK Hk.
 destruct K as [[ab ak] w v|[ab ak] n|[ab ak] n k|lo hi|ae am|re rlo rhi|[ab ak] wn|[b1 k1] dn1 [b2 k2] dn2|[ab ak] n fc|[ab ak] n];
 unfold krename, arename in *; cbn [kvars_all kentry_ok a_base a_off] in *;
@@ -3289,8 +3366,8 @@ repeat match goal with H : (_ && _)%bool = true |- _ => apply andb_prop in H; de
 unfold flat, estart, elenZ, adenot in *; cbn [a_base a_off] in *;
 rewrite ?eb_ren; rewrite ?(ER E) by assumption; exact Hk.
 Qed.
-End SE.
-#[using="m Hfw Hbw ER"] Lemma know_ok_rename : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q<'XD']NyR0%211'@y8%511%311p051'<'XL%211'H'7&Z6&TN&X1v\1v[6%3221%511r1%83<21(D%<3;21&Y=vZ1r4r3r2%544321&X0r5%22?1&Q1&TK%11C%34KK19%=4<5;1p091p0@1phJN1pT@Q21pR<Q;1").
+#[using="m Hfw Hbw ER"] Lemma know_ok_rename : forall E M k, forallb (kvars_all (ren_ok fw bw)) k = true ->
+know_ok SEGS E M k -> know_ok SEGS (ren_env bw E) M (map (krename fw) k).
 Proof.
 intros E M k. induction k as [|K rest IH]; intros Hv Hk; [constructor|].
 cbn [forallb] in Hv. apply andb_prop in Hv as [H1 H2]. apply Forall_cons_iff in Hk as [HK Hr].
@@ -3298,7 +3375,9 @@ cbn [map]. constructor; [apply kentry_ok_rename; assumption | apply IH; assumpti
 Qed.
 Definition pvars_all (l : list (expr * expr)) : bool :=
 forallb (fun p => evars_all (ren_ok fw bw) (fst p) && evars_all (ren_ok fw bw) (snd p)) l.
-#[using="m Hfw Hbw ER"] Lemma allowA_rename : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q7'XD'S2'='H'7&W;&S1r2%211%411(D%83721&RNr3%211%:11%=3<16'<'B'Q3%2211%411&W=&X0v[6r5%3221&V<v\1r4%3321A%9251%:273%N3<21p0B1p0H1pj@Q21pg4Q41pR<Q61").
+#[using="m Hfw Hbw ER"] Lemma allowA_rename : forall E cs nx,
+pvars_all (a_vis cs) = true -> pvars_all (a_ghost cs) = true ->
+allowA (ren_env bw E) (rename_cs fw cs nx) = allowA E cs.
 Proof.
 intros E cs nx Hv Hg. unfold allowA. cbn [rename_cs a_vis a_ghost]. rewrite <- map_app, !flat_map_concat_map, map_map. f_equal.
 apply map_ext_in. intros p Hin.
@@ -3311,27 +3390,32 @@ Qed.
 Proof. intros X Y f P l. induction l as [|x r IH]; [reflexivity|]. cbn. rewrite IH. reflexivity. Qed.
 #[using="Type"] Lemma existsb_ext_in : forall (X : Type) (P Q : X -> bool) l, (forall x, In x l -> P x = Q x) -> existsb P l = existsb Q l.
 Proof. intros X P Q l H. induction l as [|x r IH]; [reflexivity|]. cbn. rewrite (H x (or_introl eq_refl)), IH; [reflexivity|]. intros y Hy. apply H. right. exact Hy. Qed.
-#[using="m Hfw Hbw ER"] Lemma in_allow_rename : ltac2:(TCodec.tc2 tcn__AsanPlanSound "N'XD'S2'='H'7&W;&S1r2%211%411(D%83721'Q3pm>19&WG&X0v[6r4%3221&V<v\1r3%3321?%9251%:273%F3<21p0?1pj@I1pg4K1pR<M1").
+#[using="m Hfw Hbw ER"] Lemma in_allow_rename : forall E cs nx, pvars_all (a_vis cs) = true ->
+in_allow (ren_env bw E) (rename_cs fw cs nx) = in_allow E cs.
 Proof.
 intros E cs nx Hv. apply functional_extensionality. intros z. unfold in_allow, in_vis, in_sh. cbn [rename_cs a_vis].
 rewrite !existsb_map. f_equal; apply existsb_ext_in; intros p Hin;
 pose proof (proj1 (forallb_forall _ _) Hv p Hin) as Hp; apply andb_prop in Hp as [H1 H2];
 unfold sh_lo, sh_hi, prename; cbn [fst snd]; rewrite !(uE_rename E) by assumption; reflexivity.
 Qed.
-#[using="m Hfw Hbw ER"] Lemma in_ghost_rename : ltac2:(TCodec.tc2 tcn__AsanPlanSound "N'XD'S2'='H'7&W;&RNr2%211%411(D%83721'Q3pm>19&WH&X0v[6r4%3221&V<v\1r3%3321?%9251%:273%F3<21p0?1pj@I1pg4K1pR<M1").
+#[using="m Hfw Hbw ER"] Lemma in_ghost_rename : forall E cs nx, pvars_all (a_ghost cs) = true ->
+in_ghost (ren_env bw E) (rename_cs fw cs nx) = in_ghost E cs.
 Proof.
 intros E cs nx Hg. apply functional_extensionality. intros z. unfold in_ghost. cbn [rename_cs a_ghost].
 rewrite existsb_map. apply existsb_ext_in. intros p Hin.
 pose proof (proj1 (forallb_forall _ _) Hg p Hin) as Hp. apply andb_prop in Hp as [H1 H2].
 unfold prename. cbn [fst snd]. rewrite !(uE_rename E) by assumption. reflexivity.
 Qed.
-#[using="nx0 argH_agree m Hfw Hbw gb Hgb Hm ER"] Lemma hid_rename : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q3'XD'S2'='QK'H'7&W;&S1r3%211%411(D%83721']NyR0%211peH1;&WE&X0v[6r5%3221&V<v\1r4%3321Ar2%:3621%;3842%I3=21p0B1piNL1pj@N1pg4Q01pR<Q21").
+#[using="nx0 argH_agree m Hfw Hbw gb Hgb Hm ER"] Lemma hid_rename : forall E cs nx model, pvars_all (a_vis cs) = true ->
+hid (ren_env bw E) (rename_cs fw cs nx) model = hid E cs model.
 Proof.
 intros E cs nx model Hv. apply functional_extensionality. intros a. unfold hid, vis.
 rewrite (in_allow_rename E cs nx Hv). rewrite <- (argH_agree E (ren_env bw E) a); [reflexivity|].
 eapply env_agree_le; [apply ren_agree | exact Hgb].
 Qed.
-#[using="m Hfw Hbw ER"] Lemma maps_match_rename : ltac2:(TCodec.tc2 tcn__AsanPlanSound "QA'XD'<'S8%211'B']NyR0%211%4211%811'H'7&Z6&5&SK&X1v\1v[6%3221&S6r1%211%8241&S7%114%;271%=241qiHI1r2%A3K21(D%E3D21&WNr4r3%33217&X0r5%22E1&Q1&U>%11I%34Q8Q819%;3519p091p0>1pi6Q51pj2Q<1pR<Q@1").
+#[using="m Hfw Hbw ER"] Lemma maps_match_rename : forall E ms l,
+forallb (fun m0 => evars_all (ren_ok fw bw) (am_base m0) && evars_all (ren_ok fw bw) (am_len m0)) ms = true ->
+maps_match E ms l -> maps_match (ren_env bw E) (map (mrename fw) ms) l.
 Proof.
 intros E ms. induction ms as [|[mb ml mk] ms IH]; intros l H HM; cbn [maps_match map] in *; [exact HM|].
 cbn [forallb am_base am_len] in H. apply andb_prop in H as [Hm0 Hr]. apply andb_prop in Hm0 as [H1 H2].
@@ -3342,7 +3426,9 @@ destruct (is_tok_kind mk).
 exists iv, l'. split; [reflexivity|]. split; [exact Hsz | exact (IH _ Hr HM)].
 - destruct HM as (l' & -> & HM). exists l'. split; [reflexivity | exact (IH _ Hr HM)].
 Qed.
-#[using="m Hfw Hbw ER"] Lemma holes_rename : ltac2:(TCodec.tc2 tcn__AsanPlanSound "QG'XD'Q3'<'B']NyR0%211%4211%611'S8%811'H'7&Z6&5&SK&X1v\1v[6%3221&S6r1%211%8241&S7%114%;271%=241qiHC1%@3D18(D%D3C21'Q0&WFr5r4r3%43321r2%73N21&X0r6%22H1%:3198&Q1&U>%11M%34Q6Q61;%@3Q751p0:1p0C1pj2Q91pi6Q<1pm8QD1pR<QF1").
+#[using="m Hfw Hbw ER"] Lemma holes_rename : forall E y l ms,
+forallb (fun m0 => evars_all (ren_ok fw bw) (am_base m0) && evars_all (ren_ok fw bw) (am_len m0)) ms = true ->
+Forall (hole_ok E y l) ms -> Forall (hole_ok (ren_env bw E) y l) (map (mrename fw) ms).
 Proof.
 intros E y l ms H HF. apply Forall_forall. intros m0 Hin Hk. apply in_map_iff in Hin as (m1 & <- & Hin).
 pose proof (proj1 (forallb_forall _ _) H m1 Hin) as Hmm. apply andb_prop in Hmm as [H1 H2].
@@ -3358,7 +3444,9 @@ apply andb_prop in Hv as [Hl Ho]. cbn [frename].
 destruct H as [p [c (H1 & H2 & H3 & H4 & H5)]]. exists p, c.
 rewrite !(uE_rename E) by assumption. rewrite !(ER E) by assumption. rewrite eb_ren. repeat split; assumption.
 Qed.
-#[using="nx0 argH_agree SINV_agree m Hfw Hbw gb Hgb Hm ER"] Lemma cs_ok_rename : ltac2:(TCodec.tc2 tcn__AsanPlanSound "QI'XD'S2&R6y5']NyR0%211%5241'@y8%611%311p061'QK'='H'7&SA&X1v\1v[6%3221r5%6221(D%:3921'<'Y4%211&Y1&S0r6%211%411(?%118%E3831'W?r8r7r4%4532:C1&X0r9%22H1&V<%13K86%:5318@Ip071p0=1p0I1pj@Q51piNQ71pRFQ91pTJQ?1pg4QF1pR<QH1").
+#[using="nx0 argH_agree SINV_agree m Hfw Hbw gb Hgb Hm ER"] Lemma cs_ok_rename : forall E cs R FULL model nx,
+csvars_all (ren_ok fw bw) cs = true -> s_log (a_ss cs) = [] ->
+cs_ok E cs R FULL model -> cs_ok (ren_env bw E) (rename_cs fw cs nx) R FULL model.
 Proof.
 intros E cs R FULL model nx Hv Hlog HC.
 unfold csvars_all in Hv.
@@ -3388,7 +3476,9 @@ exact (proj1 (Forall_forall _ _) co_kinds0 m1 Hin Hk a Ha).
 - eapply SINV_agree; [eapply env_agree_le; [apply ren_agree | exact Hgb] | assumption].
 Qed.
 End RenameCS.
-#[using="argH_agree SINV_agree"] Lemma rename_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "R3'='XD'S2&R6y5']NyR0%211%5241'@y8%611%311p061'QK'<'B%12AA%311'Nv]8r8%3221'W?r7r6r5r4%5574321'H%E1L&UOr:%231<6(4r3%22Q21%83741'I'G&Y@r<r;r1%43321r9%G53D1IF'Q3&V7%11G%21B%F3421%=261%>291qR>QE1%A2QF1p0C1p0M1p0Q41pg6QI1piDQ:1piNQ?1pRFQA1pTJQG1pg4QN1pR<R01ph6R21").
+#[using="argH_agree SINV_agree"] Lemma rename_sound : forall gb E cs R FULL model m cs',
+(nx0 <= gb)%nat -> cs_ok E cs R FULL model -> node_rename gb cs m = Some cs' ->
+exists E', env_agree gb E E' /\ cs_ok E' cs' R FULL model /\ pc cs' = pc cs.
 Proof.
 intros gb E cs R FULL model m cs' Hgb HC H. unfold node_rename in H.
 destruct (forallb (fun p => Nat.leb gb (fst p) && Nat.leb gb (snd p)) m) eqn:Hm; [|discriminate].
@@ -3401,9 +3491,12 @@ match goal with |- cs_ok _ (with_ss _ (mk_ss _ _ _ ?NX)) _ _ _ =>
 change (cs_ok (ren_env bw E) (rename_cs fw cs NX) R FULL model) end.
 apply (cs_ok_rename m fw bw Hfw Hbw gb Hgb Hm); [exact Hv | exact (co_log _ _ _ _ _ HC) | exact HC].
 Qed.
-#[using="argH_agree SINV_agree"] Lemma compact_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "QM'='XD'S2&R6y5']NyR0%211%5241'@y8%611%311p061'QK'Nv]8r7%3221'W?r6r5r4r3%5574321'H%A1H&UDr9%221<(4%12M8%73631'I'G&Y@r;r:r1%43321r8%F53D1HE'Q3&V7%11G%21A%E3421%=261%>291qR>Q@1%A2QA1p0C1p0L1p0Q31pg6QD1piNQ91pRFQ;1pTJQA1pg4QH1pR<QJ1ph6QL1").
+#[using="argH_agree SINV_agree"] Lemma compact_sound : forall gb E cs R FULL model cs',
+(nx0 <= gb)%nat -> cs_ok E cs R FULL model -> node_compact gb cs = Some cs' ->
+exists E', env_agree gb E E' /\ cs_ok E' cs' R FULL model /\ pc cs' = pc cs.
 Proof. intros gb E cs R FULL model cs' Hgb HC H. unfold node_compact in H. eapply rename_sound; eassumption. Qed.
-#[using="SEGS_in_hull HULL_ok"] Lemma abstractcell_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "QD'XD'S2&R6y5']NyR0%211%5241'@y8%611%311p061'QK'XG'Q3'W?r8r7r6r5r4%6554321'H%@1G&UAv0r3%342;71(4r2%22N1%93841'Gr:%C518BA@&V7%11:r9%311%A3I31%8261p0:1p0E1pg6Q;1pj4N1peNQ01piNQ21pRFQ41pTJQ:1pg4QA1pR<QC1").
+#[using="SEGS_in_hull HULL_ok"] Lemma abstractcell_sound : forall E cs R FULL model b n cs',
+cs_ok E cs R FULL model -> node_abstractcell A cs b n = Some cs' -> cs_ok E cs' R FULL model /\ pc cs' = pc cs.
 Proof.
 intros E cs R FULL model b n cs' HC H. unfold node_abstractcell in H.
 destruct (split_lit b) as [bb bo]. cbv zeta in H.
@@ -3413,7 +3506,7 @@ apply cs_ok_set_kn; [exact HC|]. constructor.
 - eapply kunk_covered_sound; [exact (co_know _ _ _ _ _ HC) | exact Hcov].
 - eapply know_ok_cutout; [exact (co_know _ _ _ _ _ HC) | intros; reflexivity].
 Qed.
-#[using="Type"] Lemma hw_apply_true_incl : ltac2:(TCodec.tc2 tcn__AsanPlanSound "E'<'XL%211'Y3'=&Z2r1&T6r4r3r2(D%544321%83<71r5%:3>51p031pS6@1pm6>1peH@1pk2B1").
+#[using="Type"] Lemma hw_apply_true_incl : forall r a x K, In K (hw_apply r a x true) -> In K r.
 Proof.
 induction r as [|X r IH]; intros a x K H; [exact H|]. cbn [hw_apply] in H.
 destruct X as [a' w v| | | | | | | | |]; cbn in H;
@@ -3421,13 +3514,16 @@ try (destruct H as [H|H]; [left; exact H | right; eapply IH; exact H]).
 destruct (saddr_eqb a' a); [right; eapply IH; exact H|].
 destruct H as [H|H]; [left; exact H | right; eapply IH; exact H].
 Qed.
-#[using="Type"] Lemma hw_apply_true_vars : ltac2:(TCodec.tc2 tcn__AsanPlanSound "I'<'XL%211'Y3'='H'7&TJr1r4%3221(D%73621r2&T6r5r3%342816%;251%>3=18p081peNA1pm6B1peHD1pk2F1").
+#[using="Type"] Lemma hw_apply_true_vars : forall r a x b, AP.kn_vars_lt b r = true -> AP.kn_vars_lt b (hw_apply r a x true) = true.
 Proof.
 induction r as [|X r IH]; intros a x b H; [reflexivity|]. cbn [AP.kn_vars_lt] in H. apply andb_prop in H as [HX Hr].
 cbn [hw_apply]. destruct X as [a' w v| | | | | | | | |]; cbn [AP.kn_vars_lt]; rewrite ?HX, ?(IH a x b Hr); try reflexivity.
 destruct (saddr_eqb a' a); [exact (IH a x b Hr)|]. cbn [AP.kn_vars_lt]. rewrite HX, (IH a x b Hr). reflexivity.
 Qed.
-#[using="Type"] Lemma hw_apply_ok : ltac2:(TCodec.tc2 tcn__AsanPlanSound "QD'XD']NyR0%211'@y8%511%311p051'<'XL%211'Y3'=&Y=vZ1r5r4r3%544321'H'7&TJr2%2217(D%63521'G&X3r7&XC&T8%12@?%3241%635@1r6&T6(9%24FED1%I4H541(3%11G%D214%G3F1B%A251p0C1p0K1pm6Q21peHQ41phJQ61pT@Q:1pR<QC1").
+#[using="Type"] Lemma hw_apply_ok : forall E M k a x,
+know_ok SEGS E M k -> AP.kn_vars_lt x k = true ->
+know_ok SEGS (upd E x (edenot E (hw_val k a))) M (hw_apply k a x false)
+/\ AP.kn_vars_lt (Datatypes.S x) (hw_apply k a x false) = true.
 Proof.
 intros E M k a x. induction k as [|X r IH]; intros HK Hv.
 - split; [constructor | reflexivity].
@@ -3460,7 +3556,9 @@ rewrite Ka. cbn [AP.expr_vars_lt]. replace (Nat.ltb x (Datatypes.S x)) with true
 eapply kn_vars_lt_mono'; [apply hw_apply_true_vars; exact Hvr | lia].
 + destruct (IH Hr Hvr) as [IH1 IH2]. split; [constructor; [apply KEEP | exact IH1] | cbn [AP.kn_vars_lt]; rewrite KEEPV, IH2; reflexivity].
 Qed.
-#[using="Type"] Lemma hw_go_ok : ltac2:(TCodec.tc2 tcn__AsanPlanSound "QH'<'XG%211'XD']NyR0%211'@y8%511%311p051'XL%=11'=&Y=vZ1r4r3r2%544321'H'7&TJ%1256(D%53421'I'G&Y@r7r1%33?21r6&T7r5r8%3321D%G4F751&M&;%12Q85%32I1%D216%G3F1C%A271%B2>1qR>Q<1%E2Q=1p0G1p0N1pm6Q51phJQ71pT@Q:1pR<QC1pf<QE1").
+#[using="Type"] Lemma hw_go_ok : forall bs E M k x,
+know_ok SEGS E M k -> AP.kn_vars_lt x k = true ->
+exists E', env_agree x E E' /\ know_ok SEGS E' M (hw_go k bs x) /\ AP.kn_vars_lt (x + length bs)%nat (hw_go k bs x) = true.
 Proof.
 induction bs as [|b r IH]; intros E M k x HK Hv.
 - exists E. split; [apply env_agree_refl|]. cbn [hw_go length]. rewrite Nat.add_0_r. split; assumption.
@@ -3469,7 +3567,9 @@ destruct (IH _ M _ (Datatypes.S x) H1 H2) as (E' & Hag & HK' & Hv').
 exists E'. split; [|split; [exact HK' | rewrite <- Nat.add_succ_comm; exact Hv']].
 apply (env_agree_trans _ _ (upd E x (edenot E (hw_val k (sa_of b)))) _); [apply upd_agree | eapply env_agree_le; [exact Hag | lia]].
 Qed.
-#[using="argH_agree SINV_agree"] Lemma havocwords_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "R0'XD'S2&R6y5']NyR0%211%5241'@y8%611%311p061'QK'<'XG%211'W?r7r6r5r4r3%6554321'H%A1H&UMv]8%231:6(4r2%22N1%83741'I'G&Y@r:r1%33;21&V4r9%211%73165%9251r8%L58H1KJ'Q3&V7%11K%219%J3421%A261%B291qR>QE1%E2QF1p0G1p0Q11pg6QH1pf<Q:1piNQ>1pRFQ@1pTJQF1pg4QM1pR<QO1").
+#[using="argH_agree SINV_agree"] Lemma havocwords_sound : forall E cs R FULL model bs cs',
+cs_ok E cs R FULL model -> node_havocwords nx0 cs bs = Some cs' ->
+exists E', (env_agree nx0 E E' /\ env_agree (nxt cs) E E') /\ cs_ok E' cs' R FULL model /\ pc cs' = pc cs.
 Proof.
 intros E cs R FULL model bs cs' HC H. unfold node_havocwords in H.
 destruct (fresh_ok nx0 cs) eqn:Hf; [|discriminate]. injection H as <-.
@@ -3486,7 +3586,8 @@ try assumption; reflexivity.
 - unfold Mr. change (hid E' (bump cs (length bs)) model) with (hid E' cs model).
 rewrite (hid_agree (nxt cs) E E' cs model Hag Fle Fallow). exact HK'.
 Qed.
-#[using="Type"] Lemma respell_ok_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q6'XD']NyR0%211'@y8%511%311p051'<'XL%211'XG&Y=vZ1r5r4r3%544321'H'7&V>r2%23761(D%63521&XCr7%221<%322<%;3K21p061p0>1pgFE1peHF1phJH1pT@L1pR<Q51").
+#[using="Type"] Lemma respell_ok_sound : forall E M k a e,
+know_ok SEGS E M k -> respell_ok k a e = true -> edenot E a = edenot E e.
 Proof.
 intros E M k a e HK H. unfold respell_ok in H.
 destruct (decide_branch k BC_EQ a e) as [[|]|] eqn:Hd.
@@ -3508,7 +3609,8 @@ apply bv_eq. change (bv_modulus 64) with (2 ^ 64)%Z in Hb. unfold two64 in *.
 assert (Hm : ((bv_unsigned (edenot E a) - bv_unsigned (edenot E e)) mod 2 ^ 64 = 0)%Z) by lia.
 apply Z.mod_divide in Hm; [|lia]. destruct Hm as [q Hq]. assert (q = 0)%Z by nia. subst q. lia.
 Qed.
-#[using="Type"] Lemma respell_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "QD'XD'S2&R6y5']NyR0%211%5241'@y8%611%311p061'QK'='XG'W?r8r7r6r5r4%6554321'H%@1G&V0r3%23:61(4r2%22M1%83741'Gr:%B518A@?'Q3&V7%11;r9%311%A3531%9271p0;1p0E1pg6Q;1pgFN1pk2Q01piNQ21pRFQ41pTJQ:1pg4QA1pR<QC1").
+#[using="Type"] Lemma respell_sound : forall E cs R FULL model r e cs',
+cs_ok E cs R FULL model -> node_respell cs r e = Some cs' -> cs_ok E cs' R FULL model /\ pc cs' = pc cs.
 Proof.
 intros E cs R FULL model r e cs' HC H. unfold node_respell in H.
 destruct (Nat.ltb 0 r && Nat.ltb r 32 && AP.expr_vars_lt (nxt cs) e && respell_ok (kn cs) (reg cs r) e)%bool eqn:Hc; [|discriminate].
@@ -3519,7 +3621,9 @@ split; [|reflexivity].
 destruct HC; constructor; cbn [set_reg with_ss a_ss mk_ss s_regs s_log s_know kn a_maps a_totsz a_ylo a_eager a_vis a_abytes a_brk a_fd a_tidset]; try assumption; try reflexivity.
 apply regs_ok_respell; [assumption | lia | unfold reg in Heq; symmetry; exact Heq].
 Qed.
-#[using="Type"] Lemma self_jump_word : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q5'QG'H'@']NyR0%211%411&QIr1%211(1%116%;3631yQ0%;11%=11&QFvZ1&QHr2%211%5241(4&]M&RK%22<1%42<1%J3<61'7&YEr3%22>1(D%Q03521p071p0G1pj2Q41").
+#[using="Type"] Lemma self_jump_word : forall ms,
+ms_svc_pending ms = None -> fetch_word SEGS (ms_pc ms) = Some (Z_to_bv 32 SPIN_WORD) ->
+is_self_jump SEGS ms = true.
 Proof. intros ms Hs Hf. unfold is_self_jump. rewrite Hs, Hf. vm_compute. reflexivity. Qed.
 Definition LCOK (lc : option loopctx) (D : TSet) (E : env) (fs : Fs.Fs) : Prop :=
 match lc with
@@ -3535,7 +3639,8 @@ end.
 Proof. intros [[h nx lo hi|j js sk b lo]|] D E fs HL; cbn [LCOK lc_bnd] in *; [destruct HL as [(H1 & H2 & _) _]; lia | destruct HL as [(H1 & _ & _) _]; lia | lia]. Qed.
 Definition lc_guard (lc : option loopctx) (cs : acs) : bool :=
 match lc with Some c => Nat.leb (lc_bnd c) (nxt cs) | None => true end.
-#[using="Type"] Lemma LCOK_agree : ltac2:(TCodec.tc2 tcn__AsanPlanSound "Q5'@'U6%211&YJ'XD&QE'S2&W7r6r5r4r2%544321'H'7&WMr7%2216(D%63521&Y@&V4r3%211%431@?r9r8%D421CBp041p0:1p0B1pg4I1ph0K1pR>M1pR<N1pR:Q01pi>Q21").
+#[using="Type"] Lemma LCOK_agree : forall lc D E E' fs cs,
+LCOK lc D E fs -> lc_guard lc cs = true -> env_agree (nxt cs) E E' -> LCOK lc D E' fs.
 Proof.
 intros [[h nx lo hi|j js sk b lo]|] D E E' fs cs HL Hg Hag; [| |exact I]; cbn [LCOK lc_guard lc_bnd] in *;
 apply Nat.leb_le in Hg; destruct HL as [(Hn0 & Hlh & Hlen) HL]; (split; [split; [exact Hn0 | split; [exact Hlh | exact Hlen]]|]);
@@ -3548,13 +3653,23 @@ intros [[h nx lo hi|j js sk b lo]|] D E E' fs HL Hag; [| |exact I]; cbn [LCOK lc
 destruct HL as [(Hn0 & Hlh & Hlen) HL]; (split; [split; [exact Hn0 | split; [exact Hlh | exact Hlen]]|]);
 intros E2 R' F' m' Hag2; apply HL; (eapply env_agree_trans; [eapply env_agree_le; [exact Hag | lia] | exact Hag2]).
 Qed.
-#[using="HOLES_agree"] Lemma cont_agree : ltac2:(TCodec.tc2 tcn__AsanPlanSound "T0'='@'U6%211'V8'S2'VF'XD'QK&YJ'H'S?&S;vZ1vQ@v0v]8vQDvZIvZHvZGvZJvQ?vQCr:r9r8r5r7%A@@?>=<;:987654321(RJr4%211%G3F41&W7r2&QMr3%211%54>481'7&WM%12B@(D%Q23421(?'QL%211%A11&R6y5']NyR0%211%5241y8%511%QH11p051'W?r=r1%35O2IK1rA%L1M%O42Q9Q61r;%11D'YOv]E&X5r6&V7r@%211%55QN41Q@Q<&X2r<%Q:1Q?r?%443QD21%=4R4<61p0?1p0B1p0F1piNR=1pRFL1pTJQ11pR<RA1'G&Y@%13R;>QL&V4%11>%431AQO%6241%Q55R5AR1QKQM&QE%QN1Q6%RI32QM1%L1Q5%O5RHN1R:R6r>%R311%L4Q<I1O%Q54RLQ441p071p0;1p0=1pj0S51pRHQD1pTLQI1pR>S91p0I1p0R21p0R71p0R=1p0RD1pR:S=1piNS?1pR<SA1pk8SC1pg6SE1pg4SF1phJSH1pi>SJ1ph2SN1pf6SO1").
+#[using="HOLES_agree"] Lemma cont_agree : forall bfuel fuel lc k cs cs' s E model D,
+CHECK bfuel fuel lc cs' k = COk s ->
+LCOK lc D E (m_fs model) -> lc_guard lc cs = true -> D [] ->
+(forall E R FULL model, cs_ok E cs' R FULL model -> LCOK lc D E (m_fs model) -> D [] ->
+srealizes SEGS scfg (cfg R (pc cs') FULL model) (sd D E (m_fs model) s)) ->
+forall E' R' FULL' model',
+env_agree nx0 E E' /\ env_agree (nxt cs) E E' -> cs_ok E' cs' R' FULL' model' -> m_fs model' = m_fs model ->
+srealizes SEGS scfg (cfg R' (pc cs') FULL' model') (sd D E (m_fs model) s).
 Proof.
 intros bfuel fuel lc k cs cs' s E model D Hc HL Hg HD IH E' R' FULL' model' [Hag Hag2] HC' Hfs.
 rewrite (sd_agree D E E' (m_fs model) s Hag (check_vars _ _ _ _ _ _ Hc)), <- Hfs.
 apply (IH E' R' FULL' model' HC'); [|exact HD]. rewrite Hfs. eapply LCOK_agree; [exact HL | exact Hg | exact Hag2].
 Qed.
-#[using="IT_ok SEGS_wx SEGS_in_hull HULL_ok SHADOW_ok argH_high argH_agree SINV_frame SINV_agree HOLES_agree HOLES_nil node_sys_sound node_brk2_sound node_mmap2_sound node_mmapin_sound node_mprotect2_sound node_exit_sound node_x_sound node_join_sound node_ext_sound node_emit_sound node_ext2_sound HS_sound"] Theorem check_sound : ltac2:(TCodec.tc2 tcn__AsanPlanSound "RC'='@'U6%211'V8'S2'VF'H'S?&S;vZ1vQ@v0v]8vQDvZIvZHvZGvZJvQ?vQCr5r6r4r2r3%A@@?>=<;:987654321(RJr1%211%G3F41'XD&R6y5']NyR0%211%5241y8%511%Q711p051'QK&YJ'W?r8%25I1GEF&W7r;&QM%11I%443KM1(?'QL%211%N11'YOv]E&X5r7&V7%11=%45QD31Q8Q9&X2%?1Q;r:%34Q;E21%;4QI:51p0=1p0B1p0H1pR:L1piNN1pRFQ01pTJQ51pR<Q<1p0Q>1pk8R71pg4R91pk0R;1pi>R=1pf6RA1ph2RB1").
+#[using="IT_ok SEGS_wx SEGS_in_hull HULL_ok SHADOW_ok argH_high argH_agree SINV_frame SINV_agree HOLES_agree HOLES_nil node_sys_sound node_brk2_sound node_mmap2_sound node_mmapin_sound node_mprotect2_sound node_exit_sound node_x_sound node_join_sound node_ext_sound node_emit_sound node_ext2_sound HS_sound"] Theorem check_sound : forall fuel bfuel lc p cs s,
+CHECK bfuel fuel lc cs p = COk s ->
+forall E R FULL model D, cs_ok E cs R FULL model -> LCOK lc D E (m_fs model) -> D [] ->
+srealizes SEGS scfg (cfg R (pc cs) FULL model) (sd D E (m_fs model) s).
 Proof.
 induction fuel as [|fuel IH]; intros bfuel lc p cs s Hc E R FULL model D HC HL HD; [discriminate|].
 cbn [AP.check] in Hc.
@@ -3667,7 +3782,7 @@ destruct (is_ecall_at SEGS cs) eqn:Hec; [|discriminate].
 destruct (node_mmapin A LIMIT false cs) as [[[csa csb] cscs]|] eqn:Hn; [|discriminate].
 destruct (CHECK bfuel fuel lc csa ia) as [sa|] eqn:H1; [|discriminate].
 destruct (CHECK bfuel fuel lc csb ib) as [sb|] eqn:H2; [|discriminate].
-destruct (check_all A (CHECK bfuel fuel lc) ic cscs) as [sc|] eqn:H3; [|discriminate].
+destruct (check_all A rz (CHECK bfuel fuel lc) ic cscs) as [sc|] eqn:H3; [|discriminate].
 injection Hc as <-.
 pose proof (proj2 (check_all_ok _ _ _ _ H3)) as Hall.
 eapply srz_conseq; [| eapply t_eq_trans; [| apply sd_salt2; exact HD]; apply t_eq_alt2; [apply t_eq_refl' | apply sd_salt2; exact HD]].
@@ -3692,7 +3807,7 @@ eapply srz_conseq; [| apply sd_salt2; exact HD].
 eapply (node_brk2_sound cs csa csb E R FULL model); [exact HC | exact Hec | exact Hn | exact (CONT ka csa sa H1) | exact (CONT kb csb sb H2)].
 -
 destruct (XON x) eqn:HXon; [|discriminate].
-destruct (node_x SEGS A nx0 x args cs) as [cs1|] eqn:Hn; [|discriminate].
+destruct (node_x SEGS A nx0 rz x args cs) as [cs1|] eqn:Hn; [|discriminate].
 eapply (node_x_sound x HXon args cs cs1 E R FULL model); [exact HC | reflexivity | exact Hn |]. exact (CONT k cs1 s Hc).
 -
 destruct (XN xid xargs cs) as [cs1|] eqn:Hn; [|discriminate].
@@ -3889,7 +4004,7 @@ destruct (is_ecall_at SEGS cs) eqn:Hec; [|discriminate].
 destruct (node_mmapin A LIMIT true cs) as [[[csa csb] cscs]|] eqn:Hn; [|discriminate].
 destruct (CHECK bfuel fuel lc csa iha) as [sa|] eqn:H1; [|discriminate].
 destruct (CHECK bfuel fuel lc csb ihb) as [sb|] eqn:H2; [|discriminate].
-destruct (check_all A (CHECK bfuel fuel lc) ihc cscs) as [sc|] eqn:H3; [|discriminate].
+destruct (check_all A rz (CHECK bfuel fuel lc) ihc cscs) as [sc|] eqn:H3; [|discriminate].
 injection Hc as <-.
 pose proof (proj2 (check_all_ok _ _ _ _ H3)) as Hall.
 eapply srz_conseq; [| eapply t_eq_trans; [| apply sd_salt2; exact HD]; apply t_eq_alt2; [apply t_eq_refl' | apply sd_salt2; exact HD]].

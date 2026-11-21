@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the standard model's new channel-reader field passed on). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -36,8 +37,8 @@ Theorem target_class_sound_top : forall (bfuel fuel : nat) (nlo nhi : Z) (p : pl
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x32904) M (seg_rom RSEGS)) model)
              (t_target content (m_fs model)).
 Proof.
-  intros bfuel fuel nlo nhi p s HC HS Htop HLIB sp0 gm area brkv mas tid sec content R M VM model TP TV [Mf Mv Mh Ml Mm] Hn.
-  destruct (target_entry_ok sp0 gm area brkv mas tid sec content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Hn) as (e & can & He & Hcan & CS).
+  intros bfuel fuel nlo nhi p s HC HS Htop HLIB sp0 gm area brkv mas tid sec content R M VM model TP TV [Mf Mv Mh Ml Mm Mr] Hn.
+  destruct (target_entry_ok sp0 gm area brkv mas tid sec content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Mr Hn) as (e & can & He & Hcan & CS).
   pose proof (tp_len _ _ _ _ _ _ _ _ _ _ TP) as HL.
   assert (CR : 0 <= hdr_cfglen content < 32768) by (unfold hdr_cfglen; apply Z.mod_pos_bound; lia).
   assert (C0 : hdr_cfglen content = 0) by (unfold hdr_paylen in Hn; lia).
@@ -61,8 +62,8 @@ Theorem target_class_sound_top_k : forall (k : Z) (bfuel fuel : nat) (nlo nhi : 
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x32904) M (seg_rom RSEGS)) model)
              (t_target content (m_fs model)).
 Proof.
-  intros k bfuel fuel nlo nhi p s HC HS Htop HLIB sp0 B area brkv mas tid sec content R M VM model TP TV [Mf Mv Mh Ml Mm] Hn.
-  destruct (target_entry_k_ok k sp0 B area brkv mas tid sec content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Hn) as (e & can & He & Hcan & CS).
+  intros k bfuel fuel nlo nhi p s HC HS Htop HLIB sp0 B area brkv mas tid sec content R M VM model TP TV [Mf Mv Mh Ml Mm Mr] Hn.
+  destruct (target_entry_k_ok k sp0 B area brkv mas tid sec content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Mr Hn) as (e & can & He & Hcan & CS).
   pose proof (tk_len _ _ _ _ _ _ _ _ _ _ _ TP) as HL. pose proof (tk_L _ _ _ _ _ _ _ _ _ _ _ TP) as HK.
   pose proof (capk_pos (k - 1) ltac:(pose proof (wk_k _ _ _ _ _ _ _ _ _ (tk_world _ _ _ _ _ _ _ _ _ _ _ TP)); lia)) as Hc.
   assert (CR : 0 <= hdr_cfglen content < 32768) by (unfold hdr_cfglen; apply Z.mod_pos_bound; lia).
@@ -88,8 +89,8 @@ Theorem target_class_sound_low_k : forall (k : Z) (bfuel fuel : nat) (nlo nhi : 
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x32904) M (seg_rom RSEGS)) model)
              (t_target content (m_fs model)).
 Proof.
-  intros k bfuel fuel nlo nhi p s HC HS Hlow H0 Hz HLIB sp0 B area brkv mas tid sec content R M VM model TP TV [Mf Mv Mh Ml Mm] Hn.
-  destruct (target_entry_k_ok k sp0 B area brkv mas tid sec content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Hn) as (e & can & He & Hcan & CS).
+  intros k bfuel fuel nlo nhi p s HC HS Hlow H0 Hz HLIB sp0 B area brkv mas tid sec content R M VM model TP TV [Mf Mv Mh Ml Mm Mr] Hn.
+  destruct (target_entry_k_ok k sp0 B area brkv mas tid sec content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Mr Hn) as (e & can & He & Hcan & CS).
   pose proof (tk_len _ _ _ _ _ _ _ _ _ _ _ TP) as HL. pose proof (tk_L _ _ _ _ _ _ _ _ _ _ _ TP) as HK.
   assert (C1 : 1 <= hdr_cfglen content) by (unfold hdr_paylen in Hn; lia).
   eapply rz_conseq.

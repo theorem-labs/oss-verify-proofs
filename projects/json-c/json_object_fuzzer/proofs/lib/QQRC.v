@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the auxv entries: rauxv_ok's witness as the av, vs, rnd, ex and rs of rauxv_list in rauxv_ok_malloc_fp; mremap's EINVAL answer: the error arm allows e = 12 or e = 22). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -2872,7 +2873,7 @@ alloc_ceiling <= lo -> sp <= B -> rauxv_ok m' B.
 Proof. clear - RIMG_HI RDATA_LO gw_RTEXT_LO gw_RDATA2_LO rvm_wait_entry RNG_RATP LAY_lo_RATP LAY_hi_RATP LAY_win_0 LAY_win_1 LAY_win_2 LAY_win_3 LAY_win_4 LAY_ref_reserved rmmap_entry rmunmap_entry st st2 lo sp m0 m2 m m' B RATP. gw_expose_fam RATP.
 intros MR0 MR2 AUX PE CLO SB. eapply rauxv_ok_pres; [gw_exact AUX| gw_exact PE| |].
 - intros a Ha Hfp. destruct (rmalloc_fp_cases st st2 lo sp m0 m2 a MR0 MR2 Hfp); [lia|].
-destruct AUX as (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & _ & _ & _ & HH). unfold alloc_ceiling in *. lia.
+destruct AUX as (av & vs & rnd & ex & rs & _ & _ & _ & HH). unfold alloc_ceiling in *. lia.
 - intros a Ha Hfp. gw_expose_fam RATP.
 destruct (rmalloc_fp_image st st2 lo sp m0 m2 a MR0 MR2 Hfp CLO ltac:(lia)) as [X|X]; gw_expose_fam RATP; lia.
 Qed.
@@ -4264,7 +4265,7 @@ Qed.
 let zz := match x with MrErr e => neg_errno e | MrInPlace => B | MrMoved a => a end in
 mremap_answer_ok live B ol nd zz = true ->
 match x with
-| MrErr e => e = 12
+| MrErr e => e = 12 \/ e = 22
 | MrInPlace => True
 | MrMoved a => (a mod 4096 = 0 /\ 0 < a /\ a + nd <= alloc_ceiling) /\ avoids a nd [] = true /\ a <> B mod 2^64
 end ->

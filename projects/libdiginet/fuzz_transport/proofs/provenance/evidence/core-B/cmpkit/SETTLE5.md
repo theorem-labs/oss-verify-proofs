@@ -1,6 +1,6 @@
 # Five runtime functions on cmpkit 86da41d3ef68 (row TCB, image B): kit verdict and settled verdict
 
-Kit: the tool registry 98e50c029045 tools/cmpkit/86da41d3ef68/ (SHA256SUMS: all 9 files OK). Compare: strictcmp3
+Kit: the tool registry tools/cmpkit/86da41d3ef68/ (SHA256SUMS: all 9 files OK). Compare: strictcmp3
 65688e94214a, donor libreac fuzz_decode.asan-ubsan twin (6744989bb2e6) vs libdiginet fuzz_transport.asan-ubsan twin
 (e217cb0a84f1; pin 41113a03c82f). Each name has exactly one sized FUNC copy in both twins (strictcmp3 refuses
 otherwise; settle5-B.py asserts it). The full differing-target list is read from tcmp, not the printed rows.

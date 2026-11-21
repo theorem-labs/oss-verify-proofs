@@ -6,7 +6,7 @@ and `(* Modified by ... *)` of DONOR_LIB/<F>, byte for byte, in place of the sta
 2026-10-31 18:12Z: a file copied or relocated from an Anthropic-headed file keeps its donor's header lines as copied,
 `Modified by` lines included; licence-lines (C) later rewrites them through the unit's path-map row). The stage-out's
 own leading block (the donor's lines, which port_core's renames may reach, and port_core's notice) is not copied.
-DONOR_LIB: the donor's released lib in repository layout, unnormalised (`git archive 98c99a85e4
+DONOR_LIB: the donor's released lib in repository layout, unnormalised (`git archive
 projects/libreac/fuzz_grant/proofs/lib`), <F> at the same relative path (A/Rt/..., Reusable/...).
 It refuses (exit 1, nothing written) unless, for every file: the donor's header is at least its two licence lines and
 each is a whole comment on its line; no other line of the donor or of the stage-out below its block is such a line; and

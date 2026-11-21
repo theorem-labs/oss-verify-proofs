@@ -1,9 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (Linux's mmap placement, mmap's MAP_FIXED overflow arm, the model's munmap, mremap's grow and move and brk's page-granular ledger). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import BudgetPremise.
+(* 727298f3: [close_place_bound] below needs [Placement.linux_place_admissible] and
+   [mmap_grant_len_ok].  Neither was in scope here, and inside an Ltac [match goal]
+   branch an unbound reference fails as "No applicable tactic" rather than naming
+   itself -- it only named itself once the body moved to a top-level [Ltac].  Same two
+   modules [VCommon/Ax/AxSysMmap.v] imports. *)
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs Placement.
 From OSSVerify.Proofs.openssl.bignum.lib.Lib Require Import LimBase LimMm LimMmap LimSpec LimMove LimFrame.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -18,8 +25,6 @@ Lemma fits_cons : forall (a n : word) l, (bv_unsigned a + bv_unsigned n <= two_p
 Proof. intros a n l H Hl b s [E|Hin]; [inversion E; subst; exact H | exact (Hl b s Hin)]. Qed.
 Lemma fits_app : forall l1 l2, fits l1 -> fits l2 -> fits (l1 ++ l2).
 Proof. intros l1 l2 H1 H2 a sz Hin. apply in_app_or in Hin as [H|H]; [exact (H1 _ _ H) | exact (H2 _ _ H)]. Qed.
-Lemma fits_map_remove : forall l a, fits l -> fits (map_remove l a).
-Proof. intros l a H b s Hin. unfold map_remove in Hin. apply List.filter_In in Hin as [Hin _]. exact (H b s Hin). Qed.
 Lemma fits_maps_subtract : forall l lo hi, fits l -> fits (maps_subtract l lo hi).
 Proof.
   intros l lo hi H b s Hin.
@@ -103,21 +108,69 @@ Proof.
   unfold vm_fit, brk_model_next. cbn [vm_maps]. fold (fits (brk_maps_next (m_vmmaps m) req x)).
   unfold brk_maps_next.
   destruct ((0 <? bv_unsigned (vm_brk (m_vmmaps m)))%Z && (bv_unsigned x <? bv_unsigned (vm_brk (m_vmmaps m)))%Z).
-  - apply fits_maps_subtract. exact Hf.
+  - (* SHRINK: the cut is now page-granular and guarded ([brk_unmap_cut]) *)
+    unfold brk_unmap_cut. cbv zeta.
+    destruct (page_round_up_Z (bv_unsigned x)
+              <? page_round_up_Z (bv_unsigned (vm_brk (m_vmmaps m))))%Z;
+      [apply fits_maps_subtract; exact Hf | exact Hf].
   - apply fits_app; [| exact Hf].
-    unfold brk_grants. destruct (brk_is_grow req x (vm_brk (m_vmmaps m))) eqn:Eg; [| apply fits_nil].
+    (* GROW: the grant ledger is now the PAGE range
+       [[PAGE_ALIGN(old), PAGE_ALIGN(r))], not the logical [[old, r)]. *)
+    unfold brk_grants. destruct (brk_is_grow req x (vm_brk (m_vmmaps m))); [| apply fits_nil].
+    unfold brk_page_range.
+    destruct (page_round_up_Z (bv_unsigned (vm_brk (m_vmmaps m)))
+              <? page_round_up_Z (bv_unsigned x))%Z eqn:Elh; [| apply fits_nil].
+    apply Z.ltb_lt in Elh.
     apply fits_cons; [| apply fits_nil].
-    unfold brk_is_grow in Eg. apply andb_true_iff in Eg as [Eg Elt]. apply Z.ltb_lt in Elt.
-    pose proof (mremap_word_range x). pose proof (mremap_word_range (vm_brk (m_vmmaps m))).
-    rewrite bv_sub_unsigned. rewrite bv_wrap_small; [lia|].
-    change (bv_modulus 64) with two_pow_64. lia.
+    pose proof (mremap_word_range x) as Hr.
+    pose proof (mremap_word_range (vm_brk (m_vmmaps m))) as Hb.
+    pose proof (page_round_up_Z_nonneg (bv_unsigned (vm_brk (m_vmmaps m))) (proj1 Hb)) as Hlo0.
+    assert (Hhi : (page_round_up_Z (bv_unsigned x) <= two_pow_64)%Z).
+    { unfold page_round_up_Z, page_size, two_pow_64 in *.
+      pose proof (Z.div_mod (bv_unsigned x + 4096 - 1) 4096 ltac:(lia)).
+      pose proof (Z.mod_pos_bound (bv_unsigned x + 4096 - 1) 4096 ltac:(lia)).
+      lia. }
+    assert (U : forall z, (0 <= z < two_pow_64)%Z -> bv_unsigned (Z_to_bv 64 z) = z).
+    { intros z Hz. rewrite Z_to_bv_unsigned. apply bv_wrap_small.
+      change (bv_modulus 64) with two_pow_64. exact Hz. }
+    rewrite (U (page_round_up_Z (bv_unsigned (vm_brk (m_vmmaps m))))) by lia.
+    destruct (Z.eq_dec (page_round_up_Z (bv_unsigned x)
+                        - page_round_up_Z (bv_unsigned (vm_brk (m_vmmaps m)))) two_pow_64)
+      as [He|He].
+    + (* the one corner where the size would wrap: it needs the break's page
+         at 0 and the resolution's at 2^64, and the wrapped size is still
+         under the bound *)
+      pose proof (mremap_word_range
+        (Z_to_bv 64 (page_round_up_Z (bv_unsigned x)
+                     - page_round_up_Z (bv_unsigned (vm_brk (m_vmmaps m)))))).
+      lia.
+    + rewrite (U ((page_round_up_Z (bv_unsigned x)
+                   - page_round_up_Z (bv_unsigned (vm_brk (m_vmmaps m))))%Z)) by lia.
+      lia.
 Qed.
 
 Lemma munmap_fit : forall i m addr len,
   vm_fit (m_vmmaps m) -> sys_post (munmap_spec addr len) i m (fun m' => vm_fit (m_vmmaps m')).
 Proof.
   intros i m addr len Hf. unfold munmap_spec. post_auto; try exact Hf.
-  change (fits (map_remove (vm_maps (m_vmmaps m)) addr)). apply fits_map_remove. exact Hf.
+  (* LPS 75d69e00: the exact arm's ledger is [mmap_fixed_destroyed_next]
+     (Sys/Mm/Mmap.v:1488) - the request RANGE cut out of [vm_maps] with
+     [maps_subtract] - where f1006fe8's [munmap_spec] removed the whole entry
+     based at [addr] with [map_remove], a name its Sys/Mm has no hit for at
+     75d69e00 (control: [maps_subtract] fires 41 times in that same file).
+     The new partial arm ([munmap_cut_ok], Mmap.v:2729) writes the SAME ledger
+     through [with_mmap_destroyed], which delta-unfolds to the exact arm's
+     [vm_forget_range lo hi (with_vmmaps ... m)] - that conversion is what
+     [m_vmmaps_with_mmap_destroyed] above proves by [reflexivity] - so both
+     residual goals are the same term and one [exact] closes both.
+     The range is spelled out rather than left to unification because
+     [post_step]'s [cbv beta zeta] has already expanded munmap_spec's [let]s,
+     and an [exact] of a closed term needs only a conversion check. *)
+  all: exact (fits_maps_subtract (vm_maps (m_vmmaps m))
+                (bv_unsigned addr)
+                (bv_unsigned addr
+                 + bv_unsigned (Z_to_bv 64 (page_round_up_Z (bv_unsigned len))))
+                Hf).
 Qed.
 
 Lemma mprotect_fit : forall i m addr len prot,
@@ -133,6 +186,14 @@ Proof.
   destruct (negb (bv_unsigned flags =? MREMAP_MAYMOVE)%Z); [post_auto|].
   destruct (negb (bv_unsigned old mod page_size =? 0)%Z); [post_auto; exact Hf|].
   destruct (page_align_is0_b new_size) eqn:Hnew; [post_auto; exact Hf|].
+  (* LPS@75d69e00 Sys/Mm/Mremap.v:798-805 inserts a gate BETWEEN the two PAGE_ALIGN
+     tests: a page-aligned new length over TASK_SIZE is err_ret EINVAL before any VMA is
+     looked up (check_mremap_params, mm/mremap.c, Linux v6.18.46).  Without this arm the
+     walk still faces an [if] where [apply post_get_model] expects the [m <- get_model]
+     bind, and reports [x : ?A, Unable to unify "Model" with "word"] against the lemma
+     rather than the cause.  Same shape as the err_ret EINVAL gate above it.  This tree's
+     own Lib/LimSpec.v:376 already spells the gate in this exact pre-[cbv zeta] form. *)
+  destruct (TASK_SIZE <? page_round_up_Z (bv_unsigned new_size))%Z; [post_auto; exact Hf|].
   destruct (page_align_is0_b old_size) eqn:Hold; [post_auto|].
   apply post_get_model. cbv zeta.
   set (old_nZ := page_round_up_Z (bv_unsigned old_size)). set (new_nZ := page_round_up_Z (bv_unsigned new_size)).
@@ -151,34 +212,135 @@ Proof.
   assert (G : forall dst, (bv_unsigned dst + new_nZ <= alloc_top (m_vmmaps m))%Z ->
                 vm_fit (m_vmmaps (mremap_model_next m old old_n dst new_n))).
   { intros dst Hd.
-    change (fits ((dst, new_n) :: map_remove (vm_maps (m_vmmaps m)) old)).
-    apply fits_cons; [lia | apply fits_map_remove; exact Hf]. }
+    (* LPS 75d69e00: [mremap_maps_next] (Sys/Mm/Mremap.v:166-171) gained an
+       [old_n] argument and now cuts the source RANGE out of [vm_maps],
+       [maps_subtract (bv_unsigned old) (bv_unsigned old + bv_unsigned old_n)],
+       where f1006fe8's three-argument version removed the whole entry based at
+       [old] ([map_remove]).  [Lib/LimMove.v:50-52] already reads it this way. *)
+    change (fits ((dst, new_n) :: maps_subtract (vm_maps (m_vmmaps m))
+                                    (bv_unsigned old)
+                                    (bv_unsigned old + bv_unsigned old_n))).
+    apply fits_cons; [lia | apply fits_maps_subtract; exact Hf]. }
   apply post_alt; [post_auto; exact Hf|].
   destruct (new_nZ <? old_nZ)%Z eqn:Elt.
   - apply Z.ltb_lt in Elt. post_auto. apply G. lia.
-  - assert (MOVE : sys_post
-              (dst <- choose (fun dst => mremap_fresh_b m old_nZ new_nZ old old_n dst new_n = true) ;;
-               modify (fun _ => mremap_model_next m old old_n dst new_n) ;;
-               pure (mremap_move_effect old old_n dst old_nZ new_nZ)) i m (fun m' => vm_fit (m_vmmaps m'))).
-    { post_auto. apply G.
+  - (* LPS@75d69e00 Sys/Mm/Mremap.v:826-843 SPLIT the grow resolution.  Where
+       f1006fe8 offered an [alt] between an in-place grow gated by
+       [mremap_inplace_grow_b] (room AND budget in one predicate) and a move, the
+       revision makes it an [if] on [mremap_inplace_room_b] -- the ROOM TEST ALONE
+       (:320-326) -- with the budget moved inside the in-place arm as its own
+       [choose], and the move arm's [choose] predicate widened from
+       [mremap_fresh_b ... = true] to [mremap_dst_ok] (:463-467), which is
+       [linux_place ... /\ mremap_fresh_b ... = true].  The model's own note at
+       :313-319 says why: with room, a failing charge is a REFUSAL and not a move,
+       so keeping the two in one predicate made a failing budget look like missing
+       room.  There is no [alt] here any more, so [apply post_alt] goes with it,
+       and [MOVE] is no longer needed as a shared assert: each arm is reached once.
+       [mremap_inplace_room_b]'s FIRST conjunct is the [alloc_top] bound [G] wants,
+       at [dst := old] -- which is the destination the in-place arm's [modify]
+       uses.  The move arm's navigation into [mremap_fresh_b] is unchanged: that
+       definition (:439-447) still has its six conjuncts in the same order, and the
+       [alloc_top] bound is still the fourth. *)
+    destruct (mremap_inplace_room_b m old old_n new_n old_nZ new_nZ) eqn:Eroom.
+    + post_auto. apply G.
+      unfold mremap_inplace_room_b in Eroom. cbv zeta in Eroom.
+      apply andb_true_iff in Eroom as [Eroom _].
+      apply Z.leb_le in Eroom. exact Eroom.
+    + post_auto. apply G.
+      destruct Hp as [_ Hp].
       unfold mremap_fresh_b in Hp. cbv zeta in Hp.
       apply andb_true_iff in Hp as [Hp _]. apply andb_true_iff in Hp as [Hp _]. apply andb_true_iff in Hp as [_ Hp].
-      apply Z.leb_le in Hp. exact Hp. }
-    destruct (mremap_inplace_grow_b m old old_n new_n old_nZ new_nZ) eqn:Eig; [| exact MOVE].
-    apply post_alt; [| exact MOVE].
-    post_auto. apply G.
-    unfold mremap_inplace_grow_b in Eig. cbv zeta in Eig.
-    apply andb_true_iff in Eig as [Eig _]. apply andb_true_iff in Eig as [Eig _].
-    apply Z.leb_le in Eig. exact Eig.
+      apply Z.leb_le in Hp. exact Hp.
 Qed.
 
 Lemma vm_fit_with_vmmaps : forall h m, fits (vm_maps h) -> vm_fit (m_vmmaps (with_vmmaps h m)).
 Proof. intros h m H. exact H. Qed.
 
+(* 727298f3: the bound a freely-placed grant leaves is [linux_place]'s third
+   admissibility conjunct.  Stated as a tactic so the two overflow branches of
+   [mmap_fit] share one text, and written with [proj1 (proj2 (proj2 …))] rather than an
+   intro pattern so nothing depends on how the conjunction is nested.  The application
+   shape is the model's own, 727298f3:Checks/Sys/Mm/Mmap.v:52-55.  The modeled arm
+   carries [linux_place … /\ mmap_noreserve_backed_ok … = true]; the NOACCESS arm has no
+   budget test and carries a bare [linux_place …]. *)
+Ltac close_place_bound :=
+  match goal with
+  | EL : w_is0 ?ln = false |- _ =>
+      first
+        [ match goal with
+          | Hp : linux_place _ _ _ _ _ /\ _ |- _ =>
+              exact (proj1 (proj2 (proj2 (linux_place_admissible _ _ _ _ _
+                       (proj1 (mmap_grant_len_ok ln EL))
+                       (proj2 (mmap_grant_len_ok ln EL)) (proj1 Hp)))))
+          end
+        | match goal with
+          | Hp : linux_place _ _ _ _ _ |- _ =>
+              exact (proj1 (proj2 (proj2 (linux_place_admissible _ _ _ _ _
+                       (proj1 (mmap_grant_len_ok ln EL))
+                       (proj2 (mmap_grant_len_ok ln EL)) Hp))))
+          end ]
+  end.
+
 Lemma mmap_fit : forall i m addr len prot flags fd off,
   vm_fit (m_vmmaps m) -> sys_post (mmap_spec addr len prot flags fd off) i m (fun m' => vm_fit (m_vmmaps m')).
 Proof.
   intros i m addr len prot flags fd off Hf. unfold mmap_spec.
+  (* LPS@75d69e00 Sys/Mm/Mmap.v:2066, :2299, :2478 and :2507 insert a 64-bit OVERFLOW
+     gate at the head of each MAP_FIXED arm, and [mmap_fixed_overflow] (:1804-1807) is an
+     [alt] of an errno with [ret_only addr], or [err_ret ENOMEM] -- none of which touches
+     the model.  The bndiv twin's round READ the obligation
+     at its :277: with E4 [mmap_fixed_noaccess_b ... = true] and E5 the overflow test
+     true, the goal [grant_fits] faces is an EFFECT-VALUED HOLE inside that refusal arm,
+     reported as "Unable to unify ... with SyscallEffect".  Cured as this file already
+     cures the revision's TASK_SIZE gate in [mremap_fit]: destruct BEFORE the walk and
+     close the refusal arm with [post_auto; exact Hf].  One destruct serves all four
+     MAP_FIXED arms; the scrutinee is closed over [addr] and [len] alone. *)
+  (* 727298f3, corrected after a farm round: the two branches need
+     DIFFERENT scripts and merging them is wrong.  With [Eov = true] the four MAP_FIXED
+     arms refuse through [mmap_fixed_overflow] and touch no model, while the two
+     freely-placed arms are still reachable and DO grant -- which is why the old
+     [post_auto; exact Hf] failed here.  But their residual bound comes from
+     [linux_place], not from the [negb ... <=? alloc_top] gate the MAP_FIXED arms carry:
+     under [Eov = true] that gate's bound is FALSE, so running the no-overflow tail here
+     asks for an unprovable goal and reports "No applicable tactic".
+     [post_step] also has no case for [mmap_fixed_overflow], so [post_auto] stops on it;
+     unfolding lets the walk finish (it is an [alt] of an errno with [ret_only addr]).
+     Goals and hypotheses read off the prints of two
+     farm rounds; no box here compiles Rocq. *)
+  destruct (two_pow_64 <=? bv_unsigned addr + page_round_up_Z (bv_unsigned len))%Z eqn:Eov.
+  { post_auto; try exact Hf.
+    all: try (unfold mmap_fixed_overflow; post_auto; try exact Hf).
+    all: rewrite ?m_vmmaps_with_mmap_backing.
+    all: try exact Hf.
+    all: try apply vm_fit_with_vmmaps.
+    all: cbn [vm_maps].
+    all: try exact Hf.
+    all: repeat first [apply fits_maps_subtract | exact Hf | apply fits_cons].
+    all: try exact Hf.
+    all: apply (grant_fits (m_vmmaps m)); [apply round_nonneg|].
+    (* A farm round printed the two residual goals with their whole
+       context: both ARE freely-placed grants, but the NOACCESS arm's hypothesis is a
+       BARE [linux_place …] with no [mmap_noreserve_backed_ok] conjunct -- that arm has
+       no budget test -- so a pattern written only for the conjunction misses it.  Hence
+       two [linux_place] alternatives, conjunction first. *)
+    (* Reading the reverted print again (a later farm round), the two residual
+       goals of this branch are not bounds at all -- their conclusions are [()] and
+       [list event], witness holes [post_auto] left behind.  Give them a value first; the
+       bound alternatives below then face only real bounds. *)
+    all: first
+      [ exact tt
+      | exact (@nil event)
+      | close_place_bound
+      | match goal with Hp : _ /\ _ /\ (?z <= ?t)%Z /\ _ |- (?z <= ?t)%Z => exact (proj1 (proj2 (proj2 Hp))) end
+      | repeat match goal with
+               | Hp : ?x = ?y /\ _ |- _ => destruct Hp as [Hp _]
+               | Hp : ?x = ?y |- _ => subst x
+               end;
+        match goal with E : negb (?z <=? ?t)%Z = false |- (?z <= ?t)%Z =>
+          apply negb_false_iff in E; apply Z.leb_le in E; exact E end ]. }
+  (* No overflow: the pre-727298f3 script, unchanged.  [post_step]'s first case destructs
+     the decline's [if] on its own and [post_unmodeled] closes the declined side, so this
+     branch needs no decline handling at all. *)
   post_auto; try exact Hf.
   all: rewrite ?m_vmmaps_with_mmap_backing, ?m_vmmaps_with_mmap_replacement, ?m_vmmaps_with_mmap_destroyed.
   all: try exact Hf.
@@ -189,7 +351,10 @@ Proof.
   all: try exact Hf.
   all: apply (grant_fits (m_vmmaps m)); [apply round_nonneg|].
   all: first
-    [ match goal with Hp : _ /\ _ /\ (?z <= ?t)%Z /\ _ |- (?z <= ?t)%Z => exact (proj1 (proj2 (proj2 Hp))) end
+    [ exact tt
+    | exact (@nil event)
+    | match goal with Hp : _ /\ _ /\ (?z <= ?t)%Z /\ _ |- (?z <= ?t)%Z => exact (proj1 (proj2 (proj2 Hp))) end
+    | close_place_bound
     | repeat match goal with
              | Hp : ?x = ?y /\ _ |- _ => destruct Hp as [Hp _]
              | Hp : ?x = ?y |- _ => subst x

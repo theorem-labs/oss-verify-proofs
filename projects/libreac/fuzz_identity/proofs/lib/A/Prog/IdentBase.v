@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: the part of proofs/cgif/cgif_file_fuzzer/lib/YC20.v that carries no cgif name, copied for libreac/fuzz_grant's program walk; this copy is fuzz_grant's lib/A/Prog/GrantBase.v (a working branch 4a980cd5011) with only the unit's module prefix changed, for libreac/fuzz_identity (a Theorem Labs lane, 2026-10-28): the read-only range, the frame object and the shape of a call's post-condition. The cgif-specific stack and event constants and the cgif function contracts are left out; each function's walk states its own. *)
+(* Modified by Theorem Labs, 2026-10: the part of proofs/cgif/cgif_file_fuzzer/lib/YC20.v that carries no cgif name, copied for libreac/fuzz_grant's program walk; this copy is fuzz_grant's lib/A/Prog/GrantBase.v (a working branch) with only the unit's module prefix changed, for libreac/fuzz_identity (a Theorem Labs lane, 2026-10-28): the read-only range, the frame object and the shape of a call's post-condition. The cgif-specific stack and event constants and the cgif function contracts are left out; each function's walk states its own. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

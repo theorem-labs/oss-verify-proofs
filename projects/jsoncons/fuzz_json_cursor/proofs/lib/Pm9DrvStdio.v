@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the zero-filled stack window): changed stk_def, stk_wr. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
@@ -81,7 +82,9 @@ Section Stdio.
 
   Lemma stk_wr : forall vals ebs MV kn a n,
     know_ok ASEGS (Env (vals_ev vals) ebs) MV kn -> has_window kn = true -> vals_ev vals 0 = sp0 ->
-    usp - 8388608 <= a -> a + n <= usp ->
+    (* WINDOW, old beside new (stk_wr and stk_def): was [usp - 8388608 <= a]; DRV_ZWIN.
+       vis_stk / the shadow lemmas below keep 8388608: that is stack_max_size (ahl_ceil). *)
+    usp - DRV_ZWIN <= a -> a + n <= usp ->
     forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true.
   Proof.
     intros vals ebs MV kn a n HK Hw P0 Ha Hn d k Hd Hk.
@@ -90,7 +93,7 @@ Section Stdio.
   Qed.
   Lemma stk_def : forall vals ebs MV kn a n,
     know_ok ASEGS (Env (vals_ev vals) ebs) MV kn -> has_window kn = true -> vals_ev vals 0 = sp0 ->
-    usp - 8388608 <= a -> a + n <= usp ->
+    usp - DRV_ZWIN <= a -> a + n <= usp ->
     forall i, 0 <= i < n -> MV (Z_to_bv 64 (a + i)) <> None.
   Proof.
     intros vals ebs MV kn a n HK Hw P0 Ha Hn i Hi. pose proof Hsp.

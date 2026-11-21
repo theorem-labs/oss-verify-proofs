@@ -5,10 +5,10 @@
    seg_sign, ev_val, ev_cur, ev_sign, ev_lb_nil, ev_60, ev_5c, ev_block and their list and sign helpers) moved to
    image A (fuzz_uci.asan): footprint runs (lib/Lib/ExecF.v evtF, lib/Lib/StepF.v step) instead of evt, this image's
    addresses (UciCvIface.v CV_AT offsets +0x06c .. +0x128) and registers, and the two ASan load checks of each loop
-   in the form of proofs/libreac/fuzz_decode/lib/A/Prog/crtA_loop.v at origin/ossv/recipes 88154566652a (cl1_F;
+   in the form of proofs/libreac/fuzz_decode/lib/A/Prog/crtA_loop.v (cl1_F;
    crt_sh1F, takeF and crt_lits copied as cv_sh1F, takeF and cv_lits, module paths changed to reac_repacer.fuzz_uci). *)
 (* Modified by Theorem Labs, 2026-10: the straight-line segments of reac-repacer/fuzz_uci's check_value in image A, in the form
-   and with the helpers of proofs/libreac/fuzz_decode/lib/A/Prog/crtA_segs.v (origin/ossv/recipes 88154566652a:
+   and with the helpers of proofs/libreac/fuzz_decode/lib/A/Prog/crtA_segs.v (
    crt_seg1_F .. crt_seg9_F, Z_to_le_bytes_to_Z, crt_le8_of_bytes, crt_c8s, crt_rw_c8s, crt_frame_words, crt_regs,
    crt_usub, crt_shift, crt_w, crt_finF, crt_memF, crt_pc) and of its lib/A/Prog/ReacDecodeLib.v rd_all. *)
 (* Modified by Theorem Labs, 2026-10: the helpers and tactics of reac-repacer/fuzz_uci's lib/A/Prog/UciCvSegs.v
@@ -18,7 +18,8 @@
    sh_at, and the steps of the ASan load check cv_ck1_F), renamed cc_* and moved to fuzz_wire's check_copy (image A,
    module paths reac_repacer.fuzz_wire). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_wire/lib/A/Prog/check_copy_cgW_segs.v, with its module paths and numbers changed; 288 of its 360 lines of code are new or changed and 451 lines of the source are left out. *)
-(* The footprint (ExecF.evtF) runs of the three straight-line segments of reac-repacer/fuzz_wire's check_downstream in image B, in the form of reac-repacer/fuzz_uci's lib/B/Prog/UciCvBSegs.v (recipes commit 0295462466b2; its frame-word helpers copied), the shadow checks stepped as in this unit's footprint walks of image B (one check lemma per shadow test, StepF's step, one rng fact per access) and the frame's want closed as the released lib/Prog/check_downstream.v closes it (the model lib/Prog/rp_ds_accept_c.v ds_accept_result evaluated on the branch facts of each path). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* The footprint (ExecF.evtF) runs of the three straight-line segments of reac-repacer/fuzz_wire's check_downstream in image B, in the form of reac-repacer/fuzz_uci's lib/B/Prog/UciCvBSegs.v (recipes; its frame-word helpers copied), the shadow checks stepped as in this unit's footprint walks of image B (one check lemma per shadow test, StepF's step, one rng fact per access) and the frame's want closed as the released lib/Prog/check_downstream.v closes it (the model lib/Prog/rp_ds_accept_c.v ds_accept_result evaluated on the branch facts of each path). *)
 (* WireCdsBSegs: the runs of check_downstream of fuzz_wire.asan-ubsan (0x7ffe8 = wire_sigma WS_check_downstream,
    lib/B/Prog/WirePAddr.v; 97 words, 0x7ffe8 .. 0x8016c), stepped by lib/Lib/StepF.v:
      cds_frame_F  +0x0 .. +0xc: `addi sp, sp, -0x10`, `sd ra, 8(sp)`, `sd s0, 0(sp)`: the frame [sp - 16, sp) written;

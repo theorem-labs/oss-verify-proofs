@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/pj_parse_frees.v, with only its comments or blank lines changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset pj_parse, image A' (RELOCATED unchanged from a Theorem Labs lane's image-B' batch-kit rebind
-   5134b312d551 lib/B/Prog/pj_parse_frees.v; image-free): pj_free's order list under a grant oracle ok is
+   lib/B/Prog/pj_parse_frees.v; image-free): pj_free's order list under a grant oracle ok is
    the all-granted one when the reading under ok made the all-granted reading's result and trace. Proves no function
    (kind: pure model lemma).
 

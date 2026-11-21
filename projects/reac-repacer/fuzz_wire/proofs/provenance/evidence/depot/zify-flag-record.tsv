@@ -1,4 +1,4 @@
-file	rule	release (fuzz_grant 4f87de75d67)	before (wire closure, no line)	after (wire, line present)	matches release
+file	rule	release (fuzz_grant)	before (wire closure, no line)	after (wire, line present)	matches release
 A/AFk5.v	E6	false	true	false	yes
 A/AFkb.v	E6	false	true	false	yes
 A/AFkc.v	E6	false	true	false	yes

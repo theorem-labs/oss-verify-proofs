@@ -1,16 +1,17 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/TopX_RT2.v, with its module paths changed; 16 of its 58 lines of code are new or changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* top_x group RT (TOPX-OWNERS.md (sha256 bb821fae800d; internal record)), the row lib/A/TopX_RT.v left
-   open: A's top_x (W_LLVMFuzzerTestOneInput_top_x.v at integ bb9dae5d905)
+   open: A's top_x (W_LLVMFuzzerTestOneInput_top_x.v at integ)
      ASTRNLEN_x (top_x.v:264) : et_strnlen_spec_x TfibB ARX 0x10350 0x10370 (SIGMA WS_strnlen)
    PROVED at the instance ARX_rt (TopX_RT.v's verbatim copy of top_x.v:125-126's ARX:
    fun ly S Hp W mem md => ARcf (cp := CfParams_reply) segs TfibB ly S Hp W mem md /\ Hp = []).
-   - The statement is RTx.v:172's astrnlen_whole_realizesM_x segs TfibB ARX_rt 0x10350 0x10370 (SIGMA WS_strnlen).
+   - The statement is RTx.v:173's astrnlen_whole_realizesM_x segs TfibB ARX_rt 0x10350 0x10370 (SIGMA WS_strnlen).
      It is convertible to top_x's et_strnlen_spec_x TfibB ARX 0x10350 0x10370 (SIGMA WS_strnlen) by unfolding only
-     (W_LLVMFuzzerTestOneInput_event_x.v:162-177 against IcptRealizesX.v:124-139 / RTx.v:172-187): every premise and
+     (W_LLVMFuzzerTestOneInput_event_x.v:163-178 against IcptRealizesX.v:125-140 / RTx.v:173-188): every premise and
      every post conjunct is the same text; ecall_pre_x is FCiface's on both sides; event_x's et_consts_view
-     (W_LLVMFuzzerTestOneInput_event.v:79) and ConstsViewDef.v:19's consts_view have the same body; ARX and ARX_rt
+     (W_LLVMFuzzerTestOneInput_event.v:80) and ConstsViewDef.v:20's consts_view have the same body; ARX and ARX_rt
      have the same body.  So the plug at the top is `exact topx_ASTRNLEN_x` after `unfold et_strnlen_spec_x`.  This
      file does not Require event_x.
    - The proof is lib/A/RT_strnlen_fit_x.v rt_strnlen_fit_x (the walk Rt/Strnlen.v:567 strnlen_icpt_realizesM_x

@@ -2,7 +2,7 @@
 
 Lane-added comment blocks removed under a lane's 19:18Z ruling (a comment line absent from the donor
 file is lane-added and is removed in the comment-only commit before BASE). Donor evidence: cgif's
-proofs/cgif/cgif_file_fuzzer/lib/YG0d.v at 6d085644782c carries NO address-check block in its header,
+proofs/cgif/cgif_file_fuzzer/lib/YG0d.v at theorem-labs/oss-verify-proofs@6b32741d849a carries NO address-check block in its header,
 and cgif has no lib/A/Rt/MemchrDef.v at all. Nothing in the removed text is disputed.
 
 # the removed lane-added comment blocks: index only (a lane 21:31Z).

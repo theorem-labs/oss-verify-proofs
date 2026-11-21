@@ -7,9 +7,9 @@
    output reuse-P12.txt): glue_seg_P12: 0 named, 0 by address, 0 related,
    0 released, the delivered package 0; declared only on this branch (a working branch). seg_P12: 0 released; its hits are the stage
    hypothesis (ACtl.v) and source lemma (Seg/P12.v, image B twin) this file builds on.  Written new.
-   At ossv/recipes c5e779efe8c (2026-10-31), glue_seg_P12 and seg_P12 are defined only in this unit (glue_seg_P12 in
-   this file; seg_P12 at the stage hypotheses lib/A/ACtl.v:735 and lib/B/ACtl.v:510, the source lemmas lib/A/Prog/Seg/P12.v:870 and
-   lib/B/Prog/Seg/P12.v:321, and image B's lib/B/ACtlW3b.v:2196).
+   At (2026-10-31), glue_seg_P12 and seg_P12 are defined only in this unit (glue_seg_P12 in
+   this file; seg_P12 at the stage hypotheses lib/A/ACtl.v:735 and lib/B/ACtl.v:511, the source lemmas lib/A/Prog/Seg/P12.v:871 and
+   lib/B/Prog/Seg/P12.v:322, and image B's lib/B/ACtlW3b.v:2197).
 
    WHAT IT PROVES
      glue_seg_P12 : forall POST,
@@ -70,7 +70,7 @@
    SECTION HYPOTHESES.  The Section mirrors ACtl.v's Section Ctl (ACtl.v (at head lib/A/ACtl.v:217-262) (an earlier version, blob 84ef756918c, not in this delivery), less RELRO_KIND_NAME, RELRO_CAT, RELRO_FRAMES and MO_LE) in its
    order, then ONE NEW hypothesis, QMARK_ROW (exact text at its declaration; a Theorem Labs lane 05:52Z / a Theorem Labs lane): the
    bundle's constant-shadow row `z1 (ANum (shadow_addr QMARK)) 2` is in Tfib_const.  TRUE on the record core
-   (a Theorem Labs lane's AF0m.v (from a working branch e56483f863b), Tfib_const_shadow :2179), not provable on
+   (a Theorem Labs lane's AF0m.v (from a working branch), Tfib_const_shadow :2179), not provable on
    the planning base; ACtl.v discharges it there by vm_compute.  The proof uses RELRO_IMG (kitmem_arodataS_journal at
    the exits), LAWS, TFIB_SYMS and QMARK_ROW, so after the Section the lemma is
    `glue_seg_P12 B MT XM_LIB RLO RHI RELRO_IMG LAWS TFIB_SYMS QMARK_ROW`.
@@ -99,7 +99,7 @@
    Measured (every `From OSSVerify.Proofs.libreac.fuzz_ctrl.. Require ..` followed from this file over the
    branch tree): 395 files at the glue commit; at the route (C) L3 switch, by fclosure.py
    (conservative over-approximation): 508 files, 499 before the switch on its working-branch
-   merge 04a1fa44844, the switch adding A/ACtlCutC, ACtlG/KitMem, ProgWorldCtlRt, ProgWorldCtlRtC,
+   merge, the switch adding A/ACtlCutC, ACtlG/KitMem, ProgWorldCtlRt, ProgWorldCtlRtC,
    ProgWorldOwnedRo, ProgWorldVisHeap, ProgWorldVisWin, ProgWorld_Fs and Reusable/YConstIn; no lib/AZ/AsanW (not in this delivery), no W6,
    no SegCF / *_cfw / Cf* route file (the core's Reusable/R/Cfg.v, reached through YK04, is not one); its lib/AZ
    files are
@@ -431,7 +431,7 @@ Variable REAC_CTRL_IDENTITY_REPLY_K : Z.
 Variable REAC_CTRL_PARSE_BC : Z.
 (* THE ONE NEW HYPOTHESIS (two Theorem Labs lanes 05:52Z): the bundle's constant-shadow row of the "?" string, `z1
    (ANum 0x7fffc23c) 0x2` (shadow_addr 0x211e0 = 0x7fffc23c by computation: QMARK is a 2-byte global in a
-   partial granule, so its shadow byte holds 2).  TRUE on the record core (a Theorem Labs lane's AF0m.v (from a working branch e56483f863b),
+   partial granule, so its shadow byte holds 2).  TRUE on the record core (a Theorem Labs lane's AF0m.v (from a working branch),
    Tfib_const_shadow, :2179); not provable on the planning
    base this file builds on, whose Tfib_const lacks the row.  ACtl.v discharges it on the record by vm_compute. *)
 Hypothesis QMARK_ROW : forall ly,

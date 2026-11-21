@@ -1,8 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30: the ROOM round (an internal work row), A's re-fit git diff f6bfd4d6ab5 f6038f3d481
-   of lib/A/W_gesture_model_g.v applied by three-way merge onto lane W4's ARx text (a working branch
-   0d0105eaf4d) at B's names: pb_gesture_model_g_x at RP, and Section cf: pb_gesture_model_g_cf at the B top's ARX
+(* Modified by Theorem Labs, 2026-10-30: the ROOM round (an internal work row), A's re-fit git diff
+   of lib/A/W_gesture_model_g.v applied by three-way merge onto lane W4's ARx text (a working branch)
+   at B's names: pb_gesture_model_g_x at RP, and Section cf: pb_gesture_model_g_cf at the B top's ARX
    (lib/B/W_LLVMFuzzerTestOneInput_top_x.v Definition ARX, word for word), its literal shadow facts by
    lib/B/TopxImageB.v tfib_shp_x. The AR statements (Section r) are W4's, unchanged. *)
 (* Modified by Theorem Labs, 2026-10: IMAGE B (asan-ubsan, entry 0x86048) twin of lib/A/W_gesture_model_g.v.
@@ -18,6 +18,7 @@
    from the three cuts' _x theorems (pb_gesture_model_x, pb_gm_scan_x, pb_gm_found_x) and the callees' _g_x twins;
    Section r re-derives pb_gesture_model_g, statement unchanged, at ARx := W_journal_x.ARi0. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/W_gesture_model_g.v; 15 of its 71 lines of code are new or changed and 134 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Satisfiability at the real image B of the R contract texts (W_contract_xR_g6.v), at R := wle' SEGS RZ_cf: each
    lemma derives the R form from the existing strict walk, under that walk's own Section hypotheses. The import block
    is the walk file's (W_gesture_model_g.v), so each hypothesis reads as there. *)

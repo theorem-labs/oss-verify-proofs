@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: Section Sound is generic in the Leaf class of its srealizes walks. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -15,6 +16,7 @@ From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import
   AsanAcct AsanAcctShape SpinAlg Hoare.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import AxSymExec3 AxSymExec3Sound AxSymRun3 AsanPlanCore AsanPlan AsanPlanSound.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import AsanPopFree.   (* [comment removed for export] *)
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import Leaf.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope Z_scope.
@@ -646,6 +648,7 @@ End KnowTests.
 
 Section Sound.
 Variable SEGS : list Segment.
+Context {LF : Leaf}.
 Variable A : atable.
 Variable nx0 : nat.
 Variable LIMIT : Z.
@@ -664,6 +667,8 @@ Hypothesis E_SP0 : AP.expr_vars_lt nx0 e_sp0_early = true.                      
 Hypothesis argH_agree : forall E E' (a : word), env_agree nx0 E E' -> argH E a = argH E' a.
 Hypothesis SINV_frame : forall E M M', (forall a, argH E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
 Hypothesis SINV_agree : forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E' M.
+(* LPS c0dd863a: [APS.cs_ok_agree]'s transport of [co_ehdr] *)
+Hypothesis EHDR_lt : V_EHDR_below nx0.
 (* [comment removed for export] *)
 Variable FS0 : Fs.Fs.
 (* [comment removed for export] *)

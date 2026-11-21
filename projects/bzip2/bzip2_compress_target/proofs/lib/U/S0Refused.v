@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the m_channel_reader premise of the fd-2 write). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -205,6 +206,10 @@ Section Refused.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  (* LPS 75d69e00: [S0LibStdioCall.stdio_call_sound] now asks that the far end of
+     the channel reads ([State.m_channel_reader]); without it the fd-2 writev
+     raises SIGPIPE.  Declared last so the discharged prefix only grows at its end. *)
+  Hypothesis Hrdr : m_channel_reader model = true.
 
   Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
   Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
@@ -318,6 +323,7 @@ Section Refused.
       change 38%nat with ((8 + (4 + 2)) + (8 + (8 + 8)))%nat. exact MSG.
     - reflexivity.
     - exact Hfd2.
+    - exact Hrdr.
     - exact Hh.
     - exact Hlazy.
     - apply t_exit_has_nil.
@@ -706,9 +712,9 @@ Section RefusedStmt.
 
   Theorem refused_tail_ok : refused_tail_stmt.
   Proof.
-    intros sp0 model tid hw R M Hvsp Hh Hl Hfd2 Rsp Rgp Rtp SW IMG Mtid Htid Mself Mcan Mpg Mhw Hhw.
+    intros sp0 model tid hw R M Hvsp Hh Hl Hfd2 Hrdr Rsp Rgp Rtp SW IMG Mtid Htid Mself Mcan Mpg Mhw Hhw.
     rewrite <- re_ivs_gw in IMG.
-    exact (ref_refused_tail sp0 [] model Hvsp Hh Hl Hfd2 tid R M Rsp Rgp Rtp SW IMG Mtid Htid Mself
+    exact (ref_refused_tail sp0 [] model Hvsp Hh Hl Hfd2 Hrdr tid R M Rsp Rgp Rtp SW IMG Mtid Htid Mself
              run_guard hw run_guard_range Hhw Mcan Mpg Mhw).
   Qed.
 End RefusedStmt.

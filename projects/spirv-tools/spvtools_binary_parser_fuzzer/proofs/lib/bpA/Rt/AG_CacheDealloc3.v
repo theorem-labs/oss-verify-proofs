@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the ledger invariant's new entries_nonzero conjunct). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require AW_0Gc.
@@ -167,7 +168,7 @@ Section CDStep.
   Proof.
     intros K. pose proof BND as B. pose proof B as (B1 & B2 & B3 & B4 & B5 & B6 & B7 & B8 & ECA & EP & ERI & ERB & EFA & N1 & N2 & N3 & N4 & N5 & N6 & N7 & N8 & N9 & C1 & V3 & V5 & CNTB & T16 & S16 & P16 & M18).
     pose proof (bv_unsigned_in_range _ sp) as SPR. change (bv_modulus 64) with (2^64) in SPR.
-    destruct AX as [AWV FXR]. pose proof AMX as AMX'. destruct AMX' as [AM AK]. pose proof AM as AM'. destruct AM' as (AIL & ASV & AB0). destruct AIL as (IL1 & IL2 & IL3 & NOV & NW & NWA).
+    destruct AX as [AWV FXR]. pose proof AMX as AMX'. destruct AMX' as [AM AK]. pose proof AM as AM'. destruct AM' as (AIL & ASV & AB0). destruct AIL as (IL1 & IL2 & IL3 & NOV & NW & NWA & NZM).
     destruct AB0 as [AB0a AB0b].
 
     destruct (cd_cells_of_arepq s m _ _ c RQ HC INIT) as (q0 & q1 & q2 & q3 & PC1 & PC2 & PC3 & PC4 & QST & TST & RIC & RIJ & EXH & RST & FARR & FAJ & USJ & REN).

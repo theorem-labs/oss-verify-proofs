@@ -1,5 +1,5 @@
 (* Helper lemmas of sup_host_setting's ASan+UBSan walk (plugin-hostd/fuzz_command, fuzz_command.asan-ubsan, entry
-   0x8b53c) that need no callee statement (a Theorem Labs lane's lib/B/Prog/sup_host_setting_c.v on a working branch 92195a003c6):
+   0x8b53c) that need no callee statement (a Theorem Labs lane's lib/B/Prog/sup_host_setting_c.v on a working branch):
 
    - the four UBSan checks of the pointer &tok[n] (tok + 8n, computed by repeated `addi 8`), each as its
      instructions compute it; every one branches to the `unimp` at 0x8b8c0:
@@ -12,8 +12,8 @@
    - 0x8b68c `blez s5` (s5 = ntok) is not taken for 1 <= ntok (hsb_blez_ntok); loop 2's bound
      s2 = ntok zero-extended (0x8b728 `slli a0,s5,32`, 0x8b730 `srli s2,a0,32`; hsb_zext32);
    - the token array's addresses: 4096 <= ptok and ptok + 8 ntok <= alloc_ceiling (hsb_arr_bound, as A's
-     hs4_ptok_range, lib/A/Prog/sup_host_setting_s4.v:88-99 on a working branch e323bbe76d2);
-   - join_sp's length along the join loop (A's hs6_join_snoc, hs6_firstn_S, sup_host_setting_s6.v:62-104). *)
+     hs4_ptok_range, lib/A/Prog/sup_host_setting_s4.v:88-99 on a working branch);
+   - join_sp's length along the join loop (A's hs6_join_snoc, hs6_firstn_S, sup_host_setting_s6.v:63-105). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

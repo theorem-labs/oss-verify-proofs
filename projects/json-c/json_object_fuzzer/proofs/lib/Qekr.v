@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: the jo_set_scalar_A_stmt proofs name jo_preA's conjunct). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -94,7 +95,7 @@ Proof. intros []; [left; reflexivity | right; discriminate ..]. Qed.
 
 Lemma set_int_A : jo_set_scalar_A_stmt 0x9c88c.
 Proof.
-unfold jo_set_scalar_A_stmt. intros until errv. intros (HP & ST & LO & LOS & SPA & HT & ERR & TP & RA) RR A0 K.
+unfold jo_set_scalar_A_stmt. intros until errv. intros (HP & ST & LO & HBT & LOS & SPA & HT & ERR & TP & RA) RR A0 K.
 unfold_consts. unfold A_ERRNO, A_TP in *. subst a0 tp. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI. cbn [hl_segs hla_base A4L A4H] in MI.
 pose proof (sb_cellsA A4L HIx _ _ _ _ _ _ _ HP) as [GOT CELL].
@@ -1048,7 +1049,7 @@ Proof. intros []; [left; reflexivity | right; discriminate ..]. Qed.
 
 Lemma set_int_A : jo_set_scalar_A_stmt 0x9e1d0.
 Proof.
-unfold jo_set_scalar_A_stmt. intros until errv. intros (HP & ST & LO & LOS & SPA & HT & ERR & TP & RA) RR A0 K.
+unfold jo_set_scalar_A_stmt. intros until errv. intros (HP & ST & LO & HBT & LOS & SPA & HT & ERR & TP & RA) RR A0 K.
 unfold_consts. unfold A_ERRNO, A_TP in *. subst a0 tp. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI. cbn [hl_segs hla_base A4L A4H] in MI.
 pose proof (sb_cellsA A4L HIx _ _ _ _ _ _ _ HP) as [GOT CELL].

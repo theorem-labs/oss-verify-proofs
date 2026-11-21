@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx form of FMgxaSeamReady.v (readiness of the three interceptors at musl vfprintf's
    call, READY's clauses and seam_ready_holds), over the engine's allocator relation ARx with its laws
    YCbqG.AR_laws_x, the two side laws LAY / BANDP (FMgxaSeamARX.v proves both at reply's ARX) and the world field
@@ -16,12 +17,12 @@
    wview_of_mrd, rw_range, rw_of_ro, cells_cons, cells_cons8), and four AR-free lemmas of its Section C, :947-972
    (dest_tail_of_amem8, seam_dest_rng) and :1045-1058 (band_word, shadow_band). Until FMgxaSeamReady.v built (it reads
    the world field w_H8, which reply's world record now has), this file carried byte-identical copies of those 37
-   lemmas (a working branch 1afa6c01fcd). W_H8 stays a Section hypothesis, so no consumer changes; the field
+   lemmas (a working branch). W_H8 stays a Section hypothesis, so no consumer changes; the field
    discharges it by `fun W a H => w_H8 W a H`.
 
    Section CX is the conversion of FMgxaSeamReady.v Section C done by fuzz_preset (PSnpSeamReady.v :529-1155 and
-   PSnpSeamReadyAR.v :140-216 at a working branch dad42dbecbc4) of a Theorem Labs lane's FMgxaSeamReady.v Section
-   C (3242941dc964 :557-1264):
+   PSnpSeamReadyAR.v :140-216 at a working branch) of a Theorem Labs lane's FMgxaSeamReady.v Section
+   C (557-1264):
    - Section hypotheses (fm :557-560 `LAWS : AR_laws`, TB; preset :529-547): ARx, hl, `LAWS : YCbqG.AR_laws_x
      tfibsegs B ARx hl` (its fields alx_zshadow, alx_zshadow_byte, alx_const_cells are the ones read), LAY (preset's
      alx_layout_ok), BANDP (preset's alx_band_pres, PSnpSeamReady.v:542-543, verbatim), TB and W_H8 (preset

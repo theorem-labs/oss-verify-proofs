@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: new walk for libreac/fuzz_pcap (a Theorem Labs lane). The generic helpers pe_land_m32,
    pe_denot_and_m32(_add0), pe_trim_* / pe_submem_to / pe_prreg_raw / pe_add_fact / pe_sregion are cgif_file_fuzzer
-   lib/A/ACer.v's (origin/ossv/recipes c8557374ad2e) as a Theorem Labs lane's lib/A/Prog/PcapSourceOpen.v restates them
-   (a working branch f0d76b020fe); pe_U_srl, pe_cbyte .. pe_word_at and pe_saved_of are
-   a Theorem Labs lane's lib/A/Prog/GrantEntryHead.v (a working branch b83b8251684) restated over PAImg pcap_listing. *)
+   lib/A/ACer.v's as a Theorem Labs lane's lib/A/Prog/PcapSourceOpen.v restates them
+   (a working branch); pe_U_srl, pe_cbyte .. pe_word_at and pe_saved_of are
+   a Theorem Labs lane's lib/A/Prog/GrantEntryHead.v (a working branch) restated over PAImg pcap_listing. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_pcap's entry function LLVMFuzzerTestOneInput (0x807c8, listing offset 0x90) on the ASan build of libreac
    v1.9.0: its first phase, pe_E, in the form PcapEntryPhases.v fixes for the harness walks:
      pe_from POST GI_K1 -> pe_from POST GI_leave -> pe_start POST
@@ -45,7 +46,7 @@
      ASIL   asource_img_laws SK SEGS B KS       the stream symbols' image laws (PSourceMeta.v)
      HGLEN  VAL (A_HI 8) + 0x618 = VAL (A_OBJ 4)  PcapEntryTop.pi_pcap_glen (as PcapHarnessA.v's HGLEN)
    The facts about the harness's globals pe_G (no stream env byte in pe_G, pe_G writable, g_file_len below g_file)
-   come from pe_base (PcapEntryDefs.v:404, :406, :409; a working branch 9be46202615). *)
+   come from pe_base (PcapEntryDefs.v:405, :407, :410; a working branch). *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -76,9 +77,9 @@ Local Set Warnings "-abstract-large-number".
 Open Scope bv_scope.
 Open Scope Z_scope.
 
-(* ---- generic helpers, copied from a Theorem Labs lane's lib/A/Prog/PcapSourceOpen.v (a working branch
-   f0d76b020fe, lines 300-367), which took them from cgif_file_fuzzer lib/A/ACer.v:24-25, 86-91, 131-139, 156-164
-   (origin/ossv/recipes c8557374ad2e). ---- *)
+(* ---- generic helpers, copied from a Theorem Labs lane's lib/A/Prog/PcapSourceOpen.v (a working branch,
+   lines 300-367), which took them from cgif_file_fuzzer lib/A/ACer.v:24-25, 86-91, 131-139, 156-164.
+   ---- *)
 Lemma pe_land_m32 : forall x, 0 <= x < 2 ^ 64 -> Z.land x (2 ^ 64 - 32) = 32 * (x / 32).
 Proof.
 intros x Hx.
@@ -140,8 +141,8 @@ Ltac pe_add_fact HS n f prf :=
     let HS3 := fresh "HS3" in
     pose proof (st_ok_pi_add_fact Ev ssx msx n f HS ltac:(prf)) as HS3; clear HS; rename HS3 into HS; pe_norm_pi HS end.
 
-(* The shift-right of a 64-bit value by a literal (a Theorem Labs lane's GrantEntryHead.v gh_U_srl, a working branch
-   b83b8251684, generic over the engine's sv; copied, renamed). *)
+(* The shift-right of a 64-bit value by a literal (a Theorem Labs lane's GrantEntryHead.v gh_U_srl, a working branch,
+   generic over the engine's sv; copied, renamed). *)
 Lemma pe_U_srl : forall E x k, 0 <= k < 64 -> U E (SAlu ALU_SRL x (SLit k)) = U E x / 2 ^ k.
 Proof.
 intros E x k Hk. rewrite U_SAlu, U_SLit. cbn [zalu_raw].
@@ -205,7 +206,7 @@ Context {PI : PAImg pcap_listing}.
 #[local] Notation BASE := (@pa_val _ pcap_listing PI A_TEXT).
 #[local] Notation rdW W mem := (mrestrict (w_H W) mem).
 
-(* ---- reading the engine's regions back (a Theorem Labs lane's GrantEntryHead.v, a working branch b83b8251684:
+(* ---- reading the engine's regions back (a Theorem Labs lane's GrantEntryHead.v, a working branch:
    gh_cbyte, gh_chunks_match, gh_shadow_bytes, gh_cword, gh_word_of_region, gh_word_at; copied, renamed pe_*, over
    PAImg pcap_listing) ---- *)
 Definition pe_cbyte (cs : list YP09.chunk) (i : Z) : option Z :=
@@ -672,7 +673,7 @@ pose proof (h_sp SK B MT KS cx HB) as (Hsp16 & Hsp_lo & Hsp_hi & Hsp1 & Hsp1_32)
 destruct (h_base SK B MT KS cx HB) as (HROD & HMETA & HG & HGR).
 pose proof HB as (HPRE & Hra & H10 & H11 & Hpn & HPL & Hfr0 & Hev0 & Hlive0 & _ & Hnone & Hhead & _ & Hsp1d & _ & _ &
                   HMOK & Hneed & _ & _ & _ & HTRm & HTRf).
-(* pe_base's facts on the harness's globals, through PcapHarnessA's h_base / h_base_objsep (PcapEntryDefs.v:404, :406,
+(* pe_base's facts on the harness's globals, through PcapHarnessA's h_base / h_base_objsep (PcapEntryDefs.v:405, :407,
    :409). *)
 pose proof (h_base_objsep SK B MT KS cx HB) as HGSEP.
 assert (HGENV : forall a, inG pe_G a -> ~ asrc_env_addr KS a)

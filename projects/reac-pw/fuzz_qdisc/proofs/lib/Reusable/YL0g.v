@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YL0g.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the allocation mode the allocator record carries (a refused munmap leaves a leaked map)). *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -9,10 +10,12 @@ BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require Import YK11 YK0o YK0s YK15 YM06 YP09.
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require Import YO0i YO0f YO0d.
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require Import YM05.
+From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable.R Require Import Cfg.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Local Open Scope Z_scope.
 Section b. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {AM : AllocMode}.
 Definition in_ro_img (B : malloc_syms) (a : Z) : Prop :=
 (exists s, In s (ms_segs B) /\ seg_writable s = false /\
 Z.of_N (seg_base s) <= a < Z.of_N (seg_base s) + Z.of_N (seg_size s)) /\
@@ -69,5 +72,5 @@ End c.
 Definition LIB_STACK : Z := 65536.
 Definition LIB_STACK_RGB : Z := 61440.
 End b.
-Definition lib_contract_all {rc : YM05.RunCeil} (B : malloc_syms) (API : AllocAPI B) (pc ra empty stk : Z) : Prop :=
-forall fx : FPState, @lib_contract fx rc B API pc ra empty stk.
+Definition lib_contract_all {rc : YM05.RunCeil} {AM : AllocMode} (B : malloc_syms) (API : AllocAPI (AM:=AM) B) (pc ra empty stk : Z) : Prop :=
+forall fx : FPState, @lib_contract fx rc AM B API pc ra empty stk.

@@ -1,19 +1,20 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstRcPrim.v (commit f02099425ace, round-3 cf layer, field round 3 (d0377850faa + 91bb9319bae); reply-rccf; file sha256 8d5974deaca8) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YGcfInstRcPrim.v (round-3 cf layer, field round 3; reply-rccf; file sha256 8d5974deaca8) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the generic cf instance layer, lane F2b (second hand of the lane): the PRIMARY arm of
    __asan::QuarantineCallback::Recycle's read fields over the drain's cut
-   relation, the cf twin of YFf3.rc_fin_ARm (YFf3.v:678).
+   relation, the cf twin of YFf3.rc_fin_ARm (YFf3.v:679).
    rule 24: no function proved (kind: relational transport of the RChunk post to the cf cut relation ARcfR).
 
-   Lane B1's slice H4 states the read fields of Recycle over an opaque cut relation (DMrcReads.v at
-   commit cfe12703b567, proofs/cgif/cgif_file_fuzzer/lib/DMrcReads.v: rc_head_t, rc_model_t, rc_prim_fh_t,
-   rc_prim_step_t; rc_prim_room_t at commit 6fdbdd538bcf).  This file proves four of
+   Lane B1's slice H4 states the read fields of Recycle over an opaque cut relation (DMrcReads.v,
+   proofs/cgif/cgif_file_fuzzer/lib/DMrcReads.v: rc_head_t, rc_model_t, rc_prim_fh_t,
+   rc_prim_step_t; rc_prim_room_t).  This file proves four of
    them at the cf instance, GENERICALLY over ImgBase.AImg (im_segs), with
      ARXr := YGcfInstDrainR.ARXr_cf B IOK Hp, AOX := aowned B, DRq := YGcfInstDrainR.DRq_cf B NMAXD,
    in the fields' own shape, so B1 instantiates IM at its unit's image when it plugs them in:
    - [rc_head_cf]: the chunk at the head of DRq_cf is live, quarantined and no longer in the quarantine's items
-     (RIx_cf's item facts; H4's field at commit f713e8280c3);
+     (RIx_cf's item facts; H4's field);
    - [rc_model_cf]: along every path of recycle_chunk, DRq_cf moves to the rest of the list (H4's revised field, the
      MODEL half alone; [rc_model_full_cf] / [rc_model_puser_cf] / [rc_model_aox_cf] keep the puser and owned-set
      conjuncts the first text carried, from YG03cf.recycle_chunk_okx_cf);
@@ -24,19 +25,19 @@
      ARXr_cf at YFf3.X1 (the chunk deleted), CacheDealloc's model premises [cd_model_cf] for the user object, the
      window in the owned set or the stack scratch, the owned set shrinks, and puser off the chunk's own extent is
      apart from the window.  (H4 DROPPED the sixth conjunct, puser grows: it is definitional.)
-  - [rc_prim_room_cf]: H4's ROOM field (rc_prim_room_t, DMrcReads.v:99-103 at commit 6fdbdd538bcf), the growth
+  - [rc_prim_room_cf]: H4's ROOM field (rc_prim_room_t, DMrcReads.v:100-104), the growth
     arm's byte budget at the call, from AbudgetRestate's room of record at the drain cut (YGcfRoomCf.room_rec_cf_of_cut
     with the pending allowance and the unit's admission cf_hull_ok from DRq_cf's conjuncts) and
     YGcfCker.room_wA_parts_R.
-   [cd_model_cf] is DMwalkIF.cd_model (DMwalkIF.v:457-468 at cfe12703b567) VERBATIM, restated here because DMwalkIF is
+   [cd_model_cf] is DMwalkIF.cd_model (DMwalkIF.v:458-469) VERBATIM, restated here because DMwalkIF is
    stated over cgif's image.  Its RMAXD premise here is [HRMAX]: kFreeArrayOffset <= RMAXD.  With DMwalkIF.rmaxd_ok
-   (2 ^ 31 <= RMAXD <= kFreeArrayOffset, DMwalkIF.v:307) that pins RMAXD = kFreeArrayOffset at the cf instance, which
-   is the value DMwalkIF.v:302-306 names for cf: a cf class's mapped user part reaches kFreeArrayOffset, so no
+   (2 ^ 31 <= RMAXD <= kFreeArrayOffset, DMwalkIF.v:308) that pins RMAXD = kFreeArrayOffset at the cf instance, which
+   is the value DMwalkIF.v:303-307 names for cf: a cf class's mapped user part reaches kFreeArrayOffset, so no
    smaller RMAXD can bound rg_alloc_user there.
    rc_prim_fh_t (the cut-read seed, cgif's YFfr.FH_ok over YFgs.REG0's image literals) is NOT here: its discharge is
    B1 H4's at the unit's image (ReallocPrimary, 2026-10-30).
    Memory premise (H4's revision 01:59Z, reviewer RevRcReads): the walk's own frame, plus [CONST'], the constant
-   cells of the image hold after the call (the cf twin of YFf3's CONST' hypothesis, YFf3.v:47; the walk discharges
+   cells of the image hold after the call (the cf twin of YFf3's CONST' hypothesis, YFf3.v:48; the walk discharges
    it from the image's const table, so NO image fact enters this file).
    The free-side ledger conjunct (abudget_ok_cf's A_bytes (w_A W) <= abudget_cf S) is carried, not discharged: the
    primary arm changes neither w_A nor abudget_cf ([abudget_X1]).
@@ -71,7 +72,7 @@ Local Open Scope am_scope.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
 (* The model premise's text.                                                                                        *)
-(* DMwalkIF.cd_model (DMwalkIF.v:457-468 at cfe12703b567), verbatim. *)
+(* DMwalkIF.cd_model (DMwalkIF.v:458-469), verbatim. *)
 Definition cd_model_cf (RMAXD : Z) (S : astate) (c off : Z) : Prop :=
 1 <= c <= 30 /\ st_cache_inited S = true /\
 Z.of_nat (length (pc_chunks (cache S c))) <= max_cached c /\
@@ -99,7 +100,7 @@ Qed.
 Lemma Forall_flat_map_in : forall {A C} (Q : C -> Prop) (f : A -> list C) l x, Forall Q (flat_map f l) -> In x l -> Forall Q (f x).
 Proof. intros A C Q f l x H Hx. apply Forall_forall. intros y Hy. apply (proj1 (Forall_forall _ _) H). apply in_flat_map. exists x. auto. Qed.
 
-(* copy of YFex.v:70 *)
+(* copy of YFex.v:71 *)
 Lemma find_chunk_at_app_cf : forall B ly l1 l2 g,
 find_chunk_at B ly (l1 ++ l2) g = match find_chunk_at B ly l1 g with Some x => Some x | None => find_chunk_at B ly l2 g end.
 Proof. intros B ly l1 l2 g. induction l1 as [|x t IH]; cbn; [reflexivity|]. destruct (_ && _); [reflexivity | exact IH]. Qed.
@@ -599,7 +600,7 @@ Qed.
 Definition cell_in (lo len : Z) (ce : acell) : Prop :=
 lo <= aeval B ly (c_at ce) /\ aeval B ly (c_at ce) + Z.max 1 (Z.of_nat (c_w ce)) <= lo + len.
 
-(* copy of YFf3.v:422 *)
+(* copy of YFf3.v:423 *)
 Lemma batch_cells_within : forall l ce, In ce (batch_cells l) ->
 exists b2, In b2 l /\ cell_in (SB + b_self b2) (24 + 8 * Z.of_nat (length (b_items b2))) ce.
 Proof.
@@ -712,7 +713,7 @@ pose proof (RL.chunks_disjoint_cf B ly X Hp _ y kq rM Hy Hk Hne) as DJ0. unfold 
 unfold ck_n in Hn. rewrite Y4 in Ep. subst p. lia.
 Qed.
 
-(* The weak shadow (CfF2b 68f3ef3b4ba): a granule's shadow keeps its value, or the granule is a pending chunk's user
+(* The weak shadow (CfF2b): a granule's shadow keeps its value, or the granule is a pending chunk's user
    granule and its shadow is present.  At X1 a pending chunk other than kq is still pending; kq's own user granules
    are the window part DHk, which the call writes (NEW_sh). *)
 Lemma FIN : forall g v,
@@ -1120,11 +1121,11 @@ Section F.
 Variable B : asyms.
 Variable IOK : Z -> Prop.
 Variable Hp : list Z.
-(* DRq_cf's size bound (CfF2b 2337319d6c4): a parameter, so the small arm (kQuarantineMax) and the big arm
+(* DRq_cf's size bound (CfF2b): a parameter, so the small arm (kQuarantineMax) and the big arm
    (NMAXD_big_cf) both instantiate these fields. *)
 Variable NMAXD : Z.
 
-(* H4's model ARM SPLIT field (commit a337c4d4e0f7, proofs/cgif/cgif_file_fuzzer/lib/DMrc.v:59): the recycled chunk is
+(* H4's model ARM SPLIT field (proofs/cgif/cgif_file_fuzzer/lib/DMrc.v:59): the recycled chunk is
    a primary chunk, or a live secondary whose map and pointer-array slot exist. *)
 Theorem rc_split_cf : forall X k ks zs, DRq_cf B NMAXD X (k :: ks) zs ->
 (exists off, ck_beg k = PPrim off) \/
@@ -1142,7 +1143,7 @@ destruct (ck_beg k) as [|off|r off|c p] eqn:Eb; try solve [destruct CK].
   exists r, off, sm, i. split; [reflexivity | split; [exact Q1 | exact Hi]].
 Qed.
 
-(* B1's rc_head_t at DRq := DRq_cf B NMAXD (commit f713e8280c3, DMrcReads.v:56-58): the head chunk is live, quarantined, and
+(* B1's rc_head_t at DRq := DRq_cf B NMAXD (DMrcReads.v:57-59): the head chunk is live, quarantined, and
    not among the quarantine's items (RIx_cf: the items are live and quarantined, and NoDup over items ++ q_items). *)
 Theorem rc_head_cf : forall X k ks zs, DRq_cf B NMAXD X (k :: ks) zs ->
 In k (st_chunks X) /\ ck_state k = CQuarantined /\ ~ In (ck_beg k) (map ck_beg (q_items X)).
@@ -1322,7 +1323,7 @@ split; [split; [exact HI | split]|].
   eapply puser_notD; eassumption.
 Qed.
 
-(* H4's ROOM field (rc_prim_room_t, commit 6fdbdd538bcf, proofs/cgif/cgif_file_fuzzer/lib/DMrcReads.v:99-103), its
+(* H4's ROOM field (rc_prim_room_t, proofs/cgif/cgif_file_fuzzer/lib/DMrcReads.v:99-103), its
    text at ARXr := ARXr_cf B IOK Hp and DRq := DRq_cf B NMAXD: at Recycle's call for a primary chunk, the growth arm's
    byte budget.  The cut's room of record is AbudgetRestate's YGcfRoomCf.room_rec_cf_of_cut, with the pending
    allowance qloose_cut from DRq_cf's own conjuncts (YGcfRoomCf.qloose_cut_of_pending) and the unit's admission

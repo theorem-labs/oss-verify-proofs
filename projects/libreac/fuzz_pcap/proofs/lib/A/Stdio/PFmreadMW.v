@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (a Theorem Labs lane): the WALK of musl's mread -- the read hook fmemopen
    stores in the FILE and fread calls through f->read -- inside libreac/fuzz_pcap (libreac v1.9.0,
    the memory-checking builds). It proves lib/A/Stdio/PFreadM.v's rmread_contract, text unchanged
-   (a Theorem Labs lane's caller-journal form, PFreadM.v as at a working branch 9b4de8c19fc and
-   unchanged at ffaa56103b8; PSource.v / PSourceMeta.v as at ffaa56103b8: as_rwa, b + n <= 2^64,
+   (a Theorem Labs lane's caller-journal form, PFreadM.v as at a working branch and
+   unchanged; PSource.v / PSourceMeta.v as: as_rwa, b + n <= 2^64,
    explicit SK).
 
-   rule 24: at ossv/recipes 568db058c1de (2026-10-28), there was NO DONOR for mread. `proof-index mread` (index v5, built 2026-10-28T21:58:24Z)
+   rule 24: (2026-10-28), there was NO DONOR for mread. `proof-index mread` (index v5, built 2026-10-28T21:58:24Z)
    returns rc=0 with four released files, all pcap's OWN plain / ubsan walks in lib/Prog and
    lib/U/Prog (lib/Lib's evt form over rsegs, not the ASan SRr / ajournal form); the four released
    refs hold no cgif-form proof of mread, and cgif_file_fuzzer links no mread at all (it writes a

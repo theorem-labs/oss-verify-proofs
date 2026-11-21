@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (brk's page-granular ledger and the vDSO). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs.
@@ -8,6 +9,7 @@ Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope sys_scope.
 
+(* [comment removed for export] *)
 Definition lim_at {A} (L : Z) (i : SyscallInput) (m : Model) (c1 c2 : Sys A) : Prop :=
   forall o, c1 i m o -> c2 i (setL L m) (omap L o) /\ opres m o.
 
@@ -54,18 +56,30 @@ Proof. intros (y & Hy & E). injection E as -> -> ->. auto. Qed.
 Lemma modify_inv (f : Model -> Model) i m x m1 evs : modify f i m (Ok x m1 evs) -> m1 = f m /\ evs = [].
 Proof. intros E. hnf in E. injection E as -> -> ->. auto. Qed.
 
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+Lemma vm_backing_used_setL : forall L m, vm_backing_used (setL L m) = vm_backing_used m.
+Proof. reflexivity. Qed.
 Lemma vm_forget_range_setL : forall L lo hi m, vm_forget_range lo hi (setL L m) = setL L (vm_forget_range lo hi m).
 Proof. reflexivity. Qed.
 Lemma forget_vm_ranges_setL : forall L rs m, forget_vm_ranges rs (setL L m) = setL L (forget_vm_ranges rs m).
 Proof. intros L rs. induction rs as [|[a n] rs IH]; intros m; cbn [forget_vm_ranges]; [reflexivity|]. rewrite vm_forget_range_setL. apply IH. Qed.
+Lemma mlim_vm_forget_range : forall lo hi m, mlim (vm_forget_range lo hi m) = mlim m.
+Proof. reflexivity. Qed.
 Lemma mlim_forget_vm_ranges : forall rs m, mlim (forget_vm_ranges rs m) = mlim m.
 Proof. intros rs. induction rs as [|[a n] rs IH]; intros m; cbn [forget_vm_ranges]; [reflexivity|]. rewrite IH. reflexivity. Qed.
 
+(* [comment removed for export] *)
+(* [comment removed for export] *)
 Lemma with_brk_next_setL : forall L m req r, with_brk_next (setL L m) req r = setL L (with_brk_next m req r).
 Proof. intros. unfold with_brk_next. cbv zeta. rewrite <- forget_vm_ranges_setL. reflexivity. Qed.
 Lemma mlim_with_brk_next : forall m req r, mlim (with_brk_next m req r) = mlim m.
 Proof. intros. unfold with_brk_next. cbv zeta. rewrite mlim_forget_vm_ranges. reflexivity. Qed.
 
+Lemma brk_budget_ok_setL : forall L m r, brk_budget_ok (setL L m) r = (vm_backing_used m + brk_grow_bytes (m_vmmaps m) r <=? L)%Z.
+Proof. reflexivity. Qed.
+
+(* [comment removed for export] *)
 Lemma brk_r_ok_transfer : forall L m req r,
   brk_budget_refused_b m req = false -> brk_budget_refused_b (setL L m) req = false ->
   brk_r_ok m req r = true -> brk_r_ok (setL L m) req r = true.
@@ -82,7 +96,7 @@ Proof.
   apply andb_true_iff in H as [Hr H]. apply andb_true_iff. split; [exact Hr|].
   destruct ((0 <? bv_unsigned (vm_brk h))%Z && (bv_unsigned (vm_brk h) <? bv_unsigned r)%Z) eqn:E3; [| reflexivity].
   apply andb_true_iff in H as [Hreg Hb]. apply andb_true_iff. split; [exact Hreg|].
-
+  (* [comment removed for export] *)
   apply andb_true_iff in E3 as [E3a E3b].
   apply orb_true_iff in Hr as [Hr|Hr]; apply bv_eqb_eq in Hr; subst r.
   - rewrite E3a, E3b in R2. cbn [andb] in R2. apply negb_false_iff in R2. exact R2.
@@ -103,6 +117,8 @@ Proof.
     + intros [] m2 evs2 Hm. apply at_pure. reflexivity.
 Qed.
 
+(* [comment removed for export] *)
+(* [comment removed for export] *)
 Lemma blind_err_ret e : lim_blind (err_ret e).
 Proof. lim_auto. Qed.
 Lemma blind_ret_only r : lim_blind (ret_only r).
@@ -114,6 +130,8 @@ Proof. lim_auto. Qed.
 
 Ltac at_leaf := first [ apply at_blind; first [apply blind_err_ret | apply blind_ret_only | apply blind_errno_alt | apply lim_blind_unmodeled | apply lim_blind_pure ] ].
 
+(* [comment removed for export] *)
+(* [comment removed for export] *)
 Lemma munmap_at : forall L i m addr len, lim_at L i m (munmap_spec addr len) (munmap_spec addr len).
 Proof.
   intros L i m addr len. unfold munmap_spec.
@@ -122,14 +140,25 @@ Proof.
   destruct (TASK_SIZE <? bv_unsigned addr + page_round_up_Z (bv_unsigned len))%Z; [at_leaf|].
   cbn [setvl vm_maps vm_reserved vm_noaccess vm_start_brk vm_brk vm_limit vm_mmap_base vm_init_sp].
   destruct (map_has (vm_maps (m_vmmaps m)) addr (Z_to_bv 64 (page_round_up_Z (bv_unsigned len)))).
-  - apply at_bind.
+  - (* 08b1429: the exact arm may answer an injected -ENOMEM, and the unmap
+       rebuilds the ledger through [mmap_fixed_destroyed_next] *)
+    apply at_alt; [at_leaf|].
+    apply at_bind.
     + apply at_modify; reflexivity.
     + intros [] m1 evs Hm. apply at_bind.
       * apply at_blind. unfold forget_vm_range. apply lim_blind_modify; reflexivity.
       * intros [] m2 evs2 Hm2. at_leaf.
   - change (munmap_free_ok (setvl L (m_vmmaps m)) addr (page_round_up_Z (bv_unsigned len)))
       with (munmap_free_ok (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len))).
-    destruct (munmap_free_ok (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len))); at_leaf.
+    destruct (munmap_free_ok (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len))); [at_leaf|].
+    (* the partial-cut arm (new at the revision) *)
+    change (munmap_cut_ok (setvl L (m_vmmaps m)) addr (page_round_up_Z (bv_unsigned len)))
+      with (munmap_cut_ok (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len))).
+    destruct (munmap_cut_ok (m_vmmaps m) addr (page_round_up_Z (bv_unsigned len))); [|at_leaf].
+    apply at_alt; [at_leaf|].
+    apply at_bind.
+    + apply at_modify; reflexivity.
+    + intros [] m1 evs Hm. at_leaf.
 Qed.
 
 Lemma madvise_at : forall L i m addr len adv, lim_at L i m (madvise_spec addr len adv) (madvise_spec addr len adv).
@@ -148,6 +177,8 @@ Proof.
   - intros [] m1 evs Hm. at_leaf.
 Qed.
 
+(* [comment removed for export] *)
+(* [comment removed for export] *)
 Lemma mprotect_at : forall L i m addr len prot,
   mprotect_budget_refused_b addr len prot m = false -> mprotect_budget_refused_b addr len prot (setL L m) = false ->
   lim_at L i m (mprotect_spec addr len prot) (mprotect_spec addr len prot).
@@ -162,6 +193,10 @@ Proof.
   set (n := Z_to_bv 64 (page_round_up_Z (bv_unsigned len))) in *.
   change (vm_noaccess (m_vmmaps (setL L m))) with (vm_noaccess (m_vmmaps m)) in *.
   change (vm_maps (m_vmmaps (setL L m))) with (vm_maps (m_vmmaps m)) in *.
+  (* 08b1429: a range meeting the vDSO/vvar pair is unmodeled; [setL] keeps the kernel and vdso_top *)
+  change (m_kernel (setL L m)) with (m_kernel m) in *.
+  change (vdso_top (m_vmmaps (setL L m))) with (vdso_top (m_vmmaps m)) in *.
+  destruct (negb (region_free (vdso_reserved (m_kernel m) (vdso_top (m_vmmaps m))) addr n)); [at_leaf|].
   destruct (map_contains (vm_noaccess (m_vmmaps m)) addr n && map_contains (vm_maps (m_vmmaps m)) addr n).
   - apply negb_false_iff in R1, R2.
     apply at_alt; [at_leaf|].

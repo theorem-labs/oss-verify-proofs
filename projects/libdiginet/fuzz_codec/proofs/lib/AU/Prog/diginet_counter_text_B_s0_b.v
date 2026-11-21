@@ -2,12 +2,13 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACez.v:26-243 (the harness entry
-   segment, tfib_lib_A_seg) at c8557374ad2e for fuzz_knock's ASan image (fuzz_knock.asan, sha256
+   segment, tfib_lib_A_seg) for fuzz_knock's ASan image (fuzz_knock.asan, sha256
    61768cf4739b7641c99c825dde45eddafc55b601d41109555be0272fc7ca4118), and the S0/S1 boundary state from the form of
    proofs/cgif/cgif_file_fuzzer/lib/A/ACf7.v:27-28 (ss_A2). rule 24: no function proved (a port of the released
    cgif_file_fuzzer harness walk structure). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_knock/lib/A/APgMain0.v, with its module paths changed; 308 of its 337 lines of code are new or changed and 277 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_codec/lib/A/Prog/diginet_counter_text_A_s0.v, with its module paths, module names, addresses and numbers changed; 296 of its 360 lines of code are new or changed and 273 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment S0 of diginet_counter_text's walk in image B, part b: from the frame request's return (ct_s0_r1,
    0x86a5c) to __asan_memset's return (ct_s0_r2, 0x86b1c).
    0x86a5c .. 0x86b18: s2 = s4 = F (bnez s2 at 0x86a6c is taken, F >= 4096, so the machine-stack fallback

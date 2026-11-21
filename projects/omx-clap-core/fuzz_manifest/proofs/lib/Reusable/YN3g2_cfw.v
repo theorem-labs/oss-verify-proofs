@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN3g.v, with its module paths and addresses changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/Reusable/YN3g.v, with its module paths changed; 10 of its 54 lines of code are new or changed and 407 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the node obligation sys_rob and the new system calls). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -19,6 +20,7 @@ YP0m YP0e YP09 YP02 YP0l YP0k YP06 YP03 YP04.
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require Import YN3v YH00 YN3f.
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require Import YM05.
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require Import YO0d YN3g YK15_cfw YP0n2_cfw.
+From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require Import RomBase.
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib Require Import SlotAgree.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
@@ -41,19 +43,51 @@ crealizes B (mkCfg (mkst (regupd regs 10 (Z_to_bv 64 0)) (v_addi pc 4) mem rom) 
 crealizes B (mkCfg (pend_at regs pc mem rom) model) T.
 Proof using.
 intros regs pc mem rom model fd ch b0 T Hh Hlz Hno Hfdc H32 Hfd Hcnt Hb0 Hl0 Hiok Hok0 Hc.
-eapply (crz_ret_only_copyins_silent B regs pc mem rom model [(getr regs 11, 16%nat)]
-(Z_to_bv 64 0) model T Hh Hlz ltac:(rewrite Hno; reflexivity)); [|exact Hh|exact Hlz|exact Hc].
-intros eff. rewrite (chk66 segs) by exact Hno. rewrite Hfd, H32.
-destruct Hfdc as [Hlk Hch].
-unfold check_writev. cbn [in_mem sys_input]. rewrite Hlk, Hch, Hcnt.
+(* 727298f3: [sys_rob] as Reusable/YN3g.v's [rz_writev_empty]: the answer is the same for
+   every larger read-only backing, because the two iovec words read the same there. *)
+assert (Hu64 : forall rom' a v, rom_ext rom rom' ->
+ms_read_u64 (pend_at regs pc mem rom) a = Some v -> ms_read_u64 (pend_at regs pc mem rom') a = Some v).
+{ intros rom' a v Hr. unfold ms_read_u64.
+destruct (ms_read_bytes (pend_at regs pc mem rom) a (Z_to_bv 64 8)) as [bs|] eqn:E; [|discriminate].
+pose proof (ms_read_bytes_wrom (pend_at regs pc mem rom) rom' a (Z_to_bv 64 8) bs Hr E) as E'.
+change (wrom (pend_at regs pc mem rom) rom') with (pend_at regs pc mem rom') in E'.
+rewrite E'. exact (fun X => X). }
+assert (Hchk : forall rom', rom_ext rom rom' -> forall eff,
+check_syscall (sys_input segs (pend_at regs pc mem rom') (getr regs 17)) eff model
+= check_ret_only_copyins [(getr regs 11, 16%nat)] eff (Z_to_bv 64 0) model []).
+{ intros rom' Hr eff.
+pose proof (Hu64 rom' _ _ Hr Hb0) as Hb0'. pose proof (Hu64 rom' _ _ Hr Hl0) as Hl0'.
+rewrite (chk66 segs) by exact Hno. rewrite Hfd, H32.
+(* 08b1429: fdchan is a THREE-way conjunction at the revision --
+   fd_lookup .. = Some (FdChannel ch) /\ w_is0 ch = false /\ m_channel_reader model = true --
+   so it needs a nested pattern. The old two-way pattern left Hch as the PAIR, and `rewrite Hch`
+   quoted the whole first conjunct as its pattern, reporting `Found no subterm matching
+   "w_is0 ch = false"`: a mis-destructured hypothesis, not a missing subterm. Hcr is unused on
+   this path -- the zero-total branch of check_writev returns before the reader gate at
+   Checks/Sys/Fs/ReadWrite.v:5251 -- but it must be bound to reach Hch. *)
+destruct Hfdc as [Hlk [Hch Hcr]].
+(* 08b1429: the `if w_is0 ch` gate now SURVIVES the reductions below and is the outermost form
+   left, so `rewrite Hch` moves to the end of the chain, where the goal actually exposes it. *)
+unfold check_writev. cbn [in_mem sys_input]. rewrite Hlk, Hcnt.
 change (iovcnt32 (Z_to_bv 64 1)) with (Z_to_bv 64 1).
 unfold import_iovecs, import_iovecs_accesses. rewrite bv_eqb_refl, Hiok. cbn [negb].
-rewrite (read_iovec_entry_of (pend_at regs pc mem rom) (getr regs 11) b0 (Z_to_bv 64 0) Hb0 Hl0)
+rewrite (read_iovec_entry_of (pend_at regs pc mem rom') (getr regs 11) b0 (Z_to_bv 64 0) Hb0' Hl0')
 by (change (bv_unsigned (Z_to_bv 64 0)) with 0%Z; lia).
 change (Z.min (bv_unsigned (Z_to_bv 64 0)) MAX_RW_COUNT) with 0%Z. rewrite Hok0. cbn [negb].
 cbv zeta.
 replace (iovs_total (cap_iovecs [(b0, Z_to_bv 64 0)]) =? 0)%Z with true by reflexivity.
-reflexivity.
+rewrite Hch. cbn [negb].
+(* 08b1429: the copyins ledger is now built by State.iovec_entry_accesses (State.v:1713-1722)
+   where this script wrote the literal [(getr regs 11, 16%nat)]. It reads the length word at
+   the BITVECTOR address `a + 8` while this tree's hypotheses spell it
+   `Z_to_bv 64 (bv_unsigned a + 8)`: equal, not syntactically equal. Bridge it with the SAME
+   pair read_iovec_entry_of's own proof uses on the same two reads (YP0n.v:1275) --
+   read_u64_ms then word_add_BV (YP0n.v:1016). *)
+unfold iovec_entry_accesses.
+rewrite !read_u64_ms, word_add_BV, Hl0', Hb0'. reflexivity. }
+apply (crz_ret_only_copyins_silent B regs pc mem rom model [(getr regs 11, 16%nat)]
+(Z_to_bv 64 0) model T Hh Hlz ltac:(rewrite Hno; reflexivity) (Hchk rom (rom_ext_refl rom)) Hh Hlz); [| exact Hc].
+apply (rob_pend segs). intros rom' Hr eff. rewrite (Hchk rom' Hr), (Hchk rom (rom_ext_refl rom)). reflexivity.
 Qed.
 End e.
 End d.

@@ -41,7 +41,7 @@
    - The 4 bytes lie in a frame of the caller's state (`In (cid, pos) (frames Sc)`: pcap_source_next's ph is in its
      class-0 side-stack frame), they read b0..b3 (garr8), and their shadow marks them usable (range_addressable).
      Frames lie in [4096, alloc_ceiling) (YCbq frames_bounds), so p >= 4096 (no null) and p + 4 < 2 ^ 47 (no wrap).
-     The pre also states, in lib/A/Stdio/PFreadISpec.v's form (:67 at d83ca9847f8), that the bytes are apart from
+     The pre also states, in lib/A/Stdio/PFreadISpec.v's form (:67), that the bytes are apart from
      every byte the call writes, the function's own frame [sp - 16, sp) (R1, a Theorem Labs lane).
    - The post: a0 = the sign-extended 32-bit value rd_u32_val of the bytes; the callee-saved registers and sp are kept;
      the call returns to ra; the world is the same; the 4 bytes still read b0..b3, and every byte outside the
@@ -58,7 +58,7 @@
      frames_bounds (Reusable/YCbq.v:447):
        0x81c60 `beq a0,-1`: decide_eq2 (YP0e.v:914): p's range is disjoint from 2 ^ 64 - 1, not taken;
        0x81c84 `bltu a0+3,2`: decide_ltu2 (YP0e.v:922, itv_lt :893): [p + 3, ...] lies above 2, not taken.
-     Template: the released v1.8 UBSan proof lib/U/Prog/rd_u32.v (origin/ossv/recipes c8557374ad2e), where
+     Template: the released v1.8 UBSan proof lib/U/Prog/rd_u32.v, where
      bytes_at_bound at :19 gives a0 + 4 <= 2 ^ 64 and the two `if_false` at :31 take the same two guards' false arms.
    - The four ASan checks (0x81c58, 0x81c78, 0x81c9c, 0x81cb0 `bnez` of the shadow byte of p, p + 1, p + 2, p + 3)
      are decided inside the same run: each shadow `lb` becomes a token (Reusable/YCbn.v:173 tok_load), and each `bnez`
@@ -68,6 +68,7 @@
      The run leaves no shadow obligation, so the four __asan_report_load1 calls (0x81d18, 0x81d28, 0x81d38, 0x81d48)
      are not reached. Template: lib/A/Prog/PcapSourceClose.v cl_entry / shent_ps_ok (the same entry form, at 8
      bytes). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.

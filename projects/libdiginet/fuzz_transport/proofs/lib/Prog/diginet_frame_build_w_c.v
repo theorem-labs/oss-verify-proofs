@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/Prog/diginet_frame_build_w_c.v at b8f2ecf2c3ff0406d93584348ebba6e5957c14ce to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/Prog/diginet_frame_build_w_c.v to fuzz_transport's images *)
 (* Wide contract of diginet_frame_build in fuzz_transport.plain.
    Source: src/diginet_frame.c:93-127 at 835f336c. Address 0x178d8 (diginet_frame_build_c.v).
    It is diginet_frame_build_contract with two premises made wider, for the callers send_control

@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/ErrnoG.v, with its module paths and module names changed; 39 of its 82 lines of code are new or changed and 367 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/AllocG.v at origin/cold/c-asan-realloc-c5 95e6f1d72b6 (sha256 9fd0d69116a5) into lib/Reusable (shared by both images), with its module paths changed; the M1 text of this file (c-asan-realloc-primary 10c1218e6df) is replaced, not kept beside it. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/AllocG.v (sha256 9fd0d69116a5) into lib/Reusable (shared by both images), with its module paths changed; the M1 text of this file (c-asan-realloc-primary) is replaced, not kept beside it. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The frame-generic contract of __asan::Allocator::Allocate.
 
    The run starts at Allocate's first instruction [pcA] and ends at its [ret], back at the caller's return pc.

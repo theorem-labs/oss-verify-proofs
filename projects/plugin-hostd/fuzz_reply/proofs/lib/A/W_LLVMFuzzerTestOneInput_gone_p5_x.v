@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: the ARx-GENERIC conversion of ARM_gone's PHASE 5 (lib/A/W_LLVMFuzzerTestOneInput_gone_p5.v,
    a Theorem Labs lane's gp5_t0_csd: the table-order loop of fuzz_reply.c:646-653, fuzz_reply.asan 0x84864 (GT0) to
    check_shape_done's call at 0x8494c (GCSD)) to the cut invariants of lib/A/W_LLVMFuzzerTestOneInput_cut_x.v
@@ -9,7 +10,7 @@
      HERRROM verbatim; RIstep / RIend with LS -> LSx; CNL / CSHE at W_contract_x's cnl_spec_x / cshe_spec_x.
    - OWED (kit has no twin): BLKN, W_kit_x.v's text (AR's al_blocks has 0 <= n, ARx_blocks_law does not).
      Forced by the generic relation: HPST (the image is off PST: the journal's image clause asks it; trivial at
-     PST = []) and FRMF (W_frame_x.v:105's Section hypothesis, for frame_al64_x / shadow_hull_vis_of_frame_x).
+     PST = []) and FRMF (W_frame_x.v:106's Section hypothesis, for frame_al64_x / shadow_hull_vis_of_frame_x).
      IMGC is W_img_x.fr_img_cover_x (no hypothesis).
    - HP0 makes every ghost list of the walk empty, so every converted helper is stated at Hp = []: AR0 is _gone_p5.v's
      AR at [], AJ0 / AJi0 its journals, AFN0 its afn_pre, LFB0 its lf_base. The AR-free lemmas and definitions of
@@ -70,7 +71,7 @@ Local Set Warnings "-abstract-large-number".
 Open Scope Z_scope.
 
 Section gp5_x.
-(* cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:191-235), the part ARM_gone reads *)
+(* cut_x's Section w header (W_LLVMFuzzerTestOneInput_cut_x.v:192-236), the part ARM_gone reads *)
 Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 #[local] Notation segs := (@pa_segs _ fr_prog_listing PB_fr).
 Variable B : asyms.
@@ -97,7 +98,7 @@ Variable RINV : lfcx -> Z -> lmod -> Prop.
 Variable MMAX : Z.
 (* the room round: the room predicate the callees are taken at (RM := fun S _ => NP S at the instance) *)
 Variable RP : roomp.
-(* W3's check_no_loss and check_shape_ends at the kit's forms: W_contract_x.v:1332 cnl_spec_x and :1086 cshe_spec_x,
+(* W3's check_no_loss and check_shape_ends at the kit's forms: W_contract_x.v:1333 cnl_spec_x and :1086 cshe_spec_x,
    G-generic as _gone_p5.v takes them (each call at its own G, the 32 bytes of slot j's two lists) *)
 Hypothesis CNL : forall G, gx_ok segs B G -> gx_rt B G ->
   cnl_spec_x B PST ARx MT RP G MMAX (BASE + AF_fr_check_no_loss).
@@ -112,7 +113,7 @@ Hypothesis RIstep : GN_RI_step B MT LSx RINV MMAX.
 Hypothesis RIend : GN_RI_end B MT LSx RINV.
 (* the room round (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) (c) / (d)), as _gone_p3_x.v states them: RPNP (RM is NP at the instance), the arm's
    count row LSCNT (GN_LS_cnt_x, _gone_base_x.v) and its model count rule CNTSTEP (GN_CNT_step, _gone_base.v, at
-   check_no_loss's premise peak cnl_pk, W_contract_x.v:308) *)
+   check_no_loss's premise peak cnl_pk, W_contract_x.v:309) *)
 Variable gn_pk : lfcx -> lmod -> list (hsrc * nat) -> (Z -> bool) -> nat.
 Hypothesis RPNP : forall S k, rp_RM RP S k <-> NP S.
 Hypothesis LSCNT : GN_LS_cnt_x B LSx RINV RP gn_pk.
@@ -126,7 +127,7 @@ Hypothesis HERRROM : forall a, in_rom segs a -> ~ (as_errno B <= a < as_errno B 
 Hypothesis BLKN : forall ly S Hp (W : world segs) mem md p n, ARx ly S Hp W mem md -> In (p, n) (ablocks B ly S) -> 0 <= n.
 (* the image is off PST (add_x's HPST): the journal's image clause takes it; trivial at PST = [] *)
 Hypothesis HPST : forall a, in_img segs a -> ~ Exists (in_zr a) PST.
-(* W_frame_x.v:105's Section hypothesis FRMF, for frame_al64_x / shadow_hull_vis_of_frame_x *)
+(* W_frame_x.v:106's Section hypothesis FRMF, for frame_al64_x / shadow_hull_vis_of_frame_x *)
 Hypothesis FRMF : forall ly S Hp (W : world segs) mem md cid pos, ARx ly S Hp W mem md -> In (cid, pos) (frames S) ->
   ly_F ly mod 4096 = 0 /\ fs_frame_off cid pos mod 64 = 0 /\ 64 <= fs_frame_bytes cid /\ fs_frame_bytes cid mod 64 = 0.
 (* W_kit_x's IMGC, from the laws' image field *)
@@ -271,7 +272,7 @@ Proof.
   unfold zdisjoint in Hf. cbn [fst snd] in Hf. lia.
 Qed.
 
-(* cnl_spec's last premise (W_contract.v:2064): the stack is readable from the callee's sp = F up to ly_top.  Below
+(* cnl_spec's last premise (W_contract.v:2065): the stack is readable from the callee's sp = F up to ly_top.  Below
    the entry's sp it is the arm's own frame, present by the journal's frame clause; from the entry's sp up the
    journal keeps the entry's view (its high-memory clause), which lf_base's STKR (_cut.v:172-177) says is readable *)
 Lemma gp5_stkr_x : forall cx fpos ly3 S3 (W : world segs) mem md k,
@@ -1893,7 +1894,7 @@ Proof.
     - apply (gp5_ra_fake cx FF W mem _ _ HFR HFF8); lia.
     - apply (shadow_hull_vis_of_frame_x segs B ARx LAWS FRMF ly S3 [] W mem mdc 1 fpos _ _ HARc Hfin);
         [fold FF; lia | change (fs_frame_bytes 1) with 128; fold FF; lia | lia].
-    (* where P lives (cshe_spec's P-home premise, W_contract.v:1905-1906): its FRAME disjunct.  PF = FF + 32 is
+    (* where P lives (cshe_spec's P-home premise, W_contract.v:1906-1907): its FRAME disjunct.  PF = FF + 32 is
        prefix[48] in the 128-byte fake frame of class 1 the arm seated, a frame of S, and PLEN + 9 <= 48 (gn_prefix_at),
        so [PF, PF + PLEN + 8) lies inside it; its shadow facts are the two premises above (gp5_ra_fake from the arm's
        unpoison stores, shadow_hull_vis_of_frame) *)
@@ -2045,7 +2046,7 @@ Variable R : world segs -> world segs -> Prop.
 Hypothesis R_refl : forall W, R W W.
 Hypothesis R_trans : forall W1 W2 W3, R W1 W2 -> R W2 W3 -> R W1 W3.
 Hypothesis WLE_R : forall W W', wle W W' -> R W W'.
-(* check_no_loss and check_shape_ends at R (W_contract_xR_g6.v:267 cnl_spec_xR, :178 cshe_spec_xR), G-generic as the
+(* check_no_loss and check_shape_ends at R (W_contract_xR_g6.v:268 cnl_spec_xR, :178 cshe_spec_xR), G-generic as the
    strict CNL / CSHE *)
 Hypothesis CNL_R : forall G, gx_ok segs B G -> gx_rt B G ->
   cnl_spec_xR B PST ARx R MT RP G MMAX (BASE + AF_fr_check_no_loss).

@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by gabelogan195, 2026-11: the spinning leaf srz_cfg_spin removed from srealizes_cfg, with the lemma srz_cfg_spinning and the spinning case of each lemma that inducts on srealizes_cfg, so that a derivation of srealizes_cfg is a well-founded tree of steps ending in halted configurations. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the configuration relation's node asks the read-only-backing premise (RomBase.sys_rob), the three vDSO arms of sstep_cfg are covered, and srz_cfg_spinning is removed. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -11,7 +11,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Sem.
 From OSSVerify.Proofs.skcms.iccprofile_info.lib.Asan Require Import
-  SimInv ExitSim CatSim MmapSim ShapeAlg DivergeSim LazyFrame SpinAlg.
+  SimInv ExitSim CatSim MmapSim ShapeAlg DivergeSim LazyFrame SpinAlg RomBase.
 Unset Nia Cache.  (* [comment removed for export] *)
 Import ListNotations.
 Open Scope bv_scope.
@@ -44,10 +44,17 @@ Inductive srealizes_cfg : config -> TSet -> Prop :=
 | srz_cfg_node : forall c (I : Type) (evs : I -> list event) (nx : I -> config)
                         (T : I -> TSet) (i0 : I),
     node_ok_cfg c I evs nx ->
+    (* the node's system call reads no byte the run's backing adds ([RomBase.sys_rob];
+       [RunSegsCfg.srealizes_cfg_run_init] lifts a walk to the run's start) *)
+    sys_rob segs c ->
     (forall i, srealizes_cfg (nx i) (T i)) ->
     srealizes_cfg c (t_alt (fun i => t_emit (evs i) (T i)))
 | srz_cfg_halt : forall c,
     m_halted (cfg_model c) <> None ->
+    srealizes_cfg c t_nil
+| srz_cfg_spin : forall c,
+    False /\ to_spin segs (cfg_ms c) (cfg_model c) ->
+    m_halted (cfg_model c) = None ->
     srealizes_cfg c t_nil
 | srz_cfg_conseq : forall c T T',
     srealizes_cfg c T -> t_eq T T' -> srealizes_cfg c T'.
@@ -57,8 +64,9 @@ Inductive srealizes_cfg : config -> TSet -> Prop :=
 Lemma srealizes_cfg_nonempty : forall c T, srealizes_cfg c T -> T [].
 Proof.
   intros c T H;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq].
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c Hspin Hh | c T T' H IH Heq].
   - exists i0. left. apply is_prefix_nil.
+  - reflexivity.
   - reflexivity.
   - apply Heq. exact IH.
 Qed.
@@ -67,13 +75,14 @@ Lemma srealizes_cfg_pclosed : forall c T, srealizes_cfg c T ->
   forall tr tr', T tr -> is_prefix tr' tr -> T tr'.
 Proof.
   intros c T H;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c Hspin Hh | c T T' H IH Heq];
     intros tr tr' HT Hp.
   - destruct HT as [i [Hpre | (tr0 & -> & HT0)]]; exists i.
     + left. eapply is_prefix_trans; eauto.
     + apply is_prefix_app_split in Hp as [Hp | (tr0' & -> & Hp)].
       * left. exact Hp.
       * right. exists tr0'. split; [reflexivity | eapply IH; eauto].
+  - unfold t_nil in *. subst tr. apply is_prefix_nil_r in Hp. exact Hp.
   - unfold t_nil in *. subst tr. apply is_prefix_nil_r in Hp. exact Hp.
   - apply Heq. eapply IH; [apply Heq; exact HT | exact Hp].
 Qed.
@@ -109,21 +118,12 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma spin_star_cfg_nil : forall ms model tr c',
-  to_spin segs ms model -> m_halted model = None ->
-  star_cfg segs CFG (mkCfg ms model) tr c' -> tr = [].
-Proof.
-  intros ms model tr c' Hspin Hh Hstar.
-  exact (spin_star_nil segs ms model tr c' Hspin Hh (star_cfg_sub segs CFG _ _ _ Hstar)).
-Qed.
-
-(* [comment removed for export] *)
 
 Lemma srealizes_cfg_star_only : forall c T, srealizes_cfg c T ->
   forall tr c', star_cfg segs CFG c tr c' -> T tr.
 Proof.
   intros c T H;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c Hspin Hh | c T T' H IH Heq];
     intros tr c' Hstar.
   - inversion Hstar as [|c1 e c2 tr2 c3 Hss Hstar2]; subst.
     + exists i0. left. apply is_prefix_nil.
@@ -132,6 +132,7 @@ Proof.
       inversion Heq2; subst c2.
       exists i. right. exists tr2. split; [reflexivity | eapply IH; exact Hstar2].
   - rewrite (star_cfg_halted_nil c tr c' Hh Hstar). reflexivity.
+  - destruct Hspin as [[] _].
   - apply Heq. eapply IH; exact Hstar.
 Qed.
 
@@ -139,7 +140,7 @@ Lemma srealizes_cfg_admits : forall c T, srealizes_cfg c T ->
   forall tr, T tr -> obs_trace_cfg segs CFG c tr.
 Proof.
   intros c T H;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c Hspin Hh | c T T' H IH Heq];
     intros tr HT.
   - destruct Hnode as [Hcomp _].
     destruct HT as [i [Hpre | (tr0 & -> & HT0)]].
@@ -147,6 +148,7 @@ Proof.
     + destruct (IH i tr0 HT0) as (tr'' & c'' & Hstar & Hp).
       exists (evs i ++ tr''), c''.
       split; [eapply star_cfg_step; [apply Hcomp | exact Hstar] | apply is_prefix_app_mono; exact Hp].
+  - unfold t_nil in HT; subst tr. apply obs_trace_cfg_nil.
   - unfold t_nil in HT; subst tr. apply obs_trace_cfg_nil.
   - apply IH. apply Heq. exact HT.
 Qed.
@@ -165,12 +167,13 @@ Lemma srealizes_cfg_step : forall c T e c',
   srealizes_cfg c T -> sstep_cfg segs CFG c e (SNext c') -> exists T', srealizes_cfg c' T'.
 Proof.
   intros c T e c' H; revert e c';
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c Hspin Hh | c T T' H IH Heq];
     intros e c' Hss.
   - destruct Hnode as [_ Hsound].
     destruct (Hsound e (SNext c') Hss) as (i & _ & Heq2).
     inversion Heq2; subst c'. exists (T i). apply Hcont.
   - exfalso. apply Hh. eapply sstep_cfg_halted_none; exact Hss.
+  - destruct Hspin as [[] _].
   - eapply IH; exact Hss.
 Qed.
 
@@ -178,11 +181,12 @@ Lemma srealizes_cfg_no_sserror : forall c T e,
   srealizes_cfg c T -> ~ sstep_cfg segs CFG c e SError.
 Proof.
   intros c T e H; revert e;
-    induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+    induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c Hspin Hh | c T T' H IH Heq];
     intros e Hss.
   - destruct Hnode as [_ Hsound].
     destruct (Hsound e SError Hss) as (i & _ & Hbad). discriminate.
   - apply Hh. eapply sstep_cfg_halted_none; exact Hss.
+  - destruct Hspin as [[] _].
   - eapply IH; exact Hss.
 Qed.
 
@@ -242,6 +246,9 @@ Proof.
     [ms model ms' model' Hh Hsvc Hacc
     | ms model Hh Hsvc Hacc
     | ms model Hh Hsvc Hacc
+    | ms model fn n eff model' model'' evs
+    | ms model fn n eff model' evs
+    | ms model fn
     | ms model x8 eff model' model'' evs Hh Hsvc Hspec Hh' Hmat
     | ms model x8 eff model' evs Hh Hsvc Hspec Hh' Hmat
     | ms model x8 eff model' evs code Hh Hsvc Hspec Hh' Hk
@@ -250,6 +257,9 @@ Proof.
   - eapply sstep_cfg_instr; eassumption.
   - eapply sstep_cfg_instr_fault; eassumption.
   - eapply sstep_cfg_instr_unmodeled; eassumption.
+  - eapply sstep_cfg_vdso_call; eassumption.
+  - eapply sstep_cfg_vdso_materialization_fault; eassumption.
+  - eapply sstep_cfg_vdso_unmodeled; eassumption.
   - eapply sstep_cfg_syscall; try eassumption.
     intros (Hoff & _ & _). specialize (Hna x8 Hsvc). cbn [cfg_ms] in Hna. rewrite Hna in Hoff. discriminate.
   - eapply sstep_cfg_syscall_materialization_fault; try eassumption.
@@ -280,6 +290,9 @@ Proof.
     [ms model ms' model' Hh Hsvc Hacc
     | ms model Hh Hsvc Hacc
     | ms model Hh Hsvc Hacc
+    | ms model fn n eff model' model'' evs
+    | ms model fn n eff model' evs
+    | ms model fn
     | ms model x8 eff model' model'' evs Hh Hsvc Hspec Hh' Hmat
     | ms model x8 eff model' evs Hh Hsvc Hspec Hh' Hmat
     | ms model x8 eff model' evs code Hh Hsvc Hspec Hh' Hk
@@ -288,6 +301,9 @@ Proof.
   - eapply sstep_cfg_instr; eassumption.
   - eapply sstep_cfg_instr_fault; eassumption.
   - eapply sstep_cfg_instr_unmodeled; eassumption.
+  - eapply sstep_cfg_vdso_call; eassumption.
+  - eapply sstep_cfg_vdso_materialization_fault; eassumption.
+  - eapply sstep_cfg_vdso_unmodeled; eassumption.
   - eapply sstep_cfg_syscall; try eassumption.
     intros (_ & _ & (eff' & m2 & evs2 & Hs2 & Hr2)).
     pose proof (Hfo x8 Hsvc eff' m2 evs2 Hs2) as Hr. cbn [cfg_ms cfg_model] in Hr. congruence.
@@ -360,12 +376,16 @@ Proof.
     [ms1 model1 ms' model' Hh Hsvc Hacc
     | ms1 model1 Hh Hsvc Hacc
     | ms1 model1 Hh Hsvc Hacc
+    | ms1 model1 fn n eff model' model'' evs
+    | ms1 model1 fn n eff model' evs
+    | ms1 model1 fn
     | ms1 model1 x8 eff model' model'' evs Hh Hsvc Hspec Hh' Hmat
     | ms1 model1 x8 eff model' evs Hh Hsvc Hspec Hh' Hmat
     | ms1 model1 x8 eff model' evs code Hh Hsvc Hspec Hh' Hk
     | ms1 model1 x8 eff model' evs sig Hh Hsvc Hspec Hk
     | ms1 model1 x8 Hh Hsvc Hspec]; subst.
   - eapply sstep_cfg_instr; eassumption.
+  - eapply sstep_cfg_vdso_call; eassumption.
   - eapply sstep_cfg_syscall; try eassumption.
     intros (_ & Hr & (eff' & m2 & evs2 & Hs2 & Hr2)).
     destruct (sstep_of_outcome ms model x8 eff' m2 evs2 Hh Hsvc Hs2)
@@ -410,6 +430,9 @@ Proof.
         [ms1 model1 ms' model' Hh Hsv Hacc
         | ms1 model1 Hh Hsv Hacc
         | ms1 model1 Hh Hsv Hacc
+        | ms1 model1 fn n eff model' model'' evs1
+        | ms1 model1 fn n eff model' evs1
+        | ms1 model1 fn
         | ms1 model1 y8 eff model' model'' evs1 Hh Hsv Hspec Hns Hh' Hmat
         | ms1 model1 y8 eff model' evs1 Hh Hsv Hspec Hns Hh' Hmat
         | ms1 model1 y8 eff model' evs1 code Hh Hsv Hspec Hh' Hk
@@ -459,6 +482,9 @@ Proof.
     [ms1 model1 ms' model' Hh Hsvc Hacc
     | ms1 model1 Hh Hsvc Hacc
     | ms1 model1 Hh Hsvc Hacc
+    | ms1 model1 fn n eff model' model'' evs1
+    | ms1 model1 fn n eff model' evs1
+    | ms1 model1 fn
     | ms1 model1 x8 eff model' model'' evs1 Hh Hsvc Hspec Hh' Hmat
     | ms1 model1 x8 eff model' evs1 Hh Hsvc Hspec Hh' Hmat
     | ms1 model1 x8 eff model' evs1 code Hh Hsvc Hspec Hh' Hk
@@ -466,6 +492,9 @@ Proof.
     | ms1 model1 x8 Hh Hsvc Hspec]; subst.
   - try (match goal with E : _ = nx i |- _ => rewrite <- E end).
     eapply sstep_cfg_instr; eassumption.
+  - try (match goal with E : _ = nx i |- _ => rewrite <- E end).
+    try (match goal with E : _ = evs i |- _ => rewrite <- E end).
+    eapply sstep_cfg_vdso_call; eassumption.
   - match goal with E : _ = nx i |- _ => rename E into Ei end.
     try rewrite <- Ei. try (match goal with E : _ = evs i |- _ => rewrite <- E end).
     eapply sstep_cfg_syscall; try eassumption.
@@ -488,13 +517,13 @@ Qed.
 
 (* [comment removed for export] *)
 Lemma srz_cfg_silent1 : forall c c' T,
-  node_ok segs c unit (fun _ => []) (fun _ => c') ->
+  node_ok segs c unit (fun _ => []) (fun _ => c') -> sys_rob segs c ->
   srealizes_cfg c' T ->
   srealizes_cfg c T.
 Proof.
-  intros c c' T Hnode Hc.
+  intros c c' T Hnode Hrob Hc.
   apply (srz_cfg_conseq c (t_alt (fun _ : unit => t_emit [] T))).
-  - apply (srz_cfg_node c unit (fun _ => []) (fun _ => c') (fun _ => T) tt (node_ok_cfg_unit c [] c' Hnode)).
+  - apply (srz_cfg_node c unit (fun _ => []) (fun _ => c') (fun _ => T) tt (node_ok_cfg_unit c [] c' Hnode) Hrob).
     intros []; exact Hc.
   - eapply t_eq_trans;
       [ apply (t_alt_unit (fun _ : unit => t_emit [] T))
@@ -503,13 +532,13 @@ Qed.
 
 (* [comment removed for export] *)
 Lemma srz_cfg_emit1 : forall c c' e T,
-  node_ok segs c unit (fun _ => e) (fun _ => c') ->
+  node_ok segs c unit (fun _ => e) (fun _ => c') -> sys_rob segs c ->
   srealizes_cfg c' T ->
   srealizes_cfg c (t_emit e T).
 Proof.
-  intros c c' e T Hnode Hc.
+  intros c c' e T Hnode Hrob Hc.
   apply (srz_cfg_conseq c (t_alt (fun _ : unit => t_emit e T))).
-  - apply (srz_cfg_node c unit (fun _ => e) (fun _ => c') (fun _ => T) tt (node_ok_cfg_unit c e c' Hnode)).
+  - apply (srz_cfg_node c unit (fun _ => e) (fun _ => c') (fun _ => T) tt (node_ok_cfg_unit c e c' Hnode) Hrob).
     intros []; exact Hc.
   - apply t_alt_unit.
 Qed.
@@ -517,23 +546,23 @@ Qed.
 (* [comment removed for export] *)
 Lemma srz_cfg_node_na : forall c (I : Type) (evs : I -> list event) (nx : I -> config) (T : I -> TSet) (i0 : I),
   nonalloc c ->
-  node_ok segs c I evs nx ->
+  node_ok segs c I evs nx -> sys_rob segs c ->
   (forall i, srealizes_cfg (nx i) (T i)) ->
   srealizes_cfg c (t_alt (fun i => t_emit (evs i) (T i))).
 Proof.
-  intros c I evs nx T i0 Hna Hnode Hc.
-  exact (srz_cfg_node c I evs nx T i0 (node_ok_cfg_of_nonalloc c I evs nx Hna Hnode) Hc).
+  intros c I evs nx T i0 Hna Hnode Hrob Hc.
+  exact (srz_cfg_node c I evs nx T i0 (node_ok_cfg_of_nonalloc c I evs nx Hna Hnode) Hrob Hc).
 Qed.
 
 (* [comment removed for export] *)
 Lemma srz_cfg_cases : forall c (I : Type) (nx : I -> config) (T : I -> TSet) (i0 : I),
-  node_ok_cfg c I (fun _ => []) nx ->
+  node_ok_cfg c I (fun _ => []) nx -> sys_rob segs c ->
   (forall i, srealizes_cfg (nx i) (T i)) ->
   srealizes_cfg c (t_alt T).
 Proof.
-  intros c I nx T i0 Hnode Hc.
+  intros c I nx T i0 Hnode Hrob Hc.
   apply (srz_cfg_conseq c (t_alt (fun i => t_emit [] (T i)))).
-  - apply (srz_cfg_node c I (fun _ => []) nx T i0 Hnode Hc).
+  - apply (srz_cfg_node c I (fun _ => []) nx T i0 Hnode Hrob Hc).
   - intros tr. split.
     + intros [i Hi]. exists i.
       exact (proj1 (t_emit_nil_eq (T i) (srealizes_cfg_nonempty _ _ (Hc i)) tr) Hi).
@@ -543,30 +572,30 @@ Qed.
 
 (* [comment removed for export] *)
 Lemma srz_cfg_same : forall c (I : Type) (nx : I -> config) (T : TSet) (i0 : I),
-  node_ok_cfg c I (fun _ => []) nx ->
+  node_ok_cfg c I (fun _ => []) nx -> sys_rob segs c ->
   (forall i, srealizes_cfg (nx i) T) ->
   srealizes_cfg c T.
 Proof.
-  intros c I nx T i0 Hnode Hc.
+  intros c I nx T i0 Hnode Hrob Hc.
   apply (srz_cfg_conseq c (t_alt (fun _ : I => T))).
-  - exact (srz_cfg_cases c I nx (fun _ => T) i0 Hnode Hc).
+  - exact (srz_cfg_cases c I nx (fun _ => T) i0 Hnode Hrob Hc).
   - intros tr. split; [intros [_ H]; exact H | intros H; exists i0; exact H].
 Qed.
 
 (* [comment removed for export] *)
 Lemma srz_cfg_alt2 : forall c (IA IB : Type) (nx : IA + IB -> config) (A B : TSet) (a0 : IA) (b0 : IB),
-  node_ok_cfg c (IA + IB) (fun _ => []) nx ->
+  node_ok_cfg c (IA + IB) (fun _ => []) nx -> sys_rob segs c ->
   (forall i, srealizes_cfg (nx (inl i)) A) ->
   (forall i, srealizes_cfg (nx (inr i)) B) ->
   srealizes_cfg c (t_alt2 A B).
 Proof.
-  intros c IA IB nx A B a0 b0 Hnode HA HB.
+  intros c IA IB nx A B a0 b0 Hnode Hrob HA HB.
   assert (HA0 : A []) by (eapply srealizes_cfg_nonempty; apply (HA a0)).
   assert (HB0 : B []) by (eapply srealizes_cfg_nonempty; apply (HB b0)).
   apply (srz_cfg_conseq c
     (t_alt (fun i : IA + IB => t_emit [] (match i with inl _ => A | inr _ => B end)))).
   - apply (srz_cfg_node c (IA + IB) (fun _ => []) nx
-             (fun i => match i with inl _ => A | inr _ => B end) (inl a0) Hnode).
+             (fun i => match i with inl _ => A | inr _ => B end) (inl a0) Hnode Hrob).
     intros [i|i]; [apply HA | apply HB].
   - intro tr. unfold t_alt2. split.
     + intros [[i|i] Hi];
@@ -581,15 +610,15 @@ Qed.
 Lemma srz_cfg_alt2_drop : forall ms model x8 (IA IB : Type) (nx : IA + IB -> config) (B : TSet) (b0 : IB),
   ms_svc_pending ms = Some x8 ->
   injected_family_off CFG (sys_input segs ms x8) = true ->
-  node_ok segs (mkCfg ms model) (IA + IB) (fun _ => []) nx ->
+  node_ok segs (mkCfg ms model) (IA + IB) (fun _ => []) nx -> sys_rob segs (mkCfg ms model) ->
   (forall i, ms_svc_pending (cfg_ms (nx i)) = None) ->
   (forall a, refusal_b (sys_input segs ms x8) model (ms_gpr (cfg_ms (nx (inl a))) 0) = true) ->
   (forall b, refusal_b (sys_input segs ms x8) model (ms_gpr (cfg_ms (nx (inr b))) 0) = false) ->
   (forall b, srealizes_cfg (nx (inr b)) B) ->
   srealizes_cfg (mkCfg ms model) B.
 Proof.
-  intros ms model x8 IA IB nx B b0 Hsvc Hoff Hnode Hsvc' Hrefa Hrefb HB.
-  apply (srz_cfg_same (mkCfg ms model) IB (fun b => nx (inr b)) B b0); [| exact HB].
+  intros ms model x8 IA IB nx B b0 Hsvc Hoff Hnode Hrob Hsvc' Hrefa Hrefb HB.
+  apply (srz_cfg_same (mkCfg ms model) IB (fun b => nx (inr b)) B b0); [| exact Hrob | exact HB].
   apply (node_ok_cfg_keep ms model x8 (IA + IB) IB (fun _ => []) nx inr b0 Hsvc Hoff Hnode Hsvc' Hrefb).
   intros [a | b] Hr; [rewrite Hrefa in Hr; discriminate Hr | exists b; reflexivity].
 Qed.
@@ -598,18 +627,19 @@ Qed.
 Lemma srz_cfg_silent_nonref : forall ms model x8 (I : Type) (nx : I -> config) (B : TSet) (i0 : I),
   ms_svc_pending ms = Some x8 ->
   injected_family_off CFG (sys_input segs ms x8) = true ->
-  node_ok segs (mkCfg ms model) I (fun _ => []) nx ->
+  node_ok segs (mkCfg ms model) I (fun _ => []) nx -> sys_rob segs (mkCfg ms model) ->
   (forall i, ms_svc_pending (cfg_ms (nx i)) = None) ->
   refusal_b (sys_input segs ms x8) model (ms_gpr (cfg_ms (nx i0)) 0) = false ->
   (forall i, refusal_b (sys_input segs ms x8) model (ms_gpr (cfg_ms (nx i)) 0) = false -> srealizes_cfg (nx i) B) ->
   srealizes_cfg (mkCfg ms model) B.
 Proof.
-  intros ms model x8 I nx B i0 Hsvc Hoff Hnode Hsvc' Hr0 HB.
+  intros ms model x8 I nx B i0 Hsvc Hoff Hnode Hrob Hsvc' Hr0 HB.
   set (J := {i : I | refusal_b (sys_input segs ms x8) model (ms_gpr (cfg_ms (nx i)) 0) = false}).
   apply (srz_cfg_same (mkCfg ms model) J (fun j => nx (proj1_sig j)) B (exist _ i0 Hr0)).
   - apply (node_ok_cfg_keep ms model x8 I J (fun _ => []) nx (@proj1_sig _ _) (exist _ i0 Hr0) Hsvc Hoff Hnode Hsvc').
     + intros [i Hi]. exact Hi.
     + intros i Hi. exists (exist _ i Hi). reflexivity.
+  - exact Hrob.
   - intros [i Hi]. exact (HB i Hi).
 Qed.
 
@@ -674,7 +704,7 @@ Lemma srz_cfg_step : forall ms model ms' T,
   srealizes_cfg (mkCfg ms model) T.
 Proof.
   intros ms model ms' T Hh Hlazy Hsvc Hstep Hc.
-  eapply srz_cfg_silent1; [apply node_instr; eassumption | exact Hc].
+  eapply srz_cfg_silent1; [apply node_instr; eassumption | apply sys_rob_instr; exact Hsvc | exact Hc].
 Qed.
 
 Lemma srz_cfg_msteps : forall ms ms' model T,
@@ -700,7 +730,7 @@ Lemma srz_cfg_step_disjoint : forall ms model ms' ranges T,
   srealizes_cfg (mkCfg ms model) T.
 Proof.
   intros ms model ms' ranges T Hh Hsvc Hstep Hout Hc.
-  eapply srz_cfg_silent1; [eapply node_instr_disjoint; eassumption | exact Hc].
+  eapply srz_cfg_silent1; [eapply node_instr_disjoint; eassumption | apply sys_rob_instr; exact Hsvc | exact Hc].
 Qed.
 
 (* [comment removed for export] *)
@@ -729,6 +759,8 @@ Proof.
     + intros e st Hss.
       destruct (sstep_exit_inv segs ms model x8 e st Hh Hsvc Hx8 Hss) as [-> ->].
       exists tt. split; reflexivity.
+  - destruct Hx8 as [Hx8' | Hx8'];
+      (eapply sys_rob_memfree; [exact Hsvc | rewrite Hx8'; first [exact memfree_93 | exact memfree_94]]).
   - apply srz_cfg_halt. cbn. discriminate.
 Qed.
 

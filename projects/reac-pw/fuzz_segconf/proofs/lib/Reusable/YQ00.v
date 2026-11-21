@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YQ00.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/Reusable/YQ00.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader conjunct of fdchan; the vDSO pair and vDSO steps; the four new process-state fields). *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From stdpp Require Import bitvector.
@@ -17,7 +18,7 @@ Definition relimV (L : Z) (h : VmMaps) : VmMaps :=
 mkVmMapsFull (vm_reserved h) (vm_maps h) (vm_noaccess h) (vm_start_brk h) (vm_brk h) L
 (vm_mmap_base h) (vm_init_sp h).
 Definition relimS (L : Z) (v : VmState) : VmState :=
-mkVmState (relimV L (vmst_maps v)) (vmst_lazy v) (vmst_materialized v).
+mkVmState (relimV L (vmst_maps v)) (vmst_lazy v) (vmst_materialized v) (vmst_kernel v) (vmst_vdso v).
 Definition relim (L : Z) (m : Model) : Model :=
 mkModelOf (m_fd m) (relimS L (m_vm m)) (m_io m) (m_fsys m) (m_proc m) (m_lim m) (m_time m).
 Definition relim_cfg (L : Z) (c : config) : config := mkCfg (cfg_ms c) (relim L (cfg_model c)).
@@ -320,6 +321,18 @@ Lemma rr_vm_limit : forall L h, vm_limit (relimV L h) = L. Proof. reflexivity. Q
 Lemma rr_alloc_top : forall L h, alloc_top (relimV L h) = alloc_top h. Proof. reflexivity. Qed.
 Lemma rr_vm_backed_maps : forall L h, vm_backed_maps (relimV L h) = vm_backed_maps h. Proof. reflexivity. Qed.
 Lemma rr_vm_backing_used : forall L m, vm_backing_used (relim L m) = vm_backing_used m. Proof. reflexivity. Qed.
+Lemma rr_m_kernel : forall L m, m_kernel (relim L m) = m_kernel m. Proof. reflexivity. Qed.
+Lemma rr_m_vdso : forall L m, m_vdso (relim L m) = m_vdso m. Proof. reflexivity. Qed.
+Lemma rr_vmst_kernel : forall L v, vmst_kernel (relimS L v) = vmst_kernel v. Proof. reflexivity. Qed.
+Lemma rr_vmst_vdso : forall L v, vmst_vdso (relimS L v) = vmst_vdso v. Proof. reflexivity. Qed.
+Lemma rr_m_sigpipe_pending : forall L m, m_sigpipe_pending (relim L m) = m_sigpipe_pending m. Proof. reflexivity. Qed.
+Lemma rr_m_channel_reader : forall L m, m_channel_reader (relim L m) = m_channel_reader m. Proof. reflexivity. Qed.
+Lemma rr_m_sigpipe_action : forall L m, m_sigpipe_action (relim L m) = m_sigpipe_action m. Proof. reflexivity. Qed.
+Lemma rr_m_sigpipe_default : forall L m, m_sigpipe_default (relim L m) = m_sigpipe_default m. Proof. reflexivity. Qed.
+Lemma rr_m_sigpipe_terminal : forall L m, m_sigpipe_terminal (relim L m) = m_sigpipe_terminal m. Proof. reflexivity. Qed.
+Lemma rr_mmap_top : forall L h, mmap_top (relimV L h) = mmap_top h. Proof. reflexivity. Qed.
+Lemma rr_vdso_top : forall L h, vdso_top (relimV L h) = vdso_top h. Proof. reflexivity. Qed.
+#[export] Hint Rewrite rr_m_kernel rr_m_vdso rr_vmst_kernel rr_vmst_vdso rr_m_sigpipe_pending rr_m_channel_reader rr_m_sigpipe_action rr_m_sigpipe_default rr_m_sigpipe_terminal rr_mmap_top rr_vdso_top : relim_rw.
 #[export] Hint Rewrite rr_m_fds rr_m_pipes rr_m_vm_lazy rr_m_vm_materialized rr_m_stdin rr_m_urandom rr_m_net rr_m_conn_ix rr_m_fs rr_m_halted rr_m_tid rr_m_setsid_succeeded rr_m_has_children rr_m_sigaltstack_installed rr_m_sigmask rr_m_killed rr_m_sigabrt_pending rr_m_abort_terminal rr_m_utsname rr_m_statpins rr_m_rlimit_core rr_m_nofile rr_m_clock rr_m_creds rr_m_fd rr_m_io rr_m_fsys rr_m_proc rr_m_lim rr_m_time rr_m_vmmaps rr_m_vm rr_vmst_maps rr_vmst_lazy rr_vmst_materialized rr_vm_reserved rr_vm_maps rr_vm_noaccess rr_vm_start_brk rr_vm_brk rr_vm_mmap_base rr_vm_init_sp rr_vm_limit rr_alloc_top rr_vm_backed_maps rr_vm_backing_used : relim_rw.
 From Ltac2 Require Import Ltac2.
 Set Default Proof Mode "Classic".
@@ -343,7 +356,7 @@ iost_stdin iost_urandom iost_net iost_conn_ix fsst_image cr_uid cr_euid cr_suid 
 procst_setsid_succeeded procst_sigmask procst_children procst_utsname procst_sigaltstack_installed procst_killed procst_sigabrt_pending
 procst_abort_terminal procst_statpins limst_core limst_nofile timest_clock m_fd m_vm m_io m_fsys m_proc m_lim m_time
 m_fds m_pipes m_vmmaps m_vm_lazy m_vm_materialized m_stdin m_urandom m_net m_conn_ix m_fs m_halted m_tid m_setsid_succeeded m_has_children
-m_sigaltstack_installed m_sigmask m_killed m_sigabrt_pending m_abort_terminal m_utsname m_statpins m_rlimit_core m_nofile m_clock m_creds].
+m_sigaltstack_installed m_sigmask m_killed m_sigabrt_pending m_abort_terminal m_utsname m_statpins m_rlimit_core m_nofile m_clock m_creds vmst_kernel vmst_vdso procst_sigpipe_pending procst_channel_reader procst_sigpipe_action procst_sigpipe_terminal m_kernel m_vdso m_sigpipe_pending m_channel_reader m_sigpipe_action m_sigpipe_default m_sigpipe_terminal ].
 Ltac red_proj_in H :=
 lazy beta iota zeta delta [relim relimS relimV
 vm_reserved vm_maps vm_noaccess vm_start_brk vm_brk vm_limit vm_mmap_base vm_init_sp fdst_table fdst_pipes vmst_maps vmst_lazy vmst_materialized
@@ -351,7 +364,7 @@ iost_stdin iost_urandom iost_net iost_conn_ix fsst_image cr_uid cr_euid cr_suid 
 procst_setsid_succeeded procst_sigmask procst_children procst_utsname procst_sigaltstack_installed procst_killed procst_sigabrt_pending
 procst_abort_terminal procst_statpins limst_core limst_nofile timest_clock m_fd m_vm m_io m_fsys m_proc m_lim m_time
 m_fds m_pipes m_vmmaps m_vm_lazy m_vm_materialized m_stdin m_urandom m_net m_conn_ix m_fs m_halted m_tid m_setsid_succeeded m_has_children
-m_sigaltstack_installed m_sigmask m_killed m_sigabrt_pending m_abort_terminal m_utsname m_statpins m_rlimit_core m_nofile m_clock m_creds] in H.
+m_sigaltstack_installed m_sigmask m_killed m_sigabrt_pending m_abort_terminal m_utsname m_statpins m_rlimit_core m_nofile m_clock m_creds vmst_kernel vmst_vdso procst_sigpipe_pending procst_channel_reader procst_sigpipe_action procst_sigpipe_terminal m_kernel m_vdso m_sigpipe_pending m_channel_reader m_sigpipe_action m_sigpipe_default m_sigpipe_terminal ] in H.
 Ltac rw_proj :=
 lazy beta zeta; autorewrite with relim_rw;
 repeat match goal with H : vm_limit (m_vmmaps ?mm) = _ |- context [vm_limit (m_vmmaps ?mm)] => rewrite !H end.

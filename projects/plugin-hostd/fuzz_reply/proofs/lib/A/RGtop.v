@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/ErrnoG.v, with its module paths and module names changed; 429 of its 464 lines of code are new or changed and 375 lines of the source are left out. *)
-(* CARRIED from commit f02099425ace9f613657229b085bb00b2e89f977,
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/RGtop.v, sha256 5bea0a68eb53cdb2964a23239e3a194bc6d9a66f931c35a51c3ea6327c44cf4e (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the Require lines only:
    the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable

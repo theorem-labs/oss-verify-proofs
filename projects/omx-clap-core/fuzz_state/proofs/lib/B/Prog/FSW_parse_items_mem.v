@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) helpers of the parse_items walk: memory transport along
    the walk's journal, the frame chain at s0 = q + 16, and where the result object v lies.
    B-LOCAL COPIES (renamed pv_ -> pim_, statements and proofs otherwise verbatim) of the B parse_value walk's helpers,
-   copied from a working branch a40df3dd279
+   copied from a working branch
    proofs/omx-clap-core/fuzz_state/lib/B/Prog/FSW_parse_value_holds.v (a Theorem Labs lane; no B kit twin):
    pim_eqon (pv_eqon) and its lemmas pim_eqon_sub / _trans / _refl / _keep / _val / _bytes / _wrat / _wr / _in / _zero /
    _RA, pim_aview_low, pim_pstat_img, pim_glob_eqon, pim_glob_aview, pim_inFP_nil, pim_ot16, pim_bad_next_le,
@@ -14,6 +14,7 @@
    the chain is [] or the one record (q + 16, in->end, in->p), which in->p < q + 16 stops) and pim_pobj_mk (v's pobj at
    any point of the walk from the entry's, its placement and shadow along the journal, its writability given).
    rule 24: proves no function (kind: helper lemmas). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -195,7 +196,7 @@ Lemma pim_val_mb : forall (M M' : word -> option byte) a (n : nat) v,
   (forall i, 0 <= i < Z.of_nat n -> mbyte tfibsegs M' (a + i) = mbyte tfibsegs M (a + i)) ->
   val_mem tfibsegs M a n v -> val_mem tfibsegs M' a n v.
 Proof. intros M M' a n v E V j Hj. rewrite (E (Z.of_nat j) ltac:(lia)). exact (V j Hj). Qed.
-(* one byte read off a memory as a val_mem of width 1 (image A's walk, a working branch 00c6d1886e6
+(* one byte read off a memory as a val_mem of width 1 (image A's walk, a working branch
    lib/A/FSH_parse_value.v pv_val1) *)
 Lemma pim_val1 : forall (m : word -> option byte) a (b : byte), mbyte tfibsegs m a = Some b ->
   val_mem tfibsegs m a 1 (bv_unsigned b).

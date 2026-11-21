@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN2b.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed node_ledger_of). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -78,17 +79,19 @@ mreal_cf segs (mkCfg (mkst regs (Z_to_bv 64 (ms_malloc B)) mem (seg_rom segs)) m
 (malloc_leaf B (MRx B) L A regs mem md n).
 
 (* The ledger counts the policy's window count needs at a placement request of the walk (YN02_cf.knode_cf_mmap_rw,
-   knode_cf_mmap_none): the image's reserved segments (at most 8 of at most 2^30 bytes) and one map per slot. *)
+   knode_cf_mmap_none): the image's reserved segments, the at most 2 entries of at most 0x14000 bytes the ledger
+   lets follow them (lg_reserved, YO0d.rx_ok), and one map per slot.  So the image's part must leave that room:
+   at most 6 segments of at most 2^30 - 0x14000 bytes (YN0c_cf.src0_reserved_room). *)
 Lemma node_ledger_of : forall L A md, ledger_ok B L A md -> ledger_x L A md ->
-  (length (segments_reserved (ms_segs B)) <= 8)%nat -> ivs_bytes (segments_reserved (ms_segs B)) <= 2 ^ 30 ->
+  (length (segments_reserved (ms_segs B)) <= 6)%nat -> ivs_bytes (segments_reserved (ms_segs B)) <= 2 ^ 30 - 0x14000 ->
   Z.of_nat (length (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md))) <= nslots A + KRES /\
   ivs_bytes (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) <= live_bytes A + 2 ^ 30 /\
   140735332483072 <= alloc_top (m_vmmaps md).
 Proof.
-intros L A md G LX RL RB. split; [|split].
-- rewrite length_app, (lg_reserved _ _ _ _ G). pose proof (lg_count _ _ _ _ G). unfold KRES. lia.
-- rewrite ivs_bytes_app, (lg_reserved _ _ _ _ G), (ivs_bytes_live_bytes (vm_maps (m_vmmaps md))).
-  pose proof (lx_lb _ _ _ LX). lia.
+intros L A md G LX RL RB. destruct (lg_reserved _ _ _ _ G) as (rx & Erx & Lrx & Brx & _). split; [|split].
+- rewrite length_app, Erx, length_app. pose proof (lg_count _ _ _ _ G eq_refl). unfold KRES. lia.
+- rewrite ivs_bytes_app, Erx, ivs_bytes_app, (ivs_bytes_live_bytes (vm_maps (m_vmmaps md))).
+  pose proof (lx_lb _ _ _ LX eq_refl). lia.
 - pose proof (YM05.ceil_le_top _ (lg_ceil _ _ _ _ G)). pose proof (proj1 alloc_ceiling_value). lia.
 Qed.
 End o.

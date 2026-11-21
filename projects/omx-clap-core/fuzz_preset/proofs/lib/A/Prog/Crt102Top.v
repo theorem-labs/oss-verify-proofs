@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumC.v, with its module paths and module names changed; 417 of its 458 lines of code are new or changed and 887 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* On the Step-1 contract texts (the re-hiding move):
    the text now concludes `SRr' segs YGcfRehidePost.RZ_cf .. (fpostFbm ..)` (fpostFbm is at wle') and takes the entry
    premise `(length rp_os <= 4)%nat` (HOS4, after ck_frm0). So the three stretch statements CRT_A_AT_J / _U / _X
@@ -14,13 +15,13 @@
    (lib/A/PRH_FnCheck.v, Section c :416, the definition at its end), image A' (asan pin 1be0f53d96cb9d6c, unstripped
    twin bff8519bbe3ea0e4).
 
-   base: commit 2fdcfd7be069 (post-landing line).
+   base: (post-landing line).
    STATUS AT THE kb ROUND (the walk owner's brief, the internal file wild-budget-kb-reshape.md; the text
    PRH_FnCheck.v:1310-1390: no rp_sm binder, keyed on ReaderRes.jr_strtod, the wild room `wild_room (as_universe B) []
    (prh_wk F_check_round_trip) (st_depot S)` at :1366, a BUDGETED post fpostFbm .. (wbudget [] (prh_wk
    F_check_round_trip))). Every closed piece is its own Qed lemma. The named antecedent CRT_A_WILD_BUDGET is
    DISCHARGED (crt102_top_wild_budget, from the text's wild room, now a premise of crt_A_under). AT THE STEP-1 RULING
-   (on 1409ad6e7e37) the Record CRT_A_OPEN_RW's four goals are proved at their sources in Crt102Rewrite (the callee
+   the Record CRT_A_OPEN_RW's four goals are proved at their sources in Crt102Rewrite (the callee
    texts' dead-arm conjuncts; pj_set's FREEORD-COPY conjunct carried K -> N) and RETIRED with the Record and
    CRT_A_SEAM_OPEN_RW, so THE CONTRACT IS Qed (crt102_top, crt102_top_TfibA); crt102_top_open / crt102_top_open_TfibA,
    the contract modulo that Record, are the same statements and are retired. Before the kb round the contract
@@ -48,7 +49,7 @@
                         Crt102Rewrite.crt102rw_wild_budget_pn_goal from the text's wild room (kb round).
   - crt102_top / crt102_top_TfibA: THE CONTRACT. Qed.
   THE OPEN SET: empty. What it held, each with its close:
-    CLOSED at the kb round: CRT_A_WILD_BUDGET (crt102_top_wild_budget). Before it, as found at the landing cut 7cdbb61b5fa0:
+    CLOSED at the kb round: CRT_A_WILD_BUDGET (crt102_top_wild_budget). Before it, as found at the landing cut:
     CRT_A_WILD_BUDGET (THE A' TWIN OF Crt102TopB's CRT_B_WILD_BUDGET, retired on B' at the kb round; route: the kb re-shape,
      the walk owner's brief, the internal file wild-budget-kb-reshape.md), under the text's premises, the
       conjunction of
@@ -111,19 +112,19 @@
                                          the contract texts.
     STRLEN / STRCMP (astrlen / astrcmp_realizes_xrom at the listing's __wrap_strlen / __wrap_strcmp)  the libc rows.
 
-  INPUTS OF RECORD (taken by path; base commit 99138946d790):
-  - the contract texts at the kit tip of record 3ac20a5c9e30: lib/A/PRH_FnCheck.v 0844ed8c0608, PRH_Base.v
+  INPUTS OF RECORD (taken by path):
+  - the contract texts at the kit tip of record: lib/A/PRH_FnCheck.v 0844ed8c0608, PRH_Base.v
     ee2f5cd7ed35, PRH_FnPj.v dc0d0aa79c0f, PRH_FnWriter.v 98737c36ea08, PRH_FnAlloc.v 95e26ff95e63, PRH_FnEx.v
     45ddb7a7d5ae; model lib/Spec/PresetReqAt.v 43c958024221; CfParamsPreset.v b60d0f63c926 (of record).
-  - engine of record at s1b bb085d091bbe (YCbqG.v c3b5d0111037, YGcallMxmn.v b47cf7942c3d).
-  - listing v3 (commit 74dcda1eda12): lib/A/Listing_prog.v 7ed1529926bd, lib/A/PAImg_prog.v
+  - engine of record at s1b (YCbqG.v c3b5d0111037, YGcallMxmn.v b47cf7942c3d).
+  - listing v3: lib/A/Listing_prog.v 7ed1529926bd, lib/A/PAImg_prog.v
     505a51ff7d08; image files: AF0l dfca6bb1a8d7, AF0m 97f423adf6eb, PRH_Img 934516a622e8, YImgTop d2a97d3111ce.
   - the lane's files (all on the glue's Records): Crt102Glue.v d65f66b784a1, Crt102Img.v 176eec830b61, Crt102Entry.v
     6cd098c3ba17, Crt102Arms.v 605107281144, Crt102Kit.v fb64ea6c3126, Crt102AF0lCheck.v 76548b0b655e, Crt102Tail.v
     d38ea142ecbc, Crt102Rewrite.v c56e5c84cf47, Crt102Loops.v f781285e67bc, Crt102PALibCheck.v 405c59509186; the A'
-    instance: lib/A/AD2l.v eb321db7a357, lib/A/PALibA.v 88c72c8175cf (by path from commit
-    83ac1a932a8d). PresetCfnA is in the closure (through the text and Crt102Loops) and is NOT cited here.
-   - build route pins102: the internal file zfb-targets.85055e6079bccb28.sh (self-hashing), FACTS 8f3e7e1a07f1,
+    instance: lib/A/AD2l.v eb321db7a357, lib/A/PALibA.v 88c72c8175cf (by path).
+    PresetCfnA is in the closure (through the text and Crt102Loops) and is NOT cited here.
+   - build route pins102: the internal file zfb-targets.85055e6079bccb28.sh (self-hashing), FACTS,
      PAU pau-preset-102.
    - rule 24: no function proved (RULE24.md (sha256 96ef6f3404f0; internal record) on the lane base: census-1 sweep complete, 14980 refs,
      7934 hit refs, 1479 files, 0 errors, positive control OK; the ACrt* / BCrt* walks are old-pin, entry 0x82550;
@@ -241,7 +242,7 @@ Definition CRT_A_AT_X : Prop :=
 End s.
 
 (* ---- tcheck_round_trip_specX's binders and premises at A' (the landing cut's PRH_FnCheck.v:1310-1390 with the
-   4b8f95c0455c conjunct, the text's order), in front of a conclusion K at the binders K reads, with TWO differences,
+   conjunct, the text's order), in front of a conclusion K at the binders K reads, with TWO differences,
    both in the conclusion's favour: the run's strtod model is a binder rp_sm with the tie `rp_sm =
    ReaderRes.jr_strtod` where the text writes ReaderRes.jr_strtod (crt102_top_of instantiates it at
    ReaderRes.jr_strtod and the tie by reflexivity: the lane's slices keep crt_pos's rp_sm); and the text's last
@@ -558,7 +559,7 @@ Qed.
 (* ---- THE CONTRACT AT A', generic in B, at the text's instance of its two string addresses: Qed. crt102_top_of's and
    crt102_top_U's premise CRT_A_WILD_BUDGET is crt102_top_wild_budget (kb round, from the text's own wild-room premise),
    and the U seam owes nothing more: the four goals (DEAD-PJSTRING / -PJSET / -PJWRITE, FREEORD-COPY) are proved
-   at their sources in Crt102Rewrite and retired with the Record CRT_A_OPEN_RW (the Step-1 ruling on 1409ad6e7e37;
+   at their sources in Crt102Rewrite and retired with the Record CRT_A_OPEN_RW (the Step-1 ruling;
    the contract modulo that Record, crt102_top_open, is this statement and is retired with it). ---- *)
 Theorem crt102_top :
   tcheck_round_trip_specX (fx := fx) (rc := rc) (ci := CfImg_A) (cp := CfParams_preset) (PI := prh_img_A) (RL := RL)
@@ -575,8 +576,8 @@ End f.
 (* ======================================================================================================== *)
 (* ---- THE A' INSTANCE OF B: AD2l.TfibB, the A' asan image's generated record (lib/A/AD2l.v eb321db7a357,
    TfibB_syms : AF0m.TfibSyms TfibB). Crt102Entry's four image stand-ins are discharged here, not assumed:
-     PAL               PALibA.palib_A (the A' witness, lib/A/PALibA.v 88c72c8175cf by path from
-                       commit 83ac1a932a8d; every field by vm_compute on AF0l dfca6bb1a8d7), which
+     PAL               PALibA.palib_A (the A' witness, lib/A/PALibA.v 88c72c8175cf by path;
+                       every field by vm_compute on AF0l dfca6bb1a8d7), which
                        also gives Crt102Tail's ENV (pal_env);
      pal_stack_malloc3 Crt102AF0lCheck.crt102_af0l_stack_malloc3 (the listing's symbol = AF0l's pc_stack_malloc 3;
                        as_code TfibB is Tfib_code by its definition);

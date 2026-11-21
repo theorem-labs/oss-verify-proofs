@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC7z.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/Reusable/YC7z.v, with its module paths and module names changed; 18 of its 41 lines of code are new or changed and 50 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/reac_segconf_ignore_file_c.v; 31 of its 59 lines of code are new or changed and 13 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_declared (fuzz_segconf.c:375-388, 556-577; fuzz_segconf.asan 0x87658, 376 bytes, 94 instructions; frame 80
    bytes): the contract of the ASan build's code, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
    entry, SRr of apost_base at the return). Functional content: the plain contract
@@ -55,8 +56,8 @@
    asks).
    Call site: LLVMFuzzerTestOneInput 0x85c10 (provenance/evidence/image-tables/callsites.asan.tsv).
    The WALK takes these runtime entries as Section hypotheses (the interceptor lane's interface
-   provenance/evidence/interceptors/INTERFACE-A-interceptors.md (commit 7068323e2626); rows 16-19 were added by the
-   accepted v1, 5e0b8a44fdc):
+   provenance/evidence/interceptors/INTERFACE-A-interceptors.md; rows 16-19 were added by the
+   accepted v1):
      RtString.astrcmp_realizes (row 17) at the strcmp trampoline (image A 0x43a14), once per entry.
    It is NOT a premise of this contract: the statement does not mention it. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.

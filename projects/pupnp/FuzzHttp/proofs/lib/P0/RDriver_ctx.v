@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack window below sp). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation.
 From stdpp Require Import gmap.
@@ -33,7 +34,10 @@ Section CTX.
   Notation gpv := (Z_to_bv 64 0x10800).
   Notation tpv := (Z_to_bv 64 RATP).
 
-  Definition LO : Z := usp0 - 8388608.
+  (* LPS 727298f3: the stack floor of the run.  The launch zero-maps only [stack_window_lo, sp0)
+     with [stack_window_lo <= sp0 - 6144513] ([InitStack.launch_facts]); the allocation ceiling
+     stays [sp0 - 8388608] (= sp0 - stack_max_size, hypothesis [CEIL] of each section). *)
+  Definition LO : Z := usp0 - 6144512.
 
   Definition MFRAME (mm : mem) (pad : list byte) (s7v s6v s5v s4v : word) : Prop :=
     rw_cells rsegs mm (usp0 + -128)
@@ -135,10 +139,10 @@ Section EXITS.
   Notation gpv := (Z_to_bv 64 0x10800).
   Notation tpv := (Z_to_bv 64 RATP).
   Hypothesis VSP : valid_sp sp0.
-  Hypothesis CEIL : alloc_ceiling = LO sp0.
+  Hypothesis CEIL : alloc_ceiling = usp0 - 8388608.
   Hypothesis HT : 0 < TID < 4194304.
 
-  #[using="VSP CEIL"] Lemma sp_facts : 0x7fff80000000 <= usp0 <= 0x800000000000 /\ usp0 mod 16 = 0 /\ alloc_ceiling <= LO sp0 /\ LO sp0 + 8388608 = usp0 /\ 0x5c000 <= LO sp0.
+  #[using="VSP CEIL"] Lemma sp_facts : 0x7fff80000000 <= usp0 <= 0x800000000000 /\ usp0 mod 16 = 0 /\ alloc_ceiling <= LO sp0 /\ LO sp0 + 6144512 = usp0 /\ 0x5c000 <= LO sp0.
   Proof. destruct VSP as (A & B & C). rewrite CEIL. unfold LO, sp_window_lo, sp_window_hi, stack_max_size in *. repeat split; lia. Qed.
 
   #[using="HT"] Lemma rat_exit_intro : forall (code : Z) (s : PState) (LB : list block) (SP : Z) (ra t0 t1 t2 s0 s1 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)

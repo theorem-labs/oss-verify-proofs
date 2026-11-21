@@ -1,5 +1,5 @@
 (* The image-B twin of the image lemmas of lib/A/FSupoisonStack.v (POISON-U lane, a Theorem Labs lane,
-   a working branch d37bcb51c52): fsw_ARU_img_end_fs and fsw_ARU_rodata_ra, the two lemmas there that
+   a working branch): fsw_ARU_img_end_fs and fsw_ARU_rodata_ra, the two lemmas there that
    are stated over image A (AB1v.tfibsegs, AF0x.TFIB_IMG_END, FSupoisonARX.fs_img_end).  Every other lemma of
    lib/A/FSupoisonStack.v is generic in its segments and asyms (Section s: Variable segs, Variable B) and is
    imported from there as it is.  The two are stated here over fuzz_state's image B (fuzz_state.asan-ubsan,

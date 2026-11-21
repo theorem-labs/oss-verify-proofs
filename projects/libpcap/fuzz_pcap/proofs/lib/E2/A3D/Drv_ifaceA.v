@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: in both interfaces, gd_args spans the entry image's length less 8 bytes (was 16). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run.
@@ -115,7 +116,7 @@ Section DrvIfaces.
     gd_canary : forall L RNG s CL FB FL m, GIOA L RNG s CL FB FL m ->
                  rw_cells asegs m 0xa6160 [C8 (Z_to_bv 64 0x6015f8)] /\ exists c : word, rw_cells asegs m 0x6015f8 [C8 c];
     (* [comment removed for export] *)
-    gd_args : forall L RNG s CL FB FL m, GIOA L RNG s CL FB FL m -> mobjA RNG m USP (Z.of_nat (length SB) - 16);   (* [comment removed for export] *)
+    gd_args : forall L RNG s CL FB FL m, GIOA L RNG s CL FB FL m -> mobjA RNG m USP (Z.of_nat (length SB) - 8);   (* [comment removed for export] *)
     (* [comment removed for export] *)
     gd_unp : forall L RNG s CL FB FL m, GIOA L RNG s CL FB FL m ->
                  unpoisoned m DRV_RODATA_LO DRV_RODATA_HI /\ unpoisoned m READ_STAGE (READ_STAGE + 65536);
@@ -406,7 +407,7 @@ Section DrvIfaces.
     gd_canary : forall L RNG s CL FB FL m, GIOA L RNG s CL FB FL m ->
                  rw_cells asegs m 0xa6540 [C8 (Z_to_bv 64 0x6019f8)] /\ exists c : word, rw_cells asegs m 0x6019f8 [C8 c];
     (* [comment removed for export] *)
-    gd_args : forall L RNG s CL FB FL m, GIOA L RNG s CL FB FL m -> mobjA RNG m USP (Z.of_nat (length SB) - 16);   (* [comment removed for export] *)
+    gd_args : forall L RNG s CL FB FL m, GIOA L RNG s CL FB FL m -> mobjA RNG m USP (Z.of_nat (length SB) - 8);   (* [comment removed for export] *)
     (* [comment removed for export] *)
     gd_unp : forall L RNG s CL FB FL m, GIOA L RNG s CL FB FL m ->
                  unpoisoned m DRV_RODATA_LO DRV_RODATA_HI /\ unpoisoned m READ_STAGE (READ_STAGE + 65536);

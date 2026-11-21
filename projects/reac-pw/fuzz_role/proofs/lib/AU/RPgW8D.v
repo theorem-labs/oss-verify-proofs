@@ -1,34 +1,35 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: restates text of proofs/reac-pw/fuzz_role/lib/A/RPgX01.v at 9bffaa83ff88
+(* Modified by Theorem Labs, 2026-10: restates text of proofs/reac-pw/fuzz_role/lib/A/RPgX01.v
    [Apache-2.0] (rx_reg_atom / rx_reg_ext / rx_ew_reg / rx_st_region / rx_chunk_zero / rx_flag0_of, the saved-slot
    chunk list rx_sv_chunks, the numeral tactics z5 / z5g and the flag-store tactic rx_run_flag, which passes
-   aj_flag_store its sixteen journal arguments) and of proofs/reac-pw/fuzz_role/lib/A/RPgCheck.v at 77f59d02b018
+   aj_flag_store its sixteen journal arguments) and of proofs/reac-pw/fuzz_role/lib/A/RPgCheck.v
    [Apache-2.0] (the shape of a `ret` leaf into a callee post), for reac-pw/fuzz_rate's image A: the walk is
    check_csv's release and epilogue, the side-stack class is 2 instead of 3, and the post is RtPgCSpec.rt_cpost_o,
    whose owned-set conjunct is discharged from the cut's layout, chunk and frame equalities. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_rate/lib/A/RtPgCcsvS3.v, with its module names changed; 156 of its 180 lines of code are new or changed and 302 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6aHead.v at 876d0cb3d0d6; the plain run with
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6aHead.v; the plain run with
    frame-shadow stores of w6_head, here for reac-pw/fuzz_rate's last run of the walk piece W8 (the stores write 0xf8,
    the run ends at the pod loop's latch instead of a call, and the post is RtPgSteps.rts_post). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW8D.v at 8f1d7a0a9084 for the same unit's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW8D.v for the same unit's
    image B (fuzz_rate.asan-ubsan): the image is images.AsanUbsan; the pcs, the cells (cnt at R+0x140, k at R+0x178)
    and the registers (s3 = the frame's shadow base) are image B's; the frame for locals is the class-4 frame (128
    shadow bytes) and the 13 shadow bytes are [66, 79); the run also sets s8 := -8; the prefix rw8_ becomes rbw8_ and
    RtPgSteps' rts_ becomes RtPgStepsB's rtsb_. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_rate/lib/AU/RtPgBW8D.v, with its module paths, module names, addresses and numbers changed; 55 of its 177 lines of code are new or changed and 58 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6aHead.v at 876d0cb3d0d6; the plain run with
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6aHead.v; the plain run with
    frame-shadow stores of w6_head, here for reac-pw/fuzz_rate's last run of the walk piece W8 (the stores write 0xf8,
    the run ends at the pod loop's latch instead of a call, and the post is RtPgSteps.rts_post). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW8D.v at 8f1d7a0a9084 for the same unit's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW8D.v for the same unit's
    image B (fuzz_rate.asan-ubsan): the image is images.AsanUbsan; the pcs, the cells (cnt at R+0x140, k at R+0x178)
    and the registers (s3 = the frame's shadow base) are image B's; the frame for locals is the class-4 frame (128
    shadow bytes) and the 13 shadow bytes are [66, 79); the run also sets s8 := -8; the prefix rw8_ becomes rbw8_ and
    RtPgSteps' rts_ becomes RtPgStepsB's rtsb_. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgBW8D.v at 6c65f5a5cf5c for reac-pw/fuzz_role's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgBW8D.v for reac-pw/fuzz_role's
    image B (fuzz_role.asan-ubsan): module paths fuzz_rate -> fuzz_role, the segments lib/AU/Img0.v rsegs; the pcs and
    the cells (cnt at R+0x128, k at R+0x150) are role B's; the run sets s10 := -8 instead of s8; the prefix rbw8_
    becomes w8_ and RtPgStepsB's rtsb_ becomes RPgSteps' rl_. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_role image B (fuzz_role.asan-ubsan, pinned sha256
    b255d4935da5af137a3967dbe33380ea43be8e78bfe05d1e356e0a2be8a69ff0; addresses measured on the unstripped twin
    dc791783f32962615e18a5f5cffae758ba56eb5dc87f70913c3579b101b4406a, same loaded bytes): the run lemma w8_runD of

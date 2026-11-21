@@ -5,13 +5,14 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names and numbers changed; 809 of its 930 lines of code are new or changed and 890 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/R4.v, with its module paths, module names, addresses and numbers changed; 535 of its 675 lines of code are new or changed and 790 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/P6.v; 68 of its 134 lines of code are new or changed and 609 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Provenance (route (a) bridge input, lead 22:18Z; auditor a Theorem Labs lane):
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
-   source runs: lib/B/Prog/Seg/P6.v p6_evt at a working branch 3803efccea0
+   source runs: lib/B/Prog/Seg/P6.v p6_evt at a working branch
      (blob 23917ccc08f4435b78ab4902fb8a546de4d8dcd6);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    compare: p6_evt_of_F composes p6_pre_F, the caller's reac_ctrl_identity_reply_contract premise and
      p6_post_F and re-derives the source statement of P6.p6_evt verbatim; p6_evt_same checks that type
      against P6.p6_evt.  p6_pre_F re-runs P6.v line 136 (0x81d68 .. 0x81d7c, up to the callee entry),

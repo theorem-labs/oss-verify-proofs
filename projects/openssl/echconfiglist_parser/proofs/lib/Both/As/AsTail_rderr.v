@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise is a section hypothesis, carried across materialization by same_but_materialized_reader; HppHi gives ten bytes of room above the path, as the revised entry block does). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -49,6 +50,7 @@ Section Tail.
   Variables (pp : word) (path t8 : list byte) (can : Z).
   Hypothesis Hvsp : valid_sp sp0.
   Hypothesis Hfd2 : fd_lookup (m_fds mo0) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  Hypothesis Hrdr : m_channel_reader mo0 = true.
   (* [comment removed for export] *)
   Hypothesis Hstk : stk asegs mem0 (bv_unsigned sp0 - 128 - OT_FR) (bv_unsigned sp0 - 128).
   Hypothesis Hgot : forall i, 0x571000 <= i < 0x5ea000 -> mem0 (Z_to_bv 64 i) = None.
@@ -62,7 +64,9 @@ Section Tail.
   Hypothesis Ht8 : rdn RSEGS mem0 (Z_to_bv 64 (bv_unsigned pp + Z.of_nat (length path))) 8 = Some t8.
   Hypothesis Hnonul : ~ In (Z_to_bv 8 0) path.
   Hypothesis HppLo : bv_unsigned sp0 <= bv_unsigned pp.
-  Hypothesis HppHi : bv_unsigned pp + Z.of_nat (length path) + 17 <= AAPP_HI.
+  (* LPS 727298f3: ten bytes of room above the path's NUL (AsMainPre.astr_at: the exec name's NUL and the
+     entry block's top slot); the callees need nine (AsFprintfS_rderr.fpH's HpHi, AsStrnlenK.snH's RsHi) *)
+  Hypothesis HppHi : bv_unsigned pp + Z.of_nat (length path) + 10 <= AAPP_HI.
   (* [comment removed for export] *)
   Hypothesis Hsh0 : forall a, ASHADOW_BASE + (bv_unsigned sp0 - 128 - 65536) / 8 <= a < ASHADOW_BASE + 2^44 ->
                     mem0 (Z_to_bv 64 a) = Some (Z_to_bv 8 0).
@@ -287,6 +291,7 @@ Section Tail.
     - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0, ?P141). unorm. exact MSG.
     - reflexivity.
     - rewrite (same_but_materialized_fds _ _ (same_but_materialized_trans _ _ _ SB SB')) || rewrite <- (same_but_materialized_fds _ _ (same_but_materialized_trans _ _ _ SB SB')). exact Hfd2.
+    - rewrite (same_but_materialized_reader _ _ (same_but_materialized_trans _ _ _ SB SB')). exact Hrdr.
     - exact OK'.
     - exact RS'.
     - apply t_exit_has_nil.
@@ -654,6 +659,7 @@ Section Tail.
     - reflexivity.
     - reflexivity.
     - rewrite (same_but_materialized_fds _ _ (same_but_materialized_trans _ _ _ SB SB')) || rewrite <- (same_but_materialized_fds _ _ (same_but_materialized_trans _ _ _ SB SB')). exact Hfd2.
+    - rewrite (same_but_materialized_reader _ _ (same_but_materialized_trans _ _ _ SB SB')). exact Hrdr.
     - exact OK'.
     - exact RS'.
     - apply t_exit_has_nil.
@@ -715,6 +721,7 @@ Section Tail.
     - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0, ?P141). unorm. exact B80.
     - cbn [edenot]. exact Hnl.
     - rewrite (same_but_materialized_fds _ _ (same_but_materialized_trans _ _ _ SB SB')) || rewrite <- (same_but_materialized_fds _ _ (same_but_materialized_trans _ _ _ SB SB')). exact Hfd2.
+    - rewrite (same_but_materialized_reader _ _ (same_but_materialized_trans _ _ _ SB SB')). exact Hrdr.
     - exact OK'.
     - exact RS'.
     - apply t_exit_has_nil.
@@ -835,6 +842,7 @@ Section Tail.
     - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0). unorm. exact Hnl.
     - reflexivity.
     - rewrite (same_but_materialized_fds _ _ (same_but_materialized_trans _ _ _ SB SB')) || rewrite <- (same_but_materialized_fds _ _ (same_but_materialized_trans _ _ _ SB SB')). exact Hfd2.
+    - rewrite (same_but_materialized_reader _ _ (same_but_materialized_trans _ _ _ SB SB')). exact Hrdr.
     - exact OK'.
     - exact RS'.
     - apply t_exit_has_nil.
@@ -903,6 +911,7 @@ Section Tail.
       replace (bv_unsigned sp0 + -592)%Z with (bv_unsigned sp0 + -592)%Z by lia. exact H17.
     - cbn [edenot ev ENV PX]. rewrite P2. exact Hsrc.
     - rewrite (same_but_materialized_fds _ _ (same_but_materialized_trans _ _ _ SB SB')) || rewrite <- (same_but_materialized_fds _ _ (same_but_materialized_trans _ _ _ SB SB')). exact Hfd2.
+    - rewrite (same_but_materialized_reader _ _ (same_but_materialized_trans _ _ _ SB SB')). exact Hrdr.
     - exact OK'.
     - exact RS'.
     - apply t_emit_has_nil.

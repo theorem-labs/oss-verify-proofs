@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/ex_ws_x.v, with its module paths and module names changed; 1951 of its 2020 lines of code are new or changed and 807 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/PRW_put_string_base.v; 883 of its 990 lines of code are new or changed and 1913 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset image A, slice S7b (WalkS7b.S7bPutString): put_string's walk, part A: the entry, frame_alloc_0, the
    fake frame's header and shadow, and the opening-quote put (A 0x8836c .. 0x8847c), over PRW_put_string_base.v.
-   KIT: the kit's cut 7cdbb61b5fa0 (PRH_FnWriter.v d89d3c67b78c). The segment runs at the
+   KIT: the kit's cut (PRH_FnWriter.v d89d3c67b78c). The segment runs at the
    ENTRY float state (premise `x_fx X = fx`) and changes none; its joins carry ps_float (ps_float_entry). One image-fact
    hypothesis HPAB (pa_lo / pa_hi are image A's; WalkS7bR's ruling).
    No address literal: entries, return sites and literals are by name (A_prog_slot, the listing's PAddHi addends).

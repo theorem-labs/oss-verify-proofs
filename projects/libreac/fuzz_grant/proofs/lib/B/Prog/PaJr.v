@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the step through a jump table (paj_jr_table) for the position-abstract walks, written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/YC1g.v. *)
-(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/PaJr.v, ported from a working branch a970a282587: the same text over image B's listing and walk layer (lib/B/Prog). Image B has two `jr a0` dispatches, ctrl_lay_block's at 0x83d84 and reac_box_model_block's at 0x84208; lib/B/Prog/GrantImg.v checks both tables against image B by computation. *)
+(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/PaJr.v, ported from a working branch: the same text over image B's listing and walk layer (lib/B/Prog). Image B has two `jr a0` dispatches, ctrl_lay_block's at 0x83d84 and reac_box_model_block's at 0x84208; lib/B/Prog/GrantImg.v checks both tables against image B by computation. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* A computed jump through a table of the image. At a `jr rs1` slot whose
    register holds VAL (A_OBJ i) + e, where the caller's equation says that this
    is BASE + k, the walk goes on at slot k with the same registers, regions and

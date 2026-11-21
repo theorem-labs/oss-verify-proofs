@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: adapted from cgif's lib/A/ACgq.v and lib/A/ACk8.v (file header, walk tactic forms) for reac_ctrl_parse of libreac's fuzz_grant. *)
-(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) segment of the reac_ctrl_parse 0x82774 walk, in the shape of lib/A/Prog/CtrlParseTail3.v at a working branch 603e40683a4 (image A 0x82000), over image B's listing and walk layer (lib/B/Prog), with image B's addresses and objects; image B's extra UBSan guards are decided by the engine from the atom facts. Source blob 92f7a97011aa (lib/A/Prog/CtrlParseTail3.v at a working branch 603e40683a4; 7e98c198edd's blob 221b571aa82d differs in tactics only and is not the source). *)
+(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) segment of the reac_ctrl_parse 0x82774 walk, in the shape of lib/A/Prog/CtrlParseTail3.v at a working branch (image A 0x82000), over image B's listing and walk layer (lib/B/Prog), with image B's addresses and objects; image B's extra UBSan guards are decided by the engine from the atom facts. Source blob 92f7a97011aa (lib/A/Prog/CtrlParseTail3.v at a working branch; a commit's blob 221b571aa82d differs in tactics only and is not the source). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_ctrl_parse, the walk from cut B (0x82970) to cut J for the frames of class 3 (pz_P3):
    frame type cd ea, link 1: the call of kind_of_link1 on the opcode frame[22]. *)
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require YZ00.

@@ -2,9 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10-30 (lane F1 of the generic cf instance layer; integrator
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YFg5cf.v (commit af0289e23fe, CfF1 round-3 re-fit; file sha256 7b433b3baae0) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 2 image addresses moved by function pairs the comparison kit cmpkit 4bbd3a74be89 calls the same code (strictcmp2 16982e3ef42b, by funcpair_reply 5313c28e09c6 on the cgif twin ce511d541cda; 2 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair); 1 data addresses the tool read as sizes, each a pc-relative target of both paired functions; 2 hand maps (resolve-all.tsv, each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/YFg5cf.v at commit cb892d2cb61, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (4 numerals; per-numeral report). *)
-   ReallocPrimary): the RELATION half of proofs/cgif/cgif_file_fuzzer/lib/YFg5.v at c5 30a1993588f (Enqueue's HIT
+   ReallocPrimary): the RELATION half of proofs/cgif/cgif_file_fuzzer/lib/YFg5.v at c5 theorem-labs/oss-verify-proofs@6b32741d849a (Enqueue's HIT
    arm: a new batch from a non-empty class-24 cache), ported from cgif's AR / enq_pre to the cf instance's ARX_cf /
    enq_pre_cf, as YFg4cf.v ported YFg4.v.  Kept, with these changes only: the Section's call premise is
    YGcfInstEnq.enq_pre_cf at YGcfInstBase.ARX_cf B IOK Hp; Hci reads Wf_cf (wrc_cache); HI / NBG read YFf2cf.HIGH /
@@ -13,11 +11,14 @@
    instance's EnqIfaceHit.ih_post states), through YFf2cf.enq_fin_ARmcf, ALedger_same_cf, ahs_transfer_cf and Wf_cf
    of the end state from YGcfInstEnqG.enq_hit_wf_cf.
    DROPPED: the walk half (cell readers, cache_vals, last_facts, hit_facts, u_facts, q_facts, the E0 equations,
-   REG0_ok .. SEED_ok, FH_ok, tfib_enqueue_hit_arm): it reads the walk's own size bounds (YFgq.v:124 fh_Hnn,
+   REG0_ok .. SEED_ok, FH_ok, tfib_enqueue_hit_arm): it reads the walk's own size bounds (YFgq.v:125 fh_Hnn,
    1 <= nn < 2 ^ 28), which is the unit's relocated walk (EnqGbase's ih_walk at NMAXD), not this transport.
    IMAGE-SPECIFIC (cgif_file's image, TfibSyms): each unit relocates this file to its own image (preset A' / B':
    A11; reply A / B: lane W), as A/AFf0cf.v was.
    rule 24: no function proved (kind: relational transport of the allocator relation over Enqueue's hit arm). *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YFg5cf.v (CfF1 round-3 re-fit; file sha256 7b433b3baae0) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 2 image addresses moved by function pairs the comparison kit cmpkit 4bbd3a74be89 calls the same code (strictcmp2 16982e3ef42b, by funcpair_reply 5313c28e09c6 on the cgif twin ce511d541cda; 2 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair); 1 data addresses the tool read as sizes, each a pc-relative target of both paired functions; 2 hand maps (resolve-all.tsv, each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/YFg5cf.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (4 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -110,7 +111,7 @@ unfold YFgq.NBv, coff. splits; try lia; try exact A3. exact A11.
 Qed.
 (* ---------------------------------------------------------------------------------------------------------------- *)
 (* The walk's free hypotheses at cf (a Theorem Labs lane, 2026-10-30; for a Theorem Labs lane's Enqueue hit arm): B3's YFgq.free_hyps
-   (YFgq.v:114-139) from enq_pre_cf, as YFg5.v:247-405 proves them at cgif's enq_pre.  The memory readers and the
+   (YFgq.v:115-140) from enq_pre_cf, as YFg5.v:248-406 proves them at cgif's enq_pre.  The memory readers and the
    size / list facts are YFfqcf.v's (its section g at sp0 / HSP / IMG / Hk / HQL / HNB, its section h at l); the
    region, pair, fact and seed checks are YFg5.v's scripts with these changes only: the call premise is enq_pre_cf (its
    stack window CLenq.QSTACK_G = QSTACK = 1088), fh_Hnn reads the call's guard ck_n k <= kQuarantineMax

@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied into libreac/fuzz_ctrl; LimSim imports renamed *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed step_down_exact, RINV_init, run_scfg_relim_traces, run_scfg_relim_errors). *)
 From Stdlib Require Import ZArith List Bool Lia.
 From stdpp Require Import bitvector.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Run Specs RiscvSemantics MemImageType.
@@ -33,7 +34,11 @@ Lemma step_down_exact : forall ms m evs st,
 Proof.
   intros ms m evs st HM MV NB Hs.
   remember (mkCfg ms m) as c eqn:Ec.
-  destruct Hs as [ms0 mm ms' mm' Hh Hp Ha | ms0 mm Hh Hp Ha | ms0 mm Hh Hp Ha | ms0 mm x8 eff mm' mm'' evs0 Hh Hp Hsp Hnsp Hh' Hmat
+  destruct Hs as [ms0 mm ms' mm' Hh Hp Ha | ms0 mm Hh Hp Ha | ms0 mm Hh Hp Ha Hnv
+                 | ms0 mm fn n eff mm' mm'' evs0 Hh Hp Ha Hfn Hno Hsp Hef Hh' Hmat
+                 | ms0 mm fn n eff mm' evs0 Hh Hp Ha Hfn Hno Hsp Hef Hh' Hmat
+                 | ms0 mm fn Hh Hp Ha Hfn Hun
+                 | ms0 mm x8 eff mm' mm'' evs0 Hh Hp Hsp Hnsp Hh' Hmat
                  | ms0 mm x8 eff mm' evs0 Hh Hp Hsp Hnsp Hh' Hmat | ms0 mm x8 eff mm' evs0 code Hh Hp Hsp Hh' Hk | ms0 mm x8 eff mm' evs0 sig Hh Hp Hsp Hk | ms0 mm x8 Hh Hp Hsp];
     injection Ec as -> ->.
   - (* [comment removed for export] *)
@@ -47,7 +52,7 @@ Proof.
       rewrite Emat0 in Emat. injection Emat as ->.
       exists (@access_value _ report), m0. split; [reflexivity|]. split; [unfold MOK; rewrite (materialize_limit _ _ _ Emat0); exact HM|].
       apply sstep_cfg_instr; [halt_tac Hh | exact Hp |]. unfold mi_account_step. rewrite Est, Emat1. reflexivity.
-    + exfalso. apply NB. split; [halt_tac Hh|]. left. split; [exact Hp|]. exists report. split; [exact Est | exact Emat1].
+    + exfalso. apply NB. split; [halt_tac Hh|]. left. split; [exact Hp|]. left. exists report. split; [exact Est | exact Emat1].
   - (* [comment removed for export] *)
     unfold mi_account_step in Ha.
     destruct (step_accesses segs ms) as [report| |] eqn:Est; [|  |discriminate].
@@ -55,12 +60,50 @@ Proof.
       destruct (materialize_model_accesses (relim L m) (@accessed_ranges _ report)) as [m1|] eqn:Emat1.
       * assert (HLE' : L <= vm_limit (m_vmmaps m)) by (unfold MOK in HM; rewrite HM; exact HLE).
         destruct (materialize_relim_up L m _ _ HLE' Emat1) as (m0' & Emat0 & _). rewrite Emat0 in Emat. discriminate Emat.
-      * exfalso. apply NB. split; [halt_tac Hh|]. left. split; [exact Hp|]. exists report. split; [exact Est | exact Emat1].
+      * exfalso. apply NB. split; [halt_tac Hh|]. left. split; [exact Hp|]. left. exists report. split; [exact Est | exact Emat1].
     + apply sstep_cfg_instr_fault; [halt_tac Hh | exact Hp | unfold mi_account_step; rewrite Est; reflexivity].
   - (* [comment removed for export] *)
     unfold mi_account_step in Ha.
     destruct (step_accesses segs ms) as [report| |] eqn:Est; [destruct (materialize_model_accesses m (@accessed_ranges _ report)); discriminate|discriminate|].
-    apply sstep_cfg_instr_unmodeled; [halt_tac Hh | exact Hp | unfold mi_account_step; rewrite Est; reflexivity].
+    apply sstep_cfg_instr_unmodeled; [halt_tac Hh | exact Hp | unfold mi_account_step; rewrite Est; reflexivity | exact Hnv].
+  - (* the revision's vDSO call: the relim side makes the same call, with the same result *)
+    unfold mi_account_step in Ha.
+    destruct (step_accesses segs ms) as [report| |] eqn:Est; [destruct (materialize_model_accesses m (@accessed_ranges _ report)); discriminate|discriminate|].
+    destruct (syscall_spec_dir L0 L HLE false _ m HM (fun _ => vdso_alloc_false segs ms (relim L m) fn n Hno) (fun _ => MV) _ Hsp)
+      as ([e0 m0 ev0|] & Hsp0 & R); cbn in R; [|contradiction].
+    destruct R as (-> & -> & -> & HM0).
+    destruct (materialize_model_accesses (relim L mm') (syscall_effect_accesses eff)) as [m1|] eqn:Emat1.
+    + assert (HLE' : L <= vm_limit (m_vmmaps mm')) by (unfold MOK in HM0; rewrite HM0; exact HLE).
+      destruct (materialize_relim_up L mm' _ _ HLE' Emat1) as (m0' & Hmat0 & ->).
+      rewrite Hmat0 in Hmat. injection Hmat as ->.
+      exists (vdso_post segs ms m (vdso_frame segs) eff), (with_vdso_bump mm''). split; [reflexivity|].
+      split; [unfold MOK; change (vm_limit (m_vmmaps (with_vdso_bump mm''))) with (vm_limit (m_vmmaps mm''));
+              rewrite (materialize_limit _ _ _ Hmat0); exact HM0|].
+      exact (sstep_cfg_vdso_call segs cfg ms (relim L m) fn n eff (relim L mm') (relim L mm'') evs0
+               ltac:(halt_tac Hh) Hp ltac:(unfold mi_account_step; rewrite Est; reflexivity) Hfn Hno Hsp0 Hef
+               ltac:(halt_tac Hh') Emat1).
+    + exfalso. apply NB. split; [halt_tac Hh|]. left. split; [exact Hp|]. right.
+      split; [cbn [cfg_ms cfg_model]; unfold mi_account_step; rewrite Est; reflexivity|].
+      exists fn, n, eff, (relim L mm'), evs0. split; [exact Hfn|]. split; [exact Hno|]. split; [exact Hsp0|].
+      split; [exact Hef|]. split; [halt_tac Hh' | exact Emat1].
+  - (* the revision's vDSO call whose effect fails to materialize: the relim side fails too, or the budget refuses it *)
+    unfold mi_account_step in Ha.
+    destruct (step_accesses segs ms) as [report| |] eqn:Est; [destruct (materialize_model_accesses m (@accessed_ranges _ report)); discriminate|discriminate|].
+    destruct (syscall_spec_dir L0 L HLE false _ m HM (fun _ => vdso_alloc_false segs ms (relim L m) fn n Hno) (fun _ => MV) _ Hsp)
+      as ([e0 m0 ev0|] & Hsp0 & R); cbn in R; [|contradiction].
+    destruct R as (-> & -> & -> & HM0).
+    destruct (materialize_model_accesses (relim L mm') (syscall_effect_accesses eff)) as [m1|] eqn:Emat1.
+    + assert (HLE' : L <= vm_limit (m_vmmaps mm')) by (unfold MOK in HM0; rewrite HM0; exact HLE).
+      destruct (materialize_relim_up L mm' _ _ HLE' Emat1) as (m0' & Hmat0 & _). rewrite Hmat0 in Hmat. discriminate Hmat.
+    + exfalso. apply NB. split; [halt_tac Hh|]. left. split; [exact Hp|]. right.
+      split; [cbn [cfg_ms cfg_model]; unfold mi_account_step; rewrite Est; reflexivity|].
+      exists fn, n, eff, (relim L mm'), evs0. split; [exact Hfn|]. split; [exact Hno|]. split; [exact Hsp0|].
+      split; [exact Hef|]. split; [halt_tac Hh' | exact Emat1].
+  - (* the revision's vDSO call the model declines *)
+    unfold mi_account_step in Ha.
+    destruct (step_accesses segs ms) as [report| |] eqn:Est; [destruct (materialize_model_accesses m (@accessed_ranges _ report)); discriminate|discriminate|].
+    eapply sstep_cfg_vdso_unmodeled; [halt_tac Hh | exact Hp | unfold mi_account_step; rewrite Est; reflexivity | exact Hfn |].
+    eapply vdso_unmodeled_down; eassumption.
   - (* [comment removed for export] *)
     pose proof (not_refused_mark segs L ms m x8 NB Hh Hp) as G.
     destruct (syscall_spec_dir L0 L HLE false _ m HM (fun _ => G) (fun _ => MV) _ Hsp) as ([e0 m0 ev0|] & Hsp0 & R); cbn in R; [|contradiction].
@@ -184,33 +227,38 @@ End Runs.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
-(* [comment removed for export] *)
+(* 08b1429: run_scfg and run_scfg_budget_refused run over run_segments segs inp sp mbase (the
+   loaded segments plus the vDSO/vvar tail), so the invariant is taken there, as in
+   LimSimSys.must_exit_in_scfg_relim and Reusable/YQ02. *)
 Lemma RINV_init : forall segs cfg pc ph sp brk0 mbase rnd Lbig Lsmall inp,
   source_within_budget_scfg cfg Lsmall (mkImage segs pc ph) (mkEntry sp brk0 mbase rnd) inp ->
-  RINV segs cfg Lbig Lsmall (init_config segs pc ph sp brk0 mbase rnd Lbig inp).
+  RINV (run_segments segs inp sp mbase) cfg Lbig Lsmall
+    (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd Lbig inp).
 Proof.
   intros segs cfg pc ph sp brk0 mbase rnd Lbig Lsmall inp NB.
   split; [apply init_config_limit|]. split; [apply init_config_WF|].
   unfold source_within_budget_scfg, run_scfg_budget_refused in NB.
-  rewrite (init_config_relim segs pc ph sp brk0 mbase rnd Lbig Lsmall inp) in NB. exact NB.
+  rewrite (init_config_relim (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd Lbig Lsmall inp) in NB. exact NB.
 Qed.
 
 Theorem run_scfg_relim_traces : forall cfg img (Lbig Lsmall : Z) en inp,
   Lsmall <= Lbig -> source_within_budget_scfg cfg Lsmall img en inp ->
   trace_equiv (bh_traces (run_scfg cfg img Lsmall en inp)) (bh_traces (run_scfg cfg img Lbig en inp)).
 Proof.
-  intros cfg [segs pc ph] Lbig Lsmall [sp brk0 mbase rnd] inp HLE NB tr. cbn.
-  rewrite (init_config_relim segs pc ph sp brk0 mbase rnd Lbig Lsmall inp).
-  apply (obs_trace_relim segs cfg Lbig Lsmall HLE). exact (RINV_init segs cfg pc ph sp brk0 mbase rnd Lbig Lsmall inp NB).
+  intros cfg [segs pc ph] Lbig Lsmall [sp brk0 mbase rnd] inp HLE NB tr. cbn [run_scfg bh_traces].
+  rewrite (init_config_relim (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd Lbig Lsmall inp).
+  apply (obs_trace_relim (run_segments segs inp sp mbase) cfg Lbig Lsmall HLE).
+  exact (RINV_init segs cfg pc ph sp brk0 mbase rnd Lbig Lsmall inp NB).
 Qed.
 
 Theorem run_scfg_relim_errors : forall cfg img (Lbig Lsmall : Z) en inp,
   Lsmall <= Lbig -> source_within_budget_scfg cfg Lsmall img en inp ->
   (bh_errors (run_scfg cfg img Lsmall en inp) <-> bh_errors (run_scfg cfg img Lbig en inp)).
 Proof.
-  intros cfg [segs pc ph] Lbig Lsmall [sp brk0 mbase rnd] inp HLE NB. cbn.
-  rewrite (init_config_relim segs pc ph sp brk0 mbase rnd Lbig Lsmall inp).
-  apply (reaches_error_relim segs cfg Lbig Lsmall HLE). exact (RINV_init segs cfg pc ph sp brk0 mbase rnd Lbig Lsmall inp NB).
+  intros cfg [segs pc ph] Lbig Lsmall [sp brk0 mbase rnd] inp HLE NB. cbn [run_scfg bh_errors].
+  rewrite (init_config_relim (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd Lbig Lsmall inp).
+  apply (reaches_error_relim (run_segments segs inp sp mbase) cfg Lbig Lsmall HLE).
+  exact (RINV_init segs cfg pc ph sp brk0 mbase rnd Lbig Lsmall inp NB).
 Qed.
 
 Theorem run_scfg_relim_error_free_unkilled : forall cfg img (Lbig Lsmall : Z) en inp,

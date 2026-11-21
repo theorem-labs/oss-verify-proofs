@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (gen_Pn passes mo0_minv the channel-reader fact, and valid_input_core_of_either is proved over the input's new clauses; gen_fds and gen_fs read the fd table and the file system through the start model's State.with_vdso; plain_entry_exists takes the core's witness entry launch_entry_va, which the new launch conjunct of valid_entry needs). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -97,16 +98,26 @@ Let mo := mo0 segs lim en inp.
 Lemma gen_Pn : tsafe nstep Pn t mo.
 Proof.
 destruct (X1r7.prog_model_ok segs rs pc ph lim en inp Hpos Hceil H40 Hlim VE VI) as [_ Hs].
-apply tsafe_Pn; [exact Hs| exact (X1ot.prog_no_enomem segs rs pc ph lim en inp Hpos Hceil H40 Hlim VE VI)| apply mo0_minv| apply mo0_not_halted].
+apply tsafe_Pn; [exact Hs| exact (X1ot.prog_no_enomem segs rs pc ph lim en inp Hpos Hceil H40 Hlim VE VI)| exact (mo0_minv _ _ _ _ (valid_input_core_reader _ VI))| apply mo0_not_halted].
 Qed.
 
 Lemma gen_leaves : leaves_unreachable_m nstep t mo.
 Proof. exact (proj1 (X1r7.prog_model_ok segs rs pc ph lim en inp Hpos Hceil H40 Hlim VE VI)). Qed.
 
+(* [mo0] is [State.with_vdso] over [State.init_model]; [with_vdso] changes only the vDSO run state, so
+   the fd table and the file system are [init_model]'s by conversion *)
 Lemma gen_fds : m_fds mo = fds_std.
-Proof. unfold mo, TopLevel.mo0. rewrite m_fds_init_model. reflexivity. Qed.
+Proof.
+unfold mo, TopLevel.mo0.
+transitivity (m_fds (init_model (segments_reserved segs) (en_brk en) (en_mmap_base en) (en_sp en) lim inp)); [reflexivity|].
+rewrite m_fds_init_model. reflexivity.
+Qed.
 Lemma gen_fs : m_fs mo = in_fs inp.
-Proof. unfold mo, TopLevel.mo0. rewrite m_fs_init_model. reflexivity. Qed.
+Proof.
+unfold mo, TopLevel.mo0.
+transitivity (m_fs (init_model (segments_reserved segs) (en_brk en) (en_mmap_base en) (en_sp en) lim inp)); [reflexivity|].
+rewrite m_fs_init_model. reflexivity.
+Qed.
 
 Lemma gen_exists : forall ok, exists full,
 texit nstep nexit t mo full /\ full = ct_events (in_fs inp) (ctrace_of (argv_Z (in_argv inp)) (in_fs inp) ok)
@@ -172,24 +183,20 @@ Qed.
 Lemma plain_entry_exists : forall inp, valid_input_either inp ->
 exists en, valid_entry (mkImage psegs Plain.M.init_pc Plain.M.phdrs) en inp.
 Proof.
-intros inp (Hargv & Henvp & _ & _ & _ & _ & _ & _ & Hsize & _).
+(* LPS 727298f3: [Run.valid_entry] gained the launch conjunct [entry_launch_ok_va]; the witness is the
+   core's [Run.launch_entry_va] over the image's break, as [Equivalence.image_brk_satisfiable_entry]
+   builds it, and [Run.launch_entry_va_valid] discharges the rest from the input's argv, envp and
+   launch clauses *)
+intros inp Hv.
 assert (Hsat : image_brk_satisfiable psegs = true) by (vm_compute; reflexivity).
 destruct (image_brk_satisfiable_sound psegs Hsat) as [brk Hbrk].
-pose proof (entry_stack_span_bound _ _ Hargv Henvp) as Hspan.
-exists (mkEntry (Z_to_bv 64 sp_window_lo) brk (Z_to_bv 64 mmap_base_max) (mkDraw (Z_to_bv 128 0) (fun _ => Z_to_bv 8 0))).
-rewrite (valid_entry_sv48 _ _ _ Hsize).
-cbn. split; [| split; [exact Hbrk | split]].
-- unfold valid_sp, sp_window_lo, sp_window_hi.
-rewrite Z_to_bv_unsigned, bv_wrap_small by (unfold bv_modulus; cbn; lia). lia.
-- unfold valid_mmap_base, mmap_base_min, mmap_base_max, sp_window_hi, page_size.
-rewrite Z_to_bv_unsigned, bv_wrap_small by (unfold bv_modulus; cbn; lia). lia.
-- unfold entry_stack_fits.
-rewrite Z_to_bv_unsigned, bv_wrap_small by (unfold bv_modulus, sp_window_lo; cbn; lia).
-unfold entry_stack_span_max in Hspan. unfold sp_window_lo, sp_window_hi. lia.
+red in Hv. repeat match goal with Hc : _ /\ _ |- _ => destruct Hc end.
+exists (launch_entry_va (in_va_size inp) inp brk (Z_to_bv 128 0) vdso_keeps_all).
+apply launch_entry_va_valid; assumption.
 Qed.
 
 Lemma valid_input_core_of_either : forall inp, valid_input_either inp -> valid_input_core inp.
-Proof. intros inp (A & B & C & _ & D & E & F & G & I & _). exact (conj A (conj B (conj C (conj D (conj E (conj F (conj G I))))))). Qed.
+Proof. intros inp H. red in H. unfold valid_input_core. tauto. Qed.
 
 Theorem run_defined_valid : forall inp ok, valid_input_either inp -> run_defined (in_fs inp) (argv_Z (in_argv inp)) ok.
 Proof.

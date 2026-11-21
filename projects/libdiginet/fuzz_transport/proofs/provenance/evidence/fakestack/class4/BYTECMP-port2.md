@@ -11,10 +11,10 @@ a5c53bb2bed4.
 
 ## Rule 24: every released donor of class 4, compared before the choice
 
-Lookup: ../class0/rule24-grep.txt (origin/ossv/recipes 9b0ac6f0e678, one path-scoped git grep per released unit with
+Lookup: ../class0/rule24-grep.txt (one path-scoped git grep per released unit with
 an ASan proof tree, 36 units). Files that state `astack_malloc_realizes tfibsegs B 4`: libreac/fuzz_grant A and B
 (Rt/StackMalloc4{,Tbl}.v), libreac/fuzz_identity A and B (Rt/StackMalloc4{,Tbl}.v), plugin-hostd/fuzz_command A and B
-(Rt/RtSM4{,T}.v). Each read at e10f488c53fc (the last recipes commit with proofs/<P/H>/lib, the layout alreloc reads;
+(Rt/RtSM4{,T}.v). Each read (the last recipes commit with proofs/<P/H>/lib, the layout alreloc reads;
 every file read there has the same blob at the tip).
 
 `cands.sh 4 HUB DONORS TARGET out-port2/rule24` (out-port2/rule24/rule24-4.tsv, rule24-4-closeness.txt):
@@ -31,7 +31,7 @@ relocation carries, the donor's own table: walked words differing by a pc-relati
 differing targets and pc-relative words): grant 62 walked; whole functions 1 differing target (RegisterCommonFlags +
 0x1218, data-differs, outside the 2 walked words) and 416 words; the failing ones, not ranked: identity 47 / 1 / 403,
 fuzz_command 87 / 1 / 504. Chosen: **libreac/fuzz_grant** lib/A/Rt/StackMalloc4Tbl.v + StackMalloc4.v + AF0r.v (the
-table StackMalloc4Tbl.v takes tbl_fs from) at e10f488c53fc (last changed by d2e4b664b21d; image asan c2c7559b29bd,
+table StackMalloc4Tbl.v takes tbl_fs from) (last changed; image asan c2c7559b29bd,
 twin 57c26f993615).
 
 AF0r.v is grant's class-1 walk file; classes 1 and 2 of this row come from another donor (reported 2026-10-31), so

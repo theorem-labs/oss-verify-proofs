@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the cs_ok hypothesis HC is stated over AsanInitL's SINV0L and argH0 of the run's input). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -9,7 +10,7 @@ From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Lib Require Import Mem Ce
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import HeapCeil AsanAllocModel. From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both Require Import AsanAllocCons. From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import LazyRestrict LazySR.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.As Require Import ASegs AsShadow AsConst AsIface AsDriverLaws AllocWf AllocRep AllocRepX AsDepotInv AG_Malloc2 FakeStackRep
   AS_InstWF AS_InstMainDefs AS_InstDefs AS_InstMainRep AS_InstMainK AS_InstMainVis.
-From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import PropExec AxSymExec3 AsanPlanCore AsanPlan AsanPlanSound AsanInit AsStartupHSF. From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both Require Import AsMainState AsMainFacts AsMainLazy AsMainCells AsMainIface AsMainIfaceDepot AsMainIfaceAlloc.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import PropExec AxSymExec3 AsanPlanCore AsanPlan AsanPlanSound AsanInit AsanInitL AsStartupHSF. From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both Require Import AsMainState AsMainFacts AsMainLazy AsMainCells AsMainIface AsMainIfaceDepot AsMainIfaceAlloc.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.AsCert Require Import AsImages AsPlanImages.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.As Require Import AsMainSyms.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Both.As Require Import PerfLia.
@@ -27,8 +28,8 @@ Section AT_MAIN.
   Hypothesis Vev : valid_envp (in_envp inp).
   Hypothesis Vfit : entry_stack_fits sp0 (in_argv inp) (in_envp inp).
   Hypothesis Hh : HSF_asan h = Some ch.
-  Hypothesis HC : cs_ok ASEGS ASAN_H AsanInit.LIMIT (SINV0 APH sp0 rdraw brk0 (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-                        (argH0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model.
+  Hypothesis HC : cs_ok ASEGS ASAN_H AsanInit.LIMIT (SINV0L APH AsanUbsan.M.init_pc sp0 rdraw brk0 inp)
+                        (argH0 sp0 rdraw inp) (in_fs inp) E ch R FULL model.
   #[local] Notation g := (hole_granted h).
   #[local] Notation cls := (hole_class h).
   #[local] Notation X := (Xof g E).

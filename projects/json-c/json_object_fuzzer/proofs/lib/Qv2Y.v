@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the auxv entries: rauxv_list and rauxv_ok restated at the revision's auxv (QCa8.Mq5.rauxv_list): the 24 keyed values before AT_RANDOM, AT_RANDOM, AT_EXECFN and the CONFIG_RSEQ pair or none, with the vector's own length in the address bound). *)
 
 
 From OSSVerify.Proofs.json_c.json_object_fuzzer.lib.Lib Require CodeAt StepGen GwInst GwEq GwApply GwApply2. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Q6nq.
@@ -207,19 +208,21 @@ Q r (set_m (strip st') s') ms') ->
 implM rsegs (raw_malloc n) s Q ms.
 Proof. first [GwApply2.gw_by_name2 GwI.segs (@QCa8.Mq5.rraw_malloc_bridge) | autorewrite with gw_eqs; GwApply2.gw_by_name2 GwI.segs (@QCa8.Mq5.rraw_malloc_bridge)]. Qed.
 
-Definition rauxv_list (x3 x4 x5 x16 x6 x11 x12 x23 rnd : Z) : list word :=
-map wz [3; x3; 4; x4; 5; x5; 16; x16; 6; x6; 11; x11; 12; x12; 23; x23; 25; rnd; 0; 0].
+(* LPS 727298f3: the revision's auxv (QCa8.Mq5.rauxv_list) *)
+Definition rauxv_list (vs : list Z) (rnd ex : Z) (rs : list Z) : list word :=
+map wz (QCa8.Mq5.rauxv_kvw QCa8.Mq5.rauxv_keys0 vs 0 ++ [25; rnd; 31; ex] ++ rs ++ [0; 0]).
 Lemma gw_eq_rauxv_list : @rauxv_list = ltac:(GwInst.gw_term (@QCa8.Mq5.rauxv_list) (@rauxv_list)). Proof. unfold rauxv_list, QCa8.Mq5.rauxv_list; first [reflexivity | autorewrite with gw_eqs; reflexivity]. Qed.
 #[local] Hint Rewrite gw_eq_rauxv_list : gw_eqs.
 
 Definition rauxv_ok (m : mem) (B : Z) : Prop :=
-exists av x3 x4 x5 x16 x6 x11 x12 x23 rnd,
+exists av vs rnd ex rs,
 rw_cells rsegs m RAUXV_CELL [C8 (wz av)]
-/\ bytes_at rsegs m av (u64s (rauxv_list x3 x4 x5 x16 x6 x11 x12 x23 rnd))
+/\ bytes_at rsegs m av (u64s (rauxv_list vs rnd ex rs))
 /\ bytes_at rsegs m (rnd + 8) (le8 (wz rc_secret))
-/\ alloc_ceiling <= B /\ B <= av /\ av + 160 <= 2^64 /\ B <= rnd + 8 /\ rnd + 16 <= 2^64
-/\ 0 <= x3 < 2^64 /\ 0 <= x4 < 2^64 /\ 0 <= x5 < 2^64 /\ 0 <= x16 < 2^64 /\ 0 <= x6 < 2^64
-/\ 0 <= x11 < 2^64 /\ 0 <= x12 < 2^64 /\ 0 <= x23 < 2^64 /\ 0 <= rnd < 2^64
+/\ alloc_ceiling <= B /\ B <= av /\ av + 8 * Z.of_nat (length (rauxv_list vs rnd ex rs)) <= 2^64
+/\ B <= rnd + 8 /\ rnd + 16 <= 2^64
+/\ length vs = 24%nat /\ Forall (fun v => 0 <= v < 2^64) vs /\ 0 <= ex < 2^64 /\ (rs = [] \/ rs = [27; 28; 28; 32])
+/\ 0 <= rnd < 2^64
 /\ av mod 8 = 0.
 
 #[using="Type"] Lemma rauxv_ok_weaken : forall m B B', rauxv_ok m B -> alloc_ceiling <= B' <= B -> rauxv_ok m B'.

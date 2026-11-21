@@ -1,6 +1,6 @@
-fuzz_knock@88154566652a: Reusable 597 .v, AU 406 .v, in both 0 (B text wins); root .v now 1097; A/ 411
+fuzz_knock: Reusable 597 .v, AU 406 .v, in both 0 (B text wins); root .v now 1097; A/ 411
 left module refs to lib.Reusable / lib.AU: 1
-step1: target lib = b55ba5ae509 lib + cc592f53d4ff lib/Reusable; 77 replaced lib/B files removed; lib/B 314 files, lib/Reusable 554
+step1: target lib = lib + lib/Reusable; 77 replaced lib/B files removed; lib/B 314 files, lib/Reusable 554
 port_core: versions: port_core.py 7a74e72920e6, resolve_code.py 81803218fe79, gen_traces.py a78026af1ae2, adapted.patch 27bb43cc1436, symbol gate 5033540ba83b
 port_core: staged 88 files (0 kept from the target), 73 with moved addresses; 1317 ok, 120 values written over remap's (fixed.tsv), 0 hand values from --override; 87 for review (review.tsv); refused 9 (czone-unverified 9); decimals in the image (decimals.tsv): derived 4, excluded 113, kept 5, mapped 10; 0 uses of names the shipped kernel lacks (kernel-name-missing); core adaptations applied to 0 files (); 0 name rows to check (names.tsv); 0 target-changed files named by staged files (differs.tsv)
 port_core: generated set (the default, with the Y twins of its A/ entries): 24 entries: A/AB01.v A/AB03.v A/AB05.v A/AB12.v A/AB1m.v A/AD2i.v A/AD2j.v A/AD1k.v A/AB1v.v A/AB1h.v A/AB1k.v A/ACej.v YD2j.v YB01.v YB03.v YB05.v YB12.v YB1m.v YD2i.v YD1k.v YB1v.v YB1h.v YB1k.v YCej.v

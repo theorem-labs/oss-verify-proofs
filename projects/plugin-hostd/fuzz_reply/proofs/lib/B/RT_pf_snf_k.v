@@ -1,9 +1,9 @@
-(* Image B twin of lib/A/RT_pf_snf_k.v at 2c1f180a413 (sha256 3ed7d507c2bc; internal record): module paths lib.A -> lib.B; 3 image numerals moved to fuzz_reply.asan-ubsan by symbol + offset, each checked against that image (CHAINKB-numerals.tsv sha256 86a76b0550d0; internal record). *) (* Copy of lib/A/RT_pf_snf.v:20-261 at d49bd1db505 (sha256 3dd9b59a44f4; internal record), retargeted to RT_pf_stmt_k.v's keep-fx
+(* Image B twin of lib/A/RT_pf_snf_k.v (sha256 3ed7d507c2bc; internal record): module paths lib.A -> lib.B; 3 image numerals moved to fuzz_reply.asan-ubsan by symbol + offset, each checked against that image (CHAINKB-numerals.tsv sha256 86a76b0550d0; internal record). *) (* Copy of lib/A/RT_pf_snf.v:20-261 (sha256 3dd9b59a44f4; internal record), retargeted to RT_pf_stmt_k.v's keep-fx
    statements (it names no GXA statement itself).
    ___interceptor_snprintf at fuzz_reply.asan-ubsan, RT_pf_stmt_k.v snprintf_icpt_stmt_k (no
    frm0 premise; the post keeps the caller's F and fc), at __wrap_snprintf 0x42234, assembled from pieces that are
    already proved - no function is walked here:
-   - R4Printf's RELOCATED Bz walk (a working branch 5247aa4d0b9, lib/A/Bz/K/I_snprintfw.v): snprintf_walkA (the
+   - R4Printf's RELOCATED Bz walk (a working branch, lib/A/Bz/K/I_snprintfw.v): snprintf_walkA (the
      trampoline, the frame of 96, the va_start spill of a3..a7 at [q-40, q), TryAsanInitFromRtl, to the call of
      ___interceptor_vsnprintf 0x46538 with va_list = q-40) and snprintf_walkB (the epilogue);
    - the vsnprintf interceptor's own keep-fx statement entered at its body 0x46538, taken as the Section hypothesis

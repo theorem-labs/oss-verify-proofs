@@ -16,7 +16,7 @@
 
    Rule 24 (proof-index v5 built 2026-10-28T21:58:24Z, exit 0, read from a file, not a pipe):
    preset_base64_encode has RELEASED proofs for fs's PLAIN and UBSAN builds only (lib/Prog, lib/U/Prog,
-   ossv/recipes@566eb6ffa5, release/pau-projects-recipes@b6a0088adc), none for an ASan build. *)
+   ossv/recipes, release/pau-projects-recipes), none for an ASan build. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

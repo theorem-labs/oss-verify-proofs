@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from projects/cgif/cgif_file_fuzzer/proofs/lib/A/AD1l.v, with its module paths changed and its addresses moved to libreac/fuzz_knock's ASan build; AB1v's tfibsegs is A/AWalkFw0.v's. *)
 (* Modified by Theorem Labs, 2026-10: copied from projects/libreac/fuzz_knock/proofs/lib/A/AD1l.v (donor image sha256 61768cf4739b), with its module paths changed and its addresses moved to libdiginet/fuzz_codec's ASan build. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the fdchan premise of the channel-2 sites: the lookup, the live channel and its reader). *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require YImgTop.
 From Stdlib Require Import ZArith NArith List Lia Bool String.
@@ -137,7 +138,7 @@ apply (tfib_not_owned_static B F_STDERR (F_STDERR + FILE_SZ) a HB); [vm_compute;
 | exact (u64_range (sv_denot E (SOff 41 0)))
 | exact (ro_img_of_IMG E _ HIMG)
 | apply (rodata_hull_zero B HB LAWS ly S W mem md); [exact HAR | unfold FMT_open, FMT_rderr, FMT_usage; lia | unfold FMT_open, FMT_rderr, FMT_usage, YImgTop.IMG_TOP; lia | lia]
-| split; [exact Hfd | reflexivity]
+| exact Hfd
 | exact HAI
 | intros regs' mem' md' HAR' HP' Hsbm' Ha0' HFW' Hfr' Hpr' HAI';
 apply (HPOST regs' mem' md' HAR' HP' Hsbm');

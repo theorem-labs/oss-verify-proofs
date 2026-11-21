@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx form of FMgxaSeamNorm.v's one AR lemma (layout_of_preU, Section KP), over the
    engine's allocator relation ARx. FMgxaSeamNorm.v is not edited: every other lemma of it is AR-free and is used
    from it.
 
-   The conversion is fuzz_preset's (PSnpSeamNorm.v at a working branch dad42dbecbc4, :1344-1352) of
-   a Theorem Labs lane's FMgxaSeamNorm.v (3242941dc964, :1332-1338): FMupoison.ecall_preU (AR over `unpoison U mem`) ->
+   The conversion is fuzz_preset's (PSnpSeamNorm.v at a working branch, :1344-1352) of
+   a Theorem Labs lane's FMgxaSeamNorm.v (1332-1338): FMupoison.ecall_preU (AR over `unpoison U mem`) ->
    FCiface.ecall_pre_x (ARx over mem, with the ghost head list Hp), and AR's am_layout -> the layout law. Reply's
    AR_laws_x (Reusable/YCbqG.v) has no layout field (preset's alx_layout_ok, field 18), so the law is the Section
    hypothesis LAY in preset's field text (ARx_layout_ok_law); FMgxaSeamARX.v proves it at reply's ARX from ARmcf's

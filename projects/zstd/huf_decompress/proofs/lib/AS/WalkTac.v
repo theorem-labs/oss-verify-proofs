@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (2 recorded proofs replaced by written proofs (v_add_0_r, v_add_0_l)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -24,11 +25,17 @@ Ltac gres :=
 (* [comment removed for export] *)
 Lemma v_add_0_r : forall x : word, v_add x (Z_to_bv 64 0) = x.
 Proof.
-ltac2:(KReplay.run1 (kr_t_WalkTac ()) [] "h02b1h12b2h21nh31zh41Hh51xp;1p;2p;3p;6g0000j13Tg000Uj1>Tg0013j12Tg001Vj20Tg002@j24Tg002fj31Tg003@j3;Tg003dj29Tg004Jj28Tg005=j37Tg005ij26Tg006Xj65Tg0076j2:Tg007Sj1=Tg0084j2<Tg008j#3#3#3#3#3#3#>R0#2R1g009OR2f0R3,00R41403f1R5511X32g009mR6%23R7%25R8g00:Kf2R9#2?153f3R:/0910:5512R;[10951093512%2:?195[R<f4#2?1:9\;A;953P3n2001000000120000000W1W0W2P<^18^07^26P3P01005R6,40R7P5P2190610099123X321805970610071606E5O4b4g00:fR6,:4%=4E51406,<3=113eW5o"). Qed.
+  intro x. unfold v_add. change (bv_unsigned (Z_to_bv 64 0)) with 0%Z.
+  rewrite Z.add_0_r. apply bv_eq. rewrite Z_to_bv_unsigned.
+  apply bv_wrap_small, bv_unsigned_in_range.
+Qed.
 
 Lemma v_add_0_l : forall x : word, v_add (Z_to_bv 64 0) x = x.
 Proof.
-ltac2:(KReplay.run1 (kr_t_WalkTac ()) [] "h02b1h12b2h21nh31zh41Hh51xp;1p;2p;3p;6g0000j13Tg000Uj1>Tg0013j12Tg001Vj20Tg002@j24Tg002fj31Tg003@j3;Tg003dj29Tg004Jj28Tg005=j37Tg005ij26Tg006Xj65Tg0076j2:Tg00;Dj1=Tg0084j2<Tg008j#3#3#3#3#3#3#>R0#2R1g009OR2f0R3,00R41403f1R5511X32g009mR6%23R7%25R8g00:Kf2R9#2?153f3R:/0910:5512R;[10951093512%2:?195[R<f4#2?1:9\;A;953P3n2001000000120000000W1W0W2P<^18^07^26P3P01005R6,40R7P5P2190610099123X321805970610071606E5O4b4g00:fR6/:4%=4E51406/<3=113eW5o"). Qed.
+  intro x. unfold v_add. change (bv_unsigned (Z_to_bv 64 0)) with 0%Z.
+  rewrite Z.add_0_l. apply bv_eq. rewrite Z_to_bv_unsigned.
+  apply bv_wrap_small, bv_unsigned_in_range.
+Qed.
 
 (* [comment removed for export] *)
 Ltac is_pos_lit p :=

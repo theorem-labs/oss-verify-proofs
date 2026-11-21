@@ -43,7 +43,7 @@ Module DFE := OSSVerify.Proofs.libreac.fuzz_decode.lib.Prog.FloatExact.
 (* The pcm sample values the convert loop reads, read at the entry state (pcm lies in a caller block, which the walk
    never writes), and the float each becomes: s24 of three little-endian bytes (`lbu`, `lbu`, `lb`, combined at
    +0x168 .. +0x188), converted (`fcvt.s.w` at +0x18c) and scaled by fa5 = F2M23 = 2^-23 (`fmul.s` at +0x190).
-   Same shape as image B's crtB_pb / crtB_s24 / crtB_cv (a working branch 8d59e829a9a,
+   Same shape as image B's crtB_pb / crtB_s24 / crtB_cv (a working branch,
    lib/B/Prog/crtB_cuts.v). *)
 Definition crtA_pb (rd : reader) (pcm i : Z) : Z := match rd (pcm + i) with Some v => v | None => 0 end.
 Definition crtA_s24 (b0 b1 b2 : Z) : Z := b0 + 256 * b1 + 65536 * b2 - (if 128 <=? b2 then 16777216 else 0).

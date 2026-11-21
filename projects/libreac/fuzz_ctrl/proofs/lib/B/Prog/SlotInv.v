@@ -64,7 +64,7 @@ Lemma FRAME_SHADOW_val : FRAME_SHADOW = 392.
 Proof. reflexivity. Qed.
 
 (* frame_asan_ubsan (B/FrameAPI.v:147) without its last conjunct (the slot obligation yielding asan_ubsan_halts); the
-   conjunct itself is slot_obligation. frame batch 2 (a Theorem Labs lane 48004cf7bfc) added the sink-env bound (FrameAPI.v:156,
+   conjunct itself is slot_obligation. frame batch 2 (a Theorem Labs lane) added the sink-env bound (FrameAPI.v:156,
    after `0 < empty < 2 ^ 62`); frame_facts carries it LAST, so the v1.8 positions of frame_facts are kept. *)
 Definition frame_facts (B : malloc_syms) (APIf : forall rc : RunCeil, AC.AsanAllocAPI AC.ASYMS AsanRTInv.RT)
     (LS : lib_shape) (SH : sink_head) (SK : sink_syms) (ra empty : Z) : Prop :=
@@ -246,8 +246,8 @@ Arguments lwn_shadow {API H mem md a} _.
 
 (* The slot's OWN share of class c: one slot of class c (the harness holds at most one block of its own at a
    time: fuzz_dup at fuzz_ctrl.c:524 freed at :613 before fuzz_dup at :704 freed at :706), 0 at the classes no
-   primary request reaches. The body of a Theorem Labs lane's CtrlClassLive.BC_ctrl (a working branch
-   61aba11640, CtrlClassLive.v (not in this delivery)), as image A's SlotInv.v (0b6b7fff89f). Top level, not a section variable: no
+   primary request reaches. The body of a Theorem Labs lane's CtrlClassLive.BC_ctrl (a working branch,
+   CtrlClassLive.v (not in this delivery)), as image A's SlotInv.v. Top level, not a section variable: no
    lemma's arity moves. *)
 Definition BC_ctrl (c : Z) : Z :=
   if (c =? 0) || (c =? 5) || (c =? 31) then 0 else AsanCtrl.size_of_class c.
@@ -411,7 +411,7 @@ Definition ENT (g : ghost) (hb : list (Z * Z)) (mem : word -> option byte) (md :
      not keep. Transports: ent_shadow_entry / ent_shadow_store / ent_shadow_call / ent_shadow_mat (Seg/Tac_slot.v). *)
   (forall q k i, In (q, k) (g_H g) -> ~ In (q, k) (g_T g) -> 0 <= i < k ->
      mbyte rsegs mem (shadow_addr (q + i)) = mbyte rsegs (g_mem g) (shadow_addr (q + i))) /\
-  (* Generation N.1's per-class bound, 14th and LAST (a Theorem Labs lane's design 16:0xZ, mirrored from image A, 0b6b7fff89f):
+  (* Generation N.1's per-class bound, 14th and LAST (a Theorem Labs lane's design 16:0xZ, mirrored from image A):
      SOME per-class bound BE on the ENTRY heap, with room for the slot's own share under the shared budget 2 ^ 22
      (classbound/fuzz_ctrl.tsv (a working note, not in this delivery): Bc = 2 ^ 22, m = 1, SP = size_of_class c; image B has the same allocator
      class table, lib/AZ/Spec/AsanCtrl.v, and the same harness heap use). It is existential, so no section variable is
@@ -1202,9 +1202,9 @@ Definition rec_inv (g : ghost) (j : nat) (phi A kp : Z) (m : word -> option byte
      field16 = v14 + 256 * v15 /\
      (if v16 =? 0 then (if v17 =? 0 then 1 else 0) else 0) = (if t_k (g_in g) j =? 1 then 1 else 0)).
 
-(* The record bundles the F16 / F17 entry cuts read and F13-F15 carry (a Theorem Labs lane's retired Seg/F15.v (not in this delivery), f52ea940d3c:
+(* The record bundles the F16 / F17 entry cuts read and F13-F15 carry (a Theorem Labs lane's retired Seg/F15.v (not in this delivery):
    f15_rb / f15_rx, the text F14's exits give), with image A's short-arm guards (push 6c5b, A/Prog/Seg/F13.v (a version not in this delivery)
-   Inv_A820a0_loc; from a working branch d70d9f3807). Every frame reaches 0x82340 .. 0x8237c: the short arm
+   Inv_A820a0_loc; from a working branch). Every frame reaches 0x82340 .. 0x8237c: the short arm
    (len < 50: 0x81f7c bltu -> 0x82020, parse kind 0, reply_ret 0, 0x821f0 bne -> 0x82308 -> memcpy 0x8233c) and the
    long arm whose bytes 12 / 13 are not 0x88 / 0x19 as well (the fragment call returns 0 for FgNone, so the
    `bltz a0` at 0x8235c falls through). [A+272] = b2z (t_8819 j) (0x82018 seqz on the byte-13 test after the
@@ -1357,7 +1357,7 @@ Definition RL (g : ghost) (j i : nat) (phi fr : Z) (regs : bvmap 5 word) (m : wo
   (i <= 10)%nat /\ rg regs 23 (CAT + CAT_ROW * Z.of_nat i) /\ rg regs 25 (Z.of_nat i) /\ rg regs 21 CAT /\
   rg regs 10 (CAT_ROW * Z.of_nat i) /\ rg regs 11 0 /\ rg regs 12 0 /\
   (forall i', (i' < i)%nat -> t_blk (g_in g) j <> decl_i (Z.of_nat i')) /\ PTL g j phi fr regs m.
-(* RLc (prover a Theorem Labs lane, lib/B/Prog/Seg/F34.v on a working branch 44ac51d3f4, verbatim): row i of row_of_block at the
+(* RLc (prover a Theorem Labs lane, lib/B/Prog/Seg/F34.v on a working branch, verbatim): row i of row_of_block at the
    return point 0x82c24 of declaration_of (W03, i = 0 .. 10), carried on to 0x82c38: RL without the row head's three
    overflow-check operands (a0 is the call's result, a1 and a2 are gone), with the row pointer now in both s7 and
    the checked sum s8 (0x82c08 add s8,a0,s5; F36's `bnez s8` at 0x82c38 reads it, trap row T72), and the row slot
@@ -1476,8 +1476,8 @@ Definition Inv_B81220 (g : ghost) (c : config) : Prop :=
    spills [A + 240] = fr + 2448, [A + 232] = fr + 2464 and [A + 224] = fr + 2496 (0x814cc-0x814e0: addi a1,a3,272 /
    sd a1,240(s1), addi a1,a3,288 / sd a1,232(s1), addi a1,a3,320 / sd a1,224(s1), a3 = fr + 2176; next stores
    0x81f40 / 0x81f44 / 0x81f60 in the frame loop), which R10 (0x817dc-0x817e4), R11 (0x81840-0x81850) and R15
-   (0x81904-0x8190c) read (prover a Theorem Labs lane, lib/B/Prog/Seg/R11.v (not in this delivery) on a working branch b0de306812).
-   LOOPB (prover a Theorem Labs lane, seg_A5 + seg_R1 Qed on a working branch e316ddb751, lib/B/Prog/Seg/A5.v, verbatim) is
+   (0x81904-0x8190c) read (prover a Theorem Labs lane, lib/B/Prog/Seg/R11.v (not in this delivery) on a working branch).
+   LOOPB (prover a Theorem Labs lane, seg_A5 + seg_R1 Qed on a working branch, lib/B/Prog/Seg/A5.v, verbatim) is
    the loop body every turn carries: the facts above (our[] as the first t OUR bytes followed by 6 - t unread
    bytes, which the store at turn t replaces), plus the loop registers of turn t, all set in A4 and rewritten only
    by the loop: a0 = 6 - t (0x814b0 li a0,6; the store count, 0x81580), a1 = 1 (0x81540, the T01 constant),
@@ -1591,17 +1591,17 @@ Definition OUTA (fr : Z) (m : word -> option byte) : Prop := addressable m (fr +
    declaration slot [A+96] = decl_slot fr (0x814ec addi a1,a3,384 / 0x814f0 sd a1,96(s1); next store 0x81e90 in
    the frame-loop prologue) and the ports buffer [A+120] = fr + 2528 (0x814e4 addi a1,a3,352 / 0x814e8 sd
    a1,120(s1); next store 0x81e70), with a3 = fr + 2176 (0x814b4 addi a3,a1,129, not rewritten up to 0x81534).
-   Prover a Theorem Labs lane (seg_R6, lib/B/Prog/Seg/R6.v on a working branch 96ceb6489e, Inv_B81688_loc): the row-name
+   Prover a Theorem Labs lane (seg_R6, lib/B/Prog/Seg/R6.v on a working branch, Inv_B81688_loc): the row-name
    clause, a fact the loop does not change, so RBE carries it to the latch: when the catalogue row names a row
    name, its bytes and placement (R6X states the same clause only on the identity turns b = 5 / 6). a Theorem Labs lane's second
    loop fact (out[] apart from the thread cells of the side stack, fp_tls) is not carried: it follows from FRA alone
-   at every cut (Seg/Tac_fsfree.v tls_fra / fra_rbe_tls, also prover a Theorem Labs lane's r13_tls_fra on a working branch
-   6a3ed3e194: the thread cells are image cells below GT, or the allocator's bytes, or below stklo and outside FS,
+   at every cut (Seg/Tac_fsfree.v tls_fra / fra_rbe_tls, also prover a Theorem Labs lane's r13_tls_fra on a working branch:
+   the thread cells are image cells below GT, or the allocator's bytes, or below stklo and outside FS,
    and no frame byte is any of those). Adopt FSFREE: RBE also carries
    R6X's loop-invariant facts - our[] addressable (no loop store to its shadow granule 328(s3), see R5), the row
    table at BA_FR + 72, the box bytes at BOXA and the catalogue row at mrow (image bytes; no loop store is below
    GT) - so R6X at any turn, in particular R6X g (S b) at R21's back edge, follows from RBE (r6x_of_rbe).
-   Prover a Theorem Labs lane (seg_R11, lib/B/Prog/Seg/R11.v (not in this delivery) on a working branch b0de306812): the three reply-slot spills
+   Prover a Theorem Labs lane (seg_R11, lib/B/Prog/Seg/R11.v (not in this delivery) on a working branch): the three reply-slot spills
    [A + 240] = fr + 2448, [A + 232] = fr + 2464, [A + 224] = fr + 2496 (A4's 0x814d0 / 0x814d8 / 0x814e0; no loop
    store to (s1); read 0x817dc-0x817e4, 0x81824-0x8182c, 0x81840-0x81850, 0x81904-0x8190c), and the identity
    record fr + 2176 addressable for 38 bytes (R3's shadow stores 0x8165c-0x8166c `sb zero,272..275(s3)` /
@@ -1610,7 +1610,7 @@ Definition OUTA (fr : Z) (m : word -> option byte) : Prop := addressable m (fr +
    its other conjuncts lack (no store to (s1) in 0x816ec-0x81ac8), so PRO holds at every R cut from R6 on and at
    the latch; and (prover a Theorem Labs lane, seg_R10) the fragment-record pointer [A+112] = fr + 2256 (A4's 0x814c0, the only
    store before the frame-loop prologue's 0x81e88), which R10's fragment arms reload at 0x81818 / 0x818f8. Adopt
-   10 (prover a Theorem Labs lane's R9 chain, a working branch be153b10cd): the fragment record fr + 2256 addressable for 72
+   10 (prover a Theorem Labs lane's R9 chain, a working branch): the fragment record fr + 2256 addressable for 72
    bytes (R4 / R5's entry facts; the only shadow stores in 0x816ec-0x81ac8 are 296..300 / 306 / 308 / 312 / 316 /
    317 / 320..323(s3), none in the record's granules 282..290), which R9's exit Inv_B817a4_at asks for. *)
 Definition RBE (g : ghost) (fr : Z) (regs : bvmap 5 word) (m : word -> option byte) : Prop :=
@@ -1694,7 +1694,7 @@ Definition Inv_B8168c (g : ghost) (c : config) : Prop :=
    at 0x816a0-0x816b0 and rewrites s2 at 0x816b4, so the fact is R5's entry fact only), and out[] / our[]
    addressable (no shadow store in 0x8169c-0x816ec; 328(s3), our[]'s granule, is written only at 0x814b8 and
    0x82f14). R5 also carries R6's row-name clause (see RBE), which R6 needs on entry (prover a Theorem Labs lane, seg_R6 on
-   a working branch 96ceb6489e). Adopt FSFREE: the build_as
+   a working branch). Adopt FSFREE: the build_as
    side-stack package (prover a Theorem Labs lane's R5X) is no longer carried; the R6 call site rebuilds it from FRA
    (Seg/Tac_fsfree.v fra_fp). R5 also carries the identity record fr + 2176 addressable for 38 bytes (R3's shadow
    stores 0x8165c-0x8166c, see RBE) and (adopt 10) the fragment record fr + 2256 addressable for 72 bytes (R4's
@@ -1722,7 +1722,7 @@ Definition Inv_B8169c (g : ghost) (c : config) : Prop :=
    spills, read at 0x816ec-0x81700: [A + 312] = fr + 544 (0x814a4/0x814a8), [A + 272] = the catalogue box
    (0x816b0), [A + 264] = fr + 2624 = our[] (0x814f4/0x81544), [A + 256] = round_trip.box 0x21140
    (0x816d4/0x816d8), [A + 248] = 0x1234 (0x816dc/0x816e0). The last conjunct is prover a Theorem Labs lane's Inv_B81688_loc
-   addition (seg_R6, lib/B/Prog/Seg/R6.v on a working branch 96ceb6489e); RBE also holds it.
+   addition (seg_R6, lib/B/Prog/Seg/R6.v on a working branch); RBE also holds it.
    Adopt 10 (prover a Theorem Labs lane's R14X / R16 text: the constant 32, read by the trap tests 0x818ac / 0x81950 `bne a5,s11`):
    every R cut from here to the latch (Inv_B816ec_at .. Inv_B81ac0_at) carries `rg regs 27 32` (v1.9.0's s11;
    the patched image had s2) as its last conjunct (on R14 / R16 after a3). Its source is R5's 0x816cc `li
@@ -1747,7 +1747,7 @@ Definition Inv_B816ec (g : ghost) (c : config) : Prop := exists b, Inv_B816ec_at
    0x81718-0x81758 read the reciprocal s5 = 36 (0x816c8) and the magic word at [A + 128] = 0xe38f0000
    (0x816c4/0x816e4/0x816e8, read 0x8173c). The n_b = 0 arm (image A's Theorem Labs lane 05:46Z twin): build_as may return 0,
    so R7's `beqz a0,81ac0` (0x81710) is live and goes to the latch; the row / our[] / box / 0x1234 spills of image
-   A's arm and [A+144] / [A+8] are RBE's. Adopt 10 (prover a Theorem Labs lane's R9 chain, a working branch be153b10cd):
+   A's arm and [A+144] / [A+8] are RBE's. Adopt 10 (prover a Theorem Labs lane's R9 chain, a working branch):
    the turn-b identity / fragment records on both arms (from R6's entry RS; build_as writes neither), and on the
    n_b <> 0 arm out[]'s frame bytes rt_F: build_as's post gives bytes_at o (em_fr db sb (a5 mod 65536) 205 234
    (ba_X md mb nb b) len) only under go && E, and E is n_b <> 0, so the conjunct is guarded here; R8 reads them. *)
@@ -1789,7 +1789,7 @@ Definition Inv_B81764_at (g : ghost) (b : nat) (c : config) : Prop :=
    below fr) is rebuilt at the call from FRA (Seg/Tac_fsfree.v fra_fp), not carried. FRA's window conjunct plus
    fra_frame give [sp - K, sp) addressable for every K <= FN_STACK (fra_call_pre's own window clause), and
    REAC_CTRL_PARSE_K = 8800. `rnb g b <> 0` holds on this arm only (R7's a0 <> 0 edge), which is why
-   Inv_B81710_at does not carry it. Adopt 10: a Theorem Labs lane's R9_entry (R9.v on a working branch be153b10cd) verbatim -
+   Inv_B81710_at does not carry it. Adopt 10: a Theorem Labs lane's R9_entry (R9.v on a working branch) verbatim -
    the turn records, the frame bytes rt_F at Phi (R8's copy post) and the fragment record's 72 addressable bytes
    (also RBE's), which the exit's RF, a0 = rt_k and addressable (fr + 2256) 72 need. *)
 (* v1.9 pc 0x8177c *)
@@ -1818,7 +1818,7 @@ Definition Inv_B817a4_at (g : ghost) (b : nat) (c : config) : Prop :=
 (* v1.9 pc 0x817a4 *)
 Definition Inv_B817a4 (g : ghost) (c : config) : Prop := exists b, Inv_B817a4_at g b c.
 (* R11 (0x817ec, after the reac_ctrl_identity_reply call 0x817e8 of the turns b = 3, 4), prover a Theorem Labs lane's R11_entry
-   (lib/B/Prog/Seg/R11.v (not in this delivery) on a working branch b0de306812, seg_R11) after the earlier official body: b = 3 or
+   (lib/B/Prog/Seg/R11.v (not in this delivery) on a working branch, seg_R11) after the earlier official body: b = 3 or
    4, the turn records RF (s4 = Phi, s2 = n_b, the frame bytes at Phi), a0 = the reply result (read by 0x817f0 beq a0,a1,81840) and, under reply_ok, the three reply cells (R10's reply post), which R11's 0x81844 / 0x8184c /
    0x81854 load for the ingest call. The reply-slot spills and the identity record's addressability are RBE's. *)
 (* v1.9 pc 0x817ec *)
@@ -1834,8 +1834,8 @@ Definition Inv_B817ec_at (g : ghost) (b : nat) (c : config) : Prop :=
 (* v1.9 pc 0x817ec *)
 Definition Inv_B817ec (g : ghost) (c : config) : Prop := exists b, Inv_B817ec_at g b c.
 (* R12 (0x81834, after reac_ctrl_identity_fragment FRAG@0x81830 on R10's b = 6 arm 0x8180c-0x81830; only b = 6
-   reaches it, b = 5 goes to 0x81914): prover a Theorem Labs lane's R12X (lib/B/Prog/Seg/R12.v (not in this delivery) on a working branch
-   35bb4f952f, R12_entry, a Theorem Labs lane's refit) after the earlier official body: b = 6, n_b <> 0, s4 = Phi_r, the identity
+   reaches it, b = 5 goes to 0x81914): prover a Theorem Labs lane's R12X (lib/B/Prog/Seg/R12.v (not in this delivery) on a working branch,
+   R12_entry, a Theorem Labs lane's refit) after the earlier official body: b = 6, n_b <> 0, s4 = Phi_r, the identity
    record RID b at fr + 2176, the fragment call's new record RFG (S b) at fr + 2256 and its 72 bytes addressable,
    a0 = fg_rf (the call's result, tested 0x81838), and on the closing class (fg_rf = 1) the three out cells of the
    FgClose post (reac_ctrl_identity_fragment_c.v fg_mem) that 0x81840-0x81854 load for the ingest call: the u16
@@ -1855,7 +1855,7 @@ Definition Inv_B81834_at (g : ghost) (b : nat) (c : config) : Prop :=
 (* v1.9 pc 0x81834 *)
 Definition Inv_B81834 (g : ghost) (c : config) : Prop := exists b, Inv_B81834_at g b c.
 (* R13 (0x81860, after reac_identity_ingest; prover a Theorem Labs lane's Inv_B817fc_loc of lib/B/Prog/Seg/R13.v (a version not in this delivery),
-   written on a working branch 6a3ed3e194, verbatim): the code tests the result (0x81860 li a1,1; 0x81864 beq a0,a1,81a98; the fall-through 0x81868 `j 0x82fa4` is the abort branch), so the cut carries a0 = 1. The result
+   written on a working branch, verbatim): the code tests the result (0x81860 li a1,1; 0x81864 beq a0,a1,81a98; the fall-through 0x81868 `j 0x82fa4` is the abort branch), so the cut carries a0 = 1. The result
    is ingest_ret (reac_identity_ingest_c.v:17-18): -1 when the call is refused, else fst (ING idb ad pb), which is
    0 unless ad is ADDR_FIRMWARE, ADDR_MODEL_NAME or ADDR_REAC_VERSION with a payload long enough for that branch
    (RcIdentModel.v:72-76); seg_R12 has to show turn b's record meets that condition. The records are turn S b's:
@@ -1877,7 +1877,7 @@ Definition rsum (g : ghost) (b i : nat) : Z := RcModel.psum (skipn 18 (rt_g (g_i
    image A are image B's [A+272] (in RBE) / [A+24] (0x816ac) / [A+16] (0x816b8), the declaration slot [A+200] is
    [A+96] (0x814f0) and the ports buffer [A+216] is [A+120] (0x814e8); the 12 ports bytes at fr + 2528 are
    addressable from the shadow stores 0x81870 / 0x81874. Adopt 10 (prover a Theorem Labs lane's R14X, lib/B/Prog/Seg/R14.v on
-   a working branch b086914ea7): a3 = -(Phi_r + 18), the room word R10 computes on the b = 0 arm (0x81888
+   a working branch): a3 = -(Phi_r + 18), the room word R10 computes on the b = 0 arm (0x81888
    li a0,-18 / 0x8188c sub a0,a0,s4 / 0x81894 sltiu / 0x81898 neg / 0x8189c and, with s4 = Phi_r from the RF of
    R10's entry; one edge 0x817a4 -> 0x817c4 -> 0x8186c -> 0x818a8, no cut between), read at 0x818a8 and not
    written in the loop; and s11 = 32 (see R6). a Theorem Labs lane's third R14X fact, want CAT n_0 (rt_g 0) = mrow (the exit's
@@ -1991,7 +1991,7 @@ Definition PL0 (g : ghost) (fr : Z) (regs : bvmap 5 word) (m : word -> option by
   CUR g (c0 (g_in g)) regs /\ IDBe g fr RcIdentModel.ID0 m /\ FGBe g fr z72 m /\ RAD fr m /\
   spill regs m 176 (fr + 2688) /\ spill regs m 208 (fragb fr) /\ FSj g fr 0 regs m.
 (* ---- Init and P8 (P1-P12). P1 (0x81c58) re-poisons out[]; P2 (0x81ca8) is the init join. P3-P12 ~ P01-P09.
-   Adopt 6 (prover a Theorem Labs lane, P1-P6 Qed on a working branch 3cf40d7a82, Seg/P2.v / P4.v / P6.v): P2 gains the record
+   Adopt 6 (prover a Theorem Labs lane, P1-P6 Qed on a working branch, Seg/P2.v / P4.v / P6.v): P2 gains the record
    pointer spills [A+176] = fr + 2688 / [A+208] = fr + 2768 (A4 0x81500 / 0x81508), P4 gains D = fr + 2768 and
    [A+64] = fr + 3056 (A4 0x8153c), P6 gains [A+64], PL0 and the kind-name table addressable. Their sources are
    threaded by range: the three spills from A4 (LOOPB, R2-R5, RBE, P1, P1', P2, P3; no store to 64 / 176 / 208(s1)
@@ -2011,7 +2011,7 @@ Definition PL0 (g : ghost) (fr : Z) (regs : bvmap 5 word) (m : word -> option by
 (* B: [A+8] holds Q = S(fr) + 68 at 0x81c58 (0x81210 addi s11,s3,68; 0x81634 sd s11,8(s1); read 0x81ca0 for the
    meta_fill_f8 call with a1 = 187). Adopt 10 (prover a Theorem Labs lane, seg_P1 / seg_P1_bfc): the bound is Q + 187 <= S(fr) + 328,
    so the 0xf8 fill [Q, Q + 187) of 0x81ca4 stays below S(fr) + 328, the shadow byte of our[] (PRO's addressable
-   (fr + 2624) 6); image A did the same on Inv_A81a68 / Inv_A81a70 (4b78298cbd). Q = S(fr) + 68 (RBE's
+   (fr + 2624) 6); image A did the same on Inv_A81a68 / Inv_A81a70. Q = S(fr) + 68 (RBE's
    [A+8]) meets it: 68 + 187 = 255. *)
 (* v1.9 pc 0x81c58 *)
 Definition Inv_B81c58 (g : ghost) (c : config) : Prop :=
@@ -2201,7 +2201,7 @@ Definition Inv_B81e08 (g : ghost) (c : config) : Prop :=
 (* f1_IN (push 5b, image A's f1_IN of a Theorem Labs lane's seg_F1 / image B's Theorem Labs lane's Seg/F1.v local cuts): the input block
    the F1 allocation call keeps live and the two instrumented byte loads of the loop head read. The membership
    is guarded by 0 < g_n g: lib/B/FrameAPI.v:54 gives `In (p, n) H` only on that arm (n = 0 has p = empty).
-   (Image A states it unguarded at 6cfbd06ba1; reported to a Theorem Labs lane.) a Theorem Labs lane's f1_WIN / f1_HI are not carried:
+   (Image A states it unguarded; reported to a Theorem Labs lane.) a Theorem Labs lane's f1_WIN / f1_HI are not carried:
    fra_call_pre gives the callee window addressable and off the live blocks at AK_MALLOC = 4096 <= FN_STACK, and
    the three ENTRY stack-top facts are FRA's, moved to the cut's state by ENT. Image A's prologue spill
    [A + 248] = fr + 176 is image B's [A + 168] (0x81470), already in FLI. *)
@@ -2474,7 +2474,7 @@ Definition Inv_B8235c (g : ghost) (c : config) : Prop := exists j, Inv_B8235c_at
 (* F15 (0x82378), a Theorem Labs lane's local text (lib/B/Prog/Seg/F15.v seg_F15 Qed, not in this delivery): adds the fragment return value
    s7 = fg_ret (frcl ...) (decides the 0x8237c branch), the compare the call ran (t_sum_ok false, so the class
    is FgNone; the 72-byte memcmp of the copy against the record is Some vcmp = a0). Adopt 6: RECF and a Theorem Labs lane's two
-   bundles (FRBA, FRX; Seg/F15.v (not in this delivery) f52ea940d3c Inv_B8230c_rec / Inv_B82310_rec, guarded). *)
+   bundles (FRBA, FRX; Seg/F15.v (not in this delivery) Inv_B8230c_rec / Inv_B82310_rec, guarded). *)
 (* v1.9 pc 0x82378 *)
 Definition Inv_B82378_at (g : ghost) (j : nat) (c : config) : Prop :=
   FCUTP g 0x82378 j (fun phi fr regs m => LK g fr j regs m /\ FLV g fr j regs m /\ FM g j phi fr regs m /\
@@ -2500,14 +2500,14 @@ Definition Inv_B8237c_at (g : ghost) (j : nat) (c : config) : Prop :=
 (* v1.9 pc 0x8237c *)
 Definition Inv_B8237c (g : ghost) (c : config) : Prop := exists j, Inv_B8237c_at g j c.
 (* F16 (0x823d8): before the record_sum_closes call 0x823dc (image A inlines the sum; its loop head 0x821ac).
-   Adopt 6: a Theorem Labs lane's entry text (lib/B/Prog/Seg/F16.v on a working branch f49d239439, Inv_B82370_loc;
+   Adopt 6: a Theorem Labs lane's entry text (lib/B/Prog/Seg/F16.v on a working branch, Inv_B82370_loc;
    a Theorem Labs lane's `exists (j : nat)` is the official index j): the F17 entry facts with their placements against the
    identity record [fr + 2688, fr + 2726) the ingest writes, the record_sum_closes argument [A+120] with its N = a1
    bytes and their closing sum, the first-fragment state with the parser's address cell, and the ingest
    arguments with the identity record's 38 cells. Only the turn that closes a record reaches
    0x823d8 (t_rf j = 1: class FgClose, which needs fg_fr, so 50 <= len_j), but fg_fr does not test bytes 12 / 13,
    so [A+272] (= b2z t_8819) is in the t_8819 form and rec_inv / the two compare operands are under
-   t_8819 = true (see FRB). Then the conjuncts of prover a Theorem Labs lane's Inv_B82370_loc (Seg/F16.v (a version not in this delivery; written on a working branch e57b0367fa)) that another Theorem Labs lane's
+   t_8819 = true (see FRB). Then the conjuncts of prover a Theorem Labs lane's Inv_B82370_loc (Seg/F16.v (a version not in this delivery; written on a working branch)) that another Theorem Labs lane's
    text lacks: FLV, t_rf j = 1, a1 = pll + 5, the record's post bytes t_FGf with its 72 bytes addressable,
    frag_ok, the address cell [fr+256] = fg_addr, the identity record's 38 bytes; and FTURN, RECF.
    v1.9.0 address check (fuzz_ctrl.c v1.9.0:398-400; 0x823e4-0x82440): `first->have` (0x823e4-0x823ec, a0 =
@@ -2589,8 +2589,8 @@ Definition Inv_B823d8_at (g : ghost) (j : nat) (c : config) : Prop :=
     c.
 (* v1.9 pc 0x823d8 *)
 Definition Inv_B823d8 (g : ghost) (c : config) : Prop := exists j, Inv_B823d8_at g j c.
-(* F17 (0x82464) opens_record entry: a Theorem Labs lane's Inv_B823e0_loc (lib/B/Prog/Seg/F17.v (not in this delivery) on a working branch
-   f49d239439): s2 = Phi, the first 50 bytes of Phi addressable (v1.9, for opens_record's memcpy 0x82630; patched 40), s11 = -8, the first-fragment window (v1.9: the local
+(* F17 (0x82464) opens_record entry: a Theorem Labs lane's Inv_B823e0_loc (lib/B/Prog/Seg/F17.v (not in this delivery) on a working branch):
+   s2 = Phi, the first 50 bytes of Phi addressable (v1.9, for opens_record's memcpy 0x82630; patched 40), s11 = -8, the first-fragment window (v1.9: the local
    `first`, [fr + 2880, fr + 2920), app memory above GT; patched: the spills [A+112, A+144) in high app memory), and the
    F18 entry facts (kp = [A+280], k = s8, [A+272], rec_inv, the two bcmp operands [A+112] / [A+96]); for the split
    cut 0x82468 also s4 = len and [A+224] (FCUTP's), FM and FSj. mem_inv,
@@ -2638,7 +2638,7 @@ Definition Inv_B82464_at (g : ghost) (j : nat) (c : config) : Prop :=
 (* v1.9 pc 0x82464 *)
 Definition Inv_B82464 (g : ghost) (c : config) : Prop := exists j, Inv_B82464_at g j c.
 (* F17 internal split (twin of image A's Inv_A822a0_at, pre-v1.9 0x821c4): the opens_record entry block 0x82468, reached from F15 (rf <> 1
-   at 0x8237c) and from F17's fall-through (0x82464). a Theorem Labs lane's Inv_B823e4_loc (Seg/F17.v (not in this delivery), f49d239439): the
+   at 0x8237c) and from F17's fall-through (0x82464). a Theorem Labs lane's Inv_B823e4_loc (Seg/F17.v (not in this delivery)): the
    0x82464 text at this pc without its a0 clause, under FCUTP. Every frame reaches 0x82468 (the rf <> 1 edge
    takes the short and the non-8819 frames), so, as image A's Inv_A822a0_at (push 6c5b): Phi's first 50 bytes addressable
    (v1.9: opens_record's checked_memcpy 0x82630 reads [Phi + 27, Phi + 27 + n), n = Phi[26] <= 22 (0x825d4-0x825d8),
@@ -2866,7 +2866,7 @@ Definition Inv_B82844 (g : ghost) (c : config) : Prop := exists j, Inv_B82844_at
 (* F24 (v1.9 0x82878; patched 0x827f8): past F23's register swap (0x82848 sd s8,272(s1); 0x8284c mv s8,s9), so s8
    holds the sum flag and k is in [A+272] (FTL); s6 still holds 1 (the frame-loop constant, 0x81ea0), the
    `ld s6,312(s1)` at 0x82878 itself has not run yet.
-   Adopt 8 (prover a Theorem Labs lane, F23 / F24 / F25 Qed on a working branch ff75dcbfe64, lib/B/Prog/Seg/Tac_f23.v): the
+   Adopt 8 (prover a Theorem Labs lane, F23 / F24 / F25 Qed on a working branch, lib/B/Prog/Seg/Tac_f23.v): the
    local cuts Inv_B827f8_loc / Inv_B82808_loc, verbatim after the earlier official body: their window shell's F27K
    (a Theorem Labs lane's F27CUT, Seg/F27.v; its heap list hb1 phi (flen g j) is FCUTP's a_size form, equal at 50 <= flen) and
    their bodies. F23GAP is a Theorem Labs lane's pair of frame-byte bundles at Phi: FTURN's frame bytes and their 50-byte prefix
@@ -2939,7 +2939,7 @@ Definition Inv_B828b4_at (g : ghost) (j : nat) (c : config) : Prop :=
        rg regs 21 (fr + 128)) c.
 Definition Inv_B828b4 (g : ghost) (c : config) : Prop := exists j, Inv_B828b4_at g j c.
 (* F28 (0x8292c): the port-slot loop head (back edge 0x829b8 bnez a7,8292c), image A's patched 0x825b0.
-   Adopt 12 (prover a Theorem Labs lane, F26 / F27 / F29 Qed on a working branch f3d87d8368, lib/B/Prog/Seg/F27.v): F28GAP,
+   Adopt 12 (prover a Theorem Labs lane, F26 / F27 / F29 Qed on a working branch, lib/B/Prog/Seg/F27.v): F28GAP,
    a Theorem Labs lane's gap of F28's entry, verbatim: the F27K window state, r = t_rp = 0 (0x828c4 `beqz s9` taken), s7 = unk
    (0x828a4 `mv s7,a0`), PORTS, FIRSTb, and the loop registers that patched 0x82838 / 0x828fc-0x82928 set: a0 = a4 =
    blk + 8, a6 = -8 - blk (s11 - blk), a7 = 12, a1 = a2 = a3 = a5 = 0, t3 = 12 (blk = phi + 18).
@@ -3062,7 +3062,7 @@ Definition Inv_B82c84_at (g : ghost) (j : nat) (c : config) : Prop :=
        FTURN g j phi regs m /\ IFS g fr (S j) regs m /\ rg regs 22 1) c.
 (* v1.9 pc 0x82c84 *)
 Definition Inv_B82c84 (g : ghost) (c : config) : Prop := exists j, Inv_B82c84_at g j c.
-(* 0x82c90 (prover a Theorem Labs lane, lib/B/Prog/Seg/F32.v on a working branch fd33f18705, Inv_B82c2c_loc_at): the target of
+(* 0x82c90 (prover a Theorem Labs lane, lib/B/Prog/Seg/F32.v on a working branch, Inv_B82c2c_loc_at): the target of
    the `bne`s at 0x82b60, 0x82b8c and 0x82bb4 (no official cut before; 0x82c90 li s7,0, then the
    reac_box_catalogue_match call 0x82c9c to the cut patched 0x82c3c): the row of the block is not selected (t_want_m = 0),
    Phi not in the FakeStack, and the pass-through state PT32 that the F31 cuts carry. FRA gives a Theorem Labs lane's AC.aspZ regs
@@ -3079,7 +3079,7 @@ Definition Inv_B82c90_at (g : ghost) (j : nat) (c : config) : Prop :=
 (* v1.9 pc 0x82c90 *)
 Definition Inv_B82c90 (g : ghost) (c : config) : Prop := exists j, Inv_B82c90_at g j c.
 (* F35 entry (0x82c24, the return point of declaration_of 0x82c20), with prover a Theorem Labs lane's conjuncts of
-   Inv_B82bc0_loc_at (Seg/F34.v (a version not in this delivery; from a working branch 44ac51d3f4)): the earlier official body is the first group; then RLc (row i's
+   Inv_B82bc0_loc_at (Seg/F34.v (a version not in this delivery; from a working branch)): the earlier official body is the first group; then RLc (row i's
    loop state), the call's result a0 = 1 (the beqz at 0x82c24 not taken) and row i's declaration in the slot
    [fr + 64, fr + 96) with the slot addressable, which F35's bcmp reads. *)
 (* v1.9 pc 0x82c24 *)
@@ -3093,7 +3093,7 @@ Definition Inv_B82c24_at (g : ghost) (j i : nat) (c : config) : Prop :=
 Definition Inv_B82c24 (g : ghost) (c : config) : Prop := exists j i, Inv_B82c24_at g j i c.
 (* F36 (0x82c38): inside row_of_block, after the bcmp at 0x82c34; the row latch 0x82c80 goes to the row head 0x82be4
    and on to the F34 cut 0x82bf4 at row i + 1, so the cut carries the row index i like 0x82bf4 / 0x82c24. Prover
-   a Theorem Labs lane's conjuncts of Inv_B82bd4_loc_at (in a Seg/F35.v not in this delivery; written on a working branch 44ac51d3f4) after the earlier official body: RLc, the compare
+   a Theorem Labs lane's conjuncts of Inv_B82bd4_loc_at (in a Seg/F35.v not in this delivery; written on a working branch) after the earlier official body: RLc, the compare
    result in a0 (zero exactly when the block equals row i's declaration; F36's `beqz a0` at 0x82c54), and row i's
    declaration in the slot [fr + 64, fr + 96) with the slot addressable. *)
 (* v1.9 pc 0x82c38 *)
@@ -3156,11 +3156,11 @@ Proof.
   - reflexivity.
 Qed.
 
-(* Adopt 10 (prover a Theorem Labs lane's third R14X fact, lib/B/Prog/Seg/R14.v on a working branch b086914ea7): the
+(* Adopt 10 (prover a Theorem Labs lane's third R14X fact, lib/B/Prog/Seg/R14.v on a working branch): the
    catalogue match of turn 0 finds the mode row, for every input. It is the exit Inv_B819a8_at's a0 = mrow after
    R14's reac_box_catalogue_match call (post a0 = want CM_T len fb, CM_T = CAT). Every value in it is a function of
    OUR and i* < 11, so it is computed over the 11 rows with OUR's 6 bytes left as variables (a Theorem Labs lane's
-   RtmB.rb_rtm_want, a working branch 35bb4f952f). A lemma, not a conjunct of Inv_B818a8_at. *)
+   RtmB.rb_rtm_want, a working branch). A lemma, not a conjunct of Inv_B818a8_at. *)
 Lemma rt_want0 : forall inp, RcMatch.want CAT (rt_n inp 0) (rt_g inp 0) = mrow inp.
 Proof.
   pose proof FRAME_BYTES_val as HFBv. pose proof FRAME_SHADOW_val as HFSv.
@@ -3181,7 +3181,7 @@ Lemma rnb_want0 : forall g b, b = 0%nat ->
 Proof. intros g b ->. exact (rt_want0 (g_in g)). Qed.
 
 (* F37 entry (patched 0x82c3c, the return point of the reac_box_catalogue_match call 0x82c9c): prover a Theorem Labs lane's entry text
-   Inv_B82c3c_loc2_at (lib/B/Prog/Seg/F37.v (a version not in this delivery; from a working branch 592d7f08a9), seg_F37 Qed) after the earlier
+   Inv_B82c3c_loc2_at (lib/B/Prog/Seg/F37.v (a version not in this delivery; from a working branch), seg_F37 Qed) after the earlier
    official body: F35's conjuncts (the catalogue result a0 = want CAT len (t_g j) that F37's `bne a0,s7` at
    0x82ca4 compares with s7 = t_want_m j, the matched row's address or 0; Phi = s2, len = s4, the spills
    [A + 152] = fr + 64 and [A + 160] = fr + 32, the Phi bytes, the frame), the bne operands equal
@@ -3206,7 +3206,7 @@ Definition Inv_B82ca0_at (g : ghost) (j : nat) (c : config) : Prop :=
 (* v1.9 pc 0x82ca0 *)
 Definition Inv_B82ca0 (g : ghost) (c : config) : Prop := exists j, Inv_B82ca0_at g j c.
 (* F38 entry (0x82d1c, after the free of F37), with prover a Theorem Labs lane's conjuncts of Inv_B82cb8_loc_at (seg_F38,
-   a working branch 359093db9c): s5 = j (0x82ca0 `ld s5,240(s1)`, read by 0x82d1c `addiw a3,s5,1`; the patched image had s9 = j, patched 0x82c3c `ld s9,232(s1)`, read by `addiw a3,s9,1`); s7 = p + body_j +
+   a working branch): s5 = j (0x82ca0 `ld s5,240(s1)`, read by 0x82d1c `addiw a3,s5,1`; the patched image had s9 = j, patched 0x82c3c `ld s9,232(s1)`, read by `addiw a3,s9,1`); s7 = p + body_j +
    len_j and s9 = left_j - h_j - len_j (F37's 0x82ca8-0x82cb4, the cursor of turn j + 1); IFS g fr (S j), the frame
    records and first-frag spills of turn j + 1, which the loop-head cut asks for and the latch hands on. *)
 (* v1.9 pc 0x82d1c *)
@@ -3221,9 +3221,9 @@ Definition Inv_B82d1c_at (g : ghost) (j : nat) (c : config) : Prop :=
 (* v1.9 pc 0x82d1c *)
 Definition Inv_B82d1c (g : ghost) (c : config) : Prop := exists j, Inv_B82d1c_at g j c.
 
-(* ---- X1's entry facts (adopt 8; prover a Theorem Labs lane's gap X1G at 0x82eac, lib/B/Prog/Seg/X12.v on a working branch
-   408e729ce0, image A's push-7 text Inv_A82b04, pre-v1.9 0x82a58). The edges into 0x82eac: F38's two exits from Inv_B82d1c_at g j
-   (0x82d28 when j = 255; 0x81ec4 / 0x81ec8 when left_(j+1) = 0; a Theorem Labs lane's seg_F38, a working branch 359093db9c)
+(* ---- X1's entry facts (adopt 8; prover a Theorem Labs lane's gap X1G at 0x82eac, lib/B/Prog/Seg/X12.v on a working branch,
+   image A's push-7 text Inv_A82b04, pre-v1.9 0x82a58). The edges into 0x82eac: F38's two exits from Inv_B82d1c_at g j
+   (0x82d28 when j = 255; 0x81ec4 / 0x81ec8 when left_(j+1) = 0; a Theorem Labs lane's seg_F38, a working branch)
    and P12's run from Inv_B81e08 when left_0 = n - c0 = 0 (0x81e08 .. 0x81ec4 / 0x81ec8). Inv_B81ec4_at never
    takes 0x81ec8: LI has 1 <= left_j, so `bnez s8` is taken. F38's runs write no memory; P12's run writes the
    spills at A + 72, 80, ..., 136, A + 152 and A + 256 and the shadow bytes S(fr) + 360 .. 375, none of the cells
@@ -3326,7 +3326,7 @@ Qed.
 
 (* ---- Epilogue, release, abort (X1, X2, Jrel, Y). *)
 (* X1 entry (0x82eac) and X2 entry (0x82ecc), adopt 8: image A's push-7 texts (Inv_A82b04 / Inv_A82b20, v1.8 Inv_A82a58 / Inv_A82a74) in image
-   B's spill, = prover a Theorem Labs lane's X1F / X2G (Seg/X12.v 408e729ce0). X1 reads the identity record pointer spill
+   B's spill, = prover a Theorem Labs lane's X1F / X2G (Seg/X12.v). X1 reads the identity record pointer spill
    [A + 176] = fr + 2688 (0x82eac / 0x82eb8 `ld a0,176(s1)`), the 21 identity bytes there with a 0 in bytes
    3 .. 19 (0x82eb0 reads byte 20; the memchr wrapper's 17-byte search from fr + 2691 at 0x82ec8 finds the 0) and
    those 17 bytes addressable (the wrapper's check of the bytes it read); producers x1_entry_of_lk (F38) and

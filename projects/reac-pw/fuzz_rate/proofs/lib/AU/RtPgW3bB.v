@@ -1,11 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Reusable/YCbq.v aj_intrin_at at 28fdc66416e (the call of
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Reusable/YCbq.v aj_intrin_at (the call of
    __asan_memcpy in the journal) restated as hd_memcpy with the wrapper's same_but_materialized kept in the post as
-   same_io, and proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v at 9e73ed57244 (m2_img_zone, m2_cstr_kept, the .rodata
+   same_io, and proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v (m2_img_zone, m2_cstr_kept, the .rodata
    zone of m2_szone) restated as hd_img_zone / hd_cstr_kept / hd_szone for the .rodata range only; the rest of the
    file is new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanHead.v at cdde2c4d95b for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgScanHead.v for
    reac-pw/fuzz_headamp image A: its start-fact record hd_c3 / hd_c3_of, its bounds lemma hd_bounds and its walk hd_A
    (a nonzero test of a block, a register move, a zero test of the length, the __asan_memcpy, its return) restated for
    headamp's segment M04a (C7 0x83744 -> C8 0x83764) as h4a_c7 / h4a_c7_of / h4a_bounds / h4a_copy over HPgSeg.hs_scx,
@@ -14,19 +14,20 @@
    no copy (h4a_zero), the extra-atom register lemma h4a_reg_at and the post construction h4a_close are new; role's
    parse step, .rodata zone and string lemmas are not taken (M04a calls no parse). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/A/HPgM04a.v, with its module paths and module names changed; 344 of its 383 lines of code are new or changed and 430 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW3b.v at 4d659c905bca (its shape-7 part:
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW3b.v (its shape-7 part:
    w3b_b7_core, w3b_img_b7, w3b_b7_img and rs_piece_W3b_b7), for the same unit's image B: image B's pcs and code; the
    values the header reads come from real-frame cells (pp at R+0x168, &pp->len at R+0x158, the shadow address of
    &pp->len at R+0x170, ~pp at R+0x108) and pp is the register a6; the two UBSan tests of pod_put32 (pod.h:179) and
    the shape-7 flag store R+0x110 are new; the statement is lib/AU/RtPgSegB.v's rsb_piece_W3b_b7_stmt. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_rate/lib/AU/RtPgW3aB7.v, with its addresses and numbers changed; 270 of its 424 lines of code are new or changed and 229 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW3b.v at 470a2fe18f00, ported to
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW3b.v, ported to
    reac-pw/fuzz_rate image B (fuzz_rate.asan-ubsan): image B's pcs; pp, &pp->len, the shadow address of &pp->len and
    ~pp are cells of the real frame and not registers, so the engine's state is one region on R and two on pp, and the
    shadow base is s4 (x20); the second pod_put32 is out of line at 0x827e0, so the code table is two blocks; the six
    UBSan trap branches of the piece are decided by the atom ranges of len and of ~pp; the piece also writes the
    shape-7 flag cell R+0x110; the shape is register a3's own atom; the image facts come from lib/AU/RtPgStepsB.v and
    the memory lemmas from lib/AU/RtPgMemB.v. The shape-7 header B7 -> PH is image B's W3a lane, not this file. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14; every address measured on the unstripped twin
    a1e5fa55ae27e657ea2719297ec4c037110f10fa9047c3ea7bb6ea7fcb358cb1, same loaded bytes): the Object header of the

@@ -5,8 +5,8 @@
    symbolic states and invariants at the segment boundaries. No CTX list, FsEntryCtx or FsEntryTraces premise (post-drop
    shape). Definitions only.
    rule 24: proves function LLVMFuzzerTestOneInput (shared definitions of the segments; reuse search: proof-index
-   LLVMFuzzerTestOneInput, ported from a working branch 08ad70da3bf).
-   Ported from: lib/A/FSW_entry_defs.v (a working branch 0d34d65d2b7), every numeral re-read from the B
+   LLVMFuzzerTestOneInput, ported from a working branch).
+   Ported from: lib/A/FSW_entry_defs.v (a working branch), every numeral re-read from the B
    listing (objdump of fuzz_state.asan-ubsan, tmp/dis_fsB/LLVMFuzzerTestOneInput.fuzz_state.asan-ubsan.s). B differs from
    A by the UBSan pointer-overflow checks after the memcpy (0x810e0 `not a0,s5` / 0x810e4 `bltu a0,s3,0x8123c`, and
    0x81104 `beq a0,a1,0x8123c` after the NUL store; 0x8123c `unimp`), so the A -> B offset is +0x70 up to the memcpy call

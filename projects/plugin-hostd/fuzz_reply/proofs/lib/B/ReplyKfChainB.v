@@ -4,9 +4,10 @@
    secondary-request counts (nsec_tr) of the per-trace count files. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyKfChain.v, with its module paths changed; 1 line of the source is left out. *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/plugin-hostd/fuzz_reply/lib/A/ReplyKfChain.v, with its module paths and module names changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* KF-COUNT: the ONE growth potential and g_out count chain shared by the per-trace count files (ReplyKfTrB.v,
    ReplyKfTrRrB.v, ReplyKfTrRigB.v, ReplyKfTrSmB.v).  proves no function (kind: segment lemma).
-   The image-B (asan-ubsan) twin of lib/A/ReplyKfChain.v at 747923a4ff8: the same text over lib/B/W_contract.v.
+   The image-B (asan-ubsan) twin of lib/A/ReplyKfChain.v: the same text over lib/B/W_contract.v.
    - kf_lg x = log2 (x / 32256), the potential of a block of x bytes.  A growth from s to c >= 2 s (send_line's g_out:
      c = 2 (no + n) with s < no + n; a list vector: 16 cap -> 32 cap; drain's buffer: cap -> 2 cap) raises kf_lg by at
      least 1 when c is secondary (64512 < c) and never lowers it, for any s (kf_lg_grow).  kf_lg x >= 0, monotone,

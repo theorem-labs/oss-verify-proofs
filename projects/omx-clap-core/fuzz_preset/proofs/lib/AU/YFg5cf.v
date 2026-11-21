@@ -1,22 +1,23 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/cgif/cgif_file_fuzzer/lib/YFg5cf.v (commit 3cae605a900a, file sha256 7b433b3baae0) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; cgif's image-instance names kept where preset's B' instance carries them (AGif2cgif, AImg_cgif), CfImg_cgif -> CfImg_B, cgif's image rows mapped to preset's (YGcfImgcgif.* -> CfImgB / PresetImgRefillB / PresetImgRowsB, *cgif -> *preset); its 4 image numerals moved by symbol from cgif_file_fuzzer.asan-ubsan (pin 1c29845fe605, unstripped twin of the same build) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal, jump-table offsets, derived counts and list indices by the same stage map), 0 list indices re-picked, and 0 addresses named in comments; facts preset already states are cited, not restated; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/cgif/cgif_file_fuzzer/lib/YFg5cf.v (file sha256 7b433b3baae0) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; cgif's image-instance names kept where preset's B' instance carries them (AGif2cgif, AImg_cgif), CfImg_cgif -> CfImg_B, cgif's image rows mapped to preset's (YGcfImgcgif.* -> CfImgB / PresetImgRefillB / PresetImgRowsB, *cgif -> *preset); its 4 image numerals moved by symbol from cgif_file_fuzzer.asan-ubsan (pin 1c29845fe605, unstripped twin of the same build) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal, jump-table offsets, derived counts and list indices by the same stage map), 0 list indices re-picked, and 0 addresses named in comments; facts preset already states are cited, not restated; comment references to people and refs dropped; no other numeral changed. *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10-30 (lane F1 of the generic cf instance layer; integrator
-   ReallocPrimary): the RELATION half of proofs/cgif/cgif_file_fuzzer/lib/YFg5.v at c5 30a1993588f (Enqueue's HIT
+   ReallocPrimary): the RELATION half of proofs/cgif/cgif_file_fuzzer/lib/YFg5.v at c5 theorem-labs/oss-verify-proofs@6b32741d849a (Enqueue's HIT
    arm: a new batch from a non-empty class-24 cache), ported from cgif's AR / enq_pre to the cf instance's ARX_cf /
    enq_pre_cf, as YFg4cf.v ported YFg4.v.  Kept, with these changes only: the Section's call premise is
-   YGcfInstEnq.enq_pre_cf at YGcfInstBase.ARX_cf B IOK Hp; Hci reads Wf_cf (wrc_cache); HI (:99) / NBG (YFfqcf.v:331, read here through q_hit_facts) read YFf2cf.HIGH /
+   YGcfInstEnq.enq_pre_cf at YGcfInstBase.ARX_cf B IOK Hp; Hci reads Wf_cf (wrc_cache); HI (:99) / NBG (YFfqcf.v:332, read here through q_hit_facts) read YFf2cf.HIGH /
    YFf2cf.nb_geom (kFreeArrayOffset for 2 ^ 31); WIN_dec reads 1 <= cnt from l <> [] (not from cache_vals); HTSD is a
    lemma (amc_tsd); FINQH becomes FINQH_cf, whose conclusion is EnqGbase.enq_leaf_g0 at ARX_cf (the call post the cf
    instance's EnqIfaceHit.ih_post states), through YFf2cf.enq_fin_ARmcf_x (its ARmcf part, :493), ALedger_same_cf, ahs_transfer_cf and Wf_cf
    of the end state from YGcfInstEnqG.enq_hit_wf_cf.
    ALSO PORTED (below, :108-:318): of the walk half, the E0 equations (:122-:136), the readers q_* (:137-:181: cell readers, cache_vals,
    last_facts, hit_facts, u_facts, q_facts), REG0_ok .. SEED_ok (as *_cf, :190-:291) and FH_ok (as FH_ok_cf, :293); fh_Hnn (YFgq.v:126,
-   1 <= nn <= kQuarantineMax) is YFfqcf.u_facts_cf's 1 <= nn and enq_pre_cf's guard (HNM, :119; :310).  NOT HERE: tfib_enqueue_hit_arm / tfib_enqueue_hit; the unit's walk YFh4.segQH takes FH_ok_cf (AU/YGcfInstEnqMisspreset.v:354-356).
+   1 <= nn <= kQuarantineMax) is YFfqcf.u_facts_cf's 1 <= nn and enq_pre_cf's guard (HNM, :119; :310).  NOT HERE: tfib_enqueue_hit_arm / tfib_enqueue_hit; the unit's walk YFh4.segQH takes FH_ok_cf (AU/YGcfInstEnqMisspreset.v:355-357).
    IMAGE-SPECIFIC (cgif_file's image, TfibSyms): each unit relocates this file to its own image (preset A' / B':
    A11; reply A / B: lane W), as A/AFf0cf.v was.
    rule 24: no function proved (kind: relational transport of the allocator relation over Enqueue's hit arm). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

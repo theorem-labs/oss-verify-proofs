@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/A/APgRt.v (rt_hand, fs_roF / fs_rwF) and
-   APgStep.v (same_io_wvb) at 6ebe35ba632; adapted to the class-0 frame and the exit of reac_box_pin_parse. *)
+   APgStep.v (same_io_wvb); adapted to the class-0 frame and the exit of reac_box_pin_parse. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_pin/lib/A/PPgParse4.v, with its module paths and module names changed; 262 of its 291 lines of code are new or changed and 251 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_codec/lib/A/Prog/check_personality_A.v, with its module names changed; 691 of its 735 lines of code are new or changed and 247 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* diginet_meter_encode (diginet_codec.c:217-231) at image A 0x85600, 141 instructions, real frame 48, no side-stack
    frame (diginet_meter_mask and diginet_sysex_encode are inlined), against lib/A/Prog/CPgEncC.v's cdc_meter_specX.
    a0 = p (the personality), a1 = channel, a2 = right (int), a3 = segments, a4 = out (all lw).

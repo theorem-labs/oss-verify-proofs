@@ -8,6 +8,7 @@
    not change; `scene_seg_S1` proves it.  The step kit is the position-abstract one (A/Prog/ScenePaLib.v,
    A/Prog/PaJournal.v); the malloc station is the shape of the S5 lane's M3 (amalloc04_rule_triv over AMALLOC),
    and each loop is a step lemma over a named invariant, closed by induction on the turns left. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (*   THE WALK, in the order `scene_seg_S1` takes it:
      - 0x82b78-0x82b84: `s1_entry` rebuilds C1 as the symbolic state `s1_ss0`.  Its three regions are the three
@@ -237,7 +238,7 @@ Qed.
 (* ================================================================================================================
    THE WALK, C1 (0x82b78) -> C2 (0x82ca8)
    ================================================================================================================ *)
-(* reac_scene_placeholder, the source of the fill loop (P_LLVMFuzzerTestOneInput.v:128-129). *)
+(* reac_scene_placeholder, the source of the fill loop (P_LLVMFuzzerTestOneInput.v:129-130). *)
 Definition s1_PL : Z := 0x20e80.
 Definition s1_PLN : Z := 8904.
 (* Its bytes are in the image's file pages, so EVERY state reads them: `mbyte` falls back to `seg_rom`
@@ -304,7 +305,7 @@ destruct (mbyte SEGS m (p + Z.of_nat j)) as [b|] eqn:Hb; [|exfalso; exact (Hp eq
 split; [exact (s1_val_mem_byte m _ b Hb) | apply u8_range].
 Qed.
 (* The walk kit's read-only window is the listing's: the SHARED statement's Section h carried these two
-   (lib/A/P_LLVMFuzzerTestOneInput.v:196-197 HWRLO / HWRHI at 0c703db40b0, a Theorem Labs lane 03:35Z) until the 04:04Z ruling made
+   (lib/A/P_LLVMFuzzerTestOneInput.v:197-198 HWRLO / HWRHI, a Theorem Labs lane 03:35Z) until the 04:04Z ruling made
    them segment-Section bindings; the composition discharges both by reflexivity. *)
 Hypothesis HWRLO : sw_rlo WK = pa_relro_lo.
 Hypothesis HWRHI : sw_rhi WK = pa_relro_hi.
@@ -313,7 +314,7 @@ Hypothesis HWRHI : sw_rhi WK = pa_relro_hi.
    statement's HRO_TT (03:48Z): only the two negative conditions on the eight bytes are taken, and the image
    half -- the word is in the relocation-read-only window and its file bytes are 0x20e80 -- is decided below.
    OWNER: the glue, as for HRO_TT -- two Theorem Labs lanes (B's tables) with a third (the start-up
-   certificate), the owners P_LLVMFuzzerTestOneInput.v:247-248 names for the static-image facts of this walk. *)
+   certificate), the owners P_LLVMFuzzerTestOneInput.v:248-249 names for the static-image facts of this walk. *)
 Hypothesis HOWN_PLGOT : forall i, 0 <= i < 8 ->
 ~ Exists (in_zr (VAL (A_OBJ 4) + i)) (as_owned_static B) /\ ~ (as_errno B <= VAL (A_OBJ 4) + i < as_errno B + 4).
 Lemma s1_got_rom : forall k, (k < 8)%nat ->
@@ -338,7 +339,7 @@ rewrite (s1_got_rom k Hk) in Hv. cbn [option_map] in Hv. unfold aview in Hv.
 destruct (mbyte SEGS (mrestrict Hh mem) (VAL (A_OBJ 4) + Z.of_nat k)) as [b|] eqn:Hb; [|discriminate Hv].
 injection Hv as Hv. f_equal. apply bv_eq. exact Hv.
 Qed.
-(* The placeholder's shadow is the runtime's zero range (P_LLVMFuzzerTestOneInput.v:235 HZS_PL). *)
+(* The placeholder's shadow is the runtime's zero range (P_LLVMFuzzerTestOneInput.v:236 HZS_PL). *)
 Hypothesis HZS_PL : in_zs B s1_PL s1_PLN.
 
 (* ---- the registers every station of the segment carries, and the bytes the entry block writes ---- *)

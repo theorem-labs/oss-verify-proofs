@@ -4,7 +4,8 @@
    journal at a reflexive and transitive world relation R (binders first; the call keeps the world, so no law of R is
    read); aj_snprintf_at_xrom keeps its statement and is the instance at wle. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcallSnp.v, with its module paths and module names changed; 317 of its 380 lines of code are new or changed and 199 lines of the source are left out. *)
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfSx.v (a working branch 3e35620c52e); relocated to plugin-hostd/fuzz_reply/fuzz_reply.asan-ubsan by a Theorem Labs lane's pfinst/tool (reloc.py target reply-B): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_reply.asan-ubsan, symbol + offset; table pfinst/tool/tables/reply-B/FMsnprintfSx.table). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfSx.v (a working branch); relocated to plugin-hostd/fuzz_reply/fuzz_reply.asan-ubsan by a Theorem Labs lane's pfinst/tool (reloc.py target reply-B): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_reply.asan-ubsan, symbol + offset; table pfinst/tool/tables/reply-B/FMsnprintfSx.table). *)
 (* Image-neutral companion of the frozen shared text (FMsnprintfShared.v): nothing here names an image, so every unit
    relocates it once.
    - ff_stable64: ff_stable with the memory change asked only at 64-bit addresses (a reader reads Z_to_bv 64 a, so at an
@@ -212,8 +213,8 @@ getr regs' 10 = w64 (Z.of_nat (length T)) /\
 (forall a, 0 <= a < 2 ^ 64 -> ~ (d <= a < d + sn_len (n - 1) T) ->
 ~ (spZ regs - K <= a < spZ regs) -> aview segs (w_H W) mem' a = aview segs (w_H W) mem a) /\
 (forall a, apresent (w_H W) mem a -> apresent (w_H W) mem' a)).
-(* the vfprintf interceptor / musl vfprintf with GXA's four premises (RtPrintf.GxSeam's text, cold/port-fm-gxseam
-   1eccd2160c1 lib/A/FMgxaSeamDef.v, verbatim; this file is its one definition) *)
+(* the vfprintf interceptor / musl vfprintf with GXA's four premises (RtPrintf.GxSeam's text,
+    lib/A/FMgxaSeamDef.v, verbatim; this file is its one definition) *)
 Definition sh_avfprintf_icpt_realizesUx
     (FF : fmt_fam) (K gc gv img_lo img_hi : Z) (cr : list (Z * Z)) (snw pc : Z) : Prop :=
 forall ly S (U : list (Z * Z)) W regs mem md fp f ap bp cp s0 n0 (ws T : list Z) cval,

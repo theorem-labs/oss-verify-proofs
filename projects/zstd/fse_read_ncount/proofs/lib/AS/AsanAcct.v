@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (interp_eff_accesses_restrict and step_accesses_restrict re-proved for the vvar range check on loads (range_meets_vvar) and fetch_failure's vDSO-text case; P_silent1 takes the premise that no system call is pending). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -312,7 +313,7 @@ split; [reflexivity|]. split; [reflexivity|]. split; [intros; reflexivity|].
 apply ranges_avoid_nil.
 -
 destruct (ov_read_bytes segs (mrestrict H m) a (width_bytes n)) as [bs|] eqn:Hrd;
-[|discriminate].
+[|destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
 destruct (ov_read_bytes_restrict _ m a bs Hrd) as [Hfull Hav].
 rewrite Hfull.
 destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) (mrestrict H m))
@@ -391,6 +392,7 @@ destruct (fetch_word_ov segs (ms_mem ms) (ms_pc ms)) as [w|].
 destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|].
 { exact (decode_exec_accesses_restrict ms w msr' rs' Hs). }
 exfalso. unfold fetch_failure in Hs.
+destruct (vdso_text_at segs (ms_pc ms)); [discriminate|].
 destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate|].
 destruct (fetch_byte_traps segs (ms_pc ms) || fetch_byte_traps segs (ms_pc ms + 1)
 || match fetch_half_any segs (ms_mem ms) (ms_pc ms) with
@@ -838,7 +840,9 @@ destruct (H x); reflexivity.
 Qed.
 Variable P : config -> Prop.
 Hypothesis P_silent1 : forall c c',
-node_ok c unit (fun _ => []) (fun _ => c') -> P c' -> P c.
+  node_ok c unit (fun _ => []) (fun _ => c') ->
+  ms_svc_pending (cfg_ms c) = None ->   (* LPS 727298f3: instruction nodes only ([RomBase.sys_rob_instr]) *)
+  P c' -> P c.
 #[using="HH Hwx P_silent1"] Theorem rz_msteps_restricted : forall A msr0 msr',
 msteps segs msr0 msr' ->
 forall ms model,
@@ -857,7 +861,7 @@ rewrite unrestrict_restrict in Hk. exact Hk.
 - rewrite restrict_svc_pending in Hsvc.
 destruct (node_instr_restricted A ms msr1 model Hcov Hwf Hinv Hh Hsvc Hstep)
 as (model1 & Hinv1 & Hsame1 & Hcl1 & _ & Hnode).
-apply (P_silent1 _ _ Hnode).
+    apply (P_silent1 _ _ Hnode Hsvc).
 pose proof (same_but_materialized_frame model model1 Hsame1) as Hfr.
 apply (IH (unrestrict H (ms_mem ms) msr1) model1).
 + symmetry. apply restrict_unrestrict_clean. exact Hcl1.

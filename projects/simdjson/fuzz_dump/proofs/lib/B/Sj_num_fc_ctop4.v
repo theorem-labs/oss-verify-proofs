@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB; taken in part from projects/simdjson/fuzz_ondemand/proofs/lib/B/Sj_num_fc_ctop4.v, line 69. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -64,7 +65,7 @@ Section FCTOP.
   Hypothesis OK : fcb_ok E.
   Hypothesis ETP : q_tp E = Z_to_bv 64 B_TP.
   Hypothesis SP16 : (SP mod 16 = 0)%Z.
-  Hypothesis LOR : (rt_sp0 RT Σ0 - STACK_WIN <= lo)%Z.
+  Hypothesis LOR : (rt_sp0 RT Σ0 - STACK_SPAN <= lo)%Z.
   Hypothesis FRL : (length (rt_frames RT Σ0) + FFB_FRAMES <= FRAMES_MAX)%nat.
   Hypothesis CRD : (FFB_CREDIT <= rt_credit RT Σ0)%Z.
 

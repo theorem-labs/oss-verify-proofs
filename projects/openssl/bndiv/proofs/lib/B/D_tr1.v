@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (TPRE holds the stack from rt_sp0 - STACK_WOK, the bottom of the stack the launch zero-maps, instead of rt_sp0 - STACK_WIN, and the stack floor lo follows; the atexit, init and checked_src_live premises rt_sp0 - STACK_WIN <= lo are proved from STACK_WOK <= STACK_WIN). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -50,14 +51,14 @@ Hypothesis XENV_incb : forall m, XENV m -> incb 0 m.
 Hypothesis INCB_off : forall x, TR_INIT + 1 <= x < TR_INIT + 5 -> outside IO_FP x /\ outside XENV1_FP x.
 Hypothesis ATXW_off : forall x, in_ranges ATX_W x -> outside IO_FP x.
 
-Local Ltac ul := unfold SEGTOP_A, STACK_WIN, USTACK_TOP, RT_STACK, FUZZ_STACK, FUZZ_COST, FUZZ_LIVE, INIT_STACK, INIT_COST, INIT_LIVE, LIVE_MAX, CREDIT_DRV, g_read_stage in *; lia.
+Local Ltac ul := unfold SEGTOP_A, STACK_WIN, STACK_WOK, USTACK_TOP, RT_STACK, FUZZ_STACK, FUZZ_COST, FUZZ_LIVE, INIT_STACK, INIT_COST, INIT_LIVE, LIVE_MAX, CREDIT_DRV, g_read_stage in *; lia.
 
 (* [comment removed for export] *)
 Definition TPRE (Σ : rts RT) (usp buf cap cp L pp plen : Z) (c0b : byte) (payload : list byte)
     (c0 c1 c2 c3 c4 c5 c6 c7 : word) (m : mem) : Prop :=
   ART RT Σ m /\ mem_inv bsegs m /\ CLX OUT_rep ERR_rep XENV lib_startA stdout_init m /\ main_frame m usp c0 c1 c2 c3 c4 c5 c6 c7
-  /\ stk bsegs m (rt_sp0 RT Σ - STACK_WIN) (usp - 80)
-  /\ usp mod 16 = 0 /\ rt_sp0 RT Σ - STACK_WIN + 0x100000 <= usp /\ usp <= rt_sp0 RT Σ /\ 0x7fff80000000 <= rt_sp0 RT Σ
+  /\ stk bsegs m (rt_sp0 RT Σ - STACK_WOK) (usp - 80)
+  /\ usp mod 16 = 0 /\ rt_sp0 RT Σ - STACK_WOK + 0x100000 <= usp /\ usp <= rt_sp0 RT Σ /\ 0x7fff80000000 <= rt_sp0 RT Σ
   /\ rt_live RT Σ = [(buf, cap)] /\ rt_frames RT Σ = [] /\ CREDIT_DRV - 5 * cap <= rt_credit RT Σ /\ cap <= 67108864
   /\ buf <= cp /\ cp + 1 <= buf + cap /\ (0 < L -> bytes_at bsegs m cp [c0b]) /\ 0 <= L < 32768
   /\ buf <= pp /\ pp + plen <= buf + cap /\ bytes_at bsegs m pp payload /\ plen = Z.of_nat (length payload) /\ plen < 2^26
@@ -95,7 +96,7 @@ Proof using AF AF_DRV MAL MCP ATX INIT LFR LEX OUT_loc ERR_loc XENV_loc XENV1_lo
   pose proof (AF_DRV Σ m ART0) as (_ & _ & GI & _).
   pose proof CLX0 as (_ & _ & XE0 & (LP0 & LT0) & _).
   pose proof (tr_calls_range L c0b) as TCR.
-  set (lo := rt_sp0 RT Σ - STACK_WIN) in *.
+  set (lo := rt_sp0 RT Σ - STACK_WOK) in *.
   assert (EU : bv_unsigned (Z_to_bv 64 (usp - 80)) = usp - 80) by (apply unsigned_lit; ul).
   assert (B16' : (usp - 80) mod 16 = 0) by (apply Z.mod_divide; [lia|]; apply Z.mod_divide in B16; [| lia]; destruct B16 as (q & ->); exists (q - 5); lia).
   assert (B16'' : (usp - 160) mod 16 = 0) by (apply Z.mod_divide; [lia|]; apply Z.mod_divide in B16; [| lia]; destruct B16 as (q & ->); exists (q - 10); lia).
@@ -132,7 +133,7 @@ Proof using AF AF_DRV MAL MCP ATX INIT LFR LEX OUT_loc ERR_loc XENV_loc XENV1_lo
   apply (ATX Σ fds0 fs (Z_to_bv 64 0x1ee21c) (Z_to_bv 64 (usp - 160)) gp (Z_to_bv 64 TP_A) t0 t1 t2 (Z_to_bv 64 plen)
            (Z_to_bv 64 pp) (Z_to_bv 64 AEF_GUARD) (Z_to_bv 64 0) (Z_to_bv 64 pp) (Z_to_bv 64 plen) a4 a5 a6 a7
            (Z_to_bv 64 L) (Z_to_bv 64 cp) (Z_to_bv 64 TR_INIT) x5 x6 x7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m1 lo);
-    [reflexivity| rewrite EU2; exact ST1| rewrite EU2; ul| unfold lo; lia| exact XE1| exact ART1| exact MI1| exact Hc1'|].
+    [reflexivity| rewrite EU2; exact ST1| rewrite EU2; ul| unfold lo; ul| exact XE1| exact ART1| exact MI1| exact Hc1'|].
   intros cfA (mA & HcA).
   destruct (ASTA_unpack RT Σ _ _ cfA HcA) as (msA & (RSA & (ARTA & MIA & WMA & STA & MUA) & X1A) & HcA').
   destruct RSA as (r0 & r1 & r2 & q1 & q2 & q3 & q4 & q5 & q6 & q7 & r3 & r4 & r5 & r6 & FA & fcA & ->).
@@ -200,7 +201,7 @@ Proof using AF AF_DRV MAL MCP ATX INIT LFR LEX OUT_loc ERR_loc XENV_loc XENV1_lo
   apply (INIT Σ (PMfd fds0 fs) (Z_to_bv 64 0x1ee2dc) (Z_to_bv 64 (usp - 160)) gp (Z_to_bv 64 TP_A) r0 r1 r2 (Z_to_bv 64 plen)
            (Z_to_bv 64 pp) (Z_to_bv 64 AEF_ARGC) (Z_to_bv 64 (usp - 160)) q2 q3 q4 q5 q6 q7
            (Z_to_bv 64 L) (Z_to_bv 64 cp) (Z_to_bv 64 TR_INIT) x5 x6 x7 s8 s9 s10 s11 r3 r4 r5 r6 FA fcA mB lo);
-    try reflexivity; try assumption.
+    try reflexivity; try assumption; try exact (win_le_wok _).
   - apply PMfd_fdfs_only.
   - apply PMfd_mat_stable.
   - rewrite LV. cbn [length]. ul.
@@ -344,7 +345,7 @@ Proof using AF AF_DRV MAL MCP ATX INIT LFR LEX OUT_loc ERR_loc XENV_loc XENV1_lo
         -- ul.
         -- ul.
         -- lia.
-        -- rewrite <- PL. exact (checked_src_live RT AF Σ3 m3 _ lo buf cap pp plen ART3 INB3 ltac:(lia) ltac:(lia) ltac:(rewrite SP3, SP2; lia)).
+        -- rewrite <- PL. exact (checked_src_live RT AF Σ3 m3 _ lo buf cap pp plen ART3 INB3 ltac:(lia) ltac:(lia) ltac:(rewrite SP3, SP2; ul)).
         -- rewrite <- PL. exact (checked_dst_live RT AF Σ3 m3 _ owned plen owned plen ART3 INO ltac:(lia) ltac:(lia) ltac:(lia)).
         -- rewrite <- PL. lia.
         -- unfold call_ok. rewrite EU2, SP3, SP2. split; [exact ST3|]. ul.

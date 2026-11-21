@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (QI_init: the launch's reserved ledger now ends with the vDSO pair below min(mmap base, sp minus stack max), so the live-bytes premise leaves 20 pages for it and a new bound keeps the reserved top, brk_aslr_max and the pair's pages under mmap_base_min; new premises in_channel_reader inp = true and valid_mmap_base mbase; proof re-done for KL's vDSO-pair and mapping fields; u64_lit, AS/AgentLib.v's 64-bit literal lemma, copied here for QI_init; new QI_with_vdso (QI holds of with_vdso of a model it holds of; the lemma of openssl/ct's Spec/LB_Init.v with this unit's LN conjunct)). *)
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Specs Run.
@@ -57,6 +58,9 @@ pose proof (CAP_lower P c HP ltac:(lia)). lia.
 - exact HP.
 - exact PQ.
 Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
+(* the 64-bit literal lemma of AS/AgentLib.v (u64_lit); QI_init rewrites with it, and nothing this file imports gives it *)
+Lemma u64_lit : forall z, (0 <= z < 2 ^ 64)%Z -> bv_unsigned (Z_to_bv 64 z) = z.
+Proof. intros z Hz. apply Z_to_bv_small. unfold bv_modulus. lia. Qed.
 Lemma reserved_top_ge' : forall l e, In e l -> bv_unsigned (fst e) + bv_unsigned (snd e) <= reserved_top l.
 Proof.
 induction l as [|[a sz] l IH]; intros e Hin; [destruct Hin|].
@@ -69,26 +73,53 @@ sp_window_lo <= bv_unsigned sp <= sp_window_hi ->
 atop = bv_unsigned sp - stack_max_size ->
 reserved_top (segments_reserved segs) + brk_aslr_max + 4 * PGSZ <= alloc_ceiling_lo ->
 reserved_top (segments_reserved segs) + brk_aslr_max + 2^34 + 8 * PGSZ <= FLOOR ->
-live_bytes (segments_reserved segs) <= 2^30 -> 2^31 <= lim ->
+  (live_bytes (segments_reserved segs) + 20 * page_size <= 2^30
+   /\ reserved_top (segments_reserved segs) + brk_aslr_max + 4 * PGSZ + 4096 + 20 * page_size <= mmap_base_min) -> 2^31 <= lim ->
 (forall c, 0 <= P c) -> PQOK P -> PHI P <= LBUDGET ->
+  in_channel_reader inp = true ->
+  (* 08b1429: the launch's vDSO pair sits just below min(mbase, sp - 8 MiB), far above the brk area *)
+  valid_mmap_base mbase ->
 QI [] P (ps_init (reservedZ segs) atop) (init_model (segments_reserved segs) brk0 mbase sp lim inp).
 Proof.
-intros P segs brk0 mbase sp lim inp atop (Hlo & Hhi & Hal) Hpos Hsp Eatop Hceil Hfloor Hresv Hlim HP PQ HPHI. Local Ltac2 Set LiaHints.tbl := fun () => "0090>12584768545.2513807164177.2514152173418.2216154904229.2527547058782.2533668031574.2853517065302.2355956085492.256159675390.21 00000100S00^00j00k01201301901?SS3Hlo3Hhi3Hal4Hpos3Hsp5Eatop5HceilS3Hsp5EatopS3Hhi6HfloorSS3Hlo1HSS4HlimS4HPHI".
+  intros P segs brk0 mbase sp lim inp atop (Hlo & Hhi & Hal) Hpos Hsp Eatop Hceil Hfloor [Hresv Hvlow] Hlim HP PQ HPHI Hrdr Hmb. Local Ltac2 Set LiaHints.tbl := fun () => "0090>12584768545.2513807164177.2514152173418.2216154904229.2527547058782.2533668031574.2853517065302.2355956085492.256159675390.21 00000100S00^00j00k01201301901?SS3Hlo3Hhi3Hal4Hpos3Hsp5Eatop5HceilS3Hsp5EatopS3Hhi6HfloorSS3Hlo1HSS4HlimS4HPHI".
 split; [| unfold R63X, zsum; cbn; lia].
 pose proof alloc_ceiling_lo_val as Hclo.
 assert (Hat : 0 < atop <= atop_hi) by (unfold atop_hi, sp_window_lo, sp_window_hi, stack_max_size in *; lia).
 exists (minit 0 (reservedZ segs) atop), (led_init (reservedZ segs) atop), [], (fun _ => []).
 split; [reflexivity|]. split; [apply INVL_init; [lia| exact Hat]|]. split; [apply SINV_minit|]. split; [apply AQ_minit; [exact HP| exact PQ]|].
+  set (VT := page_round_down_Z (Z.min (bv_unsigned mbase) (bv_unsigned sp - stack_max_size))).
 assert (Evm : m_vmmaps (init_model (segments_reserved segs) brk0 mbase sp lim inp)
-= mkVmMapsFull (segments_reserved segs) [] [] brk0 brk0 lim mbase sp) by reflexivity.
+                = mkVmMapsFull (segments_reserved segs ++ vdso_reserved (in_kernel inp) VT) [] [] brk0 brk0 lim mbase sp)
+    by reflexivity.
 assert (Eh : m_halted (init_model (segments_reserved segs) brk0 mbase sp lim inp) = None) by reflexivity.
+  assert (HVT : mmap_base_min - 4095 <= VT < two_pow_64).
+  { destruct Hmb as (M1 & M2 & M3). destruct Hsp as [S1 S2]. unfold VT, page_round_down_Z, page_size, two_pow_64.
+    unfold mmap_base_min, mmap_base_max, sp_window_lo, sp_window_hi, stack_max_size in *. lia. }
+  assert (HLV : live_bytes (vdso_reserved (in_kernel inp) VT) <= 20 * page_size).
+  { pose proof (vdso_len_bounds (in_kernel inp)). unfold vdso_reserved. cbv zeta.
+    destruct (VT - vdso_len (in_kernel inp) <? page_size); cbn [live_bytes]; [unfold page_size in *; lia|].
+    rewrite !u64_lit by (unfold vdso_len, vdso_vvar_pages, page_size in *; pose proof (vdso_text_pages_le (in_kernel inp)); lia).
+    unfold vdso_len, vdso_vvar_pages, page_size in *. lia. }
+  (* LPS 727298f3: the launch's reserved ledger is the image's entries, below the break, then the vDSO pair *)
+  assert (EVT : vdso_top (mkVmMapsFull (segments_reserved segs ++ vdso_reserved (in_kernel inp) VT) [] [] brk0 brk0 lim mbase sp) = VT).
+  { rewrite <- Evm. apply vdso_top_init_model. }
+  assert (KVD : exists R0, segments_reserved segs ++ vdso_reserved (in_kernel inp) VT
+                  = R0 ++ vdso_reserved (in_kernel inp) (vdso_top (mkVmMapsFull (segments_reserved segs ++ vdso_reserved (in_kernel inp) VT) [] [] brk0 brk0 lim mbase sp))
+                /\ (forall e, In e R0 -> ehi e <= bv_unsigned brk0)).
+  { exists (segments_reserved segs). rewrite EVT. split; [reflexivity|].
+    intros e Hin. pose proof (reserved_top_ge' _ _ Hin). unfold ehi. lia. }
+  clearbody VT.
 split; [| split; [| split; [| apply Permutation_refl]]].
-- constructor; rewrite ?Evm; cbn -[Z.pow Z.mul Z.add Z.sub init_model alloc_top].
-+ apply minv_init. exact Hsp.
+  - constructor; rewrite ?Evm; cbn -[Z.pow Z.mul Z.add Z.sub init_model alloc_top vdso_reserved].
+    + apply minv_init; [exact Hsp | exact Hrdr].
 + exact Eh.
 + split; [intros e []| apply pwdisj_nil].
-+ reflexivity.
-+ intros e Hin. pose proof (reserved_top_ge' _ _ Hin). unfold ehi. lia.
+    + eexists. rewrite map_app. reflexivity.
+    + intros e Hin. apply in_app_or in Hin as [Hin|Hin].
+      * left. pose proof (reserved_top_ge' _ _ Hin). unfold ehi. lia.
+      * right. destruct e as [a n]. destruct (vdso_reserved_above (in_kernel inp) VT a n ltac:(lia) Hin) as [V1 _].
+        pose proof (vdso_len_bounds (in_kernel inp)). unfold elo. cbn [fst].
+        unfold PGSZ, page_size in *. lia.
 + unfold PGSZ in *. unfold page_size in Hal. unfold alloc_ceiling_lo, sp_window_lo, stack_max_size in *. lia.
 + intros b l [].
 + intros b l k [].
@@ -96,9 +127,24 @@ split; [| split; [| split; [| apply Permutation_refl]]].
 + intros b l H. discriminate.
 + split; reflexivity.
 + unfold alloc_top. cbn [vm_init_sp]. exact Eatop.
+    + exact KVD.
+    + intros e [].
 - unfold LI, gm, BB. rewrite Evm. cbn. lia.
 - split; [| split].
 + rewrite Evm. unfold kcnt, lcnt. cbn. lia.
-+ unfold LNstat. rewrite Evm. cbn -[Z.pow Z.mul Z.add]. unfold PGSZ in *. split; [lia|]. split; [lia| exact Hresv].
+    + unfold LNstat. rewrite Evm. cbn -[Z.pow Z.mul Z.add live_bytes vdso_reserved]. unfold PGSZ in *. split; [lia|]. split; [lia|].
+      rewrite live_bytes_app. lia.
 + intros b l H. discriminate.
 Qed. Local Ltac2 Set LiaHints.tbl := fun () => "".
+
+(* LPS 727298f3: the run's initial model is [init_model] with the launch's vDSO draw installed
+   ([TopLevel.mo0]); [with_vdso] changes only [m_vdso], which neither [KL], [LI] nor [LN] reads, so
+   [QI] carries over field by field (the lemma of openssl/ct's Spec/LB_Init.v, with this unit's
+   [LN] conjunct). *)
+Lemma QI_with_vdso : forall X P s v m, QI X P s m -> QI X P s (with_vdso v m).
+Proof.
+  intros X P s v m [(st & L & BL & LS & H1 & H2 & H3 & H4 & HK & HL & HN & H7) HB].
+  split; [|exact HB]. exists st, L, BL, LS.
+  split; [exact H1|]. split; [exact H2|]. split; [exact H3|]. split; [exact H4|].
+  split; [destruct HK; constructor; assumption|]. split; [exact HL|]. split; [exact HN| exact H7].
+Qed.

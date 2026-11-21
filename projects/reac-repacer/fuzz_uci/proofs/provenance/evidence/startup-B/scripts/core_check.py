@@ -7,7 +7,7 @@ MANIFEST, where the head carries one) is exactly what its own header's writer of
 there (the no-hand-edit rule for a shared file). That writer is a registered tool (WRITERS below), read from git and run
 here; no slice ships a copy of it. Exit 1 if any of these does not hold. Paths from ucib_env.py.
 
-  core_check.py <image-B core branch> f47e2a8927b9 89a444c41f23
+  core_check.py <image-B core branch>
 """
 import hashlib, os, re, shutil, subprocess, sys, tempfile
 

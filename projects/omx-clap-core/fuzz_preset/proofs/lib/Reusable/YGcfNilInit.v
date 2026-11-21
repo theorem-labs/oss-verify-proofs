@@ -1,17 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfNilInit.v at commit fec7cbb6287c (the cf layer of record, field rounds 1 + 2), module paths changed; the preset-side hunks kept on top are listed in the round6f report. *)
-(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfNilInit.v at commit d0377850faab (the cf layer of record, field round 3 + the hull round + pf_ial_apart_t), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfNilInit.v (the cf layer of record, field rounds 1 + 2), module paths changed; the preset-side hunks kept on top are listed in the round6f report. *)
+(* Modified by Theorem Labs, 2026-10-30: taken by path from proofs/cgif/cgif_file_fuzzer/lib/YGcfNilInit.v (the cf layer of record, field round 3 + the hull round + pf_ial_apart_t), module paths changed; the preset-side hunks kept on top are listed in the round6g report. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the event-free second allocator instance (suffix cf) at the initial state.
    ARcf_nil (YGcfNil.v) at S = init_state (YG00.v:169), with its seven closed premises discharged:
    st_nev init_state = 0 < EV_MAX; mtr_ok init_state (EV_A * EV_MAX) holds numerically
    (ameter init_state = E_BASE + A_BASE = 2 ^ 30 + 2 ^ 32, plus 2 ^ 33 + VM_HEAD <= 2 ^ 39);
-   Compl0 init_state (proj1 BigInv_init, YG01.v:415); st_sec_arr init_state = [];
+   Compl0 init_state (proj1 BigInv_init, YG01.v:416); st_sec_arr init_state = [];
    errb_cap_cf init_state = 0 (st_secs init_state = []); every st_secs entry is live (none exists); the errbuf
    slot's placement (no errbuf: YGcfXs.xs_placed_cf_init).
    The conversion EXPOSES class 1's shadow band (YG0ncf.v section 2b): ARcf_nil_init returns the
    entry world with the interval [cls1_band_lo_cf, cls1_band_hi_cf) allowed and visible
-   (cls1_band_expose_cf, by cgif's wallow / allow_expose, YG0b.v:418-447), where ARcf holds. The
+   (cls1_band_expose_cf, by cgif's wallow / allow_expose, YG0b.v:419-448), where ARcf holds. The
    budget arithmetic is cls1_band_fits_init_cf: the band's 469,766,144 bytes fit in the event
    credit EV_A * EV_MAX = 2 ^ 33 that A_BASE_CF carries and init_state has not spent; the room
    for the map is the room of record's init form (YGcfRoomCf.room_init_band_cf).

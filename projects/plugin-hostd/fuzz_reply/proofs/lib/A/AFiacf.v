@@ -10,6 +10,7 @@
    YGcfPlace.sec_grant_exists_cf, which is not its twin); grant_facts cites the instance's YG0jcf.anon_grant_facts_cf
    (the cf twin of YG0j.anon_grant_facts), and img_cover_of_ledger_cf is the cf twin of AF0x.img_cover_of_ledger.
    No statement of the generated file changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: sec_grant_exists_AR, the section's grant hypothesis HG and grant_parts use grant_ok_na_pin_b (the alignment, bound and free-region check, as grant_ok_na_pin now takes a hint). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -64,7 +65,7 @@ pose proof (cf_sizes_ok (ck_req k) Hn) as CS. lia.
 Qed.
 Lemma sec_grant_exists_AR : forall B ly S rd md nZ,
 ARmcf B ly S Hp rd -> ALedger_cf tfibsegs ly S md -> amwf md -> 0 < nZ <= YGcfNames.cf_nob ->
-exists a, grant_ok_na_pin md a nZ = true.
+exists a, grant_ok_na_pin_b md a nZ = true.
 Proof.
 intros B ly S rd md nZ M L [_ NZ] HnZ.
 pose proof (wfc_secondary _ _ _ _ _ (amc_wf _ _ _ _ _ M)) as WS. pose proof (xs_cf_length ly S) as XL.
@@ -92,7 +93,7 @@ Hypothesis M : ARmcf B ly S Hp rd.
 Hypothesis L : ALedger_cf tfibsegs ly S md.
 Hypothesis HnZ : 0 < nZ <= cf_malloc_max + 4 * 4096.
 Hypothesis HnZal : nZ mod 4096 = 0.
-Hypothesis HG : grant_ok_na_pin md a nZ = true.
+Hypothesis HG : grant_ok_na_pin_b md a nZ = true.
 Let A : Z := bv_unsigned a.
 Let LY : layout_ok ly := amc_layout _ _ _ Hp _ M.
 Lemma nZ_word : bv_unsigned (Z_to_bv 64 nZ) = nZ.
@@ -110,7 +111,7 @@ A mod 4096 = 0 /\ 0 < A /\ A + nZ <= alloc_top (m_vmmaps md) /\
 region_free (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) a (Z_to_bv 64 nZ) = true /\
 A + nZ <= alloc_top (m_vmmaps md).
 Proof.
-clear LY. pose proof HG as Hg. unfold grant_ok_na_pin in Hg.
+clear LY. pose proof HG as Hg. unfold grant_ok_na_pin_b in Hg.
 apply andb_prop in Hg as [Hg Hrf]. apply andb_prop in Hg as [Hg Htop]. apply andb_prop in Hg as [Hal Hpos].
 apply Z.eqb_eq in Hal. apply Z.ltb_lt in Hpos. apply Z.leb_le in Htop.
 unfold page_size in Hal. unfold A. repeat split; assumption.

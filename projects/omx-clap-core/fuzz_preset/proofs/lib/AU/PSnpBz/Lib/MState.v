@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/openssl/bndiv/lib/Lib/MState.v, with its module paths changed; 1 of its 130 lines of code is new or changed. *)
-(* Modified by Theorem Labs, 2026-10: moved from image B (fuzz_preset.asan-ubsan f8f98a95), commit 3244f5c71f6, to the #102 pin B' (fuzz_preset.asan-ubsan d663f82d, unstripped c90d4fa5): 0 address numerals by the frozen alreloc (sha256 c4338d099cfb8025, commit d99acc3edd9, same-unit move, --assume-source), each by symbol + offset in both images, or for a .rodata string by its unique content in both; GXA keys and history lines kept (report and decisions: the relocation record, the internal file resolve-B-why.tsv). *)
-(* Modified by Theorem Labs, 2026-10: relocated onto omx-clap-core/fuzz_preset.asan-ubsan (image B, f8f98a95) from commit 7e395de08f5 proofs/omx-clap-core/fuzz_manifest/lib/A/Bz/Lib/MState.v: module paths (lib/A/Bz -> lib/AU/PSnpBz), the image binding Asan -> AsanUbsan, and 0 address numerals by alreloc (sha256 c4338d099cfb8025, commit d99acc3edd97, --build asan-ubsan --from-build asan), each by symbol + offset in both images (per-numeral report: the relocation record, reloc-B). *)
-(* Ported by the runtime port from commit affce6489c8 proofs/omx-clap-core/fuzz_manifest/lib/A/Bz/Lib/MState.v, unchanged. *)
+(* Modified by Theorem Labs, 2026-10: moved from image B (fuzz_preset.asan-ubsan f8f98a95), to the #102 pin B' (fuzz_preset.asan-ubsan d663f82d, unstripped c90d4fa5): 0 address numerals by the frozen alreloc (sha256 c4338d099cfb8025, same-unit move, --assume-source), each by symbol + offset in both images, or for a .rodata string by its unique content in both; GXA keys and history lines kept (report and decisions: the relocation record, the internal file resolve-B-why.tsv). *)
+(* Modified by Theorem Labs, 2026-10: relocated onto omx-clap-core/fuzz_preset.asan-ubsan (image B, f8f98a95) from proofs/omx-clap-core/fuzz_manifest/lib/A/Bz/Lib/MState.v: module paths (lib/A/Bz -> lib/AU/PSnpBz), the image binding Asan -> AsanUbsan, and 0 address numerals by alreloc (sha256 c4338d099cfb8025, --build asan-ubsan --from-build asan), each by symbol + offset in both images (per-numeral report: the relocation record, reloc-B). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
+(* Ported by the runtime port from proofs/omx-clap-core/fuzz_manifest/lib/A/Bz/Lib/MState.v, unchanged. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU.PSnpBz Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -48,7 +49,7 @@ Fixpoint interp_eff (segs : list Segment) (t : eff) (m : word -> option byte)
   | ELoad n a k =>
       match ov_read_bytes segs m a (width_bytes n) with
       | Some bs => interp_eff segs (k (bv_extract 0 n (le_bytes_to_word bs))) m
-      | None => MachineFault
+      | None => if range_meets_vvar segs a (width_bytes n) then MachineUnmodeled else MachineFault
       end
   | EStore n a v k =>
       if store_ok segs m a (width_bytes n)
@@ -61,7 +62,7 @@ Lemma interp_eff_spec : forall segs t m,
 Proof.
   intros segs t. unfold RiscvSemantics.interp_eff.
   induction t as [c|c|c|c|c|c|n a k IH|n a v k IH]; intros m; cbn [interp_eff interp_eff_accesses drop_access_report]; try reflexivity.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|reflexivity].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|destruct (range_meets_vvar segs a (width_bytes n)); reflexivity].
     rewrite <- IH. destruct (interp_eff_accesses segs (k _) m) as [r| |]; reflexivity.
   - destruct (store_ok segs m a (width_bytes n)); [|reflexivity].
     rewrite <- IH. destruct (interp_eff_accesses segs k _) as [r| |]; reflexivity.

@@ -1,11 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (imports RomBase; new lemma mm_node_rob, that a brk, mmap, munmap or mprotect node meets the RomBase.sys_rob premise aevt_step now has, used in impl_twf_aevt). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require Import PropExec MState Mem Exec ITree Nodes AEvt.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Heap Require Import Monad MSafe.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Common.Cfg Require RomBase.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require Import DietDestruct.   (* [comment removed for export] *)
 Import ListNotations.
 Import ITree.Exc.
@@ -48,6 +50,18 @@ Proof.
   (intros Q K ms mo Hh Hm dd_H; ddestruct dd_H as (ms' & Hs & HQ); intros HK). eapply aevt_msteps; [exact Hh| exact Hm| exact Hs|]. apply HK, HQ.
 Qed.
 
+(* [aevt_step]'s [RomBase.sys_rob] at a heap node: brk / mmap / munmap / mprotect (214, 222, 215,
+   226) have specifications that do not read memory ([RomBase.memfree]). *)
+#[using="Type"] Lemma mm_node_rob : forall n ms mo,
+  is_mm n -> at_node segs n ms -> RomBase.sys_rob segs (mkCfg ms mo).
+Proof.
+  intros n ms mo Hn Hat.
+  destruct n; cbn [is_mm] in Hn; try contradiction; cbn [at_node] in Hat; destruct Hat as [Hs _];
+    apply (RomBase.sys_rob_memfree segs ms mo _ Hs);
+    first [ exact RomBase.memfree_214 | exact RomBase.memfree_222
+          | exact RomBase.memfree_215 | exact RomBase.memfree_226 ].
+Qed.
+
 (* [comment removed for export] *)
 #[using="Type"] Lemma impl_twf_aevt {R} : forall (t : itree node R) (Q : R -> machine_state -> Prop) (P : R -> Model -> Prop) ms mo,
   tmm t ->
@@ -74,6 +88,7 @@ Proof.
       eapply aevt_mono; [apply (IH eff Q P (nret ms1 eff) mo' (Hk eff) (Hik eff) (Hwk _ _ _ Hst) Hm' Hh')|].
       cbn. (intros c dd_H; ddestruct dd_H as (r & HQ & HP & M1 & M2 & M3)). exists r. split; [exact HQ|]. split; [exact HP|]. split; [exact M1|]. split; [exact M2|].
       eapply vm_only_trans; eauto.
+    + exact (mm_node_rob n ms1 mo Hn Hat).
 Qed.
 
 (* [comment removed for export] *)

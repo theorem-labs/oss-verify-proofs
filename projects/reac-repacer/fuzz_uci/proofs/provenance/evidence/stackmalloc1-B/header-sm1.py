@@ -2,7 +2,7 @@
 """header-sm1.py LIB: the comments-only step after apply-sm1.sh, for the three files of this run (applied.txt).
 
 Per file: the donor's Copyright and SPDX lines stay; the donor's Modified lines stay, undated (core-B/header-clean.py's
-rule), with the branch name before the commit they cite removed (it keeps `commit af735a950e2`; BRANCH below), and
+rule), with the branch name before the commit they cite removed (it keeps ``; BRANCH below), and
 `grant's B lane` -> `grant's image B`; port_core's own provenance line is replaced by ONE undated line naming the donor
 file at its release commit, the donor image and the target image. Then it CHECKS that every file's text with all Coq
 comments removed is byte-identical before and after (no statement or proof changed), and counts what the text rule

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (region_side unfolds the writable stack window's floor wok_lo, as the model's StartupTac.region_side does). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -408,8 +409,9 @@ Ltac len_rw :=
 
 (* [comment removed for export] *)
 Ltac region_side :=
-  unfold win_lo;
+  unfold win_lo, wok_lo;
   match goal with |- context [stack_max_size] => rewrite ?stack_max_size_val | _ => idtac end;
+  unfold stack_window_reach;
   len_rw;
   cbn [length Z.of_nat Pos.of_succ_nat Pos.succ Nat.add Nat.mul]; imm_norm; unorm; lia.
 

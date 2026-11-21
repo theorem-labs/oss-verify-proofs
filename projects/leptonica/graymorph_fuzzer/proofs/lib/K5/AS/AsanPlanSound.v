@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (cs_ok's reservation ledger with the launch's extra intervals and the vDSO pair: resx_entry_ok, co_res and its projections co_resx, co_mres and co_vdso; cs_ok's channel-reader field co_rdr; PropExec qualified as K5.AS.PropExec). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -19,7 +20,7 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Local Ltac Z.euclidean_division_equations_cleanup ::= idtac.  (* [comment removed for export] *)
 Local Ltac Zify.zify_internal_to_euclidean_division_equations ::= zify_fast_euclid.
 
-Local Instance asanreflect_fx : PropExec.FPState := PropExec.fx0.
+Local Instance asanreflect_fx : K5.AS.PropExec.FPState := K5.AS.PropExec.fx0.
 Import ListNotations.
 Open Scope Z_scope.
 
@@ -277,6 +278,17 @@ Definition lazy_in_maps (mo : Model) : Prop :=
     exists e, In e (vm_maps (m_vmmaps mo)) /\ bv_unsigned (fst e) <= bv_unsigned (fst iv)
               /\ bv_unsigned (fst iv) + bv_unsigned (snd iv) <= bv_unsigned (fst e) + bv_unsigned (snd e).
 
+(* LPS 08b1429: the launch's extra reserved intervals (the vDSO pair,
+   [State.init_reserved]): page-aligned, above the image hull and a page clear
+   of [KHI], below 2^47. *)
+Definition resx_entry_ok (iv : word * word) : Prop :=
+  0 < bv_unsigned (snd iv)
+  /\ bv_unsigned (fst iv) mod 4096 = 0
+  /\ bv_unsigned (snd iv) mod 4096 = 0
+  /\ img_hi A <= bv_unsigned (fst iv)
+  /\ KHI + 4096 <= bv_unsigned (fst iv)
+  /\ bv_unsigned (fst iv) + bv_unsigned (snd iv) <= 2 ^ 47.
+
 Record cs_ok (E : env) (cs : acs) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model) : Prop := CS_OK {
   (* [comment removed for export] *)
   co_regs  : regs_ok E (s_regs (a_ss cs)) R;
@@ -287,7 +299,19 @@ Record cs_ok (E : env) (cs : acs) (R : bvmap 5 word) (FULL : word -> option byte
   co_fds   : fds_ok E (a_fd cs) model;
   co_fs    : m_fs model = FS0;
   co_tid   : a_tidset cs = false -> m_tid model = None;
-  co_res   : vm_reserved (m_vmmaps model) = segments_reserved SEGS;
+  (* LPS 08b1429: the ledger is the image's reservations followed by the
+     launch's extra ones; no tracked mapping meets a reserved interval; the
+     launch's vDSO pair is in the ledger.  Packed in one field so that [cs_ok]
+     keeps its arity; projections [co_resx], [co_mres], [co_vdso] below. *)
+  co_res   : (exists rx : list (word * word),
+                vm_reserved (m_vmmaps model) = segments_reserved SEGS ++ rx
+                /\ Forall resx_entry_ok rx
+                /\ (length rx <= n_resx A)%nat
+                /\ sum_sizes rx <= resx_bytes A)
+             /\ Forall (fun iv => Forall (iv_disjoint iv) (vm_reserved (m_vmmaps model)))
+                       (vm_maps (m_vmmaps model))
+             /\ incl (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model)))
+                     (vm_reserved (m_vmmaps model));
   co_limit : vm_limit (m_vmmaps model) = LIMIT;
   (* [comment removed for export] *)
   co_maps  : maps_match E (a_maps cs) (vm_maps (m_vmmaps model));
@@ -335,8 +359,28 @@ Record cs_ok (E : env) (cs : acs) (R : bvmap 5 word) (FULL : word -> option byte
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   co_naal : Forall (fun iv => bv_unsigned (fst iv) mod 4096 = 0 /\ bv_unsigned (snd iv) mod 4096 = 0 /\ 0 < bv_unsigned (snd iv))
-              (vm_noaccess (m_vmmaps model))
+              (vm_noaccess (m_vmmaps model));
+  (* LPS 08b1429: the far end of the standard channels has a reader. [init_model] seeds it from
+     [in_channel_reader], which the launch predicate pins, and no model setter writes it;
+     [writev_spec]'s channel arm reads it. *)
+  co_rdr : m_channel_reader model = true
 }.
+
+Lemma co_resx : forall E cs R FULL model, cs_ok E cs R FULL model ->
+  exists rx : list (word * word),
+    vm_reserved (m_vmmaps model) = segments_reserved SEGS ++ rx
+    /\ Forall resx_entry_ok rx
+    /\ (length rx <= n_resx A)%nat
+    /\ sum_sizes rx <= resx_bytes A.
+Proof using . intros E cs R FULL model HC. exact (proj1 (co_res _ _ _ _ _ HC)). Qed.
+
+Lemma co_mres : forall E cs R FULL model, cs_ok E cs R FULL model ->
+  Forall (fun iv => Forall (iv_disjoint iv) (vm_reserved (m_vmmaps model))) (vm_maps (m_vmmaps model)).
+Proof using . intros E cs R FULL model HC. exact (proj1 (proj2 (co_res _ _ _ _ _ HC))). Qed.
+
+Lemma co_vdso : forall E cs R FULL model, cs_ok E cs R FULL model ->
+  incl (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) (vm_reserved (m_vmmaps model)).
+Proof using . intros E cs R FULL model HC. exact (proj2 (proj2 (co_res _ _ _ _ _ HC))). Qed.
 
 (* [comment removed for export] *)
 Lemma e_band_eq : e_band = eaddz e_sp0 (-8388608).
@@ -512,8 +556,9 @@ Proof using SINV_frame.
   pose proof (same_but_materialized_frame _ _ Hs) as Hfr.
   assert (Evm : m_vmmaps model' = m_vmmaps model) by apply Hfr.
   assert (Elz : m_vm_lazy model' = m_vm_lazy model) by apply Hfr.
+  assert (Ekn : m_kernel model' = m_kernel model) by (unfold same_but_materialized in Hs; rewrite Hs; reflexivity).
   destruct HC. constructor; cbn [with_ss a_ss a_maps a_totsz a_ylo a_eager a_vis a_abytes a_brk a_fd a_tidset kn];
-    rewrite ?Evm, ?Elz; try assumption.
+    rewrite ?Evm, ?Elz, ?Ekn; try assumption.
   - unfold Mr. rewrite (hid_same _ _ _ _ Hs). exact HK.
   - replace (m_halted model') with (m_halted model) by (symmetry; apply Hfr). assumption.
   - unfold fds_ok in *. replace (m_fds model') with (m_fds model) by (symmetry; apply Hfr).
@@ -525,6 +570,7 @@ Proof using SINV_frame.
   - intros a Hh. rewrite (hid_same _ _ _ _ Hs) in Hh. rewrite (Hhid a Hh). auto.
   - eapply SINV_frame; [|eassumption]. intros a Ha. apply Hhid. unfold hid. rewrite Ha. reflexivity.
   - unfold lazy_in_maps in *. rewrite Evm, Elz. assumption.
+  - pose proof Hfr as (_ & _ & _ & _ & _ & Hpr & _). unfold m_channel_reader. rewrite Hpr. assumption.
 Qed.
 
 (* [comment removed for export] *)

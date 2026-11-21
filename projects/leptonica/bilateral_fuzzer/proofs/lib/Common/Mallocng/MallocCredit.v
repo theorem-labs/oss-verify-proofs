@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (proofs and definitions restated for the model's changed definitions). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -119,39 +120,39 @@ Section Credit.
               aroom_of_aroomP := g_room_of_roomP |}.
     - (* [comment removed for export] *)
       abstract (
-        intros fx A m md regs n ret sp0 argv envp S HG Hpure Henv H10 Hn H1 Hret H4 Hal Htop Hsp0 Hwin HK;
-        apply (glue_malloc_g malloc_okX malloc_refines fx A m md regs n ret sp0 argv envp S HG Hpure Henv H10 Hn H1 Hret H4 Hal Htop Hsp0 Hwin);
-        intros A' m' vm' regs' res X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 GR _;
-        apply (HK A' m' vm' regs' res X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11);
+        intros fx A m md regs n ret sp0 argv envp S HG Hpure Hvd Henv H10 Hn H1 Hret H4 Hal Htop Hsp0 Hwin HK;
+        apply (glue_malloc_g malloc_okX malloc_refines fx A m md regs n ret sp0 argv envp S HG Hpure Hvd Henv H10 Hn H1 Hret H4 Hal Htop Hsp0 Hwin);
+        intros A' m' vm' regs' res X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 X12 GR _;
+        apply (HK A' m' vm' regs' res X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 X12);
         intros k p HR Hk Hp; exact (g_roomP_malloc A A' _ vm' n k p (proj1 Hn) GR HR Hk Hp)).
     - (* [comment removed for export] *)
       abstract (
-        intros fx A m md regs cnt sz ret sp0 argv envp S HG Hpure Henv H10 H11 Hcnt Hsz Hn H1 Hret H4 Hal Htop Hsp0 Hwin HK;
-        apply (glue_calloc_g calloc_okX calloc_refines fx A m md regs cnt sz ret sp0 argv envp S HG Hpure Henv H10 H11 Hcnt Hsz Hn H1 Hret H4 Hal Htop Hsp0 Hwin);
-        intros A' m' vm' regs' res X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 GR _;
-        apply (HK A' m' vm' regs' res X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11);
+        intros fx A m md regs cnt sz ret sp0 argv envp S HG Hpure Hvd Henv H10 H11 Hcnt Hsz Hn H1 Hret H4 Hal Htop Hsp0 Hwin HK;
+        apply (glue_calloc_g calloc_okX calloc_refines fx A m md regs cnt sz ret sp0 argv envp S HG Hpure Hvd Henv H10 H11 Hcnt Hsz Hn H1 Hret H4 Hal Htop Hsp0 Hwin);
+        intros A' m' vm' regs' res X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 X12 GR _;
+        apply (HK A' m' vm' regs' res X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 X12);
         intros k p HR Hk Hp; exact (g_roomP_malloc A A' _ vm' (cnt * sz) k p (proj1 Hn) GR HR Hk Hp)).
     - (* [comment removed for export] *)
       abstract (
-        intros fx A m md regs n k p ret sp0 argv envp S HG Hpure Henv H10 Hn HR Hk Hp Hmax H1 Hret H4 Hal Htop Hsp0 Hwin HK;
-        apply (glue_malloc_g malloc_okX malloc_refines fx A m md regs n ret sp0 argv envp S HG Hpure Henv H10 Hn H1 Hret H4 Hal Htop Hsp0 Hwin);
-        intros A' m' vm' regs' res X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 GR NR;
+        intros fx A m md regs n k p ret sp0 argv envp S HG Hpure Hvd Henv H10 Hn HR Hk Hp Hmax H1 Hret H4 Hal Htop Hsp0 Hwin HK;
+        apply (glue_malloc_g malloc_okX malloc_refines fx A m md regs n ret sp0 argv envp S HG Hpure Hvd Henv H10 Hn H1 Hret H4 Hal Htop Hsp0 Hwin);
+        intros A' m' vm' regs' res X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 X12 GR NR;
         destruct X4 as [(E0 & _) | (Hnz & F1 & F2 & F3 & F4)];
         [ exfalso; apply (g_noroom_absurd A m (m_vmmaps md) n k (alloc_margin n) HG (conj (proj1 Hn) Hmax)
                             (g_roomP_margin A (m_vmmaps md) k p n HR (proj1 Hn) Hp) Hk (Z.le_refl _));
           apply NR; rewrite E0; reflexivity
-        | apply (HK A' m' vm' regs' res X1 X2 X3 Hnz F1 F2 F3 F4 X5 X6 X7 X8 X9 X10 X11);
+        | apply (HK A' m' vm' regs' res X1 X2 X3 Hnz F1 F2 F3 F4 X5 X6 X7 X8 X9 X10 X11 X12);
           exact (g_roomP_malloc A A' _ vm' n k p (proj1 Hn) GR HR Hk Hp) ]).
     - (* [comment removed for export] *)
       abstract (
-        intros fx A m md regs cnt sz k p ret sp0 argv envp S HG Hpure Henv H10 H11 Hcnt Hsz Hn HR Hk Hp Hmax H1 Hret H4 Hal Htop Hsp0 Hwin HK;
-        apply (glue_calloc_g calloc_okX calloc_refines fx A m md regs cnt sz ret sp0 argv envp S HG Hpure Henv H10 H11 Hcnt Hsz Hn H1 Hret H4 Hal Htop Hsp0 Hwin);
-        intros A' m' vm' regs' res X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 GR NR;
+        intros fx A m md regs cnt sz k p ret sp0 argv envp S HG Hpure Hvd Henv H10 H11 Hcnt Hsz Hn HR Hk Hp Hmax H1 Hret H4 Hal Htop Hsp0 Hwin HK;
+        apply (glue_calloc_g calloc_okX calloc_refines fx A m md regs cnt sz ret sp0 argv envp S HG Hpure Hvd Henv H10 H11 Hcnt Hsz Hn H1 Hret H4 Hal Htop Hsp0 Hwin);
+        intros A' m' vm' regs' res X1 X2 X3 X4 X5 X6 X7 X8 X9 X10 X11 X12 GR NR;
         destruct X4 as [(E0 & _) | (Hnz & F1 & F2 & F3 & F4 & F5)];
         [ exfalso; apply (g_noroom_absurd A m (m_vmmaps md) (cnt * sz) k (alloc_margin (cnt * sz)) HG (conj (proj1 Hn) Hmax)
                             (g_roomP_margin A (m_vmmaps md) k p (cnt * sz) HR (proj1 Hn) Hp) Hk (Z.le_refl _));
           apply NR; rewrite E0; reflexivity
-        | apply (HK A' m' vm' regs' res X1 X2 X3 Hnz F1 F2 F3 F4 F5 X5 X6 X7 X8 X9 X10 X11);
+        | apply (HK A' m' vm' regs' res X1 X2 X3 Hnz F1 F2 F3 F4 F5 X5 X6 X7 X8 X9 X10 X11 X12);
           exact (g_roomP_malloc A A' _ vm' (cnt * sz) k p (proj1 Hn) GR HR Hk Hp) ]).
   Defined.
 

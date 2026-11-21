@@ -204,7 +204,9 @@ Proof.
   split; [exact G0|]. split; lia.
 Qed.
 
-Lemma pf_capok : forall H M, 0 <= H -> M + H / 101 <= 299524 -> H / 101 <= 42967 -> CAPOK2 H M pf_BMAX pf_NMAX.
+(* LPS 727298f3: slot_cap carries the placement floor (Reusable/PlaceCap.v), so at RQ2 = 352321536 it is
+   299059 (vm_compute below); the bound on M + H / 101 is that cap less SLOTS2's 47 and KRES. *)
+Lemma pf_capok : forall H M, 0 <= H -> M + H / 101 <= 299004 -> H / 101 <= 42967 -> CAPOK2 H M pf_BMAX pf_NMAX.
 Proof.
   intros H M H0 H1 H2.
   assert (Hg : 0 <= H / 101) by (apply Z.div_pos; lia).
@@ -214,7 +216,7 @@ Proof.
   assert (EM : MMAX = 8388608) by reflexivity.
   assert (R : RQ2 H pf_NMAX = 352321536).
   { unfold RQ2, AREA2. rewrite P, EM. unfold METAS_PER_AREA, PGSZ. set (g := H / 101) in *. lia. }
-  assert (S : slot_cap 352321536 = 299579) by (vm_compute; reflexivity).
+  assert (S : slot_cap 352321536 = 299059) by (vm_compute; reflexivity).
   unfold CAPOK2. rewrite R, S, P.
   unfold LIVE2, SLOTS2, NA2, AREA2, METAS_PER_AREA, PGSZ, KRES.
   rewrite EM.

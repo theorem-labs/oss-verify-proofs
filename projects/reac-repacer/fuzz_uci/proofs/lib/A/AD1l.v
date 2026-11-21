@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AD1l.v, with its module paths changed, names TfibSyms -> UciSyms and its addresses moved to libreac/fuzz_grant's ASan build. *)
 (* Modified by Theorem Labs: copied from proofs/libreac/fuzz_grant/lib/A/AD1l.v (donor image sha256 c2c7559b29bd), with its module paths changed, names GrantSyms -> UciSyms and its addresses moved to reac-repacer/fuzz_uci's ASan build. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the fprintf site hands the intercept the model's own fdchan, three conjuncts now, which its premise already is). *)
 From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -136,7 +137,7 @@ apply (tfib_not_owned_static B F_STDERR (F_STDERR + FILE_SZ) a HB); [vm_compute;
 | exact (u64_range (sv_denot E (SOff 41 0)))
 | exact (ro_img_of_IMG E _ HIMG)
 | apply (rodata_hull_zero B HB LAWS ly S W mem md); [exact HAR | unfold FMT_open, FMT_rderr, FMT_usage; lia | unfold FMT_open, FMT_rderr, FMT_usage; lia | lia]
-| split; [exact Hfd | reflexivity]
+| exact Hfd
 | exact HAI
 | intros regs' mem' md' HAR' HP' Hsbm' Ha0' HFW' Hfr' Hpr' HAI';
 apply (HPOST regs' mem' md' HAR' HP' Hsbm');

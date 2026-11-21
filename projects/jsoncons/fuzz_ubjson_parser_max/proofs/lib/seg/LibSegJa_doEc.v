@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: the start fact on EVar 33 (the string pointer) allows it up to 2^47 - 10 instead of 2^47 - 17, as the nine-byte string read-ahead of LPS 727298f3 gives, and the walk ex1 is computed in the build from ss0 instead of being recorded. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require SegBoil SegFn.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require SegCodec. Import SegCodec.StrNota.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
@@ -20,7 +21,7 @@ Definition NX0 : nat := 140.
 Definition v0 (k : Z) : expr := SegFn.v0_f k.
 Definition L : expr := ltac:(SegCodec.D "$4"%pstring).
 Definition regs0 : list expr := ltac:(SegCodec.D ",20#$1$2$3$4$5$6$7$22#136>40$:$;$<$=$>$?$10$11$12$13$14#68>=<0$7:$7;#$7=$22$7?$1<$1=$1>$1?"%pstring).
-Definition kn0 : list kentry := ltac:(SegCodec.D ",2>'$2#7???7?811000#800000000000&$2#10($2-840#:?0,$2-840#:?0%#10000#134000'$21#7???7?811000#7?????????>?'$22#40#1????)$2-840#:?0$21#+$22#1#&6$2#3#7???8046#18!##7???;>10,8#(##136>60#8(##136>68#8(##136>78#8!##136>98,8+$2#2:0!##136>:0,8#50!##68>=<0,8$28!$2#28,8$28!$2#68,8#11<>=<!$2#60,8#25!$2#58,8#7???????!$2#50,8#!$2#48,8#11!$2#40,8#136>40!$2#38,8#1?0:<!$2#30,8#!##136>40,1#5!##136>=0,4#????????!##13;9=9,1#1!##13:<?8,8#7???8000!##134640,8#1249:<!$2#=0,8#68>=<0!$2#220,8$28!$2#288,8#11<2<<!$2#280,8#136>40!$2#278,8#1?099!$2#270,8#68>=<0!$2#268,8#1!$2#260,8#68?598!$2#258,8#5!$2#250,8$16!$2#248,8$17!$2#240,8$18!$2#238,8$19!$2#230,8$1:!$2#228,8$1;!##136>88,8#11;27<"%pstring).
+Definition kn0 : list kentry := ltac:(SegCodec.D ",2>'$2#7???7?811000#800000000000&$2#10($2-840#:?0,$2-840#:?0%#10000#134000'$21#7???7?811000#7??????????6'$22#40#1????)$2-840#:?0$21#+$22#1#&6$2#3#7???8046#18!##7???;>10,8#(##136>60#8(##136>68#8(##136>78#8!##136>98,8+$2#2:0!##136>:0,8#50!##68>=<0,8$28!$2#28,8$28!$2#68,8#11<>=<!$2#60,8#25!$2#58,8#7???????!$2#50,8#!$2#48,8#11!$2#40,8#136>40!$2#38,8#1?0:<!$2#30,8#!##136>40,1#5!##136>=0,4#????????!##13;9=9,1#1!##13:<?8,8#7???8000!##134640,8#1249:<!$2#=0,8#68>=<0!$2#220,8$28!$2#288,8#11<2<<!$2#280,8#136>40!$2#278,8#1?099!$2#270,8#68>=<0!$2#268,8#1!$2#260,8#68?598!$2#258,8#5!$2#250,8$16!$2#248,8$17!$2#240,8$18!$2#238,8$19!$2#230,8$1:!$2#228,8$1;!##136>88,8#11;27<"%pstring).
 Definition ss0 : sym_state := SS 1159952 regs0 [] kn0 NX0.
 Definition F0 : list SGP.region := ltac:(SegCodec.D ",4$2-840#:?0##136>60#8##136>68#8##136>78#8"%pstring).
 Definition F0L : list SR.region := ltac:(SegCodec.D ",4$2-840#:?0##136>60#8##136>68#8##136>78#8"%pstring).
@@ -32,7 +33,8 @@ Definition AUTO := SGA.auto RSEGS IT X_CPY X_SET X_LEN RO_LO RO_HI BF STOPS1 END
 Definition LOADB := SGP.loadbyte IT BR.
 Definition BLOCK := SGP.step1 RSEGS IT X_CPY X_SET X_LEN RO_LO RO_HI BF F0 (SR.SBlock STOPS1).
 Set Printing Width 1000000. Set Printing Depth 1000000.
-Definition ex1 : list SGA.aitem * (Z * sym_state) := ltac:(SegCodec.D ",1!!,2#11;2;8#11;2;8#5=#11;2;8,20##11<2><+$2#220$3$4$5$6$7##136>40$28###11;27<###$11#68>=<0#1#68?598#68>=<0$16$17$18$19$1:$1;$1<$1=$1>$1?,,3?!$2#248,8$28!$2#250,8$16!$2#258,8#!$2#260,8#68?598!$2#268,8#1!$2#270,8#68>=<0!$2#278,8+$22#12!$2#280,8#136>40!$2#288,8#11<2><!##136>68,8+$2#2:1!$2#2:0,1#:!$2-20,8#!$2-18,8#1?0:<!$2-10,8#1!$2-8,8#1?0:=!$2#,8#136>40!$2#8,8#!$2#10,8#1?0:<!$2#18,8#1!$2#20,8#136>40!$2#28,8#11;=78!$2#38,8#1?0:=!$2#40,8#136>40!$2#48,8+$22#11!$2#50,8+@-1$22#7?????>>!$2#58,8#7???????!$2#60,8#25!$2#68,8#11<4;<!##136>78,8+$2#2:0!##136>60,8+$2#2?0'$2#7???7?811000#800000000000&$2#10($2-840#:?0,$2-840#820,$2#30#8,$2#70#1=8,$2#290#10,$2#2:1#?%#10000#134000'$21#7???7?811000#7?????????>?'$22#40#1????)$2-840#:?0$21#+$22#1#&6$2#3#7???8046#18!##7???;>10,8#(##136>60#8(##136>68#8(##136>78#8!##136>98,8+$2#2:0!##136>:0,8#50!##68>=<0,8$28!$2#30,8#!##136>40,1#5!##136>=0,4#????????!##13;9=9,1#1!##13:<?8,8#7???8000!##134640,8#1249:<!$2#=0,8#68>=<0!$2#220,8$28!$2#240,8$18!$2#238,8$19!$2#230,8$1:!$2#228,8$1;!##136>88,8#11;27<,8<!"%pstring).
+Definition ex1 : list SGA.aitem * (Z * sym_state) := Eval vm_compute in (AUTO 20000 ss0).
+Lemma ex1_reached_end : fst (snd ex1) = 93. Proof. vm_compute. reflexivity. Qed.
 Definition s1 : sym_state := snd (snd ex1).
 Definition plan : SGP.splan := SGA.mkplan (fst ex1) (SGP.PEnd 0).
 Definition in_foot (b : expr) (k : Z) (w : Z) : bool := SegFn.in_foot_f F0L b k w.

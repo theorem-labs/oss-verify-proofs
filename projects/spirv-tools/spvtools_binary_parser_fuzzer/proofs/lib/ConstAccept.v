@@ -18,7 +18,8 @@ Definition accept_segment : Segment := {|
   seg_base := 65536%N;
   seg_size := 132%N;
   seg_perms := "r-x"%string;
-  seg_bytes := ["7f454c460201010000000000000000000200f30001000000780001000000000040000000000000000000000000000000040000004000380001004000000000000100000005000000000000000000000000000100000000000000010000000000840000000000000084000000000000000010000000000000130500009308e00573000000"%pstring]
+  seg_bytes := ["7f454c460201010000000000000000000200f30001000000780001000000000040000000000000000000000000000000040000004000380001004000000000000100000005000000000000000000000000000100000000000000010000000000840000000000000084000000000000000010000000000000130500009308e00573000000"%pstring];
+  seg_kind := SegLoader
 |}.
 Definition accept_segments : list Segment := [accept_segment].
 Definition accept_phdrs : PhdrInfo := mkPhdrInfo 65600%N 56%N 1%N.
@@ -27,14 +28,16 @@ Definition accept_image : Image := mkImage accept_segments 65656%N accept_phdrs.
 Lemma accept_image_wf : image_wf accept_image.
 Proof. check_image_wf. Qed.
 
-Lemma accept_exits_c : forall sp rnd argv envp uid hw,
-  exits_c accept_segments verdict_accept 8
-    (init_machine_state accept_segments 65656%N accept_phdrs sp rnd argv envp uid hw)
+Lemma accept_exits_c : forall sp mbase draw inp,
+  exits_c (run_segments accept_segments inp sp mbase) verdict_accept 8
+    (init_machine_state (run_segments accept_segments inp sp mbase) 65656%N accept_phdrs sp
+       mbase draw inp)
   = true.
 Proof.
-  intros. rewrite (with_mem_eta (init_machine_state _ _ _ _ _ _ _ _ _)).
-  generalize (ms_mem (init_machine_state accept_segments 65656%N accept_phdrs sp rnd argv envp uid hw)).
-  intros mem. vm_compute. reflexivity.
+  intros. rewrite (with_mem_eta (init_machine_state _ _ _ _ _ _ _)).
+  generalize (ms_mem (init_machine_state (run_segments accept_segments inp sp mbase) 65656%N
+                        accept_phdrs sp mbase draw inp)).
+  intros mem. unfold run_segments. vm_compute. reflexivity.
 Qed.
 
 Lemma accept_must_exit : forall inp en,

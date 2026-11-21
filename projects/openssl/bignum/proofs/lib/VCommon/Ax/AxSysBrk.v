@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's munmap, brk's page-granular ledger and the reserved ledger). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
@@ -46,12 +47,14 @@ Proof.
   match goal with |- (if ?c then _ else _) <> _ => destruct c; discriminate end.
 Qed.
 
+(* [comment removed for export] *)
 Lemma brk_query_r (m : Model) (req r : word) : w_is0 req = true -> Mmap.brk_r_ok m req r = true -> r = vm_brk (m_vmmaps m).
 Proof. intros H0 H. unfold Mmap.brk_r_ok in H. rewrite H0 in H. cbn [orb] in H. apply bv_eqb_eq in H. exact H. Qed.
 
 Lemma brk_query_ok (m : Model) (req : word) : w_is0 req = true -> Mmap.brk_r_ok m req (vm_brk (m_vmmaps m)) = true.
 Proof. intros H0. unfold Mmap.brk_r_ok. rewrite H0. cbn [orb]. apply bv_eqb_refl. Qed.
 
+(* [comment removed for export] *)
 Lemma brk_grow_r (m : Model) (req r : word) :
   w_is0 req = false -> bv_unsigned (min_brk (m_vmmaps m)) <= bv_unsigned req ->
   bv_unsigned (vm_brk (m_vmmaps m)) < bv_unsigned req -> Mmap.brk_r_ok m req r = true ->
@@ -79,6 +82,7 @@ Proof.
   rewrite (proj2 (Z.ltb_ge _ _) Hmin). rewrite (proj2 (Z.ltb_ge _ _)) by lia. rewrite bv_eqb_refl, Hg. reflexivity.
 Qed.
 
+(* [comment removed for export] *)
 Lemma with_brk_keep (m : Model) (req : word) : with_brk_next m req (vm_brk (m_vmmaps m)) = m.
 Proof.
   unfold with_brk_next, brk_model_next, brk_maps_next. rewrite brk_unmaps_keep, brk_grants_keep.
@@ -86,21 +90,51 @@ Proof.
   destruct m as [fd [[res maps na sb b lim mb sp] lazy mat] io fs proc lm tm]. reflexivity.
 Qed.
 
+(* [comment removed for export] *)
 Definition brk_grow_maps (m : Model) (req : word) : VmMaps :=
   let h := m_vmmaps m in
   mkVmMapsFull (vm_reserved h) ((vm_brk h, req - vm_brk h)%bv :: vm_maps h) (vm_noaccess h) (vm_start_brk h) req (vm_limit h)
     (vm_mmap_base h) (vm_init_sp h).
 
-Lemma with_brk_grow (m : Model) (req : word) :
-  w_is0 req = false -> 0 < bv_unsigned (vm_brk (m_vmmaps m)) -> bv_unsigned (vm_brk (m_vmmaps m)) < bv_unsigned req ->
-  with_brk_next m req req = with_vmmaps (brk_grow_maps m req) m.
+Lemma sub_unsigned (req old : word) : bv_unsigned old <= bv_unsigned req -> bv_unsigned (req - old)%bv = bv_unsigned req - bv_unsigned old.
 Proof.
-  intros H0 Hb Hlt. unfold with_brk_next, brk_model_next, brk_maps_next, brk_grow_maps.
-  assert (Hne : req <> Z_to_bv 64 0) by (intros ->; unfold w_is0 in H0; rewrite bv_eqb_refl in H0; discriminate H0).
-  rewrite (brk_unmaps_grow req (vm_brk (m_vmmaps m))) by lia. rewrite (brk_grants_grow req req _ Hne Hb Hlt).
-  rewrite (proj2 (Z.ltb_ge (bv_unsigned req) _)) by lia. rewrite andb_false_r. reflexivity.
+  intros H. rewrite bv_sub_unsigned. apply bv_wrap_small.
+  pose proof (bv_unsigned_in_range 64 req). pose proof (bv_unsigned_in_range 64 old). lia.
 Qed.
 
+(* WAS, and a farm round measured it false at AxSysBrk.v:105:
+     Lemma with_brk_grow (m : Model) (req : word) :
+       w_is0 req = false -> 0 < bv_unsigned (vm_brk (m_vmmaps m)) ->
+       bv_unsigned (vm_brk (m_vmmaps m)) < bv_unsigned req ->
+       with_brk_next m req req = with_vmmaps (brk_grow_maps m req) m.
+   The revision's brk grant is PAGE-RANGED: brk_maps_next now prepends
+   `brk_page_range (page_round_up_Z (bv_unsigned (vm_brk h))) (page_round_up_Z (bv_unsigned req))`
+   and wraps the result in `forget_vm_ranges []` with
+   `maps_subtract_ranges (vm_noaccess h) []` (LPS@75d69e00 Sys/Mm/Mmap.v:167, :198,
+   :463-485), where it used to prepend the single entry (vm_brk h, req - vm_brk h).
+   The two collapse exactly when both ends are page-aligned, so the lemma gains the
+   two alignment premises -- the same pair brk_zeros_aligned (:124-134, the sibling
+   that was already ported) and brk_gate_aligned (:109) carry, and sys_brk2 proves
+   both at :273-275 before either is used.  brk_grow_maps itself is unchanged, so
+   every consumer of it (:303, :307, :334, :340) is untouched. *)
+Lemma with_brk_grow (m : Model) (req : word) :
+  w_is0 req = false -> 0 < bv_unsigned (vm_brk (m_vmmaps m)) -> bv_unsigned (vm_brk (m_vmmaps m)) < bv_unsigned req ->
+  bv_unsigned (vm_brk (m_vmmaps m)) mod page_size = 0 -> bv_unsigned req mod page_size = 0 ->
+  with_brk_next m req req = with_vmmaps (brk_grow_maps m req) m.
+Proof.
+  intros H0 Hb Hlt Ha1 Ha2. unfold with_brk_next, brk_model_next, brk_maps_next, brk_grow_maps.
+  assert (Hne : req <> Z_to_bv 64 0) by (intros ->; unfold w_is0 in H0; rewrite bv_eqb_refl in H0; discriminate H0).
+  rewrite (brk_unmaps_grow req (vm_brk (m_vmmaps m))) by lia. rewrite (brk_grants_grow req req _ Hne Hb Hlt).
+  rewrite (page_round_up_Z_aligned (bv_unsigned (vm_brk (m_vmmaps m))) ltac:(lia) Ha1),
+          (page_round_up_Z_aligned (bv_unsigned req) ltac:(lia) Ha2).
+  unfold brk_page_range. rewrite (proj2 (Z.ltb_lt _ _) Hlt), Z_to_bv_bv_unsigned.
+  rewrite (proj2 (Z.ltb_ge (bv_unsigned req) _)) by lia. rewrite andb_false_r.
+  rewrite <- (sub_unsigned req (vm_brk (m_vmmaps m)) ltac:(lia)), Z_to_bv_bv_unsigned.
+  cbn [forget_vm_ranges maps_subtract_ranges fold_left app].
+  destruct m as [fd [[res maps na sb b lim mb sp] lazy mat] io fs proc lm tm]. reflexivity.
+Qed.
+
+(* [comment removed for export] *)
 Lemma brk_gate_aligned (m : Model) (req : word) :
   0 < bv_unsigned (vm_brk (m_vmmaps m)) -> bv_unsigned (vm_brk (m_vmmaps m)) < bv_unsigned req ->
   bv_unsigned (vm_brk (m_vmmaps m)) mod page_size = 0 -> bv_unsigned req mod page_size = 0 ->
@@ -128,12 +162,7 @@ Proof.
   unfold brk_page_range. rewrite (proj2 (Z.ltb_lt _ _) Hlt), Z_to_bv_bv_unsigned. reflexivity.
 Qed.
 
-Lemma sub_unsigned (req old : word) : bv_unsigned old <= bv_unsigned req -> bv_unsigned (req - old)%bv = bv_unsigned req - bv_unsigned old.
-Proof.
-  intros H. rewrite bv_sub_unsigned. apply bv_wrap_small.
-  pose proof (bv_unsigned_in_range 64 req). pose proof (bv_unsigned_in_range 64 old). lia.
-Qed.
-
+(* [comment removed for export] *)
 Lemma brk_refusal_query (m : Model) (req ret : word) : w_is0 req = true -> brk_refusal_b m req ret = false.
 Proof. intros H. unfold brk_refusal_b. rewrite H. reflexivity. Qed.
 
@@ -156,6 +185,10 @@ Proof.
   rewrite E. reflexivity.
 Qed.
 
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
 Lemma region_free_shrink (l : list (word * word)) (a n1 n2 : word) :
   bv_unsigned n2 <= bv_unsigned n1 -> region_free l a n1 = true -> region_free l a n2 = true.
 Proof.
@@ -170,6 +203,9 @@ Variable LIM : Z.
 Variable fs0 : Fs.Fs.
 Variable KT : valuation -> list byte -> TSet.
 Hypothesis Hlow : segs_low segs.
+(* NEW, with AxSysMmapS's Main section: R_grant_rw_gen below carries it now that
+   ledger_free's call to in_segs_reserved needs it. *)
+Hypothesis Hnk : forallb (fun s => negb (seg_kernel_map s)) segs = true.
 
 Notation MRm := (MR segs fs0).
 Notation RR ρ := (R segs amodel (MRm ρ) LIM ρ).
@@ -199,8 +235,8 @@ Proof.
     by (intros r0; exact (refusal_b_214 segs (latch ms) x8 model r0 H17)).
   assert (Hoffm : injected_family_off cfg (sys_input segs (latch ms) x8) = true).
   { apply family_off_alloc; [exact Hcfg2 | rewrite H17; cbn; tauto | rewrite H17; lia]. }
-
-  assert (Hkeep : forall B, a_pc B = npc A -> a_regs B = aset (a_regs A) reg_a0 (of_form (am_brk (a_model A))) -> a_resv B = a_resv A ->
+  (* [comment removed for export] *)
+  assert (Hkeep : forall B, a_pc B = npc A -> a_regs B = aset (a_regs A) reg_a0 (of_form (am_brk (a_model A))) -> a_resv B = RNone ->
             a_mem B = a_mem A -> a_facts B = a_facts A -> a_model B = a_model A -> a_budget B = a_budget A -> Snd B ->
             realizes_cfg segs cfg (mkCfg (advance_past_svc (apply_effect (latch ms) (mkEffect old [] []))) model) (KT ρ o)).
   { intros B E1 E2 E3 E4 E5 E6 E7 HB. refine (HB ρ _ _ o _); [|unfold out_val in *; rewrite E6; exact Ho].
@@ -214,13 +250,13 @@ Proof.
   pose proof (xform_sound ρ _ _ req f Hsat (Hregs (Z_to_bv 5 10)) Ef) as Hreq.
   apply (rzc_latch segs cfg ms model w _ Hh Hsvc Hf He).
   destruct (is_zero_form f) eqn:Ez.
-  -
+  - (* [comment removed for export] *)
     apply is_zero_form_eq in Ez. subst f. change (leval ρ (0, [])) with 0 in Hreq.
     assert (Hr0 : w_is0 req = true).
     { unfold w_is0. apply bv_eqb_eq. apply bv_eq. rewrite Hreq. reflexivity. }
     destruct (lrange (a_facts A) (am_brk (a_model A))) as [[blo bhi]|] eqn:Eb; [|discriminate Hs].
     match type of Hs with (if ?c then _ else _) = _ => destruct c; [|discriminate Hs] end. injection Hs as <-.
-    apply (rzc_sys_silent segs cfg (latch ms) model x8 (KT ρ o) Hh eq_refl).
+    apply (rzc_sys_silent segs cfg (latch ms) model x8 (KT ρ o) Hh eq_refl (rob_sys_214 segs (latch ms) model x8 eq_refl H17)).
     + rewrite Hchk. apply chk_brk_modeled.
     + intros eff m' evs Hc. rewrite Hchk in Hc. destruct (chk_brk req eff model m' evs Hc) as [-> [r0 [Hr [-> ->]]]].
       split; [reflexivity|]. rewrite (brk_query_r model req r0 Hr0 Hr). rewrite with_brk_keep. exact Hh.
@@ -232,7 +268,7 @@ Proof.
       exists model. split; [apply materialize_nil|].
       apply (Hkeep (with_model A (npc A) (aset (a_regs A) reg_a0 (of_form (am_brk (a_model A)))) (a_mem A) (a_facts A) (a_model A) (a_budget A)));
         try reflexivity. exact (HS _ (or_introl eq_refl)).
-  -
+  - (* [comment removed for export] *)
     destruct (snd (lsub f (am_brk (a_model A)))) as [|t0 tr] eqn:Ed; [|discriminate Hs].
     set (d := fst (lsub f (am_brk (a_model A)))) in *.
     destruct (brk_grow_guard A (am_brk (a_model A)) d) eqn:Eg; [|discriminate Hs]. injection Hs as <-.
@@ -250,7 +286,7 @@ Proof.
     { rewrite <- leval_lsub. unfold leval. rewrite Ed. cbn [teval]. unfold d. lia. }
     pose proof (mr_brk0 segs fs0 ρ _ _ HM) as Hb0.
     pose proof (lin_al_sound ρ 4096 _ ltac:(lia) Gal) as Hal_b.
-
+    (* [comment removed for export] *)
     assert (Ao : 0 < bv_unsigned old) by (clear - Hold Rb G1; lia).
     assert (Ad : bv_unsigned req = bv_unsigned old + d) by (clear - Hold Hreq Hdl; lia).
     assert (Am : bv_unsigned (vm_start_brk (m_vmmaps model)) <= bv_unsigned old) by (clear - Hold Hb0 Rb0 G3; lia).
@@ -267,18 +303,18 @@ Proof.
     assert (Hsubw : (req - old)%bv = Z_to_bv 64 d) by (apply bv_eq; rewrite Hdz, u_Z_to_bv; [reflexivity | unfold two64; clear - Gd1 Gd2; lia]).
     assert (Hold0 : 0 < bv_unsigned (vm_brk (m_vmmaps model))) by (fold old; exact Ao).
     destruct (Mmap.brk_grow_ok model req req) eqn:Egrow.
-    +
+    + (* [comment removed for export] *)
       pose proof Egrow as Egate. rewrite (brk_gate_aligned model req Hold0 Hlt Hal_o Hal_r) in Egate.
       apply andb_prop in Egate as [Egate Gbud]. apply andb_prop in Egate as [Gtop Gfree]. apply Z.leb_le in Gtop. fold old in Gfree.
       assert (Hnull : null_ok model d old).
       { split; [exact Hal_o|]. split; [exact Ao|]. split; [clear - Gtop Ad; lia|].
         apply (region_free_shrink _ old (Z_to_bv 64 (bv_unsigned req + page_size - bv_unsigned old))); [|exact Gfree].
         unfold page_size. rewrite !u_Z_to_bv by (unfold two64; clear - Ad Ao Gd1 Gd2 A47; lia). clear - Ad; lia. }
-      apply (rzc_sys_silent segs cfg (latch ms) model x8 (KT ρ o) Hh eq_refl).
+      apply (rzc_sys_silent segs cfg (latch ms) model x8 (KT ρ o) Hh eq_refl (rob_sys_214 segs (latch ms) model x8 eq_refl H17)).
       * rewrite Hchk. apply chk_brk_modeled.
       * intros eff m' evs Hc. rewrite Hchk in Hc. destruct (chk_brk req eff model m' evs Hc) as [-> [r0 [Hr [-> ->]]]].
         split; [reflexivity|]. destruct (brk_grow_r model req r0 Hr0 Hmin Hlt Hr) as [[-> _]| ->].
-        -- rewrite (with_brk_grow model req Hr0 Hold0 Hlt). exact Hh.
+        -- rewrite (with_brk_grow model req Hr0 Hold0 Hlt Hal_o Hal_r). exact Hh.
         -- rewrite with_brk_keep. exact Hh.
       * exists (mkEffectU req [] (brk_zeros req req old) (brk_unmaps req old) [] []), (with_brk_next model req req). split.
         -- rewrite Hchk. apply chk_brk_ok. apply brk_grow_ok_r; assumption.
@@ -286,7 +322,7 @@ Proof.
       * intros eff m' Hc Hnr. specialize (Hnr Hoffm). rewrite Hrb in Hnr. rewrite Hchk in Hc.
         destruct (chk_brk req eff model m' [] Hc) as [_ [r0 [Hr [-> ->]]]]. cbn [eff_ret] in Hnr.
         destruct (brk_grow_r model req r0 Hr0 Hmin Hlt Hr) as [[-> _]| ->]; [|rewrite (brk_refusal_keep model req Hr0 Hmin Hlt) in Hnr; discriminate Hnr].
-        fold old. rewrite (with_brk_grow model req Hr0 Hold0 Hlt).
+        fold old. rewrite (with_brk_grow model req Hr0 Hold0 Hlt Hal_o Hal_r).
         assert (Hle : bv_unsigned old <= bv_unsigned req) by (clear - Ad Gd1; lia).
         rewrite (brk_zeros_aligned req old Hr0 Ao Hlt Hal_o Hal_r), (brk_unmaps_grow req old Hle).
         replace (bv_unsigned req - bv_unsigned old) with d by (clear - Ad; lia).
@@ -298,7 +334,7 @@ Proof.
         apply andb_prop in Gwit as [W1 W2].
         assert (Hd47 : 0 < d < 2 ^ 47) by (clear - Gd1 Gd2; lia).
         assert (Hposr : forall R0, In R0 (a_mem A) -> 0 < to_Z (rg_n R0)) by (intros R0 HIn; apply Z.ltb_lt; exact (lforall_forall _ _ Gpos R0 HIn)).
-        apply (R_grant_rw_gen segs LIM fs0 Hlow ρ A ms model old d HR Hpc Hd47 Gd3 Hnull Gsh Geb Hposr
+        apply (R_grant_rw_gen segs LIM fs0 Hlow Hnk ρ A ms model old d HR Hpc Hd47 Gd3 Hnull Gsh Geb Hposr
                  (snd (am_brk (a_model A))) (wofZ (fst (am_brk (a_model A)))) (of_form f) req (a_facts A) _ _ (a_budget A + d)).
         -- unfold smod. rewrite wZ_wofZ, Zplus_mod_idemp_r. rewrite Hold. unfold leval. rewrite Z.mod_small; [clear; lia|].
            pose proof (bv_unsigned_in_range 64 old) as X. change (bv_modulus 64) with two64 in X. unfold leval in Hold. clear - X Hold. lia.
@@ -315,13 +351,13 @@ Proof.
              exact (MR_free_span segs fs0 ρ _ model old d HM (proj1 Hd47) ltac:(clear - N3 At; lia) N4 Gsh). }
            assert (Hspan : am_shadow (a_model A) = true -> var_ent (AE (am_brk (a_model A)) d false) = true ->
                              bv_unsigned old + d <= sh_lo \/ sh_hi <= bv_unsigned old) by (intros _ _; exact Hsp0).
-
+           (* [comment removed for export] *)
            assert (Hnfull : AxLz.lzfull (AE (am_brk (a_model A)) d false) = false).
            { destruct (AxLz.lzfull (AE (am_brk (a_model A)) d false)) eqn:Efl; [|reflexivity]. exfalso.
              destruct (AxLz.lzfull_in_span ρ _ Efl) as [S1 S2]. cbn [ae_base ae_size] in S1, S2. rewrite <- Hold in S1, S2.
              clear - S1 S2 Hsp0 Hd47. lia. }
            exact (MR_brk_grow segs fs0 ρ (a_model A) model HM (AE (am_brk (a_model A)) d false) old d (am_next (a_model A))
-                    (eq_sym Hold) eq_refl (proj1 Hd47) Hnull Hspan (brk_grow_maps model req) f eq_refl Hnfull eq_refl Hgm eq_refl eq_refl eq_refl Hreq).
+                    (eq_sym Hold) eq_refl (proj1 Hd47) Hnull Hspan (brk_grow_maps model req) f eq_refl Hnfull eq_refl Hgm eq_refl eq_refl eq_refl Hreq eq_refl).
         -- exact Hgm.
         -- reflexivity.
         -- reflexivity.
@@ -331,7 +367,7 @@ Proof.
            rewrite u_Z_to_bv in X by (unfold two64; clear - Hd47; lia). clear - X Hb. lia.
         -- exact W1.
         -- exact W2.
-    +
+    + (* [comment removed for export] *)
       assert (Hall : forall eff m' evs, check_brk req eff model = CheckOk m' evs ->
                 evs = [] /\ eff = mkEffect old [] [] /\ m' = model).
       { intros eff m' evs Hc. destruct (chk_brk req eff model m' evs Hc) as [-> [r0 [Hr [-> ->]]]]. split; [reflexivity|].
@@ -343,7 +379,7 @@ Proof.
       assert (Hforced : forall eff, ~ spurious_refusal_cfg cfg (sys_input segs (latch ms) x8) model eff).
       { intros eff. apply forced_not_spurious. intros eff' m' evs' Hc. rewrite Hchk in Hc. destruct (Hall _ _ _ Hc) as (_ & -> & _).
         rewrite Hrb. exact (brk_refusal_keep model req Hr0 Hmin Hlt). }
-      apply (rzc_chk_silent segs cfg (latch ms) model x8 (KT ρ o) Hh eq_refl).
+      apply (rzc_chk_silent segs cfg (latch ms) model x8 (KT ρ o) Hh eq_refl (rob_sys_214 segs (latch ms) model x8 eq_refl H17)).
       * rewrite Hchk. apply chk_brk_modeled.
       * intros eff m' evs Hc. rewrite Hchk in Hc. destruct (Hall _ _ _ Hc) as (-> & _ & ->). split; [reflexivity | exact Hh].
       * exists (mkEffect old [] []), model. split; [rewrite Hchk; exact Hkeep_ok | apply Hforced].

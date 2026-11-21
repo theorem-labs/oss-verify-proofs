@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the rz_node call proves its new third conjunct, sys_rob, from mm_node_rob). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -52,10 +53,11 @@ Proof.
     change (t_alt (fun i : I => t_emit [] (tsh (k (fst (proj1_sig i))) (snd (proj1_sig i)) TT)))
       with (t_alt (fun i : I => t_emit ((fun _ : I => @nil event) i) ((fun i : I => tsh (k (fst (proj1_sig i))) (snd (proj1_sig i)) TT) i))).
     apply (rz_node segs (mkCfg ms1 mo) I (fun _ => []) nx _ (exist _ (eff0, mo0) Hst0)).
-    + split.
+    + split; [|split].
       * intros [[eff mo'] Hst]. cbn. exact (proj2 (proj2 (Hsnd _ _ _ Hst))).
       * intros e st Hss. destruct (Hc _ _ Hss) as (eff & mo' & -> & Hst).
         pose proof (nstep_nil _ _ _ _ _ Hst) as ->. exists (exist _ (eff, mo') Hst). split; reflexivity.
+      * exact (mm_node_rob segs n ms1 mo Hn Hat).
     + intros [[eff mo'] Hst]. cbn.
       pose proof (Hsnd _ _ _ Hst) as (Hh' & Hm' & _).
       pose proof (nstep_mm_vm_only n mo eff mo' [] Hm Hs Hst) as [Hvo _].

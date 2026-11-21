@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the write node's access_ok gate and the write and writev nodes' channel reader, the iovec copy-in ledger (new iovec_entry_accesses_cov), the C-string walk's access_ok stop and the path nodes' 2^47 bound, the four new descriptor kinds, and unlinkat's AT_REMOVEDIR alt. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -105,10 +106,10 @@ Qed.
   at_nodeA segs (NWrite fd bs) RNG ms -> minv mo -> m_halted mo = None ->
   node_cov (nstep (NWrite fd bs)) ms mo.
 Proof.
-  intros ms mo fd bs [(Hsvc & Hfd & Ha0 & Ha2 & Hlen & Hrom & Hbs) HCOV] Hminv Hh. cbn [ncov] in HCOV.
+  intros ms mo fd bs [(Hsvc & Hfd & Ha0 & Ha2 & Hlen & Hacc & Hrom & Hbs) HCOV] Hminv Hh. cbn [ncov] in HCOV.
   unfold max_write, rw_bytes_max in Hlen.
   pose proof (bytes_at_in _ _ _ _ Hrom Hbs) as Hin.
-  destruct (std_chan mo fd Hminv Hfd) as [Hlk Hw].
+  destruct (std_chan mo fd Hminv Hfd) as (Hlk & Hw & Hrdr).
   apply (write_family_cov ms mo (Z_to_bv 64 64) fd bs (fun k => [(areg ms 11, k)]) Hsvc Hh Hminv); [|lia|].
   2:{ intros k Hk. eapply cov_one; [exact HCOV| lia]. }
   intros o. rewrite syscall_spec_64 by (sysno 64). rewrite in_a0_si, in_a1_si, in_a2_si, Ha0, Ha2.
@@ -117,6 +118,12 @@ Proof.
   - rewrite unsigned_lit by lia. unfold rw_bytes_max. lia.
   - rewrite w_is0_lit by lia. apply Z.eqb_neq. lia.
   - rewrite in_mem_si. rewrite <- (wa_unsigned_id (areg ms 11)). apply read_bytes_map_bytes_in; [exact Hin|lia].
+  - (* the [access_ok] gate [write_spec]'s channel arm gained at 75d69e00
+       Sys/Fs/ReadWrite.v:1693-1708, discharged from the address bound [at_node]'s
+       NWrite case carries *)
+    rewrite unsigned_lit by lia. unfold access_okb, TASK_SIZE.
+    apply andb_true_intro; split; apply Z.leb_le; lia.
+  - exact Hrdr.
 Qed.
 
 (* [comment removed for export] *)
@@ -125,14 +132,31 @@ Qed.
 
 (* [comment removed for export] *)
 
+(* LPS 727298f3: one descriptor's copy-in ledger is [State.iovec_entry_accesses]: nothing, its
+   [iov_len] half, or the whole 16 bytes, by which loads the kernel completed. *)
+#[using="Type"] Lemma iovec_entry_accesses_cov : forall mp (a : word) len,
+  rng RNG (bv_unsigned a) len -> 16 <= len -> bv_unsigned a + 16 <= 2^64 ->
+  Forall (acc_in RNG) (iovec_entry_accesses mp a).
+Proof.
+  intros mp a len HR Hl HB. pose proof (bv_unsigned_in_range 64 a) as Ra. change (bv_modulus 64) with (2^64) in Ra.
+  unfold iovec_entry_accesses.
+  destruct (read_u64 mp (a + 8)); [|constructor].
+  destruct (read_u64 mp a).
+  - eapply cov_one; [exact HR| lia].
+  - assert (U8 : bv_unsigned (a + 8)%bv = bv_unsigned a + 8).
+    { rewrite bv_add_unsigned. unfold bv_wrap. change (bv_modulus 64) with (2^64).
+      change (bv_unsigned (8 : word)) with 8. apply Z.mod_small. lia. }
+    constructor; [|constructor]. eapply rng_acc_var; [exact HR|]. rewrite U8. lia.
+Qed.
+
 #[using="Type"] Lemma copy_iovecs_accesses_cov : forall mp k (a : word),
   rng RNG (bv_unsigned a) (16 * Z.of_nat k) -> bv_unsigned a + 16 * Z.of_nat k <= 2^64 ->
   Forall (acc_in RNG) (copy_iovecs_accesses mp a k).
 Proof.
   intros mp k. induction k as [|k IH]; intros a HR HB; cbn [copy_iovecs_accesses]; [constructor|].
   pose proof (bv_unsigned_in_range 64 a) as Ra. change (bv_modulus 64) with (2^64) in Ra.
-  constructor.
-  - eapply rng_acc_var; [exact HR|]. lia.
+  apply Forall_app. split.
+  - eapply iovec_entry_accesses_cov; [exact HR| lia| lia].
   - destruct (read_iovec_entry mp a); try constructor.
     destruct (Z.eq_dec (Z.of_nat k) 0) as [E|E]; [destruct k; [constructor| lia]|].
     assert (U : bv_unsigned (a + 16)%bv = bv_unsigned a + 16).
@@ -149,7 +173,7 @@ Proof.
   destruct (bv_eqb (Z_to_bv 64 (Z.of_nat cnt)) (Z_to_bv 64 1)) eqn:E1.
   - destruct (negb (access_okb a 16)); [constructor|].
     apply bv_eqb_eq in E1. apply (f_equal bv_unsigned) in E1. rewrite !unsigned_lit in E1 by lia.
-    eapply cov_one; [exact HR| lia].
+    eapply iovec_entry_accesses_cov; [exact HR| lia| lia].
   - destruct (bv_eqb (Z_to_bv 64 (Z.of_nat cnt)) (Z_to_bv 64 0)); [constructor|].
     destruct (IOV_MAX <? bv_unsigned (Z_to_bv 64 (Z.of_nat cnt))); [constructor|].
     destruct (negb (access_okb a (16 * bv_unsigned (Z_to_bv 64 (Z.of_nat cnt))))); [constructor|].
@@ -200,7 +224,7 @@ Proof.
   pose proof (iovs_ok_of_at _ _ _ _ Hrom Hbufs ltac:(lia)) as Hok.
   pose proof (iovs_range_of_at _ _ _ _ Hbufs) as Hrng.
   pose proof (Forall2_length Hbufs) as Hleq.
-  destruct (std_chan mo fd Hminv Hfd) as [Hlk Hw].
+  destruct (std_chan mo fd Hminv Hfd) as (Hlk & Hw & Hrdr).
   pose proof (iovs_total_ok _ _ _ Hok) as Htotal.
   assert (Hcnt32 : iovcnt32 (Z_to_bv 64 (Z.of_nat (length bufs))) = Z_to_bv 64 (Z.of_nat (length bufs))).
   { unfold iovcnt32. apply abi_low32_small. lia. }
@@ -229,6 +253,7 @@ Proof.
   - rewrite Htotal. unfold MAX_RW_COUNT. lia.
   - rewrite in_mem_si. apply gather_iovecs_ok. exact Hok.
   - lia.
+  - exact Hrdr.
 Qed.
 
 (* [comment removed for export] *)
@@ -240,6 +265,8 @@ Qed.
   bytes_in mp a (str ++ [Z_to_bv 8 0]) -> (cstr_access_len_aux mp (wa a) fuel <= length str + 1)%nat.
 Proof.
   induction str as [|b str IH]; intros fuel mp a H; destruct fuel as [|fuel]; cbn [cstr_access_len_aux length]; try lia.
+  (* LPS 727298f3: the walk stops (length 0) at an address past strncpy_from_user's clamp. *)
+  all: destruct (access_okb (wa a) 1); cbn [negb]; try lia.
   - cbn [app] in H. apply bytes_in_cons in H as [Hb _]. rewrite Hb. rewrite (proj2 (bv_eqb_eq _ _) eq_refl). lia.
   - cbn [app] in H. apply bytes_in_cons in H as [Hb H]. rewrite Hb.
     destruct (bv_eqb b (Z_to_bv 8 0)); [lia|]. rewrite wa_succ. specialize (IH fuel mp (a + 1) H). lia.
@@ -274,7 +301,7 @@ Qed.
   at_nodeA segs (NOpen path) RNG ms -> minv mo -> m_halted mo = None ->
   node_cov (nstep (NOpen path)) ms mo.
 Proof.
-  intros ms mo path [(Hsvc & Ha0 & Hfl & Hnz & Hsl & Hdd & Hrom & Hp) HCOV] Hminv Hh. cbn [ncov] in HCOV.
+  intros ms mo path [(Hsvc & Ha0 & Hfl & Hnz & Hsl & Hdd & H47 & Hrom & Hp) HCOV] Hminv Hh. cbn [ncov] in HCOV.
   pose proof (path_reads_cov ms path Hrom Hp HCOV) as COVR.
   pose proof (bytes_at_in _ _ _ _ Hrom Hp) as Hin.
   assert (Hmfl : modeled_open_flags (areg ms 12) = true).
@@ -290,9 +317,9 @@ Proof.
                   if (path_max <=? length path)%nat then CstrTooLong else CstrOk path).
   { rewrite Hmem. unfold read_cstr. rewrite <- (wa_unsigned_id (areg ms 11)).
     destruct (Nat.leb_spec0 path_max (length path)) as [Hlong|Hshort].
-    - apply (read_cstr_aux_toolong_bytes_in path_max path); [exact Hlong|exact Hnz|].
+    - apply (read_cstr_aux_toolong_bytes_in path_max path); [exact Hlong|exact Hnz| lia |].
       apply bytes_in_app in Hin as [Hin _]. exact Hin.
-    - apply (read_cstr_aux_bytes_in path path_max); [lia|exact Hnz|exact Hin]. }
+    - apply (read_cstr_aux_bytes_in path path_max); [lia|exact Hnz|exact H47|exact Hin]. }
   (* [comment removed for export] *)
   assert (Hchar :
     (exists r mo1, (forall o, syscall_spec i mo o <-> o = Ok (with_copyins R (eff0 r)) mo1 []) /\
@@ -369,7 +396,7 @@ Proof.
     apply andb_true_intro; split; apply Z.leb_le; lia. }
   unfold i in *; clear i. cbn [nstep].
   destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [e|] eqn:Hlk.
-  - pose proof (proj1 (proj2 (proj2 (proj2 Hminv))) _ _ Hlk) as Hok. destruct e as [ch|p off|p off|p off|p off| |sk|pid w|rd wr| ]; cbn [fd_ok] in Hok.
+  - pose proof (proj1 (proj2 (proj2 (proj2 Hminv))) _ _ Hlk) as Hok. destruct e as [ch|p off|p off|p off|p off| |sk|pid w|rd wr| | | | | ]; cbn [fd_ok] in Hok.
     + (* [comment removed for export] *) exfalso. rewrite unsigned_lit in Hok by lia. lia.
     + (* [comment removed for export] *)
       destruct (fs_lookup (m_fs mo) p) as [data|] eqn:Hfs; [|exfalso; exact (Hok eq_refl)].
@@ -408,6 +435,10 @@ Proof.
       * intros o. rewrite Hsp. apply (read_null_outcome _ _ _ _ _ _ Hlk).
       * intros eff mo' evs. cbn [nstep]. rewrite Hlk. tauto.
     + destruct Hok.   (* [comment removed for export] *)
+    + destruct Hok.   (* FdStream: [fd_ok]'s catch-all sends it to [False]. *)
+    + destruct Hok.   (* FdEventfd *)
+    + destruct Hok.   (* FdDgram *)
+    + destruct Hok.   (* FdAnon *)
   - (* [comment removed for export] *)
     eapply (cov_det0 _ ms mo (Z_to_bv 64 63) (efferr EBADF) mo []); [exact Hsvc|exact Hh| | |exact Hh|exact Hminv|cov_tac].
     * intros o. rewrite Hsp. apply (read_badfd_outcome _ _ _ _ _ _ Hlk).
@@ -471,7 +502,7 @@ Qed.
   at_nodeA segs (NOpenW path mode) RNG ms -> minv mo -> m_halted mo = None ->
   node_cov (nstep (NOpenW path mode)) ms mo.
 Proof.
-  intros ms mo path mode [(Hsvc & Ha0 & Hfl & Ha3 & Hnz & Hslash & Hrom & Hp) HCOV] Hminv Hh. cbn [ncov] in HCOV.
+  intros ms mo path mode [(Hsvc & Ha0 & Hfl & Ha3 & Hnz & Hslash & H47 & Hrom & Hp) HCOV] Hminv Hh. cbn [ncov] in HCOV.
   pose proof (path_reads_cov ms path Hrom Hp HCOV) as COVR.
   pose proof (bytes_at_in _ _ _ _ Hrom Hp) as Hin.
   assert (Hmfl : modeled_open_flags (areg ms 12) = true) by (apply modeled_open_flags_wr; exact Hfl).
@@ -485,9 +516,9 @@ Proof.
                   if (path_max <=? length path)%nat then CstrTooLong else CstrOk path).
   { rewrite Hmem. unfold read_cstr. rewrite <- (wa_unsigned_id (areg ms 11)).
     destruct (Nat.leb_spec0 path_max (length path)) as [Hlong|Hshort].
-    - apply (read_cstr_aux_toolong_bytes_in path_max path); [exact Hlong|exact Hnz|].
+    - apply (read_cstr_aux_toolong_bytes_in path_max path); [exact Hlong|exact Hnz| lia |].
       apply bytes_in_app in Hin as [Hin _]. exact Hin.
-    - apply (read_cstr_aux_bytes_in path path_max); [lia|exact Hnz|exact Hin]. }
+    - apply (read_cstr_aux_bytes_in path path_max); [lia|exact Hnz|exact H47|exact Hin]. }
   (* [comment removed for export] *)
   assert (Hchar :
     (exists r, (forall o, syscall_spec i mo o <-> o = Ok (with_copyins R (eff0 r)) mo []) /\
@@ -621,7 +652,7 @@ Proof.
   unfold i in *; clear i. cbn [nstep].
   destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [e|] eqn:Hlk.
   - pose proof (proj1 (proj2 (proj2 (proj2 Hminv))) _ _ Hlk) as Hok.
-    destruct e as [ch|p cur|p cur|p cur|p cur| |sk|pid w|rd wr| ]; cbn [fd_ok] in Hok; try (destruct Hok; fail); try congruence.
+    destruct e as [ch|p cur|p cur|p cur|p cur| |sk|pid w|rd wr| | | | | ]; cbn [fd_ok] in Hok; try (destruct Hok; fail); try congruence.
     + exfalso. rewrite unsigned_lit in Hok by lia. lia.
     + (* [comment removed for export] *)
       destruct (fs_lookup (m_fs mo) p) as [data|] eqn:Hfs; [|exfalso; exact (Hok eq_refl)].
@@ -669,7 +700,7 @@ Qed.
   at_nodeA segs (NUnlink path rmdir) RNG ms -> minv mo -> m_halted mo = None -> nsafe (NUnlink path rmdir) mo ->
   node_cov (nstep (NUnlink path rmdir)) ms mo.
 Proof.
-  intros ms mo path rmdir [(Hsvc & Ha0 & Ha2 & Hnz & Hne & Hnd & Hndd & Hsl & Hlen & Hrom & Hp) HCOV] Hminv Hh Hsafe. cbn [nsafe] in Hsafe.
+  intros ms mo path rmdir [(Hsvc & Ha0 & Ha2 & Hnz & Hne & Hnd & Hndd & Hsl & Hlen & H47 & Hrom & Hp) HCOV] Hminv Hh Hsafe. cbn [nsafe] in Hsafe.
   cbn [ncov] in HCOV. pose proof (path_reads_cov ms path Hrom Hp HCOV) as COVR.
   pose proof (bytes_at_in _ _ _ _ Hrom Hp) as Hin.
   set (i := sys_input segs ms (Z_to_bv 64 35)).
@@ -680,7 +711,7 @@ Proof.
   assert (Hdir : fd32 (areg ms 10) = AT_FDCWD32) by (rewrite Ha0; reflexivity).
   assert (Hcstr : read_cstr (in_mem i) (areg ms 11) = CstrOk path).
   { change (in_mem i) with (ms_read_byte ms). unfold read_cstr. rewrite <- (wa_unsigned_id (areg ms 11)).
-    apply (read_cstr_aux_bytes_in path path_max); [unfold path_max; unfold NAME_MAX in Hlen; lia|exact Hnz|exact Hin]. }
+    apply (read_cstr_aux_bytes_in path path_max); [unfold path_max; unfold NAME_MAX in Hlen; lia|exact Hnz|exact H47|exact Hin]. }
   destruct Hsafe as [Hu Hnames].
   assert (Hsp : forall o, syscall_spec i mo o <-> unlink_out (unlink_reads i (areg ms 11)) mo path rmdir o).
   { intros o. unfold i. rewrite syscall_spec_35 by (sysno 35). rewrite in_a0_si, in_a1_si, in_a2_si. fold i. rewrite <- Hrm.
@@ -690,11 +721,13 @@ Proof.
   destruct (fs_lookup (m_fs mo) path) as [d|] eqn:Hl.
   2:{ eapply (cov_det _ ms mo (Z_to_bv 64 35) (errno_ret ENOENT) R mo []); [exact Hsvc|exact Hh|exact Hsp| |exact Hh|exact Hminv|exact COVR].
       intros eff mo' evs. cbn [nstep]. rewrite Hsl, Hu, Hl. unfold efferr, eff0. tauto. }
-  destruct rmdir.
-  { eapply (cov_det _ ms mo (Z_to_bv 64 35) (errno_ret ENOTDIR) R mo []); [exact Hsvc|exact Hh|exact Hsp| |exact Hh|exact Hminv|exact COVR].
-    intros eff mo' evs. cbn [nstep]. rewrite Hsl, Hu, Hl. unfold efferr, eff0. tauto. }
-  intros x8' eff mo' evs Hx Hsp'. rewrite Hsvc in Hx. injection Hx as <-.
-  apply Hsp in Hsp' as [(e & He & Heq) | Heq]; apply Ok_inj in Heq as (-> & _ & _);
+  (* 75d69e00:theories/LinuxProcessSem/Sys/Fs/Namei.v:337-341 -- the AT_REMOVEDIR arm is an
+     [alt], so [cov_det]'s single outcome no longer characterises it.  Coverage does not
+     care which errno is chosen: every outcome of this arm carries the same copyins and
+     no writes, so the removal case's own ending closes it unchanged. *)
+  destruct rmdir;
+    intros x8' eff mo' evs Hx Hsp'; rewrite Hsvc in Hx; injection Hx as <-;
+    apply Hsp in Hsp' as [(e & He & Heq) | Heq]; apply Ok_inj in Heq as (-> & _ & _);
     unfold syscall_effect_accesses, with_copyins, efferr, eff0; cbn [eff_copyins eff_writes write_accesses];
     rewrite app_nil_r; exact COVR.
 Qed.
@@ -767,7 +800,7 @@ Proof.
     change (Z_to_bv 64 b) with (wa b). rewrite Hw. discriminate. }
   unfold i in *; clear i. cbn [nstep]. fold iovs.
   destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [e|] eqn:Hlk.
-  - pose proof (proj1 (proj2 (proj2 (proj2 Hminv))) _ _ Hlk) as Hok. destruct e as [ch|p off|p off|p off|p off| |sk|pid w|rd wr| ]; cbn [fd_ok] in Hok.
+  - pose proof (proj1 (proj2 (proj2 (proj2 Hminv))) _ _ Hlk) as Hok. destruct e as [ch|p off|p off|p off|p off| |sk|pid w|rd wr| | | | | ]; cbn [fd_ok] in Hok.
     + exfalso. rewrite unsigned_lit in Hok by lia. lia.
     + (* [comment removed for export] *)
       destruct (fs_lookup (m_fs mo) p) as [data|] eqn:Hfs; [|exfalso; exact (Hok eq_refl)].
@@ -807,6 +840,10 @@ Proof.
       * intros o. rewrite Hsp. apply (readv_null_outcome _ _ _ _ _ _ Hlk).
       * intros eff mo' evs. cbn [nstep]. rewrite Hlk. unfold efferr, eff0. tauto.
     + destruct Hok.   (* [comment removed for export] *)
+    + destruct Hok.   (* FdStream: [fd_ok]'s catch-all sends it to [False]. *)
+    + destruct Hok.   (* FdEventfd *)
+    + destruct Hok.   (* FdDgram *)
+    + destruct Hok.   (* FdAnon *)
   - (* [comment removed for export] *)
     eapply (cov_det0 _ ms mo (Z_to_bv 64 65) (efferr EBADF) mo []); [exact Hsvc|exact Hh| | |exact Hh|exact Hminv|cov_tac].
     * intros o. rewrite Hsp. apply (readv_badfd_outcome _ _ _ _ _ _ Hlk).

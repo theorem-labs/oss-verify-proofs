@@ -1,11 +1,11 @@
 (* libreac/fuzz_identity, build asan: from the wrappers' read-only premise (lib/A/Rt/WrapRo.v aro_unowned) to the
-(* Modified by Theorem Labs, 2026-10: derived from lib/A/WrapRoM.v of this library by derive_y.py: module names A.Axyz -> AU.Yxyz, addresses moved from reac-pw/fuzz_pin's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/WrapRoM.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
    musl constants the strlen and memchr walks read (lib/A/YE39.v mconsts_view: 0x10350 .. 0x10370). Those 32 bytes
    lie in a read-only segment (YE39.v mc_in_rom), are not in Tfib_owned_static (checked range by range below, so a
    core whose list covers them fails here and not in a walk), and are not errno. This replaces cgif's
    mconsts_of_rom_view (YE39.v:40), whose premise rom_view a caller cannot carry across __asan_stack_malloc_*. *)
 (* Modified by Theorem Labs, 2026-10-29: for r-identity's acceptance (cold/h-rw-ide-6-wrapacc), the record class is TfibSyms, not IdentTfibSyms (DECISIONS-LIVE 05:31Z: TfibSyms in both A and B, no --rename), and the core modules are Required by full path at the applied A core's names (lib/A/A*.v, lib/Reusable/YA0m, YE08, YE21). *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/A/Rt/WrapRoM.v at origin/ossv/recipes 6ebe35ba632; module paths changed to reac-pw/fuzz_pin, its addresses moved to reac-pw/fuzz_pin's ASan build. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/A/Rt/WrapRoM.v; module paths changed to reac-pw/fuzz_pin, its addresses moved to reac-pw/fuzz_pin's ASan build. *)
+(* Modified by Theorem Labs, 2026-10: derived from lib/A/Rt/WrapRoM.v of this library by derive_y.py: module names A.Axyz -> AU.Yxyz, addresses moved from reac-pw/fuzz_pin's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/Rt/WrapRoM.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

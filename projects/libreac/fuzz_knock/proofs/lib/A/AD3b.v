@@ -7,6 +7,7 @@
    The proof below the statement is Qed (tfib_alloc_ok): both arms walked over tfibtbl_rtB, the first-use arm through create_contract at 0x6eb28.
    Amendment 11 (a Theorem Labs lane): the first-use arm's last conjunct states X fresh against every map of Alloc's entry model md (Forall over vm_maps (m_vmmaps md)), from S3's new last conjunct P7 at Create's call; Alloc's steps before the call change the model only by with_vm_backing, which keeps m_vmmaps (m_vmmaps_wvb).
    rule 24: proves function StackStore::Alloc (reuse search: see (internal path)). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -25,7 +26,7 @@ Unset Lia Cache. Unset Nia Cache.
 Local Set Warnings "-abstract-large-number".
 Local Open Scope Z_scope.
 
-(* knock's Alloc (A image, sha256 61768cf4739b..., read from the packed base c8557374's Asan_seg_001.hex; the AU twin's
+(* knock's Alloc (A image, sha256 61768cf4739b..., read from the packed base's Asan_seg_001.hex; the AU twin's
    numbers come from AU's own tables, which differ from A's at least in the page-size GOT slot):
      0x6ea18  addi sp,sp,-16; sd ra,8(sp); sd s0,0(sp); a5 := count; a1 := this
      0x6ea2c  amoadd.d s0,a5,(a0)          start := s_total; s_total += count (BEFORE Create is called)

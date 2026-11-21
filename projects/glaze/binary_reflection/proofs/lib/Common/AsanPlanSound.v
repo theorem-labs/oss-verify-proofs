@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the CONFIG_RSEQ flag as the RSEQ section variable; the vDSO reservation in the reserved ledger: co_res's three facts with co_resx, co_mres and co_vdso). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -445,6 +446,13 @@ Variable IT : itab.
 Hypothesis IT_ok : itab_sound SEGS IT.
 Variable A : atable.
 Variable nx0 : nat.
+(* The run's CONFIG_RSEQ flag, mirroring [AP]'s own Section variable
+   (Common/AsanPlan.v:3495).  It is declared HERE in the same position --
+   after [nx0], before [LIMIT] -- so the discharged argument order of this
+   file's lemmas matches [AP]'s: [SEGS IT A nx0 RSEQ LIMIT ...].  It stays
+   FREE: this file proves the checker sound for every value of the flag, and
+   a consumer instantiates it with [rseq_z (kb_rseq (in_kernel inp))]. *)
+Variable RSEQ : Z.
 Variable LIMIT : Z.
 Variable HS : nat -> option acs.
 (* [comment removed for export] *)
@@ -482,7 +490,7 @@ Variable FS0 : Fs.Fs.
 (* [comment removed for export] *)
 Variable KC : nat.
 
-#[local] Notation CHECK := (AP.check SEGS IT A nx0 LIMIT XN XE XB HS KC).
+#[local] Notation CHECK := (AP.check SEGS IT A nx0 RSEQ LIMIT XN XE XB HS KC).
 
 #[local] Notation cfg := (cfg_of SEGS).
 
@@ -592,6 +600,23 @@ Qed.
 
 
 
+(* LPS 08b1429: ported from leptonica/bilateral_fuzzer
+   proofs/lib/K5/AS/AsanPlanCore.v:71-73 and AsanPlanSound.v:283-289 at
+   the donor's revision.  The donor's [atable] argument is dropped: [A] is a Section
+   variable here and neither constant reads it.  [resx_entry_ok] is the
+   size/alignment/2^47 bound and is NOT what separates a vDSO interval from this
+   tree's ASan slot space -- see the comment on [co_res]. *)
+Definition n_resx : nat := 2%nat.
+Definition p_resx : nat := 20%nat.
+Definition resx_bytes : Z := Z.of_nat p_resx * 4096.
+Definition resx_entry_ok (iv : word * word) : Prop :=
+  0 < bv_unsigned (snd iv)
+  /\ bv_unsigned (fst iv) mod 4096 = 0
+  /\ bv_unsigned (snd iv) mod 4096 = 0
+  /\ img_hi A <= bv_unsigned (fst iv)
+  /\ KHI + 4096 <= bv_unsigned (fst iv)
+  /\ bv_unsigned (fst iv) + bv_unsigned (snd iv) <= 2 ^ 47.
+
 Record cs_ok (E : env) (cs : acs) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model) : Prop := CS_OK {
   (* [comment removed for export] *)
   co_regs  : regs_ok E (s_regs (a_ss cs)) R;
@@ -602,7 +627,23 @@ Record cs_ok (E : env) (cs : acs) (R : bvmap 5 word) (FULL : word -> option byte
   co_fds   : fds_ok E (a_fd cs) model;
   co_fs    : m_fs model = FS0;
   co_tid   : a_tidset cs = false -> m_tid model = None;
-  co_res   : vm_reserved (m_vmmaps model) = segments_reserved SEGS;
+  (* LPS 08b1429: the reserved ledger is the image's segments followed by the
+     launch's vDSO reservation ([State.init_reserved]; AsSInit.v:754-781 proves
+     the appended shape).  Three facts in ONE field so [cs_ok] keeps its arity;
+     projections [co_resx], [co_mres], [co_vdso] below the record.  Ported from
+     leptonica/bilateral_fuzzer proofs/lib/K5/AS/AsanPlanSound.v:291-313 at
+     the donor's revision.  The MIDDLE conjunct is what carries [AsKSys7b.res_low] and
+     [AsKSys10.res_in_hull] in this tree: no CONSTANT separates the vDSO pair
+     from the ASan slot space, so [resx_entry_ok] cannot. *)
+  co_res   : (exists rx : list (word * word),
+                vm_reserved (m_vmmaps model) = segments_reserved SEGS ++ rx
+                /\ Forall resx_entry_ok rx
+                /\ (length rx <= n_resx)%nat
+                /\ sum_sizes rx <= resx_bytes)
+             /\ Forall (fun iv => Forall (iv_disjoint iv) (vm_reserved (m_vmmaps model)))
+                       (vm_maps (m_vmmaps model))
+             /\ incl (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model)))
+                     (vm_reserved (m_vmmaps model));
   co_limit : vm_limit (m_vmmaps model) = LIMIT;
   (* [comment removed for export] *)
   co_maps  : maps_match E (a_maps cs) (vm_maps (m_vmmaps model));
@@ -640,6 +681,32 @@ Record cs_ok (E : env) (cs : acs) (R : bvmap 5 word) (FULL : word -> option byte
                FULL a = Some (Z_to_bv 8 0);
   co_sinv  : SINV E FULL
 }.
+
+(* LPS 08b1429: the three projections of [co_res].  Ported from
+   leptonica/bilateral_fuzzer proofs/lib/K5/AS/AsanPlanSound.v:368-382 at
+   the donor's revision. *)
+Lemma co_resx : forall E cs R FULL model, cs_ok E cs R FULL model ->
+  exists rx : list (word * word),
+    vm_reserved (m_vmmaps model) = segments_reserved SEGS ++ rx
+    /\ Forall resx_entry_ok rx
+    /\ (length rx <= n_resx)%nat
+    /\ sum_sizes rx <= resx_bytes.
+Proof using . intros E cs R FULL model HC. exact (proj1 (co_res _ _ _ _ _ HC)). Qed.
+
+Lemma co_mres : forall E cs R FULL model, cs_ok E cs R FULL model ->
+  Forall (fun iv => Forall (iv_disjoint iv) (vm_reserved (m_vmmaps model))) (vm_maps (m_vmmaps model)).
+Proof using . intros E cs R FULL model HC. exact (proj1 (proj2 (co_res _ _ _ _ _ HC))). Qed.
+
+Lemma co_vdso : forall E cs R FULL model, cs_ok E cs R FULL model ->
+  incl (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) (vm_reserved (m_vmmaps model)).
+Proof using . intros E cs R FULL model HC. exact (proj2 (proj2 (co_res _ _ _ _ _ HC))). Qed.
+
+(* LPS 08b1429: the [KHI] clause of [resx_entry_ok] against the literal, so
+   consumers need not have [APC.KHI] in scope.  [KHI = 0x10007fff8000]
+   (AzPlanCore.v:102) is the same literal as [AsVocab.AS_HEAPLO]
+   (AsVocab.v:1621). *)
+Lemma resx_above_heap : forall iv, resx_entry_ok iv -> 0x10007fff8000 <= bv_unsigned (fst iv).
+Proof using . intros iv (_ & _ & _ & _ & H & _). unfold KHI in H. lia. Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -1399,7 +1466,7 @@ Definition always (cs : acs) : bool := true.
 (* [comment removed for export] *)
 Definition sys_stmt (y : snode) : Prop := node1_stmt (is_ecall_at SEGS) (node_sys A nx0 y).
 (* [comment removed for export] *)
-Definition x_stmt (x : xnode) : Prop := forall args, node1_stmt always (node_x SEGS A nx0 x args).
+Definition x_stmt (x : xnode) : Prop := forall args, node1_stmt always (node_x SEGS A nx0 RSEQ x args).
 (* [comment removed for export] *)
 Definition fresh_stmt : Prop := forall r logc base, node1_stmt always (fun cs => node_fresh nx0 cs r logc base).
 (* [comment removed for export] *)
@@ -2949,7 +3016,7 @@ Proof. reflexivity. Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 Lemma check_all_ok : forall (chk : acs -> plan -> cres) k css s,
-  check_all A chk k css = COk s ->
+  check_all A RSEQ chk k css = COk s ->
   (exists cs1, In cs1 css /\ chk cs1 k = COk s /\ True) /\ (forall cs, In cs css -> chk cs k = COk s).
 Proof.
   intros chk k css s H. unfold check_all in H. destruct css as [|cs0 rest]; [discriminate|].
@@ -3017,7 +3084,7 @@ Proof.
   - destruct (is_ecall_at SEGS cs); [|discriminate]. destruct (node_mmapin A LIMIT false cs) as [[[csa csb] cscs]|]; [|discriminate].
     destruct (CHECK bfuel fuel lc csa ia) as [sa|] eqn:H1; [|discriminate].
     destruct (CHECK bfuel fuel lc csb ib) as [sb|] eqn:H2; [|discriminate].
-    destruct (check_all A (CHECK bfuel fuel lc) ic cscs) as [sc|] eqn:H3; [|discriminate].
+    destruct (check_all A RSEQ (CHECK bfuel fuel lc) ic cscs) as [sc|] eqn:H3; [|discriminate].
     injection Hc as <-.
     destruct (check_all_ok _ _ _ _ H3) as [(cs1 & Hin1 & Hc1 & _) _].
     apply salt2_vars; [exact (IH _ ia _ sa H1) | apply salt2_vars; [exact (IH _ ib _ sb H2) | exact (IH _ ic _ sc Hc1)]].
@@ -3029,7 +3096,7 @@ Proof.
     destruct (CHECK bfuel fuel lc csa ka) as [sa|] eqn:H1; [|discriminate].
     destruct (CHECK bfuel fuel lc csb kb) as [sb|] eqn:H2; [|discriminate].
     injection Hc as <-. apply salt2_vars; [exact (IH _ ka _ sa H1) | exact (IH _ kb _ sb H2)].
-  - destruct (node_x SEGS A nx0 x args cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
+  - destruct (node_x SEGS A nx0 RSEQ x args cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
   - destruct (XN xid xargs cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
   - destruct (XE eid eargs cs) as [[[fd ps] cs1]|]; [|discriminate].
     destruct (CHECK bfuel fuel lc cs1 k) as [s1|] eqn:H1; [|discriminate].
@@ -3076,7 +3143,7 @@ Proof.
     destruct (is_ecall_at SEGS cs); [|discriminate]. destruct (node_mmapin A LIMIT true cs) as [[[csa csb] cscs]|]; [|discriminate].
     destruct (CHECK bfuel fuel lc csa iha) as [sa|] eqn:H1; [|discriminate].
     destruct (CHECK bfuel fuel lc csb ihb) as [sb|] eqn:H2; [|discriminate].
-    destruct (check_all A (CHECK bfuel fuel lc) ihc cscs) as [sc|] eqn:H3; [|discriminate].
+    destruct (check_all A RSEQ (CHECK bfuel fuel lc) ihc cscs) as [sc|] eqn:H3; [|discriminate].
     injection Hc as <-.
     destruct (check_all_ok _ _ _ _ H3) as [(cs1 & Hin1 & Hc1 & _) _].
     apply salt2_vars; [exact (IH _ iha _ sa H1) | apply salt2_vars; [exact (IH _ ihb _ sb H2) | exact (IH _ ihc _ sc Hc1)]].
@@ -4088,7 +4155,7 @@ Proof.
     destruct (node_mmapin A LIMIT false cs) as [[[csa csb] cscs]|] eqn:Hn; [|discriminate].
     destruct (CHECK bfuel fuel lc csa ia) as [sa|] eqn:H1; [|discriminate].
     destruct (CHECK bfuel fuel lc csb ib) as [sb|] eqn:H2; [|discriminate].
-    destruct (check_all A (CHECK bfuel fuel lc) ic cscs) as [sc|] eqn:H3; [|discriminate].
+    destruct (check_all A RSEQ (CHECK bfuel fuel lc) ic cscs) as [sc|] eqn:H3; [|discriminate].
     injection Hc as <-.
     pose proof (proj2 (check_all_ok _ _ _ _ H3)) as Hall.
     eapply srz_conseq; [| eapply t_eq_trans; [| apply sd_salt2; exact HD]; apply t_eq_alt2; [apply t_eq_refl' | apply sd_salt2; exact HD]].
@@ -4112,7 +4179,7 @@ Proof.
     eapply srz_conseq; [| apply sd_salt2; exact HD].
     eapply (node_brk2_sound cs csa csb E R FULL model); [exact HC | exact Hec | exact Hn | exact (CONT ka csa sa H1) | exact (CONT kb csb sb H2)].
   - (* [comment removed for export] *)
-    destruct (node_x SEGS A nx0 x args cs) as [cs1|] eqn:Hn; [|discriminate].
+    destruct (node_x SEGS A nx0 RSEQ x args cs) as [cs1|] eqn:Hn; [|discriminate].
     eapply (node_x_sound x args cs cs1 E R FULL model); [exact HC | reflexivity | exact Hn |]. exact (CONT k cs1 s Hc).
   - (* [comment removed for export] *)
     destruct (XN xid xargs cs) as [cs1|] eqn:Hn; [|discriminate].
@@ -4313,7 +4380,7 @@ Proof.
     destruct (node_mmapin A LIMIT true cs) as [[[csa csb] cscs]|] eqn:Hn; [|discriminate].
     destruct (CHECK bfuel fuel lc csa iha) as [sa|] eqn:H1; [|discriminate].
     destruct (CHECK bfuel fuel lc csb ihb) as [sb|] eqn:H2; [|discriminate].
-    destruct (check_all A (CHECK bfuel fuel lc) ihc cscs) as [sc|] eqn:H3; [|discriminate].
+    destruct (check_all A RSEQ (CHECK bfuel fuel lc) ihc cscs) as [sc|] eqn:H3; [|discriminate].
     injection Hc as <-.
     pose proof (proj2 (check_all_ok _ _ _ _ H3)) as Hall.
     eapply srz_conseq; [| eapply t_eq_trans; [| apply sd_salt2; exact HD]; apply t_eq_alt2; [apply t_eq_refl' | apply sd_salt2; exact HD]].

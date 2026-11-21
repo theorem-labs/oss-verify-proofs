@@ -110,16 +110,35 @@ Variable API : AllocAPI B.
 Let segs := ms_segs B.
 Let MR := aa_MR API.
 
+(* 08b1429, Run.v:253-254: segments_reserved maps over
+   `filter (fun s => negb (seg_kernel_map s)) segs`, so membership in [segments_reserved]
+   now needs the segment to be a non-kernel map.  [B] is abstract in this section --
+   [HSEG : ms_segs B = rsegs] is only introduced at Section Facts2 below -- so the fact
+   cannot be computed here and is taken as a premise.  It is discharged once, by
+   [rf_nokmap], at the single consumer of this lemma (rf_ro_false_notimg). *)
 Lemma rf_ro_in_img : forall C, img_check B C = true -> C + 4096 <= 2 ^ 64 ->
+  (forall s, In s (ms_segs B) -> seg_kernel_map s = false) ->
   forall x : word, Mem.ro_addr segs x = true -> in_img B (bv_unsigned x).
 Proof.
-  intros C H HC x Hx. unfold img_check in H. apply andb_prop in H as [H1 _]. rewrite forallb_forall in H1.
+  intros C H HC HK x Hx. unfold img_check in H. apply andb_prop in H as [H1 _]. rewrite forallb_forall in H1.
   unfold Mem.ro_addr in Hx. destruct (find_segment segs (bv_unsigned x) 1) as [seg|] eqn:F; [|discriminate].
   destruct (kb_find_segment segs _ _ _ F) as (Hin & Hlo & Hhi).
   specialize (H1 seg Hin). apply Z.leb_le in H1.
   change segs with (ms_segs B) in Hin.
   split; [intros E; rewrite E in Hin; destruct Hin|].
-  exists (segment_reservation seg). split; [unfold segments_reserved; apply in_map; exact Hin|].
+  assert (Hk : seg_kernel_map seg = false) by exact (HK seg Hin).
+  (* `filter_In` cannot engage: this file's `filter` and the one in the model's
+     definition are different constants (Reusable/YG0h.v:85-95 records the same wall in
+     the other direction).  Proved by reduction, naming no `filter`, as YG0h does. *)
+  exists (segment_reservation seg). split;
+    [ unfold segments_reserved; apply in_map;
+      clear - Hin Hk; revert Hin; generalize (ms_segs B); intros l;
+      induction l as [|a t IH]; cbn; [ tauto | ];
+      intros Hin; cbn in Hin;
+      destruct (seg_kernel_map a) eqn:E; cbn;
+      [ destruct Hin as [->|Hin]; [ rewrite Hk in E; discriminate E | exact (IH Hin) ]
+      | destruct Hin as [->|Hin]; [ left; reflexivity | right; exact (IH Hin) ] ]
+    | ].
   pose proof (N2Z.is_nonneg (seg_base seg)). pose proof (N2Z.is_nonneg (seg_size seg)).
   unfold segment_reservation, page_round_down_Z, page_round_up_Z, page_size. cbn [fst snd].
   rewrite !MState.unsigned_lit by (Z.div_mod_to_equations; lia).
@@ -279,6 +298,14 @@ Hypothesis HG : globals_free B API omx_G.
 Lemma rf_check : img_check B 140735332483072 = true.
 Proof. unfold img_check. rewrite HSEG. vm_compute. reflexivity. Qed.
 
+(* Discharges the kernel-map premise of [rf_ro_in_img] (see its note at :113): here
+   [HSEG] pins [ms_segs B] to the concrete image segments, so the fact computes. *)
+Lemma rf_nokmap : forall s, In s (ms_segs B) -> seg_kernel_map s = false.
+Proof.
+  intros s Hs. rewrite HSEG in Hs. vm_compute in Hs.
+  repeat (destruct Hs as [<-|Hs]; [vm_compute; reflexivity|]). destruct Hs.
+Qed.
+
 Lemma rf_img : img_low B.
 Proof. apply (img_low_of_check B 140735332483072); [exact rf_check | pose proof alloc_ceiling_value; lia]. Qed.
 
@@ -311,7 +338,7 @@ Qed.
 Lemma rf_ro_false_notimg : forall a, 0 <= a < 2 ^ 64 -> ~ in_img B a -> Mem.ro_addr (ms_segs B) (Z_to_bv 64 a) = false.
 Proof.
   intros a Ha Hn. destruct (Mem.ro_addr (ms_segs B) (Z_to_bv 64 a)) eqn:E; [|reflexivity].
-  exfalso. apply Hn. pose proof (rf_ro_in_img B 140735332483072 rf_check ltac:(lia) _ E) as H.
+  exfalso. apply Hn. pose proof (rf_ro_in_img B 140735332483072 rf_check ltac:(lia) rf_nokmap _ E) as H.
   rewrite MState.unsigned_lit in H by lia. exact H.
 Qed.
 

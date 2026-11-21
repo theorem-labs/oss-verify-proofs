@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/RepGrantcf.v (commit 4d286b2e618d, file sha256 ee1b793f286c) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 0 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepGrantcf.v (commit f01d79f3fb5, cf refill round 3; file sha256 c23f271ec80e) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/RepGrantcf.v (file sha256 ee1b793f286c) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 0 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepGrantcf.v (cf refill round 3; file sha256 c23f271ec80e) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* Theorem Labs, 2026-10-30 (a prior worker, RepF4Append's relation side): a placement witness for the errbuf mmap
    of __asan::AppendToErrorMessageBuffer (RepIFcf.append_spec_cf), from the cf relation alone.  It is half (A) of
    RepF4Append's slice premise errb_map_fits_cf: a grant exists, so the MmapOrDie refusal branch needs only the
@@ -37,10 +38,10 @@ Variable B : asyms.
 
 Lemma errb_grant_exists_cf : forall (Hp : list Z) (ly : alayout) (S : astate) (W : world tfibsegs)
   (mem : word -> option byte) (md : Model) (mat : list word) (nZ : Z),
-  ARcf tfibsegs B ly S Hp W mem md -> 0 < nZ <= cf_nob ->
-  exists a, grant_ok_na_pin (with_vm_backing (m_vm_lazy md) mat md) a nZ = true.
+  ARcf tfibsegs B ly S Hp W mem md -> 0 < nZ <= cf_nob -> nZ mod page_size = 0 ->
+  exists a, grant_ok_na_pin (Z_to_bv 64 0) (with_vm_backing (m_vm_lazy md) mat md) a nZ = true.
 Proof.
-intros Hp ly S W mem md mat nZ (M & L & _ & MW & _) HnZ.
+intros Hp ly S W mem md mat nZ (M & L & _ & MW & _) HnZ HnZal.
 pose proof (amc_wf _ _ _ _ _ M) as WF. pose proof (amc_layout _ _ _ _ _ M) as LO.
 set (md0 := with_vm_backing (m_vm_lazy md) mat md).
 pose proof (amwf_same md md0 eq_refl eq_refl MW) as [_ NZ].
@@ -58,7 +59,7 @@ assert (XS : Forall (fun e => 0 <= snd e <= cf_nob) (xs_cf ly S)).
 { unfold xs_cf. destruct (last_cap_idx (st_secs S) 0 None); [|constructor].
   constructor; [|constructor]. cbn [snd]. exact (errb_cap_bound_cf _ _ _ _ _ WF). }
 exact (sec_grant_exists_live_P cf_nob cf_place_limit cf_malloc_max tfibsegs ly S md0 (xs_cf ly S) nZ
-  cf_nob_lo cf_nob_al cf_place_ok cf_sizes_ok LO LC NZ SC LIVE XS HnZ).
+  cf_nob_lo cf_nob_al cf_place_ok cf_sizes_ok LO LC NZ SC LIVE XS HnZ HnZal).
 Qed.
 
 End a.

@@ -2,13 +2,20 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YO0d.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed in_img, auxv_pre, auxv_pre_mono, rz_split, heap_pristine; added auxv_types, AUXV_RAND_K, auxv_types_rand, length_auxv_types, auxv_types_len_ge, rx_ok; removed AUXV_TYPES); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Reusable Require Import YK11 YK0s YK0i YK15 YM06 YM02 YP09.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Reusable Require Import YO0i YO0f YO0x.
-From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Reusable Require Import YM05.
+(* YM01 had no B/ copy, which is why the farm reported "Unable to locate library YM01 with prefix
+   ...lib.B.Reusable" (appended the name to this line and it inherited the prefix).
+   Requiring the plain namespace's YM01 instead makes the Require resolve and then FAILS: YM01's
+   alloc_ceiling is a field of Reusable.YM05's RunCeil class, while this section carries
+   rc : B.Reusable.YM05.RunCeil, so the parameter cannot be inferred (UNDEFINED EVARS, measured
+   locally on the A/ twin at :122). B/Reusable/YM01.v now exists as the translated twin. *)
+From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Reusable Require Import YM05 YM01.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Reusable Require Export YM0b.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Reusable Require Export PlaceCap.
 Import ListNotations.
@@ -65,19 +72,34 @@ Definition word_mem (segs : list Segment) (mem : word -> option byte) (a v : Z) 
 forall k, (k < 8)%nat -> mbyte segs mem (a + Z.of_nat k) = Some (Z_to_bv 8 (le_byte v 8 k)).
 Definition in_img (B : malloc_syms) (a : Z) : Prop := ms_segs B <> [] /\ exists s, In s (segments_reserved (ms_segs B)) /\
 bv_unsigned (fst s) <= a < bv_unsigned (fst s) + bv_unsigned (snd s).
-Definition AUXV_TYPES : list Z := [3; 4; 5; 16; 6; 11; 12; 23; 25; 0].
+(** The auxv type words ([StackLayout.auxv_entries]): the 26 pairs every launch carries
+    (AT_SYSINFO_EHDR, the eight cache words, AT_MINSIGSTKSZ, AT_HWCAP, AT_PAGESZ, AT_CLKTCK, AT_PHDR,
+    AT_PHENT, AT_PHNUM, AT_BASE, AT_FLAGS, AT_ENTRY, AT_UID, AT_EUID, AT_GID, AT_EGID, AT_SECURE,
+    AT_RANDOM, AT_EXECFN), then the two AT_RSEQ pairs only under CONFIG_RSEQ ([rs]), then AT_NULL.
+    mallocng's secret read walks them to AT_NULL, so [auxv_pre] holds for one of the two layouts. *)
+Definition auxv_types (rs : bool) : list Z :=
+[33; 40; 41; 42; 43; 44; 45; 46; 47; 51; 16; 6; 17; 3; 4; 5; 7; 8; 9; 11; 12; 13; 14; 23; 25; 31]
+++ (if rs then [27; 28] else []) ++ [0].
+(** The pair index of AT_RANDOM, which [auxv_types_rand] checks for both layouts. *)
+Definition AUXV_RAND_K : nat := 24.
+Lemma auxv_types_rand : forall rs, nth AUXV_RAND_K (auxv_types rs) 0 = 25.
+Proof. intros [|]; reflexivity. Qed.
+Lemma length_auxv_types : forall rs, Z.of_nat (length (auxv_types rs)) = 27 + 2 * (if rs then 1 else 0).
+Proof. intros [|]; reflexivity. Qed.
+Lemma auxv_types_len_ge : forall rs, 27 <= Z.of_nat (length (auxv_types rs)).
+Proof. intros [|]; cbn; lia. Qed.
 Definition auxv_pre (B : malloc_syms) (sec : Z) (lo : Z) (mem : word -> option byte) : Prop :=
-exists av ar,
+exists (rs : bool) av ar,
 word_mem (ms_segs B) mem (ms_libc B + 8) av /\
-(forall k, (k < 10)%nat -> word_mem (ms_segs B) mem (av + 16 * Z.of_nat k) (nth k AUXV_TYPES 0)) /\
-word_mem (ms_segs B) mem (av + 16 * 8 + 8) ar /\
+(forall k, (k < length (auxv_types rs))%nat -> word_mem (ms_segs B) mem (av + 16 * Z.of_nat k) (nth k (auxv_types rs) 0)) /\
+word_mem (ms_segs B) mem (av + 16 * Z.of_nat AUXV_RAND_K + 8) ar /\
 word_mem (ms_segs B) mem (ar + 8) sec /\
-4096 <= av /\ av + 160 <= 2 ^ 63 /\ 4096 <= ar /\ ar + 16 <= 2 ^ 63 /\
+4096 <= av /\ av + 16 * Z.of_nat (length (auxv_types rs)) <= 2 ^ 63 /\ 4096 <= ar /\ ar + 16 <= 2 ^ 63 /\
 lo <= av /\ lo <= ar.
 Lemma auxv_pre_mono : forall B sec lo lo' mem, lo' <= lo -> auxv_pre B sec lo mem -> auxv_pre B sec lo' mem.
 Proof.
-intros B sec lo lo' mem Hle (av & ar & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10).
-exists av, ar. repeat (split; [assumption|]). split; lia.
+intros B sec lo lo' mem Hle (rs & av & ar & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10).
+exists rs, av, ar. repeat (split; [assumption|]). split; lia.
 Qed.
 Definition vml_lo (B : malloc_syms) : Z := match ms_vmlock B with Some v => v | None => 0 end.
 Definition vml_len (B : malloc_syms) : Z := match ms_vmlock B with Some _ => 4 | None => 0 end.
@@ -250,11 +272,11 @@ node_ok segs c I (fun _ => []) nx ->
 (forall i, bit i = 1 -> realizes segs (nx i) TB) ->
 realizes segs c (t_alt2 TA TB).
 Proof.
-intros c I nx bit TA TB [Hsnd Hcmp] Hbits [ia Hia] [ib Hib] HA HB.
+intros c I nx bit TA TB [Hsnd [Hcmp Hrob]] Hbits [ia Hia] [ib Hib] HA HB.
 set (IA := {i : I | bit i = 0}). set (IB := {i : I | bit i = 1}).
 set (nx' := fun j : IA + IB => match j with inl (exist _ i _) => nx i | inr (exist _ i _) => nx i end).
 apply (rz_alt2 segs c IA IB nx' TA TB (exist _ ia Hia) (exist _ ib Hib)).
-- split.
+- split; [| split; [| exact Hrob]].
 + intros [[i Hi]|[i Hi]]; cbn; apply Hsnd.
 + intros e st Hst. destruct (Hcmp e st Hst) as (i & -> & ->).
 destruct (Hbits i) as [Hi|Hi].
@@ -534,6 +556,9 @@ End w.
 Section y.
 Variable B : malloc_syms.
 Let segs := ms_segs B.
+Definition rx_ok (brk : Z) (rx : list (word * word)) : Prop :=
+(length rx <= 2)%nat /\ ivs_bytes rx <= 0x14000
+/\ Forall (fun iv => brk + 2 ^ 20 <= bv_unsigned (fst iv)) rx.
 Record heap_pristine (mem : word -> option byte) (md : Model) : Prop := {
 hp_ctx   : forall i, 0 <= i < CTX_SIZE -> mbyte segs mem (ms_ctx B + i) = Some (Z_to_bv 8 0);
 hp_lock  : forall k, (k < 4)%nat -> mbyte segs mem (ms_lock B + Z.of_nat k) = Some (Z_to_bv 8 0);
@@ -548,7 +573,8 @@ hp_vm    : vm_maps (m_vmmaps md) = [] /\ vm_noaccess (m_vmmaps md) = [] /\
 vm_brk (m_vmmaps md) = vm_start_brk (m_vmmaps md) /\
 valid_brk segs (vm_brk (m_vmmaps md)) /\
 bv_unsigned (vm_brk (m_vmmaps md)) + 2 * 4096 <= alloc_ceiling /\
-vm_reserved (m_vmmaps md) = segments_reserved segs /\
+(exists rx, vm_reserved (m_vmmaps md) = segments_reserved segs ++ rx
+/\ rx_ok (bv_unsigned (vm_brk (m_vmmaps md))) rx) /\
 SRC_LIM_MIN <= vm_limit (m_vmmaps md) /\
 vm_backing_used md <= 0;
 hp_model : m_halted md = None /\ m_vm_lazy md = [] /\ m_vm_materialized md = [];

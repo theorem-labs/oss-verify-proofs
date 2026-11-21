@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-29: copied from proofs/omx-clap-core/fuzz_preset/lib/A/RGthinS2a.v (hub 9f4806388ad, blob 0b8806fe7195) rt_seg_mid_a, restated as YGcfReallocCompose.wrap_realloc_walk_cf's field rw_mid_a at image A (entry facts rentry_cf, Allocate's post at AOXm_cf, errno / memnorm kept). *)
+(* Modified by Theorem Labs, 2026-10-29: copied from proofs/omx-clap-core/fuzz_preset/lib/A/RGthinS2a.v (blob 0b8806fe7195) rt_seg_mid_a, restated as YGcfReallocCompose.wrap_realloc_walk_cf's field rw_mid_a at image A (entry facts rentry_cf, Allocate's post at AOXm_cf, errno / memnorm kept). *)
 (* Modified by Theorem Labs, 2026-10-31: field round 3 part 3c (the record's segments no longer keep the overlay normal
    form): rw_mid_a_A's memnorm conjunct and its proof removed, and with them the memnorm lemmas memnorm_pw /
    memnorm_se, which only the segments' memnorm keeps used. *)
@@ -8,7 +8,8 @@
    (YGcfReallocComposeKeep.wrap_realloc_walk_keep_cf): the memnorm keep right after RGtop.rkeep, proved by memnorm_pw
    (m2a leaves memory unchanged); memnorm_pw / memnorm_se restored as they were before the part-3c re-fit. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/RGcfSegs2a.v, with its module paths and module names changed; 35 of its 154 lines of code are new or changed and 97 lines of the source are left out. *)
-(* Modified by a Theorem Labs lane (ReallocPrimary.RealSegA), 2026-10-30: from proofs/plugin-hostd/fuzz_reply/lib/A/RGthinS2a.v (commit 66a127cb11e, sha256 a27090cbd6cd; internal record, reply A text, no relocation); module paths: lib.Reusable -> lib.A for AllocG DeallocG ReallocG RGtop; no other change. *)
+(* Modified by a Theorem Labs lane (ReallocPrimary.RealSegA), 2026-10-30: from proofs/plugin-hostd/fuzz_reply/lib/A/RGthinS2a.v (sha256 a27090cbd6cd; internal record, reply A text, no relocation); module paths: lib.Reusable -> lib.A for AllocG DeallocG ReallocG RGtop; no other change. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_reply.asan: the thin segment S2a (RGtop.seg_mid_a): Allocate's return into Reallocate with a block ->
    REAL(memcpy)'s entry, over the machine run RGthinM.m2a (ported from cgif_rgb's YF67.v:156 c1_copy and YF78.v:263
    c1_at_mid, relocated to fuzz_reply's image). *)

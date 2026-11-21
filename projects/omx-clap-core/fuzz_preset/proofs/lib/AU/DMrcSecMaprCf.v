@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/DMrcSecMaprCf.v (commit ce1a656b52b7, file sha256 c860468e9280) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 1 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcSecMaprCf.v (commit 3d8ad2aeb77e, H4 cf instance set (reply-rccf); file sha256 dccf8b3a46ec) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMrcSecMaprCf.v at commit 2c35faeeaec, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (1 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/DMrcSecMaprCf.v (file sha256 c860468e9280) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 1 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcSecMaprCf.v (H4 cf instance set (reply-rccf); file sha256 dccf8b3a46ec) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py), and 1 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMrcSecMaprCf.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (1 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved-region ledger). *)
 (* Theorem Labs, 2026-10-30 (lane B1, slice H4): H4's secondary MAP-READ field DMrcSecReads.rc_sec_mapr_t at cgif's
    cf cut relation YGcfInstDrainR.ARXr_cf.
    rule 24: proves function __asan::QuarantineCallback::Recycle (0x348fc; RChunk secondary cut / map reads) at cgif's cf relation,
@@ -91,10 +92,16 @@ assert (Rb : 0 <= b /\ b + n < 2 ^ 63) by (unfold kLowShadowBeg, kLowShadowEnd, 
 assert (Ub : bv_unsigned (Z_to_bv 64 b) = b) by (apply u64; lia).
 assert (Un : bv_unsigned (Z_to_bv 64 n) = n) by (apply u64; lia).
 assert (HR : region_free (vm_reserved (m_vmmaps md)) (Z_to_bv 64 b) (Z_to_bv 64 n) = true).
-{ rewrite (alc_reserved _ _ _ _ L). apply (YG0h.region_free_reserved segs); [| | lia | lia].
-  - intros sg Hsg. pose proof (alc_img _ _ _ _ L sg Hsg) as [I1 I2]. pose proof (lo_img _ LO) as (J0 & J1 & J2 & J3).
-    unfold kImgLo, kImgEnd in *. lia.
-  - unfold kImgEnd, kLowShadowBeg, kHighShadowBeg in *. lia. }
+{ destruct (alc_reserved _ _ _ _ L) as (rx & Hrx & _ & HB & _). rewrite Hrx, YG0h.region_free_app.
+  apply andb_true_intro. split.
+  - apply (YG0h.region_free_reserved segs); [| | lia | lia].
+    + intros sg Hsg. pose proof (alc_img _ _ _ _ L sg Hsg) as [I1 I2]. pose proof (lo_img _ LO) as (J0 & J1 & J2 & J3).
+      unfold kImgLo, kImgEnd in *. lia.
+    + unfold kImgEnd, kLowShadowBeg, kHighShadowBeg in *. lia.
+  - (* the reservation tail starts in high memory, above both shadows (YG0n.res_tail_ok) *)
+    apply YA06.region_free_forall. intros q Hq. right. rewrite Ub, Un.
+    destruct (proj1 (Forall_forall _ _) HB q Hq) as [Q1 _].
+    unfold kHighMemBeg, kLowShadowBeg, kLowShadowEnd, kHighShadowBeg, kHighShadowEnd in *. lia. }
 destruct Hin as [[I1 I2]|[I1 I2]].
 - apply (YA06.madvise_gate_intro _ (wiv (kLowShadowBeg, kLowShadowEnd - kLowShadowBeg))).
   + apply (alc_band _ _ _ _ L). left. reflexivity.

@@ -21,14 +21,15 @@
    YGcallx.v original VERBATIM (the _mR forms are proved by it), under its own name for the walks that apply it. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcallMxmn.v, with its module paths and module names changed; 948 of its 1094 lines of code are new or changed and 2183 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/Cno102B_E0.v, with its module names and addresses changed; 850 of its 951 lines of code are new or changed and 993 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image B' (#102 pins: asan-ubsan sha256 d663f82d7f488d30, unstripped twin c90d4fa54d43160b):
    SEGMENT CB3 Init of the re-walk of check_no_overread (cno, entry B' 0x819f0 = slot 201 of the whole-program
    listing). Lane R7-4 / CB3 (a Theorem Labs lane; #102 plan, the internal file PLAN-cno-caw-102.md sections 5.0 / 5.2, row
    "CB3 Init | 0x81bbc -> 0x81c40").
    rule 24: no function proved. rule 24: proves no function (kind: segment lemma).
    INPUTS (by path, blobs as named; this file adds none):
-     SHARED CONTRACT lib/B/Prog/Cno102B_Base.v 06098b64f859 (a working branch 0e85941c7687, bound
-     to the kit CUT a working branch 7cdbb61b5fa0): the cuts cnb_at_init (start) and cnb_ex_read1 /
+     SHARED CONTRACT lib/B/Prog/Cno102B_Base.v 06098b64f859 (a working branch, bound
+     to the kit CUT a working branch): the cuts cnb_at_init (start) and cnb_ex_read1 /
      cnb_at_read1 (exit), cnb_pre CTX0 D (no DW), the budgeted journal cnb_J D wk (wk = 0 at both cuts), cnb_mid, the
      progress fact cnb_prog, the refused-copy fact cnb_cdead, the listing tables PL_cno_B.
      STEP KIT lib/B/Prog/Cno102B_Ro.v c1b5ec3f8fff (on the same head; cited, never restated): cnb_J_rebase /
@@ -47,7 +48,7 @@
      prh_ledger_blocks / _heads, kept_at; lib/A/PRH_Reader.v 4266e709561a: pj_zeroR; lib/A/PRH_FnReader.v
      f1ae32e3b2cd: prhReader_home; lib/A/PRH_FnCheck.v c40cf3fdcd2a; lib/B/PRH_ImgB.v 3216eca68342).
      The hand-step lemmas (cnb3_step / _pc4 / _hs_addi / _hs_call) are the A' twin's lib/A/Prog/Cno102A_Ro.v
-     (a working branch 8bc94560f61: cn_step / cn_pc4 / cn_hs_addi / cn_hs_call) restated over the
+     (a working branch: cn_step / cn_pc4 / cn_hs_addi / cn_hs_call) restated over the
      B' contract's names (cnb_cfg, cnb_pc, B_prog_tpi_cno, PL_cno_B); cnb3_final's copy keep (KC) takes its
      head-disjointness from cn_call_keep (same commit).
    THE SEGMENT (DERIVED byte offsets inside check_no_overread; cnb3_slots pins every word):
@@ -72,7 +73,7 @@
    every byte outside its window), the
    input (prhReader_home: a block or a read-only global), the read-only image. The run progress fact cnb_prog D
    (cnb_cevs D r1 r2 r3) S passes through unchanged: CB3 makes no run event and leaves the allocator state S alone.
-   THE CUT (the kit 7cdbb61b5fa0; this file was proved on the f97c contract, Cno102B_Base.v cd5327470344): cnb_pre is
+   THE CUT (the kit; this file was proved on the f97c contract, Cno102B_Base.v cd5327470344): cnb_pre is
    cnb_pre CTX0 D (the Variable DW is gone); the journal is cnb_J D 0, the budgeted ajournal_xw at the spent wild
    budget 0. The segment makes no allocator call: each shadow store and each memset row is a FIXED-trace step, made
    on the journal REBASED to the empty budget (the kit's cnb_J_rebase) and UNBASED at the same WS after

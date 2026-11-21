@@ -14,7 +14,7 @@ Import ListNotations.
 Local Open Scope Z_scope.
 
 (* Measured in the symtab of the #102 twin pau-preset-102/omx-clap-core/unstripped/fuzz_preset/fuzz_preset.plain (sha256
-   c8f4d6b8e567b0b1...), the unstripped twin of the pinned fuzz_preset.plain 805604bb0907ae1b... (facts 8f3e7e1a07f1):
+   c8f4d6b8e567b0b1...), the unstripped twin of the pinned fuzz_preset.plain 805604bb0907ae1b... (facts):
      check_no_overread FUNC LOCAL 0x13778 size 652: addi sp, sp, -0xf0; s0..s7 and ra saved at sp + 0xa8 .. sp + 0xe8;
      three padded copies inlined (malloc (n + 16), and when it is not NULL memcpy and a 16-byte memset; a NULL stores
      1 into g_own_ran_out (one byte, LedgerCells.GL_OWN_RAN_OUT, s7 - 0x18 with s7 = 0x347b8)); the three trees at

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (6 recorded proofs replaced by computation, vm_compute (startup_events, startup_spacebeg, malloc_65536_events and 3 more)). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Bool.
@@ -541,38 +542,32 @@ Section Examples.
 
   Definition st0 := snd (run (astartup 0x6a3f48 0x7fffc0000000) 0x2aaaaaaab000).
   Example startup_events :
-    length (fst (fst (run (astartup 0x6a3f48 0x7fffc0000000) 0x2aaaaaaab000))) = 24%nat.
-Proof.
-ltac2:(KReplay.run1 (kr_t_AsanCtrl ()) ["Examples"] "p;2p;1p;3p-1R0g0000R1p4p710p8P0P1p4p7210R2p8P0p1000Mp4p710p8P0p1000jp5p710p8p1001Fp6051000R0p1002=p6051001R3p8p10032p6051000R4P3p8p1003lp605000R5P3p8P5P0p8P5P2p8P5p1004cp6051000R2p8P5p1005ap6051000R0p8P5g006_R5p6051000R6p8p1007Up6051000R7P3p8p1008Op6051000R8P3p8p1009Dp6051000R9P3p8P9P4p8P9P8p8p100:?p6051000R:P3p8P:P4p8P:P8p8p100;@p6051000R:P3p8P:P4p8P:P8p8g00<FR:p6154110000P9p8p100=Ap6051000R9P3p8P9P4p8P9P8p8p100>Ep6051000R;P3p8P;P4p8P;P8p8P;P9p8P2P3p8P2P4p8P2P;p8p100?Kp6051000R;P3p8P;P4p8P;P9p8P0P3p8P0P4p8P0P8p8p100@Kp6051000R0P3p8P0P4p8P0P7p8P0P8p8p100AKp6051000R8P3p8P8P;p8P8P0p8p100BKp6051000R0P3p8P0P8p8p100CLp6051000R8P3p8P8P;p8P8P0p8p100DIp6051000R0P3p8P0P4p8P0P8p8p100ECp6051000R8P3p8P8P0p8p100F;p6051000R0P3p8P0P4p8P0P2p8P6P3p8g00G5j2DTg00GOj2;Tg00Goj1?Tg00HOj11Tg00I4j10Tg00IYj18TP:j2CTP5j3BTP1j3<Tg00J7j2ATg00JWj3@Tg00K1j16Tf0R1#6#6#6#6p=3%11#0#1#0p=2%01#0p=4%11#1p=9%11#1#1#1p=5%01#1p=>%11#0p=:%01#0#0#0p==%01#0#0#0#0#0#0#0p=7g00KPR1g00Ko#3#3#3#3#3#3R5'Dg00LNg00MFR:';R3%?3R31;3:g00MdR3g00N_R6#1R2#0#2#4#9#5#>#4#:#4#8%12#9#5#5#5#4#=#7#7#7#8'C%06#:#2#2#2#2#2#2#2#9#=#7#85B33<7<:'A=@15do"). Qed.
+    length (fst (fst (run (astartup 0x6a3f48 0x7fffc0000000) 0x2aaaaaaab000))) = 24%nat.   (* [comment removed for export] *)
+  Proof. vm_compute. reflexivity. Qed.
   Example startup_spacebeg : a_space_beg st0 = 0x2aaaaae50000 /\ a_ptr_array st0 = 0x2acaaae5a000.
-Proof.
-ltac2:(KReplay.run1 (kr_t_AsanCtrl ()) ["Examples"] "p;1p;3p;2p;4g00HOj13Tg00IYj18Tg00JWj35Tg00G5j26Tg00ODj4<Tg00O_j1;Tg00P]j1:Tg00Q[j29Tg00I4j11Tf0R0#1#3p=7%10#3#1#3p=0%30#1p=4%10#1#1#1p=2g00MFR0g00N_#7#0R1#0#0#0#0#3#4#0#2#2#2#2#8R2;52%41#7#0#0#0#3#4#0#4#4#2#2#2#8R1=50116021601C<g00R6R3#;=502%:3=501'9do"). Qed.
+  Proof. vm_compute. split; reflexivity. Qed.
 
   (* [comment removed for export] *)
   Example malloc_65536_events :
     map fst (fst (fst (run (amalloc ALLOC_TOP_MIN [] st0 65536) 0x2acaaca7a000)))
     = [AMmap 0 0x12000 PROT_RW F_ANON; AMmap 0x2acaaae5a000 0x20000 PROT_RW F_FIXED].
-Proof.
-ltac2:(KReplay.run1 (kr_t_AsanCtrl ()) ["Examples"] "p;1p;4p;3p;2p-1R0g00RlR1p4p710p8P0P1p4p7210p8g00Goj1=Tg00I4j10Tg00IYj14Tg00HOj13Tg00SHj47Tg00T@j1:Tg00T`j35Tg00G5j2>Tg00GOj29Tg0000j2Dj3<Tg00U@j1CTg00Ubj4BTg006_j3ATP1j4?Tg00JWj3@Tf0R1#3#0p=2%01#0#0#0p=6%01#0#0#0#0#0#0#0p=8%01#3p=1%01#0p=;g00LNR1#=R0g00V\R2g00N_R3#0R4#0R5#2#6#8#4R6%33R3#4R7%05R5#2#4C7%34#1#1#2#1#1#1#1#1R4#1#1#3#2#1#1#2#2#6#8#4R8%05#6#8R5#0#4R9P7%;3#2#4C7%:1R3551551'>g00MFR7,91R:P11D17%=:R:19:7g00Mdg003l#C'9R:g00W:1977#:g00R6%45CB%34#;#2#2#1#3#3#2#2#6#8#45A:3<7<7C?P2P6g00X:R6g00Y4C7P8P9P6g00YmC7=5135515@0do"). Qed.
+  Proof. vm_compute. reflexivity. Qed.
 
   (* [comment removed for export] *)
   Definition st1 := fst (snd (run (amalloc ALLOC_TOP_MIN [] st0 65536) 0x2acaaca7a000)).
   Example malloc_20_events :
     map fst (fst (fst (run (amalloc ALLOC_TOP_MIN [] st1 20) 0))) =
     [AMmap (0x2aaaaae50000 + 2 * 2^32) 0x40000 PROT_RW F_FIXED; AMmap (0x2aaaaae50000 + 2 * 2^32 + 0xE0000000) 0x40000 PROT_RW F_FIXED].
-Proof.
-ltac2:(KReplay.run1 (kr_t_AsanCtrl ()) ["Examples"] "p;1p;4p;3p;2g00Goj1?Tg00I4j10Tg00HOj11Tg00IYj13Tg00SHj46Tg00T@j1;Tg00T`j37Tg00G5j2HTg00GOj28Tg0000j2Gj3=Tg00U@j1FTg00Ubj4ETg006_j3DTg00Rlj4CTg00Zgj2BTg00[Dj2ATg00[aj2>Tg00JWj3@Tf0R0#1#0p=5%00#1p=:%00#1#0#1p=4%00#0#0#0#0#0#0#0p=2%00#0#0#0p=9%00#0p=<g00LNR0#?R1g00N_R2#0R3#5R4#1#:#4R5#5R6#:#4#4#1#5#4#2#2#3%93R7#0#9#2#3R8%12R2#3R9%<2#5#3R:C6%16#1#<#:#4#1#5#4#2#2#3P8P9P:C6%;0R:570570'Hg00MFR9,80R6P01G09%?6R61869g00Mdg003l#F'8R6g00W:1899#;g00\>%04#3CEg00V\5D63=7=9CC%45#4#4#1#5#4#2#2#3%33R3%37,B3'A'>R3P8g00X:R7g00YmR5C6%52#9#2#2#2#3,>3P8P7P5C6=70:5705@1do"). Qed.
+  Proof. vm_compute. reflexivity. Qed.
 
   (* [comment removed for export] *)
   Definition st2p := snd (run (amalloc ALLOC_TOP_MIN [] st1 20) 0).
   Example first_free_events :
     map fst (fst (fst (run (afree (fst st2p) (snd st2p)) 0))) =
     [AMmap (0x2aaaaae50000 + 24 * 2^32) 0x40000 PROT_RW F_FIXED; AMmap (0x2aaaaae50000 + 24 * 2^32 + 0xE0000000) 0x40000 PROT_RW F_FIXED].
-Proof.
-ltac2:(KReplay.run1 (kr_t_AsanCtrl ()) ["Examples"] "p;1p;4p;3p;2g00Goj1>Tg00I4j10Tg00HOj12Tg00IYj14Tg00SHj46Tg00T@j1?Tg00T`j37Tg00G5j2ITg00GOj2=Tg0000j2Hj39Tg00U@j1GTg00]4j3FTg00]Qj2ETg006_j3DTg00Rlj4CTg00Zgj2BTg00[Dj2ATg00[aj2<Tg00JWj3@Tf0R0#0#2#0#2p=1%20#0p=5%00#0p=8%00#2p=;%00#0#0#0#0#0#0#0p=3%00#0#0#0p=:g00LNR0#>R1g00N_R2#0R3#2#1R4#5#8#;R5#;#1#1#2#5#1#3#3#4%:3R6#0#:#3#4R7%22R2#4R8%82R9#5#4R:C6%25#2#8#;#1#2#5#1#3#3#4P7P8P:C6%?0R:570570'Ig00MFR8,=0R5P01H08%>5R51=58g00MdR5g003l#GR;g00^IR<595AF5;<'Eg00V\5D539798CC%14#1#1#1#2#5#1#3#3#4%09#4%43%46'B'A'<R6P7g00X:R3g00YmR9C6%52#:#3#3#3#4,<6P7P3P9C6=70:5705@1do"). Qed.
+  Proof. vm_compute. reflexivity. Qed.
 
   Example sizes : (class_id (needed_size 20), size_of_class 24, class_id 8192, needed_size 65536, sec_map_size 65536, is_primary 64512, is_primary 64513)
                   = (2, 8192, 24, 69632, 0x12000, true, false).
-Proof.
-ltac2:(KReplay.run1 (kr_t_AsanCtrl ()) ["Examples"] "p;2p;1p;4p;3g00GOj26Tg00I4j10Tg00IYj13Tg00_@j44Tg00HOj12Tg00G5j2=Tg00_`j19Tg00`^j18Tg00aYj1<Tg00bYj1;Tg00cXj1:Tg00JWj3>Tf0R0#0#0p=7%00#0#0#0p=1f2g00MFR1f1P0C4p=51611R0/61R2/61R3/61R4g00dUR5'6R6/65R7P6P5P4P5P1P1g00N_R8#0R9#3%09R:#0R;#7#1#1R<#3R=C4%28R8#0#7#3R>550%2;#1#1#1#3552%2:#0#1#1#1#3553g00e5C4g00eUC4R:'=P6P5P4P5P1P1%29#7#3#9#8%<>C4%8=550%0<#7#3R<#9552%;<553%28#2#2#2#0#1#1R8#0#3#:C4%28#3#:C4=>7:do"). Qed.
+  Proof. vm_compute. reflexivity. Qed.
 End Examples.

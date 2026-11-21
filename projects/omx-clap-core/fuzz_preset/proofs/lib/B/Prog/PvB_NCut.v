@@ -28,7 +28,7 @@
    MEMNORM: every internal cut carries `YStrtodRowX.aj_memnorm SEGS mem` (its LAST conjunct), seeded by pv_at_N's last
    conjunct (PvB_Defs.v (sha256 94ab745e2ce1; internal record)) and kept across runs / hand steps by lib/Reusable/YSRrMemnorm.v and across calls by the
    apost_base_xm keeps (YCbqGmn.v); the strtod row takes it at the call's memory from cut M / R's predecessor.
-   ROOM (the post-implication form of the kit's #102 texts, the batch kit's tip 240b06ed4fd4; PvB_Room.v): no run position at entry. L
+   ROOM (the post-implication form of the kit's #102 texts, the batch kit's tip; PvB_Room.v): no run position at entry. L
    kit tree preset-tree-at-2026-10-30T00-42-43Z.tsv (sha256 08fbb565c497; internal record); PvB_Room.v): no run position at entry.
    L and S carry pv_reader0's `rp_keep (pe_S en) Sc` (the live list equal, any position kept: no allocator step before the call).
    M carries fuzz_malloc's post (PRH_FnAlloc.v tfuzz_malloc_specX) composed with that keep at the call state: res = 0 keeps the room

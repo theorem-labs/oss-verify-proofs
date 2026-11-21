@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the THP flag). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -25,7 +26,7 @@ Context {fx : FPState} {RL : Reloc} {RC : RelocCode RL} {RS : RelocSites RL}.
 Theorem munmap_refines : munmap_stmt.
 Proof.
   unfold munmap_stmt.
-  intros md regs mm rom s addr len sp ret P L Hp Hvm Hag H2 Hal Hlo0 Hlo Hhi Hhi64 Hwt Hstk H1 Hret H4 H10 H11 HS HK.
+  intros md regs mm rom s addr len sp ret P L Hp Hvm Hthp Hvdo Hag H2 Hal Hlo0 Hlo Hhi Hhi64 Hwt Hstk H1 Hret H4 H10 H11 HS HK.
   pose proof (minv_init s sp 32 Hlo0 Hlo ltac:(lia) Hhi Hhi64 Hwt) as HI.
   pose proof (mwin_init s mm sp 32 Hstk) as HW.
   rewrite <- (with_vmmaps_same md), <- Hvm.
@@ -61,7 +62,7 @@ Ltac mmap_granted Hp HS Hag HI HW HK Hret :=
 Theorem mmap_refines : forall k, mmap_stmt k.
 Proof.
   intros k. unfold mmap_stmt.
-  intros md regs mm rom s len sp ret P L Hp Hvm Hag H2 Hal Hlo0 Hlo Hhi Hhi64 Hwt Hstk H1 Hret H4
+  intros md regs mm rom s len sp ret P L Hp Hvm Hthp Hvdo Hag H2 Hal Hlo0 Hlo Hhi Hhi64 Hwt Hstk H1 Hret H4
          H10 H11 H12 H13 H14 H15 HS HK.
   pose proof (minv_init s sp 80 Hlo0 Hlo ltac:(lia) Hhi Hhi64 Hwt) as HI.
   pose proof (mwin_init s mm sp 80 Hstk) as HW.
@@ -82,7 +83,7 @@ Qed.
 Theorem mprotect_refines : mprotect_stmt.
 Proof.
   unfold mprotect_stmt.
-  intros md regs mm rom s addr len sp ret pgbs P L Hp Hvm Hag H2 Hal Hlo0 Hlo Hhi Hhi64 Hwt Hstk H1 Hret H4
+  intros md regs mm rom s addr len sp ret pgbs P L Hp Hvm Hthp Hvdo Hag H2 Hal Hlo0 Hlo Hhi Hhi64 Hwt Hstk H1 Hret H4
          H10 H11 H12 Hpg Hpgv HS HK.
   pose proof (minv_init s sp 32 Hlo0 Hlo ltac:(lia) Hhi Hhi64 Hwt) as HI.
   pose proof (mwin_init s mm sp 32 Hstk) as HW.
@@ -117,7 +118,7 @@ Ltac mmapf_err Hp HS Hag HI HW HK Hret :=
 Theorem mmap_fixed_refines : mmap_fixed_stmt.
 Proof.
   unfold mmap_fixed_stmt.
-  intros md regs mm rom s addr len sp ret P L Hp Hvm Hag H2 Hal Hlo0 Hlo Hhi Hhi64 Hwt Hstk H1 Hret H4
+  intros md regs mm rom s addr len sp ret P L Hp Hvm Hthp Hvdo Hag H2 Hal Hlo0 Hlo Hhi Hhi64 Hwt Hstk H1 Hret H4
          H10 H11 H12 H13 H14 H15 HS HK.
   pose proof (minv_init s sp 80 Hlo0 Hlo ltac:(lia) Hhi Hhi64 Hwt) as HI.
   pose proof (mwin_init s mm sp 80 Hstk) as HW.

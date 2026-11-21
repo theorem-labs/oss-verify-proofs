@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the premise on V 33 (the string pointer) of sC1_conc, sC3_conc and sC4_conc allows it up to 2^47 - 10 instead of 2^47 - 17, matching the nine-byte string read-ahead of LPS 727298f3 and the recomputed segment walks. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require PConcR.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require PStmt. Import PStmt.StrNota.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BigLinkZA.
@@ -32,7 +33,7 @@ Lemma KS_sC1_ok : BG.kept_ok 140 LibSegJb_sC1.regs0 LibSegJb_sC1.regs_out0 KS_sC
 Local Ltac r1mk za ks fx R M V s := PStmt.mk RSEGS aligned srl_range za ks fx R M V s.
 Local Ltac r1pf za ks r0 k0 br pss nx f0 pc seg fx R M V s :=
 PConcR.PR.solve2 RSEGS aligned srl_range za ks r0 k0 br pss nx f0 pc seg fx R M V s.
-Definition sC1_conc_s := ",12A#v2p#2#40A#v21p#2#40A#v22p#2#40S,1#11>7<4S,2v2S,:v21S,;#7???????B#7???7?811000v2#800000000000Hv2#10I_v2#10>0#10>0Ja_v2#10>0#10>0O#10000#136000B#7???7?811000v21#7?????????>?B#v22#1????P_v2#10>0#10>0v21+v22#1Na#13=718#1La#136358#127308La#1361>8#1266>8,1_v2#10>0#10>0,1,21X#62<>8#1266>8Y,T,1#649?8T,2_v2#10=0T,8_v2#880T,9#7???????T,;#T,<#7???????T,=#1266>8T,12v21T,13#T,14#1Lb_v2#8;8r15Lb_v2#8;0r14Lb_v2#8:8#7???????Lb_v2#8:0v21Lb_v2#898v21Lb_v2#890#7???????Lb_v2#888#12732<Lb_v2#878#1Lb_v2#870v2Lb_v2#868#630:<Lb_v2#40r16Lb_v2#38r15Lb_v2#30r14Lb_v2#28r13Lb_v2#20r12Lb_v2#18r9Lb_v2#10r8Lb_v2#8#11>7<4Jb_v2#10=0#818Jb_v2#880#8Jb_v2#860#820"%pstring.
+Definition sC1_conc_s := ",12A#v2p#2#40A#v21p#2#40A#v22p#2#40S,1#11>7<4S,2v2S,:v21S,;#7???????B#7???7?811000v2#800000000000Hv2#10I_v2#10>0#10>0Ja_v2#10>0#10>0O#10000#136000B#7???7?811000v21#7??????????6B#v22#1????P_v2#10>0#10>0v21+v22#1Na#13=718#1La#136358#127308La#1361>8#1266>8,1_v2#10>0#10>0,1,21X#62<>8#1266>8Y,T,1#649?8T,2_v2#10=0T,8_v2#880T,9#7???????T,;#T,<#7???????T,=#1266>8T,12v21T,13#T,14#1Lb_v2#8;8r15Lb_v2#8;0r14Lb_v2#8:8#7???????Lb_v2#8:0v21Lb_v2#898v21Lb_v2#890#7???????Lb_v2#888#12732<Lb_v2#878#1Lb_v2#870v2Lb_v2#868#630:<Lb_v2#40r16Lb_v2#38r15Lb_v2#30r14Lb_v2#28r13Lb_v2#20r12Lb_v2#18r9Lb_v2#10r8Lb_v2#8#11>7<4Jb_v2#10=0#818Jb_v2#880#8Jb_v2#860#820"%pstring.
 Section SE.
 Variables (fx : FPState).
 Variables (R : PStmt.RTY).
@@ -44,7 +45,7 @@ r1pf PConcR.PR.zeros_r [KS_sC1] LibSegJb_sC1.regs0 LibSegJb_sC1.kn0 LibSegJb_sC1
 End SE.
 Definition KS_sC3 : list nat := Eval vm_compute in (BG.kept_list 140 LibSegJb_sC3.regs0 LibSegJb_sC3.regs_out0).
 Lemma KS_sC3_ok : BG.kept_ok 140 LibSegJb_sC3.regs0 LibSegJb_sC3.regs_out0 KS_sC3 = true. Proof. vm_compute. reflexivity. Qed.
-Definition sC3_conc_s := ",1=A#v2p#2#40A#v14p#2#40A#v15p#2#40A#v21p#2#40A#v22p#2#40A#v78p#2#40A#v79p#2#40S,2v2S,:+v21v22S,14v78S,15v79B#7???7?811000v2#800000000000Hv2#10I_v2#10#10Ja_v2#10#10O#10000#136000B#7???7?811000v21#7?????????>?B#v22#1????P_v2#10#10v21+v22#1La+v2#848#12732<La+v2#840#7???????La+v2#838v21La+v2#830v21La+v2#828#7???????La+v2#820v14La+v2#818v15La+v2#868#630:<La+v2#860+v2#10=0La+v2#858#1,1_v2#10#10,1,;X#64:58#630:<Y,T,1#630:<T,2+v2#870T,8+v2#10=0T,9#1T,:v22T,12v21T,13#7???????T,14v14T,15v15"%pstring.
+Definition sC3_conc_s := ",1=A#v2p#2#40A#v14p#2#40A#v15p#2#40A#v21p#2#40A#v22p#2#40A#v78p#2#40A#v79p#2#40S,2v2S,:+v21v22S,14v78S,15v79B#7???7?811000v2#800000000000Hv2#10I_v2#10#10Ja_v2#10#10O#10000#136000B#7???7?811000v21#7??????????6B#v22#1????P_v2#10#10v21+v22#1La+v2#848#12732<La+v2#840#7???????La+v2#838v21La+v2#830v21La+v2#828#7???????La+v2#820v14La+v2#818v15La+v2#868#630:<La+v2#860+v2#10=0La+v2#858#1,1_v2#10#10,1,;X#64:58#630:<Y,T,1#630:<T,2+v2#870T,8+v2#10=0T,9#1T,:v22T,12v21T,13#7???????T,14v14T,15v15"%pstring.
 Section SE.
 Variables (fx : FPState).
 Variables (R : PStmt.RTY).
@@ -56,7 +57,7 @@ r1pf PConcR.PR.zeros_r [KS_sC3] LibSegJb_sC3.regs0 LibSegJb_sC3.kn0 LibSegJb_sC3
 End SE.
 Definition KS_sC4 : list nat := Eval vm_compute in (BG.kept_list 140 LibSegJb_sC4.regs0 LibSegJb_sC4.regs_out0).
 Lemma KS_sC4_ok : BG.kept_ok 140 LibSegJb_sC4.regs0 LibSegJb_sC4.regs_out0 KS_sC4 = true. Proof. vm_compute. reflexivity. Qed.
-Definition sC4_conc_s := ",29A#v2p#2#40A#v8p#2#40A#v9p#2#40A#v12p#2#40A#v13p#2#40A#v14p#2#40A#v15p#2#40A#v16p#2#40A#v21p#2#40A#v22p#2#40A#v6<p#2#40A#v6=p#2#40A#v76p#2#40A#v77p#2#40A#v78p#2#40A#v79p#2#40A#v7:p#2#40S,2v2S,8v6<S,9v6=S,12v76S,13v77S,14v78S,15v79S,16v7:B#7???7?811000v2#800000000000Hv2#10I_v2#10#10Ja_v2#10#10O#10000#136000B#7???7?811000v21#7?????????>?B#v22#1????P_v2#10#10v21+v22#1La+v2#858#11>7<4La+v2#850v8La+v2#848v9La+v2#840v12La+v2#838v13La+v2#830v14La+v2#828v15La+v2#820v16,1_v2#10#10,1,;X#63120#11>7<4Y,T,1#11>7<4T,2+v2#860T,8v8T,9v9T,12v12T,13v13T,14v14T,15v15T,16v16"%pstring.
+Definition sC4_conc_s := ",29A#v2p#2#40A#v8p#2#40A#v9p#2#40A#v12p#2#40A#v13p#2#40A#v14p#2#40A#v15p#2#40A#v16p#2#40A#v21p#2#40A#v22p#2#40A#v6<p#2#40A#v6=p#2#40A#v76p#2#40A#v77p#2#40A#v78p#2#40A#v79p#2#40A#v7:p#2#40S,2v2S,8v6<S,9v6=S,12v76S,13v77S,14v78S,15v79S,16v7:B#7???7?811000v2#800000000000Hv2#10I_v2#10#10Ja_v2#10#10O#10000#136000B#7???7?811000v21#7??????????6B#v22#1????P_v2#10#10v21+v22#1La+v2#858#11>7<4La+v2#850v8La+v2#848v9La+v2#840v12La+v2#838v13La+v2#830v14La+v2#828v15La+v2#820v16,1_v2#10#10,1,;X#63120#11>7<4Y,T,1#11>7<4T,2+v2#860T,8v8T,9v9T,12v12T,13v13T,14v14T,15v15T,16v16"%pstring.
 Section SE.
 Variables (fx : FPState).
 Variables (R : PStmt.RTY).

@@ -72,7 +72,7 @@ Proof.
 Qed.
 
 (* Footprint form (RECIPE.md step 1 (a working note, not in this delivery); image A's counterpart, with a post that keeps t0 and a7, of the image-B statement a Theorem Labs lane proved on
-   a working branch 7c09519361): the same run as an ExecF.evtF under a footprint RNG, with one rng premise per
+   a working branch): the same run as an ExecF.evtF under a footprint RNG, with one rng premise per
    region the run reads or writes: the 16-byte frame (the save and restore of ra), the GOT cell and the runtime cell
    that hold the shadow offset (two 8-byte loads), the 32 data bytes at p + 18, and their shadow bytes (one 1-byte
    load at (a >> 3) + ASAN_K per data byte a, so the byte-exact span).

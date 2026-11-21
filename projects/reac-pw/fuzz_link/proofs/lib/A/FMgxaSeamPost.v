@@ -1,4 +1,4 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamPost.v (a working branch 0ddf65fd8cc); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 5 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMgxaSeamPost.table); names: record RT_IImgA -> . *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamPost.v (a working branch); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 5 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMgxaSeamPost.table); names: record RT_IImgA -> . *)
 (* Step 3 of the evt -> SRr seam at musl vfprintf: GXA's post read as the harness's post, every
    piece of it except the final assembly (the GXA seam does that).
 

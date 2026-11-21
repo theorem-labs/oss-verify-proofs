@@ -3,7 +3,7 @@
    lib/A/Prog/pf_pieces.v). No machine state, no image, no binary: every lemma is about SegModel's Gallina
    functions, seg_spec's encodings and byte lists.
 
-   The bodies are the plain-build walk owner's file lib/Prog/pf_p8_lemmas.v at commit cfdd99183965, which the
+   The bodies are the plain-build walk owner's file lib/Prog/pf_p8_lemmas.v, which the
    plain walk lib/Prog/pf_p8.v uses; that file is not on this branch and its machine-state lemmas are stated over
    the plain build's MState, so only its image-free part is carried here, under the names this walk uses:
      [a12_spine]    r_key's ignore branch under H_IGN's premises (pf_p8_lemmas.p8_spine).

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a failed load is split on range_meets_vvar and the instruction fetch on vdso_text_at, the model's vvar and vDSO-text cases). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From stdpp Require Import bitvector.
@@ -57,7 +58,7 @@ Proof.
   induction t as [c | c | c | c | c | c | n a k IH | n a v k IH]; intros m report H;
     cbn [interp_eff_accesses] in H; try discriminate H.
   - inversion H; subst. cbn. apply mrel_refl.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs |]; [| discriminate H].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs |]; [| destruct (range_meets_vvar segs a (width_bytes n)); discriminate H].
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) m) as [r0 | |] eqn:E; try discriminate H.
     inversion H; subst. cbn [access_value]. exact (IH _ m r0 E).
   - destruct (store_ok segs m a (width_bytes n)) eqn:Hok; [| discriminate H].
@@ -98,6 +99,7 @@ Proof.
   destruct (fetch_word_ov segs (ms_mem ms) (ms_pc ms)) as [w|]; [exact (Hdx w H)|].
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|]; [exact (Hdx w H)|].
   unfold fetch_failure in H.
+  destruct (vdso_text_at segs (ms_pc ms)); [discriminate H|].
   destruct (negb (bv_unsigned (ms_pc ms) mod 2 =? 0)%Z); [discriminate H|].
   cbv zeta in H.
   match type of H with context [if ?b then MachineFault else MachineUnmodeled] => destruct b; discriminate H end.

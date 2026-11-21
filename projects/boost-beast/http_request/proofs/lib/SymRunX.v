@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -283,11 +284,12 @@ Lemma stk_ok_mem_denot : forall segs E mem log sp K,
 Proof. intros. eapply stk_ok_grows; [eassumption | apply mem_denot_grows]. Qed.
 
 (* [comment removed for export] *)
-Lemma stk_ok_init : forall segs ph sp argv envp uid hw rnd,
-  stk_ok segs (wrap_mem ph sp argv envp uid hw rnd) sp stack_max_size.
+Lemma stk_ok_init : forall segs inp mbase ph entry sp draw,
+  stk_ok segs (wrap_mem inp mbase ph entry sp draw) sp
+    (bv_unsigned sp - stack_window_lo (in_kernel inp) mbase draw).
 Proof.
-  intros segs ph sp argv envp uid hw rnd a n H1 H2.
-  apply store_ok_wrap_window; assumption.
+  intros segs inp mbase ph entry sp draw a n H1 H2.
+  apply store_ok_wrap_window; [lia | assumption].
 Qed.
 
 Lemma kwr_of_stk_ok : forall segs E mem (e : expr) (sp : word) K,
@@ -347,16 +349,18 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma wrap_mem_none_low : forall ph sp argv envp uid hw rnd (i : Z),
-  (0 <= i)%Z -> (i < bv_unsigned sp - stack_max_size)%Z ->
-  wrap_mem ph sp argv envp uid hw rnd (Z_to_bv 64 i) = None.
+Lemma wrap_mem_none_low : forall inp mbase ph entry sp draw (i : Z),
+  (0 <= i)%Z -> (i < stack_window_lo (in_kernel inp) mbase draw)%Z ->
+  (i < bv_unsigned sp)%Z ->
+  wrap_mem inp mbase ph entry sp draw (Z_to_bv 64 i) = None.
 Proof.
-  intros ph sp argv envp uid hw rnd i H0 Hi. unfold wrap_mem.
+  intros inp mbase ph entry sp draw i H0 Hi Hisp. unfold wrap_mem.
   pose proof (u64_range sp) as Hsp.
-  assert (Hu : bv_unsigned (Z_to_bv 64 i) = i) by (apply u_small; unfold stack_max_size in Hi; lia).
+  assert (Hu : bv_unsigned (Z_to_bv 64 i) = i) by (apply u_small; lia).
   unfold stack_to_mem. rewrite Hu.
-  replace (Z.leb (bv_unsigned sp) i) with false by (symmetry; apply Z.leb_gt; unfold stack_max_size in Hi; lia).
-  replace (Z.leb (bv_unsigned sp - stack_max_size) i) with false by (symmetry; apply Z.leb_gt; lia).
+  replace (Z.leb (bv_unsigned sp) i) with false by (symmetry; apply Z.leb_gt; lia).
+  replace (Z.leb (stack_window_lo (in_kernel inp) mbase draw) i) with false
+    by (symmetry; apply Z.leb_gt; lia).
   reflexivity.
 Qed.
 

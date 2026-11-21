@@ -1,6 +1,6 @@
-(* Image B twin of lib/A/RT_pf_vsn_k.v at 2c1f180a413 (sha256 853ebf34e91b; internal record): module paths lib.A -> lib.B; 11 image numerals moved to fuzz_reply.asan-ubsan by symbol + offset, each checked against that image (CHAINKB-numerals.tsv sha256 86a76b0550d0; internal record). *) (* KEEP-FX copy of RT_pf_vsn.v: ___interceptor_vsnprintf at fuzz_reply.asan-ubsan, entered at the trampoline 0x4222c, with
+(* Image B twin of lib/A/RT_pf_vsn_k.v (sha256 853ebf34e91b; internal record): module paths lib.A -> lib.B; 11 image numerals moved to fuzz_reply.asan-ubsan by symbol + offset, each checked against that image (CHAINKB-numerals.tsv sha256 86a76b0550d0; internal record). *) (* KEEP-FX copy of RT_pf_vsn.v: ___interceptor_vsnprintf at fuzz_reply.asan-ubsan, entered at the trampoline 0x4222c, with
    the REAL(vsnprintf) call taken from the keep-FP twin (lib/CJ/RL/GXAK, provenance/keepfx/README.md).
-   Copy of lib/A/RT_pf_vsn.v:49-332 at d49bd1db505 (sha256 09a6db9237b7; internal record), retargeted to GXAK.
+   Copy of lib/A/RT_pf_vsn.v:49-332 (sha256 09a6db9237b7; internal record), retargeted to GXAK.
 
    vsnprintf_icpt_ok_k proves RT_pf_stmt_k.v vsnprintf_icpt_stmt_k (no frm0 premise; the post keeps the caller's F and
    fc) from the Section hypothesis VSNX, the twin's GXAK/G_vsnprintf.v vsnprintf_x_stmt at the second instance

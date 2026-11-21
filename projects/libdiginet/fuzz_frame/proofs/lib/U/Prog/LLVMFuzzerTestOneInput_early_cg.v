@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
-(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/U/Prog/LLVMFuzzerTestOneInput_early_cg.v
-   at bc49657c087aa7d6ab0af1ffb2cb67fa08b15de1; module path and fuzz_egress's UBSan values: frame 0xa0 and LLVM_K from
+(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/U/Prog/LLVMFuzzerTestOneInput_early_cg.v;
+   module path and fuzz_egress's UBSan values: frame 0xa0 and LLVM_K from
    check_inject, over this unit's lib/U/Prog/LLVMFuzzerTestOneInput_early.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_egress/lib/U/Prog/LLVMFuzzerTestOneInput_early_cg.v, with its module paths and numbers changed; 3 of its 86 lines of code are new or changed and 6 lines of the source are left out. *)
-(* ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/Prog/LLVMFuzzerTestOneInput_early_cg.v at bf7779f81ed7 for libdiginet/fuzz_frame: the crash-free (SRcf) return at once of an input of 2 ^ 26 bytes or more in fuzz_frame.ubsan. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/Prog/LLVMFuzzerTestOneInput_early_cg.v for libdiginet/fuzz_frame: the crash-free (SRcf) return at once of an input of 2 ^ 26 bytes or more in fuzz_frame.ubsan. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

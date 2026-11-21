@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch premises entry_launch_ok_va and valid_input; the run's CONFIG_RSEQ flag; the start-up stack anchored at its top; AT_EXECFN): changed sp, envp, Hsp, Hva, Hve, src0_open_failed, src0_cannot_open_hyp; added inp, Hargv, Hvl, Hlau, Hvi, efn; removed Hfits. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -23,38 +24,63 @@ Lemma msg_cannot_open_eq : forall p, msg_cannot_open p = strB "cli: cannot open 
 Proof. intros p. unfold msg_cannot_open. vm_compute. reflexivity. Qed.
 Definition errno_fact : afact := mkAF (2^64 - 4095) (2^64 - 1) 0.
 Section b.
-Variable sp : word.
+Variable sp brk mbase : word.
+Variable inp : ProcInput.
 Variable a0 path : list byte.
-Variable envp : list (list byte).
 Variable tid : word.
 Variable rnd : EntryDraw.
 Hypothesis Hsp : valid_sp sp.
-Hypothesis Hva : valid_argv [a0; path].
-Hypothesis Hve : valid_envp envp.
-Hypothesis Hfits : entry_stack_fits sp [a0; path] envp.
+(* The layout facts are now stated over [in_argv inp] rather than over a free [argv]
+   (YP08.v:494), so the two-element argv this section is about arrives as an EQUATION and
+   the facts below are rewritten with it. *)
+Hypothesis Hargv : in_argv inp = [a0; path].
+Hypothesis Hva : valid_argv (in_argv inp).
+Hypothesis Hve : valid_envp (in_envp inp).
+(* [entry_stack_fits] REPLACED by the premises YN3e's Section f takes (YN3e.v:189-194). *)
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp.
+Hypothesis Hvi : valid_input inp.
+#[local] Notation envp := (in_envp inp).
+#[local] Notation efn := (in_execfn inp).
 Theorem src0_open_failed : forall regs mem model (e : Z),
 0 < e < 4096 ->
 m_halted model = None -> m_vm_lazy model = [] ->
 fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) model ->
-regs_ok (E_main sp [a0; path] envp tid rnd) (ss_regs ss_open) regs ->
-mem_ok src0segs (E_main sp [a0; path] envp tid rnd) mem (ss_mem ss_open) ->
-facts_ok (E_main sp [a0; path] envp tid rnd) (ss_facts ss_open) ->
-runs_at (bv_unsigned sp) mem (runs_main true sp [a0; path] envp rnd) ->
+regs_ok (E_main sp inp [a0; path] envp efn tid rnd) (ss_regs ss_open) regs ->
+mem_ok src0segs (E_main sp inp [a0; path] envp efn tid rnd) mem (ss_mem ss_open) ->
+facts_ok (E_main sp inp [a0; path] envp efn tid rnd) (ss_facts ss_open) ->
+runs_at (bv_unsigned sp) mem (runs_main (kb_rseq (in_kernel inp)) true sp (ed_top rnd) [a0; path] envp efn) ->
 realizes src0segs
 (mkCfg (mkst (regupd regs 10 (errno_ret e)) (v_addi (Z_to_bv 64 (ss_pc ss_open)) 4) mem (seg_rom src0segs)) model)
 (diag (msg_cannot_open path) (m_fs model)).
 Proof.
 intros regs mem model e He Hh Hlz Hfd2 Hregs Hmem HG HR.
 unfold diag, wr, ex, ch_stderr. rewrite msg_cannot_open_eq.
-pose proof (layout_facts sp [a0; path] envp Hsp Hva Hve) as L. unfold SP_LO, SP_HI in L.
-pose proof (z_argv_bounds sp [a0; path] envp 1 ltac:(cbn; lia)) as B1. cbn [nth] in B1.
-pose proof (argv_no_nul [a0; path] Hva 1 ltac:(cbn; lia)) as Hnul1. cbn [nth] in Hnul1.
-pose proof (argv_str_len [a0; path] Hva 1 ltac:(cbn; lia)) as Hlen1. cbn [nth] in Hlen1.
-pose proof (ew0 sp [a0; path] envp (xw_main sp [a0; path] envp tid rnd) (xd_main rnd)) as H0.
-change (E0 _ _ _ _ _) with (E_main sp [a0; path] envp tid rnd) in H0.
-pose proof (ew2' sp [a0; path] envp Hsp Hva Hve (xw_main sp [a0; path] envp tid rnd) (xd_main rnd) ltac:(cbn; lia)) as H2.
-change (E0 _ _ _ _ _) with (E_main sp [a0; path] envp tid rnd) in H2.
-pose proof (z_argv_fits sp [a0; path] envp Hfits 1 ltac:(cbn; lia)) as F1. cbn [nth] in F1. unfold SP_HI in F1.
+assert (Hal : (2 <= length (in_argv inp))%nat) by (rewrite Hargv; cbn; lia).
+(* [YP08.layout_facts]'s fourth conjunct is now [z_rand + 16 <= z_strs] (YP08.v:757) and no
+   longer [< 2^63]; conjuncts 6 and 7 carry it on to [ztop <= SP_HI], and [SP_HI] is
+   0x800000000000 = 2^47 (YP08.v:311), so the [unfold] below still hands [lia] a literal
+   power-of-two ceiling for every atom in this proof. *)
+pose proof (LF inp mbase sp brk rnd Hsp Hva Hve Hvl Hlau Hvi) as L.
+(* [YL0v.bsb_over_read]'s ceiling premise is discharged against the end of the tail ([STE]). *)
+pose proof (STE inp mbase sp brk rnd Hsp Hva Hve Hvl Hlau Hvi) as STE0.
+(* [AUXV_BYTES] of the run's flag is an atom to [lia]; its range bounds the strings from below. *)
+pose proof (YP08.auxv_bytes_range (kb_rseq (in_kernel inp))) as ARL.
+pose proof (ZAB inp mbase sp brk rnd Hsp Hva Hve Hvl Hlau Hvi 1 ltac:(lia)) as B1.
+pose proof (ANN inp mbase sp brk rnd Hsp Hva Hve Hvl Hlau Hvi 1 ltac:(lia)) as Hnul1.
+assert (Hlen1 : Z.of_nat (length (nth 1 (in_argv inp) [])) <= 131071)
+by (eapply YP08.argv_str_len; first [eassumption | lia]).
+assert (H0 : bv_unsigned (ew (E_main sp inp [a0; path] envp efn tid rnd) 0) = bv_unsigned sp)
+by reflexivity.
+assert (H2 : bv_unsigned (ew (E_main sp inp (in_argv inp) envp efn tid rnd) 2)
+= z_argv (bv_unsigned (ed_top rnd)) (in_argv inp) envp efn 1)
+by (unfold E_main; eapply YP08.ew2'; first [eassumption | lia]).
+assert (F1 : z_argv (bv_unsigned (ed_top rnd)) (in_argv inp) envp efn 1
++ Z.of_nat (length (nth 1 (in_argv inp) [])) + 1 <= SP_HI - 9)
+by (eapply YP08.z_argv_fits; first [eassumption | lia]).
+rewrite Hargv in L, B1, Hnul1, Hlen1, H2, F1, STE0.
+cbn [nth] in B1, Hnul1, Hlen1, F1.
+unfold SP_LO, SP_HI in L. unfold SP_HI in F1.
 assert (Hue : bv_unsigned (errno_ret e) = 2^64 - e).
 { unfold errno_ret. rewrite Z_to_bv_unsigned. unfold bv_wrap. change (bv_modulus 64) with (2^64).
 rewrite <- (Z.mod_add _ 1) by lia. replace (- e + 1 * 2 ^ 64) with (2 ^ 64 - e) by lia. apply Z.mod_small. lia. }
@@ -64,7 +90,7 @@ ltac:(cbn [af_lo af_hi errno_fact]; rewrite Hue; lia)
 ltac:(cbn [af_al2 errno_fact]; lia)
 ltac:(cbn [af_al2 errno_fact]; rewrite Z.pow_0_r; apply Z.mod_1_r)) as HS.
 sym_norm HS.
-assert (H9 : bv_unsigned (ew (ewset (E_main sp [a0; path] envp tid rnd) 10 (errno_ret e)) 10) = 2^64 - e)
+assert (H9 : bv_unsigned (ew (ewset (E_main sp inp [a0; path] envp efn tid rnd) 10 (errno_ret e)) 10) = 2^64 - e)
 by (rewrite ew_ewset_same; exact Hue).
 sym_run3_with src0tbl_ok HS.
 sym_assume_with3 src0tbl_ok HS false.
@@ -163,7 +189,7 @@ Qed.
 End b.
 Theorem src0_cannot_open_hyp : cannot_open_hyp.
 Proof.
-unfold cannot_open_hyp. intros sp a0 path envp tid rnd regs mem model e Hsp Hva Hve Hfits Htid Hregs Hmem HG HR Hh Hlz Hch He.
-exact (src0_open_failed sp a0 path envp tid rnd Hsp Hva Hve Hfits regs mem model e He Hh Hlz Hch Hregs Hmem HG HR).
+unfold cannot_open_hyp. intros sp brk mbase inp a0 path tid rnd regs mem model e Hsp Hargv Hva Hve Hvl Hlau Hvi Htid Hregs Hmem HG HR Hh Hlz Hch He.
+exact (src0_open_failed sp brk mbase inp a0 path tid rnd Hsp Hargv Hva Hve Hvl Hlau Hvi regs mem model e He Hh Hlz Hch Hregs Hmem HG HR).
 Qed.
 End a.

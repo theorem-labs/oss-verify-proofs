@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Copyright 2026 Theorem Labs *)
 (* Image B's exit-end LS row (row G-BLS-exit of FREE-PIECES.md (sha256 0f44f6fd1403; internal record); B-TOPX-OWNERS.md (sha256 705727227472; internal record) row 48 LS_exit_end;
-   the B top lib/B/W_LLVMFuzzerTestOneInput_top_x.v at e43cf0c7bef; k3's lib/B/ReplyBTop.v:90 at a6411d87d21).
+   the B top lib/B/W_LLVMFuzzerTestOneInput_top_x.v; k3's lib/B/ReplyBTop.v:90).
    proves no function (kind: invariant lemma).
 
    WHAT THIS FILE PROVES (a Theorem Labs lane 06:42Z, a Theorem Labs lane 06:45Z / 07:06Z): the B exit text BY ITS OWNER'S NAME,
-   a Theorem Labs lane's lib/B/ReplyLS3B_inst.v TX_LS_exit_end_e (A's adopted lib/A/ReplyLSI.v:191-221 word for word:
+   a Theorem Labs lane's lib/B/ReplyLS3B_inst.v TX_LS_exit_end_e (A's adopted lib/A/ReplyLSI.v:192-222 word for word:
    the top's LS_exit_end with NP dropped and LS_exit_end3e's four premises last - relay_finish's final capacity, the
    loop's t bound, fr_hblks at the return, NoDup), at the B top's parameters (MT := ameter_triv, XN_LIB := XR0,
    fr_live_post := fr_live_post_b, fr_surv := fr_surv_b TfibB, fr_FP := fr_FP_b, ARX := top_x's ARX,
@@ -16,14 +17,14 @@
    - bx_LS_exit_end_lsi: at decbox's instance ReplyLS3B_inst.LSI TfibB OUT_MAX4 fr_CAP (any fr_CAP), projected by
      decbox's lsi_parts.
 
-   NP: the B texts that k3 re-points still conclude NP (ReplyBTop.v:90 RLV; lib/B/W_LLVMFuzzerTestOneInput_exit_x.v:157
-   at a6411d87d21; Btop:285 at e43cf0c7bef) and move to TX_LS_exit_end_e's NP-free text, as A's top did
-   (lib/A/W_LLVMFuzzerTestOneInput_top_x.v:646-661 at 14fbe276057).
+   NP: the B texts that k3 re-points still conclude NP (ReplyBTop.v:90 RLV; lib/B/W_LLVMFuzzerTestOneInput_exit_x.v:157;
+   Btop:285) and move to TX_LS_exit_end_e's NP-free text, as A's top did
+   (lib/A/W_LLVMFuzzerTestOneInput_top_x.v:646-661).
 
    WHY THE OLD B TEXT CANNOT BE PROVED: (U1) cap is free (btext_cap_breaks_post); (U2) NP := room_live_cf reads
-   allocator state (lib/Reusable/YGcfRoomLive.v:1210-1213) that no premise names; (U3) fr_surv_b needs the entry
-   conjunct and fr_hblks at the return (btext_surv_needs_ent); and at e43cf0c7bef fr_live_post_b's OUT_MAX was
-   33,554,430 (YCfn_cf.v:38 there) below fr_OUT's OUT_MAX4 = 133,953,540; equal at this base (be3d698ebfa,
+   allocator state (lib/Reusable/YGcfRoomLive.v:1211-1214) that no premise names; (U3) fr_surv_b needs the entry
+   conjunct and fr_hblks at the return (btext_surv_needs_ent); and fr_live_post_b's OUT_MAX was
+   33,554,430 (YCfn_cf.v:38 there) below fr_OUT's OUT_MAX4 = 133,953,540; equal at this base (
    YCfn_cf.v:49): ou_live_post_b_om. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -84,7 +85,7 @@ Open Scope Z_scope.
 #[local] Existing Instance YE2k.tfib_sink_head.
 
 (* ================================================================== the constants, read from the B files *)
-(* fr_live_post_b's bound is fr_OUT's: YCfn_cf.OUT_MAX (lib/B/YCfn_cf.v:49) is ReplyLSBo.OUT_MAX4 (ReplyLSBo.v:69) *)
+(* fr_live_post_b's bound is fr_OUT's: YCfn_cf.OUT_MAX (lib/B/YCfn_cf.v:49) is ReplyLSBo.OUT_MAX4 (ReplyLSBo.v:70) *)
 Lemma ou_live_post_b_om : YCfn_cf.OUT_MAX = ReplyLSBo.OUT_MAX4.
 Proof. reflexivity. Qed.
 
@@ -118,7 +119,7 @@ Proof.
   pose proof (LSx_OUT cx t m ly3 S3 HLS) as HOU.
   pose proof (LSx_ENT cx t m ly3 S3 HLS) as HEN.
   pose proof (Z.le_refl ReplyLSBo.OUT_MAX4) as HOM.
-  (* decbox's KF-COUNT 09be0e8b51b: LS_exit_end3e concludes the first two conjuncts only; the meter conjunct is
+  (* decbox's KF-COUNT: LS_exit_end3e concludes the first two conjuncts only; the meter conjunct is
      `exact I` at MT := ameter_triv *)
   assert (R : ReplyB3LS3e.fr_live_post3_e ReplyLSBo.OUT_MAX4 (c_S cx) (stack_free_state 1 fpos S') k' /\
               ReplyB3LS3e.fr_surv_e TfibB (c_ly cx) (c_S cx) (c_W cx) (c_mem cx) ly' (stack_free_state 1 fpos S')
@@ -131,8 +132,8 @@ Qed.
 End bx.
 
 (* ================================================================== at decbox's LSI *)
-(* ReplyLS3B_inst.LSI B OM fr_CAP := fr_LS3cp B YCfn_cf.CALL_ROOM_B /\ fr_OUT OM /\ fr_ENT B /\ fr_CAP (decbox
-   8963bbb77ad4, ReplyLS3B_inst.v:228-231), at B := TfibB, OM := OUT_MAX4, fr_CAP its slot (any predicate); its
+(* ReplyLS3B_inst.LSI B OM fr_CAP := fr_LS3cp B YCfn_cf.CALL_ROOM_B /\ fr_OUT OM /\ fr_ENT B /\ fr_CAP (decbox,
+   ReplyLS3B_inst.v:229-232), at B := TfibB, OM := OUT_MAX4, fr_CAP its slot (any predicate); its
    projections are decbox's lsi_parts (:234-241). *)
 Section bxi.
 Context {fx : YK11.FPState} {rc : YM05.RunCeil}.

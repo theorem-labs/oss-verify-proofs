@@ -8,7 +8,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.U.Prog Require Import PackFi
 Import ListNotations.
 Local Open Scope Z_scope.
 
-(* U twin of Prog/PackFitCf.v (c-frame-gi, db362d2b84), with the ubsan build's modules: fuzz_preset's caps fit the agreement's sanitizer budget: the cut-free pack room LIVE2c of CS_of (beta2_x x) plus
+(* U twin of Prog/PackFitCf.v (c-frame-gi), with the ubsan build's modules: fuzz_preset's caps fit the agreement's sanitizer budget: the cut-free pack room LIVE2c of CS_of (beta2_x x) plus
    NONHEAP_CF stays under LIM_AG, for every payload of at most pf_MAX bytes and every call with at most pf_BMAX live
    bytes. *)
 

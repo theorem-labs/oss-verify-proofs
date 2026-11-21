@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO layer: fetch_failure's vdso_text_at case in fetch_failure_not_ok, and the vvar arm of a failed load (range_meets_vvar) in interp_eff_accesses_all). *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -152,7 +153,8 @@ intros segs P t. induction t as [c|c|c|c|c|c|n a k IH|n a v k IH]; intros m rep 
 - discriminate HI.
 - discriminate HI.
 - discriminate HI.
-- destruct (ov_read_bytes segs m a (RiscvSemantics.width_bytes n)) as [bs|]; [|discriminate HI].
+- destruct (ov_read_bytes segs m a (RiscvSemantics.width_bytes n)) as [bs|];
+[|destruct (RiscvSemantics.range_meets_vvar segs a (RiscvSemantics.width_bytes n)); discriminate HI].
 destruct (RiscvSemantics.interp_eff_accesses segs (k _) m) as [rep'| |] eqn:E; try discriminate HI.
 injection HI as <-. cbn. eapply IH; [apply HA | exact E].
 - destruct (store_ok segs m a (RiscvSemantics.width_bytes n)); [|discriminate HI].
@@ -181,6 +183,7 @@ Lemma fetch_failure_not_ok : forall segs m a st,
 RiscvSemantics.fetch_failure segs m a = MachineOk st -> False.
 Proof.
 intros segs m a st H. unfold RiscvSemantics.fetch_failure in H.
+destruct (vdso_text_at _ _); [discriminate H|].
 destruct (negb _); [discriminate H|].
 cbv zeta in H. destruct (_ || _ || _)%bool; discriminate H.
 Qed.

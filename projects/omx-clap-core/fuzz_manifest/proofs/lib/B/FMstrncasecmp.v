@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMstrncasecmp.v at a working branch b6bc009d623, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMstrncasecmp.v at a working branch, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
 (* fm's strncasecmp runtime contract in the donor's form: `astrncasecmp_realizes` (lib/A/FMH_Rt.v) at PC_strncasecmp.
    No new walk. The machine half is the Bz body walk of the interceptor, already proved at fm.asan's addresses:
    the trampoline 0x41338 (A/Bz/A/I_tramp.v tramp_strncasecmp) and __interceptor_strncasecmp 0x42400

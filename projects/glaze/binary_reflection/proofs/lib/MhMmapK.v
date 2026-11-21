@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: extended ledger accounting for the launch tail and preserved map/reserved separation. *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -59,20 +60,45 @@ Record LEDGERX `{RN : mh_run} (st : mst) (X : list (word * word)) (vm : VmMaps) 
            | BrkLive b0 b _ => bv_unsigned (vm_brk vm) = b /\ bv_unsigned (vm_start_brk vm) = b0
            | BrkDead _ => True
            end;
-  lx_res : vm_reserved vm = segments_reserved RSEGS;
-  lx_top : page_floor (alloc_top vm) = CEIL
+  lx_res : reserved_layout vm;
+  lx_top : page_floor (alloc_top vm) = CEIL;
+  lx_mres : Forall (fun iv => region_free (vm_reserved vm) (fst iv) (snd iv) = true) (vm_maps vm)
 }.
 
 Lemma LEDGERX_nil `{RN : mh_run} : forall st vm, LEDGER st vm <-> LEDGERX st [] vm.
 Proof.
   intros st vm. split.
-  - intros [A B C D E]. constructor; cbn [app]; assumption.
-  - intros [A B C D E]. constructor; cbn [app] in A; assumption.
+  - intros [A B C D E F]. constructor; cbn [app]; assumption.
+  - intros [A B C D E F]. constructor; cbn [app] in A; assumption.
 Qed.
 
 Lemma LEDGERX_same `{RN : mh_run} : forall st st' X vm, s_regions st' = s_regions st -> s_brk st' = s_brk st -> LEDGERX st X vm -> LEDGERX st' X vm.
 Proof.
-  intros st st' X vm ER EB [LM LN LB LR LMB]. unfold noacc_of in LN. constructor; unfold noacc_of; rewrite ?ER, ?EB; assumption.
+  intros st st' X vm ER EB [LM LN LB LR LMB LMR]. unfold noacc_of in LN. constructor; unfold noacc_of; rewrite ?ER, ?EB; assumption.
+Qed.
+
+Lemma ledgerx_prefix_free `{RN : mh_run} : forall st X vm a n,
+  LEDGERX st X vm -> region_free (vm_reserved vm ++ vm_maps vm) a n = true ->
+  region_free (segments_reserved RSEGS ++ vm_maps vm) a n = true.
+Proof.
+  intros st X vm a n LG HF.
+  destruct (lx_res st X vm LG) as (rx & ER & _).
+  apply RefNodes.region_free_intro. intros b sz Hin.
+  eapply RefNodes.region_free_In; [exact HF|].
+  apply in_app_iff in Hin. apply in_app_iff. destruct Hin as [Hin|Hin].
+  - left. rewrite ER. apply in_or_app. left. exact Hin.
+  - right. exact Hin.
+Qed.
+
+Lemma region_free_subrange : forall rs (a n b k : word),
+  region_free rs a n = true ->
+  bv_unsigned a <= bv_unsigned b ->
+  bv_unsigned b + bv_unsigned k <= bv_unsigned a + bv_unsigned n ->
+  region_free rs b k = true.
+Proof.
+  intros rs a n b k HF Hlo Hhi. apply RefNodes.region_free_intro.
+  intros c sz Hin. pose proof (RefNodes.region_free_In rs a n c sz HF Hin) as D.
+  destruct D; lia.
 Qed.
 
 (* [comment removed for export] *)
@@ -146,7 +172,8 @@ Section Budget.
     Forall (fun p => bv_unsigned (snd p) <= 2 ^ 35) (vm_reserved vm ++ vm_maps vm).
   Proof.
     intros X vm LG XOK. apply Forall_app. split.
-    - rewrite (lx_res st X vm LG). exact rsegs_small.
+    - destruct (lx_res st X vm LG) as (rx & ER & _ & HR & _).
+      rewrite ER. apply Forall_app. split; [exact rsegs_small | exact HR].
     - apply Forall_forall. intros e He. apply (Permutation_in _ (lx_maps st X vm LG)) in He.
       apply in_app_iff in He. destruct He as [He|He].
       + destruct (XOK e He) as (a & n & -> & _ & Hn & _). cbn [snd]. ceil. rewrite u64_lit; lia.
@@ -155,9 +182,10 @@ Section Budget.
   Qed.
 
   Lemma ledgerx_entries_count : forall X vm, LEDGERX st X vm ->
-    length (vm_reserved vm ++ vm_maps vm) = (4 + length X + length (s_regions st))%nat.
+    (length (vm_reserved vm ++ vm_maps vm) <= 6 + length X + length (s_regions st))%nat.
   Proof.
-    intros X vm LG. rewrite length_app, (lx_res st X vm LG), rsegs_len.
+    intros X vm LG. destruct (lx_res st X vm LG) as (rx & ER & HR & _).
+    rewrite length_app, ER, length_app, rsegs_len.
     rewrite (Permutation_length (lx_maps st X vm LG)), length_app, length_map. lia.
   Qed.
 End Budget.
@@ -185,28 +213,44 @@ Section Grants.
   Proof. exact (alloc_top_ge_CEIL0 _ (lx_top st X _ LG)). Qed.
 
   Lemma ledgerx_count : Z.of_nat (length X) + Z.of_nat (length (s_regions st)) <= 246 ->
-    Z.of_nat (length (vm_reserved (m_vmmaps mdl) ++ vm_maps (m_vmmaps mdl))) <= 250.
-  Proof. intros H. rewrite (ledgerx_entries_count st X _ LG). lia. Qed.
+    Z.of_nat (length (vm_reserved (m_vmmaps mdl) ++ vm_maps (m_vmmaps mdl))) <= 252.
+  Proof. intros H. pose proof (ledgerx_entries_count st X _ LG). lia. Qed.
 
   (* [comment removed for export] *)
+  (* 75d69e00: the grant guard is Linux's placement rule, so these carry the
+     HINT and a positive page-aligned length, and the old band conclusion
+     ([GAPLO <= a <= CEIL0]) is replaced by the two facts the placement rule
+     does give.  Both call sites already discarded the third component. *)
   Lemma ledgerx_grant_rw : forall hint n,
-    0 <= n <= 2 ^ 35 ->
+    0 < n <= 2 ^ 35 -> n mod page_size = 0 ->
     Z.of_nat (length X) + Z.of_nat (length (s_regions st)) <= 246 ->
     XSUM X + RSUM (s_regions st) + n <= vm_limit (m_vmmaps mdl) ->
-    exists a, grant_ok hint mdl a n = true /\ GAPLO <= bv_unsigned a /\ bv_unsigned a + n <= CEIL0.
+    exists a, grant_ok hint mdl a n = true
+              /\ 0 < bv_unsigned a /\ bv_unsigned a + n <= alloc_top (m_vmmaps mdl).
   Proof.
-    intros hint n Hn Hcnt Hbud.
-    apply (grant_exists_big hint mdl n Hn (ledgerx_entries_small st L HWF X _ LG XOK) (ledgerx_count Hcnt) ledgerx_top).
-    pose proof (backing_le st L HWF X mdl LG Hl Hm). lia.
+    intros hint n Hn Hnal Hcnt Hbud.
+    apply (grant_exists_gen hint mdl (2 ^ 35) n 252); try assumption; try lia.
+    - reflexivity.
+    - exact (ledgerx_entries_small st L HWF X _ LG XOK).
+    - exact (ledgerx_count Hcnt).
+    - exact band_252.
+    - exact ledgerx_top.
+    - pose proof (backing_le st L HWF X mdl LG Hl Hm). lia.
   Qed.
 
   (* [comment removed for export] *)
-  Lemma ledgerx_grant_na : forall n,
-    0 <= n <= 2 ^ 35 ->
+  Lemma ledgerx_grant_na : forall hint n,
+    0 < n <= 2 ^ 35 -> n mod page_size = 0 ->
     Z.of_nat (length X) + Z.of_nat (length (s_regions st)) <= 246 ->
-    exists a, grant_ok_na_pin mdl a n = true /\ GAPLO <= bv_unsigned a /\ bv_unsigned a + n <= CEIL0.
+    exists a, grant_ok_na_pin hint mdl a n = true
+              /\ 0 < bv_unsigned a /\ bv_unsigned a + n <= alloc_top (m_vmmaps mdl).
   Proof.
-    intros n Hn Hcnt.
-    exact (grant_exists_na_big mdl n Hn (ledgerx_entries_small st L HWF X _ LG XOK) (ledgerx_count Hcnt) ledgerx_top).
+    intros hint n Hn Hnal Hcnt.
+    apply (grant_exists_na_gen hint mdl (2 ^ 35) n 252); try assumption; try lia.
+    - reflexivity.
+    - exact (ledgerx_entries_small st L HWF X _ LG XOK).
+    - exact (ledgerx_count Hcnt).
+    - exact band_252.
+    - exact ledgerx_top.
   Qed.
 End Grants.

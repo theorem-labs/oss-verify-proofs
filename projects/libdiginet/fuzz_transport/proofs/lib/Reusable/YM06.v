@@ -2,13 +2,15 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YM06.v, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Reusable/YM06.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_transport; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_transport.lib. *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Reusable/YM06.v for libdiginet/fuzz_transport; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_transport.lib. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run_segments lift (RomStableK, sys_rob in node_ok)); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import Wellfounded.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YK0n YK0i YK15.
+From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import RomBase.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Section d. Context {fx : YK11.FPState}.
@@ -56,9 +58,9 @@ Proof using.
 intros c I nx i0 Q Hnode H T HK.
 exact (rz_silent_allI segs c I nx i0 T Hnode (fun i => H i T HK)).
 Qed.
-Lemma SR_cut : forall c (Q : config -> Prop), budget_refused_at segs c -> SR c Q.
+Lemma SR_cut : forall c (Q : config -> Prop), budget_refused_at segs c -> sys_rob segs c -> SR c Q.
 Proof using.
-intros c Q Hb T _. apply rz_cut. exact Hb.
+intros c Q Hb Hrb T _. apply rz_cut; assumption.
 Qed.
 Lemma SR_case : forall (A : Prop) c Q,
 (A \/ ~ A) -> (A -> SR c Q) -> (~ A -> SR c Q) -> SR c Q.

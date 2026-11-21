@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB; taken in part from projects/simdjson/fuzz_dump/proofs/lib/A/Atp_defsA.v, line 77. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -73,7 +74,7 @@ Definition a_live (RT : rt_sig) (Σ : rts RT) (E : aenvA) : Prop :=
   In (ae_TAPE E, ae_NT E) (rt_live RT Σ) /\ In (ae_SBUF E, ae_NS E) (rt_live RT Σ)
   /\ (ae_p1 E = [] \/ In (ae_PB E, ae_NPB E) (rt_live RT Σ))
   /\ In (ae_fD E, ae_kD E) (rt_frames RT Σ)
-  /\ rt_sp0 RT Σ - STACK_WIN <= ae_lo E.
+  /\ rt_sp0 RT Σ - STACK_SPAN <= ae_lo E.
 
 Definition AINV_A (E : aenvA) (m : mem) : Prop :=
   bytes_at asegs m (ae_TAPE E) (u64s (map (Z_to_bv 64) (ae_tws E)))

@@ -14,7 +14,7 @@
 
    THE SPLIT POINT (a Theorem Labs lane 00:45Z).  strcmp_wrap has no `_F` in this tree, so the tail run is SPLIT at the call.
    The callee's fact is a Theorem Labs lane's astrcmp_realizes at 0x42964 (lib/Reusable/AStrcmpDef.v), now the PROVED theorem
-   A.Rt.Strcmp.ctrl_strcmp_tramp (lib/A/Rt/Strcmp.v (at head lib/A/Rt/Strcmp.v:467), taken by path from a working branch faf0dd1d3b0),
+   A.Rt.Strcmp.ctrl_strcmp_tramp (lib/A/Rt/Strcmp.v (at head lib/A/Rt/Strcmp.v:468), taken by path from a working branch),
    cited as the lemma H_strcmp with its body; r21g_aj_strcmp_at puts it in journal form, in the shape of the
    core's aj_bcmp_at (YCbq.v:2062-2110).  strcmp itself is NOT re-proved here.  The guarded reads of the source
    (the row word at mr + 280 and the record byte at S5 + 20, read only when h <> 0) stay guarded, in the run, in the
@@ -28,7 +28,7 @@
                                 the core's only source is arodata_okS.
      H_strcmp                   no longer a hypothesis: the lemma H_strcmp, by A.Rt.Strcmp.ctrl_strcmp_tramp B LAWS
                                 TFIB_SYMS (its body is astrcmp_realizes segs B 0x42964 unfolded).
-   ROUTE (C), a working branch 1899bed1aee: ctl_from's runtime premise is A.ACtlRtC.ctl_rt_C B ly3 S3 mem3 (ACtlCut.v:243).
+   ROUTE (C), a working branch: ctl_from's runtime premise is A.ACtlRtC.ctl_rt_C B ly3 S3 mem3 (ACtlCut.v:243).
    The three runs and the strcmp rule take no shadow_rw premise; the stage's own keeps r21g_ctlrt_munch (the latch's
    eight shadow stores) and r21g_ctlrt_view (the strcmp call) carry ctl_rt_C's two regions (cut_shadow B ly3 S3,
    img_shadow) at the same state; r21g_str_facts reads only its ro_agree part.  No VIS0 / OWNED_RO.
@@ -80,7 +80,7 @@ Module R21R := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog.Seg.R21F.
 Module R21N := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog.Seg.R21Fs.
 Module RTM := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog.Seg.B3Rtm.
 (* The binding table of the doubled Lib families this file names (ctrlgate dcb362e1c42f; a Theorem Labs lane 07:0xZ), each alias
-   bound by full path to exactly the copy `About` reports in this file's own context at 20a34d3456a: LBMS.MS,
+   bound by full path to exactly the copy `About` reports in this file's own context: LBMS.MS,
    LBST.rw_cells and LBCE.* bind image A's copies A.Bz.Lib.* (the copies ACtlCutP's cut bodies are stated
    in); lib.Lib.PropExec.seg_rom binds the core copy; the bare stdpp.bitvector.definitions.Z_to_bv_bv_unsigned binds stdpp's lemma. *)
 Module LBMS := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Bz.Lib.MState.
@@ -171,7 +171,7 @@ Proof.
 Qed.
 
 (* ---------------------------------------------------------------------------------------------------------
-   1b. The strcmp rule's two definitions, AStrcmpDef.v:36 / :39-44 (a Theorem Labs lane; relocated as this unit's
+   1b. The strcmp rule's two definitions, AStrcmpDef.v:37 / :40-45 (a Theorem Labs lane; relocated as this unit's
    lib/Reusable/AStrcmpDef.v), verbatim over this unit's core names; H_strcmp below states the rule with its body
    and is proved by A.Rt.Strcmp.ctrl_strcmp_tramp (conversion through these two definitions). *)
 Definition r21g_strcmp_res (c1 c2 : Z) : Z := if c1 =? c2 then 0 else if c1 <? c2 then -1 else 1.
@@ -219,8 +219,8 @@ Hypothesis TFIB_SYMS : A.AF0m.CtrlTSyms B.
 (* the catalogue lies in the read-only span the core's arodata_okS speaks of: ACtl.v a3c6b7b35017:205, verbatim *)
 Hypothesis RELRO_CAT : RLO <= A.Prog.SlotModel.CAT /\ A.Prog.SlotModel.CAT + A.Prog.SlotModel.CAT_N * A.Prog.SlotModel.CAT_ROW <= RHI.
 
-(* AStrcmpDef.v:46-66, astrcmp_realizes segs B 0x42964 (ctrl A's __wrap_strcmp trampoline, strcmp_wrap_c.v:8),
-   stated with its body; PROVED by a Theorem Labs lane's ctrl_strcmp_tramp (A/Rt/Strcmp.v (at head lib/A/Rt/Strcmp.v:467; from a working branch faf0dd1d3b0)). *)
+(* AStrcmpDef.v:47-67, astrcmp_realizes segs B 0x42964 (ctrl A's __wrap_strcmp trampoline, strcmp_wrap_c.v:8),
+   stated with its body; PROVED by a Theorem Labs lane's ctrl_strcmp_tramp (A/Rt/Strcmp.v (at head lib/A/Rt/Strcmp.v:468; from a working branch)). *)
 Lemma H_strcmp :
   forall ly S (W : lib.Reusable.YA0n.world segs) regs mem md x y k c1 c2,
   lib.Reusable.YG0d.ecall_pre segs B ly S W regs mem md ->
@@ -259,9 +259,9 @@ Proof. exact (A.Rt.Strcmp.ctrl_strcmp_tramp B LAWS TFIB_SYMS). Qed.
 (* The catalogue names' shadow (formerly the named Section hypothesis NAME_SHADOW), PROVED from AR's own facts.  Each
    row name with an identity record is a 32-byte-aligned asan global of at most 9 bytes, so its shadow is one 8-byte
    shadow block.  Each byte of that block is either a row of the record's shadow const table A.AF0m.Tfib_const_shadow
-   (AF0m.v:2167: the partial last granule, value n mod 8, and the 0xf9 redzone bytes), which AR's am_const
-   (YG0n.v:211) gives under TFIB_SYMS' ts_const (AF0m.v:3002), or a byte of a range of A.AF0m.Tfib_zero_shadow
-   (AF0m.v:2955: the full granules), which LAWS' al_zshadow (YG0d.v:435-438) gives under ts_zsh (AF0m.v:3006).
+   (AF0m.v:2168: the partial last granule, value n mod 8, and the 0xf9 redzone bytes), which AR's am_const
+   (YG0n.v:211) gives under TFIB_SYMS' ts_const (AF0m.v:3003), or a byte of a range of A.AF0m.Tfib_zero_shadow
+   (AF0m.v:2956: the full granules), which LAWS' al_zshadow (YG0d.v:435-438) gives under ts_zsh (AF0m.v:3007).
    range_addressable follows by YG0v.block_shadow_range, shadow_hull_vis byte by byte.  Each row's name address and
    length are computed (vm_compute), as B3Rtm.a_row_facts computes them. *)
 Lemma r21g_ns_row : forall ly S (W : lib.Reusable.YA0n.world segs) m md s v,

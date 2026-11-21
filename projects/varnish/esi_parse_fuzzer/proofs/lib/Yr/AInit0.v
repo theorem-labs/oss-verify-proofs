@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the start-up's mapped-stack fact is the 6144512 bytes below sp, shown visible inside the fixed stack region, and the reservation-ledger cover is the image's reservations followed by the launch's bounded reservations. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -151,7 +152,9 @@ Section Init.
   Qed.
   Tactic Notation "fixed_nth" integer(k) := unfold fixed_regions_; cbn [al_image_lo al_image_hi AL_pasan];
     do k right; left; reflexivity.
-  #[using="RAW md FULL sp0"] Lemma vis_stk : zrange_visible Hd (p_sp0 P - 0x800000) 0x800000.
+  (* LPS 727298f3: the 6144512 bytes below sp the launch maps ([maps_repr_]) lie inside the
+     fixed stack region; it WAS the whole 8 MiB below sp *)
+  #[using="RAW md FULL sp0"] Lemma vis_stk : zrange_visible Hd (p_sp0 P - 6144512) 6144512.
   Proof. pose proof PF. pose proof alloc_ceiling_val. apply (vis_fix (p_sp0 P - 0x800000) (0x800000 + p_stk_span P)); [fixed_nth 0| lia| lia| lia| lia]. Qed.
   Lemma vis_stksh : zrange_visible Hd (fst stack_shadow_iv) (snd stack_shadow_iv).
   Proof.
@@ -509,7 +512,8 @@ Section Init.
         exists fog. split; [exact L1|]. split; [exact L2|]. split; [exact L3|]. split; [exact L4|].
         cbn [cl_image_lo cl_image_hi LPA] in L5 |- *. exact L5.
       + exact (ar0_gap _ _ _ _ _ RAW).
-      + exact (ar0_reserved _ _ _ _ _ RAW).
+      + (* LPS 727298f3: [acover_]'s ledger conjunct is [ar0_reserved]'s existential *)
+        exact (ar0_reserved _ _ _ _ _ RAW).
     - exact TOP.
   Qed.
 

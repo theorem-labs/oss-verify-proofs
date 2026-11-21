@@ -10,7 +10,7 @@ Inputs, all from the environment (env.example.sh lists them):
   BOX_A, BOX_B         fuzz_boxreg.asan / .asan-ubsan unstripped twins
   BOX_PIN_A, BOX_PIN_B the pinned fuzz_boxreg images
   TOOLS                a directory holding bytecmp-7daa0e2a03d9.py and repin_check-9cbc3553c09e.py, the tools of record
-                       (commit 8cd71d3a4bb) tools/bytecmp/7daa0e2a03d9/bytecmp.py and tools/repin_check/9cbc3553c09e/repin_check.py;
+                       tools/bytecmp/7daa0e2a03d9/bytecmp.py and tools/repin_check/9cbc3553c09e/repin_check.py;
                        their sha256 must start with those names, else the run stops
 The scripts drvcmp.py, closure.py and jtcheck.py beside this file are copied with the two tools into a temporary
 directory and run there. WT_LIB (the unit's proofs/reac-repacer/fuzz_uci/lib) is read by memchr-local.py --check.

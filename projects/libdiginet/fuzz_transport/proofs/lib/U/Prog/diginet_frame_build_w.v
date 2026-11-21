@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/mbedtls/fuzz_pkcs7/lib/Lib/Asn1Aux.v; 305 of its 322 lines of code are new or changed and 432 lines of the source are left out. *)
 (* proves the wide UBSan contract of diginet_frame_build (fuzz_transport.ubsan, 0x18260) and that it gives the narrow one. *)
-(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/diginet_frame_build_w.v at bb3053036017d1d92db6eca9e973ce610be16c08 to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/diginet_frame_build_w.v to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Walk of diginet_frame_build (src/diginet_frame.c:93-127 at 835f336c) in fuzz_transport.ubsan for
    U/Prog/diginet_frame_build_w_c.v. The wide contracts of diginet_body_check and diginet_sum16
    and the contracts of memcpy and memset are its hypotheses.

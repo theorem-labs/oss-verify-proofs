@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the registers of the three vDSO step arms). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool.
@@ -138,7 +139,7 @@ Proof.
   induction 1 as [c1 c2 H|c1 c2 H|c1 c2 H|c1 c2 H|c1 c2 H|c1 c2 H|n a k1 k2 Hk IH|n a v k1 k2 Hk IH]; intros m; cbn [interp_eff_accesses res_eqv];
     try exact I.
   - cbn [res_eqv accessed_ranges access_value fst snd]. split; [reflexivity|]. split; [reflexivity|exact H].
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|exact I].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [|destruct (range_meets_vvar segs a (width_bytes n)); exact I].
     specialize (IH (bv_extract 0 n (le_bytes_to_word bs)) m).
     destruct (interp_eff_accesses segs (k1 _) m) as [r1| |], (interp_eff_accesses segs (k2 _) m) as [r2| |];
       cbn in IH |- *; try contradiction; try exact I.
@@ -231,6 +232,86 @@ Proof.
   unfold advance_past_svc, apply_effect, set_reg, ms_pc. cbn.
   destruct (bv_eqb 10 0); cbn; rewrite ?Hf, ?Hp, ?Hrv, ?Hfc, ?Hm, ?Hrom; repeat split; auto.
   apply regs_eqv_set, HR.
+Qed.
+
+(* The revision's three vDSO step arms read the caller-saved registers,
+   the frame below sp and the return address, all of which [ms_eqv]
+   fixes, so a vDSO call carries the relation exactly as a syscall does. *)
+Lemma ms_sp_eqv : forall ms1 ms2, ms_eqv ms1 ms2 -> ms_sp ms1 = ms_sp ms2.
+Proof.
+  intros ms1 ms2 H. unfold ms_sp. apply (proj1 H).
+  intros Hc. apply (f_equal (@bv_unsigned 5)) in Hc. vm_compute in Hc. discriminate Hc.
+Qed.
+
+Lemma vdso_read_regs_eqv : forall ms1 ms2, ms_eqv ms1 ms2 -> vdso_read_regs ms1 = vdso_read_regs ms2.
+Proof. intros ms1 ms2 H. unfold vdso_read_regs. apply map_ext. intros r. apply ms_reg_eqv, H. Qed.
+
+Lemma ms_read_byte_eqv : forall ms1 ms2, ms_eqv ms1 ms2 -> ms_read_byte ms1 = ms_read_byte ms2.
+Proof.
+  intros ms1 ms2 H. destruct H as (_ & _ & _ & _ & _ & _ & Hm & Hrom).
+  unfold ms_read_byte. rewrite Hm, Hrom. reflexivity.
+Qed.
+
+Lemma set_reg_eqv : forall ms1 ms2 r v, ms_eqv ms1 ms2 -> ms_eqv (set_reg ms1 r v) (set_reg ms2 r v).
+Proof.
+  intros ms1 ms2 r v H. pose proof H as H0. destruct H as (HR & Hf & Hp & Hs & Hrv & Hfc & Hm & Hrom).
+  unfold set_reg. destruct (bv_eqb r 0); [exact H0|].
+  cbn. repeat split; cbn; auto. apply regs_eqv_set, HR.
+Qed.
+
+Lemma vdso_write_regs_mem : forall rs vs ms, ms_mem (vdso_write_regs ms rs vs) = ms_mem ms.
+Proof.
+  induction rs as [|r rs IH]; intros [|v vs] ms; cbn; try reflexivity.
+  rewrite IH. unfold set_reg. destruct (bv_eqb (Z_to_bv 5 r) 0); reflexivity.
+Qed.
+
+Lemma vdso_write_regs_eqv : forall rs vs ms1 ms2, ms_eqv ms1 ms2 ->
+  ms_eqv (vdso_write_regs ms1 rs vs) (vdso_write_regs ms2 rs vs).
+Proof.
+  induction rs as [|r rs IH]; intros [|v vs] ms1 ms2 H; cbn; try exact H.
+  apply IH, set_reg_eqv, H.
+Qed.
+
+Lemma vdso_with_mem_eqv : forall ms1 ms2 m, ms_eqv ms1 ms2 -> ms_eqv (vdso_with_mem ms1 m) (vdso_with_mem ms2 m).
+Proof.
+  intros ms1 ms2 m H. destruct H as (HR & Hf & Hp & Hs & Hrv & Hfc & Hm & Hrom).
+  unfold vdso_with_mem. repeat split; cbn; auto.
+Qed.
+
+Lemma vdso_set_pc_eqv : forall ms1 ms2 pc, ms_eqv ms1 ms2 -> ms_eqv (vdso_set_pc ms1 pc) (vdso_set_pc ms2 pc).
+Proof.
+  intros ms1 ms2 pc H. destruct H as (HR & Hf & Hp & Hs & Hrv & Hfc & Hm & Hrom).
+  unfold vdso_set_pc. repeat split; cbn; auto.
+Qed.
+
+Lemma apply_effect_eqv' : forall ms1 ms2 eff, ms_eqv ms1 ms2 -> ms_eqv (apply_effect ms1 eff) (apply_effect ms2 eff).
+Proof.
+  intros ms1 ms2 eff H. destruct H as (HR & Hf & Hp & Hs & Hrv & Hfc & Hm & Hrom).
+  unfold apply_effect, set_reg. cbn.
+  destruct (bv_eqb 10 0); cbn; rewrite ?Hf, ?Hp, ?Hs, ?Hrv, ?Hfc, ?Hm, ?Hrom; repeat split; auto.
+  apply regs_eqv_set, HR.
+Qed.
+
+Lemma vdso_post_eqv : forall ms1 ms2 model f eff, ms_eqv ms1 ms2 ->
+  ms_eqv (vdso_post segs ms1 model f eff) (vdso_post segs ms2 model f eff).
+Proof.
+  intros ms1 ms2 model f eff H. pose proof H as H0.
+  unfold vdso_post.
+  rewrite (ms_reg_eqv _ _ 1 H0), (ms_sp_eqv _ _ H0), (vdso_read_regs_eqv _ _ H0), (ms_read_byte_eqv _ _ H0).
+  apply vdso_set_pc_eqv. apply apply_effect_eqv'.
+  rewrite !vdso_write_regs_mem. rewrite (proj1 (proj2 (proj2 (proj2 (proj2 (proj2 (proj2 H0))))))).
+  apply vdso_with_mem_eqv. apply vdso_write_regs_eqv. exact H0.
+Qed.
+
+Lemma vdso_call_unmodeled_eqv : forall ms1 ms2 model fn, ms_eqv ms1 ms2 ->
+  vdso_call_unmodeled segs ms2 model fn -> vdso_call_unmodeled segs ms1 model fn.
+Proof.
+  intros ms1 ms2 model fn H Hu.
+  destruct Hu as [Hu | [(n & Hn & Hsp) | (n & eff & model' & evs & Hn & Hsp & Hd)]].
+  - left; exact Hu.
+  - right; left. exists n. split; [exact Hn|]. rewrite (sys_input_eqv ms1 ms2 _ H). exact Hsp.
+  - right; right. exists n, eff, model', evs. split; [exact Hn|].
+    split; [rewrite (sys_input_eqv ms1 ms2 _ H); exact Hsp | exact Hd].
 Qed.
 
 

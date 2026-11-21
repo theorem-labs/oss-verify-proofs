@@ -1,5 +1,5 @@
 (* lib/A/ProgWorldShadow.v -- fuzz_ctrl image A (libreac v1.9.0): the two statements of lib/A/ProgWorld.v Section
-   BlkShadow (frozen at a working branch 519a229f64a), proved.  Written by a Theorem Labs lane for a Theorem Labs lane
+   BlkShadow (frozen at a working branch), proved.  Written by a Theorem Labs lane for a Theorem Labs lane
    (that lane is the one writer of ProgWorld.v and wires these in; consumer a Theorem Labs lane).
    proves no function (kind: segment lemma).
 
@@ -142,9 +142,9 @@ Proof.
 Qed.
 
 (* ---- Global shadow: a Theorem Labs lane's ProgWorld statements ctl_gshadow_of_AR_stmt (AMENDED) and ctl_global_shadow_of_AR_stmt
-   (ProgWorld.v (at head lib/A/ProgWorld.v:1116-1123 / :1143-1154; from a working branch 1d23ced37fd)).  The a48c4068c6e text of
+   (ProgWorld.v (at head lib/A/ProgWorld.v:1116-1123 / :1143-1154; from a working branch)).  The text of
    ctl_gshadow_of_AR_stmt was FALSE (a Theorem Labs lane 05:47Z): Tfib_const_abs holds `z1 (ANum 0xa9558) 0x1` (asan_inited = 1,
-   AF0m.v:82), so g := 8 * (0xa9558 - 0x7fff8000) < 0 met every premise (shadow_addr g = 0xa9558, k = 1) while addressable
+   AF0m.v:83), so g := 8 * (0xa9558 - 0x7fff8000) < 0 met every premise (shadow_addr g = 0xa9558, k = 1) while addressable
    needs 0 <= g; the amended text adds the image bound kImgLo <= g, g + k <= kImgEnd (resp. g + n <= kImgEnd).  Sources:
    AR's am_const at as_const B ly = Tfib_const ly (CtrlTSyms' ts_const), the view -> mrd step pwsh_view_mrd,
    ctl_zshadow_of_AR for the full granules, am_static_img + lo_img for kImgLo <= fst r. ---- *)
@@ -210,8 +210,8 @@ Proof.
     exact (pwsh_addressable_app m g _ _ HZ HP).
 Qed.
 
-(* ---- Const-row visibility: a Theorem Labs lane's ProgWorld statement ctl_const_vis_of_AR_stmt (a working branch
-   e68ab922649, ProgWorld.v section ConstVis, item 19).  Route named there: the row holds over the view
+(* ---- Const-row visibility: a Theorem Labs lane's ProgWorld statement ctl_const_vis_of_AR_stmt (a working branch,
+   ProgWorld.v section ConstVis, item 19).  Route named there: the row holds over the view
    (ProgWorld_Fs.pw_row, AR's am_const at as_const B ly = Tfib_const ly), so the view reads byte a; a byte the view
    reads is visible (ProgWorldVisFrame.vis_of_aview, through w_Hoff); pw_z1_row gives the byte in bytes_at form. ---- *)
 Lemma ctl_const_vis_of_AR : A.ProgWorld.ctl_const_vis_of_AR_stmt B.

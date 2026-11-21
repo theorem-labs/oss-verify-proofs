@@ -10,7 +10,7 @@
    cover of lib/B/W_img_x.v :30 fr_img_cover_x (ly_img covers [0x10000, 0x5fc000), image B's top, above IMG_TOP_A).
    frame_flag_lawP_x_ARX: the instance at top_x's ARX text (ARcf at CfParams_reply with Hp = []), FLAG from
    lib/Reusable/YG0scf.v :506 AR_flag_law_ok_cf; ARX_laws_ffl: the laws, as top_x.v :156-159.  Same shape and names
-   as a Theorem Labs lane's lib/A/W_frame_flag_cf.v (a working branch fa09307e497).  Template: cgif's
+   as a Theorem Labs lane's lib/A/W_frame_flag_cf.v (a working branch).  Template: cgif's
    lib/A/ACed.v tfibX_FFL (origin/ossv/recipes).  Imports: A twin's, at lib/B (not top_x). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia.

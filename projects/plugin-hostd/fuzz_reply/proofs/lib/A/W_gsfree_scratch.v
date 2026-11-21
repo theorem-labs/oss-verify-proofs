@@ -16,6 +16,7 @@
      0x839b8  j 0x836f4 = DLN (S q).
    The model step is drain_b_c.seen_tr's GEnd/Some branch: the request RFree (|key| + 1), the held keys
    swap_remove'd at n, the array size unchanged (W_drain_gs.v gs_seen_end_old). *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -132,7 +133,7 @@ Hypothesis HGR : forall a, inG (G_DR B RG) a -> ~ in_rom SEGS a.
 Hypothesis HROMO : rom_out SEGS B (G_DR B RG).
 (* aout_at's three read-only output cells (g_client, g_send_dead, g_send_max) are NOT in G_DR, so neither HG
    nor the free rule's image clause says they are unowned; a call keeps them only through this, which is
-   send_line's own header fact (W_send_line_cx.v:86), decidable at the pinned placement. *)
+   send_line's own header fact (W_send_line_cx.v:87), decidable at the pinned placement. *)
 Hypothesis HGO : gx_ok SEGS B [(rg_client RG, 4); (rg_send_dead RG, 1); (rg_send_max RG, 8)].
 Hypothesis MTL : ameter_laws MT.
 Hypothesis TL : PALib B.
@@ -2314,7 +2315,7 @@ End a.
      range_addressable_of_block_hp0_x), gfr_fp_x, gfr_awr_blk_x, gfr_kept_blk_x, gfr_post_x and the arm gs_free_x.
      Three kit lemmas the AR proof cites have no kit twin on this base and are restated over ARx with their proofs:
      YCbq.v's sep_blocks_pos / sep_blocks_perm (from the law alx_sep) and region_kept_stack_aj
-     (W_LLVMFuzzerTestOneInput_pro_x.v:320's text).
+     (W_LLVMFuzzerTestOneInput_pro_x.v:321's text).
    - The one allocator call, free #2 at 0x8394c, is AFREE in its caller-context form (W_journal_x.v
      afree_cf_rule_c_x), its return address 0x83950 in CTX_F (HCTX_fr2), its stack room W_journal_x.aj_stack_room_x.
      The room round (lib/A/W_drain_room_x.v): the cut owes seen_tr's RFree (|x| + 1) first (gsf_fut, from
@@ -2563,7 +2564,7 @@ Hypothesis AFREER : afree_cf_rule_c_xR SEGS B PST ARx MT RP RO CTX_F R.
 Let RUNR := paj_run_x_xG B PST ARx LAWS R (G_DR B RG) HG 0 [].
 Let RUNTOR := paj_run_to_x_xG B PST ARx LAWS R (G_DR B RG) HG 0 [].
 
-(* YCbq.v:2602 region_kept_stack_aj over ajournal_x (W_LLVMFuzzerTestOneInput_pro_x.v:320's text and proof) *)
+(* YCbq.v:2602 region_kept_stack_aj over ajournal_x (W_LLVMFuzzerTestOneInput_pro_x.v:321's text and proof) *)
 Lemma region_kept_stack_aj_xR : forall E lyc Sc (W : world SEGS) memc (W2 : world SEGS) mem2 slo shi (Er : Z -> Prop)
     n lo hi wlo whi cs sp0 sp STK FP ly S Hp W0 mem md own ly2 S2 Hp2 md2 k,
   acall_kept SEGS B lyc Sc W memc W2 mem2 slo shi Er ->
@@ -3619,7 +3620,7 @@ Qed.
 End wR.
 
 
-(* YCbq.v:2602 region_kept_stack_aj over ajournal_x (W_LLVMFuzzerTestOneInput_pro_x.v:320's text and proof) *)
+(* YCbq.v:2602 region_kept_stack_aj over ajournal_x (W_LLVMFuzzerTestOneInput_pro_x.v:321's text and proof) *)
 Lemma region_kept_stack_aj_x : forall E lyc Sc (W : world SEGS) memc (W2 : world SEGS) mem2 slo shi (Er : Z -> Prop)
     n lo hi wlo whi cs sp0 sp STK FP ly S Hp W0 mem md own ly2 S2 Hp2 md2 k,
   acall_kept SEGS B lyc Sc W memc W2 mem2 slo shi Er ->

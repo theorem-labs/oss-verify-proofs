@@ -7,11 +7,11 @@ Checks one property, an invariant: With ada::set_max_input_length(512), no parse
 
 ## How this program differs from what OSS-Fuzz runs
 - Linked against ada at commit e6754478.
-- In every build, getenv() returns NULL and mkstemp() uses a fixed name, so the program depends only on its input.
+- In every build, getenv() returns NULL, getpid() returns 1 and mkstemp() uses a fixed name, so the program depends only on its input.
 - A small driver reads the input file, calls the harness one to four times and prints each return value.
 
 ## What the harness checks
-The harness makes no check of its own beyond not crashing, so a statement about it says only that the code it calls never crashes, hangs or trips a sanitizer.
+The harness makes no check of its own beyond not crashing. Its halts statements say only that the code it calls never crashes, hangs or trips a sanitizer. Its agreement statements say only that the code never crashes or trips a sanitizer, and allow a run that never ends. Its bound statements say only how often its builds may disagree. Its decidability statements say only that some program decides where its builds agree.
 
 ## Statements ([Statements.v](Statements.v), [Characterise.v](Characterise.v), [Distribution.v](Distribution.v))
 

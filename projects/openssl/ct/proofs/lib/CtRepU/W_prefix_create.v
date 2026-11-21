@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the new auxv table). *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.openssl.ct.lib.CtLib Require Import ImageCt.
 (* [comment removed for export] *)
@@ -166,7 +167,7 @@ Section Proofs.
     do 14 eexists. exists m2, A, errv2. split; [reflexivity|].
     split; [exact MI3|]. split; [exact ST3|]. split; [unfold LX_ERRNO, RATP; exact ERR3|].
     split. { eapply rauxv_ok_frame; [exact AUX3| exact MU3| exact WM3|].
-             pose proof AUX3 as (av & x3' & x4' & x5' & x16' & x6' & x11' & x12' & x23' & rnd & _ & _ & _ & HB' & _).
+             pose proof AUX3 as (av & axv & rnd & execfn & r & _ & _ & _ & HB' & _).
              constructor; [cbn; unfold RAUXV_CELL; lia|]. constructor; [cbn; unfold RAUXV_CELL; lia|]. constructor; [cbn; unfold RAUXV_CELL; lia| constructor]. }
     split. { eapply rheap_pres_trans; [eapply rheap_pres_weaken; [exact HP0| lia| intros b Hb; eapply lb_remove_incl; exact Hb]|].
              eapply heap_pres_of_munch; [exact MU3| exact WM3| apply CLI3]. }

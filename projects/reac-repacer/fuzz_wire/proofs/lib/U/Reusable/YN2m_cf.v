@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN2m.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the allocator ledger's new fields). *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -247,11 +248,11 @@ alloc_ceiling + AM_STACK <= sp ->
 ctx11 L mem' A' ->
 (forall k, (k < 16)%nat -> mbyte (ms_segs B) mem' (ptr_addr L m + Z.of_nat k) = Some (Z_to_bv 8 0)) ->
 (forall x, ptr_addr L m <= x < ptr_addr L m + 16 -> present mem' x) ->
-m_vmmaps md' = m_vmmaps md -> m_vm_lazy md' = m_vm_lazy md -> m_vm_materialized md' = m_vm_materialized md -> m_halted md' = m_halted md ->
+m_vmmaps md' = m_vmmaps md -> m_vm_lazy md' = m_vm_lazy md -> m_vm_materialized md' = m_vm_materialized md -> m_halted md' = m_halted md -> m_kernel md' = m_kernel md ->
 midrep B L A' mem' md' /\ ama_ok A' /\ bounded A' /\ ptr_addr L m <> 0 /\
 (forall x, ptr_addr L m <= x < ptr_addr L m + 16 -> in_nonmap_region L A' x).
 Proof.
-intros sp mem' md' Hsp FR C11 LNK LNKP EV EL EM EH.
+intros sp mem' md' Hsp FR C11 LNK LNKP EV EL EM EH EK.
 destruct C_facts as (Hfresh & HI' & Hne & (kk & Hkk & Em) & Hlast).
 pose proof (mid_md _ _ _ _ _ MID) as (M1 & M2 & M3).
 assert (RG : forall k, region_of A' k = region_of A k) by (intros k; reflexivity).
@@ -306,8 +307,8 @@ intros x Hst [Hs|[Hc|Hm]].
 pose proof (so_img_hi _ SO x (so_statics_img _ SO x Hst)). unfold AM_STACK in *. lia.
 * apply (SNC x Hst). unfold ctxW, CTX_SIZE in *. lia.
 * destruct (areas_off_img _ x Hlast (INPAGE x Hm)) as [Hi _]. exact (Hi (so_statics_img _ SO x Hst)).
-+ destruct (ledger_same B L A md LG LX A' md' eq_refl eq_refl EV EL EM) as [G _]. exact G.
-+ destruct (ledger_same B L A md LG LX A' md' eq_refl eq_refl EV EL EM) as [_ G]. exact G.
++ destruct (ledger_same B L A md LG LX A' md' eq_refl eq_refl EV EL EM EK) as [G _]. exact G.
++ destruct (ledger_same B L A md LG LX A' md' eq_refl eq_refl EV EL EM EK) as [_ G]. exact G.
 + refine (layout_ok_xfer B X R U L L A A' mem md HI MID [] EA ltac:(intros; discriminate)
 ltac:(intros k rg Hk; rewrite RG in Hk; auto) ltac:(intros k rg Hk; rewrite RG; auto) eq_refl ltac:(intros; reflexivity) _ _ _ _ _).
 * cbn. lia.
@@ -387,11 +388,11 @@ ctx11 L mem' A1 ->
 cell_mem B L mem' (MCell (LMem (padd q META_prev)) 8 (lnk_prev (MT A1 q))) /\
 cell_mem B L mem' (MCell (LMem (padd q META_next)) 8 (lnk_next (MT A1 q)))) ->
 (forall x q, In q (QsD rest) -> ptr_addr L q <= x < ptr_addr L q + 16 -> present mem' x) ->
-m_vmmaps md' = m_vmmaps md -> m_vm_lazy md' = m_vm_lazy md -> m_vm_materialized md' = m_vm_materialized md -> m_halted md' = m_halted md ->
+m_vmmaps md' = m_vmmaps md -> m_vm_lazy md' = m_vm_lazy md -> m_vm_materialized md' = m_vm_materialized md -> m_halted md' = m_halted md -> m_kernel md' = m_kernel md ->
 midrep B L A1 mem' md' /\ ama_ok A1 /\ bounded A1 /\ ptr_addr L m <> 0 /\
 (forall x q, In q (QsD rest) -> ptr_addr L q <= x < ptr_addr L q + 16 -> in_nonmap_region L A1 x).
 Proof.
-intros sp mem' md' Hsp FR C11 QC QP EV EL EM EH.
+intros sp mem' md' Hsp FR C11 QC QP EV EL EM EH EKm.
 pose proof D_facts as (EAr & ERg & EBk & EK & Ein & Eam & Eamc & Eaac & Esh & Ehd & Etl & Eama & Efh & CR & QK & NDr).
 pose proof (mid_md _ _ _ _ _ MID) as (M1 & M2 & M3).
 assert (RG : forall k, region_of A1 k = region_of A k) by (intros k; unfold region_of; rewrite ERg; reflexivity).
@@ -463,8 +464,8 @@ intros x Hst [Hs|[Hc|(q & Hq & Hxq)]].
 pose proof (so_img_hi _ SO x (so_statics_img _ SO x Hst)). unfold AM_STACK in *. lia.
 * apply (SNC x Hst). unfold ctxW, CTX_SIZE in *. lia.
 * destruct (INPAGE q x Hq Hxq) as (a & Ha & Hxa). destruct (areas_off_img _ x Ha Hxa) as [Hi _]. exact (Hi (so_statics_img _ SO x Hst)).
-+ destruct (ledger_same B L A md LG LX A1 md' ERg EBk EV EL EM) as [G _]. exact G.
-+ destruct (ledger_same B L A md LG LX A1 md' ERg EBk EV EL EM) as [_ G]. exact G.
++ destruct (ledger_same B L A md LG LX A1 md' ERg EBk EV EL EM EKm) as [G _]. exact G.
++ destruct (ledger_same B L A md LG LX A1 md' ERg EBk EV EL EM EKm) as [_ G]. exact G.
 + refine (layout_ok_xfer B X R U L L A A1 mem md HI MID [] EA ltac:(intros; discriminate)
 ltac:(intros k rg Hk; rewrite RG in Hk; auto) ltac:(intros k rg Hk; rewrite RG; auto) eq_refl ltac:(intros; reflexivity) _ _ _ _ _).
 * rewrite ERg. lia.
@@ -721,8 +722,8 @@ intros x Hst [Hs|[Hc|[[Hne Hn]|[Hp|Hk']]]].
 * destruct (areas_off_img _ x (Hlast Hne) ltac:(unfold PGSZ; lia)) as [Hi _]. exact (Hi (so_statics_img _ SO x Hst)).
 * exact (P3 x Hp (so_statics_img _ SO x Hst)).
 * exact (Kr_img x Hk' (so_statics_img _ SO x Hst)).
-+ destruct (ledger_same B L' s3 md3 LG3 LX3 A' md3 ERg EBk eq_refl eq_refl eq_refl) as [G _]. exact G.
-+ destruct (ledger_same B L' s3 md3 LG3 LX3 A' md3 ERg EBk eq_refl eq_refl eq_refl) as [_ G]. exact G.
++ destruct (ledger_same B L' s3 md3 LG3 LX3 A' md3 ERg EBk eq_refl eq_refl eq_refl eq_refl) as [G _]. exact G.
++ destruct (ledger_same B L' s3 md3 LG3 LX3 A' md3 ERg EBk eq_refl eq_refl eq_refl eq_refl) as [_ G]. exact G.
 + refine (layout_ok_xfer B X R U L L' A A' mem md HI MID [p] EAr ltac:(intros; discriminate)
 ltac:(intros k rg Hk; rewrite RG in Hk; apply RGmap; exact Hk) ltac:(intros k rg Hk Hl Hkd; rewrite RG; exact (RGkeep k rg Hk Hl Hkd)) L'ctx L'reg _ _ _ _ _).
 * rewrite ERg. exact LEN3.
@@ -762,10 +763,10 @@ Theorem post_fail0 : forall sp mem' md',
 alloc_ceiling + AM_STACK <= sp ->
 (forall x, 0 <= x < 2 ^ 64 -> ~ WF0 sp x -> mem' (Z_to_bv 64 x) = mem (Z_to_bv 64 x)) ->
 ctx11 L mem' A' ->
-m_vmmaps md' = m_vmmaps md -> m_vm_lazy md' = m_vm_lazy md -> m_vm_materialized md' = m_vm_materialized md -> m_halted md' = m_halted md ->
+m_vmmaps md' = m_vmmaps md -> m_vm_lazy md' = m_vm_lazy md -> m_vm_materialized md' = m_vm_materialized md -> m_halted md' = m_halted md -> m_kernel md' = m_kernel md ->
 midrep B L A' mem' md' /\ ama_ok A' /\ bounded A'.
 Proof.
-intros sp mem' md' Hsp FR C11 EV EL EM EH.
+intros sp mem' md' Hsp FR C11 EV EL EM EH EKm.
 pose proof (mid_md _ _ _ _ _ MID) as (M1 & M2 & M3).
 assert (RG : forall k, region_of A' k = region_of A k) by (intros k; unfold region_of; rewrite F_regions; reflexivity).
 assert (EA : st_areas A' = st_areas A ++ []) by (rewrite app_nil_r; exact F_areas).
@@ -791,8 +792,8 @@ intros x [Hs|Hc] Hcx; [| exact Hc].
 exfalso. destruct Hs as [Hs|Hs]; [pose proof (so_ctx_hi _ SO); unfold AM_STACK in *; lia | exact (ENC x Hs Hcx)]. }
 assert (LGX : ledger_ok B L A' md' /\ ledger_x L A' md').
 { destruct F_brk as [EB|EB].
-- exact (ledger_same B L A md LG LX A' md' F_regions EB EV EL EM).
-- exact (ledger_brk_dead B L A md LG LX A' md' F_regions EB EV EL EM). }
+- exact (ledger_same B L A md LG LX A' md' F_regions EB EV EL EM EKm).
+- exact (ledger_brk_dead B L A md LG LX A' md' F_regions EB EV EL EM EKm). }
 split; [|split].
 - split.
 + exact SO.
@@ -832,8 +833,8 @@ Proof. unfold like_A0, ctx_rest_same, A0. cbn. repeat split; try reflexivity. ri
 Lemma ledger_like : forall Xs, like_A0 Xs -> ledger_ok B L Xs md /\ ledger_x L Xs md.
 Proof.
 intros Xs (ER & _ & _ & EB & _). destruct EB as [EB|EB].
-- exact (ledger_same B L A md LG LX Xs md ER EB eq_refl eq_refl eq_refl).
-- exact (ledger_brk_dead B L A md LG LX Xs md ER EB eq_refl eq_refl eq_refl).
+- exact (ledger_same B L A md LG LX Xs md ER EB eq_refl eq_refl eq_refl eq_refl).
+- exact (ledger_brk_dead B L A md LG LX Xs md ER EB eq_refl eq_refl eq_refl eq_refl).
 Qed.
 Section e0.
 Variables (Xs : astate) (a : word) (md' : Model).
@@ -843,7 +844,7 @@ Let len := Z.shiftl 2 (st_meta_alloc_shift A) * PGSZ.
 Let A' := resv_st Xs.
 Let L' := Lset L A (bv_unsigned a).
 Hypothesis PL : place_ok (Z_to_bv 64 0) md a len = true.
-Hypothesis MD' : m_vmmaps md' = m_vmmaps (mmap_none_model a (Z_to_bv 64 len) md) /\ m_halted md' = None /\ m_vm_lazy md' = [] /\ m_vm_materialized md' = [].
+Hypothesis MD' : m_vmmaps md' = m_vmmaps (mmap_none_model a (Z_to_bv 64 len) md) /\ m_halted md' = None /\ m_vm_lazy md' = [] /\ m_vm_materialized md' = [] /\ m_kernel md' = m_kernel md.
 Definition WRF (sp : Z) (x : Z) : Prop := am_scratch sp x \/ ctxW x \/ (bv_unsigned a <= x < bv_unsigned a + len).
 Lemma len_facts : 0 < len /\ len mod PGSZ = 0 /\ bv_unsigned a + len <= alloc_ceiling /\ 0 < bv_unsigned a /\
 bv_unsigned a mod PGSZ = 0 /\
@@ -854,9 +855,9 @@ destruct BND as (_ & B2 & _). pose proof (proj1 alloc_ceiling_val) as AC.
 assert (Hlen : len = 2 ^ (st_meta_alloc_shift A + 1) * 4096).
 { unfold len. rewrite Z.shiftl_mul_pow2 by lia. change PGSZ with 4096. rewrite Z.pow_add_r by lia. change (2 ^ 1) with 2. lia. }
 assert (Hpos : 0 < 2 ^ (st_meta_alloc_shift A + 1)) by (apply Z.pow_pos_nonneg; lia).
-unfold place_ok in PL. apply andb_prop in PL as [PL RF]. apply andb_prop in PL as [PL Htop].
-apply andb_prop in PL as [Hal Ha0]. apply Z.eqb_eq in Hal. apply Z.ltb_lt in Ha0. apply Z.leb_le in Htop. unfold page_size in Hal.
 assert (Hlmod : len mod PGSZ = 0) by (rewrite Hlen; change PGSZ with 4096; apply Z_mod_mult).
+destruct (place_ok_unpack (Z_to_bv 64 0) md a len ltac:(lia) ltac:(unfold page_size; change PGSZ with 4096 in Hlmod; exact Hlmod) PL) as (Hal & Ha0 & Htop & RF).
+unfold page_size in Hal.
 assert (Hceil : bv_unsigned a + len <= alloc_ceiling).
 { apply (YM05.grant_below_ceil _ _ (lg_ceil _ _ _ _ LG)); [| exact Htop].
 rewrite Z.add_mod, Hal by lia. unfold PGSZ in Hlmod. rewrite Hlmod. reflexivity. }
@@ -876,7 +877,7 @@ Proof.
 intros sp mem' Hsp FR C11.
 pose proof LXs as (ER & EAr & EMt & EB & Ein & CR & Efh & Eam & Eamc & Eaac & Esh & Ehd & Etl & Eama).
 pose proof len_facts as (Hlen & Hlmod & Hceil & Ha0 & Hal & RF & Hsh40). pose proof (proj1 alloc_ceiling_val) as AC. pose proof (u64_range a) as Ua.
-destruct MD' as (EV & MH & ML & MM).
+destruct MD' as (EV & MH & ML & MM & MK).
 destruct (ledger_like Xs LXs) as [LGs LXs'].
 assert (NNs : forall k rg, region_of Xs k = Some rg -> 0 <= rg_len rg) by (intros k rg; unfold region_of; rewrite ER; apply NN).
 assert (ERg' : st_regions A' = st_regions A ++ [mkRegion RkMetaRes len [] true]) by (unfold A', resv_st; cbn; rewrite ER, Esh; reflexivity).
@@ -900,6 +901,7 @@ assert (ELs : Lset L Xs (bv_unsigned a) = L') by (unfold L', Lset; rewrite ER; r
 destruct (ledger_same B L' A' (mmap_none_model a (Z_to_bv 64 len) md) G1 G2 A' md' eq_refl eq_refl EV) as [G3 G4].
 - rewrite ML, mmap_none_model_lazy. exact (eq_sym (proj1 (proj2 (mid_md _ _ _ _ _ MID)))).
 - rewrite MM. cbn. exact (eq_sym (proj2 (proj2 (mid_md _ _ _ _ _ MID)))).
+- exact MK.
 - exact (conj G3 G4). }
 assert (UM : used_metas A' = used_metas A) by (unfold used_metas, A', resv_st; cbn; rewrite EMt; reflexivity).
 assert (EA : st_areas A' = st_areas A ++ []) by (rewrite app_nil_r; unfold A', resv_st; cbn; exact EAr).

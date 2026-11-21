@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (startup certificates for both auxv layouts, with and without the CONFIG_RSEQ pairs; premises fixing the launch's cache words and minimum signal-frame size to the default kernel's; the binary has no vDSO image of its own). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -21,7 +22,6 @@ Import ListNotations.
 Local Notation IMG := (mkImage BDA_SEGS BDA_PC BDA_PH).
 
 Section TargetA.
-(* [comment removed for export] *)
 Variable RT : rt_sig.
 Variable OUT_rep : Stdio.stdout_st -> mem -> Prop.
 Variable ERR_rep : mem -> Prop.
@@ -33,29 +33,35 @@ Hypothesis Hfin_out : forall B, fin B = true -> am_out (a_model B) = [].
 Hypothesis Hbridge : forall (fs0 : Fs.Fs) (B : AST), fin B = true ->
   forall ρ c, R BDA_SEGS amodel (MR BDA_SEGS fs0 ρ) target_alloc_limit ρ B c ->
   exists c', cfg_eqv c' c /\ START RT OUT_rep ERR_rep XENV LIB (dec_argvB ρ) fs0 c'.
-Hypothesis Hcert : bda_cert fin = true.
+Hypothesis Hcert : bda_cert true fin = true.
+Hypothesis Hcert_norseq : bda_cert false fin = true.
 Hypothesis Hmain : forall (argv : list (list byte)) (fs : Fs.Fs) c, valid_argv argv ->
   START RT OUT_rep ERR_rep XENV LIB argv fs c -> AS.ShapeAlg.realizes bsegs c (canonT (argv_Z argv) fs).
 
 Theorem startA_realizes : forall en inp,
-  valid_entry IMG en inp -> valid_input inp ->
+  valid_entry IMG en inp -> valid_input inp -> launch_cache_words (in_kernel inp) = launch_cache_words default_kernel ->
+  min_sigframe_size (in_kernel inp) (in_hwcap inp) = min_sigframe_size default_kernel (in_hwcap inp) ->
   ShapeAlgCfg.realizes_cfg BDA_SEGS ncfg
     (init_config BDA_SEGS BDA_PC BDA_PH (en_sp en) (en_brk en) (en_mmap_base en) (en_draw en) target_alloc_limit inp)
     (canonT (argv_Z (in_argv inp)) (in_fs inp)).
 Proof.
-  intros en inp Hent Hinp.
+  intros en inp Hent Hinp Hcw Hmss.
   apply (bda_startup (fun argv fs c => exists c', cfg_eqv c' c /\ START RT OUT_rep ERR_rep XENV LIB argv fs c') fin Hfin_out) with
-    (TT := fun argv => canonT (argv_Z argv) (in_fs inp)); [ | exact Hcert | exact Hinp | exact Hent | ].
+    (TT := fun argv => canonT (argv_Z argv) (in_fs inp)); [ | exact Hcert | exact Hcert_norseq | exact Hinp | exact Hcw | exact Hmss | exact Hent | ].
   - intros fs0 B HB ρ c HR T Hk. exact (Hk c (Hbridge fs0 B HB ρ c HR)).
   - intros argv c Hva (c' & Heq & HS). exact (realizes_cfg_of_realizes_eqv bsegs c' c _ (Hmain argv (in_fs inp) c' Hva HS) Heq).
 Qed.
 
 Theorem target_canon_A : forall en inp,
-  valid_entry IMG en inp -> valid_input inp ->
+  valid_entry IMG en inp -> valid_input inp -> launch_cache_words (in_kernel inp) = launch_cache_words default_kernel ->
+  min_sigframe_size (in_kernel inp) (in_hwcap inp) = min_sigframe_size default_kernel (in_hwcap inp) ->
   trace_equiv (bh_traces (Run.run_scfg ncfg IMG target_alloc_limit en inp)) (canonT (argv_Z (in_argv inp)) (in_fs inp))
   /\ ~ bh_errors (Run.run_scfg ncfg IMG target_alloc_limit en inp).
 Proof.
-  intros en inp Hent Hinp. exact (T_canon_cfg BDA_SEGS BDA_PC BDA_PH target_alloc_limit en inp _ (startA_realizes en inp Hent Hinp)).
+  intros en inp Hent Hinp Hcw Hmss.
+  (* LPS 08b1429: the binary carries no vDSO segment of its own *)
+  assert (Hvi : vdso_image BDA_SEGS = None) by reflexivity.
+  exact (T_canon_cfg BDA_SEGS BDA_PC BDA_PH target_alloc_limit en inp _ Hvi (startA_realizes en inp Hent Hinp Hcw Hmss)).
 Qed.
 
 End TargetA.

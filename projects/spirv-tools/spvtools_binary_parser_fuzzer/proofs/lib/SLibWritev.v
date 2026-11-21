@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise of writev to the standard channels, and the iovec entry accesses; the robustness of each node's system call over a larger read-only backing (RomBase.sys_rob), which the walk's nodes now ask, proved at each node). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -11,6 +12,7 @@ From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC.
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Import
   RelSpec SimInv ExitSim CatSim CatExec PropExec SeqExec Hoare ShapeAlg Nodes FileSim AgentLib AgentNodes.
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require Import DivergeSim SRealizes SNodes.
+From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib.Common.Cfg Require RomBase RomWrite.
 #[global] Unset Lia Cache. #[global] Unset Nia Cache. #[global] Unset Nra Cache.
 Import ListNotations.
 Open Scope bv_scope.
@@ -118,6 +120,15 @@ Qed.
 Lemma writev_outcome : forall ms x8 model (fd : Z) (iov : word) iovs bss,
   ms_rom ms = seg_rom segs ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  (* the far end has a reader: at the revision [ReadWrite.writev_spec]'s
+     channel arm takes [sigpipe_write] without it
+     ([ReadWrite.writev_spec], Linux v6.18.46 fs/pipe.c:460-465).  The
+     published statements give this: [Run.valid_input] (Run.v:4571) and
+     [Run.valid_input_abort] (Run.v:4643) both pin
+     [in_channel_reader inp = true], and [Run.valid_input_channel_reader]
+     (Run.v:4921) extracts it; the reader-gone launch is the separate
+     [Run.valid_input_channel_closed] (Run.v:4848) *)
+  m_channel_reader model = true ->
   (0 < fd < 2^31)%Z ->
   bv_unsigned x8 = 66%Z ->
   ms_gpr ms 0 = Z_to_bv 64 fd ->
@@ -138,7 +149,7 @@ Lemma writev_outcome : forall ms x8 model (fd : Z) (iov : word) iovs bss,
       o = Ok (mkEffectU (Z_to_bv 64 (Z.of_nat k)) [] [] [] [] (CA ++ iov_prefix_accesses iovs k))
              model (map (WriteEv (Z_to_bv 64 fd)) (firstn k bs)).
 Proof.
-  intros ms x8 model fd iov iovs bss Hrom Hfd Hfdr Hno H0 H1 H2 Hcnt Harr Hbufs Hacc Hiok bs tot Ht1 Ht30 CA.
+  intros ms x8 model fd iov iovs bss Hrom Hfd Hrdr Hfdr Hno H0 H1 H2 Hcnt Harr Hbufs Hacc Hiok bs tot Ht1 Ht30 CA.
   pose proof (gather_of_bufs ms iovs bss Hrom Hbufs) as Hg. fold bs in Hg.
   pose proof (gather_iovecs_length _ _ _ Hg) as Hlen. fold tot in Hlen.
   split; [exact Hlen|].
@@ -163,6 +174,43 @@ Proof.
   - exact Ht30.
   - rewrite in_mem_si. exact Hg.
   - lia.
+  - exact Hrdr.
+Qed.
+
+(* LPS 08b1429: [RomBase.sys_rob] at the writev node: the iovec array and every buffer read
+   in full, so the check answers the same over a larger backing ([RomWrite.writev_rob]). *)
+Lemma writev_rob_chan : forall ms x8 model (fd : Z) (iov : word) iovs bss,
+  ms_rom ms = seg_rom segs ->
+  ms_svc_pending ms = Some x8 ->
+  fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  (0 < fd < 2^31)%Z ->
+  bv_unsigned x8 = 66%Z ->
+  ms_gpr ms 0 = Z_to_bv 64 fd ->
+  ms_gpr ms 1 = iov ->
+  ms_gpr ms 2 = Z_to_bv 64 (Z.of_nat (length iovs)) ->
+  (1 <= length iovs <= 1024)%nat ->
+  iov_array (ms_mem ms) iov iovs ->
+  iov_bufs (ms_mem ms) iovs bss ->
+  access_okb iov (16 * Z.of_nat (length iovs)) = true ->
+  iovs_access_okb iovs = true ->
+  (iovs_total iovs <= 2 ^ 30)%Z ->
+  RomBase.sys_rob segs (mkCfg ms model).
+Proof.
+  intros ms x8 model fd iov iovs bss Hrom Hsvc Hfd Hfdr Hno H0 H1 H2 Hcnt Harr Hbufs Hacc Hiok Ht30.
+  assert (Hwn : word_to_nat (Z_to_bv 64 (Z.of_nat (length iovs))) = length iovs).
+  { rewrite word_to_nat_Z, Nat2Z.id by lia. reflexivity. }
+  assert (Hc32 : iovcnt32 (Z_to_bv 64 (Z.of_nat (length iovs))) = Z_to_bv 64 (Z.of_nat (length iovs))).
+  { unfold iovcnt32, abi_low32. rewrite u64_lit by lia. rewrite Z.mod_small by lia. reflexivity. }
+  destruct (import_iovecs_ok (ms_read_byte ms) iov (Z_to_bv 64 (Z.of_nat (length iovs))) iovs
+              ltac:(apply w_is0_pos; rewrite u64_lit; lia)
+              ltac:(unfold IOV_MAX; rewrite u64_lit; lia)
+              ltac:(rewrite u64_lit by lia; exact Hacc)
+              ltac:(rewrite Hwn; exact (copy_iovecs_of_array ms iovs iov Hrom Harr))
+              Hiok ltac:(unfold MAX_RW_COUNT; lia)) as [Himp _].
+  apply (RomWrite.writev_rob segs ms model x8 (Z_to_bv 64 fd) iovs (concat bss) Hsvc Hno).
+  - rewrite H0, fd32_id by (rewrite u64_lit; lia). exact Hfd.
+  - rewrite H1, H2, Hc32. exact Himp.
+  - rewrite cap_iovecs_id_rw by exact Ht30. exact (gather_of_bufs ms iovs bss Hrom Hbufs).
 Qed.
 
 Lemma srz_writev_pending : forall ms x8 model (fd : Z) (iov : word) iovs bss (T : nat -> TSet),
@@ -170,6 +218,15 @@ Lemma srz_writev_pending : forall ms x8 model (fd : Z) (iov : word) iovs bss (T 
   m_halted model = None -> m_vm_lazy model = [] ->
   ms_svc_pending ms = Some x8 ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  (* the far end has a reader: at the revision [ReadWrite.writev_spec]'s
+     channel arm takes [sigpipe_write] without it
+     ([ReadWrite.writev_spec], Linux v6.18.46 fs/pipe.c:460-465).  The
+     published statements give this: [Run.valid_input] (Run.v:4571) and
+     [Run.valid_input_abort] (Run.v:4643) both pin
+     [in_channel_reader inp = true], and [Run.valid_input_channel_reader]
+     (Run.v:4921) extracts it; the reader-gone launch is the separate
+     [Run.valid_input_channel_closed] (Run.v:4848) *)
+  m_channel_reader model = true ->
   (0 < fd < 2^31)%Z ->
   bv_unsigned x8 = 66%Z ->
   ms_gpr ms 0 = Z_to_bv 64 fd ->
@@ -187,8 +244,8 @@ Lemma srz_writev_pending : forall ms x8 model (fd : Z) (iov : word) iovs bss (T 
   srealizes segs (mkCfg ms model)
     (t_alt (fun i : wr_index bs => t_emit (map (WriteEv (Z_to_bv 64 fd)) (firstn (proj1_sig i) bs)) (T (proj1_sig i)))).
 Proof.
-  intros ms x8 model fd iov iovs bss T Hrom Hh Hlazy Hsvc Hfd Hfdr Hno H0 H1 H2 Hcnt Harr Hbufs Hacc Hiok bs Ht1 Ht30 Hk.
-  destruct (writev_outcome ms x8 model fd iov iovs bss Hrom Hfd Hfdr Hno H0 H1 H2 Hcnt Harr Hbufs Hacc Hiok Ht1 Ht30)
+  intros ms x8 model fd iov iovs bss T Hrom Hh Hlazy Hsvc Hfd Hrdr Hfdr Hno H0 H1 H2 Hcnt Harr Hbufs Hacc Hiok bs Ht1 Ht30 Hk.
+  destruct (writev_outcome ms x8 model fd iov iovs bss Hrom Hfd Hrdr Hfdr Hno H0 H1 H2 Hcnt Harr Hbufs Hacc Hiok Ht1 Ht30)
     as [Hlen Hchk]. fold bs in Hlen, Hchk.
   set (tot := iovs_total iovs) in *.
   set (CA := copy_iovecs_accesses (ms_read_byte ms) iov (length iovs)) in *.
@@ -206,7 +263,8 @@ Proof.
            (fun i => map (WriteEv (Z_to_bv 64 fd)) (firstn (proj1_sig i) bs))
            (fun i => mkCfg (advance_past_svc (set_gpr0 ms (Z_to_bv 64 (Z.of_nat (proj1_sig i))))) model)
            (fun i => T (proj1_sig i)) (wr_full bs Hnb)).
-  2:{ intros [k [Hk1 Hk2]]. cbn [proj1_sig]. apply Hk; assumption. }
+  3:{ intros [k [Hk1 Hk2]]. cbn [proj1_sig]. apply Hk; assumption. }
+  2:{ exact (writev_rob_chan ms x8 model fd iov iovs bss Hrom Hsvc Hfd Hfdr Hno H0 H1 H2 Hcnt Harr Hbufs Hacc Hiok Ht30). }
   assert (Hnode : node_ok segs (mkCfg ms model) (wr_index bs)
                     (fun i => map (WriteEv (Z_to_bv 64 fd)) (firstn (proj1_sig i) bs))
                     (fun i => mkCfg (advance_past_svc (apply_effect ms (effs i))) model)).
@@ -226,6 +284,15 @@ Lemma srz_writev2 : forall regs (pc : word) mem model w (fd : Z) (iov b1 n1 b2 n
   fetch_word segs pc = Some w -> is_ecall w = true ->
   m_halted model = None -> m_vm_lazy model = [] ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  (* the far end has a reader: at the revision [ReadWrite.writev_spec]'s
+     channel arm takes [sigpipe_write] without it
+     ([ReadWrite.writev_spec], Linux v6.18.46 fs/pipe.c:460-465).  The
+     published statements give this: [Run.valid_input] (Run.v:4571) and
+     [Run.valid_input_abort] (Run.v:4643) both pin
+     [in_channel_reader inp = true], and [Run.valid_input_channel_reader]
+     (Run.v:4921) extracts it; the reader-gone launch is the separate
+     [Run.valid_input_channel_closed] (Run.v:4848) *)
+  m_channel_reader model = true ->
   (0 < fd < 2^31)%Z ->
   getr regs 17 = Z_to_bv 64 66 ->
   getr regs 10 = Z_to_bv 64 fd ->
@@ -249,14 +316,14 @@ Lemma srz_writev2 : forall regs (pc : word) mem model w (fd : Z) (iov b1 n1 b2 n
     (t_alt (fun i : wr_index (bs1 ++ bs2) =>
        t_emit (map (WriteEv (Z_to_bv 64 fd)) (firstn (proj1_sig i) (bs1 ++ bs2))) (T (proj1_sig i)))).
 Proof.
-  intros regs pc mem model w fd iov b1 n1 b2 n2 bs1 bs2 T HF HE Hh Hlazy Hfd Hfdr H17 H10 H11 H12
+  intros regs pc mem model w fd iov b1 n1 b2 n2 bs1 bs2 T HF HE Hh Hlazy Hfd Hrdr Hfdr H17 H10 H11 H12
          Rb1 Rn1 Rb2 Rn2 Rs1 Rs2 Hia Hb1 Hb2 Ht1 Ht30 Hk.
   eapply srz_sys; [exact Hh | exact Hlazy | exact HF | exact HE |].
   pose proof (u64_range n1). pose proof (u64_range n2).
   replace (bs1 ++ bs2) with (concat [bs1; bs2]) in * by (cbn; rewrite app_nil_r; reflexivity).
   eapply (srz_writev_pending (epend regs pc mem (seg_rom segs) (getr regs 17)) (getr regs 17) model fd iov
             [(b1, n1); (b2, n2)] [bs1; bs2] T);
-    [reflexivity | exact Hh | exact Hlazy | reflexivity | exact Hfd | exact Hfdr
+    [reflexivity | exact Hh | exact Hlazy | reflexivity | exact Hfd | exact Hrdr | exact Hfdr
     | rewrite H17; apply u64_lit; lia
     | rewrite ms_gpr_epend0; exact H10 | rewrite ms_gpr_epend1; exact H11 | rewrite ms_gpr_epend2; exact H12
     | cbn; lia | | | | | cbn [iovs_total]; lia | cbn [iovs_total]; lia | ].
@@ -275,6 +342,15 @@ Lemma srz_writev1 : forall regs (pc : word) mem model w (fd : Z) (iov b1 n1 : wo
   fetch_word segs pc = Some w -> is_ecall w = true ->
   m_halted model = None -> m_vm_lazy model = [] ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  (* the far end has a reader: at the revision [ReadWrite.writev_spec]'s
+     channel arm takes [sigpipe_write] without it
+     ([ReadWrite.writev_spec], Linux v6.18.46 fs/pipe.c:460-465).  The
+     published statements give this: [Run.valid_input] (Run.v:4571) and
+     [Run.valid_input_abort] (Run.v:4643) both pin
+     [in_channel_reader inp = true], and [Run.valid_input_channel_reader]
+     (Run.v:4921) extracts it; the reader-gone launch is the separate
+     [Run.valid_input_channel_closed] (Run.v:4848) *)
+  m_channel_reader model = true ->
   (0 < fd < 2^31)%Z ->
   getr regs 17 = Z_to_bv 64 66 ->
   getr regs 10 = Z_to_bv 64 fd ->
@@ -294,7 +370,7 @@ Lemma srz_writev1 : forall regs (pc : word) mem model w (fd : Z) (iov b1 n1 : wo
     (t_alt (fun i : wr_index bs1 =>
        t_emit (map (WriteEv (Z_to_bv 64 fd)) (firstn (proj1_sig i) bs1)) (T (proj1_sig i)))).
 Proof.
-  intros regs pc mem model w fd iov b1 n1 bs1 T HF HE Hh Hlazy Hfd Hfdr H17 H10 H11 H12
+  intros regs pc mem model w fd iov b1 n1 bs1 T HF HE Hh Hlazy Hfd Hrdr Hfdr H17 H10 H11 H12
          Rb1 Rn1 Rs1 Hia Hb1 Ht1 Ht30 Hk.
   eapply srz_sys; [exact Hh | exact Hlazy | exact HF | exact HE |].
   pose proof (u64_range n1).
@@ -302,7 +378,7 @@ Proof.
   replace bs1 with (concat [bs1]) by (cbn; rewrite app_nil_r; reflexivity).
   eapply (srz_writev_pending (epend regs pc mem (seg_rom segs) (getr regs 17)) (getr regs 17) model fd iov
             [(b1, n1)] [bs1] T);
-    [reflexivity | exact Hh | exact Hlazy | reflexivity | exact Hfd | exact Hfdr
+    [reflexivity | exact Hh | exact Hlazy | reflexivity | exact Hfd | exact Hrdr | exact Hfdr
     | rewrite H17; apply u64_lit; lia
     | rewrite ms_gpr_epend0; exact H10 | rewrite ms_gpr_epend1; exact H11 | rewrite ms_gpr_epend2; exact H12
     | cbn; lia | | | | | cbn [iovs_total]; lia | cbn [iovs_total]; lia | ].
@@ -317,6 +393,15 @@ Lemma srz_writev2_wall : forall regs (pc : word) mem model w (fd : Z) (iov b1 n1
   fetch_word segs pc = Some w -> is_ecall w = true ->
   m_halted model = None -> m_vm_lazy model = [] ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  (* the far end has a reader: at the revision [ReadWrite.writev_spec]'s
+     channel arm takes [sigpipe_write] without it
+     ([ReadWrite.writev_spec], Linux v6.18.46 fs/pipe.c:460-465).  The
+     published statements give this: [Run.valid_input] (Run.v:4571) and
+     [Run.valid_input_abort] (Run.v:4643) both pin
+     [in_channel_reader inp = true], and [Run.valid_input_channel_reader]
+     (Run.v:4921) extracts it; the reader-gone launch is the separate
+     [Run.valid_input_channel_closed] (Run.v:4848) *)
+  m_channel_reader model = true ->
   (0 < fd < 2^31)%Z ->
   getr regs 17 = Z_to_bv 64 66 ->
   getr regs 10 = Z_to_bv 64 fd ->
@@ -340,7 +425,7 @@ Lemma srz_writev2_wall : forall regs (pc : word) mem model w (fd : Z) (iov b1 n1
   srealizes segs (mkCfg (mkst regs pc mem (seg_rom segs)) model)
            (t_emit (map (WriteEv (Z_to_bv 64 fd)) (bs1 ++ bs2)) K).
 Proof.
-  intros regs pc mem model w fd iov b1 n1 b2 n2 bs1 bs2 K HF HE Hh Hlazy Hfd Hfdr H17 H10 H11 H12
+  intros regs pc mem model w fd iov b1 n1 b2 n2 bs1 bs2 K HF HE Hh Hlazy Hfd Hrdr Hfdr H17 H10 H11 H12
          Rb1 Rn1 Rb2 Rn2 Rs1 Rs2 Hia Hb1 Hb2 Ht1 Ht30 HK Hk.
   pose proof (rdn_length segs mem _ _ _ Rs1) as L1. pose proof (rdn_length segs mem _ _ _ Rs2) as L2.
   pose proof (u64_range n1). pose proof (u64_range n2).
@@ -353,6 +438,15 @@ Lemma srz_writev1_wall : forall regs (pc : word) mem model w (fd : Z) (iov b1 n1
   fetch_word segs pc = Some w -> is_ecall w = true ->
   m_halted model = None -> m_vm_lazy model = [] ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  (* the far end has a reader: at the revision [ReadWrite.writev_spec]'s
+     channel arm takes [sigpipe_write] without it
+     ([ReadWrite.writev_spec], Linux v6.18.46 fs/pipe.c:460-465).  The
+     published statements give this: [Run.valid_input] (Run.v:4571) and
+     [Run.valid_input_abort] (Run.v:4643) both pin
+     [in_channel_reader inp = true], and [Run.valid_input_channel_reader]
+     (Run.v:4921) extracts it; the reader-gone launch is the separate
+     [Run.valid_input_channel_closed] (Run.v:4848) *)
+  m_channel_reader model = true ->
   (0 < fd < 2^31)%Z ->
   getr regs 17 = Z_to_bv 64 66 ->
   getr regs 10 = Z_to_bv 64 fd ->
@@ -372,7 +466,7 @@ Lemma srz_writev1_wall : forall regs (pc : word) mem model w (fd : Z) (iov b1 n1
   srealizes segs (mkCfg (mkst regs pc mem (seg_rom segs)) model)
            (t_emit (map (WriteEv (Z_to_bv 64 fd)) bs1) K).
 Proof.
-  intros regs pc mem model w fd iov b1 n1 bs1 K HF HE Hh Hlazy Hfd Hfdr H17 H10 H11 H12
+  intros regs pc mem model w fd iov b1 n1 bs1 K HF HE Hh Hlazy Hfd Hrdr Hfdr H17 H10 H11 H12
          Rb1 Rn1 Rs1 Hia Hb1 Ht1 Ht30 HK Hk.
   pose proof (rdn_length segs mem _ _ _ Rs1) as L1. pose proof (u64_range n1).
   apply srz_wall; [unfold word_to_nat in L1; lia | exact HK |].
@@ -384,6 +478,15 @@ Lemma srz_writev1_zero : forall regs (pc : word) mem model w (fd : Z) (iov b1 : 
   fetch_word segs pc = Some w -> is_ecall w = true ->
   m_halted model = None -> m_vm_lazy model = [] ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  (* the far end has a reader: at the revision [ReadWrite.writev_spec]'s
+     channel arm takes [sigpipe_write] without it
+     ([ReadWrite.writev_spec], Linux v6.18.46 fs/pipe.c:460-465).  The
+     published statements give this: [Run.valid_input] (Run.v:4571) and
+     [Run.valid_input_abort] (Run.v:4643) both pin
+     [in_channel_reader inp = true], and [Run.valid_input_channel_reader]
+     (Run.v:4921) extracts it; the reader-gone launch is the separate
+     [Run.valid_input_channel_closed] (Run.v:4848) *)
+  m_channel_reader model = true ->
   (0 < fd < 2^31)%Z ->
   getr regs 17 = Z_to_bv 64 66 ->
   getr regs 10 = Z_to_bv 64 fd ->
@@ -397,23 +500,38 @@ Lemma srz_writev1_zero : forall regs (pc : word) mem model w (fd : Z) (iov b1 : 
   srealizes segs (mkCfg (mkst (regupd regs 10 (Z_to_bv 64 0)) (v_addi pc 4) mem (seg_rom segs)) model) K ->
   srealizes segs (mkCfg (mkst regs pc mem (seg_rom segs)) model) K.
 Proof.
-  intros regs pc mem model w fd iov b1 K HF HE Hh Hlazy Hfd Hfdr H17 H10 H11 H12 Rb1 Rn1 Hia Hb1 Hmax Hc.
+  intros regs pc mem model w fd iov b1 K HF HE Hh Hlazy Hfd _Hrdr Hfdr H17 H10 H11 H12 Rb1 Rn1 Hia Hb1 Hmax Hc.
   eapply srz_sys; [exact Hh | exact Hlazy | exact HF | exact HE |].
   set (ms := epend regs pc mem (seg_rom segs) (getr regs 17)).
   assert (Hno : bv_unsigned (getr regs 17) = 66%Z) by (rewrite H17; apply u64_lit; lia).
   assert (Harr : iov_array (ms_mem ms) iov [(b1, Z_to_bv 64 0)]).
   { cbn [iov_array ms_mem ms epend]. refine (conj Rb1 (conj Rn1 (conj _ I))). rewrite u64_lit by lia. lia. }
   pose proof (copy_iovecs_of_array ms [(b1, Z_to_bv 64 0)] iov eq_refl Harr) as Hcp. cbn [length] in Hcp.
+  assert (G0 : ms_gpr ms 0 = Z_to_bv 64 fd) by (unfold ms; rewrite ms_gpr_epend0; exact H10).
+  assert (G1 : ms_gpr ms 1 = iov) by (unfold ms; rewrite ms_gpr_epend1; exact H11).
+  assert (G2 : ms_gpr ms 2 = Z_to_bv 64 1) by (unfold ms; rewrite ms_gpr_epend2; exact H12).
+  assert (Ht0 : iovs_total [(b1, Z_to_bv 64 0)] = 0%Z) by reflexivity.
+  assert (Hiok : iovs_access_okb [(b1, Z_to_bv 64 0)] = true).
+  { cbn [iovs_access_okb forallb fst snd]. rewrite access_okb_intro_Z; [reflexivity | |];
+      rewrite ?u64_lit by lia; lia. }
+  (* LPS 08b1429: [RomBase.sys_rob] at this writev node ([RomWrite.writev_rob]) *)
+  assert (Hrob : RomBase.sys_rob segs (mkCfg ms model)).
+  { destruct (import_iovecs_ok (ms_read_byte ms) iov (Z_to_bv 64 1) [(b1, Z_to_bv 64 0)]
+                ltac:(apply w_is0_pos; rewrite u64_lit; lia)
+                ltac:(unfold IOV_MAX; rewrite u64_lit; lia)
+                ltac:(apply access_okb_intro_Z; rewrite ?u64_lit by lia; lia)
+                Hcp Hiok ltac:(rewrite Ht0; unfold MAX_RW_COUNT; lia)) as [Himp _].
+    apply (RomWrite.writev_rob segs ms model (getr regs 17) (Z_to_bv 64 fd) [(b1, Z_to_bv 64 0)] [] eq_refl Hno).
+    - rewrite G0, fd32_id by (rewrite u64_lit; lia). exact Hfd.
+    - rewrite G1, G2. exact Himp.
+    - rewrite cap_iovecs_id_rw by (rewrite Ht0; lia). reflexivity. }
   eapply (srz_ret_only_copyins_silent segs ms model (getr regs 17)
             (copy_iovecs_accesses (ms_read_byte ms) iov 1) (Z_to_bv 64 0) model);
-    [exact Hh | reflexivity | rewrite Hno; reflexivity | | exact Hh | exact Hlazy
+    [exact Hh | reflexivity | rewrite Hno; reflexivity | | exact Hrob | exact Hh | exact Hlazy
     | unfold ms; rewrite adv_set_epend; exact Hc].
   intros o.
   rewrite (syscall_spec_66 (sys_input segs ms (getr regs 17)) model o) by (rewrite in_sysno_si; exact Hno).
   rewrite in_arg0_si, in_arg1_si, in_arg2_si.
-  assert (G0 : ms_gpr ms 0 = Z_to_bv 64 fd) by (unfold ms; rewrite ms_gpr_epend0; exact H10).
-  assert (G1 : ms_gpr ms 1 = iov) by (unfold ms; rewrite ms_gpr_epend1; exact H11).
-  assert (G2 : ms_gpr ms 2 = Z_to_bv 64 1) by (unfold ms; rewrite ms_gpr_epend2; exact H12).
   rewrite G0, G1, G2.
   rewrite fd32_id by (rewrite u64_lit; lia).
   change 1%nat with (word_to_nat (Z_to_bv 64 1)).

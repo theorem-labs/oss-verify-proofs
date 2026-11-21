@@ -94,7 +94,7 @@ Ltac gw_val :=
 
 Section W. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 Variable B : asyms.
-(* the shadow-base cells of B (FSH_Base.FsShadowSyms, S0 5478e5af284), the one named premise of fs's instrumented walks;
+(* the shadow-base cells of B (FSH_Base.FsShadowSyms, S0), the one named premise of fs's instrumented walks;
    TfibLib B (A/ACeg.v) discharges it once A/ACej.v builds *)
 Hypothesis HSS : FsShadowSyms B.
 

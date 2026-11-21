@@ -1,7 +1,7 @@
 (* SPDX-License-Identifier: MIT *)
 (* Modified by Theorem Labs: the twin of lib/ZComplete.v (the SPDX line), lib/SlotTopG.v and lib/FrameSlotG.v (no licence line) for a return value of the fuzz target of 0 or -1 *)
-(* Donor: reac-repacer/fuzz_lock, proofs/reac-repacer/fuzz_lock/lib/ZComplete.v, lib/SlotTopG.v and lib/FrameSlotG.v
-   at 901d1549395.
+(* Donor: reac-repacer/fuzz_lock, proofs/reac-repacer/fuzz_lock/lib/ZComplete.v, lib/SlotTopG.v and lib/FrameSlotG.v.
+   
    Module: OSSVerify.Proofs.reac_repacer.fuzz_lock.lib.Prog.FrameRetD6. *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -19,6 +19,7 @@ From OSSVerify.Proofs.reac_repacer.fuzz_lock.lib.Reusable Require Import
 From OSSVerify.Proofs.reac_repacer.fuzz_lock.lib Require Import
   ZImage TraceHalting TraceHaltingB ZTraceSpec AllocSlots AllocRoom.
 From OSSVerify.Proofs.reac_repacer.fuzz_lock.lib.Reusable Require Import DriverSlots.
+From OSSVerify.Proofs.reac_repacer.fuzz_lock.lib.Reusable Require RomStableK.
 From OSSVerify.Proofs.reac_repacer.fuzz_lock.lib Require Import
   ZComplete ZAllocator SlotTopG Contract FrameAPI FrameSlotG Img0.
 From OSSVerify.Proofs.reac_repacer.fuzz_lock.lib.Lib Require Mem.
@@ -95,21 +96,27 @@ Proof.
   intros LS rt RI G R GI f HLSP HLS HR01 ARMS HDRV HG HR GIL GI0 HC. unfold Statements.plain_halts, halts_within_budget.
   intros [sp brk0 mbase rnd] inp Hentry Hinput Hbudget.
   apply (valid_entry_sv48 _ _ inp (valid_input_va_size inp Hinput)) in Hentry.
-  destruct Hentry as [Hsp [Hbrk [Hmb Hfits]]].
-  set (rc := RunCeilOf (bv_unsigned sp) (valid_sp_window_for_ceil sp Hsp)).
+  destruct Hentry as [Hsp [Hbrk [Hmb [Hfits Hlau]]]].
+  set (rc := RunCeilOf (bv_unsigned sp) (valid_sp_window_for_ceil sp Hsp) Budgets.Standard.lim_source).
   destruct (HC rc) as [API [AX LX]].
-  change (must_exit_in_at_cfg forced_only_cfg zsegs zallowed
-    (init_config zsegs Plain.M.init_pc Plain.M.phdrs
+  (* LPS 727298f3: the run reads [run_segments zsegs ..]; the walk over the binary's own
+     segments is lifted by [RomStableK.run_init] (the image carries no vDSO text), as
+     TraceHaltingB.halts_budgets_of_realizes does. *)
+  change (must_exit_in_at_cfg forced_only_cfg (run_segments zsegs inp sp mbase) zallowed
+    (init_config (run_segments zsegs inp sp mbase) Plain.M.init_pc Plain.M.phdrs
       sp brk0 mbase rnd Budgets.Standard.lim_source inp)).
   eapply realizes_must_exit_forced_budget with (T:=SPECX_r (LS:=LS) inp).
-  - apply (src0_realizes_specX_r (rc:=rc) (LS:=LS) API AX GI RI f rt
+  - apply (RomStableK.run_init zsegs inp sp mbase Plain.M.init_pc Plain.M.phdrs brk0 rnd
+      Budgets.Standard.lim_source); [RomStableK.vdso_none|].
+    apply (src0_realizes_specX_r (rc:=rc) (LS:=LS) API AX GI RI f rt
       (G_local_T_mono src0segs G YL0k.src0_G GI HG GIL)
       (fun mem H => GI0 mem (G_img_mono src0segs G YL0k.src0_G mem HG H))
       (lib_contract_x_R_all_r_mono src0_msyms API rt RI G YL0k.src0_G R YL0k.src0_R GI f LIBPC RA_LIB EMPTY LIB_STACK HG HR LX)
       HLS HR01 ARMS HDRV sp brk0 mbase rnd
-      Budgets.Standard.lim_source inp Hsp Hbrk Hmb Hfits Hinput).
+      Budgets.Standard.lim_source inp Hsp Hbrk Hmb Hfits Hlau Hinput).
     + apply SRC_LIM_MIN_le_source.
     + unfold rc. apply ceil_of_top_run.
+    + reflexivity.
   - apply (SPECX_r_exits_allowed HLSP).
   - reflexivity.
   - exact Hbudget.

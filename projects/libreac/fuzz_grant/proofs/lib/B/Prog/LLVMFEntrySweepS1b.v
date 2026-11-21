@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntrySweepS1b), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v. *)
 (* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/Prog/GrantEntrySweepS1b.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment 1b of the sweep phase of fuzz_grant's entry function on IMAGE B:
    0x813dc .. 0x81450, and 0x813dc .. 0x81804 when the builder refused.
 
@@ -28,7 +29,7 @@
    the answer the builder gives is the value the harness recomputes: `bsw_ok` is
    `8 + 3 * w <=? rows` here (BuildSweepModel.v bsw_ok_go).
 
-   Adapted from lib/A/Prog/GrantEntrySweepS1b.v (a working branch afd75724b5b, blob
+   Adapted from lib/A/Prog/GrantEntrySweepS1b.v (a working branch, blob
    4748748bd, 793 lines), which carries no licence header of its own.
    Image B passes the row count, the address of `a`
    and the table from s4, s8 and s2 (image A: s3, s2 and s4), keeps the sweep buffer in

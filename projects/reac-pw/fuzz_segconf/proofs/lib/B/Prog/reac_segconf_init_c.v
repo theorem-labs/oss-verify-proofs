@@ -43,10 +43,11 @@
    are parameters (or fields of B).
    The WALK takes these runtime entries as Section hypotheses:
      aintrin_realizes OSet (YG0d.v:326) at pc_memset, the checked __asan_memset (image A 0x55d7c): the kit's
-     text, the image-A owner's frame, as fuzz_command's socket_send_c.v:60-61 at 501c0d516c69 takes it; "Not in this
-     layer" in provenance/evidence/interceptors/INTERFACE-A-interceptors.md (commit 7068323e2626), not a row.
+     text, the image-A owner's frame, as fuzz_command's socket_send_c.v:60-61 takes it; "Not in this
+     layer" in provenance/evidence/interceptors/INTERFACE-A-interceptors.md, not a row.
    They are NOT premises of this contract: the statement does not mention them. *)
 (* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/A/Prog/reac_segconf_init_c.v, derived mechanically (bkit derive_b.py): its Require lines name the lib/B copies; nothing else differs. The comments are the A file's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (h0_goal pins the heap's stack floor at sp0 - 6144512, the bottom of the window the launch maps below sp, in place of sp0 - 2^23). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -28,7 +29,7 @@ Section ARUN_1. Context {hAR : arun}.
 Section Goal.
   Variable STKLO : Z.
 
-  Definition h0_goal (bp : boot_params) (mem : mem) (md : Model) : Prop := ltac2:(CDefT.buildp (gd_tbl_AH0Spec ()) "(0.(1.$2.(3.(4.O3.)(5.+2.+17.))VSTKLO,)(6.(7.VhAR,VSTKLO,(8.O3.))LHOK,(7.VhAR,VSTKLO,(8.O3.))(0.(9.VhAR,VSTKLO,(:.VhAR,VSTKLO,(8.O3.)R1.)(;.$<.)(;.$<.)O2.)(0.(=.VhAR,VSTKLO,(:.VhAR,VSTKLO,(8.O3.)R1.)O1.)(0.(1.$2.(>.(8.O3.))=)(0.(?.(10.(8.O3.))=)(0.Pc,$2.(1.$2.(11.(12.(8.O3.)R1.))=)(0.(1.$2.(13.VhAR,VSTKLO,(:.VhAR,VSTKLO,(8.O3.)R1.))(3.(4.O3.)+30.))(1.$2.(14.VhAR,VSTKLO,(:.VhAR,VSTKLO,(8.O3.)R1.))(15.O3.))))))))))")
+  Definition h0_goal (bp : boot_params) (mem : mem) (md : Model) : Prop := ltac2:(CDefT.buildp (gd_tbl_AH0Spec ()) "(0.(1.$2.(3.(4.O3.)+5=<200.)VSTKLO,)(6.(7.VhAR,VSTKLO,(8.O3.))LHOK,(7.VhAR,VSTKLO,(8.O3.))(0.(9.VhAR,VSTKLO,(:.VhAR,VSTKLO,(8.O3.)R1.)(;.$<.)(;.$<.)O2.)(0.(=.VhAR,VSTKLO,(:.VhAR,VSTKLO,(8.O3.)R1.)O1.)(0.(1.$2.(>.(8.O3.))=)(0.(?.(10.(8.O3.))=)(0.Pc,$2.(1.$2.(11.(12.(8.O3.)R1.))=)(0.(1.$2.(13.VhAR,VSTKLO,(:.VhAR,VSTKLO,(8.O3.)R1.))(3.(4.O3.)+30.))(1.$2.(14.VhAR,VSTKLO,(:.VhAR,VSTKLO,(8.O3.)R1.))(15.O3.))))))))))")
 (* [comment removed for export] *).
 
   (* [comment removed for export] *)

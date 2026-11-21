@@ -6,19 +6,20 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v, with its module paths and module names changed; 754 of its 794 lines of code are new or changed and 356 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/F31.v, with its module paths, module names and addresses changed; 496 of its 556 lines of code are new or changed and 734 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/P12.v, with its module paths and module names changed; 165 of its 295 lines of code are new or changed and 426 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Provenance (route (a) bridge input, lead 22:18Z; auditor a Theorem Labs lane):
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
    source runs: lib/B/Prog/Seg/P12.v p12_ck1, p12_ck2, p12_chk, p12_body at
-     a working branch 3803efccea0 (blob 1951f14dd81a0e7fcdf95fde352d190a617a57eb);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+     a working branch (blob 1951f14dd81a0e7fcdf95fde352d190a617a57eb);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    compare: the source runs are UL-engine evts (lib/B/Tk/UL/Exec.v), which the footprint kit has no twin of,
      so each _F lemma is re-stepped with lib.Lib StepF (runF-common brief) and p12_ul_evt bridges the
      lib.Lib msteps chain back to the UL one: p12_ck1_of_F, p12_ck2_of_F, p12_chk_of_F, p12_body_of_F
-     re-derive the source statements of p12_ck1 (P12.v:143), p12_ck2 (:167), p12_chk (:192) and p12_body
+     re-derive the source statements of p12_ck1 (P12.v:144), p12_ck2 (:167), p12_chk (:192) and p12_body
      (:225) verbatim, checked by p12_ck1_same / p12_ck2_same / p12_chk_same / p12_body_same.  p12_body_F
-     re-runs P12.v lines 263-314 (0x81e50 .. 0x81ec8); its cells premises are the lib.Lib ones
+     re-runs P12.v lines 264-315 (0x81e50 .. 0x81ec8); its cells premises are the lib.Lib ones
      (lib/Lib/Step.v rw_cells / ro_cells, the kit the footprint walk uses) in place of the UL copies of the
      source statement, and its munch / outside are the lib.Lib ones (lib/Lib/Frame.v), because the lib.Lib
      StepF store machinery carries those; p12_body_of_F crosses both back with the shared bridge

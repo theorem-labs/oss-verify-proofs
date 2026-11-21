@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (MInvR, which gained the vDSO conjunct, built by minvr_split and taken apart by minvr_dest; the vDSO fact a section hypothesis for the post's MInvR, found by instance search from the fact the caller's minvr_dest holds). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -230,6 +231,7 @@ Local Abbreviation vo_cases := (@U.Mal_malloc__G3.Mal_malloc_fastD.vo_cases s n 
 Local Notation "§9§ h__" := (h__ s L n g am rho b3 b16 HW HC HP12 Hb3 Hb16 Hhdr rd0 wok0 vm HMI Hsp Hdepth Hsp_high ok K HK mW) (at level 10, h__ global).
 Local Abbreviation chain := (§9§ U.Mal_malloc__G3.Mal_malloc_fastD.chain).
 Variables (tr : list event) (md : Model) (ms' : machine_state) (rhoF : valuation).
+Context {Hvd : OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.vdso_ok md}.
 Hypothesis EmW : ltac2:(tb__ "0|0|
 S4SfQ40A1S3aSfQ8A1A1F_;VmW;S30Vrho;A1A3").
 Hypothesis Em0 : ltac2:(tb__ "0|0|
@@ -568,11 +570,11 @@ SfQ40A1M0S3aSfQ8A1A1F_;S4G0S3dF_;S22S0R1A2S4fS0R1A2A3Fm;"). Proof using . reflex
 
 Theorem post_ok : ltac2:(tb__ "0|1|
 S3bS46A1M0S47OF_;F_;R1Vtr;Vmd;A2S50S0S1Vrho;S16S0SbS13S5cR2A5S3cG0S74Vtr;S75Vms';Vmd;A2A4A5F_;FKc;").
-Proof using HW HC HLok HP12 Hb3 Hb16 Hhdr HMI Hsp Hdepth Hsp_high Erd Ewok Hm0_sct Hm0_ctz EmW Em0 Evm Hsm Hsm0 HagF HsmF.
+Proof using HW HC HLok HP12 Hb3 Hb16 Hhdr HMI Hsp Hdepth Hsp_high Erd Ewok Hm0_sct Hm0_ctz EmW Em0 Evm Hsm Hsm0 HagF HsmF Hvd.
   intros Kc Hold.
   pose proof u110 as Res. change (bv_unsigned (rw rho' V_RES) = pA) in Res.
   assert (InvNew : MInvR segsU C_U A' rho' md).
-  { unfold MInvR. change (rm rho') with m'. rewrite rd_of_CG, wok_of_CG. exact minv'. }
+  { minvr_split. change (rm rho') with m'. rewrite rd_of_CG, wok_of_CG. exact minv'. }
   assert (KeptNew : mem_kept_owned C_U A0 A' (rm rho) (rm rho')).
   { change (rm rho') with m'. exact kept. }
   exists (L_malloc_ok EC_U), (JL_malloc_ok segsU C_U A0 Kc), rho'.
@@ -585,7 +587,7 @@ Proof using HW HC HLok HP12 Hb3 Hb16 Hhdr HMI Hsp Hdepth Hsp_high Erd Ewok Hm0_s
   split; [exact InvNew|].
   split; [rewrite Enew, HP12, Res; reflexivity|].
   split; [exact Eold|].
-  split; [exact (mem_kept_weaken segsU C_U A0 A' rho md rho' md (rm rho) (rm rho') client_addr_not_owned_U HMI_rho InvNew KeptNew)|].
+  split; [exact (mem_kept_weaken segsU C_U A0 A' rho md rho' md (rm rho) (rm rho') client_addr_not_owned_U ltac:(minvr_split; exact HMI_rho) InvNew KeptNew)|].
   split; [|exact Hold].
   split; [intros Done; exact Done | reflexivity].
 Qed.
@@ -608,7 +610,7 @@ S4bOF_;S61S3bS46A1S47OF_;F_;S2eS67S66S17S0R6R4A3S76S60R6A1S10Q40S2dR4PcA2A2R3R2A
 Proof.
   intros ok [s L] Kc rho g am Side Loop fuel Guard [tr [ms md]] (Entry & Pre).
   cbn [ma_s] in Loop. cbn [w_tr w_cfg cfg_model fst snd] in Pre.
-  destruct Pre as (Inv & KcNow & _ & _ & TopVar). unfold MInvR in Inv. cbn [ma_s ma_L] in Inv.
+  destruct Pre as (Inv & KcNow & _ & _ & TopVar). minvr_dest Inv. cbn [ma_s ma_L] in Inv.
   destruct (instantiate s L _ g am rho tr ms md Entry Inv Loop eq_refl (top_high_pre {| ma_s := s; ma_L := L |} rho _ Entry TopVar))
     as (b3 & b16 & Inst & Start).
   destruct Inst as [IW IC IL I12 Ib3 Ib16 Ihdr IMI Isp Idepth Ihigh Irom Isct Ictz Im3 Im16].
@@ -914,7 +916,7 @@ S61S3bS46A1S47OF_;F_;S2eS67S66S76S60R5A1S10Q40S2dR3PcA2A2R2R1A4S4aS0S5eS0S15S0Sb
 Proof.
   intros [s L] Kc rho g am HC. cbn [ma_s] in HC.
   intros [tr [ms md]] [Hsm HJ]. cbn [w_tr w_cfg cfg_model cfg_ms fst snd] in HJ.
-  destruct HJ as (HMI & HKc & Htp & Hini & HTV). unfold MInvR in HMI. cbn [ma_s ma_L] in HMI.
+  destruct HJ as (HMI & HKc & Htp & Hini & HTV). minvr_dest HMI. cbn [ma_s ma_L] in HMI.
   pose proof (top_high_pre (mkMA s L) rho _ Hsm HTV) as Htop.
   set (n := bv_unsigned (rw rho 12%positive)) in *.
   destruct (instantiate s L n g am rho tr ms md Hsm HMI HC eq_refl Htop) as (b3 & b16 & IH & Hsm0).
@@ -977,7 +979,7 @@ Qed.
 Lemma J_alloc_pre_WF A Kc rho tr md : ltac2:(tb__ "0|1|
 S15S0SbVA;VKc;Vrho;Vtr;Vmd;A7S5S8dS60VA;A1M0A1S98G0A1A2F_;").
 Proof.
-  intros (HMI & _). unfold MInvR in HMI. apply MInv_MInvI in HMI as [HI HR]. split; [exact (mig_I HI) | exact HR].
+  intros (HMI & _). minvr_dest HMI. apply MInv_MInvI in HMI as [HI HR]. split; [exact (mig_I HI) | exact HR].
 Qed.
 
 Definition alloc_slot_sumI0_P : Prop := ltac2:(tb__ "0|0|
@@ -1013,7 +1015,7 @@ Proof.
   intros fuel Guard w Pre.
   destruct Pre as (Entry & Inv & KcNow & Tp & Done & TopVar).
   assert (Reach : reach_ok (ma_s A)).
-  { pose proof Inv as Whole. unfold MInvR, MInv in Whole. cbv zeta in Whole.
+  { pose proof Inv as Whole. minvr_dest Whole; unfold MInv in Whole. cbv zeta in Whole.
     destruct Whole as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & Reach). exact Reach. }
   assert (Inner : forall rho1, triple segsU ok (SPJ segsU (JN_of segsU C_U IEC_U A Kc (bv_unsigned (rw rho 12))) (Pre_as IEC_U) rho1)
                                      (LQP segsU NF rho1 (Posts_asG segsU C_U IEC_U True True [] U0 A Kc))).
@@ -1054,7 +1056,7 @@ Proof.
   intros w Pre.
   destruct Pre as (Entry & Inv & KcNow & Tp & Done & TopVar).
   assert (Reach : reach_ok (ma_s A)).
-  { pose proof Inv as Whole. unfold MInvR, MInv in Whole. cbv zeta in Whole.
+  { pose proof Inv as Whole. minvr_dest Whole; unfold MInv in Whole. cbv zeta in Whole.
     destruct Whole as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & Reach). exact Reach. }
   assert (Inner : forall rho1, etriple segsU (SPJ segsU (JN_of segsU C_U IEC_U A Kc (bv_unsigned (rw rho 12))) (Pre_as IEC_U) rho1)
                                       (LQP segsU NF rho1 (Posts_asG segsU C_U IEC_U True True [] U0 A Kc))).

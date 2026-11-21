@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN0e.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the place_declined_b premise of the revision's mmap; the allocation mode (the ledger's counting fields in the forced mode only; munmap's errno arm a real outcome in the may-fail mode)). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -22,13 +23,13 @@ From Stdlib Require Import List.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YM05.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable.R Require Import Cfg.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YM06_cf YO0d_cf YN2b_cf.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable.Z Require Import Placement.  (* 727298f3: place_declined_b_null *)
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Open Scope bv_scope.
 Open Scope Z_scope.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Section f. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
-Context {AM : AllocMode}.
 Section h.
 Hypothesis AMH : alloc_meta_hyp_cf B.
 Ltac bvlit := split; apply Z.leb_le; vm_compute; reflexivity.
@@ -593,6 +594,8 @@ eapply (knode_cf_mmap_rw src0segs regs2 _ mem2 (seg_rom src0segs) md A (n + IB +
 - rewrite (Hregs2 13%bv). vm_compute. reflexivity.
 - rewrite (Hregs2 14%bv). eval_sr_get. cbn [sv_denot]. apply bv_eq. vm_compute. reflexivity.
 - rewrite (Hregs2 15%bv). vm_compute. reflexivity.
+(* #146's decline premise; this walk pins a0 to the literal 0. *)
+- rewrite (Hregs2 10%bv). eval_sr_get. cbn [sv_denot]. apply place_declined_b_null.
 -
 intros e He. destruct He as [<- | []].
 match goal with |- mreal_cf _ _ ?t _ => change t with (@IRet astate (option sptr * astate) (None, A)) end.
@@ -622,7 +625,7 @@ exact (granted_branch L A regs mem md n regs2 mem2 a PRE Hn Hrange Hregs2 Hmem2 
 intros Hmg Hbud. rewrite (Hregs2 10%bv). eval_sr_get. cbn [sv_denot].
 apply (direct_grant_exists L A mem md (n + IB + UNIT) MX Hmg); [unfold IB, UNIT; lia | exact Hbud].
 - exact Hmat.
-- exact (lx_lb _ _ _ (MRx_ledger_x B L A mem md MX)).
+- exact (lx_lb _ _ _ (MRx_ledger_x B L A mem md MX) eq_refl).
 - exact (proj1 (node_ledger_of _ _ _ _ (mc_ledger _ _ _ _ _ (MRx_MRc _ _ _ _ _ MX)) (MRx_ledger_x B L A mem md MX) (proj2 src0_reserved_small) src0_reserved_bytes)).
 - exact (proj1 (proj2 (node_ledger_of _ _ _ _ (mc_ledger _ _ _ _ _ (MRx_MRc _ _ _ _ _ MX)) (MRx_ledger_x B L A mem md MX) (proj2 src0_reserved_small) src0_reserved_bytes))).
 - exact (proj2 (proj2 (node_ledger_of _ _ _ _ (mc_ledger _ _ _ _ _ (MRx_MRc _ _ _ _ _ MX)) (MRx_ledger_x B L A mem md MX) (proj2 src0_reserved_small) src0_reserved_bytes))).

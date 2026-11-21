@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC1f.v for libreac/fuzz_grant's program walk: the listing's names are gsym, PALib names fuzz_grant.asan's objects (the shadow-base GOT slot is object 1 and its cell object 32, the side-stack flag's GOT slot object 0 and its cell object 33) and the wrappers' 4-byte jumps, and the image ends at 0x5fa000; module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/Prog/GrantPaLib.v of a working branch ca2ec2ecd18 for libreac/fuzz_ctrl: module paths and names re-keyed to fuzz_ctrl, PALib names fuzz_ctrl.asan's objects (the shadow-base GOT slot is object 1 and its cell object 30, the side-stack flag's GOT slot object 0 and its cell object 31) and the image ends at 0x5fe000. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/Prog/GrantPaLib.v of a working branch for libreac/fuzz_ctrl: module paths and names re-keyed to fuzz_ctrl, PALib names fuzz_ctrl.asan's objects (the shadow-base GOT slot is object 1 and its cell object 30, the side-stack flag's GOT slot object 0 and its cell object 31) and the image ends at 0x5fe000. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,5 +1,5 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_llvmfS5.v at a working branch 79d8c0f1b8f, relocated A->B:
-   imports per a Theorem Labs lane's core rule (a working branch 305d8b1527f: lib.A AXxx -> lib.ReusableB YXxx when listed in its
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_llvmfS5.v at a working branch, relocated A->B:
+   imports per a Theorem Labs lane's core rule (a working branch: lib.A AXxx -> lib.ReusableB YXxx when listed in its
    ReusableB list, other lib.A -> lib.B, FMupoison stays lib.A); every image numeral re-derived from B's listing
    (fuzz_manifest.objdump.txt / nm.txt of the asan-ubsan pin). *)
 (* LLVMFuzzerTestOneInput 0x8097c, segment 0x80b0c..0x80b38 (fuzz_manifest.c:305-307): live := fuzz_alloc_live ();
@@ -294,7 +294,7 @@ assert (Hq : quiet (if (length (lx_ub cx) =? 0)%nat then lx_cnt cx else lx_cnt c
 { split; [reflexivity|]. unfold CNT_LIB in Hc1. destruct (length (lx_ub cx) =? 0)%nat; lia. }
 assert (Hcnt : (if (length (lx_ub cx) =? 0)%nat then lx_cnt cx else lx_cnt cx + 2) + 1 < 2 ^ 33)
   by (destruct Hq as (_ & _ & Hq2); exact Hq2).
-(* B's names_spec (lib/B/FMH_Fn.v at a working branch 620968d59c7) also asks sp < ly_top: here sp = sp0 - 64 and
+(* B's names_spec (lib/B/FMH_Fn.v at a working branch) also asks sp < ly_top: here sp = sp0 - 64 and
    the entry's astk_ok gives sp0 <= ly_top, kept by the journal's layout_le *)
 assert (Htop : spZ (ms_regs ms3) < ly_top ly2).
 { pose proof HC3 as (HJ3c & _ & Hsp3 & _). unfold lf_J in HJ3c.
@@ -379,7 +379,7 @@ assert (Q10e : getr (ms_regs ms5) 10 = w64 (rt_peak (lx_ub cx) (lx_live cx) (lx_
 { lazymatch type of HS5 with st_ok _ _ ?ss _ => rewrite (st_ok_restrict_reg tfibsegs _ _ ss ms5 10%bv HS5) end.
   lazymatch goal with |- sv_denot _ ?e = _ => let e' := eval vm_compute in e in change e with e' end.
   match goal with |- ?g => idtac "G10:" g end.
-  (* the core at a working branch 305d8b1527f states `sub a0, a0, s2` as a0 + s2 * -1 (A had the ALU_SUB form):
+  (* the core at a working branch states `sub a0, a0, s2` as a0 + s2 * -1 (A had the ALU_SUB form):
      the kernel lemma YI0m.denot_addoff_mulm1 reads it *)
   rewrite (YI0m.denot_addoff_mulm1 _ 10 0 18 (rt_peak (lx_ub cx) (lx_live cx) (lx_live cx)) (lx_live cx)).
   - rewrite Z.add_0_r. reflexivity.

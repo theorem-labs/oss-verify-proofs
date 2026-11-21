@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reader fact of the output channels; munmap can be refused; the model's error returns; the mapping ledger's reserved ranges and mmap base). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -262,11 +263,13 @@ Qed.
 
 Lemma node_munmap_sound : forall cs cs' E R M model T,
   cs_ok E cs R M model -> is_ecall_at RSEGS cs = true -> node_munmap U0 cs = Some cs' ->
+  (forall R' M', cs_ok E (munmap_refuse cs) R' M' model ->
+      realizes RSEGS (cfg_of R' (pc (munmap_refuse cs)) M' model) T) ->
   (forall R' M' model', cs_ok E cs' R' M' model' -> m_fs model' = m_fs model ->
       realizes RSEGS (cfg_of R' (pc cs') M' model') T) ->
   realizes RSEGS (cfg_of R (pc cs) M model) T.
 Proof.
-  intros cs cs' E R M model T HC Hec Hn HK.
+  intros cs cs' E R M model T HC Hec Hn HKR HK.
   destruct (is_ecall_at_sound cs Hec) as (w & Hf & He & Hp0 & Hp4).
   unfold node_munmap in Hn.
   destruct (reg_lit cs 17) as [no|] eqn:H17; [|discriminate].
@@ -324,6 +327,13 @@ Proof.
     pose proof (vo_sp0w _ _ _ _ _ HV) as Hw. unfold two64 in Hhi. rewrite u64_lit in Ht by lia.
     unfold TASK_SIZE, sp_window_hi, STKWIN in *. lia. }
   { rewrite Hpr. apply map_has_In. exact Hin. }
+  { (* the refused answer: a0 = -ENOMEM, memory, knowledge and ledger unchanged *)
+    intros e Hine. cbn [munmap_errnos In] in Hine. destruct Hine as [<-|[]].
+    rewrite (v_addi_pc (pc cs) Hp0 Hp4).
+    specialize (HKR (regupd R (Z_to_bv 5 (Z.of_nat 10)) (errno_ret ENOMEM)) M).
+    unfold munmap_refuse in HKR. unfold pc in HKR at 1. cbn [c_ss s_pc set_pc set_reg] in HKR. apply HKR.
+    apply cs_ok_set_reg_pc; [exact HC | lia |].
+    cbn [edenot]. unfold errno_ret, ENOMEM. apply bv_eq. rewrite !Z_to_bv_unsigned, !bv_wrap64_mod. reflexivity. }
   rewrite (v_addi_pc (pc cs) Hp0 Hp4). rewrite Hpr.
   rewrite (munmap_model_simple _ _ model (co_lazy _ _ _ _ _ HC) (co_mat _ _ _ _ _ HC)).
   apply HK; [|reflexivity].
@@ -340,7 +350,24 @@ Proof.
   - exact Hfd.
   - (* [comment removed for export] *)
     destruct HV0 as [Vres Vmaps Vlen Vlive Vsmall Vnw Vseps Vlim Vsp0 Vsp0w Vtop].
-    rewrite m_vmmaps_with_vmmaps. constructor; cbn [vm_reserved vm_maps vm_limit vm_live_bytes].
+    (* twin of SymPlanSound.v:355-375 *)
+    assert (MSE : maps_subtract (vm_maps (m_vmmaps model)) (bv_unsigned (edenot E b))
+                    (bv_unsigned (edenot E b) + bv_unsigned (Z_to_bv 64 N))
+                  = map_remove (vm_maps (m_vmmaps model)) (edenot E b)).
+    { apply maps_subtract_exact.
+      - pose proof (proj1 (Forall_forall _ _) Vsmall _ Hin) as P. cbn [snd] in P. lia.
+      - intros b' s' H'. pose proof (proj1 (Forall_forall _ _) Vsmall _ H') as P. cbn [snd] in P. lia.
+      - intros b' s' H' Hb'. subst b'. destruct (seps_In2 _ _ _ Vseps H' Hin) as [HH|HH].
+        + inversion HH; reflexivity.
+        + pose proof (proj1 (Forall_forall _ _) Vsmall _ H') as P1.
+          pose proof (proj1 (Forall_forall _ _) Vsmall _ Hin) as P2.
+          unfold iv_disjoint in HH. cbn [fst snd] in *. lia.
+      - intros b' s' H' Hb'. destruct (seps_In2 _ _ _ Vseps H' Hin) as [HH|HH].
+        + exfalso. apply Hb'. inversion HH; reflexivity.
+        + unfold iv_disjoint in HH. cbn [fst snd] in HH. lia. }
+    rewrite m_vmmaps_with_vmmaps. constructor;
+      cbn [vm_reserved vm_maps vm_limit vm_live_bytes mmap_fixed_destroyed_next];
+      rewrite ?MSE.
     + exact Vres.
     + (* [comment removed for export] *)
       apply Forall_forall. intros m Hm. unfold remove_exact in Hm. apply filter_In in Hm as [Hm_in Hnm].
@@ -362,7 +389,8 @@ Proof.
         -- unfold iv_disjoint in Hdisj. cbn [fst snd] in Hdisj. rewrite u64_lit in Hdisj by (unfold two64 in *; lia).
            apply (f_equal bv_unsigned) in Heq. pose proof (u64_range sz). lia.
     + pose proof (map_remove_length (vm_maps (m_vmmaps model)) (edenot E b)). lia.
-    + unfold vm_live_bytes in Vlive |- *. cbn [vm_maps].
+    + (* twin of SymPlanSound.v:398-404 *)
+      unfold vm_live_bytes in Vlive |- *. cbn [vm_maps mmap_fixed_destroyed_next]. rewrite MSE.
       pose proof (live_bytes_map_remove_le (vm_maps (m_vmmaps model)) (edenot E b)). lia.
     + rewrite map_remove_filter. apply Forall_filter. exact Vsmall.
     + rewrite map_remove_filter. apply Forall_filter. exact Vnw.
@@ -382,6 +410,8 @@ Proof.
     rewrite EH in Hd. unfold HULL_LO, HULL_HI in Ha.
     assert (EN : bv_unsigned (Z_to_bv 64 N) = N) by (apply u64_lit; unfold two64 in Hhi; lia). rewrite EN in Hd.
     apply unfill_out. rewrite EN. rewrite u64_lit by (cbn in Ha |- *; lia). cbn in Ha, Hd |- *. lia.
+  - (* LPS 727298f3: [co_rdr]; munmap leaves the reader as it was *)
+    match goal with H : m_channel_reader _ = true |- _ => exact H end.
 Qed.
 
 (* [comment removed for export] *)
@@ -493,8 +523,8 @@ Proof.
   cbn [grant_keep_b] in G. specialize (G H). unfold kfoot_apart, kfoot in G. exact G.
 Qed.
 
-Lemma grant_ok_facts : forall hint model (a : word) n,
-  vm_reserved (m_vmmaps model) = segments_reserved RSEGS -> (0 < n < 2 ^ 64)%Z ->
+Lemma grant_ok_facts : forall hint model (a : word) n VX,
+  vm_reserved (m_vmmaps model) = segments_reserved RSEGS ++ VX -> (0 < n < 2 ^ 64)%Z ->
   grant_ok hint model a n = true ->
   (bv_unsigned a mod page_size = 0)%Z /\ (0x1000 <= bv_unsigned a)%Z /\ (bv_unsigned a + n <= alloc_top (m_vmmaps model))%Z   (* [comment removed for export] *)
   /\ (bv_unsigned a + n <= 0x10000 \/ 0xe6000 <= bv_unsigned a)%Z
@@ -502,11 +532,16 @@ Lemma grant_ok_facts : forall hint model (a : word) n,
         bv_unsigned a + n <= bv_unsigned b \/ bv_unsigned b + bv_unsigned s <= bv_unsigned a)%Z
   /\ (vm_backing_used model + n <= vm_limit (m_vmmaps model))%Z.
 Proof.
-  intros hint model a n Hres Hn Hg. unfold grant_ok in Hg.
+  intros hint model a n VX Hres Hn Hg. unfold grant_ok in Hg.
   apply andb_prop in Hg as [Hg Hl]. apply andb_prop in Hg as [Hg Hrf]. apply andb_prop in Hg as [Hg Hc].   (* [comment removed for export] *)
   apply andb_prop in Hg as [Hal Hpos].
+  apply andb_prop in Hal as [Hplace Hal].   (* twin of SymPlanSound.v:545-549 *)
   apply Z.eqb_eq in Hal. apply Z.ltb_lt in Hpos. apply Z.leb_le in Hc. apply Z.leb_le in Hl.
-  rewrite Hres in Hrf. destruct (region_free_image _ a n Hn Hrf) as [Himg Hmaps].
+  rewrite Hres, <- app_assoc in Hrf. destruct (region_free_image _ a n Hn Hrf) as [Himg Hmaps0].
+  assert (Hmaps : forall b s, In (b, s) (vm_maps (m_vmmaps model)) ->
+            (bv_unsigned a + n <= bv_unsigned b \/ bv_unsigned b + bv_unsigned s <= bv_unsigned a)%Z)
+    by (intros b s Hin; apply Hmaps0; apply in_or_app; right; exact Hin).
+  clear Hmaps0.
   repeat split; try assumption.
   unfold page_size in Hal. pose proof (Z.div_mod (bv_unsigned a) 4096 ltac:(lia)). nia.
 Qed.
@@ -680,16 +715,25 @@ Proof.
   destruct (reg_lit_sound E cs R M model 14 m1 HC ltac:(lia) H14) as [R14 _].
   destruct (reg_lit_sound E cs R M model 15 0 HC ltac:(lia) H15) as [R15 _].
   pose proof (co_vm _ _ _ _ _ HC) as HV. destruct HV as [Vres Vmaps Vlen Vlive Vsmall Vnw Vseps Vlim Vsp0 Vsp0w Vtop].  (* [comment removed for export] *)
+  pose proof Vres as (VX & VXres & VXl & VXs).
   unfold cfg_of.
   eapply (rz_mmap_anon RSEGS R (Z_to_bv 64 (pc cs)) M model w len TA TB Hf He (co_halt _ _ _ _ _ HC) (co_lazy _ _ _ _ _ HC) R17 R11);
-    [lia | exact R12 | exact R13 | | exact R15 | | |].
+    [lia | exact R12 | exact R13 | | exact R15 | | | |].
   { etransitivity; [exact R14|]. rewrite Hm1. apply bv_eq. rewrite !Z_to_bv_unsigned, !bv_wrap64_mod. reflexivity. }
+  (* #146: reg_lit cs 10 = Some 0, so the NULL hint cannot be declined. *)
+  { (* twin of SymPlanSound.v:735-740 *)
+    replace (getr R 10) with (getr R (Z_to_bv 5 (Z.of_nat 10)))
+      by (first [reflexivity | f_equal; apply bv_eq; vm_compute; reflexivity]).
+    rewrite R10. apply place_declined_b_null. }
   { (* [comment removed for export] *)
-    fold n. apply (grant_exists_gen _ model (2 ^ 30) n 1004); try lia.
+    fold n. apply (grant_exists_gen _ model (2 ^ 30) n 1006); try lia.
     - reflexivity.
-    - rewrite Vres, reserved_val. repeat apply Forall_cons; try (cbn [snd]; rewrite u64_lit by lia; lia).
-      apply Forall_forall. intros [b sz] Hin. cbn [snd]. exact (proj2 (proj1 (Forall_forall _ _) Vsmall _ Hin)).
-    - rewrite length_app, Vres, reserved_val. cbn [length]. lia.
+    - unfold n, page_round_up_Z. apply Z_mod_mult.   (* twin of SymPlanSound.v:744-746 *)
+    - rewrite VXres, reserved_val, <- app_assoc. repeat apply Forall_cons; try (cbn [snd]; rewrite u64_lit by lia; lia).
+      apply Forall_app. split.
+      + eapply Forall_impl; [|exact VXs]. intros [b sz] [[_ Hs] _]. cbn [snd] in *. exact Hs.
+      + apply Forall_forall. intros [b sz] Hin. cbn [snd]. exact (proj2 (proj1 (Forall_forall _ _) Vsmall _ Hin)).
+    - rewrite length_app, VXres, length_app, reserved_val. cbn [length]. lia.
     - rewrite bottomup_floor_val. unfold alloc_ceiling. cbn. lia.
     - apply grant_budget_intro; [exact (co_lazy _ _ _ _ _ HC) | exact (co_mat _ _ _ _ _ HC) | lia].
     - (* [comment removed for export] *) unfold init_sp_ok. lia. }
@@ -702,7 +746,7 @@ Proof.
     cbn [edenot]. unfold errno_ret, ENOMEM. apply bv_eq. rewrite !Z_to_bv_unsigned, !bv_wrap64_mod. reflexivity. }
   (* [comment removed for export] *)
   fold n. intros a Hg.
-  destruct (grant_ok_facts _ model a n Vres ltac:(lia) Hg) as (Gal & Glo & Gceil & Gimg & Gmaps & Glive).
+  destruct (grant_ok_facts _ model a n VX VXres ltac:(lia) Hg) as (Gal & Glo & Gceil & Gimg & Gmaps & Glive).
   rewrite (v_addi_pc (pc cs) Hp0 Hp4).
   apply (HKB a); [|reflexivity].
   (* [comment removed for export] *)
@@ -807,6 +851,8 @@ Proof.
   - (* [comment removed for export] *)
     eapply lib_ok_frame; [|exact HLIB]. intros x Hx. unfold HULL_LO, HULL_HI in Hx. cbn in Hx.
     apply zfill_out. rewrite (u64_lit n) by lia. rewrite (u64_lit x) by lia. lia.
+  - (* LPS 727298f3: [co_rdr]; the mapping leaves the reader as it was *)
+    match goal with H : m_channel_reader _ = true |- _ => exact H end.
 Qed.
 
 Lemma fd_lookup_std1 : forall model, m_fds model = fds_std ->
@@ -1678,6 +1724,7 @@ Proof.
   - eapply vm_ok_ext; [apply ext_call_agree | exact Hmv | exact (max1_le_0 _ _ Hnx0) | exact HV].   (* [comment removed for export] *)
   - eapply slots_ok_ext; [apply ext_call_agree | exact Hssv | exact HSS].
   - exact HLIB'.
+  - match goal with H : m_channel_reader _ = true |- _ => exact H end.   (* LPS 727298f3: [co_rdr] *)
 Qed.
 
 Lemma fresh_ok_nx0 : forall cs, fresh_ok nx0 cs = true -> (nx0 <= s_next (c_ss cs))%nat.
@@ -1971,7 +2018,10 @@ Proof.
     pose proof (IH kf csf sf Hf) as A. pose proof (IH ks css ss Hs) as B.
     unfold salt2. destruct sf; destruct ss; cbn [shape_vars_lt] in *; rewrite ?A, ?B; reflexivity.
   - destruct (is_ecall_at RSEGS cs1); [|discriminate].
-    destruct (node_munmap U0 cs1) as [cs2|] eqn:Hn; [|discriminate]. exact (IH k cs2 s Hc).
+    destruct (node_munmap U0 cs1) as [cs2|] eqn:Hn; [|discriminate].
+    destruct (check RSEGS IT U0 nx0 bfuel fuel cs2 k) as [s2|] eqn:H2; [|discriminate].
+    destruct (check RSEGS IT U0 nx0 bfuel fuel (munmap_refuse cs1) k) as [sr|]; [|discriminate].
+    destruct (shape_eqb s2 sr); [|discriminate]. injection Hc as <-. exact (IH k cs2 s2 H2).
   - destruct (is_ecall_at RSEGS cs1); [|discriminate].
     destruct (node_ioctl cs1) as [cs2|] eqn:Hn; [|discriminate]. exact (IH k cs2 s Hc).
   - destruct (Z.eqb (pc cs1) (t_stdio_write U0)); [|discriminate].
@@ -2265,6 +2315,7 @@ Proof.
     + pose proof (proj1 (forallb_forall _ _) Hall' st Hin') as X. apply existsb_sslot in X.
       exact (proj1 (Forall_forall _ _) HSL x X).
   - exact HLIB.
+  - match goal with H : m_channel_reader _ = true |- _ => exact H end.   (* LPS 727298f3: [co_rdr] *)
 Qed.
 
 End FX2.
@@ -2330,9 +2381,15 @@ Proof.
   - (* [comment removed for export] *)
     destruct (is_ecall_at RSEGS cs1) eqn:Hec; [|discriminate].
     destruct (node_munmap U0 cs1) as [cs2|] eqn:Hn; [|discriminate].
-    eapply (node_munmap_sound cs1 cs2 E R1 M1 model); [exact HC1 | exact Hec | exact Hn |].
-    intros R' M' model' HC' Hfs. apply (IH cs2 sts Hc fx FRM E R' M' model' T HC').
-    intros st Hst fx' FRM' E' R2 M2 model2 Hag HC2 Hfs2. apply (HH st Hst fx' FRM' E' R2 M2 model2 Hag HC2). rewrite Hfs2. exact Hfs.
+    destruct (collect RSEGS IT U0 nx0 bfuel cs2 k) as [a|] eqn:Ha; [|discriminate].
+    destruct (collect RSEGS IT U0 nx0 bfuel (munmap_refuse cs1) k) as [b|] eqn:Hb; [|discriminate].
+    injection Hc as <-.
+    eapply (node_munmap_sound cs1 cs2 E R1 M1 model); [exact HC1 | exact Hec | exact Hn | |].
+    + intros R' M' HC'. apply (IH (munmap_refuse cs1) b Hb fx FRM E R' M' model T HC').
+      intros st Hst. apply HH. apply in_or_app. right. exact Hst.
+    + intros R' M' model' HC' Hfs. apply (IH cs2 a Ha fx FRM E R' M' model' T HC').
+      intros st Hst fx' FRM' E' R2 M2 model2 Hag HC2 Hfs2.
+      apply (HH st ltac:(apply in_or_app; left; exact Hst) fx' FRM' E' R2 M2 model2 Hag HC2). rewrite Hfs2. exact Hfs.
   - (* [comment removed for export] *)
     destruct (is_ecall_at RSEGS cs1) eqn:Hec; [|discriminate].
     destruct (node_ioctl cs1) as [cs2|] eqn:Hn; [|discriminate].
@@ -2433,8 +2490,13 @@ Proof.
   - (* [comment removed for export] *)
     destruct (is_ecall_at RSEGS cs1) eqn:Hec; [|discriminate].
     destruct (node_munmap U0 cs1) as [cs2|] eqn:Hn; [|discriminate].
-    eapply (node_munmap_sound cs1 cs2 E R1 M1 model); [exact HC1 | exact Hec | exact Hn |].
-    intros R' M' model' HC' Hfs. rewrite <- Hfs. exact (IH bfuel k cs2 s Hc fx FRM E R' M' model' HC').
+    destruct (check RSEGS IT U0 nx0 bfuel fuel cs2 k) as [s2|] eqn:H2; [|discriminate].
+    destruct (check RSEGS IT U0 nx0 bfuel fuel (munmap_refuse cs1) k) as [sr|] eqn:Hr; [|discriminate].
+    destruct (shape_eqb s2 sr) eqn:Heq; [|discriminate]. injection Hc as <-.
+    apply shape_eqb_eq in Heq. subst sr.
+    eapply (node_munmap_sound cs1 cs2 E R1 M1 model); [exact HC1 | exact Hec | exact Hn | |].
+    + intros R' M' HC'. exact (IH bfuel k (munmap_refuse cs1) s2 Hr fx FRM E R' M' model HC').
+    + intros R' M' model' HC' Hfs. rewrite <- Hfs. exact (IH bfuel k cs2 s2 H2 fx FRM E R' M' model' HC').
   - (* [comment removed for export] *)
     destruct (is_ecall_at RSEGS cs1) eqn:Hec; [|discriminate].
     destruct (node_ioctl cs1) as [cs2|] eqn:Hn; [|discriminate].

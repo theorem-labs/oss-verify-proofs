@@ -1,15 +1,47 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the SIGPIPE write arms and the new set_robust_list, clock_getres and pwritev2 arms). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad.
 From LinuxProcessSemantics.LinuxProcessSem.Sys Require Import SyscallTable.
+From LinuxProcessSemantics.LinuxProcessSem.Sys.Fs Require ReadWrite.
 From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Common.BudgetBridge Require Import Relim.
 From Stdlib Require Lia. Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope bv_scope.
 Open Scope sys_scope.
+
+(* At the revision the write arms with no reader on the far end take
+   [ReadWrite.sigpipe_write], which modifies the model by
+   [ReadWrite.raise_sigpipe]: it touches only the process state, so it
+   leaves the maps alone and commutes with [relim]. *)
+Lemma raise_sigpipe_vmmaps : forall m, m_vmmaps (ReadWrite.raise_sigpipe m) = m_vmmaps m.
+Proof.
+  intros m. unfold ReadWrite.raise_sigpipe.
+  repeat match goal with |- context [if ?b then _ else _] => destruct b end; reflexivity.
+Qed.
+
+Lemma raise_sigpipe_relim : forall l m,
+  ReadWrite.raise_sigpipe (relim l m) = relim l (ReadWrite.raise_sigpipe m).
+Proof.
+  intros l m. unfold ReadWrite.raise_sigpipe.
+  change (m_sigpipe_default (relim l m)) with (m_sigpipe_default m).
+  change (m_sigmask (relim l m)) with (m_sigmask m).
+  repeat match goal with |- context [if ?b then _ else _] => destruct b end; reflexivity.
+Qed.
+
+(* [Relim.li] with two additions the revision's write arms need.  The
+   SIGPIPE raise above is a [modify] [Relim.li_modify] cannot close by
+   computation.  And the file arms now pass their placement as option-
+   valued helpers ([write_fault_extend] and the anon ones), which must be
+   unfolded before [li_destruct] meets them. *)
+Ltac li := repeat (first [ progress unfold ReadWrite.write_fault_extend, ReadWrite.write_fault_keep,
+                                          ReadWrite.anon_write_fault, ReadWrite.anon_fault_extend,
+                                          ReadWrite.anon_write_place
+                         | li_step
+                         | apply LI_modify; [apply raise_sigpipe_vmmaps | apply raise_sigpipe_relim] ]).
 
 Ltac arm_start := unfold LI; intros i; cbv beta;
   lazymatch goal with |- forall m o, ?c i m o -> _ => let H := fresh "HLI" in enough (H : LI c) by exact (H i) end.
@@ -159,11 +191,19 @@ Lemma arm_98 : LI (fun i => futex_spec (in_arg i 0) (in_arg i 1) (in_arg i 2) (i
 Proof. arm_start. li. Qed.
 
 (* [comment removed for export] *)
+(* set_robust_list joined the table at the revision; it reads no limit *)
+Lemma arm_99 : LI (fun i => set_robust_list_spec (in_arg i 1) i).
+Proof. arm_start. li. Qed.
+
 Lemma arm_101 : LI (fun i => nanosleep_spec (in_arg i 0) (in_arg i 1) i).
 Proof. arm_start. li. Qed.
 
 (* [comment removed for export] *)
 Lemma arm_113 : LI (fun i => clock_gettime_spec (clockid32 (in_arg i 0)) (in_arg i 1) i).
+Proof. arm_start. li. Qed.
+
+(* clock_getres joined the table at the revision; it reads no limit *)
+Lemma arm_114 : LI (fun i => clock_getres_spec (clockid32 (in_arg i 0)) (in_arg i 1) i).
 Proof. arm_start. li. Qed.
 
 (* [comment removed for export] *)
@@ -332,6 +372,10 @@ Proof. arm_start. li. Qed.
 
 (* [comment removed for export] *)
 Lemma arm_278 : LI (fun i => getrandom_spec (in_arg i 0) (in_arg i 1) (in_arg i 2) i).
+Proof. arm_start. li. Qed.
+
+(* pwritev2 joined the table at the revision; it reads no limit *)
+Lemma arm_287 : LI (fun i => pwritev2_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (flag32 (in_arg i 5)) i).
 Proof. arm_start. li. Qed.
 
 (* [comment removed for export] *)

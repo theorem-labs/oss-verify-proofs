@@ -45,7 +45,7 @@ Proof.
   apply (zlib_pack3_walk_crealizes rc LS CS GI (fun _ => []) HCS
     (G_local_T_mono src0segs G src0_G GI HG' GIL)
     (fun mem Hm => GI0 mem (G_img_mono src0segs G src0_G mem HG' Hm))
-    HX sp brk0 mbase rnd lim inp Hsp Hbrk Hmb Hfits Hinput Hlim).
+    HX sp brk0 mbase rnd lim inp Hsp Hbrk Hmb (proj1 Hfits) (proj2 Hfits) Hinput Hlim).
   unfold rc. apply ceil_of_top_run.
   unfold rc. reflexivity.
 Qed.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main entry's recorded facts read as the main entry keeps them: BPKN; imports MainEntryAsan, where they live). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -9,6 +10,7 @@ From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude.
+From OSSVerify.Proofs.zstd.simple_decompress.lib.AS Require Import MainEntryAsan.
 From OSSVerify.Proofs.zstd.simple_decompress.lib.Lib Require Import PropExec MState Mem Cells Step Frame Arr InitMem.
 From OSSVerify.Proofs.zstd.simple_decompress.lib.LibA Require Import ExecF Shadow.
 From OSSVerify.Proofs.zstd.simple_decompress.lib.Spec Require Import STree AsanCtrl AsanEmbed AsanHandoff.
@@ -26,7 +28,7 @@ Section CANSEC1. Context {rc : runConstT}.
 Section E.
   Variables (lz : list (word * word)) (AL : word -> Prop) (V : nat -> Z) (w : bool) (U : list (list Z)).
   Hypothesis A0I : forall p : word, bv_unsigned p mod 4096 = 0 -> aallowed (allow_of 2147450880 V both_vis) p -> AL p.
-  Hypothesis HP : Forall (pfact_ok V) both_pure_facts.
+  Hypothesis HP : Forall (pfact_ok V) BPKN.
   Hypothesis HU : (length U <= Z.to_nat AUMAX)%nat.
   Hypothesis HAT : 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat - 8388608 = ATOP.   (* [comment removed for export] *)
   Let L := mkALayout (LV V) w U.

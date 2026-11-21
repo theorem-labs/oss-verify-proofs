@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (yparse_loopX and ydo_parse_spec read the ceiling and auxv-address bounds from rauxv_ok's new shape (the auxv address, a pair list and the AT_RANDOM address)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -169,7 +170,7 @@ Proof.
   induction fuel as [|fuel IH]; intros until B; intros K0 HIX FUEL EXIT.
   { exfalso. destruct HIX as ((_ & _ & _ & _ & _ & _ & LP & _) & _). pose proof (loop_pre_passes_left_pos _ _ _ LP). clear -H FUEL. cbn in FUEL. lia. }
   destruct HIX as ((RY & HR & CXR & TXT & L26 & TB & LP & U0 & YR8 & (padw & obw & olw & FR) & AX & SPC & CXB & STK & CEIL & LO & ERR & MI & TP) & SB1).
-  pose proof AX as (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & _ & _ & _ & CB0 & Bav & AV144 & _).
+  pose proof AX as (av & vs & rnd & _ & _ & _ & (CB0 & Bav & _ & _ & _ & _ & AV144) & _).
   set (E := mkPE ra sp gp tp s0e s1e s2e s3e s4e s5e s6e s7e s8e s9e s10e s11e F fc T txt lo B K m REST mh h cx).
   assert (OK : pok E).
   { unfold pok, E, pSP, pCX, pLEN. cbn. unfold alloc_ceiling, RY_DO_PARSE_STACK, RY_DECODE_STACK, RY_BUF_APPEND_STACK, RY_WRAP_STACK in *.
@@ -291,7 +292,7 @@ Proof.
   pose proof RY as RY0. apply RYST_split in RY. destruct RY as [HK0 YS].
   destruct (HK_blocks HK HKB _ _ _ _ HK0) as [RNG _].
   pose proof (all_range_In _ _ RNG (or_introl eq_refl)) as R1. unfold rblock_range, alloc_ceiling, SIZEOF_HANDLE in R1. cbn [blk_addr blk_size fst snd] in R1.
-  pose proof AX as (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & _ & _ & _ & CB0 & Bav & AV144 & _).
+  pose proof AX as (av & vs & rnd & _ & _ & _ & (CB0 & Bav & _ & _ & _ & _ & AV144) & _).
   unfold hand_cells, hand_head_cells, alloc_cells in HC. cbn [yc_callbacks yc_malloc_w yc_realloc_w yc_free_w ryc app] in HC.
   subst a0 a1 a2. unfold RY_DO_PARSE, RY_DO_PARSE_STACK, RY_DECODE_STACK, RY_BUF_APPEND_STACK, RY_WRAP_STACK, alloc_ceiling in *. unfold wz in HC |- *.
   rewrite (ry_errno_lit tp TP) in ERR. unfold RERRNO in ERR.

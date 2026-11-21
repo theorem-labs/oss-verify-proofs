@@ -8,13 +8,13 @@ core, which does not exist yet (see "Waits on").
     run.sh WT HUB DONOR_DIR TARGET_DIR ALRELOC            # check + dry run, writes nothing in WT
     RECORD_A=<A record> RECORD_B=<B record> run.sh WT HUB DONOR_DIR TARGET_DIR ALRELOC --write
 
-WT = this unit's worktree, HUB = the git hub holding origin/ossv/recipes 781f46bc05cd, DONOR_DIR / TARGET_DIR = the
+WT = this unit's worktree, HUB = the git hub holding, DONOR_DIR / TARGET_DIR = the
 pipeline directories of plugin-hostd and libdiginet (bin/ or result/bin/, and unstripped/), ALRELOC = alreloc of record
 a5c53bb2bed4 (it reads align/keep-numerals.txt beside itself). Nothing in run.sh or class5cmp.py names a fuzz_transport
 address: the pins come from WT's harness.yaml, every target value from the images. A re-pin is the same command.
 
 Per image (A = asan, B = asan-ubsan) run.sh:
-1. checks each image file against its pin (fuzz_command's at 781f46bc05cd, fuzz_transport's in WT);
+1. checks each image file against its pin (fuzz_command, fuzz_transport's in WT);
 2. class5cmp.py: pairs every range of the donor's code tables (RtSM5T.v fs_ranges, RtSF5.v sf_ranges) with the target
    (by function name, or by the class-5 body's call when the name has several copies), compares each walked range and
    its whole function with the comparison kit of record cmpkit 4bbd3a74be89 (strictcmp2 16982e3ef42b; copy in
@@ -53,7 +53,7 @@ wrong rows; the one value moved inside a symbol is common_flags_dont_use + 0x89 
 - Header and notice lines are inherited byte for byte; RtStack.v's numerals are all in a comment that names the donor
   image it was measured on: kept.
 
-## Donor closure (plugin-hostd/fuzz_command, origin/ossv/recipes 781f46bc05cd)
+## Donor closure (plugin-hostd/fuzz_command)
 
 Relocated per image: lib/<I>/Rt/RtSM5T.v (class-5 code table and walk stages), RtSM5.v (cmd_stack_malloc5_contract),
 RtSF5.v (cmd_stack_free5_contract), RtSMxA.v, RtStack.v (astack_free_cls_realizes). Not relocated: RtSM1T.v, the donor's

@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: extracted from proofs/cgif/cgif_file_fuzzer/lib/YC20.v at c8557374ad2e, with its module paths changed: lines 1-8, 10-17, 43-75, 86-96 and 367-368 are taken; lines 18-42, 76-85 and 97-366 (cgif stack and event budgets, the cgif object layout and the cgif function specifications) are left out; the Require of the cgif object model YI5w and YI5z (line 9) is dropped, because the taken definitions use no name from them. *)
+(* Modified by Theorem Labs, 2026-10: extracted from proofs/cgif/cgif_file_fuzzer/lib/YC20.v at theorem-labs/oss-verify-proofs@6b32741d849a, with its module paths changed: lines 1-8, 10-17, 43-75, 86-96 and 367-368 are taken; lines 18-42, 76-85 and 97-366 (cgif stack and event budgets, the cgif object layout and the cgif function specifications) are left out; the Require of the cgif object model YI5w and YI5z (line 9) is dropped, because the taken definitions use no name from them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

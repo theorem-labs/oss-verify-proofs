@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-29: relocated from libreac/fuzz_grant (a working branch 97c611eec86,
+(* Modified by Theorem Labs, 2026-10-29: relocated from libreac/fuzz_grant (a working branch,
    proofs/libreac/fuzz_grant/lib/A/Rt/Strcmp.v, owner a Theorem Labs lane) to libreac/fuzz_identity's ASan build (image A) by
    an address map recorded by the porting lane: every code address of the walk moves by
    +0x5c, the common_flags GOT slot and the two flag cells move to the ones fuzz_identity.asan gives, the module
@@ -8,7 +8,8 @@
    taken from A/AE34.v's trampoline range, and the trampoline theorem is restated at lib/A/Rt/StrcmpDef.v's
    STRCMP_ENTRY, the name identity's callers cite. The proof script is a Theorem Labs lane's, unchanged. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Rt/Strcmp.v, with its module paths and addresses changed; 15 of its 455 lines of code are new or changed and 21 lines of the source are left out. *)
-(* Relocated from libreac/fuzz_identity's released proofs/lib/A/Rt/Strcmp.v (c3777b3715d0) to libdiginet/fuzz_transport's
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Relocated from libreac/fuzz_identity's released proofs/lib/A/Rt/Strcmp.v to libdiginet/fuzz_transport's
    image A, fuzz_transport.asan e89be137db17 (unstripped twin 86efc3a80314).
    The walked functions (the trampoline, ___interceptor_strcmp, __sanitizer_weak_hook_strcmp,
    __asan_region_is_poisoned, __asan::TryAsanInitFromRtl) have the donor's sizes and the donor's words up to

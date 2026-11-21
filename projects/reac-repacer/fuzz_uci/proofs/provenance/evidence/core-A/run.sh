@@ -3,16 +3,16 @@
 #
 #   run.sh <workdir>
 #
-# The method is libreac/fuzz_decode's (its core at commit 1148f2311f8, provenance/core-reloc/A/run.sh): the DONOR is
+# The method is libreac/fuzz_decode's (its core, provenance/core-reloc/A/run.sh): the DONOR is
 # fuzz_grant's RELEASED lib (fuzz_uci's driver and runtime are grant's), not cgif's. Agreed by the unit owner after
 # measuring both on the same trunk with the same tool: cgif donor 218 refused values / 236 rows, grant donor 100
 # refused / 101 value rows.
 #
-#   REL  port_core release 0e4e065eab9f: git -C <hub> archive 7f0e4b05267 tools/pg-reloc/0e4e065eab9f | tar -x -C X
+#   REL  port_core release 0e4e065eab9f: git -C <hub> archive tools/pg-reloc/0e4e065eab9f | tar -x -C X
 #        (versions.txt beside this file: port_core / resolve_code / gen_traces / adapted.patch / symbol gate shas)
-#   DON  fuzz_grant's released lib at origin/ossv/recipes 25e3d17bdb50, NORMALISED as decode's run.sh does (Reusable/*
+#   DON  fuzz_grant's released lib, NORMALISED as decode's run.sh does (Reusable/*
 #        moved to the lib root, module text ...fuzz_grant.lib.Reusable -> ...fuzz_grant.lib), in repository layout:
-#          mkdir -p $D/proofs/libreac/fuzz_grant/lib && git -C <hub> archive 25e3d17bdb50 proofs/libreac/fuzz_grant/lib \
+#          mkdir -p $D/proofs/libreac/fuzz_grant/lib && git -C <hub> archive proofs/libreac/fuzz_grant/lib \
 #            | tar -x -C $D/proofs/libreac/fuzz_grant/lib --strip-components=4
 #          cd $D/proofs/libreac/fuzz_grant/lib && mv Reusable/* . && rmdir Reusable && find . -name '*.v' -print0 | xargs -0 \
 #            perl -pi -e 's/OssFuzzTheorems\.Proofs\.libreac\.fuzz_grant\.lib\.Reusable/OssFuzzTheorems.Proofs.libreac.fuzz_grant.lib/g'
@@ -31,7 +31,7 @@
 # non-A files. So --apply is not used; the staged files of WORK/stage-out go into LIB by --apply's own rule (A/ files
 # always, a non-A file only when LIB lacks it).
 # The two patches zero-shadow-forallb.patch and cell-lookup.patch are libreac/fuzz_decode's (its core at commit
-# 1148f2311f8), re-cut against this run's stage-out (AFjy's context bound 0x5f6000 -> fuzz_uci's 0x5f4000): the
+#), re-cut against this run's stage-out (AFjy's context bound 0x5f6000 -> fuzz_uci's 0x5f4000): the
 # Tfib_zero_shadow case splits become forallb checks (fuzz_uci has 3 ranges, grant 15), and the AFim / AFin const-cell
 # lookups by index become cell_lookup_In. ad1q-shape.patch gives A/AD1q.v fuzz_uci's own lib_shape instance.
 #

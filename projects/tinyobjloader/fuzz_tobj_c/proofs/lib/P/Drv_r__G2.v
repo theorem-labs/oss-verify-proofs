@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the refusal frame KfR carries the run's channel reader, LPS 08b1429, written as plain text; that fact passed at the two write sums; the exit steps take KfR's four conjuncts apart). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -158,8 +159,9 @@ Hypothesis HL : MAX_INPUT <= L.
 Variable r0 : valuation.
 
 Definition TRf (n : nat) : list event := wr 2 (firstn n msg_refused).
-Definition KfR (n : nat) : list event -> Model -> Prop := ltac2:(tb__ "0|1|
-S18S23A1M0S24S2S1G0R2S13Vn;A1A3S2S1S18S1bS2aQ40A1S25A2A1S26R1A1S37Vcx;S3cZ2Z1aA2A2A3S1S4bS29R1A1Vfs;A3A2A2Lmd;Ltr;").
+(* LPS 08b1429: the frame carries the run's channel reader (a nonempty writev needs it). *)
+Definition KfR (n : nat) : list event -> Model -> Prop :=
+  fun tr md => tr = TRf n /\ m_fds md = fds3 (2 ^ 26) /\ m_fs md = fs /\ m_channel_reader md = true.
 
 Lemma refused_in_spec : ltac2:(tb__ "0|1|
 VSpecT;S1cS23S17Z2M0S14A2S1dS23S16Vfs;G0A2S19S23A1A3A3A1").
@@ -299,6 +301,7 @@ Proof using HL.
   - exact Kw_okf.
   - exact Kw_okp.
   - exact KfR_fd2.
+  - intros tr md (_ & _ & _ & R). exact R.
   - cbn. lia.
 Qed.
 Lemma wl2_ecall : ltac2:(tb__ "0|3|
@@ -308,6 +311,7 @@ Proof using .
   apply (WLerr.wl2_sum_ex (KfR 0) rho1 msg_refused [] H5 H6 H13 H15).
   - unfold WLerr.MSG, max_write_total. cbn. lia.
   - exact KfR_fd2.
+  - intros tr md (_ & _ & _ & R). exact R.
   - cbn. lia.
 Qed.
 
@@ -319,7 +323,7 @@ Proof using HL.
   destruct cert_fexit as (Hi & H17 & H10).
   apply (triple_exit_eval segs ok SpecT (KfR 38) E_fex rho1 2);
     [apply KfR_okf | apply KfR_okp | exact Hokh | exact Hi | left; exact H17 | rewrite H10; cbn [eval]; rewrite U_addr by lia; reflexivity |].
-  intros tr md (-> & _ & ->). unfold TRf. rewrite firstn_all2 by (rewrite msg_refused_len; lia). exact refused_in_spec.
+  intros tr md (-> & _ & -> & _). unfold TRf. rewrite firstn_all2 by (rewrite msg_refused_len; lia). exact refused_in_spec.
 Qed.
 Lemma ref_eexit : ltac2:(tb__ "0|0|
 S6S32S0S2cS0S10U26A1S46R1A4S31S1S18S23A1S34R1A1S15Vfs;S14A2A3Lw;A3Frho;").
@@ -329,7 +333,7 @@ Proof using .
   destruct cert_fexit as (Hi & H17 & H10).
   eapply etriple_conseq; [intros w Hw; exact Hw | |
     apply (etriple_exit_eval segs (KfR 38) E_fex rho1 2 Hi (or_introl H17))].
-  - intros w (tr & md & (-> & _ & ->) & ->). unfold TRf, die. rewrite firstn_all2 by (rewrite msg_refused_len; lia). reflexivity.
+  - intros w (tr & md & (-> & _ & -> & _) & ->). unfold TRf, die. rewrite firstn_all2 by (rewrite msg_refused_len; lia). reflexivity.
   - rewrite H10. cbn [eval]. rewrite U_addr by lia. reflexivity.
 Qed.
 

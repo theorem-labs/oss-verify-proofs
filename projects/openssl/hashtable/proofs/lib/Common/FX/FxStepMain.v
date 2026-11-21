@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the interpreter declines the failing store-conditional). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From stdpp Require Import bitvector bitvector.tactics.
@@ -411,8 +412,8 @@ Proof.
         apply R_after_sc; try reflexivity; [exact HR | rewrite (dv_conc rho Hrho0); apply wbv_w_zero | exact Hm'].
       * rewrite (interp_store segs 64 _ _ _ _ Hok). eexists. split; [reflexivity|]. apply (post_store F ms _ _ a' SZ8 (FxState.rget F (ireg rs2)) M' HR Es); [reflexivity | cbn [ms_mem ms_of]; rewrite Ea', !Hregs; reflexivity | reflexivity | shape_tac | shape_tac |].
         apply R_after_sc; try reflexivity; [exact HR | rewrite (dv_conc rho Hrho0); apply wbv_w_zero | exact Hm'].
-    + injection H as <-. eexists. split; [reflexivity|]. apply post_same; [reflexivity | reflexivity | reflexivity | shape_tac | shape_tac |].
-      apply R_after_sc; try reflexivity; [exact HR | rewrite (dv_conc rho Hrho0); apply wbv_w_one | exact (R_mem _ _ _ _ _ HR)].
+    + (* the interpreter declines a failing sc at this revision *)
+      discriminate H.
   - (* [comment removed for export] *)
     apply some_inj in Hc. subst fi. cbv beta iota zeta in H.
     destruct (aligned_for w0 (FxState.rget F (ireg rs1)) (f_mem F)) eqn:Eal; cbn [negb] in H; [|discriminate].

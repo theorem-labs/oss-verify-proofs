@@ -292,6 +292,64 @@ Definition clear_of_stack (h : VmMaps) (p : policy) (s : strip) (st n : Z) (a : 
   \/ (s_vvar s = true /\ (e <= p_vdso p < st)%Z)
   \/ (s_text s = true /\ (e <= p_vdso p + p_vvar p < st)%Z).
 
+(* ========================================================================
+   POLICY-PINNED-TO-MODEL (Main, 2026-11-07; ruled for this unit by
+   RepairG5to8Lead3, conjuncts (5) and (6) approved on the derivation below).
+
+   #38 PINS the address.  [Checks.Placement.linux_place_is]
+   (75d69e00:theories/LinuxProcessSem/Checks/Placement.v:1012-1017) decides
+   one address and [linux_place_unique] (:776) makes it the only one, so a
+   placement fact quantified over EVERY policy [policy_ok] admits is false:
+   two policies with different windows pin two different addresses and at
+   most one of them can be Linux's.  The repair is to tie the policy to the
+   model, as CONJUNCTS of the predicate the producers already build, never as
+   a free-standing hypothesis.
+
+   [vdso_in_ledger] is conjunct (6).  [fits] below asks [off_vdso], a
+   policy-only constraint Linux's [gap_fits] does not know, so the policy's
+   [highest_fit] ranges over a strictly smaller set than Linux's
+   [highest_gap] and the two maxima differ.  Pinning the STRIP is the wrong
+   cure -- [s] is the live-vDSO state [strip_next] tracks, and pinning it
+   would gut the strip.  Putting the live mappings in the LEDGER is the right
+   one, and it is the model's own idiom rather than this unit's invention:
+   [Checks.Placement.linux_place_misses_vdso] (:1189-1208) reaches exactly
+   this conclusion by the same step, from the [region_free] that
+   [linux_place_is_admissible] (:1038) hands out.  It is also the shape
+   [State.init_model] actually builds -- [vm_reserved] ends with the vDSO
+   pair -- so it is not satisfiable only for an empty strip
+   (VACUOUS-NONSPURIOUS). *)
+Definition vdso_in_ledger (h : VmMaps) (p : policy) (s : strip) : Prop :=
+  (s_vvar s = true ->
+     exists m, In m (vm_reserved h ++ vm_maps h)
+       /\ (bv_unsigned (fst m) <= vdso_end p - p_text p - p_vvar p)%Z
+       /\ (vdso_end p - p_text p <= bv_unsigned (fst m) + bv_unsigned (snd m))%Z)
+  /\ (s_text s = true ->
+     exists m, In m (vm_reserved h ++ vm_maps h)
+       /\ (bv_unsigned (fst m) <= vdso_end p - p_text p)%Z
+       /\ (vdso_end p <= bv_unsigned (fst m) + bv_unsigned (snd m))%Z).
+
+(* The six conjuncts, over a [VmMaps] and a THP setting rather than a [Model],
+   so that [PolicyFit] can state its obligation without a model in hand.
+   (5) [p_guard p = 0] is a pin on the POLICY, not on the model: Linux's
+   [topdown_search] (75d69e00:Sys/Mm/Mmap.v:1139-1143) has NO stack-clearance
+   test at all, while [search_addr]'s first arm conjoins [clear_of_stack] and
+   the hint arm asks [fits] with [g = true].  [policy_ok] admits a guard up to
+   [stack_guard_max] = 256 MiB, and for a nonzero guard the policy abandons an
+   address Linux takes.  Declining to model a knob the model does not have is
+   not a weakening of a model obligation. *)
+Definition policy_pinned_h (h : VmMaps) (thp : bool) (p : policy) (s : strip) : Prop :=
+  p_legacy p = false
+  /\ (p_min p = page_size)%Z
+  /\ (p_base p = bv_unsigned (vm_mmap_base h))%Z
+  /\ p_thp p = thp
+  /\ (p_guard p = 0)%Z
+  /\ vdso_in_ledger h p s.
+
+(* The same six over a model, which is the form [Uniform.canon_fit_at] and its
+   producers use. *)
+Definition policy_pinned (p : policy) (s : strip) (m : Model) : Prop :=
+  policy_pinned_h (m_vmmaps m) (kb_thp (m_kernel m)) p s.
+
 (** [a] is a page-aligned address at or above [lo] and above 0 at which [n]
     bytes end at or below [top], overlap nothing in the ledger (the guard of
     the fresh-grant arms of lps's [mmap_spec], with [top] for [alloc_top]),
@@ -842,11 +900,14 @@ Qed.
 
 (** ** What the statements read, for one policy [p] *)
 
+(* LPS 08b1429: Run.run_scfg runs the image over [run_segments segs inp sp mbase] (the vDSO pages), so
+   the canon/guarded family below takes the same segment list (as G1's for its trees). *)
+
 Definition canon_trace (cfg : SpuriousCfg) (p : policy) (img : Image) (lim : Z) (en : ExecEntry)
     (inp : ProcInput) (tr : list event) : Prop :=
   match img, en with
   | mkImage segs pc ph, mkEntry sp brk0 mbase rnd =>
-    exists tr' c, canon_run p segs cfg (init_config segs pc ph sp brk0 mbase rnd lim inp) tr' c
+    exists tr' c, canon_run p (run_segments segs inp sp mbase) cfg (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp) tr' c
                   /\ is_prefix tr tr'
   end.
 
@@ -854,8 +915,8 @@ Definition canon_budget_refused (cfg : SpuriousCfg) (p : policy) (img : Image) (
     (en : ExecEntry) (inp : ProcInput) : Prop :=
   match img, en with
   | mkImage segs pc ph, mkEntry sp brk0 mbase rnd =>
-    exists tr c, canon_run p segs cfg (init_config segs pc ph sp brk0 mbase rnd lim inp) tr c
-                 /\ budget_refused_at segs c
+    exists tr c, canon_run p (run_segments segs inp sp mbase) cfg (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp) tr c
+                 /\ budget_refused_at (run_segments segs inp sp mbase) c
   end.
 
 (** An error that a canonical execution of [p] reaches, or that any other
@@ -865,10 +926,10 @@ Definition guarded_reaches_error (cfg : SpuriousCfg) (p : policy) (img : Image) 
   match img, en with
   | mkImage segs pc ph, mkEntry sp brk0 mbase rnd =>
     exists tr c evs,
-      ((star_guarded segs cfg (init_config segs pc ph sp brk0 mbase rnd lim inp) tr c
-        /\ ~ unplaced_at segs c /\ ~ budget_refused_at segs c)
-       \/ canon_run p segs cfg (init_config segs pc ph sp brk0 mbase rnd lim inp) tr c)
-      /\ sstep_cfg segs cfg c evs SError
+      ((star_guarded (run_segments segs inp sp mbase) cfg (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp) tr c
+        /\ ~ unplaced_at (run_segments segs inp sp mbase) c /\ ~ budget_refused_at (run_segments segs inp sp mbase) c)
+       \/ canon_run p (run_segments segs inp sp mbase) cfg (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp) tr c)
+      /\ sstep_cfg (run_segments segs inp sp mbase) cfg c evs SError
   end.
 
 Definition guarded_trace (cfg : SpuriousCfg) (p : policy) (img : Image) (lim : Z) (en : ExecEntry)
@@ -876,8 +937,8 @@ Definition guarded_trace (cfg : SpuriousCfg) (p : policy) (img : Image) (lim : Z
   match img, en with
   | mkImage segs pc ph, mkEntry sp brk0 mbase rnd =>
     exists tr' c,
-      (star_guarded segs cfg (init_config segs pc ph sp brk0 mbase rnd lim inp) tr' c
-       \/ canon_run p segs cfg (init_config segs pc ph sp brk0 mbase rnd lim inp) tr' c)
+      (star_guarded (run_segments segs inp sp mbase) cfg (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp) tr' c
+       \/ canon_run p (run_segments segs inp sp mbase) cfg (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp) tr' c)
       /\ is_prefix tr tr'
   end.
 
@@ -1010,7 +1071,7 @@ Lemma canon_complete_of_no_placement : forall vi cfg segs pc ph lim,
   (forall en inp, valid_entry (mkImage segs pc ph) en inp -> vi inp ->
      match en with
      | mkEntry sp brk0 mbase rnd =>
-       no_placement_from segs cfg (init_config segs pc ph sp brk0 mbase rnd lim inp)
+       no_placement_from (run_segments segs inp sp mbase) cfg (init_config (run_segments segs inp sp mbase) pc ph sp brk0 mbase rnd lim inp)
      end) ->
   canon_complete vi cfg (mkImage segs pc ph) lim.
 Proof.

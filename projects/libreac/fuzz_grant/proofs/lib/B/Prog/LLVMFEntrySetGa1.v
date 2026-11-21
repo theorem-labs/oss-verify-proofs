@@ -3,8 +3,9 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntrySetGa1), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v. *)
 (* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/Prog/GrantEntrySetGa1.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/GrantEntrySetGa1.v, ported from a working branch
-   7c8c67da870 (blob 6343983ade5; the image-A file carries no licence lines, so none are copied).
+   (blob 6343983ade5; the image-A file carries no licence lines, so none are copied).
 
    The set loop of LLVMFuzzerTestOneInput on image B: the piece GA1 → G78 | the call of
    reac_headamp_tx_effective (the slots 0x80f9c .. 0x810b0, fuzz/fuzz_grant.c:201-224).

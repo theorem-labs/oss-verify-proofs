@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyImg_hcw.v (commit 4d286b2e618d, file sha256 365c556ed00b) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 0 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyImg_hcw.v (file sha256 365c556ed00b) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 0 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a prior worker, row img-hcw-B of a Theorem Labs lane's internal file REPLY-IMG-ROWS.md, for the cf layer at
-   plugin-hostd/fuzz_reply). The B twin of a prior worker's lib/A/PresetImg_hcw.v hcw_A (row img-hcw-A, 
-   cf407cb5886): same stem, same form.
+   plugin-hostd/fuzz_reply). The B twin of a prior worker's lib/A/PresetImg_hcw.v hcw_A (row img-hcw-A):
+   same stem, same form.
    rule 24: no function proved (kind: image row; the constant cells against the hit walk's thread cells, at reply's
    image B, fuzz_reply.asan-ubsan).
 
-   The row is the cf layer's image hypothesis HCW (YGcfInstHit.v:160-162 at ee95275bccb): no byte
+   The row is the cf layer's image hypothesis HCW (YGcfInstHit.v:161-163): no byte
    of a constant cell is one of the thread-object cells the hit walk writes (ImgBaseAG.WINT).  cgif's discharge is
    YGcfInstHitcgif.v:95 HCW_cgif.  Reply does not carry YGcfInstHit.v yet, so [hcw_B] states the hypothesis's text at
    reply B's instances (ImgBase.AImg at AImg_cgif, B/AGif2cgif.v:24; ImgBaseAG.WINT, B/ImgBaseAG.v:123), in the
@@ -42,7 +43,7 @@ Local Open Scope Z_scope.
 
 Section d. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 
-(* HCW (YGcfInstHit.v:160-162; YGcfInstHitcgif.v:95 HCW_cgif's twin): the constant cells miss the thread cells the
+(* HCW (YGcfInstHit.v:161-163; YGcfInstHitcgif.v:95 HCW_cgif's twin): the constant cells miss the thread cells the
    hit walk writes. *)
 Theorem hcw_B : forall B, @im_syms AImg_cgif B ->
 forall ly' c j cl', layout_ok ly' -> @im_img_cover AImg_cgif ly' -> ly_tsd ly' = as_tsd B ->

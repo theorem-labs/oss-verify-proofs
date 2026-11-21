@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start nodes over the launch input ProcInput, the CONFIG_RSEQ flag and the channel-reader premise). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -26,39 +27,43 @@ Import AX2. Import AX2S. Import AP. Import APS.
 Open Scope Z_scope.
 
 Section AsanInstance.
+  Variable apc : N.
   Variable sp : word.
   Variable rdraw : EntryDraw.   (* [comment removed for export] *)
   Variable brk0 mbase : word.
-  Variable argv envp : list (list byte).
-  Variable fs : Fs.Fs.
-  Variable stdin : InputStream.
+  Variable inp : ProcInput.
   Variable FS0 : Fs.Fs.
   Hypothesis Hsp : valid_sp sp.
-  Hypothesis Hva : valid_argv argv.
-  Hypothesis Hve : valid_envp envp.
-  Variable uid : word.
-  Variable hw : word.           (* [comment removed for export] *)
-  Hypothesis Hfit : entry_stack_fits sp argv envp.   (* [comment removed for export] *)
+  Hypothesis Hva : valid_argv (in_argv inp).
+  Hypothesis Hve : valid_envp (in_envp inp).
+  Hypothesis Hapc : Z.of_N apc = a_entry ASAN_A.
+  Hypothesis Hbrk : valid_brk ASEGS brk0.
+  Hypothesis Hmb : valid_mmap_base mbase.
+  Hypothesis Huid : valid_id (in_uid inp).
+  Hypothesis Hlaunch : valid_launch inp.
+  Hypothesis Hrdr : in_channel_reader inp = true.
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) inp.
 
   Section AnySINV.
     (* [comment removed for export] *)
     Variable SINV : env -> (word -> option byte) -> Prop.
-    Hypothesis SINV_SINV0 : forall E M, SINV E M -> SINV0 APH sp rdraw brk0 argv envp uid hw E M.
-    Hypothesis SINV_frame : forall E M M', (forall a, argH0 APH sp rdraw argv envp uid hw E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
+    Hypothesis SINV_SINV0 : forall E M, SINV E M -> SINV0 APH apc sp rdraw brk0 mbase inp E M.
+    Hypothesis SINV_frame : forall E M M', (forall a, argH0 sp rdraw inp E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
     Hypothesis SINV_agree : forall E E' M, env_agree NX0 E E' -> SINV E M -> SINV E' M.
 
-    Theorem node_x_sound_XEnvScan_asan_gen : x_stmt ASEGS ASAN_A NX0 LIMIT SINV (argH0 APH sp rdraw argv envp uid hw) FS0 XEnvScan.
+    Theorem node_x_sound_XEnvScan_asan_gen :
+      x_stmt ASEGS ASAN_A NX0 LIMIT (rseq_z (kb_rseq (in_kernel inp))) SINV (argH0 sp rdraw inp) FS0 XEnvScan.
     Proof.
       eapply (init_x_sound_envscan ASEGS ASAN_A APH asan_wx asan_in_hull asan_hull_ok
                 W_ae7d8 W_ae7dc W_ae7e0
                 ltac:(cbn [x_envscan x_envscan_k ASAN_A]; lia)
                 (fetch_lit _ _ _ _ eq_refl F_ae7d8) (fetch_lit _ _ _ _ eq_refl F_ae7dc) (fetch_lit _ _ _ _ eq_refl F_ae7e0)
                 ltac:(repeat split; reflexivity)
-                D_ae7d8 D_ae7dc D_ae7e0
-                sp rdraw brk0 argv envp FS0 Hsp Hva Hve uid hw Hfit SINV SINV_SINV0 SINV_frame).
+                D_ae7d8 D_ae7dc D_ae7e0); first [eassumption | exact asan_img_facts].
     Qed.
 
-    Theorem node_x_sound_XPnScan_asan_gen : x_stmt ASEGS ASAN_A NX0 LIMIT SINV (argH0 APH sp rdraw argv envp uid hw) FS0 XPnScan.
+    Theorem node_x_sound_XPnScan_asan_gen :
+      x_stmt ASEGS ASAN_A NX0 LIMIT (rseq_z (kb_rseq (in_kernel inp))) SINV (argH0 sp rdraw inp) FS0 XPnScan.
     Proof.
       eapply (init_x_sound_pnscan ASEGS ASAN_A APH asan_wx asan_in_hull asan_hull_ok
                 W_ae894 W_ae898 W_ae89c W_ae8a0 W_ae8a4
@@ -66,8 +71,7 @@ Section AsanInstance.
                 (fetch_lit _ _ _ _ eq_refl F_ae894) (fetch_lit _ _ _ _ eq_refl F_ae898) (fetch_lit _ _ _ _ eq_refl F_ae89c)
                 (fetch_lit _ _ _ _ eq_refl F_ae8a0) (fetch_lit _ _ _ _ eq_refl F_ae8a4)
                 ltac:(repeat split; reflexivity)
-                D_ae894 D_ae898 D_ae89c D_ae8a0 D_ae8a4
-                sp rdraw brk0 argv envp FS0 Hsp Hva Hve uid hw Hfit SINV SINV_SINV0 SINV_frame SINV_agree).
+                D_ae894 D_ae898 D_ae89c D_ae8a0 D_ae8a4); first [eassumption | exact asan_img_facts].
     Qed.
 
     (* [comment removed for export] *)

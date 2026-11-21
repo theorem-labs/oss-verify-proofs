@@ -29,11 +29,11 @@
      sa_addr); the formats "%s:%d: " / "%s: " and the default "reac-pw.conf" by sa_lit (REFUSE_LITS); fmt by
      `fp = lit f /\ sa_lit segs B rd fp f`: the format IS one of the module's literals, at the address the literal
      map gives it. sa_lit alone does NOT carry the plain .rodata bounds (sa_img also holds above the GOT word),
-     and the released vsnprintf family needs the format below the GOT word (fuzz_command lib/A/Rt/RtPFCmd.v:94-95
+     and the released vsnprintf family needs the format below the GOT word (fuzz_command lib/A/Rt/RtPFCmd.v:95-96
      FR_cmd `CMD_IMG_LO <= f /\ f + len + 1 <= CMD_GOTW`, checked by computation in its fr_lit_ok :98-100); with
      fp = lit f the walk gets a concrete address for each of the 17 formats, all below the GOT word 0xa36d8 in
      image A, and every caller passes a literal address (reac_segconf_parse_file's 11 sites, cross_check's 2).
-     Found by the G3 walk lane's contract review (D1) at 9b7c1301069e; the earlier wording of this line claimed sa_lit
+     Found by the G3 walk lane's contract review (D1); the earlier wording of this line claimed sa_lit
      carried the bounds, which was false. (ASan's printf_common reads the format: INFERENCE from
      sanitizer_common_interceptors_format.inc, not read here.) Each %s argument by sa_va_args, whose forbidden
      ranges are the plain ones: the stack below the entry sp [ly_stk_lo ly, sp) (the plain [lo, sp)), the slot
@@ -55,8 +55,8 @@
      shadow among it), so a keep clause over image shadow is not provable; a caller re-derives it from the exit
      state's AR through the record's pinned bytes.
    - it reaches snprintf and vsnprintf: apost_baseF, sa_frm0, sa_ssp rd gotw guard.
-   - arodata_okP over the window RLO .. RHI: rows 4 and 5 ask rt_rom_view (fuzz_command lib/A/Rt/RtDefs.v:145 at
-     origin/ossv/recipes 501c0d516c69), which AR does not give.
+   - arodata_okP over the window RLO .. RHI: rows 4 and 5 ask rt_rom_view (fuzz_command lib/A/Rt/RtDefs.v:145),
+     which AR does not give.
    - EV_refuse = 0, post tail sa_noalloc.
    Call sites (provenance/evidence/image-tables/callsites.asan.tsv lines 236, 244, 248, 255, 260, 266, 267, 273, 274, 276, 280, 339,
    340): reac_segconf_parse_file 0x87e74, 0x88060, 0x880f8, 0x8835c, 0x8842c, 0x884e8, 0x88510, 0x886e8, 0x88794,
@@ -71,11 +71,11 @@
    IMAGE-INDEPENDENT: no image module is Required; A_refuse, STK_refuse, RLO, RHI, lit, gotw and guard are
    parameters.
    The WALK takes these runtime entries as Section hypotheses (the interceptor lane's interface
-   provenance/evidence/interceptors/INTERFACE-A-interceptors.md (commit 7068323e2626)):
-     RtPFSeg.seg_asnprintf_realizes (row 4, over the extended piece grammar: %zu, %u, %.24s beside %s %d;
-     commit 755e9278f8ff, RtPFSeg.v:228), at the snprintf trampoline (image A 0x43a64);
-     RtPFSeg.seg_avsnprintf_realizes (row 5, the caller's va_list; RtPFSeg.v:232, the released route's Ua form at
-     U = [], not RtPFShared.v:226's text, which no released proof provides), at the vsnprintf trampoline
+   provenance/evidence/interceptors/INTERFACE-A-interceptors.md):
+     RtPFSeg.seg_asnprintf_realizes (row 4, over the extended piece grammar: %zu, %u, %.24s beside %s %d;,
+     RtPFSeg.v:229), at the snprintf trampoline (image A 0x43a64);
+     RtPFSeg.seg_avsnprintf_realizes (row 5, the caller's va_list; RtPFSeg.v:233, the released route's Ua form at
+     U = [], not RtPFShared.v:227's text, which no released proof provides), at the vsnprintf trampoline
      (0x43a5c); and, from the image-A owner's frame (the interface's "Not in this layer: classes 0 / 1 / 3, the
      kit laws"): astack_malloc_realizes 0 (kit YG0d.v:293; `__asan_stack_malloc_0` 0x3e57c),
      stack_malloc_progressP, astack_free_law, frame_flag_lawP.

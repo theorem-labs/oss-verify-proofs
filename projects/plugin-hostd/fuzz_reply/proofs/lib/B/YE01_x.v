@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx-GENERIC twins of two journal lemmas of lib/Reusable/YE01.v, for lib/B: the same
-   text as image A's lib/A/YE01_x.v (e60b29a425a), byte for byte below this header.
+   text as image A's lib/A/YE01_x.v, byte for byte below this header.
    Every lemma is parametric in segs, B, PST, ARx and the sink symbols K; only two Requires differ from A's file,
    YCbq and YE01, which are taken from lib/B (B's own twins, which cite IMG_TOP_B).  lib/B/YE01.v is NOT edited.
    asink_none_kept_x (YE01.v:83) and ameta_inv_kept_x (YE01.v:149), with the helpers aenv_kept_x (YE01.v:55) and

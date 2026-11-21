@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -152,6 +153,8 @@ Proof.
         as [(rsp & mo' & -> & Hst) | (code & mo' & -> & Hex & _)].
       * destruct (Hsil rsp mo' evs Hst) as [-> _]. split; [reflexivity | eexists; reflexivity].
       * exfalso. exact (Hnoexit code mo' Hex).
+    + (* LPS 727298f3: robustness over a larger read-only backing ([ITree.ns_rob]) *)
+      exact (ITree.ns_rob _ _ _ _ _ _ _ NS n ms1 mo Hat Hh Hminv Hnsafe).
     + (* [comment removed for export] *)
       intros evs c' Hss.
       destruct (ITree.ns_complete _ _ _ _ _ _ _ NS n ms1 mo evs (SNext c') Hat Hh Hminv Hnsafe Hss)

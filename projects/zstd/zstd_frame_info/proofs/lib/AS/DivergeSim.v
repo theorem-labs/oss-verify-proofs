@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (spin_seg marked a loader segment (seg_kind); spin_img_to_spin restated for the spin segments plus appended segments (the vDSO pair), with the vDSO run state in the model (with_vdso) and init_machine_state's new arguments; spin_img_to_spin_by_execution moved to the new arguments, its input now the new spin_exec_input; #[using] attributes dropped from 37 lemmas; imports Vdso). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool String PrimString.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
-  BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+  BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Vdso Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From OSSVerify.Proofs.zstd.zstd_frame_info.lib.AS Require Import PropExec.
 Import ListNotations.
@@ -23,11 +24,11 @@ Context {fx : FPState}.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma is_prefix_nil_inv {A} : forall (tr : list A),
+Lemma is_prefix_nil_inv {A} : forall (tr : list A),
   is_prefix tr [] -> tr = [].
 Proof. destruct tr; [reflexivity | contradiction]. Qed.
 
-#[using="Type"] Lemma is_prefix_app_mono {A} : forall (e a b : list A),
+Lemma is_prefix_app_mono {A} : forall (e a b : list A),
   is_prefix a b -> is_prefix (e ++ a) (e ++ b).
 Proof. induction e; cbn; auto. Qed.
 
@@ -37,7 +38,7 @@ Proof. induction e; cbn; auto. Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma materialize_model_accesses_nil : forall m,
+Lemma materialize_model_accesses_nil : forall m,
   materialize_model_accesses m [] = Some m.
 Proof.
   intros [fd [maps lazy materialized] io fs proc lim].
@@ -47,7 +48,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma mi_account_step_of_accesses : forall segs ms model ms' ranges,
+Lemma mi_account_step_of_accesses : forall segs ms model ms' ranges,
   RiscvSemantics.step_accesses segs ms = MachineOk (@mkAccessReport machine_state ms' ranges) ->
   mi_account_step segs ms model =
     match materialize_model_accesses model ranges with
@@ -60,7 +61,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma mi_account_step_no_access : forall segs ms model ms',
+Lemma mi_account_step_no_access : forall segs ms model ms',
   RiscvSemantics.step_accesses segs ms = MachineOk (@mkAccessReport machine_state ms' []) ->
   mi_account_step segs ms model = MachineOk (ms', model).
 Proof.
@@ -70,7 +71,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma mi_account_step_halted : forall segs ms model ms' model',
+Lemma mi_account_step_halted : forall segs ms model ms' model',
   mi_account_step segs ms model = MachineOk (ms', model') ->
   m_halted model' = m_halted model.
 Proof.
@@ -85,13 +86,13 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma v_addi_0 : forall a : word, v_addi a 0 = a.
+Lemma v_addi_0 : forall a : word, v_addi a 0 = a.
 Proof.
   intro a. unfold v_addi. rewrite Z.add_0_r. apply Z_to_bv_bv_unsigned.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma self_jump_step_accesses : forall segs ms w (rd : reg) (imm : bv 21) sz,
+Lemma self_jump_step_accesses : forall segs ms w (rd : reg) (imm : bv 21) sz,
   ms_svc_pending ms = None ->
   fetch_word segs (ms_pc ms) = Some w ->
   is_ecall w = false ->
@@ -116,7 +117,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma self_jump_account_fix : forall segs ms model w (rd : reg) (imm : bv 21) sz,
+Lemma self_jump_account_fix : forall segs ms model w (rd : reg) (imm : bv 21) sz,
   ms_svc_pending ms = None ->
   fetch_word segs (ms_pc ms) = Some w ->
   is_ecall w = false ->
@@ -130,7 +131,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma step_j_self : forall segs regs pc mem rom w (rd : reg) (imm : bv 21) sz,
+Lemma step_j_self : forall segs regs pc mem rom w (rd : reg) (imm : bv 21) sz,
   fetch_word segs pc = Some w ->
   is_ecall w = false ->
   decode_any w = Some (Jal rd imm, sz) ->
@@ -163,7 +164,7 @@ Definition silent_loop (P : config -> Prop) : Prop :=
       P (mkCfg ms' model').
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma silent_loop_cycle : forall (cs : list config),
+Lemma silent_loop_cycle : forall (cs : list config),
   (forall c, In c cs ->
      m_halted (cfg_model c) = None /\
      ms_svc_pending (cfg_ms c) = None /\
@@ -174,7 +175,7 @@ Definition silent_loop (P : config -> Prop) : Prop :=
 Proof. intros cs H c. exact (H c). Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma silent_loop_sstep : forall P c evs to,
+Lemma silent_loop_sstep : forall P c evs to,
   silent_loop P -> P c -> sstep segs c evs to ->
   evs = [] /\ exists c', to = SNext c' /\ P c'.
 Proof.
@@ -192,7 +193,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma star_case : forall c tr c', star segs c tr c' ->
+Lemma star_case : forall c tr c', star segs c tr c' ->
   (tr = [] /\ c' = c) \/
   exists evs c2 tr2,
     sstep segs c evs (SNext c2) /\ star segs c2 tr2 c' /\ tr = evs ++ tr2.
@@ -203,7 +204,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma silent_loop_star : forall P, silent_loop P ->
+Lemma silent_loop_star : forall P, silent_loop P ->
   forall c tr c', star segs c tr c' -> P c -> tr = [] /\ P c'.
 Proof.
   intros P Hloop c tr c' Hstar.
@@ -215,7 +216,7 @@ Proof.
     destruct (IH HP2) as (-> & HP3). auto.
 Qed.
 
-#[using="Type"] Lemma silent_loop_star_nil : forall P c tr c',
+Lemma silent_loop_star_nil : forall P c tr c',
   silent_loop P -> P c -> star segs c tr c' -> tr = [].
 Proof.
   intros P c tr c' Hloop HP Hstar.
@@ -223,7 +224,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma silent_loop_no_error : forall P c,
+Lemma silent_loop_no_error : forall P c,
   silent_loop P -> P c -> ~ reaches_error segs c.
 Proof.
   intros P c Hloop HP (tr & c2 & evs & Hstar & Herr).
@@ -234,7 +235,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma silent_loop_no_unmodeled : forall P c,
+Lemma silent_loop_no_unmodeled : forall P c,
   silent_loop P -> P c -> ~ reaches_unmodeled segs c.
 Proof.
   intros P c Hloop HP.
@@ -242,7 +243,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma silent_loop_obs_iff : forall P c,
+Lemma silent_loop_obs_iff : forall P c,
   silent_loop P -> P c -> forall tr, obs_trace segs c tr <-> tr = [].
 Proof.
   intros P c Hloop HP tr. split.
@@ -253,7 +254,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma silent_loop_not_all_errors : forall P c,
+Lemma silent_loop_not_all_errors : forall P c,
   silent_loop P -> P c -> ~ all_traces_error segs c.
 Proof.
   intros P c Hloop HP Hall. revert HP.
@@ -282,7 +283,7 @@ Inductive to_spin : machine_state -> Model -> Prop :=
 
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma ts_spin_no_access : forall ms model,
+Lemma ts_spin_no_access : forall ms model,
   ms_svc_pending ms = None ->
   RiscvSemantics.step_accesses segs ms = MachineOk (@mkAccessReport machine_state ms []) ->
   to_spin ms model.
@@ -291,7 +292,7 @@ Proof.
   apply ts_spin; [exact Hsvc | exact (mi_account_step_no_access segs ms model ms Hstep)].
 Qed.
 
-#[using="Type"] Lemma ts_step_no_access : forall ms model ms',
+Lemma ts_step_no_access : forall ms model ms',
   ms_svc_pending ms = None ->
   RiscvSemantics.step_accesses segs ms = MachineOk (@mkAccessReport machine_state ms' []) ->
   to_spin ms' model ->
@@ -304,7 +305,7 @@ Qed.
 
 (* [comment removed for export] *)
 
-#[using="Type"] Lemma ts_spin_no_lazy : forall ms model,
+Lemma ts_spin_no_lazy : forall ms model,
   ms_svc_pending ms = None ->
   m_vm_lazy model = [] ->
   RiscvSemantics.step segs ms = MachineOk ms ->
@@ -316,7 +317,7 @@ Proof.
   rewrite Hstep. reflexivity.
 Qed.
 
-#[using="Type"] Lemma ts_step_no_lazy : forall ms model ms',
+Lemma ts_step_no_lazy : forall ms model ms',
   ms_svc_pending ms = None ->
   m_vm_lazy model = [] ->
   RiscvSemantics.step segs ms = MachineOk ms' ->
@@ -330,7 +331,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma ts_spin_of_step_j : forall ms model w (rd : reg) (imm : bv 21) sz,
+Lemma ts_spin_of_step_j : forall ms model w (rd : reg) (imm : bv 21) sz,
   ms_svc_pending ms = None ->
   fetch_word segs (ms_pc ms) = Some w ->
   is_ecall w = false ->
@@ -347,7 +348,7 @@ Qed.
 Definition spinning (c : config) : Prop :=
   to_spin (cfg_ms c) (cfg_model c) /\ m_halted (cfg_model c) = None.
 
-#[using="Type"] Lemma spinning_silent_loop : silent_loop spinning.
+Lemma spinning_silent_loop : silent_loop spinning.
 Proof.
   intros [ms model] [Hspin Hh]; cbn in Hspin, Hh; cbn.
   revert Hh.
@@ -367,7 +368,7 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-#[using="Type"] Theorem spin_star_nil : forall ms model tr c',
+Theorem spin_star_nil : forall ms model tr c',
   to_spin ms model -> m_halted model = None ->
   star segs (mkCfg ms model) tr c' -> tr = [].
 Proof.
@@ -377,7 +378,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Theorem spin_obs_iff : forall ms model,
+Theorem spin_obs_iff : forall ms model,
   to_spin ms model -> m_halted model = None ->
   forall tr, obs_trace segs (mkCfg ms model) tr <-> tr = [].
 Proof.
@@ -387,7 +388,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Theorem spin_no_error_run : forall ms model,
+Theorem spin_no_error_run : forall ms model,
   to_spin ms model -> m_halted model = None ->
   ~ reaches_error segs (mkCfg ms model).
 Proof.
@@ -397,7 +398,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Theorem spin_no_sstep_error : forall ms model,
+Theorem spin_no_sstep_error : forall ms model,
   to_spin ms model -> m_halted model = None ->
   forall evs, ~ sstep segs (mkCfg ms model) evs SError.
 Proof.
@@ -408,7 +409,7 @@ Proof.
   discriminate Heq.
 Qed.
 
-#[using="Type"] Theorem spin_no_unmodeled : forall ms model,
+Theorem spin_no_unmodeled : forall ms model,
   to_spin ms model -> m_halted model = None ->
   ~ reaches_unmodeled segs (mkCfg ms model).
 Proof.
@@ -418,7 +419,7 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Theorem spin_not_all_errors : forall ms model,
+Theorem spin_not_all_errors : forall ms model,
   to_spin ms model -> m_halted model = None ->
   ~ all_traces_error segs (mkCfg ms model).
 Proof.
@@ -433,12 +434,12 @@ Qed.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-#[using="Type"] Lemma obs_trace_of_star : forall c0 evs c tr,
+Lemma obs_trace_of_star : forall c0 evs c tr,
   star segs c0 evs c -> is_prefix tr evs -> obs_trace segs c0 tr.
 Proof. intros c0 evs c tr Hstar Hpre. exists evs, c. auto. Qed.
 
 (* [comment removed for export] *)
-#[using="Type"] Theorem spin_reach_obs : forall c0 P ms model,
+Theorem spin_reach_obs : forall c0 P ms model,
   star segs c0 P (mkCfg ms model) ->
   to_spin ms model -> m_halted model = None ->
   (forall tr, is_prefix tr P -> obs_trace segs c0 tr) /\
@@ -471,7 +472,7 @@ Definition is_self_jump (ms : machine_state) : bool :=
     end
   end.
 
-#[using="Type"] Lemma is_self_jump_to_spin : forall ms model,
+Lemma is_self_jump_to_spin : forall ms model,
   is_self_jump ms = true -> to_spin ms model.
 Proof.
   intros ms model H. unfold is_self_jump in H.
@@ -502,7 +503,7 @@ Fixpoint spin_c (fuel : nat) (ms : machine_state) (model : Model) : bool :=
       end
   end.
 
-#[using="Type"] Lemma spin_c_to_spin : forall fuel ms model,
+Lemma spin_c_to_spin : forall fuel ms model,
   spin_c fuel ms model = true -> to_spin ms model.
 Proof.
   induction fuel as [|fuel IH]; intros ms model H; cbn in H;
@@ -550,7 +551,7 @@ Hypothesis Hg_noerr : ~ reaches_error segs c_g.
 Hypothesis Hloop : silent_loop segs P.
 Hypothesis HP_r : P c_r.
 
-#[using="c_g c_r P Hsplit Hstep_g Hg_obs Hloop HP_r"] Theorem spin_branch_toy_obs_iff : forall tr,
+Theorem spin_branch_toy_obs_iff : forall tr,
   obs_trace segs c0 tr <-> is_prefix tr (evs_g ++ T).
 Proof.
   intro tr. split.
@@ -579,7 +580,7 @@ Proof.
       apply is_prefix_app_mono. exact HpreT.
 Qed.
 
-#[using="evs_g c_g c_r P Hsplit Hg_noerr Hloop HP_r"] Theorem spin_branch_toy_no_error : ~ reaches_error segs c0.
+Theorem spin_branch_toy_no_error : ~ reaches_error segs c0.
 Proof.
   intros (tr & cerr & evs & Hstar & Herr).
   destruct (star_case segs c0 tr cerr Hstar)
@@ -606,7 +607,8 @@ Definition spin_seg : Segment := {|
   seg_base := 0x10000;
   seg_size := 4;
   seg_perms := "r-x"%string;
-  seg_bytes := ["6f000000"%pstring]
+  seg_bytes := ["6f000000"%pstring];
+  seg_kind  := SegLoader
 |}.
 Definition spin_segs : list Segment := [spin_seg].
 Definition spin_img : Image :=
@@ -616,13 +618,15 @@ Example j_dot_decodes :
   decode_any (Z_to_bv 32 0x6f) = Some (Jal 0 (Z_to_bv 21 0), 4%Z).
 Proof. div_vm_refl. Qed.
 
-Lemma spin_img_to_spin : forall sp brk0 mbase (rnd : EntryDraw) lim inp,
-  to_spin spin_segs
-    (init_machine_state spin_segs 0x10000 (mkPhdrInfo 0x10040 56 6) sp rnd
-       (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-    (init_model (segments_reserved spin_segs) brk0 mbase sp lim inp).
+(* [comment removed for export] *)
+Lemma spin_img_to_spin : forall vt sp brk0 mbase (rnd : EntryDraw) lim inp,
+  to_spin (spin_segs ++ vt)
+    (init_machine_state (spin_segs ++ vt) 0x10000 (mkPhdrInfo 0x10040 56 6)
+       sp mbase rnd inp)
+    (with_vdso (vdso_run_init (ed_vdso rnd))
+       (init_model (segments_reserved (spin_segs ++ vt)) brk0 mbase sp lim inp)).
 Proof.
-  intros sp brk0 mbase rnd lim inp.
+  intros vt sp brk0 mbase rnd lim inp.
   eapply ts_spin_of_step_j with (w := Z_to_bv 32 0x6f).
   - reflexivity.
   - div_vm_refl.
@@ -663,15 +667,19 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
+Definition spin_exec_input : ProcInput :=
+  mkProcInput [[]] [] [] IEof (Z_to_bv 64 1000) (Z_to_bv 64 1002) []
+    net_silent default_nofile (Z_to_bv 64 0) hwcap_rv64gc false Sv48.
+
 Example spin_img_to_spin_by_execution :
   to_spin spin_segs
     (init_machine_state spin_segs 0x10000 (mkPhdrInfo 0x10040 56 6)
-       (Z_to_bv 64 65536) (mkDraw (Z_to_bv 128 0) (fun _ => Z_to_bv 8 0))
-       [[]] [] (Z_to_bv 64 1000) hwcap_rv64gc)
+       (Z_to_bv 64 65536) (Z_to_bv 64 0x7fff7f800000)
+       (mkDraw (Z_to_bv 128 0) (Z_to_bv 64 69632) vdso_keeps_all)
+       spin_exec_input)
     (init_model (segments_reserved spin_segs) (Z_to_bv 64 1048576)
        (Z_to_bv 64 0x7fff7f800000) (Z_to_bv 64 65536) 0x40000000%Z
-       (mkProcInput [[]] [] [] IEof (Z_to_bv 64 1000) (Z_to_bv 64 1002) []
-          net_silent default_nofile (Z_to_bv 64 0) hwcap_rv64gc false Sv48)).
+       spin_exec_input).
 Proof. prove_to_spin 1%nat. Qed.
 
 End SelfJumpImage.

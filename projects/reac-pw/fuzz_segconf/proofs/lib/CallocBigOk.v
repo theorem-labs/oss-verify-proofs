@@ -3,10 +3,11 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/YN03.v, with its module paths and module names changed; 426 of its 462 lines of code are new or changed and 500 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/AllocCut.v, with its module paths and module names changed; 51 of its 124 lines of code are new or changed and 389 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* segconf's calloc contracts with no 4096-byte cap (CallocBigC.v), from the certificates of CallocBig.v and
    CallocBig_cf.v. calloc_contract_big_ok is AllocCut.calloc_contract_ok (this frame, lines 349-389) with the
    certificate as a premise in place of aa_calloc (this frame's ms_calloc is None) and the cap raised;
-   calloc_contract_big_cf_ok is libreac/fuzz_knock's AllocCallocCf.calloc_contract_cf_ok (25e3d17bdb50, lines 49-94)
+   calloc_contract_big_cf_ok is libreac/fuzz_knock's AllocCallocCf.calloc_contract_cf_ok (lines 49-94)
    changed the same way, with the room proof of this frame's AllocCf.malloc_contract_cf_ok (it adds slotW). *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

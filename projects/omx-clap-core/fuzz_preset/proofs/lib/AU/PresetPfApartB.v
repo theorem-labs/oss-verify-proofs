@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyPfApartB.v (commit 4d286b2e618d, file sha256 4d6bdb037a0c) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal, jump-table offsets and list indices by the same stage map), 0 list indices re-picked, and 0 addresses named in comments; facts preset already states are cited, not restated; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyPfApartB.v (file sha256 4d6bdb037a0c) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal, jump-table offsets and list indices by the same stage map), 0 list indices re-picked, and 0 addresses named in comments; facts preset already states are cited, not restated; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a prior worker, for lane W of a Theorem Labs lane's cf layer at plugin-hostd/fuzz_reply): the unit row
    PF_APART at reply's image B (fuzz_reply.asan-ubsan), the twin of lib/A/ReplyPfApartA.v, the premise HPFA of the cf layer's Deallocate tops
    (lane F2a, lib/B/YGcfInstFreePost.v PF_APART B at B := TfibB).
@@ -11,7 +12,7 @@
    ly_img_ok B ly /\ im_img_cover ly /\ asyms_ok B (YGcfInstFreePost.v:71, :125).  [pf_apart_preset_B] states that text
    unfolded at reply's DImg_cgif (DGif0cgif: dg_izone := DGgi.IZONE, dg_dzone := DGgi.DZONE) and AImg_cgif
    (im_img_cover := YF0x.img_cover), so the layer's PF_APART TfibB is it by conversion.  The twin of cgif's
-   YGcfInstFreeImgcgif.PF_APART_of_rows_cgif (d3b943ec6dd3), on the same route, from the
+   YGcfInstFreeImgcgif.PF_APART_of_rows_cgif, on the same route, from the
    reply rows of three other lanes:
    - not in IZONE: a prior worker's row PresetRelroGeoB.pf_ial_apart_preset_B (YG0ncf.pf_ial_apart_t at TfibSyms);
    - not in DZONE's first disjunct [dzone_static_lo, dzone_static_hi) (= TFIB_STORE .. YD20.RS_LO, stackStore ..

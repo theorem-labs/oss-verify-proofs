@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Trevor Hansen, 2026-11: hex addresses and numbers for the binaries of libtasn1/asn1_get_length_der_fuzzer, and module names. *)
+(* Modified by Theorem Labs, 2026-11: ported toward LPS 727298f3 by the change of the same file of cgif/cgif_rgb_fuzzer, its addresses relocated to this unit's binaries. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -17,7 +18,7 @@ From OSSVerify.Proofs.libtasn1.asn1_get_length_der_fuzzer.lib.C Require Import Y
 From OSSVerify.Proofs.libtasn1.asn1_get_length_der_fuzzer.lib.C Require Import YP0m YP0o YP0p YP0v.
 From OSSVerify.Proofs.libtasn1.asn1_get_length_der_fuzzer.lib.C Require Import YO2g YO2j YO2k YO2h UO0e.
 From Stdlib Require Import List.
-From OSSVerify.Proofs.libtasn1.asn1_get_length_der_fuzzer.lib.C Require Import YN05.
+From OSSVerify.Proofs.libtasn1.asn1_get_length_der_fuzzer.lib.C Require Import YN05 YK0a.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Open Scope bv_scope.
@@ -282,17 +283,26 @@ destruct ubs2_reserved_small as [RS RL].
 destruct (region_free_exists_high (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) (page_round len)) as (a & Ha1 & Ha2 & Ha3 & Ha4).
 - lia.
 - apply Forall_app. split.
-+ rewrite (lg_reserved _ _ _ _ G). exact RS.
++ destruct (lg_reserved _ _ _ _ G) as (rx & Hres & Hrx & _). rewrite Hres. apply Forall_app. split; [exact RS|].
+eapply Forall_impl; [| exact Hrx]. intros e (_ & _ & He). cbn beta. change (2 ^ 39) with 549755813888. lia.
 + apply Forall_forall. intros p Hp. pose proof (proj1 (Forall_forall _ _) (lg_sizes _ _ _ _ G) p Hp) as Hs. cbn beta in Hs. lia.
-- rewrite length_app. rewrite (lg_reserved _ _ _ _ G). pose proof (lg_count _ _ _ _ G). change (ms_segs B) with ubs2segs. lia.
-- exists a. unfold grant_ok.
-rewrite (proj2 (Z.eqb_eq _ _) Ha1), (proj2 (Z.ltb_lt 0 _)) by lia.
+- destruct (lg_reserved _ _ _ _ G) as (rx & Hres & _ & Hrxl). rewrite length_app, Hres, length_app.
+pose proof (lg_count _ _ _ _ G). change (ms_segs B) with ubs2segs. lia.
+- (* 08b1429: mmap takes Linux's own address ([linux_place]); the free gap gives one (Placement.linux_place_exists) *)
 pose proof (YN05.ceil_le_top _ (lg_ceil _ _ _ _ G)) as Htop.
 assert (Ha3' : bv_unsigned a + page_round len <= alloc_top (m_vmmaps md)) by lia.
-rewrite (proj2 (Z.leb_le _ _) Ha3'), Ha4.
-rewrite (proj2 (Z.leb_le _ _)).
-2:{ pose proof (lg_backing _ _ _ _ G). pose proof (lg_limit _ _ _ _ G). unfold SRC_LIM_MIN in *. lia. }
-reflexivity.
+assert (HnZ0 : 0 < page_round len) by (pose proof (YP0k.page_round_ge len); lia).
+assert (HnZal : page_round len mod page_size = 0) by exact (YP0k.page_round_mod len).
+assert (Hbud : vm_backing_used md + page_round len <= vm_limit (m_vmmaps md)).
+{ pose proof (lg_backing _ _ _ _ G). pose proof (lg_limit _ _ _ _ G). unfold SRC_LIM_MIN in *. lia. }
+assert (GF : LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.gap_fits (vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)) LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.task_unmapped_base (alloc_top (m_vmmaps md)) (page_round len) (bv_unsigned a)).
+{ unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.gap_fits. rewrite Z_to_bv_bv_unsigned. unfold page_size in *. unfold LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.task_unmapped_base. repeat split; [exact Ha1 | lia | exact Ha3' | exact Ha4]. }
+destruct (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_exists (m_vmmaps md) (kb_thp (m_kernel md)) (Z_to_bv 64 0) (page_round len) HnZ0 HnZal
+(ex_intro _ (bv_unsigned a) (or_intror GF))) as (a' & Ha').
+destruct (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_admissible (m_vmmaps md) _ (Z_to_bv 64 0) (page_round len) a' HnZ0 HnZal Ha') as (_ & Hpos' & Hhi' & _).
+pose proof (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.alloc_top_lt_two_pow_64 (m_vmmaps md)) as Hat. unfold two_pow_64 in Hat.
+exists (Z_to_bv 64 a'). apply grant_ok_intro; [exact HnZ0 | exact HnZal | | exact Hbud].
+apply (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is_iff _ _ _ _ _ HnZ0 HnZal). rewrite Z_to_bv_small by (unfold bv_modulus; lia). exact Ha'.
 Qed.
 Lemma in_wrange_list : forall E rs x,
 in_wrange E rs x ->
@@ -382,10 +392,13 @@ Lemma auxv_pre_ext : forall sec lo m m',
 (forall x, ms_libc B + 8 <= x < ms_libc B + 16 -> mbyte (ms_segs B) m' x = mbyte (ms_segs B) m x) ->
 auxv_pre B sec lo m -> auxv_pre B sec lo m'.
 Proof.
-intros sec lo m m' Hhi Hlibc (av & ar & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10).
-exists av, ar. repeat split; try assumption.
+intros sec lo m m' Hhi Hlibc (av & ar & r & Hr & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10).
+(* every key word lies inside the vector ([APC.auxv_key_range]), below [AUXSZ 1] *)
+unfold APC.AUXSZ, APC.AT_RANDOM_VOFF in *.
+exists av, ar, r. unfold APC.AUXSZ, APC.AT_RANDOM_VOFF. split; [exact Hr|]. repeat split; try assumption.
 - intros k Hk. rewrite Hlibc by lia. apply H1. exact Hk.
-- intros k Hk j Hj. rewrite Hhi by lia. apply H2; assumption.
+- intros k Hk j Hj. pose proof (APC.auxv_key_range r k Hr Hk) as Ho.
+unfold APC.AUXSZ in Ho. rewrite Hhi by lia. apply H2; assumption.
 - intros k Hk. rewrite Hhi by lia. apply H3. exact Hk.
 - intros k Hk. rewrite Hhi by lia. apply H4. exact Hk.
 Qed.
@@ -635,7 +648,7 @@ getr regs6 19 = Z_to_bv 64 (n + 20) -> getr regs6 20 = a -> (forall r, 21 <= bv_
 (forall x, 0 <= x < 2 ^ 64 -> ~ scratch B regs x -> ~ (ms_ctx B <= x < ms_ctx B + CTX_SIZE) -> ~ in_nonmap_region L3 A3 x ->
 ~ (bv_unsigned a <= x < bv_unsigned a + dlen n) -> mem6 (Z_to_bv 64 x) = mem (Z_to_bv 64 x)) ->
 mreal ubs2segs (mkCfg (mkst regs6 (Z_to_bv 64 RA_AM) mem6 (seg_rom ubs2segs)) md3)
-(IAsk (KMunmap (YO2g.r0 A) (n + IB + UNIT)) A3 (fun _ => IRet (None, dm_kill A A3)))
+(IAsk (KMunmap (YO2g.r0 A) (n + IB + UNIT)) A3 (fun z => if negb (z =? 0) then IRet (None, dm_kill A A3) else IRet (None, A3)))
 (fun r c' => malloc_post [] U0 A n r -> malloc_leaf B (MRx B) L A regs mem md n r c').
 Proof.
 intros L A regs mem md n a L3 A3 regs6 mem6 md3 PRE Hn Hrange sp GR MID3 LE3 FR3 UB3 HI3 EU3 HB3 HA3 VM3
@@ -709,8 +722,77 @@ eapply (knode_munmap ubs2segs regs7 _ mem7 (seg_rom ubs2segs) md3 A3 (YO2g.r0 A)
 - rewrite A1. intros EQ. apply (f_equal bv_unsigned) in EQ. rewrite !u64_of_Z in EQ by lia. lia.
 - rewrite A0, A1, u64_of_Z by lia. rewrite PRZ. unfold TASK_SIZE. pose proof (proj1 alloc_ceiling_val). lia.
 - rewrite A0, A1, PR. unfold map_has. apply existsb_exists. exists (a, Z_to_bv 64 (dlen n)). split; [exact MAPS|]. cbn [fst snd]. rewrite !bv_eqb_refl. reflexivity.
+- (* 08b1429: the REFUSED munmap (injected -ENOMEM): the fresh mapping stays; malloc returns 0 *)
+intros e He. destruct He as [<- | []].
+cbn beta. try (replace (negb (0 =? 0)) with false by reflexivity). cbv iota. apply mreal_IRet.
+pose proof (st_ok_mun2r regs (st_seq A) (st_mmap_counter A) (useq_of A) a (Z_to_bv 64 0) (xr_of regs6) regs7 mem7
+Hregs7 Hmem7 HG7) as HS8.
+fold E in HS8.
+eapply (SR_run_stop ubs2segs ubs2tbl ubs2tbl_ok RFUEL E ss_mun2r ss_none_endr);
+[exact Hh3 | exact Hlz3 | exact HS8 | apply run_mun2r |].
+intros ms8 HS9 HF9. cbn [ms_mem] in HF9.
+eapply (SR_final_ret E ss_none_endr ms8); [exact HS9 | reflexivity | reflexivity | vm_compute; reflexivity | subst E; exact Hret
+| exact Hh3 | exact Hlz3 |].
+intros MP. subst E. cbn [ew E_mi].
+set (mem8 := ms_mem ms8).
+assert (FR8 : forall x, 0 <= x < 2 ^ 64 -> ~ scratch B regs x -> mem8 (Z_to_bv 64 x) = mem6 (Z_to_bv 64 x)).
+{ intros x Hx Hns. subst mem8.
+rewrite (HF9 (Z_to_bv 64 x)) by (rewrite u64_of_Z by exact Hx; intros W; apply Hns; eapply (in_wrange_ret0 regs); [apply (proj2 sk_ret0) | exact W]).
+cbn [ms_mem mkst].
+rewrite (HF7 (Z_to_bv 64 x)) by (rewrite u64_of_Z by exact Hx; intros W; apply Hns; eapply (in_wrange_ret0 regs); [apply (proj1 sk_ret0) | exact W]).
+reflexivity. }
+assert (VM4 : exists vm', md3 = with_vmmaps vm' md).
+{ destruct VM3 as [vm3 E3]. exists vm3. rewrite E3. unfold md1, mmap_model. rewrite ?with_vmmaps_twice. reflexivity. }
+destruct (D2k_pack B L A mem md a n L3 A3 mem6 md3 sp mem8) as (MX4 & UB4); try assumption; try (unfold ALLOC_STACK; lia).
+1-4: first [exact ubs2_ENC | exact ubs2_ENS | exact ubs2_ERRIMG | exact ubs2_SNC].
+exists L3, (ms_regs ms8), mem8, md3. split; [reflexivity|]. split.
+2:{ cbn [fst snd]. split; [pose proof (st_ok_reg ubs2segs _ _ _ 10 HS9) as R; rewrite R; vm_compute; reflexivity | exact UB4]. }
+assert (OWNA : forall x, ms_ctx B <= x < ms_ctx B + CTX_SIZE -> owned B L A x).
+{ intros x Hx. left. split.
+- exists (LCtx 0, CTX_SIZE). split; [left; reflexivity|]. cbn [fst snd loc_addr]. rewrite (mc_ctx _ _ _ _ _ M). lia.
+- intros ([bp bn] & Hb & Hbx). cbn [fst snd] in Hbx.
+destruct (blocks_facts B L A mem md bp bn (x - ptr_addr L bp) M Hb ltac:(unfold ptr_addr; lia)) as (_ & Hlo & Hhi & _).
+destruct (block_region A bp bn HW Hb) as (k & o & rg & -> & Hr & Hk & Hl & Ho & Hbn & Hlen & _).
+destruct (lg_placed _ _ _ _ (mc_ledger _ _ _ _ _ M) k rg Hr Hl) as (_ & _ & _ & Himg).
+apply (Himg x); [unfold ptr_addr in *; cbn [loc_addr] in *; lia|]. apply (so_ctx_img _ (mc_syms _ _ _ _ _ M)). exact Hx. }
+assert (NONMAP : forall x, in_nonmap_region L3 A3 x -> 4096 <= x < alloc_ceiling /\ ~ in_img B x).
+{ intros x ((k & rg & Hk & Hl & Hkind & Hx) & _). pose proof (lg_placed _ _ _ _ (mid_ledger _ _ _ _ _ MID3) k rg Hk Hl) as (_ & Q1 & Q2 & Q3).
+pose proof (reg_lo_le rg). split; [lia|]. apply Q3. lia. }
+assert (FRall : forall x, 0 <= x < 2 ^ 64 -> (alloc_ceiling <= x \/ in_img B x) -> ~ owned B L A x -> ~ scratch B regs x ->
+mem8 (Z_to_bv 64 x) = mem (Z_to_bv 64 x)).
+{ intros x Hx Hhi Hno Hns. rewrite FR8; [| exact Hx | exact Hns].
+apply FR6; [exact Hx | exact Hns | intros Hc; apply Hno; apply OWNA; exact Hc | intros Hnm; destruct (NONMAP x Hnm) as [Q1 Q2]; destruct Hhi as [Hhi|Hhi]; [lia | exact (Q2 Hhi)]
+| intros Hin; apply (NI x Hin); destruct Hhi as [Hhi|Hhi]; [lia | exact Hhi]]. }
+split; [exact MX4|]. split; [destruct MP as [MP _]; exact MP|]. split; [exact HB3|].
+split; [exact (layout_le_A3 L A a n L3 (proj1 Hrange) LE3)|].
+split.
+{ intros p k Hin _. destruct (block_region A p k HW Hin) as (kk & o & rg & -> & Hr & _). unfold ptr_addr. cbn [loc_addr].
+rewrite L3old; [reflexivity|]. exact (region_of_lt A kk rg Hr). }
+split; [eapply (regs_preserved_sym regs); [apply (proj1 none_endr_checks) | exact HS9 | exact Htp]|].
+split; [exact VM4|].
+split.
+{ intros x Hhi Hno _ Hns _.
+assert (Hx : 0 <= x < 2 ^ 64) by (destruct Hhi as [Hhi|Hhi]; [lia | apply ubs2_img_range in Hhi; lia]).
+unfold mbyte, writable_at, wview. rewrite B_segs. rewrite (FRall x Hx ltac:(destruct Hhi as [Hhi|Hhi]; [left; lia | right; exact Hhi]) Hno Hns). tauto. }
+split.
+{ intros p k i Hin _ Hi. destruct (blocks_facts B L A mem md p k i M Hin Hi) as (_ & Hlo & Hhi & Hno).
+destruct (block_region A p k HW Hin) as (kk & o & rg & -> & Hr & Hkind & Hl & Ho & _ & Hlen & _).
+destruct (lg_placed _ _ _ _ (mc_ledger _ _ _ _ _ M) kk rg Hr Hl) as (_ & _ & _ & Himg).
+unfold ptr_addr in *. cbn [loc_addr] in *.
+unfold mbyte. rewrite B_segs. rewrite FR8; [| lia | intros [Hs|Hs]; [unfold spZ, ALLOC_STACK in Hs; fold sp in Hs; lia | rewrite B_errno in Hs; apply (Himg (ly_reg L kk + o + i)); [lia | apply ubs2_errno_img; exact Hs]]].
+rewrite FR6; [reflexivity | lia | | | |].
+- intros [Hs|Hs]; [unfold spZ, ALLOC_STACK in Hs; fold sp in Hs; lia | rewrite B_errno in Hs; apply (Himg (ly_reg L kk + o + i)); [lia | apply ubs2_errno_img; exact Hs]].
+- intros Hc. apply (Himg (ly_reg L kk + o + i)); [lia|]. apply (so_ctx_img _ (mc_syms _ _ _ _ _ M)). exact Hc.
+- intros [_ NM]. apply NM. pose proof (old_region_A3 A n Hrange A3 FR3 kk rg Hr Hkind) as Hr3.
+exists kk, rg. split; [exact Hr3|]. split; [exact Hl|]. split; [exact Hkind|].
+rewrite (L3old kk (region_of_lt A kk rg Hr)). lia.
+- intros Hin2. exact (new_disjoint_footprint B L A mem md a (dlen n) MX (dlen_pos n (proj1 Hrange)) GR (LMem (SP kk 0), rg_len rg) (ly_reg L kk + o + i)
+(footprint_region_In A kk rg Hr Hkind Hl) ltac:(cbn [fst snd loc_addr]; lia) Hin2). }
+intros x Hsx. eapply (scratch_writable_sym regs); [apply (proj2 none_endr_checks) | exact HS9 |].
+unfold scratch, spZ, ALLOC_STACK in Hsx. rewrite B_errno in Hsx. exact Hsx.
 -
-unfold munmap_nx. rewrite A0, A1, PR. apply mreal_IRet.
+unfold munmap_nx. rewrite A0, A1, PR.
+try (replace (negb (1 =? 0)) with true by reflexivity). cbv iota. apply mreal_IRet.
 pose proof (st_ok_mun2 regs (st_seq A) (st_mmap_counter A) (useq_of A) a (Z_to_bv 64 0) (xr_of regs6) regs7 mem7 a (Z_to_bv 64 (dlen n))
 Hregs7 Hmem7 HG7 ltac:(fold sp; lia) ltac:(rewrite Elen; lia) ltac:(rewrite Elen; lia) ltac:(rewrite Elen; lia)) as HS8.
 fold E in HS8.

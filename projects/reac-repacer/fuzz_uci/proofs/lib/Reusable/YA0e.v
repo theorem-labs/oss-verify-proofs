@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs: copied from proofs/cgif/cgif_file_fuzzer/lib/YA0e.v, with its module paths changed. *)
 (* Modified by Theorem Labs: copied from proofs/libreac/fuzz_grant/lib/YA0e.v (donor image sha256 c2c7559b29bd), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO pair's reservations; as libreac/fuzz_decode's port). *)
 From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -55,6 +56,8 @@ Hypothesis IT_ok : itab_sound SEGS IT.
 Variable A : atable.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+(* The plan nodes and checker use the run's CONFIG_RSEQ flag. *)
+Variable rz : Z.
 Variable TOP : Z.
 Variable HS : nat -> option acs.
 Variable XN : nat -> list expr -> acs -> option acs.
@@ -105,7 +108,7 @@ eapply cover_sweep_sound; [exact H2 | lia].
 Qed.
 Lemma TOP_ok : 0x7fff7f800000 <= TOP /\ TOP + 8388608 <= 2 ^ 47.
 Proof. pose proof TOP_ok' as H. unfold top_ok, CEIL in H. exact H. Qed.
-#[local] Notation CHECK := (APG.check SEGS IT A nx0 LIMIT XN XE XB HS hole_le KC).
+#[local] Notation CHECK := (APG.check SEGS IT A nx0 LIMIT rz XN XE XB HS hole_le KC).
 #[local] Notation cfg := (cfg_of SEGS).
 Definition Wz (fd : Z) (bs : list Z) : list event := map (fun z => WriteEv (Z_to_bv 64 fd) (Z_to_bv 8 z)) bs.
 Definition piece_den (E : env) (p : spiece) : list byte :=
@@ -198,7 +201,10 @@ co_halt  : m_halted model = None;
 co_fds   : fds_ok E (a_fd cs) model;
 co_fs    : m_fs model = FS0;
 co_tid   : a_tidset cs = false -> m_tid model = None;
-co_res   : vm_reserved (m_vmmaps model) = segments_reserved SEGS;
+co_res   : exists rx : list (word * word),
+vm_reserved (m_vmmaps model) = segments_reserved SEGS ++ rx /\
+(length rx <= 2)%nat /\ sum_sizes rx <= 20 * 4096 /\
+Forall (fun iv => KHI <= bv_unsigned (fst iv)) rx;
 co_limit : vm_limit (m_vmmaps model) = LIMIT;
 co_top   : alloc_top (m_vmmaps model) = TOP;
 co_maps  : maps_match E (a_maps cs) (vm_maps (m_vmmaps model));
@@ -218,7 +224,7 @@ co_kinds : Forall (fun m => am_kind m = KRWLAZY ->
 forall a : word, bv_unsigned (edenot E (am_base m)) <= bv_unsigned a < bv_unsigned (edenot E (am_base m)) + bv_unsigned (edenot E (am_len m)) ->
 in_ivs (bv_unsigned a) (vm_noaccess (m_vmmaps model)) = false
 /\ page_in_ranges (page_base a) (m_vm_lazy model) = true) (a_maps cs);
-co_totsz : sum_sizes (vm_reserved (m_vmmaps model) ++ vm_maps (m_vmmaps model)) <= a_totsz cs;
+co_totsz : sum_sizes (segments_reserved SEGS ++ vm_maps (m_vmmaps model)) <= a_totsz cs;
 co_napos : Forall (fun iv => 0 < bv_unsigned (snd iv)) (vm_noaccess (m_vmmaps model));
 co_brk   : vm_brk (m_vmmaps model) = edenot E (a_brk cs);
 co_sbrk  : bv_unsigned (vm_start_brk (m_vmmaps model)) <= bv_unsigned (vm_brk (m_vmmaps model));
@@ -231,7 +237,17 @@ in_ivs (bv_unsigned a) (vm_noaccess (m_vmmaps model)) = false ->
 page_in_ranges (page_base a) (m_vm_lazy model) = true ->
 in_ghost E cs (bv_unsigned a) = false ->
 FULL a = Some (Z_to_bv 8 0);
-co_sinv  : SINV E FULL
+co_sinv  : SINV E FULL;
+(* Track reservations separately from the segment-only virtual-gap accounting. *)
+co_mres  : Forall (fun iv => region_free (vm_reserved (m_vmmaps model)) (fst iv) (snd iv) = true)
+                 (vm_maps (m_vmmaps model));
+co_vdso  : incl (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model)))
+                (vm_reserved (m_vmmaps model));
+(* LPS 727298f3: [Sys/Fs/ReadWrite.v]'s channel arm reads [State.m_channel_reader]
+   before it admits a transfer, so the hand-off state has to carry the launch's
+   reader flag -- the field that supplies the premise [fdchan] now asks for.  It is
+   the LAST field, so no earlier field's position moves. *)
+co_rdr   : m_channel_reader model = true
 }.
 Lemma A_wf_allowA : forall E cs, A_wf (allowA E cs).
 Proof.
@@ -356,6 +372,7 @@ replace (m_fs model') with (m_fs model) by (symmetry; apply Hfr). assumption.
 - replace (eager_used model') with (eager_used model) by (symmetry; apply Hfr). assumption.
 - intros a Hh. rewrite (hid_same _ _ _ _ Hs) in Hh. rewrite (Hhid a Hh). auto.
 - eapply SINV_frame; [|eassumption]. intros a Ha. apply Hhid. unfold hid. rewrite Ha. reflexivity.
+- unfold m_channel_reader in *. replace (m_proc model') with (m_proc model) by (symmetry; apply Hfr). assumption.
 Qed.
 Lemma know_ok_filter : forall E M f k, know_ok SEGS E M k -> know_ok SEGS E M (List.filter f k).
 Proof.
@@ -1621,7 +1638,7 @@ srealizes SEGS (cfg R' (pc cs') FULL' model') T) ->
 srealizes SEGS (cfg R (pc cs) FULL model) T.
 Definition always (cs : acs) : bool := true.
 Definition sys_stmt (y : snode) : Prop := node1_stmt (is_ecall_at SEGS) (node_sys A nx0 y).
-Definition x_stmt (x : xnode) : Prop := forall args, node1_stmt always (node_x SEGS A nx0 x args).
+Definition x_stmt (x : xnode) : Prop := forall args, node1_stmt always (node_x SEGS A nx0 rz x args).
 Definition fresh_stmt : Prop := forall r logc base, node1_stmt always (fun cs => node_fresh nx0 cs r logc base).
 Lemma t_alt2_covered : forall TA TB : TSet, TA [] -> (forall tr, TB tr -> TA tr) -> t_eq TA (t_alt2 TA TB).
 Proof. intros TA TB _ H tr. unfold t_alt2. split; [intros Ha; left; exact Ha | intros [Ha|Hb]; [exact Ha | exact (H tr Hb)]]. Qed.
@@ -3167,7 +3184,7 @@ Proof. reflexivity. Qed.
 Lemma nxt_inst : forall inv J e, nxt (inst inv J e) = nxt inv.
 Proof. reflexivity. Qed.
 Lemma check_all_ok : forall (chk : acs -> plan -> cres) k css s,
-check_all A chk k css = COk s ->
+check_all A rz chk k css = COk s ->
 (exists cs1, In cs1 css /\ chk cs1 k = COk s /\ True) /\ (forall cs, In cs css -> chk cs k = COk s).
 Proof.
 intros chk k css s H. unfold check_all in H. destruct css as [|cs0 rest]; [discriminate|].
@@ -3242,7 +3259,7 @@ destruct (CHECK bfuel fuel lc csa ka) as [sa|] eqn:H1; [|discriminate].
 destruct (CHECK bfuel fuel lc csb kb) as [sb|] eqn:H2; [|discriminate].
 destruct (brk2_holes_ok hole_le sa sb && brk2_holes_ok hole_le sb sa)%bool; [|discriminate].
 injection Hc as <-. apply salt2_vars; [exact (IH _ ka _ sa H1) | exact (IH _ kb _ sb H2)].
-- destruct (node_x SEGS A nx0 x args cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
+- destruct (node_x SEGS A nx0 rz x args cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
 - destruct (XN xid xargs cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
 - destruct (XE eid eargs cs) as [[[fd ps] cs1]|]; [|discriminate].
 destruct (CHECK bfuel fuel lc cs1 k) as [s1|] eqn:H1; [|discriminate].
@@ -4381,7 +4398,7 @@ eapply (node_brk2_sound cs csa csb E R FULL model); [exact HC | exact Hec | exac
 + exact (brk2_holes_incl sa sb D E (m_fs model) Hho1 HD).
 + exact (brk2_holes_incl sb sa D E (m_fs model) Hho2 HD).
 -
-destruct (node_x SEGS A nx0 x args cs) as [cs1|] eqn:Hn; [|discriminate].
+destruct (node_x SEGS A nx0 rz x args cs) as [cs1|] eqn:Hn; [|discriminate].
 eapply (node_x_sound x args cs cs1 E R FULL model); [exact HC | reflexivity | exact Hn |]. exact (CONT k cs1 s Hc).
 -
 destruct (XN xid xargs cs) as [cs1|] eqn:Hn; [|discriminate].

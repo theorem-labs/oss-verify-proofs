@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's input, mmap base and entry draw). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation Strings.String.
 From stdpp Require Import gmap.
@@ -89,24 +90,24 @@ Section POSTA.
   Hypothesis AMS : forall lo hi, a0_static lo hi -> am_static FI AI lo hi.
   Variable PZ : mem -> Prop.
   Hypothesis PZ_agree : forall (P : Z -> Prop) m m', gagree_on P m m' -> (forall a, pz_band a -> P a) -> PZ m -> PZ m'.
-  Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw) (TID : Z) (S4 S5 S6 S7 S8 S9 S10 S11 : word).
+  Variables (sp0 : word) (argv envp : list (list byte)) (inp : ProcInput) (mbase : word) (rnd : EntryDraw) (TID : Z) (S4 S5 S6 S7 S8 S9 S10 S11 : word).
   Hypothesis VSP : valid_sp sp0.
-  Hypothesis CEIL : alloc_ceiling = LO sp0.
-  Hypothesis ESF : entry_stack_fits sp0 argv envp.
+  Hypothesis CEIL : alloc_ceiling = bv_unsigned sp0 - 8388608.
+  Hypothesis ESF : img_fits sp0 argv envp inp mbase rnd.
   Hypothesis HT : 0 < TID < 2^31.
   Hypothesis AC : am_contracts FI AI (JA FI AI).
   Hypothesis FZ : fuzz_one_stmtA FI AI (JA FI AI) PZ.
   Hypothesis EMIT : emit_printf_stmt aget_so aset_so.
   Hypothesis EXK : exit_k_stmtA TID.
   Notation usp0 := (bv_unsigned sp0).
-  Notation rat_callA' := (rat_callA FI AI PZ sp0 argv envp uid hw rnd TID S4 S5 S6 S7 S8 S9 S10 S11).
-  Notation rat_retA' := (rat_retA FI AI PZ sp0 argv envp uid hw rnd TID S4 S5 S6 S7 S8 S9 S10 S11).
-  Notation rat_emitA' := (rat_emitA FI AI PZ sp0 argv envp uid hw rnd TID S4 S5 S6 S7 S8 S9 S10 S11).
-  Notation rat_emit_retA' := (rat_emit_retA FI AI PZ sp0 argv envp uid hw rnd TID S4 S5 S6 S7 S8 S9 S10 S11).
-  Notation rat_free_ownedA' := (rat_free_ownedA FI AI PZ sp0 argv envp uid hw rnd TID S4 S5 S6 S7 S8 S9 S10 S11).
-  Notation rat_owned_retA' := (rat_owned_retA FI AI PZ sp0 argv envp uid hw rnd TID S4 S5 S6 S7 S8 S9 S10 S11).
-  Notation rat_free_bufA' := (rat_free_bufA FI AI PZ sp0 argv envp uid hw rnd TID S4 S5 S6 S7 S8 S9 S10 S11).
-  Notation rat_main_retA' := (rat_main_retA FI AI PZ sp0 argv envp uid hw rnd TID S4 S5 S6 S7 S8 S9 S10 S11).
+  Notation rat_callA' := (rat_callA FI AI PZ sp0 argv envp inp mbase rnd TID S4 S5 S6 S7 S8 S9 S10 S11).
+  Notation rat_retA' := (rat_retA FI AI PZ sp0 argv envp inp mbase rnd TID S4 S5 S6 S7 S8 S9 S10 S11).
+  Notation rat_emitA' := (rat_emitA FI AI PZ sp0 argv envp inp mbase rnd TID S4 S5 S6 S7 S8 S9 S10 S11).
+  Notation rat_emit_retA' := (rat_emit_retA FI AI PZ sp0 argv envp inp mbase rnd TID S4 S5 S6 S7 S8 S9 S10 S11).
+  Notation rat_free_ownedA' := (rat_free_ownedA FI AI PZ sp0 argv envp inp mbase rnd TID S4 S5 S6 S7 S8 S9 S10 S11).
+  Notation rat_owned_retA' := (rat_owned_retA FI AI PZ sp0 argv envp inp mbase rnd TID S4 S5 S6 S7 S8 S9 S10 S11).
+  Notation rat_free_bufA' := (rat_free_bufA FI AI PZ sp0 argv envp inp mbase rnd TID S4 S5 S6 S7 S8 S9 S10 S11).
+  Notation rat_main_retA' := (rat_main_retA FI AI PZ sp0 argv envp inp mbase rnd TID S4 S5 S6 S7 S8 S9 S10 S11).
 
   Definition LF (msr : machine_state) (g : gst) (msF : machine_state) (mo : Model) : Prop :=
     hzero (g_H g) msF /\ restrict (g_H g) msF = msr /\ INVA (mkCfg msF mo) g.
@@ -151,7 +152,7 @@ Section POSTA.
   Proof.
     intros A c s Q P K msr g msF mo HI HFT (HZ & ER & HINV) TW HP HPU HK KC.
     pose proof (dj_of_impl (c s) (epost (fun p => Q (fst p) (snd p))) msr g HFT HI msF HZ ER) as HS.
-    apply (implS_realizes_twf asegs gst VA INVA ATNA GOODA VA_fs NODE_A (c s) _
+    apply (implS_realizes_twf asegs gst VA INVA ATNA GOODA VA_fs NODE_A ROB_A (c s) _
              (fun r mo' => P r mo' /\ m_fs mo' = m_fs (VA g mo)) K msF g mo HFT HS HINV); [| | | exact KC].
     - apply twf_fdtree_fs; [exact HFT| exact TW].
     - intros r m1 m2 HM [HPr EF]. split; [exact (HP r m1 m2 HM HPr)| rewrite <- EF; symmetry; exact (proj2 HM)].
@@ -229,7 +230,7 @@ Section POSTA.
     realizes asegs (mkCfg msF mo) (t_emit (wr 1 (fst (vprintf_run so pieces_emit))) (REST (snd (vprintf_run so pieces_emit)))).
   Proof.
     intros k fl ap d so msr g msF mo REST HE HL BND RN HREST.
-    pose proof (emit_stepA FI AI AMS PZ PZ_agree sp0 argv envp uid hw rnd TID S4 S5 S6 S7 S8 S9 S10 S11 VSP CEIL ESF EMIT k fl ap d so msr g HE) as IMPL.
+    pose proof (emit_stepA FI AI AMS PZ PZ_agree sp0 argv envp inp mbase rnd TID S4 S5 S6 S7 S8 S9 S10 S11 VSP CEIL ESF EMIT k fl ap d so msr g HE) as IMPL.
     destruct (LF_minv _ _ _ _ HL) as (mo1 & HM1 & MI1 & EF1).
     set (so2 := snd (vprintf_run so pieces_emit)) in *.
     assert (BND' : Z.of_nat (length (so_buf so) + length (concat pieces_emit)) < 2^64) by (cbn [pieces_emit concat length app]; lia).
@@ -319,21 +320,21 @@ Section LEAFA.
   Hypothesis AMS : forall lo hi, a0_static lo hi -> am_static FI AI lo hi.
   Variable PZ : mem -> Prop.
   Hypothesis PZ_agree : forall (P : Z -> Prop) m m', gagree_on P m m' -> (forall a, pz_band a -> P a) -> PZ m -> PZ m'.
-  Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw).
+  Variables (sp0 : word) (argv envp : list (list byte)) (inp : ProcInput) (mbase : word) (rnd : EntryDraw).
   Hypothesis VSP : valid_sp sp0.
-  Hypothesis CEIL : alloc_ceiling = LO sp0.
-  Hypothesis ESF : entry_stack_fits sp0 argv envp.
+  Hypothesis CEIL : alloc_ceiling = bv_unsigned sp0 - 8388608.
+  Hypothesis ESF : img_fits sp0 argv envp inp mbase rnd.
   Hypothesis AC : am_contracts FI AI (JA FI AI).
   Hypothesis FZ : fuzz_one_stmtA FI AI (JA FI AI) PZ.
   Hypothesis EMIT : emit_printf_stmt aget_so aset_so.
   Hypothesis EXK : forall TID, 0 < TID < 2^31 -> exit_k_stmtA TID.
 
   #[using="AMS PZ_agree VSP CEIL ESF AC FZ EMIT EXK"] Theorem leaf_realizesA : forall ap so msr g msF mo,
-    QPARSER FI AI PZ sp0 argv envp uid hw rnd ap so msr g -> LF msr g msF mo -> ap_factsA ap ->
+    QPARSER FI AI PZ sp0 argv envp inp mbase rnd ap so msr g -> LF msr g msF mo -> ap_factsA ap ->
     realizes asegs (mkCfg msF mo) (AssembleP0.PSH (Z.to_nat (ap_calls ap)) stdout_init (m_fs mo)).
   Proof.
     intros ap so msr g msF mo (TID & S4 & S5 & S6 & S7 & S8 & S9 & S10 & S11 & HT & _ & RP) HL HF.
-    destruct (rat_parser_callA FI AI AMS PZ PZ_agree sp0 argv envp uid hw rnd TID S4 S5 S6 S7 S8 S9 S10 S11 VSP CEIL ESF HT ap so msr g RP) as (d & HCL & ->).
+    destruct (rat_parser_callA FI AI AMS PZ PZ_agree sp0 argv envp inp mbase rnd TID S4 S5 S6 S7 S8 S9 S10 S11 VSP CEIL ESF HT ap so msr g RP) as (d & HCL & ->).
     pose proof HF as (HK & _).
     assert (EK : ap_calls ap = Z.of_nat (S (Nat.pred (Z.to_nat (ap_calls ap))))) by lia.
     replace (Z.to_nat (ap_calls ap)) with (S (Nat.pred (Z.to_nat (ap_calls ap)))) by lia.
@@ -341,6 +342,6 @@ Section LEAFA.
     change stdout_init with (AssembleP0.sost true 0).
     eapply evtr_realizes; [exact HCL| exact HL|].
     cbv beta. intros msr' msF' mo' HCL' HL' EF. rewrite <- EF.
-    eapply (call_realizesA FI AI AMS PZ PZ_agree sp0 argv envp uid hw rnd TID S4 S5 S6 S7 S8 S9 S10 S11 VSP CEIL ESF HT AC FZ EMIT (EXK TID HT) _ true 0%nat ap d msr' g msF' mo'); [lia| exact HCL'| exact HL'].
+    eapply (call_realizesA FI AI AMS PZ PZ_agree sp0 argv envp inp mbase rnd TID S4 S5 S6 S7 S8 S9 S10 S11 VSP CEIL ESF HT AC FZ EMIT (EXK TID HT) _ true 0%nat ap d msr' g msF' mo'); [lia| exact HCL'| exact HL'].
   Qed.
 End LEAFA.

@@ -1,5 +1,5 @@
 (* proves the wide UBSan contract of diginet_sum16 (fuzz_transport.ubsan, 0x17f60) and that it gives the narrow one. *)
-(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/diginet_sum16_w.v at bb3053036017d1d92db6eca9e973ce610be16c08 to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/diginet_sum16_w.v to fuzz_transport's images *)
 (* Walk of diginet_sum16 (src/diginet_frame.c:42-48 at 835f336c) in fuzz_transport.ubsan for
    U/Prog/diginet_sum16_w_c.v. With no bytes, 0x17f64 (beqz a1) leaves before the loop and its
    three trap branches, whatever p is; with bytes, the premise gives p <> 0 and the narrow walk

@@ -1,13 +1,19 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap-ceiling record gains hvdso, the value musl's vdso_func cell holds once the vDSO is resolved). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith Lia.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope Z_scope.
 
+(* [hvdso]: the value musl's [vdso_func] cell holds once the first time() has resolved the
+   vDSO -- [__vdsosym]'s result, the vDSO's clock_gettime entry.  At LPS 727298f3 the auxv
+   publishes the vDSO, so this is the launch's AT_SYSINFO_EHDR plus the entry's offset in the
+   image; like [hceil] it is a run constant, fixed where the run's instance is built. *)
 Class HeapCeil : Type := mkHeapCeil {
   hceil : Z ;
-  hceil_range : 0x7fff7f800000 <= hceil <= 0x7fffff800000
+  hceil_range : 0x7fff7f800000 <= hceil <= 0x7fffff800000 ;
+  hvdso : Z
 }.
 
 (* [comment removed for export] *)

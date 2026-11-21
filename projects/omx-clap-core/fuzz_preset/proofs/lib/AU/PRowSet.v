@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-29 (c-libc-stdio, lane RowsSet): fuzz_preset's two memset rows at image B (fuzz_preset.asan-ubsan,
-   tfibsegs = Reusable/YB1v.v), in the target text of c-omx-alloc's YGcallMxmn.v (s1b 459129c18903): the generic ARx
+   tfibsegs = Reusable/YB1v.v), in the target text of c-omx-alloc's YGcallMxmn.v (s1b): the generic ARx
    with the ghost list Hp, and the memnorm keep as the last post conjunct. The twin of lib/A/PRowSet.v.
      prow_asan_memset_xm_B : AR_laws_x tfibsegs B ARx hl -> TfibSyms B ->
                              aintrin_realizes_xm tfibsegs B ARx OSet (pc_asan_memset (as_code B))   (__asan_memset 0x5296c)
@@ -19,9 +20,9 @@
    the end of ms_tail, from MEQ3 / M2out / MEQ1 and prk_memnorm_keep).
    ADDRESS literals here are the two entries (0x5296c = YImgCellsB.B_ASAN_MEMSET_PC, 0x524c8 = B_WRAP_MEMSET_PC, which
    YF0l.v:14-15's Tfib_code names); every other numeral is in the donors' proof text.
-   #102 B' (c-libc-stdio rows102): this file is origin/cold/c-libc-stdio-rows-set a6f4ebf35892's lib/AU/PRowSet.v (blob 5f9dbdc71ed4),
+   #102 B' (c-libc-stdio rows102): this file is a commit's lib/AU/PRowSet.v (blob 5f9dbdc71ed4),
    relocated B (asan-ubsan f8f98a95, twin 3b5e1a09) -> B' (asan-ubsan d663f82d7f48, twin c90d4fa54d43) by the frozen
-   alreloc c4338d099cfb8025 (cold/c-asan-tools d99acc3edd9; staged at lib/B/AU, as alreloc requires for asan-ubsan),
+   alreloc c4338d099cfb8025 (staged at lib/B/AU, as alreloc requires for asan-ubsan),
    every moved value checked against the B -> B' map b-to-bprime.tsv 5a684bb2 (bmap_b2bp.py 27b4c628 for values outside
    its population): 14 numerals moved by symbol + offset (__asan_memset -> 0x5296c; __wrap_memset -> 0x524c8; ___interceptor_memset -> 0x52bac,
    in the theorem texts of the _lit rows and the leaf and in comments); the 36 instruction words (icpt_ld8 operands 538627 / 571523) kept by --resolve. The symbolic runs come from the tree's Reusable/YE6t.v (blob 6fb94a71028c) and Reusable/YE79.v (blob a4be8aebbcc9), B' through YImgCellsB, over the #102 image record
@@ -55,7 +56,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YM05
 (* Required, not Imported: the target texts and laws are cited by qualified name, so no name of the walks' imports
    is shadowed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YCbqG FCiface YGcallMx YGcallMxmn YAkMemnorm.
-(* c-libc-stdio's row kit (RowsCpy; merged from origin/cold/c-libc-stdio-rows-cpy 532cf8bd849e): the keep and the
+(* c-libc-stdio's row kit (RowsCpy; merged): the keep and the
    const-cell rodata lemma, one home each. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require PRowKit.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU Require PRowKitA.

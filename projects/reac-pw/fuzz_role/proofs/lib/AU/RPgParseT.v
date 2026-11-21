@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseT.v at d428443238a; for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseT.v; for image B
    (fuzz_role.asan-ubsan): the image and the base are lib/AU/Img0.v's and lib/AU/RPgParseBase.v's, the pcs are image
    B's, the flag is in a1 (A: a0) and image B tests sext.w a1 against 1 and 0 before the store, so the entry is split
    three ways (v = 1, v = 0, v not in {0, 1}) with the outcomes of those two tests as entry conditions (sx11,

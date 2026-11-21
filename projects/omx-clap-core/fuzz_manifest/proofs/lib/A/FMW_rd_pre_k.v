@@ -6,6 +6,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_name_seg1.v, with its module paths, module names and numbers changed; 459 of its 550 lines of code are new or changed and 365 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_disco/lib/Y/Prog/SbDecSeg1.v, with its module paths, module names and numbers changed; 1841 of its 1900 lines of code are new or changed and 491 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_rd_pl.v; 459 of its 636 lines of code are new or changed and 1723 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lv2_locate_manifest_readings, entry segment (0x81c04 .. RD_R / RD_L): the segment's own lemmas.
    The poison window: fuzz_malloc returns whole with its 16-byte head user-poisoned (U = [(whole - 16, 16)]); the
    journal is kept over `unpoison U mem` (FMupoison.v), the runtime contracts inside the window (snprintf, strstr) take
@@ -333,7 +334,7 @@ destruct (Z_lt_le_dec a (b + m)) as [Hlt | Hge].
 Qed.
 
 (* ---- a caller's C string across a program call (G5 FMW_kitS.v cstr_ok_kept; cstr_kept's image arm is
-   suffix-closed, hdesign cce35be4cf7) ---- *)
+   suffix-closed, hdesign) ---- *)
 Lemma rdp_word_end_mono : forall x y, x <= y -> x - x mod 8 + 8 <= y - y mod 8 + 8.
 Proof.
 intros x y H. pose proof (Z.div_mod x 8 ltac:(lia)) as Dx. pose proof (Z.div_mod y 8 ltac:(lia)) as Dy.

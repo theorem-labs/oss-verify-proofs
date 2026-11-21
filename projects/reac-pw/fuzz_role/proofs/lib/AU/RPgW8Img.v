@@ -1,8 +1,8 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW5Seg.v at 164759458cdd; w5_img_gen's method (an image rebuilt from its parts) written new for rate's pod step: buf grown by x, len, and the entry area and n_ent when the step records an entry. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW8Img.v at 8f1d7a0a9084 for the same unit's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW5Seg.v; w5_img_gen's method (an image rebuilt from its parts) written new for rate's pod step: buf grown by x, len, and the entry area and n_ent when the step records an entry. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW8Img.v for the same unit's
    image B (fuzz_rate.asan-ubsan): RtPgMem's rtm_ becomes RtPgMemB's rtmb_ and the prefix rw8_ becomes rbw8_; the
    model step itself is the same (the first block's layout is the shared Pod/Layout's). *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgBW8Img.v at 6c65f5a5cf5c for reac-pw/fuzz_role's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgBW8Img.v for reac-pw/fuzz_role's
    image B (fuzz_role.asan-ubsan): module paths fuzz_rate -> fuzz_role; RtPgMemB's rtmb_ becomes RPgMem's rm_ and the
    prefix rbw8_ becomes w8_; the model step itself is the same (the same pod.h builder, Pod/Layout's layout). *)
 (* reac-pw/fuzz_role image B (fuzz_role.asan-ubsan, pinned sha256

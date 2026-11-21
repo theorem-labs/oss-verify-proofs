@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (grant_exists' page-alignment goals in the GrantEx section). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -27,13 +28,14 @@ Section GrantEx.
     a_kact st <= KCAP -> 0 < nZ <= 2 ^ 23 -> nZ mod 4096 = 0 -> eager_used mdl + nZ + A_bytes (a_aa st) <= vm_limit (m_vmmaps mdl) ->
     exists a : word, grant_ok (Z_to_bv 64 0) mdlm a nZ = true.
   Proof using BTOT BOK.
-    intros st Lc FF M0 mdl mdlm nZ W RP SBM MI KC HN _ BUD.
+    intros st Lc FF M0 mdl mdlm nZ W RP SBM MI KC HN HNal BUD.
     destruct (sbm_vmmaps _ _ SBM) as [EV EL].
     pose proof RP as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & (AW & _) & _).
     pose proof (AsKSys6.AsanNodesMmLib.mat_pages_le_A_bytes (a_aa st) mdlm MI AW) as MP.
     pose proof (eager_used_ext mdlm mdl EV EL) as EE.
     apply (grant_exists bt st Lc FF (2 ^ 20) (2 ^ 28) M0 mdl W ltac:(lia) (qroom_WF bt st Lc FF W) RP KC BOK BTOT (Z_to_bv 64 0) mdlm nZ EV).
     - (lazymatch goal with |- ?G => let G' := eval unfold NZEX in G in change_no_check G' end). lia.
+    - (lazymatch goal with |- ?G => let G' := eval unfold page_size in G in change_no_check G' end). exact HNal.
     - rewrite vm_backing_used_split, EE, EV. lia.
   Qed.
   (* [comment removed for export] *)
@@ -49,6 +51,7 @@ Section GrantEx.
     - (lazymatch goal with |- ?G => let G' := eval unfold XCNT, nnpart in G in change_no_check G' end). destruct nn; (lazymatch goal with |- ?G => let G' := eval cbn [blk_opt List.map length Z.of_nat Pos.of_succ_nat] in G in change_no_check G' end); lia.
     - (lazymatch goal with |- ?G => let G' := eval unfold XSZ, nnpart in G in change_no_check G' end). destruct nn; (lazymatch goal with |- ?G => let G' := eval cbn [blk_opt List.map BackingAlgebra.AsanPlacement.gw_sizes snd] in G in change_no_check G' end); [rewrite Spec4.AgentLib.u64_lit by lia; lia | lia].
     - (lazymatch goal with |- ?G => let G' := eval unfold NZEX in G in change_no_check G' end). lia.
+    - (lazymatch goal with |- ?G => let G' := eval unfold page_size in G in change_no_check G' end). reflexivity.
   Qed.
 End GrantEx.
 End BoDepotGrantEx.

@@ -11,14 +11,14 @@ lib/A/UciClose.v (the same rows, names, order and composition).
 
 | row | where | status | by / waits for |
 |---|---|---|---|
-| H_PROG_LLVMF | lib/B/UciBClose.v:180 | DISCHARGED, Definition | lib/B/Prog/LLVMFuzzerTestOneInput_cgW.v uci_llvmf_holds (824090cba246) |
-| H_PROG_CNO | lib/B/UciBClose.v:183 | DISCHARGED, Definition | lib/B/Prog/check_no_overread_cgW.v uci_check_no_overread_cg_holds (e61d8b88c3d0) |
-| H_PROG_CV | lib/B/UciBClose.v:186 | DISCHARGED, Definition | lib/B/Prog/check_value_cgW.v uci_check_value_cg_holds (faf4885cf4dd) |
-| H_PROG_CC | lib/B/UciBClose.v:188 | DISCHARGED, Definition | lib/B/Prog/check_clamp_cgW.v uci_check_clamp_cg_holds (e5e90545d4c8) |
-| H_PROG_RUI | lib/B/UciBClose.v:190 | DISCHARGED, Definition | lib/B/Prog/rp_uci_int_cgW.v uci_rp_uci_int_holds (d3f024dc2e5) |
-| H_PROG_RHC_F | lib/B/UciBClose.v:193 | DISCHARGED, Definition | lib/B/Prog/rp_hot_clamp_FW.v rp_hot_clamp_holds_F (783ed4e623d) |
-| H_RT_STACK_MALLOC1 | lib/B/UciBClose.v:202 | DISCHARGED, Lemma | lib/B/Rt/YF0s.v:516 stack_malloc1_contract (evidence 135b5746fc67) |
-| H_RT_MEMCHR | lib/B/UciBClose.v:208 | DISCHARGED, Lemma | lib/B/Rt/Memchr.v memchr_icpt_contract (43a6893892d7) |
+| H_PROG_LLVMF | lib/B/UciBClose.v:180 | DISCHARGED, Definition | lib/B/Prog/LLVMFuzzerTestOneInput_cgW.v uci_llvmf_holds |
+| H_PROG_CNO | lib/B/UciBClose.v:183 | DISCHARGED, Definition | lib/B/Prog/check_no_overread_cgW.v uci_check_no_overread_cg_holds |
+| H_PROG_CV | lib/B/UciBClose.v:186 | DISCHARGED, Definition | lib/B/Prog/check_value_cgW.v uci_check_value_cg_holds |
+| H_PROG_CC | lib/B/UciBClose.v:188 | DISCHARGED, Definition | lib/B/Prog/check_clamp_cgW.v uci_check_clamp_cg_holds |
+| H_PROG_RUI | lib/B/UciBClose.v:190 | DISCHARGED, Definition | lib/B/Prog/rp_uci_int_cgW.v uci_rp_uci_int_holds |
+| H_PROG_RHC_F | lib/B/UciBClose.v:193 | DISCHARGED, Definition | lib/B/Prog/rp_hot_clamp_FW.v rp_hot_clamp_holds_F |
+| H_RT_STACK_MALLOC1 | lib/B/UciBClose.v:202 | DISCHARGED, Lemma | lib/B/Rt/YF0s.v:516 stack_malloc1_contract (evidence) |
+| H_RT_MEMCHR | lib/B/UciBClose.v:208 | DISCHARGED, Lemma | lib/B/Rt/Memchr.v memchr_icpt_contract |
 | H_KIT_AVIEW_EXT | lib/B/UciBClose.v:214 | DISCHARGED, Lemma | lib/B/Prog/LeafCgClose.v H_KIT_AVIEW_EXT |
 | H_KIT_AVIEW_SOME | lib/B/UciBClose.v:216 | DISCHARGED, Lemma | lib/B/Prog/LeafCgClose.v H_KIT_AVIEW_SOME |
 | H_LEAF_GLUE | lib/B/UciBClose.v:218 | DISCHARGED, Lemma | lib/B/Prog/LeafCgClose.v H_LEAF_GLUE |
@@ -33,8 +33,8 @@ lib/A/UciClose.v (the same rows, names, order and composition).
 ## Evidence of the CORE lemmas
 
 H_RT_MALLOC / H_RT_FREE: lib/B/UciBRtAlloc.v uciB_MALLOC / uciB_FREE, evidence provenance/evidence/uci-b-alloc
-(head 2c0a211766f5). H_RT_ASAN_MEMCPY: lib/B/YE2q.v asan_memcpy_realizes, evidence provenance/evidence/uci-b-memcpy
-(7af39d3f61cc). H_RT_STACK_MALLOC1: evidence provenance/evidence/stackmalloc1-B (head 135b5746fc67).
+(head). H_RT_ASAN_MEMCPY: lib/B/YE2q.v asan_memcpy_realizes, evidence provenance/evidence/uci-b-memcpy.
+H_RT_STACK_MALLOC1: evidence provenance/evidence/stackmalloc1-B (head).
 
 ## Build and Print Assumptions
 

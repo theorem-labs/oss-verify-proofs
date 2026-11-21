@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises); the model's channel reader that fdchan asks for beside the descriptor (cs_ok's co_rdr, proved at the launch)); internal commit ids in comments replaced by public commits or removed. *)
 (* Image B (asan-ubsan), lane CwPinvB: this file is port/a2b.py's output (sha256 d27cabd1f8478083d9f07152def1d5f8ec74dd77cd91cd60f67a2f0ef4d5b5a2)
-   of lib/A/PresetPinvAcf.v at a working branch 093605f124c5, code unchanged; the comment below is the A
+   of lib/A/PresetPinvAcf.v at a working branch, code unchanged; the comment below is the A
    file's, with names mapped by the translator. *)
 (* Modified by Theorem Labs, 2026-10: for omx-clap-core/fuzz_preset (asan-ubsan image), the STATEMENTS of two FINV-stating
    donor files of the driver walk restated over the second allocator instance ARcf (lib/Reusable/YG0ncf.v), which holds
@@ -53,7 +54,7 @@ Local Open Scope Z_scope.
       lib/A/CfParamsPreset.v has 2 ^ 29 - 2 ^ 20), as cp is quantified.
       THE ROOM (parent's decision 2026-10-29 04:5xZ; resume brief design change 1): every headroom number is gone. A
       driver state carries NP S, NP the program interface's non-primary room (lib/AU/PresetCfnB.v Section Variable
-      iface_room_np, lane IfacePort 3f83c075b61f; its body will be a Theorem Labs lane's room_live_cf), quantified here with the
+      iface_room_np, lane IfacePort; its body will be a Theorem Labs lane's room_live_cf), quantified here with the
       interface's two laws, cited by name: PresetCfnB.iface_room_np_tail (NP S -> ROOM_cf_k S 2: the grow's malloc and
       free get their call room) and PresetCfnB.iface_room_np_step (NP kept across one malloc_cf and one free_cf from a
       state whose live set is at most three blocks). Both are premises until lib/A/CfRoomLivePreset.v (a Theorem Labs lane) gives
@@ -66,19 +67,26 @@ forall (fx : YK11.FPState) (rc : YM05.RunCeil) (LS : lib_shape) (ci : CfImg) (cp
 (B : asyms) (NR : ProcInput -> Prop),
 TfibSyms B ->
 cannot_open_tfa_cf B -> file_arm_tfa_cf (LS := LS) B NR -> dir_arm_tfa_cf B ->
-forall (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte)
+(* launch-indexed, as the core's YD2a.v tfib_arm_argv2 at LPS 727298f3: the binders [sp brk mbase] [inp] [rnd]
+   and the launch premises in place of entry_stack_fits *)
+forall (sp brk mbase : word) (inp : ProcInput) (rnd : EntryDraw) (xw : nat -> word) (xd : nat -> list byte)
 (W : world tfibsegs) (ms : machine_state) (md : Model) (ly : alayout) (a0 p : list byte),
-in_argv inp = [a0; p] ->
-valid_sp sp -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> entry_stack_fits sp (in_argv inp) (in_envp inp) ->
+valid_sp sp -> in_argv inp = [a0; p] ->
+valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp -> valid_input inp ->
 valid_fs (in_fs inp) -> NR inp ->
-st_ok tfibsegs (YP08.E0 sp (in_argv inp) (in_envp inp) xw xd) (ss_main true) (restrict (w_H W) ms) ->
-runs_at (bv_unsigned sp) (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp (in_argv inp) (in_envp inp)) ->
+st_ok tfibsegs (YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp))
+(in_argv inp) (in_envp inp) (in_execfn inp) xw xd) (ss_main true) (restrict (w_H W) ms) ->
+runs_at (bv_unsigned sp) (mrestrict (w_H W) (ms_mem ms))
+(runs_main_tfa true sp (ed_top rnd) (in_argv inp) (in_envp inp) (in_execfn inp)) ->
 AI tfibsegs (w_H W) (w_A W) md -> ARcf tfibsegs B ly init_state [] W (ms_mem ms) md -> top_ok (bv_unsigned sp) ly ->
 PCB.PINV (aview tfibsegs (w_H W) (ms_mem ms)) 0 0 ->
 YAkMemnorm.memnorm tfibsegs (ms_mem ms) ->
 (* #102 (lane StackDrv): the live real stack above the entry sp at main (the composition gives it from main's entry) *)
 YGcallStackUp.astack_up_x tfibsegs ly W (bv_unsigned sp) (ms_mem ms) ->
-m_fs md = in_fs inp -> m_fds md = APSG.fds_std ->
+(* beside the descriptor fact, as the core's AD2a.v tfib_arm_argv2 at LPS 727298f3: the model's channel reader
+   [fdchan] asks for, from the hand-off ([cs_ok]'s [co_rdr]) *)
+m_fs md = in_fs inp -> m_fds md = APSG.fds_std -> m_channel_reader md = true ->
 srealizes tfibsegs (mkCfg ms md) (CLOSEDX_args (LS := LS) [a0; p] (in_fs inp)).
 
 (* ---------------------------------------------------------------------- *)
@@ -88,19 +96,22 @@ srealizes tfibsegs (mkCfg ms md) (CLOSEDX_args (LS := LS) [a0; p] (in_fs inp)).
       iface_room_np_tail gives the malloc and the free their room, iface_room_np_step hands NP across both calls);
       drv_minv -> drv_minv_cf (lane CwSites), kept across the malloc and the free by a8's pristine laws
       (YGcfPristine.v); the errbuf slot `xs_placed_cf` is carried (00:29Z ruling).
-      The refused arm makes no allocator call and takes no room. *)
+      The refused arm makes no allocator call and takes no room.
+      LPS 727298f3: the binders and launch premises of the core's YD23.v Section Gr ([sp brk mbase] .. [a0 p] [rnd],
+      in_argv, valid_launch, entry_launch_ok_va, valid_input), YD25.eagree and runs_main_tfa launch-indexed. *)
 Definition gr_refused_cf_B : Prop :=
 forall (fx : YK11.FPState) (rc : YM05.RunCeil) (ci : CfImg) (cp : CfParams) (B : asyms),
 TfibSyms B -> refused_leaf_tfa_cf B ->
-forall (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte),
-valid_sp sp -> valid_argv [a0; p] -> valid_envp (in_envp inp) ->
+forall (sp brk mbase : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte) (rnd : EntryDraw),
+in_argv inp = [a0; p] -> valid_sp sp -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp -> valid_input inp ->
 forall (E3 : YP0m.env) (W : world tfibsegs) (ms : machine_state) (md : Model) (ly : alayout) (S : astate)
 (pth : list byte) (pb : sptr) (buf cap : Z),
-YD25.eagree sp inp xw xd a0 p E3 -> st_ok tfibsegs E3 S_G (restrict (w_H W) ms) -> YD23.gvals E3 buf cap ->
+YD25.eagree sp inp xw xd a0 p rnd E3 -> st_ok tfibsegs E3 S_G (restrict (w_H W) ms) -> YD23.gvals E3 buf cap ->
 ARcf tfibsegs B ly S [] W (ms_mem ms) md -> AI tfibsegs (w_H W) (w_A W) md -> top_ok (bv_unsigned sp) ly ->
 blocks S = [(pb, cap)] -> sptr_addr B ly pb = buf ->
-runs_at (bv_unsigned sp) (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp [a0; p] (in_envp inp)) ->
-m_fds md = APSG.fds3 (FdFile pth (Z_to_bv 64 cap)) -> m_fs md = in_fs inp ->
+runs_at (bv_unsigned sp) (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp (ed_top rnd) [a0; p] (in_envp inp) (in_execfn inp)) ->
+m_fds md = APSG.fds3 (FdFile pth (Z_to_bv 64 cap)) -> m_channel_reader md = true -> m_fs md = in_fs inp ->
 PCB.PINV (aview tfibsegs (w_H W) (ms_mem ms)) 0 0 ->
 cap = 2 ^ 26 -> srealizes tfibsegs (mkCfg ms md) (diag msg_refused (in_fs inp)).
 
@@ -109,15 +120,16 @@ forall (fx : YK11.FPState) (rc : YM05.RunCeil) (ci : CfImg) (cp : CfParams) (B :
 TfibSyms B -> PCB.iface_room_np_tail (cp := cp) NP -> PCB.iface_room_np_step (cp := cp) NP ->
 2 ^ 26 < cf_malloc_max ->
 malloc_site_tfa_cf B NP -> memcpy_site_tfa_cf B -> free_site_cf B NP ->
-forall (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte),
-valid_sp sp -> valid_argv [a0; p] -> valid_envp (in_envp inp) ->
+forall (sp brk mbase : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (a0 p : list byte) (rnd : EntryDraw),
+in_argv inp = [a0; p] -> valid_sp sp -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp -> valid_input inp ->
 forall (E3 : YP0m.env) (W : world tfibsegs) (ms : machine_state) (md : Model) (ly : alayout) (S : astate)
 (pth data : list byte) (pb : sptr) (buf cap : Z),
-YD25.eagree sp inp xw xd a0 p E3 -> st_ok tfibsegs E3 S_G (restrict (w_H W) ms) -> YD23.gvals E3 buf cap ->
+YD25.eagree sp inp xw xd a0 p rnd E3 -> st_ok tfibsegs E3 S_G (restrict (w_H W) ms) -> YD23.gvals E3 buf cap ->
 ARcf tfibsegs B ly S [] W (ms_mem ms) md -> AI tfibsegs (w_H W) (w_A W) md -> top_ok (bv_unsigned sp) ly ->
 blocks S = [(pb, cap)] -> sptr_addr B ly pb = buf -> NP S -> xs_placed_cf ly S ->
-runs_at (bv_unsigned sp) (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp [a0; p] (in_envp inp)) ->
-m_fds md = APSG.fds3 (FdFile pth (Z_to_bv 64 cap)) -> m_fs md = in_fs inp ->
+runs_at (bv_unsigned sp) (mrestrict (w_H W) (ms_mem ms)) (runs_main_tfa true sp (ed_top rnd) [a0; p] (in_envp inp) (in_execfn inp)) ->
+m_fds md = APSG.fds3 (FdFile pth (Z_to_bv 64 cap)) -> m_channel_reader md = true -> m_fs md = in_fs inp ->
 PCB.PINV (aview tfibsegs (w_H W) (ms_mem ms)) 0 0 ->
 YAkMemnorm.memnorm tfibsegs (ms_mem ms) ->
 (* #102 (lane StackDrv): the live real stack above the entry sp, and in the continuation below *)
@@ -126,16 +138,16 @@ forall (K : TSet),
 cap < 2 ^ 26 -> (exists e, 0 <= e /\ cap = 2 ^ e) -> cap mod 65536 = 0 -> pb <> PNull ->
 blk (w_H W) (ms_mem ms) buf cap data -> drv_minv_cf B S cap (dlen data) -> cap <= dlen data ->
 (forall (W' : world tfibsegs) ms' md' ly' S' (pb' : sptr),
-let ER' := E_RD (YP08.E0 sp [a0; p] (in_envp inp) xw xd) (ms_regs ms') in
+let ER' := E_RD (YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd) (ms_regs ms') in
 st_ok tfibsegs ER' S_RD (restrict (w_H W') ms') ->
 bv_unsigned (ew ER' A_BUF) = sptr_addr B ly' pb' -> bv_unsigned (ew ER' A_LEN) = cap -> bv_unsigned (ew ER' A_CAP) = 2 * cap ->
 ARcf tfibsegs B ly' S' [] W' (ms_mem ms') md' -> AI tfibsegs (w_H W') (w_A W') md' -> top_ok (bv_unsigned sp) ly' ->
 blocks S' = [(pb', 2 * cap)] -> pb' <> PNull -> NP S' -> xs_placed_cf ly' S' -> drv_minv_cf B S' (2 * cap) (dlen data) ->
-runs_at (bv_unsigned sp) (mrestrict (w_H W') (ms_mem ms')) (runs_main_tfa true sp [a0; p] (in_envp inp)) ->
+runs_at (bv_unsigned sp) (mrestrict (w_H W') (ms_mem ms')) (runs_main_tfa true sp (ed_top rnd) [a0; p] (in_envp inp) (in_execfn inp)) ->
 blk (w_H W') (ms_mem ms') (sptr_addr B ly' pb') cap data ->
 PCB.PINV (aview tfibsegs (w_H W') (ms_mem ms')) 0 0 ->
 YAkMemnorm.memnorm tfibsegs (ms_mem ms') ->
 YGcallStackUp.astack_up_x tfibsegs ly' W' (bv_unsigned sp) (ms_mem ms') ->
-m_fds md' = APSG.fds3 (FdFile pth (Z_to_bv 64 cap)) -> m_fs md' = in_fs inp ->
+m_fds md' = APSG.fds3 (FdFile pth (Z_to_bv 64 cap)) -> m_channel_reader md' = true -> m_fs md' = in_fs inp ->
 srealizes tfibsegs (mkCfg ms' md') K) ->
 srealizes tfibsegs (mkCfg ms md) K.

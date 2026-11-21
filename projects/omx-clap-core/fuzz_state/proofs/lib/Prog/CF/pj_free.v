@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_scene/lib/Prog/SceneTac.v, with its module paths changed; 1051 of its 1066 lines of code are new or changed and 45 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_pcap/lib/U/Prog/pcap_source_open.v, with its module paths and module names changed; 547 of its 622 lines of code are new or changed and 991 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/Prog/CF/KindBGlue.v, with its module paths and module names changed; 2130 of its 2257 lines of code are new or changed and 495 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (auxv_pre's CONFIG_RSEQ flag witness and its auxv type table). *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -1134,8 +1135,8 @@ Lemma n_auxv_agree : forall sec lo m m', auxv_pre B sec lo m ->
   (forall x, (ms_libc B + 8 <= x < ms_libc B + 16) \/ (lo <= x < 2 ^ 63) -> mbyte segs m' x = mbyte segs m x) ->
   auxv_pre B sec lo m'.
 Proof.
-  intros sec lo m m' (av & ar & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10) HA.
-  exists av, ar.
+  intros sec lo m m' (rs & av & ar & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10) HA. pose proof (auxv_types_len_ge rs). unfold AUXV_RAND_K in *.
+  exists rs, av, ar. try unfold AUXV_RAND_K.
   split; [apply (n_word_agree m); [exact H1 | intros k Hk; apply HA; lia]|].
   split; [intros k Hk; apply (n_word_agree m); [exact (H2 k Hk) | intros j Hj; apply HA; lia]|].
   split; [apply (n_word_agree m); [exact H3 | intros j Hj; apply HA; lia]|].

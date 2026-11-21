@@ -1,6 +1,6 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/RT_pf_Tbl.v (a working branch 3e35620c52e); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 2 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/RT_pf_Tbl.table). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/RT_pf_Tbl.v (a working branch); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 2 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/RT_pf_Tbl.table). *)
 (* The numerals of fuzz_manifest.asan's printf_common call (RT_pf_bz.v), one name each, in the form of a Theorem Labs lane's
-   lib/A/RT_pf_Tbl.v (a working branch 970f7d733a4) restricted to printf_common.
+   lib/A/RT_pf_Tbl.v (a working branch) restricted to printf_common.
    MEASURED from fm.asan's unstripped twin (a lane record (fuzz_manifest.asan),
    symbol table and disassembly), keyed on the symbol, never on a bare address of another image:
 

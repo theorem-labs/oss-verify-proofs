@@ -4,10 +4,11 @@
 (* Modified by Theorem Labs, 2026-10: ported to libreac/fuzz_knock: segment S7 EXIT of the ASan harness walk of
    LLVMFuzzerTestOneInput in fuzz_knock.asan (sha256 61768cf4739b7641c99c825dde45eddafc55b601d41109555be0272fc7ca4118).
    Donor: proofs/cgif/cgif_file_fuzzer/lib/A/ACf4.v:26-127 (the exit lemma and its local tactics) and A/ACf7.v:35-56 (the
-   exit state and invariant) at c8557374ad2e. Framework: a Theorem Labs lane, knock's lib/A copies
+   exit state and invariant). Framework: a Theorem Labs lane, knock's lib/A copies
    under the donor names: AWalkFw0 (tfibsegs), ACef (tfibtbl_lib), AF0l, ACej, ACeh (TfibLib, tfib_img_range with
    TFIB_IMG_END = 0x5f3000), ACem (aj_run_flag_sh), ACep, AWalkFw1 (A/ACer.v), AWalkFw2 (A/ACf9.v), ACfm (EV_LIB = 0), and
    APgRt (the class-1 context record, rt_prelude, fs_rwF with the 0 16 window). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* rule 24: no function proved. A port of the released cgif_file_fuzzer harness-walk structure.
 
    THE LEMMA

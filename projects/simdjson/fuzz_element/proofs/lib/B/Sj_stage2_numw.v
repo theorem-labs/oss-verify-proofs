@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: a stack-floor fact handed to the allocator-ceiling premise of art_client_write is passed through lia, since the floor is now measured by STACK_SPAN. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -80,7 +81,7 @@ Section NumW.
     s2_open_mem HM. wE_norm.
 
     assert (ART1 : ART RT Σ m1).
-    { apply (art_client_write RT AF Σ m0 m1 (e_lo E0) NART NWIN); [| exact WM].
+    { apply (art_client_write RT AF Σ m0 m1 (e_lo E0) NART ltac:(lia)); [| exact WM].
       apply (agree_of_munch _ m0 m1 _ MU). intros x NC.
       assert (CL : forall y, s2_region E0 y -> aclient (rt_live RT Σ) (rt_frames RT Σ) (e_lo E0) y).
       { intros y Hy. eapply aclient_mono; [exact (NCL y Hy) | auto | auto | lia]. }

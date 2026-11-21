@@ -1,18 +1,19 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B' (asan-ubsan, #102 pin d663f82d7f48, unstripped twin c90d4fa54d43): the
    walk of check_reject_clean (CrcB.v check_reject_clean_holds_B) at the B' instance with its callee fuzz_alloc_live
    DISCHARGED (h-pre-b1's request through h-rw-pre-5, 19:3xZ; the image-B' twin of h-hreply-s5-rf's A' file
-   lib/A/Prog/Crc102InstLive.v, origin/cold/h-hreply-s5-rf-p102-n10-crca 3506a663d1f0). Lane CrcBp of h-rw-pre-5.
+   lib/A/Prog/Crc102InstLive.v). Lane CrcBp of h-rw-pre-5.
    rule 24: no function proved. rule 24: proves no function (kind: merge).
    check_reject_clean_holds_B_inst_live is check_reject_clean_holds_B at
    - B := YD2l.TfibB (blob 95803a8b9493), PI := prh_img_B, PA := PI_prog_B, RL := prh_room_live_a8 at CfParams_preset;
    - ARx := ARcf /\ xs_placed_cf at CfParams_preset over PI_prog_B's segments: THE relation of c-omx-alloc's instance
-     corollary fuzz_alloc_live_holds_B_inst (origin/cold/c-omx-alloc-acc102 78c92e0f7d3a,
-     lib/B/Prog/FuzzAllocAccInstB102.v 3b59f132b2db, on int102 since 8862cc5bd2f), word for word (its ARcfx);
+     corollary fuzz_alloc_live_holds_B_inst (
+     lib/B/Prog/FuzzAllocAccInstB102.v 3b59f132b2db, on int102), word for word (its ARcfx);
    with:
    - LAWS by YGcallcf.AR_laws_x_xs of YG0lawscf.AR_laws_ok_cf (the A' file's discharge, here at B's segments);
-   - FLIVE by FuzzAllocAccInstB102.fuzz_alloc_live_holds_B_inst (the tfuzz_alloc_live_specX, f97c8b2f046b :110, no
+   - FLIVE by FuzzAllocAccInstB102.fuzz_alloc_live_holds_B_inst (the tfuzz_alloc_live_specX, :110, no
      image premise);
    - EMPTY_RO / EMPTY_ZS by CrcBRomRefute.v cr_empty_ro_B / cr_empty_zs_B (vm_compute at TfibB);
    - IMGV at ARcf /\ xs_placed_cf from the same fact at ARcf ALONE (the relation implies ARcf), so the premise left is

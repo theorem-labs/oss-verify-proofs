@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: both_img_facts closes every field of img_facts, which has gained if_resx, by one tactic over all goals instead of one bullet per field. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -151,12 +152,19 @@ Definition BPH : PhdrInfo := AsanUbsan.M.phdrs.
 
 Lemma both_img_facts : img_facts BSEGS BOTH BPH.
 Proof.
+  (* No bullet is opened here: every field of [img_facts] is closed by one `all: first [...]` over the whole
+     constructor (a trailing `all:` after bullets cannot see a goal behind bullet discipline). So the record
+     may gain or lose a field and nothing shifts, and a field no arm closes fails on this line, naming the
+     tactic. Every arm is either an `exact` of a named lemma or a computation on the goal itself, with no
+     assumption/eassumption sweep. Arms are ordered cheapest-failure-first; `vm_compute; reflexivity` is last
+     so it is never attempted on the quantified [if_rw] goal, which its own arm closes earlier. *)
   constructor.
-  - repeat split; reflexivity.
-  - cbn [img_lo img_hi BOTH]. lia.
-  - vm_compute. reflexivity.
-  - exact both_res_hull.
-  - rewrite both_res_sizes. reflexivity.
-  - cbn [rw_lo rw_len BOTH]. split; [lia|]. intros m x Hx. apply both_rw_window. lia.
-  - exact both_shadow_ok.
+  all: first [ exact both_res_hull
+             | exact both_shadow_ok
+             | cbn [rw_lo rw_len BOTH]; split; [lia|]; intros m x Hx; apply both_rw_window; lia
+             | cbn [img_lo img_hi BOTH]; lia
+             | repeat split; reflexivity
+             | rewrite both_res_sizes; reflexivity
+             | repeat split; vm_compute; lia
+             | vm_compute; reflexivity ].
 Qed.

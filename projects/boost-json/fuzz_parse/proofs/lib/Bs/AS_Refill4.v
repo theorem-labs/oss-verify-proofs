@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: statements written out as text. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -84,7 +85,11 @@ Section Refill.
   Hypothesis FAJ : stk asegs m (FAB + 4 * nf) (FAB + mfa).
   Hypothesis USJ : stk asegs m (rbeg + au) (rbeg + mu).
   (* [comment removed for export] *)
-  Hypothesis RESF : forall (a k : word), AHI_LO <= bv_unsigned a -> region_free (vm_reserved (m_vmmaps mo)) a k = true.
+  (* LPS 727298f3: the ledger holds the launch's vDSO/vvar pair, so a window above [AHI_LO] is
+     free of it only when it lies inside a mapping ([AllocRepX.ak_resf_hi]); every window passed
+     here lies inside the primary region [PRIM] maps. *)
+  Hypothesis RESF : forall (a k : word), AHI_LO <= bv_unsigned a ->
+    map_contains (vm_maps (m_vmmaps mo)) a k = true -> region_free (vm_reserved (m_vmmaps mo)) a k = true.
   Hypothesis PRIM : forall (a k : word), rbeg <= bv_unsigned a -> bv_unsigned a + bv_unsigned k <= rbeg + 2^32 -> map_contains (vm_maps (m_vmmaps mo)) a k = true.
   Hypothesis NW : entries_nowrap (vm_maps (m_vmmaps mo)). Hypothesis NWA : entries_nowrap (vm_noaccess (m_vmmaps mo)).
   Hypothesis NOV : nooverlap (vm_maps (m_vmmaps mo)).
@@ -217,7 +222,11 @@ Section RefillTop.
   Hypothesis FAJ : stk asegs m (FAB + 4 * nf) (FAB + mfa).
   Hypothesis USJ : stk asegs m (rbeg + au) (rbeg + mu).
   (* [comment removed for export] *)
-  Hypothesis RESF : ltac2:(zQ "b0!nb!is4!lh1!lh9!t3!ln4!lo0!lof!hj6!ld!q5>1a@1$1@1$0#k0>1k@1$1@1$0#k0>0@2$9$8@2$a@1$0#k0^2@3$4$2@3$6@1$7@1$5?2mo^3^2$3").
+  (* LPS 727298f3: the ledger holds the launch's vDSO/vvar pair, so a window above [AHI_LO] is
+     free of it only when it lies inside a mapping ([AllocRepX.ak_resf_hi]); every window passed
+     here lies inside the primary region [PRIM] maps. *)
+  Hypothesis RESF : forall (a k : word), AHI_LO <= bv_unsigned a ->
+    map_contains (vm_maps (m_vmmaps mo)) a k = true -> region_free (vm_reserved (m_vmmaps mo)) a k = true.
   Hypothesis PRIM : forall (a k : word), rbeg <= bv_unsigned a -> bv_unsigned a + bv_unsigned k <= rbeg + 2^32 -> map_contains (vm_maps (m_vmmaps mo)) a k = true.
   Hypothesis NW : ltac2:(zQ "30!ln4!lpe!lu6@1$2@1$1@1$0?2mo"). Hypothesis NWA : ltac2:(zQ "30!ln4!lv8!lu6@1$2@1$1@1$0?2mo").
   Hypothesis NOV : ltac2:(zQ "30!ln4!lpe!mg7@1$2@1$1@1$0?2mo").

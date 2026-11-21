@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YG0n.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vvar/vDSO pair in the initial model and its reservations; the kernel's own maps among the run's segments; the reserved tail past the image's segments and the maps kept clear of it; the run's segment list with the vDSO pair). *)
 From OSSVerify.Proofs.reac_pw.fuzz_link.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -254,7 +255,10 @@ match l with
 | e :: t => Z.eqb (fst e) lo && Z.leb 0 (snd e) && Z.ltb (lo + snd e) (2 ^ 64) && tiles_b t (lo + snd e) hi
 end.
 Definition img_covered_b (segs : list Segment) (img : Z * Z) : bool :=
-Z.leb 0 (fst img) && tiles_b (map seg_resv_z segs) (fst img) (fst img + snd img).
+(* 08b1429: Run.segments_reserved maps over `filter (fun s => negb (seg_kernel_map s)) segs`
+   (Run.v:253-254), so the boolean gate must tile the SAME list; the kernel's own maps -- the
+   vDSO/vvar pair that run_segments appends -- are not the binary's reservations. *)
+Z.leb 0 (fst img) && tiles_b (map seg_resv_z (filter (fun s => negb (seg_kernel_map s)) segs)) (fst img) (fst img + snd img).
 Lemma tiles_b_cover : forall l lo hi a, 0 <= lo -> tiles_b l lo hi = true -> lo <= a < hi ->
 exists e, In e l /\ fst e <= a < fst e + snd e /\ 0 <= fst e /\ fst e + snd e < 2 ^ 64.
 Proof.
@@ -308,10 +312,32 @@ Definition perm_maps : list (Z * Z) :=
 (ly_C ly, kCtxMapSize); (ly_D ly, 4096)] ++ ly_extra ly.
 Definition esec (na lz : list (word * word)) (E : list (Z * Z)) : Z :=
 YK0g.sum_count (fun x => negb (YK0g.covered (na ++ lz) x)) (map wiv E).
+(* e is taken in the model: every byte of e lies in a reserved or mapped interval, or e starts at or above the page floor of
+   alloc_top, where no fresh (page-aligned) grant reaches. (git-lead's AD3d.md_takes, restated with page_floor, 10:4xZ.) *)
+Definition vm_takes (md : Model) (e : Z * Z) : Prop :=
+(0 < snd e /\ forall a, in_zr a e -> Exists (fun q => bv_unsigned (fst q) <= a < bv_unsigned (fst q) + bv_unsigned (snd q))
+(vm_reserved (m_vmmaps md) ++ vm_maps (m_vmmaps md)))
+\/ YM05.page_floor (alloc_top (m_vmmaps md)) <= fst e.
+(** #38: [State.init_reserved] appends the vDSO/vvar pair to the segment reservations
+    (727298f3 State.v:7743), so the segments-only equation is false of every initial model.
+    What the consumers need of that tail, and all that [YA0e.cs_ok] supplies at the producer
+    ([co_res] and [co_mres], A/AD1d.v [tfib_ALedger]): at most two entries, each starting in
+    high memory and at most twenty pages long, none meeting the pointer-array reservation
+    [ly_Q] or the primary reservation [ly_prim] (both mapped at the producer, and
+    [co_mres] keeps every mapping clear of every reservation).  It names only the tail and
+    [ly], so every transport that keeps [vm_reserved] keeps it. *)
+Definition res_tail_ok (rx : list (word * word)) : Prop :=
+(length rx <= 2)%nat /\
+Forall (fun iv => kHighMemBeg <= bv_unsigned (fst iv) /\ bv_unsigned (snd iv) <= 20 * 4096) rx /\
+region_free rx (w64 (ly_Q ly)) (w64 kPtrArrayResv) = true /\
+region_free rx (w64 (ly_prim ly)) (w64 kPrimResvSize) = true.
 Record ALedger (S : astate) (md : Model) : Prop := {
 al_img : forall sg, In sg segs -> fst (ly_img ly) <= Z.of_N (seg_base sg) /\ Z.of_N (seg_base sg) + Z.of_N (seg_size sg) <= fst (ly_img ly) + snd (ly_img ly);
 al_limit : ASAN_VM_LMIN <= vm_limit (m_vmmaps md);
-al_reserved : vm_reserved (m_vmmaps md) = segments_reserved segs;
+(** The tail of the reservations past the image's own, as [res_tail_ok] bounds it.  The
+    record keeps its arity, so every [destruct L as [L1 .. L15]] is unaffected. *)
+al_reserved : exists rx : list (word * word),
+vm_reserved (m_vmmaps md) = segments_reserved segs ++ rx /\ res_tail_ok rx;
 al_prim : exists pieces, prim_pieces_ok S pieces /\
 (forall p, In p pieces <-> (In (wiv p) (vm_maps (m_vmmaps md)) /\ 0 < snd p /\ ly_prim ly <= fst p /\ fst p + snd p <= ly_prim ly + kPrimResvSize));
 al_Q : In (wiv (ly_Q ly, kPtrArrayResv)) (vm_maps (m_vmmaps md));
@@ -331,6 +357,24 @@ exists e, In e (segments_reserved segs) /\ bv_unsigned (fst e) <= a < bv_unsigne
 al_shna : region_free (vm_noaccess (m_vmmaps md)) (w64 kLowShadowBeg) (w64 (kLowShadowEnd - kLowShadowBeg)) = true /\
 region_free (vm_noaccess (m_vmmaps md)) (w64 kHighShadowBeg) (w64 (kHighShadowEnd - kHighShadowBeg)) = true
 }.
+(* The extents a first StackDepotPut's new maps must miss (git-lead's AD3j.first_put_avoid, the same text). *)
+Definition kd_avoid (S : astate) : list (Z * Z) :=
+[(ly_prim ly, kPrimResvSize); (ly_Q ly, kPtrArrayResv); (ly_T ly, kThreadObjSize); (ly_F ly, kFakeStackSize);
+(ly_C ly, 256); (ly_D ly, 4096); (ly_stk_lo ly, ly_stk_hi ly - ly_stk_lo ly); ly_img ly]
+++ ly_extra ly ++ sec_extents ly S ++ band_maps.
+Lemma vm_takes_sub : forall md e a, vm_takes md e -> in_zr a e -> vm_takes md (a, 1).
+Proof.
+intros md e a [[P C]|T] Ha.
+- left. split; [cbn; lia|]. intros a' Ha'. unfold in_zr in Ha'. cbn [fst snd] in Ha'. assert (a' = a) as -> by lia. exact (C a Ha).
+- right. cbn [fst]. unfold in_zr in Ha. lia.
+Qed.
+(* The image is taken: al_imgcov is per byte, and the reserved intervals are the image segments (al_reserved). *)
+Lemma img_takes : forall S md, ALedger S md -> 0 < snd (ly_img ly) -> vm_takes md (ly_img ly).
+Proof.
+intros S md L P. left. split; [exact P|]. intros a Ha. destruct (al_imgcov _ _ L a Ha) as (e & He & R).
+destruct (al_reserved _ _ L) as (rx & Hrx & _).
+apply Exists_exists. exists e. split; [apply in_or_app; left; rewrite Hrx; apply in_or_app; left; exact He | exact R].
+Qed.
 Lemma ceil_top_init_sp_ok : forall md, YM05.ceil_of_top (alloc_top (m_vmmaps md)) -> YK06.init_sp_ok (m_vmmaps md).
 Proof.
 intros md CT. pose proof (YM05.ceil_le_top _ CT) as LE. pose proof (proj1 alloc_ceiling_val) as [CV _].

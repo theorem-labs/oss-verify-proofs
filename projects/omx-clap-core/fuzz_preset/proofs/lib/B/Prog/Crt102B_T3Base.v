@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/ExvB_Loop_kitQ.v, with its module paths and module names changed; 678 of its 721 lines of code are new or changed and 153 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* kb round (the contract's wild budget in crt_live): S and O1 carry crt_live at kb 64, the budget of U and W
    ((prh_wk F_round_trip_text + prh_wk F_round_trip_text)%nat, the glue's spelling); pj_string, pj_set and
    fuzz_alloc_ran_out have no wild site, so the journal stays at the budget it had at U. crt3_ff / crt3_home_keep /
@@ -14,19 +15,19 @@
 
    proves no function (kind: segment statements and image lemmas).
 
-   INPUTS OF RECORD (this row was built on the check_round_trip walk head
-   71a8716672850d3cc31b00bbc497633106293cac, merged, no rebase; no PRH_* file by path):
+   INPUTS OF RECORD (this row was built on the check_round_trip walk head,
+   merged, no rebase; no PRH_* file by path):
    - pins: A' asan 1be0f53d96cb9d6c (twin bff8519bbe3ea0e4), B' asan-ubsan d663f82d7f488d30 (twin c90d4fa54d43160b).
    - the lane's glue lib/A/Prog/Crt102Glue.v (records, read by name): crt_at_U_B (the pre; its crt_at_U_B_copy_fo is
      copy's ordered free list, producer row T2), crt_at_X_B (the C4a post, unreachable at this head), crt_at_W_B (the
      post; crt_at_W_B_copy_fo produced here), crt_live / crt_side, crt_pos / crt_evs_U / crt_evs_W, crt_tree_J,
      crt_dregs_B, QF, crt_cfg, CRT_OWN_LO_B, CRT_W0_OFF_B; image facts lib/A/Prog/Crt102Img.v (Section b: the B'
      values only the B PAImg instance carries, the HB hypotheses); model lib/A/Prog/Crt102Model.v.
-   - texts: the head's (the kit cut 7cdbb61b5fa0 merged into the lane): PRH_FnPj 5aca5cbe2cfb - tpj_string_specX /
+   - texts: the head's (the kit cut merged into the lane): PRH_FnPj 5aca5cbe2cfb - tpj_string_specX /
      tpj_set_specX keyed on ReaderRes.jr_strtod, with prh_cons_from, DEAD-PJSTRING / -PJSET and FREEORD-COPY.
    - listing: lib/B/Listing_prog.v, runner tables lib/B/Prog/PLB102.v (TxPutB102's PAListing of that listing, the
      lane's blob); the body read off the B' disassembly of check_round_trip (B' entry 0x82828).
-   - build route pins102: the pins102 route script zfb-targets (sha256 85055e6079bc), FACTS 8f3e7e1a07f1,
+   - build route pins102: the pins102 route script zfb-targets (sha256 85055e6079bc), FACTS,
      the PAU directory pau-preset-102.
 
    THE B' CODE (the internal file crt.B.s; offsets from the B' entry; doc = s6, F = s3 = s7, &copy = s4, shadow base s11):
@@ -145,9 +146,9 @@ apply andb_prop in C1 as [_ E1]. apply Z.eqb_eq in E1. exists rd0. rewrite E1. r
 Qed.
 
 (* ======================================================================================================== *)
-(* ---- IMAGE-FREE TREE AND WORD LEMMAS, transcribed from the lane's unlanded slice files (Crt102Arms.v at
-   commit 9cd06e6c389 :72-226 / :237-271 / :330-347, dev build rc=0 there; Crt102Rewrite.v at
-   commit 2eddf107d30 :165-213), names prefixed crt3_; delete at the slices' landing. ---- *)
+(* ---- IMAGE-FREE TREE AND WORD LEMMAS, transcribed from the lane's unlanded slice files (Crt102Arms.v:
+    72-226 / :237-271 / :330-347, dev build rc=0 there; Crt102Rewrite.v:
+    165-213), names prefixed crt3_; delete at the slices' landing. ---- *)
 Section rd.
 Variable segs : list Segment.
 
@@ -429,9 +430,9 @@ Qed.
 (* ---- IMAGE B's BOUNDS, never image A's (YImgTop.v:27-32: on #102 IMG_TOP = 0x600000 is A's top, B's is IMG_TOP_B =
    0x601000; a sweep of the unit, 19:21Z). ---- *)
 (* image B's shadow is visible, the STAND-IN for the image fact (owner: the instance owner, the instance's supply):
-   the instance owner's YGcfAmx2.img_shadow_vis_cf (lib/Reusable/YGcfAmx2.v:47-49) at image B's CfImgB.CfImg_B,
+   the instance owner's YGcfAmx2.img_shadow_vis_cf (lib/Reusable/YGcfAmx2.v:48-50) at image B's CfImgB.CfImg_B,
    i.e. over [cf_img_lo, cf_img_top) = [IMG_LO_B, IMG_TOP_B) (lib/AU/CfImgB.v:60-62), as the allocator lane's
-   FuzzStrdupB (commit e8c226ad89c3, lib/B/Prog/FuzzStrdupB.v:301-305) states it, with
+   FuzzStrdupB (lib/B/Prog/FuzzStrdupB.v:301-305) states it, with
    ARcf segs B -> ARx: this row's stage Sections take the allocator relation ARx as a Variable, as the contract
    texts do. At ARx := ARcf (ci := CfImg_B) segs B it IS the
    instance owner's definition at ci := CfImg_B (crt3_img_shadow_vis_B_a8, both directions by the identity; ARcf
@@ -458,7 +459,7 @@ Section t3img. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {PA : PAImg B_pro
 #[local] Notation SEGS := (@pa_segs _ B_prog_listing PA).
 #[local] Notation VAL := (@pa_val _ B_prog_listing PA).
 #[local] Notation BASE := (@pa_val _ B_prog_listing PA A_TEXT).
-(* Crt102Img's Section b hypotheses, the two this file reads (B' values in Crt102Img.v:1002-1008) *)
+(* Crt102Img's Section b hypotheses, the two this file reads (B' values in Crt102Img.v:1003-1009) *)
 Hypothesis HB_base : BASE = B_prog_base.
 Hypothesis HB_segs : SEGS = B.Img0.rsegs.
 
@@ -547,7 +548,7 @@ Context {ly : alayout} {S : astate} {Hp : list Z} {W : world SEGS} {regs : bvmap
   {CTX0 : list (list Z)}.
 #[local] Notation sp0 := (spZ regs).
 #[local] Notation sp1 := (CRT_sp1 (regs := regs)).
-(* crt_side / crt_live take no rp_* since 11c39f7e88b7 (the position moved to crt_pos) *)
+(* crt_side / crt_live take no rp_* (the position moved to crt_pos) *)
 #[local] Notation liveB := (crt_live (rc := rc) (PI := prh_img_B) (RL := RL) (SK := SK) (L := B_prog_listing)
   (PA := PA) (B := B) (ARx := ARx)
   (ly := ly) (S := S) (Hp := Hp) (W := W) (regs := regs) (mem := mem) (md := md) (doc := doc) (t := t) (D := D)
@@ -742,7 +743,7 @@ Definition crt_at_O1_3 (fxk : YK11.FPState) (lyc : alayout) (Sc : astate) (Hpc :
      crt3_copy_tblk Dc /\
      crt3_copy_fo Wc memc Lamc (F_ lyc pos + CRT_OFF_COPY) Dc).
 
-(* ---- the stage statements: each boundary is `the run from this configuration reaches QF` (Crt102Glue.v:244-247).
+(* ---- the stage statements: each boundary is `the run from this configuration reaches QF` (Crt102Glue.v:245-248).
    CRT3_X is the glue's CRT_B_AT_X at CRT_PC := CRT_PC_B, CRT_X_OFF := CRT_X_OFF_B, convertible to it
    (Crt102B_T3.v checks it by reflexivity). ---- *)
 Definition CRT3_X : Prop :=

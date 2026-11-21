@@ -1,6 +1,6 @@
 (* Theorem Labs, 2026-10: fuzz_preset, image B' (asan-ubsan, #102 pin d663f82d7f48, unstripped twin c90d4fa54d43):
    check_reject_clean at the B' live instance (CrcBInstLive.v check_reject_clean_holds_B_inst_live, the kit's text
-   tcheck_reject_clean_specX at the cut 7cdbb61b5fa0) with the bcmp row CITED (lead's order 14:4xZ; row of
+   tcheck_reject_clean_specX at the cut) with the bcmp row CITED (lead's order 14:4xZ; row of
    a Theorem Labs lane).
    rule 24: no function proved. rule 24: proves no function (kind: instance corollary citing a proved row).
    Instance (CrcBInstLive.v's): B := YD2l.TfibB, PA := PI_prog_B (L := B_prog_listing), PI := prh_img_B,

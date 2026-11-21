@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's input, mmap base and entry draw). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation Strings.String.
 From stdpp Require Import gmap.
@@ -60,10 +61,10 @@ Section MainA0.
   Hypothesis FZ : fuzz_one_stmtA FI AI (JA FI AI) PZ.
 
   Hypothesis GLUE : forall inp en msF mo,
-    valid_input inp -> valid_entry imgA0 en inp -> alloc_ceiling = LO (en_sp en) -> H_MAIN_A0 inp en msF mo ->
+    valid_input inp -> valid_entry imgA0 en inp -> alloc_ceiling = bv_unsigned (en_sp en) - 8388608 -> H_MAIN_A0 inp en msF mo ->
     exists g, INVA (mkCfg msF mo) g
-         /\ rat_mainA FI AI PZ (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en) (restrict (g_H g) msF) g
-         /\ entry_stack_fits (en_sp en) (in_argv inp) (in_envp inp).
+         /\ rat_mainA FI AI PZ (en_sp en) (in_argv inp) (in_envp inp) inp (en_mmap_base en) (en_draw en) (restrict (g_H g) msF) g
+         /\ img_fits (en_sp en) (in_argv inp) (in_envp inp) inp (en_mmap_base en) (en_draw en).
 
   #[using="MCI MSI SNI FPS FP4 FPB"] Lemma FPR : @fprintf_diag_stmt HC ASt.
   Proof. exact (fprintf_diag_proof MCI MSI SNI FPS FP4 FPB). Qed.
@@ -75,17 +76,17 @@ Section MainA0.
   Proof. intros TID HT. exact (exit_k_proofA TID HT DT). Qed.
 
   Definition H_MAIN_HC (inp : ProcInput) (en : ExecEntry) (ms : machine_state) (mo : Model) : Prop :=
-    H_MAIN_A0 inp en ms mo /\ alloc_ceiling = LO (en_sp en).
+    H_MAIN_A0 inp en ms mo /\ alloc_ceiling = bv_unsigned (en_sp en) - 8388608.
 
   Definition QLEAF (inp : ProcInput) (en : ExecEntry) (r : exc (at_parser (ptr:=unit) * ASt)) (msF : machine_state) (a : gst) : Prop :=
     match r with
-    | Ok p => QPARSER FI AI PZ (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en) (fst p) (snd p) (restrict (g_H a) msF) a
+    | Ok p => QPARSER FI AI PZ (en_sp en) (in_argv inp) (in_envp inp) inp (en_mmap_base en) (en_draw en) (fst p) (snd p) (restrict (g_H a) msF) a
     | Unr => True
     end.
 
   #[using="HG FI AI PZ AMS AC BSR MCI MSI SNI RDF RDB FWF FWB VPF VPB VFF VFB FPS FP4 FPB DT PZ_agree FZ GLUE"] Theorem main_realizesA : MAIN H_MAIN_HC RSVA.
   Proof.
-    refine (AssembleA0.main_realizes RSVA H_MAIN_HC gst VA INVA ATNA GOODA VA_meq VA_fs NODE_A _ QLEAF _ _).
+    refine (AssembleA0.main_realizes RSVA H_MAIN_HC gst VA INVA ATNA GOODA VA_meq VA_fs NODE_A ROB_A _ QLEAF _ _).
     -   intros ms mo a [HF HZ]. exists (strip_vm (VA a mo)).
       pose proof (lf_minv _ _ _ _ _ HF) as (M & _). pose proof (lf_halt _ _ _ _ _ HF) as Hh.
       split; [unfold meq, VA; rewrite m_fds_strip_vm, m_fs_strip_vm; split; reflexivity|].
@@ -96,13 +97,13 @@ Section MainA0.
       assert (VSP : valid_sp (en_sp en)).
       { pose proof (valid_input_va_size _ VI) as Hsv48. destruct en as [sp brk mb dr]. rewrite (valid_entry_sv48 _ _ _ Hsv48) in VE. cbn [imgA0] in VE. cbn. exact (proj1 VE). }
       exists g. split; [exact HINV|].
-      pose proof (main_djM FI AI AMS PZ PZ_agree (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en)
+      pose proof (main_djM FI AI AMS PZ PZ_agree (en_sp en) (in_argv inp) (in_envp inp) inp (en_mmap_base en) (en_draw en)
                     VSP CEIL VARGV ESF AC FPR EXK FWR MCI RDF RDB BSR _ g RM) as DJ.
       pose proof (DJ ms (proj1 (proj2 HINV)) eq_refl) as HI.     cbv beta in HI.
       eapply implS_mono; [exact HI|]. intros [|[ap so]] ms' a'; cbn [QLEAF fst snd]; intros H; exact H.
     -   intros inp en ap so ms a mo HQ [HF [HZ HV]] HFa HB.     cbn [QLEAF fst snd] in HQ.
       pose proof HQ as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & (VSP & CEIL & ESF) & _).
-      eapply (leaf_realizesA FI AI AMS PZ PZ_agree (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en)
+      eapply (leaf_realizesA FI AI AMS PZ PZ_agree (en_sp en) (in_argv inp) (in_envp inp) inp (en_mmap_base en) (en_draw en)
                 VSP CEIL ESF AC FZ EMIT EXK ap so _ a ms mo HQ); [| exact HFa].
       split; [exact HZ|]. split; [reflexivity| split; [exact HF| split; [exact HZ| exact HV]]].
   Qed.

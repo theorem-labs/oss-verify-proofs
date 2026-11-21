@@ -5,9 +5,10 @@
    W_frame.v's generated frm_off_imgP states the shared core's off_img (Reusable/YCbq.v), whose top is image A's
    0x5fb000; that is true on B but too weak there, because image B's objects reach 0x5fc000 (W_kit.v pa_obj_img), and a
    walk that separates a fake frame from the GOT or the shadow cell needs the frame above B's top.  Taken verbatim from
-   BRigPro's rgp_frm_off_imgB (lib/B/W_rig_pro.v:325-338 on a working branch e97a7e3f2ce), so walks cite one
+   BRigPro's rgp_frm_off_imgB (lib/B/W_rig_pro.v:326-339 on a working branch), so walks cite one
    lemma instead of local copies.  Its image numbers (base 0x10000, top 0x5fc000) are checked against the image by
    chkbottom.py (sha256 f4eb61789f3c; internal record). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

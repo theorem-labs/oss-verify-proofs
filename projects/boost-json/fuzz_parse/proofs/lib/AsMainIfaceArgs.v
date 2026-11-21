@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: statements written out as text, lemmas added for the revision, the launch input as a ProcInput. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib Require Top0Gc4. (* [comment removed for export] *)
@@ -17,7 +18,7 @@ From OSSVerify.Proofs.boost_json.fuzz_parse.lib Require Import
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib.As Require Import AsMainSyms.
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib.Lib Require Import Nd.
 Require Import OSSVerify.Proofs.boost_json.fuzz_parse.lib.Lib.CDef.
-Local Ltac2 zQ s := CDef.cdeft "37Corelib4Init9Datatypes04bool04andb79OSSVerify6Proofsaboost_jsonafuzz_parse3libfAsMainIfaceArgs7AT_MAIN~~~~~~i46isSome69OSSVerify6Proofsaboost_jsonafuzz_parse3lib8AsMainVM~~~~~~n78lin_ofxB79OSSVerify6Proofsaboost_jsonafuzz_parse3lib8AsanPlan2AP~~~~~~rd2kn79OSSVerify6Proofsaboost_jsonafuzz_parse3libaAxSymExec33AX2~~~~~~hg03lin69OSSVerify6Proofsaboost_jsonafuzz_parse3libbAsMainFacts~~~~~~hk88has_factrd5e_sp0rd6e_str003fst03nat37Corelib7Numbers7BinNumshqd1Z69OSSVerify6Proofsaboost_jsonafuzz_parse3libbAsMainCells~~~~~~hsb9all_holesrd3acsrd9atr_entryrd8e_argv1wrd6e_atrbrd6e_str1rd8kw_argv1hg05KWordhg02SAhg04expr79OSSVerify6Proofsaboost_jsonafuzz_parse3libbAxSymExec3B4AX2B~~~~~~im74bctxim74mkbc04true37Corelib4Init5Logicis02eqi4aargs_checkhqd4Npos35stdpp9bitvectorbdefinitionsiuf2bv06length04list03nil37Corelib5Lists7ListDefji53nth3h5LinuxProcessSemanticsfLinuxProcessSem5Statejk37in_argvhk82vE46Stdlib6ZArith6BinInt1Zjo26of_natjo23mulis03andjk37in_envpjo23addjo22lejo23sub3h5LinuxProcessSemanticsfLinuxProcessSembStackLayoutjt1h1build_stack_bytesjk38in_hwcapjk36in_uid69OSSVerify6Proofsaboost_jsonafuzz_parse3libcAsPlanImages~~~~~~kj13APH79OSSVerify6Proofsaboost_jsonafuzz_parse3libdAsanPlanSound3APS~~~~~~kn72uEhg06lin_of79OSSVerify6Proofsaboost_jsonafuzz_parse3libfAxSymExec3Sound4AX2S~~~~~~ksb4lden04prod04pair04conshg04EVar03sndiufbbv_unsignedjo23pow37Corelib4Init5Peanolkf2ltji56firstn69OSSVerify6Proofsaboost_jsonafuzz_parse3lib7CatExec~~~~~~ln3ccat_argv_ptr69OSSVerify6Proofsaboost_jsonafuzz_parse3lib8PropExec~~~~~~lrdh3total_arg_bytes_nat04Some06optionis02ex3h5LinuxProcessSemanticsfLinuxProcessSem3Runmi4h1entry_stack_imagejt1cstack_to_mem79OSSVerify6Proofsaboost_jsonafuzz_parse3lib3Lib3Mem~~~~~~mn62wajo22lthk83Xofhk8chole_granted69OSSVerify6Proofsaboost_jsonafuzz_parse3libbAsMainIface~~~~~~mt37pm_vmemkj15ASEGSlrd3rdniuf7Z_to_bv79OSSVerify6Proofsaboost_jsonafuzz_parse3lib2As9AsMainPre~~~~~~nj77astr_at3h5LinuxProcessSemanticsfLinuxProcessSemeRiscvSemanticsno1h0word_to_le_byteshg06edenotlkf2le69OSSVerifyaboost_jsonafuzz_parse6images4Asan1M~~~~~~ntdfloaded_segments36Stdlib5Lists4Listoi59nth_errormi48valid_spmi49valid_brkmi4avalid_argvmi4avalid_envpmi4h0entry_stack_fits69OSSVerify6Proofsaboost_jsonafuzz_parse3libcAsStartupHSF~~~~~~oof8HSF_asanjk35in_fs69OSSVerify6Proofsaboost_jsonafuzz_parse3lib8AsImages~~~~~~ou36ASAN_H69OSSVerify6Proofsaboost_jsonafuzz_parse3lib8AsanInit~~~~~~pi85LIMITpi85SINV0pi85argH0kn75cs_ok" s.   (* [comment removed for export] *)
+Local Ltac2 zQ s := CDef.cdeft "37Corelib4Init9Datatypes04bool04andb79OSSVerify6Proofsaboost_jsonafuzz_parse3libfAsMainIfaceArgs7AT_MAIN~~~~~~i46isSome69OSSVerify6Proofsaboost_jsonafuzz_parse3lib8AsMainVM~~~~~~n78lin_ofxB79OSSVerify6Proofsaboost_jsonafuzz_parse3lib8AsanPlan2AP~~~~~~rd2kn79OSSVerify6Proofsaboost_jsonafuzz_parse3libaAxSymExec33AX2~~~~~~hg03lin69OSSVerify6Proofsaboost_jsonafuzz_parse3libbAsMainFacts~~~~~~hk88has_factrd5e_sp0rd6e_str003fst03nat37Corelib7Numbers7BinNumshqd1Z69OSSVerify6Proofsaboost_jsonafuzz_parse3libbAsMainCells~~~~~~hsb9all_holesrd3acsrd9atr_entryrd8e_argv1wrd6e_atrbrd6e_str1rd8kw_argv1hg05KWordhg02SAhg04expr79OSSVerify6Proofsaboost_jsonafuzz_parse3libbAxSymExec3B4AX2B~~~~~~im74bctxim74mkbc04true37Corelib4Init5Logicis02eqi4aargs_checkhqd4Npos35stdpp9bitvectorbdefinitionsiuf2bv06length04list03nil37Corelib5Lists7ListDefji53nth3h5LinuxProcessSemanticsfLinuxProcessSem5Statejk37in_argvhk82vE46Stdlib6ZArith6BinInt1Zjo26of_natjo23mulis03andjk37in_envpjo23addjo22lejo23sub3h5LinuxProcessSemanticsfLinuxProcessSembStackLayoutjt1h1build_stack_bytesjk38in_hwcapjk36in_uid69OSSVerify6Proofsaboost_jsonafuzz_parse3libcAsPlanImages~~~~~~kj13APH79OSSVerify6Proofsaboost_jsonafuzz_parse3libdAsanPlanSound3APS~~~~~~kn72uEhg06lin_of79OSSVerify6Proofsaboost_jsonafuzz_parse3libfAxSymExec3Sound4AX2S~~~~~~ksb4lden04prod04pair04conshg04EVar03sndiufbbv_unsignedjo23pow37Corelib4Init5Peanolkf2ltji56firstn69OSSVerify6Proofsaboost_jsonafuzz_parse3lib7CatExec~~~~~~ln3ccat_argv_ptr69OSSVerify6Proofsaboost_jsonafuzz_parse3lib8PropExec~~~~~~lrdh3total_arg_bytes_nat04Some06optionis02ex3h5LinuxProcessSemanticsfLinuxProcessSem3Runmi4h1entry_stack_imagejt1cstack_to_mem79OSSVerify6Proofsaboost_jsonafuzz_parse3lib3Lib3Mem~~~~~~mn62wajo22lthk83Xofhk8chole_granted69OSSVerify6Proofsaboost_jsonafuzz_parse3libbAsMainIface~~~~~~mt37pm_vmemkj15ASEGSlrd3rdniuf7Z_to_bv79OSSVerify6Proofsaboost_jsonafuzz_parse3lib2As9AsMainPre~~~~~~nj77astr_at3h5LinuxProcessSemanticsfLinuxProcessSemeRiscvSemanticsno1h0word_to_le_byteshg06edenotlkf2le69OSSVerifyaboost_jsonafuzz_parse6images4Asan1M~~~~~~ntdfloaded_segments36Stdlib5Lists4Listoi59nth_errormi48valid_spmi49valid_brkmi4avalid_argvmi4avalid_envpmi4h0entry_stack_fits69OSSVerify6Proofsaboost_jsonafuzz_parse3libcAsStartupHSF~~~~~~oof8HSF_asanjk35in_fs69OSSVerify6Proofsaboost_jsonafuzz_parse3lib8AsImages~~~~~~ou36ASAN_H69OSSVerify6Proofsaboost_jsonafuzz_parse3lib8AsanInit~~~~~~pi85LIMITpi85SINV0pi85argH0kn75cs_okkj14A_PC69OSSVerify6Proofsaboost_jsonafuzz_parse3lib9AsanInitPpof5SINVmpof5argHp" s.   (* [comment removed for export] *)
 Import ListNotations. Import AX2. Import AX2S. Import AX2B. Import APC. Import AP. Import APS. Import APSX.
 Open Scope Z_scope.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
@@ -34,7 +35,7 @@ Section AT_MAIN.
   Hypothesis Vev : ltac2:(zQ "20!omc!jr2@1$0@1$1?3inp").
   Hypothesis Vfit : ltac2:(zQ "30!ona!jn1!jr2@3$0?3sp0@1$1?3inp@1$2?3inp").
   Hypothesis Hh : ltac2:(zQ "50!ih6!mh0!mh6!it4!ose@3$3@1$2$0@1$4?1h@2$1$0?2ch").
-  Hypothesis HC : ltac2:(zQ "c0!jn1!jr2!khb!ki7!kn0!ota!phe!nhc!pm3!pmc!pn5!pne@b$b$7$6$8@8$9$4?3sp0?5rdraw?4brk0@1$0?3inp@1$1?3inp@1$3?3inp@1$2?3inp@7$a$4?3sp0?5rdraw@1$0?3inp@1$1?3inp@1$3?3inp@1$2?3inp@1$5?3inp?1E?2ch?1R?4FULL?5model").
+  Hypothesis HC : ltac2:(zQ "90!pne!nhc!phe!pm3!ps5!kn0!po7!pse!ota@b$0$1$2$3@6$4$5$6?3sp0?5rdraw?4brk0?3inp@3$7?3sp0?5rdraw?3inp@1$8?3inp?1E?2ch?1R?4FULL?5model").
   #[local] Notation g := (hole_granted h).
   #[local] Notation cls := (hole_class h).
   #[local] Notation X := (Xof g E).
@@ -173,12 +174,22 @@ Section AT_MAIN.
   #[local] Notation rdn_Mr_full := (AsMainCells.rdn_Mr_full sp0 brk0 rdraw inp ch E FULL model) (only parsing).
 
   (* [comment removed for export] *)
-  #[local] Notation MR := (Mr ASAN_H (argH0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) E ch model FULL).
-  #[local] Notation HID := (hid ASAN_H (argH0 APH sp0 rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) E ch model).
+  #[local] Notation MR := (Mr ASAN_H (AsanInitP.argHp sp0 rdraw inp) E ch model FULL).
+  #[local] Notation HID := (hid ASAN_H (AsanInitP.argHp sp0 rdraw inp) E ch model).
   #[local] Notation argv := (in_argv inp).
   #[local] Notation envp := (in_envp inp).
   #[local] Notation envc := (Z.of_nat (length (in_envp inp))).
-  #[local] Notation BSB := (build_stack_bytes APH sp0 (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) rdraw).
+  (* LPS 727298f3: the entry block is [entry_stack_image inp mb APH ENTW sp0 rdraw], laid at a launch
+     base [mb] that [SINVm] binds existentially, so no single block is named here.  Its top [UTOP]
+     (the stack VMA's end), its head [CHD] (sp0 to the top of the AT_RANDOM bytes), the string bytes
+     [LSTR] (argv, envp, the exec name, each with its NUL) and argv[0]'s address [STRB] are
+     functions of the run alone (StackLayout.block_head_size, CatExec.cat_string_off); the
+     restatement of boost-beast/http_request's As/AsMainIfaceArgs.v. *)
+  #[local] Notation UTOP := (bv_unsigned (ed_top rdraw)).
+  #[local] Notation CHD := (Z.of_nat (block_head_size (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp))).
+  #[local] Notation LSTR := (Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp) (in_execfn inp))).
+  #[local] Notation STRB := (sp0z + Z.of_nat (cat_string_off (kb_rseq (in_kernel inp)) sp0 (ed_top rdraw) (in_argv inp) (in_envp inp) (in_execfn inp))).
+  #[local] Notation ENTW := (Z_to_bv 64 (Z.of_N A_PC)).
   Let KNF := co_know _ _ _ _ _ _ _ _ _ _ _ HC.
 
   (* [comment removed for export] *)
@@ -190,18 +201,42 @@ Section AT_MAIN.
   (* [comment removed for export] *)
   Lemma cs_v3 : ltac2:(zQ "b0!iu7!jgc!jh2!jha!ji0!it4!jjc!hs6!jn1!jnc!jpa@3$5$7@2$9?1EN3@1$a@2$2@1$1@1$0#8@4$6@1$3@1$1@1$0#8N0@1$8?3inp@1$4@1$1@1$0#8").
   Proof.
-    destruct (co_sinv _ _ _ _ _ _ _ _ _ _ _ HC) as [HE _]. unfold vE. rewrite (HE 3%nat) by (unfold NX0; lia).
-    cbn [ev E0 vals0 nth]. apply u_of_Z.
+    pose proof (AsanInitP.SINVm_ev _ _ _ _ _ _ _ _ (co_sinv _ _ _ _ _ _ _ _ _ _ _ HC)) as HE. unfold vE. rewrite (HE 3%nat) by (unfold NX0; lia).
+    unfold AsanInitP.E0p. cbn [ev AsanInit.E0 AsanInit.vals0 nth]. apply u_of_Z.
     npose Vav as (Hl & _ & Hs & _ & _). assert (Hin : In (nth 0 argv []) argv) by (apply nth_In; lia).
     pose proof (proj1 (Forall_forall _ _) Hs _ Hin) as L. cbv beta in L. lia.
   Qed.
-  Lemma W_facts : ltac2:(zQ "h30!jh2!iu7!jnc!jq4!jpa!jgc!jha!jqb!jn1!jr2!jrd!js4!jsa!it4!hs6!kg5!khb!ki7!kn0@2$7@2$bZ@2$2?1EN4@2$7@3$d$e@2$3+8@2$2?1EN4@2$c@2$c@1$4@2$0@1$5@1$1#8@7$f$h2?3sp0@1$8?3inp@1$9?3inp@1$h1?3inp@1$h0?3inp?5rdraw+h0@2$a@2$a@2$3+8@1$4@2$0@1$6@1$5@1$1#8@1$8?3inp@2$3+8@1$4@2$0@1$6@1$5@1$1#8@1$9?3inp+r8@2$b@2$2?1EN4+kkls0").
+
+  (* LPS 727298f3: the block's arithmetic at a launch base [mb].  [Run.valid_launch_sp] puts sp0
+     between [launch_sp_lo] and [launch_sp_hi], so the [arch_align_stack] pad
+     [StackLayout.block_pad_len] does not clamp and is at most 4110; argv[0] sits [LSTR + 8] below
+     the stack VMA's end; [Run.valid_stack_top_va] keeps that end at or below STACK_TOP
+     ([PropExec.entry_page_top_within_window]).  Text of boost-beast/http_request. *)
+  Lemma launch_lay : forall mb, entry_launch_ok_va Sv48 (mkEntry sp0 brk0 mb rdraw) inp ->
+    0 <= Z.of_nat (block_pad_len (kb_rseq (in_kernel inp)) sp0 (ed_top rdraw) argv envp (in_execfn inp)) <= 4110
+    /\ STRB + LSTR + 8 = UTOP /\ UTOP <= 0x800000000000.
   Proof.
-    npose (AsanInit.W_range APH sp0 rdraw argv envp (in_uid inp) (in_hwcap inp) Vav Vev) as (W1 & W2 & W3).
-    destruct (co_sinv _ _ _ _ _ _ _ _ _ _ _ HC) as [HE _]. unfold vE. rewrite (HE 4%nat) by (unfold NX0; lia).
-    cbn [ev E0 vals0 nth]. rewrite u_of_Z by lia. repeat split; lia.
+    intros mb Hlau.
+    pose proof (entry_page_top_within_window Sv48 inp mb sp0 brk0 rdraw Hlau) as HT.
+    unfold entry_page_top, va_stack_top, sp_window_hi in HT.
+    cbn [entry_launch_ok_va] in Hlau. destruct Hlau as (_ & Hsw & _). destruct Hsw as (_ & Hslo & Hshi).
+    unfold launch_sp_lo, launch_sp_hi, align_down16 in Hslo, Hshi.
+    pose proof (Z.mod_pos_bound (UTOP - 8 - LSTR) 16 ltac:(lia)).
+    pose proof (Z.mod_pos_bound (UTOP - 8 - LSTR - 4095) 16 ltac:(lia)).
+    unfold cat_string_off, block_pad_len. rewrite Nat2Z.inj_add, Z2Nat.id by lia.
+    split; [lia|]. split; lia.
   Qed.
 
+  (* V_W (vals0 index 4) is the [arch_align_stack] pad, 0..4110, between the AT_RANDOM bytes and
+     argv[0]; it no longer counts words up to the old fixed string offset 184 *)
+  Lemma W_facts : 0 <= vE E 4 <= 4110 /\ STRB = sp0z + CHD + vE E 4.
+  Proof.
+    pose proof (AsanInitP.SINVm_ev _ _ _ _ _ _ _ _ (co_sinv _ _ _ _ _ _ _ _ _ _ _ HC)) as HE.
+    destruct args_block as (mb & (_ & Hlau) & _). pose proof (launch_lay mb Hlau) as (HP & _).
+    unfold vE. rewrite (HE 4%nat) by (unfold NX0; lia).
+    unfold AsanInitP.E0p. cbn [ev AsanInit.E0 AsanInit.vals0 nth]. rewrite u_of_Z by lia.
+    unfold cat_string_off. rewrite Nat2Z.inj_add. split; lia.
+  Qed.
   (* [comment removed for export] *)
   Lemma no_wrap : ltac2:(zQ "d0!it4!h8!ira!hs6!me!r2!vb!krb!ilf!hk1!ks1!ir2!lh2>1e$8>0@3$0$1@2$4$9@2$5@1$b@1$6?2ch^1$2@3$0$3@2$7?1E^2@2$c?1E@1$a^2").
   Proof.
@@ -213,77 +248,145 @@ Section AT_MAIN.
   (* [comment removed for export] *)
   Lemma lin_e_sp0 : ltac2:(zQ "c0!hs6!ilf!lha!li0!li6!lic!jha!ji0!it4!hp2!hk1!ks1@3$8$a@1$b$9@4$3$0@1$6@2$2$0$1Z@3$4@2$2$0$1@4$3$0$1+ogg0@1$5N0@3$4@2$2$0$1@4$3$0$1+hgg0@1$5N6@3$4@2$2$0$1@4$3$0$1+h0@1$5Na@1$7@2$2$0$1").
   Proof. vm_compute. reflexivity. Qed.
-  Lemma lin_e_str0 : ltac2:(zQ "c0!hs6!ilf!lha!li0!li6!lic!jha!ji0!it4!hpa!hk1!ks1@3$8$a@1$b$9@4$3$0@1$6@2$2$0$1+r8@3$4@2$2$0$1@4$3$0$1+ogg0@1$5N0@3$4@2$2$0$1@4$3$0$1+8@1$5N1@3$4@2$2$0$1@4$3$0$1+8@1$5N2@3$4@2$2$0$1@4$3$0$1+hgg0@1$5N6@3$4@2$2$0$1@4$3$0$1+h0@1$5Na@1$7@2$2$0$1").
+  (* LPS 727298f3: argv[0] is [e_atrandom + 16 + V_W] (AsanPlanCore), so its linear form holds the
+     pad, the STACK_ROUND gap and the CONFIG_RSEQ flag; the AT_RANDOM bytes sit 456 above e_atrb's base *)
+  Lemma lin_e_str0 : lin_of e_str0 = (472, [(32768, EVar 0); (8, EVar 1); (8, EVar 2); (1, EVar 4); (4096, EVar 6); (16, EVar 10); (8, EVar 11); (32, EVar 12)]).
   Proof. vm_compute. reflexivity. Qed.
-  Lemma lin_e_str1 : ltac2:(zQ "c0!hs6!ilf!lha!li0!li6!lic!jha!ji0!it4!ijc!hk1!ks1@3$8$a@1$b$9@4$3$0@1$6@2$2$0$1+r9@3$4@2$2$0$1@4$3$0$1+ogg0@1$5N0@3$4@2$2$0$1@4$3$0$1+8@1$5N1@3$4@2$2$0$1@4$3$0$1+8@1$5N2@3$4@2$2$0$1@4$3$0$1+1@1$5N3@3$4@2$2$0$1@4$3$0$1+hgg0@1$5N6@3$4@2$2$0$1@4$3$0$1+h0@1$5Na@1$7@2$2$0$1").
+  Lemma lin_e_str1 : lin_of e_str1 = (473, [(32768, EVar 0); (8, EVar 1); (8, EVar 2); (1, EVar 3); (1, EVar 4); (4096, EVar 6); (16, EVar 10); (8, EVar 11); (32, EVar 12)]).
   Proof. vm_compute. reflexivity. Qed.
-  Lemma lin_e_atrb : ltac2:(zQ "f0!hs6!ilf!lha!li0!li6!lic!it4!ij3!hq3!jha!ji0!lj4!jqb!hk1!ks1@2$c@3$6$d@1$e@3$8$1$0$7@4$3$0@1$9@2$2$0$1Z@3$4@2$2$0$1@4$3$0$1+ogg0@1$5N0@3$4@2$2$0$1@4$3$0$1+8@1$5N1@3$4@2$2$0$1@4$3$0$1+8@1$5N2@3$4@2$2$0$1@4$3$0$1+8@1$5N4@3$4@2$2$0$1@4$3$0$1+hgg0@1$5N6@3$4@2$2$0$1@4$3$0$1+h0@1$5Na@1$a@2$2$0$1@3$6$0@3$b$1$0$7+r8").
+  Lemma lin_e_atrb : lin_of (fst e_atrb) = (0, [(32768, EVar 0); (8, EVar 1); (8, EVar 2); (4096, EVar 6); (16, EVar 10); (8, EVar 11); (32, EVar 12)]) /\ snd e_atrb = 456.
   Proof. vm_compute. split; reflexivity. Qed.
 
-  Lemma arg_facts : ltac2:(zQ "i59!iu7!jrd!jgc!it4!jh2!jqb!hs6!jpa!jha!jn1!krb!jq4!lj9!h8!ira!jr2!ho6!vb!ij3!hp2!hpa!ilf!hq3!ji0!lj4!jjc!kg5!khb!ki7!kn0!ihc!ii8!ijc!ik5!il0!il9!jsa&@2$4@1$8@1$2@1$0#8@1$9?3inp&@1$7~0&@2$b+8~1&@2$1@2$c@1$0#k0?3sp0~2&@2$4@1$8@1$2@1$0#8@1$f?3inp&@1$7~4&@2$b+8~5&@2$1~3~6&@2$1~7+r8@2$5@3$3$d@2$h0@1$h1?2ch@3$i2@2$i3$h3+8N8$h4$e@2$5@3$3$d@2$h0@1$h1?2ch@1$i1$hf$e@2$5@3$3$d@2$h0@1$h1?2ch$he$e@2$5@3$3$6@2$a?1E$h3@2$c@1$0#k0?3sp0@2$5@3$3$6@2$a?1E$h4~8@2$5@3$3$6@2$a?1E$i0@2$1@2$1~8@1$7@2$4@1$2@1$0#8@4$h9@1$8@1$2@1$0#8N0@1$9?3inp@1$h7@1$2@1$0#8+1@3$3$6@2$1@2$a?1E@3$h6$h5$6$h2@3$h8$h5$6$h2@2$i4@2$1@2$c@1$0#k0?3sp0@1$7@2$4@1$2@1$0#8@7$ha$hd?3sp0@1$9?3inp@1$f?3inp@1$hc?3inp@1$hb?3inp?5rdraw+h0").
+  Lemma arg_facts :
+    has_fact (kn ch) (KWord (SA e_sp0 8) 8 e_str0) = true /\ has_fact (kn ch) (kw_argv1 e_argv1w) = true /\ has_fact (kn ch) atr_entry = true
+    /\ uE E e_sp0 = sp0z /\ uE E e_str0 = STRB
+    /\ uE E e_str1 = STRB + Z.of_nat (length (nth 0 argv [])) + 1
+    /\ uE E (fst e_atrb) + snd e_atrb = sp0z + CHD - 16.
   Proof.
     pose proof args_check_ok as H0. unfold args_check in H0. pose proof (all_holes_here _ H0) as H. cbv beta in H. clear H0.
-    apply andb_prop in H as [H N4]. apply andb_prop in H as [H N3]. apply andb_prop in H as [H N2]. apply andb_prop in H as [H N1].
+    apply andb_prop in H as [H _]. apply andb_prop in H as [H _]. apply andb_prop in H as [H _]. apply andb_prop in H as [H _].
     apply andb_prop in H as [H F3]. apply andb_prop in H as [F1 F2].
-    npose (facts sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Hh HC) as (_ & _ & _ & _ & _ & _ & _ & _ & SP & _ & _ & V1 & V2 & _).
-    pose proof cs_v3 as V3. npose W_facts as (W1 & W2 & W3).
+    (* LPS 727298f3: the plan's stack pointer and argv[0] pointer through [SINVm] (AsanInitP), not
+       through the old literal offset 184 (the text of boost-beast/http_request) *)
+    pose proof (co_sinv _ _ _ _ _ _ _ _ _ _ _ HC) as SI.
+    pose proof (AsanInitP.SINVm_sp0 _ _ _ _ _ _ Vsp Vav Vev _ _ SI) as USP.
+    rewrite e_sp0_early_eq in USP.
+    pose proof (AsanInitP.SINVm_vals _ _ _ _ _ _ Vsp Vav Vev Vfit _ _ SI) as (_ & _ & US0).
+    destruct args_block as (mb & (_ & Hlau) & _). pose proof (launch_lay mb Hlau) as (_ & HS & HT).
+    pose proof W_facts as (W1 & W2). pose proof cs_v3 as V3.
+    pose proof Vsp as [VS1 [VS2 _]]. unfold sp_window_lo, sp_window_hi in VS1, VS2.
+    pose proof Vav as ([Hl _] & _ & Hs & _ & _).
+    assert (HL0 : Z.of_nat (length (nth 0 argv [])) <= 131071).
+    { assert (Hin : In (nth 0 argv []) argv) by (apply nth_In; lia).
+      exact (proj1 (Forall_forall _ _) Hs _ Hin). }
+    pose proof (Nat2Z.is_nonneg (launch_string_bytes argv envp (in_execfn inp))).
+    assert (HCH : 16 <= CHD) by (unfold block_head_size; cbv zeta; lia).
     split; [exact F1|]. split; [exact F2|]. split; [exact F3|].
-    rewrite (no_wrap _ N1), (no_wrap _ N2), (no_wrap _ N3), (no_wrap _ N4).
-    pose proof lin_e_atrb as [LA SA]. rewrite lin_e_sp0, lin_e_str0, lin_e_str1, LA, SA.
-    unfold lden. cbn [fst snd tden]. rewrite !uE_var. rewrite V1, V2, V3. repeat split; lia.
+    split; [exact USP|]. split; [exact US0|]. split.
+    - (* e_str1 = e_str0 + (V_L0 + 1), V_L0 = |argv[0]| ([cs_v3]) *)
+      unfold e_str1, eadd, eaddz, uE. unfold uE, AX2S.uE in US0.
+      rewrite !mkAlu_denot, !edenot_lit, !u_add64, US0.
+      change (bv_unsigned (edenot E (EVar V_L0))) with (vE E 3). rewrite V3, (u_of_Z 1) by lia.
+      rewrite (Z.mod_small (Z.of_nat (length (nth 0 argv [])) + 1)) by lia.
+      rewrite Z.mod_small by lia. lia.
+    - (* the AT_RANDOM bytes: e_str0 = e_atrandom + 16 + V_W and STRB = sp0z + CHD + V_W ([W_facts]),
+         so e_atrandom = sp0z + CHD - 16; [e_atrb] splits off its literal (AsanInit.split_u) *)
+      assert (UA : uE E e_atrandom = sp0z + CHD - 16).
+      { pose proof US0 as U. unfold e_str0, eadd, eaddz, uE, AX2S.uE in U.
+        rewrite !mkAlu_denot, !edenot_lit, !u_add64, (u_of_Z 16) in U by lia.
+        change (bv_unsigned (edenot E (EVar V_W))) with (vE E 4) in U.
+        unfold uE. pose proof (u64_range (edenot E e_atrandom)). lia. }
+      assert (Hab : split_lit e_atrandom = (fst e_atrb, snd e_atrb))
+        by (unfold e_atrb; destruct (split_lit e_atrandom); reflexivity).
+      assert (Hak : 0 <= snd e_atrb <= 456) by (vm_compute; split; discriminate).
+      pose proof (split_u E e_atrandom (fst e_atrb) (snd e_atrb) Hab ltac:(lia) ltac:(lia)) as HSU.
+      unfold uE, AX2S.uE in HSU, UA |- *. lia.
   Qed.
 
   (* [comment removed for export] *)
-  Lemma lay : ltac2:(zQ "h17!iu7!jh2!js4!jpa!jgc!jqb!jha!jn1!jr2!jrd!lj9!kg5!khb!ki7!kn0!jq4!lk8&@2$1@1$6@1$4@1$0#8@1$7?3inp&@1$3~0&@2$1@1$6@1$4@1$0#8@1$8?3inp&@1$3~2&@7$b$e?3sp0@1$7?3inp@1$8?3inp@1$d?3inp@1$c?3inp?5rdraw&@2$1@1$4@1$0#8~4&@1$3~5@2$5@2$2@2$9@2$9@2$f+8~1@2$f+8~3+s8~6@2$5@2$2@2$9@2$a@1$0#k0?3sp0~6@2$h0+2+if@2$5@2$5@2$2+1~1@2$2~1+kg0@2$5@2$5@2$2Z~3@2$2~3+hg0@2$5@2$2+nvvvogggggg0@2$a@1$0#k0?3sp0@2$2@2$a@1$0#k0?3sp0+ogggggggggg0").
+  (* LPS 727298f3: the block runs from sp0 to the stack VMA's end [UTOP], with the strings at its top *)
+  Lemma lay :
+    8 * argc + 8 * envc + 200 <= UTOP - sp0z /\ UTOP <= 2 ^ 47 /\ 1 <= argc <= 1024 /\ 0 <= envc <= 256
+    /\ 0x7fff80000000 <= sp0z <= 0x800000000000 /\ STRB + LSTR + 8 = UTOP.
   Proof.
-    pose proof (AsanInit.bsb_ge APH sp0 rdraw argv envp (in_uid inp) (in_hwcap inp)) as [G _].
-    pose proof (AsanInit.usp_fit APH sp0 rdraw argv envp (in_uid inp) (in_hwcap inp) Vfit) as UF.
-    pose proof (AsanInit.len_av APH sp0 rdraw argv envp (in_uid inp) (in_hwcap inp) Vav) as LA.
-    pose proof (AsanInit.len_ev APH sp0 rdraw argv envp (in_uid inp) (in_hwcap inp) Vev) as LE.
-    pose proof Vsp as [V1 [V2 _]]. unfold sp_window_lo, sp_window_hi in V1, V2. repeat split; lia.
+    destruct args_block as (mb & (_ & Hlau) & _). pose proof (launch_lay mb Hlau) as (HP & HS & HT).
+    pose proof Vav as [[LA1 LA2] _]. pose proof Vev as [LE _]. pose proof Vsp as [V1 [V2 _]].
+    unfold sp_window_lo, sp_window_hi in V1, V2.
+    assert (HCH : 8 * argc + 8 * envc + 472 <= CHD).
+    { pose proof (auxv_size_rseq (kb_rseq (in_kernel inp))) as HA. pose proof (rseq_z_range (kb_rseq (in_kernel inp))).
+      unfold block_head_size, block_items. cbv zeta. lia. }
+    assert (HSO : STRB = sp0z + CHD + Z.of_nat (block_pad_len (kb_rseq (in_kernel inp)) sp0 (ed_top rdraw) argv envp (in_execfn inp)))
+      by (unfold cat_string_off; rewrite Nat2Z.inj_add; lia).
+    pose proof (Nat2Z.is_nonneg (launch_string_bytes argv envp (in_execfn inp))).
+    split; [lia|]. split; [lia|]. split; [lia|]. split; [lia|]. split; lia.
   Qed.
-  Lemma u_ptr : ltac2:(zQ "h11!iu7!jha!jn1!jrd!jgc!jh2!jpa!jr2!jq4!lj9!hq8!it4!lm3!lm9!hs6!lqd!lv8&@2$5@1$1@1$4@1$0#8@1$2?3inp>1k$a>0@2$c^1~0@3$b$e@2$9@1$0#k0@4$f?3sp0@1$2?3inp@1$7?3inp^2@2$3@2$3@2$3@2$3@2$9@1$0#k0?3sp0@2$8+8@1$6~0@2$8+8@1$6@2$5@1$1@1$4@1$0#8@1$7?3inp+r8@1$6@1$h0@3$d@1$1@1$4@1$0#8^2@1$2?3inp").
+
+  (* The k-th argv pointer: argv[k] = argv[0] + the bytes of the strings before it
+     (CatExec.cat_argv_ptr_offset), argv[0] = sp0 + cat_string_off (CatExec.cat_string_base_offset) *)
+  Lemma u_ptr : forall k, (k < length argv)%nat ->
+    bv_unsigned (cat_argv_ptr (ed_top rdraw) argv envp (in_execfn inp) k) = STRB + Z.of_nat (total_arg_bytes_nat (firstn k argv)).
   Proof.
-    intros k Hk. pose proof Vsp as [V1 [V2 _]].
-    rewrite (RefLayout.u_cat_argv_ptr APH sp0 rdraw argv envp (in_uid inp) (in_hwcap inp) Vav Vev V1 V2 k Hk).
-    unfold cat_struct_size. change auxv_size with 160%nat. lia.
+    intros k Hk. pose proof lay as (_ & HT & _ & _ & VS & ST).
+    destruct args_block as (mb & (_ & Hlau) & _).
+    pose proof (total_arg_bytes_firstn_le k argv) as TF. pose proof (length_flatten_strings argv) as LF.
+    unfold launch_string_bytes in ST.
+    rewrite (cat_argv_ptr_offset (ed_top rdraw) argv envp (in_execfn inp) k Hk).
+    rewrite (cat_string_base_offset Sv48 inp mb sp0 brk0 rdraw Hlau).
+    rewrite !word_add_nat_Z2bv.
+    rewrite (u_of_Z (sp0z + _)) by lia.
+    apply u_of_Z. lia.
   Qed.
-  Lemma room : ltac2:(zQ "h30!iu7!jgc!jn1!jh2!jrd!jha!jr2!jpa!lj9!hq8!ji0!lm3!jjc!kg5!khb!ki7!kn0!lqd!js4>1k$9>0@2$b^1@2$3@1$5@1$1@1$0#8@1$2?3inp@2$h2@2$4@2$4@2$8@1$0#k0@4$h1?3sp0@1$2?3inp@1$6?3inp^2@1$7@2$3@1$1@1$0#8@4$c@1$5@1$1@1$0#8^2@1$2?3inp@1$a@1$1@1$0#8+h1@2$4@2$8@1$0#k0?3sp0@1$7@2$3@1$1@1$0#8@7$d$h0?3sp0@1$2?3inp@1$6?3inp@1$f?3inp@1$e?3inp?5rdraw").
+
+  (* Above argv[k]'s NUL lie at least the exec name's NUL and the 8-byte top slot, so ten bytes
+     from argv[k] + |argv[k]| still lie in the block; the old 17 counted the AT_RANDOM bytes, which
+     are no longer above the strings *)
+  Lemma room : forall k, (k < length argv)%nat ->
+    bv_unsigned (cat_argv_ptr (ed_top rdraw) argv envp (in_execfn inp) k) + Z.of_nat (length (nth k argv [])) + 10 <= UTOP.
   Proof.
-    intros k Hk. pose proof Vsp as [V1 [V2 _]].
-    exact (MuslStrlen.argv_ptr_room APH sp0 argv envp (in_uid inp) (in_hwcap inp) rdraw Vav Vev V1 V2 k Hk).
+    intros k Hk. pose proof lay as (_ & _ & _ & _ & _ & ST). rewrite (u_ptr k Hk).
+    pose proof (total_arg_bytes_firstn_within argv k Hk) as TW. pose proof (length_flatten_strings argv) as LF.
+    unfold launch_string_bytes in ST. lia.
   Qed.
 
   (* [comment removed for export] *)
-  (* [comment removed for export] *)
-  (* [comment removed for export] *)
-  Lemma stack_to_mem_some : ltac2:(zQ "h70!iu7!jgc!jn1!jr2!khb!ki7!kn0!lj9!mh0!jh2!mh6!jqb!it4!mhe!hs6!ml0!kg5!mm6!mr0!jrd!js4!mr6!jpa>1x$e>0@2$b@2$h4@2$7@1$0#k0?3sp0^1@2$h5^1@2$h3@2$7@1$0#k0?3sp0@1$h6@2$9@1$1@1$0#8@7$h0$6?3sp0@1$2?3inp@1$3?3inp@1$5?3inp@1$4?3inp?5rdraw@2$d@1$1@1$0#8\1b@1$1@1$0#8@3$c@1$a@1$1@1$0#8@3$h1?3sp0@7$f$6?3sp0@1$2?3inp@1$3?3inp@1$5?3inp@1$4?3inp?5rdraw@1$h2^3@2$8@1$1@1$0#8^1").
+  Lemma stack_to_mem_some : forall mb, entry_launch_ok_va Sv48 (mkEntry sp0 brk0 mb rdraw) inp ->
+    forall (x : Z), sp0z <= x < UTOP ->
+    exists b, stack_to_mem sp0 (entry_stack_image inp mb APH ENTW sp0 rdraw) (wa x) = Some b.
   Proof.
-    intros x Hx. npose lay as (G & UF & LA & LE & VS). unfold stack_to_mem. rewrite !(wa_unsigned x) by lia.
+    intros mb Hlau x Hx. pose proof lay as (_ & HT & _ & _ & VS & _).
+    pose proof (length_entry_stack_image_launch Sv48 inp mb APH ENTW sp0 brk0 rdraw Hlau) as HL.
+    unfold stack_to_mem. cbv zeta. rewrite !(wa_unsigned x) by lia.
     replace (sp0z <=? x) with true by (symmetry; apply Z.leb_le; lia).
-    unfold entry_stack_image. rewrite length_app.
-    destruct (Z.ltb_spec (x - sp0z) (Z.of_nat (length BSB + length (entry_slack sp0 BSB (ed_slack rdraw))))); [|exfalso; lia].
-    destruct (nth_error _ (Z.to_nat (x - sp0z))) as [b|] eqn:Hn; [exists b; reflexivity|].
-    apply nth_error_None in Hn. rewrite length_app in Hn. lia.
+    replace (x - sp0z <? Z.of_nat (length (entry_stack_image inp mb APH ENTW sp0 rdraw))) with true
+      by (symmetry; apply Z.ltb_lt; lia).
+    destruct (nth_error (entry_stack_image inp mb APH ENTW sp0 rdraw) (Z.to_nat (x - sp0z))) as [b|] eqn:Hn; [exists b; reflexivity|].
+    apply nth_error_None in Hn. lia.
+  Qed.
+
+  (* The hidden half of the block is the whole string area [STRB, UTOP) ([AsanInit.argB0]), and the
+     invariant pins it to the image at SOME launch base ([args_block]) *)
+  Lemma block_full : exists mb, AsanInitP.launch_base_ok sp0 rdraw brk0 inp mb /\
+    forall x : Z, STRB <= x < UTOP ->
+      FULL (wa x) = stack_to_mem sp0 (entry_stack_image inp mb APH ENTW sp0 rdraw) (wa x).
+  Proof.
+    destruct args_block as (mb & Hb & HA). exists mb. split; [exact Hb|].
+    intros x Hx. pose proof lay as (_ & HT & _ & _ & VS & _).
+    rewrite <- (wrap_above_sp inp mb APH ENTW sp0 rdraw (wa x)) by (rewrite wa_unsigned by lia; lia).
+    apply HA. unfold AsanInitP.argBp, AsanInit.argB0. cbv beta zeta. rewrite wa_unsigned by lia.
+    unfold cat_string_off in Hx. rewrite Nat2Z.inj_add in Hx.
+    apply orb_true_intro. right. apply andb_true_intro.
+    split; [apply Z.leb_le; lia | apply Z.ltb_lt; lia].
   Qed.
 
   (* [comment removed for export] *)
-  Lemma block_full : ltac2:(zQ "h80!iu7!jrd!jgc!jh2!jn1!jr2!jpa!jha!khb!ki7!kn0!mr0!jq4!lj9!mh6!jqb!it4!hs6!ml0!kg5!mm6!js4!mr6!jsa>1x$h1>0@2$f@2$h5@2$1@2$1@2$1@2$d@1$0#k0?3sp0@2$c+8@1$6@2$3@1$7@1$2@1$0#8@1$4?3inp@2$c+8@1$6@2$3@1$7@1$2@1$0#8@1$5?3inp+r8^1@2$h6^1@2$h7@2$1@2$d@1$0#k0?3sp0@1$6@2$3@1$2@1$0#8@7$h3$a?3sp0@1$4?3inp@1$5?3inp@1$9?3inp@1$8?3inp?5rdraw+h0@3$h0@1$e@1$2@1$0#8@1?4FULL@1$b^2@3$h4?3sp0@7$h2$a?3sp0@1$4?3inp@1$5?3inp@1$9?3inp@1$8?3inp?5rdraw@1$b^2").
+  (* The sixteen AT_RANDOM bytes now sit [CHD - 16] above sp0, below the pad and the strings *)
+  Lemma atr_full : forall x : Z, sp0z + CHD - 16 <= x < sp0z + CHD -> exists b, FULL (wa x) = Some b.
   Proof.
-    intros x Hx. npose lay as (G & UF & LA & LE & VS). npose W_facts as (W1 & W2 & W3).
-    rewrite <- (wrap_above_sp APH sp0 argv envp (wa x) (in_uid inp) (in_hwcap inp) rdraw) by (rewrite wa_unsigned by lia; lia).
-    apply (pmc_args _ _ _ _ _ _ MC). unfold argB0. rewrite wa_unsigned by lia.
-    apply orb_true_intro. right. apply andb_true_intro. split; [apply Z.leb_le; lia | apply Z.ltb_lt; lia].
-  Qed.
-
-  (* [comment removed for export] *)
-  Lemma atr_full : ltac2:(zQ "h64!iu7!jgc!jh2!kg5!jn1!jr2!khb!ki7!kn0!jrd!jpa!lj9!mh0!mh6!jqb!it4!mhe!hs6!mr0!js4!mr6!jsa&@7$3$8?3sp0@1$4?3inp@1$5?3inp@1$7?3inp@1$6?3inp?5rdraw&@2$2@1$1@1$0#8~0&@1$a~1&@2$9@2$b@1$0#k0?3sp0~2>1x$h1>0@2$e@2$h3@2$h5~3+h0^1@2$h4^1~3@2$h0@1$1@1$0#8\1b@1$1@1$0#8@3$f@1$d@1$1@1$0#8@1?4FULL@1$h2^3@2$c@1$1@1$0#8^1").
-  Proof.
-    intros x Hx. npose arg_facts as (_ & _ & F3 & _ & _ & _ & UA). npose lay as (G & UF & _).
+    intros x Hx. pose proof arg_facts as (_ & _ & F3 & _ & _ & _ & UA).
     unfold has_fact in F3. apply existsb_exists in F3 as [K [HK HE]]. apply kentry_eqb_eq in HE. subst K.
     pose proof (proj1 (Forall_forall _ _) KNF _ HK) as KO. unfold atr_entry in KO. cbn [kentry_ok] in KO. ndestruct KO as (FL & LEN & BL).
     unfold elenZ in BL, LEN. fold (uE E (ELit 16)) in BL, LEN. rewrite (uE_lit' 16 ltac:(lia)) in BL, LEN.
-    assert (ES : estart E (SA (fst e_atrb) (snd e_atrb)) = sp0z + Z.of_nat (length BSB) - 16).
+    assert (ES : estart E (SA (fst e_atrb) (snd e_atrb)) = sp0z + CHD - 16).
     { unfold estart. cbn [a_base a_off]. fold (uE E (fst e_atrb)). exact UA. }
     specialize (BL (x - estart E (SA (fst e_atrb) (snd e_atrb))) ltac:(lia)).
     replace (estart E (SA (fst e_atrb) (snd e_atrb)) + (x - estart E (SA (fst e_atrb) (snd e_atrb)))) with x in BL by lia.
@@ -291,13 +394,13 @@ Section AT_MAIN.
   Qed.
 
   (* [comment removed for export] *)
-  Lemma upper_vm_some : ltac2:(zQ "ha0!iu7!jgc!jrd!lj9!jh2!jpa!jha!jn1!jr2!jq4!mh0!mh6!jqb!it4!mhe!hs6!kg5!khb!ki7!mrc!ms3!nh1!kn0!mr0!js4!mr6>1x$f>0@2$c@2$h8@2$2@2$2@2$2@2$3@1$0#k0?3sp0@2$9+8@1$5@2$4@1$6@1$1@1$0#8@1$7?3inp@2$9+8@1$5@2$4@1$6@1$1@1$0#8@1$8?3inp+r8^1@2$h9^1@2$2@2$3@1$0#k0?3sp0@1$5@2$4@1$1@1$0#8@7$h0$h6?3sp0@1$7?3inp@1$8?3inp@1$h2?3inp@1$h1?3inp?5rdraw@2$e@1$1@1$0#8\1b@1$1@1$0#8@3$d@1$b@1$1@1$0#8@5$h5@2$3@1$0#k0?3sp0@2$3@1$0#k0?4brk0@2$h3@1$h4?1h?1E?4FULL@1$h7^3@2$a@1$1@1$0#8^1").
+  (* The string area [STRB, UTOP) is all in the image, so every byte of it is present *)
+  Lemma upper_vm_some : forall x : Z, STRB <= x < UTOP -> exists b, VM (wa x) = Some b.
   Proof.
-    intros x Hx. npose lay as (G & UF & LA & LE & VS). pose proof pd_facts as PD.
+    intros x Hx. pose proof lay as (_ & HT & _ & _ & VS & _). pose proof pd_facts as PD.
     rewrite (vm_stack x ltac:(lia)).
-    destruct (Z.lt_ge_cases x (sp0z + Z.of_nat (length BSB) - 16)) as [L|L].
-    - rewrite (block_full x ltac:(lia)). apply stack_to_mem_some. lia.
-    - apply atr_full. lia.
+    destruct block_full as (mb & (_ & Hlau) & BF).
+    rewrite (BF x Hx). apply (stack_to_mem_some mb Hlau). lia.
   Qed.
 
   Lemma rdn_some_of : ltac2:(zQ "h30!iu7!jgc!jha!mh6!js4!mh0!it4!mhe!hs6!jrd!jpa!hq8!jqb!nhc!mr0!ni5!mr6!lk8!nic>1m>1x@1$1@1$0#k0@1$3@1$1@1$0#8>1n$b>1a$8>0@2$4Z^1>0@2$4@2$9^2@1$a^3@2$h1+2+k0>0>1x$8>0@2$c@2$4^4^1@2$h0^1@2$9^4@1$a^5@2$7@1$1@1$0#8\1b@1$1@1$0#8@3$6@1$3@1$1@1$0#8@1^8@1$e^3@2$5@1$1@1$0#8^1@2$7@1$2@1$1@1$0#8\2bs@1$2@1$1@1$0#8@3$6@1$3@1$2@1$1@1$0#8@4$f$d^7@2$h2@1$0#k0^5^6@2$5@1$2@1$1@1$0#8^1").
@@ -316,32 +419,37 @@ Section AT_MAIN.
   Lemma wa_word : ltac2:(zQ "50!iu7!jgc!it4!mr0!lj9>1x@1$1@1$0#k0@3$2@1$1@1$0#k0@1$3@2$4@1$0#k0^1^1").
   Proof. intros x. unfold wa. apply bv_eq. rewrite Z_to_bv_unsigned. apply bv_wrap_small. apply bv_unsigned_in_range. Qed.
 
-  Lemma arg_string : ltac2:(zQ "h00!iu7!jn1!jgc!lj9!jha!jh2!hq8!ji0!lm3!jjc!jr2!nn6!mrc!ms3!nh1!lqd>1k$6>0@2$8^1@2$5@1$4@1$2@1$0#8@1$1?3inp@4$b@4$e@2$3@1$0#k0?3sp0@2$3@1$0#k0?4brk0@2$c@1$d?1h?1E?4FULL?3sp0@2$3@1$0#k0@4$f?3sp0@1$1?3inp@1$a?3inp^2@4$9@1$4@1$2@1$0#8^2@1$1?3inp@1$7@1$2@1$0#8").
+  Lemma arg_string : forall k, (k < length argv)%nat ->
+    astr_at VM sp0 (bv_unsigned (cat_argv_ptr (ed_top rdraw) argv envp (in_execfn inp) k)) (nth k argv []).
   Proof.
-    intros k Hk. npose lay as (G & UF & LA & LE & VS). pose proof pd_facts as PD. pose proof Vsp as [VS1 [VS2 _]].
+    (* LPS 727298f3: the read goes through the image at the invariant's launch base ([block_full]),
+       and the bound [p + |s| + 10 <= 2^47] is [room] with [UTOP <= 2^47] ([lay]); the text of
+       boost-beast/http_request's As/AsMainIfaceArgs.v *)
+    intros k Hk. pose proof lay as (_ & HT & LA & LE & VS & ST). pose proof pd_facts as PD.
     pose proof (u_ptr k Hk) as UP. pose proof (room k Hk) as RM.
     pose proof (total_arg_bytes_firstn_le k argv) as TF.
-    pose proof (RefLayout.lay_bsb_nw APH sp0 rdraw argv envp (in_uid inp) (in_hwcap inp) Vav Vev VS2) as NW.
+    destruct block_full as (mb & (_ & Hlau) & BF).
     unfold astr_at. change Asan.M.loaded_segments with ASEGS.
-    set (p := bv_unsigned (cat_argv_ptr sp0 argv envp k)) in *.
+    set (p := bv_unsigned (cat_argv_ptr (ed_top rdraw) argv envp (in_execfn inp) k)) in *.
     split; [lia|]. split; [lia|]. split.
     { npose Vav as (_ & _ & _ & Hn & _). apply (proj1 (Forall_forall _ _) Hn). apply nth_In. exact Hk. }
     split.
-    - (* [comment removed for export] *)
-      rewrite <- (read_argv_cstr_k APH ASEGS sp0 argv envp k (in_uid inp) (in_hwcap inp) rdraw Hk NW).
-      replace (Z_to_bv 64 p) with (cat_argv_ptr sp0 argv envp k) by (subst p; symmetry; apply wa_word).
+    - rewrite <- (read_argv_cstr_k Sv48 ASEGS inp mb APH ENTW sp0 brk0 rdraw k Hlau Hk).
+      replace (Z_to_bv 64 p) with (cat_argv_ptr (ed_top rdraw) argv envp (in_execfn inp) k) by (subst p; symmetry; apply wa_word).
       apply rdn_ext; [fold p; lia|]. intros x Hx. fold p in Hx. rewrite <- (wa_word x).
-      rewrite (vm_stack (bv_unsigned x) ltac:(pose proof (u64_range x); lia)). apply block_full. lia.
-    - (* [comment removed for export] *)
-      apply (rdn_some_of VM 8 (p + Z.of_nat (length (nth k argv [])))); [lia | lia |]. intros x Hx. apply upper_vm_some. lia.
+      rewrite (vm_stack (bv_unsigned x) ltac:(pose proof (u64_range x); lia)). apply BF. lia.
+    - apply (rdn_some_of VM 8 (p + Z.of_nat (length (nth k argv [])))); [lia | lia |]. intros x Hx. apply upper_vm_some. lia.
   Qed.
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  Lemma slot_main : ltac2:(zQ "he0!iu7!jgc!jha!it4!jrd!lj9!js4!mh0!h8!jh2!mh6!ira!hs6!nr8!jn1!mrc!ho6!ms3!nh1!nhc!hp2!vb!il0!il9!nsd!ilf!ni5!jq4!jpa!nic>3off$c>1v$h9>1w@1$1@1$0#k0>0@3$3$8@2$h0@1$h5?2ch@3$h6@2$h7$h4^3N8^2$b>0@2$6Z^4>0@2$6@2$4^5+8@2$4@2$hb+8@1$hc@2$9@1$2@1$1@1$0#8@1$e?3inp+h0>0@3$3@1$1@1$0#k0@2$h8?1E^5^4@3$3@1$a@1$2@1$1@1$0#8@4$ha$h3@4$h2@2$5@1$0#k0?3sp0@2$5@1$0#k0?4brk0@2$f@1$h1?1h?1E?4FULL@2$hd@1$0#k0@2$4@2$5@1$0#k0?3sp0^7N8@2$7@1$2@1$1@1$0#8@2$dN8^5").
+  (* LPS 727298f3: the visible slots are below argv[2]'s ([argH0_low], [hid_stack]) *)
+  Lemma slot_main : forall off v w,
+    has_fact (kn ch) (KWord (SA e_sp0 off) 8 v) = true -> 0 <= off -> off + 8 <= 24 -> edenot E v = w ->
+    rdn ASEGS VM (Z_to_bv 64 (sp0z + off)) 8 = Some (word_to_le_bytes 8 w).
   Proof.
-    intros off v w HF Ho1 Ho2 Hv. npose lay as (G & UF & LA & LE & VS). pose proof pd_facts as PD.
+    intros off v w HF Ho1 Ho2 Hv. pose proof lay as (_ & HT & LA & LE & VS & _). pose proof pd_facts as PD.
     npose arg_facts as (_ & _ & _ & USP & _).
     unfold has_fact in HF. apply existsb_exists in HF as [K [HK HE]]. apply kentry_eqb_eq in HE. subst K.
     pose proof (proj1 (Forall_forall _ _) KNF _ HK) as KO. cbn [kentry_ok] in KO. ndestruct KO as (_ & FL & RD).
@@ -354,16 +462,17 @@ Section AT_MAIN.
     rewrite <- (wa_word x). apply vm_stack. lia.
   Qed.
 
-  Lemma arg_ptr0 : ltac2:(zQ "h20!iu7!lj9!jha!jgc!mh0!mh6!it4!nr8!jn1!jr2!mrc!ms3!nh1!nhc!lqd!ni5!jrd!nic@3$6@1$5@1$2@1$3@1$0#8@4$f$d@4$c@2$1@1$0#k0?3sp0@2$1@1$0#k0?4brk0@2$a@1$b?1h?1E?4FULL@2$h1@1$0#k0@2$h0@2$1@1$0#k0?3sp0+8N8@2$4@1$2@1$3@1$0#8@2$7N8@4$e?3sp0@1$8?3inp@1$9?3inpN0").
+  Lemma arg_ptr0 : rdn ASEGS VM (Z_to_bv 64 (sp0z + 8)) 8 = Some (word_to_le_bytes 8 (cat_argv_ptr (ed_top rdraw) argv envp (in_execfn inp) 0)).
   Proof.
-    npose lay as (G & UF & LA & LE & VS). npose arg_facts as (F1 & _ & _ & _ & US0 & _).
+    pose proof lay as (_ & HT & LA & LE & VS & _). npose arg_facts as (F1 & _ & _ & _ & US0 & _).
     apply (slot_main 8 e_str0 _ F1); [lia | lia |].
     apply bv_eq. change (bv_unsigned (edenot E e_str0)) with (uE E e_str0). rewrite US0, (u_ptr 0 ltac:(lia)). replace (total_arg_bytes_nat (firstn 0 argv)) with 0%nat by reflexivity. lia.
   Qed.
 
-  Lemma arg_ptr1 : ltac2:(zQ "h40!iu7!jha!jgc!lj9!jn1!mh0!jh2!mh6!it4!nt7!nr8!jr2!mrc!ms3!nh1!nhc!lqd!ni5!jrd!nic>0@2$9N2@2$6@1$1@1$2@1$0#8@1$4?3inp@3$8@1$7@1$1@1$2@1$0#8@4$h1$f@4$e@2$3@1$0#k0?3sp0@2$3@1$0#k0?4brk0@2$c@1$d?1h?1E?4FULL@2$h3@1$0#k0@2$h2@2$3@1$0#k0?3sp0+h0N8@2$5@1$1@1$2@1$0#8@2$aN8@4$h0?3sp0@1$4?3inp@1$b?3inpN1").
+  Lemma arg_ptr1 : (2 <= length argv)%nat ->
+    rdn ASEGS VM (Z_to_bv 64 (sp0z + 16)) 8 = Some (word_to_le_bytes 8 (cat_argv_ptr (ed_top rdraw) argv envp (in_execfn inp) 1)).
   Proof.
-    intros H2. npose lay as (G & UF & LA & LE & VS). npose arg_facts as (_ & F2 & _ & _ & US0 & US1 & _).
+    intros H2. pose proof lay as (_ & HT & LA & LE & VS & ST). npose arg_facts as (_ & F2 & _ & _ & US0 & US1 & _).
     npose (facts sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Hh HC) as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & V1 & _).
     unfold kw_argv1 in F2. apply (slot_main 16 e_argv1w _ F2); [lia | lia |].
     apply bv_eq. rewrite (u_ptr 1 ltac:(lia)).
@@ -383,11 +492,11 @@ Section AT_MAIN.
 
   (* [comment removed for export] *)
   Theorem pre_args : ltac2:(zQ "h91!iu7!jha!jgc!lj9!mh0!mh6!it4!hs6!mrc!ms3!nh1!jrd!nic!hq8!jqb!mhe!lm3!nr8!jn1!nn6!ni5!oh2!oj8!jq4!jpa&@4$a@2$3@1$0#k0?3sp0@2$3@1$0#k0?4brk0@2$8@1$9?1h?1E?4FULL>1i$d>1s@1$1@1$2@1$0#8>0@2$h0^2N2>0@3$6@1$5@1$1@1$2@1$0#8@3$h6@1$1@1$2@1$0#8@1$h2?3inp^3@2$4@1$1@1$2@1$0#8^2@2$f$7\1p$7@2$e@3$6@1$5@1$1@1$2@1$0#8@4$h4$h5~0@2$c@1$0#k0@2$b@2$b@2$3@1$0#k0?3sp0+8@2$h7+8@1$h8^5N8@2$4@1$1@1$2@1$0#8@2$h1N8@2$c@1$0#k0^1@4$h3~0?3sp0^1^4").
-  Proof.
+  Proof using sp0 brk0 rdraw inp h ch E R FULL model Vsp Vbrk Vav Vev Vfit Hh HC.   (* the argument list AsInstanceMain applies *)
     intros i s Hi Hs. change Asan.M.loaded_segments with ASEGS.
     assert (Hk : (i < length argv)%nat) by exact (nth_error_lt _ _ _ Hs).
     assert (Hn : nth i argv [] = s) by exact (nth_error_nth _ _ [] Hs).
-    exists (bv_unsigned (cat_argv_ptr sp0 argv envp i)). split; [| rewrite <- Hn; apply arg_string; exact Hk].
+    exists (bv_unsigned (cat_argv_ptr (ed_top rdraw) argv envp (in_execfn inp) i)). split; [| rewrite <- Hn; apply arg_string; exact Hk].
     rewrite wa_word0.
     destruct i as [|[|i]]; [ | | lia].
     - replace (bv_unsigned sp0 + 8 + 8 * Z.of_nat 0) with (sp0z + 8) by lia. apply arg_ptr0.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepAppcf.v (commit 3cae605a900a, blob d9283eb472ee) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; pin 1be0f53d96cb), from cgif_file_fuzzer asan-ubsan ce511d541cda (pin 1c29845fe605), the cf layer at part 3c; module paths changed; 11 image numerals moved by port_addr_check 3d2eee813cce MAPS predictions and the twins' symbol + offset map (0 model labels and sizes kept); no other numeral changed; comments removed (the source file keeps them). *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepAppcf.v (blob d9283eb472ee) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; pin 1be0f53d96cb), from cgif_file_fuzzer asan-ubsan ce511d541cda (pin 1c29845fe605), the cf layer at part 3c; module paths changed; 11 image numerals moved by port_addr_check 3d2eee813cce MAPS predictions and the twins' symbol + offset map (0 model labels and sizes kept); no other numeral changed; comments removed (the source file keeps them). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool String Ascii.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -36,7 +37,7 @@ Hypothesis errb_map_fits_cf :
   layout_ok ly -> img_cover ly -> TfibSyms B -> ly_tsd ly = TFIB_TSD ->
   ARcf tfibsegs B ly S Hp W mem md -> xs_mapped_cf ly S md -> qloose S -> cf_hull_ok S ->
   0 < nZ -> nZ mod kPage = 0 -> nZ <= cf_nob ->
-  (exists a, grant_ok_na_pin md a nZ = true) /\
+  (exists a, grant_ok_na_pin (Z_to_bv 64 0) md a nZ = true) /\
   eager_used md + A_bytes (w_A W) + nZ <= vm_limit (m_vmmaps md).
 
 Lemma errb_map_not_refusable :
@@ -46,13 +47,14 @@ Lemma errb_map_not_refusable :
   ARcf tfibsegs B ly S Hp W mem md -> xs_mapped_cf ly S md -> qloose S -> cf_hull_ok S ->
   0 < nZ -> nZ mod kPage = 0 -> nZ <= cf_nob ->
   Z.of_nat (length mat) * page_size <= A_bytes (w_A W) ->
-  mmap_grant_refusable (Z_to_bv 64 34) (with_vm_backing (m_vm_lazy md) mat md) nZ = false.
+  mmap_grant_refusable (Z_to_bv 64 34) (Z_to_bv 64 0) (with_vm_backing (m_vm_lazy md) mat md) nZ = false.
 Proof.
 intros Hp ly S W mem md mat nZ LY IMG TS TSD AR XM QL HT Hpos Hal Hnob Hmat.
 destruct (errb_map_fits_cf Hp ly S W mem md nZ LY IMG TS TSD AR XM QL HT Hpos Hal Hnob) as [[a Ha] Hroom].
 assert (Hvm : m_vmmaps (with_vm_backing (m_vm_lazy md) mat md) = m_vmmaps md) by apply m_vmmaps_wvb.
-apply (grant_na_pin_not_grant_refusable _ _ a).
-- unfold grant_ok_na_pin in Ha |- *. rewrite Hvm. exact Ha.
+apply (grant_na_pin_not_grant_refusable _ _ _ a).
+- (* [grant_ok_na_pin] reads m_vmmaps and m_kernel, which with_vm_backing keeps by computation. *)
+  exact Ha.
 - unfold mmap_noreserve_backed_ok.
   replace (mmap_noreserve_b (Z_to_bv 64 34)) with false by (vm_compute; reflexivity).
   cbv iota. apply Z.leb_le. rewrite vm_backing_used_split, Hvm.

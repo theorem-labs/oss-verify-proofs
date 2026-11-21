@@ -1,8 +1,8 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseLB.v at afaa3cb55c1d; module paths, file
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseLB.v; module paths, file
    and plain-lemma names, pcs and comments changed to reac-pw/fuzz_rate's reac_rate_prop_parse on image A; the back
    edge is rate's 0x84728 beqz -> L2 (the taken side is the path to L2, the j side is refuted); lb_same_io_wvb
    replaced by RtPgParseBase.v's same_io_wvb. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgParseLB.v at f7246d55e8c3 for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgParseLB.v for image B
    (fuzz_rate.asan-ubsan); image B's pcs and code; the last body byte's address is in a0 (atom 10) and P + c + 8 in a1
    (atom 11); the key select is branchless (snez / addi / and, lb_mask_U and lb_key_val, by cases on the byte), so the
    walk splits only at the alignment branch; the key slot at L2 is in a1; lib/AU/RtPgParseBaseB.v and lib/AU/Img0.v

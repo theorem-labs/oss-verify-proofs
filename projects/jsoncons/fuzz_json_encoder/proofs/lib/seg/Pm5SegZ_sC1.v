@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the nine-byte string read-ahead): changed ex1, kn0; added ex1_reached_end; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/seg/Pm9SegZ_sC1.v, lines 25, 45-46. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -26,7 +27,7 @@ Definition kn0 : list kentry := [KRange (EVar 2) 140735332552704 140737488355328
    KWr (SA (EVar 2) (-4320)) (ELit 4320);
    KUnk (SA (EVar 2) (-4320)) (ELit 4320);
    KImg 65536 1466368;
-   KRange (EVar 33) 140735332552704 140737488355311;
+   KRange (EVar 33) 140735332552704 140737488355318;
    KRange (EVar 34) 0 131071;
    KDisj (SA (EVar 2) (-4320)) (ELit 4320) (SA (EVar 33) 0) (EAlu Instr.ALU_ADD (EVar 34) (ELit 1));
    KWord (SA (ELit 0) (1500312)) 1 (ELit 1);
@@ -47,8 +48,8 @@ Definition BLOCK := SGP.step1 RSEGS IT X_CPY X_SET X_LEN RO_LO RO_HI BF F0 (SR.S
 Set Printing Width 1000000. Set Printing Depth 1000000.
 
 (* [comment removed for export] *)
-Definition ex1 : list SGA.aitem * (Z * sym_state) :=
-  (([SGA.AStep (SR.SBlock [1401788; 1401788])], (93, SS 1401788 [ELit 0; ELit 450300; EAlu Instr.ALU_ADD (EVar 2) (ELit (-4304)); EVar 3; EVar 4; EVar 5; EVar 6; EVar 7; EAlu Instr.ALU_ADD (EVar 2) (ELit (-2176)); ELit 2147483647; EVar 33; ELit 0; ELit 2147483647; ELit 1401788; EVar 14; EVar 15; EVar 16; EVar 17; EVar 33; ELit 0; ELit 1; EVar 21; EVar 22; EVar 23; EVar 24; EVar 25; EVar 26; EVar 27; EVar 28; EVar 29; EVar 30; EVar 31] [] [KWord {| a_base := EVar 2; a_off := -4320 |} 8 (EAlu Instr.ALU_ADD (EVar 2) (ELit (-2176))); KWord {| a_base := EVar 2; a_off := -4312 |} 8 (ELit 450272); KWord {| a_base := EVar 2; a_off := -2232 |} 8 (EVar 21); KWord {| a_base := EVar 2; a_off := -2224 |} 8 (EVar 20); KWord {| a_base := EVar 2; a_off := -2216 |} 8 (ELit 2147483647); KWord {| a_base := EVar 2; a_off := -2208 |} 8 (EVar 33); KWord {| a_base := EVar 2; a_off := -2200 |} 8 (EVar 33); KWord {| a_base := EVar 2; a_off := -2192 |} 8 (ELit 2147483647); KWord {| a_base := EVar 2; a_off := -2184 |} 8 (ELit 1404928); KWord {| a_base := EVar 2; a_off := -2168 |} 8 (ELit 1); KWord {| a_base := EVar 2; a_off := -2160 |} 8 (EVar 2); KWord {| a_base := EVar 2; a_off := -2152 |} 8 (ELit 443824); KWord {| a_base := EVar 2; a_off := -64 |} 8 (EVar 22); KWord {| a_base := EVar 2; a_off := -56 |} 8 (EVar 21); KWord {| a_base := EVar 2; a_off := -48 |} 8 (EVar 20); KWord {| a_base := EVar 2; a_off := -40 |} 8 (EVar 19); KWord {| a_base := EVar 2; a_off := -32 |} 8 (EVar 18); KWord {| a_base := EVar 2; a_off := -24 |} 8 (EVar 9); KWord {| a_base := EVar 2; a_off := -16 |} 8 (EVar 8); KWord {| a_base := EVar 2; a_off := -8 |} 8 (ELit 1369240); KRange (EVar 2) 140735332552704 140737488355328; KAlign (EVar 2) 16; KWr {| a_base := EVar 2; a_off := -4320 |} (ELit 4320); KUnk {| a_base := EVar 2; a_off := -4304 |} (ELit 2072); KUnk {| a_base := EVar 2; a_off := -2176 |} (ELit 8); KUnk {| a_base := EVar 2; a_off := -2144 |} (ELit 2080); KImg 65536 1466368; KRange (EVar 33) 140735332552704 140737488355311; KRange (EVar 34) 0 131071; KDisj {| a_base := EVar 2; a_off := -4320 |} (ELit 4320) {| a_base := EVar 33; a_off := 0 |} (EAlu Instr.ALU_ADD (EVar 34) (ELit 1)); KWord {| a_base := ELit 0; a_off := 1500312 |} 1 (ELit 1); KWord {| a_base := ELit 0; a_off := 1467640 |} 8 (ELit 1404892); KWord {| a_base := ELit 0; a_off := 1467272 |} 8 (ELit 1401788)] 140))).
+Definition ex1 := Eval vm_compute in (AUTO 20000 ss0).
+Lemma ex1_reached_end : fst (snd ex1) = 93. Proof. vm_compute. reflexivity. Qed.
 Definition s1 : sym_state := snd (snd ex1).
 
 Definition plan : SGP.splan := SGA.mkplan (fst ex1) (SGP.PEnd 0).

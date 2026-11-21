@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (rz_read's fd_lookup case split covers the FdStream, FdEventfd, FdDgram and FdAnon descriptors). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -97,7 +98,7 @@ Proof.
   intros fd buf count Q ms mo a mo' K IM Hmi Hh Hc HK RO CONT.
   apply (rz_enode _ _ Q ms mo (fun a1 mo1 => a1 = a /\ mo1 = mo') K IM Hmi Hh I HK).
   - unfold read_out in RO. cbn [nstep_cfg node_off alloc_only_cfg sc_alloc sc_fs negb nstep].
-    destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|i w|drd dwr| ]|] eqn:E; try discriminate.
+    destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|i w|drd dwr| |sid sside sst|ectx|dfam|aid aaf]|] eqn:E; try discriminate.
     + destruct (fs_lookup (m_fs mo) p) as [data|] eqn:F; [|discriminate].
       eexists _, _, []. split; [reflexivity|]. split; reflexivity.
     + exists (efferr EISDIR), mo, []. auto.

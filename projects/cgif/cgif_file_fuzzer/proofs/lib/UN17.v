@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed ledger_new_map. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -170,6 +171,11 @@ split; [exact Hceil|]. intros x Hx Himg. exact (FI x Himg Hx).
 pose proof (vm_backing_used_le_maps (mmap_model a (Z_to_bv 64 n) md) ltac:(rewrite mmap_model_lazy; exact ML) MM) as VB.
 rewrite VM in VB. cbn [State.live_bytes] in VB. rewrite NU in VB. pose proof (lx_lb _ _ _ LX). lia.
 +   exact (lg_ceil _ _ _ _ LG).
++ exact (lg_vdso _ _ _ _ LG).
++ intros k rg Hk Hl Hkind. rewrite RO in Hk. destruct (Nat.ltb_spec k N).
+* rewrite (Lset_lt L A _ k H). exact (lg_rfree _ _ _ _ LG k rg Hk Hl Hkind).
+* destruct (Nat.eqb_spec k N); [|discriminate]. injection Hk as <-. subst k. unfold w64. rewrite Lset_new, w64_u64. cbn [rg_len].
+exact (rfree_app_l _ _ _ _ RF).
 - split; rewrite ?VM.
 + intros k rg x Hk Hl Hx. rewrite RO in Hk. destruct (Nat.ltb_spec k N).
 * rewrite (Lset_lt L A _ k H) in Hx. destruct (lx_cov _ _ _ LX k rg x Hk Hl Hx) as (e & He & Hex). exists e. split; [right; exact He | exact Hex].

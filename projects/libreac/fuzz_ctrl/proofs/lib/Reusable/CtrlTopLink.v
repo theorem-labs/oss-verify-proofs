@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported from cgif's ACed.v / ACfi.v top-link facts to fuzz_ctrl's CtrlB *)
-(* Image B, the twin of lib/A/ACtlTopLink.v. The donor is proofs/cgif/cgif_file_fuzzer/lib/YCed.v of c8557374ad2e
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Image B, the twin of lib/A/ACtlTopLink.v. The donor is proofs/cgif/cgif_file_fuzzer/lib/YCed.v
    (root-level twin of A/ACed.v):
      ctrlb_ro_segs_chk / ctrlb_ro_below / ctrlb_RO <- tfibX_ro_segs_chk :49, tfibX_ro_below :52, tfibX_RO0 :59
                                                       (YCfi.v:40-49 tfib_ro_segs_chk / tfib_ROB is the same check);

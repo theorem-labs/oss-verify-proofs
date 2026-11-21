@@ -8,8 +8,8 @@
    BUILT AGAINST (#102, pins A' asan 1be0f53d): the interface of record lib/A/PresetCfnA.v blob 245f68e4e777 (since revised),
    the #102 kit tip as it stood on the integration head
    (lib/A/PRH_Base.v fdb45545469b, PRH_FnAlloc.v 740f4d11d144, both since revised), a Theorem Labs lane's A' accessor walks lib/A/Prog/PwAllocSurf.v
-   428e59506566 (p102-allocsurf f5123281fbe2, on int102), h-mani-a8's lib/A/FCapiCf.v e29123ff8116.
-   THE #102 RE-CUT (from origin/cold/h-pre-b1-bridgea-mn 0c8e1ed21bd3, the iface-mn port; every change is forced by
+   428e59506566 (p102-allocsurf, on int102), h-mani-a8's lib/A/FCapiCf.v e29123ff8116.
+   THE #102 RE-CUT (the iface-mn port; every change is forced by
    one of the five interface / kit changes below, and no statement is weakened):
    (a) prh_ledger has 13 arguments: the two #102 cells g_most / g_own_ran_out (prh_ledger_most / prh_ledger_own). The
        accessor tuple prwA_led carries them as most / own, and every prh_ledger site carries the SAME most / own from
@@ -149,7 +149,7 @@ eapply SRr_mono; [exact (T ly S Hp W regs mem md ch x (conj Hpre' (conj Haro (co
 intros W' c' _ Hpost.
 (* the interface's callee post is the float form: this text leaves the float state alone, so
    YCbqG.apost_base_x_F gives it from the plain form at the entry rounding mode 0 (Hfz). h-pre-b1's twin,
-   PRW_AfnBridgeB.v:158 at cold/h-pre-b1-bridgeb 8b9c82bcf459, does the same; the two must not drift. *)
+   PRW_AfnBridgeB.v:158, does the same; the two must not drift. *)
 unfold PresetCfnA.apost_base_cfF. apply YCbqG.apost_base_x_F; [exact Hfz |].
 unfold apost_base_x, ajournal_x in *.
 destruct Hpost as (ly' & S' & Hp' & regs' & mem' & md' & k & Hc & Hj & Hr & HQ).

@@ -5,7 +5,8 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_disco/lib/A/Rt/MemchrMusl.v
    (the general memchr), with its module paths changed (it carries no address: the musl memchr body is AE3a.v's fetch/decode lemmas, already at fuzz_reply.asan's 0x963d0). *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/Rt/MemchrMusl.v (the general memchr relocated per rewalk/INTERCEPTOR-RELOC-RECIPE.md), with its module paths changed, names TfibSyms -> BoxregSyms, and its addresses moved to libreac/fuzz_boxreg's ASan build by code pairing (none: it carries no address). *)
-(* Modified by Theorem Labs, 2026-10: ported from proofs/libreac/fuzz_boxreg/lib/A/Rt/MemchrMusl.v (commit 88154566652a, the musl memchr walk of memchr_icpt_realizesM) to reac-repacer/fuzz_uci's ASan build fuzz_uci.asan, for the memchr entry __interceptor_trampoline_memchr at 0x4107c: module paths only. It carries no address: the musl memchr body is AE3a.v's fetch/decode lemmas, at fuzz_uci.asan's memchr 0x90254 (the same 204 bytes up to pc-relative fields as fuzz_boxreg.asan's 0x92088). *)
+(* Modified by Theorem Labs, 2026-10: ported from proofs/libreac/fuzz_boxreg/lib/A/Rt/MemchrMusl.v (the musl memchr walk of memchr_icpt_realizesM) to reac-repacer/fuzz_uci's ASan build fuzz_uci.asan, for the memchr entry __interceptor_trampoline_memchr at 0x4107c: module paths only. It carries no address: the musl memchr body is AE3a.v's fetch/decode lemmas, at fuzz_uci.asan's memchr 0x90254 (the same 204 bytes up to pc-relative fields as fuzz_boxreg.asan's 0x92088). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_uci.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

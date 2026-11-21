@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs: copied from proofs/libreac/fuzz_decode/lib/A/Prog/LLVMFuzzerTestOneInput_leafb.v (origin/ossv/recipes 88154566652a) for reac-repacer/fuzz_uci's image A: module paths and names changed, the cell rows are this unit's AsanCells rows, and the read-only-image helper is dropped. *)
+(* Modified by Theorem Labs: copied from proofs/libreac/fuzz_decode/lib/A/Prog/LLVMFuzzerTestOneInput_leafb.v for reac-repacer/fuzz_uci's image A: module paths and names changed, the cell rows are this unit's AsanCells rows, and the read-only-image helper is dropped. *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/reac-repacer/fuzz_uci/lib/A/Prog/UciCcLeafb.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/A/Prog/UciCcLeafb.v, with its module paths and module names changed; 157 of its 522 lines of code are new or changed and 156 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/reac-repacer/fuzz_uci/lib/A/Prog/UciCcLeafb.v and ported to libdiginet/fuzz_frame image A: module paths and this unit's own names; asan_cells' last three rows are this image's (REAL_MEMCPY, REAL_MEMSET, GOT_REAL_MEMSET). *)
 (* Modified by Theorem Labs, 2026-10: libdiginet/fuzz_frame image B's twin of this unit's lib/A/Prog/CanLeafb.v: module paths changed (lib/B/YB1v.v, lib/B/Img0.v, lib/B/AsanCells.v, lib/B/YCbq.v, lib/B/Prog/DgnFrameCg.v, LeafCgKit.v and AsanKA.v; the aliases AImg0 / AKA are named BImg0 / BKA); the image's low bound is lib/B/Prog/FrameBImg.v frameb_segs_low (for lib/A/Prog/DgnFrameImg.v dgnframe_segs_low); asan_cells' rows, the last three (REAL_MEMCPY, REAL_MEMSET, GOT_REAL_MEMSET) among them, are fuzz_frame.asan-ubsan's, read by symbol from lib/B/AsanCells.v. No statement changes otherwise. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* CanLeafb: the shared leaf-call bridge of the image-B walks of libdiginet/fuzz_decode, over this unit's segments
    decodesegsB0 and its record B. A program leaf of this unit is stated in lib/B/Prog/<leaf>_cg.v over the kit
    lib/B/Prog/LeafCgKit.v: its premises are footprint facts about the RAW call memory (Frame.stk, Mem.bytes_at,

@@ -1,33 +1,71 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the PROT_NONE grant tests name Linux's placement and the run's alloc_top, so the placement gate is a theorem, not a premise; place_declined_b on mmap_noaccess_check and the vDSO-range premise on mprotect_check; node_ok's third conjunct, sys_rob, on the brk and set_tid_address nodes; the page-granular brk ledger and the mmap-base premise of brk_grow_admissible_init; node_of_iff removed; encoded (CDefT) statements written out in plain text, comments restored; imports Placement and RomBase). *)
+(* Written by the OSS-Fuzz proof collaborators. *)
+(** * RefNodes — [realizes] syscall nodes for the syscalls the driver + musl
+      issue, in continuation-passing style.
+
+    Image-INDEPENDENT (Section over [segs]); the state on the ecall is
+    [mkst regs pc mem (seg_rom segs)] and every lemma has the shape
+
+      fetch_word segs pc = Some w -> is_ecall w = true ->
+      m_halted model = None -> m_vm_lazy model = [] ->
+      getr regs 17 = Z_to_bv 64 <nr> -> <argument / model facts> ->
+      <one [realizes] hypothesis per outcome, at
+         mkst (regupd regs 10 <ret>) (v_addi pc 4) <mem'> (seg_rom segs), <model'>> ->
+      realizes segs (mkCfg (mkst regs pc mem (seg_rom segs)) model) <shape>.
+
+    Nodes and checker equations: brk ([node_brk]), mmap ([mmap_check];
+    PROT_NONE anonymous: [mmap_noaccess_check]; contained MAP_FIXED
+    PROT_NONE: [fixed_noaccess_model]), mprotect ([mprotect_check]),
+    munmap ([munmap_check]), set_tid_address ([node_set_tid]),
+    exit/exit_group ([rz_exit_at]).  [writev] is LibWritev.rz_writev*.
+
+    Every node is derived from the verified checker
+    ([ExecutableSpecs.check_syscall]) through [Nodes.sstep_svc_inv] /
+    [Nodes.node_chk].
+
+    After the Section (image- and [segs]-independent, Z_scope):
+    - LEDGER ALGEBRA for discharging the nodes' model-side hypotheses on
+      concrete ledgers ([region_free_*], [map_has_*], [map_contains_*],
+      [map_remove_*], [maps_subtract_*], [iv_subtract_*], [live_bytes_*]);
+    - pigeonhole lemmas for an mmap grant address ([pick_candidate],
+      [region_free_of_noconflict]);
+    - [brk_grow_ok_aligned_intro] / [brk_grow_admissible_init].
+
+    Notes:
+    - every node takes [m_vm_lazy model = []] next to
+      [m_halted model = None];
+    - brk: [brk_r_ok]/[brk_grow_ok] take the MODEL (budget =
+      [vm_backing_used]); post-model is [AllocSim.brk_model req r model]
+      (= [Mmap.with_brk_next]), for which [brk_model_grow_eq] gives the
+      explicit ledger on the aligned-grow path;
+    - mmap PROT_NONE: the grant predicate has NO budget conjunct
+      ([grant_ok_na]); mprotect rw over PROT_NONE: success additionally
+      needs [mprotect_budget_ok]; MAP_FIXED PROT_NONE / munmap successors
+      go through [vm_forget_range] ([fixed_noaccess_model] etc. below are
+      stated with it). *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
-From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement ExecutableSpecs.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.ABoot Require Import AsanCeil.  (* [comment removed for export] *)
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.ABoot Require Import
   SimInv ExitSim PropExec CatExec CatSim SeqExec StreamExec MmapSim AllocSim FileSim
   ShapeAlg Nodes StoreOk AgentLib AgentNodes SpecConsts.
+From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Common.Cfg Require Import RomBase.
 Local Instance asanreflect_fx : PropExec.FPState := PropExec.fx0.
 Import ListNotations.
 Open Scope bv_scope.
-From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.Lib Require CDefT.
-From Ltac2 Require Ltac2.
-Ltac2 gd_tbl_RefNodes () : Init.string Init.list := ["LinuxProcessSemantics.LinuxProcessSem.State.VmMaps"; "Corelib.Init.Logic.eq"; "LinuxProcessSemantics.LinuxProcessSem.State.mkVmMapsFull"; "LinuxProcessSemantics.LinuxProcessSem.State.vm_reserved"; "LinuxProcessSemantics.LinuxProcessSem.State.vm_maps"; "LinuxProcessSemantics.LinuxProcessSem.State.vm_noaccess"; "LinuxProcessSemantics.LinuxProcessSem.State.vm_start_brk"; "LinuxProcessSemantics.LinuxProcessSem.State.vm_brk"; "LinuxProcessSemantics.LinuxProcessSem.State.vm_limit"; "LinuxProcessSemantics.LinuxProcessSem.State.vm_mmap_base"; "LinuxProcessSemantics.LinuxProcessSem.State.vm_init_sp"; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.machine_state"; "stdpp.bitvector.definitions.bv"; "LinuxProcessSemantics.LinuxProcessSem.State.Model"; "LinuxProcessSemantics.LinuxProcessSem.State.SyscallEffect"; "Corelib.Numbers.BinNums.Z"; "stdpp.bitvector.definitions.bv_unsigned"; "LinuxProcessSemantics.LinuxProcessSem.Checks.Sys.Prelude.check_result"; "LinuxProcessSemantics.LinuxProcessSem.Checks.ExecutableSpecs.check_syscall"; "LinuxProcessSemantics.LinuxProcessSem.Run.sys_input"; "LinuxProcessSemantics.LinuxProcessSem.Checks.Sys.Mm.Mmap.check_mmap"; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.ms_gpr"; "LinuxProcessSemantics.LinuxProcessSem.Checks.Sys.Mm.Mmap.check_munmap"; "LinuxProcessSemantics.LinuxProcessSem.Run.config"; "WithSegs.three"; "OSSVerify.KrLib.ABoot.ShapeAlg.TSet"; "OSSVerify.KrLib.ABoot.ShapeAlg.node_ok"; "Corelib.Init.Datatypes.nil"; "LinuxProcessSemantics.LinuxProcessSem.State.event"; "OSSVerify.KrLib.ABoot.ShapeAlg.realizes"; "WithSegs.T1"; "WithSegs.T2"; "WithSegs.T3"; "t_alt3"; "Corelib.Init.Datatypes.list"; "LinuxProcessSemantics.LinuxProcessSem.Run.sstep"; "LinuxProcessSemantics.LinuxProcessSem.Run.SNext"; "LinuxProcessSemantics.LinuxProcessSem.Run.step_to"; "Corelib.Init.Logic.ex"; "Corelib.Init.Logic.and"; "LinuxProcessSemantics.Riscv.Prelude.bvmap"; "Corelib.Init.Datatypes.option"; "LinuxProcessSemantics.LinuxProcessSem.Run.advance_past_svc"; "LinuxProcessSemantics.LinuxProcessSem.Run.apply_effect"; "OSSVerify.KrLib.ABoot.AgentNodes.epend"; "LinuxProcessSemantics.LinuxProcessSem.State.mkEffectU"; "Corelib.Init.Datatypes.prod"; "LinuxProcessSemantics.LinuxProcessSem.State.MemCopy"; "Corelib.Init.Datatypes.nat"; "OSSVerify.KrLib.ABoot.PropExec.mkst"; "asanreflect_fx"; "OSSVerify.KrLib.ABoot.PropExec.regupd"; "stdpp.bitvector.definitions.BV"; "Corelib.Init.Logic.I"; "OSSVerify.KrLib.ABoot.PropExec.v_addi"; "Corelib.Init.Datatypes.cons"; "Corelib.Init.Datatypes.pair"; "OSSVerify.KrLib.ABoot.MmapSim.zfill"; "OSSVerify.KrLib.ABoot.MmapSim.unfill"; "OSSVerify.KrLib.ABoot.CatExec.wbytes"; "LinuxProcessSemantics.LinuxProcessSem.State.m_vm_lazy"; "LinuxProcessSemantics.LinuxProcessSem.State.m_vm_materialized"; "OSSVerify.KrLib.ABoot.MmapSim.munmap_model"; "LinuxProcessSemantics.LinuxProcessSem.State.with_vmmaps"; "LinuxProcessSemantics.LinuxProcessSem.State.m_vmmaps"; "LinuxProcessSemantics.LinuxProcessSem.State.map_remove"; "LinuxProcessSemantics.LinuxProcessSem.State.maps_subtract"; "Stdlib.ZArith.BinInt.Z.add"; "LinuxProcessSemantics.LinuxProcessSem.State.m_halted"; "Corelib.Init.Datatypes.None"; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.ms_svc_pending"; "Corelib.Init.Datatypes.Some"; "LinuxProcessSemantics.LinuxProcessSem.Run.mkCfg"; "Corelib.Init.Specif.sig"; "OSSVerify.KrLib.ABoot.AllocSim.brk_resolution_ok"; "Corelib.Init.Specif.proj1_sig"; "LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.brk_zeros"; "LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.brk_unmaps"; "OSSVerify.KrLib.ABoot.AllocSim.brk_model"; "Stdlib.ZArith.BinInt.Z.lt"; "Stdlib.ZArith.BinInt.Z.le"; "Corelib.Init.Logic.iff"; "Corelib.Init.Logic.or"; "Corelib.Init.Datatypes.bool"; "LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.brk_grow_ok"; "Corelib.Init.Datatypes.true"; "Stdlib.ZArith.BinInt.Z.pow"; "Stdlib.ZArith.BinInt.Z.modulo"; "LinuxProcessSemantics.LinuxProcessSem.State.page_size"; "stdpp.bitvector.definitions.Z_to_bv"; "Corelib.Init.Datatypes.andb"; "Stdlib.ZArith.BinInt.Z.eqb"; "Stdlib.ZArith.BinInt.Z.ltb"; "Stdlib.ZArith.BinInt.Z.leb"; "OSSVerify.KrLib.ABoot.AsanCeil.alloc_ceiling"; "LinuxProcessSemantics.LinuxProcessSem.State.region_free"; "Corelib.Init.Datatypes.app"; "OSSVerify.KrLib.ABoot.AsanCeil.hint_placement_ok_b"; "LinuxProcessSemantics.LinuxProcessSem.State.alloc_top"; "OSSVerify.KrLib.ABoot.AsanCeil.placement_policy"; "WithSegs.grant_ok_na_pin"; "WithSegs.grant_ok_na"; "OSSVerify.KrLib.ABoot.AsanCeil.init_sp_ok"; "Corelib.Init.Logic.not"; "LinuxProcessSemantics.LinuxProcessSem.Checks.Sys.Prelude.errno_ret_in"; "LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mmap.mmap_errnos"; "Corelib.Init.Datatypes.false"; "LinuxProcessSemantics.LinuxProcessSem.Checks.Sys.Mm.Mprotect.check_mprotect"; "LinuxProcessSemantics.LinuxProcessSem.State.vm_forget_range"; "WithSegs.fixed_noaccess_model"; "WithSegs.fixed_destroyed_model"; "LinuxProcessSemantics.LinuxProcessSem.Checks.Sys.Kernel.Fork.check_set_tid_address"; "LinuxProcessSemantics.LinuxProcessSem.State.m_tid"; "WithSegs.tid_I"; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.set_gpr0"; "LinuxProcessSemantics.LinuxProcessSem.Sys.Kernel.Fork.PID_MAX_ENVELOPE"; "LinuxProcessSemantics.LinuxProcessSem.State.with_tid"; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.fetch_word"; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics.is_ecall"; "OSSVerify.KrLib.ABoot.PropExec.getr"; "OSSVerify.KrLib.ABoot.ShapeAlg.t_exit"; "stdpp.bitvector.definitions.bv_and"; "LinuxProcessSemantics.LinuxProcessSem.State.m_fs"; "LinuxProcessSemantics.LinuxProcessSem.State.vm_backing_used"; "LinuxProcessSemantics.LinuxProcessSem.State.vm_backed_bytes"; "LinuxProcessSemantics.LinuxProcessSem.State.sp_window_lo"; "LinuxProcessSemantics.LinuxProcessSem.State.reserved_top"; "Stdlib.Lists.List.In"; "LinuxProcessSemantics.LinuxProcessSem.State.map_contains"; "LinuxProcessSemantics.LinuxProcessSem.State.iv_subtract"; "Stdlib.ZArith.BinInt.Z.sub"; "Corelib.Lists.ListDef.Forall"; "Corelib.Init.Datatypes.snd"; "LinuxProcessSemantics.LinuxProcessSem.State.live_bytes"; "LinuxProcessSemantics.LinuxProcessSem.State.maps_subtract_all"; "LinuxProcessSemantics.LinuxProcessSem.State.vm_live_bytes"; "LinuxProcessSemantics.LinuxProcessSem.Sys.Mm.Mprotect.mprotect_budget_ok"; "Corelib.Init.Datatypes.length"; "LinuxProcessSemantics.LinuxProcessSem.Fs.file_read"; "Stdlib.Arith.PeanoNat.Nat.min"; "LinuxProcessSemantics.LinuxProcessSem.BvBase.word_to_nat"; "Corelib.Init.Nat.sub"; "Corelib.Init.Peano.le"; "zconflict"; "cand"; "Stdlib.Lists.List.NoDup"; "Corelib.Init.Datatypes.S"; "Stdlib.Lists.List.filter"; "Corelib.Init.Datatypes.negb"; "Corelib.Init.Peano.lt"].
 
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* Shape helpers                                                              *)
+(* ========================================================================= *)
 
 Definition t_alt3 (A B C : TSet) : TSet := t_alt2 A (t_alt2 B C).
 
@@ -37,9 +75,9 @@ Proof. intros A tr. unfold t_alt2. tauto. Qed.
 Lemma t_alt3_idem : forall A, t_eq (t_alt3 A A A) A.
 Proof. intros A tr. unfold t_alt3, t_alt2. tauto. Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* Model plumbing                                                             *)
+(* ========================================================================= *)
 
 Lemma with_fds_halted' : forall fds m, m_halted (with_fds fds m) = m_halted m.
 Proof. intros fds m. reflexivity. Qed.
@@ -60,14 +98,16 @@ Lemma with_vmmaps_eta : forall m,
   with_vmmaps (m_vmmaps m) m = m.
 Proof. intros m. destruct m as [? [? ? ?] ? ? ? ?]; reflexivity. Qed.
 
-Lemma vmmaps_eta : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Ph,$0.(1.$0.(2.(3.R1.)(4.R1.)(5.R1.)(6.R1.)(7.R1.)(8.R1.)(9.R1.)(:.R1.))R1.)")
-(* [comment removed for export] *).
+Lemma vmmaps_eta : forall h,
+  mkVmMapsFull (vm_reserved h) (vm_maps h) (vm_noaccess h) (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h) = h.
 Proof. intros h. destruct h; reflexivity. Qed.
 
 Lemma Z_to_bv_u_eq' : forall (a : word) (z : Z), z = bv_unsigned a -> Z_to_bv 64 z = a.
 Proof. intros a z ->. apply bv_eq. rewrite Z_to_bv_unsigned. apply bv_wrap_small. apply bv_unsigned_in_range. Qed.
 
-(* [comment removed for export] *)
+(** [vm_forget_range] on a model without lazy mappings or materialized
+    pages is the identity (our binaries never create MAP_NORESERVE
+    mappings, so both ledgers stay empty for the whole run). *)
 Lemma vm_forget_range_id : forall lo hi m,
   m_vm_lazy m = [] -> m_vm_materialized m = [] ->
   vm_forget_range lo hi m = m.
@@ -90,23 +130,28 @@ Proof. reflexivity. Qed.
 Section WithSegs.
 Variable segs : list Segment.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma mmap_check : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pms,$;.Px8,(<.&40.)Pmodel,$=.Peff,$>.P,(1.$?.(10.&40.R3.)+=>.)(1.$11.(12.(13.Vsegs,R5.R4.)R2.R3.)(14.(15.R5.#0.)(15.R5.#1.)(15.R5.#2.)(15.R5.#3.)(15.R5.#4.)(15.R5.#5.)R2.R3.))")
-(* [comment removed for export] *).
+(* The [check_syscall] equation for mmap ([MmapSim] reasons through [syscall_spec_mmap] instead) *)
+Lemma mmap_check : forall ms x8 model eff,
+  bv_unsigned x8 = 222%Z ->
+  check_syscall (sys_input segs ms x8) eff model
+  = check_mmap (ms_gpr ms 0) (ms_gpr ms 1) (ms_gpr ms 2) (ms_gpr ms 3) (ms_gpr ms 4) (ms_gpr ms 5) eff model.
 Proof. intros ms x8 model eff Hno. unfold check_syscall. rewrite in_sysno_sys_input, Hno. reflexivity. Qed.
 
-#[using="Type"] Lemma munmap_check : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pms,$;.Px8,(<.&40.)Pmodel,$=.Peff,$>.P,(1.$?.(10.&40.R3.)+=7.)(1.$11.(12.(13.Vsegs,R5.R4.)R2.R3.)(16.(15.R5.#0.)(15.R5.#1.)R2.R3.))")
-(* [comment removed for export] *).
+Lemma munmap_check : forall ms x8 model eff,
+  bv_unsigned x8 = 215%Z ->
+  check_syscall (sys_input segs ms x8) eff model = check_munmap (ms_gpr ms 0) (ms_gpr ms 1) eff model.
 Proof. intros ms x8 model eff Hno. unfold check_syscall. rewrite in_sysno_sys_input, Hno. reflexivity. Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* Generic: three-way silent nodes                                            *)
+(* ========================================================================= *)
 
 Inductive three : Type := T1 | T2 | T3.
 
-#[using="Type"] Lemma rz_alt3 : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pc,$17.Pnx,P,$18.$17.PA,$19.PB,$19.PC,$19.P,(1:.Vsegs,R5.$18.L,$18.(1;.$1<.)R4.)P,(1=.Vsegs,A1.R5.$1>.R4.)P,(1=.Vsegs,A1.R6.$1?.R4.)P,(1=.Vsegs,A1.R7.$20.R4.)(1=.Vsegs,R9.(21.R7.R6.R5.))")
-(* [comment removed for export] *).
+Lemma rz_alt3 : forall c (nx : three -> config) (A B C : TSet),
+  node_ok segs c three (fun _ => []) nx ->
+  realizes segs (nx T1) A -> realizes segs (nx T2) B -> realizes segs (nx T3) C ->
+  realizes segs c (t_alt3 A B C).
 Proof.
   intros c nx A B C Hnode HA HB HC.
   apply (rz_conseq segs c (t_alt (fun i => match i with T1 => A | T2 => B | T3 => C end))).
@@ -116,21 +161,18 @@ Proof.
     + intros [H | [H | H]]; [exists T1 | exists T2 | exists T3]; exact H.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma node_of_iff : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pc,$17.PI,StPevs,P,R1.(22.$1<.)Pnx,P,R2.$17.P,Pi,R3.(23.Vsegs,R5.A1.R3.R1.(24.A1.R2.R1.))P,Pe,(22.$1<.)Pst,$25.P,(23.Vsegs,R7.R2.R1.)(26.R7.Li,R7.(27.(1.(22.$1<.)R4.A1.R7.R1.)(1.$25.R3.(24.A1.R6.R1.))))(1:.Vsegs,R6.R5.R4.R3.)")
-(* [comment removed for export] *).
-Proof. intros; split; assumption. Qed.
+(* ========================================================================= *)
+(* Post-state normal forms for the effect shapes used below                   *)
+(* ========================================================================= *)
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-#[using="Type"] Lemma adv_ret_epend : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pregs,(28.&5.(<.&40.))Ppc,(<.&40.)Pmem,P,(<.&40.)(29.(<.&8.))Prom,P,(<.&40.)(29.(<.&8.))Px8,(<.&40.)Pr,(<.&40.)(1.$;.(2:.(2;.(2<.R6.R5.R4.R3.R2.)(2=.R1.(1;.(2>.(<.&40.)(22.(<.&8.))))(1;.(2>.(<.&40.)(<.&40.)))(1;.(2>.(<.&40.)(<.&40.)))(1;.$2?.)(1;.(2>.(<.&40.)$30.)))))(31.$32.(33.R6.(34.&5.+:.$35.)R1.)(36.R5.+4.)R4.R3.))")
-(* [comment removed for export] *).
+Lemma adv_ret_epend : forall regs pc mem rom x8 r,
+  advance_past_svc (apply_effect (epend regs pc mem rom x8) (mkEffectU r [] [] [] [] []))
+  = mkst (regupd regs 10 r) (v_addi pc 4) mem rom.
 Proof. intros. unfold epend. apply adv_eff_ret. Qed.
 
-#[using="Type"] Lemma adv_zeros1_epend : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pregs,(28.&5.(<.&40.))Ppc,(<.&40.)Pmem,P,(<.&40.)(29.(<.&8.))Prom,P,(<.&40.)(29.(<.&8.))Px8,(<.&40.)Pr,(<.&40.)Pa,(<.&40.)Pn,(<.&40.)(1.$;.(2:.(2;.(2<.R8.R7.R6.R5.R4.)(2=.R3.(1;.(2>.(<.&40.)(22.(<.&8.))))(37.(2>.(<.&40.)(<.&40.))(38.(<.&40.)(<.&40.)R2.R1.)(1;.(2>.(<.&40.)(<.&40.))))(1;.(2>.(<.&40.)(<.&40.)))(1;.$2?.)(1;.(2>.(<.&40.)$30.)))))(31.$32.(33.R8.(34.&5.+:.$35.)R3.)(36.R7.+4.)(39.R2.R1.R6.)R5.))")
-(* [comment removed for export] *).
+Lemma adv_zeros1_epend : forall regs pc mem rom x8 r a n,
+  advance_past_svc (apply_effect (epend regs pc mem rom x8) (mkEffectU r [] [(a, n)] [] [] []))
+  = mkst (regupd regs 10 r) (v_addi pc 4) (zfill a n mem) rom.
 Proof.
   intros. unfold epend.
   assert (Hm : apply_zeros (apply_unmaps mem []) [(a, n)] = zfill a n mem).
@@ -143,8 +185,9 @@ Proof.
   unfold mkst, regupd. rewrite b_npc4, Hm. reflexivity.
 Qed.
 
-#[using="Type"] Lemma adv_unmaps1_epend : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pregs,(28.&5.(<.&40.))Ppc,(<.&40.)Pmem,P,(<.&40.)(29.(<.&8.))Prom,P,(<.&40.)(29.(<.&8.))Px8,(<.&40.)Pr,(<.&40.)Pa,(<.&40.)Pn,(<.&40.)(1.$;.(2:.(2;.(2<.R8.R7.R6.R5.R4.)(2=.R3.(1;.(2>.(<.&40.)(22.(<.&8.))))(1;.(2>.(<.&40.)(<.&40.)))(37.(2>.(<.&40.)(<.&40.))(38.(<.&40.)(<.&40.)R2.R1.)(1;.(2>.(<.&40.)(<.&40.))))(1;.$2?.)(1;.(2>.(<.&40.)$30.)))))(31.$32.(33.R8.(34.&5.+:.$35.)R3.)(36.R7.+4.)(3:.R2.R1.R6.)R5.))")
-(* [comment removed for export] *).
+Lemma adv_unmaps1_epend : forall regs pc mem rom x8 r a n,
+  advance_past_svc (apply_effect (epend regs pc mem rom x8) (mkEffectU r [] [] [(a, n)] [] []))
+  = mkst (regupd regs 10 r) (v_addi pc 4) (unfill a n mem) rom.
 Proof.
   intros. unfold epend.
   assert (Hm : apply_writes (apply_zeros (apply_unmaps mem [(a, n)]) []) [] = unfill a n mem).
@@ -160,42 +203,44 @@ Proof.
   unfold mkst, regupd. rewrite b_npc4, Hm. reflexivity.
 Qed.
 
-#[using="Type"] Lemma adv_write1_epend : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pregs,(28.&5.(<.&40.))Ppc,(<.&40.)Pmem,P,(<.&40.)(29.(<.&8.))Prom,P,(<.&40.)(29.(<.&8.))Px8,(<.&40.)Pr,(<.&40.)Pbuf,(<.&40.)Pdata,(22.(<.&8.))(1.$;.(2:.(2;.(2<.R8.R7.R6.R5.R4.)(2=.R3.(37.(2>.(<.&40.)(22.(<.&8.)))(38.(<.&40.)(22.(<.&8.))R2.R1.)(1;.(2>.(<.&40.)(22.(<.&8.)))))(1;.(2>.(<.&40.)(<.&40.)))(1;.(2>.(<.&40.)(<.&40.)))(1;.$2?.)(1;.(2>.(<.&40.)$30.)))))(31.$32.(33.R8.(34.&5.+:.$35.)R3.)(36.R7.+4.)(3;.R6.R2.R1.)R5.))")
-(* [comment removed for export] *).
+Lemma adv_write1_epend : forall regs pc mem rom x8 r buf data,
+  advance_past_svc (apply_effect (epend regs pc mem rom x8) (mkEffect r [(buf, data)] []))
+  = mkst (regupd regs 10 r) (v_addi pc 4) (wbytes mem buf data) rom.
 Proof. intros. unfold epend. rewrite adv_apply_write, write_to_mem_wbytes. reflexivity. Qed.
 
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* munmap(a, len) of exactly one recorded mapping                            *)
+(* ========================================================================= *)
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
-
-#[using="Type"] Lemma munmap_model_simple : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pa,(<.&40.)Pn,(<.&40.)Pm,$=.P,(1.(22.(2>.(<.&40.)(<.&40.)))(3<.R1.)(1;.(2>.(<.&40.)(<.&40.))))P,(1.(22.(<.&40.))(3=.R2.)(1;.(<.&40.)))(1.$=.(3>.R5.R4.R3.)(3?.(2.(3.(40.R3.))(41.(4.(40.R3.))R5.)(42.(5.(40.R3.))(10.&40.R5.)(43.(10.&40.R5.)(10.&40.R4.)))(6.(40.R3.))(7.(40.R3.))(8.(40.R3.))(9.(40.R3.))(:.(40.R3.)))R3.))")
-(* [comment removed for export] *).
+Lemma munmap_model_simple : forall (a n : word) m,
+  m_vm_lazy m = [] -> m_vm_materialized m = [] ->
+  munmap_model a n m = with_vmmaps (mmap_fixed_destroyed_next (m_vmmaps m) a n) m.
 Proof.
   intros a n m Hl Hm. unfold munmap_model, with_mmap_destroyed.
   apply vm_forget_range_id; [rewrite with_vmmaps_lazy'; exact Hl | exact Hm].
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* brk                                                                        *)
+(* ========================================================================= *)
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma node_brk : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pms,$;.Pmodel,$=.Px8,(<.&40.)P,(1.(29.(<.&40.))(44.R2.)(45.(<.&40.)))P,(1.(22.(2>.(<.&40.)(<.&40.)))(3<.R3.)(1;.(2>.(<.&40.)(<.&40.))))P,(1.(29.(<.&40.))(46.R5.)(47.(<.&40.)R3.))P,(1.$?.(10.&40.R4.)+=6.)(1:.Vsegs,(48.R7.R6.)(49.(<.&40.)Lr,(<.&40.)(4:.R7.(15.R8.#0.)R1.))L,(49.(<.&40.)Lr,(<.&40.)(4:.R7.(15.R8.#0.)R1.))(1;.$1<.)Li,(49.(<.&40.)Lr,(<.&40.)(4:.R7.(15.R8.#0.)R1.))(48.(2:.(2;.R8.(2=.(4;.(<.&40.)Lr,(<.&40.)(4:.R8.(15.R9.#0.)R1.)R1.)(1;.(2>.(<.&40.)(22.(<.&8.))))(4<.(15.R8.#0.)(4;.(<.&40.)Lr,(<.&40.)(4:.R8.(15.R9.#0.)R1.)R1.)(7.(40.R7.)))(4=.(4;.(<.&40.)Lr,(<.&40.)(4:.R8.(15.R9.#0.)R1.)R1.)(7.(40.R7.)))(1;.$2?.)(1;.(2>.(<.&40.)$30.)))))(4>.(15.R8.#0.)(4;.(<.&40.)Lr,(<.&40.)(4:.R8.(15.R9.#0.)R1.)R1.)R7.)))")
-(* [comment removed for export] *).
+(** The brk node in terms of the resolved break [r]: every admissible
+    transition is [r] with [Mmap.brk_r_ok model req r = true]
+    ([AllocSim.brk_resolution_ok]), to the [AllocSim.brk_model] successor
+    with the [brk_zeros]/[brk_unmaps] effect. *)
+Lemma node_brk : forall ms model x8,
+  m_halted model = None -> m_vm_lazy model = [] ->
+  ms_svc_pending ms = Some x8 -> bv_unsigned x8 = 214%Z ->
+  node_ok segs (mkCfg ms model)
+    {r : word | brk_resolution_ok model (ms_gpr ms 0) r}
+    (fun _ => [])
+    (fun i => mkCfg (advance_past_svc (apply_effect ms
+                       (mkEffectU (proj1_sig i) []
+                          (brk_zeros (ms_gpr ms 0) (proj1_sig i) (vm_brk (m_vmmaps model)))
+                          (brk_unmaps (proj1_sig i) (vm_brk (m_vmmaps model))) [] [])))
+                    (brk_model (ms_gpr ms 0) (proj1_sig i) model)).
 Proof.
-  intros ms model x8 Hh Hlazy Hsvc Hno. split.
+  intros ms model x8 Hh Hlazy Hsvc Hno. split; [|split].
   - intros [r Hr]. cbn [proj1_sig].
     pose proof (brk_ok_intro segs ms x8 model r Hno Hr) as Hspec.
     destruct (brk_step_shape segs ms x8 model _ _ _ Hh Hlazy Hno Hspec) as (_ & Hh' & _ & _ & Hlazy').
@@ -206,13 +251,19 @@ Proof.
     apply (brk_ok_iff segs ms x8 model eff model' [] Hno) in Hspec.
     destruct Hspec as (Heff & _ & Hok & ->).
     exists (exist _ (eff_ret eff) Hok). cbn [proj1_sig]. rewrite <- Heff. split; reflexivity.
+  - apply (sys_rob_memfree segs ms model x8 Hsvc). rewrite Hno. exact memfree_214.
 Qed.
 
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
-#[using="Type"] Lemma brk_r_ok_grow_cases : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pm,$=.Preq,(<.&40.)Pr,(<.&40.)Zh,$0.(40.R3.)P,(4?.=(10.&40.R3.))P,(50.(10.&40.(6.R2.))(10.&40.R4.))P,(50.(10.&40.(7.R3.))(10.&40.R5.))(51.(4:.R7.R6.R5.)(52.(1.(<.&40.)R5.(7.R4.))(27.(1.(<.&40.)R5.R6.)(1.$53.(54.R7.R6.R6.)$55.))))")
-(* [comment removed for export] *).
+(** Unfolding [Mmap.brk_r_ok] on a request at or above both the heap base
+    and the current break (the GROW path): the resolutions are exactly
+    "keep the break" and — if [brk_grow_ok] admits it — "move to req". *)
+Lemma brk_r_ok_grow_cases : forall m req r,
+  let h := m_vmmaps m in
+  (0 < bv_unsigned req)%Z ->
+  (bv_unsigned (vm_start_brk h) <= bv_unsigned req)%Z ->
+  (bv_unsigned (vm_brk h) <= bv_unsigned req)%Z ->
+  brk_resolution_ok m req r <->
+  (r = vm_brk h \/ (r = req /\ Mmap.brk_grow_ok m req req = true)).
 Proof.
   intros m req r h Hpos Hs Hb.
   unfold brk_resolution_ok, Mmap.brk_r_ok. cbv zeta. fold h.
@@ -227,8 +278,8 @@ Proof.
     unfold Mmap.brk_grow_ok. fold h. rewrite Z.ltb_irrefl, andb_false_r. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma brk_model_keep : forall m req,
+(** The model after keeping the break is unchanged. *)
+Lemma brk_model_keep : forall m req,
   brk_model req (vm_brk (m_vmmaps m)) m = m.
 Proof.
   intros m req. unfold brk_model, with_brk_next. cbv zeta.
@@ -238,9 +289,16 @@ Proof.
   cbn [app maps_subtract_ranges fold_left]. rewrite vmmaps_eta. apply with_vmmaps_eta.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma brk_model_grow_eq : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pm,$=.Pd,$?.Zh,$0.(40.R2.)Zb,(<.&40.)(7.R1.)P,(4?.=R3.)P,(4?.=(10.&40.R2.))P,(4?.(43.(10.&40.R3.)R5.)(56.+2.+40.))P,(1.$?.(57.(10.&40.R4.)$58.)=)P,(1.$?.(57.R7.$58.)=)(1.$=.(4>.(59.&40.(43.(10.&40.R6.)R8.))(59.&40.(43.(10.&40.R6.)R8.))R9.)(3?.(2.(3.R7.)(37.(2>.(<.&40.)(<.&40.))(38.(<.&40.)(<.&40.)R6.(59.&40.R8.))(4.R7.))(5.R7.)(6.R7.)(59.&40.(43.(10.&40.R6.)R8.))(8.R7.)(9.R7.)(:.R7.))R9.))")
-(* [comment removed for export] *).
+(** The model after an aligned grow [b -> b + d] (b > 0 page aligned, d > 0). *)
+Lemma brk_model_grow_eq : forall m (d : Z),
+  let h := m_vmmaps m in
+  let b := vm_brk h in
+  (0 < d)%Z -> (0 < bv_unsigned b)%Z -> (bv_unsigned b + d < 2 ^ 64)%Z ->
+  (bv_unsigned b mod page_size = 0)%Z -> (d mod page_size = 0)%Z ->
+  brk_model (Z_to_bv 64 (bv_unsigned b + d)) (Z_to_bv 64 (bv_unsigned b + d)) m
+  = with_vmmaps (mkVmMapsFull (vm_reserved h) ((b, Z_to_bv 64 d) :: vm_maps h)
+                   (vm_noaccess h) (vm_start_brk h)
+                   (Z_to_bv 64 (bv_unsigned b + d)) (vm_limit h) (vm_mmap_base h) (vm_init_sp h)) m.
 Proof.
   intros m d h b Hd Hb0 Hnw Hbal Hdal.
   pose proof (u64_range b) as Hbr.
@@ -255,87 +313,150 @@ Proof.
   unfold brk_model_next, brk_maps_next. fold b.
   rewrite (proj2 (Z.ltb_ge (bv_unsigned req) (bv_unsigned b))) by lia. rewrite andb_false_r.
   rewrite (brk_grants_grow req req b Hreq0 Hb0 Hlt), (brk_unmaps_grow req b) by lia.
+  rewrite (page_round_up_Z_aligned (bv_unsigned b)) by (first [lia | exact Hbal]).
+  rewrite Hureq.
+  rewrite (page_round_up_Z_aligned (bv_unsigned b + d))
+    by (first [lia | rewrite Zplus_mod, Hbal, Hdal; reflexivity]).
+  unfold brk_page_range. rewrite (proj2 (Z.ltb_lt (bv_unsigned b) (bv_unsigned b + d))) by lia.
   cbn [app maps_subtract_ranges fold_left].
-  replace (req - b) with (Z_to_bv 64 d); [reflexivity|].
-  apply bv_eq. rewrite bv_sub_unsigned, Hureq.
-  rewrite bv_wrap_small by (unfold bv_modulus; lia). rewrite u64_lit by lia. lia.
+  replace (Z_to_bv 64 (bv_unsigned b)) with b
+    by (apply bv_eq; rewrite u64_lit by lia; reflexivity).
+  replace (bv_unsigned b + d - bv_unsigned b)%Z with d by lia.
+  reflexivity.
 Qed.
 
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* mmap(0, len, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0)                  *)
+(* ========================================================================= *)
 
-(* [comment removed for export] *)
+(** The model after a fresh PROT_NONE grant: recorded in both ledgers. *)
+Definition noaccess_model (a n : word) (m : Model) : Model :=
+  with_vmmaps (mkVmMapsFull (vm_reserved (m_vmmaps m))
+                 ((a, n) :: vm_maps (m_vmmaps m))
+                 ((a, n) :: vm_noaccess (m_vmmaps m))
+                 (vm_start_brk (m_vmmaps m)) (vm_brk (m_vmmaps m)) (vm_limit (m_vmmaps m))
+                 (vm_mmap_base (m_vmmaps m)) (vm_init_sp (m_vmmaps m))) m.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(** May the kernel place an INACCESSIBLE reservation at [a, a+n)?  Like
+    [MmapSim.grant_ok] WITHOUT the budget conjunct: a PROT_NONE mapping
+    consumes no backed memory ([Mmap.mmap_spec], noaccess branch).
 
-(* [comment removed for export] *)
-Definition noaccess_model (a n : word) (m : Model) : Model := ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "(3?.(2.(3.(40.O1.))(37.(2>.(<.&40.)(<.&40.))(38.(<.&40.)(<.&40.)O3.O2.)(4.(40.O1.)))(37.(2>.(<.&40.)(<.&40.))(38.(<.&40.)(<.&40.)O3.O2.)(5.(40.O1.)))(6.(40.O1.))(7.(40.O1.))(8.(40.O1.))(9.(40.O1.))(:.(40.O1.)))O1.)")
-(* [comment removed for export] *).
+    TWO CHANGES SINCE THE PLACEMENT WORK.  The first conjunct is the spec's own
+    placement rule ([Mmap.linux_place], decided by
+    [Placement.linux_place_is]) — the address is Linux's, not merely a
+    free one.  And the third conjunct bounds the grant by the run's
+    [alloc_top], not by the constant [alloc_ceiling]: at Linux's
+    address the constant bound is FALSE for some admissible runs, since
+    the top-down window's ceiling [mmap_top h] follows
+    [vm_mmap_base h], which [Run.valid_mmap_base] allows above
+    [alloc_ceiling] (see [AsanCeil.placement_policy]). *)
+Definition grant_ok_na (hint : word) (m : Model) (a : word) (n : Z) : bool :=
+  linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint n a
+  && (bv_unsigned a mod page_size =? 0)%Z && (0 <? bv_unsigned a)%Z
+  && (bv_unsigned a + n <=? alloc_top (m_vmmaps m))%Z
+  && region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 n)
+  && hint_placement_ok_b hint (m_vmmaps m) (bv_unsigned a) n.
 
-(* [comment removed for export] *)
-Definition grant_ok_na (hint : word) (m : Model) (a : word) (n : Z) : bool := ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "(5:.(5:.(5:.(5:.(5;.(57.(10.&40.O2.)$58.)=)(5<.=(10.&40.O2.)))(5=.(43.(10.&40.O2.)O1.)$5>.))(5?.(60.(2>.(<.&40.)(<.&40.))(3.(40.O3.))(4.(40.O3.)))O2.(59.&40.O1.)))(61.O4.(40.O3.)(10.&40.O2.)O1.))")
-(* [comment removed for export] *).
+(** The checker's grant condition for a PROT_NONE grant — EXACTLY what
+    [check_mmap]'s noaccess arm tests, so [mmap_noaccess_check] below is
+    a [reflexivity].  That is now one test: the address is the one
+    [Mmap.linux_place] gives.  The four conditions the old guard listed
+    are consequences of it ([Placement.linux_place_is_admissible]) and
+    are no longer separately checked.
 
-(* [comment removed for export] *)
-Definition grant_ok_na_pin (m : Model) (a : word) (n : Z) : bool := ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "(5:.(5:.(5:.(5;.(57.(10.&40.O2.)$58.)=)(5<.=(10.&40.O2.)))(5=.(43.(10.&40.O2.)O1.)(62.(40.O3.))))(5?.(60.(2>.(<.&40.)(<.&40.))(3.(40.O3.))(4.(40.O3.)))O2.(59.&40.O1.)))")
-(* [comment removed for export] *).
+    It gained the [hint] parameter that every other [grant_ok*] already
+    had: [check_mmap]'s test reads the call's [addr] argument, so the
+    condition is no longer hint-independent. *)
+Definition grant_ok_na_pin (hint : word) (m : Model) (a : word) (n : Z) : bool :=
+  linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint n a.
 
-#[using="Type"] Lemma grant_ok_na_of_pin : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "P,$63.Phint,(<.&40.)Pm,$=.Pa,(<.&40.)Pn,$?.P,(4?.=R1.)P,(1.$?.(57.R2.$58.)=)P,(1.$53.(64.R5.R4.R3.)$55.)(1.$53.(65.R7.R6.R5.R4.)$55.)")
-(* [comment removed for export] *).
+Lemma grant_ok_na_pin_unpack : forall hint m a n,
+  (0 < n)%Z -> (n mod page_size = 0)%Z ->
+  grant_ok_na_pin hint m a n = true ->
+  (bv_unsigned a mod page_size = 0)%Z /\ (0 < bv_unsigned a)%Z
+  /\ (bv_unsigned a + n <= alloc_top (m_vmmaps m))%Z
+  /\ region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 n) = true.
 Proof.
-  intros PL hint m a n Hn Hnal H. unfold grant_ok_na_pin in H.
-  apply andb_true_iff in H as [H Hrf]. apply andb_true_iff in H as [H Htop]. apply andb_true_iff in H as [Hal Hpos].
-  destruct (PL (m_vmmaps m) a n Hn Hnal (proj1 (Z.eqb_eq _ _) Hal) (proj1 (Z.ltb_lt _ _) Hpos) (proj1 (Z.leb_le _ _) Htop) Hrf) as [Hce Hpl].
-  unfold grant_ok_na. rewrite Hal, Hpos, Hrf, (proj2 (Z.leb_le _ _) Hce). cbn [andb].
-  unfold hint_placement_ok_b. destruct (w_is0 hint); [exact Hpl | reflexivity].
+  intros hint m a n Hn Hnal H.
+  exact (linux_place_is_admissible _ _ _ _ _ Hn Hnal H).
 Qed.
 
-#[using="Type"] Lemma grant_ok_na_pin_of_grant_ok : forall hint m a n, grant_ok hint m a n = true -> grant_ok_na_pin m a n = true.
+(** THE GATE IS NO LONGER A HYPOTHESIS.  [AsanCeil.placement_policy_holds]
+    proves it from the spec's placement rule, so the checker's
+    condition already implies the gated one. *)
+Lemma grant_ok_na_of_pin : forall hint m a n,
+  (0 < n)%Z -> (n mod page_size = 0)%Z ->
+  grant_ok_na_pin hint m a n = true -> grant_ok_na hint m a n = true.
 Proof.
-  intros hint m a n H. unfold grant_ok in H. unfold grant_ok_na_pin.
-  apply andb_true_iff in H as [H _]. exact H.
+  intros hint m a n Hn Hnal H.
+  unfold grant_ok_na_pin in H.
+  destruct (linux_place_is_admissible _ _ _ _ _ Hn Hnal H)
+    as (Hal & Hpos & Htop & Hfree).
+  unfold grant_ok_na. rewrite H, Hfree.
+  rewrite (proj2 (Z.eqb_eq _ _) Hal), (proj2 (Z.ltb_lt _ _) Hpos),
+    (proj2 (Z.leb_le _ _) Htop). cbn [andb].
+  unfold hint_placement_ok_b. destruct (w_is0 hint) eqn:H0; [|reflexivity].
+  unfold w_is0 in H0. apply bv_eqb_eq in H0. subst hint.
+  exact (placement_policy_holds (m_vmmaps m) (kb_thp (m_kernel m)) a n Hn Hnal
+           (proj1 (linux_place_is_iff _ _ _ _ _ Hn Hnal) H)).
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma grant_ok_na_pin_of_gate : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Phint,(<.&40.)Pm,$=.Pa,(<.&40.)Pn,$?.P,(66.(40.R3.))P,(1.$53.(65.R5.R4.R3.R2.)$55.)(1.$53.(64.R5.R4.R3.)$55.)")
-(* [comment removed for export] *).
+Lemma grant_ok_na_pin_of_grant_ok : forall hint m a n,
+  grant_ok hint m a n = true -> grant_ok_na_pin hint m a n = true.
 Proof.
-  intros hint m a n Hisp H. unfold grant_ok_na in H. unfold grant_ok_na_pin.
-  apply andb_true_iff in H as [H _]. apply andb_true_iff in H as [H Hrf]. apply andb_true_iff in H as [H Hce].
-  apply andb_true_iff in H as [Hal Hpos].
-  assert (Htop : (bv_unsigned a + n <= alloc_top (m_vmmaps m))%Z)
-    by (apply (alloc_top_ge_of_ceiling _ _ Hisp); apply Z.leb_le; exact Hce).
-  rewrite Hal, Hpos, Hrf, (proj2 (Z.leb_le _ _) Htop). reflexivity.
+  intros hint m a n H. unfold grant_ok_na_pin.
+  exact (grant_ok_place _ _ _ _ H).
 Qed.
 
-#[using="Type"] Lemma grant_na_pin_not_errno : forall m a n,
-  (0 <= n)%Z -> grant_ok_na_pin m a n = true -> errno_ret_in mmap_errnos a = false.
+(** [grant_ok_na] implies [grant_ok_na_pin]: the gate is the only
+    extra conjunct, and both bound the grant by the run's [alloc_top]. *)
+Lemma grant_ok_na_pin_of_gate : forall hint m a n,
+  grant_ok_na hint m a n = true -> grant_ok_na_pin hint m a n = true.
 Proof.
-  intros m a n Hn Hg. unfold grant_ok_na_pin in Hg.
-  apply andb_true_iff in Hg as [Hg _]. apply andb_true_iff in Hg as [Hg Htop]. apply Z.leb_le in Htop.
+  intros hint m a n H. unfold grant_ok_na in H. unfold grant_ok_na_pin.
+  rewrite !andb_true_iff in H. tauto.
+Qed.
+
+Lemma grant_ok_na_place : forall hint m a n,
+  grant_ok_na hint m a n = true ->
+  linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint n a = true.
+Proof.
+  intros hint m a n H. unfold grant_ok_na in H.
+  rewrite !andb_true_iff in H. tauto.
+Qed.
+
+Lemma grant_na_pin_not_errno : forall hint m a n,
+  (0 < n)%Z -> (n mod page_size = 0)%Z -> grant_ok_na_pin hint m a n = true ->
+  errno_ret_in mmap_errnos a = false.
+Proof.
+  intros hint m a n Hn Hnal Hg.
+  destruct (grant_ok_na_pin_unpack _ _ _ _ Hn Hnal Hg) as (_ & _ & Htop & _).
   apply errno_ret_in_below; [reflexivity|]. alloc_top_bounds. unfold two_pow_64 in *. lia.
 Qed.
 
-Definition mmap_noaccess_args_ok (ms : machine_state) : Prop := ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "(27.(67.(1.(<.&40.)(15.O1.#1.)(59.&40.=)))(27.(1.(<.&40.)(15.O1.#2.)(59.&40.=))(27.(1.(<.&40.)(15.O1.#3.)(59.&40.+22.))(27.(1.(<.&40.)(15.O1.#4.)(59.&40.-1.))(1.(<.&40.)(15.O1.#5.)(59.&40.=))))))")
-(* [comment removed for export] *).
+Definition mmap_noaccess_args_ok (ms : machine_state) : Prop :=
+  ms_gpr ms 1 <> Z_to_bv 64 0 /\ ms_gpr ms 2 = Z_to_bv 64 0
+  /\ ms_gpr ms 3 = Z_to_bv 64 34 /\ ms_gpr ms 4 = Z_to_bv 64 (-1)
+  /\ ms_gpr ms 5 = Z_to_bv 64 0.
 
-#[using="Type"] Lemma mmap_noaccess_check : forall ms x8 model eff,
+Lemma mmap_noaccess_check : forall ms x8 model eff,
   bv_unsigned x8 = 222%Z -> mmap_noaccess_args_ok ms ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
   check_syscall (sys_input segs ms x8) eff model
   = let n := page_round_up_Z (bv_unsigned (ms_gpr ms 1)) in
     match eff with
     | mkEffectU r [] [] us [] [] =>
         if errno_ret_in mmap_errnos r
         then match us with [] => CheckOk model [] | _ => CheckReject end
-        else if grant_ok_na_pin model r n && listNN_eqb us [(r, Z_to_bv 64 n)]
+        else if grant_ok_na_pin (ms_gpr ms 0) model r n && listNN_eqb us [(r, Z_to_bv 64 n)]
              then CheckOk (noaccess_model r (Z_to_bv 64 n) model) []
              else CheckReject
     | _ => CheckReject
     end.
 Proof.
-  intros ms x8 model eff Hno (H1 & H2 & H3 & H4 & H5).
-  rewrite (mmap_check ms x8 model eff Hno). unfold check_mmap.
+  intros ms x8 model eff Hno (H1 & H2 & H3 & H4 & H5) Hdecl.
+  rewrite (mmap_check ms x8 model eff Hno). unfold check_mmap, check_mmap_fixed_overflow.
   assert (E1 : w_is0 (ms_gpr ms 1) = false) by (unfold w_is0; apply bv_eqb_neq; exact H1).
   rewrite E1, H2, H3, H5.
   replace (mmap_off_aligned_b (Z_to_bv 64 0)) with true by (vm_compute; reflexivity).
@@ -345,47 +466,58 @@ Proof.
   replace (mmap_noaccess_b (Z_to_bv 64 0) (Z_to_bv 64 34) (Z_to_bv 64 0)) with true
     by (vm_compute; reflexivity).
   cbn [negb]. cbv beta iota zeta.
+  rewrite Hdecl.
   destruct eff as [r ws zs us cs ci]. destruct ws; [|reflexivity]. destruct zs; [|reflexivity].
   destruct cs; [|destruct us; reflexivity]. destruct ci; [|destruct us; reflexivity].
   destruct (errno_ret_in mmap_errnos r); [reflexivity|].
   unfold grant_ok_na_pin, noaccess_model, with_mmap_backing.
   replace (mmap_noreserve_b (Z_to_bv 64 34)) with false by (vm_compute; reflexivity).
-  rewrite <- !andb_assoc. reflexivity.
+  reflexivity.
 Qed.
 
-#[using="Type"] Lemma grant_na_not_errno : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Phint,(<.&40.)Pmodel,$=.Pa,(<.&40.)Pn,$?.P,(50.=R1.)P,(1.$53.(65.R5.R4.R3.R2.)$55.)(1.$53.(68.$69.R4.)$6:.)")
-(* [comment removed for export] *).
+Lemma grant_na_not_errno : forall hint model a n,
+  (0 <= n)%Z -> grant_ok_na hint model a n = true -> errno_ret_in mmap_errnos a = false.
 Proof.
   intros hint model a n Hn Hg. unfold grant_ok_na in Hg.
-  apply andb_true_iff in Hg as [Hg _]. apply andb_true_iff in Hg as [Hg _]. apply andb_true_iff in Hg as [Hg Hce]. apply Z.leb_le in Hce.
-  apply errno_ret_in_below; [reflexivity|].
-  pose proof alloc_ceiling_val. unfold two_pow_64. lia.
+  apply andb_true_iff in Hg as [Hg _]. apply andb_true_iff in Hg as [Hg _].
+  apply andb_true_iff in Hg as [Hg Htop].
+  apply Z.leb_le in Htop.
+  apply errno_ret_in_below; [reflexivity|]. alloc_top_bounds. unfold two_pow_64 in *. lia.
 Qed.
 
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* mprotect(addr, len, PROT_READ|PROT_WRITE) over PROT_NONE pages             *)
+(* ========================================================================= *)
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(** The model after enabling [addr, addr+n): the range leaves [vm_noaccess]
+    (= [Mprotect.mprotect_model_next]). *)
+Definition mprotect_model (addr n : word) (m : Model) : Model :=
+  with_vmmaps (mkVmMapsFull (vm_reserved (m_vmmaps m)) (vm_maps (m_vmmaps m))
+                 (maps_subtract (vm_noaccess (m_vmmaps m)) (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n))
+                 (vm_start_brk (m_vmmaps m)) (vm_brk (m_vmmaps m)) (vm_limit (m_vmmaps m))
+                 (vm_mmap_base (m_vmmaps m)) (vm_init_sp (m_vmmaps m))) m.
 
-(* [comment removed for export] *)
-Definition mprotect_model (addr n : word) (m : Model) : Model := ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "(3?.(2.(3.(40.O1.))(4.(40.O1.))(42.(5.(40.O1.))(10.&40.O3.)(43.(10.&40.O3.)(10.&40.O2.)))(6.(40.O1.))(7.(40.O1.))(8.(40.O1.))(9.(40.O1.))(:.(40.O1.)))O1.)")
-(* [comment removed for export] *).
-
-#[using="Type"] Lemma mprotect_model_next_eq : forall m addr n, mprotect_model_next m addr n = mprotect_model addr n m.
+Lemma mprotect_model_next_eq : forall m addr n, mprotect_model_next m addr n = mprotect_model addr n m.
 Proof. reflexivity. Qed.
 
-#[using="Type"] Lemma check_syscall_226 : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pms,$;.Px8,(<.&40.)Peff,$>.Pm,$=.P,(1.$?.(10.&40.R3.)+>2.)(1.$11.(12.(13.Vsegs,R5.R4.)R3.R2.)(6;.(15.R5.#0.)(15.R5.#1.)(15.R5.#2.)R3.R2.))")
-(* [comment removed for export] *).
+Lemma check_syscall_226 : forall ms x8 eff m,
+  bv_unsigned x8 = 226%Z ->
+  check_syscall (sys_input segs ms x8) eff m
+  = check_mprotect (ms_gpr ms 0) (ms_gpr ms 1) (ms_gpr ms 2) eff m.
 Proof. intros ms x8 eff m Hno. unfold check_syscall. rewrite in_sysno_si, Hno. reflexivity. Qed.
 
-#[using="Type"] Lemma mprotect_check : forall ms x8 model eff (addr : word) (len : Z),
+(** The range must be apart from the vdso/vvar pair: a request that
+    meets it is answered [CheckUnmodeled] whatever the effect, because
+    the vDSO text carries [VM_MAYWRITE] and the model has no term for a
+    vDSO whose bytes changed ([Checks.Sys.Mm.Mprotect.check_mprotect]). *)
+Lemma mprotect_check : forall ms x8 model eff (addr : word) (len : Z),
   bv_unsigned x8 = 226%Z ->
   ms_gpr ms 0 = addr -> (bv_unsigned addr mod page_size = 0)%Z ->
   ms_gpr ms 1 = Z_to_bv 64 len -> (0 < len)%Z ->
   (bv_unsigned addr + page_round_up_Z len < two_pow_64)%Z ->
   ms_gpr ms 2 = Z_to_bv 64 3 ->
   let n := Z_to_bv 64 (page_round_up_Z len) in
+  region_free (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) addr n = true ->
   map_contains (vm_noaccess (m_vmmaps model)) addr n = true ->
   map_contains (vm_maps (m_vmmaps model)) addr n = true ->
   check_syscall (sys_input segs ms x8) eff model
@@ -399,7 +531,7 @@ Proof. intros ms x8 eff m Hno. unfold check_syscall. rewrite in_sysno_si, Hno. r
     | _ => CheckReject
     end.
 Proof.
-  intros ms x8 model eff addr len Hno H0 Hal H1 Hlen Hnw H2 n Hna Hma.
+  intros ms x8 model eff addr len Hno H0 Hal H1 Hlen Hnw H2 n Hvd Hna Hma.
   assert (Hlen' : (len < two_pow_64)%Z).
   { pose proof (page_round_up_Z_bounds len ltac:(lia)). pose proof (u64_range addr). lia. }
   assert (Hu1 : bv_unsigned (ms_gpr ms 1) = len) by (rewrite H1; apply u64_lit; unfold two_pow_64 in Hlen'; lia).
@@ -411,7 +543,7 @@ Proof.
   assert (E1 : w_is0 (ms_gpr ms 1) = false).
   { unfold w_is0, bv_eqb. rewrite Hu1. change (bv_unsigned (Z_to_bv 64 0)) with 0%Z. apply Z.eqb_neq. lia. }
   rewrite E1. rewrite (proj2 (Z.leb_gt _ _)) by lia.
-  cbv beta iota zeta. fold n. rewrite Hna, Hma. cbn [andb].
+  cbv beta iota zeta. fold n. rewrite Hvd. cbn [negb]. rewrite Hna, Hma. cbn [andb].
   destruct eff as [r ws zs us cs ci]. destruct ws; [|reflexivity].
   destruct us; [| destruct (errno_ret_in mprotect_errnos r); reflexivity].
   destruct cs; [| destruct (errno_ret_in mprotect_errnos r); reflexivity].
@@ -419,56 +551,78 @@ Proof.
   reflexivity.
 Qed.
 
-#[using="Type"] Lemma ENOMEM_in_mprotect_errnos : In ENOMEM mprotect_errnos.
+Lemma ENOMEM_in_mprotect_errnos : In ENOMEM mprotect_errnos.
 Proof. left. reflexivity. Qed.
 
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* mmap(addr, len, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS|MAP_FIXED, -1, 0)     *)
+(* over a range inside one tracked mapping (musl's brk guard page)            *)
+(* ========================================================================= *)
 
-(* [comment removed for export] *)
+(** Success: the range becomes inaccessible (PROT_NONE ledger + unmapped
+    overlay); ownership ([vm_maps]) is unchanged; the lazy/materialized
+    ledgers are cleared over the range ([vm_forget_range], identity on our
+    models: [fixed_noaccess_model_simple]). *)
+Definition fixed_noaccess_model (addr n : word) (m : Model) : Model :=
+  vm_forget_range (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n)
+    (with_vmmaps (mkVmMapsFull (vm_reserved (m_vmmaps m)) (vm_maps (m_vmmaps m))
+                   ((addr, n) :: maps_subtract (vm_noaccess (m_vmmaps m)) (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n))
+                   (vm_start_brk (m_vmmaps m)) (vm_brk (m_vmmaps m)) (vm_limit (m_vmmaps m))
+                 (vm_mmap_base (m_vmmaps m)) (vm_init_sp (m_vmmaps m))) m).
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(** Destructive failure: the range is gone from both ledgers. *)
+Definition fixed_destroyed_model (addr n : word) (m : Model) : Model :=
+  vm_forget_range (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n)
+    (with_vmmaps (mkVmMapsFull (vm_reserved (m_vmmaps m))
+                   (maps_subtract (vm_maps (m_vmmaps m)) (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n))
+                   (maps_subtract (vm_noaccess (m_vmmaps m)) (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n))
+                   (vm_start_brk (m_vmmaps m)) (vm_brk (m_vmmaps m)) (vm_limit (m_vmmaps m))
+                 (vm_mmap_base (m_vmmaps m)) (vm_init_sp (m_vmmaps m))) m).
 
-(* [comment removed for export] *)
-Definition fixed_noaccess_model (addr n : word) (m : Model) : Model := ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "(6<.(10.&40.O3.)(43.(10.&40.O3.)(10.&40.O2.))(3?.(2.(3.(40.O1.))(4.(40.O1.))(37.(2>.(<.&40.)(<.&40.))(38.(<.&40.)(<.&40.)O3.O2.)(42.(5.(40.O1.))(10.&40.O3.)(43.(10.&40.O3.)(10.&40.O2.))))(6.(40.O1.))(7.(40.O1.))(8.(40.O1.))(9.(40.O1.))(:.(40.O1.)))O1.))")
-(* [comment removed for export] *).
-
-(* [comment removed for export] *)
-Definition fixed_destroyed_model (addr n : word) (m : Model) : Model := ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "(6<.(10.&40.O3.)(43.(10.&40.O3.)(10.&40.O2.))(3?.(2.(3.(40.O1.))(42.(4.(40.O1.))(10.&40.O3.)(43.(10.&40.O3.)(10.&40.O2.)))(42.(5.(40.O1.))(10.&40.O3.)(43.(10.&40.O3.)(10.&40.O2.)))(6.(40.O1.))(7.(40.O1.))(8.(40.O1.))(9.(40.O1.))(:.(40.O1.)))O1.))")
-(* [comment removed for export] *).
-
-#[using="Type"] Lemma fixed_noaccess_model_simple : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Paddr,(<.&40.)Pn,(<.&40.)Pm,$=.P,(1.(22.(2>.(<.&40.)(<.&40.)))(3<.R1.)(1;.(2>.(<.&40.)(<.&40.))))P,(1.(22.(<.&40.))(3=.R2.)(1;.(<.&40.)))(1.$=.(6=.R5.R4.R3.)(3?.(2.(3.(40.R3.))(4.(40.R3.))(37.(2>.(<.&40.)(<.&40.))(38.(<.&40.)(<.&40.)R5.R4.)(42.(5.(40.R3.))(10.&40.R5.)(43.(10.&40.R5.)(10.&40.R4.))))(6.(40.R3.))(7.(40.R3.))(8.(40.R3.))(9.(40.R3.))(:.(40.R3.)))R3.))")
-(* [comment removed for export] *).
+Lemma fixed_noaccess_model_simple : forall addr n m,
+  m_vm_lazy m = [] -> m_vm_materialized m = [] ->
+  fixed_noaccess_model addr n m
+  = with_vmmaps (mkVmMapsFull (vm_reserved (m_vmmaps m)) (vm_maps (m_vmmaps m))
+                   ((addr, n) :: maps_subtract (vm_noaccess (m_vmmaps m)) (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n))
+                   (vm_start_brk (m_vmmaps m)) (vm_brk (m_vmmaps m)) (vm_limit (m_vmmaps m))
+                 (vm_mmap_base (m_vmmaps m)) (vm_init_sp (m_vmmaps m))) m.
 Proof. intros. unfold fixed_noaccess_model. apply vm_forget_range_id; [rewrite with_vmmaps_lazy'|]; assumption. Qed.
 
-#[using="Type"] Lemma fixed_destroyed_model_simple : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Paddr,(<.&40.)Pn,(<.&40.)Pm,$=.P,(1.(22.(2>.(<.&40.)(<.&40.)))(3<.R1.)(1;.(2>.(<.&40.)(<.&40.))))P,(1.(22.(<.&40.))(3=.R2.)(1;.(<.&40.)))(1.$=.(6>.R5.R4.R3.)(3?.(2.(3.(40.R3.))(42.(4.(40.R3.))(10.&40.R5.)(43.(10.&40.R5.)(10.&40.R4.)))(42.(5.(40.R3.))(10.&40.R5.)(43.(10.&40.R5.)(10.&40.R4.)))(6.(40.R3.))(7.(40.R3.))(8.(40.R3.))(9.(40.R3.))(:.(40.R3.)))R3.))")
-(* [comment removed for export] *).
+Lemma fixed_destroyed_model_simple : forall addr n m,
+  m_vm_lazy m = [] -> m_vm_materialized m = [] ->
+  fixed_destroyed_model addr n m
+  = with_vmmaps (mkVmMapsFull (vm_reserved (m_vmmaps m))
+                   (maps_subtract (vm_maps (m_vmmaps m)) (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n))
+                   (maps_subtract (vm_noaccess (m_vmmaps m)) (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n))
+                   (vm_start_brk (m_vmmaps m)) (vm_brk (m_vmmaps m)) (vm_limit (m_vmmaps m))
+                 (vm_mmap_base (m_vmmaps m)) (vm_init_sp (m_vmmaps m))) m.
 Proof. intros. unfold fixed_destroyed_model. apply vm_forget_range_id; [rewrite with_vmmaps_lazy'|]; assumption. Qed.
 
-Definition mmap_fixed_args_ok (ms : machine_state) : Prop := ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "(27.(67.(1.(<.&40.)(15.O1.#1.)(59.&40.=)))(27.(1.(<.&40.)(15.O1.#2.)(59.&40.=))(27.(1.(<.&40.)(15.O1.#3.)(59.&40.+32.))(27.(1.(<.&40.)(15.O1.#4.)(59.&40.-1.))(1.(<.&40.)(15.O1.#5.)(59.&40.=))))))")
-(* [comment removed for export] *).
+Definition mmap_fixed_args_ok (ms : machine_state) : Prop :=
+  ms_gpr ms 1 <> Z_to_bv 64 0 /\ ms_gpr ms 2 = Z_to_bv 64 0
+  /\ ms_gpr ms 3 = Z_to_bv 64 50 /\ ms_gpr ms 4 = Z_to_bv 64 (-1)
+  /\ ms_gpr ms 5 = Z_to_bv 64 0.
 
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* set_tid_address(p): the FIRST call picks any tid in (0, 2^22)              *)
+(* ========================================================================= *)
 
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-#[using="Type"] Lemma check_syscall_96 : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pms,$;.Px8,(<.&40.)Peff,$>.Pm,$=.P,(1.$?.(10.&40.R3.)+60.)(1.$11.(12.(13.Vsegs,R5.R4.)R3.R2.)(6?.R3.R2.))")
-(* [comment removed for export] *).
+Lemma check_syscall_96 : forall ms x8 eff m,
+  bv_unsigned x8 = 96%Z ->
+  check_syscall (sys_input segs ms x8) eff m = check_set_tid_address eff m.
 Proof. intros ms x8 eff m Hno. unfold check_syscall. rewrite in_sysno_si, Hno. reflexivity. Qed.
 
 Definition tid_I : Type := { t : word | (0 < bv_unsigned t < PID_MAX_ENVELOPE)%Z }.
 
-#[using="Type"] Lemma one_tid_ok : (0 < bv_unsigned (Z_to_bv 64 1) < PID_MAX_ENVELOPE)%Z.
+Lemma one_tid_ok : (0 < bv_unsigned (Z_to_bv 64 1) < PID_MAX_ENVELOPE)%Z.
 Proof. unfold PID_MAX_ENVELOPE. rewrite u64_lit by lia. lia. Qed.
 
-#[using="Type"] Lemma node_set_tid : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pms,$;.Pmodel,$=.Px8,(<.&40.)P,(1.(29.(<.&40.))(44.R2.)(45.(<.&40.)))P,(1.(22.(2>.(<.&40.)(<.&40.)))(3<.R3.)(1;.(2>.(<.&40.)(<.&40.))))P,(1.(29.(<.&40.))(46.R5.)(47.(<.&40.)R3.))P,(1.$?.(10.&40.R4.)+60.)P,(1.(29.(<.&40.))(70.R6.)(45.(<.&40.)))(1:.Vsegs,(48.R8.R7.)$71.L,$71.(1;.$1<.)Li,$71.(48.(2:.(72.R9.(4;.(<.&40.)Lt,(<.&40.)(27.(4?.=(10.&40.R1.))(4?.(10.&40.R1.)$73.))R1.)))(74.(4;.(<.&40.)Lt,(<.&40.)(27.(4?.=(10.&40.R1.))(4?.(10.&40.R1.)$73.))R1.)R8.)))")
-(* [comment removed for export] *).
+Lemma node_set_tid : forall ms model x8,
+  m_halted model = None -> m_vm_lazy model = [] ->
+  ms_svc_pending ms = Some x8 -> bv_unsigned x8 = 96%Z ->
+  m_tid model = None ->
+  node_ok segs (mkCfg ms model) tid_I (fun _ => [])
+    (fun i => mkCfg (advance_past_svc (set_gpr0 ms (proj1_sig i))) (with_tid (proj1_sig i) model)).
 Proof.
   intros ms model x8 Hh Hlazy Hsvc Hno Htid.
   assert (Hchk : forall eff, check_syscall (sys_input segs ms x8) eff model =
@@ -483,7 +637,7 @@ Proof.
     mkCfg (advance_past_svc (set_gpr0 ms (proj1_sig i))) (with_tid (proj1_sig i) model)
     = mkCfg (advance_past_svc (apply_effect ms (effs i))) (with_tid (proj1_sig i) model)).
   { intros [t Ht]. cbn [proj1_sig effs]. rewrite <- (apply_effect_no_write ms t). reflexivity. }
-  split.
+  split; [|split].
   - intros i. rewrite Enx. apply (sstep_of_check segs ms model x8); [exact Hh | exact Hsvc | | rewrite with_tid_halted; exact Hh | rewrite with_tid_lazy; exact Hlazy].
     destruct i as [t [Ht1 Ht2]]. subst effs. cbn [proj1_sig]. rewrite Hchk.
     rewrite (proj2 (Z.ltb_lt _ _) Ht1), (proj2 (Z.ltb_lt _ _) Ht2). reflexivity.
@@ -509,17 +663,22 @@ Proof.
       destruct ws; [|discriminate]. destruct zs; [|discriminate]. destruct us; [|discriminate].
       destruct cs; [|discriminate]. destruct ci; [|discriminate].
       destruct ((0 <? bv_unsigned ret)%Z && (bv_unsigned ret <? PID_MAX_ENVELOPE)%Z); discriminate.
+  - apply (sys_rob_memfree segs ms model x8 Hsvc). rewrite Hno. exact memfree_96.
 Qed.
 
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* exit / exit_group                                                          *)
+(* ========================================================================= *)
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
-#[using="Type"] Lemma rz_exit_at : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pregs,(28.&5.(<.&40.))Ppc,(<.&40.)Pmem,P,(<.&40.)(29.(<.&8.))Prom,P,(<.&40.)(29.(<.&8.))Pmodel,$=.Pw,(<.&20.)Pcode,(<.&40.)P,(1.(29.(<.&20.))(75.Vsegs,R6.)(47.(<.&20.)R2.))P,(1.$53.(76.R3.)$55.)P,(1.(29.(<.&40.))(44.R5.)(45.(<.&40.)))P,(1.(22.(2>.(<.&40.)(<.&40.)))(3<.R6.)(1;.(2>.(<.&40.)(<.&40.))))P,(52.(1.(<.&40.)(77.R;.(34.&5.+11.$35.))(59.&40.+5>.))(1.(<.&40.)(77.R;.(34.&5.+11.$35.))(59.&40.+5=.)))P,(1.(<.&40.)(77.R<.(34.&5.+:.$35.))R6.)(1=.Vsegs,(48.(31.$32.R=.R<.R;.R:.)R9.)(78.(79.&40.R7.(59.&40.+??.))(7:.R9.)))")
-(* [comment removed for export] *).
+(** At an ecall pc with a7 = 94 (exit_group) or 93 (exit) and a0 = code, the
+    configuration realizes [t_exit (code & 255)]. *)
+Lemma rz_exit_at : forall regs (pc : word) mem rom model w code,
+  fetch_word segs pc = Some w -> is_ecall w = true ->
+  m_halted model = None -> m_vm_lazy model = [] ->
+  (getr regs 17 = Z_to_bv 64 94 \/ getr regs 17 = Z_to_bv 64 93) ->
+  getr regs 10 = code ->
+  realizes segs (mkCfg (mkst regs pc mem rom) model)
+           (t_exit (bv_and code (Z_to_bv 64 255)) (m_fs model)).
 Proof.
   intros regs pc mem rom model w code HF HE Hh Hlazy H17 H10.
   eapply rz_sys; [exact Hh | exact Hlazy | exact HF | exact HE |].
@@ -528,38 +687,54 @@ Proof.
   destruct H17 as [H|H]; [right|left]; rewrite H; reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma rz_exit_at_lit : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pregs,(28.&5.(<.&40.))Ppc,(<.&40.)Pmem,P,(<.&40.)(29.(<.&8.))Prom,P,(<.&40.)(29.(<.&8.))Pmodel,$=.Pw,(<.&20.)Pcode,$?.P,(1.(29.(<.&20.))(75.Vsegs,R6.)(47.(<.&20.)R2.))P,(1.$53.(76.R3.)$55.)P,(1.(29.(<.&40.))(44.R5.)(45.(<.&40.)))P,(1.(22.(2>.(<.&40.)(<.&40.)))(3<.R6.)(1;.(2>.(<.&40.)(<.&40.))))P,(52.(1.(<.&40.)(77.R;.(34.&5.+11.$35.))(59.&40.+5>.))(1.(<.&40.)(77.R;.(34.&5.+11.$35.))(59.&40.+5=.)))P,(1.(<.&40.)(77.R<.(34.&5.+:.$35.))(59.&40.R6.))P,(27.(50.=R7.)(4?.R7.+100.))(1=.Vsegs,(48.(31.$32.R>.R=.R<.R;.)R:.)(78.(59.&40.R8.)(7:.R:.)))")
-(* [comment removed for export] *).
+(** ... with a literal status below 256. *)
+Lemma rz_exit_at_lit : forall regs (pc : word) mem rom model w (code : Z),
+  fetch_word segs pc = Some w -> is_ecall w = true ->
+  m_halted model = None -> m_vm_lazy model = [] ->
+  (getr regs 17 = Z_to_bv 64 94 \/ getr regs 17 = Z_to_bv 64 93) ->
+  getr regs 10 = Z_to_bv 64 code -> (0 <= code < 256)%Z ->
+  realizes segs (mkCfg (mkst regs pc mem rom) model) (t_exit (Z_to_bv 64 code) (m_fs model)).
 Proof.
   intros regs pc mem rom model w code HF HE Hh Hlazy H17 H10 Hc.
   rewrite <- (bv_and_255_small code Hc). eapply rz_exit_at; eassumption.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* Discharging the budget side conditions                                     *)
+(* ========================================================================= *)
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma vm_backing_used_simple : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pm,$=.P,(1.(22.(2>.(<.&40.)(<.&40.)))(3<.R1.)(1;.(2>.(<.&40.)(<.&40.))))P,(1.(22.(<.&40.))(3=.R2.)(1;.(<.&40.)))(1.$?.(7;.R3.)(7<.(40.R3.)))")
-(* [comment removed for export] *).
+(** On a model with no lazy mappings and no materialized sparse pages (every
+    model our binaries reach) the backed-memory meter is the VmMaps-level
+    [vm_backed_bytes]; with no PROT_NONE ranges it is just [vm_live_bytes]. *)
+Lemma vm_backing_used_simple : forall m,
+  m_vm_lazy m = [] -> m_vm_materialized m = [] ->
+  vm_backing_used m = vm_backed_bytes (m_vmmaps m).
 Proof.
   intros m Hl Hm. unfold vm_backing_used. rewrite Hl, Hm. cbn [maps_subtract_all length Z.of_nat Z.mul]. unfold vm_backed_bytes. lia.
 Qed.
 
-#[using="Type"] Lemma vm_backed_bytes_no_noaccess : forall h,
+Lemma vm_backed_bytes_no_noaccess : forall h,
   vm_noaccess h = [] -> vm_backed_bytes h = vm_live_bytes h.
 Proof. intros h H. unfold vm_backed_bytes, vm_backed_maps. rewrite H. reflexivity. Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma brk_grow_ok_aligned_intro : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pm,$=.Pd,$?.Zh,$0.(40.R2.)Zb,(<.&40.)(7.R1.)P,(1.$?.(57.(10.&40.R1.)$58.)=)P,(1.$?.(57.R4.$58.)=)P,(4?.=R5.)P,(4?.=(10.&40.R4.))P,(50.(43.(10.&40.R5.)R7.)$5>.)P,(66.R7.)P,(1.$53.(5?.(60.(2>.(<.&40.)(<.&40.))(3.R8.)(4.R8.))R7.(59.&40.(43.R9.$58.)))$55.)P,(50.(43.(7;.R;.)R:.)(8.R9.))(1.$53.(54.R<.(59.&40.(43.(10.&40.R9.)R;.))(59.&40.(43.(10.&40.R9.)R;.)))$55.)")
-(* [comment removed for export] *).
+(** Admissibility of an aligned grow [b -> b + d]: below the ceiling,
+    disjoint from the image and every mapping, within budget. *)
+Lemma brk_grow_ok_aligned_intro : forall m d,
+  let h := m_vmmaps m in
+  let b := vm_brk h in
+  (bv_unsigned b mod page_size = 0)%Z -> (d mod page_size = 0)%Z -> (0 < d)%Z ->
+  (0 < bv_unsigned b)%Z ->
+  (bv_unsigned b + d <= alloc_ceiling)%Z -> init_sp_ok h ->
+  region_free (vm_reserved h ++ vm_maps h) b (Z_to_bv 64 (d + page_size)) = true ->
+  (vm_backing_used m + d <= vm_limit h)%Z ->
+  Mmap.brk_grow_ok m (Z_to_bv 64 (bv_unsigned b + d)) (Z_to_bv 64 (bv_unsigned b + d)) = true.
 Proof.
   intros m d h b Hbal Hdal Hd Hb0 Hce Hisp Hrf Hlive.
   pose proof alloc_ceiling_val as Hcv. pose proof (u64_range b) as Hbr.
   pose proof (alloc_ceiling_le_alloc_top h Hisp) as Htop.
   assert (Hureq : bv_unsigned (Z_to_bv 64 (bv_unsigned b + d)) = (bv_unsigned b + d)%Z) by (apply u64_lit; lia).
-  unfold Mmap.brk_grow_ok, Mmap.brk_budget_ok. fold h. fold b. rewrite Hureq.
+  unfold Mmap.brk_grow_ok, Mmap.brk_budget_ok, Mmap.brk_grow_bytes.
+  fold h. fold b. rewrite Hureq.
   rewrite (proj2 (Z.ltb_lt 0 _) Hb0), (proj2 (Z.ltb_lt (bv_unsigned b) _)) by lia. cbn [andb].
   rewrite (page_round_up_Z_aligned (bv_unsigned b)) by (first [lia | exact Hbal]).
   rewrite (page_round_up_Z_aligned (bv_unsigned b + d))
@@ -568,54 +743,71 @@ Proof.
   rewrite (proj2 (Z.leb_le _ _)) by lia.
   replace (Z_to_bv 64 (bv_unsigned b)) with b by (symmetry; apply Z_to_bv_u_eq'; reflexivity).
   replace (bv_unsigned b + d + page_size - bv_unsigned b)%Z with (d + page_size)%Z by lia. rewrite Hrf.
-  replace (bv_unsigned (Z_to_bv 64 (bv_unsigned b + d) - b)) with d.
-  2:{ rewrite bv_sub_unsigned, Hureq. rewrite bv_wrap_small by (unfold bv_modulus; lia). lia. }
+  replace (Z.max 0 (bv_unsigned b + d - bv_unsigned b))%Z with d by lia.
   rewrite (proj2 (Z.leb_le _ _) Hlive). reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-#[using="Type"] Lemma brk_grow_admissible_init : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Preserved,(22.(2>.(<.&40.)(<.&40.)))Pbrk0,(<.&40.)Pmbase,(<.&40.)Psp,(<.&40.)Plim,$?.Pmodel,$=.Pd,$?.P,(50.$7=.(10.&40.R4.))P,(50.(7>.R8.)(10.&40.R7.))P,(1.$?.(57.(10.&40.R8.)$58.)=)P,(1.$?.(57.R4.$58.)=)P,(4?.=R5.)P,(4?.=(10.&40.R;.))P,(50.(43.(10.&40.R<.)R7.)$5>.)P,(50.R8.R:.)P,(1.$0.(40.R:.)(2.R?.(1;.(2>.(<.&40.)(<.&40.)))(1;.(2>.(<.&40.)(<.&40.)))R>.R>.R;.R=.R<.))P,(1.(22.(2>.(<.&40.)(<.&40.)))(3<.R;.)(1;.(2>.(<.&40.)(<.&40.))))P,(1.(22.(<.&40.))(3=.R<.)(1;.(<.&40.)))(1.$53.(54.R=.(59.&40.(43.(10.&40.R11.)R<.))(59.&40.(43.(10.&40.R11.)R<.)))$55.)")
-(* [comment removed for export] *).
+(** In the initial model (no mappings yet; break = the ASLR base [brk0] at or
+    above the image top) the first aligned grow of [d <= limit] bytes that
+    stays below the ceiling is admissible. *)
+(* [AsanCeil.init_sp_ok] gained the mmap-base floor; this lemma (no consumer in proofs/) takes it
+   as a premise beside the sp one. *)
+Lemma brk_grow_admissible_init : forall reserved (brk0 mbase sp : word) lim (model : Model) d,
+  (sp_window_lo <= bv_unsigned sp)%Z ->
+  (mmap_base_min <= bv_unsigned mbase)%Z ->
+  (reserved_top reserved <= bv_unsigned brk0)%Z ->
+  (bv_unsigned brk0 mod page_size = 0)%Z -> (d mod page_size = 0)%Z -> (0 < d)%Z ->
+  (0 < bv_unsigned brk0)%Z ->
+  (bv_unsigned brk0 + d <= alloc_ceiling)%Z ->
+  (d <= lim)%Z ->
+  m_vmmaps model = mkVmMapsFull reserved [] [] brk0 brk0 lim mbase sp ->
+  m_vm_lazy model = [] -> m_vm_materialized model = [] ->
+  Mmap.brk_grow_ok model (Z_to_bv 64 (bv_unsigned brk0 + d)) (Z_to_bv 64 (bv_unsigned brk0 + d)) = true.
 Proof.
-  intros reserved brk0 mbase sp lim model d Hsp Htop Hbal Hdal Hd Hb0 Hce Hlim Hvm Hlz Hmt.
+  intros reserved brk0 mbase sp lim model d Hsp Hmbase Htop Hbal Hdal Hd Hb0 Hce Hlim Hvm Hlz Hmt.
   pose proof (brk_grow_ok_aligned_intro model d) as H. cbv zeta in H. rewrite Hvm in H. cbn in H.
-  apply H; try assumption; try lia.  (* [comment removed for export] *)
+  apply H; try assumption; try lia.
+  - apply init_sp_ok_intro; cbn; assumption.
   - rewrite app_nil_r. apply region_free_above_top. exact Htop.
   - rewrite vm_backing_used_simple by assumption. rewrite Hvm. cbn. lia.
 Qed.
 
 End WithSegs.
 
-(* [comment removed for export] *)
+(* The remaining, [segs]-independent material is stated in Z_scope. *)
 Local Open Scope Z_scope.
 
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* Ledger algebra: evaluating the model's interval bookkeeping               *)
+(* ========================================================================= *)
 
 Lemma u64_roundtrip : forall (x : word), Z_to_bv 64 (bv_unsigned x) = x.
 Proof. intros x. apply bv_eq. rewrite Z_to_bv_unsigned. apply bv_wrap_small. apply bv_unsigned_in_range. Qed.
 
-(* [comment removed for export] *)
-Lemma region_free_app : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pl1,(22.(2>.(<.&40.)(<.&40.)))Pl2,(22.(2>.(<.&40.)(<.&40.)))Plo,(<.&40.)Pn,(<.&40.)(1.$53.(5?.(60.(2>.(<.&40.)(<.&40.))R4.R3.)R2.R1.)(5:.(5?.R4.R2.R1.)(5?.R3.R2.R1.)))")
-(* [comment removed for export] *).
+(** [region_free] *)
+Lemma region_free_app : forall l1 l2 (lo n : word),
+  region_free (l1 ++ l2) lo n = region_free l1 lo n && region_free l2 lo n.
 Proof.
   induction l1 as [|[b s] l1 IH]; intros l2 lo n; [reflexivity|].
   cbn [region_free app]. rewrite IH, andb_assoc. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-Lemma region_free_In : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pl,(22.(2>.(<.&40.)(<.&40.)))Plo,(<.&40.)Pn,(<.&40.)Pb,(<.&40.)Ps,(<.&40.)P,(1.$53.(5?.R5.R4.R3.)$55.)P,(7?.(2>.(<.&40.)(<.&40.))(38.(<.&40.)(<.&40.)R3.R2.)R6.)(52.(50.(43.(10.&40.R6.)(10.&40.R5.))(10.&40.R4.))(50.(43.(10.&40.R4.)(10.&40.R3.))(10.&40.R6.)))")
-(* [comment removed for export] *).
+(** NOTE: shadows [State.region_free_In]/[State.region_free_intro] (which
+    speak [iv_overlap]); these are the Z-inequality forms the walks use. *)
+Lemma region_free_In : forall l (lo n b s : word),
+  region_free l lo n = true -> In (b, s) l ->
+  bv_unsigned lo + bv_unsigned n <= bv_unsigned b \/ bv_unsigned b + bv_unsigned s <= bv_unsigned lo.
 Proof.
   induction l as [|[b' s'] l IH]; intros lo n b s Hrf Hin; [destruct Hin|].
   apply region_free_cons in Hrf as [Hd Hrf].
   destruct Hin as [E | Hin]; [injection E as -> ->; exact Hd | exact (IH _ _ _ _ Hrf Hin)].
 Qed.
 
-Lemma region_free_intro : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pl,(22.(2>.(<.&40.)(<.&40.)))Plo,(<.&40.)Pn,(<.&40.)P,Pb,(<.&40.)Ps,(<.&40.)P,(7?.(2>.(<.&40.)(<.&40.))(38.(<.&40.)(<.&40.)R2.R1.)R5.)(52.(50.(43.(10.&40.R5.)(10.&40.R4.))(10.&40.R3.))(50.(43.(10.&40.R3.)(10.&40.R2.))(10.&40.R5.)))(1.$53.(5?.R4.R3.R2.)$55.)")
-(* [comment removed for export] *).
+Lemma region_free_intro : forall l (lo n : word),
+  (forall b s, In (b, s) l ->
+     bv_unsigned lo + bv_unsigned n <= bv_unsigned b \/ bv_unsigned b + bv_unsigned s <= bv_unsigned lo) ->
+  region_free l lo n = true.
 Proof.
   induction l as [|[b s] l IH]; intros lo n H; [reflexivity|].
   cbn [region_free]. rewrite IH by (intros b' s' Hin; apply H; right; exact Hin).
@@ -623,15 +815,17 @@ Proof.
   destruct (H b s (or_introl eq_refl)) as [Hl | Hr]; [right | left]; apply Z.ltb_ge; lia.
 Qed.
 
-(* [comment removed for export] *)
+(** [map_has] / [map_contains] *)
 Lemma map_has_head : forall (a n : word) l, map_has ((a, n) :: l) a n = true.
 Proof. intros. unfold map_has. cbn [existsb fst snd]. rewrite !bv_eqb_refl. reflexivity. Qed.
 
 Lemma map_has_cons : forall p (a n : word) l, map_has l a n = true -> map_has (p :: l) a n = true.
 Proof. intros p a n l H. unfold map_has in *. cbn [existsb]. rewrite H. apply orb_true_r. Qed.
 
-Lemma map_contains_head : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pa,(<.&40.)Psz,(<.&40.)Plo,(<.&40.)Pn,(<.&40.)Pl,(22.(2>.(<.&40.)(<.&40.)))P,(50.(10.&40.R5.)(10.&40.R3.))P,(50.(43.(10.&40.R4.)(10.&40.R3.))(43.(10.&40.R6.)(10.&40.R5.)))(1.$53.(80.(37.(2>.(<.&40.)(<.&40.))(38.(<.&40.)(<.&40.)R7.R6.)R3.)R5.R4.)$55.)")
-(* [comment removed for export] *).
+Lemma map_contains_head : forall (a sz lo n : word) l,
+  bv_unsigned a <= bv_unsigned lo ->
+  bv_unsigned lo + bv_unsigned n <= bv_unsigned a + bv_unsigned sz ->
+  map_contains ((a, sz) :: l) lo n = true.
 Proof.
   intros a sz lo n l H1 H2. unfold map_contains. cbn [existsb fst snd].
   rewrite (proj2 (Z.leb_le _ _) H1), (proj2 (Z.leb_le _ _) H2). reflexivity.
@@ -641,7 +835,7 @@ Lemma map_contains_cons : forall p (lo n : word) l,
   map_contains l lo n = true -> map_contains (p :: l) lo n = true.
 Proof. intros p lo n l H. unfold map_contains in *. cbn [existsb]. rewrite H. apply orb_true_r. Qed.
 
-(* [comment removed for export] *)
+(** [map_remove] (munmap's effect on [vm_maps]) *)
 Lemma map_remove_nil : forall (a : word), map_remove [] a = [].
 Proof. reflexivity. Qed.
 
@@ -660,12 +854,14 @@ Proof.
   rewrite IH by (intros b' s' Hin; apply (H b' s'); right; exact Hin). reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-Lemma disjoint_base_ne : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Plo,(<.&40.)Pn,(<.&40.)Pb,(<.&40.)Ps,(<.&40.)P,(4?.=(10.&40.R3.))P,(4?.=(10.&40.R2.))P,(52.(50.(43.(10.&40.R6.)(10.&40.R5.))(10.&40.R4.))(50.(43.(10.&40.R4.)(10.&40.R3.))(10.&40.R6.)))(67.(1.(<.&40.)R5.R7.))")
-(* [comment removed for export] *).
+(** Disjoint nonempty intervals have different bases. *)
+Lemma disjoint_base_ne : forall (lo n b s : word),
+  0 < bv_unsigned n -> 0 < bv_unsigned s ->
+  (bv_unsigned lo + bv_unsigned n <= bv_unsigned b \/ bv_unsigned b + bv_unsigned s <= bv_unsigned lo) ->
+  b <> lo.
 Proof. intros lo n b s Hn Hs Hd ->. lia. Qed.
 
-(* [comment removed for export] *)
+(** [live_bytes] *)
 Lemma live_bytes_cons : forall (a n : word) l, live_bytes ((a, n) :: l) = bv_unsigned n + live_bytes l.
 Proof. reflexivity. Qed.
 
@@ -682,37 +878,42 @@ Proof.
     fold (map_remove l a); pose proof (IH a); pose proof (u64_range s); lia.
 Qed.
 
-(* [comment removed for export] *)
+(** [iv_subtract] / [maps_subtract] (munmap / mprotect / MAP_FIXED effects
+    on [vm_noaccess], brk shrink).  NOTE: the interval endpoints [lo]/[hi]
+    are [Z] in the current [State.iv_subtract]. *)
 Lemma maps_subtract_nil : forall (lo hi : Z), maps_subtract [] lo hi = [].
 Proof. reflexivity. Qed.
 
-Lemma maps_subtract_cons : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pa,(<.&40.)Psz,(<.&40.)Plo,$?.Phi,$?.Pl,(22.(2>.(<.&40.)(<.&40.)))(1.(22.(2>.(<.&40.)(<.&40.)))(42.(37.(2>.(<.&40.)(<.&40.))(38.(<.&40.)(<.&40.)R5.R4.)R1.)R3.R2.)(60.(2>.(<.&40.)(<.&40.))(81.R5.R4.R3.R2.)(42.R1.R3.R2.)))")
-(* [comment removed for export] *).
+Lemma maps_subtract_cons : forall (a sz : word) (lo hi : Z) l,
+  maps_subtract ((a, sz) :: l) lo hi = iv_subtract a sz lo hi ++ maps_subtract l lo hi.
 Proof. reflexivity. Qed.
 
-Lemma maps_subtract_app : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pl1,(22.(2>.(<.&40.)(<.&40.)))Pl2,(22.(2>.(<.&40.)(<.&40.)))Plo,$?.Phi,$?.(1.(22.(2>.(<.&40.)(<.&40.)))(42.(60.(2>.(<.&40.)(<.&40.))R4.R3.)R2.R1.)(60.(2>.(<.&40.)(<.&40.))(42.R4.R2.R1.)(42.R3.R2.R1.)))")
-(* [comment removed for export] *).
+Lemma maps_subtract_app : forall l1 l2 (lo hi : Z),
+  maps_subtract (l1 ++ l2) lo hi = maps_subtract l1 lo hi ++ maps_subtract l2 lo hi.
 Proof.
   induction l1 as [|[a sz] l1 IH]; intros l2 lo hi; [reflexivity|].
   cbn [maps_subtract app]. rewrite IH, app_assoc. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-Lemma iv_subtract_covered : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pa,(<.&40.)Psz,(<.&40.)Plo,$?.Phi,$?.P,(50.R2.(10.&40.R4.))P,(50.(43.(10.&40.R5.)(10.&40.R4.))R2.)(1.(22.(2>.(<.&40.)(<.&40.)))(81.R6.R5.R4.R3.)(1;.(2>.(<.&40.)(<.&40.))))")
-(* [comment removed for export] *).
+(** Subtracting a range that covers the interval removes it. *)
+Lemma iv_subtract_covered : forall (a sz : word) (lo hi : Z),
+  lo <= bv_unsigned a -> bv_unsigned a + bv_unsigned sz <= hi ->
+  iv_subtract a sz lo hi = [].
 Proof.
   intros a sz lo hi H1 H2. unfold iv_subtract.
   rewrite (proj2 (Z.ltb_ge _ _) H1), (proj2 (Z.ltb_ge _ _) H2). reflexivity.
 Qed.
 
-(* [comment removed for export] *)
+(** ... in particular the interval itself. *)
 Lemma iv_subtract_self : forall (a sz : word),
   iv_subtract a sz (bv_unsigned a) (bv_unsigned a + bv_unsigned sz) = [].
 Proof. intros a sz. apply iv_subtract_covered; lia. Qed.
 
-(* [comment removed for export] *)
-Lemma iv_subtract_disjoint : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pa,(<.&40.)Psz,(<.&40.)Plo,$?.Phi,$?.P,(4?.=(10.&40.R3.))P,(50.R3.R2.)P,(52.(50.R3.(10.&40.R6.))(50.(43.(10.&40.R6.)(10.&40.R5.))R4.))(1.(22.(2>.(<.&40.)(<.&40.)))(81.R7.R6.R5.R4.)(37.(2>.(<.&40.)(<.&40.))(38.(<.&40.)(<.&40.)R7.R6.)(1;.(2>.(<.&40.)(<.&40.)))))")
-(* [comment removed for export] *).
+(** Subtracting a disjoint range keeps a nonempty interval whole. *)
+Lemma iv_subtract_disjoint : forall (a sz : word) (lo hi : Z),
+  0 < bv_unsigned sz -> lo <= hi ->
+  (hi <= bv_unsigned a \/ bv_unsigned a + bv_unsigned sz <= lo) ->
+  iv_subtract a sz lo hi = [(a, sz)].
 Proof.
   intros a sz lo hi Hsz Hlh Hd. unfold iv_subtract.
   destruct Hd as [Hd | Hd].
@@ -726,27 +927,35 @@ Proof.
     rewrite Z.min_l by lia. rewrite u64_roundtrip. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-Lemma iv_subtract_suffix : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pa,(<.&40.)Psz,(<.&40.)Plo,$?.Phi,$?.P,(4?.(10.&40.R4.)R2.)P,(50.R3.(43.(10.&40.R5.)(10.&40.R4.)))P,(50.(43.(10.&40.R6.)(10.&40.R5.))R3.)(1.(22.(2>.(<.&40.)(<.&40.)))(81.R7.R6.R5.R4.)(37.(2>.(<.&40.)(<.&40.))(38.(<.&40.)(<.&40.)R7.(59.&40.(82.R5.(10.&40.R7.))))(1;.(2>.(<.&40.)(<.&40.)))))")
-(* [comment removed for export] *).
+(** Subtracting a suffix [lo, hi) with [a < lo <= a+sz <= hi] keeps the
+    prefix [a, lo). *)
+Lemma iv_subtract_suffix : forall (a sz : word) (lo hi : Z),
+  bv_unsigned a < lo -> lo <= bv_unsigned a + bv_unsigned sz ->
+  bv_unsigned a + bv_unsigned sz <= hi ->
+  iv_subtract a sz lo hi = [(a, Z_to_bv 64 (lo - bv_unsigned a))].
 Proof.
   intros a sz lo hi H1 H2 H3. unfold iv_subtract.
   rewrite (proj2 (Z.ltb_lt _ _) H1), (proj2 (Z.ltb_ge _ _) H3). cbn [app].
   rewrite Z.min_r by lia. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-Lemma iv_subtract_prefix : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pa,(<.&40.)Psz,(<.&40.)Plo,$?.Phi,$?.P,(50.R2.(10.&40.R4.))P,(50.(10.&40.R5.)R2.)P,(4?.R3.(43.(10.&40.R6.)(10.&40.R5.)))(1.(22.(2>.(<.&40.)(<.&40.)))(81.R7.R6.R5.R4.)(37.(2>.(<.&40.)(<.&40.))(38.(<.&40.)(<.&40.)(59.&40.R4.)(59.&40.(82.(43.(10.&40.R7.)(10.&40.R6.))R4.)))(1;.(2>.(<.&40.)(<.&40.)))))")
-(* [comment removed for export] *).
+(** Subtracting a prefix [lo, hi) with [lo <= a < hi < a+sz] keeps the
+    suffix [hi, a+sz). *)
+Lemma iv_subtract_prefix : forall (a sz : word) (lo hi : Z),
+  lo <= bv_unsigned a -> bv_unsigned a <= hi ->
+  hi < bv_unsigned a + bv_unsigned sz ->
+  iv_subtract a sz lo hi = [(Z_to_bv 64 hi, Z_to_bv 64 (bv_unsigned a + bv_unsigned sz - hi))].
 Proof.
   intros a sz lo hi H1 H2 H3. unfold iv_subtract.
   rewrite (proj2 (Z.ltb_ge _ _) H1), (proj2 (Z.ltb_lt _ _) H3). cbn [app].
   rewrite Z.max_r by lia. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-Lemma iv_subtract_sizes : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pa,(<.&40.)Psz,(<.&40.)Plo,$?.Phi,$?.PN,$?.P,(50.=R3.)P,(4?.R3.(56.+2.+40.))P,(50.(10.&40.R6.)R3.)(83.(2>.(<.&40.)(<.&40.))Lp,(2>.(<.&40.)(<.&40.))(50.(10.&40.(84.(<.&40.)(<.&40.)R1.))R5.)(81.R8.R7.R6.R5.))")
-(* [comment removed for export] *).
+(** Size bounds survive subtraction (for [maps_subtract_sizes] below). *)
+Lemma iv_subtract_sizes : forall (a sz : word) (lo hi : Z) N,
+  0 <= lo -> hi < 2 ^ 64 ->
+  bv_unsigned sz <= N ->
+  Forall (fun p => bv_unsigned (snd p) <= N) (iv_subtract a sz lo hi).
 Proof.
   intros a sz lo hi N Hlo Hhi Hs. pose proof (u64_range a). pose proof (u64_range sz).
   unfold iv_subtract. apply Forall_app. split.
@@ -758,8 +967,10 @@ Proof.
     rewrite u64_lit by lia. lia.
 Qed.
 
-Lemma maps_subtract_sizes : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pl,(22.(2>.(<.&40.)(<.&40.)))Plo,$?.Phi,$?.PN,$?.P,(50.=R3.)P,(4?.R3.(56.+2.+40.))P,(83.(2>.(<.&40.)(<.&40.))Lp,(2>.(<.&40.)(<.&40.))(50.(10.&40.(84.(<.&40.)(<.&40.)R1.))R4.)R6.)(83.(2>.(<.&40.)(<.&40.))Lp,(2>.(<.&40.)(<.&40.))(50.(10.&40.(84.(<.&40.)(<.&40.)R1.))R5.)(42.R7.R6.R5.))")
-(* [comment removed for export] *).
+Lemma maps_subtract_sizes : forall l (lo hi : Z) N,
+  0 <= lo -> hi < 2 ^ 64 ->
+  Forall (fun p => bv_unsigned (snd p) <= N) l ->
+  Forall (fun p => bv_unsigned (snd p) <= N) (maps_subtract l lo hi).
 Proof.
   induction l as [|[a sz] l IH]; intros lo hi N Hlo Hhi H; [constructor|].
   inversion H as [|p l' Hp Hl]; subst. cbn [maps_subtract]. apply Forall_app. split.
@@ -767,8 +978,9 @@ Proof.
   - apply IH; assumption.
 Qed.
 
-Lemma map_remove_sizes : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pl,(22.(2>.(<.&40.)(<.&40.)))Pa,(<.&40.)PN,$?.P,(83.(2>.(<.&40.)(<.&40.))Lp,(2>.(<.&40.)(<.&40.))(50.(10.&40.(84.(<.&40.)(<.&40.)R1.))R2.)R3.)(83.(2>.(<.&40.)(<.&40.))Lp,(2>.(<.&40.)(<.&40.))(50.(10.&40.(84.(<.&40.)(<.&40.)R1.))R3.)(41.R4.R3.))")
-(* [comment removed for export] *).
+Lemma map_remove_sizes : forall l (a : word) N,
+  Forall (fun p => bv_unsigned (snd p) <= N) l ->
+  Forall (fun p => bv_unsigned (snd p) <= N) (map_remove l a).
 Proof.
   intros l a N H. unfold map_remove. apply List.incl_Forall with (l1 := l); [|exact H].
   apply List.incl_filter.
@@ -792,9 +1004,10 @@ Proof.
     fold (map_remove l a); specialize (IH a); lia.
 Qed.
 
-(* [comment removed for export] *)
-Lemma live_bytes_iv_subtract_le : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pa,(<.&40.)Psz,(<.&40.)Plo,$?.Phi,$?.P,(50.R2.R1.)(50.(85.(81.R5.R4.R3.R2.))(10.&40.R4.))")
-(* [comment removed for export] *).
+(** [live_bytes] only shrinks under subtraction. *)
+Lemma live_bytes_iv_subtract_le : forall (a sz : word) (lo hi : Z),
+  lo <= hi ->
+  live_bytes (iv_subtract a sz lo hi) <= bv_unsigned sz.
 Proof.
   intros a sz lo hi Hlh. pose proof (u64_range a). pose proof (u64_range sz).
   unfold iv_subtract.
@@ -815,8 +1028,9 @@ Qed.
 Lemma maps_subtract_all_nil : forall maps, maps_subtract_all maps [] = maps.
 Proof. reflexivity. Qed.
 
-Lemma maps_subtract_all_cons : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pmaps,(22.(2>.(<.&40.)(<.&40.)))Pa,(<.&40.)Pn,(<.&40.)Pcuts,(22.(2>.(<.&40.)(<.&40.)))(1.(22.(2>.(<.&40.)(<.&40.)))(86.R4.(37.(2>.(<.&40.)(<.&40.))(38.(<.&40.)(<.&40.)R3.R2.)R1.))(86.(42.R4.(10.&40.R3.)(43.(10.&40.R3.)(10.&40.R2.)))R1.))")
-(* [comment removed for export] *).
+Lemma maps_subtract_all_cons : forall maps (a n : word) cuts,
+  maps_subtract_all maps ((a, n) :: cuts)
+  = maps_subtract_all (maps_subtract maps (bv_unsigned a) (bv_unsigned a + bv_unsigned n)) cuts.
 Proof. reflexivity. Qed.
 
 Lemma live_bytes_maps_subtract_all_le : forall cuts maps,
@@ -827,24 +1041,34 @@ Proof.
   apply live_bytes_maps_subtract_le. pose proof (u64_range n). lia.
 Qed.
 
-(* [comment removed for export] *)
+(** The BACKED view never exceeds the logical live total ... *)
 Lemma vm_backed_bytes_le_live : forall h, vm_backed_bytes h <= vm_live_bytes h.
 Proof. intros h. unfold vm_backed_bytes, vm_backed_maps, vm_live_bytes. apply live_bytes_maps_subtract_all_le. Qed.
 
-(* [comment removed for export] *)
-Lemma vm_backing_used_le_live : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pm,$=.P,(1.(22.(2>.(<.&40.)(<.&40.)))(3<.R1.)(1;.(2>.(<.&40.)(<.&40.))))P,(1.(22.(<.&40.))(3=.R2.)(1;.(<.&40.)))(50.(7;.R3.)(87.(40.R3.)))")
-(* [comment removed for export] *).
+(** ... so on our models (no lazy mappings, no materialized sparse pages) the
+    budget meter is bounded by [vm_live_bytes]: every budget
+    hypothesis [vm_live_bytes h + n <= vm_limit h] discharges the
+    spec's [vm_backing_used m + n <= vm_limit h]. *)
+Lemma vm_backing_used_le_live : forall m,
+  m_vm_lazy m = [] -> m_vm_materialized m = [] ->
+  vm_backing_used m <= vm_live_bytes (m_vmmaps m).
 Proof.
   intros m Hl Hm. rewrite (vm_backing_used_simple m Hl Hm). apply vm_backed_bytes_le_live.
 Qed.
 
-Lemma grant_budget_intro : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pm,$=.Pn,$?.P,(1.(22.(2>.(<.&40.)(<.&40.)))(3<.R2.)(1;.(2>.(<.&40.)(<.&40.))))P,(1.(22.(<.&40.))(3=.R3.)(1;.(<.&40.)))P,(50.(43.(87.(40.R4.))R3.)(8.(40.R4.)))(50.(43.(7;.R5.)R4.)(8.(40.R5.)))")
-(* [comment removed for export] *).
+Lemma grant_budget_intro : forall m n,
+  m_vm_lazy m = [] -> m_vm_materialized m = [] ->
+  vm_live_bytes (m_vmmaps m) + n <= vm_limit (m_vmmaps m) ->
+  vm_backing_used m + n <= vm_limit (m_vmmaps m).
 Proof. intros m n Hl Hm H. pose proof (vm_backing_used_le_live m Hl Hm). lia. Qed.
 
-(* [comment removed for export] *)
-Lemma mprotect_budget_ok_intro : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pm,$=.Paddr,(<.&40.)Pn,(<.&40.)P,(1.(22.(2>.(<.&40.)(<.&40.)))(3<.R3.)(1;.(2>.(<.&40.)(<.&40.))))P,(1.(22.(<.&40.))(3=.R4.)(1;.(<.&40.)))P,(50.(87.(40.R5.))(8.(40.R5.)))(1.$53.(88.R6.R5.R4.)$55.)")
-(* [comment removed for export] *).
+(** The budget test of an rw [mprotect] over a PROT_NONE range, discharged
+    from the LOGICAL ledger: exposing bytes never charges more than the live
+    byte total. *)
+Lemma mprotect_budget_ok_intro : forall m addr n,
+  m_vm_lazy m = [] -> m_vm_materialized m = [] ->
+  vm_live_bytes (m_vmmaps m) <= vm_limit (m_vmmaps m) ->
+  mprotect_budget_ok m addr n = true.
 Proof.
   intros m addr n Hl Hm Hlive. unfold mprotect_budget_ok, vm_backing_within_limit.
   rewrite mprotect_model_next_eq. apply Z.leb_le.
@@ -852,20 +1076,27 @@ Proof.
   unfold mprotect_model. rewrite with_vmmaps_vm. cbn [vm_live_bytes vm_maps vm_limit]. exact Hlive.
 Qed.
 
-(* [comment removed for export] *)
-Lemma file_read_length_eq : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pdata,(22.(<.&8.))Poff,(<.&40.)Pcount,(<.&40.)(1.$30.(89.(<.&8.)(8:.R3.R2.R1.))(8;.(8<.R1.)(8=.(89.(<.&8.)R3.)(8<.R2.))))")
-(* [comment removed for export] *).
+(** [file_read] delivers at most [count] and at most the remaining bytes
+    (for the length side conditions of the file-read node). *)
+Lemma file_read_length_eq : forall data (off count : word),
+  length (file_read data off count) = Nat.min (word_to_nat count) (length data - word_to_nat off).
 Proof. intros. rewrite length_file_read. reflexivity. Qed.
 
-Lemma file_read_length_le : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pdata,(22.(<.&8.))Poff,(<.&40.)Pcount,(<.&40.)(27.(8>.(89.(<.&8.)(8:.R3.R2.R1.))(8<.R1.))(8>.(89.(<.&8.)(8:.R3.R2.R1.))(8=.(89.(<.&8.)R3.)(8<.R2.))))")
-(* [comment removed for export] *).
+Lemma file_read_length_le : forall data (off count : word),
+  (length (file_read data off count) <= word_to_nat count)%nat
+  /\ (length (file_read data off count) <= length data - word_to_nat off)%nat.
 Proof. intros data off count. rewrite file_read_length_eq. split; lia. Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+(* ========================================================================= *)
+(* Pigeonhole lemmas for an admissible mmap address                         *)
+(* ========================================================================= *)
 
-(* [comment removed for export] *)
+(** Candidate grant addresses for a size bound [N]: [cand N j = bottomup_floor + j*2N]
+    (at or above [Mmap.bottomup_floor], so [Mmap.placement_ok]'s first
+    disjunct holds for every candidate, whatever the hint and the mmap base).
+    An interval of size at most [N] meets at most one candidate window
+    [cand N j, cand N j + n) (n <= N), so among [length l + 1] candidates one
+    is free of all [length l] recorded intervals. *)
 Definition cand (N : Z) (j : nat) : Z := bottomup_floor + Z.of_nat j * (2 * N).
 
 Definition zconflict (a n : Z) (p : word * word) : Prop :=
@@ -882,9 +1113,10 @@ Qed.
 Lemma cand_spacing : forall N j k, 0 <= N -> (j < k)%nat -> cand N j + 2 * N <= cand N k.
 Proof. intros N j k HN H. unfold cand. rewrite bottomup_floor_val. nia. Qed.
 
-(* [comment removed for export] *)
-Lemma conflict_unique : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "PN,$?.Pn,$?.Pp,(2>.(<.&40.)(<.&40.))Pj,$30.Pk,$30.P,(27.(50.=R4.)(50.R4.R5.))P,(50.(10.&40.(84.(<.&40.)(<.&40.)R4.))R6.)P,(8?.(90.R7.R4.)R6.R5.)P,(8?.(90.R8.R4.)R7.R6.)(1.$30.R6.R5.)")
-(* [comment removed for export] *).
+(** At most one candidate conflicts with a given interval of size <= N. *)
+Lemma conflict_unique : forall N n p j k,
+  0 <= n <= N -> bv_unsigned (snd p) <= N ->
+  zconflict (cand N j) n p -> zconflict (cand N k) n p -> j = k.
 Proof.
   intros N n p j k Hn Hs [A1 A2] [B1 B2].
   destruct (Nat.lt_trichotomy j k) as [Hlt | [Heq | Hgt]]; [| exact Heq |].
@@ -892,14 +1124,16 @@ Proof.
   - pose proof (cand_spacing N k j ltac:(lia) Hgt). lia.
 Qed.
 
-(* [comment removed for export] *)
-Lemma filter_keep_all_but_one : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "PP,P,$30.$53.Pjs,(22.$30.)P,(91.$30.R1.)P,Pj,$30.Pk,$30.P,(7?.$30.R2.R4.)P,(7?.$30.R2.R5.)P,(1.$53.A1.R7.R4.$55.)P,(1.$53.A1.R8.R4.$55.)(1.$30.R6.R5.)(8>.(89.$30.R3.)(92.(89.$30.(93.$30.Lj,$30.(94.A1.R5.R1.)R3.))))")
-(* [comment removed for export] *).
+(** Removing the (at most one) element satisfying [P] costs at most one. *)
+Lemma filter_keep_all_but_one : forall (P : nat -> bool) (js : list nat),
+  List.NoDup js ->
+  (forall j k, In j js -> In k js -> P j = true -> P k = true -> j = k) ->
+  (length js <= S (length (List.filter (fun j => negb (P j)) js)))%nat.
 Proof.
   intros P js Hnd Huniq. induction js as [|j js IH]; [cbn; lia|].
   inversion Hnd as [|x l Hnotin Hnd']; subst.
   cbn [List.filter List.length]. destruct (P j) eqn:Pj; cbn [negb].
-  - (* [comment removed for export] *)
+  - (* j removed; nothing else in js satisfies P *)
     assert (Hall : forall k, In k js -> P k = false).
     { intros k Hk. destruct (P k) eqn:Pk; [|reflexivity].
       exfalso. assert (j = k) by (apply Huniq; [left; reflexivity | right; exact Hk | exact Pj | exact Pk]).
@@ -915,8 +1149,11 @@ Proof.
     lia.
 Qed.
 
-Lemma pick_candidate : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "PN,$?.Pn,$?.Pl,(22.(2>.(<.&40.)(<.&40.)))Pjs,(22.$30.)P,(27.(50.=R3.)(50.R3.R4.))P,(83.(2>.(<.&40.)(<.&40.))Lp,(2>.(<.&40.)(<.&40.))(50.(10.&40.(84.(<.&40.)(<.&40.)R1.))R6.)R3.)P,(91.$30.R3.)P,(95.(89.(2>.(<.&40.)(<.&40.))R5.)(89.$30.R4.))(26.$30.Lj,$30.(27.(7?.$30.R1.R6.)Pp,(2>.(<.&40.)(<.&40.))P,(7?.(2>.(<.&40.)(<.&40.))R1.R8.)(67.(8?.(90.R;.R3.)R:.R2.))))")
-(* [comment removed for export] *).
+Lemma pick_candidate : forall (N n : Z) (l : list (word * word)) (js : list nat),
+  0 <= n <= N ->
+  Forall (fun p => bv_unsigned (snd p) <= N) l ->
+  List.NoDup js -> (length l < length js)%nat ->
+  exists j, In j js /\ forall p, In p l -> ~ zconflict (cand N j) n p.
 Proof.
   intros N n l. induction l as [|p l IH]; intros js Hn Hsz Hnd Hlen.
   - destruct js as [|j js]; [cbn in Hlen; lia|]. exists j. split; [left; reflexivity | intros q []].
@@ -934,8 +1171,10 @@ Proof.
     + apply Hfree. exact Hq.
 Qed.
 
-Lemma region_free_of_noconflict : ltac2:(CDefT.buildp (gd_tbl_RefNodes ()) "Pl,(22.(2>.(<.&40.)(<.&40.)))Pa,$?.Pn,$?.P,(50.=R2.)P,(50.=R2.)P,(4?.(43.R4.R3.)(56.+2.+40.))P,Pp,(2>.(<.&40.)(<.&40.))P,(7?.(2>.(<.&40.)(<.&40.))R1.R7.)(67.(8?.R7.R6.R2.))(1.$53.(5?.R7.(59.&40.R6.)(59.&40.R5.))$55.)")
-(* [comment removed for export] *).
+Lemma region_free_of_noconflict : forall l (a n : Z),
+  0 <= a -> 0 <= n -> a + n < 2 ^ 64 ->
+  (forall p, In p l -> ~ zconflict a n p) ->
+  region_free l (Z_to_bv 64 a) (Z_to_bv 64 n) = true.
 Proof.
   induction l as [|[b s] l IH]; intros a n Ha Hn Hnw Hno; [reflexivity|].
   cbn [region_free]. rewrite IH; [| lia | lia | lia | intros p Hp; apply Hno; right; exact Hp].
@@ -946,15 +1185,3 @@ Proof.
   - right. apply Z.ltb_ge. lia.
   - left. apply Z.ltb_ge. lia.
 Qed.
-
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)

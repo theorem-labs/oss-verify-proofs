@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumA.v, with its module paths and module names changed; 4213 of its 4307 lines of code are new or changed and 684 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* On the Step-1 contract texts (the re-hiding move): the walk sits at the world relation
    R := YA0nH.wle' SEGS YGcfRehidePost.RZ_cf (the contract note, the internal file WLE-CONTRACT.md): the
    journals AJ / AJW are ajournal_xR / ajournal_xwR at R, every segment statement is YA0nH.SRr' SEGS RZ_cf, and the
@@ -10,13 +11,13 @@
    crt102rw_lift_x, strlen's row by the engine's YGcallMxmn.aj_strlen_at_xromR. The
    texts' new premises: the run's length bound from the Section hypothesis HOS4, and parse_noting's hull budget from
    the run position (PresetHullPay.hull_budget_of_room_pos; one call's worth by crt102rw_hull_nt_rt). *)
-(* base: commit 2fdcfd7be069 (post-landing line). kb round (brief
+(* base: (post-landing line). kb round (brief
    the internal file wild-budget-kb-reshape.md): crt_live carries its budget kb (U, the G / K /
    O1 / W / reading states at 64 = prh_wk F_round_trip_text + prh_wk F_round_trip_text; after parse_noting, N and L0
    at 66 = prh_wk F_check_round_trip) and its journal at a budget WS with wbudget [] kb WS; the parse_noting call runs
    over the Kit's budgeted call rule crt102rw_call_b, and crt102rw_wild_budget_pn is RESTATED in the kb form and
    DISCHARGED here (crt102rw_wild_budget_pn_goal, Qed, from the text's entry room HWR0).
-   The Step-1 ruling of the contract texts' owner (on 1409ad6e7e37): the four OPEN_K0_* goals close only at their
+   The Step-1 ruling of the contract texts' owner: the four OPEN_K0_* goals close only at their
    SOURCES, in this file, as B' T3 does (Crt102B_T3U.v / Crt102B_T3S.v / Crt102B_T3O.v). pj_string's, pj_set's and
    pj_write's refused arms are refuted where each callee returns (crt102rw_at_U, crt102rw_G_taken, crt102rw_Wgo) by the
    callee text's own dead-arm conjunct, and copy's ordered free list is pj_set's FREEORD-COPY conjunct at K, carried K
@@ -27,10 +28,10 @@
    rule 24: no function proved. rule 24: proves no function (kind: segment lemmas of check_round_trip); the function-level
    lookup is the unit owner's (proof-index check_round_trip EXIT=0, an internal record of that lookup:
    only PLAIN lib/Prog and UBSAN lib/U/Prog proofs are released, concluding in SR).
-   INPUTS OF RECORD: the rewrite's branch (cut from 8d89746aeafb), with the walk's base
-   9912f952f0c3 merged; the walk's glue lib/A/Prog/Crt102Glue.v (the interface, unchanged by this file); the cut
-   DESIGN.md (sha256 d05697dd088c; internal record); the listing, the internal file crt.A.s; the structure of the closed walk S10TxString.v (at commit
-   a977ac095573; that file is not in this tree), whose S10Env.v is reused unchanged.
+   INPUTS OF RECORD: the rewrite's branch (cut), with the walk's base
+   merged; the walk's glue lib/A/Prog/Crt102Glue.v (the interface, unchanged by this file); the cut
+   DESIGN.md (sha256 d05697dd088c; internal record); the listing, the internal file crt.A.s; the structure of the closed walk S10TxString.v (
+   that file is not in this tree), whose S10Env.v is reused unchanged.
    THE CODE (A' check_round_trip + offsets, the internal file crt.A.s): U +0x1e4 (unpoison back / v, &doc->n and its inline check, doc->n,
    the STAMP literal) -> pj_string +0x24c -> G +0x250 -> pj_set +0x278 -> K +0x27c (s8 = seqz) -> O1 +0x280 (first
    out_of_memory: g_own_ran_out, fuzz_alloc_ran_out +0x290) -> +0x294 (beqz s8; &back spill) -> pj_write +0x2b0 -> W +0x2b4
@@ -41,7 +42,7 @@
    its res = -1 arm dead), crt102rw_atK (K), crt102rw_O1 (O1), crt102rw_Wgo (W0, pj_write; its refused arm dead),
    crt102rw_W2 (W), crt102rw_R712 (strlen), crt102rw_R724 (parse_noting), crt102rw_R740 (N .. L0), composed by
    crt102rw_chain (Qed) and stated by crt102_rw (Qed, at its continuation crt102rw_L0K).
-   WHAT IS PROVED AND WHAT IS ASSUMED AT THE LANDING CUT (commit 7cdbb61b5fa0; measured on this
+   WHAT IS PROVED AND WHAT IS ASSUMED AT THE LANDING CUT (measured on this
    file's build): every segment above is Qed; crt102rw_chain is a Qed implication from FIVE named Props:
    OPEN_K0_DEAD_PJSTRING, OPEN_K0_DEAD_PJSET, OPEN_K0_DEAD_PJWRITE, OPEN_K0_FREEORD_COPY (the texts', as before the cut),
    and crt102rw_wild_budget_pn, NEW at the cut: the parse_noting TWIN of Crt102Arms.arms_wild_budget and of
@@ -136,7 +137,7 @@ Open Scope Z_scope.
 
 (* ---- A GRANTED READING'S OUTCOMES GIVE THE ALL-GRANTED FREE LIST, and THE ROOM COUNTS FROM A POSITION
    (Rtt102CmpPNA.v pn_ag_some / pn_ag_none / pn_jf_cont_agree / pn_jf_agree / pn_pj_frees_agree / pn_ok_upto_some /
-   pn_pkR_bound / pn_firstn_add / pn_cnt_subm / pn_pkR_pos, commit 0d042ecb926, verbatim
+   pn_pkR_bound / pn_firstn_add / pn_cnt_subm / pn_pkR_pos, verbatim
    but for the names) ---- *)
 Lemma crt102rw_ag_some : forall A Bt (m : PjGrammar.M A) (k : A -> PjGrammar.M Bt) ok a t ok0,
   PjGrammar.agrees m -> m [] = (Some a, t, ok0) ->
@@ -431,7 +432,7 @@ Hypothesis HWR0 : YCbqGwild.wild_room (as_universe B) [] (prh_wk F_check_round_t
    from it at the run position (PresetHullPay.hull_budget_of_room_pos); the callees' rp_os is the walk's *)
 Hypothesis HOS4 : (length rp_os <= 4)%nat.
 
-(* ---- the callee texts (the contract texts at caa965672d21 by path on base 33ff96ae153c: PRH_FnPj 79e2637972c6,
+(* ---- the callee texts (the contract texts by path on base: PRH_FnPj 79e2637972c6,
    PRH_FnAlloc ec27f8c6dd04, PRH_FnWriter 5e80aa3d7978, PRH_FnCheck 22cddcb1e58a), each at every float state (their
    walks are generic in fx), at the caller's universe closure ---- *)
 Hypothesis PJSTR : forall fxk : YK11.FPState, PRH_FnPj.tpj_string_specX (fx := fxk) B ARx SK CTX0.
@@ -1117,7 +1118,7 @@ refine (crt102rw_call LAWS HPRE fxk (@STK_fuzz_alloc_ran_out prh_img_A) [] crt10
     exfalso. lia.
 Qed.
 
-(* ---- tree_vis of harness blocks (Crt102Arms.v crt_tree_vis_keep, commit e731fa2c71f, VERBATIM
+(* ---- tree_vis of harness blocks (Crt102Arms.v crt_tree_vis_keep, VERBATIM
    but for the name: the walk base's Crt102Arms.v blob is at the old ledger arity and does not build here) ---- *)
 Lemma crt102rw_tree_vis_keep : forall lyt St Hpt Wt memt mdt Lamc peakc cntc failc ranc mostc ownc Dt,
   ARx lyt St Hpt Wt memt mdt -> prh_ledger B lyt St Hpt Wt memt Lamc peakc cntc failc ranc mostc ownc ->
@@ -1488,8 +1489,8 @@ Definition crt102rw_Wgo_goal : Prop := crt102rw_L0K -> forall (fx' : YK11.FPStat
 (* ==== THE READING, W .. L0: helpers. The view lemmas and the live state across a window of the real stack are
    Crt102Loops.v's (cl_writable_mono / cl_agree / cl_ra_keep / cl_hull_keep /
    cl_blk_low / cl_ro_low / cl_live_keep / cl_sarg / cl_strcmp_call), verbatim but for the names and this Section's
-   sp / doc lemmas (crt102rw_sp, crt102rw_doc_home); the string facts of a harness block are Rtt102CmpLib.v's (at commit
-   2fb8f5740fe7, a file not in this tree: rcl_garr8_aview / rcl_first_byte / rcl_hull_sub / rcl_tail_in_block /
+   sp / doc lemmas (crt102rw_sp, crt102rw_doc_home); the string facts of a harness block are Rtt102CmpLib.v's (
+   a file not in this tree: rcl_garr8_aview / rcl_first_byte / rcl_hull_sub / rcl_tail_in_block /
    rcl_hblk_str / rcl_nodeR_bytes / rcl_wdoc_nz / rcl_read_back), the same way. ==== *)
 Lemma crt102rw_writable_mono : forall (H : word -> bool) m m' a,
   (forall z, apresent H m z -> apresent H m' z) ->
@@ -2577,7 +2578,7 @@ Definition crt102rw_G740 : Prop :=
   crt102rw_Nst fxk lyc Sc Hpc Wc memc mdc kj pos Do Dback Lamc peakc cntc rg ms c q cap ok okr tr ->
   YA0nH.SRr' SEGS YGcfRehidePost.RZ_cf Wc (cfgA fxk CRT_N_OFF rg memc mdc) QFa.
 
-(* UNIV-END is RETIRED by the landing cut (commit 7cdbb61b5fa0): tparse_noting_specX no longer
+(* UNIV-END is RETIRED by the landing cut: tparse_noting_specX no longer
    takes `In (text + len) DW` (the run-word list DW is gone; the closure's clause 4b holds the cursor free traces at
    every word), so the parse_noting call at +0x2e0 owes no membership of q + len.
    SRC-CEIL is RETIRED by the landing cut too: the cut's src_rd (PRH_Base.v:1652-1663) asks `p + |l| <= alloc_ceiling`
@@ -4757,7 +4758,7 @@ Qed.
      Crt102B_RRT.crtb_wild_budget), DISCHARGED by crt102rw_wild_budget_pn_goal at the kb re-shape, brief
      the internal file wild-budget-kb-reshape.md;
    - crt102rw_L0K, not open: the next slice's entry (Crt102Loops), the chain's continuation at L0.
-   RETIRED, each by its content proved AT ITS SOURCE (the Step-1 ruling of the contract texts' owner on 1409ad6e7e37;
+   RETIRED, each by its content proved AT ITS SOURCE (the Step-1 ruling of the contract texts' owner;
    the B' T3 twins, Crt102B_T3U.v / Crt102B_T3S.v / Crt102B_T3O.v):
    - OPEN_K0_DEAD_PJSTRING: pj_string's refused arm at +0x24c is refuted in crt102rw_at_U by tpj_string_specX's
      DEAD-PJSTRING conjunct (PRH_FnPj.v:1275).

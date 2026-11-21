@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: mq_vm_only keeps only the direction from vm_only to mq, since vm_only now also equates the channel reader, the fd case splits add the four new fd kinds, and unlinkat's AT_REMOVEDIR arm is an errno before the type test or -ENOTDIR. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -17,7 +18,12 @@ Definition mq (moG moC : Model) : Prop :=
   m_fds moC = m_fds moG /\ m_fs moC = m_fs moG /\ m_halted moC = m_halted moG /\
   m_tid moC = m_tid moG /\ m_stdin moC = m_stdin moG.
 
-Lemma mq_vm_only moG moC : mq moG moC <-> vm_only moG moC.
+(* [vm_only] is now strictly stronger than [mq]: it also equates
+   [m_channel_reader] (Nodes.v, [Definition vm_only]), which [minv]'s reader
+   conjunct needs and which [mq] -- a relation between the G and C runs,
+   not between two states of one run -- has no business asserting.  Only
+   this direction was ever used ([mq_vm_l], [mq_vm_r] below). *)
+Lemma mq_vm_only moG moC : vm_only moG moC -> mq moG moC.
 Proof. unfold mq, vm_only. tauto. Qed.
 
 Lemma mq_refl mo : mq mo mo.
@@ -134,7 +140,7 @@ Proof.
     + eexists. split; [split; [reflexivity| right; split; [exact Hlk| split; [reflexivity| reflexivity]]]|].
       apply xstep_fs_fds. exact HQ.
   - (* [comment removed for export] *) destruct H as [-> H]. rewrite ?EF, ?ES.
-    destruct (fd_lookup (m_fds moG) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|pid w|[|] [|]| ]|]; try (destruct H; fail).
+    destruct (fd_lookup (m_fds moG) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|pid w|[|] [|]| | | | | ]|]; try (destruct H; fail).
     + destruct (fs_lookup (m_fs moG) p) as [data|]; [| destruct H]. destruct H as [-> ->].
       eexists. split; [split; [reflexivity| split; [reflexivity| reflexivity]]|].
       rewrite ?EF, ?ES. apply xstep_fs_fds. exact HQ.
@@ -143,12 +149,16 @@ Proof.
     destruct (path_has_slash path); [destruct H|].     (* [comment removed for export] *)
     destruct (fs_under (m_fs moG) path); [destruct H|].
     destruct (fs_lookup (m_fs moG) path); [| destruct H as [-> ->]; exists moC; split; [auto| apply xstep_same; exact HQ]].
-    destruct rmdir; [destruct H as [-> ->]; exists moC; split; [auto| apply xstep_same; exact HQ]|].
+    (* the AT_REMOVEDIR arm is an alt: an errno before the type test, or -ENOTDIR *)
+    destruct rmdir.
+    { destruct H as [(e & He & -> & ->)|(-> & ->)].
+      - exists moC. split; [split; [reflexivity| left; exists e; auto]| apply xstep_same; exact HQ].
+      - exists moC. split; [split; [reflexivity| right; auto]| apply xstep_same; exact HQ]. }
     destruct H as [(e & He & -> & ->)|(Hn & -> & ->)].
     + exists moC. split; [split; [reflexivity| left; exists e; auto]| apply xstep_same; exact HQ].
     + exists (with_fs (fs_remove (m_fs moG) path) moC). split; [split; [reflexivity| right; auto]| apply xstep_fs; exact HQ].
   - (* [comment removed for export] *) destruct H as [-> H]. rewrite ?EF, ?ES.
-    destruct (fd_lookup (m_fds moG) (Z_to_bv 64 fd)) as [[ch|p cur|p cur|p cur|p cur| |sk|pid w|[|] [|]| ]|]; try (destruct H; fail).
+    destruct (fd_lookup (m_fds moG) (Z_to_bv 64 fd)) as [[ch|p cur|p cur|p cur|p cur| |sk|pid w|[|] [|]| | | | | ]|]; try (destruct H; fail).
     + destruct (fs_lookup (m_fs moG) p) as [data|]; [| destruct H].
       destruct (lseek_result_cross moG moC fd _ _ off rsp moG' HQ H) as (moC' & H' & X). exists moC'. auto.
     + destruct (fs_lookup (m_fs moG) p) as [data|]; [| destruct H].
@@ -177,7 +187,7 @@ Theorem nstep_cross_read fd bufG bufC count moG moC rspG moG' evs :
 Proof.
   intros HQ H. pose proof (mq_fds _ _ HQ) as EF. pose proof (mq_fs _ _ HQ) as ES.
   cbn [nstep] in H |- *. rewrite EF, ES. destruct H as [-> H].
-  destruct (fd_lookup (m_fds moG) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|pid w|[|] [|]| ]|] eqn:Hlk; try (exfalso; exact H).
+  destruct (fd_lookup (m_fds moG) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|pid w|[|] [|]| | | | | ]|] eqn:Hlk; try (exfalso; exact H).
   - (* [comment removed for export] *)
     destruct (fs_lookup (m_fs moG) p) as [data|] eqn:Hfs; [| destruct H]. destruct H as [-> ->].
     eexists _, _. split; [split; [reflexivity| split; [reflexivity| reflexivity]]|]. split; [apply xstep_fds; exact HQ|].
@@ -271,7 +281,7 @@ Proof.
   intros Hl HF HQ H. pose proof (mq_fds _ _ HQ) as EF. pose proof (mq_fs _ _ HQ) as ES.
   pose proof (iovs_total_map_snd dstsG dstsC Hl) as EI.
   cbn [nstep] in H |- *. rewrite EF, ES, EI. destruct H as [-> H].
-  destruct (fd_lookup (m_fds moG) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|pid w|[|] [|]| ]|] eqn:Hlk; try (exfalso; exact H).
+  destruct (fd_lookup (m_fds moG) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|pid w|[|] [|]| | | | | ]|] eqn:Hlk; try (exfalso; exact H).
   - destruct (fs_lookup (m_fs moG) p) as [data|] eqn:Hfs; [| destruct H]. cbv zeta in H. destruct H as [-> ->].
     eexists _, _. split; [split; [reflexivity| split; [reflexivity| reflexivity]]|]. split; [apply xstep_fds; exact HQ|].
     apply dec_readv_xaddr; [exact Hl| exact HF].

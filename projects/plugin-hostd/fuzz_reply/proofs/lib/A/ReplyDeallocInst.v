@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, for lane W of a Theorem Labs lane's cf layer at plugin-hostd/fuzz_reply): reply's
    DEALLOCATE INSTANCE at image A (fuzz_reply.asan, pin 42c58610e125), in the PRIMED form (row (a) of the primed-free
    plan: a secondary free re-hides the dead map's shadow, so reply's free contract is the primed
@@ -8,7 +9,7 @@
    image, its unit facts and rows, and the other lanes' closers).
 
    Export: afree_realizes_cf_rh_reply_all : forall fx rc,
-   @YG0dcfR.afree_realizes_cf_rh fx rc CfImg_A CfParams_reply tfibsegs TfibB (the conclusion is YG0dcfR.v:61-69; free(NULL)
+   @YG0dcfR.afree_realizes_cf_rh fx rc CfImg_A CfParams_reply tfibsegs TfibB (the conclusion is YG0dcfR.v:62-70; free(NULL)
    is the same contract, p = PNull).  Route:
    - YGcfMallocComposeRh.afree_realizes_cf_rh_of_parts_m (row (b), RealSegA) at B := TfibB, atpD := atp_cf,
      ARX := ARXq_cf TfibB IOK_reply, with YGcfInstBase.ARXq_cf_ARcf, a Theorem Labs lane's rows ReplyRelroGeoA.relro_seg_reply_A /

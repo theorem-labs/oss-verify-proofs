@@ -2,12 +2,13 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the closing pattern of a Theorem Labs lane's PASS4-REFIT.md section F for sup_chain's
-   ASan+UBSan walk (lib/B/Prog/sup_chain.v, tsup_chain_spec_holds; statement from a Theorem Labs lane f490061c104): the walk's
+   ASan+UBSan walk (lib/B/Prog/sup_chain.v, tsup_chain_spec_holds; statement from a Theorem Labs lane): the walk's
    per-binary hypotheses discharged at the pinned image (lib/B/Prog/CmdImg.v's instance PB_cmd, whose segments are
-   tfibsegs, and the sink head YE2k.tfib_sink_head), as SupRemoveAllRefitClosed.v (a working branch e84227c9553) does
+   tfibsegs, and the sink head YE2k.tfib_sink_head), as SupRemoveAllRefitClosed.v (a working branch) does
    on A: cmd_img_facts_tfib, cmd_sig_prog_PB, cmd_palib, cmd_palibf, cmd_frame_flag_law by a Theorem Labs lane's lemmas of those
-   names (CmdRecImg / CmdRecRest, a Theorem Labs lane fc8bcbd8b42), the statement's AFREE_LAW by cmd_astack_free_law and VOBJS by
+   names (CmdRecImg / CmdRecRest, a Theorem Labs lane), the statement's AFREE_LAW by cmd_astack_free_law and VOBJS by
    cmd_val_objs_PB. What remains: HB, MTL, MTLF and the callee and runtime contracts (each at every FP state). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

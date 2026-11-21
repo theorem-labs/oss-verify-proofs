@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: cgif_file_fuzzer lib/A/AE6x.v's walk of the memchr wrapper, generalised to any byte c in a1 and to a window that may hold no c: the musl call is MemchrMusl's walk, and after it the found case keeps AE6x's check (AE6y, count a0 - s2 + 1) while the not-found case takes the twin check of MemchrChk (count s1). *)
-(* Modified by Theorem Labs, 2026-10: relocated from libreac/fuzz_disco lib/A/Rt/Memchr.v at 3b8a77d146c to libreac/fuzz_ctrl's ASan build: module paths, TfibSyms -> CtrlTSyms, and the addresses moved by symbol (trampoline 0x429dc -> 0x42974, interceptor return 0x441fc -> 0x44194 and end 0x4425c -> 0x441f4, musl memchr 0x99674 -> 0x97b10, real_memchr cell 0xa2238 -> 0xa17f8, splat constants 0x10368/0x10388 -> 0x10350/0x10370). *)
+(* Modified by Theorem Labs, 2026-10: relocated from libreac/fuzz_disco lib/A/Rt/Memchr.v to libreac/fuzz_ctrl's ASan build: module paths, TfibSyms -> CtrlTSyms, and the addresses moved by symbol (trampoline 0x429dc -> 0x42974, interceptor return 0x441fc -> 0x44194 and end 0x4425c -> 0x441f4, musl memchr 0x99674 -> 0x97b10, real_memchr cell 0xa2238 -> 0xa17f8, splat constants 0x10368/0x10388 -> 0x10350/0x10370). *)
 (* Modified by Theorem Labs, 2026-10: the image-B twin of this branch's lib/A/Rt/Memchr.v, made from it by moving every address to libreac/fuzz_ctrl's asan-ubsan build (v1.9.0) by symbol (both images' nm; every function compared with elfdis.py --diff, level 3 "identical except PC-relative fields"), and by taking the core modules from lib/Reusable's Y twins. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

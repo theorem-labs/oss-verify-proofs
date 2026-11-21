@@ -6,6 +6,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3a.v, with its module names changed; 4006 of its 4152 lines of code are new or changed and 2320 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW4b.v, with its module paths and module names changed; 782 of its 845 lines of code are new or changed and 4089 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/F12.v; 218 of its 245 lines of code are new or changed and 818 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/F10.v -- GLUE for stage seg_F10 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput (lib/A/ACtl.v:770-772,
    piece W4b).  Written by a Theorem Labs lane; single writer.  rule 24: no function proved
    (stage glue of a walk).
@@ -16,7 +17,7 @@
        CF POST (ix_cut C_A820fc_at [Z.of_nat j]) -> CF POST (ix_cut C_A81ff4_at [Z.of_nat j])
    with ACtl.v's own CF notation (SK := A.AE2k.tfib_sink_head, FP := []), i.e. exactly ACtl.v's Section hypothesis
    seg_F10.  Segment F10 starts at 0x81ff4, the return point of `jal reac_ctrl_identity_reply@0x81ff0`, and branches
-   on a0 = reply_ret.  The source proof is lib/A/Prog/Seg/F10.v:147-343 (seg_F10, blob b66c500e388 (the blob this tree had at release c5e779efe8c)); this file
+   on a0 = reply_ret.  The source proof is lib/A/Prog/Seg/F10.v:147-343 (seg_F10, blob b66c500e388 (the blob this tree had at release)); this file
    mirrors its steps.  Both arms are the PROVED footprint runs of lib/A/Prog/Seg/F10F.v (blob 37f300c6282):
      seg_F10_run1_F (F10F.v:108-173)  a0 = 1 (ir true): 0x81ff4 -> 0x8206c, reads 7 ranges, writes no memory;
      seg_F10_run2_F (F10F.v:205-222)  a0 = 0 (ir false): 0x81ff4 -> 0x820fc, no memory access.
@@ -48,8 +49,8 @@
                   (ID1 = rp_id (t_ID j) .. = t_ID j there, Seg/F10.v:341).
 
    THE b5 MOVE IS KitMem.kitmem_b5_keep, and why KitMem carries it (measured 2026-10-29; first written here as the
-   local f10g_keep, moved into KitMem by a Theorem Labs lane at a working branch 028b95c2b6b, merged into this
-   branch at c5d58e80468).  Seg/F10.v's f10_keep (:130-145) moves the same seven bundles across a register change
+   local f10g_keep, moved into KitMem by a Theorem Labs lane at a working branch, merged into this
+   branch).  Seg/F10.v's f10_keep (:130-145) moves the same seven bundles across a register change
    that keeps registers 2 9 18 20 21 22 23 24 25, but it is stated over SlotInv's predicates, and ACtlCutP's
    transcriptions are NOT convertible with them:
      (1) ACtlCutP.f1_IN (ACtlCutP.v:658-659) lacks SlotInv.f1_IN's `(0 < g_n g -> In (g_p g, g_n g) (g_H g))`
@@ -71,8 +72,8 @@
    CLOSURE (glue closure rule, a Theorem Labs lane 23:32Z / porter 23:38Z, 23:40Z): every Require is qualified, no Import /
    Export of a project module; the twin modules this file names (YK11 YK1b YM05 YO09) and lib/Lib's ExecF / MState /
    Regs6ss are loaded and named by their absolute path.  Shared kits: lib/A/ACtlG/Kit.v 7e164a09a73 and
-   lib/A/ACtlG/KitMem.v 0628a0a76e6 (at branch HEAD c5d58e80468).  Frame-route files reached through Seg/F10F.v
-   (blob at c5d58e80468): Seg/F10.v b66c500e388, Seg/F10F.v 37f300c6282, Seg/Tac_slot.v de02ff45188 (of record),
+   lib/A/ACtlG/KitMem.v 0628a0a76e6 (at branch HEAD).  Frame-route files reached through Seg/F10F.v
+   (blob): Seg/F10.v b66c500e388, Seg/F10F.v 37f300c6282, Seg/Tac_slot.v de02ff45188 (of record),
    Seg/Tac_b5.v 4a9ebd96689, SlotInv.v 4cf85db229a (of record), SlotModel.v 04dc7903221 (of record), AsanRT.v
    b67d26f8ec7 (mcs 30), AsanRTInv.v 2a8602e8526, AsanRTFacts.v 1657e654e8c, Contract.v fa6fd478d9a, FrameAPI.v
    f6ffefa9bb4, MemNorm.v cb518fc0304, PContract.v a0c4b1b2aa5, AsanLift.v e92b008d733, KindBGlue.v 35e845dad50,
@@ -84,11 +85,11 @@
    SHADOWED NAMES: getr / mkst / seg_rom / cfg_at only fully qualified.  Check:
      grep -nE '(^|[^.A-Za-z_])(mkst|getr|seg_rom|cfg_at)\b' lib/A/ACtlG/F10.v   -- hits only inside comments.
 
-   ROUTE (C) BUILD STATE: type-check rc=0 on a working branch shell 1899bed1aee (cb build, a build machine, log
+   ROUTE (C) BUILD STATE: type-check rc=0 on a working branch shell (cb build, a build machine, log
    (internal path), build 2026-10-29T13:05:56Z); build of record: a Theorem Labs lane's cbrec record
    over lib/A/ACtlG/L3W4bAudit.v (not in this delivery).  The paragraph below is the pre-route-(C) state.
    BUILD STATE (honest): TYPECHECKS, rc=0, build 2026-10-29T07:30:41Z
-   (a build machine, wb4b.sh, at branch HEAD c5d58e80468 with KitMem.kitmem_b5_keep; the first green build,
+   (a build machine, wb4b.sh, at branch HEAD with KitMem.kitmem_b5_keep; the first green build,
    build-20261029T072129Z.log, compiled Seg/F10.vo, Seg/F10F.vo and this file fresh).  TYPES ONLY: the build
    workspace replaces the core's undefined port_core_refused_<hex> names by their literals (A/AE2k.v is in this
    closure through the CF notation's SK); no AD2l stand-in (A/AD2l.v is not in the closure).  Print Assumptions

@@ -1,16 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the auxv region is 464 bytes, was 160, the auxv fact is the launch's vector, carried over memory that agrees on it (auxv_ok_agree), and the type words a scan of it reads come from that vector (auxv_vec_type). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp.bitvector Require Import definitions.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.LinuxProcessSem Require StackLayout.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From OSSVerify.jsoncons.fuzz_bigint.images Require Import Plain.
 From OSSVerify.Proofs.jsoncons.fuzz_bigint.lib Require Import PropExec CatExec CatSim SeqExec StoreOk StreamSim Hoare ShapeAlg SpinAlg HeapIface LibIface
      AxSymExec3 AxSymExec3B AxSymExec3Sound AxSymRun3 SegRun SegPlan Src0PlanKit AsanPlanCore
      Src0_code_20088_210bc BigBranchSrc0 BigLinkBase BigLinkGlue BigLinkReduce BigModel BigFactsDigits
-     L5Defs L5Core L5CoreKit L5CoreSpecs L5KnP L5ParseArith L5ParseKit L5ParseSpecs L5Bytes L5E1A.
+     L5Defs L5Core L5CoreKit L5CoreKitS L5CoreSpecs L5KnP L5ParseArith L5ParseKit L5ParseSpecs L5Bytes L5E1A.
 Import ListNotations. Import AX2. Import AX2B. Import AX2S.
 Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -144,7 +146,7 @@ Qed.
 Definition stat_rd (av a : Z) : Prop :=
   (EH_CAUGHT <= a < EH_CAUGHT + 12) \/ (SYSCAT_GUARD <= a < SYSCAT_GUARD + 2) \/ (UW_FLAGS <= a < UW_FLAGS + 6) \/
   (TD_LOCALE <= a < TD_LOCALE + 8) \/ (LOCALE_MSGCAT <= a < LOCALE_MSGCAT + 8) \/ (CANARY <= a < CANARY + 8) \/ (AUXVP <= a < AUXVP + 8) \/
-  (av <= a < av + 160) \/ (0x10000 <= a < 0x5f608) \/ (0x5f630 <= a < 0x5f650) \/ (0x5f660 <= a < 0x5f668).
+  (av <= a < av + 464) \/ (0x10000 <= a < 0x5f608) \/ (0x5f630 <= a < 0x5f650) \/ (0x5f660 <= a < 0x5f668).
 
 Lemma u32_at_agree M M' a v : L5C.agree_on M M' a 4 -> 0 <= a -> a + 4 <= 2 ^ 64 -> L5.u32_at RSEGS M a v -> L5.u32_at RSEGS M' a v.
 Proof. intros AG Ha Hn H. unfold L5.u32_at in *. rewrite (L5C.rdn_agree RSEGS M M' 4 a); auto. Qed.
@@ -157,7 +159,7 @@ Proof.
   unfold e1_statics. unfold stat_rd, EH_CAUGHT, EH_UNCAUGHT, SYSCAT_GUARD, UW_FLAGS, TD_LOCALE, LOCALE_MSGCAT, CANARY, AUXVP in *.
   assert (AG: forall a n, (forall i, a <= i < a + n -> (456952 <= i < 456952 + 12) \/ (457504 <= i < 457504 + 2) \/ (459617 <= i < 459617 + 6) \/
      (459784 <= i < 459784 + 8) \/ (591656 <= i < 591656 + 8) \/ (591528 <= i < 591528 + 8) \/ (591568 <= i < 591568 + 8) \/
-     (av <= i < av + 160) \/ (0x10000 <= i < 0x5f608) \/ (0x5f630 <= i < 0x5f650) \/ (0x5f660 <= i < 0x5f668)) -> L5C.agree_on M M' a n).
+     (av <= i < av + 464) \/ (0x10000 <= i < 0x5f608) \/ (0x5f630 <= i < 0x5f650) \/ (0x5f660 <= i < 0x5f668)) -> L5C.agree_on M M' a n).
   { intros a n H i Hi. apply K. apply H. exact Hi. }
   Ltac cell AG := first [ eapply (L5C.u64_at_agree RSEGS); [apply AG; intros; lia | lia | lia | assumption]
                         | eapply u32_at_agree; [apply AG; intros; lia | lia | lia | assumption]
@@ -165,7 +167,7 @@ Proof.
   split. cell AG. split. cell AG. split. cell AG. split. cell AG.
   split. { destruct fl. destruct S5 as (F1 & F2 & F3 & F4 & F5 & F6). repeat split; cell AG. destruct S5 as (F1 & F2 & F3). repeat split; cell AG. }
   split. cell AG. split. cell AG. split. cell AG. split. cell AG. split. exact S10. split. exact S11. split. exact S12.
-  split. { intros j Hj. eapply (L5C.u64_at_agree RSEGS). apply AG. intros; lia. lia. lia. apply S13. exact Hj. }
+  split. { apply (auxv_ok_agree M M' av uid rnd hw S13); [lia | intros i Hi; apply K; lia]. }
   split. exact S14. split. exact S15. split. exact S16. split. exact S17.
   split. { intros i Hi. rewrite K by lia. apply S18. exact Hi. }
   split. { intros i Hi. rewrite K by lia. apply S19. exact Hi. }
@@ -174,13 +176,13 @@ Qed.
 
 (* [comment removed for export] *)
 Lemma stat_keep_hpres av LBx spx scr W M1 M2 :
-  L5C.hpres L LBx spx scr W M1 M2 -> hl_sptop L - 2 ^ 23 + scr <= spx -> 0 <= scr -> 0x7fff80000000 <= hl_sptop L -> spx <= av -> av + 160 <= 2 ^ 64 ->
+  L5C.hpres L LBx spx scr W M1 M2 -> hl_sptop L - 2 ^ 23 + scr <= spx -> 0 <= scr -> 0x7fff80000000 <= hl_sptop L -> spx <= av -> av + 464 <= 2 ^ 64 ->
   (forall i, stat_rd av i -> L5.outside W i) ->
   forall a, stat_rd av a -> M2 (Z_to_bv 64 a) = M1 (Z_to_bv 64 a).
 Proof.
   intros HP Hsp Hscr Hst Hav Hav2 HO a Ha. apply (L5C.hpres_kept L LBx spx scr W M1 M2 a HP).
   pose proof Ha as Ha'. unfold stat_rd, EH_CAUGHT, SYSCAT_GUARD, UW_FLAGS, TD_LOCALE, LOCALE_MSGCAT, CANARY, AUXVP in Ha.
-  assert (D: av <= a < av + 160 \/ (0x10000 <= a < 0x90730 /\ (a < 0x70394 \/ 0x70398 <= a))) by lia.
+  assert (D: av <= a < av + 464 \/ (0x10000 <= a < 0x90730 /\ (a < 0x70394 \/ 0x70398 <= a))) by lia.
   destruct D as [AV|[IM NE]].
   - apply L5C.kept_stack. lia. lia. lia. rewrite (ly_errno L LY); lia. exact Hst. apply HO. exact Ha'.
   - apply L5C.kept_static. rewrite (ly_img_lo L LY), (ly_img_hi L LY); lia. intros HS; apply (ly_static L LY) in HS; lia.
@@ -208,7 +210,7 @@ Proof.
   unfold e1_statics. unfold stat_rd, EH_CAUGHT, EH_UNCAUGHT, SYSCAT_GUARD, UW_FLAGS, TD_LOCALE, LOCALE_MSGCAT, CANARY, AUXVP in *.
   assert (AG: forall a n, (forall i, a <= i < a + n -> ((456952 <= i < 456952 + 12) \/ (457504 <= i < 457504 + 2) \/ (459617 <= i < 459617 + 6) \/
      (459784 <= i < 459784 + 8) \/ (591656 <= i < 591656 + 8) \/ (591528 <= i < 591528 + 8) \/ (591568 <= i < 591568 + 8) \/
-     (av <= i < av + 160) \/ (0x10000 <= i < 0x5f608) \/ (0x5f630 <= i < 0x5f650) \/ (0x5f660 <= i < 0x5f668)) /\ ~ (457504 <= i < 457504 + 2)) -> L5C.agree_on M M' a n).
+     (av <= i < av + 464) \/ (0x10000 <= i < 0x5f608) \/ (0x5f630 <= i < 0x5f650) \/ (0x5f660 <= i < 0x5f668)) /\ ~ (457504 <= i < 457504 + 2)) -> L5C.agree_on M M' a n).
   { intros a n H i Hi. destruct (H i Hi) as [H1 H2]. apply K. exact H1. exact H2. }
   Ltac cellg AG := first [ eapply (L5C.u64_at_agree RSEGS); [apply AG; intros; lia | lia | lia | assumption]
                          | eapply u32_at_agree; [apply AG; intros; lia | lia | lia | assumption]
@@ -216,7 +218,7 @@ Proof.
   split. cellg AG. split. cellg AG. split. exact G0. split. exact G1.
   split. { destruct fl. destruct S5 as (F1 & F2 & F3 & F4 & F5 & F6). repeat split; cellg AG. destruct S5 as (F1 & F2 & F3). repeat split; cellg AG. }
   split. cellg AG. split. cellg AG. split. cellg AG. split. cellg AG. split. exact S10. split. exact S11. split. exact S12.
-  split. { intros j Hj. eapply (L5C.u64_at_agree RSEGS). apply AG. intros; lia. lia. lia. apply S13. exact Hj. }
+  split. { apply (auxv_ok_agree M M' av uid rnd hw S13); [lia | intros i Hi; apply K; lia]. }
   split. exact S14. split. exact S15. split. exact S16. split. exact S17.
   split. { intros i Hi. rewrite K by lia. apply S18. exact Hi. }
   split. { intros i Hi. rewrite K by lia. apply S19. exact Hi. }
@@ -234,33 +236,60 @@ Proof.
   - exact (L5C.hpres_defined L LBx spx scr W M1 M2 HP).
   - intros a Ha CA NE. exact (L5C.hpres_cdef L LBx spx scr W M1 M2 a HP Ha CA NE).
 Qed.
-(* [comment removed for export] *)
-Lemma auxv_cells M av uid rnd hw :
-  (forall j, (j < 20)%nat -> L5.u64_at RSEGS M (av + 8 * Z.of_nat j) (nth j (auxv20 uid rnd hw) 0)) ->
-  L5.u64_at RSEGS M (av) 3 /\ L5.u64_at RSEGS M (av + 8) 65600 /\ L5.u64_at RSEGS M (av + 16) 4 /\ L5.u64_at RSEGS M (av + 24) 56 /\ L5.u64_at RSEGS M (av + 32) 5 /\ L5.u64_at RSEGS M (av + 40) 10 /\ L5.u64_at RSEGS M (av + 48) 16 /\ L5.u64_at RSEGS M (av + 56) hw /\ L5.u64_at RSEGS M (av + 64) 6 /\ L5.u64_at RSEGS M (av + 72) 4096 /\ L5.u64_at RSEGS M (av + 80) 11 /\ L5.u64_at RSEGS M (av + 88) uid /\ L5.u64_at RSEGS M (av + 96) 12 /\ L5.u64_at RSEGS M (av + 104) uid /\ L5.u64_at RSEGS M (av + 112) 23 /\ L5.u64_at RSEGS M (av + 120) 0 /\ L5.u64_at RSEGS M (av + 128) 25 /\ L5.u64_at RSEGS M (av + 136) rnd /\ L5.u64_at RSEGS M (av + 144) 0 /\ L5.u64_at RSEGS M (av + 152) 0.
+(* The words of the LPS 727298f3 vector a scan of it reads ([dl_iterate_phdr]
+   looks for AT_PHDR and AT_PHNUM up to AT_NULL): every type word, the three
+   program-header values, and AT_NULL's value.  [r] is CONFIG_RSEQ. *)
+Lemma auxv_vec_type la ph entry gid ae uid rnd hw i :
+  (i < StackLayout.auxv_count (StackLayout.la_rseq la))%nat ->
+  nth (2 * i) (auxv_vec la ph entry gid ae uid rnd hw) 0 = nth i (auxv_types (StackLayout.la_rseq la)) 0.
 Proof.
-  intros H. unfold auxv20 in H.
-  pose proof (H 0%nat ltac:(lia)) as X0. cbn [nth] in X0. replace (av + 8 * Z.of_nat 0) with (av) in X0 by lia.
-  pose proof (H 1%nat ltac:(lia)) as X1. cbn [nth] in X1. replace (av + 8 * Z.of_nat 1) with (av + 8) in X1 by lia.
-  pose proof (H 2%nat ltac:(lia)) as X2. cbn [nth] in X2. replace (av + 8 * Z.of_nat 2) with (av + 16) in X2 by lia.
-  pose proof (H 3%nat ltac:(lia)) as X3. cbn [nth] in X3. replace (av + 8 * Z.of_nat 3) with (av + 24) in X3 by lia.
-  pose proof (H 4%nat ltac:(lia)) as X4. cbn [nth] in X4. replace (av + 8 * Z.of_nat 4) with (av + 32) in X4 by lia.
-  pose proof (H 5%nat ltac:(lia)) as X5. cbn [nth] in X5. replace (av + 8 * Z.of_nat 5) with (av + 40) in X5 by lia.
-  pose proof (H 6%nat ltac:(lia)) as X6. cbn [nth] in X6. replace (av + 8 * Z.of_nat 6) with (av + 48) in X6 by lia.
-  pose proof (H 7%nat ltac:(lia)) as X7. cbn [nth] in X7. replace (av + 8 * Z.of_nat 7) with (av + 56) in X7 by lia.
-  pose proof (H 8%nat ltac:(lia)) as X8. cbn [nth] in X8. replace (av + 8 * Z.of_nat 8) with (av + 64) in X8 by lia.
-  pose proof (H 9%nat ltac:(lia)) as X9. cbn [nth] in X9. replace (av + 8 * Z.of_nat 9) with (av + 72) in X9 by lia.
-  pose proof (H 10%nat ltac:(lia)) as X10. cbn [nth] in X10. replace (av + 8 * Z.of_nat 10) with (av + 80) in X10 by lia.
-  pose proof (H 11%nat ltac:(lia)) as X11. cbn [nth] in X11. replace (av + 8 * Z.of_nat 11) with (av + 88) in X11 by lia.
-  pose proof (H 12%nat ltac:(lia)) as X12. cbn [nth] in X12. replace (av + 8 * Z.of_nat 12) with (av + 96) in X12 by lia.
-  pose proof (H 13%nat ltac:(lia)) as X13. cbn [nth] in X13. replace (av + 8 * Z.of_nat 13) with (av + 104) in X13 by lia.
-  pose proof (H 14%nat ltac:(lia)) as X14. cbn [nth] in X14. replace (av + 8 * Z.of_nat 14) with (av + 112) in X14 by lia.
-  pose proof (H 15%nat ltac:(lia)) as X15. cbn [nth] in X15. replace (av + 8 * Z.of_nat 15) with (av + 120) in X15 by lia.
-  pose proof (H 16%nat ltac:(lia)) as X16. cbn [nth] in X16. replace (av + 8 * Z.of_nat 16) with (av + 128) in X16 by lia.
-  pose proof (H 17%nat ltac:(lia)) as X17. cbn [nth] in X17. replace (av + 8 * Z.of_nat 17) with (av + 136) in X17 by lia.
-  pose proof (H 18%nat ltac:(lia)) as X18. cbn [nth] in X18. replace (av + 8 * Z.of_nat 18) with (av + 144) in X18 by lia.
-  pose proof (H 19%nat ltac:(lia)) as X19. cbn [nth] in X19. replace (av + 8 * Z.of_nat 19) with (av + 152) in X19 by lia.
-  repeat split; assumption.
+  intros Hi. destruct la as [eh c ms r]. cbn [StackLayout.la_rseq] in *.
+  destruct r; cbn [StackLayout.auxv_count] in Hi; (do 29 (destruct i as [|i]; [reflexivity|])); Lia.lia.
+Qed.
+
+(* [auxv_cells] also gives the whole vector defined, the [KUnk] fact of the
+   throw-path certificates' start knowledge ([SegAuxv.aux_kn]): every word of it
+   is a [u64_at] of the launch's vector, above the image. *)
+Lemma auxv_cells M av uid rnd hw :
+  auxv_ok M av uid rnd hw -> 2 ^ 40 <= av ->
+  exists r : bool,
+    av + 16 * Z.of_nat (length (auxv_types r)) <= 2 ^ 47
+    /\ (forall i, (i < length (auxv_types r))%nat -> L5.u64_at RSEGS M (av + 16 * Z.of_nat i) (nth i (auxv_types r) 0))
+    /\ L5.u64_at RSEGS M (av + 216) 0x10040 /\ L5.u64_at RSEGS M (av + 232) 56 /\ L5.u64_at RSEGS M (av + 248) 10
+    /\ L5.defined M av (16 * Z.of_nat (length (auxv_types r)))
+    /\ L5.u64_at RSEGS M (av + 16 * Z.of_nat (length (auxv_types r)) - 8) 0.
+Proof.
+  intros (la & ph & entry & gid & ae & P1 & P2 & P3 & B & W) AVLO.
+  assert (LT : forall r, length (auxv_types r) = StackLayout.auxv_count r) by (intros []; reflexivity).
+  assert (C27 : (27 <= StackLayout.auxv_count (StackLayout.la_rseq la))%nat)
+    by (unfold StackLayout.auxv_count; destruct (StackLayout.la_rseq la); cbn; Lia.lia).
+  assert (DEF : L5.defined M av (16 * Z.of_nat (StackLayout.auxv_count (StackLayout.la_rseq la)))).
+  { intros i Hi.
+    pose proof (Z.div_mod i 8 ltac:(Lia.lia)) as DM. pose proof (Z.mod_pos_bound i 8 ltac:(Lia.lia)) as MB.
+    assert (Hk : (Z.to_nat (i / 8) < 2 * StackLayout.auxv_count (StackLayout.la_rseq la))%nat).
+    { apply Nat2Z.inj_lt. rewrite Z2Nat.id by (apply Z.div_pos; Lia.lia). Lia.lia. }
+    pose proof (W _ Hk) as U. rewrite Z2Nat.id in U by (apply Z.div_pos; Lia.lia).
+    pose proof (L5KS.u64_at_defined2 M (av + 8 * (i / 8)) _ U ltac:(Lia.lia) ltac:(right; Lia.lia) ltac:(Lia.lia)) as D8.
+    replace (av + i) with (av + 8 * (i / 8) + i mod 8) by Lia.lia. apply D8. Lia.lia. }
+  exists (StackLayout.la_rseq la). rewrite LT. split; [exact B|]. split.
+  { intros i Hi. rewrite <- (auxv_vec_type la ph entry gid ae uid rnd hw i Hi).
+    replace (av + 16 * Z.of_nat i) with (av + 8 * Z.of_nat (2 * i)) by Lia.lia. apply W. Lia.lia. }
+  pose proof (W 27%nat ltac:(Lia.lia)) as X27. pose proof (W 29%nat ltac:(Lia.lia)) as X29. pose proof (W 31%nat ltac:(Lia.lia)) as X31.
+  change (nth 27 (auxv_vec la ph entry gid ae uid rnd hw) 0) with (bv_unsigned (Z_to_bv 64 (Z.of_N (ph_addr ph)))) in X27.
+  change (nth 29 (auxv_vec la ph entry gid ae uid rnd hw) 0) with (bv_unsigned (Z_to_bv 64 (Z.of_N (ph_ent ph)))) in X29.
+  change (nth 31 (auxv_vec la ph entry gid ae uid rnd hw) 0) with (bv_unsigned (Z_to_bv 64 (Z.of_N (ph_num ph)))) in X31.
+  rewrite P1 in X27. rewrite P2 in X29. rewrite P3 in X31.
+  change (bv_unsigned (Z_to_bv 64 0x10040)) with 0x10040 in X27.
+  change (bv_unsigned (Z_to_bv 64 56)) with 56 in X29.
+  change (bv_unsigned (Z_to_bv 64 10)) with 10 in X31.
+  replace (av + 8 * Z.of_nat 27) with (av + 216) in X27 by Lia.lia.
+  replace (av + 8 * Z.of_nat 29) with (av + 232) in X29 by Lia.lia.
+  replace (av + 8 * Z.of_nat 31) with (av + 248) in X31 by Lia.lia.
+  split; [exact X27|]. split; [exact X29|]. split; [exact X31|]. split; [exact DEF|].
+  destruct la as [eh c ms r]. cbn [StackLayout.la_rseq] in *.
+  destruct r; cbn [StackLayout.auxv_count] in *.
+  - pose proof (W 57%nat ltac:(Lia.lia)) as XN. replace (av + 16 * Z.of_nat 29 - 8) with (av + 8 * Z.of_nat 57) by Lia.lia. exact XN.
+  - pose proof (W 53%nat ltac:(Lia.lia)) as XN. replace (av + 16 * Z.of_nat 27 - 8) with (av + 8 * Z.of_nat 53) by Lia.lia. exact XN.
 Qed.
 
 

@@ -1,6 +1,6 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamGuard.v (cold/port-fm-rtprintf-param 3e35620c52e); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMgxaSeamGuard.table); GXA symbol keys kept (0x22e18); names: record RT_IImgA -> A_img RecAsanVfA.N_img_asan_vf. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMgxaSeamGuard.v at 2d2ff01bb6f2 relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
-(* The GUARD of the GXA seam at musl vfprintf: GXA's vf_ready_a (lib/CJ/RL/GXA/G_vfprintf_snf.v:219),
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamGuard.v; relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMgxaSeamGuard.table); GXA symbol keys kept (0x22e18); names: record RT_IImgA -> A_img RecAsanVfA.N_img_asan_vf. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMgxaSeamGuard.v relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
+(* The GUARD of the GXA seam at musl vfprintf: GXA's vf_ready_a (lib/CJ/RL/GXA/G_vfprintf_snf.v:220),
    from facts that hold where the harness calls vfprintf.
 
    vf_ready_a asks, at every store m1 that the walk reaches through the footprint

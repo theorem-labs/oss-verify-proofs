@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (SIGPIPE on a dead reader for write, writev and pwritev2, and the budget arms of set_robust_list 99, clock_getres 114 and pwritev2 287). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -12,6 +13,24 @@ Open Scope Z_scope.
 
 Section Arms.
 Variable L : Z.
+
+Lemma raise_sigpipe_sl : forall m, raise_sigpipe (sl L m) = sl L (raise_sigpipe m).
+Proof.
+  intros m. unfold raise_sigpipe.
+  change (m_sigpipe_default (sl L m)) with (m_sigpipe_default m).
+  change (m_sigmask (sl L m)) with (m_sigmask m).
+  destruct (negb (m_sigpipe_default m)); [reflexivity |].
+  destruct (sigpipe_blocked (m_sigmask m)); reflexivity.
+Qed.
+
+(* LPS 08b1429: a write to a dead reader raises SIGPIPE; the budget is untouched *)
+Lemma mlim_raise_sigpipe : forall m, mlim (raise_sigpipe m) = mlim m.
+Proof.
+  intros m. unfold raise_sigpipe.
+  destruct (negb (m_sigpipe_default m)); [reflexivity |].
+  destruct (sigpipe_blocked (m_sigmask m)); reflexivity.
+Qed.
+
 
 (* [comment removed for export] *)
 Lemma fr_arm_56 : forall i m, FR L i m (openat_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2)) (openat_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2)).
@@ -39,7 +58,11 @@ Proof. intros i m. unfold read_spec. fq. Qed.
 
 (* [comment removed for export] *)
 Lemma fr_arm_64 : forall i m, FR L i m (write_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2)) (write_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2)).
-Proof. intros i m. unfold write_spec. fq. Qed.
+Proof. intros i m. unfold write_spec. fq.
+  all: try (cbv beta iota zeta; fq).
+  all: try apply raise_sigpipe_sl.
+  all: try apply mlim_raise_sigpipe.
+Qed.
 
 (* [comment removed for export] *)
 Lemma fr_arm_65 : forall i m, FR L i m (readv_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2)) (readv_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2)).
@@ -47,7 +70,11 @@ Proof. intros i m. unfold readv_spec. fq. Qed.
 
 (* [comment removed for export] *)
 Lemma fr_arm_66 : forall i m, FR L i m (writev_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2)) (writev_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2)).
-Proof. intros i m. unfold writev_spec. fq. Qed.
+Proof. intros i m. unfold writev_spec. fq.
+  all: try (cbv beta iota zeta; fq).
+  all: try apply raise_sigpipe_sl.
+  all: try apply mlim_raise_sigpipe.
+Qed.
 
 (* [comment removed for export] *)
 Lemma fr_arm_67 : forall i m, FR L i m (pread64_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3)) (pread64_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3)).
@@ -140,5 +167,22 @@ Proof. intros i m. unfold sigaltstack_spec. fq. Qed.
 (* [comment removed for export] *)
 Lemma fr_arm_134 : forall i m, FR L i m (rt_sigaction_spec (sig32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3)) (rt_sigaction_spec (sig32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3)).
 Proof. intros i m. unfold rt_sigaction_spec. fq. Qed.
+
+(* LPS 727298f3: [spec_table] gained set_robust_list (99), clock_getres (114) and
+   pwritev2 (287). *)
+Lemma fr_arm_99 : forall i m, FR L i m (set_robust_list_spec (in_arg i 1)) (set_robust_list_spec (in_arg i 1)).
+Proof. intros i m. unfold set_robust_list_spec. fq. Qed.
+
+Lemma fr_arm_114 : forall i m, FR L i m (clock_getres_spec (clockid32 (in_arg i 0)) (in_arg i 1)) (clock_getres_spec (clockid32 (in_arg i 0)) (in_arg i 1)).
+Proof. intros i m. unfold clock_getres_spec. fq. Qed.
+
+Lemma fr_arm_287 : forall i m, FR L i m
+  (pwritev2_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (flag32 (in_arg i 5)))
+  (pwritev2_spec (fd32 (in_arg i 0)) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (flag32 (in_arg i 5))).
+Proof. intros i m. unfold pwritev2_spec. fq.
+  all: try (cbv beta iota zeta; fq).
+  all: try apply raise_sigpipe_sl.
+  all: try apply mlim_raise_sigpipe.
+Qed.
 
 End Arms.

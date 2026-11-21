@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's mmap base; the model's channel reader as a premise of the writes; the first malloc's auxv read off the launch's entry block; the writable stack is the launch's 6144513 bytes below sp0). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -109,16 +110,27 @@ Section First.
   Hypothesis Hve : valid_envp envv.
   Hypothesis Hvsp : valid_sp sp0.
   Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-  Hypothesis ME : main_entry sp0 rdraw [a0s; path] envv a_uid a_hwcap tid regs0 mem0.
+    (* LPS 75d69e00: [main_entry] takes the run's whole ProcInput and the mmap base
+     in place of (argv, envp, uid, hwcap).  [mkProcInputC] (Amb.v:42) is the very
+     input this Section's own conclusion runs -- [in_argv]/[in_envp]/[in_uid]/
+     [in_hwcap] of it reduce to exactly the four the old spelling named -- so
+     naming it here is the same statement, not a narrower one. *)
+  Local Notation INP := (mkProcInputC [a0s; path] envv fs0 stdin0) (only parsing).
+  Hypothesis ME : main_entry sp0 rdraw INP mbase tid regs0 mem0.
   Hypothesis Hbrk : valid_brk RSEGS brk.
 
   Variable mo1 : Model.
-  Hypothesis M1v : m_vmmaps mo1 = m_vmmaps (S1RFront.model0 sp0 a0s path envv tid brk mbase fs0 stdin0).
+  Hypothesis M1v : m_vmmaps mo1 = m_vmmaps (S1RFront.model0 sp0 a0s path envv tid rdraw brk mbase fs0 stdin0).
   Hypothesis M1l : m_vm_lazy mo1 = [].
   Hypothesis M1h : m_halted mo1 = None.
   Hypothesis M1m : m_vm_materialized mo1 = [].
   Hypothesis M1fs : m_fs mo1 = fs0.
   Hypothesis M1fd2 : fd_lookup (m_fds mo1) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  (* LPS 727298f3: the heap invariant reads the kernel build (the vDSO pair, the
+     placement's THP setting), so carrying it from [model0] to [mo1] needs the kernel too. *)
+  Hypothesis M1k : m_kernel mo1 = m_kernel (S1RFront.model0 sp0 a0s path envv tid rdraw brk mbase fs0 stdin0).
+  (* LPS 727298f3: the far end's reader bit, which [rst] carries round the read loop. *)
+  Hypothesis M1r : m_channel_reader mo1 = true.
 
   Hypothesis HAC : (alloc_ceiling = bv_unsigned sp0 - 8388608)%Z.
   Hypothesis HRR : (rr_canary = bv_unsigned (canary rdraw))%Z.
@@ -128,9 +140,9 @@ Section First.
   Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
   Let SPal : (bv_unsigned sp0 mod 16 = 0)%Z := proj2 (proj2 Hvsp).
 
-  #[local] Notation model0 := (S1RFront.model0 sp0 a0s path envv tid brk mbase fs0 stdin0).
+  #[local] Notation model0 := (S1RFront.model0 sp0 a0s path envv tid rdraw brk mbase fs0 stdin0).
   #[local] Notation model1 := mo1.
-  #[local] Notation P1 := (p1 sp0 a0s path envv).
+  #[local] Notation P1 := (p1 a0s path envv rdraw).
 
   Lemma rimg_missb :
     Forall (fun iv : Z * Z => D_main_missb (fst iv) (Z.to_nat (snd iv - fst iv)) = true) rimg_ivs.
@@ -140,8 +152,8 @@ Section First.
     img_clear mem0 lo hi.
   Proof.
     intros lo hi Hb Hle Hhi i Hi. destruct (missb_parts lo _ Hb) as (_ & _ & Hlo0 & _).
-    rewrite (main_entry_mem_data sp0 rdraw [a0s; path] envv a_uid a_hwcap tid regs0 mem0 ME) by (rewrite u_small by lia; unfold stack_max_size; lia).
-    apply (D_main_none sp0 [a0s; path] envv tid rdraw Hva).
+    rewrite (main_entry_mem_data sp0 rdraw INP mbase tid regs0 mem0 ME) by (rewrite u_small by lia; unfold stack_max_size; lia).
+    apply (D_main_none sp0 INP tid rdraw Hva).
     apply (missb_sub lo (Z.to_nat (hi - lo))); [exact Hb | lia | rewrite Z2Nat.id by lia; cbn [Z.of_nat Pos.of_succ_nat Pos.succ]; lia].
   Qed.
 
@@ -153,7 +165,7 @@ Section First.
     apply mem0_clear; [exact Hb | lia | lia].
   Qed.
 
-  Ltac Dcell L := unfold cell; apply (main_entry_rdn_D sp0 [a0s; path] envv tid rdraw SPlo regs0 mem0 ME); [lia | cbn; lia | apply (L sp0 [a0s; path] envv tid rdraw Hva)].
+  Ltac Dcell L := unfold cell; apply (main_entry_rdn_D sp0 INP tid rdraw SPlo mbase regs0 mem0 ME); [lia | cbn; lia | apply (L sp0 INP tid rdraw Hva)].
 
   Lemma mem0_main_mem : drv_main_mem mem0.
   Proof.
@@ -181,7 +193,7 @@ Section First.
             let a' := eval vm_compute in a in replace a with a' by reflexivity;
             let H := fresh in krd HK0 a' 1%nat H; exact H end
         | ]). lia.
-    - unfold cell. rewrite HRR, Z_to_bv_bv_unsigned. exact (main_entry_guard sp0 [a0s; path] envv tid rdraw Hva SPlo regs0 mem0 ME RSEGS).
+    - unfold cell. rewrite HRR, Z_to_bv_bv_unsigned. exact (main_entry_guard sp0 INP tid rdraw Hva SPlo mbase regs0 mem0 ME RSEGS).
     -   intros w Hi Hnrw.
       assert (Hw : (0x10000 <= bv_unsigned w < 0xee000)%Z).
       { apply img_iff in Hi. destruct (Z.lt_ge_cases (bv_unsigned w) 0xee000); [lia|]. exfalso. apply Hnrw.
@@ -196,7 +208,9 @@ Section First.
     constructor.
     - reflexivity.
     - reflexivity.
-    - reflexivity.
+    (* 08b1429: [State.init_model] ends the reserved ledger with the vDSO pair *)
+    - exact (vm_reserved_init_model (segments_reserved RSEGS) brk mbase sp0 LIM
+               (mkProcInputC [a0s; path] envv fs0 stdin0)).
     - reflexivity.
     - exact Hbrk.
     - change (vm_start_brk (m_vmmaps model0)) with brk. rewrite HAC. unfold brk_aslr_max in Hb2. lia.
@@ -223,8 +237,9 @@ Section First.
       /\ (bv_unsigned sp0 <= bv_unsigned P1)%Z /\ (bv_unsigned P1 + Z.of_nat (length path) + 1 < 2 ^ 63)%Z.
     Proof.
       clear HL P0 P2 P3 P4 P5 HK HG HO.
-      destruct (main_str sp0 a0s path envv tid rdraw regs0 mem0 Hva Hve Hvsp ME 1%nat ltac:(lia)) as (Sr & Slo & Shi & Slen).
-      cbn [nth] in Sr, Slo, Shi, Slen. fold (p1 sp0 a0s path envv) in Sr, Slo, Shi.
+      (* [S1MainEntry.main_str] reads the launch facts from [ME]; [Hve] is not a parameter of it. *)
+      destruct (main_str sp0 a0s path envv tid rdraw regs0 mem0 Hva Hvsp ME 1%nat ltac:(lia)) as (Sr & Slo & Shi & Slen).
+      cbn [nth] in Sr, Slo, Shi, Slen. fold (p1 a0s path envv rdraw) in Sr, Slo, Shi.
       rewrite Z_to_bv_bv_unsigned. split; [|lia].
       rewrite <- Sr. apply rdn_ext; [rewrite Nat2Z.inj_add; cbn [Z.of_nat Pos.of_succ_nat]; lia|].
       intros x Hx. apply HA. lia.
@@ -240,11 +255,11 @@ Section First.
         pose proof (proj1 (Forall_forall _ _) mem0_rimg _ Hin) as C. cbn [fst snd] in C.
         intros i Hi. rewrite HO by (rewrite u_small by lia; lia). apply C. exact Hi.
       - unfold cell. rewrite Z_to_bv_bv_unsigned.
-        rewrite <- (main_entry_tid sp0 [a0s; path] envv tid rdraw Hva SPlo regs0 mem0 ME RSEGS).
+        rewrite <- (main_entry_tid sp0 INP tid rdraw Hva SPlo mbase regs0 mem0 ME RSEGS).
         symmetry. apply rdn_ext; [rewrite u_small by lia; cbn; lia|]. intros x Hx. rewrite u_small in Hx by lia. symmetry. apply HO. cbn in Hx. lia.
       - unfold cell. krd HK 0x1005f0%Z 8%nat H. exact H.
       - unfold cell. krd HK 0x100688%Z 8%nat H. exact H.
-      - eapply pins_same; [exact (main_entry_pins_sx sp0 rdraw [a0s; path] envv a_uid a_hwcap tid regs0 mem0 SPlo ME)|].
+      - eapply pins_same; [exact (main_entry_pins_sx sp0 rdraw INP mbase tid regs0 mem0 SPlo ME)|].
         intros a Ha. pose proof (D_RD_rw _ Ha) as (lo & hi & Hin & Hr). cbn in Hin. destruct Hin as [E|[]]. injection E as <- <-.
         apply HO. lia.
       - constructor; unfold cell;
@@ -257,7 +272,9 @@ Section First.
                   | rewrite alu_add; unfold v_add; do 3 f_equal; apply bv_eq; rewrite !Z_to_bv_unsigned, !bv_wrap64_mod; cbn [bv_unsigned Z_to_bv]; rewrite ?Zplus_mod_idemp_r; f_equal; lia
                   | idtac ] end.
       - intros d m Hd Hm. eapply store_ok_mono; [exact HG|].
-        apply (main_entry_store_ok_win sp0 rdraw [a0s; path] envv a_uid a_hwcap tid regs0 mem0 ME); rewrite u_small by lia; unfold stack_max_size; lia.
+        apply (main_entry_store_ok_win sp0 rdraw INP mbase tid regs0 mem0 ME);
+          rewrite ?stack_window_depth_val in *; rewrite u_small by lia;
+          try unfold wok_lo; try unfold stack_window_reach; try unfold stack_max_size; lia.
       - exact Sr.
     Qed.
   End AtCall.
@@ -281,6 +298,7 @@ Section First.
     fp_live : live MI A = [(p, 65536%Z)];
     fp_t8 : exists t8, rdn RSEGS M (Z_to_bv 64 (bv_unsigned P1 + Z.of_nat (length path))) 8 = Some t8;
     fp_fds : m_fds mo = m_fds mo1;
+    fp_rdr : m_channel_reader mo = true;
     fp_fs : m_fs mo = fs0
   }.
 
@@ -292,7 +310,7 @@ Section First.
     intros KBODY HLOOP vals R M HL P0 P1v P2 P3 P4 P5 HR HK HA HG HO.
     pose proof (path_facts M HA) as (Sr & Slo & Shi).
     edestruct (main_strN sp0 [a0s; path] envv tid rdraw regs0 mem0 Hva Hve Hvsp ME 1%nat ltac:(cbn; lia)) as (_ & _ & Shi2 & Slen & t8 & Ht8).
-    cbn [nth] in Ht8, Shi2, Slen. fold (p1 sp0 a0s path envv) in Ht8, Shi2.
+    cbn [nth] in Ht8, Shi2, Slen. fold (p1 a0s path envv rdraw) in Ht8, Shi2.
     assert (Ht8M : rdn RSEGS M (Z_to_bv 64 (bv_unsigned P1 + Z.of_nat (length path))) 8 = Some t8).
     { rewrite <- Ht8. apply rdn_ext; [rewrite u_small by lia; lia|]. intros x Hx. rewrite u_small in Hx by lia. apply HA. lia. }
     pose proof (rmem_at_call vals M P0 HK HA HG HO) as RM.
@@ -301,43 +319,68 @@ Section First.
     assert (OWNC0 : forall a, owned MI A0 a -> ~ in_ranges (ly_img L) a -> (0 < a < alloc_ceiling)%Z)
       by (intros a Ho Hni; exact (OWNC A0 mem0 model0 a AI0 Ho Hni)).
     assert (AI1 : AINV0 A0 M model1).
-    { apply (dm_frame0 _ _ _ _ DM A0 mem0 M model0 model1 AI0); [ | exact HG | exact M1v | rewrite M1l; reflexivity].
+    { apply (dm_frame0 _ _ _ _ DM A0 mem0 M model0 model1 AI0); [ | exact HG | exact M1v | rewrite M1l; reflexivity | exact M1k].
       intros a Ho. apply HO. pose proof (u64_range a).
       destruct (Classical_Prop.classic (in_ranges (ly_img L) (bv_unsigned a))) as [Hi|Hni].
       - apply img_iff in Hi. left. lia.
       - pose proof (OWNC0 _ Ho Hni). left. lia. }
     pose proof (dm_consts _ _ _ _ DM) as [MSc BIGc NMAXc RBc SCg SCn].
-    destruct (auxvp_u sp0 a0s path envv rdraw Hva Hve Hvsp) as [Hau Hab].
-    destruct (rnd_u2 sp0 a0s path envv tid rdraw regs0 mem0 Hva Hve Hvsp ME) as (Hr1 & Hr2 & Hr3 & Hr4).
-    set (rp := at_random_ptr sp0 [a0s; path] envv) in *.
+    pose proof (auxvp_u sp0 a0s path envv) as AU.
+    repeat match type of AU with ?P -> _ => specialize (AU ltac:(assumption)) end. destruct AU as [Hau Hab].
+    epose proof (rnd_u2 sp0 a0s path envv tid rdraw regs0 mem0) as RU.
+    repeat match type of RU with ?P -> _ => specialize (RU ltac:(eassumption)) end. destruct RU as (Hr1 & Hr2 & Hr3 & Hr4).
+    epose proof (rd_auxv_main sp0 a0s path envv tid rdraw regs0 mem0) as RA.
+    repeat match type of RA with ?P -> _ => specialize (RA ltac:(eassumption)) end.
     eapply (dm_first _ _ _ _ DM fx A0 R M model1 65536 (bv_unsigned sp0 - 128) 0x6563c KBODY AI1).
     -
-      set (aw := fun j => nth j (RefLayout.auxv_words RPH rp a_uid a_hwcap) (Z_to_bv 64 0)).
-      exists (bv_unsigned (auxvp sp0 a0s path envv)), (bv_unsigned (aw 1%nat)), (bv_unsigned (aw 3%nat)), (bv_unsigned (aw 5%nat)),
-             (bv_unsigned (aw 7%nat)), (bv_unsigned (aw 9%nat)), (bv_unsigned (aw 11%nat)), (bv_unsigned (aw 13%nat)),
-             (bv_unsigned (aw 15%nat)), (bv_unsigned rp).
+      (* LPS 727298f3: the launch's auxv ([StackLayout.auxv_entries]), read off the entry block
+         ([S1MainEntry.rd_auxv_main]); [gpos] is a key's value position in it *)
+      set (aw := fun j => bv_unsigned (nth j (RefLayout.auxv_words (launch_auxv INP sp0 mbase) RPH (0x6549c : word)
+                   (in_uid INP) (in_gid INP) (in_hwcap INP)
+                   (at_random_ptr sp0 (kb_rseq (in_kernel INP)) (in_argv INP) (in_envp INP))
+                   (at_execfn_ptr (ed_top rdraw) (in_execfn INP))) (Z_to_bv 64 0))).
+      set (gpos := fun k : Z => if Z.eqb k 33 then 1%nat else if Z.eqb k 40 then 3%nat else if Z.eqb k 41 then 5%nat
+              else if Z.eqb k 42 then 7%nat else if Z.eqb k 43 then 9%nat else if Z.eqb k 44 then 11%nat
+              else if Z.eqb k 45 then 13%nat else if Z.eqb k 46 then 15%nat else if Z.eqb k 47 then 17%nat
+              else if Z.eqb k 51 then 19%nat else if Z.eqb k 17 then 25%nat else if Z.eqb k 7 then 33%nat
+              else if Z.eqb k 8 then 35%nat else if Z.eqb k 9 then 37%nat else if Z.eqb k 13 then 43%nat
+              else if Z.eqb k 14 then 45%nat else if Z.eqb k 31 then 51%nat else if Z.eqb k 27 then 53%nat
+              else 55%nat).
+      exists (bv_unsigned (auxvp sp0 a0s path envv)), (aw 27%nat), (aw 29%nat), (aw 31%nat), (aw 21%nat),
+             (aw 23%nat), (aw 39%nat), (aw 41%nat), (aw 47%nat), (bv_unsigned (at_random_ptr sp0 (kb_rseq a_kernel) [a0s; path] envv)).
       split; [|split; [|split; [|split; [lia|split; [lia|split; [pose proof (u64_range (auxvp sp0 a0s path envv)); lia|split;[lia|split;[lia|]]]]]]]].
       + unfold cell, LIBC. rewrite Z_to_bv_bv_unsigned.
         assert (E0 : rdn RSEGS mem0 (Z_to_bv 64 (0x120948 + 8)) 8 = Some (word_to_le_bytes 8 (auxvp sp0 a0s path envv)))
-          by (apply (main_entry_rdn_D sp0 [a0s; path] envv tid rdraw SPlo regs0 mem0 ME); [lia | cbn; lia | apply (D_main_auxv sp0 [a0s; path] envv tid rdraw Hva)]).
+          by (apply (main_entry_rdn_D sp0 INP tid rdraw SPlo mbase regs0 mem0 ME); [lia | cbn; lia | apply (D_main_auxv sp0 INP tid rdraw Hva)]).
         rewrite <- E0. apply rdn_ext; [rewrite u_small by lia; cbn; lia|]. intros x Hx. rewrite u_small in Hx by lia. apply HO. cbn in Hx. lia.
-      + intros i Hi. unfold cell.
+      + exists (kb_rseq a_kernel), (fun k => aw (gpos k)). intros i Hi.
+        assert (Hj : (i < 2 * auxv_count (kb_rseq (in_kernel INP)))%nat)
+          by (revert Hi; change (in_kernel INP) with a_kernel; unfold DrvMallocT.auxv_words, auxv_count;
+              destruct (kb_rseq a_kernel); cbn [length app]; lia).
+        assert (Hi58 : (i < 58)%nat) by (revert Hj; unfold auxv_count; destruct (kb_rseq (in_kernel INP)); lia).
+        unfold cell.
         rewrite <- (rdn_ext RSEGS 8 mem0 M) by (try (rewrite u_small by lia; lia); intros x Hx; rewrite u_small in Hx by lia; symmetry; apply HO; lia).
-        rewrite (auxv_word_at sp0 a0s path envv tid rdraw regs0 mem0 Hva Hve Hvsp ME i Hi). do 2 f_equal.
-        do 20 (destruct i as [|i]; [subst aw; cbn [nth RefLayout.auxv_words DrvMallocT.auxv_words auxv_entries flat_map app fst snd]; first [rewrite Z_to_bv_bv_unsigned; reflexivity | reflexivity | idtac "AUX"] |]). lia.
+        rewrite (RA i _ _ Hj eq_refl eq_refl). do 2 f_equal.
+        assert (HLR : la_rseq (launch_auxv INP sp0 mbase) = kb_rseq a_kernel) by reflexivity.
+        subst aw gpos. unfold RefLayout.auxv_words, auxv_entries. rewrite HLR.
+        clear Hi Hi58. revert i Hj. change (in_kernel INP) with a_kernel.
+        destruct (kb_rseq a_kernel); intros i Hj; cbn [auxv_count] in Hj.
+        all: do 58 (destruct i as [|i];
+               [cbn [nth flat_map app fst snd DrvMallocT.auxv_words Z.eqb Pos.eqb];
+                first [rewrite Z_to_bv_bv_unsigned; reflexivity | reflexivity] |]).
+        all: lia.
       +
         unfold cell. rewrite HRS.
         rewrite <- (rdn_ext RSEGS 8 mem0 M) by (try (rewrite u_small by lia; lia); intros x Hx; rewrite u_small in Hx by lia; symmetry; apply HO; lia).
         pose proof (Hr4 8%nat 8%nat ltac:(lia)) as H8. change (Z.of_nat 8) with 8%Z in H8. rewrite H8.
         rewrite at_random_hi8. reflexivity.
-      + repeat constructor; cbn; try apply u64_range; pose proof (u64_range (aw 1%nat)); pose proof (u64_range (aw 3%nat));
-          pose proof (u64_range (aw 5%nat)); pose proof (u64_range (aw 7%nat)); pose proof (u64_range (aw 9%nat));
-          pose proof (u64_range (aw 11%nat)); pose proof (u64_range (aw 13%nat)); pose proof (u64_range (aw 15%nat)); pose proof (u64_range rp); lia.
+      + subst aw. repeat (apply Forall_cons; [apply u64_range|]). apply Forall_nil.
     - exact TI0.
     - reflexivity.
     - exact FR0.
     - exact LV0.
     - constructor; [exact M1h | exact M1l | exact M1m | rewrite M1v; rewrite HAC; reflexivity].
+    - exact M1r.
     -   intros w Hi Hnrw.
       assert (Hw : (0x10000 <= bv_unsigned w < 0xee000)%Z).
       { apply img_iff in Hi. destruct (Z.lt_ge_cases (bv_unsigned w) 0xee000); [lia|]. exfalso. apply Hnrw.
@@ -364,7 +407,7 @@ Section First.
       assert (Hni : ~ in_ranges (ly_img L) a) by (rewrite img_iff; lia).
       pose proof (OWNC0 a Ho Hni). lia.
     -
-      intros A' R' M' mo' p AI' TI' MS' FS FDS KEPT A10 Hp LADD CP BG NEWT FR DEF.
+      intros A' R' M' mo' p AI' TI' MS' FS FDS RD1 KEPT A10 Hp LADD CP BG NEWT FR DEF.
       destruct LADD as [LV' _]. rewrite LV0 in LV'.
       destruct (ai_live_block MI A' M' mo' p 65536 AI' ltac:(rewrite LV'; left; reflexivity)) as (_ & Hal & _ & Hceil & Hby).
       assert (A21 : getr R' 21 = Z_to_bv 64 65536).
@@ -412,6 +455,7 @@ Section First.
           -- unfold zwin in H. lia.
           -- exact (high_not_errno (bv_unsigned x) ltac:(lia) H).
         * exact FDS.
+        * rewrite RD1. exact M1r.
         * rewrite FS. exact M1fs.
   Qed.
 

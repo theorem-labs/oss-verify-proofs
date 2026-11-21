@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the nine-byte string read-ahead): changed as0_drv_mainW, dg_dot_ofW, dg_nofile_of_openerrW and 1 more. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -36,14 +37,14 @@ Definition drv_main_onW (P : list byte -> Fs.Fs -> Prop) (KP : list byte -> Fs.F
     asan_iface_ok L ar C scfg HI -> afree_null_spec L ar scfg HI -> aicpt_ok L ar IL scfg HI -> lib_iface_okDW Lay ar scfg HI (LSt ar) PHI -> drv_layoutA L ar IL sp ->
     SX2S.regs_ok (env_mainA sp p0 p1 can tid R) sr_mainA R ->
     SX2S.know_ok ASEGS (env_mainA sp p0 p1 can tid R) (mrestrict (ahid A0 model) M0) kn_mainA ->
-    auxv_atA sp p0 M0 ->
+    (* DROPPED, old beside new: [auxv_atA sp p0 M0 ->], as in Pm4DrvMain.drv_main_on. *)
     dinv ar HI sp M0 [] [] cr0 A0 M0 model ->
     defined M0 (bv_unsigned sp) (ar_stack_top ar - bv_unsigned sp) ->
     m_fds model = APSK.fds_std -> m_fs model = fs ->
     rdn ASEGS (mrestrict (ahid A0 model) M0) p1 (length path + 1) = Some (path ++ [Z_to_bv 8 0]) ->
-    bv_unsigned sp <= bv_unsigned p1 /\ bv_unsigned p1 + Z.of_nat (length path) + 1 + 16 <= 2 ^ 47 ->
+    bv_unsigned sp <= bv_unsigned p1 /\ bv_unsigned p1 + Z.of_nat (length path) + 1 + 9 <= 2 ^ 47 ->
     cr0 = (8192, B0) ->
-    defined M0 (bv_unsigned p1) (Z.of_nat (length path) + 1 + 16) ->
+    defined M0 (bv_unsigned p1) (Z.of_nat (length path) + 1 + 8) ->
     shadow_allowed A0 (ahl_ceil ar) (2 ^ 47 - ahl_ceil ar) ->
     srealizes ASEGS scfg (mkCfg (mkst R (Z_to_bv 64 0xb00b0) M0 (seg_rom ASEGS)) model) (KP path fs).
 Definition dg_nofile_stmtW := drv_main_onW (fun path fs => (4096 <= length path)%nat \/ path = [] \/ (path <> dot_path /\ fs_lookup fs path = None))
@@ -55,7 +56,7 @@ Theorem dg_nofile_of_openerrW : forall (L : asan_layout) (C : asan_statics_cells
 Proof.
   intros L C IL Lay LSt B0 DG_OPENERR.
   unfold dg_nofile_stmtW, drv_main_onW.
-  intros Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs HPHIOK Hcase ar HI p0 p1 can tid A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK AUXV DI M0def FDS EFS STR PLO Ecr PDEF SAH.
+  intros Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs HPHIOK Hcase ar HI p0 p1 can tid A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK DI M0def FDS EFS STR PLO Ecr PDEF SAH.
   assert (Hsp : 0x7fff80000000 <= bv_unsigned sp <= 2 ^ 47) by (destruct Hvsp as (H1 & H2 & H3); unfold sp_window_lo, sp_window_hi in H1, H2; lia).
   assert (Hal : bv_unsigned sp mod 16 = 0) by (destruct Hvsp as (_ & _ & H3); exact H3).
   pose proof CONSTS as CONSTS'. destruct CONSTS as (ILY & HRD & Hkpm & Hlin & Hovh & HPR & HEX & _).
@@ -89,7 +90,7 @@ Theorem dg_dot_ofW : forall (L : asan_layout) (C : asan_statics_cells) (IL : icp
 Proof.
   intros L C IL Lay LSt B0 DLL HBUD DG_OPENERR DG_READERR.
   unfold dg_dot_stmtW, drv_main_onW.
-  intros Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs HPHIOK Hdot ar HI p0 p1 can tid A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK AUXV DI M0def FDS EFS STR PLO Ecr PDEF SAH.
+  intros Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs HPHIOK Hdot ar HI p0 p1 can tid A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK DI M0def FDS EFS STR PLO Ecr PDEF SAH.
   subst path.
   assert (Hsp : 0x7fff80000000 <= bv_unsigned sp <= 2 ^ 47) by (destruct Hvsp as (H1 & H2 & H3); unfold sp_window_lo, sp_window_hi in H1, H2; lia).
   assert (Hal : bv_unsigned sp mod 16 = 0) by (destruct Hvsp as (_ & _ & H3); exact H3).
@@ -125,20 +126,20 @@ Theorem as0_drv_mainW : forall (L : asan_layout) (C : asan_statics_cells) (IL : 
 Proof.
   intros L C IL Lay LSt B0 DLL DLC HBUD DG_OPENERR DG_SHORT DG_OVERRUN DG_REFUSE DG_NOFILE DG_DOT.
   unfold drv_main_stmtW.
-  intros Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs HPHIOK ar HI p0 p1 can tid A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK AUXV DI M0def FDS EFS STR PLO Ecr PDEF SAH.
+  intros Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs HPHIOK ar HI p0 p1 can tid A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK DI M0def FDS EFS STR PLO Ecr PDEF SAH.
   cbn [spec].
   destruct (Nat.leb_spec0 4096 (length path)) as [Hlong|Hshort].
-  { exact (DG_NOFILE Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs HPHIOK (or_introl Hlong) ar HI p0 p1 can tid A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK AUXV DI M0def FDS EFS STR PLO Ecr PDEF SAH). }
+  { exact (DG_NOFILE Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs HPHIOK (or_introl Hlong) ar HI p0 p1 can tid A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK DI M0def FDS EFS STR PLO Ecr PDEF SAH). }
   destruct (list_byte_eqb path []) eqn:Hemp.
   { apply list_byte_eqb_iffA in Hemp.
-    exact (DG_NOFILE Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs HPHIOK (or_intror (or_introl Hemp)) ar HI p0 p1 can tid A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK AUXV DI M0def FDS EFS STR PLO Ecr PDEF SAH). }
+    exact (DG_NOFILE Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs HPHIOK (or_intror (or_introl Hemp)) ar HI p0 p1 can tid A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK DI M0def FDS EFS STR PLO Ecr PDEF SAH). }
   assert (Hne : path <> []) by (intros E; apply list_byte_eqb_iffA in E; rewrite E in Hemp; discriminate).
   destruct (list_byte_eqb path dot_path) eqn:Hdot.
   { apply list_byte_eqb_iffA in Hdot.
-    exact (DG_DOT Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs HPHIOK Hdot ar HI p0 p1 can tid A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK AUXV DI M0def FDS EFS STR PLO Ecr PDEF SAH). }
+    exact (DG_DOT Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs HPHIOK Hdot ar HI p0 p1 can tid A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK DI M0def FDS EFS STR PLO Ecr PDEF SAH). }
   assert (Hnd : path <> dot_path) by (intros E; apply list_byte_eqb_iffA in E; rewrite E in Hdot; discriminate).
   destruct (fs_lookup fs path) as [fdata|] eqn:Hlk.
-  2:{ exact (DG_NOFILE Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs HPHIOK (or_intror (or_intror (conj Hnd Hlk))) ar HI p0 p1 can tid A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK AUXV DI M0def FDS EFS STR PLO
+  2:{ exact (DG_NOFILE Halloc Hfs CONSTS sp a0s path envp fs Hvsp Hva Hve Hvfs HPHIOK (or_intror (or_intror (conj Hnd Hlk))) ar HI p0 p1 can tid A0 cr0 R M0 model HIok FNok ICok LIok DL HR HK DI M0def FDS EFS STR PLO
                Ecr PDEF SAH). }
   (* [comment removed for export] *)
   assert (Hsp : 0x7fff80000000 <= bv_unsigned sp <= 2 ^ 47) by (destruct Hvsp as (H1 & H2 & H3); unfold sp_window_lo, sp_window_hi in H1, H2; lia).
@@ -188,7 +189,7 @@ Proof.
       * intros HPLp. unfold acredit_ok. rewrite HPLeq. lia.
       * assert (Hp4096 : (length path < 4096)%nat) by lia.
         assert (HPHI : PHI (payloadA fdata)) by (apply (HPHIOK Hp4096 Hne Hnd fdata Hlk); unfold MAX_INPUT in *; lia).
-        apply (@drv_loopA scfg L ar C IL HI HIok ICok sp Hsp Hal DL fs fdata p0 p1 can M0 M0def A0 CAP HCAP HltC Lay (LSt ar) ILY HPR DLL DLC LSAx PHI LIok HPHI [] crC AUXV).
+        apply (@drv_loopA scfg L ar C IL HI HIok ICok sp Hsp Hal DL fs fdata p0 p1 can M0 M0def A0 CAP HCAP HltC Lay (LSt ar) ILY HPR DLL DLC LSAx PHI LIok HPHI [] crC).
         -- (* [comment removed for export] *)
            pose proof (CALLSA_range sp fdata) as HCL.
            unfold Pm4DrvE.lib_roomA, Pm4DrvE.credit_scaleA, credit_le, cr1A. rewrite HPLeq. cbn [fst snd].

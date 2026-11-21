@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO reservation in the reserved ledger: co_res's three facts with co_resx, co_mres and co_vdso, the resx bounds and sum_sizes_vdso_bound; cs_ok's channel-reader field co_rdr, with rdr_sbm). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 #[local] Ltac Zify.zify ::= WdZS.wd_zs_stock.   (* [comment removed for export] *)
@@ -226,6 +227,83 @@ Qed.
 
 
 
+(* LPS 08b1429: the launch's extra reserved intervals (the vDSO pair,
+   [State.vdso_reserved]): upper bounds on their count and total size in pages,
+   the same for every table ([State.vdso_len_bounds]: at most twenty pages, two
+   intervals).  Ported from leptonica/bilateral_fuzzer
+   proofs/lib/K5/AS/AsanPlanCore.v:71-73; the donor's [atable]
+   argument is dropped because [A] is a Section variable here and neither
+   constant reads it. *)
+Definition n_resx : nat := 2%nat.
+Definition p_resx : nat := 20%nat.
+Definition resx_bytes : Z := Z.of_nat p_resx * 4096.
+
+(** [APC.resx_budget] (AzPlanCore.v, Module APC) is this same quantity, carried by
+   [a_totsz] at construction so that [co_totsz] below has room for the vDSO pair.
+   It is declared in APC rather than here because [init_acs_of] lives in that file
+   and AzPlanCore sits BELOW AzAPS in the Require order, so it cannot name
+   [resx_bytes].  This is the donor's shape (leptonica keeps both the constant and
+   the constructor in AsanPlanCore.v) split across the two layers this tree has.
+
+   DO NOT COLLAPSE THE TWO NAMES.  [resx_bytes] already has two declarations that
+   DIFFER IN ARITY -- the model's [resx_bytes (A : atable) : Z] at 75d69e0079f9
+   theories/Common/AsanPlanCore.v:155, and this nullary one -- and AsSInit.v:15,22
+   imports APC and APS together.  A third declaration spelled [resx_bytes] would
+   resolve by import order at every unqualified site.  [APC.resx_budget] is written
+   qualified at its use sites for the same reason. *)
+Lemma resx_budget_eq : APC.resx_budget = resx_bytes.
+Proof. reflexivity. Qed.
+
+(** The donor's [resx_bytes_lo] (leptonica/edge_fuzzer AsanInit.v:587), consumed
+   there by [init_co_res] (:1175) and [init_co_totsz] (:1195). *)
+Lemma resx_bytes_lo : 81920 <= resx_bytes.
+Proof. unfold resx_bytes, p_resx. cbn. lia. Qed.
+
+(** The whole [co_totsz] step for the INITIAL ledger, in one lemma, because
+   AsSInit.v has no [sum_sizes_app] in scope: the only two declarations of that
+   name are AzSMmLib.v:98 and AzSMmB.v:106, and AsSInit.v Requires NEITHER file.
+   Adding a Require to reach one would be the fragile-by-absence hazard, so the
+   append step is discharged here by induction instead.
+
+   [vdso_reserved] (75d69e0079f9 theories/LinuxProcessSem/State.v:6540) is either
+   empty or the two-entry pair sized [vdso_vvar_pages * page_size] and
+   [vdso_text_pages kb * page_size].  With [vdso_vvar_pages = 4] (:3769) and
+   [vdso_text_pages_le : vdso_text_pages kb <= 16] (:3837) the pair is at most
+   twenty pages, which is exactly [resx_bytes = 20 * 4096 = 81920].  The bound is
+   therefore READ OFF THE MODEL, not chosen to fit.
+
+   Freshly named: it must not collide with the two [sum_sizes_app]s above. *)
+Lemma sum_sizes_vdso_bound : forall l kb top,
+  sum_sizes (l ++ vdso_reserved kb top) <= sum_sizes l + resx_bytes.
+Proof.
+  intros l kb top.
+  assert (V : sum_sizes (vdso_reserved kb top) <= resx_bytes).
+  { unfold vdso_reserved.
+    pose proof (vdso_text_pages_pos kb). pose proof (vdso_text_pages_le kb).
+    destruct (Z.ltb_spec (top - vdso_len kb) page_size) as [Hlt|Hge];
+      [cbn [sum_sizes]; unfold resx_bytes, p_resx; cbn; lia|].
+    cbn [sum_sizes snd].
+    rewrite !bv_unsigned_Z_to_bv_u64
+      by (unfold vdso_vvar_pages, page_size, two_pow_64 in *; lia).
+    unfold resx_bytes, p_resx, vdso_vvar_pages, page_size, two_pow_64 in *. cbn in *. lia. }
+  induction l as [|x l IH]; cbn [app sum_sizes]; lia.
+Qed.
+
+(* LPS 08b1429: the launch's extra reserved intervals ([State.init_reserved]):
+   page-aligned, above the image hull and a page clear of [KHI], below 2^47.
+   Ported VERBATIM from leptonica/bilateral_fuzzer
+   proofs/lib/K5/AS/AsanPlanSound.v:283-289.
+   NOTE for the next reader: this is good for the size/alignment/2^47 bound and
+   is NOT what separates a vDSO interval from this tree's ASan slot space.  That
+   separation comes from [co_mres]; see the comment on [co_res] below. *)
+Definition resx_entry_ok (iv : word * word) : Prop :=
+  0 < bv_unsigned (snd iv)
+  /\ bv_unsigned (fst iv) mod 4096 = 0
+  /\ bv_unsigned (snd iv) mod 4096 = 0
+  /\ img_hi A <= bv_unsigned (fst iv)
+  /\ KHI + 4096 <= bv_unsigned (fst iv)
+  /\ bv_unsigned (fst iv) + bv_unsigned (snd iv) <= 2 ^ 47.
+
 Record cs_ok (E : env) (cs : acs) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model) : Prop := CS_OK {
   (* [comment removed for export] *)
   co_regs  : regs_ok E (s_regs (a_ss cs)) R;
@@ -236,7 +314,28 @@ Record cs_ok (E : env) (cs : acs) (R : bvmap 5 word) (FULL : word -> option byte
   co_fds   : fds_ok E (a_fd cs) model;
   co_fs    : m_fs model = FS0;
   co_tid   : a_tidset cs = false -> m_tid model = None;
-  co_res   : vm_reserved (m_vmmaps model) = segments_reserved SEGS;
+  (* LPS 08b1429: the reserved ledger is NO LONGER just the image's segments --
+     [State.init_reserved] appends the launch's vDSO reservation, and
+     [AsSInit.v:754-781] proves the appended shape.  Three facts in ONE field so
+     that [cs_ok] keeps its arity; projections [co_resx], [co_mres], [co_vdso]
+     just below the record.  Ported from leptonica/bilateral_fuzzer
+     proofs/lib/K5/AS/AsanPlanSound.v:291-313.
+     The MIDDLE conjunct is load-bearing in THIS tree in a way it is not in the
+     donor: the ASan slot space is [[bt_resv6, bt_resv6 + bt_resv6_len)] with
+     [bt_resv6] constrained only by [rng_ok] (AsAinvBoot3.v:76), while the vDSO
+     pair sits at [vdso_top = page_round_down_Z (Z.min mbase (sp - stack_max_size))]
+     with [MBASE_MIN = 0x154555557000] (AzPlanCore.v:111).  No CONSTANT separates
+     them, so [resx_entry_ok] cannot carry [AsKSys7b.res_low] /
+     [AsKSys10.res_in_hull]; [co_mres] can, through [(w6,n6) \in vm_maps h]. *)
+  co_res   : (exists rx : list (word * word),
+                vm_reserved (m_vmmaps model) = segments_reserved SEGS ++ rx
+                /\ Forall resx_entry_ok rx
+                /\ (length rx <= n_resx)%nat
+                /\ sum_sizes rx <= resx_bytes)
+             /\ Forall (fun iv => Forall (iv_disjoint iv) (vm_reserved (m_vmmaps model)))
+                       (vm_maps (m_vmmaps model))
+             /\ incl (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model)))
+                     (vm_reserved (m_vmmaps model));
   (* [comment removed for export] *)
   co_limit : LIMIT <= vm_limit (m_vmmaps model);
   (* [comment removed for export] *)
@@ -297,8 +396,39 @@ Record cs_ok (E : env) (cs : acs) (R : bvmap 5 word) (FULL : word -> option byte
                     in_ivs (bv_unsigned a) (vm_maps (m_vmmaps model)) = true
                     /\ page_in_ranges (page_base a) (m_vm_lazy model) = false) (a_maps cs);
   (* [comment removed for export] *)
-  co_napos : Forall (fun e : word * word => 0 < bv_unsigned (snd e)) (vm_noaccess (m_vmmaps model))
+  co_napos : Forall (fun e : word * word => 0 < bv_unsigned (snd e)) (vm_noaccess (m_vmmaps model));
+  (* LPS 08b1429: the far end of the standard channels has a reader. [init_model] seeds it from
+     [in_channel_reader], which the launch predicate pins, and no model setter writes it;
+     [writev_spec]'s channel arm reads it. *)
+  co_rdr : m_channel_reader model = true
 }.
+
+(* LPS 08b1429: the three projections of [co_res].  Ported from
+   leptonica/bilateral_fuzzer proofs/lib/K5/AS/AsanPlanSound.v:368-382 at
+   the donor's revision. *)
+Lemma co_resx : forall E cs R FULL model, cs_ok E cs R FULL model ->
+  exists rx : list (word * word),
+    vm_reserved (m_vmmaps model) = segments_reserved SEGS ++ rx
+    /\ Forall resx_entry_ok rx
+    /\ (length rx <= n_resx)%nat
+    /\ sum_sizes rx <= resx_bytes.
+Proof using . intros E cs R FULL model HC. exact (proj1 (co_res _ _ _ _ _ HC)). Qed.
+
+Lemma co_mres : forall E cs R FULL model, cs_ok E cs R FULL model ->
+  Forall (fun iv => Forall (iv_disjoint iv) (vm_reserved (m_vmmaps model))) (vm_maps (m_vmmaps model)).
+Proof using . intros E cs R FULL model HC. exact (proj1 (proj2 (co_res _ _ _ _ _ HC))). Qed.
+
+Lemma co_vdso : forall E cs R FULL model, cs_ok E cs R FULL model ->
+  incl (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) (vm_reserved (m_vmmaps model)).
+Proof using . intros E cs R FULL model HC. exact (proj2 (proj2 (co_res _ _ _ _ _ HC))). Qed.
+
+(* LPS 08b1429: the [KHI] clause of [resx_entry_ok], restated against the
+   literal so that consumers need not have [APC.KHI] in scope -- [AsAinvMainA]
+   and its three mirrors do not.  [KHI = 0x10007fff8000] (AzPlanCore.v:102) is
+   the same literal as [AsVocab.AS_HEAPLO] (AsVocab.v:1621), which is what
+   [AsKSys10.shpage_boot]'s third conjunct is stated against. *)
+Lemma resx_above_heap : forall iv, resx_entry_ok iv -> 0x10007fff8000 <= bv_unsigned (fst iv).
+Proof using . intros iv (_ & _ & _ & _ & H & _). unfold KHI in H. lia. Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -406,6 +536,15 @@ Lemma hid_ext : forall E cs cs' model,
   a_vis cs' = a_vis cs -> hid E cs' model = hid E cs model.
 Proof. intros. unfold hid. apply functional_extensionality. intros a. rewrite (vis_ext _ _ _ _ H). reflexivity. Qed.
 
+(* [same_but_materialized_frame] (Common/AsanAcct.v:873-881) has no
+   [m_channel_reader] conjunct; it goes through its sixth, [m_proc m' = m_proc m],
+   because [m_channel_reader] is a projection of [m_proc] (State.v:4912-4913). *)
+Lemma rdr_sbm : forall m m', same_but_materialized m m' -> m_channel_reader m' = m_channel_reader m.
+Proof.
+  intros m m' S. destruct (same_but_materialized_frame _ _ S) as (_ & _ & _ & _ & _ & Ep & _).
+  unfold m_channel_reader. rewrite Ep. reflexivity.
+Qed.
+
 (* [comment removed for export] *)
 Lemma cs_ok_frame : forall E cs R FULL model ss' R' FULL' model',
   cs_ok E cs R FULL model ->
@@ -434,6 +573,7 @@ Proof.
   - intros a Hh. rewrite (hid_same _ _ _ _ Hs) in Hh. rewrite (Hhid a Hh). auto.
   - intros a H1 H2. apply Hdef. eauto.
   - eapply SINV_frame; [|eassumption]. intros a Ha. apply Hhid. unfold hid. rewrite Ha. reflexivity.
+  - (* co_rdr *) rewrite (rdr_sbm _ _ Hs). assumption.
 Qed.
 
 (* [comment removed for export] *)

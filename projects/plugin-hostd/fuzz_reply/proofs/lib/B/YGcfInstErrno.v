@@ -1,9 +1,10 @@
-(* Modified by a Theorem Labs lane (ReallocPrimary.CfW.ReplyEnqReloc), 2026-10-30: carried BY PATH from commit d3183c6ef2d0 (CfF1's lane F1 head; blobs hold on layer ae2fa80b0325), proofs/cgif/cgif_file_fuzzer/lib/YGcfInstErrno.v, sha256 bea965f8b8143337. The only change is the module paths: OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib M -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable M, except lib.A for: ImgBase ImgBaseAG ImgBaseDG YGcfMallocCompose ErrnoG ErrnoGcf YGcfDIface ErrnoApart. No numeral and no statement changed. *)
+(* Modified by a Theorem Labs lane (ReallocPrimary.CfW.ReplyEnqReloc), 2026-10-30: carried BY PATH (CfF1's lane F1 head; blobs hold on layer), proofs/cgif/cgif_file_fuzzer/lib/YGcfInstErrno.v, sha256 bea965f8b8143337. The only change is the module paths: OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib M -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable M, except lib.A for: ImgBase ImgBaseAG ImgBaseDG YGcfMallocCompose ErrnoG ErrnoGcf YGcfDIface ErrnoApart. No numeral and no statement changed. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/YGcfInstErrno.v at commit f303438be5b, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/YGcfInstErrno.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (lane F1 of the generic cf instance layer; integrator ReallocPrimary).
-   The cf twin of proofs/cgif/cgif_file_fuzzer/lib/ErrnoApartcgif.v at c5 30a1993588f (with AGif1m.v's
+   The cf twin of proofs/cgif/cgif_file_fuzzer/lib/ErrnoApartcgif.v at c5 (with AGif1m.v's
    errno_not_owned_cgif and CLenqcgifE.v's errno_kept_view / enq_errno_kept, the errno facts the cgif arms read
    beside it), feeding ErrnoGcf.v.
    rule 24: no function proved (kind: interface-instance discharge: errno's image facts and errno kept at the cf

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumC.v, with its module paths and module names changed; 1178 of its 1252 lines of code are new or changed and 854 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* CR-Z (a Theorem Labs lane's internal file PART7-ROWS.md row Z; image A', harness fix #102 pins): check_reject_clean_starved's segment Z,
    A' 0x82510 (+944) .. 0x8254c / 0x82410 / ABORT, stated against the frozen kit CrsKitAp.v. The walk:
      +944  bnez s7          -> ABORT refuted (s7 = 0, the injected pretty write's NULL);
@@ -24,7 +25,7 @@
    the named premise crs_cnt24_Z, and the continuations crs_from_R / crs_from_H3, in a Theorem Labs lane's premise order. On the
    walk's kit no route of Z reaches R or a NULL free (nothing is refused), so the proof uses neither crs_free0 nor
    crs_from_R; the statement keeps both (the kit's lane shape Z: crs_from_R -> crs_from_H3 -> crs_from_Z).
-   Inputs: pin A' asan sha256 1be0f53d96cb9d6c... (harness.yaml of release/fuzz-preset-ran-out-pins 8f3e7e1a07f1);
+   Inputs: pin A' asan sha256 1be0f53d96cb9d6c... (harness.yaml);
    listing lib/A/Listing_prog.v blob 7ed1529926bd + lib/A/PAImg_prog.v blob 505a51ff7d08 (a Theorem Labs lane's #102 listings
    v3; entry 0x82160 = slot 736); the kit cut preset-tree-at-2026-10-30T04-57-22Z.tsv (sha256 652fe98064b9; internal record) by path, as on the walk's kit preset-tree-at-2026-10-30T06-59-32Z.tsv (sha256 09adbeae147a; internal record):
    PRH_FnCheck.v blob c40cf3fdcd2a (tcheck_reject_clean_starved_specX), PRH_FnAlloc.v 4d8aeba047e5, PRH_FnWriter.v

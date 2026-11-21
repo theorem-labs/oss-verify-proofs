@@ -6,13 +6,13 @@
    Moved here with their proofs unchanged (the copies differ only in their name prefix):
    - snt_pf_dec .. snt_cr_disj: the B sup_add walk,
      lib/B/Prog/sup_add_sn.v:59-131 (prefix sas_), copied with prefix scb_ in an earlier version of
-     lib/B/Prog/sup_call_b.v:56-126. snt_cr_low, snt_cr_in and snt_cr_disj state the bound 0x606000 (CMD_IMG_HI)
+     lib/B/Prog/sup_call_b.v:57-127. snt_cr_low, snt_cr_in and snt_cr_disj state the bound 0x606000 (CMD_IMG_HI)
      where the copies state 0x30000: RtPFCmd's CMD_SNP_CR became CMD_CR's body, the image's two non-writable load
      segments, which end at 0xa5000.
-   - snt_b_shadow, snt_E: sup_add_s3.v:49 sas3_shadow and :61 sas3_E (scb_E in sup_call_b.v:179).
-   - snt_fmt_d: sup_call_b.v:265 scb_fmt_d. sup_add_s3.v:98 sas3_fmt_d states the same fact at its walk's
-     constant SA_FMT_D (sup_add_s0.v:67, = 0x21f40), so it is snt_fmt_d up to conversion.
-   - snt_sp1_facts, snt_land_m32, snt_denot_and_m32, snt_zr_apart: sup_add_s1a.v:103, :111, :119, :158 (prefix s1_),
+   - snt_b_shadow, snt_E: sup_add_s3.v:50 sas3_shadow and :61 sas3_E (scb_E in sup_call_b.v:180).
+   - snt_fmt_d: sup_call_b.v:266 scb_fmt_d. sup_add_s3.v:99 sas3_fmt_d states the same fact at its walk's
+     constant SA_FMT_D (sup_add_s0.v:68, = 0x21f40), so it is snt_fmt_d up to conversion.
+   - snt_sp1_facts, snt_land_m32, snt_denot_and_m32, snt_zr_apart: sup_add_s1a.v:104, :112, :120, :159 (prefix s1_),
      copied without prefix in an earlier version of sup_call_s1.v:143, :151, :159, :212 (the A sup_resp
      template's helpers for `andi sp,sp,-32`).
    *)

@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YCbq.v, with its module paths changed and off_img's image range set to libreac/fuzz_boxreg's own (Reusable/YImgTop.v IMG_LO, IMG_TOP). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/Reusable/YCbq.v, with its module paths and module names changed; 442 of its 552 lines of code are new or changed and 2852 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs ASan, group ALLOC: the U-form allocator call steps of fuzz_state (image tfibsegs), a kit file other walks import,
    plus the fuzz_free p = 0 arm. The fuzz_malloc_spec / fuzz_free_spec walks themselves (lib/A/FSH_Fn_alloc.v) need
    RELOC's static-store arm and are NOT in this file.
@@ -290,8 +291,8 @@ Qed.
    freed block, own = []), the free twin of fsw_aj_malloc04U_sub, for a walk whose own call machinery composes the callee
    half (CRT's crt_seg_call / crt_after_call). No trace premise (C5: afree_realizesU and ml_free admit any trace once
    st_nev < EV_MAX). Its premises are the callee's: acall_preU and astk_ok ASTACK at the call, the event room, the
-   block, U outside it, a0 and ra. ported from: CRT's crtD2_free_sub (lib/A/FSH_crt_segD2_s39.v, a working branch
-   6cf61486dca), the same statement and script, renamed into this file; fsw_aj_freeU below is now built on it. ---- *)
+   block, U outside it, a0 and ra. ported from: CRT's crtD2_free_sub (lib/A/FSH_crt_segD2_s39.v, a working branch),
+   the same statement and script, renamed into this file; fsw_aj_freeU below is now built on it. ---- *)
 Lemma fsw_aj_freeU_sub : FSupoisonU.afree_realizesU tfibsegs B ->
   forall lyc Sc U (W : world tfibsegs) regsT memT mdc pa n raw ch,
   FSupoisonU.acall_preU tfibsegs B lyc Sc U W regsT memT mdc ch ->

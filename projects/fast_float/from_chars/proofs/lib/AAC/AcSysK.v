@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (RomBase.sys_rob at the system-call nodes; the launch's reservations with the vDSO pair). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool FunctionalExtensionality.
@@ -280,7 +281,8 @@ Proof. LiaFast.lf_pins (fun (Hsegb Hoff Hrespos Hreswf : LiaFast.U) => LiaFast.u
       + exfalso. destruct (HG0 R HR) as (HRs & _ & _).
         exact (sep_app2_sound E (s_facts L) (sm_maps M) model (sm_sp M) _ HF0 Hmaps Hpd Hgsh Hgtop Hsp (proj2 Hspok)
                  j g a n R Hj Hgm Hlo Hhi ltac:(unfold two64; lia) HRs HRw Hc w Hw Hin).
-      + exfalso. rewrite <- Hres in Hc.
+      + exfalso. apply (sep_res_b_app _ (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model)))) in Hc.
+        rewrite <- Hres in Hc.
         exact (sep_res_sound E (sm_maps M) model _ Hmaps Hgsh Hmres j g a n R Hj Hgm Hlo Hhi Hc w Hw Hin).
       + exfalso. destruct (HG0 R HR) as (HRs & _ & _).
         exact (sep_rb_sound E (s_facts L) (sm_maps M) model (sm_sp M) HF0 Hgsh Hgtop Hsp (proj2 Hspok) j a n R HRs HRw Hc w Hw Hin).
@@ -322,7 +324,12 @@ Proof. LiaFast.lf_pins (fun (Hsegb Hoff Hrespos Hreswf : LiaFast.U) => LiaFast.u
   assert (Hctn : (region_free (vm_reserved (m_vmmaps model)) (lden E a) (Z_to_bv 64 n0)
                   && map_contains (vm_maps (m_vmmaps model)) (lden E a) (Z_to_bv 64 n0))%bool = true).
   { apply andb_true_intro. split.
-    - rewrite Hres. apply region_free_of_pts; [exact Hreswf | exact Hrespos | | rewrite HnZw; exact HnZpos].
+    - (* the launch ledger is the segments' then the vDSO pair's, as in FxChFixNew *)
+      assert (Hvt : 0 <= vdso_top (m_vmmaps model) < two64).
+      { pose proof (den_vdso_of _ _ _ _ _ _ _ _ _ Hd). pose proof (vdso_len_bounds (m_kernel model)). pose proof (vdso_top_lt (m_vmmaps model)).
+        unfold SH_HI, page_size in *. lia. }
+      destruct (vdso_ivs_ok (m_kernel model) _ Hvt) as [Hvw Hvp].
+      rewrite Hres. apply region_free_of_pts; [exact (ivs_wf_app _ _ Hreswf Hvw) | exact (proj2 (Forall_app _ _ _) (conj Hrespos Hvp)) | | rewrite HnZw; exact HnZpos].
       intros x Hx. rewrite HnZw, HuA in Hx. rewrite <- Hres. exact (Hmres x (Hcm x Hx)).
     - rewrite Hmaps. apply (map_contains_intro _ _ _ (fst (gden E g)) (snd (gden E g))); [rewrite <- surjective_pairing; exact (lden_maps_in E _ _ g Hgj Hgm) | |].
       + unfold gden. cbn [fst]. unfold uE in *. lia.
@@ -332,14 +339,14 @@ Proof. LiaFast.lf_pins (fun (Hsegb Hoff Hrespos Hreswf : LiaFast.U) => LiaFast.u
   - assert (Hbr := branch_fixed_na_contained segs ms1 (ms_reg ms 17) model Hno).
     rewrite ?Hg0, ?Hg1, ?Hg2, ?Hg3, ?Hg5 in Hbr. rewrite HnZ in Hbr, Hctn.
     specialize (Hbr Hoffa Hanon Hnz0 Hmod Hnac Hsel Hgate Hctn).
-    eapply rzc_silent1; [|exact (Hk _ _ HD')].
+    eapply rzc_silent1; [| RomWrite.rob_tac | exact (Hk _ _ HD')].
     exact (node_mmap_fixed_na_contained segs cfg Hoff ms1 model (ms_reg ms 17) (lden E a) (Z_to_bv 64 n0) (Z_to_bv 64 flags) Hh Hsvc Hno
              ltac:(rewrite HuA; lia) Hbr).
   - apply andb_prop in Hsel as [Hsel1 Hsel2]. apply negb_true_iff in Hsel1.
     assert (Hbr := branch_fixed_rw_contained segs ms1 (ms_reg ms 17) model Hno).
     rewrite ?Hg0, ?Hg1, ?Hg2, ?Hg3, ?Hg5 in Hbr. rewrite HnZ in Hbr, Hctn.
     specialize (Hbr Hoffa Hanon Hnz0 Hmod Hnac Hsel1 Hsel2 Hgate Hctn).
-    eapply rzc_silent1; [|exact (Hk _ _ HD')].
+    eapply rzc_silent1; [| RomWrite.rob_tac | exact (Hk _ _ HD')].
     apply (node_mmap_fixed_rw_contained segs cfg Hoff ms1 model (ms_reg ms 17) (lden E a) (Z_to_bv 64 n0) (Z_to_bv 64 flags) Hh Hsvc Hno
              ltac:(rewrite HuA; lia) Hbr).
     (* [comment removed for export] *)

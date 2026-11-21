@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: the boundary states and segment statements of LLVMFuzzerTestOneInput's ASan+UBSan walk (plugin-hostd/fuzz_command image B, 0x86530), the B twin of lib/A/Prog/LLVMFuzzerTestOneInput_defs.v, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh6.v (the CL_*_stmtX statements: from a point of the function to its return, under the entry's context) and A/ACf5.v (rtcx, rt_base: the entry's facts bundled once). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/B/Prog/LLVMFuzzerTestOneInput_defs.v, with its module paths, module names, addresses and numbers changed; 469 of its 518 lines of code are new or changed and 289 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_defs.v; 57 of its 83 lines of code are new or changed and 492 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image A (fuzz_segconf.asan): the INTERNAL cut statements of segment A11b of
    reac_segconf_parse_file's walk (segment A11b's proof, by the G3 walk owner, 2026-10-30).
 
@@ -13,7 +14,7 @@
      (HA_TAIL n -> H_MISS B n) /\ (HA_TAIL n -> H_LOWOUT B n).
    This file states only what the segment cuts itself at; pf_pieces.v is never edited.
 
-   The code (the excerpt in the unit's internal record, commit dfb49d6ad789, path records/segp/dis/
+   The code (the excerpt in the unit's internal record, path records/segp/dis/
    reac_segconf_parse_file.fuzz_segconf.asan.s), with F the class-5 frame and SH its shadow:
      0x885a8 MISS      sd s9,0x18(s1) (the value pointer vp); 31 `sb zero,X(s11)` putting known[240] (cells
                        0x64..0x81) and ntok (cell 0x8a) IN scope; ld s3,0x70(s1) (= F + 0x450, &ntok);

@@ -6,9 +6,10 @@
    holds none (gout_top).  Statements: lib/B/W_rig_top_defs.v stmt_gin_top / stmt_gout_top.  The Section header is
    W_rig_top_defs.v's, verbatim.  Proof port of k3's image-A track (a working branch 80fffa8e840,
    lib/A/W_rig_top_gin.v): GTOPM / GIN / GOUT have image A's text, so only the imports change.
-   ROUTE (b), STEP 3 (the image-A twin: a Theorem Labs lane's RIG_x round of lib/A/W_rig_top.v, commit f4cd818e98d): at
+   ROUTE (b), STEP 3 (the image-A twin: a Theorem Labs lane's RIG_x round of lib/A/W_rig_top.v): at
    W_relay_instance_gone_cx.v's generic Section; gbud's room and count conjuncts pass through unchanged.
    Proves no function (kind: segment lemma). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

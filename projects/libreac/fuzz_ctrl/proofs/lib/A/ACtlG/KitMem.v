@@ -41,7 +41,7 @@
    lib/A/Reusable/<X> and that this file names (YK11 YM05 YI16 YK1b) are written FULLY qualified everywhere
    (a Theorem Labs lane 03:4xZ: a partial `Reusable.YK11` resolves to ctrl's copy once A.Contract is loaded).
 
-   BUILD STATE: type-check on 5da74c9c931 (glue base 29ddfc3ea99 merged), closure reaches no stand-in:
+   BUILD STATE: type-check (glue base merged), closure reaches no stand-in:
    cb build on a build machine, no substitution (log name in the commit).  No Axiom, no
    Parameter, no Admitted, no admit. *)
 
@@ -707,7 +707,7 @@ Lemma kitmem_rng_win : forall {fx : OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusa
   OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.ExecF.rng (A.ProgBridge.RNG_W (Reusable.YA0n.w_H Wc)) lo len.
 Proof.
   intros fx rc SK B STK sp0 FP ly S W mem md own lyc Sc Wc memc mdc k lo len HJ H1 H2.
-  (* ProgWorldVisWin.win_vis's argument, for any sink head (its statement at 1d23ced37fd fixes SK to
+  (* ProgWorldVisWin.win_vis's argument, for any sink head (its statement fixes SK to
      tfib_sink_head through ProgWorld.win_vis_stmt; the window clauses of the journal do not read SK) *)
   apply A.ProgBridge.rng_of_visible.
   destruct HJ as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & Hpres & Hstk & _).

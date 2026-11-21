@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -47,15 +48,18 @@ Qed.
 
 Section Facts.
   Context {AMB : Amb}.
+  (* 75d69e00: the facts are over the run's input, as [RefStartup]'s [Section Consumers]
+     states [main_entry] and [RefStartupDefs] states [D_main]; [av] projects from it. *)
+  Variable inp : ProcInput.
   Variable sp0 : word.
-  Variables av ev : list (list byte).
+  Local Notation av := (in_argv inp) (only parsing).
   Variable rnd : EntryDraw.
   Variable tid : word.
   Hypothesis Hva : valid_argv av.
   Hypothesis Hlo : (0x7fff80000000 <= bv_unsigned sp0)%Z.
   Hypothesis Hhi : (bv_unsigned sp0 <= 0x800000000000)%Z.
 
-  Let D := D_main sp0 av ev a_hwcap rnd tid.
+  Let D := D_main inp sp0 rnd tid.
 
   Lemma len_av : (1 <= Z.of_nat (length av) <= 1024)%Z.
   Proof. destruct Hva as [[H1 H2] _]. lia. Qed.
@@ -63,7 +67,7 @@ Section Facts.
   (* [comment removed for export] *)
   Lemma D_main_miss : forall segs (a : Z) (n : nat),
     D_main_missb a n = true ->
-    rdn segs (D_main sp0 av ev a_hwcap rnd tid) (Z_to_bv 64 a) n = rdn segs (fun _ => None) (Z_to_bv 64 a) n.
+    rdn segs (D_main inp sp0 rnd tid) (Z_to_bv 64 a) n = rdn segs (fun _ => None) (Z_to_bv 64 a) n.
   Proof.
     intros segs a n Hb. pose proof (u64_range tid).
     unfold D_main_missb, D_main_cells in Hb. cbn [forallb] in Hb.
@@ -111,7 +115,7 @@ Section Facts.
     intros segs. pose proof (u64_range tid). subst D.
     unfold D_main, D_cx, D_fd, D_ssp, D_tls, D_tlsB, D_tlsA, D_libc. peel.
     match goal with |- rdn _ (wbytes (wbytes (wbytes ?DD _ _) _ _) _ _) _ _ = _ =>
-      exact (rd_guard8_gen segs DD 0xb2690 [rbn rnd 0; rbn rnd 1; rbn rnd 2; rbn rnd 3] [rbn rnd 4; rbn rnd 5; rbn rnd 6; rbn rnd 7]
+      exact (rd_guard8_gen rnd segs DD 0xb2690 [rbn rnd 0; rbn rnd 1; rbn rnd 2; rbn rnd 3] [rbn rnd 4; rbn rnd 5; rbn rnd 6; rbn rnd 7]
                eq_refl eq_refl ltac:(lia) ltac:(lia)) end.
   Qed.
 
@@ -134,7 +138,7 @@ Section Facts.
 
   (* [comment removed for export] *)
   Lemma D_main_environ : forall segs,
-    rdn segs D (Z_to_bv 64 0x92580) 8 = Some (word_to_le_bytes 8 (envp_w sp0 av)).
+    rdn segs D (Z_to_bv 64 0x92580) 8 = Some (word_to_le_bytes 8 (envp_w inp sp0)).
   Proof.
     intros segs. pose proof (u64_range tid). pose proof len_av. subst D.
     unfold D_main, D_cx, D_fd, D_ssp, D_tls, D_tlsB, D_tlsA, D_libc. peel.
@@ -161,7 +165,7 @@ Section Facts.
 
   (* [comment removed for export] *)
   Lemma D_main_hwcap : forall segs,
-    rdn segs D (Z_to_bv 64 0xb2948) 8 = Some (word_to_le_bytes 8 a_hwcap).
+    rdn segs D (Z_to_bv 64 0xb2948) 8 = Some (word_to_le_bytes 8 (in_hwcap inp)).
   Proof.
     intros segs. pose proof (u64_range tid). subst D.
     unfold D_main, D_cx, D_fd, D_ssp, D_tls, D_tlsB, D_tlsA, D_libc. peel.
@@ -169,9 +173,10 @@ Section Facts.
   Qed.
 
   (* [comment removed for export] *)
+  Variables (mbase entry : word).
   Variable regs : bvmap 5 word.
   Variable mem : word -> option byte.
-  Hypothesis ME : main_entry sp0 av ev rnd tid regs mem.
+  Hypothesis ME : main_entry inp mbase entry sp0 rnd tid regs mem.
 
   Lemma main_entry_rdn_image : forall segs (a : Z) (n : nat),
     D_main_missb a n = true ->
@@ -181,7 +186,7 @@ Section Facts.
     assert (Hr : (0 <= a /\ a + Z.of_nat n <= 0xb4000)%Z).
     { unfold D_main_missb in Hb. apply andb_true_iff in Hb as [Hb H2]. apply andb_true_iff in Hb as [_ H1].
       apply Z.leb_le in H1. apply Z.leb_le in H2. lia. }
-    rewrite (main_entry_rdn_data sp0 av ev rnd tid regs mem ME)
+    rewrite (main_entry_rdn_data _ _ _ _ _ _ _ _ ME)
       by (rewrite stack_max_size_val; unorm; lia).
     apply D_main_miss. exact Hb.
   Qed.
@@ -189,14 +194,14 @@ Section Facts.
   Lemma main_entry_tid : forall segs,
     rdn segs mem (Z_to_bv 64 0x925a8) 4 = Some (word_to_le_bytes 4 tid).
   Proof.
-    intros segs. rewrite (main_entry_rdn_data sp0 av ev rnd tid regs mem ME)
+    intros segs. rewrite (main_entry_rdn_data _ _ _ _ _ _ _ _ ME)
       by (rewrite stack_max_size_val; unorm; lia). apply D_main_tid.
   Qed.
 
   Lemma main_entry_guard : forall segs,
     rdn segs mem (Z_to_bv 64 0xb2690) 8 = Some (canary_bytes rnd).
   Proof.
-    intros segs. rewrite (main_entry_rdn_data sp0 av ev rnd tid regs mem ME)
+    intros segs. rewrite (main_entry_rdn_data _ _ _ _ _ _ _ _ ME)
       by (rewrite stack_max_size_val; unorm; lia). apply D_main_guard.
   Qed.
 End Facts.

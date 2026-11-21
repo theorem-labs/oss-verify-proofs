@@ -8,8 +8,9 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_ex_tok_e.v, with its numbers changed; 225 of its 286 lines of code are new or changed and 244 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_ex_tok_lha.v; 151 of its 203 lines of code are new or changed and 234 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_ex_tok_n.v, with its module paths, module names and numbers changed; 99 of its 152 lines of code are new or changed and 150 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* G4, IMAGE B: expected's return at EX_R 0x81908 (restore ra, s0..s11 from the frame; sp += 240; ret): ex_seg_R.
-   B twin of lib/A/FMW_ex_ret.v (06d82004dc3): B's frame is 240 bytes and its saved registers sit at F + 232 .. F + 136
+   B twin of lib/A/FMW_ex_ret.v: B's frame is 240 bytes and its saved registers sit at F + 232 .. F + 136
    (read from B's code, (internal path)); the answer is already in a0 (B sets it from s7 at
    0x81904, before EX_R). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require YZ00.

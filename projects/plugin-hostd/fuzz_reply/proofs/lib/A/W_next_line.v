@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the ASan walk of fuzz_reply's next_line, in the form of the cgif walks of
    proofs/cgif/cgif_file_fuzzer/lib/A/AC8h.v (call sites) and lib/A/ACbk.v (entry and return). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* next_line(at, line, len) at 0x85d4c reads *at = A and g_nout = O; when A < O it finds the first NUL of the
    O - A bytes at g_out + A with the memchr interceptor and writes the line's start, its length and the new
    position through its three pointers.  Its spec is W_contract.v's nl_spec (Section w1n; agreed with lane W3).
@@ -61,7 +62,7 @@ let g := VAL (A_OBJ 0) in let c := VAL (A_OBJ 32) in let no := VAL A_g_nout in l
 (no + 8 <= ou \/ ou + 8 <= no) /\ (no + 8 <= g \/ g + 8 <= no) /\ (no + 8 <= c \/ c + 8 <= no) /\
 (ou + 8 <= g \/ g + 8 <= ou) /\ (ou + 8 <= c \/ c + 8 <= ou).
 
-(* ---- THE GENERIC WALK (route (b), step 3, on the check_bounded template, a working branch 663b15a129c):
+(* ---- THE GENERIC WALK (route (b), step 3, on the check_bounded template, a working branch):
    next_line over any allocator relation ARx with its laws, stated as W_contract_x.nl_spec_x.  AMEMCHR is the memchr
    text's twin W_sites_x.amemchr_realizesM_x; the call goes through W_sites_x.aj_gx_entry_at_x.  HP0 is the
    template's (this walk reads no heap block, so the closed theorem does not take it). ---- *)

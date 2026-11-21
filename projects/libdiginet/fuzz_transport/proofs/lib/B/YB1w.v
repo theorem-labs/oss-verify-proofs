@@ -4,7 +4,8 @@
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YB1w.v (donor image sha256 1c29845fe605), with its module paths changed and its addresses moved to libreac/fuzz_decode's ASan build. *)
 (* Modified by Theorem Labs, 2026-10: the function rows are keyed by name to fuzz_decode.asan-ubsan's own FUNC symbols (unstripped .symtab) and each tfib_E_ is st_value + st_size (provenance/core-reloc/B/yb1w/yb1w_regen.py); six rows the relocation had moved with cgif's span no longer cover the next function (start, thunk_417cc, MmapFixedOrDieOnFatalError_MmapFixedSuperNoReser, target_run, pthread_key_create_body_tsd_init, thunk_96f9c); and the three rows the relocation dropped are back, read off the same symbols (asan_stack_malloc_0, StackDepotNode_store_hash_helper, LLVMFuzzerTestOneInput). *)
 (* Modified by Theorem Labs, 2026-10: tfib_img_lo / tfib_img_hi are the numerals vm_compute gives for the unit's Reusable/YImgTop.v IMG_LO / IMG_TOP, as image A's A/AB1w.v does (RELOC-GATES G17). *)
-(* Relocated from proofs/libreac/fuzz_decode/lib/YB1w.v at 88154566652a by port_core 83f5203d2a2f onto libdiginet/fuzz_transport (asan-ubsan). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Relocated from proofs/libreac/fuzz_decode/lib/YB1w.v by port_core 83f5203d2a2f onto libdiginet/fuzz_transport (asan-ubsan). *)
 From Stdlib Require Import ZArith.
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.B Require Import YImgTop.
 Unset Lia Cache. Unset Nia Cache.

@@ -2,8 +2,8 @@
    premise PST_unowned (PwAllocSurf.v:774): it HOLDS at the real image-A' (#102) instance, B := AD2l.TfibB (the A'
    asyms record: as_owned_static = AF0m.v's Tfib_owned_static, generated from the #102 twin bff8519bbe3e), PIA :=
    prh_img_A (lib/A/PRH_Img.v, the #102 table). By computation: every one of the seven harness static ranges in
-   prh_pst is disjoint from every range in Tfib_owned_static. Relocated 2026-10-29 from the old-pin file
-   (origin/cold/h-w6rep-2-allocsurf c47ea1638ed6); the statement and proof are unchanged, the instance under them is
+   prh_pst is disjoint from every range in Tfib_owned_static. Relocated 2026-10-29 from the old-pin file;
+   the statement and proof are unchanged, the instance under them is
    A'. Print Assumptions PST_unowned_at_TfibB: closed under the global context. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.

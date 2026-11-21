@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: seg_entry_A0 and seg_entry_B0_stmt take it after alloc_ceiling <= lo; the hiA_stack_malloc, DUP, NEWL and FREEL calls discharge it; the PE_STATIC_A instances prove it). *)
 
 From Stdlib Require ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -164,7 +165,7 @@ pe_arg_okA m LBc FRS sb len lenr payload slack -> 0 <= sb -> sb + len < 2^63 ->
 rw_cells asegs m LOCCELL_A [C8 (Z_to_bv 64 GLOBLOC_A)] ->
 rw_cells asegs m LOCALE_LOCK_A [C4 (Z_to_bv 64 0)] -> GA m ->
 sp = Z_to_bv 64 sp0 ->
-stk asegs m lo sp0 -> alloc_ceiling <= lo -> lo <= sp0 - PE_STK_A ->
+stk asegs m lo sp0 -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= sp0 - PE_STK_A ->
 sp0 mod 32 = 0 -> sp0 + 32 <= hiA_top A4L HIx -> sp0 < 2^62 ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
 tp = Z_to_bv 64 A_TP -> bv_unsigned ra mod 2 = 0 ->
@@ -191,7 +192,7 @@ AJ5 A4L HIx A' T md' ms') ->
 AJ5 A4L HIx A T md (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 A_PE_ENTRY) fc None m (seg_rom asegs)).
 Proof.
-intros until pbs. intros HP ETBS MXB TOK PB Hpb TSK STR PLEN LEN MODE SB0 SBL LOC LCK G ESP ST LO LOS SPA HT SP62 ERR TP RAE A0 A1 A2 LMN FRN BM1 BB BD BSL sv KL KR.
+intros until pbs. intros HP ETBS MXB TOK PB Hpb TSK STR PLEN LEN MODE SB0 SBL LOC LCK G ESP ST LO HBT LOS SPA HT SP62 ERR TP RAE A0 A1 A2 LMN FRN BM1 BB BD BSL sv KL KR.
 unfold PE_STK_A in LOS.
 subst a0 a1 a2 tp sp.
 assert (INtk : In (tk, 72) ((TBS ++ LBc) ++ LM)) by (apply in_or_app; left; rewrite ETBS; left; reflexivity).
@@ -247,6 +248,7 @@ eapply (hiA_stack_malloc A4L HIx) with (k := 2) (bytes := 224) (lo := lo) (LB :=
 all: rewrite ?unsigned_lit by lia.
 1: exact ST.
 1: exact LO.
+1: first [assumption | lia].
 1: cbn [hl_stack_A A4L]; lia.
 1: clear - SPA; Z.div_mod_to_equations; lia.
 1: lia.
@@ -390,7 +392,7 @@ stepz. step. step.
 evt_done5.
 eapply (DUP) with (LB := TBS ++ LBc) (LM := LM) (FRS := (Fr, 2) :: FRS) (B := B) (lo := lo) (errv := errv1);
 [ heap_nowA A4L HIx HPJ MU WM MIJ
-| rewrite unsigned_lit by lia; exact ST3 | exact LO | rewrite unsigned_lit by lia; cbn [hl_stack A4H]; lia
+| rewrite unsigned_lit by lia; exact ST3 | exact LO | first [assumption | lia] | rewrite unsigned_lit by lia; cbn [hl_stack A4H]; lia
 | rewrite unsigned_lit by lia; clear - SPA; Z.div_mod_to_equations; lia | rewrite unsigned_lit by lia; lia | exact ERR1 | reflexivity
 | rewrite unsigned_lit by lia; reflexivity | exact LMN | exact BM1 | ].
 intros ms5 m5 md5 A5 rd errv5 RS5 VM5 ST5 HPR5 ERR5 OUT5. open_ret RS5.
@@ -422,7 +424,7 @@ clear MU WM MIJ ST3 ERR1 HPJ.
 
 assert (STCJ : forall nl mdl, PE_STATIC_A HIx (PEF tk 0 0 len lenr sb (sp0 + -416) mdl mxd fl) (PEFA sp0 Fr LC_GLOBAL_A nl bsl dsl) lo).
 { intros nl mdl. unfold PE_STATIC_A, pe_geomA, LENR_OK; cbn [pf_spf pf_len pf_lenr pf_sb pf_md pf_mxd pf_fl pf_tk pa_sp0 pa_F].
-repeat split; try (clear - LO LOS SPA HT SP62 SP0R PLEN LEN SB0 SBL LRR MXB HFal HF0 HFc Htal ACR; first [lia | Z.div_mod_to_equations; lia]). }
+repeat split; try (clear - LO HBT LOS SPA HT SP62 SP0R PLEN LEN SB0 SBL LRR MXB HFal HF0 HFc Htal ACR; first [lia | Z.div_mod_to_equations; lia]). }
 assert (EXIT : forall (mX : word -> option byte) (mdX : config) (AX : ASA A4L HIx) (BX : bud) (errvX : word) (eX : Z) (jsl jffx jshx : list byte)
 (y1 u0' u1' u2' w0 w1 w2 w3 w4 w5 w6 w7 z4 z6 z7 z9 z10 z11 u3' u4' u5' u6' : word),
 HEAPAx AX (TBS ++ LBc) LM ((Fr, 2) :: FRS) BX mX mdX ->
@@ -525,7 +527,7 @@ step. step. if_truex.
 step. step. step. step. step.
 evt_done5.
 eapply (NEWL) with (LB := TBS ++ LBc) (LM := (rd, 48) :: LM) (FRS := (Fr, 2) :: FRS) (B := charge B 0 M2D) (lo := lo) (d := rd) (junk := jd) (errv := errv5);
-[ exact HP5 | left; reflexivity | exact DBLK | exact LCK | rewrite unsigned_lit by lia; exact ST5 | exact LO | rewrite unsigned_lit by lia; lia
+[ exact HP5 | left; reflexivity | exact DBLK | exact LCK | rewrite unsigned_lit by lia; exact ST5 | exact LO | first [assumption | lia] | rewrite unsigned_lit by lia; lia
 | rewrite unsigned_lit by lia; clear - SPA; Z.div_mod_to_equations; lia | rewrite unsigned_lit by lia; lia | exact ERR5 | reflexivity
 | rewrite unsigned_lit by lia; reflexivity | ].
 intros ms6 m6 rn jn RS6 ST6 HPR6 DBLK6 LCK6 ERR6 HP6 Hrn. open_ret RS6.
@@ -567,7 +569,7 @@ assert (Gf : GA mc) by (eapply GA_outside; [exact G8 | exact MU | exact WM | pe_
 end.
 evt_done5.
 eapply (FREEL) with (LB := TBS ++ LBc) (LM := (rd, 48) :: LM) (FRS := (Fr, 2) :: FRS) (B := charge B 0 M2D) (d := rd) (n := 48) (lo := lo) (errv := errv5);
-[ heap_nowA A4L HIx HP6 MU WM MI6 | left; reflexivity | rewrite unsigned_lit by lia; exact ST6 | exact LO | rewrite unsigned_lit by lia; cbn [hl_stack A4H]; lia
+[ heap_nowA A4L HIx HP6 MU WM MI6 | left; reflexivity | rewrite unsigned_lit by lia; exact ST6 | exact LO | first [assumption | lia] | rewrite unsigned_lit by lia; cbn [hl_stack A4H]; lia
 | rewrite unsigned_lit by lia; clear - SPA; Z.div_mod_to_equations; lia | rewrite unsigned_lit by lia; lia | exact ERR6 | reflexivity | rewrite unsigned_lit by lia; reflexivity | ].
 intros ms9 m9 md9 A9 r9 RS9 VM9 ST9 HPR9 ERR9 HP9. open_ret RS9.
 rewrite (unsigned_lit (sp0 + -416)) in ST9, HPR9 by lia.
@@ -670,7 +672,7 @@ eapply (KL rd (sp0 + -416) Fr m8 md5 A5 (charge B 0 M2D) (Z_to_bv 64 0)
 end end.
 +
 unfold PE_STATIC_A, pe_geomA, LENR_OK; cbn [pf_spf pf_len pf_lenr pf_sb pf_md pf_mxd pf_fl pf_tk pa_sp0 pa_F].
-repeat split; try (clear - LO LOS SPA HT SP62 SP0R PLEN LEN SB0 SBL LRR MXB HFal HF0 HFc Htal ACR; first [lia | Z.div_mod_to_equations; lia]).
+repeat split; try (clear - LO HBT LOS SPA HT SP62 SP0R PLEN LEN SB0 SBL LRR MXB HFal HF0 HFc Htal ACR; first [lia | Z.div_mod_to_equations; lia]).
 +
 assert (INq0 : In (q, 32 * mxd) L0) by (unfold L0, LB0; left; reflexivity).
 assert (INpbs : incl pbs L0) by (intros b Hb; unfold L0, LB0; right; apply in_or_app; left; apply in_or_app; left; exact Hb).
@@ -824,7 +826,7 @@ eapply rw_cells_transport in LCK; [| exact MUS | exact WMS | cbn [disjoint_from 
 eapply rw_cells_transport in ERR1; [| exact MUS | exact WMS | cbn [disjoint_from cells_size csize Nat.add]; lia].
 eapply rw_cells_transport in LOC3; [| exact MUS | exact WMS | cbn [disjoint_from cells_size csize Nat.add]; lia].
 assert (MUJ : munch [(lo, sp0); (tk, tk + 72)] m3 mS).
-{ eapply munch_trans; [eapply munch_weaken; [| exact MU] | eapply munch_weaken; [| exact MUS]]; intros z Hz; cbn [outside] in Hz |- *; clear - Hz LO LOS; lia. }
+{ eapply munch_trans; [eapply munch_weaken; [| exact MU] | eapply munch_weaken; [| exact MUS]]; intros z Hz; cbn [outside] in Hz |- *; clear - Hz LO HBT LOS; lia. }
 pose proof (wmono_trans _ _ _ _ WM WMS) as WMJ.
 clear MU WM. pose proof (wmono_refl asegs mS) as WM. pose proof (munch_refl [] mS) as MU.
 step.
@@ -1054,7 +1056,7 @@ pe_arg_okA m LBc FRS sb len lenr payload slack -> 0 <= sb -> sb + len < 2^63 ->
 rw_cells asegs m LOCCELL_A [C8 (Z_to_bv 64 GLOBLOC_A)] ->
 rw_cells asegs m LOCALE_LOCK_A [C4 (Z_to_bv 64 0)] -> GA m ->
 sp = Z_to_bv 64 sp0 ->
-stk asegs m lo sp0 -> alloc_ceiling <= lo -> lo <= sp0 - PE_STK_A ->
+stk asegs m lo sp0 -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= sp0 - PE_STK_A ->
 sp0 mod 32 = 16 -> sp0 + 32 <= hiA_top A4L HIx -> sp0 < 2^62 ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
 tp = Z_to_bv 64 A_TP -> bv_unsigned ra mod 2 = 0 ->
@@ -1083,7 +1085,7 @@ F (Z_to_bv 64 A_PE_ENTRY) fc None m (seg_rom asegs)).
 
 Lemma seg_entry_B0 : seg_entry_B0_stmt.
 Proof.
-cbv delta [seg_entry_B0_stmt]. intros until pbs. intros HP ETBS MXB TOK PB Hpb TSK STR PLEN LEN MODE SB0 SBL LOC LCK G ESP ST LO LOS SPA HT SP62 ERR TP RAE A0 A1 A2 LMN FRN BM1 BB BD BSL sv KL KR.
+cbv delta [seg_entry_B0_stmt]. intros until pbs. intros HP ETBS MXB TOK PB Hpb TSK STR PLEN LEN MODE SB0 SBL LOC LCK G ESP ST LO HBT LOS SPA HT SP62 ERR TP RAE A0 A1 A2 LMN FRN BM1 BB BD BSL sv KL KR.
 unfold PE_STK_A in LOS.
 subst a0 a1 a2 tp sp.
 assert (INtk : In (tk, 72) ((TBS ++ LBc) ++ LM)) by (apply in_or_app; left; rewrite ETBS; left; reflexivity).
@@ -1139,6 +1141,7 @@ eapply (hiA_stack_malloc A4L HIx) with (k := 2) (bytes := 224) (lo := lo) (LB :=
 all: rewrite ?unsigned_lit by lia.
 1: exact ST.
 1: exact LO.
+1: first [assumption | lia].
 1: cbn [hl_stack_A A4L]; lia.
 1: clear - SPA; Z.div_mod_to_equations; lia.
 1: lia.
@@ -1293,7 +1296,7 @@ step. step.
 evt_done5.
 eapply (DUP) with (LB := TBS ++ LBc) (LM := LM) (FRS := (Fr, 2) :: FRS) (B := B) (lo := lo) (errv := errv1);
 [ heap_nowA A4L HIx HPJ MU WM MIJ
-| rewrite unsigned_lit by lia; exact ST3 | exact LO | rewrite unsigned_lit by lia; cbn [hl_stack A4H]; lia
+| rewrite unsigned_lit by lia; exact ST3 | exact LO | first [assumption | lia] | rewrite unsigned_lit by lia; cbn [hl_stack A4H]; lia
 | rewrite unsigned_lit by lia; clear - SPA; Z.div_mod_to_equations; lia | rewrite unsigned_lit by lia; lia | exact ERR1 | reflexivity
 | rewrite unsigned_lit by lia; reflexivity | exact LMN | exact BM1 | ].
 intros ms5 m5 md5 A5 rd errv5 RS5 VM5 ST5 HPR5 ERR5 OUT5. open_ret RS5.
@@ -1325,7 +1328,7 @@ clear MU WM MIJ ST3 ERR1 HPJ.
 
 assert (STCJ : forall nl mdl, PE_STATIC_A HIx (PEF tk 0 0 len lenr sb (sp0 + -432) mdl mxd fl) (PEFA sp0 Fr LC_GLOBAL_A nl bsl dsl) lo).
 { intros nl mdl. unfold PE_STATIC_A, pe_geomA, LENR_OK; cbn [pf_spf pf_len pf_lenr pf_sb pf_md pf_mxd pf_fl pf_tk pa_sp0 pa_F].
-repeat split; try (clear - LO LOS SPA HT SP62 SP0R PLEN LEN SB0 SBL LRR MXB HFal HF0 HFc Htal ACR; first [lia | Z.div_mod_to_equations; lia]). }
+repeat split; try (clear - LO HBT LOS SPA HT SP62 SP0R PLEN LEN SB0 SBL LRR MXB HFal HF0 HFc Htal ACR; first [lia | Z.div_mod_to_equations; lia]). }
 assert (EXIT : forall (mX : word -> option byte) (mdX : config) (AX : ASA A4L HIx) (BX : bud) (errvX : word) (eX : Z) (jsl jgx jffx jshx : list byte)
 (y1 u0' u1' u2' w1 w2 w3 w4 w5 w6 w7 z3 z4 z5 z8 z9 z10 z11 u3' u4' u5' u6' : word),
 HEAPAx AX (TBS ++ LBc) LM ((Fr, 2) :: FRS) BX mX mdX ->
@@ -1428,7 +1431,7 @@ step. step. step. if_truex.
 step. step. step. step. step.
 evt_done5.
 eapply (NEWL) with (LB := TBS ++ LBc) (LM := (rd, 48) :: LM) (FRS := (Fr, 2) :: FRS) (B := charge B 0 M2D) (lo := lo) (d := rd) (junk := jd) (errv := errv5);
-[ exact HP5 | left; reflexivity | exact DBLK | exact LCK | rewrite unsigned_lit by lia; exact ST5 | exact LO | rewrite unsigned_lit by lia; lia
+[ exact HP5 | left; reflexivity | exact DBLK | exact LCK | rewrite unsigned_lit by lia; exact ST5 | exact LO | first [assumption | lia] | rewrite unsigned_lit by lia; lia
 | rewrite unsigned_lit by lia; clear - SPA; Z.div_mod_to_equations; lia | rewrite unsigned_lit by lia; lia | exact ERR5 | reflexivity
 | rewrite unsigned_lit by lia; reflexivity | ].
 intros ms6 m6 rn jn RS6 ST6 HPR6 DBLK6 LCK6 ERR6 HP6 Hrn. open_ret RS6.
@@ -1470,7 +1473,7 @@ assert (Gf : GA mc) by (eapply GA_outside; [exact G8 | exact MU | exact WM | pe_
 end.
 evt_done5.
 eapply (FREEL) with (LB := TBS ++ LBc) (LM := (rd, 48) :: LM) (FRS := (Fr, 2) :: FRS) (B := charge B 0 M2D) (d := rd) (n := 48) (lo := lo) (errv := errv5);
-[ heap_nowA A4L HIx HP6 MU WM MI6 | left; reflexivity | rewrite unsigned_lit by lia; exact ST6 | exact LO | rewrite unsigned_lit by lia; cbn [hl_stack A4H]; lia
+[ heap_nowA A4L HIx HP6 MU WM MI6 | left; reflexivity | rewrite unsigned_lit by lia; exact ST6 | exact LO | first [assumption | lia] | rewrite unsigned_lit by lia; cbn [hl_stack A4H]; lia
 | rewrite unsigned_lit by lia; clear - SPA; Z.div_mod_to_equations; lia | rewrite unsigned_lit by lia; lia | exact ERR6 | reflexivity | rewrite unsigned_lit by lia; reflexivity | ].
 intros ms9 m9 md9 A9 r9 RS9 VM9 ST9 HPR9 ERR9 HP9. open_ret RS9.
 rewrite (unsigned_lit (sp0 + -432)) in ST9, HPR9 by lia.
@@ -1574,7 +1577,7 @@ eapply (KL rd (sp0 + -432) Fr mL md5 A5 (charge B 0 M2D) (Z_to_bv 64 0)
 end end end.
 +
 unfold PE_STATIC_A, pe_geomA, LENR_OK; cbn [pf_spf pf_len pf_lenr pf_sb pf_md pf_mxd pf_fl pf_tk pa_sp0 pa_F].
-repeat split; try (clear - LO LOS SPA HT SP62 SP0R PLEN LEN SB0 SBL LRR MXB HFal HF0 HFc Htal ACR; first [lia | Z.div_mod_to_equations; lia]).
+repeat split; try (clear - LO HBT LOS SPA HT SP62 SP0R PLEN LEN SB0 SBL LRR MXB HFal HF0 HFc Htal ACR; first [lia | Z.div_mod_to_equations; lia]).
 +
 assert (INq0 : In (q, 32 * mxd) L0) by (unfold L0, LB0; left; reflexivity).
 assert (INpbs : incl pbs L0) by (intros b Hb; unfold L0, LB0; right; apply in_or_app; left; apply in_or_app; left; exact Hb).
@@ -1725,7 +1728,7 @@ eapply rw_cells_transport in LCK; [| exact MUS | exact WMS | cbn [disjoint_from 
 eapply rw_cells_transport in ERR1; [| exact MUS | exact WMS | cbn [disjoint_from cells_size csize Nat.add]; lia].
 eapply rw_cells_transport in LOC3; [| exact MUS | exact WMS | cbn [disjoint_from cells_size csize Nat.add]; lia].
 assert (MUJ : munch [(lo, sp0); (tk, tk + 72)] m3 mS).
-{ eapply munch_trans; [eapply munch_weaken; [| exact MU] | eapply munch_weaken; [| exact MUS]]; intros z Hz; cbn [outside] in Hz |- *; clear - Hz LO LOS; lia. }
+{ eapply munch_trans; [eapply munch_weaken; [| exact MU] | eapply munch_weaken; [| exact MUS]]; intros z Hz; cbn [outside] in Hz |- *; clear - Hz LO HBT LOS; lia. }
 pose proof (wmono_trans _ _ _ _ WM WMS) as WMJ.
 clear MU WM. pose proof (wmono_refl asegs mS) as WM. pose proof (munch_refl [] mS) as MU.
 step. step.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the m_channel_reader premise beside fd 1 in exit_spec_stmt's flush disjunct). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -127,7 +128,8 @@ Definition exit_spec_stmt : Prop :=
     exit_cells v tid ini fin bss b1 b2 b3 b4 junk0 wp0 rp0 wp2 rp2 ->
     (   (pending = [] /\ exists wp1 rp1, file_clean v STDOUT_F wp1 rp1)
      \/ (exists wb wp wend bufp bufsz rp1 canary, stdout_pending v wb wp wend bufp bufsz rp1 canary pending
-           /\ fd_lookup (m_fds md) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)))) ->
+           /\ fd_lookup (m_fds md) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))
+           /\ m_channel_reader md = true)) ->   (* 08b1429: channel-reader-premise, beside the fd in the flush disjunct *)
     srealizes rsegs
       (mkCfg (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
                  F (Z_to_bv 64 EXIT_ENTRY) fc None m (seg_rom rsegs)) md)

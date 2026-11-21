@@ -2,16 +2,17 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: for omx-clap-core/fuzz_preset, the call journals YCe5.v:254-274 (ajournal) and
    YCbq.v:350-372 (ajournal) with the allocator invariant AR made the parameter ARx of YCbqG.v's shape; no other change. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* YCe5x.v is the ONLY home of the ARx twins of YCe5.ajournal and YCbq.ajournal. A proof that needs YCe5's journal over a
    generic ARx (the consumer is fuzz_reply's lib/A/ACfl.v, whose tfib_lib_contract names YCe5.afn_pre and YCe5.ajournal)
    cites ajournal_e5x; a proof that needs YCbq's journal over a generic ARx cites ajournal_bq_x; nobody makes a second
    copy.
    The pre side is YCbqG.afn_pre_x, which already equals YCe5.afn_pre over ARx + Hp; this file makes no copy of it.
-   ajournal_e5x is YCe5's text, so it differs from YCbqG.ajournal_x (YCbqG.v:198-221) in exactly three deliberate places:
-   (1) the io conjunct is `same_io md md'`, not `aos_step FP md md'` (YCbqG.v:203);
-   (2) the image clause has no `~ Exists (in_zr a) PST -> fp_spares FP a ->` premise (YCbqG.v:211), so Section x takes
+   ajournal_e5x is YCe5's text, so it differs from YCbqG.ajournal_x (YCbqG.v:199-222) in exactly three deliberate places:
+   (1) the io conjunct is `same_io md md'`, not `aos_step FP md md'` (YCbqG.v:204);
+   (2) the image clause has no `~ Exists (in_zr a) PST -> fp_spares FP a ->` premise (YCbqG.v:212), so Section x takes
        no PST and no YI16.sink_head instance;
-   (3) there is no `ly_extra` frame conjunct (YCbqG.v:219-220).
+   (3) there is no `ly_extra` frame conjunct (YCbqG.v:220-221).
    ARx takes the ghost poisoned-head set Hp, so ajournal_e5x takes Hp (before) and Hp' (after) at the positions
    YCbqG.ajournal_x takes them; only Hp' is read, as the argument of ARx at the post state. YCbqG's hl occurs only in
    its laws record AR_laws_x, never in a journal, so neither journal of this file takes hl.
@@ -21,15 +22,15 @@
    keeps aos_step, the fp_spares premise and the ly_extra conjunct, so Section bq takes YCbq's YI16.sink_head context SK
    (fp_spares reads it) and no PST. The check lemma ajournal_bq_x_AR proves the twin: at ARx := cgif's AR with Hp
    ignored, ajournal_bq_x is YCbq.ajournal by reflexivity. ajournal_bq_x_iff_x links the two ARx forms for every ARx:
-   at PST = [], ajournal_bq_x is YCbqG.ajournal_x, whose one extra premise `~ Exists (in_zr a) []` (YCbqG.v:211) holds.
-   Routing of the journal texts of fuzz_preset (checked at 459129c18903): only YCe5 and YCbq define a constant
+   at PST = [], ajournal_bq_x is YCbqG.ajournal_x, whose one extra premise `~ Exists (in_zr a) []` (YCbqG.v:212) holds.
+   Routing of the journal texts of fuzz_preset (checked): only YCe5 and YCbq define a constant
    `ajournal`; YC80 and YE01 name one by a notation; every other module whose code says `ajournal` (YC5d, YCeg, YCeh,
    YCem, YCfl, YD1r, YD1w) cites one of the two constants and routes as its body.
      YCe5  own body, YCe5.v:254-274 -> ajournal_e5x (this file); identical modulo AR (ajournal_e5x_AR).
      YCbq  own body, YCbq.v:350-372 -> ajournal_bq_x (this file); identical modulo AR (ajournal_bq_x_AR).
-           YCbqG.ajournal_x differs from it only in the PST premise YCbqG.v:211 (ajournal_bq_x_iff_x for every ARx,
+           YCbqG.ajournal_x differs from it only in the PST premise YCbqG.v:212 (ajournal_bq_x_iff_x for every ARx,
            ajournal_x_YCbq at ARx := AR: iffs at PST = []).
-     YC80  no body: YC80.v:50 is `Local Notation ajournal := (ajournal segs B)`, which is YCbq.ajournal (YC80.v:18
+     YC80  no body: YC80.v:51 is `Local Notation ajournal := (ajournal segs B)`, which is YCbq.ajournal (YC80.v:19
            imports YCbq and no module that defines another ajournal) -> as YCbq.
      YE01  no body: YE01.v:48, the same notation, YCbq.ajournal by YE01.v:21 -> as YCbq.
    YCbq.ajournal differs from YCe5.ajournal at YCbq.v:355 (aos_step FP for same_io), YCbq.v:362 (the extra premise

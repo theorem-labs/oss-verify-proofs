@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v at 1d255703e887 (the shared layer
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgM02Base.v (the shared layer
    of the match half of fuzz_role's image-A segment M02) for reac-pw/fuzz_rate image A: role's pcs become rate's, the
    code table covers rate's four blocks (the key compare, the two readers, the two checks and their five slow
    blocks), the shadow base moves from role's s7 to rate's s2 (atom 18), the frame cell the half reads is rate's hz
@@ -11,12 +11,13 @@
    premise), pod_nearest (rom_view) and the strcmp wrapper against the harness's own key at 0x20fa0, so one string
    is carried, not ten. The generic plumbing role's file takes from its lib/A/RPgCheck.v (the entry state's register
    overrides, the kept-run lemma and the write-range tactics) is taken here from lib/A/RtPgCheck.v. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgM02Base.v at 99ffd8edac9c for image B
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgM02Base.v for image B
    (fuzz_rate.asan-ubsan): image B's pcs and code table (KM 0x82c40 .. 0x82de8 and the three runs of slow blocks), the
    shadow base is s4 (atom 20), the hz cell is at F+0x2a0, the real frame's size is 0x220, the frame for locals is a
    side-stack frame of class 4 (1024 bytes), the cuts are lib/AU/RtPgSegB.v's (rs_ -> rsb_), the frame and region
    lemmas are lib/AU/RtPgMemB.v's, the plumbing is lib/AU/RtPgCheck.v's, M02's write set is image B's six ranges, and
    image A's lib/A/RtPgSiteA.v rate_A_site_strs is restated at image B's record as m2b_site_strs. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate, image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14; every address measured on the unstripped twin
    a1e5fa55ae27e657ea2719297ec4c037110f10fa9047c3ea7bb6ea7fcb358cb1, whose loaded code bytes are the pin's): the

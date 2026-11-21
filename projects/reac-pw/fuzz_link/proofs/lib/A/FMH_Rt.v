@@ -5,7 +5,7 @@
    a sibling that proves its own donor-form Definition of the same name replaces the one here.
    bcmp: the donor's abcmp_realizes (YG0d.v:352) at PC_bcmp. Poison / unpoison: Poison's tfib_poison16 /
    tfib_unpoison16 (design/POISON.md section 7). Design: a Theorem Labs lane's design/HARNESS.md section 4. *)
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMH_Rt.v (a working branch 3e35620c52e) *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMH_Rt.v (a working branch) *)
 (* Modified by Theorem Labs, 2026-10 (a Theorem Labs lane, G9 row P8-A-base): fuzz_disco.asan's SUBSET of fm's file, the two
    names the G9 snprintf route reads (FMbz_clean.v, FMrt_lift.v; g9/P0/pieces/P8-A-base.md): rt_post_ro and
    rt_post_roU, fm's text, module paths changed (no numeral in them). Dropped: the pure answer models, fm's format

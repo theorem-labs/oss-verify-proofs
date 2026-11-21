@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: for omx-clap-core/fuzz_preset, cgif's program-call rule aj_call and its stack-region
-   keep region_kept_stack_sub (proofs/cgif/cgif_file_fuzzer/lib/YCbq.v:1845-1899, origin/ossv/recipes c8557374ad2e)
+   keep region_kept_stack_sub (proofs/cgif/cgif_file_fuzzer/lib/YCbq.v:1845-1899, theorem-labs/oss-verify-proofs@6b32741d849a)
    restated over YCbqG.v's journal ajournal_x (allocator invariant a parameter ARx, ghost head set Hp after S, Hpc after
    Sc, program statics PST). One change in aj_call_x: the callee's post is YCbqG.v's apost_base_x itself, so the callee's
    event count is the existential of apost_base_x instead of a fixed EV1. Generic: no image class, no address, no
@@ -16,6 +16,7 @@
    ajournal_x_subR. region_kept_stack_sub_xR reads two journals at R. Each plain rule is its R form at wle (wle_refl /
    wle_trans); its statement is unchanged. The disjunctive rules aj_call_x_or / aj_call_xF_or are removed: no code
    outside this file used them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -134,7 +135,7 @@ achain lyc (aview segs (w_H W) (ms_mem ms)) (sp0 + o) (s0Z (ms_regs ms)) ch1 ->
 (afn_pre_x segs B ARx STK1 lyc Sc Hpc W (ms_regs ms) (ms_mem ms) mdc ch1 ->
  SRr segs W (mkCfg (mkst (ms_regs ms) (Z_to_bv 64 (ss_pc ss)) (ms_mem ms) (seg_rom segs)) mdc)
    (apost_base_x segs B PST ARx STK1 FP1 (ms_regs ms) lyc Sc Hpc W (ms_mem ms) mdc Q)) ->
-(* the callee's footprint, BY THE NAME YCbqG.v's ajournal_x_sub takes (h-hpreset-7 9052c7a7d74 fp_sub_x :688-691:
+(* the callee's footprint, BY THE NAME YCbqG.v's ajournal_x_sub takes (h-hpreset-7 fp_sub_x :688-691:
    the caller's footprint, a temporary block, a slot of a frame the caller took since its entry, or a byte of the
    caller's own stack window; the window case carries no alloc_ceiling bound, the caller's astk_ok gives it) *)
 fp_sub_x B STK sp0 FP FP1 ly S own lyc Sc ->

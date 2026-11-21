@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the launch's channel reader. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -32,6 +33,9 @@ Section OpenFailCS.
   Hypothesis Hh : ltac2:(zQ "60!h9!jc!lj4!hge!q9!ljb@3$4@1$3@1$1@1$0#k0@1$5?5model@1$2@1$1@1$0#k0").
   Hypothesis Hlazy : ltac2:(zQ "71!h9!jc!lk7!l9!ig4!q9!lke&@2$2@1$1@1$0#k0@1$1@1$0#k0@3$5@1$3~0@1$6?5model@1$4~0").
   Hypothesis Hfd2 : ltac2:(zQ "90!h9!llb!hg4!hh7!hge!q9!lm6!ln3!lo0@3$5@1$4$1@2$7@1$8?5model@2$2@1$0#k0+2@2$3$1@1$6@2$2@1$0#k0+2").
+  (* LPS 75d69e00: the launch's channel reader, constant over the run; of_tail
+     (RefOpenFailCS_tail2) needs it for the stderr write and the exit flush. *)
+  Hypothesis Hrdr : m_channel_reader model = true.
 
   Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
   Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
@@ -39,7 +43,7 @@ Section OpenFailCS.
 
   (* [comment removed for export] *)
   Theorem of_tail_cs : ltac2:(zQ "i40!h9!jc!l9!m0!o1!o7!q9!u4!v6!vb!hg4!hge!hh7!hl9!hq6!hu6!hv1!hv7!hve!ig4!iga!ii2!il5!ioc!ira!is3!isb!jhc!ji4!jm3!jqf!jv2!kg5!kl3!kle!knc>4path@1$2@1$1@1$0#8>2pp@1$1@1$0#k0>2t8@1$2@1$1@1$0#8>4vals@1$2@1$1@1$0#k0>1R@2$h8@1$0#5@1$1@1$0#k0>1M>0@1$1@1$0#k0@1$b@1$1@1$0#8>0@1$h4@3$i3@1$1@1$0#8@2$a@1$0#8Z^6>0@2$8@1$9@2$3@1$1@1$0#8^7+hvvvf>0@3$6$h2@2$3@1$1@1$0#k0^5Ni7>0@3$6@1$1@1$0#k0@2$f^6N0?3sp0>0@3$6@1$1@1$0#k0@2$f^7N2^9>0@2$8@2$5@1$0#k0?3sp0@2$5@1$0#k0^a>0@2$8@2$4@2$4@2$5@1$0#k0^b@1$9@2$3@1$1@1$0#8^c+8@2$4@2$5@1$0#k0?3sp0+kgggg0>0@2$8@2$4@2$4@2$5@1$0#k0^c@1$9@2$3@1$1@1$0#8^d+8+ogggggggggg0>0@3$i2@2$e?2BL^b$hc^a>0@4$i1$7@2$e?2BL^c^a$hb>0@3$6@1$b@1$2@1$1@1$0#8@4$d$7^b^f@2$h5@2$3@1$1@1$0#8^h0N1@2$c@1$2@1$1@1$0#8@3$h0@1$1@1$0#8^h0@3$h1@1$1@1$0#8@2$a@1$0#8Z@1$h3@1$1@1$0#8>0@3$6@1$b@1$2@1$1@1$0#8@4$d$7^c@2$a@1$0#k0@2$4@2$5@1$0#k0^h0@1$9@2$3@1$1@1$0#8^h1N8@2$c@1$2@1$1@1$0#8^f@4$he$7$hd@2$h6@5$h9?2fx^e@2$a@1$0#k0+knmm0^d@1$ha$7?5model@2$i0@1$hf^h2@1$h7?5model").
-  Proof. exact (of_tail sp0 BL model Hvsp Hh Hlazy Hfd2). Qed.
+  Proof. exact (of_tail sp0 BL model Hvsp Hh Hlazy Hfd2 Hrdr). Qed.
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)

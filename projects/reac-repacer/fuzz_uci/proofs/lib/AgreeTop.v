@@ -25,8 +25,8 @@ Theorem plain_rz_of_contracts_R : forall (LS : lib_shape) RI G R GI f,
 Proof.
   intros LS RI G R GI f HDRV HG HR GIL GI0 HC [sp brk0 mbase rnd] inp Hentry Hinput.
   apply (valid_entry_sv48 _ _ inp (valid_input_va_size inp Hinput)) in Hentry.
-  destruct Hentry as [Hsp [Hbrk [Hmb Hfits]]].
-  set (rc := RunCeilOf (bv_unsigned sp) (valid_sp_window_for_ceil sp Hsp)).
+  destruct Hentry as [Hsp [Hbrk [Hmb [Hfits Hlau]]]].
+  set (rc := RunCeilOf (bv_unsigned sp) (valid_sp_window_for_ceil sp Hsp) Budgets.Standard.lim_source).
   destruct (HC rc) as [API [AX LX]].
   change (realizes zsegs (init_config zsegs Plain.M.init_pc Plain.M.phdrs
     sp brk0 mbase rnd Budgets.Standard.lim_source inp) (SPECX (LS:=LS) inp)).
@@ -35,9 +35,10 @@ Proof.
     (fun mem H => GI0 mem (G_img_mono src0segs G YL0k.src0_G mem HG H))
     (lib_contract_x_R_all_mono src0_msyms API RI G YL0k.src0_G R YL0k.src0_R GI f LIBPC RA_LIB EMPTY LIB_STACK HG HR LX)
     driver_obligationsX_proved HDRV sp brk0 mbase rnd
-    Budgets.Standard.lim_source inp Hsp Hbrk Hmb Hfits Hinput).
+    Budgets.Standard.lim_source inp Hsp Hbrk Hmb Hfits Hlau Hinput).
   - apply SRC_LIM_MIN_le_source.
   - unfold rc. apply ceil_of_top_run.
+  - reflexivity.
 Qed.
 Definition ubsan_realizes_specX (LS : lib_shape) : Prop :=
   forall en inp, valid_entry Images.ubsan en inp -> valid_input inp ->
@@ -60,5 +61,5 @@ Proof.
     (SPECX (LS:=LS) inp) (SPECX (LS:=LS) inp)
     (plain_rz_of_contracts_R LS RI G R GI f HDRV HG HR GIL GI0 HC en_p inp Hp Hinput)
     (HU en_s inp Hs Hinput) (t_eq_refl _)
-    (cf_run_of_budget Images.plain Budgets.Standard.lim_source en_p inp Hbud) (HUC en_s inp Hs Hinput)).
+    Hbud (HUC en_s inp Hs Hinput)).
 Qed.

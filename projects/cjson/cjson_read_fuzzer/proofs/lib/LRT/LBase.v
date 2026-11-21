@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: no_wx also asks that no segment is a kernel map, since segments_reserved now leaves those out (in_filter_nonkernel), and seg_in_reservation takes that premise; LOK's reserved ledger is the image's reservations followed by the launch's own (the vDSO pair), each apart from every map (lok_resv), and lok_resv_free reads a region inside a map as free of the whole ledger. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -482,7 +483,9 @@ Proof. reflexivity. Qed.
 (* [comment removed for export] *)
 Record LOK (mo : Model) : Prop := mkLOK {
   lok_halt : m_halted mo = None;
-  lok_resv : vm_reserved (m_vmmaps mo) = segments_reserved segs;
+  (* the image's reservations, then the launch's own (the vDSO pair), each apart from every map *)
+  lok_resv : exists rx, vm_reserved (m_vmmaps mo) = segments_reserved segs ++ rx
+                        /\ (forall r e, In r rx -> In e (vm_maps (m_vmmaps mo)) -> rdisj r e);
   (* [comment removed for export] *)
   lok_top : alloc_top (m_vmmaps mo) = alloc_ceiling;
   (* [comment removed for export] *)
@@ -506,17 +509,33 @@ Qed.
 (* [comment removed for export] *)
 Definition no_wx : Prop :=
   (forall s, In s segs -> seg_executable s && seg_writable s = false)
-  /\ (forall s, In s segs -> page_round_up_Z (Z.of_N (seg_base s) + Z.of_N (seg_size s)) < 2^64).
+  /\ (forall s, In s segs -> page_round_up_Z (Z.of_N (seg_base s) + Z.of_N (seg_size s)) < 2^64)
+  /\ (forall s, In s segs -> seg_kernel_map s = false).
+
+(* stdpp's filter (re-exported through BvBase) does not reduce on a symbolic segment; with the
+   segment's kind a constructor the step computes (G4's RunSegs.segments_reserved_app trick) *)
+Lemma in_filter_nonkernel : forall (l0 : list Segment) s, In s l0 -> seg_kernel_map s = false ->
+  In s (filter (fun s => negb (seg_kernel_map s)) l0).
+Proof.
+  intros l0. induction l0 as [|s0 l IH]; intros s Hs Hk; [destruct Hs|].
+  destruct s0 as [sb ssz sp sby sk]. destruct Hs as [E|Hs].
+  - subst s. destruct sk; cbn in Hk;
+      first [discriminate Hk | exact (or_introl eq_refl) | left; reflexivity].
+  - destruct sk; first [exact (or_intror (IH s Hs Hk)) | exact (IH s Hs Hk)
+                        | cbn; first [right; apply IH; assumption | apply IH; assumption]].
+Qed.
 
 (* [comment removed for export] *)
 Lemma seg_in_reservation : forall s (x : word), In s segs ->
+  seg_kernel_map s = false ->
   (forall s, In s segs -> page_round_up_Z (Z.of_N (seg_base s) + Z.of_N (seg_size s)) < 2^64) ->
   Z.of_N (seg_base s) <= bv_unsigned x < Z.of_N (seg_base s) + Z.of_N (seg_size s) ->
   in_rangesb (segments_reserved segs) x = true.
 Proof.
-  intros s x Hs Hok Hx. apply in_rangesb_true. unfold segments_reserved.
+  intros s x Hs Hkm Hok Hx. apply in_rangesb_true. unfold segments_reserved.
   exists (fst (segment_reservation s)), (snd (segment_reservation s)). split.
-  - apply in_map_iff. exists s. split; [| exact Hs]. destruct (segment_reservation s); reflexivity.
+  - apply in_map_iff. exists s. split; [| exact (in_filter_nonkernel segs s Hs Hkm)].
+    destruct (segment_reservation s); reflexivity.
   - pose proof (Hok s Hs) as Hhi. unfold segment_reservation. cbn [fst snd].
     unfold page_round_up_Z, page_round_down_Z in *. change page_size with 4096 in *.
     pose proof (N2Z.is_nonneg (seg_base s)). pose proof (N2Z.is_nonneg (seg_size s)).
@@ -540,9 +559,24 @@ Lemma region_free_noseg : forall maps a n (x : word), no_wx ->
   region_free (segments_reserved segs ++ maps) a n = true ->
   bv_unsigned a <= bv_unsigned x < bv_unsigned a + bv_unsigned n -> noseg x.
 Proof.
-  intros maps a n x [_ Hok] Hf Hx s Hs Hsx.
-  pose proof (seg_in_reservation s x Hs Hok Hsx) as Hr. apply in_rangesb_true in Hr as (lo & sz & Hin & Hlx).
+  intros maps a n x (_ & Hok & Hkm) Hf Hx s Hs Hsx.
+  pose proof (seg_in_reservation s x Hs (Hkm s Hs) Hok Hsx) as Hr. apply in_rangesb_true in Hr as (lo & sz & Hin & Hlx).
   eapply (region_free_false_of _ a n lo sz x); [exact Hf| apply in_or_app; left; exact Hin| exact Hx| exact Hlx].
+Qed.
+
+(* A region inside a map is free of the launch's own reservations; with the image's part
+   checked by the caller, it is free of the whole ledger. *)
+Lemma lok_resv_free : forall mo (a n : word), LOK mo ->
+  region_free (segments_reserved segs) a n = true ->
+  map_contains (vm_maps (m_vmmaps mo)) a n = true ->
+  region_free (vm_reserved (m_vmmaps mo)) a n = true.
+Proof.
+  intros mo a n HO Hs Hm. destruct (lok_resv mo HO) as (rx & E & D).
+  unfold map_contains in Hm. apply existsb_exists in Hm as ([b k] & Hin & Hb). cbn [fst snd] in Hb.
+  apply andb_true_iff in Hb as [H1 H2]. apply Z.leb_le in H1. apply Z.leb_le in H2.
+  rewrite E, region_free_app, Hs. cbn [andb].
+  apply region_free_intro. intros c s Hc. pose proof (D (c, s) (b, k) Hc Hin) as R. unfold rdisj, uz in R. cbn [fst snd] in R.
+  unfold iv_overlap. apply andb_false_iff. destruct R as [R|R]; [left|right]; apply Z.ltb_ge; lia.
 Qed.
 
 

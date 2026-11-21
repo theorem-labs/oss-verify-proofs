@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/ErrnoApartScgif.v (a working branch 30a1993588f, file sha256 d5e52a0422bd) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53; pin f8f98a95bc52); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-(* Modified by Theorem Labs, 2026-10: relocated from the old pin B (pinned fuzz_preset.asan-ubsan f8f98a95bc52, twin 3b5e1a099b53; this file at 74f20580f552) to B' (#102 pin d663f82d7f48, twin c90d4fa54d43) by the relocation route of record, frozen alreloc a5c53bb2bed4ad03 (a Theorem Labs lane's internal file alreloc.py.frozen-a5c53bb2bed4ad03), --assume-source, --resolve resolve-B102.txt (sha256 5cd2316e3413; internal record) (4 lines name this file); 0 numerals changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/ErrnoApartScgif.v (a working branch, file sha256 d5e52a0422bd) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53; pin f8f98a95bc52); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: relocated from the old pin B (pinned fuzz_preset.asan-ubsan f8f98a95bc52, twin 3b5e1a099b53; this file) to B' (#102 pin d663f82d7f48, twin c90d4fa54d43) by the relocation route of record, frozen alreloc a5c53bb2bed4ad03 (a Theorem Labs lane's internal file alreloc.py.frozen-a5c53bb2bed4ad03), --assume-source, --resolve resolve-B102.txt (sha256 5cd2316e3413; internal record) (4 lines name this file); 0 numerals changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The cgif_file discharges of ErrnoApartS.v's image facts, at AImg_cgif (AGif2cgif) and AImgS_cgif (AGif4cgif).
 
    Moved here from ErrnoApartAB.v, names and proofs unchanged: errno_apart_dzone_s_cgif, errno_apart_shadow_s_cgif,
-   errno_apart_zone3_s_cgif.  errno is TFIB_ERRNO = 0x5de68c (YF0m.v:16, ts_errno YF0m.v:297):
-   - the depot zone AGjm.DZONE (AGjm.v:571-572): [0x17d5c8, 0x5cdd50) ends 0x1093c below errno; the nodes and store
+   errno_apart_zone3_s_cgif.  errno is TFIB_ERRNO = 0x5de68c (YF0m.v:17, ts_errno YF0m.v:298):
+   - the depot zone AGjm.DZONE (AGjm.v:572-573): [0x17d5c8, 0x5cdd50) ends 0x1093c below errno; the nodes and store
      blocks are owned extents, apart by errno_in_img_cgif (ErrnoApartAB.v) and ErrnoApart.errno_apart_owned;
-   - the shadow offset AGjm.SHBv (AGjm.v:163): 0x7fff8000, above errno;
+   - the shadow offset AGjm.SHBv (AGjm.v:164): 0x7fff8000, above errno;
    - zone3 (YF0x.v:64): off the image (zone3_off_img, YF0x.v:72).
 
    Require hazard: the Require closure reaches YA08 / YA09 / YA0e through ErrnoApartS (ErrnoApartScgif -> ErrnoApartS ->

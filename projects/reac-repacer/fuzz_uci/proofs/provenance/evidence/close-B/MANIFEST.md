@@ -4,10 +4,10 @@ Written by scripts/mk_slice_manifest.py; not edited by hand. Start with RECORD.m
 
 | path | role | sha256 |
 |---|---|---|
-| `RECORD.md` | the record: the 18 rows with file:line and status, build, Print Assumptions, measurements | `81f74a3c49ab730df1aab590b0d5e920a6822e75fd3561281659d71f2f2b703e` |
+| `RECORD.md` | the record: the 18 rows with file:line and status, build, Print Assumptions, measurements | `f0e6a5f63f346e6faa77c2008aad414892c0d4a0f5b5e79ace7489e38a8b79cb` |
 | `env.example.sh` | every variable run.sh reads, without values | `143fbaee2df5366b77f5d8fd30049c94990ba58448f99d95e140e92f868670f3` |
 | `images.sha256` | sha256 of every image read | `8dd945dbd391b4c3e419ac625a0fda5fbb35fe6e8df3f66ec9781c549b81d463` |
-| `records/build.txt` | the build of record: mode, pins, targets, rc, About / Print Assumptions | `ee6b07c2d9e65b40eb0f08a3511bf2966d386b9302ce92625954d9a387a6f62f` |
+| `records/build.txt` | the build of record: mode, pins, targets, rc, About / Print Assumptions | `913d9fbd8f389e9e51838dab881dba2707018722c5169858f058311823081345` |
 | `run.sh` | reruns every measurement and rewrites tables/, records/, RECORD.md and MANIFEST.md | `b8240359c26e88a9e817331e776058a76d28577eced23f23169189bcbed603f1` |
 | `scripts/cells.py` | runtime cells, GOT words and REAL values of one image | `226ff1db04a786e20217e349df74bb938544fb0143a808db5f998f757d9a8f6e` |
 | `scripts/dis_rv64.py` | listings, UBSan trap branches and s0 writes of the six program functions | `9cf250fe305995e7823df72b203dc8f71b2fd28c810bdb33edde376208c54ceb` |

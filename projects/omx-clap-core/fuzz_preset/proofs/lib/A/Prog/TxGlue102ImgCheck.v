@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: for omx-clap-core/fuzz_preset, the CALLER-WINDOW call kit over YCbqG.v's journal
    ajournal_x (allocator invariant a parameter ARx, ghost head set Hp after S, program statics PST), generic: no image
-   class, no address, no ledger. Credit: WalkS4, lib/A/Prog/PRW_CallerJ.v at 85a188622c5 (statements and proofs taken
+   class, no address, no ledger. Credit: WalkS4, lib/A/Prog/PRW_CallerJ.v (statements and proofs taken
    from there; changes below). Donors there: cj_kept from cgif_file_fuzzer lib/YC20.v:311-325 tlzw_kept and
    lib/YC8n.v:272-287 tlzw_kept_of_journal (origin/release/pau-projects-recipes), generalised to ajournal_x's keep
    clauses; aj_call_xW from YCbqGcall.v aj_call_x (cgif YCbq.v:1845-1883 aj_call, origin/ossv/recipes).
@@ -14,10 +14,10 @@
    - START: ajournal_x_init_W, the widened journal (STK + e) (sp + e) at the entry state.
    - CALL of a caller-window callee: aj_call_xW / aj_call_xWF (callee state in mkst form), aj_call_xW_sp /
      aj_call_xWF_sp (the entry form of YCbqGcall.v's aj_call_x_sp: st_ok, ss_resv, the machine state ms).
-     The footprint side condition is YCbqG.v's own fp_sub_x (h-hpreset-7 9052c7a7d74 :688-691), whose fourth
+     The footprint side condition is YCbqG.v's own fp_sub_x (h-hpreset-7 :688-691), whose fourth
      disjunct `sp0 - STK <= a < sp0` is the caller's window: WalkS4's fp_sub_xW is that predicate, so this file
      no longer states one and ajournal_x_sub_W (the name WalkS4's callers use) is YCbqG's ajournal_x_sub.
-   - vrd_call_W: h-verbs-3's lib/A/VrdArm.v call rule (6d4cddbdff5), premise shape kept, as a corollary of
+   - vrd_call_W: h-verbs-3's lib/A/VrdArm.v call rule, premise shape kept, as a corollary of
      aj_call_xW_sp at e1 := - o.
    - aj_call_xWF_d: WalkH6's caller-window float call rule (h-walk-identity's S8aCallW.v aj_call_xWF), verbatim: no
      fwin_x for the callee and no window-kept clause on either side.
@@ -38,6 +38,7 @@
    fpostW_x_R_lift: a plain fpostW_x (journal at wle) is fpostW_xR at every R that contains wle. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YCbqGcallW.v; 1356 of its 1435 lines of code are new or changed and 732 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/Tx102Glue.v, with its module paths and module names changed; 37 of its 65 lines of code are new or changed and 1407 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, the IMAGE CHECK of the #102 tx glue's per-instance image bounds, at image A' and at image B'.
    OWNER h-hpreset-7 (K0 / S10's owner), branch cold/h-hpreset-7-s10-perinst. This file changes no other file.
    THE TEXT UNDER CHECK is the #102 tx glue that S10's #102 move cites (a Theorem Labs lane's ruling 19:36Z), taken by path, unchanged:
@@ -45,8 +46,8 @@
      literal, under its Section hypotheses img_shadow_vis_x (:1041), img_box (:1044) and img_cf_box (:1045);
    - lib/A/Prog/TxStr102Glue.v bff94397b16a (owner h-rw-pre-5, lane TxStrBp): the same three (:528, :530, :531), and
      pa_hi_ok (:486), cf_img_ok (:488) and pal_uar_img (:509); it passes the three to s10_src_img (:1271).
-   Both from h-rw-pre-5's INT102-READY commits: TxStr102Glue.v from cold/h-rw-pre-5-r102-txstrB dcab39c6a1ce,
-   Tx102Glue.v from cold/h-rw-pre-5-r102-txB 02fc33de3e82 (the same two blobs as at 5c998d4b8b0c, where this check
+   Both from h-rw-pre-5's INT102-READY commits: TxStr102Glue.v from
+   Tx102Glue.v (the same two blobs as, where this check
    first took them). Every bound there is the instance's pa_lo / pa_hi or the CfImg's cf_img_lo / cf_img_top; none is
    YImgTop's IMG_LO / IMG_TOP, and there is no pa_box.
    WHAT THIS FILE CHECKS:
@@ -54,14 +55,14 @@
        h-mani-a8's instance (lib/A/AImgShadowVisCf.v tfib_img_shadow_vis_cf); s10_src_img instantiates there
        (s10_src_img_A).
    (2) IMAGE B': the same at PI_prog_B / CfImg_B / TfibB (lib/Reusable/YD2l.v); img_shadow_vis_x by h-mani-a8's B'
-       instance (lib/AU/AImgShadowVisCfB.v 18b6de6fa4e8 tfib_img_shadow_vis_cf_B, by path from
-       cold/h-mani-a8-alloc102 22d71cc04fb0); s10_src_img instantiates there (s10_src_img_B). The bytes
+       instance (lib/AU/AImgShadowVisCfB.v 18b6de6fa4e8 tfib_img_shadow_vis_cf_B, by path);
+       s10_src_img instantiates there (s10_src_img_B). The bytes
        [0x600000, 0x600010) - B''s last PT_LOAD above A's top (lib/Reusable/YImgTop.v d2a97d3111ce:25-26) - are inside
        the B' bounds, are image bytes, and have a visible shadow at every state (b_tail_covered, b_tail_shadow_visible).
    (3) NEGATIVE CONTROL: S10's old-pin A-constant forms at image B' fail, and so does the #102 text with image A's
        CfImg bounds at PI_prog_B. Each `Fail` prints its error in the build log; each refutation lemma (..._false_at_B,
-       ..._misses_B_tail) shows that no proof of the old form exists. The old forms are quoted from
-       cold/h-hpreset-7-walk-S10-acc abe7dfed0746: pa_box (S10TxState.v b7d596ea70bc:149), S10's own A-instance proof
+       ..._misses_B_tail) shows that no proof of the old form exists. The old forms are quoted:
+       pa_box (S10TxState.v b7d596ea70bc:149), S10's own A-instance proof
        of it (S10TxString.v 966080da4b30:159-160, pa_box_A), and the range of img_shadow_vis_x (S10TxState.v :143).
    (2) and (3) are lib/B/Prog/TxGlue102ImgCheckB.v: moved there byte for byte so that no A-tree file Requires lib.B
    (a Theorem Labs lane's shadow audit; a Theorem Labs lane's ruling 06:42Z). This file no longer Requires lib.B, lib.AU, YImgTop or YD2l.

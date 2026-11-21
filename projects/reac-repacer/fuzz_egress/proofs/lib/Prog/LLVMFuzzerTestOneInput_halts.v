@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/Prog/LLVMFuzzerTestOneInput_halts.v at bc49657c087a; module path only. *)
+(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/Prog/LLVMFuzzerTestOneInput_halts.v; module path only. *)
 From Stdlib Require Import ZArith List Lia.
 From OSSVerify.Proofs.reac_repacer.fuzz_egress.lib.Reusable Require Import YK11 YM05 YO0d YL0i.
 From OSSVerify.Proofs.reac_repacer.fuzz_egress.lib Require Import Contract FrameAPI.

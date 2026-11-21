@@ -5,9 +5,9 @@
      E  the class-0 request (YCbq.aj_stack_malloc_at 0);
      B  the stretch from the return 0x86648 to ret: mb_post_rebaseRB (lib/B/Prog/C_reac_box_model_blockRBLib.v),
         lifted by GlueLift.rrB_lift.
-   The lift is a Theorem Labs lane's shared rrB_lift (lib/B/Prog/GlueLift.v, a working branch
-   b9b1631c5b8 / 7c18eb11bbd), used as is, with its wx premise discharged by ProgBridgeData.rsegs_wx_nowrap (a Theorem Labs lane,
-   a working branch 9f8ab5fbe2f).
+   The lift is a Theorem Labs lane's shared rrB_lift (lib/B/Prog/GlueLift.v, a working branch),
+   used as is, with its wx premise discharged by ProgBridgeData.rsegs_wx_nowrap (a Theorem Labs lane,
+   a working branch).
 
 
    rule 24: no function proved (the re-base and lift of the proved run reac_box_model_block_holds_F). *)
@@ -296,7 +296,7 @@ End EventA.
 
 
 (* rrB_journal_free (the journal across a stretch that frees one fake frame, generic in cid) moved UNCHANGED to
-   lib/B/Prog/GlueLift.v Section JournalFree (a working branch d83cc3a1d97); use
+   lib/B/Prog/GlueLift.v Section JournalFree (a working branch); use
    GlueLift.rrB_journal_free. *)
 
 Print Assumptions mbB_SA.

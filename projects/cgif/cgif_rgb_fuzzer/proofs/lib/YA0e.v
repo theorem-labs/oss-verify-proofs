@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the CONFIG_RSEQ flag rz is threaded into node_x and APG.check; the plan's PMunmap2 node covers munmap's refused -ENOMEM answer, with node_munmap2_sound; the reserved ledger is the image plus a bounded list of vDSO entries, with the new conjuncts co_mres and co_vdso, and frames keep the kernel field; cs_ok's new last field co_rdr, the launch's channel-reader flag that fdchan asks for, kept by cs_ok_frame through m_proc). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -53,6 +54,9 @@ Variable A : atable.
 Variable nx0 : nat.
 Variable LIMIT : Z.
 Variable TOP : Z.
+(* #38: the run's CONFIG_RSEQ flag as 0 or 1, threaded into [node_x] (the plan's
+   layout nodes read [e_str0]/[e_argv1w], which the revision made r-dependent). *)
+Variable rz : Z.
 Variable HS : nat -> option acs.
 Variable XN : nat -> list expr -> acs -> option acs.
 Variable XE : nat -> list expr -> acs -> option (Z * list spiece * acs).
@@ -102,7 +106,18 @@ eapply cover_sweep_sound; [exact H2 | lia].
 Qed.
 Lemma TOP_ok : 0x7fff7f800000 <= TOP /\ TOP + 8388608 <= 2 ^ 47.
 Proof. pose proof TOP_ok' as H. unfold top_ok, CEIL in H. exact H. Qed.
-#[local] Notation CHECK := (APG.check SEGS IT A nx0 LIMIT XN XE XB HS hole_le KC).
+(* #38: [APG.check] gained [rz] from Section a's variable list, between [LIMIT]
+   and [XN] - the position the round named ("XN has type nat -> list expr ->
+   acs -> option acs while it is expected to have type Z", YA0e.v:3218).  Every
+   use of CHECK goes through this one abbreviation, so this is the single site. *)
+#[local] Notation CHECK := (APG.check SEGS IT A nx0 LIMIT rz XN XE XB HS hole_le KC).
+Definition resx_entry_ok (iv : word * word) : Prop :=
+0 < bv_unsigned (snd iv)
+/\ bv_unsigned (fst iv) mod 4096 = 0
+/\ bv_unsigned (snd iv) mod 4096 = 0
+/\ img_hi A <= bv_unsigned (fst iv)
+/\ KHI + 4096 <= bv_unsigned (fst iv)
+/\ bv_unsigned (fst iv) + bv_unsigned (snd iv) <= 2 ^ 47.
 #[local] Notation cfg := (cfg_of SEGS).
 Definition Wz (fd : Z) (bs : list Z) : list event := map (fun z => WriteEv (Z_to_bv 64 fd) (Z_to_bv 8 z)) bs.
 Definition piece_den (E : env) (p : spiece) : list byte :=
@@ -195,7 +210,11 @@ co_halt  : m_halted model = None;
 co_fds   : fds_ok E (a_fd cs) model;
 co_fs    : m_fs model = FS0;
 co_tid   : a_tidset cs = false -> m_tid model = None;
-co_res   : vm_reserved (m_vmmaps model) = segments_reserved SEGS;
+co_res   : exists rx : list (word * word),
+vm_reserved (m_vmmaps model) = segments_reserved SEGS ++ rx
+/\ Forall resx_entry_ok rx
+/\ (length rx <= n_resx A)%nat
+/\ sum_sizes rx <= resx_bytes A;
 co_limit : vm_limit (m_vmmaps model) = LIMIT;
 co_top   : alloc_top (m_vmmaps model) = TOP;
 co_maps  : maps_match E (a_maps cs) (vm_maps (m_vmmaps model));
@@ -228,7 +247,16 @@ in_ivs (bv_unsigned a) (vm_noaccess (m_vmmaps model)) = false ->
 page_in_ranges (page_base a) (m_vm_lazy model) = true ->
 in_ghost E cs (bv_unsigned a) = false ->
 FULL a = Some (Z_to_bv 8 0);
-co_sinv  : SINV E FULL
+co_sinv  : SINV E FULL;
+co_mres  : Forall (fun iv => Forall (iv_disjoint iv) (vm_reserved (m_vmmaps model)))
+(vm_maps (m_vmmaps model));
+co_vdso  : incl (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model)))
+(vm_reserved (m_vmmaps model));
+(* LPS 727298f3: [Sys/Fs/ReadWrite.v]'s channel arm reads [State.m_channel_reader]
+   before it admits a transfer, so the hand-off state has to carry the launch's
+   reader flag -- the field that supplies the premise [fdchan] now asks for.  It is
+   the LAST field, so no earlier field's position moves. *)
+co_rdr   : m_channel_reader model = true
 }.
 Lemma A_wf_allowA : forall E cs, A_wf (allowA E cs).
 Proof.
@@ -341,8 +369,9 @@ intros E cs R FULL model ss' R' FULL' model' HC Hs Hinv HR HL HK Hhid.
 pose proof (same_but_materialized_frame _ _ Hs) as Hfr.
 assert (Evm : m_vmmaps model' = m_vmmaps model) by apply Hfr.
 assert (Elz : m_vm_lazy model' = m_vm_lazy model) by apply Hfr.
+assert (Ekn : m_kernel model' = m_kernel model) by (rewrite Hs; reflexivity).
 destruct HC. constructor; cbn [with_ss a_ss a_maps a_totsz a_ylo a_eager a_vis a_abytes a_brk a_fd a_tidset kn];
-rewrite ?Evm, ?Elz; try assumption.
+rewrite ?Evm, ?Elz, ?Ekn; try assumption.
 - unfold Mr. rewrite (hid_same _ _ _ _ Hs). exact HK.
 - replace (m_halted model') with (m_halted model) by (symmetry; apply Hfr). assumption.
 - unfold fds_ok in *. replace (m_fds model') with (m_fds model) by (symmetry; apply Hfr).
@@ -353,6 +382,7 @@ replace (m_fs model') with (m_fs model) by (symmetry; apply Hfr). assumption.
 - replace (eager_used model') with (eager_used model) by (symmetry; apply Hfr). assumption.
 - intros a Hh. rewrite (hid_same _ _ _ _ Hs) in Hh. rewrite (Hhid a Hh). auto.
 - eapply SINV_frame; [|eassumption]. intros a Ha. apply Hhid. unfold hid. rewrite Ha. reflexivity.
+- unfold m_channel_reader in *. replace (m_proc model') with (m_proc model) by (symmetry; apply Hfr). assumption.
 Qed.
 Lemma know_ok_filter : forall E M f k, know_ok SEGS E M k -> know_ok SEGS E M (List.filter f k).
 Proof.
@@ -1618,7 +1648,7 @@ srealizesM SEGS b (cfg R' (pc cs') FULL' model') T) ->
 srealizesM SEGS b (cfg R (pc cs) FULL model) T.
 Definition always (cs : acs) : bool := true.
 Definition sys_stmt (y : snode) : Prop := node1_stmt (is_ecall_at SEGS) (node_sys A nx0 y).
-Definition x_stmt (x : xnode) : Prop := forall args, node1_stmt always (node_x SEGS A nx0 x args).
+Definition x_stmt (x : xnode) : Prop := forall args, node1_stmt always (node_x SEGS A nx0 rz x args).
 Definition fresh_stmt : Prop := forall r logc base, node1_stmt always (fun cs => node_fresh nx0 cs r logc base).
 Lemma t_alt2_covered : forall TA TB : TSet, TA [] -> (forall tr, TB tr -> TA tr) -> t_eq TA (t_alt2 TA TB).
 Proof. intros TA TB _ H tr. unfold t_alt2. split; [intros Ha; left; exact Ha | intros [Ha|Hb]; [exact Ha | exact (H tr Hb)]]. Qed.
@@ -1692,6 +1722,8 @@ Hypothesis node_mmap2_sound : mm2_stmt (node_mmap2g A nx0 LIMIT).
 Hypothesis node_mmapin_sound : forall hole : bool, mm3_stmt (node_mmapin_g A LIMIT hole).
 Hypothesis node_mmapin2_sound : mm2_stmt (node_mmapin2_g A LIMIT).
 Hypothesis node_mprotect2_sound : mm2_stmt (node_mprotect2g A LIMIT).
+(* 08b1429: munmap of an exact mapping may be refused with -ENOMEM; the plan node is PMunmap2. *)
+Hypothesis node_munmap2_sound : mm2_stmt (node_munmap2 A).
 Hypothesis node_exit_sound : exit_stmt.
 Hypothesis node_x_sound : forall x, x_stmt x.
 Hypothesis node_join_sound : join_stmt.
@@ -3173,7 +3205,7 @@ Proof. reflexivity. Qed.
 Lemma nxt_inst : forall inv J e, nxt (inst inv J e) = nxt inv.
 Proof. reflexivity. Qed.
 Lemma check_all_ok : forall (chk : acs -> plan -> cres) k css s,
-check_all A chk k css = COk s ->
+check_all A rz chk k css = COk s ->
 (exists cs1, In cs1 css /\ chk cs1 k = COk s /\ True) /\ (forall cs, In cs css -> chk cs k = COk s).
 Proof.
 intros chk k css s H. unfold check_all in H. destruct css as [|cs0 rest]; [discriminate|].
@@ -3199,7 +3231,7 @@ Proof.
 intros bfuel fuel. induction fuel as [|fuel IH]; intros lc p cs s Hc; [discriminate|].
 cbn [APG.check] in Hc.
 match type of Hc with (if ?g then _ else _) = _ => destruct g; [discriminate|] end.
-destruct p as [stops k|e mid k1 k2|ce cmid ck1 ck2|db1 db2 dk1 dk2|sb1 sn1 sb2 sn2 k| |K k|jb joff jn k|ixs k|db dn k|gws k|bm k|hrs k|hbK k|r logc fb k|y k|ma mb|ia ib ic|qa qb|ka kb|x args k|xid xargs k|eid eargs k|bid bargs kb1 kb2|lJ lN linv lbody lk| |h| | |fi fsz fk|gi gsz gk|gb gn gk2|ub un uk|hlo hhi hk|ilo ihi ik|djp drs dk|rnm rnk|cpk|vj vjs vlo vka vk|mj|ab an ak|hws hwk|rsr rse rsk|iha ihb ihc|i2a i2b].
+destruct p as [stops k|e mid k1 k2|ce cmid ck1 ck2|db1 db2 dk1 dk2|sb1 sn1 sb2 sn2 k| |K k|jb joff jn k|ixs k|db dn k|gws k|bm k|hrs k|hbK k|r logc fb k|y k|ma mb|ia ib ic|qa qb|ka kb|ua ub2|x args k|xid xargs k|eid eargs k|bid bargs kb1 kb2|lJ lN linv lbody lk| |h| | |fi fsz fk|gi gsz gk|gb gn gk2|ub un uk|hlo hhi hk|ilo ihi ik|djp drs dk|rnm rnk|cpk|vj vjs vlo vka vk|mj|ab an ak|hws hwk|rsr rse rsk|iha ihb ihc|i2a i2b].
 - destruct (run_block_gc SEGS IT _ KC bfuel (stops ++ STOPS A) cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
 - destruct (APG.expr_vars_lt nx0 e) eqn:Hv; [|discriminate].
 destruct (erange (kn cs) e) as [[lo hi]|]; [|discriminate].
@@ -3244,7 +3276,7 @@ injection Hc as <-. apply salt2_vars; [exact (IH _ ma _ sa H1) | exact (IH _ mb 
 - destruct (is_ecall_at SEGS cs); [|discriminate]. destruct (node_mmapin_g A LIMIT false cs) as [[[csa csb] cscs]|]; [|discriminate].
 destruct (CHECK bfuel fuel lc csa ia) as [sa|] eqn:H1; [|discriminate].
 destruct (CHECK bfuel fuel lc csb ib) as [sb|] eqn:H2; [|discriminate].
-destruct (check_all A (CHECK bfuel fuel lc) ic cscs) as [sc|] eqn:H3; [|discriminate].
+destruct (check_all A rz (CHECK bfuel fuel lc) ic cscs) as [sc|] eqn:H3; [|discriminate].
 injection Hc as <-.
 destruct (check_all_ok _ _ _ _ H3) as [(cs1 & Hin1 & Hc1 & _) _].
 apply salt2_vars; [exact (IH _ ia _ sa H1) | apply salt2_vars; [exact (IH _ ib _ sb H2) | exact (IH _ ic _ sc Hc1)]].
@@ -3257,7 +3289,11 @@ destruct (CHECK bfuel fuel lc csa ka) as [sa|] eqn:H1; [|discriminate].
 destruct (CHECK bfuel fuel lc csb kb) as [sb|] eqn:H2; [|discriminate].
 destruct (brk2_holes_ok hole_le sa sb); [|discriminate].
 injection Hc as <-. apply salt2_vars; [exact (IH _ ka _ sa H1) | exact (IH _ kb _ sb H2)].
-- destruct (node_x SEGS A nx0 x args cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
+- destruct (is_ecall_at SEGS cs); [|discriminate]. destruct (node_munmap2 A cs) as [[csa csb]|]; [|discriminate].
+destruct (CHECK bfuel fuel lc csa ua) as [sa|] eqn:H1; [|discriminate].
+destruct (CHECK bfuel fuel lc csb ub2) as [sb|] eqn:H2; [|discriminate].
+injection Hc as <-. apply salt2_vars; [exact (IH _ ua _ sa H1) | exact (IH _ ub2 _ sb H2)].
+- destruct (node_x SEGS A nx0 rz x args cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
 - destruct (XN xid xargs cs) as [cs1|]; [|discriminate]. exact (IH _ k cs1 s Hc).
 - destruct (XE eid eargs cs) as [[[fd ps] cs1]|]; [|discriminate].
 destruct (CHECK bfuel fuel lc cs1 k) as [s1|] eqn:H1; [|discriminate].
@@ -3304,7 +3340,7 @@ injection Hc as <-. apply andb_prop in Ht as [Ht _]. apply andb_prop in Ht as [_
 destruct (is_ecall_at SEGS cs); [|discriminate]. destruct (node_mmapin_g A LIMIT true cs) as [[[csa csb] cscs]|]; [|discriminate].
 destruct (CHECK bfuel fuel lc csa iha) as [sa|] eqn:H1; [|discriminate].
 destruct (CHECK bfuel fuel lc csb ihb) as [sb|] eqn:H2; [|discriminate].
-destruct (check_all A (CHECK bfuel fuel lc) ihc cscs) as [sc|] eqn:H3; [|discriminate].
+destruct (check_all A rz (CHECK bfuel fuel lc) ihc cscs) as [sc|] eqn:H3; [|discriminate].
 injection Hc as <-.
 destruct (check_all_ok _ _ _ _ H3) as [(cs1 & Hin1 & Hc1 & _) _].
 apply salt2_vars; [exact (IH _ iha _ sa H1) | apply salt2_vars; [exact (IH _ ihb _ sb H2) | exact (IH _ ihc _ sc Hc1)]].
@@ -4237,7 +4273,7 @@ match p with
 | PAbstractCell _ _ k | PHavocWords _ k | PRespell _ _ k => lv k
 | PSplit _ _ k1 k2 | PCase2 _ _ k1 k2 | PCaseDisj _ _ k1 k2 | PBrk2 k1 k2 | PExt2 _ _ k1 k2 | PLoop _ _ _ k1 k2
 | PVia _ _ _ k1 k2 => lv k1 && lv k2
-| PMmap _ kb | PMprotect _ kb | PMmapIn _ kb _ | PMmapInH _ kb _ | PMmapIn2 _ kb => lv kb
+| PMmap _ kb | PMprotect _ kb | PMmapIn _ kb _ | PMmapInH _ kb _ | PMmapIn2 _ kb | PMunmap2 _ kb => lv kb
 | PContra | PNext | PHandoff _ | PExit | PMerge _ => true
 | PSpin => false
 end.
@@ -4313,7 +4349,7 @@ m_fs model' = m_fs model -> srealizesM SEGS false (cfg R' (pc cs') FULL' model')
 assert (SAME : forall k cs' s', CHECK bfuel fuel lc cs' k = COk s' -> lvb b k = true -> cs_ok E cs' R FULL model ->
 srealizesM SEGS b (cfg R (pc cs') FULL model) (sd D E (m_fs model) s')).
 { intros k cs' s' Hk Hlk HC'. refine (CONT k cs' s' Hk Hlk E R FULL model (conj (env_agree_refl _ _) (env_agree_refl _ _)) HC' eq_refl). }
-destruct p as [stops k|e mid k1 k2|ce cmid ck1 ck2|db1 db2 dk1 dk2|sb1 sn1 sb2 sn2 k| |K k|jb joff jn k|ixs k|db dn k|gws k|bm k|hrs k|hbK k|r logc fb k|y k|ma mb|ia ib ic|qa qb|ka kb|x args k|xid xargs k|eid eargs k|bid bargs kb1 kb2|lJ lN linv lbody lk| |h| | |fi fsz fk|gi gsz gk|gb gn gk2|ub un uk|hlo hhi hk|ilo ihi ik|djp drs dk|rnm rnk|cpk|vj vjs vlo vka vk|mj|ab an ak|hws hwk|rsr rse rsk|iha ihb ihc|i2a i2b].
+destruct p as [stops k|e mid k1 k2|ce cmid ck1 ck2|db1 db2 dk1 dk2|sb1 sn1 sb2 sn2 k| |K k|jb joff jn k|ixs k|db dn k|gws k|bm k|hrs k|hbK k|r logc fb k|y k|ma mb|ia ib ic|qa qb|ka kb|ua ub2|x args k|xid xargs k|eid eargs k|bid bargs kb1 kb2|lJ lN linv lbody lk| |h| | |fi fsz fk|gi gsz gk|gb gn gk2|ub un uk|hlo hhi hk|ilo ihi ik|djp drs dk|rnm rnk|cpk|vj vjs vlo vka vk|mj|ab an ak|hws hwk|rsr rse rsk|iha ihb ihc|i2a i2b].
 -
 destruct (run_block_gc SEGS IT _ KC bfuel (stops ++ STOPS A) cs) as [cs1|] eqn:Hrb; [|discriminate].
 pose proof (LCOK_bnd b lc D E (m_fs model) HL) as Hgb.
@@ -4434,7 +4470,7 @@ destruct (is_ecall_at SEGS cs) eqn:Hec; [|discriminate].
 destruct (node_mmapin_g A LIMIT false cs) as [[[csa csb] cscs]|] eqn:Hn; [|discriminate].
 destruct (CHECK bfuel fuel lc csa ia) as [sa|] eqn:H1; [|discriminate].
 destruct (CHECK bfuel fuel lc csb ib) as [sb|] eqn:H2; [|discriminate].
-destruct (check_all A (CHECK bfuel fuel lc) ic cscs) as [sc|] eqn:H3; [|discriminate].
+destruct (check_all A rz (CHECK bfuel fuel lc) ic cscs) as [sc|] eqn:H3; [|discriminate].
 injection Hc as <-.
 pose proof (proj2 (check_all_ok _ _ _ _ H3)) as Hall.
 eapply srzM_conseq; [| eapply t_eq_trans; [| apply sd_salt2; exact HD]; apply t_eq_alt2; [apply t_eq_refl' | apply sd_salt2; exact HD]].
@@ -4460,7 +4496,15 @@ eapply srzM_conseq; [| apply sd_salt2; exact HD].
 eapply (node_brk2_sound b cs csa csb E R FULL model); [exact HC | exact Hec | exact Hn | | apply sd_has_nil; exact HD | exact (CONT ka csa sa H1 (lvb_l _ _ _ Hlv)) | exact (CONT kb csb sb H2 (lvb_r _ _ _ Hlv))].
 exact (brk2_holes_incl sa sb D E (m_fs model) Hho HD).
 -
-destruct (node_x SEGS A nx0 x args cs) as [cs1|] eqn:Hn; [|discriminate].
+destruct (is_ecall_at SEGS cs) eqn:Hec; [|discriminate].
+destruct (node_munmap2 A cs) as [[csa csb]|] eqn:Hn; [|discriminate].
+destruct (CHECK bfuel fuel lc csa ua) as [sa|] eqn:H1; [|discriminate].
+destruct (CHECK bfuel fuel lc csb ub2) as [sb|] eqn:H2; [|discriminate].
+injection Hc as <-.
+eapply srzM_conseq; [| apply sd_salt2; exact HD].
+eapply (node_munmap2_sound b cs csa csb E R FULL model); [exact HC | exact Hec | exact Hn | exact (CONTF ua csa sa H1) | exact (CONT ub2 csb sb H2 Hlv)].
+-
+destruct (node_x SEGS A nx0 rz x args cs) as [cs1|] eqn:Hn; [|discriminate].
 eapply (node_x_sound x args b cs cs1 E R FULL model); [exact HC | reflexivity | exact Hn |]. exact (CONT k cs1 s Hc Hlv).
 -
 destruct (XN xid xargs cs) as [cs1|] eqn:Hn; [|discriminate].
@@ -4658,7 +4702,7 @@ destruct (is_ecall_at SEGS cs) eqn:Hec; [|discriminate].
 destruct (node_mmapin_g A LIMIT true cs) as [[[csa csb] cscs]|] eqn:Hn; [|discriminate].
 destruct (CHECK bfuel fuel lc csa iha) as [sa|] eqn:H1; [|discriminate].
 destruct (CHECK bfuel fuel lc csb ihb) as [sb|] eqn:H2; [|discriminate].
-destruct (check_all A (CHECK bfuel fuel lc) ihc cscs) as [sc|] eqn:H3; [|discriminate].
+destruct (check_all A rz (CHECK bfuel fuel lc) ihc cscs) as [sc|] eqn:H3; [|discriminate].
 injection Hc as <-.
 pose proof (proj2 (check_all_ok _ _ _ _ H3)) as Hall.
 eapply srzM_conseq; [| eapply t_eq_trans; [| apply sd_salt2; exact HD]; apply t_eq_alt2; [apply t_eq_refl' | apply sd_salt2; exact HD]].

@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names and addresses changed; 2105 of its 2257 lines of code are new or changed and 859 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A5.v, with its module paths and addresses changed; 1044 of its 1143 lines of code are new or changed and 2158 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/R1F.v; 26 of its 131 lines of code are new or changed and 1038 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* lib/A/Prog/Seg/R1Fs.v -- a NARROWED footprint twin of a Theorem Labs lane's R1F.r1_mode_evt_F (Seg/R1F.v:341), written by
    a Theorem Labs lane's stage lane for the glue of seg_R1_turn (lib/A/ACtlG/R1_turn.v), approved by a Theorem Labs lane
    (2026-10-29 ~04:40Z) under the narrowed-stretch rule (two Theorem Labs lanes, 04:23Z / 04:34Z).
@@ -19,8 +20,8 @@
 
    WHAT THIS FILE STATES
    - r1_mode_evt_Fs: r1_mode_evt_F with exactly those two premises guarded by `w <> 0 ->`; binders, other premises
-     and post are r1_mode_evt_F's.  Its proof is R1F.v:361-412 with the two guarded hypotheses specialised on the
-     w <> 0 arm; on the w = 0 arm the run is the four register-only steps of R1F.v:367-374 (no data access).
+     and post are r1_mode_evt_F's.  Its proof is R1F.v:362-413 with the two guarded hypotheses specialised on the
+     w <> 0 arm; on the w = 0 arm the run is the four register-only steps of R1F.v:368-375 (no data access).
    - r1_mode_evt_F_of_Fs: a Theorem Labs lane's r1_mode_evt_F re-derived from r1_mode_evt_Fs (each unguarded premise gives its
      guarded form), with r1_mode_evt_F_of_Fs_verbatim pinning its type to R1F.r1_mode_evt_F's by constr_eq: the
      narrowed twin is provably the same run.
@@ -31,7 +32,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Import PropExec MState M
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A Require Import Img0 AsanRT AsanRTFacts.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Prog Require Import RcAsanLib.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog.Seg Require Import R1 R1F.
-(* Last: StepF's step / mem_after_store (evtF goals) shadow Step's (evt goals), as R1F.v:38 orders them. *)
+(* Last: StepF's step / mem_after_store (evtF goals) shadow Step's (evt goals), as R1F.v:39 orders them. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Import ExecF StepF.
 Import ListNotations.
 Open Scope Z_scope.
@@ -71,14 +72,14 @@ Proof.
   lazymatch goal with |- ExecF.evtF _ _ ?QQ _ => set (Q := QQ) end.
   step.
   destruct (Z.eq_dec w 0) as [E0|N0].
-  - (* w = 0: four register-only steps, no data access (R1F.v:367-374) *)
+  - (* w = 0: four register-only steps, no data access (R1F.v:368-375) *)
     subst w. r1_br.
     step. step. step.
     apply ExecF.evtF_done. unfold Q. cbv beta. left. eexists.
     split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].
     split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].
     split; [reflexivity|]. split; reflexivity.
-  - (* w <> 0: R1F.v:375-411, with the guarded footprint premises specialised *)
+  - (* w <> 0: R1F.v:376-412, with the guarded footprint premises specialised *)
     r1_br.
     specialize (HRk N0). specialize (HOKk N0). specialize (HRm N0).
     specialize (Rshm N0). specialize (Rpm N0).

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack window below sp; the launch's input, mmap base and entry draw). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation Strings.String.
 From stdpp Require Import gmap.
@@ -49,10 +50,10 @@ Section SEAMS.
   Hypothesis AMS : forall lo hi, a0_static lo hi -> am_static FI AI lo hi.
   Variable PZ : mem -> Prop.
   Hypothesis PZ_agree : forall (P : Z -> Prop) m m', gagree_on P m m' -> (forall a, pz_band a -> P a) -> PZ m -> PZ m'.
-  Variables (sp0 : word) (argv envp : list (list byte)) (uid hw : word) (rnd : EntryDraw) (TID : Z) (S4 S5 S6 S7 S8 S9 S10 S11 : word).
+  Variables (sp0 : word) (argv envp : list (list byte)) (inp : ProcInput) (mbase : word) (rnd : EntryDraw) (TID : Z) (S4 S5 S6 S7 S8 S9 S10 S11 : word).
   Hypothesis VSP : valid_sp sp0.
-  Hypothesis CEIL : alloc_ceiling = LO sp0.
-  Hypothesis ESF : entry_stack_fits sp0 argv envp.
+  Hypothesis CEIL : alloc_ceiling = bv_unsigned sp0 - 8388608.
+  Hypothesis ESF : img_fits sp0 argv envp inp mbase rnd.
   Hypothesis HT : 0 < TID < 2^31.
   Hypothesis EMIT : emit_printf_stmt aget_so aset_so.
   Local Notation K := (am_K FI AI).
@@ -60,8 +61,8 @@ Section SEAMS.
   Notation usp0 := (bv_unsigned sp0).
   Notation gpv := (Z_to_bv 64 0x10800).
   Notation tpv := (Z_to_bv 64 RATPA).
-  Notation BASEs so mm := (BASE_A PZ sp0 argv envp uid hw rnd TID so mm).
-  Notation BASE2s so mm := (BASE_A2 PZ sp0 argv envp uid hw rnd TID so mm).
+  Notation BASEs so mm := (BASE_A PZ sp0 argv envp inp mbase rnd TID so mm).
+  Notation BASE2s so mm := (BASE_A2 PZ sp0 argv envp inp mbase rnd TID so mm).
 
   Notation TST pc x1 t0 t1 t2 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 t3 t4 t5 t6 F fc mm :=
     (MS (mkR x1 (Z_to_bv 64 (usp0 + -208)) gpv tpv t0 t1 t2 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 (Z_to_bv 64 (-2)) S8 S9 S10 S11 t3 t4 t5 t6)
@@ -96,9 +97,9 @@ Section SEAMS.
     else EXITC2 TID mm.
 
   Definition BASE_cb (cb : bool) (so : stdout_st) (mm : mem) : Prop :=
-    stk asegs mm (LO sp0) (usp0 + -128) /\ mem_inv asegs mm /\ EXCB cb mm /\ MAINC0 mm /\ IMGK sp0 argv envp uid hw rnd mm
+    stk asegs mm (LO sp0) (usp0 + -128) /\ mem_inv asegs mm /\ EXCB cb mm /\ MAINC0 mm /\ IMGK sp0 argv envp inp mbase rnd mm
     /\ stderr_wfile0 mm /\ stdout_file mm so /\ stk asegs mm RSVA (RSVA + 65536) /\ stdin_file mm
-    /\ SHZ sp0 argv envp uid hw rnd mm /\ asan_env asegs mm /\ globals_shadow mm /\ PZ mm /\ wr_at asegs mm 0xb0290 1.
+    /\ SHZ sp0 argv envp inp mbase rnd mm /\ asan_env asegs mm /\ globals_shadow mm /\ PZ mm /\ wr_at asegs mm 0xb0290 1.
 
   Definition DMEM (cb : bool) (ap : at_parser (ptr:=unit)) (d : dlayA K) (so : stdout_st) (m : mem) : Prop :=
     TRFRAME sp0 m (d_pad d) (d_sc d) (ap_payload_len ap) (d_A d) (d_L d)
@@ -109,7 +110,7 @@ Section SEAMS.
     DLAY_ok ap d /\ DMEM cb ap d so m /\ DBYTES own ap d m /\ DBLOCKS own ap d LB
     /\ RHEAP_A FI AI s LB m /\ RFAKE FI st m
     /\ (exists errv : word, rw_cells asegs m RERRNOA [C4 errv])
-    /\ stk asegs m (usp0 - 8388608) (usp0 + -208).
+    /\ stk asegs m (usp0 - 6144512) (usp0 + -208).
 
   Definition DBUD (k : Z) (s : aps FI AI) (st : fsstate FI) (LB : BL) : Prop :=
     Z.of_nat (length LB) <= 2 /\ lb_bytes FI AI LB <= 2^27 /\ fs_live FI st = [] /\ am_nsec FI AI s + k * FZ_NSEC <= A0_NSEC_MAX.
@@ -172,7 +173,7 @@ Section SEAMS.
       /\ DLAY_ok ap d /\ MFRAME sp0 argv m (d_mpad d) S7 S6 S5 S4 /\ BASE2s so m /\ CJ1 m
       /\ DBYTES false ap d m /\ DBLOCKS false ap d LB /\ RHEAP_A FI AI s LB m /\ RFAKE FI st m
       /\ (exists errv : word, rw_cells asegs m RERRNOA [C4 errv])
-      /\ stk asegs m (usp0 - 8388608) (usp0 + -128).
+      /\ stk asegs m (usp0 - 6144512) (usp0 + -128).
 
   Definition rat_main_retA (sts : Z) (so : stdout_st) (ms : machine_state) (g : gst) : Prop :=
     exists (x1 t0 t1 t2 x9 a0 a1 a2 a3 a4 a5 a6 a7 x18 x19 x20 x21 t3 t4 t5 t6 : word) (F : bvmap 5 word) (fc : bv 32) (m : mem) (mpad : list byte)
@@ -180,7 +181,7 @@ Section SEAMS.
       ms = GST 0x86270 x1 t0 t1 t2 (Z_to_bv 64 sts) x9 a0 a1 a2 a3 a4 a5 a6 a7 x18 x19 x20 x21 t3 t4 t5 t6 F fc m
       /\ g = gh FI AI s /\ 0 <= sts < 256
       /\ MFRAME sp0 argv m mpad S7 S6 S5 S4 /\ BASE2s so m /\ RHEAP_A FI AI s LB m /\ RFAKE FI st m
-      /\ stk asegs m (usp0 - 8388608) (usp0 + -128).
+      /\ stk asegs m (usp0 - 6144512) (usp0 + -128).
 
   #[using="VSP"] Lemma valid_sp_facts : 0x7fff80000000 <= usp0 <= 0x800000000000 /\ usp0 mod 16 = 0.
   Proof. destruct VSP as (A & B & C). unfold sp_window_lo, sp_window_hi in *. lia. Qed.
@@ -208,9 +209,9 @@ Section SEAMS.
       eapply rw_cells_gagree; [exact AG| exact B2|]. intros a Ha. apply HP2. cbn [cells_size csize Nat.add] in Ha. lia.
   Qed.
 
-  #[using="AMS VSP CEIL ESF"] Lemma base_addr_pclient : forall LB q a, q <= usp0 + -128 -> base_addr sp0 argv envp uid hw rnd a -> pclient FI AI LB q a.
+  #[using="AMS VSP CEIL ESF"] Lemma base_addr_pclient : forall LB q a, q <= usp0 + -128 -> base_addr sp0 argv envp inp mbase rnd a -> pclient FI AI LB q a.
   Proof.
-    pose proof valid_sp_facts as SF. pose proof (sp_facts sp0 VSP CEIL) as SF'. pose proof (IMGB_len47 sp0 argv envp uid hw rnd ESF) as IL. pose proof alloc_ceiling_bounds as CB'.
+    pose proof valid_sp_facts as SF. pose proof (sp_facts sp0 VSP CEIL) as SF'. pose proof (IMGB_len47 sp0 argv envp inp mbase rnd ESF) as IL. pose proof alloc_ceiling_bounds as CB'.
     intros LB q a HQ Ha. unfold base_addr, exitc_addr, stdout_addr, stderr_addr, stdin_addr, pz_band in Ha. unfold LO in *.
     Ltac bandp AMS l h := right; left; exists l, h; split; [apply AMS; unfold a0_static; split; [lia|]; lia | split; [lia | unfold A0_ERRNO; lia]].
     repeat match type of Ha with _ \/ _ => destruct Ha as [Ha|Ha] end.
@@ -231,8 +232,8 @@ Section SEAMS.
   Proof.
     intros so q LB m m' HQ BA HP MI' ST' ENV'. pose proof (sp_facts sp0 VSP CEIL) as SF. unfold LO in *.
     pose proof (pkeep_agree FI AI _ _ _ _ HP) as AG.
-    eapply (BASE_A_agree0 PZ PZ_agree sp0 argv envp uid hw rnd TID VSP CEIL ESF HT so); [exact BA| exact AG| intros a Ha; apply base_addr_pclient; [lia| exact Ha]| exact MI'| | | exact ENV'].
-    - destruct BA as (ST & _). assert (HQ' : usp0 - 8388608 <= q <= usp0 + -128) by lia. unfold LO in ST. destruct (stk_split asegs m _ q _ ST HQ') as [_ STq].
+    eapply (BASE_A_agree0 PZ PZ_agree sp0 argv envp inp mbase rnd TID VSP CEIL ESF HT so); [exact BA| exact AG| intros a Ha; apply base_addr_pclient; [lia| exact Ha]| exact MI'| | | exact ENV'].
+    - destruct BA as (ST & _). assert (HQ' : usp0 - 6144512 <= q <= usp0 + -128) by lia. unfold LO in ST. destruct (stk_split asegs m _ q _ ST HQ') as [_ STq].
       eapply stk_merge; [exact ST'| | unfold LO; lia]. eapply stk_gagree; [exact AG| exact STq| intros a Ha; left; lia].
     - destruct BA as (_ & _ & _ & _ & _ & _ & _ & RSS & _).
       eapply stk_gagree; [exact AG| exact RSS|]. intros a Ha. right; left. exists 0x5d5f40, 0x5e5f80. split; [apply AMS; unfold a0_static; lia| unfold RSVA, A0_ERRNO in *; lia].
@@ -267,12 +268,12 @@ Section SEAMS.
   Qed.
 
   #[using="PZ_agree VSP CEIL ESF HT"] Lemma BASE_cb_agree0 : forall cb cb' (P : Z -> Prop) so m m',
-    BASE_cb cb so m -> gagree_on P m m' -> (forall a, base_addr sp0 argv envp uid hw rnd a -> P a) ->
+    BASE_cb cb so m -> gagree_on P m m' -> (forall a, base_addr sp0 argv envp inp mbase rnd a -> P a) ->
     mem_inv asegs m' -> stk asegs m' (LO sp0) (usp0 + -128) -> stk asegs m' RSVA (RSVA + 65536) -> asan_env asegs m' ->
     rw_cells asegs m' 0x5e5f54 [C1 (Z_to_bv 8 (Z.b2z cb'))] -> BASE_cb cb' so m'.
   Proof.
     intros cb cb' P so m m' (ST & MI & EX & MC & IMG & SE & SOF0 & RSS & SI & SZ & ENV & GSH & HPZ & CRT) AG HP MI' ST' RSS' ENV' CB'.
-    pose proof (sp_facts sp0 VSP CEIL) as SF. pose proof (IMGB_len47 sp0 argv envp uid hw rnd ESF) as IL. pose proof alloc_ceiling_bounds as CB0. unfold LO in *.
+    pose proof (sp_facts sp0 VSP CEIL) as SF. pose proof (IMGB_len47 sp0 argv envp inp mbase rnd ESF) as IL. pose proof alloc_ceiling_bounds as CB0. unfold LO in *.
     destruct (EXCB_exitc cb m EX) as (m0 & EX0 & AG0).
     assert (AGX : gagree_on exitc_addr m0 m').
     { eapply gagree_on_trans; [exact AG0|]. eapply gagree_on_mono; [exact AG|]. intros a Ha. apply HP. left. exact Ha. }
@@ -306,7 +307,7 @@ Section SEAMS.
     intros cb so q LB m m' HQ BA HP MI' ST' ENV'. pose proof (sp_facts sp0 VSP CEIL) as SF. unfold LO in *.
     pose proof (pkeep_agree FI AI _ _ _ _ HP) as AG.
     eapply (BASE_cb_agree0 cb cb); [exact BA| exact AG| intros a Ha; apply base_addr_pclient; [lia| exact Ha]| exact MI'| | | exact ENV'| ].
-    - destruct BA as (ST & _). assert (HQ' : usp0 - 8388608 <= q <= usp0 + -128) by lia. unfold LO in ST. destruct (stk_split asegs m _ q _ ST HQ') as [_ STq].
+    - destruct BA as (ST & _). assert (HQ' : usp0 - 6144512 <= q <= usp0 + -128) by lia. unfold LO in ST. destruct (stk_split asegs m _ q _ ST HQ') as [_ STq].
       eapply stk_merge; [exact ST'| | unfold LO; lia]. eapply stk_gagree; [exact AG| exact STq| intros a Ha; left; lia].
     - destruct BA as (_ & _ & _ & _ & _ & _ & _ & RSS & _).
       eapply stk_gagree; [exact AG| exact RSS|]. intros a Ha. right; left. exists 0x5d5f40, 0x5e5f80. split; [apply AMS; unfold a0_static; lia| unfold RSVA, A0_ERRNO in *; lia].
@@ -342,7 +343,7 @@ Section SEAMS.
     pose proof AFR as (MI' & ST' & ENV' & RF' & AP).
     split. { unfold TRFRAME in *. eapply (apres_rw_cells FI AI); [exact AP| exact TF| apply aclient_range_above; lia]. }
     split. { unfold MFRAME in *. eapply (apres_rw_cells FI AI); [exact AP| exact FR| apply aclient_range_above; lia]. }
-    split. { apply BASE_cb_A2. eapply (BASE_A2_alloc_q FI AI AMS PZ PZ_agree sp0 argv envp uid hw rnd TID VSP CEIL ESF HT so (usp0 + -208)); [unfold LO; lia| apply BASE_cb_A2; exact BA| exact AFR]. }
+    split. { apply BASE_cb_A2. eapply (BASE_A2_alloc_q FI AI AMS PZ PZ_agree sp0 argv envp inp mbase rnd TID VSP CEIL ESF HT so (usp0 + -208)); [unfold LO; lia| apply BASE_cb_A2; exact BA| exact AFR]. }
     destruct CJ as [X1 X2]. split; (eapply (apres_rw_cells FI AI); [exact AP| eassumption| eapply (aclient_range_static FI AI _ _ _ _ 0x5d5f40 0x5e5f80); [apply AMS; unfold a0_static; lia| cbn; lia| cbn; lia]]).
   Qed.
 
@@ -357,21 +358,21 @@ Section SEAMS.
   Qed.
 
   #[using="PZ_agree VSP CEIL ESF"] Lemma DMEM_emit : forall ap d so so' m m',
-    DMEM false ap d so m -> munch [(usp0 - 8388608, usp0 + -208); (0xaebb8, 0xaebb8 + 232); (0x607080, 0x607080 + 1024)] m m' -> wmono asegs m m' ->
-    mem_inv asegs m' -> stk asegs m' (usp0 - 8388608) (usp0 + -208) -> asan_env asegs m' -> stdout_file m' so' ->
+    DMEM false ap d so m -> munch [(usp0 - 6144512, usp0 + -208); (0xaebb8, 0xaebb8 + 232); (0x607080, 0x607080 + 1024)] m m' -> wmono asegs m m' ->
+    mem_inv asegs m' -> stk asegs m' (usp0 - 6144512) (usp0 + -208) -> asan_env asegs m' -> stdout_file m' so' ->
     DMEM false ap d so' m'.
   Proof.
     intros ap d so so' m m' (TF & FR & BA & CJ) MU WM MI' ST' ENV' SOF'. pose proof valid_sp_facts as SF. pose proof (sp_facts sp0 VSP CEIL) as SF'.
-    pose proof (IMGB_len47 sp0 argv envp uid hw rnd ESF) as IL47. pose proof alloc_ceiling_bounds as CB'.
+    pose proof (IMGB_len47 sp0 argv envp inp mbase rnd ESF) as IL47. pose proof alloc_ceiling_bounds as CB'.
     pose proof (gagree_on_of_munch _ _ _ MU WM) as AG.
-    assert (OUT : forall a, ((a < usp0 - 8388608 \/ usp0 - 208 <= a) /\ ~ (0xaebb8 <= a < 0xaebb8 + 232) /\ ~ (0x607080 <= a < 0x607080 + 1024)) ->
-                            (fun a0 : Z => outside [(usp0 - 8388608, usp0 + -208); (0xaebb8, 0xaebb8 + 232); (0x607080, 0x607080 + 1024)] a0) a).
+    assert (OUT : forall a, ((a < usp0 - 6144512 \/ usp0 - 208 <= a) /\ ~ (0xaebb8 <= a < 0xaebb8 + 232) /\ ~ (0x607080 <= a < 0x607080 + 1024)) ->
+                            (fun a0 : Z => outside [(usp0 - 6144512, usp0 + -208); (0xaebb8, 0xaebb8 + 232); (0x607080, 0x607080 + 1024)] a0) a).
     { intros a Ha. cbn. lia. }
     split. { unfold TRFRAME in *. eapply rw_cells_gagree; [exact AG| exact TF|]. intros a Ha. apply OUT. cbn in Ha. lia. }
     split. { unfold MFRAME in *. eapply rw_cells_gagree; [exact AG| exact FR|]. intros a Ha. apply OUT. cbn in Ha. lia. }
     split.
     { apply BASE_cb_A2. apply BASE_cb_A2 in BA.
-      eapply (BASE_A2_agree_so PZ PZ_agree sp0 argv envp uid hw rnd TID VSP CEIL ESF); [exact BA| exact AG| | exact WM| exact MI'| | | exact ENV'| exact SOF'].
+      eapply (BASE_A2_agree_so PZ PZ_agree sp0 argv envp inp mbase rnd TID VSP CEIL ESF); [exact BA| exact AG| | exact WM| exact MI'| | | exact ENV'| exact SOF'].
       - intros a Ha Hs. apply OUT. unfold base_addr2, base_addr, exitc_addr, stdout_addr, stderr_addr, stdin_addr, pz_band, sh, SHADOW_OFF, SH_HI in *.
         clear -Ha Hs SF IL47 CB'. Z.div_mod_to_equations. lia.
       - destruct BA as (ST & _). unfold LO in ST. destruct (stk_split asegs m _ (usp0 + -208) _ ST ltac:(lia)) as [_ SThi].
@@ -385,7 +386,7 @@ Section SEAMS.
     rw_cells asegs m' 0x5e5f54 [C1 (Z_to_bv 8 (Z.b2z cb'))] -> DMEM cb ap d so m -> DMEM cb' ap d so m'.
   Proof.
     intros cb cb' ap d so m m' MU WM MI' CB (TF & FR & BA & CJ). pose proof valid_sp_facts as SF. pose proof (sp_facts sp0 VSP CEIL) as SF'.
-    pose proof (IMGB_len47 sp0 argv envp uid hw rnd ESF) as IL47. pose proof alloc_ceiling_bounds as CB'.
+    pose proof (IMGB_len47 sp0 argv envp inp mbase rnd ESF) as IL47. pose proof alloc_ceiling_bounds as CB'.
     pose proof (gagree_on_of_munch _ _ _ MU WM) as AG.
     assert (OUT : forall a, (a < 0x5e5f54 \/ 0x5e5f55 <= a) -> (fun a0 : Z => outside [(0x5e5f54, 0x5e5f55)] a0) a).
     { intros a Ha. cbn. lia. }
@@ -442,7 +443,7 @@ Section SEAMS.
     eapply DST_cb; [exact MU| exact WM| exact MI| exact CB| exact SM].
   Qed.
 
-  #[using="AMS PZ_agree VSP CEIL ESF HT"] Lemma rat_parser_callA : forall ap so ms g, rat_parserA FI AI PZ sp0 argv envp uid hw rnd TID S4 S5 S6 S7 S8 S9 S10 S11 ap so ms g ->
+  #[using="AMS PZ_agree VSP CEIL ESF HT"] Lemma rat_parser_callA : forall ap so ms g, rat_parserA FI AI PZ sp0 argv envp inp mbase rnd TID S4 S5 S6 S7 S8 S9 S10 S11 ap so ms g ->
     exists d, evt asegs (fun ms' => rat_callA (ap_calls ap) false ap d so ms' g) ms /\ so = stdout_init.
   Proof.
     intros ap so ms g (x1 & t0 & t1 & t2 & a0 & a1 & a2 & a3 & a4 & a5 & a6 & a7 & t3 & t4 & t5 & t6 & F & fc & mm & A & cap & L & sc & AL & OW & DATA & junk & mpad & pad & errv & LB & s & st & kb
@@ -491,24 +492,24 @@ Section SEAMS.
     implM asegs (stdout_vprintf aget_so aset_so pieces_emit) so (fun _ so' ms' => rat_emit_retA k 0 fl ap d so' ms' g) ms.
   Proof.
     intros k fl ap d so ms g (t0 & t1 & t2 & a2 & a3 & a4 & a5 & a6 & a7 & t3 & t4 & t5 & t6 & F & fc & m & s & st & LB & -> & FRM & Eg & HK & HRC & SM).
-    pose proof valid_sp_facts as SF. pose proof (sp_facts sp0 VSP CEIL) as SF'. pose proof (IMGB_len47 sp0 argv envp uid hw rnd ESF) as IL47. pose proof alloc_ceiling_bounds as CB'.
+    pose proof valid_sp_facts as SF. pose proof (sp_facts sp0 VSP CEIL) as SF'. pose proof (IMGB_len47 sp0 argv envp inp mbase rnd ESF) as IL47. pose proof alloc_ceiling_bounds as CB'.
     destruct SM as ((OK & DM & DB & DBL & HP & RF & [errv ERR] & ST) & DBU).
     pose proof DM as (TF & FR & BA & CJ).
     pose proof BA as (STm & MI & EX & MC & IMG & SE & SOF & RSS & SI & SZ & ENV & GSH & HPZ & CRT). destruct MC as (G28 & GSE & SSP).
     eapply implM_mono.
-    { eapply EMIT with (lo := usp0 - 8388608) (canary := guard_word); rewrite ?unsigned_lit by lia;
+    { eapply EMIT with (lo := usp0 - 6144512) (canary := guard_word); rewrite ?unsigned_lit by lia;
         first [ exact SOF | reflexivity | exact ST | unfold EMIT_DEPTH; lia | unfold GLOBALS_TOP; lia | lia | exact SSP | exact MI | exact FRM | exact ENV
               | clear -SF; Z.div_mod_to_equations; lia
-              | unfold RO_LO, RO_SZ; apply (SHZ_ro sp0 argv envp uid hw rnd); exact SZ
-              | apply (SHZ_stdout_buf sp0 argv envp uid hw rnd); exact SZ
-              | apply (SHZ_stack sp0 argv envp uid hw rnd); [exact SZ | lia | lia | lia | lia] ]. }
+              | unfold RO_LO, RO_SZ; apply (SHZ_ro sp0 argv envp inp mbase rnd); exact SZ
+              | apply (SHZ_stdout_buf sp0 argv envp inp mbase rnd); exact SZ
+              | apply (SHZ_stack sp0 argv envp inp mbase rnd); [exact SZ | lia | lia | lia | lia] ]. }
     cbv beta. intros [] so' ms' PO.
     destruct PO as (u0 & u1 & u2 & b0 & b1 & b2 & b3 & b4 & b5 & b6 & b7 & u3 & u4 & u5 & u6 & Ft & fc' & m' & -> & MU & WM & MI' & FRM' & FEQ & ST' & SOF' & SSP' & ENV').
     rewrite !unsigned_lit in MU by lia. rewrite !unsigned_lit in ST' by lia.
     pose proof (gagree_on_of_munch _ _ _ MU WM) as AG.
     pose proof OK as (_ & _ & _ & _ & LEN & _ & _ & _ & BR & OWN).
-    assert (OUT : forall a, ((a < usp0 - 8388608 \/ usp0 - 208 <= a) /\ ~ (0xaebb8 <= a < 0xaebb8 + 232) /\ ~ (0x607080 <= a < 0x607080 + 1024)) ->
-                            (fun a0 : Z => outside [(usp0 - 8388608, usp0 + -208); (0xaebb8, 0xaebb8 + 232); (0x607080, 0x607080 + 1024)] a0) a).
+    assert (OUT : forall a, ((a < usp0 - 6144512 \/ usp0 - 208 <= a) /\ ~ (0xaebb8 <= a < 0xaebb8 + 232) /\ ~ (0x607080 <= a < 0x607080 + 1024)) ->
+                            (fun a0 : Z => outside [(usp0 - 6144512, usp0 + -208); (0xaebb8, 0xaebb8 + 232); (0x607080, 0x607080 + 1024)] a0) a).
     { intros a Ha. cbn. lia. }
     unfold rat_emit_retA. do 18 eexists. exists m', s, st, LB.
     split; [replace (ret_pc (Z_to_bv 64 0x86420)) with (Z_to_bv 64 0x86420) by (symmetry; rpc); reflexivity|].

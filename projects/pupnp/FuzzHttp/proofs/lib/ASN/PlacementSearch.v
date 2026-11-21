@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the NULL-hint mmap placement is the model's linux_place). *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State.
+From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement.
 Import ListNotations.
 Open Scope bv_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
-
 Definition no_higher_fit (maps : list (word * word)) (aZ nZ baseZ : Z)
     : Prop :=
   forall g : Z,
@@ -14,25 +15,21 @@ Definition no_higher_fit (maps : list (word * word)) (aZ nZ baseZ : Z)
     (aZ + nZ <= g)%Z ->
     (g + nZ <= baseZ)%Z ->
     region_free maps (Z_to_bv 64 g) (Z_to_bv 64 nZ) = false.
-
 Definition fit_candidates (maps : list (word * word)) (aZ nZ : Z)
     : list Z :=
   (aZ + nZ)%Z
     :: map (fun p => page_round_up_Z (bv_unsigned (fst p)
                                       + bv_unsigned (snd p))%Z)
            maps.
-
 Definition higher_fit_b (maps : list (word * word)) (aZ nZ baseZ : Z)
     : bool :=
   existsb (fun g => (g mod page_size =? 0)%Z
                     && (aZ + nZ <=? g)%Z && (g + nZ <=? baseZ)%Z
                     && region_free maps (Z_to_bv 64 g) (Z_to_bv 64 nZ))
           (fit_candidates maps aZ nZ).
-
 Lemma page_round_up_Z_aligned : forall z,
   (page_round_up_Z z mod page_size = 0)%Z.
 Proof. intro z. unfold page_round_up_Z. apply Z_mod_mult. Qed.
-
 Lemma page_round_up_Z_ge : forall z, (z <= page_round_up_Z z)%Z.
 Proof.
   intro z. unfold page_round_up_Z, page_size.
@@ -40,7 +37,6 @@ Proof.
   pose proof (Z.mod_pos_bound (z + 4096 - 1) 4096 ltac:(lia)).
   lia.
 Qed.
-
 Lemma page_round_up_Z_le : forall z b,
   (z <= b)%Z -> (b mod page_size = 0)%Z -> (page_round_up_Z z <= b)%Z.
 Proof.
@@ -51,13 +47,11 @@ Proof.
   apply Z.le_trans with (m := (b / 4096 * 4096)%Z); [|lia].
   apply Z.mul_le_mono_nonneg_r; lia.
 Qed.
-
 Lemma fold_max_ge_seed : forall l s, (s <= fold_left Z.max l s)%Z.
 Proof.
   induction l as [|x l IH]; intro s; cbn; [lia|].
   pose proof (IH (Z.max s x)). lia.
 Qed.
-
 Lemma fold_max_ge_in : forall l s x,
   In x l -> (x <= fold_left Z.max l s)%Z.
 Proof.
@@ -66,7 +60,6 @@ Proof.
   - pose proof (fold_max_ge_seed l (Z.max s x)). lia.
   - apply IH; assumption.
 Qed.
-
 Lemma fold_max_le : forall l s b,
   (s <= b)%Z -> (forall x, In x l -> (x <= b)%Z) ->
   (fold_left Z.max l s <= b)%Z.
@@ -76,7 +69,6 @@ Proof.
   - pose proof (Hl y ltac:(now left)). lia.
   - intros x Hx. apply Hl. now right.
 Qed.
-
 Lemma fold_max_in_or_seed : forall l s,
   fold_left Z.max l s = s \/ In (fold_left Z.max l s) l.
 Proof.
@@ -86,7 +78,6 @@ Proof.
       [right; now left | now left].
   - right. now right.
 Qed.
-
 Lemma higher_fit_b_complete : forall maps aZ nZ baseZ g,
   (0 <= aZ + nZ)%Z -> (0 < nZ)%Z ->
   (aZ mod page_size = 0)%Z -> (nZ mod page_size = 0)%Z ->
@@ -97,7 +88,6 @@ Lemma higher_fit_b_complete : forall maps aZ nZ baseZ g,
   region_free maps (Z_to_bv 64 g) (Z_to_bv 64 nZ) = true ->
   higher_fit_b maps aZ nZ baseZ = true.
 Proof.
-
   intros maps aZ nZ baseZ g HaPos HnPos HaAl HnAl Hbase HgAl Hglo Hghi
     Hgfree.
   assert (Hmod : two_pow_64 = bv_modulus 64) by reflexivity.
@@ -167,7 +157,6 @@ Proof.
   rewrite (proj2 (Z.leb_le _ _) Hg'base).
   reflexivity.
 Qed.
-
 Lemma higher_fit_b_sound : forall maps aZ nZ baseZ,
   higher_fit_b maps aZ nZ baseZ = true ->
   exists g, (g mod page_size = 0)%Z /\ (aZ + nZ <= g)%Z
@@ -185,7 +174,6 @@ Proof.
   - now apply Z.leb_le.
   - exact Hfree.
 Qed.
-
 Lemma no_higher_fit_iff : forall maps aZ nZ baseZ,
   (0 <= aZ)%Z -> (0 < nZ)%Z ->
   (aZ mod page_size = 0)%Z -> (nZ mod page_size = 0)%Z ->
@@ -206,22 +194,18 @@ Proof.
     exfalso. apply higher_fit_b_sound in Hf as (g & HgAl & Hglo & Hghi & Hfree).
     rewrite (H g HgAl Hglo Hghi) in Hfree. discriminate.
 Qed.
-
 Definition search_candidates (maps : list (word * word)) (loZ : Z)
     : list Z :=
   loZ :: map (fun p => page_round_up_Z (bv_unsigned (fst p)
                                         + bv_unsigned (snd p))%Z)
              maps.
-
 Definition place_fits (maps : list (word * word)) (loZ hiZ nZ : Z) (g : Z)
     : bool :=
   (g mod page_size =? 0)%Z && (loZ <=? g)%Z && (g + nZ <=? hiZ)%Z
   && region_free maps (Z_to_bv 64 g) (Z_to_bv 64 nZ).
-
 Definition place (maps : list (word * word)) (loZ hiZ nZ : Z)
     : option Z :=
   find (place_fits maps loZ hiZ nZ) (search_candidates maps loZ).
-
 Lemma place_sound : forall maps loZ hiZ nZ a,
   place maps loZ hiZ nZ = Some a ->
   (a mod page_size = 0)%Z /\ (loZ <= a)%Z /\ (a + nZ <= hiZ)%Z
@@ -239,7 +223,6 @@ Proof.
   - now apply Z.leb_le.
   - exact Hfree.
 Qed.
-
 Lemma existsb_find : forall {A} (f : A -> bool) l,
   existsb f l = true -> exists x, find f l = Some x.
 Proof.
@@ -247,7 +230,6 @@ Proof.
   destruct (f y) eqn:Hy; [intros _; now exists y|].
   cbn. exact IH.
 Qed.
-
 Lemma higher_fit_b_as_place : forall maps loZ hiZ nZ,
   higher_fit_b maps (loZ - nZ) nZ hiZ
   = existsb (place_fits maps loZ hiZ nZ) (search_candidates maps loZ).
@@ -257,7 +239,6 @@ Proof.
   replace (loZ - nZ + nZ)%Z with loZ by lia.
   reflexivity.
 Qed.
-
 Lemma place_complete : forall maps loZ hiZ nZ g,
   (0 <= loZ)%Z -> (0 < nZ)%Z ->
   (loZ mod page_size = 0)%Z -> (nZ mod page_size = 0)%Z ->
@@ -279,10 +260,8 @@ Proof.
   - exact Hghi.
   - exact Hfree.
 Qed.
-
 Definition place_in_model (h : VmMaps) (nZ : Z) : option Z :=
   place (vm_reserved h ++ vm_maps h) page_size (alloc_top h) nZ.
-
 Lemma place_in_model_admissible : forall h nZ a,
   (0 <= nZ)%Z ->
   place_in_model h nZ = Some a ->
@@ -302,11 +281,9 @@ Proof.
   rewrite Hrt. repeat split; try assumption.
   unfold page_size in Hlo. lia.
 Qed.
-
 Example place_accepts_a_negative_length :
   place_in_model (mkVmMaps [] [] 0 0 0) (-4096) = Some 4096%Z.
 Proof. vm_compute. reflexivity. Qed.
-
 Lemma place_in_model_complete : forall h nZ g,
   (0 < nZ)%Z -> (nZ mod page_size = 0)%Z ->
   (g mod page_size = 0)%Z -> (page_size <= g)%Z ->
@@ -322,16 +299,39 @@ Proof.
   - unfold page_size. reflexivity.
   - exact (alloc_top_lt h).
 Qed.
-
+Definition place_in_model_linux (h : VmMaps) (nZ : Z) : option Z :=
+  place (vm_reserved h ++ vm_maps h) task_unmapped_base (alloc_top h) nZ.
+Lemma place_in_model_linux_grants : forall h thp hint nZ g,
+  (0 < nZ)%Z -> (nZ mod page_size = 0)%Z ->
+  place_in_model_linux h nZ = Some g ->
+  exists a, linux_place h thp hint nZ a.
+Proof.
+  intros h thp hint nZ g HnPos HnAl H. unfold place_in_model_linux in H.
+  destruct (place_sound _ _ _ _ _ H) as (Hal & Hlo & Hhi & Hfree).
+  apply (linux_place_exists h thp hint nZ HnPos HnAl).
+  exists g. right. unfold gap_fits. repeat split; assumption.
+Qed.
+Lemma place_in_model_linux_complete : forall h nZ g,
+  (0 < nZ)%Z -> (nZ mod page_size = 0)%Z ->
+  (g mod page_size = 0)%Z -> (task_unmapped_base <= g)%Z ->
+  (g + nZ <= alloc_top h)%Z ->
+  region_free (vm_reserved h ++ vm_maps h)
+    (Z_to_bv 64 g) (Z_to_bv 64 nZ) = true ->
+  exists a, place_in_model_linux h nZ = Some a.
+Proof.
+  intros h nZ g Hn Hnal HgAl Hglo Hghi Hfree.
+  unfold place_in_model_linux.
+  apply (place_complete _ _ _ _ g); try assumption.
+  - unfold task_unmapped_base. lia.
+  - unfold task_unmapped_base, page_size. reflexivity.
+  - exact (alloc_top_lt h).
+Qed.
 Definition witness_ledger : list (word * word) :=
   [(Z_to_bv 64 4096, Z_to_bv 64 8192)].
-
 Definition demo_top : Z := alloc_top (mkVmMaps [] [] 0 0 0).
-
 Example place_skips_the_occupied_floor :
   place witness_ledger page_size demo_top 4096 = Some 12288%Z.
 Proof. vm_compute. reflexivity. Qed.
-
 Example place_complete_premises_are_satisfiable :
   (0 <= page_size)%Z /\ (0 < 4096)%Z
   /\ (page_size mod page_size = 0)%Z /\ (4096 mod page_size = 0)%Z
@@ -343,10 +343,8 @@ Proof.
   unfold page_size, demo_top, two_pow_64. rewrite alloc_top_mkVmMaps.
   repeat split; try (vm_compute; reflexivity); try lia.
 Qed.
-
 Definition full_ledger : list (word * word) :=
   [(Z_to_bv 64 4096, Z_to_bv 64 (demo_top - 4096))].
-
 Example place_finds_nothing_when_full :
   place full_ledger page_size demo_top 4096 = None.
 Proof. vm_compute. reflexivity. Qed.

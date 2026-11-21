@@ -8,11 +8,12 @@
    ROUTE (b), STEP 3 (CONVERSION.md (sha256 1015972e02a9; internal record); the RIG_x round): Section c is the cx file's
    generic Section (its hypothesis list, verbatim), and pb_relay_instance_gone_x proves W_contract_x.v rig_spec_x over
    any allocator relation ARx with its laws, the program statics PST and the room record RP, at the stack budget
-   RIG_STK_x of W8's DRAIN_STK_x ruling (commit b9052387bcb).
+   RIG_STK_x of W8's DRAIN_STK_x ruling.
    This file proves ONLY the generic theorem (a Theorem Labs lane's ruling, option 1).  The AR theorem pb_relay_instance_gone
    (rig_spec) and its re-derivation Section cAR are deleted: the x -> AR bridge W_contract_x.rig_spec_x_AR0 is false at
    RIG_STK_x = RIG_STK + 128 and was deleted with that ruling, and no file outside this family applied the AR theorem
    (the AR arms of LLVMFuzzerTestOneInput take rig_spec as a hypothesis). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -127,7 +128,7 @@ Hypothesis HLIT21 : glit_at_x ARx 21 (RelayModel.K_GESTURE ++ [0]).
 (* the two literals lie in .rodata below the GOT word FR_GOT_GUARD = 0x9e658, |"%s %d "| + 1 = 7 and
    |"param_gesture"| + 1 + 8 = 22 bytes: the location premises M1 / M3 of the narrowed asnprintf_realizes_x
    (W_sites_x.v), which this abstract placement does not fix.  PB_fr decides it by vm_compute: SnpNarrowSites.v
-   HLITGOT_PB_fr, whose statement is this text at PI := PB_fr (commit 2f48fc47493's hypothesis, carried here). *)
+   HLITGOT_PB_fr, whose statement is this text at PI := PB_fr (a commit's hypothesis, carried here). *)
 Hypothesis HLITGOT : VAL (A_OBJ 20) + 7 <= FR_GOT_GUARD /\ VAL (A_OBJ 21) + 22 <= FR_GOT_GUARD.
 Hypothesis HLIT31 : glit_at_x ARx 31 ([32; 101; 110; 100] ++ [0]).
 Hypothesis PSTR : forall a, in_rom SEGS a -> ~ Exists (in_zr a) PST.
@@ -149,7 +150,7 @@ apply (rig_all B PST ARx MT RP MMAX RG CTX_AFREE).
 - eapply W_rig_tail.rig_tail; eassumption.
 Qed.
 (* ---- route R (RULE-SHAPES.md (sha256 2e856ce788dd; internal record) sec 0): pb_relay_instance_gone_x at a world relation R, concluding a Theorem Labs lane's
-   rig_spec_xR (W_contract_xR_relay.v, 338e88f16a16) exactly.  The Section's hypotheses are W_relay_instance_gone_cx.v
+   rig_spec_xR (W_contract_xR_relay.v) exactly.  The Section's hypotheses are W_relay_instance_gone_cx.v
    Section wR's (the R laws, RO / RO_ARx, AFREE_R, DRAIN_R, GE_R), which the segment walks at R take.  The
    composition is W_rig_all.v rig_all_xR, applied, as the strict proof above, to the seven segment walks at R:
    W_rig_pro.v rig_pro_xR, W_rig_top.v rig_top_proof_xR, W_rig_key.v rig_key_proof_xR / rig_keys_proof_xR,

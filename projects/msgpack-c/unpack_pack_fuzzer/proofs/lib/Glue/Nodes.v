@@ -1,12 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a syscall return clears the LR/SC reservation: svc_ret, svc_post_eq and st_ok_svc_return; node_set_tid re-proved over the model's alloc_mark_sysnos list; fx_node_set_tid carries plain_mf's channel-reader fact; rz_silent_all takes RomBase.sys_rob, proved at the set_tid_address node by RomBase.sys_rob_memfree; imports RomBase). *)
 From Stdlib Require Import ZArith Bool List Lia.
 From Stdlib Require Import PrimInt63 Uint63.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType RiscvSemantics Fs State Monad Specs Run.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Common Require Import ShapeAlg ShapeAcc.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Scfg Require Import Fcfg.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.AS Require RomBase.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.FX Require Import
   W64 W64Proofs Val IMap Mem Instr State Step Plan ValProofs StepSoundBase StepSound PlanSound Acc.
 Unset Nia Cache. Unset Nra Cache.
@@ -160,13 +162,13 @@ Lemma st_ok_model : forall E T ms mo mo',
 Proof. intros E T ms mo mo' [] Hmi Hops. split; assumption. Qed.
 
 Lemma rz_silent_all : forall c (I : Type) (nx : I -> config) (i0 : I) (K : TSet),
-  node_ok segs c I (fun _ => []) nx ->
+  node_ok segs c I (fun _ => []) nx -> RomBase.sys_rob segs c ->
   (forall i, realizes segs (nx i) K) ->
   realizes segs c K.
 Proof.
-  intros c I nx i0 K Hnode Hk.
+  intros c I nx i0 K Hnode Hrob Hk.
   apply (rz_conseq segs c (t_alt (fun _ : I => t_emit [] K))).
-  - apply (rz_node segs c I (fun _ => []) nx (fun _ => K) i0 Hnode). exact Hk.
+  - apply (rz_node segs c I (fun _ => []) nx (fun _ => K) i0 Hnode Hrob). exact Hk.
   - assert (HK0 : K []) by (eapply realizes_nonempty; exact (Hk i0)).
     intros tr. split.
     + intros [i Hi]. exact (proj1 (t_emit_nil_eq K HK0 tr) Hi).
@@ -350,14 +352,15 @@ Qed.
 End EnvChange.
 
 Definition svc_ret (T : sstate) (v : sv) (fs' : list fact) (n' : int) : sstate :=
-  SS (PrimInt63.add (s_pc T) 4%uint63) (rf_set (s_rf T) X10 v) (s_ff T) (s_resv T) (s_regs T)
+  (* LPS 08b1429: a syscall return clears the LR/SC reservation ([advance_past_svc]). *)
+  SS (PrimInt63.add (s_pc T) 4%uint63) (rf_set (s_rf T) X10 v) (s_ff T) RNone (s_regs T)
      (fs' ++ s_facts T) (s_ops T) (s_priv T) n'.
 
 Lemma reg10 : (10%bv : bv 5) = reg_of_r5 X10.
 Proof. apply bv_eq. reflexivity. Qed.
 
 Lemma svc_post_eq : forall ms x8 ret,
-  svc_post ms x8 ret = ms_upd ms (rset (reg_of_r5 X10) ret (with_pc (ms_pc_val ms + Z_to_bv 64 4)%bv (core_of ms))) (ms_mem ms).
+  svc_post ms x8 ret = ms_upd ms (rset (reg_of_r5 X10) ret (with_resv None (with_pc (ms_pc_val ms + Z_to_bv 64 4)%bv (core_of ms)))) (ms_mem ms).
 Proof. intros. unfold svc_post, advance_past_svc, set_gpr0, set_reg. rewrite reg10. reflexivity. Qed.
 
 Section WithSegs2.
@@ -375,10 +378,13 @@ Lemma st_ok_svc_return : forall E T ms model model' x8 ret v fs' n',
 Proof.
   intros E T ms model model' x8 ret v fs' n' HS Hpc Hv Hfs Hmf Hops.
   pose proof (st_ok_reg_pc segs OPS E T ms model X10 v ret (PrimInt63.add (s_pc T) 4%uint63) HS Hv) as H1.
-  rewrite (pc4_ok (s_pc T) Hpc), <- (so_pc _ _ _ _ _ _ HS) in H1. rewrite <- (svc_post_eq ms x8 ret) in H1.
+  rewrite (pc4_ok (s_pc T) Hpc), <- (so_pc _ _ _ _ _ _ HS) in H1.
+  rewrite (svc_post_eq ms x8 ret).
   destruct H1 as [Hpc' Hx0 Hregs Hfregs Hsvc Hresv Hfcsr Hrom Hz Hbst Hreg Hdisj Hpub Hfacts Hops' Hapart Hmf0 Hcov0].
   split; cbn [s_pc s_rf s_ff s_resv s_regs s_facts s_ops s_priv svc_ret setpc setr] in *; try assumption.
-  unfold facts_hold. apply Forall_app. split; assumption.
+  all: try (unfold facts_hold; apply Forall_app; split; assumption).
+  (* LPS 08b1429: the syscall return clears the reservation on both sides *)
+  all: cbn; reflexivity.
 Qed.
 
 End WithSegs2.
@@ -444,7 +450,7 @@ Proof.
   assert (Hlazy' : forall t, m_vm_lazy (with_tid t model) = []) by (intros t; exact Hlazy).
   apply two_sided_lift.
   { apply (step_nonspur_nonalloc segs ms model x8 Hsvc). rewrite Hno. unfold alloc_mark_sysnos.
-    intros [H|[H|[H|[H|[]]]]]; discriminate H. }
+    intros Hin; repeat (destruct Hin as [H|Hin]; [discriminate H|]); destruct Hin. }
   split.
   - intros [t Ht]. cbn [proj1_sig].
     rewrite <- (apply_effect_ret_only ms t).
@@ -529,9 +535,12 @@ Proof.
   assert (Hx8 : den E (getr T X17) = Z_to_bv 64 96) by (rewrite H17; reflexivity).
   assert (H96 : bv_unsigned (den E (getr T X17)) = 96) by (rewrite Hx8; reflexivity).
   eapply rz_pend; [exact HS | exact Hat |].
-  pose proof (plain_mf OPS _ PL (so_mf _ _ _ _ _ _ HS)) as [Hh Hlazy].
+  pose proof (plain_mf OPS _ PL (so_mf _ _ _ _ _ _ HS)) as [Hh Hlazy Hrdr].
   apply (rz_silent_all segs _ tid_I _ (exist _ (Z_to_bv 64 1) tid1_ok) K
            (node_set_tid (pend ms (den E (getr T X17))) model _ Hh Hlazy eq_refl H96 Htid)).
+  { (* LPS 727298f3: set_tid_address reads no memory ([RomBase.memfree_96]) *)
+    apply (RomBase.sys_rob_memfree segs (pend ms (den E (getr T X17))) model (den E (getr T X17)) eq_refl).
+    rewrite H96. exact RomBase.memfree_96. }
   intros [t Ht]. cbn [proj1_sig].
   change (advance_past_svc (set_gpr0 (pend ms (den E (getr T X17))) t)) with (svc_post ms (den E (getr T X17)) t).
   apply (Hk (env_set E (s_next T) t) _ _ t (env_set_ext E (s_next T) t)); [|exact Ht|reflexivity].
@@ -543,7 +552,7 @@ Proof.
   - cbn [den]. rewrite env_set_same, wbv_wzero. apply bv_add_0_r. reflexivity.
   - constructor; [|constructor]. cbn [fact_holds]. rewrite env_set_same, !wlit_ok.
     change (to_Z 1%uint63) with 1. change (to_Z tid_max) with 4194303. unfold PID_MAX_ENVELOPE in Ht. lia.
-  - apply (plain_minv OPS _ PL). split; [rewrite m_halted_with_tid; exact Hh | exact Hlazy].
+  - apply (plain_minv OPS _ PL). split; [rewrite m_halted_with_tid; exact Hh | exact Hlazy | exact Hrdr].
   - apply Hpure. exact (so_ops _ _ _ _ _ _ HS').
 Qed.
 

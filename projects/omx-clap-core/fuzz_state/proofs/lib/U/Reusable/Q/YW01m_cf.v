@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: cut-free (knode_cf) twins of Q/YW01.v's knode_mremap and knode_mremap_cases. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's munmap (errno arm, cut, allocation mark); mremap's new answers). *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -13,6 +14,7 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.U.Reusable Require Import YM0
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.U.Reusable.R Require Import Cfg.
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.U.Reusable Require Import YM06_cf YO0d_cf YN02_cf.
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.U.Reusable.Q Require Import YW01.
+From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YK13.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Local Open Scope Z_scope.
@@ -20,15 +22,8 @@ Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 
 (* With empty lazy and materialized ledgers, mremap's two budget readings (the post-state of
    the in-place resolution and the destination-free move charge) are each bounded by the
-   live bytes of vm_maps plus the new length. *)
-Lemma kcfm_live_bytes_filter_le : forall f l, State.live_bytes (List.filter f l) <= State.live_bytes l.
-Proof.
-  intros f l. induction l as [|[x sz] r IH]; cbn [List.filter State.live_bytes]; [lia|].
-  pose proof (bv_unsigned_in_range 64 sz). destruct (f (x, sz)); cbn [State.live_bytes]; lia.
-Qed.
-
-Lemma kcfm_map_remove_le : forall l a, State.live_bytes (map_remove l a) <= State.live_bytes l.
-Proof. intros l a. unfold map_remove. apply kcfm_live_bytes_filter_le. Qed.
+   live bytes of vm_maps plus the new length. Source-span subtraction preserves this
+   bound without assuming that the source occupies an entire mapping entry. *)
 
 Lemma kcfm_next_vml : forall m old old_n dst new_n,
   vm_limit (m_vmmaps (mremap_model_next m old old_n dst new_n)) = vm_limit (m_vmmaps m).
@@ -40,10 +35,11 @@ Lemma kcfm_next_backing : forall m old old_n dst new_n,
   <= bv_unsigned new_n + State.live_bytes (vm_maps (m_vmmaps m)).
 Proof.
   intros m old old_n dst new_n Hl Hm. rewrite (mremap_next_with_vmmaps m old old_n dst new_n Hl Hm).
-  pose proof (kcf_backing_le_maps (with_vmmaps (mremap_maps_next (m_vmmaps m) old dst new_n) m) Hl Hm) as Hb.
-  assert (E : State.live_bytes (vm_maps (m_vmmaps (with_vmmaps (mremap_maps_next (m_vmmaps m) old dst new_n) m)))
-              = bv_unsigned new_n + State.live_bytes (map_remove (vm_maps (m_vmmaps m)) old)) by reflexivity.
-  pose proof (kcfm_map_remove_le (vm_maps (m_vmmaps m)) old). lia.
+  pose proof (kcf_backing_le_maps (with_vmmaps (mremap_maps_next (m_vmmaps m) old old_n dst new_n) m) Hl Hm) as Hb.
+  assert (E : State.live_bytes (vm_maps (m_vmmaps (with_vmmaps (mremap_maps_next (m_vmmaps m) old old_n dst new_n) m)))
+              = bv_unsigned new_n + State.live_bytes (maps_subtract (vm_maps (m_vmmaps m)) (bv_unsigned old) (bv_unsigned old + bv_unsigned old_n))) by reflexivity.
+  pose proof (u64_range old_n).
+  pose proof (YK13.live_bytes_maps_subtract_le (vm_maps (m_vmmaps m)) (bv_unsigned old) (bv_unsigned old + bv_unsigned old_n) ltac:(lia)). lia.
 Qed.
 
 Lemma kcfm_move_charge_le : forall m old old_n new_n,
@@ -52,8 +48,9 @@ Lemma kcfm_move_charge_le : forall m old old_n new_n,
 Proof.
   intros m old old_n new_n Hl Hm. unfold mremap_move_charge, mremap_source_lazy_b. cbv zeta. rewrite Hl, Hm.
   cbn [map_contains existsb maps_subtract maps_subtract_all List.filter List.length Nat.add Z.of_nat Z.mul].
-  pose proof (live_bytes_maps_subtract_all_le (vm_noaccess (m_vmmaps m)) (map_remove (vm_maps (m_vmmaps m)) old)).
-  pose proof (kcfm_map_remove_le (vm_maps (m_vmmaps m)) old). lia.
+  pose proof (live_bytes_maps_subtract_all_le (vm_noaccess (m_vmmaps m)) (maps_subtract (vm_maps (m_vmmaps m)) (bv_unsigned old) (bv_unsigned old + bv_unsigned old_n))).
+  pose proof (u64_range old_n).
+  pose proof (YK13.live_bytes_maps_subtract_le (vm_maps (m_vmmaps m)) (bv_unsigned old) (bv_unsigned old + bv_unsigned old_n) ltac:(lia)). lia.
 Qed.
 
 Section b.
@@ -100,7 +97,8 @@ split; [|split].
 - apply (kcf_vml_node segs _ _ _ _ (node_mremap segs regs pc mem rom model Hh HA)).
   intros [[eff m'] [Hk Hns]]. unfold vml, mremap_nx. cbn [proj1_sig fst snd cfg_model].
   destruct (mremap_ok_cases _ _ _ model eff m' (ma_neq _ _ HA) Hk)
-  as [(e & _ & _ & ->) | (_ & [(_ & _ & ->) | [(_ & _ & _ & ->) | (dst & _ & _ & _ & _ & ->)]])];
+  as [(_ & _ & ->) | [(e & _ & _ & ->) |
+  (_ & [(_ & _ & ->) | [(_ & _ & _ & ->) | (dst & _ & _ & _ & _ & ->)]])]];
   reflexivity.
 - cbn [cfg_ms pend_at]. discriminate.
 Qed.
@@ -108,19 +106,22 @@ Qed.
 Lemma knode_cf_mremap : forall regs pc mem rom model snap (r : nat) (ol nl : Z) (Kont : Z -> config -> Prop),
 m_halted model = None ->
 mremap_args regs model ->
+(TASK_SIZE < bv_unsigned (getr regs 12) ->
+Kont 0 (mkCfg (mkst (regupd regs 10 (errno_ret EINVAL)) (v_addi pc 4) mem rom) model)) ->
 (forall e, In e mremap_errnos ->
 Kont 0 (mkCfg (mkst (regupd regs 10 (errno_ret e)) (v_addi pc 4) mem rom) model)) ->
 (forall eff m',
 mremap_chk_body (getr regs 10) (getr regs 11) (getr regs 12) model eff = CheckOk m' [] ->
 errno_ret_in mremap_errnos (eff_ret eff) = false ->
+bv_unsigned (getr regs 12) <= TASK_SIZE ->
 Kont 1 (mkCfg (mkst (regupd regs 10 (eff_ret eff)) (v_addi pc 4) (effmem mem eff) rom) m')) ->
 m_vm_materialized model = [] ->
 State.live_bytes (vm_maps (m_vmmaps model)) <= live_bytes snap ->
 bv_unsigned (getr regs 12) <= nl ->
 knode_cf segs (mkCfg (pend_at regs pc mem rom) model) (KMremap r ol nl) snap Kont.
 Proof.
-intros regs pc mem rom model snap r ol nl Kont Hh HA HK0 HK1 Hmat Hlb Hnl.
-split; [exact (knode_mremap segs regs pc mem rom model snap r ol nl Kont Hh HA HK0 HK1)|].
+intros regs pc mem rom model snap r ol nl Kont Hh HA HKev HK0 HK1 Hmat Hlb Hnl.
+split; [exact (knode_mremap segs regs pc mem rom model snap r ol nl Kont Hh HA HKev HK0 HK1)|].
 exact (kcfm_mremap_rest regs pc mem rom model snap r ol nl Hh HA Hmat Hlb Hnl).
 Qed.
 
@@ -128,12 +129,15 @@ Lemma knode_cf_mremap_cases : forall regs pc mem rom model snap (r : nat) (ol nl
 m_halted model = None ->
 mremap_args regs model ->
 let old := getr regs 10 in let old_n := getr regs 11 in let new_n := getr regs 12 in
+(TASK_SIZE < bv_unsigned new_n ->
+Kont 0 (mkCfg (mkst (regupd regs 10 (errno_ret EINVAL)) (v_addi pc 4) mem rom) model)) ->
 (forall e, In e mremap_errnos ->
 Kont 0 (mkCfg (mkst (regupd regs 10 (errno_ret e)) (v_addi pc 4) mem rom) model)) ->
 (forall mem',
 mremap_post_mem mem mem' (bv_unsigned old) (bv_unsigned old_n) (bv_unsigned old) (bv_unsigned new_n) ->
 bv_unsigned old + bv_unsigned new_n <= alloc_top (m_vmmaps model) ->
-region_free (vm_reserved (m_vmmaps model) ++ map_remove (vm_maps (m_vmmaps model)) old) old new_n = true
+region_free (vm_reserved (m_vmmaps model) ++ maps_subtract (vm_maps (m_vmmaps model)) (bv_unsigned old)
+  (bv_unsigned old + bv_unsigned old_n)) old new_n = true
 \/ bv_unsigned new_n < bv_unsigned old_n ->
 Kont 1 (mkCfg (mkst (regupd regs 10 old) (v_addi pc 4) mem' rom)
 (mremap_model_next model old old_n old new_n))) ->
@@ -148,8 +152,8 @@ State.live_bytes (vm_maps (m_vmmaps model)) <= live_bytes snap ->
 bv_unsigned (getr regs 12) <= nl ->
 knode_cf segs (mkCfg (pend_at regs pc mem rom) model) (KMremap r ol nl) snap Kont.
 Proof.
-intros regs pc mem rom model snap r ol nl Kont Hh HA old old_n new_n HK0 HKin HKmv Hmat Hlb Hnl.
-split; [exact (knode_mremap_cases segs regs pc mem rom model snap r ol nl Kont Hh HA HK0 HKin HKmv)|].
+intros regs pc mem rom model snap r ol nl Kont Hh HA old old_n new_n HKev HK0 HKin HKmv Hmat Hlb Hnl.
+split; [exact (knode_mremap_cases segs regs pc mem rom model snap r ol nl Kont Hh HA HKev HK0 HKin HKmv)|].
 exact (kcfm_mremap_rest regs pc mem rom model snap r ol nl Hh HA Hmat Hlb Hnl).
 Qed.
 End b.

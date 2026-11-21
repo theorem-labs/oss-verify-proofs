@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the vvar arm of loads, the vDSO arm of fetch_failure, and RomBase.sys_rob at a walk's instruction step. *)
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -32,6 +33,7 @@ From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.Lib Require Ceil.
 From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.LRT Require Spin.
 From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.LRT Require SRealizes.
 From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.LRT Require LBase.
+From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib Require RomBase.
 Module LStep.
 (* [comment removed for export] *)
 
@@ -209,7 +211,8 @@ Proof.
     intros mv mr c mv' Hm H; cbn [interp_eff0 interp_eff_accesses] in H |- *; try discriminate.
   - injection H as <- <-. exists mr, []. split; [reflexivity|]. split; [exact Hm|].
     split; [auto|]. split; [intros x Hx; left; exact Hx|]. intros a' n' [].
-  - destruct (ov_read_bytes segs mv a (width_bytes n)) as [bs|] eqn:Er; [|discriminate].
+  - destruct (ov_read_bytes segs mv a (width_bytes n)) as [bs|] eqn:Er;
+      [| destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
     destruct (ov_read_bytes_ext _ _ _ _ _ Hm Er) as [-> Hvis].
     destruct (IH _ _ _ _ _ Hm H) as (mr' & acc & Hk & Hm' & Hmono & Hnew & Hacc).
     rewrite Hk. exists mr', ((a, width_bytes n) :: acc). split; [reflexivity|].
@@ -276,9 +279,9 @@ Qed.
 
 Lemma fetch_failure_not_ok : forall m a st, fetch_failure segs m a <> MachineOk st.
 Proof.
-  intros m a st. unfold fetch_failure.
-  destruct (negb (bv_unsigned a mod 2 =? 0)); [discriminate|].
-  match goal with |- (if ?b then _ else _) <> _ => destruct b; discriminate end.
+  (* 08b1429: a pc in the vDSO text is a first [MachineUnmodeled] arm. *)
+  intros m a st. unfold fetch_failure. cbv zeta.
+  repeat match goal with |- (if ?b then _ else _) <> _ => destruct b end; discriminate.
 Qed.
 
 (* [comment removed for export] *)
@@ -609,7 +612,7 @@ Lemma srz_lstep : forall g mo mat ms mr ms1 T,
 Proof.
   intros g mo mat ms mr ms1 T HI Hsvc Hstep K.
   destruct (lnode_instr g mo mat ms mr ms1 HI Hsvc Hstep) as (mr' & mat' & HI' & Hnode).
-  eapply srz_silent1; [exact Hnode| apply K; exact HI'].
+  eapply srz_silent1; [exact Hnode| apply RomBase.sys_rob_instr; cbn [cfg_ms]; rewrite ms_svc_pending_msw; exact Hsvc | apply K; exact HI'].
 Qed.
 
 (* [comment removed for export] *)

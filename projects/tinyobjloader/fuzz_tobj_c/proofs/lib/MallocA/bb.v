@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (K0_ks_munmap_ok written as plain text with munmap's exact cut added, maps_subtract equals map_remove, proved from the invariant's own facts by maps_subtract_exact; K0_ks_madvise_ok reads the reserved ledger as the image's entries followed by the vDSO/vvar pair, which lies above the high shadow). *)
 (* [comment removed for export] *)
 Local Set Warnings "-require-in-module".
 (* [comment removed for export] *)
@@ -1496,8 +1497,18 @@ Section Gates.
 Hypothesis HL8 : ltac2:(tb__ "0|0|
 S25S41S11S3dQ40A1A1S47S46R4R3R2R1A4S79S49R2A1A1F_;Fmd;Ftp;Frho;FA;").
 
-Theorem K0_ks_munmap_ok : ltac2:(tb__ "0|3|
-S51S25S41S11S3dQ40M0A1M1A1S11S48A1S47S45R6R5R4R3R2R1A6S24S60S24R1S29R7A1A3S3eG0S27R2A1A2G1S3eG0S2bR3A1A2G1S3S2S12S4dS4bS49R6A1A1M2R2R1A3S1cA3S3G1S60S14G1G1A2S20G1G1R3R1A4S4bS49R7A1A1A3S2G1R2R3A3F_;Fs;S2S12S4aS4eG2R2A2R2R1A3S1cA3A2A2Tn;Ta;F_;Fch;F_;Fmd;Ftr;Ftp;Frho;FA;FKc;").
+(* LPS 08b1429 (in 727298f3): written out as plain text (decoded from this file's [tbs__] table)
+   with one conjunct added, munmap's exact cut (Fw/SysSpec.v [maps_subtract_exact]), proved from
+   this invariant's own facts: every map entry has positive size ([L8text]), the chunk's entry is
+   the only one at its base, and every other entry misses it. *)
+Theorem K0_ks_munmap_ok : forall (Kc : KcA) (A : AA) (rho : valuation) (tp : list (bv 64)) (tr : list event) (md : Model),
+  K0 Kc A rho tp tr md -> forall ch : sec_chunk, In ch (aa_sec A) ->
+  let a := Z_to_bv 64 (sc_map_beg ch) in let n := Z_to_bv 64 (sc_map_size ch) in
+  map_has (vm_maps (m_vmmaps md)) a n = true
+  /\ (forall s, In (a, s) (vm_maps (m_vmmaps md)) -> s = n)
+  /\ region_free (map_remove (vm_maps (m_vmmaps md)) a) a n = true
+  /\ maps_subtract (vm_maps (m_vmmaps md)) (bv_unsigned a) (bv_unsigned a + bv_unsigned n)
+     = map_remove (vm_maps (m_vmmaps md)) a.
 Proof.
   intros Kc A rho tp tr md HK ch Hch. cbv zeta. pose proof HK as (HA & _). destruct (HL8 A rho tp md HA) as (POS & _).
   destruct (K0_parts Kc A rho tp tr md HK) as (_ & _ & _ & _ & _ & _ & HM).
@@ -1507,14 +1518,25 @@ Proof.
   assert (RA : ranges_apart (vm_maps (m_vmmaps md))).
   { destruct HM as (_ & _ & _ & _ & _ & _ & _ & LI). destruct LI as (_ & _ & L3 & _). unfold maps_disjoint in L3. apply ranges_apart_app in L3 as (_ & R & _). exact R. }
   pose proof (POS a n ENT) as Pn.
-  split; [|split].
+  assert (RF : region_free (map_remove (vm_maps (m_vmmaps md)) a) a n = true).
+  { apply region_free_apart. intros e He. unfold map_remove in He. apply filter_In in He as [He Hb].
+    destruct (In_nth_error _ _ ENT) as [k Hk]. destruct (In_nth_error _ _ He) as [j Hj].
+    apply (maps_disjoint_in _ k j (a, n) e RA); [|exact Hk | exact Hj]. intros ->. rewrite Hk in Hj. injection Hj as <-.
+    cbn [fst] in Hb. unfold bv_eqb in Hb. rewrite Z.eqb_refl in Hb. discriminate Hb. }
+  split; [|split; [|split; [exact RF|]]].
   - unfold map_has. apply existsb_exists. exists (a, n). split; [exact ENT|]. cbn [fst snd]. unfold bv_eqb. rewrite !Z.eqb_refl. reflexivity.
   - intros s Hs. destruct (entry_at_base _ a n (a, s) RA ENT Hs eq_refl Pn) as [E|Z0]; [injection E as ->; reflexivity|].
     cbn [snd] in Z0. pose proof (POS a s Hs). lia.
-  - apply region_free_apart. intros e He. unfold map_remove in He. apply filter_In in He as [He Hb].
-    destruct (In_nth_error _ _ ENT) as [k Hk]. destruct (In_nth_error _ _ He) as [j Hj].
-    apply (maps_disjoint_in _ k j (a, n) e RA); [|exact Hk | exact Hj]. intros ->. rewrite Hk in Hj. injection Hj as <-.
-    cbn [fst] in Hb. unfold bv_eqb in Hb. rewrite Z.eqb_refl in Hb. discriminate Hb.
+  - apply maps_subtract_exact; [exact Pn | intros b s Hbs; exact (POS b s Hbs) | |].
+    + intros b s Hbs Eb. subst b.
+      destruct (entry_at_base _ a n (a, s) RA ENT Hbs eq_refl Pn) as [E|Z0]; [injection E as ->; reflexivity|].
+      cbn [snd] in Z0. pose proof (POS a s Hbs). lia.
+    + intros b s Hbs Hne.
+      assert (Hin : In (b, s) (map_remove (vm_maps (m_vmmaps md)) a)).
+      { unfold map_remove. apply filter_In. split; [exact Hbs|]. cbn [fst]. apply Bool.negb_true_iff.
+        unfold bv_eqb. apply Z.eqb_neq. intros E. apply Hne. apply bv_eq. exact E. }
+      pose proof (region_free_In _ _ _ _ _ RF Hin) as OV. unfold iv_overlap in OV.
+      apply Bool.andb_false_iff in OV. destruct OV as [OV|OV]; apply Z.ltb_ge in OV; lia.
 Qed.
 
 Theorem K0_ks_madvise_ok : ltac2:(tb__ "0|7|
@@ -1544,9 +1566,17 @@ Proof.
     { destruct Hband as [B|B]; [destruct PLO as ([b s] & He & H1 & H2) | destruct PHI as ([b s] & He & H1 & H2)]; exists b, s; cbn [fst snd] in *; (split; [exact He | lia]). }
     destruct INM as (b & s & He & H1 & H2).
     apply (madvise_dontneed_ok_intro (m_vmmaps md) a (Z_to_bv 64 n) b s); [| exact He | exact H1 | rewrite Un; exact H2 | exact L10 | rewrite Un; exact Hn0 |].
-    + rewrite L1. change (segments_reserved segsA) with (segments_reserved ImageFacts.segsA). rewrite segments_reserved_A. apply region_free_apart. intros e He'. unfold apartW. cbn [fst snd]. right.
-      unfold LOW_SHADOW_BEG, HIGH_SHADOW_BEG in Hband.
-      destruct He' as [<-|[<-|[<-|[<-|[]]]]]; cbn [fst snd]; rewrite !u64 by lia; lia.
+    + (* LPS 727298f3: the reserved ledger is the image's entries, below the shadow, then the vDSO/vvar pair,
+         at or above VDSO_FLOOR = HIGH_SHADOW_END (Fw/SysSpec.v [vdso_pair_ok]). *)
+      destruct L1 as (W & EW & _ & HW). rewrite EW.
+      change (segments_reserved segsA) with (segments_reserved ImageFacts.segsA). rewrite segments_reserved_A. apply region_free_apart. intros e He'.
+      apply in_app_iff in He' as [He'|He'].
+      * unfold apartW. cbn [fst snd]. right.
+        unfold LOW_SHADOW_BEG, HIGH_SHADOW_BEG in Hband.
+        destruct He' as [<-|[<-|[<-|[<-|[]]]]]; cbn [fst snd]; rewrite !u64 by lia; lia.
+      * destruct (HW e He') as (F & _). unfold apartW. cbn [fst snd]. left. rewrite Un.
+        unfold OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysSpec.VDSO_FLOOR in F.
+        unfold LOW_SHADOW_BEG, SHADOW_GAP_BEG, HIGH_SHADOW_BEG, HIGH_SHADOW_END in Hband. lia.
     + rewrite Un. intros z Hz. destruct (PAGE z Hz) as (UP & PAL & PB). cbv zeta in UP, PAL, PB.
       destruct (N9 _ PAL PB) as [_ COV]. pose proof (Z.div_mod z 4096 ltac:(lia)) as DZ. pose proof (Z.mod_pos_bound z 4096 ltac:(lia)) as MZ.
       specialize (COV (z mod 4096) MZ). rewrite UP in COV. replace (z / 4096 * 4096 + z mod 4096) with z in COV by lia. exact COV.

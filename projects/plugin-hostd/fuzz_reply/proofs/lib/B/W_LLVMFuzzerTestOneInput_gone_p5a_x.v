@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10-30: KF-COUNT F3: p5st_x carries gn_cst and gn_runc; RIend at that cost bound *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx-GENERIC twin of the first part of ARM_gone's phase p5 on image B
-   (lib/B/W_LLVMFuzzerTestOneInput_gone_p5a.v, a Theorem Labs lane's, fee5272ac13 / 4118c28f01e: the table-order loop's helpers,
+   (lib/B/W_LLVMFuzzerTestOneInput_gone_p5a.v, a Theorem Labs lane: the table-order loop's helpers,
    its states and the entry 0x84b78 -> loop head or check_shape_done), for the conversion of ARM_gone to the cut
    invariants of lib/B/W_LLVMFuzzerTestOneInput_cut_x.v.  _gone_p5a.v is not edited.
    - CITED from _gone_p5a.v: its AR-free names (the table's bytes, the model helpers, the register lemmas, gp5_akept_G,
      the coverage lemmas of Section cov, ...), with the Section variables they were generalized over;
    - RESTATED under their names + _x, merged per item with SmallX's image-A twin
-     lib/A/W_LLVMFuzzerTestOneInput_gone_p5_x.v (95a5de32ab2), over ARx at the ghost list []: the journal-keep kit
+     lib/A/W_LLVMFuzzerTestOneInput_gone_p5_x.v, over ARx at the ghost list []: the journal-keep kit
      (Section jk), the block lemmas, the loop states and their journal / keep lemmas, B's own gp5_gst_keep_x, and the
      entry step gp5_t0_x.
    Section hypotheses beyond cut_x's header: _gone.v's HGs, HGcells, HROMPIN, HZS, HCE, RIend (LS -> LSx), GWL and HERR
@@ -68,7 +69,7 @@ Open Scope Z_scope.
 (* @@ B-ONLY-HDR Local_Notation LLVMF_STK *)
 Local Notation LLVMF_STK := YCfn.LLVMF_STK.
 
-(* ---- the bytes of the relay's table: entry i's 4-byte fd field (W_LLVMFuzzerTestOneInput_drain.v:103-162,
+(* ---- the bytes of the relay's table: entry i's 4-byte fd field (W_LLVMFuzzerTestOneInput_drain.v:104-163,
    copied with dr_ -> gp5_ so this phase imports no other phase's file) ---- *)
 (* @@ SECTION gp5 *)
 Section gp5.
@@ -76,7 +77,7 @@ Section gp5.
 Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 (* @@ MERGED #[local]_Notation segs *)
 #[local] Notation segs := (@pa_segs _ fr_prog_listing PB_fr).
-(* the cut's Section w context (lib/B/W_LLVMFuzzerTestOneInput_cut.v:308-331, the base's Section g) *)
+(* the cut's Section w context (lib/B/W_LLVMFuzzerTestOneInput_cut.v:309-332, the base's Section g) *)
 (* @@ MERGED Variable B *)
 Variable B : asyms.
 (* @@ MERGED Variable MT *)
@@ -142,7 +143,7 @@ Hypothesis BLKN : forall ly S Hp (W : world segs) mem md p n, ARx ly S Hp W mem 
 (* the image is off PST (add_x's HPST): the journal's image clause takes it; trivial at PST = [] *)
 (* @@ AX-ONLY Hypothesis HPST *)
 Hypothesis HPST : forall a, in_img segs a -> ~ Exists (in_zr a) PST.
-(* W_frame_x.v:105's Section hypothesis FRMF, for frame_al64_x / shadow_hull_vis_of_frame_x *)
+(* W_frame_x.v:106's Section hypothesis FRMF, for frame_al64_x / shadow_hull_vis_of_frame_x *)
 (* @@ AX-ONLY Hypothesis FRMF *)
 Hypothesis FRMF : forall ly S Hp (W : world segs) mem md cid pos, ARx ly S Hp W mem md -> In (cid, pos) (frames S) ->
   ly_F ly mod 4096 = 0 /\ fs_frame_off cid pos mod 64 = 0 /\ 64 <= fs_frame_bytes cid /\ fs_frame_bytes cid mod 64 = 0.
@@ -395,7 +396,7 @@ Proof.
   unfold zdisjoint in Hf. cbn [fst snd] in Hf. lia.
 Qed.
 
-(* cnl_spec's last premise (W_contract.v:2064): the stack is readable from the callee's sp = F up to ly_top.  Below
+(* cnl_spec's last premise (W_contract.v:2065): the stack is readable from the callee's sp = F up to ly_top.  Below
    the entry's sp it is the arm's own frame, present by the journal's frame clause; from the entry's sp up the
    journal keeps the entry's view (its high-memory clause), which lf_base's STKR (_cut.v:172-177) says is readable *)
 (* @@ SECTION cov *)

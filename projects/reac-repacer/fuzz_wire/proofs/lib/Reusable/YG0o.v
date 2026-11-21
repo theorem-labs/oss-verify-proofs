@@ -3,8 +3,9 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YG0o.v, with its module paths changed. *)
 (* Modified by Theorem Labs, 2026-10: EV_MAX raised to 11776, as in omx-clap-core/fuzz_manifest's copy of this file; the region facts in the area-bound proof bound rg_mapped_user by kFreeArrayOffset instead of 2 ^ 31, and the proofs unfold kFreeArrayOffset in the primary-chunk bound of cfacts. *)
-(* Modified by Theorem Labs, 2026-10: the empty-depot switch (DepotCfg.depot_has_trace) taken from proofs/libreac/fuzz_knock/lib/Reusable/YG0o.v at 88154566652a, hunk by hunk (provenance evidence/depot: depot-classes.tsv, depot_apply.py): hunks 1 2 3 4 5 7 8 12; hunks 6 9 10 11 keep this file's text. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/Reusable/YG0o.v at 4f87de75d677 (donor image sha256 c2c7559b29bd), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: the empty-depot switch (DepotCfg.depot_has_trace) taken from proofs/libreac/fuzz_knock/lib/Reusable/YG0o.v, hunk by hunk (provenance evidence/depot: depot-classes.tsv, depot_apply.py): hunks 1 2 3 4 5 7 8 12; hunks 6 9 10 11 keep this file's text. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/Reusable/YG0o.v (donor image sha256 c2c7559b29bd), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp Require Import bitvector.

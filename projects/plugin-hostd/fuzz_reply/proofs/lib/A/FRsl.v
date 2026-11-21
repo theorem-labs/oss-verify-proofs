@@ -1,6 +1,6 @@
-(* Port-from: origin/cold/port-state-rt-str 3210d71ee38 proofs/omx-clap-core/fuzz_state/lib/A/FSsl.v.
+(* Port-from: proofs/omx-clap-core/fuzz_state/lib/A/FSsl.v.
    Changes (R1Str, 2026-10-29): module path fuzz_state -> fuzz_reply; 4 fuzz_state.asan address numerals moved to fuzz_reply.asan, each paired by code (instruction by instruction, relocation fields masked) or, for a data cell, by the instruction that loads it (table: lib/A/RT_kit.v); renamed from FSsl.v. *)
-(* Port-from: origin/cold/c-asan-rt-stateio-n 840c4afa7e2 proofs/plugin-hostd/fuzz_reply/lib/A/Prog/wrap_kit.v:39-68
+(* Port-from: proofs/plugin-hostd/fuzz_reply/lib/A/Prog/wrap_kit.v:39-68
    (bz_mem_inv_same, sl_proof, mch_proof) and lib/A/Prog/asan_memcpy.v:42-50 (msteps_to_bz, evt_to_bz, mem_inv_of_bz).
    Changes (h-rw-sta-4, 2026-10-28): restated without AsanRT / AsanRTFacts / BzBridge; the module aliases BzE / BzM / BzI
    (c-asan-rt BzBridge.v:15-17) and BzU / SLc / SLp / MHc / MHp (wrap_kit.v:22-27) are local; proofs unchanged.
@@ -12,7 +12,7 @@
    byte-identical in this tree; no AsanRT, asan_cells, Admitted or Axiom).
    What it gives: the plain strlen at 0x96b4c and the plain memchr at 0x963d0, in the words of the Bz tree
    (I_musl.v strlen_stmt / memchr_stmt), which the interceptor walks take as their section hypotheses SL
-   (Bz/A/I_strlen.v:96) and MCH (Bz/A/I_memchrw.v:77). *)
+   (Bz/A/I_strlen.v:97) and MCH (Bz/A/I_memchrw.v:78). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Lib Require Import PropExec MState Mem Exec Frame.

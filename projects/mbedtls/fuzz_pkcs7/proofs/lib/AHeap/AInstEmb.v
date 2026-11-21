@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (MX_T_emb takes the checker's placement premise placed_at and passes it to HK_emb; its encoded statement kept verbatim, with a lemma proving it equal to the written-out statement without that premise). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State.
@@ -117,13 +118,50 @@ Section G.
   Qed.
 
   (* [comment removed for export] *)
-  Theorem MX_T_emb : ltac2:(CDefT.buildp (gd_tbl_AInstEmb ()) "Pmo,$10.Pa,(11.&40.)P,(1.$0.(2.(3.Vh,))=)P,(12.VhAR,Vh,Vc,Vmo0,(13.$14.)(13.$14.)(15.(16.Vh,))(17.(16.Vh,))R3.)P,(1.$0.(18.(19.&40.R3.)+1000.)=)P,(=.=(19.&40.R4.))P,(<.(>.(19.&40.R5.)$?.)(1:.VhAR,))P,(1.$14.(1;.(1<.(1=.(11.&40.)(11.&40.))(1>.(1?.R7.))(20.(1?.R7.)))R6.(21.&40.$?.))$22.)(;.(23.(19.&40.R7.)(24.+22.R7.$?.R8.))(;.(25.(26.(19.&40.R7.))(19.&40.R7.)$?.)(;.(<.+65;000.(19.&40.R7.))(:.(<.(>.(19.&40.R7.)$?.)+7???7000.)(<.+10007???8000.(19.&40.R7.))))))")
-(* [comment removed for export] *).
+  (** LPS #38.  [AVstE.HK_emb] now asks for the checker's placement test at the
+      EMB SIZE ([ASys.placed_at kEmbBytes mo a]), so [MX_T_emb] has to ask for
+      it too: the address is Linux's answer to a [kEmbBytes] request and nothing
+      in this section can invent that.  The caller
+      ([AW_B12WalkP]'s grant continuation) has it, out of [AO_grant].
+
+      The [CDefT] blob is REPLACED with explicit text (rule 4), never decoded
+      and re-encoded; [ZZ_MX_T_emb_old] keeps it verbatim and the inline
+      [ZZ_MX_T_emb_faithful] makes the kernel certify that the text below MINUS
+      the new premise is the old statement. *)
+  Definition ZZ_MX_T_emb_old : Prop := ltac2:(CDefT.buildp (gd_tbl_AInstEmb ()) "Pmo,$10.Pa,(11.&40.)P,(1.$0.(2.(3.Vh,))=)P,(12.VhAR,Vh,Vc,Vmo0,(13.$14.)(13.$14.)(15.(16.Vh,))(17.(16.Vh,))R3.)P,(1.$0.(18.(19.&40.R3.)+1000.)=)P,(=.=(19.&40.R4.))P,(<.(>.(19.&40.R5.)$?.)(1:.VhAR,))P,(1.$14.(1;.(1<.(1=.(11.&40.)(11.&40.))(1>.(1?.R7.))(20.(1?.R7.)))R6.(21.&40.$?.))$22.)(;.(23.(19.&40.R7.)(24.+22.R7.$?.R8.))(;.(25.(26.(19.&40.R7.))(19.&40.R7.)$?.)(;.(<.+65;000.(19.&40.R7.))(:.(<.(>.(19.&40.R7.)$?.)+7???7000.)(<.+10007???8000.(19.&40.R7.))))))").
+
+  Lemma ZZ_MX_T_emb_faithful : ZZ_MX_T_emb_old =
+    (forall (mo : Model) (a : word),
+       a_emb (h_acct h) = 0 ->
+       KF None None nb0 bl0 mo ->
+       bv_unsigned a mod 4096 = 0 ->
+       0 < bv_unsigned a ->
+       bv_unsigned a + kEmbBytes <= ACEIL ->
+       region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 kEmbBytes) = true ->
+       KxF (bv_unsigned a) (anon_grant 0x22 a kEmbBytes mo)
+       /\ crange (CSxh (bv_unsigned a)) (bv_unsigned a) kEmbBytes
+       /\ 6664192 <= bv_unsigned a
+       /\ (bv_unsigned a + kEmbBytes <= 2147446784 \/ 17594333495296 <= bv_unsigned a)).
+  Proof. exact eq_refl. Qed.
+
+  Theorem MX_T_emb :
+    forall (mo : Model) (a : word),
+      a_emb (h_acct h) = 0 ->
+      KF None None nb0 bl0 mo ->
+      bv_unsigned a mod 4096 = 0 ->
+      0 < bv_unsigned a ->
+      bv_unsigned a + kEmbBytes <= ACEIL ->
+      region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 kEmbBytes) = true ->
+      ASys.placed_at kEmbBytes mo a ->
+      KxF (bv_unsigned a) (anon_grant 0x22 a kEmbBytes mo)
+      /\ crange (CSxh (bv_unsigned a)) (bv_unsigned a) kEmbBytes
+      /\ 6664192 <= bv_unsigned a
+      /\ (bv_unsigned a + kEmbBytes <= 2147446784 \/ 17594333495296 <= bv_unsigned a).
   Proof.
-    intros mo a E0 KK AAL A0 ACE RF. destruct (MX_entry_HK mo KK) as [K FR].
+    intros mo a E0 KK AAL A0 ACE RF APL. destruct (MX_entry_HK mo KK) as [K FR].
     assert (NZ : bv_unsigned a <> 0) by lia.
     destruct (HK_emb AL0 AL0_sb AL0_IML AL0_IMH h mo a (hx (bv_unsigned a)) K AAL A0 ACE RF
-                ltac:(apply vst_slack; [exact B| exact HV| unfold CE, npg_shadow, kEmbBytes; cbn; lia]) (R_emb_hx _ E0 NZ)) as (K' & CR & I0 & BD).
+                ltac:(apply vst_slack; [exact B| exact HV| unfold CE, npg_shadow, kEmbBytes; cbn; lia]) (R_emb_hx _ E0 NZ) APL) as (K' & CR & I0 & BD).
     split; [split; [exact E0| split; [exact NZ| split; [exact K'| eapply mo_frame_trans; [exact FR| apply mo_frame_anon_grant]]]]|].
     split; [| exact (conj I0 BD)].
     intros x Hx. right. split; [| exact Hx]. split; [exact E0| split; [exact NZ| eexists; exact K']].

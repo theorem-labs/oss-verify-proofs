@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the emit nodes take their argument pieces from one hypothesis (EXTRA) of the start invariant). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -82,18 +83,23 @@ Section NodesArg.
 
   Hypothesis Lay : 0x7fff80000000 <= usp /\ usp + 192 <= STR0 /\ STR0 + L0 + 1 <= TOP
                    /\ (2 <= argc -> STR1 + L1 + 1 <= TOP)
-                   /\ TOP mod 8 = 0 /\ TOP + 16 <= 2 ^ 47 /\ L0 <= 131071 /\ L1 <= 131071 /\ 1 <= argc <= 1024.
+                   /\ TOP mod 8 = 0 /\ TOP + 8 <= 2 ^ 47 /\ L0 <= 131071 /\ L1 <= 131071 /\ 1 <= argc <= 1024.
   Hypothesis Hnz : forall i j, (j < length (ARG i))%nat -> bv_unsigned (byte_at (ARG i) j) <> 0.
 
-  Hypothesis SINV_vals : forall E M, SINV E M ->
-    uE E e_sp0 = usp /\ uE E e_str0 = STR0 /\ edenot E (EVar V_L0) = Z_to_bv 64 L0
-    /\ edenot E (EVar V_ARGC) = Z_to_bv 64 argc /\ edenot E (EVar V_L1) = Z_to_bv 64 L1
-    /\ eb E 1%nat = argv0 /\ eb E 2%nat = argv1.
+  (* LPS c0dd863a: what the emit nodes need of the start invariant is the soundness of the argument pieces
+     ([CxNodesArgSound.extra_pieces_sound] from the launch's argument strings, or
+     [CxNodesArgSound.extra_pieces_sound_nil] where the invariant fixes no argument string) *)
+  Hypothesis EXTRA : forall E cs model FULL k s l ps,
+    SINV E FULL -> know_ok SEGS E (Mr A argH E cs model FULL) k ->
+    extra_pieces SEGS k s l = Some ps ->
+    exists extra, pbytes E ps = extra
+      /\ rdn SEGS FULL (edenot E s) (length extra) = Some extra
+      /\ bv_unsigned (edenot E l) = Z.of_nat (length extra)
+      /\ bv_unsigned (edenot E s) + Z.of_nat (length extra) <= 2 ^ 64
+      /\ (extra = [] \/ (exists i, arg_ok i /\ bv_unsigned (edenot E s) = STR i /\ extra = ARG i)
+          \/ rdn SEGS (Mr A argH E cs model FULL) (edenot E s) (length extra) = Some extra).
   (* [comment removed for export] *)
   Hypothesis SINV_rd : forall E M (a : word), SINV E M -> STR0 <= bv_unsigned a < TOP -> exists b, M a = Some b.
-  (* [comment removed for export] *)
-  Hypothesis SINV_str : forall E M i j, SINV E M -> arg_ok i -> (j <= length (ARG i))%nat ->
-    M (Z_to_bv 64 (STR i + Z.of_nat j)) = Some (byte_at (ARG i) j).
 
   #[local] Notation CSOK := (cs_ok SEGS A LIMIT SINV argH ISP FS0) (only parsing).
 
@@ -121,6 +127,7 @@ Section NodesArg.
     rdn SEGS mem (Z_to_bv 64 (g_canary G)) 8 = Some (word_to_le_bytes 8 can) ->
     0 < fd < 2147483648 ->
     fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+    m_channel_reader model = true ->
     m_halted model = None ->
     0 <= wb <= wp -> wp <= 2 ^ 47 -> wp - wb = Z.of_nat (length pending) -> bv_unsigned l = Z.of_nat (length extra) ->
     Z.of_nat (length pending) + Z.of_nat (length extra) <= 2 ^ 30 ->
@@ -153,7 +160,7 @@ Section NodesArg.
   (* [comment removed for export] *)
   #[local] Notation adenot_abs0_i := (adenot_abs0).
   #[local] Notation after_call_cs_ok_i := (after_call_cs_ok SEGS A nx0 LIMIT SINV argH FS0 ISP NX0_spw argH_agree SINV_frame SINV_agree).
-  #[local] Notation extra_pieces_sound_i := (extra_pieces_sound SEGS A SINV argH SEGS_in_hull HULL_ok ISP argH_high usp STR0 TOP argc argv0 argv1 Lay SINV_vals SINV_str HISP).
+  #[local] Notation extra_pieces_sound_i := EXTRA.
   #[local] Notation flat_abs0_i := (flat_abs0 STR0 TOP argv0 argv1).
   #[local] Notation kimg_cut_sound_i := (kimg_cut_sound SEGS usp STR0 TOP argc argv0 argv1 Lay).
   #[local] Notation know_ok_havoc3_i := (know_ok_havoc3 SEGS A wi0 wi1 wi2 wi3 wi4 wi5 wi6 Xis Ei usp STR0 TOP argc argv0 argv1 Lay Gro_hull Gfile).
@@ -353,6 +360,8 @@ Section NodesArg.
     - exact Rcan.
     - apply orb_prop in Hfd12 as [X|X]; apply Z.eqb_eq in X; subst; lia.
     - exact FD.
+    - (* [comment removed for export] *)
+      exact (proj2 (proj2 (proj2 (co_res _ _ _ _ _ _ _ _ _ _ _ _ HC)))).
     - exact (co_halt _ _ _ _ _ _ _ _ _ _ _ _ HC).
     - lia.
     - lia.

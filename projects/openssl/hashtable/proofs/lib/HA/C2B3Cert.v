@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the plans are renumbered to the new numbering). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool.
-From OSSVerify.Proofs.openssl.hashtable.lib Require Import AxSymExec3 AsanPlanCore AsanInit CertRefl CxRel CxPlan CxPlanSound HAPlanImage HAAtable HACheck0 HACheck1 C1HS C2AStart HASplit St3b C2B3Lit CxfL9 CxfFast.
+From OSSVerify.Proofs.openssl.hashtable.lib Require Import AxSymExec3 AsanPlanCore AsanInit CertRefl CxRel CxPlan CxPlanSound HAPlanImage HAAtable HACheck0 HACheck1 C1HS C2AStart HASplit St3b C2B3Lit CxfL9 CxfFast HAReg.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations. Import AX2. Import CAP. Open Scope Z_scope.
 Definition c2b3_IT : itab := APC.mk_itab_ranges HASEGS st3b_ranges.
@@ -12,5 +13,5 @@ Proof. apply CXS.mk_itab_ranges_sound. Qed.
 Definition c2b3_shape_ (_ : unit) : shape := (SHole 10).
 Abbreviation c2b3_shape := (c2b3_shape_ tt).
 Lemma c2b3_cert :
-  CAP.check HASEGS c2b3_IT HAT NX0 AsanInit.LIMIT ha1_XN ha1_XE ha1_XB C2B3_HS 0 true false true 400000 3000 None c2b3_start st3b_plan = COk c2b3_shape.
+  CAP.check HASEGS c2b3_IT HAT NX0 AsanInit.LIMIT ha1_XN ha1_XE ha1_XB C2B3_HS 0 true false true 400000 3000 None c2b3_start (mplan st3b_plan) = COk c2b3_shape.
 Proof. apply CXFF.check_l_intro. ltac2:(cert_refl_vm constr:(COk c2b3_shape)). Time Qed.

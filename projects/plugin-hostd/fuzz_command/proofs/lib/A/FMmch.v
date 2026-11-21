@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/PSstrlen.v, with its module paths changed; 142 of its 194 lines of code are new or changed and 691 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: copied from plugin-hostd/fuzz_reply (a working branch 86b50358d34) to libreac/fuzz_boxreg: module paths changed, no other change. *)
+(* Modified by Theorem Labs, 2026-10: copied from plugin-hostd/fuzz_reply (a working branch) to libreac/fuzz_boxreg: module paths changed, no other change. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/A/RT_mem_bz.v, with its module paths changed; 18 of its 45 lines of code are new or changed and 167 lines of the source are left out. *)
 (* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMmch.v; relocated to plugin-hostd/fuzz_command.asan by the GXA address relocator (target fuzz_command.asan): module paths changed; 0 address numerals moved (address checker 0767e70e074a, predict mode, fm.asan -> fuzz_command.asan, symbol + offset; the relocator's table for this file). *)
 (* 2026-10-29: the A/Prog modules this file names are our lib/A/Prog/RtG_<name>.v (the walks relocated for this image); fm's names re-pointed. *)
@@ -12,6 +12,7 @@
    Changes (2026-10-28): restated without AsanRT / AsanRTFacts / BzBridge; the module aliases BzE / BzM / BzI
    (the shared ASan runtime proofs' BzBridge.v:15-17) and BzU / SLc / SLp / MHc / MHp (wrap_kit.v:22-27) are local; proofs unchanged. *)
 (* Modified by Theorem Labs, 2026-10: relocated to omx-clap-core fuzz_manifest.asan; from proofs/plugin-hostd/fuzz_reply/lib/A/FRsl.v, module path fuzz_reply -> fuzz_manifest, renamed FRsl.v -> FMmch.v, the strlen half (sl_proof, Prog/strlen_c, Prog/strlen) dropped, no address numerals (the musl memchr walk it wraps is fm's lib/A/Prog/memchr.v, MEMCHR 0x924a8, taken by path). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* What it gives: musl memchr at 0x924a8 (fuzz_manifest.asan), the REAL(memchr) of the memchr interceptor, in the words
    of the Bz tree (I_musl.v memchr_stmt), which the interceptor walk takes as its section hypothesis MCH
    (Bz/A/I_memchrw.v) and the strnlen interceptor walk passes on (Bz/A/I_strnlen.v). *)

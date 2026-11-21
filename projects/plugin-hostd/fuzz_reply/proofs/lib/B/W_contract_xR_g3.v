@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_LLVMFuzzerTestOneInput_exit_x.v, with its module paths, module names and numbers changed; 153 of its 247 lines of code are new or changed and 8437 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Contract texts at a world relation R, image B: list_drop (lib/B/W_contract_x.v ldrop_post_x :603, ldrop_spec_x :623)
    and the block lx_ends of SEG_EXIT (lib/B/W_bx_defs_x.v lx_ends_post_x :195, lx_ends_S_x :222).  A beside-file of
    W_contract_xR.v (a Theorem Labs lane's), in its form: R is a Section variable right after ARx, with its laws R_refl, R_trans,
@@ -89,7 +90,7 @@ Hypothesis WLE_R : forall W W', wle W W' -> R W W'.
 Variable MT : ameter_ops.
 Variable RP : roomp.
 Variable G : list (Z * Z).
-(* W_contract_x.v:603 ldrop_post_x at R *)
+(* W_contract_x.v:604 ldrop_post_x at R *)
 Definition ldrop_post_xR (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
 (LA : Z) (l : HarnessRep.hlist) (lines : bool) (i : nat) (kr : nat) : world SEGS -> config -> Prop :=
 fun W' c' => exists ly' S' Hp' regs' mem' md',
@@ -106,7 +107,7 @@ alist_at B ly' S' W' mem' LA (ldrop_list l i) lines /\
 (exists b1 b2, ablocks B ly S = b1 ++ (fst (nth i (HarnessRep.hl_recs l) (0, [])),
  Z.of_nat (length (snd (nth i (HarnessRep.hl_recs l) (0, [])))) + 1) :: b2 /\ ablocks B ly' S' = b1 ++ b2) /\
 mo_le MT S S' (mo_free MT) /\ rp_RM RP S' kr.
-(* W_contract_x.v:623 ldrop_spec_x at R *)
+(* W_contract_x.v:624 ldrop_spec_x at R *)
 Definition ldrop_spec_xR (pc : Z) : Prop :=
 forall W ly S Hp regs mem md ch LA l lines i,
 afn_pre_x SEGS B ARx LDROP_STK ly S Hp W regs mem md ch ->
@@ -185,7 +186,7 @@ Hypothesis R_trans : forall W1 W2 W3, R W1 W2 -> R W2 W3 -> R W1 W3.
 Hypothesis WLE_R : forall W W', wle W W' -> R W W'.
 Variable RP : roomp.
 Local Notation lx_ends_cost := (W_bx_defs.lx_ends_cost MT).
-(* W_bx_defs_x.v:197 lx_ends_post_x at R *)
+(* W_bx_defs_x.v:198 lx_ends_post_x at R *)
 Definition lx_ends_post_xR (cx : lfcx) (t fpos : Z) (ly3 : alayout) (S3 : astate) (m : lmod)
     (norder : Z) (ord : Z -> Z) : world segs -> config -> Prop :=
   fun W' c' => exists ly' S' regs' mem' md' k' (m' : lmod) (afin : Z),
@@ -212,7 +213,7 @@ Definition lx_ends_post_xR (cx : lfcx) (t fpos : Z) (ly3 : alayout) (S3 : astate
     (forall j, (j < 4)%nat -> lx_slot_evo (nth j (lm_hs m) None) (nth j (lm_hs m') None)) /\
     frames S' = frames S3 /\ mo_le MT S3 S' (lx_ends_cost (lm_hs m)) /\
         NP S' /\ cnt_ok_pk RP (fun _ => 0%nat) (ablocks B ly' S').
-(* W_bx_defs_x.v:224 lx_ends_S_x at R *)
+(* W_bx_defs_x.v:225 lx_ends_S_x at R *)
 Definition lx_ends_S_xR : Prop :=
   forall cx t fpos (ly3 : alayout) (S3 : astate) (m : lmod)
     (norder : Z) (ord : Z -> Z) regs mem (md : Model) (W : world segs) k,

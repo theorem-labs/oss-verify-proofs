@@ -7,6 +7,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/R7tail.v; 1150 of its 1202 lines of code are new or changed and 1180 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/R7.v, with its module names changed; 329 of its 397 lines of code are new or changed and 1134 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/P1_70.v, with its addresses and numbers changed; 63 of its 98 lines of code are new or changed and 362 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/A2.v -- GLUE for stage seg_A2 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput (lib/A/ACtl.v:649,
    `Hypothesis seg_A2 : forall POST, CF POST C_A80f88 -> CF POST C_A80f54`).  Written by a Theorem Labs lane
    (piece W0/W1); single writer.  The pattern is
@@ -19,16 +20,16 @@
    seg_A2.  Segment A2 is 0x80f54 -> 0x80f88, the two arms after the class-6 frame request (Seg/A2.v:183-235):
      0x80f54 mv s5,a0   0x80f58 j   0x80f60 mv s6,s5   0x80f64 bnez s5   (taken: the side-stack arm, a0 <> 0).
 
-   RULE 24 (released proofs first): proof-index LLVMFuzzerTestOneInput (index v5, built 2026-10-28 20:16:23Z
-   from e966c513ee6, ossv/recipes@a8831f7c5c), second-agent check a Theorem Labs lane 21:10Z CONFIRM: the released ASan
-   donor is cgif/cgif_file_fuzzer at origin/ossv/recipes c8557374ad2e; its walk lifts no outside-proved run, so this
+   RULE 24 (released proofs first): proof-index LLVMFuzzerTestOneInput (index v5, built 2026-10-28 20:16:23Z,
+   ossv/recipes), second-agent check a Theorem Labs lane 21:10Z CONFIRM: the released ASan
+   donor is cgif/cgif_file_fuzzer; its walk lifts no outside-proved run, so this
    glue has no donor counterpart.  Its pieces are the donor's SRr (YA0n) and ajournal_exec (YCbq), a Theorem Labs lane's
    kit and bridge (Reusable/YA0nR.v SRr_xregs_eqv / SRr_fevt; A/ProgBridge.v fevt_of_evtF, tfibsegs_rsegs,
    cfg_at_MS), a Theorem Labs lane's footprint run, and the shared kits lib/A/ACtlG/Kit.v and lib/A/ACtlG/KitMem.v.
 
-   THE RUN.  a Theorem Labs lane's mechanical v1.9 re-run A.Prog.Seg.A2F.a2_side_evt_F (Seg/A2F.v (at head lib/A/Prog/Seg/A2F.v:128-146) (an earlier version, blob adddec57ad2, not in this delivery)),
+   THE RUN.  a Theorem Labs lane's mechanical v1.9 re-run A.Prog.Seg.A2F.a2_side_evt_F (Seg/A2F.v (at head lib/A/Prog/Seg/A2F.v:129-147) (an earlier version, blob adddec57ad2, not in this delivery)),
    Required, not assumed: the side-stack arm a2_side_evt (Seg/A2.v:221, blob
-   283929a6248 (the blob this tree had at release c5e779efe8c)) under StepF.  It is register-only (premise rows
+   283929a6248 (the blob this tree had at release)) under StepF.  It is register-only (premise rows
    segment-F-premises-A.tsv:12 (a working note, not in this delivery): no rng premise), so it is lifted at the EMPTY footprint Kit.kit_RNG0.
    The real-stack arm a2_real_evt (a0 = 0) is NOT used: the shell passes sel = fr (ACtlCut.v:223), the entry body
    pins a0 = sel (C_A80f54's a0v regs sel, ACtlCutP.v:1098), and the owned class-6 frame has 4096 <= fr
@@ -72,7 +73,7 @@
    both as the core's lib/Reusable/<X> and as ctrl's lib/A/Reusable/<X> (YI04 YI16 YK11 YK1b YM05 YO09) are loaded
    by absolute Require lines and written through the fully qualified aliases CK11 / CK1b / CM05 / CO09 below; lib/Lib's
    modules through LMState / LRegs; ctrl's YK11 (the run's) through AK11.  Frame-route files of record in the closure
-   (through Seg/A2F.v), blobs at the glue worktree HEAD 729ec17cb79: Seg/A2F.v adddec57ad2, Seg/A2.v 283929a6248,
+   (through Seg/A2F.v), blobs at the glue worktree HEAD: Seg/A2F.v adddec57ad2, Seg/A2.v 283929a6248,
    SlotInv.v 4cf85db229a, Seg/Tac_slot.v de02ff45188, SlotModel.v 04dc7903221, AsanRT.v b67d26f8ec7 (mcs 30),
    AsanRTInv.v 2a8602e8526, Contract.v fa6fd478d9a, FrameAPI.v f6ffefa9bb4, MemNorm.v cb518fc0304.
 
@@ -159,8 +160,8 @@ Proof.
   change (@AK11.fp_csr (AK11.mkFP CK11.fp_regs CK11.fp_csr)) with (@CK11.fp_csr fx) in HRUN.
   change (@AK11.getr) with (@CK11.getr) in HRUN.
   change (@AK11.seg_rom) with (@CK11.seg_rom) in HRUN.
-  (* glue base batch 5's A2F.v states the post with lib.Lib's PropExec copy (LPE.getr / LPE.seg_rom, A2F.v:126-137
-     at c903fcfd291); same bodies as the core's YK11 ones, so the same `change` *)
+  (* glue base batch 5's A2F.v states the post with lib.Lib's PropExec copy (LPE.getr / LPE.seg_rom, A2F.v:126-137);
+     same bodies as the core's YK11 ones, so the same `change` *)
   change (@OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.PropExec.getr) with (@CK11.getr) in HRUN.
   change (@OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib.PropExec.seg_rom) with (@CK11.seg_rom) in HRUN.
   pose proof (A.ProgBridge.fevt_of_evtF _ _ _ HRUN) as HFS.

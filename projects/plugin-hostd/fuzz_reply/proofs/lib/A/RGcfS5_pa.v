@@ -1,6 +1,7 @@
-(* Modified by Theorem Labs, 2026-10-29: copied from proofs/omx-clap-core/fuzz_preset/lib/A/FSRealloc_S1_pa.v (337e6a94485, sha256 72d44e6fb387; internal record) for realloc(NULL, n) (segment S5): PAREGS / PAFRAMES / PACHK / PAST_top / pa_leaf / pachk_ok restated for the end state of A/RGcfS5_r.v's SS_EN (Allocate's entry 0x325b8 reached from asan_realloc's NULL-input `jal Allocate` 0x32fb4: ra = 0x32fb8, sp = entry sp - 2160, no Reallocate frame); frame_chunk, regs_chk, frames_chk and their lemmas are FSRealloc_S1_pa's. *)
+(* Modified by Theorem Labs, 2026-10-29: copied from proofs/omx-clap-core/fuzz_preset/lib/A/FSRealloc_S1_pa.v (sha256 72d44e6fb387; internal record) for realloc(NULL, n) (segment S5): PAREGS / PAFRAMES / PACHK / PAST_top / pa_leaf / pachk_ok restated for the end state of A/RGcfS5_r.v's SS_EN (Allocate's entry 0x325b8 reached from asan_realloc's NULL-input `jal Allocate` 0x32fb4: ra = 0x32fb8, sp = entry sp - 2160, no Reallocate frame); frame_chunk, regs_chk, frames_chk and their lemmas are FSRealloc_S1_pa's. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

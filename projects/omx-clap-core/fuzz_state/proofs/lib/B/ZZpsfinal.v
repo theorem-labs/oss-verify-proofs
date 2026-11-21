@@ -5,7 +5,7 @@
    sources, every pc walked and every report site). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/Prog/FSW_parse_value.v, with its module names and numbers changed; 1163 of its 1272 lines of code are new or changed and 1247 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan, image B) twin of lib/A/FSW_put_string.v at
-   a working branch ca67007c8c2 (a Theorem Labs lane), and another Theorem Labs lane: same lemma names and statement shapes;
+   a working branch (a Theorem Labs lane), and another Theorem Labs lane: same lemma names and statement shapes;
    imports point at lib/B's image files and walk kit (YB1v, YB1w, FSH_Base, FSH_Rt, FSPstat, FSH_Fn_writer,
    FSW_K, FSW_K3, FSW_ret, FSW_frame, FSW_frame3, FSW_rd, FSW_strkit and lib/B's put_string files); the
    image-agnostic FSupoison, FSupoisonU, FSupoisonStack, FSH_YC20, FSH_Gen and FSW_writer_model stay lib/A's.
@@ -14,18 +14,19 @@
    rule 24: proves no function (kind: segment lemma). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/B/FSW_put_string.v; 7 of its 47 lines of code are new or changed and 1232 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan, image B) twin of lib/A/ZZpsfinal.v at
-   a working branch ca67007c8c2 (a Theorem Labs lane), and another Theorem Labs lane: same lemma names and statement shapes;
+   a working branch (a Theorem Labs lane), and another Theorem Labs lane: same lemma names and statement shapes;
    imports point at lib/B's image files and walk kit (YB1v, YB1w, FSH_Base, FSH_Rt, FSPstat, FSH_Fn_writer,
    FSW_K, FSW_K3, FSW_ret, FSW_frame, FSW_frame3, FSW_rd, FSW_strkit and lib/B's put_string files); the
    image-agnostic FSupoison, FSupoisonU, FSupoisonStack, FSH_YC20, FSH_Gen and FSW_writer_model stay lib/A's.
    Every address, cut, branch, offset and register of put_string's own code is RE-MEASURED on image B
    (A_put_string 0x85fc8, 928 bytes; the neutral excerpt put_string.fuzz_state.asan-ubsan.s), never copied.
    RULE-24: proves function put_string (omx-clap-core/fuzz_state, image B = asan-ubsan, entry 0x85fc8). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* put_string's walk on image B, CLOSED: put_string_spec (image B, fs.asan-ubsan, A_put_string 0x85fc8) from the four
    segments of ZZpsclose.ps_close: SEG1 ZZpsg1.psg1 (entry, fake-frame grant, the opening-quote put), SEG2 ZZpsg2.psg2
    (the scan loop or the empty arm, the run put), SEG3 ZZpsg3.psg3 (the closing-quote put), SEG4 ZZpstail.psg4 (the
-   epilogue to the post). The image-A twin is lib/A/ZZpsfinal.v ps_put_string_spec (a working branch
-   ca67007c8c2).
+   epilogue to the post). The image-A twin is lib/A/ZZpsfinal.v ps_put_string_spec (a working branch).
+   
    The Section hypotheses are the walk's OPEN hypotheses, each with its owner: the SAME set as image A's (put_spec,
    FsShadowSyms, api_env, model_laws, stack_malloc_progressP, astack_malloc_realizesU at class 0, B's class-0 code map,
    astack_free_law, frame_flag_lawP, the use-after-return cell pair, fs_img_facts), each stated over image B's

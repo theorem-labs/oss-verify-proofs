@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a failing store-conditional is no longer stepped, so its soundness arm is removed). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool Lia.
@@ -1610,15 +1611,8 @@ Section WithU.
     { subst ok. cbn [c_resv core_of]. unfold resv_ok in Hrv. destruct (s_resv st) as [r|], (ms_resv ms) as [cw|]; try (exfalso; exact Hrv); try reflexivity.
       destruct Hrv as [-> Hr]. rewrite Hux, w64_unsigned. rewrite two64z_eq in Hr. rewrite Z.mod_small by lia. reflexivity. }
     (* [comment removed for export] *)
-    assert (FAILARM : ok = false -> sound_res rho (s_next st) ms (SNext (set_pc (wr (set_resv st None) (regn rd) (alit 1)) (s_pc st + isz)))).
-    { intros Hokf. pose proof (R_set_resv_none rho st ms HR) as HR0.
-      pose proof (wr_sound rho (set_resv st None) _ rd (alit 1) w1 HR0 (alit_ok rho 1)) as HR1.
-      rewrite core_of_ms_of in HR1. cbn [ms_mem ms_of] in HR1. rewrite ms_of_idem in HR1.
-      cbn [sound_res]. eexists _, rho. split; [|split; [|split; [apply agree_refl | nxt]]].
-      - apply Hcan. cbn [exec]. rewrite Hal'. cbn [negb]. fold ok. rewrite Hokf. rewrite interp_done. reflexivity.
-      - rewrite with_resv_with_pc, <- with_pc_rset, (npc_eq rho st ms isz HR). apply set_pc_sound. exact HR1. }
     destruct (s_resv st) as [r|] eqn:Er.
-    - destruct (Z.eqb_spec r x) as [->|NE]; [|apply FAILARM; rewrite Hok_eq; first [reflexivity | apply (proj2 (Z.eqb_neq r x)); exact NE]].
+    - destruct (Z.eqb_spec r x) as [->|NE]; [|first [exact I | rewrite (proj2 (Z.eqb_neq r x) NE); exact I]].
       pose proof (R_set_resv_none rho st ms HR) as HR0.
       assert (Hwf0 : wf_state (set_resv st None) = true) by (rewrite wf_set_resv; exact Hwf).
       set (ms0 := ms_of ms (with_resv None (core_of ms)) (ms_mem ms)) in HR0.
@@ -1642,7 +1636,7 @@ Section WithU.
          | rewrite with_resv_with_pc, <- with_pc_rset, (npc_eq rho st ms isz HR), <- Hpc1;
            cbn [width_bytes]; change (Pos.to_nat 4) with 4%nat; change (Pos.to_nat 8) with 8%nat;
            rewrite ?store_bytes_low32; apply set_pc_sound; exact HR2 ]).
-    - apply FAILARM. exact Hok_eq.
+    - exact I.
   Qed.
 
   Lemma low32_of_sext : forall (v : bv 32), low32 (sext 64 v) = v.

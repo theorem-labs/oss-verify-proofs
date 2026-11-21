@@ -19,20 +19,21 @@
    holds each cf_ro_reads range), as YGcfAroBridge.arodata_ok_cf_of_P does, and their PST premise covers every
    aro_addr_cf address. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcallcf.v, with its module paths and module names changed; 45 of its 104 lines of code are new or changed and 535 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane WalkB2, route R; integrator ReallocPrimary).
    rule 24: no function proved here (a lemma on a call's dead shadow set and the journal's view-frame domains).
-   L2 at fuzz_reply image B: the cf dead set of a call, dead_shadow_new lyc Sc S2 (lib/B/YGcfRehidePost.v:70), misses
+   L2 at fuzz_reply image B: the cf dead set of a call, dead_shadow_new lyc Sc S2 (lib/B/YGcfRehidePost.v:71), misses
    each of the five view-frame domains of the journal YCbqG.ajournal_xR (lib/Reusable/YCbqG.v): above alloc_ceiling,
    the user bytes of the blocks live at the journal's end, the image, the journal start's frames and their shadow, and
    ly_extra. So a journal whose frames hold off the dead set gives the frames of the journal itself. The statement is
    the shared text of ajournal_x_of_rh_off (CfR, 2026-10-30; first built as the R4 probe, a working branch
-   cb17f1003ddf lib/A/R4ProbeROff.v:89). Per domain:
-   - above the ceiling: dead_shadow_new_below_ceiling (YGcfRehidePost.v:231);
+   lib/A/R4ProbeROff.v:89). Per domain:
+   - above the ceiling: dead_shadow_new_below_ceiling (YGcfRehidePost.v:232);
    - block bytes: AR_laws_x's alx_blocks at the journal's end puts them in application memory; dead_shadow_new_app;
-   - image: segs_low puts it below kLowMemEnd; dead_shadow_new_not_low (YGcfRehidePost.v:236);
+   - image: segs_low puts it below kLowMemEnd; dead_shadow_new_not_low (YGcfRehidePost.v:237);
    - frame bytes: frame_facts_cf at the CALL state (the start's frames are live there) puts them in the fake stack
      (ly_F, kFakeStackSize), application memory; dead_shadow_new_app. Frame shadow: dsn_frame_shadow_off below, from
-     dead_shadow_new_off (YGcfRehidePost.v:123) at the static extent (ly_F lyc, kFakeStackSize) with sec_placed;
+     dead_shadow_new_off (YGcfRehidePost.v:124) at the static extent (ly_F lyc, kFakeStackSize) with sec_placed;
    - ly_extra: ARx_extra_law_ok_ARcf (Reusable/YGcfExtra.v) at the call state; dead_shadow_new_app.
    The lib/A twin is lib/A/AjxRhOff.v, the same text with lib/A's YGcfRehidePost. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
@@ -70,7 +71,7 @@ Qed.
 Section f. Context {rc : YM05.RunCeil}.
 (* The shadow of an 8-aligned range inside the fake stack misses a call's dead set: dead_shadow_new_off at the static
    extent e := (ly_F lyc, kFakeStackSize); e is no dead slot, since a value in both halves of sec_placed's pairwise list
-   would be disjoint from itself. At the index-keyed core (fa123bc2baa) dead_shadow_new_off also takes
+   would be disjoint from itself. At the index-keyed core dead_shadow_new_off also takes
    live_slots_placed at the dead set's entry state, which is Sc here. *)
 Lemma dsn_frame_shadow_off : forall lyc Sc S2 fa fb a,
   sec_placed lyc Sc -> live_slots_placed lyc Sc ->

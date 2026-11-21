@@ -6,11 +6,11 @@
    reply_rl_param_ok discharges room_live_cf's one parameter premise rl_param_ok.  So the three laws hold at B's
    instance with no premise left: NP_LIVE = 3 is room_live_cf_step_gen's live-set bound, and the tail law's
    ROOM_cf_k S 2 is room_live_room_k (RK_realloc = 2).  The proofs are A's np_init_rl / np_step_rl / np_tail_rl
-   (lib/A/ReplyTFIBcf.v, cfdriver 46f1762ad5a) at CfParams_reply.
+   (lib/A/ReplyTFIBcf.v, cfdriver) at CfParams_reply.
    MT_PRE (lib/B/YD1mcf.v): fuzz_reply's real meter is ameter_triv on both images, so its witness is the trivial one,
    and that IS the real instance, not a stand-in: W8Add withdrew the live-state meter (relay.c:106 grows the held table
    by one entry per begin, so no XM_LIB can bound it; STATUS.md:278-282 (sha256 975db8402b4c; internal record), METER-FINDING.txt (sha256 e56f281c60fb; internal record)), and
-   both tops instantiate ameter_triv (lib/A/ReplyATop.v:95 on cfdriver 46f1762ad5a, lib/B/ReplyTFIBBParts.v:60);
+   both tops instantiate ameter_triv (lib/A/ReplyATop.v:95 on cfdriver, lib/B/ReplyTFIBBParts.v:60);
    a Theorem Labs lane ruled it a valid witness at 23:23Z. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia.

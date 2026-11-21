@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-29: omx-clap-core/fuzz_preset, image B' (asan-ubsan, #102 pin d663f82d7f48, unstripped twin
    c90d4fa54d43): THE B' INSTANCE of CheckBoundedAllocB.v's check_bounded_alloc_holds_B (the f97c text
    tcheck_bounded_alloc_specX, lib/A/PRH_FnCheck.v:523-532 blob 9ecd8eb167c6, proved verbatim with the ONE premise
@@ -14,7 +15,7 @@
    PI_prog_B, PAImg_prog.v:405 `pa_segs := rsegs`) ARE image B's.
    check_bounded_alloc_holds_B_inst_xs (h-pre-b1's request through h-rw-pre-5, 19:5xZ, so that its driver composes over
    ONE relation): the same walk at the relation of CrcBInstLive.v's check_reject_clean_holds_B_inst_live
-   (origin/cold/h-rw-pre-5-r102-crcB 8f5bab31e565, lib/B/Prog/CrcBInstLive.v e49be3adb151), word for word:
+   (lib/B/Prog/CrcBInstLive.v e49be3adb151), word for word:
    RL := prh_room_live_a8 at CfParams_preset, ARx := ARcf /\ xs_placed_cf over PI_prog_B's segments (its ARcfx), LAWS
    by YGcallcf.AR_laws_x_xs of YG0lawscf.AR_laws_ok_cf (CrcBInstLive.v's discharge). No premise.
    A separate file so that the walk's own closure (CheckBoundedAllocB.v) stays the one it was proved in: PALibB brings

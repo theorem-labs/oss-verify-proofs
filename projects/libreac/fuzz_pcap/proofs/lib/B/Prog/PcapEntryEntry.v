@@ -23,7 +23,8 @@
    stack_malloc_progressP, which model_laws (YG0d.v:520 ml_stack_malloc_progress) gives. So no cut carries the
    real-frame arm.
 
-   Rule 24: at ossv/recipes 25e3d17bdb50 (2026-10-29), no released proof walked this function on an asan-ubsan image (see the lane report). *)
+   Rule 24: (2026-10-29), no released proof walked this function on an asan-ubsan image (see the lane report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.B.Prog Require Import PcapEntry PcapEntryDefs PcapEntryPhases.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.

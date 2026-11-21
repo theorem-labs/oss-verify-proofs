@@ -1,18 +1,19 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/CfInstImgA.v, with its module paths and module names changed; 58 of its 87 lines of code are new or changed and 107 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane WalkB2; integrator ReallocPrimary).
    rule 24: proves function __wrap_malloc (fuzz_reply image A, 0x53dec: its one instruction, `j ___interceptor_malloc`)
    and closes reply's malloc contract by the cf layer's body route; the body's walk is lib/A/ReplyMallocBodyA.v's.
    Reuse search: proof-index __wrap_malloc wrap_to_body_step_cf amalloc_realizes_cf_of_body, 2026-10-30T17:32:07Z:
    no released or unreleased proof of either at fuzz_reply (only the address Definition A_wrap_malloc, lib/A/AD1t.v:50);
-   the donor of record is fuzz_preset A1's wrap_to_body_step_A (lib/A/WrapMallocABodyUnit.v at 9e87119fcf60).
+   the donor of record is fuzz_preset A1's wrap_to_body_step_A (lib/A/WrapMallocABodyUnit.v).
    The allocator's malloc contract amalloc_realizes_cf (Reusable/YG0dcf.v) at plugin-hostd/fuzz_reply image A (asan), by
-   YGcfMallocCompose.amalloc_realizes_cf_of_body (lib/A/YGcfMallocCompose.v:354), whose three premises are:
+   YGcfMallocCompose.amalloc_realizes_cf_of_body (lib/A/YGcfMallocCompose.v:355), whose three premises are:
    - wrap_to_body_step_reply_A: YGcfMallocCompose.wrap_to_body_step_cf at B: __wrap_malloc (pc_wrap_malloc 0x53dec,
      AF0l.v:11) holds the one word 0x1d80006f = `j 0x53fc4` (jal x0, +0x1d8), so it steps to ___interceptor_malloc
      (pc_malloc 0x53fc4) with the same registers and memory. The word is read through AB1q.tfibtbl_rtA, whose row
-     0x53de8 / 206 covers it. This is A1's wrap_to_body_step_A (fuzz_preset lib/A/WrapMallocABodyUnit.v at 9e87119fcf60)
+     0x53de8 / 206 covers it. This is A1's wrap_to_body_step_A (fuzz_preset lib/A/WrapMallocABodyUnit.v)
      stated at the layer text, with reply's two pcs.
    - malloc_leaf_widen_reply_A: YGcfLeafWiden.malloc_leaf_widen_cf_ok at reply's two image facts: errno's four bytes
      (TFIB_ERRNO 0x5d93cc, AF0m.v) lie below kHighMemBeg <= ly_stk_lo (layout_ok's lo_top, YG0f.v:325-327), and no

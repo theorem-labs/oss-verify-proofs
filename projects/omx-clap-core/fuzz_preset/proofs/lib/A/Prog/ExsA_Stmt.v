@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Theorem Labs, 2026-10: fuzz_preset, image A' (#102 pin asan 1be0f53d96cb, facts 8f3e7e1a07f1), ex_string
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10: fuzz_preset, image A' (#102 pin asan 1be0f53d96cb, facts), ex_string
    (fuzz_preset.c :185-239, A_prog_sigma AS_ex_string = 0x84034, 318 instructions to 0x8452c): the STATEMENTS of its walk
    against the kit's tex_string_specX (lib/A/PRH_FnEx.v), instantiated at image A'. This file proves nothing about the program.
    PORTED from lib/B/Prog/ExsB_Stmt.v (a Theorem Labs lane's B' walk): es_e, ES_PRE, ES_Q, ES_POST, ES_RES and ESG are the donor's

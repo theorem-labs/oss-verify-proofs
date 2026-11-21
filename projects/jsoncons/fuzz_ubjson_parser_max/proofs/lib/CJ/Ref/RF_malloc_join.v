@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the rauxv_ok destruct patterns follow its any-layout auxv form, as in fuzz_bigint's copy; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/CJ/Ref/RF_malloc_join.v, line 131. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
@@ -124,7 +125,7 @@ Lemma rauxv_ok_malloc_fp : ltac2:(TCodec.tc2 tcn__CJ_Ref_RF_malloc_join "QB'C'6'
 Proof. intros st st2 lo sp m0 m2 m m' B.
 intros MR0 MR2 AUX PE CLO SB. eapply rauxv_ok_pres; [exact AUX| exact PE| |].
 - intros a Ha Hfp. destruct (rmalloc_fp_cases st st2 lo sp m0 m2 a MR0 MR2 Hfp); [lia|].
-destruct AUX as (av & x3 & x4 & x5 & hw & x6 & x11 & x12 & x23 & rnd & _ & _ & _ & HH). pose_ceil. lia.
+destruct AUX as (av & vs & rnd & _ & _ & _ & HH & _). pose_ceil. lia.
 - intros a Ha Hfp. unfold RAUXV_CELL, RLIBC in Ha.
 destruct (rmalloc_fp_image st st2 lo sp m0 m2 a MR0 MR2 Hfp CLO ltac:(lia)) as [X|X]; unfold RCTX in X; lia.
 Qed.

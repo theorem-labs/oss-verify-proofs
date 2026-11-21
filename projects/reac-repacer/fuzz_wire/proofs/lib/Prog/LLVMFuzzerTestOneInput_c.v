@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
-(* Modified by Theorem Labs: reac-repacer/fuzz_uci's lib/Prog/LLVMFuzzerTestOneInput_c.v (6874bc78b1f) at fuzz_wire's
+(* Modified by Theorem Labs: reac-repacer/fuzz_uci's lib/Prog/LLVMFuzzerTestOneInput_c.v at fuzz_wire's
    module paths and plain image values. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The harness entry contract of fuzz_wire plain c8763dfc4e81, the cut between the driver / start-up frame
    (lib/FrameAPI.v, lib/FrameProof.v, ported with the kit) and this program's walk. The text of fuzz_uci's contract (itself
    libreac/fuzz_decode's released lib/Prog/LLVMFuzzerTestOneInput_c.v) at this image's values: entry 0x12d78, frame

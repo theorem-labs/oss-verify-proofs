@@ -376,14 +376,15 @@ Proof.
   pose proof PRE0 as (_ & _ & _ & _ & _ & HK & HK63 & _ & _ & _ & HAUX).
   assert (Hf0 : st_init_done A0 = false).
   { destruct (st_init_done A0) eqn:E; [rewrite (HI eq_refl) in Hf; discriminate | reflexivity]. }
-  destruct (HAUX Hf0) as (av & ar & W1 & W2 & W3 & W4 & H5 & H6 & H7 & H8 & H9 & H10).
+  destruct (HAUX Hf0) as (rs & av & ar & W1 & W2 & W3 & W4 & H5 & H6 & H7 & H8 & H9 & H10).
+  pose proof (auxv_types_len_ge rs). unfold AUXV_RAND_K in *.
   pose proof caw_k_val as HKv. pose proof OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable.YM05.alloc_ceiling_value as Hc.
   assert (HE : errno_addr B + 4 <= OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable.YM05.alloc_ceiling) by (rewrite HERR; unfold STRTOD_ERRNO; lia).
   assert (HIx : forall a v, spZ regs0 <= a -> a + 8 <= 2 ^ 63 -> word_mem (ms_segs B) mem0 a v ->
             word_mem (ms_segs B) m a v).
   { intros a v H1 H2 Hw. apply (word_mem_frame (ms_segs B) mem0 m a v Hw). intros k Hk.
     refine (proj1 (HHI (a + k) _ _)); [lia | intros [Hs|Hs]; lia]. }
-  rewrite Hsec. exists av, ar.
+  rewrite Hsec. exists rs, av, ar. unfold AUXV_RAND_K.
   split; [intros k Hk; rewrite (HLB Hf (Z.of_nat k)) by lia; exact (W1 k Hk)|].
   split; [intros k Hk; apply HIx; [lia | lia | exact (W2 k Hk)]|].
   split; [apply HIx; [lia | lia | exact W3]|].

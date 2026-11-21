@@ -13,6 +13,7 @@
    lib/B/TransportBFacts.v's; the slot is the image-B core's G form (lib/B/YCfn.v at G := lib/B/TransportGB.v
    G_HARNESS_B, lib/B/YD1q.v, which takes no hull premise); the conclusion is lib/B/TransportTFIBB.v TFIB_TB and the two
    ASan+UBSan statements of lib/B/AsanUbsanTop.v; module paths and names changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's [entry_launch_ok_va] fact; the run ceiling at the allocation limit, RunCeilOf's third argument). *)
 (* The closing side of fuzz_transport's two ASan+UBSan statements of image B (rule 24: no function proved; this file is
    assembly).
 
@@ -934,13 +935,14 @@ Let EXS : exit_site_tfa B est xst := tfib_exit_site B HB LAWS.
 Lemma transportb_srealizesX_rc : forall sp rdraw brk mb inp,
   valid_sp sp -> valid_brk TSEGS brk -> valid_mmap_base mb ->
   entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
   YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
   srealizes TSEGS (init_config TSEGS AsanUbsan.M.init_pc TPH sp brk mb rdraw target_alloc_limit inp) (SPECX inp).
 Proof.
-  intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil.
+  intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil.
   change target_alloc_limit with YA02.LIMIT.
   exact (tfib_srealizesX B HB AMALLOC AFREE AICPY ARDCHK ameter_triv XL XL RLO RHI MT_FREE BF.trans_ro_in
-    LIB_CONTRACT xst XFR PF1 PFN est ESTI ESTF FWS RFS FPO FPR FPU EXS sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil).
+    LIB_CONTRACT xst XFR PF1 PFN est ESTI ESTF FWS RFS FPO FPR FPU EXS sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil).
 Qed.
 End RC.
 
@@ -948,9 +950,9 @@ End RC.
    frame_TFIB_T_of_parts). *)
 Theorem transport_TFIB_B : TFIB_TB.
 Proof.
-  intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp.
-  exact (@transportb_srealizesX_rc (YM05.RunCeilOf (bv_unsigned sp) (valid_sp_windowTB sp Hsp)) sp rnd brk mbase inp
-    Hsp Hbrk Hmb Hfit Hinp (YM05.ceil_of_top_run _)).
+  intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau.
+  exact (@transportb_srealizesX_rc (YM05.RunCeilOf (bv_unsigned sp) (valid_sp_windowTB sp Hsp) YA02.LIMIT) sp rnd brk mbase inp
+    Hsp Hbrk Hmb Hfit Hinp Hlau (YM05.ceil_of_top_run _)).
 Qed.
 
 (* The two ASan+UBSan statements of record of image B (lib/B/AsanUbsanTop.v section b): agreement from TFIB_TB and the

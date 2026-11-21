@@ -1,18 +1,19 @@
-(* CARRIED from a working branch 3dd49fa29fa14b99e3c465cacbfe79a09756bb26,
+(* CARRIED from a working branch,
    proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfAmx.v, sha256 8be269c9cb72acb640ba8fea3919a7d256314e2450d9ed1191e526d09e3c87ac.
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change
    made here is the module prefix OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.
-   Plus the P'' (Univ trace carrier) delta of commit 94ab015e127b for cgif/cgif_file_fuzzer/lib/YGcfAmx.v, taken 3-way (base d94d29d53c8).
+   Plus the P'' (Univ trace carrier) delta for cgif/cgif_file_fuzzer/lib/YGcfAmx.v, taken 3-way.
    Plus one comment change (:295-296): the YGcfRmodel pointer names lib/A / lib/B, where YGcfRmodel lives at this unit. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the event-free second allocator instance (suffix cf), the malloc / free laws in the
    form c-omx-alloc's generic kit consumes (alloc_model_laws_x_cf): a post with an UPPER bound on the event
    counter, which malloc_post_cf (YG07cf.v) and free_post_ycf (YG03cf.v) do not carry.
    The upper bounds, proved on every returning path of the model (ipost below, an all-paths property that
    needs no invariant):
-   - malloc_cf: st_nev s' <= st_nev s + 3. malloc_cf ticks once (YG00cf.v:243). Its only other ticks are
-     errb_map_cf's (YG00cf.v:131), reached through populate_cf -> map_more_user_cf's class-full arm ->
+   - malloc_cf: st_nev s' <= st_nev s + 3. malloc_cf ticks once (YG00cf.v:244). Its only other ticks are
+     errb_map_cf's (YG00cf.v:132), reached through populate_cf -> map_more_user_cf's class-full arm ->
      errb_report_cf, at most once per malloc_cf. errb_report_cf makes two errb_append_cf calls, and each
      maps at most once: on a mapped buffer it remaps at most once; on an unmapped one it maps
      ERRB_INIT = 65,536 bytes, after which the capacity is 65,536 and the request (exh_len1 = 33 or

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the THP-flag and vdso_ok premises of ntfree_refines). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -35,7 +36,7 @@ Theorem ntfree_refines : ntfree_stmt.
 Proof.
   unfold ntfree_stmt. intros md regs mm rom s fuel. revert md regs mm rom s.
   induction fuel as [|fuel IH];
-    intros md regs mm rom s g i sp ret P L Hp Hvm Hag H2 Hal Hlo0 Hlo Hhi Hhi64 Hwt Hstk H1 Hret H4 H10 H11 HS HK.
+    intros md regs mm rom s g i sp ret P L Hp Hvm Hthp Hvdo Hag H2 Hal Hlo0 Hlo Hhi Hhi64 Hwt Hstk H1 Hret H4 H10 H11 HS HK.
   { (* [comment removed for export] *) exfalso. exact HS. }
   rewrite Nat2Z.inj_succ in Hlo, Hstk, HK.
   pose proof (minv_init s sp (96 * Z.succ (Z.of_nat fuel)) Hlo0 Hlo ltac:(lia) Hhi Hhi64 Hwt) as HI.

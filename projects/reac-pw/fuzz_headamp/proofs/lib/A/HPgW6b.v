@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6b.v at f3898085bda; for reac-pw/fuzz_headamp image A, proving HPgSeg's hs_piece_W6b_stmt: module paths and the rs_ prefix renamed to hs_, the strlen trampoline 0x41b98 (lib/A/Rt/StrlenDef.v STRLEN_ENTRY_A) and __asan_memcpy 0x51d0c. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6b.v; for reac-pw/fuzz_headamp image A, proving HPgSeg's hs_piece_W6b_stmt: module paths and the rs_ prefix renamed to hs_, the strlen trampoline 0x41b98 (lib/A/Rt/StrlenDef.v STRLEN_ENTRY_A) and __asan_memcpy 0x51d0c. *)
 (* reac-pw/fuzz_headamp image A (fuzz_headamp.asan, pinned sha256
    f3e0669d2819724922df0556b11c2dcd22d1e16fe7e0fe1535ce784b34436c47; every address measured on the unstripped twin
    b5f352154c54a97c66fd92dfa228e8a854498f6cd313dba0107900546b043f9a, same loaded bytes except .note.gnu.build-id): the walk piece "ent_build B" of

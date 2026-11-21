@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACer.v, with its module paths and module names changed; 1338 of its 1373 lines of code are new or changed and 261 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_K.v, with its module paths and module names changed; 157 of its 204 lines of code are new or changed and 1326 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs program part, lane ENTRY, IMAGE B (fs.asan-ubsan, pinned sha256 5ac5ce0954f8...): the canonical boundary state of
    the LLVMFuzzerTestOneInput walk (lib/B/FSW_entry_defs.v fe_ss) holds at any machine state that has the eleven saved
    words at s0 - 8 .. s0 - 88, the live class-0 fake frame with its flag word, and s0 / s2 / s8 / s9 at the entry sp /
@@ -14,8 +15,8 @@
    fe_awr_z), the byte across a callee journal (fe_lensh_journal, fe_lensh_npstat) and decode_spec_ff's
    range_addressable premise from it (fe_lensh_ra).
    rule 24: proves function LLVMFuzzerTestOneInput (shared kit of the entry walk's segments; reuse search:
-   proof-index LLVMFuzzerTestOneInput, ported from a working branch 08ad70da3bf).
-   Ported from: lib/A/FSW_entry_canon.v (a working branch 0d34d65d2b7), A's names, the imports moved to
+   proof-index LLVMFuzzerTestOneInput, ported from a working branch).
+   Ported from: lib/A/FSW_entry_canon.v (a working branch), A's names, the imports moved to
    lib/B. RELOC-B hypotheses: none. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

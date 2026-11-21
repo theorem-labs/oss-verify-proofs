@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/AGhy.v at 95e6f1d72b6 (sha256 378d6b206c74) into lib/B (libreac/fuzz_decode image B, fuzz_decode.asan-ubsan), REGENERATED, not relocated: A_Allocate from fuzz_decode.asan-ubsan's symbol table and TAIL0G's rows from lib/B/YFhy.v REG0 (proofs/libreac/fuzz_decode/provenance/alloc-reloc/B/tools/gen_aghy.py), module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/AGhy.v (sha256 378d6b206c74) into lib/B (libreac/fuzz_decode image B, fuzz_decode.asan-ubsan), REGENERATED, not relocated: A_Allocate from fuzz_decode.asan-ubsan's symbol table and TAIL0G's rows from lib/B/YFhy.v REG0 (proofs/libreac/fuzz_decode/provenance/alloc-reloc/B/tools/gen_aghy.py), module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The seeds of the frame-generic walk of Allocator::Allocate (the AG* files, generalized from YFhy-YFjg).
 
    The walk starts at Allocate's first instruction (A_Allocate) with the caller's frame abstract.  Over the

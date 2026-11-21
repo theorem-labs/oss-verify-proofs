@@ -1,11 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the bridge lemma takes a premise that the predicate implies the channel-reader flag and threads it through its induction; taken in part from projects/simdjson/fuzz_atpointer/proofs/lib/A/Z11m.v, 20 lines within its lines 9-201. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys Require Import Uapi.
 From OSSVerify.Proofs.simdjson.fuzz_ondemand.lib.AS Require Import CatSim ShapeAlg AsanAcct AsanAcctShape.
+From OSSVerify.Proofs.simdjson.fuzz_ondemand.lib.AS Require Import RomBase RomWritev.
 From OSSVerify.Proofs.simdjson.fuzz_ondemand.lib.Lib Require Import PropExec MState Mem Exec ITree Nodes Decode RelSpec RzCPS NodesA NodesA_wv.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
@@ -130,7 +132,20 @@ Proof using Hwx Hsegs.
   { rewrite (iovs_total_ok _ _ _ Hok), Hnb. reflexivity. }
   set (CA := import_iovecs_accesses (in_mem i) (areg ms 11) (iovcnt32 (Z_to_bv 64 (Z.of_nat (length iovs))))).
   exists (Z_to_bv 64 66), (with_copyins CA (mkEffect (Z_to_bv 64 0) [] [])), mo.
-  split; [exact Hsvc|]. split.
+  split; [exact Hsvc|].
+  split.
+  { (* the node's specification is the same over the run's larger read-only backing *)
+    apply (writev_rob_of segs ms mo (Z_to_bv 64 fd) (areg ms 11) (Z_to_bv 64 (Z.of_nat (length iovs)))
+             (Z_to_bv 64 fd) iovs (concat bufs) Hsvc).
+    - change (ms_gpr ms 0) with (areg ms 10). rewrite Ha0.
+      rewrite fd32_id by (rewrite unsigned_lit; destruct Hfd; lia). reflexivity.
+    - reflexivity.
+    - change (ms_gpr ms 2) with (areg ms 12). rewrite Ha2, Hleq. reflexivity.
+    - exact Hfdl.
+    - exact Himp.
+    - rewrite cap_iovecs_id_rw by (rewrite Htotal; unfold MAX_RW_COUNT; lia).
+      apply gather_iovecs_ok. exact Hok. }
+  split.
   { intros o. change (sys_input segs ms (Z_to_bv 64 66)) with i. rewrite Hsp. exact (writev_chan_zero_outcome _ _ _ i mo o (Z_to_bv 64 fd) iovs Hfdl Hw Himp Htotal). }
   split; [apply vm_same_refl|]. split; [apply io_eff_copyins, io_eff_mkEffect|].
   split.
@@ -145,11 +160,12 @@ Theorem impl_realizes : forall {X : Type} (chans : list Z) (t : itree node (exc 
     (T : X -> TSet) ms c,
   mat_stable PM ->
   (forall mo fd, PM mo -> In fd chans -> fd_lookup (m_fds mo) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd))) ->
+  (forall mo, PM mo -> m_channel_reader mo = true) ->
   tok chans t -> AST segtop A (eq ms) PM c -> impl segs (at_node segs) t (epost Q) ms ->
   (forall x ms' c', Q x ms' -> AST segtop A (eq ms') PM c' -> realizes segs c' (T x)) ->
   realizes segs c (TT t T).
 Proof using Hwx Hsegs.
-  intros X chans t A PM Q T. induction t as [[|x]|n k IH|kc IHc]; intros ms c HPM HFD Htok Hc Him HK; cbn [tok] in Htok; [| | |contradiction].
+  intros X chans t A PM Q T. induction t as [[|x]|n k IH|kc IHc]; intros ms c HPM HFD HRD Htok Hc Him HK; cbn [tok] in Htok; [| | |contradiction].
   - contradiction.
   - cbn [impl epost] in Him. cbn [TT].
     apply (ast_evt segs segtop Hwx Hsegs A (eq ms) PM (Q x) HPM (fun ms0 E => eq_ind ms (fun z => evt segs (Q x) z) Him ms0 E) (T x) c Hc).
@@ -164,7 +180,7 @@ Proof using Hwx Hsegs.
       * apply (ast_writev0 A (eq ms1) PM (eq (nretA ms1 (eff0 (Z_to_bv 64 0)))) PM fd bufs Eb HPM); [| | exact Hc1'|].
         -- intros ms0 <-. split; [exact Hat| reflexivity].
         -- intros mo HPMmo. split; [| exact HPMmo]. exact (HFD mo fd HPMmo Hfd).
-        -- intros c2 Hc2. apply (IH _ _ c2 HPM HFD (Htok0 eq_refl) Hc2 (Hk _) HK).
+        -- intros c2 Hc2. apply (IH _ _ c2 HPM HFD HRD (Htok0 eq_refl) Hc2 (Hk _) HK).
       * assert (W : wnode segs (AST segtop A (eq ms1) PM) (Z_to_bv 64 fd) (b :: bs)
                       (fun j => AST segtop A (eq (nretA ms1 (eff0 (Z_to_bv 64 (Z.of_nat j))))) PM)).
         { assert (Hnb : (1 <= length (concat bufs))%nat).
@@ -173,16 +189,17 @@ Proof using Hwx Hsegs.
                         fd bufs Hnb HPM) as W0.
           rewrite <- Eb. apply W0.
           - intros ms0 <-. split; [exact Hat|]. intros j Hj. reflexivity.
-          - intros mo HPMmo. split; [| exact HPMmo]. exact (HFD mo fd HPMmo Hfd). }
+          - intros mo HPMmo. split; [| exact HPMmo]. exact (HFD mo fd HPMmo Hfd).
+          - exact HRD. }
         apply (W (fun j => TT (k (eff0 (Z_to_bv 64 (Z.of_nat j)))) T) c1 Hc1').
-        intros j c2 Hj Hc2. apply (IH _ _ c2 HPM HFD (Htok1 j ltac:(first [exact Hj| rewrite Eb; exact Hj])) Hc2 (Hk _) HK).
+        intros j c2 Hj Hc2. apply (IH _ _ c2 HPM HFD HRD (Htok1 j ltac:(first [exact Hj| rewrite Eb; exact Hj])) Hc2 (Hk _) HK).
     +
       destruct Htok as (Hfd & Htok'). cbn [TT].
       pose proof Hat as (Hsvc & Hfd2 & Hreq & Ha0 & Ha1).
       apply (ast_ioctl segs segtop Hwx Hsegs A (eq ms1) PM (eq (nretA ms1 (efferr ENOTTY))) PM fd Hfd2 HPM); [| | exact Hc1'|].
       * intros ms0 <-. split; [exact Hsvc|]. split; [exact Ha0|]. split; [rewrite Ha1, Hreq; reflexivity| reflexivity].
       * intros mo HPMmo. split; [| exact HPMmo]. exists (Z_to_bv 64 fd). exact (HFD mo fd HPMmo Hfd).
-      * intros c2 Hc2. apply (IH _ _ c2 HPM HFD Htok' Hc2 (Hk _) HK).
+      * intros c2 Hc2. apply (IH _ _ c2 HPM HFD HRD Htok' Hc2 (Hk _) HK).
 Qed.
 
 End Rules.

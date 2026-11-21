@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: the assembly of sup_pin_accept's ASan walk (plugin-hostd/fuzz_command) from
    its two halves, after proofs/cgif/cgif_file_fuzzer/lib/A/ACke.v (the instantiation file of a cgif walk). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/sup_pin_accept.v, with its module paths and module names changed; 64 of its 90 lines of code are new or changed and 41 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* sup_remove_all's walk on the ASan+UBSan build of plugin-hostd/fuzz_command (fuzz_command.asan-ubsan,
    BASE + AF_sup_remove_all = 0x8b434, 10 instructions), the shared statements: the footprint and the post-condition
    of lib/B/Prog/sup_remove_all_c.v, the statement as the walk proves it, record's footprint for the call at
@@ -11,7 +12,7 @@
 
    tsup_remove_all_specF is tsup_remove_all_spec (sup_remove_all_c.v:71-116) with its footprint named sra_FP and its
    post-condition named sra_post; the two are convertible (tsup_remove_all_specF_spec below), so the walk's theorem
-   gives tsup_remove_all_spec by `exact`. Both statements are at pass 5 (a working branch f490061c104): the rounding-mode-0
+   gives tsup_remove_all_spec by `exact`. Both statements are at pass 5 (a working branch): the rounding-mode-0
    premise after afn_pre, apost_baseF, no astack_pres premise. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith List Bool Lia Permutation.

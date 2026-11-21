@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs: the shared part of proofs/libreac/fuzz_decode/lib/A/Prog/check_round_trip_cg.v (origin/ossv/recipes 88154566652a: dec_utrace, the read-only reads and their two instance facts, the value-0 shadow granule of a table, the leaf instances dec_leaf_at / dec_leaf_wr_at and the runtime cells as constant cells of the record) for reac-repacer/fuzz_uci's image A: module paths changed, the image is the core's tfibsegs (lib/A/AB1v.v), the read-only reads and the cells are fuzz_uci.asan's, measured on the pinned image. *)
+(* Modified by Theorem Labs: the shared part of proofs/libreac/fuzz_decode/lib/A/Prog/check_round_trip_cg.v (dec_utrace, the read-only reads and their two instance facts, the value-0 shadow granule of a table, the leaf instances dec_leaf_at / dec_leaf_wr_at and the runtime cells as constant cells of the record) for reac-repacer/fuzz_uci's image A: module paths changed, the image is the core's tfibsegs (lib/A/AB1v.v), the read-only reads and the cells are fuzz_uci.asan's, measured on the pinned image. *)
 (* Modified by Theorem Labs, 2026-11: copied from proofs/reac-repacer/fuzz_uci/lib/A/Prog/UciCg.v, with its module paths changed. *)
-(* Modified by Theorem Labs: the shared part of proofs/libreac/fuzz_decode/lib/A/Prog/check_round_trip_cg.v (origin/ossv/recipes 88154566652a: dec_utrace, the read-only reads and their two instance facts, the value-0 shadow granule of a table, the leaf instances dec_leaf_at / dec_leaf_wr_at and the runtime cells as constant cells of the record) for reac-repacer/fuzz_uci's image A: module paths changed, the image is the core's tfibsegs (lib/A/AB1v.v), the read-only reads and the cells are fuzz_uci.asan's, measured on the pinned image. *)
+(* Modified by Theorem Labs: the shared part of proofs/libreac/fuzz_decode/lib/A/Prog/check_round_trip_cg.v (dec_utrace, the read-only reads and their two instance facts, the value-0 shadow granule of a table, the leaf instances dec_leaf_at / dec_leaf_wr_at and the runtime cells as constant cells of the record) for reac-repacer/fuzz_uci's image A: module paths changed, the image is the core's tfibsegs (lib/A/AB1v.v), the read-only reads and the cells are fuzz_uci.asan's, measured on the pinned image. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/A/Prog/UciCg.v, with its module paths changed; 778 of its 849 lines of code are new or changed and 69 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_transport/lib/A/Prog/DgnTransportCg.v, with its module paths and module names changed; 709 of its 816 lines of code are new or changed and 742 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* on_announce_seg_kit: the shared lemmas of the pieces of on_announce's image-A G-form walk (the cut contract
    lib/A/Prog/OnannCut.v, the statement lib/A/Prog/on_announce_cg.v). It proves no piece; each piece file
    on_announce_seg_<piece>.v Requires it. Lemmas of note:
@@ -462,7 +463,7 @@ Qed.
 (* 4. The cut state: AR, the layout, the own frame                     *)
 (* ------------------------------------------------------------------ *)
 
-(* What every piece takes from onann_fix and onann_cur (the shape of SlostNtc.v:552-595, SlostRel.v:231-266): AR at
+(* What every piece takes from onann_fix and onann_cur (the shape of SlostNtc.v:553-596, SlostRel.v:231-266): AR at
    the entry and at the cut state; the cut layout's stack bounds, frame and flag addresses are the entry's; the own
    frame (ONANN_CID, pos) is live at F, its 1024 bytes and 128 shadow bytes present and not owned, off G, in
    application memory below alloc_ceiling and the stack window; its flag byte present, owned, off the frame and its
@@ -554,7 +555,7 @@ Qed.
 (* ------------------------------------------------------------------ *)
 
 (* trans_rom_view_rd at the cut memory: a TRANS_RO_RD byte is an image byte below G, not owned, not errno, so
-   acall_kept_g's image clause keeps it (SlostNtc.v:893-897). *)
+   acall_kept_g's image clause keeps it (SlostNtc.v:894-898). *)
 Lemma onann_rom_call : trans_ro_rd_unowned B -> trans_rom_no_errno B ->
   forall lyc Sc (W : world segs) memc (W2 : world segs) mem2 slo shi (E : Z -> Prop),
   trans_rom_view_rd W memc ->

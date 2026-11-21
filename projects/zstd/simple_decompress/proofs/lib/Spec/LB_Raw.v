@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (QI_fds takes the premise that the kernel build (m_kernel) is unchanged, which KL's vDSO-pair field reads; QI_after_node supplies it from nstep_kernel). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
 From stdpp Require Import gmap.
@@ -97,11 +98,11 @@ Proof.
   - rewrite <- (zsum_map_perm _ _ _ HXY) || idtac. unfold R63X in *. rewrite (zsum_map_perm _ _ _ (Permutation_sym HXY)). exact HB.
 Qed.
 
-Lemma QI_fds X P s mo mo' : QI X P s mo -> m_vmmaps mo' = m_vmmaps mo -> minv mo' -> m_halted mo' = None -> QI X P s mo'.
+Lemma QI_fds X P s mo mo' : QI X P s mo -> m_vmmaps mo' = m_vmmaps mo -> m_kernel mo' = m_kernel mo -> minv mo' -> m_halted mo' = None -> QI X P s mo'.
 Proof.
-  intros [(st & L & BL & LS & E & INV & SI & HAQ & HK & HL & HN & HP) HB] Hvm Hmi Hh. split; [| exact HB].
+  intros [(st & L & BL & LS & E & INV & SI & HAQ & HK & HL & HN & HP) HB] Hvm Hkb Hmi Hh. split; [| exact HB].
   exists st, L, BL, LS. repeat (split; [assumption|]). split; [| split; [| split; [| exact HP]]].
-  - destruct HK; constructor; try (rewrite Hvm); auto.
+  - destruct HK; constructor; try (rewrite Hvm); try (rewrite Hkb); auto.
   - unfold LI in *. rewrite Hvm. exact HL.
   - apply (LN_frame L L mo); try (rewrite Hvm); auto.
 Qed.
@@ -112,7 +113,7 @@ Proof. intros [(st & L & BL & LS & _ & _ & _ & _ & HK & _) _]. split; [exact (kl
 Lemma QI_after_node X P s mo n rsp mo' evs :
   QI X P s mo -> nstep n mo rsp mo' evs -> m_vmmaps mo' = m_vmmaps mo -> QI X P s mo'.
 Proof.
-  intros HQ Hst Hvm. destruct (QI_minv _ _ _ _ HQ) as [Hmi Hh].
+  intros HQ Hst Hvm. destruct (QI_minv _ _ _ _ HQ) as [Hmi Hh]. pose proof (nstep_kernel _ _ _ _ _ Hst) as Hkb.
   destruct (minv_preserved n mo rsp mo' evs Hmi Hh Hst) as [Hh' Hmi']. eapply QI_fds; eauto.
 Qed.
 

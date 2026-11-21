@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the printf and header fwrite lemmas of Section IO take the channel-reader premise; new Section IORT with drv_msteps_rt, drv_printf_first_rt, drv_printf_buf_rt, drv_hdr_short_rt and drv_hdr_overrun_rt, the same lemmas under the run's driver laws asan_driver_laws_run, whose walks are over the run's segment list asegs ++ rt_tail from the configuration with that list's read-only backing). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -18,6 +19,8 @@ From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Lib Require Import Mem Cells Step Frame MState SysStep Exec.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.As Require Import ASegs AsShadow AsConst AsIface AsCXXHeap AsDriverLaws AsLazyRun
   RefExitBase RefStdioDefs AsStdioWrite AsStdioCall AsScLib AsPrintfFirst AsPrintfBuf AsHdrErr AsDrvRun.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require LazyTail.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require RomBase RunTail PairCleanAll.
 Import OSSVerify.Proofs.openssl.echconfiglist_parser.lib.PropExec.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -52,6 +55,7 @@ Section IO.
     ap1H regs mem sp can ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0x1f425c) mem rom -> as_AKREL H s (mkCfg msF mo) ->
     fd_lookup (m_fds mo) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)) ->
+    m_channel_reader mo = true ->
     K [] ->
     (forall regs' mem' msF' mo', ap1Post regs mem sp can regs' mem' ->
        as_VIS H s msF' = mkst regs' (Z_to_bv 64 0x1f41b0) mem' rom -> as_AKREL H s (mkCfg msF' mo') ->
@@ -59,9 +63,9 @@ Section IO.
        realizes asegs (mkCfg msF' mo') K) ->
     realizes asegs (mkCfg msF mo) (t_emit [WriteEv (Z_to_bv 64 1) (Z_to_bv 8 48); WriteEv (Z_to_bv 64 1) (Z_to_bv 8 10)] K).
   Proof.
-    intros s msF mo regs mem sp can K PH HV HA Hfd1 HKnil HK.
+    intros s msF mo regs mem sp can K PH HV HA Hfd1 Hrd1 HKnil HK.
     apply (drv_lazy H DL s msF mo regs _ mem _ HV HA). intros L S Zr OK RS BACK.
-    apply (aprintf0_first L S Zr regs mem msF mo sp can K PH OK RS Hfd1 HKnil).
+    apply (aprintf0_first L S Zr regs mem msF mo sp can K PH OK RS Hfd1 Hrd1 HKnil).
     intros regs' mem' msF' mo' PO OK' SB' HS' RS'. destruct (BACK msF' mo' _ OK' (same_vm_sb _ _ SB') RS') as [HV' HA'].
     exact (HK regs' mem' msF' mo' PO HV' HA' SB').
   Qed.
@@ -95,6 +99,7 @@ Section IO.
     hfH regs mem sp can ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0x1f3fb4) mem rom -> as_AKREL H s (mkCfg msF mo) ->
     fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+    m_channel_reader mo = true ->
     K [] ->
     (forall regs' mem' msF' mo', hfPost regs mem sp can regs' mem' ->
        as_VIS H s msF' = mkst regs' (Z_to_bv 64 0x1f3ff0) mem' rom -> as_AKREL H s (mkCfg msF' mo') ->
@@ -102,9 +107,9 @@ Section IO.
        realizes asegs (mkCfg msF' mo') K) ->
     realizes asegs (mkCfg msF mo) (t_emit (W 2 msg_short) K).
   Proof.
-    intros s msF mo regs mem sp can K PH HV HA Hfd2 HKnil HK.
+    intros s msF mo regs mem sp can K PH HV HA Hfd2 Hrd2 HKnil HK.
     apply (drv_lazy H DL s msF mo regs _ mem _ HV HA). intros L S Zr OK RS BACK.
-    apply (as_hdr_short_fwrite L S Zr regs mem msF mo sp can K PH OK RS Hfd2 HKnil).
+    apply (as_hdr_short_fwrite L S Zr regs mem msF mo sp can K PH OK RS Hfd2 Hrd2 HKnil).
     intros regs' mem' msF' mo' PO OK' SB' HS' RS'. destruct (BACK msF' mo' _ OK' (same_vm_sb _ _ SB') RS') as [HV' HA'].
     exact (HK regs' mem' msF' mo' PO HV' HA' SB').
   Qed.
@@ -113,6 +118,7 @@ Section IO.
     hfH regs mem sp can ->
     as_VIS H s msF = mkst regs (Z_to_bv 64 0x1f3fd0) mem rom -> as_AKREL H s (mkCfg msF mo) ->
     fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+    m_channel_reader mo = true ->
     K [] ->
     (forall regs' mem' msF' mo', hfPost regs mem sp can regs' mem' ->
        as_VIS H s msF' = mkst regs' (Z_to_bv 64 0x1f3ff0) mem' rom -> as_AKREL H s (mkCfg msF' mo') ->
@@ -120,10 +126,130 @@ Section IO.
        realizes asegs (mkCfg msF' mo') K) ->
     realizes asegs (mkCfg msF mo) (t_emit (W 2 msg_overrun) K).
   Proof.
-    intros s msF mo regs mem sp can K PH HV HA Hfd2 HKnil HK.
+    intros s msF mo regs mem sp can K PH HV HA Hfd2 Hrd2 HKnil HK.
     apply (drv_lazy H DL s msF mo regs _ mem _ HV HA). intros L S Zr OK RS BACK.
-    apply (as_hdr_overrun_fwrite L S Zr regs mem msF mo sp can K PH OK RS Hfd2 HKnil).
+    apply (as_hdr_overrun_fwrite L S Zr regs mem msF mo sp can K PH OK RS Hfd2 Hrd2 HKnil).
     intros regs' mem' msF' mo' PO OK' SB' HS' RS'. destruct (BACK msF' mo' _ OK' (same_vm_sb _ _ SB') RS') as [HV' HA'].
     exact (HK regs' mem' msF' mo' PO HV' HA' SB').
   Qed.
 End IO.
+
+(* LPS 727298f3: the lemmas of Section IO under the run's driver laws.  Each walk is over the run's
+   segment list asegs ++ rt_tail from the configuration with that list's read-only backing (arz),
+   through drv_lazy_rt, the LazyTail lemmas and the stdio lemmas' _rt forms, with the pair's
+   invariant vcm2 vlo vb vhi as the step invariant (vs_inv); the VIS facts keep the
+   binary's backing rom. *)
+Section IORT.
+  Context {HCEIL : HeapCeil} {RT : RunTail.RunTail}.
+  Variable H : asr.
+  Hypothesis HH : asan_rt_hyps H.
+  Context {vlo vb vhi : Z}.
+  Hypothesis DLR : asan_driver_laws_run RunTail.rt_tail vlo vb vhi H.
+
+  Let rom := seg_rom asegs.
+  Local Notation rV := (seg_rom (asegs ++ RunTail.rt_tail)) (only parsing).
+
+  (* the machine run is moved to the run's backing by LazyTail.msteps_wrom *)
+  Theorem drv_msteps_rt : forall s msF regs pc mem regs' pc' mem' mo T,
+    as_VIS H s msF = mkst regs pc mem rom -> as_AKREL H s (mkCfg msF mo) ->
+    CatSim.msteps asegs (mkst regs pc mem rom) (mkst regs' pc' mem' rom) ->
+    (forall msF' mo', as_VIS H s msF' = mkst regs' pc' mem' rom -> as_AKREL H s (mkCfg msF' mo') ->
+       same_but_materialized mo mo' -> arz (mkCfg msF' mo') T) ->
+    arz (mkCfg msF mo) T.
+  Proof.
+    intros s msF regs pc mem regs' pc' mem' mo T HV HA Hms HK.
+    apply (drv_lazy_rt H DLR s msF mo regs pc mem T HV HA). intros L S Zr OK RS VC BACK.
+    eapply (LazyTail.rz_msteps_lazy_mkst_tail asegs RunTail.rt_tail RunTail.rt_nx RunTail.rt_nw
+              (vcm2 vlo vb vhi) (vs_inv H DLR) L S Zr (RomBase.wrom msF rV) regs pc mem rV
+              regs' pc' mem' mo T OK VC RS (LazyTail.msteps_wrom asegs _ _ rV Hms)).
+    intros msF'' mo' OK' SB' HS' RS' VC'.
+    destruct (BACK msF'' mo' regs' pc' mem' OK' (same_vm_sb _ _ SB') RS' VC') as (msF' & EQ & HV' & HA').
+    rewrite EQ. exact (HK msF' mo' HV' HA' SB').
+  Qed.
+
+  Theorem drv_printf_first_rt : forall s msF mo regs mem (sp : word) (can : Z) (K : TSet),
+    ap1H regs mem sp can ->
+    as_VIS H s msF = mkst regs (Z_to_bv 64 0x1f425c) mem rom -> as_AKREL H s (mkCfg msF mo) ->
+    fd_lookup (m_fds mo) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)) ->
+    m_channel_reader mo = true ->
+    K [] ->
+    (forall regs' mem' msF' mo', ap1Post regs mem sp can regs' mem' ->
+       as_VIS H s msF' = mkst regs' (Z_to_bv 64 0x1f41b0) mem' rom -> as_AKREL H s (mkCfg msF' mo') ->
+       same_but_materialized mo mo' ->
+       arz (mkCfg msF' mo') K) ->
+    arz (mkCfg msF mo) (t_emit [WriteEv (Z_to_bv 64 1) (Z_to_bv 8 48); WriteEv (Z_to_bv 64 1) (Z_to_bv 8 10)] K).
+  Proof.
+    intros s msF mo regs mem sp can K PH HV HA Hfd1 Hrd1 HKnil HK.
+    apply (drv_lazy_rt H DLR s msF mo regs _ mem _ HV HA). intros L S Zr OK RS VC BACK.
+    apply (aprintf0_first_rt L S Zr (vcm2 vlo vb vhi) (vs_inv H DLR)
+             regs mem (RomBase.wrom msF rV) mo sp can K PH OK VC RS Hfd1 Hrd1 HKnil).
+    intros regs' mem' msF'' mo' PO OK' SB' HS' RS' VC'.
+    destruct (BACK msF'' mo' _ _ _ OK' (same_vm_sb _ _ SB') RS' VC') as (msF' & EQ & HV' & HA').
+    rewrite EQ. exact (HK regs' mem' msF' mo' PO HV' HA' SB').
+  Qed.
+
+  Theorem drv_printf_buf_rt : forall (j : nat) s msF mo regs mem (sp : word) (can : Z) (K : TSet),
+    (j <= 2)%nat ->
+    apbH mem sp (ABUF + 2 * Z.of_nat j) can ->
+    getr regs 1 = Z_to_bv 64 0x1f41b0 -> getr regs 2 = sp -> getr regs 11 = Z_to_bv 64 0 ->
+    as_VIS H s msF = mkst regs (Z_to_bv 64 0x1f425c) mem rom -> as_AKREL H s (mkCfg msF mo) ->
+    (forall regs' mem' msF' mo',
+       keeps_cs regs regs' ->
+       frame_mod mem mem' [(Z_to_bv 64 (bv_unsigned sp - 3400), 3400); (Z_to_bv 64 0x5b4a28, 4);
+                           (Z_to_bv 64 0x5b4a50, 8); (Z_to_bv 64 (ABUF + 2 * Z.of_nat j), 2)] ->
+       rdn asegs mem' (Z_to_bv 64 (ABUF + 2 * Z.of_nat j)) 2 = Some [Z_to_bv 8 0x30; Z_to_bv 8 0x0a] ->
+       rdn asegs mem' (Z_to_bv 64 0x5b4a50) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 (ABUF + 2 * Z.of_nat j + 2))) ->
+       rdn asegs mem' (Z_to_bv 64 0x5b4a28) 4 = Some (word_to_le_bytes 4 (Z_to_bv 64 5)) ->
+       as_VIS H s msF' = mkst regs' (Z_to_bv 64 0x1f41b0) mem' rom -> as_AKREL H s (mkCfg msF' mo') ->
+       same_but_materialized mo mo' ->
+       arz (mkCfg msF' mo') K) ->
+    arz (mkCfg msF mo) K.
+  Proof.
+    intros j s msF mo regs mem sp can K Hj PH R1 R2 R11 HV HA HK.
+    destruct (aprintf0_buffered j regs mem rom sp can Hj PH R1 R2 R11) as (regs' & mem' & RUN & KCS & FM & RD1 & RD2 & RD3).
+    apply (drv_msteps_rt s msF regs _ mem regs' _ mem' mo K HV HA RUN).
+    intros msF' mo' HV' HA' SB'. exact (HK regs' mem' msF' mo' KCS FM RD1 RD2 RD3 HV' HA' SB').
+  Qed.
+
+  Theorem drv_hdr_short_rt : forall s msF mo regs mem (sp : word) (can : Z) (K : TSet),
+    hfH regs mem sp can ->
+    as_VIS H s msF = mkst regs (Z_to_bv 64 0x1f3fb4) mem rom -> as_AKREL H s (mkCfg msF mo) ->
+    fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+    m_channel_reader mo = true ->
+    K [] ->
+    (forall regs' mem' msF' mo', hfPost regs mem sp can regs' mem' ->
+       as_VIS H s msF' = mkst regs' (Z_to_bv 64 0x1f3ff0) mem' rom -> as_AKREL H s (mkCfg msF' mo') ->
+       same_but_materialized mo mo' ->
+       arz (mkCfg msF' mo') K) ->
+    arz (mkCfg msF mo) (t_emit (W 2 msg_short) K).
+  Proof.
+    intros s msF mo regs mem sp can K PH HV HA Hfd2 Hrd2 HKnil HK.
+    apply (drv_lazy_rt H DLR s msF mo regs _ mem _ HV HA). intros L S Zr OK RS VC BACK.
+    apply (as_hdr_short_fwrite_rt L S Zr (vcm2 vlo vb vhi) (vs_inv H DLR)
+             regs mem (RomBase.wrom msF rV) mo sp can K PH OK VC RS Hfd2 Hrd2 HKnil).
+    intros regs' mem' msF'' mo' PO OK' SB' HS' RS' VC'.
+    destruct (BACK msF'' mo' _ _ _ OK' (same_vm_sb _ _ SB') RS' VC') as (msF' & EQ & HV' & HA').
+    rewrite EQ. exact (HK regs' mem' msF' mo' PO HV' HA' SB').
+  Qed.
+
+  Theorem drv_hdr_overrun_rt : forall s msF mo regs mem (sp : word) (can : Z) (K : TSet),
+    hfH regs mem sp can ->
+    as_VIS H s msF = mkst regs (Z_to_bv 64 0x1f3fd0) mem rom -> as_AKREL H s (mkCfg msF mo) ->
+    fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+    m_channel_reader mo = true ->
+    K [] ->
+    (forall regs' mem' msF' mo', hfPost regs mem sp can regs' mem' ->
+       as_VIS H s msF' = mkst regs' (Z_to_bv 64 0x1f3ff0) mem' rom -> as_AKREL H s (mkCfg msF' mo') ->
+       same_but_materialized mo mo' ->
+       arz (mkCfg msF' mo') K) ->
+    arz (mkCfg msF mo) (t_emit (W 2 msg_overrun) K).
+  Proof.
+    intros s msF mo regs mem sp can K PH HV HA Hfd2 Hrd2 HKnil HK.
+    apply (drv_lazy_rt H DLR s msF mo regs _ mem _ HV HA). intros L S Zr OK RS VC BACK.
+    apply (as_hdr_overrun_fwrite_rt L S Zr (vcm2 vlo vb vhi) (vs_inv H DLR)
+             regs mem (RomBase.wrom msF rV) mo sp can K PH OK VC RS Hfd2 Hrd2 HKnil).
+    intros regs' mem' msF'' mo' PO OK' SB' HS' RS' VC'.
+    destruct (BACK msF'' mo' _ _ _ OK' (same_vm_sb _ _ SB') RS' VC') as (msF' & EQ & HV' & HA').
+    rewrite EQ. exact (HK regs' mem' msF' mo' PO HV' HA' SB').
+  Qed.
+End IORT.

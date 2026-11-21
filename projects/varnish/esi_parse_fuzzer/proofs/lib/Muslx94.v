@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (bsb_len_lower, bsb_word_k and read_word_stack restated over the entry stack image of the launch input ProcInput, with string offsets from cat_string_off and the stack top). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -486,38 +487,41 @@ Proof.
     rewrite (IH k ltac:(lia)). lia.
 Qed.
 
-Lemma bsb_len_lower : forall ph (sp : word) (a e : list (list byte)) uid hw rnd,
-  (cat_struct_size a e + total_arg_bytes_nat a + 16
-   <= length (build_stack_bytes ph sp a e uid hw rnd))%nat.
+Lemma bsb_len_lower : forall inp mbase ph entry (sp : word) draw,
+  (cat_string_off (kb_rseq (in_kernel inp)) sp (ed_top draw)
+     (in_argv inp) (in_envp inp) (in_execfn inp)
+   + total_arg_bytes_nat (in_argv inp) + 8
+   <= length (entry_stack_image inp mbase ph entry sp draw))%nat.
 Proof.
-  intros ph sp a e uid hw rnd.
-  unfold build_stack_bytes, cat_struct_size. cbv zeta.
-  rewrite (string_addrs_pair a). cbv beta iota.
-  rewrite (string_addrs_pair e). cbv beta iota.
-  rewrite !length_app, !length_flat_map_le8,
-    !length_string_addrs_fst, !length_n_to_le_8, length_auxv_bytes,
-    !length_flatten_strings, !repeat_length, length_at_random_bytes.
-  lia.
+  intros inp mbase ph entry sp draw.
+  unfold entry_stack_image. rewrite length_build_stack_bytes.
+  unfold cat_string_off, launch_string_bytes.
+  cbn [launch_auxv la_rseq].
+  rewrite !length_flatten_strings. lia.
 Qed.
 
 (* [comment removed for export] *)
-Lemma bsb_word_k : forall ph (sp : word) a e k m uid hw rnd, (k < length a)%nat ->
-  (m <= length (nth k a []))%nat ->
+Lemma bsb_word_k : forall inp mbase ph entry (sp : word) draw k m,
+  (k < length (in_argv inp))%nat ->
+  (m <= length (nth k (in_argv inp) []))%nat ->
   exists pre post,
-    build_stack_bytes ph sp a e uid hw rnd = pre ++ post
-    /\ length pre = (cat_struct_size a e + total_arg_bytes_nat (firstn k a) + m)%nat
+    entry_stack_image inp mbase ph entry sp draw = pre ++ post
+    /\ length pre = (cat_string_off (kb_rseq (in_kernel inp)) sp (ed_top draw)
+                       (in_argv inp) (in_envp inp) (in_execfn inp)
+                     + total_arg_bytes_nat (firstn k (in_argv inp)) + m)%nat
     /\ (8 <= length post)%nat.
 Proof.
-  intros ph sp a e k m uid hw rnd Hk Hm.
-  destruct (bsb_byte_k ph sp a e k uid hw rnd Hk) as [pre0 [post0 [E Hlen0]]].
-  pose proof (bsb_len_lower ph sp a e uid hw rnd) as Hlow.
-  pose proof (total_arg_bytes_firstn_le (S k) a) as Hmono.
-  pose proof (total_arg_bytes_firstn_S a k Hk) as Hstep.
-  set (s1 := (nth k a [] ++ [Z_to_bv 8 0])) in *.
-  assert (Hs1 : length s1 = (length (nth k a []) + 1)%nat)
+  intros inp mbase ph entry sp draw k m Hk Hm.
+  destruct (bsb_byte_k inp mbase ph entry sp draw k Hk)
+    as [pre0 [post0 [E Hlen0]]].
+  pose proof (bsb_len_lower inp mbase ph entry sp draw) as Hlow.
+  pose proof (total_arg_bytes_firstn_le (S k) (in_argv inp)) as Hmono.
+  pose proof (total_arg_bytes_firstn_S (in_argv inp) k Hk) as Hstep.
+  set (s1 := (nth k (in_argv inp) [] ++ [Z_to_bv 8 0])) in *.
+  assert (Hs1 : length s1 = (length (nth k (in_argv inp) []) + 1)%nat)
     by (unfold s1; rewrite length_app; cbn [length]; lia).
-  assert (Hpost0 : (16 <= length post0)%nat).
-  { assert (Hl : length (build_stack_bytes ph sp a e uid hw rnd)
+  assert (Hpost0 : (8 <= length post0)%nat).
+  { assert (Hl : length (entry_stack_image inp mbase ph entry sp draw)
                  = (length pre0 + length s1 + length post0)%nat)
       by (rewrite E, !length_app; lia).
     lia. }
@@ -529,21 +533,30 @@ Proof.
   - rewrite length_app, length_skipn. lia.
 Qed.
 
-Lemma read_word_stack : forall ph segs (sp : word) a e k m uid hw rnd,
-  (k < length a)%nat -> (m <= length (nth k a []))%nat ->
-  (bv_unsigned sp + Z.of_nat (length (build_stack_bytes ph sp a e uid hw rnd)) < 2^64)%Z ->
+Lemma read_word_stack : forall v segs inp mbase ph entry (sp brk : word) draw k m,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  (k < length (in_argv inp))%nat ->
+  (m <= length (nth k (in_argv inp) []))%nat ->
+  (bv_unsigned sp
+   + Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw)) < 2^64)%Z ->
   exists bs, length bs = 8%nat /\
-    rdn segs (stack_to_mem sp (entry_stack_image ph sp a e uid hw rnd))
-        (cat_argv_ptr sp a e k + nat_to_word m) 8%nat = Some bs.
+    rdn segs (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw))
+        (cat_argv_ptr (ed_top draw) (in_argv inp) (in_envp inp) (in_execfn inp) k
+         + nat_to_word m) 8%nat = Some bs.
 Proof.
-  intros ph segs sp a e k m uid hw rnd Hk Hm Hnw.
-  destruct (bsb_word_k ph sp a e k m uid hw rnd Hk Hm) as [pre [post [E [Hlen Hpost]]]].
+  intros v segs inp mbase ph entry sp brk draw k m Hlau Hk Hm Hnw.
+  destruct (bsb_word_k inp mbase ph entry sp draw k m Hk Hm)
+    as [pre [post [E [Hlen Hpost]]]].
   exists (firstn 8 post). split; [apply firstn_length_le; lia|].
-  replace (cat_argv_ptr sp a e k + nat_to_word m)
+  replace (cat_argv_ptr (ed_top draw) (in_argv inp) (in_envp inp) (in_execfn inp) k
+           + nat_to_word m)
     with (sp + nat_to_word (length pre)).
-  2:{ rewrite Hlen, (cat_argv_ptr_offset sp a e k Hk). unfold cat_string_base.
+  2:{ rewrite Hlen,
+        (cat_argv_ptr_offset (ed_top draw) (in_argv inp) (in_envp inp)
+           (in_execfn inp) k Hk),
+        (cat_string_base_offset v inp mbase sp brk draw Hlau).
       rewrite !nat_to_word_add_merge. f_equal. f_equal. lia. }
-  apply (read_at_offset_image segs ph sp a e uid hw rnd
+  apply (read_at_offset_image segs inp mbase ph entry sp draw
            pre (firstn 8 post) (skipn 8 post) 8%nat).
   - rewrite E. f_equal. symmetry. apply firstn_skipn.
   - apply firstn_length_le. lia.

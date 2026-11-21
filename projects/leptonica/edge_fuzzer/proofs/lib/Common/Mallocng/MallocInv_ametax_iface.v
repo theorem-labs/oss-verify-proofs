@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the THP flag). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -34,7 +35,7 @@ Proof. intros h. unfold am_grow. repeat split; auto; lia. Qed.
 Definition am_room (A : astate) (s : mstate) : Prop :=
   0 < spare A \/
   (vm_backed_bytes (ms_vm s) + 4096 <= vm_limit (ms_vm s) /\
-   (0 < a_ctx A KAac \/ exists a, grant_ok_na_vm (ms_vm s) a (2 ^ (a_ctx A KShift + 13)) = true)).
+   (0 < a_ctx A KAac \/ forall thp, exists a, grant_ok_na_vm thp (Z_to_bv 64 0) (ms_vm s) a (2 ^ (a_ctx A KShift + 13)) = true)).
 
 (* [comment removed for export] *)
 Definition muse (A : astate) : Z := 101 * Z.of_nat (length (a_areas A)) - spare A.
@@ -101,7 +102,7 @@ Qed.
 
 (* [comment removed for export] *)
 Definition refusalP (M : Z) (h : VmMaps) : Prop :=
-  exists len, 0 < len <= M /\ len mod 4096 = 0 /\ forall a, mmap_grant_ok MMrw h a len = false.
+  exists len, 0 < len <= M /\ len mod 4096 = 0 /\ exists thp, forall a, mmap_grant_ok MMrw thp h a len = false.
 
 Lemma refusalP_weaken : forall M M' h, refusalP M h -> M <= M' -> refusalP M' h.
 Proof. intros M M' h (len & H1 & H2 & H3) HM. exists len. split; [lia|]. split; assumption. Qed.
@@ -118,7 +119,7 @@ Definition snoroom (sp0 : word) (argv envp : list (list byte)) (cb : list byte)
                    (~ am_room A1 s1 \/
                     exists len, 0 < len <= M /\ len mod 4096 = 0 /\
                                 vm_backed_bytes (ms_vm s1) + len <= vm_backed_bytes (ms_vm s) + db /\
-                                forall a, mmap_grant_ok MMrw (ms_vm s1) a len = false).
+                                exists thp, forall a, mmap_grant_ok MMrw thp (ms_vm s1) a len = false).
 
 Lemma snoroom_weaken : forall sp0 argv envp cb c b a x M c' b' a' x' M' A s,
   snoroom sp0 argv envp cb c b a x M A s -> c <= c' -> b <= b' -> a <= a' -> c - a <= c' - a' -> x <= x' -> M <= M' ->

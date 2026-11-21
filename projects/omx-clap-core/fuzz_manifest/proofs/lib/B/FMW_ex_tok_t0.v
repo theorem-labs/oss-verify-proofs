@@ -9,12 +9,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_ex_tok_lha.v; 151 of its 203 lines of code are new or changed and 234 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_ex_tok_n.v, with its module paths, module names, addresses and numbers changed; 105 of its 198 lines of code are new or changed and 110 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/B/FMW_ex_tok_n.v, with its numbers changed; 477 of its 532 lines of code are new or changed and 143 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* G4 IMAGE B: tk_seg_T0 (lib/B/FMW_ex_tok_base.v) for fm.asan-ubsan's expected: EX_T 0x816dc .. TK_LH 0x81730
    (listing lines 294-314, fuzz_manifest.c:100-103): ll = strlen (local), len = strlen (text), the loop's first test
    len >= ll + nl + 1, the setup (F+0x10 = ll + nl + 1, F+0x50 = len, a6 = text, s8 = 0, s2 = ll + 1 + nl,
    F+8 = F+0 = text + 1 + nl + ll, F+0x18 = ll, s6 = text + nl, s10 = ~text). The test failing leaves through
    0x8166c .. 0x816a0 (a7, t0, t1 re-made, s7 = close + 1, s5 = text + s7, the guard 0x816a0) to EX_L at close + 1
-   (token false). Twin of image A's lib/A/FMW_ex_tok_t0.v (06d82004dc3), which proves its own bounds (it needs no
+   (token false). Twin of image A's lib/A/FMW_ex_tok_t0.v, which proves its own bounds (it needs no
    FMW_ex_decl_base); the walk is cut after each runtime call:
      EX_T  0x816dc: a0 = local (F+0x20), strlen;                 -> TK_A1
      TK_A1 0x816e4: s10 = ll, s8 = a0 = text (F+0x78), strlen;    -> TK_A2

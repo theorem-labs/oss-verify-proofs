@@ -112,6 +112,7 @@
      SEG_EXIT   0x84ebc   beqz a3     (seqz(align) and snez)  BASE_OK    trap_base_ok         0 < g_src, 8 | g_src
    The walk is cut at five points; each segment between them is a Section hypothesis (SEG_ / ARM_) here, and the
    walks that close them replace the hypotheses one by one.  SEG_JT is proved. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -244,13 +245,13 @@ Definition fr_gi (ly : alayout) (S : astate) (W : world segs) (mem : word -> opt
   val_mem segs (rd W mem) AG_THREAD_UP 1 0 /\
   (exists lst, val_mem segs (rd W mem) AG_LISTEN 4 lst) /\
   (forall i, 0 <= i < 4 -> writable_at segs (rd W mem) (AG_LISTEN + i)).
-(* The eighth (a Theorem Labs lane's approved text, 2026-10-29, landed on lib/A at a working branch 60c0b278422):
+(* The eighth (a Theorem Labs lane's approved text, 2026-10-29, landed on lib/A at a working branch):
    THE HARNESS BLOCKS.  SEG_PRO's entry split of the live blocks into the input block, g_src's table, g_out's buffer
    and the rest needs them live and pairwise distinct.  fr_hblks names the blocks the globals point to - g_src's
    table (G, ATABLE) when g_src reads G <> 0, g_out's buffer (o, c) when g_capout reads c <> 0 - read through the view
    at rg_src / rg_out / rg_capout of B's fr_RG (fr_globals_b).  THE ONE DEFINITION on image B: lib/A's
    W_LLVMFuzzerTestOneInput_cut.v fr_hblks at B's names, the same text as the B driver's fr_hblks_b
-   (lib/B/YCfn_cf.v:55-59 at 430b6b00098), which takes it from here. *)
+   (lib/B/YCfn_cf.v:55-59), which takes it from here. *)
 Definition fr_hblks (W : world segs) (mem : word -> option byte) : list (Z * Z) :=
   let v := aview segs (w_H W) mem in
   (match rdword v (rg_src fr_RG) with Some G => if G =? 0 then [] else [(G, ATABLE)] | None => [] end) ++
@@ -685,8 +686,8 @@ Definition lregs_K (cx : lfcx) (t : Z) (m : lmod) (FF : Z) (regs : bvmap 5 word)
   getr regs 20 = w64 (c_p cx + lm_k m) /\ sv8 W mem (lf_F cx + 144) (c_n cx - lm_k m) /\ 0 <= lm_k m <= c_n cx.
 (* X 0x84e64: the loop left (or never entered) after t operations; the exit block reads s0, s1, s2, s10, s11 (it
    re-derives g_nsrc's high half with auipc, so no s7 clause, and g_s with auipc, so no s3 clause).  The last conjunct
-   bounds t (0 <= t <= OPS_MAX), which the exit's room facts read (lib/A/ReplyLS3oRf.v on image A, commit
-   066a0abe56c); every entry to X supplies it: SEG_HEAD from lregs_H's t < OPS_MAX, SEG_LATCH from lregs_K's (B's
+   bounds t (0 <= t <= OPS_MAX), which the exit's room facts read (lib/A/ReplyLS3oRf.v on image A);
+   every entry to X supplies it: SEG_HEAD from lregs_H's t < OPS_MAX, SEG_LATCH from lregs_K's (B's
    SEG_PRO lands on INV_H alone, difference (2)). *)
 Definition lregs_X (cx : lfcx) (t : Z) (m : lmod) (FF : Z) (regs : bvmap 5 word) (W : world segs)
     (mem : word -> option byte) : Prop :=

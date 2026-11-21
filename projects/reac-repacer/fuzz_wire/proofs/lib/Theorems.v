@@ -1,4 +1,4 @@
-(* The unit's tops, as reac-repacer/fuzz_uci's lib/Theorems.v (recipes commit 0295462466b2): plain_halts and ubsan_halts from the
+(* The unit's tops, as reac-repacer/fuzz_uci's lib/Theorems.v (recipes): plain_halts and ubsan_halts from the
    harness-entry packs lib/Prog/LLVMFuzzerTestOneInput_halts.v and lib/U/Prog/LLVMFuzzerTestOneInput_halts.v,
    ubsan_agrees from the agreement chain's lib/Prog/LLVMFuzzerTestOneInput_agree.v, asan_halts and asan_agrees from
    image A's close lib/A/WireClose.v, asan_ubsan_halts and asan_ubsan_agrees from image B's close

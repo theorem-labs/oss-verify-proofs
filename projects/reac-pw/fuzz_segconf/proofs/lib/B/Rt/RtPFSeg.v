@@ -5,9 +5,10 @@
    read); aj_snprintf_at_xrom keeps its statement and is the instance at wle. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcallSnp.v, with its module paths and module names changed; 317 of its 380 lines of code are new or changed and 199 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/FMsnprintfSx.v, with its module paths and module names changed; 112 of its 159 lines of code are new or changed and 333 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf's snprintf and vsnprintf contracts for image B (fuzz_segconf.asan-ubsan): the image-B twin of
-   lib/A/Rt/RtPFSeg.v (commit 755e9278f8ff, sha256 5fcabfce1726; rows 4 and 5 of
-   proofs/reac-pw/fuzz_segconf/provenance/evidence/interceptors/INTERFACE-A-interceptors.md (commit 7068323e2626)), over a grammar
+   lib/A/Rt/RtPFSeg.v (sha256 5fcabfce1726; rows 4 and 5 of
+   proofs/reac-pw/fuzz_segconf/provenance/evidence/interceptors/INTERFACE-A-interceptors.md), over a grammar
    that adds segconf's three conversions to the released one. Statements only; no walk, no proof.
 
    - The grammar. segconf's formats use literal bytes, %s, %d (released pieces) and %u, %zu, %.24s (not in the
@@ -19,26 +20,26 @@
      (the released branch is tried first at every byte), so seg_parse f = Some (map PRel ps) whenever
      pf_parse f = Some ps. (The constructor is not called SP: segconf's lib/Spec/SegModel.v has Notation SP := 32.)
    - The new pieces, with the text musl's printf_core writes and the argument shape the released predicates already
-     state (pf_args_asan, RtPFShared.v:44-62, is reused unchanged):
+     state (pf_args_asan, RtPFShared.v:45-63, is reused unchanged):
        Pu   "%u"    one AInt v (a 32-bit int in a 64-bit slot, as RISC-V passes an unsigned int), text the decimal
                     digits of v mod 2^32 (GXA's model: PA_u (v mod 2^32), Printf_text.v:629 pt_conv_u);
        Pzu  "%zu"   one AU64 u (the 64-bit word), text the decimal digits of u (GXA's model: PA_ull u at T_SIZET,
                     Printf_text.v:616-621);
        P24s "%.24s" one APtr s, text firstn 24 s (musl: strnlen (s, 24) bytes). The precision is the fixed literal 24,
                     as the released grammar has fixed-width pieces (%04x, %02x) and no general width.
-   - The family FR_seg lo hi has FR_cmd's eleven conjuncts in FR_cmd's order (RtPFCmd.v:90-95), over seg_parse,
+   - The family FR_seg lo hi has FR_cmd's eleven conjuncts in FR_cmd's order (RtPFCmd.v:91-96), over seg_parse,
      seg_text and seg_prec_pos, with RtPFCmd's own cmd_args_slack / cmd_args_amem; lo / hi are the image range the
      format lies in (FR_cmd: CMD_IMG_LO and the GOT word CMD_GOTW). seg_pk takes every piece, so FR_cmd rd rs f ws T
      gives FR_seg CMD_IMG_LO CMD_GOTW rd rs f ws T, and row 4 at RtPFCmd's constants gives
      RtFormat.asnprintf_realizes pc CMD_GOTW guard.
-   - Row 4 (snprintf) is the released text RtPFCmd.cmd_asnprintf_realizes (RtPFCmd.v:310, the text of
+   - Row 4 (snprintf) is the released text RtPFCmd.cmd_asnprintf_realizes (RtPFCmd.v:311, the text of
      RtFormat.asnprintf_realizes, RtFormat.v:85) at FR_seg: no premise is new.
    - Row 5 (the vsnprintf wrapper, called by refuse with its own va_list): the released route proves the vsnprintf
-     interceptor ONLY in the GXA-route form sh_avsnprintf_icpt_realizesUa (RtPFSx.v:166, FMsnprintfSvsni.v:981
-     svsni_ok), which has four premises the frozen sh_avsnprintf_icpt_realizes (RtPFShared.v:226) lacks. So
+     interceptor ONLY in the GXA-route form sh_avsnprintf_icpt_realizesUa (RtPFSx.v:167, FMsnprintfSvsni.v:981
+     svsni_ok), which has four premises the frozen sh_avsnprintf_icpt_realizes (RtPFShared.v:227) lacks. So
      seg_avsnprintf_icpt_realizes is the Ua text at U = [] (ecall_pre, AR in the post), with ONE premise changed as
      cmd_asnprintf_realizes changes it: consts_view over cr becomes RtDefs.rt_rom_view (a call site has no AR for the
-     runtime-owned read-only bytes; RtPFCmd.v:304-309).
+     runtime-owned read-only bytes; RtPFCmd.v:305-310).
    - The windows are kit constants, as in RtString.v: 2 * ESTACK at both entries. Measured on image A (pin sha256
      48c5355bdacb..., read from neutral excerpts of the pin); image B's code is the same up to pc-relative words (by
      measurement, pin c3796c0b38f3...), and its addresses are given here: the trampolines are one `j` each
@@ -151,7 +152,7 @@ Fixpoint seg_text (qs : list seg_piece) (args : list pf_arg) : option (list Z) :
       end
   end.
 
-(* every %.*s precision is at least 1 (RtPFShared.v:84-92 pf_prec_pos; the new pieces take one argument each) *)
+(* every %.*s precision is at least 1 (RtPFShared.v:85-93 pf_prec_pos; the new pieces take one argument each) *)
 Fixpoint seg_prec_pos (qs : list seg_piece) (args : list pf_arg) : Prop :=
   match qs, args with
   | [], _ => True
@@ -168,7 +169,7 @@ Fixpoint seg_prec_pos (qs : list seg_piece) (args : list pf_arg) : Prop :=
 Definition seg_pk (q : seg_piece) : Prop :=
   match q with PRel _ | Pu | Pzu | P24s => True end.
 
-(* FR_cmd's shape (RtPFCmd.v:90-95) over seg_parse / seg_text for the conversions PK covers, the format a nonempty
+(* FR_cmd's shape (RtPFCmd.v:91-96) over seg_parse / seg_text for the conversions PK covers, the format a nonempty
    literal in [lo, hi) *)
 Definition seg_fam (PK : seg_piece -> Prop) (lo hi : Z) : fmt_fam := fun rd rs f ws T =>
   exists (fmt : list Z) (qs : list seg_piece) (args : list pf_arg),
@@ -189,8 +190,8 @@ Section c.
 Variable segs : list Segment.
 Variable B : asyms.
 
-(* ---- the vsnprintf wrapper (d, n, f, ap), the arguments the words at ap: RtPFSx.v:166 sh_avsnprintf_icpt_realizesUa
-   with U = [] (RtPFShared.v:226's ecall_pre and AR) and consts_view over cr replaced by RtDefs.rt_rom_view;
+(* ---- the vsnprintf wrapper (d, n, f, ap), the arguments the words at ap: RtPFSx.v:167 sh_avsnprintf_icpt_realizesUa
+   with U = [] (RtPFShared.v:227's ecall_pre and AR) and consts_view over cr replaced by RtDefs.rt_rom_view;
    every other line is the Ua text's ---- *)
 Definition seg_avsnprintf_icpt_realizes (FF : fmt_fam) (K gc gv img_lo img_hi : Z) (cr : list (Z * Z)) (pc : Z) : Prop :=
 forall ly S W regs mem md d n f ap (ws T : list Z) cval,
@@ -214,10 +215,10 @@ dest_ok segs B ly S W regs mem d (sn_len (n - 1) T) -> amem_range d (sn_len (n -
 range_addressable (aview segs (w_H W) mem) SHADOW_OFF d (sn_len (n - 1) T) ->
 shadow_hull_vis (aview segs (w_H W) mem) d (sn_len (n - 1) T) ->
 (* dest_off_globals: the caller discharges it by measurement *) zdisjoint (d, sn_len (n - 1) T) (img_lo, img_hi - img_lo) ->
-(* frm0_entry: rounding mode 0 at entry (GXA VfprintfCall.v:37) *) Z.land (Z.shiftr (bv_unsigned (@fp_csr fx)) 5) 7 = 0 ->
+(* frm0_entry: rounding mode 0 at entry (GXA VfprintfCall.v:38) *) Z.land (Z.shiftr (bv_unsigned (@fp_csr fx)) 5) 7 = 0 ->
 (* order: the arguments lie at or above the entry sp (every caller's va area is its own spill or above it) *)
 spZ regs <= ap ->
-(* the destination is below the window or above the argument slots (GXA VfprintfCall.v:42, first disjunction) *)
+(* the destination is below the window or above the argument slots (GXA VfprintfCall.v:43, first disjunction) *)
 (d + sn_len (n - 1) T <= spZ regs - K \/ ap + 8 * Z.of_nat (length ws) <= d) ->
 (* the argument slots below 2^47 (the normalized store GXA and printf_common's cleaned run read drops higher bytes) *)
 ap + 8 * Z.of_nat (length ws) <= 2 ^ 47 ->
@@ -237,7 +238,7 @@ getr regs' 10 = w64 (Z.of_nat (length T)) /\
 
 (* ---- the two rows a walker takes ---- *)
 (* Row 4. snprintf (d, n, f, ...) at the trampoline pc: RtFormat.asnprintf_realizes's text (RtPFCmd.cmd_asnprintf_realizes,
-   RtPFCmd.v:310) at segconf's family, formats in [img_lo, gotw) *)
+   RtPFCmd.v:311) at segconf's family, formats in [img_lo, gotw) *)
 Definition seg_asnprintf_realizes (img_lo img_hi : Z) (cr : list (Z * Z)) (pc gotw guard : Z) : Prop :=
 cmd_asnprintf_realizes segs B (FR_seg img_lo gotw) SEG_SNP_K gotw guard img_lo img_hi cr pc.
 

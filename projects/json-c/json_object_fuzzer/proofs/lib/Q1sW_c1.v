@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mremap's EINVAL answer: the error arm allows e = 12 or e = 22). *)
 
 
 From OSSVerify.Proofs.json_c.json_object_fuzzer.lib.Lib Require CodeAt StepGen GwInst GwEqH GwApply GwApply2. From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Q6nq.
@@ -126,7 +127,7 @@ F (ret_pc ra) fc None m' (seg_rom rsegs)
 /\ wmono rsegs m m' /\ mem_inv rsegs m'
 /\ stk rsegs m' lo (bv_unsigned sp)
 /\ rw_cells rsegs m' (errno_addr tp) [C4 (Z_to_bv 64 e)]
-/\ e = 12
+/\ (e = 12 \/ e = 22)
 | _ => exists t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 m2,
 ms' = MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (Z_to_bv 64 (mremap_ret x old)) a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (ret_pc ra) fc None (mremap_mem x old oldlen newlen m2) (seg_rom rsegs)

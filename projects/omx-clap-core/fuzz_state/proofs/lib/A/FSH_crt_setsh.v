@@ -3,9 +3,9 @@
    set_shadow contract (FSH_crt_base.v CrtRt's crt_fr_set_shadow_f5, FSH_Rt.v FsRt's fr_set_shadow_f5).
    rule 24: no function proved (kind: helper / kit / model lemmas; no walk of program code).
    That contract is SetShadowDefU.aset_shadow_realizesU at PC_set_shadow_f5 0xf5, and S0 states it WITH the presence
-   clause `forall a, apresent (w_H W) mem a -> apresent (w_H W) mem' a` (its last conjunct, SetShadowDefU.v:48, S0
-   5dbb8ce6286 "set_shadow contracts keep presence"). crt_set_shadow_fixed is that contract less one conjunct (the
-   callee's stack window is present after the call, SetShadowDefU.v:47), so SETSH is a weakening of its post; no other
+   clause `forall a, apresent (w_H W) mem a -> apresent (w_H W) mem' a` (its last conjunct, SetShadowDefU.v:49, S0
+   "set_shadow contracts keep presence"). crt_set_shadow_fixed is that contract less one conjunct (the
+   callee's stack window is present after the call, SetShadowDefU.v:48), so SETSH is a weakening of its post; no other
    premise is needed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List.

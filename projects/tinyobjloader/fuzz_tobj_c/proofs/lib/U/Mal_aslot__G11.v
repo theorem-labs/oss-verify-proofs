@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO fact read from the walk's invariant where a step needs it; MInvIR, which pairs malloc's invariant with the vDSO fact, projected to that invariant where a lemma reads only it). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -139,6 +140,7 @@ Let wok0 := wok_of segsU mW.
 Lemma S_MI : ltac2:(tb__ "0|0|
 Sa8S2bVX;S3fS3bSdS0A2A1VU;S67Vs;VL;A2Vrd0;Vwok0;Vvm;A8").
 Proof using HJ mW. exact (proj1 HJ). Qed.
+Lemma S_vdso : OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Malloc.Contract.vdso_ok md. Proof using HJ. exact (proj2 (proj1 HJ)). Qed.
 Lemma S_xraw : xraw X s. Proof using HJ. exact (proj1 (proj2 HJ)). Qed.
 Lemma S_Kc : Kc tr md. Proof using HJ. exact (proj1 (proj2 (proj2 HJ))). Qed.
 Lemma S_sc : 0 <= sc < 48. Proof using HJ. exact (proj1 (proj1 (proj2 (proj2 (proj2 HJ))))). Qed.
@@ -455,6 +457,7 @@ Proof.
   destruct A as [s L]. cbn [ma_s] in part_ok.
   apply (TRRulesK.trr_inhP RR); [exact kB_nn|].
   intros [tr [ms md]] [Hsm HJ]. cbn [w_tr w_cfg cfg_model fst snd] in HJ.
+  pose proof (S_vdso X U s L Kc rho tr md HJ) as Hvd.
   set (K := fun (tr' : list event) (md' : Model) => Kc tr' md' /\ tr' = tr /\ md' = md).
   assert (K_impl : TRRulesK.implK Kc K) by (intros tr' md' k_now; exact (proj1 k_now)).
   assert (K_pin : forall tr' md', K tr' md' -> Kc tr' md' /\ tr' = tr /\ md' = md)
@@ -1035,7 +1038,7 @@ S4cS8S2bVX;VU;VA;VKc;Vrho;Vtr0;Vmd0;A9").
 Lemma HMI0 : ltac2:(tb__ "0|0|
 S51S8S2bVX;S3fS3bSdS0A2A1VU;VA;Vrho;Vmd0;A8"). Proof using HJ0. exact (proj1 HJ0). Qed.
 Lemma HI0 : ltac2:(tb__ "0|0|
-S69VX;S3fS3bSdS0A2A1VU;Vs;A4"). Proof using HJ0. exact (mig_I HMI0). Qed.
+S69VX;S3fS3bSdS0A2A1VU;Vs;A4"). Proof using HJ0. exact (mig_I (proj1 HMI0)). Qed.
 Lemma HXr0 : xraw X s. Proof using HJ0. exact (proj1 (proj2 HJ0)). Qed.
 Lemma Hsc0 : 0 <= sc < 48. Proof using HJ0. exact (proj1 (proj1 (proj2 (proj2 (proj2 HJ0))))). Qed.
 
@@ -1090,13 +1093,13 @@ Proof using HJ0 HJG Hkept.
   exact (mem_kept_of_ownedG_U X None U X None U A A_G
            (Contract.rd_of segsU (rm rho)) (Contract.wok_of segsU (rm rho)) (m_vmmaps md0)
            (Contract.rd_of segsU (rm rhoG)) (Contract.wok_of segsU (rm rhoG)) (m_vmmaps mdG)
-           (rm rho) (rm rhoG) HMI0 HXr0 MI_G xraw_G Hkept).
+           (rm rho) (rm rhoG) (proj1 HMI0) HXr0 (proj1 MI_G) xraw_G Hkept).
 Qed.
 
 Lemma client_addr_G a : ltac2:(tb__ "0|0|
 S88S8S2bVA;Va;A4S88S8S2bVA_G;Va;A4F_;").
 Proof using HJ0 HJG Hub.
-  unfold client_addr, A, A_G. rewrite (ma_blocks_ub_same X U X None U s sG L HI0 (mig_I (proj1 HJG)) Hub). exact (fun H => H).
+  unfold client_addr, A, A_G. rewrite (ma_blocks_ub_same X U X None U s sG L HI0 (mig_I (proj1 (proj1 HJG))) Hub). exact (fun H => H).
 Qed.
 
 Lemma kept_G A' m' : ltac2:(tb__ "0|0|
@@ -1115,7 +1118,7 @@ Lemma canary_G m' : ltac2:(tb__ "0|0|
 Sa7S8S2bS56Q40S57VrhoG;PaeA2A2Vm';A4S53S8S2bS59Vrho;A1Vm';A4F_;").
 Proof using HJ0 Hgd.
   (* The image invariant at entry fixes the eight GOT bytes that hold the guard's address. *)
-  destruct (mig_statics HMI0) as (_ & _ & _ & _ & _ & _ & _ & _ & g_entry & got_at_entry & _).
+  destruct (mig_statics (proj1 HMI0)) as (_ & _ & _ & _ & _ & _ & _ & _ & g_entry & got_at_entry & _).
   (* Two eight-byte windows: where the final memory and the entry memory hold the same value, they read alike. *)
   assert (window_same : forall (base v : Z),
             holds (byteview_of (Contract.rd_of segsU (rm rho)) (fun _ => true)) base 8 v ->
@@ -1214,7 +1217,7 @@ Proof using AM AM_REACH HVI Hkam Pam Phit Pta0 RR TA_REACH.
   exists (SPJ segsU (J_as_pre segsU C_U X U {| ma_s := s; ma_L := L |} Kc) (Pre_as IEC_U) rho).
   split; [split; assumption|].
   pose proof (Hsc0 X U s L Kc rho _ _ J0) as sc_rng.
-  pose proof (mig_I (proj1 J0)) as inv0.
+  pose proof (mig_I (proj1 (proj1 J0))) as inv0.
   apply (TRRulesK.trr_seq RR 0 (kam + kB) _
            (fun w => HITP X U {| ma_s := s; ma_L := L |} Kc rho w \/ GX X U {| ma_s := s; ma_L := L |} Kc rho w)).
   { exact (try_avail_partK X U {| ma_s := s; ma_L := L |} Kc RF GF TR RR 0 (Z.le_refl 0) (proj2 reach0) rho). }

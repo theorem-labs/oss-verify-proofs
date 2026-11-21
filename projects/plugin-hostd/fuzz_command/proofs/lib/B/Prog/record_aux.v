@@ -5,10 +5,11 @@
    fuzz_command.asan-ubsan) that need no callee statement and no image: the walk's points in B's listing, the listing's
    62 slots, the symbolic states of the entry and of the meet of record()'s two arms, the slot, the footprint, and the
    recorder's representation under record()'s stores. After A's inlined record() in lib/A/Prog/sup_pin_accept_s4.v
-   (a working branch 3cc8391594b: spa_acall_new, spa_rep_record_lt, spa_rep_spill_fn, spa_rep_ncalls) and
+   (a working branch: spa_acall_new, spa_rep_record_lt, spa_rep_spill_fn, spa_rep_ncalls) and
    lib/A/Prog/sup_pin_accept_r.v (spa_arep_rest, spa_arep_keep), re-derived on B's code (below). A's record() is
    inlined in every recording function; B keeps it as a function, so there is no A walk of it. The Generation-N
-   walk lib/B/Prog/record.v of a working branch 543f2c3645b was read as a B-code template only, not ported. *)
+   walk lib/B/Prog/record.v of a working branch was read as a B-code template only, not ported. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* record on B (recorder.c:205-221; entry BASE + AF_record = 0x8a728, .symtab LOCAL FUNC, 248 bytes, 62 instructions;
    measured with capstone 5.0.7 on fuzz_command.asan-ubsan, sha256 658cefbe806b535ba1fbe5a37c8efe02099fc39c...;

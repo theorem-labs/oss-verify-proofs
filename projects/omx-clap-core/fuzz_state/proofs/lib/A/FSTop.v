@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/A/AZ03.v and lib/Halts_tfib.v for fuzz_state, in the form proofs/libreac/fuzz_grant/lib/A/AsanTop.v:91-129 (a working branch c2edc13c0fa) gives them: the plain side is fuzz_state's proved realization (lib/FSPlain.v), the shape is ag_shape checksum_shape, the halting corollary takes srealizes, module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/A/AZ03.v and lib/Halts_tfib.v for fuzz_state, in the form proofs/libreac/fuzz_grant/lib/A/AsanTop.v:91-129 (a working branch) gives them: the plain side is fuzz_state's proved realization (lib/FSPlain.v), the shape is ag_shape checksum_shape, the halting corollary takes srealizes, module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises)). *)
 (* Qed modulo TFIB_T (lead 20:39Z: discharged by porting cgif_file's closed AD1q / AD2p walk).
    OPEN: TFIB_T (the ASan side of fs.asan: from every valid start, fs.asan's init_config at target_alloc_limit
    srealizes SPECX (LS:=ag_shape checksum_shape), lib/A/FSTfib.v). It is the ONE premise of both theorems below
    (Section a's hypothesis TFIB; invisible to Print Assumptions, so it is named here). What will discharge it:
-   - the relocated cgif_file ASan core: lib/A and the lib/Reusable files of the raw copy d579ce160e2 (runtime,
+   - the relocated cgif_file ASan core: lib/A and the lib/Reusable files of the raw copy (runtime,
      allocator model, start-up, driver), moved from cgif_file.asan to fs.asan by lane RELOC, with fs's start-up
      certificate;
    - fs's per-function walks, lanes ALLOC / READER / WRITER / CNO / CRT / CHECKS / ENTRY / RUNTIME, composed by
@@ -14,8 +15,8 @@
      (internal path)); none is a hypothesis of these theorems:
      * FS_AREALLOC_A: fs's ASan realloc contract (call target __wrap_realloc 0x53078, which jumps to
        __interceptor_realloc 0x53474; trace ipc 0x53594). The donor model has no realloc (YG0f.v:134-178 asyms,
-       YG00.v ops, YG0d.v contracts, ACej.v:337 universe). Owner a Theorem Labs lane; model
-       lib/A/FSH_ReallocModel.v (a working branch a882c264dfa); discharge: a Theorem Labs lane
+       YG00.v ops, YG0d.v contracts, ACej.v:338 universe). Owner a Theorem Labs lane; model
+       lib/A/FSH_ReallocModel.v (a working branch); discharge: a Theorem Labs lane
        arealloc_realizes_all (a working branch). fs needs 1 <= n < MALLOC_MAX; cgif_rgb's
        arealloc_realizes needs 64513 <= n (YG0f.v:221-230).
      * FS_DOC_STRS: two clauses about the document round_trip_document builds (fs.c:229-247: its keys and string
@@ -64,12 +65,12 @@ Proof.
   destruct en_s as [sp brk mb rnd].
   pose proof (valid_input_va_size _ Hinp) as Hsv48.
   unfold Images.asan in Hent.
-  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent. destruct Hent as [Hsp' [Hbrk' [Hmb' Hfit']]].
+  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent. destruct Hent as [Hsp' [Hbrk' [Hmb' [Hfit' Hlau']]]].
   exact (shape_strong_equiv_efs_relim SanitizerBudgets.lim_source ShippedBudgets.lim_source SanitizerBudgets.lim_target
     Plain.M.loaded_segments Plain.M.init_pc Plain.M.phdrs sp brk mb rnd
     fssegs0 Asan.M.init_pc Asan.M.phdrs sp' brk' mb' rnd'
     (SPECX (LS:=ag_shape checksum_shape) inp) (SPECX (LS:=ag_shape checksum_shape) inp) inp
-    asan_lim_source_le SWB HP (TFIB sp' brk' mb' rnd' inp Hsp' Hbrk' Hmb' Hfit' Hinp) (t_eq_refl _)).
+    asan_lim_source_le SWB HP (TFIB sp' brk' mb' rnd' inp Hsp' Hbrk' Hmb' Hfit' Hinp Hlau') (t_eq_refl _)).
 Qed.
 
 Theorem fs_asan_halts_of_tfib : Statements.asan_halts.
@@ -81,8 +82,8 @@ Proof.
     target_alloc_limit ShippedBudgets.lim_source lim_source_le_target (forced_only_cfg_least _)).
   intros sp brk mb rnd inp Hen Hinp. exists (SPECX (LS:=ag_shape checksum_shape) inp). split.
   - pose proof (valid_input_va_size _ Hinp) as Hsv48.
-    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb Hfit]]].
-    exact (TFIB sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hinp).
+    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb [Hfit Hlau]]]].
+    exact (TFIB sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau).
   - exact (SPECX_shape_ok inp).
 Qed.
 End a.

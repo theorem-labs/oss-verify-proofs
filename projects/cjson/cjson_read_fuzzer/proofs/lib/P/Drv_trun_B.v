@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the three DMOD destructurings, two of them before DMOD_chan, take its new channel-reader field. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -101,7 +102,7 @@ Section S.
   Proof.
     intros until x31. intros IT K.
     destruct IT as (HL & INA & IND & PAY & CJ & [e ER] & MI & ST & [u TFR] & MFR & DS & INC & SEF & SOF & DM & FRM).
-    pose proof DM as [MOK' MFDS HFS].
+    pose proof DM as [MOK' MFDS HFS _].
     pose proof GT as GT'. try rewrite <- alloc_ceiling_eq in GT'.
     eapply rz_step_evt; [exact MOK'|].
     do 2 step. apply evt_done.
@@ -191,7 +192,7 @@ Section S.
   Proof.
     intros until x31. intros IT Hj HK K2.
     pose proof IT as (HL & INA & IND & PAY & CJ & [e ER] & MI & ST & [u TFR] & MFR & DS & INC & SEF & SOF & DM & FRM).
-    pose proof DM as [MOK' MFDS HFS]. destruct (DMOD_chan _ _ _ DM ltac:(left; reflexivity)) as [CH1 CH2].
+    pose proof DM as [MOK' MFDS HFS _]. destruct (DMOD_chan _ _ _ DM ltac:(left; reflexivity)) as [CH1 CH2].
     pose proof (lhd_ssp0 _ _ _ _ HL) as SSP.
     pose proof (lines_length j) as LL. pose proof (lines_bytes j) as LBY.
     apply rz_drop_nil; [exact HK|].
@@ -216,7 +217,7 @@ Section S.
   Proof.
     intros until x31. intros IT HK K2.
     pose proof IT as (HL & INA & IND & PAY & CJ & [e ER] & MI & ST & [u TFR] & MFR & DS & INC & SEF & SOF & DM & FRM).
-    pose proof DM as [MOK' MFDS HFS]. destruct (DMOD_chan _ _ _ DM ltac:(left; reflexivity)) as [CH1 CH2].
+    pose proof DM as [MOK' MFDS HFS _]. destruct (DMOD_chan _ _ _ DM ltac:(left; reflexivity)) as [CH1 CH2].
     pose proof (lhd_ssp0 _ _ _ _ HL) as SSP.
     eapply (SO_EMIT1 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc m mo lo ssp_guard_val K);
       first [exact MOK'| exact CH1| exact SOF| exact SSP| exact MI| exact FRM| exact HK

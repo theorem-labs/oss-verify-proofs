@@ -1,8 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mmap_grant_refusable and mmap_reserve_refusable read Linux's placement answer, the new vm_place_available at the hint under the kernel's THP flag, in place of vm_gap_available; Placement imported). *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement.
 Import ListNotations.
 Open Scope bv_scope.
 
@@ -165,12 +167,63 @@ Proof.
       (proj2 (Z.leb_le _ _) Htop), Hfree. reflexivity.
 Qed.
 
-Definition mmap_grant_refusable (flags : word) (m : Model) (nZ : Z) : bool :=
-  negb (mmap_noreserve_backed_ok flags m nZ)
-  || negb (vm_gap_available (m_vmmaps m) nZ).
+(* LPS 08b1429: [mmap_spec]'s grant arms pick Linux's one address
+   ([Mmap.linux_place]); a grant outcome exists exactly when the placement
+   rule has an answer, so the refusal criteria read the placement, not any
+   free gap. *)
+Definition vm_place_available (h : VmMaps) (thp : bool) (hint : word) (nZ : Z) : bool :=
+  match linux_place_b h thp hint nZ with Some _ => true | None => false end.
 
-Definition mmap_reserve_refusable (m : Model) (nZ : Z) : bool :=
-  negb (vm_gap_available (m_vmmaps m) nZ).
+Lemma vm_place_available_iff : forall h thp hint nZ,
+  (0 < nZ)%Z -> (nZ mod page_size = 0)%Z ->
+  vm_place_available h thp hint nZ = true <->
+  exists a : word, linux_place h thp hint nZ (bv_unsigned a).
+Proof.
+  intros h thp hint nZ Hn Hal.
+  destruct (linux_place_b_spec h thp hint nZ Hn Hal) as [Hs Hnone].
+  unfold vm_place_available. destruct (linux_place_b h thp hint nZ) as [z|] eqn:Hb.
+  - split; [intros _|reflexivity].
+    pose proof (proj1 (Hs z) eq_refl) as Hz.
+    destruct (linux_place_admissible h thp hint nZ z Hn Hal Hz) as (_ & Hpos & Htop & _).
+    pose proof (alloc_top_lt_two_pow_64 h) as Hat.
+    exists (Z_to_bv 64 z). rewrite bv_unsigned_Z_to_bv_u64; [exact Hz|].
+    unfold page_size in *. lia.
+  - split; [discriminate|]. intros (a & Ha). exfalso. exact (proj1 Hnone eq_refl _ Ha).
+Qed.
+
+Lemma vm_place_available_of_gap : forall h thp hint nZ g,
+  (0 < nZ)%Z -> (nZ mod page_size = 0)%Z ->
+  gap_fits (vm_reserved h ++ vm_maps h) task_unmapped_base (alloc_top h) nZ g ->
+  vm_place_available h thp hint nZ = true.
+Proof.
+  intros h thp hint nZ g Hn Hnal Hg.
+  destruct (linux_place_exists h thp hint nZ Hn Hnal (ex_intro _ g (or_intror Hg))) as [a Ha].
+  destruct (linux_place_b_spec h thp hint nZ Hn Hnal) as [_ Hnone].
+  unfold vm_place_available. destruct (linux_place_b h thp hint nZ) eqn:E; [reflexivity|].
+  exfalso. exact (proj1 Hnone eq_refl a Ha).
+Qed.
+
+Lemma ed_nZ_pos_aligned : forall len : word, w_is0 len = false ->
+  (0 < page_round_up_Z (bv_unsigned len))%Z /\ (page_round_up_Z (bv_unsigned len) mod page_size = 0)%Z.
+Proof.
+  (* [bv_eqb_neq] is not a name this file can see: the model declares it in
+     Common/PropExec.v and in the other direction.  [Sys/Syscall.w_is0_false_pos]
+     is the model's own lemma for exactly this step, and [Specs] exports it.
+     sibling of json-c/json_object_fuzzer lib/EdAlloc.v:208, fix confirmed by
+     a build of that unit *)
+  intros len H. pose proof (w_is0_false_pos len H) as Hu.
+  pose proof (bv_unsigned_in_range 64 len) as [H0 _].
+  unfold page_round_up_Z, page_size. split.
+  - apply Z.mul_pos_pos; [|lia]. apply Z.div_str_pos. lia.
+  - apply Z_mod_mult.
+Qed.
+
+Definition mmap_grant_refusable (hint flags : word) (m : Model) (nZ : Z) : bool :=
+  negb (mmap_noreserve_backed_ok flags m nZ)
+  || negb (vm_place_available (m_vmmaps m) (kb_thp (m_kernel m)) hint nZ).
+
+Definition mmap_reserve_refusable (hint : word) (m : Model) (nZ : Z) : bool :=
+  negb (vm_place_available (m_vmmaps m) (kb_thp (m_kernel m)) hint nZ).
 
 Definition mmap_fixed_fresh_refusable (flags : word) (m : Model) (nZ : Z) : bool :=
   negb (mmap_noreserve_backed_ok flags m nZ).

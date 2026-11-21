@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 582 of its 596 lines of code are new or changed and 234 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Import PropExec MState Mem Exec Frame Cells Step Tac Bytes ZBridge.
@@ -18,7 +19,7 @@ Import ListNotations.
 Open Scope Z_scope.
 
 (* The footprint hook this file's stores use (Step's footprint_after_store), Local. lib/A/Prog/MemMono.v:207's copy
-   is GLOBAL on this tree (a Theorem Labs lane's declared exception 3; a Theorem Labs lane's 8bac67328ab was not taken) and reaches this file
+   is GLOBAL on this tree (a Theorem Labs lane's declared exception 3; a Theorem Labs lane's was not taken) and reaches this file
    through the Require Export above; this copy, defined after it, is the one in force here. Byte-for-byte
    MemMono.v:207-217's body. *)
 Local Ltac footprint_after_store segs m a bs ::=

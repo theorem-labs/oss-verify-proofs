@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-29: relocated from libreac/fuzz_grant (a working branch 97c611eec86,
+(* Modified by Theorem Labs, 2026-10-29: relocated from libreac/fuzz_grant (a working branch,
    proofs/libreac/fuzz_grant/lib/A/Rt/StrcmpChkY.v, owner a Theorem Labs lane) to libreac/fuzz_identity's ASan build
    (image A) by an address map recorded by the porting lane; module paths, GrantSyms ->
    TfibSyms. The proof script is a Theorem Labs lane's, unchanged. *)
@@ -15,7 +15,8 @@
    path 0x42b30..0x42b60 rechecks the granules and returns to 0x42880.
    Atoms: 9 = s1 = p (the string), 41 = n = s4 = k + 1 (s5 = k on entry); 32.. as in AE6z. *)
 (* Modified by Theorem Labs, 2026-10-29: for a Theorem Labs lane's acceptance (a working branch), the record class is TfibSyms, not IdentTfibSyms (DECISIONS-LIVE: TfibSyms in both A and B, no --rename), and the core modules are Required by full path at the applied A core's names (lib/A/A*.v, lib/Reusable/YA0m, YE08, YE21). *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/A/Rt/StrcmpChkY.v at origin/ossv/recipes 09c6822d886 for reac-pw/fuzz_headamp image A (fuzz_headamp.asan, pin f3e0669d2819); module paths changed; addresses moved to fuzz_headamp.asan by alreloc a5c53bb2bed4 in the code only (every comment is the source's, verbatim: its addresses are fuzz_identity.asan's or those of the image it names); the Section is generalized over a set U of shadow bytes (Variable U, HAR at FMupoison.unpoison U mem, HUlo: U at or above kHighShadowBeg; POSTr's AR at unpoison U mem'), with basics' ARm, finishR's frame step (WrapU.AR_frame_U, al_stack at the unpoisoned memory) and ent_ro (WrapU.rodata_ok_U, sc_rodata_low) changed to match: U = [] is the source's statement by conversion. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/A/Rt/StrcmpChkY.v for reac-pw/fuzz_headamp image A (fuzz_headamp.asan, pin f3e0669d2819); module paths changed; addresses moved to fuzz_headamp.asan by alreloc a5c53bb2bed4 in the code only (every comment is the source's, verbatim: its addresses are fuzz_identity.asan's or those of the image it names); the Section is generalized over a set U of shadow bytes (Variable U, HAR at FMupoison.unpoison U mem, HUlo: U at or above kHighShadowBeg; POSTr's AR at unpoison U mem'), with basics' ARm, finishR's frame step (WrapU.AR_frame_U, al_stack at the unpoisoned memory) and ent_ro (WrapU.rodata_ok_U, sc_rodata_low) changed to match: U = [] is the source's statement by conversion. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,4 +1,4 @@
-(* AsanCells: split VERBATIM from lib/A/AsanRT.v @ dmig 0260981d028, lines 1-6 (imports), 8-49 (constants and
+(* AsanCells: split VERBATIM from lib/A/AsanRT.v @ dmig, lines 1-6 (imports), 8-49 (constants and
    address predicates) and 77-87 (asan_cells), to keep asan_cf_cells (malloc_context_size = 1, toolchain N) and
    the rest of AsanRT.v (RT_* cells, asan_opt/cf/uw/real/im/exit/fs cells) out of the leaf closure (a Theorem Labs lane's
    decision 2026-10-28 20:25Z). Nothing is changed in the copied text. *)

@@ -11,7 +11,7 @@
      gn_pair_ok source is at slot k (fr_RINV's distinct fds, RI_fds_holds), so after relay_instance_gone slot k holds
      rig_post's source for entry j, which rig_rel's dr_rel leaves drained (pending list empty, offset 0).
    - RI_gone_read_sat: one state meets all of RI_gone_read's premises (and RI_gone_pairs's).
-   - Section collapse / collapse2: the records of rounds 1 and 2 of the gone rules' texts (bb9dae5d905, a1a3591c77c),
+   - Section collapse / collapse2: the records of rounds 1 and 2 of the gone rules' texts,
      which were false at the instance; machine-checked counter-instances, not proofs of the rows.
    Part 2 (over W_LLVMFuzzerTestOneInput_gone_base.v's own model): RI_gone_pairs_plug / RI_gone_read_plug restate
    part 1 at gone_base's GN_RI_pairs / GN_RI_read; then the step and end rows.
@@ -19,16 +19,17 @@
      check_no_loss and check_shape_ends left of what relay_instance_gone left there; when gone = 0, `at` is the
      entry's position in the stream relay_instance_gone sent (rg_acc_pos), which is the entries' drained lines and
      then their ended keys' end lines (rg_rel_dec, rg_strm).
-   - RI_gone_step_holds(_c): GN_RI_step of a working branch a39b599f92e (copied verbatim as
+   - RI_gone_step_holds(_c): GN_RI_step of a working branch (copied verbatim as
      GN_RI_step_d) at MT := ameter_triv, RINV := fr_RINV, MMAX := WR_MMAX, LS := fr_LS3 B / fr_LS3c B.  The LS-side
-     conjunct cnl_room is a Theorem Labs lane's gx6_step_room(_c) (ReplyLS3cTopxGoneF.v at b25d82fcf04); mo_ok is True at
+     conjunct cnl_room is a Theorem Labs lane's gx6_step_room(_c) (ReplyLS3cTopxGoneF.v); mo_ok is True at
      ameter_triv; the rest is RINV-side (rg_step_rinv_side).
-   - RI_gone_end_holds_q5(_c): GN_RI_end of a39b599f92e (copied as GN_RI_end_q5) with REQ5 (no held list's capacity
-     shrinks from m to mc) as one more, last, premise: s5-r1d's gx6_end_LS3(_c) needs it, and a39b599f92e's gn_cnl_ok
+   - RI_gone_end_holds_q5(_c): GN_RI_end (copied as GN_RI_end_q5) with REQ5 (no held list's capacity
+     shrinks from m to mc) as one more, last, premise: s5-r1d's gx6_end_LS3(_c) needs it, and's gn_cnl_ok
      does not carry `hl_cap (hs_held h) <= hl_cap H'` from which ReplyLS3cTopxGoneH.v's gxh_req5 derives it.
-   - GN_RI_step_r3 (Section rg3): the record of round 3 (aa34c06e82c): without re_U NUL-free the step row is false.
+   - GN_RI_step_r3 (Section rg3): the record of round 3: without re_U NUL-free the step row is false.
    Local helpers rg_lines_nz / rg_upds_in / rg_W_read_lines_nz state what a Theorem Labs lane's ReplyRINV_a12.v
    (lines_nul_free / upds_nul_free) states; they stay local. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -170,7 +171,7 @@ Proof.
 Qed.
 
 (* ================================================================== RI_gone_read *)
-(* integ bb9dae5d905 W_LLVMFuzzerTestOneInput_gone_base.v:444-453 gn_entry_model / gn_rig_ok, copied verbatim *)
+(* integ W_LLVMFuzzerTestOneInput_gone_base.v:445-454 gn_entry_model / gn_rig_ok, copied verbatim *)
 Definition gn_entry_model (e : rentry) : Prop :=
   (re_eof e = 0 \/ re_eof e = 1) /\ (re_skip e = 0 \/ re_skip e = 1) /\
   length (re_pad1 e) = 4%nat /\ length (re_pad2 e) = 4%nat /\ 0 <= re_fd e < 2 ^ 31 /\
@@ -181,7 +182,7 @@ Definition gn_rig_ok (cx : lfcx) (m : lmod) (hs : list (hsrc * nat)) (qs : list 
     (combine (lm_es m) hs) qs c2 O2 cap2 /\
   length qs = length (lm_es m) /\
   Forall gn_entry_model (map fst qs) /\ NoDup (map re_fd (map fst qs)).
-(* integ bb9dae5d905 W_LLVMFuzzerTestOneInput_gone_base.v:573-577 GN_RI_read, copied verbatim at RINV := fr_RINV *)
+(* integ W_LLVMFuzzerTestOneInput_gone_base.v:574-578 GN_RI_read, copied verbatim at RINV := fr_RINV *)
 Definition GN_RI_read_d : Prop := forall cx t m hs qs c2 O2 cap2 out2 m1 k h,
   fr_RINV cx t m -> gn_pairs m hs -> gn_after_rig cx m hs qs c2 O2 cap2 out2 m1 ->
   gn_rig_ok cx m hs qs c2 O2 cap2 ->
@@ -296,8 +297,8 @@ Proof.
 Qed.
 
 (* ================================================================== FINDING: the OLD RI_gone_step and RI_gone_end
-   (integ bb9dae5d905 gone_base.v:579-613) are false at the instance.  Machine-checked evidence, kept as the record;
-   not proofs of the rows (a Theorem Labs lane restated both on a working branch a1a3591c77c with the callee
+   (integ gone_base.v:579-613) are false at the instance.  Machine-checked evidence, kept as the record;
+   not proofs of the rows (a Theorem Labs lane restated both on a working branch with the callee
    posts' block relation as a premise).  Both old rows tie their post-state Sx to the pre-state S by
    `mo_le MT S Sx cst` alone (gone_base.v:583, :612), and the instance's meter is MT := ameter_triv, whose mo_le is
    True (Reusable/YCbp.v:17-18).  So Sx may be rg_big S (W8Add's big_state, its LS-FINDING.v
@@ -306,10 +307,10 @@ Qed.
      blocks_bytes Sx + ... + len + 1 <= LIVE_MAX (W_contract.v cnl_room): false at every step whose slot holds an
      expected record (relay_instance_gone's dr_rel appends the drained lines to the expected list);
    - GN_RI_end concludes `LS cx (t + 1) mc lyx Sx` (:613): false for every LS that bounds the live bytes, as
-     fr_LS3 does (ReplyLS3.v:143 fr_LS3_room on a working branch 793a73ec89e: blocks_bytes S + 2 ^ 31
-     <= LIVE_MAX).  (lyx is free as well, for any MT: fr_LS3's Permutation (ablocks B lyx Sx) ..., ReplyLS3.v:125,
+     fr_LS3 does (ReplyLS3.v:144 fr_LS3_room on a working branch: blocks_bytes S + 2 ^ 31
+     <= LIVE_MAX).  (lyx is free as well, for any MT: fr_LS3's Permutation (ablocks B lyx Sx) ..., ReplyLS3.v:126,
      reads lyx.)
-   GN_RI_step_old / GN_RI_end_old are the old texts (bb9dae5d905 gone_base.v:579-605, :608-613), copied verbatim
+   GN_RI_step_old / GN_RI_end_old are the old texts (gone_base.v:579-605, :608-613), copied verbatim
    with their Section parameters (MT, LS, RINV, MMAX) as arguments.  gn_run here is ReplyRINV.v's copy, an inductive
    distinct from gone_base's, which the two proofs only pass through. *)
 Section collapse.
@@ -389,9 +390,9 @@ Qed.
 End collapse.
 
 (* ================================================================== FINDING, round 2: the restated rows of
-   a working branch a1a3591c77c (the callee posts' block relation added after mo_le; GN_RI_step also
+   a working branch (the callee posts' block relation added after mo_le; GN_RI_step also
    takes lyx) are still false at RINV := fr_RINV: nothing in them pins the stream lm_O m, which fr_RINV does not read
-   (ReplyRINV.v:219-226) and fr_LS3 does not read either.  The counter-instance below is concrete: the first head's
+   (ReplyRINV.v:220-227) and fr_LS3 does not read either.  The counter-instance below is concrete: the first head's
    kind of state with one byte x already in the stream, and slot 0's source holding the line "a" (bytes 97, 0).
    relay_instance_gone drains it, so the stream is x, 97, 0 and slot 0's expected list is ["a"]:
    - GN_RI_step at the first call (gn_run0, A = 0) asks skipn 0 [x; 97; 0] = [97; 0] ++ rest (x = 120 here; any x
@@ -402,7 +403,7 @@ End collapse.
    gn_op (op 5, lm_O m = [], t < OPS_MAX) as a premise, is in the rows proved below. *)
 Section collapse2.
 
-(* the round-2 texts (a1a3591c77c gone_base.v:583-622), verbatim, with their Section parameters as arguments *)
+(* the round-2 texts (gone_base.v:583-622), verbatim, with their Section parameters as arguments *)
 Definition GN_RI_step_r2 (B : asyms) (MT : ameter_ops) (LS : lfcx -> Z -> lmod -> alayout -> astate -> Prop)
     (RINV : lfcx -> Z -> lmod -> Prop) (MMAX : Z) : Prop :=
   forall cx t m ly S hs qs c2 O2 cap2 out2 m1 mc A i k h (lyx : alayout) (Sx : astate) cst,
@@ -571,9 +572,9 @@ Qed.
 End collapse2.
 End rg.
 
-(* ================================================================== the OLD RI_gone_end (bb9dae5d905) is vacuous
+(* ================================================================== the OLD RI_gone_end is vacuous
    at the top's instance: a concrete state meets all its premises (the first head of a Theorem Labs lane's fr_LS3_sat,
-   ReplyLS3.v:464-505: one relay entry, slot 0 open, nothing pending, nothing read), so GN_RI_end_collapse_triv's
+   ReplyLS3.v:465-506: one relay entry, slot 0 open, nothing pending, nothing read), so GN_RI_end_collapse_triv's
    general statement (ANY LS whose states have at most LIVE_MAX live bytes, at MT := ameter_triv) closes it at
    LS := fr_LS3 B, RINV := fr_RINV. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require ReplyLS ReplyLS3.
@@ -2605,7 +2606,7 @@ Proof.
   split; [exact HC|]. split; [exact Hctl|]. split; [exact HQM|]. split; [exact HQF | exact HCK].
 Qed.
 
-(* a39b599f92e's GN_RI_step (gone_base.v:583-624), verbatim, with its Section parameters as arguments *)
+(* a commit's GN_RI_step (gone_base.v:583-624), verbatim, with its Section parameters as arguments *)
 Definition GN_RI_step_d (B : asyms) (MT : ameter_ops) (LS : lfcx -> Z -> lmod -> alayout -> astate -> Prop)
     (RINV : lfcx -> Z -> lmod -> Prop) (MMAX : Z) : Prop :=
   forall cx t m ly S hs qs c2 O2 cap2 out2 m1 mc A i k h (lyx : alayout) (Sx : astate) cst,
@@ -2647,7 +2648,7 @@ Definition GN_RI_step_d (B : asyms) (MT : ameter_ops) (LS : lfcx -> Z -> lmod ->
         (want_of (gn_pre cx m) (hl_recs (hs_held h'))) <> None) /\
      mo_ok MT Sy (hl_n (hs_held h') * mo_free MT)).
 
-(* a39b599f92e's GN_RI_end (gone_base.v:628-648), verbatim, with its Section parameters as arguments, and REQ5 (the
+(* a commit's GN_RI_end (gone_base.v:628-648), verbatim, with its Section parameters as arguments, and REQ5 (the
    held lists' capacities do not shrink from m to mc) as one more, last, premise *)
 Definition GN_RI_end_q5 (B : asyms) (MT : ameter_ops) (LS : lfcx -> Z -> lmod -> alayout -> astate -> Prop)
     (RINV : lfcx -> Z -> lmod -> Prop) : Prop :=
@@ -2723,7 +2724,7 @@ Proof.
 Qed.
 
 (* ---- the rows at the top's instance: MT := ameter_triv, RINV := fr_RINV, MMAX := WR_MMAX, LS := fr_LS3 B or
-   fr_LS3c B; the LS-side conjuncts are a Theorem Labs lane's (ReplyLS3cTopxGoneF.v at b25d82fcf04) *)
+   fr_LS3c B; the LS-side conjuncts are a Theorem Labs lane's (ReplyLS3cTopxGoneF.v) *)
 Lemma RI_gone_step_holds : forall B,
   GN_RI_step_d B ameter_triv (ReplyLS3.fr_LS3 B) fr_RINV W_LLVMFuzzerTestOneInput_write.WR_MMAX.
 Proof.
@@ -2769,7 +2770,7 @@ Qed.
 
 End rows.
 
-(* ---- the official rows (lib/A/W_LLVMFuzzerTestOneInput_gone_base.v's GN_RI_step / GN_RI_end at a Theorem Labs lane's KF-COUNT text 6151e809fb35: the binder
+(* ---- the official rows (lib/A/W_LLVMFuzzerTestOneInput_gone_base.v's GN_RI_step / GN_RI_end at a Theorem Labs lane's KF-COUNT text: the binder
    q, the premises gn_runc / gn_cst after gn_run / mo_le, and GN_RI_step's inner check_no_loss post at cnl_cost) at
    MT := ameter_triv, RINV := fr_RINV, MMAX := fr_MMAX, LS := fr_LS3 B or fr_LS3c B.  GN_RI_step is GN_RI_step_d with
    the two new premises unused and its inner post (any cst') taken at cnl_cost.  GN_RI_end is GN_RI_end_q5 with REQ5
@@ -2831,7 +2832,7 @@ End rows9.
 
 (* ================================================================== the RINV halves of the rows as a Theorem Labs lane's
    ReplyLS3cTopxGone8.v splits them (its module G8 states G8.GN_RI_step_ri :77 and G8.GN_RI_end_ri :189 over
-   gone_base's own gn_run / gn_cnl_ok at a Theorem Labs lane's KF-COUNT text, cda28f0ce1d: binder q, gn_runc / gn_cst, the inner
+   gone_base's own gn_run / gn_cnl_ok at a Theorem Labs lane's KF-COUNT text: binder q, gn_runc / gn_cst, the inner
    post at cnl_cost), for ANY LS and ANY meter; the RINV side reads neither cost premise.  The top's instance
    (LS := fr_LS3cp B /\ fr_OUT OM /\ fr_ENT B) takes them through s5-r1d's gx8_* lemmas *)
 Section rows8.
@@ -2856,7 +2857,7 @@ Section rg3.
 Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 
 
-(* aa34c06e82c lib/A/W_LLVMFuzzerTestOneInput_gone_base.v:583-614, verbatim, with the Section parameters B, MT, LS, RINV, MMAX as arguments *)
+(* lib/A/W_LLVMFuzzerTestOneInput_gone_base.v:584-615, verbatim, with the Section parameters B, MT, LS, RINV, MMAX as arguments *)
 Definition GN_RI_step_r3 (B : asyms) (MT : ameter_ops) (LS : lfcx -> Z -> lmod -> alayout -> astate -> Prop)
     (RINV : lfcx -> Z -> lmod -> Prop) (MMAX : Z) : Prop :=
   forall cx t m ly S hs qs c2 O2 cap2 out2 m1 mc A i k h (lyx : alayout) (Sx : astate) cst,
@@ -2875,7 +2876,7 @@ Definition GN_RI_step_r3 (B : asyms) (MT : ameter_ops) (LS : lfcx -> Z -> lmod -
   hl_n (hs_held h) + Z.of_nat (count_begin (texts (hs_expected h))) < 2 ^ 22 /\
   0 <= A <= Z.of_nat (length (lm_O mc)) /\
   (* the stream's length fits next_line's memchr bound (both check_* specs ask NO <= 2 ^ 40 and
-     0 < NO -> NO < 2 ^ 32); one operation sends at most 33,488,385 bytes (W_contract.v:580-581).  The
+     0 < NO -> NO < 2 ^ 32); one operation sends at most 33,488,385 bytes (W_contract.v:581-582).  The
      model's, like the size bounds above; aout_at alone bounds it only by the allocator's MALLOC_MAX.  (p5) *)
   Z.of_nat (length (lm_O mc)) < 2 ^ 32 /\
   (lm_gn m1 = 0 -> exists rest, skipn (Z.to_nat A) (lm_O mc) = bstream (hs_expected h) ++ rest) /\
@@ -3050,12 +3051,12 @@ Qed.
 End rg3.
 
 (* ================================================================== the NEW rows are not vacuous (VERIFY rule 10):
-   one state meets every premise of a39b599f92e's GN_RI_step (at the loop's first call) and of its GN_RI_end (after
+   one state meets every premise of's GN_RI_step (at the loop's first call) and of its GN_RI_end (after
    the loop), at MT := ameter_triv, RINV := fr_RINV, LS := fr_LS3 B (and REQ5 holds there too).  The state: one
    operation done (t = 1), the gone op (byte 5) next at lm_k = 1 of a 2-byte input; one relay entry whose line buffer
    is allocated (an earlier drain), its source open at slot 0 with nothing pending; the live blocks are the input,
    the table, the entry's buffer and the source's partial buffer, each a chunk of the allocator state (as
-   a Theorem Labs lane's fr_LS3_sat, ReplyLS3.v:464-505). *)
+   a Theorem Labs lane's fr_LS3_sat, ReplyLS3.v:465-506). *)
 Section nsat.
 Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Variable B : asyms.

@@ -1,4 +1,4 @@
-(* CARRIED from commit 0deb5310273b0d538ec2a1697f391a1c8ad21c34,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YGcfXsMapped.v, sha256 9cba783ceb7348eaa3258bf254bdaf8a2aa307a231dce3dbf964bbc21aeb7f1b (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the Require lines only:
    the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
@@ -6,16 +6,17 @@
 *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Taken by path from a working branch a0fed4266a1b, provisional. *)
+(* Taken by path from a working branch, provisional. *)
 (* Modified by a Theorem Labs lane (DeallocNmaxA), 2026-10-30: km_fr_free_cf's script covers free_cf's recycle side (km_fr_recycle_chunk); statements unchanged. A change request to a Theorem Labs lane *)
 (* Modified by Theorem Labs, 2026-10: module paths changed from fuzz_preset lib.Reusable to cgif_file_fuzzer lib; the text is otherwise unchanged. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mkeep_grant_md, mkeep_munmap, errb_fresh_apart and the xs_mapped_cf unmap and remap lemmas: munmap_model drops only the maps of an exact map; imports YG0j); internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the keep lemmas of xs_mapped_cf (YGcfXs.v), the walk fact that the error-message-buffer
    extent xs_cf ly S is one of the LPS model's maps. xs_fresh_of_grant (YGcfXs.v) reads it at a secondary grant, so a
    walk invariant that carries it must keep it across every step that changes vm_maps or xs_cf.
    - Section 1, the map frame mkeep D md md': every map of md whose base is not the base of an extent in D stays a
      map of md'. Each LPS model operation the allocator walks use is one: with_vm_backing, same_but_materialized,
-     mmap_model, grant_md, fixedin_ok_model keep every map (D = []); munmap_model (w64 c) drops only the maps based
-     at c (D = [(c, _)]).
+     mmap_model, grant_md, fixedin_ok_model keep every map (D = []); munmap_model (w64 c) n of an exact map (w64 c, n)
+     of a well-formed model (amwf) drops only the maps based at c (D = [(c, _)]).
    - Section 2, the generic keep (xs_mapped_cf_frame) and the base-apartness facts that feed it: an xs extent is
      apart from every sec extent (xs_sec_apart, from xs_placed_cf's zdisjoint), from the shadow band
      (xs_shadow_apart, from in_app), and from a fresh grant (errb_fresh_apart, from region_free).
@@ -36,7 +37,7 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YK11 Y
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YG00 YG0a YG01 YG0f YG0n.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YM05.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YGcfNames YG01cf YG00cf YG0ncf YG08cf YGcfXs.
-From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YK0v YA05 YA09 YG0b YG04 ReallocP YGcfAmx.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YK0v YA05 YA09 YG0b YG04 ReallocP YGcfAmx YG0j.
 (* stdpp, through the LPS modules, shadows several list names; the lemmas here are Stdlib's. *)
 From Stdlib Require Import List.
 Import ListNotations.
@@ -109,13 +110,18 @@ intros D hole flags a n md. unfold YG0b.grant_md. destruct hole.
 - apply mkeep_fixedin_ok.
 Qed.
 
-Lemma mkeep_munmap : forall c m n md, mkeep [(c, m)] md (YK0v.munmap_model (w64 c) n md).
+(* At LPS 727298f3 munmap_model cuts vm_maps with maps_subtract (with_mmap_destroyed over
+   mmap_fixed_destroyed_next), which keeps only the outer parts of a map that straddles [c, c + n). On an exact map
+   (w64 c, n) of a model whose maps are positive and pairwise disjoint (amwf), every other map lies outside the range
+   and the cut drops that map alone (YG0j.eager_used_munmap). *)
+Lemma mkeep_munmap : forall c m n md, amwf md -> In (w64 c, n) (vm_maps (m_vmmaps md)) ->
+mkeep [(c, m)] md (YK0v.munmap_model (w64 c) n md).
 Proof.
-intros c m n md q Hq HD. inversion HD as [|z l Hz _]; subst. cbn [fst] in Hz.
-change (vm_maps (m_vmmaps (YK0v.munmap_model (w64 c) n md))) with (map_remove (vm_maps (m_vmmaps md)) (w64 c)).
-unfold map_remove. apply filter_In. split; [exact Hq|].
-destruct (bv_eqb (fst q) (w64 c)) eqn:E; [|reflexivity].
-exfalso. apply Hz. apply bv_eqb_eq. exact E.
+intros c m n md MW Hin q Hq HD. inversion HD as [|z l Hz _]; subst. cbn [fst] in Hz.
+destruct (in_split _ _ Hin) as (l1 & l2 & E).
+destruct (YG0j.eager_used_munmap (w64 c, n) md l1 l2 MW E) as [_ VM]. cbn [fst snd] in VM. rewrite VM.
+rewrite E in Hq. apply in_app_iff in Hq as [Hq|[Hq|Hq]]; apply in_app_iff; [left; exact Hq | | right; exact Hq].
+exfalso. apply Hz. rewrite <- Hq. reflexivity.
 Qed.
 
 (* The chain of c-asan's secondary-grant post model (AGif4.v's sec_md, whose flags are 50): the backing steps, the
@@ -216,7 +222,7 @@ Qed.
 
 (* A fresh grant's base is not an xs base: region_free puts it apart from every map, the xs extent among them. *)
 Lemma errb_fresh_apart : forall ly S md a ncap, amwf md -> xs_placed_cf ly S -> xs_mapped_cf ly S md ->
-grant_ok_na_pin md (w64 a) ncap = true -> 0 <= a -> 0 < ncap -> a + ncap < 2 ^ 64 ->
+grant_ok_na_pin_b md (w64 a) ncap = true -> 0 <= a -> 0 < ncap -> a + ncap < 2 ^ 64 ->
 Forall (fun z => w64 a <> w64 (fst z)) (xs_cf ly S).
 Proof.
 intros ly S md a ncap MW HP Hm Hg Ha Hn Han.
@@ -320,11 +326,12 @@ exact (proj1 (Forall_forall _ _) (xs_shadow_apart ly S md (fst z) MW HP Hm (proj
 Qed.
 
 Lemma xs_mapped_cf_shadow_unmap : forall ly S md c n, amwf md -> xs_placed_cf ly S -> xs_mapped_cf ly S md ->
-kLowShadowBeg <= c < kHighMemBeg -> xs_mapped_cf ly S (YK0v.munmap_model (w64 c) n md).
+kLowShadowBeg <= c < kHighMemBeg -> In (w64 c, n) (vm_maps (m_vmmaps md)) ->
+xs_mapped_cf ly S (YK0v.munmap_model (w64 c) n md).
 Proof.
-intros ly S md c n MW HP Hm Hc. apply (xs_mapped_cf_shadow_frame ly S md _ [(c, 0)] MW HP Hm).
+intros ly S md c n MW HP Hm Hc Hin. apply (xs_mapped_cf_shadow_frame ly S md _ [(c, 0)] MW HP Hm).
 - constructor; [exact Hc | constructor].
-- apply mkeep_munmap.
+- exact (mkeep_munmap c 0 n md MW Hin).
 Qed.
 
 (* 3d. The secondary unmap at the quarantine recycle (sec_dealloc's KMunmapSec). The unmapped extent z is a sec
@@ -334,10 +341,11 @@ Qed.
 Lemma xs_mapped_cf_sec_unmap : forall segs B ly S0 Hp W mem md0 S md ly' S' z n,
 ARcf segs B ly S0 Hp W mem md0 -> xs_placed_cf ly S0 -> xs_mapped_cf ly S0 md0 ->
 In z (sec_extents ly S0) -> xs_cf ly S = xs_cf ly S0 -> xs_cf ly' S' = xs_cf ly S ->
-xs_mapped_cf ly S md -> xs_mapped_cf ly' S' (YK0v.munmap_model (w64 (fst z)) n md).
+xs_mapped_cf ly S md -> amwf md -> In (w64 (fst z), n) (vm_maps (m_vmmaps md)) ->
+xs_mapped_cf ly' S' (YK0v.munmap_model (w64 (fst z)) n md).
 Proof.
-intros segs B ly S0 Hp W mem md0 S md ly' S' z n HA HP Hm0 Hz E0 E1 Hm.
-apply (xs_mapped_cf_frame ly S md ly' S' _ [(fst z, snd z)] Hm E1 (mkeep_munmap (fst z) (snd z) n md)).
+intros segs B ly S0 Hp W mem md0 S md ly' S' z n HA HP Hm0 Hz E0 E1 Hm MW Hin.
+apply (xs_mapped_cf_frame ly S md ly' S' _ [(fst z, snd z)] Hm E1 (mkeep_munmap (fst z) (snd z) n md MW Hin)).
 rewrite E0. apply Forall_forall. intros e He. constructor; [|constructor].
 exact (xs_sec_apart segs B ly S0 Hp W mem md0 HA HP Hm0 e z He Hz).
 Qed.
@@ -372,15 +380,16 @@ Qed.
    munmap of the old buffer (based at the old xs base); premises ARcf's amwf and xs_placed_cf at the old state. *)
 Lemma xs_mapped_cf_errb_remap_old : forall ly S md ly' S' a ncap md1 n,
 amwf md -> xs_placed_cf ly S -> xs_mapped_cf ly S md ->
-grant_ok_na_pin md (w64 a) ncap = true -> 0 <= a -> 0 < ncap -> a + ncap < 2 ^ 64 ->
+grant_ok_na_pin_b md (w64 a) ncap = true -> 0 <= a -> 0 < ncap -> a + ncap < 2 ^ 64 ->
 st_secs S' = map cfx_retire (st_secs S) ++ [mkSec ncap ERRB_CAP_TAG false] ->
 ly_sec ly' (length (st_secs S)) = a -> mkeep [] (YK0v.mmap_model (w64 a) (w64 ncap) md) md1 ->
-forall e, In e (xs_cf ly S) -> xs_mapped_cf ly' S' (YK0v.munmap_model (w64 (fst e)) n md1).
+forall e, In e (xs_cf ly S) -> amwf md1 -> In (w64 (fst e), n) (vm_maps (m_vmmaps md1)) ->
+xs_mapped_cf ly' S' (YK0v.munmap_model (w64 (fst e)) n md1).
 Proof.
-intros ly S md ly' S' a ncap md1 n MW HP Hm Hg Ha Hn Han Es Ea Hk e He.
+intros ly S md ly' S' a ncap md1 n MW HP Hm Hg Ha Hn Han Es Ea Hk e He MW1 Hin.
 pose proof (errb_fresh_apart ly S md a ncap MW HP Hm Hg Ha Hn Han) as FA.
 apply (xs_mapped_cf_errb_remap S md ly' S' a ncap _ ([] ++ [(fst e, snd e)]) Es ltac:(lia) Ea).
-- exact (mkeep_trans [] _ _ _ _ Hk (mkeep_munmap (fst e) (snd e) n md1)).
+- exact (mkeep_trans [] _ _ _ _ Hk (mkeep_munmap (fst e) (snd e) n md1 MW1 Hin)).
 - constructor; [exact (proj1 (Forall_forall _ _) FA e He) | constructor].
 Qed.
 

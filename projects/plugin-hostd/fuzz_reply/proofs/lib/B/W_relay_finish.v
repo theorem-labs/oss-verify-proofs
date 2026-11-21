@@ -2,21 +2,22 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the ASan+UBSan walk (image B, fuzz_reply.asan-ubsan) of fuzz_reply's
    relay_finish, a NEW walk over lib/B/W_listing.v (B's body is not A's up to relocation: VERDICT.md (sha256 810ca1df9ca9; internal record)),
-   after lib/A/W_relay_finish_h.v (a working branch a3987bff22c: its loop rf_loop and its tail rf_tail), in the
-   form of the B walks lib/B/W_check_bounded.v (a working branch 7e062bb9b9c) and lib/B/W_gse_loop.v
-   (a working branch bb5ed8a0689). *)
+   after lib/A/W_relay_finish_h.v (a working branch: its loop rf_loop and its tail rf_tail), in the
+   form of the B walks lib/B/W_check_bounded.v (a working branch) and lib/B/W_gse_loop.v
+   (a working branch). *)
 (* Modified by Theorem Labs, 2026-10: the room `_x` form (a Theorem Labs lane, RoomRFB): the walk is pb_relay_finish_x,
    stated over any allocator relation ARx with its laws as W_contract_x.v rf_spec_x (Section c below: PST / ARx / hl /
    LAWS / HP0 / BLKN, the callees' and the allocator rules' `_x` twins, PSTR / PSTC), and it threads rf_spec_x's room
    round: the budget rp_RM RP (each round: the free's 1, then gestures_end's charge) and the count premise
    cnt_ok_pk RP rf_pk (rf_pk = 5) to the free (cnt_ok) and to gestures_end (gse_pk = 4); the round's room bound follows
    rf_room's `- cap` threading (the round frees the old g_out block).  The room argument is lib/A/W_relay_finish_h.v's
-   (a working branch 9e4f84a8fb9), the ARx form that of lib/B/W_list_free.v / W_source_reset.v
-   (a working branch dfa1a225350).
+   (a working branch), the ARx form that of lib/B/W_list_free.v / W_source_reset.v
+   (a working branch).
    B's relay_finish sets no frame pointer and calls no __asan_stack_malloc, so A's fake-frame seat, its set_fs step and rp_RPF across the seat do not apply.
    pb_relay_finish keeps its statement, byte-identical, and its Section hypotheses (the same terms in the same order;
    HPLAIN / HWSEG write rf_cells as rf_cells RG GTU GL): it is re-derived from pb_relay_finish_x at ARx := ARi0,
    PST := [], RP := RP_AR (Section cAR); pb_relay_finish_fr / _fr_tfib are unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* relay_finish at 0x82344 (image B; 0x822ec in A), 80 instructions, frame 48 (ra, s0-s4 saved), NO ASan fake frame
    (B never calls __asan_stack_malloc here, so A's ASMERR / ASMX question does not arise):
      0x82344  prologue; s0 = the shadow base SB (GOT slot A_OBJ 0 -> cell A_OBJ 30); lbu g_thread_up; beqz -> 0x8239c
@@ -85,7 +86,7 @@ Ltac awr_any := first [ OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable.YC
                        | OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.B.YCbq.awr_ok_tac ].
 (* ---- LX0, the laws at ARi0 (W_journal_x.v), from AR_laws.  The AR theorem pb_relay_finish keeps its Section
    hypothesis LAWS : AR_laws, and pb_relay_finish_fr its premise AR_laws SEGS TB; Section cAR derives LX0 from it here.
-   The text is lib/B/YLX0.v's (a working branch 77dce911cd1, the B twin of lib/A/W_laws_x.v AR_laws_x_ARi0_of),
+   The text is lib/B/YLX0.v's (a working branch, the B twin of lib/A/W_laws_x.v AR_laws_x_ARi0_of),
    which this kit does not carry: Reusable/YCbqG.v AR_laws_x_of_AR takes three facts of cgif's AR beyond AR_laws - the
    8-aligned stack bounds (layout_ok's lo_top), a live block's tail granule viewable, and the const cells (am_const). *)
 Section rf_lx. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.

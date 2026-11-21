@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: ten node side-goal chains gain an alternative that rewrites unsigned_lit and closes the goal by lia, ahead of their ATNODE report. *)
 (* [comment removed for export] *)
 Require OSSVerify.Proofs.libpcap.fuzz_pcap.lib.Ox.F64_004.   (* [comment removed for export] *)
 From Stdlib Require Lia.
@@ -2325,6 +2326,7 @@ Section GlueFo.
         all: first [ exact NNUL | exact NOK | exact (proj1 NOK) | exact (proj2 NOK)
                    | rewrite unsigned_lit by lia; exact HNAME1 | rewrite unsigned_lit by lia; exact RGNAME
                    | lazymatch goal with |- Z.ldiff _ _ = _ => vm_compute; reflexivity end
+                   | (rewrite ?unsigned_lit by lia; lia)
                    | match goal with |- ?g => idtac "ATNODE:" g end ]. }
       intros rsp a Hdec.
       assert (HD : match a with SErr e => rsp = efferr e /\ 1 <= e <= 4095 | SVal v => rsp = eff0 (Z_to_bv 64 v) /\ 3 <= v <= 4096 end).
@@ -2755,6 +2757,7 @@ Section GlueFo.
         all: first [ exact NNUL | exact NOK | exact (proj1 NOK) | exact (proj2 NOK)
                    | rewrite unsigned_lit by lia; exact HNAME1 | rewrite unsigned_lit by lia; exact RGNAME
                    | lazymatch goal with |- Z.ldiff _ _ = _ => vm_compute; reflexivity end
+                   | (rewrite ?unsigned_lit by lia; lia)
                    | match goal with |- ?g => idtac "ATNODE:" g end ]. }
       intros rsp a Hdec.
       assert (HD : match a with SErr e => rsp = efferr e /\ 1 <= e <= 4095 | SVal v => rsp = eff0 (Z_to_bv 64 v) /\ 3 <= v <= 4096 end).
@@ -3601,6 +3604,7 @@ Section GlueSys.
       all: try (change (to_bytes (map bv_unsigned name)) with (to_bytes (of_bytes name)); rewrite to_of_bytes).
       all: first [ exact NNUL | exact NS | exact ND1 | exact ND2 | exact NLM | rewrite unsigned_lit by lia; exact HNAME1 | rewrite unsigned_lit by lia; exact RGNAME
                  | (intros E; apply (f_equal (@length byte)) in E; cbn in E; lia)
+                 | (rewrite ?unsigned_lit by lia; lia)
                  | match goal with |- ?g => idtac "ATNODE:" g end ]. }
     intros rsp a Hdec. unfold dec_unlink in Hdec. apply dec_plain_Some in Hdec.
     destruct a as [e|v].
@@ -3688,6 +3692,7 @@ Section GlueSys.
       all: try (change (to_bytes (map bv_unsigned name)) with (to_bytes (of_bytes name)); rewrite to_of_bytes).
       all: first [ exact NNUL | exact NS | exact ND1 | exact ND2 | exact NLM | rewrite unsigned_lit by lia; exact HNAME | rewrite unsigned_lit by lia; exact RGNAME
                  | (intros E; apply (f_equal (@length byte)) in E; cbn in E; lia)
+                 | (rewrite ?unsigned_lit by lia; lia)
                  | match goal with |- ?g => idtac "ATNODE1:" g end ]. }
     intros rsp a Hdec. unfold dec_unlink in Hdec. apply dec_plain_Some in Hdec.
     destruct a as [e|v].
@@ -3705,6 +3710,7 @@ Section GlueSys.
           all: try (change (to_bytes (map bv_unsigned name)) with (to_bytes (of_bytes name)); rewrite to_of_bytes).
           all: first [ exact NNUL | exact NS | exact ND1 | exact ND2 | exact NLM | rewrite unsigned_lit by lia; exact HNAME | rewrite unsigned_lit by lia; exact RGNAME
                      | (intros E; apply (f_equal (@length byte)) in E; cbn in E; lia)
+                     | (rewrite ?unsigned_lit by lia; lia)
                      | match goal with |- ?g => idtac "ATNODE2:" g end ]. }
         intros rsp2 a2x Hdec2. unfold dec_unlink in Hdec2. apply dec_plain_Some in Hdec2.
         assert (HR2 : exists (r2 : word) (e2 : Z), (a2x = SErr e2 /\ r2 = errno_ret e2 /\ 1 <= e2 <= 4095) \/ (a2x = SVal 0 /\ r2 = Z_to_bv 64 0)).
@@ -3941,6 +3947,7 @@ Section GlueSys.
       all: try (change (to_bytes (map bv_unsigned name)) with (to_bytes (of_bytes name)); rewrite to_of_bytes).
       all: first [ exact NNUL | exact NS | exact ND1 | exact ND2 | exact NLM | rewrite unsigned_lit by lia; exact HNAME1 | rewrite unsigned_lit by lia; exact RGNAME
                  | (intros E; apply (f_equal (@length byte)) in E; cbn in E; lia)
+                 | (rewrite ?unsigned_lit by lia; lia)
                  | match goal with |- ?g => idtac "ATNODE:" g end ]. }
     intros rsp a Hdec. unfold dec_unlink in Hdec. apply dec_plain_Some in Hdec.
     destruct a as [e|v].
@@ -4028,6 +4035,7 @@ Section GlueSys.
       all: try (change (to_bytes (map bv_unsigned name)) with (to_bytes (of_bytes name)); rewrite to_of_bytes).
       all: first [ exact NNUL | exact NS | exact ND1 | exact ND2 | exact NLM | rewrite unsigned_lit by lia; exact HNAME | rewrite unsigned_lit by lia; exact RGNAME
                  | (intros E; apply (f_equal (@length byte)) in E; cbn in E; lia)
+                 | (rewrite ?unsigned_lit by lia; lia)
                  | match goal with |- ?g => idtac "ATNODE1:" g end ]. }
     intros rsp a Hdec. unfold dec_unlink in Hdec. apply dec_plain_Some in Hdec.
     destruct a as [e|v].
@@ -4045,6 +4053,7 @@ Section GlueSys.
           all: try (change (to_bytes (map bv_unsigned name)) with (to_bytes (of_bytes name)); rewrite to_of_bytes).
           all: first [ exact NNUL | exact NS | exact ND1 | exact ND2 | exact NLM | rewrite unsigned_lit by lia; exact HNAME | rewrite unsigned_lit by lia; exact RGNAME
                      | (intros E; apply (f_equal (@length byte)) in E; cbn in E; lia)
+                     | (rewrite ?unsigned_lit by lia; lia)
                      | match goal with |- ?g => idtac "ATNODE2:" g end ]. }
         intros rsp2 a2x Hdec2. unfold dec_unlink in Hdec2. apply dec_plain_Some in Hdec2.
         assert (HR2 : exists (r2 : word) (e2 : Z), (a2x = SErr e2 /\ r2 = errno_ret e2 /\ 1 <= e2 <= 4095) \/ (a2x = SVal 0 /\ r2 = Z_to_bv 64 0)).
@@ -4340,6 +4349,7 @@ Section GlueMk.
     { at_nodeA_solve.
       all: first [ exact TMPN_nonul | (rewrite unsigned_lit by lia; exact STR5)
                  | (rewrite unsigned_lit by lia; rewrite TMPN_len; eapply rng_sub'; [exact RGNAME | lia])
+                 | (rewrite ?unsigned_lit by lia; rewrite ?TMPN_len; lia)
                  | match goal with |- ?g => idtac "ATNODE:" g end ]. }
     intros rsp a Hdec. apply dec_plain_Some in Hdec.
     (* [comment removed for export] *)
@@ -4622,6 +4632,7 @@ Section GlueMk.
     { at_nodeA_solve.
       all: first [ exact TMPN_nonul | (rewrite unsigned_lit by lia; exact STR5)
                  | (rewrite unsigned_lit by lia; rewrite TMPN_len; eapply rng_sub'; [exact RGNAME | lia])
+                 | (rewrite ?unsigned_lit by lia; rewrite ?TMPN_len; lia)
                  | match goal with |- ?g => idtac "ATNODE:" g end ]. }
     intros rsp a Hdec. apply dec_plain_Some in Hdec.
     (* [comment removed for export] *)

@@ -1,27 +1,28 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, for a Theorem Labs lane's cf layer at plugin-hostd/fuzz_reply; image row img-errnoseg-A).
    rule 24: no function proved (kind: measurement; an image row, a closed computation at reply's image A,
    fuzz_reply.asan, pin 42c58610e125).
 
    The cf layer states this row as a Definition over its own Section context; reply has not taken that layer file
    yet.  So the Lemma below states the layer Definition's body VERBATIM at reply's instance (the image class
-   ImgBase.AImg at AImg_reply, A/AGif2reply.v:23), for a B with the image's symbol facts (the layer's Section b has
+   ImgBase.AImg at AImg_reply, A/AGif2reply.v:24), for a B with the image's symbol facts (the layer's Section b has
    `Hypothesis TS : im_syms B`), and a consumer closes the layer's row with `exact` once the layer is on reply.  No
    Definition of the layer is copied here.
 
-   The cf text, YGcfInstErrno.v:83-84 (lane F1, a working branch cadcb4a0f83; the same text on a working branch
-   89caf2ed683; set in this form by bdbe5c2a7e5, where it was :86-87, the line a Theorem Labs lane's CF-UNIT-HYPS.md:35 (sha256 77b3f94c95d2; internal record)
+   The cf text, YGcfInstErrno.v:84-85 (lane F1, a working branch; the same text on a working branch;
+   set in this form, where it was :86-87, the line a Theorem Labs lane's CF-UNIT-HYPS.md:35 (sha256 77b3f94c95d2; internal record)
    cites), in `Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : CfParams}.
    Context {IM : AImg} {AG : AGImg} {DI : DImg}. ... Section b. Variable B : asyms. Hypothesis TS : im_syms B.`:
      Definition errno_seg_t : Prop :=
      forall a, as_errno B <= a < as_errno B + 4 -> seg_rom im_segs (Z_to_bv 64 a) <> None.
-   cgif's discharge: YGcfInstErrnocgif.v:38-42 errno_seg_cgif (cadcb4a0f83), by YB13.tfib_rw_rom.
+   cgif's discharge: YGcfInstErrnocgif.v:38-42 errno_seg_cgif, by YB13.tfib_rw_rom.
 
-   Proof at image A: ts_errno (A/AF0m.v:875) gives as_errno B = TFIB_ERRNO = 0x5d93cc (A/AF0m.v:22), so errno's four
+   Proof at image A: ts_errno (A/AF0m.v:876) gives as_errno B = TFIB_ERRNO = 0x5d93cc (A/AF0m.v:23), so errno's four
    bytes [0x5d93cc, 0x5d93d0) lie in the image's read-write window [0x9d000, 0x5fb000), where every byte is a segment
    byte (AB13.tfib_rw_rom, A/AB13.v:110: segments 2 = [0x9d000, 0x9f000) and 3 = [0x9f000, 0x5fb000), by scanN over
-   the image's own segment bytes; errno is in segment 3); im_segs of AImg_reply is tfibsegs (A/AGif2reply.v:24). *)
+   the image's own segment bytes; errno is in segment 3); im_segs of AImg_reply is tfibsegs (A/AGif2reply.v:25). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

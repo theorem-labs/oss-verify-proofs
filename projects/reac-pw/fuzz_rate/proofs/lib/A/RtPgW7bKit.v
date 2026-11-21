@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/Reusable/YCbq.v aj_intrin_at (lines 2155-2206) restated as w7_memcpy_at for image A's __asan_memcpy 0x510d4, with the wrapper's same_but_materialized kept in the post as same_io; the rest of the file is new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW7bKit.v at 25d4b718638e for reac-pw/fuzz_rate's image A: module paths changed; the image is fuzz_rate.asan (images.Asan) in place of lib/A/Img0; RPgBase.rl_cstr and RPgMem.rm_nth_map are lib/A/RtPgBase.v rt_cstr and lib/A/RtPgMem.v rtm_nth_map; __asan_memcpy is rate's 0x51860 (lib/A/RtPgW7bBase.v W7_MEMCPY). *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW7bKit.v for reac-pw/fuzz_rate's image A: module paths changed; the image is fuzz_rate.asan (images.Asan) in place of lib/A/Img0; RPgBase.rl_cstr and RPgMem.rm_nth_map are lib/A/RtPgBase.v rt_cstr and lib/A/RtPgMem.v rtm_nth_map; __asan_memcpy is rate's 0x51860 (lib/A/RtPgW7bBase.v W7_MEMCPY). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image A (fuzz_rate.asan, pinned sha256
    22bc8613d780c9a99353dc86368f9401311ef5c8358882651217836298529b6a; addresses measured on the unstripped twin
    0d508f2c65c249840b6c8fe3c1960824f2548b175c23583632f06bb7956458c3): the memory kit of the walk of

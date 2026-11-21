@@ -1,13 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the free-gap lemmas place below mmap_top through the model's top-down Linux placement (gap_fits, topdown_search), in place of the bottom-up floor, following LPS 727298f3's theories/Common/AsanPlacement.v. *)
 
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State Monad Specs.
+From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement.
 From OSSVerify.Proofs.coturn.FuzzStunClient.lib.Common Require Import AsanCeil PlacementSearch.  (* [comment removed for export] *)
-Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
+Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope bv_scope.
 Local Open Scope Z_scope.
 
@@ -201,19 +203,22 @@ Proof.
   rewrite IH, Nat2Z.inj_succ. lia.
 Qed.
 
-Theorem free_gap_of_totals : forall (h : VmMaps) nZ tot,
-  0 <= nZ ->
+(* [comment removed for export] *)
+Theorem free_gap_of_totals : forall (h : VmMaps) (thp : bool) nZ tot,
+  0 < nZ -> nZ mod page_size = 0 ->
+  alloc_ceiling <= alloc_top h ->
   gw_sizes (vm_reserved h ++ vm_maps h) <= tot ->
   bottomup_floor + nZ + tot + Z.of_nat (length (vm_reserved h ++ vm_maps h)) * (nZ + 4095) <= alloc_ceiling ->
-  exists g, g mod page_size = 0 /\ bottomup_floor <= g /\ g + nZ <= alloc_ceiling
-            /\ region_free (vm_reserved h ++ vm_maps h) (Z_to_bv 64 g) (Z_to_bv 64 nZ) = true
-            /\ hint_placement_ok_b (Z_to_bv 64 0) h g nZ = true.
+  exists g, linux_place h thp (Z_to_bv 64 0) nZ g.
 Proof.
-  intros h nZ tot HnZ Htot Hband.
-  destruct (free_gap_of_slack (vm_reserved h ++ vm_maps h) nZ HnZ) as (g & Hal & Hfl & Hc & Hfree).
+  intros h thp nZ tot HnZ HnAl Htop Htot Hband.
+  destruct (free_gap_of_slack (vm_reserved h ++ vm_maps h) nZ ltac:(lia))
+    as (g & Hal & Hfl & Hc & Hfree).
   { rewrite gap_weight_sizes. lia. }
-  exists g. split; [exact Hal|]. split; [exact Hfl|]. split; [exact Hc|]. split; [exact Hfree|].
-  apply hint_placement_ok_b_of_floor. exact Hfl.
+  apply (linux_place_exists h thp (Z_to_bv 64 0) nZ HnZ HnAl).
+  exists g. right. unfold gap_fits.
+  pose proof bottomup_floor_val as Hfv.
+  repeat split; [exact Hal | unfold task_unmapped_base; lia | lia | exact Hfree].
 Qed.
 
 (* [comment removed for export] *)
@@ -266,12 +271,12 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-Lemma ledger_split_window_free : forall l K Y nZ,
-  0 <= K -> 0 < nZ -> K + 2 * nZ <= Y -> Y < 2 ^ 64 ->
+Lemma ledger_split_window_free_w : forall l K Y w,
+  0 <= K -> 0 < w -> K + w <= Y -> Y < 2 ^ 64 ->
   ledger_split l K Y ->
-  region_free l (Z_to_bv 64 (Y - nZ)) (Z_to_bv 64 nZ) = true.
+  region_free l (Z_to_bv 64 (Y - w)) (Z_to_bv 64 w) = true.
 Proof.
-  intros l K Y nZ HK HnZ HY HY64 Hsplit.
+  intros l K Y w HK Hw HY HY64 Hsplit.
   apply region_free_intro. intros b s Hin.
   unfold iv_overlap. rewrite !fg_u64_lit by lia.
   pose proof (bv_unsigned_in_range 64 s).
@@ -284,41 +289,68 @@ Qed.
 Theorem null_hint_grant_above : forall h (a : word) nZ K Y,
   0 < nZ -> nZ mod page_size = 0 ->
   bv_unsigned a mod page_size = 0 ->
-  Y mod page_size = 0 -> Y <= bv_unsigned (vm_mmap_base h) ->
-  0 <= K -> K + 2 * nZ <= Y ->
+  Y mod page_size = 0 -> Y <= mmap_top h ->
+  page_size <= K -> K + 2 * nZ <= Y ->
   ledger_split (vm_reserved h ++ vm_maps h) K Y ->
   placement_ok_b h (bv_unsigned a) nZ = true ->
   bottomup_floor <= bv_unsigned a \/ Y - 2 * nZ < bv_unsigned a.
 Proof.
   intros h a nZ K Y HnZ HnAl HaAl HYal HYB HK HY Hsplit Hpl.
+  right.
   pose proof (fg_u64_range a) as Ha.
-  pose proof (fg_u64_range (vm_mmap_base h)) as HB.
-  assert (HY64 : Y < 2 ^ 64) by (clear - HB HYB; lia).
-  assert (HgAl : (Y - nZ) mod page_size = 0).
-  { rewrite Zminus_mod, HYal, HnAl. reflexivity. }
-  pose proof (ledger_split_window_free _ K Y nZ HK HnZ HY HY64 Hsplit) as Hfree.
-  apply (placement_ok_b_iff h (bv_unsigned a) nZ (proj1 Ha) HnZ HaAl HnAl) in Hpl.
-  clear HnAl HaAl HYal.
-  destruct Hpl as [Hfl|Hnhf]; [left; exact Hfl|right].
-  destruct (Z.lt_ge_cases (Y - 2 * nZ) (bv_unsigned a)) as [Hlt|Hge]; [exact Hlt|exfalso].
-  assert (H1 : bv_unsigned a + nZ <= Y - nZ) by (clear - Hge; lia).
-  assert (H2 : Y - nZ + nZ <= bv_unsigned (vm_mmap_base h)) by (clear - HYB; lia).
-  pose proof (Hnhf (Y - nZ) HgAl H1 H2) as Hno.
-  rewrite Hfree in Hno. discriminate.
+  pose proof pmd_size_pos as Hpmd.
+  pose proof (mmap_top_lt_two_pow_64 h) as Htop64.
+  assert (HY64 : Y < 2 ^ 64) by (clear - Htop64 HYB; unfold two_pow_64 in *; lia).
+  (* [comment removed for export] *)
+  assert (FIT : forall w, 0 < w -> w mod page_size = 0 -> K + w <= Y ->
+           gap_fits (vm_reserved h ++ vm_maps h) page_size (mmap_top h) w (Y - w)).
+  { intros w Hw Hwal Hroom. unfold gap_fits.
+    repeat split.
+    - rewrite Zminus_mod, HYal, Hwal. reflexivity.
+    - unfold page_size in HK |- *. lia.
+    - lia.
+    - exact (ledger_split_window_free_w _ K Y w ltac:(unfold page_size in HK; lia)
+               Hw ltac:(lia) HY64 Hsplit). }
+  (* [comment removed for export] *)
+  assert (TD : forall w b, 0 < w -> w mod page_size = 0 -> K + w <= Y ->
+           topdown_search h w b -> (Y - w <= b)%Z).
+  { intros w b Hw Hwal Hroom Hts. unfold topdown_search in Hts. cbv zeta in Hts.
+    destruct Hts as [[_ Hmax]|[Hno _]].
+    - exact (Hmax _ (FIT w Hw Hwal Hroom)).
+    - exfalso. exact (Hno (Y - w) (FIT w Hw Hwal Hroom)). }
+  apply (placement_ok_b_iff h (bv_unsigned a) nZ HnZ HnAl) in Hpl.
+  destruct Hpl as (thp & Hpl).
+  unfold linux_place in Hpl. cbv zeta in Hpl.
+  assert (Hg : hint_address (Z_to_bv 64 0) = 0) by (vm_compute; reflexivity).
+  rewrite Hg, Z.eqb_refl in Hpl. cbv iota in Hpl.
+  destruct (thp && (nZ mod pmd_size =? 0)%Z)%bool eqn:Hthp.
+  - assert (Hmul : (nZ mod pmd_size = 0)%Z)
+      by (apply andb_true_iff in Hthp as [_ E]; now apply Z.eqb_eq).
+    assert (Hge : (pmd_size <= nZ)%Z).
+    { pose proof (Z.div_mod nZ pmd_size ltac:(lia)) as D.
+      assert (0 < nZ / pmd_size)%Z by nia. nia. }
+    assert (HpadAl : ((nZ + pmd_size) mod page_size = 0)%Z).
+    { rewrite Zplus_mod, HnAl, (mod_pmd_mod_page pmd_size (Z_mod_same_full pmd_size)).
+      reflexivity. }
+    destruct Hpl as [(ret & Hret & ->)|[_ Hts]].
+    + pose proof (thp_align_bounds ret) as [Hb1 _].
+      pose proof (TD (nZ + pmd_size) ret ltac:(lia) HpadAl ltac:(lia) Hret). lia.
+    + pose proof (TD nZ _ HnZ HnAl ltac:(lia) Hts). lia.
+  - pose proof (TD nZ _ HnZ HnAl ltac:(lia) Hpl). lia.
 Qed.
 
 (* [comment removed for export] *)
 Theorem null_hint_grant_step : forall h (a n : word) nZ K Y,
   0 < nZ -> nZ mod page_size = 0 ->
   bv_unsigned a mod page_size = 0 ->
-  Y mod page_size = 0 -> Y <= bv_unsigned (vm_mmap_base h) ->
-  0 <= K -> K < bottomup_floor -> K + 2 * nZ <= Y ->
+  Y mod page_size = 0 -> Y <= mmap_top h ->
+  page_size <= K -> K < bottomup_floor -> K + 2 * nZ <= Y ->
   ledger_split (vm_reserved h ++ vm_maps h) K Y ->
   placement_ok_b h (bv_unsigned a) nZ = true ->
   let Y' := Z.min Y (bv_unsigned a) in
   K < bv_unsigned a
   /\ (bottomup_floor <= Y' \/ Y - 2 * nZ + page_size <= Y') /\ Y' <= Y
-  /\ Y' mod page_size = 0 /\ Y' <= bv_unsigned (vm_mmap_base h)
+  /\ Y' mod page_size = 0 /\ Y' <= mmap_top h
   /\ ledger_split (vm_reserved h ++ (a, n) :: vm_maps h) K Y'.
 Proof.
   intros h a n nZ K Y HnZ HnAl HaAl HYal HYB HK HKfl HY Hsplit Hpl Y'.
@@ -360,14 +392,14 @@ Proof. unfold kHighMemBeg, mmap_base_min. rewrite bottomup_floor_val. split; ref
 Corollary kHighMemBeg_le : forall h (a : word) nZ Y,
   0 < nZ -> nZ mod page_size = 0 ->
   bv_unsigned a mod page_size = 0 ->
-  Y mod page_size = 0 -> Y <= bv_unsigned (vm_mmap_base h) ->
+  Y mod page_size = 0 -> Y <= mmap_top h ->
   kHighMemBeg + 2 * nZ <= Y ->
   ledger_split (vm_reserved h ++ vm_maps h) kHighMemBeg Y ->
   placement_ok_b h (bv_unsigned a) nZ = true ->
   kHighMemBeg < bv_unsigned a.
 Proof.
   intros h a nZ Y HnZ HnAl HaAl HYal HYB HY Hsplit Hpl.
-  assert (HK : 0 <= kHighMemBeg) by (unfold kHighMemBeg; clear; lia).
+  assert (HK : page_size <= kHighMemBeg) by (unfold kHighMemBeg, page_size; clear; lia).
   destruct (null_hint_grant_above h a nZ kHighMemBeg Y HnZ HnAl HaAl HYal HYB HK HY Hsplit Hpl)
     as [Hfl|Hlt]; clear HnAl HaAl HYal Hpl; [|lia].
   rewrite bottomup_floor_val in Hfl. unfold kHighMemBeg. lia.

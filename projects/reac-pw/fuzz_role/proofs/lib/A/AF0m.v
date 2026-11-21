@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AF0m.v (donor image sha256 7093581aab04), with its module paths changed and its addresses moved to reac-pw/fuzz_role's ASan build. *)
-(* Modified by Theorem Labs: regenerated for reac-pw/fuzz_role image A by af0m.py 3681a21ca430 from fuzz_role.asan and its 50 collected hand-off states; base: proofs/cgif/cgif_file_fuzzer/lib/A/AF0m.v at c8557374ad2e through port_core 0e4e065eab9f's stage-out, with Tfib_owned_static relocated by object against fuzz_role.asan's symbols and bytes; the walk read list cells appended with --reads *)
+(* Modified by Theorem Labs: regenerated for reac-pw/fuzz_role image A by af0m.py 3681a21ca430 from fuzz_role.asan and its 50 collected hand-off states; base: proofs/cgif/cgif_file_fuzzer/lib/A/AF0m.v at theorem-labs/oss-verify-proofs@6b32741d849a through port_core 0e4e065eab9f's stage-out, with Tfib_owned_static relocated by object against fuzz_role.asan's symbols and bytes; the walk read list cells appended with --reads *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_role.asan (reac-pw/fuzz_role asan) sha256 614cffc0864cc31d9d1ced61322c4efd567b64bc89fe09a227a05b5126e0debb; unstripped twin sha256 6da77bafc5c050954dd89149e1e55a24064c2211e3cbd351822d1c0a20900ad6 *)
 (* owned read-only static bytes pinned as const cells from the image: 1417 bytes in 227 cells, from 57 ranges of Tfib_owned_static; counted from this file's own tables *)
 From OSSVerify.Proofs.reac_pw.fuzz_role.lib.Reusable Require YZ00.

@@ -14,9 +14,9 @@
      state after it (W2, m2), given what the fread wrapper's post keeps (rread_kept with the window AFREAD_STK below
      sp1, and the shadow band) and the bytes it read (R, j of them, at the head of the buffer).
      PORTED from lib/A's nx_fread_buf_post (lib/A/Prog/PcapSourceNextSkipDefs.v:323-483 on
-     a working branch da0818b5f51, a Theorem Labs lane) with its helpers nxs_vm_frame, nxs_ps_at_frame,
+     a working branch, a Theorem Labs lane) with its helpers nxs_vm_frame, nxs_ps_at_frame,
      nxs_ra_frame, nxs_mbyte_present (:119-146, unchanged). lib/B's changes: rread_kept / rread_wrset
-     (lib/A/Stdio/PFreadM.v:344 / :285, the post of PFreadISpec's afread_spec) for afread_kept / afread_wrset;
+     (lib/A/Stdio/PFreadM.v:345 / :286, the post of PFreadISpec's afread_spec) for afread_kept / afread_wrset;
      NX_STK_B = 272 + AFREAD_STK = 8464 (lib/B Defs) for NX_STK; the sp facts of lib/B's Seat (nx_sp_facts:
      alloc_ceiling + 8464 <= sp, sp <= 2 ^ 47, sp - 272 <= sp1 <= sp - 256) for lib/A's nx_E_below and its
      sp1 range (sp - 256 < sp1 <= sp - 224).
@@ -34,6 +34,7 @@
 (* Modified by Theorem Labs, 2026-10: nxs_vm_frame (the copy of lib/A's helper, an instance of lib/A/Prog/PcapSourceClose.v's
    vm_frame) and nxs_ra_frame (a copy of ra_frame) deleted; their uses name lib/A/Prog/PcapSourceCloseSpec.v's
    vm_frame_segs and ra_frame. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -74,7 +75,7 @@ Context {PI : PAImg pcap_listing}.
 #[local] Abbreviation rdW W mem := (mrestrict (w_H W) mem).
 
 (* ---------------------------------------------------------------------------------------------- *)
-(* Byte-level helpers, statements as in lib/A's PcapSourceNextSkipDefs.v:119-146 on da0818b5f51   *)
+(* Byte-level helpers, statements as in lib/A's PcapSourceNextSkipDefs.v:119-146   *)
 (* ---------------------------------------------------------------------------------------------- *)
 
 Lemma nxs_ps_at_frame : forall (m m' : word -> option byte) ps h sw lol lvt lvid pad,

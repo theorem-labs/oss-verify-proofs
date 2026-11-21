@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/AD1pcf.v, with its module paths and module names changed; 114 of its 150 lines of code are new or changed and 210 lines of the source are left out. *)
-(* Made by a Theorem Labs lane (2026-10-29, a Theorem Labs lane's DRIVER_CF_B) as the image-B twin of lib/A/ReplyTFIBcf.v
-   (commit 46f1762ad5a): TFIB_B_T from fuzz_reply's cf program interface at route R, fr_lib_contract_drvR
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises)); internal commit ids in comments replaced by public commits or removed. *)
+(* Made by a Theorem Labs lane (2026-10-29, a Theorem Labs lane's DRIVER_CF_B) as the image-B twin of lib/A/ReplyTFIBcf.v:
+   TFIB_B_T from fuzz_reply's cf program interface at route R, fr_lib_contract_drvR
    (lib/B/YD1w_cf.v), over the B cf driver closure (lib/B/YD1qcf.v tfib_srealizesX and the cf site files). The
    image-B values are lib/B/ReplyTFIBBParts.v's: the read-only range 0x9d9f0 .. 0x9ec48 (.data.rel.ro start .. .got
    end), the three fprintf format addresses 0x1d745 / 0x1d75a / 0x15886, AsanUbsan.M.init_pc. Section hypotheses as
    A's (NP and its three laws, the meter MT with MT_PRE, the run count NS with NS_MO / XN_BND / nsec_malloc_cf /
-   nsec_free_cf / NS_START (a Theorem Labs lane ddf9cf4d2f7 and 458a2b5da2a, KF-COUNT #7), TLLVMF, AMALLOC / AFREE) except HCOVD:
+   nsec_free_cf / NS_START (a Theorem Labs lane, KF-COUNT #7), TLLVMF, AMALLOC / AFREE) except HCOVD:
    the covered range is discharged in lib/B/YD1pcf.v by a Theorem Labs lane's YStkCov.tfib_handoff_stk_up_cov; A's _triv
    corollary is not here (B has none); A's commentary follows. *)
 (* The cf driver's top for plugin-hostd/fuzz_reply.asan-ubsan: TFIB_B_T (lib/A/ReplyTFIB.v) from fuzz_reply's cf program
@@ -94,7 +95,7 @@ Hypothesis TLLVMF : forall (rc : YM05.RunCeil) (fx : YK11.FPState),
   @fr_lib_contract_drvR fx rc checksum_shape ci cp TfibB MT XM_LIB XN_LIB REPLYB_RO_LO REPLYB_RO_HI LIBROOM_fr NP
     (YA0nH.wle' tfibsegs (@YGcfRehidePost.RZ_cf rc)).
 (* the cf allocator's malloc and free; the free at the primed contract (route R, lib/B/YG0dcfR.v; free(NULL) inside
-   it), the text ReplyAllocTargetsB.afree_target_replyB states (primed at a Theorem Labs lane's 7c91d0cac15) *)
+   it), the text ReplyAllocTargetsB.afree_target_replyB states (primed at a Theorem Labs lane) *)
 Hypothesis AMALLOC : forall (rc : YM05.RunCeil), amalloc_realizes_cf tfibsegs TfibB.
 Hypothesis AFREE : forall (rc : YM05.RunCeil), YG0dcfR.afree_realizes_cf_rh tfibsegs TfibB.
 (* field rounds 2 and 3: the cf driver's start witnesses (at the start-up hand-off, B/ReplyStartWitB.v), the unit's three
@@ -133,30 +134,32 @@ Let EXS : exit_site_tfa B est xst. Proof. eapply tfib_exit_site; eassumption. De
 Lemma replyb_srealizesX_rc_cf : forall sp rdraw brk mb inp,
 valid_sp sp -> valid_brk TSEGS brk -> valid_mmap_base mb ->
 entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
 YM05.ceil_of_top (bv_unsigned sp - stack_max_size) ->
 srealizes TSEGS (init_config TSEGS AsanUbsan.M.init_pc TPH sp brk mb rdraw target_alloc_limit inp) (SPECX inp).
 Proof.
-intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil.
+intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil.
 change target_alloc_limit with YA02.LIMIT.
 exact (tfib_srealizesX B HB NP NPI NPS NPT (AMALLOC rc) (AFREE rc) AICPY ARDCHK MT XM_LIB XN_LIB REPLYB_RO_LO REPLYB_RO_HI
   NS NRUN XNMAX MT_PRE NS_MO XN_BND HULL_NS nsec_malloc_cf nsec_free_cf NS_START RO_IN RO LIBX
   xst XFR PF1 PFN est ESTI ESTF FWS RFS FPO FPR FPU EXS (HSTART rc) HSTART_ARO (HSTART_PF rc) HROWS HPFO
-  sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hceil).
+  sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau Hceil).
 Qed.
 End RC.
 Theorem replyb_srealizesX_top_cf : forall sp rdraw brk mb inp,
 valid_sp sp -> valid_brk TSEGS brk -> valid_mmap_base mb ->
 entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mb rdraw) inp ->
 srealizes TSEGS (init_config TSEGS AsanUbsan.M.init_pc TPH sp brk mb rdraw target_alloc_limit inp) (SPECX inp).
 Proof.
-intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp.
+intros sp rdraw brk mb inp Hsp Hbrk Hmb Hfit Hinp Hlau.
 exact (@replyb_srealizesX_rc_cf (YM05.RunCeilOf (bv_unsigned sp) (valid_sp_windowX sp Hsp) target_alloc_limit) sp rdraw brk mb inp
-  Hsp Hbrk Hmb Hfit Hinp (YM05.ceil_of_top_run _)).
+  Hsp Hbrk Hmb Hfit Hinp Hlau (YM05.ceil_of_top_run _)).
 Qed.
 (* TFIB_B_T from the cf program interface, the meter's room at each call, the run count's laws, NP's laws, the cf
    allocator's realizers and drv_pre's RELRO facts *)
 Theorem replyb_TFIB_B_T_of_cf : TFIB_B_T.
-Proof. intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp. exact (replyb_srealizesX_top_cf sp rnd brk mbase inp Hsp Hbrk Hmb Hfit Hinp). Qed.
+Proof. intros sp brk mbase rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau. exact (replyb_srealizesX_top_cf sp rnd brk mbase inp Hsp Hbrk Hmb Hfit Hinp Hlau). Qed.
 End b.
 
 (* NP at the cf instance's non-primary room room_live_cf (Reusable/YGcfRoomLive.v, a Theorem Labs lane, carried by RelocA-2):

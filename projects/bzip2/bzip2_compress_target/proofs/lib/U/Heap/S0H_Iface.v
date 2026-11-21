@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the kernel build kept across a VM-only step). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -390,7 +391,8 @@ Proof.
   intros L pbrk MD MD' HK Evm Hh.
   assert (E1 : m_vmmaps MD' = m_vmmaps MD) by (unfold m_vmmaps; rewrite Evm; reflexivity).
   assert (E2 : m_vm_lazy MD' = m_vm_lazy MD) by (unfold m_vm_lazy; rewrite Evm; reflexivity).
-  destruct HK; constructor; rewrite ?E1, ?E2; auto.
+  assert (E3 : m_kernel MD' = m_kernel MD) by (unfold m_kernel; rewrite Evm; reflexivity).
+  destruct HK; constructor; rewrite ?E1, ?E2, ?E3; auto.
 Qed.
 
 Lemma S0_inv_model_frame : forall s LB m MD MD', S0_inv s LB m MD -> m_vm MD' = m_vm MD -> m_halted MD' = None -> S0_inv s LB m MD'.

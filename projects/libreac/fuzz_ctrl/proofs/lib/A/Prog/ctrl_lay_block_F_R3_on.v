@@ -2,25 +2,26 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 602 of its 619 lines of code are new or changed and 231 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* ctrl_lay_block, image A (asan, entry 0x855f4): ROUTE (C) twin of region R3's run (0x85828, the return of
    reac_box_model_block, -> 0x858f4, after the class-1 flag release).  A Theorem Labs lane (a Theorem Labs lane),
    brief (a working note, not in this delivery).
    rule 24: no function proved.  This file proves no function (kind: segment lemma).
 
-   lay_F_R3_run_on is lay_F_R3_run (ctrl_lay_block_F_R3.v (at head lib/A/Prog/ctrl_lay_block_F_R3.v:476-555; from a working branch 63a02bb46d7)) in
+   lay_F_R3_run_on is lay_F_R3_run (ctrl_lay_block_F_R3.v (at head lib/A/Prog/ctrl_lay_block_F_R3.v:477-556; from a working branch)) in
    the route (C) form of record (a Theorem Labs lane's ASSIGN.md (a working note, not in this delivery; its form frozen by a Theorem Labs lane 09:38Z) + the 10:34Z amendment):
-   - PRE: the run has TWO universal shadow_rw premises, the Section's `SR0 : shadow_rw m` (ctrl_lay_block_F_R3.v:191)
-     and the `shadow_rw mc` conjunct of its FI premise (ctrl_lay_block.v:1100, at the region's start memory mc).
+   - PRE: the run has TWO universal shadow_rw premises, the Section's `SR0 : shadow_rw m` (ctrl_lay_block_F_R3.v:192)
+     and the `shadow_rw mc` conjunct of its FI premise (ctrl_lay_block.v:1101, at the region's start memory mc).
      The Section's SR0 is DROPPED: once its consumers are re-proved (below) no shadow byte is read or stored through
      it (its one access, F_7.v:204, takes the run's start memory instead, see (3)).  FI's conjunct becomes the premise
      `shadow_rw_on (lay_F_R3_shadow_R FS p) mc` (R3 below) beside FI_on mc (FI without that conjunct).  The callee
-     contract asan_memcpy_contract_F becomes a Theorem Labs lane's asan_memcpy_contract_F_on (lib/A/Prog/asan_memcpy_cF_on.v,
-     83ab88c3325), by name.
+     contract asan_memcpy_contract_F becomes a Theorem Labs lane's asan_memcpy_contract_F_on (lib/A/Prog/asan_memcpy_cF_on.v),
+     by name.
    - POST: FI's conjunct leaves the post (FI_on) and the post gains the transport
      `forall P, shadow_rw_on P mc0 -> shadow_rw_on P m4` from the region's START memory mc0 to its END memory m4
      (a Theorem Labs lane's request, 12:58Z).
    - lay_F_R3_shadow_R_sub proves R3 a subset of a Theorem Labs lane's ctrl_lay_block_shadow_R (lib/A/Prog/ctrl_lay_block_c.v:392,
-     a working branch 0bf62760c4a, blob c36731db371), binders in its order (S FS p f md g fr mb nb a).
+     a working branch, blob c36731db371), binders in its order (S FS p f md g fr mb nb a).
 
    R3 = lay_F_R3_shadow_R FS p = asan_stack_malloc_shadow_R FS 1 (the shadow of the class-1 fake-stack block) \/
         sh_word_on (p + 18) 32 (the aligned shadow words of the output block).
@@ -33,7 +34,7 @@
        (frb = fs_frame FS 1 j, FS mod 4096 = 0) the first is inside the class-1 block (lay_on_frame_out_block,
        lay_F_R3_memcpy_R below).
    (2) READS + presence for the tracked release, the 12 shadow bytes [shadow_addr frb, + 12): stretch k = 7
-       (ctrl_lay_block_F_7.v:207) takes FI's `shadow_rw mc1` into frame_shadow_rwcells (ctrl_lay_block.v:990-1014:
+       (ctrl_lay_block_F_7.v:208) takes FI's `shadow_rw mc1` into frame_shadow_rwcells (ctrl_lay_block.v:991-1015:
        mrd present :1006, wview :1013) for the rw_cells block the 0xf5 stores run against.
    (3) STORES, the 16 shadow bytes [shadow_addr frb, + 16) of the frame release (F_7.v:213-228; bytes 12..15
        untracked through ly_epi_ush): F_7.v:201-204 `FSW16` from the Section's SR0 (wview at m), used with
@@ -41,7 +42,7 @@
        from R3 (the run's premise carried to mc1 by the transport of k = 5 / k = 6), used with wmono mc1 ->
        store-time memory (WMcc); the stores are the same instructions.
    (4) through fk_facts / fk_spc only (their non-shadow conjuncts, no shadow access): F_R3.v:237-241 (fk_spc),
-       :243-251 (LC_FI_memcpy, which also transports FI's shadow_rw by fl_shadow_rw, ctrl_lay_block.v:1664), F_7.v:163.
+       :243-251 (LC_FI_memcpy, which also transports FI's shadow_rw by fl_shadow_rw, ctrl_lay_block.v:1665), F_7.v:163.
    Bytes (2) and (3) are the side frame's (sfr <> 0, F_R3.v:479), inside the class-1 block (lay_on_frame_sh_block,
    ctrl_lay_block_F_R2_on.v).  The release (F_R3.v:79-129) touches only the flag byte fs_flag FS 1 j (not shadow)
    and k = 6 at g = 0 (F_R3.v:417-436) is one register-only step.  The frame index is a binder of the run, so the
@@ -51,12 +52,12 @@
    RE-PROVED HELPERS (re-based copy allowance, a Theorem Labs lane 23:53Z: instruction proofs verbatim; each named here):
    - from ctrl_lay_block_F_R2_on.v (Required qualified): FI_on (FI minus its shadow_rw conjunct) and fk_facts_on
      (fk_facts minus its frame-shadow conjunct :520, no shadow premise).
-   - fk_spc_on (ctrl_lay_block.v:1603-1608), fk_facts -> fk_facts_on.
-   - FI_keep_on (ctrl_lay_block.v:1652-1669), FI -> FI_on: the fl_shadow_rw bullet (:1664) goes with the conjunct.
-   - LC_FI_memcpy_on (ctrl_lay_block.v:1750-1787), fk_spc -> fk_spc_on, FI -> FI_on, FI_keep -> FI_keep_on.
-   - frame_shadow_rwcells_on (ctrl_lay_block.v:990-1014): premise `shadow_rw mm` -> shadow_rw_on of the 12 bytes
+   - fk_spc_on (ctrl_lay_block.v:1604-1609), fk_facts -> fk_facts_on.
+   - FI_keep_on (ctrl_lay_block.v:1653-1670), FI -> FI_on: the fl_shadow_rw bullet (:1664) goes with the conjunct.
+   - LC_FI_memcpy_on (ctrl_lay_block.v:1751-1788), fk_spc -> fk_spc_on, FI -> FI_on, FI_keep -> FI_keep_on.
+   - frame_shadow_rwcells_on (ctrl_lay_block.v:991-1015): premise `shadow_rw mm` -> shadow_rw_on of the 12 bytes
      [shadow_addr frb, + 12) it reads (two uses, :1006 and :1013, now give the membership).
-   - ctrl_lay_block_F_7_on (ctrl_lay_block_F_7.v:147-240) with its Section-local Ltacs ly_epi_out / ly_epi_ush
+   - ctrl_lay_block_F_7_on (ctrl_lay_block_F_7.v:148-241) with its Section-local Ltacs ly_epi_out / ly_epi_ush
      (F_7.v:133-144) verbatim: FI -> FI_on plus the premise shadow_rw_on R3 mc (DIFF below).
    NEW: lay_on_frame_out_block, lay_F_R3_memcpy_R.
    Section L's wrappers lay_F_R3_LC_addr_p / lay_F_R3_app_blk / lay_F_R3_stk_shrink (F_R3.v:221-235) are Local
@@ -81,9 +82,9 @@
      the 12-byte region from SRc (FRB12); `unfold lay_F_pre_release` -> `unfold ctrl_lay_block_F_7.lay_F_pre_release`.
 
    PROVENANCE: as ctrl_lay_block_F_R3.v (image root (internal path), ELF
-   sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd, FACTS of record ed6b6b7b0ab). *)
+   sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd, FACTS of record). *)
 (* FIRST, before ctrl_lay_block_F_common loads ctrl_lay_block: A.ShadowRwOnT Requires A.Prog.MemMono, whose non-local
-   `Ltac footprint_after_store ::=` (MemMono.v:207) would otherwise replace ctrl_lay_block's (ctrl_lay_block.v:215),
+   `Ltac footprint_after_store ::=` (MemMono.v:207) would otherwise replace ctrl_lay_block's (ctrl_lay_block.v:216),
    which carries ctrl_lay_block.rd_mono hypotheses across the stores of stretch k = 7 (as in
    ctrl_lay_block_F_R2_on.v, where this was measured). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A Require ShadowRwOnT.
@@ -111,7 +112,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Import ExecF StepF.
    not copied), Required qualified *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.A.Prog Require ctrl_lay_block_F_R2_on ctrl_lay_block_F_R3
   ctrl_lay_block_F_7.
-(* Local copy of ctrl_lay_block.v:215's store hook: the base made it Local (a Theorem Labs lane; from a working branch c9390e308b8); this file's rd_mono steps need it. *)
+(* Local copy of ctrl_lay_block.v:216's store hook: the base made it Local (a Theorem Labs lane; from a working branch); this file's rd_mono steps need it. *)
 Local Ltac footprint_after_store segs m a bs ::=
   repeat match goal with
   | MU : munch ?Wq ?mq m |- _ =>
@@ -152,14 +153,14 @@ Proof.
 Qed.
 
 Section L5R_on.
-  (* Section L's Variables (ctrl_lay_block.v:404-405), verbatim. *)
+  (* Section L's Variables (ctrl_lay_block.v:405-406), verbatim. *)
   Variables (ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 : word) (F : bvmap 5 word) (fc : bv 32)
     (m : word -> option byte) (p f md g FS : Z) (fr ob tb mb nb gb : list byte).
 
   Local Notation S := (bv_unsigned sp).
   Local Notation K := CTRL_LAY_BLOCK_K.
 
-  (* Section L's Hypotheses (ctrl_lay_block.v:410-474), verbatim, EXCEPT SR0, which this run no longer uses (header,
+  (* Section L's Hypotheses (ctrl_lay_block.v:411-475), verbatim, EXCEPT SR0, which this run no longer uses (header,
      "PRE").  The four callee / runtime contracts of Section L are NOT taken; the checked copy takes a Theorem Labs lane's
      route (C) footprint contract asan_memcpy_contract_F_on (MEMCF below). *)
   Hypothesis Rp : 0 <= p < 2^64.
@@ -231,7 +232,7 @@ Section L5R_on.
 
   Local Notation SP2 := ((S - 128) / 32 * 32).
 
-  (* Section L's predicates, applied to this section's variables (as ctrl_lay_block_F_R3.v:214-217), with FI_on for
+  (* Section L's predicates, applied to this section's variables (as ctrl_lay_block_F_R3.v:215-218), with FI_on for
      FI (ctrl_lay_block_F_R2_on.v). *)
   Local Notation FK := (ctrl_lay_block.FK sp FS).
   Local Notation FI_on := (ctrl_lay_block_F_R2_on.FI_on sp tp p f FS).
@@ -266,7 +267,7 @@ Section L5R_on.
 
   (* ---- re-proved helpers (header, RE-PROVED HELPERS) ---- *)
 
-  (* fk_spc (ctrl_lay_block.v:1603-1608), fk_facts -> fk_facts_on. *)
+  (* fk_spc (ctrl_lay_block.v:1604-1609), fk_facts -> fk_facts_on. *)
   Lemma fk_spc_on : forall frb sfr spc j w120, FK frb sfr spc j w120 -> S - 256 <= spc <= S - 128.
   Proof.
     intros frb sfr spc j w120 HK. pose proof SP2_facts as (_ & HAlo & HAhi).
@@ -274,7 +275,7 @@ Section L5R_on.
     destruct HK as [(_ & E1 & E2) | (_ & _ & _ & E2 & _)]; lia.
   Qed.
 
-  (* FI_keep (ctrl_lay_block.v:1652-1669), FI -> FI_on (its fl_shadow_rw bullet :1664 goes with the conjunct). *)
+  (* FI_keep (ctrl_lay_block.v:1653-1670), FI -> FI_on (its fl_shadow_rw bullet :1664 goes with the conjunct). *)
   Lemma FI_keep_on : forall mc mc' W' frb sfr spc j w120, FI_on mc frb sfr spc j w120 ->
     munch W' mc mc' -> wmono rsegs mc mc' -> sub_fp W' (ctrl_lay_block_W p S) ->
     (forall x, FS <= x < FS + FS_SIZE -> outside W' x \/ exists b, mrd rsegs mc' (wa x) = Some b) ->
@@ -293,7 +294,7 @@ Section L5R_on.
     - intros x Hx Hf. exact (fl_addressable W' mc mc' x 1 (HA x Hx Hf) MU SHo).
   Qed.
 
-  (* LC_FI_memcpy (ctrl_lay_block.v:1750-1787), fk_spc -> fk_spc_on, FI -> FI_on, FI_keep -> FI_keep_on. *)
+  (* LC_FI_memcpy (ctrl_lay_block.v:1751-1788), fk_spc -> fk_spc_on, FI -> FI_on, FI_keep -> FI_keep_on. *)
   Lemma LC_FI_memcpy_on : forall mc m' gj X X' D N frb sfr spc j w120,
     LC mc gj X -> FI_on mc frb sfr spc j w120 -> p + 18 <= D -> D + N <= p + 50 -> 0 <= N ->
     munch [(D, D + N); (spc - ASAN_MEMCPY_K, spc)] mc m' -> wmono rsegs mc m' -> mem_inv rsegs m' ->
@@ -333,7 +334,7 @@ Section L5R_on.
         [left; exact Ho | right; exact (RD x Ho)].
   Qed.
 
-  (* frame_shadow_rwcells (ctrl_lay_block.v:990-1014): the premise `shadow_rw mm` -> the 12 shadow bytes it reads. *)
+  (* frame_shadow_rwcells (ctrl_lay_block.v:991-1015): the premise `shadow_rw mm` -> the 12 shadow bytes it reads. *)
   Lemma frame_shadow_rwcells_on : forall (mm : word -> option byte) (frb : Z),
     frb mod 8 = 0 -> frb + 96 <= APPMEM_END ->
     (forall i, 0 <= i < 96 -> app_mem (frb + i)) ->
@@ -363,7 +364,7 @@ Section L5R_on.
       exact (proj1 (Hsr (shadow_addr frb + i) ltac:(cbv beta; lia) (Hin i ltac:(lia)))).
   Qed.
 
-  (* ---- stretch k = 7 (ctrl_lay_block_F_7.v:122-240), with its Section-local Ltacs (F_7.v:133-144) verbatim ---- *)
+  (* ---- stretch k = 7 (ctrl_lay_block_F_7.v:123-241), with its Section-local Ltacs (F_7.v:133-144) verbatim ---- *)
   Ltac ly_epi_out := cbn [outside]; repeat (split; [lia|]); exact I.
 
   (* An untracked shadow byte store at offset o (the side frame's shadow beyond the 12 tracked bytes). *)
@@ -502,7 +503,7 @@ Section L5R_on.
     subst frb. exact (lay_on_frame_out_block FS j a FS4K Hj H).
   Qed.
 
-  (* The copy's post: lay_F_R3_post_args (ctrl_lay_block_F_R3.v:256-267) with FI_on, plus the transport from the pre
+  (* The copy's post: lay_F_R3_post_args (ctrl_lay_block_F_R3.v:257-268) with FI_on, plus the transport from the pre
      memory mc0. *)
   Definition lay_F_R3_post_args_on (mc0 : word -> option byte) (frb sfr spc j : Z) (w120 : word)
       : machine_state -> Prop :=
@@ -519,7 +520,7 @@ Section L5R_on.
       (forall P : Z -> Prop, shadow_rw_on P mc0 -> shadow_rw_on P mc').
 
   (* 0x8583c: the checked copy of the 32 bytes at src (the box result at frb + 32) into the output block, then the
-     ly_args entry at 0x85840 (ctrl_lay_block_F_R3.v:272-351). *)
+     ly_args entry at 0x85840 (ctrl_lay_block_F_R3.v:273-352). *)
   Lemma lay_F_R3_cpy_on : forall (RNG : footprint) (mc : word -> option byte) (gj X sb : list byte)
       (src frb sfr spc j : Z)
       (w120 xra x5 x6 x7 x13 x14 x15 x16 x17 x22 x23 x28 x29 x30 x31 : word),
@@ -603,7 +604,7 @@ Section L5R_on.
           | eapply munch_weaken; [| exact MUc]; intros x Hx; cbn [outside] in Hx |- *; unfold ASAN_MEMCPY_K in *; lia ].
   Qed.
 
-  (* 0x85828 -> 0x85840: `li a1,1; bne a0,a1,0x85840` (ctrl_lay_block_F_R3.v:357-401). *)
+  (* 0x85828 -> 0x85840: `li a1,1; bne a0,a1,0x85840` (ctrl_lay_block_F_R3.v:358-402). *)
   Lemma lay_F_R3_box_arm_on : forall (RNG : footprint) (mc : word -> option byte) (gj : list byte)
       (r frb sfr spc j : Z) (w120 : word)
       (xra t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' : word),
@@ -652,7 +653,7 @@ Section L5R_on.
        | exact SHSRC].
   Qed.
 
-  (* ---- stretch k = 6 at g = 0 (ctrl_lay_block_F_R3.v:407-436), FI -> FI_on; memory unchanged ---- *)
+  (* ---- stretch k = 6 at g = 0 (ctrl_lay_block_F_R3.v:408-437), FI -> FI_on; memory unchanged ---- *)
   Definition ly_args_F_R3_post_on (mc0 : word -> option byte) (gj : list byte) (frb sfr spc j : Z) (w120 : word)
       : machine_state -> Prop :=
     fun ms' => exists (xra x5 x6 x7 x10 x11 x12 x13 x14 x15 x16 x17 x19 x20 x21 x22 x23 x28 x29 x30 x31 : word),
@@ -686,7 +687,7 @@ Section L5R_on.
 
   (* ---- the region's whole run (0x85828 -> 0x858f4): lay_F_R3_box_arm_on (k = 5), ly_args_F_R3_g0_on (k = 6 at
      g = 0), ctrl_lay_block_F_7_on (k = 7) and ctrl_lay_block_F_R3.lay_F_R3_release.  The post: lay_F_R3_end
-     (ctrl_lay_block_F_R3.v:444-462) with FI_on and the transport from mc0 to the end memory m4. ---- *)
+     (ctrl_lay_block_F_R3.v:445-463) with FI_on and the transport from mc0 to the end memory m4. ---- *)
   Definition lay_F_R3_end_on (mc0 : word -> option byte) (gj : list byte) (frb spc j : Z) (w120 : word)
       : machine_state -> Prop :=
     fun ms' => exists (xra x5 x6 x7 a0' x11 x12 x13 x14 x15 x16 x17 x19 x20 x21 x22 x23 x28 x29 x30 x31 : word)
@@ -699,7 +700,7 @@ Section L5R_on.
       (* k = 5 / k = 6: the memcpy's write set, the ly_args / EPI_T bundle at mc1 *)
       munch [(p + 18, p + 18 + 32); (spc - ASAN_MEMCPY_K, spc)] mc0 mc1 /\
       FI_on mc1 frb frb spc j w120 /\ LC mc1 gj1 LAY /\
-      (* k = 7 (lay_F_pre_release, ctrl_lay_block_F_7.v:117-120) *)
+      (* k = 7 (lay_F_pre_release, ctrl_lay_block_F_7.v:118-121) *)
       munch [(shadow_addr frb, shadow_addr frb + 16); (frb, frb + 8)] mc1 m3 /\
       wmono rsegs mc1 m3 /\ rd_mono mc1 m3 /\
       (* the release (lay_F_R3_release) *)

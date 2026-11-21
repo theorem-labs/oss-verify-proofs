@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB; a stack-floor fact handed to the allocator-ceiling premise of art_client_write is passed through lia. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -469,7 +470,7 @@ Qed.
 Theorem aevt_str_find : forall Σ K (ra gp tp t0 t1 t2 s0 s1 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word) F fc (m : mem)
     (sp S : Z) (lg : bool) (A cap sz pos lo : Z),
   lstrA m S lg A cap sz -> lstr_cls RT Σ A cap -> lstr_cls RT Σ S 24 -> acc asegs m A cap -> 0 <= pos < 2^62 ->
-  ART RT Σ m -> mem_inv asegs m -> stk asegs m lo sp -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + RT_STACK + 16 <= sp -> sp + 16 <= USTACK_TOP -> sp mod 16 = 0 ->
+  ART RT Σ m -> mem_inv asegs m -> stk asegs m lo sp -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + RT_STACK + 16 <= sp -> sp + 16 <= USTACK_TOP -> sp mod 16 = 0 ->
   (forall (r : Z) (t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' : word) (F' : bvmap 5 word) (m' : mem),
      (r = 18446744073709551615 \/ pos <= r < sz) ->
      lstrA m' S lg A cap sz -> acc asegs m' A cap -> ART RT Σ m' -> mem_inv asegs m' -> stk asegs m' lo sp -> wmono asegs m m' ->
@@ -489,7 +490,7 @@ Proof using AF RC FDO MST.
   apply (aevt_evt RT AF PMc MST). eapply (sf_walk1 _ sp lo S lg A cap sz pos); [exact LS| lia| lia| ul| left; ul| exact ST| ul| ul| ul| exact MI|].
   intros m1 xa3 xa4 MU1 WM1 MI1 ST1 FR1.
   assert (ART1 : ART RT Σ m1).
-  { apply (art_client_write RT AF Σ m m1 lo ART0 LOW); [| exact WM1]. intros a Ha. apply MU1. cbn [outside]. split; [| exact I]. intros X. apply Ha. left. ul. }
+  { apply (art_client_write RT AF Σ m m1 lo ART0 ltac:(lia)); [| exact WM1]. intros a Ha. apply MU1. cbn [outside]. split; [| exact I]. intros X. apply Ha. left. ul. }
   assert (AG1 : forall a : word, bv_unsigned a < lo -> m1 a = m a). { intros a Ha. apply MU1. cbn [outside]. split; [ul| exact I]. }
   assert (BS1 : bytes_at asegs m1 A bs). { apply (bytes_at_agree asegs m m1 _ _ BS). intros a Ha. apply AG1. lia. }
   assert (ACC1 : acc asegs m1 A cap).
@@ -558,7 +559,7 @@ Theorem aevt_str_replace : forall Σ K (ra gp tp t0 t1 t2 s0 s1 a4 a5 a6 a7 s2 s
   lstrA m S lg A cap sz -> lstr_cls RT Σ A cap -> lstr_cls RT Σ S 24 -> acc asegs m A cap ->
   (lg = false \/ S + 24 <= A \/ A + cap <= S) ->
   0 <= pos -> pos + 2 <= sz -> (lit = 0x23800 \/ lit = 0x23820) ->
-  ART RT Σ m -> mem_inv asegs m -> stk asegs m lo sp -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + RT_STACK + 80 <= sp -> sp + 16 <= USTACK_TOP -> sp mod 16 = 0 ->
+  ART RT Σ m -> mem_inv asegs m -> stk asegs m lo sp -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + RT_STACK + 80 <= sp -> sp + 16 <= USTACK_TOP -> sp mod 16 = 0 ->
   (forall (t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' : word) (F' : bvmap 5 word) (m' : mem),
      lstrA m' S lg A cap (sz - 1) -> acc asegs m' A cap -> ART RT Σ m' -> mem_inv asegs m' -> stk asegs m' lo sp -> wmono asegs m m' ->
      (forall a : word, aclient (rt_live RT Σ) (rt_frames RT Σ) sp (bv_unsigned a) -> ~ (S <= bv_unsigned a < S + 24) -> ~ (A <= bv_unsigned a < A + cap) ->
@@ -585,7 +586,7 @@ Proof using AF RC RC2 FDO MST.
   intros m1 j MU1 WM1 MI1 ST1 FR1.
   assert (AG1 : forall a : word, bv_unsigned a < lo -> m1 a = m a). { intros a Ha. apply MU1. cbn [outside]. split; [ul| exact I]. }
   assert (ART1 : ART RT Σ m1).
-  { apply (art_client_write RT AF Σ m m1 lo ART0 LOW); [| exact WM1]. intros a Ha. apply MU1. cbn [outside]. split; [| exact I]. intros X. apply Ha. left. ul. }
+  { apply (art_client_write RT AF Σ m m1 lo ART0 ltac:(lia)); [| exact WM1]. intros a Ha. apply MU1. cbn [outside]. split; [| exact I]. intros X. apply Ha. left. ul. }
   assert (LS1 : lstrA m1 S lg A cap sz). { apply (lstrA_agree m m1 _ _ _ _ _ LS). intros a Ha. apply AG1. lia. }
   pose proof (ACCLO m m1 ACC AG1) as ACC1.
   assert (EU1 : bv_unsigned (wz (sp - 48)) = sp - 48) by (apply unsigned_lit; ul).
@@ -613,7 +614,7 @@ Proof using AF RC RC2 FDO MST.
     intros m3 xa1 xa3 xa4 MU3 WM3 MI3 ST3 FR3.
     assert (AG3 : forall a : word, bv_unsigned a < lo -> m3 a = m2 a). { intros a Ha. apply MU3. cbn [outside]. split; [ul| exact I]. }
     assert (ART3 : ART RT Σ m3).
-    { apply (art_client_write RT AF Σ m2 m3 lo ART2 LOW); [| exact WM3]. intros a Ha. apply MU3. cbn [outside]. split; [| exact I]. intros X. apply Ha. left. ul. }
+    { apply (art_client_write RT AF Σ m2 m3 lo ART2 ltac:(lia)); [| exact WM3]. intros a Ha. apply MU3. cbn [outside]. split; [| exact I]. intros X. apply Ha. left. ul. }
     assert (LS3 : lstrA m3 S lg A cap sz). { apply (lstrA_agree m2 m3 _ _ _ _ _ LS2). intros a Ha. apply AG3. lia. }
     pose proof (ACCLO m2 m3 ACC2 AG3) as ACC3.
     assert (EU3 : bv_unsigned (wz (sp - 80)) = sp - 80) by (apply unsigned_lit; ul).
@@ -643,7 +644,7 @@ Proof using AF RC RC2 FDO MST.
         [exact HDRx| exact DAx| exact LBSx| lia| lia| lia| lia| ul| lia| ul| exact SEP| exact STx| ul| ul| ul| exact FRx| exact MIx|].
       intros m5 MU5 WM5 MI5 ST5 HDR5 DA5.
       assert (ART5 : ART RT Σ m5).
-      { apply (art_client_write RT AF Σ mx m5 lo ARTx LOW); [| exact WM5]. intros a Ha. apply MU5. cbn [outside].
+      { apply (art_client_write RT AF Σ mx m5 lo ARTx ltac:(lia)); [| exact WM5]. intros a Ha. apply MU5. cbn [outside].
         split; [intros X; apply Ha; apply (CLo lo); left; exact X|]. split; [| exact I]. intros X; apply Ha; apply (CLo lo); right; lia. }
       apply HK.
       - split; [lia|]. split; [lia|]. split; [lia|]. split; [lia|]. split; [lia|]. split; [| exact HDR5].

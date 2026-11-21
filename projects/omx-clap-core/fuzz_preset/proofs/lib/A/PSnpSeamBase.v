@@ -10,7 +10,7 @@
    This file holds only what both halves of the seam need: the reader identity, bytes, words,
    writability, mem_inv, and the return-address and configuration shapes.  The ASan shadow lives in
    FMgxaSeamShadow.v and the contract translation in FMgxaSeam*.v. *)
-(* Modified by Theorem Labs, 2026-10: c-libc-stdio's copy for fuzz_preset image A (L3-V2, the GXA seam over ARx; parent c-libc-stdio 14:3xZ) of proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamBase.v at origin/cold/port-fm-rtprintf-param 3e35620c52e: module paths fuzz_manifest -> fuzz_preset; the image record RT_IImgA.A_img -> preset's rebuilt-pin lib/CJ/RL/I/IImgA.v N_img_asan (taken by path by c-libc-str, f697dea427f); nothing else changes (no U, no numeral). The sentences above name fm's files. *)
+(* Modified by Theorem Labs, 2026-10: c-libc-stdio's copy for fuzz_preset image A (L3-V2, the GXA seam over ARx; parent c-libc-stdio 14:3xZ) of proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeamBase.v: module paths fuzz_manifest -> fuzz_preset; the image record RT_IImgA.A_img -> preset's rebuilt-pin lib/CJ/RL/I/IImgA.v N_img_asan (taken by path by c-libc-str); nothing else changes (no U, no numeral). The sentences above name fm's files. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -28,7 +28,7 @@ Local Open Scope Z_scope.
 Definition cjstore (H : word -> bool) (mem : word -> option byte) : word -> option byte :=
   mrestrict H mem.
 
-(* fm's premise store_clean (projects/omx-clap-core/fuzz_manifest/proofs/lib/A/FMbz_str.v:288, as at 445e498a469), restated here
+(* fm's premise store_clean (projects/omx-clap-core/fuzz_manifest/proofs/lib/A/FMbz_str.v:288, as), restated here
    because the shared contract does not carry it (lib/Reusable/FMsnprintfShared.v:157 sh_asnprintf_realizes has no store premise): the mutable
    store holds no byte at a read-only address and none above the user address limit.  The CJ engine
    asks for it under the name mem_inv at every walk. *)

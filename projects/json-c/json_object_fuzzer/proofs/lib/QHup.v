@@ -1,10 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap's errno answer in munmap_check_modeled, and munmap_model by the model's mmap_fixed_destroyed_next, with maps_subtract_exact; mmap placement by the model's linux_place_is in grant_ok; the place_declined_b premise on tmw's mmap node). *)
 
 From Stdlib Require NArith ZArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Equivalence OmniEquivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run OmniRun.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require ExecutableSpecs.
 From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QWXq QQny QWTC Q3bI QgpE QU0c Qo8J Qek8.
 From LinuxProcessSemantics.Riscv Require Prelude Sem.
@@ -170,17 +172,60 @@ zfill a n m x = m x.
 Proof. intros a n m x Hx. exact (zmem_out m a n x Hx). Qed.
 
 Definition munmap_model (addr n : word) (m : Model) : Model :=
-with_mmap_destroyed addr n
-(mkVmMapsFull (vm_reserved (m_vmmaps m))
-(map_remove (vm_maps (m_vmmaps m)) addr)
-(maps_subtract (vm_noaccess (m_vmmaps m))
-(bv_unsigned addr)
-(bv_unsigned addr + bv_unsigned n))
-(vm_start_brk (m_vmmaps m))
-(vm_brk (m_vmmaps m))
-(vm_limit (m_vmmaps m))
-(vm_mmap_base (m_vmmaps m))
-(vm_init_sp (m_vmmaps m))) m.
+  with_mmap_destroyed addr n (mmap_fixed_destroyed_next (m_vmmaps m) addr n) m.
+
+(* LPS 727298f3: the exact arm cuts the range out of both ledgers; on a ledger whose one entry at [a] is
+   exactly the cut and every other entry misses it, the cut removes that entry (as coturn/FuzzStunClient's
+   Common/MmapSim.v) *)
+Lemma iv_subtract_outside : forall (b s : word) lo hi,
+  (0 < bv_unsigned s)%Z -> (lo < hi)%Z ->
+  (bv_unsigned b + bv_unsigned s <= lo \/ hi <= bv_unsigned b)%Z ->
+  iv_subtract b s lo hi = [(b, s)].
+Proof.
+  intros b s lo hi Hs Hlh Hd. unfold iv_subtract. cbv zeta.
+  destruct Hd as [Hd|Hd].
+  - rewrite (proj2 (Z.ltb_lt (bv_unsigned b) lo)) by lia.
+    rewrite (proj2 (Z.ltb_ge hi (bv_unsigned b + bv_unsigned s))) by lia.
+    rewrite Z.min_l by lia. rewrite Z_to_bv_bv_unsigned. reflexivity.
+  - rewrite (proj2 (Z.ltb_ge (bv_unsigned b) lo)) by lia.
+    rewrite (proj2 (Z.ltb_lt hi (bv_unsigned b + bv_unsigned s))) by lia.
+    rewrite Z.max_l by lia.
+    replace (bv_unsigned b + bv_unsigned s - bv_unsigned b)%Z
+      with (bv_unsigned s) by lia.
+    rewrite !Z_to_bv_bv_unsigned. reflexivity.
+Qed.
+
+Lemma maps_subtract_exact : forall l (a n : word),
+  (0 < bv_unsigned n)%Z ->
+  (forall b s, In (b, s) l -> (0 < bv_unsigned s)%Z) ->
+  (forall b s, In (b, s) l -> b = a -> s = n) ->
+  (forall b s, In (b, s) l -> b <> a ->
+     (bv_unsigned b + bv_unsigned s <= bv_unsigned a
+      \/ bv_unsigned a + bv_unsigned n <= bv_unsigned b)%Z) ->
+  maps_subtract l (bv_unsigned a) (bv_unsigned a + bv_unsigned n)
+  = map_remove l a.
+Proof.
+  induction l as [|[b s] r IH]; intros a n Hn Hpos Hu Hd; [reflexivity|].
+  assert (IHr : maps_subtract r (bv_unsigned a) (bv_unsigned a + bv_unsigned n)
+                = map_remove r a).
+  { apply IH; [exact Hn
+              | intros b' s' H; apply (Hpos b' s'); right; exact H
+              | intros b' s' H; apply (Hu b' s'); right; exact H
+              | intros b' s' H; apply (Hd b' s'); right; exact H]. }
+  cbn [maps_subtract]. rewrite IHr.
+  unfold map_remove. cbn [List.filter fst]. fold (map_remove r a).
+  destruct (bv_eqb b a) eqn:E; cbn [negb].
+  - apply bv_eqb_eq in E. subst b.
+    rewrite (Hu a s (or_introl eq_refl) eq_refl).
+    unfold iv_subtract. cbv zeta.
+    rewrite (proj2 (Z.ltb_ge _ _) (Z.le_refl (bv_unsigned a))).
+    rewrite (proj2 (Z.ltb_ge _ _) (Z.le_refl (bv_unsigned a + bv_unsigned n))).
+    reflexivity.
+  - assert (Hne : b <> a) by (intros ->; rewrite bv_eqb_refl in E; discriminate).
+    rewrite (iv_subtract_outside b s); [reflexivity | | lia |].
+    + exact (Hpos b s (or_introl eq_refl)).
+    + exact (Hd b s (or_introl eq_refl) Hne).
+Qed.
 
 Definition mmap_model (a n : word) (m : Model) : Model :=
 with_vmmaps (mkVmMapsFull (vm_reserved (m_vmmaps m))
@@ -196,10 +241,11 @@ Definition page_round_up (len : word) : word :=
 Z_to_bv 64 (page_round_up_Z (bv_unsigned len)).
 
 Definition grant_ok (hint : word) (m : Model) (a : word) (n : Z) : bool :=
-(bv_unsigned a mod page_size =? 0)%Z && (0 <? bv_unsigned a)%Z
-&& (bv_unsigned a + n <=? alloc_top (m_vmmaps m))%Z
-&& region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 n)
-&& (vm_backing_used m + n <=? vm_limit (m_vmmaps m))%Z.
+  linux_place_is (m_vmmaps m) (kb_thp (m_kernel m)) hint n a
+  && (bv_unsigned a mod page_size =? 0)%Z && (0 <? bv_unsigned a)%Z
+  && (bv_unsigned a + n <=? alloc_top (m_vmmaps m))%Z
+  && region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 n)
+  && (vm_backing_used m + n <=? vm_limit (m_vmmaps m))%Z.
 
 Lemma munmap_model_halted : forall addr n m, m_halted (munmap_model addr n m) = m_halted m.
 Proof. reflexivity. Qed.
@@ -248,24 +294,29 @@ Definition munmap_eff (ms : machine_state) : SyscallEffect :=
 mkEffectU (Z_to_bv 64 0) [] [] [(ms_gpr ms 0, page_round_up (ms_gpr ms 1))] [] [].
 
 Lemma munmap_check_modeled : forall ms model eff,
-munmap_args_ok ms model ->
-check_munmap (ms_gpr ms 0) (ms_gpr ms 1) eff model
-= match eff with
-| mkEffectU r [] [] us [] [] =>
-if w_is0 r
-&& listNN_eqb us [(ms_gpr ms 0, page_round_up (ms_gpr ms 1))]
-then CheckOk (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) []
-else CheckReject
-| _ => CheckReject
-end.
+  munmap_args_ok ms model ->
+  check_munmap (ms_gpr ms 0) (ms_gpr ms 1) eff model
+  = match eff with
+    | mkEffectU r [] [] us [] [] =>
+        if errno_ret_in munmap_errnos r
+        then match us with
+             | [] => CheckOk model []
+             | _ => CheckReject
+             end
+        else if w_is0 r
+                && listNN_eqb us [(ms_gpr ms 0, page_round_up (ms_gpr ms 1))]
+        then CheckOk (munmap_model (ms_gpr ms 0) (page_round_up (ms_gpr ms 1)) model) []
+        else CheckReject
+    | _ => CheckReject
+    end.
 Proof.
-intros ms model eff (Hal & Hlen & Hnw & Hhas).
-unfold check_munmap.
-rewrite (proj2 (Z.eqb_eq _ _) Hal).
-unfold w_is0 at 1. rewrite (bv_eqb_neq _ _ Hlen).
-cbn [negb orb]. cbv zeta.
-rewrite (proj2 (Z.ltb_ge _ _) Hnw). cbv beta iota.
-unfold page_round_up in Hhas. rewrite Hhas. reflexivity.
+  intros ms model eff (Hal & Hlen & Hnw & Hhas).
+  unfold check_munmap.
+  rewrite (proj2 (Z.eqb_eq _ _) Hal).
+  unfold w_is0 at 1. rewrite (bv_eqb_neq _ _ Hlen).
+  cbn [negb orb]. cbv zeta.
+  rewrite (proj2 (Z.ltb_ge _ _) Hnw). cbv beta iota.
+  unfold page_round_up in Hhas. rewrite Hhas. reflexivity.
 Qed.
 
 Definition unfill (a n : word) (m : word -> option byte) : word -> option byte :=
@@ -368,6 +419,8 @@ Inductive tmw : machine_state -> Model -> list (list byte) -> word
 ms_svc_pending ms = Some x8 ->
 bv_unsigned x8 = 222%Z ->
 mmap_args_ok ms ->
+place_declined_b (m_kernel model) (m_vmmaps model) (ms_gpr ms 0)
+(page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = false ->
 (forall e, In e mmap_errnos ->
 twm (advance_past_svc (set_gpr0 ms (errno_ret e))) model bf cf) ->
 (forall a, grant_ok (ms_gpr ms 0) model a (page_round_up_Z (bv_unsigned (ms_gpr ms 1))) = true ->

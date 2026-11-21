@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/ExvB_Loop_kitQ.v, with its module paths and module names changed; 1116 of its 1156 lines of code are new or changed and 156 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: segment VALUE of parse_items' image-B walk, the CALL block (rebound to the kit's
    a Theorem Labs lane, prover PvCall2; the batch kit's rebind PItemsB.K1Value). Proves no function (kind: segment lemma).
      pv_call_holds : forall N, pv_aftv_spec B ARx SK d CTX0 CW N -> pv_call_spec B ARx SK d CTX0 CW N
    (PItems_value_pres.v), at prh_img_B / B_prog_listing / PI_prog_B / PL_prog_B.
    The block is one instruction, PI_O_PVAL `jal parse_value`, with its return site PI_O_AFTV. parse_value's text is
-   the batch kit's tparse_value_specX at S d (lib/A/PRH_FnParse.v ed236011cf99, the batch kit 240b06ed4fd4; Section hypothesis PV,
+   the batch kit's tparse_value_specX at S d (lib/A/PRH_FnParse.v ed236011cf99, the batch kit; Section hypothesis PV,
    the text's own): it takes the cursor set CW, prh_cw_entry, wild_room and the hull budget over its all-granted events
    at the call, and concludes YA0nH.SRr' pa_segs RZ_cf in the BUDGETED m-form window-float post fpostWFbm (wbudget CW 0)
    .. (fQmn mem Q), at wle'; Q is the text's tpvP_Q, read through tpvP_R_of and its fields. The specs take the journal at
@@ -365,10 +366,10 @@ Context {HL : Z}.
 Hypothesis LAWS : AR_laws_x SEGS B ARx HL.
 Variable d : nat.
 Variable CTX0 : list (list Z).
-(* the cursor set of the walk (the batch kit 240b06ed4fd4): parse_items' own CW, handed on to parse_value unchanged *)
+(* the cursor set of the walk (the batch kit): parse_items' own CW, handed on to parse_value unchanged *)
 Variable CW : list (list Z).
 (* the callee: the kit's record text of parse_value at depth S d (lib/A/PRH_FnParse.v ed236011cf99 tparse_value_specX,
-   the batch kit 240b06ed4fd4: CW, prh_cw_entry, wild_room, the budgeted post at wbudget CW 0), owner PValueB *)
+   the batch kit: CW, prh_cw_entry, wild_room, the budgeted post at wbudget CW 0), owner PValueB *)
 Hypothesis PV : (d < PjGrammar.MAXD)%nat -> forall (fy : YK11.FPState) (CTX' : list (list Z)),
   tparse_value_specX (fx := fy) (L := B_prog_listing) (PA := PA) B ARx SK (Nat.succ d) CTX' CTX0 CW.
 (* the harness-block shadow law, PItems_defs.v's one text (discharged at ARcf by YGcfHeadSh.v) *)
@@ -640,7 +641,7 @@ assert (Hlen0 : 0 < len) by lia.
 (* SRC-CEIL (the kit's PRH_Base.v src_rd): the ceiling bounds the text's own bytes, no `+ 8` *)
 assert (Htxc : text + len <= YM05.alloc_ceiling) by lia.
 (* the cursor's p word below alloc_ceiling, which prh_cur_entry's arm at F_parse_items asks at the call (pvc_cur_low),
-   from rd_pre's strict text ceiling (the batch kit's tip 03fcabb582d0 / c23331281d07, rd_pre's last conjunct) *)
+   from rd_pre's strict text ceiling (the batch kit's tip, rd_pre's last conjunct) *)
 assert (HTXS : text + len < YM05.alloc_ceiling)
   by (match goal with H : text + len < YM05.alloc_ceiling |- _ => exact H end).
 pose proof (pvc_cur_low text len pc ltac:(lia) HTXS) as HPCC.

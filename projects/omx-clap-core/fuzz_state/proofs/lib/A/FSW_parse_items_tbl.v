@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* A Theorem Labs lane / a Theorem Labs lane; built on S0 946ad86dc9f and re-targeted on the CTX-free statements
-   (a working branch faa7e2570e5). This file takes no spec, so the CTX drop does not touch it. *)
+(* A Theorem Labs lane / a Theorem Labs lane; built on S0 and re-targeted on the CTX-free statements
+   (a working branch). This file takes no spec, so the CTX drop does not touch it. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/omx-clap-core/fuzz_state/lib/A/FSW_crt_tbl.v (lane CRT,
-   a working branch 0c8f540c787), keeping only its table pattern, for parse_items' text range. *)
+   a working branch), keeping only its table pattern, for parse_items' text range. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs program part, READER lane (a Theorem Labs lane, walk of parse_items): the decode table of parse_items' own text, for the
    walk's symbolic runs (FSW_K.v fsw_run_AJU / fsw_run_to_AJU / fsw_run_tok_AJU take `table_ok tfibsegs tbl`). The
    range is RELOC's AB1w.v names: tfib_A_parse_items = 0x84a04 .. tfib_E_parse_items = 0x850b8, 1,716 bytes (nm:

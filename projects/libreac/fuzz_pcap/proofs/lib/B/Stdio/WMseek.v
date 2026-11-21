@@ -1,25 +1,26 @@
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ASAN-UBSAN-image walk of musl mseek for libreac/fuzz_pcap -- PFmopsM.v's
    amseek_rewind_spec, PROVED for the ORIGINAL v1.9.0 asan-ubsan image at mseek's measured entry
    0x8eaf4 (PStdioImgB.v's PMSEEK_U). The statement is image-generic and is taken UNCHANGED from
    lib/A/Stdio/PFmopsM.v; only the image module, the symbol record and the measured pcs differ.
 
    PORTED BY SYMBOL + OFFSET, never by a numeric delta, from a Theorem Labs lane's own PROVED ASan walk
-   lib/A/Stdio/WMseek.v (a working branch 729f4aaf6e5, theorem pcap_amseek_rewind): its
+   lib/A/Stdio/WMseek.v (a working branch, theorem pcap_amseek_rewind): its
    structure, case split and tactics. EVERY address below is re-measured on THIS image. The
-   released-proof lookup (ossv proof index v5, 2026-10-28T20:16:23Z, main@e966c513ee6c; output
+   released-proof lookup (ossv proof index v5, 2026-10-28T20:16:23Z, main; output
    mseek.out (sha256 c5f80922a92c; internal record), confirmed by a fresh read-only checker)
    found 4 files named for mseek and 4 related, ALL on the PLAIN (lib/Prog) or UBSAN (lib/U/Prog)
    image: no released proof stated mseek on any pcap ASan image, asan-ubsan included.
 
    WHERE EACH CONSTANT COMES FROM.
-     PMSEEK_U = 0x8eaf4:  lib/B/Stdio/PStdioImgB.v at a working branch b4439851fa3 (the value
-       first stated in lib/A/Stdio/PFmopsM.v at a working branch 02075de74ec, which c625af6eaa9
+     PMSEEK_U = 0x8eaf4:  lib/B/Stdio/PStdioImgB.v at a working branch (the value
+       first stated in lib/A/Stdio/PFmopsM.v at a working branch, which
        moved there). PMSEEK_STK = 48: lib/A/Stdio/PFmopsM.v.
      pcap_KS (the asan-ubsan symbol record KS_U, auditor PASSED 18/18): lib/B/Stdio/PSourceK.v at
-       a working branch d6edf2117df -- as_can_got 0x9a380, as_canary 0x5f47d0, as_seek 0x8eaf4.
+       a working branch -- as_can_got 0x9a380, as_canary 0x5f47d0, as_seek 0x8eaf4.
      MEASURED HERE, on the asan-ubsan pin's own dumps: the symbol mseek (nm 't', 0x8eaf4, size 0x9c
        = 39 instructions) and every pc below, read off
        fuzz_pcap.objdump.txt (sha256 af7c8be930de; internal record); the word at the .got slot 0x9a380,

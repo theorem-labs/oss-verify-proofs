@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: the run plumbing of proofs/reac-pw/fuzz_role/lib/A/RPgCfgChanges.v at 964efd2f474 (cfg_keep, cfg_kwr_ro and the same_io chain of cfg_leaf, as l_keep, l_kwr and l_post) and of proofs/reac-pw/fuzz_qdisc/lib/A/QPgCheck.v at b0f706c04a1 (awr_stk, as l_awr: the writable window is the frame [F, F + 0x60) at atom 2), for a segment of reac_role_prop_parse's walk that starts and ends at the cuts of lib/A/RPgParseBase.v; the entry states, exits, string lemmas and the walk below are new. *)
+(* Modified by Theorem Labs, 2026-10: the run plumbing of proofs/reac-pw/fuzz_role/lib/A/RPgCfgChanges.v (cfg_keep, cfg_kwr_ro and the same_io chain of cfg_leaf, as l_keep, l_kwr and l_post) and of proofs/reac-pw/fuzz_qdisc/lib/A/QPgCheck.v (awr_stk, as l_awr: the writable window is the frame [F, F + 0x60) at atom 2), for a segment of reac_role_prop_parse's walk that starts and ends at the cuts of lib/A/RPgParseBase.v; the entry states, exits, string lemmas and the walk below are new. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_role/lib/A/RPgParseL.v; 492 of its 562 lines of code are new or changed and 844 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_role/lib/A/RPgParseF.v, with its module paths and module names changed; 111 of its 169 lines of code are new or changed and 504 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp: the model steps of the find loop of reac_headamp_prop_parse_result (Pod/Spa.v find_prop,
    spa_pod_object_find_prop, and is_struct_at, spa_pod_is_struct) at the cut FIND of lib/A/HPgParseBase.v
    (hp_m_find), shared by both images' find segments (image A lib/A/HPgParseCut.v, image B lib/AU/HPgParseCut.v).
@@ -68,7 +69,7 @@ Lemma hpf_is_struct : forall bs r,
 Spa.is_struct_at bs (r + 8) = (Spa.u32_at bs (r + 8) <? Spa.SPA_POD_MAX_SIZE) && (Spa.u32_at bs (r + 12) =? Model.POD_STRUCT).
 Proof. intros bs r. unfold Spa.is_struct_at. replace (r + 8 + 4) with (r + 12) by lia. reflexivity. Qed.
 
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseF.v at afaa3cb55c1 (U_sub_l,
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseF.v (U_sub_l,
    U_sx32_eqb, U_add, U_or, U_srl, U_sext32), names prefixed hpf_. *)
 (* ================== the engine's arithmetic on the find loop's values (both images) ================== *)
 (* `sub rd,b,a` as the engine writes it *)

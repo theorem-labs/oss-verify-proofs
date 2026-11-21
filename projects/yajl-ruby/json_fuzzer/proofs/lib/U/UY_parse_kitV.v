@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (pmem_updL reads the allocation-ceiling bound from rauxv_ok's new shape (the auxv address, a pair list and the AT_RANDOM address)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -93,7 +94,7 @@ Proof.
   apply RYST_split in RY. destruct RY as [HK0 YS]. destruct (HK_blocks HK HKB _ _ _ _ HK0) as [RNG SEP].
   destruct HR as (HS & LXR & DBR & BSR).
   pose proof (proj1 STK) as LO0. unfold pSP in LO0, STK, STK', LO.
-  pose proof AX as (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & _ & _ & _ & CB0 & _). unfold alloc_ceiling in CB0.
+  pose proof AX as (av & vs & rnd & _ & _ & _ & (CB0 & _) & _). unfold alloc_ceiling in CB0.
   pose proof SAME as (_ & EHA & _). unfold pH in LXR'. rewrite <- EHA in LXR'.
   pose proof (munch_agree _ _ _ MU WM) as AG.
   destruct TXT as (TXB & TXF & T0 & T62).

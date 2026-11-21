@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from projects/cgif/cgif_file_fuzzer/proofs/lib/YM09.v, with its module paths changed; the source run's cut-freedom at the larger limit comes from lib/A/RelimCut.v, and shape_strong_equiv_ef_relim takes the target's as a premise, because fuzz_knock's realizes (YK15.v) has a cut at a budget refusal. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YM09.v at origin/ossv/recipes 4b6f0df50aa7 (fuzz_knock's released ASan tree); module paths changed to libdiginet/fuzz_codec. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/Reusable/YM09.v (fuzz_knock's released ASan tree); module paths changed to libdiginet/fuzz_codec. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput and its premises; the run's segment list); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -12,6 +13,7 @@ From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require Import YK0n YK0
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require Import YQ02.
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable.R Require Import Cfg.
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.A Require Import RelimCut.
+From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require Import RomStableK.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Theorem sefb_relim_source : forall (Ls Lbig Lt : Z) (src tgt : Image) (en en' : ExecEntry) (inp : ProcInput),
@@ -28,7 +30,10 @@ Section a. Context {fx : YK11.FPState}.
 Theorem shape_strong_equiv_ef_relim :
 forall (Ls Lbig Lt : Z) source_segs rpc rph rsp rbrk rmb rrnd
 target_segs apc aph asp abrk amb arnd
-(T T' : TSet) (inp : ProcInput),
+(T T' : TSet) (inp : ProcInput)
+(* 08b1429: [YM08] lifts both walks to the run's segments; the two images carry no vDSO text of
+   their own, as instance arguments so that the callers are unchanged *)
+`{NoVdso (mkImage source_segs rpc rph)} `{NoVdso (mkImage target_segs apc aph)},
 (Ls <= Lbig)%Z ->
 ~ run_scfg_budget_refused ACFG (mkImage source_segs rpc rph) Ls (mkEntry rsp rbrk rmb rrnd) inp ->
 realizes source_segs (init_config source_segs rpc rph rsp rbrk rmb rrnd Lbig inp) T ->
@@ -38,14 +43,20 @@ t_eq T T' ->
 strong_equiv_error_free_budgets_scfg ACFG Ls Lt (mkImage source_segs rpc rph) (mkImage target_segs apc aph)
 (mkEntry rsp rbrk rmb rrnd) (mkEntry asp abrk amb arnd) inp.
 Proof.
-intros * HLE NB Hs Ht Ct Heq. apply (sefb_relim_source Ls Lbig Lt _ _ _ _ inp HLE NB).
+(* 08b1429: the two `{NoVdso ...} binders of the statement above are introduced POSITIONALLY by
+   intros, so they need two names of their own (YM08 line 33 says the same); without them HLE/NB
+   captured the instances and every later name shifted by two. *)
+intros * NVs NVt HLE NB Hs Ht Ct Heq. apply (sefb_relim_source Ls Lbig Lt _ _ _ _ inp HLE NB).
 exact (shape_strong_equiv_ef_budgets Lbig Lt source_segs rpc rph rsp rbrk rmb rrnd target_segs apc aph asp abrk amb arnd T T' inp Hs Ht
 (cut_free_of_relim source_segs rpc rph rsp rbrk rmb rrnd Ls Lbig inp HLE NB) Ct Heq).
 Qed.
 Theorem shape_strong_equiv_efs_relim :
 forall (Ls Lbig Lt : Z) source_segs rpc rph rsp rbrk rmb rrnd
 target_segs apc aph asp abrk amb arnd
-(T T' : TSet) (inp : ProcInput),
+(T T' : TSet) (inp : ProcInput)
+(* 08b1429: [YM08] lifts both walks to the run's segments; the two images carry no vDSO text of
+   their own, as instance arguments so that the callers are unchanged *)
+`{NoVdso (mkImage source_segs rpc rph)} `{NoVdso (mkImage target_segs apc aph)},
 (Ls <= Lbig)%Z ->
 ~ run_scfg_budget_refused ACFG (mkImage source_segs rpc rph) Ls (mkEntry rsp rbrk rmb rrnd) inp ->
 realizes source_segs (init_config source_segs rpc rph rsp rbrk rmb rrnd Lbig inp) T ->
@@ -54,7 +65,8 @@ t_eq T T' ->
 strong_equiv_error_free_budgets_scfg ACFG Ls Lt (mkImage source_segs rpc rph) (mkImage target_segs apc aph)
 (mkEntry rsp rbrk rmb rrnd) (mkEntry asp abrk amb arnd) inp.
 Proof.
-intros * HLE NB Hs Ht Heq. apply (sefb_relim_source Ls Lbig Lt _ _ _ _ inp HLE NB).
+(* 08b1429: same two instance binders as above; two names of their own. *)
+intros * NVs NVt HLE NB Hs Ht Heq. apply (sefb_relim_source Ls Lbig Lt _ _ _ _ inp HLE NB).
 exact (shape_strong_equiv_efs_budgets Lbig Lt source_segs rpc rph rsp rbrk rmb rrnd target_segs apc aph asp abrk amb arnd T T' inp Hs Ht
 (cut_free_of_relim source_segs rpc rph rsp rbrk rmb rrnd Ls Lbig inp HLE NB) Heq).
 Qed.

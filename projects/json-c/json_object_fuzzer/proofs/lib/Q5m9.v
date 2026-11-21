@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the auxv entries: rauxv_ok_magree over the revision's rauxv_ok, whose auxv list replaces the eight named entries). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -5776,8 +5777,8 @@ Proof. clear - base rvm_wait_entry ralloc_meta_entry rmmap_entry rmprotect_entry
 #[using="base rvm_wait_entry ralloc_meta_entry rmmap_entry rmprotect_entry"] Lemma rauxv_ok_magree C m m' B :
 rauxv_ok m B -> magree C m m' -> (forall a, C a -> a < B /\ ~ ((RATP + 131736) <= a < (RATP + 131744))) -> rauxv_ok m' B.
 Proof. clear - base rvm_wait_entry ralloc_meta_entry rmmap_entry rmprotect_entry RATP C m m' B. gw_expose_fam RATP.
-intros (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & AC & AL & RN & H) AG HC.
-exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd. split; [|split; [|split; [|gw_exact H]]].
+intros (av & vs & rnd & ex & rs & AC & AL & RN & H) AG HC.
+exists av, vs, rnd, ex, rs. split; [|split; [|split; [|gw_exact H]]].
 - eapply rrw_cells_magree; [gw_exact AC| gw_exact AG|]. cbn. intros a Ha X. destruct (HC a X) as [_ Y]. apply Y. gw_exact Ha.
 - eapply rbytes_at_magree; [gw_exact AL| gw_exact AG|]. intros a Ha X. destruct (HC a X) as [Y _].
 unfold rauxv_list in Ha. rewrite u64s_length, map_length in Ha. cbn in Ha. lia.

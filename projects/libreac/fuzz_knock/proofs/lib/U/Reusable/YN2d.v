@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN2d.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed munmap_model_maps, ledger_ok_A4, md4_with, ledger_ok_same, fin; added ledger_leak_A4, midrep_A4_leak, MRx_A4_leak, md3_with, D2_pack_leak). *)
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -12,10 +13,12 @@ YO0i YO0f YO0g YO0x YO0z YO0s YO0u YO0v YO10 YO0d.
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.U.Reusable Require Import YN03 YN31 YN2b YN2e YN2c YN2f YN2g.
 From Stdlib Require Import List.
 From OSSVerify.Proofs.libreac.fuzz_knock.lib.U.Reusable Require Import YM05.
+From OSSVerify.Proofs.libreac.fuzz_knock.lib.U.Reusable.R Require Import Cfg.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Local Open Scope Z_scope.
 Section u. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
+Context {AM : AllocMode}.
 Lemma loc_addr_LMem' L p : loc_addr L (LMem p) = ly_reg L (prid p) + poff p.
 Proof. destruct p; reflexivity. Qed.
 Lemma prid_padd' : forall p d, prid (padd p d) = prid p.
@@ -56,13 +59,20 @@ intros addr n m H. unfold munmap_model, with_mmap_destroyed, vm_forget_range, wi
 cbn [m_vm_materialized]. unfold m_vm_materialized in H |- *. cbn. rewrite H. reflexivity.
 Qed.
 Lemma munmap_model_maps : forall addr n m,
+(0 < bv_unsigned n)%Z ->
+(forall b s, In (b, s) (vm_maps (m_vmmaps m)) -> (0 < bv_unsigned s)%Z) ->
+(forall b s, In (b, s) (vm_maps (m_vmmaps m)) -> b = addr -> s = n) ->
+(forall b s, In (b, s) (vm_maps (m_vmmaps m)) -> b <> addr ->
+   (bv_unsigned b + bv_unsigned s <= bv_unsigned addr
+    \/ bv_unsigned addr + bv_unsigned n <= bv_unsigned b)%Z) ->
 vm_maps (m_vmmaps (munmap_model addr n m)) = map_remove (vm_maps (m_vmmaps m)) addr /\
 vm_noaccess (m_vmmaps (munmap_model addr n m)) = maps_subtract (vm_noaccess (m_vmmaps m)) (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n) /\
 vm_reserved (m_vmmaps (munmap_model addr n m)) = vm_reserved (m_vmmaps m) /\
 vm_brk (m_vmmaps (munmap_model addr n m)) = vm_brk (m_vmmaps m) /\
 vm_start_brk (m_vmmaps (munmap_model addr n m)) = vm_start_brk (m_vmmaps m) /\
 vm_limit (m_vmmaps (munmap_model addr n m)) = vm_limit (m_vmmaps m).
-Proof. intros. repeat split; reflexivity. Qed.
+Proof. intros addr n m Hn Hpos Hu Hd. repeat split; try reflexivity.
+apply maps_subtract_exact; assumption. Qed.
 Lemma vm_backing_used_le_maps : forall m,
 m_vm_lazy m = [] -> m_vm_materialized m = [] ->
 vm_backing_used m <= State.live_bytes (vm_maps (m_vmmaps m)).
@@ -420,7 +430,28 @@ unfold ranges_disjoint, iv_lo, iv_len in *. cbn [fst snd] in H. rewrite len_u in
 Qed.
 Lemma ledger_ok_A4 : ledger_ok B L3 A4 md4.
 Proof.
-pose proof (munmap_model_maps a (Z_to_bv 64 len) md3) as (VM & VN & VR & VB & VS & VL).
+pose proof Hlen as [P0 _].
+(* 08b1429: munmap_model_maps now takes maps_subtract_exact's four premises. They are
+   discharged from this file's own Y3 and r0_maps_entry, in the same shape YN27.v:140-156
+   uses for the identical bridge -- lx_maps for the size, lx_disj against the entry being
+   removed for exactness and disjointness. *)
+pose proof (munmap_model_maps a (Z_to_bv 64 len) md3
+ltac:(rewrite len_u; exact P0)
+ltac:(intros b s Hbs; exact (proj1 (lx_maps _ _ _ Y3 _ Hbs)))
+ltac:(intros b s Hbs Eb; subst b;
+destruct (lx_disj _ _ _ Y3 _ _ Hbs r0_maps_entry) as [E|D]; [injection E as ->; reflexivity|];
+exfalso; unfold ranges_disjoint, iv_lo, iv_len in D; cbn [fst snd] in D;
+pose proof (proj1 (lx_maps _ _ _ Y3 _ Hbs)) as Hs; unfold iv_len in Hs; cbn [snd] in Hs;
+rewrite len_u in D; pose proof Hlen as [P1 _]; lia)
+ltac:(intros b s Hbs Hne;
+destruct (lx_disj _ _ _ Y3 _ _ Hbs r0_maps_entry) as [E|D];
+[injection E as -> _; exfalso; exact (Hne eq_refl)|];
+(* The goal keeps `bv_unsigned (Z64 len)` while D carries `len` after its own rewrite, so
+   lia saw two opaque terms and reported "No applicable tactic". Read off the goal with
+   `fail 100` -- `idtac` does not reach this driver's log. len_u is rewritten on BOTH sides. *)
+unfold ranges_disjoint, iv_lo, iv_len in D; cbn [fst snd] in D;
+rewrite len_u in D; rewrite len_u; lia))
+as (VM & VN & VR & VB & VS & VL).
 pose proof r0_placed as (Ral & Rlo & Rhi & Rimg). pose proof Hlen as [P Pm]. pose proof (proj1 alloc_ceiling_val) as AC. pose proof aZ.
 pose proof A4_fields as (E1 & E2 & E3 & E4 & E5 & E6 & E7 & _).
 assert (PG : PGSZ = 4096) by reflexivity.
@@ -458,10 +489,10 @@ apply andb_prop in Hc as [C1 C2]. apply Z.leb_le in C1. apply Z.leb_le in C2. cb
 - rewrite E7. pose proof (lg_brk _ _ _ _ G3) as HB. destruct (st_brk A3); exact HB.
 - intros k rg Hk Hl. rewrite A4_region_of in Hk. destruct (Nat.eqb_spec k r0) as [->|Hne]; [injection Hk as <-; discriminate|].
 exact (lg_placed _ _ _ _ G3 k rg Hk Hl).
-- pose proof (length_map_remove _ _ _ r0_maps_entry). pose proof (lg_count _ _ _ _ G3).
+- intros Eaf. pose proof (length_map_remove _ _ _ r0_maps_entry). pose proof (lg_count _ _ _ _ G3 Eaf).
 unfold A4. rewrite (kill_nslots A n A3 (proj1 Hn) FR3). lia.
-- unfold A4. rewrite (kill_live_bytes A n A3 (proj1 Hn) FR3). apply Forall_forall. intros e He. apply In_map_remove in He as [He Hne].
-destruct (lx_in _ _ _ Y3 e He) as (k & rg & Hk & Hl & G1 & G2).
+- intros Eaf. unfold A4. rewrite (kill_live_bytes A n A3 (proj1 Hn) FR3). apply Forall_forall. intros e He. apply In_map_remove in He as [He Hne].
+destruct (lx_in _ _ _ Y3 Eaf e He) as (k & rg & Hk & Hl & G1 & G2).
 destruct (Nat.eq_dec k r0) as [->|Hk0].
 + rewrite A3_r0 in Hk. injection Hk as <-. cbn [rgn rg_len] in G2. rewrite L3_r0 in G1, G2.
 exfalso. apply Hne. rewrite (entry_in_r0 e He G1 G2). reflexivity.
@@ -474,12 +505,16 @@ destruct (Nat.eqb k' (YN2c.r0 A)); [injection Hk' as <-; cbn; lia|].
 destruct (inv_areas HI3) as (_&_&_&_&_&_&_&_&A9). exact (A9 k' rg' Hk'). }
 pose proof (region_len_le_live len Hlen (dm_kill A A3) k rg NN Hk4 Hl) as LE.
 rewrite (kill_live_bytes A n A3 (proj1 Hn) FR3) in LE. unfold iv_lo, iv_len in G1, G2. cbn beta. lia.
-- pose proof (lx_lb _ _ _ Y3) as LB. pose proof (live_bytes_map_remove _ _ _ r0_maps_entry) as LR. rewrite len_u in LR.
+- intros Eaf. pose proof (lx_lb _ _ _ Y3 Eaf) as LB. pose proof (live_bytes_map_remove _ _ _ r0_maps_entry) as LR. rewrite len_u in LR.
 unfold A4. rewrite (kill_live_bytes A n A3 (proj1 Hn) FR3).
 destruct (mid_md _ _ _ _ _ MID3) as (_ & Hlz & Hmat).
 pose proof (vm_backing_used_le_maps (munmap_model a (Z_to_bv 64 len) md3) (munmap_model_no_lazy _ _ _ Hlz) (munmap_model_no_mat _ _ _ Hmat)) as VBU.
 rewrite VM in VBU. lia.
 -   exact (lg_ceil _ _ _ _ G3).
+- exact (lg_vdso _ _ _ _ G3).
+- intros k rg Hk Hl Hkind. rewrite A4_region_of in Hk. destruct (Nat.eqb_spec k r0) as [->|Hne]; [injection Hk as <-; discriminate|].
+exact (lg_rfree _ _ _ _ G3 k rg Hk Hl Hkind).
+- exact (lg_brk_vdso _ _ _ _ G3).
 Qed.
 Lemma ledger_x_A4 : ledger_x L3 A4 md4.
 Proof.
@@ -524,6 +559,47 @@ destruct (mid_md _ _ _ _ _ MID3) as (H1 & H2 & H3). destruct VM3 as [vm3 E3].
 exists (m_vmmaps md4). unfold md4 at 1. rewrite (munmap_model_with a (Z_to_bv 64 len) md3 H2 H3).
 rewrite E3 at 2. unfold md1, mmap_model. rewrite !with_vmmaps_twice. reflexivity.
 Qed.
+(* munmap's ENOMEM answer under may-fail: the model keeps md3's mapping of the killed region, and memory
+   is kept outside the scratch ranges ([AG8]).  [A4]'s live regions are A3's less [r0], so the ledger
+   holds at md3 with its counting fields vacuous. *)
+Lemma ledger_leak_A4 : @amf AM = true -> ledger_ok B L3 A4 md3 /\ ledger_x L3 A4 md3.
+Proof.
+intros Ham. pose proof A4_fields as (_ & _ & _ & _ & _ & _ & E7 & _).
+assert (SUB : forall r rg, region_of A4 r = Some rg -> rg_live rg = true -> region_of A3 r = Some rg).
+{ intros k rg Hk Hl. rewrite A4_region_of in Hk. destruct (Nat.eqb_spec k r0) as [->|Hne]; [injection Hk as <-; discriminate | exact Hk]. }
+split; [exact (ledger_ok_fewer_live B L3 A3 A4 md3 Ham G3 E7 SUB) | exact (ledger_x_fewer_live L3 A3 A4 md3 Ham Y3 SUB)].
+Qed.
+Lemma midrep_A4_leak : @amf AM = true -> midrep B L3 A4 mem8 md3.
+Proof.
+intros Ham. destruct (ledger_leak_A4 Ham) as [LG LX].
+split.
+- exact (mid_syms _ _ _ _ _ MID3).
+- exact memrep_A4.
+- exact tail_geom_A4.
+- exact statics_A4.
+- exact LG.
+- exact LX.
+- exact layout_ok_A4.
+- exact (mid_ctx _ _ _ _ _ MID3).
+- exact (mid_sec _ _ _ _ _ MID3).
+- exact (mid_md _ _ _ _ _ MID3).
+Qed.
+Theorem MRx_A4_leak : @amf AM = true -> bounded A3 -> ama_ok A3 -> MRx B L3 A4 mem8 md3.
+Proof.
+intros Ham HB HA. apply midrep_MRx.
+- exact (midrep_A4_leak Ham).
+- exact (kill_inv A n A3 HW (proj1 Hn) FR3 HI3n EU3n).
+- exact (kill_bounded A A3 HB).
+- apply (rsv_ok_sub A); [exact (MRx_rsv _ _ _ _ _ MX)|]. intros f Hf. unfold frames, used_metas in Hf |- *.
+rewrite (proj1 A4_fields) in Hf. fold (used_metas A3) in Hf. fold (frames A3) in Hf. rewrite frames_A3 in Hf. exact Hf.
+- exact (kill_ama A A3 HA).
+-
+apply (span_ok_same_metas A3); [| exact (proj1 A4_fields)]. exact span_ok_A3.
+Qed.
+Lemma md3_with : exists vm', md3 = with_vmmaps vm' md.
+Proof.
+destruct VM3 as [vm3 E3]. exists vm3. rewrite E3. unfold md1, mmap_model. rewrite !with_vmmaps_twice. reflexivity.
+Qed.
 End D2.
 Lemma pairwise_map_In' {X Y} (R : Y -> Y -> Prop) (f : X -> Y) : forall l x y,
 pairwise R (map f l) -> In x l -> In y l -> x = y \/ R (f x) (f y) \/ R (f y) (f x).
@@ -542,7 +618,7 @@ intros Lx A1' A2' mdx G ER EB.
 assert (RO : forall k, region_of A2' k = region_of A1' k) by (intros k; unfold region_of; rewrite ER; reflexivity).
 assert (NS : nslots A2' = nslots A1') by (unfold nslots; rewrite ER; reflexivity).
 assert (LBy : live_bytes A2' = live_bytes A1') by (unfold live_bytes; rewrite ER; reflexivity).
-split; try (exact (lg_reserved _ _ _ _ G) || exact (lg_limit _ _ _ _ G) || exact (lg_rclim _ _ _ _ G) || exact (lg_brk0 _ _ _ _ G)).
+split; try (exact (lg_reserved _ _ _ _ G) || exact (lg_limit _ _ _ _ G) || exact (lg_rclim _ _ _ _ G) || exact (lg_brk0 _ _ _ _ G) || exact (lg_vdso _ _ _ _ G) || exact (lg_brk_vdso _ _ _ _ G)).
 - intros k rg Hk. rewrite RO in Hk. exact (lg_maps _ _ _ _ G k rg Hk).
 - intros k rg off Hk. rewrite RO in Hk. exact (lg_noaccess _ _ _ _ G k rg off Hk).
 - rewrite EB. exact (lg_brk _ _ _ _ G).
@@ -551,6 +627,7 @@ split; try (exact (lg_reserved _ _ _ _ G) || exact (lg_limit _ _ _ _ G) || exact
 - rewrite LBy. exact (lg_sizes _ _ _ _ G).
 - rewrite LBy. exact (lg_backing _ _ _ _ G).
 -   exact (lg_ceil _ _ _ _ G).
+- intros k rg Hk. rewrite RO in Hk. exact (lg_rfree _ _ _ _ G k rg Hk).
 Qed.
 Lemma layout_ok_same : forall Lx A1 A2, layout_ok Lx A1 -> st_regions A2 = st_regions A1 -> footprint A2 = footprint A1 -> layout_ok Lx A2.
 Proof.
@@ -921,6 +998,30 @@ split; [eapply L3_old; fin|].
 split; [eapply A3_r0; fin|].
 split; [eapply r0_maps_entry; fin|].
 eapply user_blocks_A3; fin.
+Qed.
+(* [D2_pack] when munmap answered ENOMEM under may-fail: the mapping is kept (md3) and memory with it. *)
+Lemma D2_pack_leak : forall B L A mem md (a : word) n L3 A3 mem6 md3 sp mem8,
+@amf AM = true ->
+MRx B L A mem md -> MMAP_THRESHOLD <= n < 2 ^ 62 -> grant_ok (Z_to_bv 64 0) md a (dlen n) = true ->
+(forall x, errno_addr B <= x < errno_addr B + 4 -> ~ (ms_ctx B <= x < ms_ctx B + CTX_SIZE)) ->
+(forall x, errno_addr B <= x < errno_addr B + 4 -> ~ static_owned B x) ->
+(forall x, errno_addr B <= x < errno_addr B + 4 -> in_img B x) ->
+(forall x, static_owned B x -> ~ (ms_ctx B <= x < ms_ctx B + CTX_SIZE)) ->
+midrep B L3 A3 mem6 md3 -> layout_le (dA2 A n) (L1 L A a) L3 -> am_frame (dA2 A n) A3 -> ub_same (dA2 A n) A3 ->
+Inv [] None U0 A3 -> (forall g am, usedX [] A3 g am <-> usedX [] A g am) ->
+alloc_ceiling + ALLOC_STACK <= sp ->
+(forall x, 0 <= x < 2 ^ 64 -> ~ ((sp - ALLOC_STACK <= x < sp) \/ (errno_addr B <= x < errno_addr B + 4)) ->
+~ (bv_unsigned a <= x < bv_unsigned a + dlen n) -> mem8 (Z_to_bv 64 x) = mem6 (Z_to_bv 64 x)) ->
+bounded A3 -> ama_ok A3 ->
+(exists vm3, md3 = with_vmmaps vm3 (md1 md a (dlen n))) ->
+MRx B L3 (dm_kill A A3) mem8 md3 /\ user_blocks (dm_kill A A3) = user_blocks A /\
+(exists vm', md3 = with_vmmaps vm' md).
+Proof.
+intros B L A mem md a n L3 A3 mem6 md3 sp mem8 Ham MX Hn GR ENC ENS ERRIMG SNC MID3 LE3 FR3 UB3 HI3 EU3 Hsp AG8 HB3 HA3 VM3.
+assert (HX3 : forall g am, memb g [] = true -> MT A3 g <> Some (MUsed am)) by (intros g am H; discriminate).
+split; [eapply MRx_A4_leak; first [eassumption | reflexivity]|].
+split; [eapply user_blocks_A4; first [eassumption | reflexivity]|].
+eapply md3_with; first [eassumption | reflexivity].
 Qed.
 Lemma D3_pre : forall B L A mem md (a : word) n L3 A3 mem6 md3 m,
 MRx B L A mem md -> MMAP_THRESHOLD <= n < 2 ^ 62 -> grant_ok (Z_to_bv 64 0) md a (dlen n) = true ->

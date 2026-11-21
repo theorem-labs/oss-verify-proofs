@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: send_message's walk on plugin-hostd/fuzz_command's ASan image, assembled from its
    five segments (send_message_s1.v .. send_message_s5.v) as cgif's cgif_close is assembled from its segment chain
-   (proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v, ACke.v at c8557374ad2e; the chain ACh1.v:804-805,
+   (proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v, ACke.v; the chain ACh1.v:804-805,
    ACh2.v:1238-1239, the contract ACh5.v:323-341). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

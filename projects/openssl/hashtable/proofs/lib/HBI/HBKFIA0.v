@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the state invariants take the launch record [LaunchX], and the argument area is read from it). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -44,13 +45,14 @@ Section S.
   Variables argv envp : list (list byte).
   Variable fs : Fs.Fs.
   Variables uid hw : word.
+  Context {L : LaunchX}.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
   Let c := content_of argv fs.
-  #[local] Notation SV := (SINVm HAPH sp rdraw brk0 argv envp uid hw c).
-  #[local] Notation argH := (argH0 HAPH sp rdraw argv envp uid hw).
+  #[local] Notation SV := (SINVm HAPH sp rdraw brk0 argv envp uid hw L c).
+  #[local] Notation argH := (argH0 sp rdraw argv envp (lx_kb L) (lx_execfn L)).
   #[local] Notation ISP := (bv_unsigned sp).
 
 
@@ -193,7 +195,7 @@ Section S.
   Qed.
 End S.
 
-Theorem hfi_a0 : forall sp rdraw brk0 argv envp fs uid hw, valid_sp sp -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp argv envp ->
+Theorem hfi_a0 : forall sp rdraw brk0 argv envp fs uid hw (L : LaunchX), valid_sp sp -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp argv envp ->
   forall k, 1 <= k <= 10 -> 2 ^ (15 + k) <= flen (content_of argv fs) <= 2 ^ (16 + k) - 1 ->
-  piece (SINVm HAPH sp rdraw brk0 argv envp uid hw (content_of argv fs)) (argH0 HAPH sp rdraw argv envp uid hw) (bv_unsigned sp) fs (HBKge1A0.fi_start_a0 k) TTK.
-Proof. intros sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit. exact (hfi_a0_sec sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit). Qed.
+  piece (SINVm HAPH sp rdraw brk0 argv envp uid hw L (content_of argv fs)) (argH0 sp rdraw argv envp (lx_kb L) (lx_execfn L)) (bv_unsigned sp) fs (HBKge1A0.fi_start_a0 k) TTK.
+Proof. intros sp rdraw brk0 argv envp fs uid hw L Hsp Hva Hve Hfit. exact (hfi_a0_sec (L:=L) sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit). Qed.

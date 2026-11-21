@@ -17,16 +17,16 @@
        lane CwD1q), spelled out here;
    (2) the library shape is ZTraceSpec.checksum_shape, passed explicitly;
    (3) the program slot is the program interface preset_lib_contract_x_all (lib/AU/PresetCfnB.v, 
-       a working branch 3f83c075b61f) in place of cgif's tfib_lib_contract_x, at its Section variables: the
+       a working branch) in place of cgif's tfib_lib_contract_x, at its Section variables: the
        build's strtod model sm, the PROVISIONAL non-primary room iface_room_np, B, MT, XM_LIB / XN_LIB and
        PAYLOAD_ROOM; its frame names (afn_pre_cf, ajournal_cf, apost_base_cf, ablocks_cf) are the interface's
        constants, so they are not quantified here; its listing class L / PA (RO_IN now reads PA's relro range in
        place of cgif's RLO / RHI). The slot, the free realizer and the post-call sites (PF1, PFN, EXS) are taken at
        every FP state, since a harness call returns at the callee's fx';
    (3a) the room, in the interface's form. The run-level start-up bound `4 * N_LLVMF + 24 <= K_INIT` of the
-       earlier text (pushed 61da04ae7317) is DELETED with N_LLVMF: it made the run layer vacuous (K_INIT = 14,335
+       earlier text (pushed) is DELETED with N_LLVMF: it made the run layer vacuous (K_INIT = 14,335
        against at least 9,696 allocator steps per harness call; a Theorem Labs lane's note, the internal file n-llvmf.md).
-       The run's primary room is a Theorem Labs lane's P8 (a working branch 4ec915e66b6, lib/Spec/PresetP8.v
+       The run's primary room is a Theorem Labs lane's P8 (a working branch, lib/Spec/PresetP8.v
        preset_room), the interface's state conjunct iface_room_at, which the leaves derive at the first call and
        the slot's post carries; nothing about it is a premise here. A driver state carries only the interface's
        non-primary room iface_room_np, a PROVISIONAL Section variable of the interface (owner a Theorem Labs lane,
@@ -39,7 +39,7 @@
        calls, and none exists before the first): the realizers AMALLOC / AFREE / AICPY are a8's _cf forms, and
        ARDCHK, FWS, RFS, FPO, FPR, FPU, PF1, PFN, EXS are the core's site forms with cgif's AR replaced by ARcf. The
        switch from cgif's AR is made once, at the allocator's initial state, inside the proof (a Theorem Labs lane's
-       ARcf_nil_init, lib/Reusable/YGcfNilInit.v:37, a working branch 5d91379f2041);
+       ARcf_nil_init, lib/Reusable/YGcfNilInit.v:38, a working branch);
    (4a) the allocator rows AMALLOC / AFREE are in their keep forms, YGcfMallocComposeKeep.amalloc_realizes_cf_keep /
        afree_realizes_cf_rh_keep (the leaf's memnorm keep at its end configuration), AFREE the primed free contract
        under the re-hide;
@@ -48,8 +48,8 @@
    (6) NEW premise PROOM, the payload-room bridge of the internal file closedwalk-plan.md 2f (the interface's PAYLOAD_ROOM from the
        no-refusal premise; trivial at PAYLOAD_ROOM := fun _ => True);
    (7) the earlier premises ABL / AFL / AJL (CwLoopA's PROVISIONAL links of the then quantified interface
-       vocabulary to ARcf) are DELETED: the interface's frame names are constants now (iface 3f83c075b61f);
-   (8) memnorm (the interface's header item (8), a working branch 446222ec0601; lane MnPrefix): NO
+       vocabulary to ARcf) are DELETED: the interface's frame names are constants now (iface);
+   (8) memnorm (the interface's header item (8), a working branch; lane MnPrefix): NO
        premise. The loop's named premise PresetD1rB.H_memnorm_drv_B (its three runner segments vp_run / br_run /
        l2_run keep YAkMemnorm.memnorm tfibsegs) is PROVED (lib/AU/PresetD1rBmn.v H_memnorm_drv_B_holds, by the core
        twins of lib/Reusable/YD2mnSeg.v), so the earlier premise HMND is deleted. Memnorm at the loop head comes from main:
@@ -71,6 +71,7 @@
    Literals: the three fprintf format addresses are the core's relocated values (lib/Reusable/YD1p.v:66-68) and are preset
    asan's strings (the internal file closedwalk-plan.md 2c: 0x1d84b / 0x1d860 / 0x158e3); the refused-site format 0x197b6 and its
    numeral 67108864 are the core's (lib/Reusable/YD1x.v:87). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises); the input-owned, top-anchored launch stack; the start-up certificate per CONFIG_RSEQ flag with states computed in the build). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -80,7 +81,8 @@ From OSSVerify.Core Require Shapes.
 From OSSVerify.omx_clap_core.fuzz_preset Require Images.
 From OSSVerify.omx_clap_core.fuzz_preset.images Require Import AsanUbsan.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YK11 YK15 YK18 YK0c YK0e YK09 YA0c YA0e YA01 YA02 YA00.
-From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YB12 YB01.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YB12 YB01r.
+From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU Require Import PresetD1qB.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YK00 YK0s YP0n YM02 YP0m YP09 YP0l YP06 YP08 YP03 YN3q YN3v YK04 YA0i YA0n YA0o YA0p.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YG00 YG0a YG01 YG0k YG0f YG0v YG0n YG0d YCe5 YL02 YG08.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YB1v YF0l YF0m YD2j YD2i YD1t YD20 YD1v YD2h YD2f YD1w YD1x YD1i.
@@ -94,11 +96,11 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU Require Import CfImgB.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A Require Import CfParamsPreset.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.AU Require Import PresetCfnB.
 (* CITED, never copied (the parent's ruling: one definition per predicate):
-   lane IfacePort (a working branch 3f83c075b61f, lib/AU/PresetCfnB.v): preset_lib_contract_x_all,
+   lane IfacePort (a working branch, lib/AU/PresetCfnB.v): preset_lib_contract_x_all,
    iface_room_np_init, iface_room_np_step, iface_room_np_tail;
-   lane CwSites (a working branch 9f95abaab5bd: printf_post_cf with the memnorm keep): printf_first_cf,
+   lane CwSites (a working branch: printf_post_cf with the memnorm keep): printf_first_cf,
    printf_next_cf, exit_site_cf;
-   lane CwPreA (a working branch 3d2de00623dc): aread_check_stmt_cf, fwrite_site_tfa_cf,
+   lane CwPreA (a working branch): aread_check_stmt_cf, fwrite_site_tfa_cf,
    refused_site_tfa_cf, fprintf_s_site_tfa_cf.
    Each site form is the core's with cgif's AR replaced by ARcf; they take {fx rc ci cp}: tfib_drv_main_B passes
    cp := CfParams_preset by name, takes the sites a harness call can precede at every fx (after a call the FP state is
@@ -156,7 +158,7 @@ forall (rc : YM05.RunCeil)
 (* the program slot at every FP state (preset_lib_contract_x_all: each call returns at the callee's fx') *)
 (LIBC : preset_lib_contract_x_all (rc := rc) (LS := ZTraceSpec.checksum_shape) (L := L) (PA := PA)
   sm iface_room_np B MT XM_LIB XN_LIB PAYLOAD_ROOM)
-(* #102 (no-DW interface, PresetCfnB.v, first at commit 8259b94c42ee): the slot pre's universe closure at the slot's
+(* #102 (no-DW interface, PresetCfnB.v, first): the slot pre's universe closure at the slot's
    context set, state-free; the closed top takes it from the instance's universe *)
 (UNIV : @PRH_Base.prh_univ_closure PresetCfnB.preset_prh_img B CfImg_B PresetCfnB.iface_ctx0)
 (* the instance universe's wild room covers the loop's four calls (true by conversion at TfibB) *)
@@ -176,18 +178,20 @@ forall (rc : YM05.RunCeil)
 (FPR : fprintf_s_site_tfa_cf (cp := CfParams_preset) B est YImgCellsB.B_RODATA_0XD577 (strB "cli: read error on "%string) nlB)
 (FPU : fprintf_s_site_tfa_cf (cp := CfParams_preset) B est YImgCellsB.B_RODATA_0X55CA (strB "usage: "%string) (strB " INPUT"%string ++ nlB))
 (EXS : forall fx : YK11.FPState, exit_site_cf (fx := fx) (cp := CfParams_preset) B est xst),
-forall (sp : word) (rdraw : EntryDraw) (brk : word) (inp : ProcInput) (en_p : ExecEntry)
+forall (sp : word) (rdraw : EntryDraw) (brk mbase : word) (inp : ProcInput) (en_p : ExecEntry)
 (h : nat) (ch : acs) (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model),
-valid_sp sp -> valid_brk AsanUbsan.M.loaded_segments brk -> entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+valid_sp sp -> valid_brk AsanUbsan.M.loaded_segments brk -> valid_mmap_base mbase ->
+entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) inp ->
 NR en_p inp ->
 @YM05.ceil_of_top rc (bv_unsigned sp - stack_max_size) ->
-HS_tfib h = Some ch ->
+HS_tfib_r (rseq_z (kb_rseq (in_kernel inp))) h = Some ch ->
 cs_ok AsanUbsan.M.loaded_segments TFIB YA02.LIMIT (YA02.TOP sp)
-(YA02.SINV0 AsanUbsan.M.loaded_segments AsanUbsan.M.phdrs sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-(YA02.argH0 AsanUbsan.M.phdrs sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model ->
-(forall n, (n < NX0G)%nat -> ev E n = ev (YA02.E0 AsanUbsan.M.phdrs sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) n) ->
-(forall a, YA02.argH0 AsanUbsan.M.phdrs sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) E a = true ->
-FULL a = wrap_mem AsanUbsan.M.phdrs sp (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) rdraw a) ->
+(SINV_B sp rdraw brk mbase inp)
+(argH_B sp rdraw inp) (in_fs inp) E ch R FULL model ->
+(forall n, (n < NX0G)%nat -> ev E n = ev (E0_B sp rdraw brk inp) n) ->
+(forall a, argH_B sp rdraw inp E a = true ->
+FULL a = FULL0_B sp rdraw mbase inp a) ->
 srealizes AsanUbsan.M.loaded_segments (cfg_of AsanUbsan.M.loaded_segments R (pc ch) FULL model)
 (CLOSEDX (LS := OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.ZTraceSpec.checksum_shape) inp).
 
@@ -197,20 +201,24 @@ srealizes AsanUbsan.M.loaded_segments (cfg_of AsanUbsan.M.loaded_segments R (pc 
    fact H1_8), for a layout whose top is page aligned and within top_ok of usp (YD1g.ly0: layout_ok and
    YD1f.tfib_top_ok), every byte of [usp - 64 KiB, ly_top) is present: not hidden by H1 and mapped in FULL. It is the
    statement of the start-up lane's stack_up_main_W1_B (lib/AU/Prog/StackUpMainB.v, over the kit's argH0 change in
-   lib/Reusable/YA02.v, a working branch 87cf0d0d06f6: the argv NULL word and LPS's slack up to the
-   entry page top), which PROVES it: lib/AU/PresetD1pBPfC.v H_stackup_main_B_holds. *)
+   lib/Reusable/YA02.v, a working branch: the argv NULL word and LPS's slack up to the
+   entry page top), which PROVES it: lib/AU/PresetD1pBPfC.v H_stackup_main_B_holds. LPS 727298f3: it also takes the
+   launch premise entry_launch_ok_va, which places the stack VMA's end, up to which the entry stack image runs. *)
 Definition H_stackup_main_B : Prop :=
-forall (rc : YM05.RunCeil) (sp : word) (rdraw : EntryDraw) (brk : word) (inp : ProcInput)
+forall (rc : YM05.RunCeil) (sp : word) (rdraw : EntryDraw) (brk mbase : word) (inp : ProcInput)
 (Hsp : valid_sp sp) (Hva : valid_argv (in_argv inp)) (Hve : valid_envp (in_envp inp))
 (Hfit : entry_stack_fits sp (in_argv inp) (in_envp inp))
+(Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) inp)
 (h : nat) (ch : acs) (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model),
-HS_tfib h = Some ch ->
+forall SINV : env -> (word -> option byte) -> Prop,
+(forall E' M, SINV E' M -> uE E' e_sp0 = YA02.TOP sp + 8388608) ->
+HS_tfib_r (rseq_z (kb_rseq (in_kernel inp))) h = Some ch ->
 cs_ok AsanUbsan.M.loaded_segments TFIB YA02.LIMIT (YA02.TOP sp)
-(YA02.SINV0 AsanUbsan.M.loaded_segments AsanUbsan.M.phdrs sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-(YA02.argH0 AsanUbsan.M.phdrs sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model ->
-(forall n, (n < NX0G)%nat -> ev E n = ev (YA02.E0 AsanUbsan.M.phdrs sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) n) ->
-(forall a, YA02.argH0 AsanUbsan.M.phdrs sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) E a = true ->
-FULL a = wrap_mem AsanUbsan.M.phdrs sp (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) rdraw a) ->
+SINV
+(argH_B sp rdraw inp) (in_fs inp) E ch R FULL model ->
+(forall n, (n < NX0G)%nat -> ev E n = ev (E0_B sp rdraw brk inp) n) ->
+(forall a, argH_B sp rdraw inp E a = true ->
+FULL a = FULL0_B sp rdraw mbase inp a) ->
 forall (H1_8 : forall a : Z, YG0f.in_band_rw a ->
   YD2i.H1 sp rdraw inp ch E model (Z_to_bv 64 a) = YD2i.H1 sp rdraw inp ch E model (Z_to_bv 64 (a - a mod 8))),
 forall ly : alayout, ly_top ly mod 4096 = 0 -> YD1v.top_ok (rc := rc) (bv_unsigned sp) ly ->
@@ -223,24 +231,28 @@ forall a, bv_unsigned sp - 65536 <= a < ly_top ly -> apresent (w_H (YD2i.W1 sp r
 (* the init model's lazy and noaccess maps lie in its maps (ARcf's alc_lazy_in_maps at the start);
    supplied by: start-up rows (the kit owner) *)
 Definition H_start_lazy_B : Prop :=
-forall (sp : word) (rdraw : EntryDraw) (brk : word) (inp : ProcInput)
+forall (sp : word) (rdraw : EntryDraw) (brk mbase : word) (inp : ProcInput)
 (h : nat) (ch : acs) (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model),
-HS_tfib h = Some ch ->
+forall SINV : env -> (word -> option byte) -> Prop,
+(forall E' M, SINV E' M -> uE E' e_sp0 = YA02.TOP sp + 8388608) ->
+HS_tfib_r (rseq_z (kb_rseq (in_kernel inp))) h = Some ch ->
 cs_ok AsanUbsan.M.loaded_segments TFIB YA02.LIMIT (YA02.TOP sp)
-(YA02.SINV0 AsanUbsan.M.loaded_segments AsanUbsan.M.phdrs sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-(YA02.argH0 AsanUbsan.M.phdrs sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model ->
+SINV
+(argH_B sp rdraw inp) (in_fs inp) E ch R FULL model ->
 forall x, YK0g.covered (vm_noaccess (m_vmmaps model) ++ m_vm_lazy model) x = true ->
 YK0g.covered (vm_maps (m_vmmaps model)) x = true.
 (* the start witness of the RegionInfo + 68 bytes and the errbuf object (YG0ncf.start_cells_cf) at the start-up
    world W1; supplied by: start-up rows (the kit owner) *)
 Definition H_start_cells_B : Prop :=
-forall (rc : YM05.RunCeil) (sp : word) (rdraw : EntryDraw) (brk : word) (inp : ProcInput)
+forall (rc : YM05.RunCeil) (sp : word) (rdraw : EntryDraw) (brk mbase : word) (inp : ProcInput)
 (Hsp : valid_sp sp) (Hva : valid_argv (in_argv inp))
 (h : nat) (ch : acs) (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model),
-HS_tfib h = Some ch ->
+forall SINV : env -> (word -> option byte) -> Prop,
+(forall E' M, SINV E' M -> uE E' e_sp0 = YA02.TOP sp + 8388608) ->
+HS_tfib_r (rseq_z (kb_rseq (in_kernel inp))) h = Some ch ->
 cs_ok AsanUbsan.M.loaded_segments TFIB YA02.LIMIT (YA02.TOP sp)
-(YA02.SINV0 AsanUbsan.M.loaded_segments AsanUbsan.M.phdrs sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-(YA02.argH0 AsanUbsan.M.phdrs sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model ->
+SINV
+(argH_B sp rdraw inp) (in_fs inp) E ch R FULL model ->
 forall (H1_8 : forall a : Z, YG0f.in_band_rw a ->
   YD2i.H1 sp rdraw inp ch E model (Z_to_bv 64 a) = YD2i.H1 sp rdraw inp ch E model (Z_to_bv 64 (a - a mod 8))),
 forall B : asyms, TfibSyms B ->
@@ -248,13 +260,15 @@ start_cells_cf tfibsegs B (YD1g.ly0 ch E model) init_state
   (YD2i.W1 sp rdraw inp Hsp Hva ch E model H1_8) FULL.
 (* the start witness of Printf's two cells (YG0ncf.start_pf_cf) at W1; supplied by: start-up rows (the kit owner) *)
 Definition H_start_pf_B : Prop :=
-forall (rc : YM05.RunCeil) (sp : word) (rdraw : EntryDraw) (brk : word) (inp : ProcInput)
+forall (rc : YM05.RunCeil) (sp : word) (rdraw : EntryDraw) (brk mbase : word) (inp : ProcInput)
 (Hsp : valid_sp sp) (Hva : valid_argv (in_argv inp))
 (h : nat) (ch : acs) (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model),
-HS_tfib h = Some ch ->
+forall SINV : env -> (word -> option byte) -> Prop,
+(forall E' M, SINV E' M -> uE E' e_sp0 = YA02.TOP sp + 8388608) ->
+HS_tfib_r (rseq_z (kb_rseq (in_kernel inp))) h = Some ch ->
 cs_ok AsanUbsan.M.loaded_segments TFIB YA02.LIMIT (YA02.TOP sp)
-(YA02.SINV0 AsanUbsan.M.loaded_segments AsanUbsan.M.phdrs sp rdraw brk (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp))
-(YA02.argH0 AsanUbsan.M.phdrs sp rdraw (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp)) (in_fs inp) E ch R FULL model ->
+SINV
+(argH_B sp rdraw inp) (in_fs inp) E ch R FULL model ->
 forall (H1_8 : forall a : Z, YG0f.in_band_rw a ->
   YD2i.H1 sp rdraw inp ch E model (Z_to_bv 64 a) = YD2i.H1 sp rdraw inp ch E model (Z_to_bv 64 (a - a mod 8))),
 forall B : asyms, TfibSyms B ->

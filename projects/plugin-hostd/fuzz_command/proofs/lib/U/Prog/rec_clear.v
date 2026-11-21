@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_pcap/lib/Prog/mread.v, with its module paths and numbers changed; 989 of its 1017 lines of code are new or changed and 233 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/Prog/chain_words.v, with its module paths, module names, addresses and numbers changed; 483 of its 548 lines of code are new or changed and 952 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/Prog/sup_worker_list.v, with its module paths, addresses and numbers changed; 779 of its 856 lines of code are new or changed and 471 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 as this unit's lib/Prog/rec_clear.v is, with the U module paths (changed rc_auxv). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
@@ -444,8 +445,8 @@ Lemma rc_auxv : forall L A mem md m' W S, aa_MR API L A mem md -> auxv_pre B (ly
   auxv_pre B (ly_sec L) S m'.
 Proof.
   intros L A mem md m' W S HM HAX MU HL HS. pose proof (aa_laws API) as LAWS. pose proof alloc_ceiling_val as AC0.
-  destruct HAX as (av & ar & W1 & W2 & W3 & W4 & B1 & B2 & B3 & B4 & L1 & L2).
-  exists av, ar.
+  destruct HAX as (rs & av & ar & W1 & W2 & W3 & W4 & B1 & B2 & B3 & B4 & L1 & L2).
+  exists rs, av, ar. pose proof (auxv_types_len_ge rs). unfold AUXV_RAND_K in *.
   assert (LIB : forall k, (k < 8)%nat -> 0 <= ms_libc B + 8 + Z.of_nat k < 2 ^ 64 /\ outside W (ms_libc B + 8 + Z.of_nat k)).
   { intros k Hk. assert (Ho : owned B L A (ms_libc B + 8 + Z.of_nat k)) by (right; unfold static_owned; lia).
     pose proof (owned_low B _ LAWS L A mem md _ HM Ho). split; [lia | apply HL; lia]. }

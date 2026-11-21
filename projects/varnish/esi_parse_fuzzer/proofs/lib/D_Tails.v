@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main-entry words p0C/p1C in base_ok and the register pins, knD's stack-window row over the 6144512 bytes below sp0, and the channel-reader premise of the refused tail's stderr write), as bzip2/bzip2_compress_target's main phase was. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -186,8 +187,10 @@ Definition knD : list kentry := knM0.
 
 Lemma knD_vars : kn_vars_lt 6 knD = true. Proof. vm_compute. reflexivity. Qed.
 (* [comment removed for export] *)
-Definition knD_iw : nat := Eval vm_compute in match kindex (is_kwr_cov (EVar 0) (-8388608) 8388608) knD 0 with Some i => i | None => 0%nat end.
-Lemma knD_win : nth_error knD knD_iw = Some (KWr (SA (EVar 0) (-8388608)) 8388608). Proof. vm_compute. reflexivity. Qed.
+(* LPS 727298f3: main_entry's window row is the 6144512 bytes below sp0 ([D_Manqc.kn_stack]).
+   [knD_win] checks that knD carries that row unchanged. *)
+Definition knD_iw : nat := Eval vm_compute in match kindex (is_kwr_cov (EVar 0) (-6144512) 6144512) knD 0 with Some i => i | None => 0%nat end.
+Lemma knD_win : nth_error knD knD_iw = Some (KWr (SA (EVar 0) (-6144512)) 6144512). Proof. vm_compute. reflexivity. Qed.
 
 Section Drv.
   Context {AMB : Amb}.
@@ -199,8 +202,8 @@ Section Drv.
   Hypothesis Hvsp : valid_sp sp0.
 
   Definition base_ok (vals : list word) : Prop :=
-    length vals = 70%nat /\ vals_ev vals 0 = sp0 /\ vals_ev vals 1 = p0 sp0 a0s path envv
-    /\ vals_ev vals 2 = p1 sp0 a0s path envv /\ vals_ev vals 5 = tid.
+    length vals = 70%nat /\ vals_ev vals 0 = sp0 /\ vals_ev vals 1 = p0C a0s path envv rdraw
+    /\ vals_ev vals 2 = p1C a0s path envv rdraw /\ vals_ev vals 5 = tid.
 
   (* [comment removed for export] *)
   Definition junk_at (vals : list word) (R : bvmap 5 word) : Prop :=
@@ -213,7 +216,7 @@ Section Drv.
   Qed.
 
   Lemma sr_drv_ok : forall vals R,
-    base_ok vals -> junk_at vals R -> pins_main sp0 (p1 sp0 a0s path envv) R ->
+    base_ok vals -> junk_at vals R -> pins_main sp0 (p1C a0s path envv rdraw) R ->
     regs_ok (ENV a0s path rdraw vals) sr_drv R.
   Proof.
     (intros vals R; (first [ intro dR_1; dand5 dR_1 as HL V0 V1 V2 V5 | intros (HL & V0 & V1 & V2 & V5) ]); intros HJ [P2 P3 P4 P8 P18 P20 P24 P25 P26 P27]).
@@ -260,7 +263,7 @@ Section Drv.
 
   (* [comment removed for export] *)
   Lemma pins_of_sr_drv : forall vals R,
-    base_ok vals -> regs_ok (ENV a0s path rdraw vals) sr_drv R -> pins_main sp0 (p1 sp0 a0s path envv) R.
+    base_ok vals -> regs_ok (ENV a0s path rdraw vals) sr_drv R -> pins_main sp0 (p1C a0s path envv rdraw) R.
   Proof.
     (intros vals R; (first [ intro dR_2; dand5 dR_2 as HL V0 V1 V2 V5 | intros (HL & V0 & V1 & V2 & V5) ]); intros HR). pose proof (proj1 Hvsp) as SPlo. pose proof (u64_range sp0).
     split.
@@ -287,8 +290,8 @@ Section Drv.
      expr_eqb (nth 26 sr (ELit 0)) (ELit 0) && expr_eqb (nth 27 sr (ELit 0)) (ELit 0))%bool.
 
   Lemma pins_of_sr : forall vals R sr,
-    vals_ev vals 0 = sp0 -> vals_ev vals 2 = p1 sp0 a0s path envv -> pins_expr_ok sr = true ->
-    regs_ok (ENV a0s path rdraw vals) sr R -> pins_main sp0 (p1 sp0 a0s path envv) R.
+    vals_ev vals 0 = sp0 -> vals_ev vals 2 = p1C a0s path envv rdraw -> pins_expr_ok sr = true ->
+    regs_ok (ENV a0s path rdraw vals) sr R -> pins_main sp0 (p1C a0s path envv rdraw) R.
   Proof.
     intros vals R sr V0 V2 Hok HR. pose proof (proj1 Hvsp) as SPlo. pose proof (u64_range sp0).
     unfold pins_expr_ok in Hok. repeat (apply andb_prop in Hok as [Hok ?]).
@@ -523,13 +526,14 @@ Section Tails.
     | left; split; [reflexivity|]; exists (Z_to_bv 64 0), (Z_to_bv 64 0); repeat split; krd_solve HK ].
 
   #[using="Hvsp"] Theorem refused_tail : forall vals R (M : word -> option byte) (md : Model),
-    base_ok sp0 a0s path envv tid vals -> junk_at vals R -> pins_main sp0 (p1 sp0 a0s path envv) R ->
+    base_ok sp0 a0s path envv rdraw tid vals -> junk_at vals R -> pins_main sp0 (p1C a0s path envv rdraw) R ->
     know_ok RSEGS (ENV a0s path rdraw vals) M knD ->
     m_halted md = None -> m_vm_lazy md = [] ->
     fd_lookup (m_fds md) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+    m_channel_reader md = true ->   (* LPS 727298f3: the stderr write needs a reading far end *)
     realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x17dac) M (seg_rom RSEGS)) md) (t_die msg_refused (m_fs md)).
   Proof.
-    intros vals R M md HB HJ HP HK Hh Hlazy Hfd2.
+    intros vals R M md HB HJ HP HK Hh Hlazy Hfd2 Hrdr2.
     pose proof HB as (HL & P0 & P1 & P2 & P5).
     pose proof (proj1 Hvsp) as SPlo. pose proof (proj1 (proj2 Hvsp)) as SPhi. pose proof (proj2 (proj2 Hvsp)) as SPal.
     unfold sp_window_lo, sp_window_hi in *.
@@ -558,6 +562,7 @@ Section Tails.
       unfold flat, estart. cbn [a_base a_off edenot ev ENV]. rewrite P0. lia.
     - reflexivity.
     - exact Hfd2.
+    - exact Hrdr2.
     - exact Hh.
     - exact Hlazy.
     - apply t_exit_has_nil.

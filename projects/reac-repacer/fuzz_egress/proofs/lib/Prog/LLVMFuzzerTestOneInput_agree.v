@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
-(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/Prog/LLVMFuzzerTestOneInput_agree.v
-   at bc49657c087aa7d6ab0af1ffb2cb67fa08b15de1; module path and this unit's two slot contracts (egress_slot_g_frame,
+(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/Prog/LLVMFuzzerTestOneInput_agree.v;
+   module path and this unit's two slot contracts (egress_slot_g_frame,
    egress_slot_cg_frame). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Statements.ubsan_agrees, as libreac/fuzz_decode's released lib/Prog/LLVMFuzzerTestOneInput_agree.v: the kit's
    ubsan_agrees_of_slots (lib/AgreeFrame.v) at ag_shape kept_shape, given the plain image's slot contract
    (lib/Prog/LLVMFuzzerTestOneInput_gfr.v: egress_slot_g_frame) and the UBSan image's cut-free one

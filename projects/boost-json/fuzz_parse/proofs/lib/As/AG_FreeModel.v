@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: lemmas added for the revision. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib.As Require AW_0Gc. (* [comment removed for export] *)
@@ -75,6 +76,23 @@ Lemma sbs_fields : ltac2:(zQ "h40!jpd!jq3!qc!hh8!ir7!is1!it2!ji5!jj0!jk2!jm1!ik1
 Proof.
 ltac2:(KReplay.run1z (kr_t_AG_FreeModel ()) [] "##_<h02H0h12H1h23H10h33H11h43H12h53H13h62H2h72H3h82H4h92H5h:2H6h;2H7h<2H8h=2H9h>1Hh?3H14h@1ShA1ahB1bp&0p;2p;1p;3p;4g00;ek201Tg00UQj1DTg00Y7j1MTg003bj1TTg00V`j1:Tg00ZFj1>Tg00[Xj19Tg00\cj1<Tg00^3j17Tg00l=j1nTg00_<j15Tg00`Hj14Tg00aPj1=Tg00bXj1@Tg00Wmj1?Tg00e7j18Tg00gRj12Tg00h\j16Tg00ifj13Tg00=:j30!s/$nR0j2!u+$?Xj4PTg00RdR1f1R2f0R3#D30p=u%339012p=Qf2R4#6=012/13p=b%229014!s3$tf3R5%84;0!sC%rg00SgR6f5R7#@f4R830%?4=052/13'1p=Fg00moR9%=!s[+S%42909!sx%o%52905!s3%OA0178A054!se'B%9!sE,R%>2906!s3%U%52=043p=N%>4=06!t'%m%27=018%9!tT/l%48=095%34!uO&'1p=A%D2=013p=\%649015!u|&'1p=C%859078!uu,'1p=G%@89067%?!te''1p=I%459098%=!uO''1p=KA0123p=;f7R:f6R;#8;07A0185%6!tV,'1p=EA0985A09!uo+WA0;!v%1VA0785A01!s8+[!s8&6!s8+k%:8=075!v0,'1p>00%2:=01;%9!sD%D4%D2501!tN+Z%:!w,,~!s}&!t[,YA06!t[1}%:!wD&iA0623p=|A0685!w[&'1p={%:4%:2505!s|$z%>2=063p=g%:8%:5507%>4%>2506!s|&y%2!v6'p=x%9!t1&e%D:%D;501!s`:'1p=H!xg,%9!tD&'1p=J%7!sm&cA0923p=w%52%53504p=L!w?&!vs,v%42=093p=^%259018%6!xp/X%?890;7%8!xp/a%=!xp%@!z`''1p=s%=!sr&`%@!ut&j!xo4p=d%?7=0;8%8!zs/q%?!u0&]%8!s0&h%2!zq&_%6!s0&f%3!s0&pg00L\R620123P0%D4R9/u2%M4%M2g00o:#TR<%:4R=%:2%>4R>g011Q#TR?%94R@P2%<4%<2g012\#TRA%74%72g013g#nRB%54RCP2%44RD%=2P4%@2g010E#TREP4%?2%T1R1P4%82%24RF%62%34RG/Q25b47t2CrEF5S47o2COEBCR7U2EBP5PDP5PGP5PFP?P5P@%D5R@P9P<%:5P=ANB5C9m5>EBElDAP31\8@%M7R@%M8P<%:7R>%:8%>7R5P?%97RCP8%<7R=%<8PA%77R9%78PB%57RFP8%47RGP8%=7RDP8%@7R4P8PE%?7RHP8P1%87RIP8%27RJP8%67RKP8%37RLP8CCEGEIDK!u5'8EBP0%M;/;@P<%:;R@P>%>;R>P!tY$;R5PC%<;P=PA%7;P9PB%5;R9PF%4;RFPG%=;PDP;P4PEP;PHP1P;PI%2;RIPJP;PK%3;RK/;LGEEFDWFVE[EkP:PFP:PKP:PIP?P:P5P:P;P<P:P@P:P>ANB:9J00GZDAP3f8R9#M%M:';P<f9R:#:R>P9%>:R@P?%9:R;P9%<:R5%<9PA%7:RI%7!tw$:RKP9%4:RFP9%=:RLP9%@:RJP9PE%?:RHP9P1%8:R4P9%2:RDP9%6:RGP9%3:R:P9!vL39C~P0f:R9#:R==0<>%>9R>P!tV$9R@P;%<9P5PA%79PIPB%59RIPK%49RKPFP9PJPEP9!vD$9P4%29R4PDP9PG%39RG/;:GEEF9S9LEYEBE}f;RLPKPLPGPLP4P?PLP@PL!ym%LR9P=%>L!vL$LIEk!vK&<RL=i<9f=R9#>RI!tg%>PL%<9R=%<L!tj$R@%7L!tm%4PL%49RGPL%=9RKPL%@9R:PLPE%?9RDPLP1%89RHPL%29RJPL%69RFPL%39R9PL!v?3LP0f>RL#>R5/|!tL$LRIP>%<L!yX%LP@PB%5LR@P4%4LR4PG%=!u[%:PEPLPDP1PLPH%2LRHPJPLPF%3LRF/;9!yX,f?R9P4P9!vq$HP?P9PIP9PLP<P9PL%>9RLP5PBP9P@D{Cz!v8&@R@/gLP?fARL#9R9P@%<LR5%<@!tg$RI%7!tj&HP@%4LRFP@%=LR4P@%@LRJP@PE%?LRDP@P1%8LR:P@%2LRKP@%6LRGP@%3LRLP@!v21P0fBR@#9R==0?9%<@!y6%@!y6%@RIPH%4@RHPFP@!y6$@!uz$@P:%2@R:PKP@PG%3@RG!|T&9S@4EYEBfCR4PHP4PGP?%94RGP=%D4%D@P<P4P@P4P@ANB4IEyE[9x4:!u{$DR4=e?GfERG#<R:%<4PA%7GRI%74PB%5G!w_%GR=P4%=GRHP4%@GRLP4PE%?GRKP4P1%8GRDP4%2GRJP4%6GRFP4%3GRGP4!us/P0fFR4#</;:PA%74!ui%4RIP@%44R@P=%=!u9%LPEP4PKP1P4PD%24RDPJP4PF%34RF/;G!xj'fGRGP@PGPFPGPDP?PG!uv$4P<!s0'ANBGIGHEJ!ue$HRI#<%<G';PAfIRG#7R4%7!tU$GRD%5I%4GRFPI%=GR@PI%@GRJPI!ua'I!ua%LPI%2GRHPI%6GR=PI%3GR:PI!ua'FVP0fJRI=cA!vb$IR4PD%4IRDPFPI!xB$I!uR$IPL%2IRLPHPIP=%3IR=!~R+I@EYfKR@PDP@P=!~F$?P@PI!s&$<!s0'ANB@4!uT+LR4%7@5cAPBfMRA#5!x'%ARIP4%=ARLP4%@AR=!x'%ARD!x'%AR:P4%2A!xK$6ARKP4%3ARJ!x'/P0fNR4#5RF=0B!wt&I%=4PLP4P=!wt$D!wt$:%24R:!x3$K%34RK/;J!wt%fO!|B$JPKPJP:P?!x@$J!wr$!s0&%5JRJ=0BF!uH+PRF=NBJfQRJ#4R4PF%=JR:PF%@JRKPFPE%?JR@PFP1%8JRHPF%2JRDPF%6JR=PF%3JRJPF!u='P0fRRF#4RL/w4PFPKPE!|t$1PFPH%2FRHPDPFP=%3FR=!u-&9SF:fSR:#4RJPL%3:P=P:PHP?!#:S%FP<!s0'ALB:!u1%vP3fTR:/^JfURJ#=RFP:%@JRHP:!u%%=P:!u%%LP:!u%%:%6JR@P:!u%$/Q:DXFaDsP0fVR:/`F!tB$EP:P=P1P:PL%2:RLPDP:P@%3:R@!t|&fWRJ%4:P!w/%L!w'$:!s&$<!s0'ALBJ:!w#+XR:%=J'`fYRJ#@RL!to'@!to'D!to%=!to%H!to%FP:!vr%P0fZR:/jL!tj$@!tj$D!#<$$!vE$%3:RH/;FDdFqf[RF%4:PFPHPF!}c$!v^%:P<!s0'ALBF!tj,\R:%@F'jPEf]RF#?RD!tc%F!tU$2F!tc%F!vT%FRL!vT&P0f^R:=]ED!t]$H%2:RH!t]$!vI'LGEf_RL%4:!#<0%HP?PLP:!s&$<!s0'ALBL!t[,`R:%?L5]EP1faRE#8!x%%E!tZ$6E!tS%ER=!v8%P0fbR:=h1!wo&H!tL-=DdfcR=%4:!~6$=!wm$=!xI$:P<!s0'ALB=!tL,dR:%8=5h1feR1#2!up%1!tQ$31R1!up$P0ffR:#2!t2$%3:R=/;19b:Lfg!ub'=%2LR=!#@,$L%9!ug:B!tA$hRL/_=fiR=#6R:PL%3=R@PLCCP0fjR0/f:%30R:/;@fkR@%40P@!u[$20P?P@P0!s&$<!s0'ALB@0!uE+lR0%6@'ffmR@#3R:/Q0fnR0%4@'^1p0:R:%2@,_0RL%9@9e?0R?%D@,\0R1%:@9i<0R<%>@,g0RHALB0@R0'1R@'1RB'1RD'1RK'1R4'1PGP:P4P3PLPKP7P?PDPJP1PBP=!ti$EPHP0PFPACP!s$/W?W5P2P3O2n20010!s#$12!s/&W5W4!sD>4W3!sD>3W2!sD>2W=!sD>=W<!sD><W;!sD>;W:!sD>:W9!sD>9W8!sD>8W7!sD>7W6!sD>6W1!sD>1W0!sD>0W>!sD>@XB6WAo"). Qed.
 
+
+(* LPS revision repair (75d69e00, checker 2c6b6db8).  UNIVERSE ANCHOR for the replay below.
+   TWIN of Bs/AG_FreeModel.v's; the anchor names only `ex_elimF1` and `astate`, both of which
+   are spelled identically on the two sides, so the transfer carries no address, no
+   hex-suffixed identifier and no literal (rule 22's audit is vacuous here by construction).
+   `KReplay.run1`/`run1z` hand the decoded proof term to the kernel with `Std.exact_no_check`
+   (KReplay.v:627), so a replay can only CONSUME universe constraints that are already in the
+   graph; it cannot add one, because nothing elaborates the term.  `am_free_unfold`'s term
+   applies `Nd.ex_elimF1` (a monomorphic `Lemma`, so `ex_elimF1.u0` is rigid) to `astate`,
+   whose level is `max(Set, PositiveMap.tree.u0)` because of the `as_chunks : PositiveMap.t
+   chunk` field; the application needs `PositiveMap.tree.u0 <= ex_elimF1.u0`.
+   Measured (scratch probe, image 2c6b6db8): `Check (ex_elimF1 astate)` ELABORATES, printing
+   exactly `(* {} |= PositiveMap.tree.u0 <= ex_elimF1.u0 *)`.  So neither `astate`'s level nor
+   `Nd.ex_elimF1` changed; what the revision removed is whatever elaborated declaration used
+   to put that constraint into this file's graph ahead of the replay.  The line below is that
+   declaration, written explicitly. *)
+Definition u_anchor_ex_elimF1_astate := ex_elimF1 astate.
 
 Section FreeModel.
   Variables (st : astate) (ch : chunk).

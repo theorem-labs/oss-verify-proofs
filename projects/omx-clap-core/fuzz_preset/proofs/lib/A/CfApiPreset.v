@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset's AsanAPI_cf (YGcfNames.v, Section API) at the second allocator instance,
    image A: segs := tfibsegs (AB1v.v), CfImg := CfImg_A (CfImgA.v), CfParams := CfParams_preset (CfParamsPreset.v),
    each class instance passed by name (ci := CfImg_A, cp := CfParams_preset), positionally with @, inferred (ci at :171 and :177, from the AR_laws_ok_cf argument), or, in Section PV (:195-197), ci from the Section context and cp from the local CfParams_preset instance. The RunCeil is an explicit argument (the tree has no preset
@@ -10,10 +11,10 @@
       pair takes a ghost set Hp and a pc in YGcfRealloc.v; the parameter is `forall Hp` at the realloc
       interceptor's entry cf_pc_wrap_realloc (YGcfRealloc.v:70-71). arealloc_null_realizes_cf names B, which the
       record's parameter (list Segment -> Prop) does not take, so the instance's B is captured.
-      The strcmp / strlen contracts are c-libc-stdio's (YGcfStr.v, by path from commit
-      3e37c5476fed): their predicates are the real definitions; their proofs are open arguments. The snprintf
-      contract is c-omx-alloc's row YGcallSnp.asnprintf_realizes_xrom (by path from commit
-      193779166e07) at ARx := ARcf segs B, the form YGcallSnpCk.asnprintf_cf_of_xrom instantiates, at preset's
+      The strcmp / strlen contracts are c-libc-stdio's (YGcfStr.v, by path):
+      their predicates are the real definitions; their proofs are open arguments. The snprintf
+      contract is c-omx-alloc's row YGcallSnp.asnprintf_realizes_xrom (by path)
+      at ARx := ARcf segs B, the form YGcallSnpCk.asnprintf_cf_of_xrom instantiates, at preset's
       format family, window and read-only ranges (CfSnprintfPreset.v), CfImg_A's canary cells and image range, and
      as the row's [rlo, rhi) (the relro range of PresetRodata.arodata_okP, lib/Spec/PresetRodata.v) the image's
       relro range pa_relro_lo / pa_relro_hi of the whole-program listing instance PI_prog_A (lib/A/PAImg_prog.v,
@@ -21,8 +22,8 @@
       (PRH_Base.v fpre, Prog/FuzzStrdup.v RLO / RHI). Its proof is an open argument.
    2. The fields with a proof in this tree are filled: aa_laws_cf (YG0lawscf.AR_laws_ok_cf), aa_model_cf
       (YG0ucf.model_laws_cf_ok, from universe_ok (as_universe B), the instance's premise HU), aa_stack_free_cf
-      (YG0tcf.astack_free_law_ok_cf), and the frame-area pair from h-hpreset-7's FCapiCf.v (merged at
-      52a7fffa7133): aa_stack_malloc_cf (preset_aa_stack_malloc_cf; [0; 1; 3] is cf_fs_classes CfParams_preset)
+      (YG0tcf.astack_free_law_ok_cf), and the frame-area pair from h-hpreset-7's FCapiCf.v (merged):
+      aa_stack_malloc_cf (preset_aa_stack_malloc_cf; [0; 1; 3] is cf_fs_classes CfParams_preset)
       and aa_set_shadow_f5_cf (preset_aa_set_shadow_f5_cf; FCimg's SET_SHADOW_F5 and CfImg_A's
       cf_pc_set_shadow_f5 are the same numeral, so the two types convert), both from AR_laws_ok_cf and the
       image-symbol premise HT : TfibSyms B.
@@ -188,7 +189,7 @@ tfibsegs B
 (* ---------------------------------------------------------------------------- *)
 (* 4. The shadow byte after the head of a block that is all head is visible: the  *)
 (*    fact __asan_poison_memory_region / __asan_unpoison_memory_region (p, 16)     *)
-(*    read, c-omx-alloc's stand-in (commit 6e9844d19ad2,                           *)
+(*    read, c-omx-alloc's stand-in (                                               *)
 (*    lib/A/CfPoison.v:183 and lib/AU/CfPoisonB.v:189), in its text and argument   *)
 (*    order. YGcfHp.poison_next_vis_cf_le16 at preset's cf_head = 16 <= 16; segs   *)
 (*    and the image class are generic, so image B uses the same lemma.             *)

@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AF0l.v at c8557374ad2e, with its module paths changed and every address relocated to libreac/fuzz_knock's asan image (sha256 61768cf4739b...): each value is the same function + offset in knock's symbol table (port_addr_check.py MAPS rows; h-rw-kno-2 knock-reloc/literals.tsv name-pair rows, masked instructions equal). Three cgif entries have no knock counterpart and are 0 (no code is at 0 in knock's image, which starts at 0x10000): __asan_stack_malloc_2 (cgif 0x3ca34; knock uses class 1 only), __asan_memcpy (cgif 0x515dc) and the bcmp trampoline (cgif 0x41904); knock's image has none of these symbols. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AF0l.v at theorem-labs/oss-verify-proofs@6b32741d849a, with its module paths changed and every address relocated to libreac/fuzz_knock's asan image (sha256 61768cf4739b...): each value is the same function + offset in knock's symbol table (port_addr_check.py MAPS rows; h-rw-kno-2 knock-reloc/literals.tsv name-pair rows, masked instructions equal). Three cgif entries have no knock counterpart and are 0 (no code is at 0 in knock's image, which starts at 0x10000): __asan_stack_malloc_2 (cgif 0x3ca34; knock uses class 1 only), __asan_memcpy (cgif 0x515dc) and the bcmp trampoline (cgif 0x41904); knock's image has none of these symbols. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/A/AF0l.v (donor image sha256 61768cf4739b), with its module paths changed and its addresses moved to reac-pw/fuzz_qdisc's ASan build. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith.
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require Import YG0f.

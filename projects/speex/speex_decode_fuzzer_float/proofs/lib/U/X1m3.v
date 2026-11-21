@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the auxv as the launch writes it, at both values of the CONFIG_RSEQ flag: [auxv_keys] replaces the old ten-pair list in [rauxv_ok]). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -248,19 +249,48 @@ eapply impl_epost_mono; [apply IH1; exact H1|];
 intros [[o1 r] s2] ms2; cbn; intros [HQ HL]; split; [exact HQ| apply (leaf_of_vis o _ k z); [exact I| exact HL]].
 Qed.
 
-Definition rauxv_list (x3 x4 x5 x16 x6 x11 x12 x23 rnd : Z) : list word :=
-map wz [3; x3; 4; x4; 5; x5; 16; x16; 6; x6; 11; x11; 12; x12; 23; x23; 25; rnd; 0; 0].
+(* LPS 727298f3: the auxv as [StackLayout.auxv_entries] writes it (24 fixed-key pairs, AT_RANDOM 25,
+   AT_EXECFN 31, the two AT_RSEQ_* pairs only under CONFIG_RSEQ, then AT_NULL); musl's malloc
+   reads every key up to AT_NULL, so both layouts are carried (the form of bzip2's RS0/RMallocTree.v). *)
+Definition auxv_keys (m : mem) (av rnd : Z) : Prop :=
+bytes_at rsegs m av (le8 (wz 33)) /\ bytes_at rsegs m (av + 16) (le8 (wz 40)) /\ bytes_at rsegs m (av + 32) (le8 (wz 41))
+/\ bytes_at rsegs m (av + 48) (le8 (wz 42)) /\ bytes_at rsegs m (av + 64) (le8 (wz 43)) /\ bytes_at rsegs m (av + 80) (le8 (wz 44))
+/\ bytes_at rsegs m (av + 96) (le8 (wz 45)) /\ bytes_at rsegs m (av + 112) (le8 (wz 46)) /\ bytes_at rsegs m (av + 128) (le8 (wz 47))
+/\ bytes_at rsegs m (av + 144) (le8 (wz 51)) /\ bytes_at rsegs m (av + 160) (le8 (wz 16)) /\ bytes_at rsegs m (av + 176) (le8 (wz 6))
+/\ bytes_at rsegs m (av + 192) (le8 (wz 17)) /\ bytes_at rsegs m (av + 208) (le8 (wz 3)) /\ bytes_at rsegs m (av + 224) (le8 (wz 4))
+/\ bytes_at rsegs m (av + 240) (le8 (wz 5)) /\ bytes_at rsegs m (av + 256) (le8 (wz 7)) /\ bytes_at rsegs m (av + 272) (le8 (wz 8))
+/\ bytes_at rsegs m (av + 288) (le8 (wz 9)) /\ bytes_at rsegs m (av + 304) (le8 (wz 11)) /\ bytes_at rsegs m (av + 320) (le8 (wz 12))
+/\ bytes_at rsegs m (av + 336) (le8 (wz 13)) /\ bytes_at rsegs m (av + 352) (le8 (wz 14)) /\ bytes_at rsegs m (av + 368) (le8 (wz 23))
+/\ bytes_at rsegs m (av + 384) (le8 (wz 25)) /\ bytes_at rsegs m (av + 392) (le8 (wz rnd))
+/\ bytes_at rsegs m (av + 400) (le8 (wz 31))
+/\ ((bytes_at rsegs m (av + 416) (le8 (wz 27)) /\ bytes_at rsegs m (av + 432) (le8 (wz 28))
+/\ bytes_at rsegs m (av + 448) (le8 (wz 0)))
+\/ bytes_at rsegs m (av + 416) (le8 (wz 0))).
 
-Lemma rauxv_list_length x3 x4 x5 x16 x6 x11 x12 x23 rnd :
-length (u64s (rauxv_list x3 x4 x5 x16 x6 x11 x12 x23 rnd)) = 160%nat.
-Proof. unfold rauxv_list. rewrite u64s_length, map_length. reflexivity. Qed.
+Lemma auxv_keys_map : forall m m' av rnd,
+(forall A w, av <= A -> A + 8 <= av + 464 -> bytes_at rsegs m A (le8 w) -> bytes_at rsegs m' A (le8 w)) ->
+auxv_keys m av rnd -> auxv_keys m' av rnd.
+Proof.
+intros m m' av rnd HT H. unfold auxv_keys in *.
+repeat match goal with H : bytes_at _ _ _ _ /\ _ |- _ => destruct H end.
+repeat match goal with |- _ /\ _ => split end;
+try (eapply HT; [| |eassumption]; lia).
+match goal with H : _ \/ _ |- _ => destruct H as [(T1 & T2 & T3) | T1] end;
+[left; repeat split | right]; (eapply HT; [| |eassumption]; lia).
+Qed.
+
+Lemma auxv_read8 : forall m A w a, bytes_at rsegs m A (le8 w) -> a = wa A -> ov_read_bytes rsegs m a 8 = Some (le8 w).
+Proof.
+intros m A w a H ->. rewrite <- (Z.add_0_r A). change 0 with (Z.of_nat 0).
+rewrite (bytes_at_ov_read rsegs m A (le8 w) 0 8 H) by (rewrite length_le8; lia). reflexivity.
+Qed.
 
 Definition rauxv_ok {RCEIL : RunCeiling} (m : mem) (B : Z) : Prop :=
 exists av x3 x4 x5 x16 x6 x11 x12 x23 rnd,
 rw_cells rsegs m RAUXV_CELL [C8 (wz av)]
-/\ bytes_at rsegs m av (u64s (rauxv_list x3 x4 x5 x16 x6 x11 x12 x23 rnd))
+/\ auxv_keys m av rnd
 /\ bytes_at rsegs m (rnd + 8) (le8 run_secret)
-/\ alloc_ceiling <= B /\ B <= av /\ av + 160 <= 2^64 /\ B <= rnd + 8 /\ rnd + 16 <= 2^64
+/\ alloc_ceiling <= B /\ B <= av /\ av + 464 <= 2^64 /\ B <= rnd + 8 /\ rnd + 16 <= 2^64
 /\ 0 <= x3 < 2^64 /\ 0 <= x4 < 2^64 /\ 0 <= x5 < 2^64 /\ 0 <= x16 < 2^64 /\ 0 <= x6 < 2^64
 /\ 0 <= x11 < 2^64 /\ 0 <= x12 < 2^64 /\ 0 <= x23 < 2^64 /\ 0 <= rnd < 2^64.
 
@@ -278,7 +308,8 @@ Proof.
 intros m m' B W sfH_; first [ sf_destruct 14%nat sfH_ as av x3 x4 x5 x16 x6 x11 x12 x23 rnd C A1 A2 H | sf_fb; destruct sfH_ as (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & C & A1 & A2 & H) ]; intros MU WM FW.
 first [ unshelve sf_eexists 10%nat; [ exact (av) | exact (x3) | exact (x4) | exact (x5) | exact (x16) | exact (x6) | exact (x11) | exact (x12) | exact (x23) | exact (rnd) | ] | sf_fb; exists av, x3, x4, x5, x16, x6, x11, x12, x23, rnd ]. split; [|split; [|split; [|exact H]]].
 - eapply rw_cells_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [_ ?]. lia.
-- eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [? _]. lia.
+- eapply auxv_keys_map; [|exact A1]. intros A w HA HB Hb. pose proof (length_le8 w) as LL.
+eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn -[le8]. intros lo hi [? _]. rewrite LL. lia.
 - eapply bytes_at_transport; eauto. eapply Forall_disjoint_from; [exact FW|]. cbn. intros lo hi [? _]. lia.
 Qed.
 

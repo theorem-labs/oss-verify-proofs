@@ -1,8 +1,8 @@
 (* check_round_trip 0x81b9c, fs.asan-ubsan (image tfibsegs = lib/B/YB1v.v), WALK LANE D2, segment 37: 0x8249c -> 0x824a4,
    the second fuzz_free. B twin of lib/A/FSH_crt_segD2_s37.v.
-   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from 6cf61486dca lib/A/FSH_crt_segD2_s37.v)
-   Port source: a working branch 6cf61486dca proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segD2_s37.v (CTX-free),
-   itself PORTED from a working branch d25a984c903 proofs/omx-clap-core/fuzz_state/lib/A/Prog/
+   rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from lib/A/FSH_crt_segD2_s37.v)
+   Port source: a working branch proofs/omx-clap-core/fuzz_state/lib/A/FSH_crt_segD2_s37.v (CTX-free),
+   itself PORTED from a working branch proofs/omx-clap-core/fuzz_state/lib/A/Prog/
    check_round_trip_sd21.v / sd22.v, stages St21 / St22 (the same two fuzz_free calls; on fs.asan at 0x82338 / 0x82340).
    The function-level lookup is the one quoted in the lane head (internal path)
    (checker a Theorem Labs lane, role check, CONFIRM). Same Definition / Lemma names and statement shapes as the A file; every
@@ -21,7 +21,7 @@
    nothing, so the step is the base's crt_seg_call (FSH_crt_site.v) at r0 = 0x8249c, A_c = A_fuzz_free, r = 0x824a4,
    STKc = STK_fuzz_free.
 
-   What St22 of d25a984c903 does at this call, restated in S0's ajournal / ARU / U form:
+   What St22 does at this call, restated in S0's ajournal / ARU / U form:
    - the callee frees text's reader block (text - HEAD, enc_size len + HEAD), the last block of the walk that has a
      user-poisoned head, so the head (text - HEAD, HEAD) leaves U and U is the entry's c_U again (up to order);
    - g_live goes down by enc_size len, back to the entry's c_live;

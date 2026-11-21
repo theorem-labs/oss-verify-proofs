@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the step of a program walk through a runtime entry whose contract is art_post (lib/A/Rt/RtDefs.v), after cgif_file_fuzzer's aj_memcmp_at (lib/YCbq.v) and aj_intrin_atS (lib/A/Prog/PaCall.v); the facts a walk reads at such a call, carried from the entry to a state whose memory differs only in the stack window; the runtime entries' call pre-state at a point of the walk; and small list and arithmetic lemmas these steps use. Written for plugin-hostd/fuzz_command's sup_reply_code walk. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/Prog/PaArt.v (origin/ossv/recipes 501c0d516c69) for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/Prog/PaArt.v for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: for omx-clap-core/fuzz_preset, the CALLER-WINDOW call kit over YCbqG.v's journal
    ajournal_x (allocator invariant a parameter ARx, ghost head set Hp after S, program statics PST), generic: no image
-   class, no address, no ledger. Credit: WalkS4, lib/A/Prog/PRW_CallerJ.v at 85a188622c5 (statements and proofs taken
+   class, no address, no ledger. Credit: WalkS4, lib/A/Prog/PRW_CallerJ.v (statements and proofs taken
    from there; changes below). Donors there: cj_kept from cgif_file_fuzzer lib/YC20.v:311-325 tlzw_kept and
    lib/YC8n.v:272-287 tlzw_kept_of_journal (origin/release/pau-projects-recipes), generalised to ajournal_x's keep
    clauses; aj_call_xW from YCbqGcall.v aj_call_x (cgif YCbq.v:1845-1883 aj_call, origin/ossv/recipes).
@@ -14,10 +14,10 @@
    - START: ajournal_x_init_W, the widened journal (STK + e) (sp + e) at the entry state.
    - CALL of a caller-window callee: aj_call_xW / aj_call_xWF (callee state in mkst form), aj_call_xW_sp /
      aj_call_xWF_sp (the entry form of YCbqGcall.v's aj_call_x_sp: st_ok, ss_resv, the machine state ms).
-     The footprint side condition is YCbqG.v's own fp_sub_x (h-hpreset-7 9052c7a7d74 :688-691), whose fourth
+     The footprint side condition is YCbqG.v's own fp_sub_x (h-hpreset-7 :688-691), whose fourth
      disjunct `sp0 - STK <= a < sp0` is the caller's window: WalkS4's fp_sub_xW is that predicate, so this file
      no longer states one and ajournal_x_sub_W (the name WalkS4's callers use) is YCbqG's ajournal_x_sub.
-   - vrd_call_W: h-verbs-3's lib/A/VrdArm.v call rule (6d4cddbdff5), premise shape kept, as a corollary of
+   - vrd_call_W: h-verbs-3's lib/A/VrdArm.v call rule, premise shape kept, as a corollary of
      aj_call_xW_sp at e1 := - o.
    - aj_call_xWF_d: WalkH6's caller-window float call rule (h-walk-identity's S8aCallW.v aj_call_xWF), verbatim: no
      fwin_x for the callee and no window-kept clause on either side.
@@ -38,6 +38,7 @@
    fpostW_x_R_lift: a plain fpostW_x (journal at wle) is fpostW_xR at every R that contains wle. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YCbqGcallW.v, with its module names changed; 482 of its 526 lines of code are new or changed and 767 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S4_PsFree.v; 622 of its 679 lines of code are new or changed and 469 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset lib/A, slice S4 (parse_string's decode stretch): the KIT of the \u SUB-STRETCH (S4_PsU.v, the
    sub-stretch ps_seg_u of S4_PsDecKit.v). Two layers, nothing about the engine's runs:
    - PURE: the hex loop's accumulator against PjGrammar.hex4 (the code's `or (slliw acc 4) digit`), and the list
@@ -50,10 +51,10 @@
    last. P is a Section Variable, never instantiated here. dec_run takes the run's own P at the new memory (its HPM,
    YSRrMemnorm's runner twin at P) and hands it to the kit's dec_keep; dec_call takes P at the post memory (S4_PsU.v
    derives it by srr_inv_call from the callee text's m-form keep); dec_closeN carries it unchanged.
-   FILE SET: as the kit's cut 7cdbb61b5fa0 carries it (PRH_Base blob ef7c8ca98529, PRH_FnReader f1ae32e3b2cd, listing
+   FILE SET: as the kit's cut carries it (PRH_Base blob ef7c8ca98529, PRH_FnReader f1ae32e3b2cd, listing
    Listing_prog.v 7ed1529926bd, PAImg_prog.v 505a51ff7d08), this row's S4_PsBase.v and S4_PsDecKit.v (the ledger
    through its named helpers ps_led_blocks / ps_led_heads); earlier the kit of record at base
-   dd6bf533e31 (old-pin acceptance kit 4f18c75d4900, engine s1b 459129c18903).
+   (old-pin acceptance kit, engine s1b).
    Numerals: 4 / 16 (WORD: a hex digit's bits and its radix), 8 / 24 / 32 / 36 / 40 / 136 (DERIVED: frame offsets
    inside parse_string, 144 its frame LENGTH), 2 ^ 47 / 2 ^ 64 (DERIVED: the address band and the word range),
    255 / 256 (WORD: a byte), 55296 / 56320 / -56613888 (WORD: the surrogate constants the prologue stores); no
@@ -656,7 +657,7 @@ Qed.
    the SAME register file (the cut's register clauses speak of regs alone, so the walk re-states them at the leaf
    with dec_closeN / free_close). The callee's footprint FP1 is parse_string's own hex4 slot (sp + 36, inside the
    caller window e1) or the bytes put_utf8 writes at the write cursor w (inside the block fuzz_malloc made). The
-   callee leaves the allocator state alone (S' = S in the cut's texts, since the kit walkkit 0afb3f76c28), which is what
+   callee leaves the allocator state alone (S' = S in the cut's texts, since the kit walkkit), which is what
    carries room_live_cf and ps_rpos across; its ablocks and hidden heads are the call state's. ---- *)
 Lemma dec_call : forall CTX CW D ly S Hp W regs mem md out w r Q STK1 e1 FP1 ly2 W2 mem2 md2 k2 k3,
   ps_pre B ARx CTX CW D -> ps_at_decP B ARx SK P D ly S Hp W regs mem md out w r Q ->

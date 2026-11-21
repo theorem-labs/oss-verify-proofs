@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: the escape sections take it as HBTlo and pass it to ser_appendA). *)
 
 From Stdlib Require ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -41,6 +42,7 @@ Hypothesis Hd : d = 0 \/ d = 16.
 Hypothesis Hq : q = usp - 224 - d.
 Hypothesis Hq32 : q mod 32 = 0.
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis LOS : lo <= usp - AESC_STACK.
 Hypothesis HT : usp <= hiA_top A4L HIx.
 Hypothesis CAP0 : 32 <= cap0 < 2^30.
@@ -184,7 +186,7 @@ intros until sbs. intros INV SB SBL Hk Hb SRCB UPS He Hek -> Hret Hret2 FS FRM K
 destruct INV as (j0 & j1 & gj & j8 & sb & j17 & INV1).
 pose proof (bv_unsigned_in_range 64 sp) as SPR. unfold bv_modulus in SPR. cbn in SPR.
 pose proof alloc_ceiling_range as ACR. unfold AESC_STACK in LOS. unfold usp in *.
-eapply (ser_appendA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 (6 * n) LO HT CAP0 TXT NEED OBL_REALLOC_NF) with (F := F) (sb := sbs) (e := e);
+eapply (ser_appendA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 (6 * n) LO HBTlo HT CAP0 TXT NEED OBL_REALLOC_NF) with (F := F) (sb := sbs) (e := e);
 [ exact INV1 | exact SB | exact SBL | exact Hk | exact Hb | exact SRCB | exact UPS | exact He | exact Hek
 | lia | clear - Hq32; Z.div_mod_to_equations; lia | lia | unfold_consts; lia | reflexivity | exact Hret | exact Hret2 | exact FS | exact FRM | ].
 intros A' m' md' t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F' fc' INV' FS' FR' SB'.
@@ -800,6 +802,7 @@ Hypothesis Hd : d = 0 \/ d = 16.
 Hypothesis Hq : q = usp - 224 - d.
 Hypothesis Hq32 : q mod 32 = 0.
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis LOS : lo <= usp - AESC_STACK.
 Hypothesis HT : usp <= hiA_top A4L HIx.
 Hypothesis CAP0 : 32 <= cap0 < 2^30.
@@ -950,7 +953,7 @@ intros until sbs. intros INV SB SBL Hk Hb SRCB UPS He Hek -> Hret Hret2 FS FRM K
 destruct INV as (j0 & j1 & gj & j8 & sb & j17 & INV1).
 pose proof (bv_unsigned_in_range 64 sp) as SPR. unfold bv_modulus in SPR. cbn in SPR.
 pose proof alloc_ceiling_range as ACR. unfold AESC_STACK in LOS. unfold usp in *.
-eapply (ser_appendA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 (6 * n) LO HT CAP0 TXT NEED OBL_REALLOC_NF) with (F := F) (sb := sbs) (e := e);
+eapply (ser_appendA HIx sp gp m0 md0 LB LM FRS B0 pb lo bpos0 cap0 (6 * n) LO HBTlo HT CAP0 TXT NEED OBL_REALLOC_NF) with (F := F) (sb := sbs) (e := e);
 [ exact INV1 | exact SB | exact SBL | exact Hk | exact Hb | exact SRCB | exact UPS | exact He | exact Hek
 | lia | clear - Hq32; Z.div_mod_to_equations; lia | lia | unfold_consts; lia | reflexivity | exact Hret | exact Hret2 | exact FS | exact FRM | ].
 intros A' m' md' t0' t1' t2' a0' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' F' fc' INV' FS' FR' SB'.

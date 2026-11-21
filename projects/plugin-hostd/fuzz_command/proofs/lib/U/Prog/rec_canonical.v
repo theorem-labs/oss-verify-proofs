@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/boost-beast/http_request/lib/Lib/Tac.v; 237 of its 261 lines of code are new or changed and 298 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_pcap/lib/Prog/mread.v, with its module paths and numbers changed; 1088 of its 1116 lines of code are new or changed and 233 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/U/Prog/chain_words.v; 737 of its 834 lines of code are new or changed and 1019 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 as this unit's lib/Prog/rec_canonical.v is, with the U module paths (changed rec_canonical_holds). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
@@ -685,8 +686,8 @@ Proof using SEGS ERRNO_LOW GOTG XM.
     split; [rewrite E1_4; exact HTP|].
     split; [intros a Ha; rewrite SEGS; apply WM1; apply HERR; exact Ha|].
     intros HI. specialize (HAUX HI). rewrite SP1.
-    destruct HAUX as (av & ar & W1 & W2 & W3 & W4 & B1 & B2 & B3 & B4 & L1 & L2).
-    exists av, ar.
+    destruct HAUX as (auxrs & av & ar & W1 & W2 & W3 & W4 & B1 & B2 & B3 & B4 & L1 & L2).
+    exists auxrs, av, ar. pose proof (auxv_types_len_ge auxrs). unfold AUXV_RAND_K in *.
     split.
     { eapply word_mem_munch; [exact MU1 | | exact W1]. intros k Hk.
       assert (SO : owned B L A (ms_libc B + 8 + Z.of_nat k)) by (right; unfold static_owned; lia).

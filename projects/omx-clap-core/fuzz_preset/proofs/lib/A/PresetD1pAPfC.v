@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3; internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: tfib_drv_main_A_holds, the driver walk of fuzz_preset's ASan image (lib/A/PresetD1pA.v),
    from the composition lib/A/PresetD1pAPf.v (tfib_drv_main_A_of_leaves) and the leaf THEOREMS their owners pushed,
    cited by name (parent's order 2026-10-29 05:5xZ: a pushed theorem is cited, never kept as a hypothesis).
@@ -14,7 +15,7 @@
    THE LIVE REAL STACK (#102; the interface's header item (13)): the prefix leaves and the loop carry the stack above
    usp from main's entry to each harness call (lane StackDrv); at main it is PresetD1pA.H_stackup_main_A, PROVED here
    (H_stackup_main_A_holds) by the start-up lane's stack_up_main_W1_A (lib/A/Prog/StackUpMainA.v, over the kit's argH0,
-   a working branch 87cf0d0d06f6).
+   a working branch).
    THE ALLOCATOR SWITCH'S START-UP PREMISES (cf layer field rounds 2-3; lib/A/PresetD1pA.v section 4): the two image
    rows H_errb_rows_A / H_pf_rows_A are PROVED here (H_errb_rows_A_holds / H_pf_rows_A_holds) from the image's rows
    at CfImg_A (lib/A/CfIalApartPreset.v); the three start-up rows H_start_lazy_A / H_start_cells_A / H_start_pf_A are
@@ -24,15 +25,15 @@
    main_exh_errb_cells_A with YGcfInstBase.exh_cell_cf_init / errb_cells_cf_init; lib/A/AD2iPfCells.v
    main_pf_cells_A). So tfib_drv_main_A_holds has no start-up premise left.
    CITED (lane, branch sha, file):
-     CwPreA  a working branch  f26d81679efe  lib/A/PresetD1preAPf.v   (the nine pre-loop sites and leaves)
-     CwSites a working branch c5750d597271  lib/A/PresetD1sitesAPf.v (free_site, free_null_site, exit_leaf)
+     CwPreA  a working branch  lib/A/PresetD1preAPf.v   (the nine pre-loop sites and leaves)
+     CwSites a working branch  lib/A/PresetD1sitesAPf.v (free_site, free_null_site, exit_leaf)
      CwLoopA a working branch (this branch)  lib/A/PresetD1rAPf.v (loop_L_x_A on the memnorm interface;
                                                         led_L closed by vm_compute on the ledger-cut AD2j)
-     CwRunqm a working branch f43397621393  lib/A/PresetD2eAPf.v     (runqm_cf_A; the proof moved byte for
+     CwRunqm a working branch  lib/A/PresetD2eAPf.v     (runqm_cf_A; the proof moved byte for
                                                         byte out of lib/A/PresetD2eA.v on a working branch)
-     CwRunqA a working branch 8608f6e0e524  lib/A/PresetD2runQAPf.v (run_Q), PresetD2runAPfQ.v (post_P),
+     CwRunqA a working branch  lib/A/PresetD2runQAPf.v (run_Q), PresetD2runAPfQ.v (post_P),
                                                         PresetD2runAPfH.v (hdr), PresetD2runAPfM.v (file_arm, dir_arm)
-     CwPinvA a working branch f50b650085f0  lib/A/PresetPinvAPf.v (handoff, finv_run / _site / _icpt),
+     CwPinvA a working branch  lib/A/PresetPinvAPf.v (handoff, finv_run / _site / _icpt),
                                                         lib/A/PresetPinvA2aPf.v (arm_argv2)
      MnPrefix a working branch             lib/A/PresetD2runARd0mnPf.v (rd0_dir, rd0_file: the memnorm
                                                         twin of WalkMain's lib/A/PresetD2runARd0Pf.v, a Theorem Labs lane) *)
@@ -65,7 +66,7 @@ Section stackup.
 #[local] Existing Instance YK11.fx0.
 Theorem H_stackup_main_A_holds : PresetD1pA.H_stackup_main_A.
 Proof.
-intros rc sp rdraw brk inp Hsp Hva Hve Hfit h ch E R FULL model Hch HC HE HM H1_8 ly Hal Htop a Ha.
+intros rc sp rdraw brk mbase inp Hsp Hva Hve Hfit Hlau h ch E R FULL model SINV SINV_sp0 Hch HC HE HM H1_8 ly Hal Htop a Ha.
 eapply StackUpMainA.stack_up_main_W1_A; eassumption.
 Qed.
 End stackup.
@@ -86,23 +87,39 @@ Proof. intros B HB. exact (CfIalApartPreset.pf_cells_owned_A B HB). Qed.
    lib/A/AD2iPfCells.v), the cells put in the field form by the draft's YGcfInstBase.exh_cell_cf_init /
    errb_cells_cf_init *)
 Section startrows.
+(* the core-shaped Section lemmas main_exh_errb_cells_A / main_pf_cells_A are applied through their binders in Section
+   order (A/AD2i.v, A/AD1g.v) by [instC], a tactic local to each proof: a top-level Ltac resolves each name it uses
+   where it is defined, and these names exist only after the proof's intros (omx-clap-core/fuzz_state's A/AD1p.v) *)
 #[local] Existing Instance YK11.fx0.
 Theorem H_start_lazy_A_holds : PresetD1pA.H_start_lazy_A.
 Proof.
-intros sp rdraw brk inp h ch E R FULL model Hch HC.
+intros sp rdraw brk mbase inp h ch E R FULL model SINV SINV_sp0 Hch HC.
 exact (YCsokLazyMaps.cs_ok_lazy_in_maps_cf _ _ _ _ _ _ _ _ _ _ _ _ HC).
 Qed.
 Theorem H_start_cells_A_holds : PresetD1pA.H_start_cells_A.
 Proof.
-intros rc sp rdraw brk inp Hsp Hva h ch E R FULL model Hch HC H1_8 B HB W' L.
-destruct (AD2iExhErrb.main_exh_errb_cells_A B HB sp rdraw brk inp Hsp Hva h ch E R FULL model Hch HC H1_8 W' L)
-  as (X & P & M & D & C & S).
+intros rc sp rdraw brk mbase inp Hsp Hva h ch E R FULL model SINV SINV_sp0 Hch HC H1_8 B HB W' L.
+let instC H := (try specialize (H YK11.fx0); try specialize (H B); try specialize (H HB); try specialize (H sp);
+  try specialize (H rdraw); try specialize (H brk); try specialize (H mbase); try specialize (H inp);
+  try specialize (H Hsp); try specialize (H Hva); try specialize (H h); try specialize (H ch); try specialize (H E);
+  try specialize (H R); try specialize (H FULL); try specialize (H model); try specialize (H Hch);
+  try specialize (H SINV); try specialize (H SINV_sp0); try specialize (H HC); try specialize (H rc);
+  try specialize (H H1_8)) in
+(pose proof (@AD2iExhErrb.main_exh_errb_cells_A) as XC; instC XC).
+destruct (XC W' L) as (X & P & M & D & C & S).
 split; [apply YGcfInstBase.exh_cell_cf_init; exact X | apply YGcfInstBase.errb_cells_cf_init; assumption].
 Qed.
 Theorem H_start_pf_A_holds : PresetD1pA.H_start_pf_A.
 Proof.
-intros rc sp rdraw brk inp Hsp Hva h ch E R FULL model Hch HC H1_8 B HB W' L.
-exact (AD2iPfCells.main_pf_cells_A B HB sp rdraw brk inp Hsp Hva h ch E R FULL model Hch HC H1_8 W' L).
+intros rc sp rdraw brk mbase inp Hsp Hva h ch E R FULL model SINV SINV_sp0 Hch HC H1_8 B HB W' L.
+let instC H := (try specialize (H YK11.fx0); try specialize (H B); try specialize (H HB); try specialize (H sp);
+  try specialize (H rdraw); try specialize (H brk); try specialize (H mbase); try specialize (H inp);
+  try specialize (H Hsp); try specialize (H Hva); try specialize (H h); try specialize (H ch); try specialize (H E);
+  try specialize (H R); try specialize (H FULL); try specialize (H model); try specialize (H Hch);
+  try specialize (H SINV); try specialize (H SINV_sp0); try specialize (H HC); try specialize (H rc);
+  try specialize (H H1_8)) in
+(pose proof (@AD2iPfCells.main_pf_cells_A) as XP; instC XP).
+exact (XP W' L).
 Qed.
 End startrows.
 

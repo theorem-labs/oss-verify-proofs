@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Does not rest on tex_word_specX. memnorm only as EXN_keepM / EXN_keepM_cur's step keep, which each run gives by
-   YAkMemnorm.memnorm_msteps over its own msteps (kit 4f18c75d4900). *)
+   YAkMemnorm.memnorm_msteps over its own msteps (kit). *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B (asan-ubsan, rebuilt pin f8f98a95bc52, unstripped twin 3b5e1a099b53),
    ex_value's NUMBER SEGMENT, sub-pieces T and F of lib/B/Prog/ExvB_NumCut.v:
      T  CT (exv_pc 0xa70, B 0x83f9c) -> CX (exv_pc 0xa7c, B 0x83fa8)          exn_T : EXN_T B ARx SK E pos

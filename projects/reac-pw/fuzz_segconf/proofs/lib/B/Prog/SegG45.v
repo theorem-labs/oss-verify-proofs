@@ -1,7 +1,7 @@
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin sha256 c3796c0b38f3): the 21 walks of groups G4 and
    G5 composed with each other, at the walks' own abstract listing instance (`Context {PI : PAImg seg_listing}`:
    entries BASE + AF_<F>, call targets pa_sigma SS_<x>) and allocator record B. The twin of image A's
-   lib/A/Prog/SegG45.v (commit 6f7a1561a103): the same lemma names, the same Section hypotheses, over lib/B's walks
+   lib/A/Prog/SegG45.v: the same lemma names, the same Section hypotheses, over lib/B's walks
    (lib/B/Prog/<F>.v, theorem <F>_walk) and contracts (lib/B/Prog/<F>_c.v). Each callee contract a G4 / G5 walk
    takes is discharged here by that callee's walk; what is left are Section hypotheses of exactly the walks' own
    texts:

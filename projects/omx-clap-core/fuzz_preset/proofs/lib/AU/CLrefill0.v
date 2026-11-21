@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/CLrefill0.v (cold/c-asan-realloc-c5 ced28ed2383, file sha256 fa358ad428e7) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-(* The refill callee's contract with a RAW frame (statement only; lib/AU/MnRefillRB.v:399 proves its _em form, tfib_refill_okR_em).  The released
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/CLrefill0.v (file sha256 fa358ad428e7) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* The refill callee's contract with a RAW frame (statement only; lib/AU/MnRefillRB.v:400 proves its _em form, tfib_refill_okR_em).  The released
    YFl1.tfib_refill_spec frames the memory through [aview] only (YG0d.acall_post), which hides the bytes of hidden
    pages; an ARX-style relation reads those raw bytes.  [refill_leafR] keeps the released [refill_leaf] as its first
    conjunct and adds: outside the bytes owned before or after the call and outside the callee's stack window

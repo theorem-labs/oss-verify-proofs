@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, chk_pre_intro takes a string that ends at least 9 bytes below 2 ^ 47, was 16 (strlen's eight-byte read-ahead and one byte for ASan's high end). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp.bitvector Require Import definitions.
@@ -36,7 +37,7 @@ Proof.
   intros [A _ _]. rewrite (SeqExec.rdn_firstn RSEGS M _ _ _ (length bs + 1) A) by lia. f_equal.
   rewrite firstn_app. rewrite firstn_all2 by lia. replace (length bs + 1 - length bs)%nat with 1%nat by lia. reflexivity.
 Qed.
-Lemma chk_pre_intro (M : word -> option byte) p n s : 0 <= n <= 131071 -> 140735332552704 <= p -> p + n + 1 + 16 <= 2 ^ 47 ->
+Lemma chk_pre_intro (M : word -> option byte) p n s : 0 <= n <= 131071 -> 140735332552704 <= p -> p + n + 1 + 9 <= 2 ^ 47 ->
   140735332552704 <= s - 72 -> s <= 2 ^ 47 -> L5.writable RSEGS M (s - 72) 72 -> rt_layout_globs M ->
   (forall x : word, SB + p / 8 - 7 <= bv_unsigned x < Z.min (SB + (p + n) / 8 + 8) (SB + 2 ^ 44) -> M x = Some (Z_to_bv 8 0)) -> chk_pre M p (n + 1) s.
 Proof.

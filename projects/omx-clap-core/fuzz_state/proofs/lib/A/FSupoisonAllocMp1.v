@@ -90,12 +90,12 @@ Qed.
 (* The image's constant cells (AF0m.v Tfib_const): where they sit, and that their bytes are off UP.                   *)
 (* ---------------------------------------------------------------------------------------------------------------- *)
 
-(* A literal byte range of the image, or a shadow byte range of the image. Port-from: lib/A/AFev.v:395 low_okd. *)
+(* A literal byte range of the image, or a shadow byte range of the image. Port-from: lib/A/AFev.v:396 low_okd. *)
 Definition cimgb (a w : Z) : bool :=
   ((TFIB_IMG_LO <=? a) && (a + w <=? TFIB_IMG_END)) ||
   ((SHADOW_OFF + TFIB_IMG_LO / 8 <=? a) && (a + w <=? SHADOW_OFF + TFIB_IMG_END / 8)).
 
-(* Where every constant cell sits. Port-from: lib/A/AFev.v:398 const_loc_okd (the o_quar clause dropped: this
+(* Where every constant cell sits. Port-from: lib/A/AFev.v:399 const_loc_okd (the o_quar clause dropped: this
    file only needs the cell's location, not its disjointness from the quarantine window). *)
 Definition const_locb (c : acell) : bool :=
   let w := Z.max 1 (Z.of_nat (c_w c)) in

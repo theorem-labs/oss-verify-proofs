@@ -1,4 +1,4 @@
-(* The image-B port of lib/A/Prog/reac_segconf_declared_d.v (commit 29221b01c4cd): the shared
+(* The image-B port of lib/A/Prog/reac_segconf_declared_d.v: the shared
    vocabulary of the walk of reac_segconf_declared on fuzz_segconf.asan-ubsan (image B, entry 0x89e7c =
    BASE + AF_reac_segconf_declared, 231 instructions), in plugin-hostd/fuzz_command's lib/B/Prog form: the context
    record, the cut points, the contract's premises and post over the context, the frame part and the kept part of

@@ -1,5 +1,5 @@
 (** reac-pw/fuzz_segconf: the build-independent part of the kit for the satisfiability lemmas of the premises of
-    contract family F1 (lib/Prog/*_c.v and lib/U/Prog/*_c.v; written against seg_spec.v of c7b9518dac31: role_enc,
+    contract family F1 (lib/Prog/*_c.v and lib/U/Prog/*_c.v; written against seg_spec.v: role_enc,
     mconf_encp).
     The per-build parts are Prog/SegSat.v (plain, over Img0.rsegs) and U/Prog/SegSat.v (UBSan, over U/Img0.rsegs);
     the lemmas are in Prog/sat/F1Sat.v and U/Prog/sat/F1Sat.v.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader fact): changed us_segEF4, us_segF3, us_segG and 2 more; added Hrdr, vmc_refl; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/U/Pm10Usage_tail_u.v, 10 lines within its lines 22-752. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -26,6 +27,7 @@ Import ListNotations.
 Open Scope bv_scope.
 Import SX2. Import SX2S.
 
+Local Ltac vmc_refl := first [ lazymatch goal with |- _ = ?b => vm_cast_no_check (@eq_refl _ b) end | vm_compute; reflexivity ].
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Section FPX_1. Context {fx : PropExec.FPState}.
 Variable scfg : SpuriousCfg.
@@ -48,7 +50,7 @@ Lemma msg_usage_eq : forall a0s, msg_usage a0s = PRE7 ++ a0s ++ SUF7.
 Proof. intros. unfold msg_usage, PRE7, SUF7. reflexivity. Qed.
 
 Section UTail.
-  Context {RE : RunEnv}.
+  Context {RE : RunEnv}. Context {RO : ReaderOn}.
   Variable sp0 : word.
   Variable BL : list (list byte).          (* [comment removed for export] *)
   Variable model : Model.
@@ -56,8 +58,9 @@ Section UTail.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  (* 08b1429: writev_spec reads [m_channel_reader] *)
+  Hypothesis Hrdr : m_channel_reader model = true.
 
-  (* [comment removed for export] *)
   Definition ENV (vals : list word) : env := Env (vals_ev vals) (blobs_ev BL).
 
   Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
@@ -164,10 +167,10 @@ Ltac close_exit_at HR HK P0 Hh Hlazy sp0 OFF WLO :=
     pose proof u_itinerary as (_ & _ & _ & _ & _ & _ & _ & SC & _).
     lazymatch goal with |- srealizes _ _ (mkCfg (mkst ?Rc _ ?Mc _) _) _ =>
     apply (stdio_call_sound scfg vals (blobs_ev BL) u_srG u_knG Rc Mc model u_scG (msg_usage a0s) []
-             (t_exit (exit_code 2) (m_fs model)) HR HK (eq_trans (f_equal (fun n => stdio_call n u_srG u_knG) HL) SC));
+             (t_exit (exit_code 2) (m_fs model)) ltac:(rdr) HR HK (eq_trans (f_equal (fun n => stdio_call n u_srG u_knG) HL) SC));
       cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn u_scG]; rewrite ?LEN end.
     - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0, ?P112). unorm. lia.
-    - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0, ?P112). unorm. lia.  (* [comment removed for export] *)
+    - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0, ?P112). unorm. lia.
     - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0, ?P112). unorm. lia.
     - cbn [edenot length]. reflexivity.
     - cbn [length Z.of_nat]. lia.
@@ -181,7 +184,7 @@ Ltac close_exit_at HR HK P0 Hh Hlazy sp0 OFF WLO :=
     - exact Hh.
     - exact Hlazy.
     - apply t_exit_has_nil.
-    - (* [comment removed for export] *)
+    -
       clear HR HK. intros R2 M2 HR HK.
       eapply (us_segH (vals ++ junk_vals R2));
         [ rewrite length_app, junk_vals_length, HL; reflexivity
@@ -189,7 +192,6 @@ Ltac close_exit_at HR HK P0 Hh Hlazy sp0 OFF WLO :=
         | exact HR | exact HK ].
   Qed.
 
-  (* [comment removed for export] *)
   Definition atUF0 (a0s : list byte) (L : Z) (T : TSet) : Prop :=
     forall vals R M,
       length vals = 198%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 112 = Z_to_bv 64 L ->
@@ -604,17 +606,17 @@ Ltac close_exit_at HR HK P0 Hh Hlazy sp0 OFF WLO :=
   Proof.
     intros vals R M HL P0 HR HK.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
-    (* [comment removed for export] *)
+
     run_blk scr0 230%nat.
     apply (srz_conseq RSEGS scfg _ (t_emit (map (WriteEv (Z_to_bv 64 2)) ([] ++ [])) (t_exit (exit_code 2) (m_fs model)))).
     2:{ cbn [map app]. apply t_eq_sym. apply t_emit_nil_exit. }
     pose proof u_itinerary as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & SC & _).
     lazymatch goal with |- srealizes _ _ (mkCfg (mkst ?Rc _ ?Mc _) _) _ =>
     apply (stdio_call_sound scfg vals (blobs_ev BL) u_srG3 u_knG3 Rc Mc model u_scG3 [] []
-             (t_exit (exit_code 2) (m_fs model)) HR HK (eq_trans (f_equal (fun n => stdio_call n u_srG3 u_knG3) HL) SC));
+             (t_exit (exit_code 2) (m_fs model)) ltac:(rdr) HR HK (eq_trans (f_equal (fun n => stdio_call n u_srG3 u_knG3) HL) SC));
       cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn u_scG3 length Z.of_nat] end.
     - lia.
-    - first [lia | ed_lin ltac:(cbn [ev ENV]; rewrite ?P0); unorm; lia].  (* [comment removed for export] *)
+    - first [lia | ed_lin ltac:(cbn [ev ENV]; rewrite ?P0); unorm; lia].
     - lia.
     - cbn [edenot]. apply u_small. lia.
     - lia.
@@ -664,11 +666,11 @@ Ltac close_exit_at HR HK P0 Hh Hlazy sp0 OFF WLO :=
     pose proof u_itinerary as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & SC & _).
     lazymatch goal with |- srealizes _ _ (mkCfg (mkst ?Rc _ ?Mc _) _) _ =>
     apply (stdio_call_sound scfg vals (blobs_ev BL) u_srF3 u_knF3 Rc Mc model u_scF3 (PRE7 ++ a0s) SUF7
-             (t_exit (exit_code 2) (m_fs model)) HR HK (eq_trans (f_equal (fun n => stdio_call n u_srF3 u_knF3) HL) SC));
+             (t_exit (exit_code 2) (m_fs model)) ltac:(rdr) HR HK (eq_trans (f_equal (fun n => stdio_call n u_srF3 u_knF3) HL) SC));
       cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn u_scF3];
       rewrite ?length_app, ?PRE7_len, ?SUF7_len end.
     - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0, ?P112). unorm. lia.
-    - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0, ?P112). unorm. lia.  (* [comment removed for export] *)
+    - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0, ?P112). unorm. lia.
     - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0, ?P112). unorm. lia.
     - cbn [edenot]. apply u_small. lia.
     - cbn [length Z.of_nat]. lia.
@@ -682,18 +684,13 @@ Ltac close_exit_at HR HK P0 Hh Hlazy sp0 OFF WLO :=
     - exact Hh.
     - exact Hlazy.
     - apply t_exit_has_nil.
-    - (* [comment removed for export] *)
+    -
       clear HR HK. intros R2 M2 HR HK.
       eapply (us_segG3 (vals ++ junk_vals R2));
         [ rewrite length_app, junk_vals_length, HL; reflexivity
         | rewrite vals_ev_app_l by (rewrite HL; lia); exact P0
         | exact HR | exact HK ].
   Qed.
-
-  (* [comment removed for export] *)
-  (* [comment removed for export] *)
-  (* [comment removed for export] *)
-  (* [comment removed for export] *)
 
   Lemma us_segH4 : forall vals R M,
     length vals = 262%nat -> vals_ev vals 0 = sp0 ->
@@ -715,7 +712,7 @@ Ltac close_exit_at HR HK P0 Hh Hlazy sp0 OFF WLO :=
   Proof.
     intros vals R M HL P0 HR HK.
     pose proof SPlo as Hlo. pose proof SPhi as Hhi.
-    (* [comment removed for export] *)
+
     run_blk scr0 230%nat.
     krdv HK 0%nat (-560)%Z 7%nat Hb. { apply flat_intro; cbn [edenot ev ENV]; rewrite ?P0; lia. }
     rewrite SUF7_word in Hb.
@@ -724,11 +721,11 @@ Ltac close_exit_at HR HK P0 Hh Hlazy sp0 OFF WLO :=
     pose proof u_itinerary as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & SC & _).
     lazymatch goal with |- srealizes _ _ (mkCfg (mkst ?Rc _ ?Mc _) _) _ =>
     apply (stdio_call_sound scfg vals (blobs_ev BL) u_srG4 u_knG4 Rc Mc model u_scG4 SUF7 []
-             (t_exit (exit_code 2) (m_fs model)) HR HK (eq_trans (f_equal (fun n => stdio_call n u_srG4 u_knG4) HL) SC));
+             (t_exit (exit_code 2) (m_fs model)) ltac:(rdr) HR HK (eq_trans (f_equal (fun n => stdio_call n u_srG4 u_knG4) HL) SC));
       cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn u_scG4];
       rewrite ?SUF7_len end.
     - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0). unorm. lia.
-    - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0). unorm. lia.  (* [comment removed for export] *)
+    - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0). unorm. lia.
     - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0). unorm. lia.
     - cbn [edenot length Z.of_nat]. apply u_small. lia.
     - cbn [length Z.of_nat]. lia.
@@ -751,7 +748,7 @@ Ltac close_exit_at HR HK P0 Hh Hlazy sp0 OFF WLO :=
 
   Lemma us_segEF4 : forall (a0s : list byte) (pp : word) (L : Z), Z.of_nat (length a0s) = L -> (74 <= L <= 131071)%Z ->
     (bv_unsigned sp0 <= bv_unsigned pp)%Z -> (bv_unsigned pp + L + 8 <= bv_unsigned sp0 + 4194304)%Z ->
-    (bv_unsigned pp + L + 8 <= 0x800000000000)%Z ->     (* [comment removed for export] *)
+    (bv_unsigned pp + L + 8 <= 0x800000000000)%Z ->
     atUE0 a0s pp L (t_emit (W 2 (msg_usage a0s)) (t_exit (exit_code 2) (m_fs model))).
   Proof.
     intros a0s pp L HP HPr Hpp1 Hpp2 Hpp3 vals R M HL P0 P1 P112 HR HK Hstr.
@@ -783,12 +780,12 @@ Ltac close_exit_at HR HK P0 Hh Hlazy sp0 OFF WLO :=
     pose proof u_itinerary as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & SC & _).
     lazymatch goal with |- srealizes _ _ (mkCfg (mkst ?Rc _ ?Mc _) _) _ =>
     apply (stdio_call_sound scfg vals (blobs_ev BL) u_srE4 u_knE4 Rc Mc model u_scE4 PRE7 a0s
-             (t_emit (W 2 SUF7) (t_exit (exit_code 2) (m_fs model))) HR HK
+             (t_emit (W 2 SUF7) (t_exit (exit_code 2) (m_fs model))) ltac:(rdr) HR HK
              (eq_trans (f_equal (fun n => stdio_call n u_srE4 u_knE4) HL) SC));
       cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn u_scE4];
       rewrite ?PRE7_len end.
     - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0). unorm. lia.
-    - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0). unorm. lia.  (* [comment removed for export] *)
+    - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0). unorm. lia.
     - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0). unorm. lia.
     - cbn [edenot ev ENV LX]. rewrite P112. rewrite u_small by lia. lia.
     - cbn [length Z.of_nat]. lia.
@@ -802,7 +799,7 @@ Ltac close_exit_at HR HK P0 Hh Hlazy sp0 OFF WLO :=
     - exact Hh.
     - exact Hlazy.
     - apply t_emit_has_nil.
-    - (* [comment removed for export] *)
+    -
       clear HR HK. intros R1 M1 HR HK.
       clear Hstr' Hsrc Hw0 Psmall.
       lazymatch type of HK with know_ok _ _ _ ?k => change k with u_knF40 in HK end.
@@ -863,10 +860,6 @@ Ltac close_exit_at HR HK P0 Hh Hlazy sp0 OFF WLO :=
       change (Env (vals_ev vals2) (blobs_ev BL)) with (ENV vals2) in HR, HK.
       eapply (us_segG4 vals2); [exact HL2 | exact Q0 | exact HR | exact HK].
   Qed.
-
-  (* [comment removed for export] *)
-  (* [comment removed for export] *)
-  (* [comment removed for export] *)
 
   Theorem us_tail : forall (a0s : list byte) (pp : word) (t8 : list byte) vals R M,
     ~ In (Z_to_bv 8 0) a0s -> (Z.of_nat (length a0s) <= 131071)%Z ->

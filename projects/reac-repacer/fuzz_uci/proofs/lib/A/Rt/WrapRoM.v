@@ -4,8 +4,8 @@
    core whose list covers them fails here and not in a walk), and are not errno. This replaces cgif's
    mconsts_of_rom_view (AE39.v:40), whose premise rom_view a caller cannot carry across __asan_stack_malloc_*. *)
 (* Modified by Theorem Labs, 2026-10-29: for r-identity's acceptance (cold/h-rw-ide-6-wrapacc), the record class is TfibSyms, not IdentTfibSyms (DECISIONS-LIVE 05:31Z: TfibSyms in both A and B, no --rename), and the core modules are Required by full path at the applied A core's names (lib/A/A*.v, lib/Reusable/YA0m, YE08, YE21). *)
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_identity lib/A/Rt/WrapRoM.v (origin/ossv/recipes 70952e1c8c9)
-   to reac-repacer/fuzz_uci image A (fuzz_uci.asan, sha256 6ea017c24525) on the fuzz_uci A core (276afc86670b): module
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_identity lib/A/Rt/WrapRoM.v
+   to reac-repacer/fuzz_uci image A (fuzz_uci.asan, sha256 6ea017c24525) on the fuzz_uci A core: module
    paths; record class TfibSyms -> UciSyms (code only; the donor's own Modified-by lines are kept as its record).
    Numerals moved by symbol + offset from the fuzz_identity unstripped twin to the fuzz_uci unstripped twin (each
    function is the same code up to pc-relative fields: bytecmp 7daa0e2a03d9 with repin_check 9cbc3553c09e's target pass); a .got slot moves to the slot that

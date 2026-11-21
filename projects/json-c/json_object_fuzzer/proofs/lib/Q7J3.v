@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput: `D_main`, `main_entry` and the open branches over the launch's input, the mmap base and the entry point; the entry stack layout: the argv strings laid from the stack's top `ed_top` with the exec file name; openat's path below TASK_SIZE in path_at, from the string end bound of main_strN). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Equivalence.
@@ -29,6 +30,8 @@ Import SX2. Import SX2S.
 
 Section L.
 Context {AMB : Amb}.
+(* LPS 727298f3: the start-up's data image [QFeQ.D_main] takes the launch's input. *)
+Variable inp : ProcInput.
 Variable sp0 : word.
 Variables av ev : list (list byte).
 Variable tid : word.
@@ -37,9 +40,9 @@ Hypothesis Hlo : (sp_window_lo <= bv_unsigned sp0)%Z.
 Hypothesis Hhi : (bv_unsigned sp0 <= sp_window_hi)%Z.
 
 #[using="Hva"] Lemma D_main_locale : forall segs,
-rdn segs (D_main sp0 av ev tid) (Z_to_bv 64 0x75e40) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 0x96138)).
+rdn segs (D_main inp sp0 tid) (Z_to_bv 64 0x75e40) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 0x96138)).
 Proof.
-intros segs. pose proof (u64_range tid). pose proof (len_av av Hva). unfold sp_window_lo, sp_window_hi in *.
+intros segs. pose proof (u64_range tid). unfold sp_window_lo, sp_window_hi in *.
 unfold D_main, D_fd, D_ssp, D_tls, D_tlsB, D_tlsA, D_libc. peel.
 apply rdn_wbytes_hit8. unorm; lia.
 Qed.
@@ -143,7 +146,10 @@ Hypothesis Hva : valid_argv [a0s; path].
 Hypothesis Hve : valid_envp envv.
 Hypothesis Hvsp : valid_sp sp0.
 Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-Hypothesis ME : main_entry sp0 [a0s; path] envv tid regs0 mem0.
+(* LPS 727298f3: [main_entry] takes the launch's input, the mmap base and the entry point. *)
+Variable inp : ProcInput.
+Variable entry : word.
+Hypothesis ME : main_entry inp mbase entry sp0 [a0s; path] envv tid regs0 mem0.
 Hypothesis Hbrk : valid_brk RSEGS brk.
 Hypothesis Hpne : path <> [].
 Hypothesis Hplen : (length path <= 4095)%nat.
@@ -153,13 +159,13 @@ Notation model0 := (Q1zM.model0 sp0 a0s path envv tid brk mbase fs0 stdin0).
 Notation model1g := (Q1zM.model1g sp0 tid brk mbase fs0 stdin0).
 Notation above_sp0 := (Q1zM.above_sp0 sp0 mem0).
 
-Hypothesis HKA : open_err_branch sp0 a0s path envv tid mem0 brk mbase fs0 stdin0 (t_die (msg_cannot_open path) fs0).
+Hypothesis HKA : open_err_branch sp0 a0s path envv tid mem0 brk mbase fs0 stdin0 inp (t_die (msg_cannot_open path) fs0).
 
 Definition open_ok_branch (fd3 : FdEntry) (KB : TSet) : Prop :=
 forall vals R M,
 length vals = 39%nat -> vals_ev vals 0 = sp0 ->
-vals_ev vals 1 = p0 sp0 a0s path envv -> vals_ev vals 2 = p1 sp0 a0s path envv ->
-vals_ev vals 3 = auxvp sp0 a0s path envv -> vals_ev vals 4 = rnd sp0 a0s path envv -> vals_ev vals 5 = tid ->
+vals_ev vals 1 = p0 a0s path envv inp -> vals_ev vals 2 = p1 a0s path envv inp ->
+vals_ev vals 3 = auxvp sp0 a0s path envv -> vals_ev vals 4 = rnd sp0 a0s path envv inp -> vals_ev vals 5 = tid ->
 vals_ev vals 38 = ssp_canary ->
 regs_ok (ENV vals) srB0 R -> know_ok RSEGS (ENV vals) M knA -> above_sp0 M ->
 M = mem_denot (ENV vals) mem0 logA ->
@@ -175,27 +181,27 @@ Proof.
 intros KB HKfile HKdot Hfs.
 pose proof (proj1 Hvsp) as SPlo. pose proof (proj1 (proj2 Hvsp)) as SPhi.
 unfold sp_window_lo, sp_window_hi in *.
-pose proof (main_regs_ok sp0 a0s path envv tid regs0 mem0 Hvsp Htid ME) as HR.
-pose proof (main_know_ok sp0 a0s path envv tid regs0 mem0 Hva Hve Hvsp Htid ME) as HK.
-change (E0 sp0 a0s path envv tid regs0) with (ENV (vals0 sp0 a0s path envv tid regs0)) in HR, HK.
-set (vals := vals0 sp0 a0s path envv tid regs0) in *.
+pose proof (main_regs_ok sp0 a0s path envv tid regs0 mem0 inp mbase entry Hva Hve Hvsp Htid ME) as HR.
+pose proof (main_know_ok sp0 a0s path envv tid regs0 mem0 inp mbase entry Hva Hve Hvsp Htid ME) as HK.
+change (E0 sp0 a0s path envv tid regs0 inp) with (ENV (vals0 sp0 a0s path envv tid regs0 inp)) in HR, HK.
+set (vals := vals0 sp0 a0s path envv tid regs0 inp) in *.
 assert (HL : length vals = 39%nat) by (subst vals; unfold vals0; rewrite !length_app, junk_vals_length; reflexivity).
 assert (P0 : vals_ev vals 0 = sp0) by reflexivity.
-assert (P1 : vals_ev vals 1 = p0 sp0 a0s path envv) by reflexivity.
-assert (P2 : vals_ev vals 2 = p1 sp0 a0s path envv) by reflexivity.
+assert (P1 : vals_ev vals 1 = p0 a0s path envv inp) by reflexivity.
+assert (P2 : vals_ev vals 2 = p1 a0s path envv inp) by reflexivity.
 assert (P3 : vals_ev vals 3 = auxvp sp0 a0s path envv) by reflexivity.
-assert (P4 : vals_ev vals 4 = rnd sp0 a0s path envv) by reflexivity.
+assert (P4 : vals_ev vals 4 = rnd sp0 a0s path envv inp) by reflexivity.
 assert (P5t : vals_ev vals 5 = tid) by reflexivity.
 assert (P38 : vals_ev vals 38 = ssp_canary) by reflexivity.
-destruct (main_str sp0 a0s path envv tid regs0 mem0 Hva Hve Hvsp ME 1%nat ltac:(lia)) as (Sr & Slo & Shi & Slen).
+destruct (main_str sp0 a0s path envv tid regs0 mem0 inp mbase entry Hva Hve Hvsp Htid ME 1%nat ltac:(lia)) as (Sr & Slo & Shi & Slen).
 cbn [nth] in Sr, Slo, Shi, Slen.
 clearbody vals.
 
 run_block_keep scr0 39%nat.
-assert (Sr' : rdn RSEGS M (p1 sp0 a0s path envv) (length path + 1) = Some (path ++ [Z_to_bv 8 0])).
+assert (Sr' : rdn RSEGS M (p1 a0s path envv inp) (length path + 1) = Some (path ++ [Z_to_bv 8 0])).
 { rewrite EQM. unfold p1. rewrite (rdn_mem_denot_above RSEGS (ENV vals) mem0 _ 0%nat 0x97000);
 [exact Sr | vm_compute; reflexivity | cbn [ev Q1zM.ENV]; rewrite P0; lia | cbn [ev Q1zM.ENV]; rewrite P0; lia | lia
-| pose proof (u64_range (cat_argv_ptr sp0 [a0s; path] envv 1)); lia]. }
+| pose proof (u64_range (cat_argv_ptr (ed_top a_rnd) [a0s; path] envv (in_execfn inp) 1)); lia]. }
 assert (HA : above_sp0 M).
 { intros x Hx. rewrite EQM. apply (mem_denot_above (ENV vals) mem0 _ 0%nat 0x97000);
 [vm_compute; reflexivity | cbn [ev Q1zM.ENV]; rewrite P0; lia | cbn [ev Q1zM.ENV]; rewrite P0; lia | lia]. }
@@ -220,6 +226,12 @@ eapply (HKA e (vals ++ [errno_ret e])); try eassumption.
 rewrite <- HL, <- (Nat.add_0_r (length vals)). rewrite vals_ev_app_r. reflexivity. }
 pose proof (regs_set_a0 (ENV vals) _ _ (Z_to_bv 64 3) (ELit 3) HR eq_refl) as HR3.
 assert (EDOT : Uapi.dot_path = QBxa.Mq5.dot_path) by reflexivity.
+(* LPS 727298f3: path_at's TASK_SIZE bound (read_cstr_of_rdn), from the string end bound of
+   Q1oC.Mq1.main_strN for argv[1] (as QleT.path_fits) *)
+assert (Pfit : (bv_unsigned (p1 a0s path envv inp) + Z.of_nat (length path) + 1 <= 0x800000000000)%Z).
+{ destruct (Q1oC.Mq1.main_strN sp0 [a0s; path] envv tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME 1%nat ltac:(cbn; lia))
+as (_ & _ & _ & _ & _ & Send).
+cbn [nth] in Send. unfold p1. change (2 ^ 47)%Z with 0x800000000000%Z in Send. exact Send. }
 destruct (list_eq_dec (fun x y : byte => bv_eq_dec _ x y) path QBxa.Mq5.dot_path) as [Hdot|Hndot].
 -
 eapply (rz_openat_dot RSEGS _ _ _ model0 ECALLW); try apply is_ecall_ECALLW.
@@ -231,6 +243,7 @@ eapply (rz_openat_dot RSEGS _ _ _ model0 ECALLW); try apply is_ecall_ECALLW.
 + regv HR (12 : reg). vm_compute. reflexivity.
 + rewrite m0_fds. rewrite alloc_fd_fds0. apply fd_lookup_fds0_3.
 +  rewrite EDOT, <- Hdot. split; [exact Hplen|]. split; [apply (Q1zM.path_nonul a0s path Hva)|].
+split; [regv HR (11 : reg); cbn [edenot ev Q1zM.ENV]; rewrite P2; unfold TASK_SIZE; lia|].
 regv HR (11 : reg). cbn [edenot ev Q1zM.ENV]. rewrite P2. exact Sr'.
 + exact KAok.
 + rewrite v_addi_pc4 by lia. change (0x5eae0 + 4)%Z with 0x5eae4%Z.
@@ -248,6 +261,7 @@ eapply (rz_openat_file RSEGS _ _ _ model0 ECALLW); try apply is_ecall_ECALLW.
 + regv HR (12 : reg). vm_compute. reflexivity.
 + rewrite m0_fds. rewrite alloc_fd_fds0. apply fd_lookup_fds0_3.
 +  split; [exact Hplen|]. split; [apply (Q1zM.path_nonul a0s path Hva)|].
+split; [regv HR (11 : reg); cbn [edenot ev Q1zM.ENV]; rewrite P2; unfold TASK_SIZE; lia|].
 regv HR (11 : reg). cbn [edenot ev Q1zM.ENV]. rewrite P2. exact Sr'.
 + exact Hpne.
 + apply (Q1zM.path_noslash a0s path tid Hva Htid).

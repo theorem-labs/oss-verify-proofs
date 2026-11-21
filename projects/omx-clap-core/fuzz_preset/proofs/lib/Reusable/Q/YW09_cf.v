@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -156,15 +157,16 @@ Variables (regs2 : bvmap 5 word) (mem2 : word -> option byte).
 Hypothesis AT2 : at_S2 L regs mem g am fr n a rg gd err regs2 mem2.
 Definition RAW (m0 m1 : word -> option byte) : Prop :=
 forall x, 0 <= x < 2 ^ 64 -> ~ STK x -> ~ ERRN x -> m1 (Z_to_bv 64 x) = m0 (Z_to_bv 64 x).
-Lemma to_S4 :
-SR_cfv src0segs (mkCfg (mkst (regupd regs2 10 (Z_to_bv 64 (2 ^ 64 - 12))) (v_addi (Z_to_bv 64 MREMAP_ECALL) 4) mem2 (seg_rom src0segs)) md)
-(fun c4 => exists ms4, c4 = mkCfg ms4 md /\ st_ok src0segs E (S4 rcr) ms4 /\ RAW mem (ms_mem ms4)).
+(* LPS 727298f3: the refusal is ENOMEM or EINVAL ([YW0e.S2no]). *)
+Lemma to_S4 e : In e [12; 22]%Z ->
+SR_cfv src0segs (mkCfg (mkst (regupd regs2 10 (Z_to_bv 64 (2 ^ 64 - e))) (v_addi (Z_to_bv 64 MREMAP_ECALL) 4) mem2 (seg_rom src0segs)) md)
+(fun c4 => exists ms4, c4 = mkCfg ms4 md /\ st_ok src0segs E (S4 e rcr) ms4 /\ RAW mem (ms_mem ms4)).
 Proof.
-destruct AT2 as (_ & _ & Hregs2 & Hmem2 & HG2 & HF2). destruct Hmd as (Hh & Hlz & _).
+intros He. destruct AT2 as (_ & _ & Hregs2 & Hmem2 & HG2 & HF2). destruct Hmd as (Hh & Hlz & _).
 destruct (S2_run_ok rcr) as (_ & Hpc2 & Hrv2).
-assert (HS : st_ok src0segs E (S2no rcr) (mkst (regupd regs2 10 (Z_to_bv 64 (2 ^ 64 - 12))) (v_addi (Z_to_bv 64 MREMAP_ECALL) 4) mem2 (seg_rom src0segs))).
+assert (HS : st_ok src0segs E (S2no e rcr) (mkst (regupd regs2 10 (Z_to_bv 64 (2 ^ 64 - e))) (v_addi (Z_to_bv 64 MREMAP_ECALL) 4) mem2 (seg_rom src0segs))).
 { rewrite <- Hpc2. unfold S2no. apply st_ok_resume_sv; [exact Hregs2 | exact Hmem2 | exact HG2 | reflexivity]. }
-eapply SR_cfv_mono; [exact (S4_run E _ md Hh Hlz rcr HS)|].
+eapply SR_cfv_mono; [exact (S4_run E _ md Hh Hlz e rcr He HS)|].
 intros c4 (ms4 & -> & HS4 & HF4). exists ms4. split; [reflexivity|]. split; [exact HS4|].
 cbn [ms_mem] in HF4. rewrite mem_S2no in HF4.
 intros x Hx N1 N2. transitivity (mem2 (Z_to_bv 64 x)).
@@ -173,8 +175,10 @@ eapply in_wrange_skeleton; [exact (skel_S2 rcr) | exact W].
 - apply HF2. rewrite lit64_small by lia. exact (not_wr_entry x Hx N1 N2).
 Qed.
 Section m.
+Variable e : Z.
+Hypothesis He : In e [12; 22]%Z.
 Variable ms4 : machine_state.
-Hypothesis HS4 : st_ok src0segs E (S4 rcr) ms4.
+Hypothesis HS4 : st_ok src0segs E (S4 e rcr) ms4.
 Hypothesis RAW4 : RAW mem (ms_mem ms4).
 Let regs4 := ms_regs ms4.
 Let mem4 := ms_mem ms4.
@@ -184,12 +188,12 @@ getr regs4 4 = getr regs 4 /\ getr regs4 8 = Z_to_bv 64 n /\ getr regs4 9 = Z_to
 getr regs4 18 = Z_to_bv 64 (P + NOLD) /\ getr regs4 19 = Z_to_bv 64 (16 * fr_off fr) /\ getr regs4 20 = Z_to_bv 64 4095 /\ getr regs4 21 = Z_to_bv 64 P /\ getr regs4 22 = Z_to_bv 64 n /\
 (forall i, In i [23; 24; 25; 26; 27]%nat -> getr regs4 (nat_to_reg i) = getr regs (nat_to_reg i)).
 Proof.
-destruct (S4_shape rcr) as (_ & _ & Hv & _). unfold view in Hv. cbn [map] in Hv.
+destruct (S4_shape e rcr He) as (_ & _ & Hv & _). unfold view in Hv. cbn [map] in Hv.
 vnth Hv 0%nat V1. vnth Hv 1%nat V2. vnth Hv 2%nat V3. vnth Hv 3%nat V4. vnth Hv 4%nat V8. vnth Hv 5%nat V9. vnth Hv 6%nat V10.
 vnth Hv 7%nat V18. vnth Hv 8%nat V23. vnth Hv 9%nat V24. vnth Hv 10%nat V25. vnth Hv 11%nat V26. vnth Hv 12%nat V27.
-pose proof (S4_view2 rcr) as Hv2.
+pose proof (S4_view2 e rcr He) as Hv2.
 unfold view in Hv2. cbn [map] in Hv2. vnth Hv2 0%nat V19. vnth Hv2 1%nat V20. vnth Hv2 2%nat V21. vnth Hv2 3%nat V22.
-pose proof (st_ok_regs_ok src0segs E _ _ HS4) as R. change (regs_ok E (ss_regs (S4 rcr)) regs4) in R.
+pose proof (st_ok_regs_ok src0segs E _ _ HS4) as R. change (regs_ok E (ss_regs (S4 e rcr)) regs4) in R.
 pose proof XP as XP. pose proof XN as XN.
 repeat match goal with |- _ /\ _ => split end.
 - rewrite (R 1%bv), V1. reflexivity.
@@ -215,9 +219,9 @@ Lemma S4_mem :
 Forall (chunk_ok src0segs E mem4 SP) frame_chunks.
 Proof.
 pose proof (st_ok_mem_ok src0segs E _ _ HS4) as (_ & ROK & _). change (ms_mem ms4) with mem4 in ROK.
-destruct (S4_shape rcr) as (_ & _ & _ & Hsm). rewrite Hsm in ROK.
+destruct (S4_shape e rcr He) as (_ & _ & _ & Hsm). rewrite Hsm in ROK.
 assert (Rstk : region_ok src0segs E mem4 (stk3 rcr)) by (eapply (proj1 (Forall_forall _ _) ROK); cbn; tauto).
-assert (Rerr : region_ok src0segs E mem4 (YP09.mkRegion (Some aTP) (-164) (-160) (-164) (-160) [mkChunk (-164) (CVal 4 (SLit 12))]))
+assert (Rerr : region_ok src0segs E mem4 (YP09.mkRegion (Some aTP) (-164) (-160) (-164) (-160) [mkChunk (-164) (CVal 4 (SLit e))]))
 by (eapply (proj1 (Forall_forall _ _) ROK); cbn; tauto).
 destruct Rstk as (_ & _ & Wstk & Cstk). destruct Rerr as (_ & _ & Werr & _).
 cbn [r_base r_wlo r_whi r_chunks stk3] in Wstk, Cstk, Werr. rewrite base_SP in Wstk, Cstk. rewrite base_TP in Werr.
@@ -227,7 +231,7 @@ split; [|split].
 - apply Forall_app in Cstk as [_ Cstk]. apply Forall_app in Cstk as [_ Cstk]. exact Cstk.
 Qed.
 Lemma fb_at_S4 : fb_arrival L A regs mem md (pp am fr) NOLD n regs4 mem4.
-Proof using HS4 HW MX PRE RAW4 XR.
+Proof using He HS4 HW MX PRE RAW4 XR.
 pose proof S4_regs as (R1 & R2 & R3 & R4 & R8 & R9 & R10 & R18 & _ & _ & _ & _ & RK).
 pose proof S4_mem as (W1 & W2 & CF).
 split.
@@ -255,11 +259,11 @@ End S2.
 End FB.
 Theorem src0_realloc_fb : OBL_fb_T.
 Proof using.
-intros FB L A regs mem md g am fr n a ka rg HC Hth gd err regs2 mem2 AT2.
+intros FB L A regs mem md g am fr n a ka rg HC Hth gd err regs2 mem2 AT2 e He.
 pose proof (proj1 AT2) as Hgd. pose proof (proj1 (proj2 AT2)) as Herr.
 eapply mreal_cf_SR_pre; [eapply to_S4; eassumption|].
 intros c4 (ms4 & -> & HS4 & RAW4).
-destruct (S4_shape (rcr am fr)) as (Hpc & Hrv & _).
+destruct (S4_shape e (rcr am fr) He) as (Hpc & Hrv & _).
 rewrite (st_ok_mkst src0segs (Er L regs g am fr n a rg gd err) _ _ HS4 Hrv), Hpc.
 unfold OBL_fb_gen in FB. apply FB. eapply fb_at_S4; eassumption.
 Qed.

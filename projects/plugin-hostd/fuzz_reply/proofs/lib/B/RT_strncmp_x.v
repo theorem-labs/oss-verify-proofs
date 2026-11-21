@@ -6,12 +6,12 @@
    RT_strncmp.v is not edited; its helper lemmas are used by Import. The statement is W_sites_x.v's
    astrncmp_realizes_x; the proof of rt_strncmp_x is RT_strncmp.v's with AR -> ARx (am_layout of proj1 HAR ->
    rtl_layout, al_frame / al_stack -> rtl_frame / rtl_stack, RT_kit / RT_post's AR lemmas -> their _x forms there).
-   Measured (lines at a working branch 9b1367c7fe1): the original reads AR through
+   Measured (lines at a working branch): the original reads AR through
    al_const (through RT_kit.walk_cells, :286), al_frame / al_stack (through RT_post.aentry_post_of_walk, :361) and
-   the ARm field am_layout (:281 and RT_post.v:249), the layout law here; a Theorem Labs lane's three-law note
+   the ARm field am_layout (:281 and RT_post.v:250), the layout law here; a Theorem Labs lane's three-law note
    (RESUME.md:116-122 sha256 704eb9d3afa6; internal record) did not count the ARm fields, hence the record's rtl_layout and rtl_const_cells.
-   The original's named premise FrRtCells (RT_kit.v:226) is not needed over ARx: the walk reads only conjuncts 1-10
-   of fr_rt_rest (through RT_kit.walk_cells, RT_kit.v:207), all const rows. So rt_strncmp_x_walk takes the walk's
+   The original's named premise FrRtCells (RT_kit.v:227) is not needed over ARx: the walk reads only conjuncts 1-10
+   of fr_rt_rest (through RT_kit.walk_cells, RT_kit.v:208), all const rows. So rt_strncmp_x_walk takes the walk's
    cells RT_kit_cells_x.FrWalkCells_x, and the twin rt_strncmp_x derives them from rt_laws + FrShadowSyms +
    TfibSyms (RT_kit_cells_x.walk_cells_x_of_syms): no cell premise.
    At the end: rt_strncmp_of_x, whose statement is byte for byte RT_strncmp.v's rt_strncmp, from rt_strncmp_x_walk
@@ -20,7 +20,8 @@
    premises are AR_laws_cf frsegs B, FrShadowSyms B and TfibSyms B; at the cf top (B := TfibB) each is a closed
    theorem: AR_laws_ok_cf (Reusable/YG0lawscf.v), RT_kit.fr_shadow_of_palib of W_palib_fr.palib_tfib TfibB
    TfibB_syms, and AD2l.TfibB_syms. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/RT_strncmp_x.v at commit 6b4f6082575, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (3 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/RT_strncmp_x.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (3 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

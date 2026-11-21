@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_ubjson_encoder/lib/S8/AsanAcct.v, with its module paths and module names changed; 403 of its 523 lines of code are new or changed and 1138 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/A/FMbz_clean.v, with its module paths and module names changed; 344 of its 386 lines of code are new or changed and 481 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: lib/A/HPgWrapNcmp.v's hd_strncmp_core (itself reac-pw/fuzz_pin's
-   lib/A/PPgWrapNcmp.v pin_strncmp_core at 90722657971) re-run with the caller's frame hole of lib/A/HPgHole.v
+   lib/A/PPgWrapNcmp.v pin_strncmp_core) re-run with the caller's frame hole of lib/A/HPgHole.v
    (ecall_preH in, the hole post out), as lib/A/Rt/FMrt_lift.v rt_post_roU_win re-runs rt_post_ro_win with
    lib/A/Rt/FMupoison.v ARU_frame: hd_rt_post_roH_win is rt_post_roU_win with HPgHole.ARH_frame in place of
    ARU_frame; the walk's premises that AR gives (the stack window, the runtime cells, the read-only views) are read
@@ -35,6 +35,7 @@
      (model_zero).
    The top lemmas: pin_astrncmp (every B with TfibSyms B) and pin_astrncmp_TfibB (pin's record, lib/A/AD2l.v). *)
 (* Modified by Theorem Labs, 2026-10: the asan-ubsan twin of lib/A/PPgWrapNcmp.v of this library, for reac-pw/fuzz_pin's asan-ubsan image (fuzz_pin.asan-ubsan d6f83d301522) instead of its asan image (fuzz_pin.asan 3e4859aed23f): module paths lib.A -> lib.AU (the core files A<xyz> -> Y<xyz>); lib.A.PPgWrap, image-independent, kept; no numeral changed (every address numeral checked on the asan-ubsan image); by hand, comments only: the program's call of the trampoline is reac_box_pin_parse 0x80da0 in this image (the function's code differs between the two images, so that address is read from this image's code, not moved by offset), and two comments name lib/AU/Rt/PinRoPins.v and lib/AU/YD2l.v. The comment lines above describe how lib/A/PPgWrapNcmp.v was made and quote the asan image's values; the code and comments below carry the asan-ubsan values. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

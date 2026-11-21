@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: send_message's first walk segment on plugin-hostd/fuzz_command's ASan image, from
    the entry 0x86b10 to the malloc wrapper's return 0x86c28, ported from proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v,
-   AChc.v and ACke.v (cgif_close) at c8557374ad2e, with the class-1 side-stack frame steps of A/ACk1.v
+   AChc.v and ACke.v (cgif_close), with the class-1 side-stack frame steps of A/ACk1.v
    (cgif_newgif) and the realigned stack pointer of A/AChf.v (flushFrame): fuzz_command's listing, send_message's
    symbolic states. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

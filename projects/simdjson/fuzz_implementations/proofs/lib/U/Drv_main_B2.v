@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the run_ok hypothesis is added, the argv pointers come from the launch's layout, and the stack region's lower bound is 4 MiB below the entry sp instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool Permutation Strings.String.
 From stdpp Require Import gmap.
@@ -47,6 +48,7 @@ Section B2.
   Hypothesis CEIL : ceil_ok sp0.
   Hypothesis VARGV : valid_argv argv.
   Hypothesis VENVP : valid_envp envp.
+  Hypothesis ROK : run_ok sp0 argv envp.
   Hypothesis EARGV : argv = [arg0; arg1].
   Hypothesis HT : 0 < TID < 4194304.
   Hypothesis MALLOC : rmalloc_stmt.
@@ -63,14 +65,14 @@ Section B2.
   Notation RDHEAD' := (RDHEAD sp0 argv envp uid TID PAD S4 S5 S6 S7 S8 S9 S10 S11).
   Notation RDBRK' := (RDBRK sp0 argv envp uid TID PAD S4 S5 S6 S7 S8 S9 S10 S11).
   Notation POSTBODY' := (POSTBODY sp0 argv envp uid TID PAD S4 S5 S6 S7 S8 S9 S10 S11).
-  Ltac hyps := first [exact VSP | exact CEIL | exact VARGV | exact VENVP | exact EARGV | exact HT | exact MALLOC | exact FREE | exact FPR | exact FWX | exact SWF | exact FWR].
+  Ltac hyps := first [exact VSP | exact CEIL | exact VARGV | exact VENVP | exact ROK | exact EARGV | exact HT | exact MALLOC | exact FREE | exact FPR | exact FWX | exact SWF | exact FWR].
 
   Notation GST pc x1 t0 t1 t2 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 t3 t4 t5 t6 F fc mm :=
     (MS (mkR x1 (Z_to_bv 64 (usp0 + -128)) (Z_to_bv 64 0x10800) (Z_to_bv 64 RATP) t0 t1 t2 (Z_to_bv 64 2) x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 x19 x20 x21 x22 x23 S8 S9 S10 S11 t3 t4 t5 t6)
         F (Z_to_bv 64 pc) fc None mm (seg_rom usegs)).
 
   Lemma rd_body : forall (fd P1v : Z) (st : rd_st) (s : PState) ms,
-    3 <= fd < 2^32 -> nth_error (argv_ptrs sp0 argv envp) 1 = Some (Z_to_bv 64 P1v) ->
+    3 <= fd < 2^32 -> nth_error (argv_ptrs run_top argv envp run_execfn) 1 = Some (Z_to_bv 64 P1v) ->
     RDHEAD' fd P1v st s ms ->
     implM usegs (read_loop_body io raw_malloc raw_free ustage fd (map bv_unsigned arg1) st) s (POSTBODY' fd P1v) ms.
   Proof.
@@ -117,7 +119,7 @@ Section B2.
     replace (Z.shiftl (Z.of_nat (length DATA)) 1) with (rd_cap st * 2) by (rewrite Z.shiftl_mul_pow2 by lia; lia).
     eapply implM_bind.
     { unfold rmalloc_stmt in MALLOC.
-      eapply MALLOC with (lo := usp0 - 8388608) (B := usp0); try reflexivity; unfold RATP; rewrite ?(unsigned_lit RMallocRep.RATP) by (unfold RMallocRep.RATP; lia); rewrite ?(unsigned_lit (usp0 + -128)) by lia;
+      eapply MALLOC with (lo := usp0 - 4194304) (B := usp0); try reflexivity; unfold RATP; rewrite ?(unsigned_lit RMallocRep.RATP) by (unfold RMallocRep.RATP; lia); rewrite ?(unsigned_lit (usp0 + -128)) by lia;
         unfold RMallocRep.RATP; cbn [Z.add];
         first [ exact P0 | exact AUX | exact ST | exact ERR | exact MI | unfold RMALLOC_STACK; lia | lia ]. }
     cbv beta. intros r s1 ms1 PO.
@@ -193,7 +195,7 @@ Section B2.
     lazymatch goal with |- impl _ _ (?tm _) _ ?msx => change (implM usegs tm s1 (POSTBODY' fd P1v) msx) end.
     eapply implM_bind.
     { apply implM_leaves. unfold rfree_stmt in FREE.
-      eapply FREE with (lo := usp0 - 8388608) (B := usp0) (p := rd_buf st) (A := A) (n := rd_cap st); try reflexivity; unfold RATP;
+      eapply FREE with (lo := usp0 - 4194304) (B := usp0) (p := rd_buf st) (A := A) (n := rd_cap st); try reflexivity; unfold RATP;
         rewrite ?(unsigned_lit RMallocRep.RATP) by (unfold RMallocRep.RATP; lia); rewrite ?(unsigned_lit (usp0 + -128)) by lia; unfold RMallocRep.RATP; cbn [Z.add];
         first [ exact P2 | right; left; reflexivity | exact AUX | exact ST | exact MI | exact ERR2 | unfold RFREE_STACK; lia | lia ]. }
     cbv beta. intros [] s2 ms2 [PO LEAF].
@@ -219,7 +221,7 @@ Section B2.
 
     apply implM_retb. cbv beta iota.
     rewrite <- LENZ.
-    eapply (rd_read sp0 argv envp uid arg0 arg1 TID PAD S4 S5 S6 S7 S8 S9 S10 S11 VSP CEIL VARGV VENVP EARGV HT FPR FWX SWF fd P1v (mkRd nb (rd_cap st * 2) (rd_content st)) s2);
+    eapply (rd_read sp0 argv envp uid arg0 arg1 TID PAD S4 S5 S6 S7 S8 S9 S10 S11 VSP CEIL VARGV VENVP ROK EARGV HT FPR FWX SWF fd P1v (mkRd nb (rd_cap st * 2) (rd_content st)) s2);
       cbn [rd_buf rd_cap rd_content]; first [exact FD | exact HP1 | exact HC | exact SG3 | exact FR3 | exact BA3 | exact EX3 | unfold RMallocRep.RERRNO; exact ERR3 | exact FRM | lia | idtac].
     split; [exact HEAP3|]. split; [exact HA3|]. split; [exact NB3|].
     assert (CAP2 : rd_cap st * 2 <= 67108864).
@@ -235,7 +237,7 @@ Section B2.
     end.
 
   Lemma rd_loop : forall (fuel : nat) (fd P1v : Z) (st : rd_st) (s : PState) ms,
-    3 <= fd < 2^32 -> nth_error (argv_ptrs sp0 argv envp) 1 = Some (Z_to_bv 64 P1v) ->
+    3 <= fd < 2^32 -> nth_error (argv_ptrs run_top argv envp run_execfn) 1 = Some (Z_to_bv 64 P1v) ->
     RDHEAD' fd P1v st s ms ->
     implM usegs (mloop fuel (read_loop_body io raw_malloc raw_free ustage fd (map bv_unsigned arg1)) st) s (POSTLOOP fd P1v) ms.
   Proof.

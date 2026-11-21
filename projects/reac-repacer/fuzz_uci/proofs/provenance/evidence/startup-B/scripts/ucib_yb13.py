@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""ucib_yb13.py -- reac-repacer/fuzz_uci image-B YB13.v: cgif's released lib/YB13.v (commit 25e3d17bdb50,
-blob 7bf6329799b9, = c8557374ad2e's) with every image numeral recomputed from fuzz_uci.asan-ubsan by the rule the donor's
+"""ucib_yb13.py -- reac-repacer/fuzz_uci image-B YB13.v: cgif's released lib/YB13.v (
+blob 7bf6329799b9, = a commit's) with every image numeral recomputed from fuzz_uci.asan-ubsan by the rule the donor's
 own numeral follows. The rules and the token-substitution engine are decode's gen.py (gen_dec.py beside this file,
 sha256 6ccd419c977f, imported unchanged): slots_AB13 (TFIB_BSS = the start of the last PT_LOAD's zero
 suffix up to img_hi, the four segments' bases / sizes / byte counts, the writable window) plus ONE slot this image needs

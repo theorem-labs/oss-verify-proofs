@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the state invariants take the launch record [LaunchX], and the argument area is read from it). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -43,20 +44,22 @@ Section HAXAll.
   Variable brk0 : word.
   Variables argv envp : list (list byte).
   Variables uid hw : word.
+  Context {L : LaunchX}.
   Variable fs : Fs.Fs.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
   Variable SINV : env -> (word -> option byte) -> Prop.
-  Hypothesis S0 : forall E M, SINV E M -> SINV0 HAPH sp rdraw brk0 argv envp uid hw E M.
-  Hypothesis SF : forall E M M', (forall a, argH0 HAPH sp rdraw argv envp uid hw E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
+  Hypothesis S0 : forall E M, SINV E M -> SINVL HAPH sp rdraw brk0 argv envp uid hw L E M.
+  Hypothesis SF : forall E M M', (forall a, argH0 sp rdraw argv envp (lx_kb L) (lx_execfn L) E a = true -> M' a = M a) -> SINV E M -> SINV E M'.
   Hypothesis SA : forall E E' M, env_agree NX0 E E' -> SINV E M -> SINV E' M.
 
-  #[local] Notation argH := (argH0 HAPH sp rdraw argv envp uid hw).
+  #[local] Notation argH := (argH0 sp rdraw argv envp (lx_kb L) (lx_execfn L)).
   #[local] Notation ISP := (bv_unsigned sp).
-  Let AH := argH0_high HAPH sp rdraw argv envp uid hw Hsp Hva.
-  Let AA := argH0_agree HAPH sp rdraw argv envp uid hw.
+  (* [AsanInit.argH0_high] is the top-level form over [sp rdraw argv envp kb execfn]. *)
+  Let AH := AsanInit.argH0_high sp rdraw argv envp (lx_kb L) (lx_execfn L) Hsp Hva.
+  Let AA := argH0_agree sp rdraw argv envp (lx_kb L) (lx_execfn L).
 
   Theorem ha_x_all_sinv : forall x, x_stmt HASEGS HAT NX0 AsanInit.LIMIT SINV argH ISP fs x.
   Proof.
@@ -82,7 +85,7 @@ Section HAXAll.
         | exact (fetch_at HASEGS _ _ _ eq_refl F_51c4cc) | exact (fetch_at HASEGS _ _ _ eq_refl F_51c4d0) | exact (fetch_at HASEGS _ _ _ eq_refl F_51c4d4)
         | exact (fetch_at HASEGS _ _ _ eq_refl F_51c4d8) | exact (fetch_at HASEGS _ _ _ eq_refl F_51c4dc)
         | repeat split; reflexivity | exact D_51c4cc | exact D_51c4d0 | exact D_51c4d4 | exact D_51c4d8 | exact D_51c4dc | try diet_eassumption .. ].
-    - exact (init_x_sound_layout HASEGS HAT HAPH sp rdraw argv envp fs uid hw SINV).
+    - apply x_sound_layout.
     - exact (APSX.node_x_sound_XIStrncpy HASEGS HAT NX0 LIMIT hat_segs_wx hat_in_hull hat_hull_ok SINV argH ISP
                AH NX0_spw AA SF SA fs ha_istrncpy_spec).
     - exact (APSX.node_x_sound_XPopFree HASEGS HAT NX0 LIMIT hat_segs_wx hat_in_hull hat_hull_ok SINV argH ISP

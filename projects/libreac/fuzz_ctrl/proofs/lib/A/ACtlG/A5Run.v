@@ -1,5 +1,5 @@
 (* lib/A/ACtlG/A5Run.v -- the _F run of segment A5 of fuzz_ctrl image A, PROVED: seg_A5_run_F_ok is the Section
-   hypothesis seg_A5_run_F of lib/A/ACtlG/A5.v (A5.v:129-152 (an earlier version, blob 6fe66e3de56, not in this delivery); from a working branch 8b0ff2e4e96),
+   hypothesis seg_A5_run_F of lib/A/ACtlG/A5.v (A5.v:129-152 (an earlier version, blob 6fe66e3de56, not in this delivery); from a working branch),
    its statement copied character for character from A5.v:130-152.  rule 24: no function proved (one
    register-only run of a walk segment).  Written by a Theorem Labs lane (brief
    a5run.md (a working note, not in this delivery)).

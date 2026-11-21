@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YC1fP.v, with its module paths and module names changed; 710 of its 767 lines of code are new or changed and 456 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, IMAGE B' (asan-ubsan, #102 pin d663f82d7f488d30; listing of record lib/B/Listing_prog.v, slots as at
-   blob 8bcc2c9e7809, a working branch d42e123915ae; the cut's blob c97cc46b3e13 changes only its header
+   blob 8bcc2c9e7809, a working branch; the cut's blob c97cc46b3e13 changes only its header
    line): the walk of fuzz.h's fuzz_pick (omx-clap-core fuzz/fuzz.h
    :64-72 at 246923f0, blob 0269c7f7; out of line on B' only, 0x84da4, 42 instructions from slot 3510) against the kit's
-   text tfuzz_pick_specX (lib/A/PRH_FnCheck.v:923, blob c40cf3fdcd2a at the batch kit's cut 7cdbb61b5fa0), proved VERBATIM.
+   text tfuzz_pick_specX (lib/A/PRH_FnCheck.v:923, blob c40cf3fdcd2a at the batch kit's cut), proved VERBATIM.
    proves function fuzz_pick (reuse search: the internal file REWALK-102-PLAN.md section F3)
    the batch kit's REBIND (rule 24: the rebind proves no function): the walk is a Theorem Labs lane's working branch
-   ff497269cc63 (this path, blob d6f8c0dfa621), proved there against the kit's earlier text (PRH_FnCheck.v blob
+   (this path, blob d6f8c0dfa621), proved there against the kit's earlier text (PRH_FnCheck.v blob
    6f6bc83d7420). The two texts, comments stripped, differ ONLY in the ledger's two #102 fields: the binders
    `most own` and prh_ledger's last two arguments `most own`, in the pre and in the post. The walk keeps the ledger
    whole (prh_ledger_kept_aview), so the proof changes only in its intros.
@@ -18,7 +19,7 @@
    (fpi_entry: the entry is slot 3510; fpi_hi: the image lies below 2 ^ 31). The binding of B to the image's
    shadow-base GOT word and cell is YC1fP's PALibCore.
    THE TOP fuzz_pick_holds_B (end of file) is the kit's text at the B' halts top's instance, with the type of
-   HaltsClosedB.v's H_text_fuzz_pick_B (a working branch 5f51f36fad3f, blob 895e87822602, :257-259),
+   HaltsClosedB.v's H_text_fuzz_pick_B (a working branch, blob 895e87822602, :257-259),
    so that citation is `exact`: PI := preset_prh_img (= prh_img_B), L := B_prog_listing, PA := PI_prog_B
    (lib/B/PAImg_prog.v blob 15fab93fe702, which builds at the cut), B := TfibB (lib/Reusable/YD2l.v),
    ARx := PresetCfnB.iface_ARx (ARcf /\ xs_placed_cf at CfParams_preset), RL := prh_room_live_a8,
@@ -820,7 +821,7 @@ End w.
 
 (* ---------------------------------------------------------------------- *)
 (* THE TOP: the kit's text at the B' halts top's instance. Its type is HaltsClosedB.v's H_text_fuzz_pick_B
-   (a working branch 5f51f36fad3f :257-259) in the same frame: the two local instances (the start-up
+   (a working branch :257-259) in the same frame: the two local instances (the start-up
    float state YK11.fx0 and the image's CfImg_B, HaltsClosedB.v :125 / :127), the abbreviations PAB / ARi / RLX / SEGS_B
    (:132-135) and the same named arguments. The names are qualified because this file Imports none of the halts top's
    modules. Required here, after the walk: PAImg_prog's PI_prog_B is a global instance. *)

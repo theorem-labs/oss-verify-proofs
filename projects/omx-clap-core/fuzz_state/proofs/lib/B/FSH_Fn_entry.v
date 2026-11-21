@@ -1,5 +1,5 @@
 (* fs program part, lane ENTRY, IMAGE B (fs.asan-ubsan, sha256 5ac5ce0954f8...): the twin of lib/A/FSH_Fn_entry.v
-   (a working branch c97b870fa10, folded in S0). Same names and the same three-premise order (TfibLib, TfibSyms,
+   (a working branch, folded in S0). Same names and the same three-premise order (TfibLib, TfibSyms,
    FsEntryTraces, LIBK), every address and frame image B's own: no term here uses image A's content.
    rule 24: proves no function (kind: statement text). Statement only, besides the image-neutral lemma fs_fake_granted,
    restated here so this file does not load lib/A/FSH_Fn_entry.v.
@@ -14,13 +14,13 @@
      (ra 0x810c4), __asan_memcpy 0x810dc, free trampoline 0x8118c (ra 0x81190). FsEntryRt states the runtime contracts
      at these sites (memchr at lib/B/FSH_Base.v's PC_memchr). These are the entry's OWN runtime uses: a callee's closing
      theorem adds its own runtime premises when composed, so fs_entry_goal takes no lib/B/FSH_Rt.v FsRt (the mirror of
-     lib/A/FSH_Fn_entry.v, 25c141b8cb6).
+     lib/A/FSH_Fn_entry.v).
    - the allocator call traces' inner return address (the GetCurrentPc `jal`'s return inside the interceptor, i.e.
      call_trace's ipc): __interceptor_malloc 0x532bc + 0xc8 = 0x53384 (`jal 0x205b0` at 0x53380), __interceptor_free
      0x530ec + 0x138 = 0x53224 (`jal 0x20710` at 0x53220); A's 0x53314 / 0x531b4 sit at the same offsets, and the A and
      B interceptors have identical mnemonic sequences (348 and 464 bytes).
    IMAGE-B CORE: TfibLib and TfibSyms are image B's own twins, lib/B/YCeg.v (Record TfibLib :27) and lib/B/YF0m.v
-   (Record TfibSyms :909), from RELOC-B (a working branch 8d433ea5180); this file lands in S0 together with that
+   (Record TfibSyms :909), from RELOC-B (a working branch); this file lands in S0 together with that
    core. The contract concluded is lib/B/FSH_Harness.v's fs_lib_contract_x at build B, whose sink / meta cells are its
    Section variable K (asink_syms) and whose sink head is the context SK - both are explicit here, to be instantiated
    by B's core (FSH_Base.fsB_sink_head and B's asink_syms); when the B harness switches to B's YCfn, only the

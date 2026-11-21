@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the load-reserved reservation a system call clears, in nretA_MSsvc_w; the channel-reader conjunct of PMfd in the read proofs). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -21,7 +22,7 @@ Import ListNotations.
 Open Scope Z_scope.
 
 Lemma nretA_MSsvc_w : forall R F pc x8 fc rv m ro r ws,
-  nretA (MSsvc R F pc x8 fc rv m ro) (mkEffect r ws []) = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4)%bv fc rv
+  nretA (MSsvc R F pc x8 fc rv m ro) (mkEffect r ws []) = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4)%bv fc None
     (apply_writes (apply_zeros (apply_unmaps m []) []) ws) ro.
 Proof. reflexivity. Qed.
 
@@ -116,8 +117,8 @@ Proof using AF AF_ICPT RIP.
            fd g_read_stage count p off data); [lia| lia| ul| exact (ASTA_PM_mat_stable RT AF Σ _ fs0)| | | exact Hc1'|].
   - intros ms <-. split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|].
     split; [exact WR1| reflexivity].
-  - intros mo (HAR & HF & HF2). rewrite HF, HF2. split; [exact HLK|]. split; [exact HFS|].
-    split; [apply (af_with_fds RT AF); exact HAR| split; [reflexivity| exact HF2]].
+  - intros mo (HAR & HF & HF2 & HRD). rewrite HF, HF2. split; [exact HLK|]. split; [exact HFS|].
+    split; [apply (af_with_fds RT AF); exact HAR| split; [reflexivity| split; [exact HF2| exact HRD]]].
   - intros c2 Hc2.
     set (r := Z.of_nat (length bs)) in *.
     assert (Hr : 0 <= r <= count).
@@ -248,7 +249,7 @@ Proof using AF AF_ICPT.
            (fun ms => nretA msA (efferr EISDIR) = ms) (fun mo => ARTM RT Σ mo /\ PMfd F0 fs0 mo)
            fd g_read_stage count); [lia| lia| ul| ul| exact (ASTA_PM_mat_stable RT AF Σ _ fs0)| | | exact Hc1'|].
   - intros ms <-. split; [reflexivity|]. split; [reflexivity|]. split; [reflexivity|]. split; reflexivity.
-  - intros mo (HAR & HF & HF2). rewrite HF. split; [exact HLK|]. split; [exact HAR| split; assumption].
+  - intros mo (HAR & HF & HF2 & HRD). rewrite HF. split; [exact HLK|]. split; [exact HAR| exact (conj HF (conj HF2 HRD))].
   - intros c2 Hc2.
     assert (EQ : nretA msA (efferr EISDIR)
                  = MS (mkR (Z_to_bv 64 0xc8c84) (Z_to_bv 64 (usp + -2144)) gp (Z_to_bv 64 0x60a408) t0 t1 t2 (Z_to_bv 64 usp)

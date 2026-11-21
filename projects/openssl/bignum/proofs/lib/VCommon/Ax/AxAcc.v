@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the failing store-conditional lemma removed, as a failing sc now loads and stores back). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -322,23 +323,6 @@ Proof.
   destruct wd; cbv beta iota delta [amo_n sc_bytes] in *;
     rewrite Hok; cbv beta iota;
     destruct (is_x0 rd); cbv beta iota; reflexivity.
-Qed.
-
-Lemma acc_Sc_fail : forall ms w isz wd aq rl rd rs1 rs2,
-  fetch_word segs (ms_pc_val ms) = Some w -> is_ecall w = false ->
-  decode_any w = Some (Sc wd aq rl rd rs1 rs2, isz) ->
-  amo_aligned wd (rg ms rs1) = true ->
-  sc_ok (ms_resv ms) (rg ms rs1) = false ->
-  RiscvSemantics.step_accesses segs ms =
-  MachineOk (@mkAccessReport machine_state
-    (setx ms rd w1 (ms_pc_val ms + Z_to_bv 64 isz) None (ms_mem ms))
-    []).
-Proof.
-  intros ms w isz wd aq rl rd rs1 rs2 Hfetch Hecall Hdecode Hal Hres.
-  acc_pipeline Hfetch Hecall Hdecode.
-  unfold rg, sc_ok in Hal, Hres. unfold setx, rg. rewrite Hal. cbv beta iota delta [negb].
-  rewrite Hres. cbv beta iota.
-  destruct (is_x0 rd); cbv beta iota; reflexivity.
 Qed.
 
 Lemma acc_Amo_w : forall ms w isz op aq rl rd rs1 rs2 bs,

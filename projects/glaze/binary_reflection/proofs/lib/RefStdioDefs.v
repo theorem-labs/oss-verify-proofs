@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (exit_pre requires the channel reader). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -197,7 +198,8 @@ Definition exit_pre (regs : bvmap 5 word) (mem : word -> option byte) (model : M
     /\ ( (pending = [] /\ exists wp1 rp1, file_clean mem 0x75858 wp1 rp1)
        \/ (exists (wb wp : Z) (bufp bufsz rp1 can : word),
               stdout_pending mem wb wp bufp bufsz rp1 can pending
-              /\ fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))) ).
+              /\ fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))
+              /\ m_channel_reader model = true) ).
 End FPGen1.
 
 

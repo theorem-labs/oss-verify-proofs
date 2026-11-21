@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the nine-byte string read-ahead): changed dpM2d_conc. *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp.bitvector Require Import definitions.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -133,7 +134,7 @@ Lemma dpM2d_conc fx R M (V : nat -> Z) :
   0 <= (V 2%nat) < 2 ^ 64 -> 0 <= (V 8%nat) < 2 ^ 64 -> 0 <= (V 9%nat) < 2 ^ 64 -> 0 <= (V 18%nat) < 2 ^ 64 -> 0 <= (V 19%nat) < 2 ^ 64 -> 0 <= (V 20%nat) < 2 ^ 64 -> 0 <= (V 21%nat) < 2 ^ 64 -> 0 <= (V 22%nat) < 2 ^ 64 -> 0 <= (V 33%nat) < 2 ^ 64 -> 0 <= (V 34%nat) < 2 ^ 64 -> 0 <= (V 40%nat) < 2 ^ 64 -> 0 <= (V 110%nat) < 2 ^ 64 -> 0 <= (V 111%nat) < 2 ^ 64 -> 0 <= (V 112%nat) < 2 ^ 64 -> 0 <= (V 113%nat) < 2 ^ 64 -> 0 <= (V 118%nat) < 2 ^ 64 -> 0 <= (V 119%nat) < 2 ^ 64 -> 0 <= (V 120%nat) < 2 ^ 64 -> 0 <= (V 122%nat) < 2 ^ 64 ->
   getr R (reg 2) = Z_to_bv 64 (V 2%nat) -> getr R (reg 8) = Z_to_bv 64 31 -> getr R (reg 9) = Z_to_bv 64 1412392 -> getr R (reg 10) = Z_to_bv 64 (V 110%nat) -> getr R (reg 11) = Z_to_bv 64 (V 111%nat) -> getr R (reg 12) = Z_to_bv 64 (V 112%nat) -> getr R (reg 13) = Z_to_bv 64 (V 113%nat) -> getr R (reg 18) = Z_to_bv 64 (V 118%nat) -> getr R (reg 19) = Z_to_bv 64 (V 119%nat) -> getr R (reg 20) = Z_to_bv 64 (V 120%nat) -> getr R (reg 21) = Z_to_bv 64 7019984 -> getr R (reg 22) = Z_to_bv 64 (V 122%nat) ->
   140735332552704 <= (V 2%nat) <= 140737488355328 -> aligned (V 2%nat) 16 -> L5.writable RSEGS M ((V 2%nat) - 16) 16 -> L5.defined M ((V 2%nat) - 16) 16 ->
-  L5.img_clear M 65536 1400832 -> 140735332552704 <= (V 33%nat) <= 140737488355311 -> 0 <= (V 34%nat) <= 131071 -> (((V 2%nat) - 16) + 16 <= (V 33%nat) \/ (V 33%nat) + ((V 34%nat) + 1) <= ((V 2%nat) - 16)) ->
+  L5.img_clear M 65536 1400832 -> 140735332552704 <= (V 33%nat) <= 140737488355318 -> 0 <= (V 34%nat) <= 131071 -> (((V 2%nat) - 16) + 16 <= (V 33%nat) \/ (V 33%nat) + ((V 34%nat) + 1) <= ((V 2%nat) - 16)) ->
   L5.u64_at RSEGS M 2147462256 0 -> L5.writable RSEGS M 1412424 8 -> L5.writable RSEGS M 1412432 8 -> L5.writable RSEGS M 1412448 8 ->
   L5.u64_at RSEGS M 1412480 7021992 -> L5.u64_at RSEGS M 1412488 0 -> L5.u64_at RSEGS M 7019984 (V 40%nat) -> L5.u64_at RSEGS M ((V 2%nat) + 40) (V 40%nat) ->
   L5.u64_at RSEGS M ((V 2%nat) + 104) 1300808 -> L5.u64_at RSEGS M ((V 2%nat) + 96) 1 -> L5.u64_at RSEGS M ((V 2%nat) + 88) 31 -> L5.u64_at RSEGS M ((V 2%nat) + 80) 31 ->

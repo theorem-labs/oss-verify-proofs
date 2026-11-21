@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the premise that the binary carries no vDSO segment). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia.
 Require LinuxProcessSemantics.EquivalenceDefinition.Equivalence.
@@ -89,6 +90,7 @@ Theorem halts_both :
 Proof.
   apply (halts_allowed_of_realizes_init_big acfg bsegs b_init_pc b_phdrs target_alloc_limit source_alloc_limit
            halts_codes (fun inp => spec (in_argv inp) (in_fs inp))).
+  - (* the binary carries no vDSO segment *) reflexivity.
   - unfold source_alloc_limit, target_alloc_limit. lia.
   - exact B_realizes_init.
   - intros inp _. apply spec_exits_in.

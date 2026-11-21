@@ -23,13 +23,14 @@
    achain_chain_pre of it. joined's new premises at its call: len's 8 bytes present (the journal's window), and
    (pass 5b) the stack from len - 16 present, from the statement's astack_pres kept by astack_pres_journal. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 309 of its 363 lines of code are new or changed and 4999 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image A (fuzz_segconf.asan): stretch E of segment A9 of reac_segconf_parse_file's walk,
    the theorem a9_sE : SA9_E B of lib/A/Prog/pf_a9_d.v (K9 0x88510 -> TAIL 0x88068). Part of
    segment A9's proof, by the G3 walk owner, 2026-10-30.
 
    proves no function (kind: segment lemma of reac_segconf_parse_file's image-A walk, one stretch of segment A9;
    the whole function's rule-24 line, its pasted released-proof index output and the G3 walk owner's CONFIRM of
-   2026-10-30T15:42:08Z are in the unit's internal record, commit dfb49d6ad789,
+   2026-10-30T15:42:08Z are in the unit's internal record,
    path records/segp/g3-lookup.md, reuse verdict none:
    written new)
 
@@ -185,7 +186,7 @@ Hypothesis VRO : seg_val_relro (PI := PI).
 (* the callee: refuse_contract at image A's numbers (lib/A/Prog/refuse_c.v, SegInstA.v), at every FP state *)
 Hypothesis REFUSE : forall fx0 : YK11.FPState,
   refuse_contract (fx := fx0) SEGS B (BASE + AF_refuse) STK_refuse RLO_A RHI_A seg_litA_rc gotwA guardA.
-(* the contract writer's route A (2026-10-30), lib/A/Prog/reac_segconf_parse.v:137's shape: the stack-protector cells at
+(* the contract writer's route A (2026-10-30), lib/A/Prog/reac_segconf_parse.v:138's shape: the stack-protector cells at
    every AR state. Forced by pf_a6_k.a6_base_move after the refuse call: refuse's post has no keep clause and its
    journal does not keep the GOT word 0xa36d8 (an owned static); discharged from SegRecCells.seg_rec_cells when
    listing stage 2 compiles. *)

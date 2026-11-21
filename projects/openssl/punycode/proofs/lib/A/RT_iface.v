@@ -1,12 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack range of rng_class ends at USTACK_TOP - 9 and the string slack of fprintf_stderr_icontract at USTACK_TOP - 8, in place of USTACK_TOP - 16; adds STACK_WOK, the part of the 8 MiB stack mapping the launch writes below sp0). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
 From OSSVerify.Proofs.openssl.punycode.lib.Common Require Import ShapeAlg AsanAcct.
+From OSSVerify.Proofs.openssl.punycode.lib.Common Require StoreOk.
 From OSSVerify.Proofs.openssl.punycode.lib.Lib Require Import PropExec MState Mem Frame Cells Step Arr Exec ImageA RzCPS.
 From OSSVerify.Proofs.openssl.punycode.lib.Spec Require Import Prelim StrFun Canon Stdio.
 From OSSVerify.Proofs.openssl.punycode.lib.Spec Require PrintfFormats.
@@ -26,6 +28,10 @@ Definition SEGTOP_A : Z := 0xbca000.
 (* [comment removed for export] *)
 Definition USTACK_TOP : Z := 0x800000000000.
 Definition STACK_WIN : Z := 0x800000.
+(* The part of the stack mapping the launch writes and zero-fills, [sp0 - STACK_WOK, sp0): the
+   8 MiB less the model's [StoreOk.stack_window_reach].  STACK_WIN stays the mapping (and the
+   heap ceiling); the main-level contracts hold [stk] from [rt_sp0 - STACK_WOK]. *)
+Definition STACK_WOK : Z := STACK_WIN - StoreOk.stack_window_reach.
 (* [comment removed for export] *)
 Definition RT_STACK : Z := 0x10000.
 (* [comment removed for export] *)
@@ -139,7 +145,7 @@ Definition rt_pres_ex (live : list (Z * Z)) (frames : list (Z * nat)) (sp : Z) (
 Definition rng_class (RT : rt_sig) (Σ : rts RT) (s n : Z) : Prop :=
   (exists p k, In (p, k) (rt_live RT Σ) /\ p <= s /\ s + n <= p + k)
   \/ (exists f k, In (f, k) (rt_frames RT Σ) /\ f <= s /\ s + n <= f + fs_size k - 8)
-  \/ (rt_sp0 RT Σ - STACK_WIN + 64 <= s /\ s + n <= USTACK_TOP - 16)
+  \/ (rt_sp0 RT Σ - STACK_WIN + 64 <= s /\ s + n <= USTACK_TOP - 9)
   \/ (0x10000 <= s /\ s + n <= SEGTOP_A).
 
 (* [comment removed for export] *)
@@ -614,7 +620,7 @@ Definition fprintf_stderr_icontract : Prop :=
        /\ bv_unsigned sp <= a
        /\ exists slack, bytes_at asegs m (a + Z.of_nat (length s) + 1) slack
             /\ (- (a + Z.of_nat (length s) + 1)) mod 8 <= Z.of_nat (length slack)
-            /\ a + Z.of_nat (length s) + 1 + Z.of_nat (length slack) <= USTACK_TOP - 16) ->
+            /\ a + Z.of_nat (length s) + 1 + Z.of_nat (length slack) <= USTACK_TOP - 8) ->
   fd_lookup F0 (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
   ERR_rep m -> io_ssp m ->
   ART RT Σ m -> mem_inv asegs m -> call_ok RT Σ m sp lo ->

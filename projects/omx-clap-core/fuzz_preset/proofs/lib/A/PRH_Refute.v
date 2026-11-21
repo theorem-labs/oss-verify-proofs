@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/PRH_Refute.v, with its module paths and module names changed; 1 of its 248 lines of code is new or changed. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10 (#102, the K1-batch walk-kit lead's dead-arm sweep): THE REFUTATION FAMILY of the ENTRY-KEYED texts' refusal arms
    (the kit owner's order to the rtt102 walk: one mechanism; no rtt lane had started it, per the rtt102 walk, 2026-10-29). NOT A KIT
    TEXT: it Requires lib/A/PresetCfnA.v (P8 at the instance, preset_no_refusal), so it is built in the consumer tree
@@ -21,7 +22,7 @@
    alone: no post carries the granted path, and without it the refusal is consistent with every other fact a post
    states - an ENVIRONMENT refusal at a state with room (YGcfRoom.room_of_cf reads the blocks, the quarantine items and
    the batch count, not the class-exhausted flag that malloc_cf_null_post sets). And no walk can assume the run
-   hypothesis inside its body (lib/Reusable/YA0n.v:35-38: SRr is a continuation over trace sets with no forall
+   hypothesis inside its body (lib/Reusable/YA0n.v:36-39: SRr is a continuation over trace sets with no forall
    introduction), so the exclusion is made where the path is held, at the allocator call, and carried out of the call
    by the TEXT: an ENTRY-KEYED text takes prh_cons_from at entry and states the arm dead (tpj_string_specX
    DEAD-PJSTRING, tpj_set_specX DEAD-PJSET, tpj_write_specX DEAD-PJWRITE and its callees' DEAD-PUT /

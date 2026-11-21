@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: amodel gains am_rdr, that the standard channels have a reader; the data keeps the recorded run's numbering and is filtered by a fixed rule to the facts the start-up's computed final hand-off states justify after its renumbering, with the run's own facts on the launch's variables addressed from sp added per rseq value and the four sizes of the computed states; a_main_entry and a_main_stmt take the launch's ProcInput, mmap base, valid_launch and entry_launch_ok_va, amain_args reads the launch's block as AsanInit's SINV0 does, and amodel's reservations end with the launch's extra ones; the justification lemmas move to AMainJust.v. *)
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -9,13 +10,12 @@ From Stdlib Require List.
 From Stdlib Require Bool.
 From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.AS Require AxSymExec3.
 From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.AS Require AsanPlan.
-From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.AS Require StartupHS2Asan.
 From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.A Require MainExport.
 From OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.A Require MainExportFast.
 Module MainFactsAsan.
 (* [comment removed for export] *)
 Import Stdlib.ZArith.ZArith Stdlib.Lists.List Stdlib.Bool.Bool.
-Import OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.AS.AxSymExec3 OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.AS.AsanPlan OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.AS.StartupHS2Asan.
+Import OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.AS.AxSymExec3 OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.AS.AsanPlan.
 Import OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.A.MainExport OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.A.MainExportFast.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
@@ -859,7 +859,6 @@ Definition asan_mem_facts : list mfact := [
   ; MCell (ZLit 6279856) 8 (ZLit 6279864)   (* [comment removed for export] *)
   ; MCell (ZLit 6279872) 8 (ZLit 582084)   (* [comment removed for export] *)
   ; MCell (ZLit 6280128) 8 (ZLit 465176)   (* [comment removed for export] *)
-  ; MCell (ZLit 6280408) 8 (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 184))   (* [comment removed for export] *)
   ; MCell (ZLit 6280416) 1 (ZLit 1)   (* [comment removed for export] *)
   ; MCell (ZLit 6280424) 8 (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 24))   (* [comment removed for export] *)
   ; MCell (ZLit 6280432) 8 (ZLit 6279776)   (* [comment removed for export] *)
@@ -1021,7 +1020,6 @@ Definition asan_mem_facts : list mfact := [
   ; MFill (ZLit 2148219173) 3 249   (* [comment removed for export] *)
   ; MZero (ZLit 2148219176) 17624   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  ; MWr (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit (-8388608))) 8388608   (* [comment removed for export] *)
   ; MCell (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit (-48))) 8 (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit 8))   (* [comment removed for export] *)
   ; MCell (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit (-40))) 8 (ZLit 0)   (* [comment removed for export] *)
   ; MCell (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit (-32))) 8 (ZLit 0)   (* [comment removed for export] *)
@@ -1029,29 +1027,7 @@ Definition asan_mem_facts : list mfact := [
   ; MCell (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit (-16))) 8 (ZLit 0)   (* [comment removed for export] *)
   ; MCell (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit (-8))) 8 (ZLit 0)   (* [comment removed for export] *)
   ; MRo (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) 8 (ZV 1)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit 8)) 8 (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 184))   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit 16)) 8 (ZMul (ZLtu (ZLit 1) (ZV 1)) (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZV 3) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10))))))) (ZLit 185)))   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 24)) 8 (ZLit 3)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 32)) 8 (ZLit 65600)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 40)) 8 (ZLit 4)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 48)) 8 (ZLit 56)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 56)) 8 (ZLit 5)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 64)) 8 (ZLit 11)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 72)) 8 (ZLit 16)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 80)) 8 (ZV 9)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 88)) 8 (ZLit 6)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 96)) 8 (ZLit 4096)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 104)) 8 (ZLit 11)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 112)) 8 (ZV 8)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 120)) 8 (ZLit 12)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 128)) 8 (ZV 8)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 136)) 8 (ZLit 23)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 144)) 8 (ZLit 0)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 152)) 8 (ZLit 25)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 160)) 8 (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 8) (ZV 4)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10))))))) (ZLit 184))   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 168)) 8 (ZLit 0)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 176)) 8 (ZLit 0)   (* [comment removed for export] *)
   (* [comment removed for export] *)
   ; MWrS (ZAdd (ZAdd (ZMul (ZLit 4096) (ZV 0)) (ZMul (ZLit 512) (ZV 10))) (ZLit 2146402304)) (ZAdd (ZAdd (ZMul (ZLit (-4096)) (ZV 0)) (ZMul (ZLit (-512)) (ZV 10))) (ZLit 17592187092992))   (* [comment removed for export] *)
   ; MZeroS (ZAdd (ZAdd (ZMul (ZLit 4096) (ZV 0)) (ZMul (ZLit 512) (ZV 10))) (ZLit 2146402304)) (ZAdd (ZAdd (ZMul (ZLit (-4096)) (ZV 0)) (ZMul (ZLit (-512)) (ZV 10))) (ZLit 17592187092992))   (* [comment removed for export] *)
@@ -2891,6 +2867,8 @@ Definition asan_mem_facts : list mfact := [
   ; MZero (ZAdd (ZMul (ZLit 4096) (ZV 471)) (ZLit 24)) 4072   (* [comment removed for export] *)
   (* [comment removed for export] *)
   ; MWr (ZAdd (ZMul (ZLit 512) (ZV 471)) (ZLit 2147450880)) 512   (* [comment removed for export] *)
+  (* the run's own facts on the launch's variables that the recorded run's state lacks, at both rseq values *)
+  ; MWr (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit (-6144513))) 6144513
 ].
 
 Definition asan_pure_facts : list pfact := [
@@ -2899,7 +2877,6 @@ Definition asan_pure_facts : list pfact := [
   ; PVar 1 1 1024   (* [comment removed for export] *)
   ; PVar 2 0 256   (* [comment removed for export] *)
   ; PVar 3 0 131071   (* [comment removed for export] *)
-  ; PVar 4 0 280000   (* [comment removed for export] *)
   ; PVar 5 1535 525823   (* [comment removed for export] *)
   ; PVar 6 0 255   (* [comment removed for export] *)
   ; PVar 7 0 131071   (* [comment removed for export] *)
@@ -2936,8 +2913,6 @@ Definition asan_pure_facts : list pfact := [
   ; PRange (ZAdd (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit (-4096)) (ZV 344))) (ZLit 3935)) 0 4095   (* [comment removed for export] *)
   ; PRange (ZAdd (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit (-4096)) (ZV 344))) (ZLit 3935)) 0 4095   (* [comment removed for export] *)
   ; PRange (ZAdd (ZMul (ZLit (-4096)) (ZV 209)) (ZAnd (ZMul (ZLit 4096) (ZV 208)) (ZLit 65535))) 0 0   (* [comment removed for export] *)
-  ; PRange (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 8) (ZV 4)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10))))))) (ZLit 200)) 140735340871872 140737488355328   (* [comment removed for export] *)
-  ; PRange (ZAdd (ZMul (ZLit 4096) (ZV 0)) (ZAdd (ZV 1) (ZAdd (ZV 2) (ZAdd (ZV 4) (ZAdd (ZMul (ZLit 2) (ZV 6)) (ZMul (ZLit 512) (ZV 10))))))) 17591917608961 17592186044391   (* [comment removed for export] *)
   ; PRange (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) 140735340871680 140737488355136   (* [comment removed for export] *)
   ; PRange (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZMul (ZLit 4096) (ZV 10))) 140735340871680 140737488351232   (* [comment removed for export] *)
   ; PRange (ZAdd (ZMul (ZLit 4096) (ZV 0)) (ZAdd (ZMul (ZLit 2) (ZV 6)) (ZMul (ZLit 512) (ZV 10)))) 17591917608960 17592186044392   (* [comment removed for export] *)
@@ -3101,6 +3076,9 @@ Definition asan_pure_facts : list pfact := [
   ; PDisjS (ZAdd (ZMul (ZLit 512) (ZV 396)) (ZLit 2147450880)) (ZLit 512) (ZAdd (ZAdd (ZMul (ZLit 4096) (ZV 0)) (ZMul (ZLit 512) (ZV 10))) (ZLit 2146402304)) (ZAdd (ZAdd (ZMul (ZLit (-4096)) (ZV 0)) (ZMul (ZLit (-512)) (ZV 10))) (ZLit 17592187092992))   (* [comment removed for export] *)
   ; PDisjS (ZAdd (ZMul (ZLit 512) (ZV 397)) (ZLit 2147450880)) (ZLit 512) (ZAdd (ZAdd (ZMul (ZLit 4096) (ZV 0)) (ZMul (ZLit 512) (ZV 10))) (ZLit 2146402304)) (ZAdd (ZAdd (ZMul (ZLit (-4096)) (ZV 0)) (ZMul (ZLit (-512)) (ZV 10))) (ZLit 17592187092992))   (* [comment removed for export] *)
   ; PDisjS (ZAdd (ZMul (ZLit 512) (ZV 78)) (ZLit 2147450880)) (ZLit 8192) (ZAdd (ZAdd (ZMul (ZLit 4096) (ZV 0)) (ZMul (ZLit 512) (ZV 10))) (ZLit 2146402304)) (ZAdd (ZAdd (ZMul (ZLit (-4096)) (ZV 0)) (ZMul (ZLit (-512)) (ZV 10))) (ZLit 17592187092992))   (* [comment removed for export] *)
+  (* the run's own facts on the launch's variables that the recorded run's state lacks, at both rseq values *)
+  ; PVar 11 0 1
+  ; PVar 4 0 4110
 ].
 
 (* [comment removed for export] *)
@@ -3187,40 +3165,27 @@ Definition asan_ledger : list lentry := [
 
 (* [comment removed for export] *)
 Definition asan_vmbrk : nat := 452%nat.   (* [comment removed for export] *)
-Definition asan_totsz : Z := 17729664581632.   (* [comment removed for export] *)
-Definition asan_ylo : Z := 23387528589312.     (* [comment removed for export] *)
-Definition asan_eager : Z := 16515072.   (* [comment removed for export] *)
-Definition asan_abytes : Z := 2460765184.  (* [comment removed for export] *)
+Definition asan_totsz : Z := 17729664663552.   (* the computed final states' (AMainJust.asan_consts) *)
+Definition asan_ylo : Z := 23387528507392.
+Definition asan_eager : Z := 16515072.
+Definition asan_abytes : Z := 2460765184.
 
 (* [comment removed for export] *)
-Lemma asan_mem_facts_justified_w1 :
-  forallb (mjustify (s_know (a_ss HS_asan2_1)) (var_ranges (s_know (a_ss HS_asan2_1))) 65536 6287360) (asan_mem_facts ++ asan_mem_facts_w1) = true.
-Proof. apply mjustify_fast_sound. vm_cast_no_check (eq_refl true). Qed.   (* [comment removed for export] *)
-Lemma asan_pure_facts_justified_w1 :
-  forallb (pjustify (s_know (a_ss HS_asan2_1)) (var_ranges (s_know (a_ss HS_asan2_1)))) (asan_pure_facts ++ asan_pure_facts_w1) = true.
-Proof. vm_cast_no_check (eq_refl true). Qed.
-Lemma asan_vis_justified_w1 :
-  vis_match (var_ranges (s_know (a_ss HS_asan2_1))) (a_vis HS_asan2_1) asan_vis_app = true /\ vis_match (var_ranges (s_know (a_ss HS_asan2_1))) (a_ghost HS_asan2_1) asan_ghost = true.
-Proof. split; vm_compute; reflexivity. Qed.
-Lemma asan_ledger_justified_w1 :
-  ledger_xmatch (var_ranges (s_know (a_ss HS_asan2_1))) (a_maps HS_asan2_1) asan_ledger = true.
-Proof. vm_compute. reflexivity. Qed.
-Lemma asan_consts_w1 : a_totsz HS_asan2_1 = asan_totsz /\ a_ylo HS_asan2_1 = asan_ylo /\ a_eager HS_asan2_1 = asan_eager /\ a_abytes HS_asan2_1 = asan_abytes.
-Proof. repeat split; reflexivity. Qed.
-Lemma asan_mem_facts_justified_w2 :
-  forallb (mjustify (s_know (a_ss HS_asan2_2)) (var_ranges (s_know (a_ss HS_asan2_2))) 65536 6287360) (asan_mem_facts ++ asan_mem_facts_w2) = true.
-Proof. apply mjustify_fast_sound. vm_cast_no_check (eq_refl true). Qed.   (* [comment removed for export] *)
-Lemma asan_pure_facts_justified_w2 :
-  forallb (pjustify (s_know (a_ss HS_asan2_2)) (var_ranges (s_know (a_ss HS_asan2_2)))) (asan_pure_facts ++ asan_pure_facts_w2) = true.
-Proof. vm_cast_no_check (eq_refl true). Qed.
-Lemma asan_vis_justified_w2 :
-  vis_match (var_ranges (s_know (a_ss HS_asan2_2))) (a_vis HS_asan2_2) asan_vis_app = true /\ vis_match (var_ranges (s_know (a_ss HS_asan2_2))) (a_ghost HS_asan2_2) asan_ghost = true.
-Proof. split; vm_compute; reflexivity. Qed.
-Lemma asan_ledger_justified_w2 :
-  ledger_xmatch (var_ranges (s_know (a_ss HS_asan2_2))) (a_maps HS_asan2_2) asan_ledger = true.
-Proof. vm_compute. reflexivity. Qed.
-Lemma asan_consts_w2 : a_totsz HS_asan2_2 = asan_totsz /\ a_ylo HS_asan2_2 = asan_ylo /\ a_eager HS_asan2_2 = asan_eager /\ a_abytes HS_asan2_2 = asan_abytes.
-Proof. repeat split; reflexivity. Qed.
+(* the run's own facts on the launch's variables (0..12) that depend on its rseq flag and that the recorded
+   run's state lacks, as the start-up's computed final states hold them: the memory facts addressed from sp
+   (argv[0]'s word at sp + 8 first, argv[1]'s at sp + 16 second) and the ranges of one launch variable *)
+Definition asan_mem_facts_r0 : list mfact := [
+  MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit 8)) 8 (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZV 4) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZAdd (ZMul (ZLit 4096) (ZV 10)) (ZMul (ZLit 8) (ZV 11)))))))) (ZLit 472))
+  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit 16)) 8 (ZMul (ZLtu (ZLit 1) (ZV 1)) (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZV 3) (ZAdd (ZV 4) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZAdd (ZMul (ZLit 4096) (ZV 10)) (ZMul (ZLit 8) (ZV 11))))))))) (ZLit 473)))
+].
+Definition asan_pure_facts_r0 : list pfact := [
+].
+Definition asan_mem_facts_r1 : list mfact := [
+  MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit 8)) 8 (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZV 4) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZAdd (ZMul (ZLit 4096) (ZV 10)) (ZMul (ZLit 8) (ZV 11)))))))) (ZLit 504))
+  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit 16)) 8 (ZMul (ZLtu (ZLit 1) (ZV 1)) (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZV 3) (ZAdd (ZV 4) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZAdd (ZMul (ZLit 4096) (ZV 10)) (ZMul (ZLit 8) (ZV 11))))))))) (ZLit 505)))
+].
+Definition asan_pure_facts_r1 : list pfact := [
+].
 End MainFactsAsan.
 
 (* [comment removed for export] *)
@@ -3264,6 +3229,8 @@ Definition IX_S1 : nat := 0%nat.   Definition IX_ARGC : nat := 1%nat.  Definitio
 Definition IX_L0 : nat := 3%nat.   Definition IX_W : nat := 4%nat.     Definition IX_BRK : nat := 5%nat.
 Definition IX_S2 : nat := 6%nat.   Definition IX_L1 : nat := 7%nat.    Definition IX_UID : nat := 8%nat.
 Definition IX_HW : nat := 9%nat.   Definition IX_SP : nat := 10%nat.
+(* the launch variables LPS 727298f3 added: the alignment gap before AT_RANDOM and the group id *)
+Definition IX_G : nat := 11%nat.   Definition IX_GID : nat := 12%nat.
 Definition IX_TID : nat := 44%nat.       (* [comment removed for export] *)
 Definition IX_CANARY : nat := 45%nat.    (* [comment removed for export] *)
 Definition IX_LLA : nat := 78%nat.       (* [comment removed for export] *)
@@ -3287,7 +3254,8 @@ Record amodel (V : nat -> Z) (sp : word) (fs : Fs.Fs) (mo : Model) : Prop := AMO
   am_halted   : m_halted mo = None;
   am_fds      : m_fds mo = [(wz 0, FdChannel (wz 0)); (wz 1, FdChannel (wz 1)); (wz 2, FdChannel (wz 2))];
   am_fs       : m_fs mo = fs;
-  am_reserved : vm_reserved (m_vmmaps mo) = segments_reserved asegs;
+  (* the image's reservations, then the launch's extra ones (the vDSO pair) *)
+  am_reserved : exists rx : list (word * word), vm_reserved (m_vmmaps mo) = segments_reserved asegs ++ rx /\ (length rx <= 2)%nat;
   am_limit    : vm_limit (m_vmmaps mo) = target_alloc_limit;
   am_brk      : vm_brk (m_vmmaps mo) = wz (V asan_vmbrk);
   am_start_brk : bv_unsigned (vm_start_brk (m_vmmaps mo)) <= V asan_vmbrk;
@@ -3310,26 +3278,33 @@ Record amodel (V : nat -> Z) (sp : word) (fs : Fs.Fs) (mo : Model) : Prop := AMO
   am_noaccess_sub : forall z, MainExport.in_ivs z (vm_noaccess (m_vmmaps mo)) -> MainExport.in_ivs z (vm_maps (m_vmmaps mo));
   am_totsz    : ivs_sum (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) <= asan_totsz;
   (* [comment removed for export] *)
-  am_noaccess_pos : Forall (fun iv => 0 < bv_unsigned (snd iv)) (vm_noaccess (m_vmmaps mo))
+  am_noaccess_pos : Forall (fun iv => 0 < bv_unsigned (snd iv)) (vm_noaccess (m_vmmaps mo));
+  (* LPS 08b1429: the standard channels have a reader (AsanPlanSound.co_rdr) *)
+  am_rdr : m_channel_reader mo = true
 }.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-Definition amain_W (sp0 : word) (rdraw : EntryDraw) (argv envp : list (list byte)) (uid hw : word) : Z :=
-  (Z.of_nat (length (build_stack_bytes APH sp0 argv envp uid hw rdraw)) - 16
-   - (8 * Z.of_nat (length argv) + 8 * Z.of_nat (length envp) + 184)) / 8.
+(* The launch's block above sp as StackLayout lays it out for the run's input: the head (argc, the argv
+   and envp arrays, the auxv and AT_RANDOM), the padding [amain_W] and the strings from [amain_STR0] to the
+   stack VMA's end (ed_top), as AsanInit's argH0 reads it. *)
+Definition amain_W (sp0 : word) (rdraw : EntryDraw) (inp : ProcInput) : Z :=
+  Z.of_nat (block_pad_len (kb_rseq (in_kernel inp)) sp0 (ed_top rdraw) (in_argv inp) (in_envp inp) (in_execfn inp)).
+Definition amain_STR0 (sp0 : word) (rdraw : EntryDraw) (inp : ProcInput) : Z :=
+  bv_unsigned sp0 + Z.of_nat (block_head_size (kb_rseq (in_kernel inp)) (in_argv inp) (in_envp inp)) + amain_W sp0 rdraw inp.
 
-Definition amain_vars (V : nat -> Z) (sp0 brk0 : word) (rdraw : EntryDraw) (argv envp : list (list byte)) (uid hw : word) : Prop :=
+Definition amain_vars (V : nat -> Z) (sp0 brk0 : word) (rdraw : EntryDraw) (inp : ProcInput) : Prop :=
   let usp := bv_unsigned sp0 in
   (forall n, 0 <= V n < 2 ^ 64)
   /\ V IX_S1 = usp / 32768 /\ V IX_S2 = usp mod 4096 / 16 /\ V IX_SP = usp mod 32768 / 4096
   /\ 32768 * V IX_S1 + 4096 * V IX_SP + 16 * V IX_S2 = usp
-  /\ V IX_ARGC = Z.of_nat (length argv) /\ V IX_ENVC = Z.of_nat (length envp)
-  /\ V IX_L0 = Z.of_nat (length (nth 0 argv [])) /\ V IX_L1 = Z.of_nat (length (nth 1 argv []))
-  /\ V IX_W = amain_W sp0 rdraw argv envp uid hw
-  /\ V IX_BRK = bv_unsigned brk0 / 4096 /\ V IX_UID = bv_unsigned uid /\ V IX_HW = bv_unsigned hw.
+  /\ V IX_ARGC = Z.of_nat (length (in_argv inp)) /\ V IX_ENVC = Z.of_nat (length (in_envp inp))
+  /\ V IX_L0 = Z.of_nat (length (nth 0 (in_argv inp) [])) /\ V IX_L1 = Z.of_nat (length (nth 1 (in_argv inp) []))
+  /\ V IX_W = amain_W sp0 rdraw inp
+  /\ V IX_BRK = bv_unsigned brk0 / 4096 /\ V IX_UID = bv_unsigned (in_uid inp) /\ V IX_HW = bv_unsigned (in_hwcap inp)
+  /\ V IX_G = Z.of_nat (block_items (in_argv inp) (in_envp inp) mod 2) /\ V IX_GID = bv_unsigned (in_gid inp).
 
 (* [comment removed for export] *)
 Definition amain_regs (V : nat -> Z) (sp0 : word) (R : bvmap 5 word) : Prop :=
@@ -3345,15 +3320,18 @@ Definition amain_regs (V : nat -> Z) (sp0 : word) (R : bvmap 5 word) : Prop :=
   /\ AS.PropExec.getr R 24 = wz 0 /\ AS.PropExec.getr R 25 = wz 0 /\ AS.PropExec.getr R 26 = wz 0 /\ AS.PropExec.getr R 27 = wz 0.
 
 (* [comment removed for export] *)
-Definition amain_argblock (sp0 : word) (rdraw : EntryDraw) (argv envp : list (list byte)) (uid hw : word) (a : Z) : Prop :=
+(* the part of the launch's block the main phase reads as the launch wrote it: the envp array and the strings
+   (AsanInit's argH0) *)
+Definition amain_argblock (sp0 : word) (rdraw : EntryDraw) (inp : ProcInput) (a : Z) : Prop :=
   let usp := bv_unsigned sp0 in
-  let argc := Z.of_nat (length argv) in
-  let envc := Z.of_nat (length envp) in
+  let argc := Z.of_nat (length (in_argv inp)) in
+  let envc := Z.of_nat (length (in_envp inp)) in
   (usp + 8 * argc + 16 <= a < usp + 8 * argc + 8 * envc + 24)
-  \/ (usp + 8 * argc + 8 * envc + 184 <= a < usp + 8 * argc + 8 * envc + 184 + 8 * amain_W sp0 rdraw argv envp uid hw).
+  \/ (amain_STR0 sp0 rdraw inp <= a < bv_unsigned (ed_top rdraw)).
 
-Definition amain_args (sp0 : word) (rdraw : EntryDraw) (argv envp : list (list byte)) (uid hw : word) (m : word -> option byte) : Prop :=
-  forall a : word, amain_argblock sp0 rdraw argv envp uid hw (bv_unsigned a) -> m a = wrap_mem APH sp0 argv envp uid hw rdraw a.
+Definition amain_args (sp0 mbase : word) (rdraw : EntryDraw) (inp : ProcInput) (m : word -> option byte) : Prop :=
+  forall a : word, amain_argblock sp0 rdraw inp (bv_unsigned a) ->
+    m a = AS.PropExec.wrap_mem inp mbase APH (wz (Z.of_N Asan.M.init_pc)) sp0 rdraw a.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -3361,6 +3339,10 @@ Definition amain_args (sp0 : word) (rdraw : EntryDraw) (argv envp : list (list b
 (* [comment removed for export] *)
 Definition asan_mem_facts_w (w : bool) : list mfact := if w then asan_mem_facts_w1 else asan_mem_facts_w2.
 Definition asan_pure_facts_w (w : bool) : list pfact := if w then asan_pure_facts_w1 else asan_pure_facts_w2.
+(* the facts on the launch's own variables that depend on its rseq flag (the auxv, AT_RANDOM, the argv
+   words), at the run's flag *)
+Definition asan_mem_facts_r (r : bool) : list mfact := if r then asan_mem_facts_r1 else asan_mem_facts_r0.
+Definition asan_pure_facts_r (r : bool) : list pfact := if r then asan_pure_facts_r1 else asan_pure_facts_r0.
 
 (* [comment removed for export] *)
 Definition clipw (r : Z * Z) : Z * Z := (fst r, Z.min (snd r) (2 ^ 64)).
@@ -3380,25 +3362,29 @@ Definition amain_gwin (V : nat -> Z) (m : word -> option byte) (mo : Model) : Pr
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-Definition a_main_entry (w : bool) (V : nat -> Z) (sp0 brk0 : word) (rdraw : EntryDraw) (argv envp : list (list byte)) (uid hw : word)
+Definition a_main_entry (w : bool) (V : nat -> Z) (sp0 brk0 mbase : word) (rdraw : EntryDraw) (inp : ProcInput)
            (fs : Fs.Fs) (regs : bvmap 5 word) (m : word -> option byte) (mo : Model) (g : lghost) : Prop :=
-  amain_vars V sp0 brk0 rdraw argv envp uid hw
+  amain_vars V sp0 brk0 rdraw inp
   /\ amain_regs V sp0 regs
   /\ Forall (mfact_ok asegs V m) (asan_mem_facts ++ asan_mem_facts_w w)
   /\ Forall (pfact_ok V) (asan_pure_facts ++ asan_pure_facts_w w)
-  /\ amain_args sp0 rdraw argv envp uid hw m
+  /\ amain_args sp0 mbase rdraw inp m
   /\ amodel V sp0 fs mo
   /\ g = mkG (amain_windows V) AMAIN_R0
   /\ amain_gwin V m mo
   (* [comment removed for export] *)
-  /\ (forall a : word, 0x800000000000 <= bv_unsigned a -> m a = None).
+  /\ (forall a : word, 0x800000000000 <= bv_unsigned a -> m a = None)
+  /\ Forall (mfact_ok asegs V m) (asan_mem_facts_r (kb_rseq (in_kernel inp)))
+  /\ Forall (pfact_ok V) (asan_pure_facts_r (kb_rseq (in_kernel inp))).
 
 (* [comment removed for export] *)
 Definition a_main_stmt : Prop :=
-  forall (ACEIL : Ceil) (w : bool) (V : nat -> Z) (sp0 brk0 mbase : word) (rdraw : EntryDraw) (argv envp : list (list byte))
-         (uid hw : word) (fs : Fs.Fs) (regs : bvmap 5 word) (m : word -> option byte) (mo : Model) (g : lghost),
+  forall (ACEIL : Ceil) (w : bool) (V : nat -> Z) (sp0 brk0 mbase : word) (rdraw : EntryDraw) (inp : ProcInput)
+         (fs : Fs.Fs) (regs : bvmap 5 word) (m : word -> option byte) (mo : Model) (g : lghost),
     valid_sp sp0 -> valid_brk asegs brk0 -> valid_mmap_base mbase ->
-    valid_argv argv -> valid_envp envp -> valid_fs fs -> entry_stack_fits sp0 argv envp -> valid_id uid -> valid_hwcap hw ->
+    valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_fs fs -> entry_stack_fits sp0 (in_argv inp) (in_envp inp) ->
+    valid_id (in_uid inp) -> valid_hwcap (in_hwcap inp) ->
+    valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp0 brk0 mbase rdraw) inp ->
     alloc_ceiling = bv_unsigned sp0 - 8388608 ->
-    a_main_entry w V sp0 brk0 rdraw argv envp uid hw fs regs m mo g ->
-    LRZ asegs (MS (mkR_of regs) bvmap_empty (wz AM_MAIN) (Z_to_bv 32 0) None m (seg_rom asegs)) mo g (spec04 argv fs).
+    a_main_entry w V sp0 brk0 mbase rdraw inp fs regs m mo g ->
+    LRZ asegs (MS (mkR_of regs) bvmap_empty (wz AM_MAIN) (Z_to_bv 32 0) None m (seg_rom asegs)) mo g (spec04 (in_argv inp) fs).

@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/AGif2cgif.v at 95e6f1d72b6 (sha256 f5aa8e82f671) into lib/B (libreac/fuzz_decode image B, fuzz_decode.asan-ubsan), with its module paths changed only (it states no image numeral; image B's own copy because its Require closure reaches image modules). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/AGif2cgif.v (sha256 f5aa8e82f671) into lib/B (libreac/fuzz_decode image B, fuzz_decode.asan-ubsan), with its module paths changed only (it states no image numeral; image B's own copy because its Require closure reaches image modules). *)
 (* The cgif_file instance of the image class ImgBase.AImg: cgif's segments (tfibsegs), data cells (TFIB_TP / TFIB_TSD /
    TFIB_OOM / TFIB_ERRNO), image window (YF0x.img_cover), symbol facts (YF0m.TfibSyms) and constant cells
    (YF0m.Tfib_const).  The image-free interfaces (AGif2, ...) take the class as [Context {IM : AImg}]; a cgif_file

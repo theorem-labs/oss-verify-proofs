@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the run's vDSO and vvar pages; recorded (KReplay) proofs re-proved by tactics). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import Permutation.
@@ -27,7 +28,7 @@ Import ListNotations.
 Import AX2. Import AX2S. Import AP.
 Open Scope Z_scope.
 
-Local Instance ri_fx : PropExec.FPState := PropExec.fx0.
+Local Instance ri_fx : K5.AS.PropExec.FPState := K5.AS.PropExec.fx0.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -345,9 +346,43 @@ Lemma seps_FOP : forall l, APS.seps l -> ForallOrdPairs iv_apart l.
 Proof.
 ltac2:(KReplay.run1 (kr_t_RT_init ()) ["Pure"] "h01lh11Hh22Hfh32Hsh42IHh51pp;1p;2p;3p;6p;5g00RFj10Tg00`<j1;Tg046hj14Tg008@j23Tg00Wmj1:Tg068;j12Tg069>j31Tg069cj25Tg06:Hj16Tg00Q@j37Tg06;Pj68Tg06<5j59Tg00n]#0#0#0#0#0#0#;#4R0/30R0#:R1f0R2#2g06=:R3=102X011503f1R4#6=702%24f2R59103P0P3f4f3P5P2E8W4W3W2X01X50P4P2D9W1W0o"). Qed.
 
+(* LPS 08b1429: the ledger's vDSO suffix, from the plan's packed [co_res]. *)
+Lemma ri_artm_res : artm_res model.
+Proof.
+  destruct (APS.co_resx _ _ _ _ _ _ _ _ _ _ _ _ HC) as (rx & Er & _ & Hn & Hb).
+  pose proof (APS.co_mres _ _ _ _ _ _ _ _ _ _ _ _ HC) as Hm.
+  exists rx. split; [exact Er|]. split; [exact Hn|].
+  split; [rewrite live_bytes_sum_sizes; eapply Z.le_trans; [exact Hb| vm_compute; congruence]|].
+  apply Forall_forall. intros e He. apply List.filter_In in He as [He _].
+  pose proof (proj1 (Forall_forall _ _) Hm e He) as X. cbv beta in X. rewrite Er in X.
+  apply Forall_app in X as [_ X]. exact X.
+Qed.
+
 Lemma ri_artm : LIMIT = VMLIMIT -> ARTM_A (sigma0 A E ch model) model.
 Proof.
-ltac2:(KReplay.run1 (kr_t_RT_init ()) ["Pure"] "p'0h01Hh14__x1h24__x2h34__x3h41mh51nh62Hzh71xi001xh81Ah97__arithh:4__ffh;8__varmaph<5__with=2b1h>2b2h?1eh@1fhA1lhB1chC1zhD2H1hE2H2hF2HehG3HinhH4__x4hI4__x5hJ2E1hK2E2hL3HeahM3HivhN4HlimhO2_HhP3_H0hQ3_H1hR3_H2hS3acchT1bhU2ivhV1sp%0p&0p;1p;2p;3p;4p;=p;6p;Bp;5p;?p;@p;7p;8g00RFj19Tg00`<k10PTg046hj1rTg008@j2\Tg03^4k10]Tg04fdk10UTg02\@k30OTg0612k400Tg06>5j1vTg06?1j3qTg00Wmj1VTg059Bj1iTg06?\k10pTg00;Xj3BTg06@Zk10`Tg06AQk10\Tg02V<k10ZTg06BOk20TTg00?5R0j21Tg06CJk20RTg06D8m=0NTg06E;m=0GTg00NIj6UTg06F@l=~Tg03M^j1xTg00SIj22Tg008`j1uTg003Xj1tTg03D@j1sTg03E?j3]Tg009Bj1nTg03E[j1mTg03FYj1kTg03J1j1jTg03Jij1hTg00Rkj1FTg00Qaj1LTg00V7j2fTg03K`k20mTg03N\k10kTg03H4k10gTg00E6j37Tg00:;j24Tg011Oj2cTg00MSj1CTg013Ij2WTg01CWj3bTg0142k20[Tg00WMj1HTg015Jk30YTg015jj2STg00XMk10XTg00Xkk10WTg00YIk10VTg00Aik10STg016Hj2aTg00Z4j2`Tg016kk30QTg00ZWk20MTg00?jj2_Tg00[9k20JTg00[ek30FTg00\Dk40ETg01Zej2^Tg02X4k10>Tg03l4k40=Tg05lFj2}Tg00i3j1RTg02\[lByTg020Vj2zTg01Qfj1{Tg01S[j1|Tg026jj1wTg02;Gk101Tg029Vk102Tg02Y1k503Tg02Dlk104Tg06GEk105Tg06HKk106Tg069>k307Tg03^kk108Tg03_dj2QTg01dDk109Tg030Ik10:Tg06ILj2pTg04EWk10;Tg05CDk10<Tg05P_j1oTg06JHm=0?Tg06KJm=0@m@0jTg06LPm=0ATg06MTk20BTg04GMk10CTg04FUj1lTg01mWk30DTg04S=j2<Tg05E@j2XTg06NPk30HTg005hk60ITg00U]R1j2PTg06OUk20KTg06P5m?0LTg004oR2j3[Tg00?PS00j2MTg03Shj3gTg06Q:j2?Tg0112j2ETg0540j2ATg03QZk30oTg03SHk20nTg00VTj2;Tg054Mk20lTg03GVj2ZTg06R9k20fTg00Bjj4OTg00CEk40eTg06RZk20cTg05?Rk10bTg06S`k20aTg01?kk40dTg00a=j4eTg00jnk70_Tg01AQk30hTg01D@k80iTg004Rk30^Tg02?kj3dTg00GMR3f0R4g06TY3Bp=Yf2R5f1R6/44'2p==g00FMR7g00FmR87B4p=0P3P5P6P4H0dp=D1a34p=IP3P6g00l7P4Cep=JP6g00l^R9g00m=R:P:g00m]R;P4g00n=K0_p=8B0h364p=Gf3R<P9P:P:P;P5P6P4L0ip=>%C4#C#C#Cp=@1<64=B78p=5AB748,16p=:B0^564,Q<p=3f4R9Ad564,Q<'4p=6Ad564,Q<p=KP3P6g010KP4Cep=Tf6R=f5R>P9P<P5P6P4COCOp=Np,5LIMITR?#Yg00n]R@#9RA#9RB#9RC#9#9#9$0PRD#rRE/\ERFg0537p,5modelRG$0]RH$0URI60OFRJp,1ARKp,1ERLp,2chRMPGH00RN#v3q%VF%iHg03BKRO$0p3BRP&0`HRQ#YRR&0\GRSg03UURT&0ZN3=RU20TNGS01'1RV'1RW'120RFJPPPWPOPKp,3nx0RWP?p,4SINVRPp,4argHRXp,3FS0RYPLPMp,1RRZp,4FULLR[PGp,2HCR\N=0NPRPVP3P?%Y4XC3P4PQPOPKPWP?PPPXPYPLPMPZP[PGP\N=0GEUPUQ01POPKPWP?PPPXPYPLPMPZP[PGP\M=~%xMRQ,2Sg03\6g00EMRV#u%tV%sM3]#0RRg00GkR]%nMR^#m%kM3]#0R_%jM%hM%FAR`%LB#9Ra#L#F'f+0m5BVRV12QTRb&0kM%9a#F,f`'2&0gM=7]^'1R^'1R]'1Ra'1Rc'1P0PRPcPUP4P0P_PaPUP4P0PVP]PUP4P0PbP^PUP4P3g00JHRd144d%FCRC/cdRe'49=STXC3g00oBRfg00OgRg#CRh#CRi,W31W3h1W3g5b35b3g01F]+0[%Hf40YRg%VfRf1S35Rh1S3<&0X3Rj7D<Rk7D6S02&0W3Rl&0V3Rm%LA#IRn%IARA'J,8mS03&0S:R:Pm1a3@Ro/Jn,8mS04P:1`3dRp/Gp1`3C>0Q3p'G,GA,Jo,8mC>C>20Mm;R;P4P51_7820J45#0dB0F3d6H0ER8b:b;b<X13X23X331256Rq126<14ddRr/4e9=5<[[^13^23^33P4PQPTPSP5fBRQO5b9PrV3%Ci#@#@#@#@#@#@#@Ri'^&0>iEUPKPLPMPGH0=g01YlV3%H3V3g01JFRrg02]VRe#HPd1\33#HRsg00PF#HRtPt1}LM%Rd%F@#R%L@R@#9Rt#F#R%R`Prg02^RPsg00Ii,\3#HMByRs/z4Rr#{%|r'4XB3/^iP3Pe%w6$01/44XS3XVePd&02sI03'4&04s,cC'49=STePUeXR^XLbP6P4O2n2001000000121000000X0]XQVP6P4O2n2001000000121000000X0aXP_P6P4O2n2001000000121000000X0cXORP6P4O2n2001000000121000000b0bF&05G&06GRRg06=:>07FIRc&08H,QD&09NS05$0:R_5B3Ra1pNGS06&0;GS07&0<GS08%oGS09'1S0:'1RV'1R]'1Rb'1R^'1POPKPWP?PPPXPYPLPMPZP[PGP\N=0?PRP^POPKPWP?PPPXPYPLPMPZP[PGP\N=0@PcPbPOPKPWP?PPPXPYPLPMPZP[PGP\N=0A-0BIPaP]1_3_Q06PV&0CHRH%lGRV60DFR_/54P71<I6%04R]XT7RaP71<_6PaP41<H61<V6'XRaB0HHV6J0I%0aP01X64#0%05Ra%06R_'P[Rb1P_]1X56#0Rc[%0</Pa\c20K64P6n2001000000120000000X>7X=7Pb^>7^=7P41<H<Rb1<V<RcP6O3%0b%0c'PP115H915V915I>P415H>POPKPWP?PPPXPYPLPMPZP[PGP\P=P4N?0LW6P4O115V>P2p4p710R2P7\4RH%V6R1P0A[564#0A7945P<P4O1':X7<,M<Rc[RbA7<46P5P4O1':X75,M5A[<56#0R^[RRA7>4<P9P4O1':X79,M9\^Ag564S0;P6n2001000000120000000WAW@W8Pb^A1^@H^82P4PFf8R^,?4RUXBFPVP6O4A7F4VRT/:UX7F,MFQ00PFf9RU,?4,:TX7F15IUP4f;RS,?4,:TP0A7F6Vf<RT,?6#0f=RC,5IP4A7F<Vf?RV,?9#0PDPEPEP>C3Rsf@Re'ERiPsPDPEPEP>D6Rr,AeR`<0o4%0i/:`P0PDPEPEP=C3R`fARi'E#0P`PDPEPEP=D6,Ai#015IQP4PDPEPEP^C3R`fCRu'E#0fDPDPEPEPUC3PDPEPEPUD6'A#0P01E64#0Pq[RU12641E56#0Rv[Rw12<5Rx\v20n64S0<P6n2001000000120000000X43X53PU^43^53P4PDPEPEPSC3RvfFRyP5O312vyP01A64#01;56Rz[R{1;641A56#0R|[R}1;<5\|20l64S0=P6n2001000000120000000X43X53P{^43^53P4fHR|PDPEPEPCC3R~PDPEPEPCCKS0>'4RCP<O31;|CPOPKPWP?PPPXPYPLPMPZP[PGP\f>f:R\PgPfADh<j?D6kPlPm%IBRB/Go,Tn,8mP:Pm1JBn,8mP:1Tpo,8mC>C>P;P8b:b;b<X13X23X331464,;5125<Rp1;d5[[^13^23^33P4fJRdPDPEPEPVC3RBPDPEPEPVCKRVP6P<O5b9N@0jA7F4IRnPDPEPEP4C3Rk/2B14BVPkPDPEPEP4D6RV'2'1'1X?F,MFQ00PFPDPEPEPeC3RB,2kPBPDPEPEPeD6/2V'1,1nX?FfK,5IP4PDPEPEPQC3Re,2kPePDPEPEPQD6/2V'1,1nP0A7F6IPDPEPEP6C3RVPDPEPEPuC3RQ'2PQPDPEPEPuD6PDPEPEP6CK7=V'1fORV,5IP4A7F<IPDPEPEP9C3RQPDPEPEPyC3Re'2PePDPEPEPyD6PDPEPEP9CK7=Q'1P0PDPEPEfGRQC3Ry,2sPyPDPEPEPQD6/2rfS,5IP4PDPEPEf7C3PDPEPEfIC3'2PDPEPEPdC3PDPEPEPdD6PDPEPEP^CK7=`P0PbPRA[9<5#0\cQ0;P4n2001000000120000000XA1X@HX82PR^A1^@H^82P4PFfXR2,?4RHXBFPIPF1:nHX7FP\A7F\IfW,?\#0R\P=P01Z64#011a_Ra[11_]1Z56#0[R_1Z<5#0\a20f64P4n2001000000120000000X>7X=7P_^>7^=7P41Ev2R7PvPDPEPEPSD6,A2R2%07%02P0PUPw1E<5#0\qQ0<P4n2001000000120000000X43X53Pw^43^53P4PDPEPEPTC3RwfYRqPgPfQ02PlPmQ04P:PmQ03P:1JoA,8mC>C>P;P8b:b;b<X13X23X331245Pp\x[^13^23^33P4PDPEPEPVC3RxfZRpP~P>PuO5b9O3b0P0P{P}1A<5#0\zQ0=P4n2001000000120000000X43X53P}^43^53P4PqPwPDPEPEPTD6PgPf1S399Dj51S3>9Dj<7D6PlPm%It%L@#I'GRt%I@,GARA'J,8mP:Pm1Tot,8mP:1ToA,8mC>C>P;P8b:b;b<X13X23X33XH3XI314<9R<?=65149>,;61;5<[[^13^23^33^H3^I3P4PDPEPEPVCKPxQ0>P~PpP9PiO7b9O3b0COO3b0P\eCOH0eO4b0fV,5IeWKWJP6P4O2n2001000000121000000W0WFP6P4O2n2011000000121000000W0X?FP6P4O2n2011000000121100000b?bEb0bDb0WEWDP6P4O2n2001000000121000000bGWGWMP6P4O2n2001000000121000000W0XUFP6P4O2n2001000000121100000b6b0W6P4O1n200100000021000011000b6b0b61<J620cI6EUQ05$0b/56eW6XC3Q06eQ07Q0:g06UUQ08Q09g06VWg06WTCOFNFNFNQ01eFNFN20aNGeWNo"). Qed.
+  intros Hlim. unfold ARTM_A. split; [exact (Permutation_refl _)|]. split; [exact ri_artm_res|].
+  split; [rewrite (APS.co_limit _ _ _ _ _ _ _ _ _ _ _ _ HC); exact Hlim|].
+  split.
+  { pose proof (APS.co_eager _ _ _ _ _ _ _ _ _ _ _ _ HC) as He. pose proof ri_test as (_ & _ & _ & Hea & _).
+    unfold rt_eager, sigma0, sigma_init. cbn [pr sec sec_nres r_muser r_mfa reg0 fold_right]. rewrite sum_cls_0. lia. }
+  (* [comment removed for export] *)
+  unfold artm_sys. split; [exact (APS.co_wf _ _ _ _ _ _ _ _ _ _ _ _ HC)|].
+  split; [exact (APS.co_lazyin _ _ _ _ _ _ _ _ _ _ _ _ HC)|].
+  split; [exact (seps_FOP _ (APS.co_seps _ _ _ _ _ _ _ _ _ _ _ _ HC))|].
+  split; [reflexivity|].
+  split; [|split; [exact ri_shadow_lazy | split; [exact ri_zbound | exact ri_noaccess_pos]]].
+  (* [comment removed for export] *)
+  intros z Hz. cbn [l_maps0 lay sigma0 sigma_init lay0]. rewrite covered_filter_vpos.
+  rewrite BackingAlgebra.covered_app in Hz. apply orb_true_iff in Hz as [Hz|Hz].
+  - exact (APS.co_nasub _ _ _ _ _ _ _ _ _ _ _ _ HC z Hz).
+  - unfold BackingAlgebra.covered in Hz. apply existsb_exists in Hz as (iv & Hiv & Hin).
+    unfold BackingAlgebra.in_iv, BackingAlgebra.in_rng, BackingAlgebra.B, BackingAlgebra.S in Hin.
+    apply andb_prop in Hin as [H1 H2]. apply Z.leb_le in H1. apply Z.ltb_lt in H2.
+    destruct (APS.co_lazyin _ _ _ _ _ _ _ _ _ _ _ _ HC iv Hiv ltac:(lia)) as (e & He & E1 & E2).
+    unfold BackingAlgebra.covered. apply existsb_exists. exists e. split; [exact He|].
+    unfold BackingAlgebra.in_iv, BackingAlgebra.in_rng, BackingAlgebra.B, BackingAlgebra.S.
+    apply andb_true_iff. split; [apply Z.leb_le| apply Z.ltb_lt]; lia.
+Qed.
 
 Lemma ri_allow : forall p, page_allowedb (APS.allowA A E ch) p = true -> page_allowedb (rtA_allow (sigma0 A E ch model)) p = true.
 Proof.

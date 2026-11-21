@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* gated: a Theorem Labs lane PASS A+B at c061542723f / 731386609e0.  Nothing is filled.  Gates on this text (a Theorem Labs lane's pcmd tools, both images, all exit 0; gates3.md (sha256 73e84770b991; internal record)): cellcheck --target-only 308 facts, 153 OK, 155 STATE, 0 WRONG; shadowcheck 45/45 const-shadow cells, 6 zero ranges, 0 poisoned, 0 unparsed (also at 0x5f6f00); ownedcheck 38 owned ranges, 308 const cells, UNOWNED 0, OVERCLAIM 0, UNPARSED 0. *)
-(* Before commit 5098883da0b3 (2026-10-29) brought YF0l and YB13 into this tree, the asan-ubsan files built ONLY in a union that also included a working branch 27d40cfe97f76cd158308a2aef684e7e509db360: this file Requires YF0l and lib/Reusable/YD2i.v Requires YB13, both of them core files of that branch. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* gated: a Theorem Labs lane PASS A+B.  Nothing is filled.  Gates on this text (a Theorem Labs lane's pcmd tools, both images, all exit 0; gates3.md (sha256 73e84770b991; internal record)): cellcheck --target-only 308 facts, 153 OK, 155 STATE, 0 WRONG; shadowcheck 45/45 const-shadow cells, 6 zero ranges, 0 poisoned, 0 unparsed (also at 0x5f6f00); ownedcheck 38 owned ranges, 308 const cells, UNOWNED 0, OVERCLAIM 0, UNPARSED 0. *)
+(* Before (2026-10-29) brought YF0l and YB13 into this tree, the asan-ubsan files built ONLY in a union that also included a working branch: this file Requires YF0l and lib/Reusable/YD2i.v Requires YB13, both of them core files of that branch. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.

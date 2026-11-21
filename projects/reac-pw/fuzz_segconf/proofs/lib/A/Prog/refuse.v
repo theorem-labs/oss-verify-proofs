@@ -4,15 +4,15 @@
 (* Modified by Theorem Labs, 2026-10: number's walk on the ASan build of plugin-hostd/fuzz_command, in the form of proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v (a walk) and ACa2.v (a class-1 side-stack frame): tnumber_spec of lib/A/Prog/number_c.v, from number's entry (0x8e430) through __asan_stack_malloc_0 and strtol to strtol's return, then numberB.v's n_segB. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/numberA.v, with its module paths, module names and numbers changed; 1350 of its 1544 lines of code are new or changed and 319 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: refuse's walk on reac-pw/fuzz_segconf's ASan image A (fuzz_segconf.asan,
-   refuse at 0x88da4), in the form of plugin-hostd/fuzz_command's lib/A/Prog/numberA.v at origin/ossv/recipes
-   501c0d516c69 (number: a class-0 side-stack frame released inline): the entry to the call of
+   refuse at 0x88da4), in the form of plugin-hostd/fuzz_command's lib/A/Prog/numberA.v
+    (number: a class-0 side-stack frame released inline): the entry to the call of
    __asan_stack_malloc_0 (0x88e30), the frame and its poisoning, the inline checks of c->refused, c->n_refusals
    and c->reading[0], and the branches up to the snprintf calls (0x88f5c, 0x88f74) and the n_refusals >= 8 exit
    (0x88efc -> 0x88fc4). The refuse walk, 2026-10-30. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/refuse_a.v, with its module paths and module names changed; 15 of its 54 lines of code are new or changed and 1505 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: refuse (reac-pw/fuzz_segconf, ASan image A fuzz_segconf.asan, refuse at
    0x88da4) against its contract lib/A/Prog/refuse_c.v, in the form of plugin-hostd/fuzz_command's released
-   lib/A/Prog walks at origin/ossv/recipes 501c0d516c69. The walk itself is in the segment files:
+   lib/A/Prog walks. The walk itself is in the segment files:
 
      refuse_e.v    the entry state ss_r0 and its seed, the canonical release state ss_rel, the state tactics
      refuse_f.v    the functional lemmas (rconf_enc over a reader, SegModel.refuse, the refusal text)
@@ -22,6 +22,7 @@
                    n_refusals >= 8 arm and the body (the two snprintf calls, the vsnprintf call, n_refusals++)
 
    The image-A refuse walk, 2026-10-30. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

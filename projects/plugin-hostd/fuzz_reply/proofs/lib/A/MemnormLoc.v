@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MemnormLoc.v (a working branch 30a1993588f, c5 + memnorm; file sha256 6501a76bde7b) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MemnormLoc.v (a working branch, c5 + memnorm; file sha256 6501a76bde7b) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (task MEMNORM, callee add-ons): location lemmas for the memnorm keeps of the cgif_file
    Allocate / Deallocate callee walks (brief CALLEE-BRIEF.md (sha256 473ea00fb987; internal record), measurement callee-frames.md (sha256 5c3a3ececfa7; internal record)).
    rule 24: no function proved (kind: image / location lemmas).
@@ -22,7 +23,7 @@
      YFf2.D (Enqueue, hit; YFf2.D_owned :866, which also takes k), from YFf2.D_cases :335, YFf2.HIGH :316;
      YFey.D (Drain transfer; YFey.D_owned :744, plus TfibSyms for the instance cells), from YFey.D_cases :244,
        YFey.HIGH :225.
-   The window -> keep step for any other window W is MemnormT.memnorm_frame (MemnormT.v:74) with W's own location
+   The window -> keep step for any other window W is MemnormT.memnorm_frame (MemnormT.v:75) with W's own location
    facts (e.g. YFg0.WIN_zone, YFgs.WIN_zone, YFkm.XC_where, YFhm.TABW_range, YFg8.MAP_facts) and the helpers here. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.
@@ -65,7 +66,7 @@ intros x Hx. pose proof ASAN_CEIL_range as [CR _]. apply MemnormHitG.mn_safe_hig
 Qed.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* YFf4.D (the Recycle secondary path's window, YFf4.v:79-88).                                                      *)
+(* YFf4.D (the Recycle secondary path's window, YFf4.v:80-89).                                                      *)
 Lemma YFf4_D_safe : forall (B : asyms) (TB : TfibSyms B) (ly : alayout) (X : astate) (rd : reader) (M : ARm B ly X rd)
   (k : chunk) (r : nat) (o : Z) (sm : secmap) (i : nat),
   In k (st_chunks X) -> ck_state k = CQuarantined -> ck_beg k = PSec r o -> nth_error (st_secs X) r = Some sm ->
@@ -103,7 +104,7 @@ intros x Hx. exact (YFf4_D_safe B TB ly X rd M k r o sm i Hk Hst Hb Hsm Hi sp Hs
 Qed.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* YFf1.D (Enqueue with room in the last batch, YFf1.v:41-44).                                                     *)
+(* YFf1.D (Enqueue with room in the last batch, YFf1.v:42-45).                                                     *)
 Lemma YFf1_D_safe : forall (B : asyms) (ly : alayout) (X : astate) (rd : reader) (M : ARm B ly X rd)
   (lb : batch) (initr : list batch),
   rev (qc_list (st_qthread X)) = lb :: initr -> Z.of_nat (length (b_items lb)) < kBatchSlots ->
@@ -133,7 +134,7 @@ intros x Hx. exact (YFf1_D_safe B ly X rd M lb initr Hrev Hroom sp Hsp IMG x Hx)
 Qed.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* YFf2.D (Enqueue that opens a new batch, YFf2.v:73-78).                                                          *)
+(* YFf2.D (Enqueue that opens a new batch, YFf2.v:74-79).                                                          *)
 Lemma YFf2_D_safe : forall (B : asyms) (ly : alayout) (X : astate) (rd : reader) (M : ARm B ly X rd),
   st_cache_inited X = true -> forall l : list Z, pc_chunks (cache X kBatchClass) = l -> l <> [] ->
   forall sp : Z, ly_stk_lo ly + AFew.QSTACK <= sp <= ly_stk_hi ly -> img_cover ly ->
@@ -163,7 +164,7 @@ intros x Hx. exact (YFf2_D_safe B ly X rd M Hci l Hl Hlne sp Hsp IMG x Hx).
 Qed.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* YFey.D (the Drain's transfer, YFey.v:46-51).                                                                    *)
+(* YFey.D (the Drain's transfer, YFey.v:47-52).                                                                    *)
 Lemma YFey_D_safe : forall (B : asyms) (TB : TfibSyms B) (ly : alayout) (X : astate) (rd : reader) (M : ARm B ly X rd)
   (P R : list batch),
   qc_list (st_qglobal X) ++ qc_list (st_qthread X) = P ++ R ->

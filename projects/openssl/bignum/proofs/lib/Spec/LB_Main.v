@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the m_channel_reader premise; prog_noerr_gen and noerr_stmt are over the run's initial model TopLevel.mo0 with the vDSO draw, through QI_with_vdso). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation String.
@@ -155,16 +156,20 @@ Theorem prog_noerr_gen : forall segs rstage pc ph lim en inp,
   image_low segs -> KLIM + SMALLREQ <= lim ->
   valid_entry (mkImage segs pc ph) en inp -> valid_input_either inp ->
   bv_unsigned (en_sp en) - stack_max_size = alloc_ceiling ->
-  tsafe nstep node_noerr (prog segs rstage (in_argv inp))
-        (init_model (segments_reserved segs) (en_brk en) (en_mmap_base en) (en_sp en) lim inp).
+  (* LPS 727298f3: over the run's initial model [TopLevel.mo0], which carries the launch's vDSO draw *)
+  tsafe nstep node_noerr (prog segs rstage (in_argv inp)) (TopLevel.mo0 segs lim en inp).
 Proof.
   intros segs rstage pc ph lim [sp brk0 mbase] inp Hsegs Hlim Hve Hvi Htop.
+  pose proof Hvi as Hvi0.
+  assert (Hrdr : in_channel_reader inp = true)
+    by (red in Hvi0; repeat match goal with H : _ /\ _ |- _ => destruct H end; assumption).
   destruct Hve as (_ & Hbrk & _). destruct Hvi as (Hargv & _).
-  unfold prog. cbn [en_brk en_mmap_base en_sp] in *.
+  unfold prog, TopLevel.mo0. cbn [en_brk en_mmap_base en_sp] in *.
   apply (mspecL_program_noerr LBUDGET (QI [] Pstat) (prog_with rstage (argv_Z (in_argv inp))) (fun _ _ _ => False)).
   - apply prog_with_L; [apply argv_Z_short| apply argv_Z_paths]; exact Hargv.
   - unfold reservedZ. unfold valid_brk in Hbrk. cbn [img_segments] in Hbrk.
-    apply QI_init; [exact Hbrk| exact (proj1 Hsegs)| exact (image_low_ceil segs Hsegs)| exact Htop| exact Pstat_nonneg| | exact (proj2 Hsegs)| exact Hlim].
+    apply QI_with_vdso.
+    apply QI_init; [exact Hbrk| exact (proj1 Hsegs)| exact (image_low_ceil segs Hsegs)| exact Htop| exact Pstat_nonneg| | exact (proj2 Hsegs)| exact Hlim| exact Hrdr].
     pose proof PHI_Pstat. unfold MAX_INPUT, IB, UNIT in *. lia.
   - intros [].
 Qed.
@@ -174,7 +179,7 @@ End WithCeiling.
 Definition noerr_stmt (segs : list Segment) (rstage : Z) (pc : N) (ph : PhdrInfo) (lim : Z) : Prop :=
   forall en inp, valid_entry (mkImage segs pc ph) en inp -> valid_input_either inp ->
     tsafe nstep node_noerr (@Prog.prog (ceiling_of_sp (bv_unsigned (en_sp en))) segs rstage (in_argv inp))
-          (init_model (segments_reserved segs) (en_brk en) (en_mmap_base en) (en_sp en) lim inp).
+          (TopLevel.mo0 segs lim en inp).
 
 Theorem prog_noerr : forall segs rstage pc ph lim,
   image_low segs -> KLIM + SMALLREQ <= lim ->

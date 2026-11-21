@@ -15,7 +15,7 @@ the proofs repository; the gate tools as gates/run-gates.sh lists them.
 | sites.py | every call into an __asan_stack_malloc_<k> of one image (the class-1 call site and the classes the image links) |
 | cmpkit-sm1.py | runs the 13 pairs and six controls on the comparison kit 4bbd3a74be89 (strictcmp2's tcmp; checks the kit directory and SHA256SUMS; adds no compare) |
 | cmpkit-86da41d3ef68-scans.sh | runs cmpkit 86da41d3ef68's luiscan (the 13 functions, both images) and ambiscan (the records/cmpkit-4bbd3a74be89-*.out files) from a copy of the kit: `cmpkit-86da41d3ef68-scans.sh KIT P R OUT` |
-| mkdon-sm1.sh | normalises fuzz_grant's released lib at recipes 4f87de75d67 into run.sh's DON (core-A's rule) |
+| mkdon-sm1.sh | normalises fuzz_grant's released lib at recipes into run.sh's DON (core-A's rule) |
 | run.sh | the relocation run of record (port_core flags, image pins) |
 | files-sm1.txt | --files: the three donor files, each with its reason |
 | measure-sm1.py, measure-sm1.out | the image-B record's override value measured by role on both image-A images: the donor's bound holds on fuzz_uci.asan, so no override |
@@ -33,7 +33,7 @@ the proofs repository; the gate tools as gates/run-gates.sh lists them.
 | gates/settle-sm1.py | the named measurement of RegisterCommonFlags +0x1218: the place's C string in both images, every use of its address, every reader of the field it is stored in; refuses unless it is read only as a C string |
 | records/bytecmp-bodies.out, records/bytecmp-bodies-b-tool.out | bytecmp.py's output on the two image-A twins (exit 0), and with --no-addi0 (the two rows the added rule decides) |
 | records/bytecmp-control-1.out, records/bytecmp-control-2.out, records/bytecmp-control-3.out, records/bytecmp-control-4.out, records/bytecmp-control-5.out, records/bytecmp-control-6.out | bytecmp.py's six planted controls (three instruction words, the .got cell's module id, the cell re-pointed, a byte in an empty string's window; each exit 1) |
-| records/bytecmp-control-6-before-fix.out | control 6 run with the tool of 2894d73b0f91: the empty-string plant missed (exit 0), the defect the window rule fixes |
+| records/bytecmp-control-6-before-fix.out | control 6 run with the tool: the empty-string plant missed (exit 0), the defect the window rule fixes |
 | records/cmpkit-4bbd3a74be89-summary.out | the kit re-run, one line per pair (12 EQUAL, RegisterCommonFlags NOT EQUAL; its +0x358 words EQUAL) and per control (6 caught) |
 | records/cmpkit-4bbd3a74be89-twins.out | drvcmp.py twins: each side's unstripped twin against its stripped pin |
 | records/cmpkit-4bbd3a74be89-pairs.out | strictcmp2.py cmp over the 12 pairs named once in each image, with every C-string acceptance (CSTR rows) |
@@ -57,4 +57,4 @@ the proofs repository; the gate tools as gates/run-gates.sh lists them.
 | records/yh03check.txt | yh03check (N/A) and its controls |
 | records/build.txt | the cb build of record and its planted control |
 | records/print-assumptions.txt | Check + Print Assumptions of stack_malloc1_contract (an uncommitted scratch file's source and compile output) |
-| records/consumer-fit.txt | the consumer's hypothesis type (lib/A/UciClose.v:143 at 9ee6811b6c95) closed by exact on a scratch merge (source and compile output) |
+| records/consumer-fit.txt | the consumer's hypothesis type (lib/A/UciClose.v:143) closed by exact on a scratch merge (source and compile output) |

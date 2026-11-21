@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPropKit.v at a529a88a618 for reac-pw/fuzz_headamp image A: every address relocated (role image A -> headamp image A), the block pcs, the code table's range (1573 words: headamp's out-of-line slow blocks are four instructions long), module paths; kept_run from proofs/reac-pw/fuzz_role/lib/A/RPgCfgChanges.v at a529a88a618 (role's cfg functions have no twin in headamp; same_io_wvb is HPgSteps'). *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPropKit.v for reac-pw/fuzz_headamp image A: every address relocated (role image A -> headamp image A), the block pcs, the code table's range (1573 words: headamp's out-of-line slow blocks are four instructions long), module paths; kept_run from proofs/reac-pw/fuzz_role/lib/A/RPgCfgChanges.v (role's cfg functions have no twin in headamp; same_io_wvb is HPgSteps'). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/A/HPgPropKit.v, with its module paths and module names changed; 118 of its 150 lines of code are new or changed and 97 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: the code table, the ok-statements and the segment statements in the form of
-   proofs/reac-pw/fuzz_role/lib/A/RPgParseBase.v at afaa3cb55c1 (parse_tbl, H_ok .. T_ok, segE1_stmt .. segT_stmt),
-   with the cuts of headamp's plain walk (proofs/reac-pw/fuzz_headamp/lib/Prog/Seg/ParseCut.v at 3e9fc5c8969: S_EPI,
+   proofs/reac-pw/fuzz_role/lib/A/RPgParseBase.v (parse_tbl, H_ok .. T_ok, segE1_stmt .. segT_stmt),
+   with the cuts of headamp's plain walk (proofs/reac-pw/fuzz_headamp/lib/Prog/Seg/ParseCut.v: S_EPI,
    S_EXIT, S_WALK, K_ADV, S_KEY, S_VALUE) at image A's pcs and registers. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_headamp_prop_parse_result 0x845b4 (2416 bytes, 604 instructions, all 4 bytes) of reac-pw/fuzz_headamp's ASan
    image A (fuzz_headamp.asan, pinned sha256 f3e0669d2819724922df0556b11c2dcd22d1e16fe7e0fe1535ce784b34436c47;
    unstripped twin b5f352154c54a97c66fd92dfa228e8a854498f6cd313dba0107900546b043f9a, the same loaded bytes except .note.gnu.build-id): the cut

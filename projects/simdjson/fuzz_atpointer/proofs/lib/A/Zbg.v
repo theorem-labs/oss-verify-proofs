@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor raised to the 0x5D0000 bytes below sp that the launch guarantees ([STACK_GAP])). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Monad Specs Run Fs.
@@ -50,9 +51,9 @@ Hypothesis Hart : ART RT Σ m.
 Hypothesis Hinv : mem_inv asegs m.
 Hypothesis Hclx : CLX OUT_rep ERR_rep XENV LIB stdout_init m.
 Hypothesis Hargv : argv_rep argvb m ap.
-Hypothesis Hstk : stk asegs m (rt_sp0 RT Σ - STACK_WIN) usp.
+Hypothesis Hstk : stk asegs m (rt_sp0 RT Σ - STACK_WIN + STACK_GAP) usp.
 Hypothesis Hsig : sigma0_ok RT Σ usp.
-Hypothesis Husp : usp mod 16 = 0 /\ usp < ap /\ rt_sp0 RT Σ - STACK_WIN + 0x100000 <= usp.
+Hypothesis Husp : usp mod 16 = 0 /\ usp < ap /\ rt_sp0 RT Σ - STACK_WIN + STACK_GAP + 0x100000 <= usp.
 
 Theorem start_of_handoff : START RT OUT_rep ERR_rep XENV LIB argvb fs (canon_cfg asegs R a_main FULL model).
 Proof.
@@ -76,7 +77,9 @@ Proof.
     rewrite R1, R2, R4, R10, R11. reflexivity.
   -   split; [exact Hartm|]. unfold PMfd. split.
     { pose proof (APS.co_fds _ _ _ _ _ _ _ _ _ _ _ _ HC) as F. rewrite Hfd in F. exact F. }
-    exact (APS.co_fs _ _ _ _ _ _ _ _ _ _ _ _ HC).
+    split; [exact (APS.co_fs _ _ _ _ _ _ _ _ _ _ _ _ HC)|].
+    (* LPS 08b1429: the plan carries the launch's channel reader ([cs_ok]'s [co_rdr]). *)
+    exact (APS.co_rdr _ _ _ _ _ _ _ _ _ _ _ _ HC).
   -   intros a Ha Hna. cbn [cfg_ms cfg_model canon_cfg mkst ms_mem] in *.
     exact (hk_HZ asegs A nx0 LIMIT SINV argH fs HULL_ok E ch R FULL model HC (rt_allow RT Σ) Hallow a Ha Hna).
 Qed.

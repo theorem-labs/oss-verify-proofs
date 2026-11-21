@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Copyright 2026 Theorem Labs *)
 (* New for reac-repacer/fuzz_egress: the cut-free (SRcf) walk of check_inject on the UBSan image, 0x130b0, against
-   lib/U/Prog/check_inject_ccf.v: check_inject_holds_cf, as reac-repacer/fuzz_uci's lib/U/Prog/check_value_cg.v (at
-   bc49657c087a) is to its check_value.v. Section CI is lib/U/Prog/check_inject.v's with SR replaced by SRcf
+   lib/U/Prog/check_inject_ccf.v: check_inject_holds_cf, as reac-repacer/fuzz_uci's lib/U/Prog/check_value_cg.v
+    is to its check_value.v. Section CI is lib/U/Prog/check_inject.v's with SR replaced by SRcf
    (SRcf_bind / SRcf_ret, EgressGlue_cg's eg_runA_cf / eg_runN_cf), both of fuzz_dup's mallocs at the agree room
    (malloc_contract_ag; room_ag_gen for room_slots_small), both frees (free(c), and free(e) as the tail call) by the
    kit's free_contract_cf, and the room premise ci_room_cf. The instruction segments (ci_seg1 .. ci_seg4, with the

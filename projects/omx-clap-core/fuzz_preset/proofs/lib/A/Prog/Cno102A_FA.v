@@ -5,6 +5,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/Reusable/YP0n.v, with its module paths and module names changed; 967 of its 1043 lines of code are new or changed and 1914 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/Cno102B_Base.v, with its module paths and module names changed; 702 of its 797 lines of code are new or changed and 948 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/Cno102A_Ro.v, with its module paths and module names changed; 912 of its 1104 lines of code are new or changed and 605 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image A' (#102 pins: asan sha256 1be0f53d96cb9d6c, unstripped twin bff8519bbe3ea0e4): CA10a, the FIRST
    HALF of segment CA10 Free of the re-walk of check_no_overread (cno): the three pj_free calls, CN_FREE (1060, A'
    0x81d28) -> CN_FRCUT (1084, A' 0x81d40), in the base's generic-P FORWARD form. Lane CnoA102f.CnoA102fA (sub-lane of
@@ -43,7 +44,7 @@
    lib/A/Prog/Cno102_FKit.v 16b038eac014 (pjf_fd_of_node, pjf_nodeR_lblk), lib/Prog/PvFdZeroR.v (pv_fd_zeroR);
    listing lib/A/Listing_prog.v (slots 201 + off / 4: PW mv a0,s9 at 1060; PCall AS_pj_free 1 at 1064 / 1072 / 1080;
    PW ld a0,48(s1) at 1068; PW mv a0,s3 at 1076). The hand steps, the frame chain and the frame keep are copied (prefix
-   cfa_) from lane CnoA102r.CnoA678's lib/A/Prog/Cno102A_Ro.v (a working branch 8bc94560f61: cn_step /
+   cfa_) from lane CnoA102r.CnoA678's lib/A/Prog/Cno102A_Ro.v (a working branch: cn_step /
    cn_hs_addi / cn_hs_ld / cn_hs_call / cn_chain / cn_open_keep / cn_entry_facts) and the post-state transfer follows
    lane CnoA102r.CnoApn's Cno102A_Rpn.v cn_pn_call.
    THE PROOF: cn_pjm_of_free; then three times [one instruction setting a0 (mv a0, s9 / ld a0, 48(s1) = d2 by cn_slots /

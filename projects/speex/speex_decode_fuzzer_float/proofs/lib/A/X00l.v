@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the string-end bound below USTACK_TOP in checked_src_stack, and STACK_SPAN as the guaranteed stack span in MAINCTX_agree and MAINCTX_agree_nw). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
 From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.AS Require Import X0mx X0k2.
@@ -93,7 +94,7 @@ pose proof (af_live_range RT AF Σ m p k HA Hin) as (R1 & R2 & R3). split.
 - left. lia.
 Qed.
 
-Lemma checked_src_stack : forall Σ m sp lo s n, ART RT Σ m -> rt_sp0 RT Σ - STACK_WIN + 64 <= s -> s + n <= USTACK_TOP - 16 ->
+Lemma checked_src_stack : forall Σ m sp lo s n, ART RT Σ m -> rt_sp0 RT Σ - STACK_WIN + 64 <= s -> s + n <= USTACK_TOP - 9 ->
 bv_unsigned sp <= s -> pois_apart (rt_pois RT Σ) s n -> checked_src RT Σ m sp lo s n.
 Proof using AF.
 intros Σ m sp lo s n HA H1 H2 H3 H4. split.
@@ -160,7 +161,7 @@ Qed.
 
 Lemma MAINCTX_agree : forall Σ Σ' so so' usp ap c0 c1 c2 c3 c4 c5 c6 c7 m m',
 MAINCTX RT OUT_rep ERR_rep XENV LIB argvb Σ so usp ap c0 c1 c2 c3 c4 c5 c6 c7 m ->
-ART RT Σ' m' -> mem_inv bsegs m' -> wmono bsegs m m' -> stk bsegs m' (rt_sp0 RT Σ - STACK_WIN) (usp - 80) ->
+  ART RT Σ' m' -> mem_inv bsegs m' -> wmono bsegs m m' -> stk bsegs m' (rt_sp0 RT Σ - STACK_SPAN) (usp - 80) ->
 rt_sp0 RT Σ' = rt_sp0 RT Σ -> CLX OUT_rep ERR_rep XENV LIB so' m' ->
 agree_on (fun x => usp - 80 <= x < USTACK_TOP) m m' ->
 MAINCTX RT OUT_rep ERR_rep XENV LIB argvb Σ' so' usp ap c0 c1 c2 c3 c4 c5 c6 c7 m'.
@@ -202,7 +203,7 @@ Qed.
 
 Lemma MAINCTX_agree_nw : forall Σ Σ' so so' usp ap c0 c1 c2 c3 c4 c5 c6 c7 m m',
 MAINCTX RT OUT_rep ERR_rep XENV LIB argvb Σ so usp ap c0 c1 c2 c3 c4 c5 c6 c7 m ->
-ART RT Σ' m' -> mem_inv bsegs m' -> stk bsegs m' (rt_sp0 RT Σ - STACK_WIN) (usp - 80) ->
+  ART RT Σ' m' -> mem_inv bsegs m' -> stk bsegs m' (rt_sp0 RT Σ - STACK_SPAN) (usp - 80) ->
 rt_sp0 RT Σ' = rt_sp0 RT Σ -> CLX OUT_rep ERR_rep XENV LIB so' m' ->
 agree_on (fun x => usp - 80 <= x < USTACK_TOP) m m' ->
 MAINCTX RT OUT_rep ERR_rep XENV LIB argvb Σ' so' usp ap c0 c1 c2 c3 c4 c5 c6 c7 m'.
@@ -308,7 +309,7 @@ pose proof (af_live_range RT AF Σ m p k HA Hin) as (R1 & R2 & R3). split.
 - left. lia.
 Qed.
 
-Lemma checked_src_stack : forall Σ m sp lo s n, ART RT Σ m -> rt_sp0 RT Σ - STACK_WIN + 64 <= s -> s + n <= USTACK_TOP - 16 ->
+Lemma checked_src_stack : forall Σ m sp lo s n, ART RT Σ m -> rt_sp0 RT Σ - STACK_WIN + 64 <= s -> s + n <= USTACK_TOP - 9 ->
 bv_unsigned sp <= s -> pois_apart (rt_pois RT Σ) s n -> checked_src RT Σ m sp lo s n.
 Proof using AF.
 intros Σ m sp lo s n HA H1 H2 H3 H4. split.
@@ -375,7 +376,7 @@ Qed.
 
 Lemma MAINCTX_agree : forall Σ Σ' so so' usp ap c0 c1 c2 c3 c4 c5 c6 c7 m m',
 MAINCTX RT OUT_rep ERR_rep XENV LIB argvb Σ so usp ap c0 c1 c2 c3 c4 c5 c6 c7 m ->
-ART RT Σ' m' -> mem_inv asegs m' -> wmono asegs m m' -> stk asegs m' (rt_sp0 RT Σ - STACK_WIN) (usp - 80) ->
+  ART RT Σ' m' -> mem_inv asegs m' -> wmono asegs m m' -> stk asegs m' (rt_sp0 RT Σ - STACK_SPAN) (usp - 80) ->
 rt_sp0 RT Σ' = rt_sp0 RT Σ -> CLX OUT_rep ERR_rep XENV LIB so' m' ->
 agree_on (fun x => usp - 80 <= x < USTACK_TOP) m m' ->
 MAINCTX RT OUT_rep ERR_rep XENV LIB argvb Σ' so' usp ap c0 c1 c2 c3 c4 c5 c6 c7 m'.
@@ -417,7 +418,7 @@ Qed.
 
 Lemma MAINCTX_agree_nw : forall Σ Σ' so so' usp ap c0 c1 c2 c3 c4 c5 c6 c7 m m',
 MAINCTX RT OUT_rep ERR_rep XENV LIB argvb Σ so usp ap c0 c1 c2 c3 c4 c5 c6 c7 m ->
-ART RT Σ' m' -> mem_inv asegs m' -> stk asegs m' (rt_sp0 RT Σ - STACK_WIN) (usp - 80) ->
+  ART RT Σ' m' -> mem_inv asegs m' -> stk asegs m' (rt_sp0 RT Σ - STACK_SPAN) (usp - 80) ->
 rt_sp0 RT Σ' = rt_sp0 RT Σ -> CLX OUT_rep ERR_rep XENV LIB so' m' ->
 agree_on (fun x => usp - 80 <= x < USTACK_TOP) m m' ->
 MAINCTX RT OUT_rep ERR_rep XENV LIB argvb Σ' so' usp ap c0 c1 c2 c3 c4 c5 c6 c7 m'.

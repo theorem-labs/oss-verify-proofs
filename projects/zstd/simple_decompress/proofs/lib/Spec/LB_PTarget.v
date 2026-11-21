@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (Q_fds, Qamb_fds and Qrun_fds take the premise that the kernel build (m_kernel) is unchanged). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Specs Run.
@@ -86,7 +87,7 @@ Definition Q (X : list (bptr * Z)) : assn PState := QI X P.
 Local Notation mspecL := (mspecL LBUDGET).
 
 Lemma Q_minv X s mo : Q X s mo -> minv mo /\ m_halted mo = None. Proof. apply QI_minv. Qed.
-Lemma Q_fds X s mo mo' : Q X s mo -> m_vmmaps mo' = m_vmmaps mo -> minv mo' -> m_halted mo' = None -> Q X s mo'. Proof. apply QI_fds. Qed.
+Lemma Q_fds X s mo mo' : Q X s mo -> m_vmmaps mo' = m_vmmaps mo -> m_kernel mo' = m_kernel mo -> minv mo' -> m_halted mo' = None -> Q X s mo'. Proof. apply QI_fds. Qed.
 Lemma Q_live X s mo : Q X s mo -> live mo <= LBUDGET. Proof. apply QI_live. Qed.
 Lemma Q_so X s mo v : Q X s mo -> Q X (set_so_ps v s) mo. Proof. apply QI_set_so. Qed.
 Lemma Q_perm X Y s mo : Permutation X Y -> Q X s mo -> Q Y s mo. Proof. apply QI_perm. Qed.
@@ -223,13 +224,13 @@ Lemma Qamb_Qrun X s mo : Qamb X s mo -> Qrun X s mo.
 Proof. intros H. exists Pamb. split; [intros c; apply Z.le_refl|]. split; [exact Pamb_amb| exact H]. Qed.
 
 Lemma Qamb_minv X s mo : Qamb X s mo -> minv mo /\ m_halted mo = None. Proof. apply QI_minv. Qed.
-Lemma Qamb_fds X s mo mo' : Qamb X s mo -> m_vmmaps mo' = m_vmmaps mo -> minv mo' -> m_halted mo' = None -> Qamb X s mo'. Proof. apply QI_fds. Qed.
+Lemma Qamb_fds X s mo mo' : Qamb X s mo -> m_vmmaps mo' = m_vmmaps mo -> m_kernel mo' = m_kernel mo -> minv mo' -> m_halted mo' = None -> Qamb X s mo'. Proof. apply QI_fds. Qed.
 Lemma Qamb_live X s mo : Qamb X s mo -> live mo <= LBUDGET. Proof. apply QI_live. Qed.
 Lemma Qamb_so X s mo v : Qamb X s mo -> Qamb X (set_so_ps v s) mo. Proof. apply QI_set_so. Qed.
 Lemma Qamb_perm X Y s mo : Permutation X Y -> Qamb X s mo -> Qamb Y s mo. Proof. apply QI_perm. Qed.
 Lemma Qrun_minv X s mo : Qrun X s mo -> minv mo /\ m_halted mo = None. Proof. intros (P & _ & _ & H). eapply QI_minv. exact H. Qed.
-Lemma Qrun_fds X s mo mo' : Qrun X s mo -> m_vmmaps mo' = m_vmmaps mo -> minv mo' -> m_halted mo' = None -> Qrun X s mo'.
-Proof. intros (P & H1 & H2 & H) E M N. exists P. split; [exact H1|]. split; [exact H2|]. eapply QI_fds; eauto. Qed.
+Lemma Qrun_fds X s mo mo' : Qrun X s mo -> m_vmmaps mo' = m_vmmaps mo -> m_kernel mo' = m_kernel mo -> minv mo' -> m_halted mo' = None -> Qrun X s mo'.
+Proof. intros (P & H1 & H2 & H) E K M N. exists P. split; [exact H1|]. split; [exact H2|]. eapply QI_fds; eauto. Qed.
 Lemma Qrun_live X s mo : Qrun X s mo -> live mo <= LBUDGET. Proof. intros (P & _ & _ & H). eapply QI_live. exact H. Qed.
 Lemma Qrun_so X s mo v : Qrun X s mo -> Qrun X (set_so_ps v s) mo.
 Proof. intros (P & H1 & H2 & H). exists P. split; [exact H1|]. split; [exact H2|]. apply QI_set_so. exact H. Qed.

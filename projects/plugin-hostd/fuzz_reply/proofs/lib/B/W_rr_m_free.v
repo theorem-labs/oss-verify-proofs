@@ -30,7 +30,7 @@
      W_traps.v trap_ptr_wrap_atom (G0 + 56 i does not wrap: G0 + 896 <= alloc_ceiling); it decides 0x84330 (null
      consistency), 0x84334 (g_src null) and 0x84340 (slot alignment) itself from the atom facts. *)
 (* Modified by Theorem Labs, 2026-10: ROUTE (b), STEP 3 in the room form (lane Rrm, the image-A twin a Theorem Labs lane
-   f4cd818e98d lib/A/W_rr_m_free.v): FREE over ANY allocator relation ARx, in place (Section c is
+   lib/A/W_rr_m_free.v): FREE over ANY allocator relation ARx, in place (Section c is
    W_relay_remove_cx.v's generic block, as in W_rr_m_kit.v): the journal ajournal_gx_x with the head sets, the laws'
    and block twins (alx_blocks, alx_owned_image, sep_blocks_x, range_addressable_of_block_hp0_x,
    ajournal_gx_rom_view_x with PSTR), RUN = paj_run_x_x with paj_run_tok_x; rmf_free over the _c_x free rules (the
@@ -43,6 +43,7 @@
    (already over ARx), and a block's off-image fact is rmf_blk_off_img at image B's top 0x5fc000 (the kit's
    blk_off_imgP_x states the shared core's off_img at image A's top 0x5fb000; the AR text read W_kit.v blk_off_imgP at
    lib/B/YCbq.v's). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

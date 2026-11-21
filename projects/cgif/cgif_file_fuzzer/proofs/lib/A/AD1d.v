@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch premises entry_launch_ok_va and valid_input; the run's CONFIG_RSEQ flag; AT_EXECFN; the launch's group id; the vDSO's mappings and steps; the start-up hand-off states computed in the build): changed AVIS13, kz_chk, tfib_holes_chkB, Hch, SINV, argH, HE, inst and 3 more; added SINV_sp0; removed HM. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -8,7 +9,7 @@ BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr.
 From OSSVerify.cgif.cgif_file_fuzzer.images Require Import Asan.
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require Import YK11 YP09 YK00 YK04 YA0i YA0n YK0g YK0c YK0d YK0e YK0f YK09 YA01 YA0c YA0e YA0d YA02 YA0j.
-From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib.A Require Import AB12 AB1h AB13 AB01.
+From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib.A Require Import AB12 AB1h AB13 AB01 AB01r.
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require Import YG00 YG01 YG0f YG0v YG0n YG0r YG0b YG0g.
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib.A Require Import AF0m.
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require Import YM05 YD1h.
@@ -29,15 +30,15 @@ intros sg Hsg. pose proof (proj1 (forallb_forall _ _) tfib_img_segs_b sg Hsg) as
 apply andb_prop in X as [X1 X2]. apply Z.leb_le in X1. apply Z.leb_le in X2. exact (conj X1 X2).
 Qed.
 Definition AVIS13 : list (expr * expr) :=
-[ (epg 518, ELit 4096); (epg 501, ELit 8388608); (epg 500, ELit 1048576); (epg 424, ELit 11571200); (epg 357, ELit 4096);
-(epg 292, ELit 4096); (epg 275, ELit 65536); (epg 274, ELit 4096); RINFO_P; (epg 254, ELit 3727360); (epg 109, ELit 65536); IMG_P; STK_P ].
+[ (epg 524, ELit 4096); (epg 507, ELit 8388608); (epg 506, ELit 1048576); (epg 430, ELit 11571200); (epg 363, ELit 4096);
+(epg 296, ELit 4096); (epg 279, ELit 65536); (epg 278, ELit 4096); RINFO_P; (epg 258, ELit 3727360); (epg 113, ELit 65536); IMG_P; STK_P ].
 Definition avis_chk (ch : acs) : bool :=
 forallb (fun p => existsb (pair_eqb p) AVIS13 || existsb (sub_of_map p) (musl_maps ch))%bool (a_vis ch).
 Definition kz_chk (ch : acs) : bool :=
-(kn_zero ch (EMd M_MUL (ELit 512) (EVar 501)) 2147450880 1048576
-&& kn_zero ch (EMd M_MUL (ELit 512) (EVar 500)) 2147450880 131072
-&& kn_zero ch (EMd M_MUL (ELit 512) (EVar 424)) 2147450880 1446400)%bool.
-Lemma tfib_holes_chkB : forallb (fun ch => avis_chk ch && kz_chk ch)%bool HS_tfib_list = true.
+(kn_zero ch (EMd M_MUL (ELit 512) (EVar 507)) 2147450880 1048576
+&& kn_zero ch (EMd M_MUL (ELit 512) (EVar 506)) 2147450880 131072
+&& kn_zero ch (EMd M_MUL (ELit 512) (EVar 430)) 2147450880 1446400)%bool.
+Lemma tfib_holes_chkB : forallb (fun ch => avis_chk ch && kz_chk ch)%bool HS_tfib_list_all = true.
 Proof. vm_compute. reflexivity. Qed.
 Section f. Context {fx : YK11.FPState}.
 Section g.
@@ -50,18 +51,19 @@ Hypothesis Hve : valid_envp (in_envp inp).
 Hypothesis Hfit : entry_stack_fits sp (in_argv inp) (in_envp inp).
 Variable h : nat.
 Variables (ch : acs) (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (model : Model).
-Hypothesis Hch : HS_tfib h = Some ch.
+Hypothesis Hch : HS_tfib_r (rseq_z (kb_rseq (in_kernel inp))) h = Some ch.
 #[local] Notation argv := (in_argv inp).
 #[local] Notation envp := (in_envp inp).
 #[local] Notation uid := (in_uid inp).
 #[local] Notation hw := (in_hwcap inp).
-#[local] Notation SINV := (YA02.SINV0 TPH sp rdraw brk argv envp uid hw).
-#[local] Notation argH := (YA02.argH0 TPH sp rdraw argv envp uid hw).
+(* The invariant abstract and the input's own fields, as A/AD1g.v. *)
+Variable SINV : env -> (word -> option byte) -> Prop.
+#[local] Notation argH := (YA02.argH0 sp rdraw argv envp (in_kernel inp) (in_execfn inp)).
 #[local] Notation TOP := (YA02.TOP sp).
 #[local] Notation LIM := YA02.LIMIT.
+Hypothesis SINV_sp0 : forall E' M, SINV E' M -> uE E' e_sp0 = TOP + 8388608.
 Hypothesis HC : cs_ok TSEGS TFIB LIM TOP SINV argH (in_fs inp) E ch R FULL model.
-Hypothesis HE : forall n, (n < NX0G)%nat -> ev E n = ev (YA02.E0 TPH sp rdraw brk argv envp uid hw) n.
-Hypothesis HM : forall a, argH E a = true -> FULL a = wrap_mem TPH sp argv envp uid hw rdraw a.
+Hypothesis HE : forall n, (n < NX0G)%nat -> ev E n = ev (YA02.E0 sp rdraw brk argv envp uid (in_gid inp) hw (in_kernel inp) (in_execfn inp)) n.
 #[local] Notation MR := (Mr TFIB TOP argH E ch model FULL).
 #[local] Notation HID := (hid TFIB TOP argH E ch model).
 #[local] Notation u := (uE E).
@@ -75,8 +77,9 @@ Hypothesis Hceil : YM05.ceil_of_top (usp - stack_max_size).
 #[local] Notation HS0 := (AD1g.HS0 sp rdraw inp ch E model).
 Ltac inst H := try specialize (H B); try specialize (H HB); try specialize (H sp); try specialize (H rdraw); try specialize (H brk); try specialize (H inp);
 try specialize (H Hsp); try specialize (H Hva); try specialize (H Hve); try specialize (H Hfit); try specialize (H h); try specialize (H ch);
-try specialize (H E); try specialize (H R); try specialize (H FULL); try specialize (H model); try specialize (H Hch); try specialize (H HC);
-try specialize (H HE); try specialize (H HM); try specialize (H rc); try specialize (H Hceil).
+try specialize (H E); try specialize (H R); try specialize (H FULL); try specialize (H model); try specialize (H Hch);
+try specialize (H SINV); try specialize (H SINV_sp0); try specialize (H HC);
+try specialize (H HE); try specialize (H rc); try specialize (H Hceil).
 Ltac get L := let H := fresh "L" in pose proof L as H; inst H; exact H.
 #[local] Definition dm_vals := ltac:(get @AD1g.dm_vals).
 #[local] Definition band_vals := ltac:(get @AD1g.band_vals).
@@ -139,7 +142,29 @@ constructor.
 -
 intros sg Hsg. cbn [ly_img AD1g.ly0]. exact (tfib_img_segs sg Hsg).
 - rewrite (ho_limit TSEGS TFIB LIM TOP SINV argH (in_fs inp) E ch R FULL model HC). unfold ASAN_VM_LMIN, YA02.LIMIT, target_alloc_limit. apply Z.leb_le. vm_compute. reflexivity.
-- exact (ho_res TSEGS TFIB LIM TOP SINV argH (in_fs inp) E ch R FULL model HC).
+- destruct (ho_res TSEGS TFIB LIM TOP SINV argH (in_fs inp) E ch R FULL model HC) as (rx & Erx & Frx & Lrx & Srx).
+pose proof (ho_mres TSEGS TFIB LIM TOP SINV argH (in_fs inp) E ch R FULL model HC) as MR0.
+assert (HQ : In (dQ E) vm) by vin.
+pose proof (proj1 (Forall_forall _ _) MR0 (dQ E) HQ) as DQ.
+assert (HP : In (dP E) vm) by vin.
+pose proof (proj1 (Forall_forall _ _) MR0 (dP E) HP) as DP.
+assert (SE : forall l, 0 <= sum_sizes l /\ forall iv, In iv l -> bv_unsigned (snd iv) <= sum_sizes l).
+{ induction l as [|x l [IH0 IH]]; cbn [sum_sizes]; [split; [lia | intros iv []]|].
+pose proof (u64_range (snd x)) as Ux. split; [lia|]. intros iv [<-|Hin]; [lia|]. pose proof (IH iv Hin). lia. }
+pose proof VQ as VQ1. pose proof VQ as VQ2. unfold wzp in VQ1, VQ2.
+apply (f_equal fst) in VQ1. apply (f_equal snd) in VQ2. cbn [fst snd] in VQ1, VQ2.
+pose proof VP as VP1. pose proof VP as VP2. unfold wzp in VP1, VP2.
+apply (f_equal fst) in VP1. apply (f_equal snd) in VP2. cbn [fst snd] in VP1, VP2.
+exists rx. split; [exact Erx|]. split; [|exact Lrx].
+apply Forall_forall. intros iv Hiv.
+pose proof (proj1 (Forall_forall _ _) Frx iv Hiv) as (F1 & F2 & F3 & F4 & F5 & F6).
+pose proof (proj1 (Forall_forall _ _) DQ iv ltac:(rewrite Erx; apply in_app_iff; right; exact Hiv)) as D.
+pose proof (proj1 (Forall_forall _ _) DP iv ltac:(rewrite Erx; apply in_app_iff; right; exact Hiv)) as D'.
+pose proof (proj2 (SE rx) iv Hiv) as S1.
+change (resx_bytes TFIB) with 81920 in Srx. unfold KHI in F5.
+unfold iv_disjoint in D, D'. rewrite VQ1, VQ2 in D. rewrite VP1, VP2 in D'.
+unfold al_rx_ok, zdisjoint. cbn [fst snd ly_Q ly_prim AD1g.ly0]. unfold kPtrArrayResv, kPrimResvSize.
+repeat split; first [assumption | lia].
 -
 exists [(u eP, kPrimResvSize)]. split.
 + split; [|split].
@@ -267,7 +292,7 @@ Lemma MR_full : forall (a : word) b, MR a = Some b -> FULL a = Some b.
 Proof. intros a b H. unfold Mr, mrestrict in H. destruct (HID a); [discriminate H | exact H]. Qed.
 Lemma CHKB : avis_chk ch = true /\ kz_chk ch = true.
 Proof.
-pose proof (proj1 (forallb_forall _ _) tfib_holes_chkB ch (HS_tfib_In h ch Hch)) as H. cbn beta in H.
+pose proof (proj1 (forallb_forall _ _) tfib_holes_chkB ch (HS_tfib_r_In _ h ch Hch)) as H. cbn beta in H.
 apply andb_prop in H as [H1 H2]. exact (conj H1 H2).
 Qed.
 Lemma avis_cases : forall p, In p (a_vis ch) -> In p AVIS13 \/ exists m, In m (musl_maps ch) /\ sub_of_map p m = true.
@@ -276,9 +301,9 @@ intros p Hp. pose proof (proj1 (forallb_forall _ _) (proj1 CHKB) p Hp) as H. cbn
 - left. apply existsb_exists in H as (q & Hq & He). apply pair_eqb_eq in He. subst q. exact Hq.
 - right. apply existsb_exists in H as (m & Hm & Hs). exists m. exact (conj Hm Hs).
 Qed.
-Lemma kz_facts : kn_zero ch (EMd M_MUL (ELit 512) (EVar 501)) 2147450880 1048576 = true
-/\ kn_zero ch (EMd M_MUL (ELit 512) (EVar 500)) 2147450880 131072 = true
-/\ kn_zero ch (EMd M_MUL (ELit 512) (EVar 424)) 2147450880 1446400 = true.
+Lemma kz_facts : kn_zero ch (EMd M_MUL (ELit 512) (EVar 507)) 2147450880 1048576 = true
+/\ kn_zero ch (EMd M_MUL (ELit 512) (EVar 506)) 2147450880 131072 = true
+/\ kn_zero ch (EMd M_MUL (ELit 512) (EVar 430)) 2147450880 1446400 = true.
 Proof.
 pose proof (proj2 CHKB) as H. unfold kz_chk in H. apply andb_prop in H as [H H3]. apply andb_prop in H as [H1 H2]. exact (conj H1 (conj H2 H3)).
 Qed.

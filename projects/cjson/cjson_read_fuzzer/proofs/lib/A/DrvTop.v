@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the seven DMOD destructurings take its new channel-reader field, and the open step's side goals also close open_spec's new TASK_SIZE bound on the path, read off the path's bytes in mapped memory (bytes_at_task); a string argument's end plus 9 (was its end plus slack plus 16) is at most 2^47, what the launch's entry block gives for an argv string (the NUL that ends execfn and the 8-byte slot come after it, below ed_top <= 2^47); the path bytes with their slack end below TASK_SIZE, read off memory (bytes_at_task), where the loop moves them. *)
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -99,7 +100,7 @@ Section S.
           (t_emit (W 1 (to_bytes (so_buf so))) (t_exit (wz code) fs)).
   Proof.
     intros until B. intros DM HFD Ha0 CODE TP ST CEIL LO SPH HART DS TID SOF SOB SEF SIF MI.
-    pose proof DM as [_ HFS _]. destruct (DMOD_chan _ _ _ DM HFD) as [CH1 CH2].
+    pose proof DM as [_ HFS _ _]. destruct (DMOD_chan _ _ _ DM HFD) as [CH1 CH2].
     pose proof (artcells_split m (art_rtcells AI _ _ _ _ _ _ _ _ _ HART)) as (IC & PC & FMC & IC2 & UC & UC2 & (XG & XN & XR & XM)).
     destruct (art_exit_shadows m (art_lowshadow AI _ _ _ _ _ _ _ _ _ HART)) as ([jA SA] & [jB SB] & [jC SC] & [jD SD]).
     destruct DS as (D1 & D2 & (cdt & thr & sec & tm1 & D3) & D4 & D5 & D6 & D7 & D8 & D9 & D10 & D11
@@ -348,7 +349,7 @@ Section S.
     die_pre m -> p2 = wz P1 ->
     bytes_at asegs m P1 (path ++ Z_to_bv 8 0 :: slack) -> ~ In (Z_to_bv 8 0) path ->
     (- (P1 + zlength path + 1)) mod 8 <= zlength slack -> zlength path <= 2^20 -> bv_unsigned sp <= P1 ->
-    P1 + zlength path + 1 + zlength slack + 16 <= 2^47 ->
+    P1 + zlength path + 1 + 9 <= 2^47 ->
     LRZ asegs (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 (wz ASTDERR) (wz fmt) p2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (wz 0x82118) fc None m (seg_rom asegs)) mo g
         (t_die (msg path) fs).
   Proof.
@@ -370,7 +371,7 @@ Section S.
     die_pre m -> s2 = wz P1 ->
     bytes_at asegs m P1 (path ++ Z_to_bv 8 0 :: slack) -> ~ In (Z_to_bv 8 0) path ->
     (- (P1 + zlength path + 1)) mod 8 <= zlength slack -> zlength path <= 2^20 -> bv_unsigned sp <= P1 ->
-    P1 + zlength path + 1 + zlength slack + 16 <= 2^47 ->
+    P1 + zlength path + 1 + 9 <= 2^47 ->
     LRZ asegs (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (wz 0x820e4) fc None m (seg_rom asegs)) mo g
         (t_die (msg_read_error path) fs).
   Proof.
@@ -383,7 +384,7 @@ Section S.
     die_pre m -> s2 = wz P1 ->
     bytes_at asegs m P1 (path ++ Z_to_bv 8 0 :: slack) -> ~ In (Z_to_bv 8 0) path ->
     (- (P1 + zlength path + 1)) mod 8 <= zlength slack -> zlength path <= 2^20 -> bv_unsigned sp <= P1 ->
-    P1 + zlength path + 1 + zlength slack + 16 <= 2^47 ->
+    P1 + zlength path + 1 + 9 <= 2^47 ->
     LRZ asegs (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6) F (wz 0x82148) fc None m (seg_rom asegs)) mo g
         (t_die (msg_cannot_open path) fs).
   Proof.
@@ -802,7 +803,7 @@ Section S.
     intros F fc FRM. unfold post_stmt. intros cap A TRS B np junk m mo g ra t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 t3 t4 t5 t6 IV LT.
     destruct IV as (ST & MI & FR & DS & DIC & [e ER] & IFL & SOF & SEF & SIF & SSZ & BY & HART & HT & NP & HB & DM & FL & BLK & SOK & [stj RSC] & (k & CAP & HDRV) & LEN1 & LEN2 & CAP2).
     pose proof RSN_Z as HRSN. pose proof ARS_eq as HARS.
-    pose proof DM as [MFDS HFS HH].
+    pose proof DM as [MFDS HFS HH HRD].
     pose proof (art_block_range AI _ _ _ _ _ _ _ _ _ A cap HART ltac:(left; reflexivity)) as BR.
     (nelimp BR 4%nat; intros BR1 BR2 BR3 BR4). unfold AIMG_HI in BR1.
     assert (DRVB : DRV_B_TRUN = 515669262528) by (vm_compute; reflexivity).
@@ -1033,7 +1034,7 @@ Section S.
   Hypothesis SLK : (- (P1 + zlength path + 1)) mod 8 <= zlength slack.
   Hypothesis LEN : zlength path <= 131071.
   Hypothesis PUS : bv_unsigned sp + 128 <= P1.
-  Hypothesis PHI : P1 + zlength path + 1 + zlength slack + 16 <= 2^47.
+  Hypothesis PHI : P1 + zlength path + 1 + 9 <= 2^47.
 
   Notation INV := (loop_inv AI DI TI sp fs lo SPB P1 tid ra0 path slack data fj v0 v1 v2 v3 v4 v5 v6 v7).
   Notation REGS := (loop_regs sp gp tp F fc P1 q8 q9 q10 q11).
@@ -1059,7 +1060,7 @@ Section S.
     intros until t6. intros IV IH IHb.
     destruct IV as (ST & MI & FR & DS & DIC & [e ER] & IFL & SOF & SEF & SIF & SSZ & BY & HART & HT & NP & HB & DM & FL & BLK & SOK & [stj RSC] & (k & CAP & HDRV) & LEN1 & LEN2 & CAP2).
     pose proof RSN_Z as HRSN. pose proof ARS_eq as HARS.
-    pose proof DM as [MFDS HFS HH].
+    pose proof DM as [MFDS HFS HH HRD].
     pose proof (art_block_range AI _ _ _ _ _ _ _ _ _ A cap HART ltac:(left; reflexivity)) as BR.
     (nelimp BR 4%nat; intros BR1 BR2 BR3 BR4). unfold AIMG_HI in BR1.
     pose proof (ablk_disj_band _ _ (art_block_band AI _ _ _ _ _ _ _ _ _ A cap HART ltac:(left; reflexivity))) as BDJ. unfold KLOWSHADOW_BEG, KHIGHMEM_BEG in BDJ.
@@ -1179,6 +1180,8 @@ Section S.
         eapply stack_shadow_zero_cj_pres; [exact SSZ3| exact PR4| exact (art_lowshadow AI _ _ _ _ _ _ _ _ _ HA4)]. }
       assert (BY4 : bytes_at asegs m4 P1 (path ++ Z_to_bv 8 0 :: slack)).
       { pose proof (bytes_at_bound _ _ _ _ BY) as BB. rewrite length_app in BB. cbn [length] in BB.
+        pose proof (OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.Lib.Mem.bytes_at_task asegs m _ _ MI asegs_task BY ltac:(destruct path; discriminate)) as BT.
+        rewrite length_app in BT. cbn [length] in BT. unfold TASK_SIZE in BT.
         pose proof (cj_pres_bytes_at_hi _ _ _ _ _ _ _ _ PR BY ltac:(lia) ltac:(rewrite length_app; cbn [length]; lia)) as BY2. axport BY2 MU3 WM3 BY3.
         eapply cj_pres_bytes_at_hi; [exact PR4| exact BY3| lia| rewrite length_app; cbn [length]; lia]. }
       assert (BLK4 : rw_cells asegs m4 A' [CB (Z.to_nat cap) (firstn (Z.to_nat cap) data); CB (Z.to_nat (cap * 2 - cap)) (firstn (Z.to_nat cap) (skipn (Z.to_nat cap) junk'))]).
@@ -1212,7 +1215,7 @@ Section S.
     intros until want. intros IV IH LT WANT.
     destruct IV as (ST & MI & FR & DS & DIC & [e ER] & IFL & SOF & SEF & SIF & SSZ & BY & HART & HT & NP & HB & DM & FL & BLK & SOK & [stj RSC] & (k & CAP & HDRV) & LEN1 & LEN2 & CAP2).
     pose proof RSN_Z as HRSN. pose proof ARS_eq as HARS.
-    pose proof DM as [MFDS HFS HH].
+    pose proof DM as [MFDS HFS HH HRD].
     pose proof (art_block_range AI _ _ _ _ _ _ _ _ _ A cap HART ltac:(left; reflexivity)) as BR.
     (nelimp BR 4%nat; intros BR1 BR2 BR3 BR4). unfold AIMG_HI in BR1.
     pose proof (ablk_disj_band _ _ (art_block_band AI _ _ _ _ _ _ _ _ _ A cap HART ltac:(left; reflexivity))) as BDJ. unfold KLOWSHADOW_BEG, KHIGHMEM_BEG in BDJ.
@@ -1502,7 +1505,7 @@ Section S.
       (exists stj, rw_cells asegs m ARS [CB RSN stj]) ->
       bytes_at asegs m P1 (path ++ Z_to_bv 8 0 :: slack) -> ~ In (Z_to_bv 8 0) path ->
       (- (P1 + zlength path + 1)) mod 8 <= zlength slack -> zlength path <= 131071 -> bv_unsigned sp + 128 <= P1 ->
-      P1 + zlength path + 1 + zlength slack + 16 <= 2^47 ->
+      P1 + zlength path + 1 + 9 <= 2^47 ->
       KH [] ->
       (forall (m' : word -> option byte) (mo' : Model) (g' : lghost) (A : Z) (junk : list byte) (e' : word) (TRS' : list (list Z)) ms',
           stk asegs m' lo (bv_unsigned sp) -> mem_inv asegs m' -> ADSTAT tid m' -> DICPT m' ->
@@ -1522,7 +1525,7 @@ Section S.
   Proof.
     intros until KH. intros DM HART HT HDRV HB TP ST LO GT SPH MI FRM DS TID DIC FR ER IFL SOF SEF SIF SSZ [stj RSC] BY NONUL SLK LEN PUS PHI KH0 HK.
     pose proof RSN_Z as HRSN. pose proof ARS_eq as HARS.
-    pose proof DM as [HH MFDS HFS].
+    pose proof DM as [HH MFDS HFS HRD].
     (* [comment removed for export] *)
     assert (Ecm : cost_malloc 65536 = ltac:(let v := eval vm_compute in (cost_malloc 65536) in exact v)) by (vm_compute; reflexivity).
     assert (Elb : loop_budget 65536 = ltac:(let v := eval vm_compute in (loop_budget 65536) in exact v)) by (vm_compute; reflexivity). rewrite Ecm, Elb in HB.
@@ -1558,6 +1561,8 @@ Section S.
       by (eapply cj_pres_rw_cells; [exact PR| exact RSC| apply cj_client_range_img; unfold ARS, ADATA_LO, AIMG_HI, AERRNO, ATP; cbn; lia]).
     assert (BY2 : bytes_at asegs m2 P1 (path ++ Z_to_bv 8 0 :: slack)).
     { pose proof (bytes_at_bound _ _ _ _ BY) as BB. rewrite length_app in BB. cbn [length] in BB.
+      pose proof (OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.Lib.Mem.bytes_at_task asegs m _ _ MI asegs_task BY ltac:(destruct path; discriminate)) as BT.
+      rewrite length_app in BT. cbn [length] in BT. unfold TASK_SIZE in BT.
       eapply cj_pres_bytes_at_hi; [exact PR| exact BY| lia| rewrite length_app; cbn [length]; unfold zlength in *; lia]. }
     (nelimp BR 4%nat; intros BR1 BR2 BR3 BR4). unfold AIMG_HI in BR1.
     apply lrz_step_evt. unfold wz. step. if_cases K; zify_cond K; [exfalso; lia|]. clear K.
@@ -1582,7 +1587,7 @@ Section S.
       stdout_file m stdout_init -> stderr_wfile0 m -> stdin_file m -> stack_shadow_zero m ->
       bytes_at asegs m P1 (path ++ Z_to_bv 8 0 :: slack) -> ~ In (Z_to_bv 8 0) path ->
       (- (P1 + zlength path + 1)) mod 8 <= zlength slack -> zlength path <= 131071 -> bv_unsigned sp + 128 <= P1 ->
-      P1 + zlength path + 1 + zlength slack + 16 <= 2^47 ->
+      P1 + zlength path + 1 + 9 <= 2^47 ->
       rw_cells asegs m ARS [CB RSN stj] ->
       loop_regs sp gp tp F fc P1 q8 q9 q10 q11 0 65536 A m 0x81f84 ms ->
       LRZ asegs ms mo g (t_die (msg_read_error path) fs).
@@ -1590,7 +1595,7 @@ Section S.
     intros until ms. intros DM HART TP ST LO GT SPH MI FRM DS TID DIC ER SOF SEF SIF SSZ BY NONUL SLK LEN PUS PHI RSC nelH_; (nelim nelH_ 18%nat; intros ra t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 s7 t3 t4 t5 t6 ->)
 .
     pose proof RSN_Z as HRSN. pose proof ARS_eq as HARS.
-    pose proof DM as [MFDS HFS HH].
+    pose proof DM as [MFDS HFS HH HRD].
     pose proof (art_block_range AI _ _ _ _ _ _ _ _ _ A 65536 HART ltac:(left; reflexivity)) as BR.
     (nelimp BR 4%nat; intros BR1 BR2 BR3 BR4). unfold AIMG_HI in BR1.
     pose proof (artcells_split m (art_rtcells AI _ _ _ _ _ _ _ _ _ HART)) as (IC & _).
@@ -1641,7 +1646,7 @@ Section S.
     intros ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m mo g fs lo P1 tid path slack errv B0.
     intros DM HART HB0 HDRV HT0 _ RA TP -> -> ST LO CEIL SPH WIN SPAL BOT MI FRM DS TID DIC ER IFL SOF SEF SIF SSZ [stj RSC] AV BY NONUL SLASH DOTDOT SLK LEN PUS PHI.
     pose proof RSN_Z as HRSN. pose proof ARS_eq as HARS.
-    pose proof DM as [MFDS HFS HH].
+    pose proof DM as [MFDS HFS HH HRD].
     pose proof (bytes_at_bound _ _ _ _ BY) as BB. rewrite length_app in BB. cbn [length] in BB.
     pose proof CEIL as GT.
     assert (Elb : loop_budget 65536 = ltac:(let v := eval vm_compute in (loop_budget 65536) in exact v)) by (vm_compute; reflexivity).
@@ -1699,6 +1704,10 @@ Section S.
       split; [exact ST2|]. split; [exact MI2|]. split; [exact DS2|]. split; [exact DIC2|]. split; [exact SOF2|]. split; [exact SEF2|].
       split; [exact SIF2|]. split; [exact SSZ2| exact HART2]. }
     (* [comment removed for export] *)
+    (* open's path string lies in mapped memory, so it ends below TASK_SIZE (open_spec's last premise) *)
+    assert (PT : P1 + Z.of_nat (length path) + 1 <= TASK_SIZE).
+    { pose proof (OSSVerify.Proofs.cjson.cjson_read_fuzzer.lib.Lib.Mem.bytes_at_task asegs m1 _ _ MI asegs_task BYP ltac:(destruct path; discriminate)) as TS.
+      rewrite length_app in TS. cbn [length] in TS. lia. }
     lazymatch goal with |- LRZ _ ?ms _ _ _ =>
       eassert (OPEN : impl asegs (at_node asegs) (enode (NOpen path) dec_open) _ ms) end.
     { eapply open_spec with (lo := lo) (errv := errv) (canary := cn0);
@@ -1706,7 +1715,7 @@ Section S.
         | change (errno_addr tp) with (bv_unsigned tp + -164); rewrite (errno_addr_tp tp TP); unfold AERRNO, ATP; exact ER
         | exact SSP1 | exact SSP2 | exact MI | reflexivity | exact NONUL | lia
         | try (change (errno_addr tp) with (bv_unsigned tp + -164); rewrite (errno_addr_tp tp TP)); rewrite ?TP; unfold AERRNO, ATP, F_syscalls.got_ssp, F_syscalls.ssp_guard;
-          rewrite ?unsigned_lit by lia; lia .. ]. }
+          rewrite ?unsigned_lit by lia; unfold TASK_SIZE in *; lia .. ]. }
     (* [comment removed for export] *)
     unfold spec_path.
     destruct (Nat.leb_spec0 4096 (length path)) as [TL|NTL].
@@ -2241,7 +2250,7 @@ Definition argv_str_at (m : word -> option byte) (sp : Z) (i : nat) (s : list by
     rw_cells asegs m (sp + 56 + 8 * Z.of_nat i) [C8 (wz P)]
     /\ bytes_at asegs m P (s ++ Z_to_bv 8 0 :: slack)
     /\ (- (P + zlength s + 1)) mod 8 <= zlength slack
-    /\ sp + 48 <= P /\ P + zlength s + 1 + zlength slack + 16 <= 2^47.
+    /\ sp + 48 <= P /\ P + zlength s + 1 + 9 <= 2^47.
 
 Section Top.
   Variables (AI : art_iface) (DI : drv_iface2 AI) (TI : trs_iface).

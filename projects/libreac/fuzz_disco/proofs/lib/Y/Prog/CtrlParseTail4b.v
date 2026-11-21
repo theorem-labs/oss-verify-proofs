@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: relocated from the walk of the same function of libreac's fuzz_grant (the two are the same code at other addresses). *)
-(* Modified by Theorem Labs, 2026-10: the asan-ubsan twin, for fuzz_disco.asan-ubsan (lib_both3_0_listing): ported from a working branch edc3e948664 fuzz_grant/lib/B/Prog/CtrlParseTail4b.v (fuzz_grant image B's walk of the same code: its pc + 0x4d30 is this image's pc), with the fuzz_disco plumbing of lib/A/Prog/CtrlParseTail4b.v (a working branch b2036baffca: the cut-B hypothesis takes 50 <= n, the runs keep the caller's memory by pz_kept, the runtime entries take the floating-point state fq), over lib/Y/Prog/CtrlParseCut.v. *)
+(* Modified by Theorem Labs, 2026-10: the asan-ubsan twin, for fuzz_disco.asan-ubsan (lib_both3_0_listing): ported from a working branch fuzz_grant/lib/B/Prog/CtrlParseTail4b.v (fuzz_grant image B's walk of the same code: its pc + 0x4d30 is this image's pc), with the fuzz_disco plumbing of lib/A/Prog/CtrlParseTail4b.v (a working branch: the cut-B hypothesis takes 50 <= n, the runs keep the caller's memory by pz_kept, the runtime entries take the floating-point state fq), over lib/Y/Prog/CtrlParseCut.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_ctrl_parse (0x874a4), the walk from cut B (0x876a0) to cut J for the class-4 frames of the head-amp record (seg = 3, cp_amp): HEADAMP (6), ch/param/value at out+30..32
    (pz_P4b; a second attack on CtrlParseTail4.v).
    From cut B the walk stores is_broadcast (out + 16), the counter (out + 20), link (out + 22), seg (out + 23),

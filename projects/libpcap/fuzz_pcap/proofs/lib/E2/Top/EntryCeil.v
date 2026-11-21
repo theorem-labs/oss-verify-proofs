@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the initial model's vm maps are read through with_vdso (m_vmmaps_with_vdso). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -30,7 +31,7 @@ Lemma mo0_ceil : forall segs lim en inp, valid_sp (en_sp en) ->
   @alloc_ceiling (ceil_of_sp (en_sp en)) = page_round_down_Z (alloc_top (m_vmmaps (mo0 segs lim en inp))).
 Proof.
   intros segs lim en inp Hsp. symmetry. apply alloc_top_ceil_of_sp; [exact Hsp|].
-  unfold mo0. rewrite m_vmmaps_init_model. reflexivity.
+  unfold mo0. rewrite m_vmmaps_with_vdso, m_vmmaps_init_model. reflexivity.
 Qed.
 
 Lemma mo0_ceil_valid : forall segs pc ph lim en inp,

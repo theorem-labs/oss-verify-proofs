@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by a Theorem Labs lane (ReallocPrimary.TkSecLink), 2026-10-30: P'' trace premise: the released contract YFl0.tfib_depot_spec admits a trace by `admits (as_universe B) tr S` (YG01.v:155), so this file states it the same way; an In-form caller converts with admits_fix (YG01.v:182). *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/CLdepot.v (commit fec7cbb6287c, round-2 layer (P'' re-take, sweep parts 1-6); file sha256 672fb059f653) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/CLdepot.v (round-2 layer (P'' re-take, sweep parts 1-6); file sha256 672fb059f653) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The depot callee's contract over a generic allocator relation [ARX], image-free.
 
    The interfaces' depot fields (AGif0n.if_depot for Allocate, DGif0.di_depot for Deallocate) state

@@ -1,11 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap in the allocation family, the rounded brk grants, Linux's mmap placement and the MAP_FIXED overflow branch). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys Require Import Syscall Uaccess SyscallTable.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap Mprotect Mremap Madvise.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Placement.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Kernel Require Import Signal.
 From OSSVerify.Proofs.bzip2.bzip2_compress_target.lib.Common.BudgetBridge Require Import Relim.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -132,9 +134,12 @@ Proof. intros H. split; [exact I| exact H]. Qed.
 Lemma LI_set_sigmask_deliver new : LI (set_sigmask_deliver new).
 Proof.
   unfold set_sigmask_deliver. apply LI_modify; intros; unfold sigmask_deliver_model.
-  - destruct (m_sigabrt_pending m && negb (sigabrt_blocked new))%bool; reflexivity.
+  - destruct (m_sigabrt_pending m && negb (sigabrt_blocked new))%bool; [reflexivity|].
+    destruct (m_sigpipe_pending m && negb (sigpipe_blocked new))%bool; reflexivity.
   - change (m_sigabrt_pending (relim l m)) with (m_sigabrt_pending m).
-    destruct (m_sigabrt_pending m && negb (sigabrt_blocked new))%bool; reflexivity.
+    change (m_sigpipe_pending (relim l m)) with (m_sigpipe_pending m).
+    destruct (m_sigabrt_pending m && negb (sigabrt_blocked new))%bool; [reflexivity|].
+    destruct (m_sigpipe_pending m && negb (sigpipe_blocked new))%bool; reflexivity.
 Qed.
 
 Ltac li_step2 :=
@@ -197,18 +202,40 @@ Proof.
   { apply err_ret_iff in H. subst o. apply LIV_ok_same. intros l. apply bind_get_vmmaps. cbv beta zeta.
     apply err_ret_iff. reflexivity. }
   let b := cond_of H in destruct b eqn:E3.
-  - unfold set_vmmaps, forget_vm_range in H. apply modify2_pure_iff in H. subst o. split.
-    + split; [reflexivity|]. unfold INV.
-      cbn [m_vmmaps vm_forget_range with_vm_backing with_vmmaps vmst_maps m_vm vm_maps].
-      intros [HF HN]. split; [apply maps_fit_map_remove, HF| unfold map_remove; intros b s Hin;
-        apply List.filter_In in Hin as [Hin _]; exact (HN b s Hin)].
-    + intros l. apply bind_get_vmmaps. cbv beta zeta. sync E3.
-      unfold set_vmmaps, forget_vm_range. apply modify2_pure_iff. reflexivity.
+  - (* the revision's exact-mapping arm is an [alt]: the injected errno, then the unmap *)
+    unfold alt in H. destruct H as [H|H].
+    + apply errno_ret_iff in H. destruct H as (e & He & ->). apply LIV_ok_same. intros l.
+      apply bind_get_vmmaps. cbv beta zeta. sync E3. left.
+      apply errno_ret_iff. exists e. split; [exact He | reflexivity].
+    + unfold set_vmmaps, forget_vm_range in H. apply modify2_pure_iff in H. subst o. split.
+      * split; [reflexivity|]. unfold INV.
+        cbn [m_vmmaps vm_forget_range with_vm_backing with_vmmaps vmst_maps m_vm vm_maps mmap_fixed_destroyed_next].
+        intros [HF HN]. split;
+          [ intros b s Hin; destruct (maps_subtract_In _ _ _ b s Hin) as (a & sz & Hin0 & Hiv);
+            pose proof (HF a sz Hin0) as Hf; pose proof (iv_subtract_within a sz _ _ b s Hf Hiv); lia
+          | apply maps_subtract_nonzero, HN ].
+      * intros l. apply bind_get_vmmaps. cbv beta zeta. sync E3. right.
+        unfold set_vmmaps, forget_vm_range. apply modify2_pure_iff. reflexivity.
   - let b := cond_of H in destruct b eqn:E4.
     + apply ret_only_iff in H. subst o. apply LIV_ok_same. intros l. apply bind_get_vmmaps. cbv beta zeta.
       sync E3. sync E4. apply ret_only_iff. reflexivity.
-    + unfold unmodeled in H. subst o. apply LIV_unmodeled. intros l. apply bind_get_vmmaps. cbv beta zeta.
-      sync E3. sync E4. reflexivity.
+    + (* the revision's partial-cut arm ([munmap_cut_ok]): again an injected errno or the cut *)
+      let b := cond_of H in destruct b eqn:E5.
+      * unfold alt in H. destruct H as [H|H].
+        -- apply errno_ret_iff in H. destruct H as (e & He & ->). apply LIV_ok_same. intros l.
+           apply bind_get_vmmaps. cbv beta zeta. sync E3. sync E4. sync E5. left.
+           apply errno_ret_iff. exists e. split; [exact He | reflexivity].
+        -- apply modify_pure_iff in H. subst o. split.
+           ++ split; [reflexivity|]. unfold INV, with_mmap_destroyed.
+              cbn [m_vmmaps vm_forget_range with_vm_backing with_vmmaps vmst_maps m_vm vm_maps mmap_fixed_destroyed_next].
+              intros [HF HN]. split;
+                [ intros b s Hin; destruct (maps_subtract_In _ _ _ b s Hin) as (a & sz & Hin0 & Hiv);
+                  pose proof (HF a sz Hin0) as Hf; pose proof (iv_subtract_within a sz _ _ b s Hf Hiv); lia
+                | apply maps_subtract_nonzero, HN ].
+           ++ intros l. apply bind_get_vmmaps. cbv beta zeta. sync E3. sync E4. sync E5. right.
+              apply modify_pure_iff. reflexivity.
+      * unfold unmodeled in H. subst o. apply LIV_unmodeled. intros l. apply bind_get_vmmaps. cbv beta zeta.
+        sync E3. sync E4. sync E5. reflexivity.
 Qed.
 
 (* [comment removed for export] *)
@@ -277,15 +304,17 @@ Proof. induction L as [|[a n] L IH]; intros l m; [reflexivity|]. cbn [forget_vm_
 Lemma abr_214 i m : bv_unsigned (in_sysno i) = 214%Z ->
   alloc_budget_refused_b i m = brk_budget_refused_b m (in_arg i 0).
 Proof. intros E. exact (proj1 (alloc_mark_sysnos_dispatched i m) E). Qed.
+(* At the revision [alloc_mark_sysnos_dispatched] gained munmap (215) in
+   second position, so every later projection moves one place right. *)
 Lemma abr_216 i m : bv_unsigned (in_sysno i) = 216%Z ->
   alloc_budget_refused_b i m = mremap_budget_refused_b (in_arg i 0) (in_arg i 1) (in_arg i 2) (in_arg i 3) m.
-Proof. intros E. exact (proj1 (proj2 (alloc_mark_sysnos_dispatched i m)) E). Qed.
+Proof. intros E. exact (proj1 (proj2 (proj2 (alloc_mark_sysnos_dispatched i m))) E). Qed.
 Lemma abr_222 i m : bv_unsigned (in_sysno i) = 222%Z ->
   alloc_budget_refused_b i m = mmap_budget_refused_b (in_arg i 0) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (in_arg i 5) m.
-Proof. intros E. exact (proj1 (proj2 (proj2 (alloc_mark_sysnos_dispatched i m))) E). Qed.
+Proof. intros E. exact (proj1 (proj2 (proj2 (proj2 (alloc_mark_sysnos_dispatched i m)))) E). Qed.
 Lemma abr_226 i m : bv_unsigned (in_sysno i) = 226%Z ->
   alloc_budget_refused_b i m = mprotect_budget_refused_b (in_arg i 0) (in_arg i 1) (in_arg i 2) m.
-Proof. intros E. exact (proj2 (proj2 (proj2 (alloc_mark_sysnos_dispatched i m))) E). Qed.
+Proof. intros E. exact (proj2 (proj2 (proj2 (proj2 (alloc_mark_sysnos_dispatched i m)))) E). Qed.
 
 (* [comment removed for export] *)
 Lemma ARM_leaf_ok i m x l (c : Sys SyscallEffect) (P Q R : Prop) :
@@ -353,22 +382,56 @@ Proof.
   intros i m o. unfold brk_spec. rewrite (bind_get_model _ i m o). cbv beta zeta. apply choose_modify_pure_iff.
 Qed.
 
+(* At the revision [brk_grants] grants the whole pages between the rounded
+   old and new breaks ([brk_page_range]) instead of the raw byte range, and
+   nothing when they round to the same page. *)
+Lemma page_round_up_Z_bounds x : (0 <= x < two_pow_64)%Z -> (0 <= page_round_up_Z x <= two_pow_64)%Z.
+Proof.
+  intros Hx. change two_pow_64 with 18446744073709551616%Z in *. unfold page_round_up_Z, page_size.
+  pose proof (Z.div_pos (x + 4096 - 1) 4096 ltac:(lia) ltac:(lia)).
+  pose proof (Z.div_lt_upper_bound (x + 4096 - 1) 4096 4503599627370497 ltac:(lia) ltac:(lia)).
+  lia.
+Qed.
+
+Lemma page_round_up_Z_ge x : (0 <= x)%Z -> (x <= page_round_up_Z x)%Z.
+Proof.
+  intros Hx. unfold page_round_up_Z, page_size.
+  pose proof (Z.div_mod (x + 4096 - 1) 4096 ltac:(lia)).
+  pose proof (Z.mod_pos_bound (x + 4096 - 1) 4096 ltac:(lia)). lia.
+Qed.
+
+Lemma maps_fit_brk_page_range lo hi : (0 <= lo)%Z -> (hi <= two_pow_64)%Z -> maps_fit (brk_page_range lo hi).
+Proof.
+  intros H0 H1. unfold brk_page_range. destruct (lo <? hi)%Z eqn:L; [| apply maps_fit_nil]. apply Z.ltb_lt in L.
+  apply maps_fit_cons; [| apply maps_fit_nil].
+  assert (Hm : bv_modulus 64 = (2 ^ 64)%Z) by reflexivity.
+  rewrite !Z_to_bv_unsigned. unfold bv_wrap. rewrite Hm. unfold two_pow_64 in *.
+  rewrite (Z.mod_small lo) by lia.
+  pose proof (Z.mod_le (hi - lo) (2 ^ 64)%Z ltac:(lia) ltac:(lia)). lia.
+Qed.
+
+Lemma entries_nonzero_brk_page_range lo hi : (0 < lo)%Z -> (hi <= two_pow_64)%Z -> entries_nonzero (brk_page_range lo hi).
+Proof.
+  intros H0 H1. unfold brk_page_range. destruct (lo <? hi)%Z eqn:L; [| apply entries_nonzero_nil]. apply Z.ltb_lt in L.
+  apply entries_nonzero_cons; [| apply entries_nonzero_nil].
+  assert (Hm : bv_modulus 64 = (2 ^ 64)%Z) by reflexivity.
+  rewrite Z_to_bv_unsigned. unfold bv_wrap. rewrite Hm. unfold two_pow_64 in *.
+  rewrite Z.mod_small by lia. lia.
+Qed.
+
 Lemma maps_fit_brk_grants req r b : maps_fit (brk_grants req r b).
 Proof.
   unfold brk_grants. destruct (brk_is_grow req r b) eqn:G; [| apply maps_fit_nil].
-  apply maps_fit_cons; [| apply maps_fit_nil].
-  unfold brk_is_grow in G. apply andb_true_iff in G as [_ G]. apply Z.ltb_lt in G.
-  pose proof (word_range r). pose proof (word_range b).
-  rewrite bv_sub_unsigned, bv_wrap_small; [lia|]. change (bv_modulus 64) with two_pow_64. lia.
+  pose proof (page_round_up_Z_bounds _ (word_range r)). pose proof (page_round_up_Z_bounds _ (word_range b)).
+  apply maps_fit_brk_page_range; lia.
 Qed.
 
 Lemma entries_nonzero_brk_grants req r b : entries_nonzero (brk_grants req r b).
 Proof.
   unfold brk_grants. destruct (brk_is_grow req r b) eqn:G; [| apply entries_nonzero_nil].
-  apply entries_nonzero_cons; [| apply entries_nonzero_nil].
-  unfold brk_is_grow in G. apply andb_true_iff in G as [_ G]. apply Z.ltb_lt in G.
-  pose proof (word_range r). pose proof (word_range b).
-  rewrite bv_sub_unsigned, bv_wrap_small; [lia|]. change (bv_modulus 64) with two_pow_64. lia.
+  unfold brk_is_grow in G. apply andb_prop in G as [G _]. apply andb_prop in G as [_ G]. apply Z.ltb_lt in G.
+  pose proof (page_round_up_Z_bounds _ (word_range r)). pose proof (page_round_up_Z_ge (bv_unsigned b) ltac:(lia)).
+  apply entries_nonzero_brk_page_range; lia.
 Qed.
 
 Lemma brk_r_ok_relim m req r l :
@@ -402,10 +465,12 @@ Proof.
     + unfold mlim, with_brk_next. cbv zeta. rewrite m_vmmaps_forget_vm_ranges. reflexivity.
     + unfold INV, with_brk_next. cbv zeta. rewrite m_vmmaps_forget_vm_ranges.
       cbn [m_vmmaps with_vmmaps vmst_maps m_vm]. unfold brk_model_next. cbn [vm_maps]. unfold brk_maps_next.
-      match goal with |- context [if ?b then _ else _] => destruct b end; intros [HF HN]; split;
-        [ apply maps_fit_maps_subtract, HF| apply maps_subtract_nonzero, HN
-        | apply maps_fit_app; [apply maps_fit_brk_grants| exact HF]
-        | apply entries_nonzero_app; [apply entries_nonzero_brk_grants| exact HN]].
+      match goal with |- context [if ?b then _ else _] => destruct b end; intros [HF HN];
+        try (unfold brk_unmap_cut; cbv zeta; match goal with |- context [if ?c then _ else _] => destruct c end);
+        split;
+        first [ apply maps_fit_maps_subtract, HF | apply maps_subtract_nonzero, HN | exact HF | exact HN
+              | apply maps_fit_app; [apply maps_fit_brk_grants| exact HF]
+              | apply entries_nonzero_app; [apply entries_nonzero_brk_grants| exact HN] ].
   - intros _ _ M2. apply brk_spec_iff. exists r. split; [exact (brk_r_ok_relim _ _ _ _ M2 Hok)|].
     cbn [relimo]. unfold with_brk_next. cbv zeta. rewrite <- forget_vm_ranges_relim. reflexivity.
 Qed.
@@ -431,6 +496,32 @@ Proof. destruct b; [reflexivity| discriminate]. Qed.
 Lemma le_of_negb_leb_false x y : negb (x <=? y)%Z = false -> (x <= y)%Z.
 Proof. intros H. apply Z.leb_le. exact (true_of_negb_false _ H). Qed.
 
+(* At the revision [mmap_spec]'s anonymous arms pick the address Linux
+   picks ([Mmap.linux_place]) instead of listing the four admissibility
+   facts, so the budget bridge reads those facts off the placement. *)
+Lemma mmap_place_facts (h : VmMaps) (thp : bool) (hint len a : word) :
+  w_is0 len = false ->
+  linux_place h thp hint (page_round_up_Z (bv_unsigned len)) (bv_unsigned a) ->
+  (bv_unsigned a mod page_size = 0)%Z /\ (0 < bv_unsigned a)%Z
+  /\ (bv_unsigned a + page_round_up_Z (bv_unsigned len) <= alloc_top h)%Z
+  /\ region_free (vm_reserved h ++ vm_maps h)
+       (Z_to_bv 64 (bv_unsigned a)) (Z_to_bv 64 (page_round_up_Z (bv_unsigned len))) = true.
+Proof.
+  intros H0 HL.
+  exact (Placement.linux_place_admissible h thp hint _ _
+           (page_round_up_Z_pos len H0) (Placement.page_round_up_Z_aligned _) HL).
+Qed.
+
+(* [relim] changes only [vm_limit], and [linux_place] reads the ledger,
+   the mmap base and the initial stack pointer, so it is unchanged. *)
+Lemma linux_place_relim l m thp hint nZ a :
+  linux_place (m_vmmaps (relim l m)) thp hint nZ a
+  = linux_place (m_vmmaps m) thp hint nZ a.
+Proof. reflexivity. Qed.
+
+Lemma kb_thp_relim l m : kb_thp (m_kernel (relim l m)) = kb_thp (m_kernel m).
+Proof. reflexivity. Qed.
+
 (* [comment removed for export] *)
 Ltac unrelim :=
   repeat match goal with
@@ -438,6 +529,8 @@ Ltac unrelim :=
   | |- context [vm_maps (m_vmmaps (relim ?l ?m))] => change (vm_maps (m_vmmaps (relim l m))) with (vm_maps (m_vmmaps m))
   | |- context [vm_noaccess (m_vmmaps (relim ?l ?m))] => change (vm_noaccess (m_vmmaps (relim l m))) with (vm_noaccess (m_vmmaps m))
   | |- context [alloc_top (m_vmmaps (relim ?l ?m))] => change (alloc_top (m_vmmaps (relim l m))) with (alloc_top (m_vmmaps m))
+  | |- context [linux_place (m_vmmaps (relim ?l ?m)) ?t ?hi ?nz ?aa] => rewrite (linux_place_relim l m t hi nz aa)
+  | |- context [kb_thp (m_kernel (relim ?l ?m))] => rewrite (kb_thp_relim l m)
   end.
 
 Ltac mm_hyp H :=
@@ -497,6 +590,12 @@ Ltac mm_atom H :=
       let a := fresh "a" in let HP := fresh "HP" in
       apply choose_modify_pure_iff in H as (a & HP & ->); repeat match type of HP with _ /\ _ => destruct HP as [? HP] end;
       try match goal with Ea : a = _ |- _ => subst a end;
+      (* the placement carries the alignment, the positivity, the top bound
+         and the free region the old guard listed one by one *)
+      try match goal with
+          | HL : linux_place ?hh ?tt ?hi (page_round_up_Z (bv_unsigned ?ln)) (bv_unsigned ?aa) |- _ =>
+              destruct (mmap_place_facts hh tt hi ln aa ltac:(eassumption) HL) as (? & ? & ? & ?)
+          end;
       split; [ mm_frame
              | let HI := fresh "HI" in let M1 := fresh "M1" in let M2 := fresh "M2" in
                intros HI M1 M2; syncall; synch M2;
@@ -508,15 +607,33 @@ Ltac mm_atom H :=
                intros HI M1 M2; syncall; synch M2; mm_go ltac:(apply modify_pure_iff; mm_model) ]
   | err_ret _ _ _ _ =>
       apply err_ret_iff in H; subst; apply ARM_leaf_ok; intros _ _ _; syncall; mm_go ltac:(apply err_ret_iff; reflexivity)
+  (* LPS 75d69e00 (#105): an error-valued MAP_FIXED address comes back as itself ([Mmap.mmap_fixed_overflow]) *)
+  | ret_only _ _ _ _ =>
+      apply ret_only_iff in H; subst; apply ARM_leaf_ok; intros _ _ _; syncall; mm_go ltac:(apply ret_only_iff; reflexivity)
   end.
 
 Lemma arm_222 : ARM 222 (fun i => mmap_spec (in_arg i 0) (in_arg i 1) (in_arg i 2) (in_arg i 3) (in_arg i 4) (in_arg i 5) i).
 Proof.
   intros i m o l Hno H. cbv beta in H. rewrite !(abr_222 _ _ Hno).
-  unfold mmap_spec in H. leaves H. all: cbv beta zeta in H.
-  all: unfold mmap_budget_refused_b, mmap_spec;
+  (* LPS 75d69e00 (#105): the MAP_FIXED overflow branch is [mmap_fixed_overflow], opened here so its
+     [if] and its two leaves are split like every other arm; it reads no model state *)
+  unfold mmap_spec, mmap_fixed_overflow in H. leaves H. all: cbv beta zeta in H.
+  all: unfold mmap_budget_refused_b, mmap_spec, mmap_fixed_overflow;
        repeat match goal with E : ?b = _ |- context [if ?b then _ else _] => rewrite E end; cbv zeta.
   all: try (solve [leaf_li H]).
+  (* the revision answers a closed fd on the file-backed path with EBADF
+     (a match on the fd table), a held one unmodeled; the budget does not
+     touch the fd table *)
+  all: try (solve [
+    lazymatch type of H with context [fd_lookup (m_fds ?mm) ?k] =>
+      let Ef := fresh "Ef" in
+      destruct (fd_lookup (m_fds mm) k) as [?|] eqn:Ef; cbv beta iota in H;
+      first [apply err_ret_iff in H | unfold unmodeled in H]; subst;
+      first [apply ARM_leaf_ok | apply ARM_leaf_unmodeled]; intros _ _ _; syncall;
+      repeat match goal with |- context [m_fds (relim ?l0 ?m0)] => change (m_fds (relim l0 m0)) with (m_fds m0) end;
+      rewrite Ef; cbv beta iota;
+      first [apply err_ret_iff | idtac]; reflexivity
+    end]).
   all: mm_hyp H.
   all: mm_atom H.
 Qed.

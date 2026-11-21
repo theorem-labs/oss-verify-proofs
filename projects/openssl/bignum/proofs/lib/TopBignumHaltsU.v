@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-11: copied from projects/openssl/bignum/proofs/lib/TopBignumHaltsP.v at 874e3397a35 and changed to the UBSan build: images.Plain -> images.Ubsan, the BgHXP/BgBnE/BgBnR instantiations -> BgHXU/BgBnEU/BgBnRU, TopBignumPlain -> TopBignumUbsan, bgp* -> bgu* and implG_plain_bg -> implG_ubsan_bg. *)
+(* Modified by Theorem Labs, 2026-11: copied from projects/openssl/bignum/proofs/lib/TopBignumHaltsP.v at theorem-labs/oss-verify-proofs@f92feaf8b7e6 and changed to the UBSan build: images.Plain -> images.Ubsan, the BgHXP/BgBnE/BgBnR instantiations -> BgHXU/BgBnEU/BgBnRU, TopBignumPlain -> TopBignumUbsan, bgp* -> bgu* and implG_plain_bg -> implG_ubsan_bg. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

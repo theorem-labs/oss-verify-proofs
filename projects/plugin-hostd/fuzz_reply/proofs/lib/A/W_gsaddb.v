@@ -18,7 +18,8 @@
    The cut DLN (S q) is then the line loop after the begin's key was added: the relay entry's key list gains
    (res, the jj bytes of the line, []), the held keys gain firstn jj (dline s1 p q), and the meter is charged
    strndup's request RMalloc (jj + 1), the head of GARfut's owed trace.
-   The Section header is lib/A/W_gsaddb_cx.v's (re-frozen at d5fc80d3baa, with HGO and HERRW), verbatim. *)
+   The Section header is lib/A/W_gsaddb_cx.v's (re-frozen, with HGO and HERRW), verbatim. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -518,7 +519,7 @@ Qed.
 Ltac gbt_clr0 := repeat match goal with H : _ |- _ => clear H end.
 (* ============================================================================================
    (4) the sign of the requests still owed (W_drain_tr.v's lemmas, renamed, with the line-loop sign lemmas of
-   a working branch 38063c439ef; W_drain_tr.vo is not built in this workspace)
+   a working branch; W_drain_tr.vo is not built in this workspace)
    ============================================================================================ *)
 (* ---- Every request of the trace asks a nonnegative size (a free asks none). ---- *)
 Definition gbt_tr_sizes_ok (t : dtrace) : Prop :=
@@ -1940,7 +1941,7 @@ Variable MMAX : Z.
 Variable RG : rep_globals.
 Context {hl : Z}.
 Hypothesis LAWS : AR_laws_x SEGS B ARx hl.
-(* W_drain_cx_x.v:151-216, the ones this file's proofs use, in that file's order and text *)
+(* W_drain_cx_x.v:152-217, the ones this file's proofs use, in that file's order and text *)
 Hypothesis HG : gx_ok SEGS B (G_DR B RG).
 Hypothesis HGR : forall a, inG (G_DR B RG) a -> ~ in_rom SEGS a.
 Hypothesis HROMO : rom_out SEGS B (G_DR B RG).

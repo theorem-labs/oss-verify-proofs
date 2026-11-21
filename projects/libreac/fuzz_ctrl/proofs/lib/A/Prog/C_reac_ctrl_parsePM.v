@@ -4,7 +4,7 @@
                 the register file C_reac_ctrl_parseK.rcpK_regsE (reac_ctrl_parseF_bnd.BndFOn.PreCall's post): the
                 core's class-1 rule A.Prog.YC85.aj_stack_malloc_atS, then at the return memory the new frame's flag
                 byte (1) and its back pointer (the flag address, at frame_addr + 120) in ctrl's bytes_at form.
-   Ported from a Theorem Labs lane's lib/B/Prog/C_reac_ctrl_parsePf.v @ 258208c7d59, image A addresses: B's rcpB_E1 -> rcpPM_E1.
+   Ported from a Theorem Labs lane's lib/B/Prog/C_reac_ctrl_parsePf.v, image A addresses: B's rcpB_E1 -> rcpPM_E1.
    Changes from B: the request is YC85.aj_stack_malloc_atS (it gives S2 = set_fs f2 Sc and the journal), not
    C_reac_ctrl_parseE1.aj_stack_malloc_at_raw; the two frame facts come from AR at S2 (the journal's first conjunct:
    YG0s.frame_facts for the bounds, YG0n.am_flags with mem_pos (frames S2) 1 pos = true, as (1, pos) heads frames S2)

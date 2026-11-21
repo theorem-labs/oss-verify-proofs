@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the main-level stack floor STACK_WOK, the zero stack the entry state holds below sp0). *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.openssl.ct.lib.CtLib Require Import ImageCtA.
 (* [comment removed for export] *)
@@ -71,8 +72,8 @@ Definition TCTX (Σ : rts RT) (LW : list (Z * Z)) (so : stdout_st) (icb : Z) (us
     (c0 c1 c2 c3 c4 c5 c6 c7 x0 x1 x2 x3 x4 x5 x6 x7 : word) (m : mem) : Prop :=
   ART RT Σ m /\ mem_inv ctbsegs m /\ CLX OUT_rep ERR_rep XENV LIB so m
   /\ main_frame m usp c0 c1 c2 c3 c4 c5 c6 c7 /\ tr_frame m (usp - 80) (Z_to_bv 64 0x1eed48) x0 x1 x2 x3 x4 x5 x6 x7
-  /\ stk ctbsegs m (rt_sp0 RT Σ - STACK_WIN) (usp - 160)
-  /\ usp mod 16 = 0 /\ rt_sp0 RT Σ - STACK_WIN + 0x100000 <= usp /\ usp <= rt_sp0 RT Σ /\ 0x7fff80000000 <= rt_sp0 RT Σ
+  /\ stk ctbsegs m (rt_sp0 RT Σ - STACK_WOK) (usp - 160)
+  /\ usp mod 16 = 0 /\ rt_sp0 RT Σ - STACK_WOK + 0x100000 <= usp /\ usp <= rt_sp0 RT Σ /\ 0x7fff80000000 <= rt_sp0 RT Σ
   /\ Permutation (rt_live RT Σ) (LW ++ tr_live plen owned buf cap) /\ rt_frames RT Σ = []
   /\ plen = Z.of_nat (length payload) /\ plen < 2^26 /\ bytes_at ctbsegs m d payload
   /\ (plen = 0 -> d = TR_EMPTY /\ owned = 0) /\ (0 < plen -> d = owned) /\ 0 < cap /\ usp + 16 <= USTACK_TOP
@@ -112,8 +113,8 @@ Definition TRET (so : stdout_st) (usp buf cap : Z) (x0 x1 x2 x3 x4 x5 x6 x7 : wo
                    a1 a2 a3 a4 a5 a6 a7 x2 x3 x4 x5 x6 x7 s8 s9 s10 s11 t3 t4 t5 t6)
               F (Z_to_bv 64 0x1eed48) fc None m (seg_rom ctbsegs))) c
     /\ ART RT Σ m /\ mem_inv ctbsegs m /\ CLX OUT_rep ERR_rep XENV LIB so m
-    /\ main_frame m usp c0 c1 c2 c3 c4 c5 c6 c7 /\ stk ctbsegs m (rt_sp0 RT Σ - STACK_WIN) (usp - 80)
-    /\ usp mod 16 = 0 /\ rt_sp0 RT Σ - STACK_WIN + 0x100000 <= usp /\ usp <= rt_sp0 RT Σ /\ 0x7fff80000000 <= rt_sp0 RT Σ
+    /\ main_frame m usp c0 c1 c2 c3 c4 c5 c6 c7 /\ stk ctbsegs m (rt_sp0 RT Σ - STACK_WOK) (usp - 80)
+    /\ usp mod 16 = 0 /\ rt_sp0 RT Σ - STACK_WOK + 0x100000 <= usp /\ usp <= rt_sp0 RT Σ /\ 0x7fff80000000 <= rt_sp0 RT Σ
     /\ (In (buf, cap) (rt_live RT Σ) /\ Z.of_nat (length (rt_live RT Σ)) < LIVE_MAX) /\ rt_frames RT Σ = [] /\ usp + 16 <= USTACK_TOP
     /\ incb 0 m.
 
@@ -147,7 +148,7 @@ Qed.
 (* [comment removed for export] *)
 Lemma TCTX_agree_nw : forall Σ Σ' LW LW' so so' icb usp buf cap plen d owned payload c0 c1 c2 c3 c4 c5 c6 c7 x0 x1 x2 x3 x4 x5 x6 x7 m m',
   TCTX RT OUT_rep ERR_rep XENV LIBA Σ LW so icb usp buf cap plen d owned payload c0 c1 c2 c3 c4 c5 c6 c7 x0 x1 x2 x3 x4 x5 x6 x7 m ->
-  ART RT Σ' m' -> mem_inv ctbsegs m' -> stk ctbsegs m' (rt_sp0 RT Σ - STACK_WIN) (usp - 160) ->
+  ART RT Σ' m' -> mem_inv ctbsegs m' -> stk ctbsegs m' (rt_sp0 RT Σ - STACK_WOK) (usp - 160) ->
   rt_sp0 RT Σ' = rt_sp0 RT Σ -> Permutation (rt_live RT Σ') (LW' ++ tr_live plen owned buf cap) -> rt_frames RT Σ' = [] ->
   CLX OUT_rep ERR_rep XENV LIB so' m' ->
   agree_on (fun x => usp - 160 <= x < USTACK_TOP) m m' ->

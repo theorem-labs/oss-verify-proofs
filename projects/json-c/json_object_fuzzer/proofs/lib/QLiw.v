@@ -1,10 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (RomBase.sys_rob at the system-call nodes: the closure J_nclosed takes it, and getrandom (278) meets it by sys_rob_memfree; getrandom's destination read through State.copy_bytes_map after the access_ok range). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Monad Specs Run.
 From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QQIi QdTb QHWH Q1lV Qcrs QUcd QCUT QwAs Qc6I QJFf Qsn5 Qknc QBrp Q2ui Q1KO QNqr.
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib.Cfg Require RomBase.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 Module Mq0.
@@ -69,8 +71,9 @@ Notation nstA := (nstepA L nstep_raw).
 Notation tpathA := (tpath nstA).
 
 Variable J : config -> Prop.
+(* LPS 727298f3: a closure under nodes needs the node's [RomBase.sys_rob] *)
 Hypothesis J_nclosed : forall c (I : Type) (nx : I -> config) (i0 : I),
-node_ok segs c I (fun _ => []) nx -> (forall i, J (nx i)) -> J c.
+node_ok segs c I (fun _ => []) nx -> RomBase.sys_rob segs c -> (forall i, J (nx i)) -> J c.
 
 Variable F : word -> bool.
 Hypothesis F_off : H_off_segments segs F.
@@ -140,7 +143,8 @@ assert (Hi0 : exists i : Ix, True).
 exists (exist _ (evs, mkCfg ms' mo2) Hst). exact I.
 - exfalso. exact (Hnx mo1 code mo' Hd01 Hx). }
 destruct Hi0 as [i0 _].
-apply (J_nclosed c1 Ix (fun i => snd (proj1_sig i)) i0 Hnode).
+apply (J_nclosed c1 Ix (fun i => snd (proj1_sig i)) i0 Hnode
+(nsA_rob _ _ _ _ _ _ _ _ _ _ _ NS n ms1 mo1 Hsp Hat1 Hh1 HC1 Hns1)).
 intros [[e c'] Hst]. cbn [fst snd proj1_sig].
 destruct (Hexpl e _ Hst) as (rsp & ms' & mo' & E & -> & Hv' & Hr & HC' & Hh'). injection E as ->.
 assert (HstA : nstA n mo0 rsp mo' []) by (exists mo1; split; assumption).
@@ -563,11 +567,23 @@ assert (Hul : bv_unsigned (Z_to_bv 64 len) = len) by (apply unsigned_lit; lia).
 assert (Hmc : negb (modeled_rw_count (Z_to_bv 64 len)) = false).
 { unfold modeled_rw_count. rewrite Hul. apply negb_false_iff. apply Z.leb_le. unfold rw_bytes_max. lia. }
 rewrite Hmc. rewrite in_wmem_si.
+(* LPS 727298f3: the destination is asked through [State.copy_bytes_map], which first takes the range
+   [access_ok] admits (as Qnhz.getrandom_outcome) *)
+assert (Hacc : access_okb (Z_to_bv 64 buf) len = true).
+{ pose proof (access_okb_wr_at segs ms buf len Hwr ltac:(unfold access_ok_walk_max; lia)
+    ltac:(unfold task_size_max, TASK_SIZE; lia)) as A. rewrite Hul in A. exact A. }
+unfold copy_bytes_map.
+lazymatch goal with |- context[access_okb ?a ?l] =>
+replace (access_okb a l) with (access_okb (Z_to_bv 64 buf) len)
+by (f_equal; first [reflexivity | exact Hul | symmetry; exact Hul]) end.
+rewrite Hacc. cbv iota.
 pose proof (read_bytes_map_wr_at segs ms buf len len Hwr ltac:(lia) ltac:(lia)) as W.
-destruct (read_bytes_map (ms_writable_byte segs ms) (Z_to_bv 64 buf) (Z_to_bv 64 len)) as [wv|]; [| congruence].
+(* the length the copy reads is [bv_unsigned (Z_to_bv 64 len)] re-wrapped: name it [Z_to_bv 64 len] *)
+rewrite ?Z_to_bv_bv_unsigned.
+destruct (read_bytes_map (ms_writable_byte segs ms) (Z_to_bv 64 buf) (Z_to_bv 64 len)) as [wv|] eqn:Erd; [| congruence].
 assert (Hz : negb (w_is0 (Z_to_bv 64 len)) = true).
 { unfold w_is0, bv_eqb. rewrite Hul. change (bv_unsigned (Z_to_bv 64 0)) with 0. apply negb_true_iff. apply Z.eqb_neq. lia. }
-rewrite Hz. rewrite Hul. replace (len <=? getrandom_small_max) with true by (symmetry; apply Z.leb_le; unfold getrandom_small_max; lia).
+rewrite Hz. rewrite ?Hul. replace (len <=? getrandom_small_max) with true by (symmetry; apply Z.leb_le; unfold getrandom_small_max; lia).
 reflexivity.
 Qed.
 
@@ -660,6 +676,11 @@ destruct (proj1 (proj2 (getr_nodeA buf len ms mo Hat Hh HC)) rsp mo' evs Hr) as 
 exists ms', mo2, rsp. auto 8.
 - intros n ms mo code mo' _ _ _ _ _ [].
 - intros [buf len] ms mo _ Hat Hh HC _. left. exact (proj2 (proj2 (getr_nodeA buf len ms mo Hat Hh HC))).
+(* LPS 727298f3: getrandom (278) reads no [in_mem] *)
+- intros [buf len] ms mo _ Hat _ _ _. destruct Hat as [Hs0 _].
+  change (ms_svc_pending ms = Some (Z_to_bv 64 278)) in Hs0.
+  apply (RomBase.sys_rob_memfree segs ms mo (Z_to_bv 64 278) Hs0).
+  change (bv_unsigned (Z_to_bv 64 278)) with 278%Z. exact RomBase.memfree_278.
 - intros [buf len] moA moB rsp mo' evs Hs (mo2 & (-> & -> & bs & Hbs & ->) & Hd).
 exists moB. split.
 + exists moB. split; [split; [reflexivity|]; split; [reflexivity|]; exists bs; auto| apply drift_refl].
@@ -682,6 +703,6 @@ Hypothesis Hwx : wx_segs_nowrap segs.
 Hypothesis Hsegs : segs_in_base L segs.
 Variable J : config -> Prop.
 Hypothesis J_nclosed : forall c (I : Type) (nx : I -> config) (i0 : I),
-node_ok segs c I (fun _ => []) nx -> (forall i, J (nx i)) -> J c.
+node_ok segs c I (fun _ => []) nx -> RomBase.sys_rob segs c -> (forall i, J (nx i)) -> J c.
 
 End Rule.

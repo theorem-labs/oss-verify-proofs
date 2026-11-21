@@ -1,10 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (its main-phase plans and the expressions its trees name checked renumbered to the new hand-off numbering; the segment into hand-off 105 taken as K1BD0F.k1s0x_f). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool.
 From LinuxProcessSemantics.Riscv Require Import Instr.
 From OSSVerify.Proofs.double_conversion.string_to_double_fuzzer.lib Require Import AxSymExec3 AsanPlanCore AsanPlan AsanPlanImages BothPlanImages BothTableL AsanInit AsanNodesArg AsanNodesIO AsanNodesRP AsanMainLib AsanShape AsanMainDefs BothMainDefs BothMain MainHSBoth MainItabBoth PlanFormsBoth BK0TailAll K1BTpl K1BDx_10 K1BD0 K1BDx_2 K1BDx_3 K1BDx_4 K1BDx_5 K1BDx_6 K1BDx_7 K1BDx_8 K1BDx_9 K1BDx_1 K1BCertS0 K1BCertCx_0 K1BCertCx_1 K1BCertCx_2 K1BCertCx_3 K1BCertCx_4 K1BCertCx_5 K1BCertPx_0 K1BCertPx_1 K1BCertPx_2 K1BCertPx_3.
+From OSSVerify.Proofs.double_conversion.string_to_double_fuzzer.lib Require PlanRegen.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations. Import AX2. Import APC. Import AP.
 Open Scope Z_scope.
@@ -42,16 +44,16 @@ Local Notation TT := TT_r5.
   Lemma TNx_10_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 2 HS_hr10x (root_class 5 ++ [(QFlen, 33554432, QMAX)]) TNx_10 = true.
   Proof. apply mtree_ok_split; (apply mtree_ok_class; [vm_compute; reflexivity|]); [exact TFx_10_ok | exact TRx_10_ok]. Qed.
   Definition TSxa_10 : mtree := MPre 1 k1s10xa [(168%nat, (2%nat, HS_hr10x))] [(168%nat, TNx_10)].
-  Lemma TSxa_10_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg10x e_r 4046) (root_class 5 ++ [(QFlen, 33554432, QMAX)]) TSxa_10 = true.
-  Proof. unfold TSxa_10. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg10x e_r 4046) (root_class 5 ++ [(QFlen, 33554432, QMAX)]) 1 k1s10xa [(168%nat, (2%nat, HS_hr10x))] [(168%nat, TNx_10)] eq_refl (k1s10xa_ok TT) eq_refl).
+  Lemma TSxa_10_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg10x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 33554432, QMAX)]) TSxa_10 = true.
+  Proof. unfold TSxa_10. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg10x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 33554432, QMAX)]) 1 k1s10xa [(168%nat, (2%nat, HS_hr10x))] [(168%nat, TNx_10)] eq_refl (k1s10xa_ok TT) eq_refl).
     apply (mforest_ok_cons KCm BFUELm FUELm BITm TT 1 [(168%nat, (2%nat, HS_hr10x))] (root_class 5 ++ [(QFlen, 33554432, QMAX)]) 168%nat TNx_10 [] 2 HS_hr10x eq_refl eq_refl TNx_10_ok). apply mforest_ok_nil. Qed.
   Definition TSxb_10 : mtree := MPre 1 k1s10xb [(168%nat, (2%nat, HS_hr10x))] [(168%nat, TNx_10)].
-  Lemma TSxb_10_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg10x e_r 4046) (root_class 5 ++ [(QFlen, 33554432, QMAX)]) TSxb_10 = true.
-  Proof. unfold TSxb_10. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg10x e_r 4046) (root_class 5 ++ [(QFlen, 33554432, QMAX)]) 1 k1s10xb [(168%nat, (2%nat, HS_hr10x))] [(168%nat, TNx_10)] eq_refl (k1s10xb_ok TT) eq_refl).
+  Lemma TSxb_10_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg10x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 33554432, QMAX)]) TSxb_10 = true.
+  Proof. unfold TSxb_10. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg10x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 33554432, QMAX)]) 1 k1s10xb [(168%nat, (2%nat, HS_hr10x))] [(168%nat, TNx_10)] eq_refl (k1s10xb_ok TT) eq_refl).
     apply (mforest_ok_cons KCm BFUELm FUELm BITm TT 1 [(168%nat, (2%nat, HS_hr10x))] (root_class 5 ++ [(QFlen, 33554432, QMAX)]) 168%nat TNx_10 [] 2 HS_hr10x eq_refl eq_refl TNx_10_ok). apply mforest_ok_nil. Qed.
-  Definition TSx_10 : mtree := MCase e_r 4046 TSxa_10 TSxb_10.
+  Definition TSx_10 : mtree := MCase (PlanRegen.mexpr e_r) 4046 TSxa_10 TSxb_10.
   Lemma TSx_10_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 HS_hg10x (root_class 5 ++ [(QFlen, 33554432, QMAX)]) TSx_10 = true.
-  Proof. exact (mtree_ok_case KCm BFUELm FUELm BITm TT 1%nat 1%nat HS_hg10x (root_class 5 ++ [(QFlen, 33554432, QMAX)]) e_r 4046 TSxa_10 TSxb_10 eq_refl TSxa_10_ok TSxb_10_ok). Qed.
+  Proof. exact (mtree_ok_case KCm BFUELm FUELm BITm TT 1%nat 1%nat HS_hg10x (root_class 5 ++ [(QFlen, 33554432, QMAX)]) (PlanRegen.mexpr e_r) 4046 TSxa_10 TSxb_10 eq_refl TSxa_10_ok TSxb_10_ok). Qed.
 
 
   Definition PWx9_1_PEa : mtree := MEmpty 2.
@@ -81,16 +83,16 @@ Local Notation TT := TT_r5.
   Lemma TNx_9_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 2 HS_hr9x (root_class 5 ++ [(QFlen, 16777216, QMAX)]) TNx_9 = true.
   Proof. apply mtree_ok_split; (apply mtree_ok_class; [vm_compute; reflexivity|]); [exact TFx_9_ok | exact TRx_9_ok]. Qed.
   Definition TSxa_9 : mtree := MPre 1 k1s9xa [(165%nat, (2%nat, HS_hr9x))] [(165%nat, TNx_9)].
-  Lemma TSxa_9_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg9x e_r 4046) (root_class 5 ++ [(QFlen, 16777216, QMAX)]) TSxa_9 = true.
-  Proof. unfold TSxa_9. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg9x e_r 4046) (root_class 5 ++ [(QFlen, 16777216, QMAX)]) 1 k1s9xa [(165%nat, (2%nat, HS_hr9x))] [(165%nat, TNx_9)] eq_refl (k1s9xa_ok TT) eq_refl).
+  Lemma TSxa_9_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg9x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 16777216, QMAX)]) TSxa_9 = true.
+  Proof. unfold TSxa_9. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg9x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 16777216, QMAX)]) 1 k1s9xa [(165%nat, (2%nat, HS_hr9x))] [(165%nat, TNx_9)] eq_refl (k1s9xa_ok TT) eq_refl).
     apply (mforest_ok_cons KCm BFUELm FUELm BITm TT 1 [(165%nat, (2%nat, HS_hr9x))] (root_class 5 ++ [(QFlen, 16777216, QMAX)]) 165%nat TNx_9 [] 2 HS_hr9x eq_refl eq_refl TNx_9_ok). apply mforest_ok_nil. Qed.
   Definition TSxb_9 : mtree := MPre 1 k1s9xb [(165%nat, (2%nat, HS_hr9x))] [(165%nat, TNx_9)].
-  Lemma TSxb_9_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg9x e_r 4046) (root_class 5 ++ [(QFlen, 16777216, QMAX)]) TSxb_9 = true.
-  Proof. unfold TSxb_9. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg9x e_r 4046) (root_class 5 ++ [(QFlen, 16777216, QMAX)]) 1 k1s9xb [(165%nat, (2%nat, HS_hr9x))] [(165%nat, TNx_9)] eq_refl (k1s9xb_ok TT) eq_refl).
+  Lemma TSxb_9_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg9x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 16777216, QMAX)]) TSxb_9 = true.
+  Proof. unfold TSxb_9. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg9x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 16777216, QMAX)]) 1 k1s9xb [(165%nat, (2%nat, HS_hr9x))] [(165%nat, TNx_9)] eq_refl (k1s9xb_ok TT) eq_refl).
     apply (mforest_ok_cons KCm BFUELm FUELm BITm TT 1 [(165%nat, (2%nat, HS_hr9x))] (root_class 5 ++ [(QFlen, 16777216, QMAX)]) 165%nat TNx_9 [] 2 HS_hr9x eq_refl eq_refl TNx_9_ok). apply mforest_ok_nil. Qed.
-  Definition TSx_9 : mtree := MCase e_r 4046 TSxa_9 TSxb_9.
+  Definition TSx_9 : mtree := MCase (PlanRegen.mexpr e_r) 4046 TSxa_9 TSxb_9.
   Lemma TSx_9_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 HS_hg9x (root_class 5 ++ [(QFlen, 16777216, QMAX)]) TSx_9 = true.
-  Proof. exact (mtree_ok_case KCm BFUELm FUELm BITm TT 1%nat 1%nat HS_hg9x (root_class 5 ++ [(QFlen, 16777216, QMAX)]) e_r 4046 TSxa_9 TSxb_9 eq_refl TSxa_9_ok TSxb_9_ok). Qed.
+  Proof. exact (mtree_ok_case KCm BFUELm FUELm BITm TT 1%nat 1%nat HS_hg9x (root_class 5 ++ [(QFlen, 16777216, QMAX)]) (PlanRegen.mexpr e_r) 4046 TSxa_9 TSxb_9 eq_refl TSxa_9_ok TSxb_9_ok). Qed.
 
 
   Definition PWx8_1_PEa : mtree := MEmpty 2.
@@ -120,16 +122,16 @@ Local Notation TT := TT_r5.
   Lemma TNx_8_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 2 HS_hr8x (root_class 5 ++ [(QFlen, 8388608, QMAX)]) TNx_8 = true.
   Proof. apply mtree_ok_split; (apply mtree_ok_class; [vm_compute; reflexivity|]); [exact TFx_8_ok | exact TRx_8_ok]. Qed.
   Definition TSxa_8 : mtree := MPre 1 k1s8xa [(162%nat, (2%nat, HS_hr8x))] [(162%nat, TNx_8)].
-  Lemma TSxa_8_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg8x e_r 4046) (root_class 5 ++ [(QFlen, 8388608, QMAX)]) TSxa_8 = true.
-  Proof. unfold TSxa_8. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg8x e_r 4046) (root_class 5 ++ [(QFlen, 8388608, QMAX)]) 1 k1s8xa [(162%nat, (2%nat, HS_hr8x))] [(162%nat, TNx_8)] eq_refl (k1s8xa_ok TT) eq_refl).
+  Lemma TSxa_8_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg8x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 8388608, QMAX)]) TSxa_8 = true.
+  Proof. unfold TSxa_8. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg8x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 8388608, QMAX)]) 1 k1s8xa [(162%nat, (2%nat, HS_hr8x))] [(162%nat, TNx_8)] eq_refl (k1s8xa_ok TT) eq_refl).
     apply (mforest_ok_cons KCm BFUELm FUELm BITm TT 1 [(162%nat, (2%nat, HS_hr8x))] (root_class 5 ++ [(QFlen, 8388608, QMAX)]) 162%nat TNx_8 [] 2 HS_hr8x eq_refl eq_refl TNx_8_ok). apply mforest_ok_nil. Qed.
   Definition TSxb_8 : mtree := MPre 1 k1s8xb [(162%nat, (2%nat, HS_hr8x))] [(162%nat, TNx_8)].
-  Lemma TSxb_8_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg8x e_r 4046) (root_class 5 ++ [(QFlen, 8388608, QMAX)]) TSxb_8 = true.
-  Proof. unfold TSxb_8. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg8x e_r 4046) (root_class 5 ++ [(QFlen, 8388608, QMAX)]) 1 k1s8xb [(162%nat, (2%nat, HS_hr8x))] [(162%nat, TNx_8)] eq_refl (k1s8xb_ok TT) eq_refl).
+  Lemma TSxb_8_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg8x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 8388608, QMAX)]) TSxb_8 = true.
+  Proof. unfold TSxb_8. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg8x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 8388608, QMAX)]) 1 k1s8xb [(162%nat, (2%nat, HS_hr8x))] [(162%nat, TNx_8)] eq_refl (k1s8xb_ok TT) eq_refl).
     apply (mforest_ok_cons KCm BFUELm FUELm BITm TT 1 [(162%nat, (2%nat, HS_hr8x))] (root_class 5 ++ [(QFlen, 8388608, QMAX)]) 162%nat TNx_8 [] 2 HS_hr8x eq_refl eq_refl TNx_8_ok). apply mforest_ok_nil. Qed.
-  Definition TSx_8 : mtree := MCase e_r 4046 TSxa_8 TSxb_8.
+  Definition TSx_8 : mtree := MCase (PlanRegen.mexpr e_r) 4046 TSxa_8 TSxb_8.
   Lemma TSx_8_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 HS_hg8x (root_class 5 ++ [(QFlen, 8388608, QMAX)]) TSx_8 = true.
-  Proof. exact (mtree_ok_case KCm BFUELm FUELm BITm TT 1%nat 1%nat HS_hg8x (root_class 5 ++ [(QFlen, 8388608, QMAX)]) e_r 4046 TSxa_8 TSxb_8 eq_refl TSxa_8_ok TSxb_8_ok). Qed.
+  Proof. exact (mtree_ok_case KCm BFUELm FUELm BITm TT 1%nat 1%nat HS_hg8x (root_class 5 ++ [(QFlen, 8388608, QMAX)]) (PlanRegen.mexpr e_r) 4046 TSxa_8 TSxb_8 eq_refl TSxa_8_ok TSxb_8_ok). Qed.
 
 
   Definition PWx7_1_PEa : mtree := MEmpty 2.
@@ -159,16 +161,16 @@ Local Notation TT := TT_r5.
   Lemma TNx_7_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 2 HS_hr7x (root_class 5 ++ [(QFlen, 4194304, QMAX)]) TNx_7 = true.
   Proof. apply mtree_ok_split; (apply mtree_ok_class; [vm_compute; reflexivity|]); [exact TFx_7_ok | exact TRx_7_ok]. Qed.
   Definition TSxa_7 : mtree := MPre 1 k1s7xa [(159%nat, (2%nat, HS_hr7x))] [(159%nat, TNx_7)].
-  Lemma TSxa_7_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg7x e_r 4046) (root_class 5 ++ [(QFlen, 4194304, QMAX)]) TSxa_7 = true.
-  Proof. unfold TSxa_7. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg7x e_r 4046) (root_class 5 ++ [(QFlen, 4194304, QMAX)]) 1 k1s7xa [(159%nat, (2%nat, HS_hr7x))] [(159%nat, TNx_7)] eq_refl (k1s7xa_ok TT) eq_refl).
+  Lemma TSxa_7_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg7x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 4194304, QMAX)]) TSxa_7 = true.
+  Proof. unfold TSxa_7. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg7x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 4194304, QMAX)]) 1 k1s7xa [(159%nat, (2%nat, HS_hr7x))] [(159%nat, TNx_7)] eq_refl (k1s7xa_ok TT) eq_refl).
     apply (mforest_ok_cons KCm BFUELm FUELm BITm TT 1 [(159%nat, (2%nat, HS_hr7x))] (root_class 5 ++ [(QFlen, 4194304, QMAX)]) 159%nat TNx_7 [] 2 HS_hr7x eq_refl eq_refl TNx_7_ok). apply mforest_ok_nil. Qed.
   Definition TSxb_7 : mtree := MPre 1 k1s7xb [(159%nat, (2%nat, HS_hr7x))] [(159%nat, TNx_7)].
-  Lemma TSxb_7_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg7x e_r 4046) (root_class 5 ++ [(QFlen, 4194304, QMAX)]) TSxb_7 = true.
-  Proof. unfold TSxb_7. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg7x e_r 4046) (root_class 5 ++ [(QFlen, 4194304, QMAX)]) 1 k1s7xb [(159%nat, (2%nat, HS_hr7x))] [(159%nat, TNx_7)] eq_refl (k1s7xb_ok TT) eq_refl).
+  Lemma TSxb_7_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg7x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 4194304, QMAX)]) TSxb_7 = true.
+  Proof. unfold TSxb_7. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg7x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 4194304, QMAX)]) 1 k1s7xb [(159%nat, (2%nat, HS_hr7x))] [(159%nat, TNx_7)] eq_refl (k1s7xb_ok TT) eq_refl).
     apply (mforest_ok_cons KCm BFUELm FUELm BITm TT 1 [(159%nat, (2%nat, HS_hr7x))] (root_class 5 ++ [(QFlen, 4194304, QMAX)]) 159%nat TNx_7 [] 2 HS_hr7x eq_refl eq_refl TNx_7_ok). apply mforest_ok_nil. Qed.
-  Definition TSx_7 : mtree := MCase e_r 4046 TSxa_7 TSxb_7.
+  Definition TSx_7 : mtree := MCase (PlanRegen.mexpr e_r) 4046 TSxa_7 TSxb_7.
   Lemma TSx_7_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 HS_hg7x (root_class 5 ++ [(QFlen, 4194304, QMAX)]) TSx_7 = true.
-  Proof. exact (mtree_ok_case KCm BFUELm FUELm BITm TT 1%nat 1%nat HS_hg7x (root_class 5 ++ [(QFlen, 4194304, QMAX)]) e_r 4046 TSxa_7 TSxb_7 eq_refl TSxa_7_ok TSxb_7_ok). Qed.
+  Proof. exact (mtree_ok_case KCm BFUELm FUELm BITm TT 1%nat 1%nat HS_hg7x (root_class 5 ++ [(QFlen, 4194304, QMAX)]) (PlanRegen.mexpr e_r) 4046 TSxa_7 TSxb_7 eq_refl TSxa_7_ok TSxb_7_ok). Qed.
 
 
   Definition PWx6_1_PEa : mtree := MEmpty 2.
@@ -198,16 +200,16 @@ Local Notation TT := TT_r5.
   Lemma TNx_6_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 2 HS_hr6x (root_class 5 ++ [(QFlen, 2097152, QMAX)]) TNx_6 = true.
   Proof. apply mtree_ok_split; (apply mtree_ok_class; [vm_compute; reflexivity|]); [exact TFx_6_ok | exact TRx_6_ok]. Qed.
   Definition TSxa_6 : mtree := MPre 1 k1s6xa [(156%nat, (2%nat, HS_hr6x))] [(156%nat, TNx_6)].
-  Lemma TSxa_6_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg6x e_r 4046) (root_class 5 ++ [(QFlen, 2097152, QMAX)]) TSxa_6 = true.
-  Proof. unfold TSxa_6. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg6x e_r 4046) (root_class 5 ++ [(QFlen, 2097152, QMAX)]) 1 k1s6xa [(156%nat, (2%nat, HS_hr6x))] [(156%nat, TNx_6)] eq_refl (k1s6xa_ok TT) eq_refl).
+  Lemma TSxa_6_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg6x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 2097152, QMAX)]) TSxa_6 = true.
+  Proof. unfold TSxa_6. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg6x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 2097152, QMAX)]) 1 k1s6xa [(156%nat, (2%nat, HS_hr6x))] [(156%nat, TNx_6)] eq_refl (k1s6xa_ok TT) eq_refl).
     apply (mforest_ok_cons KCm BFUELm FUELm BITm TT 1 [(156%nat, (2%nat, HS_hr6x))] (root_class 5 ++ [(QFlen, 2097152, QMAX)]) 156%nat TNx_6 [] 2 HS_hr6x eq_refl eq_refl TNx_6_ok). apply mforest_ok_nil. Qed.
   Definition TSxb_6 : mtree := MPre 1 k1s6xb [(156%nat, (2%nat, HS_hr6x))] [(156%nat, TNx_6)].
-  Lemma TSxb_6_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg6x e_r 4046) (root_class 5 ++ [(QFlen, 2097152, QMAX)]) TSxb_6 = true.
-  Proof. unfold TSxb_6. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg6x e_r 4046) (root_class 5 ++ [(QFlen, 2097152, QMAX)]) 1 k1s6xb [(156%nat, (2%nat, HS_hr6x))] [(156%nat, TNx_6)] eq_refl (k1s6xb_ok TT) eq_refl).
+  Lemma TSxb_6_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg6x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 2097152, QMAX)]) TSxb_6 = true.
+  Proof. unfold TSxb_6. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg6x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 2097152, QMAX)]) 1 k1s6xb [(156%nat, (2%nat, HS_hr6x))] [(156%nat, TNx_6)] eq_refl (k1s6xb_ok TT) eq_refl).
     apply (mforest_ok_cons KCm BFUELm FUELm BITm TT 1 [(156%nat, (2%nat, HS_hr6x))] (root_class 5 ++ [(QFlen, 2097152, QMAX)]) 156%nat TNx_6 [] 2 HS_hr6x eq_refl eq_refl TNx_6_ok). apply mforest_ok_nil. Qed.
-  Definition TSx_6 : mtree := MCase e_r 4046 TSxa_6 TSxb_6.
+  Definition TSx_6 : mtree := MCase (PlanRegen.mexpr e_r) 4046 TSxa_6 TSxb_6.
   Lemma TSx_6_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 HS_hg6x (root_class 5 ++ [(QFlen, 2097152, QMAX)]) TSx_6 = true.
-  Proof. exact (mtree_ok_case KCm BFUELm FUELm BITm TT 1%nat 1%nat HS_hg6x (root_class 5 ++ [(QFlen, 2097152, QMAX)]) e_r 4046 TSxa_6 TSxb_6 eq_refl TSxa_6_ok TSxb_6_ok). Qed.
+  Proof. exact (mtree_ok_case KCm BFUELm FUELm BITm TT 1%nat 1%nat HS_hg6x (root_class 5 ++ [(QFlen, 2097152, QMAX)]) (PlanRegen.mexpr e_r) 4046 TSxa_6 TSxb_6 eq_refl TSxa_6_ok TSxb_6_ok). Qed.
 
 
   Definition PWx5_1_PEa : mtree := MEmpty 2.
@@ -243,16 +245,16 @@ Local Notation TT := TT_r5.
   Lemma TNx_5_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 2 HS_hr5x (root_class 5 ++ [(QFlen, 1048576, QMAX)]) TNx_5 = true.
   Proof. apply mtree_ok_split; (apply mtree_ok_class; [vm_compute; reflexivity|]); [exact TFx_5_ok | exact TRx_5_ok]. Qed.
   Definition TSxa_5 : mtree := MPre 1 k1s5xa [(153%nat, (2%nat, HS_hr5x))] [(153%nat, TNx_5)].
-  Lemma TSxa_5_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg5x e_r 4046) (root_class 5 ++ [(QFlen, 1048576, QMAX)]) TSxa_5 = true.
-  Proof. unfold TSxa_5. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg5x e_r 4046) (root_class 5 ++ [(QFlen, 1048576, QMAX)]) 1 k1s5xa [(153%nat, (2%nat, HS_hr5x))] [(153%nat, TNx_5)] eq_refl (k1s5xa_ok TT) eq_refl).
+  Lemma TSxa_5_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg5x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 1048576, QMAX)]) TSxa_5 = true.
+  Proof. unfold TSxa_5. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg5x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 1048576, QMAX)]) 1 k1s5xa [(153%nat, (2%nat, HS_hr5x))] [(153%nat, TNx_5)] eq_refl (k1s5xa_ok TT) eq_refl).
     apply (mforest_ok_cons KCm BFUELm FUELm BITm TT 1 [(153%nat, (2%nat, HS_hr5x))] (root_class 5 ++ [(QFlen, 1048576, QMAX)]) 153%nat TNx_5 [] 2 HS_hr5x eq_refl eq_refl TNx_5_ok). apply mforest_ok_nil. Qed.
   Definition TSxb_5 : mtree := MPre 1 k1s5xb [(153%nat, (2%nat, HS_hr5x))] [(153%nat, TNx_5)].
-  Lemma TSxb_5_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg5x e_r 4046) (root_class 5 ++ [(QFlen, 1048576, QMAX)]) TSxb_5 = true.
-  Proof. unfold TSxb_5. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg5x e_r 4046) (root_class 5 ++ [(QFlen, 1048576, QMAX)]) 1 k1s5xb [(153%nat, (2%nat, HS_hr5x))] [(153%nat, TNx_5)] eq_refl (k1s5xb_ok TT) eq_refl).
+  Lemma TSxb_5_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg5x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 1048576, QMAX)]) TSxb_5 = true.
+  Proof. unfold TSxb_5. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg5x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 1048576, QMAX)]) 1 k1s5xb [(153%nat, (2%nat, HS_hr5x))] [(153%nat, TNx_5)] eq_refl (k1s5xb_ok TT) eq_refl).
     apply (mforest_ok_cons KCm BFUELm FUELm BITm TT 1 [(153%nat, (2%nat, HS_hr5x))] (root_class 5 ++ [(QFlen, 1048576, QMAX)]) 153%nat TNx_5 [] 2 HS_hr5x eq_refl eq_refl TNx_5_ok). apply mforest_ok_nil. Qed.
-  Definition TSx_5 : mtree := MCase e_r 4046 TSxa_5 TSxb_5.
+  Definition TSx_5 : mtree := MCase (PlanRegen.mexpr e_r) 4046 TSxa_5 TSxb_5.
   Lemma TSx_5_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 HS_hg5x (root_class 5 ++ [(QFlen, 1048576, QMAX)]) TSx_5 = true.
-  Proof. exact (mtree_ok_case KCm BFUELm FUELm BITm TT 1%nat 1%nat HS_hg5x (root_class 5 ++ [(QFlen, 1048576, QMAX)]) e_r 4046 TSxa_5 TSxb_5 eq_refl TSxa_5_ok TSxb_5_ok). Qed.
+  Proof. exact (mtree_ok_case KCm BFUELm FUELm BITm TT 1%nat 1%nat HS_hg5x (root_class 5 ++ [(QFlen, 1048576, QMAX)]) (PlanRegen.mexpr e_r) 4046 TSxa_5 TSxb_5 eq_refl TSxa_5_ok TSxb_5_ok). Qed.
 
 
   Definition PWx4_1_PEa : mtree := MEmpty 2.
@@ -282,16 +284,16 @@ Local Notation TT := TT_r5.
   Lemma TNx_4_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 2 HS_hr4x (root_class 5 ++ [(QFlen, 524288, QMAX)]) TNx_4 = true.
   Proof. apply mtree_ok_split; (apply mtree_ok_class; [vm_compute; reflexivity|]); [exact TFx_4_ok | exact TRx_4_ok]. Qed.
   Definition TSxa_4 : mtree := MPre 1 k1s4xa [(150%nat, (2%nat, HS_hr4x))] [(150%nat, TNx_4)].
-  Lemma TSxa_4_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg4x e_r 4046) (root_class 5 ++ [(QFlen, 524288, QMAX)]) TSxa_4 = true.
-  Proof. unfold TSxa_4. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg4x e_r 4046) (root_class 5 ++ [(QFlen, 524288, QMAX)]) 1 k1s4xa [(150%nat, (2%nat, HS_hr4x))] [(150%nat, TNx_4)] eq_refl (k1s4xa_ok TT) eq_refl).
+  Lemma TSxa_4_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg4x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 524288, QMAX)]) TSxa_4 = true.
+  Proof. unfold TSxa_4. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg4x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 524288, QMAX)]) 1 k1s4xa [(150%nat, (2%nat, HS_hr4x))] [(150%nat, TNx_4)] eq_refl (k1s4xa_ok TT) eq_refl).
     apply (mforest_ok_cons KCm BFUELm FUELm BITm TT 1 [(150%nat, (2%nat, HS_hr4x))] (root_class 5 ++ [(QFlen, 524288, QMAX)]) 150%nat TNx_4 [] 2 HS_hr4x eq_refl eq_refl TNx_4_ok). apply mforest_ok_nil. Qed.
   Definition TSxb_4 : mtree := MPre 1 k1s4xb [(150%nat, (2%nat, HS_hr4x))] [(150%nat, TNx_4)].
-  Lemma TSxb_4_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg4x e_r 4046) (root_class 5 ++ [(QFlen, 524288, QMAX)]) TSxb_4 = true.
-  Proof. unfold TSxb_4. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg4x e_r 4046) (root_class 5 ++ [(QFlen, 524288, QMAX)]) 1 k1s4xb [(150%nat, (2%nat, HS_hr4x))] [(150%nat, TNx_4)] eq_refl (k1s4xb_ok TT) eq_refl).
+  Lemma TSxb_4_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg4x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 524288, QMAX)]) TSxb_4 = true.
+  Proof. unfold TSxb_4. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg4x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 524288, QMAX)]) 1 k1s4xb [(150%nat, (2%nat, HS_hr4x))] [(150%nat, TNx_4)] eq_refl (k1s4xb_ok TT) eq_refl).
     apply (mforest_ok_cons KCm BFUELm FUELm BITm TT 1 [(150%nat, (2%nat, HS_hr4x))] (root_class 5 ++ [(QFlen, 524288, QMAX)]) 150%nat TNx_4 [] 2 HS_hr4x eq_refl eq_refl TNx_4_ok). apply mforest_ok_nil. Qed.
-  Definition TSx_4 : mtree := MCase e_r 4046 TSxa_4 TSxb_4.
+  Definition TSx_4 : mtree := MCase (PlanRegen.mexpr e_r) 4046 TSxa_4 TSxb_4.
   Lemma TSx_4_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 HS_hg4x (root_class 5 ++ [(QFlen, 524288, QMAX)]) TSx_4 = true.
-  Proof. exact (mtree_ok_case KCm BFUELm FUELm BITm TT 1%nat 1%nat HS_hg4x (root_class 5 ++ [(QFlen, 524288, QMAX)]) e_r 4046 TSxa_4 TSxb_4 eq_refl TSxa_4_ok TSxb_4_ok). Qed.
+  Proof. exact (mtree_ok_case KCm BFUELm FUELm BITm TT 1%nat 1%nat HS_hg4x (root_class 5 ++ [(QFlen, 524288, QMAX)]) (PlanRegen.mexpr e_r) 4046 TSxa_4 TSxb_4 eq_refl TSxa_4_ok TSxb_4_ok). Qed.
 
 
   Definition PWx3_1_PEa : mtree := MEmpty 2.
@@ -321,16 +323,16 @@ Local Notation TT := TT_r5.
   Lemma TNx_3_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 2 HS_hr3x (root_class 5 ++ [(QFlen, 262144, QMAX)]) TNx_3 = true.
   Proof. apply mtree_ok_split; (apply mtree_ok_class; [vm_compute; reflexivity|]); [exact TFx_3_ok | exact TRx_3_ok]. Qed.
   Definition TSxa_3 : mtree := MPre 1 k1s3xa [(147%nat, (2%nat, HS_hr3x))] [(147%nat, TNx_3)].
-  Lemma TSxa_3_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg3x e_r 4046) (root_class 5 ++ [(QFlen, 262144, QMAX)]) TSxa_3 = true.
-  Proof. unfold TSxa_3. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg3x e_r 4046) (root_class 5 ++ [(QFlen, 262144, QMAX)]) 1 k1s3xa [(147%nat, (2%nat, HS_hr3x))] [(147%nat, TNx_3)] eq_refl (k1s3xa_ok TT) eq_refl).
+  Lemma TSxa_3_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg3x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 262144, QMAX)]) TSxa_3 = true.
+  Proof. unfold TSxa_3. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg3x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 262144, QMAX)]) 1 k1s3xa [(147%nat, (2%nat, HS_hr3x))] [(147%nat, TNx_3)] eq_refl (k1s3xa_ok TT) eq_refl).
     apply (mforest_ok_cons KCm BFUELm FUELm BITm TT 1 [(147%nat, (2%nat, HS_hr3x))] (root_class 5 ++ [(QFlen, 262144, QMAX)]) 147%nat TNx_3 [] 2 HS_hr3x eq_refl eq_refl TNx_3_ok). apply mforest_ok_nil. Qed.
   Definition TSxb_3 : mtree := MPre 1 k1s3xb [(147%nat, (2%nat, HS_hr3x))] [(147%nat, TNx_3)].
-  Lemma TSxb_3_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg3x e_r 4046) (root_class 5 ++ [(QFlen, 262144, QMAX)]) TSxb_3 = true.
-  Proof. unfold TSxb_3. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg3x e_r 4046) (root_class 5 ++ [(QFlen, 262144, QMAX)]) 1 k1s3xb [(147%nat, (2%nat, HS_hr3x))] [(147%nat, TNx_3)] eq_refl (k1s3xb_ok TT) eq_refl).
+  Lemma TSxb_3_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg3x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 262144, QMAX)]) TSxb_3 = true.
+  Proof. unfold TSxb_3. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg3x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 262144, QMAX)]) 1 k1s3xb [(147%nat, (2%nat, HS_hr3x))] [(147%nat, TNx_3)] eq_refl (k1s3xb_ok TT) eq_refl).
     apply (mforest_ok_cons KCm BFUELm FUELm BITm TT 1 [(147%nat, (2%nat, HS_hr3x))] (root_class 5 ++ [(QFlen, 262144, QMAX)]) 147%nat TNx_3 [] 2 HS_hr3x eq_refl eq_refl TNx_3_ok). apply mforest_ok_nil. Qed.
-  Definition TSx_3 : mtree := MCase e_r 4046 TSxa_3 TSxb_3.
+  Definition TSx_3 : mtree := MCase (PlanRegen.mexpr e_r) 4046 TSxa_3 TSxb_3.
   Lemma TSx_3_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 HS_hg3x (root_class 5 ++ [(QFlen, 262144, QMAX)]) TSx_3 = true.
-  Proof. exact (mtree_ok_case KCm BFUELm FUELm BITm TT 1%nat 1%nat HS_hg3x (root_class 5 ++ [(QFlen, 262144, QMAX)]) e_r 4046 TSxa_3 TSxb_3 eq_refl TSxa_3_ok TSxb_3_ok). Qed.
+  Proof. exact (mtree_ok_case KCm BFUELm FUELm BITm TT 1%nat 1%nat HS_hg3x (root_class 5 ++ [(QFlen, 262144, QMAX)]) (PlanRegen.mexpr e_r) 4046 TSxa_3 TSxb_3 eq_refl TSxa_3_ok TSxb_3_ok). Qed.
 
 
   Definition PWx2_1_PEa : mtree := MEmpty 2.
@@ -360,16 +362,16 @@ Local Notation TT := TT_r5.
   Lemma TNx_2_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 2 HS_hr2x (root_class 5 ++ [(QFlen, 131072, QMAX)]) TNx_2 = true.
   Proof. apply mtree_ok_split; (apply mtree_ok_class; [vm_compute; reflexivity|]); [exact TFx_2_ok | exact TRx_2_ok]. Qed.
   Definition TSxa_2 : mtree := MPre 1 k1s2xa [(144%nat, (2%nat, HS_hr2x))] [(144%nat, TNx_2)].
-  Lemma TSxa_2_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg2x e_r 4046) (root_class 5 ++ [(QFlen, 131072, QMAX)]) TSxa_2 = true.
-  Proof. unfold TSxa_2. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg2x e_r 4046) (root_class 5 ++ [(QFlen, 131072, QMAX)]) 1 k1s2xa [(144%nat, (2%nat, HS_hr2x))] [(144%nat, TNx_2)] eq_refl (k1s2xa_ok TT) eq_refl).
+  Lemma TSxa_2_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg2x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 131072, QMAX)]) TSxa_2 = true.
+  Proof. unfold TSxa_2. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_lo HS_hg2x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 131072, QMAX)]) 1 k1s2xa [(144%nat, (2%nat, HS_hr2x))] [(144%nat, TNx_2)] eq_refl (k1s2xa_ok TT) eq_refl).
     apply (mforest_ok_cons KCm BFUELm FUELm BITm TT 1 [(144%nat, (2%nat, HS_hr2x))] (root_class 5 ++ [(QFlen, 131072, QMAX)]) 144%nat TNx_2 [] 2 HS_hr2x eq_refl eq_refl TNx_2_ok). apply mforest_ok_nil. Qed.
   Definition TSxb_2 : mtree := MPre 1 k1s2xb [(144%nat, (2%nat, HS_hr2x))] [(144%nat, TNx_2)].
-  Lemma TSxb_2_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg2x e_r 4046) (root_class 5 ++ [(QFlen, 131072, QMAX)]) TSxb_2 = true.
-  Proof. unfold TSxb_2. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg2x e_r 4046) (root_class 5 ++ [(QFlen, 131072, QMAX)]) 1 k1s2xb [(144%nat, (2%nat, HS_hr2x))] [(144%nat, TNx_2)] eq_refl (k1s2xb_ok TT) eq_refl).
+  Lemma TSxb_2_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg2x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 131072, QMAX)]) TSxb_2 = true.
+  Proof. unfold TSxb_2. apply (segb_tree KCm BFUELm FUELm BITm TT 1 1 (mcase_hi HS_hg2x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 131072, QMAX)]) 1 k1s2xb [(144%nat, (2%nat, HS_hr2x))] [(144%nat, TNx_2)] eq_refl (k1s2xb_ok TT) eq_refl).
     apply (mforest_ok_cons KCm BFUELm FUELm BITm TT 1 [(144%nat, (2%nat, HS_hr2x))] (root_class 5 ++ [(QFlen, 131072, QMAX)]) 144%nat TNx_2 [] 2 HS_hr2x eq_refl eq_refl TNx_2_ok). apply mforest_ok_nil. Qed.
-  Definition TSx_2 : mtree := MCase e_r 4046 TSxa_2 TSxb_2.
+  Definition TSx_2 : mtree := MCase (PlanRegen.mexpr e_r) 4046 TSxa_2 TSxb_2.
   Lemma TSx_2_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 1 HS_hg2x (root_class 5 ++ [(QFlen, 131072, QMAX)]) TSx_2 = true.
-  Proof. exact (mtree_ok_case KCm BFUELm FUELm BITm TT 1%nat 1%nat HS_hg2x (root_class 5 ++ [(QFlen, 131072, QMAX)]) e_r 4046 TSxa_2 TSxb_2 eq_refl TSxa_2_ok TSxb_2_ok). Qed.
+  Proof. exact (mtree_ok_case KCm BFUELm FUELm BITm TT 1%nat 1%nat HS_hg2x (root_class 5 ++ [(QFlen, 131072, QMAX)]) (PlanRegen.mexpr e_r) 4046 TSxa_2 TSxb_2 eq_refl TSxa_2_ok TSxb_2_ok). Qed.
 
 
   Definition PWx1_1_PEa : mtree := MEmpty 2.
@@ -411,20 +413,20 @@ Local Notation TT := TT_r5.
   Lemma TNx_1_ok : mtree_ok KCm BFUELm FUELm BITm TT 1 2 HS_hr1x (root_class 5 ++ [(QFlen, 65536, QMAX)]) TNx_1 = true.
   Proof. apply mtree_ok_split; (apply mtree_ok_class; [vm_compute; reflexivity|]); [exact TFx_1_ok | exact TRx_1_ok]. Qed.
   Definition TSxa_1 : mtree := MPre 1 k1s1xa [(141%nat, (2%nat, HS_hr1x))] [(141%nat, TNx_1)].
-  Lemma TSxa_1_ok : mtree_ok KCm BFUELm FUELm BITm TT 0 1 (mcase_lo HS_hg1x e_r 4046) (root_class 5 ++ [(QFlen, 65536, QMAX)]) TSxa_1 = true.
-  Proof. unfold TSxa_1. apply (segb_tree KCm BFUELm FUELm BITm TT 0 1 (mcase_lo HS_hg1x e_r 4046) (root_class 5 ++ [(QFlen, 65536, QMAX)]) 1 k1s1xa [(141%nat, (2%nat, HS_hr1x))] [(141%nat, TNx_1)] eq_refl (k1s1xa_ok TT) eq_refl).
+  Lemma TSxa_1_ok : mtree_ok KCm BFUELm FUELm BITm TT 0 1 (mcase_lo HS_hg1x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 65536, QMAX)]) TSxa_1 = true.
+  Proof. unfold TSxa_1. apply (segb_tree KCm BFUELm FUELm BITm TT 0 1 (mcase_lo HS_hg1x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 65536, QMAX)]) 1 k1s1xa [(141%nat, (2%nat, HS_hr1x))] [(141%nat, TNx_1)] eq_refl (k1s1xa_ok TT) eq_refl).
     apply (mforest_ok_cons KCm BFUELm FUELm BITm TT 1 [(141%nat, (2%nat, HS_hr1x))] (root_class 5 ++ [(QFlen, 65536, QMAX)]) 141%nat TNx_1 [] 2 HS_hr1x eq_refl eq_refl TNx_1_ok). apply mforest_ok_nil. Qed.
   Definition TSxb_1 : mtree := MPre 1 k1s1xb [(141%nat, (2%nat, HS_hr1x))] [(141%nat, TNx_1)].
-  Lemma TSxb_1_ok : mtree_ok KCm BFUELm FUELm BITm TT 0 1 (mcase_hi HS_hg1x e_r 4046) (root_class 5 ++ [(QFlen, 65536, QMAX)]) TSxb_1 = true.
-  Proof. unfold TSxb_1. apply (segb_tree KCm BFUELm FUELm BITm TT 0 1 (mcase_hi HS_hg1x e_r 4046) (root_class 5 ++ [(QFlen, 65536, QMAX)]) 1 k1s1xb [(141%nat, (2%nat, HS_hr1x))] [(141%nat, TNx_1)] eq_refl (k1s1xb_ok TT) eq_refl).
+  Lemma TSxb_1_ok : mtree_ok KCm BFUELm FUELm BITm TT 0 1 (mcase_hi HS_hg1x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 65536, QMAX)]) TSxb_1 = true.
+  Proof. unfold TSxb_1. apply (segb_tree KCm BFUELm FUELm BITm TT 0 1 (mcase_hi HS_hg1x (PlanRegen.mexpr e_r) 4046) (root_class 5 ++ [(QFlen, 65536, QMAX)]) 1 k1s1xb [(141%nat, (2%nat, HS_hr1x))] [(141%nat, TNx_1)] eq_refl (k1s1xb_ok TT) eq_refl).
     apply (mforest_ok_cons KCm BFUELm FUELm BITm TT 1 [(141%nat, (2%nat, HS_hr1x))] (root_class 5 ++ [(QFlen, 65536, QMAX)]) 141%nat TNx_1 [] 2 HS_hr1x eq_refl eq_refl TNx_1_ok). apply mforest_ok_nil. Qed.
-  Definition TSx_1 : mtree := MCase e_r 4046 TSxa_1 TSxb_1.
+  Definition TSx_1 : mtree := MCase (PlanRegen.mexpr e_r) 4046 TSxa_1 TSxb_1.
   Lemma TSx_1_ok : mtree_ok KCm BFUELm FUELm BITm TT 0 1 HS_hg1x (root_class 5 ++ [(QFlen, 65536, QMAX)]) TSx_1 = true.
-  Proof. exact (mtree_ok_case KCm BFUELm FUELm BITm TT 0%nat 1%nat HS_hg1x (root_class 5 ++ [(QFlen, 65536, QMAX)]) e_r 4046 TSxa_1 TSxb_1 eq_refl TSxa_1_ok TSxb_1_ok). Qed.
+  Proof. exact (mtree_ok_case KCm BFUELm FUELm BITm TT 0%nat 1%nat HS_hg1x (root_class 5 ++ [(QFlen, 65536, QMAX)]) (PlanRegen.mexpr e_r) 4046 TSxa_1 TSxb_1 eq_refl TSxa_1_ok TSxb_1_ok). Qed.
 
-  Definition T_K1 : mtree := MPre 0 k1s0x [(105%nat, (1%nat, HS_hg1x))] [(105%nat, TSx_1)].
+  Definition T_K1 : mtree := MPre 0 K1BD0F.k1s0x_f [(105%nat, (1%nat, HS_hg1x))] [(105%nat, TSx_1)].
   Lemma T_K1_ok : mtree_ok KCm BFUELm FUELm BITm TT 0 0 (HSA HS_main_both 0) (root_class 5 ++ [(QFlen, 65535 + 1, QMAX)]) T_K1 = true.
-  Proof. unfold T_K1. apply (preb_tree HS_main_both KCm BFUELm FUELm BITm TT 0 0%nat (root_class 5 ++ [(QFlen, 65536, QMAX)]) 0 k1s0x [(105%nat, (1%nat, HS_hg1x))] [(105%nat, TSx_1)] eq_refl k1s0_ok eq_refl).
+  Proof. unfold T_K1. apply (preb_tree HS_main_both KCm BFUELm FUELm BITm TT 0 0%nat (root_class 5 ++ [(QFlen, 65536, QMAX)]) 0 K1BD0F.k1s0x_f [(105%nat, (1%nat, HS_hg1x))] [(105%nat, TSx_1)] eq_refl k1s0_ok eq_refl).
     apply (mforest_ok_cons KCm BFUELm FUELm BITm TT 0 [(105%nat, (1%nat, HS_hg1x))] (root_class 5 ++ [(QFlen, 65536, QMAX)]) 105%nat TSx_1 [] 1 HS_hg1x eq_refl eq_refl TSx_1_ok).
     apply mforest_ok_nil. Qed.
 End TTS.

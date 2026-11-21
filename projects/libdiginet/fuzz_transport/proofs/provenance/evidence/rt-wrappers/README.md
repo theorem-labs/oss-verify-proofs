@@ -14,7 +14,7 @@ lib/A/Prog/diginet_personality_from_name_cg.v, astrlen_realizes = lib/A/Prog/Tra
 
 ## Donor
 
-libreac/fuzz_identity, released (release history commit c3777b3715d0), projects/libreac/fuzz_identity/proofs/lib:
+libreac/fuzz_identity, released (release history), projects/libreac/fuzz_identity/proofs/lib:
 A/Rt/StrcmpTbl.v, StrcmpLoop.v, StrcmpChkX.v, StrcmpChkY.v, Strcmp.v (strcmp_icpt_contract), A/FMsl0.v,
 FMstrlen_chk1.v, FMstrlen_chk2.v, FMstrlen_musl.v, FMstrlen.v (strlen_icpt_srr), A/Rt/WrapRoM.v (mconsts_of_aro),
 A/Rt/Strlen.v (strlen_icpt_contract). Their binder file is A/Rt/WrapBinders.v (astrcmp_binder_A, astrlen_binder_A),
@@ -66,7 +66,7 @@ rtreloc.py (sha256 b39a0f9f3525; internal record) is not in this slice: its code
 history (in a comment it rewrites, and in the list of words it refuses). It is cited by its file sha256,
 b39a0f9f352545e62c86e0bccc339b3635f24f7a7874e670cfdb6af367f11859; tools/img.py is the ELF reader it imports.
 
-`rtreloc.py HUB WT <donor twin> <target twin> numerals.tsv` reads each donor file at c3777b3715d0 and writes it to
+`rtreloc.py HUB WT <donor twin> <target twin> numerals.tsv` reads each donor file and writes it to
 this unit. Every numeral of the code and of the kept comments of 0x10000 or more is in numerals.tsv (file, line,
 donor value, target value, reason): 387 moved, 592 kept (979 in all). The table:
 
@@ -100,7 +100,7 @@ TransportRtCg's aro_unowned. No proof step changed.
 ## Build and assumptions
 
 `VM=<build VM> cb build <clone> lib/A/Rt/RtStrcmpCg.vo lib/A/Rt/RtStrlenCg.vo` (cb's defaults, dune): rc=0,
-2 targets and 12 dependencies compiled, 0 failed, vo check 0 failed, 4 PINNED (facts f6acfcb0c1b8). Own times:
+2 targets and 12 dependencies compiled, 0 failed, vo check 0 failed, 4 PINNED (facts). Own times:
 StrcmpChkY 67 s, StrcmpChkX 63 s, FMstrlen_chk2 44 s, every other file under 11 s.
 PrintAssumptionsRt12.v (outside lib/, compiled in the checker image against the build's workspace): both theorems
 print 13 Prim* primitives and FunctionalExtensionality.functional_extensionality_dep (pa-*.out), no other axiom.

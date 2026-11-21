@@ -4,7 +4,7 @@
    rule 24: no function proved
    rule 24: proves no function (kind: segment lemma). Every lemma here is a step of the string arm's join; the callee
    (parse_string) enters only through its post's arms: the kit's published lib/A/PRH_FnReader.v tparse_string_specX (kit
-   a working branch 3ac20a5c9e30, blob fb7b12dfa169: the POST-IMPLICATION form - no entry position, each
+   a working branch, blob fb7b12dfa169: the POST-IMPLICATION form - no entry position, each
    arm's live-request Permutation and exact position transfer keyed on the arm's own list prhPs_evs .. okA, the
    refusal arm's OUTCOME exclusion, and fuzz_malloc's refusal ledger verbatim), which the arm lemmas (VrdArmStrOk.v
    vrd_str_a_okP / vrd_str_a_ok) take as their Section hypothesis.
@@ -21,7 +21,7 @@
    the JOIN memory (after rows 143..151 wrote the node's str field [v + 16, v + 24)). The journal from parse_value's
    entry is at the caller-window stack (STK_parse_value d + e) (spZ regs0 + e), own = [(0, pos)].
    CITED, NOT RE-PROVED: A'Ledger's per-event ledger steps over rd_ledger_move's #102 form (VrdLedgerEv.v at
-   a working branch 127f6184b2fe: vle_fail_chosen, vle_fail_refused, vle_alloc_free, vle_alloc), VnumD's
+   a working branch: vle_fail_chosen, vle_fail_refused, vle_alloc_free, vle_alloc), VnumD's
    vrd_pv_post / vrd_epi_a / vrd_zero_val (VrdNum.v), the arm toolkit of VrdArm.v (vrs_ledger_keep, vrs_pst_keep,
    vrs_in_ok_keep, vrs_garr8_keep, vrs_sep_last, vrd_str_model, vrs_gtrace_str), VproC's vrd_saved / vrd_frame /
    vrd_node_frame_disj (VrdPro.v), the kit's prhPs_evs_model / prhPs_evs_arm (PRH_FnReader.v) and the grammar's
@@ -941,7 +941,7 @@ Qed.
    vrd_cur_entry_call carries prh_cur_entry and the cursor set's prh_cw_entry to the call registers from the arm's own
    facts: s0 at the call is parse_value's entry sp (no arm row writes s0), the entry ra is below the ceiling (fpre's
    fourth conjunct), and the entry cursor word p is at least 4096 (pj_in_okR: text <= p, 4096 <= text). At the kit's cut
-   7cdbb61b5fa0 parse_string takes prh_cw_ok B CW (PRH_FnReader.v blob f1ae32e3b2cd, in the slot of the deleted
+   parse_string takes prh_cw_ok B CW (PRH_FnReader.v blob f1ae32e3b2cd, in the slot of the deleted
    prh_cur_ok), which is the call state's prh_cw_entry at parse_string's own free word. ---- *)
 Lemma vrs_call_chains : forall (CW : list (list Z)) (ly0 ly : alayout) (W0 W : world SEGS)
     (mem0 mem mc : word -> option byte)
@@ -1038,7 +1038,7 @@ rewrite Hs0. eapply vrd_cur_chain_call; [lia | lia | exact Hq8 | lia | exact H16
 exact (HW8 (q - 8) ltac:(lia) ltac:(lia) ltac:(lia)).
 Qed.
 
-(* ---- THE JOIN at ROW 225: vrd_epi_aR with the arm's result vrd_pv_post. The kit's cut 7cdbb61b5fa0: parse_string's post
+(* ---- THE JOIN at ROW 225: vrd_epi_aR with the arm's result vrd_pv_post. The kit's cut: parse_string's post
    is budgeted (fpostWbm at wbudget CW 0, PRH_FnReader.v blob f1ae32e3b2cd), so its journal over the call is at a
    budget WS1 and the caller's journal after it at a budget WS within wbudget CW 0, which vrd_epi_aR carries.
    THE RE-HIDING MOVE: parse_string's text concludes SRr' segs RZ_cf with its journal at wle' (it frees its block on a

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the auxv lies at least 16 bytes above the stack top (ar_sptop ar + 16 <= av), the auxv fact is the launch's vector (L5USA.auxv_okA) in place of the ten-pair auxv20A, and it is read through the visible memory (auxv_vis) and passed with the CONFIG_RSEQ flag to the leaf lemmas. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -138,7 +139,7 @@ Lemma e3_s15 :
     forall (RNDR : 0 <= rnd < 2 ^ 64),
     forall (CANR : 0 <= canary < 2 ^ 64),
     forall (HWR : 0 <= hw < 2 ^ 64),
-    forall (AVS : ar_sptop ar <= av),
+    forall (AVS : ar_sptop ar + 16 <= av),
     forall (HH : ri_inv HI ([(d1, 64); (d2, 64); (d3, 64); (d4, 64)] ++ LB1) (L5DSA.ff_e3 FF Sp F1a F3a F1b F3b F1c F1d) LKt cr A M (vml_of model)),
     forall (AM : amodel_ok A model),
     forall (HK : K []),
@@ -477,7 +478,7 @@ Lemma e3_s15 :
     forall (CI46 : cinv L ar HI M42 model42 A41 LB1 ((F1a, 1, Sp - 80) :: FF) Sp SCR XW [(ref, 66); (u, 144)] M46 model46 ((F1c, 1, Sp - 1136) :: LKt) (adebit L (adebit L (adebit L cr 144) 48) 66) A43),
     forall (FRO : forall j : nat, (j < 10)%nat -> L5.u64_at RSEGS M46 (Sp - 80 + 8 * Z.of_nat j) (nth j [L5DSA.U R0 24; L5DSA.U R0 23; L5DSA.U R0 22; L5DSA.U R0 21; L5DSA.U R0 20; L5DSA.U R0 19; L5DSA.U R0 18; Sp + 16; L5DSA.U R0 8; 584500] 0)),
     forall (FRD : forall j : nat, (j < 13)%nat -> L5.u64_at RSEGS M46 (Sp - 216 + 8 * Z.of_nat j) (nth j [L5DSA.U R0 27; L5DSA.U R0 26; L5DSA.U R0 25; L5DSA.RETIRE_MAGIC; F1a; F1a / 8 + SB; F1a + 32; nz bo; nz xo; F1a; Sp - 112; Sp; L5DSA.DIV_RET_O] 0)),
-    forall (AUXV : forall j : nat, (j < 20)%nat -> L5.u64_at RSEGS M46 (av + 8 * Z.of_nat j) (nth j (L5USA.auxv20A uid rnd hw) 0)),
+    forall (AUXV : L5USA.auxv_okA M46 av uid rnd hw),
     forall (IC3 : L5.img_clear M46 895872 (895872 + 8)),
     forall (IC2 : L5.img_clear M46 895824 895856),
     forall (IC1 : L5.img_clear M46 65536 884736),
@@ -542,8 +543,8 @@ Proof.
   { unfold numf in *. clear - NUM TLSR. lia. }
   destruct TLSI as (DJ1 & DJ2 & DJ3). destruct TLSP as (DJ4 & DJ5 & DJ6). destruct TB2 as (DJ10 & DJ11 & DJ12).
   clear NUM. rename NUM4 into NUM. clear TLSR.
-  expand_arr_at AUXV 20%nat av 0. expand_arr_at FRO 10%nat (Sp - 1296) 1216.
-  pose proof (ue3r6_conc HFILL HCOPY HTLS fx47 R47 (mrestrict (ahid A43 model47) M47)
+  auxv_vis CI47 AUXV rx. expand_arr_at FRO 10%nat (Sp - 1296) 1216.
+  pose proof (ue3r6_conc HFILL HCOPY HTLS rx fx47 R47 (mrestrict (ahid A43 model47) M47)
                 (fun j => match j with 2%nat => Sp - 1296 | 10%nat => obj | 32%nat => av | 33%nat => canary | 34%nat => uid | 36%nat => rnd | 39%nat => hw | 40%nat => ctx | 41%nat => th | 42%nat => blk | 43%nat => tbv | 44%nat => tev | 45%nat => L5DSA.U R0 8 | 46%nat => L5DSA.U R0 18 | 47%nat => L5DSA.U R0 19 | 48%nat => L5DSA.U R0 20 | 49%nat => L5DSA.U R0 21 | 50%nat => L5DSA.U R0 22 | 51%nat => L5DSA.U R0 23 | 52%nat => L5DSA.U R0 24 | 53%nat => nz rt8 | _ => 0 end)) as P. cbn beta iota in P.
   feed_rng P ltac:(first [ apply nz_range | apply UR | apply BL.bvu_range | (unfold L5DSA.U; apply BL.bvu_range) | nlia | (unfold S, SB, L5DSA.RETIRE_MAGIC; unfold numg in FN; clear - FN; lia) ]).
   feed P ltac:(first [fcell CI47 | fdp CI47]).

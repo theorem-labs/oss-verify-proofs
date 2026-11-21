@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revised entry stack block, with the strings at its top, and the launch facts; the run's mmap base). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith List Lia Bool.
@@ -13,6 +14,7 @@ From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib.Drv Require 
 #[global] Unset Lia Cache. #[global] Unset Nia Cache. #[global] Unset Nra Cache.
 Import ListNotations.
 Open Scope bv_scope.
+Local Set Default Proof Using "All".
 
 Section Img.
   Variable SEGS : list Segment.
@@ -24,27 +26,33 @@ Definition regs_init (sp0 : word) : bvmap 5 word :=
   regupd (regupd bvmap_empty 10 (Z_to_bv 64 0)) 2 sp0.
 
 Section P1.
-  Variable sp0 : word.
+  Variable v : VaSize.
+  Variable inp : ProcInput.
+  Variable mbase entry : word.
+  Variable sp0 brk : word.
   Variable rdraw : EntryDraw.
-  Variables av ev : list (list byte).
-  Variable uid : word.
-  Variable hw : word.
+  Local Notation av := (in_argv inp) (only parsing).
+  Local Notation ev := (in_envp inp) (only parsing).
+  Local Notation uid := (in_uid inp) (only parsing).
+  Local Notation hw := (in_hwcap inp) (only parsing).
   Hypothesis Hva : valid_argv av.
   Hypothesis Hve : valid_envp ev.
+  Hypothesis Hvl : valid_launch inp.
+  Hypothesis Hlau : entry_launch_ok_va v (mkEntry sp0 brk mbase rdraw) inp.
   Hypothesis Hlo : (0x7fff80000000 <= bv_unsigned sp0)%Z.
   Hypothesis Hhi : (bv_unsigned sp0 <= 0x800000000000)%Z.
   Hypothesis Hal : (bv_unsigned sp0 mod 16 = 0)%Z.
 
-  Local Notation mem0 := (wrap_mem RPH sp0 av ev uid hw rdraw) (only parsing).
-  Local Notation CM := (cmem sp0 (wrap_mem RPH sp0 av ev uid hw rdraw)) (only parsing).
+  Local Notation mem0 := (wrap_mem inp mbase RPH entry sp0 rdraw) (only parsing).
+  Local Notation CM := (cmem sp0 (wrap_mem inp mbase RPH entry sp0 rdraw)) (only parsing).
 
-  Let argc : word := argcN av.
+  Let argc : word := argcN inp.
   Local Notation argvp := (Z_to_bv 64 (bv_unsigned sp0 + 8)) (only parsing).
-  Let envp : word := envp_ptr sp0 av.
-  Let pn : word := cat_argv_ptr sp0 av ev 0.
+  Let envp : word := envp_ptr inp sp0.
+  Let pn : word := cat_argv_ptr (ed_top rdraw) av ev (in_execfn inp) 0.
 
   Lemma u_argc : bv_unsigned argc = Z.of_nat (length av).
-  Proof. exact (u_argcN av Hva). Qed.
+  Proof. exact (u_argcN inp Hva). Qed.
 
   Lemma len_av : (1 <= Z.of_nat (length av) <= 1024)%Z.
   Proof. destruct Hva as [[H1 H2] _]. lia. Qed.
@@ -95,7 +103,7 @@ Section P1.
         [ exact (F_65478 _ HX) | reflexivity | exact D_65478
         | addr_norm; rewrite rdn_cmem_above by region_side;
           apply (rdn_low_bytes SEGS mem0 sp0 argc 4); [lia|];
-          exact (read_argc_w SEGS RPH sp0 av ev uid hw rdraw Hva Hve Hhi)
+          eapply read_argc_w; first [exact Hva | exact Hvl | exact Hlau | exact Hlo | exact Hhi]
         | apply bytes_le_to_Z_4_small; rewrite Hargc; lia ]
         | step_simpl]; vnorm.
       rewrite (v_lw_small argc) by (rewrite Hargc; lia).
@@ -128,7 +136,7 @@ Section P1.
         | addr_norm; rewrite rdn_cmem_above by region_side;
           replace (Z_to_bv 64 (bv_unsigned sp0 + 8)) with (sp0 + nat_to_word (8 + 8 * 0))
             by (rewrite word_add_nat; f_equal; lia);
-          exact (read_argv_ptr_w SEGS RPH sp0 av ev uid hw rdraw Hva Hve Hlo Hhi 0 ltac:(lia))
+          eapply read_argv_ptr_w; first [exact Hva | exact Hvl | exact Hlau | exact Hlo | exact Hhi | lia]
         | apply bytes_le_to_Z_8 ]
         | step_simpl]; vnorm.
       stepiv (F_cf9f0 _ HX) D_cf9f0 (Z_to_bv 64 (8 * Z.of_nat (length av)))

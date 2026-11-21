@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the place_declined_b premise of the mmap decline). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -86,7 +87,12 @@ Lemma nprog_read : forall sel fd buf cnt mo,
   end -> nprog sel (NRead fd buf cnt) mo.
 Proof.
   intros sel fd buf cnt mo Hfd. apply nprog_of_nstep; [exact I|].
-  destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|pi pw|rd wr| ]|] eqn:E; try contradiction.
+  (* [FdEntry] has 14 constructors at 75d69e00 theories/LinuxProcessSem/State.v:3257, the
+     last four appended: [FdStream id side st], [FdEventfd ctx], [FdDgram family],
+     [FdAnon id af].  Pattern copied from the in-tree sibling Lib/Decode.v:428; all four
+     new entries land in the [Some _ => False] arm of [Hfd], so [try contradiction] closes
+     them and the three bullets below are unchanged. *)
+  destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|pi pw|rd wr| |i sd st|ctx|fam|i af]|] eqn:E; try contradiction.
   - destruct (fs_lookup (m_fs mo) p) as [data|] eqn:Hfs; [|contradiction].
     eexists _, _, []. cbn [nstep]. rewrite E, Hfs. split; [reflexivity|]. split; reflexivity.
   - exists (efferr EISDIR), mo, []. cbn [nstep]. rewrite E. auto.
@@ -193,7 +199,7 @@ Proof.
   destruct Hst as ((Hs & _) & Hst & _).
   assert (Hn' : match n with NBrk _ | NMunmap _ _ | NMprotect _ _ _ => True
              | NMmap _ _ _ flags => mmap_noreserve_b (Z_to_bv 64 flags) = false | _ => False end).
-  { destruct n; try exact I; try contradiction. cbn [nsafe] in Hs. eapply mmap_safe_noreserve. exact Hs. }
+  { destruct n; try exact I; try contradiction. cbn [nsafe] in Hs. eapply mmap_safe_noreserve. exact (proj1 Hs). }
   destruct (nstep_mm_vm_only n mo rsp mo' evs Hn' Hst) as ((Hfd & Hfs & _) & -> & _). auto.
 Qed.
 

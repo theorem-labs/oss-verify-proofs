@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stream constructor takes the caller's stack floor, inside the stack window the launch maps, as its last premise). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -103,6 +104,7 @@ Definition stream_ctor_stmt : Prop :=
     as_RFS H LF m -> (length LF + 1 < AFS_MAXLIVE)%nat -> ACONST m ->
     stack0 m lo shi -> bv_unsigned sp + 64 <= shi ->
     stream_ctor_cost N <= as_AL H s ->
+    hceil + 2244096 <= lo ->      (* LPS 727298f3: the stack floor the wild free (AsIface7) takes *)
     as_SR H (stream_ctor_post ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc s LB LF bs ioc D N allocb regb cfgb schedb lo B shi ds m mo)
       (mkCfg msF mo).
 

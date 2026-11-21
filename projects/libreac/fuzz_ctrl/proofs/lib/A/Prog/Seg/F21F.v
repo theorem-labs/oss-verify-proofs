@@ -6,18 +6,19 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_box_catalogue_match.v, with its module paths and module names changed; 2419 of its 2557 lines of code are new or changed and 3153 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/Tac_slot.v, with its module paths and module names changed; 594 of its 661 lines of code are new or changed and 2490 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F21.v; 202 of its 337 lines of code are new or changed and 526 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/F21.v blob 2ea8e91ed500 (the blob this tree had at release c5e779efe8c) at fdd2ed9f9d7.
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   FACTS, PAU pau-libreac-v190. Source: Seg/F21.v blob 2ea8e91ed500 (the blob this tree had at release).
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: each <r>_of_F re-derives F21.<r> at ExecF.RNG_all; <r>_of_F_verbatim checks by constr_eq that its type is
    the type of F21.<r> after F21's own first premise (the plain record-verifier contract). Mechanical re-run,
    route (a) (lead 22:15Z); input to the ported walk only.
    Callee _F cited: reac_ctrl_headamp_record_verify_contract_F, proved by
-   lib/A/Prog/reac_ctrl_headamp_record_verify_F.v (blob 87d3a9c0822b, copied byte-for-byte from 911c6aa5d24 with its
-   statement's home lib/A/Prog/reac_ctrl_headamp_record_verify_c.v blob a751f3b5d3ae; neither is on fdd2ed9f9d7). *)
+   lib/A/Prog/reac_ctrl_headamp_record_verify_F.v (blob 87d3a9c0822b, copied byte-for-byte with its
+   statement's home lib/A/Prog/reac_ctrl_headamp_record_verify_c.v blob a751f3b5d3ae; neither is). *)
 (* Footprint twins of Seg/F21.v f21_t2 / f21_evt (re-walk form, RECIPE.md steps 1-2 (a working note, not in this delivery)): the same runs as
    ExecF.evtF under a footprint RNG, with one rng premise per region the run (or the record verifier it calls through
    its footprint contract reac_ctrl_headamp_record_verify_contract_F) reads or writes: the record bytes
@@ -25,13 +26,13 @@
    of the shadow-offset cell and that cell, and (f21_evt_F) the sum_ok spill [A+280, A+288).
    F21.v is unchanged; f21_t2_of_F / f21_evt_of_F re-derive its statements from the twins with RNG_all.
 
-   v1.9.0 (2026-10-28): moved onto a Theorem Labs lane's v1.9 F21 runs (a working branch 3b23b0e7141, Seg/F21.v f21_t2 :244,
-   f21_evt :360; the two statements are byte-identical to the ones at 5eecbc43670). Every pc is copied from a Theorem Labs lane's
+   v1.9.0 (2026-10-28): moved onto a Theorem Labs lane's v1.9 F21 runs (a working branch, Seg/F21.v f21_t2 :244,
+   f21_evt :360; the two statements are byte-identical to the ones). Every pc is copied from a Theorem Labs lane's
    text: v1.8 0x82408 / 0x82458 / 0x824a8 / 0x824ec / 0x824f4 -> v1.9 0x824b4 / 0x82504 / 0x82554 / 0x82598 /
    0x825a0. The footprint regions are the v1.8 ones; the image cells are named GOT_CELL_K / CELL_K (lib/A/AsanRT.v,
    v1.9 0x9fad0 / 0xa8878). The record verifier is no longer a Section hypothesis: f21_harvc_F, the file's one use
    of the callee contract, applies its owner's proof reac_ctrl_headamp_record_verify_holds_F (lib/A/Prog/
-   reac_ctrl_headamp_record_verify_F.v, a working branch dcf92cb416a). So the twins and the _of_F corollaries
+   reac_ctrl_headamp_record_verify_F.v, a working branch). So the twins and the _of_F corollaries
    take no hypothesis; the owner's f21_t2 / f21_evt take the plain contract as their first premise (F21.v Section S,
    Hypothesis HARV), and the *_of_F_verbatim checks pin each corollary with constr_eq to the owner's statement after
    that premise. *)

@@ -1,7 +1,7 @@
 # G11: the address checker 205a90fd19b8 over the image B files, on the series tree (gate record)
 
-Proves no function (kind: measurement). Run 2026-10-31 (`run.sh g11`) on the series tree `d57e4e79e469` (run.sh:
-`SERIES`): the series base b1afc3e80791 with the unit's later fixes (among them YE34.v:20 and :24, ruled in G9). Its
+Proves no function (kind: measurement). Run 2026-10-31 (`run.sh g11`) on the series tree (run.sh:
+`SERIES`): the series base with the unit's later fixes (among them YE34.v:20 and :24, ruled in G9). Its
 owner installed port_addr_check 205a90fd19b8 at 2026-10-31 08:00Z. 0d24592683b6 is run again here on the same tree,
 so that the two versions are compared on one tree. The G10 (0d24592683b6 on the series base), G7 and G1 records stand
 beside this one, unchanged.
@@ -23,8 +23,8 @@ size-name), read before the symbol key, and a size whose value changed is NON-AD
 ## Commands
 (1) The gate: G1's command with the tool replaced and the series tree as `--dst`, every other argument the same:
 ```
-python3 "$PAC205" --git "$GIT" --donors-from "$DONORS" --summary --fail-on-flags \
-  --src c8557374ad2e:proofs/cgif/cgif_file_fuzzer/lib --dst d57e4e79e469:proofs/libreac/fuzz_disco/lib \
+python3 "$PAC205" --git "$GIT" --donors-from "$DONORS" --summary --fail-on-flags \:
+  proofs/cgif/cgif_file_fuzzer/lib:proofs/libreac/fuzz_disco/lib \
   --paired-only --map A/=A/ --map =Reusable/ \
   --src-image A="$CGIF_BIN/cgif_file_fuzzer.asan" --src-image B="$CGIF_BIN/cgif_file_fuzzer.asan-ubsan" \
   --src-image P="$CGIF_BIN/cgif_file_fuzzer.plain" --src-image U="$CGIF_BIN/cgif_file_fuzzer.ubsan" \

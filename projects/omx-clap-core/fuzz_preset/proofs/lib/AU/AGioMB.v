@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGioM.v (a working branch 29b7505aa27, file sha256 f4fd83e5ec40) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53; pin f8f98a95bc52); module paths changed; its 2 image addresses moved by code-verified function pairs (2 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py); no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: relocated from the old pin B (pinned fuzz_preset.asan-ubsan f8f98a95bc52, twin 3b5e1a099b53; this file at 74f20580f552) to B' (#102 pin d663f82d7f48, twin c90d4fa54d43) by the relocation route of record, frozen alreloc a5c53bb2bed4ad03 (a Theorem Labs lane's internal file alreloc.py.frozen-a5c53bb2bed4ad03), --assume-source, --resolve resolve-B102.txt (sha256 5cd2316e3413; internal record) (3 lines name this file); 2 numerals changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGioM.v (a working branch, file sha256 f4fd83e5ec40) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53; pin f8f98a95bc52); module paths changed; its 2 image addresses moved by code-verified function pairs (2 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: relocated from the old pin B (pinned fuzz_preset.asan-ubsan f8f98a95bc52, twin 3b5e1a099b53; this file) to B' (#102 pin d663f82d7f48, twin c90d4fa54d43) by the relocation route of record, frozen alreloc a5c53bb2bed4ad03 (a Theorem Labs lane's internal file alreloc.py.frozen-a5c53bb2bed4ad03), --assume-source, --resolve resolve-B102.txt (sha256 5cd2316e3413; internal record) (3 lines name this file); 2 numerals changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (task MEMNORM, full Allocate): the memnorm-kept twin of cgif's AGioE.alloc_sec_e (the SECONDARY arm
    of the frame-generic Allocate contract): [alloc_sec_em] (:255) concludes MemnormT.alloc_leaf_em (ErrnoGcf.alloc_leaf_e plus
-   `memnorm mem -> memnorm mem'`, MemnormT.v:205) in place of ErrnoG.alloc_leaf_e, from AGioE's hypotheses (Section f, :244-253); this tree has no AGioE (cgif lib/AGioE.v at 29b7505aa27, as history).
+   `memnorm mem -> memnorm mem'`, MemnormT.v:206) in place of ErrnoG.alloc_leaf_e, from AGioE's hypotheses (Section f, :244-253); this tree has no AGioE (cgif lib/AGioE.v, as history).
    rule 24: no function proved (kind: arm twin, frame corollary).
 
-   The proof (alloc_sec_w_em, :76-223) is cgif's AGioE.alloc_sec_w_e's (cgif lib/AGioE.v:73-212 at 29b7505aa27, as history), with AGk0MB.sec_arms_w_em (AGk0MB.v:676) for AGk0EB.sec_arms_w_e (AGk0EB.v:610) and the keep
+   The proof (alloc_sec_w_em, :76-223) is cgif's AGioE.alloc_sec_w_e's (cgif lib/AGioE.v:73-212, as history), with AGk0MB.sec_arms_w_em (AGk0MB.v:676) for AGk0EB.sec_arms_w_e (AGk0EB.v:610) and the keep
    carried through the leaf conversion (the virtual register file does not touch memory); the changed lines are marked
    (* memnorm *).  This tree has no AGioE.v, and lib/AU/AGio.v (AGio.alloc_sec_w / alloc_sec) is removed in this series, as history. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
@@ -65,7 +66,7 @@ Hypothesis HNOB : NMAXW + 4 * 4096 <= NOBW.
 Hypothesis HROOM : 2 * (NMAXW + 4 * 4096) + (NMAXW + 4 * 4096) / 8 + 8192 + 2 ^ 19 <= ROOMW.
 Hypothesis IFS : AGif4.AIfaceSw B U mt ARX AOX rpre nmax lmax lpost dpost mtag stag NMAXW NOBW ROOMW.
 Hypothesis TS : TfibSyms B.
-(* Every instantiation keeps Allocate's size-too-big branch off (AllocG.v:20). *)
+(* Every instantiation keeps Allocate's size-too-big branch off (AllocG.v:21). *)
 Hypothesis Hnmax : nmax <= NMAXW.
 (* The call site's can_fill argument: 1 for malloc / realloc, 0 for calloc (AllocG's [cf]). *)
 Variable cf : Z.
@@ -244,7 +245,7 @@ Variables (mtag stag : Z).
 Hypothesis IF : AGif0n.AIface B U mt ARX AOX rpre nmax lmax lpost dpost mtag stag.
 Hypothesis IFS : AGif4.AIfaceS B U mt ARX AOX rpre nmax lmax lpost dpost mtag stag.
 Hypothesis TS : TfibSyms B.
-(* Every instantiation keeps Allocate's size-too-big branch off (AllocG.v:20). *)
+(* Every instantiation keeps Allocate's size-too-big branch off (AllocG.v:21). *)
 Hypothesis Hnmax : nmax <= MALLOC_MAX.
 (* The call site's can_fill argument: 1 for malloc / realloc, 0 for calloc (AllocG's [cf]). *)
 Variable cf : Z.

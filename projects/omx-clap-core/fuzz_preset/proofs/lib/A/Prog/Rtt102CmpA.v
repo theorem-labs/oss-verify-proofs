@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumC.v, with its module names changed; 78 of its 113 lines of code are new or changed and 893 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image A' (asan, sha256 1be0f53d96cb9d6c, unstripped twin bff8519bbe3ea0e4): STRETCH CMP of
    round_trip_text's walk ON THE #102 PINS (lane RttCmp of WalkRtt102, the text owner), RTT_SEG_CMP of Rtt102Cut.v:
    rtt_seg RT_O2 rtt_at_o2 -> rtt_seg RT_CMP rtt_at_cmp.
@@ -11,7 +12,7 @@
           both hold ri_tb D) .. +760 addi s7, s10, 0x20 .. +768 jal __wrap_strlen            -> +772 cmp_at_len
      PN   +772 .. +784 jal parse_noting (text, len, &back)                                   -> +788 cmp_at_pn
      FF   +788 mv s8, a0 .. +796 jal __wrap_free (want) .. +804 jal fuzz_free (text)         -> +808 RT_O2
-   WHAT IS PROVED, rtt_seg_cmp_A : RTT_SEG_CMP, ON THE BATCH KIT'S CUT 7cdbb61b5fa0 (WalkRtt102b's shared layer 80a1d52c32c7),
+   WHAT IS PROVED, rtt_seg_cmp_A : RTT_SEG_CMP, ON THE BATCH KIT'S CUT (WalkRtt102b's shared layer),
    under the Section hypotheses below only (engine / instance laws, the callee texts, the head), with NO premise of
    its own. The pre-cut theorem rtt_seg_cmp_A_univend was CMP from a cut strengthened by two tagged premises; both
    retire at the batch kit's cut:
@@ -20,13 +21,13 @@
                    gone from every text. rtt_at_cmp_ue, RTT_UNIVEND_CLAUSE and rtt_seg_cmp_A_of_univend are deleted.
      K0-SRC-CEIL   DISCHARGED. The cut's src_rd (PRH_Base.v:1660) asks q + len <= alloc_ceiling, no `+ 8`;
                    Rtt102CmpPNA.v cmp_pn's assert HSRC_CEIL derives it from the text block being live: alx_blocks
-                   (YCbqG.v:113-116, ARx_blocks_law: p + req_size n <= alloc_ceiling) at (q - cf_head, capw + cf_head),
+                   (YCbqG.v:114-117, ARx_blocks_law: p + req_size n <= alloc_ceiling) at (q - cf_head, capw + cf_head),
                    req_size n >= n, and len < capw (Rtt102Cut.v:575, rtt_at_cmp).
    Everything else is the texts': parse_noting's outcome clause gives the granted reading at the cut's position and
    prh_cons_from share (its ran-out outcome is refuted at the call), the read-back blocks over rd_blocks, the free
    order over pj_frees at every depth bound (at DOC_D PresetFreeFo.pj_frees_wdoc_t turns it into fo t) and K0-CAP's
    pj_ncapR; the wild budget's 2 for parse_noting is the text's 32 less the rendering's 30 (rtt_wild_room).
-   HISTORY: at f9eda666dd9 (record 9cf516b1971, WITHDRAWN as a stretch result) the theorem rested on K0-TBLK, an
+   HISTORY: (record, WITHDRAWN as a stretch result) the theorem rested on K0-TBLK, an
    ordered block equality since MEASURED FALSE, so that theorem was vacuous; the later K0-FREEORD (universal over
    every pj_nodeR tree at the reader's size multiset) was of the same refutable class. Neither is carried here.
    Numerals: the program points above (DERIVED). No ADDRESS literal: every pc is pa_sigma / pa_val of the listing. *)
@@ -135,7 +136,7 @@ Hypothesis STRLEN : forall fx' : YK11.FPState,
    at any float state: the call happens at the cut's fxc *)
 Hypothesis TFF : forall fx' : YK11.FPState,
   @tfuzz_free_specX fx' rc CfParamsPreset.CfParams_preset prh_img_A RL A_prog_listing PA B ARx SK.
-(* (b) the callee's kit text, parse_noting (PRH_FnCheck.v at the batch kit's cut 7cdbb61b5fa0, blob c40cf3fdcd2a: the
+(* (b) the callee's kit text, parse_noting (PRH_FnCheck.v at the batch kit's cut, blob c40cf3fdcd2a: the
    post-implication form with its own exact advance, the wild room at entry and the budgeted post), at any float state:
    the call happens at the cut's fxc, which rtt_fx only relates to fx *)
 Hypothesis TPN : forall fx0 : YK11.FPState,

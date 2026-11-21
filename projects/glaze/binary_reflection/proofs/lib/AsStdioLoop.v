@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise on the writev nodes, carried through the stdio loop). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -469,6 +470,12 @@ Section RZR.
   Qed.
   Lemma MOK_fds : forall model, MOK A model0 model -> m_fds model = m_fds model0.
   Proof. intros model [_ SB]. pose proof (same_but_materialized_frame _ _ SB) as F'. tauto. Qed.
+  (* [comment removed for export] *)
+  Lemma MOK_rdr : forall model, MOK A model0 model -> m_channel_reader model = m_channel_reader model0.
+  Proof.
+    intros model [_ SB]. destruct (same_but_materialized_frame _ _ SB) as (_ & _ & _ & _ & _ & Ep & _).
+    unfold m_channel_reader. rewrite Ep. reflexivity.
+  Qed.
   Lemma MOK_minv : forall model, MOK A model0 model -> MInv A model.
   Proof. intros model [MI _]. exact MI. Qed.
 
@@ -525,6 +532,7 @@ Section Loop.
   Hypothesis Fhi : (f + 232 <= 0x103af8)%Z.
   Hypothesis FD : (0 < fd < 2147483648)%Z.
   Hypothesis Hfd0 : fd_lookup (m_fds model0) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)).
+  Hypothesis Hrdr0 : m_channel_reader model0 = true.
   Hypothesis Hh0 : m_halted model0 = None.
   Hypothesis Hcov0 : lazy_cover H (m_vm_lazy model0) A.
   #[local] Abbreviation MOKm := (MOK A model0).
@@ -621,6 +629,8 @@ Section Loop.
   Proof. intros model MK. exact (MOK_cover H A model0 Hcov0 model MK). Qed.
   Lemma LK_fd : forall model, MOKm model -> fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)).
   Proof. intros model MK. rewrite (MOK_fds A model0 model MK). exact Hfd0. Qed.
+  Lemma LK_rdr : forall model, MOKm model -> m_channel_reader model = true.
+  Proof. intros model MK. rewrite (MOK_rdr A model0 model MK). exact Hrdr0. Qed.
   (* [comment removed for export] *)
   Lemma ra_frame : forall (a : Z) (n : nat), (su - 112 <= a)%Z -> (a + Z.of_nat n <= su)%Z ->
     range_avoids H (Z_to_bv 64 a) n.
@@ -708,7 +718,7 @@ Section Loop.
     eapply (HW1 H A F regs1 (0xeca74 : word) m' mdlA W_eca78 fd
               (Z_to_bv 64 (su - 88)) (Z_to_bv 64 (bv_unsigned b + Z.of_nat k))
               (Z_to_bv 64 (Z.of_nat (length bs) - Z.of_nat k)) (skipn k bs) K
-              HH Hwx Awf (LK_minv _ MKA) (LK_cover _ MKA) MCA F_eca78 E_eca78 (LK_halted _ MKA) (LK_fd _ MKA) FD
+              HH Hwx Awf (LK_minv _ MKA) (LK_cover _ MKA) MCA F_eca78 E_eca78 (LK_halted _ MKA) (LK_fd _ MKA) (LK_rdr _ MKA) FD
               Q17 Q10 Q11 Q12);
       [ | | | apply ra_frame; lia | | | | | | exact HKnil | ].
     - subst m'. rdn_solve.
@@ -823,7 +833,7 @@ Section Loop.
                 (Z_to_bv 64 (su - 104)) (Z_to_bv 64 (bv_unsigned b0 + Z.of_nat k))
                 (Z_to_bv 64 (Z.of_nat (length bs0) - Z.of_nat k))
                 b1 (Z_to_bv 64 (Z.of_nat (length bs1))) (skipn k bs0) bs1 K
-                HH Hwx Awf (LK_minv _ MKA) (LK_cover _ MKA) MCA F_eca78 E_eca78 (LK_halted _ MKA) (LK_fd _ MKA) FD
+                HH Hwx Awf (LK_minv _ MKA) (LK_cover _ MKA) MCA F_eca78 E_eca78 (LK_halted _ MKA) (LK_fd _ MKA) (LK_rdr _ MKA) FD
                 Q17 Q10 Q11 Q12);
         [ | | | | | | apply ra_frame; lia | | | | | | | | exact HKnil | ].
       + subst m'. rdn_solve.
@@ -924,7 +934,7 @@ Section Loop.
                 (Z_to_bv 64 (su - 88)) (Z_to_bv 64 (bv_unsigned b1 + Z.of_nat (k - length bs0)))
                 (Z_to_bv 64 (Z.of_nat (length bs1) - Z.of_nat (k - length bs0)))
                 (skipn (k - length bs0) bs1) K
-                HH Hwx Awf (LK_minv _ MKA) (LK_cover _ MKA) MCA F_eca78 E_eca78 (LK_halted _ MKA) (LK_fd _ MKA) FD
+                HH Hwx Awf (LK_minv _ MKA) (LK_cover _ MKA) MCA F_eca78 E_eca78 (LK_halted _ MKA) (LK_fd _ MKA) (LK_rdr _ MKA) FD
                 Q17 Q10 Q11 Q12);
         [ | | | apply ra_frame; lia | | | | | | exact HKnil | ].
       + subst m'. rdn_solve.

@@ -4,8 +4,8 @@
 (* Modified by Theorem Labs, 2026-10: copied from projects/cgif/cgif_file_fuzzer/proofs/lib/A/AD2l.v, with its module paths changed and its addresses moved to libreac/fuzz_scene's ASan build. *)
 (* Modified by Theorem Labs, 2026-10-29: libreac/fuzz_scene's concrete start-up record B for the asan image, the
    instance of `TfibSyms` (lib/A/AF0m.v:906-930) that lib/A/SceneBCertB.v gives to the start-up certificate.
-   Its tables are a working branch's (lib/A/AF0l.v, lib/A/AF0m.v at a working branch a00b0ed6266) and its trace
-   universe is a Theorem Labs lane's measured one (lib/A/ACej.v at a working branch 1c79108a270). The five
+   Its tables are a working branch's (lib/A/AF0l.v, lib/A/AF0m.v at a working branch) and its trace
+   universe is a Theorem Labs lane's measured one (lib/A/ACej.v at a working branch). The five
    literals were measured on fuzz_scene.asan (unstripped sha256 6ed872f7cc8c1e42..., stripped 43654a025fd02e1f...,
    by an ELF symtab / .got / PT_LOAD read): each is scene's, none is cgif's.
      as_shadow_cell 0xa37f8 = st_value of __asan_shadow_memory_dynamic_address (.bss, 8 bytes) + 0;
@@ -19,7 +19,8 @@
    cells Tfib_const_abs[49] and [50] (AF0m.v:83-84), not file bytes. *)
 (* Modified by Theorem Labs, 2026-10: derived from lib/A/AD2l.v of this library by derive_y.py: module names A.Axyz -> AU.Yxyz, addresses moved from libdiginet/fuzz_codec's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/AD2l.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
 (* Modified by Theorem Labs, 2026-10: copied from projects/libreac/fuzz_scene/proofs/lib/A/AD2l.v (donor image sha256 43654a025fd0), with its module paths changed and its addresses moved to libdiginet/fuzz_codec's ASan build. *)
-(* ZERO-MARGIN facts of this record's Tfib_owned_static (AF0m.v:894-901), measured on fuzz_scene.asan, for whoever
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* ZERO-MARGIN facts of this record's Tfib_owned_static (AF0m.v:895-902), measured on fuzz_scene.asan, for whoever
    next edits these tables: each is a premise of the entry statement that holds with no byte to spare.
      - trailer window [0x20e00, 0x20e28): the owned row (0x20dd2, 0x2e) ends exactly at 0x20e00, and (0x20e2c, 0x14)
        starts right after the trailer bytes [0x20e20, 0x20e2c) (HRO_TT, proved in lib/A/SceneBCertB.v);

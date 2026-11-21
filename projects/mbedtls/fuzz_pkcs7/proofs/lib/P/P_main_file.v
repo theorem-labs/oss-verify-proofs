@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (LREGS written out in plain text from its encoded (CDefT) definition, with p1's new argument list; the loop invariant LINV carries the channel reader, li_rdr, and a new tactic rdr_solve supplies it to the refused, out-of-memory and directory tails; the stack window, stack bounds and frame regions of dinv, dinv_stk, dinv_heap, dinv_agree, tail_mem_agree, the read loop and dir_kont moved to sp0 - 6144512, the floor of the stack the launch maps (was sp0 - 8388608); HINIT, dinv_cut, file_kont_core and dir_kont take cut_mem and file_kont_concrete with the entry draw rd). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -260,6 +261,12 @@ Proof.
 Qed.
 Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
+(* 08b1429: a write reads [m_channel_reader]; it is invariant (recipes/channel-reader-premise.md).
+   Close it from a carried fact, through a heap frame, or from the ambient record. *)
+Ltac rdr_solve :=
+  first [ assumption | exact a_reader
+        | match goal with MF : mo_frame _ _ |- _ => rewrite (mo_frame_reader _ _ MF); clear MF; rdr_solve end ].
+
 Section Driver.
   Context {AMB : Amb}.
   Context {LM : Lim}.   (* [comment removed for export] *)
@@ -292,7 +299,7 @@ Section Driver.
   Hypothesis FREEC : free_c_stmt psegs (P_layout sp0) HI DRV.
   Hypothesis DRVMO : drv_mo_stmt psegs (P_layout sp0) HI DRV.
   Hypothesis DRVLE : drv_le_stmt psegs (P_layout sp0) HI DRV.
-  Hypothesis HINIT : ltac2:(CDefT.buildp (gd_tbl_P_main_file ()) "PM,P,(8.&40.)(9.(8.&8.))Pfd3,$3=.P,(3>.Vsp0,Va0s,Vpath,Venvv,Vmem0,R2.)(3;.(36.$4.(1>.Vsp0,)VHI,)Lh,(36.$4.(1>.Vsp0,)VHI,)(<.(37.$4.(1>.Vsp0,)VHI,R1.(24.$1<.)R4.(3?.VAMB,VLM,Vsp0,Vtid,Vbrk,Vmbase,Vfs0,Vstdin0,R3.))(<.(10.$;.(40.$4.(1>.Vsp0,)VHI,R1.)(41.&40.Vsp0,))(<.A3.VDRV,#>.R1.(3?.VAMB,VLM,Vsp0,Vtid,Vbrk,Vmbase,Vfs0,Vstdin0,R3.)A1.VNS,R1.))))")
+  Hypothesis HINIT : ltac2:(CDefT.buildp (gd_tbl_P_main_file ()) "PM,P,(8.&40.)(9.(8.&8.))Pfd3,$3=.P,(3>.VAMB,Vsp0,Va0s,Vpath,Venvv,Vrd,Vmem0,R2.)(3;.(36.$4.(1>.Vsp0,)VHI,)Lh,(36.$4.(1>.Vsp0,)VHI,)(<.(37.$4.(1>.Vsp0,)VHI,R1.(24.$1<.)R4.(3?.VAMB,VLM,Vsp0,Vtid,Vbrk,Vmbase,Vfs0,Vstdin0,R3.))(<.(10.$;.(40.$4.(1>.Vsp0,)VHI,R1.)(41.&40.Vsp0,))(<.A3.VDRV,#>.R1.(3?.VAMB,VLM,Vsp0,Vtid,Vbrk,Vmbase,Vfs0,Vstdin0,R3.)A1.VNS,R1.))))")
 (* [comment removed for export] *).
 
   (* [comment removed for export] *)
@@ -302,13 +309,13 @@ Section Driver.
     first [specialize (H envv)|idtac]; first [specialize (H tid)|idtac]; first [specialize (H rd)|idtac]; first [specialize (H regs0)|idtac];
     first [specialize (H mem0)|idtac]; first [specialize (H Hva)|idtac]; first [specialize (H Hve)|idtac];
     first [specialize (H Hvsp)|idtac]; first [specialize (H Htid)|idtac]; first [specialize (H ME)|idtac];
-    lazymatch goal with CM : cut_mem _ _ _ _ _ ?M |- _ => specialize (H M CM) end.
+    lazymatch goal with CM : cut_mem _ _ _ _ _ _ ?M |- _ => specialize (H M CM) end.
 
   (* [comment removed for export] *)
   Definition FRAME : list cell := ltac2:(CDefT.buildp (gd_tbl_P_main_file ()) "(21.$39.(3<.(2>.&40.=))(21.$39.(3<.(2>.&40.=))(21.$39.(3<.(2>.&40.=))(21.$39.(3<.(2>.&40.=))(21.$39.(3<.(2>.&40.(30.(41.&40.Vsp0,)+20.)))(21.$39.(3<.(2>.&40.+1<=<<.))(21.$39.(3<.(2>.&40.+2.))(21.$39.(3<.(2>.&40.(30.(41.&40.Vsp0,)+8.)))(21.$39.(3<.(2>.&40.+3;;;0.))(24.$39.))))))))))")
 (* [comment removed for export] *).
   Record dinv (m : mem) : Prop := DINV {
-    di_win : forall a : Z, bv_unsigned sp0 - 8388608 <= a < bv_unsigned sp0 -> wview psegs m (wa a) <> None;
+    di_win : forall a : Z, bv_unsigned sp0 - 6144512 <= a < bv_unsigned sp0 -> wview psegs m (wa a) <> None;
     di_frame : rw_cells psegs m (bv_unsigned sp0 - 120) FRAME;
     di_minv : mem_inv psegs m;
     di_statics : statics_ok psegs (P_layout sp0) m;
@@ -318,24 +325,24 @@ Section Driver.
   }.
 
   Local Ltac2 Set LiaOrc.tbl := fun () => "0090?L18928845742.40L22973599159.43L31111523699.42L31111528215.43L34467128655.42L56765667309.42L68075135701.40L8871453363.43 L8871456983.42 00000500B00S00d00n01B01G01Q01[S3sp0S3sp01x2Hx2H1S3sp04SPlo1H1a2HaS3sp04SPlo1H1a2HaS3sp01a2HaS3sp04SPlo1H2H01a2HaS3sp0S3sp01a2HES3sp01a2Ha". (* [comment removed for export] *)
-  #[using="AMB rd regs0 Hvsp Htid ME SPlo SPhi"] Lemma dinv_cut : forall M, cut_mem sp0 a0s path envv mem0 M -> dinv M.
+  #[using="AMB rd regs0 Hvsp Htid ME SPlo SPhi"] Lemma dinv_cut : forall M, cut_mem sp0 a0s path envv rd mem0 M -> dinv M.
   Proof.
     intros M CM. cutfact cut_mem_inv MI. cutfact cut_clear CL. cutfact cut_frame FRM. cutfact cut_tid_cell TIDC.
     pose proof SPlo. pose proof SPhi.
     split.
-    - intros a Ha. apply (cm_win _ _ _ _ _ _ CM). unfold wa. rewrite u_small by lia. lia.
+    - intros a Ha. apply (cm_win _ _ _ _ _ _ _ CM). unfold wa. rewrite u_small by lia. lia.
     - exact FRM.
     - exact MI.
     - split; [cbn; lia|]. split; [cbn; lia|]. cbn [hl_data_lo hl_data_hi hl_written P_layout]. unfold P_written.
       intros a Ha HE. apply CL; lia.
     - split; intros a Ha; apply CL; lia.
     - exact TIDC.
-    - intros x Hx. cbn [outside] in Hx. pose proof (u64_range x). apply (cm_above _ _ _ _ _ _ CM). lia.
+    - intros x Hx. cbn [outside] in Hx. pose proof (u64_range x). apply (cm_above _ _ _ _ _ _ _ CM). lia.
   Qed.
   Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
   Local Ltac2 Set LiaOrc.tbl := fun () => "0030?L24376346147.36L34467128655.38L64936856764.3600000:00D00NS3sp04SPloS3sp01a2HaS3sp04SPhi". (* [comment removed for export] *)
-  #[using="Hvsp SPlo SPhi"] Lemma dinv_stk : forall m, dinv m -> stk psegs m (bv_unsigned sp0 - 8388608) (bv_unsigned sp0 - 128).
+  #[using="Hvsp SPlo SPhi"] Lemma dinv_stk : forall m, dinv m -> stk psegs m (bv_unsigned sp0 - 6144512) (bv_unsigned sp0 - 128).
   Proof.
     intros m D. pose proof SPlo. pose proof SPhi. apply stk_of_wview; [lia|lia|]. intros a Ha. apply (di_win m D). lia.
   Qed.
@@ -343,7 +350,7 @@ Section Driver.
 
   (* [comment removed for export] *)
   Local Ltac2 Set LiaOrc.tbl := fun () => "0070?L32162264840.52L34467122463.53L37275296262.53L42409521467.50L47536040637.53L49652024439.50L56765677501.5300000:00D00Q00]00m01901MS3sp01a2HaS3sp01a2HaS3sp02SP1a2H1S3sp02SP3HSPS3sp02SP1a2Ha2H1S3sp02SP3HSPS3sp04SPlo1H2H01a2Ha". (* [comment removed for export] *)
-  #[using="Hvsp SPlo SPhi"] Lemma dinv_heap : ltac2:(CDefT.buildp (gd_tbl_P_main_file ()) "PLB,(12.$1<.)PSP,$;.Pm,P,(8.&40.)(9.(8.&8.))Pm',P,(8.&40.)(9.(8.&8.))P,(42.R2.)P,(1?.$4.(1>.Vsp0,)R5.R4.R3.R2.)P,(28.$4.R3.)P,(27.$4.R4.(31.(41.&40.Vsp0,)+800000.)R6.)P,(=.R7.(31.(41.&40.Vsp0,)+80.))P,(=.(43.(1>.Vsp0,))R8.)(42.R7.)")
+  #[using="Hvsp SPlo SPhi"] Lemma dinv_heap : ltac2:(CDefT.buildp (gd_tbl_P_main_file ()) "PLB,(12.$1<.)PSP,$;.Pm,P,(8.&40.)(9.(8.&8.))Pm',P,(8.&40.)(9.(8.&8.))P,(42.R2.)P,(1?.$4.(1>.Vsp0,)R5.R4.R3.R2.)P,(28.$4.R3.)P,(27.$4.R4.(31.(41.&40.Vsp0,)+5=<200.)R6.)P,(=.R7.(31.(41.&40.Vsp0,)+80.))P,(=.(43.(1>.Vsp0,))R8.)(42.R7.)")
 (* [comment removed for export] *).
   Proof.
     intros LB SP m m' D HP MI' ST' HSP HSP2. pose proof SPlo. pose proof SPhi. destruct D as [W F MI SO DM TI AB].
@@ -363,7 +370,7 @@ Section Driver.
 
   (* [comment removed for export] *)
   Local Ltac2 Set LiaOrc.tbl := fun () => "00S0?L11303449684.52L12180585073.57L12894880909.57L12894885609.54L16085729392.51L27051828931.52L29566453808.57L29566458452.54L29566460129.52L29566460903.53L34467128655.51L41730347118.52L41730358326.57L49335788265.57L52101703855.52L52101704617.53L53505208731.52L53505208989.53L53900435230.52L56765662601.54L56765667309.57L56765676602.53L56765677372.52L63136217354.52L6354960761.51 L6354970921.52 L64204622775.52L66782601509.57L7470072007.53 L7470072769.52 L7470082832.57 L7470086516.54 L8923421326.52 L8923428566.57 L8929206777.57 00000C00P00Z00d00n01801B01L01\01f02002A02Y02j03=03Q03d04D04N04X04b04l05605C05W06506>06O06Y06i07307=07N07f08=S3sp02lo2hi1a2Ha2H1S3sp02B21i2HiS3sp01a2HaS3sp01a2HaS3sp01a2HaS3sp01x2H1S3sp01a2HaS3sp01a2HES3sp02lo2hi1a2H2S3sp01a2H4S3sp01a2HaS3sp04SPlo1H1x2HxS3sp04SPlo2B21H1i2Hi3tidS3sp03tid2B21i2HiS3sp02lo2hi1a2H12H2S3sp04SPlo1H1a2H22H3S3sp02lo2hi1a2H12H2S3sp04SPlo2lo2hi2Hr1H1a2H22H32H4S3sp04SPloS3sp01a2HaS3sp01a2HaS3sp01a2H1S3sp01a2H1S3sp01x2Hx2H1S3sp04SPlo1H2H01a2HaS3sp04SPlo2lo2hi2Hr2H01a2Ha2H1S3sp03tidS3sp03tid2B21i2HiS3sp01a2H3S3sp02lo2hi1a2H2S3sp01a2HaS3sp01a2HES3sp04SPlo1H1x2HxS3sp04SPlo2B21H1i2Hi3tidS3sp04SPlo2B21H2H01i2Hi". (* [comment removed for export] *)
-  #[using="Hvsp Htid SPlo SPhi"] Lemma dinv_agree : ltac2:(CDefT.buildp (gd_tbl_P_main_file ()) "Pm,P,(8.&40.)(9.(8.&8.))Pm',Px,(8.&40.)(9.(8.&8.))Plo,$;.Phi,$;.P,(42.R4.)P,Pa,$;.P,(<.(=.=R1.)(>.R1.(25.+2.+40.)))P,(?.(<.(=.(31.(41.&40.Vsp0,)+800000.)R2.)(>.R2.(31.(41.&40.Vsp0,)+80.))))P,(?.(<.(=.R6.R3.)(>.R3.R5.)))P,(?.(<.(=.+59924.R4.)(>.R4.+59928.)))P,(?.(<.(=.+49869.R5.)(>.R5.+59869.)))(10.(9.(8.&8.))A1.R:.(11.R6.)A1.R;.(11.R6.))P,(44.R6.R5.)P,(2?.(<.(=.+7;000.R5.)(=.R4.(31.(41.&40.Vsp0,)+800000.)))(2?.(=.R4.+10000.)(=.R4.R5.)))(42.R7.)")
+  #[using="Hvsp Htid SPlo SPhi"] Lemma dinv_agree : ltac2:(CDefT.buildp (gd_tbl_P_main_file ()) "Pm,P,(8.&40.)(9.(8.&8.))Pm',Px,(8.&40.)(9.(8.&8.))Plo,$;.Phi,$;.P,(42.R4.)P,Pa,$;.P,(<.(=.=R1.)(>.R1.(25.+2.+40.)))P,(?.(<.(=.(31.(41.&40.Vsp0,)+5=<200.)R2.)(>.R2.(31.(41.&40.Vsp0,)+80.))))P,(?.(<.(=.R6.R3.)(>.R3.R5.)))P,(?.(<.(=.+59924.R4.)(>.R4.+59928.)))P,(?.(<.(=.+49869.R5.)(>.R5.+59869.)))(10.(9.(8.&8.))A1.R:.(11.R6.)A1.R;.(11.R6.))P,(44.R6.R5.)P,(2?.(<.(=.+7;000.R5.)(=.R4.(31.(41.&40.Vsp0,)+5=<200.)))(2?.(=.R4.+10000.)(=.R4.R5.)))(42.R7.)")
 (* [comment removed for export] *).
   Proof.
     intros m m' lo hi D AG GR Hr. pose proof SPlo. pose proof SPhi. destruct D as [W F MI SO DM TI AB].
@@ -375,7 +382,7 @@ Section Driver.
     - ddestruct F as [CA [W1 [W2 W3]]]. split; [| split; [lia|]; split; [exact W2|]; intros i Hi; apply (mem_grows_wmono m m' GR); apply W3; exact Hi].
       destruct CA as [WF (B1 & B2 & B3)]. split; [exact WF|]. split; [exact B1|]. split; [exact B2|].
       intros i Hi. unfold mrd. rewrite AG' by (cbn in Hi, B2; lia). apply B3. exact Hi.
-    - eapply (mem_inv_agree m m' (fun a => (bv_unsigned sp0 - 8388608 <= a < bv_unsigned sp0 - 128) \/ (lo <= a < hi /\ 0 <= a) \/ (0x59924 <= a < 0x59928)
+    - eapply (mem_inv_agree m m' (fun a => (bv_unsigned sp0 - 6144512 <= a < bv_unsigned sp0 - 128) \/ (lo <= a < hi /\ 0 <= a) \/ (0x59924 <= a < 0x59928)
                                           \/ (0x49869 <= a < 0x59869))); [exact MI| |].
       + intros a H1 H2. apply AG; lia.
       + intros a [Ha|[Ha|[Ha|Ha]]]; [apply ro_addr_high; lia | | apply ro_addr_data; lia | apply ro_addr_data; lia].
@@ -419,7 +426,7 @@ Section Driver.
 
   (* [comment removed for export] *)
   Local Ltac2 Set LiaOrc.tbl := fun () => "00\0?L12113272004.57L15690264964.57L16085729392.59L1748097566.57 L20629502660.57L21011980132.57L23515878686.57L23982118078.57L28070455742.57L29566453808.59L29566460774.59L3077252804.57 L35575990628.57L38415669604.57L38828685214.57L39071876414.57L40324139364.57L41208547172.57L41730358455.64L43333725758.57L46332287646.57L51063455902.57L52101704488.59L52326541156.57L52945209630.57L53505208860.59L56559771492.57L56765666148.64L56765676731.59L57007104708.57L60556448318.57L6065560878.57 L61180623918.57L63013951172.57L6395539652.57 L64644785982.57L66103035076.57L66188260615.64L66702410020.57L66919148446.57L6759395518.57 L7470071878.59 L7470082832.59 L8923428439.64 00000500:00D00I00N00S00X00]00b00l01601;01@01E01J01O01T01Y01o02402902>02O02T02Y03703<03U03_03d03i03n04304804=04B04G04`04e04j04o05905C05YS3sp0S3sp0S3sp01a2HaS3sp0S3sp0S3sp0S3sp0S3sp0S3sp0S3sp01a2HaS3sp01a2H3S3sp0S3sp0S3sp0S3sp0S3sp0S3sp0S3sp0S3sp04SPlo1a1n2H31j2HjS3sp0S3sp0S3sp0S3sp04SPlo1H1a2H1S3sp0S3sp0S3sp04SPlo2lo2hi2Hr1a2H12H22H3S3sp0S3sp04SPlo1a1n2H12H21j2HjS3sp01a2H1S3sp0S3sp0S3sp0S3sp0S3sp0S3sp0S3sp0S3sp0S3sp04SPlo1a1n2H12H21j2HjS3sp0S3sp0S3sp0S3sp01a2H2S3sp01a2HaS3sp04SPlo1a1n2H41j2Hj". (* [comment removed for export] *)
-  #[using="Hvsp SPlo SPhi"] Lemma tail_mem_agree : ltac2:(CDefT.buildp (gd_tbl_P_main_file ()) "Pm,P,(8.&40.)(9.(8.&8.))Pm',Px,(8.&40.)(9.(8.&8.))Plo,$;.Phi,$;.P,(45.Vsp0,(41.&40.Vtid,)R4.)P,Pa,$;.P,(<.(=.=R1.)(>.R1.(25.+2.+40.)))P,(?.(<.(=.(31.(41.&40.Vsp0,)+800000.)R2.)(>.R2.(31.(41.&40.Vsp0,)+80.))))P,(?.(<.(=.R6.R3.)(>.R3.R5.)))P,(?.(<.(=.+59924.R4.)(>.R4.+59928.)))P,(?.(<.(=.+49869.R5.)(>.R5.+59869.)))(10.(9.(8.&8.))A1.R:.(11.R6.)A1.R;.(11.R6.))P,(44.R6.R5.)P,(2?.(<.(=.+7;000.R5.)(=.R4.(31.(41.&40.Vsp0,)+800000.)))(2?.(=.R4.+10000.)(=.R4.R5.)))(45.Vsp0,(41.&40.Vtid,)R7.)")
+  #[using="Hvsp SPlo SPhi"] Lemma tail_mem_agree : ltac2:(CDefT.buildp (gd_tbl_P_main_file ()) "Pm,P,(8.&40.)(9.(8.&8.))Pm',Px,(8.&40.)(9.(8.&8.))Plo,$;.Phi,$;.P,(45.Vsp0,(41.&40.Vtid,)R4.)P,Pa,$;.P,(<.(=.=R1.)(>.R1.(25.+2.+40.)))P,(?.(<.(=.(31.(41.&40.Vsp0,)+5=<200.)R2.)(>.R2.(31.(41.&40.Vsp0,)+80.))))P,(?.(<.(=.R6.R3.)(>.R3.R5.)))P,(?.(<.(=.+59924.R4.)(>.R4.+59928.)))P,(?.(<.(=.+49869.R5.)(>.R5.+59869.)))(10.(9.(8.&8.))A1.R:.(11.R6.)A1.R;.(11.R6.))P,(44.R6.R5.)P,(2?.(<.(=.+7;000.R5.)(=.R4.(31.(41.&40.Vsp0,)+5=<200.)))(2?.(=.R4.+10000.)(=.R4.R5.)))(45.Vsp0,(41.&40.Vtid,)R7.)")
 (* [comment removed for export] *).
   Proof.
     intros m m' lo hi TM AG GR Hr. pose proof SPlo. pose proof SPhi. destruct TM as [W RO GOT DA CO TI TR LO [canw CA] NL SI OF ATX].
@@ -527,8 +534,7 @@ Section Driver.
     Local Ltac2 Set LiaOrc.tbl := fun () => "". (* [comment removed for export] *)
 
     (* [comment removed for export] *)
-    Definition LREGS (ra t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 s7 t3 t4 t5 t6 : word) (buf len cap : Z) : bvmap 5 word := ltac2:(CDefT.buildp (gd_tbl_P_main_file ()) "(50.O14.(2>.&40.(31.(41.&40.Vsp0,)+80.))(2>.&40.+10800.)(2>.&40.+599<8.)O13.O12.O11.(2>.&40.+2.)(2>.&40.O3.)O10.O?.O>.O=.O<.O;.O:.O9.(51.Vsp0,Va0s,Vpath,Venvv,)(2>.&40.O2.)(2>.&40.+3.)(2>.&40.O1.)(2>.&40.+49869.)O8.(2>.&40.=)(2>.&40.=)(2>.&40.=)(2>.&40.=)O7.O6.O5.O4.)")
-(* [comment removed for export] *).
+    Definition LREGS (ra t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 s7 t3 t4 t5 t6 : word) (buf len cap : Z) : bvmap 5 word := (mkR ra (Z_to_bv (64)%N (Z.sub (bv_unsigned sp0) 128%Z)) (Z_to_bv (64)%N 0x10800%Z) (Z_to_bv (64)%N 0x599c8%Z) t0 t1 t2 (Z_to_bv (64)%N 2%Z) (Z_to_bv (64)%N buf) a0 a1 a2 a3 a4 a5 a6 a7 (p1 a0s path envv rd) (Z_to_bv (64)%N len) (Z_to_bv (64)%N 3%Z) (Z_to_bv (64)%N cap) (Z_to_bv (64)%N 0x49869%Z) s7 (Z_to_bv (64)%N 0%Z) (Z_to_bv (64)%N 0%Z) (Z_to_bv (64)%N 0%Z) (Z_to_bv (64)%N 0%Z) t3 t4 t5 t6).
 
     Record LINV (buf len cap : Z) (k : nat) (m : mem) (mo : Model) (h : HST psegs (P_layout sp0) HI) : Prop := MKLINV {
       li_dinv : dinv m;
@@ -539,6 +545,7 @@ Section Driver.
       li_mok : MOK mo;
       li_fs : m_fs mo = fs0;
       li_fds : m_fds mo = FDS (Z_to_bv 64 len);
+      li_rdr : m_channel_reader mo = true;   (* 08b1429: writev reads the channel reader (recipes/channel-reader-premise.md) *)
       li_bytes : bytes_at psegs m buf (firstn (Z.to_nat len) fdata);
       li_wr : wr_at psegs m buf cap;
       li_len : 0 <= len <= Z.of_nat (length fdata);
@@ -561,7 +568,7 @@ Section Driver.
         induction fuel as [|fuel IH]; intros buf len cap k ra t0 t1 t2 a0 a1 a2 a3 a4 a5 a6 a7 s7 t3 t4 t5 t6 m mo h Hfuel Hlc LI.
         { destruct LI. lia. }
         pose proof SPlo as Hlo. pose proof SPhi as Hhi.
-        destruct LI as [D HH HD CR HT MK FS FDSq BY WR LEN COK BR].
+        destruct LI as [D HH HD CR HT MK FS FDSq RDR0 BY WR LEN COK BR].
         pose proof (cap_ok_bounds cap COK) as CB.
         dpose BR as (BR1 & BR2 & BR3 & BR4 & BR5). rewrite (P_alloc_ceiling_eq sp0 Hvsp) in BR4.
         cbn [hl_img_lo hl_img_hi P_layout] in BR5.
@@ -573,7 +580,7 @@ Section Driver.
         { intros w Hw1 Hw2. unfold LREGS.
           step. step. step. apply aevtM_done.       (* [comment removed for export] *)
           change (MS ?Rx bvmap_empty ?pc (Z_to_bv 32 0) None ?Mx ?rom) with (@mkst PropExec.fx0 Rx pc Mx rom).
-          assert (WIN : forall a : word, bv_unsigned sp0 - 8388608 <= bv_unsigned a < bv_unsigned sp0 -> wview psegs m a <> None).
+          assert (WIN : forall a : word, bv_unsigned sp0 - 6144512 <= bv_unsigned a < bv_unsigned sp0 -> wview psegs m a <> None).
           { intros a Ha. rewrite <- (Z_to_bv_bv_unsigned a). apply (di_win m D). lia. }
           (* [comment removed for export] *)
           assert (BOK : store_ok psegs m (Z_to_bv 64 0x49869) (Z.to_nat w) = true).
@@ -596,18 +603,19 @@ Section Driver.
           assert (MK1 : MOK mo1) by (apply MOK_with_fds; exact MK).
           assert (FS1 : m_fs mo1 = fs0) by exact FS.
           assert (FDS1 : m_fds mo1 = FDS (Z_to_bv 64 (len + nb))) by reflexivity.
+          assert (RDR1 : m_channel_reader mo1 = true) by exact RDR0.
           pose proof (length_le8 (Z_to_bv 64 0x1ceb4)) as L8.
           assert (HH1 : HEAP psegs (P_layout sp0) HI h [(buf, cap)] m1 mo1).
-          { apply (heap_mo psegs (P_layout sp0) HI h [(buf, cap)] m1 mo mo1); [| reflexivity | reflexivity | reflexivity].
-            subst m1. eapply (heap_write psegs (P_layout sp0) HI) with (SP := bv_unsigned sp0 - 8388608);
-              [ eapply (heap_write psegs (P_layout sp0) HI) with (SP := bv_unsigned sp0 - 8388608);
+          { apply (heap_mo psegs (P_layout sp0) HI h [(buf, cap)] m1 mo mo1); [| reflexivity | reflexivity | reflexivity | reflexivity].
+            subst m1. eapply (heap_write psegs (P_layout sp0) HI) with (SP := bv_unsigned sp0 - 6144512);
+              [ eapply (heap_write psegs (P_layout sp0) HI) with (SP := bv_unsigned sp0 - 6144512);
                 [ exact HH | rewrite (P_alloc_ceiling_eq sp0 Hvsp); lia
                 | apply client_wrange_stack; [lia | rewrite L8, HT; cbn; lia] | lia | rewrite L8; lia ]
               | rewrite (P_alloc_ceiling_eq sp0 Hvsp); lia
               | intros a Ha; right; left; cbn [hl_data_lo hl_data_hi hl_static P_layout]; unfold P_static; lia
               | lia | lia ]. }
           assert (HD1 : DRV k h mo1) by (eapply DRVMO; [exact HD | reflexivity | reflexivity | reflexivity | reflexivity]).
-          assert (AG1 : forall x : Z, 0 <= x < 2 ^ 64 -> ~ (bv_unsigned sp0 - 8388608 <= x < bv_unsigned sp0 - 128) -> ~ (0 <= x < 0) ->
+          assert (AG1 : forall x : Z, 0 <= x < 2 ^ 64 -> ~ (bv_unsigned sp0 - 6144512 <= x < bv_unsigned sp0 - 128) -> ~ (0 <= x < 0) ->
                         ~ (0x59924 <= x < 0x59928) -> ~ (0x49869 <= x < 0x59869) -> m1 (wa x) = m (wa x)).
           { intros x H1 H2 H3 H4 H5. subst m1. rewrite write_other by lia. apply write_other; rewrite ?L8; lia. }
           assert (GR1 : mem_grows m m1) by (subst m1; eapply mem_grows_trans; apply write_to_mem_grows).
@@ -663,7 +671,7 @@ Section Driver.
                      (mkR (Z_to_bv 64 0x1ce4c) (Z_to_bv 64 (bv_unsigned sp0 - 128)) (Z_to_bv 64 0x10800) (Z_to_bv 64 0x599c8)
                           (getr regs2 5) (getr regs2 6) (getr regs2 7) (Z_to_bv 64 2) (Z_to_bv 64 buf) (Z_to_bv 64 (buf + len))
                           (getr regs2 11) (getr regs2 12) (getr regs2 13) (getr regs2 14) (getr regs2 15) (getr regs2 16) (getr regs2 17)
-                          (p1 sp0 a0s path envv) (Z_to_bv 64 len) (Z_to_bv 64 3) (Z_to_bv 64 cap) (Z_to_bv 64 0x49869) (Z_to_bv 64 nb)
+                          (p1 a0s path envv rd) (Z_to_bv 64 len) (Z_to_bv 64 3) (Z_to_bv 64 cap) (Z_to_bv 64 0x49869) (Z_to_bv 64 nb)
                           (Z_to_bv 64 0) (Z_to_bv 64 0) (Z_to_bv 64 0) (Z_to_bv 64 0)
                           (getr regs2 28) (getr regs2 29) (getr regs2 30) (getr regs2 31)) regs2).
             { intros r. pose proof (ridx_range r) as Hi. rewrite <- (ridx_roundtrip r). set (i := ridx r) in *. clearbody i.
@@ -681,10 +689,10 @@ Section Driver.
             (* [comment removed for export] *)
             set (m2 := write_to_mem m1 (wa (buf + len)) bs).
             assert (HH2 : HEAP psegs (P_layout sp0) HI h [(buf, cap)] m2 mo1).
-            { subst m2. eapply (heap_write psegs (P_layout sp0) HI) with (SP := bv_unsigned sp0 - 8388608);
+            { subst m2. eapply (heap_write psegs (P_layout sp0) HI) with (SP := bv_unsigned sp0 - 6144512);
                 [ exact HH1 | rewrite (P_alloc_ceiling_eq sp0 Hvsp); lia
                 | eapply client_wrange_block; [left; reflexivity | lia | lia] | lia | lia ]. }
-            assert (AG2 : forall x : Z, 0 <= x < 2 ^ 64 -> ~ (bv_unsigned sp0 - 8388608 <= x < bv_unsigned sp0 - 128) -> ~ (buf <= x < buf + cap) ->
+            assert (AG2 : forall x : Z, 0 <= x < 2 ^ 64 -> ~ (bv_unsigned sp0 - 6144512 <= x < bv_unsigned sp0 - 128) -> ~ (buf <= x < buf + cap) ->
                           ~ (0x59924 <= x < 0x59928) -> ~ (0x49869 <= x < 0x59869) -> m2 (wa x) = m1 (wa x)).
             { intros x H1 H2 H3 H4 H5. subst m2. apply write_other; lia. }
             assert (GR2 : mem_grows m1 m2) by (subst m2; apply write_to_mem_grows).
@@ -718,7 +726,7 @@ Section Driver.
                 2:{ unfold BODY, t_body. replace (MAX_INPUT <=? Z.of_nat (length fdata)) with true by (symmetry; apply Z.leb_le; unfold MAX_INPUT; lia).
                     rewrite FS1. reflexivity. }
                 change (MS ?Rx bvmap_empty ?pc (Z_to_bv 32 0) None ?Mx ?rom) with (@mkst PropExec.fx0 Rx pc Mx rom).
-                eapply (refused_tail sp0 mo1 (bv_unsigned tid) Hvsp Hh1' Hl1' FD2);
+                eapply (refused_tail sp0 mo1 (bv_unsigned tid) Hvsp Hh1' Hl1' FD2 ltac:(rdr_solve));
                   [ norm_getr; reflexivity | norm_getr; reflexivity | norm_getr; reflexivity | ].
                 eapply dinv_tail_mem; [exact D2 | exact HH2].
               * (* [comment removed for export] *)
@@ -733,7 +741,7 @@ Section Driver.
                 destruct k as [|k']. { exfalso. rewrite Z.pow_0_r in CR. lia. }
                 pose proof (cap_ok_double cap COK ltac:(lia)) as [COK2 CAP2].
                 eapply rz_conseq; [ | apply (LSHAPE_grow cap); lia ].
-                eapply (MRZ k') with (lo := bv_unsigned sp0 - 8388608) (n := 2 * cap);
+                eapply (MRZ k') with (lo := bv_unsigned sp0 - 6144512) (n := 2 * cap);
                   [ exact HH2 | exact HD1
                   | rewrite u_small by lia; apply dinv_stk; exact D2
                   | rewrite (P_alloc_ceiling_eq sp0 Hvsp); lia
@@ -756,7 +764,7 @@ Section Driver.
                    change (MS ?Rx bvmap_empty ?pc (Z_to_bv 32 0) None ?Mx ?rom) with (@mkst PropExec.fx0 Rx pc Mx rom).
                    pose proof MK' as MK3; destruct MK3 as [Hh' Hl'].
                    assert (FD2' : fd_lookup (m_fds mo') (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2))) by (rewrite (mo_frame_fds _ _ MF); exact FD2).
-                   eapply (oom_tail sp0 mo' (bv_unsigned tid) Hvsp Hh' Hl' FD2');
+                   eapply (oom_tail sp0 mo' (bv_unsigned tid) Hvsp Hh' Hl' FD2' ltac:(rdr_solve));
                      [ left; reflexivity | norm_getr; reflexivity | norm_getr; reflexivity | norm_getr; reflexivity | ].
                    eapply dinv_tail_mem; [exact D' | exact HH'].
                 -- (* [comment removed for export] *)
@@ -806,7 +814,7 @@ Section Driver.
                             (mkR (Z_to_bv 64 0x1ce90) (Z_to_bv 64 (bv_unsigned sp0 - 128)) (Z_to_bv 64 0x10800) (Z_to_bv 64 0x599c8)
                                  (getr regs3 5) (getr regs3 6) (getr regs3 7) (Z_to_bv 64 2) (Z_to_bv 64 A0) (Z_to_bv 64 A0)
                                  (getr regs3 11) (getr regs3 12) (getr regs3 13) (getr regs3 14) (getr regs3 15) (getr regs3 16) (getr regs3 17)
-                                 (p1 sp0 a0s path envv) (Z_to_bv 64 cap) (Z_to_bv 64 3) (Z_to_bv 64 (2 * cap)) (Z_to_bv 64 0x49869) (Z_to_bv 64 buf)
+                                 (p1 a0s path envv rd) (Z_to_bv 64 cap) (Z_to_bv 64 3) (Z_to_bv 64 (2 * cap)) (Z_to_bv 64 0x49869) (Z_to_bv 64 buf)
                                  (Z_to_bv 64 0) (Z_to_bv 64 0) (Z_to_bv 64 0) (Z_to_bv 64 0)
                                  (getr regs3 28) (getr regs3 29) (getr regs3 30) (getr regs3 31)) regs3).
                    { intros r. pose proof (ridx_range r) as Hi. rewrite <- (ridx_roundtrip r). set (i := ridx r) in *. clearbody i.
@@ -824,10 +832,10 @@ Section Driver.
                    set (m3 := write_to_mem m' (wa A0) (firstn (Z.to_nat cap) fdata)).
                    pose proof (firstn_length (Z.to_nat cap) fdata) as FL.
                    assert (HH3 : HEAP psegs (P_layout sp0) HI h' [(A0, 2 * cap); (buf, cap)] m3 mo').
-                   { subst m3. eapply (heap_write psegs (P_layout sp0) HI) with (SP := bv_unsigned sp0 - 8388608);
+                   { subst m3. eapply (heap_write psegs (P_layout sp0) HI) with (SP := bv_unsigned sp0 - 6144512);
                        [ exact HH' | rewrite (P_alloc_ceiling_eq sp0 Hvsp); lia
                        | eapply client_wrange_block; [left; reflexivity | lia | rewrite FL; lia] | lia | rewrite FL; lia ]. }
-                   assert (AG3 : forall x : Z, 0 <= x < 2 ^ 64 -> ~ (bv_unsigned sp0 - 8388608 <= x < bv_unsigned sp0 - 128) -> ~ (A0 <= x < A0 + 2 * cap) ->
+                   assert (AG3 : forall x : Z, 0 <= x < 2 ^ 64 -> ~ (bv_unsigned sp0 - 6144512 <= x < bv_unsigned sp0 - 128) -> ~ (A0 <= x < A0 + 2 * cap) ->
                         ~ (0x59924 <= x < 0x59928) -> ~ (0x49869 <= x < 0x59869) -> m3 (wa x) = m' (wa x)).
                    { intros x H1 H2 H3 H4 H5. subst m3. apply write_other; rewrite ?FL; lia. }
                    assert (GR3 : mem_grows m' m3) by (subst m3; apply write_to_mem_grows).
@@ -840,7 +848,7 @@ Section Driver.
                    (* [comment removed for export] *)
                    apply rz_steps; change (seg_rom RSEGS) with (seg_rom psegs). step. step.
                    eapply aevtM_cut.
-                   { eapply (FREEC k' _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ m3 mo' h' [(A0, 2 * cap); (buf, cap)] buf cap (bv_unsigned sp0 - 8388608)
+                   { eapply (FREEC k' _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ m3 mo' h' [(A0, 2 * cap); (buf, cap)] buf cap (bv_unsigned sp0 - 6144512)
                              HH3 HD' ltac:(right; left; reflexivity));
                        [ rewrite u_small by lia; apply dinv_stk; exact D3
                        | rewrite (P_alloc_ceiling_eq sp0 Hvsp); lia
@@ -866,6 +874,7 @@ Section Driver.
                    ++ exact MK4.
                    ++ rewrite (mo_frame_fs _ _ MF4), (mo_frame_fs _ _ MF). exact FS1.
                    ++ rewrite (mo_frame_fds _ _ MF4), (mo_frame_fds _ _ MF), <- FULL. exact FDS1.
+                   ++ rewrite (mo_frame_reader _ _ MF4), (mo_frame_reader _ _ MF). exact RDR1.
                    ++ eapply (heap_pres_bytes_at psegs (P_layout sp0)); [exact HP4 | exact BY3 | eapply client_range_block; [left; reflexivity | lia | rewrite FL; lia]].
                    ++ eapply (heap_pres_wr_at psegs (P_layout sp0)); [exact HP4 | exact WR3 | eapply client_range_block; [left; reflexivity | lia | lia]].
                    ++ lia.
@@ -893,7 +902,7 @@ Section Driver.
 
       (* [comment removed for export] *)
       Local Ltac2 Set LiaOrc.tbl := fun () => "00D0?L10287183753.55L10645107738.90L18878088489.84L18878136745.79L18926662313.90L20948626091.84L20948708907.79L25322863131.79L25322940633.55L25322946203.84L29063123978.55L31093872373.90L40039506795.55L42571139497.79L42571222313.84L53517157525.90L55555927403.90L57488796975.90L63938289472.90L67905917405.5500000500C00H00M00U00Z00_00n01=01L01Q01j01o02402902A02M02[02c02hS3sp0S3sp05fdata2A0S3sp0S3sp0S3sp02A0S3sp0S3sp0S3sp04SPlo4SPhiS3sp04SPlo4SPhiS3sp04SPlo4SPhiS3sp0S3sp04SPlo3Hhi2A03BR13BR4S3sp0S3sp0S3sp0S3sp02A0S3sp02A03BR1S3sp05fdata2A0S3sp02A0S3sp0". (* [comment removed for export] *)
-      #[using="rd regs0 Hvsp Htid ME SPlo SPhi HI HSTAT DRV NS MRZ FREEC DRVMO HINIT Hfs AFTER"] Lemma file_kont_core : ltac2:(CDefT.buildp (gd_tbl_P_main_file ()) "(5:.VAMB,VLM,Vsp0,Va0s,Vpath,Venvv,Vtid,Vmem0,Vbrk,Vmbase,Vfs0,Vstdin0,(4<.Vpath,(2>.&40.=))(5;.Vfdata,Vfs0,))")
+      #[using="rd regs0 Hvsp Htid ME SPlo SPhi HI HSTAT DRV NS MRZ FREEC DRVMO HINIT Hfs AFTER"] Lemma file_kont_core : ltac2:(CDefT.buildp (gd_tbl_P_main_file ()) "(5:.VAMB,VLM,Vsp0,Va0s,Vpath,Venvv,Vtid,Vrd,Vmem0,Vbrk,Vmbase,Vfs0,Vstdin0,(4<.Vpath,(2>.&40.=))(5;.Vfdata,Vfs0,))")
 (* [comment removed for export] *).
       Proof.
         intros t1 t2 a12 t3 t4 t5 t6 M CM.
@@ -927,7 +936,7 @@ Section Driver.
           change (MS ?Rx bvmap_empty ?pc (Z_to_bv 32 0) None ?Mx ?rom) with (@mkst PropExec.fx0 Rx pc Mx rom).
           pose proof MK' as MK2; destruct MK2 as [Hh' Hl'].
           assert (FD2 : fd_lookup (m_fds mo') (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2))) by (rewrite (mo_frame_fds _ _ MF); reflexivity).
-          eapply (oom_tail sp0 mo' (bv_unsigned tid) Hvsp Hh' Hl' FD2);
+          eapply (oom_tail sp0 mo' (bv_unsigned tid) Hvsp Hh' Hl' FD2 ltac:(rdr_solve));
             [ right; reflexivity | reflexivity | reflexivity | reflexivity | eapply dinv_tail_mem; eauto ].
         - (* [comment removed for export] *)
           intros t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' m' mo' h' A0 junk MI' ST' MF HP HT' BR HH' MK' RW HD'.
@@ -953,6 +962,7 @@ Section Driver.
           + exact MK'.
           + rewrite (mo_frame_fs _ _ MF). reflexivity.
           + rewrite (mo_frame_fds _ _ MF). reflexivity.
+          + rdr_solve.
           + cbn [Z.to_nat firstn]. apply bytes_at_nil. lia.
           + destruct RW as [_ WRn]. cbn [cells_size csize Nat.add] in WRn. exact WRn.
           + lia.
@@ -968,7 +978,7 @@ Section Driver.
   (* [comment removed for export] *)
 
   Local Ltac2 Set LiaOrc.tbl := fun () => "00O0@L10287183753.53 L1080386751.92  L18284857387.91 L18401096995.91 L18878088489.82 L18878136745.77 L19613286045.92 L19614366794.92 L20948626091.82 L20948708907.77 L21690283217.102L21692366833.102L22700267513.106L25322863131.77 L25322940633.53 L25322946203.82 L29063123978.53 L31044149123.92 L31096007531.87 L34140740681.92 L40039506795.53 L42571139497.77 L42571222313.82 L43068839414.92 L52108169754.109L53519235339.87 L55553921269.87 L56759158153.109L56868372720.91 L67905917405.53 L7468169588.109 00000500B00J00R00W00\00]00e00j00o01701?01L01[01j02902>02F02_02l03103603;03<03I03Q03]03j04204704DS3sp0S3sp02A01a2HaS3sp02A0S3sp02A0S3sp0S3sp0FS3sp02A0S3sp0S3sp0S3sp02A0S3sp02A0S3sp02A01a2HaS3sp04SPlo4SPhiS3sp04SPlo4SPhiS3sp04SPlo4SPhiS3sp0S3sp02A0S3sp04SPlo3Hhi2A03BR13BR4S3sp04SPlo2A0S3sp0S3sp0S3sp0FS3sp02A01a2H2S3sp02A0S3sp02A03BR1S3sp02A01a2H1S3sp02A0S3sp0S3sp02A01a2H4". (* [comment removed for export] *)
-  #[using="rd regs0 Hva Hve Hvsp Htid ME SPlo SPhi HI HSTAT DRV NS MRZ HINIT"] Theorem dir_kont : ltac2:(CDefT.buildp (gd_tbl_P_main_file ()) "P,(10.(12.(8.&8.))Vpath,$5<.)(5:.VAMB,VLM,Vsp0,Va0s,Vpath,Venvv,Vtid,Vmem0,Vbrk,Vmbase,Vfs0,Vstdin0,$5=.(5>.$5<.Vfs0,))")
+  #[using="rd regs0 Hva Hve Hvsp Htid ME SPlo SPhi HI HSTAT DRV NS MRZ HINIT"] Theorem dir_kont : ltac2:(CDefT.buildp (gd_tbl_P_main_file ()) "P,(10.(12.(8.&8.))Vpath,$5<.)(5:.VAMB,VLM,Vsp0,Va0s,Vpath,Venvv,Vtid,Vrd,Vmem0,Vbrk,Vmbase,Vfs0,Vstdin0,$5=.(5>.$5<.Vfs0,))")
 (* [comment removed for export] *).
   Proof.
     intros Hdot t1 t2 a12 t3 t4 t5 t6 M CM.
@@ -1001,7 +1011,7 @@ Section Driver.
       change (MS ?Rx bvmap_empty ?pc (Z_to_bv 32 0) None ?Mx ?rom) with (@mkst PropExec.fx0 Rx pc Mx rom).
       pose proof MK' as MK2; destruct MK2 as [Hh' Hl'].
       assert (FD2 : fd_lookup (m_fds mo') (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2))) by (rewrite (mo_frame_fds _ _ MF); reflexivity).
-      eapply (oom_tail sp0 mo' (bv_unsigned tid) Hvsp Hh' Hl' FD2);
+      eapply (oom_tail sp0 mo' (bv_unsigned tid) Hvsp Hh' Hl' FD2 ltac:(rdr_solve));
         [ right; reflexivity | reflexivity | reflexivity | reflexivity | eapply dinv_tail_mem; eauto ].
     - (* [comment removed for export] *)
       intros t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6' m' mo' h' A0 junk MI' ST' MF HP HT' BR HH' MK' RW HD'.
@@ -1022,7 +1032,7 @@ Section Driver.
       (* [comment removed for export] *)
       change (MS ?Rx bvmap_empty ?pc (Z_to_bv 32 0) None ?Mx ?rom) with (@mkst PropExec.fx0 Rx pc Mx rom).
       pose proof MK' as MK2; destruct MK2 as [Hh' Hl'].
-      assert (WIN' : forall a : word, bv_unsigned sp0 - 8388608 <= bv_unsigned a < bv_unsigned sp0 -> wview psegs m' a <> None).
+      assert (WIN' : forall a : word, bv_unsigned sp0 - 6144512 <= bv_unsigned a < bv_unsigned sp0 -> wview psegs m' a <> None).
       { intros a Ha. rewrite <- (Z_to_bv_bv_unsigned a). apply (di_win m' D'). lia. }
       assert (BOK : store_ok psegs m' (Z_to_bv 64 0x49869) (Z.to_nat 65536) = true).
       { apply store_ok_data; rewrite u_small by lia; lia. }
@@ -1036,7 +1046,7 @@ Section Driver.
       change (MS ?Rx bvmap_empty ?pc (Z_to_bv 32 0) None ?Mx ?rom) with (@mkst PropExec.fx0 Rx pc Mx rom).
       subst path.
       assert (FD2 : fd_lookup (m_fds mo') (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2))) by (rewrite (mo_frame_fds _ _ MF); reflexivity).
-      eapply (dir_tail sp0 mo' (bv_unsigned tid) Hvsp Hh' Hl' FD2 a0s envv tid rd regs0 mem0);
+      eapply (dir_tail sp0 mo' (bv_unsigned tid) Hvsp Hh' Hl' FD2 ltac:(rdr_solve) a0s envv tid rd regs0 mem0);
         [ exact Hva | exact Hve | exact Htid | exact ME
         | norm_getr; reflexivity | norm_getr; reflexivity | norm_getr; reflexivity | norm_getr; reflexivity
         | eapply (tail_mem_agree m' M' 0 0); [eapply dinv_tail_mem; [exact D' | exact HH']

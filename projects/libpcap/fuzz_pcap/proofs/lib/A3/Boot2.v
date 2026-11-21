@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3, in both copies: Walk takes the launch input (inp, mb, entry, sp, brk, rnd) for sp, rdraw, argv, envp, uid and hw, without the entry_stack_fits and uid hypotheses, the environment agrees on NX0 (23) launch words (was 7), phase3 is proved per CONFIG_RSEQ value (phase3_t, phase3_f) and glue_tls over rs, and the #[using] attributes are dropped, some for Proof using lines. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -20,43 +21,46 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
+(* PORTED to LPS 727298f3: the section is re-threaded onto the entry-image tuple
+   [(inp, mb, entry, sp, rnd)] of Boot1.v's [Section Walk]; the environment's launch
+   prefix is [EntryKn.vals0], [NX0] (23) words long, where it was 7; and the run is one
+   chain per CONFIG_RSEQ value ([rs]), BootKn1__A3.v's [*r rs] accessors. *)
 Section Walk.
-  Variable sp : word.
-  Variable rdraw : EntryDraw.
-  Variables argv envp : list (list byte).
-  Variables uid hw : word.
+  Variable inp : ProcInput.
+  Variable mb : word.
+  Variable entry : word.
+  Variables sp brk : word.
+  Variable rnd : EntryDraw.
   Hypothesis Hsp : valid_sp sp.
-  Hypothesis Hva : valid_argv argv.
-  Hypothesis Hve : valid_envp envp.
-  Hypothesis Hfit : entry_stack_fits sp argv envp.
-  Hypothesis Huid : valid_id uid.
+  Hypothesis Hva : valid_argv (in_argv inp).
+  Hypothesis Hve : valid_envp (in_envp inp).
 
   (* [comment removed for export] *)
-  Let E7 : env := E7 sp rdraw argv envp uid hw.
-  Let MEM0 : word -> option byte := MEM0 sp rdraw argv envp uid hw.
-  Let above_ok := above_ok sp rdraw argv envp uid hw.
+  Let E7 : env := E7 inp mb entry sp rnd.
+  Let MEM0 : word -> option byte := MEM0 inp mb entry sp rnd.
+  Let above_ok := above_ok inp mb entry sp rnd.
   Let usp := bv_unsigned sp.
-  Let argc := Z.of_nat (length argv).
-  Let envc := Z.of_nat (length envp).
+  Let argc := Z.of_nat (length (in_argv inp)).
+  Let envc := Z.of_nat (length (in_envp inp)).
 
-  #[using="Hsp"] Lemma SL : 0x7fff80000000 <= usp. Proof. destruct Hsp as (H & _ & _). unfold sp_window_lo in H. exact H. Qed.
-  #[using="Hsp"] Lemma SH : usp <= 0x800000000000. Proof. destruct Hsp as (_ & H & _). unfold sp_window_hi in H. exact H. Qed.
-  #[using="sp envp Hva usp envc"] Lemma LA : 1 <= argc <= 1024. Proof. unfold argc. destruct Hva as [H _]. lia. Qed.
-  #[using="sp argv Hve usp argc"] Lemma LE : 0 <= envc <= 256. Proof. unfold envc. destruct Hve as [H _]. lia. Qed.
+  Lemma SL : 0x7fff80000000 <= usp. Proof. destruct Hsp as (H & _ & _). unfold sp_window_lo in H. exact H. Qed.
+  Lemma SH : usp <= 0x800000000000. Proof. destruct Hsp as (_ & H & _). unfold sp_window_hi in H. exact H. Qed.
+  Lemma LA : 1 <= argc <= 1024. Proof. unfold argc. destruct Hva as [H _]. lia. Qed.
+  Lemma LE : 0 <= envc <= 256. Proof. unfold envc. destruct Hve as [H _]. lia. Qed.
 
-
-  (* [comment removed for export] *)
-  Definition E8 (a : word) : env := Env (vals_ev (vals0 PH sp rdraw argv envp uid hw ++ [a])) (blobs0 rdraw argv).
-
-  #[using="Type"] Lemma E8_agree : forall a, env_agree 7 E7 (E8 a).
-  Proof. intros a. unfold E7, Boot1.E7, E0, E8. apply (vals_app_agree (vals0 PH sp rdraw argv envp uid hw) [a]). Qed.
-  #[using="Type"] Lemma ev_E8_tls : forall a, ev (E8 a) V_TLS = a.
-  Proof. intros a. reflexivity. Qed.
-  #[using="Type"] Lemma ev_E8_sp : forall a, ev (E8 a) V_SP = sp.
-  Proof. intros a. reflexivity. Qed.
 
   (* [comment removed for export] *)
-  #[using="Hsp argc envc"] Lemma above_ok_blockE : forall E lows M log,
+  Definition E8 (a : word) : env := Env (vals_ev (vals0 inp mb entry sp rnd ++ [a])) (blobs0 inp rnd).
+
+  Lemma E8_agree : forall a, env_agree NX0 E7 (E8 a).
+  Proof. intros a. unfold E7, Boot1.E7, E0, E8. apply (vals_app_agree (vals0 inp mb entry sp rnd) [a]). Qed.
+  Lemma ev_E8_tls : forall a, ev (E8 a) V_TLS = a.
+  Proof. intros a. reflexivity. Qed.
+  Lemma ev_E8_sp : forall a, ev (E8 a) V_SP = sp.
+  Proof. intros a. reflexivity. Qed.
+
+  (* [comment removed for export] *)
+  Lemma above_ok_blockE : forall E lows M log,
     ev E 0%nat = sp -> lows_ok E usp lows ->
     above_ok M -> log_below_b 0%nat lows log = true -> above_ok (mem_denot E M log).
   Proof.
@@ -76,37 +80,59 @@ Section Walk.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
 
-  #[using="Hsp usp argc envc"] Lemma phase3 : forall R M,
-    regs_ok E7 SR3 R -> know_ok SEGS E7 M KN3 -> above_ok M -> mem_grows MEM0 M ->
+  (* One lemma per CONFIG_RSEQ value, stated on the chain's own constants, and the [rs] form by
+     [exact], as Boot1.v's phase1/phase2 are.  The single proof over [rs] ([destruct rs] and
+     [cbn [SR3r KN3r SR3er KN3er]] before the block) ran its tactics in under a second but its
+     [Qed] did not finish in 26 minutes. *)
+  Lemma phase3_t : forall R M,
+    regs_ok E7 SR3_t R -> know_ok SEGS E7 M KN3_t -> above_ok M -> mem_grows MEM0 M ->
     exists R' M', msteps SEGS (mkst R (Z_to_bv 64 A_pnloop_exit) M ROM) (mkst R' (Z_to_bv 64 A_set_tid_ecall) M' ROM)
-      /\ regs_ok E7 SR3e R' /\ know_ok SEGS E7 M' KN3e /\ above_ok M' /\ mem_grows MEM0 M'.
-  Proof.
+      /\ regs_ok E7 SR3e_t R' /\ know_ok SEGS E7 M' KN3e_t /\ above_ok M' /\ mem_grows MEM0 M'.
+  Proof using Hsp.
     intros R M HR HK HA HG.
-    ms_block_with HR HK FUEL (@nil Z) noscr 7%nat R3 HR3 HK3 MS3.
+    ms_block_with HR HK FUEL (@nil Z) noscr NX0 R3 HR3 HK3 MS3.
     lazymatch type of HK3 with know_ok _ _ ?m _ => set (M3 := m) in * end.
-    assert (A3 : above_ok M3).
-    { unfold M3. apply (above_ok_blockE E7 []); [reflexivity | constructor | exact HA | vmc]. }
+    assert (A3 : above_ok M3) by (unfold M3; apply (above_ok_blockE E7 []); [reflexivity | constructor | exact HA | vmc]).
     assert (G3 : mem_grows MEM0 M3) by (unfold M3; eapply mem_grows_trans; [exact HG | apply mem_denot_grows]).
     clearbody M3. exists R3, M3. repeat split; assumption.
   Qed.
+
+  Lemma phase3_f : forall R M,
+    regs_ok E7 SR3_f R -> know_ok SEGS E7 M KN3_f -> above_ok M -> mem_grows MEM0 M ->
+    exists R' M', msteps SEGS (mkst R (Z_to_bv 64 A_pnloop_exit) M ROM) (mkst R' (Z_to_bv 64 A_set_tid_ecall) M' ROM)
+      /\ regs_ok E7 SR3e_f R' /\ know_ok SEGS E7 M' KN3e_f /\ above_ok M' /\ mem_grows MEM0 M'.
+  Proof using Hsp.
+    intros R M HR HK HA HG.
+    ms_block_with HR HK FUEL (@nil Z) noscr NX0 R3 HR3 HK3 MS3.
+    lazymatch type of HK3 with know_ok _ _ ?m _ => set (M3 := m) in * end.
+    assert (A3 : above_ok M3) by (unfold M3; apply (above_ok_blockE E7 []); [reflexivity | constructor | exact HA | vmc]).
+    assert (G3 : mem_grows MEM0 M3) by (unfold M3; eapply mem_grows_trans; [exact HG | apply mem_denot_grows]).
+    clearbody M3. exists R3, M3. repeat split; assumption.
+  Qed.
+
+  Lemma phase3 : forall rs R M,
+    regs_ok E7 (SR3r rs) R -> know_ok SEGS E7 M (KN3r rs) -> above_ok M -> mem_grows MEM0 M ->
+    exists R' M', msteps SEGS (mkst R (Z_to_bv 64 A_pnloop_exit) M ROM) (mkst R' (Z_to_bv 64 A_set_tid_ecall) M' ROM)
+      /\ regs_ok E7 (SR3er rs) R' /\ know_ok SEGS E7 M' (KN3er rs) /\ above_ok M' /\ mem_grows MEM0 M'.
+  Proof using Hsp Hva Hve. intros []; [exact phase3_t | exact phase3_f]. Qed.
 
   (* The TLS block is musl's builtin_tls in .bss: a fixed address inside the image, no mapping. *)
   Definition tls_ok (a : word) : Prop :=
     bv_unsigned a mod 16 = 0 /\ 4096 <= bv_unsigned a /\ bv_unsigned a + 4096 <= usp - 8388608
     /\ bv_unsigned a = A_builtin_tls.
 
-  #[using="Hsp argc envc"] Lemma tls_ok_builtin : tls_ok (Z_to_bv 64 A_builtin_tls).
-  Proof.
-    pose proof SL as S. unfold tls_ok. rewrite u_small by (unfold A_builtin_tls; lia).
-    unfold A_builtin_tls, usp in S |- *. split; [reflexivity|]. lia.
+  Lemma tls_ok_builtin : tls_ok (Z_to_bv 64 A_builtin_tls).
+  Proof using Hsp.
+    pose proof SL as S. unfold tls_ok. rewrite u_small by (unfold A_builtin_tls; clear; lia).
+    unfold A_builtin_tls, usp in S |- *. split; [reflexivity|]. clear - S. lia.
   Qed.
 
-  #[using="Type"] Lemma glue_tls : forall R M (a : word),
-    regs_ok E7 SR3e R -> know_ok SEGS E7 M KN3e -> regs_ok (E8 a) SR4e R /\ know_ok SEGS (E8 a) M KN4e.
-  Proof.
-    intros R M a HR HK. split.
-    - eapply regs_ok_agree; [apply E8_agree | vmc | exact HR].
-    - eapply know_ok_agree; [apply E8_agree | vmc | exact HK].
+  Lemma glue_tls : forall rs R M (a : word),
+    regs_ok E7 (SR3er rs) R -> know_ok SEGS E7 M (KN3er rs) -> regs_ok (E8 a) (SR4er rs) R /\ know_ok SEGS (E8 a) M (KN4er rs).
+  Proof using.
+    intros rs R M a HR HK. destruct rs; cbn [SR3er KN3er SR4er KN4er] in HR, HK |- *; split.
+    all: first [ eapply regs_ok_agree; [apply E8_agree | vmc | exact HR]
+               | eapply know_ok_agree; [apply E8_agree | vmc | exact HK] ].
   Qed.
 
 End Walk.
@@ -133,43 +159,43 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
+(* as the plain kit's [Section Walk] above *)
 Section Walk.
-  Variable sp : word.
-  Variable rdraw : EntryDraw.
-  Variables argv envp : list (list byte).
-  Variables uid hw : word.
+  Variable inp : ProcInput.
+  Variable mb : word.
+  Variable entry : word.
+  Variables sp brk : word.
+  Variable rnd : EntryDraw.
   Hypothesis Hsp : valid_sp sp.
-  Hypothesis Hva : valid_argv argv.
-  Hypothesis Hve : valid_envp envp.
-  Hypothesis Hfit : entry_stack_fits sp argv envp.
-  Hypothesis Huid : valid_id uid.
+  Hypothesis Hva : valid_argv (in_argv inp).
+  Hypothesis Hve : valid_envp (in_envp inp).
 
   (* [comment removed for export] *)
-  Let E7 : env := E7 sp rdraw argv envp uid hw.
-  Let MEM0 : word -> option byte := MEM0 sp rdraw argv envp uid hw.
-  Let above_ok := above_ok sp rdraw argv envp uid hw.
+  Let E7 : env := E7 inp mb entry sp rnd.
+  Let MEM0 : word -> option byte := MEM0 inp mb entry sp rnd.
+  Let above_ok := above_ok inp mb entry sp rnd.
   Let usp := bv_unsigned sp.
-  Let argc := Z.of_nat (length argv).
-  Let envc := Z.of_nat (length envp).
+  Let argc := Z.of_nat (length (in_argv inp)).
+  Let envc := Z.of_nat (length (in_envp inp)).
 
-  #[using="Hsp"] Lemma SL : 0x7fff80000000 <= usp. Proof. destruct Hsp as (H & _ & _). unfold sp_window_lo in H. exact H. Qed.
-  #[using="Hsp"] Lemma SH : usp <= 0x800000000000. Proof. destruct Hsp as (_ & H & _). unfold sp_window_hi in H. exact H. Qed.
-  #[using="sp envp Hva usp envc"] Lemma LA : 1 <= argc <= 1024. Proof. unfold argc. destruct Hva as [H _]. lia. Qed.
-  #[using="sp argv Hve usp argc"] Lemma LE : 0 <= envc <= 256. Proof. unfold envc. destruct Hve as [H _]. lia. Qed.
+  Lemma SL : 0x7fff80000000 <= usp. Proof. destruct Hsp as (H & _ & _). unfold sp_window_lo in H. exact H. Qed.
+  Lemma SH : usp <= 0x800000000000. Proof. destruct Hsp as (_ & H & _). unfold sp_window_hi in H. exact H. Qed.
+  Lemma LA : 1 <= argc <= 1024. Proof. unfold argc. destruct Hva as [H _]. lia. Qed.
+  Lemma LE : 0 <= envc <= 256. Proof. unfold envc. destruct Hve as [H _]. lia. Qed.
 
-
-  (* [comment removed for export] *)
-  Definition E8 (a : word) : env := Env (vals_ev (vals0 PH sp rdraw argv envp uid hw ++ [a])) (blobs0 rdraw argv).
-
-  #[using="Type"] Lemma E8_agree : forall a, env_agree 7 E7 (E8 a).
-  Proof. intros a. unfold E7, A3.Boot1.TwB.E7, E0, E8. apply (vals_app_agree (vals0 PH sp rdraw argv envp uid hw) [a]). Qed.
-  #[using="Type"] Lemma ev_E8_tls : forall a, ev (E8 a) V_TLS = a.
-  Proof. intros a. reflexivity. Qed.
-  #[using="Type"] Lemma ev_E8_sp : forall a, ev (E8 a) V_SP = sp.
-  Proof. intros a. reflexivity. Qed.
 
   (* [comment removed for export] *)
-  #[using="Hsp argc envc"] Lemma above_ok_blockE : forall E lows M log,
+  Definition E8 (a : word) : env := Env (vals_ev (vals0 inp mb entry sp rnd ++ [a])) (blobs0 inp rnd).
+
+  Lemma E8_agree : forall a, env_agree NX0 E7 (E8 a).
+  Proof. intros a. unfold E7, A3.Boot1.TwB.E7, E0, E8. apply (vals_app_agree (vals0 inp mb entry sp rnd) [a]). Qed.
+  Lemma ev_E8_tls : forall a, ev (E8 a) V_TLS = a.
+  Proof. intros a. reflexivity. Qed.
+  Lemma ev_E8_sp : forall a, ev (E8 a) V_SP = sp.
+  Proof. intros a. reflexivity. Qed.
+
+  (* [comment removed for export] *)
+  Lemma above_ok_blockE : forall E lows M log,
     ev E 0%nat = sp -> lows_ok E usp lows ->
     above_ok M -> log_below_b 0%nat lows log = true -> above_ok (mem_denot E M log).
   Proof.
@@ -189,37 +215,59 @@ Section Walk.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
 
-  #[using="Hsp usp argc envc"] Lemma phase3 : forall R M,
-    regs_ok E7 SR3 R -> know_ok SEGS E7 M KN3 -> above_ok M -> mem_grows MEM0 M ->
+  (* One lemma per CONFIG_RSEQ value, stated on the chain's own constants, and the [rs] form by
+     [exact], as Boot1.v's phase1/phase2 are.  The single proof over [rs] ([destruct rs] and
+     [cbn [SR3r KN3r SR3er KN3er]] before the block) ran its tactics in under a second but its
+     [Qed] did not finish in 26 minutes. *)
+  Lemma phase3_t : forall R M,
+    regs_ok E7 SR3_t R -> know_ok SEGS E7 M KN3_t -> above_ok M -> mem_grows MEM0 M ->
     exists R' M', msteps SEGS (mkst R (Z_to_bv 64 A_pnloop_exit) M ROM) (mkst R' (Z_to_bv 64 A_set_tid_ecall) M' ROM)
-      /\ regs_ok E7 SR3e R' /\ know_ok SEGS E7 M' KN3e /\ above_ok M' /\ mem_grows MEM0 M'.
-  Proof.
+      /\ regs_ok E7 SR3e_t R' /\ know_ok SEGS E7 M' KN3e_t /\ above_ok M' /\ mem_grows MEM0 M'.
+  Proof using Hsp.
     intros R M HR HK HA HG.
-    ms_block_with HR HK FUEL (@nil Z) noscr 7%nat R3 HR3 HK3 MS3.
+    ms_block_with HR HK FUEL (@nil Z) noscr NX0 R3 HR3 HK3 MS3.
     lazymatch type of HK3 with know_ok _ _ ?m _ => set (M3 := m) in * end.
-    assert (A3 : above_ok M3).
-    { unfold M3. apply (above_ok_blockE E7 []); [reflexivity | constructor | exact HA | vmc]. }
+    assert (A3 : above_ok M3) by (unfold M3; apply (above_ok_blockE E7 []); [reflexivity | constructor | exact HA | vmc]).
     assert (G3 : mem_grows MEM0 M3) by (unfold M3; eapply mem_grows_trans; [exact HG | apply mem_denot_grows]).
     clearbody M3. exists R3, M3. repeat split; assumption.
   Qed.
+
+  Lemma phase3_f : forall R M,
+    regs_ok E7 SR3_f R -> know_ok SEGS E7 M KN3_f -> above_ok M -> mem_grows MEM0 M ->
+    exists R' M', msteps SEGS (mkst R (Z_to_bv 64 A_pnloop_exit) M ROM) (mkst R' (Z_to_bv 64 A_set_tid_ecall) M' ROM)
+      /\ regs_ok E7 SR3e_f R' /\ know_ok SEGS E7 M' KN3e_f /\ above_ok M' /\ mem_grows MEM0 M'.
+  Proof using Hsp.
+    intros R M HR HK HA HG.
+    ms_block_with HR HK FUEL (@nil Z) noscr NX0 R3 HR3 HK3 MS3.
+    lazymatch type of HK3 with know_ok _ _ ?m _ => set (M3 := m) in * end.
+    assert (A3 : above_ok M3) by (unfold M3; apply (above_ok_blockE E7 []); [reflexivity | constructor | exact HA | vmc]).
+    assert (G3 : mem_grows MEM0 M3) by (unfold M3; eapply mem_grows_trans; [exact HG | apply mem_denot_grows]).
+    clearbody M3. exists R3, M3. repeat split; assumption.
+  Qed.
+
+  Lemma phase3 : forall rs R M,
+    regs_ok E7 (SR3r rs) R -> know_ok SEGS E7 M (KN3r rs) -> above_ok M -> mem_grows MEM0 M ->
+    exists R' M', msteps SEGS (mkst R (Z_to_bv 64 A_pnloop_exit) M ROM) (mkst R' (Z_to_bv 64 A_set_tid_ecall) M' ROM)
+      /\ regs_ok E7 (SR3er rs) R' /\ know_ok SEGS E7 M' (KN3er rs) /\ above_ok M' /\ mem_grows MEM0 M'.
+  Proof using Hsp Hva Hve. intros []; [exact phase3_t | exact phase3_f]. Qed.
 
   (* The TLS block is musl's builtin_tls in .bss: a fixed address inside the image, no mapping. *)
   Definition tls_ok (a : word) : Prop :=
     bv_unsigned a mod 16 = 0 /\ 4096 <= bv_unsigned a /\ bv_unsigned a + 4096 <= usp - 8388608
     /\ bv_unsigned a = A_builtin_tls.
 
-  #[using="Hsp argc envc"] Lemma tls_ok_builtin : tls_ok (Z_to_bv 64 A_builtin_tls).
-  Proof.
-    pose proof SL as S. unfold tls_ok. rewrite u_small by (unfold A_builtin_tls; lia).
-    unfold A_builtin_tls, usp in S |- *. split; [reflexivity|]. lia.
+  Lemma tls_ok_builtin : tls_ok (Z_to_bv 64 A_builtin_tls).
+  Proof using Hsp.
+    pose proof SL as S. unfold tls_ok. rewrite u_small by (unfold A_builtin_tls; clear; lia).
+    unfold A_builtin_tls, usp in S |- *. split; [reflexivity|]. clear - S. lia.
   Qed.
 
-  #[using="Type"] Lemma glue_tls : forall R M (a : word),
-    regs_ok E7 SR3e R -> know_ok SEGS E7 M KN3e -> regs_ok (E8 a) SR4e R /\ know_ok SEGS (E8 a) M KN4e.
-  Proof.
-    intros R M a HR HK. split.
-    - eapply regs_ok_agree; [apply E8_agree | vmc | exact HR].
-    - eapply know_ok_agree; [apply E8_agree | vmc | exact HK].
+  Lemma glue_tls : forall rs R M (a : word),
+    regs_ok E7 (SR3er rs) R -> know_ok SEGS E7 M (KN3er rs) -> regs_ok (E8 a) (SR4er rs) R /\ know_ok SEGS (E8 a) M (KN4er rs).
+  Proof using.
+    intros rs R M a HR HK. destruct rs; cbn [SR3er KN3er SR4er KN4er] in HR, HK |- *; split.
+    all: first [ eapply regs_ok_agree; [apply E8_agree | vmc | exact HR]
+               | eapply know_ok_agree; [apply E8_agree | vmc | exact HK] ].
   Qed.
 
 End Walk.

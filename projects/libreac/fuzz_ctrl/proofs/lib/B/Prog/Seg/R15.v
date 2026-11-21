@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names, addresses and numbers changed; 844 of its 926 lines of code are new or changed and 929 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment R15 of fuzz_ctrl LLVMFuzzerTestOneInput (asan-ubsan, image B, libreac v1.9.0): cut Inv_B81914_at b ->
    cut Inv_B81aa0_at b (plan-asan-ubsan.md section 2, row R15, range 0x81914-0x81948; forms-asan-ubsan.md S_R15; section 4,
    FREE = wrapper_free at 0x534b4). rule 24: no function proved (a slot segment).
@@ -39,7 +40,7 @@
    edge 0x81918), rg regs 20 phi (the freed block, a0 = s4 at 0x81a98) and RB g fr b (RID (S b)) (RFG (S b)) (the
    turn-(S b) records the exit cut names; the free call keeps them as frame bytes) and (adopt 10) s11 = 32, which the
    three instructions do not write and the free call keeps (a_callee_saved 27).
-   Re-fit of the v1.8 proof (a working branch c439fa41c5b) onto the v1.9.0 bytes and a Theorem Labs lane's v1.9 cut bundle (pcs
+   Re-fit of the v1.8 proof (a working branch) onto the v1.9.0 bytes and a Theorem Labs lane's v1.9 cut bundle (pcs
    +0x64, frame 3136 bytes, the 33-conjunct RBE, CUR in s7 / s9, the constant 32 in s11); the text below is R13's
    v1.9 proof with R15's entry (the run and the entry cut differ, the call and the exit are the same). *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.

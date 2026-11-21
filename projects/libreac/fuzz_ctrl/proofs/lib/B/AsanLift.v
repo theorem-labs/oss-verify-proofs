@@ -2,6 +2,10 @@ From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Reusable Require Import YK0i YK15 YM06.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Reusable.R Require Import Cfg.
+(* LPS 08b1429: [YK15.node_ok] gained the [RomBase.sys_rob] conjunct, so [node_ok_of_pnode]
+   leaves three goals, the middle one discharged here by [sys_rob_instr] (an instruction
+   configuration has no system call to be robust about). *)
+From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import RomBase.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Exec RegisterBridge Regs6ss.
 Import ListNotations.
 
@@ -62,7 +66,7 @@ Lemma node_instr_lazy : forall ms model ms' model',
   node_ok segs (mkCfg ms model) unit (fun _ => []) (fun _ => mkCfg ms' model').
 Proof.
   intros ms model ms' model' Hh Hsvc Ha.
-  apply node_ok_of_pnode; [apply transparent_instr; exact Hsvc |]. split.
+  apply node_ok_of_pnode; [apply transparent_instr; exact Hsvc | apply sys_rob_instr; exact Hsvc |]. split.
   - intros []. exact (sstep_instr segs ms model ms' model' Hh Hsvc Ha).
   - intros e st Hss. exists tt.
     inversion Hss; subst; try congruence.
@@ -82,7 +86,10 @@ Proof.
   - eapply rz_silent1; [exact (node_instr_lazy ms model ms' model' Hh Hsvc Ha) |].
     apply K. exact (mat_step model acc model' model' Hm (mat_refl model')).
   - apply rz_cut_b. unfold budget_refused_at. split; [exact Hh |]. left. split; [exact Hsvc |].
-    exists report. split; [exact Hr | exact Hn].
+    (* LPS 08b1429: the instruction arm of [budget_refused_at] is now a disjunction
+       (the accesses the step reports vs the vDSO-text arm); ours is the left one,
+       as lib/AsanLift.v:87. *)
+    left. exists report. split; [exact Hr | exact Hn].
 Qed.
 
 Lemma rz_msteps_lazy : forall ms ms' model T,

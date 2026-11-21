@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the tail jump of pins_set's ASan+UBSan walk (plugin-hostd/fuzz_command,
-   fuzz_command.asan-ubsan, 0x8c9f4 `j answer_code`; tpins_set_spec of lib/B/Prog/pins_set_c.v, statement from a Theorem Labs lane
-   917ca7ac6b1), after the A walk's ps_tail (lib/A/Prog/pins_set_s10.v of a working branch 3cc8391594b):
+   fuzz_command.asan-ubsan, 0x8c9f4 `j answer_code`; tpins_set_spec of lib/B/Prog/pins_set_c.v, statement from a Theorem Labs lane),
+   after the A walk's ps_tail (lib/A/Prog/pins_set_s10.v of a working branch):
    the body ends `ld ra,s0..s4; addi sp,sp,48; j answer_code`, so answer_code runs at pins_set's entry stack pointer
    and returns to pins_set's caller; its post is pins_set's post. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

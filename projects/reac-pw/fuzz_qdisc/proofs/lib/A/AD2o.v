@@ -1,21 +1,22 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made for libreac/fuzz_knock from proofs/cgif/cgif_file_fuzzer/lib/A/AD2o.v and AD2p.v at
-   c8557374ad2e. This file is knock's closing assembly of lib/A/KnockClose.v's parts (rule 24: no function proved; kind:
+   theorem-labs/oss-verify-proofs@6b32741d849a. This file is knock's closing assembly of lib/A/KnockClose.v's parts (rule 24: no function proved; kind:
    assembly): it instantiates KnockClose's asan Section at closed parts, so fuzz_knock's two ASan statements rest on no
    Section hypothesis. cgif's AD2o keeps three program-walk hypotheses that its AD2p discharges; knock's program contract
    (lib/A/APgLib.v knock_lib_x_all) takes none, so the closing is one file and there is no AD2p. *)
-(* Modified by Theorem Labs, 2026-10: taken for reac-pw/fuzz_qdisc image A from proofs/libreac/fuzz_knock/lib/A/AD2o.v at
-   origin/ossv/recipes 6ebe35ba632: it instantiates lib/A/QdiscClose.v's asan Section; the program contract is
+(* Modified by Theorem Labs, 2026-10: taken for reac-pw/fuzz_qdisc image A from proofs/libreac/fuzz_knock/lib/A/AD2o.v:
+   it instantiates lib/A/QdiscClose.v's asan Section; the program contract is
    lib/A/QPgLib.v's (qdisc_lib_contract_x_all_tfib over qdisc_lib_x_all, in the roles of APgLib's knock_* lemmas); the
    allocator parts are lib/A/QdiscAllocClose.v's; names knock_* -> qdisc_*, module paths changed (h-small-a3). *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up hand-off states made in the build per CONFIG_RSEQ flag); internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.reac_pw.fuzz_qdisc Require Statements.
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib Require AgreeQdisc.
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require Import YK11 YG00 YG01 YG0f YG0d YC5d YCbp YM05.
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require YG0q.
-From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.A Require AWalkFw0 AB01 AB12 AB1n ACejTfib AD2l AD2m AD1k AD1o AD1l AD1j AD1q.
+From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.A Require AWalkFw0 AB01 AB01r AB12 AB1n ACejTfib AD2l AD2m AD1k AD1o AD1l AD1j AD1q.
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.A Require QPgLib QdiscAllocClose QdiscAsanTop QdiscClose.
 Local Open Scope Z_scope.
 #[local] Existing Instance YK11.fx0.
@@ -43,7 +44,7 @@ Lemma qdisc_driver_TfibB : forall rc : YM05.RunCeil,
   (forall fx : YK11.FPState, @aintrin_realizes fx rc AWalkFw0.tfibsegs AD2l.TfibB OCpy (pc_wrap_memcpy (as_code AD2l.TfibB))) ->
   universe_ok (as_universe AD2l.TfibB) ->
   (forall t, In t ACejTfib.Tfib_drv_traces -> In t (as_universe AD2l.TfibB)) ->
-  QdiscClose.drv_mainA AB01.HS_tfib AB12.TFIB rc.
+  QdiscClose.drv_mainA AB01r.HS_tfib_r AB12.TFIB rc.
 Proof.
   intros rc AM AF AI _ _.
   exact (@AD1q.DRV_MAINX rc AD2l.TfibB AD2l.TfibB_syms (AM YK11.fx0) (AF YK11.fx0) (AI YK11.fx0)
@@ -63,12 +64,12 @@ Proof.
     (AD1j.tfib_exit_site AD2l.TfibB AD2l.TfibB_syms (YG0q.AR_laws_ok AWalkFw0.tfibsegs AD2l.TfibB))).
 Qed.
 
-(* QdiscClose's asan Section at its parts: HS_TBL / TFIB_TBL / H_STARTUP from the start-up certificate (AB01.HS_tfib,
+(* QdiscClose's asan Section at its parts: HS_TBL / TFIB_TBL / H_STARTUP from the start-up certificate (AB01r.HS_tfib_r,
    AB12.TFIB, AB1n.tfib_startup_T1), B := AD2l.TfibB with H_TRACES_B by reflexivity, the allocator parts from
    lib/A/QdiscAllocClose.v, and H_DRIVER from qdisc_driver_TfibB. *)
 Theorem ASAN_T_closed : QdiscAsanTop.ASAN_T.
 Proof.
-  exact (QdiscClose.ASAN_T_of_parts AB01.HS_tfib AB12.TFIB AB1n.tfib_startup_T1 AD2l.TfibB
+  exact (QdiscClose.ASAN_T_of_parts AB01r.HS_tfib_r AB12.TFIB AB1n.tfib_startup_T1 AD2l.TfibB
     QdiscAllocClose.qdisc_amalloc_closed QdiscAllocClose.qdisc_afree_closed QdiscAllocClose.qdisc_aicpy_closed eq_refl
     qdisc_driver_TfibB).
 Qed.

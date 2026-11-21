@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S8aNumC.v, with its module paths and module names changed; 584 of its 656 lines of code are new or changed and 856 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image A' (the #102 pins): segment H1 of the walk of check_reject_clean_starved against the text
    tcheck_reject_clean_starved_specX, row CR-H1 of the family's internal file PART7-ROWS.md (a Theorem Labs lane and its
    branch). It proves exactly the row's closing lemma
@@ -10,19 +11,19 @@
    boundary's event prefix to crs_live, which H1 passes through, and at took = 0 the W1 / R prefixes are the empty starved
    reading, crs_evs_doc0; v3 puts g_most / g_own_ran_out in the ledger and drops two crs_pre conjuncts; the ported kit drops
    DW (crs_base's positional arguments, hb_upd / BASEp patterns, shift by one) and appends four crs_pre conjuncts (five follow
-   ck_frm0 on this tree, CrsKitAp.v:405-411), which h_pre_facts' and h_doc_range's positional destructuring absorb in their trailing `_`).
+   ck_frm0 on this tree, CrsKitAp.v:406-412), which h_pre_facts' and h_doc_range's positional destructuring absorb in their trailing `_`).
    rule 24: proves function check_reject_clean_starved (reuse search: `proof-index check_reject_clean_starved
    0x82160`, the internal file index-crcs-Aprime.out, and an internal record of that lookup; CONFIRM by checker
    LookupCheckCrcsAp. At that search origin/ossv/recipes had no lib/A or lib/B, its released rows were lib/Prog
    (plain) and lib/U/Prog (ubsan) only, and no released asan Proof.v existed for check_reject_clean_starved). This
    file is one SEGMENT of that walk (kind: segment lemma); it is new.
    INPUTS.
-   - Pin A' asan sha256 1be0f53d96cb9d6c (harness.yaml of release/fuzz-preset-ran-out-pins 8f3e7e1a07f1).
+   - Pin A' asan sha256 1be0f53d96cb9d6c (harness.yaml).
    - Listing lib/A/Listing_prog.v blob 7ed1529926bd + lib/A/PAImg_prog.v blob 505a51ff7d08 (h-verbs-1 listings v3,
-     the d42e123915ae contents with a pre-evaluated slot tree; objects numbered by name). Entry 0x82160 = slot 736 (A_entry_check_reject_clean_starved). H1 is slots 810 .. 833
+     the contents with a pre-evaluated slot tree; objects numbered by name). Entry 0x82160 = slot 736 (A_entry_check_reject_clean_starved). H1 is slots 810 .. 833
      and the one slot 848 (X1's last instruction, `beqz s3`, which H1's took = 0 arm jumps to).
-   - The text: tcheck_reject_clean_starved_specX in lib/A/PRH_FnCheck.v blob 9ecd8eb167c6 (the #102 kit tip of record
-     f97c8b2f046b, by path; the same text as decff67d721f's).
+   - The text: tcheck_reject_clean_starved_specX in lib/A/PRH_FnCheck.v blob 9ecd8eb167c6 (the #102 kit tip of record,
+     by path; the same text as).
    THE SEGMENT (offsets from the entry, the internal files SEGMENT-PLAN-Aprime.md and crcs-Aprime.lst):
      +296 mv s6, a0 (a0 = fuzz_alloc_live () = lsum Lam); +300 beqz s7 (took = 0) -> +448;
      +304 lui a0, 1; +308 addiw a1, a0, 1285 (a1 = 5381, djb2's seed); +312 beqz s4 (size = 0) -> +392 = X1;
@@ -40,8 +41,8 @@
    took < 2 ^ 64 (the `beqz s7` test) is PjGrammar.G7_4 (the reading makes at most 2 len + 2 calls) with size <=
    3 * 2 ^ 20 (crs_pre). NAMED PREMISES: none beyond the three continuations (H1 makes no call).
    THE STEP KIT (section hs below: the hand steps over crs_cfg, the word arithmetic) is generic over the listing slot
-   and is Required by CrsSeg_X1.v; it follows lane CnoA102fA's lib/A/Prog/Cno102A_FA.v cfa_step / cfa_hs_* (origin/
-   cold/h-rw-pre-5-cno102a-f 574c27759c8), restated over the kit's crs_cfg and PL_prog_A's slot table.
+   and is Required by CrsSeg_X1.v; it follows lane CnoA102fA's lib/A/Prog/Cno102A_FA.v cfa_step / cfa_hs_* (origin/),
+   restated over the kit's crs_cfg and PL_prog_A's slot table.
    Numerals: offsets +296 .. +688 (LENGTH: 4 * slot); 5381, 33, 32, 8, 7, 3, 5 (WORD: djb2's seed and multiplier, the
    shift amounts and granule mask the listing's words carry); 2 ^ 20 .. 2 ^ 64 (LENGTH / WORD bounds). No ADDRESS. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.

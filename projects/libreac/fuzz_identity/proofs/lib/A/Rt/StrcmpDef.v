@@ -2,7 +2,7 @@
    calls it. STRCMP_ENTRY is the trampoline __interceptor_trampoline_strcmp, which jumps to ___interceptor_strcmp.
    Since 2026-10-29 the statement itself is NOT written here: it is lib/Reusable/AStrcmpDef.astrcmp_realizes, the text
    of record for the strcmp trampoline contract in the registry (proved on libreac/fuzz_grant
-   image A at a working branch 97c611eec86). This file keeps the name the identity callers cite and the entry
+   image A at a working branch). This file keeps the name the identity callers cite and the entry
    address. The earlier identity-local statement (the same premises, with the result stated as `v = w64 0` exactly
    when the bytes at k are equal instead of the CharCmpX value) is superseded; `strcmp_res c1 c2 = 0 <-> c1 = c2`
    gives it back in one step.

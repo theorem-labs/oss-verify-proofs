@@ -2,13 +2,14 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/PItems_entry.v, with its module paths and module names changed; 2668 of its 2786 lines of code are new or changed and 1447 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S7a_put.v, with its module paths and module names changed; 1693 of its 1918 lines of code are new or changed and 2561 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset image A' (the #102 asan pin 1be0f53d), slice S7a: the program walk of indent (A' 0x886e0, 28
    instructions) over the ONE image-A program listing (lib/A/Listing_prog.v, h-verbs-1), generic in the image facts
    (Context PAImg) and in the allocator relation ARx (LAWS : AR_laws_x), concluding K0's text tindent_specX. THIS
-   VERSION is on the kit's CUT 7cdbb61b5fa0 (merged forward into the batch prep on the batch kit's tip 44123abafeb7, whose texts it was
+   VERSION is on the kit's CUT (merged forward into the batch prep on the batch kit's tip, whose texts it was
    re-fitted to; the cut's PRH_FnWriter / PRH_FnAlloc are the batch kit's bytes): every file but the lane's is the cut's (the A'
    listings v3, Listing_prog 7ed1529926bd / PAImg_prog 505a51ff7d08; CfParamsPreset b60d0f63c926). Relocated from the
-   old-pin donor commit 30d755abfe58 by alreloc c4338d099cfb8025 (it moved only the entry address
+   old-pin donor by alreloc c4338d099cfb8025 (it moved only the entry address
    in two comments), re-fitted to the #102 texts: the ledger's two #102 cells (Section variables rmost / rown, fixed
    across indent's run), put's NULL arm keyed on f' = 1 with some history, fpre's rounding mode (frm_zero), and the batch kit's
    per-event premises: indent's consumer window prh_cons_from and live room prh_live_evs over its puts' events give
@@ -19,7 +20,7 @@
    SEGS P -> ...` (and `srr_inv_call SEGS P ->` where it crosses put's text) with P on its start and end memory, because
    an SRr post is OPAQUE once Qed, so an end-state invariant must be in the segment's statement; indent_holds
    instantiates P once (srr_inv_laws_imp / srr_inv_call_imp, memnorm over YAkMemnorm). ind_latch and ind_k13 are
-   their P := fun _ => True corollaries, byte-identical to 6492e80df47.
+   their P := fun _ => True corollaries, byte-identical to.
    THE MODEL-RUN POSITION (tindent_specX and tput_specX, the batch kit's PRH_FnWriter.v): indent takes the run's next events as its
    ENTRY premise, `prh_run_at .. rp_i (prhWriter_evs [] st (wind ..))`, and posts the EXACT advance under the
    outcomes ok of its prhWriter_ret_ok. Each put call gets its event premise (tput_specX :476-477) from that list by
@@ -162,8 +163,8 @@ Variable rp_os : list (option nat * option nat * option nat).
    with rp_os, passed to put's text at each call *)
 Hypothesis HOS : (length rp_os <= 4)%nat.
 Variable rp_H0 : list Z.
-(* the #102 ledger's two cells g_most / g_own_ran_out (PRH_Base.v prh_ledger's `most own`, kit walkkit-next
-   decff67d721f), named rmost / rown here (`own` is the journals' ownership argument): indent writes neither, so they
+(* the #102 ledger's two cells g_most / g_own_ran_out (PRH_Base.v prh_ledger's `most own`, kit walkkit-next),
+   named rmost / rown here (`own` is the journals' ownership argument): indent writes neither, so they
    are fixed across indent's run, as the texts state them *)
 Variable rmost rown : Z.
 (* the callee's text tput_specX (PRH_FnWriter.v: SRr' SEGS RZ_cf, the post fpostWmR at wle'): the slice's own put
@@ -549,7 +550,7 @@ apply (prhWriter_ret_pos_nil B rp_sm rp_x rp_os rp_H0 rp_i rp_hist).
 - exact HPOS.
 Qed.
 
-(* the P := fun _ => True corollary of ind_pretty0_P; its post moved for the TEXT (kit-oldpin b501d43ce5af's exact
+(* the P := fun _ => True corollary of ind_pretty0_P; its post moved for the TEXT (kit-oldpin's exact
    advance, tindent_specX :455-461) *)
 Lemma ind_pretty0 : forall ly S Hp W regs mem md ch o depth d buf (st : WriterApp.wst) Lam peak ran
     (rp_i : nat) (rp_hist : list YG00.chunk),
@@ -614,7 +615,7 @@ Lemma ind_call_put_P : forall (P : (word -> option byte) -> Prop), srr_inv_laws 
   prh_live_evs Sc (prhWriter_evs [] st [bs]) ->
   (forall a, inFP (prhWriter_fp buf (WriterApp.w_cap st)) a ->
      inFP FP a \/ in_tmp_block (ablocks B ly S) (ablocks B lyc Sc) a) ->
-  (* put's one record (tput_specX :453-455 on the cut 7cdbb61b5fa0), carried as this call lemma's ARGUMENT *)
+  (* put's one record (tput_specX :453-455 on the cut), carried as this call lemma's ARGUMENT *)
   (spZ regsc + 16 <= o ->
      exists ra, rdword (aview SEGS (w_H W) memc) (o - 8) = Some ra /\
      exists nfp, rdword (aview SEGS (w_H W) memc) (o - 16) = Some nfp /\ nfp < YM05.alloc_ceiling) ->
@@ -1012,7 +1013,7 @@ destruct (ind_seat IND_K20 W1 regs regs1 mem1) as (HS & SHOK).
     match goal with |- ew _ ?n = getr _ ?rg => exact (ew_Ereg_nat regs1 _ n rg eq_refl) end.
 Qed.
 
-(* the old statement, the P := fun _ => True corollary of ind_latch_P (byte-identical to 6492e80df47) *)
+(* the old statement, the P := fun _ => True corollary of ind_latch_P (byte-identical to) *)
 Lemma ind_latch : forall ly S Hp W mem md ly1 S1 Hp1 W1 (regs regs1 : bvmap 5 word) mem1 md1 k1 FP sp d cnt
     (Q : world SEGS -> config -> Prop),
   ajournal_xR (SK := SK) SEGS B (@prh_pst prh_img_A) ARx (wle' SEGS RZ_cf) (STK_indent + d) (sp + d) FP ly S Hp W mem md []
@@ -1170,7 +1171,7 @@ destruct (ind_seat IND_K22 W1 regs regs1 mem1) as (HS & SHOK).
   + apply (ind_ledger_kept ly1 S1 Hp1 W1 mem1 (ms_mem ms) md1); [exact HAR1 | exact HLOW | exact HLED1].
 Qed.
 
-(* the P := fun _ => True corollary of ind_epi_P; its premise and post moved for the TEXT (kit-oldpin b501d43ce5af's
+(* the P := fun _ => True corollary of ind_epi_P; its premise and post moved for the TEXT (kit-oldpin
    exact advance, tindent_specX :455-461) *)
 Lemma ind_epi : forall ly S Hp W (regs : bvmap 5 word) mem md ly1 S1 Hp1 W1 (regs1 : bvmap 5 word) mem1 md1 k1 d
     o buf (st : WriterApp.wst) Lam peak ran P (rp_i : nat),
@@ -1721,7 +1722,7 @@ destruct (ind_seat (AF_indent + 4 * 13) W1 regs regs1 mem1) as (HS & SHOK).
   reflexivity.
 Qed.
 
-(* the old statement, the P := fun _ => True corollary of ind_k13_P (byte-identical to 6492e80df47) *)
+(* the old statement, the P := fun _ => True corollary of ind_k13_P (byte-identical to) *)
 Lemma ind_k13 : forall ly S Hp W mem md ly1 S1 Hp1 W1 (regs regs1 : bvmap 5 word) mem1 md1 k1 FP sp d depth
     (Q : world SEGS -> config -> Prop),
   ajournal_xR (SK := SK) SEGS B (@prh_pst prh_img_A) ARx (wle' SEGS RZ_cf) (STK_indent + d) (sp + d) FP ly S Hp W mem md []
@@ -2143,7 +2144,7 @@ Qed.
 
 End h.
 
-(* ---- THE WALK of indent (A' 0x886e0): the kit's text tindent_specX (lib/A/PRH_FnWriter.v at the batch kit's 44123abafeb7:
+(* ---- THE WALK of indent (A' 0x886e0): the kit's text tindent_specX (lib/A/PRH_FnWriter.v at the batch kit:
    the entry premises prh_cons_from / prh_run_at / prh_live_evs over its puts' events `prhWriter_evs [] st P`, and the
    exact advance `exists ok, prhWriter_ret_ok ok .. most own .. /\ prh_granted ok .. /\ exists hist', pos (rp_i +
    length (prhWriter_evs ok st P))`), from put's text tput_specX (this slice's own put walk proves it) and the

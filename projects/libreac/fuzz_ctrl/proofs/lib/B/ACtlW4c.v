@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/openssl/bignum/lib/BnP/BnKit2.v, with its module paths and module names changed; 1014 of its 1028 lines of code are new or changed and 33 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/tx_put.v, with its module paths and module names changed; 2748 of its 2845 lines of code are new or changed and 931 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW4e2.v, with its module paths and module names changed; 4090 of its 4391 lines of code are new or changed and 2544 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/B/ACtlW4c.v -- piece W4c (frame turn, part 3: S_F13 .. S_F17, with S_F15b) of fuzz_ctrl image B's (asan-ubsan)
    walk of LLVMFuzzerTestOneInput in the released cgif_file_fuzzer form.  One writer: a Theorem Labs lane's glue lane.
    rule 24: no function proved (stage glue of a walk; drafting).
@@ -22,19 +23,19 @@
      B82464_at j --S_F17-->  B82468_at j    (inline: `bltz a0,0x82fa4` not taken)
    B8237c_at is a re-anchored cut (v1.8 Inv_B82310_at; plan 6.1).
 
-   ROUTE (C) (a Theorem Labs lane 09:20Z; a working branch shell a Theorem Labs lane 94da0a5cc85; brief w4C-brief.md (a working note, not in this delivery)): every cut carries
+   ROUTE (C) (a Theorem Labs lane 09:20Z; a working branch shell a Theorem Labs lane; brief w4C-brief.md (a working note, not in this delivery)): every cut carries
    B.ACtlRtC.ctl_rt_C B ly3 S3 mem3 (asan_cells, shadow_rw_on the cut's own shadow and the image's, ro_agree) instead
    of the full ctl_rt; the VIS0 / OWNED_RO Section hypotheses are gone from this file.  The inline stages
    (S_F15, S_F15b, S_F17, S_F14's sum_ok arm) pass the cut's ctl_rt_C on unchanged; S_F13 / S_F14 give it at their
    exits by B.ProgWorldCtlRtC.ctl_rt_C_of_AR (w4c_ctlrt), S_F16 carries it across its callee windows
    (w4c16_ctl_rt_munch / w4c16_rt_mv).  A callee's shadow premise is its `_on` region, shown inside the cut's own
-   shadow (w4c13_frag_R_in): reac_identity_ingest (a Theorem Labs lane ebcd94ed838), record_sum_closes (a Theorem Labs lane
-   3ea30e6571b), joined_byte (a Theorem Labs lane b31890d9f11) and reac_ctrl_identity_fragment (a Theorem Labs lane 66bf4fc003b,
+   shadow (w4c13_frag_R_in): reac_identity_ingest (a Theorem Labs lane), record_sum_closes (a Theorem Labs lane),
+   joined_byte (a Theorem Labs lane) and reac_ctrl_identity_fragment (a Theorem Labs lane,
    closed corollary reac_ctrl_identity_fragment_holds_F_closed_on) are landed and cited by name.
 
    ROUTE, BUILD STATE, SHELL GAPS (G1) / (G2), the shared Section hypotheses tfibsegs_rsegs / Hwx / RTP / rt_of_core
    and the PENDING KIT / BRIDGE FACTS: exactly as lib/B/ACtlW0.v's header.  FEVT, img_vis_W and ctl_post_bcmp are
-   CITATIONS (RTPOST-SHARED-B.txt 15:40Z swap): B.ProgBridge.fevt_of_evtF (ProgBridge.v:30), B.ProgBridge.img_vis_W
+   CITATIONS (RTPOST-SHARED-B.txt 15:40Z swap): B.ProgBridge.fevt_of_evtF (ProgBridge.v:31), B.ProgBridge.img_vis_W
    (:121), B.ProgWorld.ctl_post_bcmp (ProgWorld.v:660).
 
    SECTION HYPOTHESES OF THIS FILE (sources):
@@ -47,19 +48,19 @@
    - ctl_post_bcmp : CITED, B.ProgWorld.ctl_post_bcmp : ctl_post_bcmp_stmt = ctl_post_window_stmt (2 * ESTACK)
      (lib/B/ProgWorld.v:653, :660; PROVED): H_bcmp's world-form post as visible-address facts.  a0 is the core post's
      own register fact, nothing to convert.  Used at 0x82374 (seg_F14 step 2).
-   - img_vis_W : CITED, B.ProgBridge.img_vis_W (lib/B/ProgBridge.v:121; PROVED): the image range [IMG_LO, IMG_HI) =
+   - img_vis_W : CITED, B.ProgBridge.img_vis_W (lib/B/ProgBridge.v:122; PROVED): the image range [IMG_LO, IMG_HI) =
      [0x10000, 0x5fe000) is visible in every world.  Used for the image premises of identity_fragment and
      identity_ingest, and in seg_F14's frame-byte carriage.
    PENDING CALLEE CONTRACTS (texts not yet published):
    - reac_ctrl_identity_fragment_SRr_at (a Theorem Labs lane ProgLift; B by a Theorem Labs lane), site 0x82358: a0 = s5 = fragb fr,
      a1 = phi, a2 = len, a3 = [A + 288] = pa = fr + 256, a4 = [A + 304] = pp = fr + 272, a5 = [A + 296] = pn = fr + 304;
      caller obligations = reac_ctrl_identity_fragment_contract_F premises (reac_ctrl_identity_fragment_c.v (at head lib/B/Prog/reac_ctrl_identity_fragment_c.v:95); its
-     bcmp_wrap / memcpy `_F` premises are a Theorem Labs lane's; rng_bytes RNG premise, a working branch 083d3ab15d4);
+     bcmp_wrap / memcpy `_F` premises are a Theorem Labs lane's; rng_bytes RNG premise, a working branch);
      post: a0 = fg_ret of the fragment class (0 or 1 here), the record / cells per fg_mem; write set
      fg_fp K f pa pp pn sp c (the cells plus the callee window).
    - record_sum_closes, site 0x823dc: ACCEPTED and final (a Theorem Labs lane, 00:18Z via another Theorem Labs lane): `record_sum_closes_holds_F :
      record_sum_closes_contract_F` (lib/B/Prog/record_sum_closesF.v; the statement in lib/B/Prog/record_sum_closes_c.v:47-77)
-     on a working branch eae8a0725f2 (799ea3ce98f superseded).  No Section hypothesis, no rng_bytes; Print
+     on a working branch (superseded).  No Section hypothesis, no rng_bytes; Print
      Assumptions shows kernel primitives only.  CITED BY REQUIRING ITS MODULES, qualified, NOT as a Section hypothesis.
      It is a footprint run on ExecF.evtF from the entry RECORD_SUM_CLOSES = 0x83614 to ret_pc ra, composed like an
      `_F` (B.ProgBridge.fevt_of_evtF + SRr_fevt).  a0 = [A + 120] = fragb fr + 15, a1 = pll + 5 (6 <= a1 <= 56:
@@ -68,9 +69,9 @@
      kept, ra / sp / gp / tp / t1 / t2 / s0-s11 / t3-t6 kept.
    - joined_byte, sites 0x82414 (i = 9) and 0x82438 (i = 10): ACCEPTED and final (a Theorem Labs lane, 00:22Z via another Theorem Labs lane):
      `joined_byte_holds_F : joined_byte_contract_F` (lib/B/Prog/joined_byteF.v; statement lib/B/Prog/joined_byte_c.v:70-104;
-     corollary joined_byte_contract_of_F) on a working branch da405a385b2.  No callees, no Section
-     hypothesis, no rng_bytes.  Both files are taken BY PATH from da405a385b2 into this branch (our joined_byte_c.v was
-     a Theorem Labs lane's 3803efccea0 blob 19339d3c0b7, without the footprint section) and CITED BY REQUIRING THEIR MODULES, qualified.
+     corollary joined_byte_contract_of_F) on a working branch.  No callees, no Section
+     hypothesis, no rng_bytes.  Both files are taken BY PATH into this branch (our joined_byte_c.v was
+     a Theorem Labs lane's blob 19339d3c0b7, without the footprint section) and CITED BY REQUIRING THEIR MODULES, qualified.
      Entry JOINED_BYTE = 0x836ac, frame JOINED_BYTE_FRAME = 16; a0 = fr + 2880 (`first`, FSj), a1 = phi + 18 = blk (FM's
      [A + 312], long frame), a2 = i.  Its five UBSan checks T1-T5 (trap `unimp` 0x8373c) are INSIDE the callee and are
      discharged by the contract's premises S1.2-S1.6; premise map in seg_F16 step 2.
@@ -89,17 +90,17 @@
    - F13F.f13_pre_F (a Theorem Labs lane; F13.v f13_evt_n :1109 / f13_evt :1178, 0x82340 -> the fragment's entry 0x859e4,
           ra = 0x8235c; the callee's return pc 0x8235c IS the exit cut, so there is no `_post_F`)   PUBLISHED, proved
    - F14F.f14_evt_10_F (the sum_ok arm 0x8235c -> 0x8237c) and F14F.f14_evt_0c_pre_F (0x8235c -> the bcmp trampoline
-          BCMP_WRAP 0x42aac, ra = 0x82378 = the exit cut, so no `_post_F`) (a working branch
-          adb0b6e4f3e)                                                                         PUBLISHED
+          BCMP_WRAP 0x42aac, ra = 0x82378 = the exit cut, so no `_post_F`) (a working branch)
+          PUBLISHED
    - F15F.seg_F15_F (F15.v (not in this delivery) seg_F15, inline 0x82378 -> 0x8237c) and F15F.seg_F15b_F (seg_F15b, not in this delivery either,
           inline 0x8237c -> 0x823d8 / 0x82468)                                                PUBLISHED, in progress
    - F16F.seg_F16_pre_F / seg_F16_pre2_F / seg_F16_pre3_F / seg_F16_pre4_F (F16.v seg_F16 :1138; calls record_sum_closes
           0x823dc, joined_byte 0x82414 / 0x82438, reac_identity_ingest 0x82460; stretch k+1 starts at the return of call
-          k, and call 4 returns at the exit cut 0x82464, so no `_post_F`) (a Theorem Labs lane, adb0b6e4f3e)   PUBLISHED
-   - F17F.seg_F17_F (a Theorem Labs lane, a working branch 007c7fd6c63; F17.v (not in this delivery) seg_F17, inline 0x82464 -> 0x82468; no rng
+          k, and call 4 returns at the exit cut 0x82464, so no `_post_F`) (a Theorem Labs lane)   PUBLISHED
+   - F17F.seg_F17_F (a Theorem Labs lane, a working branch; F17.v (not in this delivery) seg_F17, inline 0x82464 -> 0x82468; no rng
           premise, one not-taken bltz; + seg_F17_run)                                          PUBLISHED, proved
    PROVENANCE: cut table rows 54-59; plan 2.3 rows 54-59, 6.2 rows S_F15b / S_F16, F.4.1 rows 25-26, F.4.2, F.4.4;
-   runs at 3803efccea0 (F13-F17); objdump L85020-L85094.
+   runs (F13-F17); objdump L85020-L85094.
 
    ABORT-SINK / TRAP OBLIGATIONS ON W4c (all branches into 0x82fa4 / 0x82fa0 in 0x82340-0x82468): 0x8235c, 0x82378,
    0x8238c, 0x8239c, 0x823b4, 0x823c8, 0x823e0, 0x823ec, 0x82440, 0x82464 (-> 0x82fa4) and 0x823c0 / 0x823d0 (T26 /
@@ -122,8 +123,8 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require B.Img0 B.ACtlK B.ACtlCut B.A
 (* a Theorem Labs lane's published `_F` modules (Required qualified, never Imported, a Theorem Labs lane 23:38Z). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog.Seg Require F13F F14F F15F F16F F17F.
 (* The route (C) footprint contracts and proofs of the two plain callees of S_F16, Required qualified:
-   record_sum_closes (a Theorem Labs lane 3ea30e6571b, build of record f9973b8f603: the accepted contract_F of eae8a0725f2 with
-   the shadow premise dropped) and joined_byte (a Theorem Labs lane b31890d9f11: the shadow premise dropped, the post's last
+   record_sum_closes (a Theorem Labs lane, build of record: the accepted contract_F with
+   the shadow premise dropped) and joined_byte (a Theorem Labs lane: the shadow premise dropped, the post's last
    conjunct `forall P, shadow_rw_on P m -> shadow_rw_on P m'`). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require record_sum_closes_c record_sum_closes_c_on.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require record_sum_closesF_on joined_byte_c.
@@ -145,9 +146,9 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Step Cells.
    the runtime-cell names of its T11 premise (Required only, qualified). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require reac_ctrl_identity_fragment_c rng_asan ImgBounds.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require bcmp_wrap_c memcmp_c.
-(* route (C): the fragment's R through its callees' leaves (a Theorem Labs lane 0cf5e518128), Required qualified. *)
+(* route (C): the fragment's R through its callees' leaves (a Theorem Labs lane), Required qualified. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require asan_memcpy_c_on bcmp_wrap_c_on sh_word_on.
-(* route (C): the fragment's closed route (C) corollary (a working branch 66bf4fc003b),
+(* route (C): the fragment's closed route (C) corollary (a working branch),
    Required qualified. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require reac_ctrl_identity_fragment_F_closed.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B Require MemNorm MemNormF.
@@ -758,7 +759,7 @@ Hypothesis B_bcmp_tramp_at : B_bcmp_tramp_entry = B.Prog.bcmp_wrap_c.BCMP_WRAP.
 Hypothesis ctl_kind_name_addressable : forall ly S (W : Reusable.YA0n.world segs) mem md,
   Reusable.YG0n.AR segs B ly S W mem md -> B.AsanRT.addressable mem B.ACtlCutP.KNA.KIND_NAME 112.
 
-(* ctl_rt_C at an exit (route (C); W5's form, a Theorem Labs lane 68d9f362f0d): B.ProgWorldCtlRtC.ctl_rt_C_of_AR (PROVED;
+(* ctl_rt_C at an exit (route (C); W5's form, a Theorem Labs lane): B.ProgWorldCtlRtC.ctl_rt_C_of_AR (PROVED;
    CtrlTSyms + AR_laws + AR + arodata_okP), whose premise TFIB_SYMS the next line carries, exact name and text; it
    supplies arodata_okP at the state from ctl_base's arodata_okS through Reusable.APostBase.arodata_ok_journalP (which
    finds RO_OFL as an instance).  The top discharges all three: TFIB_SYMS := Reusable.YD2l.CtrlB_syms, RELRO_IMG :=
@@ -767,7 +768,7 @@ Hypothesis TFIB_SYMS : Reusable.YF0m.CtrlTSyms B.
 Hypothesis RELRO_IMG : forall a, RLO <= a < RHI -> Reusable.YG0d.in_img segs a.
 Context {RO_OFL : Reusable.APostBase.ro_below_ofl segs RLO RHI}.
 
-(* ctl_rt_C at any journal state of the walk (copy, renamed, of lib/B/ACtlW5.v's w5_ctlrt at 68d9f362f0d): the proved
+(* ctl_rt_C at any journal state of the walk (copy, renamed, of lib/B/ACtlW5.v's w5_ctlrt): the proved
    B.ProgWorldCtlRtC.ctl_rt_C_of_AR at this file's TFIB_SYMS / LAWS, its arodata_okP premise from ctl_base's
    arodata_okS through APostBase.arodata_ok_journalP and B.ProgWorld.arodata_okP_of_S. *)
 Lemma w4c_arodata_cut : forall cx own ly3 S3 W3 mem3 md3 k, ACtlCut.ctl_base B MT XM_LIB RLO RHI cx ->
@@ -5013,7 +5014,7 @@ End W4c.
                             ctl_from POST (ix_cut C_B82468_at [j]) -> ctl_from POST (ix_cut C_B8237c_at [j])
      seg_F16  (B823d8_at) : forall POST j, ctl_from POST (ix_cut C_B82464_at [j]) -> ctl_from POST (ix_cut C_B823d8_at [j])
      seg_F17  (B82464_at) : forall POST j, ctl_from POST (ix_cut C_B82468_at [j]) -> ctl_from POST (ix_cut C_B82464_at [j])
-   Each seg_* is named and stated exactly as ACtl.v's Hypothesis of the same name (576147dfd46), generic in SK and FP.
+   Each seg_* is named and stated exactly as ACtl.v's Hypothesis of the same name, generic in SK and FP.
    Sink / trap obligations (branch -> target: refuting lemma, step):
      0x8235c -> 0x82fa4 : seg_F14 step 1          0x82378 -> 0x82fa4 : seg_F15 step 1
      0x8238c, 0x8239c, 0x823b4, 0x823c8 -> 0x82fa4 : seg_F15b step 1

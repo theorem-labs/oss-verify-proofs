@@ -1,9 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/Reusable/YC85.v at 6ebe35ba632
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_knock/lib/Reusable/YC85.v
    (aj_stack_malloc_atS; donor licence Apache-2.0 OR MIT) ported to reac-pw/fuzz_pin's kit, with module paths
    changed. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_grant/lib/A/Prog/CtrlParseLib.v at 6ebe35ba632
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_grant/lib/A/Prog/CtrlParseLib.v
    (pz_sh_app, pz_kept_refl / _trans / _step / _run / _frame_byte / _ra, pz_nf, pz_awr_cons, pz_own_sep,
    pz_nf_sep, pz_kept_own; donor licence Apache-2.0) ported from the position-abstract image to image A's
    segments tfibsegs: the side-stack frame of class 1 (128 bytes, 16 shadow bytes) is the class-0 frame of
@@ -16,6 +16,7 @@
    strncmp wrappers' texts stay the shared lib/A/PPgWrap.v, whose read-only premise is lib/A/Rt/WrapRo.v's
    aro_unowned, a constant with the same body, so those two calls take the premise by conversion. Every lemma
    is the A file's, stated over image B's segments. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Generic lemmas the walk of reac_box_pin_parse (0x80ba4, fuzz_pin.asan-ubsan) uses:
    1. aj_stack_malloc_atS: the call of the side stack for frames (class c), with the state after it a
       set_fs of the state before it, so that the meter does not grow (pp_mo_le_set_fs).
@@ -663,7 +664,7 @@ intros lyc Sc W memc mdc live mo lb cidm posm cidl posl HAR HOC. split.
   unfold zdisjoint in Dm, Dl. cbn [fst snd] in Dm, Dl. unfold pin_out_cell in Ha. lia.
 Qed.
 
-(* The four memory clauses of pin_post_parse (PPgCSpec.v:393-404) from the kept fact whose caller cells
+(* The four memory clauses of pin_post_parse (PPgCSpec.v:394-405) from the kept fact whose caller cells
    are the out-cells of a live call. *)
 Lemma pp_post_mem_of_kept : forall lyc Sc W memc mdc W2 mem2 slo shi (live : bool) mo lb cidm posm cidl posl,
 AR segs B lyc Sc W memc mdc -> pp_oc_frames lyc Sc live mo lb cidm posm cidl posl ->
@@ -910,7 +911,7 @@ pose proof (tfib_img_range a Hi) as Hr. unfold TFIB_IMG_LO, TFIB_IMG_END, YImgTo
 unfold off_img, YImgTop.IMG_LO, YImgTop.IMG_TOP in Om, Ol. unfold pin_out_cell in Ha. lia.
 Qed.
 
-(* The out-cells' frames from the contract's live premise (tpin_parse_specX, PPgCSpec.v:493-501) and the
+(* The out-cells' frames from the contract's live premise (tpin_parse_specX, PPgCSpec.v:494-502) and the
    caller's journal (the frames of Sc are own ++ frames S). *)
 Lemma pp_oc_frames_of_pre : forall STK sp0 FP ly S W0 mem0 md0 own lyc Sc W memc mdc k (regs : bvmap 5 word)
 sa mo lb (s : list byte) cidm posm cidl posl,

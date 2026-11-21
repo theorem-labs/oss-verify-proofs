@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a system call's reads over the larger read-only backing). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -185,6 +186,7 @@ Proof.
     + intros []. cbn [effs eff_ret]. apply CfgStep.refusal_b_mmap_errno; [exact Hno | apply ENOMEM_in_mmap_errnos].
     + intros []. cbn [effs eff_ret].
       rewrite (CfgStep.refusal_b_mmap (sys_input segs ms (getr regs 17)) model _ Hno). exact Hna.
+  - rob_mf Hno.
   - intros []. cbn [effs ms']. unfold ms. rewrite adv_zeros1_epend. exact HB.
 Qed.
 
@@ -293,6 +295,7 @@ Proof.
     + intros []. cbn [effs eff_ret]. apply CfgStep.refusal_b_mmap_errno; [exact Hno | apply ENOMEM_in_mmap_errnos].
     + intros []. cbn [effs eff_ret].
       rewrite (CfgStep.refusal_b_mmap (sys_input segs ms (getr regs 17)) model _ Hno). exact Hna.
+  - rob_mf Hno.
   - intros []. cbn [effs ms']. unfold ms. rewrite adv_unmaps1_epend. exact HB.
 Qed.
 
@@ -397,6 +400,7 @@ Proof.
     + intros []. cbn [effs eff_ret]. apply CfgStep.refusal_b_mmap_errno; [exact Hno | apply ENOMEM_in_mmap_errnos].
     + intros []. cbn [effs eff_ret].
       rewrite (CfgStep.refusal_b_mmap (sys_input segs ms (getr regs 17)) model _ Hno). exact EEXIST_not_mmap_errno.
+  - rob_mf Hno.
   - intros []. cbn [effs ms']. unfold ms. rewrite adv_ret_epend. exact HB.
 Qed.
 

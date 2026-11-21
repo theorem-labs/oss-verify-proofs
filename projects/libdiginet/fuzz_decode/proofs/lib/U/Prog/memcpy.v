@@ -6,7 +6,8 @@
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/Prog/memcpy.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_decode; 24 image values moved to fuzz_decode's binaries by symbol and offset (provenance/evidence/k2/k2-values.tsv); module path OSSVerify.Proofs.libdiginet.fuzz_decode.lib. *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/Prog/memcpy.v for libdiginet/fuzz_decode; 24 image values moved to fuzz_decode's binaries by symbol and offset (provenance/evidence/k2/k2-values.tsv); module path OSSVerify.Proofs.libdiginet.fuzz_decode.lib. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

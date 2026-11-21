@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: send_message's walk segment s3 on plugin-hostd/fuzz_command's ASan image, from
    0x86c48 (after the copy) to rec_clear's return 0x86c70, ported from proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v,
-   AChc.v and ACke.v at c8557374ad2e (cgif_close's segment chain and its program-callee steps) with the class-1 frame
+   AChc.v and ACke.v (cgif_close's segment chain and its program-callee steps) with the class-1 frame
    and inline-check steps of A/ACk1.v (cgif_newgif). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/send_message_s3.v, with its module paths and module names changed; 190 of its 227 lines of code are new or changed and 517 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* sup_remove's walk on the ASan+UBSan build of plugin-hostd/fuzz_command (fuzz_command.asan-ubsan,
    BASE + AF_sup_remove = 0x8b258, 119 instructions; 103 on the side-stack path walked), part 1: the shared
    definitions and the statements of the four segments.
@@ -244,7 +245,7 @@ blocks_bytes S4 <= blocks_bytes S3 + LIVE_ANSWER t ->
 mo_le MT S3 S4 (XM_ANSWER MT t) ->
 sr_post ly S W R O id ly4 S4 W4 regs4 mem4 md4.
 
-(* ---- the footprint's bytes (the A donor's sup_remove_s1.v:336-373, over B's record facts) ---- *)
+(* ---- the footprint's bytes (the A donor's sup_remove_s1.v:337-374, over B's record facts) ---- *)
 Section g.
 Hypothesis HB : CmdBSyms B.
 Hypothesis LAWS : AR_laws SEGS B.

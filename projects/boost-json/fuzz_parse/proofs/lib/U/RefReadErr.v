@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the launch's channel reader. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -34,6 +35,9 @@ Section ReadErr.
   Hypothesis Hh : ltac2:(zQ "60!h9!jc!lid!hg0!nd!lj4@3$4@1$3@1$1@1$0#k0@1$5?5model@1$2@1$1@1$0#k0").
   Hypothesis Hlazy : ltac2:(zQ "71!h9!jc!lk0!l9!ig2!nd!lk7&@2$2@1$1@1$0#k0@1$1@1$0#k0@3$5@1$3~0@1$6?5model@1$4~0").
   Hypothesis Hfd2 : ltac2:(zQ "90!h9!ll4!v6!hh7!hg0!nd!llf!lmc!ln9@3$5@1$4$1@2$7@1$8?5model@2$2@1$0#k0+2@2$3$1@1$6@2$2@1$0#k0+2").
+  (* LPS 75d69e00: the launch's channel reader, constant over the run; re_segF
+     (RefReadErr_tail) needs it for the stderr write and the exit flush. *)
+  Hypothesis Hrdr : m_channel_reader model = true.
 
   Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
   Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
@@ -42,7 +46,15 @@ Section ReadErr.
   (* [comment removed for export] *)
   Theorem re_tail : ltac2:(zQ "i40!h9!jc!l9!m0!nd!r8!sa!v0!v6!hg0!hg9!hge!hh7!hl9!hp9!hu8!huf!hv5!hvc!ig2!ig8!ii0!il3!ioa!ir8!is1!is9!jgb!jl7!jpa!jqc!jva!kg5!kl4!kld!kn9>4path@1$2@1$1@1$0#8>2pp@1$1@1$0#k0>2t8@1$2@1$1@1$0#8>4vals@1$2@1$1@1$0#k0>1R@2$h8@1$0#5@1$1@1$0#k0>1M>0@1$1@1$0#k0@1$9@1$1@1$0#8>0@1$h4@3$i3@1$1@1$0#8@2$8@1$0#8Z^6>0@2$a@1$b@2$3@1$1@1$0#8^7+jc>0@3$4$h2@2$3@1$1@1$0#k0^5Ni7>0@3$4@1$1@1$0#k0@2$e^6N0?3sp0>0@3$4@1$1@1$0#k0@2$e^7N2^9>0@2$a@2$6@1$0#k0?3sp0@2$6@1$0#k0^a>0@2$a@2$7@2$7@2$6@1$0#k0^b@1$b@2$3@1$1@1$0#8^c+8@2$7@2$6@1$0#k0?3sp0+kgggg0>0@3$i0@2$f?2BL^a$i2^9>0@4$hf$5@2$f?2BL^b^9$i1>0@3$4@1$9@1$2@1$1@1$0#8@4$d$5^a^e@2$h5@2$3@1$1@1$0#8^fN1@2$c@1$2@1$1@1$0#8@3$h0@1$1@1$0#8^f@3$h1@1$1@1$0#8@2$8@1$0#8Z@1$h3@1$1@1$0#8>0@3$4@1$9@1$2@1$1@1$0#8@4$d$5^b@2$8@1$0#k0@2$7@2$6@1$0#k0^f@1$b@2$3@1$1@1$0#8^h0N8@2$c@1$2@1$1@1$0#8^e@4$hc$5$hb@2$h6@5$h9?2fx^d@2$8@1$0#k0+knih0^c@1$ha$5?5model@2$he@1$hd^h1@1$h7?5model").
 Proof.
-ltac2:(KReplay.run1z (kr_t_RefReadErr ()) ["ReadErr"] "##Ehh04__x1h13HL0h27__arithh34cstrh45cstr0h54__ffh68__varmaph75__with84HL'0h98__sat114h:6!s1$9h;!sc$1h<2HKh=3HK'h>2HLh?3HL'h@3HPlhA2HRhB3HR'hC6HnonulhD4Hpp1hE4Hpp2hF4HstrhG5Hstr'hH3Ht8hI1MhJ2M'hK2P0hL2P2hM2Q0hN4Q113hO2Q2hP1RhQ2R'hR4pathhS2pphT2t8hU4valshV5vals'hW1xhX1yp&0p;1p;2p;3p;4p;Ip;8p;Lp;5p;<p;7p10000p4p710!s2$K!s2&8g000ij13Tg001Nj1Q!s/$lj1\Tg002Oj1K!s/$oj15Tg003Tj2qTg004@j1W!s/$bj2GTg005Hj3d!s/$_j1cTg0068j18!s/$Vj2;Tg0072j22!s/$Rj10Tg0081j2@Tg0093j31j1]!s2$Mj2ATg00:7j2C!s/$Tj2BTg00;]j3VTg00<kj4UTg00>9j2T!s/$Pj4LTg00?Pj1STg00@0j3b!s/$Pj3R!s/$mj2JTg00AOj1aTg00BVj2`Tg00CPj1_Tg00DRj1^Tg00EEk201Tg00FHk20!t~$GKR0j14!s1$kj2~Tg00HNj3}!s/$kj2>Tg00IEj4I!s/$lj1?Tg00JQj2zTg00KBj2y!s/$bj2xTg00L@j1w!s/$^j1sTg00MIj2r!s/$lj4ZTg00NWj2pTg00O9j2o!s/$ej3nTg00PDj4mTg00Q6j2O!s/$Yj1lTg00R;j2[!s/$VlIkTg00Scj8jTg00TmlLiTg00V;j1tTg00W?j5hTg00X@j2uTg00Y5j2vTg00Z3j4gTg00[:l<f!s/$_j7{Tg00\Cj7e!s/$gj8|Tf0R1#3#3p=Hf1R2/21#4p=9%51#5p=7%01#0p=F!s-$#0#0p=M!s2+!s$'p=Y!s:4!s$3p=:g00]KR3?121p=<%3!tF$#3p==P3g00]jR4P1P0P2f2R0f3R5f4R6f5R7f6R8f7R9f8R:M<fp=Pg00^HR;/;1p=6P2g00^fR<g00_ER=P=g00_eR>P1g00`EF{p=DP4!sM$`eP1CZp=NP0P<P=P=P>P2P1Fep=XP5!s9+0P2P1G|p=Eg00aLR<#3R?#3R@#3RA#QRB#\RC#KRD%3ARE#HRF#QRG#\RH%KHRI%5?RJ#Q/qHRK%WC\HRL1GB;RB=dC7#c19C8%5<#7RM#H#8RN';12H6g00b1RO#0RP#0RQ#F#MRR#0#F#M#Y#:RS'<1@7Op,3sp0RT51H1@8Q=1H:1AGTRUf9RV,AG';f:RW,AGf;RX,9C'C%8A'C%=F#=!s$$8,CU';p,2BLRF/BVg00bP;V:g00c[RY1BFWP:g00dbCU%WDRZPYPVf=R[f>R\,2C/TPCL%SC9bCBRB9RC\,JD31PYPW1AG\f?R]!tE$,GGPRCL1JD[51Zp,2fxRRPTPFp,5modelR^p,4HvspR_p,2HhR`p,5HlazyRaf@RbP]19CbRc%8?R?%abRd'`%_?%^^R?+01+00ReP\P[f<RfPX12H[R[/<S%4[Rg%5@#7#8R@514Rh%]3Ri%]4Rj%42%415141<211~213}XX3XW3R3P[Pg1>4gPSP@1>4@RkM9PP:CIRlPhfA,2CRm#?Rn%4m#6Rm12H]Ro#?Rp%4o#6Ro%8ERE,zURq%6U%6E1yUE#6[[REg00emRU#SRr%KURU1x42Rs%w4Rt%s4RuP41r4<!{#$fYP<CZ'D1pu>R>P1P0g00g@Rvg00g`Rw'>1o10=1vwdAn4;2CmRwb5b6b7X04RvA1411^04RxP1fE,9CRyO1b2b:b4b3b1PlPhPnPmPpPoPqPEPrPUPsPtPu1O4;/N<,DuR;%l=R=!s9$N,!s9%oP=%5M#7!s$-8RM,O4!sF%9Xu;CECEP>P!t[,%61R<1;2NRp%60Rm1;0M'[[[^04P1PyP5P\O3!ti-WP:P9P8P7P6P5!}8%12H0%FS#Y#:!s$%RW!{t$!s2%y'<1@5O=1HT1@6QfD!{x$7WfF,9C,GG51H1BF8g00h@;V7PY1BF9P7g00iJCUPYP8fHRWfIRQ!{;'ARCQB,JD51ZP!zh$P^P_P`Pap,4Hfd2fJRaPQ19CaPVP:P912HVRV/<y%4VR9%HJ#5!v8$J514R:PiPjP3PVP91>49PyPJ1>4JM9PP8CIRJP:12HWRW!zp$WRy=14@R9!s[&WPy1>4yPSP@PkM9PfCCIRkP9fL,2CR@#?RS%4@#6R@12HaRH#?Ry%4H#6RH%?[R[%6gRg!xP$vPxP1fQ,9CRC!xy$9b;!w8%b8PJP:PkP9!t5$yPHP[Pg!y,1P;P=PuPoP=AXu;o!xS41;0N,[m\p\<!xF%CP6Pa!xF$!t6/!xD']P\!xH%MIkWGW=WBWNWOWMW?XJLXQKXVI!w?+bP]PcPeGjeMLiPYg00jSPRPf%5A#7#H#5#=!s&$8,GGPX%tYDh/u^1vd?CgeWHWFW<WAWEWDWLWKW>W@WCWIWPWUXTDWSWRo"). Qed.
+    (* LPS 75d69e00: replay replaced by the plain text of the plain-image twin
+       (RefReadErr.v re_tail), now passing the reader to re_segF. *)
+    intros path pp t8 vals R M Hnonul HPl HL P0 P2 Hpp1 Hpp2 HR HK Hstr Ht8.
+    unfold t_die.
+    eapply (re_segBC sp0 BL model Hvsp Hh Hlazy path pp (Z.of_nat (length path)) _ t8 vals);
+      try eassumption; try lia.
+    intros vals' R' M' HL' Q0 Q2 Q113 HR' HK' Hstr'.
+    eapply (re_segF sp0 BL model Hvsp Hh Hlazy Hfd2 Hrdr path pp _ vals'); try eassumption; lia.
+Qed.
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)

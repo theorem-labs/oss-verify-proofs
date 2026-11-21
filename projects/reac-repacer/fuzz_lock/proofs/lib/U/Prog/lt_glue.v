@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_uci/lib/U/Prog/LLVMFuzzerTestOneInput.v, with its module paths and module names changed; 47 of its 169 lines of code are new or changed and 1122 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The glue between the machine walks of lt_segs.v and the frame invariant lf_fr of
-   LLVMFuzzerTestOneInput_fr.v: libreac/fuzz_decode's released lib/U/Prog/fd_glue.v (25e3d17bdb50) lemmas g_pre,
+   LLVMFuzzerTestOneInput_fr.v: libreac/fuzz_decode's released lib/U/Prog/fd_glue.v lemmas g_pre,
    g_above and g_run, and g_check, its g_crt for a harness function whose contract leaves no footprint
    (check_no_overread and check_lookup of fuzz_lock). Written by Theorem Labs. *)
 From Stdlib Require Import ZArith List Bool Lia.

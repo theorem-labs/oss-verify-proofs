@@ -12,9 +12,9 @@
    - va_slots_below_47 (+ _AR, _nil): the snprintf top's slot bound from the caller's own frame;
    - amem8_of_high / amem8_of_stack (+ amem_range_le): the top's destination slack by measurement.
    New file. *)
-(* Modified by Theorem Labs, 2026-10: c-libc-stdio's restatement for fuzz_preset (route (a), c-omx-hpreset 10:51Z) of proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfSx.v at origin/cold/port-fm-rtprintf-param 7e395de08f5 over the engine's ARx with the ghost head list Hp passed through unchanged (PSnpShared.v's renames: ecall_preU -> ecall_pre_x, ARU -> ARx, U -> Hp, contract suffixes Uz / Ua / Ux / U -> _xz / _xa / _xx / _x). Left out: the AR form sh_avfprintf_icpt_realizesx with its bridge sh_avfprintf_icpt_of_Ux, the AR form sh_asnprintf_mono, and va_slots_below_47_AR (the AR form is the ARx form at ARx := AR). va_slots_below_47 and va_slots_below_47_nil moved to PSnpSk.v, the one file that takes the stack-bound fact stk_bounds_x as a Section hypothesis. No image numeral. *)
-(* Modified by Theorem Labs, 2026-10: port-fm 00daeaf3796's destination slack (origin/cold/port-fm-rtprintf-param, the
-   final text 3e35620c52e): sh_avsnprintf_realizes_xa / sh_avsnprintf_icpt_realizes_xa carry 'amem_range d
+(* Modified by Theorem Labs, 2026-10: c-libc-stdio's restatement for fuzz_preset (route (a), c-omx-hpreset 10:51Z) of proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfSx.v over the engine's ARx with the ghost head list Hp passed through unchanged (PSnpShared.v's renames: ecall_preU -> ecall_pre_x, ARU -> ARx, U -> Hp, contract suffixes Uz / Ua / Ux / U -> _xz / _xa / _xx / _x). Left out: the AR form sh_avfprintf_icpt_realizesx with its bridge sh_avfprintf_icpt_of_Ux, the AR form sh_asnprintf_mono, and va_slots_below_47_AR (the AR form is the ARx form at ARx := AR). va_slots_below_47 and va_slots_below_47_nil moved to PSnpSk.v, the one file that takes the stack-bound fact stk_bounds_x as a Section hypothesis. No image numeral. *)
+(* Modified by Theorem Labs, 2026-10: port-fm's destination slack (origin/cold/port-fm-rtprintf-param, the
+   final text): sh_avsnprintf_realizes_xa / sh_avsnprintf_icpt_realizes_xa carry 'amem_range d
    (sn_len (n - 1) T + 8)' after the 2^47 slot bound, sh_avfprintf_icpt_realizes_xx carries GXA (5) 'amem_range s0
    (sn_len n0 T + 8)' after GXA (4); amem_range_le and amem8_of_high are FMsnprintfSx.v's (alloc_ceiling written
    YM05.alloc_ceiling, the RunCeil field, bounded by YM05.alloc_ceiling_lt); amem8_of_stack is in PSnpSk.v beside
@@ -218,8 +218,8 @@ getr regs' 10 = w64 (Z.of_nat (length T)) /\
 ~ (spZ regs - K <= a < spZ regs) -> aview segs (w_H W) mem' a = aview segs (w_H W) mem a) /\
 (forall a, apresent (w_H W) mem a -> apresent (w_H W) mem' a) /\
 (YAkMemnorm.memnorm segs mem -> YAkMemnorm.memnorm segs mem')).
-(* the vfprintf interceptor / musl vfprintf with GXA's four premises (RtPrintf.GxSeam's text, cold/port-fm-gxseam
-   1eccd2160c1 lib/A/FMgxaSeamDef.v, verbatim; this file is its one definition) *)
+(* the vfprintf interceptor / musl vfprintf with GXA's four premises (RtPrintf.GxSeam's text,
+    lib/A/FMgxaSeamDef.v, verbatim; this file is its one definition) *)
 Definition sh_avfprintf_icpt_realizes_xx
     (FF : fmt_fam) (K gc gv img_lo img_hi : Z) (cr : list (Z * Z)) (snw pc : Z) : Prop :=
 forall ly S (Hp : list Z) W regs mem md fp f ap bp cp s0 n0 (ws T : list Z) cval,

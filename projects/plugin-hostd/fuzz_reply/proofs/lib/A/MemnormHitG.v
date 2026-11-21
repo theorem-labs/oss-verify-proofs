@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MemnormHitG.v (a working branch 30a1993588f, c5 + memnorm; file sha256 ae14e070a8c8) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 3 image addresses moved by code-verified function pairs (5 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MemnormHitG.v (a working branch, c5 + memnorm; file sha256 ae14e070a8c8) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 3 image addresses moved by code-verified function pairs (5 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PILOT (task MEMNORM): the hit-g arm of AGikE.v with memnorm kept.  [ARM_HITG_em] is AGikE.ARM_HITG_e with
    MemnormT.alloc_leaf_em (ErrnoG.alloc_leaf_e plus `memnorm mem -> memnorm mem'`) in place of ErrnoG.alloc_leaf_e.
    rule 24: no function proved (kind: arm twin, frame corollary).
 
-   WHY THE ARM AND NOT THE TOP: the top post's raw frame (AllocG.v:99-100) leaves the owned set AOX free, and at cgif
-   aowned meets the read-only segment [0x10000, 0x30000) (YF0m.v:279-285 Tfib_owned_static holds (0x102e8, 8) ...
+   WHY THE ARM AND NOT THE TOP: the top post's raw frame (AllocG.v:100-101) leaves the owned set AOX free, and at cgif
+   aowned meets the read-only segment [0x10000, 0x30000) (YF0m.v:280-286 Tfib_owned_static holds (0x102e8, 8) ...
    (0x20e62, 0x1e)), so the top post admits a ROM byte copied into the overlay.  The arm's own raw frame is tighter:
-   at_RETw's MEQF (AGif0n.v:90-92) keeps every byte outside ImgBaseAG.WIN, ag_dzone, the new block and its shadow,
+   at_RETw's MEQF (AGif0n.v:91-93) keeps every byte outside ImgBaseAG.WIN, ag_dzone, the new block and its shadow,
    and none of those zones holds a read-only byte or reaches TASK_SIZE ([memnorm_at_RETw]):
    - high zones (the stack window, the class span Kv / Uv, the block, PBW and the shadow) lie at or above kImgEnd,
      where tfibsegs has no segment (YF0x.v:257 tfib_find_segment_none_high, TFIB_IMG_END = 0x5fb000 <= kImgEnd), and
@@ -16,9 +17,9 @@
    - the thread object's cells (WINT) and the depot's node and store blocks are owned extents, off the layout's image
      window (lo_disj) and in_app (lo_app), so off every segment ([tfib_seg_range]: a segment byte lies in
      [TFIB_IMG_LO, TFIB_IMG_END), inside the window by img_cover, YF0x.v:53);
-   - the depot zone's static part [0x177f88, 0x5c8710) (AGis.v:230) lies in the read-write segment [0x9f000,
+   - the depot zone's static part [0x177f88, 0x5c8710) (AGis.v:231) lies in the read-write segment [0x9f000,
      0x5fb000) ([tfib_seg_rw]).
-   The proof of ARM_HITG_em is AGikE.v:93-286 (the block marked as a copy) plus the memnorm conjunct from the same
+   The proof of ARM_HITG_em is AGikE.v:94-287 (the block marked as a copy) plus the memnorm conjunct from the same
    MEQF; no runner is swapped and no walk is touched.  AGikE.v is unchanged. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -102,7 +103,7 @@ apply (mn_safe_off ly x IMG).
 Qed.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* memnorm is kept by a memory that equals [mem] outside at_RETw's raw frame zones (AGif0n.v:90-92, the clause in
+(* memnorm is kept by a memory that equals [mem] outside at_RETw's raw frame zones (AGif0n.v:91-93, the clause in
    the form at_RETw states it, as AGikE.errno_kept_at_RETw reads it). *)
 Lemma memnorm_at_RETw : forall B ly (regs0 : bvmap 5 word) n cl v kz odd (mem mem' : word -> option byte),
 TfibSyms B -> layout_ok ly -> ImgBase.im_img_cover ly ->
@@ -158,7 +159,7 @@ apply (MemnormT.memnorm_frame4 tfibsegs (ImgBaseAG.WIN ly regs0 n cl v kz odd) (
 - exact MEQ.
 Qed.
 
-(* copy of AGikE.v:64-86 (the section header), unchanged *)
+(* copy of AGikE.v:65-87 (the section header), unchanged *)
 Section b.
 Variable B : asyms.
 (* The trace premise (C5): a predicate on the trace and the state (cgif: In tr (as_universe B)). *)
@@ -173,7 +174,7 @@ Variable dpost : Z -> alayout -> astate -> world tfibsegs -> list Z -> Z -> (wor
 Variables (mtag stag : Z).
 Hypothesis IF : AIface B U mt ARX AOX rpre nmax lmax lpost dpost mtag stag.
 Hypothesis TS : TfibSyms B.
-(* copy of AGik.v:50 *)
+(* copy of AGik.v:51 *)
 Local Ltac bvne := first [cbn; lia | vm_compute; congruence | intros X; vm_compute in X; discriminate X].
 (* can_fill of the caller's call site: 1 (malloc, realloc) or 0 (calloc). *)
 Variable cf : Z.
@@ -188,8 +189,8 @@ alloc_pre tfibsegs B U ARX rpre nmax lmax 8 1 cf inst so bp ly S W regs mem md n
 amreal tfibsegs (mt n tr S) W (cfg_at tfibsegs 0x31bd8 regs mem md)
 (MemnormT.alloc_leaf_em tfibsegs B mt ARX AOX lpost TFIB_OOM inst ly S W regs mem md n tr).
 Proof.
-(* copy of AGikE.v:93-248, unchanged *)
-(* copy of AGik.v:87-272, + errno *)
+(* copy of AGikE.v:94-249, unchanged *)
+(* copy of AGik.v:88-273, + errno *)
 intros inst so bp ly S W regs mem md n tr l off PRE Nrange0 Hinited Hcache.
 destruct IF as [Finst Fview Fshape Fdepot Fdaok Fpost Fowned Funinit].
 destruct PRE as (HARX & HRP & Hra & Hra4096 & Hal & Hlo & Hbot & Hhi & Hpres0 & Hgp & Htp & Hr10 & Hr11 & Hr12 & Hr13 & Hr14 & Hr15 &
@@ -351,7 +352,7 @@ assert (MNK : MemnormT.memnorm_keep tfibsegs mem mem').
     (proj1 Hv) (proj2 Hv) _ Hkz MEQF).
   - clear - Hcl. unfold kNumClasses. lia.
   - clear - Nrange0. lia. }
-(* copy of AGikE.v:249-281, unchanged *)
+(* copy of AGikE.v:250-282, unchanged *)
 assert (NEu : forall a, ~ (fst (ck_user (new_chunk cl off n), st_final S1 cl l off n tr z) <> PNull /\
   sptr_addr B ly (fst (ck_user (new_chunk cl off n), st_final S1 cl l off n tr z)) <= a <
   sptr_addr B ly (fst (ck_user (new_chunk cl off n), st_final S1 cl l off n tr z)) + req_size n) ->
@@ -386,7 +387,7 @@ split.
 intros a Ha. unfold spZ, AFSTACK_G in Ha. rewrite <- R2 in Ha. unfold ImgBaseAG.AFSTACK in PRS. exact (PRS a Ha). }
 split. { intros _. exact ERRNO. }
 split; [exact MNK|].
-(* copy of AGikE.v:282-288, unchanged *)
+(* copy of AGikE.v:283-289, unchanged *)
 split. { cbn [fst]. rewrite R10, KU. reflexivity. }
 split; [exact HLP|].
 split; [exact HPATH|].

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the copy-in record stops at strncpy_from_user's clamp (access_okb), the too-long openat reads the 4096-byte name window below TASK_SIZE, argv[1]'s layout is the launch's (AsanIOAsanCfg.io_lay1_asan), and the write path takes the channel reader. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -85,18 +86,19 @@ Proof. intros fds [->|[e ->]]; reflexivity. Qed.
 (* [comment removed for export] *)
 Definition mdl_sim (m m' : Model) : Prop :=
   m_vmmaps m' = m_vmmaps m /\ m_vm_lazy m' = m_vm_lazy m /\ m_halted m' = m_halted m
-  /\ m_tid m' = m_tid m /\ m_fs m' = m_fs m /\ eager_used m' = eager_used m.
+  /\ m_tid m' = m_tid m /\ m_fs m' = m_fs m /\ eager_used m' = eager_used m
+  /\ m_channel_reader m' = m_channel_reader m /\ m_kernel m' = m_kernel m.
 
 Lemma mdl_sim_refl : forall m, mdl_sim m m.
 Proof. intros m. repeat split; reflexivity. Qed.
 Lemma mdl_sim_with_fds : forall f m, mdl_sim m (with_fds f m).
 Proof. intros f m. repeat split; reflexivity. Qed.
 Lemma mdl_sim_trans : forall m1 m2 m3, mdl_sim m1 m2 -> mdl_sim m2 m3 -> mdl_sim m1 m3.
-Proof. intros m1 m2 m3 (A1&A2&A3&A4&A5&A6) (B1&B2&B3&B4&B5&B6). repeat split; congruence. Qed.
+Proof. intros m1 m2 m3 (A1&A2&A3&A4&A5&A6&A7&A8) (B1&B2&B3&B4&B5&B6&B7&B8). repeat split; congruence. Qed.
 Lemma mdl_sim_materialized : forall m m', same_but_materialized m m' -> mdl_sim m m'.
 Proof.
   intros m m' Hs. pose proof (same_but_materialized_frame _ _ Hs) as F.
-  repeat split; apply F.
+  repeat split; try apply F; rewrite Hs; reflexivity.
 Qed.
 Lemma m_fds_with_fds : forall f m, m_fds (with_fds f m) = f.
 Proof. reflexivity. Qed.
@@ -164,6 +166,8 @@ Qed.
 Lemma cstr_access_len_aux_le : forall mp a fuel, (cstr_access_len_aux mp a fuel <= fuel)%nat.
 Proof.
   intros mp a fuel. revert a. induction fuel as [|f IH]; intros a; cbn [cstr_access_len_aux]; [lia|].
+  (* LPS 727298f3: the copy-in record stops at [strncpy_from_user]'s clamp ([access_okb]) first *)
+  destruct (negb (access_okb a 1)); [lia|].
   destruct (mp a) as [b|]; [|lia]. destruct (bv_eqb b (Z_to_bv 8 0)); [lia|]. specialize (IH (a + 1)%bv). lia.
 Qed.
 
@@ -334,12 +338,16 @@ Section IOSound.
   Variables (argc STR1 : Z) (argv1 : list byte).
   (* [comment removed for export] *)
   Hypothesis H_vals : forall E M, SINV E M ->
-    ev E V_ARGC = Z_to_bv 64 argc /\ (2 <= argc -> uE E e_str1 = STR1 /\ uE E e_sp0 <= STR1).
+    ev E V_ARGC = Z_to_bv 64 argc /\ (2 <= argc -> uE E (e_str1 A) = STR1 /\ uE E e_sp0 <= STR1).
   Hypothesis H_rd1 : forall E M, SINV E M -> 2 <= argc ->
     rdn SEGS M (Z_to_bv 64 STR1) (length argv1 + 1) = Some (argv1 ++ [Z_to_bv 8 0]).
   (* [comment removed for export] *)
   Hypothesis H_argc : 1 <= argc <= 1024.   (* [comment removed for export] *)
-  Hypothesis H_lay1 : 2 <= argc -> CEIL <= STR1 /\ STR1 + 8192 <= 2 ^ 64.
+  (* LPS 727298f3: [srz_cfg_openat_toolong_lazy] reads the 4096-byte name window below
+     [TASK_SIZE]; argv[1] and its NUL lie below the stack top, so the launch gives the third
+     conjunct (AsanIOAsanCfg.io_lay1_asan). *)
+  Hypothesis H_lay1 : 2 <= argc -> CEIL <= STR1 /\ STR1 + 8192 <= 2 ^ 64
+    /\ STR1 + Z.of_nat (length argv1) + 1 <= TASK_SIZE.
   Hypothesis H_arg1 : 2 <= argc ->
     Z.of_nat (length argv1) <= 131071 /\ ~ In (Z_to_bv 8 0) argv1 /\ path_has_slash argv1 = false /\ argv1 <> dotdot_path.
 
@@ -384,10 +392,10 @@ Section IOSound.
     (forall a, hid A argH E cs model a = true -> FULL' a = FULL a) ->
     cs_ok E (ret_with cs r k' nx' f') R' FULL' model'.
   Proof.
-    intros E cs R FULL model R' FULL' model' r k' nx' f' HC (S1 & S2 & S3 & S4 & S5 & S6) Hinv HR HK Hf Hhid.
+    intros E cs R FULL model R' FULL' model' r k' nx' f' HC (S1 & S2 & S3 & S4 & S5 & S6 & S7 & S8) Hinv HR HK Hf Hhid.
     pose proof (hid_ret E cs r k' nx' f' model model' S1 S2) as Hh.
     destruct HC; constructor; cbn [ret_with a_ss a_maps a_totsz a_ylo a_eager a_vis a_ghost a_abytes a_brk a_fd a_tidset kn mk_ss s_regs s_log s_know];
-      rewrite ?allowA_ret, ?S1, ?S2, ?S3, ?S4, ?S5, ?S6; try assumption; try reflexivity.
+      rewrite ?allowA_ret, ?S1, ?S2, ?S3, ?S4, ?S5, ?S6, ?S7, ?S8; try assumption; try reflexivity.
     - unfold Mr. rewrite Hh. exact HK.
     - unfold model_ivs_wf in *. rewrite S1, S2. assumption.
     - intros a Ha. rewrite Hh in Ha. rewrite (Hhid a Ha). auto.
@@ -678,7 +686,7 @@ Section IOSound.
   (* [comment removed for export] *)
 
   Lemma openat_args_sound : forall E cs R FULL model,
-    cs_ok E cs R FULL model -> openat_args_ok SEGS cs = true ->
+    cs_ok E cs R FULL model -> openat_args_ok SEGS A cs = true ->
     0 <= pc cs /\ pc cs + 4 < two64
     /\ (exists w, fetch_word SEGS (Z_to_bv 64 (pc cs)) = Some w /\ is_ecall w = true)
     /\ getr R 17%bv = Z_to_bv 64 56
@@ -702,13 +710,13 @@ Section IOSound.
     pose proof (xlo_sound SEGS E _ (kn cs) (EVar V_ARGC) alo HK Halo) as Bargc. cbn [edenot] in Bargc.
     pose proof H_argc as Hac. rewrite Vargc, u64_lit in Bargc by lia.
     assert (Hargc2 : 2 <= argc) by lia. specialize (Vstr1 Hargc2) as [Vstr1 Vsp1]. pose proof (len_argv1 Hargc2) as L1.
-    destruct (H_lay1 Hargc2) as [Ly1 Ly2]. unfold CEIL in Ly1.
+    destruct (H_lay1 Hargc2) as (Ly1 & Ly2 & _). unfold CEIL in Ly1.
     (* [comment removed for export] *)
     destruct (reg_lit cs 10) as [z10|] eqn:Hr10; [|discriminate H10]. apply Z.eqb_eq in H10.
     destruct (reg_lit_sound SEGS A LIMIT SINV argH FS0 E cs R FULL model 10 z10 HC ltac:(lia) Hr10) as [G10 Hz10].
     replace (Z_to_bv 5 (Z.of_nat 10)) with (10%bv : bv 5) in G10 by (apply bv_eq; reflexivity).
     (* [comment removed for export] *)
-    pose proof (len_eqb_sound SEGS E _ (kn cs) (reg cs 11) e_str1 HK H11) as H11e.
+    pose proof (len_eqb_sound SEGS E _ (kn cs) (reg cs 11) (e_str1 A) HK H11) as H11e.
     pose proof (reg_sound SEGS A LIMIT SINV argH FS0 E cs R FULL model 11 HC ltac:(lia)) as G11.
     replace (Z_to_bv 5 (Z.of_nat 11)) with (11%bv : bv 5) in G11 by (apply bv_eq; reflexivity).
     rewrite H11e in G11.
@@ -745,10 +753,10 @@ Section IOSound.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
 
-  Theorem node_openat_err_sound : APSC.node1_stmt_fp SEGS A nx0 LIMIT SINV argH FS0 FP always (fun cs => node_openat_err SEGS T cs).
+  Theorem node_openat_err_sound : APSC.node1_stmt_fp SEGS A nx0 LIMIT SINV argH FS0 FP always (fun cs => node_openat_err SEGS T A cs).
   Proof.
     intros cs cs' E R FULL model TT HC _ Hn Hk. cbv beta in Hn. unfold node_openat_err in Hn.
-    destruct (openat_args_ok SEGS cs) eqn:Hargs; [|discriminate].
+    destruct (openat_args_ok SEGS A cs) eqn:Hargs; [|discriminate].
     destruct (openat_args_sound E cs R FULL model HC Hargs)
       as (Hp0 & Hp4 & [w [HF HE]] & H17 & H10 & H11 & H12 & Hargc2 & RD & Hfds & Hmat0 & Hmat1).
     pose proof (len_argv1 Hargc2) as L1. pose proof (argv1_nz Hargc2) as NZ1.
@@ -780,6 +788,8 @@ Section IOSound.
       injection Hn as <-.
       eapply (srz_cfg_openat_toolong_lazy SEGS R (Z_to_bv 64 (pc cs)) FULL model w HF HE (co_halt _ _ _ _ _ _ _ _ _ _ _ HC) H17 H10 H12 Hmat0
                 (firstn 4096 (argv1 ++ [Z_to_bv 8 0]))).
+      + cbn iota in H_open. destruct (H_lay1 Hargc2) as (Ly1 & Ly2 & Ly3). unfold CEIL in Ly1.
+        rewrite H11, u64_lit by lia. unfold TASK_SIZE in *. lia.
       + eapply rdn_firstn; [exact RD | lia].
       + rewrite firstn_app, (proj2 (Nat.sub_0_le _ _)) by lia. cbn [firstn]. rewrite app_nil_r.
         intros Hin. apply NZ1. eapply firstn_In'; exact Hin.
@@ -789,10 +799,14 @@ Section IOSound.
       destruct H_open as [Hnil | (Hnd & Hlen & Hlk)].
       + rewrite Hnil in RD.
         eapply (srz_cfg_openat_empty_lazy SEGS R (Z_to_bv 64 (pc cs)) FULL model w HF HE (co_halt _ _ _ _ _ _ _ _ _ _ _ HC) H17 H10 H12 Hmat0).
-        * split; [cbn; lia|]. split; [intros []|]. exact RD.
+        * split; [cbn; lia|]. split; [intros []|]. split; [|exact RD].
+          destruct (H_lay1 Hargc2) as (Ly1 & Ly2 & Ly3). unfold CEIL in Ly1.
+          rewrite H11, u64_lit by lia. rewrite Hnil in Ly3. cbn [length Z.of_nat] in *. unfold TASK_SIZE in *. lia.
         * apply (POST 2); [reflexivity | lia | exact Hk].
       + eapply (srz_cfg_openat_absent_lazy SEGS R (Z_to_bv 64 (pc cs)) FULL model w HF HE (co_halt _ _ _ _ _ _ _ _ _ _ _ HC) H17 H10 H12 Hmat0 argv1).
-        * split; [exact Hlen|]. split; [exact NZ1 | exact RD].
+        * split; [exact Hlen|]. split; [exact NZ1|]. split; [|exact RD].
+          destruct (H_lay1 Hargc2) as (Ly1 & Ly2 & Ly3). unfold CEIL in Ly1.
+          rewrite H11, u64_lit by lia. unfold TASK_SIZE in *. lia.
         * exact (plain_argv1 Hargc2 Hnd).
         * rewrite Hfs. exact Hlk.
         * apply (POST 2); [reflexivity | lia | exact Hk].
@@ -811,7 +825,7 @@ Section IOSound.
   Qed.
 
   Theorem node_openat2_sound : forall cs csa csb E R FULL model TA TB,
-    cs_ok E cs R FULL model -> node_openat2 SEGS nx0 T cs = Some (csa, csb) ->
+    cs_ok E cs R FULL model -> node_openat2 SEGS nx0 T A cs = Some (csa, csb) ->
     (forall E' R' FULL' model', env_agree nx0 E E' /\ env_agree (nxt cs) E E' -> cs_ok E' csa R' FULL' model' -> m_fs model' = m_fs model ->
         srealizes_cfg SEGS (cfg R' (pc csa) FULL' model') TA) ->
     (forall E' R' FULL' model', env_agree nx0 E E' /\ env_agree (nxt cs) E E' -> cs_ok E' csb R' FULL' model' -> m_fs model' = m_fs model ->
@@ -821,7 +835,7 @@ Section IOSound.
     intros cs csa csb E R FULL model TA TB HC Hn HkA HkB. unfold node_openat2 in Hn.
     assert (Hshape : exists lohi : option (Z * Z),
               match io_open T with ODir => lohi = None | OFile lo hi => lohi = Some (lo, hi) | _ => False end
-              /\ (openat_args_ok SEGS cs && fresh_ok nx0 cs)%bool = true
+              /\ (openat_args_ok SEGS A cs && fresh_ok nx0 cs)%bool = true
               /\ csa = ret_with cs (EVar (nxt cs)) (KRange (EVar (nxt cs)) (two64 - 24) (two64 - 12) :: kn cs) (Datatypes.S (nxt cs)) FdStd
               /\ csb = match lohi with
                        | Some (lo, hi) => ret_with cs (ELit 3) (KRange (EVar (nxt cs)) (Z.max lo 0) (Z.min hi FCAP) :: kn cs) (Datatypes.S (nxt cs))
@@ -829,7 +843,7 @@ Section IOSound.
                        | None => ret_with cs (ELit 3) (kn cs) (Datatypes.S (nxt cs)) FdDir
                        end).
     { destruct (io_open T) as [| | | |lo hi]; try discriminate;
-        destruct (openat_args_ok SEGS cs && fresh_ok nx0 cs)%bool; try discriminate;
+        destruct (openat_args_ok SEGS A cs && fresh_ok nx0 cs)%bool; try discriminate;
         injection Hn as <- <-; [exists None | exists (Some (lo, hi))]; repeat split; reflexivity. }
     clear Hn. destruct Hshape as (lohi & Hcase & Hc & -> & ->).
     apply andb_prop in Hc as [Hargs Hfresh].
@@ -863,7 +877,9 @@ Section IOSound.
     destruct (io_open T) as [| | | |lo hi] eqn:Eo; try contradiction; subst lohi.
     - (* [comment removed for export] *)
       eapply (srz_cfg_openat_dot_lazy SEGS R (Z_to_bv 64 (pc cs)) FULL model w HF HE (co_halt _ _ _ _ _ _ _ _ _ _ _ HC) H17 H10 H12 Hmat0 Hfree Hmat1).
-      + rewrite H_open in NZ1, RD. split; [cbn; lia|]. split; [exact NZ1 | exact RD].
+      + destruct (H_lay1 Hargc2) as (Ly1 & Ly2 & Ly3). unfold CEIL in Ly1.
+        rewrite H_open in NZ1, RD, Ly3. split; [cbn; lia|]. split; [exact NZ1|]. split; [|exact RD].
+        rewrite H11, u64_lit by lia. unfold TASK_SIZE in *. lia.
       + exact ERR.
       + rewrite Halloc, (pc4 cs Hp0 Hp4), Hfds, fd_insert_std3.
         specialize (HkB E (regupd R 10%bv (Z_to_bv 64 3)) FULL (with_fds (fds3 State.FdDir) model) (conj (env_agree_refl nx0 E) (env_agree_refl (nxt cs) E))).
@@ -878,7 +894,9 @@ Section IOSound.
     - (* [comment removed for export] *)
       destruct H_open as [c (Hne & Hnd & Hlen & Hlk & Hflen & Hblob & Hhdr)].
       eapply (srz_cfg_openat_file_lazy SEGS R (Z_to_bv 64 (pc cs)) FULL model w HF HE (co_halt _ _ _ _ _ _ _ _ _ _ _ HC) H17 H10 H12 Hmat0 Hfree Hmat1 argv1 c).
-      + split; [exact Hlen|]. split; [exact NZ1 | exact RD].
+      + split; [exact Hlen|]. split; [exact NZ1|]. split; [|exact RD].
+        destruct (H_lay1 Hargc2) as (Ly1 & Ly2 & Ly3). unfold CEIL in Ly1.
+        rewrite H11, u64_lit by lia. unfold TASK_SIZE in *. lia.
       + exact Hne.
       + exact (plain_argv1 Hargc2 Hnd).
       + rewrite Hfs. exact Hlk.
@@ -1666,7 +1684,7 @@ Section IOSound.
   (* [comment removed for export] *)
 
   Theorem io_xn_sound : forall id args,
-    APSC.node1_stmt_fp SEGS A nx0 LIMIT SINV argH FS0 FP always (ION.xn SEGS T id args).
+    APSC.node1_stmt_fp SEGS A nx0 LIMIT SINV argH FS0 FP always (ION.xn SEGS T A id args).
   Proof.
     intros id args.
     assert (NONE : APSC.node1_stmt_fp SEGS A nx0 LIMIT SINV argH FS0 FP always (fun _ => None)) by (intros cs cs' E R FULL model TT HC _ Hn Hk; discriminate).
@@ -1698,7 +1716,7 @@ Section IOSound.
   Qed.
 
   Theorem io_xb_sound : forall id args cs csa csb E R FULL model TA TB,
-    cs_ok E cs R FULL model -> ION.xb SEGS nx0 T id args cs = Some (csa, csb) ->
+    cs_ok E cs R FULL model -> ION.xb SEGS nx0 T A id args cs = Some (csa, csb) ->
     (forall E' R' FULL' model', env_agree nx0 E E' /\ env_agree (nxt cs) E E' -> cs_ok E' csa R' FULL' model' -> m_fs model' = m_fs model ->
         srealizes_cfg SEGS (cfg R' (pc csa) FULL' model') TA) ->
     (forall E' R' FULL' model', env_agree nx0 E E' /\ env_agree (nxt cs) E E' -> cs_ok E' csb R' FULL' model' -> m_fs model' = m_fs model ->
@@ -1711,9 +1729,9 @@ Section IOSound.
   Qed.
 
   (* [comment removed for export] *)
-  Corollary io_ext_stmt : APSC.ext_stmt_fp SEGS A nx0 LIMIT (ION.xn SEGS T) SINV argH FS0 FP.
+  Corollary io_ext_stmt : APSC.ext_stmt_fp SEGS A nx0 LIMIT (ION.xn SEGS T A) SINV argH FS0 FP.
   Proof. exact io_xn_sound. Qed.
-  Corollary io_ext2_stmt : APSC.ext2_stmt_fp SEGS A nx0 LIMIT (ION.xb SEGS nx0 T) SINV argH FS0 FP.
+  Corollary io_ext2_stmt : APSC.ext2_stmt_fp SEGS A nx0 LIMIT (ION.xb SEGS nx0 T A) SINV argH FS0 FP.
   Proof. exact io_xb_sound. Qed.
 
 End IOSound.

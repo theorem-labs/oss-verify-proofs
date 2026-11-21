@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the fetch-failure proof covers the model's new fetch_failure arms). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool Lia Wellfounded.
@@ -92,8 +93,8 @@ Proof.
   destruct (fetch_word segs (ms_pc ms)) as [w|]; [eapply decode_exec_rom; exact H|].
   destruct (fetch_word_ov segs (ms_mem ms) (ms_pc ms)) as [w|]; [eapply decode_exec_rom; exact H|].
   destruct (fetch_tail_any segs (ms_mem ms) (ms_pc ms)) as [w|]; [eapply decode_exec_rom; exact H|].
-  unfold fetch_failure in H. destruct (negb _); [discriminate|].
-  match type of H with context [if ?t then MachineFault else MachineUnmodeled] => destruct t; discriminate end.
+  unfold fetch_failure in H.
+  repeat match type of H with context [if ?t then _ else _] => destruct t end; discriminate.
 Qed.
 
 Lemma msteps_rom : forall segs ms ms', msteps segs ms ms' -> ms_rom ms' = ms_rom ms.

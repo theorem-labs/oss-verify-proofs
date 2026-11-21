@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/W_contract_x.v; 180 of its 421 lines of code are new or changed and 1771 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Contract texts of lib/A/W_contract_x.v at a world relation R: gesture_model (gm_post_x :1074, gm_spec_x :1091,
    gm_spec_g_x :1123), check_shape_ends (cshe_post_x :1199, cshe_spec_x :1224) and check_no_loss (cnl_post_x :1305,
    cnl_spec_x :1332).  One owner per name: the other R contract texts live in their own files (W_contract_xR.v,
@@ -79,7 +80,7 @@ Variable MT : ameter_ops.
 Variable RP : roomp.
 Variable MMAX : Z.
 Variable G : list (Z * Z).
-(* W_contract_x.v:1074 gm_post_x at R *)
+(* W_contract_x.v:1075 gm_post_x at R *)
 Definition gm_post_xR (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
 (HA : Z) (H : hlist) (ln : list byte) (kr : nat) : world SEGS -> config -> Prop :=
 fun W' c' => exists ly' S' Hp' regs' mem' md' kk (H' : hlist),
@@ -93,7 +94,7 @@ hl_cap H' = (if hl_n H <? hl_n H' then grow_cap (hl_n H) (hl_cap H) else hl_cap 
 (forall rest, Permutation (ablocks B ly S) (list_blks H ++ rest) -> Permutation (ablocks B ly' S') (list_blks H' ++ rest)) /\
 frames S' = frames S /\
 mo_le MT S S' (gm_cost MT H ln) /\ rp_RM RP S' kr.
-(* W_contract_x.v:1091 gm_spec_x at R *)
+(* W_contract_x.v:1092 gm_spec_x at R *)
 Definition gm_spec_xR (pc : Z) : Prop :=
 forall W ly S Hp regs mem md ch HA LINE (ln : list byte) H q k,
 afn_pre_x SEGS B ARx GM_STK ly S Hp W regs mem md ch ->
@@ -131,7 +132,7 @@ Hypothesis WLE_R : forall W W', @wle SEGS W W' -> R W W'.
 Variable MT : ameter_ops.
 Variable RP : roomp.
 Variable MMAX : Z.
-(* W_contract_x.v:1123 gm_spec_g_x at R *)
+(* W_contract_x.v:1124 gm_spec_g_x at R *)
 Definition gm_spec_g_xR (pc : Z) : Prop :=
 forall G, gx_ok SEGS B G -> gx_rt B G -> rom_out SEGS B G -> gm_spec_xR B PST ARx R MT RP MMAX G pc.
 End w4gR.
@@ -153,7 +154,7 @@ Hypothesis WLE_R : forall W W', @wle SEGS W W' -> R W W'.
 Variable MT : ameter_ops.
 Variable RP : roomp.
 Variable G : list (Z * Z).
-(* W_contract_x.v:1199 cshe_post_x at R *)
+(* W_contract_x.v:1200 cshe_post_x at R *)
 Definition cshe_post_xR (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
 (XO AT HA : Z) (h : hsrc) (P : list byte) (A0 gone : Z) (ob : list byte) (kr : nat) : world SEGS -> config -> Prop :=
 fun W' c' => exists ly' S' Hp' regs' mem' md' kk (H' : hlist) (ds : list (Z * list byte)) (c : Z),
@@ -177,7 +178,7 @@ val_mem SEGS (mrestrict (w_H W') mem') (VAL A_g_gone) 1 gone /\
 (forall rest, Permutation (ablocks B ly S) (cshe_ds_blks ds ++ rest) -> Permutation (ablocks B ly' S') rest) /\
 frames S' = frames S /\
 mo_le MT S S' (cshe_cost MT (hs_held h)) /\ rp_RM RP S' kr.
-(* W_contract_x.v:1224 cshe_spec_x at R *)
+(* W_contract_x.v:1225 cshe_spec_x at R *)
 Definition cshe_spec_xR (pc : Z) : Prop :=
 forall W ly S Hp regs mem md ch XO AT HA (j : nat) PF h P A0 gone O OUT ob,
 let H := hs_held h in
@@ -243,7 +244,7 @@ Variable MT : ameter_ops.
 Variable RP : roomp.
 Variable G : list (Z * Z).
 Variable MMAX : Z.
-(* W_contract_x.v:1305 cnl_post_x at R *)
+(* W_contract_x.v:1306 cnl_post_x at R *)
 Definition cnl_post_xR (regs : bvmap 5 word) ly S (Hp : list Z) (W : world SEGS) (mem : word -> option byte) (md : Model)
 (XO HA AT : Z) (h : hsrc) (E H : hlist) (gone A0 NO OUT : Z) (ob : list byte) (kr : nat) : world SEGS -> config -> Prop :=
 fun W' c' => exists ly' S' Hp' regs' mem' md' kk (E' H' : hlist),
@@ -266,7 +267,7 @@ frames S' = frames S /\
 mo_le MT S S' (cnl_cost MT E H) /\ rp_RM RP S' kr /\
 hl_cap H <= hl_cap H' /\
 hl_cap H' = cnl_cap (texts H) (hl_cap H) (hl_recs E).
-(* W_contract_x.v:1332 cnl_spec_x at R *)
+(* W_contract_x.v:1333 cnl_spec_x at R *)
 Definition cnl_spec_xR (pc : Z) : Prop :=
 forall W ly S Hp regs mem md ch XO HA (j : nat) AT (h : hsrc) gone A0 NO OUT (ob : list byte),
 afn_pre_x SEGS B ARx CNL_STK ly S Hp W regs mem md ch ->

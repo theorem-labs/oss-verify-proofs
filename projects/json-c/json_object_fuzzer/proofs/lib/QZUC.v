@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: tok_reset_level_B_cps takes it after alloc_ceiling <= lo). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -94,7 +95,7 @@ put_pre A4H A4F (tl_cs l) m (tl_cbs l) (tl_cur l) rc ->
 ((tl_name l = 0 /\ tl_nbs l = []) \/ (tl_name l <> 0 /\ exists nn, tl_nbs l = [(tl_name l, nn)])) ->
 tstack asegs m q levels ->
 rw_cells asegs m r (tok_cells_g mxd fl pb depth q x) ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - 64 - put_stk_A ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - 64 - put_stk_A ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 heap_pres A4H (LB0 ++ LM ++ fr_ivs A4L FRS) (bv_unsigned sp) me m ->
 rw_cells asegs m A_ERRNO [C4 errv] ->
@@ -107,7 +108,7 @@ AJ5 A4L HIx A T md
 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 tok_reset_level_B_entry) fc None m (seg_rom asegs)).
 Proof.
-intros until rc. intros Hl Hi MXB LEN HP EREST PP NM TS BLK ST LO LOS SPA HT HPR ERR BB RA K.
+intros until rc. intros Hl Hi MXB LEN HP EREST PP NM TS BLK ST LO HBT LOS SPA HT HPR ERR BB RA K.
 unfold put_stk_A in LOS. unfold_consts. unfold A_SB, A_TP, A_ERRNO, tok_reset_level_B_entry in *. word_range sp SPR.
 assert (INrR : In (r, 72) REST) by (rewrite EREST; apply in_or_app; right; left; reflexivity).
 assert (INqR : In (q, 32 * mxd) REST) by (rewrite EREST; apply in_or_app; right; right; left; reflexivity).

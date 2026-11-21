@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (side_ok_of_tree_ok's new premise segs_top segs <= 0x10000000, proved by computation in plain_side_ok; amain_open follows amain_at: the pad pin Wpad, the remade facts (amf, apf), the 6,144,513-byte stack window, the launch's hidden argument block and memory and the argv pointer cells; the pure facts read through keep_facts; imports MainBridgeBoth, where asan_side_ok now lives; ported by content from zstd_frame_info's file of the same role, with this binary's addresses and names). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -10,7 +11,7 @@ From OSSVerify.Proofs.zstd.huf_decompress.lib Require Import TopLevel TopLevelSB
 From OSSVerify.Proofs.zstd.huf_decompress.lib.Lib Require Import Cfg ITree Nodes.
 From OSSVerify.Proofs.zstd.huf_decompress.lib.LibA Require Import ExecF AcctCore TopLevelGen ITreeA NodesA ModelX SysStepF.
 From OSSVerify.Proofs.zstd.huf_decompress.lib.AS Require ShapeAlg SpinAlg.
-From OSSVerify.Proofs.zstd.huf_decompress.lib.AS Require Import MainExport MainFactsBoth BothEntry.
+From OSSVerify.Proofs.zstd.huf_decompress.lib.AS Require Import MainExport MainFactsBoth BothEntry MainBridgeBoth.
 From OSSVerify.Proofs.zstd.huf_decompress.lib.Spec Require Import Prog ProgA EquivPA AsanProgDeps AsanInv AsanOK ImgFacts BothHandoff ModelOK.
 From OSSVerify.Proofs.zstd.huf_decompress.lib.Plain Require Import PImg.
 From OSSVerify.Proofs.zstd.huf_decompress.lib.BothW Require Import BImg AProto.
@@ -65,23 +66,24 @@ Definition amain_open (en : ExecEntry) (inp : ProcInput) (w : bool) (V : nat -> 
         /\ 32768 * V 0%nat + 4096 * V 10%nat + 16 * V 6%nat = usp
         /\ V 1%nat = argc /\ V 2%nat = envc
         /\ V 3%nat = Z.of_nat (length (nth 0 (in_argv inp) [])) /\ V 7%nat = Z.of_nat (length (nth 1 (in_argv inp) []))
-        /\ V 4%nat = Wblk en inp /\ V 5%nat = bv_unsigned (en_brk en) / 4096 /\ V 8%nat = bv_unsigned (in_uid inp)
+        /\ V 4%nat = Wpad en inp /\ V 5%nat = bv_unsigned (en_brk en) / 4096 /\ V 8%nat = bv_unsigned (in_uid inp)
         /\ V 9%nat = bv_unsigned (in_hwcap inp))
-    /\ Forall (mfact_ok bsegs V m) (asan_mem_facts ++ asan_mem_facts_w w)
-    /\ Forall (pfact_ok V) (asan_pure_facts ++ asan_pure_facts_w w)
+    /\ Forall (mfact_ok bsegs V m) (amf (RZ_of inp) w)
+    /\ Forall (pfact_ok V) (apf (RZ_of inp) w)
     /\ mem_inv bsegs m
-    /\ stk bsegs m (usp - 8388608) usp
+    /\ stk bsegs m (usp - 6144513) usp
     /\ (forall a, hidden_arg en inp a ->
-          m (wa a) = wrap_mem b_phdrs (en_sp en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp) (en_draw en) (wa a))
+          m (wa a) = wrap_mem inp (en_mmap_base en) b_phdrs (Z_to_bv 64 (Z.of_N b_init_pc)) (en_sp en) (en_draw en) (wa a))
+    /\ argv_cells en inp m
     /\ ashadow0 V m
     /\ amodelH V (en_sp en) (in_fs inp) mo.
 
 Lemma amain_atL_open : forall lim en inp ms mo, LIMIT34 <= lim ->
   amain_atL lim en inp ms mo -> exists w V m, amain_open en inp w V m ms mo.
 Proof.
-  intros lim en inp ms mo HL (w & V & m & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10). exists w, V, m.
-  refine (conj H1 (conj H2 (conj H3 (conj H4 (conj H5 (conj H6 (conj H7 (conj H8 (conj H9 _))))))))).
-  exact (amodelH_of_amodelL lim _ _ _ _ HL H10).
+  intros lim en inp ms mo HL (w & V & m & H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8 & H9 & H10 & H11). exists w, V, m.
+  refine (conj H1 (conj H2 (conj H3 (conj H4 (conj H5 (conj H6 (conj H7 (conj H8 (conj H9 (conj H10 _)))))))))).
+  exact (amodelH_of_amodelL lim _ _ _ _ HL H11).
 Qed.
 
 Lemma amain_at_open : forall en inp ms mo,
@@ -107,20 +109,20 @@ Section Assembly.
   Hypothesis asan_impl : asan_impl_stmt rsA.
 
   Lemma plain_side_ok : forall L, 2^31 <= L -> side_ok psegs p_init_pc p_phdrs L (TP L).
-Proof. intros L HL. exact (side_ok_of_tree_ok _ _ _ _ _ _ (plain_ok L HL)). Qed.
+Proof. intros L HL. exact (side_ok_of_tree_ok _ _ _ _ _ _ (plain_ok L HL) ltac:(apply Z.leb_le; vm_compute; reflexivity)). Qed.
 
   (* [comment removed for export] *)
   Lemma asan_main_srealizes : forall L, 2^31 <= L -> forall en inp,
     valid_entry (mkImage bsegs b_init_pc b_phdrs) en inp -> valid_input_either inp ->
     forall ms mo, (exists w V m, amain_open en inp w V m ms mo) -> SpinAlg.srealizes bsegs (mkCfg ms mo) (TA L inp en).
-Proof.
+  Proof.
     intros L HL en inp Hv Hi ms mo (w & V & m & HM).
-    pose proof HM as (_ & _ & _ & _ & HP & _ & _ & _ & _ & [HLIM HMOD]).
-    apply Forall_app in HP as [HP _].
+    pose proof HM as (_ & _ & _ & HMF & HPF & _ & _ & _ & _ & _ & [HLIM HMOD]).
+    destruct (keep_facts _ _ _ _ _ HMF HPF) as (_ & _ & HP).
     destruct (asan_impl en inp w V m ms mo Hv Hi HM) as (NMAX & RNG & A & Q & HT).
     eapply SpinAlg.srz_conseq.
     + exact (implF_srealizes bsegs (at_nodeA bsegs) nstepA nexitA minvA (nsafeA NMAX) fstepS NMAX (nodesA_sound bsegs NMAX) _ RNG A Q ms (MX mo []) mo HT).
-    +
+    + (* [comment removed for export] *)
       destruct (equiv_PA_asan_toP_LL (vm_limit (m_vmmaps mo)) HLIM L HL PREAD_STAGE rsA V (en_sp en) _ _ _ en inp mo Hv Hi HMOD HP) as [HEQ _].
       intros tr. unfold TA. symmetry. apply HEQ.
   Qed.

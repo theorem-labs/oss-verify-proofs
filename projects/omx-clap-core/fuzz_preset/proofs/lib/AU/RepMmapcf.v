@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/RepMmapcf.v (commit 4d286b2e618d, file sha256 702f29161957) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 51 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 5 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/RepMmapcf.v (file sha256 702f29161957) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 51 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 5 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
 (* Copyright 2026 Theorem Labs *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepMmapcf.v (commit f01d79f3fb5, cf refill round 3; file sha256 125553fbc3b9) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 39 image addresses moved by function pairs the comparison kit cmpkit 86da41d3ef68 calls the same code except at the by-hand acceptances named below (strictcmp3 65688e94214a, by funcpair_reply 6963bc4a94fc on the cgif twin ce511d541cda; 42 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair; 1 pair(s) carry a BY-HAND acceptance (the internal file accept.tsv, re-measured each run): _ZN11__sanitizer17GetNamedMappingFdEPKcmPi+0x90 (lui-in-section: CONSTANT)), and 16 pcs named in comments; 9 hand maps (the internal file resolve-run-f01d79f3fb5.tsv, each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepMmapcf.v (cf refill round 3; file sha256 125553fbc3b9) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 39 image addresses moved by function pairs the comparison kit cmpkit 86da41d3ef68 calls the same code except at the by-hand acceptances named below (strictcmp3 65688e94214a, by funcpair_reply 6963bc4a94fc on the cgif twin ce511d541cda; 42 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair; 1 pair(s) carry a BY-HAND acceptance (the internal file accept.tsv, re-measured each run): _ZN11__sanitizer17GetNamedMappingFdEPKcmPi+0x90 (lui-in-section: CONSTANT)), and 16 pcs named in comments; 9 hand maps (the internal file resolve-run.tsv, each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* Theorem Labs, 2026-10-30 (a prior worker, F4 sub-slice MmapOrDieWalk): __sanitizer::MmapOrDie (0x66a74) of
    cgif_file_fuzzer's asan-ubsan image (pin 1c29845fe605), granted path, as the model's KMmapSec node.
    rule 24: proves function __sanitizer::MmapOrDie (reuse search: `proof-index VSNPrintf Printf
@@ -115,11 +116,12 @@ inversion HA as [|? ? Hiv Hr]; subst. destruct Hiv as (H1 & H2 & H3). cbn [fst s
 destruct (IH Hr) as [IH1 IH2]. unfold page_size in H2, H3. split; [lia|].
 rewrite Zplus_mod, Zminus_mod, H2, H3, IH2. reflexivity.
 Qed.
-Lemma grant_pin_parts : forall m (a : word) n, grant_ok_na_pin m a n = true ->
+Lemma grant_pin_parts : forall m (a : word) n, grant_ok_na_pin (Z_to_bv 64 0) m a n = true -> 0 < n -> n mod 4096 = 0 ->
 bv_unsigned a mod 4096 = 0 /\ 0 < bv_unsigned a /\ bv_unsigned a + n <= alloc_top (m_vmmaps m) /\
 region_free (vm_reserved (m_vmmaps m) ++ vm_maps (m_vmmaps m)) a (Z_to_bv 64 n) = true.
 Proof.
-intros m a n Hg. unfold grant_ok_na_pin in Hg.
+intros m a n Hg0 Hn Hnal.
+pose proof (YK13.grant_ok_na_pin_facts _ _ _ _ Hn ltac:(unfold page_size; exact Hnal) Hg0) as Hg. unfold YK13.grant_ok_na_pin_b in Hg.
 apply andb_prop in Hg as [Hg Hrf]. apply andb_prop in Hg as [Hg Htop]. apply andb_prop in Hg as [Hal Hpos].
 apply Z.eqb_eq in Hal. apply Z.ltb_lt in Hpos. apply Z.leb_le in Htop. unfold page_size in Hal. repeat split; assumption.
 Qed.
@@ -196,7 +198,7 @@ let H := w_H W in let sp := bv_unsigned (getr regs 2) in let nZ := page_round_up
 forall (a : Z) (regs' : bvmap 5 word) (mem' : word -> option byte) (mat : list word),
   let mdN := with_vm_backing (m_vm_lazy md) mat md in
   let md1 := with_mmap_backing (w64 34) (w64 a) (w64 nZ) (mmap_model (w64 a) (w64 nZ) mdN) in
-  0 <= a < 2 ^ 64 -> grant_ok_na_pin mdN (w64 a) nZ = true ->
+  0 <= a < 2 ^ 64 -> grant_ok_na_pin (Z_to_bv 64 0) mdN (w64 a) nZ = true ->
   regs_preserved regs regs' -> getr regs' 10 = w64 a ->
   (forall x : word, ~ (sp - MOD_STK <= bv_unsigned x < sp) -> ~ (a <= bv_unsigned x < a + nZ) -> mem' x = mem x) ->
   (forall x : word, a <= bv_unsigned x < a + nZ -> mem' x = Some (Z_to_bv 8 0)) ->
@@ -212,8 +214,8 @@ Lemma mod_at_ecall : forall {R : Type} (K : Z -> itree astate R) (Q : R -> world
 let sp := bv_unsigned (getr regs 2) in let nZ := page_round_up_Z sz in
 getr regs 10 = w64 sz -> YK0s.ret_ok (getr regs 1) -> 0 < sz -> sz < 2 ^ 48 -> MWF md ->
 (forall mat, Z.of_nat (length mat) * page_size <= A_bytes (w_A W) ->
-   mmap_grant_refusable (w64 34) (with_vm_backing (m_vm_lazy md) mat md) nZ = false) ->
-(forall a : word, grant_ok_na_pin md a nZ = true ->
+   mmap_grant_refusable (w64 34) (Z_to_bv 64 0) (with_vm_backing (m_vm_lazy md) mat md) nZ = false) ->
+(forall a : word, grant_ok_na_pin (Z_to_bv 64 0) md a nZ = true ->
    (bv_unsigned a + nZ <= sp - MOD_STK \/ sp <= bv_unsigned a) /\ (bv_unsigned a + nZ <= 0xa2000 \/ 0x601000 <= bv_unsigned a)) ->
 TFIB_IMG_END <= sp - MOD_STK ->
 mod_cont K Q W regs mem md sz ->
@@ -259,7 +261,7 @@ apply (SRr_use_AI tfibsegs). intros HAI. cbn [cfg_model] in HAI.
 pose proof (mat_le_A tfibsegs (w_H W) (w_A W) _ HAI) as HMA. rewrite m_vm_materialized_wvb in HMA.
 pose proof (HGR mat HMA) as HRF.
 pose proof HRF as HRF'. unfold mmap_grant_refusable in HRF'. apply orb_false_iff in HRF' as [HB _]. apply negb_false_iff in HB.
-destruct (grant_of_not_refusable (Z_to_bv 64 0) _ nZ HRF) as [a0 Ha0].
+destruct (grant_of_not_refusable (Z_to_bv 64 0) _ nZ ltac:(lia) ltac:(unfold page_size; exact NZ2) HRF) as [a0 Ha0].
 pose proof (grant_ok_na_pin_of_grant_ok _ _ _ _ Ha0) as Ha0'.
 assert (MWFN : MWF (with_vm_backing (m_vm_lazy md) mat md)) by (eapply MWF_same_but_materialized; [exact HMWF | reflexivity]).
 assert (SLK : eager_used (with_vm_backing (m_vm_lazy md) mat md) + A_bytes (w_A W) + nZ <= vm_limit (m_vmmaps (with_vm_backing (m_vm_lazy md) mat md))).
@@ -282,7 +284,7 @@ exists Ix, nx, (fun _ => 1), (fun _ => false), i0.
 split; [exact NODE|].
 split.
 { intros i _. destruct (OUT i) as (md_i & _ & _ & _ & Hg & -> & ->). cbn [cfg_model].
-  destruct (grant_pin_parts _ _ _ Hg) as (G1 & G2 & G3 & G4).
+  destruct (grant_pin_parts _ _ _ Hg ltac:(lia) NZ2) as (G1 & G2 & G3 & G4).
   pose proof (commit_AI tfibsegs (w_H W) (w_A W) (with_vm_backing (m_vm_lazy md) mat md) true (Z_to_bv 64 34) (ga i) nZ HAI MWFN
     eq_refl ltac:(unfold page_size; exact G1) ltac:(lia) ltac:(rewrite (pru_idem nZ NZ2); exact G3)
     ltac:(cbv iota; rewrite (pru_idem nZ NZ2); exact G4) ltac:(rewrite (pru_idem nZ NZ2); exact SLK)) as CA.
@@ -292,7 +294,7 @@ split; [reflexivity|]. split; [reflexivity|]. split; [intros; reflexivity|].
 split; [intros i Hi; discriminate Hi|].
 intros i _. cbv beta.
 destruct (OUT i) as (md_i & _ & IO_i & _ & Hg & NX & MD). rewrite NX. subst md_i. clear NX OUT NODE.
-destruct (grant_pin_parts _ _ _ Hg) as (G1 & G2 & G3 & G4).
+destruct (grant_pin_parts _ _ _ Hg ltac:(lia) NZ2) as (G1 & G2 & G3 & G4).
 pose proof (alloc_top_lt (m_vmmaps md)) as ATL. rewrite m_vmmaps_wvb in G3.
 assert (GAr : 4096 <= bv_unsigned (ga i) <= 2 ^ 64 - 2 ^ 23 - 4096).
 { clear - G1 G2 G3 ATL NZ1. apply Z.mod_divide in G1 as [q Hq]; [|lia]. rewrite Hq in *. lia. }
@@ -306,7 +308,7 @@ apply (amreal_SRr_pre tfibsegs (K 1) W _ Q
   (fun W' c' => W' = W /\ exists regs' mem' mat0,
      let mdN0 := with_vm_backing (m_vm_lazy md) mat0 md in
      let md1 := with_mmap_backing (w64 34) (w64 A) (w64 nZ) (mmap_model (w64 A) (w64 nZ) mdN0) in
-     grant_ok_na_pin mdN0 (w64 A) nZ = true /\
+     grant_ok_na_pin (Z_to_bv 64 0) mdN0 (w64 A) nZ = true /\
      c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom tfibsegs)) md1 /\
      regs_preserved regs regs' /\ getr regs' 10 = w64 A /\
      (forall x : word, ~ (sp - MOD_STK <= bv_unsigned x < sp) -> ~ (A <= bv_unsigned x < A + nZ) -> mem' x = mem x) /\
@@ -390,14 +392,14 @@ val_mem tfibsegs m 0xa2830 8 0x13b1a0 -> val_mem tfibsegs m 0x13b1a0 8 4096 ->
 val_mem tfibsegs m 0xa2840 8 0x13d228 -> val_mem tfibsegs m 0x13d32c 1 0 -> val_mem tfibsegs m 0x13d2b8 8 0 ->
 MWF md ->
 (forall mat, Z.of_nat (length mat) * page_size <= A_bytes (w_A W) ->
-   mmap_grant_refusable (w64 34) (with_vm_backing (m_vm_lazy md) mat md) nZ = false) ->
-(forall a : word, grant_ok_na_pin md a nZ = true ->
+   mmap_grant_refusable (w64 34) (Z_to_bv 64 0) (with_vm_backing (m_vm_lazy md) mat md) nZ = false) ->
+(forall a : word, grant_ok_na_pin (Z_to_bv 64 0) md a nZ = true ->
    (bv_unsigned a + nZ <= sp - MOD_STK \/ sp <= bv_unsigned a) /\ (bv_unsigned a + nZ <= 0xa2000 \/ 0x601000 <= bv_unsigned a)) ->
 sp mod 16 = 0 -> TFIB_IMG_END <= sp - MOD_STK -> (forall b, sp - MOD_STK <= b < sp -> apresent H mem b) ->
 (forall (a : Z) (regs' : bvmap 5 word) (mem' : word -> option byte) (mat : list word),
    let mdN := with_vm_backing (m_vm_lazy md) mat md in
    let md1 := with_mmap_backing (w64 34) (w64 a) (w64 nZ) (mmap_model (w64 a) (w64 nZ) mdN) in
-   0 <= a < 2 ^ 64 -> grant_ok_na_pin mdN (w64 a) nZ = true ->
+   0 <= a < 2 ^ 64 -> grant_ok_na_pin (Z_to_bv 64 0) mdN (w64 a) nZ = true ->
    regs_preserved regs regs' -> getr regs' 10 = w64 a ->
    (forall x : word, ~ (sp - MOD_STK <= bv_unsigned x < sp) -> ~ (a <= bv_unsigned x < a + nZ) -> mem' x = mem x) ->
    (forall x : word, a <= bv_unsigned x < a + nZ -> mem' x = Some (Z_to_bv 8 0)) ->
@@ -453,7 +455,7 @@ all: (apply (mod_at_ecall K Q snap ncap W regs mem md sz _ ms2 _ H10 Hra Hsz0 Hs
   [reflexivity | reflexivity | reflexivity | reflexivity | reflexivity |
    intros x Hx; rewrite (frame_stack E0 _ _ _ sp x HF ltac:(vm_compute; reflexivity) ltac:(rewrite E2; reflexivity) Hx); exact (FR1 x Hx)]).
 Qed.
-(* the node, as RepF4Append consumes it (merged at 3020f6582da) *)
+(* the node, as RepF4Append consumes it (merged) *)
 Lemma mmapordie_node : forall {R : Type} (K : Z -> itree astate R) (Q : R -> world tfibsegs -> config -> Prop)
   (snap : astate) (ncap : Z) (W : world tfibsegs) (regs : bvmap 5 word) (mem : word -> option byte) (md : Model) (sz : Z),
 let H := w_H W in let m := mrestrict H mem in let sp := bv_unsigned (getr regs 2) in
@@ -463,14 +465,14 @@ val_mem tfibsegs m 0xa2830 8 0x13b1a0 -> val_mem tfibsegs m 0x13b1a0 8 4096 ->
 val_mem tfibsegs m 0xa2840 8 0x13d228 -> val_mem tfibsegs m 0x13d32c 1 0 -> val_mem tfibsegs m 0x13d2b8 8 0 ->
 MWF md ->
 (forall mat, Z.of_nat (length mat) * page_size <= A_bytes (w_A W) ->
-   mmap_grant_refusable (w64 34) (with_vm_backing (m_vm_lazy md) mat md) nZ = false) ->
-(forall a : word, grant_ok_na_pin md a nZ = true ->
+   mmap_grant_refusable (w64 34) (Z_to_bv 64 0) (with_vm_backing (m_vm_lazy md) mat md) nZ = false) ->
+(forall a : word, grant_ok_na_pin (Z_to_bv 64 0) md a nZ = true ->
    (bv_unsigned a + nZ <= sp - MOD_STK \/ sp <= bv_unsigned a) /\ (bv_unsigned a + nZ <= 0xa2000 \/ 0x601000 <= bv_unsigned a)) ->
 sp mod 16 = 0 -> TFIB_IMG_END <= sp - MOD_STK -> (forall b, sp - MOD_STK <= b < sp -> apresent H mem b) ->
 (forall (a : Z) (regs' : bvmap 5 word) (mem' : word -> option byte) (mat : list word),
    let mdN := with_vm_backing (m_vm_lazy md) mat md in
    let md1 := with_mmap_backing (w64 34) (w64 a) (w64 nZ) (mmap_model (w64 a) (w64 nZ) mdN) in
-   grant_ok_na_pin mdN (w64 a) nZ = true ->
+   grant_ok_na_pin (Z_to_bv 64 0) mdN (w64 a) nZ = true ->
    regs_preserved regs regs' -> getr regs' 10 = w64 a ->
    (forall x : word, ~ (sp - MOD_STK <= bv_unsigned x < sp) -> ~ (a <= bv_unsigned x < a + nZ) -> mem' x = mem x) ->
    (forall x : word, a <= bv_unsigned x < a + nZ -> mem' x = Some (Z_to_bv 8 0)) ->
@@ -493,7 +495,7 @@ let H := w_H W in let sp := bv_unsigned (getr regs 2) in let nZ := page_round_up
 fun W' c' => W' = W /\ exists (a : Z) (regs' : bvmap 5 word) (mem' : word -> option byte) (mat : list word),
   let mdN := with_vm_backing (m_vm_lazy md) mat md in
   let md1 := with_mmap_backing (w64 34) (w64 a) (w64 nZ) (mmap_model (w64 a) (w64 nZ) mdN) in
-  0 <= a < 2 ^ 64 /\ grant_ok_na_pin mdN (w64 a) nZ = true /\
+  0 <= a < 2 ^ 64 /\ grant_ok_na_pin (Z_to_bv 64 0) mdN (w64 a) nZ = true /\
   c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom tfibsegs)) md1 /\
   regs_preserved regs regs' /\ getr regs' 10 = w64 a /\
   (forall x : word, ~ (sp - MOD_STK <= bv_unsigned x < sp) -> ~ (a <= bv_unsigned x < a + nZ) -> mem' x = mem x) /\
@@ -508,15 +510,15 @@ val_mem tfibsegs m 0xa2830 8 0x13b1a0 -> val_mem tfibsegs m 0x13b1a0 8 4096 ->
 val_mem tfibsegs m 0xa2840 8 0x13d228 -> val_mem tfibsegs m 0x13d32c 1 0 -> val_mem tfibsegs m 0x13d2b8 8 0 ->
 MWF md ->
 (forall mat, Z.of_nat (length mat) * page_size <= A_bytes (w_A W) ->
-   mmap_grant_refusable (w64 34) (with_vm_backing (m_vm_lazy md) mat md) nZ = false) ->
-(forall a : word, grant_ok_na_pin md a nZ = true ->
+   mmap_grant_refusable (w64 34) (Z_to_bv 64 0) (with_vm_backing (m_vm_lazy md) mat md) nZ = false) ->
+(forall a : word, grant_ok_na_pin (Z_to_bv 64 0) md a nZ = true ->
    (bv_unsigned a + nZ <= sp - MOD_STK \/ sp <= bv_unsigned a) /\ (bv_unsigned a + nZ <= 0xa2000 \/ 0x601000 <= bv_unsigned a)) ->
 sp mod 16 = 0 -> TFIB_IMG_END <= sp - MOD_STK -> (forall b, sp - MOD_STK <= b < sp -> apresent H mem b) ->
 SRr tfibsegs W (mkCfg (mkst regs (w64 0x66a74) mem (seg_rom tfibsegs)) md)
 (fun W' c' => W' = W /\ exists (a : Z) (regs' : bvmap 5 word) (mem' : word -> option byte) (mat : list word),
   let mdN := with_vm_backing (m_vm_lazy md) mat md in
   let md1 := with_mmap_backing (w64 34) (w64 a) (w64 nZ) (mmap_model (w64 a) (w64 nZ) mdN) in
-  0 <= a < 2 ^ 64 /\ grant_ok_na_pin mdN (w64 a) nZ = true /\
+  0 <= a < 2 ^ 64 /\ grant_ok_na_pin (Z_to_bv 64 0) mdN (w64 a) nZ = true /\
   c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom tfibsegs)) md1 /\
   regs_preserved regs regs' /\ getr regs' 10 = w64 a /\
   (forall x : word, ~ (sp - MOD_STK <= bv_unsigned x < sp) -> ~ (a <= bv_unsigned x < a + nZ) -> mem' x = mem x) /\
@@ -544,12 +546,12 @@ Qed.
 (* the no-refusal premise from the room and one grantable base *)
 Lemma mmap_not_refusable_of_room : forall (W : world tfibsegs) (md : Model) (nZ : Z),
 eager_used md + A_bytes (w_A W) + nZ <= vm_limit (m_vmmaps md) ->
-(exists a0, grant_ok_na_pin md (w64 a0) nZ = true) ->
+(exists a0, grant_ok_na_pin (Z_to_bv 64 0) md (w64 a0) nZ = true) ->
 forall mat, Z.of_nat (length mat) * page_size <= A_bytes (w_A W) ->
-mmap_grant_refusable (w64 34) (with_vm_backing (m_vm_lazy md) mat md) nZ = false.
+mmap_grant_refusable (w64 34) (Z_to_bv 64 0) (with_vm_backing (m_vm_lazy md) mat md) nZ = false.
 Proof.
 intros W md nZ Hroom [a0 Ha0] mat Hmat.
-apply (grant_na_pin_not_grant_refusable (w64 34) _ (w64 a0) nZ).
+apply (grant_na_pin_not_grant_refusable (w64 34) (Z_to_bv 64 0) _ (w64 a0) nZ).
 - exact Ha0.
 - unfold mmap_noreserve_backed_ok. change (mmap_noreserve_b (w64 34)) with false. cbv iota. apply Z.leb_le.
   rewrite vm_backing_used_split, eager_used_wvb, m_vm_materialized_wvb, m_vmmaps_wvb. lia.
@@ -557,12 +559,12 @@ Qed.
 (* the apartness premise from the reserved image segments and the mmap top below the stack window *)
 Lemma mmap_apart_of_layout : forall (md : Model) (nZ sp : Z),
 vm_reserved (m_vmmaps md) = segments_reserved tfibsegs ->
-alloc_top (m_vmmaps md) <= sp - MOD_STK -> 0 < nZ ->
-forall a : word, grant_ok_na_pin md a nZ = true ->
+alloc_top (m_vmmaps md) <= sp - MOD_STK -> 0 < nZ -> nZ mod 4096 = 0 ->
+forall a : word, grant_ok_na_pin (Z_to_bv 64 0) md a nZ = true ->
 (bv_unsigned a + nZ <= sp - MOD_STK \/ sp <= bv_unsigned a) /\ (bv_unsigned a + nZ <= 0xa2000 \/ 0x601000 <= bv_unsigned a).
 Proof.
-intros md nZ sp Hres Htop HnZ a Hg.
-destruct (grant_pin_parts _ _ _ Hg) as (G1 & G2 & G3 & G4).
+intros md nZ sp Hres Htop HnZ HnZal a Hg.
+destruct (grant_pin_parts _ _ _ Hg HnZ HnZal) as (G1 & G2 & G3 & G4).
 pose proof (alloc_top_lt (m_vmmaps md)) as ATL.
 split; [left; lia|].
 rewrite Hres, region_free_app in G4. apply andb_prop in G4 as [G4 _].

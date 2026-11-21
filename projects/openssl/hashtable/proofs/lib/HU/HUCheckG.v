@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stdio write takes the output channel's reader; [Lay_t] states xe_sound's bound on the string block; the emit node's argument pieces come from extra_pieces_sound_nil, with no argument bytes). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -108,24 +109,15 @@ Section G0Check.
                AH NX_spw AA SF SA fs h0_segs_wr h0_copy_spec_memcpy).
   Qed.
 
-  (* [comment removed for export] *)
-  Lemma SINVt_vals : forall E M, SINV E M ->
-    uE E e_sp0 = ISP /\ uE E e_str0 = STR0 /\ edenot E (EVar V_L0) = Z_to_bv 64 (Z.of_nat (length (@nil byte)))
-    /\ edenot E (EVar V_ARGC) = Z_to_bv 64 1 /\ edenot E (EVar V_L1) = Z_to_bv 64 (Z.of_nat (length (@nil byte)))
-    /\ eb E 1%nat = [] /\ eb E 2%nat = [].
-  Proof. intros E M [(H1 & H2 & H3 & H4 & H5 & H6 & H7 & _) _]. cbn [length Z.of_nat]. tauto. Qed.
-
-  Lemma SINVt_str : forall E M i j, SINV E M -> CxNodesArgSound.arg_ok 1 i -> (j <= length (CxNodesArgSound.ARG [] [] i))%nat ->
-    M (Z_to_bv 64 (CxNodesArgSound.STR STR0 [] i + Z.of_nat j)) = Some (CatExec.byte_at (CxNodesArgSound.ARG [] [] i) j).
-  Proof.
-    intros E M i j [(_ & _ & _ & _ & _ & _ & _ & _ & H9) _] Hi Hj. destruct i as [|i]; [|cbn in Hi; lia].
-    cbn [CxNodesArgSound.ARG length] in Hj. assert (j = 0%nat) by lia. subst j.
-    cbn [CxNodesArgSound.STR CxNodesArgSound.ARG Z.of_nat]. rewrite Z.add_0_r. exact H9.
-  Qed.
+  (* LPS c0dd863a: the plain family states have no argument bytes (argc 1, argv[0] empty), so the emit
+     node's argument pieces need these three values only, and not argv[0]'s address *)
+  Lemma SINVt_nil : forall E M, SINV E M ->
+    edenot E (EVar V_L0) = Z_to_bv 64 0 /\ edenot E (EVar V_ARGC) = Z_to_bv 64 1 /\ eb E 1%nat = [].
+  Proof. intros E M [(_ & _ & H3 & H4 & _ & H6 & _) _]. split; [exact H3 | split; [exact H4 | exact H6]]. Qed.
 
   Lemma Lay_t : 0x7fff80000000 <= ISP /\ ISP + 192 <= STR0 /\ STR0 + Z.of_nat (length (@nil byte)) + 1 <= STR0 + 8
                    /\ (2 <= 1 -> STR0 + Z.of_nat (length (@nil byte)) + 1 + Z.of_nat (length (@nil byte)) + 1 <= STR0 + 8)
-                   /\ (STR0 + 8) mod 8 = 0 /\ STR0 + 8 + 16 <= 2 ^ 47 /\ Z.of_nat (length (@nil byte)) <= 131071
+                   /\ (STR0 + 8) mod 8 = 0 /\ STR0 + 8 + 8 <= 2 ^ 47 /\ Z.of_nat (length (@nil byte)) <= 131071
                    /\ Z.of_nat (length (@nil byte)) <= 131071 /\ 1 <= 1 <= 1024.
   Proof. pose proof usp_lo. cbn [length Z.of_nat]. repeat split; try lia. rewrite <- Z.add_mod_idemp_l, Hstr8 by lia. reflexivity. Qed.
 
@@ -146,6 +138,7 @@ Section G0Check.
     rdn HSEGS mem (Z_to_bv 64 (AN.g_canary (AN.argtab_of H0T))) 8 = Some (word_to_le_bytes 8 can) ->
     0 < fd < 2147483648 ->
     fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+      m_channel_reader model = true ->
     m_halted model = None ->
     0 <= wb <= wp -> wp <= 2 ^ 47 -> wp - wb = Z.of_nat (length pending) -> bv_unsigned l = Z.of_nat (length extra) ->
     Z.of_nat (length pending) + Z.of_nat (length extra) <= 2 ^ 30 ->
@@ -171,7 +164,7 @@ Section G0Check.
              (t_emit (map (WriteEv (Z_to_bv 64 fd)) (pending ++ extra)) K).
   Proof.
     intros H regs mem model su f wb wp fd s l bufp bufsz can ret pending extra K
-           HH HL AVF AVP AVE Hsp' Ha0 Ha1 Ha2 Hra SUlo SUhi SOK0 Flo Fhi Fwp Fwb Ffd Fbuf Fbsz C1 C2 FD Hfd Hh WBP WPhi
+           HH HL AVF AVP AVE Hsp' Ha0 Ha1 Ha2 Hra SUlo SUhi SOK0 Flo Fhi Fwp Fwb Ffd Fbuf Fbsz C1 C2 FD Hfd Hrdr Hh WBP WPhi
            LENP LENE M30 DISJP DISJE SNW RDP RDE Hret HKnil HK.
     replace (Z_to_bv 64 (AN.g_stdio_write (AN.argtab_of H0T))) with (0x2b55ac%bv : word) by (apply bv_eq; reflexivity).
     apply (h0_stdio_write_s H regs mem model su f wb wp fd s l bufp bufsz can ret pending extra K); try assumption; try (cbn in *; lia).
@@ -191,10 +184,11 @@ Section G0Check.
 
   Theorem g0_XE_sound : emit_stmt HSEGS H0T NX LIM (g0_XE NX) SINV argH ISP fs.
   Proof.
-    pose proof Lay_t as LAY.
     eapply (xe_sound HSEGS H0T NX LIM SINV argH fs h0t_in_hull h0t_hull_ok ISP AH NX_spw AA SF SA
              (Z_to_bv 32 0) (Z_to_bv 32 0) (Z_to_bv 32 0) (Z_to_bv 32 0) (Z_to_bv 32 0) (Z_to_bv 32 0) (Z_to_bv 32 0));
-      [cbn; lia | repeat split; reflexivity | exact LAY | exact SINVt_vals | exact SINVt_str | reflexivity | exact Gro_h0 | exact stdio_h0 | exact Gfile_h0].
+      [cbn; lia | repeat split; reflexivity | exact Lay_t
+      | exact (extra_pieces_sound_nil HSEGS H0T SINV argH h0t_in_hull h0t_hull_ok ISP AH _ _ _ _ _ _ Lay_t eq_refl SINVt_nil)
+      | reflexivity | exact Gro_h0 | exact stdio_h0 | exact Gfile_h0].
   Qed.
 
   (* [comment removed for export] *)

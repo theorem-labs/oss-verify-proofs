@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (read_cstr asks access_ok for each byte below TASK_SIZE; the image's run segments). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From stdpp Require Import bitvector.
@@ -35,7 +36,7 @@ Definition seg_rom (segs : list Segment) : word -> option byte :=
               end.
 
 Lemma init_cfg_rom : forall img lim en inp,
-  ms_rom (cfg_ms (init_cfg img lim en inp)) = seg_rom (img_segments img).
+  ms_rom (cfg_ms (init_cfg img lim en inp)) = seg_rom (image_run_segments img en inp).
 Proof. intros [segs pc ph] lim [sp brk0 mb rnd] inp. reflexivity. Qed.
 
 Lemma read_byte_rview : forall segs ms a,
@@ -271,9 +272,12 @@ Theorem fx_openat_sep_error : forall cfg F ms m w7 w0' w2 t off l,
   path_eqb (bytes_of l) devnull_path = false ->
   path_eqb (bytes_of l) urandom_path = false ->   (* [comment removed for export] *)
   tmp_name (bytes_of l) = None ->
+  proc_self_fd (bytes_of l) = None ->
+  (* LPS 08b1429: read_cstr asks access_ok of each byte up to the NUL *)
+  (forall i, (i <= length (bytes_of l))%nat -> bv_unsigned (aoff (dv rho (FV t (W64 0 off))) i) < TASK_SIZE) ->
   reaches_error_cfg segs cfg (mkCfg (ms_pend ms) m).
 Proof.
-  intros cfg F ms m w7 w0' w2 t off l HR Hrom Hh H17 Hw7 H10 Hw0 H12 Hfl H11 Hstr Hslash Hlt Hdn Hur Htmp.
+  intros cfg F ms m w7 w0' w2 t off l HR Hrom Hh H17 Hw7 H10 Hw0 H12 Hfl H11 Hstr Hslash Hlt Hdn Hur Htmp Hpsf Htop.
   destruct (fx_cstring_sound (f_mem F) (ms_mem ms) t off l (R_mem _ _ _ _ _ HR) Hstr)
     as (Hlen & Hnn & Hbytes & Hnul).
   assert (Ha0 : ms_gpr (ms_pend ms) 0 = wbv w0').
@@ -296,11 +300,13 @@ Proof.
   - intros i Hi. rewrite Ha1, ms_read_byte_pend, (read_byte_rview segs ms _ Hrom).
     exact (Hbytes i Hi).
   - rewrite Ha1, ms_read_byte_pend, (read_byte_rview segs ms _ Hrom). exact Hnul.
+  - intros i Hi. rewrite Ha1. exact (Htop i Hi).
   - exact Hslash.
   - exact Hlt.
   - exact Hdn.
   - exact Hur.
   - exact Htmp.
+  - exact Hpsf.
 Qed.
 
 End Sound.
@@ -326,6 +332,8 @@ Theorem fx_openat_sep_error_Rn : forall cfg n rho F ms m w7 w0' w2 t off l,
   path_eqb (bytes_of l) devnull_path = false ->
   path_eqb (bytes_of l) urandom_path = false ->   (* [comment removed for export] *)
   tmp_name (bytes_of l) = None ->
+  proc_self_fd (bytes_of l) = None ->
+  (forall i, (i <= length (bytes_of l))%nat -> bv_unsigned (aoff (dv rho (FV t (W64 0 off))) i) < TASK_SIZE) ->
   reaches_error_cfg segs cfg (mkCfg (ms_pend ms) m).
 Proof.
   intros cfg n rho F ms m w7 w0' w2 t off l HRn H0.

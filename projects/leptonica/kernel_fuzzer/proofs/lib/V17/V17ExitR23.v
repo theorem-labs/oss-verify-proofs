@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise of ref_exit_flush and its use in ref_exit). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -539,10 +540,11 @@ Theorem ref_exit_flush :
   stdout_pending mem wb wp bufp bufsz rp1 can pending ->
   m_halted model = None -> m_vm_lazy model = [] ->
   fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1)) ->
+  m_channel_reader model = true ->
   realizes RSEGS (mkCfg (mkst regs (0x16b48 : word) mem (seg_rom RSEGS)) model)
            (t_emit (W 1 pending) (t_exit (bv_and code (Z_to_bv 64 255)) (m_fs model))).
 Proof.
-  intros regs mem model sp tp code tid wp2 rp2 wb wp bufp bufsz rp1 can pending EC SP Hh Hlazy Hfd.
+  intros regs mem model sp tp code tid wp2 rp2 wb wp bufp bufsz rp1 can pending EC SP Hh Hlazy Hfd Hrd.
   destruct (w_pre regs mem (seg_rom RSEGS) sp tp code tid wp2 rp2 EC)
     as (regs1 & mem1 & RUN & Rsp & Rs0 & Rra & SOK1 & TR).
   eapply rz_msteps; [exact Hh | exact Hlazy | exact RUN |]. clear RUN.
@@ -563,7 +565,7 @@ Proof.
     - split; (apply TR; [assumption | cbn; lia ..]). }
   rl_tail (@Exit.exit_tail_flush fx v17_reloc v17_code v17_sites v17_data v17_rw
              regs1 mem1 model sp code wp2 rp2 wb wp bufp bufsz rp1 can pending
-             Rsp Rs0 Rra Esplo Esphi SOK1 G1 FC2 (stdout_pending_G _ _ _ _ _ _ _ _ SP1) Hh Hlazy Hfd).
+             Rsp Rs0 Rra Esplo Esphi SOK1 G1 FC2 (stdout_pending_G _ _ _ _ _ _ _ _ SP1) Hh Hlazy Hfd Hrd).
 Qed.
 End VP2.
 
@@ -589,11 +591,11 @@ Theorem ref_exit : forall regs mem model code pending,
            (t_emit (W 1 pending) (t_exit (bv_and code (Z_to_bv 64 255)) (m_fs model))).
 Proof.
   intros regs mem model code pending (sp & tp & tid & wp2 & rp2 & EC & Hh & Hlazy & CASES).
-  destruct CASES as [(E & wp1 & rp1 & F1) | (wb & wp & bufp & bufsz & rp1 & can & SP & Hfd)].
+  destruct CASES as [(E & wp1 & rp1 & F1) | (wb & wp & bufp & bufsz & rp1 & can & SP & Hfd & Hrd)].
   - subst pending. cbn [W map].
     eapply rz_conseq; [| apply t_emit_nil_exit].
     exact (ref_exit_clean regs mem model sp tp code tid wp2 rp2 wp1 rp1 EC F1 Hh Hlazy).
-  - exact (ref_exit_flush regs mem model sp tp code tid wp2 rp2 wb wp bufp bufsz rp1 can pending EC SP Hh Hlazy Hfd).
+  - exact (ref_exit_flush regs mem model sp tp code tid wp2 rp2 wb wp bufp bufsz rp1 can pending EC SP Hh Hlazy Hfd Hrd).
 Qed.
 End VP4.
 

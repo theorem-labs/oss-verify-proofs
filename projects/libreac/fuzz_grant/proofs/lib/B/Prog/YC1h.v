@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/YC1h.v (a working branch d98082bd58b): over image B's listing; frm_off_imgB states a side-stack frame's position against GrantTop.v's IMG_LO_B / IMG_TOP_B; image A's file was made from proofs/cgif/cgif_file_fuzzer/lib/YC1h.v. *)
+(* Modified by Theorem Labs, 2026-10: image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/YC1h.v (a working branch): over image B's listing; frm_off_imgB states a side-stack frame's position against GrantTop.v's IMG_LO_B / IMG_TOP_B; image A's file was made from proofs/cgif/cgif_file_fuzzer/lib/YC1h.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

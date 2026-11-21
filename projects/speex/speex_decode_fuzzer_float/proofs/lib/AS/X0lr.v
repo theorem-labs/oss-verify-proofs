@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the plan's CONFIG_RSEQ flag rz as a new argument of node_x_sound_XSniff). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -227,6 +228,7 @@ Import AX2. Import AX2S. Import AP. Import APS.
 Section Node.
 Variable SEGS : list Segment.            Variable A : atable.
 Variable nx0 : nat.                      Variable LIMIT : Z.
+Variable rz : Z.   (** #108: the plan's CONFIG_RSEQ flag (unread by XSniff) *)
 Variable SINV : env -> (word -> option byte) -> Prop.
 Variable argH : env -> word -> bool.     Variable FS0 : Fs.Fs.
 Hypothesis SEGS_wx : wx_segs_nowrap SEGS.
@@ -247,7 +249,7 @@ destruct n as [|n]; destruct m as [|m]; cbn [sr_upd nth Nat.eqb]; try reflexivit
 apply IH. cbn in Hn. lia.
 Qed.
 
-Theorem node_x_sound_XSniff : APS.x_stmt SEGS A nx0 LIMIT SINV argH FS0 XSniff.
+Theorem node_x_sound_XSniff : APS.x_stmt SEGS A nx0 LIMIT rz SINV argH FS0 XSniff.
 Proof.
 intros args cs cs' E R FULL model T HC _ Hn Hk. cbv beta in Hn. unfold node_x, summary_smear in Hn.
 destruct (Z.eqb (pc cs) (x_sniff A)) eqn:Hpc; [|discriminate]. apply Z.eqb_eq in Hpc. cbn [negb] in Hn.

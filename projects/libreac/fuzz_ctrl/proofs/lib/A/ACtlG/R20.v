@@ -5,8 +5,9 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/tx_put.v, with its module paths and module names changed; 3018 of its 3112 lines of code are new or changed and 934 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW4e1.v, with its module paths and module names changed; 507 of its 559 lines of code are new or changed and 3060 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtl.v, with its module paths, module names, addresses and numbers changed; 382 of its 398 lines of code are new or changed and 543 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/R20.v -- GLUE for stage seg_R20 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput
-   (lib/A/ACtl.v (at head lib/A/ACtl.v:704) (an earlier version, blob a3c6b7b35017, not in this delivery), on a glue base from a working branch 29ddfc3ea99).  Written by a Theorem Labs lane (block of a Theorem Labs lane 03:48Z); single
+   (lib/A/ACtl.v (at head lib/A/ACtl.v:704) (an earlier version, blob a3c6b7b35017, not in this delivery), on a glue base from a working branch).  Written by a Theorem Labs lane (block of a Theorem Labs lane 03:48Z); single
    writer.  rule 24: no function proved (stage glue of a walk; proves no function, kind: segment lemma).
    Pattern: glue-pattern.md sections 3, 4, 9 (a working note, not in this delivery); pilot lib/A/ACtlG/A5.v.
 
@@ -19,7 +20,7 @@
    `mv a0,s8 ; jal __wrap_free` (0x8191c / 0x81920), and the free returns to 0x81924.  It is an ALLOCATOR segment
    (glue-pattern.md section 9 (a working note, not in this delivery)): the walk is carried to the free's entry 0x53378 with ra = 0x81924, a0 = phi, and the
    free site 0x81920 (shared with R13 / R15 / R16) is a Theorem Labs lane's ONE lemma A.ACtlG.Free81920.glue_free_81920
-   (a working branch 10fb2f0a627, merged), CITED by name at this file's Section arguments.
+   (a working branch, merged), CITED by name at this file's Section arguments.
 
    THE PROOF
    G1  the entry cut at index [Z.of_nat b]: ix_cut's index equation, then C_A818e8_at's conjuncts (ACtlCutP.v:1667).
@@ -50,13 +51,13 @@
        [fr + 4088, fr + 4096) are frame bytes (NWfr); RB at turn (S b) is RB at b (b = 0, B3Rtm.a_RS_012).
 
    SECTION HYPOTHESES (exact text below)
-   - LAWS, TFIB_SYMS, AFREE4, MT_FREE, CHAIN_OF_CUT: ACtl.v's (:237, :252, :276, :279, :598 on a working branch +
-     10fb2f0a627), the Section of A.ACtlG.Free81920 with its MOK_FREE given by (fun S => MT_FREE S _), as ACtl.v:277-278
+   - LAWS, TFIB_SYMS, AFREE4, MT_FREE, CHAIN_OF_CUT: ACtl.v's (:237, :252, :276, :279, :598 on a working branch +),
+     the Section of A.ACtlG.Free81920 with its MOK_FREE given by (fun S => MT_FREE S _), as ACtl.v:277-278
      and R15.v / R16.v (same lane) do.  LAWS / TFIB_SYMS / AFREE4 / MT_FREE are ACtl.v's text; CHAIN_OF_CUT is
      Free81920.v's text, which is ACtl.v's with its notations CB / ctlcx / c_mem / c_md written out.
    - (none from the kit: lib/A/ACtlG/Kit.v is on the glue base, so kit_wx / kit_segs_low are Required and cited as
      A.ACtlG.Kit.kit_wx / A.ACtlG.Kit.kit_segs_low.)
-   - No VIS0 / OWNED_RO (none was ever needed here; glue_free_81920 has none since 10fb2f0a627).  The former
+   - No VIS0 / OWNED_RO (none was ever needed here; glue_free_81920 has none).  The former
      HFREE (glue_free_81920's statement as a hypothesis) is replaced by the citation.
    Required, not assumed: Seg/R20F.v r20_evt_F and Seg/R15F.v rfree_evt_F (a Theorem Labs lane's re-runs) and the kit's
    kit_wx / kit_segs_low.  Proof-internal citations from the _F files' closure, Qed-closed and stated over lib/Lib
@@ -350,7 +351,7 @@ Proof.
   { exists Af, sp.
     (* FRAC's register reader and this file's CK11.getr have the same body; each register step goes through
        conversion (eq_trans), never a rewrite, so it holds whichever YK11 copy ACtlCutP's name resolves to (on glue base
-       eb89fed7fac it was the unit copy, lib/A/Reusable/YK11) *)
+       it was the unit copy, lib/A/Reusable/YK11) *)
     split; [exact (eq_trans E2 Hr2)|].
     split; [exact Hspm|].
     split; [transitivity (Reusable.YG0d.spZ regs3); [unfold Reusable.YG0d.spZ; f_equal; exact E2 | exact Hspz]|].

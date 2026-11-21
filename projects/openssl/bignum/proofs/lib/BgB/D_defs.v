@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the argv and path string bounds below the stack top move from USTACK_TOP - 16 to USTACK_TOP - 9 and USTACK_TOP - 8; PMfd_mat_stable carries PMfd's new channel-reader conjunct m_channel_reader; START and MAINCTX hold the stack from rt_sp0 - STACK_WOK, the bottom of the stack the launch zero-maps, instead of rt_sp0 - STACK_WIN). *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.openssl.bignum.lib.BgLib Require Import ImageBgA.
 
@@ -39,7 +40,12 @@ Variable RT : rt_sig.
 Hypothesis AF : art_facts RT.
 
 Lemma PMfd_mat_stable : forall F0 fs0, mat_stable (PMfd F0 fs0).
-Proof. intros F0 fs0. exact (mat_stable_obs (fun fds fs' _ _ _ => fds = F0 /\ fs' = fs0)). Qed.
+Proof.
+  intros F0 fs0 mo mo' Hs (H1 & H2 & H3).
+  destruct (mat_stable_obs (fun fds fs' _ _ _ => fds = F0 /\ fs' = fs0) mo mo' Hs (conj H1 H2)) as [E1 E2].
+  split; [exact E1|]. split; [exact E2|].
+  unfold same_but_materialized in Hs. rewrite Hs. exact H3.
+Qed.
 
 Lemma ASTA_PM_mat_stable : forall Σ F0 fs0, mat_stable (fun mo => ARTM RT Σ mo /\ PMfd F0 fs0 mo).
 Proof. intros Σ F0 fs0. apply mat_stable_and; [exact (af_mat_stable RT AF Σ)| apply PMfd_mat_stable]. Qed.
@@ -105,12 +111,12 @@ Definition argv_rep (m : mem) (ap : Z) : Prop :=
   exists ptrs : list word, u64arr bgbsegs m ap ptrs /\ length ptrs = Nat.min 2 (length argvb)
     /\ (forall i s p, nth_error argvb i = Some s -> nth_error ptrs i = Some p ->
          bytes_at bgbsegs m (bv_unsigned p) (s ++ [Z_to_bv 8 0])
-         /\ ap + 8 * Z.of_nat (length argvb) <= bv_unsigned p /\ bv_unsigned p + Z.of_nat (length s) + 1 <= USTACK_TOP - 16)
+         /\ ap + 8 * Z.of_nat (length argvb) <= bv_unsigned p /\ bv_unsigned p + Z.of_nat (length s) + 1 <= USTACK_TOP - 9)
 
     /\ (forall i s p, nth_error argvb i = Some s -> nth_error ptrs i = Some p ->
          exists slack, bytes_at bgbsegs m (bv_unsigned p + Z.of_nat (length s) + 1) slack
            /\ (- (bv_unsigned p + Z.of_nat (length s) + 1)) mod 8 <= Z.of_nat (length slack)
-           /\ bv_unsigned p + Z.of_nat (length s) + 1 + Z.of_nat (length slack) <= USTACK_TOP - 16).
+           /\ bv_unsigned p + Z.of_nat (length s) + 1 + Z.of_nat (length slack) <= USTACK_TOP - 8).
 
 Definition CREDIT_DRV : Z := 2^34.
 
@@ -126,23 +132,23 @@ Definition START (c : config) : Prop :=
              (Z_to_bv 64 (Z.of_nat (length argvb))) (Z_to_bv 64 ap) a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11
              t3 t4 t5 t6 F fc a_main m)) c
     /\ ART RT Σ m /\ mem_inv bgbsegs m /\ CLX stdout_init m /\ argv_rep m ap
-    /\ stk bgbsegs m (rt_sp0 RT Σ - STACK_WIN) usp /\ sigma0_ok Σ usp
-    /\ usp mod 16 = 0 /\ usp < ap /\ rt_sp0 RT Σ - STACK_WIN + 0x100000 <= usp.
+    /\ stk bgbsegs m (rt_sp0 RT Σ - STACK_WOK) usp /\ sigma0_ok Σ usp
+    /\ usp mod 16 = 0 /\ usp < ap /\ rt_sp0 RT Σ - STACK_WOK + 0x100000 <= usp.
 
 Definition main_frame (m : mem) (usp : Z) (s0 s1 s2 s3 s4 s5 s6 s7 : word) : Prop :=
   exists junk, rw_cells bgbsegs m (usp - 80) [CB 8 junk; C8 s7; C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 (Z_to_bv 64 MAIN_RA)].
 
 Definition MAINCTX (Σ : rts RT) (so : stdout_st) (usp ap : Z) (c0 c1 c2 c3 c4 c5 c6 c7 : word) (m : mem) : Prop :=
   ART RT Σ m /\ mem_inv bgbsegs m /\ CLX so m /\ argv_rep m ap /\ main_frame m usp c0 c1 c2 c3 c4 c5 c6 c7
-  /\ stk bgbsegs m (rt_sp0 RT Σ - STACK_WIN) (usp - 80)
-  /\ usp mod 16 = 0 /\ usp < ap /\ rt_sp0 RT Σ - STACK_WIN + 0x100000 <= usp /\ usp <= rt_sp0 RT Σ.
+  /\ stk bgbsegs m (rt_sp0 RT Σ - STACK_WOK) (usp - 80)
+  /\ usp mod 16 = 0 /\ usp < ap /\ rt_sp0 RT Σ - STACK_WOK + 0x100000 <= usp /\ usp <= rt_sp0 RT Σ.
 
 Definition path_b : list byte := nth 1 argvb [].
 
 Definition path_slack (m : mem) (path : Z) : Prop :=
   exists slack, bytes_at bgbsegs m (path + Z.of_nat (length path_b) + 1) slack
     /\ (- (path + Z.of_nat (length path_b) + 1)) mod 8 <= Z.of_nat (length slack)
-    /\ path + Z.of_nat (length path_b) + 1 + Z.of_nat (length slack) <= USTACK_TOP - 16.
+    /\ path + Z.of_nat (length path_b) + 1 + Z.of_nat (length slack) <= USTACK_TOP - 8.
 
 Definition OPEN (c : config) : Prop :=
   exists (Σ : rts RT) (usp ap path : Z) (gp t0 t1 t2 s1 a2 a3 a4 a5 a6 a7 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 : word)
@@ -152,7 +158,7 @@ Definition OPEN (c : config) : Prop :=
              (Z_to_bv 64 path) (Z_to_bv 64 0) a2 a3 a4 a5 a6 a7 (Z_to_bv 64 path) s3 s4 s5 s6 s7 s8 s9 s10 s11
              t3 t4 t5 t6 F fc e_open m)) c
     /\ MAINCTX Σ stdout_init usp ap c0 c1 c2 c3 c4 c5 c6 c7 m /\ sigma0_ok Σ usp
-    /\ bytes_at bgbsegs m path (path_b ++ [Z_to_bv 8 0]) /\ ap < path /\ path + Z.of_nat (length path_b) + 1 <= USTACK_TOP - 16
+    /\ bytes_at bgbsegs m path (path_b ++ [Z_to_bv 8 0]) /\ ap < path /\ path + Z.of_nat (length path_b) + 1 <= USTACK_TOP - 9
     /\ path_slack m path.
 
 Definition FAILED (c : config) : Prop :=
@@ -161,7 +167,7 @@ Definition FAILED (c : config) : Prop :=
       (ret_st (Z_to_bv 64 RET_OPEN) (Z_to_bv 64 (usp - 80)) gp (Z_to_bv 64 TP_A) (Z_to_bv 64 2) s1 (Z_to_bv 64 path)
               s3 s4 s5 s6 s7 s8 s9 s10 s11 (Z_to_bv 64 (-1)) m) c
     /\ MAINCTX Σ stdout_init usp ap c0 c1 c2 c3 c4 c5 c6 c7 m /\ sigma0_ok Σ usp
-    /\ bytes_at bgbsegs m path (path_b ++ [Z_to_bv 8 0]) /\ ap < path /\ path + Z.of_nat (length path_b) + 1 <= USTACK_TOP - 16
+    /\ bytes_at bgbsegs m path (path_b ++ [Z_to_bv 8 0]) /\ ap < path /\ path + Z.of_nat (length path_b) + 1 <= USTACK_TOP - 9
     /\ path_slack m path.
 
 Definition OPENED (c : config) : Prop :=
@@ -170,7 +176,7 @@ Definition OPENED (c : config) : Prop :=
       (ret_st (Z_to_bv 64 RET_OPEN) (Z_to_bv 64 (usp - 80)) gp (Z_to_bv 64 TP_A) (Z_to_bv 64 2) s1 (Z_to_bv 64 path)
               s3 s4 s5 s6 s7 s8 s9 s10 s11 (Z_to_bv 64 3) m) c
     /\ MAINCTX Σ stdout_init usp ap c0 c1 c2 c3 c4 c5 c6 c7 m /\ sigma0_ok Σ usp
-    /\ bytes_at bgbsegs m path (path_b ++ [Z_to_bv 8 0]) /\ ap < path /\ path + Z.of_nat (length path_b) + 1 <= USTACK_TOP - 16
+    /\ bytes_at bgbsegs m path (path_b ++ [Z_to_bv 8 0]) /\ ap < path /\ path + Z.of_nat (length path_b) + 1 <= USTACK_TOP - 9
     /\ open_ent path_b fs = Some ent /\ path_slack m path.
 
 Definition EXIT (code : Z) : config -> Prop := EXITc fs code.

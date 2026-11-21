@@ -1,4 +1,4 @@
-(* copied from proofs/cgif/cgif_file_fuzzer/lib/ErrnoApart.v @ 57e82b93d43 (c-asan, cold/c-asan-nmax-param: the fs install head of record, to be byte-checked against the ~20:30Z installed sha), module paths changed only. *)
+(* copied from proofs/cgif/cgif_file_fuzzer/lib/ErrnoApart.v (c-asan, cold/c-asan-nmax-param: the fs install head of record, to be byte-checked against the ~20:30Z installed sha), module paths changed only. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* errno lies apart from every zone the frame-generic Allocate / Deallocate walks frame out.
@@ -8,21 +8,21 @@
    states that ONCE per zone family, image-free; ErrnoApartcgif.v discharges each image fact ONCE for cgif_file.
 
    The zones, measured from every frame clause of AGif0n / AGif4 / DGif0 / DMiface / DMspec / DIfaceR:
-   - stack windows [sp0 - k, sp0): ascratch (YG0d.v:214-215, used by DMspec.v:108, DIfaceR.v:54, AllocG / DeallocG),
-     at_RETw / at_RETkw (AGif0n.v:88, :111, inside WIN), if_depot / if_depot_miss (AGif0n.v:191, :348), if_refill's
-     premise (AGif0n.v:287, :290), rleaf (AGif0n.v:262-266), sfin (AGif4.v:87-88, inside WIN and DXz), ifs_depot
-     (AGif4.v:261), di_depot (DGif0.v:293), dmem_c / dmem_m / dmem_n (DGif0.v:159, :183, :194), dmem_q (DMiface.v:119);
+   - stack windows [sp0 - k, sp0): ascratch (YG0d.v:214-215, used by DMspec.v:109, DIfaceR.v:55, AllocG / DeallocG),
+     at_RETw / at_RETkw (AGif0n.v:89, :112, inside WIN), if_depot / if_depot_miss (AGif0n.v:192, :349), if_refill's
+     premise (AGif0n.v:288, :291), rleaf (AGif0n.v:263-267), sfin (AGif4.v:87-88, inside WIN and DXz), ifs_depot
+     (AGif4.v:261), di_depot (DGif0.v:294), dmem_c / dmem_m / dmem_n (DGif0.v:160, :184, :195), dmem_q (DMiface.v:120);
    - the thread object's cells (WINT of ImgBaseAG / K6 / ImgBaseAGS / DGgiC / DGgmC, qhdr) and among them the
-     unwinding byte (also alone in if_refill's premise, AGif0n.v:290, and dmem_n, DGif0.v:194);
-   - the depot zone: ag_dzone (AGif0n.v:86-88, :109-111, :192, :349), ims_dzone (AGif4.v:84-86, :88 via DXz, :262),
-     dg_dzone (DGif0.v:157-159, :181-183, :294);
-   - the internal allocator's zone dg_izone (DGif0.v:159, :183, :195);
-   - the new primary block, its chunk header and its shadow (at_RETw / at_RETkw, AGif0n.v:88-90, :111-113);
+     unwinding byte (also alone in if_refill's premise, AGif0n.v:291, and dmem_n, DGif0.v:195);
+   - the depot zone: ag_dzone (AGif0n.v:87-89, :110-112, :193, :350), ims_dzone (AGif4.v:84-86, :88 via DXz, :262),
+     dg_dzone (DGif0.v:158-160, :182-184, :295);
+   - the internal allocator's zone dg_izone (DGif0.v:160, :184, :196);
+   - the new primary block, its chunk header and its shadow (at_RETw / at_RETkw, AGif0n.v:89-91, :112-114);
    - the secondary map, its block, its shadow and the pointer array's slots (sfin, AGif4.v:87-89; ifs_post_grant,
      AGif4.v:313, :318); the instance's secondary windows WINI (AGif4.v:87 via WIN);
-   - the freed block, its header words and its shadow, the last batch's cells (dmem_c / dmem_m, DGif0.v:159-160,
-     :183-184; the post's E, DeallocG.v:115);
-   - the quarantine's header words in the instance and the batch cells (dmem_q, DMiface.v:113-114, :119).
+   - the freed block, its header words and its shadow, the last batch's cells (dmem_c / dmem_m, DGif0.v:160-161,
+     :183-184; the post's E, DeallocG.v:116);
+   - the quarantine's header words in the instance and the batch cells (dmem_q, DMiface.v:114-115, :120).
    AOX (the allocator's owned set) is not an image fact: an instance of the interface proves that errno is unowned.
 
    Image facts (Props, one per class field family; their cgif discharges are in ErrnoApartcgif.v):
@@ -56,6 +56,7 @@
    Require closure reaches YA08 / YA09 / YA0e, whose non-local Zify flag setting escapes Require (ErrnoApartS.v's
    header gives the consumer's fix).  This file's Require closure reaches none of AGif4, YA08, YA09, YA0e. *)
 (* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/Reusable/ErrnoApart.v, derived mechanically (bkit derive_b.py): its Require lines name the lib/B copies; nothing else differs. The comments are the A file's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed; line numbers cited in comments updated. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -205,7 +206,7 @@ unfold K6.WINT, K6.Pv, K6.SSLOTv in Hw.
 unfold kThreadObjSize, t_cache, t_stats, t_unwinding, kNumClasses in *. lia.
 Qed.
 
-(* at_RETw's window WIN (AGif0n.v:88). *)
+(* at_RETw's window WIN (AGif0n.v:89). *)
 Lemma errno_apart_win_g : errno_in_img -> errno_apart_shadow_ag -> forall B ly regs0 n cl v kz odd a,
 im_syms B -> layout_ok ly -> im_img_cover ly ->
 ly_stk_lo ly + ImgBaseAG.AFSTACK <= bv_unsigned (getr regs0 2) ->
@@ -227,7 +228,7 @@ unfold ImgBaseAG.WIN in Hw. destruct Hw as [Hw|[Hw|[Hw|Hw]]].
   unfold ImgBaseAG.PBv in Hw. lia.
 Qed.
 
-(* at_RETkw's window K6.WIN (AGif0n.v:111). *)
+(* at_RETkw's window K6.WIN (AGif0n.v:112). *)
 Lemma errno_apart_win_k : errno_in_img -> errno_apart_shadow_ag -> forall B ly regs0 n cl v odd a,
 im_syms B -> layout_ok ly -> im_img_cover ly ->
 ly_stk_lo ly + ImgBaseAG.AFSTACK <= bv_unsigned (getr regs0 2) ->
@@ -249,7 +250,7 @@ unfold K6.WIN in Hw. destruct Hw as [Hw|[Hw|[Hw|Hw]]].
   unfold K6.PBv in Hw. lia.
 Qed.
 
-(* The new block (at_RETw's [Kv + RZ kz, + n), AGif0n.v:89). *)
+(* The new block (at_RETw's [Kv + RZ kz, + n), AGif0n.v:90). *)
 Lemma errno_apart_blk_g : errno_in_img -> forall B ly n cl v kz a, im_syms B -> layout_ok ly -> im_img_cover ly ->
 0 <= cl -> 0 <= v ->
 ImgBaseAG.Kv ly cl v + ImgBaseAG.RZ kz <= a < ImgBaseAG.Kv ly cl v + ImgBaseAG.RZ kz + n ->
@@ -261,7 +262,7 @@ assert (C0 : 0 <= cl * 2 ^ 32) by (apply Z.mul_nonneg_nonneg; lia).
 assert (R0 : 0 <= ImgBaseAG.RZ kz) by (unfold ImgBaseAG.RZ, ImgBaseAG.rz_of; pose proof (Z.pow_nonneg 2 kz ltac:(lia)); lia).
 unfold ImgBaseAG.Kv in Ha. lia.
 Qed.
-(* The new block (at_RETkw's [K6.Kv + K6.RZ, + K6.NPv n), AGif0n.v:112). *)
+(* The new block (at_RETkw's [K6.Kv + K6.RZ, + K6.NPv n), AGif0n.v:113). *)
 Lemma errno_apart_blk_k : errno_in_img -> forall B ly n cl v a, im_syms B -> layout_ok ly -> im_img_cover ly ->
 0 <= cl -> 0 <= v ->
 K6.Kv ly cl v + K6.RZ <= a < K6.Kv ly cl v + K6.RZ + K6.NPv n -> ~ (as_errno B <= a < as_errno B + 4).
@@ -272,7 +273,7 @@ assert (C0 : 0 <= cl * 2 ^ 32) by (apply Z.mul_nonneg_nonneg; lia).
 unfold K6.Kv, K6.RZ in Ha. lia.
 Qed.
 
-(* The new block's shadow (at_RETw's [SUv, + N8D n / 8), AGif0n.v:90). *)
+(* The new block's shadow (at_RETw's [SUv, + N8D n / 8), AGif0n.v:91). *)
 Lemma errno_apart_shd_g : errno_apart_shadow_ag -> forall B ly n cl v kz a, im_syms B -> layout_ok ly ->
 0 <= cl -> 0 <= v ->
 ImgBaseAG.SUv ly cl v kz <= a < ImgBaseAG.SUv ly cl v kz + ImgBaseAG.N8D n / 8 -> ~ (as_errno B <= a < as_errno B + 4).
@@ -284,7 +285,7 @@ assert (R0 : 0 <= ImgBaseAG.RZ kz) by (unfold ImgBaseAG.RZ, ImgBaseAG.rz_of; pos
 assert (U0 : 0 <= ImgBaseAG.Uv ly cl v kz / 8) by (apply Z.div_pos; [unfold ImgBaseAG.Uv, ImgBaseAG.Kv; lia | lia]).
 unfold ImgBaseAG.SUv in Ha. lia.
 Qed.
-(* The new block's shadow (at_RETkw's [K6.SUv, + K6.N8D n / 8), AGif0n.v:113). *)
+(* The new block's shadow (at_RETkw's [K6.SUv, + K6.N8D n / 8), AGif0n.v:114). *)
 Lemma errno_apart_shd_k : errno_apart_shadow_ag -> forall B ly n cl v a, im_syms B -> layout_ok ly ->
 0 <= cl -> 0 <= v ->
 K6.SUv ly cl v <= a < K6.SUv ly cl v + K6.N8D n / 8 -> ~ (as_errno B <= a < as_errno B + 4).
@@ -298,7 +299,7 @@ Qed.
 End g.
 
 (* ---------------------------------------------------------------------------------------------------------------- *)
-(* The Deallocate side (DImg): dmem_c / dmem_m / dmem_n (DGif0.v:155-198) and dmem_q (DMiface.v:117-124).          *)
+(* The Deallocate side (DImg): dmem_c / dmem_m / dmem_n (DGif0.v:156-199) and dmem_q (DMiface.v:118-125).          *)
 Section d. Context {DI : DImg}.
 
 (* Image fact: the depot zone. *)
@@ -307,7 +308,7 @@ forall B ly a, im_syms B -> layout_ok ly -> im_img_cover ly -> dg_dzone ly a -> 
 (* Image fact: the internal allocator's zone. *)
 Definition errno_apart_izone : Prop :=
 forall B a, im_syms B -> dg_izone a -> ~ (as_errno B <= a < as_errno B + 4).
-(* Image fact: an application zone (the freed block's chunk: DGif0.dview's dv_zone, DGif0.v:140). *)
+(* Image fact: an application zone (the freed block's chunk: DGif0.dview's dv_zone, DGif0.v:141). *)
 Definition errno_apart_zone3_d : Prop :=
 forall B x sz a, im_syms B -> dg_zone3 x sz -> x <= a < x + sz -> ~ (as_errno B <= a < as_errno B + 4).
 (* Image fact: the allocator instance object. *)
@@ -327,7 +328,7 @@ intros HI B ly a TS LY IMG Hw. apply (errno_apart_thread HI B ly a TS LY IMG).
 unfold DGgmC.WINT in Hw. unfold kThreadObjSize, t_stats, t_unwinding in *. lia.
 Qed.
 
-(* dmem_c's window dwin_c (DGif0.v:159). *)
+(* dmem_c's window dwin_c (DGif0.v:160). *)
 Lemma errno_apart_dwin_c : errno_in_img -> errno_apart_zone3_d -> forall B ly sp0 pa nn lastb a,
 im_syms B -> layout_ok ly -> im_img_cover ly -> ly_stk_lo ly + DGbaseC.DFSTACK <= sp0 ->
 dg_zone3 (pa - 16) (DGgiC.N8v nn + 16) -> 1 <= nn -> ly_space ly <= DGgiC.Bv ly lastb ->
@@ -345,7 +346,7 @@ unfold dwin_c in Hw. destruct Hw as [Hw|[Hw|Hw]].
   + apply (errno_apart_high HI B ly a TS LY IMG). lia.
 Qed.
 
-(* dmem_m's window dwin_m (DGif0.v:183). *)
+(* dmem_m's window dwin_m (DGif0.v:184). *)
 Lemma errno_apart_dwin_m : errno_in_img -> errno_apart_zone3_d -> forall B ly sp0 pa nn a,
 im_syms B -> layout_ok ly -> im_img_cover ly -> ly_stk_lo ly + DGbaseC.DFSTACK <= sp0 ->
 dg_zone3 (pa - 16) (DGgiC.N8v nn + 16) -> 1 <= nn ->
@@ -359,7 +360,7 @@ unfold dwin_m in Hw. destruct Hw as [Hw|[Hw|Hw]].
   unfold DGgmC.WINB in Hw. apply (HZ B _ _ a TS Hz). lia.
 Qed.
 
-(* The freed block's shadow dshadow (DGif0.v:160, :184). *)
+(* The freed block's shadow dshadow (DGif0.v:161, :185). *)
 Lemma errno_apart_dshadow : errno_in_img -> forall B ly pa nn a, im_syms B -> layout_ok ly -> im_img_cover ly ->
 0 <= pa -> dshadow pa nn a -> ~ (as_errno B <= a < as_errno B + 4).
 Proof.
@@ -367,7 +368,7 @@ intros HI B ly pa nn a TS LY IMG Hp Hw. apply (errno_apart_high HI B ly a TS LY 
 unfold dshadow, DGgiC.SPv in Hw. pose proof (Z.div_pos pa 8 Hp ltac:(lia)). unfold SHADOW_OFF, kImgEnd in *. lia.
 Qed.
 
-(* The freed block (the Deallocate post's E, DeallocG.v:115 / :142). *)
+(* The freed block (the Deallocate post's E, DeallocG.v:116 / :143). *)
 Lemma errno_apart_blk_d : errno_apart_zone3_d -> forall B pa nn a, im_syms B ->
 dg_zone3 (pa - 16) (DGgiC.N8v nn + 16) -> pa <= a < pa + nn -> ~ (as_errno B <= a < as_errno B + 4).
 Proof.
@@ -375,7 +376,7 @@ intros HZ B pa nn a TS Hz Ha. apply (HZ B _ _ a TS Hz).
 assert (nn <= DGgiC.N8v nn) by (unfold DGgiC.N8v; pose proof (div_bounds_e (nn + 7) 8 ltac:(lia)); lia). lia.
 Qed.
 
-(* dmem_q's window dwin_q (DMiface.v:119). *)
+(* dmem_q's window dwin_q (DMiface.v:120). *)
 Lemma errno_apart_dwin_q : errno_in_img -> errno_apart_inst_d -> forall B inst ly sp0 X S' P a,
 im_syms B -> layout_ok ly -> im_img_cover ly -> ly_stk_lo ly + YFeuC.DSTACK <= sp0 -> dg_inst_ok inst ->
 (forall b, In b (all_batches X ++ all_batches S' ++ P) -> 0 <= b_self b) ->

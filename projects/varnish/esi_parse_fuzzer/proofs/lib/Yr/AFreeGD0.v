@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap cuts its range out of vm_maps with maps_subtract, so maps5 states the mappings after the free as map_remove less the empty entries at h + msz, and the ledger and cover proofs show each kept entry has a positive size). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -62,6 +63,10 @@ Notation wz z := (Z_to_bv 64 z) (only parsing).
 Ltac kung_all := unfold kHighMemBeg, kDepotNodesBlock, kStackStoreBlockBytes, kShadowOffset, kRegionSize, kSpaceSize, kFreeArrayOffset,
                         kHighShadowMapBeg, kHighShadowMapSize, kSpaceReserve, kMaxSize, kLowShadowMapBeg, kLowShadowBeg, kShadowGapBeg,
                         kPtrArrayReserve, kChunksBlockCount, kFakeStackBytes, kPageSize, kSecondaryHeaderSize, kMaxPrimaryUser in *.
+
+(* LPS 727298f3: munmap cuts its range out of vm_maps ([Ledger.maps_subtract_rm_nz]); an entry of positive size passes the [nz_at] filter. *)
+Lemma fsm_nz_at_pos : forall z (b s : word), 0 < bv_unsigned s -> nz_at z (b, s) = true.
+Proof. intros z b s Hs. unfold nz_at. cbn [fst snd]. destruct (Z.eqb_spec (bv_unsigned s) 0) as [E|E]; [exfalso; lia | reflexivity]. Qed.
 
 Section Chain.
 Context {Clg : Ceiling}.
@@ -130,8 +135,6 @@ Context {Clg : Ceiling}.
     Proof. rewrite (same_but_materialized_vmmaps _ _ SB5), MD4, munmap_modelL_vmmaps, vmmaps3. reflexivity. Qed.
     Lemma maps3 : vm_maps (m_vmmaps md3) = vm_maps (m_vmmaps md).
     Proof. rewrite vmmaps3. reflexivity. Qed.
-    Lemma maps5 : vm_maps (m_vmmaps md5) = map_remove (vm_maps (m_vmmaps md)) (wz h).
-    Proof. rewrite vmmaps5. reflexivity. Qed.
     Lemma resv5 : vm_reserved (m_vmmaps md5) = vm_reserved (m_vmmaps md) /\ vm_reserved (m_vmmaps md3) = vm_reserved (m_vmmaps md) /\ vm_reserved (m_vmmaps md1) = vm_reserved (m_vmmaps md).
     Proof. rewrite vmmaps5, vmmaps3, vmmaps1. OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib.AndN.rsplit; reflexivity. Qed.
 
@@ -140,6 +143,15 @@ Context {Clg : Ceiling}.
     Proof. destruct LG as (L1 & _). apply L1. eapply nth_error_In. exact (bm_nth_sec A _ _ NTH). Qed.
     Lemma fsm_has : map_has (vm_maps (m_vmmaps md3)) (wz h) (wz msz) = true.
     Proof. rewrite maps3. apply In_map_has. exact fsm_in_maps. Qed.
+    (* LPS 727298f3: the munmap of (h, msz) is map_remove less the empty entries based at h + msz *)
+    Lemma maps5 : vm_maps (m_vmmaps md5) = List.filter (nz_at (h + msz)) (map_remove (vm_maps (m_vmmaps md)) (wz h)).
+    Proof.
+      pose proof len_facts as (_ & _ & _ & _ & _ & _ & _ & _ & U3 & U4 & _ & _ & MP & _).
+      pose proof (asI_minv A m md AI) as [HMI _].
+      assert (HN : 0 < bv_unsigned (wz msz)) by (rewrite U4; exact MP).
+      pose proof (maps_subtract_rm_nz _ (wz h) (wz msz) HN (minv_nooverlap HMI) fsm_in_maps) as EQ.
+      rewrite vmmaps5. cbn [vm_maps munmap_vmmaps]. rewrite EQ, U3, U4. reflexivity.
+    Qed.
 
     Lemma fsm_eager : eager_map (wz h) (wz msz) md3.
     Proof.
@@ -217,13 +229,15 @@ Context {Clg : Ceiling}.
       unfold aledger_. cbv zeta. rewrite maps5. (first [ dand3 resv5 as RV5 RV3 RV1 | destruct resv5 as (RV5 & RV3 & RV1) ]). rewrite RV5.
       split; [| split; [exact L2| split; [exact L3| split; [exact L4| split; [| split; [| split]]]]]].
       - (* [comment removed for export] *)
-        intros b s Hin. unfold map_remove. apply filter_In. split.
+        intros b s Hin.
+        assert (BS : 0 <= b /\ 0 < s /\ b + s <= 2^47).
+        { apply (bm_bounds A b s W). unfold big_maps, big_maps_ in Hin |- *. cbn [sec_remove sr_chunks] in Hin. apply in_app_iff in Hin as [Hin|Hin]; apply in_or_app; [left; exact Hin| right].
+          apply in_map_iff in Hin as (c & <- & Hc). apply in_map_iff. exists c. split; [reflexivity|]. apply (chunks'_in_iff A m md (CS h n0) i AI NTH) in Hc as [Hc _]. exact Hc. }
+        apply filter_In. split; [| apply fsm_nz_at_pos; rewrite unsigned_lit by lia; lia].
+        unfold map_remove. apply filter_In. split.
         + apply L1. unfold big_maps_ in Hin |- *. cbn [sec_remove sr_chunks] in Hin. apply in_app_iff in Hin as [Hin|Hin]; apply in_or_app; [left; exact Hin| right].
           apply in_map_iff in Hin as (c & <- & Hc). apply in_map_iff. exists c. split; [reflexivity|]. apply (chunks'_in_iff A m md (CS h n0) i AI NTH) in Hc as [Hc _]. exact Hc.
         + cbn [fst]. unfold bv_eqb. rewrite U3. apply Bool.negb_true_iff. apply Z.eqb_neq.
-          assert (BS : 0 <= b /\ 0 < s /\ b + s <= 2^47).
-          { apply (bm_bounds A b s W). unfold big_maps, big_maps_ in Hin |- *. cbn [sec_remove sr_chunks] in Hin. apply in_app_iff in Hin as [Hin|Hin]; apply in_or_app; [left; exact Hin| right].
-            apply in_map_iff in Hin as (c & <- & Hc). apply in_map_iff. exists c. split; [reflexivity|]. apply (chunks'_in_iff A m md (CS h n0) i AI NTH) in Hc as [Hc _]. exact Hc. }
           rewrite unsigned_lit by lia.
           unfold big_maps_ in Hin. cbn [sec_remove sr_chunks] in Hin. apply in_app_iff in Hin as [Hin|Hin].
           * (* [comment removed for export] *)
@@ -260,12 +274,13 @@ Context {Clg : Ceiling}.
       pose proof (asI_minv A m md AI) as [HMI _]. pose proof alloc_ceiling_val as CE.
       unfold acover_. rewrite maps5. destruct resv5 as (RV5 & _). rewrite RV5. split; [| split; [| exact RSV]].
       - exists fog. split; [exact FL|]. split; [exact FS|]. split; [| split; [| exact F2']].
-        + intros e He. apply map_remove_In in He as [He NE]. pose proof (COV e He) as X. cbv zeta in X |- *.
+        + intros e He. apply filter_In in He as [He _]. apply map_remove_In in He as [He NE]. pose proof (COV e He) as X. cbv zeta in X |- *.
           destruct X as [X|[X|X]]; [| right; left; exact X| right; right; exact X]. left.
           unfold big_maps_ in X |- *. cbn [sec_remove sr_chunks]. apply in_app_iff in X as [X|X]; apply in_or_app; [left; exact X| right].
           apply in_map_iff in X as (c & E & Hc). apply in_map_iff. exists c. split; [exact E|]. apply (chunks'_in_iff A m md (CS h n0) i AI NTH). split; [exact Hc|].
           intros ->. apply NE. cbn [cs_map cs_n] in E. injection E as E1 E2. apply bv_eq. rewrite U3. symmetry. exact E1.
-        + intros bs Hbs. unfold map_remove. apply filter_In. split; [exact (F1' bs Hbs)|]. cbn [fst]. unfold bv_eqb. rewrite U3. apply Bool.negb_true_iff. apply Z.eqb_neq.
+        + intros bs Hbs. apply filter_In. split; [| apply fsm_nz_at_pos; pose proof (proj1 (Forall_forall _ _) FS bs Hbs) as (_ & SZ & _); rewrite unsigned_lit by lia; lia].
+          unfold map_remove. apply filter_In. split; [exact (F1' bs Hbs)|]. cbn [fst]. unfold bv_eqb. rewrite U3. apply Bool.negb_true_iff. apply Z.eqb_neq.
           (first [ pose proof ((proj1 (Forall_forall _ _) FS bs Hbs)) as dR_23; dand3 dR_23 as S1 S2 S3 | pose proof (proj1 (Forall_forall _ _) FS bs Hbs) as (S1 & S2 & S3) ]). rewrite unsigned_lit by lia.
           (* [comment removed for export] *)
           intros E. pose proof (minv_nooverlap HMI) as NO.
@@ -276,7 +291,8 @@ Context {Clg : Ceiling}.
           destruct (nooverlap_In_In _ _ _ NO INf INm) as [D|D]; [exact (NEQ D)|].
           unfold Ledger.hi, Ledger.lo in D. cbn [fst snd] in D. rewrite ?U3, ?U4 in D. rewrite !unsigned_lit in D by lia. rewrite ?U3, ?U4 in D.
           (first [ pose proof ((sk_geo A m md p n0 AI HL NQ')) as dR_25; dand4 dR_25 as _ _ MSZ _ | pose proof (sk_geo A m md p n0 AI HL NQ') as (_ & _ & MSZ & _) ]). lia.
-      - unfold map_remove. apply filter_In. split; [exact C3|]. cbn [fst]. unfold bv_eqb. rewrite U3, unsigned_lit by (kung_all; lia). apply Bool.negb_true_iff. apply Z.eqb_neq.
+      - apply filter_In. split; [| apply fsm_nz_at_pos; rewrite unsigned_lit by (kung_all; lia); kung_all; lia].
+        unfold map_remove. apply filter_In. split; [exact C3|]. cbn [fst]. unfold bv_eqb. rewrite U3, unsigned_lit by (kung_all; lia). apply Bool.negb_true_iff. apply Z.eqb_neq.
         pose proof (sk_geo A m md p n0 AI HL NQ') as (HLO & _). (first [ pose proof ((aobj_facts _ _ HLO)) as dR_26; dand5 dR_26 as _ NN _ _ SIDE | pose proof (aobj_facts _ _ HLO) as (_ & NN & _ & _ & SIDE) ]). clear -SIDE NN. kung_all. lia.
     Qed.
   End Models.

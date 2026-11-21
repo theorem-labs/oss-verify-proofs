@@ -1,13 +1,13 @@
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Image root: the original libreac v1.9.0 set: the pinned fuzz_pcap.asan image (sha256 b7a91d9b1fb0),
-   its unstripped twin (sha256 36da3052c383); statements of record
-   ed6b6b7b0ab. malloc_context_size 30 (kUnwindMax 30); nothing here rests on a malloc_context_size of 1. *)
+   its unstripped twin (sha256 36da3052c383); statements of record.
+   malloc_context_size 30 (kUnwindMax 30); nothing here rests on a malloc_context_size of 1. *)
 (* libreac/fuzz_pcap v1.9.0, fuzz_pcap.asan: the facts about the allocation-trace universe (ACej.v, Tfib_universe) that
-   cgif_file_fuzzer's TFIB_T closing takes at its entry points, in the form its consumers use them (cgif_file_fuzzer at
-   ossv/recipes c8557374ad2e):
+   cgif_file_fuzzer's TFIB_T closing takes at its entry points, in the form its consumers use them (cgif_file_fuzzer):
+   
    - lib/A/AD2l.v:37 `as_universe := Tfib_universe`: ACej.Tfib_universe (re-exported here);
-   - lib/A/AD2l.v:78, field ts_universe (lib/A/AF0m.v:313) `universe_ok (as_universe B)`: ACej.Tfib_universe_ok;
-   - lib/A/AD2l.v:79-82, field ts_universe_drv (lib/A/AF0m.v:314) `forall t, In t DRV_TRACES -> In t (as_universe B)`:
+   - lib/A/AD2l.v:78, field ts_universe (lib/A/AF0m.v:314) `universe_ok (as_universe B)`: ACej.Tfib_universe_ok;
+   - lib/A/AD2l.v:79-82, field ts_universe_drv (lib/A/AF0m.v:315) `forall t, In t DRV_TRACES -> In t (as_universe B)`:
      Tfib_universe_drv below, over Tfib_drv_traces, the list that the core's lib/A/AF0m.v DRV_TRACES must be.
    No fact here depends on EV_MAX (lib/Reusable/YG00.v): universe_ok (lib/Reusable/YG01.v) is stated with DEPOT_MAX and
    kUnwindMax only. *)

@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the frame-area API of fuzz_preset's ASan-UBSan image B at the second allocator instance,
    the image-B twin of lib/A/FCapiCf.v (blob e29123ff8116) by the same module-path map that gen_fc_b.py applies to
-   lib/A/FCapi.v (lib/AU/FCapi.v:4; A<x> -> Y<x>, FCimg -> FCimgB, lib.A FCapi -> lib.AU FCapi), with both theorems
-   renamed with a _B suffix (:23, :30); no other code change. It builds against the head's lib/AU FCimgB and FCapi (:18); as history (of the 10 blobs below only FCm0r, FCm1r and FCm3r are the head's), it was first built against a Theorem Labs lane's image-B frame-class chain, taken by path from
-   origin/cold/h-hpreset-7-frameclass 2cca8b644ee7 (lib/AU blobs: FCapi d9cde3c681ba, FCf5 0d2e2435408f,
+   lib/A/FCapi.v (lib/AU/FCapi.v:5; A<x> -> Y<x>, FCimg -> FCimgB, lib.A FCapi -> lib.AU FCapi), with both theorems
+   renamed with a _B suffix (:23, :30); no other code change. It builds against the head's lib/AU FCimgB and FCapi (:18); as history (of the 10 blobs below only FCm0r, FCm1r and FCm3r are the head's), it was first built against a Theorem Labs lane's image-B frame-class chain, taken by path
+    (lib/AU blobs: FCapi d9cde3c681ba, FCf5 0d2e2435408f,
    FCimgB b4380b440ea5, FCm0r f82124ec3b50, FCm0s 8a5323b82e64, FCm1r 5d44271d1c6a, FCm1s 68fda7b03e80,
    FCm3r ecf9803a2ef1, FCm3s 42a8954d22cd, FCxA 39e380adbd7a).
    FCapi.v's two theorems at ARx := ARcf tfibsegs B, with fs_iface from FCifaceCf.fs_iface_ARcf.

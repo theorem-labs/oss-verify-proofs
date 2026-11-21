@@ -1,7 +1,7 @@
 (* lib/A/Prog/reac_box_model_block_c_on.v -- route (C): the `_on` STATEMENTS for reac_box_model_block, split out
    of reac_box_model_block_c.v (a Theorem Labs lane request, 2026-10-29 11:54Z) so that a consumer takes them BY PATH without
    rebuilding the whole reac_box_model_block_c family; reac_box_model_block_c.v, a Theorem Labs lane's file, still states the same four declarations
-   too (appended to its text from a working branch d69f7c708f6).  The text of the four declarations below is unchanged by the copy.
+   too (appended to its text from a working branch).  The text of the four declarations below is unchanged by the copy.
    THERE IS NO PROOF of reac_box_model_block_contract_on here: it is a STATEMENT (see the comment below). *)
 From Stdlib Require Import ZArith List Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

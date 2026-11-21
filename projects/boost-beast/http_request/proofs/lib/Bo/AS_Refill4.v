@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 From OSSVerify.Proofs.boost_beast.http_request.lib.Common Require KReplay.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -17,7 +18,7 @@ From OSSVerify.Proofs.boost_beast.http_request.lib.Lib Require Import Tac Image 
 From OSSVerify.Proofs.boost_beast.http_request.lib Require Import SReach AllocSim MmapSim LazyRestrict LazyLedger LazySR LazyNodes AsanAllocModel.
 From OSSVerify.Proofs.boost_beast.http_request.lib.Bo Require Import BSegs AsShadow.
 From OSSVerify.Proofs.boost_beast.http_request.lib.As Require Import AllocWf AllocKit.
-From OSSVerify.Proofs.boost_beast.http_request.lib.Bo Require Import AllocRep.
+From OSSVerify.Proofs.boost_beast.http_request.lib.Bo Require Import AllocRep AllocRepX.
 From OSSVerify.Proofs.boost_beast.http_request.lib.As Require Import AsAtomics.
 From OSSVerify.Proofs.boost_beast.http_request.lib.Bo Require Import F_memset AW_PoisonShadow AW_Leaves AllocWalkKit AW_MmapFixed AW_Efs AW_Populate AW_Gfa AW_InitCache AW_Refill AW_LargeAlloc1 SecLazy AS_Refill1 AS_Refill2 AS_Refill3 AllocTacX.
 Import ListNotations.
@@ -84,7 +85,15 @@ Section Refill.
   Hypothesis FAJ : stk bsegs m (FAB + 4 * nf) (FAB + mfa).
   Hypothesis USJ : stk bsegs m (rbeg + au) (rbeg + mu).
   (* [comment removed for export] *)
-  Hypothesis RESF : forall (a k : word), AHI_LO <= bv_unsigned a -> region_free (vm_reserved (m_vmmaps mo)) a k = true.
+  (* #38 RESERVED-CEILING-CLASS: no lemma of this section uses this slot; it has the
+     shape of the [RESF] slot of [refill_sreach] below, which forwards it to [rf_mid_map] and [rf_umap].
+     Every such window lies inside the primary region [PRIM] maps, and [SBR] bounds [sb] only
+     by [AHI_LO] and [aceil], so the former upper premise [a + k <= ARESX_LO] cannot be paid
+     there; the slot is keyed on [map_contains] instead.  The [AHI_LO] premise is kept so that
+     every [RESF] slot has the one shape the recorded AG_* bodies supply: [ak_resf_hi]
+     ({As,Bo}/AllocRepX.v) passed through a lambda that binds that premise. *)
+  Hypothesis RESF : forall (a k : word), AHI_LO <= bv_unsigned a ->
+    map_contains (vm_maps (m_vmmaps mo)) a k = true -> region_free (vm_reserved (m_vmmaps mo)) a k = true.
   Hypothesis PRIM : forall (a k : word), rbeg <= bv_unsigned a -> bv_unsigned a + bv_unsigned k <= rbeg + 2^32 -> map_contains (vm_maps (m_vmmaps mo)) a k = true.
   Hypothesis NW : entries_nowrap (vm_maps (m_vmmaps mo)). Hypothesis NWA : entries_nowrap (vm_noaccess (m_vmmaps mo)).
   Hypothesis NOV : nooverlap (vm_maps (m_vmmaps mo)).
@@ -223,7 +232,15 @@ Section RefillTop.
   Hypothesis FAJ : stk bsegs m (FAB + 4 * nf) (FAB + mfa).
   Hypothesis USJ : stk bsegs m (rbeg + au) (rbeg + mu).
   (* [comment removed for export] *)
-  Hypothesis RESF : forall (a k : word), AHI_LO <= bv_unsigned a -> region_free (vm_reserved (m_vmmaps mo)) a k = true.
+  (* #38 RESERVED-CEILING-CLASS: [refill_sreach] forwards this slot to [rf_mid_map]
+     (AS_Refill3.v) and [rf_umap] (AS_Refill2.v), whose uses are mmap-commit [region_free] premises.
+     Every such window lies inside the primary region [PRIM] maps, and [SBR] bounds [sb] only
+     by [AHI_LO] and [aceil], so the former upper premise [a + k <= ARESX_LO] cannot be paid
+     there; the slot is keyed on [map_contains] instead.  The [AHI_LO] premise is kept so that
+     every [RESF] slot has the one shape the recorded AG_* bodies supply: [ak_resf_hi]
+     ({As,Bo}/AllocRepX.v) passed through a lambda that binds that premise. *)
+  Hypothesis RESF : forall (a k : word), AHI_LO <= bv_unsigned a ->
+    map_contains (vm_maps (m_vmmaps mo)) a k = true -> region_free (vm_reserved (m_vmmaps mo)) a k = true.
   Hypothesis PRIM : forall (a k : word), rbeg <= bv_unsigned a -> bv_unsigned a + bv_unsigned k <= rbeg + 2^32 -> map_contains (vm_maps (m_vmmaps mo)) a k = true.
   Hypothesis NW : entries_nowrap (vm_maps (m_vmmaps mo)). Hypothesis NWA : entries_nowrap (vm_noaccess (m_vmmaps mo)).
   Hypothesis NOV : nooverlap (vm_maps (m_vmmaps mo)).

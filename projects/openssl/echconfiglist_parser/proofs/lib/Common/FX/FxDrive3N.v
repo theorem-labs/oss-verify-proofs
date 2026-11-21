@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (sys_ok3 adds the RomBase.sys_rob conjunct; grant3_steps and sys_grant3_sound take the place_declined_b premise and the Linux-placed address; dext_node closes same_but_vm's m_kernel conjunct); Section Drive3N is generic in the Leaf class of its realizes_cfg walks. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From stdpp Require Import bitvector.
@@ -12,6 +13,8 @@ From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.FX Require Import
   W64 ITrie FxSpec FxInstr FxState FxMem FxExec FxRel FxMemSound FxValSound FxStepSound FxStepMain FxRun FxRn
   FxLazy FxSys FxDrive FxCellFrame FxDrive3.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require RomBase.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import Leaf.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope Z_scope.
@@ -224,6 +227,7 @@ Qed.
 Section Drive3N.
 Variable cfg : SpuriousCfg.
 Variable segs : list Segment.
+Context {LF : Leaf}.
 Variable IM : fimage.
 Variable code : itrie finstr.
 Hypothesis Hcode : code_ok segs code.
@@ -422,7 +426,12 @@ Lemma dext_node n rho F L ms m n' rho' F' L' ms' m' :
 Proof.
   intros [Hn Hrho _ _ _ Hvm Hsp _ _ _ _] Hsb Hmb.
   split; [exact Hn|]. split; [exact Hrho|]. split.
-  - destruct Hvm as (A1 & A2 & A3 & A4 & A5 & A6). repeat split; assumption.
+  (* [same_but_vm] gained a SEVENTH conjunct at 08b1429 - [m_kernel m' = m_kernel m],
+     which is what carries the launch's vDSO/vvar placement across a step
+     (FxDrive.v:375-380).  Six names left the seventh with nothing to close it, which
+     is the "No such assumption." here; [same_but_vm_trans] at FxDrive.v:387 already
+     destructs seven. *)
+  - destruct Hvm as (A1 & A2 & A3 & A4 & A5 & A6 & A7). repeat split; assumption.
   - repeat split; assumption.
 Qed.
 
@@ -751,8 +760,11 @@ Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
+(* LPS 08b1429: the record also says the syscall's specification is the same over every larger
+   read-only backing ([RomBase.sys_rob]; [ShapeCfg.rzc_node] asks it). *)
 Definition sys_ok3 (n : int) (rho : int -> word) (F : fstate) (L3 : fledger3) (res : dres3)
     (ms : machine_state) (m : Model) : Prop :=
+  RomBase.sys_rob segs (mkCfg (ms_pend ms) m) /\
   exists (I : Type) (i0 : I) (nx : I -> config),
     (forall e st, sstep_cfg segs cfg (mkCfg (ms_pend ms) m) e st <->
                   exists i, e = [] /\ st = SNext (nx i))
@@ -802,6 +814,9 @@ Lemma grant3_steps n rho F L3 ms m nr len res :
   bv_unsigned (ms_gpr (ms_pend ms) 2) = 3 ->
   bv_unsigned (ms_gpr (ms_pend ms) 3) = (if nr then 16418 else 34) ->
   bv_unsigned (ms_gpr (ms_pend ms) 5) = 0 ->
+  (* 727298f3 (#144/#146): the decline, which both anonymous step lemmas take. *)
+  place_declined_b (m_kernel m) (m_vmmaps m) (ms_gpr (ms_pend ms) 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr (ms_pend ms) 1))) = false ->
   let nZ := page_round_up_Z (to_Z len) in
   exists (I : Type) (i0 : I) (aof : I -> word),
     (forall e st, sstep_cfg segs cfg (mkCfg (ms_pend ms) m) e st <->
@@ -811,7 +826,7 @@ Lemma grant3_steps n rho F L3 ms m nr len res :
                            (grant_model3 nr (aof i) nZ m)))
     /\ forall i, mmap_grant_na_b (m_vmmaps m) (aof i) nZ = true.
 Proof.
-  intros Hsys HD Hstep Hx8 Ha1 Ha2 Ha3 Ha5.
+  intros Hsys HD Hstep Hx8 Ha1 Ha2 Ha3 Ha5 Hdecl.
   destruct (sys_grant3_inv nr F L3 n len res Hsys) as (Hpos & Hle & Hup & Htag & Hfit & L0 & Hacct).
   pose proof HD as (HDI & HL & _).
   pose proof HDI as (HRn & H0 & Hh & _ & Hli & _).
@@ -825,21 +840,31 @@ Proof.
   destruct (ledger_inv_params_nonneg _ _ _ _ _ Hli) as [Hc0 HS0].
   unfold grant_fits in Hfit. apply andb_true_iff in Hfit as [Hpig _].
   apply Z.leb_le in Hpig. rewrite HnZ in Hpig.
-  assert (Hpig' : page_size + (live_bytes R0 + fl_S (fl3 L3)) + (Z.of_nat (length R0) + fl_c (fl3 L3)) * (nZ + page_size) + nZ
+  assert (Hpig' : task_unmapped_base + (live_bytes R0 + fl_S (fl3 L3)) + (Z.of_nat (length R0) + fl_c (fl3 L3)) * (nZ + page_size) + nZ
                   <= alloc_lo_bound).
   { rewrite alloc_lo_bound_val. unfold page_size.
     assert ((Z.of_nat (length R0) + fl_c (fl3 L3)) * (nZ + 4096) <= (Rc + fl_c (fl3 L3)) * (nZ + 4096))
       by (apply Z.mul_le_mono_nonneg_r; lia).
     lia. }
-  destruct (mmap_grant_na_exists_inv R0 BIG _ _ _ nZ Hli ltac:(lia) Hpig') as [a0 Ha0].
-  change (mmap_grant_na_b (m_vmmaps m) a0 nZ = true) in Ha0.
+  (* as FxDrive.v: both forms in scope, task_unmapped_base > page_size. *)
+  assert (Hpig_ps : page_size + (live_bytes R0 + fl_S (fl3 L3)) + (Z.of_nat (length R0) + fl_c (fl3 L3)) * (nZ + page_size) + nZ
+                  <= alloc_lo_bound)
+    by (unfold task_unmapped_base, page_size in *; lia).
+  (* 75d69e00: the step lemmas take the address Linux PLACES ([mmap_place_na_b] /
+     [mmap_place_b], LedgerCfg.v).  [Hli] is over the erased ledger, which keeps the
+     reserved and mapped lists, the mmap base and the initial sp, so the placement test
+     over [erase m] is the test over [m] by conversion. *)
+  assert (HnZmod : nZ mod page_size = 0) by (unfold page_size; apply page_round_up_Z_mod).
+  destruct (mmap_place_na_exists_inv (ms_gpr (ms_pend ms) 0) R0 BIG _ _ (erase m) nZ Hli HnZpos HnZmod Hpig')
+    as [a0 Ha0].
+  change (mmap_place_na_b (ms_gpr (ms_pend ms) 0) m a0 nZ = true) in Ha0.
   destruct nr.
   - (* [comment removed for export] *)
     assert (Hargs : mmap_anon_nr_args (ms_pend ms) (to_Z len)) by (unfold mmap_anon_nr_args; repeat split; assumption).
     pose proof (mmap_anon_nr_step_iff_lz cfg segs (ms_pend ms) _ m (to_Z len) Halloc Hh
-                  (ms_pend_svc ms) Hx8 Hargs (ex_intro _ a0 Ha0)) as Hiff. cbv zeta in Hiff. fold nZ in Hiff.
-    exists {a : word | mmap_grant_na_b (m_vmmaps m) a nZ = true}, (exist _ a0 Ha0), (fun i => proj1_sig i).
-    split; [|intros [a Ha]; exact Ha].
+                  (ms_pend_svc ms) Hx8 Hargs Hdecl (ex_intro _ a0 Ha0)) as Hiff. cbv zeta in Hiff. fold nZ in Hiff.
+    exists {a : word | mmap_place_na_b (ms_gpr (ms_pend ms) 0) m a nZ = true}, (exist _ a0 Ha0), (fun i => proj1_sig i).
+    split; [|intros [a Ha]; exact (mmap_place_na_b_grant _ _ _ _ Ha)].
     intros e st. rewrite Hiff. split.
     + intros (a & Ha & -> & ->). exists (exist _ a Ha). split; reflexivity.
     + intros ([a Ha] & -> & ->). exists a. repeat split. exact Ha.
@@ -849,18 +874,22 @@ Proof.
     { apply (lazy_part_budget IM R0 Lim mem0 rom0 hi na0 lz0 brk0 A0 n rho F L3 m nZ HL).
       apply Z.leb_le in Hacct. unfold acct_ok in Hacct. cbn [grant_ledger3 fl_E fl_Ab snd] in Hacct.
       rewrite HnZ in Hacct. pose proof (lp_E _ _ _ _ _ _ _ _ _ _ _ HL). clear - Hacct HnZpos. lia. }
-    assert (Hex : exists a, mmap_grant_b m a nZ = true).
-    { exists a0. apply mmap_grant_na_b_iff in Ha0 as (A1 & A2 & A3 & A4).
+    (* the PROT_NONE placement and the budget give the PROT_READ|WRITE placement: the
+       same [linux_place_is] test and the four hygiene facts, plus [Hbud] *)
+    assert (Hex : exists a, mmap_place_b (ms_gpr (ms_pend ms) 0) m a nZ = true).
+    { exists a0. pose proof (mmap_place_na_b_adm _ _ _ _ Ha0) as (A1 & A2 & A3 & A4).
+      unfold mmap_place_na_b in Ha0. apply andb_true_iff in Ha0 as [Hpl _].
+      unfold mmap_place_b. rewrite Hpl. cbn [andb].
       apply mmap_grant_b_iff. repeat split; assumption. }
     pose proof (mmap_anon_step_iff_lz cfg segs (ms_pend ms) _ m (to_Z len) Halloc Hh
-                  (ms_pend_svc ms) Hx8 Hargs Hex) as Hiff. cbv zeta in Hiff. fold nZ in Hiff.
+                  (ms_pend_svc ms) Hx8 Hargs Hdecl Hex) as Hiff. cbv zeta in Hiff. fold nZ in Hiff.
     destruct Hex as [a1 Ha1'].
-    exists {a : word | mmap_grant_b m a nZ = true}, (exist _ a1 Ha1'), (fun i => proj1_sig i).
+    exists {a : word | mmap_place_b (ms_gpr (ms_pend ms) 0) m a nZ = true}, (exist _ a1 Ha1'), (fun i => proj1_sig i).
     split.
     + intros e st. rewrite Hiff. split.
       * intros (a & Ha & -> & ->). exists (exist _ a Ha). split; reflexivity.
       * intros ([a Ha] & -> & ->). exists a. repeat split. exact Ha.
-    + intros [a Ha]. cbn [proj1_sig].
+    + intros [a Ha]. cbn [proj1_sig]. apply mmap_place_b_grant in Ha.
       apply mmap_grant_b_iff in Ha as (A1 & A2 & A3 & A4 & _). apply mmap_grant_na_b_iff. repeat split; assumption.
 Qed.
 
@@ -873,10 +902,13 @@ Theorem sys_grant3_sound n rho F L3 ms m nr len res :
   bv_unsigned (ms_gpr (ms_pend ms) 2) = 3 ->
   bv_unsigned (ms_gpr (ms_pend ms) 3) = (if nr then 16418 else 34) ->
   bv_unsigned (ms_gpr (ms_pend ms) 5) = 0 ->
+  place_declined_b (m_kernel m) (m_vmmaps m) (ms_gpr (ms_pend ms) 0)
+    (page_round_up_Z (bv_unsigned (ms_gpr (ms_pend ms) 1))) = false ->
   sys_ok3 n rho F L3 res ms m.
 Proof.
-  intros Hsys HD Hat Hstep Hx8 Ha1 Ha2 Ha3 Ha5.
-  destruct (grant3_steps n rho F L3 ms m nr len res Hsys HD Hstep Hx8 Ha1 Ha2 Ha3 Ha5)
+  intros Hsys HD Hat Hstep Hx8 Ha1 Ha2 Ha3 Ha5 Hdecl.
+  split; [eapply RomBase.sys_rob_memfree; [reflexivity | rewrite Hx8; exact RomBase.memfree_222] |].
+  destruct (grant3_steps n rho F L3 ms m nr len res Hsys HD Hstep Hx8 Ha1 Ha2 Ha3 Ha5 Hdecl)
     as (I & i0 & aof & Hiff & Hadm).
   exists I, i0, (fun i => mkCfg (sysret (ms_pend ms) (aof i)
                             (apply_zeros (ms_mem (ms_pend ms)) [(aof i, Z_to_bv 64 (page_round_up_Z (to_Z len)))]))
@@ -1099,6 +1131,7 @@ Theorem sys_unmap3_sound n rho F L3 ms m t off len res :
   sys_ok3 n rho F L3 res ms m.
 Proof.
   intros Hsys (HDI & HL & HS & HX) Hat Hstep Hx8 Ha0 Ha1.
+  split; [eapply RomBase.sys_rob_memfree; [reflexivity | rewrite Hx8; exact RomBase.memfree_215] |].
   unfold sys_unmap3 in Hsys.
   destruct (sys_unmap keep F (fl3 L3) n t off len) as [[F' L' n'|]|] eqn:Hg; try discriminate.
   destruct (iget t (f_mem F)) as [rg0|] eqn:Hg0; [|discriminate].
@@ -1172,7 +1205,7 @@ Proof.
     - assert (Htag' : fent_tag e' <> t) by (rewrite Et'; exact Htag).
       destruct (Hdisj0 e' He' Htag') as [Hd|Hd]; unfold e_inside in Hins; [left | right]; lia. }
   (* [comment removed for export] *)
-  pose proof (munmap_entry_step_iff_gen_lz cfg segs (ms_pend ms) (ms_reg ms 17) m (to_Z len) nw Hh
+  pose proof (munmap_entry_step_iff_gen_lz cfg segs (ms_pend ms) (ms_reg ms 17) m (to_Z len) nw Halloc Hh
                 (ms_pend_svc ms) Hx8 Hargs) as Hiff.
   rewrite Ha0' in Hiff. fold m' ms' in Hiff.
   exists unit, tt, (fun _ => mkCfg ms' m').

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the unwinder chain reads the launch's auxv (L5USA.auxv_okA) through its visible memory (cv_auxv) and carries it over steps that write nothing above it (auxv_okA_carry), in place of auxv_cell. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -11,6 +12,7 @@ From OSSVerify.jsoncons.fuzz_bigint.images Require Import AsanUbsan.
 From OSSVerify.Proofs.jsoncons.fuzz_bigint.lib Require Import PropExec CatExec CatSim SeqExec StoreOk StreamSim Hoare ShapeAlg SpinAlg HeapIface HeapIfaceA IcptIfaceAB0 LibIface
      AsanAcct AxSymExec3 AxSymExec3Sound AsanPlanCore SegRun BigLinkBase BigLinkGlue L5Defs L5Kn L5KnA L5Core L5LazyA L5DefsAB0
      L5CoreAB0 L5CoreSpecsAB0 L5StepAB0 L5CoreBB0 L5ParseSpecsAB0 L5OpmodSpecsAB0 L5DivSpecsAB0 L5UnwindSpecsAB0 L5BUnwK.
+From OSSVerify.Proofs.jsoncons.fuzz_bigint.lib.seg Require Import SegAuxv.
 Import ListNotations.
 Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -19,6 +21,46 @@ Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
 Module L5AUK2.
 Import L5A. Import L5CA. Import L5CSA. Import L5SA. Import L5CB. Import L5AUK.
+
+(* LPS 727298f3: the launch's auxiliary vector ([L5USA.auxv_okA]) as the unwinder chain reads and
+   carries it.  [rom_above_hull], [defined_of_rdnA] and [defined_of_u64A] are
+   [L5ParseKit.top_none], [defined_of_rdn] and [defined_of_u64] ([L5ParseKit.v:46-67]) at this
+   image's hull; [auxv_vec_auxt] is [L5StrctorKit.auxv_vec_type] ([L5StrctorKit.v:239-248]) over
+   [SegAuxv.auxt], the type words the throw-path certificates' start knowledge states. *)
+Lemma rom_above_hull (x : word) : L5.hull_hi RSEGS <= bv_unsigned x -> seg_rom RSEGS x = None.
+Proof.
+  intros Hx. rewrite hull_hi_eq in Hx.
+  assert (E : find_segment RSEGS (bv_unsigned x) (Z.of_N 1) = None)
+    by exact (find_segment1_none_above RSEGS _ (bv_unsigned x) segs_below Hx).
+  unfold seg_rom, memory_read. rewrite E. reflexivity.
+Qed.
+Lemma defined_of_rdnA M : forall (n : nat) a bs, 0 <= a -> a + Z.of_nat n <= 2 ^ 64 -> L5.hull_hi RSEGS <= a ->
+  rdn RSEGS M (Z_to_bv 64 a) n = Some bs -> L5.defined M a (Z.of_nat n).
+Proof.
+  induction n as [|n IH]; intros a bs Ha Hn Hi HR i Hii. lia.
+  cbn [rdn] in HR.
+  destruct (M (Z_to_bv 64 a)) as [b|] eqn:EM.
+  - destruct (rdn RSEGS M (Z_to_bv 64 a + 1)%bv n) as [rest|] eqn:ER; [|discriminate].
+    destruct (Z.eq_dec i 0) as [->|Hi0]. rewrite Z.add_0_r, EM. discriminate.
+    rewrite (L5C.add1_lit a) in ER. replace (a + i) with (a + 1 + (i - 1)) by lia.
+    apply (IH (a + 1) rest); try lia. exact ER.
+  - rewrite (rom_above_hull (Z_to_bv 64 a)) in HR. discriminate. rewrite L5.unsigned_lit by lia. lia.
+Qed.
+Lemma defined_of_u64A M a v : 0 <= a -> a + 8 <= 2 ^ 64 -> L5.hull_hi RSEGS <= a -> L5.u64_at RSEGS M a v -> L5.defined M a 8.
+Proof. intros Ha H8 Hi Hu. apply (defined_of_rdnA M 8 a _ Ha ltac:(cbn; lia) Hi Hu). Qed.
+Lemma auxv_vec_auxt la ph entry gid ae uid rnd hw i :
+  (i < StackLayout.auxv_count (StackLayout.la_rseq la))%nat ->
+  nth (2 * i) (auxv_vec la ph entry gid ae uid rnd hw) 0 = nth i (auxt (StackLayout.la_rseq la)) 0.
+Proof.
+  intros Hi. destruct la as [eh c ms r]. cbn [StackLayout.la_rseq] in *.
+  destruct r; cbn [StackLayout.auxv_count] in Hi; (do 29 (destruct i as [|i]; [reflexivity|])); Lia.lia.
+Qed.
+(* The vector is carried over a step that writes nothing in [av, 2^47): nothing the unwinder
+   chain writes lies above its stack, and [auxv_okA] reads only below 2^47. *)
+Lemma auxv_okA_carry Mo Mn av uid rnd hw : 0 <= av -> L5C.agree_on Mo Mn av (2 ^ 47 - av) ->
+  L5USA.auxv_okA Mo av uid rnd hw -> L5USA.auxv_okA Mn av uid rnd hw.
+Proof. intros Hav AG H. apply (L5USA.auxv_okA_agree Mo Mn av uid rnd hw H Hav). intros i Hi1 Hi2. apply AG. lia. Qed.
+
 Section SCFG_1.
 Context {SCFG_P : ScfgP}.
 
@@ -597,15 +639,61 @@ Lemma cv_zeros XB Mc modelc LKc crc Ac a n : cinv XB Mc modelc LKc crc Ac -> L5A
   L5KA.zeros_at Mc a n -> L5KA.zeros_at (mrestrict (ahid Ac modelc) Mc) a n.
 Proof. intros CI Hv X. apply (proj2 (zeros_at_vis _ Mc a n (cvis_avis L ar C HI LY HIok M0 model0 A0 LB FF Sp Scr W XB Mc modelc LKc crc Ac CI a n Hv))). exact X. Qed.
 
+(* LPS 727298f3: the vector at [av] read through the chain's visible memory, in the form the
+   throw-path certificates' start knowledge takes ([SegAuxv.aux_kn]): every type word,
+   AT_PHDR/AT_PHENT/AT_PHNUM's values (pairs 13-15) and the whole vector defined.  [r] is the
+   vector's CONFIG_RSEQ flag.  The proof follows [L5StrctorKit.auxv_cells]
+   ([L5StrctorKit.v:250-293]) with this image's program-header count. *)
+Lemma cv_auxv XB Mc modelc LKc crc Ac av uid rnd hw : cinv XB Mc modelc LKc crc Ac ->
+  ahl_ceil ar <= av -> 2 ^ 40 <= av -> L5USA.auxv_okA Mc av uid rnd hw ->
+  exists r : bool,
+    (forall i, (i < length (auxt r))%nat -> L5.u64_at RSEGS (mrestrict (ahid Ac modelc) Mc) (av + 16 * Z.of_nat i) (nth i (auxt r) 0))
+    /\ L5.u64_at RSEGS (mrestrict (ahid Ac modelc) Mc) (av + 216) 65600
+    /\ L5.u64_at RSEGS (mrestrict (ahid Ac modelc) Mc) (av + 232) 56
+    /\ L5.u64_at RSEGS (mrestrict (ahid Ac modelc) Mc) (av + 248) 11
+    /\ L5.defined (mrestrict (ahid Ac modelc) Mc) av (auxlen r).
+Proof.
+  intros CI AC AVLO (la & ph & entry & gid & ae & P1 & P2 & P3 & B & WD).
+  assert (HH : L5.hull_hi RSEGS <= av) by (rewrite hull_hi_eq; lia).
+  assert (C27 : (27 <= StackLayout.auxv_count (StackLayout.la_rseq la))%nat)
+    by (unfold StackLayout.auxv_count; destruct (StackLayout.la_rseq la); cbn; lia).
+  set (cnt := StackLayout.auxv_count (StackLayout.la_rseq la)) in *.
+  assert (VIS : forall a n, av <= a -> a + n <= av + 16 * Z.of_nat cnt -> avis (ahid Ac modelc) a n).
+  { intros a n H1 H2. apply (cvis_avis L ar C HI LY HIok M0 model0 A0 LB FF Sp Scr W XB Mc modelc LKc crc Ac CI a n).
+    left. split; lia. }
+  assert (WV : forall j, (j < 2 * cnt)%nat ->
+             L5.u64_at RSEGS (mrestrict (ahid Ac modelc) Mc) (av + 8 * Z.of_nat j) (nth j (auxv_vec la ph entry gid ae uid rnd hw) 0)).
+  { intros j Hj. apply (proj2 (u64_at_vis _ Mc (av + 8 * Z.of_nat j) _ (VIS (av + 8 * Z.of_nat j) 8 ltac:(lia) ltac:(lia)) ltac:(lia) ltac:(lia))).
+    exact (WD j Hj). }
+  assert (LT : length (auxt (StackLayout.la_rseq la)) = cnt) by (unfold cnt; destruct (StackLayout.la_rseq la); reflexivity).
+  exists (StackLayout.la_rseq la). unfold auxlen. rewrite LT. split.
+  { intros i Hi. rewrite <- (auxv_vec_auxt la ph entry gid ae uid rnd hw i Hi).
+    replace (av + 16 * Z.of_nat i) with (av + 8 * Z.of_nat (2 * i)) by lia. apply WV. lia. }
+  pose proof (WV 27%nat ltac:(lia)) as X27. pose proof (WV 29%nat ltac:(lia)) as X29. pose proof (WV 31%nat ltac:(lia)) as X31.
+  change (nth 27 (auxv_vec la ph entry gid ae uid rnd hw) 0) with (bv_unsigned (Z_to_bv 64 (Z.of_N (ph_addr ph)))) in X27.
+  change (nth 29 (auxv_vec la ph entry gid ae uid rnd hw) 0) with (bv_unsigned (Z_to_bv 64 (Z.of_N (ph_ent ph)))) in X29.
+  change (nth 31 (auxv_vec la ph entry gid ae uid rnd hw) 0) with (bv_unsigned (Z_to_bv 64 (Z.of_N (ph_num ph)))) in X31.
+  rewrite P1 in X27. rewrite P2 in X29. rewrite P3 in X31.
+  change (bv_unsigned (Z_to_bv 64 0x10040)) with 0x10040 in X27.
+  change (bv_unsigned (Z_to_bv 64 56)) with 56 in X29.
+  change (bv_unsigned (Z_to_bv 64 11)) with 11 in X31.
+  replace (av + 8 * Z.of_nat 27) with (av + 216) in X27 by lia.
+  replace (av + 8 * Z.of_nat 29) with (av + 232) in X29 by lia.
+  replace (av + 8 * Z.of_nat 31) with (av + 248) in X31 by lia.
+  split; [exact X27|]. split; [exact X29|]. split; [exact X31|].
+  apply (proj2 (defined_vis _ Mc av (16 * Z.of_nat cnt) (VIS av (16 * Z.of_nat cnt) ltac:(lia) ltac:(lia)))).
+  intros i Hi.
+  pose proof (Z.div_mod i 8 ltac:(lia)) as DM. pose proof (Z.mod_pos_bound i 8 ltac:(lia)) as MB.
+  assert (Hk : (Z.to_nat (i / 8) < 2 * cnt)%nat).
+  { apply Nat2Z.inj_lt. rewrite Z2Nat.id by (apply Z.div_pos; lia). lia. }
+  pose proof (WD _ Hk) as U. rewrite Z2Nat.id in U by (apply Z.div_pos; lia).
+  pose proof (defined_of_u64A Mc (av + 8 * (i / 8)) _ ltac:(lia) ltac:(lia) ltac:(lia) U) as D8.
+  replace (av + i) with (av + 8 * (i / 8) + i mod 8) by lia. apply D8. lia.
+Qed.
+
 End CHAIN.
 End WithIface.
 End SCFG_1.
-
-(* [comment removed for export] *)
-Lemma auxv_cell (M : word -> option byte) (av uid rnd hw : Z) :
-  (forall j : nat, (j < 20)%nat -> L5.u64_at RSEGS M (av + 8 * Z.of_nat j) (nth j (L5USA.auxv20A uid rnd hw) 0)) ->
-  forall (j : nat) (a v : Z), (j < 20)%nat -> a = av + 8 * Z.of_nat j -> v = nth j (L5USA.auxv20A uid rnd hw) 0 -> L5.u64_at RSEGS M a v.
-Proof. intros H j a v Hj -> ->. apply H. exact Hj. Qed.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -733,6 +821,8 @@ Ltac carry Mo Mn AG sd :=
                      rewrite (AG i 1 ltac:(nlia) ltac:(nlia)); [ apply H; exact Hi | sd .. | nlia ]);
                clear H; rename Y into H)
             | clear H ]
+  | H : L5USA.auxv_okA Mo ?av ?u ?rn ?hw |- _ =>      (* LPS 727298f3: the launch's auxv, over [av, 2^47) ([auxv_okA_carry]) *)
+      first [ apply (auxv_okA_carry Mo Mn av u rn hw ltac:(nlia) ltac:(apply AG; [nlia | nlia | sd ..])) in H | clear H ]
   end.
 (* [comment removed for export] *)
 Ltac sd_piece := intros ?i ?Hi; cbv beta; ndlia.
@@ -813,4 +903,14 @@ Ltac tidy CIk :=
   repeat match goal with M : FPState |- _ => clear M end.
 (* [comment removed for export] *)
 Ltac sd_call := idtac; lazymatch goal with |- ccl _ _ _ _ => ccl_tac | |- _ => nlia end.
+(* LPS 727298f3: before a throw-path certificate's piece, [cv_auxv] at the piece's [cinv] gives
+   the vector facts its start knowledge asks for, on the visible memory the piece reads; [r]
+   names the vector's CONFIG_RSEQ flag, which the piece lemma takes. *)
+Tactic Notation "auxv_vis" constr(CI) constr(AX) ident(r) :=
+  with_ci CI ltac:(fun L ar C HI LY HIok M0 model0 A0 LB FF Sp Scr W XB Mc modelc LKc crc Ac =>
+    lazymatch type of AX with
+    | L5USA.auxv_okA Mc ?av ?uid ?rnd ?hw =>
+        destruct (cv_auxv L ar C HI LY HIok M0 model0 A0 LB FF Sp Scr W XB Mc modelc LKc crc Ac av uid rnd hw CI ltac:(nlia) ltac:(nlia) AX)
+          as (r & ?AXT & ?AXA & ?AXE & ?AXN & ?AXD)
+    end).
 End L5AUK2.

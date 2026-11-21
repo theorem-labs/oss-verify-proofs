@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (the producer check of the index-keyed set): lemmas of the dead set dead_shadow_new at the kit's
    INDEX-keyed body (YGcfRehidePost.v; core ruling 2026-10-30 18:00Z: the name stays, the body is the kit's, no second name).
    Ported from cgif/cgif_file_fuzzer lib/PixChk.v (file sha256 2e88698b2c8a; donor not released; module paths
    cgif -> preset Reusable; its _ix names now plain). (1) the kit's emptiness lemma and the provers of
-   dead_shadow_new_off's premise are in YGcfRehidePost.v (core 33db28e0c9a; live_slots_placed_of_wf / _of_wf_cf); (2) the walk-level composition (rec_live, the backward liveness
+   dead_shadow_new_off's premise are in YGcfRehidePost.v (core; live_slots_placed_of_wf / _of_wf_cf); (2) the walk-level composition (rec_live, the backward liveness
    of each slot index, with YGcfRecStep.rec_step) and the two steps that keep rec_live; (3) the assumption audit of the
    restated producers. That donor file's DMrcRh / DMrcRhOk / DMrcCf parts are not ported: preset has no copy of those
    cgif-image walk files. Generic: no image, no address. *)
@@ -20,7 +21,7 @@ Local Open Scope Z_scope.
 Section ix. Context {rc : YM05.RunCeil}.
 
 (* ---- (1) dead_shadow_new_same_secs_empty and the premise of dead_shadow_new_off (live_slots_placed, with its
-   provers live_slots_placed_of_wf / _of_wf_cf) are in YGcfRehidePost.v (core 33db28e0c9a). ---- *)
+   provers live_slots_placed_of_wf / _of_wf_cf) are in YGcfRehidePost.v (core). ---- *)
 
 (* ---- (2) The walk-level producer: one call's set inside the walk's set (YGcfRecStep.v:1-4's composition). ---- *)
 (* At the index-keyed body the extent conjunct of rec_step does not give that slot r was live at S0 (an extent value at

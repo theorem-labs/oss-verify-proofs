@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the resolved vdso_func cell holds hvdso, the vDSO's clock_gettime entry, not 0). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -218,7 +219,7 @@ Definition is_fresh (st : libst) : bool := match st with Fresh => true | Inited 
 (* [comment removed for export] *)
 Definition lib_statics_inited (m : mem) (i : lib_inited) : Prop :=
      IMPL_mem m                                                                  (* [comment removed for export] *)
-  /\ rw_cells rsegs m A_vdso_func [C8 (wz (if li_vdso_done i then 0 else P_cgt_init))]
+  /\ rw_cells rsegs m A_vdso_func [C8 (wz (if li_vdso_done i then hvdso else P_cgt_init))]
   /\ rw_cells rsegs m A_mem_inited [C1 (b8 1)]
   /\ CTX_statics m (li_ctx i)
   /\ ERR_statics m (li_chain i)

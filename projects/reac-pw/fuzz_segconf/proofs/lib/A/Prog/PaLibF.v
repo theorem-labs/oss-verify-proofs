@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC44.v, the side-stack frame and use-after-return walk helpers (PALibF) over fuzz_command's listing: module paths, csym, the image's end 0x606000. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/Prog/PaLibF.v (origin/ossv/recipes 501c0d516c69) for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths; csym -> ssym; the image's end 0x606000 -> YG0f.kImgEnd (0x601000); cs_stack_malloc and palf_sm over the side-stack classes fuzz_segconf.asan links, 0, 1, 3 and 5 (fuzz_command: 0, 1, 3, 4, 5, 7). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_command/lib/A/Prog/PaLibF.v for reac-pw/fuzz_segconf's image A (fuzz_segconf.asan): module paths; csym -> ssym; the image's end 0x606000 -> YG0f.kImgEnd (0x601000); cs_stack_malloc and palf_sm over the side-stack classes fuzz_segconf.asan links, 0, 1, 3 and 5 (fuzz_command: 0, 1, 3, 4, 5, 7). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From Stdlib Require Import FunctionalExtensionality.

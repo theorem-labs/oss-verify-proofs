@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mmap's declined-placement gate, clear of the vDSO pages). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -402,12 +403,13 @@ Lemma ex_mmap_anon : forall regs (pc : word) mem model w (len : Z) (a : word),
   getr regs 12 = Z_to_bv 64 3 -> getr regs 13 = Z_to_bv 64 34 ->
   getr regs 14 = Z_to_bv 64 (-1) -> getr regs 15 = Z_to_bv 64 0 ->
   let n := page_round_up_Z len in
+  place_declined_b (m_kernel model) (m_vmmaps model) (getr regs 10) n = false ->
   grant_ok (getr regs 10) model a n = true ->
   reach segs (mkCfg (mkst regs pc mem (seg_rom segs)) model)
              (mkCfg (mkst (regupd regs 10 a) (v_addi pc 4) (zfill a (Z_to_bv 64 n) mem) (seg_rom segs))
                     (mmap_model a (Z_to_bv 64 n) model)).
 Proof.
-  intros regs pc mem model w len a HF HE Hh Hlazy H17 H11 Hlen H12 H13 H14 H15 n Ha.
+  intros regs pc mem model w len a HF HE Hh Hlazy H17 H11 Hlen H12 H13 H14 H15 n Hdecl Ha.
   set (ms := epend regs pc mem (seg_rom segs) (getr regs 17)).
   assert (Hu1 : bv_unsigned (ms_gpr ms 1) = len).
   { unfold ms. rewrite ms_gpr_epend1, H11. apply u64_lit. lia. }
@@ -423,6 +425,7 @@ Proof.
   eapply reach_trans; [eapply reach_ecall; eassumption |]. fold ms.
   pose proof (reach_syscall segs ms model (getr regs 17) _ _ _ Hh eq_refl
                 (mmap_succ_ok segs ms (getr regs 17) model a ltac:(rewrite H17; apply u64_lit; lia) Hargs
+                   ltac:(rewrite H0, Hu1; exact Hdecl)
                    ltac:(rewrite H0, Hu1; exact Ha))
                 ltac:(rewrite mmap_model_halted; exact Hh)
                 (materialize_model_accesses_no_lazy _ _ (eq_trans (mmap_model_lazy _ _ _) Hlazy))) as Hr.
@@ -437,10 +440,11 @@ Lemma ex_mmap_anon_enomem : forall regs (pc : word) mem model w (len : Z),
   getr regs 11 = Z_to_bv 64 len -> (0 < len < 2 ^ 64)%Z ->
   getr regs 12 = Z_to_bv 64 3 -> getr regs 13 = Z_to_bv 64 34 ->
   getr regs 14 = Z_to_bv 64 (-1) -> getr regs 15 = Z_to_bv 64 0 ->
+  place_declined_b (m_kernel model) (m_vmmaps model) (getr regs 10) (page_round_up_Z len) = false ->
   reach segs (mkCfg (mkst regs pc mem (seg_rom segs)) model)
              (mkCfg (mkst (regupd regs 10 (errno_ret ENOMEM)) (v_addi pc 4) mem (seg_rom segs)) model).
 Proof.
-  intros regs pc mem model w len HF HE Hh Hlazy H17 H11 Hlen H12 H13 H14 H15.
+  intros regs pc mem model w len HF HE Hh Hlazy H17 H11 Hlen H12 H13 H14 H15 Hdecl.
   set (ms := epend regs pc mem (seg_rom segs) (getr regs 17)).
   assert (Hargs : mmap_args_ok ms).
   { unfold mmap_args_ok, ms.
@@ -448,10 +452,13 @@ Proof.
     rewrite H11, H12, H13, H14, H15. repeat split; try reflexivity.
     intro Hc. apply (f_equal bv_unsigned) in Hc. rewrite u64_lit in Hc by lia.
     change (bv_unsigned (Z_to_bv 64 0)) with 0%Z in Hc. lia. }
+  assert (Hu1 : bv_unsigned (ms_gpr ms 1) = len).
+  { unfold ms. rewrite ms_gpr_epend1, H11. apply u64_lit. lia. }
+  assert (H0 : ms_gpr ms 0 = getr regs 10) by (unfold ms; rewrite ms_gpr_epend0; reflexivity).
   eapply reach_trans; [eapply reach_ecall; eassumption |]. fold ms.
   pose proof (reach_syscall segs ms model (getr regs 17) _ _ _ Hh eq_refl
                 (mmap_fail_ok segs ms (getr regs 17) model ENOMEM ltac:(rewrite H17; apply u64_lit; lia) Hargs
-                   ENOMEM_in_mmap_errnos)
+                   ENOMEM_in_mmap_errnos ltac:(rewrite H0, Hu1; exact Hdecl))
                 Hh (materialize_model_accesses_no_lazy _ _ Hlazy)) as Hr.
   rewrite apply_effect_no_write in Hr. unfold ms in Hr. rewrite adv_set_epend in Hr. exact Hr.
 Qed.
@@ -468,12 +475,13 @@ Lemma ex_mmap_noaccess : forall regs (pc : word) mem model w (len : Z) (a : word
   getr regs 12 = Z_to_bv 64 0 -> getr regs 13 = Z_to_bv 64 34 ->
   getr regs 14 = Z_to_bv 64 (-1) -> getr regs 15 = Z_to_bv 64 0 ->
   let n := page_round_up_Z len in
+  place_declined_b (m_kernel model) (m_vmmaps model) (getr regs 10) n = false ->
   grant_ok_na (getr regs 10) model a n = true ->
   reach segs (mkCfg (mkst regs pc mem (seg_rom segs)) model)
              (mkCfg (mkst (regupd regs 10 a) (v_addi pc 4) (unfill a (Z_to_bv 64 n) mem) (seg_rom segs))
                     (noaccess_model a (Z_to_bv 64 n) model)).
 Proof.
-  intros regs pc mem model w len a HF HE Hh Hlazy H17 H11 Hlen H12 H13 H14 H15 n Ha.
+  intros regs pc mem model w len a HF HE Hh Hlazy H17 H11 Hlen H12 H13 H14 H15 n Hdecl Ha.
   set (ms := epend regs pc mem (seg_rom segs) (getr regs 17)).
   assert (Hno : bv_unsigned (getr regs 17) = 222%Z) by (rewrite H17; apply u64_lit; lia).
   assert (Hu1 : bv_unsigned (ms_gpr ms 1) = len).
@@ -484,8 +492,9 @@ Proof.
     rewrite H11, H12, H13, H14, H15. repeat split; try reflexivity.
     intro Hc. apply (f_equal bv_unsigned) in Hc. rewrite u64_lit in Hc by lia.
     change (bv_unsigned (Z_to_bv 64 0)) with 0%Z in Hc. lia. }
-  pose proof (mmap_noaccess_check segs ms (getr regs 17) model (mkEffectU a [] [] [(a, Z_to_bv 64 n)] [] []) Hno Hargs) as Hchk.
   assert (H0 : ms_gpr ms 0 = getr regs 10) by (unfold ms; rewrite ms_gpr_epend0; reflexivity).
+  pose proof (mmap_noaccess_check segs ms (getr regs 17) model (mkEffectU a [] [] [(a, Z_to_bv 64 n)] [] []) Hno Hargs
+                ltac:(rewrite H0, Hu1; exact Hdecl)) as Hchk.
   rewrite Hu1, H0 in Hchk. cbv zeta iota beta in Hchk. fold n in Hchk.
   assert (Hn0 : (0 <= n)%Z) by (unfold n; apply page_round_up_Z_nonneg; lia).
   rewrite (grant_na_not_errno _ model a n Hn0 Ha), Ha in Hchk. cbn [andb] in Hchk.
@@ -556,6 +565,7 @@ Lemma ex_mprotect : forall regs (pc : word) mem model w (addr : word) (len : Z),
   (bv_unsigned addr + page_round_up_Z len < two_pow_64)%Z ->
   getr regs 12 = Z_to_bv 64 3 ->
   let n := Z_to_bv 64 (page_round_up_Z len) in
+  region_free (vdso_reserved (m_kernel model) (vdso_top (m_vmmaps model))) addr n = true ->
   map_contains (vm_noaccess (m_vmmaps model)) addr n = true ->
   map_contains (vm_maps (m_vmmaps model)) addr n = true ->
   mprotect_budget_ok model addr n = true ->
@@ -563,13 +573,13 @@ Lemma ex_mprotect : forall regs (pc : word) mem model w (addr : word) (len : Z),
              (mkCfg (mkst (regupd regs 10 (Z_to_bv 64 0)) (v_addi pc 4) (zfill addr n mem) (seg_rom segs))
                     (mprotect_model addr n model)).
 Proof.
-  intros regs pc mem model w addr len HF HE Hh Hlazy H17 H10 Hal H11 Hlen Hnw H12 n Hna Hma Hbud.
+  intros regs pc mem model w addr len HF HE Hh Hlazy H17 H10 Hal H11 Hlen Hnw H12 n Hvd Hna Hma Hbud.
   set (ms := epend regs pc mem (seg_rom segs) (getr regs 17)).
   assert (Hno : bv_unsigned (getr regs 17) = 226%Z) by (rewrite H17; apply u64_lit; lia).
   pose proof (mprotect_check segs ms (getr regs 17) model (mkEffectU (Z_to_bv 64 0) [] [(addr, n)] [] [] []) addr len Hno
                 ltac:(unfold ms; rewrite ms_gpr_epend0; exact H10) Hal
                 ltac:(unfold ms; rewrite ms_gpr_epend1; exact H11) Hlen Hnw
-                ltac:(unfold ms; rewrite ms_gpr_epend2; exact H12) Hna Hma) as Hchk.
+                ltac:(unfold ms; rewrite ms_gpr_epend2; exact H12) Hvd Hna Hma) as Hchk.
   cbv zeta iota beta in Hchk. fold n in Hchk. rewrite Hbud in Hchk.
   change (errno_ret_in mprotect_errnos (Z_to_bv 64 0)) with false in Hchk. cbv iota in Hchk.
   unfold w_is0 in Hchk. rewrite bv_eqb_refl, (proj2 (listNN_eqb_eq _ _) eq_refl) in Hchk. cbn [andb] in Hchk.

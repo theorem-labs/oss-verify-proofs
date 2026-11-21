@@ -15,6 +15,7 @@
    The `bne a0, a1` at 0x838a0 is never taken (both hold s->nheld, pinned to one atom); the four shadow
    checks (0x838a8, 0x838c8, 0x838e8 of &s->held, 0x838f4 of &s->nheld, 0x83924 of the new slot) read a
    zero byte, so no __asan_report_* arm opens. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -2039,7 +2040,7 @@ Variable RG : rep_globals.
 Context {hl : Z}.
 Hypothesis LAWS : AR_laws_x SEGS B ARx hl.
 Hypothesis HP0 : forall ly S Hp W mem md, ARx ly S Hp W mem md -> Hp = [].
-(* W_drain_cx_x.v:151-216, the ones this file's proofs use *)
+(* W_drain_cx_x.v:152-217, the ones this file's proofs use *)
 Hypothesis HG : gx_ok SEGS B (G_DR B RG).
 Hypothesis HGR : forall a, inG (G_DR B RG) a -> ~ in_rom SEGS a.
 Hypothesis HROMO : rom_out SEGS B (G_DR B RG).

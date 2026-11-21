@@ -61,7 +61,7 @@ start-up shadow bytes; AE3i 129280 bytes). The per-row triage table is byte-equa
 is a **DEFECT, fixed in the series**. `tfibmusl_text_count` 16403 is cgif's value kept by the relocation; the file's own
 rule (.text end − `tfibmusl_text_start`) / 4 on the A pin gives (0x9eea8 − 0x8f310) / 4 = 16102 (gate 8,
 `counts/counts-A.tsv`), the value image B's `lib/Reusable/YB1v.v:10` ships by the same rule. The unit owner ruled it a
-defect; the series code commit ac99185f1f10 sets 16102 (build check pending). Gate 1's record and hand table are left
+defect; the series code sets 16102 (build check pending). Gate 1's record and hand table are left
 as they were; read their OVER-COVER row as this DEFECT.
 
 ## Planted control (must fire)

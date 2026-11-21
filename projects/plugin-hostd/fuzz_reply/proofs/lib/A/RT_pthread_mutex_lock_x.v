@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: the runtime site contract alock_realizes (lib/A/W_sites.v) proved for
    fuzz_reply.asan's musl pthread_mutex_lock at 0x9883c. *)
 (* Modified by Theorem Labs, 2026-10-29: from lib/A/RT_pthread_mutex_lock.v, as the module RT_pthread_mutex_lock_x: cut to the proof of rt_pthread_mutex_lock (the helper lemmas are used by Import) and restated over a generic allocator invariant ARx under lib/Rt/RTx.v's rt_laws (rt_pthread_mutex_lock_x); the corollaries rt_pthread_mutex_lock_of_x (rt_pthread_mutex_lock's statement, unchanged) and rt_pthread_mutex_lock_cf added. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/RT_pthread_mutex_lock.v's runtime contract rt_pthread_mutex_lock restated
    over a generic allocator invariant ARx (ghost head set Hp threaded) under the five-law record rt_laws of
    lib/Rt/RTx.v (a Theorem Labs lane's, the one record for both images: rtl_frame, rtl_stack, rtl_const, rtl_layout,
@@ -10,7 +11,7 @@
    W_sites_x.v's alock_realizes_x; the proof of rt_pthread_mutex_lock_x is RT_pthread_mutex_lock.v's with AR -> ARx
    (am_layout of proj1 HAR -> rtl_layout, al_frame / al_stack -> rtl_frame / rtl_stack, RT_kit / RT_post's AR lemmas
    -> their _x forms there).
-   Measured (lines at a working branch 9b1367c7fe1): the original reads AR through
+   Measured (lines at a working branch): the original reads AR through
    al_frame (RT_pthread_mutex_lock.v:424) only; no ARm field; the three-law note (RESUME.md:116-122 sha256 704eb9d3afa6; internal record) did not
    count the ARm fields, hence the record's rtl_layout and rtl_const_cells.
    At the end: rt_pthread_mutex_lock_cf, the twin at ARx := ARcf with the laws from AR_laws_cf (RTx.rt_laws_cf).

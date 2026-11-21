@@ -3,11 +3,12 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/bzip2/bzip2_compress_target/lib/K/A/I_memcpyw.v, with its module paths, module names, addresses and numbers changed; 251 of its 508 lines of code are new or changed and 282 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_pcap/lib/A/Bz/A/I_amemmovew.v
-   (a working branch eabce720039), the __asan_memmove walk, with its module paths changed and its code
+   (a working branch), the __asan_memmove walk, with its module paths changed and its code
    addresses moved from fuzz_pcap.asan's __asan_memmove (0x51c50) to fuzz_reply.asan's (0x52e04): the 220 words differ
    only in auipc/ld/jal relocations, so each pc keeps its offset (+0x11b4).  pcap's I_memcpyw.icells and
    I_amemcpy.stk_after_copy are restated here (amm_cells at fuzz_reply's cells; stk_after_copy unchanged) instead of
    importing the two memcpy walks. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A.Bz Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

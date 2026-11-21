@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseK.v at afaa3cb55c1d; for reac-pw/fuzz_rate:
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseK.v; for reac-pw/fuzz_rate:
    module paths and names are rate's, the pcs are image A's of fuzz_rate.asan, the next-child back edge 0x84728 beqz
    is taken to L2 (its not-taken side refuted), T is 0x847d0 and the answers are Rate.spa_rate_value's. *)
 (* Segment K of reac_rate_prop_parse's walk on image A (fuzz_rate.asan): from K 0x84700 (strcmp's return) through the

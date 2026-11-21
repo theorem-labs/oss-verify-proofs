@@ -1,22 +1,23 @@
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10 (a Theorem Labs lane): asan-ubsan twin of lib/A/Stdio/PFmemopenI.v (a working branch 76a6a1c97de, a Theorem Labs lane; the final text with the narrow mconsts window), ported from that file: the same walk, Requires lib.A.A<n> -> lib.Reusable.Y<n> (AB1v AE34 AF0l AF0m AF0x AE2y) and A<n>. -> Y<n>. qualified names; the image-free lib/A imports are kept. 19 image numerals relocated on the pinned v1.9.0 images by symbol + offset, each containing symbol pair VERIFIED equal (code: mnemonic + registers): __wrap_fmemopen 0x415c4 -> 0x41614, ___interceptor_fmemopen 0x46644 -> 0x46694, TryAsanInitFromRtl 0x59894 -> 0x598e4, AsanInitInternal 0x595e0 -> 0x59630 (asan_inited's `sb a0,0(s3)` 0x597b8 -> 0x59808), fmemopen 0x8e870 -> 0x8e73c; the real_fmemopen cell 0x9b5e8 -> 0x9b4b0 (it holds 0x8e73c); asan_inited 0xa2598 -> 0xa2498. UNCHANGED in asan-ubsan: the mconsts window MC_LO / MC_HI 0x10350 / 0x10370 (__strchrnul's loads land in it on both pins and its bytes are identical); the instruction words 0x00030067, 0x00a59a63, 0x0800506f, 0xfe010113, 0xff010113 (equal at the relocated pcs).; the real-call address is lib/B/Stdio/PStdioImgB.PFMEMOPEN_U (0x8e73c, fmemopen+0), qualified, in every code use (r_M, shapeM, fm_front, RFM): the source names asan's PFMEMOPEN (0x8e870) there. *)
+(* Modified by Theorem Labs, 2026-10 (a Theorem Labs lane): asan-ubsan twin of lib/A/Stdio/PFmemopenI.v (a working branch, a Theorem Labs lane; the final text with the narrow mconsts window), ported from that file: the same walk, Requires lib.A.A<n> -> lib.Reusable.Y<n> (AB1v AE34 AF0l AF0m AF0x AE2y) and A<n>. -> Y<n>. qualified names; the image-free lib/A imports are kept. 19 image numerals relocated on the pinned v1.9.0 images by symbol + offset, each containing symbol pair VERIFIED equal (code: mnemonic + registers): __wrap_fmemopen 0x415c4 -> 0x41614, ___interceptor_fmemopen 0x46644 -> 0x46694, TryAsanInitFromRtl 0x59894 -> 0x598e4, AsanInitInternal 0x595e0 -> 0x59630 (asan_inited's `sb a0,0(s3)` 0x597b8 -> 0x59808), fmemopen 0x8e870 -> 0x8e73c; the real_fmemopen cell 0x9b5e8 -> 0x9b4b0 (it holds 0x8e73c); asan_inited 0xa2598 -> 0xa2498. UNCHANGED in asan-ubsan: the mconsts window MC_LO / MC_HI 0x10350 / 0x10370 (__strchrnul's loads land in it on both pins and its bytes are identical); the instruction words 0x00030067, 0x00a59a63, 0x0800506f, 0xfe010113, 0xff010113 (equal at the relocated pcs).; the real-call address is lib/B/Stdio/PStdioImgB.PFMEMOPEN_U (0x8e73c, fmemopen+0), qualified, in every code use (r_M, shapeM, fm_front, RFM): the source names asan's PFMEMOPEN (0x8e870) there. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Written by Theorem Labs, 2026-10 (a Theorem Labs lane), for libreac/fuzz_pcap v1.9.0 (ASan build).
 
-   WHAT THIS FILE PROVES. a Theorem Labs lane's afmemopen_spec (lib/A/Stdio/PFmemopenISpec.v, a working branch
-   8fe833c8d36; Definition byte-identical to bd307b59958), statement UNCHANGED, for pcap's ASan fmemopen wrapper:
+   WHAT THIS FILE PROVES. a Theorem Labs lane's afmemopen_spec (lib/A/Stdio/PFmemopenISpec.v, a working branch;
+   Definition byte-identical to), statement UNCHANGED, for pcap's ASan fmemopen wrapper:
    theorem pcap_afmemopen_spec below is
    afmemopen_spec SK tfibsegs B K MT CTX 0x41614 ra 0x10350 0x10370. The C library's fmemopen enters only as a
    Section hypothesis at the REAL call: a Theorem Labs lane's rfmemopen_contract (lib/A/Stdio/PFmemopenM.v,
-   a working branch 7504d592f23, Definitions byte-identical to c53fee70393: rfmemopen_post carries md
+   a working branch, Definitions byte-identical to: rfmemopen_post carries md
    and ends with
    m_fds md' = m_fds md /\ m_fs md' = m_fs md - this lane asked for that clause, because the sink token alone
    lets aos_step change the sink fd and path and the tail call takes md' from this post alone), instantiated at
    (PStdioImgB.PFMEMOPEN_U 0x8e73c, ra, 0x10350, 0x10370) with the same K and CTX. rfmemopen_contract takes amalloc04_rule
    (YC5d.v:56) as a premise, so that rule is a Section hypothesis too. The only other hypotheses are the image's
    own laws: AR_laws, PcapSyms (lib/Reusable/YF0m.v) and a Theorem Labs lane's asource_img_laws (A/Stdio/PSourceMeta.v), the last
-   carried as PFclose.v:107 (a working branch 3fc82453590) carries it, discharged once at
+   carried as PFclose.v:108 (a working branch) carries it, discharged once at
    instantiation.
    THE CONSTANT WINDOW [0x10350, 0x10370) (__strchrnul's two 8-byte constants, read by fmemopen's strchr calls;
    cgif's MC_LO / MC_HI; this image's lib/Reusable/YE39.v:27-31, mc_bounds :31; the same window on both pcap pins, auditor 00:27Z). Both statements
@@ -46,22 +47,22 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
    law (fm_const, through PcapSyms' Tfib_const) as 1, so the branch is decided not-taken inside the run:
    escape_operands states the two operands at 0x59904 (a1 = 1, a0 = 1), and r_M ends RS_running AT 0x8e73c, which
    a run through 0x59918 cannot do (AsanInitInternal is outside tbl_fm, so such a run stops at its first word).
-   E-PEND: that value is lib/Reusable/YF0m.v:83 `z1 (ANum 0xa2498) 0x1 (* E-PEND pcrel/RT *)` on
-   a working branch 74a15f49722 (a Theorem Labs lane; YF0m generated by a Theorem Labs lane's start-up set); the auditor measured the same cell independently at 22:52Z. The store
+   E-PEND: that value is lib/Reusable/YF0m.v:84 `z1 (ANum 0xa2498) 0x1 (* E-PEND pcrel/RT *)` on
+   a working branch (a Theorem Labs lane; YF0m generated by a Theorem Labs lane's start-up set); the auditor measured the same cell independently at 22:52Z. The store
    that sets it is AsanInitInternal's `sb a0,0(s3)` at 0x59808, with s3 = 0xa2498 from 0x59648 / 0x5964c
    (objdump.txt:43184-43185, :43296; s3 is reloaded only on the early-return path at 0x59670). NOT the `sw` at
    0x5976c, which stores through the GOT cell 0x99750, a different runtime cell. No step of this proof reads
    either store: the walk takes asan_inited = 1 from the AR const law (fm_const). If af0m.py changes that cell,
    fm_const_chk fails and this file must be re-checked.
-   THE REAL CELL: 0x9b4b0 -> 0x8e73c is lib/Reusable/YF0m.v:293 `z8 (ANum 0x9b4b0) 0x8e73c` (M-IMG, the asan-ubsan
-   real_fmemopen cell, on a working branch 74a15f49722; this lane measured the same value in the asan-ubsan pin's PT_LOAD).
+   THE REAL CELL: 0x9b4b0 -> 0x8e73c is lib/Reusable/YF0m.v:294 `z8 (ANum 0x9b4b0) 0x8e73c` (M-IMG, the asan-ubsan
+   real_fmemopen cell, on a working branch; this lane measured the same value in the asan-ubsan pin's PT_LOAD).
 
    NO META-REGION PREMISE (class R2). afmemopen_spec has no (M : Z) and no asrc_meta_inv, and needs none: the
    20 wrapper instructions and TryAsanInitFromRtl's taken path (objdump.txt:23464-23484, 43352-43365) touch no
    AddrHashMap / FileMetadata cell and have no path to CheckFailed at 0x6b968 (ruling relayed by a Theorem Labs lane).
 
    THE IMAGE. segs := tfibsegs (the pin image) and pc := 0x41614; B, K, MT, CTX, ra and SK stay general. The
-   stdio cells K names cannot collide with the 48 stack bytes the wrapper writes: asil_env (PSourceMeta.v:80)
+   stdio cells K names cannot collide with the 48 stack bytes the wrapper writes: asil_env (PSourceMeta.v:81)
    puts every address of asrc_env_addr K inside the image, and fm_segs_low puts the image below kLowMemEnd,
    which is below alloc_ceiling and so below the stack floor.
 
@@ -72,9 +73,9 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 
    SOURCES. The run, its shape check and the frame / AR transfer follow cgif's iopen_front (lib/A/AE2g.v:93); the
    overall shape (front run, callee hypotheses, journal composition) follows cgif's tfib_afopen_spec
-   (lib/A/AE25.v:195). Both are read from the DONOR ref origin/ossv/recipes c8557374ad2e,
+   (lib/A/AE25.v:195). Both are read from the DONOR ref,
    proofs/cgif/cgif_file_fuzzer. The asan-ubsan layer used here (lib/Reusable YB1v, YE34, YF0l, YF0m, YF0x, YE2y) is
-   a working branch 74a15f49722.
+   a working branch.
    rule 24: pcapmemopeni-fmemopen-icpt.txt (sha256 8c3dffd65a3d; internal record) (the proof index exit 1, index built 2026-10-28T21:58:24Z),
    pcapmemopeni-gitgrep.txt (sha256 75264fbb8006; internal record) (git grep of the names on the four released refs, exit 1) and a fresh
    read-only scout's CONFIRM (a Theorem Labs lane): no released proof of this function. *)
@@ -145,7 +146,7 @@ split; [exact HS1|]. split; [exact HF | exact HFr].
 Qed.
 
 (* The two runtime cells the run reads, from the AR const law (PcapSyms' Tfib_const, lib/Reusable/YF0m.v at
-   a working branch 74a15f49722): asan_inited = 1 (E-PEND, YF0m.v:83) and the REAL(fmemopen) slot 0x9b4b0 = 0x8e73c (M-IMG, :293). *)
+   a working branch): asan_inited = 1 (E-PEND, YF0m.v:84) and the REAL(fmemopen) slot 0x9b4b0 = 0x8e73c (M-IMG, :293). *)
 Definition fm_const : list (Z * Z * list (Z * N * Z)) :=
 [ ((symaddr Symbols.AsanUbsan.s__ZN6__asanL11asan_initedE), 1, [(0, 1%N, 1)]); ((symaddr Symbols.AsanUbsan.s__ZN14__interception13real_fmemopenE), 8, [(0, 8%N, (symaddr Symbols.AsanUbsan.s_fmemopen))]) ].
 Lemma fm_const_chk : forall ly, rodata_chk ly fm_const = true.

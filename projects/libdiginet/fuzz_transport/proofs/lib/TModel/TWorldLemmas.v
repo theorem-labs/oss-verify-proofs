@@ -5,7 +5,7 @@ From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.TModel Require Import TWorld
 Import ListNotations.
 Open Scope Z_scope.
 
-(* TWorld's upd is the kit's upd_bytes (Lib/Mem.v:193) at a Z offset. *)
+(* TWorld's upd is the kit's upd_bytes (Lib/Mem.v:194) at a Z offset. *)
 Lemma upd_upd_bytes : forall (bs v : list byte) k, upd bs k v = upd_bytes bs (Z.to_nat k) v.
 Proof. reflexivity. Qed.
 
@@ -279,7 +279,7 @@ Proof.
   cbn [andb]; try reflexivity; exfalso; lia.
 Qed.
 
-(* ---- new: put and the machine's little-endian store bytes (Lib/Mem.v:389-392) ---- *)
+(* ---- new: put and the machine's little-endian store bytes (Lib/Mem.v:390-393) ---- *)
 
 Lemma put_le8 : forall w : word, put 8 (bv_unsigned w) = le8 w.
 Proof. reflexivity. Qed.

@@ -1,3 +1,4 @@
+// Modified by Theorem Labs, 2026-11-14: catch std::bad_alloc from this harness's own allocation in write_callback, which then returns -1.
 /*
  * Archive write fuzzer for libarchive
  * Tests archive creation and writing code paths
@@ -24,7 +25,11 @@ static ssize_t write_callback(struct archive *a, void *client_data, const void *
   (void)client_data;
   if (g_output && length > 0) {
     const uint8_t *buf = static_cast<const uint8_t*>(buffer);
-    g_output->insert(g_output->end(), buf, buf + length);
+    try {
+      g_output->insert(g_output->end(), buf, buf + length);
+    } catch (const std::bad_alloc &) {
+      return -1;
+    }
   }
   return length;
 }

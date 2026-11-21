@@ -2,11 +2,11 @@
    transcribed from ctrl's own cut text against the fixed interface of lib/B/ACtlCut.v.  Written by a Theorem Labs lane's
    transcription lane (a Theorem Labs lane) with an image-B copy of a Theorem Labs lane's generator
    (gen_b.py, from gen.py,
-   which wrote lib/A/ACtlCutP.v at a working branch 6446767144e); single writer.  DEFINITIONS ONLY:
+   which wrote lib/A/ACtlCutP.v at a working branch); single writer.  DEFINITIONS ONLY:
    no Lemma, no Axiom, no Parameter, no Admitted, no tactic.
 
    WHAT THIS FILE IS
-   ctrl's cut text of record is lib/B/Prog/SlotInv.v at 23a791566db (3406 lines).  Its shells (FRA :330,
+   ctrl's cut text of record is lib/B/Prog/SlotInv.v (3406 lines).  Its shells (FRA :330,
    FRAH :447, ENT :371, CUTST :433, CUTST0 :489, CUTSTR :495, PREF :1391) speak the Theorem Labs lane frame vocabulary this
    walk replaces, so they are NOT transcribed: ACtlCut.v's ctl_base (the core's own lib pre), ctl_from and
    ctl_rt state them in the donor's form (the translation section of
@@ -16,7 +16,7 @@
    letters dropped from the name (they are the record's idx argument): row "B816ec_at b" is C_B816ec_at.
 
    RULE 24 (released proofs first).  proof-index LLVMFuzzerTestOneInput (index v5, built 2026-10-28
-   20:16:23Z from main@e966c513ee6, ossv/recipes@a8831f7c5c): 30 files named for it, 1290 uses of its address,
+   20:16:23Z from main, ossv/recipes): 30 files named for it, 1290 uses of its address,
    105 related; released proofs for seven other units, as ASan for bluez/fuzz_hci and for the donor
    cgif/cgif_file_fuzzer.  Second-agent check a Theorem Labs lane, 21:10Z: CONFIRM -- cgif is the only released ASan
    donor matching this unit on branch (ossv/recipes), LPS (2afba80c) and framework (afn_pre / ajournal); the
@@ -142,7 +142,7 @@
      print('NOT YET ON DISK (the core):',sorted(miss)); print('EXT:',sorted(ext))
      EOF
 
-   Output (on the commit that adds this file, with lib/B/Prog/SlotModel.v = 23a791566db's blob de18d111c37):
+   Output (on the commit that adds this file, with lib/B/Prog/SlotModel.v = a commit's blob de18d111c37):
    144 files, and the line that matters --
      FORBIDDEN: []
    i.e. nothing under the porter's forbidden set (lib/B/Prog/SlotInv.v, lib/AZ/**, lib/B/AsanRTInv.v,
@@ -256,13 +256,13 @@
    (the core's own symbol-bundle field, which its pre states) and Reusable.YCfn.A_LLVMF.
 
    MODEL VERSION (image B only, measured by check_cutp_b.py): the
-   bodies name image B's v1.9.0 model, lib/B/Prog/SlotModel.v at 23a791566db (blob de18d111c37), which SlotInv.v
-   at that commit is written over; every name qualified through a Module alias here is defined by its module at
-   23a791566db.  The commit that re-twins this file brings that model by path (the branch had the older
+   bodies name image B's v1.9.0 model, lib/B/Prog/SlotModel.v (blob de18d111c37), which SlotInv.v
+   at that commit is written over; every name qualified through a Module alias here is defined by its module.
+   The commit that re-twins this file brings that model by path (the branch had the older
    patched-image blob 5e641ff, which lacks SM.fs_n, SM.fs_body, SM.joined_byte and SM.joined_addr).
 
    BUILD STATE (honest): the relocated core is in this tree (lib/Reusable), and ACtlCut.v and this file are built with it (lib/dune takes every .v file; lib/B/ACtlW0.v and lib/B/ACtlAll.v Require this file);
-   before it landed both were labelled stand-ins, to be typechecked the hour the core landed (zfactsbuild on FACTS ed6b6b7b0ab +
+   before it landed both were labelled stand-ins, to be typechecked the hour the core landed (zfactsbuild on FACTS +
    PAU pau-libreac-v190; there was no cb base, a Theorem Labs lane 21:22Z).  Nothing here was built, committed or pushed then. *)
 
 From Coq Require Import ZArith List Permutation.
@@ -323,7 +323,7 @@ Module ART := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.AsanRT.
 Module ARF := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.AsanRTFacts.
 (* Program constants, under the aliases image A's SlotInv.v uses (image B's SlotInv.v :36-52 calls the same
    image-B modules KNC / BW / SF / RIFC); BAP / BAC are image B's own aliases, for its build_as package.  Image B
-   keeps the two callee contract files image A turned into Section Variables (RCIR, RCP): at 23a791566db their
+   keeps the two callee contract files image A turned into Section Variables (RCIR, RCP): their
    closures are clean (34 and 32 files, no lib/AZ), see CLOSURE above. *)
 Module KNA := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog.reac_ctrl_kind_name_c.
 Module BWA := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog.bcmp_wrap_c.
@@ -336,7 +336,7 @@ Module BAP := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Prog.reac_ctrl_build_as_c.
 Module BAC := OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog.reac_ctrl_build_as_c.
 
 (* The core's segment list, as ACtlCut.v takes it: a notation, not a Variable, so that `world segs` is the
-   pre's type and not a new one (ACtlCut.v, 22:37Z; the donor's root YB1v.v:11, the porter's name 22:45Z). *)
+   pre's type and not a new one (ACtlCut.v, 22:37Z; the donor's root YB1v.v:12, the porter's name 22:45Z). *)
 Local Notation segs := Reusable.YB1v.tfibsegs.
 
 Section CtlCutP.
@@ -395,7 +395,7 @@ Definition ixn (k : nat) (idx : list Z) : nat := Z.to_nat (nth k idx 0).
 Definition ixz (k : nat) (idx : list Z) : Z := nth k idx 0.
 
 (* ---------------------------------------------------------------------------------------------------------
-   1. The body predicates ctrl's cuts share, transcribed from SlotInv.v at 23a791566db with their names kept, in
+   1. The body predicates ctrl's cuts share, transcribed from SlotInv.v with their names kept, in
    SlotInv.v's own order (its line order, which is its dependency order).  Among them are ctrl's own readers
    (q64 / u32 / u16 / b8 :268-271, Sfr :282, spill :834-835).  Each carries its source line; the conjuncts dropped
    from each are listed in the transcription report, bundle by bundle. *)
@@ -948,7 +948,7 @@ Definition FRAHC (cx : ctlcx) (fr sel hdr : Z) (regs : bvmap 5 word)
 (* FAKE-FRAME TRAILER WORD (added 04:58Z by a Theorem Labs lane, the shell's one writer; found by a Theorem Labs lane): the last
    conjunct of FRAC and FRAHC.  The class-6 frame's last word, at fr + fs_frame_bytes 6 - 8 = fr + 4088, holds the
    frame's flag address.  The core's frame allocator post gives it (YG0d.v:296; aj_stack_malloc_at, YCbq.v:1764) at
-   0x8108c, and the release at 0x82f48 needs it (Reusable.StackFreeDef.astack_free_realizes, StackFreeDef.v:25;
+   0x8108c, and the release at 0x82f48 needs it (Reusable.StackFreeDef.astack_free_realizes, StackFreeDef.v:26;
    aj_stack_free_at).  Neither AR nor ajournal carries it for the walk's OWN frame, so every own6 body carries it,
    in raw form like the other frame words; the program writes only [fr, fr + FRAME_BYTES) of the frame. *)
 
@@ -993,7 +993,7 @@ Definition fcutp_body (cx : ctlcx) (j : nat) (bl : list (Z * Z)) (fr : Z)
 (* ---------------------------------------------------------------------------------------------------------
    3. The 91 cuts, in the address order of the cut map, one record per row of
    cut-table-B.tsv (a working note, not in this delivery).  Each record's comment gives the row's cut
-   name, its SlotInv.v definition and line at 23a791566db, ctrl's shell, the pc, the index shape, the event
+   name, its SlotInv.v definition and line, ctrl's shell, the pc, the index shape, the event
    bound, the frame list and the W piece, plus the table's superseded note where it has one.
 
    EVERY CUT FROM A4's FRAME ALLOCATION TO ITS RELEASE OWNS THE CLASS-6 FAKE FRAME (own6).  The class-full

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -94,7 +95,7 @@ Lemma pj_tail : forall (Σ0 Σx : rts RT) (K : config -> Prop) (usp sp' f lo d n
 
   0 < f -> f mod 64 = 0 -> f + 1024 <= rt_sp0 RT Σ0 - STACK_WIN -> SEGTOP_A <= f -> 0 <= f / 8 ->
   (f + 1024 <= f / 8 + 2147450880 \/ f / 8 + 2147450880 + 128 <= f) -> SHB <= f / 8 + 2147450880 -> f / 8 + 2147450880 + 128 + 1 <= rt_sp0 RT Σ0 - STACK_WIN ->
-  rt_sp0 RT Σ0 - STACK_WIN <= lo -> lo + FUZZ_STACK <= usp -> usp + 16 <= USTACK_TOP -> usp - 208 <= sp' <= usp - 192 -> sp' mod 32 = 0 ->
+  rt_sp0 RT Σ0 - STACK_SPAN <= lo -> lo + FUZZ_STACK <= usp -> usp + 16 <= USTACK_TOP -> usp - 208 <= sp' <= usp - 192 -> sp' mod 32 = 0 ->
 
   ART RT Σx m -> mem_inv bsegs m -> rt_frames RT Σx = [(f, 4%nat)] -> (forall e, In e (rt_live RT Σ0) -> In e (rt_live RT Σx)) -> rt_sp0 RT Σx = rt_sp0 RT Σ0 -> cb <= rt_credit RT Σx ->
   PDONE Σx m (f + 160) (rt_live RT Σ0) ->

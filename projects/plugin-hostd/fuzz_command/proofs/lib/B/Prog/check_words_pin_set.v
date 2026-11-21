@@ -6,9 +6,10 @@
    amalloc04_sub and the memcpy calls through aj_intrin_atS (PaCall.v), and the strlen calls through PaArt.v's
    aj_art_at (jw_art_at below also keeps the entry's promise that a present byte stays present). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/joined.v, with its module paths and module names changed; 672 of its 752 lines of code are new or changed and 1807 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_words_pin_set on the ASan+UBSan build of plugin-hostd/fuzz_command (fuzz_command.asan-ubsan): the walk that
    proves its contract tcwps_spec (lib/B/Prog/check_words_pin_set_c.v). The B twin of the A pilot
-   lib/A/Prog/check_words_pin_set.v (a working branch 8b1b6a9b6cb), re-walked on B's code, in the style of
+   lib/A/Prog/check_words_pin_set.v (a working branch), re-walked on B's code, in the style of
    cgif_file_fuzzer's cmpPixel walk (lib/A/AChd.v): an entry seed, symbolic runs by the verified executor
    (paj_run_tok), data-dependent branches split by psrr_branch_tok, the two wrapper calls composed into the journal
    through PaArtStr.v (PaArt.v's aj_art_at), and the return through paj_ret_at.

@@ -1,8 +1,8 @@
 (* Theorem Labs, 2026-10: non-vacuity witness for the walk hypothesis `TL : PALibCore (PI := PI_prog_A) B` of
    lib/A/Prog/hex4_x.v (fuzz_preset's asan image A): it holds at TfibB, the image's asyms record (lib/A/AD2l.v), at the
    listing instance PI_prog_A (lib/A/PAImg_prog.v). *)
-(* Modified by Theorem Labs, 2026-10: relocated to the #102 pin A' (asan 1be0f53d, unstripped twin bff8519bbe3e) from
-   origin/cold/h-rw-pre-5-hex4m b371d41abbaa (blob dac26455166d); alreloc frozen-c4338d099cfb8025 moved 0 numerals.
+(* Modified by Theorem Labs, 2026-10: relocated to the #102 pin A' (asan 1be0f53d, unstripped twin bff8519bbe3e)
+    (blob dac26455166d); alreloc frozen-c4338d099cfb8025 moved 0 numerals.
    The walk's listing is now the #102 whole-program listing PI_prog_A (PAImg_prog.v 505a51ff7d08; the old per-function
    leaves listing PI_hex4 has no A' twin), and hex4_A_palib_core is the same vm_compute proof re-run at the A' tables
    (AD2l eb321db7a357, PAImg_prog 505a51ff7d08). ADDED hex4_holds_A: the bridge lib/A/Prog/S3_Hex4Bridge.v's hex4_holds
@@ -20,7 +20,7 @@ Import ListNotations.
 Local Set Warnings "-abstract-large-number".
 Open Scope Z_scope.
 (* FULLY QUALIFIED image names (CrcBp's wrong-image trap, owner 19:2xZ). Locate in this file's context (pins102
-   workspace of cf6f00470c9b): rsegs and Img0.rsegs resolve to lib.A.Img0.rsegs, PI_prog_A to lib.A.PAImg_prog.
+   workspace): rsegs and Img0.rsegs resolve to lib.A.Img0.rsegs, PI_prog_A to lib.A.PAImg_prog.
    The names below are those full paths; hex4A_names_guard checks the short names against them by reflexivity. *)
 #[local] Notation SEGS_A := OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A.Img0.rsegs.
 #[local] Notation PI_A := OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.A.PAImg_prog.PI_prog_A.

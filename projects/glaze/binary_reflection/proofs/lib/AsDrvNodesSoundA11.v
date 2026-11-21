@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise on asan_stdio_write and the co_rdr field of cs_ok; the TASK_SIZE carriers, proved for every callee frame in dtor_core). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -345,6 +346,7 @@ Theorem asan_stdio_write :
   ssp_cells mem can ->
   (0 < fd < 2147483648)%Z ->
   fd_lookup (m_fds model) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) ->
+  m_channel_reader model = true ->
   m_halted model = None ->
   (0 <= wb <= wp)%Z -> (wp <= 0x800000000000)%Z ->
   (wp - wb = Z.of_nat (length pending))%Z ->
@@ -372,7 +374,7 @@ Theorem asan_stdio_write :
 Proof.
   intros H A F regs mem model su f wb wp fd s l bufp bufsz can ret pending extra K
          HH Hwx Awf MI0 Hcov0 MC0 AVfr AVf AVp AVe
-         Hsp Ha0 Ha1 Ha2 Hra SUlo SUhi SOK Flo Fhi SWF SSP FD Hfd Hh WBP WPhi
+         Hsp Ha0 Ha1 Ha2 Hra SUlo SUhi SOK Flo Fhi SWF SSP FD Hfd Hrdr Hh WBP WPhi
          LENP LENE M30 DISJP DISJE SNW RDP RDE Hret HKnil HK.
   assert (MAX : (0 <= Z.of_nat (length pending) + Z.of_nat (length extra))%Z) by lia.
   assert (MK0 : MOK A model model) by (split; [exact MI0 | apply same_but_materialized_refl]).
@@ -436,11 +438,11 @@ Proof.
   pose proof (loop1 R su f fd l bufp bufsz can ret (getr regs 8) (getr regs 9) (getr regs 18) (getr regs 19)
                 (getr regs 20) (getr regs 21) (getr regs 22) (getr regs 3) (getr regs 4) (getr regs 23)
                 (getr regs 24) (getr regs 25) (getr regs 26) (getr regs 27) mem1 H A F model K
-                HH Hwx Awf HW1 MC1 AVfr SUlo SUhi Flo Fhi FD Hfd Hh Hcov0 Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK') as L1.
+                HH Hwx Awf HW1 MC1 AVfr SUlo SUhi Flo Fhi FD Hfd Hrdr Hh Hcov0 Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK') as L1.
   pose proof (loop2 R su f fd l bufp bufsz can ret (getr regs 8) (getr regs 9) (getr regs 18) (getr regs 19)
                 (getr regs 20) (getr regs 21) (getr regs 22) (getr regs 3) (getr regs 4) (getr regs 23)
                 (getr regs 24) (getr regs 25) (getr regs 26) (getr regs 27) mem1 H A F model K
-                HH Hwx Awf HW1 HW2 MC1 AVfr SUlo SUhi Flo Fhi FD Hfd Hh Hcov0 Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK') as L2.
+                HH Hwx Awf HW1 HW2 MC1 AVfr SUlo SUhi Flo Fhi FD Hfd Hrdr Hh Hcov0 Hret HKnil SOK1 M8 M16 M24 M32 M40 M48 M56 M64 M72 Mcan Mbuf Mbsz Mfd HK') as L2.
   pose proof (LM_refl su mem1) as LM1.
   destruct (Z.eq_dec wb wp) as [EQ|NEQ].
   - (* [comment removed for export] *)
@@ -480,7 +482,7 @@ Proof.
       eapply (HW1 H A F regs1 (0xec9ec : word) mem1 mdlA W_ec9f0 fd
                 (Z_to_bv 64 (su - 88)) s l (x0 :: extra') K
                 HH Hwx Awf (proj1 MKA) (MOK_cover H A model Hcov0 mdlA MKA) MC1 F_ec9f0 E_ec9f0
-                (MOK_halted A model Hh mdlA MKA) ltac:(rewrite (MOK_fds A model mdlA MKA); exact Hfd) FD
+                (MOK_halted A model Hh mdlA MKA) ltac:(rewrite (MOK_fds A model mdlA MKA); exact Hfd) ltac:(rewrite (MOK_rdr A model mdlA MKA); exact Hrdr) FD
                 R17 R10 R11 R12 M88);
         [ | | apply hid_off_range_avoids; [u_norm; lia | u_norm; eapply hid_off_sub; [exact AVfr | lia | lia]]
         | | | | | | exact HKnil | ].
@@ -534,7 +536,7 @@ Proof.
     eapply (HW2 H A F regs1 (0xec9ec : word) mem1 mdlA W_ec9f0 fd
               (Z_to_bv 64 (su - 104)) (Z_to_bv 64 wb) (Z_to_bv 64 (wp - wb)) s l pending extra K
               HH Hwx Awf (proj1 MKA) (MOK_cover H A model Hcov0 mdlA MKA) MC1 F_ec9f0 E_ec9f0
-              (MOK_halted A model Hh mdlA MKA) ltac:(rewrite (MOK_fds A model mdlA MKA); exact Hfd) FD
+              (MOK_halted A model Hh mdlA MKA) ltac:(rewrite (MOK_fds A model mdlA MKA); exact Hfd) ltac:(rewrite (MOK_rdr A model mdlA MKA); exact Hrdr) FD
               R17 R10 R11 R12 M104);
       [ | | | | | apply hid_off_range_avoids; [u_norm; lia | u_norm; eapply hid_off_sub; [exact AVfr | lia | lia]]
       | | | | | | | | exact HKnil | ].
@@ -2352,6 +2354,7 @@ Proof.
   - constructor; rewrite ?Z_to_bv_bv_unsigned; assumption.
   - destruct Hfdv; lia.
   - exact (fds_ok_chan12 E (a_fd cs) model fdv (co_fds HC) Hfdv).
+  - (* [comment removed for export] *) exact (co_rdr HC).
   - exact (co_halt HC).
   - lia.
   - lia.
@@ -2543,6 +2546,13 @@ Hypothesis DTOR_FRAME : forall L LF B C K M M' mdl, AINVH L LF B C K M mdl ->
   AINVH L LF B C K M' mdl.
 (* [comment removed for export] *)
 Hypothesis PERM_flag : forall a, DNA.DTOR_FLAG <= a < DNA.DTOR_FLAG + 8 -> in_wins PERMc a.
+(* The TASK_SIZE carrier ([AsDrvNodesSoundA3]'s [SPTOPc_task]/[M0c_task]): the start frame's
+   memory maps nothing at or above TASK_SIZE, and [dtor_core] PROVES the same of every callee
+   frame's start memory rather than assuming it. *)
+Hypothesis SWIN_img : forall lo hi, In (lo, hi) SWIN ->
+  g_ro_hi GASAN <= lo /\ hi <= g_img_hi GASAN /\ (forall plo phi, In (plo, phi) (g_priv GASAN) -> hi <= plo \/ phi <= lo).
+Hypothesis SPTOPc_task : SPTOPc <= TASK_SIZE.
+Hypothesis M0c_task : forall a : word, TASK_SIZE <= u a -> M0c a = None.
 
 #[local] Notation AINVat M0 := (AINV_f SWIN GASAN AINVH PERMc SPTOPc HIDc HIDFc M0 B0c C0c).
 #[local] Notation AINVc := (AINVat M0c).
@@ -2556,7 +2566,8 @@ Hypothesis PERM_flag : forall a, DNA.DTOR_FLAG <= a < DNA.DTOR_FLAG + 8 -> in_wi
 
 (* [comment removed for export] *)
 Variable chk0 : acs -> plan -> cres.
-Hypothesis TAIL_sound : forall (M0' : word -> option byte) pl cs s,
+Hypothesis TAIL_sound : forall (M0' : word -> option byte), (forall a : word, TASK_SIZE <= u a -> M0' a = None) ->
+  forall pl cs s,
   gplan_ok pl = true -> chk0 cs pl = COk s ->
   forall E fx R M model, cs_okat M0' E cs fx R M model ->
   RZ (cfgF ASEGS fx R (pc cs) M model) (GPS.sd (fun _ _ _ => t_nil) t_nil E (m_fs model) s).
@@ -2587,6 +2598,23 @@ Proof.
   rewrite (hid_image_false11 E cs B C K M mdl x HA) by (cbn [g_img_lo g_img_hi GASAN]; lia). reflexivity.
 Qed.
 
+Lemma zone_task11 : forall Lc Lf B C K M mdl (a : word),
+  AINVc Lc Lf B C K M mdl -> TASK_SIZE <= u a -> AzFrame.zone SWIN GASAN PERMc SPTOPc HIDc HIDFc a.
+Proof.
+  intros Lc Lf B C K M mdl a HA Ha. destruct HA as (_ & HPo & _).
+  split; [right; right; left; lia|]. split.
+  - intros HPw. pose proof (proj2 HPo (u a) HPw) as X. unfold two47, TASK_SIZE in *. lia.
+  - intros (lo & hi & Hin & Hz). destruct (SWIN_img lo hi Hin) as (_ & S2 & _).
+    cbn [g_img_hi GASAN] in S2. unfold TASK_SIZE in Ha. lia.
+Qed.
+
+Lemma task_none11 : forall Lc Lf B C K M mdl (a : word),
+  AINVc Lc Lf B C K M mdl -> TASK_SIZE <= u a -> M a = None.
+Proof.
+  intros Lc Lf B C K M mdl a HA Ha. pose proof (zone_task11 Lc Lf B C K M mdl a HA Ha) as Z.
+  destruct HA as (_ & _ & _ & HZ & _). rewrite (HZ a Z). exact (M0c_task a Ha).
+Qed.
+
 (* [comment removed for export] *)
 Lemma dtor_core : forall cs E E' fx R M model T (ret : Z) sr2 k' nx2 regs' Mr',
   cs_okA E cs fx R M model ->
@@ -2600,7 +2628,7 @@ Lemma dtor_core : forall cs E E' fx R M model T (ret : Z) sr2 k' nx2 regs' Mr',
   rdn ASEGS Mr' (Z_to_bv 64 DNA.DTOR_MU) 8 = Some (LE8 0) ->
   regs_ok E' sr2 regs' ->
   know_ok ASEGS E' Mr' k' ->
-  (forall M0' fx'' R' M'' model',
+  (forall M0' fx'' R' M'' model', (forall a : word, TASK_SIZE <= u a -> M0' a = None) ->
       cs_okat M0' E' (with_ss cs (mk_ss ret sr2 k' nx2)) fx'' R' M'' model' -> m_fs model' = m_fs model ->
       RZ (cfgF ASEGS fx'' R' ret M'' model') T) ->
   RZ (cfgF ASEGS fx R (pc cs) M model) T.
@@ -2613,8 +2641,6 @@ Proof.
   intros model' Hsame Hhid Hhalt' Hfs' Hfds' HA' Hclean.
   unfold unrestrict. cbn [ms_regs ms_fregs ms_pc_val ms_svc_pending ms_resv ms_fcsr ms_mem ms_rom mkstF mkst].
   set (M'' := munrestrict (GPS.hid SHC VSHc E cs model) M Mr').
-  apply (Hk M'' fx regs' M'' model'); [|exact Hfs'].
-  pose proof (GPS.cs_ok_agree ASEGS NXD PERMc SPTOPc FS0 SHC VSHc AINVc KCAP FTOPc fx_ok UINV UINV_agree E E' cs fx R M model Hag Hfresh HC) as HC1.
   (* [comment removed for export] *)
   assert (CH : forall a, M'' a <> M a ->
             (gowned SWIN PERMc SPTOPc SB (blocks_den E (a_vis cs)) (blocks_den E (a_fake cs)) a \/ in_lsb (u a) = true \/ in_mub (u a) = true)
@@ -2622,6 +2648,22 @@ Proof.
   { intros a Ha. unfold M'', munrestrict in Ha |- *.
     destruct (GPS.hid SHC VSHc E cs model a) eqn:EH; [exfalso; apply Ha; reflexivity|].
     apply Hown. unfold GPS.Mr, mrestrict. rewrite EH. exact Ha. }
+  (* The callee frame's start memory is [M'']: it maps nothing at or above TASK_SIZE, because
+     [M] maps nothing there ([task_none11]) and every byte the call changed is owned, low
+     shadow or the module-dtor cell, all of which lie below TASK_SIZE. *)
+  assert (HTK : forall a : word, TASK_SIZE <= u a -> M'' a = None).
+  { intros a Ha. pose proof (task_none11 _ _ _ _ _ M model a (co_ainv HC) Ha) as HM.
+    destruct (M'' a) as [b|] eqn:Hb; [exfalso|reflexivity].
+    assert (Hne : M'' a <> M a) by (rewrite Hb, HM; discriminate).
+    destruct (CH a Hne) as [[Ho|[Hl|Hm]] _].
+    - exact (gowned_not_zone SWIN GASAN SHC AINVH HP asan_G_ro_img2 drvA_G_img_al drvA_G_img_shlo PERMc SPTOPc HIDc HIDFc M0c B0c C0c
+               _ _ _ _ _ _ _ (co_ainv HC) a Ho (zone_task11 _ _ _ _ _ M model a (co_ainv HC) Ha)).
+    - unfold in_lsb in Hl. apply andb_prop in Hl as [_ Hl]. apply Z.ltb_lt in Hl.
+      assert (DNA.LOWSH_HI < TASK_SIZE) by (vm_compute; reflexivity). lia.
+    - unfold in_mub in Hm. apply andb_prop in Hm as [_ Hm]. apply Z.ltb_lt in Hm.
+      assert (DNA.DTOR_MU + 8 < TASK_SIZE) by (vm_compute; reflexivity). lia. }
+  apply (Hk M'' fx regs' M'' model' HTK); [|exact Hfs'].
+  pose proof (GPS.cs_ok_agree ASEGS NXD PERMc SPTOPc FS0 SHC VSHc AINVc KCAP FTOPc fx_ok UINV UINV_agree E E' cs fx R M model Hag Hfresh HC) as HC1.
   assert (HAE : AINVat M'' (blocks_den E (a_vis cs)) (blocks_den E (a_fake cs)) (bcost E (a_vis cs)) (bcount (a_vis cs)) (uE E (a_meter cs)) M'' model').
   { set (M1 := fun a : word => if (in_lsb (u a) || in_mub (u a))%bool then M a else M'' a).
     assert (H1 : AINVc (blocks_den E (a_vis cs)) (blocks_den E (a_fake cs)) (bcost E (a_vis cs)) (bcount (a_vis cs)) (uE E (a_meter cs)) M1 model').
@@ -2641,7 +2683,7 @@ Proof.
         reflexivity. }
     split; [exact H2|]. split; [exact HPo|]. split; [exact HT|]. split; [intros a _; reflexivity | intros a _ X; exact X]. }
   pose proof (same_but_materialized_frame model model' Hsame) as (_ & _ & _ & _ & _ & _ & _ & _ & Hfds & _ & _ & Hfs & Hhalt & _).
-  destruct HC1 as [CR CL CK CH0 CF CD CA CU CX CP CT CK2 CFB CFL]; constructor;
+  destruct HC1 as [CR CL CK CH0 CF CD CA CU CX CP CT CK2 CFB CFL CRD]; constructor;
     cbn [with_ss a_ss a_vis a_fake a_meter a_totsz a_eager kn mk_ss s_regs s_log s_know]; try assumption; try reflexivity.
   - (* [comment removed for export] *)
     change (Mr E' (with_ss cs (mk_ss ret sr2 k' nx2)) model' M'') with (Mr E' cs model' M'').
@@ -2656,6 +2698,9 @@ Proof.
     rewrite (blocks_den_agree (nxt cs) E E' (a_fake cs) Hag Ffk).
     rewrite (bcost_agree (nxt cs) E E' (a_vis cs) Hag (pairs_vars_lt_app_l _ _ _ Fallow)).
     rewrite (GPS.uE_agree (nxt cs) E E' (a_meter cs) Hag Fmt). exact HAE.
+  - (* co_rdr: [same_but_materialized] leaves [m_proc] alone (AsVocab.v:941), and the
+       reader is a projection of it. *)
+    rewrite (APS.rdr_sbm _ _ Hsame). exact CRD.
 Qed.
 
 (* [comment removed for export] *)
@@ -2790,12 +2835,12 @@ Proof.
       destruct (in_mub (u x)) eqn:Hm; [reflexivity|]. apply UNCH; [lia | exact Hl | exact Hf | exact Hm].
     + intros x Hx. unfold M_3 in Hx. destruct (in_lsb (u x) || in_flb (u x) || in_mub (u x))%bool; [exact Hx | apply (Hgr x Hx)].
   - (* [comment removed for export] *)
-    intros M0' fx'' R' M'' model' HC' Hfs'. rewrite <- Ecs1 in Hcase.
+    intros M0' fx'' R' M'' model' HT' HC' Hfs'. rewrite <- Ecs1 in Hcase.
     assert (HW : GPS.Wp E' fd ps = GPS.Wp E fd ps) by (symmetry; apply Wp_agree_eb; exact (proj2 Hag)).
     destruct Hcase as [HF|(HN & -> & ->)].
-    + pose proof (TAIL_sound M0' tailF _ _ gplan_tailF HF E' fx'' R' M'' model' HC') as HT.
+    + pose proof (TAIL_sound M0' HT' tailF _ _ gplan_tailF HF E' fx'' R' M'' model' HC') as HT.
       cbn [GPS.sd] in HT. rewrite HW, Hfs' in HT. exact HT.
-    + pose proof (TAIL_sound M0' tailN _ _ gplan_tailN HN E' fx'' R' M'' model' HC') as HT.
+    + pose proof (TAIL_sound M0' HT' tailN _ _ gplan_tailN HN E' fx'' R' M'' model' HC') as HT.
       cbn [GPS.sd] in HT. rewrite Hfs' in HT.
       eapply RZ_conseq; [exact HT|]. intros tr. symmetry. apply t_emit_nil_eq. apply t_exit_has_nil.
 Qed.

@@ -5,7 +5,7 @@ B/YFet.v (decode's B text) proves four `v = AV (ANum 0)` facts by unfolding the 
 (cbv [Tfib_const ...] in Hc) and destructing the membership In c (Tfib_const ly) cell by cell, which is quadratic
 in the record's cells. The image-A core's row TCA measured the A twin (A/AFet.v) at 43 GB / 2.2 h with transport's
 3080 cells and replaced each block by one forallb check decided by vm_compute (8 s / 0.7 GB): the image-A core's run
-of record 9f022aeb9a21, its patch afet-cost.patch (sha256 9f5dfea19198). This writes the same replacement for B's four
+of record, its patch afet-cost.patch (sha256 9f5dfea19198). This writes the same replacement for B's four
 blocks.
 Proof text only: the statements are unchanged. Exactly four blocks must match; a fresh unified diff, -p0 from
 stage-out, 3 lines of context."""

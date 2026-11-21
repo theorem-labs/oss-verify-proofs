@@ -3,8 +3,8 @@
    strip_c.v's strip_lead / strip_trail / strip_mid / strip_le only). Index forms of what the code computes: memchr's
    result as SegModel.memchr, the two strip calls (0x86658 key, 0x86664 value) as slices of the line, the quotes
    (0x86668-0x866d8), and m_key's two cases (mk_disp, or the refusal).
-   Copied from image A's lane (the image-A m_file-family lane, commit ddef332b859f,
-   lib/A/Prog/m_file_s_keya_m.v, whose lemmas are the segconf porter's plain proofs at commit dec616e11c2f
+   Copied from image A's lane (the image-A m_file-family lane,
+   lib/A/Prog/m_file_s_keya_m.v, whose lemmas are the segconf porter's plain proofs at
    lib/Prog/mfp_facts.v:13-362 and lib/Prog/mfu_facts.v:17-28, 279-290), statements and proofs unchanged, each name
    prefixed kb_ so that no other m_file file's names are shadowed. New for image B (strip is a call there, not
    image A's four inline loops): kb_strip_slice, kb_key_strip, kb_val_strip (strip's post, s0 + strip_lead and

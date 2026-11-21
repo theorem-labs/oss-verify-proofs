@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -31,7 +32,7 @@ Lemma sf_evt_step : ltac2:(zQ "hb1!r8!tc!u1!vd!jd!hj9!hme!hn7!hnd!hq9!hud!h8!hv4
 Proof.
   intros segs Q R F pc fc rv m ro w i sz ms1 Hf He Hd Hx K.
   eapply evt_step; [ | exact K ]. split; [reflexivity|].
-  rewrite (step_gen segs R F pc fc rv m ro w i sz Hf He Hd). exact Hx.
+  exact (step_gen_ok _ _ _ _ _ _ _ _ _ _ _ _ Hf He Hd Hx).
 Qed.
 
 (* [comment removed for export] *)

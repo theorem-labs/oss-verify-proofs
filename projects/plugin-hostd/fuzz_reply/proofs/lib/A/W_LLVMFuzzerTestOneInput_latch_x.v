@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: SEG_LATCH of the ASan walk of fuzz_reply's LLVMFuzzerTestOneInput over a generic allocator
    relation ARx (a Theorem Labs lane's route (b)): the ARx conversion of lib/A/W_LLVMFuzzerTestOneInput_latch.v's lf_seg_latch
-   (W8's, Qed at a working branch 44de651f71b), stated as the Section hypothesis SEG_LATCH of
+   (W8's, Qed at a working branch), stated as the Section hypothesis SEG_LATCH of
    lib/A/W_LLVMFuzzerTestOneInput_cut_x.v Section w.  The AR file is NOT edited.
    - Cited from the AR file (they do not mention AR): the keep windows (lt_keep_lo, lt_keep_hi, lt_akept_of_low,
      lt_akept_rng, lt_akept_of_rng), the frame, ROM and jump-table transport (lt_aframe_kept, lt_sv8_kept, lt_rom_kept,
@@ -19,7 +20,7 @@
      W_contract_x.cb_spec_x; its post aleafx_post_x carries the kept clause the AR file added as cbk_spec) and
      ERRNO_LOW (the AR file's, verbatim).
    - Route R (RULE-SHAPES.md (sha256 2e856ce788dd; internal record) sec 0, a Theorem Labs lane's brief-lfR): Section wR's lf_seg_latch_xR is cut_x Section wR's
-     SEG_LATCH_R (lib/A/W_LLVMFuzzerTestOneInput_cut_x.v:466) at a world relation R containing wle.  check_bounded is a leaf that calls no allocator,
+     SEG_LATCH_R (lib/A/W_LLVMFuzzerTestOneInput_cut_x.v:467) at a world relation R containing wle.  check_bounded is a leaf that calls no allocator,
      so it keeps the STRICT W1_check_bounded; the segment is the strict walk over the cut's R journal, lifted to R at
      its head (cut_x's lf_seg_jt_xR form).  Section chkR checks it in SEG_LATCH_R's text and argument position. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
@@ -377,9 +378,9 @@ Hypothesis HP0 : forall ly S Hp (W : world segs) mem md, ARx ly S Hp W mem md ->
 Hypothesis HG : gx_ok segs B G_fr.
 Variable LSx : lfcx -> Z -> lmod -> alayout -> astate -> Prop.
 Variable RINV : lfcx -> Z -> lmod -> Prop.
-(* _latch.v:298 W1_check_bounded, converted: check_bounded's contract over ARx, W_contract_x.v:163
+(* _latch.v:298 W1_check_bounded, converted: check_bounded's contract over ARx, W_contract_x.v:164
    cb_spec_x B PST ARx (BASE + AF_fr_check_bounded), whose post (:106 aleafx_post_x) carries the kept clause the AR
-   file's cbk_spec added (W1Verify's pb_check_bounded_x, a working branch be8158006bd, proves it). *)
+   file's cbk_spec added (W1Verify's pb_check_bounded_x, a working branch, proves it). *)
 Hypothesis W1_check_bounded : cb_spec_x B PST ARx (BASE + AF_fr_check_bounded).
 (* _latch.v:302 ERRNO_LOW, verbatim *)
 Hypothesis ERRNO_LOW : 0 <= as_errno B /\ as_errno B + 4 <= CEIL8.
@@ -477,7 +478,7 @@ Proof.
     rewrite Hs0Z. left. split; [right; left; rewrite HTOPeq; exact Hge | reflexivity].
 Qed.
 
-(* :799 lf_seg_latch over ARx: cut_x Section w's SEG_LATCH (W_LLVMFuzzerTestOneInput_cut_x.v:562) *)
+(* :799 lf_seg_latch over ARx: cut_x Section w's SEG_LATCH (W_LLVMFuzzerTestOneInput_cut_x.v:563) *)
 Theorem lf_seg_latch_x : forall cx Hp t W c,
   lf_base_x B MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G_fr ARx cx Hp ->
   INV_K_x B NP G_fr fr_FP PST ARx LSx RINV cx Hp t W c ->
@@ -704,7 +705,7 @@ Proof.
 Qed.
 
 (* ---- route R (RULE-SHAPES.md (sha256 2e856ce788dd; internal record) sec 0): SEG_LATCH at a world relation R containing wle, cut_x Section wR's SEG_LATCH_R
-   (W_LLVMFuzzerTestOneInput_cut_x.v:466).  The segment's one call, check_bounded, is a leaf that calls no allocator,
+   (W_LLVMFuzzerTestOneInput_cut_x.v:467).  The segment's one call, check_bounded, is a leaf that calls no allocator,
    so it frees nothing and re-hides no shadow: its STRICT contract W1_check_bounded is kept (top_x passes the strict
    pb_check_bounded_x), its wle step stays a wle step, and its strict journal lifts to R (ajournal_gx_xR_mono, WLE_R).
    So the segment is the strict walk of lf_seg_latch_x over the cut's R journal (paj_run_x_xR, ajournal_gx_sub_xR
@@ -796,7 +797,7 @@ Proof.
     rewrite Hs0Z. left. split; [right; left; rewrite HTOPeq; exact Hge | reflexivity].
 Qed.
 
-(* lib/A/W_LLVMFuzzerTestOneInput_cut_x.v:466 SEG_LATCH_R: lf_seg_latch_x's walk over the cut's R journal *)
+(* lib/A/W_LLVMFuzzerTestOneInput_cut_x.v:467 SEG_LATCH_R: lf_seg_latch_x's walk over the cut's R journal *)
 Theorem lf_seg_latch_xR : forall cx Hp t W c,
   lf_base_x B MT XM_LIB RLO RHI fr_live_pre LIBROOM NP G_fr ARx cx Hp ->
   INV_K_xR B NP G_fr fr_FP PST ARx LSx RINV R cx Hp t W c ->
@@ -1103,7 +1104,7 @@ Proof.
     ARx LAWS HG LSx RINV SEG_PRO SEG_HEAD ARM_add ARM_write ARM_drain ARM_close ARM_remove ARM_gone ARM_eintr
     ARM_event ARM_sendmax ARM_default lf_seg_latch_x_check SEG_EXIT).
 Qed.
-(* ---- route R: lib/A/W_LLVMFuzzerTestOneInput_cut_x.v:466 SEG_LATCH_R restated in its text at a world relation R (cut_x Section wR's Section-local
+(* ---- route R: lib/A/W_LLVMFuzzerTestOneInput_cut_x.v:467 SEG_LATCH_R restated in its text at a world relation R (cut_x Section wR's Section-local
    names, as its End w generalizes them: the forms lib/A/W_LLVMFuzzerTestOneInput_top_x.v Section topxR uses), closed by `exact` from lf_seg_latch_xR;
    and the theorem in SEG_LATCH_R's argument position of cut_x's lf_contract_of_segments_xR (the other thirteen steps
    as hypotheses in cut_x.v:451-473's text; SEG_JT is walked inside cut_x). *)
@@ -1118,7 +1119,7 @@ Local Notation IAR := (INV_A_xR B NP G_fr fr_FP PST ARx LSx RINV R).
 Local Notation IKR := (INV_K_xR B NP G_fr fr_FP PST ARx LSx RINV R).
 Local Notation IXR := (INV_X_xR B NP G_fr fr_FP PST ARx LSx RINV R).
 Local Notation POSTR := (lf_post_xR B MT XN_LIB fr_live_post fr_surv NP G_fr fr_FP PST ARx R).
-(* lib/A/W_LLVMFuzzerTestOneInput_cut_x.v:466 SEG_LATCH_R, its text *)
+(* lib/A/W_LLVMFuzzerTestOneInput_cut_x.v:467 SEG_LATCH_R, its text *)
 Lemma lf_seg_latch_xR_check : forall cx Hp t W c, BASEx cx Hp -> IKR cx Hp t W c ->
   SRrG segs R W c (fun W' c' => IHR cx Hp (t + 1) W' c' \/ IXR cx Hp W' c').
 Proof.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start state over the launch input ProcInput). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -22,7 +23,7 @@ Definition prog_tree (R : Type) : Type := ProcInput -> ExecEntry -> itree node R
 (* [comment removed for export] *)
 Definition ms0 (segs : list Segment) (pc : N) (ph : PhdrInfo)
     (en : ExecEntry) (inp : ProcInput) : machine_state :=
-  init_ms segs pc ph (en_sp en) (en_draw en) (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp).
+  init_ms segs pc ph (en_sp en) (en_mmap_base en) (en_draw en) inp.
 
 (* [comment removed for export] *)
 

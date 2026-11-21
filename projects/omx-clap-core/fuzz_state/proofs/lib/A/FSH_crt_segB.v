@@ -4,13 +4,13 @@
    decode 0x82074, bcmp 0x82098, pj_object 0x82120 and 0x82128), with the class-3 fake frame live (own = [(3, pos)]);
    plus the three pj_set FP site lemmas of segments 15 / 17 / 19 (lane B2 uses them).
    rule 24: proves no function (kind: segment lemmas of check_round_trip's walk, PORTED from a working branch
-   d25a984c903 proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_sd3.v (the stretch 0x82078 .. 0x8213c:
+   proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_sd3.v (the stretch 0x82078 .. 0x8213c:
    crt_cmp_seg :239, crt_objs_seg :371, crt_seg3 :562, crt_obj_hdr :693; stage cuts St3 :260 / St4 :315 of
    check_round_trip_stdefs.v); the function's reuse search is crt-lane-head.md's rule-24 line (checker a Theorem Labs lane
    04:26Z). The step forms are the S0 statement's (crt_from), the call crossing FSH_crt_site.crt_seg_call.
    Ported from (first draft, kept as the record): CHECKER VERDICT a Theorem Labs lane (22:47Z) CONFIRM "none for build A, by
    name or address: the released `check_round_trip` proofs are plain/ubsan only, 0x138ac/0x139ac" - superseded by the
-   exact ASan proof d25a984c903 found at 04:26Z, which this file now ports. *)
+   exact ASan proof found at 04:26Z, which this file now ports. *)
 (*
 
    The ten segments (MEASURED, capstone 5.0.7 over the pinned fs.asan):
@@ -198,7 +198,7 @@ fold F. rewrite <- E. exact (Hnf x Hx).
 Qed.
 
 (* the empty object pj_object leaves: its header is type 6 with str = kids = keys = n = cap = 0 (PjStruct.pj_node's JObj
-   arm with no blocks forces cap = 0, hence kids = keys = 0; n = |[]|). Port of d25a984c903 sd3 crt_obj_hdr :693. *)
+   arm with no blocks forces cap = 0, hence kids = keys = 0; n = |[]|). Port sd3 crt_obj_hdr :693. *)
 Lemma crtB_obj0_hdr : forall ly S (W : world tfibsegs) m v,
   rtree tfibsegs B ly S W m v (PjTree.JObj []) [] ->
   exists num, PjStruct.pj_hdr tfibsegs (mrestrict (w_H W) m) v 6 num 0 0 0 0 0.
@@ -229,7 +229,7 @@ Proof. intros W W' m m' v num K H. exact (PjStruct.pj_hdr_eq tfibsegs _ _ v 6 nu
 End walk.
 
 (* ================= segment 13: 0x82124 -> pj_object (state = s7 = F + 0x80) -> 0x8212c =================
-   Port of d25a984c903 sd3 crt_objs_seg's second half (:371-557): `mv a0, s7; jal pj_object`. The boundary at 0x82124
+   Port sd3 crt_objs_seg's second half (:371-557): `mv a0, s7; jal pj_object`. The boundary at 0x82124
    is crt_INV_8212c without the state object (only its placement, pobj). *)
 Definition crtB_sc13 : sstate := Eval vm_compute in fst (sym_run_toN tfibsegs crt_tbl FUEL A_pj_object (crt_ss2 0x82124)).
 Lemma crtB_run13 : sym_run_toN tfibsegs crt_tbl FUEL A_pj_object (crt_ss2 0x82124) = (crtB_sc13, RS_running).
@@ -839,7 +839,7 @@ End brw.
    Two entries (the two exits of segment 11): crtB_seg12 from crtB_ss_8209c (the `bnez a0` on bcmp's answer first,
    crtB_seg_call_brw) and crtB_seg12z from crtB_ss_820a0 (crtB_seg_call_w). The run writes the frame's shadow (region 3:
    the 7 granules of each of doc / state / v / back and the n cell's granule set to 0) and the frame's n cell (region
-   2's chunk at 0x1a0); the callee part (crtB_hcall12) reads them off the call-site st_ok. Port of d25a984c903
+   2's chunk at 0x1a0); the callee part (crtB_hcall12) reads them off the call-site st_ok. Port of
    lib/A/Prog/check_round_trip_sd3.v crt_objs_seg (:371) first half, restated over the S0 predicates. MEASURED by the
    engine over crt_tbl. *)
 Definition crtB_csF12 : list YP09.chunk :=
@@ -998,7 +998,7 @@ split.
 split; [exact (RBK _ _ HRD) | exact (ZBK _ _ _ HRD Lld HZD)].
 Qed.
 (* a boundary run's write window (the saved words, the s1 slots, the frame and its shadow) holds no image byte and no
-   byte of a live block (port of FSH_crt_segD2_s36.v crtD2_w36, a5a8bfb0274, for any boundary pc) *)
+   byte of a live block (port of FSH_crt_segD2_s36.v crtD2_w36, for any boundary pc) *)
 Lemma crtB_w_out : forall cx E k ly3 S3 U3 (W3 : world tfibsegs) mem md3 r,
   crt_E cx E ->
   @ajournal rc SK tfibsegs B STK_check_round_trip (spZ (c_regs cx)) FS_PSTAT_FP (c_ly cx) (c_S cx) (c_W cx)

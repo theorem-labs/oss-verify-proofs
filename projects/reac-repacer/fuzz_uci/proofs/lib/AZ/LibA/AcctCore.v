@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs: copied from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/AZ/LibA/AcctCore.v at 88154566652a310ff96f54a5442e5c73fdaad090 for reac-repacer/fuzz_uci; module path OSSVerify.Proofs.reac_repacer.fuzz_uci.lib. *)
+(* Modified by Theorem Labs: copied from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/AZ/LibA/AcctCore.v at theorem-labs/oss-verify-proofs@f92feaf8b7e6 for reac-repacer/fuzz_uci; module path OSSVerify.Proofs.reac_repacer.fuzz_uci.lib. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.

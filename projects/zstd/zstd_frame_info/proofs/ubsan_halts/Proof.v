@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by gabelogan195, 2026-11: made in part from this harness's proofs/lib/HaltsAsanB.v at commit f92feaf8b7: six of its import lines (lines 5, 6 and 8, and lines 7, 11 and 12 with their modules changed) and its final step, haltsB_of_must_exit_acfg with forced_only_cfg_least (line 24, as in proofs/lib/HaltsAsanBClosed.v, line 13), restated for the UBSan build; one import line is proofs/lib/UbsanMain.v, line 13, and one step is UbsanMain.v, line 24, with the module path written in full and a hypothesis renamed; the facts it passes are those of proofs/lib/Spec/ModelOK.v, line 55, with lim_p (proofs/lib/Spec/ImgFacts.v, line 32) for lim_u, at source_alloc_limit for target_alloc_limit; HaltsAsanBClosed.v, UbsanMain.v, Spec/ModelOK.v and Spec/ImgFacts.v are also at commit f92feaf8b7; the rest of the file is new. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (halts_of_impl_tree_S's new premises: the channel reader, from the valid input, and segs_top segs <= 0x10000000, proved by computation). *)
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.zstd.zstd_frame_info Require Statements.
@@ -25,7 +26,8 @@ Proof.
     as [Hleaves Hsafe].
   exact (halts_of_impl_tree_S usegs u_init_pc u_phdrs source_alloc_limit EXITS02
            (Prog.prog usegs UREAD_STAGE inp en) _ en inp Hen
-           (valid_input_either_va_size _ Heither) (prog_texits _ _ _ _)
+           (valid_input_either_va_size _ Heither) (valid_input_either_reader _ Heither)
+           ltac:(apply Z.leb_le; vm_compute; reflexivity) (prog_texits _ _ _ _)
            (OSSVerify.Proofs.zstd.zstd_frame_info.lib.Ubsan.PlainClosed.plain_impl_closed
               en inp Hen Heither)
            Hleaves Hsafe).

@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/reac_box_model_block_glue.v, with its module paths, module names and numbers changed; 167 of its 228 lines of code are new or changed and 2351 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* ctrl_lay_block (0x86104) on fuzz_ctrl's ASan+UBSan build, image B (libreac v1.9.0): region R1 of the cgif glue
    pb_ctrl_lay_block (a Theorem Labs lane, hand a Theorem Labs lane).  rule 24: no function proved here.
 
    PLAN OF RECORD: R1 (ctrl_lay_block-B-glue-plan.md section 3 (a working note, not in this delivery)).
    lay_to_ret is the image-B twin of a Theorem Labs lane's image-A lay_to_ret (
-   lib/A/Prog/C_ctrl_lay_block_glue.v (at head lib/A/Prog/C_ctrl_lay_block_glue.v:759-926; from a working branch 9861af6cbb5)), same proof shape:
+   lib/A/Prog/C_ctrl_lay_block_glue.v (at head lib/A/Prog/C_ctrl_lay_block_glue.v:759-926; from a working branch)), same proof shape:
    - the entry 0x86104 -> the jal into __asan_stack_malloc_1 is CUTS.ly_pre_sm1 (ctrl_lay_block_cutsF.v) run on the
      normalized entry memory (B.MemNorm.normalize memc) and lifted by ctrl_lay_block_gbase.lay_SRr_norm at
      RNG := B.ProgBridge.RNG_W (w_H W).  Its post is the call state at pc 0x3d868 (252008), ra 0x8617c (549244),

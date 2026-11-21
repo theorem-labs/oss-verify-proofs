@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: new file, the shared interface of image B's SEG_EXIT (fuzz_reply.asan-ubsan
    0x84e64-0x850f8; lib/B/W_LLVMFuzzerTestOneInput_exit.v states and closes it).  The A donor is one file
-   (b86949b953d lib/A/W_LLVMFuzzerTestOneInput_exit.v, 8158 lines, Qed); here its five
+   (lib/A/W_LLVMFuzzerTestOneInput_exit.v, 8158 lines, Qed); here its five
    blocks are proved in their own files, each against the statement this file fixes:
      lx_order_S   0x84e64 .. 0x84f00 / 0x84fe0   lib/B/W_bx_order.v   (A donor :574-1816)
      lx_rf_site_S 0x84f00 / 0x84fe0, two insns   lib/B/W_bx_rf.v      (A donor :1817-3015)
@@ -17,10 +17,11 @@
    - SB is in s11 (x27; A: x26); HI_G_NOUT in s10 (x26; A: s9 x25); norder in s3 (x19, as A).
    - the resets' set-up loads s4 = F+80 (FF, x20) and s8 = F+96 (SB + FF/8, x24) and no s7 (A's x23): lx_reset's post
      carries x20 and x24 only; the release reads FF from F+104 through s1, so lx_ffexit takes x9 = F and lf_base.
-   - check_shape_ends is B's (lx_cshe_spec, a verbatim copy of e6c15ce5205
-     W_contract.v:1755-1863).
+   - check_shape_ends is B's (lx_cshe_spec, a verbatim copy of
+     W_contract.v:1756-1864).
    - the order-copy loop holds three UBSan trap branches (0x84eac / 0x84eb8 / 0x84ebc -> unimp 0x850fc), refuted
      with lib/B/W_traps.v (trap_ptr_bltu, trap_null_xor, trap_base_ok). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -173,9 +174,9 @@ Fixpoint lx_rf_room (bb : Z) (c : ctl) (O : list byte) (mx no cap : Z) (es : lis
   end.
 Definition lx_rf_ctl (c : ctl) : ctl := CTL (-1) (ct_br c) (ct_dd c) (ct_ei c) (ct_ev c).
 
-(* check_shape_ends' spec: a VERBATIM COPY of image B's text at e6c15ce5205
-   lib/B/W_contract.v:1755-1863 (Section w3e :1745-1864, header comment from :1736; proved there as
-   lib/B/W_check_shape_ends.v:141 pb_check_shape_ends : cshe_spec B MT G A_csheBP), diffable line by line after these
+(* check_shape_ends' spec: a VERBATIM COPY of image B's text at
+   lib/B/W_contract.v:1756-1864 (Section w3e :1745-1864, header comment from :1736; proved there as
+   lib/B/W_check_shape_ends.v:142 pb_check_shape_ends : cshe_spec B MT G A_csheBP), diffable line by line after these
    renamings and nothing else: CSHE_FRAME / CSHE_STK / cshe_home / cshe_ds_blks / cshe_cost / cshe_post / cshe_spec ->
    lx_CSHE_FRAME / lx_CSHE_STK / lx_cshe_home / lx_cshe_ds_blks / lx_cshe_cost / lx_cshe_post / lx_cshe_spec; SEGS ->
    segs; the Section variables B MT -> the ones below; the Section variable G -> an argument of lx_cshe_post and the
@@ -403,7 +404,7 @@ Definition lx_rf_post_site (cx : lfcx) (pcj : Z) (m : lmod) (fpos : Z) (ly3 : al
     frames S' = frames S3 /\
     mo_le MT S3 S' (lx_rf_cost (lm_c m) [] (lm_mx m) 0 (lm_cap m) (lm_es m)) /\
     (* g_capout after relay_finish is its run's final capacity (the witness m' sets it): the post's CAPOUT bound
-       (LS_exit_cap) reads it at the return (image A's _exit.v lx_rf_post_site, 5a9b16eac9e) *)
+       (LS_exit_cap) reads it at the return (image A's _exit.v lx_rf_post_site) *)
     lm_cap m' = gse_cap (lx_rf_run (lm_c m) [] (lm_mx m) 0 (lm_cap m) (lm_es m)).
 Definition lx_rf_site_S : Prop :=
   forall cx pcj t W regs mem md ly3 S3 fpos k m,

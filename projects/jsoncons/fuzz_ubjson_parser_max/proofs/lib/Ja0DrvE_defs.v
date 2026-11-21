@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: shrinks the writable stack region in the knPA and knP2A entry checks from 8388608 bytes to 6144513 bytes below the stack pointer, leaving the other known-memory entries unchanged; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/As0DrvE_defs.v, lines 49, 92. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State.
@@ -32,7 +33,7 @@ summE rPA = (0x62a54, [], 134%nat, 10%nat)
 /\ (nth 1 srPA (ELit 0), nth 2 srPA (ELit 0), nth 10 srPA (ELit 0), nth 11 srPA (ELit 0))
 = (ELit 0xa7640, EAlu ALU_ADD (EVar 0) (ELit (-288)), ELit 85708, EAlu ALU_ADD (EVar 0) (ELit (-264)))
 /\ forallb (fun K => existsb (kentry_eqb K) knPA)
-[KWr (SA (EVar 0) (-8388608)) 8388608; KWord (SA (EVar 0) (-264)) 8 (ELit 0); KImg 65536 1261568; KWord (SA (ELit 0) 6876608) 8 (EVar 3)] = true
+[KWr (SA (EVar 0) (-6144513)) (6144513); KWord (SA (EVar 0) (-264)) 8 (ELit 0); KImg 65536 1261568; KWord (SA (ELit 0) 6876608) 8 (EVar 3)] = true
 /\ sr_vars_lt 134 srPA = true /\ kn_vars_lt 134 knPA = true
 /\ (s_pc (fst (fst rQtA)), snd (fst rQtA), s_log (fst (fst rQtA))) = (0xa7534, [SCBr true BC_NE (EAluw ALU_ADD (EVar 81) (ELit (-1))) (ELit 0)], [])
 /\ (s_pc (fst (fst rQfA)), snd (fst rQfA), s_log (fst (fst rQfA))) = (0x78ebc, [SCBr false BC_NE (EAluw ALU_ADD (EVar 81) (ELit (-1))) (ELit 0)], [])
@@ -65,7 +66,7 @@ ksubl_b knQ0A knLH2A = true /\ ksubl_b knQ2A knLH2A = true /\ kn_vars_lt 81 knLH
 /\ summE rLB2A = summE rLB1A /\ s_regs (fst (fst rLB2A)) = srLBA /\ s_log (fst (fst rLB2A)) = [SE (SA (ELit 0) 0x66d354) 1 (ELit 1)]
 /\ summE rP2A = (0x62a54, [], 134%nat, 10%nat) /\ s_regs (fst (fst rP2A)) = srPA
 /\ forallb (fun K => existsb (kentry_eqb K) knP2A)
-[KWr (SA (EVar 0) (-8388608)) 8388608; KWord (SA (EVar 0) (-264)) 8 (ELit 0); KImg 65536 1261568; KWord (SA (ELit 0) 6876608) 8 (EVar 3)] = true
+[KWr (SA (EVar 0) (-6144513)) (6144513); KWord (SA (EVar 0) (-264)) 8 (ELit 0); KImg 65536 1261568; KWord (SA (ELit 0) 6876608) 8 (EVar 3)] = true
 /\ (s_pc (fst (fst rSt2A)), snd (fst rSt2A), s_log (fst (fst rSt2A))) = (0xa7534, [SCBr true BC_NE (EAluw ALU_ADD (EVar 81) (ELit (-1))) (ELit 0)], [])
 /\ (s_pc (fst (fst rSf2A)), snd (fst rSf2A), s_log (fst (fst rSf2A))) = (0x78ebc, [SCBr false BC_NE (EAluw ALU_ADD (EVar 81) (ELit (-1))) (ELit 0)], [])
 /\ (nth 1 srSf2A (ELit 0), nth 10 srSf2A (ELit 0), nth 21 srSt2A (ELit 0)) = (ELit 0xa7574, EVar 83, EAluw ALU_ADD (EVar 81) (ELit (-1)))

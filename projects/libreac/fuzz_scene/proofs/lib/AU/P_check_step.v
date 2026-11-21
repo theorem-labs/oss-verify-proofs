@@ -2,12 +2,12 @@
    segment lemmas cs_S0 .. cs_S4 of lib/AU/P_check_step_S0.v .. S4.v, EVERY ONE OF THEM PROVED, and frame_setup and
    afobj_of_own (lib/AU/P_check_step_frame.v) are proved too; `Print Assumptions pb_check_stepX` leaves only the
    primitive-integer / -string axioms and Stdlib's functional_extensionality_dep (toolchain/allowed-axioms.txt:94).
-   Evidence, from fresh worktrees of the integration branch at bfcf9aa68da6 and e03c203366b8: for this image
+   Evidence, from fresh worktrees of the integration branch: for this image
    build-20261029T014523Z.log (sha256 d855378b10ce; internal record): rc=0, 87 files; for the asan twin
    build-20261029T005135Z.log (sha256 ba74856c8e19; internal record): rc=0, 83 files.
 
-   The asan-ubsan twin of lib/A/P_check_step.v: the SAME statement text over the asan-ubsan kit (lib.AU.Prog,
-   at 82cb6676c06). The cut states differ only where the code does (P_check_step_cut.v).
+   The asan-ubsan twin of lib/A/P_check_step.v: the SAME statement text over the asan-ubsan kit (lib.AU.Prog).
+   The cut states differ only where the code does (P_check_step_cut.v).
 
    Image: fuzz_scene.asan-ubsan, sha256 e98b1ed286c1aa5c3d558cb2069011d2413d58b2122f741531364382a528833f; symbols from
    the unstripped twin (same loaded bytes). Every number is measured (a Theorem Labs lane's TWINMAP.md sections 2, 4.1, 5;
@@ -26,7 +26,7 @@
      - read-only window .data.rel.ro + .got = 0x9b4e0..0x9c740 (pa_relro_lo/hi); image range 0x10000..0x5f9000.
    The 12 UBSan trap branches (to `unimp` 0x83864) are decided on the no-trap edge inside the segments; none needs a
    premise the asan statement does not have.
-   LAYOUT (gate 6o, a Theorem Labs lane 22:5xZ, as the asan-ubsan kit at ae48bfd851f): the image-specific YCbq (and YC5d) are Required from
+   LAYOUT (gate 6o, a Theorem Labs lane 22:5xZ, as the asan-ubsan kit): the image-specific YCbq (and YC5d) are Required from
    lib.AU; every other module from lib.Reusable, as in lib/A. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -49,7 +49,7 @@ From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU.Prog Require Import PaRun PaShad
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU.Prog Require Import PaJournal ScenePaLib SceneBase SceneRo SceneFrame YC1h YC85.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require Import YM05.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Prog Require Import SceneBlock RcModel RcParse.
-(* reac_ctrl_parse (a Theorem Labs lane 8cd86323565, TPARSE_STK = 8352) and reac_ctrl_checksum_verify (a Theorem Labs lane 33d26845cd2,
+(* reac_ctrl_parse (a Theorem Labs lane, TPARSE_STK = 8352) and reac_ctrl_checksum_verify (a Theorem Labs lane,
    TCKV_STK = 16): a Theorem Labs lane's asan-ubsan statements, Required by name. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU.Prog Require Import P_reac_ctrl_checksum_verify P_reac_ctrl_parse.
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.AU Require Import P_check_step_frame.
@@ -145,8 +145,8 @@ Hypothesis HB_ADDR : A_CS_TRAILER = 0x20d80 /\ A_CS_CFRAME = 0x20da0.
 (* the image bytes of the two globals (arodata_okP gives them in every state). *)
 Hypothesis HRO_TR : ro_bytes SEGS pa_relro_lo pa_relro_hi B A_CS_TRAILER scene_trailer.
 Hypothesis HRO_CF : ro_bytes SEGS pa_relro_lo pa_relro_hi B A_CS_CFRAME cs_frame_init.
-(* -- the program's callees: reac_ctrl_parse (a Theorem Labs lane 8cd86323565) and reac_ctrl_checksum_verify
-   (a Theorem Labs lane 33d26845cd2), lib.AU.Prog -- *)
+(* -- the program's callees: reac_ctrl_parse (a Theorem Labs lane) and reac_ctrl_checksum_verify
+   (a Theorem Labs lane), lib.AU.Prog -- *)
 Hypothesis PARSE : tctrl_parse_spec (SK := SK) B.
 Hypothesis CKV : tctrl_checksum_verify_spec (SK := SK) B.
 Theorem pb_check_stepX : tcheck_step_specX.

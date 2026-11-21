@@ -2,7 +2,7 @@
    proves no function (kind: image facts; rule 24: no function is proved here, only closed facts of image A's own
    bytes and listing).
 
-   The image premises of cgif's `pb_reac_box_model_block_stmt` (lib/A/Prog/C_reac_box_model_block.v:184-221, blob
+   The image premises of cgif's `pb_reac_box_model_block_stmt` (lib/A/Prog/C_reac_box_model_block.v:185-222, blob
    4631d95bcf7) that image A's top lib/A/ACtlAll.v must supply, at the top's instance: B := A.AD2l.CtrlB,
    SEGS := A.AB1v.tfibsegs, RLO / RHI := 0x9e380 / 0xa07c8 (PI_ctrl's pa_relro_lo / pa_relro_hi). Each
    `ctlall_<X>_stmt` is the text of the binder <X> (C_reac_box_model_block.v line in brackets), verbatim up to
@@ -234,7 +234,7 @@ Lemma ctlall_HJ14 : ctlall_HJ14_stmt.
 Proof. unfold ctlall_HJ14_stmt. intros H mem HRO. exact (tmb_garr8 _ _ _ _ tmb_j14_ok H mem HRO). Qed.
 
 (* HZS_J13 / HZS_J14: each JOIN block lies in one as_zero_shadow row of CtrlB (rows (0x219e0, 0x60) and (0x21a60,
-   0x20) of Tfib_zero_shadow, AF0m.v:2962-2963) *)
+   0x20) of Tfib_zero_shadow, AF0m.v:2963-2964) *)
 Lemma tmb_in_zs : forall a n,
   existsb (fun r : Z * Z => (fst r <=? a) && (a + n <=? fst r + snd r)) (lib.Reusable.YG0f.as_zero_shadow CtrlB) = true ->
   lib.A.Prog.CtrlRo.in_zs CtrlB a n.

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (main_entry_h0X reads the restated main_entry_A, with its launch input and premises and its new stack cells; the stack VMA's end STKHI is the draw's page top, its facts from the launch, and the heap's stack floor STKLO is sp0 - 6144512). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run.
@@ -36,42 +37,27 @@ Section Bridge.
   (* [comment removed for export] *)
   Hypothesis HACsp : ACEIL = bv_unsigned sp / 4096 * 4096 - 2 ^ 23.
 
-  Let SIMG := build_stack_bytes APH sp argv envp uid hw rdraw.
-  Let STKHI : Z := entry_page_top sp SIMG.
-  Let STKLO : Z := bv_unsigned sp - 2 ^ 23.
-
-  (* [comment removed for export] *)
-  #[using="hAR Hva Hve Hfit HACsp STKLO"] Lemma stkhi_facts : ltac2:(CDefT.buildp (gd_tbl_AH0Bridge ()) "(0.(1.(2.&40.Vsp,)VSTKHI,)(0.(3.$4.(5.VSTKHI,+1000.)=)(0.(6.VSTKHI,(7.+2.+2?.))(6.VSTKHI,(8.(2.&40.Vsp,)(7.+2.+17.))))))")
-(* [comment removed for export] *).
-  Proof.
-    pose proof (entry_page_top_ge sp SIMG) as GE. unfold entry_block_top in GE.
-    pose proof (entry_page_top_within_window APH sp argv envp uid hw rdraw Hfit) as WIN. unfold sp_window_hi in WIN.
-    pose proof (build_stack_bytes_within_span APH sp argv envp uid hw rdraw) as SPAN.
-    pose proof (entry_stack_span_bound argv envp Hva Hve) as SB. unfold entry_stack_span_max in SB.
-    destruct (build_stack_bytes_split_random APH sp argv envp uid hw) as [pre E].
-    assert (LEN : (16 <= length SIMG)%nat).
-    { unfold SIMG. rewrite E, length_app. unfold at_random_bytes. rewrite ?length_map, ?length_firstn, ?length_app, ?repeat_length. cbn. lia. }
-    fold SIMG in GE, WIN, SPAN.
-    assert (PG : STKHI mod 4096 = 0 /\ STKHI <= bv_unsigned sp + Z.of_nat (length SIMG) + 4095).
-    { unfold STKHI, entry_page_top, page_round_up_Z, page_size, entry_block_top.
-      Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true). split; [| nia].
-      rewrite Z.mul_comm. apply Z_mod_mult || (rewrite Z.mul_comm; apply Z_mod_mult). }
-    Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
-    unfold STKHI in *. lia.
-  Qed.
+  (* LPS 727298f3: the stack VMA's end is the draw's [ed_top] ([Run.entry_page_top]), and the
+     heap's stack floor is sp0 - 6144512, the bottom of the window the launch maps below sp. *)
+  Let STKHI : Z := entry_page_top rdraw.
+  Let STKLO : Z := bv_unsigned sp - 6144512.
 
   (* [comment removed for export] *)
   #[using="Hsp Hva Hve Hfit HACsp"] Theorem main_entry_h0X : ltac2:(CDefT.buildp (gd_tbl_AH0Bridge ()) "PR,(9.&5.(:.&40.))Pmem,P,(:.&40.)(;.(:.&8.))Pmd,$<.P,(=.Vsp,Vbrk0,Vrdraw,Vargv,Venvp,Vfs,Vuid,Vhw,R3.R2.R1.)(>.$?.Lbp,$?.(0.(3.$4.(10.R1.)(2.&40.Vsp,))(0.(3.$4.(11.R1.)VSTKHI,)(12.VhAR,VSTKLO,R1.R4.R3.))))")
 (* [comment removed for export] *).
   Proof.
-    intros R mem md H. ddestruct H as (p & HI & HCN & HREG & HMOD & HMEM).
-    ddestruct HMEM as (HCOM & HRC & Hzero & Hargs & Hwin & HNN & HDEF).   (* [comment removed for export] *)
+    intros R mem md H. ddestruct H as (inp & mb & p & Eav & Eev & Euid & Ehw & Hvl & Hlau & HI & HCN & HREG & HMOD & HMEM).
+    ddestruct HMEM as (HCOM & HRC & HSTK & Hzero & Hargs & Hwin & HNN & HDEF).   (* [comment removed for export] *)
     pose proof HMOD as X. unfold me_model in X. ddestruct X as (_ & _ & _ & _ & _ & (fog & FL & FSM & HFOG) & _).
-    ddestruct stkhi_facts as (S1 & S2 & S3 & S4).
+    (* LPS 727298f3: the stack VMA's end, from the launch *)
+    destruct (launch_stkhi_facts sp brk0 mb rdraw inp Hvl Hlau) as (S2 & S3 & S1' & S4').
+    assert (S1 : bv_unsigned sp < STKHI) by (unfold STKHI; lia).
+    assert (S4 : STKHI <= bv_unsigned sp + 2 ^ 23) by (unfold STKHI; lia).
+    clear S1' S4'.
     (* [comment removed for export] *)
     pose proof (r_s1 p HCN) as R1. pose proof (r_s2 p HCN) as R2.
     assert (HSP : bv_unsigned sp = SP p).
-    { rewrite <- (sp0w_eq sp brk0 rdraw argv envp uid hw Hsp Hva Hve Hfit p HI). unfold sp0w, AsanMainEntryLemmas.SP0, SP. rewrite (zev_exact p) by (cbn [zev]; lia). cbn [zev]. lia. }
+    { rewrite <- (sp0w_eq sp brk0 rdraw argv envp uid hw Hsp Hva Hve Hfit inp p HI). unfold sp0w, AsanMainEntryLemmas.SP0, SP. rewrite (zev_exact p) by (cbn [zev]; lia). cbn [zev]. lia. }
     assert (HAC : ACEIL = STKPG p - 0x800000).
     { rewrite HACsp, HSP. unfold SP, STKPG. Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true). nia. }
     Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
@@ -106,7 +92,7 @@ Section Bridge.
     { (* [comment removed for export] *) split; [| split].
       - (* [comment removed for export] *)
         split; [split; [exact AWF | reflexivity]|]. cbn [hh].
-        split; [exact (h0_hm_maps mem p HCN HCOM HDEF STKHI FOGZ TF S1 S3 ltac:(intros a Ha; apply Hwin; rewrite HSP; unfold STKHI, SIMG in *; exact Ha))|].
+        split; [exact (h0_hm_maps mem p HCN HCOM HDEF STKHI FOGZ TF S1 S3 ltac:(intros a Ha; apply Hwin; rewrite HSP; unfold STKHI in *; exact Ha) (RZI inp) HSTK)|].
         split; [exact (h0_hm_statics mem p HCN HCOM STKHI FOGZ TF)|].
         split; [exact (h0_hm_thread mem p HCN HCOM STKHI FOGZ TF)|].
         split; [exact (h0_hm_depot mem p HCN HCOM HDEF STKHI FOGZ TF HR ltac:(lia) ltac:(lia) ltac:(lia))|].

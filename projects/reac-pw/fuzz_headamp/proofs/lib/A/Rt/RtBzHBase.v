@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/plugin-hostd/fuzz_command/lib/A/Rt/RtBzHBase.v at 2d2ff01bb6f; module paths changed to reac-pw/fuzz_headamp; 2 numeral(s) moved from fuzz_command.asan to fuzz_headamp.asan by alreloc a5c53bb2bed4. *)
+(* Modified by Theorem Labs, 2026-10: proofs/plugin-hostd/fuzz_command/lib/A/Rt/RtBzHBase.v; module paths changed to reac-pw/fuzz_headamp; 2 numeral(s) moved from fuzz_command.asan to fuzz_headamp.asan by alreloc a5c53bb2bed4. *)
 (* The runtime layer of omx-clap-core/fuzz_manifest, statement base: the runtime entries fuzz_manifest's target code calls, the stack each runtime call asks for,
    and the premises of a runtime call (ecall_pre with STK bytes of stack, C strings, the read-only image views).
    Definitions only; no program module. fuzz_manifest's program part (lib/A/FMH_Base.v) holds each definition of this file, but its PC_strncmp is its own image's entry 0x412d4. *)
@@ -26,7 +26,7 @@ Variable segs : list Segment.
 Variable B : asyms.
 #[local] Abbreviation rdW W mem := (mrestrict (w_H W) mem).
 
-(* ecall_pre (YG0d.v:277) with STK bytes of present stack, as abcmp_realizes asks (YG0d.v:355), and the stack above
+(* ecall_pre (YG0d.v:278) with STK bytes of present stack, as abcmp_realizes asks (YG0d.v:356), and the stack above
    alloc_ceiling (astk_ok, YCbq.v:333), so a string below alloc_ceiling (cstr_ok) is outside the callee's window *)
 Definition ecall_pre_k (STK : Z) (ly : alayout) (S : astate) (W : world segs) (regs : bvmap 5 word)
   (mem : word -> option byte) (md : Model) : Prop :=
@@ -37,10 +37,10 @@ Definition ecall_pre_k (STK : Z) (ly : alayout) (S : astate) (W : world segs) (r
 (* the bytes l (no NUL) then a NUL at p, as the walk reads them *)
 Definition cstr (W : world segs) (mem : word -> option byte) (p : Z) (l : list Z) : Prop :=
   garr8 segs (rdW W mem) p (l ++ [0]) /\ Forall (fun c => c <> 0) l.
-(* what a runtime string reader needs of it: below the stack, shorter than 2^32 (donor k + 1 < 2^32, YG0d.v:407), its word reads inside one memory band
+(* what a runtime string reader needs of it: below the stack, shorter than 2^32 (donor k + 1 < 2^32, YG0d.v:408), its word reads inside one memory band
    (amem_range over len + 8; the interceptors' range check region_in_mem), every byte up to the NUL addressable
    (the interceptor's range check), and the rest of the 8-byte word holding the NUL visible (musl's word reads; donor
-   astrnlen_realizes, YG0d.v:411) *)
+   astrnlen_realizes, YG0d.v:412) *)
 Definition cstr_ok (W : world segs) (mem : word -> option byte) (p : Z) (l : list Z) : Prop :=
   cstr W mem p l /\ 4096 <= p /\ p + Z.of_nat (length l) + 8 <= alloc_ceiling /\ Z.of_nat (length l) + 1 < 2 ^ 32 /\
   amem_range p (Z.of_nat (length l) + 8) /\
@@ -52,7 +52,7 @@ Definition cstr_ok (W : world segs) (mem : word -> option byte) (p : Z) (l : lis
 Definition bytes_at (W : world segs) (mem : word -> option byte) (p : Z) (l : list Z) : Prop :=
   garr8 segs (rdW W mem) p l.
 
-(* the non-owned part of the donor's rom_view (YG0d.v:382): every read-only byte that is not a runtime-owned static and
+(* the non-owned part of the donor's rom_view (YG0d.v:383): every read-only byte that is not a runtime-owned static and
    not errno reads as the image byte. arodata_okP gives it at every state; rom_view itself is not provable for omx-clap-core/fuzz_manifest, whose
    .rodata global redzones are owned statics (fuzz_manifest's lib/A/AF0m.v:645 Tfib_owned_static) that no AR clause pins. The runtime walks read
    only non-owned read-only bytes (musl's word constants, the formats). *)

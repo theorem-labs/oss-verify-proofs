@@ -1,4 +1,4 @@
-(* CARRIED from commit 0deb5310273b0d538ec2a1697f391a1c8ad21c34,
+(* CARRIED from
    proofs/cgif/cgif_file_fuzzer/lib/YGcfCount.v, sha256 f04afd970af85fe747603cc7cf13996bc56a9d948bb6828adc14f6656615161f (donor version not released; internal record).
    DO NOT EDIT in this tree: change it on that branch and carry it again. The changes made here are in the Require lines only:
    the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable
@@ -7,6 +7,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10-30: the header points to YGcfSecsStep.v for the model-level steps. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30: the run's user-secondary count for reply's KF-COUNT (Main 2026-10-30). nsec_cf
    (YG0ncf.v) counts the USER st_secs entries (sec_user_cf, YGcfNames.v: 0 <= sm_size; the errbuf's control entries
    carry a negative sm_size and stay out). This file states it at the three st_secs steps over the state shapes

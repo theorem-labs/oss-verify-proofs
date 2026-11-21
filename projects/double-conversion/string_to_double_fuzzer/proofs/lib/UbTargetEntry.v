@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reader fact of the output channels). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -160,6 +161,7 @@ Section Entry.
   Hypothesis Mhalt : m_halted model = None.
   Hypothesis Mlazy : m_vm_lazy model = [].
   Hypothesis Mmat : m_vm_materialized model = [].
+  Hypothesis Mrdr : m_channel_reader model = true.   (* LPS 727298f3: [cs_ok]'s [co_rdr] *)
   Hypothesis Hn : nlo <= hdr_paylen content <= nhi.
   Variable e : Z.
   Hypothesis He : 0 <= e < 2 ^ 32.
@@ -217,7 +219,8 @@ Section Entry.
   Ltac karith := anorm; lia.
   Ltac kflat := apply flat_intro; unfold elenZ; enorm; rewrite ?u_small by lia; lia.
   Ltac kwr_stack Hst := split; [kflat|]; intros d m Hd Hm; unfold elenZ in Hm; cbn [edenot] in Hm; rewrite ?u_small in Hm by lia; anorm;
-                    replace (sp0 + -8388608 + d) with (sp0 - 8388608 + d) by lia; apply Hst; lia.
+                    (* twin of RefTargetEntry.v:222-226 *)
+                    replace (sp0 + -6144513 + d) with (sp0 - 6144513 + d) by lia; apply Hst; lia.
   Ltac kwr_def Hdef := split; [kflat|]; intros d m Hd Hm; unfold elenZ in Hm; cbn [edenot] in Hm; rewrite ?u_small in Hm by lia; anorm; rewrite ?Z.add_0_r;
                     first [ apply (store_ok_of_defined _ _ _ Hdef); lia
                           | replace (area + 0 + d) with (area + d) by lia; apply (store_ok_of_defined _ _ _ Hdef); lia
@@ -241,7 +244,7 @@ Section Entry.
                 apply (rdn_defined_nth _ (gm + 32) (length content) content HTC); try lia;
                 intros j Hj; replace (gm + 32 + j) with (gm + (32 + j)) by lia; apply Hdef; lia.
 
-  #[using="VM TP TV Mfds Mvm Mhalt Mlazy Mmat Hn He Ce Hcan Ccan L"] Theorem target_entry_ok_e :
+  #[using="VM TP TV Mfds Mvm Mhalt Mlazy Mmat Mrdr Hn He Ce Hcan Ccan L"] Theorem target_entry_ok_e :
     cs_ok E (cs_T nlo nhi) R M model.
   Proof.
     pose proof TP as TP'.
@@ -452,6 +455,7 @@ Section Entry.
       + left. intros a Hin. pose proof (LIBR_in_hull a Hin) as Hh.
         change HULL_LO with 0xc3620 in Hh. change HULL_HI with 0xc4708 in Hh. apply Hc. lia.
       + intros a Ha _. cbn [fst snd LibIface.LIBR_HULL_U] in Ha. apply Hc. lia.
+    - (* LPS 727298f3: [co_rdr] *) exact Mrdr.
   Qed.
 End Entry.
 
@@ -462,15 +466,16 @@ End Entry.
     target_vm sp0 gm area VM ->
     m_fds model = fds_std -> m_vmmaps model = VM -> m_halted model = None ->
     m_vm_lazy model = [] -> m_vm_materialized model = [] ->
+    m_channel_reader model = true ->   (* LPS 727298f3: [cs_ok]'s [co_rdr] *)
     nlo <= hdr_paylen content <= nhi ->
     exists e can, 0 <= e < 2 ^ 32 /\ 0 <= can < 2 ^ 64 /\
       cs_ok (E_T sp0 gm area tid content brkv mas e can sec R) (cs_T nlo nhi) R M model.
 Proof.
-  intros sp0 gm area brkv mas tid sec content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Hn.
+  intros sp0 gm area brkv mas tid sec content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Mr Hn.
   destruct (w_errno _ _ _ _ _ _ _ _ (tp_world _ _ _ _ _ _ _ _ _ _ TP)) as (e & He & Ce).
   destruct (w_canary _ _ _ _ _ _ _ _ (tp_world _ _ _ _ _ _ _ _ _ _ TP)) as (can & Hcan & Ccan).
   exists e, can. split; [exact He|]. split; [exact Hcan|].
-  apply (target_entry_ok_e sp0 gm area brkv mas tid sec content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Hn e He Ce can Hcan Ccan).
+  apply (target_entry_ok_e sp0 gm area brkv mas tid sec content R M VM model nlo nhi TP TV Mf Mv Mh Ml Mm Mr Hn e He Ce can Hcan Ccan).
 Qed.
 End FPW_1.
 

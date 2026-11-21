@@ -11,7 +11,7 @@
    texts the loop and the refusal pass to the interceptors.
 
    Every proof here is a list computation: no image, no machine state. The plain walk of the same C proves the
-   same facts (the plain-build walk owner's lib/Prog/pf_p7_lemmas.v:179-248 at commit cfdd99183965, p7_J / p7_kn /
+   same facts (the plain-build walk owner's lib/Prog/pf_p7_lemmas.v:179-248, p7_J / p7_kn /
    p7_sep / p7_tok / p7_kn_nth / p7_J_step / p7_J_11 / p7_known_len). *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Bool Lia.

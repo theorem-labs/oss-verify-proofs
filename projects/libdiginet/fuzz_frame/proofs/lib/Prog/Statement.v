@@ -1,5 +1,5 @@
 (* fuzz_frame's plain halting statement from the slot contract of LLVMFuzzerTestOneInput, in the form of
-   libreac/fuzz_decode's lib/Prog/Statement.v (bf7779f81ed7), which concludes from FrameAPI.v frame_plain.
+   libreac/fuzz_decode's lib/Prog/Statement.v, which concludes from FrameAPI.v frame_plain.
    Written by Theorem Labs.
 
    llvm_frame binds the allocator and sink words of fuzz_frame.plain as FrameAPI.v frame_plain does; each is a

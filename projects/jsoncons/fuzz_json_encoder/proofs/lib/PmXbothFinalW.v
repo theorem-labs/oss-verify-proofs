@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the SIGPIPE disposition left free): changed pm_xboth_tgt, pm_xboth_tgt_stmtW; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/PmCasanFinal.v, lines 52, 67-69, 85, 94-108, 113. *)
 (* [comment removed for export] *)
 From Stdlib Require Import NArith ZArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -44,13 +45,25 @@ Abbreviation IMG_tgt :=
 Section FPX_1.
 #[local] Existing Instance PropExec.fx0.
 
-(* [comment removed for export] *)
+(* STATEMENT CHANGED, old beside new (tree-local; no Statements.v closure names it):
+     OLD  .. valid_sp sp -> valid_brk .. -> valid_mmap_base mbase -> entry_stack_fits .. ->
+          valid_argv -> valid_envp -> valid_fs -> valid_creds -> valid_hwcap -> in_va_size inp = Sv48 ->
+          (forall a0s path, .. -> phi_okD PHI path (in_fs inp)) -> ..
+     NEW  the same, plus the facts [Run.valid_input_abort] and [Run.valid_entry] give at
+          LPS 727298f3 and the asan+ubsan lane's start-up reads: [valid_launch inp],
+          [entry_launch_ok_va Sv48 ..], the input's fixed flags channel_reader / sigpipe_terminal
+          and [in_kernel inp = recorded_kernel (in_kernel inp)], which make [inp] an
+          [AsanInitK.inp] instance at the input's own SIGPIPE disposition (left free by
+          [Run.valid_input_abort]).  The conclusion is unchanged. *)
 Definition pm_xboth_tgt_stmtW (scfg : SpuriousCfg) (PHI : list byte -> Prop) : Prop :=
   forall sp brk mbase (rdraw : EntryDraw) (inp : ProcInput),
     valid_sp sp -> valid_brk AsanUbsan.M.loaded_segments brk -> valid_mmap_base mbase ->
     entry_stack_fits sp (in_argv inp) (in_envp inp) ->
     valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) -> valid_creds inp -> valid_hwcap (in_hwcap inp) ->
     in_va_size inp = Sv48 ->
+    valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rdraw) inp ->
+    in_channel_reader inp = true -> in_sigpipe_terminal inp = false ->
+    in_kernel inp = recorded_kernel (in_kernel inp) ->
     (forall a0s path, in_argv inp = [a0s; path] -> phi_okD PHI path (in_fs inp)) ->
     srealizes AsanUbsan.M.loaded_segments scfg
       (init_config AsanUbsan.M.loaded_segments AsanUbsan.M.init_pc AsanUbsan.M.phdrs sp brk mbase rdraw target_alloc_limit inp)
@@ -67,23 +80,37 @@ Section Hyps.
 
   Let ICPTX : icptx_stmt cfg0 art_ILX BUDGET0 := as0_icptx cfg0 art_ILX BUDGET0 art_ILX_ok.
 
+  (* Proof, old beside new: the input is destructured at its 20 fields (was 15) and shown to
+     be [AsanInitK.inp] at kernel build [kk] and SIGPIPE disposition [sd] (the record stores
+     [recorded_kernel kk], equal to [kk] by the last premise); [Pm5MainPhaseAW.as0_realizes_spec_run]
+     is restated over that input and [apc], so it is reached by [eapply .. with]. *)
   Theorem pm_xboth_tgt : pm_xboth_tgt_stmtW cfg0 PHI.
   Proof.
-    intros sp brk mbase rdraw inp Hsp Hbrk Hmb Hfit Hva Hve Hvfs Hcreds Hhw Hsv PHIOK.
-    destruct inp as [argv envp ifs0 stdin0 uid gid groups net nofile sigmask hw abt va urnd tmp0].
-    unfold in_fs in *. cbn [in_argv in_envp in_image_fs in_tmp in_uid in_hwcap in_va_size] in *. subst va.
+    intros sp brk mbase rdraw inp Hsp Hbrk Hmb Hfit Hva Hve Hvfs Hcreds Hhw Hsv Hvl Hlau Hcr Hst Hrk PHIOK.
+    destruct inp as [argv envp ifs0 stdin0 uid gid groups net nofile sigmask hw abt va urnd tmp0 kk execfn cr sd st].
+    unfold in_fs in *.
+    cbn [in_argv in_envp in_image_fs in_tmp in_uid in_hwcap in_va_size in_channel_reader in_sigpipe_terminal in_kernel] in *.
+    subst va cr st.
     destruct Hcreds as [Hu _]. cbn [in_uid] in Hu.
-    exact (as0_realizes_spec_run cfg0 eq_refl eq_refl art_L art_C art_IL art_LX art_ILX LayA LStA BUDGET0 BUDGET0_lo BUDGET0_hi
-             (as0_inst_ok cfg0 BUDGET0 eq_refl) (as0_instN_ok cfg0 BUDGET0 eq_refl) (as0_free_null cfg0 BUDGET0) (as0_h4e BUDGET0)
-             (as0_icpt_ok cfg0 art_IL art_ILX BUDGET0 art_IL_ok art_ILX_ok ICPTX) (as0_sfree_ok cfg0 BUDGET0 eq_refl) PHI LIBA
-             (as0_dla_ok cfg0 art_IL art_IL_ok) (as0_drv_consts art_IL art_IL_ok)
-             (as0_drv_mainW cfg0 PHI art_L art_C art_IL LayA LStA BUDGET0 DLLA DLCA BUDA
-                (dg_openerr_ok cfg0 art_L art_C art_IL) (dg_short_ok cfg0 art_L art_C art_IL) (dg_overrun_ok cfg0 art_L art_C art_IL) (dg_refuse_ok cfg0 art_L art_C art_IL)
-                (dg_nofile_of_openerrW cfg0 PHI art_L art_C art_IL LayA LStA BUDGET0 (dg_openerr_ok cfg0 art_L art_C art_IL))
-                (dg_dot_ofW cfg0 PHI art_L art_C art_IL LayA LStA BUDGET0 DLLA BUDA (dg_openerr_ok cfg0 art_L art_C art_IL) (dg_readerr_ok cfg0 art_L art_C art_IL)))
-             (as0_usage_closed cfg0 art_L art_C art_IL art_ILX BUDGET0 BUDGET0_lo BUDGET0_hi (as0_inst_ok cfg0 BUDGET0 eq_refl) (as0_free_null cfg0 BUDGET0) (as0_h4e BUDGET0)
-                (as0_icpt_ok cfg0 art_IL art_ILX BUDGET0 art_IL_ok art_ILX_ok ICPTX) (as0_dla_ok cfg0 art_IL art_IL_ok) (as0_drv_consts art_IL art_IL_ok))
-             sp brk mbase rdraw argv envp (fs_seed_tmp ifs0 tmp0) stdin0 uid gid hw groups net nofile sigmask abt ifs0 urnd tmp0 Hsp Hbrk Hva Hve Hfit Hu Hhw Hvfs eq_refl PHIOK).
+    assert (EI : mkProcInput_full argv envp ifs0 stdin0 uid gid groups net nofile sigmask hw abt Sv48 urnd tmp0 kk execfn true sd false
+                 = AsanInitK.inp argv envp ifs0 stdin0 uid gid hw groups net nofile sigmask abt urnd tmp0 kk execfn sd)
+      by (unfold AsanInitK.inp; rewrite <- Hrk; reflexivity).
+    rewrite EI in *.
+    eapply as0_realizes_spec_run with (L := art_L) (C := art_C) (IL := art_IL) (LX := art_LX) (ILX := art_ILX)
+                                      (Lay := LayA) (LSt := LStA) (BUDGET := BUDGET0) (PHI := PHI) (fs := fs_seed_tmp ifs0 tmp0);
+      first [ reflexivity | exact BUDGET0_lo | exact BUDGET0_hi | eassumption
+            | exact (as0_inst_ok cfg0 BUDGET0 eq_refl) | exact (as0_instN_ok cfg0 BUDGET0 eq_refl)
+            | exact (as0_free_null cfg0 BUDGET0) | exact (as0_h4e BUDGET0)
+            | exact (as0_icpt_ok cfg0 art_IL art_ILX BUDGET0 art_IL_ok art_ILX_ok ICPTX) | exact (as0_sfree_ok cfg0 BUDGET0 eq_refl) | exact LIBA
+            | exact (as0_dla_ok cfg0 art_IL art_IL_ok) | exact (as0_drv_consts art_IL art_IL_ok)
+            | exact (as0_drv_mainW cfg0 PHI art_L art_C art_IL LayA LStA BUDGET0 DLLA DLCA BUDA
+                       (dg_openerr_ok cfg0 art_L art_C art_IL) (dg_short_ok cfg0 art_L art_C art_IL) (dg_overrun_ok cfg0 art_L art_C art_IL) (dg_refuse_ok cfg0 art_L art_C art_IL)
+                       (dg_nofile_of_openerrW cfg0 PHI art_L art_C art_IL LayA LStA BUDGET0 (dg_openerr_ok cfg0 art_L art_C art_IL))
+                       (dg_dot_ofW cfg0 PHI art_L art_C art_IL LayA LStA BUDGET0 DLLA BUDA (dg_openerr_ok cfg0 art_L art_C art_IL) (dg_readerr_ok cfg0 art_L art_C art_IL)))
+            | exact (as0_usage_closed cfg0 art_L art_C art_IL art_ILX BUDGET0 BUDGET0_lo BUDGET0_hi (as0_inst_ok cfg0 BUDGET0 eq_refl) (as0_free_null cfg0 BUDGET0) (as0_h4e BUDGET0)
+                       (as0_icpt_ok cfg0 art_IL art_ILX BUDGET0 art_IL_ok art_ILX_ok ICPTX) (as0_dla_ok cfg0 art_IL art_IL_ok) (as0_drv_consts art_IL art_IL_ok))
+            | exact PHIOK
+            | (vm_compute; reflexivity) ].
   Qed.
 End Hyps.
 End FPX_1.

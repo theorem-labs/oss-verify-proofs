@@ -1,4 +1,4 @@
-(* Ported by RtStr from cold/c-asan-rt-fmio-n affce6489c8 proofs/omx-clap-core/fuzz_manifest/lib/A/Spec/StrBytes.v, unchanged. *)
+(* Ported by RtStr from proofs/omx-clap-core/fuzz_manifest/lib/A/Spec/StrBytes.v, unchanged. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/omx-clap-core/fuzz_manifest/lib/A/Spec/StrBytes.v for reac-pw/fuzz_segconf.asan-ubsan (image B), with its module paths changed. *)
 From Stdlib Require Import ZArith Arith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

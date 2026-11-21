@@ -114,7 +114,7 @@
    `pf_arg`, `pf_parse`, `pf_text`): it is image-free, like link_spec.v, and is Required here, never Imported, so none
    of that file's plain-image definitions (`pf_img_free` and `printf_post` over `rsegs`) is used.
    THE FLOATING-POINT STATE is `aleaf_fx`'s. Entry: the shape takes `YK0o.frm_zero (fp_csr fx)`, which the
-   released printf-family contracts ask and the plain mark_quietly states (lib/Prog/mark_quietly_c.v:151); it
+   released printf-family contracts ask and the plain mark_quietly states (lib/Prog/mark_quietly_c.v:152); it
    holds at every call site, because the start-up fcsr is 0 (`fp_frm_zero_fx0`, Reusable/YK0o.v:15) and none
    of the 36 listings of link's own functions holds an f* or csr* instruction (checked over
    link-a/listings/*.fuzz_link.asan.s (36 internal records, the sha256 of each in the records MANIFEST)). Exit: `apostF`

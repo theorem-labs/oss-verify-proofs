@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: new file, block `ends` of image B's SEG_EXIT (fuzz_reply.asan-ubsan
    0x84f08-0x84fe8, lib/B/W_bx_defs.v lx_ends_S): the two nested loops after relay_finish that call
    check_shape_ends(&g_s[k], "", &at) for every open g_s[k] whose fd is order[i].  Ported from the PROVED image-A
-   donor b86949b953d lib/A/W_LLVMFuzzerTestOneInput_exit.v:3016-5868 (AX_call to the end
+   donor lib/A/W_LLVMFuzzerTestOneInput_exit.v:3017-5869 (AX_call to the end
    of lx_ends' proof: XEWalk, XETrans, the pure model lemmas, xe_call, the loops and lx_ends).
    B vs A, each read from the objdump of fuzz_reply.asan-ubsan (sha256
    10ffb5f9202ae2bdb01b7a49df9866843a6a6a0e0c50bc67cdba6ce2f6d3cf2c):
@@ -21,6 +21,7 @@
    - check_shape_ends is B's lx_cshe_spec (W_bx_defs.v): its stack budget is 112 + LDROP_STK, its post also keeps
      errno's view, and the prefix's home is one disjunction (taken here at its in_rom /\ ashp arm with XE_LIT_S).
    - the frame after the entry is bx_frame (aframe_at without F+152). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation FunctionalExtensionality.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -265,7 +266,7 @@ Definition xe_regs_slot (cx : lfcx) (i : Z) (k : nat) (n : Z) (regs : bvmap 5 wo
   getr regs 26 = w64 (lf_F cx + AX_ORDER + 4 * i) /\ getr regs 23 = w64 n.
 
 (* ============================================================ XEWalk: the tools of the four runs ======== *)
-(* The run chain of W_journal.v:632-703 (SRr_chain_pi_tok_AJX / SRr_run_to_pi_tok_AJX) without the journal: the
+(* The run chain of W_journal.v:633-704 (SRr_chain_pi_tok_AJX / SRr_run_to_pi_tok_AJX) without the journal: the
    same symbolic engine (YP0c.v sym_run_pi_tok_sound / sym_run_to_pi_tok_sound) and the same post, minus the
    journal clause.  xe_head_run / xe_inner_run / xe_adv_run carry no journal, so their runs use these. *)
 Definition xw_post (W : world segs) (E : env) (K : nat) (Bx : sv) (SH : list shent) (ss : sstate) (st' : shst)
@@ -1946,7 +1947,7 @@ Lemma xe_azs_sub : forall a n a' n', azs B a n -> a <= a' -> a' + n' <= a + n ->
 Proof.
   intros a n a' n' (r & Hin & H8 & Hlo & Hhi) H1 H2. exists r. split; [exact Hin|]. split; [exact H8|]. lia.
 Qed.
-(* a real-stack range passes every shadow check (W_check_shape_event.v:182 range_addressable_stack) *)
+(* a real-stack range passes every shadow check (W_check_shape_event.v:183 range_addressable_stack) *)
 Lemma xe_ra_stack : forall ly S (W : world segs) mem md a len,
   AR segs B ly S W mem md -> ly_stk_lo ly <= a -> a + len <= ly_stk_hi ly -> 0 <= len ->
   range_addressable (aview segs (w_H W) mem) SHADOW_OFF a len.

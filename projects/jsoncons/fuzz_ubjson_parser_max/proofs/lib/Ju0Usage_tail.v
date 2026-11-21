@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: decoded PRE7_word, SUF7_word, PRE7_len, SUF7_len and msg_usage_eq into plain statements, turned Section SE lemmas us_segH, us_segG, us_segCD into standalone lemmas, and added a ReaderOn context, Hrdr hypothesis and rdr argument to stdio_call_sound uses; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Ub0Usage_tail.v, 12 lines within its lines 35-785. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -28,20 +29,20 @@ Section FPX_1. Context {fx : PropExec.FPState}.
 Variable scfg : SpuriousCfg.
 Definition PRE7 : list byte := s2b "usage: "%string.
 Definition SUF7 : list byte := s2b " INPUT"%string ++ [Z_to_bv 8 10].
-Lemma PRE7_word : ltac2:(TCodec.tc2 tcn__Ju0Usage_tail "?';'6'R9y8%211%411&@u7&R8yR0+XQj\ecfRlkE%3221%6251&Q8%>3921").
+Lemma PRE7_word : word_to_le_bytes 7 (Z_to_bv 64 9071406455288693) = PRE7.
 Proof. vm_compute. repeat (apply (f_equal2 cons); [apply bv_eq; reflexivity|]). reflexivity. Qed.
-Lemma SUF7_word : ltac2:(TCodec.tc2 tcn__Ju0Usage_tail "?';'6'R9y8%211%411&@u7&R8yR0+RbdZeXTlbY0%3221%6251&Q9%>3921").
+Lemma SUF7_word : word_to_le_bytes 7 (Z_to_bv 64 2907475163367712) = SUF7.
 Proof. vm_compute. repeat (apply (f_equal2 cons); [apply bv_eq; reflexivity|]). reflexivity. Qed.
 Lemma pre7_img : ltac2:(TCodec.tc2 tcn__Ju0Usage_tail "H';'9'6'R9y8%211%411%611&Q>&QKyR0%811(0%118q031&R8+RTU4%2271u7%;4:521(2&Q8%22@1%G3@41").
 Proof. vm_compute. reflexivity. Qed.
 Lemma suf7_img : ltac2:(TCodec.tc2 tcn__Ju0Usage_tail "H';'9'6'R9y8%211%411%611&Q>&QKyR0%811(0%118q031&R8+RTU=%2271u7%;4:521(2&Q9%22@1%G3@41").
 Proof. vm_compute. reflexivity. Qed.
-Lemma PRE7_len : ltac2:(TCodec.tc2 tcn__Ju0Usage_tail ":';'7&5'R9y8%211&Q8%5221u7%93821"). Proof. reflexivity. Qed.
-Lemma SUF7_len : ltac2:(TCodec.tc2 tcn__Ju0Usage_tail ":';'7&5'R9y8%211&Q9%5221u7%93821"). Proof. reflexivity. Qed.
-Lemma msg_usage_eq : ltac2:(TCodec.tc2 tcn__Ju0Usage_tail "@'6'R9y8%211%411';&QEr1%211&3&Q8&Q9%33951%43:31%93:61pT6;1").
+Lemma PRE7_len : length PRE7 = 7%nat. Proof. reflexivity. Qed.
+Lemma SUF7_len : length SUF7 = 7%nat. Proof. reflexivity. Qed.
+Lemma msg_usage_eq : forall a0s, msg_usage a0s = PRE7 ++ a0s ++ SUF7.
 Proof. intros. unfold msg_usage, PRE7, SUF7. reflexivity. Qed.
 Section UTail.
-Context {RE : RunEnv}.
+Context {RE : RunEnv}. Context {RO : ReaderOn}.
 Variable sp0 : word.
 Variable BL : list (list byte).
 Variable model : Model.
@@ -49,6 +50,7 @@ Hypothesis Hvsp : valid_sp sp0.
 Hypothesis Hh : m_halted model = None.
 Hypothesis Hlazy : m_vm_lazy model = [].
 Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+Hypothesis Hrdr : m_channel_reader model = true.
 Definition ENV (vals : list word) : env := Env (vals_ev vals) (blobs_ev BL).
 Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
 Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
@@ -93,28 +95,17 @@ rewrite Z_to_bv_bv_unsigned; reflexivity
 | repeat split; krd_solve HK ]
 | left; split; [reflexivity|]; exists (Z_to_bv 64 0), (Z_to_bv 64 0); repeat split; krd_solve HK ]
 end end end.
-Section SE.
-Local Abbreviation SEC_T_us_segH := (ltac2:(TCodec.tc2 tcn__Ju0Usage_tail "R2'6'R9yR0%211%411&Cy5%2214'9y8%911%311p091';'7&5r3%22>1uX6%63521&QJr4(1%3221vR7%<3F21&QI&Q:r5%211&Q5%5321:&QH&QKr6%811&L%5442@1'QGvR6(A&Q=vR3&R8+cnYH%22Q;1&Q?%11>%756>3D1vR4%:221&QB&QD+2%211&B%117%6231%D4IC81p0F1p0M1p0Q41p0Q;1pQ:QC1pQ<QI1pTJQM1")) (only parsing).
-Variable vals : ltac:(sec_ty2 constr:(SEC_T_us_segH) 0%nat 0%nat).
-Variable R : ltac:(sec_ty2 constr:(SEC_T_us_segH) 1%nat 0%nat).
-Variable M : ltac:(sec_ty2 constr:(SEC_T_us_segH) 2%nat 0%nat).
-Lemma us_segH : ltac:(sec_stmt2 constr:(SEC_T_us_segH) 3%nat 0%nat).
+Lemma us_segH : ltac2:(TCodec.tc2 tcn__Ju0Usage_tail "R2'6'R9yR0%211%411&Cy5%2214'9y8%911%311p091';'7&5r3%22>1uX6%63521&QJr4(1%3221vR7%<3F21&QI&Q:r5%211&Q5%5321:&QH&QKr6%811&L%5442@1'QGvR6(A&Q=vR3&R8+cnYH%22Q;1&Q?%11>%756>3D1vR4%:221&QB&QD+2%211&B%117%6231%D4IC81p0F1p0M1p0Q41p0Q;1pQ:QC1pQ<QI1pTJQM1").
 Proof.
+intros vals R M.
 intros HL P0 HR HK.
 pose proof SPlo as Hlo. pose proof SPhi as Hhi.
 run_blk scr0 262%nat.
 close_exit_at HR HK P0 Hh Hlazy sp0 48%Z (-192)%Z.
 Qed.
-End SE.
-Section SE.
-Local Abbreviation SEC_T_us_segG := (ltac2:(TCodec.tc2 tcn__Ju0Usage_tail "SK'6'R9y8%211%411'>yR0%611%811&Cy5%2214'9%11:p071';&QO&5r5%22@1%411r4%73A21':&QNz%2218+R2%42:1%6231'7%>2H=uW6%B3321&QJr6(1%3221vR7%H3Q021r7uS@%8221&R8r8%22Q71%O3Q741&QI&Q:%115&Q2%4321;&QH&QKr9%711&I%5442A1%Q>1QF&Q>&R0&R:%12QHH+a9%4221%F2QK1r<%QB2R01%94?H31(2%12R24%QH3=31&QM%1297%O2R41u7%A4GF21&Q9%92R:1%R03E31'QGvR6(A&Q=vR3r;+cmS8%Q<2RA1r:&Q?%11Q5%8576431vR4%;221&QA&QC+2&QEr>%211%5241&QB&QD%117&B%11=%5231%=271%L4QGK?1p0N1p0Q71p0QF1p0QM1p0R31p0R;1p0RB1p0RG1p0RO1pQ:S81pQ<S<1pTJS@1pQ0SD1pT6SF1")) (only parsing).
-Variable a0s : ltac:(sec_ty2 constr:(SEC_T_us_segG) 0%nat 0%nat).
-Variable L : ltac:(sec_ty2 constr:(SEC_T_us_segG) 1%nat 0%nat).
-Variable vals : ltac:(sec_ty2 constr:(SEC_T_us_segG) 2%nat 0%nat).
-Variable R : ltac:(sec_ty2 constr:(SEC_T_us_segG) 3%nat 0%nat).
-Variable M : ltac:(sec_ty2 constr:(SEC_T_us_segG) 4%nat 0%nat).
-Lemma us_segG : ltac:(sec_stmt2 constr:(SEC_T_us_segG) 5%nat 0%nat).
+Lemma us_segG : ltac2:(TCodec.tc2 tcn__Ju0Usage_tail "SK'6'R9y8%211%411'>yR0%611%811&Cy5%2214'9%11:p071';&QO&5r5%22@1%411r4%73A21':&QNz%2218+R2%42:1%6231'7%>2H=uW6%B3321&QJr6(1%3221vR7%H3Q021r7uS@%8221&R8r8%22Q71%O3Q741&QI&Q:%115&Q2%4321;&QH&QKr9%711&I%5442A1%Q>1QF&Q>&R0&R:%12QHH+a9%4221%F2QK1r<%QB2R01%94?H31(2%12R24%QH3=31&QM%1297%O2R41u7%A4GF21&Q9%92R:1%R03E31'QGvR6(A&Q=vR3r;+cmS8%Q<2RA1r:&Q?%11Q5%8576431vR4%;221&QA&QC+2&QEr>%211%5241&QB&QD%117&B%11=%5231%=271%L4QGK?1p0N1p0Q71p0QF1p0QM1p0R31p0R;1p0RB1p0RG1p0RO1pQ:S81pQ<S<1pTJS@1pQ0SD1pT6SF1").
 Proof.
+intros a0s L vals R M.
 intros HP HPr HL P0 P112 HR HK SBp SBn.
 pose proof SPlo as Hlo. pose proof SPhi as Hhi.
 run_blk_keep scr0 230%nat.
@@ -146,7 +137,7 @@ by (rewrite msg_usage_eq, !length_app, PRE7_len, SUF7_len; reflexivity).
 pose proof u_itinerary as (_ & _ & _ & _ & _ & _ & _ & SC & _).
 lazymatch goal with |- srealizes _ _ (mkCfg (mkst ?Rc _ ?Mc _) _) _ =>
 apply (stdio_call_sound scfg vals (blobs_ev BL) u_srG u_knG Rc Mc model u_scG (msg_usage a0s) []
-(t_exit (exit_code 2) (m_fs model)) HR HK (eq_trans (f_equal (fun n => stdio_call n u_srG u_knG) HL) SC));
+(t_exit (exit_code 2) (m_fs model)) ltac:(rdr) HR HK (eq_trans (f_equal (fun n => stdio_call n u_srG u_knG) HL) SC));
 cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn u_scG]; rewrite ?LEN end.
 - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0, ?P112). unorm. lia.
 - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0, ?P112). unorm. lia.
@@ -170,7 +161,6 @@ eapply (us_segH (vals ++ junk_vals R2));
 | rewrite vals_ev_app_l by (rewrite HL; lia); exact P0
 | exact HR | exact HK ].
 Qed.
-End SE.
 Definition atUF0 (a0s : list byte) (L : Z) (T : TSet) : Prop :=
 forall vals R M,
 length vals = 198%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 112 = Z_to_bv 64 L ->
@@ -324,18 +314,9 @@ length vals = 166%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 1 = pp -> vals_ev 
 regs_ok (ENV vals) u_srE0 R -> know_ok RSEGS (ENV vals) M u_knD ->
 rdn RSEGS M pp (length a0s + 1) = Some (a0s ++ [Z_to_bv 8 0]) ->
 srealizes RSEGS scfg (mkCfg (mkst R (Z_to_bv 64 0x9f468) M (seg_rom RSEGS)) model) T.
-Section SE.
-Local Abbreviation SEC_T_us_segCD := (ltac2:(TCodec.tc2 tcn__Ju0Usage_tail "T<'6'R9y8%211%411yR0%511'>&Q@%913&Cy5%2216'9%11;p091';&QO&5r8%22A1%411r6%73@21':&QNzr7%3221+SooO%5231%7231&<&QL&R8%12Q19r:%43Q221%611'7%F2Q2BuS6%J3321&QJ(1%22B1vR7%O3Q921u1%62N1r<%Q33Q=21&R:%12Q@7r=%32QB1%O231&QMr>%72QF1%3216+8%5221+TPPP0%72;1%Q8231&QI&Q:r;%211&Q0%5321Q3&QH&QK%71H&F%4432Q81%R01R9&Q>rA&=rB%R02R?1%321Q3%64;@51(2&3(4(8%11RF%33RGQG1%53RH:1%72RH1%R=3@91%Q:2RI=%Q621@%QN2RK1u8%D4IQ@21r?%?2S01%RE3H31&Q;rDrC%3421HJ'QGvR6(A&Q=vR3+cmS8%R>2S;1&Q?%11Q9%655@3QI1vR4%9221%<4Q=;1Q5p0>1p0C1p0L1p0Q>1p0QD1p0QK1p0R51p0R;1p0R@1p0RF1p0RK1p0S31p0S<1pQ:SE1pQ<SI1pTJSM1pTHT31pT4T01pQ0T21pT<T41pT6T71")) (only parsing).
-Variable a0s : ltac:(sec_ty2 constr:(SEC_T_us_segCD) 0%nat 0%nat).
-Variable pp : ltac:(sec_ty2 constr:(SEC_T_us_segCD) 1%nat 0%nat).
-Variable L : ltac:(sec_ty2 constr:(SEC_T_us_segCD) 2%nat 0%nat).
-Variable T : ltac:(sec_ty2 constr:(SEC_T_us_segCD) 3%nat 0%nat).
-Variable t8 : ltac:(sec_ty2 constr:(SEC_T_us_segCD) 4%nat 0%nat).
-Variable vals : ltac:(sec_ty2 constr:(SEC_T_us_segCD) 5%nat 0%nat).
-Variable R : ltac:(sec_ty2 constr:(SEC_T_us_segCD) 6%nat 0%nat).
-Variable M : ltac:(sec_ty2 constr:(SEC_T_us_segCD) 7%nat 0%nat).
-Lemma us_segCD : ltac:(sec_stmt2 constr:(SEC_T_us_segCD) 8%nat 0%nat).
+Lemma us_segCD : ltac2:(TCodec.tc2 tcn__Ju0Usage_tail "T<'6'R9y8%211%411yR0%511'>&Q@%913&Cy5%2216'9%11;p091';&QO&5r8%22A1%411r6%73@21':&QNzr7%3221+SooO%5231%7231&<&QL&R8%12Q19r:%43Q221%611'7%F2Q2BuS6%J3321&QJ(1%22B1vR7%O3Q921u1%62N1r<%Q33Q=21&R:%12Q@7r=%32QB1%O231&QMr>%72QF1%3216+8%5221+TPPP0%72;1%Q8231&QI&Q:r;%211&Q0%5321Q3&QH&QK%71H&F%4432Q81%R01R9&Q>rA&=rB%R02R?1%321Q3%64;@51(2&3(4(8%11RF%33RGQG1%53RH:1%72RH1%R=3@91%Q:2RI=%Q621@%QN2RK1u8%D4IQ@21r?%?2S01%RE3H31&Q;rDrC%3421HJ'QGvR6(A&Q=vR3+cmS8%R>2S;1&Q?%11Q9%655@3QI1vR4%9221%<4Q=;1Q5p0>1p0C1p0L1p0Q>1p0QD1p0QK1p0R51p0R;1p0R@1p0RF1p0RK1p0S31p0S<1pQ:SE1pQ<SI1pTJSM1pTHT31pT4T01pQ0T21pT<T41pT6T71").
 Proof.
+intros a0s pp L T t8 vals R M.
 intros HP HPr Hnonul HL P0 P1 Hpp1 Hpp2 HR HK Hstr Ht8 HE0.
 pose proof SPlo as Hlo. pose proof SPhi as Hhi. pose proof (u64_range pp) as Hppr.
 assert (WOKS : win_ok (ENV vals) 0 0 4194304 IHI).
@@ -484,7 +465,6 @@ clearbody vals2.
 change (Env (vals_ev vals2) (blobs_ev BL)) with (ENV vals2) in HR, HK.
 eapply (HE0 vals2); eassumption.
 Qed.
-End SE.
 Lemma us_segB : ltac2:(TCodec.tc2 tcn__Ju0Usage_tail "T<'6'R9y8%211%411yR0%511'>&Q@%913&Cy5%2216'9%11;p091';&QO&5r8%22A1%411r6%73@21':&QNzr7%3221+SooO%5231%7231&<&QL&R8%12Q19r:%43Q221%611'7%F2Q2BuR6%J3321&QJ(1%22B1vR7%O3Q921u1%62N1r<%Q33Q=21&R:%12Q@7r=%32QB1%O231&QMr>%72QF1%3216+8%5221+TPPP0%72;1%Q8231&QI&Q:r;%211&O%5321Q3&QH&QK%71H&G%4432Q81%R01R9&Q>rA&=rB%R02R?1%321Q3%64;@51(2&3(4(8%11RF%33RGQG1%53RH:1%72RH1%R=3@91%Q:2RI=%Q621@%QN2RK1u8%D4IQ@21r?%?2S01%RE3H31&Q;rDrC%3421HJ'QGvR6(A&Q=vR3+cmS8%R>2S;1&Q?%11Q9%655@3QI1vR4%9221%<4Q=;1Q5p0>1p0C1p0L1p0Q>1p0QD1p0QK1p0R51p0R;1p0R@1p0RF1p0RK1p0S31p0S<1pQ:SE1pQ<SI1pTJSM1pTHT31pT4T01pQ0T21pT<T41pT6T71").
 Proof.
 intros a0s pp L T t8 vals R M HP HPr Hnonul HL P0 P1 Hpp1 Hpp2 HR HK Hstr Ht8 HE0.
@@ -548,7 +528,7 @@ apply (srz_conseq RSEGS scfg _ (t_emit (map (WriteEv (Z_to_bv 64 2)) ([] ++ []))
 pose proof u_itinerary as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & SC & _).
 lazymatch goal with |- srealizes _ _ (mkCfg (mkst ?Rc _ ?Mc _) _) _ =>
 apply (stdio_call_sound scfg vals (blobs_ev BL) u_srG3 u_knG3 Rc Mc model u_scG3 [] []
-(t_exit (exit_code 2) (m_fs model)) HR HK (eq_trans (f_equal (fun n => stdio_call n u_srG3 u_knG3) HL) SC));
+(t_exit (exit_code 2) (m_fs model)) ltac:(rdr) HR HK (eq_trans (f_equal (fun n => stdio_call n u_srG3 u_knG3) HL) SC));
 cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn u_scG3 length Z.of_nat] end.
 - lia.
 - first [lia | ed_lin ltac:(cbn [ev ENV]; rewrite ?P0); unorm; lia].
@@ -603,7 +583,7 @@ rewrite msg_usage_eq, app_assoc. unfold W.
 pose proof u_itinerary as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & SC & _).
 lazymatch goal with |- srealizes _ _ (mkCfg (mkst ?Rc _ ?Mc _) _) _ =>
 apply (stdio_call_sound scfg vals (blobs_ev BL) u_srF3 u_knF3 Rc Mc model u_scF3 (PRE7 ++ a0s) SUF7
-(t_exit (exit_code 2) (m_fs model)) HR HK (eq_trans (f_equal (fun n => stdio_call n u_srF3 u_knF3) HL) SC));
+(t_exit (exit_code 2) (m_fs model)) ltac:(rdr) HR HK (eq_trans (f_equal (fun n => stdio_call n u_srF3 u_knF3) HL) SC));
 cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn u_scF3];
 rewrite ?length_app, ?PRE7_len, ?SUF7_len end.
 - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0, ?P112). unorm. lia.
@@ -648,7 +628,7 @@ replace (W 2 SUF7) with (map (WriteEv (Z_to_bv 64 2)) (SUF7 ++ [])) by (unfold W
 pose proof u_itinerary as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & SC & _).
 lazymatch goal with |- srealizes _ _ (mkCfg (mkst ?Rc _ ?Mc _) _) _ =>
 apply (stdio_call_sound scfg vals (blobs_ev BL) u_srG4 u_knG4 Rc Mc model u_scG4 SUF7 []
-(t_exit (exit_code 2) (m_fs model)) HR HK (eq_trans (f_equal (fun n => stdio_call n u_srG4 u_knG4) HL) SC));
+(t_exit (exit_code 2) (m_fs model)) ltac:(rdr) HR HK (eq_trans (f_equal (fun n => stdio_call n u_srG4 u_knG4) HL) SC));
 cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn u_scG4];
 rewrite ?SUF7_len end.
 - ed_lin ltac:(cbn [ev ENV]; rewrite ?P0). unorm. lia.
@@ -710,7 +690,7 @@ unfold W at 1.
 pose proof u_itinerary as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & _ & SC & _).
 lazymatch goal with |- srealizes _ _ (mkCfg (mkst ?Rc _ ?Mc _) _) _ =>
 apply (stdio_call_sound scfg vals (blobs_ev BL) u_srE4 u_knE4 Rc Mc model u_scE4 PRE7 a0s
-(t_emit (W 2 SUF7) (t_exit (exit_code 2) (m_fs model))) HR HK
+(t_emit (W 2 SUF7) (t_exit (exit_code 2) (m_fs model))) ltac:(rdr) HR HK
 (eq_trans (f_equal (fun n => stdio_call n u_srE4 u_knE4) HL) SC));
 cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn u_scE4];
 rewrite ?PRE7_len end.

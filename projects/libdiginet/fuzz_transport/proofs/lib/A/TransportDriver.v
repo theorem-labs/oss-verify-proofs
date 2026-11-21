@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The G side of libdiginet/fuzz_transport's image-A driver statement: libreac/fuzz_pcap's lib/A/PcapDriver.v
-   (origin/ossv/recipes 198234fa4d3) reduced to its G content. PcapDriver.v states the driver obligation (cgif's AD1q.v
+   reduced to its G content. PcapDriver.v states the driver obligation (cgif's AD1q.v
    drv_mainX_stmt, DRV_MAINX) with its LIBX at pcap's program contract at the harness globals G_HARNESS. This core keeps
    grant's A/AD1q.v for that statement, so this file holds only what the G change adds to it:
    - the slot states its contract A/ACfn.v tfib_lib_contract_x at its own program-global ranges G (W_journalG.v's

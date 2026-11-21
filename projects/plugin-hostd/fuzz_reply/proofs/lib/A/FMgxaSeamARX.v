@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the two side laws of the ARx seam files (FMgxaSeamNormX.v / FMgxaSeamReadyX.v), PROVED at
    the cf instance and at reply's top_x instance ARX:
      LAY   : forall ly S Hp W mem md, ARx ly S Hp W mem md -> layout_ok ly
@@ -7,14 +8,14 @@
      BANDP : forall ly S Hp W mem md a, ARx ly S Hp W mem md -> in_band_rw a ->
                w_H W (w64 a) = false -> ~ in_vis0 ly a -> aview tfibsegs (w_H W) mem a <> None
              (preset's alx_band_pres, PSnpSnpRoot.v:96-98 / PSnpSeamReady.v:542-543 at
-             a working branch dad42dbecbc4).
+             a working branch).
    Generic part (any segs, B, CfImg, CfParams): layout_ok_cf from ARmcf's amc_layout (YG0ncf.v:217); band_pres_cf from
    ARcf's last conjunct `ahs B ly S (w_H W) mem` (YG0ncf.v:612), split on the byte: a client byte (a live chunk's user
    bytes or a fake frame's shadow) is visible by YG0qcf.client_band_vis_cf (amc_client); any other band byte that is
    not hidden and not in_vis0 is present by ahs_pres (YG0n.v:442-444), and a present visible band byte is readable
    (YG0q.aview_band, with the image env from ALedger_cf, YG0qcf.al_img_env_cf). The client / non-client split is
    decided under a double negation (the goal is a negation), so no axiom is used.
-   Instance part: ARX_seam is top_x's ARX (W_LLVMFuzzerTestOneInput_top_x.v:131-132) VERBATIM, so a plug at ARX is
+   Instance part: ARX_seam is top_x's ARX (W_LLVMFuzzerTestOneInput_top_x.v:132-133) VERBATIM, so a plug at ARX is
    `exact` up to unfolding; its AR_laws_x is top_x's ARX_laws proof (:133-138) restated over the seam files' segment
    name tfibsegs (AB1v.v, the same Asan.M.loaded_segments as W_tbl.v's frsegs = pa_segs PB_fr); ARX_LAY / ARX_BANDP
    are the two laws at ARX_seam. Then each ARx lemma of FMgxaSeamShadowX / NormX / PostX at ARX_seam (the plug

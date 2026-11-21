@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch input's kernel build): changed init_vm, init_vm_alloc_top. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap.
@@ -202,13 +203,15 @@ Record heap_iface_ok : Prop := HIOK {
 }.
 End Iface.
 
+(* LPS 08b1429: [init_model]'s ledger is [State.init_reserved], the image's reservations followed by
+   the vDSO pair of the run's kernel build [kb] (any build: nothing here constrains [kb]). *)
 Definition init_vm (L : heap_layout) (lim : Z) (VM : VmMaps) : Prop :=
-  exists brk0 mbase isp,
-    VM = mkVmMapsFull (segments_reserved (hl_segs L)) [] [] brk0 brk0 lim mbase isp /\
+  exists brk0 mbase isp (kb : KernelBuild),
+    VM = mkVmMapsFull (init_reserved (segments_reserved (hl_segs L)) mbase isp kb) [] [] brk0 brk0 lim mbase isp /\
     valid_brk (hl_segs L) brk0 /\ valid_mmap_base mbase /\ valid_sp isp /\ bv_unsigned isp = hl_sptop L.
 
 Lemma init_vm_alloc_top : forall L lim VM, init_vm L lim VM -> alloc_top VM = hl_ceil L.
 Proof.
-  intros L lim VM (brk0 & mbase & isp & -> & _ & _ & _ & Hsp).
+  intros L lim VM (brk0 & mbase & isp & kb & -> & _ & _ & _ & Hsp).
   unfold alloc_top. cbn [vm_init_sp]. rewrite Hsp. rewrite stack_max_size_val. reflexivity.
 Qed.

@@ -2,11 +2,12 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: the closing file of mix_call's ASan+UBSan walk (lib/B/Prog/mix_call.v,
    tmix_call_spec_holds), in the closing pattern of a Theorem Labs lane's PASS4-REFIT.md section F (the A model:
-   lib/A/Prog/SupRemoveAllRefitClosed.v on a working branch e84227c9553): the walk's Section hypotheses are discharged at
+   lib/A/Prog/SupRemoveAllRefitClosed.v on a working branch): the walk's Section hypotheses are discharged at
    the pinned image, the instance PB_cmd of a Theorem Labs lane's lib/B/Prog/CmdImg.v (whose segments are a Theorem Labs lane's tfibsegs) and
    the sink head YE2k.tfib_sink_head, both given by name: VOBJS is CmdRecRest's cmd_val_objs_PB and the image facts
    are CmdRecImg's cmd_img_facts_tfib. What remains is the allocator record HB and the statement's runtime entry
    ASTRLEN (the strlen wrapper's contract at every FP state). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,11 +1,11 @@
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeam02x.v (a working branch 0ddf65fd8cc); relocated to libreac/fuzz_disco.asan by reloc.py (target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table: this file's rows in provenance/evidence/g9-gxa/g9tool/g9-table-disco-A.tsv). *)
-(* Modified by Theorem Labs, 2026-10: relocated onto libreac/fuzz_disco from a working branch 0ddf65fd8cc proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeam02x.v by reloc.py target disco-A (image-neutral, one copy at lib/A for both images): module paths only; no address numeral. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeam02x.v (a working branch); relocated to libreac/fuzz_disco.asan by reloc.py (target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table: this file's rows in provenance/evidence/g9-gxa/g9tool/g9-table-disco-A.tsv). *)
+(* Modified by Theorem Labs, 2026-10: relocated onto libreac/fuzz_disco from a working branch proofs/omx-clap-core/fuzz_manifest/lib/A/FMgxaSeam02x.v by reloc.py target disco-A (image-neutral, one copy at lib/A for both images): module paths only; no address numeral. *)
 (* R1 row R-02x, the conversion %02x (Px02) at the seam, on W0's per-piece arms (FMgxaSeamPf.v :98-111): the text arm,
    the model-arguments arm (the ARGS facts: a %02x argument is an AInt v, and GXA's model takes PA_u (v mod 2^32), which
    pt_parg_ok allows), and the bytes arm; then a NON-VACUITY control at fuzz_disco's own format.
    New file beside FMgxaSeamPf.v; nothing in it is edited.
    - the text arm needs the one equation PT.pf_hex2 = pf_hex2 (an induction over the digit fuel, pt_pf_hexs; the same
-     two lemmas as fuzz_disco's lib/A/FMgxaSeamPf.v at a working branch 5a2af4f2707);
+     two lemmas as fuzz_disco's lib/A/FMgxaSeamPf.v at a working branch);
    - the bytes arm: every digit pf_hexd d of pf_hexs is a byte, and so are the zeros pf_hex2 pads with;
    - the control: fuzz_disco.c:592's "%02x:%02x:%02x:%02x:%02x:%02x" (29 bytes at .rodata 0x20f80 in both images, read
      from the pinned image libreac/fuzz_disco.asan, sha256 5e39150dd8104df9...), with six concrete AInt

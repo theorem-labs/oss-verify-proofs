@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths and module names changed; 104 of its 139 lines of code are new or changed and 479 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* On the Step-1 contract texts (the re-hiding move): row T5 at the re-hiding contract.
    crtB_T5's text is unchanged; CRT_B_SEG_T5 (CRT_B_AT_L3 -> CRT_B_AT_C -> CRT_B_AT_L0) now
    means its three cuts at YA0nH.SRr' SEGS YGcfRehidePost.RZ_cf. The journal at R := YA0nH.wle' SEGS RZ_cf. No HOS4
@@ -26,7 +27,7 @@
    prh_wk F_check_round_trip, and so do the row's inner cuts (the notation liveB); the stretch files keep the journal's
    budget across their runs and strcmp calls. crtB_T5's statement is unchanged.
 
-   INPUTS OF RECORD: base commit cbe6d10993c2 (candidate base) (Crt102Glue.v, Crt102Model.v,
+   INPUTS OF RECORD: base (candidate base) (Crt102Glue.v, Crt102Model.v,
    lib/B/Prog/Crt102KitB.v, lib/A/Prog/Crt102Kit.v, lib/A/PRH_Supply.v, lib/A/PRH_PjOrder.v pj_foR_frame); lib/B/Prog/Crt102B_T7_kit.v /
    Crt102B_T7_tree.v BY PATH as in Crt102B_T6.v; rows T6's Crt102B_T6_st.v / Crt102B_T6.v.
 *)
@@ -113,7 +114,7 @@ Hypothesis HLED0 : prh_ledger B ly S Hp W mem Lam peak cnt SIZE_MAXZ ran most 0.
 (* the text's own request bound (PRH_FnCheck.v tcheck_round_trip_specX): every ledger request is within g_most *)
 Hypothesis HRQA : RQA_crt t <= most.
 (* the read-only string "modifiedAt" the at-search compares with: the text's own `kept_img B a_mod_at 11` at the
-   instance's a_mod_at := CRT_MOD_AT_B (Crt102Img.v:1024) *)
+   instance's a_mod_at := CRT_MOD_AT_B (Crt102Img.v:1025) *)
 Hypothesis HKMA : @kept_img _ B_prog_listing PA B (@CRT_MOD_AT_B _ PA) (Z.of_nat (length ck_MOD_AT) + 1).
 (* NAMED HYPOTHESES BOK (asyms_ok B; owner image B's start-up record) and IMGVIS (the image's shadow is
    visible in every ARx state; owner the instance owner, img_shadow_vis_cf), as row T7's Crt102B_T7_tree.v takes them for its

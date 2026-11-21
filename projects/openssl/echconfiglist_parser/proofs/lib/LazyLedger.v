@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap cuts the range out of the ledger: adds munmap_vmmapsD and munmap_modelD over maps_subtract, the lemmas reading that cut as a filtered map_remove, and the eager_used_munmap_leD bound). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -1022,6 +1023,197 @@ Proof.
           destruct Hd as [Hd | [Hd | Hd]]; [lia | lia | subst e; cbn in Hne; exact (Hne eq_refl)]. }
       rewrite !andb_true_r. reflexivity. }
   (* [comment removed for export] *)
+  unfold map_remove. clear - Hin. induction (vm_maps (m_vmmaps m)) as [|e X IH]; [destruct Hin|].
+  cbn [List.filter eagerZ]. destruct Hin as [-> | Hin].
+  - cbn [fst]. replace (bv_eqb a a) with true by (unfold bv_eqb; symmetry; apply Z.eqb_refl). cbn [negb].
+    pose proof (eagerZ_map_remove_le X a (cuts m)) as Hle. unfold map_remove in Hle. lia.
+  - specialize (IH Hin). pose proof (rem_bounds e (cuts m)).
+    destruct (negb (bv_eqb (fst e) a)); cbn [eagerZ]; lia.
+Qed.
+
+(* At 727298f3 a successful munmap CUTS the range out of the ledger
+   ([Mmap.mmap_fixed_destroyed_next], which MmapSim.munmap_model applies) instead of
+   removing the whole entry based at [a].  On a ledger with no overlap that holds
+   (a, n), the cut is [map_remove] less the zero-size entries based at a + n, which
+   carry no byte.  Copied from boost-beast/http_request As/LazyLedger.v (the same
+   file in that unit); the [map_remove] forms above stay beside these, unchanged. *)
+Definition nz_at (z : Z) (e : word * word) : bool :=
+  negb ((bv_unsigned (snd e) =? 0) && (bv_unsigned (fst e) =? z)).
+
+Definition ms_cond (a n : word) (e : word * word) : Prop :=
+  (fst e = a /\ (snd e = n \/ bv_unsigned (snd e) = 0))
+  \/ (fst e <> a /\ (hi e <= lo (a, n) \/ hi (a, n) <= lo e)).
+
+Lemma ll_iv_subtract_outside : forall (b s : word) l h,
+  0 < bv_unsigned s -> l < h ->
+  (bv_unsigned b + bv_unsigned s <= l \/ h <= bv_unsigned b) ->
+  iv_subtract b s l h = [(b, s)].
+Proof.
+  intros b s l h Hs Hlh Hd. unfold iv_subtract. cbv zeta.
+  destruct Hd as [Hd|Hd].
+  - rewrite (proj2 (Z.ltb_lt (bv_unsigned b) l)) by lia.
+    rewrite (proj2 (Z.ltb_ge h (bv_unsigned b + bv_unsigned s))) by lia.
+    rewrite Z.min_l by lia. rewrite Z_to_bv_bv_unsigned. reflexivity.
+  - rewrite (proj2 (Z.ltb_ge (bv_unsigned b) l)) by lia.
+    rewrite (proj2 (Z.ltb_lt h (bv_unsigned b + bv_unsigned s))) by lia.
+    rewrite Z.max_l by lia.
+    replace (bv_unsigned b + bv_unsigned s - bv_unsigned b) with (bv_unsigned s) by lia.
+    rewrite !Z_to_bv_bv_unsigned. reflexivity.
+Qed.
+
+Lemma iv_subtract_entry : forall (a n b s : word),
+  0 < bv_unsigned n -> ms_cond a n (b, s) ->
+  iv_subtract b s (bv_unsigned a) (bv_unsigned a + bv_unsigned n)
+  = if negb (bv_eqb b a) && nz_at (bv_unsigned a + bv_unsigned n) (b, s) then [(b, s)] else [].
+Proof.
+  intros a n b s Hn Hc. unfold ms_cond, lo, hi in Hc. cbn [fst snd] in Hc.
+  pose proof (bv_unsigned_in_range _ a) as Ra. pose proof (bv_unsigned_in_range _ b) as Rb.
+  pose proof (bv_unsigned_in_range _ s) as Rs.
+  destruct Hc as [(-> & Hs) | (Hne & Hd)].
+  - assert (E : bv_eqb a a = true) by (unfold bv_eqb; apply Z.eqb_refl). rewrite E. cbn [negb andb].
+    unfold iv_subtract. cbv zeta. rewrite Z.ltb_irrefl.
+    destruct Hs as [-> | Hs].
+    + rewrite Z.ltb_irrefl. reflexivity.
+    + rewrite (proj2 (Z.ltb_ge (bv_unsigned a + bv_unsigned n) (bv_unsigned a + bv_unsigned s))) by lia. reflexivity.
+  - assert (Hu : bv_unsigned b <> bv_unsigned a) by (intros Hu; apply Hne; apply bv_eq; exact Hu).
+    assert (E : bv_eqb b a = false) by (unfold bv_eqb; apply Z.eqb_neq; exact Hu). rewrite E. cbn [negb andb].
+    unfold nz_at. cbn [fst snd].
+    destruct (Z.eqb_spec (bv_unsigned s) 0) as [S0|S0]; cbn [andb negb].
+    + destruct (Z.eqb_spec (bv_unsigned b) (bv_unsigned a + bv_unsigned n)) as [BE|BE]; cbn [negb].
+      * unfold iv_subtract. cbv zeta.
+        rewrite (proj2 (Z.ltb_ge (bv_unsigned b) (bv_unsigned a))) by lia.
+        rewrite (proj2 (Z.ltb_ge (bv_unsigned a + bv_unsigned n) (bv_unsigned b + bv_unsigned s))) by lia.
+        reflexivity.
+      * unfold iv_subtract. cbv zeta.
+        destruct Hd as [Hd|Hd].
+        -- rewrite (proj2 (Z.ltb_lt (bv_unsigned b) (bv_unsigned a))) by lia.
+           rewrite (proj2 (Z.ltb_ge (bv_unsigned a + bv_unsigned n) (bv_unsigned b + bv_unsigned s))) by lia.
+           rewrite Z.min_l by lia. rewrite Z_to_bv_bv_unsigned. reflexivity.
+        -- rewrite (proj2 (Z.ltb_ge (bv_unsigned b) (bv_unsigned a))) by lia.
+           rewrite (proj2 (Z.ltb_lt (bv_unsigned a + bv_unsigned n) (bv_unsigned b + bv_unsigned s))) by lia.
+           rewrite Z.max_l by lia.
+           replace (bv_unsigned b + bv_unsigned s - bv_unsigned b) with (bv_unsigned s) by lia.
+           rewrite !Z_to_bv_bv_unsigned. reflexivity.
+    + apply ll_iv_subtract_outside; [lia | lia | lia].
+Qed.
+
+Lemma maps_subtract_rm_nz_gen : forall X (a n : word),
+  0 < bv_unsigned n -> (forall e, In e X -> ms_cond a n e) ->
+  maps_subtract X (bv_unsigned a) (bv_unsigned a + bv_unsigned n)
+  = List.filter (nz_at (bv_unsigned a + bv_unsigned n)) (map_remove X a).
+Proof.
+  induction X as [|[b s] X IH]; intros a n Hn HC; [reflexivity|].
+  cbn [maps_subtract].
+  rewrite (iv_subtract_entry a n b s Hn (HC _ (or_introl eq_refl))).
+  rewrite (IH a n Hn (fun e He => HC e (or_intror He))).
+  unfold map_remove. cbn [List.filter fst].
+  destruct (negb (bv_eqb b a)); cbn [andb List.filter app];
+    destruct (nz_at (bv_unsigned a + bv_unsigned n) (b, s)); reflexivity.
+Qed.
+
+Lemma ll_nooverlap_In : forall X e e',
+  nooverlap X -> In e X -> In e' X -> e = e' \/ hi e <= lo e' \/ hi e' <= lo e.
+Proof.
+  induction X as [|x X IH]; intros e e' H He He'; [destruct He|].
+  destruct H as [H1 H2]. destruct He as [<-|He], He' as [<-|He'].
+  - left; reflexivity.
+  - right. destruct (H1 _ He') as [D|D]; [left|right]; exact D.
+  - right. destruct (H1 _ He) as [D|D]; [right|left]; exact D.
+  - exact (IH _ _ H2 He He').
+Qed.
+
+Lemma maps_subtract_rm_nz : forall X (a n : word),
+  0 < bv_unsigned n -> nooverlap X -> In (a, n) X ->
+  maps_subtract X (bv_unsigned a) (bv_unsigned a + bv_unsigned n)
+  = List.filter (nz_at (bv_unsigned a + bv_unsigned n)) (map_remove X a).
+Proof.
+  intros X a n Hn Hno Hin. apply maps_subtract_rm_nz_gen; [exact Hn|].
+  intros [b s] He. unfold ms_cond. cbn [fst snd].
+  pose proof (bv_unsigned_in_range _ s) as Rs.
+  destruct (ll_nooverlap_In X (b, s) (a, n) Hno He Hin) as [E | D].
+  - injection E as -> ->. left. split; [reflexivity | left; reflexivity].
+  - destruct (Z.eq_dec (bv_unsigned b) (bv_unsigned a)) as [Eu | Hu].
+    + assert (Eb : b = a) by (apply bv_eq; exact Eu). subst b.
+      left. split; [reflexivity|]. right. unfold lo, hi in D. cbn [fst snd] in D. lia.
+    + right. split; [intros Eb; apply Hu; rewrite Eb; reflexivity|]. destruct D as [D|D]; [left|right]; exact D.
+Qed.
+
+Lemma eagerZ_filter_le : forall f X C, eagerZ (List.filter f X) C <= eagerZ X C.
+Proof.
+  intros f X. induction X as [|e X IH]; intros C; cbn [List.filter eagerZ]; [lia|].
+  pose proof (rem_bounds e C) as RB. pose proof (IH C) as IC.
+  destruct (f e); cbn [eagerZ]; lia.
+Qed.
+
+Lemma entries_nowrap_filter : forall f X, entries_nowrap X -> entries_nowrap (List.filter f X).
+Proof. intros f X H p Hp. apply filter_In in Hp. apply H. exact (proj1 Hp). Qed.
+
+(* The revision's own munmap ledger builder: [munmap_vmmapsD] is definitionally
+   [Mmap.mmap_fixed_destroyed_next], so [LazyNodes.munmap_model_eqD] is [reflexivity]. *)
+Definition munmap_vmmapsD (h : VmMaps) (a n : word) : VmMaps :=
+  mkVmMapsFull (vm_reserved h) (maps_subtract (vm_maps h) (bv_unsigned a) (bv_unsigned a + bv_unsigned n))
+    (maps_subtract (vm_noaccess h) (bv_unsigned a) (bv_unsigned a + bv_unsigned n))
+    (vm_start_brk h) (vm_brk h) (vm_limit h) (vm_mmap_base h) (vm_init_sp h).
+
+Definition munmap_modelD (a n : word) (m : Model) : Model :=
+  with_mmap_destroyed a n (munmap_vmmapsD (m_vmmaps m) a n) m.
+
+Lemma munmap_modelD_vmmaps : forall a n m, m_vmmaps (munmap_modelD a n m) = munmap_vmmapsD (m_vmmaps m) a n.
+Proof. intros. unfold munmap_modelD, with_mmap_destroyed. rewrite m_vmmaps_vm_forget_range. apply m_vmmaps_with_vmmaps. Qed.
+
+Lemma munmap_modelD_lazy : forall a n m,
+  m_vm_lazy (munmap_modelD a n m)
+  = maps_subtract (m_vm_lazy m) (bv_unsigned a) (bv_unsigned a + bv_unsigned n).
+Proof. intros. unfold munmap_modelD, with_mmap_destroyed. rewrite m_vm_lazy_vm_forget_range, m_vm_lazy_with_vmmaps. reflexivity. Qed.
+
+Lemma munmap_modelD_materialized : forall a n m,
+  m_vm_materialized (munmap_modelD a n m)
+  = List.filter (page_outside_range (bv_unsigned a) (bv_unsigned a + bv_unsigned n)) (m_vm_materialized m).
+Proof. intros. unfold munmap_modelD, with_mmap_destroyed. rewrite m_vm_materialized_vm_forget_range, m_vm_materialized_with_vmmaps. reflexivity. Qed.
+
+Lemma munmap_modelD_nonvm : forall a n m,
+  m_fd (munmap_modelD a n m) = m_fd m
+  /\ m_io (munmap_modelD a n m) = m_io m
+  /\ m_fsys (munmap_modelD a n m) = m_fsys m
+  /\ m_proc (munmap_modelD a n m) = m_proc m
+  /\ m_lim (munmap_modelD a n m) = m_lim m
+  /\ m_time (munmap_modelD a n m) = m_time m.
+Proof. intros a n [fd [maps lazy mat] io fs proc lim tm]. cbn. repeat split; reflexivity. Qed.
+
+(* The [map_remove] shape of this bound is not recoverable (a zero-size entry based at
+   exactly a + n survives [map_remove] and is dropped by [maps_subtract]) and it is not
+   needed: the cut ledger is [map_remove] under a FILTER, and [eagerZ_filter_le] only
+   loses bytes, so the inequality goes through with no entries-nonzero premise. *)
+Lemma eager_used_munmap_leD : forall a n m,
+  entries_nowrap (vm_maps (m_vmmaps m)) ->
+  entries_nowrap (vm_noaccess (m_vmmaps m)) -> entries_nowrap (m_vm_lazy m) ->
+  nooverlap (vm_maps (m_vmmaps m)) -> In (a, n) (vm_maps (m_vmmaps m)) -> 0 < bv_unsigned n ->
+  eager_used (munmap_modelD a n m) + rem (a, n) (cuts m) <= eager_used m.
+Proof.
+  intros a n m HX HNA HL Hdisj Hin Hn.
+  pose proof (maps_subtract_rm_nz _ a n Hn Hdisj Hin) as EQ.
+  rewrite (eager_used_cuts (munmap_modelD a n m))
+    by (rewrite munmap_modelD_vmmaps; cbn [vm_maps munmap_vmmapsD]; rewrite EQ;
+        apply entries_nowrap_filter; apply entries_nowrap_map_remove; exact HX).
+  rewrite (eager_used_cuts m HX), munmap_modelD_vmmaps. cbn [vm_maps munmap_vmmapsD]. rewrite EQ.
+  eapply Z.le_trans; [apply Z.add_le_mono_r; apply eagerZ_filter_le|].
+  rewrite (eagerZ_cuts_ext_on (map_remove (vm_maps (m_vmmaps m)) a) (cuts m) (cuts (munmap_modelD a n m))).
+  2:{ intros e x He Hx. apply map_remove_In in He. destruct He as [He Hne].
+      unfold cuts. rewrite munmap_modelD_vmmaps, munmap_modelD_lazy. cbn [vm_noaccess munmap_vmmapsD].
+      pose proof (lo_nonneg (a, n)) as H0. pose proof (lo_hi (a, n)) as H1. unfold lo, hi in H0, H1. cbn [fst snd] in H0, H1.
+      rewrite !zcovb_app, !zcovb_maps_subtract by assumption.
+      replace (zinb (bv_unsigned a) (bv_unsigned a + bv_unsigned n) x) with false.
+      2:{ symmetry. apply zinb_false. intros Hxr.
+          assert (Hd : hi e <= lo (a, n) \/ hi (a, n) <= lo e \/ e = (a, n)).
+          { clear - Hdisj He Hin. induction (vm_maps (m_vmmaps m)) as [|e1 X IH]; [destruct He|].
+            destruct Hdisj as [H1 H2]. destruct He as [<- | He], Hin as [E | Hin].
+            - right; right; exact E.
+            - pose proof (H1 _ Hin); lia.
+            - subst e1. pose proof (H1 _ He); lia.
+            - exact (IH H2 Hin He). }
+          assert (Hxr' : lo (a, n) <= x < hi (a, n)) by exact Hxr.
+          destruct Hd as [Hd | [Hd | Hd]]; [lia | lia | subst e; cbn in Hne; exact (Hne eq_refl)]. }
+      rewrite !andb_true_r. reflexivity. }
   unfold map_remove. clear - Hin. induction (vm_maps (m_vmmaps m)) as [|e X IH]; [destruct Hin|].
   cbn [List.filter eagerZ]. destruct Hin as [-> | Hin].
   - cbn [fst]. replace (bv_eqb a a) with true by (unfold bv_eqb; symmetry; apply Z.eqb_refl). cbn [negb].

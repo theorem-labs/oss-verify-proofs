@@ -1,9 +1,10 @@
-(* CARRIED from commit a0fed4266a1b18b1453af093bfe2ee477dcbe241,
+(* CARRIED from
    proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcfPres.v, sha256 653e8a62b57e6ccad948b9ea01cbdc57620fcfe7b8da8663093d43701a4d9b7b.
    DO NOT EDIT in this tree: change it on that branch and carry it again. The only change
    made here is the module prefix OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib -> OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: what acall_post_cf (YG0dcf.v:57-65) gives about PRESENCE (apresent, YG0n.v:28-29).
    The frame clause keeps the VIEW (aview) of every byte outside aowned B ly S, aowned B ly' S', ascratch and E.
    A kept view is a kept presence only off the loaded segments: aview falls back to seg_rom when the memory has

@@ -18,10 +18,18 @@
     harness.  Every statement quantifies over all of these cases and over every
     other process input (see Vocabulary in OSSVerify.Core.Shapes).
 
-    WHAT THE HARNESS CHECKS.  No summary of this harness is recorded yet; its
-    checks, if any, are listed below.  The harness makes no check of its own
-    beyond not crashing, so a statement about it says only that the code it
-    calls never crashes, hangs or trips a sanitizer.
+    WHAT THE HARNESS CHECKS.  Copies the input (Size from 8 to 1024 bytes) into
+    a string and, after ts_session_protocol_well_known_name_indices_init
+    registers the well-known protocol names, converts it, read as a
+    comma-separated list of ALPN protocol names, to ALPN wire format with
+    convert_alpn_to_wire_format into a 30-byte (MAX_ALPN_STRING) buffer, and
+    drops the result and the buffer. Before those calls it installs a new Diags
+    object with DiagsPtr::set, and it deletes that object after. It returns -1
+    for an input with Size below 8 or above 1024.  The harness makes no check of
+    its own beyond not crashing.  Its halts statements say only that the code it
+    calls never crashes, hangs or trips a sanitizer.  Its agreement statements
+    say only that the code never crashes or trips a sanitizer, and allow a run
+    that never ends.
 
     Whether each statement is open, proved or known false is recorded in the
     harness README, not here: this file changes only when a statement does. *)

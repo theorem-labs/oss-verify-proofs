@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the section takes the run's rseq flag rz, which XSTMT (APS.x_stmt) now carries. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -57,6 +58,8 @@ Proof. exact both_popfree_spec. Qed.
 Section AsanNodes.
 Variable nx0 : nat.
 Variable LIMIT : Z.
+(* the run's rseq flag as 0/1; [APS.x_stmt] carries it because [node_x] does *)
+Variable rz : Z.
 Variable SINV : AX2.env -> (word -> option byte) -> Prop.
 Variable argH : AX2.env -> word -> bool.
 Hypothesis argH_high : forall E (a : word), argH E a = true -> AP.CEIL <= bv_unsigned a.
@@ -65,7 +68,7 @@ Hypothesis SINV_frame : forall E M M', (forall a, argH E a = true -> M' a = M a)
 Hypothesis SINV_agree : forall E E' M, env_agree nx0 E E' -> SINV E M -> SINV E' M.
 Variable FS0 : Fs.Fs.
 
-#[local] Notation XSTMT := (APS.x_stmt BSEGS AP.BOTH nx0 LIMIT SINV argH FS0).
+#[local] Notation XSTMT := (APS.x_stmt BSEGS AP.BOTH nx0 LIMIT rz SINV argH FS0).
 
 #[local] Ltac close_with NODE SPEC :=
   eapply NODE; try eassumption;

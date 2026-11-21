@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the new launch (process input, auxv, group id, exec file name); taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Src0Startup1.v, lines 16, 29-41, 46-55, 104, 134. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
@@ -20,33 +21,40 @@ Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Abbreviation RPH := Plain.M.phdrs.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S8 Require PropExec.
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib.S8 Require Import BMode.
+Local Set Default Proof Using "All".
 Section FPX_1. Context {fx : PropExec.FPState}. Context {bmK : BMode}.
 
 Definition regs_init (sp0 : word) : bvmap 5 word :=
   regupd (regupd bvmap_empty 10 (Z_to_bv 64 0)) 2 sp0.
 
 Section P1.
-  Variable sp0 : word.
-  Variables av ev : list (list byte).
-  Variable uid : word.
-  Variable hw : word.
+  Variable v : VaSize.
+  Variable inp : ProcInput.
+  Variable mbase entry : word.
+  Variable sp0 brk : word.
   Variable rdraw : EntryDraw.
+  Local Notation av := (in_argv inp) (only parsing).
+  Local Notation ev := (in_envp inp) (only parsing).
+  Local Notation uid := (in_uid inp) (only parsing).
+  Local Notation hw := (in_hwcap inp) (only parsing).
   Hypothesis Hva : valid_argv av.
   Hypothesis Hve : valid_envp ev.
+  Hypothesis Hvl : valid_launch inp.
+  Hypothesis Hlau : entry_launch_ok_va v (mkEntry sp0 brk mbase rdraw) inp.
   Hypothesis Hlo : (0x7fff80000000 <= bv_unsigned sp0)%Z.
   Hypothesis Hhi : (bv_unsigned sp0 <= 0x800000000000)%Z.
   Hypothesis Hal : (bv_unsigned sp0 mod 16 = 0)%Z.
 
-  Local Notation mem0 := (wrap_mem RPH sp0 av ev uid hw rdraw) (only parsing).
-  Local Notation CM := (cmem sp0 (wrap_mem RPH sp0 av ev uid hw rdraw)) (only parsing).
+  Local Notation mem0 := (wrap_mem inp mbase RPH entry sp0 rdraw) (only parsing).
+  Local Notation CM := (cmem sp0 (wrap_mem inp mbase RPH entry sp0 rdraw)) (only parsing).
 
-  Let argc : word := argcN av.
+  Let argc : word := argcN inp.
   Local Notation argvp := (Z_to_bv 64 (bv_unsigned sp0 + 8)) (only parsing).
-  Let envp : word := envp_ptr sp0 av.
-  Let pn : word := cat_argv_ptr sp0 av ev 0.
+  Let envp : word := envp_ptr inp sp0.
+  Let pn : word := cat_argv_ptr (ed_top rdraw) av ev (in_execfn inp) 0.
 
   Lemma u_argc : bv_unsigned argc = Z.of_nat (length av).
-  Proof. exact (u_argcN av Hva). Qed.
+  Proof. exact (u_argcN inp Hva). Qed.
 
   Lemma len_av : (1 <= Z.of_nat (length av) <= 1024)%Z.
   Proof. destruct Hva as [[H1 H2] _]. lia. Qed.
@@ -90,21 +98,18 @@ Section P1.
       stepn F_343ac D_343ac.
       stepn F_343b0 D_343b0.
       stepiv F_343b4 D_343b4 sp0 ltac:(gres; imm_norm; apply v_andi_m16_aligned; exact Hal).
-
       stepn F_343b8 D_343b8.
-
       chain_step; [reflexivity | eapply step_lw with (bs := word_to_le_bytes 4 argc) (v := argc);
         [ exact F_343bc | reflexivity | exact D_343bc
         | addr_norm; rewrite rdn_cmem_above by region_side;
           apply (rdn_low_bytes SEGS mem0 sp0 argc 4); [lia|];
-          exact (read_argc_w SEGS RPH sp0 av ev uid hw rdraw Hva Hve Hhi)
+          eapply read_argc_w; first [exact Hva | exact Hvl | exact Hlau | exact Hlo | exact Hhi]
         | apply bytes_le_to_Z_4_small; rewrite Hargc; lia ]
         | step_simpl]; vnorm.
       rewrite (v_lw_small argc) by (rewrite Hargc; lia).
       stepn F_343c0 D_343c0.
       stepn F_343c4 D_343c4.
       stepn F_343c8 D_343c8.
-
       chain_step; [reflexivity | eapply step_ld with (v := Z_to_bv 64 0x34544);
         [exact F_343cc | reflexivity | exact D_343cc | rd_img img_b80d0_8 | vm_compute; reflexivity] | step_simpl]; vnorm.
       chain_step; [reflexivity | eapply step_ld with (v := Z_to_bv 64 0x9b48c);
@@ -115,7 +120,6 @@ Section P1.
       stepn F_343dc D_343dc.
       stepn F_343e0 D_343e0.
       stepn F_343e4 D_343e4.
-
       sv F_9b6b0 D_9b6b0 (Z_to_bv 64 (bv_unsigned sp0 - 32)).
       stw F_9b6b4 D_9b6b4 (Z_to_bv 64 (bv_unsigned sp0 - 8)) (Z_to_bv 64 0) ltac:(ok_win HJ).
       stw F_9b6b8 D_9b6b8 (Z_to_bv 64 (bv_unsigned sp0 - 16)) (Z_to_bv 64 0) ltac:(ok_win HJ).
@@ -124,25 +128,20 @@ Section P1.
       stepn F_9b6c4 D_9b6c4.
       stepn F_9b6c8 D_9b6c8.
       stepn F_9b6cc D_9b6cc.
-
       chain_step; [reflexivity | eapply step_ld with (bs := word_to_le_bytes 8 pn) (v := pn);
         [ exact F_9b6d0 | reflexivity | exact D_9b6d0
         | addr_norm; rewrite rdn_cmem_above by region_side;
           replace (Z_to_bv 64 (bv_unsigned sp0 + 8)) with (sp0 + nat_to_word (8 + 8 * 0))
             by (rewrite word_add_nat; f_equal; lia);
-          exact (read_argv_ptr_w SEGS RPH sp0 av ev uid hw rdraw Hva Hve Hlo Hhi 0 ltac:(lia))
+          eapply read_argv_ptr_w; first [exact Hva | exact Hvl | exact Hlau | exact Hlo | exact Hhi | lia]
         | apply bytes_le_to_Z_8 ]
         | step_simpl]; vnorm.
       stepiv F_9b6d4 D_9b6d4 (Z_to_bv 64 (8 * Z.of_nat (length av)))
         ltac:(gres; imm_norm; rewrite <- Hargc; unfold v_slli; f_equal; rewrite Z.shiftl_mul_pow2 by lia; change (2^3)%Z with 8%Z; lia).
-
       stepiv F_9b6d8 D_9b6d8 (Z_to_bv 64 (bv_unsigned sp0 + 8 + 8 * Z.of_nat (length av))) vclose.
-
       stepiv F_9b6dc D_9b6dc envp
         ltac:(gres; imm_norm; unfold envp, envp_ptr, v_addi; unorm; f_equal; lia).
-
       stepn F_9b6e0 D_9b6e0.
-
       sv F_9b438 D_9b438 (Z_to_bv 64 (bv_unsigned sp0 - 416)).
       stw F_9b43c D_9b43c (Z_to_bv 64 (bv_unsigned sp0 - 40)) (Z_to_bv 64 0x9b73c) ltac:(ok_win HJ).
       stw F_9b440 D_9b440 (Z_to_bv 64 (bv_unsigned sp0 - 48)) (Z_to_bv 64 (bv_unsigned sp0 + 8)) ltac:(ok_win HJ).

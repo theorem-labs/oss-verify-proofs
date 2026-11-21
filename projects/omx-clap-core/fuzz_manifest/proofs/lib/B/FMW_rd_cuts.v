@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_rd_cuts.v on a working branch e2e59892bef: re-designed for B's code (cut invariants with B's registers, frame slots and pcs). *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_rd_cuts.v on a working branch: re-designed for B's code (cut invariants with B's registers, frame slots and pcs). *)
 (* lv2_locate_manifest_readings on fm.asan-ubsan: the semantic invariants at the walk's interface cuts and the segment
    statements (A's lib/A/FMW_rd_cuts.v with B's registers, frame slots and pcs).
    Interface cuts (every segment file builds its own symbolic states from these Props):

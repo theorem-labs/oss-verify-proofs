@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgSat.v at b08119c041c; the same witness for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgSat.v; the same witness for
    image B (fuzz_role.asan-ubsan) on lib/AU/Img0.v's rsegs: image B's globals table 0x9f380, its registration words,
    its nine strings, its five read-only doubles, its refuse table 0x9a920 and its eleven callee entries
    (pod_write_ent is added: image B calls it out of line). *)

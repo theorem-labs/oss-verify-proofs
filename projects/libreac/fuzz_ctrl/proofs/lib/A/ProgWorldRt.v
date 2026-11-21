@@ -2,22 +2,22 @@
    rt_of_core_stmt (Section RtOfCore) and RT_used_of_AR_stmt (Section RtUsed).  Written by a Theorem Labs lane; one
    writer.  lib/A/ProgWorld.v is a Theorem Labs lane's file and is NOT edited here: it is only Required.
 
-   BUILD (type-check only, iteration evidence, never acceptance): rc=0 on FACTS ed6b6b7b0ab with PAU
-   pau-libreac-v190, workspace (internal path) (a copy of (internal path) at a working branch 7ba9fe2f48), and `Print Assumptions
+   BUILD (type-check only, iteration evidence, never acceptance): rc=0 on FACTS with PAU
+   pau-libreac-v190, workspace (internal path) (a copy of (internal path) at a working branch), and `Print Assumptions
    rt_of_core` lists Rocq primitives only (PrimInt63.*, PrimString.*, PrimArray.array).  That build needs
-   three LOCAL, NEVER COMMITTED stand-ins which replace port_core_refused_X by 0xX (planning core
-   5d7c5ab2616): lib/A/AF0l.v, lib/A/AE2k.v, lib/A/AF0m.v.  lib/A/ACtlK.v and lib/A/ACtlCut.v need none:
-   they are on the branch from 878cb7afbc4 (a Theorem Labs lane's frozen cut interface d3d572ab8f6).
+   three LOCAL, NEVER COMMITTED stand-ins which replace port_core_refused_X by 0xX (planning core):
+   lib/A/AF0l.v, lib/A/AE2k.v, lib/A/AF0m.v.  lib/A/ACtlK.v and lib/A/ACtlCut.v need none:
+   they are on the branch (a Theorem Labs lane's frozen cut interface).
 
    rule 24: NO function of the image is proved here.  Both lemmas are program-world facts about the core's own
    state: ctrl's narrowed runtime table ProgWorld.RT_used at a memory, from the core's AR.
 
    SHAPE (a Theorem Labs lane, 03:32Z).  RT_rest_of_AR, below, is every RT_used conjunct EXCEPT shadow_rw, from
    CtrlTSyms + AR alone.  It needs NO AR_states_vis0_shadow: each conjunct is one constant row of the bundle's
-   table (ARm.am_const, Reusable/YG0n.v:211), which under CtrlTSyms (ts_const, A/AF0m.v:310) IS image A's
-   Tfib_const (A/AF0m.v:279), read through the aview -> mrd bridge of lib/A/ProgWorld_Fs.v.  Then
+   table (ARm.am_const, Reusable/YG0n.v:211), which under CtrlTSyms (ts_const, A/AF0m.v:311) IS image A's
+   Tfib_const (A/AF0m.v:280), read through the aview -> mrd bridge of lib/A/ProgWorld_Fs.v.  Then
      RT_used_of_AR = RT_rest_of_AR + shadow_rw, the latter from the file of record for that one conjunct,
-                     lib/A/ProgWorldRtShadow.v (a Theorem Labs lane, afdf6883c32; its premises and binder
+                     lib/A/ProgWorldRtShadow.v (a Theorem Labs lane; its premises and binder
                      order are RT_used_of_AR_stmt's, so it applies with no adapter);
      rt_of_core   = RT_rest_of_AR at the cut's AR -- the FIRST conjunct of Reusable.YCbq.ajournal
                     (Reusable/YCbq.v:354) -- + shadow_rw from the carried A.ACtlCut.ctl_rt (A/ACtlCut.v:192).
@@ -45,7 +45,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Mem.
 Import ListNotations.
 Local Open Scope Z_scope.
 
-(* The journal's sink_head is the core's own instance, as A.ACfn resolves it (A/AE2k.v:44). *)
+(* The journal's sink_head is the core's own instance, as A.ACfn resolves it (A/AE2k.v:45). *)
 #[local] Existing Instance A.AE2k.tfib_sink_head.
 
 Notation segs := A.AB1v.tfibsegs (only parsing).

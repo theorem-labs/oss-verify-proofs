@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -66,7 +67,7 @@ Lemma od_tail : forall (Σ : rts RT) (K : config -> Prop) (usp S1 F lo IMPL idx 
     (ra t0 t1 t2 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s8 s9 s11 t3 t4 t5 t6 : word) FR fc (m : mem)
     (j0 j136 j256 j432 h0 l12 l13 l14 l15 l16 l17 l18 pre8 mid rest : list byte),
   S1 mod 32 = 0 -> usp - 560 <= S1 <= usp - 544 -> usp mod 16 = 0 -> usp + 16 <= USTACK_TOP ->
-  rt_sp0 RT Σ - STACK_WIN <= lo -> lo + OD_NEED <= S1 -> frm0 fc ->
+  rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + OD_NEED <= S1 -> frm0 fc ->
   ART RT Σ m -> mem_inv bsegs m -> stk bsegs m lo S1 ->
   rt_frames RT Σ = [(F, 3%nat)] ->
   rt_live RT Σ = (ia, nia) :: (oc, noc) :: (idx, nidx) :: (IMPL, 96) :: vblockA A cap size ++ L0 ->
@@ -225,7 +226,7 @@ Proof using AF FDO MST RTF DTOR VDES AFV.
               l12 l13 l14 l15 l16 l17 l18 j432 F2 fc2 m2); [ul| ul| ul| ul| ul| exact LC248| exact SHp| exact LC4| exact MI2]. }
   cbv beta. intros ms3 (m3 & -> & MU3 & WM3 & MI3 & SHp3 & LC43). cbn [map repeat] in SHp3.
   apply evt_done.
-  assert (SP2' : rt_sp0 RT Σ2 - STACK_WIN <= lo) by (rewrite SP2; exact LOW).
+  assert (SP2' : rt_sp0 RT Σ2 - STACK_SPAN <= lo) by (rewrite SP2; exact LOW).
   pose proof (art_of_munch RT AF Σ2 m2 m3 lo _ ART2 SP2' FP2 MU3 WM3) as ART3.
   assert (AG3 : agree_on (fun x => ~ (F / 8 + 2147450880 + 12 <= x < F / 8 + 2147450880 + 19) /\ ~ (S1 + 432 <= x < S1 + 440)) m2 m3)
     by (apply (agree_of_munch _ _ _ _ MU3); intros x [H1 H2]; cbn [outside]; split; [exact H1| split; [exact H2| exact I]]).
@@ -276,7 +277,7 @@ Proof using AF FDO MST RTF DTOR VDES AFV.
                          ltac:(apply ACH4; clear - Hx; lia) ltac:(fail)).
   replace (ret_pc (Z_to_bv 64 0x9ba48)) with (Z_to_bv 64 0x9ba48) by (symmetry; apply ret_pc_even; [lia| reflexivity]).
   assert (INF4 : In (F, 3%nat) (rt_frames RT Σ4)) by (rewrite FRS4; exact INF2).
-  assert (SP4' : rt_sp0 RT Σ4 - STACK_WIN <= lo) by (rewrite SP4; exact SP2').
+  assert (SP4' : rt_sp0 RT Σ4 - STACK_SPAN <= lo) by (rewrite SP4; exact SP2').
 
   assert (FP5 : fp_ok RT Σ4 lo [(F / 8 + 2147450880 + 4, F / 8 + 2147450880 + 7); (F, F + 8)]).
   { apply Forall_cons; [| apply Forall_cons; [| apply Forall_nil]]; cbn [fst snd].

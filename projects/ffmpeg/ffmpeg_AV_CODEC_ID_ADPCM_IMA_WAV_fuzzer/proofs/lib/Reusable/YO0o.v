@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YO0o.v, with its module paths changed. *)
 (* Modified by Trevor Hansen, 2026-11: copied from projects/zlib/checksum_fuzzer/proofs/lib/Reusable/YO0o.v for ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (free_leaf04_res takes free_credit on the granted paths). *)
 From OSSVerify.Proofs.ffmpeg.ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -110,8 +111,8 @@ Proof.
 intros HW Hin HR Hp. pose proof (free_reqs_ok s p n HW Hin) as RQ.
 pose proof (free_leaf04_keep s b (Some p) tr u s' RQ HR Hp) as HK.
 unfold rb_free. destruct (MMAP_THRESHOLD <? n) eqn:E; [|exact HK]. apply Z.ltb_lt in E.
-pose proof (free_credit s p n HW (proj1 HR) Hin E) as [_ HL].
-pose proof (leaves_cpath04 _ _ _ _ HL Hp) as [C1 C2]. cbn [snd] in C1, C2.
+(* [free_credit] holds on the granted ([cpath04]) paths, which is what [Hp] is. *)
+pose proof (free_credit s p n HW (proj1 HR) Hin E tr (u, s') Hp) as [C1 C2]. cbn [snd] in C1, C2.
 destruct HR as (_ & B1 & B2 & B3 & B4). destruct HK as (II' & P1 & P2 & P3 & P4).
 unfold res_ok. cbn. repeat split; try exact II'; try lia. all: apply II'.
 Qed.

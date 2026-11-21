@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the facts of the old block layout (the 160-byte auxv, the old argv addresses and string block, the 8 MiB stack window) give way to the model's zero-filled stack window and the start state's own layout facts per CONFIG_RSEQ value, the size bound counts the vDSO pair's reservations, and the facts are read against the hand-off states the build computes through a renaming fM read off probes of the run, in place of the recorded states and their hint lists. *)
 (* [comment removed for export] *)
-From Stdlib Require Import ZArith NArith List Bool.
-From OSSVerify.Proofs.simdjson.fuzz_parser.lib.AS Require Import AxSymExec3 AsanPlan MainExport MainHint StartupHS2Asan.
+From Stdlib Require Import ZArith NArith List Bool Lia.
+From OSSVerify.Proofs.simdjson.fuzz_parser.lib.AS Require Import AxSymExec3 AsanPlanCore AsanPlan AsanPlanImages MainExport MainHint MainRename PlanRegen AsanStartupCert2.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations. Import AX2. Import AP.
 Open Scope Z_scope.
@@ -259,7 +260,6 @@ Definition asan_mem_facts : list mfact := [
   ; MCell (ZLit 6696656) 8 (ZLit 6696664)   (* [comment removed for export] *)
   ; MCell (ZLit 6696672) 8 (ZLit 978432)   (* [comment removed for export] *)
   ; MCell (ZLit 6696928) 8 (ZLit 544284)   (* [comment removed for export] *)
-  ; MCell (ZLit 6697208) 8 (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 184))   (* [comment removed for export] *)
   ; MCell (ZLit 6697216) 1 (ZLit 1)   (* [comment removed for export] *)
   ; MCell (ZLit 6697224) 8 (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 24))   (* [comment removed for export] *)
   ; MCell (ZLit 6697232) 8 (ZLit 6696576)   (* [comment removed for export] *)
@@ -464,7 +464,7 @@ Definition asan_mem_facts : list mfact := [
   ; MFill (ZLit 2148271201) 3 249   (* [comment removed for export] *)
   ; MZero (ZLit 2148271204) 17820   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  ; MWr (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit (-8388608))) 8388608   (* [comment removed for export] *)
+  ; MWr (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit (-6144513))) 6144513   (* LPS 727298f3: the zero-filled window [STK_ZDEPTH] = 6144513 below sp *)
   ; MCell (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit (-48))) 8 (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit 8))   (* [comment removed for export] *)
   ; MCell (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit (-40))) 8 (ZLit 0)   (* [comment removed for export] *)
   ; MCell (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit (-32))) 8 (ZLit 0)   (* [comment removed for export] *)
@@ -472,31 +472,8 @@ Definition asan_mem_facts : list mfact := [
   ; MCell (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit (-16))) 8 (ZLit 0)   (* [comment removed for export] *)
   ; MCell (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit (-8))) 8 (ZLit 0)   (* [comment removed for export] *)
   ; MRo (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) 8 (ZV 1)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit 8)) 8 (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 184))   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit 16)) 8 (ZMul (ZLtu (ZLit 1) (ZV 1)) (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZV 3) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10))))))) (ZLit 185)))   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 24)) 8 (ZLit 3)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 32)) 8 (ZLit 65600)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 40)) 8 (ZLit 4)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 48)) 8 (ZLit 56)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 56)) 8 (ZLit 5)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 64)) 8 (ZLit 11)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 72)) 8 (ZLit 16)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 80)) 8 (ZV 9)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 88)) 8 (ZLit 6)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 96)) 8 (ZLit 4096)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 104)) 8 (ZLit 11)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 112)) 8 (ZV 8)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 120)) 8 (ZLit 12)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 128)) 8 (ZV 8)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 136)) 8 (ZLit 23)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 144)) 8 (ZLit 0)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 152)) 8 (ZLit 25)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 160)) 8 (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 8) (ZV 4)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10))))))) (ZLit 184))   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 168)) 8 (ZLit 0)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 176)) 8 (ZLit 0)   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  ; MBlobD (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 8) (ZV 4)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10))))))) (ZLit 184)) 16   (* [comment removed for export] *)
   (* [comment removed for export] *)
   ; MWrS (ZAdd (ZAdd (ZMul (ZLit 4096) (ZV 0)) (ZMul (ZLit 512) (ZV 10))) (ZLit 2146402304)) (ZAdd (ZAdd (ZMul (ZLit (-4096)) (ZV 0)) (ZMul (ZLit (-512)) (ZV 10))) (ZLit 17592187092992))   (* [comment removed for export] *)
   ; MZeroS (ZAdd (ZAdd (ZMul (ZLit 4096) (ZV 0)) (ZMul (ZLit 512) (ZV 10))) (ZLit 2146402304)) (ZAdd (ZAdd (ZMul (ZLit (-4096)) (ZV 0)) (ZMul (ZLit (-512)) (ZV 10))) (ZLit 17592187092992))   (* [comment removed for export] *)
@@ -979,7 +956,6 @@ Definition asan_pure_facts : list pfact := [
   ; PVar 1 1 1024   (* [comment removed for export] *)
   ; PVar 2 0 256   (* [comment removed for export] *)
   ; PVar 3 0 131071   (* [comment removed for export] *)
-  ; PVar 4 0 280000   (* [comment removed for export] *)
   ; PVar 5 1637 525925   (* [comment removed for export] *)
   ; PVar 6 0 255   (* [comment removed for export] *)
   ; PVar 7 0 131071   (* [comment removed for export] *)
@@ -1015,8 +991,6 @@ Definition asan_pure_facts : list pfact := [
   ; PRange (ZAdd (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit (-4096)) (ZV 344))) (ZLit 3935)) 0 4095   (* [comment removed for export] *)
   ; PRange (ZAdd (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit (-4096)) (ZV 344))) (ZLit 3935)) 0 4095   (* [comment removed for export] *)
   ; PRange (ZAdd (ZMul (ZLit (-4096)) (ZV 209)) (ZAnd (ZMul (ZLit 4096) (ZV 208)) (ZLit 65535))) 0 0   (* [comment removed for export] *)
-  ; PRange (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 8) (ZV 4)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10))))))) (ZLit 200)) 140735340871872 140737488355328   (* [comment removed for export] *)
-  ; PRange (ZAdd (ZMul (ZLit 4096) (ZV 0)) (ZAdd (ZV 1) (ZAdd (ZV 2) (ZAdd (ZV 4) (ZAdd (ZMul (ZLit 2) (ZV 6)) (ZMul (ZLit 512) (ZV 10))))))) 17591917608961 17592186044391   (* [comment removed for export] *)
   ; PRange (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) 140735340871680 140737488355136   (* [comment removed for export] *)
   ; PRange (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZMul (ZLit 4096) (ZV 10))) 140735340871680 140737488351232   (* [comment removed for export] *)
   ; PRange (ZAdd (ZMul (ZLit 4096) (ZV 0)) (ZAdd (ZMul (ZLit 2) (ZV 6)) (ZMul (ZLit 512) (ZV 10)))) 17591917608960 17592186044392   (* [comment removed for export] *)
@@ -1283,45 +1257,55 @@ Definition asan_ledger : list lentry := [
 ].
 
 (* [comment removed for export] *)
-Definition asan_totsz : Z := 17729665003520.   (* [comment removed for export] *)
+Definition asan_totsz : Z := 17729665085440.   (* [comment removed for export] *)
 Definition asan_ylo : Z := 23387528589312.     (* [comment removed for export] *)
 Definition asan_eager : Z := 16519168.   (* [comment removed for export] *)
 Definition asan_abytes : Z := 2461256192.  (* [comment removed for export] *)
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)
-Definition asan_mem_hints_w1 : list N := [3; 2; 805; 804; 803; 800; 793; 799; 814; 792; 779; 782; 781; 780; 629; 630; 778; 777; 776; 775; 774; 770; 772; 771; 773; 924; 890; 889; 923; 918; 905; 917; 916; 915; 914; 922; 921; 920; 919; 912; 852; 913; 911; 910; 904; 909; 908; 907; 906; 925; 1; 6; 5; 432; 461; 426; 0; 286; 45; 285; 424; 425; 824; 838; 823; 825; 827; 826; 851; 850; 821; 819; 822; 841; 768; 769; 536; 973; 848; 936; 849; 795; 794; 537; 544; 543; 542; 541; 539; 538; 540; 725; 731; 724; 686; 698; 696; 728; 727; 726; 723; 722; 721; 730; 720; 729; 745; 744; 743; 572; 742; 741; 660; 664; 663; 576; 668; 667; 666; 736; 735; 734; 733; 732; 740; 739; 738; 737; 926; 9; 839; 815; 971; 891; 935; 842; 844; 853; 854; 855; 856; 857; 858; 859; 860; 861; 862; 863; 864; 865; 866; 867; 868; 869; 870; 871; 872; 873; 874; 875; 876; 877; 878; 879; 880; 881; 882; 883; 884; 885; 886; 887; 888; 845; 631; 846; 847; 762; 626; 767; 489; 470; 469; 490; 514; 493; 513; 494; 899; 898; 897; 896; 903; 902; 901; 900; 895; 547; 554; 553; 552; 551; 549; 548; 550; 545; 546; 555; 894; 893; 892; 165; 155; 145; 135; 74; 64; 118; 54; 43; 107; 1007; 1002; 1001; 997; 1000; 996; 990; 983; 982; 981; 986; 988; 655; 820; 984; 985; 979; 991; 577; 632; 992; 993; 980; 1155; 763; 766; 765; 764; 1003; 989; 1006; 999; 995; 994; 998; 1004; 1005; 567; 560; 564; 565; 556; 557; 558; 559; 563; 817; 818; 816; 656; 840; 972; 843; 1154; 1053; 1054; 1055; 1056; 1057; 1058; 1059; 1060; 1061; 1062; 1063; 1064; 1065; 1066; 1067; 1068; 1069; 1070; 1071; 1072; 1073; 1074; 1075; 1076; 1077; 1078; 1079; 1080; 1081; 1082; 1083; 1084; 1085; 1086; 1087; 1088; 1089; 1090; 1091; 1092; 1093; 1094; 1095; 1096; 1097; 1098; 1099; 1100; 1101; 1102; 1103; 1104; 1107; 1108; 1109; 1110; 1111; 1112; 1113; 1114; 1115; 1116; 1117; 1118; 1119; 1120; 1121; 1128; 1122; 1123; 1124; 1125; 1126; 1127; 1128; 1129; 1130; 1131; 1132; 1133; 1134; 1135; 1136; 1137; 1138; 1139; 1140; 1141; 1142; 1143; 1144; 1145; 1146; 1147; 1148; 1149; 1150; 1151; 1152; 1153; 1051; 1052; 1050; 939; 940; 434; 435; 429; 430; 941; 159; 942; 149; 943; 139; 944; 129; 945; 125; 126; 946; 122; 947; 111; 112; 948; 101; 949; 97; 98; 950; 94; 951; 91; 952; 88; 953; 85; 954; 82; 955; 78; 79; 956; 68; 957; 58; 958; 48; 959; 37; 960; 4; 961; 34; 962; 31; 963; 28; 964; 25; 965; 22; 966; 19; 967; 16; 968; 13; 969; 10; 970; 1025; 1008; 974; 975; 976; 977; 978; 1026; 1027; 1028; 1029; 1030; 1031; 1032; 1033; 1034; 1035; 1036; 1037; 1038; 1039; 1040; 1041; 1042; 1043; 1044; 1045; 1046; 1047; 1048; 1049; 937; 938; 930; 441; 440; 439; 433; 431; 428; 427; 164; 163; 158; 157; 154; 153; 148; 147; 144; 143; 138; 137; 134; 133; 128; 127; 124; 123; 121; 120; 117; 116; 110; 109; 106; 105; 100; 99; 96; 95; 93; 92; 90; 89; 87; 86; 84; 83; 81; 80; 77; 76; 73; 72; 67; 66; 63; 62; 57; 56; 53; 52; 47; 46; 42; 41; 36; 35; 33; 32; 30; 29; 27; 26; 24; 23; 21; 20; 18; 17; 15; 14; 12; 11; 8; 7; 929; 831; 832; 830; 797; 798; 796; 749; 657; 601; 600; 654; 653; 652; 750; 603; 602; 599; 578; 751; 515; 752; 748; 703; 687; 691; 704; 662; 690; 705; 575; 661; 692; 706; 574; 659; 707; 573; 695; 694; 708; 693; 689; 688; 709; 658; 710; 701; 697; 702; 673; 665; 674; 671; 672; 637; 638; 628; 627; 639; 635; 636; 584; 585; 579; 586; 582; 583; 497; 498; 463; 464; 499; 495; 496; 473; 466; 471; 472; 443; 436; 437; 438; 444; 442; 288; 284; 289; 283; 290; 282; 291; 281; 292; 280; 293; 156; 152; 151; 150; 278; 295; 277; 296; 44; 40; 39; 38; 275; 298; 274; 299; 273; 300; 272; 301; 271; 302; 270; 303; 211; 362; 269; 304; 268; 305; 267; 306; 266; 307; 265; 308; 264; 309; 263; 310; 262; 311; 261; 312; 65; 61; 60; 59; 259; 314; 258; 315; 257; 316; 256; 317; 255; 318; 254; 319; 195; 378; 253; 320; 252; 321; 192; 381; 251; 322; 250; 323; 249; 324; 248; 325; 247; 326; 246; 327; 146; 142; 141; 140; 244; 329; 243; 330; 108; 104; 103; 102; 241; 332; 240; 333; 239; 334; 238; 335; 237; 336; 236; 337; 177; 396; 235; 338; 234; 339; 233; 340; 232; 341; 231; 342; 230; 343; 229; 344; 228; 345; 227; 346; 119; 115; 114; 113; 225; 348; 224; 349; 223; 350; 222; 351; 221; 352; 220; 353; 279; 294; 219; 354; 218; 355; 276; 297; 217; 356; 216; 357; 215; 358; 214; 359; 213; 360; 212; 361; 136; 132; 131; 130; 210; 363; 209; 364; 208; 365; 207; 366; 206; 367; 205; 368; 204; 369; 203; 370; 202; 371; 260; 313; 201; 372; 200; 373; 199; 374; 198; 375; 197; 376; 196; 377; 166; 162; 161; 160; 194; 379; 193; 380; 55; 51; 50; 49; 191; 382; 190; 383; 189; 384; 188; 385; 187; 386; 186; 387; 245; 328; 185; 388; 184; 389; 242; 331; 183; 390; 182; 391; 181; 392; 180; 393; 179; 394; 178; 395; 75; 71; 70; 69; 176; 397; 175; 398; 174; 399; 173; 400; 172; 401; 171; 402; 170; 403; 169; 404; 168; 405; 226; 347; 167; 406; 287; 491; 465; 462; 1105; 1106; 492; 468; 467; 474]%N.
-Lemma asan_mem_facts_justified_w1 :
-  forallb (mjustify (s_know (a_ss HS_asan2_1)) (var_ranges (s_know (a_ss HS_asan2_1))) 65536 6705152) (asan_mem_facts ++ asan_mem_facts_w1) = true.
-Proof. apply (mjust_hints_sound _ _ _ _ _ asan_mem_hints_w1). vm_cast_no_check (@eq_refl bool true). Qed.
-(* [comment removed for export] *)
-Definition asan_pure_hints_w1 : list N := [1009; 1017; 1018; 1019; 1023; 1024; 1010; 1020; 1021; 1022; 1011; 987; 932; 834; 809; 801; 786; 754; 712; 676; 641; 614; 517; 517; 588; 523; 523; 522; 521; 521; 520; 519; 501; 476; 446; 408; 518; 518; 802; 1012; 1013; 1014; 1015; 1016; 606; 605; 829; 807; 784; 607; 747; 608; 700; 609; 670; 610; 634; 612; 581; 528; 532; 534; 530; 604; 928; 833; 835; 836; 812; 790; 760; 718; 684; 650; 624; 597; 511; 487; 459; 422; 808; 810; 811; 789; 759; 717; 683; 649; 623; 596; 510; 486; 458; 421; 785; 787; 788; 758; 716; 682; 648; 622; 595; 509; 485; 457; 420; 753; 755; 756; 757; 715; 681; 647; 621; 594; 508; 484; 456; 419; 711; 713; 714; 680; 646; 620; 593; 507; 483; 455; 418; 675; 677; 678; 679; 645; 619; 592; 506; 482; 454; 417; 640; 642; 643; 644; 618; 591; 505; 481; 453; 416; 613; 615; 616; 617; 587; 589; 590; 504; 480; 452; 415; 527; 526; 526; 525; 525; 524; 500; 502; 503; 479; 451; 414; 475; 477; 478; 450; 413; 445; 447; 448; 449; 412; 407; 409; 410; 411; 931; 933; 934; 837; 813; 791; 761; 719; 685; 651; 625; 598; 512; 488; 460; 423; 828; 806; 783; 746; 699; 669; 633; 611; 580; 529; 533; 535; 531; 927; 516]%N.
-Lemma asan_pure_facts_justified_w1 :
-  forallb (pjustify (s_know (a_ss HS_asan2_1)) (var_ranges (s_know (a_ss HS_asan2_1)))) (asan_pure_facts ++ asan_pure_facts_w1) = true.
-Proof. apply (pjust_hints_sound _ _ _ asan_pure_hints_w1). vm_cast_no_check (@eq_refl bool true). Qed.
-Lemma asan_vis_justified_w1 :
-  vis_match (var_ranges (s_know (a_ss HS_asan2_1))) (a_vis HS_asan2_1) asan_vis_app = true /\ vis_match (var_ranges (s_know (a_ss HS_asan2_1))) (a_ghost HS_asan2_1) asan_ghost = true.
-Proof. split; vm_cast_no_check (@eq_refl bool true). Qed.
-Lemma asan_ledger_justified_w1 :
-  ledger_xmatch (var_ranges (s_know (a_ss HS_asan2_1))) (a_maps HS_asan2_1) asan_ledger = true.
-Proof. vm_cast_no_check (@eq_refl bool true). Qed.
-Lemma asan_consts_w1 : a_totsz HS_asan2_1 = asan_totsz /\ a_ylo HS_asan2_1 = asan_ylo /\ a_eager HS_asan2_1 = asan_eager /\ a_abytes HS_asan2_1 = asan_abytes.
-Proof. repeat split; reflexivity. Qed.
-(* [comment removed for export] *)
-Definition asan_mem_hints_w2 : list N := [3; 2; 804; 803; 802; 799; 792; 798; 813; 791; 778; 781; 780; 779; 628; 629; 777; 776; 775; 774; 773; 769; 771; 770; 772; 923; 889; 888; 922; 917; 904; 916; 915; 914; 913; 921; 920; 919; 918; 911; 851; 912; 910; 909; 903; 908; 907; 906; 905; 924; 1; 6; 5; 432; 461; 426; 0; 286; 45; 285; 424; 425; 823; 837; 822; 824; 826; 825; 850; 849; 820; 818; 821; 840; 767; 768; 535; 972; 847; 935; 848; 794; 793; 536; 543; 542; 541; 540; 538; 537; 539; 724; 730; 723; 685; 697; 695; 727; 726; 725; 722; 721; 720; 729; 719; 728; 744; 743; 742; 571; 741; 740; 659; 663; 662; 575; 667; 666; 665; 735; 734; 733; 732; 731; 739; 738; 737; 736; 925; 9; 838; 814; 970; 890; 934; 841; 843; 852; 853; 854; 855; 856; 857; 858; 859; 860; 861; 862; 863; 864; 865; 866; 867; 868; 869; 870; 871; 872; 873; 874; 875; 876; 877; 878; 879; 880; 881; 882; 883; 884; 885; 886; 887; 844; 630; 845; 846; 761; 625; 766; 488; 469; 468; 489; 513; 492; 512; 493; 898; 897; 896; 895; 902; 901; 900; 899; 894; 546; 553; 552; 551; 550; 548; 547; 549; 544; 545; 554; 893; 892; 891; 165; 155; 145; 135; 74; 64; 118; 54; 43; 107; 1006; 1001; 1000; 996; 999; 995; 989; 982; 981; 980; 985; 987; 654; 819; 983; 984; 978; 990; 576; 631; 991; 992; 979; 1154; 762; 765; 764; 763; 1002; 988; 1005; 998; 994; 993; 997; 1003; 1004; 566; 559; 563; 564; 555; 556; 557; 558; 562; 816; 817; 815; 655; 839; 971; 842; 1153; 1052; 1053; 1054; 1055; 1056; 1057; 1058; 1059; 1060; 1061; 1062; 1063; 1064; 1065; 1066; 1067; 1068; 1069; 1070; 1071; 1072; 1073; 1074; 1075; 1076; 1077; 1078; 1079; 1080; 1081; 1082; 1083; 1084; 1085; 1086; 1087; 1088; 1089; 1090; 1091; 1092; 1093; 1094; 1095; 1096; 1097; 1098; 1099; 1100; 1101; 1102; 1103; 1106; 1107; 1108; 1109; 1110; 1111; 1112; 1113; 1114; 1115; 1116; 1117; 1118; 1119; 1120; 1127; 1121; 1122; 1123; 1124; 1125; 1126; 1127; 1128; 1129; 1130; 1131; 1132; 1133; 1134; 1135; 1136; 1137; 1138; 1139; 1140; 1141; 1142; 1143; 1144; 1145; 1146; 1147; 1148; 1149; 1150; 1151; 1152; 1050; 1051; 1049; 938; 939; 434; 435; 429; 430; 940; 159; 941; 149; 942; 139; 943; 129; 944; 125; 126; 945; 122; 946; 111; 112; 947; 101; 948; 97; 98; 949; 94; 950; 91; 951; 88; 952; 85; 953; 82; 954; 78; 79; 955; 68; 956; 58; 957; 48; 958; 37; 959; 4; 960; 34; 961; 31; 962; 28; 963; 25; 964; 22; 965; 19; 966; 16; 967; 13; 968; 10; 969; 1024; 1007; 973; 974; 975; 976; 977; 1025; 1026; 1027; 1028; 1029; 1030; 1031; 1032; 1033; 1034; 1035; 1036; 1037; 1038; 1039; 1040; 1041; 1042; 1043; 1044; 1045; 1046; 1047; 1048; 936; 937; 929; 441; 440; 439; 433; 431; 428; 427; 164; 163; 158; 157; 154; 153; 148; 147; 144; 143; 138; 137; 134; 133; 128; 127; 124; 123; 121; 120; 117; 116; 110; 109; 106; 105; 100; 99; 96; 95; 93; 92; 90; 89; 87; 86; 84; 83; 81; 80; 77; 76; 73; 72; 67; 66; 63; 62; 57; 56; 53; 52; 47; 46; 42; 41; 36; 35; 33; 32; 30; 29; 27; 26; 24; 23; 21; 20; 18; 17; 15; 14; 12; 11; 8; 7; 928; 830; 831; 829; 796; 797; 795; 748; 656; 600; 599; 653; 652; 651; 749; 602; 601; 598; 577; 750; 514; 751; 747; 702; 686; 690; 703; 661; 689; 704; 574; 660; 691; 705; 573; 658; 706; 572; 694; 693; 707; 692; 688; 687; 708; 657; 709; 700; 696; 701; 672; 664; 673; 670; 671; 636; 637; 627; 626; 638; 634; 635; 583; 584; 578; 585; 581; 582; 496; 497; 463; 464; 498; 494; 495; 472; 466; 470; 471; 443; 436; 437; 438; 444; 442; 288; 284; 289; 283; 290; 282; 291; 281; 292; 280; 293; 156; 152; 151; 150; 278; 295; 277; 296; 44; 40; 39; 38; 275; 298; 274; 299; 273; 300; 272; 301; 271; 302; 270; 303; 211; 362; 269; 304; 268; 305; 267; 306; 266; 307; 265; 308; 264; 309; 263; 310; 262; 311; 261; 312; 65; 61; 60; 59; 259; 314; 258; 315; 257; 316; 256; 317; 255; 318; 254; 319; 195; 378; 253; 320; 252; 321; 192; 381; 251; 322; 250; 323; 249; 324; 248; 325; 247; 326; 246; 327; 146; 142; 141; 140; 244; 329; 243; 330; 108; 104; 103; 102; 241; 332; 240; 333; 239; 334; 238; 335; 237; 336; 236; 337; 177; 396; 235; 338; 234; 339; 233; 340; 232; 341; 231; 342; 230; 343; 229; 344; 228; 345; 227; 346; 119; 115; 114; 113; 225; 348; 224; 349; 223; 350; 222; 351; 221; 352; 220; 353; 279; 294; 219; 354; 218; 355; 276; 297; 217; 356; 216; 357; 215; 358; 214; 359; 213; 360; 212; 361; 136; 132; 131; 130; 210; 363; 209; 364; 208; 365; 207; 366; 206; 367; 205; 368; 204; 369; 203; 370; 202; 371; 260; 313; 201; 372; 200; 373; 199; 374; 198; 375; 197; 376; 196; 377; 166; 162; 161; 160; 194; 379; 193; 380; 55; 51; 50; 49; 191; 382; 190; 383; 189; 384; 188; 385; 187; 386; 186; 387; 245; 328; 185; 388; 184; 389; 242; 331; 183; 390; 182; 391; 181; 392; 180; 393; 179; 394; 178; 395; 75; 71; 70; 69; 176; 397; 175; 398; 174; 399; 173; 400; 172; 401; 171; 402; 170; 403; 169; 404; 168; 405; 226; 347; 167; 406; 287; 490; 465; 462; 1104; 1105; 491; 467; 473]%N.
-Lemma asan_mem_facts_justified_w2 :
-  forallb (mjustify (s_know (a_ss HS_asan2_2)) (var_ranges (s_know (a_ss HS_asan2_2))) 65536 6705152) (asan_mem_facts ++ asan_mem_facts_w2) = true.
-Proof. apply (mjust_hints_sound _ _ _ _ _ asan_mem_hints_w2). vm_cast_no_check (@eq_refl bool true). Qed.
-(* [comment removed for export] *)
-Definition asan_pure_hints_w2 : list N := [1008; 1016; 1017; 1018; 1022; 1023; 1009; 1019; 1020; 1021; 1010; 986; 931; 833; 808; 800; 785; 753; 711; 675; 640; 613; 516; 516; 587; 522; 522; 521; 520; 520; 519; 518; 500; 475; 446; 408; 517; 517; 801; 1011; 1012; 1013; 1014; 1015; 605; 604; 828; 806; 783; 606; 746; 607; 699; 608; 669; 609; 633; 611; 580; 527; 531; 533; 529; 603; 927; 832; 834; 835; 811; 789; 759; 717; 683; 649; 623; 596; 510; 486; 459; 422; 807; 809; 810; 788; 758; 716; 682; 648; 622; 595; 509; 485; 458; 421; 784; 786; 787; 757; 715; 681; 647; 621; 594; 508; 484; 457; 420; 752; 754; 755; 756; 714; 680; 646; 620; 593; 507; 483; 456; 419; 710; 712; 713; 679; 645; 619; 592; 506; 482; 455; 418; 674; 676; 677; 678; 644; 618; 591; 505; 481; 454; 417; 639; 641; 642; 643; 617; 590; 504; 480; 453; 416; 612; 614; 615; 616; 586; 588; 589; 503; 479; 452; 415; 526; 525; 525; 524; 524; 523; 499; 501; 502; 478; 451; 414; 474; 476; 477; 450; 413; 445; 447; 448; 449; 412; 407; 409; 410; 411; 930; 932; 933; 836; 812; 790; 760; 718; 684; 650; 624; 597; 511; 487; 460; 423; 827; 805; 782; 745; 698; 668; 632; 610; 579; 528; 532; 534; 530; 926; 515]%N.
-Lemma asan_pure_facts_justified_w2 :
-  forallb (pjustify (s_know (a_ss HS_asan2_2)) (var_ranges (s_know (a_ss HS_asan2_2)))) (asan_pure_facts ++ asan_pure_facts_w2) = true.
-Proof. apply (pjust_hints_sound _ _ _ asan_pure_hints_w2). vm_cast_no_check (@eq_refl bool true). Qed.
-Lemma asan_vis_justified_w2 :
-  vis_match (var_ranges (s_know (a_ss HS_asan2_2))) (a_vis HS_asan2_2) asan_vis_app = true /\ vis_match (var_ranges (s_know (a_ss HS_asan2_2))) (a_ghost HS_asan2_2) asan_ghost = true.
-Proof. split; vm_cast_no_check (@eq_refl bool true). Qed.
-Lemma asan_ledger_justified_w2 :
-  ledger_xmatch (var_ranges (s_know (a_ss HS_asan2_2))) (a_maps HS_asan2_2) asan_ledger = true.
-Proof. vm_cast_no_check (@eq_refl bool true). Qed.
-Lemma asan_consts_w2 : a_totsz HS_asan2_2 = asan_totsz /\ a_ylo HS_asan2_2 = asan_ylo /\ a_eager HS_asan2_2 = asan_eager /\ a_abytes HS_asan2_2 = asan_abytes.
-Proof. repeat split; reflexivity. Qed.
+
+
+(* LPS 727298f3: the facts above are in the numbering of the start-up the plans were recorded
+   against; the computed start-up ([AsanStartupCert2.HS_asan2], the plans renumbered by
+   [PlanRegen.vsteps] [(78, 4); (310, 2)]) names its fresh variables elsewhere.  [fM] is the map
+   read off the computed main-entry states against the recorded one (probes P5 and P6, the unit's
+   probe notes): the launch's variables 0 .. 12 keep their numbers, the recorded fresh variables 44
+   and 45 are 48 and 49, from 78 they move by 4 and from 310 by 6.  A wrong map can only make a
+   justification below fail. *)
+Definition fM : nat -> nat := vsteps [(13%nat, 4%nat); (310%nat, 2%nat)].
+
+(* the block's layout facts at CONFIG_RSEQ value [r], read from the start state's own facts, which
+   the start-up keeps to the hand-off: argv[0]'s and argv[1]'s pointers, the [__progname_full] cell,
+   and the head of the block from the auxv to argv[0] defined ([AsanPlanCore.init_kn_with]) *)
+Definition zx (e : expr) : zexp := match zexp_of e with Some z => z | None => ZLit 0 end.
+Definition sp0_z : zexp := zx e_sp0.
+Definition str0_z (r : Z) : zexp := zx (e_str0 r).
+Definition argv1_z (r : Z) : zexp := zx (e_argv1w r).
+Definition head_base_z : zexp := mkaddr (zx (fst e_auxb)) (snd e_auxb).
+Definition head_len_z (r : Z) : zexp := zx (eaddz (eadd (escale 8 (EVar V_G)) (EVar V_W)) (AUXSZ r + 16)).
+Definition asan_mem_facts_l (r : Z) : list mfact :=
+  [ MRo (mkaddr sp0_z 8) 8 (str0_z r);
+    MRo (mkaddr sp0_z 16) 8 (argv1_z r);
+    MCell (ZLit 6697208) 8 (str0_z r);
+    MDefS head_base_z (head_len_z r) ].
+Definition asan_pure_facts_l (r : Z) : list pfact := [].
+
+(* the computed main-entry states: hand-offs 1 and 2 of startup2 at rz = r *)
+Definition HS2 (r : Z) (w : bool) : acs :=
+  match HS_asan2 r (if w then 1%nat else 2%nat) with Some a => a | None => init_acs_of r ASAN end.
+Lemma HS2_cases : forall r h ch, 0 <= r <= 1 -> HS_asan2 r h = Some ch -> exists w, ch = HS2 r w.
+Proof.
+  intros r h ch Hr Hh. unfold HS2.
+  destruct h as [|[|[|h]]].
+  - assert (r = 0 \/ r = 1) as [-> | ->] by lia; vm_compute in Hh; discriminate Hh.
+  - exists true. cbv beta iota. rewrite Hh. reflexivity.
+  - exists false. cbv beta iota. rewrite Hh. reflexivity.
+  - assert (r = 0 \/ r = 1) as [-> | ->] by lia; cbn in Hh; discriminate Hh.
+Qed.
+
+(* the registers at main's entry, one list for both hand-offs at both rz *)
+Definition REGS_MAIN : list expr := Eval vm_compute in s_regs (a_ss (HS2 0 true)).
+
+Definition asan_mem_facts_w (w : bool) : list mfact := if w then asan_mem_facts_w1 else asan_mem_facts_w2.
+Definition asan_pure_facts_w (w : bool) : list pfact := if w then asan_pure_facts_w1 else asan_pure_facts_w2.

@@ -17,11 +17,11 @@ of these six files from the first triage (RA.gen.tsv, RB.gen.tsv).
 
 | what | identity |
 |---|---|
-| ported files | series head plugin-hostd/fuzz_command tree (git tree 86ee7833f146; internal record); the same bytes in the merged tree 781f46bc05cd (sha256 of each file compared) |
+| ported files | series head plugin-hostd/fuzz_command tree (git tree 86ee7833f146; internal record); the same bytes in the merged tree (sha256 of each file compared) |
 | AF0m / AE3i / AD2j | 5d0364c54727 / 879a68b5b682 / a6d247bd1c98 |
 | YF0m / YE3i / YD2j | 334ce661197c / 1d1167146619 / 1d1255fdb75e |
 | lib/A/Prog/CmdGlob.v, lib/B/Prog/CmdGlob.v | f2547db2ff96, b0196c8706f9 |
-| donor files | cgif_file_fuzzer lib at c8557374ad2e: lib/A/AF0m.v, lib/A/AE3i.v, lib/A/AD2j.v, lib/YF0m.v, lib/YE3i.v, lib/YD2j.v |
+| donor files | cgif_file_fuzzer lib: lib/A/AF0m.v, lib/A/AE3i.v, lib/A/AD2j.v, lib/YF0m.v, lib/YE3i.v, lib/YD2j.v |
 | image A | fuzz_command.asan pin c0661b96b5bd, twin 68db792d5fa7 |
 | image B | fuzz_command.asan-ubsan pin bbe55d24d096, twin 658cefbe806b |
 | donor image A | cgif_file_fuzzer.asan pin 7093581aab04, twin 488e39500746 |

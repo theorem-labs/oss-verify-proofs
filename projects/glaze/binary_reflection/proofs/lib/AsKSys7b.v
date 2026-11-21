@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (res_low admits the launch's vDSO reservation pair on either side of the ASan slot space; region_free_intro gets its three arms). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 #[local] Ltac Zify.zify ::= WdZS.wd_zs_stock.   (* [comment removed for export] *)
@@ -382,7 +383,20 @@ End Vis.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
-Definition res_low (bt : as_boot) : Prop := forall iv, In iv (bt_reserved bt) -> u (fst iv) + u (snd iv) <= AS_LO.
+(* LPS 08b1429: [vm_reserved] is no longer the image's segments alone -- the
+   launch's vDSO pair is appended ([State.init_reserved]; AsSInit.v:754-781).
+   That pair is NOT below [AS_LO], so the old one-sided bound is FALSE over it.
+   The second disjunct says instead that such an interval is at or above the top
+   of the ASan slot space, which is all [node_region_free] below needs: with
+   [slot_lits]' [lo + K <= E6] it gives the OTHER arm of [region_free_intro].
+   It is stated in [bt] so that this file needs no geometry constant; it is
+   discharged in [AsAinvMainA] from [APS.co_mres] plus [(w6,n6) \in vm_maps h],
+   never from a literal -- no constant separates the vDSO pair from the slot
+   space, since [bt_resv6] is pinned only by [rng_ok] (AsAinvBoot3.v:76). *)
+Definition res_low (bt : as_boot) : Prop := forall iv, In iv (bt_reserved bt) ->
+  u (fst iv) + u (snd iv) <= AS_LO
+  \/ u (fst iv) + u (snd iv) <= bt_resv6 bt
+  \/ bt_resv6 bt + bt_resv6_len bt <= u (fst iv).
 
 Section Slot.
   Context {RUN : run_ceil}.
@@ -518,8 +532,14 @@ Section Slot.
     Proof.
       destruct slot_lits as (L0 & L1 & L2 & L3 & L4 & L5 & L6 & L7 & L8). destruct mat_eqs as (E1 & _). rewrite E1.
       destruct ledger_R as (_ & _ & _ & _ & RES & _). rewrite RES.
-      apply RefNodes.region_free_intro. intros b s Hbs. right. pose proof (RL (b, s) Hbs) as H. cbn [fst snd] in H. rewrite L5.
-      unfold AS_HEAPLO, AS_LO in *. lia.
+      (* LPS 08b1429: three arms now.  1 is the image segments (below [AS_LO]);
+         2 and 3 are the launch's vDSO pair, which [res_low] now places on one
+         side or the other of the ASan slot space.  [L1]/[L2] put the slot
+         inside that space, so each arm closes by [lia]. *)
+      apply RefNodes.region_free_intro. intros b s Hbs. destruct (RL (b, s) Hbs) as [H|[H|H]]; cbn [fst snd] in H.
+      - right. rewrite L5. unfold AS_HEAPLO, AS_LO in *. lia.
+      - right. rewrite L5. lia.
+      - left. rewrite L5, L6. lia.
     Qed.
 
     Lemma node_map_contains : map_contains (vm_maps (m_vmmaps mdlm)) addr size = true.

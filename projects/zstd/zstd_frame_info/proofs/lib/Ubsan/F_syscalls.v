@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (open_spec takes the TASK_SIZE bound on the path it reads: the path's start plus its length is below TASK_SIZE). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -259,12 +260,13 @@ Lemma open_spec : forall ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s
   (errno_addr tp + 4 <= ssp_guard \/ ssp_guard + 8 <= errno_addr tp)%Z ->
   (got_ssp + 8 <= errno_addr tp \/ errno_addr tp + 4 <= got_ssp)%Z ->
   (164 <= bv_unsigned tp)%Z ->
+  (bv_unsigned a0 + Z.of_nat (length path) < TASK_SIZE)%Z ->
   impl usegs (at_node usegs) (enode (NOpen path) dec_open)
        (epost (open_post ra sp gp tp s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 F fc (bv_unsigned a0) path errv canary lo m))
        (MS (mkR ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
            F (Z_to_bv 64 0x14204) fc None m (seg_rom usegs)).
 Proof.
-  intros until lo. intros ST SRC ERR GOT SSP MI -> NUL NOSL LO SEP1 SEP2 SEP3 SEP4 SEP5 SEP6 TP.
+  intros until lo. intros ST SRC ERR GOT SSP MI -> NUL NOSL LO SEP1 SEP2 SEP3 SEP4 SEP5 SEP6 TP TS.
   unfold got_ssp, ssp_guard in *.
   pose proof (munch_refl [(bv_unsigned sp - 112, bv_unsigned sp); (errno_addr tp, errno_addr tp + 4)]%Z m) as MU.
   pose proof (wmono_refl usegs m) as WM.

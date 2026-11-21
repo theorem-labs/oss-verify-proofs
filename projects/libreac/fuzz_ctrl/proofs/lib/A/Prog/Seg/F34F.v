@@ -4,12 +4,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths and module names changed; 1114 of its 1252 lines of code are new or changed and 873 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F34.v; 405 of its 663 lines of code are new or changed and 994 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/F34.v 0fc96b3fa139 (the blob this tree had at release c5e779efe8c) at fdd2ed9f9d7.
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   FACTS, PAU pau-libreac-v190. Source: Seg/F34.v 0fc96b3fa139 (the blob this tree had at release).
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: f34_evt_of_F re-derives F34.f34_evt at ExecF.RNG_all; f34_evt_of_F_verbatim checks by constr_eq that its
    type is the type of F34.f34_evt, apart from the first premise, which names declaration_of_contract_F in place of
    declaration_of_contract -- both first premises are checked by name too. Mechanical re-run, route (a) (lead
@@ -472,7 +473,7 @@ Qed.
 (* Route (C) (a Theorem Labs lane 09:20Z; wave lead a Theorem Labs lane, ASSIGN.md (a working note, not in this delivery) and its 10:34Z amendment): the shadow bytes
    f34_evt_F's run needs present through its shadow_rw premise.  Its only use of `shadow_rw m` is to give
    declaration_of its premise on normalize m1; the callee's narrowed contract (declaration_of_c.v
-   declaration_of_contract_F_on, a Theorem Labs lane 018e976802f) asks for its own region declaration_of_shadow_R a0 a1 at the
+   declaration_of_contract_F_on, a Theorem Labs lane) asks for its own region declaration_of_shadow_R a0 a1 at the
    call's arguments a0 = r (the row), a1 = o (the slot).  The four stores at S + 8 .. S + 11 need no shadow_rw: their
    store_ok comes from the wview premise, and the stored bytes are present after the stores.  So R is the callee's
    region alone. *)
@@ -484,7 +485,7 @@ Definition f34_evt_F_shadow_R (r o : Z) : Z -> Prop := DECLc.declaration_of_shad
    AsanRTInv.RT (universal shadow_rw), and a route (C) _on lemma must not take RT (a Theorem Labs lane batch 75, 13:32Z). *)
 Section F34F_on.
 (* declaration_of's narrowed footprint contract (declaration_of_c.v), proved by a Theorem Labs lane's declaration_ofF.v
-   declaration_of_F_holds_on_closed (a working branch 63b9129e817). *)
+   declaration_of_F_holds_on_closed (a working branch). *)
 Hypothesis DECLF_on : DECLc.declaration_of_contract_F_on.
 
 (* Route (C): f34_evt_F under the narrowed premise shadow_rw_on (f34_evt_F_shadow_R r o) m and the callee's _F_on

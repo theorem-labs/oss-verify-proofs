@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reader fact of the output channels). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -88,6 +89,7 @@ Proof.
     (* [comment removed for export] *) match goal with H : Nat.leb (Nat.max 1 nx0) _ = true |- _ => apply Nat.leb_le in H; exact (max1_le_0 _ _ H) | H : (Nat.max 1 nx0 <= _)%nat |- _ => exact (max1_le_0 _ _ H) end.
   - eapply slots_ok_ext; [exact Hag | exact Hslv | exact HSL].
   - exact HLIB.
+  - match goal with H : m_channel_reader _ = true |- _ => exact H end.   (* LPS 727298f3: [co_rdr] *)
 Qed.
 
 #[using="Type"] Lemma expr_vars_lt_mono : forall b b' e, (b <= b')%nat -> SP.expr_vars_lt b e = true -> SP.expr_vars_lt b' e = true.

@@ -9,6 +9,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSH_parse_value.v, with its module paths, module names, addresses and numbers changed; 1014 of its 1163 lines of code are new or changed and 2537 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_check_no_overread.v, with its module paths and module names changed; 1341 of its 1416 lines of code are new or changed and 1088 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_check_no_overread_top.v, with its module paths, module names and addresses changed; 717 of its 798 lines of code are new or changed and 1335 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* check_no_overread B 0x8124c (fs.c), fs.asan-ubsan: span segF of the CTX-free ASan walk of lib/B/FSH_Fn_cno.v
    check_no_overread_spec (owner of this file: a Theorem Labs lane).
    segF : segF_T B (lib/B/FSW_check_no_overread_inv.v): from INV_F1, the machine at the first fuzz_free call (0x814cc,
@@ -29,8 +30,8 @@
    Each free removes its block from `entry ++ [...]`; the block occurs once (cnof_nodup), so the rest is the list
    without it (cnof_split), and INV_R's ablocks equation holds exactly (the bad-text arm of INV_F1 states ablocks
    EQUALITY, owner decision (a)).
-   Template (text only, B addresses MEASURED): lib/A/FSW_check_no_overread_segf.v at a working branch
-   7161f1ad544. Kit lemmas by path (lib/B FSW_K / FSW_rd; lib/A's image-generic FSupoison / FSupoisonU / FSH_Gen;
+   Template (text only, B addresses MEASURED): lib/A/FSW_check_no_overread_segf.v at a working branch.
+   Kit lemmas by path (lib/B FSW_K / FSW_rd; lib/A's image-generic FSupoison / FSupoisonU / FSH_Gen;
    Reusable). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.

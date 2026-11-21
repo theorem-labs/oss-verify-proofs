@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: chan_ok also states that the channel has a reader (m_channel_reader mo = true), which a write to a channel now needs. *)
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
@@ -145,7 +146,10 @@ Notation RTP := 0x349d0%Z (only parsing).
 
 (* [comment removed for export] *)
 Definition chan_ok (mo : Model) (fd : Z) : Prop :=
-  fd_lookup (m_fds mo) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)).
+  fd_lookup (m_fds mo) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd))
+  (* 08b1429: a write to a channel needs a reader (Sys.Fs.ReadWrite.write_spec's channel arm);
+     the launch pins it (Run.valid_input_channel_reader) and nothing in this program changes it *)
+  /\ m_channel_reader mo = true.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)

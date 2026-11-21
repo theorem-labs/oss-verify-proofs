@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/DMdrainU7Rh.v (commit ce1a656b52b7, file sha256 b506ff5f9ee2) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 1 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 2 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainU7Rh.v at commit b93d7a87dae, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (3 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/DMdrainU7Rh.v (file sha256 b506ff5f9ee2) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its image-row names to preset's (ReplyImg_* -> PresetImg_*, *reply -> *preset); its 1 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 2 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainU7Rh.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (3 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, WalkB1): DoRecycle's walk at the drain's recycle cut, at the RE-HIDE twins - the
-   primed counterpart of DMdrainU7.dorecycle_at_cut (cgif proofs/cgif/cgif_file_fuzzer/lib/DMdrainU7.v at commit
-   67fc7ef5787c).  Recycle's secondary arm hides the dead shadow hull's interior at its return
+   primed counterpart of DMdrainU7.dorecycle_at_cut (cgif proofs/cgif/cgif_file_fuzzer/lib/DMdrainU7.v).
+   Recycle's secondary arm hides the dead shadow hull's interior at its return
    (YA0nR.SRr'_rehide_ret), so DoRecycle is stated over YG0dH.amreal' at YGcfRehidePost.RZ_cf with the leaf
    DMwalkIFRh.dr_leaf_rh (F1 priming row R3).  This file discharges DoRecycle's call premise at the cut
    (DMdrainC.dr_pre_at_call) exactly as DMdrainU7 does, and runs the primed DoRecycle contract
@@ -99,7 +100,7 @@ first [ exact HAR | exact HDRq | exact Hinst | exact HLY | exact HIMG | exact HS
       | exact HT0 | exact HT8 | exact HT16 | exact HT24 | exact HPL ].
 Qed.
 
-(* The primed DoRecycle walk at the cut, from the primed DoRecycle contract DMwalkIFRh.dorecycle_ok_rh_t (DMwalkIFRh.v:89),
+(* The primed DoRecycle walk at the cut, from the primed DoRecycle contract DMwalkIFRh.dorecycle_ok_rh_t (DMwalkIFRh.v:90),
    which the primed DoRecycle chain proves (a prior worker's dorecycle_ok_rh). *)
 Theorem dorecycle_at_cut_rh_of : DMwalkIFRh.dorecycle_ok_rh_t B ARXr AOX DRq RMAXD ->
 amreal' tfibsegs YGcfRehidePost.RZ_cf (do_recycle (length P) P S') W (cfg_at tfibsegs A_DoRecycle regs' mem' md)

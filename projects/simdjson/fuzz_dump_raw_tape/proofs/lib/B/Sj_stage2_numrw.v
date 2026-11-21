@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the window fact of the number world is the 0x5D0000-byte span (STACK_SPAN) the start state guarantees below the start's stack pointer, so the allocator-ceiling premise of the client-write lemma is derived from it by lia; taken in part from projects/simdjson/fuzz_dump/proofs/lib/B/Sj_stage2_numrw.v, lines 76, 182. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -72,7 +73,7 @@ Section RootW.
   Proof using AF OK0 F0.
     intros CP mB ΣB cr m1 RI MU WM. pose proof RI as (ARTB & _ & _ & SPB & _).
     destruct F0 as [[_ _ _ NWIN _ NTOP _ _ _] _ _ _ _]. s2_env OK0.
-    apply (art_client_write RT AF ΣB mB m1 (e_lo E0) ARTB ltac:(rewrite SPB; exact NWIN)); [| exact WM].
+    apply (art_client_write RT AF ΣB mB m1 (e_lo E0) ARTB ltac:(rewrite SPB; lia)); [| exact WM].
     apply (agree_of_munch _ mB m1 _ MU). intros x NC.
     assert (CL : forall y, s2_region E0 y -> aclient (rt_live RT ΣB) (rt_frames RT ΣB) (e_lo E0) y).
     { intros y Hy. eapply aclient_mono; [exact (rinv_client CP mB ΣB cr y RI (or_introl Hy)) | auto | auto | lia]. }
@@ -178,7 +179,7 @@ Section RootW.
   Lemma w_art : forall m1, munch (s2_W (env_at E0 (wm RT w))) (wm RT w) m1 -> wmono bsegs (wm RT w) m1 -> ART RT (snd w) m1.
   Proof using AF OK0 F0.
     intros m1 MU WM. destruct F0 as [[NART _ _ NWIN _ NTOP _ _ NCL] _ _ _ _]. s2_env OK0.
-    apply (art_client_write RT AF (snd w) (wm RT w) m1 (e_lo E0) NART NWIN); [| exact WM].
+    apply (art_client_write RT AF (snd w) (wm RT w) m1 (e_lo E0) NART ltac:(lia)); [| exact WM].
     apply (agree_of_munch _ (wm RT w) m1 _ MU). intros x NC.
     assert (CL : forall y, s2_region E0 y -> aclient live0 frames0 (e_lo E0) y).
     { intros y Hy. eapply aclient_mono; [exact (NCL y Hy) | auto | auto | lia]. }

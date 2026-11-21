@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (recorded (KReplay) proofs re-proved by tactics). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -12,8 +13,6 @@ Import ITree.Exc.
 Open Scope Z_scope.
 
 From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib.K5.Lib Require Import Ceiling.
-From OSSVerify.Proofs.leptonica.bilateral_fuzzer.lib Require KReplay.
-Ltac2 kr_t_KInv () := "C46Stdlib5Lists4List2hdC47Corelib5Lists7ListDef3mapC47Corelib4Init9Datatypes3fstC69OSSVerify5KrLib2K54Spec6Malloc4aptrC1?~~~~~~~~~~~~~~~I69OSSVerify5KrLib2K54Spec5STree5stree00C1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib2K54Spec6Malloc4cptrC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib2K53Lib7Ceiling@alloc_ceiling_geC1?~~~~~~~~~~~~~~~K47Corelib7Numbers7BinNums8positive02K47Corelib7Numbers7BinNums1Z02C69OSSVerify5KrLib2K53Lib7Ceiling=alloc_ceilingC1?~~~~~~~~~~~~~~~C56Stdlib6ZArith6BinInt1Z2leC69OSSVerify5KrLib2K53Lib7Ceiling@alloc_ceiling_leC1?~~~~~~~~~~~~~~~C56Stdlib6ZArith6BinInt1Z3addC69OSSVerify5KrLib2K53Lib7Ceiling@alloc_ceiling_alC1?~~~~~~~~~~~~~~~C56Stdlib6ZArith6BinInt1Z6moduloI47Corelib4Init5Logic2eq00C46Stdlib9micromega9SatDivModCZ_mod_nonneg_nonnegK47Corelib4Init9Datatypes4list01I47Corelib4Init9Datatypes4list00K46Stdlib9micromega6VarMap1t02I46Stdlib9micromega6VarMap1t00I46Stdlib9micromega=RingMicromega7Formula00K46Stdlib9micromega7EnvRing5PExpr02K46Stdlib9micromega7EnvRing5PExpr01K46Stdlib9micromega7EnvRing5PExpr03K46Stdlib9micromega=RingMicromega7Formula01K47Corelib4Init9Datatypes6option02K47Corelib7Numbers7BinNums8positive01K46Stdlib9micromega5Tauto8GFormula08C46Stdlib9micromega5Tauto8BFormulaK47Corelib4Init5Logic2eq01C46Stdlib9micromega:ZMicromega=ZTautoCheckerC46Stdlib9micromega6VarMap4findC46Stdlib9micromega:ZMicromegaCZTautoChecker_soundK46Stdlib9micromega5Tauto8GFormula04C46Stdlib9micromega5Tauto5eKindI47Corelib4Init9Datatypes4unit00K46Stdlib9micromega5Tauto4kind01K47Corelib4Init9Datatypes4unit01K47Corelib7Numbers7BinNums8positive03I47Corelib7Numbers7BinNums1Z00K47Corelib7Numbers7BinNums1Z01I46Stdlib9micromega:ZMicromega;ZArithProof00K46Stdlib9micromega=RingMicromega3Op203I47Corelib4Init9Datatypes4bool00K47Corelib4Init9Datatypes4bool01C69OSSVerify5KrLib2K54Spec6Malloc5MCEILC1?~~~~~~~~~~~~~~~".
 (* [comment removed for export] *)
 Section WithCeiling. Context {CE__ : Ceiling}.
 
@@ -57,8 +56,7 @@ Definition lbrk_pages_ok (L : mled) (lo len : Z) : bool :=
 
 (* [comment removed for export] *)
 Lemma ceil_le_MCEIL : alloc_ceiling <= MCEIL.
-Proof.
-ltac2:(KReplay.run1 (kr_t_KInv ()) ["WithCeiling"] "h04__x1h11Hh22H0h32H1h47__arithh54__ffh66__sat2h78__varmaph85__witp;1p;2p;3p;4p;8p;7p-1R0p10000p4p710R1p8P0p1000GR2p4p710p8P0P2p4p7210p8P0p1000cR2p4p710p8P0P2p4p7210p8p1001@p4p70p10028p4p710p8p10032p4p70P1p8g003jj1RTg004nj10Tg005Sj15Tg0061j1BTg0072j22Tg007Nj1@Tg008Rj2;Tg008oj1=Tg00:3j2PTg00:Sj3<Tg00:mj2OTg00;^j1LTg00<>j1KTg00<^j2HTg00=<j1FTg00=Zj1ETg00>Ej2DTg00>hj27Tg00?Kj3CTg00?nj49Tg00@Yj1GTg00A;j13Tg00A`j8ATg00BDj2ITg00Bfj2JTg00C@j2?Tg00Clj3MTg00DKj4NTg00E=j7>Tf0R1#3#3p=Q%31#3#3#3p=4%01#0p=8%01#0#0#0p=6%01#0#0#0#0#0#0#0p=1f1R2g00EaR0g00F@R3P3g00F`R4P1g00G@F>p=:p,4CE__R5#Rg00G`R6#Q#4#4#4R7#0#4#4#0#8#6#1#1#5%B5R8'2%@5%66R9#0#8#1#1R:#5R;,;8%1:#1#1#5R:'2%=5g00HER5%59R9,P8R<g00HcR=3<1O8912=812=912=<[[g00IAR<#L%K<1H52%F5%E5R<P0P3P3P4P51D56R6175;5C5g00ImR0175:C9,:<%G3P5P6P0%37#4#4#0#8#6#1#1#5R7,75C9,:<GA1I<4P1f2R<g00JTR4g00K4R0'J1?1<=<40dAM5=2CNb5b7b8X051;1;/2:1227[^05P1P8f3O2b4b6g00KT,28eb3b2b1o"). Qed.
+Proof. ceil_bounds. unfold MCEIL. lia. Qed.
 
 Definition MAPF : Z := MAP_PRIVATE + MAP_ANON.
 Definition MAPFX : Z := MAP_PRIVATE + MAP_ANON + MAP_FIXED.

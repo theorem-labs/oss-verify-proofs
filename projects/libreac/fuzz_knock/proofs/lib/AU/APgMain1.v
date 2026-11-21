@@ -5,10 +5,11 @@
    libreac/fuzz_knock's ASan harness walk), for
    LLVMFuzzerTestOneInput 0x7eed0 in fuzz_knock.asan-ubsan (sha256
    f834165f5002e65398e68d514ab2a5a5b10e53144f0b41b93ebbc6f895290e82; 350 words, size 0x578), made the way
-   proofs/cgif/cgif_file_fuzzer/lib/YCf1.v is made from A/ACf1.v at c8557374ad2e: the walk framework imports move to
+   proofs/cgif/cgif_file_fuzzer/lib/YCf1.v is made from A/ACf1.v: the walk framework imports move to
    the lib/AU twins, every pc is the asan-ubsan one, and the registers follow the asan-ubsan code. The A file's
    comment gives the donor line each step follows. rule 24: no function proved (a twin of a port of the released
    cgif_file_fuzzer harness walk structure). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
 (* SEGMENT S1 HEADER, pc 0x7f004-0x7f0d0 (52 insns), 0x7f3c8-0x7f3f4 (12) and the check slow paths 0x7f408-0x7f438
    (13), ending at ss_P, pc 0x7f0d4. The instruction-by-instruction comparison with the asan image is
@@ -29,7 +30,7 @@
      0x7f3d0-0x7f3e0 check of p+3; slow path 0x7f430-0x7f438; 0x7f3e4 lbu a4; s9 = n-4; s3 = p+4; a4 <<= 8; j 0x7f0d4.
    The four UBSan guards trap iff p + k <=u 1 (k = 1..4; the trap word 0x7f3f8 is never reached). Each is decided by
    the executor itself (decide_cond BC_GEU over the atom ranges, Reusable/YP0m.v) from the range [4096, 2^47 - 2^23]
-   of atom 10 (= p) that the segment adds at its entry, exactly as the A file does (A/APgMain1.v:349-355): n = 0 gives
+   of atom 10 (= p) that the segment adds at its entry, exactly as the A file does (A/APgMain1.v:350-356): n = 0 gives
    p = A_EMPTY (lib/AU/YCfm.v); n <> 0 gives In (p, n) (ablocks ..) from rt_base and AR_blocks_law's 4096 <= p and
    p + req_size n <= alloc_ceiling. The four shadow checks (report calls at 0x7f414, 0x7f420, 0x7f42c, 0x7f438) are
    discharged by obl_pay -> obl_of_block, as in the A file.
@@ -71,7 +72,7 @@ Open Scope bv_scope.
 Open Scope Z_scope.
 
 (* ============================== Part 1: local copies of donor walk tactics ============================== *)
-(* [A/ACf9.v:246-279, 339-340, 347-348], as lib/A/APgMain1.v:66-105 *)
+(* [A/ACf9.v:246-279, 339-340, 347-348], as lib/A/APgMain1.v:67-106 *)
 Ltac add_atom_win HS n w En :=
 lazymatch type of HS with st_ok _ ?Ev ?ssv ?msv =>
 let HS3 := fresh "HS3" in
@@ -196,7 +197,7 @@ change (Z.land (zcanon 8) 63) with 8. pose proof (Z.mod_pos_bound (U E x) 256 lt
 rewrite Z.shiftl_mul_pow2 by lia. rewrite zcanon_id by (unfold M64; lia). lia.
 Qed.
 End loc.
-(* [A/ACf1.v:124-161, 243-251, 267-281, 396-409]; knsegs = tfibsegs (a Theorem Labs lane's names), as lib/A/APgMain1.v:192-260 *)
+(* [A/ACf1.v:124-161, 243-251, 267-281, 396-409]; knsegs = tfibsegs (a Theorem Labs lane's names), as lib/A/APgMain1.v:193-261 *)
 Ltac in_region HS R E10x AG :=
   lazymatch type of HS with st_ok _ ?Ev ?ssv ?msv =>
   let HS3 := fresh "HS3" in
@@ -278,7 +279,7 @@ Section st. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Context {SK : YI16.sink_head}.
 Context {ROB : YCeh.ro_tfa_below_ofl}.
 (* ss_H, the S0 -> S1 boundary state at 0x7f004, is a Theorem Labs lane's AU twin, defined in lib/AU/APgMain0.v (Required). *)
-(* ss_P: the state at 0x7f0d4, where the five header exits join (lib/A/APgMain1.v:267-283 at 0x7f088). ss_H's
+(* ss_P: the state at 0x7f0d4, where the five header exits join (lib/A/APgMain1.v:268-284 at 0x7f088). ss_H's
    registers, memory, atoms and alias, with s9 = slot 100 (rem), s3 = slot 101 (cur = p + c), a1 = slot 102 (the low
    byte or 0), a2 = slot 103 (the second byte << 8 or 0), a3 = slot 104 (the third byte or 0), a4 = slot 105 (the
    fourth byte << 8 or 0); a0 and a5 dead (slots 110, 111); a6 = a7 = F (slot 75: ss_H's, S1 writes neither); the
@@ -297,7 +298,7 @@ mkSS 0x7f0d4
 (mkFacts (f_atoms (ss_facts ss_H)) [] (f_alias (ss_facts ss_H))).
 Definition ss_P : sstate := Eval vm_compute in ss_havoc_regs ss_P_0 RT_PN rt_P_deads.
 (* INV_P: INV_0's three conjuncts, and the join's values: c bytes consumed (0 <= c <= 4), rem = n - c with rem = 0 unless
-   c = 4, and the four byte registers below 2^16 (lib/A/APgMain1.v:284-292, unchanged) *)
+   c = 4, and the four byte registers below 2^16 (lib/A/APgMain1.v:285-293, unchanged) *)
 Definition INV_P (B : asyms) (MT : ameter_ops) : rtcx -> env -> Z -> Z -> alayout -> astate -> world tfibsegs -> machine_state -> Model -> Prop :=
 fun cx E k acc ly3 S3 W3 ms3 md3 => k <= 0 /\ acc <= ACC0 /\ ablocks B ly3 S3 = ablocks B (c_ly cx) (c_S cx) /\
 exists c rem v1 v2 v3 v4,
@@ -363,7 +364,7 @@ Proof.
 intros RP. rt_prelude.
 pose proof HINV as (Hk0 & Hacc & Eab3).
 relowRT HS AG E10 E11 E32 E10n E11n E32n.
-(* atom 10 = p in [4096, 2^47 - 2^23]: what decides the four UBSan guards (A/APgMain1.v:349-355) *)
+(* atom 10 = p in [4096, 2^47 - 2^23]: what decides the four UBSan guards (A/APgMain1.v:350-356) *)
 assert (HpR : 4096 <= p /\ p + n <= alloc_ceiling).
 { destruct Hpn as [[Hn0 HpE] | [Hnr Hin]].
   - rewrite HpE, Hn0. unfold A_EMPTY. clear - C1. lia.

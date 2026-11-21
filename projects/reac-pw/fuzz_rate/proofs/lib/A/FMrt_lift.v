@@ -7,16 +7,17 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/U/Prog/WriterRet.v, with its module paths and module names changed; 702 of its 749 lines of code are new or changed and 692 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/Prog/pj_write.v, with its module paths and module names changed; 496 of its 536 lines of code are new or changed and 709 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/ReaderKB.v, with its module paths and module names changed; 202 of its 226 lines of code are new or changed and 512 lines of the source are left out. *)
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMrt_lift.v (cold/port-fm-rtprintf-param 3e35620c52e); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMrt_lift.table). *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMrt_lift.v at 2d2ff01bb6f2 relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMrt_lift.v; relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMrt_lift.table). *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMrt_lift.v relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fm's runtime contracts in the donor's form, the generic half (RtStr lane).
    - A walk proved over the machine state alone (lib/Lib `evt`, its registers written `mkR ...`) is
-     read at a donor call site (`SRr` from `cfg_at`, YG0d.v:213): the register map is moved with
+     read at a donor call site (`SRr` from `cfg_at`, YG0d.v:214): the register map is moved with
      lib/Lib/RegisterBridge.v (canonical_contract_transport), and each step of the walk is a step of
-     the donor's `msteps`, which `SRr_msteps` (YA0n.v:149) lifts.
+     the donor's `msteps`, which `SRr_msteps` (YA0n.v:150) lifts.
    - A walk that returns to ra with the callee-saved registers kept and changes nothing but a window
      of K <= STK bytes below sp gives the donor-form post `rt_post_ro` (FMH_Rt.v:88); AR is kept by
-     the donor's frame law (al_frame, YG0d.v:439), as cgif_file A/AE2j.v:142 keeps it.  Inside fm's
+     the donor's frame law (al_frame, YG0d.v:440), as cgif_file A/AE2j.v:142 keeps it.  Inside fm's
      user-poison window the same walk gives `rt_post_roU` (FMH_Rt.v:96), ARU kept by
      SnUpoison.ARU_frame.
    - A body walk of lib/A/Bz (its own copy of `evt`) is read the same way (srr_of_canon_bz). *)

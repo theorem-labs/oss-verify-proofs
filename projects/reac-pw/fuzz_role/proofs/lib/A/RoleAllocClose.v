@@ -1,7 +1,7 @@
 (* The allocator and memcpy parts of fuzz_role's ASan image (image A), closed at the image's symbol table
    B := AD2l.TfibB: the slots H_ALLOC_MALLOC / H_ALLOC_FREE / H_RT_MEMCPY of lib/A/RoleClose.v (Section asan). fuzz_role's
    start-up depot holds traces (49 registered globals; depot_has_trace = true), so the AF0w / AF0q / AD2l / AD2m these
-   lemmas apply are the relocated depot-true texts (libreac/fuzz_scene's, origin/ossv/recipes 6ebe35ba632; the same
+   lemmas apply are the relocated depot-true texts (libreac/fuzz_scene; the same
    applications as fuzz_scene's lib/A/SceneAlloc.v and libreac/fuzz_ctrl's lib/A/CtrlClose.v:144-146): each lemma is
    `forall B, TfibSyms B -> (forall t, as_dhash B t = tfib_dhash t) -> ...` (AF0w.v:45 tfib_amalloc_realizes,
    AF0q.v:13 afree_realizes_closed) or `forall B, TfibSyms B -> ...` (AD2m.v:17 tfib_AICPY), with TfibSyms TfibB from

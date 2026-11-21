@@ -1,8 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_qdisc/lib/A/QPgMain3.v (reseatQ) at 160c9b4d5750 and
-   proofs/libreac/fuzz_knock/lib/A/APgRt.v (rt_chain) and APgMain4.v (the region and frame-chain steps) at
-   6ebe35ba632; adapted to reac_box_pin_parse's calls of the strcspn wrapper and reac_box_catalogue. *)
+   proofs/libreac/fuzz_knock/lib/A/APgRt.v (rt_chain) and APgMain4.v (the region and frame-chain steps);
+   adapted to reac_box_pin_parse's calls of the strcspn wrapper and reac_box_catalogue. *)
 (* Modified by Theorem Labs, 2026-10: the asan-ubsan twin of lib/A/PPgParse2.v of this library, for image B
    (fuzz_pin.asan-ubsan, reac_box_pin_parse at 0x80ba4). What differs: the image modules are image B's lib/AU twins,
    the cut states are image B's (lib/AU/PPgParseCx.v), the addresses are image B's (the strcspn call 0x80ce4, the
@@ -11,6 +11,7 @@
    No trap branch is in this segment: its one UBSan computation, the flag (cat <> 0 and cat mod 8 = 0) at
    0x80d20-0x80d30, is a value the runner computes to 1 from the range and the 8-alignment the walk gives the
    catalogue's result (atom 444, pin_cat_ok), and the loop's trap branches test it (lib/AU/PPgParse2L.v). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_pin, image B (fuzz_pin.asan-ubsan): reac_box_pin_parse 0x80ba4, the segment 0x80cd0 -> 0x80d40
    (pp_seg2) and the call-site lemmas of its three calls 0x80ce4 (the strcspn wrapper), 0x80cf4 (reac_box_catalogue)
    and 0x80da0 (the strncmp wrapper).

@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx-GENERIC twin of ARM_gone's phase p4 on image B (lib/B/W_LLVMFuzzerTestOneInput_gone_p4.v,
-   a Theorem Labs lane's, fee5272ac13: the check_no_loss_read loop, GC1 to GT0), for the conversion of ARM_gone to the cut
+   a Theorem Labs lane: the check_no_loss_read loop, GC1 to GT0), for the conversion of ARM_gone to the cut
    invariants of lib/B/W_LLVMFuzzerTestOneInput_cut_x.v.  _gone_p4.v is not edited.
    - CITED from _gone_p4.v: its AR-free names (the run states, gp4_keep, gp4_keep_trans, gp4_azs_sub, gp4_abk_*,
      gp4_cs_pres, ...), with the Section variables they were generalized over;
    - RESTATED over ARx at the ghost list []: B's Section gp4c, the walk of check_no_loss_read with the kept post (image
      B proves the call inline because the kit's cnlr_spec post does not keep errno's bytes): gp4c_entry_x and
      gp4c_cnlr_x, with W1Verify's check_bounded conversion (the callee's journal W_journal_x's gx form at G = [], post
-     cut_x's aleafx_post_x); and, merged per item with SmallX's image-A twin lib/A/W_LLVMFuzzerTestOneInput_gone_p4_x.v
-     (95a5de32ab2), the phase's states and steps (gp4_jr_x, gp4_head_x, gp4_tail_x, the loop, gp4_c1_t0_x).
+     cut_x's aleafx_post_x); and, merged per item with SmallX's image-A twin lib/A/W_LLVMFuzzerTestOneInput_gone_p4_x.v,
+     the phase's states and steps (gp4_jr_x, gp4_head_x, gp4_tail_x, the loop, gp4_c1_t0_x).
    Section hypotheses beyond cut_x's header: _gone.v's TL, HZS, HERR, RIR, HGCELLS, HROMPIN verbatim (AR-free), HPST
    (the generic placement's fact, as on image A).  Every ghost list is [] (cut_x's HP0). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.

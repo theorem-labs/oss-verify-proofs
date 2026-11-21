@@ -1,17 +1,17 @@
 (* reac-pw/fuzz_segconf, image A: the program side, composed at the pinned image (the role of plugin-hostd/fuzz_command's
-   lib/A/Prog/CmdProgClosed.v, origin/ossv/recipes 501c0d516c69): the contract `<F>_contract` (lib/A/Prog/<F>_c.v,
-   contracts FINAL 6f783602b5e3) of each of the 34 program functions at image A's instance SegImg.PB_seg (segments
+   lib/A/Prog/CmdProgClosed.v): the contract `<F>_contract` (lib/A/Prog/<F>_c.v,
+   contracts FINAL) of each of the 34 program functions at image A's instance SegImg.PB_seg (segments
    tfibsegs), the sink head AE2k.tfib_sink_head and the allocator record AD2l.SegB, at every run ceiling and FP state,
    from each function's walk closure (its group's theorem, applied to its callees' closures and to the runtime rows).
    The walks state entries and call targets as listing terms under `Context {PI : PAImg seg_listing}` (the image-A owner's
    ruling): here PI := PB_seg, and the top is rewritten to SegInstA's A_LLVMFuzzerTestOneInput_A by
    SegInstPB.pb_entry_LLVMFuzzerTestOneInput.
    SKELETON, instantiated group by group as the walks land (INSTANTIATE.md section E; a walk is counted only when FINAL
-   6f783602b5e3 is an ancestor of its sha and it built rc=0 on that tree):
-   - instantiated: the G1 harness walk (pb_LLVMFuzzerTestOneInput, bd12cd505428), in
+   is an ancestor of its sha and it built rc=0 on that tree):
+   - instantiated: the G1 harness walk (pb_LLVMFuzzerTestOneInput), in
      lib/A/Prog/SegG1.v at PB_seg and taken here at SegB, whose callees are the closures below; the four closed walks
      of the G3 walks (trim_walk, cross_check_walk, reac_segconf_parse_walk,
-     reac_segconf_parse_file_walk; G3's integration head 84490aabe1bd, FINAL an ancestor), composed in
+     reac_segconf_parse_file_walk; G3's integration head, FINAL an ancestor), composed in
      lib/A/Prog/SegG3.v at PB_seg with every record hypothesis discharged by the listing's lemmas and taken here at
      SegB; the six landed walks of G2 (the G2 walks)
      and the 20 counted walks of G4 + G5 (the G4 / G5 walks), composed in lib/A/Prog/SegG2.v and lib/A/Prog/SegG45.v at
@@ -281,7 +281,7 @@ replace gotwA with RtAPI.A_SSP_GOT by pc_eq. replace guardA with RtAPI.A_SSP_GUA
 exact (SegRtClosed.seg_vsnprintf_closed AD2l.SegB AD2l.SegB_syms).
 Qed.
 
-(* ---- refuse: the fifth G3 walk, refuse_a.r_walk (827761a2670c; refuse.v's refuse_walk restates it under the
+(* ---- refuse: the fifth G3 walk, refuse_a.r_walk (refuse.v's refuse_walk restates it under the
    same 11 hypotheses), at PI := PB_seg and B := SegB. cross_check's REFUSE (stated at SEG_RLO / SEG_RHI, which are RLO_A /
    RHI_A by definition) and reac_segconf_parse_file's REF take it. SM0 := r_sm0, SMP / ASF / FFL / TL / TLF / ML /
    OBJ := the listing's lemmas at SegB, SNP := r_snprintf, VSNP := r_vsnprintf_seg, SSPX := sspx. *)
@@ -430,7 +430,7 @@ Lemma cl_m_refuse : forall fx0 : YK11.FPState,
   @A.Prog.m_refuse_c.m_refuse_contract fx0 rc AE2k.tfib_sink_head tfibsegs AD2l.SegB (BASE + AF_m_refuse) STK_m_refuse RLO_A RHI_A
     seg_litA_fz gotwA guardA.
 Proof. intros fx0. eapply (SegG2.cl_m_refuse (PI := SegImg.PB_seg) AD2l.SegB); eauto with g45i. Qed.
-(* m_file: G2's last walk, m_fileA.m_file_walk (ec9e8418c67), at PI := PB_seg and B := SegB. Its premises:
+(* m_file: G2's last walk, m_fileA.m_file_walk, at PI := PB_seg and B := SegB. Its premises:
    the record facts (h_palib, h_palibf, h_model_laws, seg_val_objs_PB, seg_sig_prog_PB, sspx, the relro window
    SegImg.seg_relro_img, h_sm_progress, h_asf_law, h_ffl_law), MCROM := SegG1.g1_MCR at SegB (memchr's constant window
    is read-only, unowned and not the errno cell: the same statement as G1's MCR), the rows above (r_sm1, r_snprintf,
@@ -449,7 +449,7 @@ all: first [ exact sspx
            | idtac ].
 Qed.
 
-(* ---- G3: lib/A/Prog/SegG3.v's four closed walks (84490aabe1bd) at B := SegB ------------------ *)
+(* ---- G3: lib/A/Prog/SegG3.v's four closed walks at B := SegB ------------------ *)
 (* SegG3 takes each walk at PB_seg with its record facts discharged by the listing's lemmas under HB; here HB :=
    AD2l.SegB_syms, the runtime rows are the rows above, refuse's closure is cl_refuse, and the G2 callees are G2's
    closures above *)
@@ -475,7 +475,7 @@ Proof.
 intros fx0. eapply (SegG3.cl_reac_segconf_parse (rc := rc) AD2l.SegB AD2l.SegB_syms); eauto with g45i.
 Qed.
 
-(* ---- G1: lib/A/Prog/SegG1.v's harness walk (bd12cd505428) at B := SegB ----------------------- *)
+(* ---- G1: lib/A/Prog/SegG1.v's harness walk at B := SegB ----------------------- *)
 (* SegG1 discharges the walk's record, listing and image facts under HB; here HB := AD2l.SegB_syms, the runtime rows
    are the rows above, the 21 callees are the groups' closures above (m_file's through cl_m_file, open) *)
 Lemma cl_LLVMFuzzerTestOneInput : forall fx0 : YK11.FPState,

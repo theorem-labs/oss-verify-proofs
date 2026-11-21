@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/YGcfInstDrainQ.v, with its module paths and module names changed; 938 of its 969 lines of code are new or changed and 111 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* The F1 re-hide step's relation transfer: the cf relation across YA0nR.wrehide (group T2-T5 of the re-hide design).
    rule 24: no function proved (kind: segment lemma).
 
@@ -50,8 +51,8 @@ Section U. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : Cf
 (* An address outside the hidden interval [PB, PE), and inside the 64-bit range (so its word is itself).            *)
 Definition rout (PB PE a : Z) : Prop := 0 <= a < 2 ^ 64 /\ ~ (PB <= a < PE).
 
-(* preset-side hunk: this unit's world carries the field w_H8 (YA0n.v:25), so YA0nR.wrehide takes its proof as a
-   further argument (YA0nR.v:144-147). rh_lo and rh_hi are multiples of 4096 (YGcfRehidePost.v:30-31), hence
+(* preset-side hunk: this unit's world carries the field w_H8 (YA0n.v:26), so YA0nR.wrehide takes its proof as a
+   further argument (YA0nR.v:144-147). rh_lo and rh_hi are multiples of 4096 (YGcfRehidePost.v:31-32), hence
    8-aligned, so YA0nR.H_rehide_H8 builds that proof from w_H8 W. Nothing else changes. *)
 Lemma rh_mod8 : forall x : Z, (x / 4096 * 4096) mod 8 = 0.
 Proof. intros x. replace 4096 with (512 * 8) by lia. rewrite Z.mul_assoc. apply Z_mod_mult. Qed.

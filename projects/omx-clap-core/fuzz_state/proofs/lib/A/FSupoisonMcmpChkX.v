@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_state image A (POISON-U lane, a Theorem Labs lane): the ARU form of cgif_file_fuzzer's lib/A/AE6z.v
    (mcmpx_check_srr), for ANY set U of user-poisoned heads (FSupoison.ARU). Shared: the bcmp walk
    (FSupoisonBcmp.v) and the memcmp walk (FSupoisonMemcmpW.v) both Require this file; neither copies it.
@@ -13,7 +14,7 @@
 
    Port-from, text unchanged except where U is threaded:
      AE6z.v:26-369   constants, the vm_compute'd symbolic runs, shapeR: not copied. This file Requires RELOC's
-                     relocation lib/A/AE6z.v (a working branch, 685a0e62747) and uses its text.
+                     relocation lib/A/AE6z.v (a working branch) and uses its text.
      AE6z.v:370-2660 Section f: Variables gain UP after S; Hypothesis HAR -> HARU (FSupoison.ARU); POSTr's AR -> ARU.
                      basics: am_layout through FSupoison.ARU_AR, and ARm of aview H (unpoison UP mem) (the stack
                      window's apresent is Section f's own HpresS, already on the real mem); ent_ro: the read-only

@@ -1,5 +1,5 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_llvmfS7.v at a working branch 79d8c0f1b8f, relocated A->B:
-   imports per a Theorem Labs lane's core rule (a working branch 305d8b1527f: lib.A AXxx -> lib.ReusableB YXxx when listed in its
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_llvmfS7.v at a working branch, relocated A->B:
+   imports per a Theorem Labs lane's core rule (a working branch: lib.A AXxx -> lib.ReusableB YXxx when listed in its
    ReusableB list, other lib.A -> lib.B, FMupoison stays lib.A); every image numeral re-derived from B's listing
    (fuzz_manifest.objdump.txt / nm.txt of the asan-ubsan pin). *)
 (* LLVMFuzzerTestOneInput, segment 0x80b5c .. 0x80b74 (fuzz_manifest.c:318-320): a0 := u; check_round_trip (u);
@@ -33,7 +33,7 @@ Local Set Warnings "-abstract-large-number".
 Open Scope Z_scope.
 
 (* Four image-free lemmas the A segment takes from check_round_trip's walk files (lib/A/FMW_crtB.v crt_glob_img,
-   lib/A/FMW_crtX.v rt_used_le, rt_calls_le, crt_nodup_pw at a working branch 79d8c0f1b8f), restated here with the same
+   lib/A/FMW_crtX.v rt_used_le, rt_calls_le, crt_nodup_pw at a working branch), restated here with the same
    statements and proofs, Local, so this segment does not wait on image B's check_round_trip walk (a Theorem Labs lane's G6,
    whose B code differs from A's: must_name is outlined). *)
 Local Lemma rt_used_le : forall u fuel k, (rt_used u k fuel <= length u - k)%nat.

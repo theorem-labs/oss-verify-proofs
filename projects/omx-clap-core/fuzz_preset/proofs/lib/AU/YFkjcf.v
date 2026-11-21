@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/YFkjcf.v (commit 4d286b2e618d, file sha256 412b1ce81d98) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 0 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/YFkjcf.v (file sha256 412b1ce81d98) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 0 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal by the same symbol map), and 0 addresses named in comments; comment references to people and refs dropped; no other numeral changed. *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YFkjcf.v (commit f01d79f3fb5, cf refill round 3; file sha256 1ac5cc609b4e) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-(* Theorem Labs, 2026-10-30 (ReallocPrimary.CfW, lane W, cf refill re-base, B3 half; base on d50ec3c8a93a): YFkjcf, the cf twin of YFkj.v (this tree's copy, = c5 8d6c9f45705b).
-   A hand port of YFkj.v at commit 8d6c9f45705b (its mechanical part scripted outside the tree): imports YFkpcf / YFhmcf / YFhncf and the B3 cf twins; RI+68 is the junk
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/YFkjcf.v (cf refill round 3; file sha256 1ac5cc609b4e) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10-30 (ReallocPrimary.CfW, lane W, cf refill re-base, B3 half; base): YFkjcf, the cf twin of YFkj.v (this tree's copy, = c5).
+   A hand port of YFkj.v (its mechanical part scripted outside the tree): imports YFkpcf / YFhmcf / YFhncf and the B3 cf twins; RI+68 is the junk
    atom rJEX = 55 of YFkpcf with value jex (0 <= jex < 2 ^ 8), so the B3 atoms are 56..69; the text is otherwise YFkj.v verbatim.
    EVENT-FREE: no st_nev, EV_A, EV_MAX, EV_BIG, mtr_ok, aregime, refill_reg, qloosem or non-cf abudget.
    rule 24: no function proved (kind: re-base of the proved refill walk onto the cf instance). *)
@@ -412,7 +413,7 @@ Lemma PM3 : pc_max (cache S c) = maxc.
 Proof. pose proof (wfc_classes _ _ _ _ _ WF c HcR) as C. unfold wf_class_cf in C. rewrite Hinited in C. rewrite Hmax. exact (proj1 (wrc_cache _ _ _ _ _ _ C)). Qed.
 (* cgif's WF1 built WfP 1 0 0 from Wf and the refill regime's event premise (prim_user_mapped S + kUserMapSize <=
    kUserMapSize * st_nev S), dropped in the cf layer. The cf walk runs from the call state (refill_spec_core_cf,
-   YGcfInstRefill.v:171 at d80162ffa5c9, unticked), whose refill_state_gen_cf carries WfP_cf (as_universe B) 1 0 0 S
+   YGcfInstRefill.v:172, unticked), whose refill_state_gen_cf carries WfP_cf (as_universe B) 1 0 0 S
    (one user map of credit, :115): the B3 Section takes it as HWT. *)
 Hypothesis HWT : WfP_cf (as_universe B) 1 0 0 S.
 Lemma WF1 : WfP_cf (as_universe B) 1 0 0 S.

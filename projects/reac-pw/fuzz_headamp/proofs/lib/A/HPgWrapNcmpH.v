@@ -3,12 +3,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_ubjson_encoder/lib/S8/AsanAcct.v, with its module paths and module names changed; 403 of its 523 lines of code are new or changed and 1138 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/A/FMbz_clean.v, with its module paths and module names changed; 344 of its 386 lines of code are new or changed and 481 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: lib/A/HPgWrapNcmp.v's hd_strncmp_core (itself reac-pw/fuzz_pin's
-   lib/A/PPgWrapNcmp.v pin_strncmp_core at 90722657971) re-run with the caller's frame hole of lib/A/HPgHole.v
+   lib/A/PPgWrapNcmp.v pin_strncmp_core) re-run with the caller's frame hole of lib/A/HPgHole.v
    (ecall_preH in, the hole post out), as lib/A/Rt/FMrt_lift.v rt_post_roU_win re-runs rt_post_ro_win with
    lib/A/Rt/FMupoison.v ARU_frame: hd_rt_post_roH_win is rt_post_roU_win with HPgHole.ARH_frame in place of
    ARU_frame; the walk's premises that AR gives (the stack window, the runtime cells, the read-only views) are read
    off AR of the unpoisoned memory and carried to the memory itself, which agrees with it off the hole; the rest
    is pin's proof. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image A (fuzz_headamp.asan f3e0669d2819; twin b5f352154c54): lib/A/HPgHole.v
    `hd_astrncmp_hole tfibsegs B 0x41ba4` for every symbol record B with TfibSyms B, the strncmp wrapper's contract in
    the form the parse calls it (reac_headamp_prop_parse_result 0x849c8, inside its poisoned real-stack frame: the

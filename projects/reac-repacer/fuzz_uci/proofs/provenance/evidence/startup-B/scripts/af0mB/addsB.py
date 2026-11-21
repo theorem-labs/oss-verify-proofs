@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """addsB.py -- fuzz_uci image B's af0m --add cells, mapped BY NAME from fuzz_decode B's list of record
-(-decB 7eb81ddb186 provenance/startup-gen/B/af0m/adds.AtoB.tsv: image A's 34 --add cells keyed and moved to decode B;
+(-decB provenance/startup-gen/B/af0m/adds.AtoB.tsv: image A's 34 --add cells keyed and moved to decode B;
 GATES-decB Part 4 / 5: the 6 shadow rows and the 2 musl __atexit rows are not passed). decode's base and this base are
 both cgif-derived (port_core cgif -> unit + relocownB), so decode's list is the twin list. Keys are resolved on fuzz_uci
 B's own twin .symtab / image, never by address: SYMBOL -> the same symbol + offset; POINTER -> the unique .got slot whose
@@ -18,7 +18,7 @@ from elftools.elf.elffile import ELFFile
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 from ucib_env import need  # noqa: E402
 TWIN, PIN = need('UCIB_UBS'), need('UCIB_UB')
-TSV = need('UCIB_DECREF') + '/af0m/adds.AtoB.tsv'   # commit 7eb81ddb186 proofs/libreac/fuzz_decode/provenance/startup-gen/B
+TSV = need('UCIB_DECREF') + '/af0m/adds.AtoB.tsv'   # proofs/libreac/fuzz_decode/provenance/startup-gen/B
 DEC = need('UCIB_DECB')                             # fuzz_decode.asan-ubsan pin (sha256 5d05689fd5b1)
 
 e = ELFFile(open(TWIN, 'rb'))

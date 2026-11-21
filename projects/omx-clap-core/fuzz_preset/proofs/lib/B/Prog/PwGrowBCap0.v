@@ -6,7 +6,7 @@
    below follows it, with the malloc-shaped post facts (PwGrowG's grow_at_kept0 / grow_new_apart0 /
    grow_alloc_fresh_append) in place of the realloc's success-arm ones; arm 7 closes by PwGrowBArm7.growB_seg_arm7.
    lia is scoped (clear - ..) after the first call: the walk's contexts are large (the measured runaway).
-   STATUS (2026-10-30): growB_seg_cap0 is Qed on the kit's cut 7cdbb61b5fa0 (its tgrow_specX restated by
+   STATUS (2026-10-30): growB_seg_cap0 is Qed on the kit's cut (its tgrow_specX restated by
    PwGrowB.v's statement layer; the refusal arms by the callee's OUTCOME clause), every arm of the class: the
    n < cap and cap <> 0 exclusions, the kids call (fuzz_realloc (NULL, 448)) with its NULL arms (arms 2 / 3) and the
    array arm (4), and for an object the keys call (fuzz_realloc (NULL, 64)) with its NULL arms (5 / 6) and arm 7 by

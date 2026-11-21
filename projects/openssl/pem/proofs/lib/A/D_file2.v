@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the write-certified stack window). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -41,7 +42,7 @@ Hypothesis LIB_loc : fp_local LIB_FP LIB.
 Hypothesis IO_img : forall x, in_ranges IO_FP x -> client_static x /\ ~ drv_cell x /\ outside LIB_FP x.
 Hypothesis XENV_img : forall x, in_ranges XENV_FP x -> client_static x /\ ~ drv_cell x /\ outside IO_FP x /\ outside LIB_FP x.
 
-Local Ltac ul := unfold SEGTOP_A, STACK_WIN, USTACK_TOP, RT_STACK, g_read_stage in *; lia.
+Local Ltac ul := pose proof STACK_WOK_val; unfold SEGTOP_A, STACK_WIN, USTACK_TOP, RT_STACK, g_read_stage in *; lia.
 
 Theorem toobig_cpsE :
   cpsE asegs (RTOOBIG RT OUT_rep ERR_rep XENV LIB CG argvb fs data) (evw 2 msg_too_big) (EXIT fs 2).
@@ -52,7 +53,7 @@ Proof using AF AF_DRV FPR EXC OUT_loc ERR_loc XENV_loc LIB_loc IO_img XENV_img.
   pose proof HD as ((ART0 & MI0 & CLX0 & ARGV0 & FR0 & ST0 & B16 & UA & ULO & USP0) & HB & Hap & Hhi & SPW).
   pose proof CLX0 as (OUT0 & ERR0 & XE0 & _).
   pose proof (af_sp0_range RT AF Σ m ART0) as SP0R.
-  set (lo := rt_sp0 RT Σ - STACK_WIN) in *.
+  set (lo := rt_sp0 RT Σ - STACK_WOK) in *.
   assert (EU : bv_unsigned (Z_to_bv 64 (usp - 80)) = usp - 80) by (apply unsigned_lit; ul).
   replace (evw 2 msg_too_big) with (evw 2 (fp_msg FPtoo_big) ++ evw 1 (so_buf stdout_init))
     by (cbn [fp_msg so_buf stdout_init]; rewrite app_nil_r; reflexivity).

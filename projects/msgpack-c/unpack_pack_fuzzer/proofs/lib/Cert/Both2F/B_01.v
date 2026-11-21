@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the string area's end alignment for [FAlign 12 3], a string's end 9 bytes below 2^47 and the auxv's end bound at the 27-pair auxv's size, as the templates carry them). *)
 From Stdlib Require Import ZArith List PrimInt63 Uint63.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Fpu.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.FX Require Import W64 Val IMap Mem Instr State Step Plan Notation.
@@ -7,6 +8,7 @@ From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.FX Require Import Rot.
 Import ListNotations W64 Val Mem FI St Step Plan.
 From Stdlib Require Import PrimString.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.FX Require PlanDec.
+From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.FX Require Regen Auxv.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.FX Require StrLz.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 From OSSVerify.Proofs.msgpack_c.unpack_pack_fuzzer.lib.Ctr Require Import Lib DefsA DefsM Defs DefsB.
@@ -123,7 +125,7 @@ Definition Fc40 : fact := (FULe Vc5 (VL (wp 140737488355328%uint63))).
 Definition Vc6 : sv := (VAlu ALU_ADD (VP 10%uint63 (wp 0%uint63)) (VBlob false 10%uint63 (VL (wp 0%uint63)) 8%uint63)).
 Definition Fc41 : fact := (FULe Vc6 (VL (wp 140737488355328%uint63))).
 Definition Fc42 : fact := (FRange 12%uint63 (wp 140735340871680%uint63) (wp 140737488355328%uint63)).
-Definition Fc43 : fact := (FAlign 12%uint63 3%uint63).
+Definition Fc43 : fact := Regen.Regen.STR_END.
 Definition Fc44 : fact := (FULe (VP 12%uint63 (wp 0%uint63)) (VP 5%uint63 (wp 0%uint63))).
 Definition Vc7 : sv := (VAlu ALU_ADD (VP 12%uint63 (wp 0%uint63)) (VBlob false 15%uint63 (VL (wp 0%uint63)) 8%uint63)).
 Definition Fc45 : fact := (FULe Vc5 Vc7).
@@ -132,10 +134,10 @@ Definition Fc47 : fact := (FULe Vc7 (VL (wp 140737488355328%uint63))).
 Definition Fc48 : fact := (FULe (VP 12%uint63 (wp 0%uint63)) (VP 10%uint63 (wp 0%uint63))).
 Definition Fc49 : fact := (FULe Vc6 Vc7).
 Definition Fc50 : fact := (FULe Vc4 (VL (wp 140737488355328%uint63))).
-Definition Fc51 : fact := (FULe (VP 3%uint63 (wp 160%uint63)) (VL (wp 140737488355328%uint63))).
-Definition Fc52 : fact := (FULe Vc5 (VL (wp 140737488355312%uint63))).
+Definition Fc51 : fact := Regen.Regen.end3_fact (Auxv.Auxv.R3Tb_asan false).
+Definition Fc52 : fact := (FULe Vc5 (VL (wp 140737488355319%uint63))).
 Definition Fc53 : fact := (FULe (VP 1%uint63 (wp 96%uint63)) (VP 5%uint63 (wp 0%uint63))).
-Definition Fc54 : fact := (FULe Vc6 (VL (wp 140737488355312%uint63))).
+Definition Fc54 : fact := (FULe Vc6 (VL (wp 140737488355319%uint63))).
 Definition Fc55 : fact := (FULe (VP 1%uint63 (wp 96%uint63)) (VP 10%uint63 (wp 0%uint63))).
 Definition Vc8 : sv := (VAlu ALU_ADD (VAlu ALU_SRL (VP 1%uint63 (wp 0%uint63)) (VL (wp 3%uint63))) (VL (wp 2147450880%uint63))).
 Definition Fc56 : fact := (FEq (VP 20%uint63 (wp 0%uint63)) Vc8).
@@ -260,7 +262,7 @@ Definition Fc42 : fact := (FULe Vc5 (VL (wp 140737488355328%uint63))).
 Definition Vc6 : sv := (VAlu ALU_ADD (VP 10%uint63 (wp 0%uint63)) (VBlob false 10%uint63 (VL (wp 0%uint63)) 8%uint63)).
 Definition Fc43 : fact := (FULe Vc6 (VL (wp 140737488355328%uint63))).
 Definition Fc44 : fact := (FRange 12%uint63 (wp 140735340871680%uint63) (wp 140737488355328%uint63)).
-Definition Fc45 : fact := (FAlign 12%uint63 3%uint63).
+Definition Fc45 : fact := Regen.Regen.STR_END.
 Definition Fc46 : fact := (FULe (VP 12%uint63 (wp 0%uint63)) (VP 5%uint63 (wp 0%uint63))).
 Definition Vc7 : sv := (VAlu ALU_ADD (VP 12%uint63 (wp 0%uint63)) (VBlob false 15%uint63 (VL (wp 0%uint63)) 8%uint63)).
 Definition Fc47 : fact := (FULe Vc5 Vc7).
@@ -269,10 +271,10 @@ Definition Fc49 : fact := (FULe Vc7 (VL (wp 140737488355328%uint63))).
 Definition Fc50 : fact := (FULe (VP 12%uint63 (wp 0%uint63)) (VP 10%uint63 (wp 0%uint63))).
 Definition Fc51 : fact := (FULe Vc6 Vc7).
 Definition Fc52 : fact := (FULe Vc4 (VL (wp 140737488355328%uint63))).
-Definition Fc53 : fact := (FULe (VP 3%uint63 (wp 160%uint63)) (VL (wp 140737488355328%uint63))).
-Definition Fc54 : fact := (FULe Vc5 (VL (wp 140737488355312%uint63))).
+Definition Fc53 : fact := Regen.Regen.end3_fact (Auxv.Auxv.R3Tb_asan false).
+Definition Fc54 : fact := (FULe Vc5 (VL (wp 140737488355319%uint63))).
 Definition Fc55 : fact := (FULe (VP 1%uint63 (wp 96%uint63)) (VP 5%uint63 (wp 0%uint63))).
-Definition Fc56 : fact := (FULe Vc6 (VL (wp 140737488355312%uint63))).
+Definition Fc56 : fact := (FULe Vc6 (VL (wp 140737488355319%uint63))).
 Definition Fc57 : fact := (FULe (VP 1%uint63 (wp 96%uint63)) (VP 10%uint63 (wp 0%uint63))).
 Definition Vc8 : sv := (VAlu ALU_ADD (VAlu ALU_SRL (VP 1%uint63 (wp 0%uint63)) (VL (wp 3%uint63))) (VL (wp 2147450880%uint63))).
 Definition Fc58 : fact := (FEq (VP 20%uint63 (wp 0%uint63)) Vc8).
@@ -399,7 +401,7 @@ Definition Fc44 : fact := (FULe Vc5 (VL (wp 140737488355328%uint63))).
 Definition Vc6 : sv := (VAlu ALU_ADD (VP 10%uint63 (wp 0%uint63)) (VBlob false 10%uint63 (VL (wp 0%uint63)) 8%uint63)).
 Definition Fc45 : fact := (FULe Vc6 (VL (wp 140737488355328%uint63))).
 Definition Fc46 : fact := (FRange 12%uint63 (wp 140735340871680%uint63) (wp 140737488355328%uint63)).
-Definition Fc47 : fact := (FAlign 12%uint63 3%uint63).
+Definition Fc47 : fact := Regen.Regen.STR_END.
 Definition Fc48 : fact := (FULe (VP 12%uint63 (wp 0%uint63)) (VP 5%uint63 (wp 0%uint63))).
 Definition Vc7 : sv := (VAlu ALU_ADD (VP 12%uint63 (wp 0%uint63)) (VBlob false 15%uint63 (VL (wp 0%uint63)) 8%uint63)).
 Definition Fc49 : fact := (FULe Vc5 Vc7).
@@ -408,10 +410,10 @@ Definition Fc51 : fact := (FULe Vc7 (VL (wp 140737488355328%uint63))).
 Definition Fc52 : fact := (FULe (VP 12%uint63 (wp 0%uint63)) (VP 10%uint63 (wp 0%uint63))).
 Definition Fc53 : fact := (FULe Vc6 Vc7).
 Definition Fc54 : fact := (FULe Vc4 (VL (wp 140737488355328%uint63))).
-Definition Fc55 : fact := (FULe (VP 3%uint63 (wp 160%uint63)) (VL (wp 140737488355328%uint63))).
-Definition Fc56 : fact := (FULe Vc5 (VL (wp 140737488355312%uint63))).
+Definition Fc55 : fact := Regen.Regen.end3_fact (Auxv.Auxv.R3Tb_asan false).
+Definition Fc56 : fact := (FULe Vc5 (VL (wp 140737488355319%uint63))).
 Definition Fc57 : fact := (FULe (VP 1%uint63 (wp 96%uint63)) (VP 5%uint63 (wp 0%uint63))).
-Definition Fc58 : fact := (FULe Vc6 (VL (wp 140737488355312%uint63))).
+Definition Fc58 : fact := (FULe Vc6 (VL (wp 140737488355319%uint63))).
 Definition Fc59 : fact := (FULe (VP 1%uint63 (wp 96%uint63)) (VP 10%uint63 (wp 0%uint63))).
 Definition Vc8 : sv := (VAlu ALU_ADD (VAlu ALU_SRL (VP 1%uint63 (wp 0%uint63)) (VL (wp 3%uint63))) (VL (wp 2147450880%uint63))).
 Definition Fc60 : fact := (FEq (VP 20%uint63 (wp 0%uint63)) Vc8).
@@ -540,7 +542,7 @@ Definition Fc46 : fact := (FULe Vc5 (VL (wp 140737488355328%uint63))).
 Definition Vc6 : sv := (VAlu ALU_ADD (VP 10%uint63 (wp 0%uint63)) (VBlob false 10%uint63 (VL (wp 0%uint63)) 8%uint63)).
 Definition Fc47 : fact := (FULe Vc6 (VL (wp 140737488355328%uint63))).
 Definition Fc48 : fact := (FRange 12%uint63 (wp 140735340871680%uint63) (wp 140737488355328%uint63)).
-Definition Fc49 : fact := (FAlign 12%uint63 3%uint63).
+Definition Fc49 : fact := Regen.Regen.STR_END.
 Definition Fc50 : fact := (FULe (VP 12%uint63 (wp 0%uint63)) (VP 5%uint63 (wp 0%uint63))).
 Definition Vc7 : sv := (VAlu ALU_ADD (VP 12%uint63 (wp 0%uint63)) (VBlob false 15%uint63 (VL (wp 0%uint63)) 8%uint63)).
 Definition Fc51 : fact := (FULe Vc5 Vc7).
@@ -549,10 +551,10 @@ Definition Fc53 : fact := (FULe Vc7 (VL (wp 140737488355328%uint63))).
 Definition Fc54 : fact := (FULe (VP 12%uint63 (wp 0%uint63)) (VP 10%uint63 (wp 0%uint63))).
 Definition Fc55 : fact := (FULe Vc6 Vc7).
 Definition Fc56 : fact := (FULe Vc4 (VL (wp 140737488355328%uint63))).
-Definition Fc57 : fact := (FULe (VP 3%uint63 (wp 160%uint63)) (VL (wp 140737488355328%uint63))).
-Definition Fc58 : fact := (FULe Vc5 (VL (wp 140737488355312%uint63))).
+Definition Fc57 : fact := Regen.Regen.end3_fact (Auxv.Auxv.R3Tb_asan false).
+Definition Fc58 : fact := (FULe Vc5 (VL (wp 140737488355319%uint63))).
 Definition Fc59 : fact := (FULe (VP 1%uint63 (wp 96%uint63)) (VP 5%uint63 (wp 0%uint63))).
-Definition Fc60 : fact := (FULe Vc6 (VL (wp 140737488355312%uint63))).
+Definition Fc60 : fact := (FULe Vc6 (VL (wp 140737488355319%uint63))).
 Definition Fc61 : fact := (FULe (VP 1%uint63 (wp 96%uint63)) (VP 10%uint63 (wp 0%uint63))).
 Definition Vc8 : sv := (VAlu ALU_ADD (VAlu ALU_SRL (VP 1%uint63 (wp 0%uint63)) (VL (wp 3%uint63))) (VL (wp 2147450880%uint63))).
 Definition Fc62 : fact := (FEq (VP 20%uint63 (wp 0%uint63)) Vc8).
@@ -683,7 +685,7 @@ Definition Fc48 : fact := (FULe Vc5 (VL (wp 140737488355328%uint63))).
 Definition Vc6 : sv := (VAlu ALU_ADD (VP 10%uint63 (wp 0%uint63)) (VBlob false 10%uint63 (VL (wp 0%uint63)) 8%uint63)).
 Definition Fc49 : fact := (FULe Vc6 (VL (wp 140737488355328%uint63))).
 Definition Fc50 : fact := (FRange 12%uint63 (wp 140735340871680%uint63) (wp 140737488355328%uint63)).
-Definition Fc51 : fact := (FAlign 12%uint63 3%uint63).
+Definition Fc51 : fact := Regen.Regen.STR_END.
 Definition Fc52 : fact := (FULe (VP 12%uint63 (wp 0%uint63)) (VP 5%uint63 (wp 0%uint63))).
 Definition Vc7 : sv := (VAlu ALU_ADD (VP 12%uint63 (wp 0%uint63)) (VBlob false 15%uint63 (VL (wp 0%uint63)) 8%uint63)).
 Definition Fc53 : fact := (FULe Vc5 Vc7).
@@ -692,10 +694,10 @@ Definition Fc55 : fact := (FULe Vc7 (VL (wp 140737488355328%uint63))).
 Definition Fc56 : fact := (FULe (VP 12%uint63 (wp 0%uint63)) (VP 10%uint63 (wp 0%uint63))).
 Definition Fc57 : fact := (FULe Vc6 Vc7).
 Definition Fc58 : fact := (FULe Vc4 (VL (wp 140737488355328%uint63))).
-Definition Fc59 : fact := (FULe (VP 3%uint63 (wp 160%uint63)) (VL (wp 140737488355328%uint63))).
-Definition Fc60 : fact := (FULe Vc5 (VL (wp 140737488355312%uint63))).
+Definition Fc59 : fact := Regen.Regen.end3_fact (Auxv.Auxv.R3Tb_asan false).
+Definition Fc60 : fact := (FULe Vc5 (VL (wp 140737488355319%uint63))).
 Definition Fc61 : fact := (FULe (VP 1%uint63 (wp 96%uint63)) (VP 5%uint63 (wp 0%uint63))).
-Definition Fc62 : fact := (FULe Vc6 (VL (wp 140737488355312%uint63))).
+Definition Fc62 : fact := (FULe Vc6 (VL (wp 140737488355319%uint63))).
 Definition Fc63 : fact := (FULe (VP 1%uint63 (wp 96%uint63)) (VP 10%uint63 (wp 0%uint63))).
 Definition Vc8 : sv := (VAlu ALU_ADD (VAlu ALU_SRL (VP 1%uint63 (wp 0%uint63)) (VL (wp 3%uint63))) (VL (wp 2147450880%uint63))).
 Definition Fc64 : fact := (FEq (VP 20%uint63 (wp 0%uint63)) Vc8).

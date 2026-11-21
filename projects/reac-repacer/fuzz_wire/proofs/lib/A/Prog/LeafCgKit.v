@@ -1,7 +1,7 @@
 (* LeafCgKit: the ONE shared interface for decode image A's program-leaf translations (footprint walk ->
    cgif_file leaf form). Port of fuzz_decode to the released cgif_file_fuzzer structure (the port recipe,
    sec. 3).
-   * cgif names are Section Variables named exactly as in cgif_file_fuzzer (at c8557374ad2e,
+   * cgif names are Section Variables named exactly as in cgif_file_fuzzer (
      proofs/cgif/cgif_file_fuzzer/lib/<file>:<line> in the comments); when the relocated core lands they become
      the core's names (a rename).
    * Small cgif definitions are copied verbatim (marked), at segs := rsegs and the unit's asyms B.
@@ -18,7 +18,7 @@ From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.A Require Import Img0.
 Import ListNotations.
 Open Scope Z_scope.
 
-(* ---- cgif definitions copied verbatim (YG0d.v:18, :19-24, :27, :212-213; YG0n.v:27; YK04.v:43-46;
+(* ---- cgif definitions copied verbatim (YG0d.v:19, :20-25, :28, :213-214; YG0n.v:27; YK04.v:43-46;
    YK04R.v:130 fp_avoids at decode's ExecF.footprint), at segs := rsegs ---- *)
 Definition ESTACK : Z := 4096.
 Definition acallee_saved (r : Z) : Prop :=
@@ -56,11 +56,11 @@ Proof. reflexivity. Qed.
 
 Section LeafCgKit.
 Context {fx : YK11.FPState}.
-Variable world : Type.                                                (* YA0n.v:17 Record world *)
-Variable w_H : world -> word -> bool.                                 (* YA0n.v:18 field w_H *)
-Variable SRr : world -> config -> (world -> config -> Prop) -> Prop.    (* YA0n.v:34 *)
-Variable alayout : Type.                                              (* YG0f.v:42 *)
-Variable astate : Type.                                               (* YG00.v:153 *)
+Variable world : Type.                                                (* YA0n.v:18 Record world *)
+Variable w_H : world -> word -> bool.                                 (* YA0n.v:19 field w_H *)
+Variable SRr : world -> config -> (world -> config -> Prop) -> Prop.    (* YA0n.v:35 *)
+Variable alayout : Type.                                              (* YG0f.v:43 *)
+Variable astate : Type.                                               (* YG00.v:154 *)
 Variable AR : alayout -> astate -> world -> (word -> option byte) -> Model -> Prop.  (* YG0n.v:489, at B *)
 Variable aview : (word -> bool) -> (word -> option byte) -> Z -> option Z.          (* YG0n.v:17 *)
 Variable same_but_materialized : Model -> Model -> Prop.              (* YK04.v:538 *)
@@ -69,7 +69,7 @@ Variable ret_ok : word -> Prop.                                       (* YK0s.v:
 Variable as_gp as_tp : Z.                                             (* asyms B fields *)
 Variable aowned : alayout -> astate -> Z -> Prop.                     (* YG0n.v:235, at B *)
 
-(* ecall_pre, verbatim body of YG0d.v:277-283 over the names above. *)
+(* ecall_pre, verbatim body of YG0d.v:278-284 over the names above. *)
 Definition ecall_pre (ly : alayout) (S : astate) (W : world) (regs : bvmap 5 word)
     (mem : word -> option byte) (md : Model) : Prop :=
   AR ly S W mem md /\
@@ -103,9 +103,9 @@ Definition bridge_evtF_stmt : Prop :=
     ExecF.evtF rsegs RNG P ms -> fp_avoids (w_H W) RNG ->
     (forall ms' model', P ms' -> same_but_materialized model model' -> SRr W (mkCfg ms' model') Q) ->
     SRr W (mkCfg ms model) Q.
-(* YA0n.v:39 SRr_ret (without it no kit fact concludes SRr from its post). *)
+(* YA0n.v:40 SRr_ret (without it no kit fact concludes SRr from its post). *)
 Definition SRr_ret_stmt : Prop := forall (W : world) (c : config) (Q : world -> config -> Prop), Q W c -> SRr W c Q.
-(* YG0d.v:437 AR_frame_law at md' = md (the in_band_rw condition taken for every hidden byte, which implies it). *)
+(* YG0d.v:438 AR_frame_law at md' = md (the in_band_rw condition taken for every hidden byte, which implies it). *)
 Definition AR_frame_stmt : Prop :=
   forall ly S W mem md mem', AR ly S W mem md ->
     (forall a, 0 <= a < 2 ^ 64 -> aowned ly S a -> aview (w_H W) mem' a = aview (w_H W) mem a) ->

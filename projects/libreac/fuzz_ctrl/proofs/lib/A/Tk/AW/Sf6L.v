@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/boost-beast/http_request/lib/As/AllocWalkKit.v, with its module paths and module names changed; 353 of its 387 lines of code are new or changed and 128 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Tk/AW/SmLeaf.v, with its module paths, module names and numbers changed; 79 of its 105 lines of code are new or changed and 361 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* __asan_stack_free_6 (0x3dbf4, image A, fuzz_ctrl.asan libreac v1.9.0) with its shadow premise LOCALIZED:
    asan_stack_free_6_contract_L (lib/A/Prog/asan_stack_free_cF.v), which is the frozen asan_stack_free_6_contract
    with `shadow_rw m` replaced by `stk rsegs m (shadow_addr fr) (shadow_addr fr + fs_shadow_n 6 L)` -- the 512
@@ -16,7 +17,7 @@
    footprint is not possible after the fact (MemNormP.evtF_RNG_P_weaken_top asks every byte of P to be in RNG),
    so the walk is re-run with the weaker premise instead.
 
-   The script below is Tk/AW/Sf6.v's stack_free_6 (blob of a working branch 81b7f401f87), with exactly
+   The script below is Tk/AW/Sf6.v's stack_free_6 (blob of a working branch), with exactly
    these changes, and nothing else:
      - the premise `shadow_rw m` becomes the `stk` over [shadow_addr fr, shadow_addr fr + 512);
      - its two uses are replaced: `shadow_stk` (which turned shadow_rw into that stk) is dropped, and the frame's

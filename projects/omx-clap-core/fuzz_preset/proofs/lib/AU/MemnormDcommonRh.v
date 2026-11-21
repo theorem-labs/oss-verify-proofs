@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/MemnormDcommonRh.v (commit 4d286b2e618d, file sha256 7bf9fd19007e) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 2 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal, jump-table offsets and list indices by the same stage map), 0 list indices re-picked, and 2 addresses named in comments; facts preset already states are cited, not restated; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10-31: from proofs/plugin-hostd/fuzz_reply/lib/B/MemnormDcommonRh.v (file sha256 7bf9fd19007e) onto omx-clap-core/fuzz_preset's ASan+UBSan image B' (fuzz_preset.asan-ubsan, pin d663f82d7f48, twin c90d4fa54d43); module paths changed; reply's image-instance names mapped to preset's B' instance (AGif2reply / AImg_reply -> AGif2cgif / AImg_cgif) and its row names to preset's (Reply* -> Preset*, *reply -> *preset); its 2 image numerals moved by symbol from fuzz_reply.asan-ubsan (pin 10ffb5f9202a) to B' (port_addr_check 3d2eee813cce predictions; object addresses written in decimal, jump-table offsets and list indices by the same stage map), 0 list indices re-picked, and 2 addresses named in comments; facts preset already states are cited, not restated; comment references to people and refs dropped; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/B MemnormDcommon.v (image B: the arm whose last batch has room, memnorm kept) at round 3 part 3, over DIfaceRh.DIface_rh: the
    Hypothesis IF and its field names (the di_ prefix renamed to DIfaceRh.dih_) only; the scripts are MemnormDcommon's.
    For WalkSigDrh's instance at the primed top, whose interface instance is DIfaceRh.DIface_rh (CfF2a's
@@ -17,14 +18,14 @@
    and first word and the last batch's cells WINB), DGgi.DZONE, DGgi.IZONE and the freed block's shadow
    [SPv p, + CNT8v nn); none of those zones holds a read-only byte or reaches TASK_SIZE ([memnorm_dmem_c]), from the
    seed's free_hyps record:
-   - a WIN byte is off the image (DGgi.WIN_zone, DGgi.v:394) and below ASAN_CEIL or kHighMemEnd (DGgi.LYB :222,
+   - a WIN byte is off the image (DGgi.WIN_zone, DGgi.v:395) and below ASAN_CEIL or kHighMemEnd (DGgi.LYB :222,
      DGgi.derived_ranges :305, fh_Hsp :162);
    - DZONE's static part [0x177f88, 0x5c8710) and IZONE lie in tfibsegs' read-write segments
      (MemnormSafecgif.mn_safe_rw); its node and store blocks are zone3 (off the image, YF0x zone3_off_img) and below
      ASAN_CEIL (LYB);
    - the shadow lies in [SHADOW_OFF + 514, kHighMemBeg) (derived_ranges), above the image.
-   The proof of dealloc_common_em is DGfy.v:256-399 (blocks marked as copies; the section header is DGfy.v:219-245),
-   plus the memnorm conjunct from the same frame; the one line that splits the leaf's conjuncts (DGfy.v:369) gets the
+   The proof of dealloc_common_em is DGfy.v:257-400 (blocks marked as copies; the section header is DGfy.v:220-246),
+   plus the memnorm conjunct from the same frame; the one line that splits the leaf's conjuncts (DGfy.v:370) gets the
    extra conjunct.  No runner is swapped and no walk is touched.  DGfy.v is unchanged. *)
 (* Theorem Labs, 2026-10 (task MEMNORM): the common Deallocate arm of DGfy.v (the last batch has room) with memnorm
    kept.  [dealloc_common_em] is DGfy.dealloc_common_e with MemnormDleaf.dealloc_leaf_raw_eem
@@ -36,14 +37,14 @@
    and first word and the last batch's cells WINB), DGgi.DZONE, DGgi.IZONE and the freed block's shadow
    [SPv p, + CNT8v nn); none of those zones holds a read-only byte or reaches TASK_SIZE ([memnorm_dmem_c]), from the
    seed's free_hyps record:
-   - a WIN byte is off the image (DGgi.WIN_zone, DGgi.v:394) and below ASAN_CEIL or kHighMemEnd (DGgi.LYB :222,
+   - a WIN byte is off the image (DGgi.WIN_zone, DGgi.v:395) and below ASAN_CEIL or kHighMemEnd (DGgi.LYB :222,
      DGgi.derived_ranges :305, fh_Hsp :162);
    - DZONE's static part [0x17d5c8, 0x5cdd50) and IZONE lie in tfibsegs' read-write segments
      (MemnormSafecgif.mn_safe_rw); its node and store blocks are zone3 (off the image, YF0x zone3_off_img) and below
      ASAN_CEIL (LYB);
    - the shadow lies in [SHADOW_OFF + 514, kHighMemBeg) (derived_ranges), above the image.
-   The proof of dealloc_common_em is DGfy.v:256-399 (blocks marked as copies; the section header is DGfy.v:219-245),
-   plus the memnorm conjunct from the same frame; the one line that splits the leaf's conjuncts (DGfy.v:369) gets the
+   The proof of dealloc_common_em is DGfy.v:257-400 (blocks marked as copies; the section header is DGfy.v:220-246),
+   plus the memnorm conjunct from the same frame; the one line that splits the leaf's conjuncts (DGfy.v:370) gets the
    extra conjunct.  No runner is swapped and no walk is touched.  DGfy.v is unchanged. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -104,7 +105,7 @@ apply (MemnormT.memnorm_frame4 tfibsegs (DGgi.WIN ly regs0 p lastb) (DGgi.DZONE 
 - exact MEQ.
 Qed.
 
-(* copy of DGfy.v:219-245 (the section header), unchanged *)
+(* copy of DGfy.v:220-246 (the section header), unchanged *)
 Section b.
 Variable B : asyms.
 Variable U : list Z -> astate -> Prop.
@@ -142,7 +143,7 @@ qc_bytes (st_qthread S) + req_size n <= kQuarantineCacheMax ->
 amreal tfibsegs (ft p tr S) W (cfg_at tfibsegs 0x32390 regs mem md)
 (MemnormDleaf.dealloc_leaf_raw_eem B ft ARX AOX lpost inst ly S W regs mem md p n tr).
 Proof.
-(* copy of DGfy.v:256-368, unchanged *)
+(* copy of DGfy.v:257-369, unchanged *)
 intros inst so bp ly S W regs mem md p n tr lastb initr PRE HBLK Hrev Hroom Hcache.
 pose proof PRE as PRE0.
 destruct PRE as (HARX & HRP & Hra & Hra4096 & Hal & Hlo & Hbot & Hhi & Hpres & Hgp & Htp & Hr10 & Hr11 & Hr12 & Hr13 & Hr14 & Hr15 &
@@ -261,9 +262,9 @@ assert (MNK : MemnormT.memnorm_keep tfibsegs mem mem').
 { apply (memnorm_dmem_c W ly regs0 mem tr pa nn hb1 q lastb j1 j2 j3 regs mem' FH).
   intros x NW ND NI NS. apply DMfr; [| exact ND | exact NI | exact NS].
   intros Hw. apply NW. unfold DGgi.WIN. unfold dwin_c in Hw. rewrite R2. exact Hw. }
-(* DGfy.v:369 with the memnorm conjunct (MNK) after errno's two *)
+(* DGfy.v:370 with the memnorm conjunct (MNK) after errno's two *)
 split; [|split; [exact ERR | split; [|split; [exact MNK | split; [exact HLP | exact HPATH]]]]].
-(* copy of DGfy.v:370-399, unchanged *)
+(* copy of DGfy.v:371-400, unchanged *)
 2:{ intros a Ha. apply aview_same. pose proof (ERR (a - as_errno B) ltac:(lia)) as E.
     replace (as_errno B + (a - as_errno B)) with a in E by lia. unfold w64 in E. exact E. }
 split; [exact HARX'|]. split; [apply layout_le_refl|]. split; [apply wle_refl|].

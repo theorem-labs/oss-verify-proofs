@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepReallocBcf.v (commit f01d79f3fb5, cf refill round 3; file sha256 15a71849cb72) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 14 image addresses moved by function pairs the comparison kit cmpkit 86da41d3ef68 calls the same code (strictcmp3 65688e94214a, by funcpair_reply 6963bc4a94fc on the cgif twin ce511d541cda; 15 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair), and 14 pcs named in comments; 1 hand maps (resolve-run-f01d79f3fb5.tsv (sha256 ba54f3af32ab; internal record), each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepReallocBcf.v (cf refill round 3; file sha256 15a71849cb72) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 14 image addresses moved by function pairs the comparison kit cmpkit 86da41d3ef68 calls the same code (strictcmp3 65688e94214a, by funcpair_reply 6963bc4a94fc on the cgif twin ce511d541cda; 15 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair), and 14 pcs named in comments; 1 hand maps (resolve-run.tsv (sha256 ba54f3af32ab; internal record), each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vDSO pair and its reserved region). *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, slice F4 of a Theorem Labs lane's class-full report walk, for ReallocWalk):
    the tail of __sanitizer::InternalMmapVectorNoCtor<char, true>::Realloc (0x59e3c) of cgif_file_fuzzer's
    asan-ubsan image (pin 1c29845fe605), from MmapOrDie's return (0x59eac) to Realloc's return:
@@ -113,16 +114,18 @@ Proof. intros m m' x E Hw. unfold writable_at, wview in *. rewrite E. exact Hw. 
 (* two models equal but for their materialized backing *)
 Definition msame (m m' : Model) : Prop :=
 m_fd m = m_fd m' /\ m_vmmaps m = m_vmmaps m' /\ m_vm_lazy m = m_vm_lazy m' /\ m_io m = m_io m' /\
-m_fsys m = m_fsys m' /\ m_proc m = m_proc m' /\ m_lim m = m_lim m' /\ m_time m = m_time m'.
+m_fsys m = m_fsys m' /\ m_proc m = m_proc m' /\ m_lim m = m_lim m' /\ m_time m = m_time m'
+(* 727298f3: the vm record also holds the launch's kernel build and the vDSO run state *)
+/\ m_kernel m = m_kernel m' /\ m_vdso m = m_vdso m'.
 Lemma msame_refl : forall m, msame m m.
 Proof. intros m. repeat split; reflexivity. Qed.
 Lemma msame_wvb_l : forall m m' X, msame m m' -> msame (with_vm_backing (m_vm_lazy m) X m) m'.
-Proof. intros [fd [maps lazy mat] io fs proc lim tm] m' X H. exact H. Qed.
+Proof. intros [fd [maps lazy mat kern vd] io fs proc lim tm] m' X H. exact H. Qed.
 Lemma wvb_msame : forall m m' X, msame m m' -> with_vm_backing (m_vm_lazy m) X m = with_vm_backing (m_vm_lazy m') X m'.
 Proof.
-intros [fd [maps lazy mat] io fs proc lim tm] [fd' [maps' lazy' mat'] io' fs' proc' lim' tm'] X
-  (E1 & E2 & E3 & E4 & E5 & E6 & E7 & E8).
-unfold m_vmmaps, m_vm_lazy in E2, E3. cbn in *. subst. reflexivity.
+intros [fd [maps lazy mat kern vd] io fs proc lim tm] [fd' [maps' lazy' mat' kern' vd'] io' fs' proc' lim' tm'] X
+  (E1 & E2 & E3 & E4 & E5 & E6 & E7 & E8 & E9 & E10).
+unfold m_vmmaps, m_vm_lazy, m_kernel, m_vdso in E2, E3, E9, E10. cbn in *. subst. reflexivity.
 Qed.
 Lemma sio_msame : forall m m', msame m m' -> YG0d.same_io m' m.
 Proof. intros m m' (E1 & _ & _ & E4 & E5 & E6 & _). unfold YG0d.same_io. repeat split; assumption. Qed.

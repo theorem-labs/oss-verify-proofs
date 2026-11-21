@@ -4,7 +4,7 @@
        <- RT_pf_vf.v vf_icpt_ok <- RT_gxa_inst.v fr_vfprintf_guarded (GXA's guarded musl vfprintf at A_img, memcpy /
           memset at RT_gxa_calls_mem.v, strnlen at RT_gxa_calls.v).
    snprintf_chain_closed proves RT_pf_stmt.v snprintf_icpt_stmt (the snprintf interceptor at __wrap_snprintf runs to
-   vsnprintf_x_post) at set_ready := RT_gxa_calls_mem.set_ready, in a Theorem Labs lane 3899f140f93's form (its facts are asked
+   vsnprintf_x_post) at set_ready := RT_gxa_calls_mem.set_ready, in a Theorem Labs lane's form (its facts are asked
    only when 0 <= n), and at vf_ready := vf_ready_icpt fr_vfb, fr_vfb being the guard of GXA's closed vfprintf body.
    This is RT_pf_vf.v:368-395's commented snprintf_chain_ok with the RT_pf_vsn.v step the comment lacks.  The only
    variable left is GXA's store invariant INV (RT_gxa_inst.v:49), which the evt -> SRr bridge chooses.

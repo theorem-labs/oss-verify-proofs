@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (STACK_SPAN, the guaranteed stack span, beside STACK_WIN, and the string-end bounds below USTACK_TOP). *)
 (* [comment removed for export] *)
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -38,6 +39,13 @@ Definition SEGTOP_A : Z := 0x62b000.
 (* [comment removed for export] *)
 Definition USTACK_TOP : Z := 0x800000000000.
 Definition STACK_WIN : Z := 0x800000.
+(* LPS 75d69e00: STACK_WIN had two roles.  (a) the allocator ceiling, [l_ACEIL = l_sp0 - STACK_WIN]
+   = [alloc_top = usp - stack_max_size]: still 8 MiB, unchanged.  (b) the stack span the start state
+   GUARANTEES writable below sp: at the revision init claims only [stack_window_depth] = 6144513
+   bytes ([AsanPlanCore.init_kn_with]'s [KWr (SA e_sp0 (- stack_window_depth)) ...]), so the 8 MiB
+   span is false for some launches.  STACK_SPAN is role (b): 0x5D0000 = 6094848 <= 6144513.  A
+   literal notation, so arithmetic sees the number without an unfold.  Kernel-free. *)
+Notation STACK_SPAN := 0x5D0000%Z (only parsing).
 (* [comment removed for export] *)
 Definition RT_STACK : Z := 0x10000.
 (* [comment removed for export] *)
@@ -158,7 +166,7 @@ Definition rt_pres_ex (live : list (Z * Z)) (frames : list (Z * nat)) (sp : Z) (
 Definition rng_class (RT : rt_sig) (Σ : rts RT) (s n : Z) : Prop :=
   (exists p k, In (p, k) (rt_live RT Σ) /\ p <= s /\ s + n <= p + k)
   \/ (exists f k, In (f, k) (rt_frames RT Σ) /\ f <= s /\ s + n <= f + fs_size k - 8)
-  \/ (rt_sp0 RT Σ - STACK_WIN + 64 <= s /\ s + n <= USTACK_TOP - 16)
+  \/ (rt_sp0 RT Σ - STACK_WIN + 64 <= s /\ s + n <= USTACK_TOP - 9)
   \/ (0x10000 <= s /\ s + n <= SEGTOP_A).
 
 (* [comment removed for export] *)
@@ -685,7 +693,7 @@ Definition fprintf_stderr_icontract : Prop :=
        /\ bv_unsigned sp <= a
        /\ exists slack, bytes_at bsegs m (a + Z.of_nat (length s) + 1) slack
             /\ (- (a + Z.of_nat (length s) + 1)) mod 8 <= Z.of_nat (length slack)
-            /\ a + Z.of_nat (length s) + 1 + Z.of_nat (length slack) <= USTACK_TOP - 16) ->
+            /\ a + Z.of_nat (length s) + 1 + Z.of_nat (length slack) <= USTACK_TOP - 8) ->
   fd_lookup F0 (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
   ERR_rep m -> io_ssp m ->
   ART RT Σ m -> mem_inv bsegs m -> call_ok RT Σ m sp lo ->
@@ -773,6 +781,8 @@ Definition SEGTOP_A : Z := 0x61e000.
 (* [comment removed for export] *)
 Definition USTACK_TOP : Z := 0x800000000000.
 Definition STACK_WIN : Z := 0x800000.
+(* LPS 75d69e00: role (b) of STACK_WIN, the guaranteed stack span (see the twin above). *)
+Notation STACK_SPAN := 0x5D0000%Z (only parsing).
 (* [comment removed for export] *)
 Definition RT_STACK : Z := 0x10000.
 (* [comment removed for export] *)
@@ -893,7 +903,7 @@ Definition rt_pres_ex (live : list (Z * Z)) (frames : list (Z * nat)) (sp : Z) (
 Definition rng_class (RT : rt_sig) (Σ : rts RT) (s n : Z) : Prop :=
   (exists p k, In (p, k) (rt_live RT Σ) /\ p <= s /\ s + n <= p + k)
   \/ (exists f k, In (f, k) (rt_frames RT Σ) /\ f <= s /\ s + n <= f + fs_size k - 8)
-  \/ (rt_sp0 RT Σ - STACK_WIN + 64 <= s /\ s + n <= USTACK_TOP - 16)
+  \/ (rt_sp0 RT Σ - STACK_WIN + 64 <= s /\ s + n <= USTACK_TOP - 9)
   \/ (0x10000 <= s /\ s + n <= SEGTOP_A).
 
 (* [comment removed for export] *)
@@ -1421,7 +1431,7 @@ Definition fprintf_stderr_icontract : Prop :=
        /\ bv_unsigned sp <= a
        /\ exists slack, bytes_at asegs m (a + Z.of_nat (length s) + 1) slack
             /\ (- (a + Z.of_nat (length s) + 1)) mod 8 <= Z.of_nat (length slack)
-            /\ a + Z.of_nat (length s) + 1 + Z.of_nat (length slack) <= USTACK_TOP - 16) ->
+            /\ a + Z.of_nat (length s) + 1 + Z.of_nat (length slack) <= USTACK_TOP - 8) ->
   fd_lookup F0 (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
   ERR_rep m -> io_ssp m ->
   ART RT Σ m -> mem_inv asegs m -> call_ok RT Σ m sp lo ->

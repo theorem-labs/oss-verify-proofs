@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepAppWcf.v (commit f01d79f3fb5, cf refill round 3; file sha256 42338b9c3785) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 54 image addresses moved by function pairs the comparison kit cmpkit 86da41d3ef68 calls the same code (strictcmp3 65688e94214a, by funcpair_reply 6963bc4a94fc on the cgif twin ce511d541cda; 79 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair), and 5 pcs named in comments; 6 hand maps (resolve-run-f01d79f3fb5.tsv (sha256 ba54f3af32ab; internal record), each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/RepAppWcf.v (cf refill round 3; file sha256 42338b9c3785) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 54 image addresses moved by function pairs the comparison kit cmpkit 86da41d3ef68 calls the same code (strictcmp3 65688e94214a, by funcpair_reply 6963bc4a94fc on the cgif twin ce511d541cda; 79 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the pair, each data one a pc-relative target of both paired functions; 0 code pcs the tool read as sizes, by the pair), and 5 pcs named in comments; 6 hand maps (resolve-run.tsv (sha256 ba54f3af32ab; internal record), each with its evidence: pinned image bytes, YImgTop, the unit AF twin); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the hint-dependent mmap refusal). *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane, slice F4 of a Theorem Labs lane's class-full report walk, the walk itself):
    __asan::AppendToErrorMessageBuffer (0x563c0) of cgif_file_fuzzer's asan-ubsan image (pin 1c29845fe605)
-   realizes the model step errb_append_cf (YG00cf.v:133): append_ok_w : RepIFcf.append_spec_cf B.
+   realizes the model step errb_append_cf (YG00cf.v:134): append_ok_w : RepIFcf.append_spec_cf B.
    rule 24: proves function __asan::AppendToErrorMessageBuffer (reuse search: ossv proof index v5 built
    2026-10-30T01:54:20Z and 02:28:20Z over main / ossv/recipes / ossv/candidates /
    release/pau-projects-recipes plus the delivered package and the live cold/* working heads;
@@ -272,7 +273,7 @@ Proof.
 intros data cap lo hi Hc Hlh HB. destruct (ext_apart lo hi data cap data cap Hc ltac:(lia) ltac:(lia) ltac:(lia) HB) as [X|[X|X]]; lia.
 Qed.
 
-Lemma grant_wvb : forall md l mat a n, YK13.grant_ok_na_pin (with_vm_backing l mat md) a n = YK13.grant_ok_na_pin md a n.
+Lemma grant_wvb : forall md l mat a n, YK13.grant_ok_na_pin_b (with_vm_backing l mat md) a n = YK13.grant_ok_na_pin_b md a n.
 Proof. intros. reflexivity. Qed.
 Lemma vm_frameH : forall (H H' : word -> bool) (mem mem' : word -> option byte) a n v,
   (forall k, (k < n)%nat -> H' (Z_to_bv 64 (a + Z.of_nat k)) = H (Z_to_bv 64 (a + Z.of_nat k)) /\
@@ -486,7 +487,7 @@ Definition remap_post (W : world tfibsegs) (regs : bvmap 5 word) (mem : word -> 
   wle W W' /\ w_A W' = w_A W /\
   (forall x : word, a <= bv_unsigned x < a + ncap -> w_H W' x = false) /\
   (forall x : word, ~ (a <= bv_unsigned x < a + ncap) -> w_H W' x = w_H W x) /\
-  YK13.grant_ok_na_pin md (w64 a) ncap = true /\ 0 < a /\ a + ncap < 2 ^ 64 /\
+  YK13.grant_ok_na_pin_b md (w64 a) ncap = true /\ 0 < a /\ a + ncap < 2 ^ 64 /\
   c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom tfibsegs)) mdF /\
   regs_preserved regs regs' /\
   (forall x : word, ~ (sp - 512 <= bv_unsigned x < sp) -> ~ (O_ <= bv_unsigned x < O_ + 56) ->
@@ -521,11 +522,11 @@ Lemma app_grow : forall {R : Type} (K : Z -> itree astate R) (Q : R -> world tfi
      (data + i < sp - 512 \/ p + len + 1 <= data + i)) ->
   amwf md ->
   (forall mat, Z.of_nat (length mat) * page_size <= A_bytes (w_A W) ->
-     Placement.mmap_grant_refusable (w64 34) (with_vm_backing (m_vm_lazy md) mat md) ncap = false) ->
-  (forall a : word, YK13.grant_ok_na_pin md a ncap = true ->
+     Placement.mmap_grant_refusable (w64 34) (Z_to_bv 64 0) (with_vm_backing (m_vm_lazy md) mat md) ncap = false) ->
+  (forall a : word, YK13.grant_ok_na_pin_b md a ncap = true ->
      (bv_unsigned a + ncap <= TFIB_IMG_LO \/ TFIB_IMG_END <= bv_unsigned a) /\
      (bv_unsigned a + ncap <= sp - 512 \/ p + len + 1 <= bv_unsigned a)) ->
-  (forall (a2 : Z) (pg : word), YK13.grant_ok_na_pin md (w64 a2) ncap = true -> a2 <= bv_unsigned pg ->
+  (forall (a2 : Z) (pg : word), YK13.grant_ok_na_pin_b md (w64 a2) ncap = true -> a2 <= bv_unsigned pg ->
      bv_unsigned pg + page_size <= a2 + ncap -> page_in_ranges pg (m_vm_lazy md) = false) ->
   eager_used md + A_bytes (w_A W) + ncap <= vm_limit (m_vmmaps md) ->
   val_mem tfibsegs m 0x9d9b0 8 0x135b60 -> val_mem tfibsegs m 0x135b60 8 4096 ->
@@ -784,7 +785,7 @@ Definition first_post (W : world tfibsegs) (regs : bvmap 5 word) (mem : word -> 
   wle W W' /\ w_A W' = w_A W /\
   (forall x : word, a <= bv_unsigned x < a + ncap -> w_H W' x = false) /\
   (forall x : word, ~ (a <= bv_unsigned x < a + ncap) -> w_H W' x = w_H W x) /\
-  YK13.grant_ok_na_pin md (w64 a) ncap = true /\ 0 < a /\ a + ncap < 2 ^ 64 /\
+  YK13.grant_ok_na_pin_b md (w64 a) ncap = true /\ 0 < a /\ a + ncap < 2 ^ 64 /\
   c' = mkCfg (mkst regs' (getr regs 1) mem' (seg_rom tfibsegs)) mdF /\
   regs_preserved regs regs' /\
   (forall x : word, ~ (sp - 512 <= bv_unsigned x < sp) -> ~ (O_ <= bv_unsigned x < O_ + 56) ->
@@ -811,11 +812,11 @@ Lemma app_first1 : forall {R : Type} (K : Z -> itree astate R) (Q : R -> world t
   0 <= data < 2 ^ 64 -> 0 <= size < 2 ^ 47 -> len <= 65536 ->
   amwf md ->
   (forall mat, Z.of_nat (length mat) * page_size <= A_bytes (w_A W) ->
-     Placement.mmap_grant_refusable (w64 34) (with_vm_backing (m_vm_lazy md) mat md) ncap = false) ->
-  (forall a : word, YK13.grant_ok_na_pin md a ncap = true ->
+     Placement.mmap_grant_refusable (w64 34) (Z_to_bv 64 0) (with_vm_backing (m_vm_lazy md) mat md) ncap = false) ->
+  (forall a : word, YK13.grant_ok_na_pin_b md a ncap = true ->
      (bv_unsigned a + ncap <= TFIB_IMG_LO \/ TFIB_IMG_END <= bv_unsigned a) /\
      (bv_unsigned a + ncap <= sp - 512 \/ p + len + 1 <= bv_unsigned a)) ->
-  (forall (a2 : Z) (pg : word), YK13.grant_ok_na_pin md (w64 a2) ncap = true -> a2 <= bv_unsigned pg ->
+  (forall (a2 : Z) (pg : word), YK13.grant_ok_na_pin_b md (w64 a2) ncap = true -> a2 <= bv_unsigned pg ->
      bv_unsigned pg + page_size <= a2 + ncap -> page_in_ranges pg (m_vm_lazy md) = false) ->
   eager_used md + A_bytes (w_A W) + ncap <= vm_limit (m_vmmaps md) ->
   val_mem tfibsegs m 0x9d9b0 8 0x135b60 -> val_mem tfibsegs m 0x135b60 8 4096 ->
@@ -1134,12 +1135,12 @@ Hypothesis errb_map_fits_cf :
   layout_ok ly -> img_cover ly -> TfibSyms B -> ly_tsd ly = TFIB_TSD ->
   ARcf tfibsegs B ly S Hp W mem md -> xs_mapped_cf ly S md -> qloose S -> cf_hull_ok S ->
   0 < nZ -> nZ mod kPage = 0 -> nZ <= cf_nob ->
-  (exists a, YK13.grant_ok_na_pin md a nZ = true) /\
+  (exists a, YK13.grant_ok_na_pin (Z_to_bv 64 0) md a nZ = true) /\
   eager_used md + A_bytes (w_A W) + nZ <= vm_limit (m_vmmaps md).
 
 (* H_glazy: GLAZY of RepReallocD.realloc_pre at an errbuf call (RepF4Append's finding 7, carried upward). *)
 Hypothesis H_glazy : forall lk Hp ly S W mem md n, errb_call_pre B lk Hp ly S W mem md -> 0 < n -> n mod 4096 = 0 ->
-  forall (a2 : Z) (pg : word), YK13.grant_ok_na_pin md (w64 a2) n = true -> a2 <= bv_unsigned pg ->
+  forall (a2 : Z) (pg : word), YK13.grant_ok_na_pin_b md (w64 a2) n = true -> a2 <= bv_unsigned pg ->
   bv_unsigned pg + page_size <= a2 + n -> page_in_ranges pg (m_vm_lazy md) = false.
 
 (* H_aledger: a Theorem Labs lane's new alc_eager_x (RepRelcf.ALEDGER_X) at an errbuf call; RepF4Append carries it upward. *)

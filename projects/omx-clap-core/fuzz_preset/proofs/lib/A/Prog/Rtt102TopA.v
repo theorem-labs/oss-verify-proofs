@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/PutStringB.v, with its module paths and module names changed; 139 of its 173 lines of code are new or changed and 224 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image A' (asan, sha256 1be0f53d96cb9d6c, unstripped twin bff8519bbe3ea0e4): THE COMPOSITION of
    round_trip_text's walk ON THE #102 PINS (WalkRtt102 for the text owner), ON THE BATCH KIT'S CUT. The kit's text tround_trip_text_specX
-   (lib/A/PRH_FnCheck.v:1172, blob c40cf3fdcd2a, of the batch kit head 7cdbb61b5fa0, merged into this lane at
-   c46ea8f2977) at image A', from the seven stretch tops of the cut layer Rtt102Cut.v and its composition
+   (lib/A/PRH_FnCheck.v:1172, blob c40cf3fdcd2a, of the batch kit head, merged into this lane)
+   at image A', from the seven stretch tops of the cut layer Rtt102Cut.v and its composition
    rtt_text_of_segs (Qed):
      X   Rtt102XA.rtt_seg_x_A        CK  Rtt102CKA.rtt_seg_ck_A     O2  Rtt102O2A.rtt_seg_o2_A
      CMP Rtt102CmpA.rtt_seg_cmp_A    F   Rtt102FA.rtt_seg_f_A       T   Rtt102TA.rtt_seg_t_A_cond
      E   Rtt102EA.rtt_seg_e_A
-   THE FIVE NAMED PREMISES OF THE PRE-CUT TOP (f85f15b123a), AT THE CUT:
+   THE FIVE NAMED PREMISES OF THE PRE-CUT TOP, AT THE CUT:
      RTT_UNIVEND_CLAUSE  VANISHED. It was parse_noting's `In (text + len) DW`; the cut's tparse_noting_specX
                          (PRH_FnCheck.v:596-730; :615-616 records the removal) takes no membership of the cursor end and
                          DW is gone, so CMP states RTT_SEG_CMP directly (RTT_UNIVEND_CLAUSE, rtt_at_cmp_ue,
@@ -19,7 +20,7 @@
                          header); it is now the callee-text Section hypothesis TPJW, like TPJF / TFF / TPN.
      rtt_src_ceil        DISCHARGED, and its statement NO LONGER MATCHES the cut: the cut's src_rd (PRH_Base.v:1652)
                          asks `p + Z.of_nat (length l) <= alloc_ceiling`, with no `+ 8`; CMP proves that form at the
-                         parse_noting call (HSRC_CEIL, Rtt102CmpPNA.v:847) from AR_laws_x's alx_blocks at the live text
+                         parse_noting call (HSRC_CEIL, Rtt102CmpPNA.v:848) from AR_laws_x's alx_blocks at the live text
                          block (q - cf_head, capw + cf_head) and len < capw. (Even the old `+ 8` form now follows from
                          LAWS: AR_laws_x gained field alx_blocks_ceil8, ARx_blocks_ceil8_law.)
      RTT_T_AMR8          DISCHARGED by LAWS: AR_laws_x's new field alx_blocks_hi (ARx_blocks_hi_law,
@@ -29,24 +30,24 @@
                          ((t, pi_ret_tx_realloc, t) :: ch))` alone (Rtt102TA.v RTT_T_TRACE_AT), owner a Theorem Labs lane /
                          the image binding of B, TRUE at A' (rtt_t_trace_at_A below, from WildRoomInstA.tx_trace_inU_A).
                          Its former second conjunct (S), the live real stack above the entry sp, is now the text's
-                         own LAST PREMISE (the stack-premise text head 4b8f95c0455c, merged at fef9a8da787):
+                         own LAST PREMISE (the stack-premise text head, merged):
                          rtt_pre's 28th conjunct, read by Rtt102Cut.rtt_pre_up.
-   VACUITY BEFORE 4b8f95c0455c (the record of 5f2e946f8533): STILL VACUOUS AT ITS INSTANCE, the exact clause
+   VACUITY BEFORE (the record): STILL VACUOUS AT ITS INSTANCE, the exact clause
    RTT_T_TRACE_AT's (S) `forall D, rtt_pre D -> astack_up_x SEGS (ri_ly D) (ri_W D) (ri_sp D) (ri_mem D)`: tx_put's
    prhtx_trace asks `forall a, t - 16 <= a < ly_top ly -> aview .. <> None` at the record t = s1 + 24, rtt_pre gave
    presence only of [sp - STK, sp), and no AR_laws_x field can give [sp, ly_top) (YGcallStackUp.v's header), so (S)
-   ranged over entry states with a hole above sp. The FIX (the text owner's ruling 10:58Z, landed as 4b8f95c0455c):
+   ranged over entry states with a hole above sp. The FIX (the text owner's ruling 10:58Z, landed as):
    tround_trip_text_specX takes `YGcallStackUp.astack_up_x segs ly W (spZ regs) mem` last, unguarded; the clause is
    now rtt_pre's own and RTT_T_TRACE_AT is (U) alone. The text's prh_univ_closure (4a / 4b, DW gone) is TRUE at A'
    (rtt_closure_at_A below, from PRH_Witness.prh_univ_closure_witness_A).
-   VACUITY AFTER 4b8f95c0455c, RE-CHECKED ON THE MERGED TREE: GENUINE AT ITS INSTANCE as far as this walk can check.
+   VACUITY AFTER, RE-CHECKED ON THE MERGED TREE: GENUINE AT ITS INSTANCE as far as this walk can check.
    No named premise is false at A': the one left, RTT_T_TRACE_AT (U), is TRUE there (rtt_t_trace_at_A); the text's
    prh_univ_closure is TRUE there (rtt_closure_at_A); the text's wild room of prh_wk F_round_trip_text = 32 fits A''s
    universe (rtt_wild_room_init_A, re-derived from WildRoomInstA.A_wmax through K_LLVMF = 140). The new last premise
    astack_up_x is NOT FREE (the stack-up prover's control rtt_up_ctl_hole_A: false at any state hiding a byte of
    [sp, ly_top)) and is MET at the real check_round_trip call state given check_round_trip's own entry fact
-   (YGcallStackUp.astack_up_at_xwR at Crt102Arms.v:1102-1109; first rtt_up_at_call_A, a witness at commit 5208cc4f6eb0); that entry fact is the
-   chain 4b8f95c0455c lays up to LLVMFuzzerTestOneInput's slot pre (PresetCfnA.preset_lib_pre_x, owner: the driver interface owner),
+   (YGcallStackUp.astack_up_at_xwR at Crt102Arms.v:1102-1109; first rtt_up_at_call_A, a witness); that entry fact is the
+   chain lays up to LLVMFuzzerTestOneInput's slot pre (PresetCfnA.preset_lib_pre_x, owner: the driver interface owner),
    rooted at the initial state by YGcallStackUp.astack_up_init under the start-up residuals (a start-up proof still
    to write, as PRH_FnCheck.v's note on tcheck_round_trip_specX says). AT THE TRACE-AT STATE WITH THE ZONE PRESENT:
    each tx call's PRH_FnTx.prhtx_trace is DERIVED, not assumed - Rtt102TA.rtt_t_trace_of gives [rect - 16, sp) from
@@ -81,7 +82,7 @@
    Require: RttModel.vo does build on the #102 pins (a target of this commit's build), but it Requires the plain image
    (Img0, Contract) and checks plain-image bytes (img_empty / img_nl), which would put the plain build into the A'
    walk's closure for two image-free equations. Step, chain and writer lemmas come from the unreleased old-pin H5Rtt
-   walk (the H2H5 walk head 1934271f1f40). *)
+   walk (the H2H5 walk head). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

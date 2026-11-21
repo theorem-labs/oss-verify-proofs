@@ -12,12 +12,13 @@
    premises; their Print Assumptions shows axioms only, not those premises. The closed Statements.* come from the
    YD2o assembly, not from these conditional parts. *)
 (* Modified by Theorem Labs, 2026-10: taken for reac-pw/fuzz_qdisc image B from proofs/libreac/fuzz_knock/lib/AU/
-   AuditKnockCloseU.v at origin/ossv/recipes 88154566652, in the form of this library's lib/A/AuditQdiscClose.v: the same
+   AuditKnockCloseU.v, in the form of this library's lib/A/AuditQdiscClose.v: the same
    pairs for qdisc's lib/AU/YD2o.v and lib/AU/YQdiscAllocClose.v and the asan_ubsan parts of lib/A/QdiscAsanTop.v and
    lib/A/QdiscClose.v. qdisc's allocator closure is the one-trace text (no YD3j), and QdiscClose's asan_ubsan Section
    also takes image B's trace tables (Tfib_universe_U, Tfib_universe_ok_U, Tfib_drv_traces_U, Tfib_universe_drv_U) as
    Section arguments, which YD2o passes from lib/AU/YCej.v and YCejTfib.v; YD2o.qdisc_driver_TfibB_U (H_DRIVER_U at
    YD2l.TfibB) is audited too. Names knock_* -> qdisc_*, module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.AU Require YD2o YQdiscAllocClose.
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.A Require QdiscAsanTop QdiscClose.
 Check YD2o.ASAN_UBSAN_T_closed.

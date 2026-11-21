@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the parts the walk of plugin-hostd/fuzz_command's strdup entry needs that no file of this tree holds: the code table of the entry (the shape of lib/A/AE34.v), the two phase lemmas (the shape of lib/A/AE2y.v icpt_phase), and one lemma that carries an [amreal] post through a later run. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Rt/RtDStrdupD.v, with its module paths and module names changed; 404 of its 438 lines of code are new or changed and 53 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -139,7 +140,7 @@ Hypothesis LAWS : AR_laws_cf tfibsegs B.
 Hypothesis TB : TfibSyms B.
 (* part 3c: the unit's row relro_seg_t, which snd_pre reads to carry arodata_ok_cf to the body's call (RtDStrndupA.v) *)
 Hypothesis RS : relro_seg_t tfibsegs.
-(* RT_kit.FrShadowSyms B, its text (A/RT_kit.v:235), as RtDStrndupR.v's TL *)
+(* RT_kit.FrShadowSyms B, its text (A/RT_kit.v:236), as RtDStrndupR.v's TL *)
 Hypothesis TL : as_got_shadow B = 0x9d9d0 /\ as_shadow_cell B = 0xa60b8.
 (* the ASan range check at 0x5595c returning 0 (RtDStrndupCfRt.v); RtDStrndupZ.v reply_region_zero_stk_cf proves it *)
 Hypothesis RIPZ : aregion_zero_stk_cf tfibsegs B PC_region_is_poisoned.
@@ -473,7 +474,7 @@ Qed.
 End g.
 
 (* The instance at fuzz_reply's image A. Required here, after Section g: RT_kit sets Zify's euclidean-division flag
-   globally (A/RT_post.v:41-43). *)
+   globally (A/RT_post.v:42-44). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YG0lawscf.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A Require RT_kit W_palib_fr.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A.Rt Require RtDStrndupZ.

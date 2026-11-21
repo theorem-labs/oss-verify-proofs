@@ -11,7 +11,7 @@
    segment form and the post), A/ACfj.v:230-257 (tfib_lib_x_body: srz_enter, then the segments), A/ACfi.v:103-141
    (closed under the callee contracts), A/AChf.v:140-163 (the fake frame's realign through s0). Walk kit: lib/A/FSW_K.v
    (a working branch), FSW_frame.v (a working branch), FSW_ret.v (a working branch).
-   Atom convention (FSW_K.v:265-274): atom 2 = sp, atom 8 = s0; extra atoms from 32 under the env's extra list
+   Atom convention (FSW_K.v:266-275): atom 2 = sp, atom 8 = s0; extra atoms from 32 under the env's extra list
    fe_extra: 32 = the shadow base, 33..43 = the eleven values the prologue saves (ra, s0, s1, s2 .. s9 of the entry, at
    s0 - 8 .. s0 - 88), 44 = the fake frame's flag address, 45 = the fake frame's shadow address. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
@@ -156,7 +156,7 @@ End d.
 Definition fe_sv_chunks : list YP09.chunk :=
   map (fun k => YP09.mkChunk (- 8 * (Z.of_nat k + 1)) (CVal 8 (SOff (33 + k) 0))) (seq 0 11).
 (* (B2) right after __asan_stack_malloc_0 returns (0x80f88): the kit's resume state (FSW_frame3.v fsw_resume_ss,
-   a working branch 3c98d842174, from a Theorem Labs lane's crcs_resume_sm): the saved words at the s0 atom 8 in
+   a working branch, from a Theorem Labs lane's crcs_resume_sm): the saved words at the s0 atom 8 in
    [-88, 0), the slot 0(s1) at atom 9 in [0, 8), the granted frame at atom 10 (a0) in [0, 64) with its flag word at 56
    holding the flag address (atom 44). *)
 Definition ss_B2 : sstate := fsw_resume_ss RA_stack_malloc (-88) 0 fe_sv_chunks 9 0 8 10 (SOff 44 0) 0.

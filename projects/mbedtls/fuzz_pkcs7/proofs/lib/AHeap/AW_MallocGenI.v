@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the hypotheses T_node and T_store written out in plain text with the new placement premise ASys.placed_at, which depot_put_cfg now asks for; their old encoded statements kept as ZZ_AHeap_AW_MallocGenI_T_node_old and ZZ_AHeap_AW_MallocGenI_T_store_old, with lemmas proving them equal to the plain text without that premise). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -258,10 +259,53 @@ Section MallocGen.
   Hypothesis K_apart : ltac2:(CDefT.buildp (gd_tbl_AW_MallocGenI ()) "Pu,(1.$2<.)Pf,(1.$2<.)Pnb,(3.$2.)Pbl,(3.$2.)Pmo,$2:.Pa,(0.&40.)Pw,(0.&40.)P,A5.VK,R7.R6.R5.R4.R3.P,(19.$2<.(2=.(18.(13.(0.&40.)(0.&40.))(2>.(2?.R4.))(33.(2?.R4.)))R3.R2.)$31.)P,(5.+10000.(39.&40.R3.))P,(5.(6.(39.&40.R5.)(39.&40.R4.))(3:.VhAR,))Px,$2.P,(8.A5.VCSf,R<.R;.R:.R9.R1.(;.(5.(3;.VAL,)R1.)(<.R1.(3<.VAL,))))(17.(;.(5.(39.&40.R8.)R2.)(<.R2.(6.(39.&40.R8.)(39.&40.R7.)))))")
 (* [comment removed for export] *).
   Variables (Gn Gs : option bool -> option bool -> list Z -> list Z -> Prop).
-  Hypothesis T_node : ltac2:(CDefT.buildp (gd_tbl_AW_MallocGenI ()) "Pu,(1.$2<.)Pf,(1.$2<.)Pnb,(3.$2.)Pbl,(3.$2.)Pmo,$2:.Pa,(0.&40.)P,A4.VGn,R6.R5.R4.R3.P,A5.VK,R7.R6.R5.R4.R3.P,(19.$2.(3=.(39.&40.R3.)+1000.)=)P,(<.=(39.&40.R4.))P,(5.(6.(39.&40.R5.)(7.+2.+14.))(3:.VhAR,))P,(19.$2<.(2=.(18.(13.(0.&40.)(0.&40.))(2>.(2?.R7.))(33.(2?.R7.)))R6.(30.&40.(7.+2.+14.)))$31.)(;.A5.VK,R<.R;.(18.$2.R:.(12.$2.(39.&40.R7.)(15.$2.)))R9.(3>.+22.R7.(7.+2.+14.)R8.)(16.A4.VCSf,R<.R;.(18.$2.R:.(12.$2.(39.&40.R7.)(15.$2.)))R9.(39.&40.R7.)(7.+2.+14.)))")
-(* [comment removed for export] *).
-  Hypothesis T_store : ltac2:(CDefT.buildp (gd_tbl_AW_MallocGenI ()) "Pu,(1.$2<.)Pf,(1.$2<.)Pnb,(3.$2.)Pbl,(3.$2.)Pmo,$2:.Pa,(0.&40.)P,A4.VGs,R6.R5.R4.R3.P,A5.VK,R7.R6.R5.R4.R3.P,(19.$2.(3=.(39.&40.R3.)+1000.)=)P,(<.=(39.&40.R4.))P,(5.(6.(39.&40.R5.)(7.+2.+17.))(3:.VhAR,))P,(19.$2<.(2=.(18.(13.(0.&40.)(0.&40.))(2>.(2?.R7.))(33.(2?.R7.)))R6.(30.&40.(7.+2.+17.)))$31.)(;.A5.VK,R<.R;.R:.(18.$2.R9.(12.$2.(39.&40.R7.)(15.$2.)))(3>.+4022.R7.(7.+2.+17.)R8.)(16.A4.VCSf,R<.R;.R:.(18.$2.R9.(12.$2.(39.&40.R7.)(15.$2.)))(39.&40.R7.)(7.+2.+17.)))")
-(* [comment removed for export] *).
+  Definition ZZ_AHeap_AW_MallocGenI_T_node_old : Prop := ltac2:(CDefT.buildp (gd_tbl_AW_MallocGenI ()) "Pu,(1.$2<.)Pf,(1.$2<.)Pnb,(3.$2.)Pbl,(3.$2.)Pmo,$2:.Pa,(0.&40.)P,A4.VGn,R6.R5.R4.R3.P,A5.VK,R7.R6.R5.R4.R3.P,(19.$2.(3=.(39.&40.R3.)+1000.)=)P,(<.=(39.&40.R4.))P,(5.(6.(39.&40.R5.)(7.+2.+14.))(3:.VhAR,))P,(19.$2<.(2=.(18.(13.(0.&40.)(0.&40.))(2>.(2?.R7.))(33.(2?.R7.)))R6.(30.&40.(7.+2.+14.)))$31.)(;.A5.VK,R<.R;.(18.$2.R:.(12.$2.(39.&40.R7.)(15.$2.)))R9.(3>.+22.R7.(7.+2.+14.)R8.)(16.A4.VCSf,R<.R;.(18.$2.R:.(12.$2.(39.&40.R7.)(15.$2.)))R9.(39.&40.R7.)(7.+2.+14.)))").
+  Lemma ZZ_AHeap_AW_MallocGenI_T_node_faithful : ZZ_AHeap_AW_MallocGenI_T_node_old =
+    (forall (u f : option bool) (nb bl : list Z) (mo : Model) (a : word),
+      Gn u f nb bl ->
+      K u f nb bl mo ->
+      bv_unsigned a mod 4096 = 0 ->
+      0 < bv_unsigned a ->
+      bv_unsigned a + 2 ^ 20 <= ACEIL ->
+      region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 20)) = true ->
+      K u f (nb ++ [bv_unsigned a]) bl (anon_grant 0x22 a (2 ^ 20) mo)
+      /\ crange (CSf u f (nb ++ [bv_unsigned a]) bl) (bv_unsigned a) (2 ^ 20)).
+  Proof. exact eq_refl. Qed.
+  Hypothesis T_node :
+    forall (u f : option bool) (nb bl : list Z) (mo : Model) (a : word),
+      Gn u f nb bl ->
+      K u f nb bl mo ->
+      bv_unsigned a mod 4096 = 0 ->
+      0 < bv_unsigned a ->
+      bv_unsigned a + 2 ^ 20 <= ACEIL ->
+      region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 20)) = true ->
+      ASys.placed_at (2 ^ 20) mo a ->
+      K u f (nb ++ [bv_unsigned a]) bl (anon_grant 0x22 a (2 ^ 20) mo)
+      /\ crange (CSf u f (nb ++ [bv_unsigned a]) bl) (bv_unsigned a) (2 ^ 20).
+
+  Definition ZZ_AHeap_AW_MallocGenI_T_store_old : Prop := ltac2:(CDefT.buildp (gd_tbl_AW_MallocGenI ()) "Pu,(1.$2<.)Pf,(1.$2<.)Pnb,(3.$2.)Pbl,(3.$2.)Pmo,$2:.Pa,(0.&40.)P,A4.VGs,R6.R5.R4.R3.P,A5.VK,R7.R6.R5.R4.R3.P,(19.$2.(3=.(39.&40.R3.)+1000.)=)P,(<.=(39.&40.R4.))P,(5.(6.(39.&40.R5.)(7.+2.+17.))(3:.VhAR,))P,(19.$2<.(2=.(18.(13.(0.&40.)(0.&40.))(2>.(2?.R7.))(33.(2?.R7.)))R6.(30.&40.(7.+2.+17.)))$31.)(;.A5.VK,R<.R;.R:.(18.$2.R9.(12.$2.(39.&40.R7.)(15.$2.)))(3>.+4022.R7.(7.+2.+17.)R8.)(16.A4.VCSf,R<.R;.R:.(18.$2.R9.(12.$2.(39.&40.R7.)(15.$2.)))(39.&40.R7.)(7.+2.+17.)))").
+  Lemma ZZ_AHeap_AW_MallocGenI_T_store_faithful : ZZ_AHeap_AW_MallocGenI_T_store_old =
+    (forall (u f : option bool) (nb bl : list Z) (mo : Model) (a : word),
+      Gs u f nb bl ->
+      K u f nb bl mo ->
+      bv_unsigned a mod 4096 = 0 ->
+      0 < bv_unsigned a ->
+      bv_unsigned a + 2 ^ 23 <= ACEIL ->
+      region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 23)) = true ->
+      K u f nb (bl ++ [bv_unsigned a]) (anon_grant 0x4022 a (2 ^ 23) mo)
+      /\ crange (CSf u f nb (bl ++ [bv_unsigned a])) (bv_unsigned a) (2 ^ 23)).
+  Proof. exact eq_refl. Qed.
+  Hypothesis T_store :
+    forall (u f : option bool) (nb bl : list Z) (mo : Model) (a : word),
+      Gs u f nb bl ->
+      K u f nb bl mo ->
+      bv_unsigned a mod 4096 = 0 ->
+      0 < bv_unsigned a ->
+      bv_unsigned a + 2 ^ 23 <= ACEIL ->
+      region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 (2 ^ 23)) = true ->
+      ASys.placed_at (2 ^ 23) mo a ->
+      K u f nb (bl ++ [bv_unsigned a]) (anon_grant 0x4022 a (2 ^ 23) mo)
+      /\ crange (CSf u f nb (bl ++ [bv_unsigned a])) (bv_unsigned a) (2 ^ 23).
   Hypothesis ROOM_n : forall u f nb bl mo, Gn u f nb bl -> K u f nb bl mo -> exists a, anon_grantable 0x22 (2^20) mo a.
   Hypothesis ROOM_s : forall u f nb bl mo, Gs u f nb bl -> K u f nb bl mo -> exists a, anon_grantable 0x4022 (2^23) mo a.
 

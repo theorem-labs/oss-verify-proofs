@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (lane F2a, a working branch; owner a Theorem Labs lane): the recycle field of Deallocate's
-   big-block arm, DGbigIF.dbg_rq_t (DGbigIF.v:116-124: the cut relation and the recycle invariant for the one chunk at
+   big-block arm, DGbigIF.dbg_rq_t (DGbigIF.v:117-125: the cut relation and the recycle invariant for the one chunk at
    QuarantineCallback::Recycle's call, from the memory at Put's size test), at the layer's instance
      ARX := YGcfInstBase.ARX_cf B IOK Hp, rpre := YGcfInstFreeModel.rpreD_big_cf B, fpre := fpre_hp_cf im_segs B Hp,
      dpost := CLdepot.dpost_x im_segs B, ARXr := YGcfInstDrainR.ARXr_cf B IOK Hp, AOX := aowned B, U := U_cf B,
@@ -10,9 +11,9 @@
    the memory dmem_b at Put's size test).
    rule 24: no function proved (kind: model / cut-relation entry of the big arm's Recycle call).
 
-   [bext_rq_cf] is that field (DIfaceBig.dbg_rq).  YGcfInstFreeBig.DIfaceBigExt (YGcfInstFreeBig.v:90-100) still
+   [bext_rq_cf] is that field (DIfaceBig.dbg_rq).  YGcfInstFreeBig.DIfaceBigExt (YGcfInstFreeBig.v:91-101) still
    states the earlier text, with an st_cache_inited conjunct that DGbigIF no longer has (the flag is DRq_cf's guarded
-   conjunct, YGcfInstDrainR.v:234); its consumer takes this lemma at DGbigIF's text.
+   conjunct, YGcfInstDrainR.v:235); its consumer takes this lemma at DGbigIF's text.
 
    - [bigrq_arxr_cf]: the cut relation ARXr_cf at qx S k z tr and dmem_b's memory.  The route is YGcfInstFreeMid's
     (section m's lemmas for every field but the shadow; YGcfInstFreeMidE.enq_bridge_holds_cf for the frame of the call
@@ -390,7 +391,7 @@ split; [exact Ei|]. split.
 - exact (xs_mapped_keep_cf ly S _ md0 _ (ms_secs S k z tr) (m_vmmaps_wvb _ _ _) HXM).
 Qed.
 
-(* (L2) DRq_cf's first five conjuncts (YGcfInstDrainR.v:222-226) at the call state, the chunk pending, no batch object *)
+(* (L2) DRq_cf's first five conjuncts (YGcfInstDrainR.v:223-227) at the call state, the chunk pending, no batch object *)
 Lemma bigrq_drq5_cf : forall inst ly S W mem0 md0 p n tr k z hb1 sp0 (mem : word -> option byte),
   ARX inst ly S W mem0 md0 -> rpre S n -> fpre ly S W mem0 p n -> In (p, n) (blocks S) -> U tr S ->
   find_user (st_chunks S) p = Some k -> ck_state k = CAllocated ->
@@ -459,7 +460,7 @@ split; [exact RX|]. split; [exact CD|]. split; [exact UQ|]. split; [exact Q1|]. 
 - (* the size conjunct: the chunk's request is below the unit's malloc limit *)
   constructor; [|constructor]. change (ck_n (qk k)) with (ck_n k).
   unfold YGcfInstDrainR.NMAXD_big_cf, ck_n, req_size. destruct (Z.eqb_spec (ck_req k) 0); lia.
-- (* the pending items' bytes (CfF2b 033ceb5fdb1c): the one chunk's request is below the unit's malloc limit *)
+- (* the pending items' bytes (CfF2b): the one chunk's request is below the unit's malloc limit *)
   split.
   { cbn [items_n fold_right]. change (ck_n (qk k)) with (ck_n k). pose proof YG08cf.cf_malloc_max_bound as CMB.
     unfold ck_n, req_size in *. assert (2 ^ 31 = 2147483648) by reflexivity. destruct (Z.eqb_spec (ck_req k) 0); unfold items_n; cbn; lia. }

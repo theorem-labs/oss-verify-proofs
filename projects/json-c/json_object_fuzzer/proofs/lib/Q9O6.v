@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: ser_specA and ser_specA_al take it after alloc_ceiling <= lo; gpA_open and the proof of ser_specA_of_al name it). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -54,7 +55,7 @@ AJ5 A4L HIx A T md
 F (Z_to_bv 64 entry) fc None m (seg_rom asegs)).
 
 Ltac gpA_open PRE JO sp m s BS p :=
-destruct PRE as (HP & ST & LO & LOS & SPA & HT & ERR & TP & RA);
+destruct PRE as (HP & ST & LO & HBT & LOS & SPA & HT & ERR & TP & RA);
 pose proof (jopt_frame_onlyA HIx _ _ _ _ _ _ _ _ _ (bv_unsigned sp) _ _ HP LO JO 16) as JOK;
 unfold_consts; unfold A_ERRNO, A_TP in *;
 lazymatch type of TP with ?t = _ => subst t end;
@@ -598,7 +599,7 @@ jtx s (REST ++ Y) = Some (w, R) ->
 32 <= cap < 2^30 -> bpos + w < 2^28 -> ser_need cap bpos w <= bB B ->
 aflags_ok fl -> 0 <= lv -> lv + sdepth s <= 1000 ->
 Z.of_nat (length FRS) + 1 < 4096 ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - ser_budgetA s ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - ser_budgetA s ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] -> JHEX_A m ->
 tp = wz A_TP -> bv_unsigned ra mod 2 = 0 -> frm0 fc ->
@@ -622,7 +623,7 @@ jtx s (REST ++ Y) = Some (w, R) ->
 32 <= cap < 2^30 -> bpos + w < 2^28 -> ser_need cap bpos w <= bB B ->
 aflags_ok fl -> 0 <= lv -> lv + sdepth s <= 1000 ->
 Z.of_nat (length FRS) + 1 < 4096 ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - ser_budgetA s ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - ser_budgetA s ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] -> JHEX_A m ->
 tp = wz A_TP -> bv_unsigned ra mod 2 = 0 -> frm0 fc ->
@@ -635,7 +636,7 @@ F (wz entry) fc None m (seg_rom asegs)).
 
 Lemma ser_specA_of_al : forall entry s, ser_specA_al 0 entry s -> ser_specA_al 16 entry s -> ser_specA entry s.
 Proof.
-intros entry s H0 H16. unfold ser_specA. intros until errv. intros HP PB JN INCL JTX CAP TXT NEED FL Hlv Hlvd FRSN ST LO LOS SPA.
+intros entry s H0 H16. unfold ser_specA. intros until errv. intros HP PB JN INCL JTX CAP TXT NEED FL Hlv Hlvd FRSN ST LO HBT LOS SPA.
 assert (D32 : bv_unsigned sp mod 32 = 0 \/ bv_unsigned sp mod 32 = 16) by (clear - SPA; Z.div_mod_to_equations; lia).
 destruct D32 as [D32 | D32]; [eapply H0 | eapply H16]; eassumption.
 Qed.
@@ -791,7 +792,7 @@ AJ5 A4L HIx A T md
 F (Z_to_bv 64 entry) fc None m (seg_rom asegs)).
 
 Ltac gpA_open PRE JO sp m s BS p :=
-destruct PRE as (HP & ST & LO & LOS & SPA & HT & ERR & TP & RA);
+destruct PRE as (HP & ST & LO & HBT & LOS & SPA & HT & ERR & TP & RA);
 pose proof (jopt_frame_onlyA HIx _ _ _ _ _ _ _ _ _ (bv_unsigned sp) _ _ HP LO JO 16) as JOK;
 unfold_consts; unfold A_ERRNO, A_TP in *;
 lazymatch type of TP with ?t = _ => subst t end;
@@ -1275,7 +1276,7 @@ jtx s (REST ++ Y) = Some (w, R) ->
 32 <= cap < 2^30 -> bpos + w < 2^28 -> ser_need cap bpos w <= bB B ->
 aflags_ok fl -> 0 <= lv -> lv + sdepth s <= 1000 ->
 Z.of_nat (length FRS) + 1 < 4096 ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - ser_budgetA s ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - ser_budgetA s ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] -> JHEX_A m ->
 tp = wz A_TP -> bv_unsigned ra mod 2 = 0 -> frm0 fc ->
@@ -1299,7 +1300,7 @@ jtx s (REST ++ Y) = Some (w, R) ->
 32 <= cap < 2^30 -> bpos + w < 2^28 -> ser_need cap bpos w <= bB B ->
 aflags_ok fl -> 0 <= lv -> lv + sdepth s <= 1000 ->
 Z.of_nat (length FRS) + 1 < 4096 ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - ser_budgetA s ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - ser_budgetA s ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] -> JHEX_A m ->
 tp = wz A_TP -> bv_unsigned ra mod 2 = 0 -> frm0 fc ->
@@ -1312,7 +1313,7 @@ F (wz entry) fc None m (seg_rom asegs)).
 
 Lemma ser_specA_of_al : forall entry s, ser_specA_al 0 entry s -> ser_specA_al 16 entry s -> ser_specA entry s.
 Proof.
-intros entry s H0 H16. unfold ser_specA. intros until errv. intros HP PB JN INCL JTX CAP TXT NEED FL Hlv Hlvd FRSN ST LO LOS SPA.
+intros entry s H0 H16. unfold ser_specA. intros until errv. intros HP PB JN INCL JTX CAP TXT NEED FL Hlv Hlvd FRSN ST LO HBT LOS SPA.
 assert (D32 : bv_unsigned sp mod 32 = 0 \/ bv_unsigned sp mod 32 = 16) by (clear - SPA; Z.div_mod_to_equations; lia).
 destruct D32 as [D32 | D32]; [eapply H0 | eapply H16]; eassumption.
 Qed.

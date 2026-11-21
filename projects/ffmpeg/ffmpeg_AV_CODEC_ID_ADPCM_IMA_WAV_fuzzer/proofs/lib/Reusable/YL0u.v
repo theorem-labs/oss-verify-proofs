@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YL0u.v, with its module paths changed. *)
 (* Modified by Trevor Hansen, 2026-11: copied from projects/zlib/checksum_fuzzer/proofs/lib/Reusable/YL0u.v for ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer, with its module paths changed, and its addresses and numbers named by Reusable/YAddr.v, which holds this fuzz target's plain binary's values. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (md_ok_vm over fdchan's three conjuncts). *)
 From OSSVerify.Proofs.ffmpeg.ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -34,7 +35,10 @@ Qed.
 Definition md_ok (inp : ProcInput) (md : Model) : Prop :=
 fdchan (Z_to_bv 64 1) (Z_to_bv 64 1) md /\ fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) md /\ m_fs md = in_fs inp.
 Lemma md_ok_vm : forall inp md vm, md_ok inp md -> md_ok inp (with_vmmaps vm md).
-Proof. intros inp md vm ([H1 H1'] & [H2 H2'] & H3). unfold md_ok, fdchan. autorewrite with model. repeat split; assumption. Qed.
+(* fdchan is THREE conjuncts at LPS cd320f53 (Common/CatSim.v:1521): the fd lookup, [w_is0 ch = false]
+   and [m_channel_reader model = true]. The two-deep pattern left the third folded into one
+   hypothesis, so [assumption] had nothing to close the channel-reader goal with. *)
+Proof. intros inp md vm ([H1 [H1' H1'']] & [H2 [H2' H2'']] & H3). unfold md_ok, fdchan. autorewrite with model. repeat split; assumption. Qed.
 Lemma md_ok_ex : forall inp md md', md_ok inp md -> (exists vm, md' = with_vmmaps vm md) -> md_ok inp md'.
 Proof. intros inp md md' H [vm ->]. apply md_ok_vm. exact H. Qed.
 End c.

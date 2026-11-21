@@ -2,12 +2,13 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACem.v, with its module paths and module names changed; 1540 of its 1601 lines of code are new or changed and 390 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* pj_string 0x83be4 (pf.c:406-411), 46 instructions of fs.asan (sha256 64b53ff86172...): the ASan walk of the READER
-   lane's pj_string_spec (lib/A/FSH_Fn_reader.v:647, success form, CTX-drop statement of cb47ca101c7).
+   lane's pj_string_spec (lib/A/FSH_Fn_reader.v:647, success form, CTX-drop statement).
 
-   Rule 24: the function's released plain proof exists (c8557374ad2e lib/Prog/pj_string.v, pj_string_c.v); no ASan-image
+   Rule 24: the function's released plain proof exists (lib/Prog/pj_string.v, pj_string_c.v); no ASan-image
    proof of pj_string exists. Second-agent check: (internal path)
-   (a Theorem Labs lane, `ossv proof index v5, built 2026-10-28T21:58:24Z`, ossv/recipes@566eb6ffa5df): "pj_string: CONFIRM
+   (a Theorem Labs lane, `ossv proof index v5, built 2026-10-28T21:58:24Z`, ossv/recipes): "pj_string: CONFIRM
    (exit=0, 14 named files: (a) 8 fuzz_state plain/ubsan (lib/Prog 4+lib/U/Prog 4); (b) 6 other-unit
    (omx-clap-core/fuzz_preset); (c) 0; fuzz_state address rows: plain/ubsan only)".
 
@@ -21,7 +22,7 @@
      `bnez` to 0x83c80 / __asan_report_store4 is never taken; s = NULL picks the literal FS_RO_STRS 0x21020; to
      `jal fuzz_strdup` 0x83c40;
    - fuzz_strdup (pjs_call): callee pre by afn_pre_at (its chain is empty: s0 = v below alloc_ceiling, YCbq achain_low),
-     post from fs_fuzz_strdup (no CTX premise: CTX-drop cb47ca101c7), resume by FSW_K3.fsw_after_callFPU_args (callee FP
+     post from fs_fuzz_strdup (no CTX premise: CTX-drop), resume by FSW_K3.fsw_after_callFPU_args (callee FP
      FS_PSTAT_FP inside the caller's FP, image arm);
    - run 3 (token engine, pjs_tail): the 8-byte store to v->str (shadow check decided, __asan_report_store8 never taken),
      return value 0 (the new block is non-NULL), epilogue, `ret` 0x83c7c; FSW_ret.fsw_retU to fpostU.
@@ -33,9 +34,9 @@
    - HSS : FsShadowSyms B                                   (RELOC, TfibLib; S0 lib/A/FSH_Base.v)
    - fs_memset_realizesU : aintrin_realizesU tfibsegs B OSet PC_memset   (RUNTIME / POISON-U, lib/A/FSupoisonU.v)
    - fs_fuzz_strdup : fuzz_strdup_spec                       (ALLOC a Theorem Labs lane, lib/A/FSH_Fn_alloc.v)
-   Built over S0 a working branch c6f2144975e (S0 400b2a240b3+: FP-keyed ajournal, one-text awr_byte with the
-   fake-frame arm, the walk kit FSW_K / K3 / rres / ret / rd) merged with a working branch 237c12bae31, then
-   with the CTX-drop statements a working branch cb47ca101c7 (no CTX binder or premise). *)
+   Built over S0 a working branch (S0+: FP-keyed ajournal, one-text awr_byte with the
+   fake-frame arm, the walk kit FSW_K / K3 / rres / ret / rd) merged with a working branch, then
+   with the CTX-drop statements a working branch (no CTX binder or premise). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgSat.v at 0de5d668c87 (its boolean checkers oz_eqb, forallb_seq, img_val_chk, img_bytes_chk and their soundness lemmas, with their proofs); the witness, its direct proofs and the call-site lemmas below are new, and the image is reac-pw/fuzz_rate's asan-ubsan build instead of fuzz_role's asan build. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgSat.v (its boolean checkers oz_eqb, forallb_seq, img_val_chk, img_bytes_chk and their soundness lemmas, with their proofs); the witness, its direct proofs and the call-site lemmas below are new, and the image is reac-pw/fuzz_rate's asan-ubsan build instead of fuzz_role's asan build. *)
 (* Image B's witness for the memory premises of lib/AU/PweSpec.v's pod_write_ent contract, at a REAL call-site
    state: the state of the first of the three calls of pod_write_ent in LLVMFuzzerTestOneInput, the `jal` at
    0x81054 (pod.h:404, the shape-7 Int pod). One concrete pair (H_w, mem_w) with concrete pp, e, len satisfies every

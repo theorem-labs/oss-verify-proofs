@@ -1,7 +1,7 @@
 (* check_reject_clean_starved 0x82670 (fs.c:206-226), fs.asan-ubsan (image B), 548 bytes = 137 words (136 instructions
    and a trailing `unimp`): the walk of lib/B/FSH_Fn_checks.v check_reject_clean_starved_spec, closed by
    check_reject_clean_starved_proof (end of file) with every callee a named Section hypothesis (Section W). The B
-   RE-WALK of lib/A/FSH_check_reject_clean_starved.v (a working branch 43764928304, CTX-drop form):
+   RE-WALK of lib/A/FSH_check_reject_clean_starved.v (a working branch, CTX-drop form):
    same segments, invariants, state shapes and lemma names, over lib/B's image (YB1v tfibsegs = AsanUbsan) and lib/B's
    kit twins. The instruction table is lib/B/FSW_check_reject_clean_starved_tbl.v; the fake frame is FSW_frame.v's
    fsw_stack_malloc_atU / fsw_flag_storeU, the s8 re-seat FSW_K's fsw_reseat_atom, each program call FSW_K's
@@ -431,7 +431,7 @@ End H.
 Section W. Context {fx : YK11.FPState} {rc : YM05.RunCeil} {SK : YI16.sink_head}.
 Variable B : asyms.
 (* ---- the Section hypotheses (owners in brackets): every callee is its own spec, and the image / runtime facts are
-   named exactly as the kit takes them (lib/B/FSW_frame.v:49-50, FSW_K fsw_uar_regions_ok, lib/B/FSH_Base.v
+   named exactly as the kit takes them (lib/B/FSW_frame.v:50-51, FSW_K fsw_uar_regions_ok, lib/B/FSH_Base.v
    FsShadowSyms); RELOC-B's TfibLib (lib/B/YCeg.v:27-38) is the owner that discharges errno_low (tl_env), ML
    (tl_universe) and the two cell pairs (tl_got_shadow / tl_shadow_cell, tl_got_uar / tl_uar_cell). No CTX. Every
    sink-dependent name in a statement of this file (the six specs, fpostU, ajournal; MEASURED by `About` over every
@@ -441,8 +441,8 @@ Hypothesis IMG : @fs_img_facts rc tfibsegs B.                 (* [S0] lib/B/FSH_
 Hypothesis HSS : FsShadowSyms B.                              (* [S0 / RELOC-B] lib/B/FSH_Base.v: GOT 0x9fc10, cell 0xa8438 *)
 Hypothesis HGUAR : as_got_uar B = fs_D_GOT_uar.               (* [RELOC-B] TfibLib tl_got_uar (GOT 0x9fc68) *)
 Hypothesis HUCELL : as_uar_cell B = fs_D_uar_cell.            (* [RELOC-B] TfibLib tl_uar_cell (0xa8440) *)
-Hypothesis errno_low : api_env tfibsegs B.                    (* [RELOC-B] TfibLib tl_env; lib/B/FSW_frame.v:49 *)
-Hypothesis ML : model_laws (as_universe B).                   (* [RELOC-B] TfibLib tl_universe; lib/B/FSW_frame.v:50 *)
+Hypothesis errno_low : api_env tfibsegs B.                    (* [RELOC-B] TfibLib tl_env; lib/B/FSW_frame.v:50 *)
+Hypothesis ML : model_laws (as_universe B).                   (* [RELOC-B] TfibLib tl_universe; lib/B/FSW_frame.v:51 *)
 (* [RUNTIME / S0] lib/B/FSH_Rt.v: FsRt's fr_stack_malloc_0 by its field type, the only FsRt field the walk uses *)
 Hypothesis RTsm0 :
   pc_stack_malloc (as_code B) 0 = PC_stack_malloc_0 /\ @FSupoisonU.astack_malloc_realizesU fx rc tfibsegs B 0.
@@ -461,7 +461,7 @@ Lemma crcs_SMP : stack_malloc_progressP B.
 Proof. intros s cid Hw Hc Hn. exact (stack_malloc_progress (as_universe B) s cid Hw Hc Hn). Qed.
 Lemma crcs_ASF : astack_free_law tfibsegs B.
 Proof. exact (astack_free_law_ok tfibsegs B). Qed.
-(* the donor's link_FFL (cgif lib/A/ACfi.v:76-87) over S0's image cover (YF0x.img_cover_of_ledger, as FSW_rd.v:99) *)
+(* the donor's link_FFL (cgif lib/A/ACfi.v:76-87) over S0's image cover (YF0x.img_cover_of_ledger, as FSW_rd.v:100) *)
 Lemma crcs_FFL : frame_flag_lawP tfibsegs B.
 Proof.
 intros ly S W mem md cid pos HAR Hin.

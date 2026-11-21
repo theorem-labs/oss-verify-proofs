@@ -14,7 +14,7 @@ copy of the record is `../../startup-B/exitdrv/`.
 ## Erratum (image B)
 
 Record row DEC 0x5f9920 -> 0x5f49e0 (buf, 8) for image B is WRONG; the shipped YE23 uses STDOUT_BUFA = 0x5f49e8
-(lib/B/YE3m.v:34, since b5a5f994474f), and the B pin holds 0x5f49e8 at __stdout_FILE+0x58 (measured: the command
+(lib/B/YE3m.v:34), and the B pin holds 0x5f49e8 at __stdout_FILE+0x58 (measured: the command
 below). The row is line 81 of `exitdrv.run2.out` (`EXITDRV.md` section 5 has no DEC row). The same row's image-A value,
 0x5f4468, is what the A pin holds at its __stdout_FILE+0x58.
 
@@ -31,7 +31,7 @@ The copies keep the wrong value: they stay equal to the source apart from the to
 
 ## Where the headers point
 
-Since commit `8529e243afd7` the 4 lib headers cite the record here: a header-only tool (`exitdrv_header.py`
+Since the 4 lib headers cite the record here: a header-only tool (`exitdrv_header.py`
 `08ee0e66ac66`, `tools/exitdrv/c4a86fa61d82`) rewrote lines 1 and 5 only. Line 5 of `lib/A/AD1y.v` and `lib/A/AE23.v`
 cites `provenance/evidence/startup-A/exitdrv/EXITDRV.md` (this directory), and line 5 of `lib/B/YD1y.v` and
 `lib/B/YE23.v` cites `provenance/evidence/startup-B/exitdrv/EXITDRV.md`. Before, they cited the old record locations:

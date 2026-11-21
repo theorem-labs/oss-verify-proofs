@@ -1,6 +1,6 @@
 (* The room round (ROOM-TEXTS.md v3 sha256 767baa12f13c; internal record) for check_no_loss's _x walk (W_check_no_loss.v): the count and budget
    bookkeeping its loop carries.  Pure lemmas over the plain model, no walk.
-   - cnl_spec_x's count premise is cnt_ok_pk RP (cnl_pk E H) (W_contract_x.v:308, :1361): the live counts plus the peak
+   - cnl_spec_x's count premise is cnt_ok_pk RP (cnl_pk E H) (W_contract_x.v:309, :1362): the live counts plus the peak
      of the request trace cnl_tr E H (HarnessTr.check_no_loss_tr over the held list's shape and the expected records)
      plus 2.  The loop keeps it for the records still owed (cnl_cnt at the loop head, cnl_cntm after gesture_model):
      a held list's live count is cnl_pot of its capacity and texts (cnl_acnt_blks); one gesture_model call moves it by

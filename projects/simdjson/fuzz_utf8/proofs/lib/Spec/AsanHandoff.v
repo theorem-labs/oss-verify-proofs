@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: AMI_init reads the reservations as the image's and the vDSO pair with every map apart from them (the model's am_reserved and am_mres), reserved_facts leaves room for the vDSO pair in place of the image hull bounds and their region lemma, and the start invariant takes the channel reader. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
@@ -157,30 +158,14 @@ Lemma live_bytes_uns2 : forall l, live_bytes l = fold_right (fun q acc => snd q 
 Proof. induction l as [|[a n] l IH]; [reflexivity|]. cbn [map fold_right uns2 fst snd]. rewrite <- IH. reflexivity. Qed.
 Lemma Forall_uns2 : forall (P : Z * Z -> Prop) l, Forall P (map uns2 l) -> Forall (fun e => P (uns2 e)) l.
 Proof. induction l as [|e l IH]; intros H; [constructor|]. cbn [map] in H. apply Forall_cons_iff in H as [H1 H2]. constructor; auto. Qed.
+(* LPS 727298f3: the image's reservations leave room for the vDSO pair (at most two more
+   intervals, at most 81920 bytes: [amodel]'s [am_reserved]) *)
 Lemma reserved_facts :
-  Forall (fun e => bv_unsigned (fst e) + bv_unsigned (snd e) <= RES_HI) (segments_reserved asegs)
-  /\ zlen (segments_reserved asegs) <= LEN0 /\ live_bytes (segments_reserved asegs) <= RTOT0
-  /\ Forall (fun e => 65536 <= bv_unsigned (fst e) /\ bv_unsigned (fst e) + bv_unsigned (snd e) <= 7102464) (segments_reserved asegs).
+  zlen (segments_reserved asegs) + 2 <= LEN0 /\ live_bytes (segments_reserved asegs) + 81920 <= RTOT0.
 Proof.
-  pose proof reserved_eval as E. split; [|split; [|split]].
-  - apply (Forall_uns2 (fun q => fst q + snd q <= RES_HI)). rewrite E. unfold RES_HI. repeat constructor; cbn; lia.
+  pose proof reserved_eval as E. split.
   - unfold AsanInv.zlen. rewrite <- (length_map uns2), E. unfold LEN0. cbn [length Z.of_nat Pos.of_succ_nat Pos.succ]. lia.
   - rewrite live_bytes_uns2, E. unfold RTOT0. cbn -[Z.le Z.pow]. lia.
-  - apply (Forall_uns2 (fun q => 65536 <= fst q /\ fst q + snd q <= 7102464)). rewrite E. repeat constructor; cbn; lia.
-Qed.
-
-(* [comment removed for export] *)
-Lemma region_free_of_hull : forall l (g G : Z), 0 <= g -> 0 <= G -> g + G < 2^64 ->
-  Forall (fun e => 65536 <= bv_unsigned (fst e) /\ bv_unsigned (fst e) + bv_unsigned (snd e) <= 7102464) l ->
-  (g + G <= 65536 \/ 7102464 <= g) ->
-  region_free l (Z_to_bv 64 g) (Z_to_bv 64 G) = true.
-Proof.
-  induction l as [|[a sz] l IH]; intros g G Hg HG Hhi HF HD; [reflexivity|].
-  apply Forall_cons_iff in HF as [H1 HF]. cbn [fst snd] in H1.
-  cbn [region_free]. rewrite (IH g G Hg HG Hhi HF HD), andb_true_r.
-  unfold iv_overlap. rewrite !unsigned_lit by lia.
-  apply negb_true_iff. apply andb_false_iff.
-  destruct HD as [HD|HD]; [right| left]; apply Z.ltb_ge; lia.
 Qed.
 
 (* [comment removed for export] *)
@@ -224,9 +209,10 @@ Lemma AMI_init : forall V sp fs mo,
   AMI (resv_of V) (atop_of sp) [] (ainit (a_space_beg0 V) (a_ptr_array0 V)) (MX mo []).
 Proof.
   intros V sp fs mo HM HP. destruct (placement_facts V HP) as (F208 & F209 & F226 & FR & _ & _ & _).
-  destruct HM as [Hh Hfds Hfs Hres Hlim Hbrk Hsbrk Htop Husp Hmaps Hkinds Hsep Hbnd Hlzb Hnawf Hnasub Hnapos Htot Hnl Hab Hbud Halw Hnd Hmat].   (* [comment removed for export] *)
+  destruct HM as [Hh Hfds Hfs Hres Hlim Hbrk Hsbrk Htop Husp Hmaps Hkinds Hsep Hbnd Hlzb Hnawf Hnasub Hnapos Htot Hnl Hab Hbud Halw Hnd Hmat Hmres Hrdr].   (* [comment removed for export] *)
+  destruct Hres as (rx & Hres & Hrxl & Hrxs & _).
   unfold AMI. rewrite m_vm_materialized_MX, m_vmmaps_MX, m_vm_lazy_MX. change (Pm (MX mo [])) with (Pm mo).
-  destruct reserved_facts as (R1 & R2 & R3 & R4).
+  destruct reserved_facts as (R2 & R3).
   set (ATOP := atop_of sp). assert (EA : ATOP = bv_unsigned sp - 8388608) by reflexivity. clearbody ATOP.
   assert (W1 : ivs_wf (vm_maps (m_vmmaps mo))).
   { apply (ivs_wf_of_bounds _ ATOP ltac:(lia)). eapply Forall_impl; [|exact Hbnd]. cbv beta. intros iv (_ & _ & _ & _ & _ & H). lia. }
@@ -240,7 +226,10 @@ Proof.
     unfold MainEntry.AIMG_LO, MainEntry.AIMG_HI in A5. lia. }
   split; [reflexivity|].
   split; [rewrite Hlim; symmetry; apply LIMIT_eq|].
-  rewrite Hres. split; [exact R1|]. split; [exact R2|]. split; [exact R3|].
+  (* LPS 727298f3: the reservations are the image's and the vDSO pair; every map is apart from them *)
+  rewrite Hres in Hmres |- *. split; [exact Hmres|].
+  split. { unfold AsanInv.zlen in *. rewrite length_app. lia. }
+  split. { rewrite live_bytes_app, (live_bytes_ivs_sum rx). pose proof (ivs_sum_nonneg rx). lia. }
   split. { eapply Forall_impl; [|exact Hbnd]. cbv beta. intros iv (A1 & A2 & A3 & A4 & A5 & A6). unfold entry_ok. repeat split; try assumption. lia. }
   split; [exact W2|]. split; [exact W3|]. split; [apply ivs_sep_seps; exact Hsep|].
   split. { split; [unfold atop_ok, ACEIL, AsanInv.ATOP_MAX; lia|]. unfold alloc_top, stack_max_size. rewrite Htop. lia. }
@@ -274,7 +263,9 @@ Proof.
     { exists (4096 * V 208%nat). split; [exact INP|]. unfold a_space_beg0, PRIM_SZ, KHIGH in *. lia. }
     split; [exact INQ|].
     split; [unfold a_ptr_array0; lia|].
-    split. { unfold a_ptr_array0. apply region_free_of_hull; [lia| unfold PTR_SZ; lia| unfold PTR_SZ in *; lia| exact R4| exact HQ]. }
+    split. { unfold a_ptr_array0. apply (region_free_of_wsep_in _ (went (4096 * V 226%nat, PTR_SZ)));
+             [exact (proj1 (Forall_forall _ _) Hmres _ INQ)| ..]; unfold went; cbn [fst snd];
+             rewrite ?unsigned_lit by (unfold PTR_SZ in *; lia); unfold PTR_SZ in *; lia. }
     split; [apply (INL (ZLit LS_LO) _ AsanPlan.AP.KRWLAZY); inled|].
     split; [apply (INL (ZLit GAP_LO) _ AsanPlan.AP.KNONELAZY); inled|].
     split; [apply (INL (ZLit HS_LO) _ AsanPlan.AP.KRWLAZY); inled|].
@@ -287,7 +278,7 @@ Proof.
       destruct le as [b n k|n]; [|destruct He]. destruct He as [<-|[]].
       exists (wa (zv V b), wa n). split; [apply in_app_iff; right; exact (INL b n k Hle)|]. unfold iv_of. cbn [fst snd]. lia.
     + apply Forall_forall. intros iv Hiv. apply in_map_iff in Hiv as (e & <- & He).
-      exists e. split; [apply in_app_iff; left; exact He|]. unfold iv_of. cbn [fst snd]. lia.
+      exists e. split; [apply in_app_iff; left; apply in_app_iff; left; exact He|]. unfold iv_of. cbn [fst snd]. lia.
   - rewrite commit_bytes_ainit, Z.add_0_r.
     assert (W4 : AsanCeil.init_sp_ok (m_vmmaps mo)) by (unfold AsanCeil.init_sp_ok, sp_window_lo; rewrite Htop; lia).
     (* [comment removed for export] *)
@@ -302,10 +293,10 @@ Qed.
 
 Lemma minv_fds3 : forall mo,
   m_fds mo = init_fds -> m_tid mo = Some (Z_to_bv 64 1) -> m_vm_lazy mo = [] -> m_vm_materialized mo = [] ->
-  sp_window_lo <= bv_unsigned (vm_init_sp (m_vmmaps mo)) <= sp_window_hi -> minv mo.
+  sp_window_lo <= bv_unsigned (vm_init_sp (m_vmmaps mo)) <= sp_window_hi -> m_channel_reader mo = true -> minv mo.
 Proof.
-  intros mo Hf Ht Hl Hm Hsp. unfold minv. rewrite Hf, Ht, Hl, Hm. unfold init_fds. cbn [fd_lookup].
-  repeat split; try reflexivity; try (intros; discriminate); try lia.
+  intros mo Hf Ht Hl Hm Hsp Hrd. unfold minv. rewrite Hf, Ht, Hl, Hm. unfold init_fds. cbn [fd_lookup].
+  repeat split; try reflexivity; try (intros; discriminate); try lia; try exact Hrd.
   - intros k c H.
     destruct (bv_eqb (Z_to_bv 64 0) k) eqn:E0. { apply bv_eqb_eq in E0. subst k. vm_compute. reflexivity. }
     destruct (bv_eqb (Z_to_bv 64 1) k) eqn:E1. { apply bv_eqb_eq in E1. subst k. vm_compute. reflexivity. }
@@ -357,6 +348,7 @@ Proof.
   - reflexivity.
   - reflexivity.
   - change (m_vmmaps (strip mo)) with (m_vmmaps mo). rewrite (am_top _ _ _ _ HM). pose proof (am_usp _ _ _ _ HM). unfold sp_window_lo, sp_window_hi. lia.
+  - (* [strip] passes the reader through *) exact (am_reader _ _ _ _ HM).
 Qed.
 
 (* [comment removed for export] *)

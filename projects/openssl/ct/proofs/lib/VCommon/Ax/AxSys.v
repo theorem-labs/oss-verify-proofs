@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the place_declined_b premise of the mmap decline; the VCommon proof library over the revised model). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
@@ -217,8 +218,20 @@ Definition AST : Type := astate amodel.
 Definition out_val (ρ : valuation) (A : AST) (o : list byte) : Prop := pieces_val ρ (am_out (a_model A)) o.
 
 (* [comment removed for export] *)
+(* WAS, and the revision made it unprovable at AxSysSound.v:97 (the consumer side of
+   adv_effect):
+     Definition with_model (A : AST) (pc : w64) (regs : aregs) (mem : list region)
+                           (s : store) (am : amodel) (budget : Z) : AST :=
+       AS pc regs (a_resv A) mem s am budget (a_steps A + 1).
+   with_model builds the abstract state AFTER a syscall and nothing else (every caller
+   is a sys_* handler).  LPS@75d69e00 theories/LinuxProcessSem/Run.v:221-227 has
+   advance_past_svc set `ms_resv := None` -- a syscall now clears the reservation --
+   so the concrete post-state's reservation is None while the old abstract post-state
+   still claimed (a_resv A).  RResv (AxState.v:343-348) reads RNone as `mr = None`, so
+   the abstract side must record the clearing: (a_resv A) -> RNone.  That is the truth
+   about the post-state, not a weakening: RNone is the strongest rsv satisfied by None. *)
 Definition with_model (A : AST) (pc : w64) (regs : aregs) (mem : list region) (s : store) (am : amodel) (budget : Z) : AST :=
-  AS pc regs (a_resv A) mem s am budget (a_steps A + 1).
+  AS pc regs RNone mem s am budget (a_steps A + 1).
 
 (* [comment removed for export] *)
 Definition xlit (v : xv) : option Z := match v with XL x => Some (wZ x) | _ => None end.
@@ -361,20 +374,47 @@ Section WithSegs.
 Variable segs : list Segment.
 
 (* [comment removed for export] *)
+(* THE HINT IS NOW PART OF THE SHAPE, and it has to be.  At LPS 727298f3
+   (#144, #146) [Mmap.place_declined_b] makes [check_mmap] answer
+   [CheckUnmodeled] for a hinted anonymous placement whose range ends in the
+   band Linux may refuse, so a rule that claims the call is modelled must say
+   which hint it is talking about.  This rule is the NULL-hint one — its name,
+   its [null_ok] and its [Section Null] all say so — and a NULL hint is never
+   declined ([hint_address 0 = 0] fails [place_declined_b]'s first conjunct).
+   Requiring [a0] to be the literal 0 is therefore the narrowing that states
+   what the rule always meant.  Per AxSys.v's note above: this NARROWS what the
+   tree models and does not silently do so — a reachable request with a
+   non-NULL hint now REDDENS a proof rather than becoming a quiet refusal. *)
 Definition null_shape (A : AST) : option (Z * bool * bool) :=
   let r := a_regs A in
-  match xlit (aget r 11%uint63), xlit (aget r 12%uint63), xlit (aget r 13%uint63), xlit (aget r 15%uint63) with
-  | Some len, Some prot, Some flags, Some off =>
-      if (0 <? len) &&& (len <? 70368744177664) &&& (off =? 0) &&& ((flags =? 34) ||| (flags =? 16418)) &&& ((prot =? 3) ||| (prot =? 0))
+  match xlit (aget r 10%uint63), xlit (aget r 11%uint63), xlit (aget r 12%uint63), xlit (aget r 13%uint63), xlit (aget r 15%uint63) with
+  | Some hint, Some len, Some prot, Some flags, Some off =>
+      if (hint =? 0) &&& (0 <? len) &&& (len <? 70368744177664) &&& (off =? 0) &&& ((flags =? 34) ||| (flags =? 16418)) &&& ((prot =? 3) ||| (prot =? 0))
       then Some (page_round_up_Z len, prot =? 0, flags =? 16418) else None
-  | _, _, _, _ => None
+  | _, _, _, _, _ => None
   end.
 
 (* [comment removed for export] *)
 Definition ents_total (l : list aent) : Z := fold_right (fun e z => ae_size e + z) 0 l.
 
+(* GROWN BY THE vDSO TAIL, old text beside new.  WAS:
+     183251939328 + (live_bytes (segments_reserved segs) + ents_total (am_maps am))
+     + Z.of_nat (length (segments_reserved segs) + length (am_maps am)) * (nZ + 4096)
+     + nZ <=? tlo.
+   mr_res now reads vm_reserved = segments_reserved segs ++ rx, so MR_place_exists's
+   live_bytes/length_app sum picks up rx, bounded by the field's own conjuncts
+   (live_bytes rx <= 0x14000 and length rx <= 2).  pack_ok IS that premise as a
+   Boolean, byte for byte, so it must grow by the same 81920 + 2 * (nZ + 4096).
+   THIS NARROWS WHAT THE TREE MODELS AND DOES NOT SILENTLY DO SO: sys_mmap_null is one
+   `if ... else None` (AxSys.v:303-323) and every soundness theorem on the chain is
+   hypothesised on `= Some l` -- sys_mmap_null_sound (AxSysMmapS.v:402-404),
+   sys_disp_sound (AxDisp.v:35), sys_disp2_sound (:51-54).  There is no ok_or_refused
+   arm, so a request this now rejects REDDENS A PROOF rather than becoming an accepted
+   refusal.  If a round shows a reachable request newly rejected, that is a report to
+   the owner and not a constant to adjust. *)
 Definition pack_ok (am : amodel) (nZ tlo : Z) : bool :=
-  4096 + (live_bytes (segments_reserved segs) + ents_total (am_maps am))
+  183251939328 + 81920 + 2 * (nZ + 4096)
+  + (live_bytes (segments_reserved segs) + ents_total (am_maps am))
   + Z.of_nat (length (segments_reserved segs) + length (am_maps am)) * (nZ + 4096) + nZ <=? tlo.
 
 Definition sys_mmap_null (LIM : Z) (A : AST) : option (list AST) :=

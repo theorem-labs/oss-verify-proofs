@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the 6144513-byte zero-filled stack window): changed ME, drv_dir; added entry, inp, mbase; removed Hfits; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/Pm10DrvH.v, 63 lines within its lines 50-325. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -53,7 +54,7 @@ Tactic Notation "run_blockD_keep" constr(scr) constr(NX) := run_block_gen FUEL S
 Section FPX_2. Context {fx : PropExec.FPState}.
 Variable scfg : SpuriousCfg.
 Section DrvH.
-  Context {RE : RunEnv}.
+  Context {RE : RunEnv}. Context {RO : ReaderOn}.
   Variable L : heap_layout.
   Variable HI : heap_iface.
   Hypothesis HIok : heap_iface_ok L scfg HI.
@@ -74,8 +75,9 @@ Section DrvH.
   Hypothesis Hve : valid_envp envv.
   Hypothesis Hvsp : valid_sp sp0.
   Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-  Hypothesis ME : main_entry sp0 [a0s; path] envv uid hw rdraw tid regs0 mem0.
-  Hypothesis Hfits : entry_stack_fits sp0 [a0s; path] envv.
+  Variable inp : ProcInput.
+  Variable mbase entry : word.
+  Hypothesis ME : main_entry inp mbase entry sp0 [a0s; path] envv uid hw rdraw tid regs0 mem0.
   Hypothesis Hfs : sc_fs scfg = true.
   Hypothesis Hpd : path = dot_path.
   Hypothesis DL : drv_layout L sp0.
@@ -102,41 +104,61 @@ Section DrvH.
       cbn [kentry_ok] in H; intros i Hi; apply (proj2 (proj2 H)); lia
     end.
 
+  (* [open_err_k] (Pm6DrvA.v:114) now also discharges [inp]: its body reads
+     [p1 a0s path envv rdraw inp], so [inp] joins [scfg sp0 a0s path envv hw rdraw tid mem0
+     VM0 fs0 stdin0] and [KA] had been absorbed into that slot - "The term
+     "open_err_k .. KA" has type "TSet -> Prop" which should be Set, Prop or Type",
+     with [KA : ProcInput] in the printed context. *)
   Theorem drv_dir : forall KA,
-    open_err_k scfg sp0 a0s path envv hw rdraw tid mem0 VM0 fs0 stdin0 KA ->
+    open_err_k scfg sp0 a0s path envv hw rdraw tid mem0 VM0 fs0 stdin0 inp KA ->
     srealizes RSEGS scfg (mkCfg (mkst regs0 (Z_to_bv 64 0x398f0) mem0 (seg_rom RSEGS)) model0)
               (t_alt2 KA (t_die (msg_read_error dot_path) fs0)).
   Proof.
     intros KA HKA.
     pose proof Hsp as Hsp'. pose proof Hal as Hal'.
     assert (Hplen : (length path <= 4095)%nat) by (rewrite Hpd; cbn; lia).
-    pose proof (main_regs_ok_d sp0 a0s path envv uid hw rdraw tid regs0 mem0 [] Hvsp Htid ME) as HR.
-    assert (HK : know_ok RSEGS (ENV a0s path hw rdraw [] (vals0 sp0 a0s path envv tid regs0)) mem0 (kn_d0 ++ [KImg 0xf9a28 0xfb000; KImg 0xc7b51 0xd9550])).
-    { apply Forall_app. split; [apply (main_know_ok_d sp0 a0s path envv uid hw rdraw tid regs0 mem0 [] Hva Hve Hvsp Htid ME)
-                              | apply (main_kimg_alloc sp0 a0s path envv uid hw rdraw tid regs0 mem0 [] Hva Hve Hvsp Htid ME)]. }
-    set (vals := vals0 sp0 a0s path envv tid regs0) in *.
+    (* Pm6DrvA's section order is [sp0 a0s path envv uid hw rdraw tid regs0 mem0 VM0 fs0
+       stdin0 fdata cr0 Hva Hve Hvsp Htid inp mbase entry ME .. Hplen ..], and these three
+       go through Pm6MainEntry's main_regs_ok / main_know_ok, which take
+       [Hva Hve Hvsp Htid inp mbase entry ME].  The old calls dropped [Hva Hve] (so [Hvsp]
+       landed in [Hva]'s slot - "The term "Hvsp" has type "valid_sp sp0" while it is
+       expected to have type "valid_argv [a0s; path]"") and [inp mbase entry].  [Hplen]
+       first in each chain, since the kernel put it after [ME] for hiv_facts. *)
+    first [ pose proof (main_regs_ok_d sp0 a0s path envv uid hw rdraw tid regs0 mem0 [] Hva Hve Hvsp Htid inp mbase entry ME Hplen) as HR
+          | pose proof (main_regs_ok_d sp0 a0s path envv uid hw rdraw tid regs0 mem0 [] Hva Hve Hvsp Htid inp mbase entry ME) as HR ].
+    assert (HK : know_ok RSEGS (ENV a0s path hw rdraw [] (vals0 sp0 a0s path envv rdraw tid regs0 inp)) mem0 (kn_d0 ++ [KImg 0xf9a28 0xfb000; KImg 0xc7b51 0xd9550])).
+    { apply Forall_app. split;
+        [ first [ apply (main_know_ok_d sp0 a0s path envv uid hw rdraw tid regs0 mem0 [] Hva Hve Hvsp Htid inp mbase entry ME Hplen)
+                | apply (main_know_ok_d sp0 a0s path envv uid hw rdraw tid regs0 mem0 [] Hva Hve Hvsp Htid inp mbase entry ME) ]
+        | first [ apply (main_kimg_alloc sp0 a0s path envv uid hw rdraw tid regs0 mem0 [] Hva Hve Hvsp Htid inp mbase entry ME Hplen)
+                | apply (main_kimg_alloc sp0 a0s path envv uid hw rdraw tid regs0 mem0 [] Hva Hve Hvsp Htid inp mbase entry ME) ] ]. }
+    set (vals := vals0 sp0 a0s path envv rdraw tid regs0 inp) in *.
     assert (HL : length vals = 38%nat) by (subst vals; unfold vals0; rewrite length_app, junk_vals_length; reflexivity).
     assert (P0 : vals_ev vals 0 = sp0) by reflexivity.
-    assert (P1 : vals_ev vals 1 = p0 sp0 a0s path envv) by reflexivity.
-    assert (P2 : vals_ev vals 2 = p1 sp0 a0s path envv) by reflexivity.
+    assert (P1 : vals_ev vals 1 = p0 a0s path envv rdraw inp) by reflexivity.
+    assert (P2 : vals_ev vals 2 = p1 a0s path envv rdraw inp) by reflexivity.
     assert (P3 : vals_ev vals 3 = auxvp sp0 a0s path envv) by reflexivity.
-    assert (P4 : vals_ev vals 4 = rnd sp0 a0s path envv) by reflexivity.
+    assert (P4 : vals_ev vals 4 = rnd sp0 a0s path envv inp) by reflexivity.
     assert (P5 : vals_ev vals 5 = tid) by reflexivity.
-    destruct (path_facts sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hva Hve Hvsp ME Hfits) as (Sr & Slo & Shi & Sfit & t8 & Ht8).
+    (* Pm6OpenFail's section is [.. rdraw tid regs0 mem0 brk mbase fs0 stdin0 .. lim
+       Hva Hve Hvsp Htid inp entry ME ..] (Pm6OpenFail.v:55-72); [Htid] was missing, so
+       [inp] sat in its slot - "The term "inp" has type "ProcInput" while it is expected
+       to have type "0 < bv_unsigned tid < 2 ^ 22"". *)
+    destruct (path_facts sp0 a0s path envv uid hw rdraw tid regs0 mem0 mbase Hva Hve Hvsp Htid inp entry ME) as (Sr & Slo & Shi & Sfit & t8 & Ht8).
     assert (HA0 : above_sp0 sp0 mem0 mem0) by (intros a Ha; reflexivity).
     change (Env (vals_ev vals) (blobs_ev (blobs0 a0s path hw rdraw ++ [[]]))) with (ENVd vals) in HR, HK.
     clearbody vals.
-    (* [comment removed for export] *)
+
     run_block_keep scr0 38%nat.
     assert (HH1 : hi_heap HI [] cr0 M VM0).
     { rewrite EQM. eapply (heap_block scfg L HI HIok sp0 Hsp' DL vals _ []); [exact P0 | intros i nb Hf; discriminate | vm_compute; reflexivity | exact HH0]. }
     assert (HA : above_sp0 sp0 mem0 M).
     { rewrite EQM. apply (above_sp0_block sp0 a0s path hw rdraw mem0 [] Hvsp Hplen vals); [exact P0 | vm_compute; reflexivity | exact HA0]. }
-    assert (Sr' : rdn RSEGS M (p1 sp0 a0s path envv) (length path + 1) = Some (path ++ [Z_to_bv 8 0])).
-    { rewrite <- Sr. apply rdn_agree. intros j Hj. pose proof (u64_range (p1 sp0 a0s path envv)).
+    assert (Sr' : rdn RSEGS M (p1 a0s path envv rdraw inp) (length path + 1) = Some (path ++ [Z_to_bv 8 0])).
+    { rewrite <- Sr. apply rdn_agree. intros j Hj. pose proof (u64_range (p1 a0s path envv rdraw inp)).
       apply HA. rewrite Hpd in Hj. cbn in Hj. rewrite u_small; lia. }
     clear EQM.
-    (* [comment removed for export] *)
+
     eapply (rz_openat_dot RSEGS scfg _ _ _ model0 ECALLW); try apply is_ecall_ECALLW.
     - vm_compute. reflexivity.
     - reflexivity.
@@ -147,8 +169,22 @@ Section DrvH.
     - exact Hfs.
     - unfold model0. rewrite m0_fds. rewrite alloc_fd_fds0. apply fd_lookup_fds0_3.
     - split; [cbn; lia|]. split; [cbn; intros [E0|[]]; apply (f_equal bv_unsigned) in E0; vm_compute in E0; lia|].
-      regv HR (11%bv : reg). cbn [edenot ev ENVd ENV]. rewrite P2. rewrite Hpd in Sr'. exact Sr'.
-    - (* [comment removed for export] *)
+      (* HOMONYM: two [dot_path]s are in scope.  The goal carries the model's
+         [Uapi.dot_path] (the premise comes from Pm6ReadErr's corollary, stated in the
+         model's terms), while [Hpd : path = dot_path] and [Sr'] carry this unit's
+         [Spec.dot_path] (Spec.v:72).  Both are the one-byte path [[Z_to_bv 8 46]], so
+         they are convertible and [reflexivity] bridges them; the old text rewrote [Sr']
+         to [dot_path] and could then match neither slot, the goal holding [path] in the
+         pointer position and [Uapi.dot_path] in the length and contents positions.
+         Move the GOAL to [path] instead, and leave [Sr'] alone.
+         (No double quotes in this comment: Rocq lexes a string inside a comment, so an
+         odd number of them is an unterminated string at end of file.) *)
+      regv HR (11%bv : reg). cbn [edenot ev ENVd ENV]. rewrite P2.
+      assert (Hdp : Uapi.dot_path = path) by (rewrite Hpd; reflexivity).
+      rewrite ?Hdp. split; [exact Sr'|].
+      assert (Hl1 : length path = 1%nat) by (rewrite Hpd; reflexivity).
+      rewrite Hl1 in Sfit. rewrite ?Hl1. cbn [Z.of_nat] in Sfit |- *. unfold TASK_SIZE. lia.
+    -
       intros e He. rewrite v_addi_pc4 by lia. change (0xbb604 + 4)%Z with 0xbb608%Z.
       lazymatch type of HR with regs_ok _ ?sr ?Rc =>
         pose proof (env_app_regs vals [errno_ret e] _ sr Rc ltac:(rewrite HL; vm_compute; reflexivity) HR) as HR2 end.
@@ -167,12 +203,12 @@ Section DrvH.
       + eapply know_ok_bagree; [apply (ENV_agree_r a0s path hw rdraw []) | vm_compute; reflexivity |].
         eapply ksubl_sound; [exact HK2 | vm_compute; reflexivity].
       + exact HA.
-    - (* [comment removed for export] *)
+    -
       rewrite v_addi_pc4 by lia. change (0xbb604 + 4)%Z with 0xbb608%Z.
       unfold model0. rewrite m0_fds. rewrite alloc_fd_fds0.
       change (with_fds (fd_insert fds0 (Z_to_bv 64 3) FdDir) (Pm6DrvA.model0 tid VM0 fs0 stdin0)) with (model1d VM0).
       pose proof (regs_set_a0 (ENVd vals) _ _ (Z_to_bv 64 3) (ELit 3) HR eq_refl) as HR2. clear HR. rename HR2 into HR.
-      (* [comment removed for export] *)
+
       run_block_keep scr0 38%nat.
       cbn [mem_denot] in EQM. subst M0.
       lazymatch type of HK with know_ok _ _ _ ?kn =>
@@ -183,7 +219,7 @@ Section DrvH.
         | rewrite HL; vm_compute; reflexivity
         | rewrite HL; lia
         | exact P0
-        | apply (hiv_facts sp0 a0s path envv uid hw rdraw Hva Hve Hvsp Hplen); assumption
+        | apply (hiv_facts sp0 a0s path envv uid hw rdraw tid regs0 mem0 Hva Hve Hvsp Htid inp mbase entry ME Hplen); assumption
         | vm_compute; reflexivity
         | regv HR (2%bv : reg); cbn [edenot ev ENVd ENV]; rewrite P0; apply alu_add_w_lit
         | lia
@@ -211,14 +247,14 @@ Section DrvH.
         assert (HKC : know_ok segs E Mx knC0) by (eapply ksubl_sound; [exact HK' | vm_compute; reflexivity]); clear HK'; rename HKC into HK' end.
       change (sr_after_call_j _ _ 38) with srC0 in HR'.
       assert (Q0 : vals_ev vals1 0 = sp0) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P0).
-      assert (Q2 : vals_ev vals1 2 = p1 sp0 a0s path envv) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P2).
+      assert (Q2 : vals_ev vals1 2 = p1 a0s path envv rdraw inp) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P2).
       assert (Q3 : vals_ev vals1 3 = auxvp sp0 a0s path envv) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P3).
-      assert (Q4 : vals_ev vals1 4 = rnd sp0 a0s path envv) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P4).
+      assert (Q4 : vals_ev vals1 4 = rnd sp0 a0s path envv inp) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P4).
       assert (Q5 : vals_ev vals1 5 = tid) by (subst vals1; rewrite vals_ev_app_l by (rewrite HL; lia); exact P5).
       assert (HA1 : above_sp0 sp0 mem0 M') by (intros a Ha; rewrite (HAB a Ha); apply HA; exact Ha).
       pose proof (hz_of_block_range L sp0 DL _ _ HBR) as (B1 & B2 & B4).
       clear HR HK HH1 HA. rename HR' into HR. rename HK' into HK.
-      (* [comment removed for export] *)
+
       run_block_keep scr0 70%nat.
       assert (HA2 : above_sp0 sp0 mem0 M0).
       { rewrite EQM. apply (above_sp0_block sp0 a0s path hw rdraw mem0 [] Hvsp Hplen vals1); [exact Q0 | vm_compute; reflexivity | exact HA1]. }
@@ -227,7 +263,7 @@ Section DrvH.
       destruct (hio_wf L scfg HI HIok _ _ _ _ HH2) as [WF _].
       destruct (WF (A, 65536%Z) ltac:(left; reflexivity)) as (_ & HDEF & _). cbn [fst snd] in HDEF.
       clear EQM.
-      (* [comment removed for export] *)
+
       eapply (rz_read_dir_cnt RSEGS scfg _ _ M0 (model1d VM1) ECALLW (Z_to_bv 64 3) 65536); try apply is_ecall_ECALLW.
       + vm_compute. reflexivity.
       + reflexivity.
@@ -243,18 +279,18 @@ Section DrvH.
         replace (errno_ret EISDIR) with (Z_to_bv 64 18446744073709551595) by (apply bv_eq; reflexivity).
         pose proof (regs_set_a0 (ENVd vals1) _ _ (Z_to_bv 64 18446744073709551595) (ELit 18446744073709551595) HR eq_refl) as HR2.
         clear HR. rename HR2 into HR.
-        (* [comment removed for export] *)
+
         run_blockD_keep scr0 70%nat.
         assert (HA3 : above_sp0 sp0 mem0 M1).
         { rewrite EQM. apply (above_sp0_block sp0 a0s path hw rdraw mem0 [] Hvsp Hplen vals1); [exact Q0 | vm_compute; reflexivity | exact HA2]. }
         clear EQM.
         change fs0 with (m_fs (model1d VM1)).
-        pose proof (u64_range (p1 sp0 a0s path envv)) as Hpr.
+        pose proof (u64_range (p1 a0s path envv rdraw inp)) as Hpr.
         replace (length path + 1)%nat with 2%nat in Sr by (rewrite Hpd; reflexivity).
         replace (path ++ [Z_to_bv 8 0]) with [Z_to_bv 8 46; Z_to_bv 8 0] in Sr by (rewrite Hpd; reflexivity).
         replace (Z.of_nat (length path)) with 1%Z in Ht8 by (rewrite Hpd; reflexivity).
-        unshelve (eapply (ref_read_error_dot scfg sp0 (blobs0 a0s path hw rdraw ++ [[]]) (model1d VM1) Hvsp eq_refl eq_refl eq_refl
-                  (p1 sp0 a0s path envv) (bv_unsigned tid) _ M1 _ _ _ _ _ _ _ Htid _ _ _ _ Slo t8)).
+        unshelve (eapply (ref_read_error_dot scfg sp0 (blobs0 a0s path hw rdraw ++ [[]]) (model1d VM1) Hvsp eq_refl eq_refl eq_refl ltac:(rdr)
+                  (p1 a0s path envv rdraw inp) (bv_unsigned tid) _ M1 _ _ _ _ _ _ _ Htid _ _ _ _ Slo t8)).
         all: lazymatch goal with
              | |- getr _ _ = _ =>
                  rewrite (reg_val _ _ _ _ HR); norm_srget; cbn [edenot ev ENVd ENV]; rewrite ?Q0, ?Q2;
@@ -262,11 +298,13 @@ Section DrvH.
              | |- stack_writable _ _ =>
                  intros d m Hd Hm;
                  lazymatch type of HK with know_ok ?segs ?E _ ?kn =>
-                   pose proof (kwr_store_ok segs E M1 kn ltac:(let i := kidx kn (is_kwr_cov (EVar 0) (-8388608) 8388608) in exact i)
-                                 _ _ _ (-8388608 + d) m HK eq_refl ltac:(lia) ltac:(lia)) as W;
+                   (* old: [is_kwr_cov (EVar 0) (-8388608) 8388608] and [(-8388608 + d)]; the window
+                      row this kn carries is [Pm6MainEntry.kn_stack]'s narrow one *)
+                   pose proof (kwr_store_ok segs E M1 kn ltac:(let i := kidx kn (is_kwr_cov (EVar 0) (- DRV_ZWIN) DRV_ZWIN) in exact i)
+                                 _ _ _ (- DRV_ZWIN + d) m HK eq_refl ltac:(lia) ltac:(lia)) as W;
                    unfold adenot, v_addi in W; cbn [a_base a_off edenot ev ENVd ENV] in W; rewrite Q0 in W
                  end;
-                 replace (bv_unsigned sp0 - 8388608 + d)%Z with (bv_unsigned sp0 + (-8388608 + d))%Z by lia; exact W
+                 replace (bv_unsigned sp0 - DRV_ZWIN + d)%Z with (bv_unsigned sp0 + (- DRV_ZWIN + d))%Z by lia; exact W
              | |- Forall _ re_ivs =>
                  unfold re_ivs; repeat (apply Forall_cons; [cbn [fst snd]; unfold img_clear|]); [..|apply Forall_nil];
                  first [ kimg_clear HK 0x10000%Z 0xc7b48%Z | kimg_clear HK 0xc7b51%Z 0xc7b99%Z | kimg_clear HK 0xd7b99%Z 0xd9550%Z | kimg_clear HK 0xf9628%Z 0xf9648%Z
@@ -291,7 +329,7 @@ Section DrvH.
              | |- rdn _ _ _ 2 = _ =>
                  rewrite <- Sr; apply rdn_agree; intros j Hj; apply HA3; rewrite !u_small by lia; lia
              | |- rdn _ _ _ 8 = _ =>
-                 rewrite <- Ht8; apply rdn_agree; intros j Hj; apply HA3; rewrite (u_small (bv_unsigned (p1 sp0 a0s path envv) + 1)) by lia;
+                 rewrite <- Ht8; apply rdn_agree; intros j Hj; apply HA3; rewrite (u_small (bv_unsigned (p1 a0s path envv rdraw inp) + 1)) by lia;
                  rewrite u_small by lia; lia
              | |- _ => lia
              end.

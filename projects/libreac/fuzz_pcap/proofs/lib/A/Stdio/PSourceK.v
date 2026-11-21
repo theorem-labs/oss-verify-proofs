@@ -1,6 +1,7 @@
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: pcap_KS, the CONCRETE asource_syms for libreac/fuzz_pcap's v1.9.0 ASan
    image -- row 6 of the port's obligation set
    (OBLIGATIONS.md (sha256 781e8f81f164; internal record), a Theorem Labs lane 22:00Z), and the
@@ -8,7 +9,7 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 
    IMAGE ROOT: the ORIGINAL v1.9.0 set, which is what the statements target --
    the pinned fuzz_pcap images and their unstripped twins,
-   statements ed6b6b7b0ab. NOT the toolchain-N images.
+   statements. NOT the toolchain-N images.
 
    EVERY FIELD IS MEASURED, each with the line it came from. Symbols are from the image's own
    nm dump fuzz_pcap.nm.txt (sha256 21120db6ab2e; internal record); the words are read out of the ELF's

@@ -309,7 +309,7 @@ End r.
    relocated: GOT 0x999b0 -> __asan_shadow_memory_dynamic_address 0xa1d78 -> 0x7fff8000, fm-fn-measure.md 2) *)
 Definition g3_cells (B : asyms) : Prop := as_got_shadow B = 0x999b0 /\ as_shadow_cell B = 0xa1d78.
 
-(* cstr_kept is closed under suffixes (FMH_Fn.v cstr_kept, hdesign cce35be4cf7 / 7d12534e1ca) *)
+(* cstr_kept is closed under suffixes (FMH_Fn.v cstr_kept, hdesign) *)
 Lemma g3_cstr_kept_suffix : forall B ly S p l k, cstr_kept B ly S p l -> (k <= length l)%nat ->
   cstr_kept B ly S (p + Z.of_nat k) (skipn k l).
 Proof.

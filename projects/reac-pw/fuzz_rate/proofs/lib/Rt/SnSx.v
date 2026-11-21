@@ -4,8 +4,9 @@
    journal at a reflexive and transitive world relation R (binders first; the call keeps the world, so no law of R is
    read); aj_snprintf_at_xrom keeps its statement and is the instance at wle. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YGcallSnp.v, with its module paths and module names changed; 317 of its 380 lines of code are new or changed and 199 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/Rt/SnSx.v at 2d2ff01bb6f2; module paths changed. *)
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfSx.v (origin/cold/port-fm-rtprintf-param 3e35620c52e), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/Rt/SnSx.v; module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfSx.v, with its module paths changed. *)
 (* Image-neutral companion of the frozen shared text (FMsnprintfShared.v): nothing here names an image, so every unit
    relocates it once.
    - ff_stable64: ff_stable with the memory change asked only at 64-bit addresses (a reader reads Z_to_bv 64 a, so at an
@@ -151,10 +152,10 @@ dest_ok segs B ly S W regs mem d (sn_len (n - 1) T) -> amem_range d (sn_len (n -
 range_addressable (aview segs (w_H W) mem) SHADOW_OFF d (sn_len (n - 1) T) ->
 shadow_hull_vis (aview segs (w_H W) mem) d (sn_len (n - 1) T) ->
 (* dest_off_globals: the caller discharges it by measurement *) zdisjoint (d, sn_len (n - 1) T) (img_lo, img_hi - img_lo) ->
-(* frm0_entry: rounding mode 0 at entry (GXA VfprintfCall.v:37) *) Z.land (Z.shiftr (bv_unsigned (@fp_csr fx)) 5) 7 = 0 ->
+(* frm0_entry: rounding mode 0 at entry (GXA VfprintfCall.v:38) *) Z.land (Z.shiftr (bv_unsigned (@fp_csr fx)) 5) 7 = 0 ->
 (* order: the arguments lie at or above the entry sp (every caller's va area is its own spill or above it) *)
 spZ regs <= ap ->
-(* the destination is below the window or above the argument slots (GXA VfprintfCall.v:42, first disjunction) *)
+(* the destination is below the window or above the argument slots (GXA VfprintfCall.v:43, first disjunction) *)
 (d + sn_len (n - 1) T <= spZ regs - K \/ ap + 8 * Z.of_nat (length ws) <= d) ->
 (* the argument slots below 2^47 (the normalized store GXA and printf_common's cleaned run read drops higher bytes) *)
 ap + 8 * Z.of_nat (length ws) <= 2 ^ 47 ->
@@ -193,10 +194,10 @@ dest_ok segs B ly S W regs mem d (sn_len (n - 1) T) -> amem_range d (sn_len (n -
 range_addressable (aview segs (w_H W) mem) SHADOW_OFF d (sn_len (n - 1) T) ->
 shadow_hull_vis (aview segs (w_H W) mem) d (sn_len (n - 1) T) ->
 (* dest_off_globals: the caller discharges it by measurement *) zdisjoint (d, sn_len (n - 1) T) (img_lo, img_hi - img_lo) ->
-(* frm0_entry: rounding mode 0 at entry (GXA VfprintfCall.v:37) *) Z.land (Z.shiftr (bv_unsigned (@fp_csr fx)) 5) 7 = 0 ->
+(* frm0_entry: rounding mode 0 at entry (GXA VfprintfCall.v:38) *) Z.land (Z.shiftr (bv_unsigned (@fp_csr fx)) 5) 7 = 0 ->
 (* order: the arguments lie at or above the entry sp (every caller's va area is its own spill or above it) *)
 spZ regs <= ap ->
-(* the destination is below the window or above the argument slots (GXA VfprintfCall.v:42, first disjunction) *)
+(* the destination is below the window or above the argument slots (GXA VfprintfCall.v:43, first disjunction) *)
 (d + sn_len (n - 1) T <= spZ regs - K \/ ap + 8 * Z.of_nat (length ws) <= d) ->
 (* the argument slots below 2^47 (the normalized store GXA and printf_common's cleaned run read drops higher bytes) *)
 ap + 8 * Z.of_nat (length ws) <= 2 ^ 47 ->
@@ -213,8 +214,8 @@ getr regs' 10 = w64 (Z.of_nat (length T)) /\
 (forall a, 0 <= a < 2 ^ 64 -> ~ (d <= a < d + sn_len (n - 1) T) ->
 ~ (spZ regs - K <= a < spZ regs) -> aview segs (w_H W) mem' a = aview segs (w_H W) mem a) /\
 (forall a, apresent (w_H W) mem a -> apresent (w_H W) mem' a)).
-(* the vfprintf interceptor / musl vfprintf with GXA's four premises (RtPrintf.GxSeam's text, cold/port-fm-gxseam
-   1eccd2160c1 lib/A/FMgxaSeamDef.v, verbatim; this file is its one definition) *)
+(* the vfprintf interceptor / musl vfprintf with GXA's four premises (RtPrintf.GxSeam's text,
+    lib/A/FMgxaSeamDef.v, verbatim; this file is its one definition) *)
 Definition sh_avfprintf_icpt_realizesUx
     (FF : fmt_fam) (K gc gv img_lo img_hi : Z) (cr : list (Z * Z)) (snw pc : Z) : Prop :=
 forall ly S (U : list (Z * Z)) W regs mem md fp f ap bp cp s0 n0 (ws T : list Z) cval,

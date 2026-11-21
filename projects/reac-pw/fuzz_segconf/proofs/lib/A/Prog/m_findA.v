@@ -9,14 +9,15 @@
    window, so the memory below the frame stays the entry's (kept_out) and the read-only bytes strcmp reads
    (rt_rom_view) follow from the statement's arodata_okP. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/rec_calls_equal.v, with its module paths, module names and numbers changed; 801 of its 920 lines of code are new or changed and 1372 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The ASan walk of m_find on image A of reac-pw/fuzz_segconf (fuzz_segconf.asan, pin sha256 48c5355bdacb; entry
    BASE + AF_m_find = 0x87538, 44 instructions, 48-byte frame, no side-stack frame, one instrumented check), against
    m_find_contract (lib/A/Prog/m_find_c.v) at A_m_find := BASE + AF_m_find, STK_m_find := SegInstA.STK_m_find
    (48 + 2 * ESTACK: the frame and the bcmp wrapper's window, the deeper of the two callees), RLO / RHI :=
    SegInstA.RLO_A / RHI_A. Written new (the m_find walk lane, owner the G2 walk owner); closed against the G2 FINAL contracts at
-   the image-A owner's 6f783602b5e3 (m_find_c.v statement-identical to 044216da3413).
+   the image-A owner's (m_find_c.v statement-identical to).
 
-   Form: plugin-hostd/fuzz_command's lib/A/Prog walks at origin/ossv/recipes 501c0d516c69 -- rec_calls_equal.v (a
+   Form: plugin-hostd/fuzz_command's lib/A/Prog walks -- rec_calls_equal.v (a
    loop over a table with an interceptor call in its body, cut at the loop head, each piece re-seeded from the
    concrete state there, the loop proved by induction on the entries left, the epilogue re-seeded from the saved
    words) and segq's check_knock_refused.v (the interceptor call through PaArt.v aj_art_at, the state after it

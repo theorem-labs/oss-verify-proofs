@@ -11,8 +11,8 @@
    - FS_AREALLOC_AU : FSupoisonRealloc.FS_AREALLOC_AU tfibsegs B (as_universe B), the any-U __wrap_realloc contract at
      0x53078 in its C5 form; owner a Theorem Labs lane (plain arealloc_realizes_all) via a Theorem Labs lane (the U form).
    - FS_FUZZ_MALLOC : fuzz_malloc_spec (the p = 0 tail call); owner a Theorem Labs lane (fuzz_malloc_holds discharges it).
-   SEG-C is a Theorem Labs lane's FSW_realloc_segC.fsr_segC (a working branch 05a38a5494b), SEG-D its
-   FSW_realloc_segD.fsr_segD (a working branch bb6609fc77b). *)
+   SEG-C is a Theorem Labs lane's FSW_realloc_segC.fsr_segC (a working branch), SEG-D its
+   FSW_realloc_segD.fsr_segD (a working branch). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

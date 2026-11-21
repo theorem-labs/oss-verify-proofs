@@ -1,17 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported from this harness's lib/A/Prog/send_message_s5.v (the ASan walk,
-   a working branch 4f5a539710b, re-fitted d0af25245f3) to the ASan+UBSan build fuzz_command.asan-ubsan
+   a working branch, re-fitted) to the ASan+UBSan build fuzz_command.asan-ubsan
    (lib/B): B's program points (the same offsets from the entry 0x86bf8); the record fact cmd_prog_unowned and the
    transport lemmas from a Theorem Labs lane's kit (lib/B/Prog/CmdRecImg.v, PaCallPg.v); a Theorem Labs lane's statement passes 4, 4b and 5
-   (a working branch f490061c104): the free entry at every FP state (forall fx0), and the post apost_baseF (no
+   (a working branch): the free entry at every FP state (forall fx0), and the post apost_baseF (no
    printf-reaching code after verbs_receive, so its left disjunct). *)
 (* Modified by Theorem Labs, 2026-10: send_message's last walk segment on plugin-hostd/fuzz_command's ASan+UBSan image, from
    verbs_receive's return (0x86d60) to the `ret`: the copy freed through the free wrapper, the inline release of the
    class-1 side-stack frame (shadow 0xf8, the retired magic, shadow 0xf5, the flag byte cleared), the epilogue and the
    contract's post. Ported from proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v (cgif_close's
-   segment chain and post assembly, ACh2.v) at origin/ossv/recipes c8557374ad2e, with the free call of A/ACho.v
+   segment chain and post assembly, ACh2.v), with the free call of A/ACho.v
    (flushFrame) and the frame release of A/AChx.v and A/ACk5.v (exitR). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -105,7 +106,7 @@ Let RUNP := SRr_run_pi_AJ B LAWS.
 Let RUNC := SRr_run_pi_AJ_call B LAWS.
 Let RUNF := aj_flag_store_pi B LAWS ML ASF FFL.
 
-(* the seed at verbs_receive's return (sm_entry's form, send_message_k.v:178-250) *)
+(* the seed at verbs_receive's return (sm_entry's form, send_message_k.v:179-251) *)
 Lemma sm5_seed : forall ly S W (regs : bvmap 5 word) mem md ch FP lyc Sc Wc (regs1 : bvmap 5 word) memc mdc k fpos n src res,
 afn_pre SEGS B SEND_MESSAGE_STK ly S W regs mem md ch ->
 sm_jr B FP ly S W regs mem md fpos lyc Sc Wc memc mdc k ->

@@ -3,11 +3,11 @@
      image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
        sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
      source runs: lib/B/Prog/Seg/F15.v (not in this delivery) seg_F15 (the sl_run run) and seg_F15b (the sl_run
-       run) at a working branch 3803efccea0
+       run) at a working branch
        (blob e480181ea080a727bb5059e3030fd8bbb55aa9db).  Neither stretch calls, so there is no _pre_F / _post_F
        split; neither stores, and neither reads a shadow byte (no instrumented check in 0x82378-0x823d8);
-     tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-           lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+     tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+           lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
      compare: seg_F15_run / seg_F15b_run re-derive the run the segment proof feeds to Tac_slot.sl_run_lib, from
        seg_F15_F / seg_F15b_F at RNG := RNG_all (evtF_evt, every rng premise by rng_all).  The segment proof itself
        states its run in the UL engine and lifts it with SmLib.ul_entry; the lib.Lib form below is the one

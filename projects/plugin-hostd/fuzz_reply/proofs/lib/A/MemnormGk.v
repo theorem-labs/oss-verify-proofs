@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MemnormGk.v (a working branch 30a1993588f, c5 + memnorm; file sha256 247ba870c9f9) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MemnormGk.v (a working branch, c5 + memnorm; file sha256 247ba870c9f9) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reserved-region ledger). *)
 (* Theorem Labs, 2026-10: the kernel-answer law (MemnormG.v klaw, over LPS's sstep_cfg) at every kernel request the
    frozen Allocate / Deallocate chain answers through a node, at the node lemmas the chain uses.  Image-free.
    rule 24: no function proved (kind: generic run invariant, kernel-answer law instances).
@@ -8,7 +9,7 @@
    The requests (YG00.v:96-103) and their nodes in the chain:
    - KMapUser / KMapFreeArray / KMapPtrArray: a MAP_FIXED rw grant, YG0c.v:69 commit_node3 (used at AGjt.v:781,
      YFjt.v:766, YFkn.v:839, CLrefillB3.v:846, AFjt.v:773, AFkn.v:849); the answer memory is zfill (klaw_commit3).
-   - KMmapSec: an anonymous rw mmap the kernel places, YF05.v:149 anon_node (AGjs.v:584, AGk0.v:443, AFjs.v:584); the
+   - KMmapSec: an anonymous rw mmap the kernel places, YF05.v:149 anon_node (AGjs.v:585, AGk0.v:443, AFjs.v:584); the
      answer memory is zfill at the placed address (klaw_anon).
    - KMunmapSec: munmap, YFfn.v:21 munmap_node (DGif1dr.v:262, AFg8.v:353); the answer memory is unfill
      (klaw_munmap).
@@ -34,6 +35,8 @@ Local Open Scope Z_scope.
 Section c. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Variable segs : list Segment.
 Hypothesis segs_low : forall a, in_img segs a -> 0 <= a < kLowMemEnd.
+(* 727298f3: the image's segments are the loader's, none kernel-mapped (MemnormG.memnorm_zfill_reserved) *)
+Hypothesis segs_user : forall s, In s segs -> seg_kernel_map s = false.
 
 (* KMapUser / KMapFreeArray / KMapPtrArray: YG0c.v:69 commit_node3's premises, plus the reserved list and the top *)
 Theorem klaw_commit3 : forall (hole : bool) regs (pc : word) mem rom md (flags addr : word) (len : Z),
@@ -62,7 +65,7 @@ assert (Pn : 0 <= page_round_up_Z len)
   by (unfold page_round_up_Z, page_size; pose proof (Z.div_pos (len + 4096 - 1) 4096 ltac:(lia) ltac:(lia)); lia).
 pose proof (u64_range addr) as Ra.
 assert (Un : bv_unsigned n = page_round_up_Z len) by (unfold n; apply u64_lit; unfold TASK_SIZE in TOP; lia).
-apply (memnorm_zfill_reserved segs addr n mem segs_low HM).
+apply (memnorm_zfill_reserved segs addr n mem segs_low segs_user HM).
 - rewrite <- RES. destruct hole; [exact (region_free_app_l _ _ addr n Hplace) | exact (proj1 Hplace)].
 - rewrite Un. lia.
 Qed.
@@ -76,7 +79,7 @@ Theorem klaw_anon : forall regs (pc : word) mem rom md (flags : word) (len : Z),
   getr regs 12 = Z_to_bv 64 3 -> getr regs 13 = flags -> mmap_flags_core flags = 34 ->
   getr regs 14 = Z_to_bv 64 (-1) -> getr regs 15 = Z_to_bv 64 0 ->
   let nZ := page_round_up_Z len in let n := Z_to_bv 64 nZ in
-  (exists a, grant_ok_na_pin md a nZ = true) -> mmap_noreserve_backed_ok flags md nZ = true ->
+  (exists a, grant_ok_na_pin (Z_to_bv 64 0) md a nZ = true) -> mmap_noreserve_backed_ok flags md nZ = true ->
   vm_reserved (m_vmmaps md) = segments_reserved segs ->
   alloc_top (m_vmmaps md) <= TASK_SIZE ->
   klaw segs (YAkMemnorm.memnorm segs) (mkCfg (pend_at regs pc mem rom) md).
@@ -87,13 +90,19 @@ destruct (YF05.anon_node segs regs pc mem rom md flags len Hh H17 H10 H11 Hlen H
 apply (klaw_node segs _ _ I _ nx NODE). intros i HM.
 destruct (OUT i) as (md_i & _ & _ & _ & Hg & NX & _). rewrite NX. cbn [cfg_ms ms_mem mkst].
 cbn [cfg_ms ms_mem pend_at] in HM.
-unfold grant_ok_na_pin in Hg. apply andb_prop in Hg as [Hg Hrf]. apply andb_prop in Hg as [_ Hce].
+(* 727298f3: YF05.anon_node states the grant in the placement rule's form (the NULL hint); its alignment,
+   bound and free-region facts are YK13.grant_ok_na_pin_b of it, for a positive page-rounded size. *)
+assert (Hpos : 0 < nZ).
+{ unfold nZ, page_round_up_Z, page_size. assert (1 <= (len + 4096 - 1) / 4096) by (apply Z.div_le_lower_bound; lia). lia. }
+assert (Hal : nZ mod page_size = 0) by (unfold nZ, page_round_up_Z, page_size; apply Z_mod_mult).
+apply (YK13.grant_ok_na_pin_facts _ _ _ _ Hpos Hal) in Hg.
+unfold grant_ok_na_pin_b in Hg. apply andb_prop in Hg as [Hg Hrf]. apply andb_prop in Hg as [_ Hce].
 apply Z.leb_le in Hce.
 assert (Pn : 0 <= nZ)
   by (unfold nZ, page_round_up_Z, page_size; pose proof (Z.div_pos (len + 4096 - 1) 4096 ltac:(lia) ltac:(lia)); lia).
 pose proof (u64_range (ga i)) as Ra.
 assert (Un : bv_unsigned n = nZ) by (unfold n; apply u64_lit; unfold TASK_SIZE in TOP; lia).
-apply (memnorm_zfill_reserved segs (ga i) n mem segs_low HM).
+apply (memnorm_zfill_reserved segs (ga i) n mem segs_low segs_user HM).
 - rewrite <- RES. exact (region_free_app_l _ _ (ga i) n Hrf).
 - rewrite Un. lia.
 Qed.
@@ -143,7 +152,7 @@ Corollary klaw_anon_call : forall P, srr_inv_call segs P ->
   getr regs 12 = Z_to_bv 64 3 -> getr regs 13 = flags -> mmap_flags_core flags = 34 ->
   getr regs 14 = Z_to_bv 64 (-1) -> getr regs 15 = Z_to_bv 64 0 ->
   let nZ := page_round_up_Z len in let n := Z_to_bv 64 nZ in
-  (exists a, grant_ok_na_pin md a nZ = true) -> mmap_noreserve_backed_ok flags md nZ = true ->
+  (exists a, grant_ok_na_pin (Z_to_bv 64 0) md a nZ = true) -> mmap_noreserve_backed_ok flags md nZ = true ->
   vm_reserved (m_vmmaps md) = segments_reserved segs ->
   alloc_top (m_vmmaps md) <= TASK_SIZE ->
   klaw segs P (mkCfg (pend_at regs pc mem rom) md).

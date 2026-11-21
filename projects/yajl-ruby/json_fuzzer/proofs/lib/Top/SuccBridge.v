@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (tsil_cfg_of_msil fed without the nstep_cfg_sub projection). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith List Lia Bool.
@@ -24,7 +25,10 @@ Lemma tsil_cfg_of_msil : forall {R} (t : itree node R) mo P,
 Proof.
   intros R t; induction t as [r | n k IH]; intros mo P H; cbn in *; [exact H|].
   destruct H as (Hs & Hx & Hk). split; [exact Hs|]. split; [exact Hx|].
-  intros rsp mo' evs Hst. destruct (Hk rsp mo' evs (nstep_cfg_sub _ _ _ _ _ _ Hst)) as [He Ht].
+  (* A build named this site: [MSil.tsil] now quantifies over
+     [nstep_cfg acfg] itself, so [Hk] takes [Hst] DIRECTLY and the [nstep_cfg_sub]
+     projection that used to be needed here is now the thing that breaks it. *)
+  intros rsp mo' evs Hst. destruct (Hk rsp mo' evs Hst) as [He Ht].
   split; [exact He| apply IH; exact Ht].
 Qed.
 

@@ -40,7 +40,7 @@ Definition tfib_icells : list (Z * Z) :=
 [(FF_got_fflush, FF_real_fflush); (FF_got_fwrite, FF_real_fwrite); (FF_got_strchr, FF_real_strchr); (FF_mask, FF_mask_val)].
 (* The sink's own static cells, as (address, size): __libc.threaded, __libc.need_locks, ofl_lock and __stack_chk_guard. *)
 Definition tfib_owned : list (Z * Z) := [(A_threaded, 1); (A_need_locks, 1); (A_ofl_lock, 4); (FF_canary, 8)].
-(* fuzz_grant writes no file: ak_path, ak_mode, ak_rwa and ak_trailer are 0, and asink_strs is never stated for it. *)
+(* fuzz_uci's record, as fuzz_grant's (this file's donor): ak_path, ak_mode, ak_rwa and ak_trailer are 0, and asink_strs is never stated for tfib_K in this library. *)
 Definition tfib_K : asink_syms :=
 mkASink A_stdio_read A_stdio_write A_stdio_seek A_stdio_close 0 0 0 0 A_threaded A_need_locks A_ofl_lock FF_meta_ptr FF_meta_mem FF_got_canary FF_canary
 tfib_icells tfib_owned.

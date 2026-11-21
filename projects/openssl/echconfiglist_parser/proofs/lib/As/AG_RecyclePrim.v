@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the runtime's reserved-ledger premise is discharged on the class's primary region by AllocRepX.ak_resf_prim, since the launch's vDSO/vvar pair is reserved above AHI_LO). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -234,7 +235,7 @@ Section RPStep.
     all: try replace (sb + c * 2 ^ 32) with (RB s c) by (clear - ERB; tlia).
     all: try replace (RB s c + kFreeArrayOffset) with (FA s c) by (unfold kFreeArrayOffset; clear - EFA; tlia).
     all: try (first [exact RIC | exact RST | exact FARR | exact FAJ]).
-    { intros a kk Ha. exact (ak_resf_hi s mo AK a kk Ha). }
+    { intros a kk Ha Hk. apply (ak_resf_prim s mo AK a kk c HCC); [exact Ha| unfold kRegionSize; exact Hk]. }
     { intros a kk Ha Hk. apply (ak_prim s mo AK a kk c HCC); [exact Ha| unfold kRegionSize; exact Hk]. }
     { exact NW. }
     { exact NWA. }

@@ -1,8 +1,8 @@
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: new file, written for libreac/fuzz_pcap -- lib/B twin of lib/A/Prog/PcapSourceOpenPh.v (a working branch
-   e57fbb09a40): pcap_source_open (fuzz_pcap.asan-ubsan 0x811e0, listing offset AF_pcap_source_open = 0xa58, 246
+(* Modified by Theorem Labs, 2026-10: new file, written for libreac/fuzz_pcap -- lib/B twin of lib/A/Prog/PcapSourceOpenPh.v (a working branch):
+   pcap_source_open (fuzz_pcap.asan-ubsan 0x811e0, listing offset AF_pcap_source_open = 0xa58, 246
    instructions) on libreac v1.9.0's ASan+UBSan build, the cut between the two walk files.
 
    The code up to the fopen call is lib/A's ASan code at other pcs (0x811e0..0x812f4 here, 0x8145c..0x81570 there).
@@ -26,6 +26,7 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 
    Every number is read from the pin fuzz_pcap.asan-ubsan (sha256 9e66f771f22af67a...). The listing,
    its names and PAImg are lib/B's (PcapSyms, PcapList, PcapAddr, PcapPa, PcapPaLib); the text is otherwise lib/A's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

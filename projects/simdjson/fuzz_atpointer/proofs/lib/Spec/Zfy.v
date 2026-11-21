@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's munmap and grant_ok changes). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Specs Run.
@@ -47,24 +48,27 @@ Proof.
     + exists out, mo1, []. split; [reflexivity|]. split; [exact Spec1| exact Real1].
   - destruct NoOom as [_ Unforced]. cbn [unforced] in Unforced.
     destruct (kernel_placed flags) eqn:Placed; [exact (Unforced eq_refl)|].
-    pose proof (mmap_safe_noreserve _ _ _ _ _ _ _ SafeArgs) as NoReserve.
+    pose proof (mmap_safe_noreserve _ _ _ _ _ _ _ (proj1 SafeArgs)) as NoReserve.
     destruct (Granted (pure_input 222 [Z_to_bv 64 addr; Z_to_bv 64 len; Z_to_bv 64 prot; Z_to_bv 64 flags;
                                        Z_to_bv 64 (-1); Z_to_bv 64 0])
                       (fun eff => check_mmap (Z_to_bv 64 addr) (Z_to_bv 64 len) (Z_to_bv 64 prot) (Z_to_bv 64 flags)
                                              (Z_to_bv 64 (-1)) (Z_to_bv 64 0) eff mo))
       as (out & mo1 & Spec1 & Real1).
     + intros eff. apply check_syscall_mmap. reflexivity.
-    + intros eff. apply mmap_safe_no_unmodeled. exact SafeArgs.
+    + intros eff. apply mmap_safe_no_unmodeled; [exact (proj2 SafeArgs)| exact (proj1 SafeArgs)].
     + intros eff mo2 evs2 Ok2. exact (proj1 (proj2 (check_mmap_shape _ _ _ _ _ _ _ _ _ _ NoReserve Ok2))).
     + exists out, mo1, []. split; [reflexivity|]. split; [exact Spec1|].
       cbn [mm_ok]. rewrite Placed. exact Real1.
   - destruct (Granted (pure_input 215 [Z_to_bv 64 addr; Z_to_bv 64 len])
                       (fun eff => check_munmap (Z_to_bv 64 addr) (Z_to_bv 64 len) eff mo))
-      as (out & mo1 & Spec1 & _).
+      as (out & mo1 & Spec1 & Real1).
     + intros eff. apply check_syscall_munmap. reflexivity.
     + intros eff. apply munmap_safe_no_unmodeled. exact SafeArgs.
     + intros eff mo2 evs2 Ok2. exact (proj1 (proj2 (check_munmap_shape _ _ _ _ _ _ Ok2))).
-    + exists out, mo1, []. split; [reflexivity| exact Spec1].
+    (* LPS 75d69e00: the munmap step now also carries [mm_ok]; [Real1]'s non-spuriousness
+       gives it through [mm_ok_munmap_of_nonspurious]. *)
+    + exists out, mo1, []. split; [reflexivity|]. split; [exact Spec1|].
+      exact (mm_ok_munmap_of_nonspurious addr len mo out SafeArgs Real1).
 Qed.
 
 Lemma osel_not_open : forall sel n mo rsp, match n with NOpen _ => False | _ => True end -> osel sel n mo rsp.
@@ -125,7 +129,7 @@ Lemma nprog_read : forall sel fd buf cnt mo,
   end -> nprog sel (NRead fd buf cnt) mo.
 Proof.
   intros sel fd buf cnt mo Hfd. apply nprog_of_nstep; [exact I|].
-  destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|pi pw|rd wr| ]|] eqn:E; try contradiction.
+  destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|pi pw|rd wr| |sid sd st|ctx|fam|aid af]|] eqn:E; try contradiction.
   - destruct (fs_lookup (m_fs mo) p) as [data|] eqn:Hfs; [|contradiction].
     eexists _, _, []. cbn [nstep]. rewrite E, Hfs. split; [reflexivity|]. split; reflexivity.
   - exists (efferr EISDIR), mo, []. cbn [nstep]. rewrite E. auto.
@@ -216,7 +220,7 @@ Proof.
   destruct Hst as ((Hs & _) & Hst & _).
   assert (Hn' : match n with NBrk _ | NMunmap _ _ | NMprotect _ _ _ => True
              | NMmap _ _ _ flags => mmap_noreserve_b (Z_to_bv 64 flags) = false | _ => False end).
-  { destruct n; try exact I; try contradiction. cbn [nsafe] in Hs. eapply mmap_safe_noreserve. exact Hs. }
+  { destruct n; try exact I; try contradiction. cbn [nsafe] in Hs. eapply mmap_safe_noreserve. exact (proj1 Hs). }
   destruct (nstep_mm_vm_only n mo rsp mo' evs Hn' Hst) as ((Hfd & Hfs & _) & -> & _). auto.
 Qed.
 

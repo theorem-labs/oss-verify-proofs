@@ -1,14 +1,14 @@
 (* reac_box_model_block (0x865d8) of fuzz_ctrl's ASan+UBSan build (image B, libreac v1.9.0): its contract in cgif's
-   CALLER-JOURNAL form (cgif lib/YC20.v:311-365 on origin/ossv/recipes c8557374ad2e), STATEMENT ONLY (no Admitted;
+   CALLER-JOURNAL form (cgif lib/YC20.v:311-365), STATEMENT ONLY (no Admitted;
    the proof is pb_reac_box_model_block, lib/B/Prog/C_reac_box_model_blockPb.v, plan of record
    analyses/libreac/fuzz_ctrl/glue-B/model_block/pb_reac_box_model_block.plan.md).  rule 24: no function is proved here.
 
    The image-B twin of image A's spec of record, a Theorem Labs lane's lib/A/Prog/C_reac_box_model_block.v
-   (a working branch c592a980fe0), in B's copies of its vocabulary:
+   (a working branch), in B's copies of its vocabulary:
    - the segments are the CONCRETE list SEGS := YB1v.tfibsegs, the pa_segs of image B's PA instance
-     CtrlImg.PI_ctrl_B (lib/B/Prog/CtrlImg.v:86), so CtrlCallerJ's shapes stated over pa_segs PI apply by
+     CtrlImg.PI_ctrl_B (lib/B/Prog/CtrlImg.v:87), so CtrlCallerJ's shapes stated over pa_segs PI apply by
      conversion (A: AB1v.tfibsegs / CtrlImg.PI_ctrl);
-   - the post keeps the caller's bytes by CtrlCallerJ.tcj_kept (lib/B/Prog/CtrlCallerJ.v:42), which exempts the
+   - the post keeps the caller's bytes by CtrlCallerJ.tcj_kept (lib/B/Prog/CtrlCallerJ.v:43), which exempts the
      bytes the call writes in EVERY clause, high memory included (the core's acall_kept, a malloc-post shape, does
      not exempt them in its high-memory clause, so the output block o, which lies in high memory, could not be
      written under it);
@@ -82,7 +82,7 @@ Section b. Context {fx : lib.Reusable.YK11.FPState} {rc : lib.Reusable.YM05.RunC
 Context {SK : lib.Reusable.YI16.sink_head}.   (* := Reusable.YE2k.tfib_sink_head once B's core twin lands *)
 
 Section d.
-(* the concrete segments of image B (CtrlImg.v:22-24, 86-87) *)
+(* the concrete segments of image B (CtrlImg.v:23-25, 86-87) *)
 #[local] Notation SEGS := YB1v.tfibsegs.
 (* The read-only span of the RO premise (decisions.md item 17, cgif lib/YC20.v:56); the composer instantiates it
    with PI_ctrl_B's pa_relro = [0x9f168, 0xa15e8) and discharges RELRO_IMG by CtrlImg.ctrl_relro_img. *)

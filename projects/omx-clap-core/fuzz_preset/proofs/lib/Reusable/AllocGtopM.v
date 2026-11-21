@@ -1,10 +1,11 @@
-(* copy of proofs/cgif/cgif_file_fuzzer/lib/AllocGtopM.v@5c60b06ed1c4 (blob 88ebe8781a78); do not edit. Only this line is added, the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib is this unit's OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable, and the comment adds the parentheses after AGioM.alloc_sec_w_em (line 7), as this unit's AGioM is lib/A/AGioM.v, not cgif's. *)
+(* copy of proofs/cgif/cgif_file_fuzzer/lib/AllocGtopM.v (blob 88ebe8781a78); do not edit. Only this line is added, the module prefix OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib is this unit's OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable, and the comment adds the parentheses after AGioM.alloc_sec_w_em (line 7), as this unit's AGioM is lib/A/AGioM.v, not cgif's. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10 (task MEMNORM, full Allocate): the memnorm-kept twin of AllocGtopE: MemnormT.aalloc_realizes_em
    (every size n < nmax) from its two cases, the primary (MemnormT.aalloc_prim_realizes_em, n <= 64512) and the
    secondary ([aalloc_sec_realizes_em], 64513 <= n).  Image-free, like AllocGtopE: the case split is on n alone.  The
-   secondary case on the cgif_file image is AGioM.alloc_sec_w_em (cgif's; this unit proves [aalloc_sec_realizes_em] by AGioMB.alloc_sec_w_em_realizes, lib/AU/AGioMB.v:225, and AGioM.alloc_sec_w_em_realizes, lib/A/AGioM.v:229).
+   secondary case on the cgif_file image is AGioM.alloc_sec_w_em (cgif's; this unit proves [aalloc_sec_realizes_em] by AGioMB.alloc_sec_w_em_realizes, lib/AU/AGioMB.v:226, and AGioM.alloc_sec_w_em_realizes, lib/A/AGioM.v:230).
    rule 24: no function proved (kind: top-level composition).  AllocGtopE is unchanged. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -24,7 +25,7 @@ Local Open Scope Z_scope.
 
 Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Section b.
-(* AllocG's section variables, in AllocG's order (copy of AllocGtopE.v:22-37). *)
+(* AllocG's section variables, in AllocG's order (copy of AllocGtopE.v:23-38). *)
 Variable segs : list Segment.
 Variable B : asyms.
 Variable U : list Z -> astate -> Prop.
@@ -49,7 +50,7 @@ alloc_pre segs B U ARX rpre nmax lmax al atp cf inst so bp ly S W regs mem md n 
 amreal segs (mt n tr S) W (cfg_at segs pcA regs mem md)
 (MemnormT.alloc_leaf_em segs B mt ARX AOX lpost oomb inst ly S W regs mem md n tr).
 
-(* copy of AllocGtopE.v:45-54, at the memnorm-kept forms; part 3b: the prim case reads MP, the sec case drops it *)
+(* copy of AllocGtopE.v:46-55, at the memnorm-kept forms; part 3b: the prim case reads MP, the sec case drops it *)
 Lemma aalloc_realizes_em_of_prim_sec_em :
 MemnormT.aalloc_prim_realizes_em segs B U mt ARX AOX rpre nmax lmax lpost pcA oomb al atp cf MP ->
 aalloc_sec_realizes_em ->

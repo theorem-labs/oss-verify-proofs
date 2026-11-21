@@ -10,10 +10,10 @@
    realized at 512 GiB and the statement asks for 16 GiB, so its theorem goes through
    [Corpus.LimSimSys.must_exit_in_scfg_relim_closed], which lowers the limit on the statement's own budget premise.
 
-   The two AddressSanitizer builds are not here.  Their closures are built with [SpinAlg.srealizes], whose [srz_spin]
-   constructor admits a silent infinite loop and is used at [Common/NoReserve.v:518] and [:737] for a refused mmap and
-   at [Asan/AsanPlanSound.v:6993] for the plan's [PSpin] node, so [srealizes] does not imply halting and no induction
-   here can make it. *)
+   The two AddressSanitizer builds are not here.  Their closures are built with [SpinAlg.srealizesM], whose
+   [srz_spin] constructor admits a silent infinite loop at the flag [false] only; their halting theorems read the
+   flag [true] through [Corpus/HaltsKitFO.v] ([Theorems.coturn_fuzzstunclient_asan_halts] and
+   [coturn_fuzzstunclient_asan_ubsan_halts]). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -38,7 +38,10 @@ Proof.
   apply halts_allowed_T_scfg_budgets_of_scfg.
   intros [sp brk mb rnd] inp Hen Hinp.
   cbn [must_exit_in_scfg].
-  apply (fo_exits_must_exit Plain.M.loaded_segments Exits.ok_or_refused _
+  (* LPS 08b1429/75d69e00: [must_exit_in_scfg] runs over [run_segments segs inp sp mb] (the loaded
+     segments plus the vDSO/vvar tail), which is also the list [ref_spec_stmt] realizes over
+     ([BaseUbsan.v]); the segment argument is left to unification rather than named. *)
+  apply (fo_exits_must_exit _ Exits.ok_or_refused _
            (spec (in_argv inp) (in_fs inp))).
   - apply fo_of_realizes.
     exact (OSSVerify.Proofs.coturn.FuzzStunClient.lib.RefMain.ref_realizes_spec
@@ -58,7 +61,7 @@ Proof.
            target_alloc_limit Budgets.Standard.lim_source (mkEntry sp brk mb rnd) inp
            source_le_target Hbud).
   cbn [must_exit_in_scfg].
-  apply (fo_exits_must_exit Ubsan.M.loaded_segments Exits.ok_or_refused _
+  apply (fo_exits_must_exit _ Exits.ok_or_refused _
            (spec (in_argv inp) (in_fs inp))).
   - apply fo_of_realizes.
     exact (OSSVerify.Proofs.coturn.FuzzStunClient.lib.UbMain.ub_realizes_spec

@@ -7,10 +7,10 @@
    allocator site, the meters over an append, a kept footprint below alloc_ceiling, an allocator rule's mo_ok
    from dbud, and the signs of the requests the cut predicates still owe.
 
-   PORTED from image A on a working branch 0c06ccc287f, every lemma name kept:
-     lib/A/W_drain_gs.v:668-791 (last changed in 1ef2c00b5d5): gs_aentry_okx_kept, gs_gx_open, gs_gx_close,
+   PORTED from image A on a working branch, every lemma name kept:
+     lib/A/W_drain_gs.v:669-792 (last changed): gs_aentry_okx_kept, gs_gx_open, gs_gx_close,
        gs_tr_cost_app, gs_tr_alloc_app, gs_tr_max_nonneg, gs_tr_max_app, gs_kept_lo, gs_akept_of, gs_mo_ok_of;
-     lib/A/W_drain_tr.v:113-547 (last changed in 333e49d6f5f): tr_sizes_ok, gs_tr_cost_nonneg,
+     lib/A/W_drain_tr.v:113-547 (last changed): tr_sizes_ok, gs_tr_cost_nonneg,
        gs_tr_alloc_nonneg, gs_dlfut_sizes, gs_dsfut_sizes, gs_dnext_signs_at, gs_cut_facts, gs_cut_dnext_signs,
        gs_dgs_dnext_signs, and what they need (sz_*, dr_run_sizes, gs_dlater_sizes, tr_drl_split).
    No lemma names an image address or an image-A number.  Each is stated over image B's own interface:
@@ -33,7 +33,8 @@
    MT MMAX MTL; gs_tr_cost_nonneg to MT MTL; gs_cut_facts / gs_cut_dnext_signs / gs_dgs_dnext_signs to
    B MT MMAX RG; the others to no section variable. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/W_drain_gs_aux.v; 144 of its 528 lines of code are new or changed and 295 lines of the source are left out. *)
-(* Image-B (fuzz_reply.asan-ubsan) copy of lib/A/W_drain_tr.v (a working branch e6b5f95b285), over lib/B's
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Image-B (fuzz_reply.asan-ubsan) copy of lib/A/W_drain_tr.v (a working branch), over lib/B's
    interface; only the imports and the Section header (lib/B/W_drain_lineb.v's) changed. *)
 (* The sign of the requests still owed by fuzz_reply's drain (image A's original: ASan walk, fuzz_reply.asan 0x830dc .. 0x83de4; image B's: fuzz_reply.asan-ubsan 0x83278 .. 0x841fc).
    dbud carries the cost, the live bytes and the largest request of the trace tl still to come, not that its

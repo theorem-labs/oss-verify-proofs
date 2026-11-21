@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the entry stack image is the launch's stack block, exactly ed_top - sp bytes and non-wrapping (entry_stack_image_block, entry_stack_image_no_wrap, length_entry_stack_image_launch), in place of build_stack_bytes_within_span, and the stack reads follow the launch's auxv; launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -2395,14 +2396,6 @@ Qed.
 Definition total_arg_bytes_nat (args : list (list byte)) : nat :=
   fold_right (fun a acc => length a + 1 + acc)%nat 0%nat args.
 
-Lemma total_arg_bytes_Z : forall l,
-  total_arg_bytes l = Z.of_nat (total_arg_bytes_nat l).
-Proof.
-  induction l as [|x l IH]; [reflexivity|].
-  cbv [total_arg_bytes total_arg_bytes_nat] in *. cbn [fold_right].
-  rewrite IH. lia.
-Qed.
-
 Lemma length_flatten_strings : forall l, length (flatten_strings l) = total_arg_bytes_nat l.
 Proof.
   induction l as [|x l IH]; [reflexivity|].
@@ -2474,37 +2467,60 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
+Lemma entry_stack_image_block : forall inp mbase ph entry (sp : word) draw,
+  entry_stack_image inp mbase ph entry sp draw
+  = build_stack_bytes (launch_auxv inp sp mbase) ph entry sp (ed_top draw)
+      (in_argv inp) (in_envp inp) (in_execfn inp)
+      (in_uid inp) (in_gid inp) (in_hwcap inp) draw.
+Proof. reflexivity. Qed.
 
-(* [comment removed for export] *)
-Lemma build_stack_bytes_within_span : forall ph (sp : word) a e uid hw rnd,
-  (Z.of_nat (length (build_stack_bytes ph sp a e uid hw rnd))
-   <= entry_stack_span a e)%Z.
+Lemma la_rseq_launch_auxv : forall inp sp mbase,
+  la_rseq (launch_auxv inp sp mbase) = kb_rseq (in_kernel inp).
+Proof. reflexivity. Qed.
+
+Lemma length_entry_stack_image_launch :
+  forall v inp mbase ph entry (sp brk : word) draw,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw))
+  = (bv_unsigned (ed_top draw) - bv_unsigned sp)%Z.
 Proof.
-  intros ph sp a e uid hw rnd.
-  unfold entry_stack_span, build_stack_bytes. cbv zeta.
-  rewrite (string_addrs_pair a). cbv beta iota.
-  rewrite (string_addrs_pair e). cbv beta iota.
-  rewrite !length_app, repeat_length, !length_flat_map_le8,
-    !length_string_addrs_fst, !length_n_to_le_8, length_auxv_bytes,
-    !length_flatten_strings, length_at_random_bytes.
-  rewrite !total_arg_bytes_Z.
-  match goal with
-  | |- context [Z.to_nat ?pd] =>
-      assert (Hpd : (0 <= pd < 8)%Z) by (apply Z.mod_pos_bound; lia)
-  end.
-  unfold auxv_size. lia.
+  intros v inp mbase ph entry sp brk draw Hok.
+  cbn [entry_launch_ok_va] in Hok.
+  destruct Hok as (_ & (_ & _ & Hhi) & _).
+  unfold entry_stack_image.
+  rewrite length_build_stack_bytes, la_rseq_launch_auxv.
+  unfold launch_sp_hi, align_down16 in Hhi.
+  pose proof (Z.mod_pos_bound
+    (bv_unsigned (ed_top draw) - 8
+     - Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp)
+                                     (in_execfn inp)))
+    16 ltac:(lia)) as Hm.
+  unfold block_pad_len.
+  rewrite !Nat2Z.inj_add.
+  rewrite Z2Nat.id by lia.
+  lia.
 Qed.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-Lemma bsb_argc_prefix : forall ph (sp : word) argv envp uid hw rnd, exists tl,
-  build_stack_bytes ph sp argv envp uid hw rnd = word_le8 (len_word argv) ++ tl.
+Lemma entry_stack_image_no_wrap :
+  forall v inp mbase ph entry (sp brk : word) draw,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  (bv_unsigned sp
+   + Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw))
+     < 2 ^ 64)%Z.
 Proof.
-  intros ph sp argv envp uid hw rnd. unfold build_stack_bytes.
+  intros v inp mbase ph entry sp brk draw Hok.
+  rewrite (length_entry_stack_image_launch v inp mbase ph entry sp brk draw Hok).
+  pose proof (u64_range (ed_top draw)) as Hr. lia.
+Qed.
+
+Lemma bsb_argc_prefix :
+  forall la ph entry (sp top : word) argv envp execfn uid gid hwcap draw,
+  exists tl,
+  build_stack_bytes la ph entry sp top argv envp execfn uid gid hwcap draw
+  = word_le8 (len_word argv) ++ tl.
+Proof.
+  intros la ph entry sp top argv envp execfn uid gid hwcap draw.
+  unfold build_stack_bytes. cbv zeta.
   rewrite (string_addrs_pair argv). cbv beta iota.
   rewrite (string_addrs_pair envp). cbv beta iota.
   eexists. rewrite <- !app_assoc. reflexivity.
@@ -2535,55 +2551,43 @@ Proof.
   cbn [firstn]. rewrite app_nil_r. reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-Lemma rdn_image_in_block :
-  forall segs ph (sp : word) argv envp uid hwcap draw (a : word) n,
-  (bv_unsigned a + Z.of_nat n
-   <= entry_block_top sp (build_stack_bytes ph sp argv envp uid hwcap draw))%Z ->
-  (bv_unsigned a + Z.of_nat n <= 2^64)%Z ->
-  rdn segs (stack_to_mem sp (entry_stack_image ph sp argv envp uid hwcap draw)) a n
-  = rdn segs (stack_to_mem sp (build_stack_bytes ph sp argv envp uid hwcap draw)) a n.
-Proof.
-  intros segs ph sp argv envp uid hwcap draw a n Hin Hnw.
-  apply rdn_ext; [exact Hnw|].
-  intros x Hx. apply stack_to_mem_image_in_block. lia.
-Qed.
-
-(* [comment removed for export] *)
+(** [read_at_offset] against the mapped image.  It is [read_at_offset]
+    itself: the image and the block are one list, so there is no
+    step between them and no premise beyond the no-wrap side condition
+    [entry_stack_image_no_wrap] discharges. *)
 Lemma read_at_offset_image :
-  forall segs ph (sp : word) argv envp uid hwcap draw pre mid post k,
-  build_stack_bytes ph sp argv envp uid hwcap draw = pre ++ mid ++ post ->
+  forall segs inp mbase ph entry (sp : word) draw pre mid post k,
+  entry_stack_image inp mbase ph entry sp draw = pre ++ mid ++ post ->
   length mid = k ->
   (bv_unsigned sp
-   + Z.of_nat (length (build_stack_bytes ph sp argv envp uid hwcap draw)) < 2^64)%Z ->
-  rdn segs (stack_to_mem sp (entry_stack_image ph sp argv envp uid hwcap draw))
+   + Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw))
+     < 2 ^ 64)%Z ->
+  rdn segs (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw))
       (sp + nat_to_word (length pre)) k
   = Some mid.
 Proof.
-  intros segs ph sp argv envp uid hwcap draw pre mid post k Hb Hk Hnw.
-  pose proof (u64_range sp) as Hsp64.
-  assert (Hlen : (length pre + length mid <= length (build_stack_bytes ph sp argv envp uid hwcap draw))%nat)
-    by (rewrite Hb, !length_app; lia).
-  assert (Hu : bv_unsigned (sp + nat_to_word (length pre))
-               = (bv_unsigned sp + Z.of_nat (length pre))%Z).
-  { unfold nat_to_word. rewrite bv_add_unsigned, Z_to_bv_unsigned.
-    rewrite bv_wrap_add_idemp_r, bv_wrap64_mod. apply Z.mod_small. lia. }
-  rewrite rdn_image_in_block
-    by (unfold entry_block_top; rewrite Hu; lia).
+  intros segs inp mbase ph entry sp draw pre mid post k Hb Hk Hnw.
   exact (read_at_offset segs sp _ pre mid post k Hb Hk Hnw).
 Qed.
 
-Lemma read_argc : forall ph segs (sp : word) argv envp uid hw rnd,
-  (bv_unsigned sp + Z.of_nat (length (build_stack_bytes ph sp argv envp uid hw rnd)) < 2^64)%Z ->
-  rdn segs (stack_to_mem sp (entry_stack_image ph sp argv envp uid hw rnd)) sp 8%nat
-  = Some (word_le8 (len_word argv)).
+Lemma read_argc : forall inp mbase ph entry segs (sp : word) draw,
+  (bv_unsigned sp
+   + Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw))
+     < 2 ^ 64)%Z ->
+  rdn segs (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw))
+      sp 8%nat
+  = Some (word_le8 (len_word (in_argv inp))).
 Proof.
-  intros ph segs sp argv envp uid hw rnd Hnw.
-  destruct (bsb_argc_prefix ph sp argv envp uid hw rnd) as [tl E].
-  pose proof (read_at_offset_image segs ph sp argv envp uid hw rnd [] (word_le8 (len_word argv)) tl 8%nat) as H.
+  intros inp mbase ph entry segs sp draw Hnw.
+  destruct (bsb_argc_prefix (launch_auxv inp sp mbase) ph entry sp (ed_top draw)
+              (in_argv inp) (in_envp inp) (in_execfn inp)
+              (in_uid inp) (in_gid inp) (in_hwcap inp) draw) as [tl E].
+  rewrite <- entry_stack_image_block in E.
+  pose proof (read_at_offset_image segs inp mbase ph entry sp draw
+                [] (word_le8 (len_word (in_argv inp))) tl 8%nat) as H.
   cbn [length] in H.
   rewrite word_add_0 in H.
-  apply H; [rewrite E; reflexivity|reflexivity|exact Hnw].
+  apply H; [exact E|reflexivity|exact Hnw].
 Qed.
 
 Lemma read_byte_at : forall segs (sp : word) bytes pre s post j,
@@ -2605,31 +2609,22 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
+
 Lemma read_byte_at_image :
-  forall segs ph (sp : word) argv envp uid hwcap draw pre s post j,
-  build_stack_bytes ph sp argv envp uid hwcap draw = pre ++ s ++ post ->
+  forall segs inp mbase ph entry (sp : word) draw pre s post j,
+  entry_stack_image inp mbase ph entry sp draw = pre ++ s ++ post ->
   (j < length s)%nat ->
   (bv_unsigned sp
-   + Z.of_nat (length (build_stack_bytes ph sp argv envp uid hwcap draw))
-     < 2^64)%Z ->
-  rdn segs (stack_to_mem sp (entry_stack_image ph sp argv envp uid hwcap draw))
+   + Z.of_nat (length (entry_stack_image inp mbase ph entry sp draw))
+     < 2 ^ 64)%Z ->
+  rdn segs (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw))
       (sp + nat_to_word (length pre + j)) 1%nat
   = Some [nth j s (Z_to_bv 8 0)].
 Proof.
-  intros segs ph sp argv envp uid hwcap draw pre s post j Hb Hj Hnw.
-  destruct (nth_error_skipn_cons s j Hj) as [b [Hnth Hskip]].
-  assert (Hsj : s = firstn j s ++ b :: skipn (S j) s)
-    by (rewrite <- Hskip; symmetry; apply firstn_skipn).
-  pose proof (read_at_offset_image segs ph sp argv envp uid hwcap draw
-                (pre ++ firstn j s) [b] (skipn (S j) s ++ post) 1%nat) as H.
-  rewrite length_app in H.
-  rewrite firstn_length_le in H by lia.
-  replace (nth j s (Z_to_bv 8 0)) with b by (symmetry; apply (nth_error_nth _ _ _ Hnth)).
-  apply H; [|reflexivity|exact Hnw].
-  rewrite Hb. rewrite Hsj at 1. rewrite <- !app_assoc. reflexivity.
+  intros segs inp mbase ph entry sp draw pre s post j Hb Hj Hnw.
+  exact (read_byte_at segs sp _ pre s post j Hb Hj Hnw).
 Qed.
 
-(* [comment removed for export] *)
 Lemma nth_app0_bound : forall (a1 : list byte) j,
   (bv_unsigned (nth j (a1 ++ [Z_to_bv 8 0]) (Z_to_bv 8 0)) < 256)%Z.
 Proof.
@@ -2646,67 +2641,62 @@ Qed.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-Lemma pe_page_round_up_Z_le : forall z b,
-  (z <= b)%Z -> (b mod page_size = 0)%Z -> (page_round_up_Z z <= b)%Z.
-Proof.
-  intros z b Hzb Hb. unfold page_round_up_Z, page_size in *.
-  pose proof (Z.div_mod b 4096 ltac:(lia)) as Hbm.
-  assert (Hq : ((z + 4096 - 1) / 4096 < b / 4096 + 1)%Z)
-    by (apply Z.div_lt_upper_bound; lia).
-  apply Z.le_trans with (m := (b / 4096 * 4096)%Z); [|lia].
-  apply Z.mul_le_mono_nonneg_r; lia.
-Qed.
-
 Lemma entry_page_top_within_window :
-  forall ph (sp : word) argv envp uid hwcap draw,
-  entry_stack_fits sp argv envp ->
-  (entry_page_top sp (build_stack_bytes ph sp argv envp uid hwcap draw)
-   <= sp_window_hi)%Z.
+  forall v inp mbase (sp brk : word) draw,
+  entry_launch_ok_va v (mkEntry sp brk mbase draw) inp ->
+  (entry_page_top draw <= va_stack_top v)%Z.
 Proof.
-  intros ph sp argv envp uid hwcap draw Hfit.
-  pose proof (build_stack_bytes_within_span ph sp argv envp uid hwcap draw) as Hlen.
-  unfold entry_stack_fits in Hfit. unfold entry_page_top.
-  apply pe_page_round_up_Z_le; [ unfold entry_block_top; lia | reflexivity ].
+  intros v inp mbase sp brk draw Hok.
+  cbn [entry_launch_ok_va] in Hok.
+  destruct Hok as ((_ & Htop & _) & _ & _).
+  unfold entry_page_top. exact Htop.
 Qed.
 
-Definition wrap_mem (ph : PhdrInfo) (sp : word) (argv envp : list (list byte))
-    (uid : word) (hw : word) (rnd : EntryDraw) : word -> option byte :=
+Definition wrap_mem (inp : ProcInput) (mbase : word) (ph : PhdrInfo)
+    (entry sp : word) (draw : EntryDraw) : word -> option byte :=
   fun addr =>
-    match stack_to_mem sp (entry_stack_image ph sp argv envp uid hw rnd) addr with
+    match stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw) addr with
     | Some b => Some b
     | None =>
-      if andb (Z.leb (bv_unsigned sp - stack_max_size) (bv_unsigned addr))
+      if andb (Z.leb (stack_window_lo (in_kernel inp) mbase draw)
+                     (bv_unsigned addr))
               (Z.ltb (bv_unsigned addr) (bv_unsigned sp))
       then Some (Z_to_bv 8 0) else None
     end.
 
-Lemma init_mkst : forall segs (pc : N) ph (sp : word) argv envp uid hw rnd,
-  init_machine_state segs pc ph sp rnd argv envp uid hw =
+Lemma init_mkst : forall segs (pc : N) ph (sp mbase : word) draw inp,
+  init_machine_state segs pc ph sp mbase draw inp =
   mkst (FP:=fp0) (regupd (regupd bvmap_empty 10 (Z_to_bv 64 0)) 2 sp)
-       (Z_to_bv 64 (Z.of_N pc)) (wrap_mem ph sp argv envp uid hw rnd) (seg_rom segs).
+       (Z_to_bv 64 (Z.of_N pc))
+       (wrap_mem inp mbase ph (Z_to_bv 64 (Z.of_N pc)) sp draw)
+       (seg_rom segs).
 Proof. intros. reflexivity. Qed.
 
-(* [comment removed for export] *)
-Lemma wrap_above_sp : forall ph (sp : word) argv envp (x : word) uid hw rnd,
+(** Above (or at) [sp], the wrapper equals the raw [stack_to_mem]:
+    the zero-fill branch is gated by [addr < sp], which is false. *)
+Lemma wrap_above_sp : forall inp mbase ph entry (sp : word) draw (x : word),
   (bv_unsigned sp <= bv_unsigned x)%Z ->
-  wrap_mem ph sp argv envp uid hw rnd x = stack_to_mem sp (entry_stack_image ph sp argv envp uid hw rnd) x.
+  wrap_mem inp mbase ph entry sp draw x
+  = stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw) x.
 Proof.
-  intros ph sp argv envp x uid hw rnd Hx. unfold wrap_mem.
-  destruct (stack_to_mem sp (entry_stack_image ph sp argv envp uid hw rnd) x) as [b|] eqn:E; [reflexivity|].
-  assert (Hltf : Z.ltb (bv_unsigned x) (bv_unsigned sp) = false) by (apply Z.ltb_ge; lia).
+  intros inp mbase ph entry sp draw x Hx. unfold wrap_mem.
+  destruct (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw) x)
+    as [b|] eqn:E; [reflexivity|].
+  assert (Hltf : Z.ltb (bv_unsigned x) (bv_unsigned sp) = false)
+    by (apply Z.ltb_ge; lia).
   rewrite Hltf, andb_false_r. reflexivity.
 Qed.
 
-Lemma rdn_wrap_stack_above : forall segs ph (sp : word) argv envp (a : word) n uid hw rnd,
+Lemma rdn_wrap_stack_above :
+  forall segs inp mbase ph entry (sp : word) draw (a : word) n,
   (bv_unsigned sp <= bv_unsigned a)%Z ->
-  (bv_unsigned a + Z.of_nat n <= 2^64)%Z ->
-  rdn segs (wrap_mem ph sp argv envp uid hw rnd) a n
-  = rdn segs (stack_to_mem sp (entry_stack_image ph sp argv envp uid hw rnd)) a n.
+  (bv_unsigned a + Z.of_nat n <= 2 ^ 64)%Z ->
+  rdn segs (wrap_mem inp mbase ph entry sp draw) a n
+  = rdn segs (stack_to_mem sp (entry_stack_image inp mbase ph entry sp draw)) a n.
 Proof.
-  intros segs ph sp argv envp a n uid hw rnd Hsp Hnw.
+  intros segs inp mbase ph entry sp draw a n Hsp Hnw.
   apply rdn_ext; [exact Hnw|].
   intros x Hx. apply wrap_above_sp. lia.
 Qed.
+
 End WithFP4.

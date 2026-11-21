@@ -1,4 +1,4 @@
-(* Relocated from libreac/fuzz_decode lib/A/Prog/reac_frame_clean_len_c.v (origin/ossv/recipes 98c99a85e4) to reac-repacer/fuzz_wire
+(* Relocated from libreac/fuzz_decode lib/A/Prog/reac_frame_clean_len_c.v to reac-repacer/fuzz_wire
    image A: entry 0x8126c -> 0x81854, constants 0x10310 -> 0x10300 and 0x103c0 -> 0x103b0, module paths changed. A byte compare
    gives the two functions equal modulo pc-relative offsets and both 8-byte constants byte-equal. *)
 From Stdlib Require Import ZArith List Bool.

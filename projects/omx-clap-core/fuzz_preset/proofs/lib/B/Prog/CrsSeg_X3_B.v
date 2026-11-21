@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/CrcB.v, with its module paths and module names changed; 1179 of its 1254 lines of code are new or changed and 439 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset, image B' (#102 pins, asan-ubsan d663f82d): segment X3_B of the walk of check_reject_clean_starved
    (row CRB-X3, a Theorem Labs lane's subagent CrsX3H3). Closing lemma crs_seg_X3_B : the B' kit's crs_from_X3_B (B' +1072 =
    0x82510, fuzz_pick's return site, .. the exits to F and R), from the instance fact HI_head (cf_head =
@@ -15,15 +16,15 @@
    refuted by prh_ledger_own) -> P4 +1112 (bnez a0: the RAN arm, ran = 1, -> F with q = 0 and crs_perm_B from the
    writer's failed arm; bnez s7 refuted; jal fuzz_alloc_live) -> P5 +1124 (beq a0, s6 -> R; ABORT refuted).
    DONOR (rule 24, reuse): lane CrsX3H3's own A' file lib/A/Prog/CrsSeg_X3.v blob 769caba6a7fe
-   (a working branch 0a0dced97c5), name for name with the kit's _B names; every B' number recomputed on the
+   (a working branch), name for name with the kit's _B names; every B' number recomputed on the
    B' listing / PAImg (the STK of pj_write at DOC_D is 23360 here, x3_stk), none shifted from A'.
    rule 24: proves function check_reject_clean_starved on image B' (reuse search: `proof-index check_reject_clean_starved 0x82160`, the internal file
    index-crcs-Aprime.out, and an internal record of that lookup; CONFIRM by checker LookupCheckCrcsAp. At that search origin/ossv/recipes had no lib/A or lib/B, its
    released rows were lib/Prog (plain) and lib/U/Prog (ubsan) only, and no released asan Proof.v existed for check_reject_clean_starved).
-   INPUTS: pin B' asan-ubsan sha256 d663f82d7f488d30 (harness.yaml of release/fuzz-preset-ran-out-pins 8f3e7e1a07f1);
+   INPUTS: pin B' asan-ubsan sha256 d663f82d7f488d30 (harness.yaml);
    listing lib/B/Listing_prog.v blob c97cc46b3e13 + lib/B/PAImg_prog.v blob 15fab93fe702; image record
    lib/B/PRH_ImgB.v (prh_img_B); the kit's texts at the #102 kit tip, by path; kit lib/B/Prog/CrsKitBp.v +
-   CrsWexBp.v at a working branch fb124cd27931. *)
+   CrsWexBp.v at a working branch. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -71,7 +72,7 @@ Open Scope Z_scope.
 Lemma x3_rget : forall (regs : bvmap 5 word) l (r : bv 5) v, crs_regsat_B regs l -> In (r, v) l -> getr regs r = w64 v.
 Proof. intros regs l r v H Hin. unfold crs_regsat_B in H. rewrite Forall_forall in H. exact (H (r, v) Hin). Qed.
 
-(* S10Env.v ts_ap / ts_cs (cold/h-hpreset-7-crt102-tail 090d18ff610, lib/A/Prog/S10Env.v :385-389), restated *)
+(* S10Env.v ts_ap / ts_cs (lib/A/Prog/S10Env.v :385-389), restated *)
 Lemma x3_ap : forall rg rg' (r : bv 5), aregs_preserved rg rg' -> acallee_saved (bv_unsigned r) -> getr rg' r = getr rg r.
 Proof. intros rg rg' r HP Hr. pose proof (HP _ Hr) as Hq. rewrite Z_to_bv_bv_unsigned in Hq. exact Hq. Qed.
 Local Ltac x3_cs := unfold acallee_saved;
@@ -310,7 +311,7 @@ Qed.
 (* ---- A CALL OF THIS FUNCTION from the realigned sp (no footprint, no frame of the callee's own): the state at the
    callee's entry the run reached, the boundary facts there, the kept registers, the return site; the callee's text at
    the fpre the call builds (m-form post); the continuation gets the boundary facts at the return, the callee's journal,
-   the kept registers and the callee's Q (Crt102Rewrite.v crt102rw_call, cold/h-hpreset-7-crt102-rw 370f759b1808, the
+   the kept registers and the callee's Q (Crt102Rewrite.v crt102rw_call, the
    model, over YCbqGcall.aj_call_x_sp) ---- *)
 Lemma x3_call : forall (R : world SEGS -> world SEGS -> Prop) (Rr : forall W, R W W)
     (Rt : forall W1 W2 W3, R W1 W2 -> R W2 W3 -> R W1 W3) (Rw : forall W W', @wle SEGS W W' -> R W W')
@@ -391,7 +392,7 @@ Lemma x3_fregs_trans : forall f1 f2 f3 : YK11.FPState, fregs_kept_x f1 f2 -> fre
 Proof. intros f1 f2 f3 H1 H2 r Hr. rewrite (H2 r Hr). exact (H1 r Hr). Qed.
 
 (* ---- x3_call for a callee whose text concludes in the float form fpostFm (it may change the float state: pj_write's
-   text, PRH_FnWriter.v at the kit decff67d721f): over YCbqGcall.aj_call_xF_sp; the continuation runs at the callee's float
+   text, PRH_FnWriter.v at the kit): over YCbqGcall.aj_call_xF_sp; the continuation runs at the callee's float
    state fx' (rounding mode 0, fs0-fs11 kept, so crs_base_B holds at fx') ---- *)
 Lemma x3_callF : forall (R : world SEGS -> world SEGS -> Prop) (Rr : forall W, R W W)
     (Rt : forall W1 W2 W3, R W1 W2 -> R W2 W3 -> R W1 W3) CTX0 C fxk STK1 (off : Z) W E ss ms mdc ly S Hp k sp2

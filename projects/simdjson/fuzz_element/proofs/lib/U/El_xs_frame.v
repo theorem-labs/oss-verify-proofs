@@ -13,8 +13,8 @@ Definition xs_regsD (D : Z) : list expr :=
    EAlu ALU_ADD XBLK (ELit 128); EVar 11; EVar 12; EVar 13; EVar 14; EVar 15; EVar 16; EVar 17; EVar 18; EVar 19;
    EVar 20; EVar 21; EVar 22; EVar 23; EVar 24; EVar 25; EVar 26; EVar 27; EVar 28; EVar 29; EVar 30; EVar 31].
 
-Definition xs_ssD (D : Z) (xk : list kentry) (pc0 raval : Z) (uw : bool) : sym_state :=
-  SS pc0 (xs_regsD D) [] (xs_kn0 raval uw ++ xk) 200.
+Definition xs_ssD (D : Z) (xk : list kentry) (pc0 raval : Z) (uw b : bool) : sym_state :=
+  SS pc0 (xs_regsD D) [] (xs_kn0 raval uw b ++ xk) 200.
 
 Definition xk_end : list kentry :=
   [KWord (SA XSP (-40)) 8 (ELit 0x3da0c); KWord (SA XSP (-48)) 8 (EVar 50); KWord (SA XSP (-56)) 8 (EVar 51)].

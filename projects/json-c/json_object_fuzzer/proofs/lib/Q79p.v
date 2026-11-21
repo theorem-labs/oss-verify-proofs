@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput: both sections take its fields, apc and mbase, with the launch premise QpvH.launch_ok in place of entry_stack_fits and SINV0 / argH0 over them; the reserved ledger is the image's reservations followed by the launch's (co_res), so the image's entries are found in its first part, and the ledger count is 24 with the launch's vDSO pair). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -35,20 +36,34 @@ Variable brk0 : word.
 Variable argv envp : list (list byte).
 Variable fs : Fs.Fs.
 Variables uid hw : word.
+Variable apc : N.
+Variable mbase : word.
+Variable ifs : Fs.Fs.
+Variable stdin : InputStream.
+Variable gid : word.
+Variable groups : list word.
+Variable net : NetQueue.
+Variables nofile sigmask : word.
+Variable abort_terminal : bool.
+Variable urnd : InputStream.
+Variable tmp : Fs.Fs.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variables rdr sgd sgt : bool.
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hfit : QpvH.launch_ok sp brk0 mbase rdraw (QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt).
 Variables (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (mo : Model).
 Variable w : bool.
 Variable ch : acs.
 Hypothesis HCL : HSCLASS_S w ch.
-Hypothesis CS : cs_ok JOB6SEGS BJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JOB6PH sp rdraw brk0 argv envp uid hw) (argH0 JOB6PH sp rdraw argv envp uid hw) fs E ch R FULL mo.
+Hypothesis CS : cs_ok JOB6SEGS BJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JOB6PH apc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) (argH0 sp rdraw argv envp kb execfn) fs E ch R FULL mo.
 #[local] Notation h := (m_vmmaps mo).
 #[local] Notation LV := (LV_J E).
 #[local] Notation P f := (f _ _ _ _ _ _ _ _ _ _ _ _ CS) (only parsing).
-#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw Hsp E R FULL mo w ch HCL CS) (only parsing).
-#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
 #[local] Notation GB := (GRPB E w) (only parsing).
 #[local] Notation PERM0 := (PERM0_J E w) (only parsing).
 #[local] Notation MTB := (4096 * bv_unsigned (ev E (fst (META_O w)))).
@@ -69,7 +84,7 @@ Proof.
 intros Lg0 HR HM r Hin. unfold QNLn.Mq0.oranges in Hin. rewrite HR in Hin. apply in_app_iff in Hin as [Hin|Hin].
 -
 exists (Z_to_bv 64 (fst r), Z_to_bv 64 (snd r)). unfold QXEH.ref_reserved in Hin. cbn [In] in Hin.
-split; [left; rewrite (P co_res), asan_segments_reserved; destruct Hin as [<-|[<-|[<-|[<-|[]]]]]; cbn; tauto|].
+split; [left; destruct (P co_res) as (rx & Hres & _); rewrite Hres, asan_segments_reserved; apply in_or_app; left; destruct Hin as [<-|[<-|[<-|[<-|[]]]]]; cbn; tauto|].
 destruct Hin as [<-|[<-|[<-|[<-|[]]]]]; cbn [fst snd]; rewrite !u64_lit by lia; lia.
 - destruct meta_entry as (e & He & UB & UL). exists e. split; [right; exact He|]. rewrite UB, UL.
 destruct HM as [[HM HB]|[HM HB]]; rewrite HM, HB in Hin; cbn [map app In fst snd] in Hin; destruct Hin as [<-|[]]; cbn [fst snd];
@@ -81,7 +96,7 @@ QNLn.Mq0.RC.alloc_ceiling = atopE E -> ms_mem ms = FULL ->
 Qfya.ld_resv Lg0 = QXEH.ref_reserved -> Qfya.ld_groups Lg0 = [(GB, 4096)] ->
 (Qfya.ld_metas Lg0 = [] /\ Qfya.ld_brkreg Lg0 = Some (MTB, 8192)) \/ (Qfya.ld_metas Lg0 = [(MTB, 8192, 1)] /\ Qfya.ld_brkreg Lg0 = None) ->
 QvDJ.g_chunks g0 = [] -> 0 <= QvDJ.g_spent g0 ->
-QNLn.Mq0.KLA LV PERM0 Qi08.TMAX_J Qi08.NMAX_J (fun _ => false) Lg0 g0 (mkCfg ms mo) (QNLn.Mq0.in_sh GB 4096) (view LV mo FULL) BC_J TOT_J 22.
+QNLn.Mq0.KLA LV PERM0 Qi08.TMAX_J Qi08.NMAX_J (fun _ => false) Lg0 g0 (mkCfg ms mo) (QNLn.Mq0.in_sh GB 4096) (view LV mo FULL) BC_J TOT_J 24.
 Proof.
 intros RC__ Lg0 g0 ms HRC Hms HR HG HM Hch Hsp0.
 exact ((MV4 KLA_main_J) Lg0 g0 ms HRC Hms HG Hch Hsp0 (oranges_cov Lg0 HR HM)).
@@ -145,20 +160,34 @@ Variable brk0 : word.
 Variable argv envp : list (list byte).
 Variable fs : Fs.Fs.
 Variables uid hw : word.
+Variable apc : N.
+Variable mbase : word.
+Variable ifs : Fs.Fs.
+Variable stdin : InputStream.
+Variable gid : word.
+Variable groups : list word.
+Variable net : NetQueue.
+Variables nofile sigmask : word.
+Variable abort_terminal : bool.
+Variable urnd : InputStream.
+Variable tmp : Fs.Fs.
+Variable kb : KernelBuild.
+Variable execfn : list byte.
+Variables rdr sgd sgt : bool.
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
-Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Hfit : QpvH.launch_ok sp brk0 mbase rdraw (QpvH.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt).
 Variables (E : env) (R : bvmap 5 word) (FULL : word -> option byte) (mo : Model).
 Variable w : bool.
 Variable ch : acs.
 Hypothesis HCL : HSCLASS_S w ch.
-Hypothesis CS : cs_ok JO6SEGS AJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JO6PH sp rdraw brk0 argv envp uid hw) (argH0 JO6PH sp rdraw argv envp uid hw) fs E ch R FULL mo.
+Hypothesis CS : cs_ok JO6SEGS AJO6 QVWI.Mq0.LIMIT (bv_unsigned sp) (SINV0 JO6PH apc sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt) (argH0 sp rdraw argv envp kb execfn) fs E ch R FULL mo.
 #[local] Notation h := (m_vmmaps mo).
 #[local] Notation LV := (LV_J E).
 #[local] Notation P f := (f _ _ _ _ _ _ _ _ _ _ _ _ CS) (only parsing).
-#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw Hsp E R FULL mo w ch HCL CS) (only parsing).
-#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation MA L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp E R FULL mo w ch HCL CS) (only parsing).
+#[local] Notation MV4 L := (L sp rdraw brk0 argv envp fs uid hw apc mbase ifs stdin gid groups net nofile sigmask abort_terminal urnd tmp kb execfn rdr sgd sgt Hsp Hva Hve Hfit E R FULL mo w ch HCL CS) (only parsing).
 #[local] Notation GB := (GRPB E w) (only parsing).
 #[local] Notation PERM0 := (PERM0_J E w) (only parsing).
 #[local] Notation MTB := (4096 * bv_unsigned (ev E (fst (META_O w)))).
@@ -179,7 +208,7 @@ Proof.
 intros Lg0 HR HM r Hin. unfold QNLn.Mq0.oranges in Hin. rewrite HR in Hin. apply in_app_iff in Hin as [Hin|Hin].
 -
 exists (Z_to_bv 64 (fst r), Z_to_bv 64 (snd r)). unfold QW7x.Mq0.ref_reserved in Hin. cbn [In] in Hin.
-split; [left; rewrite (P co_res), asan_segments_reserved; destruct Hin as [<-|[<-|[<-|[<-|[]]]]]; cbn; tauto|].
+split; [left; destruct (P co_res) as (rx & Hres & _); rewrite Hres, asan_segments_reserved; apply in_or_app; left; destruct Hin as [<-|[<-|[<-|[<-|[]]]]]; cbn; tauto|].
 destruct Hin as [<-|[<-|[<-|[<-|[]]]]]; cbn [fst snd]; rewrite !u64_lit by lia; lia.
 - destruct meta_entry as (e & He & UB & UL). exists e. split; [right; exact He|]. rewrite UB, UL.
 destruct HM as [[HM HB]|[HM HB]]; rewrite HM, HB in Hin; cbn [map app In fst snd] in Hin; destruct Hin as [<-|[]]; cbn [fst snd];
@@ -191,7 +220,7 @@ QNLn.Mq0.RC.alloc_ceiling = atopE E -> ms_mem ms = FULL ->
 Qfya.ld_resv Lg0 = QW7x.Mq0.ref_reserved -> Qfya.ld_groups Lg0 = [(GB, 4096)] ->
 (Qfya.ld_metas Lg0 = [] /\ Qfya.ld_brkreg Lg0 = Some (MTB, 8192)) \/ (Qfya.ld_metas Lg0 = [(MTB, 8192, 1)] /\ Qfya.ld_brkreg Lg0 = None) ->
 QvDJ.g_chunks g0 = [] -> 0 <= QvDJ.g_spent g0 ->
-QNLn.Mq0.KLA LV PERM0 QVyC.TMAX_J QVyC.NMAX_J (fun _ => false) Lg0 g0 (mkCfg ms mo) (QNLn.Mq0.in_sh GB 4096) (view LV mo FULL) BC_J TOT_J 22.
+QNLn.Mq0.KLA LV PERM0 QVyC.TMAX_J QVyC.NMAX_J (fun _ => false) Lg0 g0 (mkCfg ms mo) (QNLn.Mq0.in_sh GB 4096) (view LV mo FULL) BC_J TOT_J 24.
 Proof.
 intros RC__ Lg0 g0 ms HRC Hms HR HG HM Hch Hsp0.
 exact ((MV4 KLA_main_J) Lg0 g0 ms HRC Hms HG Hch Hsp0 (oranges_cov Lg0 HR HM)).

@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/chain_words_s6.v, with its module paths and module names changed; 106 of its 335 lines of code are new or changed and 533 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan image A (fuzz_segconf.asan, pin sha256 48c5355bdacb): the kit of _s25 of the walk
    of the test harness's entry function LLVMFuzzerTestOneInput (0x84d34), segment S21 (K85c44 0x85c44 .. 0x85d3c) and
    the return (0x85d40); the segment lemmas are in LLVMFuzzerTestOneInput_s25.v.
 
    (1) The journal step of the shadow-fill entry meta_fill_f5 (the runtime's __asan_set_shadow_f5, 0x58ae4): the
    two lemmas ajournal_after_write_stk and aj_set_shadow_atS, copied verbatim from plugin-hostd/fuzz_command's
-   lib/A/Prog/chain_words_s6.v:204-401 (origin/ossv/recipes 501c0d516c69), whose release segconf's harness repeats
+   lib/A/Prog/chain_words_s6.v:204-401, whose release segconf's harness repeats
    (the donor method study, section 5.7); segconf's kit has no PaRt.v, so chain_words' local copy is taken.
    (2) The image facts lt_img across the release: lt_img reads only image bytes (its sa_img ranges, in_roP's
    segments, the read-only window RLO_A .. RHI_A and SegInstA's gotwA / guardA / longlA), all in

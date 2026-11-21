@@ -12,7 +12,7 @@
    object). It subsumes the literal instance of libreac/fuzz_pcap lib/A/Rt/StrcmpDef.v (x = y, k = the literal's
    length, c1 = c2 = 0, result 0). *)
 (* Modified by Theorem Labs, 2026-10-29: taken by path from libreac/fuzz_grant lib/Reusable/AStrcmpDef.v
-   (a working branch 97c611eec86, owner a Theorem Labs lane, the text of record for the strcmp trampoline contract in
+   (a working branch, owner a Theorem Labs lane, the text of record for the strcmp trampoline contract in
    a Theorem Labs lane's registry). Only the module paths change (fuzz_grant -> fuzz_identity); the statement is identical. The
    walk is a Theorem Labs lane's lib/A/Rt/Strcmp.v, relocated to identity's addresses separately. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_identity/lib/AStrcmpDef.v (donor image sha256 c954b804786c), with its module paths changed. *)
@@ -21,12 +21,13 @@
    for the strcmp wrapper's contract astrcmp_realizes of lib/Reusable/AStrcmpDef.v (fuzz_identity's text, module paths
    changed): the same journal threading through ecall_pre_at and ajournal_after_write, with the strcmp contract's
    str_meet premise and its strcmp_res result in place of bcmp's n-byte compare. The string lemmas below are new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgKcStr.v at 4a37309420ef (image A's twin of
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgKcStr.v (image A's twin of
    this adapter); image B's callee address and call sites only: the strcmp jump is 0x41c20 (A: 0x41ba0), the three
    `jal` sites are 0x83418 / 0x8342c / 0x83440 with the return addresses 0x8341c / 0x83430 / 0x83444 (A: 0x832e8 /
    0x832fc / 0x83310), and the three literals are 0x21380 / 0x213a0 / 0x213c0 (A: 0x21340 / 0x21360 / 0x21380),
    which are lib/AU/HPgImgB.v headamp_himg_B's hi_hph / hi_hpad / hi_hsens. Every lemma's text and proof is the
    donor's: the adapter names no image but the callee's address. Prefix hks_ -> hksu_. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image B (fuzz_headamp.asan-ubsan, pinned sha256
    53edda9bdeeba1803865babfecb1af6732babe47ab83c64d38cc59a90d717a94; every address below is measured on the
    unstripped twin 1674e30a0698f381704e66d2398d7906c881f4ba8fc619cb41b89fb97ad112ff, whose loaded sections are
@@ -37,7 +38,7 @@
    compares byte by byte up to the first index k where the bytes differ or s1's byte is 0, checks that the bytes it
    read are marked usable in the shadow map, and returns CharCmpX (-1, 0 or 1). It uses at most 2 ESTACK bytes of
    stack below sp and writes no byte outside them. Its contract is libreac/fuzz_identity lib/Reusable/AStrcmpDef.v
-   astrcmp_realizes at origin/ossv/recipes 2d2ff01bb6f. No file this one Requires, directly or through another,
+   astrcmp_realizes. No file this one Requires, directly or through another,
    defines astrcmp_realizes (lib/Reusable/AStrcmpDef.v and lib/A/Rt/StrcmpDef.v do), so the Section below takes
    the contract at 0x41c20 as the hypothesis STRCMP, with str_meet and strcmp_res unfolded and beta-reduced word for
    word, and quantified over the float state: `exact (fun fx' => @astrcmp_realizes fx' rc
@@ -136,7 +137,7 @@ Definition hksu_meet (W : world segs) (mem : word -> option byte) (x y k c1 c2 :
   (c1 <> c2 \/ c1 = 0).
 
 (* The strcmp wrapper's contract at image B's jump 0x41c20: libreac/fuzz_identity lib/Reusable/AStrcmpDef.v
-   `astrcmp_realizes segs B B_STRCMP` (origin/ossv/recipes 2d2ff01bb6f; the same statement as reac-pw/fuzz_role
+   `astrcmp_realizes segs B B_STRCMP` (the same statement as reac-pw/fuzz_role
    lib/Reusable/AStrcmpDef.v), with str_meet and strcmp_res unfolded and beta-reduced, at every float
    state fx' (only cfg_at reads it). `exact` of the wrapper walk's theorem at 0x41c20, stated for every float state,
    discharges it. *)

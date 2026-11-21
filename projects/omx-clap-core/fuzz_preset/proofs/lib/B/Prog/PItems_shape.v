@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the node-shape algebra of parse_items' half-built container for the image-B walk (lane
    PItemsB of a Theorem Labs lane's image-B walk list): the slot blocks pis_slots, the open container pis_open, its transfer
    along a memory change (frame, grow, snoc), its close into a node, and the freeable shapes (pj_fdR) a refusal
    leaves, all over the kit's R representation predicates (lib/A/PRH_Reader.v).
    PROVENANCE: ported BY PATH, with a Theorem Labs lane's explicit approval (00:1xZ), from
-     a working branch, sha 7fb5ff296a0c,
+     a working branch, sha,
      file proofs/omx-clap-core/fuzz_preset/lib/B/Prog/parse_items_shape.v (1,300 lines).
    CHANGES against that donor file (every lemma not named keeps its statement and proof script but for the renames):
    (1) IMPORTS, donor lines 1-9: lib/B/Reusable/YP09 -> lib/Reusable/YP09 (this tree has no lib/B/Reusable);

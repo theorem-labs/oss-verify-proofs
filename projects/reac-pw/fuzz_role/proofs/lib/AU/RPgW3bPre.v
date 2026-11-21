@@ -1,21 +1,22 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPropKit.v at a529a88a618 for reac-pw/fuzz_headamp image A: every address relocated (role image A -> headamp image A), the block pcs, the code table's range (1573 words: headamp's out-of-line slow blocks are four instructions long), module paths; kept_run from proofs/reac-pw/fuzz_role/lib/A/RPgCfgChanges.v at a529a88a618 (role's cfg functions have no twin in headamp; same_io_wvb is HPgSteps'). *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgPropKit.v for reac-pw/fuzz_headamp image A: every address relocated (role image A -> headamp image A), the block pcs, the code table's range (1573 words: headamp's out-of-line slow blocks are four instructions long), module paths; kept_run from proofs/reac-pw/fuzz_role/lib/A/RPgCfgChanges.v (role's cfg functions have no twin in headamp; same_io_wvb is HPgSteps'). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/A/HPgPropKit.v, with its module paths and module names changed; 330 of its 363 lines of code are new or changed and 96 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW3bPre.v at ce91b850dd33, ported to
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW3bPre.v, ported to
    reac-pw/fuzz_rate image B (fuzz_rate.asan-ubsan): image B's preheader (its pcs, registers and R-relative cells;
    the cursor stays in s2 and what is left in t4 on both arms, buflen is in s10 at PH and is spilled here, F is in
    s8 and s9 and s9 is reused for the `one` of the trap tests); the cells are five regions whose write windows are
    the three real-frame ranges of the build's write set (RtPgImgB hi_w1); the four complement cells the trap tests
    read are kept as YI08.U_not_off's form; the image facts come from lib/AU/RtPgStepsB.v and the memory lemmas from
    lib/AU/RtPgMemB.v. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgW3bPreB.v at 0e397e2692b, for
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgW3bPreB.v, for
    reac-pw/fuzz_role image B (fuzz_role.asan-ubsan): role B's preheader (its pcs, registers and R-relative cells: the
    cursor stays in s4 and what is left in t3 on both arms, pp is in a5 and a6, &pp->len in s6, F in s7 and s10, the
    runtime's shadow offset in s11; role has no buflen, mask or header-byte cells); the cells are three regions whose
    write windows are the two real-frame ranges of the build's write set (lib/AU/RPgImgA.v hi_w1) the preheader
    writes; the five cells it keeps are the extra atoms 32 .. 36; the frame below S is 0x200 bytes; the statement is
    lib/AU/RPgSeg.v's rs_piece_W3b_pre_stmt and the lemmas the role B kit's (lib/AU/RPgMem.v, lib/AU/RPgSteps.v). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_role image B (fuzz_role.asan-ubsan, pinned sha256
    b255d4935da5af137a3967dbe33380ea43be8e78bfe05d1e356e0a2be8a69ff0; every address measured on the unstripped twin
    dc791783f32962615e18a5f5cffae758ba56eb5dc87f70913c3579b101b4406a, same loaded bytes): the property loop's

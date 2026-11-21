@@ -1,11 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: cut-free (knode_cf) twins of Q/YW01.v's knode_mremap and knode_mremap_cases. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's munmap (errno arm, cut, allocation mark); mremap's new answers). *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YK11 YK0h YK0i YK14 YK1b YK15 YK0n YK0v YK02 YP0n YM06 YM02.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YK13.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable.Q Require Import YW00.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YO0i YO0f YO0d.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YN02.
@@ -23,15 +25,8 @@ Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 
 (* With empty lazy and materialized ledgers, mremap's two budget readings (the post-state of
    the in-place resolution and the destination-free move charge) are each bounded by the
-   live bytes of vm_maps plus the new length. *)
-Lemma kcfm_live_bytes_filter_le : forall f l, State.live_bytes (List.filter f l) <= State.live_bytes l.
-Proof.
-  intros f l. induction l as [|[x sz] r IH]; cbn [List.filter State.live_bytes]; [lia|].
-  pose proof (bv_unsigned_in_range 64 sz). destruct (f (x, sz)); cbn [State.live_bytes]; lia.
-Qed.
-
-Lemma kcfm_map_remove_le : forall l a, State.live_bytes (map_remove l a) <= State.live_bytes l.
-Proof. intros l a. unfold map_remove. apply kcfm_live_bytes_filter_le. Qed.
+   live bytes of vm_maps plus the new length. Source-span subtraction preserves this
+   bound without assuming that the source occupies an entire mapping entry. *)
 
 Lemma kcfm_next_vml : forall m old old_n dst new_n,
   vm_limit (m_vmmaps (mremap_model_next m old old_n dst new_n)) = vm_limit (m_vmmaps m).
@@ -43,10 +38,11 @@ Lemma kcfm_next_backing : forall m old old_n dst new_n,
   <= bv_unsigned new_n + State.live_bytes (vm_maps (m_vmmaps m)).
 Proof.
   intros m old old_n dst new_n Hl Hm. rewrite (mremap_next_with_vmmaps m old old_n dst new_n Hl Hm).
-  pose proof (kcf_backing_le_maps (with_vmmaps (mremap_maps_next (m_vmmaps m) old dst new_n) m) Hl Hm) as Hb.
-  assert (E : State.live_bytes (vm_maps (m_vmmaps (with_vmmaps (mremap_maps_next (m_vmmaps m) old dst new_n) m)))
-              = bv_unsigned new_n + State.live_bytes (map_remove (vm_maps (m_vmmaps m)) old)) by reflexivity.
-  pose proof (kcfm_map_remove_le (vm_maps (m_vmmaps m)) old). lia.
+  pose proof (kcf_backing_le_maps (with_vmmaps (mremap_maps_next (m_vmmaps m) old old_n dst new_n) m) Hl Hm) as Hb.
+  assert (E : State.live_bytes (vm_maps (m_vmmaps (with_vmmaps (mremap_maps_next (m_vmmaps m) old old_n dst new_n) m)))
+              = bv_unsigned new_n + State.live_bytes (maps_subtract (vm_maps (m_vmmaps m)) (bv_unsigned old) (bv_unsigned old + bv_unsigned old_n))) by reflexivity.
+  pose proof (bv_unsigned_in_range 64 old_n).
+  pose proof (YK13.live_bytes_maps_subtract_le (vm_maps (m_vmmaps m)) (bv_unsigned old) (bv_unsigned old + bv_unsigned old_n) ltac:(lia)). lia.
 Qed.
 
 Lemma kcfm_move_charge_le : forall m old old_n new_n,
@@ -55,8 +51,9 @@ Lemma kcfm_move_charge_le : forall m old old_n new_n,
 Proof.
   intros m old old_n new_n Hl Hm. unfold mremap_move_charge, mremap_source_lazy_b. cbv zeta. rewrite Hl, Hm.
   cbn [map_contains existsb maps_subtract maps_subtract_all List.filter List.length Nat.add Z.of_nat Z.mul].
-  pose proof (live_bytes_maps_subtract_all_le (vm_noaccess (m_vmmaps m)) (map_remove (vm_maps (m_vmmaps m)) old)).
-  pose proof (kcfm_map_remove_le (vm_maps (m_vmmaps m)) old). lia.
+  pose proof (live_bytes_maps_subtract_all_le (vm_noaccess (m_vmmaps m)) (maps_subtract (vm_maps (m_vmmaps m)) (bv_unsigned old) (bv_unsigned old + bv_unsigned old_n))).
+  pose proof (bv_unsigned_in_range 64 old_n).
+  pose proof (YK13.live_bytes_maps_subtract_le (vm_maps (m_vmmaps m)) (bv_unsigned old) (bv_unsigned old + bv_unsigned old_n) ltac:(lia)). lia.
 Qed.
 
 Lemma kcfm_region_free_sub : forall (l1 l2 : list (word * word)) (a n : word),
@@ -132,8 +129,8 @@ Lemma kcfm_mremap_fit : forall regs pc mem rom model snap (r : nat) (ol nl : Z),
   Uniform.canon_fit_at segs (mkCfg (pend_at regs pc mem rom) model).
 Proof.
 intros regs pc mem rom model snap r ol nl Hh HA Hmat Hlb Hnl Hcnt Hbyt Hceil H64 Hna Hroom Hslot
-  p s st Hp Hst Hlim x8 len _ _.
-cbn [cfg_model] in Hst, Hlim.
+  p s st Hp Hpin Hst Hlim x8 len _ _.
+cbn [cfg_model] in Hst, Hlim, Hpin.
 specialize (Hroom eq_refl). cbn [req_len] in Hroom. unfold vml in Hroom. cbn [cfg_model] in Hroom.
 pose proof (ma_lazy _ _ HA) as Hlz. pose proof (ma_sysno _ _ HA) as Hno.
 pose proof (ma_ceiling _ _ HA) as Hce. pose proof (ma_neq _ _ HA) as Hne.
@@ -159,6 +156,11 @@ destruct (classic (RoomShapesDraft.mremap_in_place p s (sys_input segs (pend_at 
   left. split; [exact Hret | exact Hin].
 - assert (Herr0 : errno_ret_in mremap_errnos (getr regs 10) = false).
   { apply errno_ret_in_below; [reflexivity|]. unfold two_pow_64. lia. }
+  (* LPS 727298f3: mremap refuses a new length past TASK_SIZE before any other test; a length the
+     budget admits (at most the run's limit, 2^39) is below it. *)
+  assert (HTS : (TASK_SIZE <? bv_unsigned (getr regs 12))%Z = false).
+  { apply Z.ltb_ge. pose proof (YK13.live_bytes_nonneg (vm_maps (m_vmmaps model))) as Hl0.
+    pose proof AgreeLim.LIM_AG_eq as Hag. unfold TASK_SIZE. lia. }
   destruct (Z.lt_total (bv_unsigned (getr regs 12)) (bv_unsigned (getr regs 11))) as [Hlt | [Heq | Hgt]];
     [| exfalso; exact (Hne (eq_sym Heq)) |].
   + (* a shrink is always in place *)
@@ -169,66 +171,111 @@ destruct (classic (RoomShapesDraft.mremap_in_place p s (sys_input segs (pend_at 
       split; [|rewrite si_arg0; reflexivity].
       apply check_syscall_ok_iff. rewrite (mremap_chk segs regs pc mem rom model _ HA).
       cbv beta iota zeta delta [mremap_chk_body].
-      rewrite Herr0, bv_eqb_refl, (proj2 (Z.ltb_lt _ _) Hlt), !kcfm_listNN_refl, kcfm_listCopy_refl.
+      rewrite HTS, Herr0, bv_eqb_refl, (proj2 (Z.ltb_lt _ _) Hlt), !kcfm_listNN_refl, kcfm_listCopy_refl.
       reflexivity.
     * left. rewrite si_arg2, si_arg1, Hr2, Hr1. lia.
-  + (* a grow the policy does not keep in place moves to the policy's fresh address *)
-    destruct (Hslot eq_refl Hlim) as (Hlv & Hsl & Hrq). cbn [req_len] in Hsl, Hrq.
-    change (vml (mkCfg (pend_at regs pc mem rom) model)) with (vm_limit (m_vmmaps model)) in Hlv.
-    assert (Hw : PolicyFit.win_room (m_vmmaps model) p st (bv_unsigned (getr regs 12))).
-    { apply (win_room_of_slots _ p st (bv_unsigned (getr regs 12)) (nslots snap + KRES) (live_bytes snap + 2 ^ 30)
-        Hp Hst Hceil Hcnt Hbyt).
-      - lia.
-      - lia.
-      - exact Hr2.
-      - pose proof (slot_capW_anti (bv_unsigned (getr regs 12)) nl ltac:(lia)). lia. }
-    destruct (PolicyFit.policy_fresh_exists (m_vmmaps model) p s st (bv_unsigned (getr regs 12)) Hp Hnp Hw)
-      as (a & Hfa & F1 & F2 & F3 & F4).
-    rewrite Z_to_bv_bv_unsigned in F4.
-    pose proof (u64_range a) as Ua.
-    assert (Hold : In (getr regs 10, getr regs 11) (vm_maps (m_vmmaps model))).
-    { pose proof (ma_has _ _ HA) as Hhas. unfold map_has in Hhas. apply existsb_exists in Hhas.
-      destruct Hhas as ([a0 s0] & Hin0 & Hp0). apply andb_prop in Hp0 as [Ha0 Hs0].
-      apply bv_eqb_eq in Ha0. apply bv_eqb_eq in Hs0. cbn [fst snd] in Ha0, Hs0. subst a0 s0. exact Hin0. }
-    pose proof (State.region_free_In _ _ _ _ _ F4 (in_or_app _ _ _ (or_intror Hold))) as Hov.
-    unfold iv_overlap in Hov. apply andb_false_iff in Hov.
-    assert (Hao : a <> getr regs 10) by (intros ->; destruct Hov as [Hc | Hc]; apply Z.ltb_ge in Hc; lia).
-    assert (Hmaps : region_free (vm_maps (m_vmmaps model)) a (getr regs 12) = true).
-    { apply (kcfm_region_free_sub _ _ _ _ F4). intros q Hq. apply in_or_app. right. exact Hq. }
-    assert (Hfin : mremap_final_budget_b model (getr regs 10) (getr regs 11) a (getr regs 12) = true).
-    { unfold mremap_final_budget_b, vm_backing_within_limit. apply Z.leb_le. rewrite kcfm_next_vml.
-      rewrite (mremap_move_charge_at_fresh model (getr regs 10) (getr regs 11) a (getr regs 12) F1 (ma_newn_al _ _ HA) Hnp).
-      - pose proof (kcfm_move_charge_le model (getr regs 10) (getr regs 11) (getr regs 12) Hlz Hmat). lia.
-      - unfold two_pow_64. lia.
-      - intros a0 sz0 Hin0. unfold map_remove in Hin0. apply filter_In in Hin0 as [Hin0 _].
-        exact (H64 (a0, sz0) Hin0).
-      - apply (kcfm_region_free_sub _ _ _ _ Hmaps). intros q Hq. unfold map_remove in Hq.
-        apply filter_In in Hq. exact (proj1 Hq).
-      - exact (kcfm_region_free_within _ _ _ _ Hmaps Hna).
-      - rewrite Hlz. reflexivity.
-      - rewrite Hmat. reflexivity. }
-    assert (Hfr : mremap_fresh_b model (bv_unsigned (getr regs 11)) (bv_unsigned (getr regs 12))
-                    (getr regs 10) (getr regs 11) a (getr regs 12) = true).
-    { unfold mremap_fresh_b. cbv zeta. rewrite (bv_eqb_neq a (getr regs 10) Hao), F4, Hfin.
-      rewrite (proj2 (Z.eqb_eq _ _) F1), (proj2 (Z.ltb_lt _ _) F2), (proj2 (Z.leb_le _ _) F3). reflexivity. }
-    assert (Herr : errno_ret_in mremap_errnos a = false).
-    { apply errno_ret_in_below; [reflexivity|]. unfold two_pow_64. lia. }
-    assert (Hk : mremap_chk_body (getr regs 10) (getr regs 11) (getr regs 12) model
-        (mkEffectU a [] (mremap_tail a (getr regs 11) (bv_unsigned (getr regs 11)) (bv_unsigned (getr regs 12)))
-           [(getr regs 10, getr regs 11)] [mkCopy (getr regs 10) a (getr regs 11)] [])
-        = CheckOk (mremap_model_next model (getr regs 10) (getr regs 11) a (getr regs 12)) []).
-    { cbv beta iota zeta delta [mremap_chk_body].
-      rewrite Herr, (bv_eqb_neq a (getr regs 10) Hao), (proj2 (Z.ltb_lt _ _) Hgt), Hfr.
-      rewrite !kcfm_listNN_refl, kcfm_listCopy_refl. reflexivity. }
-    assert (Hns : ~ spurious_refusal_cfg ACFG (sys_input segs (pend_at regs pc mem rom) (getr regs 17)) model
-        (mkEffectU a [] (mremap_tail a (getr regs 11) (bv_unsigned (getr regs 11)) (bv_unsigned (getr regs 12)))
-           [(getr regs 10, getr regs 11)] [mkCopy (getr regs 10) a (getr regs 11)] [])).
-    { apply kcfm_not_spurious; [exact HA|]. cbn [eff_ret]. unfold two_pow_64. lia. }
-    apply (PolicyFit.canon_step_of_sstep segs p s st regs pc mem rom model _ _ (Hs (exist _ (_, _) (conj Hk Hns))));
-      [reflexivity|].
-    intros eff0 m'' E. rewrite (kcfm_nx_ret _ _ _ _ _ _ eff0 m'' E). cbn [proj1_sig fst eff_ret].
-    right. right. left. split; [rewrite si_sysno; exact Hno|].
-    right. split; [exact Hnin|]. rewrite si_arg2, Hr2. exact Hfa.
+  + (* a grow: LPS 727298f3 grows in place when the room test passes and moves only when it fails *)
+    destruct (mremap_inplace_room_b model (getr regs 10) (getr regs 11) (getr regs 12)
+      (bv_unsigned (getr regs 11)) (bv_unsigned (getr regs 12))) eqn:Hrm.
+    * (* room: lps grows in place (the budget admits it), and the grown range misses the reserved
+         list, which holds the live vDSO mappings (conjunct (6) of the pin), so the policy keeps it
+         in place too *)
+      exfalso. apply Hnin. split.
+      -- exists (mkEffectU (getr regs 10) [] (mremap_tail (getr regs 10) (getr regs 11) (bv_unsigned (getr regs 11))
+             (bv_unsigned (getr regs 12))) [] [] []),
+           (mremap_model_next model (getr regs 10) (getr regs 11) (getr regs 10) (getr regs 12)), [].
+         split; [|rewrite si_arg0; reflexivity].
+         apply check_syscall_ok_iff. rewrite (mremap_chk segs regs pc mem rom model _ HA).
+         assert (Hg : mremap_inplace_grow_b model (getr regs 10) (getr regs 11) (getr regs 12)
+             (bv_unsigned (getr regs 11)) (bv_unsigned (getr regs 12)) = true).
+         { unfold mremap_inplace_grow_b. rewrite Hrm. cbn [andb].
+           unfold mremap_final_budget_b, vm_backing_within_limit. apply Z.leb_le. rewrite kcfm_next_vml.
+           pose proof (kcfm_next_backing model (getr regs 10) (getr regs 11) (getr regs 10) (getr regs 12) Hlz Hmat). lia. }
+         cbv beta iota zeta delta [mremap_chk_body].
+         rewrite HTS, Herr0, bv_eqb_refl, (proj2 (Z.ltb_ge _ _) (Z.lt_le_incl _ _ Hgt)), Hg,
+           !kcfm_listNN_refl, kcfm_listCopy_refl.
+         reflexivity.
+      -- right. rewrite si_arg2, si_arg0, Hr2.
+         destruct Hpin as (_ & _ & _ & _ & _ & Hvd).
+         unfold mremap_inplace_room_b in Hrm. cbv zeta in Hrm. apply andb_prop in Hrm as [_ Hrf].
+         replace (getr regs 12) with (Z_to_bv 64 (bv_unsigned (getr regs 12))) in Hrf by (apply Z_to_bv_bv_unsigned).
+         exact (PolicyFit.pin_off_vdso (m_vmmaps model) p s
+           (maps_subtract (vm_maps (m_vmmaps model)) (bv_unsigned (getr regs 10))
+              (bv_unsigned (getr regs 10) + bv_unsigned (getr regs 11)))
+           (bv_unsigned (getr regs 12)) (getr regs 10) Hvd Hnp ltac:(lia) Hrf).
+    * (* no room: lps moves to Linux's own address at hint 0 ([linux_place_is]), which is the
+         pinned policy's fresh address ([policy_admits_linux_pick]) *)
+      destruct (Hslot eq_refl Hlim) as (Hlv & Hsl & Hrq). cbn [req_len] in Hsl, Hrq.
+      change (vml (mkCfg (pend_at regs pc mem rom) model)) with (vm_limit (m_vmmaps model)) in Hlv.
+      assert (Hw : PolicyFit.win_room (m_vmmaps model) p st (bv_unsigned (getr regs 12))).
+      { apply (win_room_of_slots _ p st (bv_unsigned (getr regs 12)) (nslots snap + KRES) (live_bytes snap + 2 ^ 30)
+          Hp Hst Hceil Hcnt Hbyt).
+        - lia.
+        - lia.
+        - exact Hr2.
+        - pose proof (slot_capW_anti (bv_unsigned (getr regs 12)) nl ltac:(lia)). lia. }
+      pose proof (PolicyFit.page_round_up_aligned (bv_unsigned (getr regs 12))) as Hnal. rewrite Hr2 in Hnal.
+      pose proof (PolicyFit.policy_place_available (m_vmmaps model) p st (bv_unsigned (getr regs 12))
+        (kb_thp (m_kernel model)) (Z_to_bv 64 0) Hp Hnp Hnal Hw) as Hav.
+      pose proof (Placement.vm_place_pick_ok (m_vmmaps model) (kb_thp (m_kernel model)) (Z_to_bv 64 0)
+        (bv_unsigned (getr regs 12)) Hnp Hnal Hav) as Hpl.
+      pose proof (PolicyFit.policy_admits_linux_pick (m_vmmaps model) p s st (kb_thp (m_kernel model))
+        (Z_to_bv 64 0) (bv_unsigned (getr regs 12)) Hp Hpin Hst Hnp Hnal Hw) as Hfa.
+      revert Hpl Hfa.
+      generalize (Placement.vm_place_pick (m_vmmaps model) (kb_thp (m_kernel model)) (Z_to_bv 64 0)
+        (bv_unsigned (getr regs 12))) as a.
+      intros a Hpl Hfa.
+      unfold RoomShapesDraft.mmap_addr in Hfa. cbv zeta in Hfa.
+      replace (page_round_down_Z (bv_unsigned (Z_to_bv 64 0))) with 0 in Hfa by (vm_compute; reflexivity).
+      rewrite Z.eqb_refl in Hfa. cbv beta iota in Hfa.
+      destruct (Checks.Placement.linux_place_is_admissible (m_vmmaps model) (kb_thp (m_kernel model)) (Z_to_bv 64 0)
+        (bv_unsigned (getr regs 12)) a Hnp Hnal Hpl) as (F1 & F2 & F3 & F4).
+      rewrite Z_to_bv_bv_unsigned in F4.
+      pose proof (u64_range a) as Ua.
+      assert (Hold : In (getr regs 10, getr regs 11) (vm_maps (m_vmmaps model))).
+      { pose proof (ma_has _ _ HA) as Hhas. unfold map_has in Hhas. apply existsb_exists in Hhas.
+        destruct Hhas as ([a0 s0] & Hin0 & Hp0). apply andb_prop in Hp0 as [Ha0 Hs0].
+        apply bv_eqb_eq in Ha0. apply bv_eqb_eq in Hs0. cbn [fst snd] in Ha0, Hs0. subst a0 s0. exact Hin0. }
+      pose proof (State.region_free_In _ _ _ _ _ F4 (in_or_app _ _ _ (or_intror Hold))) as Hov.
+      unfold iv_overlap in Hov. apply andb_false_iff in Hov.
+      assert (Hao : a <> getr regs 10) by (intros ->; destruct Hov as [Hc | Hc]; apply Z.ltb_ge in Hc; lia).
+      assert (Hmaps : region_free (vm_maps (m_vmmaps model)) a (getr regs 12) = true).
+      { apply (kcfm_region_free_sub _ _ _ _ F4). intros q Hq. apply in_or_app. right. exact Hq. }
+      assert (Hfin : mremap_final_budget_b model (getr regs 10) (getr regs 11) a (getr regs 12) = true).
+      { unfold mremap_final_budget_b, vm_backing_within_limit. apply Z.leb_le. rewrite kcfm_next_vml.
+        rewrite (mremap_move_charge_at_fresh model (getr regs 10) (getr regs 11) a (getr regs 12) F1 (ma_newn_al _ _ HA) Hnp).
+        - pose proof (kcfm_move_charge_le model (getr regs 10) (getr regs 11) (getr regs 12) Hlz Hmat). lia.
+        - unfold two_pow_64. lia.
+        - intros a0 sz0 Hin0.
+          refine (maps_subtract_fits (vm_maps (m_vmmaps model)) _ _ _ a0 sz0 Hin0).
+          intros a1 s1 Hin1. pose proof (H64 (a1, s1) Hin1) as H1. cbn [fst snd] in H1. unfold two_pow_64. lia.
+        - apply region_free_subtract_fits; [|exact Hmaps].
+          intros a1 s1 Hin1. pose proof (H64 (a1, s1) Hin1) as H1. cbn [fst snd] in H1. unfold two_pow_64. lia.
+        - exact (kcfm_region_free_within _ _ _ _ Hmaps Hna).
+        - rewrite Hlz. reflexivity.
+        - rewrite Hmat. reflexivity. }
+      assert (Hfr : mremap_fresh_b model (bv_unsigned (getr regs 11)) (bv_unsigned (getr regs 12))
+                      (getr regs 10) (getr regs 11) a (getr regs 12) = true).
+      { unfold mremap_fresh_b. cbv zeta. rewrite (bv_eqb_neq a (getr regs 10) Hao), F4, Hfin.
+        rewrite (proj2 (Z.eqb_eq _ _) F1), (proj2 (Z.ltb_lt _ _) F2), (proj2 (Z.leb_le _ _) F3). reflexivity. }
+      assert (Herr : errno_ret_in mremap_errnos a = false).
+      { apply errno_ret_in_below; [reflexivity|]. unfold two_pow_64. lia. }
+      assert (Hk : mremap_chk_body (getr regs 10) (getr regs 11) (getr regs 12) model
+          (mkEffectU a [] (mremap_tail a (getr regs 11) (bv_unsigned (getr regs 11)) (bv_unsigned (getr regs 12)))
+             [(getr regs 10, getr regs 11)] [mkCopy (getr regs 10) a (getr regs 11)] [])
+          = CheckOk (mremap_model_next model (getr regs 10) (getr regs 11) a (getr regs 12)) []).
+      { cbv beta iota zeta delta [mremap_chk_body].
+        rewrite HTS, Herr, (bv_eqb_neq a (getr regs 10) Hao), (proj2 (Z.ltb_lt _ _) Hgt), Hrm, Hpl, Hfr.
+        rewrite !kcfm_listNN_refl, kcfm_listCopy_refl. reflexivity. }
+      assert (Hns : ~ spurious_refusal_cfg ACFG (sys_input segs (pend_at regs pc mem rom) (getr regs 17)) model
+          (mkEffectU a [] (mremap_tail a (getr regs 11) (bv_unsigned (getr regs 11)) (bv_unsigned (getr regs 12)))
+             [(getr regs 10, getr regs 11)] [mkCopy (getr regs 10) a (getr regs 11)] [])).
+      { apply kcfm_not_spurious; [exact HA|]. cbn [eff_ret]. unfold two_pow_64. lia. }
+      apply (PolicyFit.canon_step_of_sstep segs p s st regs pc mem rom model _ _ (Hs (exist _ (_, _) (conj Hk Hns))));
+        [reflexivity|].
+      intros eff0 m'' E. rewrite (kcfm_nx_ret _ _ _ _ _ _ eff0 m'' E). cbn [proj1_sig fst eff_ret].
+      right. right. left. split; [rewrite si_sysno; exact Hno|].
+      right. split; [exact Hnin|]. rewrite si_arg2, Hr2. exact Hfa.
 Qed.
 
 (* The cut-free clauses of knode_cf at an mremap node. *)
@@ -283,7 +330,8 @@ split; [|split; [|split]].
 - apply (kcf_vml_node segs _ _ _ _ (node_mremap segs regs pc mem rom model Hh HA)).
   intros [[eff m'] [Hk Hns]]. unfold vml, mremap_nx. cbn [proj1_sig fst snd cfg_model].
   destruct (mremap_ok_cases _ _ _ model eff m' (ma_neq _ _ HA) Hk)
-  as [(e & _ & _ & ->) | (_ & [(_ & _ & ->) | [(_ & _ & _ & ->) | (dst & _ & _ & _ & _ & ->)]])];
+  as [(_ & _ & ->) | [(e & _ & _ & ->) |
+  (_ & [(_ & _ & ->) | [(_ & _ & _ & ->) | (dst & _ & _ & _ & _ & ->)]])]];
   reflexivity.
 - cbn [cfg_ms pend_at]. discriminate.
 - exact (kcfm_mremap_fit regs pc mem rom model snap r ol nl Hh HA Hmat Hlb Hnl Hcnt Hbyt Hceil H64 Hna).
@@ -292,11 +340,14 @@ Qed.
 Lemma knode_cf_mremap : forall regs pc mem rom model snap (r : nat) (ol nl : Z) (Kont : Z -> config -> Prop),
 m_halted model = None ->
 mremap_args regs model ->
+(TASK_SIZE < bv_unsigned (getr regs 12) ->
+Kont 0 (mkCfg (mkst (regupd regs 10 (errno_ret EINVAL)) (v_addi pc 4) mem rom) model)) ->
 (forall e, In e mremap_errnos ->
 Kont 0 (mkCfg (mkst (regupd regs 10 (errno_ret e)) (v_addi pc 4) mem rom) model)) ->
 (forall eff m',
 mremap_chk_body (getr regs 10) (getr regs 11) (getr regs 12) model eff = CheckOk m' [] ->
 errno_ret_in mremap_errnos (eff_ret eff) = false ->
+bv_unsigned (getr regs 12) <= TASK_SIZE ->
 Kont 1 (mkCfg (mkst (regupd regs 10 (eff_ret eff)) (v_addi pc 4) (effmem mem eff) rom) m')) ->
 m_vm_materialized model = [] ->
 State.live_bytes (vm_maps (m_vmmaps model)) <= live_bytes snap ->
@@ -310,8 +361,8 @@ bv_unsigned (fst E) <= bv_unsigned (fst e) /\
 bv_unsigned (fst e) + bv_unsigned (snd e) <= bv_unsigned (fst E) + bv_unsigned (snd E)) ->
 knode_cf segs (mkCfg (pend_at regs pc mem rom) model) (KMremap r ol nl) snap Kont.
 Proof.
-intros regs pc mem rom model snap r ol nl Kont Hh HA HK0 HK1 Hmat Hlb Hnl Hcnt Hbyt Hceil H64 Hna.
-split; [exact (knode_mremap segs regs pc mem rom model snap r ol nl Kont Hh HA HK0 HK1)|].
+intros regs pc mem rom model snap r ol nl Kont Hh HA HKev HK0 HK1 Hmat Hlb Hnl Hcnt Hbyt Hceil H64 Hna.
+split; [exact (knode_mremap segs regs pc mem rom model snap r ol nl Kont Hh HA HKev HK0 HK1)|].
 exact (kcfm_mremap_rest regs pc mem rom model snap r ol nl Hh HA Hmat Hlb Hnl Hcnt Hbyt Hceil H64 Hna).
 Qed.
 
@@ -319,12 +370,15 @@ Lemma knode_cf_mremap_cases : forall regs pc mem rom model snap (r : nat) (ol nl
 m_halted model = None ->
 mremap_args regs model ->
 let old := getr regs 10 in let old_n := getr regs 11 in let new_n := getr regs 12 in
+(TASK_SIZE < bv_unsigned new_n ->
+Kont 0 (mkCfg (mkst (regupd regs 10 (errno_ret EINVAL)) (v_addi pc 4) mem rom) model)) ->
 (forall e, In e mremap_errnos ->
 Kont 0 (mkCfg (mkst (regupd regs 10 (errno_ret e)) (v_addi pc 4) mem rom) model)) ->
 (forall mem',
 mremap_post_mem mem mem' (bv_unsigned old) (bv_unsigned old_n) (bv_unsigned old) (bv_unsigned new_n) ->
 bv_unsigned old + bv_unsigned new_n <= alloc_top (m_vmmaps model) ->
-region_free (vm_reserved (m_vmmaps model) ++ map_remove (vm_maps (m_vmmaps model)) old) old new_n = true
+region_free (vm_reserved (m_vmmaps model) ++ maps_subtract (vm_maps (m_vmmaps model)) (bv_unsigned old)
+  (bv_unsigned old + bv_unsigned old_n)) old new_n = true
 \/ bv_unsigned new_n < bv_unsigned old_n ->
 Kont 1 (mkCfg (mkst (regupd regs 10 old) (v_addi pc 4) mem' rom)
 (mremap_model_next model old old_n old new_n))) ->
@@ -346,8 +400,8 @@ bv_unsigned (fst E) <= bv_unsigned (fst e) /\
 bv_unsigned (fst e) + bv_unsigned (snd e) <= bv_unsigned (fst E) + bv_unsigned (snd E)) ->
 knode_cf segs (mkCfg (pend_at regs pc mem rom) model) (KMremap r ol nl) snap Kont.
 Proof.
-intros regs pc mem rom model snap r ol nl Kont Hh HA old old_n new_n HK0 HKin HKmv Hmat Hlb Hnl Hcnt Hbyt Hceil H64 Hna.
-split; [exact (knode_mremap_cases segs regs pc mem rom model snap r ol nl Kont Hh HA HK0 HKin HKmv)|].
+intros regs pc mem rom model snap r ol nl Kont Hh HA old old_n new_n HKev HK0 HKin HKmv Hmat Hlb Hnl Hcnt Hbyt Hceil H64 Hna.
+split; [exact (knode_mremap_cases segs regs pc mem rom model snap r ol nl Kont Hh HA HKev HK0 HKin HKmv)|].
 exact (kcfm_mremap_rest regs pc mem rom model snap r ol nl Hh HA Hmat Hlb Hnl Hcnt Hbyt Hceil H64 Hna).
 Qed.
 End b.

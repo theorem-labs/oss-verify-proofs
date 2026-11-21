@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (new lemma sys_rob_cfg_eqv carries RomBase.sys_rob across equivalent configurations, for the robustness premises of the realizes and sreach inductions). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence.
@@ -9,6 +10,7 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem Fpu.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib Require Import Scfg PropExec ShapeAlg SReach RegsEquivM.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Lib Require Import MState Frame.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import RomBase.
 (* [comment removed for export] *)
 Import OSSVerify.Proofs.openssl.echconfiglist_parser.lib.PropExec.
 Import ListNotations.
@@ -25,10 +27,24 @@ Section Eqv.
   Lemma cfg_eqv_trans : forall a b c, cfg_eqv a b -> cfg_eqv b c -> cfg_eqv a c.
   Proof. intros a b c [H1 H2] [H3 H4]. split; [eapply ms_eqv_trans; eassumption | congruence]. Qed.
 
+  (* LPS 08b1429: an equivalent configuration has the same system-call input over every backing
+     ([sys_input_eqv]), so robustness ([RomBase.sys_rob], asked by [rz_node]/[sr_step]) carries over. *)
+  Lemma sys_rob_cfg_eqv : forall c c', cfg_eqv c c' -> sys_rob segs c -> sys_rob segs c'.
+  Proof.
+    intros [ms mo] [ms' mo'] [Hms Hmo] Hrob r x8 Hr Hs o. cbn [cfg_ms cfg_model] in *. subst mo'.
+    assert (Hw : ms_eqv (wrom ms r) (wrom ms' r)).
+    { destruct Hms as (H1 & H2 & H3 & H4 & H5 & H6 & H7 & H8).
+      unfold ms_eqv, wrom. cbn [ms_regs ms_fregs ms_pc_val ms_svc_pending ms_resv ms_fcsr ms_mem ms_rom].
+      repeat split; first [assumption | reflexivity]. }
+    rewrite <- (sys_input_eqv segs (wrom ms r) (wrom ms' r) x8 Hw).
+    rewrite <- (sys_input_eqv segs ms ms' x8 Hms).
+    destruct Hms as (_ & _ & _ & H4 & _ & _ & _ & H8).
+    apply (Hrob r x8); cbn [cfg_ms]; [rewrite H8; exact Hr | rewrite H4; exact Hs].
+  Qed.
   (* [comment removed for export] *)
   Theorem realizes_eqv : forall c T, realizes segs c T -> forall c', cfg_eqv c c' -> realizes segs c' T.
   Proof.
-    intros c T H. induction H as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq]; intros c' Heqv.
+    intros c T H. induction H as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq]; intros c' Heqv.
     - (* [comment removed for export] *)
       destruct Hnode as [N1 N2].
       set (I' := { p : I * config | sstep_cfg segs the_scfg c' (evs (fst p)) (SNext (snd p)) /\ cfg_eqv (nx (fst p)) (snd p) }).
@@ -46,6 +62,7 @@ Section Eqv.
              destruct (N2 e X' Hs) as (i & -> & ->).
              destruct st as [c2|]; cbn in HX; [|contradiction].
              exists (exist _ (i, c2) (conj Hst (cfg_eqv_sym _ _ HX))). cbn. auto.
+        * exact (sys_rob_cfg_eqv c c' Heqv Hrob).
         * intros [[i c2] [Hs He]]. cbn. apply (IH i). exact He.
       + (* [comment removed for export] *)
         intros tr. split.
@@ -59,9 +76,10 @@ Section Eqv.
   Theorem sreach_eqv : forall (Q : config -> Prop) c, sreach segs Q c ->
     forall c', cfg_eqv c c' -> sreach segs (fun d => exists d0, Q d0 /\ cfg_eqv d0 d) c'.
   Proof.
-    intros Q c H. induction H as [c HQ | c Hex Hsil Hk IH]; intros c' Heqv.
+    intros Q c H. induction H as [c HQ | c Hrob Hex Hsil Hk IH]; intros c' Heqv.
     - apply sr_done. exists c. auto.
     - apply sr_step.
+      + exact (sys_rob_cfg_eqv c c' Heqv Hrob).
       + destruct Hex as [c1 Hs]. destruct (sstep_scfg_cfg_eqv segs the_scfg c c' [] (SNext c1) Heqv Hs) as (X' & Hs' & HX).
         destruct X' as [c2|]; cbn in HX; [|contradiction]. exists c2. exact Hs'.
       + intros evs X Hst. destruct (sstep_scfg_cfg_eqv segs the_scfg c' c evs X (cfg_eqv_sym c c' Heqv) Hst) as (X' & Hs & HX).

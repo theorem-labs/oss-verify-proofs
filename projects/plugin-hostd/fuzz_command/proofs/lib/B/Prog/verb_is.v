@@ -1,5 +1,5 @@
 (* The walk of verb_is on the ASan+UBSan build of plugin-hostd/fuzz_command (fuzz_command.asan-ubsan; entry
-   0x8da0c, 30 instructions). The B twin of lib/A/Prog/verb_is.v (a working branch d98a2113f63): B's 30
+   0x8da0c, 30 instructions). The B twin of lib/A/Prog/verb_is.v (a working branch): B's 30
    listing slots (lib/B/Prog/CmdList.v, AF_verb_is = 0x74dc) are A's (AF_verb_is = 0x7a78) word for word except the
    two literal loads, which name B's hi atoms 244 / 245 and object atoms 120 (" " 0x22dc0) / 92 (" \t" 0x22500) for
    A's 288 / 289 and 109 (0x22d80) / 81 (0x224c0). B's code has no UBSan trap site in this function
@@ -239,7 +239,7 @@ split; [lia|]. split; [lia|]. split; [lia|]. split; [exact Hvis|].
 split; [left; unfold kLowMemEnd; lia|]. split; [exact Hra|]. intros _. exact Hhull.
 Qed.
 
-(* the `+ 8` band premise of a string argument (RtString.v's strcspn / strncmp, a Theorem Labs lane's d340ae1ff90): a heap
+(* the `+ 8` band premise of a string argument (RtString.v's strcspn / strncmp, a Theorem Labs lane): a heap
    string by the kit's amem8_of_blockA (the block law keeps 8 bytes past its end in the band), a read-only one is an
    image range, so amem8_of_low *)
 Lemma argA_amem8 : forall ly S W mem md p s,

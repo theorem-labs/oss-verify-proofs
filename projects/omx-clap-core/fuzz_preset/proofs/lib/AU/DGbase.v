@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: REGENERATED (not relocated) from proofs/cgif/cgif_file_fuzzer/lib/AGhy.v
-   (cold/c-asan-realloc-primary 63b73430c18, file sha256 378d6b206c74) for omx-clap-core/fuzz_preset's asan-ubsan
+   (file sha256 378d6b206c74) for omx-clap-core/fuzz_preset's asan-ubsan
    image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53), method
    h-mani-a8's agreloc-method.md section 3.  No numeral of the cgif seed is carried
    over: A_Allocate and the two constant call-site arguments are the generated names of AU/FCimgB.v, and the
@@ -11,7 +11,8 @@
    (fact (15%nat, mkAF 0 1 0)), as in the cgif seed, because AGhz / AGi0 / AGi2 / AGi4 and AllocG's contract are
    generic in cf; FCimgB.ALLOC_CF_MALLOC = 1 is the value of the malloc call site only, an instantiation. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/AU/AGhy.v, with its module paths and module names changed; 18 of its 41 lines of code are new or changed and 47 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGbase.v (cold/c-asan-realloc-c5 ced28ed2383, file sha256 4c38edb43c0d) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53); module paths changed; its 3 image addresses moved by code-verified function pairs (3 port_addr_check 0767e70e074a MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py; 1 the tool cannot place or places wrongly, read out of image B itself); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGbase.v (file sha256 4c38edb43c0d) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53); module paths changed; its 3 image addresses moved by code-verified function pairs (3 port_addr_check 0767e70e074a MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py; 1 the tool cannot place or places wrongly, read out of image B itself); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The definitions shared by the seeds of the frame-generic Deallocate walk (DGgi, DGgm, DGgn): Deallocate's entry
    pc and stack need, the frame atoms of the virtual register file regs0 (aINST = this, aBP = the trace buffer,
    aSO = the BufferedStackTrace object; atom 10 = the pointer, atom 2 = the entry sp, atom 1 = the return pc), the

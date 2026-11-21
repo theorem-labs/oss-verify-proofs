@@ -1,5 +1,5 @@
 (* Group LAW-meter of A top_x's hypotheses (TOPX-OWNERS.md (sha256 bb821fae800d; internal record)): W_LLVMFuzzerTestOneInput_top_x.v's MLAW and
-   MO_FR, each stated exactly as top_x states it (MO_FR at :247 since W8's F3 merge b85bd3e626e: KF-COUNT #4's set_fs
+   MO_FR, each stated exactly as top_x states it (MO_FR at :247 since W8's F3 merge: KF-COUNT #4's set_fs
    form), at the instance's meter MT := ameter_triv (Reusable/YCbp.v: mo_ok / mo_le are True), the meter
    ReplyATopX.v and ReplyDriverCf.v use.  Neither lemma has a premise that could be false: MLAW is closed, MO_FR's
    conclusion is True at this meter.  At MT := MT_sec, MO_FR needs that meter's own law (KF-COUNT's), not this lemma.

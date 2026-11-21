@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the 6 MiB zero-filled stack window): changed AUXV, LH2PA, SSPA and 7 more; added auxvp; removed p0; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Bo0DrvE2.v, lines 38, 293, 576, 595, 619. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -37,7 +38,7 @@ Section DrvE2.
   Hypothesis DL : drv_layoutA L ar IL sp0.
   Variable fs0 : Fs.Fs.
   Variable fdata : list byte.
-  Variables p0 p1 can : word.
+  Variables auxvp p1 can : word.
   Variable M0 : word -> option byte.
   Hypothesis M0_def : defined M0 (bv_unsigned sp0) (ar_stack_top ar - bv_unsigned sp0).
   Variable A0 : list (Z * Z).
@@ -60,10 +61,10 @@ Section DrvE2.
   Let PL : Z := PLA fdata.
   #[local] Notation payloadA := (Ba0DrvD_b.payloadA fdata).
   #[local] Notation blk_factsA := (Ba0DrvD_b.blk_factsA L ar fdata CAP).
-  #[local] Notation SSPA := (Ba0DrvE_b.SSPA scfg L ar HI sp0 fs0 fdata p0 p1 can M0 A0 CAP Lay LSt).
-  #[local] Notation LH2PA := (Ba0DrvE_b.LH2PA scfg L ar HI sp0 fs0 fdata p0 p1 can M0 A0 CAP Lay LSt).
+  #[local] Notation SSPA := (Ba0DrvE_b.SSPA scfg L ar HI sp0 fs0 fdata auxvp p1 can M0 A0 CAP Lay LSt).
+  #[local] Notation LH2PA := (Ba0DrvE_b.LH2PA scfg L ar HI sp0 fs0 fdata auxvp p1 can M0 A0 CAP Lay LSt).
   #[local] Notation e_factsA := (Ba0DrvE_b.e_factsA L ar HI sp0 fs0 fdata M0 A0 CAP Lay LSt).
-  #[local] Notation e_valsA := (Ba0DrvE_b.e_valsA sp0 fdata p0 p1 can).
+  #[local] Notation e_valsA := (Ba0DrvE_b.e_valsA sp0 fdata auxvp p1 can).
   #[local] Notation lib_roomA := (Ba0DrvE_b.lib_roomA fdata Lay).
   #[local] Notation EA := (Ba0DrvE_b.EA fs0).
   #[local] Notation LV := (lib_view Lay ar).
@@ -295,7 +296,7 @@ Section DrvE2.
     let S := usp + PSO in
     (usp - 4096 <= S /\ S + 32 <= usp /\ S mod 16 = 0 /\ 0 <= bv_unsigned can < 2 ^ 64)
     /\ (getr R 1%bv = Z_to_bv 64 688024 /\ getr R 2%bv = Z_to_bv 64 S /\ getr R 10%bv = Z_to_bv 64 85514 /\ getr R 11%bv = Z_to_bv 64 (S + 24))
-    /\ (forall a n, usp - 8388608 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
+    /\ (forall a n, usp - 6144513 <= a -> a + n <= usp -> forall d (k : nat), 0 <= d -> d + Z.of_nat k <= n -> store_ok ASEGS MV (Z_to_bv 64 (a + d)) k = true)
     /\ (forall i, 65536 <= i < 1282048 -> MV (Z_to_bv 64 i) = None)
     /\ rdn ASEGS MV (Z_to_bv 64 6896960) 8 = Some (word_to_le_bytes 8 (Z_to_bv 64 (bv_unsigned can)))
     /\ rdn ASEGS MV (Z_to_bv 64 (S + 24)) 4 = Some (word_to_le_bytes 4 (Z_to_bv 64 0)).
@@ -575,9 +576,9 @@ Section DrvE2.
   Variable crC : credit.
   #[local] Notation CALLS := (Ba0DrvD_b.CALLSA fdata).
   #[local] Notation cr1 := (Ba0DrvD_b.cr1A L fdata crC).
-  #[local] Notation lh1_kA := (Ba0DrvD_b.lh1_kA scfg L ar HI sp0 fs0 fdata p0 p1 can M0 LK0 A0 CAP crC).
+  #[local] Notation lh1_kA := (Ba0DrvD_b.lh1_kA scfg L ar HI sp0 fs0 fdata auxvp p1 can M0 LK0 A0 CAP crC).
   (* [comment removed for export] *)
-  Hypothesis AUXV : auxv_atA sp0 p0 M0.
+  Hypothesis AUXV : auxv_atA sp0 auxvp M0.
   Hypothesis HROOM1 : lib_roomA CALLS LK0 cr1.
   (* [comment removed for export] *)
   Hypothesis TAILX : forall j : nat, SSPA 1 (Z.of_nat j) (EA j).
@@ -596,7 +597,7 @@ Section DrvE2.
     destruct (sbm_fds _ _ SBM) as (G1 & G2). rewrite F1 in G1. rewrite F2 in G2.
     clear HR HK DI EQM EQH FRS SBM F1 F2 HC HPAY. rename R0 into Rb, HR0 into HRb, HK0 into HKb, DI0 into DIb, model0 into modelb, M1 into Mb.
     (* [comment removed for export] *)
-    destruct (lib_init_at_call scfg L ar C IL HI HIok sp0 Hsp DL M0 Lay (dlla_L Lay L DLL) DLC vals _ knLc1A LB LK0 cr1 A Mb modelb p0 HKb ltac:(vm_compute; reflexivity) P1 DIb AUXV)
+    destruct (lib_init_at_call scfg L ar C IL HI HIok sp0 Hsp DL M0 Lay (dlla_L Lay L DLL) DLC vals _ knLc1A LB LK0 cr1 A Mb modelb auxvp HKb ltac:(vm_compute; reflexivity) P1 DIb AUXV)
       as (av & uid & rnd & tid & cny & hw & LIF).
     pose proof (lioa_init _ _ _ _ _ LIOK av uid rnd tid cny hw Mb LIF) as HLSb.
     apply (lib_then_pfA fx' knLc1A vals Rb Mb modelb A A1 PTR OWN CALLS LB LK0 cr1 (ls_g0 LSt) (t_emit (W 1 (zero_lines 1)) K) ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
@@ -620,7 +621,7 @@ Section DrvE2.
     induction n as [|n IH]; intros j Hn Hjn; [lia|].
     destruct n as [|n'].
     - replace (j + 1 - 1)%nat with j by lia. change (Z.of_nat 1) with 1. apply TAILX.
-    - apply (step_SA scfg L ar C IL HI HIok sp0 Hsp DL fs0 fdata p0 p1 can M0 A0 CAP HCAP Lay LSt); [lia|].
+    - apply (step_SA scfg L ar C IL HI HIok sp0 Hsp DL fs0 fdata auxvp p1 can M0 A0 CAP HCAP Lay LSt); [lia|].
       replace (Z.of_nat (Datatypes.S (Datatypes.S n')) - 1) with (Z.of_nat (Datatypes.S n')) by lia.
       apply iter2A; [unfold Ba0DrvE_b.EA; apply t_emit_has_nil|].
       replace (j + Datatypes.S (Datatypes.S n') - 1)%nat with (Datatypes.S j + Datatypes.S n' - 1)%nat by lia.

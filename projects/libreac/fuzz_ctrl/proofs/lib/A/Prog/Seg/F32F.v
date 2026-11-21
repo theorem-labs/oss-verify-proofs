@@ -5,12 +5,13 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/ctrl_lay_block.v, with its module paths and module names changed; 371 of its 396 lines of code are new or changed and 3828 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/P2.v, with its numbers changed; 2046 of its 2082 lines of code are new or changed and 360 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F32.v, with its addresses and numbers changed; 394 of its 724 lines of code are new or changed and 1752 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d (unstripped
    (internal path) sha256 78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd).
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/F32.v blob 2da593b3822c at fdd2ed9f9d7.
-   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release c5e779efe8c), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release c5e779efe8c), The Rocq Prover 9.2 (OCaml 4.14.3).
+   FACTS, PAU pau-libreac-v190. Source: Seg/F32.v blob 2da593b3822c.
+   Tools: lib/Lib/StepF.v c97545265d26 (the blob this tree had at release), lib/Lib/ExecF.v 38b86b5d83a5 (the blob this tree had at release), The Rocq Prover 9.2 (OCaml 4.14.3).
    Compare: each <r>_of_F re-derives F32.<r> at ExecF.RNG_all; <r>_of_F_verbatim checks by constr_eq that its type is
    the type of F32.<r> (for f32_evt_m, apart from the first premise, which names reac_box_catalogue_contract_F in
    place of reac_box_catalogue_contract -- both first premises are checked by name too). Mechanical re-run,
@@ -35,7 +36,7 @@
      [sp - 16, sp), the runtime cells GOT_CELL_K and CELL_K, the 8 bytes at c = fr + 32 and their one shadow byte,
      which is S(fr) + 4 again (fr is 8-aligned, f32_shadow_in).
    f32_<run>_of_F re-derives Seg/F32.v's Exec.evt statement from f32_<run>_F at RNG_all (ExecF.evtF_evt, every rng
-   premise by rng_all).  Seg/F32.v's code is unchanged since release c5e779efe8c (comments edited); it keeps every code line of the source blob above and adds 350. It does not use them; they show that the footprint form loses nothing.
+   premise by rng_all).  Seg/F32.v's code is unchanged since release (comments edited); it keeps every code line of the source blob above and adds 350. It does not use them; they show that the footprint form loses nothing.
 
    rule 24: no function proved.  F32 calls reac_box_catalogue at 0x82858: f32_evt_m_F takes its footprint contract as
    the Section Hypothesis CATCF, as Seg/F32.v takes the halts contract as CATC; reac_box_catalogueF.v
@@ -613,14 +614,14 @@ Qed.
 (* Route (C) (a Theorem Labs lane 09:20Z; wave lead a Theorem Labs lane, ASSIGN.md (a working note, not in this delivery) and its 10:34Z amendment).  f32_evt_m_F used its
    premise `shadow_rw m` only to give the catalogue its own `shadow_rw` premise on the post-store memory (the CATCF
    bullet of its proof).  The catalogue's narrowed footprint contract (reac_box_catalogue_c.v
-   reac_box_catalogue_contract_F_on, d68c95046c8) DROPS that premise (no region: the catalogue reads its one
+   reac_box_catalogue_contract_F_on) DROPS that premise (no region: the catalogue reads its one
    shadow byte through addressable and stores none).  The run itself reads its two shadow bytes (phi + 16, phi + 17)
    through its ov_read_bytes premises, stores S(fr) + 4 through rw_cells (Sfr fr + 4), and keeps asan_cells by
    asan_cells_kept.  So the twins' proofs never use the premise: it is DROPPED (no R), and no post names shadow_rw.
    The Section F32F above stays as it is (Hypothesis CATCF). *)
 Section F32F_on.
 (* reac_box_catalogue's narrowed footprint contract (reac_box_catalogue_c.v), proved by a Theorem Labs lane's
-   reac_box_catalogueF.v reac_box_catalogue_F_holds_on (a working branch 330e60af39d). *)
+   reac_box_catalogueF.v reac_box_catalogue_F_holds_on (a working branch). *)
 Hypothesis CATCF_on : CATc.reac_box_catalogue_contract_F_on.
 
 (* Route (C): f32_evt_m_F with `shadow_rw m ->` dropped, under the catalogue's _F_on contract; the proof is

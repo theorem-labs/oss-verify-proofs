@@ -1,0 +1,30 @@
+(* Copyright 2026 Anthropic PBC *)
+(* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-10: relocated from cgif_file_fuzzer.asan to omx-clap-core fuzz_manifest.asan: 2 address literal(s) rewritten, module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: follows YE00 and AE2k without cgif's output-file strings and fopen/fclose cells: tfib_AIL's case splits, FINV_IVS and finv_img_ivs lose the four string ranges; tfib_aenv_off_lib_fp and tfib_meta_off_lib_fp state that the library call's footprint (sink_token :: FM_PSTAT_FP) misses the cells YE01's kept lemmas keep. *)
+(* Modified by Theorem Labs, 2026-10: the sink kit is a Theorem Labs lane's shared parameter form (a working branch) instantiated for fuzz_manifest: tfib_AIL, tfib_aenv_off_lib_fp, finv_img_ivs, finv_frame and finv_acall_post read the sink's cells through tfib_K's ak_owned (tfib_owned_iff, tfib_core_owned). *)
+(* Modified by Theorem Labs, 2026-11: made from A/AD1u.v for the ASan run at the 16 GiB limit (lib/BudgetWit/AW), with the modules it imports from that set renamed to their twins (suffix _w). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-11: cut to the declarations the usage path at 16 GiB uses. *)
+From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require YZ00.
+From Stdlib Require Import ZArith NArith List Lia Bool.
+From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
+From LinuxProcessSemantics.Riscv Require Import Prelude Instr Sem.
+From OSSVerify.omx_clap_core.fuzz_manifest.images Require Import Asan.
+From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require Import YK11 YK00 YK0s YK15.
+From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.BudgetWit.AW Require Import YK18_w.
+From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require Import YP0m YP09 YI04 YI00 YI16.
+From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require Import YK04 YA0i.
+From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.BudgetWit.AW Require Import YA0n_w.
+From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require Import YG00 YG0a YG01 YG0f.
+From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.BudgetWit.AW Require Import YG0n_w YG0d_w.
+From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.BudgetWit.AW Require Import AE2k_w.
+From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.A Require Import AB1v AF0m.
+From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.BudgetWit.AW Require Import AD1y_w.
+From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.A Require Import FMPstat.
+From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require Import YM05.
+Import ListNotations.
+Unset Lia Cache. Unset Nia Cache.
+Local Set Warnings "-abstract-large-number".
+Local Open Scope Z_scope.

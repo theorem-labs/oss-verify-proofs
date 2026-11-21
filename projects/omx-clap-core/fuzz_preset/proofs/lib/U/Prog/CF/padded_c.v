@@ -13,7 +13,7 @@ Import ListNotations.
 Local Open Scope Z_scope.
 
 (* Measured in the symtab of the #102 twin pau-preset-102/omx-clap-core/unstripped/fuzz_preset/fuzz_preset.ubsan (sha256
-   27566683952ebd54...), the unstripped twin of the pinned fuzz_preset.ubsan 45b0357d18ff66cd... (facts 8f3e7e1a07f1):
+   27566683952ebd54...), the unstripped twin of the pinned fuzz_preset.ubsan 45b0357d18ff66cd... (facts):
      padded FUNC LOCAL 0x1448c size 148 (37 insns): addi sp, sp, -0x30; ra, s0..s3 saved at sp + 0x28 .. sp + 8;
      s1 = fill, s2 = size, s3 = data; jal malloc (0x18390) with a0 = size + 16; s0 = a0; a NULL goes to 0x144f0, which
      stores 1 into g_own_ran_out (0x35250) and returns NULL; otherwise memcpy (0x22520) of size bytes when size <> 0,

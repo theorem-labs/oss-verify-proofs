@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap's model now subtracts the range from the mappings, maps_subtract, which both munmap proofs show equal to the old map_remove for a whole mapping; nsafe_mmap_rw's null-hint premise; the MAP_FIXED premises of nsafeA0_mmap_fixed_rw, mmap_modeled_b and mmap_noaccess_b false, read off the literal flags). *)
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Specs.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap Madvise.
@@ -203,7 +204,22 @@ Proof.
     pose proof (Permutation_Forall HP HF) as X. apply Forall_cons_iff in X as [_ X]. exact X. }
   pose proof (map_remove_perm _ _ _ _ HP M4 ltac:(rewrite Un; lia) HF2) as HR.
   pose proof (seps_perm _ _ HP M4) as Hs2. apply seps_cons_inv in Hs2 as [Hfar Hs12].
-  unfold munmap_model, with_mmap_destroyed. rewrite !Ua, !Un.
+  assert (HMS : maps_subtract (vm_maps (m_vmmaps mo)) a (a + n) = map_remove (vm_maps (m_vmmaps mo)) (Z_to_bv 64 a)).
+  { apply maps_subtract_as_remove; [lia | lia | lia | | |].
+    - intros e He. exact (proj1 (proj1 (Forall_forall _ _) M5 e He)).
+    - intros e He Hb. apply (Permutation_in _ HP) in He. destruct He as [He|He]; [exact (eq_sym He)|].
+      exfalso. pose proof (proj1 (Forall_forall _ _) Hfar e He) as Hw.
+      pose proof (proj1 (Forall_forall _ _) HF2 e He) as He1.
+      unfold wsep in Hw. cbn [fst snd] in Hw. rewrite Hb, Ua, Un in Hw.
+      (* [He1] comes out of [Forall_forall] as an UNREDUCED beta-redex,
+         [(fun e => 0 < bv_unsigned e.2) e], and [lia] is syntactic: it does not
+         see the inequality at all.  Measured: [lia] closes the goal from the
+         reduced hypothesis and not from the redex.  One [cbn beta] is the
+         whole fix. *)
+      cbn beta in He1. lia.
+    - intros e He Hb. apply (Permutation_in _ HP) in He. destruct He as [He|He]; [subst e; exfalso; apply Hb; reflexivity|].
+      exact (proj1 (Forall_forall _ _) Hfar e He). }
+  unfold munmap_model, with_mmap_destroyed, mmap_fixed_destroyed_next. rewrite !Ua, !Un. rewrite HMS.
   set (h' := mkVmMapsFull _ _ _ _ _ _ _ _).
   assert (WF' : model_ivs_wf (vm_forget_range a (a + n) (with_vmmaps h' mo))).
   { unfold model_ivs_wf, h'. model_proj. cbn [vm_maps vm_noaccess].
@@ -524,7 +540,7 @@ Proof.
   intros b A k mo len HK Hlen Hal Hlb. pose proof HK as (M & Hb & HN & _). pose proof M as (M1 & M2 & _).
   split.
   - cbn [nsafeA0]. unfold mmap_safeA_b.
-    pose proof (nsafe_mmap_rw 0 len mo ltac:(lia)) as X. cbn [nsafe] in X.
+    pose proof (nsafe_mmap_rw 0 len mo ltac:(lia) ltac:(vm_compute; reflexivity)) as X. cbn [nsafe] in X.
     change PROT_RW with (PROT_READ + PROT_WRITE). change F_ANON with (MAP_PRIVATE + MAP_ANONYMOUS). exact X.
   - cbn [nslack]. rewrite (mmap_len_lit len) by lia. cbv zeta. rewrite M2. split.
     + right. apply robust_le. lia.
@@ -553,6 +569,8 @@ Proof.
   - unfold page_size. exact Haal.
   - rewrite Htop. lia.
   - left. split; [exact Hrf | exact Hmc].
+  - destruct Hfl as [E | E]; rewrite E; vm_compute; reflexivity.
+  - destruct Hfl as [E | E]; rewrite E; vm_compute; reflexivity.
 Qed.
 
 Lemma nsafeA_commit : forall b A k mo a len,
@@ -1081,7 +1099,16 @@ Proof.
     pose proof (Permutation_Forall HP HF) as X. apply Forall_cons_iff in X as [_ X]. exact X. }
   pose proof (map_remove_perm _ _ _ _ HP M4 ltac:(rewrite Un; lia) HF2) as HR.
   pose proof (seps_perm _ _ HP M4) as Hs2. apply seps_cons_inv in Hs2 as [Hfar Hs12].
-  unfold munmap_model, with_mmap_destroyed. rewrite !Ua, !Un.
+  assert (HMS : maps_subtract (vm_maps (m_vmmaps mo)) a (a + n) = map_remove (vm_maps (m_vmmaps mo)) (Z_to_bv 64 a)).
+  { apply maps_subtract_as_remove; [lia | lia | lia | | |].
+    - intros e He. exact (proj1 (proj1 (Forall_forall _ _) M5 e He)).
+    - intros e He Hb. apply (Permutation_in _ HP) in He. destruct He as [He|He]; [exact (eq_sym He)|].
+      exfalso. pose proof (proj1 (Forall_forall _ _) Hfar e He) as Hw.
+      pose proof (proj1 (Forall_forall _ _) HF2 e He) as He1.
+      unfold wsep in Hw. cbn beta in He1. cbn [fst snd] in Hw, He1. rewrite Hb, Ua, Un in Hw. lia.
+    - intros e He Hb. apply (Permutation_in _ HP) in He. destruct He as [He|He]; [subst e; exfalso; apply Hb; reflexivity|].
+      exact (proj1 (Forall_forall _ _) Hfar e He). }
+  unfold munmap_model, with_mmap_destroyed, mmap_fixed_destroyed_next. rewrite !Ua, !Un. rewrite HMS.
   set (h' := mkVmMapsFull _ _ _ _ _ _ _ _).
   assert (WF' : model_ivs_wf (vm_forget_range a (a + n) (with_vmmaps h' mo))).
   { unfold model_ivs_wf, h'. model_proj. cbn [vm_maps vm_noaccess].
@@ -1402,7 +1429,7 @@ Proof.
   intros b A k mo len HK Hlen Hal Hlb. pose proof HK as (M & Hb & HN & _). pose proof M as (M1 & M2 & _).
   split.
   - cbn [nsafeA0]. unfold mmap_safeA_b.
-    pose proof (nsafe_mmap_rw 0 len mo ltac:(lia)) as X. cbn [nsafe] in X.
+    pose proof (nsafe_mmap_rw 0 len mo ltac:(lia) ltac:(vm_compute; reflexivity)) as X. cbn [nsafe] in X.
     change PROT_RW with (PROT_READ + PROT_WRITE). change F_ANON with (MAP_PRIVATE + MAP_ANONYMOUS). exact X.
   - cbn [nslack]. rewrite (mmap_len_lit len) by lia. cbv zeta. rewrite M2. split.
     + right. apply robust_le. lia.
@@ -1431,6 +1458,8 @@ Proof.
   - unfold page_size. exact Haal.
   - rewrite Htop. lia.
   - left. split; [exact Hrf | exact Hmc].
+  - destruct Hfl as [E | E]; rewrite E; vm_compute; reflexivity.
+  - destruct Hfl as [E | E]; rewrite E; vm_compute; reflexivity.
 Qed.
 
 Lemma nsafeA_commit : forall b A k mo a len,

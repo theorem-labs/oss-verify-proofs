@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's reservations with the vDSO pair; the model's m_kernel field). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -78,39 +79,41 @@ Definition STATIC_P : list ivl :=
 (* [comment removed for export] *)
 Definition FORB_P : list (Z * Z) := [(0x10000, 0x12000); (0x22000, 0x40000); (0x62000, 0x4000); (0x66000, 0x33000)].
 
-Lemma rcovered_seg : forall md (k : nat) a n, vm_reserved (m_vmmaps md) = segments_reserved SEGS -> (k < 4)%nat ->
+Lemma rcovered_seg : forall md (k : nat) a n, (forall e, In e (segments_reserved SEGS) -> In e (vm_reserved (m_vmmaps md))) -> (k < 4)%nat ->
   bv_unsigned (fst (nth k (segments_reserved SEGS) (Z_to_bv 64 0, Z_to_bv 64 0))) <= a ->
   a + n <= bv_unsigned (fst (nth k (segments_reserved SEGS) (Z_to_bv 64 0, Z_to_bv 64 0))) + bv_unsigned (snd (nth k (segments_reserved SEGS) (Z_to_bv 64 0, Z_to_bv 64 0))) ->
   MngRz2.rcovered md a n.
 Proof.
   intros md k a n Hres Hk H1 H2. unfold MngRz2.rcovered. exists (nth k (segments_reserved SEGS) (Z_to_bv 64 0, Z_to_bv 64 0)).
-  split; [rewrite Hres; apply nth_In; change (length (segments_reserved SEGS)) with 4%nat; exact Hk | split; assumption].
+  split; [apply Hres; apply nth_In; change (length (segments_reserved SEGS)) with 4%nat; exact Hk | split; assumption].
 Qed.
 
 (* [comment removed for export] *)
+(* LPS 08b1429: [LINK] reads the kernel build (the vDSO/vvar pair), so the transport keeps it *)
 Definition LINKv (HTOP : Z) (L : layout) (s : astate) (md : Model) : Prop :=
-  forall md0, m_vmmaps md0 = m_vmmaps md -> m_halted md0 = None -> m_vm_lazy md0 = [] ->
+  forall md0, m_vmmaps md0 = m_vmmaps md -> m_kernel md0 = m_kernel md -> m_halted md0 = None -> m_vm_lazy md0 = [] ->
     MngRz2.LINK HTOP FORB_P L (MallocWfKf.kf_of s) md0.
 
 (* [comment removed for export] *)
 Definition KRO (m : word -> option byte) : Prop := Image.pristine m 0x18288 0x182a8 /\ Image.pristine m 0x182a8 0x18327.
 
-Lemma LINK_ext : forall HTOP L x md md0, MngRz2.LINK HTOP FORB_P L x md -> m_vmmaps md0 = m_vmmaps md -> m_halted md0 = None -> m_vm_lazy md0 = [] ->
+Lemma LINK_ext : forall HTOP L x md md0, MngRz2.LINK HTOP FORB_P L x md -> m_vmmaps md0 = m_vmmaps md -> m_kernel md0 = m_kernel md ->
+  m_halted md0 = None -> m_vm_lazy md0 = [] ->
   MngRz2.LINK HTOP FORB_P L x md0.
 Proof.
-  intros HTOP L x md md0 HL E Hh Hl. destruct HL. constructor; unfold MngRz2.rcovered in *; rewrite ?E; assumption.
+  intros HTOP L x md md0 HL E Ek Hh Hl. destruct HL. constructor; unfold MngRz2.rcovered in *; rewrite ?E, ?Ek; assumption.
 Qed.
 
 Lemma LINKv_of : forall HTOP L s md, MngRz2.LINK HTOP FORB_P L (MallocWfKf.kf_of s) md -> LINKv HTOP L s md.
-Proof. intros HTOP L s md HL md0 E Hh Hl. exact (LINK_ext HTOP L _ md md0 HL E Hh Hl). Qed.
+Proof. intros HTOP L s md HL md0 E Ek Hh Hl. exact (LINK_ext HTOP L _ md md0 HL E Ek Hh Hl). Qed.
 
 Lemma LINK_of_v : forall HTOP L s md, LINKv HTOP L s md -> md_ok md -> MngRz2.LINK HTOP FORB_P L (MallocWfKf.kf_of s) md.
-Proof. intros HTOP L s md HL (Hh & Hl). exact (HL md eq_refl Hh Hl). Qed.
+Proof. intros HTOP L s md HL (Hh & Hl). exact (HL md eq_refl eq_refl Hh Hl). Qed.
 
 (* [comment removed for export] *)
 Lemma LINK_init : forall HTOP L md,
   m_halted md = None -> m_vm_lazy md = [] -> vm_maps (m_vmmaps md) = [] -> alloc_top (m_vmmaps md) <= HTOP ->
-  vm_reserved (m_vmmaps md) = segments_reserved SEGS -> ly_ctx L = 0x97c98 ->
+  vm_reserved (m_vmmaps md) = segments_reserved SEGS ++ vdso_reserved (m_kernel md) (vdso_top (m_vmmaps md)) -> ly_ctx L = 0x97c98 ->
   bv_unsigned (vm_brk (m_vmmaps md)) = ly_brk0 L -> PGSZ <= ly_brk0 L -> ly_brk0 L mod PGSZ = 0 ->
   bv_unsigned (Mmap.min_brk (m_vmmaps md)) <= ly_brk0 L -> ly_brk0 L <= HTOP ->
   vm_noaccess (m_vmmaps md) = [] -> 2 ^ 47 - 2 ^ 32 <= alloc_top (m_vmmaps md) -> 2 ^ 31 <= vm_limit (m_vmmaps md) ->
@@ -118,6 +121,8 @@ Lemma LINK_init : forall HTOP L md,
 Proof.
   intros HTOP L md Hh Hl Hm Ht Hf Hc Hb1 Hb2 Hb3 Hb4 Hb5 Hna Hat Hlim.
   assert (NR : forall r, nth_error (MngRz2.kf_regions (MallocWfKf.kf_of init_state)) r = None) by (intros [|r]; reflexivity).
+  assert (Hs : forall e, In e (segments_reserved SEGS) -> In e (vm_reserved (m_vmmaps md)))
+    by (intros e He; rewrite Hf; apply in_or_app; left; exact He).
   constructor.
   - exact Hh.
   - exact Hl.
@@ -126,11 +131,11 @@ Proof.
   - intros e He. rewrite Hm in He. destruct He.
   - intros e He. rewrite Hm in He. destruct He.
   - repeat constructor.
-    + apply (rcovered_seg md 0 _ _ Hf); vm_compute; first [reflexivity | lia | discriminate].
-    + apply (rcovered_seg md 1 _ _ Hf); vm_compute; first [reflexivity | lia | discriminate].
-    + apply (rcovered_seg md 2 _ _ Hf); vm_compute; first [reflexivity | lia | discriminate].
-    + apply (rcovered_seg md 3 _ _ Hf); vm_compute; first [reflexivity | lia | discriminate].
-  - rewrite Hc. apply (rcovered_seg md 3 _ _ Hf); vm_compute; first [reflexivity | lia | discriminate].
+    + apply (rcovered_seg md 0 _ _ Hs); vm_compute; first [reflexivity | lia | discriminate].
+    + apply (rcovered_seg md 1 _ _ Hs); vm_compute; first [reflexivity | lia | discriminate].
+    + apply (rcovered_seg md 2 _ _ Hs); vm_compute; first [reflexivity | lia | discriminate].
+    + apply (rcovered_seg md 3 _ _ Hs); vm_compute; first [reflexivity | lia | discriminate].
+  - rewrite Hc. apply (rcovered_seg md 3 _ _ Hs); vm_compute; first [reflexivity | lia | discriminate].
   - intros r rg E. rewrite NR in E. discriminate E.
   - intros r1 r2 rg1 rg2 _ E. rewrite NR in E. discriminate E.
   - intros r rg o E. rewrite NR in E. discriminate E.
@@ -146,7 +151,12 @@ Proof.
   - cbn. lia.
   - exact Hat.
   - exact Hlim.
-  - rewrite Hf. apply Z.leb_le. vm_compute. reflexivity.
+  - rewrite Hf, PlacementCount.ledger_size_app.
+    pose proof (MngRz2.vdso_ledger_le (m_kernel md) (vdso_top (m_vmmaps md))) as V.
+    assert (SG : PlacementCount.ledger_size (segments_reserved SEGS) <= 2 ^ 31) by (apply Z.leb_le; vm_compute; reflexivity).
+    lia.
+  - intros e He. rewrite Hf. apply in_or_app. right. exact He.
+  - intros r rg (E & _). rewrite NR in E. discriminate E.
 Qed.
 
 (* [comment removed for export] *)
@@ -820,11 +830,11 @@ End FC.
 (* [comment removed for export] *)
 
 (* [comment removed for export] *)
-Theorem heap_model_vm : forall HTOP hs m md md', Heap HTOP hs m md -> m_vmmaps md' = m_vmmaps md -> Heap HTOP hs m md'.
+Theorem heap_model_vm : forall HTOP hs m md md', Heap HTOP hs m md -> m_vmmaps md' = m_vmmaps md -> m_kernel md' = m_kernel md -> Heap HTOP hs m md'.
 Proof.
-  intros HTOP hs m md md' HP E. destruct HP as [H0 Hctx Henv Hkro Hled Hpcg HAP HHT Hb1 HT20 Hpg Hini Hrap].
+  intros HTOP hs m md md' HP E K. destruct HP as [H0 Hctx Henv Hkro Hled Hpcg HAP HHT Hb1 HT20 Hpg Hini Hrap].
   constructor; try assumption.
-  intros md0 E0 Hh Hl. apply Hled; [rewrite E0, E; reflexivity | exact Hh | exact Hl].
+  intros md0 E0 K0 Hh Hl. apply Hled; [rewrite E0, E; reflexivity | rewrite K0, K; reflexivity | exact Hh | exact Hl].
 Qed.
 
 (* [comment removed for export] *)

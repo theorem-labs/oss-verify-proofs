@@ -1,24 +1,25 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-29: the MEMNORM KEEP of the printf sites (lane CwSites, open row of the interface
-   a working branch 446222ec0601). The loop needs `memnorm tfibsegs mem -> memnorm tfibsegs mem'` across the
+   a working branch). The loop needs `memnorm tfibsegs mem -> memnorm tfibsegs mem'` across the
    driver's printf call, and no call rule can derive it from a post stated through views (YGcallMxmn.v header), so
    the walk itself must carry it. This file re-runs lib/Reusable/YE3mcf.v's two vfprintf walks and lib/Reusable/YE3hcf.v's two
    interceptor call lemmas with that conjunct, from the SAME proof text:
    - vf_icpt_memcpy_ext_mn / vf_icpt_memset_mn: YE3hcf.v:540-684 / :830-982, with the intrinsic premise taken in
      a Theorem Labs lane's keep form YGcallMxmn.aintrin_realizes_xm (which states the keep as its last post conjunct)
      instead of YCf0.aintrin_realizes0;
-   - tfib_vfprintf_stdout_first_mn / _next_mn: YE3mcf.v:537-1043 / :1044-1547, with one keep premise added to the
+   - tfib_vfprintf_stdout_first_mn / _next_mn: YE3mcf.v:538-1044 / :1045-1548, with one keep premise added to the
      continuation and the keep threaded step by step: a symbolic-runner phase by YGcallMxmn.memnorm_frame_of, the
      TIOCGWINSZ ioctl by its rule's `ms_mem ms' = ms_mem ms`, the writev by memnorm_frame_of_ecall (below, the
      st_ok_ecall twin of memnorm_frame_of, same proof), each interceptor call by the xm keep.
-   YGcallMxmn.v is taken by path from a working branch 8e33ecc4965b (blob 87de220caca2); YAkMemnorm.v
+   YGcallMxmn.v is taken by path from a working branch (blob 87de220caca2); YAkMemnorm.v
    comes with the interface commit. MN.memnorm = YAkMemnorm.memnorm.
    THIS FILE is port/a2b.py's output (sha256 f5113cbc90e5) of lib/A/PresetD1sitesAmn.v, with two hand changes in
    code: lib/A's AImgFacts import is dropped (B's YE3mcf states STDOUT_BUFA itself and has no such import), and
    the three rodata literals of the walk that a2b has no map for are the B image's: 84005 -> 84014,
    68468 -> 68476, 84006 -> 84015 (YE3mcf.v's own values; A's are AE3mcf.v's). The B cf walks are lane CwPreB's,
-   a working branch 30644fdd1332.
+   a working branch.
    rule 24: proves function vfprintf (reuse search: the internal file idx-cfcopy-walks.txt / the internal file idx-fwrite-fprintf.txt exit=0; PORT of
    the released cgif walk via CwPreB's cf copy; checker IcptCheck 04:27Z CONFIRM)
    rule 24: proves no function (kind: driver layer) *)

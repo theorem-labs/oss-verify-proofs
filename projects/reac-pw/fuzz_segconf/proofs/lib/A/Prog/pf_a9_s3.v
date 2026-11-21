@@ -7,11 +7,12 @@
    proofs/cgif/cgif_file_fuzzer/lib/A/AC8b.v (tcbb_loopX, a loop with inline checks, re-seeded at each iteration). The
    plain proof of the same loop is lib/Prog/answer.v:120-226 (an_loop). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/answer_l.v, with its module paths, module names and numbers changed; 595 of its 672 lines of code are new or changed and 710 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image A (fuzz_segconf.asan): stretch SA9_C of segment A9 of reac_segconf_parse_file's walk
    (lib/A/Prog/pf_a9_d.v: K3 0x87ff4 -> K5 0x8814c), a9_sC : SA9_C B. By the G3 walk owner, 2026-10-30.
    proves no function (kind: segment lemma of reac_segconf_parse_file's image-A walk, one stretch of segment A9; the
    whole function's rule-24 line, its pasted released-proof index output and the G3 walk owner's CONFIRM of
-   2026-10-30T15:42:08Z are in the unit's internal record, commit dfb49d6ad789,
+   2026-10-30T15:42:08Z are in the unit's internal record,
    path records/segp/g3-lookup.md, reuse verdict none: written
    new).
 
@@ -22,7 +23,7 @@
      0x8801c bne a1,DQ,0x8814c; 0x88024 a1 = s9 + a0 - 1; check 11; lbu a1,0(a1); beq a1,DQ,0x8812c; j 0x8814c
      0x88108 a1 = s9 + a0 - 1; check 14; lbu a1,0(a1); bne a1,SQ,0x8814c
      0x8812c a0 = s9 + a0 - 1; check 15 (store1); 0x88144 sb zero,0(a0); 0x88148 addi s9,s9,1; 0x8814c K5
-   THE ROUTE (fuzz_command's answer_l.v al_entry / al_SH form at origin/ossv/recipes 501c0d516c69, its trim_t.v twin
+   THE ROUTE (fuzz_command's answer_l.v al_entry / al_SH form, its trim_t.v twin
    in this clone): each arm re-seeds a symbolic state at K3 from INV_K3's concrete facts and runs the TOKEN executor
    (SegPaLib.v paj_run_tok, Bx = SOff 22 0 = s6, pf_fi's SHADOW_OFF). The two byte reads are DECIDED by REGIONS with
    one-byte CVal chunks (chain_words_s2.v cw2_seedC's route, chunk_ok from a9_inbuf's sa_str): atom 33 = V[0] in a

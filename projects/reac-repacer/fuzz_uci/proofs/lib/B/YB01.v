@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs: generated for reac-repacer/fuzz_uci image B (asan-ubsan) from its own collector run (pass 2, provenance/startup-gen/B/logs/pass2.B.log: 220 leaves = 50 hand-offs at main 0x7ee48 + 168 spins + 2 merges, 0 failure leaves) on the pinned fuzz_uci.asan-ubsan (sha256 a1b86e424adde6f65d345459822690a6c21e9e606446b91b4ad25e9f3ef6e7fc); the donor file's form, this image's states. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Read from: fuzz_uci.asan-ubsan (reac-repacer/fuzz_uci asan-ubsan) sha256 a1b86e424adde6f65d345459822690a6c21e9e606446b91b4ad25e9f3ef6e7fc; unstripped twin sha256 8d07ffcf594874884207465cc34ff9f3b1062f21f6d9b3622e0771fa76490b16 *)
 (* gate: _ZN6__asanL19malloc_context_sizeE (0x9fdfc) reads [30] in all 50 hand-off states *)
 (* gate: _ZN6__asanL11asan_initedE (0x9fdd8) reads [1] in all 50 hand-off states *)

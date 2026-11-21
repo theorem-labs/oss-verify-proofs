@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (valid_entry with the launch premise entry_launch_ok_va). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -25,7 +26,8 @@ Definition B_root : Prop := root_obligation_core BIMG target_alloc_limit spec_of
 Lemma valid_entry_unfold : forall segs pc ph sp brk0 mb rnd inp,
   valid_input_core inp ->
   valid_entry (mkImage segs pc ph) (mkEntry sp brk0 mb rnd) inp
-  <-> (valid_sp sp /\ valid_brk segs brk0 /\ valid_mmap_base mb /\ entry_stack_fits sp (in_argv inp) (in_envp inp)).
+  <-> (valid_sp sp /\ valid_brk segs brk0 /\ valid_mmap_base mb /\ entry_stack_fits sp (in_argv inp) (in_envp inp)
+       /\ entry_launch_ok_va Sv48 (mkEntry sp brk0 mb rnd) inp).
 Proof. intros segs pc ph sp brk0 mb rnd inp Hc. apply valid_entry_sv48. exact (valid_input_core_va_size _ Hc). Qed.
 
 (* [comment removed for export] *)

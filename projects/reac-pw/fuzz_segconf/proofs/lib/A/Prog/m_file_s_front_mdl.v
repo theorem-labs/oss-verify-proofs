@@ -2,7 +2,7 @@
    facts the segment's walk needs, over SegModel and m_file_m.v's line terms (mf_line, mf_rest, mf_next, mf_fin).
    Pure list facts; no instruction is executed here. The FRONT segment lane of the G2 walk owner's G2.
 
-   COPIED, with their proofs, from the plain / image-B owner's plain model files at dec616e11c2f (those
+   COPIED, with their proofs, from the plain / image-B owner's plain model files (those
    files are not in this tree and Require the plain integration, so they are copied, with the prefix fr_):
      lib/Prog/mfu_facts.v:17-66 (break_nl_spec .. m_lines_step), :274-290 (mf_fin_head, mf_rest_lt, mf_line_rest);
      lib/Prog/mfp_facts.v:13-24 (blank_gt32, blank_mask), :43-58 (slice_length, mff_line_split, mf_line_nth),

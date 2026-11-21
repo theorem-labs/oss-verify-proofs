@@ -24,6 +24,7 @@
    (pass 5b) the stack from len - 16 present, from the statement's astack_pres kept by astack_pres_journal. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_round_trip.v, with its module paths and module names changed; 4505 of its 4800 lines of code are new or changed and 4758 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/LLVMFuzzerTestOneInput_s15.v, with its module paths and module names changed; 356 of its 464 lines of code are new or changed and 4692 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan image A (fuzz_segconf.asan, pin sha256 48c5355bdacb): the kit of segment S04 of the
    walk of the test harness's entry function LLVMFuzzerTestOneInput (0x85024 .. 0x850f4, _s14 of the harness walk):
    the turn's reads over the payload's bytes (pure list facts over seg_spec / SegModel). *)
@@ -267,7 +268,7 @@ Definition S14_KEEP : list (bv 5) := [2; 3; 4; 8; 9; 18; 19; 21; 22; 25]%bv.
 Definition S14_SAVED : list (bv 5) := [2; 3; 4; 8; 9; 18; 19; 20; 21; 22; 23; 24; 25; 26; 27]%bv.
 
 (* ===================================== the memchr step ===================================== *)
-(* copied from the m_file group's owner's lib/A/Prog/m_file_memchr.v (commit 0f5525e7ab4e, the m_file
+(* copied from the m_file group's owner's lib/A/Prog/m_file_memchr.v (the m_file
    group's walk, memchr_rom_fact and aj_memchr_atM): the image fact of musl memchr's constant window (a walk
    hypothesis the close discharges), and the call of the memchr wrapper (interface row 20,
    MemchrDef.amemchr_realizesM at SegInstA.memchr_loA .. memchr_hiA) as a step of the journal *)

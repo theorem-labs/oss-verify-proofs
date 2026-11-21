@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the leaf lemmas take the run's CONFIG_RSEQ flag (r) and its start knowledge (with L5AuxKn's auxv claims), the auxv region they keep apart is 464 bytes, was 160, and the auxv facts are the launch's type words (SegAuxv.auxt) and its program-header words in place of the old ten pairs. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp.bitvector Require Import definitions.
@@ -11,6 +12,8 @@ From OSSVerify.Proofs.jsoncons.fuzz_bigint.lib Require Import PropExec CatExec C
      AxSymExec3 AxSymExec3B AxSymExec3Sound AxSymRun3 SegRun SegPlan Src0PlanKit AsanPlanCore
      BigLinkBase BigLinkGlue BigLinkInlBase BigModel BigFactsRun BigFactsDigits L5Defs L5KnP L5ParseArith.
 From OSSVerify.Proofs.jsoncons.fuzz_bigint.lib.seg Require LibSegZ_e3r4 LibSegZ_e3r5 LibSegZ_e3r6.
+From OSSVerify.Proofs.jsoncons.fuzz_bigint.lib.seg Require Import SegAuxv.
+From OSSVerify.Proofs.jsoncons.fuzz_bigint.lib Require Import L5AuxKn.
 Import ListNotations. Import AX2. Import AX2B. Import AX2S.
 Open Scope Z_scope.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
@@ -73,7 +76,7 @@ Proof.
   repeat (lazymatch goal with |- bv_unsigned (match ?k with _ => _ end) = _ => destruct k as [|k] | _ => fail end; try (apply BG.unsigned_lit; lia); try reflexivity).
   all: try (apply BG.unsigned_lit; lia); try reflexivity.
 Qed.
-Lemma e3r4_conc fx R M csp obj av canary uid rnd hw :
+Lemma e3r4_conc (r : bool) fx R M csp obj av canary uid rnd hw :
   getr R (reg 2) = Z_to_bv 64 (csp + 480) ->
   getr R (reg 3) = Z_to_bv 64 (67584) ->
   getr R (reg 4) = Z_to_bv 64 (459832) ->
@@ -96,8 +99,8 @@ Lemma e3r4_conc fx R M csp obj av canary uid rnd hw :
   1099511627776 <= av <= 140737488355328 ->
   (av) mod 8 = 0 ->
   ((csp) + -7936 + (8480) <= (obj) + -128 \/ (obj) + -128 + (144) <= (csp) + -7936) ->
-  ((obj) + -128 + (144) <= (av) + 0 \/ (av) + 0 + (160) <= (obj) + -128) ->
-  ((csp) + -7936 + (8480) <= (av) + 0 \/ (av) + 0 + (160) <= (csp) + -7936) ->
+  ((obj) + -128 + (144) <= (av) + 0 \/ (av) + 0 + (464) <= (obj) + -128) ->
+  ((csp) + -7936 + (8480) <= (av) + 0 \/ (av) + 0 + (464) <= (csp) + -7936) ->
   ((obj) + -128 + (144) <= (0) + 65536 \/ (0) + 65536 + (528384) <= (obj) + -128) ->
   L5.img_clear M 65536 390664 ->
   L5.img_clear M 390704 390736 ->
@@ -105,25 +108,11 @@ Lemma e3r4_conc fx R M csp obj av canary uid rnd hw :
   L5.u64_at RSEGS M ((obj) - 16) (0) ->
   L5.u64_at RSEGS M ((0) + 591528) (canary) ->
   L5.u64_at RSEGS M ((0) + 591568) (av) ->
-  L5.u64_at RSEGS M (av) (3) ->
-  L5.u64_at RSEGS M ((av) + 8) (65600) ->
-  L5.u64_at RSEGS M ((av) + 16) (4) ->
-  L5.u64_at RSEGS M ((av) + 24) (56) ->
-  L5.u64_at RSEGS M ((av) + 32) (5) ->
-  L5.u64_at RSEGS M ((av) + 40) (10) ->
-  L5.u64_at RSEGS M ((av) + 48) (16) ->
-  L5.u64_at RSEGS M ((av) + 56) (hw) ->
-  L5.u64_at RSEGS M ((av) + 64) (6) ->
-  L5.u64_at RSEGS M ((av) + 72) (4096) ->
-  L5.u64_at RSEGS M ((av) + 80) (11) ->
-  L5.u64_at RSEGS M ((av) + 88) (uid) ->
-  L5.u64_at RSEGS M ((av) + 96) (12) ->
-  L5.u64_at RSEGS M ((av) + 104) (uid) ->
-  L5.u64_at RSEGS M ((av) + 112) (23) ->
-  L5.u64_at RSEGS M ((av) + 120) (0) ->
-  L5.u64_at RSEGS M ((av) + 128) (25) ->
-  L5.u64_at RSEGS M ((av) + 136) (rnd) ->
-  L5.u64_at RSEGS M ((av) + 144) (0) ->
+  (forall i, (i < length (auxt r))%nat -> L5.u64_at RSEGS M ((av) + 16 * Z.of_nat i) (nth i (auxt r) 0)) ->
+  L5.u64_at RSEGS M ((av) + 216) (65600) ->
+  L5.u64_at RSEGS M ((av) + 232) (56) ->
+  L5.u64_at RSEGS M ((av) + 248) (10) ->
+  L5.defined M (av) (auxlen r) ->
   L5.u64_at RSEGS M ((obj) - 8) (csp + 896) ->
   L5.u64_at RSEGS M ((obj) - 32) (4849336966747728640) ->
   L5.u64_at RSEGS M ((csp) + 536) (139904) ->
@@ -146,13 +135,13 @@ Lemma e3r4_conc fx R M csp obj av canary uid rnd hw :
     /\ (forall x : word, ~ ((csp) + -7936 <= bv_unsigned x < (csp) + -7936 + (8416)) -> M' x = M x)
     /\ mem_grows M M'.
 Proof.
-  intros H2 H3 H4 H10 G2 G10 G32 G33 G34 G36 G39 K1 K2 K3 K4 K5 K6 K7 K8 K9 K10 K11 K12 K13 K14 K15 K16 K17 K18 K19 K20 K21 K22 K23 K24 K25 K26 K27 K28 K29 K30 K31 K32 K33 K34 K35 K36 K37 K38 K39 K40 K41 K42 K43 K44 K45 K46 K47 K48 K49 K50.
+  intros H2 H3 H4 H10 G2 G10 G32 G33 G34 G36 G39 K1 K2 K3 K4 K5 K6 K7 K8 K9 K10 K11 K12 K13 K14 K15 K16 K17 K18 K19 K20 K21 K22 K23 K24 K25 K26 K27 K28 K29 K30 K31 K32 K33 K34 K35 K36.
   set (Vf := VAL_R4 R csp obj av canary uid rnd hw). set (E := Env Vf (fun _ => [])).
   assert (ZA : forall k, bv_unsigned (ev E k) = VZ_R4 R csp obj av canary uid rnd hw k) by (apply VAL_VZ_R4; lia). unfold VZ_R4 in ZA.
   assert (HR: regs_ok E PR4.regs0 R).
   { apply BG.regs_ok_of_slots. reflexivity. cbn [BG.slots tl PR4.regs0 nth]. repeat split; L5KP.slot ZA. }
-  assert (HK: know_ok RSEGS E M PR4.kn0). { unfold know_ok, PR4.kn0. kn_allx ZA. }
-  destruct (PR4.seg_sound_ax fx E R M HR HK ltac:(constructor)) as (fx' & E' & R' & M' & i & ps0 & Hnth & Hag & Hms & Hregs & Hx0 & Hrok & Hfr & Hcells & Hgr).
+  assert (HK: know_ok RSEGS E M (PR4.kn0 r)). { unfold know_ok, PR4.kn0. apply Forall_app. split; [kn_allx ZA | apply Forall_app; split; [eapply (L5AUX.aux_kn_ok RSEGS E M av r 10); [exact (ZA 32%nat) | lia | rewrite L5AUX.auxlen_val; destruct r; lia | lia | assumption | assumption | assumption | assumption | assumption] | kn_allx ZA]]. }
+  destruct (PR4.seg_sound_ax r fx E R M HR HK ltac:(constructor)) as (fx' & E' & R' & M' & i & ps0 & Hnth & Hag & Hms & Hregs & Hx0 & Hrok & Hfr & Hcells & Hgr).
   apply L5KP.nth_error_single in Hnth. subst ps0. change PR4.NX0 with 56%nat in Hag.
   exists fx', R', M'. split. exact Hms.
   split. { intros j Hj. apply (BG.kept_regs E E' R R' PR4.regs0 PR4.regs_out 56 KS_R4 KS_R4_ok HR Hag Hregs j Hj). }
@@ -198,7 +187,7 @@ Proof.
   repeat (lazymatch goal with |- bv_unsigned (match ?k with _ => _ end) = _ => destruct k as [|k] | _ => fail end; try (apply BG.unsigned_lit; lia); try reflexivity).
   all: try (apply BG.unsigned_lit; lia); try reflexivity.
 Qed.
-Lemma e3r5_conc fx R M csp obj av canary uid rnd hw v40 v41 v42 v43 v44 v45 v46 v47 v48 v49 v50 :
+Lemma e3r5_conc (r : bool) fx R M csp obj av canary uid rnd hw v40 v41 v42 v43 v44 v45 v46 v47 v48 v49 v50 :
   getr R (reg 2) = Z_to_bv 64 (csp + 544) ->
   getr R (reg 3) = Z_to_bv 64 (67584) ->
   getr R (reg 4) = Z_to_bv 64 (459832) ->
@@ -232,8 +221,8 @@ Lemma e3r5_conc fx R M csp obj av canary uid rnd hw v40 v41 v42 v43 v44 v45 v46 
   1099511627776 <= av <= 140737488355328 ->
   (av) mod 8 = 0 ->
   ((csp) + -7936 + (8784) <= (obj) + -128 \/ (obj) + -128 + (144) <= (csp) + -7936) ->
-  ((obj) + -128 + (144) <= (av) + 0 \/ (av) + 0 + (160) <= (obj) + -128) ->
-  ((csp) + -7936 + (8784) <= (av) + 0 \/ (av) + 0 + (160) <= (csp) + -7936) ->
+  ((obj) + -128 + (144) <= (av) + 0 \/ (av) + 0 + (464) <= (obj) + -128) ->
+  ((csp) + -7936 + (8784) <= (av) + 0 \/ (av) + 0 + (464) <= (csp) + -7936) ->
   ((obj) + -128 + (144) <= (0) + 65536 \/ (0) + 65536 + (528384) <= (obj) + -128) ->
   L5.img_clear M 65536 390664 ->
   L5.img_clear M 390704 390736 ->
@@ -241,25 +230,11 @@ Lemma e3r5_conc fx R M csp obj av canary uid rnd hw v40 v41 v42 v43 v44 v45 v46 
   L5.u64_at RSEGS M ((obj) - 16) (0) ->
   L5.u64_at RSEGS M ((0) + 591528) (canary) ->
   L5.u64_at RSEGS M ((0) + 591568) (av) ->
-  L5.u64_at RSEGS M (av) (3) ->
-  L5.u64_at RSEGS M ((av) + 8) (65600) ->
-  L5.u64_at RSEGS M ((av) + 16) (4) ->
-  L5.u64_at RSEGS M ((av) + 24) (56) ->
-  L5.u64_at RSEGS M ((av) + 32) (5) ->
-  L5.u64_at RSEGS M ((av) + 40) (10) ->
-  L5.u64_at RSEGS M ((av) + 48) (16) ->
-  L5.u64_at RSEGS M ((av) + 56) (hw) ->
-  L5.u64_at RSEGS M ((av) + 64) (6) ->
-  L5.u64_at RSEGS M ((av) + 72) (4096) ->
-  L5.u64_at RSEGS M ((av) + 80) (11) ->
-  L5.u64_at RSEGS M ((av) + 88) (uid) ->
-  L5.u64_at RSEGS M ((av) + 96) (12) ->
-  L5.u64_at RSEGS M ((av) + 104) (uid) ->
-  L5.u64_at RSEGS M ((av) + 112) (23) ->
-  L5.u64_at RSEGS M ((av) + 120) (0) ->
-  L5.u64_at RSEGS M ((av) + 128) (25) ->
-  L5.u64_at RSEGS M ((av) + 136) (rnd) ->
-  L5.u64_at RSEGS M ((av) + 144) (0) ->
+  (forall i, (i < length (auxt r))%nat -> L5.u64_at RSEGS M ((av) + 16 * Z.of_nat i) (nth i (auxt r) 0)) ->
+  L5.u64_at RSEGS M ((av) + 216) (65600) ->
+  L5.u64_at RSEGS M ((av) + 232) (56) ->
+  L5.u64_at RSEGS M ((av) + 248) (10) ->
+  L5.defined M (av) (auxlen r) ->
   L5.u64_at RSEGS M ((obj) - 8) (csp + 896) ->
   L5.u64_at RSEGS M ((obj) - 32) (4849336966747728640) ->
   L5.u64_at RSEGS M ((csp) + 840) (138528) ->
@@ -302,13 +277,13 @@ Lemma e3r5_conc fx R M csp obj av canary uid rnd hw v40 v41 v42 v43 v44 v45 v46 
     /\ (forall x : word, ~ ((csp) + -7936 <= bv_unsigned x < (csp) + -7936 + (8480)) -> M' x = M x)
     /\ mem_grows M M'.
 Proof.
-  intros H2 H3 H4 H10 G2 G10 G32 G33 G34 G36 G39 G40 G41 G42 G43 G44 G45 G46 G47 G48 G49 G50 K1 K2 K3 K4 K5 K6 K7 K8 K9 K10 K11 K12 K13 K14 K15 K16 K17 K18 K19 K20 K21 K22 K23 K24 K25 K26 K27 K28 K29 K30 K31 K32 K33 K34 K35 K36 K37 K38 K39 K40 K41 K42 K43 K44 K45 K46 K47 K48 K49 K50 K51 K52 K53 K54 K55 K56 K57 K58 K59 K60.
+  intros H2 H3 H4 H10 G2 G10 G32 G33 G34 G36 G39 G40 G41 G42 G43 G44 G45 G46 G47 G48 G49 G50 K1 K2 K3 K4 K5 K6 K7 K8 K9 K10 K11 K12 K13 K14 K15 K16 K17 K18 K19 K20 K21 K22 K23 K24 K25 K26 K27 K28 K29 K30 K31 K32 K33 K34 K35 K36 K37 K38 K39 K40 K41 K42 K43 K44 K45 K46.
   set (Vf := VAL_R5 R csp obj av canary uid rnd hw v40 v41 v42 v43 v44 v45 v46 v47 v48 v49 v50). set (E := Env Vf (fun _ => [])).
   assert (ZA : forall k, bv_unsigned (ev E k) = VZ_R5 R csp obj av canary uid rnd hw v40 v41 v42 v43 v44 v45 v46 v47 v48 v49 v50 k) by (apply VAL_VZ_R5; lia). unfold VZ_R5 in ZA.
   assert (HR: regs_ok E PR5.regs0 R).
   { apply BG.regs_ok_of_slots. reflexivity. cbn [BG.slots tl PR5.regs0 nth]. repeat split; L5KP.slot ZA. }
-  assert (HK: know_ok RSEGS E M PR5.kn0). { unfold know_ok, PR5.kn0. kn_allx ZA. }
-  destruct (PR5.seg_sound_ax fx E R M HR HK ltac:(constructor)) as (fx' & E' & R' & M' & i & ps0 & Hnth & Hag & Hms & Hregs & Hx0 & Hrok & Hfr & Hcells & Hgr).
+  assert (HK: know_ok RSEGS E M (PR5.kn0 r)). { unfold know_ok, PR5.kn0. apply Forall_app. split; [kn_allx ZA | apply Forall_app; split; [eapply (L5AUX.aux_kn_ok RSEGS E M av r 10); [exact (ZA 32%nat) | lia | rewrite L5AUX.auxlen_val; destruct r; lia | lia | assumption | assumption | assumption | assumption | assumption] | kn_allx ZA]]. }
+  destruct (PR5.seg_sound_ax r fx E R M HR HK ltac:(constructor)) as (fx' & E' & R' & M' & i & ps0 & Hnth & Hag & Hms & Hregs & Hx0 & Hrok & Hfr & Hcells & Hgr).
   apply L5KP.nth_error_single in Hnth. subst ps0. change PR5.NX0 with 56%nat in Hag.
   exists fx', R', M'. split. exact Hms.
   split. { intros j Hj. apply (BG.kept_regs E E' R R' PR5.regs0 PR5.regs_out 56 KS_R5 KS_R5_ok HR Hag Hregs j Hj). }
@@ -353,7 +328,7 @@ Proof.
   repeat (lazymatch goal with |- bv_unsigned (match ?k with _ => _ end) = _ => destruct k as [|k] | _ => fail end; try (apply BG.unsigned_lit; lia); try reflexivity).
   all: try (apply BG.unsigned_lit; lia); try reflexivity.
 Qed.
-Lemma e3r6_conc fx R M csp obj av canary uid rnd hw v40 :
+Lemma e3r6_conc (r : bool) fx R M csp obj av canary uid rnd hw v40 :
   getr R (reg 2) = Z_to_bv 64 (csp + 848) ->
   getr R (reg 3) = Z_to_bv 64 (67584) ->
   getr R (reg 4) = Z_to_bv 64 (459832) ->
@@ -377,8 +352,8 @@ Lemma e3r6_conc fx R M csp obj av canary uid rnd hw v40 :
   1099511627776 <= av <= 140737488355328 ->
   (av) mod 8 = 0 ->
   ((csp) + -7936 + (8832) <= (obj) + -128 \/ (obj) + -128 + (144) <= (csp) + -7936) ->
-  ((obj) + -128 + (144) <= (av) + 0 \/ (av) + 0 + (160) <= (obj) + -128) ->
-  ((csp) + -7936 + (8832) <= (av) + 0 \/ (av) + 0 + (160) <= (csp) + -7936) ->
+  ((obj) + -128 + (144) <= (av) + 0 \/ (av) + 0 + (464) <= (obj) + -128) ->
+  ((csp) + -7936 + (8832) <= (av) + 0 \/ (av) + 0 + (464) <= (csp) + -7936) ->
   ((obj) + -128 + (144) <= (0) + 65536 \/ (0) + 65536 + (528384) <= (obj) + -128) ->
   L5.img_clear M 65536 390664 ->
   L5.img_clear M 390704 390736 ->
@@ -386,25 +361,11 @@ Lemma e3r6_conc fx R M csp obj av canary uid rnd hw v40 :
   L5.u64_at RSEGS M ((obj) - 16) (0) ->
   L5.u64_at RSEGS M ((0) + 591528) (canary) ->
   L5.u64_at RSEGS M ((0) + 591568) (av) ->
-  L5.u64_at RSEGS M (av) (3) ->
-  L5.u64_at RSEGS M ((av) + 8) (65600) ->
-  L5.u64_at RSEGS M ((av) + 16) (4) ->
-  L5.u64_at RSEGS M ((av) + 24) (56) ->
-  L5.u64_at RSEGS M ((av) + 32) (5) ->
-  L5.u64_at RSEGS M ((av) + 40) (10) ->
-  L5.u64_at RSEGS M ((av) + 48) (16) ->
-  L5.u64_at RSEGS M ((av) + 56) (hw) ->
-  L5.u64_at RSEGS M ((av) + 64) (6) ->
-  L5.u64_at RSEGS M ((av) + 72) (4096) ->
-  L5.u64_at RSEGS M ((av) + 80) (11) ->
-  L5.u64_at RSEGS M ((av) + 88) (uid) ->
-  L5.u64_at RSEGS M ((av) + 96) (12) ->
-  L5.u64_at RSEGS M ((av) + 104) (uid) ->
-  L5.u64_at RSEGS M ((av) + 112) (23) ->
-  L5.u64_at RSEGS M ((av) + 120) (0) ->
-  L5.u64_at RSEGS M ((av) + 128) (25) ->
-  L5.u64_at RSEGS M ((av) + 136) (rnd) ->
-  L5.u64_at RSEGS M ((av) + 144) (0) ->
+  (forall i, (i < length (auxt r))%nat -> L5.u64_at RSEGS M ((av) + 16 * Z.of_nat i) (nth i (auxt r) 0)) ->
+  L5.u64_at RSEGS M ((av) + 216) (65600) ->
+  L5.u64_at RSEGS M ((av) + 232) (56) ->
+  L5.u64_at RSEGS M ((av) + 248) (10) ->
+  L5.defined M (av) (auxlen r) ->
   L5.u64_at RSEGS M ((obj) - 8) (csp + 896) ->
   L5.u64_at RSEGS M ((obj) - 32) (4849336966747728640) ->
   L5.u64_at RSEGS M ((csp) + 888) (132608) ->
@@ -427,13 +388,13 @@ Lemma e3r6_conc fx R M csp obj av canary uid rnd hw v40 :
     /\ (forall x : word, ~ ((csp) + -7936 <= bv_unsigned x < (csp) + -7936 + (8784)) -> M' x = M x)
     /\ mem_grows M M'.
 Proof.
-  intros H2 H3 H4 H10 G2 G10 G32 G33 G34 G36 G39 G40 K1 K2 K3 K4 K5 K6 K7 K8 K9 K10 K11 K12 K13 K14 K15 K16 K17 K18 K19 K20 K21 K22 K23 K24 K25 K26 K27 K28 K29 K30 K31 K32 K33 K34 K35 K36 K37 K38 K39 K40 K41 K42 K43 K44 K45 K46 K47 K48 K49 K50 K51.
+  intros H2 H3 H4 H10 G2 G10 G32 G33 G34 G36 G39 G40 K1 K2 K3 K4 K5 K6 K7 K8 K9 K10 K11 K12 K13 K14 K15 K16 K17 K18 K19 K20 K21 K22 K23 K24 K25 K26 K27 K28 K29 K30 K31 K32 K33 K34 K35 K36 K37.
   set (Vf := VAL_R6 R csp obj av canary uid rnd hw v40). set (E := Env Vf (fun _ => [])).
   assert (ZA : forall k, bv_unsigned (ev E k) = VZ_R6 R csp obj av canary uid rnd hw v40 k) by (apply VAL_VZ_R6; lia). unfold VZ_R6 in ZA.
   assert (HR: regs_ok E PR6.regs0 R).
   { apply BG.regs_ok_of_slots. reflexivity. cbn [BG.slots tl PR6.regs0 nth]. repeat split; L5KP.slot ZA. }
-  assert (HK: know_ok RSEGS E M PR6.kn0). { unfold know_ok, PR6.kn0. kn_allx ZA. }
-  destruct (PR6.seg_sound_ax fx E R M HR HK ltac:(constructor)) as (fx' & E' & R' & M' & i & ps0 & Hnth & Hag & Hms & Hregs & Hx0 & Hrok & Hfr & Hcells & Hgr).
+  assert (HK: know_ok RSEGS E M (PR6.kn0 r)). { unfold know_ok, PR6.kn0. apply Forall_app. split; [kn_allx ZA | apply Forall_app; split; [eapply (L5AUX.aux_kn_ok RSEGS E M av r 10); [exact (ZA 32%nat) | lia | rewrite L5AUX.auxlen_val; destruct r; lia | lia | assumption | assumption | assumption | assumption | assumption] | kn_allx ZA]]. }
+  destruct (PR6.seg_sound_ax r fx E R M HR HK ltac:(constructor)) as (fx' & E' & R' & M' & i & ps0 & Hnth & Hag & Hms & Hregs & Hx0 & Hrok & Hfr & Hcells & Hgr).
   apply L5KP.nth_error_single in Hnth. subst ps0. change PR6.NX0 with 56%nat in Hag.
   exists fx', R', M'. split. exact Hms.
   split. { intros j Hj. apply (BG.kept_regs E E' R R' PR6.regs0 PR6.regs_out 56 KS_R6 KS_R6_ok HR Hag Hregs j Hj). }

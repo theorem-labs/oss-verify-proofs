@@ -32,7 +32,7 @@ Proof.
   intros segs c T H.
   induction H as [c I evs nx T i0 Hnode Hcont IH | c Hhalt | c T T' H IH Heq];
     intros allowed HH HT.
-  - destruct Hnode as [Hcomp Hsound].
+  - destruct Hnode as [Hcomp [Hsound _]].
     apply must_exit_in_at_cfg_running.
     + exact (sstep_cfg_not_halted _ _ _ _ _ (Hcomp i0)).
     + exists (evs i0), (SNext (nx i0)). apply Hcomp.

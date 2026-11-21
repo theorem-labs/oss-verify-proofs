@@ -4,10 +4,11 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names, addresses and numbers changed; 2962 of its 3089 lines of code are new or changed and 884 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/F36.v; 174 of its 302 lines of code are new or changed and 2961 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* PROVENANCE (lead condition 4). Image A = fuzz_ctrl.asan, libreac v1.9.0:
    pinned (internal path)
    sha256 aac16e1fe72899697a16d67dbff08390c1096be98a2fab183e80ce995135704d.
-   FACTS ed6b6b7b0ab, PAU pau-libreac-v190. Source: Seg/F36.v blob 242c29c887f9; callee contract
+   FACTS, PAU pau-libreac-v190. Source: Seg/F36.v blob 242c29c887f9; callee contract
    lib/A/Prog/reac_box_catalogue_match_c.v (an earlier version, blob 966accdeea1, not in this delivery) (the glue base's and a working branch's; a Theorem Labs lane's
    771ccbb8994 only appends to it, so the plain contract this file cites is the same text there).
    Tools: lib/Lib/StepF.v, lib/Lib/ExecF.v, The Rocq Prover 9.2.  rule 24: no function proved.

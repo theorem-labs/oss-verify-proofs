@@ -24,7 +24,7 @@
      description `buf:142` at frame offset 64, 512 bytes, .rodata 0x17667), a heap block, or the caller's real
      stack above this sp (parse_file's real-stack fallback, dead under the pinned use-after-return flag).
    - arodata_okP over the window RLO .. RHI: row 16's RtString.astrlen_realizes asks rt_rom_view (fuzz_command
-     lib/A/Rt/RtDefs.v:145 at origin/ossv/recipes 501c0d516c69), which AR does not give.
+     lib/A/Rt/RtDefs.v:145), which AR does not give.
    - no side-stack frame and no printf: apost_base, EV_trim = 0, post tail sa_noalloc.
    - the keep clause sa_kept (SegABase.v; fuzz_command's art_post keep clause, lib/A/Rt/RtDefs.v): every byte
      outside this call's stack window and the NUL byte is unchanged, the shadow included (apost_base's journal
@@ -40,8 +40,8 @@
    fuzz_segconf.asan's section and program headers (pin 48c5355bdacb), fuzz_command's CmdGlob.v convention.
    IMAGE-INDEPENDENT: no image module is Required; A_trim, STK_trim, RLO and RHI are parameters.
    The WALK takes these runtime entries as Section hypotheses (the interceptor lane's interface
-   provenance/evidence/interceptors/INTERFACE-A-interceptors.md (commit 7068323e2626); row 16 is in the accepted v1,
-   5e0b8a44fdc; at e45889d6935a strlen is that file's DECISION 2, option (b)):
+   provenance/evidence/interceptors/INTERFACE-A-interceptors.md; row 16 is in the accepted v1,;
+    strlen is that file's DECISION 2, option (b)):
      RtString.astrlen_realizes (row 16), at the strlen trampoline (image A 0x43a0c, interceptor 0x43abc).
    They are NOT premises of this contract: the statement does not mention them. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's munmap and grant_ok changes; the model's vDSO changes). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -142,22 +143,27 @@ Qed.
 Lemma acfg_family_off_222 : forall i, bv_unsigned (in_sysno i) = 222%Z -> injected_family_off ACFG i = true.
 Proof.
   intros i Hno. apply acfg_family_off_of_in. rewrite Hno.
-  unfold alloc_mark_sysnos. simpl. do 2 right. now left.
+  unfold alloc_mark_sysnos. simpl. repeat (first [left; reflexivity | right]).
 Qed.
 Lemma acfg_family_off_226 : forall i, bv_unsigned (in_sysno i) = 226%Z -> injected_family_off ACFG i = true.
 Proof.
   intros i Hno. apply acfg_family_off_of_in. rewrite Hno.
-  unfold alloc_mark_sysnos. simpl. do 3 right. now left.
+  unfold alloc_mark_sysnos. simpl. repeat (first [left; reflexivity | right]).
 Qed.
 Lemma acfg_family_off_216 : forall i, bv_unsigned (in_sysno i) = 216%Z -> injected_family_off ACFG i = true.
 Proof.
   intros i Hno. apply acfg_family_off_of_in. rewrite Hno.
-  unfold alloc_mark_sysnos. simpl. right. now left.
+  unfold alloc_mark_sysnos. simpl. repeat (first [left; reflexivity | right]).
 Qed.
 Lemma acfg_family_off_214 : forall i, bv_unsigned (in_sysno i) = 214%Z -> injected_family_off ACFG i = true.
 Proof.
   intros i Hno. apply acfg_family_off_of_in. rewrite Hno.
-  unfold alloc_mark_sysnos. simpl. now left.
+  unfold alloc_mark_sysnos. simpl. repeat (first [left; reflexivity | right]).
+Qed.
+Lemma acfg_family_off_215 : forall i, bv_unsigned (in_sysno i) = 215%Z -> injected_family_off ACFG i = true.
+Proof.
+  intros i Hno. apply acfg_family_off_of_in. rewrite Hno.
+  unfold alloc_mark_sysnos. simpl. repeat (first [left; reflexivity | right]).
 Qed.
 
 Lemma refusal_b_222 : forall i m r, bv_unsigned (in_sysno i) = 222%Z ->
@@ -180,6 +186,12 @@ Proof.
 Qed.
 Lemma refusal_b_214 : forall i m r, bv_unsigned (in_sysno i) = 214%Z ->
   refusal_b i m r = brk_refusal_b m (in_arg i 0) r.
+Proof.
+  intros i m r; cbv beta zeta delta [refusal_b].
+  generalize (bv_unsigned (in_sysno i)); intros ? ->; exact eq_refl.
+Qed.
+Lemma refusal_b_215 : forall i m r, bv_unsigned (in_sysno i) = 215%Z ->
+  refusal_b i m r = ret_in_errnos munmap_errnos r.
 Proof.
   intros i m r; cbv beta zeta delta [refusal_b].
   generalize (bv_unsigned (in_sysno i)); intros ? ->; exact eq_refl.
@@ -231,6 +243,9 @@ Proof.
   - eapply sstep_cfg_instr; eassumption.
   - eapply sstep_cfg_instr_fault; eassumption.
   - eapply sstep_cfg_instr_unmodeled; eassumption.
+  - eapply sstep_cfg_vdso_call; eassumption.
+  - eapply sstep_cfg_vdso_materialization_fault; eassumption.
+  - eapply sstep_cfg_vdso_unmodeled; eassumption.
 Qed.
 
 Lemma transparent_family_on : forall ms model x8,

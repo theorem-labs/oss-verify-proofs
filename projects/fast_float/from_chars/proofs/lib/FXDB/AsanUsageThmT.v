@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch draw in the start model; the channel-reader premise of INV_entry). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -99,12 +100,13 @@ Lemma PD4 : (length PDUM < path_max)%nat. Proof. cbn. unfold path_max. lia. Qed.
 Lemma PD5 : Forall (fun b => b <> Z_to_bv 8 0) PDUM. Proof. constructor; [intros Hc; apply (f_equal bv_unsigned) in Hc; vm_compute in Hc; discriminate | constructor]. Qed.
 
 (* [comment removed for export] *)
-Lemma INV_entry : forall sp brk0 mb lim inp path0 mem0 E S M,
+Lemma INV_entry : forall sp brk0 mb draw lim inp path0 mem0 E S M,
   lwf (s_next S) PV = true -> uE E PV + Z.of_nat (length path0) < 0x800000000000 ->
-  INV PV path0 [] (in_fs inp) true None mem0 E S M FSClosed (model0 sp brk0 mb lim inp).
+  in_channel_reader inp = true ->
+  INV PV path0 [] (in_fs inp) true None mem0 E S M FSClosed (model0 sp brk0 mb draw lim inp).
 Proof.
-  intros sp brk0 mb lim inp path0 mem0 E S M Hw Hb. unfold INV.
-  refine (conj Hw (conj eq_refl (conj _ (conj _ (conj _ (conj _ (conj eq_refl (conj _ (conj eq_refl (conj eq_refl I)))))))))).
+  intros sp brk0 mb draw lim inp path0 mem0 E S M Hw Hb Hrdi. unfold INV.
+  refine (conj Hw (conj eq_refl (conj _ (conj _ (conj _ (conj _ (conj eq_refl (conj _ (conj eq_refl (conj eq_refl (conj I Hrdi))))))))))).
   - intros Hc; discriminate Hc.
   - split; intros Hc; discriminate Hc.      (* [comment removed for export] *)
   - exact Hb.

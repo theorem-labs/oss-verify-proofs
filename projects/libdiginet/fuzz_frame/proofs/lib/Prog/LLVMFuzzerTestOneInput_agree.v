@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
-(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/Prog/LLVMFuzzerTestOneInput_agree.v
-   at bc49657c087aa7d6ab0af1ffb2cb67fa08b15de1; module path and this unit's two slot contracts (egress_slot_g_frame,
+(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/Prog/LLVMFuzzerTestOneInput_agree.v;
+   module path and this unit's two slot contracts (egress_slot_g_frame,
    egress_slot_cg_frame). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_egress/lib/Prog/LLVMFuzzerTestOneInput_agree.v, with its module paths changed; 8 of its 31 lines of code are new or changed and 7 lines of the source are left out. *)
-(* ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Prog/LLVMFuzzerTestOneInput_agree.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_frame; the agreement step is decode's (AgreeFrame.v ubsan_agrees_of_slots with the shape ag_shape kept_shape, whose leaf is LL 0: LLVMFuzzerTestOneInput returns 0 in both builds); ubsan_agrees_of_llvm takes the plain SR contract of LLVMFuzzerTestOneInput (Prog/Statement.v slot_sr_all, through LLVMFuzzerTestOneInput_gfr.v frame_slot_g_frame) and the crash-free UBSan one (U/Prog/Statement.v slot_sr_cf_all, through U/Prog/LLVMFuzzerTestOneInput_cgt.v frame_slot_cg_frame) as its two hypotheses; module path OSSVerify.Proofs.libdiginet.fuzz_frame.lib. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/Prog/LLVMFuzzerTestOneInput_agree.v for libdiginet/fuzz_frame; the agreement step is decode's (AgreeFrame.v ubsan_agrees_of_slots with the shape ag_shape kept_shape, whose leaf is LL 0: LLVMFuzzerTestOneInput returns 0 in both builds); ubsan_agrees_of_llvm takes the plain SR contract of LLVMFuzzerTestOneInput (Prog/Statement.v slot_sr_all, through LLVMFuzzerTestOneInput_gfr.v frame_slot_g_frame) and the crash-free UBSan one (U/Prog/Statement.v slot_sr_cf_all, through U/Prog/LLVMFuzzerTestOneInput_cgt.v frame_slot_cg_frame) as its two hypotheses; module path OSSVerify.Proofs.libdiginet.fuzz_frame.lib. *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
 From OSSVerify.libdiginet.fuzz_frame Require Statements.

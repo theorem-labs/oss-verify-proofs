@@ -1,4 +1,4 @@
-(* lib/A/Prog/strstr_wrap.v (RtStr's port, unchanged from cold/c-asan-rt-fmio-n affce6489c8), re-run over the
+(* lib/A/Prog/strstr_wrap.v (RtStr's port, unchanged), re-run over the
    local-shadow statements (FMss_strstr_wrap_c.v, FMss_strstr_c.v and the FMss_* wrappers).  Changed lines: the
    imports and module names; the two range checks (chk_ok_of_loc, the haystack's through shvis_prefix); the inner
    musl strstr's shadow premise (shvis_norm + shvis_kept, where the original used shadow_rw_norm + shadow_rw_kept;

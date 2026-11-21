@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (stk64_facts over the heap's stack floor, now sp0 - 6144512). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -356,8 +357,9 @@ Section Vwf.
     set (q := uv p v_s2 / 256) in *. set (r := uv p v_s2 mod 256) in *.
     pose proof (Z.div_mod r 4 ltac:(lia)) as D2. pose proof (Z.mod_pos_bound r 4 ltac:(lia)) as M2.
     set (q' := r / 4) in *. set (r' := r mod 4) in *.
-    assert (E : (SP p - 2 ^ 23) mod 64 = 16 * r').
-    { unfold SP. replace (32768 * uv p v_s1 + 16 * uv p v_s2 - 2 ^ 23) with (16 * r' + (512 * uv p v_s1 + 64 * q + q' - 2 ^ 17) * 64) by lia.
+    (* LPS 727298f3: the stack floor is sp0 - 6144512 (= sp0 - 64 * 96008) *)
+    assert (E : (SP p - 6144512) mod 64 = 16 * r').
+    { unfold SP. replace (32768 * uv p v_s1 + 16 * uv p v_s2 - 6144512) with (16 * r' + (512 * uv p v_s1 + 64 * q + q' - 96008) * 64) by lia.
       rewrite Z_mod_plus_full. apply Z.mod_small. lia. }
     rewrite E. unfold SP in *. clear E. clearbody q r q' r'. lia.
   Qed.

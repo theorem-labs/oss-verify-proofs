@@ -19,7 +19,7 @@
    C3 (the peak form; the image-A twin's re-fit of lib/A/W_rig_top.v, mirrored): drain's room is a prefix of the
    remaining trace's peak (top_room, W_tr_peak.v tr_peak_app), and tb_core carries gbud's peak room across the drain
    step with tr_peak_app and drain's NET change (tb_sh_pn; tb_alloc_app is gone).
-   ROUTE (b), STEP 3 (the image-A twin: a Theorem Labs lane's RIG_x round of lib/A/W_rig_top.v, commit f4cd818e98d): at the
+   ROUTE (b), STEP 3 (the image-A twin: a Theorem Labs lane's RIG_x round of lib/A/W_rig_top.v): at the
    generic Section of W_relay_instance_gone_cx.v.  THE ROOM at the drain call: gbud's room over the remaining trace
    grest i splits at the drain (tr_cost MT_rk is additive and nonnegative, tb_rk_nn), so drain gets
    rp_RM RP S (Z.to_nat (dr_cost MT_rk ..) + dr_kr ..) and its post's rp_RM RP S' dr_kr is gbud's room after the drain
@@ -27,6 +27,7 @@
    live counts move by tr_netP of drain's trace, which tr_peakP_app (lib/B/W_rr_m_dcnt.v part I0) turns into gbud's
    count bound over the rest (tb_core; tb_er_cnt / tb_sh_cnt: the count measures read the sizes only).
    Proves no function (kind: segment lemma). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

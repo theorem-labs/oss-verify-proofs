@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/simdjson/fuzz_element/lib/BA/R_strncasecmp.v, with its module paths and addresses changed; 66 of its 262 lines of code are new or changed and 473 lines of the source are left out. *)
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/Bz/A/I_scasew.v: ported from a working branch affce6489c8 proofs/omx-clap-core/fuzz_manifest/lib/B/Bz/A/I_scasew.v, which equals the A->B relocation (Theorem Labs tools) of lib/A/Bz/A/I_scasew.v at a working branch 5d8d8a15571 modulo module paths; module paths for this tree. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/Bz/A/I_scasew.v: ported from a working branch proofs/omx-clap-core/fuzz_manifest/lib/B/Bz/A/I_scasew.v, which equals the A->B relocation (Theorem Labs tools) of lib/A/Bz/A/I_scasew.v at a working branch modulo module paths; module paths for this tree. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.A.Bz Require BvWfKernel.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

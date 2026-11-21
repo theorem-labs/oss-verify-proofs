@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* [comment removed for export] *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (ent_of, ents_of and sum_stdio carry the CONFIG_RSEQ flag from find_entry into the AUX_OFF bounds; the sections take the no-kernel-mapped-segment premise; the stdio proof supplies the channel-reader premise; comments removed). *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
 From Stdlib Require Import Uint63.
@@ -21,11 +21,6 @@ Local Open Scope Z_scope.
 #[local] Arguments Uint63Axioms.to_Z : simpl never.
 #[local] Arguments Uint63Axioms.of_Z : simpl never.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Definition is_strbyte (x : xb) : option (Z * Z) :=
   match x with
   | BF [(v, c)] o O =>
@@ -51,7 +46,6 @@ Proof.
   symmetry. apply of_to_Z.
 Qed.
 
-(* [comment removed for export] *)
 Lemma strbyte_val (ρ : valuation) (k j : Z) (y : byte) :
   xb_z ρ (BF [(strvar k j, 1)] w_zero 0) (bv_unsigned y) -> y = Z_to_bv 8 (ρ (strvar k j)).
 Proof.
@@ -62,7 +56,6 @@ Proof.
   rewrite Z.rem_mul_r by lia. rewrite Z.mul_comm, Z.mod_add by lia. apply Z.mod_mod. lia.
 Qed.
 
-(* [comment removed for export] *)
 Fixpoint take_run (k j : Z) (n : nat) (l : list piece) : option (list piece) :=
   match n with
   | O => Some l
@@ -94,7 +87,6 @@ Proof.
     rewrite <- seq_shift, map_map. apply map_ext. intros i. f_equal. f_equal. f_equal. lia.
 Qed.
 
-(* [comment removed for export] *)
 Definition try_run (s : store) (l : list piece) : option (Z * list piece) :=
   match l with
   | PB x :: _ =>
@@ -137,7 +129,6 @@ Proof.
     intros j n Et Hn. specialize (G _ _ _ _ Et). lia.
 Qed.
 
-(* [comment removed for export] *)
 Fixpoint norm (s : store) (fuel : nat) (l : list piece) : list piece :=
   match fuel with
   | O => l
@@ -160,15 +151,9 @@ Proof.
     + destruct Hv as (o1 & -> & Hr). exists o1. split; [reflexivity | exact (IH r o1 Hr)].
 Qed.
 
-(* [comment removed for export] *)
 Definition with_out (am : amodel) (o : list piece) : amodel :=
   AM (am_maps am) (am_brk0 am) (am_brk am) (am_tid am) (am_shadow am) (am_next am) (am_atop am) o (am_exp am) (am_fd am).
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Lemma le8_word (bs : list byte) : length bs = 8%nat -> word_to_le_bytes 8 (load_word SZ8 false bs) = bs.
 Proof.
   intros Hl. unfold load_word, le_bytes_to_word. unfold word_to_le_bytes.
@@ -178,7 +163,6 @@ Proof.
   rewrite <- Hl. apply Z_to_le_bytes_lez.
 Qed.
 
-(* [comment removed for export] *)
 Inductive ioent : Type := EL (l : list xb) | ES (k : Z).
 
 Definition e_pieces (e : ioent) : list piece := match e with EL l => map PB l | ES k => [PS k] end.
@@ -194,7 +178,7 @@ Proof.
   induction 1 as [|x b l bs Hx _ IH]; cbn [map pieces_val]; [reflexivity|]. exists b, bs. split; [reflexivity|]. split; [exact Hx | exact IH].
 Qed.
 
-Lemma dec_str_argv (ρ : valuation) (k : Z) : eb_facts ρ -> 0 <= k < ρ v_argc -> dec_str k ρ = nth (Z.to_nat k) (dec_argv ρ) [].
+Lemma dec_str_argv {r : bool} (ρ : valuation) (k : Z) : eb_facts r ρ -> 0 <= k < ρ v_argc -> dec_str k ρ = nth (Z.to_nat k) (dec_argv ρ) [].
 Proof.
   intros HF Hk. pose proof HF as (Hargc & _ & Hstr & _). destruct (Hstr k Hk) as [Hl _].
   unfold dec_str, dec_argv, dec_strs.
@@ -206,8 +190,12 @@ Qed.
 Section Ent.
 Variable segs : list Segment.
 Hypothesis Hlow : segs_low segs.
+(* NEW, as in AxDisp's Main section: no_lazy_imgn gained this discriminant
+   (AxSum.v:251) when segments_reserved began filtering seg_kernel_map
+   (LPS@75d69e00 Run.v:253-254).  It reaches
+   ent_of_sound below, so EntS and StdioSound carry it too. *)
+Hypothesis Hnk : forallb (fun s => negb (seg_kernel_map s)) segs = true.
 
-(* [comment removed for export] *)
 Definition ent_words (s : store) (A : list region) (viov : xv) (i : Z) : option (xv * xv) :=
   match a_load4 segs s A (xv_off viov (16 * i)) 8, a_load4 segs s A (xv_off viov (16 * i + 8)) 8 with
   | Some l1, Some l2 => Some (val_of_bytes s SZ8 false l1, val_of_bytes s SZ8 false l2)
@@ -231,15 +219,13 @@ Proof.
   split; apply val_of_bytes_sound; first [exact Hs | assumption | (rewrite (Forall2_length HF1); exact L1) | (rewrite (Forall2_length HF2); exact L2)].
 Qed.
 
-(* [comment removed for export] *)
 Definition buf_ok (s : store) (am : amodel) (iovf : lin) (cnt : Z) (tb : terms) (ob : w64) (L : Z) : bool :=
   let bf := (wS ob, tb) in
   rbetween 2 s bf 0 (140737488355328 - L)
   &&& (rprove 2 s (lsub iovf bf) L ||| rprove 2 s (lsub bf iovf) (16 * cnt))
   &&& ((L =? 0) ||| rprove 2 s (lsub bf (am_atop am)) 0 ||| (match tb with [] => in_segn segs (wS ob) L | _ => false end)).
 
-(* [comment removed for export] *)
-Definition ent_of (s : store) (A : list region) (am : amodel) (iovf : lin) (cnt : Z) (vb vn : xv) : option ioent :=
+Definition ent_of (r : bool) (s : store) (A : list region) (am : amodel) (iovf : lin) (cnt : Z) (vb vn : xv) : option ioent :=
   match vn with
   | XL w =>
       let L := wZ w in
@@ -251,7 +237,7 @@ Definition ent_of (s : store) (A : list region) (am : amodel) (iovf : lin) (cnt 
       | None => None
       end
   | XS tn on =>
-      match str_k s vb with
+      match str_k r s vb with
       | Some k =>
           if teqb tn (t_len k) &&& (wZ on =? 0) then Some (ES k)
           else (* [comment removed for export] *)
@@ -262,23 +248,49 @@ Definition ent_of (s : store) (A : list region) (am : amodel) (iovf : lin) (cnt 
   | _ => None
   end.
 
-(* [comment removed for export] *)
 Definition ent_good (ρ : valuation) (s : store) (m : word -> option byte) (model : Model) (iovp cnt : Z) (e : ioent) (b n : word) (bs : list byte) : Prop :=
   rdn segs m b (word_to_nat n) = Some bs /\ bv_unsigned b + bv_unsigned n <= TASK_SIZE
   /\ (bv_unsigned b + bv_unsigned n <= iovp \/ iovp + 16 * cnt <= bv_unsigned b)
   /\ no_lazy model (bv_unsigned b) (bv_unsigned b + bv_unsigned n)
   /\ pieces_val ρ (e_pieces e) bs /\ bv_unsigned n = leval ρ (e_len e) /\ e_lo s e <= bv_unsigned n <= 131071.
 
+(* The rseq port reached ent_of's BODY and this lemma's PROOF but not its STATEMENT:
+   `r` stood in `ent_of r s A am ...` below with no binder for it anywhere -- "The
+   reference r was not found in the current environment", :257 chars 45-46, this
+   tree's sole error (bignum reports the same at :260,
+   the line numbers differing only by this file's comment drift).  The hypothesis
+   `find_entry A = Some ph` is the other half of it: find_entry returns
+   `option (bool * PhdrInfo)` at this revision (AxZZ.v:36), so `Some ph` no longer
+   types.  Binding `(r : bool)` and writing `Some (r, ph)` is the type-correct
+   restatement of the SAME claim under the new return type -- the hypothesis still
+   says exactly "this entry is the one find_entry finds", with its flag now named
+   rather than discarded, and the conclusion is untouched.  Nothing is weakened: the
+   proof below already reads `r` in eb_of_R, eb_rel_facts, eb_layout, str_k and
+   ent_of, so it was written against this statement and only the binder was lost. *)
 Lemma ent_of_sound (fs0 : Fs.Fs) (ρ : valuation) (s : store) (A : list region) (am : amodel) (m : word -> option byte) (model : Model)
-    (ph : PhdrInfo) (o : w64) (cnt : Z) (vb vn : xv) (b n : word) (e : ioent) :
-  sat ρ s -> RMem segs ρ A m -> hs_ok ρ A m -> MR segs fs0 ρ am model -> find_entry A = Some ph -> atop_is_sp am = true ->
+    (r : bool) (ph : PhdrInfo) (o : w64) (cnt : Z) (vb vn : xv) (b n : word) (e : ioent) :
+  sat ρ s -> RMem segs ρ A m -> hs_ok ρ A m -> MR segs fs0 ρ am model -> find_entry A = Some (r, ph) -> atop_is_sp am = true ->
   - 8388608 <= wS o -> wS o + 16 * cnt <= 0 -> 0 <= cnt ->
-  xv_val ρ vb b -> xv_val ρ vn n -> ent_of s A am (wS o, sp_terms) cnt vb vn = Some e ->
+  xv_val ρ vb b -> xv_val ρ vn n -> ent_of r s A am (wS o, sp_terms) cnt vb vn = Some e ->
   exists bs, ent_good ρ s m model (sp_val ρ + wS o) cnt e b n bs.
 Proof.
   intros Hs HM Hhs Hmod Efe Eat Ho1 Ho2 Hcnt Hvb Hvn H.
-  destruct (eb_of_R segs ρ A m ph HM Efe) as [nR Heb]. pose proof (eb_rel_facts ph ρ _ _ _ Heb) as HF.
-  pose proof (eb_layout ρ HF) as (Hs1 & Hargc & Henvc & Hl0 & Hq0 & Hq1 & Hs2). unfold sp_window_lo, sp_window_hi in *.
+  destruct (eb_of_R segs ρ A m r ph HM Efe) as [nR Heb]. pose proof (eb_rel_facts r ph ρ _ _ _ Heb) as HF.
+  pose proof (eb_layout r ρ HF) as (Hs1 & Hargc & Henvc & Hl0 & Hq0 & Hq1 & Hs2). unfold sp_window_lo, sp_window_hi in *.
+  (* Hlk's third conjunct below is `sp_val ρ <= str_addr r ρ k`, and this file states
+     it with AUX_OFF on the RIGHT only -- unlike AxSumChr's, which reads
+     `sp_val ρ + AUX_OFF r <= str_addr r ρ k` and lets the atom cancel.  Here it does
+     not cancel, so the goal is `0 <= AUX_OFF r + 8*argc + 8*envc + g` and needs BOTH
+     signs, not just v_g's: "Tactic failure: Cannot find witness" at :323 chars 66-69,
+     the k = 0 bracket, this round's sole error here (measured on the farm,
+     the other two trees reporting the same).  AUX_OFF is a
+     Definition and therefore an atom (AsanWEbLoad.v:33).  Atom sign rather than
+     unfold: Hlk, Hsa and Hba all speak in the folded AUX_OFF and are rewritten with
+     below.  Shape as AxSumLibc.v:366-369. *)
+  assert (HA0 : 0 <= AUX_OFF r) by (unfold AUX_OFF; lia).
+  assert (Hg0 : 0 <= ρ v_g).
+  { pose proof (facts_g r ph ρ HF). pose proof (facts_par r ph ρ HF).
+    pose proof (Z.mod_pos_bound (ρ v_argc + ρ v_envc + 1) 2 ltac:(lia)). lia. }
   pose proof (atop_is_sp_sound segs fs0 ρ _ _ Hmod Eat) as Hatop.
   unfold ent_of in H. destruct vn as [w|tn on| | | |]; try discriminate.
   - (* [comment removed for export] *)
@@ -297,7 +309,7 @@ Proof.
       - apply (no_lazy_above segs fs0 ρ am model _ _ Hmod). pose proof (rprove_sound ρ s 2 _ _ Hs Enl) as Y. rewrite leval_lsub in Y.
         rewrite (mr_atop segs fs0 ρ _ _ Hmod). lia.
       - destruct tb; [|discriminate]. rewrite Hvn. replace (bv_unsigned b) with (wS ob) by (rewrite Hbv; unfold leval; cbn [fst snd teval]; lia).
-        exact (no_lazy_imgn segs Hlow model _ _ (mr_res segs fs0 ρ _ _ Hmod) (mr_lazy_res segs fs0 ρ _ _ Hmod) Enl). }
+        exact (no_lazy_imgn segs Hlow Hnk model _ _ (mr_res segs fs0 ρ _ _ Hmod) (mr_lazy_res segs fs0 ρ _ _ Hmod) Enl). }
     destruct (wZ w =? 0) eqn:E0.
     + injection H as <-. apply Z.eqb_eq in E0. exists []. unfold ent_good, word_to_nat. rewrite Hvn, E0 in *. cbn [e_pieces e_len e_lo map length pieces_val].
       unfold TASK_SIZE, leval. cbn [fst snd teval Z.of_nat]. repeat split; first [reflexivity | lia | assumption | idtac].
@@ -309,8 +321,8 @@ Proof.
       exists bs. unfold ent_good, word_to_nat. rewrite Hvn. cbn [e_pieces e_len e_lo]. unfold TASK_SIZE, leval. cbn [fst snd teval].
       split; [exact Hrd|]. split; [lia|]. split; [rewrite Hvn in Hdj; exact Hdj|]. split; [rewrite Hvn in Hnl; exact Hnl|].
       split; [exact (pieces_PB ρ l bs HF2)|]. lia.
-  - (* [comment removed for export] *)
-    destruct (str_k s vb) as [k|] eqn:Ek; [|discriminate].
+  -
+    destruct (str_k r s vb) as [k|] eqn:Ek; [|discriminate].
     assert (Hx : e = ES k /\ exists on', wZ on' = 0 /\ bv_unsigned n = smod ρ (t_len k) on').
     { cbn [xv_val] in Hvn. destruct (teqb tn (t_len k) &&& (wZ on =? 0)) eqn:E1.
       - injection H as <-. apply land_true in E1 as [Etn Eon]. apply teqb_eq in Etn. apply Z.eqb_eq in Eon. subst tn.
@@ -321,13 +333,13 @@ Proof.
     destruct Hx as [-> [on' [Eon Hvn']]]. clear H Hvn.
     destruct (str_k_sound ρ s vb b k Hs HF Hvb Ek) as [Hk Hba].
     destruct (eb_argvk segs ph ρ m nR k Heb Hk) as [[Hrd Hnf] Hlen]. set (bs := nth (Z.to_nat k) (dec_argv ρ) []) in *.
-    assert (Hlk : 0 <= ρ (lenvar k) <= 131071 /\ str_addr ρ k + ρ (lenvar k) + 1 <= sp_val ρ + 184 + 8 * ρ v_argc + 8 * ρ v_envc + 8 * ρ v_q
-                  /\ sp_val ρ <= str_addr ρ k /\ 0 <= k < ρ v_argc).
+    assert (Hlk : 0 <= ρ (lenvar k) <= 131071 /\ str_addr r ρ k + ρ (lenvar k) + 1 <= sp_val ρ + AUX_OFF r + 8 * ρ v_argc + 8 * ρ v_envc + ρ v_g + ρ v_ta
+                  /\ sp_val ρ <= str_addr r ρ k /\ 0 <= k < ρ v_argc).
     { unfold str_addr. destruct Hk as [->|[-> H2]]; cbn [Z.eqb]; [lia|]. destruct (Hq1 H2) as [Hl1 Hq1']. lia. }
     destruct Hlk as (Hlk0 & Hlk1 & Hlk2 & Hlk3).
     assert (Hn : bv_unsigned n = ρ (lenvar k)).
     { rewrite Hvn'. unfold smod, t_len. cbn [teval]. rewrite Eon. rewrite Z.mod_small by (unfold FastWord.two64; lia). lia. }
-    assert (Eb : b = Z_to_bv 64 (str_addr ρ k)) by (apply word_lit_w; exact Hba).
+    assert (Eb : b = Z_to_bv 64 (str_addr r ρ k)) by (apply word_lit_w; exact Hba).
     exists bs. unfold ent_good, word_to_nat. rewrite Hn, Hba. cbn [e_pieces e_len e_lo]. unfold TASK_SIZE.
     split.
     { rewrite Eb. pose proof (rdn_firstn' segs m _ _ _ (length bs) Hrd ltac:(lia)) as X.
@@ -343,11 +355,6 @@ Qed.
 
 End Ent.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Definition sw_code_ok (segs : list Segment) (b sr : Z) : bool :=
   words_ok_f segs b SW_WORDS &&& words_ok_f segs sr SR_WORDS &&& jal_ok_f segs b 0x8c 1 sr &&& jal_ok_f segs b 0x114 1 sr.
 
@@ -361,7 +368,6 @@ Proof.
   exact (swcode_ck segs b sr HW HR HJ1 HJ2 Hbnd).
 Qed.
 
-(* [comment removed for export] *)
 Definition fd2_ok (segs : list Segment) (mem : list region) (f : Z) : bool :=
   match a_load segs mem (XL (wofZ (f + 120))) 4 with
   | Some l => match all_lit l with
@@ -390,15 +396,18 @@ Proof.
   rewrite (G y0 _ X0), (G y1 _ X1), (G y2 _ X2), (G y3 _ X3). reflexivity.
 Qed.
 
-(* [comment removed for export] *)
-Definition ents_of (segs : list Segment) (s : store) (A : list region) (am : amodel) (iovf : lin) (viov : xv) (cnt : Z) : option (list ioent) :=
+Definition ents_of (r : bool) (segs : list Segment) (s : store) (A : list region) (am : amodel) (iovf : lin) (viov : xv) (cnt : Z) : option (list ioent) :=
   match ent_words segs s A viov 0 with
   | Some (vb, vn) =>
-      match ent_of segs s A am iovf cnt vb vn with
+      (* `ent_of segs s A am ...` WAS the call: ent_of gained `(r : bool)` after the
+         Section's discharged `segs` (its definition above), and ents_of carries the
+         flag as its own first parameter, so the argument was simply dropped here and
+         at the second call below.  Same correction, both calls. *)
+      match ent_of segs r s A am iovf cnt vb vn with
       | Some e0 =>
           if cnt =? 1 then Some [e0] else
           match ent_words segs s A viov 1 with
-          | Some (vb1, vn1) => match ent_of segs s A am iovf cnt vb1 vn1 with Some e1 => Some [e0; e1] | None => None end
+          | Some (vb1, vn1) => match ent_of segs r s A am iovf cnt vb1 vn1 with Some e1 => Some [e0; e1] | None => None end
           | None => None
           end
       | None => None
@@ -406,7 +415,6 @@ Definition ents_of (segs : list Segment) (s : store) (A : list region) (am : amo
   | None => None
   end.
 
-(* [comment removed for export] *)
 Definition total_of (es : list ioent) : option lin :=
   match es with
   | [e] => Some (e_len e)
@@ -441,7 +449,6 @@ Proof.
     rewrite H1. replace (teval ρ t + c) with (c + teval ρ t) by ring. apply Z.mod_small. unfold FastWord.two64. lia.
 Qed.
 
-(* [comment removed for export] *)
 Lemma CLOB_nz (r : reg) : In r CLOB -> bv_unsigned r <> 0.
 Proof.
   unfold CLOB. cbn [In]. intros H. repeat (destruct H as [<-|H]; [vm_compute; discriminate|]). destruct H.
@@ -453,12 +460,12 @@ Definition sum_stdio (T : img_tabs) (segs : list Segment) (A : AST) : option (li
   let regs := a_regs A in
   match sw_params T b, xlit (aget regs 17%uint63), xlit (aget regs 10%uint63), aget regs 11%uint63,
         xlit (aget regs 12%uint63), xlit (aget regs 18%uint63), xlit (aget regs 9%uint63), find_entry (a_mem A) with
-  | Some sr, Some a7, Some fd, XS ts o, Some cnt, Some cnt', Some f, Some ph =>
+  | Some sr, Some a7, Some fd, XS ts o, Some cnt, Some cnt', Some f, Some (r, ph) =>
       if sw_code_ok segs b sr &&& (a7 =? 66) &&& (fd =? 2) &&& teqb ts sp_terms &&& (- 8388608 <=? wS o) &&& (wS o + 16 * cnt <=? 0)
          &&& ((cnt =? 1) ||| (cnt =? 2)) &&& (cnt' =? cnt) &&& xv_eqb (aget regs 19%uint63) (aget regs 11%uint63)
          &&& atop_is_sp (a_model A) &&& (0 <=? f) &&& in_segn segs (f + 120) 4 &&& fd2_ok segs (a_mem A) f
          &&& pc_ok (wofZ (b + 0x94)) then
-        match ents_of segs s (a_mem A) (a_model A) (wS o, sp_terms) (XS ts o) cnt with
+        match ents_of r segs s (a_mem A) (a_model A) (wS o, sp_terms) (XS ts o) cnt with
         | Some es =>
             match total_of es with
             | Some Tt =>
@@ -479,11 +486,6 @@ Definition sum_stdio (T : img_tabs) (segs : list Segment) (A : AST) : option (li
   | _, _, _, _, _, _, _, _ => None
   end.
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-
-(* [comment removed for export] *)
 Lemma R_out (segs : list Segment) (LIM : Z) (fs0 : Fs.Fs) (ρ : valuation) (A : AST) (c : config) (o : list piece) :
   R segs amodel (MR segs fs0 ρ) LIM ρ A c ->
   R segs amodel (MR segs fs0 ρ) LIM ρ (AS (a_pc A) (a_regs A) (a_resv A) (a_mem A) (a_facts A) (with_out (a_model A) o) (a_budget A) (a_steps A)) c.
@@ -496,12 +498,20 @@ Qed.
 Section EntS.
 Variable segs : list Segment.
 Hypothesis Hlow : segs_low segs.
+(* NEW: ent_of_sound is discharged out of Section Ent with Hnk after Hlow, so
+   ents_of_sound's two calls to it below need one here. *)
+Hypothesis Hnk : forallb (fun s => negb (seg_kernel_map s)) segs = true.
 
+(* Same statement-level defect as ent_of_sound's and the same cure: `r` stood in
+   `ents_of r segs s A am ...` below unbound, and `find_entry A = Some ph` no longer
+   types against find_entry's `option (bool * PhdrInfo)` (AxZZ.v:36).  The
+   restatement binds the flag and names it in the hypothesis; the conclusion is
+   untouched and the proof below was already written for a bound `r`. *)
 Lemma ents_of_sound (fs0 : Fs.Fs) (ρ : valuation) (s : store) (A : list region) (am : amodel) (m : word -> option byte) (model : Model)
-    (ph : PhdrInfo) (o : w64) (cnt : Z) (es : list ioent) :
-  sat ρ s -> RMem segs ρ A m -> hs_ok ρ A m -> MR segs fs0 ρ am model -> find_entry A = Some ph -> atop_is_sp am = true ->
+    (r : bool) (ph : PhdrInfo) (o : w64) (cnt : Z) (es : list ioent) :
+  sat ρ s -> RMem segs ρ A m -> hs_ok ρ A m -> MR segs fs0 ρ am model -> find_entry A = Some (r, ph) -> atop_is_sp am = true ->
   - 8388608 <= wS o -> wS o + 16 * cnt <= 0 -> cnt = 1 \/ cnt = 2 ->
-  ents_of segs s A am (wS o, sp_terms) (XS sp_terms o) cnt = Some es ->
+  ents_of r segs s A am (wS o, sp_terms) (XS sp_terms o) cnt = Some es ->
   exists (ents : list (word * word)) (bss : list (list byte)),
     Z.of_nat (length ents) = cnt /\ iov_array segs m (Z_to_bv 64 (sp_val ρ + wS o)) ents /\ iov_bufs segs m ents bss /\ iov_bufs_ok ents
     /\ bufs_disj (sp_val ρ + wS o) (sp_val ρ + wS o + 16 * cnt) ents /\ iov_nl model ents
@@ -510,8 +520,16 @@ Lemma ents_of_sound (fs0 : Fs.Fs) (ρ : valuation) (s : store) (A : list region)
     /\ fold_right (fun e acc => e_lo s e + acc) 0 es <= iovs_total ents <= 262142.
 Proof.
   intros Hs HM Hhs Hmod Efe Eat Ho1 Ho2 Hcnt H.
-  destruct (eb_of_R segs ρ A m ph HM Efe) as [nR Heb]. pose proof (eb_rel_facts ph ρ _ _ _ Heb) as HF.
-  pose proof (eb_layout ρ HF) as (Hs1 & Hargc & Henvc & Hl0 & Hq0 & _ & Hs2). unfold sp_window_lo, sp_window_hi in *.
+  destruct (eb_of_R segs ρ A m r ph HM Efe) as [nR Heb]. pose proof (eb_rel_facts r ph ρ _ _ _ Heb) as HF.
+  pose proof (eb_layout r ρ HF) as (Hs1 & Hargc & Henvc & Hl0 & Hq0 & _ & Hs2). unfold sp_window_lo, sp_window_hi in *.
+  (* Hiov below bounds `iovp = sp_val ρ + wS o` above, and Hs2 is the only upper
+     bound on sp_val there, so it needs the same two summand signs as :279 -- the
+     sibling of the measured :323, found by sweeping this file's three eb_layout
+     sites rather than waiting for a round to name it. *)
+  assert (HA0 : 0 <= AUX_OFF r) by (unfold AUX_OFF; lia).
+  assert (Hg0 : 0 <= ρ v_g).
+  { pose proof (facts_g r ph ρ HF). pose proof (facts_par r ph ρ HF).
+    pose proof (Z.mod_pos_bound (ρ v_argc + ρ v_envc + 1) 2 ltac:(lia)). lia. }
   set (iovp := sp_val ρ + wS o) in *.
   assert (Hiov : 0 <= iovp /\ iovp + 32 < 2 ^ 64) by (unfold iovp; lia).
   assert (Hu : bv_unsigned (Z_to_bv 64 iovp) = iovp) by (apply u_wz; lia).
@@ -521,10 +539,10 @@ Proof.
   assert (Hx : xaddr (XS sp_terms o) <> None) by discriminate.
   unfold ents_of in H.
   destruct (ent_words segs s A (XS sp_terms o) 0) as [[vb vn]|] eqn:Ew0; [|discriminate].
-  destruct (ent_of segs s A am (wS o, sp_terms) cnt vb vn) as [e0|] eqn:Ee0; [|discriminate].
+  destruct (ent_of segs r s A am (wS o, sp_terms) cnt vb vn) as [e0|] eqn:Ee0; [|discriminate].
   destruct (ent_words_sound segs Hlow ρ s A m _ _ 0 vb vn Hs HM Hhs Hv Hx Ew0) as (b0 & n0 & Hrb0 & Hrn0 & Hvb0 & Hvn0).
   rewrite Hu in Hrb0, Hrn0. replace (iovp + 16 * 0) with iovp in Hrb0 by lia. replace (iovp + (16 * 0 + 8)) with (iovp + 8) in Hrn0 by lia.
-  destruct (ent_of_sound segs Hlow fs0 ρ s A am m model ph o cnt vb vn b0 n0 e0 Hs HM Hhs Hmod Efe Eat Ho1 Ho2 ltac:(lia) Hvb0 Hvn0 Ee0)
+  destruct (ent_of_sound segs Hlow Hnk fs0 ρ s A am m model r ph o cnt vb vn b0 n0 e0 Hs HM Hhs Hmod Efe Eat Ho1 Ho2 ltac:(lia) Hvb0 Hvn0 Ee0)
     as (bs0 & G1 & G2 & G3 & G4 & G5 & G6 & G7). fold iovp in G3.
   destruct (cnt =? 1) eqn:Ec.
   - injection H as <-. apply Z.eqb_eq in Ec. exists [(b0, n0)], [bs0].
@@ -532,10 +550,10 @@ Proof.
     repeat split; first [assumption | lia | idtac].
   - apply Z.eqb_neq in Ec. assert (Ec2 : cnt = 2) by lia.
     destruct (ent_words segs s A (XS sp_terms o) 1) as [[vb1 vn1]|] eqn:Ew1; [|discriminate].
-    destruct (ent_of segs s A am (wS o, sp_terms) cnt vb1 vn1) as [e1|] eqn:Ee1; [|discriminate]. injection H as <-.
+    destruct (ent_of segs r s A am (wS o, sp_terms) cnt vb1 vn1) as [e1|] eqn:Ee1; [|discriminate]. injection H as <-.
     destruct (ent_words_sound segs Hlow ρ s A m _ _ 1 vb1 vn1 Hs HM Hhs Hv Hx Ew1) as (b1 & n1 & Hrb1 & Hrn1 & Hvb1 & Hvn1).
     rewrite Hu in Hrb1, Hrn1. replace (iovp + 16 * 1) with (iovp + 16) in Hrb1 by lia. replace (iovp + (16 * 1 + 8)) with (iovp + 16 + 8) in Hrn1 by lia.
-    destruct (ent_of_sound segs Hlow fs0 ρ s A am m model ph o cnt vb1 vn1 b1 n1 e1 Hs HM Hhs Hmod Efe Eat Ho1 Ho2 ltac:(lia) Hvb1 Hvn1 Ee1)
+    destruct (ent_of_sound segs Hlow Hnk fs0 ρ s A am m model r ph o cnt vb1 vn1 b1 n1 e1 Hs HM Hhs Hmod Efe Eat Ho1 Ho2 ltac:(lia) Hvb1 Hvn1 Ee1)
       as (bs1 & K1 & K2 & K3 & K4 & K5 & K6 & K7). fold iovp in K3.
     assert (Hu16 : bv_unsigned (Z_to_bv 64 (iovp + 16)) = iovp + 16) by (apply u_wz; lia).
     exists [(b0, n0); (b1, n1)], [bs0; bs1].
@@ -560,11 +578,13 @@ Variable LIM : Z.
 Variable fs0 : Fs.Fs.
 Variable KT : valuation -> list byte -> TSet.
 Hypothesis Hlow : segs_low segs.
+(* NEW: both for no_lazy_imgn at :694 below and for ents_of_sound, which Section
+   EntS discharges with Hnk after Hlow. *)
+Hypothesis Hnk : forallb (fun s => negb (seg_kernel_map s)) segs = true.
 Hypothesis KT_emit : forall ρ o bs, KT ρ (o ++ bs) [] -> t_eq (KT ρ o) (t_emit (W 2 bs) (KT ρ (o ++ bs))).
 
 Notation Snd := (Sound segs cfg LIM (MR segs fs0) KT).
 
-(* [comment removed for export] *)
 Lemma stdio_succ_R (ρ : valuation) (A : AST) (ms ms' : machine_state) (model : Model) (b : Z) (o : w64) (n : nat) (mem' : list region)
     (out : list piece) :
   R segs amodel (MR segs fs0 ρ) LIM ρ A (mkCfg ms model) ->
@@ -624,7 +644,7 @@ Proof.
   destruct (xlit (aget (a_regs A) 12%uint63)) as [cnt|] eqn:E12; [|discriminate].
   destruct (xlit (aget (a_regs A) 18%uint63)) as [cnt'|] eqn:E18; [|discriminate].
   destruct (xlit (aget (a_regs A) 9%uint63)) as [f|] eqn:E9; [|discriminate].
-  destruct (find_entry (a_mem A)) as [ph|] eqn:Efe; [|discriminate].
+  destruct (find_entry (a_mem A)) as [[r ph]|] eqn:Efe; [|discriminate].
   destruct (sw_code_ok segs (wZ (a_pc A) - 0x88) sr) eqn:Hcode; [|discriminate].
   destruct (sw_code_sound segs _ sr (sw_params_bnd T HT _ _ Ep) Hcode) as (wj1 & wj2 & ij1 & ij2 & HSW).
   destruct (a7 =? 66) eqn:Ea7; [|discriminate]. apply Z.eqb_eq in Ea7. subst a7.
@@ -640,7 +660,7 @@ Proof.
   destruct (in_segn segs (f + 120) 4) eqn:Efs; [|discriminate].
   destruct (fd2_ok segs (a_mem A) f) eqn:Efd2; [|discriminate].
   destruct (pc_ok (wofZ (wZ (a_pc A) - 0x88 + 0x94))) eqn:Epc; [|discriminate].
-  destruct (ents_of segs (a_facts A) (a_mem A) (a_model A) (wS o, sp_terms) (XS sp_terms o) cnt) as [es|] eqn:Ees; [|discriminate].
+  destruct (ents_of r segs (a_facts A) (a_mem A) (a_model A) (wS o, sp_terms) (XS sp_terms o) cnt) as [es|] eqn:Ees; [|discriminate].
   destruct (total_of es) as [Tt|] eqn:ET; [|discriminate].
   destruct (total_is (aget (a_regs A) 22%uint63) Tt) eqn:Eti; [|discriminate].
   destruct (1 <=? fold_right (fun e acc => e_lo (a_facts A) e + acc) 0 es) eqn:Elo; [|discriminate]. apply Z.leb_le in Elo.
@@ -649,8 +669,15 @@ Proof.
   assert (Hcnt : cnt = 1 \/ cnt = 2) by (apply lor_true in Ecnt as [X|X]; apply Z.eqb_eq in X; [left | right]; exact X).
   pose proof HR as [Hpc Hal0 Hsvc Hregs Hres Hrom Hmem Hmod Hh Hb Hsat Hhs Hcov Hcomp Hnaok]. cbn [cfg_ms cfg_model] in *.
   set (b := wZ (a_pc A) - 0x88) in *.
-  destruct (eb_of_R segs ρ (a_mem A) (ms_mem ms) ph Hmem Efe) as [nR Heb]. pose proof (eb_rel_facts ph ρ _ _ _ Heb) as HF.
-  pose proof (eb_layout ρ HF) as (Hs1 & Hargc & Henvc & Hl0 & Hq0 & _ & Hs2).
+  destruct (eb_of_R segs ρ (a_mem A) (ms_mem ms) r ph Hmem Efe) as [nR Heb]. pose proof (eb_rel_facts r ph ρ _ _ _ Heb) as HF.
+  pose proof (eb_layout r ρ HF) as (Hs1 & Hargc & Henvc & Hl0 & Hq0 & _ & Hs2).
+  (* Hsp below is `sp_window_lo <= sp_val ρ <= sp_window_hi`, whose upper half comes
+     from Hs2 and so needs the same two summand signs again.  Third and last
+     eb_layout site in this file. *)
+  assert (HA0 : 0 <= AUX_OFF r) by (unfold AUX_OFF; lia).
+  assert (Hg0 : 0 <= ρ v_g).
+  { pose proof (facts_g r ph ρ HF). pose proof (facts_par r ph ρ HF).
+    pose proof (Z.mod_pos_bound (ρ v_argc + ρ v_envc + 1) 2 ltac:(lia)). lia. }
   assert (Hsp : sp_window_lo <= sp_val ρ <= sp_window_hi) by (unfold sp_window_lo, sp_window_hi in *; lia).
   unfold sp_window_lo, sp_window_hi in Hs1, Hs2.
   pose proof (atop_is_sp_sound segs fs0 ρ _ _ Hmod Eat) as Hatop.
@@ -659,7 +686,7 @@ Proof.
   assert (Hv : xv_val ρ (XS sp_terms o) (Z_to_bv 64 iovp)).
   { cbn [xv_val]. rewrite Hu. unfold smod. change (teval ρ sp_terms) with (sp_val ρ). rewrite <- (wS_mod o), Zplus_mod_idemp_r.
     symmetry. apply Z.mod_small. unfold FastWord.two64, iovp in *. lia. }
-  destruct (ents_of_sound segs Hlow fs0 ρ (a_facts A) (a_mem A) (a_model A) (ms_mem ms) model ph o cnt es Hsat Hmem Hhs Hmod Efe Eat Eo1 Eo2 Hcnt Ees)
+  destruct (ents_of_sound segs Hlow Hnk fs0 ρ (a_facts A) (a_mem A) (a_model A) (ms_mem ms) model r ph o cnt es Hsat Hmem Hhs Hmod Efe Eat Eo1 Eo2 Hcnt Ees)
     as (ents & bss & Hlen & Harr & Hbufs & Hbok & Hdisj & Hnlb & Hpv & Htot & Htlo). fold iovp in Harr, Hdisj.
   rewrite <- (total_of_val ρ es Tt ET) in Htot.
   assert (Hn16 : Z.of_nat (Z.to_nat (16 * cnt)) = 16 * cnt) by lia.
@@ -668,16 +695,20 @@ Proof.
   assert (Hb0 : 0 <= b).
   { destruct HSW as [_ _ _ _ _ _ _ _ _ _ X]. lia. }
   destruct (in_segn_low segs (f + 120) 4 Hlow Efs) as [Hf1 Hf2]. unfold ls_beg in Hf2.
-  (* [comment removed for export] *)
   assert (G : forall (r : reg) (k : int) (z : Z), ri r = k -> xlit (aget (a_regs A) k) = Some z -> rg ms r = Z_to_bv 64 z).
-  { intros r k z Hk E. apply word_lit_w. exact (reg_lit ρ _ ms r k z Hregs Hk E). }
+  (* `intros r k z` WAS here: the rseq flag `r` from Efe (:646) is in context, so Coq
+     refuses -- "r is already used", :698 chars 11-12
+     (measured on the farm).  The forall binder on the line above may keep
+     its own `r`, since a binder in a TYPE may shadow; only the intro clashes.  `r0`
+     is the spelling the other register intros in these files already use.  Swept
+     from here to the end of the file: :718's `intros r _` is the one sibling. *)
+  { intros r0 k z Hk E. apply word_lit_w. exact (reg_lit ρ _ ms r0 k z Hregs Hk E). }
   assert (H11 : rg ms 11%bv = Z_to_bv 64 iovp).
   { apply word_lit_w. change 11%uint63 with (ri 11%bv) in E11. rewrite <- Hu. pose proof (Hregs 11%bv) as X. rewrite E11 in X. cbn [xv_val] in *. lia. }
   assert (H19 : rg ms 19%bv = Z_to_bv 64 iovp).
   { apply word_lit_w. rewrite <- Hu. pose proof (Hregs 19%bv) as X. change (ri 19%bv) with 19%uint63 in X. rewrite E19 in X. cbn [xv_val] in *. lia. }
   assert (H22 : rg ms 22%bv = Z_to_bv 64 (iovs_total ents)).
   { apply word_lit_w. rewrite Htot. apply (total_is_sound ρ _ _ Tt (Hregs 22%bv) Eti). rewrite <- Htot. lia. }
-  (* [comment removed for export] *)
   set (bsout := concat bss) in *.
   set (out := am_out (a_model A) ++ concat (map e_pieces es)) in *.
   assert (Hout : pieces_val ρ (norm (a_facts A) (length out) out) (o' ++ bsout)).
@@ -688,11 +719,10 @@ Proof.
   { intros ms' HF' Hpc'. refine (HS B (or_introl eq_refl) ρ (mkCfg ms' model) _ (o' ++ bsout) Hout).
     apply (stdio_succ_R ρ A ms ms' model b o (Z.to_nat (16 * cnt)) mem' _ HR Hsp Eat Eo1 ltac:(lia) Hnn Est Epc Hb94); [|exact Hpc'].
     fold iovp. rewrite Hn16. exact HF'. }
-  (* [comment removed for export] *)
   assert (Hne : KT ρ (o' ++ bsout) []).
   { apply (realizes_cfg_nonempty segs cfg (mkCfg (setx ms 0%bv w0 (pcw b 0x94) (ms_resv ms) (ms_mem ms)) model)). apply HB; [|reflexivity].
     constructor; cbn [setx ms_svc_pending ms_rom ms_fregs ms_fcsr ms_resv ms_mem];
-      first [apply mem_grows_refl | reflexivity | (left; reflexivity) | (intros r _; apply rg_setx_x0) | (intros x _; reflexivity)]. }
+      first [apply mem_grows_refl | reflexivity | (left; reflexivity) | (intros r0 _; apply rg_setx_x0) | (intros x _; reflexivity)]. }
   apply (rzc_conseq segs cfg _ (t_emit (W 2 bsout) (KT ρ (o' ++ bsout)))); [|apply t_eq_sym; exact (KT_emit ρ o' bsout Hne)].
   destruct (a_store_sound segs ρ (a_mem A) mem' (ms_mem ms) _ _ (repeat BT (Z.to_nat (16 * cnt))) (repeat (Z_to_bv 8 0) (Z.to_nat (16 * cnt))) Hmem Hv
               ltac:(rewrite repeat_length; exact Hnn) (Forall2_BT ρ _) Est) as [Hok _].
@@ -701,6 +731,10 @@ Proof.
            ms model (KT ρ (o' ++ bsout)) 2 f iovp ents bss Hsvc Hrom).
   - rewrite Hpc. unfold wbv, pcw. f_equal. unfold b. lia.
   - exact Hh.
+  (* NEW: stdio_write_loop's reader premise, in the slot right after m_halted.  It comes
+     from the model relation's new mr_rdr field (AxModelRel.v:99), the same route the
+     fd_lookup bullet below takes through mr_fds. *)
+  - exact (mr_rdr segs fs0 ρ _ model Hmod).
   - exact (G 17%bv 17%uint63 66 eq_refl E17).
   - exact (G 10%bv 10%uint63 2 eq_refl E10).
   - exact H11.
@@ -726,7 +760,7 @@ Proof.
   - rewrite Hlen. exact Hdisj.
   - apply (no_lazy_above segs fs0 ρ _ model _ _ Hmod). rewrite Hatop. unfold iovp. lia.
   - replace (f + 124) with (f + 120 + 4) by lia.
-    exact (no_lazy_imgn segs Hlow model _ _ (mr_res segs fs0 ρ _ _ Hmod) (mr_lazy_res segs fs0 ρ _ _ Hmod) Efs).
+    exact (no_lazy_imgn segs Hlow Hnk model _ _ (mr_res segs fs0 ρ _ _ Hmod) (mr_lazy_res segs fs0 ρ _ _ Hmod) Efs).
   - exact Hnlb.
   - intros ms' HF' Hpc' _ _. rewrite Hlen in HF'. exact (HB ms' HF' Hpc').
 Qed.

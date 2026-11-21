@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/Prog/reac_headamp_prop_parse.v at 499fa61524e
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/Prog/reac_headamp_prop_parse.v
    (reac_headamp_prop_parse_of_result: the wrapper's two steps, then the result contract at R = 0), restated for the
    contracts of lib/A/HPgCSpec.v (hd_parse_result_specX, hd_parse_specX) and this engine: the two steps by SRr_step
    on the image's words, the journal carried over the materialized model (YCbq.v ajournal_materialize), the lemma

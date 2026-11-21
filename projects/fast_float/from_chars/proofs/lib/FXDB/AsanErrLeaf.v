@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader conjunct of FxChMain.INV; the s_next step over add_fact proved by FxChMain.add_fact_next in place of a conversion over TCT). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -151,7 +152,7 @@ Proof. LiaFast.lf_pins (fun (Hoff Hfs Hp1 Hp2 Hp3 Hp4 Hp5 : LiaFast.U) => LiaFas
   pose proof (den_conv_cT model0 mem0 E ms model Hd HF) as Hd1.
   assert (Hi1 : INV PV path0 data0 fs0 false (Some H0) mem0 E TCT MMAIN FSClosed model0)
     by exact (INV_same PV path0 data0 fs0 false (Some H0) mem0 E T0T TCT MMAIN FSClosed model0 Hi TC_next).
-  assert (Hn : forall f, s_next (add_fact TCT f) = s_next TCT) by reflexivity.
+  assert (Hn : forall f, s_next (add_fact TCT f) = s_next TCT) by (intros f; apply add_fact_next).
   pose proof (u_range E LPATH) as RL.
   destruct (Z_le_gt_dec (bv_unsigned (lden E LPATH)) 63) as [Hle|Hgt].
   - apply (co_realizesT CCH_ABT TC_ABT SH_CANNOT [] c_res_ab_nilT model0 mem0 E ms model).
@@ -201,7 +202,7 @@ Hypothesis Hp5 : Forall (fun b => b <> Z_to_bv 8 0) path0.
   HA3 (sarg path0 argv0) E MMAIN (snd AC0T) mem0.
 Proof. LiaFast.lf_pins (fun (Hp4 Hp5 : LiaFast.U) => LiaFast.u0).
   intros model0 mem0 E S Hi.
-  destruct Hi as (Hpv & Hfsw & Hfr & (Hm0a & Hm0b) & Hlen & Hlk & Hfs0 & Hfds & Hc1 & Hc2 & Hdv).
+  destruct Hi as (Hpv & Hfsw & Hfr & (Hm0a & Hm0b) & Hlen & Hlk & Hfs0 & Hfds & Hc1 & Hc2 & Hdv & _).
   cbn [hv_inv] in Hdv. destruct Hdv as (_ & _ & _ & H17).
   assert (HL : uE E LPATH = Z.of_nat (length path0)).
   { unfold uE, LPATH, hvar. rewrite lden_lvar. exact H17. }
@@ -234,7 +235,7 @@ Proof. LiaFast.lf_pins (fun (Hoff Hfs Hp1 Hp2 Hp3 Hp4 Hp5 : LiaFast.U) => LiaFas
   rewrite TERR_TCT in Hd, Hi, HX, Hw.
   destruct HX as [_ HAa].
   pose proof (ha3_of_inv model0 mem0 E TCT Hi) as H3.
-  assert (Hn : forall f, s_next (add_fact TCT f) = s_next TCT) by reflexivity.
+  assert (Hn : forall f, s_next (add_fact TCT f) = s_next TCT) by (intros f; apply add_fact_next).
   pose proof (u_range E LPATH) as RL.
   destruct (Z_le_gt_dec (bv_unsigned (lden E LPATH)) 63) as [Hle|Hgt].
   - apply (co_realizesT cfg Hoff Hfs path0 data0 fs0 argv0 Hp1 Hp2 Hp3 Hp4 Hp5 CCH_ABT TC_ABT SH_CANNOT [] c_res_ab_nilT model0 mem0 E ms model).

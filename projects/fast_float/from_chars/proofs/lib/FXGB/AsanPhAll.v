@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader conjunct of FxChMain.INV). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase MemImageType RiscvSemantics State Run Specs Fs.
@@ -56,7 +57,7 @@ Definition cont_okR := cont_ok ASEGS cfg LIM PV path0 data0 fs0 argv0 false (Som
 #[using="Type"] Lemma inv_len1 : forall mem0 E S M FS model0, INV PV path0 data0 fs0 false (Some H0) mem0 E S M FS model0 ->
   bv_unsigned (E (dvar H0 16)) = flen data0.
 Proof. LiaFast.lf_pins LiaFast.u0.
-  intros mem0 E S M FS model0 Hi. destruct Hi as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & Hdv).
+  intros mem0 E S M FS model0 Hi. destruct Hi as (_ & _ & _ & _ & _ & _ & _ & _ & _ & _ & Hdv & _).
   unfold hv_inv in Hdv. destruct Hdv as (_ & _ & HL & _). exact HL.
 Qed.
 #[using="Type"] Lemma flen_min : flen data0 = Z.min (Z.of_nat (length data0)) GHI.

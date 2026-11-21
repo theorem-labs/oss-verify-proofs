@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap can be refused). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -73,6 +74,7 @@ Inductive plan : Type :=
 | PMmapIn (kkept kok kdestroyed : plan)      (* [comment removed for export] *)
 | PMprotect (krefused kgranted : plan)       (* [comment removed for export] *)
 | PBrk2 (kblocked kgranted : plan)           (* [comment removed for export] *)
+| PMunmap2 (krefused kgranted : plan)        (** munmap of exactly one tracked entry: -ENOMEM child / cut child *)
 | PX (x : xnode) (args : list expr) (k : plan)   (* [comment removed for export] *)
 | PLib (k : plan)                             (* [comment removed for export] *)
 | PExt (id : nat) (args : list expr) (k : plan)  (* [comment removed for export] *)
@@ -124,7 +126,7 @@ Inductive plan : Type :=
 
 Definition node_sys (y : snode) (cs : acs) : option acs :=
   match y with
-  | YMunmap => node_munmap A cs
+  | YMunmap => None   (** munmap can be refused (-ENOMEM) at LPS 08b1429: the exact-entry munmap is [PMunmap2] *)
   | YBrk => node_brk1 A cs
   | YSetTid => node_settid nx0 cs
   end.
@@ -330,6 +332,20 @@ Fixpoint check (fuel : nat) (lc : option loopctx) (cs : acs) (p : plan) {struct 
             match check f csa ka with
             | COk sa => match check f csb kb with
                         | COk sb => if shape_eqv sa sb then COk sa else CErr 6 p cs   (* [comment removed for export] *)
+                        | err => err
+                        end
+            | err => err
+            end
+        | None => CErr 3 p cs
+        end
+      else CErr 2 p cs
+  | PMunmap2 ka kb =>
+      if is_ecall_at segs cs then
+        match node_munmap2 A cs with
+        | Some (csa, csb) =>
+            match check f csa ka with
+            | COk sa => match check f csb kb with
+                        | COk sb => COk (salt2 sa sb)   (** LPS 727298f3: as [PMmap]; a refused child may spin (no output) *)
                         | err => err
                         end
             | err => err

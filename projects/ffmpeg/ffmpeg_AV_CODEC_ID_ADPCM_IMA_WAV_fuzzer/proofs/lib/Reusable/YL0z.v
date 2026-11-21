@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YL0z.v, with its module paths changed. *)
 (* Modified by Trevor Hansen, 2026-11: copied from projects/zlib/checksum_fuzzer/proofs/lib/Reusable/YL0z.v for ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack anchoring over the launch's ProcInput; src0_postX and anch_lp without the argv strings, which the launch environment now reads from the ProcInput). *)
 From OSSVerify.Proofs.ffmpeg.ffmpeg_AV_CODEC_ID_ADPCM_IMA_WAV_fuzzer.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -43,8 +44,10 @@ Variable API : AllocAPI src0_msyms.
 Hypothesis AX : AllocExtra src0_msyms (aa_MR API).
 Hypothesis LIBX : lib_contract_x_all src0_msyms API LIBPC RA_LIB EMPTY LIB_STACK.
 Hypothesis FRM : frm_zero fp_csr.
-Variables (sp tid : word) (a0 path : list byte) (inp : ProcInput) (data : list byte) (rnd : EntryDraw).
-Hypothesis HSA0 : forall G, anchored_atoms G = anchored_atoms RD_facts -> stack_anchored (E_main sp [a0; path] (in_envp inp) tid rnd) G.
+(* [E_main] and [E_lp] read the entry strings from [inp] at 727298f3, so [a0] and [path] are
+   no longer variables here; as libdiginet/fuzz_decode's copy of this file. *)
+Variables (sp tid : word) (inp : ProcInput) (data : list byte) (rnd : EntryDraw).
+Hypothesis HSA0 : forall G, anchored_atoms G = anchored_atoms RD_facts -> stack_anchored (E_main sp inp tid rnd) G.
 Variable RBD : rbound.
 Hypothesis ROOMX : room_calls (payload_len data) (calls data) RBD.
 Hypothesis Hvfs : valid_fs (in_fs inp).
@@ -170,7 +173,7 @@ exact (src0_overrun_tail API AX inp data cap0 L' A' b0 Hub Hcap0 HW HB Hid E ms2
 Qed.
 Theorem src0_postX : forall K : dleaf * astate -> TSet,
 (forall r, t_eq (K r) (leaf_shapeX data (in_fs inp) r)) ->
-POST API sp tid a0 path inp data rnd (fun r => res_ok (snd r) RBD) K.
+POST API sp tid inp data rnd (fun r => res_ok (snd r) RBD) K.
 Proof.
 intros K HK. unfold POST. cbv zeta beta.
 intros cap' bufp' A' Lc' J' g' len0 w ms' md' HLc Hcap Hlen0 Hub HW HB Hid HS Hw HL0 HMR Hmd0 HD HJ HG HL.
@@ -189,7 +192,7 @@ apply u64_of_Z. lia.
 - rewrite ew_ewset_other by lia. unfold E_lp. rewrite ew_ewset_other, ew_ewset_same by lia.
 apply u64_of_Z. unfold dlen in HLc. lia. }
 assert (HAN : hdr_anch E).
-{ intros G HGa. subst E. apply (anch_lp sp tid a0 path inp data rnd HSA0 J' (ptr_addr Lc' bufp') g' (Z.of_nat (length data)) cap' _ G); [| exact HGa].
+{ intros G HGa. subst E. apply (anch_lp sp tid inp data rnd HSA0 J' (ptr_addr Lc' bufp') g' (Z.of_nat (length data)) cap' _ G); [| exact HGa].
 apply (ext29_ewset data); [lia | apply ext29_refl]. }
 drv_run_with src0tbl_ok HS HF.
 lazymatch type of HS with st_ok _ _ _ ?msx => change (st_ok src0segs E ss_h0 msx) in HS end.

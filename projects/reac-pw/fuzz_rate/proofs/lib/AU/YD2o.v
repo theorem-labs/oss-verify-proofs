@@ -1,15 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made for libreac/fuzz_knock from proofs/cgif/cgif_file_fuzzer/lib/A/AD2o.v and AD2p.v at
-   c8557374ad2e. This file is knock's closing assembly of lib/A/KnockClose.v's parts (rule 24: no function proved; kind:
+   theorem-labs/oss-verify-proofs@6b32741d849a. This file is knock's closing assembly of lib/A/KnockClose.v's parts (rule 24: no function proved; kind:
    assembly): it instantiates KnockClose's asan Section at closed parts, so fuzz_knock's two ASan statements rest on no
    Section hypothesis. cgif's AD2o keeps three program-walk hypotheses that its AD2p discharges; knock's program contract
    (lib/A/APgLib.v knock_lib_x_all) takes none, so the closing is one file and there is no AD2p. *)
-(* Modified by Theorem Labs, 2026-10: taken for reac-pw/fuzz_qdisc image A from proofs/libreac/fuzz_knock/lib/A/AD2o.v at
-   origin/ossv/recipes 6ebe35ba632: it instantiates lib/A/QdiscClose.v's asan Section; the program contract is
+(* Modified by Theorem Labs, 2026-10: taken for reac-pw/fuzz_qdisc image A from proofs/libreac/fuzz_knock/lib/A/AD2o.v:
+   it instantiates lib/A/QdiscClose.v's asan Section; the program contract is
    lib/A/QPgLib.v's (qdisc_lib_contract_x_all_tfib over qdisc_lib_x_all, in the roles of APgLib's knock_* ); the
    allocator parts are lib/A/QdiscAllocClose.v's; names knock_* -> qdisc_*, module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_qdisc/lib/A/AD2o.v at 56ce9edaafc, for reac-pw/fuzz_role image A: it
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_qdisc/lib/A/AD2o.v, for reac-pw/fuzz_role image A: it
    instantiates lib/A/RoleClose.v's asan Section (its trace tables from ACej / ACejTfib); the driver is the relocated
    core's float-state-slot driver (libreac/fuzz_grant's lib/A/AD1p.v tfib_drv_main at P := a zero rounding mode, as
    fuzz_grant's lib/A/AD1q.v:107-142 tfib_srealizesXF and libreac/fuzz_boxreg's lib/A/Prog/BoxCore.v apply it), since
@@ -17,18 +17,19 @@
    (role_lib_contract_x_all_tfib over role_lib_x_all, whose free / malloc premises the adapter feeds, as
    libreac/fuzz_ctrl's lib/A/ACtlAll.v:110-111 feeds its walk top's); the allocator parts are lib/A/RoleAllocClose.v's;
    names qdisc_* -> role_*, module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/AD2o.v at fa745625e7df, for reac-pw/fuzz_rate image A: it
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/AD2o.v, for reac-pw/fuzz_rate image A: it
    instantiates lib/A/RateClose.v's asan Section; the program contract is lib/A/RtPgLib.v's (rate_lib_contract_x_all_tfib
    over rate_lib_x_all; fuzz_rate's entry function also changes the float registers and allocates three blocks); the
    allocator parts are lib/A/RateAllocClose.v's; names role_* -> rate_*, module paths changed; in the second
    Modified-by line above, a space now stands between `knock_*` and `)`, so that the comment does not end there. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the start-up hand-off states computed in the build); internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.reac_pw.fuzz_rate Require Statements.
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib Require AgreeRate.
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.Reusable Require Import YK11 YK0o YG00 YG01 YG0f YG0d YC5d YCbp YM05.
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.Reusable Require YG0q.
-From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.AU Require YB1v YB01 YB12 YB1n YCej YCejTfib YD2l YD2m YD1k YD1o YD1l YD1j YD1p YCfn.
+From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.AU Require YB1v YB01 YB01r YB12 YB1n YCej YCejTfib YD2l YD2m YD1k YD1o YD1l YD1j YD1p YCfn.
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.AU Require RtPgLibB RtPgLinkB.
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.AU Require YRateAllocClose.
 From OSSVerify.Proofs.reac_pw.fuzz_rate.lib.A Require RateAsanTop RateClose.
@@ -50,7 +51,7 @@ Lemma rate_driver_TfibB_U : forall rc : YM05.RunCeil,
   (forall fx : YK11.FPState, @aintrin_realizes fx rc segs B OCpy (pc_wrap_memcpy (as_code B))) ->
   universe_ok (as_universe B) ->
   (forall t, In t YCejTfib.Tfib_drv_traces -> In t (as_universe B)) ->
-  RateClose.drv_mainU YB01.HS_tfib YB12.TFIB rc.
+  RateClose.drv_mainU YB01r.HS_tfib_r YB12.TFIB rc.
 Proof.
   intros rc AM AF AI _ _.
   exact (@YD1p.tfib_drv_main rc RateAsanTop.rate_shape (fun fx : YK11.FPState => frm_zero (@fp_csr fx)) fp_frm_zero_fx0
@@ -73,7 +74,7 @@ Qed.
 
 Theorem ASAN_UBSAN_T_closed : RateAsanTop.ASAN_UBSAN_T.
 Proof.
-  exact (RateClose.ASAN_UBSAN_T_of_parts YB01.HS_tfib YB12.TFIB YB1n.tfib_startup_T1 B
+  exact (RateClose.ASAN_UBSAN_T_of_parts YB01r.HS_tfib_r YB12.TFIB YB1n.tfib_startup_T1 B
     YRateAllocClose.rate_amalloc_closed_U YRateAllocClose.rate_afree_closed_U YRateAllocClose.rate_aicpy_closed_U
     YCej.Tfib_universe YCej.Tfib_universe_ok eq_refl YCejTfib.Tfib_drv_traces YCejTfib.Tfib_universe_drv
     rate_driver_TfibB_U).

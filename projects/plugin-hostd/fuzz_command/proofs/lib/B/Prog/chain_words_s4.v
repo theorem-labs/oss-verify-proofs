@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: segment S4 of the walk of chain_words (0x8da84) on the ASan+UBSan build of
    plugin-hostd/fuzz_command (interface chain_words_d.v), the B twin of lib/A/Prog/chain_words_s4.v
-   (a working branch 5e2cdad423e): from the cut KD (0x8dd44, every word parsed) through
+   (a working branch): from the cut KD (0x8dd44, every word parsed) through
    `lw a0,52(s1); ld a2,24(s1); addiw a2,a2,-2; mv a1,s6; jal sup_chain` (0x8dd54) and, after the call,
    `j 0x8dd74; mv s4,a0; ld s3,16(s1); ld s6,8(s1)` to the join KJ (0x8dd80). sup_chain's post is apost_baseF (it
    reaches the sprintf and snprintf wrappers), so the call goes through the kit's cl_callS_wideF and
@@ -11,6 +11,7 @@
    is in this walk's own class-3 frame (sup_chain's afobj arm); sup_chain writes g_rec, record.spill and the
    recorder's blocks, the walk's own footprint cw_FP. The helpers it shares with segment S5 are in
    chain_words_s5.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

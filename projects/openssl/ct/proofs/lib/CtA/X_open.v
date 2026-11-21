@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the reservation a system-call return clears; the writev channel-reader flag; the TASK_SIZE bound of openat). *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.openssl.ct.lib.CtLib Require Import ImageCtA.
 (* [comment removed for export] *)
@@ -22,7 +23,7 @@ Import ListNotations.
 Open Scope Z_scope.
 
 Lemma nretA_MSsvc : forall R F pc x8 fc rv m ro r,
-  nretA (MSsvc R F pc x8 fc rv m ro) (mkEffect r [] []) = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4)%bv fc rv m ro.
+  nretA (MSsvc R F pc x8 fc rv m ro) (mkEffect r [] []) = MS (bvmap_set 10 r R) F (pc + Z_to_bv 64 4)%bv fc None m ro.
 Proof. reflexivity. Qed.
 
 Lemma pc_93368 : (Z_to_bv 64 0x52c18c + Z_to_bv 64 4)%bv = Z_to_bv 64 0x52c190.
@@ -78,10 +79,16 @@ Proof using AF.
     split; [reflexivity|]. split; [reflexivity|]. split; [vm_compute; reflexivity|]. split; [exact HNZ|]. split; [exact HSL|].
     split; [exact HDD|]. split; [reflexivity|].
     change (areg msA 11) with (Z_to_bv 64 path). pose proof (bytes_at_bound ctasegs m1 path _ HB1) as BB.
-    rewrite unsigned_lit by (rewrite length_app in BB; cbn [length] in BB; lia). exact HB1.
-  - intros mo (HAR & HF & HFS). split; [exact HFS|]. split; [split; [exact HAR| split; assumption]|].
+    rewrite unsigned_lit by (rewrite length_app in BB; cbn [length] in BB; lia).
+    (* LPS 08b1429: [open_at]'s TASK_SIZE bound ([read_cstr_aux] refuses a byte at or above it):
+       the path's bytes are readable, so they lie below [UTOP] ([Mem.bytes_at_below]) *)
+    split; [|exact HB1].
+    pose proof (bytes_at_below _ m path _ MI0 HB
+                  ltac:(intros E; apply (f_equal (@length byte)) in E; rewrite length_app in E; cbn [length] in E; lia)) as BU.
+    rewrite length_app in BU. cbn [length] in BU. unfold UTOP in BU. lia.
+  - intros mo (HAR & HF & HFS & HRD). split; [exact HFS|]. split; [split; [exact HAR| exact (conj HF (conj HFS HRD))]|].
     rewrite HF. split; [exact HFREE|]. split; [reflexivity|].
-    split; [apply (af_with_fds RT AF); exact HAR| split; [reflexivity| exact HFS]].
+    split; [apply (af_with_fds RT AF); exact HAR| split; [reflexivity| split; [exact HFS| exact HRD]]].
   - (* [comment removed for export] *)
     intros c2 (e & He & Hc2). pose proof (openat_errnos_range e He) as HeR.
     assert (EQ : nretA msA (efferr e) = MS (mkR (Z_to_bv 64 0x51ff20) (Z_to_bv 64 (usp + -96)) gp (Z_to_bv 64 0xba93f0) (Z_to_bv 64 path)
@@ -194,8 +201,14 @@ Proof using AF.
     split; [reflexivity|]. split; [reflexivity|]. split; [vm_compute; reflexivity|]. split; [exact HNZ|]. split; [exact HSL|].
     split; [exact HDD|]. split; [reflexivity|].
     change (areg msA 11) with (Z_to_bv 64 path). pose proof (bytes_at_bound ctasegs m1 path _ HB1) as BB.
-    rewrite unsigned_lit by (rewrite length_app in BB; cbn [length] in BB; lia). exact HB1.
-  - intros mo (HAR & HF & HFS). split; [exact HFS| split; [exact HAR| split; assumption]].
+    rewrite unsigned_lit by (rewrite length_app in BB; cbn [length] in BB; lia).
+    (* LPS 08b1429: [open_at]'s TASK_SIZE bound ([read_cstr_aux] refuses a byte at or above it):
+       the path's bytes are readable, so they lie below [UTOP] ([Mem.bytes_at_below]) *)
+    split; [|exact HB1].
+    pose proof (bytes_at_below _ m path _ MI0 HB
+                  ltac:(intros E; apply (f_equal (@length byte)) in E; rewrite length_app in E; cbn [length] in E; lia)) as BU.
+    rewrite length_app in BU. cbn [length] in BU. unfold UTOP in BU. lia.
+  - intros mo (HAR & HF & HFS & HRD). split; [exact HFS| split; [exact HAR| exact (conj HF (conj HFS HRD))]].
   - intros c2 (e & HeR & Hc2).
     assert (EQ : nretA msA (efferr e) = MS (mkR (Z_to_bv 64 0x51ff20) (Z_to_bv 64 (usp + -96)) gp (Z_to_bv 64 0xba93f0) (Z_to_bv 64 path)
                    t1 t2 (Z_to_bv 64 0) (Z_to_bv 64 SSP_GUARD) (Z_to_bv 64 (- e)) (Z_to_bv 64 path) (Z_to_bv 64 0x8000) (Z_to_bv 64 0)

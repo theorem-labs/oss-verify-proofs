@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC1f.v for libreac/fuzz_disco's program walk, taken from libreac/fuzz_grant's copy (lib/A/Prog/GrantPaLib.v, 3ac49e35db5): the listing's names are dsym, PALib names fuzz_disco.asan's objects (the shadow-base GOT slot is object 1 and its cell object 66, the side-stack flag's GOT slot object 0 and its cell object 67) and the wrappers' 4-byte jumps (free and malloc), and the image range is IMG_LO..IMG_TOP (YImgTop), so the last step of blk_off_imgP unfolds IMG_LO and IMG_TOP; module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC1f.v for libreac/fuzz_disco's program walk, taken from libreac/fuzz_grant's copy (lib/A/Prog/GrantPaLib.v): the listing's names are dsym, PALib names fuzz_disco.asan's objects (the shadow-base GOT slot is object 1 and its cell object 66, the side-stack flag's GOT slot object 0 and its cell object 67) and the wrappers' 4-byte jumps (free and malloc), and the image range is IMG_LO..IMG_TOP (YImgTop), so the last step of blk_off_imgP unfolds IMG_LO and IMG_TOP; module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/AE30.v, with its module paths changed; 29 of its 61 lines of code are new or changed and 1526 lines of the source are left out. *)
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfMck.v (a working branch 3e35620c52e); relocated to libreac/fuzz_disco.asan-ubsan by reloc.py (target disco-Y): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan-ubsan, symbol + offset; its relocation table is not kept); one bound kept by hand (numerals.py BY_HAND, reason in its BY_HAND row in provenance/evidence/g9-gxa/g9tool/numerals.py); names: A-core -> Y-core (lib.Reusable): AB1v->YB1v, AB1w->YB1w, AE20->YE20, AE2y->YE2y, AE34->YE34, AF0l->YF0l, AF0m->YF0m, AF0x->YF0x. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfMck.v (a working branch); relocated to libreac/fuzz_disco.asan-ubsan by reloc.py (target disco-Y): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan-ubsan, symbol + offset; its relocation table is not kept); one bound kept by hand (numerals.py BY_HAND, reason in its BY_HAND row in provenance/evidence/g9-gxa/g9tool/numerals.py); names: A-core -> Y-core (lib.Reusable): AB1v->YB1v, AB1w->YB1w, AE20->YE20, AE2y->YE2y, AE34->YE34, AF0l->YF0l, AF0m->YF0m, AF0x->YF0x. *)
 (* ARU entry facts for the ports of the donor's memcpy and memset interceptor proofs (FMsnprintfMc*.v, FMsnprintfMs*.v): the
-   fields of ecall_preU (proofs/omx-clap-core/fuzz_manifest/lib/A/FMupoison.v (a working branch 3e35620c52e)) on the real memory, and the interceptors' constant regions
+   fields of ecall_preU (proofs/omx-clap-core/fuzz_manifest/lib/A/FMupoison.v (a working branch)) on the real memory, and the interceptors' constant regions
    (A/AE2y.v icpt_rodata_ok) on the real memory. The stack window and the image cells are not user-poisoned shadow
    bytes, so `unpoison U mem` reads them as `mem`. *)
 From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require YZ00.

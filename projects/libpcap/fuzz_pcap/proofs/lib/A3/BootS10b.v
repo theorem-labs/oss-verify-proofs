@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: in both copies, EB and VB take mbase, rg_block_na matches the four-argument EB, and the boot chain's fresh-variable indices, ledger entries and environment lengths move up by 16 (brk's 101 now 117, L30_maps, the budget10 lists, ev_last's 16 + k now 32 + k). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -37,8 +38,8 @@ Section Theorems.
   Let usp := bv_unsigned sp.
 
   #[local] Notation bootS' := (bootS sp brk mbase draw lim inp).
-  #[local] Notation EB' := (EB sp draw inp).
-  #[local] Notation VB' := (VB sp draw inp).
+  #[local] Notation EB' := (EB sp mbase draw inp).
+  #[local] Notation VB' := (VB sp mbase draw inp).
   #[local] Notation at_E20' := (at_E20 sp brk mbase draw lim inp).
 
   #[using="brk mbase draw inp VI VE"] Lemma SA16b : usp mod 16 = 0. Proof. exact (SA16 sp brk mbase draw inp VI VE). Qed.
@@ -56,7 +57,7 @@ Section Theorems.
   #[using="VI VE usp"] Lemma budget10 : forall a tid c pl js p8 sb p10 p12 p15 (W : Z) sr kn (L : ledger) pre R M mdl, 2 ^ 25 <= lim ->
     l_maps L = pre ++ l_maps L20 ->
     bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js sr kn L (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl ->
-    ev (EB' a tid c pl js) 28 = p8 -> ev (EB' a tid c pl js) 38 = p12 ->
+    ev (EB' a tid c pl js) 44 = p8 -> ev (EB' a tid c pl js) 54 = p12 ->
     15450112 + 16384 + A_bytes (A10' sb p12 a W) <= lim.
   Proof.
     intros a tid c pl js p8 sb p10 p12 p15 W sr kn L pre R M mdl Hlim HLm HB E28 E38.
@@ -74,32 +75,32 @@ Section Theorems.
   (* [comment removed for export] *)
   #[using="VI VE usp"] Theorem s10_e20 : forall a tid c pl js p8 sb p10 p12 p15 R M mdl K (W : Z), 2 ^ 25 <= lim -> length js = 86%nat ->
     bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SR_E20 KN_E20 L30 (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl ->
-    ev (EB' a tid c pl js) 28 = p8 -> ev (EB' a tid c pl js) 38 = p12 -> ev (EB' a tid c pl js) 101 = brk ->
+    ev (EB' a tid c pl js) 44 = p8 -> ev (EB' a tid c pl js) 54 = p12 -> ev (EB' a tid c pl js) 117 = brk ->
     (* [comment removed for export] *)
     (forall R' mdl', bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRk0 KN_E20 L30 (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R' M mdl' ->
        srealizes SEGS (mkCfg (mkst R' (Z_to_bv 64 (A_brk_ecall1 + 4)) M ROM) mdl') K) ->
     (* [comment removed for export] *)
-    (forall R' mdl', bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRg0 KNg0 (lbrk L30 101 8192) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15)
+    (forall R' mdl', bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRg0 KNg0 (lbrk L30 117 8192) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15)
                        R' (zfill brk (Z_to_bv 64 8192) M) mdl' ->
        (forall x : word, bv_unsigned brk <= bv_unsigned x < bv_unsigned brk + 8192 -> H10' p8 sb p10 p12 a W x = false) ->
        srealizes SEGS (mkCfg (mkst R' (Z_to_bv 64 (A_brk_ecall1 + 4)) (zfill brk (Z_to_bv 64 8192) M) ROM) mdl') K) ->
     srealizes SEGS (mkCfg (mkst R (Z_to_bv 64 A_brk_ecall1) M ROM) mdl) K.
   Proof.
     intros a tid c pl js p8 sb p10 p12 p15 R M mdl K W Hlim Hjs HB E28 E38 E101 HKK HKG.
-    assert (LEN : length (VB' a tid c pl js) = 102%nat) by (rewrite length_VB, Hjs; reflexivity).
-    pose proof (budget10 a tid c pl js p8 sb p10 p12 p15 W _ _ L30 [(EVar 83, 11571200); (EVar 60, 4096); (EVar 46, 4096)] R M mdl Hlim eq_refl HB E28 E38) as BUD.
+    assert (LEN : length (VB' a tid c pl js) = 118%nat) by (rewrite length_VB, Hjs; reflexivity).
+    pose proof (budget10 a tid c pl js p8 sb p10 p12 p15 W _ _ L30 [(EVar 99, 11571200); (EVar 76, 4096); (EVar 62, 4096)] R M mdl Hlim eq_refl HB E28 E38) as BUD.
     assert (Bb : Z_to_bv 64 (bv_unsigned brk + l_brk L30) = brk).
     { apply bv_eq. change (l_brk L30) with 0. rewrite Z.add_0_r, Z_to_bv_bv_unsigned. reflexivity. }
     pose proof (bs_brk_grow sp brk mbase draw lim inp VI VE (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SR_E20 KN_E20 L30 (hc6 p8 p10) (LZ30 sp p8 sb p10 p15)
-                  101%nat 4096 8192 A_brk_ecall1 ECALLW R M mdl K HB fetch_brk_ecall1 is_ecall_ECALLW) as X.
+                  117%nat 4096 8192 A_brk_ecall1 ECALLW R M mdl K HB fetch_brk_ecall1 is_ecall_ECALLW) as X.
     cbv zeta in X. rewrite Bb in X. apply X; clear X.
     - unfold A_brk_ecall1; clear; lia.
     - unfold A_brk_ecall1; clear; lia.
     - vmeq_refl.
     - exact E101.
     - rewrite LEN. clear. lia.
-    - replace (sr_get SR_E20 10%bv) with (EAlu ALU_ADD (EVar 101) (ELit 8192)) by (vmeq_refl).
-      cbn [edenot]. change (ev (EB sp draw inp a tid c pl js) 101) with (ev (EB' a tid c pl js) 101). rewrite E101.
+    - replace (sr_get SR_E20 10%bv) with (EAlu ALU_ADD (EVar 117) (ELit 8192)) by (vmeq_refl).
+      cbn [edenot]. change (ev (EB sp mbase draw inp a tid c pl js) 117) with (ev (EB' a tid c pl js) 117). rewrite E101.
       apply bv_eq. rewrite u_add64. reflexivity.
     - change (l_brk L30) with 0. clear; lia.
     - reflexivity.
@@ -111,7 +112,7 @@ Section Theorems.
     - change (l_eager L30) with 15450112. clear - BUD. lia.
     - intros R' mdl' _ HB'. apply (HKK R' mdl'). exact HB'.
     - intros R' mdl' _ HB' Hvis. apply (HKG R' mdl'); [|exact Hvis].
-      unfold kn_brk_grant in HB'. rewrite DS_E20_std in HB'. fold (kn_brk_grant_d DS_E20 101 4096 8192 KN_E20) in HB'. rewrite KNg0_eq in HB'. exact HB'.
+      unfold kn_brk_grant in HB'. rewrite DS_E20_std in HB'. fold (kn_brk_grant_d DS_E20 117 4096 8192 KN_E20) in HB'. rewrite KNg0_eq in HB'. exact HB'.
   Qed.
 
   (* [comment removed for export] *)
@@ -155,24 +156,24 @@ Section Theorems.
     unfold LZ30. exact (conj W24 (conj P24 I24)).
   Qed.
 
-  #[using="Type"] Lemma L30_maps : l_maps L30 = [(EVar 83, 11571200); (EVar 60, 4096); (EVar 46, 4096); (EVar 38, 65536); (EVar 37, 4096); (EVar 36, 8388608);
-     (EVar 28, 137439023104); (EVar 27, 3727360); (EVar 26, 65536); (ELit 2201439137792, 15392894357504); (ELit 2415882240, 2199023255552);
+  #[using="Type"] Lemma L30_maps : l_maps L30 = [(EVar 99, 11571200); (EVar 76, 4096); (EVar 62, 4096); (EVar 54, 65536); (EVar 53, 4096); (EVar 52, 8388608);
+     (EVar 44, 137439023104); (EVar 43, 3727360); (EVar 42, 65536); (ELit 2201439137792, 15392894357504); (ELit 2415882240, 2199023255552);
      (ELit 2147446784, 268435456)].
   Proof. reflexivity. Qed.
 
   #[using="VI VE usp"] Lemma LZ30_guard_id : forall H A a tid c pl js sr kn hc lz R M mdl p8 sb p10 p15,
-    bootS' H A a tid c pl js sr kn (lbrk L30 101 8192) hc lz R M mdl ->
-    ev (EB' a tid c pl js) 28 = p8 -> ev (EB' a tid c pl js) 36 = p10 -> ev (EB' a tid c pl js) 101 = brk ->
+    bootS' H A a tid c pl js sr kn (lbrk L30 117 8192) hc lz R M mdl ->
+    ev (EB' a tid c pl js) 44 = p8 -> ev (EB' a tid c pl js) 52 = p10 -> ev (EB' a tid c pl js) 117 = brk ->
     maps_subtract (LZ30 sp p8 sb p10 p15) (bv_unsigned brk) (bv_unsigned brk + 4096) = LZ30 sp p8 sb p10 p15.
   Proof.
     intros H A a tid c pl js sr kn hc lz R M mdl p8 sb p10 p15 HB E28 E36 E101.
     pose proof SLob as SLo. pose proof SHib as SHi.
     destruct HB as [_ _ _ _ _ _ F HMO _ _ _ _].
-    assert (EV28 : edenot (EB' a tid c pl js) (EVar 28) = p8) by exact E28.
-    assert (EV36 : edenot (EB' a tid c pl js) (EVar 36) = p10) by exact E36.
-    assert (EV101 : edenot (EB' a tid c pl js) (EVar 101) = brk) by exact E101.
+    assert (EV28 : edenot (EB' a tid c pl js) (EVar 44) = p8) by exact E28.
+    assert (EV36 : edenot (EB' a tid c pl js) (EVar 52) = p10) by exact E36.
+    assert (EV101 : edenot (EB' a tid c pl js) (EVar 117) = brk) by exact E101.
     pose proof (mf_apart _ _ _ _ _ _ _ _ _ F) as AP. clear F.
-    change (l_maps (lbrk L30 101 8192)) with ((EVar 101, 8192) :: l_maps L30) in AP. rewrite L30_maps in AP.
+    change (l_maps (lbrk L30 117 8192)) with ((EVar 117, 8192) :: l_maps L30) in AP. rewrite L30_maps in AP.
     cbn [dl List.map fst snd ivs_apart] in AP. destruct AP as [AP _]. rewrite EV101, EV28, EV36 in AP.
     repeat (apply Forall_cons_iff in AP as [?X AP]); cbn [fst snd edenot] in *. clear AP.
     clear X X0 X1 X2 X3 X6 X7.
@@ -182,9 +183,9 @@ Section Theorems.
     change (bv_unsigned (Z_to_bv 64 2415882240)) with 2415882240 in *. change (bv_unsigned (Z_to_bv 64 2199023255552)) with 2199023255552 in *.
     change (bv_unsigned (Z_to_bv 64 2147446784)) with 2147446784 in *. change (bv_unsigned (Z_to_bv 64 268435456)) with 268435456 in *.
     (* [comment removed for export] *)
-    pose proof HMO as MO. unfold maps_ok in MO. change (l_maps (lbrk L30 101 8192)) with ((EVar 101, 8192) :: l_maps L30) in MO. rewrite L30_maps in MO.
-    assert (M36 : map_ok sp (EB' a tid c pl js) (EVar 36, 8388608)) by (apply (proj1 (Forall_forall _ _) MO); cbn [In]; do 6 right; left; reflexivity).
-    assert (M28 : map_ok sp (EB' a tid c pl js) (EVar 28, 137439023104)) by (apply (proj1 (Forall_forall _ _) MO); cbn [In]; do 7 right; left; reflexivity).
+    pose proof HMO as MO. unfold maps_ok in MO. change (l_maps (lbrk L30 117 8192)) with ((EVar 117, 8192) :: l_maps L30) in MO. rewrite L30_maps in MO.
+    assert (M36 : map_ok sp (EB' a tid c pl js) (EVar 52, 8388608)) by (apply (proj1 (Forall_forall _ _) MO); cbn [In]; do 6 right; left; reflexivity).
+    assert (M28 : map_ok sp (EB' a tid c pl js) (EVar 44, 137439023104)) by (apply (proj1 (Forall_forall _ _) MO); cbn [In]; do 7 right; left; reflexivity).
     clear MO HMO. unfold map_ok in M36, M28. cbn [fst snd edenot] in M36, M28. rewrite EV36 in M36. rewrite EV28 in M28.
     destruct M36 as (_ & _ & _ & T36 & _). destruct M28 as (_ & _ & _ & T28 & _). unfold stack_max_size in *.
     destruct (LZ30_shape p8 sb p10 p15 ltac:(unfold OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn4f__A3.BootKn5a.N_SPACE, usp in *; lia) ltac:(unfold N_PA, usp in *; lia)) as (_ & POS & WIN).
@@ -195,15 +196,15 @@ Section Theorems.
 
   (* [comment removed for export] *)
   #[using="usp"] Lemma brk_misses_shadow : forall H A a tid c pl js sr kn hc lz R M mdl,
-    bootS' H A a tid c pl js sr kn (lbrk L30 101 8192) hc lz R M mdl ->
-    ev (EB' a tid c pl js) 101 = brk ->
+    bootS' H A a tid c pl js sr kn (lbrk L30 117 8192) hc lz R M mdl ->
+    ev (EB' a tid c pl js) 117 = brk ->
     bv_unsigned brk + 8192 <= SHB_LO \/ SHB_HI <= bv_unsigned brk.
   Proof.
     intros H A a tid c pl js sr kn hc lz R M mdl HB E101.
     destruct HB as [_ _ _ _ _ _ F _ _ _ _ _].
-    assert (EV101 : edenot (EB' a tid c pl js) (EVar 101) = brk) by exact E101.
+    assert (EV101 : edenot (EB' a tid c pl js) (EVar 117) = brk) by exact E101.
     pose proof (mf_apart _ _ _ _ _ _ _ _ _ F) as AP. clear F.
-    change (l_maps (lbrk L30 101 8192)) with ((EVar 101, 8192) :: l_maps L30) in AP. rewrite L30_maps in AP.
+    change (l_maps (lbrk L30 117 8192)) with ((EVar 117, 8192) :: l_maps L30) in AP. rewrite L30_maps in AP.
     cbn [dl List.map fst snd ivs_apart] in AP. destruct AP as [AP _]. rewrite EV101 in AP.
     repeat (apply Forall_cons_iff in AP as [?X AP]); cbn [fst snd edenot] in *. clear AP.
     clear X X0 X1 X2 X3 X4 X5 X6 X7.
@@ -217,7 +218,7 @@ Section Theorems.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  #[local] Notation Lg := (lbrk L30 101 8192).
+  #[local] Notation Lg := (lbrk L30 117 8192).
   #[using="VI VE"] Theorem s10_bG1 : forall a tid c pl js p8 sb p10 p12 p15 R M mdl K (W : Z),
     bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRg0 KNg0 Lg (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl ->
     (forall R' M' mdl', bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRG1 KNG1 Lg (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R' M' mdl' ->
@@ -227,7 +228,7 @@ Section Theorems.
 
   (* [comment removed for export] *)
   #[using="VI VE usp"] Theorem s10_guard : forall a tid c pl js p8 sb p10 p12 p15 R M mdl K (W : Z), length js = 86%nat ->
-    ev (EB' a tid c pl js) 28 = p8 -> ev (EB' a tid c pl js) 36 = p10 -> ev (EB' a tid c pl js) 101 = brk ->
+    ev (EB' a tid c pl js) 44 = p8 -> ev (EB' a tid c pl js) 52 = p10 -> ev (EB' a tid c pl js) 117 = brk ->
     bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRG1 KNG1 Lg (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl ->
     (forall x : word, bv_unsigned brk <= bv_unsigned x < bv_unsigned brk + 8192 -> H10' p8 sb p10 p12 a W x = false) ->
     (forall R' M' mdl', bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl (js ++ [brk]) SRG1 KNG1u Lg (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R' M' mdl' ->
@@ -235,15 +236,15 @@ Section Theorems.
     srealizes SEGS (mkCfg (mkst R (Z_to_bv 64 A_musl_mmap_ecall) M ROM) mdl) K.
   Proof.
     intros a tid c pl js p8 sb p10 p12 p15 R M mdl K W Hjs E28 E36 E101 HB Hvis HK.
-    assert (LEN : length (VB' a tid c pl js) = 102%nat) by (rewrite length_VB, Hjs; reflexivity).
+    assert (LEN : length (VB' a tid c pl js) = 118%nat) by (rewrite length_VB, Hjs; reflexivity).
     pose proof (LZ30_guard_id _ _ _ _ _ _ _ _ _ _ _ _ _ _ p8 sb p10 p15 HB E28 E36 E101) as LZID.
     pose proof (bs_mmap_fixed_none_guard sp brk mbase draw lim inp VI VE (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRG1 KNG1 Lg (hc6 p8 p10) (LZ30 sp p8 sb p10 p15)
-                  101%nat 4096 8192 A_musl_mmap_ecall (l_maps L30) ECALLW R M mdl K HB fetch_musl_mmap_ecall is_ecall_ECALLW) as X.
-    cbv zeta in X. change (ev (EB sp draw inp a tid c pl js) 101) with (ev (EB' a tid c pl js) 101) in X. rewrite E101 in X. apply X; clear X.
+                  117%nat 4096 8192 A_musl_mmap_ecall (l_maps L30) ECALLW R M mdl K HB fetch_musl_mmap_ecall is_ecall_ECALLW) as X.
+    cbv zeta in X. change (ev (EB sp mbase draw inp a tid c pl js) 117) with (ev (EB' a tid c pl js) 117) in X. rewrite E101 in X. apply X; clear X.
     - unfold A_musl_mmap_ecall; clear; lia.
     - unfold A_musl_mmap_ecall; clear; lia.
     - vmeq_refl.
-    - replace (sr_get SRG1 10%bv) with (EVar 101) by (vmeq_refl). exact E101.
+    - replace (sr_get SRG1 10%bv) with (EVar 117) by (vmeq_refl). exact E101.
     - vmeq_refl.
     - vmeq_refl.
     - vmeq_refl.
@@ -275,27 +276,27 @@ Section Theorems.
 
   (* [comment removed for export] *)
   #[using="VI VE usp"] Theorem s10_e22G : forall a tid c pl js p8 sb p10 p12 p15 R M mdl K (W : Z), 2 ^ 25 <= lim -> length js = 87%nat ->
-    ev (EB' a tid c pl js) 28 = p8 -> ev (EB' a tid c pl js) 38 = p12 ->
+    ev (EB' a tid c pl js) 44 = p8 -> ev (EB' a tid c pl js) 54 = p12 ->
     bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRG2 KNG2 Lg (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl ->
-    (forall p R' M' mdl', bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl (js ++ [p]) SRG2g KNG2g (lgrant Lg 103 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R' M' mdl' ->
+    (forall p R' M' mdl', bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl (js ++ [p]) SRG2g KNG2g (lgrant Lg 119 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R' M' mdl' ->
        srealizes SEGS (mkCfg (mkst R' (Z_to_bv 64 (A_musl_mmap_ecall + 4)) M' ROM) mdl') K) ->
     srealizes SEGS (mkCfg (mkst R (Z_to_bv 64 A_musl_mmap_ecall) M ROM) mdl) K.
   Proof.
     intros a tid c pl js p8 sb p10 p12 p15 R M mdl K W Hlim Hjs E28 E38 HB HK.
-    assert (LEN : length (VB' a tid c pl js) = 103%nat) by (rewrite length_VB, Hjs; reflexivity).
-    pose proof (budget10 a tid c pl js p8 sb p10 p12 p15 W _ _ Lg [(EVar 101, 8192); (EVar 83, 11571200); (EVar 60, 4096); (EVar 46, 4096)] R M mdl Hlim eq_refl HB E28 E38) as BUD.
+    assert (LEN : length (VB' a tid c pl js) = 119%nat) by (rewrite length_VB, Hjs; reflexivity).
+    pose proof (budget10 a tid c pl js p8 sb p10 p12 p15 W _ _ Lg [(EVar 117, 8192); (EVar 99, 11571200); (EVar 76, 4096); (EVar 62, 4096)] R M mdl Hlim eq_refl HB E28 E38) as BUD.
     eapply (bs_mmap_rw_spin sp brk mbase draw lim inp VI VE (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRG2 KNG2 Lg (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) 4096 A_musl_mmap_ecall ECALLW
               R M mdl K HB fetch_musl_mmap_ecall is_ecall_ECALLW);
       rewrite ?LEN; try reflexivity; try (unfold A_musl_mmap_ecall; lia).
     - change (page_round_up_Z 4096) with 4096. change (l_eager Lg) with (15450112 + 8192). clear - BUD. lia.
-    - change (page_round_up_Z 4096) with 4096. rewrite (eq_refl : l_maps Lg = (EVar 101, 8192) :: l_maps L30), L30_maps. cbn [gws]. unfold IMG_HI, stack_max_size. clear. lia.
+    - change (page_round_up_Z 4096) with 4096. rewrite (eq_refl : l_maps Lg = (EVar 117, 8192) :: l_maps L30), L30_maps. cbn [gws]. unfold IMG_HI, stack_max_size. clear. lia.
     - intros p R' M' mdl' HB'. apply (HK p). unfold SRG2g.
       unfold kn_grant in HB'. change (page_round_up_Z 4096) with 4096 in HB'. rewrite DS_E22g_std, KNG2g_eq in HB'. exact HB'.
   Qed.
 
   #[using="VI VE"] Theorem s10_bG3 : forall a tid c pl js p8 sb p10 p12 p15 R M mdl K (W : Z),
-    bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRG2g KNG2g (lgrant Lg 103 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl ->
-    (forall R' M' mdl', bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRG3 KNG3 (lgrant Lg 103 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R' M' mdl' ->
+    bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRG2g KNG2g (lgrant Lg 119 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl ->
+    (forall R' M' mdl', bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRG3 KNG3 (lgrant Lg 119 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R' M' mdl' ->
        srealizes SEGS (mkCfg (mkst R' (Z_to_bv 64 PC_T0) M' ROM) mdl') K) ->
     srealizes SEGS (mkCfg (mkst R (Z_to_bv 64 (A_musl_mmap_ecall + 4)) M ROM) mdl) K.
   Proof. intros a tid c pl js p8 sb p10 p12 p15 R M mdl K W HB HK. change A_musl_mmap_ecall with PCG2. change PC_T0 with PCG3 in HK. rg_block VI VE HB HK runG3_eq carG3_eq. Qed.
@@ -310,7 +311,7 @@ Section Theorems.
     srealizes SEGS (mkCfg (mkst R (Z_to_bv 64 (A_brk_ecall1 + 4)) M ROM) mdl) K.
   Proof. intros a tid c pl js p8 sb p10 p12 p15 R M mdl K W HB HK. change A_brk_ecall1 with PC_E20. change A_musl_mmap_ecall with PCK1 in HK. rg_block VI VE HB HK runK1_eq carK1_eq. Qed.
 
-  #[local] Notation Lk1 := (lgrant_nr L30 102 8192).
+  #[local] Notation Lk1 := (lgrant_nr L30 118 8192).
   (* [comment removed for export] *)
   #[using="VI VE"] Theorem s10_e21K : forall a tid c pl js p8 sb p10 p12 p15 R M mdl K (W : Z), length js = 86%nat ->
     bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRK1 KNK1 L30 (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl ->
@@ -321,7 +322,7 @@ Section Theorems.
     srealizes SEGS (mkCfg (mkst R (Z_to_bv 64 A_musl_mmap_ecall) M ROM) mdl) K.
   Proof.
     intros a tid c pl js p8 sb p10 p12 p15 R M mdl K W Hjs HB HK.
-    assert (LEN : length (VB' a tid c pl js) = 102%nat) by (rewrite length_VB, Hjs; reflexivity).
+    assert (LEN : length (VB' a tid c pl js) = 118%nat) by (rewrite length_VB, Hjs; reflexivity).
     pose proof (bs_mmap_none_anon sp brk mbase draw lim inp VI VE (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRK1 KNK1 L30 (hc6 p8 p10) (LZ30 sp p8 sb p10 p15)
                   8192 A_musl_mmap_ecall ECALLW R M mdl K HB fetch_musl_mmap_ecall is_ecall_ECALLW) as X.
     cbv zeta in X. rewrite LEN in X. change (page_round_up_Z 8192) with 8192 in X. apply X; clear X.
@@ -358,7 +359,7 @@ Section Theorems.
       run_block_K HR HKN HM HL Hh HH Hwx HAW RUN CAR;
       lazymatch goal with |- srealizes _ (mkCfg (mkst _ _ ?m _) _) _ =>
         let body := eval unfold m in m in
-        lazymatch body with munrestrict ?H ?M (mem_denot (EB _ _ _ ?a ?tid ?c ?pl ?js) _ ?lg) =>
+        lazymatch body with munrestrict ?H ?M (mem_denot (EB _ _ _ _ ?a ?tid ?c ?pl ?js) _ ?lg) =>
           lazymatch type of F with mfacts _ _ _ _ _ _ _ ?L _ =>
             lazymatch type of HZ with hf_ok _ _ ?hc =>
               destruct (frame_blockS sp brk mbase draw inp VI VE H a tid c pl js M lg hc (lows_of L) ltac:(vmeq_refl)
@@ -383,7 +384,7 @@ Section Theorems.
   #[local] Notation Lk2 := (lcommit Lk1 4096).
   (* [comment removed for export] *)
   #[using="VI VE usp"] Theorem s10_mprot : forall a tid c pl js p8 sb p10 p12 p15 R M mdl K (W : Z) (q : word), 2 ^ 25 <= lim ->
-    ev (EB' a tid c pl js) 28 = p8 -> ev (EB' a tid c pl js) 38 = p12 -> ev (EB' a tid c pl js) 102 = q ->
+    ev (EB' a tid c pl js) 44 = p8 -> ev (EB' a tid c pl js) 54 = p12 -> ev (EB' a tid c pl js) 118 = q ->
     bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRK2 KNK2 Lk1 (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl ->
     In (q, Z_to_bv 64 8192) (vm_noaccess (m_vmmaps mdl)) ->
     (forall x : word, bv_unsigned q <= bv_unsigned x < bv_unsigned q + 8192 -> H10' p8 sb p10 p12 a W x = false) ->
@@ -392,15 +393,15 @@ Section Theorems.
     srealizes SEGS (mkCfg (mkst R (Z_to_bv 64 A_musl_mprotect_ecall) M ROM) mdl) K.
   Proof.
     intros a tid c pl js p8 sb p10 p12 p15 R M mdl K W q Hlim E28 E38 E102 HB Hna Hvis HK.
-    pose proof (budget10 a tid c pl js p8 sb p10 p12 p15 W _ _ Lk1 [(EVar 102, 8192); (EVar 83, 11571200); (EVar 60, 4096); (EVar 46, 4096)] R M mdl Hlim eq_refl HB E28 E38) as BUD.
+    pose proof (budget10 a tid c pl js p8 sb p10 p12 p15 W _ _ Lk1 [(EVar 118, 8192); (EVar 99, 11571200); (EVar 76, 4096); (EVar 62, 4096)] R M mdl Hlim eq_refl HB E28 E38) as BUD.
     pose proof (bs_mprotect_rw sp brk mbase draw lim inp VI VE (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRK2 KNK2 Lk1 (hc6 p8 p10) (LZ30 sp p8 sb p10 p15)
-                  102%nat 8192 4096 4096 A_musl_mprotect_ecall ECALLW R M mdl K HB fetch_musl_mprotect_ecall is_ecall_ECALLW) as X.
-    cbv zeta in X. change (ev (EB sp draw inp a tid c pl js) 102) with (ev (EB' a tid c pl js) 102) in X. rewrite E102 in X. apply X; clear X.
+                  118%nat 8192 4096 4096 A_musl_mprotect_ecall ECALLW R M mdl K HB fetch_musl_mprotect_ecall is_ecall_ECALLW) as X.
+    cbv zeta in X. change (ev (EB sp mbase draw inp a tid c pl js) 118) with (ev (EB' a tid c pl js) 118) in X. rewrite E102 in X. apply X; clear X.
     - unfold A_musl_mprotect_ecall; clear; lia.
     - unfold A_musl_mprotect_ecall; clear; lia.
     - vmeq_refl.
-    - replace (sr_get SRK2 10%bv) with (EAlu ALU_ADD (EVar 102) (ELit 4096)) by (vmeq_refl).
-      cbn [edenot]. change (ev (EB sp draw inp a tid c pl js) 102) with (ev (EB' a tid c pl js) 102). rewrite E102.
+    - replace (sr_get SRK2 10%bv) with (EAlu ALU_ADD (EVar 118) (ELit 4096)) by (vmeq_refl).
+      cbn [edenot]. change (ev (EB sp mbase draw inp a tid c pl js) 118) with (ev (EB' a tid c pl js) 118). rewrite E102.
       apply bv_eq. rewrite u_add64. reflexivity.
     - vmeq_refl.
     - vmeq_refl.
@@ -427,27 +428,27 @@ Section Theorems.
 
   (* [comment removed for export] *)
   #[using="VI VE usp"] Theorem s10_e22K : forall a tid c pl js p8 sb p10 p12 p15 R M mdl K (W : Z), 2 ^ 25 <= lim -> length js = 87%nat ->
-    ev (EB' a tid c pl js) 28 = p8 -> ev (EB' a tid c pl js) 38 = p12 ->
+    ev (EB' a tid c pl js) 44 = p8 -> ev (EB' a tid c pl js) 54 = p12 ->
     bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRK3 KNK3 Lk2 (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl ->
-    (forall p R' M' mdl', bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl (js ++ [p]) SRK3g KNK3g (lgrant Lk2 103 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R' M' mdl' ->
+    (forall p R' M' mdl', bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl (js ++ [p]) SRK3g KNK3g (lgrant Lk2 119 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R' M' mdl' ->
        srealizes SEGS (mkCfg (mkst R' (Z_to_bv 64 (A_musl_mmap_ecall + 4)) M' ROM) mdl') K) ->
     srealizes SEGS (mkCfg (mkst R (Z_to_bv 64 A_musl_mmap_ecall) M ROM) mdl) K.
   Proof.
     intros a tid c pl js p8 sb p10 p12 p15 R M mdl K W Hlim Hjs E28 E38 HB HK.
-    assert (LEN : length (VB' a tid c pl js) = 103%nat) by (rewrite length_VB, Hjs; reflexivity).
-    pose proof (budget10 a tid c pl js p8 sb p10 p12 p15 W _ _ Lk2 [(EVar 102, 8192); (EVar 83, 11571200); (EVar 60, 4096); (EVar 46, 4096)] R M mdl Hlim eq_refl HB E28 E38) as BUD.
+    assert (LEN : length (VB' a tid c pl js) = 119%nat) by (rewrite length_VB, Hjs; reflexivity).
+    pose proof (budget10 a tid c pl js p8 sb p10 p12 p15 W _ _ Lk2 [(EVar 118, 8192); (EVar 99, 11571200); (EVar 76, 4096); (EVar 62, 4096)] R M mdl Hlim eq_refl HB E28 E38) as BUD.
     eapply (bs_mmap_rw_spin sp brk mbase draw lim inp VI VE (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRK3 KNK3 Lk2 (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) 4096 A_musl_mmap_ecall ECALLW
               R M mdl K HB fetch_musl_mmap_ecall is_ecall_ECALLW);
       rewrite ?LEN; try reflexivity; try (unfold A_musl_mmap_ecall; lia).
     - change (page_round_up_Z 4096) with 4096. change (l_eager Lk2) with (15450112 + 4096). clear - BUD. lia.
-    - change (page_round_up_Z 4096) with 4096. rewrite (eq_refl : l_maps Lk2 = (EVar 102, 8192) :: l_maps L30), L30_maps. cbn [gws]. unfold IMG_HI, stack_max_size. clear. lia.
+    - change (page_round_up_Z 4096) with 4096. rewrite (eq_refl : l_maps Lk2 = (EVar 118, 8192) :: l_maps L30), L30_maps. cbn [gws]. unfold IMG_HI, stack_max_size. clear. lia.
     - intros p R' M' mdl' HB'. apply (HK p). unfold SRK3g.
       unfold kn_grant in HB'. change (page_round_up_Z 4096) with 4096 in HB'. rewrite DS_E22k_std, KNK3g_eq in HB'. exact HB'.
   Qed.
 
   #[using="VI VE"] Theorem s10_bK4 : forall a tid c pl js p8 sb p10 p12 p15 R M mdl K (W : Z),
-    bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRK3g KNK3g (lgrant Lk2 103 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl ->
-    (forall R' M' mdl', bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRK4 KNK4 (lgrant Lk2 103 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R' M' mdl' ->
+    bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRK3g KNK3g (lgrant Lk2 119 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl ->
+    (forall R' M' mdl', bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRK4 KNK4 (lgrant Lk2 119 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R' M' mdl' ->
        srealizes SEGS (mkCfg (mkst R' (Z_to_bv 64 PC_T0) M' ROM) mdl') K) ->
     srealizes SEGS (mkCfg (mkst R (Z_to_bv 64 (A_musl_mmap_ecall + 4)) M ROM) mdl) K.
   Proof. intros a tid c pl js p8 sb p10 p12 p15 R M mdl K W HB HK. change A_musl_mmap_ecall with PCK3. change PC_T0 with PCK4 in HK. rg_block VI VE HB HK runK4_eq carK4_eq. Qed.
@@ -456,29 +457,29 @@ Section Theorems.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   #[using="Type"] Theorem s10_joinG : forall a tid c pl js p8 sb p10 p12 p15 R M mdl (W : Z),
-    ev (EB' a tid c pl js) 101 = brk -> ev (EB' a tid c pl js) 102 = brk ->
-    bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRG3 KNG3 (lgrant Lg 103 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl ->
+    ev (EB' a tid c pl js) 117 = brk -> ev (EB' a tid c pl js) 118 = brk ->
+    bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRG3 KNG3 (lgrant Lg 119 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl ->
     bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SR_T0 KN_T0 (L_T0 8192) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl.
   Proof.
     intros a tid c pl js p8 sb p10 p12 p15 R M mdl W E101 E102 HB.
-    assert (HB1 : bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SR_T0 KN_T0 (lgrant Lg 103 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl).
+    assert (HB1 : bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SR_T0 KN_T0 (lgrant Lg 119 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl).
     { eapply bootS_reknow; [exact HB | auto |]. apply know_ok_sub_b. exact (proj1 T0_join). }
-    apply (bs_reledger sp brk mbase draw lim inp _ _ a tid c pl js SR_T0 KN_T0 (lgrant Lg 103 4096) (L_T0 8192) _ _ R M mdl HB1).
+    apply (bs_reledger sp brk mbase draw lim inp _ _ a tid c pl js SR_T0 KN_T0 (lgrant Lg 119 4096) (L_T0 8192) _ _ R M mdl HB1).
     - unfold sivden, L_T0, lgrant, lbrk. cbn [l_maps List.map fst snd edenot].
-      change (ev (EB sp draw inp a tid c pl js) 102) with (ev (EB' a tid c pl js) 102). change (ev (EB sp draw inp a tid c pl js) 101) with (ev (EB' a tid c pl js) 101).
+      change (ev (EB sp mbase draw inp a tid c pl js) 118) with (ev (EB' a tid c pl js) 118). change (ev (EB sp mbase draw inp a tid c pl js) 117) with (ev (EB' a tid c pl js) 117).
       rewrite E101, E102. reflexivity.
     - reflexivity.
     - unfold L_T0, lgrant, lbrk. cbn [l_eager]. clear. lia.
   Qed.
 
   #[using="Type"] Theorem s10_joinK : forall a tid c pl js p8 sb p10 p12 p15 R M mdl (W : Z),
-    bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRK4 KNK4 (lgrant Lk2 103 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl ->
+    bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRK4 KNK4 (lgrant Lk2 119 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl ->
     bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SR_T0 KN_T0 (L_T0 0) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl.
   Proof.
     intros a tid c pl js p8 sb p10 p12 p15 R M mdl W HB.
-    assert (HB1 : bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SR_T0 KN_T0 (lgrant Lk2 103 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl).
+    assert (HB1 : bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SR_T0 KN_T0 (lgrant Lk2 119 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl).
     { rewrite <- SRK4_eq. eapply bootS_reknow; [exact HB | auto |]. apply know_ok_sub_b. exact (proj2 T0_join). }
-    apply (bs_reledger sp brk mbase draw lim inp _ _ a tid c pl js SR_T0 KN_T0 (lgrant Lk2 103 4096) (L_T0 0) _ _ R M mdl HB1).
+    apply (bs_reledger sp brk mbase draw lim inp _ _ a tid c pl js SR_T0 KN_T0 (lgrant Lk2 119 4096) (L_T0 0) _ _ R M mdl HB1).
     - reflexivity.
     - reflexivity.
     - unfold L_T0, lgrant, lcommit, lgrant_nr. cbn [l_eager]. clear. lia.
@@ -488,9 +489,9 @@ Section Theorems.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   #[using="usp"] Lemma ev_last : forall a tid c pl js (w : word) (k : nat), length js = k ->
-    ev (EB' a tid c pl (js ++ [w])) (16 + k) = w.
+    ev (EB' a tid c pl (js ++ [w])) (32 + k) = w.
   Proof.
-    intros a tid c pl js w k Hk. rewrite (ev_EB_js sp draw inp a tid c pl _ k), app_nth2 by lia. rewrite Hk, Nat.sub_diag. reflexivity.
+    intros a tid c pl js w k Hk. rewrite (ev_EB_js sp mbase draw inp a tid c pl _ k), app_nth2 by lia. rewrite Hk, Nat.sub_diag. reflexivity.
   Qed.
 
   #[using="VI VE usp"] Theorem boot_s10b : forall a tid c pl p8 sb p10 p12 p15 (W : Z) js R M mdl K, 2 ^ 25 <= lim -> length js = 86%nat ->
@@ -503,11 +504,11 @@ Section Theorems.
     intros a tid c pl p8 sb p10 p12 p15 W js R M mdl K Hlim Hjs HE HK.
     destruct HE as (HB0 & Hsb & E28 & E29 & E36 & E38 & AP15 & E62 & E63 & E64 & E84 & E85 & WL & WH & E101).
     (* [comment removed for export] *)
-    assert (CARRY : forall ks, ev (EB' a tid c pl (js ++ ks)) 28 = p8 /\ ev (EB' a tid c pl (js ++ ks)) 29 = sb /\ ev (EB' a tid c pl (js ++ ks)) 36 = p10
-                     /\ ev (EB' a tid c pl (js ++ ks)) 38 = p12 /\ ev (EB' a tid c pl (js ++ ks)) 62 = Z_to_bv 64 (STv sp)
-                     /\ ev (EB' a tid c pl (js ++ ks)) 63 = Z_to_bv 64 (XQv sp) /\ ev (EB' a tid c pl (js ++ ks)) 64 = Z_to_bv 64 (PBv sp)
-                     /\ ev (EB' a tid c pl (js ++ ks)) 84 = Z_to_bv 64 W /\ ev (EB' a tid c pl (js ++ ks)) 85 = Z_to_bv 64 (Wdst sp)
-                     /\ ev (EB' a tid c pl (js ++ ks)) 101 = brk).
+    assert (CARRY : forall ks, ev (EB' a tid c pl (js ++ ks)) 44 = p8 /\ ev (EB' a tid c pl (js ++ ks)) 45 = sb /\ ev (EB' a tid c pl (js ++ ks)) 52 = p10
+                     /\ ev (EB' a tid c pl (js ++ ks)) 54 = p12 /\ ev (EB' a tid c pl (js ++ ks)) 78 = Z_to_bv 64 (STv sp)
+                     /\ ev (EB' a tid c pl (js ++ ks)) 79 = Z_to_bv 64 (XQv sp) /\ ev (EB' a tid c pl (js ++ ks)) 80 = Z_to_bv 64 (PBv sp)
+                     /\ ev (EB' a tid c pl (js ++ ks)) 100 = Z_to_bv 64 W /\ ev (EB' a tid c pl (js ++ ks)) 101 = Z_to_bv 64 (Wdst sp)
+                     /\ ev (EB' a tid c pl (js ++ ks)) 117 = brk).
     { intros ks. rewrite !ev_EB_app by (rewrite Hjs; lia). repeat split; assumption. }
     apply (s10_e20 a tid c pl js p8 sb p10 p12 p15 R M mdl K W Hlim Hjs HB0 E28 E38 E101).
     - (* [comment removed for export] *)
@@ -517,7 +518,7 @@ Section Theorems.
       set (js1 := js ++ [q]) in *.
       assert (L1 : length js1 = 87%nat) by (unfold js1; rewrite length_app, Hjs; reflexivity).
       destruct (CARRY [q]) as (F28 & _ & _ & F38 & _). fold js1 in F28, F38.
-      assert (F102 : ev (EB' a tid c pl js1) 102 = q) by (unfold js1; exact (ev_last a tid c pl js q 86 Hjs)).
+      assert (F102 : ev (EB' a tid c pl js1) 118 = q) by (unfold js1; exact (ev_last a tid c pl js q 86 Hjs)).
       apply (s10_bK2 a tid c pl js1 p8 sb p10 p12 p15 R3 M3 m3 K W q H3 Hna). intros R4 M4 m4 H4 Hna4.
       apply (s10_mprot a tid c pl js1 p8 sb p10 p12 p15 R4 M4 m4 K W q Hlim F28 F38 F102 H4 Hna4 Hvis). intros R5 M5 m5 H5.
       apply (s10_bK3 a tid c pl js1 p8 sb p10 p12 p15 R5 M5 m5 K W H5). intros R6 M6 m6 H6.
@@ -539,9 +540,9 @@ Section Theorems.
       apply (s10_e22G a tid c pl js1 p8 sb p10 p12 p15 R4 M4 m4 K W Hlim L1 F28 F38 H4). intros p R5 M5 m5 H5.
       apply (s10_bG3 a tid c pl (js1 ++ [p]) p8 sb p10 p12 p15 R5 M5 m5 K W H5). intros R6 M6 m6 H6.
       destruct (CARRY ([brk] ++ [p])) as (G28 & G29 & G36 & G38 & G62 & G63 & G64 & G84 & G85 & G101).
-      assert (G102 : ev (EB' a tid c pl (js1 ++ [p])) 102 = brk).
+      assert (G102 : ev (EB' a tid c pl (js1 ++ [p])) 118 = brk).
       { rewrite ev_EB_app by (rewrite L1; lia). unfold js1. exact (ev_last a tid c pl js brk 86 Hjs). }
-      assert (G101' : ev (EB' a tid c pl (js1 ++ [p])) 101 = brk) by (unfold js1; rewrite <- app_assoc; exact G101).
+      assert (G101' : ev (EB' a tid c pl (js1 ++ [p])) 117 = brk) by (unfold js1; rewrite <- app_assoc; exact G101).
       pose proof (s10_joinG a tid c pl (js1 ++ [p]) p8 sb p10 p12 p15 R6 M6 m6 W G101' G102 H6) as H7.
       apply (HK 8192 ([brk] ++ [p]) R6 M6 m6); [reflexivity|].
       unfold at_T0. cbv zeta. rewrite app_assoc. fold js1. split; [exact H7|]. split; [right; reflexivity|]. split; [exact Hsb|].
@@ -589,8 +590,8 @@ Section Theorems.
   Let usp := bv_unsigned sp.
 
   #[local] Notation bootS' := (bootS sp brk mbase draw lim inp).
-  #[local] Notation EB' := (EB sp draw inp).
-  #[local] Notation VB' := (VB sp draw inp).
+  #[local] Notation EB' := (EB sp mbase draw inp).
+  #[local] Notation VB' := (VB sp mbase draw inp).
   #[local] Notation at_E20' := (at_E20 sp brk mbase draw lim inp).
 
   #[using="brk mbase draw inp VI VE"] Lemma SA16b : usp mod 16 = 0. Proof. exact (SA16 sp brk mbase draw inp VI VE). Qed.
@@ -608,7 +609,7 @@ Section Theorems.
   #[using="VI VE usp"] Lemma budget10 : forall a tid c pl js p8 sb p10 p12 p15 (W : Z) sr kn (L : ledger) pre R M mdl, 2 ^ 25 <= lim ->
     l_maps L = pre ++ l_maps L20 ->
     bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js sr kn L (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl ->
-    ev (EB' a tid c pl js) 28 = p8 -> ev (EB' a tid c pl js) 38 = p12 ->
+    ev (EB' a tid c pl js) 44 = p8 -> ev (EB' a tid c pl js) 54 = p12 ->
     15450112 + 16384 + A_bytes (A10' sb p12 a W) <= lim.
   Proof.
     intros a tid c pl js p8 sb p10 p12 p15 W sr kn L pre R M mdl Hlim HLm HB E28 E38.
@@ -626,32 +627,32 @@ Section Theorems.
   (* [comment removed for export] *)
   #[using="VI VE usp"] Theorem s10_e20 : forall a tid c pl js p8 sb p10 p12 p15 R M mdl K (W : Z), 2 ^ 25 <= lim -> length js = 86%nat ->
     bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SR_E20 KN_E20 L30 (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl ->
-    ev (EB' a tid c pl js) 28 = p8 -> ev (EB' a tid c pl js) 38 = p12 -> ev (EB' a tid c pl js) 101 = brk ->
+    ev (EB' a tid c pl js) 44 = p8 -> ev (EB' a tid c pl js) 54 = p12 -> ev (EB' a tid c pl js) 117 = brk ->
     (* [comment removed for export] *)
     (forall R' mdl', bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRk0 KN_E20 L30 (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R' M mdl' ->
        srealizes SEGS (mkCfg (mkst R' (Z_to_bv 64 (A_brk_ecall1 + 4)) M ROM) mdl') K) ->
     (* [comment removed for export] *)
-    (forall R' mdl', bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRg0 KNg0 (lbrk L30 101 8192) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15)
+    (forall R' mdl', bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRg0 KNg0 (lbrk L30 117 8192) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15)
                        R' (zfill brk (Z_to_bv 64 8192) M) mdl' ->
        (forall x : word, bv_unsigned brk <= bv_unsigned x < bv_unsigned brk + 8192 -> H10' p8 sb p10 p12 a W x = false) ->
        srealizes SEGS (mkCfg (mkst R' (Z_to_bv 64 (A_brk_ecall1 + 4)) (zfill brk (Z_to_bv 64 8192) M) ROM) mdl') K) ->
     srealizes SEGS (mkCfg (mkst R (Z_to_bv 64 A_brk_ecall1) M ROM) mdl) K.
   Proof.
     intros a tid c pl js p8 sb p10 p12 p15 R M mdl K W Hlim Hjs HB E28 E38 E101 HKK HKG.
-    assert (LEN : length (VB' a tid c pl js) = 102%nat) by (rewrite length_VB, Hjs; reflexivity).
-    pose proof (budget10 a tid c pl js p8 sb p10 p12 p15 W _ _ L30 [(EVar 83, 11571200); (EVar 60, 4096); (EVar 46, 4096)] R M mdl Hlim eq_refl HB E28 E38) as BUD.
+    assert (LEN : length (VB' a tid c pl js) = 118%nat) by (rewrite length_VB, Hjs; reflexivity).
+    pose proof (budget10 a tid c pl js p8 sb p10 p12 p15 W _ _ L30 [(EVar 99, 11571200); (EVar 76, 4096); (EVar 62, 4096)] R M mdl Hlim eq_refl HB E28 E38) as BUD.
     assert (Bb : Z_to_bv 64 (bv_unsigned brk + l_brk L30) = brk).
     { apply bv_eq. change (l_brk L30) with 0. rewrite Z.add_0_r, Z_to_bv_bv_unsigned. reflexivity. }
     pose proof (bs_brk_grow sp brk mbase draw lim inp VI VE (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SR_E20 KN_E20 L30 (hc6 p8 p10) (LZ30 sp p8 sb p10 p15)
-                  101%nat 4096 8192 A_brk_ecall1 ECALLW R M mdl K HB fetch_brk_ecall1 is_ecall_ECALLW) as X.
+                  117%nat 4096 8192 A_brk_ecall1 ECALLW R M mdl K HB fetch_brk_ecall1 is_ecall_ECALLW) as X.
     cbv zeta in X. rewrite Bb in X. apply X; clear X.
     - unfold A_brk_ecall1; clear; lia.
     - unfold A_brk_ecall1; clear; lia.
     - vmeq_refl.
     - exact E101.
     - rewrite LEN. clear. lia.
-    - replace (sr_get SR_E20 10%bv) with (EAlu ALU_ADD (EVar 101) (ELit 8192)) by (vmeq_refl).
-      cbn [edenot]. change (ev (EB sp draw inp a tid c pl js) 101) with (ev (EB' a tid c pl js) 101). rewrite E101.
+    - replace (sr_get SR_E20 10%bv) with (EAlu ALU_ADD (EVar 117) (ELit 8192)) by (vmeq_refl).
+      cbn [edenot]. change (ev (EB sp mbase draw inp a tid c pl js) 117) with (ev (EB' a tid c pl js) 117). rewrite E101.
       apply bv_eq. rewrite u_add64. reflexivity.
     - change (l_brk L30) with 0. clear; lia.
     - reflexivity.
@@ -663,7 +664,7 @@ Section Theorems.
     - change (l_eager L30) with 15450112. clear - BUD. lia.
     - intros R' mdl' _ HB'. apply (HKK R' mdl'). exact HB'.
     - intros R' mdl' _ HB' Hvis. apply (HKG R' mdl'); [|exact Hvis].
-      unfold kn_brk_grant in HB'. rewrite DS_E20_std in HB'. fold (kn_brk_grant_d DS_E20 101 4096 8192 KN_E20) in HB'. rewrite KNg0_eq in HB'. exact HB'.
+      unfold kn_brk_grant in HB'. rewrite DS_E20_std in HB'. fold (kn_brk_grant_d DS_E20 117 4096 8192 KN_E20) in HB'. rewrite KNg0_eq in HB'. exact HB'.
   Qed.
 
   (* [comment removed for export] *)
@@ -707,24 +708,24 @@ Section Theorems.
     unfold LZ30. exact (conj W24 (conj P24 I24)).
   Qed.
 
-  #[using="Type"] Lemma L30_maps : l_maps L30 = [(EVar 83, 11571200); (EVar 60, 4096); (EVar 46, 4096); (EVar 38, 65536); (EVar 37, 4096); (EVar 36, 8388608);
-     (EVar 28, 137439023104); (EVar 27, 3727360); (EVar 26, 65536); (ELit 2201439137792, 15392894357504); (ELit 2415882240, 2199023255552);
+  #[using="Type"] Lemma L30_maps : l_maps L30 = [(EVar 99, 11571200); (EVar 76, 4096); (EVar 62, 4096); (EVar 54, 65536); (EVar 53, 4096); (EVar 52, 8388608);
+     (EVar 44, 137439023104); (EVar 43, 3727360); (EVar 42, 65536); (ELit 2201439137792, 15392894357504); (ELit 2415882240, 2199023255552);
      (ELit 2147446784, 268435456)].
   Proof. reflexivity. Qed.
 
   #[using="VI VE usp"] Lemma LZ30_guard_id : forall H A a tid c pl js sr kn hc lz R M mdl p8 sb p10 p15,
-    bootS' H A a tid c pl js sr kn (lbrk L30 101 8192) hc lz R M mdl ->
-    ev (EB' a tid c pl js) 28 = p8 -> ev (EB' a tid c pl js) 36 = p10 -> ev (EB' a tid c pl js) 101 = brk ->
+    bootS' H A a tid c pl js sr kn (lbrk L30 117 8192) hc lz R M mdl ->
+    ev (EB' a tid c pl js) 44 = p8 -> ev (EB' a tid c pl js) 52 = p10 -> ev (EB' a tid c pl js) 117 = brk ->
     maps_subtract (LZ30 sp p8 sb p10 p15) (bv_unsigned brk) (bv_unsigned brk + 4096) = LZ30 sp p8 sb p10 p15.
   Proof.
     intros H A a tid c pl js sr kn hc lz R M mdl p8 sb p10 p15 HB E28 E36 E101.
     pose proof SLob as SLo. pose proof SHib as SHi.
     destruct HB as [_ _ _ _ _ _ F HMO _ _ _ _].
-    assert (EV28 : edenot (EB' a tid c pl js) (EVar 28) = p8) by exact E28.
-    assert (EV36 : edenot (EB' a tid c pl js) (EVar 36) = p10) by exact E36.
-    assert (EV101 : edenot (EB' a tid c pl js) (EVar 101) = brk) by exact E101.
+    assert (EV28 : edenot (EB' a tid c pl js) (EVar 44) = p8) by exact E28.
+    assert (EV36 : edenot (EB' a tid c pl js) (EVar 52) = p10) by exact E36.
+    assert (EV101 : edenot (EB' a tid c pl js) (EVar 117) = brk) by exact E101.
     pose proof (mf_apart _ _ _ _ _ _ _ _ _ F) as AP. clear F.
-    change (l_maps (lbrk L30 101 8192)) with ((EVar 101, 8192) :: l_maps L30) in AP. rewrite L30_maps in AP.
+    change (l_maps (lbrk L30 117 8192)) with ((EVar 117, 8192) :: l_maps L30) in AP. rewrite L30_maps in AP.
     cbn [dl List.map fst snd ivs_apart] in AP. destruct AP as [AP _]. rewrite EV101, EV28, EV36 in AP.
     repeat (apply Forall_cons_iff in AP as [?X AP]); cbn [fst snd edenot] in *. clear AP.
     clear X X0 X1 X2 X3 X6 X7.
@@ -734,9 +735,9 @@ Section Theorems.
     change (bv_unsigned (Z_to_bv 64 2415882240)) with 2415882240 in *. change (bv_unsigned (Z_to_bv 64 2199023255552)) with 2199023255552 in *.
     change (bv_unsigned (Z_to_bv 64 2147446784)) with 2147446784 in *. change (bv_unsigned (Z_to_bv 64 268435456)) with 268435456 in *.
     (* [comment removed for export] *)
-    pose proof HMO as MO. unfold maps_ok in MO. change (l_maps (lbrk L30 101 8192)) with ((EVar 101, 8192) :: l_maps L30) in MO. rewrite L30_maps in MO.
-    assert (M36 : map_ok sp (EB' a tid c pl js) (EVar 36, 8388608)) by (apply (proj1 (Forall_forall _ _) MO); cbn [In]; do 6 right; left; reflexivity).
-    assert (M28 : map_ok sp (EB' a tid c pl js) (EVar 28, 137439023104)) by (apply (proj1 (Forall_forall _ _) MO); cbn [In]; do 7 right; left; reflexivity).
+    pose proof HMO as MO. unfold maps_ok in MO. change (l_maps (lbrk L30 117 8192)) with ((EVar 117, 8192) :: l_maps L30) in MO. rewrite L30_maps in MO.
+    assert (M36 : map_ok sp (EB' a tid c pl js) (EVar 52, 8388608)) by (apply (proj1 (Forall_forall _ _) MO); cbn [In]; do 6 right; left; reflexivity).
+    assert (M28 : map_ok sp (EB' a tid c pl js) (EVar 44, 137439023104)) by (apply (proj1 (Forall_forall _ _) MO); cbn [In]; do 7 right; left; reflexivity).
     clear MO HMO. unfold map_ok in M36, M28. cbn [fst snd edenot] in M36, M28. rewrite EV36 in M36. rewrite EV28 in M28.
     destruct M36 as (_ & _ & _ & T36 & _). destruct M28 as (_ & _ & _ & T28 & _). unfold stack_max_size in *.
     destruct (LZ30_shape p8 sb p10 p15 ltac:(unfold OSSVerify.Proofs.libpcap.fuzz_pcap.lib.A3.BootKn4f__A3.BootKn5a.TwB.N_SPACE, usp in *; lia) ltac:(unfold N_PA, usp in *; lia)) as (_ & POS & WIN).
@@ -747,15 +748,15 @@ Section Theorems.
 
   (* [comment removed for export] *)
   #[using="usp"] Lemma brk_misses_shadow : forall H A a tid c pl js sr kn hc lz R M mdl,
-    bootS' H A a tid c pl js sr kn (lbrk L30 101 8192) hc lz R M mdl ->
-    ev (EB' a tid c pl js) 101 = brk ->
+    bootS' H A a tid c pl js sr kn (lbrk L30 117 8192) hc lz R M mdl ->
+    ev (EB' a tid c pl js) 117 = brk ->
     bv_unsigned brk + 8192 <= SHB_LO \/ SHB_HI <= bv_unsigned brk.
   Proof.
     intros H A a tid c pl js sr kn hc lz R M mdl HB E101.
     destruct HB as [_ _ _ _ _ _ F _ _ _ _ _].
-    assert (EV101 : edenot (EB' a tid c pl js) (EVar 101) = brk) by exact E101.
+    assert (EV101 : edenot (EB' a tid c pl js) (EVar 117) = brk) by exact E101.
     pose proof (mf_apart _ _ _ _ _ _ _ _ _ F) as AP. clear F.
-    change (l_maps (lbrk L30 101 8192)) with ((EVar 101, 8192) :: l_maps L30) in AP. rewrite L30_maps in AP.
+    change (l_maps (lbrk L30 117 8192)) with ((EVar 117, 8192) :: l_maps L30) in AP. rewrite L30_maps in AP.
     cbn [dl List.map fst snd ivs_apart] in AP. destruct AP as [AP _]. rewrite EV101 in AP.
     repeat (apply Forall_cons_iff in AP as [?X AP]); cbn [fst snd edenot] in *. clear AP.
     clear X X0 X1 X2 X3 X4 X5 X6 X7.
@@ -769,7 +770,7 @@ Section Theorems.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  #[local] Notation Lg := (lbrk L30 101 8192).
+  #[local] Notation Lg := (lbrk L30 117 8192).
   #[using="VI VE"] Theorem s10_bG1 : forall a tid c pl js p8 sb p10 p12 p15 R M mdl K (W : Z),
     bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRg0 KNg0 Lg (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl ->
     (forall R' M' mdl', bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRG1 KNG1 Lg (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R' M' mdl' ->
@@ -779,7 +780,7 @@ Section Theorems.
 
   (* [comment removed for export] *)
   #[using="VI VE usp"] Theorem s10_guard : forall a tid c pl js p8 sb p10 p12 p15 R M mdl K (W : Z), length js = 86%nat ->
-    ev (EB' a tid c pl js) 28 = p8 -> ev (EB' a tid c pl js) 36 = p10 -> ev (EB' a tid c pl js) 101 = brk ->
+    ev (EB' a tid c pl js) 44 = p8 -> ev (EB' a tid c pl js) 52 = p10 -> ev (EB' a tid c pl js) 117 = brk ->
     bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRG1 KNG1 Lg (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl ->
     (forall x : word, bv_unsigned brk <= bv_unsigned x < bv_unsigned brk + 8192 -> H10' p8 sb p10 p12 a W x = false) ->
     (forall R' M' mdl', bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl (js ++ [brk]) SRG1 KNG1u Lg (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R' M' mdl' ->
@@ -787,15 +788,15 @@ Section Theorems.
     srealizes SEGS (mkCfg (mkst R (Z_to_bv 64 A_musl_mmap_ecall) M ROM) mdl) K.
   Proof.
     intros a tid c pl js p8 sb p10 p12 p15 R M mdl K W Hjs E28 E36 E101 HB Hvis HK.
-    assert (LEN : length (VB' a tid c pl js) = 102%nat) by (rewrite length_VB, Hjs; reflexivity).
+    assert (LEN : length (VB' a tid c pl js) = 118%nat) by (rewrite length_VB, Hjs; reflexivity).
     pose proof (LZ30_guard_id _ _ _ _ _ _ _ _ _ _ _ _ _ _ p8 sb p10 p15 HB E28 E36 E101) as LZID.
     pose proof (bs_mmap_fixed_none_guard sp brk mbase draw lim inp VI VE (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRG1 KNG1 Lg (hc6 p8 p10) (LZ30 sp p8 sb p10 p15)
-                  101%nat 4096 8192 A_musl_mmap_ecall (l_maps L30) ECALLW R M mdl K HB fetch_musl_mmap_ecall is_ecall_ECALLW) as X.
-    cbv zeta in X. change (ev (EB sp draw inp a tid c pl js) 101) with (ev (EB' a tid c pl js) 101) in X. rewrite E101 in X. apply X; clear X.
+                  117%nat 4096 8192 A_musl_mmap_ecall (l_maps L30) ECALLW R M mdl K HB fetch_musl_mmap_ecall is_ecall_ECALLW) as X.
+    cbv zeta in X. change (ev (EB sp mbase draw inp a tid c pl js) 117) with (ev (EB' a tid c pl js) 117) in X. rewrite E101 in X. apply X; clear X.
     - unfold A_musl_mmap_ecall; clear; lia.
     - unfold A_musl_mmap_ecall; clear; lia.
     - vmeq_refl.
-    - replace (sr_get SRG1 10%bv) with (EVar 101) by (vmeq_refl). exact E101.
+    - replace (sr_get SRG1 10%bv) with (EVar 117) by (vmeq_refl). exact E101.
     - vmeq_refl.
     - vmeq_refl.
     - vmeq_refl.
@@ -827,27 +828,27 @@ Section Theorems.
 
   (* [comment removed for export] *)
   #[using="VI VE usp"] Theorem s10_e22G : forall a tid c pl js p8 sb p10 p12 p15 R M mdl K (W : Z), 2 ^ 25 <= lim -> length js = 87%nat ->
-    ev (EB' a tid c pl js) 28 = p8 -> ev (EB' a tid c pl js) 38 = p12 ->
+    ev (EB' a tid c pl js) 44 = p8 -> ev (EB' a tid c pl js) 54 = p12 ->
     bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRG2 KNG2 Lg (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl ->
-    (forall p R' M' mdl', bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl (js ++ [p]) SRG2g KNG2g (lgrant Lg 103 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R' M' mdl' ->
+    (forall p R' M' mdl', bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl (js ++ [p]) SRG2g KNG2g (lgrant Lg 119 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R' M' mdl' ->
        srealizes SEGS (mkCfg (mkst R' (Z_to_bv 64 (A_musl_mmap_ecall + 4)) M' ROM) mdl') K) ->
     srealizes SEGS (mkCfg (mkst R (Z_to_bv 64 A_musl_mmap_ecall) M ROM) mdl) K.
   Proof.
     intros a tid c pl js p8 sb p10 p12 p15 R M mdl K W Hlim Hjs E28 E38 HB HK.
-    assert (LEN : length (VB' a tid c pl js) = 103%nat) by (rewrite length_VB, Hjs; reflexivity).
-    pose proof (budget10 a tid c pl js p8 sb p10 p12 p15 W _ _ Lg [(EVar 101, 8192); (EVar 83, 11571200); (EVar 60, 4096); (EVar 46, 4096)] R M mdl Hlim eq_refl HB E28 E38) as BUD.
+    assert (LEN : length (VB' a tid c pl js) = 119%nat) by (rewrite length_VB, Hjs; reflexivity).
+    pose proof (budget10 a tid c pl js p8 sb p10 p12 p15 W _ _ Lg [(EVar 117, 8192); (EVar 99, 11571200); (EVar 76, 4096); (EVar 62, 4096)] R M mdl Hlim eq_refl HB E28 E38) as BUD.
     eapply (bs_mmap_rw_spin sp brk mbase draw lim inp VI VE (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRG2 KNG2 Lg (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) 4096 A_musl_mmap_ecall ECALLW
               R M mdl K HB fetch_musl_mmap_ecall is_ecall_ECALLW);
       rewrite ?LEN; try reflexivity; try (unfold A_musl_mmap_ecall; lia).
     - change (page_round_up_Z 4096) with 4096. change (l_eager Lg) with (15450112 + 8192). clear - BUD. lia.
-    - change (page_round_up_Z 4096) with 4096. rewrite (eq_refl : l_maps Lg = (EVar 101, 8192) :: l_maps L30), L30_maps. cbn [gws]. unfold IMG_HI, stack_max_size. clear. lia.
+    - change (page_round_up_Z 4096) with 4096. rewrite (eq_refl : l_maps Lg = (EVar 117, 8192) :: l_maps L30), L30_maps. cbn [gws]. unfold IMG_HI, stack_max_size. clear. lia.
     - intros p R' M' mdl' HB'. apply (HK p). unfold SRG2g.
       unfold kn_grant in HB'. change (page_round_up_Z 4096) with 4096 in HB'. rewrite DS_E22g_std, KNG2g_eq in HB'. exact HB'.
   Qed.
 
   #[using="VI VE"] Theorem s10_bG3 : forall a tid c pl js p8 sb p10 p12 p15 R M mdl K (W : Z),
-    bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRG2g KNG2g (lgrant Lg 103 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl ->
-    (forall R' M' mdl', bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRG3 KNG3 (lgrant Lg 103 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R' M' mdl' ->
+    bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRG2g KNG2g (lgrant Lg 119 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl ->
+    (forall R' M' mdl', bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRG3 KNG3 (lgrant Lg 119 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R' M' mdl' ->
        srealizes SEGS (mkCfg (mkst R' (Z_to_bv 64 PC_T0) M' ROM) mdl') K) ->
     srealizes SEGS (mkCfg (mkst R (Z_to_bv 64 (A_musl_mmap_ecall + 4)) M ROM) mdl) K.
   Proof. intros a tid c pl js p8 sb p10 p12 p15 R M mdl K W HB HK. change A_musl_mmap_ecall with PCG2. change PC_T0 with PCG3 in HK. rg_block VI VE HB HK runG3_eq carG3_eq. Qed.
@@ -862,7 +863,7 @@ Section Theorems.
     srealizes SEGS (mkCfg (mkst R (Z_to_bv 64 (A_brk_ecall1 + 4)) M ROM) mdl) K.
   Proof. intros a tid c pl js p8 sb p10 p12 p15 R M mdl K W HB HK. change A_brk_ecall1 with PC_E20. change A_musl_mmap_ecall with PCK1 in HK. rg_block VI VE HB HK runK1_eq carK1_eq. Qed.
 
-  #[local] Notation Lk1 := (lgrant_nr L30 102 8192).
+  #[local] Notation Lk1 := (lgrant_nr L30 118 8192).
   (* [comment removed for export] *)
   #[using="VI VE"] Theorem s10_e21K : forall a tid c pl js p8 sb p10 p12 p15 R M mdl K (W : Z), length js = 86%nat ->
     bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRK1 KNK1 L30 (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl ->
@@ -873,7 +874,7 @@ Section Theorems.
     srealizes SEGS (mkCfg (mkst R (Z_to_bv 64 A_musl_mmap_ecall) M ROM) mdl) K.
   Proof.
     intros a tid c pl js p8 sb p10 p12 p15 R M mdl K W Hjs HB HK.
-    assert (LEN : length (VB' a tid c pl js) = 102%nat) by (rewrite length_VB, Hjs; reflexivity).
+    assert (LEN : length (VB' a tid c pl js) = 118%nat) by (rewrite length_VB, Hjs; reflexivity).
     pose proof (bs_mmap_none_anon sp brk mbase draw lim inp VI VE (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRK1 KNK1 L30 (hc6 p8 p10) (LZ30 sp p8 sb p10 p15)
                   8192 A_musl_mmap_ecall ECALLW R M mdl K HB fetch_musl_mmap_ecall is_ecall_ECALLW) as X.
     cbv zeta in X. rewrite LEN in X. change (page_round_up_Z 8192) with 8192 in X. apply X; clear X.
@@ -910,7 +911,7 @@ Section Theorems.
       run_block_K HR HKN HM HL Hh HH Hwx HAW RUN CAR;
       lazymatch goal with |- srealizes _ (mkCfg (mkst _ _ ?m _) _) _ =>
         let body := eval unfold m in m in
-        lazymatch body with munrestrict ?H ?M (mem_denot (EB _ _ _ ?a ?tid ?c ?pl ?js) _ ?lg) =>
+        lazymatch body with munrestrict ?H ?M (mem_denot (EB _ _ _ _ ?a ?tid ?c ?pl ?js) _ ?lg) =>
           lazymatch type of F with mfacts _ _ _ _ _ _ _ ?L _ =>
             lazymatch type of HZ with hf_ok _ _ ?hc =>
               destruct (frame_blockS sp brk mbase draw inp VI VE H a tid c pl js M lg hc (lows_of L) ltac:(vmeq_refl)
@@ -935,7 +936,7 @@ Section Theorems.
   #[local] Notation Lk2 := (lcommit Lk1 4096).
   (* [comment removed for export] *)
   #[using="VI VE usp"] Theorem s10_mprot : forall a tid c pl js p8 sb p10 p12 p15 R M mdl K (W : Z) (q : word), 2 ^ 25 <= lim ->
-    ev (EB' a tid c pl js) 28 = p8 -> ev (EB' a tid c pl js) 38 = p12 -> ev (EB' a tid c pl js) 102 = q ->
+    ev (EB' a tid c pl js) 44 = p8 -> ev (EB' a tid c pl js) 54 = p12 -> ev (EB' a tid c pl js) 118 = q ->
     bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRK2 KNK2 Lk1 (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl ->
     In (q, Z_to_bv 64 8192) (vm_noaccess (m_vmmaps mdl)) ->
     (forall x : word, bv_unsigned q <= bv_unsigned x < bv_unsigned q + 8192 -> H10' p8 sb p10 p12 a W x = false) ->
@@ -944,15 +945,15 @@ Section Theorems.
     srealizes SEGS (mkCfg (mkst R (Z_to_bv 64 A_musl_mprotect_ecall) M ROM) mdl) K.
   Proof.
     intros a tid c pl js p8 sb p10 p12 p15 R M mdl K W q Hlim E28 E38 E102 HB Hna Hvis HK.
-    pose proof (budget10 a tid c pl js p8 sb p10 p12 p15 W _ _ Lk1 [(EVar 102, 8192); (EVar 83, 11571200); (EVar 60, 4096); (EVar 46, 4096)] R M mdl Hlim eq_refl HB E28 E38) as BUD.
+    pose proof (budget10 a tid c pl js p8 sb p10 p12 p15 W _ _ Lk1 [(EVar 118, 8192); (EVar 99, 11571200); (EVar 76, 4096); (EVar 62, 4096)] R M mdl Hlim eq_refl HB E28 E38) as BUD.
     pose proof (bs_mprotect_rw sp brk mbase draw lim inp VI VE (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRK2 KNK2 Lk1 (hc6 p8 p10) (LZ30 sp p8 sb p10 p15)
-                  102%nat 8192 4096 4096 A_musl_mprotect_ecall ECALLW R M mdl K HB fetch_musl_mprotect_ecall is_ecall_ECALLW) as X.
-    cbv zeta in X. change (ev (EB sp draw inp a tid c pl js) 102) with (ev (EB' a tid c pl js) 102) in X. rewrite E102 in X. apply X; clear X.
+                  118%nat 8192 4096 4096 A_musl_mprotect_ecall ECALLW R M mdl K HB fetch_musl_mprotect_ecall is_ecall_ECALLW) as X.
+    cbv zeta in X. change (ev (EB sp mbase draw inp a tid c pl js) 118) with (ev (EB' a tid c pl js) 118) in X. rewrite E102 in X. apply X; clear X.
     - unfold A_musl_mprotect_ecall; clear; lia.
     - unfold A_musl_mprotect_ecall; clear; lia.
     - vmeq_refl.
-    - replace (sr_get SRK2 10%bv) with (EAlu ALU_ADD (EVar 102) (ELit 4096)) by (vmeq_refl).
-      cbn [edenot]. change (ev (EB sp draw inp a tid c pl js) 102) with (ev (EB' a tid c pl js) 102). rewrite E102.
+    - replace (sr_get SRK2 10%bv) with (EAlu ALU_ADD (EVar 118) (ELit 4096)) by (vmeq_refl).
+      cbn [edenot]. change (ev (EB sp mbase draw inp a tid c pl js) 118) with (ev (EB' a tid c pl js) 118). rewrite E102.
       apply bv_eq. rewrite u_add64. reflexivity.
     - vmeq_refl.
     - vmeq_refl.
@@ -979,27 +980,27 @@ Section Theorems.
 
   (* [comment removed for export] *)
   #[using="VI VE usp"] Theorem s10_e22K : forall a tid c pl js p8 sb p10 p12 p15 R M mdl K (W : Z), 2 ^ 25 <= lim -> length js = 87%nat ->
-    ev (EB' a tid c pl js) 28 = p8 -> ev (EB' a tid c pl js) 38 = p12 ->
+    ev (EB' a tid c pl js) 44 = p8 -> ev (EB' a tid c pl js) 54 = p12 ->
     bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRK3 KNK3 Lk2 (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl ->
-    (forall p R' M' mdl', bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl (js ++ [p]) SRK3g KNK3g (lgrant Lk2 103 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R' M' mdl' ->
+    (forall p R' M' mdl', bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl (js ++ [p]) SRK3g KNK3g (lgrant Lk2 119 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R' M' mdl' ->
        srealizes SEGS (mkCfg (mkst R' (Z_to_bv 64 (A_musl_mmap_ecall + 4)) M' ROM) mdl') K) ->
     srealizes SEGS (mkCfg (mkst R (Z_to_bv 64 A_musl_mmap_ecall) M ROM) mdl) K.
   Proof.
     intros a tid c pl js p8 sb p10 p12 p15 R M mdl K W Hlim Hjs E28 E38 HB HK.
-    assert (LEN : length (VB' a tid c pl js) = 103%nat) by (rewrite length_VB, Hjs; reflexivity).
-    pose proof (budget10 a tid c pl js p8 sb p10 p12 p15 W _ _ Lk2 [(EVar 102, 8192); (EVar 83, 11571200); (EVar 60, 4096); (EVar 46, 4096)] R M mdl Hlim eq_refl HB E28 E38) as BUD.
+    assert (LEN : length (VB' a tid c pl js) = 119%nat) by (rewrite length_VB, Hjs; reflexivity).
+    pose proof (budget10 a tid c pl js p8 sb p10 p12 p15 W _ _ Lk2 [(EVar 118, 8192); (EVar 99, 11571200); (EVar 76, 4096); (EVar 62, 4096)] R M mdl Hlim eq_refl HB E28 E38) as BUD.
     eapply (bs_mmap_rw_spin sp brk mbase draw lim inp VI VE (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRK3 KNK3 Lk2 (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) 4096 A_musl_mmap_ecall ECALLW
               R M mdl K HB fetch_musl_mmap_ecall is_ecall_ECALLW);
       rewrite ?LEN; try reflexivity; try (unfold A_musl_mmap_ecall; lia).
     - change (page_round_up_Z 4096) with 4096. change (l_eager Lk2) with (15450112 + 4096). clear - BUD. lia.
-    - change (page_round_up_Z 4096) with 4096. rewrite (eq_refl : l_maps Lk2 = (EVar 102, 8192) :: l_maps L30), L30_maps. cbn [gws]. unfold IMG_HI, stack_max_size. clear. lia.
+    - change (page_round_up_Z 4096) with 4096. rewrite (eq_refl : l_maps Lk2 = (EVar 118, 8192) :: l_maps L30), L30_maps. cbn [gws]. unfold IMG_HI, stack_max_size. clear. lia.
     - intros p R' M' mdl' HB'. apply (HK p). unfold SRK3g.
       unfold kn_grant in HB'. change (page_round_up_Z 4096) with 4096 in HB'. rewrite DS_E22k_std, KNK3g_eq in HB'. exact HB'.
   Qed.
 
   #[using="VI VE"] Theorem s10_bK4 : forall a tid c pl js p8 sb p10 p12 p15 R M mdl K (W : Z),
-    bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRK3g KNK3g (lgrant Lk2 103 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl ->
-    (forall R' M' mdl', bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRK4 KNK4 (lgrant Lk2 103 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R' M' mdl' ->
+    bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRK3g KNK3g (lgrant Lk2 119 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl ->
+    (forall R' M' mdl', bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRK4 KNK4 (lgrant Lk2 119 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R' M' mdl' ->
        srealizes SEGS (mkCfg (mkst R' (Z_to_bv 64 PC_T0) M' ROM) mdl') K) ->
     srealizes SEGS (mkCfg (mkst R (Z_to_bv 64 (A_musl_mmap_ecall + 4)) M ROM) mdl) K.
   Proof. intros a tid c pl js p8 sb p10 p12 p15 R M mdl K W HB HK. change A_musl_mmap_ecall with PCK3. change PC_T0 with PCK4 in HK. rg_block VI VE HB HK runK4_eq carK4_eq. Qed.
@@ -1008,29 +1009,29 @@ Section Theorems.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   #[using="Type"] Theorem s10_joinG : forall a tid c pl js p8 sb p10 p12 p15 R M mdl (W : Z),
-    ev (EB' a tid c pl js) 101 = brk -> ev (EB' a tid c pl js) 102 = brk ->
-    bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRG3 KNG3 (lgrant Lg 103 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl ->
+    ev (EB' a tid c pl js) 117 = brk -> ev (EB' a tid c pl js) 118 = brk ->
+    bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRG3 KNG3 (lgrant Lg 119 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl ->
     bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SR_T0 KN_T0 (L_T0 8192) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl.
   Proof.
     intros a tid c pl js p8 sb p10 p12 p15 R M mdl W E101 E102 HB.
-    assert (HB1 : bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SR_T0 KN_T0 (lgrant Lg 103 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl).
+    assert (HB1 : bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SR_T0 KN_T0 (lgrant Lg 119 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl).
     { eapply bootS_reknow; [exact HB | auto |]. apply know_ok_sub_b. exact (proj1 T0_join). }
-    apply (bs_reledger sp brk mbase draw lim inp _ _ a tid c pl js SR_T0 KN_T0 (lgrant Lg 103 4096) (L_T0 8192) _ _ R M mdl HB1).
+    apply (bs_reledger sp brk mbase draw lim inp _ _ a tid c pl js SR_T0 KN_T0 (lgrant Lg 119 4096) (L_T0 8192) _ _ R M mdl HB1).
     - unfold sivden, L_T0, lgrant, lbrk. cbn [l_maps List.map fst snd edenot].
-      change (ev (EB sp draw inp a tid c pl js) 102) with (ev (EB' a tid c pl js) 102). change (ev (EB sp draw inp a tid c pl js) 101) with (ev (EB' a tid c pl js) 101).
+      change (ev (EB sp mbase draw inp a tid c pl js) 118) with (ev (EB' a tid c pl js) 118). change (ev (EB sp mbase draw inp a tid c pl js) 117) with (ev (EB' a tid c pl js) 117).
       rewrite E101, E102. reflexivity.
     - reflexivity.
     - unfold L_T0, lgrant, lbrk. cbn [l_eager]. clear. lia.
   Qed.
 
   #[using="Type"] Theorem s10_joinK : forall a tid c pl js p8 sb p10 p12 p15 R M mdl (W : Z),
-    bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRK4 KNK4 (lgrant Lk2 103 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl ->
+    bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SRK4 KNK4 (lgrant Lk2 119 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl ->
     bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SR_T0 KN_T0 (L_T0 0) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl.
   Proof.
     intros a tid c pl js p8 sb p10 p12 p15 R M mdl W HB.
-    assert (HB1 : bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SR_T0 KN_T0 (lgrant Lk2 103 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl).
+    assert (HB1 : bootS' (H10' p8 sb p10 p12 a W) (A10' sb p12 a W) a tid c pl js SR_T0 KN_T0 (lgrant Lk2 119 4096) (hc6 p8 p10) (LZ30 sp p8 sb p10 p15) R M mdl).
     { rewrite <- SRK4_eq. eapply bootS_reknow; [exact HB | auto |]. apply know_ok_sub_b. exact (proj2 T0_join). }
-    apply (bs_reledger sp brk mbase draw lim inp _ _ a tid c pl js SR_T0 KN_T0 (lgrant Lk2 103 4096) (L_T0 0) _ _ R M mdl HB1).
+    apply (bs_reledger sp brk mbase draw lim inp _ _ a tid c pl js SR_T0 KN_T0 (lgrant Lk2 119 4096) (L_T0 0) _ _ R M mdl HB1).
     - reflexivity.
     - reflexivity.
     - unfold L_T0, lgrant, lcommit, lgrant_nr. cbn [l_eager]. clear. lia.
@@ -1040,9 +1041,9 @@ Section Theorems.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
   #[using="usp"] Lemma ev_last : forall a tid c pl js (w : word) (k : nat), length js = k ->
-    ev (EB' a tid c pl (js ++ [w])) (16 + k) = w.
+    ev (EB' a tid c pl (js ++ [w])) (32 + k) = w.
   Proof.
-    intros a tid c pl js w k Hk. rewrite (ev_EB_js sp draw inp a tid c pl _ k), app_nth2 by lia. rewrite Hk, Nat.sub_diag. reflexivity.
+    intros a tid c pl js w k Hk. rewrite (ev_EB_js sp mbase draw inp a tid c pl _ k), app_nth2 by lia. rewrite Hk, Nat.sub_diag. reflexivity.
   Qed.
 
   #[using="VI VE usp"] Theorem boot_s10b : forall a tid c pl p8 sb p10 p12 p15 (W : Z) js R M mdl K, 2 ^ 25 <= lim -> length js = 86%nat ->
@@ -1055,11 +1056,11 @@ Section Theorems.
     intros a tid c pl p8 sb p10 p12 p15 W js R M mdl K Hlim Hjs HE HK.
     destruct HE as (HB0 & Hsb & E28 & E29 & E36 & E38 & AP15 & E62 & E63 & E64 & E84 & E85 & WL & WH & E101).
     (* [comment removed for export] *)
-    assert (CARRY : forall ks, ev (EB' a tid c pl (js ++ ks)) 28 = p8 /\ ev (EB' a tid c pl (js ++ ks)) 29 = sb /\ ev (EB' a tid c pl (js ++ ks)) 36 = p10
-                     /\ ev (EB' a tid c pl (js ++ ks)) 38 = p12 /\ ev (EB' a tid c pl (js ++ ks)) 62 = Z_to_bv 64 (STv sp)
-                     /\ ev (EB' a tid c pl (js ++ ks)) 63 = Z_to_bv 64 (XQv sp) /\ ev (EB' a tid c pl (js ++ ks)) 64 = Z_to_bv 64 (PBv sp)
-                     /\ ev (EB' a tid c pl (js ++ ks)) 84 = Z_to_bv 64 W /\ ev (EB' a tid c pl (js ++ ks)) 85 = Z_to_bv 64 (Wdst sp)
-                     /\ ev (EB' a tid c pl (js ++ ks)) 101 = brk).
+    assert (CARRY : forall ks, ev (EB' a tid c pl (js ++ ks)) 44 = p8 /\ ev (EB' a tid c pl (js ++ ks)) 45 = sb /\ ev (EB' a tid c pl (js ++ ks)) 52 = p10
+                     /\ ev (EB' a tid c pl (js ++ ks)) 54 = p12 /\ ev (EB' a tid c pl (js ++ ks)) 78 = Z_to_bv 64 (STv sp)
+                     /\ ev (EB' a tid c pl (js ++ ks)) 79 = Z_to_bv 64 (XQv sp) /\ ev (EB' a tid c pl (js ++ ks)) 80 = Z_to_bv 64 (PBv sp)
+                     /\ ev (EB' a tid c pl (js ++ ks)) 100 = Z_to_bv 64 W /\ ev (EB' a tid c pl (js ++ ks)) 101 = Z_to_bv 64 (Wdst sp)
+                     /\ ev (EB' a tid c pl (js ++ ks)) 117 = brk).
     { intros ks. rewrite !ev_EB_app by (rewrite Hjs; lia). repeat split; assumption. }
     apply (s10_e20 a tid c pl js p8 sb p10 p12 p15 R M mdl K W Hlim Hjs HB0 E28 E38 E101).
     - (* [comment removed for export] *)
@@ -1069,7 +1070,7 @@ Section Theorems.
       set (js1 := js ++ [q]) in *.
       assert (L1 : length js1 = 87%nat) by (unfold js1; rewrite length_app, Hjs; reflexivity).
       destruct (CARRY [q]) as (F28 & _ & _ & F38 & _). fold js1 in F28, F38.
-      assert (F102 : ev (EB' a tid c pl js1) 102 = q) by (unfold js1; exact (ev_last a tid c pl js q 86 Hjs)).
+      assert (F102 : ev (EB' a tid c pl js1) 118 = q) by (unfold js1; exact (ev_last a tid c pl js q 86 Hjs)).
       apply (s10_bK2 a tid c pl js1 p8 sb p10 p12 p15 R3 M3 m3 K W q H3 Hna). intros R4 M4 m4 H4 Hna4.
       apply (s10_mprot a tid c pl js1 p8 sb p10 p12 p15 R4 M4 m4 K W q Hlim F28 F38 F102 H4 Hna4 Hvis). intros R5 M5 m5 H5.
       apply (s10_bK3 a tid c pl js1 p8 sb p10 p12 p15 R5 M5 m5 K W H5). intros R6 M6 m6 H6.
@@ -1091,9 +1092,9 @@ Section Theorems.
       apply (s10_e22G a tid c pl js1 p8 sb p10 p12 p15 R4 M4 m4 K W Hlim L1 F28 F38 H4). intros p R5 M5 m5 H5.
       apply (s10_bG3 a tid c pl (js1 ++ [p]) p8 sb p10 p12 p15 R5 M5 m5 K W H5). intros R6 M6 m6 H6.
       destruct (CARRY ([brk] ++ [p])) as (G28 & G29 & G36 & G38 & G62 & G63 & G64 & G84 & G85 & G101).
-      assert (G102 : ev (EB' a tid c pl (js1 ++ [p])) 102 = brk).
+      assert (G102 : ev (EB' a tid c pl (js1 ++ [p])) 118 = brk).
       { rewrite ev_EB_app by (rewrite L1; lia). unfold js1. exact (ev_last a tid c pl js brk 86 Hjs). }
-      assert (G101' : ev (EB' a tid c pl (js1 ++ [p])) 101 = brk) by (unfold js1; rewrite <- app_assoc; exact G101).
+      assert (G101' : ev (EB' a tid c pl (js1 ++ [p])) 117 = brk) by (unfold js1; rewrite <- app_assoc; exact G101).
       pose proof (s10_joinG a tid c pl (js1 ++ [p]) p8 sb p10 p12 p15 R6 M6 m6 W G101' G102 H6) as H7.
       apply (HK 8192 ([brk] ++ [p]) R6 M6 m6); [reflexivity|].
       unfold at_T0. cbv zeta. rewrite app_assoc. fold js1. split; [exact H7|]. split; [right; reflexivity|]. split; [exact Hsb|].

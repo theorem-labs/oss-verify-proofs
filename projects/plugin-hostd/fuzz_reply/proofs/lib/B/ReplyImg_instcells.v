@@ -1,19 +1,20 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10-30 (a Theorem Labs lane): the body of INST_CELLS_t from
-   proofs/cgif/cgif_file_fuzzer/lib/YGcfInstSec.v (commit b81e8b96881) stated unfolded at fuzz_reply image B's names, and
+   proofs/cgif/cgif_file_fuzzer/lib/YGcfInstSec.v stated unfolded at fuzz_reply image B's names, and
    proved by the cell lookup pattern of lib/B/AGif2.v (cell_holds_val_mem over as_const) against reply B's Tfib_const. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (a Theorem Labs lane; plugin-hostd/fuzz_reply, image B).
    rule 24: no function proved (kind: image fact, a const-cell table lookup at plugin-hostd/fuzz_reply image B).
 
    inst_cells_B is the cgif-layer image fact INST_CELLS_t of proofs/cgif/cgif_file_fuzzer/lib/YGcfInstSec.v
-   (lines 336-345 at commit b81e8b96881) at reply B's symbol table.  The reply tree does not carry YGcfInstSec, so the
+   (lines 336-345) at reply B's symbol table.  The reply tree does not carry YGcfInstSec, so the
    body of INST_CELLS_t B is stated UNFOLDED, verbatim, at the reply's names: im_segs is AGif2reply.AImg_reply's
    (= tfibsegs, lib/B/YB1v.v), and the symbol table is any B with TfibSyms B (lib/B/YF0m.v).
 
    Proof: under TfibSyms B, as_inst B = TFIB_INST (ts_inst) and as_const B ly = Tfib_const ly (ts_const).  Each cell is
    found in reply B's table Tfib_const by `cell_lookup` (ImgBase.v) and vm_compute, at the address and value the
-   statement names, and is read out of the Forall hypothesis by cell_holds_val_mem (the pattern of lib/B/AGif2.v:77-90):
+   statement names, and is read out of the Forall hypothesis by cell_holds_val_mem (the pattern of lib/B/AGif2.v:78-91):
    - inst + o_space, inst + o_sec_chunks, inst + 80: the symbolic cells c8 (AInst _) (ASp 0) / (AQ 0) of Tfib_const_sym;
    - inst + 0xe20, inst + 0xe28, inst + o_sec, inst + 88: literal 8-byte cells of Tfib_const_abs;
    - inst + o_sec_mutex + 1 (3 bytes of 0): the 1-byte zero cell at inst + o_sec_mutex + 1 and the 2-byte zero cell at
@@ -38,7 +39,7 @@ Local Set Warnings "-abstract-large-number".
 Open Scope Z_scope.
 Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 
-(* = YGcfInstSec.INST_CELLS_t B (YGcfInstSec.v:336-345 at b81e8b96881), unfolded, for every B with TfibSyms B. *)
+(* = YGcfInstSec.INST_CELLS_t B (YGcfInstSec.v:335-344), unfolded, for every B with TfibSyms B. *)
 Lemma inst_cells_B : forall (B : asyms), TfibSyms B ->
   forall ly (H : word -> bool) (mem : word -> option byte), layout_ok ly -> ly_tsd ly = as_tsd B ->
   Forall (cell_holds B ly (aview im_segs H mem)) (as_const B ly) ->

@@ -1,6 +1,6 @@
 (* LeafCgFacts: LeafCgKit.v's cgif facts proved at decode's own definitions (image B, on the relocated core).
-   ret_ok_stmt at YK0s.ret_ok (lib/Reusable/YK0s.v:193, the relocated copy of cgif's YK0s.v:192) is the released
-   lemma lib/Prog/KindB.v:188 ret_pc_of_ok.
+   ret_ok_stmt at YK0s.ret_ok (lib/Reusable/YK0s.v:194, the relocated copy of cgif's YK0s.v:192) is the released
+   lemma lib/Prog/KindB.v:189 ret_pc_of_ok.
    aview_ext_stmt / aview_some_stmt at YG0n.aview segs (lib/Reusable/YG0n.v:18, cgif's YG0n.v:17): one unfolding
    each, the same steps as YCbq.v:148 aview_eq_of / :135 aview_some_of_apresent.
    bridge_evtF_stmt at YA0n.SRr rsegs: YA0nR.SRr_fevt (lib/Reusable/YA0nR.v + YK04R.v), after reading decode's footprint run
@@ -54,8 +54,8 @@ Proof.
   - exact Hk.
 Qed.
 
-(* The four kit facts cgif proves at its AR (YA0n.v:39, YG0q.v:757, YG0s.v:170), instantiated; AR_sbm by AR_frame_law
-   at mem' = mem, the model read as YA0o.v:27 same_but_materialized_wvb (as cgif's AD1y.v:139 / decode's YD1y.v:146). *)
+(* The four kit facts cgif proves at its AR (YA0n.v:40, YG0q.v:758, YG0s.v:171), instantiated; AR_sbm by AR_frame_law
+   at mem' = mem, the model read as YA0o.v:28 same_but_materialized_wvb (as cgif's AD1y.v:139 / decode's YD1y.v:146). *)
 Lemma SRr_ret_stmt_YA0n : forall segs, @LeafCgKit.SRr_ret_stmt (world segs) (SRr segs).
 Proof. intros segs W c Q HQ. exact (SRr_ret segs W c Q HQ). Qed.
 

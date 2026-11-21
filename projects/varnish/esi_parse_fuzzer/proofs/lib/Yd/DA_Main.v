@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the main-entry statements read the launch's argument layout. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -29,7 +30,7 @@ Definition RA_MAIN : Z := 0x982ac.     (* [comment removed for export] *)
 Definition MAIN_PC : Z := 0x86918.
 
 Section S.
-  Context {Clg : Ceiling} {AI : AsanAlloc LPA}.   (* [comment removed for export] *)
+  Context {Clg : Ceiling} {AI : AsanAlloc LPA} {LAY : ArgLayout}.   (* [comment removed for export] *)
   Variable usp : Z.
   Hypothesis HCEIL : alloc_ceiling = usp - 0x800000.   (* [comment removed for export] *)
   Variables argv envp : list (list byte).

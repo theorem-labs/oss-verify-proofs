@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch model's channel reader, LPS 08b1429, passed to the two write sums by Kd0_rdr; MInvR, which gained the vDSO conjunct, taken apart by minvr_dest; DrvTail1's new layout: the tail after argv[0] is at least 11 bytes, was 18; the exit steps take Kd0's four conjuncts apart). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
@@ -186,8 +187,10 @@ Proof. vm_cast_no_check (@eq_refl _ true). Qed.
 
 Definition O_str : sobj := ltac2:(tb__ "0|0|
 S17S14P19A1SeZ0A1S14P48A1S2SfA1S25P3A1A5").
-Definition F_d : list sprop := ltac2:(tb__ "0|1|
-S0S12S13SeZ12A1S14P48A1M0A2S0S12S13G0SeZ400000A1A2S2S12A1A3A3").
+(* LPS 727298f3: the tail after argv[0] (Lib/DrvTail1.v) is argv[1] = ".", its zero byte, the envp
+   strings, AT_EXECFN's name and the closing zero bytes: [L3_ge] bounds it below by 1 + 10 bytes (it was
+   1 + 17 when the pad and the random bytes ended the image). *)
+Definition F_d : list sprop := [SPUle (SLit 11) (SVar 72); SPUle (SVar 72) (SLit 4194304)].
 Definition P_d0 : sstate := ltac:(let x := eval vm_compute in
   (add_facts F_d (mkSS (ss_pc P_dE) (ss_regs P_dE) (ss_fregs P_dE) (ss_fcsr P_dE) (ss_resv P_dE) (ss_objs P_dE ++ [O_str]) (ss_facts P_dE) 73%positive (ss_lenient P_dE))) in exact x).
 Lemma P_d0_eq : ltac2:(tb__ "0|0|
@@ -502,30 +505,32 @@ Let JD : ltac2:(tb__ "0|1|
 S5S93A1S92OF_;M0F_;S20S5SaS11S11A2A1SbeG0F_;S9dFD;Ftv;Fr0;FK;") := ltac2:(tb__ "0|0|
 SdfVsp;Vdraw;Vinp;A3").
 Let Kd0 := U.Drv_m__G1.Drv_m.Kd0 inp md0.
-Let A1 : Z := InitArg1.A1 sp inp.
+Let A1 : Z := InitArg1.A1 sp draw inp.
 Let Hsp : valid_sp sp := ltac2:(tb__ "0|0|
 SdeVsp;Vbrk;Vmb;Vdraw;Vinp;VHent;A6").
-Let tail1 : list byte := DrvTail1.tail1 draw inp.
-Let STR := Z.of_nat (str_off argv envp).
+Let Hlaunch := U.Drv_m__G1.Drv_m.Hlaunch sp brk mb draw inp Hent.
+Let tail1 : list byte := DrvTail1.tail1 inp.
+Let STR := Z.of_nat (str_off inp sp draw).
 
 Lemma NUsp : 0x7fff80000000 <= bv_unsigned sp <= 0x800000000000.
 Proof using A1 Hargc Hent Hinp JD Kd0 STR mdo. pose proof (U.Drv_m__G1.Drv_m.NU sp brk mb draw inp Hent Hinp Hargc) as N. lia. Qed.
 Lemma len_argv1 : length argv1 = 1%nat. Proof using Hdot. rewrite Hdot. reflexivity. Qed.
 
-Lemma A1_facts : ltac2:(tb__ "0|2|
-S42SacSaaS91Q40Vsp;A2Zb8A2VA1;A2S42SacZ12SafSdS8fQ8A1Vtail1;A2A1M0A2S42SadG0SabZ2M1Z16A2A2SadSaaVA1;G0A2SabG1Z30A2A2A2A2A2").
+Lemma A1_facts : bv_unsigned sp + 184 <= A1 /\ 11 <= Z.of_nat (length tail1) /\ Z.of_nat (length tail1) < 2 ^ 22
+  /\ A1 + Z.of_nat (length tail1) < 2 ^ 48.
 Proof using Hargc Hdot Hent Hinp JD Kd0 STR mdo.
-  pose proof (U.Drv_m__G1.Drv_m.NU sp brk mb draw inp Hent Hinp Hargc) as N. pose proof (DrvTail1.L3_ge sp inp Hsp Hinp Hargc) as G.
-  pose proof (DrvTail1.length_tail1 sp draw inp Hsp Hinp Hargc) as LT.
-  pose proof len_argv1 as L1. unfold A1, tail1, argv1, argv0, argv, envp, DrvTail1.L3 in *. lia.
+  pose proof (U.Drv_m__G1.Drv_m.NU sp brk mb draw inp Hent Hinp Hargc) as N.
+  pose proof (DrvTail1.L3_ge pcU phU sp brk mb draw inp Hsp Hinp Hlaunch Hargc) as G.
+  pose proof (DrvTail1.length_tail1 pcU phU sp brk mb draw inp Hsp Hinp Hlaunch Hargc) as LT.
+  pose proof len_argv1 as L1. cbv zeta in N, G, LT. unfold A1, tail1, argv1, argv0, argv, envp, DrvTail1.L3 in *. lia.
 Qed.
 Lemma tail1_0 : nth 0 tail1 (Z_to_bv 8 0) = Z_to_bv 8 46.
 Proof using A1 Hargc Hdot Hent Hinp JD Kd0 STR mdo.
-  unfold tail1. rewrite (DrvTail1.tail1_head draw inp Hargc 0) by (fold argv argv1; rewrite len_argv1; lia).
+  unfold tail1. rewrite (DrvTail1.tail1_head inp Hargc 0) by (fold argv argv1; rewrite len_argv1; lia).
   fold argv argv1. rewrite Hdot. reflexivity.
 Qed.
 Lemma tail1_1 : nth 1 tail1 (Z_to_bv 8 0) = Z_to_bv 8 0.
-Proof using Hargc Hdot Hent Hinp. unfold tail1. rewrite <- len_argv1. exact (DrvTail1.tail1_nul draw inp Hargc). Qed.
+Proof using Hargc Hdot Hent Hinp. unfold tail1. rewrite <- len_argv1. exact (DrvTail1.tail1_nul inp Hargc). Qed.
 
 Lemma mdo_fds : ltac2:(tb__ "0|1|
 S41S5SaS8fQ40M0A1S94A2A1S95Vmdo;A1S99SedS90G0Z3A2S96A3A3").
@@ -586,6 +591,7 @@ Proof using A1 Hargc Hdot Hfds0 HokK HokP JD P0 mdo.
   - intros k. apply HokK, Kw_tcons.
   - intros k. apply HokP, Kw_tcons.
   - apply Kd0_fd2.
+  - exact (U.Drv_m__G1.Drv_m.Kd0_rdr inp md0).
   - rewrite msg_len. cbn. lia.
 Qed.
 Lemma wl2_ecall : ltac2:(tb__ "0|2|
@@ -595,6 +601,7 @@ Proof using A1 Hargc Hdot Hfds0 JD P0 mdo.
   apply (WLerr.wl2_sum_ex Kd0 rho1 msg [] H5 H6 ltac:(rewrite H13, msg_len; reflexivity) ltac:(rewrite H15; reflexivity)).
   - unfold WLerr.MSG, max_write_total. rewrite app_nil_r, msg_len. cbn. lia.
   - apply Kd0_fd2.
+  - exact (U.Drv_m__G1.Drv_m.Kd0_rdr inp md0).
   - rewrite msg_len. cbn. lia.
 Qed.
 
@@ -622,7 +629,7 @@ Proof using Hargc Hdot Hent Hinp mdo.
   { pose proof (holds_of_existsb rho _ _ HFd nz_dir) as Hf. apply holds_nbeq in Hf. rewrite CursorGlue.U_lit in Hf. change (0 mod M64v) with 0 in Hf. exact Hf. }
   assert (G37 : bv_unsigned (rw rho 41) + 65536 + 4 <= bv_unsigned sp - 8388608).
   { destruct (proj1 (Forall_forall _ _) HN (SVar 41, SLit 65536) ltac:(left; reflexivity) Hnz) as (Hpos & Hb & _). unfold tvv in Hb. cbn [fst snd eval] in Hb.
-    unfold MInvR in HM. pose proof (minv_block_geom C_U Ai _ _ _ _ _ HM Hb) as (G0 & _ & G2 & G3 & _).
+    minvr_dest HM. pose proof (minv_block_geom C_U Ai _ _ _ _ _ HM Hb) as (G0 & _ & G2 & G3 & _).
     rewrite U_addr in G3 by lia. unfold PGSZ, UNIT, IB in *. lia. }
 
   destruct (carve_statics_fresh segs C_U statics_layout_U statics_wseg_U rho P_dir (tr, mkCfg ms md) g 71 72 Hsm ltac:(rewrite NX; lia) Vg
@@ -738,7 +745,7 @@ Proof using Hargc Hdot Hent Hfds0 Hinp HokK HokP Hokh mdo.
     intros Lf rho5 [<-|[]] Hag5. cbn [lf_state]. destruct cert_x as (Hi & H17 & H10).
     apply (triple_exit_eval segs ok SpecT (WLerr.Kw Kd0 msg [] (length (WLerr.MSG msg []))) E_x rho5 2);
       [apply HokK, Kw_tcons | apply HokP, Kw_tcons | exact Hokh | exact Hi | left; exact H17 | rewrite H10; reflexivity |].
-    intros tr md (tr0 & (-> & _ & ->) & ->). unfold WLerr.TRk, WLerr.MSG. rewrite app_nil_r, firstn_all. cbn [app].
+    intros tr md (tr0 & (-> & _ & -> & _) & ->). unfold WLerr.TRk, WLerr.MSG. rewrite app_nil_r, firstn_all. cbn [app].
     exact read_error_in_spec.
 Qed.
 
@@ -822,7 +829,7 @@ Proof using Hargc Hdot Hent Hfds0 Hinp mdo.
     eapply erun_tr; [exact run_w | exact LnE |].
     intros Lf rho5 [<-|[]] Hag5. cbn [lf_state]. destruct cert_x as (Hi & H17 & H10).
     eapply etriple_conseq; [intros w Hw; exact Hw | | apply (etriple_exit_eval segs (WLerr.Kw Kd0 msg [] (length (WLerr.MSG msg []))) E_x rho5 2 Hi (or_introl H17))].
-    + intros w (tr & md & (tr0 & (Htr0 & _ & Hfs1) & Htr) & Hw). unfold Q, die. rewrite Hw, Htr, Htr0, Hfs1. unfold WLerr.TRk, WLerr.MSG. rewrite app_nil_r, firstn_all. reflexivity.
+    + intros w (tr & md & (tr0 & (Htr0 & _ & Hfs1 & _) & Htr) & Hw). unfold Q, die. rewrite Hw, Htr, Htr0, Hfs1. unfold WLerr.TRk, WLerr.MSG. rewrite app_nil_r, firstn_all. reflexivity.
     + rewrite H10. reflexivity.
 Qed.
 

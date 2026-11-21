@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/Prog/FSW_grow_tbl.v (a working branch
-   f9ccbd8f565, a Theorem Labs lane), at B's range. *)
+(* Modified by Theorem Labs, 2026-10: lib/B (fs.asan-ubsan) twin of lib/A/Prog/FSW_grow_tbl.v (a working branch,
+   a Theorem Labs lane), at B's range. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs program part, READER group, image B (fs.asan-ubsan): the decode table of grow's own text (A_grow 0x83ca8, pf.c:42-63),
    for the walk's symbolic runs (lib/B FSW_K.v fsw_run_AJU / fsw_run_tok_AJU and their run-to twins take
    `table_ok tfibsegs tbl`). The range is RELOC-B's B/YB1w.v:467 names: tfib_A_grow = 0x83ca8 .. tfib_E_grow = 0x83e58,

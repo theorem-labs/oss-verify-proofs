@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the munmap node's errno arm ahead of the grant, its maps_subtract ledger (mmap_fixed_destroyed_next) and new partial-cut arm (munmap_cut_ok), and the mmap node's MAP_FIXED overflow check and placement admissibility of the freely placed arms (Placement now required). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -10,6 +11,7 @@ From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.LibA Require Import AcctCore Exec
 From OSSVerify.Proofs.libpcap.fuzz_pcap.lib.E2.LibA Require Import ITreeA NodesA NodesSil.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs.
 From LinuxProcessSemantics.LinuxProcessSem.Checks.Sys Require Import Prelude Dispatch.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Placement.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope bv_scope.
@@ -101,13 +103,34 @@ Proof.
   destruct (map_has (vm_maps (m_vmmaps m)) a (Z_to_bv 64 (page_round_up_Z (bv_unsigned l)))) eqn:G3.
   - destruct eff as [r ws zs us cs ci]. destruct ws; [|discriminate]. destruct zs; [|discriminate].
     destruct cs; [|discriminate]. destruct ci; [|discriminate].
+    (* 75d69e00 Checks/Sys/Mm/Mmap.v:415-456 dispatches the munmap errnos BEFORE
+       the grant, so this is no longer the first test under [map_has]; the errno
+       arm leaves the model alone, which is exactly what [shE] needs. *)
+    destruct (errno_ret_in munmap_errnos r) eqn:Ge.
+    { destruct us; [|discriminate]. injection H as <- _. repeat split; assumption. }
     destruct (w_is0 r && listNN_eqb us [(a, Z_to_bv 64 (page_round_up_Z (bv_unsigned l)))]); [|discriminate].
-    injection H as <- _. rewrite m_vmmaps_destroyed. cbn [vm_maps vm_noaccess vm_reserved]. split; [|split].
-    + apply In_map_remove; [exact HI|]. intros ->. lia.
+    (* LPS 727298f3: the kept munmap arm rebuilds [vm_maps] with [maps_subtract] over the
+       request ([mmap_fixed_destroyed_next]), where it used [map_remove]. *)
+    injection H as <- _. rewrite m_vmmaps_destroyed. unfold mmap_fixed_destroyed_next.
+    cbn [vm_maps vm_noaccess vm_reserved]. split; [|split].
+    + apply In_maps_subtract; [exact HI| exact S0| rewrite UN; lia| rewrite UN; lia].
     + apply region_free_maps_subtract; [lia| rewrite UN; lia| exact HN].
     + exact HR.
-  - destruct (munmap_free_ok (m_vmmaps m) a (page_round_up_Z (bv_unsigned l))); [|discriminate].
-    apply check_ret_only_ok_iff in H as (_ & <- & _). repeat split; assumption.
+  - destruct (munmap_free_ok (m_vmmaps m) a (page_round_up_Z (bv_unsigned l))).
+    { apply check_ret_only_ok_iff in H as (_ & <- & _). repeat split; assumption. }
+    (* LPS 727298f3: a request that cuts part of a mapping has its own arm, kept or
+       refused as the [map_has] arm is. *)
+    destruct (munmap_cut_ok (m_vmmaps m) a (page_round_up_Z (bv_unsigned l))); [|discriminate].
+    destruct eff as [r ws zs us cs ci]. destruct ws; [|discriminate]. destruct zs; [|discriminate].
+    destruct cs; [|discriminate]. destruct ci; [|discriminate].
+    destruct (errno_ret_in munmap_errnos r) eqn:Ge.
+    { destruct us; [|discriminate]. injection H as <- _. repeat split; assumption. }
+    destruct (w_is0 r && listNN_eqb us [(a, Z_to_bv 64 (page_round_up_Z (bv_unsigned l)))]); [|discriminate].
+    injection H as <- _. rewrite m_vmmaps_destroyed. unfold mmap_fixed_destroyed_next.
+    cbn [vm_maps vm_noaccess vm_reserved]. split; [|split].
+    + apply In_maps_subtract; [exact HI| exact S0| rewrite UN; lia| rewrite UN; lia].
+    + apply region_free_maps_subtract; [lia| rewrite UN; lia| exact HN].
+    + exact HR.
 Qed.
 
 Lemma m_vmmaps_with_vmmaps : forall h m, m_vmmaps (with_vmmaps h m) = h.
@@ -151,7 +174,7 @@ Lemma check_mmap_shE : forall a l p f d off eff m m' evs (b s : word),
   (bv_unsigned a = 0 \/ bv_unsigned a + page_round_up_Z (bv_unsigned l) <= bv_unsigned b \/ bv_unsigned b + bv_unsigned s <= bv_unsigned a) ->
   shE (m_vmmaps m') b s.
 Proof.
-  intros a l p f d off eff m m' evs b s H (HI & HN & HR) S0 AP. unfold Mmap.check_mmap in H.
+  intros a l p f d off eff m m' evs b s H (HI & HN & HR) S0 AP. unfold Mmap.check_mmap, check_mmap_fixed_overflow in H.
   pose proof (bv_unsigned_in_range 64 a) as Ra. change (bv_modulus 64) with (2^64) in Ra.
   pose proof (bv_unsigned_in_range 64 l) as Rl. change (bv_modulus 64) with (2^64) in Rl.
   pose proof (page_round_up_Z_ge (bv_unsigned l)) as RU.
@@ -161,6 +184,19 @@ Proof.
   all: rewrite ?vmmaps_with_mmap_replacement, ?vmmaps_with_mmap_backing, ?m_vmmaps_destroyed, ?m_vmmaps_with_vmmaps.
   all: unfold mmap_fixed_rw_next, mmap_fixed_destroyed_next, mmap_fixed_rw_span_next, mmap_fixed_noaccess_span_next.
   all: split_andb; prep_arith.
+  (* LPS 727298f3: a freely placed arm answers Linux's placement ([linux_place_is]); its
+     admissibility gives the [region_free] over the reserved and live maps the old test read. *)
+  all: repeat match goal with
+       | HL : Placement.linux_place_is ?hh ?thp ?hint ?nZ ?r = true |- _ =>
+           let A := fresh "LA" in
+           pose proof (Placement.linux_place_is_admissible hh thp hint nZ r
+                         ltac:(first [ lia
+                                     | match goal with Hw : w_is0 ?x = false |- _ =>
+                                         pose proof (Syscall.w_is0_false_pos x Hw);
+                                         pose proof (page_round_up_Z_ge (bv_unsigned x)); lia end ])
+                         ltac:(apply page_round_up_Z_aligned) HL) as A;
+           clear HL; destruct A as (_ & _ & _ & A)
+       end.
   all: try (assert (UN : bv_unsigned (Z_to_bv 64 (page_round_up_Z (bv_unsigned l))) = page_round_up_Z (bv_unsigned l))
               by (apply unsigned_lit; lia)).
   all: split; [| split; [| exact HR]]; cbn [vm_maps vm_noaccess].

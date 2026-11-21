@@ -13,7 +13,7 @@
        dec_leafb_bytes_le, dec_leafb_rom_bytes, dec_leafb_addressable, dec_leafb_addressable_block,
        dec_leafb_wr_at, dec_leafb_wr_block, the app_mem / off_stk arithmetic.
    (d) dec_leafb_asan_cells: asan_cells from dec_crt_cells B (check_round_trip_cg.v:194) and AR's am_const. Its
-       helpers are copied from a working branch e6dfa363adb,
+       helpers are copied from a working branch,
        proofs/libreac/fuzz_decode/lib/A/Prog/crtA_cells.v:23-237 (crt_* renamed dec_leafb_*; text otherwise the
        record's). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.

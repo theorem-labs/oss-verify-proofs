@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (brk's budget charge brk_grow_bytes, munmap's cut of the maps, and the model's channel reader). *)
 From OSSVerify.Proofs.spirv_tools.spvtools_binary_parser_fuzzer.lib Require BvWfKernel.
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -111,9 +112,19 @@ Proof.
   apply andb_prop in H as [H Hbud]. apply andb_prop in H as [Htop Hrf].
   apply Z.leb_le in Htop. apply Z.leb_le in Hbud.
   split; [exact Htop|]. split; [exact Hrf|].
-  rewrite bv_sub_unsigned in Hbud. rewrite Hureq in Hbud. fold h b in Hbud.
-  replace (bv_unsigned b + d - bv_unsigned b)%Z with d in Hbud by lia.
-  unfold bv_wrap in Hbud. change (bv_modulus 64) with (2 ^ 64)%Z in Hbud. rewrite Z.mod_small in Hbud by lia. exact Hbud.
+  (* #38: [brk_budget_ok] no longer charges [bv_unsigned (r - vm_brk h)]; it charges
+     [brk_grow_bytes h r = Z.max 0 (page_round_up_Z (bv_unsigned r)
+     - page_round_up_Z (bv_unsigned (vm_brk h)))] (75d69e00 Mmap.v:372-378).  So the
+     old [bv_sub_unsigned]/[bv_wrap] tail has no subject.  Both roundings collapse by
+     the SAME two alignment facts this proof already used at :105-:107, and the max
+     by [0 < d]. *)
+  unfold Mmap.brk_grow_bytes in Hbud. fold h in Hbud. fold b in Hbud.
+  rewrite Hureq in Hbud.
+  rewrite (page_round_up_Z_aligned (bv_unsigned b + d)) in Hbud
+    by (first [lia | rewrite Z.add_mod, Hbal, Hdal by (unfold page_size; lia); reflexivity]).
+  rewrite (page_round_up_Z_aligned (bv_unsigned b)) in Hbud by (first [lia | exact Hbal]).
+  replace (Z.max 0 (bv_unsigned b + d - bv_unsigned b)) with d in Hbud by lia.
+  exact Hbud.
 Qed.
 
 Lemma sum_sizes_app : forall l1 l2, sum_sizes (l1 ++ l2) = sum_sizes l1 + sum_sizes l2.
@@ -548,6 +559,7 @@ Proof.
         cbn [a_ss a_maps a_totsz a_ylo a_eager a_vis a_ghost a_abytes a_brk a_fd a_tidset a_vmops kn mk_ss s_regs s_log s_know s_pc s_next];
         fold csB; rewrite ?HTOPEQ; try assumption; try reflexivity.
       all: try (change (m_halted model') with (m_halted model); assumption).
+      all: try (change (m_channel_reader model') with (m_channel_reader model); assumption).
       all: lazymatch goal with
       | |- regs_ok _ _ _ =>
           apply regs_ok_regupd_same; [exact co_regs0 | exact G10 | intros X; apply (f_equal bv_unsigned) in X; discriminate]
@@ -608,6 +620,17 @@ Proof.
           eapply SINV_frame; [|exact co_sinv0]; intros a Ha; apply F1; pose proof (argH_high _ _ Ha); unfold CEIL, KHI in *; lia
       | |- vm_noaccess _ = _ /\ m_vm_lazy _ = _ =>
           rewrite Hvm', Hlz'; unfold h'; cbn [vm_noaccess]; exact co_vmx0
+      | |- (exists rx, vm_reserved _ = _ /\ _) /\ _ =>
+          (* #38 three-way [co_res]: see bpA/Start/AsanNodesMmB.v, same branch *)
+          change (m_kernel model') with (m_kernel model);
+          change (vdso_top (m_vmmaps model')) with (vdso_top (m_vmmaps model));
+          rewrite Hvm'; unfold h'; cbn [vm_reserved vm_maps];
+          destruct Hres as (Xresx & Xmres & Xvdso);
+          split; [exact Xresx|]; split; [|exact Xvdso];
+          apply Forall_cons; [|exact Xmres];
+          apply Forall_forall; intros [rb rs] HinR; unfold iv_disjoint; cbn [fst snd]; rewrite Udw;
+          rewrite region_free_app in Hrf; apply andb_prop in Hrf as [Hrf1 _];
+          pose proof (BRefNodes.region_free_In _ _ dw rb rs Hrf1 HinR) as DR; rewrite Udw in DR; lia
       | |- ?g => idtac "UNSOLVED FIELD:" g
       end.
     +
@@ -890,6 +913,58 @@ Proof.
   destruct (g x); cbn; rewrite IH; destruct (h x); cbn; rewrite ?orb_true_r; reflexivity.
 Qed.
 
+(* #38 (NSTEP-MUNMAP cause 2): see bpA/Start/AsanNodesMmB.v, same two lemmas
+   (the model's Common/MmapSim.iv_subtract_outside / maps_subtract_exact, vendored). *)
+Lemma mmb_iv_subtract_outside : forall (b s : word) lo hi,
+  (0 < bv_unsigned s)%Z -> (lo < hi)%Z ->
+  (bv_unsigned b + bv_unsigned s <= lo \/ hi <= bv_unsigned b)%Z ->
+  iv_subtract b s lo hi = [(b, s)].
+Proof.
+  intros b s lo hi Hs Hlh Hd. unfold iv_subtract. cbv zeta.
+  destruct Hd as [Hd|Hd].
+  - rewrite (proj2 (Z.ltb_lt (bv_unsigned b) lo)) by lia.
+    rewrite (proj2 (Z.ltb_ge hi (bv_unsigned b + bv_unsigned s))) by lia.
+    rewrite Z.min_l by lia. rewrite Z_to_bv_bv_unsigned. reflexivity.
+  - rewrite (proj2 (Z.ltb_ge (bv_unsigned b) lo)) by lia.
+    rewrite (proj2 (Z.ltb_lt hi (bv_unsigned b + bv_unsigned s))) by lia.
+    rewrite Z.max_l by lia.
+    replace (bv_unsigned b + bv_unsigned s - bv_unsigned b)%Z
+      with (bv_unsigned s) by lia.
+    rewrite !Z_to_bv_bv_unsigned. reflexivity.
+Qed.
+
+Lemma mmb_maps_subtract_exact : forall l (a n : word),
+  (0 < bv_unsigned n)%Z ->
+  (forall b s, In (b, s) l -> (0 < bv_unsigned s)%Z) ->
+  (forall b s, In (b, s) l -> b = a -> s = n) ->
+  (forall b s, In (b, s) l -> b <> a ->
+     (bv_unsigned b + bv_unsigned s <= bv_unsigned a
+      \/ bv_unsigned a + bv_unsigned n <= bv_unsigned b)%Z) ->
+  maps_subtract l (bv_unsigned a) (bv_unsigned a + bv_unsigned n)
+  = map_remove l a.
+Proof.
+  induction l as [|[b s] r IH]; intros a n Hn Hpos Hu Hd; [reflexivity|].
+  assert (IHr : maps_subtract r (bv_unsigned a) (bv_unsigned a + bv_unsigned n)
+                = map_remove r a).
+  { apply IH; [exact Hn
+              | intros b' s' H; apply (Hpos b' s'); right; exact H
+              | intros b' s' H; apply (Hu b' s'); right; exact H
+              | intros b' s' H; apply (Hd b' s'); right; exact H]. }
+  cbn [maps_subtract]. rewrite IHr.
+  unfold map_remove. cbn [List.filter fst]. fold (map_remove r a).
+  destruct (bv_eqb b a) eqn:E; cbn [negb].
+  - apply bv_eqb_eq in E. subst b.
+    rewrite (Hu a s (or_introl eq_refl) eq_refl).
+    unfold iv_subtract. cbv zeta.
+    rewrite (proj2 (Z.ltb_ge _ _) (Z.le_refl (bv_unsigned a))).
+    rewrite (proj2 (Z.ltb_ge _ _) (Z.le_refl (bv_unsigned a + bv_unsigned n))).
+    reflexivity.
+  - assert (Hne : b <> a) by (intros ->; rewrite bv_eqb_refl in E; discriminate).
+    rewrite (mmb_iv_subtract_outside b s); [reflexivity | | lia |].
+    + exact (Hpos b s (or_introl eq_refl)).
+    + exact (Hd b s (or_introl eq_refl) Hne).
+Qed.
+
 Lemma node_munmap_sound : forall cs cs' E R FULL model T,
   CSOK E cs R FULL model -> is_ecall_at SEGS cs = true ->
   node_munmap A cs = Some cs' ->
@@ -1058,7 +1133,20 @@ Proof.
   specialize (HK E (regupd R (Z_to_bv 5 (Z.of_nat 10)) (Z_to_bv 64 0)) FULL' model' (conj (env_agree_refl' _ _) (env_agree_refl' _ _))).
   unfold cfg_of in HK. replace (pc cs') with (pc cs + 4) in HK by reflexivity. rewrite bv5_10. apply HK; [|reflexivity]. clear HK.
 
-  assert (PM : vm_maps (m_vmmaps model') = map_remove (vm_maps (m_vmmaps model)) addr) by reflexivity.
+  (* #38: see bpA/Start/AsanNodesMmB.v, same assertion *)
+  assert (PM : vm_maps (m_vmmaps model') = map_remove (vm_maps (m_vmmaps model)) addr).
+  { transitivity (maps_subtract (vm_maps (m_vmmaps model)) (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n)); [reflexivity|].
+    apply mmb_maps_subtract_exact.
+    - pose proof (BPOS _ HIN) as X. unfold amap_den in X. cbn [snd] in X. exact X.
+    - intros b0 s0 H0. exact (BPOS (b0, s0) H0).
+    - intros b0 s0 H0 Hb0. pose proof (UNIQ (b0, s0) H0 Hb0) as E0. unfold amap_den in E0.
+      injection E0 as E1 E2. exact E2.
+    - intros b0 s0 H0 Hb0.
+      assert (NE0 : (b0, s0) <> amap_den E m).
+      { intros Heq. apply Hb0. unfold amap_den in Heq. injection Heq as E1 E2. rewrite E1. exact Haddr. }
+      destruct (DISJl (b0, s0) H0 NE0) as [D|D]; cbn [fst snd] in D.
+      + left. exact D.
+      + right. rewrite Un. exact D. }
   assert (PN : vm_noaccess (m_vmmaps model') = maps_subtract (vm_noaccess (m_vmmaps model)) lo (lo + bv_unsigned n)) by reflexivity.
   assert (PL : m_vm_lazy model' = maps_subtract (m_vm_lazy model) lo (lo + bv_unsigned n)) by reflexivity.
   assert (PISP : vm_init_sp (m_vmmaps model') = vm_init_sp (m_vmmaps model)) by reflexivity.
@@ -1129,7 +1217,7 @@ Proof.
     split; [exact Hm'|]. split; [exact Hne'|]. intros Hnf'. exact (DISJ' m' Hm' Hnf' Hne'). }
   assert (KNF : forall m', am_kind m' = KNONE \/ am_kind m' = KNONELAZY \/ am_kind m' = KRWLAZY -> is_fog m' = false).
   { intros m' Hk. unfold is_fog. destruct Hk as [-> |[-> | ->]]; reflexivity. }
-  destruct HC as [Xregs Xlog Xknow Xhalt Xfds Xfs Xtid Xres Xlimit Xmaps Xholes Xseps Xwf Xbounds Xlazyb Xtop Xsp0 Xnasub Xnone Xkinds Xtotsz Xbrk Xsbrk Xeager Xabytes Xminv Xzero Xsinv Xvmx].
+  destruct HC as [Xregs Xlog Xknow Xhalt Xfds Xfs Xtid Xres Xlimit Xmaps Xholes Xseps Xwf Xbounds Xlazyb Xtop Xsp0 Xnasub Xnone Xkinds Xtotsz Xbrk Xsbrk Xeager Xabytes Xminv Xzero Xsinv Xvmx Xrdr].
   destruct Hlohi as (L1 & L2 & L3 & L4 & L5).
   assert (HAeq : ALLOW E cs' = flat_map (allow1 A E) (kept ++ gone ++ a_ghost cs)) by reflexivity.
   assert (HTOPEQ : TOP model' = TOP model) by (unfold TOP, alloc_top; rewrite PISP; reflexivity).
@@ -1157,7 +1245,13 @@ Proof.
   - unfold fds_ok in *. exact Xfds.
   - exact Xfs.
   - exact Xtid.
-  - exact Xres.
+  - (* #38 three-way [co_res] across the munmap: see bpA/Start/AsanNodesMmB.v *)
+    change (m_kernel model') with (m_kernel model).
+    change (vdso_top (m_vmmaps model')) with (vdso_top (m_vmmaps model)).
+    change (vm_reserved (m_vmmaps model')) with (vm_reserved (m_vmmaps model)).
+    destruct Xres as (Xresx & Xmres & Xvdso). split; [exact Xresx|]. split; [|exact Xvdso].
+    rewrite PM. unfold map_remove. apply Forall_forall. intros iv Hiv. apply filter_In in Hiv as [Hiv _].
+    exact (proj1 (Forall_forall _ _) Xmres iv Hiv).
   - exact Xlimit.
   - rewrite PM. exact MAPS'.
   -
@@ -1257,6 +1351,7 @@ Proof.
   -   eapply SINV_frame; [|exact Xsinv]. intros x Hx. unfold FULL'. apply unfill_out. pose proof (argH_sp0 _ _ Hx). rewrite Un. subst hi. lia.
   -   subst cs'. cbn [a_vmops vm_replay]. destruct (vm_replay E (a_vmops cs)) as [na lz]. cbn [fst snd] in Xvmx |- *. destruct Xvmx as [Xna Xlz].
     rewrite PN, PL, <- Xna, <- Xlz. unfold vm_step, vm_lo, vm_hi. rewrite Hne, HnZw. fold addr. fold lo. rewrite Un. unfold hi. split; reflexivity.
+  -   exact Xrdr.
 Qed.
 
 Theorem node_sys_sound_YMunmap : sys_stmt SEGS A nx0 LIMIT SINV argH FS0 YMunmap.

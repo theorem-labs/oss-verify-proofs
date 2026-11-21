@@ -5,12 +5,13 @@
    for libreac/fuzz_identity's ASan build (lib/A). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_catalogue.v, with its module paths and numbers changed; 204 of its 254 lines of code are new or changed and 319 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/check_ignore.v, with its module paths and module names changed; 253 of its 290 lines of code are new or changed and 217 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* trim (reac_segconf.c:51-59, static) on the ASan image A of reac-pw/fuzz_segconf (fuzz_segconf.asan, 0x890a8,
    296 bytes, 74 instructions, frame 32 bytes, no side-stack frame): the kit of its walk. Written new by the G3 walk owner
-   for trim's walk, in the form of plugin-hostd/fuzz_command's lib/A/Prog walks at origin/ossv/recipes 501c0d516c69
+   for trim's walk, in the form of plugin-hostd/fuzz_command's lib/A/Prog walks
    (answer_s1.v: the cut statements; answer_l.v: a loop with inline checks re-seeded at each iteration; xstrdup.v: a
-   strlen call). The contract is lib/A/Prog/trim_c.v (the contract writer's, 4ae990f62a3b).
-   Here: the pure lemmas of the plain walk (the plain-build walk owner's lib/Prog/trim.v TrimSpine at db8c4beebf62, the image-free
+   strlen call). The contract is lib/A/Prog/trim_c.v (the contract writer).
+   Here: the pure lemmas of the plain walk (the plain-build walk owner's lib/Prog/trim.v TrimSpine, the image-free
    part, copied), the walk's cut points as listing offsets, the entry context tr_cx (the contract's premises), the
    invariant tr_mid every cut carries (the journal from the entry; every byte outside the stack window kept; the four
    saved registers in the prologue's slots), the registers tr_regs, and the four cut statements:
@@ -51,7 +52,7 @@ Local Set Warnings "-abstract-large-number".
 Open Scope bv_scope.
 Open Scope Z_scope.
 
-(* ---- the plain walk's pure lemmas (lib/Prog/trim.v TrimSpine at db8c4beebf62, the image-free part) ---- *)
+(* ---- the plain walk's pure lemmas (lib/Prog/trim.v TrimSpine, the image-free part) ---- *)
 Module TrimA.
 Import SegModel.
 
@@ -200,7 +201,7 @@ Context {PI : PAImg seg_listing}.
 Section e.
 Variable B : asyms.
 
-(* the contract's footprint and post (trim_c.v:93-99 at 78cbfa6c12be), word for word *)
+(* the contract's footprint and post (trim_c.v:93-99), word for word *)
 Definition tr_FP (p : Z) (s : list Z) : list (Z * Z) := [(trim_end_addr p s, trim_end_addr p s + 1)].
 Definition tr_Q (ly : alayout) (S : astate) (W : world SEGS) (mem : word -> option byte) (regs : bvmap 5 word)
   (p : Z) (s : list Z)

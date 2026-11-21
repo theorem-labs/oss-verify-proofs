@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6c6.v at cb9cdc023f20; ported to the same
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW6c6.v; ported to the same
    unit's image B (fuzz_rate.asan-ubsan): image B's pcs, registers and real-frame cells; the pod is e62 (F + 0x210) in
    the class-4 side-stack frame; the no-byte arm reads the table too, so both arms carry the table and its shadow
    granules (a zero shadow region) and the split t & 3 = j sits before the table's check; the three UBSan trap

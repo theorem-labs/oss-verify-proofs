@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: statements written out as text. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase StackLayout.
@@ -15,7 +16,10 @@ Class HeapSecret : Type := mkHeapSecret {
   hsecret : Z ;
   hsecret_range : 0 <= hsecret < 2^64 ;
   hcanary : Z ;
-  hcanary_range : 0 <= hcanary < 2^64
+  hcanary_range : 0 <= hcanary < 2^64 ;
+  (* LPS 727298f3: the run's CONFIG_RSEQ flag ([kb_rseq] of the input's kernel), which picks the
+     tail of the auxv the launch builds ([StackLayout.auxv_entries]) *)
+  hrseq : bool
 }.
 
 (* [comment removed for export] *)
@@ -57,7 +61,9 @@ Qed.
 (* [comment removed for export] *)
 Lemma word_range : ltac2:(zQ "70!j7!hs0!hm1!ho0!ho6!hpd!pb>1w@1$6@1$0#k0@2$2@2$3Z@2$1@1$0#k0^1@2$4@2$1@1$0#k0^1@2$5+2+k0").
 Proof. intros w. pose proof (bv_unsigned_in_range 64 w) as R. unfold bv_modulus in R. exact R. Qed.
-Definition heap_secret_of_draw : ltac2:(zQ "40!j7!n2!hse!pb>3rnd$1>2cw@1$3@1$0#k0$2") := ltac2:(zQ "80!j7!n2!htb!hqf!hua!ig2!pb!hs0\3rnd$1\2cw@1$6@1$0#k0@4$2@1$3^2@1$4^2@2$7@1$0#k0^1@1$5^1").
+(* LPS 727298f3: the instance also carries the run's CONFIG_RSEQ flag. *)
+Definition heap_secret_of_draw (rnd : EntryDraw) (cw : bv 64) (rseq : bool) : HeapSecret :=
+  mkHeapSecret (secret_of_draw rnd) (secret_of_draw_range rnd) (bv_unsigned cw) (word_range cw) rseq.
 
 Section Facts.
   Context {HSEC : HeapSecret}.

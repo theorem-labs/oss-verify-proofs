@@ -10,6 +10,7 @@ From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib Require Import
   ZImage ZTraceSpec AllocSlots AllocRoom ZComplete ZAllocator Contract SlotKept FrameAPI FrameSlotG SlotPack
   SlotAgree SlotAgreeV AllocCf AgreeLim Agree AgreeWalk AgreeTop AgreeZlib AgreeWalkP AgreePack.
+From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import RomStableK.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Lib Require Mem.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.U Require Contract SlotKept FrameAPI SlotPack SlotAgreeV
   AgreeZlib AgreeWalkP AgreePack AgreeFramePKU Agree.
@@ -71,7 +72,7 @@ Proof.
   apply (zlib_pack_walk_crealizes rc LS CS GI (fun _ => []) HCS
     (G_local_T_mono src0segs G src0_G GI HG' GIL)
     (fun mem Hm => GI0 mem (G_img_mono src0segs G src0_G mem HG' Hm))
-    HX sp brk0 mbase rnd lim inp Hsp Hbrk Hmb Hfits Hinput Hlim).
+    HX sp brk0 mbase rnd lim inp Hsp Hbrk Hmb (proj1 Hfits) (proj2 Hfits) Hinput Hlim).
   unfold rc. apply ceil_of_top_run.
   unfold rc. reflexivity.
 Qed.
@@ -86,6 +87,6 @@ Proof.
   destruct (U.AgreeFramePKU.ubsan_crealizes_of_cgp LIM_AG LS CS Gu GIu HCSu HGu GILu GI0u HLIM Hu en_s inp
     Budgets.Standard.lim_target Hs_e Hinput ltac:(apply Z.leb_le; vm_compute; reflexivity)) as [Ru Cu].
   exact (agree_frame Images.plain Budgets.Standard.lim_source en_p Images.ubsan Budgets.Standard.lim_target en_s inp
-    (SPECX (LS:=LS) inp) (SPECX (LS:=LS) inp) Rp Ru (t_eq_refl _) (budget_of_cf_run _ _ _ _ Cp)
-    (U.Agree.budget_of_cf_run _ _ _ _ Cu)).
+    (SPECX (LS:=LS) inp) (SPECX (LS:=LS) inp) Rp Ru (t_eq_refl _) (budget_of_cf_run _ _ _ _ _ Rp Cp)
+    (U.Agree.budget_of_cf_run _ _ _ _ _ Ru Cu)).
 Qed.

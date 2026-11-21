@@ -2,9 +2,10 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/AChf.v, with its module paths, module names and numbers changed; 918 of its 990 lines of code are new or changed and 294 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* sup_resp's walk on the ASan+UBSan build of plugin-hostd/fuzz_command (image fuzz_command.asan-ubsan, entry
-   0x8a188, 132 instructions; the side-stack path walked here), the B twin of the A walk (a working branch
-   3b9b122549f, lib/A/Prog/sup_resp.v) in the form of proofs/cgif/cgif_file_fuzzer/lib/A/AChf.v (flushFrame: a realigned
+   0x8a188, 132 instructions; the side-stack path walked here), the B twin of the A walk (a working branch,
+   lib/A/Prog/sup_resp.v) in the form of proofs/cgif/cgif_file_fuzzer/lib/A/AChf.v (flushFrame: a realigned
    frame, a side-stack frame of the stack-malloc entry, released inline).
 
    B's code is A's up to registers (the shadow address in s6, the frame in s7, s7 saved, sp1's slot at sp1 + 16) and

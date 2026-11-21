@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-30: new file holding code from lib/A/ReplyRINV_a12.v (419c9d7c02f), lib/A/ReplyRINV_a3.v, lib/A/ReplyRINV.v and lib/A/ReplyTopXRI.v (8da615a239d) and lib/B/ReplyRINVB.v (f908a004fd1), restated at image B's names and at lib/B/ReplyBTop.v's Context texts. *)
+(* Modified by Theorem Labs, 2026-10-30: new file holding code from lib/A/ReplyRINV_a12.v, lib/A/ReplyRINV_a3.v, lib/A/ReplyRINV.v and lib/A/ReplyTopXRI.v and lib/B/ReplyRINVB.v, restated at image B's names and at lib/B/ReplyBTop.v's Context texts. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/B/ReplyRINVB_exit.v; 126 of its 183 lines of code are new or changed and 881 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The two exit rows of the image-B composition ReplyBTop.replyb_TFIB_B_T_composed, each as a lemma whose statement is
    the row's Section hypothesis, at that composition's instance: MT := ReplyKfMeterB.MT_sec nsec_cf cf_kmax, both
    library budgets ReplyLSBSec.SEC_CALL KF_KC, LS := ReplyLS3B_inst.LSI with fr_CAP /\ fr_SEC, RINV := fr_RINV, the route

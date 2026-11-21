@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Copyright 2026 Theorem Labs, PBC *)
 (* Row img-su-syslog-A of a Theorem Labs lane's REPLY-IMG-ROWS.md:66 (sha256 a33a582e3ffd; internal record)
    (CF-UNIT-HYPS.md:155 (sha256 77b3f94c95d2; internal record), Table 4, a START-UP fact): common_flags + 0x40 (log_to_syslog) = 0 in reply image A's state
@@ -8,11 +9,11 @@
    in YB01.v:14 HS_tfib_0_kn and YB03.v:12 JS_tfib_band.
    At reply A: common_flags = 0x137be8 (AB1w.v:591 tfib_D_common_flags_dont_use_CommonFlags_struct_common; the pinned
    fuzz_reply.asan 42c58610 nm: _ZN11__sanitizer21common_flags_dont_useE 0x137be8 size 0x120), so log_to_syslog is the
-   word at 0x137be8 + 0x40 = 0x137c28 = 1276968, inside the 0x120-byte struct. It is AF0m.v:50 (Tfib_const_abs row 8),
+   word at 0x137be8 + 0x40 = 0x137c28 = 1276968, inside the 0x120-byte struct. It is AF0m.v:51 (Tfib_const_abs row 8),
    AB01.v:19 (HS_tfib_0_kn) and AB03.v:15 (JS_tfib_band). The text names it once in AB01.v, but HS_tfib_k_kn for k >= 1
    is built from HS_tfib_0_kn by seg (AB01.v:21-36), so the word reaches the later hand-off states without appearing in
    their text; replya_log_to_syslog_hs states it for all 50 (a Theorem Labs lane measured the same on B).
-   Proofs: the const form by ts_const (AF0m.v:886) and list membership; the start forms by kentry_eqb (YK09.v:365) and
+   Proofs: the const form by ts_const (AF0m.v:887) and list membership; the start forms by kentry_eqb (YK09.v:365) and
    kentry_eqb_eq (YA0e.v:694), decided by a whole-goal vm_compute. *)
 From Stdlib Require Import ZArith List Bool.
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require Import YG00 YG01 YG0f YK0c YK09 YA0e.

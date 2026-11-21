@@ -1,12 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mmap placement by the model's linux_place_is in anon_place_ok; the channel-reader premise as fdinv's last conjunct, m_channel_reader, which check_writev's channel arm reads; openat's path below TASK_SIZE, the new at_node conjunct, and cstr_access_len_aux's per-byte access_okb; the new descriptor kinds FdStream, FdEventfd, FdDgram and FdAnon in the read node's case split). *)
 
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap.
 From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require Import EdAlloc.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Placement.
 From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import ExecutableSpecs Progress.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
 From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QQIi.
@@ -49,9 +51,31 @@ Definition grant_ceilA : Z := sp_window_hi - stack_max_size.
 Definition rlen (len : Z) : Z := page_round_up_Z len.
 Definition rlenw (len : Z) : word := Z_to_bv 64 (rlen len).
 
+(* LPS 727298f3: an anonymous NULL-hint mmap is granted only at the one address Linux's
+   search gives ([Placement.linux_place_is], Checks/Sys/Mm/Mmap.v [check_mmap]); the four
+   facts after it follow from it (Placement.linux_place_is_admissible) and stay for the
+   proofs that read them. *)
 Definition anon_place_ok (mo : Model) (a : word) (n : Z) : bool :=
-(bv_unsigned a mod page_size =? 0) && (0 <? bv_unsigned a) && (bv_unsigned a + n <=? alloc_top (m_vmmaps mo))
+Placement.linux_place_is (m_vmmaps mo) (kb_thp (m_kernel mo)) (Z_to_bv 64 0) n a
+&& (bv_unsigned a mod page_size =? 0) && (0 <? bv_unsigned a) && (bv_unsigned a + n <=? alloc_top (m_vmmaps mo))
 && region_free (vm_reserved (m_vmmaps mo) ++ vm_maps (m_vmmaps mo)) a (Z_to_bv 64 n).
+
+Lemma anon_place_ok_of_is : forall mo a n, 0 < n -> n mod page_size = 0 ->
+Placement.linux_place_is (m_vmmaps mo) (kb_thp (m_kernel mo)) (Z_to_bv 64 0) n a = true ->
+anon_place_ok mo a n = true.
+Proof.
+intros mo a n Hn Hnal H. pose proof H as H'.
+apply (Placement.linux_place_is_admissible _ _ _ _ _ Hn Hnal) in H' as (A1 & A2 & A3 & A4).
+unfold anon_place_ok. rewrite H, (proj2 (Z.eqb_eq _ _) A1), (proj2 (Z.ltb_lt _ _) A2), (proj2 (Z.leb_le _ _) A3), A4.
+reflexivity.
+Qed.
+
+Lemma anon_place_ok_is : forall mo a n, anon_place_ok mo a n = true ->
+Placement.linux_place_is (m_vmmaps mo) (kb_thp (m_kernel mo)) (Z_to_bv 64 0) n a = true.
+Proof.
+intros mo a n H. unfold anon_place_ok in H. apply andb_prop in H as [H _].
+apply andb_prop in H as [H _]. apply andb_prop in H as [H _]. apply andb_prop in H as [H _]. exact H.
+Qed.
 
 Definition fixed_contained (mo : Model) (a n : word) : bool :=
 region_free (vm_reserved (m_vmmaps mo)) a n && map_contains (vm_maps (m_vmmaps mo)) a n.
@@ -144,7 +168,9 @@ fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) /\
 (forall k c, fd_lookup (m_fds mo) k = Some (FdChannel c) -> bv_unsigned k < 3) /\
 (forall k p off, fd_lookup (m_fds mo) k = Some (FdFile p off) -> fs_lookup (m_fs mo) p <> None) /\
 (forall k e, fd_lookup (m_fds mo) k = Some e ->
-match e with FdChannel _ | FdFile _ _ | FdDir => True | _ => False end).
+match e with FdChannel _ | FdFile _ _ | FdDir => True | _ => False end) /\
+(* LPS 727298f3: the standard channels' far end has a reader; [check_writev]'s channel arm reads it *)
+m_channel_reader mo = true.
 
 Definition maps_below_top (h : VmMaps) : Prop :=
 alloc_top h <= grant_ceilA /\
@@ -257,15 +283,16 @@ Hypothesis Hsegs : segs_in_base L segs.
 #[local] Notation CINV := (cinv L (xinvA L) (jsome L)) (only parsing).
 
 Lemma fdinv_frame : forall mo mo',
-m_fds mo' = m_fds mo -> m_fs mo' = m_fs mo -> fdinv mo -> fdinv mo'.
+m_fds mo' = m_fds mo -> m_fs mo' = m_fs mo -> m_channel_reader mo' = m_channel_reader mo -> fdinv mo -> fdinv mo'.
 Proof.
-intros mo mo' Hf Hs (M0 & M1 & M2 & MC & MF & MK). unfold fdinv. rewrite Hf, Hs.
-split; [exact M0|]. split; [exact M1|]. split; [exact M2|]. split; [exact MC|]. split; [exact MF| exact MK].
+intros mo mo' Hf Hs Hr (M0 & M1 & M2 & MC & MF & MK & MR). unfold fdinv. rewrite Hf, Hs, Hr.
+split; [exact M0|]. split; [exact M1|]. split; [exact M2|]. split; [exact MC|]. split; [exact MF| split; [exact MK | exact MR]].
 Qed.
 
 Lemma fdinv_drift : forall mo mo', drift L mo mo' -> fdinv mo -> fdinv mo'.
 Proof.
-intros mo mo' Hd. pose proof (drift_frame L _ _ Hd) as (Hf & Hs & _). apply fdinv_frame; assumption.
+intros mo mo' Hd. pose proof (drift_frame L _ _ Hd) as (Hf & Hs & _). apply fdinv_frame; [exact Hf | exact Hs |].
+destruct Hd as (P & _ & _ & ->). reflexivity.
 Qed.
 
 Lemma vminvA_vmeq : forall mo mo', vmeq mo mo' -> vminvA L mo -> vminvA L mo'.
@@ -404,44 +431,47 @@ fdinv mo -> fd_lookup (m_fds mo) (alloc_fd (m_fds mo)) = None ->
 match ent with FdDir => True | FdFile p _ => fs_lookup (m_fs mo) p <> None | _ => False end ->
 fdinv (with_fds (fd_insert (m_fds mo) (alloc_fd (m_fds mo)) ent) mo).
 Proof.
-intros mo ent (M0 & M1 & M2 & MC & MF & MK) Hfree Hent. unfold fdinv. autorewrite with model.
+intros mo ent (M0 & M1 & M2 & MC & MF & MK & MR) Hfree Hent. unfold fdinv. autorewrite with model.
 set (fd := alloc_fd (m_fds mo)) in *.
 assert (Hne : forall k e, fd_lookup (m_fds mo) k = Some e -> bv_eqb fd k = false).
 { intros k e Hk. destruct (bv_eqb fd k) eqn:E; [|reflexivity]. apply bv_eqb_eq in E. subst k. congruence. }
 rewrite !fd_lookup_insert. rewrite (Hne _ _ M0), (Hne _ _ M1), (Hne _ _ M2).
-split; [exact M0|]. split; [exact M1|]. split; [exact M2|]. split; [|split].
+split; [exact M0|]. split; [exact M1|]. split; [exact M2|]. split; [|split; [|split]].
 - intros k c. rewrite fd_lookup_insert. destruct (bv_eqb fd k); [intros H; inversion H; subst; destruct Hent| apply MC].
 - intros k p off. rewrite fd_lookup_insert. destruct (bv_eqb fd k); [intros H; inversion H; subst; exact Hent| apply MF].
 - intros k e. rewrite fd_lookup_insert. destruct (bv_eqb fd k); [|apply MK].
 intros H. inversion H; subst. destruct e; first [exact I | destruct Hent].
+- exact MR.
 Qed.
 
 Lemma fdinv_update_file : forall mo k p off off',
 fdinv mo -> fd_lookup (m_fds mo) k = Some (FdFile p off) ->
 fdinv (with_fds (fd_insert (m_fds mo) k (FdFile p off')) mo).
 Proof.
-intros mo k p off off' (M0 & M1 & M2 & MC & MF & MK) Hk. unfold fdinv. autorewrite with model.
+intros mo k p off off' (M0 & M1 & M2 & MC & MF & MK & MR) Hk. unfold fdinv. autorewrite with model.
 assert (Hne : forall k' c, fd_lookup (m_fds mo) k' = Some (FdChannel c) -> bv_eqb k k' = false).
 { intros k' c Hk'. destruct (bv_eqb k k') eqn:E; [|reflexivity]. apply bv_eqb_eq in E. subst k'. congruence. }
 rewrite !fd_lookup_insert. rewrite (Hne _ _ M0), (Hne _ _ M1), (Hne _ _ M2).
-split; [exact M0|]. split; [exact M1|]. split; [exact M2|]. split; [|split].
+split; [exact M0|]. split; [exact M1|]. split; [exact M2|]. split; [|split; [|split]].
 - intros k' c. rewrite fd_lookup_insert. destruct (bv_eqb k k'); [intros H; discriminate| apply MC].
 - intros k' p' o. rewrite fd_lookup_insert. destruct (bv_eqb k k'); [|apply MF]. intros H. inversion H; subst. exact (MF _ _ _ Hk).
 - intros k' e. rewrite fd_lookup_insert. destruct (bv_eqb k k'); [|apply MK]. intros H. inversion H; subst. exact I.
+- exact MR.
 Qed.
 
 Lemma fdinv_remove : forall mo fd, fdinv mo -> 3 <= fd < 2^32 ->
 fdinv (with_fds (fd_remove (m_fds mo) (Z_to_bv 64 fd)) mo).
 Proof.
-intros mo fd (M0 & M1 & M2 & MC & MF & MK) Hfd. unfold fdinv. autorewrite with model.
+intros mo fd (M0 & M1 & M2 & MC & MF & MK & MR) Hfd. unfold fdinv. autorewrite with model.
 rewrite !fd_lookup_remove.
 assert (Hne : forall z, 0 <= z < 3 -> bv_eqb (Z_to_bv 64 fd) (Z_to_bv 64 z) = false).
 { intros z Hz. unfold bv_eqb. rewrite !unsigned_lit by lia. apply Z.eqb_neq. lia. }
 rewrite !Hne by lia.
-split; [exact M0|]. split; [exact M1|]. split; [exact M2|]. split; [|split].
+split; [exact M0|]. split; [exact M1|]. split; [exact M2|]. split; [|split; [|split]].
 - intros k c. rewrite fd_lookup_remove. destruct (bv_eqb _ k); [discriminate| apply MC].
 - intros k p off. rewrite fd_lookup_remove. destruct (bv_eqb _ k); [discriminate| apply MF].
 - intros k e. rewrite fd_lookup_remove. destruct (bv_eqb _ k); [discriminate| apply MK].
+- exact MR.
 Qed.
 
 Lemma close_factsA : forall ms mo fd,
@@ -494,8 +524,11 @@ Lemma cstr_access_len_le : forall path fuel mp a,
 Proof.
 induction path as [|b path IH]; intros fuel mp a Hnz Hb.
 - destruct fuel as [|fuel]; cbn [cstr_access_len_aux length]; [lia|].
+(* LPS 727298f3: each byte is fetched only past [access_okb a 1] (State.cstr_access_len_aux) *)
+destruct (negb (access_okb (wa a) 1)); [lia|].
 cbn [app] in Hb. apply bytes_in_cons in Hb as [Hb _]. rewrite Hb. rewrite bv_eqb_refl. lia.
 - destruct fuel as [|fuel]; cbn [cstr_access_len_aux length]; [lia|].
+destruct (negb (access_okb (wa a) 1)); [lia|].
 cbn [app] in Hb. apply bytes_in_cons in Hb as [Hb0 Hb]. rewrite Hb0.
 assert (Hne : bv_eqb b (Z_to_bv 8 0) = false).
 { destruct (bv_eqb b (Z_to_bv 8 0)) eqn:E; [|reflexivity]. apply bv_eqb_eq in E. exfalso. apply Hnz. left. congruence. }
@@ -533,10 +566,14 @@ file_facts ms mo (nstep (NOpen path) mo).
 Proof.
 intros ms mo path Hat HI HX.
 
-pose proof Hat as (Hsvc & Ha0 & Hfl & Hnz & Hsl & Hdd & Hrom & Hpv). cbn [ms_svc_pending ms_rom ms_mem msview restrict] in Hsvc, Hrom, Hpv.
+pose proof Hat as (Hsvc & Ha0 & Hfl & Hnz & Hsl & Hdd & Hrom & Hpv & Hts). cbn [ms_svc_pending ms_rom ms_mem msview restrict] in Hsvc, Hrom, Hpv.
 change (mrestrict (hidden L mo) (ms_mem ms)) with (view L mo (ms_mem ms)) in Hpv.
 destruct (bytes_at_view L segs Hsegs mo (ms_mem ms) _ _ Hpv) as [Hp Hvis].
-assert (Hatf : at_node segs (NOpen path) ms) by (split; [exact Hsvc|]; split; [exact Ha0|]; split; [exact Hfl|]; split; [exact Hnz|]; split; [exact Hsl|]; split; [exact Hdd|]; split; assumption).
+(* at_node's NOpen case gained a ninth conjunct at #38 (QJFf.v:1108): the path's bytes
+   lie below TASK_SIZE, because read_cstr_aux now refuses a byte at or above it.  It
+   is carried here, not re-derived: msview changes only ms_mem, so Hts is already a
+   statement about areg ms 11. *)
+assert (Hatf : at_node segs (NOpen path) ms) by (split; [exact Hsvc|]; split; [exact Ha0|]; split; [exact Hfl|]; split; [exact Hnz|]; split; [exact Hsl|]; split; [exact Hdd|]; split; [exact Hrom|]; split; assumption).
 set (reads := [(areg ms 11, cstr_access_len_aux (ms_read_byte ms) (areg ms 11) path_max)]).
 exists (Z_to_bv 64 56), (fun eff => check_copyins_after reads eff (open_check path (clear_copyins eff) mo)).
 split; [exact Hsvc|]. split; [|split; [|split]].
@@ -573,13 +610,14 @@ at_node segs (NRead fd buf count) ms -> fdinv mo ->
 check_syscall (sys_input segs ms (Z_to_bv 64 63)) eff mo = read_check fd buf count eff mo.
 Proof.
 
-intros ms mo fd buf count eff (Hsvc & Hfd & Ha0 & Ha1 & Ha2 & Hc & Htop & Hwr) (M0 & M1 & M2 & MC & MF & MK).
+intros ms mo fd buf count eff (Hsvc & Hfd & Ha0 & Ha1 & Ha2 & Hc & Htop & Hwr) (M0 & M1 & M2 & MC & MF & MK & MR).
 pose proof Hwr as (Hb & Hbc & _). pose proof Hc as Hc'. unfold access_ok_walk_max in Hc'.
 pose proof Htop as Htop'. unfold task_size_max, TASK_SIZE in Htop'.
 pose proof (access_okb_wr_at segs ms buf count Hwr Hc Htop) as Hok.
 dispatch 63. unfold check_read, read_check. rewrite Ha0, Ha1, Ha2, in_wmem_si.
 unfold fd32. rewrite abi_low32_small by lia.
-destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|id w|dnr dnw| ]|] eqn:Hlk; try reflexivity.
+destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|id w|dnr dnw| |sq sw sv|ex|dgf|ani anf]|] eqn:Hlk; try reflexivity;
+try (exfalso; exact (MK _ _ Hlk)).
 - exfalso. apply MC in Hlk. rewrite unsigned_lit in Hlk by lia. lia.
 - rewrite Hok. cbn [negb].
 destruct (fs_lookup (m_fs mo) p) as [data|] eqn:Hfs. 2:{ exfalso. exact (MF _ _ _ Hlk Hfs). }
@@ -593,14 +631,7 @@ with (Some (match read_bytes_map (ms_writable_byte segs ms) (Z_to_bv 64 buf) (Z_
 2:{ pose proof (read_bytes_map_wr_at segs ms buf count (Z.of_nat (length bs)) Hwr ltac:(lia) ltac:(lia)) as W.
 destruct (read_bytes_map _ _ _); [reflexivity| congruence]. }
 reflexivity.
-- exfalso. exact (MK _ _ Hlk).
-- exfalso. exact (MK _ _ Hlk).
-- exfalso. exact (MK _ _ Hlk).
 - rewrite Hok. reflexivity.
-- exfalso. exact (MK _ _ Hlk).
-- exfalso. exact (MK _ _ Hlk).
-- exfalso. exact (MK _ _ Hlk).
-- exfalso. exact (MK _ _ Hlk).
 Qed.
 
 Lemma read_check_ok_iffA : forall fd buf count eff mo mo' evs,
@@ -608,7 +639,7 @@ fdinv mo ->
 read_check fd buf count eff mo = CheckOk mo' evs <-> nstep (NRead fd buf count) mo eff mo' evs.
 Proof.
 intros fd buf count eff mo mo' evs (_ & _ & _ & _ & MF & _). unfold read_check. cbn [nstep].
-destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|id w|dnr dnw| ]|] eqn:Hlk.
+destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|id w|dnr dnw| |sq sw sv|ex|dgf|ani anf]|] eqn:Hlk.
 - split; [discriminate| tauto].
 - destruct (fs_lookup (m_fs mo) p) as [data|]. 2:{ split; [discriminate|tauto]. }
 cbv zeta. destruct (file_read data off (Z_to_bv 64 count)) as [|b bs'] eqn:Ebs.
@@ -630,6 +661,10 @@ subst. repeat split; reflexivity.
 - split; [discriminate| tauto].
 - split; [discriminate| tauto].
 - split; [discriminate| tauto].
+- split; [discriminate| tauto].
+- split; [discriminate| tauto].
+- split; [discriminate| tauto].
+- split; [discriminate| tauto].
 - rewrite check_ret_only_ok_iff. unfold efferr, eff0. tauto.
 Qed.
 
@@ -643,7 +678,7 @@ e = mkEffect (len_word bs) (delivered_writes (Z_to_bv 64 buf) bs) [] /\
 mo2 = with_fds (fd_insert (m_fds mo) (Z_to_bv 64 fd) (FdFile p (off + len_word bs)%bv)) mo)).
 Proof.
 intros fd buf count mo e mo2 evs [-> H]. split; [reflexivity|].
-destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|id w|dnr dnw| ]|] eqn:Hlk; try contradiction.
+destruct (fd_lookup (m_fds mo) (Z_to_bv 64 fd)) as [[ch|p off|p off|p off|p off| |sk|id w|dnr dnw| |sq sw sv|ex|dgf|ani anf]|] eqn:Hlk; try contradiction.
 - destruct (fs_lookup (m_fs mo) p) as [data|] eqn:Hfs; [|contradiction]. destruct H as [-> ->]. right.
 exists p, off, data. split; [reflexivity|]. split; [exact Hfs|]. split; reflexivity.
 - destruct H as [-> ->]. left. eexists. unfold efferr. split; reflexivity.
@@ -724,6 +759,8 @@ cbv zeta. unfold writev_check.
 destruct (length (concat bufs)) as [|n] eqn:EL.
 - cbn [Z.of_nat Z.eqb Nat.eqb]. reflexivity.
 - replace (Z.of_nat (Datatypes.S n) =? 0) with false by (symmetry; apply Z.eqb_neq; lia). cbn [Nat.eqb].
+(* LPS 727298f3: [check_writev]'s channel arm tests the reader first; [fdinv]'s last conjunct is it *)
+pose proof Hminv as (_ & _ & _ & _ & _ & _ & HR). rewrite HR. cbn [negb].
 unfold len_word. rewrite EL. replace (addr_is_error_b (Z_to_bv 64 (Z.of_nat (Datatypes.S n)))) with false.
 2:{ symmetry. unfold addr_is_error_b, two_pow_64. rewrite unsigned_lit by lia. apply Z.ltb_ge. lia. }
 reflexivity.

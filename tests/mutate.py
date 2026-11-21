@@ -3,23 +3,25 @@
 
     python3 tests/mutate.py        (from the repository root, in the checker image; tests/check.sh runs it)
 
-For each statement kind of theories/Shapes.v this makes the kind vacuous, or true of every program, in a scratch
-copy of theories/, tests/, toolchain/ and dune-project, and requires `dune build --root . theories tests` of that copy
-to FAIL, at a file other than Shapes.v (theories/Premises.v, a refutation under tests/proofs/, tests/toy/Controls.v).
-It requires the same build of an unmutated copy to pass.  It exits 1 if any kind's mutation is not caught, if a
-mutation does not apply to the text of Shapes.v exactly once, or if the unmutated copy does not build.
+For each statement kind of theories/Shapes.v, and each shape of theories/ClassifierShapes.v, this makes the kind
+vacuous, or true of every program, in a scratch copy of theories/, tests/, toolchain/ and dune-project, and requires
+`dune build --root . theories tests` of that copy to FAIL, at a file other than the mutated one (theories/Premises.v,
+a refutation or a library of them under tests/proofs/, tests/toy/Controls.v).  It requires the same build of an
+unmutated copy to pass.  It exits 1 if any kind's mutation is not caught, if a mutation does not apply to the text of
+its file exactly once, or if the unmutated copy does not build.
 
-In every copy, the unmutated one included, each proof of Shapes.v is replaced by Admitted.  Those lemmas
-(`_is_lps`, `_mono`, `_of_classifier`) are facts about the shapes, not controls, and a mutation breaks some of them;
-the change being simulated arrives with them restated.  An Admitted lemma can let a file that uses it compile, never
-make one fail, so a failure downstream is the mutation's doing.  (Nothing here is ever checked as a proof: the copies
-are deleted.)
+In every copy, the unmutated one included, each proof of Shapes.v and of ClassifierShapes.v is replaced by Admitted.
+Those lemmas (`_is_lps`, `_mono`, `_of_classifier`; ClassifierShapes.v's `_is_copy` lemmas and its bridges from the
+exact forms) are facts about the shapes, not controls, and a mutation breaks some of them; the change being simulated
+arrives with them restated.  An Admitted lemma can let a file that uses it compile, never make one fail, so a failure
+downstream is the mutation's doing.  (Nothing here is ever checked as a proof: the copies are deleted.)
 
-The mutations include the ones the reviews of these controls used, and, for each other agreement and halting shape, a
-premise that contradicts the shape's input predicate.
+The mutations include the ones the reviews of these controls used, and, for each other agreement and halting shape
+and each classifier shape but the bounds, a premise that contradicts the shape's input predicate.
 
-The checkout itself is never written: Shapes.v is read from it, each mutated text is written only into a copy under a
-fresh temporary directory, and each copy is deleted when its build ends, whether it passes, fails or raises.
+The checkout itself is never written: Shapes.v and ClassifierShapes.v are read from it, each mutated text is written
+only into a copy under a fresh temporary directory, and each copy is deleted when its build ends, whether it passes,
+fails or raises.
 """
 import concurrent.futures
 import os
@@ -31,6 +33,8 @@ import tempfile
 
 ROOT = os.getcwd()
 COPY = ("theories", "tests", "toolchain", "dune-project")
+SHAPES = "theories/Shapes.v"
+CLASSIFIER_SHAPES = "theories/ClassifierShapes.v"
 
 CONTRADICTS = {
     "valid_input": "in_abort_terminal inp = true",          # valid_input pins in_abort_terminal to false
@@ -38,6 +42,9 @@ CONTRADICTS = {
     "valid_input_hwcap_rv64gc": "in_hwcap inp <> hwcap_rv64gc",
     "valid_input_abort_hwcap_rv64gc": "in_hwcap inp <> hwcap_rv64gc",
 }
+# valid_fin_input f is valid_input (to_proc_input f), which pins in_abort_terminal to false
+FIN_CONTRADICTS = "in_abort_terminal (to_proc_input f) = true"
+NO_VALID_INPUT = "forall f : FinProcInput, valid_fin_input f -> %s ->" % FIN_CONTRADICTS
 
 
 def premise(pred, extra):
@@ -49,8 +56,8 @@ def premise(pred, extra):
 BOUND = ("(sum_weights w l <= b * M)%Q", "(sum_weights w l <= b * M + (if Qle_bool b 0 then 0 else M))%Q")
 DECIDE_C = ("exists C : Image, image_wf C /\\ ", "exists C : Image, ")
 
-# (kind, what the mutation does, (old text, new text) inside the kind's Definition)
-MUTATIONS = [
+# (file, kind, what the mutation does, (old text, new text) inside the kind's Definition in that file)
+MUTATIONS = [(SHAPES,) + m for m in [
     ("halts_within_budget", "a premise contradicting valid_input",
      premise("valid_input", CONTRADICTS["valid_input"])),
     ("halts_may_fail", "the premise valid_input_abort inp (a reviewer's)",
@@ -68,7 +75,18 @@ MUTATIONS = [
     ("disagrees_at_most_rv64gc", "true at every b > 0", BOUND),
     ("agreement_decidable", "the image_wf C conjunct dropped (a reviewer's)", DECIDE_C),
     ("agreement_decidable_rv64gc", "the image_wf C conjunct dropped", DECIDE_C),
-]
+    ("classifier_rejects_at_most", "true at every b > 0", BOUND),
+]] + [(CLASSIFIER_SHAPES,) + m for m in [
+    ("classifier_total3", "a premise contradicting valid_fin_input",
+     ("    valid_fin_input f ->\n", "    valid_fin_input f ->\n    %s ->\n" % FIN_CONTRADICTS)),
+    ("classifies_good_inputs_sound", "a premise no valid finite input meets",
+     ("  sound C (", "  %s\n  sound C (" % NO_VALID_INPUT)),
+    ("classifies_patch_diff_sound", "a premise no valid finite input meets",
+     ("  sound C (", "  %s\n  sound C (" % NO_VALID_INPUT)),
+    ("maybe_empty", "a premise no valid finite input meets",
+     ("Prop := forall f, ~ maybe_input C f.", "Prop :=\n  %s ~ maybe_input C f." % NO_VALID_INPUT)),
+    ("maybe_at_most", "true at every b > 0", BOUND),
+]]
 
 
 def definition_span(text, kind):
@@ -89,8 +107,9 @@ def admit_all(text):
     return re.sub(r"Proof\..*?Qed\.", "Admitted.", text, flags=re.S)
 
 
-def build(label, shapes_text, jobs):
-    """Build a copy whose Shapes.v is shapes_text: (passed, the files dune reports errors in)."""
+def build(label, texts, jobs):
+    """Build a copy in which each file of texts (a path under the root) has its text there: (passed, the files dune
+    reports errors in)."""
     d = tempfile.mkdtemp(prefix="mutate-%s-" % label)
     try:
         for p in COPY:
@@ -99,8 +118,9 @@ def build(label, shapes_text, jobs):
                 shutil.copytree(src, dst, ignore=shutil.ignore_patterns("_build", "__pycache__"))
             else:
                 shutil.copy2(src, dst)
-        with open(os.path.join(d, "theories", "Shapes.v"), "w", encoding="utf-8") as f:
-            f.write(shapes_text)
+        for path, text in texts.items():
+            with open(os.path.join(d, path), "w", encoding="utf-8") as f:
+                f.write(text)
         r = subprocess.run(["dune", "build", "--root", ".", "-j", str(jobs), "theories", "tests"], cwd=d,
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=dict(os.environ, DUNE_CACHE="disabled"))
         out = r.stdout.decode("utf-8", "replace")
@@ -111,37 +131,41 @@ def build(label, shapes_text, jobs):
 
 
 def main():
-    with open(os.path.join(ROOT, "theories", "Shapes.v"), encoding="utf-8") as f:
-        shapes = f.read()
+    originals = {}
+    for path in (SHAPES, CLASSIFIER_SHAPES):
+        with open(os.path.join(ROOT, path), encoding="utf-8") as f:
+            originals[path] = f.read()
     parallel = max(1, min(4, (os.cpu_count() or 2) // 2))
     jobs = max(1, (os.cpu_count() or 2) // parallel)
+    base = {path: admit_all(text) for path, text in originals.items()}
     texts = []
-    for kind, what, (old, new) in MUTATIONS:
+    for path, kind, what, (old, new) in MUTATIONS:
         try:
-            texts.append((kind, what, admit_all(mutate(shapes, kind, old, new))))
+            mutated = admit_all(mutate(originals[path], kind, old, new))
         except ValueError as e:
             print("BROKEN  %s: %s" % (kind, e))
             return 1
-    base = admit_all(shapes)
+        texts.append((path, kind, what, {**base, path: mutated}))
     with concurrent.futures.ThreadPoolExecutor(parallel) as pool:
         base_run = pool.submit(build, "base", base, jobs)
-        runs = [(k, w, pool.submit(build, k, t, jobs)) for k, w, t in texts]
+        runs = [(p, k, w, pool.submit(build, k, t, jobs)) for p, k, w, t in texts]
         ok, files, out = base_run.result()
         if not ok:
             print("BROKEN  the unmutated copy does not build:\n" + out[-3000:])
             return 1
         print("PASS    unmutated copy builds")
         caught = 0
-        for kind, what, fut in runs:
+        for path, kind, what, fut in runs:
             ok, files, out = fut.result()
-            outside = [f for f in files if f != "theories/Shapes.v"]
-            if not ok and outside and "theories/Shapes.v" not in files:
+            outside = [f for f in files if f != path]
+            name = "%s (%s)" % (kind, os.path.basename(path))
+            if not ok and outside and path not in files:
                 caught += 1
-                print("CAUGHT  %s, %s: the build fails at %s" % (kind, what, ", ".join(outside)))
+                print("CAUGHT  %s, %s: the build fails at %s" % (name, what, ", ".join(outside)))
             elif not ok:
-                print("MISSED  %s, %s: the build fails only at %s\n%s" % (kind, what, ", ".join(files) or "?", out[-2000:]))
+                print("MISSED  %s, %s: the build fails only at %s\n%s" % (name, what, ", ".join(files) or "?", out[-2000:]))
             else:
-                print("MISSED  %s, %s: the copy builds" % (kind, what))
+                print("MISSED  %s, %s: the copy builds" % (name, what))
     print("mutations caught: %d of %d kinds" % (caught, len(MUTATIONS)))
     return 0 if caught == len(MUTATIONS) else 1
 

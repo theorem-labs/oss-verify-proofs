@@ -4,15 +4,16 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names and numbers changed; 3942 of its 4075 lines of code are new or changed and 878 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/R10.v, with its module names, addresses and numbers changed; 426 of its 656 lines of code are new or changed and 3845 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Provenance (route (a) bridge input, lead 22:18Z; auditor a Theorem Labs lane):
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
    source runs: lib/B/Prog/Seg/R10.v r10_cfg0 (:134), r10_sum12 (:196), r10_head_reply (:252),
      r10_head_frag6 (:301), r10_head_frag5 (:351) (no call); r10_reply_call (:401, reac_ctrl_identity_reply),
      r10_frag6_call (:534) and r10_frag5_call (:650, reac_ctrl_identity_fragment) at
-     a working branch 3803efccea0 (blob 3e337604ea39d36bedf3457b924598a163623f14);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+     a working branch (blob 3e337604ea39d36bedf3457b924598a163623f14);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    compare: the no-call runs each get <run>_of_F (evtF_evt + rng_all) re-deriving the source statement; the
      call runs are split at their single call into <run>_pre_F (stop at the callee entry, ra = return pc) and
      <run>_post_F (from the return pc, 0 further steps; repackages the callee post facts into the exit cut).

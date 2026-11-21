@@ -1,6 +1,6 @@
 # G1: the address checker of record over the image B files (gate record)
 
-Proves no function (kind: measurement). Re-run 2026-10-30 on the series base b1afc3e80791 (`run.sh g1`).
+Proves no function (kind: measurement). Re-run 2026-10-30 on the series base (`run.sh g1`).
 
 ## Tool
 port_addr_check.py, the address checker of record, sha256
@@ -10,8 +10,8 @@ row carries a finding class; the classes come from the tool (`FLAG-CLASSES 575d3
 
 ## Command
 ```
-python3 "$PAC" --git "$GIT" --donors-from "$DONORS" --summary --fail-on-flags \
-  --src c8557374ad2e:proofs/cgif/cgif_file_fuzzer/lib --dst b1afc3e80791:proofs/libreac/fuzz_disco/lib \
+python3 "$PAC" --git "$GIT" --donors-from "$DONORS" --summary --fail-on-flags \:
+  proofs/cgif/cgif_file_fuzzer/lib:proofs/libreac/fuzz_disco/lib \
   --paired-only --map A/=A/ --map =Reusable/ \
   --src-image A="$CGIF_BIN/cgif_file_fuzzer.asan" --src-image B="$CGIF_BIN/cgif_file_fuzzer.asan-ubsan" \
   --src-image P="$CGIF_BIN/cgif_file_fuzzer.plain" --src-image U="$CGIF_BIN/cgif_file_fuzzer.ubsan" \

@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-29: relocated from libreac/fuzz_grant (a working branch 97c611eec86,
+(* Modified by Theorem Labs, 2026-10-29: relocated from libreac/fuzz_grant (a working branch,
    proofs/libreac/fuzz_grant/lib/A/Rt/StrcmpChkX.v, owner a Theorem Labs lane) to libreac/fuzz_identity's ASan build
    (image A) by an address map recorded by the porting lane; module paths, GrantSyms ->
    TfibSyms. The proof script is a Theorem Labs lane's, unchanged. *)
@@ -14,6 +14,7 @@
    `bnez a3` 0x4282c), whose slow path 0x42a50..0x42a80 rechecks the granules and returns to 0x42830.
    Atoms: 18 = s2 = p (the string), 41 = n; as in AE6z, 32.. are the shadow granules and words. *)
 (* Modified by Theorem Labs, 2026-10-29: for a Theorem Labs lane's acceptance (a working branch), the record class is TfibSyms, not IdentTfibSyms (DECISIONS-LIVE: TfibSyms in both A and B, no --rename), and the core modules are Required by full path at the applied A core's names (lib/A/A*.v, lib/Reusable/YA0m, YE08, YE21). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

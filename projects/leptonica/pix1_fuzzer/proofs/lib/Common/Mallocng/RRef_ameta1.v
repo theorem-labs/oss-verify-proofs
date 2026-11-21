@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the transparent-huge-page flag and vdso_ok premises of am_tail_piece, am_newarea_piece, am_brk_piece, am_some_piece and am_res_piece, and minv's extra conjunct). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import decidable.
@@ -39,7 +40,7 @@ Hypothesis MU : munmap_stmt.
 
 Lemma am_tail_piece {B} : forall md (R : bvmap 5 word) mm rom (s0 s : mstate) (p : word)
     (K : word -> M B) (P : B -> mstate -> Prop) (L : B -> mstate -> TSet),
-  md_pure md -> magree s mm -> minv s0 s ->
+  md_pure md -> magree s mm -> minv s0 s -> ms_thp s0 = kb_thp (m_kernel md) -> vdso_ok (with_vmmaps (ms_vm s0) md) ->
   getr R 19 = A_LOCK -> getr R 9 = p ->
   tsafe (MallocTree.mbind (am_tail p) K s) P ->
   (forall m s' mm' R',
@@ -52,7 +53,7 @@ Lemma am_tail_piece {B} : forall md (R : bvmap 5 word) mm rom (s0 s : mstate) (p
   realizes ml_segs (mkCfg (mkst R (pc+ PC_ALLOC_META 0x218) mm rom) (with_vmmaps (ms_vm s) md))
            (tshape (MallocTree.mbind (am_tail p) K s) L).
 Proof.
-  intros md R mm rom s0 s p K P L Hp Hag HI H19 H9 HS HK.
+  intros md R mm rom s0 s p K P L Hp Hag HI Hthp0 Hvdo0 H19 H9 HS HK.
   pose proof I as HW. pose proof I as Hret. note_win HI. sys_hyps.
   unfold am_tail in HS |- *. munf. mnorm HS.
   mrunx_until Hp HS Hag HI HW HK Hret no_calls (bv_unsigned PC_ALLOC_META + 0x234).
@@ -80,7 +81,7 @@ Definition am_newarea_xr (x : option (word * bool)) (R' : bvmap 5 word) : Prop :
 
 Lemma am_newarea_piece {B} : forall md (R : bvmap 5 word) mm rom (s0 s : mstate) (sp : word)
     (K : option (word * bool) -> M B) (P : B -> mstate -> Prop) (L : B -> mstate -> TSet),
-  md_pure md -> magree s mm -> minv s0 s ->
+  md_pure md -> magree s mm -> minv s0 s -> ms_thp s0 = kb_thp (m_kernel md) -> vdso_ok (with_vmmaps (ms_vm s0) md) ->
   getr R 19 = A_LOCK -> getr R 8 = Z_to_bv 64 4096 -> getr R 2 = v_addi sp (-64) ->
   getr R 4 = A_TP ->
   bv_unsigned sp mod 16 = 0 ->
@@ -99,9 +100,9 @@ Lemma am_newarea_piece {B} : forall md (R : bvmap 5 word) mm rom (s0 s : mstate)
   realizes ml_segs (mkCfg (mkst R (pc+ PC_ALLOC_META 0x1b8) mm rom) (with_vmmaps (ms_vm s) md))
            (tshape (MallocTree.mbind (am_newarea (Z_to_bv 64 4096)) K s) L).
 Proof.
-  intros md R mm rom s0 s sp K P L Hp Hag HI H19 H8 H2 H4 Hal Hlo Hhi Hstk HS HK.
+  intros md R mm rom s0 s sp K P L Hp Hag HI Hthp0 Hvdo0 H19 H8 H2 H4 Hal Hlo Hhi Hstk HS HK.
   pose proof I as Hret. note_win HI. sys_hyps.
-  pose proof HI as HI0. destruct HI0 as (_ & _ & _ & Hlo0 & _ & Hhi64 & _).
+  pose proof HI as HI0. destruct HI0 as (_ & _ & _ & _ & Hlo0 & _ & Hhi64 & _).
   pose proof (mwin_init s0 mm sp 144 Hstk) as HW.
   unfold am_newarea, am_newarea_xr in HS |- *. munf. mnorm HS.
   am_run Hp HS Hag HI HW HK Hret K am_newarea_pc.
@@ -129,7 +130,7 @@ Definition am_brk_xr (a0 : word) (x : option (word * bool)) (R' : bvmap 5 word) 
 
 Lemma am_brk_piece {B} : forall md (R : bvmap 5 word) mm rom (s0 s : mstate) (sp cb a0 : word)
     (K : option (word * bool) -> M B) (P : B -> mstate -> Prop) (L : B -> mstate -> TSet),
-  md_pure md -> magree s mm -> minv s0 s ->
+  md_pure md -> magree s mm -> minv s0 s -> ms_thp s0 = kb_thp (m_kernel md) -> vdso_ok (with_vmmaps (ms_vm s0) md) ->
   getr R 19 = A_LOCK -> getr R 8 = Z_to_bv 64 4096 -> getr R 2 = v_addi sp (-64) ->
   getr R 4 = A_TP -> getr R 9 = cb -> getr R 10 = a0 ->
   bv_unsigned sp mod 16 = 0 ->
@@ -148,9 +149,9 @@ Lemma am_brk_piece {B} : forall md (R : bvmap 5 word) mm rom (s0 s : mstate) (sp
   realizes ml_segs (mkCfg (mkst R (pc+ PC_ALLOC_META 0x114) mm rom) (with_vmmaps (ms_vm s) md))
            (tshape (MallocTree.mbind (am_brk (Z_to_bv 64 4096) cb) K s) L).
 Proof.
-  intros md R mm rom s0 s sp cb a0 K P L Hp Hag HI H19 H8 H2 H4 H9 H10 Hal Hlo Hhi Hstk HS HK.
+  intros md R mm rom s0 s sp cb a0 K P L Hp Hag HI Hthp0 Hvdo0 H19 H8 H2 H4 H9 H10 Hal Hlo Hhi Hstk HS HK.
   pose proof I as Hret. note_win HI. sys_hyps.
-  pose proof HI as HI0. destruct HI0 as (_ & _ & _ & Hlo0 & _ & Hhi64 & _).
+  pose proof HI as HI0. destruct HI0 as (_ & _ & _ & _ & Hlo0 & _ & Hhi64 & _).
   pose proof (mwin_init s0 mm sp 144 Hstk) as HW.
   unfold am_brk, am_brk_xr in HS |- *. munf. mnorm HS.
   am_run Hp HS Hag HI HW HK Hret K am_brk_pc.
@@ -172,7 +173,7 @@ Qed.
 
 Lemma am_some_piece {B} : forall md (R : bvmap 5 word) mm rom (s0 s : mstate) (sp p : word)
     (K : word -> M B) (P : B -> mstate -> Prop) (L : B -> mstate -> TSet),
-  md_pure md -> magree s mm -> minv s0 s ->
+  md_pure md -> magree s mm -> minv s0 s -> ms_thp s0 = kb_thp (m_kernel md) -> vdso_ok (with_vmmaps (ms_vm s0) md) ->
   getr R 19 = A_LOCK -> getr R 8 = Z_to_bv 64 4096 -> getr R 2 = v_addi sp (-64) ->
   getr R 4 = A_TP -> getr R 9 = p ->
   bv_unsigned sp mod 16 = 0 ->
@@ -191,9 +192,9 @@ Lemma am_some_piece {B} : forall md (R : bvmap 5 word) mm rom (s0 s : mstate) (s
   realizes ml_segs (mkCfg (mkst R (pc+ PC_ALLOC_META 0x20c) mm rom) (with_vmmaps (ms_vm s) md))
            (tshape (MallocTree.mbind (am_some (Z_to_bv 64 4096) p true) K s) L).
 Proof.
-  intros md R mm rom s0 s sp p K P L Hp Hag HI H19 H8 H2 H4 H9 Hal Hlo Hhi Hstk HS HK.
+  intros md R mm rom s0 s sp p K P L Hp Hag HI Hthp0 Hvdo0 H19 H8 H2 H4 H9 Hal Hlo Hhi Hstk HS HK.
   pose proof I as Hret. note_win HI. sys_hyps.
-  pose proof HI as HI0. destruct HI0 as (_ & _ & _ & Hlo0 & _ & Hhi64 & _).
+  pose proof HI as HI0. destruct HI0 as (_ & _ & _ & _ & Hlo0 & _ & Hhi64 & _).
   pose proof (mwin_init s0 mm sp 144 Hstk) as HW.
   unfold am_some, am_okc in HS |- *. munf. mnorm HS.
   (* [comment removed for export] *)
@@ -239,7 +240,7 @@ Ltac am_fin_newarea Hp HS Hag HI HW HK Hret K :=
 
 Lemma am_res_piece {B} : forall md (R : bvmap 5 word) mm rom (s0 s : mstate) (sp : word)
     (K : word -> M B) (P : B -> mstate -> Prop) (L : B -> mstate -> TSet),
-  md_pure md -> magree s mm -> minv s0 s ->
+  md_pure md -> magree s mm -> minv s0 s -> ms_thp s0 = kb_thp (m_kernel md) -> vdso_ok (with_vmmaps (ms_vm s0) md) ->
   getr R 19 = A_LOCK -> getr R 8 = Z_to_bv 64 4096 -> getr R 2 = v_addi sp (-64) ->
   getr R 4 = A_TP ->
   bv_unsigned sp mod 16 = 0 ->
@@ -258,9 +259,9 @@ Lemma am_res_piece {B} : forall md (R : bvmap 5 word) mm rom (s0 s : mstate) (sp
   realizes ml_segs (mkCfg (mkst R (pc+ PC_ALLOC_META 0xb4) mm rom) (with_vmmaps (ms_vm s) md))
            (tshape (MallocTree.mbind (am_res (Z_to_bv 64 4096)) K s) L).
 Proof.
-  intros md R mm rom s0 s sp K P L Hp Hag HI H19 H8 H2 H4 Hal Hlo Hhi Hstk HS HK.
+  intros md R mm rom s0 s sp K P L Hp Hag HI Hthp0 Hvdo0 H19 H8 H2 H4 Hal Hlo Hhi Hstk HS HK.
   pose proof I as Hret. note_win HI. sys_hyps.
-  pose proof HI as HI0. destruct HI0 as (_ & _ & _ & Hlo0 & _ & Hhi64 & _).
+  pose proof HI as HI0. destruct HI0 as (_ & _ & _ & _ & Hlo0 & _ & Hhi64 & _).
   pose proof (mwin_init s0 mm sp 144 Hstk) as HW.
   unfold am_res in HS |- *. munf. mnorm HS.
   (* [comment removed for export] *)

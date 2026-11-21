@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: lemmas added for the revision. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -28,6 +29,25 @@ ltac2:(KReplay.run1z (kr_t_AsCXXHeap ()) [] "##%;h02LBh11bp;1p;2p10000p4p70p1001
 Lemma lf_remove_head : ltac2:(zQ "80!q6!t2!md!t9!m6!o8!u0!u8>1k$0>2ff$0>2fp$0>2LF@1$2@2$1@2$1$0$0$0@3$5@1$2$6@2$7^3@3$4@2$1@2$1$0$0$0@4$3@2$1$0$0$0@4$3$0$0^4^3^2^1^1").
 Proof.
 ltac2:(KReplay.run1 (kr_t_AsCXXHeap ()) [] "h02LFh11bh22ffh32fph41kp;2p;1p;4p;3p;6g008oj25Tg004lj13Tg009Oj40Tg009oj21Tg00;7j34Tg00;Wj32Tg0087j29Tg00<1j28Tg00<Nj17Tg00=0j66Tg008QR01500R1/50R2#3g00=NR3g00=ng002nR4#3R5P3P5f0R6f1R7P1P0P0P0f4f3R8C0f2R9C01187544n0100000020000;27X1319561899%79E6P1P0P0P0P8P9C0P7C0=426,19=256eW0X30X20W4o"). Qed.
+
+(* LPS revision repair (75d69e00, checker 2c6b6db8).  UNIVERSE ANCHOR for fresh_of_RFS's
+   replay below.  Same cause as the four AG_*/AS_* anchors: `KReplay.run1`/`run1z` hand the
+   decoded term to the kernel with `Std.exact_no_check` (KReplay.v:627), so a replay can only
+   CONSUME universe constraints already in the graph and cannot add one.  fresh_of_RFS's term
+   applies an `in_map_iff`-shaped hypothesis at `A := fframe`, `B := Z`, and the kernel says
+   `Type@{fframe.u0}` is not a subtype of `Type@{Map.u0}`.
+   `Map.u0` IS Stdlib's `List.v` `Section Map` universe — the section that declares `map`,
+   `in_map` and `in_map_iff` over `Variables (A B : Type)` — so the missing constraint is
+   `fframe.u0 <= Map.u0` and the elaborator adds it from any application of a lemma of that
+   section at `A := fframe`.
+   MY FIRST ATTEMPT AT THIS ANCHOR DID NOT WORK AND THE REASON IS WORTH THE LINE: I wrote it
+   with an unqualified `map`/`in_map`, and this file does `From stdpp Require Import gmap`,
+   so the name need not resolve to the `List` section's constant at all — the stream's cause
+   6, two libraries wearing one name.  The constraint went to the wrong constant and the
+   error did not move.  So the anchor below names the lemma the replay actually uses, fully
+   qualified, at exactly its instance: nothing is proved, nothing is unfolded, and there is
+   no name left for `stdpp` to capture. *)
+Definition u_anchor_in_map_iff_fframe := @List.in_map_iff fframe Z.
 
 Section HH.
   Context {HCEIL : HeapCeil}.

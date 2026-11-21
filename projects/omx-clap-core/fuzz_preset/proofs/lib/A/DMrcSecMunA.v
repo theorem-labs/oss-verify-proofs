@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcSecMun.v (commit 5ad50e61fc6a, file sha256 5131aab3ec3e) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; #102 pin 1be0f53d96cb); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py), and 2 pcs named in comments; no other numeral changed. *)
-(* Theorem Labs, 2026-10-30 (head H4 of the interface DMwalkIF.v at dc3949af11c): the SECONDARY arm of
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcSecMun.v (file sha256 5131aab3ec3e) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 bff8519bbe3e; #102 pin 1be0f53d96cb); module paths changed; its 0 image addresses moved by code-verified function pairs (0 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py), and 2 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10-30 (head H4 of the interface DMwalkIF.v): the SECONDARY arm of
    __asan::QuarantineCallback::Recycle (0x34810), i.e. LargeMmapAllocator::Deallocate, over the opaque cut relation ARXr.
    rule 24: proves function __asan::QuarantineCallback::Recycle (secondary arm), at omx-clap-core/fuzz_preset's asan
    image A' (relocated from the donor's proof at cgif_file_fuzzer's asan-ubsan image); reuse search at fuzz_preset
    (2026-10-31, by name and by word over the released corpus, both with and without the meaning ranking, and an exact
    theorem-name grep over origin/ossv/recipes; a by-address search cannot see this unit, whose released builds carry no
-   symbol table): no released file is named for the function.  PRIOR ART: tfib_rchunk_sec (in the released file lib/A/AFg9.v, deleted in this series; at 87c4b944683b of
+   symbol table): no released file is named for the function.  PRIOR ART: tfib_rchunk_sec (in the released file lib/A/AFg9.v, deleted in this series; of
    origin/ossv/recipes) proves the secondary arm over the concrete amreal / rcc_pre form; this file restates the machine
    walk of that arm over the opaque cut relation ARXr of DMwalkIF head H4, and takes the map definitions of the released
    lib/A/AFg8.v, which this tree carries at the released blob.

@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Theorem Labs, 2026-10: image B's twin of lib/A/AD2mcf.v (a working branch 46f1762ad5a), in place of A1's raw
-   generator copy of lib/B/YD2m.v (88ba9e5b87c). It is the cf twin of B/YD2m.v - the two interceptor results the
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Theorem Labs, 2026-10: image B's twin of lib/A/AD2mcf.v (a working branch), in place of A1's raw
+   generator copy of lib/B/YD2m.v. It is the cf twin of B/YD2m.v - the two interceptor results the
    fuzz_reply driver calls, over the event-free second allocator instance ARcf (Reusable/YG0ncf.v) instead of cgif's AR:
      tfib_AICPY_cf  : aintrin_realizes_cf tfibsegs B OCpy (pc_wrap_memcpy (as_code B))   (B/YD2m.v:17 tfib_AICPY)
      tfib_ARDCHK_cf : YD1icf.aread_check_stmt B                                           (B/YD2m.v:22 tfib_ARDCHK)
    Both come from the SAME walks as the AR versions: B/YE31.v memcpy_icpt_realizes_x and B/YE33.v
    aread_check_realizes_x are those walks stated over an arbitrary allocator invariant ARx (B/YE2y.v's
-   icpt_laws_x / ecall_pre_ix; row A4's conversion acd4eb7f7c6), and YE31.memcpy_icpt_realizes /
+   icpt_laws_x / ecall_pre_ix; row A4's conversion), and YE31.memcpy_icpt_realizes /
    YE33.aread_check_realizes are their cgif AR instances, with their statement text unchanged. icpt_laws_x_cf below is
    the ARcf instance of the law record: every field is a field of AR_laws_cf (YG0dcf.v) or of ARmcf (YG0ncf.v), so the
    record is discharged by citation, with no new allocator fact.

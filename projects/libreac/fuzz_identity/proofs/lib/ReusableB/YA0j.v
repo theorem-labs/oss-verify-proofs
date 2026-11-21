@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from projects/cgif/cgif_file_fuzzer/proofs/lib/YA0j.v (donor image sha256 1c29845fe605), with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed ho_tid, ho_res, ho_kinds, ho_totsz); added ho_rdr, the hand-off's channel reader from cs_ok's co_rdr. *)
 From OSSVerify.Proofs.libreac.fuzz_identity.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -143,10 +144,28 @@ Lemma ho_fs : m_fs model = FS0.
 Proof. exact (co_fs _ _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
 Lemma ho_fds_std : a_fd ch = FdStd -> m_fds model = fds_std.
 Proof. intros H. pose proof (co_fds _ _ _ _ _ _ _ _ _ _ _ _ HC) as X. rewrite H in X. exact X. Qed.
+(* The hand-off model's channel reader, from [cs_ok]'s [co_rdr]: [fdchan] asks for it
+   beside the descriptor, and the driver reads it here once, where [cs_ok] is in hand. *)
+Lemma ho_rdr : m_channel_reader model = true.
+Proof. exact (co_rdr _ _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
 Lemma ho_tid : a_tidset ch = false -> m_tid model = None.
 Proof. exact (co_tid _ _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
-Lemma ho_res : vm_reserved (m_vmmaps model) = segments_reserved SEGS.
-Proof. exact (co_res _ _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
+(** #38: [cs_ok]'s reservation tail with the bounds its consumer ([YG0n.ALedger.al_reserved])
+    reads: at most two entries, each in high memory and at most twenty pages long, and every
+    mapping clear of every reservation ([co_mres]). *)
+Lemma ho_res : exists rx : list (word * word),
+vm_reserved (m_vmmaps model) = segments_reserved SEGS ++ rx /\ (length rx <= 2)%nat /\
+Forall (fun iv => KHI <= bv_unsigned (fst iv) /\ bv_unsigned (snd iv) <= 20 * 4096) rx /\
+Forall (fun iv => region_free (vm_reserved (m_vmmaps model)) (fst iv) (snd iv) = true) (vm_maps (m_vmmaps model)).
+Proof.
+destruct (co_res _ _ _ _ _ _ _ _ _ _ _ _ HC) as (rx & H & HL & HS & HK).
+exists rx. split; [exact H|]. split; [exact HL|]. split; [|exact (co_mres _ _ _ _ _ _ _ _ _ _ _ _ HC)].
+assert (N : forall l : list (word * word), 0 <= sum_sizes l).
+{ induction l as [|x l IHl]; cbn [sum_sizes]; [lia|]. pose proof (bv_unsigned_in_range _ (snd x)). lia. }
+clear - HS HK N. revert HS. induction HK as [|iv l K1 K2 IH]; intros HS; constructor.
+- cbn [sum_sizes] in HS. pose proof (N l). split; [exact K1 | lia].
+- apply IH. cbn [sum_sizes] in HS. pose proof (bv_unsigned_in_range _ (snd iv)). lia.
+Qed.
 Lemma ho_limit : vm_limit (m_vmmaps model) = LIMIT.
 Proof. exact (co_limit _ _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
 Lemma ho_brk : vm_brk (m_vmmaps model) = edenot E (a_brk ch).
@@ -187,7 +206,12 @@ forall a : word, bv_unsigned (edenot E (am_base m)) <= bv_unsigned a < bv_unsign
 in_ivs (bv_unsigned a) (vm_noaccess (m_vmmaps model)) = false
 /\ page_in_ranges (page_base a) (m_vm_lazy model) = true) (a_maps ch).
 Proof. exact (co_kinds _ _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
-Lemma ho_totsz : sum_sizes (vm_reserved (m_vmmaps model) ++ vm_maps (m_vmmaps model)) <= a_totsz ch.
+(** #38: the PROJECTION MUST FOLLOW THE FIELD.  [cs_ok.co_totsz] was narrowed to
+    [sum_sizes (segments_reserved SEGS ++ vm_maps ...)] so the appended vDSO pair
+    never enters the sum; this projection stated the old subject, so
+    [exact (co_totsz ...)] no longer typechecked.  Nothing downstream needs the
+    wider subject: the pair is bounded by [co_res]'s own tail conjunct. *)
+Lemma ho_totsz : sum_sizes (segments_reserved SEGS ++ vm_maps (m_vmmaps model)) <= a_totsz ch.
 Proof. exact (co_totsz _ _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
 Lemma ho_zero : forall a : word, HID a = true ->
 in_ivs (bv_unsigned a) (vm_maps (m_vmmaps model)) = true ->

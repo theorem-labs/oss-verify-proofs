@@ -1,4 +1,4 @@
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_names.v on a working branch e2e59892bef: relocated A->B by symbol (b_reloc.py; the same 8 instructions at 0x81e74), names_spec's strict sp premise. *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMW_names.v on a working branch: relocated A->B by symbol (b_reloc.py; the same 8 instructions at 0x81e74), names_spec's strict sp premise. *)
 (* lv2_locate_manifest_names 0x81e74 (lv2_locate.c:78-83), 8 instructions:
      addi sp,sp,-16; sd ra,8(sp); sd zero,0(sp); mv a2,sp; jal lv2_locate_manifest_readings; ld ra,8(sp);
      addi sp,sp,16; ret

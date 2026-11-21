@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the asan-ubsan twin of lib/A/QdiscAllocClose.v, made from proofs/libreac/fuzz_knock/lib/AU/
-   YKnockAllocClose.v at origin/ossv/recipes 88154566652. The allocator and memcpy parts of fuzz_qdisc's asan-ubsan
+   YKnockAllocClose.v. The allocator and memcpy parts of fuzz_qdisc's asan-ubsan
    driver, closed at that image's symbol table B := YD2l.TfibB: the slots H_ALLOC_MALLOC_U / H_ALLOC_FREE_U /
    H_RT_MEMCPY_U of lib/A/QdiscClose.v's Section asan_ubsan. Each is the core's theorem at TfibB:
    YF0w.tfib_amalloc_realizes, YF0q.afree_realizes_closed and YD2m.tfib_AICPY, with TfibB's TfibSyms from

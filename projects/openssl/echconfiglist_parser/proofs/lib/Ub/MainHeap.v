@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (malloc and free calls are walks over the run's list RSEGS ++ rt_tail through hx_reach and RomBase.cwrom; free_call_bin keeps the free call over the binary's own segments). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -15,6 +16,7 @@ From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Ub Require Import MainDef
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Lib Require Import Mem Cells Step Frame MState SysStep.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Ub Require Import USegs RMalloc_iface_stmt HeapSR_iface.
 From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Spec Require Import Prog.
+From OSSVerify.Proofs.openssl.echconfiglist_parser.lib.Common.Cfg Require Import RomBase RomStable RunTail.
 (* [comment removed for export] *)
 Import OSSVerify.Proofs.openssl.echconfiglist_parser.lib.PropExec.
 Import ListNotations.
@@ -26,6 +28,10 @@ Abbreviation RSEGS := Ubsan.M.loaded_segments.
 
 Section Heap.
   Context {HCEIL : HeapCeil}.
+  (* the heap calls on the way to the target and after it are walks over the run's list: the
+     heap's reach is one over that list from the state with its backing ([MainDefs.hx_reach]) *)
+  Context {RT : RunTail}.
+  Local Notation VS := (RSEGS ++ rt_tail) (only parsing).
   Variable HS : hsr.
   Hypothesis HH : heap_sr_hyps HS.
   Hypothesis HX : heap_extra HS.
@@ -60,16 +66,18 @@ Section Heap.
         rheap_pres LB (bv_unsigned (getr regs 2)) mem mem' ->
         rblock_range A n -> hs_RHEAP HS s' ((p, A, n) :: LB) mem' ->
         rw_cells usegs mem' A [CB (Z.to_nat n) junk] ->
-        realizes RSEGS (mkCfg (mkst regs' (Z_to_bv 64 ra) mem' (seg_rom RSEGS)) model') K) ->
-    realizes RSEGS (mkCfg (mkst regs (Z_to_bv 64 RMALLOC_SYM) mem (seg_rom RSEGS)) model) K.
+        realizes VS (mkCfg (mkst regs' (Z_to_bv 64 ra) mem' (seg_rom VS)) model') K) ->
+    realizes VS (mkCfg (mkst regs (Z_to_bv 64 RMALLOC_SYM) mem (seg_rom VS)) model) K.
   Proof.
     intros regs mem model s LB n lo B errv ra K Hra Hra64 Hra2 Htp Ha0 Hn HRH HKR HAL HAU HB HSTK HLO HLO2 HERR HINV HK.
     (* [comment removed for export] *)
-    apply (realizes_eqv RSEGS (mkCfg (MS (mkR_of regs) bvmap_empty (Z_to_bv 64 RMALLOC_SYM) (Z_to_bv 32 0) None mem (seg_rom RSEGS)) model)).
+    apply (realizes_eqv VS (mkCfg (MS (mkR_of regs) bvmap_empty (Z_to_bv 64 RMALLOC_SYM) (Z_to_bv 32 0) None mem (seg_rom VS)) model)).
     2:{ split; [apply ms_eqv_sym; apply mkst_as_MS | reflexivity]. }
     rewrite mkR_of_getr. rewrite Hra, Htp, Ha0.
+    (* the start state is the binary-backed state with the run's backing ([RomBase.cwrom]) *)
+    change (mkCfg (MS ?R ?F ?pc ?fc None mem ?r) model) with (cwrom (mkCfg (MS R F pc fc None mem (seg_rom RSEGS)) model) r).
     eapply sreach_realizes.
-    { apply (hx_sr HS HX).
+    { apply (hx_reach HS HX); [| reflexivity].
       apply (MALLOC (Z_to_bv 64 ra) (getr regs 2) (getr regs 3) (Z_to_bv 64 RATP) (getr regs 5) (getr regs 6) (getr regs 7)
                     (getr regs 8) (getr regs 9) (Z_to_bv 64 n) (getr regs 11) (getr regs 12) (getr regs 13) (getr regs 14)
                     (getr regs 15) (getr regs 16) (getr regs 17) (getr regs 18) (getr regs 19) (getr regs 20) (getr regs 21)
@@ -78,9 +86,10 @@ Section Heap.
                     bvmap_empty (Z_to_bv 32 0) mem s LB n lo B errv model);
         try assumption; try reflexivity.
       rewrite <- Htp. exact HERR. }
-    intros c' (t0 & t1 & t2 & a1 & a2 & a3 & a4 & a5 & a6 & a7 & t3 & t4 & t5 & t6 & m' & errv' & A & junk & p & s' &
+    intros c' (c0 & -> & t0 & t1 & t2 & a1 & a2 & a3 & a4 & a5 & a6 & a7 & t3 & t4 & t5 & t6 & m' & errv' & A & junk & p & s' &
                Hms & HKR' & HMP & HINV' & HSTK' & HERR' & HAU' & HPRES & HBR & HRH' & HBLK).
-    destruct c' as [ms' mo']. cbn [cfg_ms cfg_model] in *. subst ms'.
+    destruct c0 as [ms' mo']. cbn [cfg_ms cfg_model] in *. subst ms'.
+    change (cwrom (mkCfg (MS ?R ?F ?pc ?fc None ?m ?ro) mo') ?r) with (mkCfg (MS R F pc fc None m r) mo').
     rewrite (ret_pc_even ra Hra64 Hra2).
     change (MS ?R ?F ?pc ?fc None ?m ?rom) with (mkst R pc m rom).
     eapply (HK _ m' mo' A p s' errv' junk); try exact HKR'; try exact HMP; try exact HINV'; try exact HSTK'; try exact HAU';
@@ -109,6 +118,56 @@ Section Heap.
         rw_cells usegs mem' (errno_addr (getr regs 4)) [C4 errv] -> hs_rauxv_ok HS mem' B ->
         rheap_pres (hs_lb_remove HS p LB) (bv_unsigned (getr regs 2)) mem mem' ->
         hs_RHEAP HS s' (hs_lb_remove HS p LB) mem' ->
+        realizes VS (mkCfg (mkst regs' (Z_to_bv 64 ra) mem' (seg_rom VS)) model') K) ->
+    realizes VS (mkCfg (mkst regs (Z_to_bv 64 RFREE_SYM) mem (seg_rom VS)) model) K.
+  Proof.
+    intros regs mem model s LB p A n lo B errv ra K Hra Hra64 Hra2 Htp Ha0 HRH HKR HIN HAU HB HSTK HLO HLO2 HERR HINV HK.
+    apply (realizes_eqv VS (mkCfg (MS (mkR_of regs) bvmap_empty (Z_to_bv 64 RFREE_SYM) (Z_to_bv 32 0) None mem (seg_rom VS)) model)).
+    2:{ split; [apply ms_eqv_sym; apply mkst_as_MS | reflexivity]. }
+    rewrite mkR_of_getr. rewrite Hra, Htp, Ha0.
+    change (mkCfg (MS ?R ?F ?pc ?fc None mem ?r) model) with (cwrom (mkCfg (MS R F pc fc None mem (seg_rom RSEGS)) model) r).
+    eapply sreach_realizes.
+    { apply (hx_reach HS HX); [| reflexivity].
+      apply (FREE (Z_to_bv 64 ra) (getr regs 2) (getr regs 3) (Z_to_bv 64 RATP) (getr regs 5) (getr regs 6) (getr regs 7)
+                  (getr regs 8) (getr regs 9) (Z_to_bv 64 A) (getr regs 11) (getr regs 12) (getr regs 13) (getr regs 14)
+                  (getr regs 15) (getr regs 16) (getr regs 17) (getr regs 18) (getr regs 19) (getr regs 20) (getr regs 21)
+                  (getr regs 22) (getr regs 23) (getr regs 24) (getr regs 25) (getr regs 26) (getr regs 27) (getr regs 28)
+                  (getr regs 29) (getr regs 30) (getr regs 31)
+                  bvmap_empty (Z_to_bv 32 0) mem s LB p A n lo B errv model);
+        try assumption; try reflexivity.
+      rewrite <- Htp. exact HERR. }
+    intros c' (c0 & -> & t0 & t1 & t2 & a0 & a1 & a2 & a3 & a4 & a5 & a6 & a7 & t3 & t4 & t5 & t6 & m' & s' &
+               Hms & HKR' & HMP & HINV' & HSTK' & HERR' & HAU' & HPRES & HRH').
+    destruct c0 as [ms' mo']. cbn [cfg_ms cfg_model] in *. subst ms'.
+    change (cwrom (mkCfg (MS ?R ?F ?pc ?fc None ?m ?ro) mo') ?r) with (mkCfg (MS R F pc fc None m r) mo').
+    rewrite (ret_pc_even ra Hra64 Hra2).
+    change (MS ?R ?F ?pc ?fc None ?m ?rom) with (mkst R pc m rom).
+    eapply (HK _ m' mo' s'); try exact HKR'; try exact HMP; try exact HINV'; try exact HSTK'; try exact HAU';
+      try exact HPRES; try exact HRH'.
+    - intros r Hr. unfold heap_kept in Hr. cbn [In] in Hr.
+      destruct Hr as [<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[<-|[]]]]]]]]]]]]]]]];
+        rewrite (getr_mkR (Z_to_bv 64 ra)); cbn; first [reflexivity | symmetry; exact Htp].
+    - rewrite Htp. exact HERR'.
+  Qed.
+
+  (* [free_call] over the binary's own segments, for a whole walk to exit that never reaches
+     the target ([MainTop.exit_tail], under the header-error paths' RSEGS-stated fwrite). *)
+  Lemma free_call_bin : forall (regs : bvmap 5 word) (mem : word -> option byte) (model : Model)
+      (s : PState) (LB : list block) (p : bptr) (A n lo B : Z) (errv : word) (ra : Z) (K : TSet),
+    getr regs 1 = Z_to_bv 64 ra -> 0 <= ra < 2 ^ 64 -> ra mod 2 = 0 ->
+    getr regs 4 = Z_to_bv 64 RATP ->
+    getr regs 10 = Z_to_bv 64 A ->
+    hs_RHEAP HS s LB mem -> hs_KREL HS s model -> In (p, A, n) LB ->
+    hs_rauxv_ok HS mem B -> bv_unsigned (getr regs 2) <= B ->
+    stk usegs mem lo (bv_unsigned (getr regs 2)) -> hceil <= lo -> lo <= bv_unsigned (getr regs 2) - RFREE_STACK ->
+    rw_cells usegs mem (errno_addr (getr regs 4)) [C4 errv] -> mem_inv usegs mem ->
+    (forall (regs' : bvmap 5 word) (mem' : word -> option byte) (model' : Model) (s' : PState),
+        (forall r, In r heap_kept -> getr regs' r = getr regs r) ->
+        hs_KREL HS s' model' -> hs_MPRES HS model model' ->
+        mem_inv usegs mem' -> stk usegs mem' lo (bv_unsigned (getr regs 2)) ->
+        rw_cells usegs mem' (errno_addr (getr regs 4)) [C4 errv] -> hs_rauxv_ok HS mem' B ->
+        rheap_pres (hs_lb_remove HS p LB) (bv_unsigned (getr regs 2)) mem mem' ->
+        hs_RHEAP HS s' (hs_lb_remove HS p LB) mem' ->
         realizes RSEGS (mkCfg (mkst regs' (Z_to_bv 64 ra) mem' (seg_rom RSEGS)) model') K) ->
     realizes RSEGS (mkCfg (mkst regs (Z_to_bv 64 RFREE_SYM) mem (seg_rom RSEGS)) model) K.
   Proof.
@@ -117,8 +176,7 @@ Section Heap.
     2:{ split; [apply ms_eqv_sym; apply mkst_as_MS | reflexivity]. }
     rewrite mkR_of_getr. rewrite Hra, Htp, Ha0.
     eapply sreach_realizes.
-    { apply (hx_sr HS HX).
-      apply (FREE (Z_to_bv 64 ra) (getr regs 2) (getr regs 3) (Z_to_bv 64 RATP) (getr regs 5) (getr regs 6) (getr regs 7)
+    { apply (hx_free_bin HS HX (Z_to_bv 64 ra) (getr regs 2) (getr regs 3) (Z_to_bv 64 RATP) (getr regs 5) (getr regs 6) (getr regs 7)
                   (getr regs 8) (getr regs 9) (Z_to_bv 64 A) (getr regs 11) (getr regs 12) (getr regs 13) (getr regs 14)
                   (getr regs 15) (getr regs 16) (getr regs 17) (getr regs 18) (getr regs 19) (getr regs 20) (getr regs 21)
                   (getr regs 22) (getr regs 23) (getr regs 24) (getr regs 25) (getr regs 26) (getr regs 27) (getr regs 28)

@@ -1,15 +1,16 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10-30: KF-COUNT F3: P5M_x carries gn_cst, gn_runc; RIstep at that bound *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the ARx-GENERIC twin of the second part of ARM_gone's phase p5 on image B
-   (lib/B/W_LLVMFuzzerTestOneInput_gone_p5b.v, a Theorem Labs lane's, fee5272ac13: the two calls of the loop, check_no_loss at
+   (lib/B/W_LLVMFuzzerTestOneInput_gone_p5b.v, a Theorem Labs lane: the two calls of the loop, check_no_loss at
    0x84bf8 and check_shape_ends), for the conversion of ARM_gone to the cut invariants of
    lib/B/W_LLVMFuzzerTestOneInput_cut_x.v.  _gone_p5b.v is not edited.
    - part a's names (_gone_p5a.v) are taken from lib/B/W_LLVMFuzzerTestOneInput_gone_p5a_x.v at this Section's
      variables where part a restates them (p5st_x, P5C_x, P5T_x, gp5_ly_x, gp5_xport_x, gp5_sep_step_x, ...), and from
      _gone_p5a.v where they read no AR (gp5_split, gp5_surv, gp5_regs_call);
    - RESTATED under their names + _x, merged per item with SmallX's image-A twin
-     lib/A/W_LLVMFuzzerTestOneInput_gone_p5_x.v (95a5de32ab2): the loop's call state P5M_x, B's gp5_stk_rd_x (cnl_spec's
+     lib/A/W_LLVMFuzzerTestOneInput_gone_p5_x.v: the loop's call state P5M_x, B's gp5_stk_rd_x (cnl_spec's
      readable-stack premise from the cut's STKR), and the two call steps gp5_c8_x / gp5_c3_x (the callees' contracts
      GN_CNL_x / GN_CSHE_x: the kit's cnl_spec_x / cshe_spec_x at each slot's G).
    Section hypotheses beyond cut_x's header: as part a's, and CNL / CSHE (base_x's GN_CNL_x / GN_CSHE_x), RIstep
@@ -141,7 +142,7 @@ Hypothesis CSHE : GN_CSHE_x B MT PST ARx RP.
 Hypothesis RIstep : GN_RI_step B MT LSx RINV MMAX.
 (* the room round (ROOM-TEXTS.md (sha256 767baa12f13c; internal record) (c) / (d)), as _gone_p3_x.v states them: RPNP (RM is NP at the instance), the arm's
    count row LSCNT (GN_LS_cnt_x, _gone_base_x.v) and its model count rule CNTSTEP (GN_CNT_step, _gone_base.v, at
-   check_no_loss's premise peak cnl_pk, W_contract_x.v:378) *)
+   check_no_loss's premise peak cnl_pk, W_contract_x.v:379) *)
 Variable gn_pk : lfcx -> lmod -> list (hsrc * nat) -> (Z -> bool) -> nat.
 Hypothesis RPNP : forall S k, rp_RM RP S k <-> NP S.
 Hypothesis LSCNT : GN_LS_cnt_x B LSx RINV RP gn_pk.
@@ -154,7 +155,7 @@ Hypothesis BLKN : forall ly S Hp (W : world segs) mem md p n, ARx ly S Hp W mem 
 (* the image is off PST (add_x's HPST): the journal's image clause takes it; trivial at PST = [] *)
 (* @@ UNANCHORED Hypothesis HPST *)
 Hypothesis HPST : forall a, in_img segs a -> ~ Exists (in_zr a) PST.
-(* W_frame_x.v:105's Section hypothesis FRMF, for frame_al64_x / shadow_hull_vis_of_frame_x *)
+(* W_frame_x.v:106's Section hypothesis FRMF, for frame_al64_x / shadow_hull_vis_of_frame_x *)
 (* @@ UNANCHORED Hypothesis FRMF *)
 Hypothesis FRMF : forall ly S Hp (W : world segs) mem md cid pos, ARx ly S Hp W mem md -> In (cid, pos) (frames S) ->
   ly_F ly mod 4096 = 0 /\ fs_frame_off cid pos mod 64 = 0 /\ 64 <= fs_frame_bytes cid /\ fs_frame_bytes cid mod 64 = 0.

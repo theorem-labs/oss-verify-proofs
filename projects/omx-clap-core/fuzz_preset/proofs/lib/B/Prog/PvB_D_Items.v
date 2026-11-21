@@ -1,7 +1,7 @@
 (* fuzz_preset image B' (asan-ubsan, #102), parse_value 0x8637c, segment D (the dispatch): the
    CONTAINER ARMS' packaging lemma. The first byte after the white space is '{' (123, o = true) or '[' (91, o = false);
    the machine calls parse_items (q, v, o) and returns its result. pvD_Qm_items turns parse_items' post (the
-   tparse_items_specX of the batch kit, a working branch 8ba304fe2f93 lib/A/PRH_FnParse.v, its
+   tparse_items_specX of the batch kit, a working branch lib/A/PRH_FnParse.v, its
    post body taken verbatim as a hypothesis at the call state: the live list and the run position moved by rd_hevs
    tr, the outcome over parse_items' grant-all trace, the ledger move with g_most and the refused peak, the free-order
    tie against prhPi_frees, the capacity words) and the reader state at the call (pv_reader0, its room keep from

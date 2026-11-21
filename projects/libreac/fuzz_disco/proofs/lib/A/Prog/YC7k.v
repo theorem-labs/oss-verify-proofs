@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC7k.v for libreac/fuzz_disco's program walk, with its module paths changed; taken by path from libreac/fuzz_grant's copy (lib/A/Prog/YC7k.v, 52e554e9597) with fuzz_grant renamed fuzz_disco; atom 43's image range af_lo / af_hi is YImgTop.IMG_LO / IMG_TOP instead of cgif's 65536 / 6270976 (0x5fb000). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC7k.v for libreac/fuzz_disco's program walk, with its module paths changed; taken by path from libreac/fuzz_grant's copy (lib/A/Prog/YC7k.v) with fuzz_grant renamed fuzz_disco; atom 43's image range af_lo / af_hi is YImgTop.IMG_LO / IMG_TOP instead of cgif's 65536 / 6270976 (0x5fb000). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase.

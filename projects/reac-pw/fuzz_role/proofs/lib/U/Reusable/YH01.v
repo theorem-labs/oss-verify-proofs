@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/YH01.v, with its module paths changed; 9 of its 19 lines of code are new or changed and 37 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput (kernel build, exec file name, SIGPIPE disposition) and entry). *)
 From OSSVerify.Proofs.reac_pw.fuzz_role.lib.U Require Import ZImage.
 Definition src0_img := zimg.
 Definition src0_img_ok := zimg_ok.
@@ -15,7 +16,7 @@ From OSSVerify.reac_pw.fuzz_role.images Require Import Ubsan.
 From OSSVerify.Proofs.reac_pw.fuzz_role.lib.U.Reusable Require Import YH00.
 Lemma src0_init_config_ms : forall sp brk mbase rnd lim inp,
 cfg_ms (init_config src0segs Ubsan_init_pc Ubsan_phdrs sp brk mbase rnd lim inp)
-= init_machine_state src0segs Ubsan_init_pc Ubsan_phdrs sp rnd (in_argv inp) (in_envp inp) (in_uid inp) (in_hwcap inp).
+= init_machine_state src0segs Ubsan_init_pc Ubsan_phdrs sp mbase rnd inp.
 Proof. reflexivity. Qed.
 Lemma src0_init_config_model : forall sp brk mbase rnd lim inp,
 m_halted (cfg_model (init_config src0segs Ubsan_init_pc Ubsan_phdrs sp brk mbase rnd lim inp)) = None

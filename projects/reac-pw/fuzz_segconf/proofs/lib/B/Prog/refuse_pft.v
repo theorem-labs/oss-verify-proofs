@@ -5,16 +5,17 @@
 (* Modified by Theorem Labs, 2026-10: the malloc/free journal lemmas (aj_free_at, aj_free_at_io, aj_free_null_at, aj_free_null_at_io, aj_malloc_at, aj_malloc_at_io, aj_malloc_at04, aj_malloc_at04_io, aj_malloc, aj_free) no longer take In (call_trace0 ...) (as_universe B); the model laws get the trace length (call_trace_len) and the contracts the event bound. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/Reusable/YCbq.v, with its numbers changed; 205 of its 373 lines of code are new or changed and 3177 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/PaRt.v, with its module paths and module names changed; 254 of its 304 lines of code are new or changed and 323 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10-30: copied for image B (fuzz_segconf.asan-ubsan) from lib/A/Prog/refuse_pft.v at commit 781e28832d34 (a sub-lane, commit 24ba8b52b52f) by the image-B refuse walk lane of the image-B G3 walk owner: Require paths (lib/B/Rt, lib/B/Prog, image B's kit copies of the unit owner 694f3575dda2); the VERBATIM local copies of the row texts replaced by the carriers the image-B wrapper-layer owner landed (lib/B/Rt/RtPFShared.v, RtPFCmd.v, RtPFSeg.v), so r_aj_vsnprintf_atSF is stated over RtPFSeg.seg_avsnprintf_icpt_realizes (rt_rom_view in place of consts_view, and that text's four further premises); FFR's text unchanged. *)
+(* Modified by Theorem Labs, 2026-10-30: copied for image B (fuzz_segconf.asan-ubsan) from lib/A/Prog/refuse_pft.v (a sub-lane) by the image-B refuse walk lane of the image-B G3 walk owner: Require paths (lib/B/Rt, lib/B/Prog, image B's kit copies of the unit owner); the VERBATIM local copies of the row texts replaced by the carriers the image-B wrapper-layer owner landed (lib/B/Rt/RtPFShared.v, RtPFCmd.v, RtPFSeg.v), so r_aj_vsnprintf_atSF is stated over RtPFSeg.seg_avsnprintf_icpt_realizes (rt_rom_view in place of consts_view, and that text's four further premises); FFR's text unchanged. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan image A: the snprintf / vsnprintf texts refuse's walk takes (the image-A wrapper-layer owner's
-    interface rows 4 and 5, provenance/segi/INTERFACE-A-interceptors.md at commit e45889d6935a), their step
+    interface rows 4 and 5, provenance/segi/INTERFACE-A-interceptors.md), their step
    lemmas through a program walk's journal, and FFR, the one fact refuse's walk assumes of segconf's printf
    grammar. Statement and proof text of the image-A refuse walk lane (the image-A G3 walk owner), 2026-10-30.
 
    INTERCEPTOR TEXT PENDING the image-A wrapper-layer owner's carriers lib/A/Rt/RtPFShared.v, lib/A/Rt/RtPFCmd.v (RtFormat.v's
    asnprintf_realizes is RtPFCmd.asnprintf_sh, its cmd_asnprintf_realizes at the image's family) and
    lib/A/Rt/RtPFSeg.v (segconf's grammar extension). The blocks marked VERBATIM are byte-exact copies of the
-   donor's lines at origin/ossv/recipes 501c0d516c69 (proofs/plugin-hostd/fuzz_command/lib/A/Rt/<file>), so the
+   donor's lines (proofs/plugin-hostd/fuzz_command/lib/A/Rt/<file>), so the
    swap to the carriers is a rename (refuse_pft.X -> RtPFShared.X / RtPFCmd.X). The family is a parameter FF of
    type fmt_fam here, where the carriers will fix segconf's (FR_seg); the window K, the image span img_lo .. img_hi
    and the read-only list cr are parameters too, where RtPFCmd.asnprintf_sh fixes fuzz_command's (CMD_SNP_K,
@@ -70,7 +71,7 @@ match xs, ws with
 | _ :: _, [] => False
 end.
 (* The format at f: an image literal (SegABase.sa_lit's reader part) below the GOT word gotw (the place
-   fuzz_command's FR_cmd asks, RtPFCmd.v:94-95), its bytes, NUL and slack, its shadow, 8 bytes past its NUL in
+   fuzz_command's FR_cmd asks, RtPFCmd.v:95-96), its bytes, NUL and slack, its shadow, 8 bytes past its NUL in
    application memory, and its read span apart from rs. *)
 Definition ffr_fmt (segs : list Segment) (B : asyms) (gotw : Z) (rd : reader) (rs : list (Z * Z)) (f : Z)
 (fmt : list Z) : Prop :=
@@ -90,7 +91,7 @@ FF rd rs f ws (SegModel.fmt fmt xs).
 (* ======== the snprintf / vsnprintf steps through a program walk's journal ========
    (image B: r_aj_vsnprintf_atSF is stated over RtPFSeg.seg_avsnprintf_icpt_realizes, row 5's final text, which
    asks rt_rom_view where the A file's local copy asked consts_view, and four premises more)
-   fuzz_command's cwc_aj_snprintf_atSF (lib/A/Prog/PaRt.v at origin/ossv/recipes 501c0d516c69) with the family FF,
+   fuzz_command's cwc_aj_snprintf_atSF (lib/A/Prog/PaRt.v) with the family FF,
    the window K, the image span img_lo .. img_hi and the read-only list cr as parameters. The step builds the
    contract's ecall_pre_stk from the journal (PaArt.v's ecall_pre_stk_at), its dest_ok from the per-byte awr_byte
    premise (YCbq.v's awr_byte_present), applies the contract, and rebuilds the journal with YCbq.v's

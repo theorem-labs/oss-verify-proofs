@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise passed through alloc1_nspec_f). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 #[local] Ltac Zify.zify ::= WdZS.wd_zs_stock.   (* [comment removed for export] *)
@@ -500,11 +501,11 @@ Theorem alloc1_nspec_f : forall XTRA stk entry,
   h_alloc1_at SEGS G FXOK RZ AINVH FPC XTRA stk entry ->
   alloc1_nspec SEGS SWIN PERMc SPTOPc FTOPc G AINVf FXOK RZ FPC bcap ccap XTRA stk entry.
 Proof.
-  intros XTRA stk entry Hstk HM fx R M mdl Lc Lf B C K ret n sp T Hpre HX HFDS HLF HT0 Hok.
+  intros XTRA stk entry Hstk HM fx R M mdl Lc Lf B C K ret n sp T Hpre HX HFDS HLF HT0 Hrdr Hok.
   pose proof Hpre as (Hh & HFX & HAf & Hcall & _).
   assert (Hsp : SFLOOR + stk <= sp /\ sp <= SPTOPc) by (destruct Hcall as (_ & _ & _ & _ & _ & X1 & X2 & _); split; assumption).
   assert (HLF' : Z.of_nat (length (Lf ++ HIDF)) + 1 <= FMIN) by (rewrite length_app; pose proof FTOPc_ok; lia).   (* [comment removed for export] *)
-  apply (HM fx R M mdl (Lc ++ HID) (Lf ++ HIDF) (B0 + B) (C0 + C) K ret n sp T (nmalloc_pre_h _ _ _ _ _ _ _ _ _ _ _ _ _ _ Hpre) HX HFDS HLF' HT0).
+  apply (HM fx R M mdl (Lc ++ HID) (Lf ++ HIDF) (B0 + B) (C0 + C) K ret n sp T (nmalloc_pre_h _ _ _ _ _ _ _ _ _ _ _ _ _ _ Hpre) HX HFDS HLF' HT0 Hrdr).
   intros fx' R' M' mdl' p Hpost. apply (Hok fx' R' M' mdl' p). eapply nmalloc_post_ok_f; [exact Hstk | exact HAf | right; exact Hsp | exact Hpost].
 Qed.
 

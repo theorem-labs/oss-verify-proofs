@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: the statements carry the flag of the flagged relation SpinAlg.srealizesM and use the shadow table of the launch's rseq layout (BOTH_at (rseq_z rsb)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
@@ -22,24 +23,26 @@ Proof.
   repeat (destruct H as [<-|H]; [cbn; tauto|]). destruct H.
 Qed.
 
-Lemma both_istrncpy_spec : APSX.istrncpy_spec BSEGS (AP.x_istrncpy AP.BOTH) (AP.x_sealed AP.BOTH).
+Lemma both_istrncpy_spec {rsb : bool} : APSX.istrncpy_spec BSEGS (AP.x_istrncpy (AP.BOTH_at (AP.rseq_z rsb))) (AP.x_sealed (AP.BOTH_at (AP.rseq_z rsb))).
 Proof.
   intros mem0 dst regs ret Hnone Hst Hnw Hdisj Hret R1 R10 R11 R12.
   destruct (both_istrncpy_sealed mem0 dst (seg_rom BSEGS) regs ret Hnone Hst Hnw Hdisj Hret R1 R10 R11 R12)
     as (regs' & Hms & Hag).
   exists regs'. split; [|split].
   - replace APSX.SEALED_BYTES with strncpy_sealed_bytes by reflexivity.
-    replace (Z_to_bv 64 (AP.x_istrncpy AP.BOTH)) with both_istrncpy_entry by (apply bv_eq; reflexivity). exact Hms.
+    replace (Z_to_bv 64 (AP.x_istrncpy (AP.BOTH_at (AP.rseq_z rsb)))) with both_istrncpy_entry by (apply bv_eq; reflexivity). exact Hms.
   - eapply kept_ok_of_regs_agree; [apply istrncpy_clob_sub | exact Hag].
   - rewrite <- R10. apply Hag. unfold istrncpy_clob. cbn. intros [H|[H|[H|[H|[H|[]]]]]]; discriminate.
 Qed.
 
-Lemma both_popfree_spec' : popfree_spec BSEGS (AP.x_popfree AP.BOTH).
+Lemma both_popfree_spec' {rsb : bool} : popfree_spec BSEGS (AP.x_popfree (AP.BOTH_at (AP.rseq_z rsb))).
 Proof. exact both_popfree_spec. Qed.
 
 (* [comment removed for export] *)
 
 Section AsanNodes.
+Context {sfl : bool}.   (* the flag of [SpinAlg.srealizesM] *)
+  Context {rsb : bool}.   (* the launch's kb_rseq; the table is ASAN_at/BOTH_at (rseq_z rsb) *)
 Variable nx0 : N.
 Variable LIMIT : Z.
 Variable SINV : AX2.env -> (word -> option byte) -> Prop.
@@ -53,7 +56,7 @@ Hypothesis nx0_ge7 : APS.nx0_ok nx0.
 Hypothesis argH_top : forall E M (a : word), SINV E M -> argH E a = true -> APS.uE E AP.e_sp0 <= bv_unsigned a.
 Variable FS0 : Fs.Fs.
 
-#[local] Notation XSTMT := (APS.x_stmt BSEGS AP.BOTH nx0 LIMIT SINV argH FS0).
+#[local] Notation XSTMT := (APS.x_stmt BSEGS (AP.BOTH_at (AP.rseq_z rsb)) nx0 LIMIT SINV argH FS0 sfl).
 
 #[local] Ltac close_with NODE SPEC :=
   eapply NODE; try eassumption;

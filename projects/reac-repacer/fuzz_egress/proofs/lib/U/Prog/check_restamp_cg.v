@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Copyright 2026 Theorem Labs *)
 (* New for reac-repacer/fuzz_egress: the cut-free (SRcf) walk of check_restamp on the UBSan image, 0x12e58, against
    lib/U/Prog/check_restamp_ccf.v: check_restamp_holds_cf, as reac-repacer/fuzz_uci's lib/U/Prog/check_value_cg.v
-   (at bc49657c087a) is to its check_value.v. Section CRS is lib/U/Prog/check_restamp.v's with SR replaced by SRcf
+   is to its check_value.v. Section CRS is lib/U/Prog/check_restamp.v's with SR replaced by SRcf
    (SRcf_bind / SRcf_ret, EgressGlue_cg's eg_runA_cf / eg_runN_cf), malloc at the agree room (malloc_contract_ag;
    room_ag_gen from the room premise cr_room_cf), free by the kit's free_contract_cf; memcpy, rp_restamp and bcmp are
    Section hypotheses, as there. The instruction segments (cs_short, cs_seg1, cs_seg2) and the glue lemmas over the

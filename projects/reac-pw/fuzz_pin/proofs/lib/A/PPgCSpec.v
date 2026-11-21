@@ -4,8 +4,8 @@
    restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: made for reac-pw/fuzz_pin image A from
    proofs/libreac/fuzz_knock/lib/A/APgCSpec.v (the Section form of its lines 32-164) and
-   proofs/libreac/fuzz_knock/lib/A/ACfn.v (lines 27-73, the harness contract) at origin/ossv/recipes
-   6ebe35ba632, with their module paths changed, in the shape reac-pw/fuzz_qdisc's lib/A/QPgCSpec.v uses
+   proofs/libreac/fuzz_knock/lib/A/ACfn.v (lines 27-73, the harness contract),
+   with their module paths changed, in the shape reac-pw/fuzz_qdisc's lib/A/QPgCSpec.v uses
    (origin/cold/h-small-a3-qdisca-a4 752182a65173). rule 24 (reuse): no function is proved here; this file
    states the ASan-level contracts only.
 
@@ -261,6 +261,7 @@
 
    Agreement record: see the commit message (accepted-by / refused-by lines).
    =================================================================================================== *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_pin.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -369,7 +370,7 @@ Variables RLO RHI : Z.
    the image (arodata_okP), the table, its 22 pointers, its 11 tokens and the ':' set string are there,
    marked usable, and in range (pin_cat_ok, pin_ro_str). The entry-memory forms are not enough: the first
    call of reac_box_pin_parse, __asan_stack_malloc_0 (0x80bb8), keeps only the bytes the runtime does not
-   own (lib/Reusable/YG0d.v:308-309), and the image's shadow is itself the runtime's own (aowned's lm_zone
+   own (lib/Reusable/YG0d.v:309-310), and the image's shadow is itself the runtime's own (aowned's lm_zone
    shadow, lib/Reusable/YG0n.v:427-433), so no call keeps the shadow facts; the harness reads the same
    objects after __asan_stack_malloc_1 (0x80724) and malloc (0x80824). What keeps them is the allocator
    relation at the image's own symbol record B (its zero-shadow ranges and const cells hold the start-up's
@@ -536,7 +537,7 @@ Qed.
 End d.
 
 (* ============================== LLVMFuzzerTestOneInput (LIB1) ==============================
-   ACfn's text (knock's lib/A/ACfn.v:27-73 at 6ebe35ba632) over abstract segs, sink and constants, as
+   ACfn's text (knock's lib/A/ACfn.v:27-73) over abstract segs, sink and constants, as
    reac-pw/fuzz_qdisc's lib/A/QPgCSpec.v Section e states it. lib/A/PPgLib.v instantiates it at image A's
    constants; image B's twin instantiates it at its own. *)
 Section e. Context {LS : lib_shape}.
@@ -590,7 +591,7 @@ End c.
 End b.
 
 (* The top claim is monotone in its event budget: pin's harness spends 2 events (one malloc and one free,
-   lib/Reusable/YG01.v:452 and :460), and the core's donor text lib/A/ACfn.v carries a larger budget, so
+   lib/Reusable/YG01.v:453 and :461), and the core's donor text lib/A/ACfn.v carries a larger budget, so
    lib/A/PPgLib.v bridges the two with this lemma. A larger budget makes the start state's event clause
    stronger and the journal's clause weaker, so the contract at the smaller budget gives the larger one. *)
 Lemma pin_lib_contract_x_ev_mono :

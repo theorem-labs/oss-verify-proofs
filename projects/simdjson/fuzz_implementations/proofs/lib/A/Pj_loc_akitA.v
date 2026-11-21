@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors its call lemmas and tactics read are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB; taken in part from projects/simdjson/fuzz_dump/proofs/lib/A/Pj_loc_akitA.v, lines 92, 102, 284, 292, 327. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -88,7 +89,7 @@ Hypothesis MST : mat_stable PMc.
 Local Ltac ul := unfold SEGTOP_A, STACK_WIN, USTACK_TOP, RT_STACK in *; lia.
 
 Lemma pres_fp_fold_munch : forall Σ (mX m0 m m' : mem) (q lo : Z) Wmu Wout,
-  ART RT Σ mX -> rt_sp0 RT Σ - STACK_WIN <= lo ->
+  ART RT Σ mX -> rt_sp0 RT Σ - STACK_SPAN <= lo ->
   rt_pres_fp (rt_live RT Σ) (rt_frames RT Σ) q Wout m0 m -> munch Wmu m m' ->
   (forall a, q <= a \/ a < lo -> outside Wout a -> outside Wmu a) ->
   rt_pres_fp (rt_live RT Σ) (rt_frames RT Σ) q Wout m0 m'.
@@ -98,7 +99,7 @@ Proof using AF.
 Qed.
 
 Lemma pres_fp_after_call : forall Σ (mX m0 m m' : mem) (q lo sp_c : Z) Wc Wout,
-  ART RT Σ mX -> rt_sp0 RT Σ - STACK_WIN <= lo -> sp_c <= q ->
+  ART RT Σ mX -> rt_sp0 RT Σ - STACK_SPAN <= lo -> sp_c <= q ->
   rt_pres_fp (rt_live RT Σ) (rt_frames RT Σ) q Wout m0 m -> rt_pres_fp (rt_live RT Σ) (rt_frames RT Σ) sp_c Wc m m' ->
   (forall a, q <= a \/ a < lo -> outside Wout a -> outside Wc a) ->
   rt_pres_fp (rt_live RT Σ) (rt_frames RT Σ) q Wout m0 m'.
@@ -280,7 +281,7 @@ Ltac astart q Wout :=
       pose proof (pres_fp_refl' RT Σ q Wout m) as ACC; pose proof ART0 as ARTX; pose proof (wmono_refl asegs m) as WMS;
       pose proof (af_sp0_range RT AF Σ m ART0) as SP0R; pose proof (af_sp0_win RT AF Σ m ART0) as SP0W;
       unfold RT_STACK in *;
-      lazymatch goal with LOR : (rt_sp0 RT Σ - STACK_WIN <= ?lo)%Z |- _ =>
+      lazymatch goal with LOR : (rt_sp0 RT Σ - STACK_SPAN <= ?lo)%Z |- _ =>
         assert (LOLO : (0x6d2000 <= lo)%Z) by a_ul end
   end.
 
@@ -288,7 +289,7 @@ Ltac a_fold :=
   lazymatch goal with
   | ACC : rt_pres_fp _ _ ?q ?Wout ?m0 ?ms, MU : munch ?Wmu _ ?mc, ARTX : ART ?RT ?Σ _, AF : art_facts _ |- _ =>
     lazymatch goal with
-    | WMS : wmono asegs ms mc, LOR : (rt_sp0 RT Σ - STACK_WIN <= ?lo)%Z |- _ =>
+    | WMS : wmono asegs ms mc, LOR : (rt_sp0 RT Σ - STACK_SPAN <= ?lo)%Z |- _ =>
       let flo := lazymatch Wmu with cons (pair ?f _) _ => f end in
       let ARTC := fresh "ARTC" in
       assert (ARTC : ART RT Σ mc) by (apply (art_after_munch RT AF Σ flo Wmu ms mc ARTX); [a_ul | exact MU | exact WMS | a_in_client]);
@@ -323,7 +324,7 @@ Ltac apost_call :=
     clear MUN WMc;
     try match goal with H : mem_inv asegs m1 |- _ => clear H end;
     lazymatch goal with
-    | ACC : rt_pres_fp _ _ ?q ?Wout ?m0 m1, ARTX0 : ART ?RT ?Σ m1, LOR : (rt_sp0 _ _ - STACK_WIN <= ?lo)%Z, AF : art_facts _ |- _ =>
+    | ACC : rt_pres_fp _ _ ?q ?Wout ?m0 m1, ARTX0 : ART ?RT ?Σ m1, LOR : (rt_sp0 _ _ - STACK_SPAN <= ?lo)%Z, AF : art_facts _ |- _ =>
         let ACC2 := fresh "ACC" in
         pose proof (pres_fp_after_call RT AF Σ m1 m0 m1 m2 q lo spc Wc Wout ARTX0 LOR ltac:(a_ul) ACC PRc ltac:(a_outside_sub)) as ACC2;
         clear ACC PRc ARTX0; rename ACC2 into ACC

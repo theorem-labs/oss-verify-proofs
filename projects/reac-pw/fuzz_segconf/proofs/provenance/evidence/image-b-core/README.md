@@ -1,7 +1,7 @@
 # image-b-core: derivation records of image B's early frame files (fuzz_segconf.asan-ubsan)
 
 The run inputs and as-run records of the derivations of image B's early frame files from the image-A core are kept in an
-internal record, commit 572475d5204934e2783b3e01ac3286743e56008f, under Bcore-derivations/. Each file, by path in that record,
+internal record, under Bcore-derivations/. Each file, by path in that record,
 and its sha256:
 
 Bcore-derivations/d2/a-names.txt b1d7dcbc67b3f56b18d6ec6dea22b414e51f8763a564591670970b6c153fa487
@@ -61,8 +61,8 @@ Bcore-derivations/d2/run-dy.sh 4ad14ea341912f19ff3f9246f42e0efeec53cae4e0ec95efa
 Bcore-derivations/d2/tablecheck.tsv d20e3117e284dfa05e112d2cf5b3df794bbabeab60fd7e8b1393620ddf24af2b
 Bcore-derivations/d2/tablerows.tsv 622c3371230fc10c45f874ac7e2733b69a35d6f62a36923bfc75b478739e0e5e
 
-The derivation of wave d1 (YE34, YF0x, YE3a, YB1h) is kept in the internal record commit
-359033f69c63b81a6bb37223d18e6e8e1cf8ce66, under Bcore-derivations/d1/; that commit also holds every file above, unchanged. Each file, by path
+The derivation of wave d1 (YE34, YF0x, YE3a, YB1h) is kept in the internal record,
+under Bcore-derivations/d1/; that commit also holds every file above, unchanged. Each file, by path
 in that record, and its sha256:
 
 Bcore-derivations/d1/a-names.txt 13d6217ecfc7a6e759ff247211680dbf2ab539aa95578c5cc0b4d965c7c21717

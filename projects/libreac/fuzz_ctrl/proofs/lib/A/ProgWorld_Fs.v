@@ -333,7 +333,7 @@ Proof.
     apply (pw_c8_bytes B ly W m _ _ _ _ Hcell); [reflexivity | reflexivity | lia | lia].
 Qed.
 
-(* Rows of the bundle's const table (am_const under CtrlTSyms: as_const B ly = Tfib_const ly, AF0m.v:310). *)
+(* Rows of the bundle's const table (am_const under CtrlTSyms: as_const B ly = Tfib_const ly, AF0m.v:311). *)
 Lemma pw_row : forall (TS : A.AF0m.CtrlTSyms B) ly S (W : lib.Reusable.YA0n.world segs) m md c,
   lib.Reusable.YG0n.AR segs B ly S W m md -> In c (A.AF0m.Tfib_const ly) ->
   lib.Reusable.YG0f.cell_holds B ly (lib.Reusable.YG0n.aview segs (lib.Reusable.YA0n.w_H W) m) c.
@@ -379,7 +379,7 @@ Proof.
 Qed.
 
 (* (2) ctl_fp_of_AR.  Proved from AR directly (no ctl_tls_of_AR hypothesis): asan_tls_cells at DT = TP+32,
-   TS = ly_tsd, C = ly_C, T = ly_T, DB = ly_D, k = 0 from the const rows (absolute AF0m.v:90-91, 101-103, 112,
+   TS = ly_tsd, C = ly_C, T = ly_T, DB = ly_D, k = 0 from the const rows (absolute AF0m.v:91-92, 101-103, 112,
    117-118, 135, 137, 174, 186; symbolic :24-28); the TP word from `c8 (ATp 0) (AF 0)` (:27); fs_place and fp_cls
    from ctl_fs_of_AR; FS+88 / FS+96 from fs_cells (YG0n.v:100-101). *)
 Lemma ctl_fp_of_AR : A.ProgWorld.ctl_fp_of_AR_stmt B.

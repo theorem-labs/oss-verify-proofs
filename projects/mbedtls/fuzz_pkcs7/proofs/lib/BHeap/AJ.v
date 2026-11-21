@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the read case also splits on the new vvar-range test; the munmap lemma reproved from J_fixrw_destroyed, since munmap_model is now the model's range cut). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -66,7 +67,7 @@ Qed.
 Proof.
   induction t as [c|c|c|c|c|c|n a k IH|n a v k IH]; intros m r H; cbn [interp_eff_accesses] in H; try discriminate.
   - inversion H; subst. cbn. apply nwmono_refl.
-  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [| discriminate].
+  - destruct (ov_read_bytes segs m a (width_bytes n)) as [bs|]; [| destruct (range_meets_vvar segs a (width_bytes n)); discriminate].
     destruct (interp_eff_accesses segs (k (bv_extract 0 n (le_bytes_to_word bs))) m) as [rep| |] eqn:E; try discriminate.
     inversion H; subst. cbn. exact (IH _ m rep E).
   - destruct (store_ok segs m a (width_bytes n)) eqn:OK; [| discriminate].
@@ -339,29 +340,10 @@ Qed.
   map_has (vm_maps (m_vmmaps mo)) (Z_to_bv 64 addr) (Z_to_bv 64 nZ) = true ->
   J (apply_unmaps m [(wa addr, Z_to_bv 64 nZ)]) (munmap_model addr nZ mo).
 Proof.
-  (intros m mo addr nZ dd_H; ddestruct dd_H as (W1 & W2 & SEP & J1 & J2); intros A0 N0 AN MH).
-  assert (UA : bv_unsigned (Z_to_bv 64 addr) = addr) by (apply u64_lit; lia).
-  assert (UN : bv_unsigned (Z_to_bv 64 nZ) = nZ) by (apply u64_lit; lia).
-  assert (INM : In (Z_to_bv 64 addr, Z_to_bv 64 nZ) (vm_maps (m_vmmaps mo))).
-  { unfold map_has in MH. apply existsb_exists in MH. ddestruct MH as ([b sz] & Hin & E). cbn [fst snd] in E.
-    apply andb_prop in E. destruct E as [E1 E2]. apply bv_eqb_eq in E1. apply bv_eqb_eq in E2. subst. exact Hin. }
-  unfold J, munmap_model, with_mmap_destroyed. cbv zeta. model_proj. cbn [vm_maps vm_noaccess].
-  split; [apply ivs_wf_remove; exact W1|]. split; [apply maps_subtract_wf; [exact W2| lia]|].
-  split; [apply msep_remove; exact SEP|].
-  split.
-  - intros q Hq.
-    assert (QP : 0 < eS q) by (eapply maps_subtract_pos; [exact W2| intros e He; exact (proj1 (J1 e He))| exact Hq]).
-    split; [exact QP|].
-    destruct (maps_subtract_pieces _ _ _ q W2 Hq) as (r & Hr & R1 & R2 & R3).
-    ddestruct (proj2 (J1 r Hr)) as (e & He & C1 & C2).
-    exists e. split; [| lia]. apply in_map_remove. split; [exact He|]. intros FE.
-    destruct (SEP e _ He INM) as [E|AP].
-    + subst e. cbn [fst snd] in C1, C2. rewrite ?UA, ?UN in C1, C2. lia.
-    + assert (EB : eB e = addr) by (rewrite FE; exact UA). cbn [fst snd] in AP. rewrite ?UA, ?UN in AP. lia.
-  - (intros x Hx HB dd_H; ddestruct dd_H as (a0 & e0 & He0 & E1 & E2 & XA & NC)). destruct (ncov_subtract _ _ _ _ W2 (NC (bv_unsigned x) XA)) as [_ OUT].
-    rewrite (unmaps_outside m addr nZ ltac:(lia) ltac:(lia) ltac:(lia) x OUT). apply (J2 x Hx HB).
-    apply in_map_remove in He0. dexists a0, e0. split; [exact (proj1 He0)|]. split; [lia|]. split; [lia|]. split; [exact XA|].
-    intros y Hy. exact (proj1 (ncov_subtract _ _ _ _ W2 (NC y Hy))).
+  (* 08b1429: [munmap_model] is the model's cut ([Mmap.mmap_fixed_destroyed_next]),
+     the same next state as [fixrw_destroyed] *)
+  intros m mo addr nZ HJ A0 N0 AN _.
+  exact (J_fixrw_destroyed m mo HJ addr nZ A0 N0 AN).
 Qed.
 
 (* [comment removed for export] *)

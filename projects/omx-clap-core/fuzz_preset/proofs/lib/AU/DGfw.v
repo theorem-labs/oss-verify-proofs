@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGfw.v (cold/c-asan-realloc-primary e63c092c44c, file sha256 34c67b63d231) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53); module paths changed; its 12 image addresses moved by code-verified function pairs (12 port_addr_check 8a1de5003757 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DGfw.v (file sha256 34c67b63d231) onto omx-clap-core/fuzz_preset's asan-ubsan image (unstripped fuzz_preset.asan-ubsan, sha256 3b5e1a099b53); module paths changed; its 12 image addresses moved by code-verified function pairs (12 port_addr_check 8a1de5003757 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The states of the frame-generic Deallocate walk, the arms that open a new batch or drain (from YFfw): the
    released script from Deallocate's entry on, over the generic seed DGgm.SS0.  QuarantineChunk's sp is 48 below
    Deallocate's entry sp (released: 2176 below the free interceptor's). *)

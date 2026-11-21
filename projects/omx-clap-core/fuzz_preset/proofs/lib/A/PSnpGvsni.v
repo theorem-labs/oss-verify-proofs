@@ -17,7 +17,7 @@
        s1 = res + 1, s2 = str, s3 = size, a0 = res; it returns at 0x4599c;
      the epilogue reloads ra, s0..s7 from the saved slots (a symbolic state built from them, as A/AE35.v builds its
        ss_epi) and returns. *)
-(* Modified by Theorem Labs, 2026-10: the image-bearing half of origin/cold/port-fm-rtprintf-param 7e395de08f5
+(* Modified by Theorem Labs, 2026-10: the image-bearing half of
    proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfGvsni.v for the snprintf chain restated over ARx (route (a),
    c-omx-hpreset 10:51Z), re-pinned at preset image A (fuzz_preset.asan d83eb25d; symbols from its unstripped twin
    f0d2e8d4): only the items of the four roots' closure that carry image numerals or run the code, vsni_rodata
@@ -37,7 +37,8 @@
      __interception::real_vsnprintf + 0                0x9b748    0xa3850
      vsnprintf + 0 (value)                             0x91f0c    0x9a63c
      ___interceptor_vsnprintf + 0xfc (ss_epi's pc)     0x4599c    0x46284 *)
-(* Modified by Theorem Labs, 2026-10: moved to the #102 pins, image A' (fuzz_preset.asan 1be0f53d, unstripped bff8519b), from the old-pin donor origin/cold/c-libc-stdio-presetsnp-vfp ac1750cac8be: every code numeral by symbol + offset by c-asan's alreloc of record (frame/alreloc.py.frozen-c4338d099cfb8025, --src omx-clap-core/fuzz_preset --src-pin d83eb25d --assume-source; the chain's code is equal old -> #102); kept as written: the IImg record keys (fm addresses), the instruction words and the segment sizes; audited by port_addr_check 0767e70e074a (only the record keys flag). Per-numeral table: c-libc-stdio scratch/p102/reloc/A/PSnpGvsni.v.reloc.tsv. Comment numerals are as written (sentences above that name preset A's addresses describe the old pin). *)
+(* Modified by Theorem Labs, 2026-10: moved to the #102 pins, image A' (fuzz_preset.asan 1be0f53d, unstripped bff8519b), from the old-pin donor: every code numeral by symbol + offset by c-asan's alreloc of record (frame/alreloc.py.frozen-c4338d099cfb8025, --src omx-clap-core/fuzz_preset --src-pin d83eb25d --assume-source; the chain's code is equal old -> #102); kept as written: the IImg record keys (fm addresses), the instruction words and the segment sizes; audited by port_addr_check 0767e70e074a (only the record keys flag). Per-numeral table: c-libc-stdio scratch/p102/reloc/A/PSnpGvsni.v.reloc.tsv. Comment numerals are as written (sentences above that name preset A's addresses describe the old pin). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -67,8 +68,8 @@ Definition vsni_rodata : list (Z * Z * list (Z * N * Z)) :=
    (0xa3d90, 8, [(0, 8%N, 0x9ab78)])].
 (* The three cells other than REAL (vsnprintf), and the split (the roots' Svsni uses them). Every cell of vsni_rodata
    is a row of preset A's constant table (AF0m.v Tfib_const): the REAL (vsnprintf) row `z8 (ANum 0xa3850) 0x9a63c` is
-   h-pre-b3's generated blob 1d01cd9b0fcd (origin/cold/h-pre-b3-af0m-vsnp d4c54f298e8); fm's AF0m has its twin
-   (7e395de08f5 lib/A/AF0m.v:341). *)
+   h-pre-b3's generated blob 1d01cd9b0fcd; fm's AF0m has its twin
+   (lib/A/AF0m.v:341). *)
 Definition vsni_rodata0 : list (Z * Z * list (Z * N * Z)) :=
   [(0xabb98, 1, [(0, 1%N, 1)]); (0xa2000, 8, [(0, 8%N, 0x13c9e8)]); (0x13ca3c, 1, [(0, 1%N, 1)])].
 Lemma vsni_rodata_split : vsni_rodata = vsni_rodata0 ++ [(0xa3d90, 8, [(0, 8%N, 0x9ab78)])].

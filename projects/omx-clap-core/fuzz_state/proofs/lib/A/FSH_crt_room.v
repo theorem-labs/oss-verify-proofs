@@ -11,8 +11,8 @@
    - crtr_rd_live: pj_parse's live bytes are |es| + 1352 (ech is the identity on base64 bytes).
    - crtr_es_len / crtr_tb_len: |es| <= 3 * 2 ^ 20 and |tb| <= 3 * 2 ^ 20 (crt_base's text bound and b64_dec).
    Clause 1 of crt_room_C2 is tight: 71 + wev0 <= 78, and wev0 = 7 on the 3-request path.
-   Ported from: crtr_six_len / crtr_dec_len are FSH_crt_segC2.v c2_six_len / c2_dec_len (a working branch
-   be1fe777656, which port lib/Prog/check_no_overread.v:125-139); crtr_newcap22 / crtr_pow22 are
+   Ported from: crtr_six_len / crtr_dec_len are FSH_crt_segC2.v c2_six_len / c2_dec_len (a working branch,
+   which port lib/Prog/check_no_overread.v:125-139); crtr_newcap22 / crtr_pow22 are
    lib/Prog/WriterSpecFacts.v newcap_le28 / pow4096_le with the bound 2 ^ 22. A new file: no licence lines.
    rule 24: no function proved (kind: statement-budget restatement in check_round_trip's base + model lemmas
    discharging its room premises; no walk of program code). *)

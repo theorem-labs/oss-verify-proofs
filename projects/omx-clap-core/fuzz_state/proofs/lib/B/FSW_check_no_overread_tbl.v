@@ -5,7 +5,7 @@
    (internal path)): 0x8124c .. 0x81614 is 243
    instructions, each a 32-bit word (0x81618 - 0x8124c = 972 = 4 * 243), so the function has no compressed
    instruction and every instruction it executes is a table entry; its calls leave the range.
-   Template (text only): lib/A/FSW_check_no_overread_tbl.v at a working branch 59f0008819f. *)
+   Template (text only): lib/A/FSW_check_no_overread_tbl.v at a working branch. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.

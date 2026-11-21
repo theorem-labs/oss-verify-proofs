@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise through the oom, refused and read-error leaves; vm_only_rdr). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -47,12 +48,12 @@ valid_sp sp0w /\ bv_unsigned sp0w = usp0
 /\ cell m 0x75dc8 4 tid /\ (0 < tid < 2^22)
 /\ cell m 0x75da8 8 0x75da8 /\ cell m 0x960e0 8 (bv_unsigned rc_canary) /\ cell m 0x96130 8 4096.
 Proof.
-intros m A LB md D HP. destruct D as [SPB STK FRM TID SELF PRS STG PTH PTH8 LOC CEIL].
+intros m A LB md D HP. pose proof QRjH.Mq3.stack_window_depth_val as SWD. destruct D as [SPB STK FRM TID SELF PRS STG PTH PTH8 LOC CEIL].
 assert (U : bv_unsigned sp0w = usp0) by (subst sp0w; apply unsigned_lit; lia).
 split. { unfold valid_sp, sp_window_lo, sp_window_hi. rewrite U. lia. } split. { exact U. }
 split. { intros d n Hd Hn. rewrite U.
-pose proof (QZDE.wr_at_store_ok rsegs m (usp0 - 8388608) 8388608 d n) as W. unfold QZDE.wa in W. apply W; [| lia| lia].
-destruct STK as (S1 & S2 & S3). split; [lia|]. split; [lia|]. intros i Hi. exact (proj1 (S3 (usp0 - 8388608 + i) ltac:(lia))). }
+pose proof (QZDE.wr_at_store_ok rsegs m (usp0 - QRjH.Mq3.stack_window_depth) QRjH.Mq3.stack_window_depth d n) as W. unfold QZDE.wa in W. apply W; [| lia| lia].
+destruct STK as (S1 & S2 & S3). split; [lia|]. split; [lia|]. intros i Hi. exact (proj1 (S3 (usp0 - QRjH.Mq3.stack_window_depth + i) ltac:(lia))). }
 split. { rewrite <- PRIS_re_ivs. unfold pris in PRS. eapply Forall_impl; [| exact PRS]. intros [lo hi] H i Hi. exact (H i Hi). }
 destruct TID as [T1 T2].
 split. { apply cell_of_bytes_at; [exact T1| lia]. } split. { exact T2. }
@@ -65,31 +66,31 @@ Qed.
 
 #[using="sp0w"] Lemma leaf_oom : leaf_oom_stmt usp0 pp tid path.
 Proof.
-unfold leaf_oom_stmt. intros until pc. intros D HP -> -> FD2 Hpc.
+unfold leaf_oom_stmt. intros until pc. intros D HP -> -> FD2 RDR Hpc.
 destruct (leaf_facts m A LB md D HP) as (VSP & U & STW & IMG & CT & HT & CS & CC & CPG).
 pose proof (heapc_model_ok usp0 A LB m md HP) as [Hh Hl].
 change (QEpW.MS ?R F (Z_to_bv 64 pc) fc None m (seg_rom rsegs)) with (@mkst F fc R (Z_to_bv 64 pc) m (seg_rom rsegs)).
-apply (ref_oom_tail (fF:=F) (fC:=fc) sp0w [] md VSP Hh Hl FD2 tid (bv_unsigned rc_canary) _ m); try assumption; cbn [getr]; rewrite ?U; reflexivity.
+apply (ref_oom_tail (fF:=F) (fC:=fc) sp0w [] md VSP Hh Hl FD2 RDR tid (bv_unsigned rc_canary) _ m); try assumption; cbn [getr]; rewrite ?U; reflexivity.
 Qed.
 
 #[using="sp0w"] Lemma leaf_refused : leaf_refused_stmt usp0 pp tid path.
 Proof.
-unfold leaf_refused_stmt. intros until LB. intros D HP -> -> FD2.
+unfold leaf_refused_stmt. intros until LB. intros D HP -> -> FD2 RDR.
 destruct (leaf_facts m A LB md D HP) as (VSP & U & STW & IMG & CT & HT & CS & CC & CPG).
 pose proof (heapc_model_ok usp0 A LB m md HP) as [Hh Hl].
 change (QEpW.MS ?R F (Z_to_bv 64 0x20c08) fc None m (seg_rom rsegs)) with (@mkst F fc R (Z_to_bv 64 0x20c08) m (seg_rom rsegs)).
-apply (ref_refused_tail (fF:=F) (fC:=fc) sp0w [] md VSP Hh Hl FD2 tid (bv_unsigned rc_canary) _ m); try assumption; cbn [getr]; rewrite ?U; reflexivity.
+apply (ref_refused_tail (fF:=F) (fC:=fc) sp0w [] md VSP Hh Hl FD2 RDR tid (bv_unsigned rc_canary) _ m); try assumption; cbn [getr]; rewrite ?U; reflexivity.
 Qed.
 
 #[using="sp0w"] Lemma leaf_readerr : leaf_readerr_stmt usp0 pp tid path.
 Proof.
-unfold leaf_readerr_stmt. intros until LB. intros D HP Hdot -> -> FD2.
+unfold leaf_readerr_stmt. intros until LB. intros D HP Hdot -> -> FD2 RDR.
 destruct (leaf_facts m A LB md D HP) as (VSP & U & STW & IMG & CT & HT & CS & CC & CPG).
 pose proof (heapc_model_ok usp0 A LB m md HP) as [Hh Hl].
 destruct D as [SPB _ _ _ _ _ _ (P1 & P2 & P3) (t8 & Q1 & Q2) _ _]. rewrite Hdot in P1, P3, Q1. cbn [length app Z.of_nat Pos.of_succ_nat] in P1, P3, Q1.
 change (QEpW.MS ?R F (Z_to_bv 64 0x20bec) fc None m (seg_rom rsegs)) with (@mkst F fc R (Z_to_bv 64 0x20bec) m (seg_rom rsegs)).
 rewrite Hdot.
-apply (ref_read_error_dot (fF:=F) (fC:=fc) sp0w [] md VSP Hh Hl FD2 (Z_to_bv 64 pp) tid (bv_unsigned rc_canary) _ m) with (t8 := t8); try assumption; try (cbn [getr]; rewrite ?U; reflexivity).
+apply (ref_read_error_dot (fF:=F) (fC:=fc) sp0w [] md VSP Hh Hl FD2 RDR (Z_to_bv 64 pp) tid (bv_unsigned rc_canary) _ m) with (t8 := t8); try assumption; try (cbn [getr]; rewrite ?U; reflexivity).
 all: rewrite ?unsigned_lit by lia; rewrite ?U.
 all: first [exact (bytes_at_rdn0 rsegs m pp _ P1) | rewrite <- Q2; exact (bytes_at_rdn0 rsegs m _ _ Q1) | lia | match goal with |- ?G => idtac "LEFT" G end].
 Qed.
@@ -141,6 +142,9 @@ Lemma vm_only_fds : forall md md', QeZD.vm_only md md' -> m_fds md' = m_fds md.
 Proof. intros md md' (H & _). unfold m_fds. rewrite H. reflexivity. Qed.
 Lemma vm_only_fs : forall md md', QeZD.vm_only md md' -> m_fs md' = m_fs md.
 Proof. intros md md' (_ & _ & H & _). unfold m_fs. rewrite H. reflexivity. Qed.
+(* LPS 727298f3: a vm-only step keeps m_proc, so it keeps [State.m_channel_reader] *)
+Lemma vm_only_rdr : forall md md', QeZD.vm_only md md' -> m_channel_reader md' = m_channel_reader md.
+Proof. intros md md' (_ & _ & _ & H & _). unfold m_channel_reader. rewrite H. reflexivity. Qed.
 
 Definition PRIS2 : list (Z * Z) :=
 [(0x10000,0x63d90); (0x63d98,0x63e88); (0x63e90,0x64ee8); (0x64ef0,0x64ef8); (0x64efc,0x64fb0); (0x65098,0x650a0); (0x65188,0x65198);
@@ -204,7 +208,7 @@ Section AmbX.
 Context {AMB : Amb}.
 Record DFX (usp0 pp tid : Z) (path : list byte) (m : mem) : Prop := MKDFX {
 x_sp    : 0x7fff80000000 <= usp0 <= 0x800000000000 /\ usp0 mod 16 = 0;
-x_stk   : stk rsegs m (usp0 - 8388608) usp0;
+x_stk   : stk rsegs m (usp0 - QRjH.Mq3.stack_window_depth) usp0;
 x_frame : rw_cells rsegs m (usp0 - 120) (main_frame usp0);
 x_tid   : bytes_at rsegs m 0x75dc8 (le4 (Z_to_bv 64 tid)) /\ 0 < tid < 2^22;
 x_self  : bytes_at rsegs m 0x75da8 (le8 (Z_to_bv 64 0x75da8));
@@ -220,7 +224,7 @@ x_atx   : exists armed, QFeQ.Mq0.atx_state armed m    }.
 Proof. intros [A1 A2 A3 A4 A5 A6 A7 A8 A9 A10 A11]. constructor; auto; [apply pris_prisx; exact A6 | exists false; apply pris_atx_idle; exact A6]. Qed.
 
 #[using="Type"] Lemma DFX_munch : forall usp0 pp tid path m m' W,
-DFX usp0 pp tid path m -> munch W m m' -> wmono rsegs m m' -> stk rsegs m' (usp0 - 8388608) (usp0 - 128) ->
+DFX usp0 pp tid path m -> munch W m m' -> wmono rsegs m m' -> stk rsegs m' (usp0 - QRjH.Mq3.stack_window_depth) (usp0 - 128) ->
 Forall (fun iv => snd iv <= usp0 - 128 /\
 (snd iv <= 0x10000 \/ 0x97000 <= fst iv
 \/ (0x64fb0 <= fst iv /\ snd iv <= 0x65098) \/ (0x650a0 <= fst iv /\ snd iv <= 0x65188)
@@ -228,7 +232,7 @@ Forall (fun iv => snd iv <= usp0 - 128 /\
 /\ fst iv <= snd iv) W ->
 DFX usp0 pp tid path m'.
 Proof.
-intros usp0 pp tid path m m' W D MU WM ST' FW. destruct D as [SPB STK FRM TID SELF PRS STG PTH PTH8 LOC CEIL ATX].
+intros usp0 pp tid path m m' W D MU WM ST' FW. pose proof QRjH.Mq3.stack_window_depth_val as SWD. destruct D as [SPB STK FRM TID SELF PRS STG PTH PTH8 LOC CEIL ATX].
 assert (OUT : forall x, (usp0 - 128 <= x \/ (0x10000 <= x < 0x97000 /\ ~ stdio_area x)) -> outside W x).
 { intros x Hx. unfold stdio_area in Hx. clear -FW Hx. induction W as [|[lo hi] W IH]; [exact I|]. apply Forall_cons_iff in FW as [[F1 [F2 F3]] FW]. cbn [fst snd] in *.
 split; [lia| apply IH; exact FW]. }
@@ -237,8 +241,8 @@ assert (EQ : forall x, (usp0 - 128 <= x \/ (0x10000 <= x < 0x97000 /\ ~ stdio_ar
 destruct PTH as (P1 & P2 & P3). destruct TID as [T1 T2].
 constructor.
 - exact SPB.
-- destruct (stk_split rsegs m (usp0 - 8388608) (usp0 - 128) usp0 STK ltac:(lia)) as [_ S2].
-apply (stk_merge rsegs m' (usp0 - 8388608) (usp0 - 128) usp0 ST'); [| lia].
+- destruct (stk_split rsegs m (usp0 - QRjH.Mq3.stack_window_depth) (usp0 - 128) usp0 STK ltac:(lia)) as [_ S2].
+apply (stk_merge rsegs m' (usp0 - QRjH.Mq3.stack_window_depth) (usp0 - 128) usp0 ST'); [| lia].
 eapply stk_transport; [exact S2| exact MU| exact WM|]. intros x Hx. left. apply OUT. lia.
 - destruct FRM as [[WF BA] WR]. split; [split; [exact WF|]|].
 + eapply bytes_at_agree; [exact BA|]. intros x Hx. apply EQ; [left; lia|]. rewrite cells_bytes_length in Hx by exact WF. cbn in Hx. lia.
@@ -272,10 +276,10 @@ Qed.
 #[using="Type"] Lemma DFX_alloc usp0 pp tid path m m' LB0 SP lo :
 DFX usp0 pp tid path m ->
 rheap_pres LB0 SP m m' -> mem_inv rsegs m' -> stk rsegs m' lo SP ->
-lo = usp0 - 8388608 -> lo <= SP <= usp0 - 120 ->
+lo = usp0 - QRjH.Mq3.stack_window_depth -> lo <= SP <= usp0 - 120 ->
 DFX usp0 pp tid path m'.
 Proof.
-intros [SPB STK FRM TID SELF PRS STG PTH PTH8 LOC CEIL ATX] HP MI' ST' -> HSP.
+intros [SPB STK FRM TID SELF PRS STG PTH PTH8 LOC CEIL ATX] HP MI' ST' -> HSP. pose proof QRjH.Mq3.stack_window_depth_val as SWD.
 assert (EQ : forall x, (SP <= x \/ (0x60000 <= x < 0x97000 /\ ~ (RCTX <= x < RCTX + 928) /\ ~ (RERRNO <= x < RERRNO + 4))) ->
 0 <= x < 2^64 -> m' (wa x) = m (wa x)).
 { intros x Hx Hr. apply (HP x Hr). destruct Hx as [Hx|Hx]; [left; exact Hx| right; left].

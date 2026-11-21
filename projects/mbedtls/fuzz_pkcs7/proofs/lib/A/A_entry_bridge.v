@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap's stack floor is sp - 6144512, the bottom of the window the launch maps below sp, so STKLO_OK_of states the allocation ceiling below it). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout State Run.
@@ -39,7 +40,9 @@ Section ARUN_OF.
   #[using="Type"] Lemma HACsp_of : @ACEIL arun_of = bv_unsigned sp / 4096 * 4096 - 2 ^ 23.
   Proof. reflexivity. Qed.
   (* [comment removed for export] *)
-  #[using="Type"] Lemma STKLO_OK_of : @ACEIL arun_of <= bv_unsigned sp - 2 ^ 23.
+  (* LPS 727298f3: the stack floor is sp - 6144512 ([MemSplit.wok_lo] + 1); the ceiling, 8 MiB below
+     sp's page, stays below it *)
+  #[using="Type"] Lemma STKLO_OK_of : @ACEIL arun_of <= bv_unsigned sp - 6144512.
   Proof. change (@ACEIL arun_of) with aceil_of. unfold aceil_of. Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true). nia. Qed.
   Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 End ARUN_OF.
@@ -58,6 +61,6 @@ Section H0.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
   Let hAR : arun := arun_of sp Hsp.
-  Let STKLO : Z := bv_unsigned sp - 2 ^ 23.
+  Let STKLO : Z := bv_unsigned sp - 6144512.
 
   End H0.

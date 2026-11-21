@@ -1,8 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
-(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/U/Prog/LLVMFuzzerTestOneInput_c.v
-   at bc49657c087aa7d6ab0af1ffb2cb67fa08b15de1; the same text at fuzz_egress's UBSan image values and module path.
+(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/U/Prog/LLVMFuzzerTestOneInput_c.v;
+   the same text at fuzz_egress's UBSan image values and module path.
    The harness entry contract on the UBSan image, the cut between the driver / start-up frame (lib/U/FrameAPI.v,
    lib/U/FrameProof.v) and this program's walk, measured from the unstripped fuzz_egress.ubsan: entry 0x12c6c,
    frame 0xa0 bytes (v[12] at sp, head[53] at sp + 0x33, seven saved registers at sp + 0x68), malloc 0x14240,
@@ -12,6 +12,7 @@
    (0x12ccc, 0x12cd8, 0x12ce4, 0x12cf0) are on the stack below 2^47, the two on data + HEAD * (size > HEAD)
    (0x12d9c wrap, 0x12dac null arithmetic) hold because data is the driver's block when size > 0; the
    `beqz a0` after malloc (0x12dbc, to abort) is the allocator contract's non-NULL result. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

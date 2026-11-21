@@ -3,7 +3,8 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: hex addresses and numbers for the binary of libreac/fuzz_grant (stack_malloc_1 at 0x3cf18); the code table also covers stack_malloc_0 and _4; module names. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/Rt/AF0r.v (a working branch ff613211c119) to lib/A/AF0r.v, with its module paths changed, GrantSyms renamed PcapSyms and its addresses moved to libreac/fuzz_pcap's v1.9.0 ASan build. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/Rt/AF0r.v (a working branch) to lib/A/AF0r.v, with its module paths changed, GrantSyms renamed PcapSyms and its addresses moved to libreac/fuzz_pcap's v1.9.0 ASan build. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

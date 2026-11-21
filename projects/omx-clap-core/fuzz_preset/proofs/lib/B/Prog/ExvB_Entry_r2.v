@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Does not rest on tex_word_specX or memnorm: EXV_HYP has neither field since b29a52d6b76b / 379ec9e4a7d5. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Does not rest on tex_word_specX or memnorm: EXV_HYP has neither field. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B (asan-ubsan, rebuilt pin f8f98a95bc52, unstripped twin 3b5e1a099b53),
    ex_value's FRAME HEADER stretch: the symbolic run from the return site of `jal frame_alloc_1` (B_prog_sigma
    AS_ex_value + 116, listing slot 1973) through the `jal ex_ws` (slot 2014, `PCall AS_ex_ws`) to ex_ws's entry
@@ -116,7 +117,7 @@ Variable ARx : alayout -> astate -> list Z -> world rsegs -> (word -> option byt
 Hypothesis LAWS : AR_laws_x rsegs B ARx cf_head.
 
 (* Pm is a memory invariant the run carries (YC80x.srr_inv_laws; ex_value takes Pm m := memnorm (e_mem E) -> memnorm m,
-   the m-form keep of kit 4f18c75d4900); YC1fPx's _inv runner moves it across the run *)
+   the m-form keep of kit); YC1fPx's _inv runner moves it across the run *)
 Lemma exve_run2 : forall (W : world rsegs) (regs : bvmap 5 word) memc mdc
     STK sp0 FP ly S Hp W0 mem0 md0 own lyc Sc Hpc k (spe q v pos : Z) (Q : world rsegs -> config -> Prop)
     (Pm : (word -> option byte) -> Prop),

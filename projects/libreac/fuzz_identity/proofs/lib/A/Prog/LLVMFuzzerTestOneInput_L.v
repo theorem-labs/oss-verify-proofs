@@ -4,6 +4,7 @@
    [Apache-2.0]; projects/cgif/cgif_file_fuzzer/proofs/lib/YCbq.v:518-584, 622-634 [Apache-2.0 OR MIT];
    projects/cgif/cgif_rgb_fuzzer/proofs/lib/YC05.v:110-141, 221-225, 227-235, 264-270 [Apache-2.0 OR MIT], for
    libreac/fuzz_identity's ASan build (lib/A). The [Apache-2.0 OR MIT] text is used under Apache-2.0. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Segment L of LLVMFuzzerTestOneInput's ASan walk (fuzz_identity.asan 0x82090..0x82178, listing offsets
    0x1984..0x1a6c, 58 slots): the three frees of the output buffers (dp, tk, then nm from mf+184), the
    use-after-scope poisoning of the frame's shadow (0x820a8..0x820f4), the frame release (the magic word at
@@ -362,7 +363,7 @@ Variable arodata_okS : list Segment -> asyms -> Z -> Z -> reader -> Prop.
 #[local] Notation EPRE g := (e_pre B MT XM_LIB RLO RHI RA_LLVMF A_EMPTY LLVMF_STK EV_LIB LIVE_LIB
   asink_syms_T KS asink_none ameta_inv arodata_okS g).
 #[local] Notation MEV := (mo_malloc MT 256 + mo_free MT).
-(* What the walk needs of the contract's constants (LLVMFuzzerTestOneInput.v:82-83, :176). *)
+(* What the walk needs of the contract's constants (LLVMFuzzerTestOneInput.v:83-84, :177). *)
 Hypothesis HSTK : STK_LLVMF <= LLVMF_STK.
 Hypothesis HEV : EV_LLVMF <= EV_LIB.
 Hypothesis HXN : forall n, EV_LLVMF * (mo_malloc MT 256 + mo_free MT) <= XN_LIB n.

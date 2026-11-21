@@ -1,4 +1,4 @@
-# converse .got check on lib/AU at 635d3958aeb0: every code numeral whose lib/AU value lies in fuzz_headamp.asan-ubsan .got [0x9c790, 0x9d4e8] comes from a lib/A value that is a fuzz_headamp.asan .got cell for the SAME target (slot start), or the section end; patched / generated files (YE37 rewritten table, YE23, YCej) included
+# converse .got check on lib/AU: every code numeral whose lib/AU value lies in fuzz_headamp.asan-ubsan .got [0x9c790, 0x9d4e8] comes from a lib/A value that is a fuzz_headamp.asan .got cell for the SAME target (slot start), or the section end; patched / generated files (YE37 rewritten table, YE23, YCej) included
 lib/A file	line	A value	B value	kind	verdict
 A/AB1w.v	15	0x9c310	0x9c790	slot start, same target	ok
 A/AB1w.v	16	0x9c310	0x9c790	slot start, same target	ok

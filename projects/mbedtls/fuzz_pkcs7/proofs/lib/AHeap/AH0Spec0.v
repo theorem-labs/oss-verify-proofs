@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the initial heap layout's stack floor is sp0 - 6144512, the bottom of the window the launch maps below sp, in place of sp0 - 2^23). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List.
 From OSSVerify.Proofs.mbedtls.fuzz_pkcs7.lib.AHeap Require Import ACeil AModel AModelX.
@@ -19,7 +20,7 @@ Record boot_params := BP {
   bp_top : Z; bp_sp0 : Z; bp_stkhi : Z; bp_extra : list (Z * Z); bp_tf : Z; bp_gsh : list (Z * Z) }.
 
 (* [comment removed for export] *)
-Definition L0_of (bp : boot_params) : alayout := ltac2:(CDefT.buildp (gd_tbl_AH0Spec0 ()) "(0.(1.O1.)(2.O1.)(3.O1.)(4.O1.)(5.O1.)(6.O1.)(7.O1.)(8.O1.)(9.O1.)(:.O1.)(;.(:.O1.)+30.)(;.(:.O1.)(<.+2.+17.))(=.O1.)(>.O1.)(?.O1.)+10000.(10.O1.))")
+Definition L0_of (bp : boot_params) : alayout := ltac2:(CDefT.buildp (gd_tbl_AH0Spec0 ()) "(0.(1.O1.)(2.O1.)(3.O1.)(4.O1.)(5.O1.)(6.O1.)(7.O1.)(8.O1.)(9.O1.)(:.O1.)(;.(:.O1.)+30.)(;.(:.O1.)+5=<200.)(=.O1.)(>.O1.)(?.O1.)+10000.(10.O1.))")
 (* [comment removed for export] *).
 
 (* [comment removed for export] *)

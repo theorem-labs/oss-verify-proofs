@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: relocated to libreac/fuzz_disco (the same code of reac_ctrl_parse at other addresses; the cut specifications are fuzz_disco's, which bound n and keep one memory equation instead of acall_kept). *)
-(* Modified by Theorem Labs, 2026-10: the asan-ubsan twin, for fuzz_disco.asan-ubsan (lib_both3_0_listing, entry 0x874a4): the run steps relocated from fuzz_grant image B's walk of the same code (a working branch edc3e948664, lib/B/Prog/CtrlParseNone.v; Y pc = image B pc + 0x4d30), on the fuzz_disco statement layer of lib/A/Prog/CtrlParseNone.v (a working branch eafd64be243) over lib/Y/Prog/CtrlParseCut.v; the n < 50 branch is refuted from 50 <= n (that path is the short walk's). *)
+(* Modified by Theorem Labs, 2026-10: the asan-ubsan twin, for fuzz_disco.asan-ubsan (lib_both3_0_listing, entry 0x874a4): the run steps relocated from fuzz_grant image B's walk of the same code (a working branch, lib/B/Prog/CtrlParseNone.v; Y pc = image B pc + 0x4d30), on the fuzz_disco statement layer of lib/A/Prog/CtrlParseNone.v (a working branch) over lib/Y/Prog/CtrlParseCut.v; the n < 50 branch is refuted from 50 <= n (that path is the short walk's). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_ctrl_parse (0x874a4 of fuzz_disco's asan-ubsan image, AF_both3_reac_ctrl_parse 0x64e8 of the listing),
    the walk from cut M (0x875e4) to cut J (0x878c4) on the two paths the header check rejects when 50 <= n
    (frame[12] <> 0x88, frame[13] <> 0x19): the return code 0, the out struct all zero.

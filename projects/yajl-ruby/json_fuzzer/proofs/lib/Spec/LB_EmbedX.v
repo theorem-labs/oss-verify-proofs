@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mremap_maps_rm, the exact-entry premise of nstep_dec_mremap, and mremap's EINVAL refusal, with nstep_mremap_source's premise that the new length is at most TASK_SIZE, the source fact taken under it; xev_step_L's mremap step is the configured nstep_cfg step, read as nstep by nstep_cfg_sub). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From stdpp Require Import gmap.
@@ -23,11 +24,11 @@ Context {RC__ : OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Lib.RunCeiling.RunCei
 
 Lemma nstep_mremap_source : forall old osz nsz mo rsp mo' evs,
   0 <= old -> old mod 4096 = 0 -> 0 < osz -> osz mod 4096 = 0 -> 0 < nsz -> nsz mod 4096 = 0 ->
-  old + Z.max osz nsz < 2^64 ->
+  old + Z.max osz nsz < 2^64 -> nsz <= TASK_SIZE ->
   nstep (NMremap old osz nsz Uapi.MREMAP_MAYMOVE) mo rsp mo' evs ->
   mremap_source_b (m_vmmaps mo) (Z_to_bv 64 old) (Z_to_bv 64 osz) osz = true.
 Proof.
-  intros old osz nsz mo rsp mo' evs Hold Holda Hosz Hosza Hnsz Hnsza Hhi H.
+  intros old osz nsz mo rsp mo' evs Hold Holda Hosz Hosza Hnsz Hnsza Hhi Hts H.
   apply nstep_mremap_iff in H. unfold check_mremap in H.
   change (bv_unsigned (Z_to_bv 64 Uapi.MREMAP_MAYMOVE)) with Uapi.MREMAP_MAYMOVE in H. cbn [Z.eqb Pos.eqb negb Uapi.MREMAP_MAYMOVE] in H.
   rewrite (unsigned_lit old) in H by lia.
@@ -35,6 +36,8 @@ Proof.
   rewrite (page_align_is0_false nsz Hnsz Hnsza ltac:(lia)) in H.
   rewrite (page_align_is0_false osz Hosz Hosza ltac:(lia)) in H. cbv zeta in H.
   rewrite !unsigned_lit in H by lia. rewrite !page_round_up_Z_id in H by lia.
+  (* LPS 08b1429: a new length past TASK_SIZE is -EINVAL before the source is looked at *)
+  replace (TASK_SIZE <? nsz) with false in H by (symmetry; apply Z.ltb_ge; exact Hts).
   destruct (mremap_source_b (m_vmmaps mo) (Z_to_bv 64 old) (Z_to_bv 64 osz) osz); [reflexivity|].
   cbn [andb negb] in H. discriminate H.
 Qed.
@@ -70,16 +73,22 @@ Proof.
   pose proof (mmap_len_ge l ltac:(lia)) as N1. fold n in N1.
   assert (Hnn : mmap_len nl = nl) by (apply mmap_len_of_aligned; [lia| unfold PGSZ in Hnla; exact Hnla]).
   subst ol. change Realloc.MREMAP_MAYMOVE with Uapi.MREMAP_MAYMOVE in Hst.
-  pose proof (nstep_mremap_source a n nl mo rsp mo' evs ltac:(lia) ltac:(unfold PGSZ in A3; exact A3) ltac:(lia) Hna
-                ltac:(lia) ltac:(unfold PGSZ in Hnla; exact Hnla) ltac:(unfold LEN_MAX in Hnl; lia) Hst) as Hsrc.
+  (* LPS 08b1429: a new length past TASK_SIZE is -EINVAL before the source is read, so the source
+     fact is needed (and proved) only below TASK_SIZE *)
+  assert (Hsrc : nl <= TASK_SIZE ->
+                 mremap_source_b (m_vmmaps mo) (Z_to_bv 64 a) (Z_to_bv 64 n) n = true).
+  { intros Hts. exact (nstep_mremap_source a n nl mo rsp mo' evs ltac:(lia) ltac:(unfold PGSZ in A3; exact A3) ltac:(lia) Hna
+                ltac:(lia) ltac:(unfold PGSZ in Hnla; exact Hnla) ltac:(unfold LEN_MAX in Hnl; lia) Hts Hst). }
   pose proof (nstep_dec_mremap a n nl [] mo rsp mo' evs (kl_minv _ _ _ HK) ltac:(lia) ltac:(unfold PGSZ in A3; exact A3)
-                ltac:(lia) Hna ltac:(lia) ltac:(unfold PGSZ in Hnla; exact Hnla) ltac:(unfold LEN_MAX in Hnl; lia) Hsrc (Forall_nil _) Hst)
+                ltac:(lia) Hna ltac:(lia) ltac:(unfold PGSZ in Hnla; exact Hnla) ltac:(unfold LEN_MAX in Hnl; lia)
+                  ltac:(intros b s Hbs; destruct (pwdisj_In _ _ _ (proj2 (kl_wf _ _ _ HK)) Hbs A5) as [E|D]; [left; unfold went, wz in E; injection E as -> ->; split; reflexivity | right; pose proof (proj1 (kl_wf _ _ _ HK) (b, s) Hbs) as W; unfold edisj, elo, ehi in D, W; cbn [fst snd went] in D, W; unfold wz in D; rewrite ?unsigned_lit in D by lia; lia])
+                  Hsrc (Forall_nil _) Hst)
     as (_ & _ & x' & Hd' & Hx).
   rewrite Hd in Hd'. assert (x' = x) by congruence. subst x'.
   (* [comment removed for export] *)
-  assert (LIVE : forall dst, vm_live_bytes (mremap_maps_next (m_vmmaps mo) (Z_to_bv 64 a) dst (Z_to_bv 64 nl))
+  assert (LIVE : forall dst, vm_live_bytes (mremap_maps_rm (m_vmmaps mo) (Z_to_bv 64 a) dst (Z_to_bv 64 nl))
                             = vm_live_bytes (m_vmmaps mo) - n + nl).
-  { intros dst. unfold vm_live_bytes, mremap_maps_next. cbn [vm_maps]. rewrite live_bytes_cons. cbn [snd].
+  { intros dst. unfold vm_live_bytes, mremap_maps_rm. cbn [vm_maps]. rewrite live_bytes_cons. cbn [snd].
     rewrite (live_bytes_remove _ _ (wz n) (kl_wf _ _ _ HK)).
     2:{ unfold went in A5. exact A5. }
     rewrite (unsigned_wz n) by lia. rewrite unsigned_lit by (unfold LEN_MAX in Hnl; lia). lia. }
@@ -87,7 +96,7 @@ Proof.
   pose proof (LI_elim _ _ HL) as HL0.
   destruct x as [e| |d]; cbn [mremap_val xevent_post].
   - (* [comment removed for export] *)
-    destruct Hx as (-> & -> & _). rewrite is_err_neg by (unfold ENOMEM; lia). exact HL.
+    destruct Hx as ([-> | ->] & ->); [rewrite is_err_neg by (unfold ENOMEM; lia) | rewrite is_err_neg by (unfold EINVAL; lia)]; exact HL.
   - (* [comment removed for export] *)
     rewrite Herr. apply LI_intro. rewrite BB_set_groups, (gm_remap_group L pbrk mo a l a nl HK Hin). fold n. rewrite Hnn.
     destruct Hx as [[E _]|[[_ Evm]|(_ & _ & Evm)]]; [exfalso; exact (Hne (eq_sym E))| |]; rewrite Evm, LIVE; lia.
@@ -117,7 +126,7 @@ Proof.
     intros rsp mo' evs [z s'] Hst Ek [Hans HP]. cbn [fst snd] in *.
     destruct (dec_mremap a ol nl [] rsp) as [x|] eqn:Hd; cbn in Ek; [| discriminate].
     assert (Ez : z = mremap_val a x) by congruence. subst z.
-    exact (li_mremap L (ps_brk s0) mo rsp mo' evs a ol nl x HK HLI Hpre Hst Hd).
+    exact (li_mremap L (ps_brk s0) mo rsp mo' evs a ol nl x HK HLI Hpre (NodesCfg.nstep_cfg_sub _ _ _ _ _ _ Hst) Hd).
 Qed.
 
 (* [comment removed for export] *)

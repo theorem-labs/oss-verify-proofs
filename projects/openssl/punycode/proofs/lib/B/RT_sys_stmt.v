@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (grant_node also declares the NULL mmap hint, areg ms 10 = 0). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -72,5 +73,7 @@ Definition grant_node : Prop :=
      /\ rt_eager Σ + len <= rt_eager (Σ' P) /\ rt_eager (Σ' P) <= 2 ^ 38) ->
   (forall ms, Pm ms -> ms_svc_pending ms = Some (Z_to_bv 64 222) /\ areg ms 11 = Z_to_bv 64 len
       /\ areg ms 12 = Z_to_bv 64 3 /\ areg ms 13 = Z_to_bv 64 34 /\ areg ms 15 = Z_to_bv 64 0
+      (* the twin of the NULL-hint declaration of A/RT_sys_stmt.v *)
+      /\ areg ms 10 = Z_to_bv 64 0
       /\ forall P, sgrant_ok Σ P len -> K P (nretA ms (mkEffect (Z_to_bv 64 P) [] [(Z_to_bv 64 P, Z_to_bv 64 len)]))) ->
   cps bsegs (ASTA RTA Σ PMc Pm) (fun c => exists P, sgrant_ok Σ P len /\ ASTA RTA (Σ' P) PMc (K P) c).

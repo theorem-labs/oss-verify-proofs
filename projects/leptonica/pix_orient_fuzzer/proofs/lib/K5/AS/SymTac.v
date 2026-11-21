@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the munmap answers; module paths qualified against the K5 twins). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -198,14 +199,14 @@ ltac2:(KReplay.run1 (kr_t_SymTac ()) ["WithFP9"] "h02msh11Hh23ms'h32Heh43Hmsh52H
 
 Lemma msteps_to_wr : forall segs LH bs ms ms',
   msteps segs ms ms' ->
-  StreamSim.to_wr segs LH bs ms' -> StreamSim.to_wr segs LH bs ms.
+  K5.AS.StreamSim.to_wr segs LH bs ms' -> K5.AS.StreamSim.to_wr segs LH bs ms.
 Proof.
 ltac2:(KReplay.run1 (kr_t_SymTac ()) ["WithFP9"] "h02msh11Hh23ms'h33Hmsh42Hph52Hsh62Hwh72IHh82LHh92bsh:3ms1h;3ms2h<4segsp;1p;3p;4p;2p;8p;7g003Yj16Tg000nj11Tg0028j13Tg002Vj12Tg013Xj35Tg01>bj40Tg015Nj1<Tg0160j1;Tg0176j1:Tg008nj34Tg017Xj17Tg018`j28Tg019\j29Tg01?^j8>Tg01;`j7=Tg01<\#6g01=[R0p-0[g00Bh#1#1#1R1#3#2#6f4R2f1R3f0R435f5R5f7R6f6R7P5P4C0f8P6P7f2R8C0[X20X00P7P5P2P4C0P4W1X00%11#1#1#3#2R1#<%;8%:134%70f9R1f3R9'8190834f:R:?598f;R;P:P1P9C0f<R1P;P:P5C0[P1P;P:P2C0f=P1P;P6P7P2P9P3P4O1G>W6W7W3W5W4X;0X:0X00P8P3P4F=W1X20X00W9W8W<o"). Qed.
 
 (* [comment removed for export] *)
 Lemma msteps_lh_next : forall segs LH ms ms',
   msteps segs ms ms' ->
-  StreamSim.lh_next segs LH ms' -> StreamSim.lh_next segs LH ms.
+  K5.AS.StreamSim.lh_next segs LH ms' -> K5.AS.StreamSim.lh_next segs LH ms.
 Proof.
 ltac2:(KReplay.run1 (kr_t_SymTac ()) ["WithFP9"] "p'0h03ms'h12H0h21Hh32HLh42Hmh52LHh61mh72msh84segsi001xp;1p;3p;2p;6p;4g003Yj16Tg013Xj30Tg01@Zj32Tg00fAR0j21Tg01AVj65Tg01BTj44Tg01Boj43Tg01<\#6g01=[R1p-0[f3R2f1R3f0R430f4R5?223g01CIP1f6R6?024f5R7P4O1'1X01A2675P4f8R8?074f7P4O1'1P0f9R0?063P8P3O1f:R6?208P4f;R9?082P9P5O1P1f>f<R5;04f=R8P4O1'1X01P7A0897P5P7O1P8P9P6P7P0P3E5P4C4C3W3W4P3P4O2n2001000000120000000W1X61P3P4O2n2001000000120100000W1W2X01X71W5W8o"). Qed.
 
@@ -214,15 +215,15 @@ End WithFP9.
 Ltac sym_halted :=
   solve [ reflexivity
         | eassumption
-        | (rewrite ?MmapSim.mmap_model_halted, ?MmapSim.munmap_model_halted;
+        | (rewrite ?K5.AS.MmapSim.mmap_model_halted, ?K5.AS.MmapSim.munmap_model_halted;
            solve [ reflexivity | eassumption ])
         | (cbn [cfg_model m_halted]; autorewrite with model; solve [ reflexivity | eassumption ]) ].
 
 Ltac sym_no_lazy :=
   cbn [cfg_model];
   repeat first
-    [ rewrite MmapSim.mmap_model_lazy
-    | apply MmapSim.munmap_model_no_lazy ];
+    [ rewrite K5.AS.MmapSim.mmap_model_lazy
+    | apply K5.AS.MmapSim.munmap_model_no_lazy ];
   solve [ reflexivity | eassumption ].
 
 Section WithFP10.
@@ -231,19 +232,19 @@ Context {fx : FPState}.
 (* [comment removed for export] *)
 End WithFP10.
 Ltac chain_mst :=
-  first [ eapply CatSim.msteps_to_wexit
-        | eapply MmapSim.msteps_twm
-        | eapply MmapSim.msteps_twm_tail
-        | eapply MmapSim.msteps_tmw
-        | eapply StreamSim.msteps_to_rd
+  first [ eapply K5.AS.CatSim.msteps_to_wexit
+        | eapply K5.AS.MmapSim.msteps_twm
+        | eapply K5.AS.MmapSim.msteps_twm_tail
+        | eapply K5.AS.MmapSim.msteps_tmw
+        | eapply K5.AS.StreamSim.msteps_to_rd
         | eapply msteps_to_wr
-        | eapply WallSim.msteps_to_wall_tail
-        | eapply WallSim.msteps_to_wallexit
-        | eapply DrainSim.msteps_to_rd
-        | eapply DrainSim.msteps_to_out
+        | eapply K5.AS.WallSim.msteps_to_wall_tail
+        | eapply K5.AS.WallSim.msteps_to_wallexit
+        | eapply K5.AS.DrainSim.msteps_to_rd
+        | eapply K5.AS.DrainSim.msteps_to_out
         | eapply msteps_to_exit
         | eapply msteps_lh_next
-        | (eapply ShapeAlg.rz_msteps; [ sym_halted | sym_no_lazy | | ])
+        | (eapply K5.AS.ShapeAlg.rz_msteps; [ sym_halted | sym_no_lazy | | ])
         | eapply msteps_trans ].
 
 Section WithFP11.
@@ -254,8 +255,8 @@ Lemma chain_mst_realizes : forall segs ms ms' model T,
   m_halted model = None ->
   m_vm_lazy model = [] ->
   msteps segs ms ms' ->
-  ShapeAlg.realizes segs (mkCfg ms' model) T ->
-  ShapeAlg.realizes segs (mkCfg ms model) T.
+  K5.AS.ShapeAlg.realizes segs (mkCfg ms' model) T ->
+  K5.AS.ShapeAlg.realizes segs (mkCfg ms model) T.
 Proof.
 ltac2:(KReplay.run1 (kr_t_SymTac ()) ["WithFP11"] "h02Hhh15Hlazyh23Hmsh32Hrh41Th55modelh62msh73ms'h84segsp;1p;3p;2p;9g003Yj13Tg000nj10Tg0028j15Tg002Vj14Tg015Nj1>Tg01Ccj1;Tg0176j1:Tg008nj31Tg0039j26Tg01DZj12Tg007Qj17Tg013Xj38Tg01ERj29Tg01FGj3=Tg01GEl9<Tg01<\#3g01=[R0g01HBg01I8g00Bh#0#0#0#0#0#0#5#4R1#>f1R2#;%:1311611R1#3R3f2R4#2%71R131f6R5f5R6f4R738f7R81967f3R93=f8P8P5P6P7P9P4%26=131eP2f0M9<W3W2W1W0W4W5X70W6W8o"). Qed.
 
@@ -264,8 +265,8 @@ Lemma chain_mst_realizes_mmap : forall segs ms ms' model a n T,
   m_halted model = None ->
   m_vm_lazy model = [] ->
   msteps segs ms ms' ->
-  ShapeAlg.realizes segs (mkCfg ms' (MmapSim.mmap_model a n model)) T ->
-  ShapeAlg.realizes segs (mkCfg ms (MmapSim.mmap_model a n model)) T.
+  K5.AS.ShapeAlg.realizes segs (mkCfg ms' (K5.AS.MmapSim.mmap_model a n model)) T ->
+  K5.AS.ShapeAlg.realizes segs (mkCfg ms (K5.AS.MmapSim.mmap_model a n model)) T.
 Proof.
 ltac2:(KReplay.run1 (kr_t_SymTac ()) ["WithFP11"] "h02Hhh15Hlazyh23Hmsh32Hrh41Th51ah61lh75modelh82msh93ms'h:1nh;4segsp;1p;3p;2p;6p;9g003Yj14Tg000nj10Tg0028j17Tg002Vj15Tg015Nj1ATg01Ccj1;Tg0176j1:Tg008nj31Tg0039j26Tg01DZj12Tg007Qj18Tg013Xj39Tg01J0j33Tg01ERj2@Tg01FGj3?Tg01Jmj3>Tg00=Nj6<Tg01GEl9=Tg01<\#4g01=[R0g01HBg00Bh#0#0#0#0#0#0#7#5R1g01I8%A1f3R2#;%:1311611R3#4R4f4R5#2%83R331f8R6f7R7f6R839f9R9f5R:?358,@7;?2f:P9P6A38:7R6P5P2P4%27f0R2=143X64f2%26R6A>8:7E<A1463ef1P2M9=W3W2W1W0W4X:1W5W7X90W8W;o"). Qed.
 

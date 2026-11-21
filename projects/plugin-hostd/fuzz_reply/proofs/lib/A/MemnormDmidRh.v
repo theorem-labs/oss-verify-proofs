@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MemnormDmid.v (a working branch 30a1993588f, c5 + memnorm; file sha256 8164a0d31ef3) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 3 image addresses moved by code-verified function pairs (3 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/MemnormDmid.v (a working branch, c5 + memnorm; file sha256 8164a0d31ef3) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 3 image addresses moved by code-verified function pairs (3 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py); no other numeral changed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_reply/lib/A/MemnormDmid.v, with its module names changed; 4 of its 168 lines of code are new or changed and 86 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* MemnormDmid.v's mid arm (dealloc_mid_em, memnorm kept) at round 3 part 3, over DIfaceRh.DIface_rh: the Hypothesis
    IF and its field names (the di_ prefix renamed to DIfaceRh.dih_), and the call of DGg2.mid_walk -> DGg2Rh.mid_walk,
    only; the scripts are MemnormDmid's.  The drain arm dealloc_drn_em is not restated here: under the re-hide it is
@@ -125,8 +126,8 @@ Qed.
 Lemma xr_raw_em : forall B AOX, DGfz.xr_raw B AOX true (MnEnq.acall_raw_em_x B AOX).
 Proof. intros B AOX inst stk ly S W regs mem md E ly' S' W' regs' mem' md' H _. exact (proj1 H). Qed.
 
-(* copy of DGfz.v:88-103 / DGg2.v:149-163 (the section header), plus the callees' memnorm-kept contracts and the
-   ErrnoApart image facts the copied errno scripts read (DGfz.v:113-116) *)
+(* copy of DGfz.v:89-104 / DGg2.v:150-164 (the section header), plus the callees' memnorm-kept contracts and the
+   ErrnoApart image facts the copied errno scripts read (DGfz.v:114-117) *)
 Section e.
 Variable B : asyms.
 Hypothesis TS : TfibSyms B.
@@ -176,7 +177,7 @@ pose proof (DIfaceRh.dih_view B U ft ARX ARXr AOX rpre lpost fpre dpost dbody L2
 pose proof (DIfaceRh.dih_inst B U ft ARX ARXr AOX rpre lpost fpre dpost dbody L24 QB DRq MP IF inst ly S W mem md HARX) as HIO.
 destruct (DGg1.FH_m B TS U ARX rpre fpre inst so bp ly S W regs mem md p n tr PRE0 HBLK HIO DV)
   as (hb1 & j1 & j2 & j3 & Hhb1 & Hhdr & FH).
-(* copy of DGg2.v:619-624 *)
+(* copy of DGg2.v:620-625 *)
 destruct DV as [[LY IMG _ _ _ _ _] _ _ _ _ _ _ (HZp & _ & _ & HNN) _ _].
 assert (Hpa : 0 <= sptr_addr B ly p) by (destruct HZp as [Z0 _]; lia).
 assert (HSP : ly_stk_lo ly + DGbaseC.DFSTACK <= bv_unsigned (getr regs 2))
@@ -188,7 +189,7 @@ eapply amreal_mono; [| exact (amreal_apath_gflag tfibsegs _ _ _ _ MAIN)].
 intros r Wo co [(regsR & memR & mdR & -> & HPOST & HLP & X & regsC & memC & mdC & regsE & memE & mdE & HX & RAWC & DMC & FRT)
   HPATH].
 destruct HX as (HXr & HXe & HXm).
-(* copy of DGg2.v:630-639: errno from Deallocate's entry to Enqueue's call, and from Enqueue's return to Put's ret *)
+(* copy of DGg2.v:631-640: errno from Deallocate's entry to Enqueue's call, and from Enqueue's return to Put's ret *)
 assert (ERRC : ErrnoG.errno_kept B mem memC).
 { intros i Hi. apply DMC; rewrite (EB i Hi); intros Hw.
   - apply (ErrnoApart.errno_apart_dwin_m EAimg EAz3 B ly _ _ _ _ TS LY IMG HSP HZp (proj1 HNN) Hw). lia.

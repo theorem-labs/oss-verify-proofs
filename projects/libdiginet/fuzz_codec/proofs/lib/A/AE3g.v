@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from projects/cgif/cgif_file_fuzzer/proofs/lib/A/AE3g.v, with its module paths changed and its addresses moved to libreac/fuzz_knock's ASan build; AB1v's tfibsegs is A/AWalkFw0.v's. *)
 (* Modified by Theorem Labs, 2026-10: copied from projects/libreac/fuzz_knock/proofs/lib/A/AE3g.v (donor image sha256 61768cf4739b), with its module paths changed and its addresses moved to libdiginet/fuzz_codec's ASan build. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise of fdchan; node_ok's sys_rob conjunct; writev's per-descriptor copy-in entries; the run's segment list; the model's step and syscall-input changes). *)
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import FunctionalExtensionality.
@@ -20,6 +21,7 @@ From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require Import YP0m YP0
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require Import YK04 YA0i YA0n YA0o YA0p YA0m.
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require Import YN3v.
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.A Require Import AWalkFw0 AE3e AE3f AF0x.
+From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require Import RomBase.
 From OSSVerify.Proofs.libdiginet.fuzz_codec.lib.Reusable Require Import YM05.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
@@ -153,22 +155,45 @@ srealizes segs (mkCfg (pend_at regs pc mem rom) model) T.
 Proof.
 intros regs pc mem rom model fd ch b0 T HAI Hno Hfdc H32 Hfd Hcnt Hb0 Hl0 Hiok Hok0 Hav Hc.
 set (CI := [(getr regs 11, 16%nat)]).
-destruct (node_ret_only_copyins_lazy segs H A regs pc mem rom model CI (Z_to_bv 64 0) model [] HAI)
-as (Hn & HA & Hs).
-- intros eff. rewrite (chk66 segs) by exact Hno. rewrite Hfd, H32.
-destruct Hfdc as [Hlk Hch].
-unfold check_writev. cbn [in_mem sys_input]. rewrite Hlk, Hch, Hcnt.
+(* 727298f3: [node_ok] also asks the answer be the same for every larger read-only backing
+   ([sys_rob]), so the check is stated over every [rom'] extending [rom], as in
+   Reusable/YN3g.v. *)
+assert (Hu64 : forall rom' a v, rom_ext rom rom' ->
+ms_read_u64 (pend_at regs pc mem rom) a = Some v -> ms_read_u64 (pend_at regs pc mem rom') a = Some v).
+{ intros rom' a v Hr. unfold ms_read_u64.
+destruct (ms_read_bytes (pend_at regs pc mem rom) a (Z_to_bv 64 8)) as [bs|] eqn:E; [|discriminate].
+pose proof (ms_read_bytes_wrom (pend_at regs pc mem rom) rom' a (Z_to_bv 64 8) bs Hr E) as E'.
+change (wrom (pend_at regs pc mem rom) rom') with (pend_at regs pc mem rom') in E'.
+rewrite E'. exact (fun X => X). }
+assert (Hchk : forall rom', rom_ext rom rom' -> forall eff,
+check_syscall (sys_input segs (pend_at regs pc mem rom') (getr regs 17)) eff model
+= check_ret_only_copyins CI eff (Z_to_bv 64 0) model []).
+{ intros rom' Hr eff.
+pose proof (Hu64 rom' _ _ Hr Hb0) as Hb0'. pose proof (Hu64 rom' _ _ Hr Hl0) as Hl0'.
+rewrite (chk66 segs) by exact Hno. rewrite Hfd, H32.
+(* 727298f3: [fdchan] has three conjuncts and the [w_is0 ch] gate survives to the end of the
+   chain, as in Reusable/YN3g.v. *)
+destruct Hfdc as [Hlk [Hch Hcr]].
+unfold check_writev. cbn [in_mem sys_input]. rewrite Hlk, Hcnt.
 change (iovcnt32 (Z_to_bv 64 1)) with (Z_to_bv 64 1).
 unfold import_iovecs, import_iovecs_accesses. rewrite bv_eqb_refl, Hiok. cbn [negb].
-rewrite (read_iovec_entry_of (pend_at regs pc mem rom) (getr regs 11) b0 (Z_to_bv 64 0) Hb0 Hl0)
+rewrite (read_iovec_entry_of (pend_at regs pc mem rom') (getr regs 11) b0 (Z_to_bv 64 0) Hb0' Hl0')
 by (change (bv_unsigned (Z_to_bv 64 0)) with 0%Z; lia).
 change (Z.min (bv_unsigned (Z_to_bv 64 0)) MAX_RW_COUNT) with 0%Z. rewrite Hok0. cbn [negb].
 cbv zeta.
 replace (iovs_total (cap_iovecs [(b0, Z_to_bv 64 0)]) =? 0)%Z with true by reflexivity.
-subst CI. destruct (check_ret_only_copyins _ _ _ _ _); reflexivity.
+rewrite Hch. cbn [negb].
+(* the copyins ledger is [State.iovec_entry_accesses]; it reduces to the literal by the same
+   two reads, as in Reusable/YN3g.v. *)
+unfold iovec_entry_accesses. rewrite !read_u64_ms, word_add_BV, Hl0', Hb0'.
+subst CI. first [reflexivity | destruct (check_ret_only_copyins _ _ _ _ _); reflexivity]. }
+destruct (node_ret_only_copyins_lazy segs H A regs pc mem rom model CI (Z_to_bv 64 0) model [] HAI)
+as (Hn & HA & Hs).
+- exact (Hchk rom (rom_ext_refl rom)).
 - exact (AI_halted segs H A model HAI).
 - repeat split; reflexivity.
 - exact Hav.
+- apply (rob_pend segs). intros rom' Hr eff. rewrite (Hchk rom' Hr), (Hchk rom (rom_ext_refl rom)). reflexivity.
 - exact (srz_silent1 segs _ _ T Hn (Hc _ HA Hs)).
 Qed.
 End g.

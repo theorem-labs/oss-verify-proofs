@@ -1,11 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the model's placement by linux_place and its reserved-ledger changes). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State StackLayout Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys Require Import Syscall Uapi.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap.
+(* [Placement] carries the new placement gate's ingredients: [linux_place_b],
+   [linux_place_b_spec], [linux_place_unique], [pmd_size_pos] and
+   [thp_align_bounds] (75d69e00:theories/LinuxProcessSem/Checks/Placement.v).
+   The donor also imports [LinuxProcessSemantics.Common.PlacementSearch]; in
+   this tree that file is vendored as [AS.Zfi], imported below. *)
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Import Placement.
 From OSSVerify.Proofs.simdjson.fuzz_atpointer.lib.AS Require Import Zfi.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
@@ -19,47 +26,149 @@ Definition bottomup_floor : Z := 0x2aaaaaaab000.
 Lemma bottomup_floor_val : bottomup_floor = 0x2aaaaaaab000.
 Proof. reflexivity. Qed.
 
+(** ** The placement gate, stated over [Sys/Mm/Mmap.linux_place]
+
+    WHAT THE GATE SAYS NOW.  [placement_ok h aZ nZ] is "aZ is where
+    Linux puts a NULL-hint anonymous request of nZ bytes into the
+    ledger h, on one of the two kernel builds" — the spec's own
+    [Mmap.linux_place] at hint 0, with the build existentially
+    quantified because the ASan plan layer does not carry the run's
+    [State.KernelBuild].  [placement_ok_b] decides it with
+    [Checks.Placement.linux_place_b], and [placement_ok_window] reads
+    off Linux's two search windows (mm/mmap.c,
+    [generic_get_unmapped_area_topdown], Linux v6.18.46 commit
+    1f99e9ab748f): the grant either ends inside
+    [[page_size, mmap_top h)] or starts at or above
+    [task_unmapped_base].  The ASan lower bound
+    ([Z2x.null_hint_grant_above]) needs more than that
+    summary: it uses the MAXIMALITY of the top-down branch, which only
+    the full predicate carries, which is why the gate keeps the
+    predicate.
+
+    WHAT IT SAID BEFORE, AND WHY THAT WAS NOT A THEOREM.  The old gate
+    was "at or above [bottomup_floor], or no free gap is higher below
+    [vm_mmap_base h]" — the postcondition of a FIRST-FIT search the
+    spec did not have — and the old [placement_policy] derived it from
+    the four conditions of the old [choose] guard.  Both halves of
+    that hypothesis are false, before and after this change:
+
+    (i) its address was quantified over EVERY free page-aligned range
+        below [alloc_top h], and Linux picks one of them.  With an
+        empty ledger and [nZ = page_size], [aZ = page_size] passes the
+        four old guard conditions and fails the old gate: it is not at
+        or above the floor, and gaps above it are free.  So the
+        premise has to name Linux's address, which is what
+        [linux_place] does.
+
+    (ii) even at Linux's address the old conclusion
+        [aZ + nZ <= alloc_ceiling] is false for some admissible runs.
+        The top-down window's ceiling is
+        [mmap_top h = Z.min (vm_mmap_base h) (page_round_down_Z (alloc_top h))],
+        and [Run.valid_mmap_base] allows [vm_mmap_base h] up to
+        [State.mmap_base_max = 0x7ffff8000000], which is ABOVE the
+        constant [alloc_ceiling = 0x7fff7f800000]; [alloc_top h] is as
+        high as [sp_window_hi - stack_max_size = 0x7fffff800000].  A
+        grant in [[alloc_ceiling, alloc_top h)] is Linux's and breaks
+        the bound.  The true bound at Linux's address is
+        [aZ + nZ <= alloc_top h], which [Placement.linux_place_admissible]
+        gives, so the grant predicates state that one and the gate
+        states none. *)
 Definition placement_ok (h : VmMaps) (aZ nZ : Z) : Prop :=
-  bottomup_floor <= aZ
-  \/ no_higher_fit (vm_reserved h ++ vm_maps h) aZ nZ (bv_unsigned (vm_mmap_base h)).
+  exists thp : bool, linux_place h thp (Z_to_bv 64 0) nZ aZ.
 
 Definition placement_ok_b (h : VmMaps) (aZ nZ : Z) : bool :=
-  (bottomup_floor <=? aZ)%Z
-  || negb (higher_fit_b (vm_reserved h ++ vm_maps h) aZ nZ (bv_unsigned (vm_mmap_base h))).
+  (match linux_place_b h true (Z_to_bv 64 0) nZ with
+   | Some x => (x =? aZ)%Z | None => false end)
+  || (match linux_place_b h false (Z_to_bv 64 0) nZ with
+      | Some x => (x =? aZ)%Z | None => false end).
 
 Lemma placement_ok_b_iff : forall h aZ nZ,
-  0 <= aZ -> 0 < nZ -> aZ mod page_size = 0 -> nZ mod page_size = 0 ->
-  placement_ok_b h aZ nZ = true <-> placement_ok h aZ nZ.
+  0 < nZ -> nZ mod page_size = 0 ->
+  (placement_ok_b h aZ nZ = true <-> placement_ok h aZ nZ).
 Proof.
-  intros h aZ nZ HaPos HnPos HaAl HnAl. unfold placement_ok_b, placement_ok.
-  pose proof (bv_unsigned_in_range 64 (vm_mmap_base h)) as [_ Hbase].
-  assert (Hb : bv_unsigned (vm_mmap_base h) < two_pow_64) by (unfold two_pow_64; exact Hbase).
-  rewrite orb_true_iff, Z.leb_le, negb_true_iff.
-  rewrite (no_higher_fit_iff _ _ _ _ HaPos HnPos HaAl HnAl Hb). reflexivity.
+  intros h aZ nZ HnPos HnAl. unfold placement_ok_b, placement_ok.
+  assert (K : forall thp,
+    (match linux_place_b h thp (Z_to_bv 64 0) nZ with
+     | Some x => (x =? aZ)%Z | None => false end) = true
+    <-> linux_place h thp (Z_to_bv 64 0) nZ aZ).
+  { intro thp.
+    destruct (linux_place_b_spec h thp (Z_to_bv 64 0) nZ HnPos HnAl)
+      as [Hsome Hnone].
+    destruct (linux_place_b h thp (Z_to_bv 64 0) nZ) as [x|] eqn:Hb.
+    - split.
+      + intro E. apply Z.eqb_eq in E. subst x. now apply Hsome.
+      + intro Hp. apply Z.eqb_eq.
+        exact (linux_place_unique _ _ _ _ _ _ (proj1 (Hsome x) eq_refl) Hp).
+    - split; [discriminate|]. intro Hp. exfalso.
+      exact (proj1 Hnone eq_refl aZ Hp). }
+  rewrite orb_true_iff, (K true), (K false).
+  split; [intros [H|H]; [now exists true | now exists false]
+         | intros ([|] & H); [now left | now right]].
 Qed.
 
-Lemma placement_ok_b_of_floor : forall h aZ nZ,
-  bottomup_floor <= aZ -> placement_ok_b h aZ nZ = true.
-Proof. intros h aZ nZ H. unfold placement_ok_b. rewrite (proj2 (Z.leb_le _ _) H). reflexivity. Qed.
+(** Linux's address is unique, so the gate is a FUNCTION of the state:
+    two addresses that both pass it under the same kernel build are
+    equal.  (The disjunction over [thp] is there because the ASan plan
+    layer does not carry the run's [KernelBuild]; both builds exist and
+    the bound below holds for either.) *)
+Lemma placement_ok_thp : forall h thp aZ nZ,
+  linux_place h thp (Z_to_bv 64 0) nZ aZ -> placement_ok h aZ nZ.
+Proof. intros h thp aZ nZ H. now exists thp. Qed.
 
 Definition hint_placement_ok_b (addr : word) (h : VmMaps) (aZ nZ : Z) : bool :=
   if w_is0 addr then placement_ok_b h aZ nZ else true.
-
-Lemma hint_placement_ok_b_of_floor : forall addr h aZ nZ,
-  bottomup_floor <= aZ -> hint_placement_ok_b addr h aZ nZ = true.
-Proof. intros addr h aZ nZ H. unfold hint_placement_ok_b. destruct (w_is0 addr); [now apply placement_ok_b_of_floor|reflexivity]. Qed.
 
 Lemma hint_placement_ok_b_nonnull : forall addr h aZ nZ,
   w_is0 addr = false -> hint_placement_ok_b addr h aZ nZ = true.
 Proof. intros addr h aZ nZ H. unfold hint_placement_ok_b. now rewrite H. Qed.
 
+(** Linux's plain search leaves the address in one of its two windows.
+    Both halves are the [gap_fits] bound of the branch that produced
+    it.  The ASan layer uses the stronger MAXIMALITY of the top-down
+    branch (see [Z2x.null_hint_grant_above]); this is the
+    cheap consequence. *)
+Lemma topdown_search_window : forall h nZ a,
+  topdown_search h nZ a -> (a + nZ <= mmap_top h)%Z \/ (task_unmapped_base <= a)%Z.
+Proof.
+  intros h nZ a H. unfold topdown_search in H. cbv zeta in H.
+  destruct H as [[(_ & _ & Hhi & _) _] | [_ [(_ & Hlo & _ & _) _]]];
+    [now left | now right].
+Qed.
+
+Lemma placement_ok_window : forall h aZ nZ,
+  placement_ok h aZ nZ ->
+  (aZ + nZ <= mmap_top h)%Z \/ (task_unmapped_base <= aZ)%Z.
+Proof.
+  intros h aZ nZ (thp & Hpl).
+  unfold linux_place in Hpl. cbv zeta in Hpl.
+  assert (Hg : hint_address (Z_to_bv 64 0) = 0) by (vm_compute; reflexivity).
+  rewrite Hg, Z.eqb_refl in Hpl. cbv iota in Hpl.
+  pose proof pmd_size_pos as Hpmd.
+  destruct (thp && (nZ mod pmd_size =? 0)%Z)%bool.
+  - destruct Hpl as [(ret & Hret & ->)|[_ Hts]].
+    + pose proof (thp_align_bounds ret) as [Hb1 Hb2].
+      destruct (topdown_search_window _ _ _ Hret) as [Hhi|Hlo];
+        [left|right]; lia.
+    + exact (topdown_search_window _ _ _ Hts).
+  - exact (topdown_search_window _ _ _ Hpl).
+Qed.
+
+(** THE GATE, now a theorem.  A NULL-hint grant of the spec is at the
+    address [Mmap.linux_place] gives, and that address passes the
+    checker's placement gate.  The node-soundness layer applies
+    [placement_policy_holds] where it used to carry a hypothesis. *)
 Definition placement_policy : Prop :=
-  forall (h : VmMaps) (a : word) (nZ : Z),
+  forall (h : VmMaps) (thp : bool) (a : word) (nZ : Z),
     0 < nZ -> nZ mod page_size = 0 ->
-    bv_unsigned a mod page_size = 0 -> 0 < bv_unsigned a ->
-    bv_unsigned a + nZ <= alloc_top h ->
-    region_free (vm_reserved h ++ vm_maps h) a (Z_to_bv 64 nZ) = true ->
-    bv_unsigned a + nZ <= alloc_ceiling /\ placement_ok_b h (bv_unsigned a) nZ = true.
+    linux_place h thp (Z_to_bv 64 0) nZ (bv_unsigned a) ->
+    placement_ok_b h (bv_unsigned a) nZ = true.
+
+Theorem placement_policy_holds : placement_policy.
+Proof.
+  intros h thp a nZ HnPos HnAl Hpl.
+  apply (placement_ok_b_iff h (bv_unsigned a) nZ HnPos HnAl).
+  now exists thp.
+Qed.
 
 Definition init_sp_ok (h : VmMaps) : Prop := sp_window_lo <= bv_unsigned (vm_init_sp h).
 

@@ -2,7 +2,7 @@
    ghost and one Inv_<cut> per cut between ENTRY and RET, each a CUTST of Prog/SlotFR.v (FR over the live harness
    blocks hb, at some FP state with rounding mode 0). Statement text: no function is proved here.
    The form is reac-pw/fuzz_role's Prog/SlotInv.v (itself fuzz_pin's and
-   libreac/fuzz_ctrl's released Prog/SlotInv.v, origin/ossv/recipes 25e3d17bdb50), with rate's three live blocks
+   libreac/fuzz_ctrl's released Prog/SlotInv.v), with rate's three live blocks
    (fuzz_rate.c:231-284):
    - pp = malloc(19744) (0x13154 `jal malloc`, a0 = s3 = 5 << 12 - 0x2e0); pod = fuzz_dup(pp->buf, pp->len) =
      malloc(len ? len : 1) (0x141e0, a0 = len + (len = 0) from 0x141d8-0x141dc); buf = malloc(buflen ? buflen : 1)

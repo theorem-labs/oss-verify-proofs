@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/PSstrlen.v, with its module paths changed; 142 of its 194 lines of code are new or changed and 691 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: copied from plugin-hostd/fuzz_reply (a working branch 86b50358d34) to libreac/fuzz_boxreg: module paths changed, no other change. *)
+(* Modified by Theorem Labs, 2026-10: copied from plugin-hostd/fuzz_reply (a working branch) to libreac/fuzz_boxreg: module paths changed, no other change. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_boxreg/lib/A/RT_mem_bz.v, with its module paths and module names changed; 204 of its 281 lines of code are new or changed and 117 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/asan_memcpy.v, with its module paths and module names changed; 46 of its 82 lines of code are new or changed and 245 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/FMss_memchr_wrap.v, with its module names and numbers changed; 104 of its 149 lines of code are new or changed and 37 lines of the source are left out. *)
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMss_strchr_wrap.v at cold/port-fm-int 5d8d8a15571, relocated A->B by asan-kit elfmap.py + remap.py over the unstripped twins; every image numeral re-derived by symbol / section (fmb-b4 reloc report). *)
-(* lib/A/Prog/strchr_wrap.v (RtStr's port, unchanged from cold/c-asan-rt-fmio-n affce6489c8), re-run against the
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMss_strchr_wrap.v, relocated A->B by asan-kit elfmap.py + remap.py over the unstripped twins; every image numeral re-derived by symbol / section (fmb-b4 reloc report). *)
+(* lib/A/Prog/strchr_wrap.v (RtStr's port, unchanged), re-run against the
    local-shadow statement FMss_strchr_wrap_c.v: the range check comes from chk_ok_of_loc (FMss_shv.v) and the post's
    shadow fact from shvis_kept; every other line is the original's. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.

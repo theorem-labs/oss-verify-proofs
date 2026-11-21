@@ -5,13 +5,14 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names and numbers changed; 3942 of its 4075 lines of code are new or changed and 878 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/R10.v, with its module names, addresses and numbers changed; 426 of its 656 lines of code are new or changed and 3845 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/R10F.v, with its module names, addresses and numbers changed; 70 of its 152 lines of code are new or changed and 574 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Provenance (route (a) bridge input, lead 22:18Z; auditor a Theorem Labs lane):
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
    source runs: lib/B/Prog/Seg/R9.v r9_st (:74, no call), r9_call (:107, call reac_ctrl_parse) at
-     a working branch 3803efccea0 (blob 9c72c72c56136cfec6a903ff9d76c16cdd7055b0);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
+     a working branch (blob 9c72c72c56136cfec6a903ff9d76c16cdd7055b0);
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
    compare: r9_st_of_F (evtF_evt + rng_all) re-derives the source r9_st statement, and r9_st_same
      compiles that it IS R9.r9_st's statement (`ltac:(let T := type of R9.r9_st in exact T)`); r9_call is
      split at its single call into r9_call_pre_F (stop at reac_ctrl_parse entry 0x83e04, ra = 0x817a4) and

@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YFfl.v, with its module paths changed, and its fuzz_reply.asan-ubsan addresses relocated from cgif_file_fuzzer.asan-ubsan (9 numerals; per-numeral report). *)
-(* Modified by Theorem Labs, 2026-10: the case split over Tfib_zero_shadow does not fix its length (the generated B/YF0m.v has 13 ranges, the donor's 5), as lib/A/AFfl.v (RelocA e5cf89b8f08). *)
+(* Modified by Theorem Labs, 2026-10: the case split over Tfib_zero_shadow does not fix its length (the generated B/YF0m.v has 13 ranges, the donor's 5), as lib/A/AFfl.v (RelocA). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the open path proof adds the TASK_SIZE bound that at_node NOpen now carries, from bytes_at_below and UTOP). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -334,6 +335,11 @@ Proof.
   pose proof (wmono_refl rsegs m) as WM.
   (* [comment removed for export] *)
   pose proof (bytes_at_bound _ _ _ _ SRC) as BP. rewrite length_app in BP. cbn [length] in BP.
+  (* LPS 08b1429: at_node NOpen carries the TASK_SIZE bound; the path's bytes are readable, so
+     they lie below UTOP ([Mem.bytes_at_below]) *)
+  pose proof (bytes_at_below _ _ _ _ MI SRC
+                ltac:(intros E; apply (f_equal (@length byte)) in E; rewrite length_app in E; cbn [length] in E; lia)) as BU.
+  rewrite length_app in BU. cbn [length] in BU. unfold UTOP in BU.
   apply impl_enode.
   carve_frame 96%nat ST.
   zidle_begin sp 96%Z MUz WMz.

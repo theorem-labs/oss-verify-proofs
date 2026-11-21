@@ -3,13 +3,14 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_decode/lib/B/Prog/LLVMFuzzerTestOneInput_segX_exit_td.v, with its module paths, module names and numbers changed; 1110 of its 1140 lines of code are new or changed and 322 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/PSB_Tail.v, with its module paths and module names changed; 2151 of its 2263 lines of code are new or changed and 1028 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3; internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset lib/B, parse_string on image B (asan-ubsan): the DECODE LOOP BODY stretch of the walk, proved against
    the cut layer lib/A/Prog/PS_Gen.v + lib/B/Prog/PSB_Base.v: psb_dec_step_holds (psb_dec_lt m -> psb_dec_lt (S m)),
    ending in ps_postR (wle' segs RZ_cf) CW D (SRr' segs RZ_cf: the turn may reach the bad escape's fuzz_free).
    rule 24: proves no function (kind: segment lemma). The function is parse_string B (lane BParseString); its reuse
    search is the record file r24-index.txt (sha256 e7c12b08eeb1; internal record) (checker CONFIRM; donor none;
    templates T1 the released plain / UBSan walks, T2 the OLD image-B walk, T3 WalkS4's image-A cut layer).
-   GENERIC-P FORM (the internal file GP-BRIEF.md, a Theorem Labs lane 12:18Z / 12:22Z): base 3d53a181c75 (a working branch;
+   GENERIC-P FORM (the internal file GP-BRIEF.md, a Theorem Labs lane 12:18Z / 12:22Z): base (a working branch;
    PS_Gen ba0681112ea5, PSB_Base 73bed5b3d393, YSRrMemnorm a1c1ece77b14, YAkMemnorm 96c72061b4d4). Reason: an SRr post is
    OPAQUE once Qed, so an end-state invariant must be in the segment's statement. psb_dec_step_holdsP is over an
    abstract P with srr_inv_laws segs P only (the stretch makes no kit call, so no srr_inv_call / srr_inv_mn); every
@@ -17,7 +18,7 @@
    each exit, from the run's end keep. The old psb_dec_step_holds is kept, statement byte-identical (it did NOT move),
    as the corollary at P := fun _ => True. Ported from the concrete memnorm port a working branch
    preset-tree-at-2026-10-29T12-18-41Z.tsv (sha256 01b6eb28a24f; internal record) (ps_mn D -> P, ps_mn_laws D -> PLAW).
-   Proved first on base 8860ed3a414 (the kit walkkit 0afb3f76c28; blobs re-derived by git rev-parse at that sha:
+   Proved first on base (the kit walkkit; blobs re-derived by git rev-parse at that sha:
    PRH_FnReader ba3a5407e12b, PS_Gen 8fe447f77d55, PSB_Base fd79fd54d991, YCbqG 83da015952be, A Listing_prog v4
    cbba047f885a, B Listing_prog f843fdf7fe2f). Section hypotheses taken: LAWS, PST_ok, HW (prh_head_wide, WalkS4's
    form; the harness heads below the out block); no callee text (the stretch makes no call); TL not needed.
@@ -598,7 +599,7 @@ Proof.
     { intros E. injection E as E1 _. cbn [map fst] in HND. inversion HND as [|x l HN HND2]; subst. apply HN.
       assert (Hi : In out (map fst (pi_Lam D)))
         by (apply in_map_iff; exists (b, m); split; [cbn [fst]; lia | exact Hin]).
-      first [ apply list_elem_of_In; exact Hi | apply elem_of_list_In; exact Hi ]. }
+      first [ apply list_elem_of_In; exact Hi | apply list_elem_of_In; exact Hi ]. }
     pose proof (sep_blocks_x segs B ARx LAWS ly S Hp W mem md _ _ _ _ HAR Hab Hin_o Hne) as Hd.
     pose proof (req_size_pos (m + cf_head) (Z.add_nonneg_nonneg _ _ Hm0 Hh0)) as [_ Rm].
     unfold zdisjoint in Hd. cbn [fst snd] in Hd. rewrite Ro in Hd. lia.
@@ -778,7 +779,7 @@ Proof.
   unfold SHADOW_OFF in *. lia.
 Qed.
 
-(* a byte that stays present stays writable (PRW_StepKit.v:106 writable_kept, at this walk's world) *)
+(* a byte that stays present stays writable (PRW_StepKit.v:107 writable_kept, at this walk's world) *)
 Lemma pdc_writable_kept : forall (W : world segs) (m m2 : word -> option byte) a,
   (apresent (w_H W) m a -> apresent (w_H W) m2 a) ->
   writable_at segs (rdW W m) a -> writable_at segs (rdW W m2) a.

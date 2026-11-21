@@ -2,7 +2,7 @@
 
 ## The lines this recipe covers
 
-Lines 29-91 of lib/CJ/RL/GXA/G_vsnprintf.v at commit dde52d349c2c34a82325f0f2f2d973bf87d8c2b4 (blob 7569ce1b31a345335b9ae3213bcbb30b39476c3c,
+Lines 29-91 of lib/CJ/RL/GXA/G_vsnprintf.v (blob 7569ce1b31a345335b9ae3213bcbb30b39476c3c,
 sha256 c337a4c71e9f250c4e1624a7f5c58b33b81152856259b4c7810ce320cad57aa9): the Definition of vsnprintf_prog, from its `Definition` line to the line that ends
 with `.`, that is the `PNode` and `PJ_<op>` lines of the tree. As a file (the 63 lines and a final newline) they have
 sha256 742a4b6bacb2d4039dc84b64078c8ae20f8d838b5304cc10599119201eb8be11.
@@ -44,7 +44,7 @@ The file's Requires name no image: its Section takes `Context {IMG : RImg}`. The
 | deny list (ptree_emit.py --deny): internal names, one per line; private, not published | $DENY | bcdc797a74b48a2a76d955655628e1c61c538beb30226e15895b2c59a90d5763 |
 
 $PINS holds plain/, ubsan/, asan/ and asan-ubsan/, each with the image and its twin. $UNIT is the unit root
-projects/plugin-hostd/fuzz_command/proofs at dde52d349c2c. The deny list changes no output byte: it only makes the
+projects/plugin-hostd/fuzz_command/proofs. The deny list changes no output byte: it only makes the
 generator refuse an argument or an output that holds one of its strings.
 
 ## fuzz_command.asan (the unit's pin)

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader fact, the 6 MiB zero-filled stack window): changed know_okRE, re_tail, stack_writable; added Hrdr; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Src0ReadErr.v, lines 37-45, 52, 60, 83, 166-167. *)
 From OSSVerify.Proofs.jsoncons.fuzz_bson_parser_max.lib Require BvWfKernel.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -38,17 +39,22 @@ Definition re_ivs : list (Z * Z) :=
    (0xe8c80,0xe8c88); (0xe8c98,0xe8ca0); (0xe8ca8,0xe8cd8);
    (0xe91a8,0xea000)]%Z.   (* [comment removed for export] *)
 
-(* [comment removed for export] *)
+(* THE ZERO-FILLED WINDOW, old beside new: [d + m <= 8388608] / [sp0 - 8388608 + d] ->
+   [d + m <= DRV_ZWIN] / [sp0 - DRV_ZWIN + d], DRV_ZWIN = 6144513 = StoreOk.stack_window_depth
+   (Bs0MainEntry).  The 8 MiB claim is FALSE at LPS 75d69e00 (wrap_mem zero-fills only to
+   MemSplit.wok_lo sp0 = sp0 - 6144513).  Its only producer is Bs0DrvH's [stack_writable] goal,
+   discharged off [Bs0MainEntry.kn_stack]'s narrow row; its only consumer is [know_okRE] below,
+   for [knRE0]'s window entry, which is narrow too. *)
 Definition stack_writable (M : word -> option byte) (sp0 : word) : Prop :=
-  forall d m, (0 <= d)%Z -> (d + Z.of_nat m <= 8388608)%Z ->
-    store_ok RSEGS M (Z_to_bv 64 (bv_unsigned sp0 - 8388608 + d)) m = true.
+  forall d m, (0 <= d)%Z -> (d + Z.of_nat m <= DRV_ZWIN)%Z ->
+    store_ok RSEGS M (Z_to_bv 64 (bv_unsigned sp0 - DRV_ZWIN + d)) m = true.
 Definition cell (M : word -> option byte) (a : Z) (n : nat) (v : Z) : Prop :=
   rdn RSEGS M (Z_to_bv 64 a) n = Some (word_to_le_bytes n (Z_to_bv 64 v)).
 Definition img_clear (M : word -> option byte) (lo hi : Z) : Prop :=
   forall i, (lo <= i < hi)%Z -> M (Z_to_bv 64 i) = None.
 
 Section ReadErr.
-  Context {RE : RunEnv}.
+  Context {RE : RunEnv}. Context {RO : ReaderOn}.
   Variable sp0 : word.
   Variable BL : list (list byte).
   Variable model : Model.
@@ -56,6 +62,7 @@ Section ReadErr.
   Hypothesis Hh : m_halted model = None.
   Hypothesis Hlazy : m_vm_lazy model = [].
   Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+  Hypothesis Hrdr : m_channel_reader model = true.
 
   Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
   Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
@@ -78,7 +85,7 @@ Section ReadErr.
     eapply (re_segBC scfg sp0 BL model Hvsp Hh Hlazy path pp (Z.of_nat (length path)) _ t8 vals);
       try eassumption; try lia.
     intros vals' R' M' HL' Q0 Q2 Q113 HR' HK' Hstr'.
-    eapply (re_segF scfg sp0 BL model Hvsp Hh Hlazy Hfd2 path pp _ vals'); try eassumption; lia.
+    eapply (re_segF scfg sp0 BL model Hvsp Hh Hlazy Hfd2 Hrdr path pp _ vals'); try eassumption; lia.
   Qed.
 
   (* [comment removed for export] *)
@@ -161,7 +168,8 @@ Section ReadErr.
     - change (edenot E (EVar 0)) with sp0. lia.
     - (* [comment removed for export] *) split; [apply flat_intro; cbn; lia|].
       intros d m Hd Hm. unfold estart. cbn [a_base a_off]. change (edenot E (EVar 0)) with sp0.
-      replace (bv_unsigned sp0 + -8388608 + d)%Z with (bv_unsigned sp0 - 8388608 + d)%Z by lia.
+      (* old: [bv_unsigned sp0 + -8388608 + d] = [bv_unsigned sp0 - 8388608 + d] *)
+      replace (bv_unsigned sp0 + - DRV_ZWIN + d)%Z with (bv_unsigned sp0 - DRV_ZWIN + d)%Z by lia.
       apply Mstack; lia.
     - change (edenot E (EVar 2)) with pp. lia.
     - (* [comment removed for export] *) split; [apply flat_intro; cbn [edenot a_base a_off]; rewrite ?(u_small 0) by lia; lia|].

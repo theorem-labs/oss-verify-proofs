@@ -1,12 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: plugin-hostd/fuzz_reply.asan, the cf allocator bridge (a Theorem Labs lane R, new file), part 3:
    the TICK UPDATE of a malloc_cf that returns a block (EXCEPTION 3 of the event-term gate, Main 2026-10-30 00:2xZ:
    the journal's st_nev conjunct, YCbqG.v:249, grows by the call's own model ticks). malloc_cf (YG00cf.v) ticks once
    at its entry; the only other ticks are errb_map_cf's (YG00cf.v), which run only inside the class-full report of
    map_more_user_cf, an arm that returns false, so populate_cf, get_from_allocator_cf and cache_alloc_cf then fail
    and malloc_cf returns PNull. So every return of malloc_cf with a block has st_nev = the entry's + 1
-   (malloc_cf_block_nev). malloc_post_cf (YG07cf.v:259) gives only the lower bound.
+   (malloc_cf_block_nev). malloc_post_cf (YG07cf.v:260) gives only the lower bound.
    Proved over YGcfXs.cfx_ipost (every return of the tree), by the fr_* walk of YGcfXs.v (:440-470) restated with two
    predicates: the tick count, and the cache (unchanged by a failed refill). Model lemmas only; no function is proved
    (rule 24); no address. *)

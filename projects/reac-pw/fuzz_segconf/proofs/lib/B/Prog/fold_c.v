@@ -60,7 +60,7 @@
    Why each premise holds there (m_file 0x86140, frame 320, STK_m_file 8,592 at image B): cap = 64 or 24 >= 1. v and
    vn: [v, v + vn) lies in m_file's text block t (strip's post gives t <= v <= e' <= t + |text|; the unquote moves v
    up by one and e' down by one only when vn >= 2, `blt` 0x86678), so m_file_pre's sa_heap / sa_addr / sa_str of t
-   (lib/B/Prog/m_file_c.v:218-219, image B's copy of the image-A owner's FINAL 6f783602b5e3) give l := the vn bytes, and
+   (lib/B/Prog/m_file_c.v:218-219, image B's copy of the image-A owner's FINAL) give l := the vn bytes, and
    for its first k bytes sa_bytes, sa_addr, sa_loc (its heap arm) and v <> 0 (t <> 0). low: 144(s1) = FB + 32
    (0x86308-0x86310, FB = 120(s1) the side-stack frame base), the 64-byte buffer low of m_file's class-1 side-stack
    frame (requested with a0 = 128 at 0x861b4; the shadow bytes (FB >> 3) + 0x7fff8000 + 4 .. + 11 of [FB + 32, FB + 96) are marked
@@ -72,7 +72,7 @@
    image B: A_fold = 0x87c94 (twin .symtab); STK_fold = 16 (its frame; the error path is dead).
    IMAGE-INDEPENDENT: no image module is Required; A_fold and STK_fold are parameters, and the shadow-base cells are
    fields of B.
-   KIT: image B's copies (the segconf porter's image-B kit derivation, commit 694f3575dda2, and
+   KIT: image B's copies (the segconf porter's image-B kit derivation, and
    the image-B kit name map): YA0n YG0f YG0n YG0d YCbq from lib.B, SegPgBase / SegABase from
    lib.B.Prog; no lib/A file and none of the 44 B kit modules from lib.Reusable.
    The WALK takes no runtime entry as a Section hypothesis: the function calls none on its good path. *)

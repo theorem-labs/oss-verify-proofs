@@ -1,9 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: made from proofs/reac-pw/fuzz_role/lib/A/RPgCheck.v at 77f59d02b01 (the
+(* Modified by Theorem Labs, 2026-10: made from proofs/reac-pw/fuzz_role/lib/A/RPgCheck.v (the
    save-slot region, regs_ok_override / ck_regs_ok / ck_lit / ck_atom, ck_kept_run, awr_stk / kwr_stk, the run /
-   keep / leaf chain, ck_wx / ck_segs_low) and proofs/reac-pw/fuzz_role/lib/A/RPgRefuse.v at 77f59d02b01 (the .got
+   keep / leaf chain, ck_wx / ck_segs_low) and proofs/reac-pw/fuzz_role/lib/A/RPgRefuse.v (the .got
    word and shadow-offset cell regions with base None and their al_const proofs) for reac-pw/fuzz_headamp's image A
    (fuzz_headamp.asan): the common plumbing of the walks of headamp's check functions against lib/A/HPgCSpec.v's
    hd_check_*_specX. What is new against role's files: the .got word 0x9c370 and the cell 0xa4db8 of this image;
@@ -16,22 +16,23 @@
    lib/AU/HPgChkBaseU.v is image B's. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/A/HPgChkBase.v, with its module paths and module names changed; 264 of its 319 lines of code are new or changed and 308 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW5Kit.v and
-   proofs/reac-pw/fuzz_role/lib/A/RPgW5Seg.v at ada533759b23 for reac-pw/fuzz_rate image A: the code table, the
+   proofs/reac-pw/fuzz_role/lib/A/RPgW5Seg.v for reac-pw/fuzz_rate image A: the code table, the
    shadow band and the engine helpers are rate's (the prefix w5_ becomes rw8_, the image is images.Asan instead of
    a lib/A/Img0 module, RPgMem's rm_ lemmas become RtPgMem's rtm_); the post of a block is RtPgSteps.rts_post
    instead of a local copy; the five run statements of the piece are new. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW8Kit.v at 8f1d7a0a9084 for the same unit's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW8Kit.v for the same unit's
    image B (fuzz_rate.asan-ubsan): the image is images.AsanUbsan; the pcs, the code tables and the registers are image
    B's; the prefix rw8_ becomes rbw8_, RtPgMem's rtm_ becomes RtPgMemB's rtmb_ and RtPgSteps' rts_ becomes RtPgStepsB's
    rtsb_; the frame for locals is the class-4 frame (1024 bytes) with the pod in e62 at F + 0x210; image B calls
    pod_write_ent where image A inlines it, so runs A and B become the one run P to the call, and the run statements
    and the piece's block statement (rbw8_core_stmt, A's rw8_core_stmt of lib/A/RtPgW8Core.v) are restated. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgBW8Kit.v at 6c65f5a5cf5c for reac-pw/fuzz_role's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/AU/RtPgBW8Kit.v for reac-pw/fuzz_role's
    image B (fuzz_role.asan-ubsan): module paths fuzz_rate -> fuzz_role, the segments lib/AU/Img0.v rsegs; the prefix
    rbw8_ becomes w8_, RtPgMemB's rtmb_ becomes RPgMem's rm_, RtPgStepsB's rtsb_ becomes RPgSteps' / RPgStepsU's rl_
    (rtsb_post -> rl_wpost); the pcs, the code tables, the registers and the real-frame cells are role B's (pp in a5
    and &pp->len in s6 at J, &e62 in the cell R+0x158, the shadow offset in s11; the J block also moves the cursor and
    what is left into s8 / s2 and sets s4 = 1; the latch sets s10 = -8); the real frame is 0x200 bytes. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_role image B (fuzz_role.asan-ubsan, pinned sha256
    b255d4935da5af137a3967dbe33380ea43be8e78bfe05d1e356e0a2be8a69ff0; every address measured on the unstripped twin
    dc791783f32962615e18a5f5cffae758ba56eb5dc87f70913c3579b101b4406a, same loaded bytes): the shared part of the

@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainB.v (commit fe876300d09, Quarantine::Drain walk set; file sha256 6906800fe2f2) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 1 image addresses moved by code-verified function pairs (1 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 2 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainB.v (Quarantine::Drain walk set; file sha256 6906800fe2f2) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 1 image addresses moved by code-verified function pairs (1 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by funcpair.py; 0 code pcs the tool read as sizes, by funcpair.py), and 2 pcs named in comments; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, WalkB1): the SEED of the segment at 0x33a38 (Recycle after MergeBatches,
-   DMseg_rj.v), i.e. DMseg_rj.free_hyps (DMseg_rj.v:78-84) in full, from the memory and register facts
+   DMseg_rj.v), i.e. DMseg_rj.free_hyps (DMseg_rj.v:79-85) in full, from the memory and register facts
    MergeBatches' return leaves (DMwalkIF.mb_post): the two lock bytes, the global list's count / first / bytes
    words, the temp list's count / last words on Recycle's frame, and the three saved registers s0 / s1 / s2.  The
-   construction is DMdeq.SEED1_ok's (DMdeq.v:290-385) for this shell's three regions and five atoms.
+   construction is DMdeq.SEED1_ok's (DMdeq.v:291-386) for this shell's three regions and five atoms.
    rule 24: no function proved (kind: the seed of a segment already walked, DMseg_rj.segR; the lane's reuse
    search is LOOKUP-B1-drain.txt (sha256 c6e48b676fd5; internal record), `proof-index MergeBatches Recycle QuarantineCallback_Recycle Drain`
    2026-10-29T23:07:48Z exit 0, rule-24 check B1LookupCheck CONFIRM).

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made from projects/cgif/cgif_file_fuzzer/proofs/lib/YZ03.v and lib/Halts_tfib.v for fuzz_identity's ASan+UBSan image: the plain side is fuzz_identity's proved realization lib/PlainRz.v identity_plain_rz (image-neutral; this file Requires no lib/A file of the asan image), the halting corollary takes srealizes, module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed identity_asan_ubsan_agrees_of_tfib, identity_asan_ubsan_halts_of_tfib). *)
 (* fuzz_identity's two ASan+UBSan statements from the ASan+UBSan side TFIB_TB (B/IdentityTFIB.v), in the form of
    projects/cgif/cgif_file_fuzzer/proofs/lib/YZ03.v (agreement) and lib/Halts_tfib.v (halting), as lib/A/AsanTop.v proves the
    two ASan statements:
@@ -35,12 +36,12 @@ Proof.
   destruct en_s as [sp brk mb rnd].
   pose proof (valid_input_va_size _ Hinp) as Hsv48.
   unfold Images.asan_ubsan in Hent.
-  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent. destruct Hent as [Hsp' [Hbrk' [Hmb' Hfit']]].
+  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent. destruct Hent as [Hsp' [Hbrk' [Hmb' [Hfit' Hlau']]]].
   exact (shape_strong_equiv_efs_relim SanitizerBudgets.lim_source ShippedBudgets.lim_source SanitizerBudgets.lim_target
     Plain.M.loaded_segments Plain.M.init_pc Plain.M.phdrs sp brk mb rnd
     identsegsB0 AsanUbsan.M.init_pc AsanUbsan.M.phdrs sp' brk' mb' rnd'
     (SPECX (LS:=identity_shape) inp) (SPECX (LS:=identity_shape) inp) inp
-    asan_lim_source_le SWB HP (TFIB sp' brk' mb' rnd' inp Hsp' Hbrk' Hmb' Hfit' Hinp) (t_eq_refl _)).
+    asan_lim_source_le SWB HP (TFIB sp' brk' mb' rnd' inp Hsp' Hbrk' Hmb' Hfit' Hinp Hlau') (t_eq_refl _)).
 Qed.
 
 Theorem identity_asan_ubsan_halts_of_tfib : Statements.asan_ubsan_halts.
@@ -52,8 +53,8 @@ Proof.
     AsanUbsan.M.phdrs target_alloc_limit ShippedBudgets.lim_source lim_source_le_target (forced_only_cfg_least _)).
   intros sp brk mb rnd inp Hen Hinp. exists (SPECX (LS:=identity_shape) inp). split.
   - pose proof (valid_input_va_size _ Hinp) as Hsv48.
-    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb Hfit]]].
-    exact (TFIB sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hinp).
+    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb [Hfit Hlau]]]].
+    exact (TFIB sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau).
   - exact (SPECX_shape_ok inp).
 Qed.
 End b.

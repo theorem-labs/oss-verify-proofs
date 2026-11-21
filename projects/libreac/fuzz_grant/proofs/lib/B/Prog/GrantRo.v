@@ -1,4 +1,4 @@
-(* Image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/GrantRo.v (a working branch d98082bd58b): the read range IMG_LO / IMG_HI is GrantTop.v's IMG_LO_B / IMG_TOP_B, computed from image B's PT_LOADs. *)
+(* Image B (fuzz_grant.asan-ubsan) twin of lib/A/Prog/GrantRo.v (a working branch): the read range IMG_LO / IMG_HI is GrantTop.v's IMG_LO_B / IMG_TOP_B, computed from image B's PT_LOADs. *)
 (* The image's read-only data is marked usable, in every state.
 
    The memory-checking runtime registers the program's globals at start-up and

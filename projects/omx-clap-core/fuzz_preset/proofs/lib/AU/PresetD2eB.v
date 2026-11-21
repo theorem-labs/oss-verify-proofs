@@ -34,6 +34,7 @@
    lane CwPreB's malloc_site_tfa_cf / memcpy_site_tfa_cf (lib/AU/PresetD1preB.v), lane CwLoopB's loop_L_cf_B
    (lib/AU/PresetD1rB.v) and its lemmas over ARcf (lib/AU/PresetD1rBx.v), lane CwPinvB's PINV frame theorems.
    The allocator parameters are preset's, CfParams_preset (lib/A/CfParamsPreset.v), as in the loop. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises)); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -50,9 +51,9 @@ From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YO05
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YD2e.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require Import YGcfNames YG01cf YG00cf YG0ncf YG0dcf YGcfRoomPre YGcfApath.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YGcfRoomKeep YGcfPath YGcfXs YG0lawscf YK0o.
-(* The run-level room is a Theorem Labs lane's P8 (a working branch 4ec915e66b6, lib/Spec/PresetP8.v): the state
+(* The run-level room is a Theorem Labs lane's P8 (a working branch, lib/Spec/PresetP8.v): the state
    predicate room_at, not a sum over calls. a8's view of an astate (room_of_cf, q_fifo) is YGcfRoom.v, its free
-   coupling YGcfFrees.v (a working branch 5d91379f2041); the model's run (hruns, hlive, hfrees) is
+   coupling YGcfFrees.v (a working branch); the model's run (hruns, hlive, hfrees) is
    lib/Spec. Names used qualified. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YGcfRoom YGcfFrees.
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Spec Require PresetRoom PresetRun PresetReqAt PresetRoomPos.
@@ -77,7 +78,7 @@ Open Scope Z_scope.
    The old run premise ROOM_cf_k S (4 * N_LLVMF + 3) is UNSATISFIABLE - K_INIT is 14,335 allocator steps and one
    harness call takes at least 9,696 (a Theorem Labs lane's note, the internal file n-llvmf.md) - so every headroom number
    of the RUN layer is deleted, here and in the statements this file consumes. A run of any length is carried
-   instead by a Theorem Labs lane's P8 (a working branch 4ec915e66b6, lib/Spec/PresetP8.v preset_room): a
+   instead by a Theorem Labs lane's P8 (a working branch, lib/Spec/PresetP8.v preset_room): a
    PREDICATE ON THE STATE, which P8 turns into `room_at s c` at every consumer allocation.
    RUNQM's share of it (a Theorem Labs lane's division of 2026-10-29 04:5xZ) is the DRIVER LEAF: before the first harness
    call the model has run nothing, so P8's live premise is just `the state's own blocks are at most three`, and
@@ -91,7 +92,7 @@ Section R0.
 Context {ci : CfImg} {cp : CfParams}.
 
 (* The quarantine's two queues in the two orders: q_fifo walks the global batches then the thread's (a8's
-   YGcfRoom.v:57), q_items the thread's then the global ones (YG01.v:209). Same members. *)
+   YGcfRoom.v:58), q_items the thread's then the global ones (YG01.v:210). Same members. *)
 Lemma q_fifo_in_items : forall S k, In k (YGcfRoom.q_fifo S) -> In k (q_items S).
 Proof.
 intros S k. unfold YGcfRoom.q_fifo, q_items, all_batches. rewrite !flat_map_app.
@@ -148,11 +149,14 @@ Section s.
 (* Every class argument is a Context variable; lib_shape is passed by name (run_shape's LS): this tree loads
    #[global] lib_shape instances of other builds. *)
 Context {fx : YK11.FPState} {rc : YM05.RunCeil} {LS : lib_shape} {ci : CfImg} {cp : CfParams}.
-#[local] Notation ELV sp a0 p inp xw xd := (YP08.E0 sp [a0; p] (in_envp inp) xw xd).
+(* YP08.E0 is TOP-anchored and launch-indexed at 727298f3: the statement carries the entry draw and the launch
+   premises as the core's AD2d.run_QM_tfa does *)
+#[local] Notation ELV sp rnd a0 p inp xw xd :=
+(YP08.E0 sp (ed_top rnd) (kb_rseq (in_kernel inp)) [a0; p] (in_envp inp) (in_execfn inp) xw xd).
 (* N_LLVMF is GONE from this layer: the interface's per-call step count went with the sum form of the room
    (2026-10-29). CwSites' tail_at_pinv_B takes B as its first explicit argument.
    NP is the interface's non-primary room: the Section Variable iface_room_np of lib/AU/PresetCfnB.v
-   (a working branch 3f83c075b61f), whose body will be a Theorem Labs lane's room_live_cf
+   (a working branch), whose body will be a Theorem Labs lane's room_live_cf
    (lib/A/CfRoomLivePreset.v, in progress). It is what a driver state carries in place of every deleted
    headroom number; its laws are the interface's own iface_room_np_tail / iface_room_np_step, taken as
    premises of runqm_cf_B. Section order B, NP, NR, as in CwSites' tail_at_pinv_B and CwPreB's sites. *)
@@ -161,12 +165,16 @@ Variable NP : astate -> Prop.
 Variable NR : ProcInput -> Prop.
 
 Definition run_QM_tfa_cf : Prop :=
-forall (sp : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (ws : list word)
-(W : world tfibsegs) (ms : machine_state) (md : Model) (ly : alayout) (S : astate) (a0 p data : list byte) (pb : sptr) (cap : Z),
-in_argv inp = [a0; p] -> valid_sp sp -> valid_argv [a0; p] -> valid_envp (in_envp inp) -> valid_fs (in_fs inp) ->
+forall (sp brk mbase : word) (inp : ProcInput) (xw : nat -> word) (xd : nat -> list byte) (ws : list word)
+(W : world tfibsegs) (ms : machine_state) (md : Model) (ly : alayout) (S : astate) (a0 p data : list byte) (pb : sptr) (cap : Z)
+(rnd : EntryDraw),
+valid_sp sp -> in_argv inp = [a0; p] ->
+valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp -> valid_input inp ->
+valid_fs (in_fs inp) ->
 NR inp ->
 fs_lookup (in_fs inp) p = Some data -> 6 + config_len data <= dlen data -> 0 < payload_len data ->
-let E3 := E_P (edset (havoc (ELV sp a0 p inp xw xd) K_M1 ws) 2 data) data (sptr_addr B ly pb + 2 + config_len data) in
+let E3 := E_P (edset (havoc (ELV sp rnd a0 p inp xw xd) K_M1 ws) 2 data) data (sptr_addr B ly pb + 2 + config_len data) in
 tail_at_pinv_B B NP (if config_len data =? 0 then sPM0 else sPM1 (Z.of_nat (calls data))) E3 sp inp a0 p data W ms md ly S pb cap ->
 (* #102 (lane StackDrv): the live real stack above the entry sp, carried from main to the loop head *)
 YGcallStackUp.astack_up_x tfibsegs ly W (bv_unsigned sp) (ms_mem ms) ->

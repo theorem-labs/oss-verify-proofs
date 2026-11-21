@@ -17,7 +17,7 @@
        s1 = res + 1, s2 = str, s3 = size, a0 = res; it returns at 0x4599c;
      the epilogue reloads ra, s0..s7 from the saved slots (a symbolic state built from them, as A/AE35.v builds its
        ss_epi) and returns. *)
-(* Modified by Theorem Labs, 2026-10: the image-free half of origin/cold/port-fm-rtprintf-param 7e395de08f5
+(* Modified by Theorem Labs, 2026-10: the image-free half of
    proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfGvsni.v for the snprintf chain restated over ARx (route (a),
    c-omx-hpreset 10:51Z): only the items the four roots' closure reaches, AC (:58), SAVED / epi_chunks (:80-82),
    stk_chunks (:97-98), st_ok_head, den_atom, bvu5, ra_xfer, hull_xfer (:101-127), EOK_havoc_lt (:156-157),
@@ -25,6 +25,7 @@
    fm's (the source's comment). 0x868 is a frame offset of __interceptor_vsnprintf, the same at every image of this
    code. vsni_rodata, the runs and ss_epi are image-bearing and live in lib/A/PSnpGvsni.v. The walk of the vsnprintf
    interceptor and avsni_ok (the HarnessDesign route) are not reached and not ported. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

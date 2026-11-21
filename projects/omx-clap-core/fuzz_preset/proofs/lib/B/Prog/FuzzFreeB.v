@@ -8,7 +8,7 @@
    at o = 0 over YG0dcf's cf text, the room by a Theorem Labs lane's YGcfRoomLive.RL_free_step at L24 + DRV + 1
    (CfRoomLivePreset.preset_rl_b24_ok), the call's QM_cf by YGcfRoomLive.room_live_room, the ledger by S1Ledger's
    prh_ledger_disown.
-   #102 (this line, B' images, the kit of record walkkit-next decff67d721f): the ledger carries g_most / g_own_ran_out
+   #102 (this line, B' images, the kit of record walkkit-next): the ledger carries g_most / g_own_ran_out
    (prh_ledger .. most own; prh_pst has seven statics); the walk keeps both cells off its writes (prh_pst_most /
    prh_pst_own) and passes them through prh_glob_final_le and prh_ledger_disown (the S1Ledger.v 8cf15eeb6311).
    The body: p = 0 returns (beqz); else the UBSan checks p <> 16 / 15 <u p (`unimp` traps, decided by the engine from

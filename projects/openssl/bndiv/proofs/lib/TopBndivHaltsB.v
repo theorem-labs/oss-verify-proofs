@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-11: copied from projects/openssl/bndiv/proofs/lib/TopBndivHaltsA.v at 874e3397a35 and moved to the ASan+UBSan build: the AsanUbsan image, the AxB, AxBdB and B modules, TopBndivBoth.main_both, and the names imgB, realizes_both, must_exit_both_big and halts_bndiv_both. *)
+(* Modified by Theorem Labs, 2026-11: copied from projects/openssl/bndiv/proofs/lib/TopBndivHaltsA.v at theorem-labs/oss-verify-proofs@f92feaf8b7e6 and moved to the ASan+UBSan build: the AsanUbsan image, the AxB, AxBdB and B modules, TopBndivBoth.main_both, and the names imgB, realizes_both, must_exit_both_big and halts_bndiv_both. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (realizes_both also takes the start certificate without CONFIG_RSEQ (BdAStartCertNoRseq) and the valid_input_cache_words and valid_input_min_sigframe_size facts; must_exit_both_big uses vdso_image = None); internal commit ids in comments replaced by public commits or removed. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import Equivalence MustExit HaltsAllowed.
@@ -13,7 +14,7 @@ From OSSVerify.Proofs.openssl.bndiv.lib.AS Require ShapeHalts.
 From OSSVerify.Proofs.openssl.bndiv.lib Require TopHalts TopBndivBoth.
 From OSSVerify.Proofs.openssl.bndiv.lib.B Require Import RT_iface RT_rep D_defs D_libiface I_iodefs X_xdefs.
 From OSSVerify.Proofs.openssl.bndiv.lib.AxB Require ArtA.
-From OSSVerify.Proofs.openssl.bndiv.lib.AxBdB Require BdAStartCert.
+From OSSVerify.Proofs.openssl.bndiv.lib.AxBdB Require BdAStartCert BdAStartCertNoRseq.
 From OSSVerify.Proofs.openssl.bndiv.lib.VCommon Require ShapeAlgCfg.
 From OSSVerify.Proofs.openssl.bndiv.lib.AxA Require RzBridge.
 From OSSVerify.Proofs.openssl.bndiv.lib.AxB Require StartA.
@@ -40,7 +41,9 @@ Lemma realizes_both : forall en inp, valid_entry imgB en inp -> valid_input inp 
 Proof.
   intros en inp He Hi.
   exact (AxB.StartA.startA_realizes RTA OUT_repA ERR_repA XENVA lib_startA ArtA.fin_mainA ArtA.fin_mainA_out ArtA.bridgeA_final
-           AxBdB.BdAStartCert.bda_cert_main TopBndivBoth.main_both en inp He Hi).
+           AxBdB.BdAStartCert.bda_cert_main AxBdB.BdAStartCertNoRseq.bda_cert_main_norseq
+           TopBndivBoth.main_both en inp He Hi
+           (valid_input_cache_words inp Hi) (valid_input_min_sigframe_size inp (in_hwcap inp) Hi)).
 Qed.
 
 Theorem must_exit_both_big : forall en inp, valid_entry imgB en inp -> valid_input inp ->
@@ -48,7 +51,9 @@ Theorem must_exit_both_big : forall en inp, valid_entry imgB en inp -> valid_inp
 Proof.
   intros en inp He Hi. pose proof (realizes_both en inp He Hi) as Hr.
   destruct en as [sp brk mb rnd]. cbn [must_exit_in_scfg en_sp en_brk en_mmap_base en_draw] in *.
-  apply (AxA.RzBridge.realizes_cfg_must_exit_forced_only _ TopHalts.codes02 _ _ Hr).
+  (* LPS 08b1429: the binary carries no vDSO segment of its own *)
+  assert (Hvi : vdso_image AsanUbsan.M.loaded_segments = None) by reflexivity.
+  apply (AxA.RzBridge.realizes_cfg_must_exit_forced_only_init _ TopHalts.codes02 _ _ _ _ _ _ _ inp _ Hvi Hr).
   - apply canonT_exits_in.
   - reflexivity.
 Qed.

@@ -7,10 +7,10 @@
    (RcBraidLib.v:18, :48) break FP steps in every file that loads it. A file with FP steps Requires
    lib/Lib/CrtS24.v instead.
 
-   PORT of a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_enc.v:1-355 (the
+   PORT of a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_enc.v:1-355 (the
    image-A record; its image-A part is lib/A/Prog/crtA_enc.v, and its sample lemmas are in lib/Lib/CrtS24.v), plus
    the items that file took from
-   a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Spec/StrFun.v (memcmp_model and its
+   a working branch:proofs/libreac/fuzz_decode/lib/A/Spec/StrFun.v (memcmp_model and its
    lemma). Each block below cites its source lines. Lemma names, statements and proofs are the record's; only the
    imports differ (no lib/A file, no StrFun, no crt_convert). *)
 From Stdlib Require Import ZArith List Lia.
@@ -24,7 +24,7 @@ Notation rb_byte := CrtS24.rb_byte (only parsing).
 Import ListNotations.
 Open Scope Z_scope.
 
-(* memcmp_model: verbatim from a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Spec/StrFun.v:169-177. *)
+(* memcmp_model: verbatim from a working branch:proofs/libreac/fuzz_decode/lib/A/Spec/StrFun.v:169-177. *)
 Fixpoint memcmp_model (l r : list byte) (n : nat) {struct n} : option Z :=
   match n with
   | O => Some 0
@@ -35,14 +35,14 @@ Fixpoint memcmp_model (l r : list byte) (n : nat) {struct n} : option Z :=
       end
   end.
 
-(* memcmp_model_total: verbatim from a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Spec/StrFun.v:179-183. *)
+(* memcmp_model_total: verbatim from a working branch:proofs/libreac/fuzz_decode/lib/A/Spec/StrFun.v:179-183. *)
 Lemma memcmp_model_total : forall l r n, (n <= length l)%nat -> (n <= length r)%nat -> exists v, memcmp_model l r n = Some v.
 Proof.
   intros l r n; revert l r; induction n as [|n IH]; intros [|a l] [|b r] Hl Hr; cbn in *; try lia; try (eexists; reflexivity).
   destruct (bv_unsigned a =? bv_unsigned b); [apply IH; lia| eexists; reflexivity].
 Qed.
 
-(* rbx_one .. rb_at: verbatim from a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_enc.v:11-44. *)
+(* rbx_one .. rb_at: verbatim from a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_enc.v:11-44. *)
 Lemma rbx_one : forall (m : word -> option byte) y b (x : word), 0 <= y < 2^64 ->
   write_to_mem m (wa y) [b] x = if bv_unsigned x =? y then Some b else m x.
 Proof.
@@ -78,7 +78,7 @@ Qed.
 Definition rb_off (p j : Z) : Z := if j =? 0 then 3 + p else if j =? 1 then 5 * p else 1 + p.
 Definition rb_at (N s c j : Z) : Z := if j =? 0 then rb_lo N s c else if j =? 1 then rb_mid N s c else rb_hi N s c.
 
-(* rb_at_eq .. rb_cover: verbatim from a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_enc.v:46-221 (crt_enc.v:45, rb_byte, is in lib/Lib/CrtS24.v). *)
+(* rb_at_eq .. rb_cover: verbatim from a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_enc.v:46-221 (crt_enc.v:45, rb_byte, is in lib/Lib/CrtS24.v). *)
 Lemma rb_at_eq : forall N s c j, 0 <= c -> rb_at N s c j = 3 * (s * N) + 6 * (c / 2) + rb_off (c mod 2) j.
 Proof.
   intros N s c j Hc. unfold rb_at, rb_off, rb_lo, rb_mid, rb_hi, rb_G.
@@ -255,18 +255,18 @@ Proof.
     split; [exact Rs|]. split; [lia|]. split; [lia|]. rewrite rb_at_eq, P1, P2 by lia. unfold rb_off. cbn. lia.
 Qed.
 
-(* memcmp_self: verbatim from a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_enc.v:262-266. *)
+(* memcmp_self: verbatim from a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_enc.v:262-266. *)
 Lemma memcmp_self : forall l n, (n <= length l)%nat -> memcmp_model l l n = Some 0.
 Proof.
   intros l n. revert l. induction n as [|n IH]; intros [|b l] H; cbn in *; try reflexivity; try lia.
   rewrite Z.eqb_refl. apply IH. lia.
 Qed.
 
-(* crt_K: verbatim from a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_enc.v:271-272. *)
+(* crt_K: verbatim from a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_enc.v:271-272. *)
 Definition crt_K (pb : Z -> byte) (ns : Z) (s ch : Z) : Z :=
   s24 (pb (3 * (ch * ns + s))) (pb (3 * (ch * ns + s) + 1)) (pb (3 * (ch * ns + s) + 2)).
 
-(* nth_seq0: verbatim from a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_enc.v:341-345. *)
+(* nth_seq0: verbatim from a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_enc.v:341-345. *)
 Lemma nth_seq0 : forall k i, (i < k)%nat -> nth_error (seq 0 k) i = Some i.
 Proof.
   intros k i H. rewrite nth_error_nth' with (d := 0%nat) by (rewrite length_seq; exact H).

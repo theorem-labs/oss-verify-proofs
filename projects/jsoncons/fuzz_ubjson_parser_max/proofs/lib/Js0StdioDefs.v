@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: sw_post_rdn and sw_post_store_ok written out as plain statements with the encoding table and TCodec import dropped, and the stdout invariant in FPX_1 now also requires m_channel_reader model = true; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Src0StdioDefs.v, lines 58-65, 72-74, 142-144. *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require BvWfKernel.
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -14,8 +15,6 @@ From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require Export Js0Exit
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope bv_scope.
-From OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib Require TCodec.
-Ltac2 tcn__Js0StdioDefs () := ([""; "Corelib.Init.Datatypes."; "Corelib.Init.Logic."; "Corelib.Numbers.BinNums."; "LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.Js0StdioDefs.FPX_1."; "OSSVerify.Proofs.jsoncons.fuzz_ubjson_parser_max.lib.PropExec."; "OSSVerify.jsoncons.fuzz_ubjson_parser_max.images.Plain.M."; "Stdlib.ZArith.BinInt.Z."; "stdpp.bitvector.definitions."], [["1Some"; "1bool"; "1list"; "1nat"; "1option"; "1true"; "2eq"; "2or"; "3Z"; "4store_ok"; "5sw_post"; "6rdn"; "7loaded_segments"; "8add"; "8le"; "8of_nat"]; ["8pow"; "8sub"; "0a"; "0bs"; "0bufp"; "0bufsz"; "0f"; "0mem"; "0mem'"; "0n"; "9bv"; "9bv_unsigned"; "0su"]]).
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Section FPX_1. Context {fx : PropExec.FPState}.
 Record sw_file (mem : word -> option byte) (f : Z) (wb wp : Z) (fd : Z) (bufp bufsz : word) : Prop := {
@@ -40,13 +39,22 @@ swp_wend : rdn RSEGS mem' (Z_to_bv 64 (f + 32)) 8%nat = Some (word_to_le_bytes 8
 swp_wpos : rdn RSEGS mem' (Z_to_bv 64 (f + 40)) 8%nat = Some (word_to_le_bytes 8 bufp);
 swp_wbase : rdn RSEGS mem' (Z_to_bv 64 (f + 56)) 8%nat = Some (word_to_le_bytes 8 bufp)
 }.
-Lemma sw_post_rdn : ltac2:(TCodec.tc2 tcn__Js0StdioDefs "RL'JyR0%211'4y8%511%311p051'8'3'2%116':r9r8r7r6r5r4%76654321'6%B1:&;&<r:r3%443281(0r2%22B1%:3941&>&=&K%12Q1A&?%11B%5231&@+2+R0%3221%;251'7%;2Q;L%:1L%>221&Ar;+S@%3221%D251%E248%:221%E2QEQ7%D1Q7%H221+Q0%J2:1%L231+Q@%M2=1%O218%D241%O2QOQB%N1QB%Q2221r<+QH%Q5221%Q7241%Q724O%Q9218%N231%QD4QCQBQMQL%Q@2R0QL%QH3QG21p041p0?1p0J1p0Q61p0QC1p0QO1pQ8R81pQDR;1pQ6RC1pQBR?1pQ<RE1pQ:RF1pQ>RA1pQJRB1pQ@RD1").
+Lemma sw_post_rdn : forall mem su f bufp bufsz mem' (a : word) n bs,
+sw_post mem su f bufp bufsz mem' ->
+rdn RSEGS mem a n = Some bs ->
+(bv_unsigned a + Z.of_nat n <= 2 ^ 64)%Z ->
+(bv_unsigned a + Z.of_nat n <= su - 112 \/ su <= bv_unsigned a)%Z ->
+(bv_unsigned a + Z.of_nat n <= f + 32 \/ f + 48 <= bv_unsigned a)%Z ->
+(bv_unsigned a + Z.of_nat n <= f + 56 \/ f + 64 <= bv_unsigned a)%Z ->
+rdn RSEGS mem' a n = Some bs.
 Proof.
 intros mem su f bufp bufsz mem' a n bs P H Hnw D1 D2 D3.
 rewrite (rdn_ext RSEGS n mem' mem a Hnw); [exact H|].
 intros x Hx. apply (swp_agree _ _ _ _ _ _ P); lia.
 Qed.
-Lemma sw_post_store_ok : ltac2:(TCodec.tc2 tcn__Js0StdioDefs "Q7'JyR0%211'4y8%511%311p051'8'3':r8r7r6r5r4r3%76654321'6'1&9&<r9r2%443281(5%83721%746=<;%:3913p031p0=1pQDF1pQ6N1pQBJ1pQ<Q01pQ:Q11pQ>L1pQJM1pQ@O1").
+Lemma sw_post_store_ok : forall mem su f bufp bufsz mem' (a : word) n,
+sw_post mem su f bufp bufsz mem' ->
+store_ok RSEGS mem a n = true -> store_ok RSEGS mem' a n = true.
 Proof. intros mem su f bufp bufsz mem' a n P H. eapply store_ok_mono; [apply (swp_grows _ _ _ _ _ _ P) | exact H]. Qed.
 Record exit_common (regs : bvmap 5 word) (mem : word -> option byte)
 (sp tp code : word) (tid : Z) (wp2 rp2 : word) : Prop := {
@@ -97,6 +105,7 @@ exit_common regs mem sp tp code tid wp2 rp2
 /\ ( (pending = [] /\ exists wp1 rp1, file_clean mem 0xb60d0 wp1 rp1)
 \/ (exists (wb wp : Z) (bufp bufsz rp1 can : word),
 stdout_pending mem wb wp bufp bufsz rp1 can pending
-/\ fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))) ).
+/\ fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))
+/\ m_channel_reader model = true) ).
 End FPX_1.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).

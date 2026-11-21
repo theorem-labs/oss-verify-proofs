@@ -4,7 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: the contract and walk of reac_ctrl_identity_poll_block on fuzz_grant.asan, written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v, proofs/cgif/cgif_file_fuzzer/lib/A/AChd.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_grant/lib/A/Prog/CtrlIdentityPollBlock.v, with its module paths, module names and numbers changed; 695 of its 772 lines of code are new or changed and 346 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/FuzzStrdup.v, with its module paths and module names changed; 74 of its 106 lines of code are new or changed and 740 lines of the source are left out. *)
-(* Copied from proofs/libreac/fuzz_grant/lib/A/Prog/GrantRo.v of a working branch ca2ec2ecd18; module paths re-keyed to fuzz_ctrl, IMG_HI changed from 0x5fa000 to fuzz_ctrl.asan's 0x5fe000, the list of fuzz_grant globals in the partial-granule note replaced by the general statement, and :15's attribution of the fact to a Theorem Labs lane replaced by the citation of ctrl's own proof. *)
+(* Copied from proofs/libreac/fuzz_grant/lib/A/Prog/GrantRo.v of a working branch; module paths re-keyed to fuzz_ctrl, IMG_HI changed from 0x5fa000 to fuzz_ctrl.asan's 0x5fe000, the list of fuzz_grant globals in the partial-granule note replaced by the general statement, and :15's attribution of the fact to a Theorem Labs lane replaced by the citation of ctrl's own proof. *)
 (* The image's read-only data is marked usable, in every state.
 
    The memory-checking runtime registers the program's globals at start-up and
@@ -21,7 +21,8 @@
        (`img_shadow_vis`, a fact of the runtime's symbols; lib/B/ACtlCutC.v:273 ctrl_img_shadow_vis proves it from CtrlTSyms and the AR laws).
    A walk takes `in_zs B q n` for the table it reads and `img_shadow_vis`; never
    their consequences. *)
-(* Modified by Theorem Labs, 2026-10: image B's twin of proofs/libreac/fuzz_ctrl/lib/A/Prog/CtrlRo.v at 31508bdaf24, re-keyed to fuzz_ctrl.asan-ubsan (the pin of analyses/libreac/fuzz_ctrl/listing-B): the read-only data of image B's image: the range is fuzz_ctrl.asan-ubsan's own 0x10000..0x5fe000, read from the pin's PT_LOADs, as lib/B/Prog/CtrlPa.v's pa_img_range fixes it. *)
+(* Modified by Theorem Labs, 2026-10: image B's twin of proofs/libreac/fuzz_ctrl/lib/A/Prog/CtrlRo.v, re-keyed to fuzz_ctrl.asan-ubsan (the pin of analyses/libreac/fuzz_ctrl/listing-B): the read-only data of image B's image: the range is fuzz_ctrl.asan-ubsan's own 0x10000..0x5fe000, read from the pin's PT_LOADs, as lib/B/Prog/CtrlPa.v's pa_img_range fixes it. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

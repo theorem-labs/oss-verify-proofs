@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 From OSSVerify.Proofs.boost_beast.http_request.lib.Common Require KReplay.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -45,6 +46,17 @@ Lemma sh_ceiling_range : 0x10006fef8000 <= sh aceil <= 0x10007fef8000.
 Proof. ltac2:(KReplay.run [|constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AsShadow.aceil_facts); constr:(HCEIL); constr:(@Corelib.Init.Logic.and); constr:(@Stdlib.ZArith.BinInt.Z.le); constr:(@Corelib.Numbers.BinNums.Zpos); constr:(@Corelib.Numbers.BinNums.xO); constr:(@Corelib.Numbers.BinNums.xI); constr:(@Corelib.Numbers.BinNums.xH); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AsShadow.aceil); constr:(@Corelib.Init.Logic.eq); constr:(@Corelib.Numbers.BinNums.Z); constr:(@Stdlib.ZArith.BinInt.Z.modulo); constr:(@Corelib.Numbers.BinNums.Z0); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.HeapCeil.hceil); constr:(@Stdlib.ZArith.BinInt.Z.lt); constr:(@Stdlib.ZArith.BinInt.Z.add); constr:(@Stdlib.ZArith.BinInt.Z.div_mod); constr:(@Corelib.Init.Logic.not); constr:(@Stdlib.ZArith.BinInt.Z.mul); constr:(@Stdlib.ZArith.BinInt.Z.div); constr:(@Stdlib.ZArith.BinInt.Z.mod_pos_bound); constr:(@Stdlib.ZArith.BinInt.Z.mod_neg_bound); constr:(@Stdlib.omega.PreOmega.Z.div_0_r_ext); constr:(@Stdlib.omega.PreOmega.Z.mod_0_r_ext); constr:(@Corelib.Init.Logic.eq_refl); constr:(@Corelib.Init.Datatypes.comparison); constr:(@Stdlib.ZArith.BinInt.Z.compare); constr:(@Corelib.Init.Datatypes.cons); constr:(@Stdlib.micromega.ZMicromega.ZArithProof); constr:(@Stdlib.micromega.ZMicromega.CutProof); constr:(@Stdlib.micromega.RingMicromega.PsatzAdd); constr:(@Stdlib.micromega.RingMicromega.PsatzMulC); constr:(@Stdlib.micromega.EnvRing.Pc); constr:(@Corelib.Numbers.BinNums.Zneg); constr:(@Stdlib.micromega.RingMicromega.PsatzIn); constr:(@Corelib.Init.Datatypes.S); constr:(@Corelib.Init.Datatypes.O); constr:(@Stdlib.micromega.ZMicromega.RatProof); constr:(@Stdlib.micromega.RingMicromega.PsatzMulE); constr:(@Stdlib.micromega.RingMicromega.PsatzC); constr:(@Stdlib.micromega.ZMicromega.DoneProof); constr:(@Corelib.Init.Datatypes.nil); constr:(@Corelib.Init.Datatypes.list); constr:(@Stdlib.micromega.VarMap.Branch); constr:(@Stdlib.micromega.VarMap.Empty); constr:(@Stdlib.micromega.VarMap.Elt); constr:(@Stdlib.micromega.VarMap.t); constr:(@Stdlib.micromega.Tauto.IMPL); constr:(@Stdlib.micromega.RingMicromega.Formula); constr:(@Stdlib.micromega.Tauto.eKind); constr:(@Corelib.Init.Datatypes.unit); constr:(@Stdlib.micromega.Tauto.isProp); constr:(@Stdlib.micromega.Tauto.NOT); constr:(@Stdlib.micromega.Tauto.A); constr:(@Stdlib.micromega.RingMicromega.Build_Formula); constr:(@Stdlib.micromega.EnvRing.PEc); constr:(@Stdlib.micromega.RingMicromega.OpEq); constr:(@Corelib.Init.Datatypes.tt); constr:(@Corelib.Init.Datatypes.None); constr:(@Stdlib.micromega.EnvRing.PEX); constr:(@Stdlib.micromega.EnvRing.PEadd); constr:(@Stdlib.micromega.EnvRing.PEmul); constr:(@Stdlib.micromega.Tauto.AND); constr:(@Stdlib.micromega.RingMicromega.OpLe); constr:(@Stdlib.micromega.RingMicromega.OpLt); constr:(@Stdlib.micromega.Tauto.X); constr:(@Stdlib.micromega.Tauto.BFormula); constr:(@Stdlib.micromega.ZMicromega.ZTautoChecker_sound); constr:(@Corelib.Init.Datatypes.bool); constr:(@Corelib.Init.Datatypes.true); constr:(@Stdlib.micromega.ZMicromega.ZTautoChecker); constr:(@Stdlib.micromega.VarMap.find); constr:(@Corelib.Init.Logic.False); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AsShadow.sh)|] [|@__ff; @__varmap; @__wit; @__x1; @__x2; @__x3; @__x4; @__x5; @__p1; @__arith; @H0; @H5; @r0; @q0; @H8; @H7; @H6; @H4; @r; @q; @H3; @H2; @H1; @H; @ACEILB|] "#'e#5#}#B#j#k#i#D#q#'###p#w#?#(#T#%#&#9#+#$#C#H#I#K#L#M#N#O#R#Q#\#^#]#`#S#e#l#u#|#}#5$$#8#@#E#0#Y#X#_#U#a#b#d#f#h#r#x#y#*#z#~$##{#)#-#.#,#3#4$%#=#>#;#:#A#F#n#m#V#[#Z#o#<#G#g#s#v#J#P#W#c#t9#g$#h$#i%#j%#k&#l%#m'#n*#o&#p$#q%#r%#s$#t%#u+#v%#w*#x%#y%#z&#{'#|&US;R$M$#$#$#$#$#$#$#$#$#$#$#$#$###$#$#$#$#$#$#$#$###############################################/#US<R%$#$s#&$#$#$#$#$#$#$#$###############################################/#%s#%#&s#%##M######################/#VS%s#4#'C#GUS=R%s#7#0s#8'(%#&%#&(#&8#m#s#m#/7VS&s#?#'C$GUS'#VS(s#B&4'#VS%s#D(0$#'Cs#F#k##(#VS)s#H,(G-%G(()/&$#k##&#VS*s#N2(3G(4.%/G&$#k##&#VS+s#T8'C5Gk##8#VS,s#W;'C6s#Xk##;#VS&s#Zs#)'Cs#*GUS'#VS(s#]s#,4s#-#0#s#-'Cs#`#k##'#VS)s#bs#1(Gs#2%Gs#2(s#3s#4&$#k##&#VS*s#hs#7(s#8G(s#9s#8%s#9G&$#k##&#VS+s#ns#='C4Gk##7#VS,s#qs#@'Cs#@s#rk##:#VS-Gs#C5S.#m##5UN#%GJ(Js#H&$#VS-Gs#?5S.#m##s#6US>#%GS#(S#s#D&$#US?MVS@C#,S/,#,#,#,#,#,#-C#6C+#-C'-C)-C-6C/#+C%#+C'#+C)#VSACs#X-CS/WS0C$#,/-C#-C6WS0C(-+C$#+C0#+C'#+C*#VS1#S2VSB/#-C:6CA6+C,/+C$#+C&#VS1#S2USCOWS3O$#WS3O+#USDOUSECVS4CN7C$P#VS4CI7C#Q&7C%S$#USFCUSGC.Cs$&.CG)C$K#*&FDDE#HZS5'FDDE#USHD2Cs$8#s%12C#WS6C+#2Cs%48C$#)C(K#*0FDDE#H11FDDE,+#$s$A2C#)C2L#*5FDDE#H.Cs$.)C&SI#*8FDDE#H39FDDE&#)C&K8*;FDDE#HZS5<FDDE#2CMWS6C*#8C#.)C9K#*AFDDE#H1BFDDE(<#.Cs$x)C#L=*s#%FDDE#H.Cs$X)C@L#*s#(FDDE#H3s#)FDDE&#)C?Ks#(*s#+FDDE#HZSJs#,FDDESK3s#-FDDE$#3s#.FDDE'##s$S$#$###$#$#$#$#$#$#$###$#$#$#$#$###############################/#.C##s%G############################/#.C#8C#s#G)C5L#*s#dFDDE#H$s#6$#$#$#$#$#$#$###$#$#$#$#$###############################/#.C#)Cs#$L#*s$)FDDE#H3s$*FDDEs#$#1s$+FDDEs#[s$%#1s$,FDDEs#hs$&#1s$-FDDEs#rs$'#1s$.FDDEs#{s$(#VSLs$/E5S7S8VSMJP'S7#S8m$%#WSNCGS$XSOJP$#l#$*)#l#%s$9s$8#l#&s$As$@#j#'C#j#(C#j#)C#j#*C#j#+C#j#,S9#k##s%:S:4s%cN0#Q'CP#k##&#%GI(Is%]&$#k##s%]S:4s%`Q0#SP'CI#k##&#%s&EI%Is&#&$#'CNG&#S#&%#0s#PI%s#b#%$s#0&$#k##'#k##.#k##4#k##8#k#'C#k#(C#k#)C#k#*C#k#+C#k#,S9#^Js%|ISQQs&XSRSSS$STSUl#-s#%$#l#.s%:s%7#l#/s%Bs%?#l#0s&*C#l#1s%^C#l#2s%Ks%I#l#3s%Os%M#l#4s%Vs%Q#l#/s%]s%X#l#5s%fs%_#l#6s%}C#l#7s&$C#l#8s%ls%j#l#9s%ps%n#l#:s%ws%r#l#.s%~s%y#l#;s&,s&$#USVs&j%s$&#%$s#P&$#m#'#l#<s&4s&5##"). Qed.
 Lemma sh_ceiling_lt_AHI_LO : sh aceil < AHI_LO.
 Proof. pose proof sh_ceiling_range. unfold AHI_LO. lia. Qed.
+
+(* #38 RESERVED-CEILING-CLASS: the floor for the launch's extra reserved bases,
+   the same constant as [As/AsanPlanSound.v RESX_LO] in this file's vocabulary.
+   [Run.v:3154 valid_mmap_base] - the va-INDEPENDENT predicate, assumed at
+   [As/AsanInit.v:105], NOT [valid_mmap_base_va], so Sv39's zero floor is not
+   reachable here - gives [State.v:321 mmap_base_min] = 0x154555557000, and
+   [As/AsanInit.v:482 vtop_range] with [State.vdso_len_bounds] puts every extra
+   base at or above 0x154555542001.  This is that rounded DOWN; margin 0x542001.
+   It sits far above [AHI_LO] = [AsanPlanCore.v:34 KHI] = 0x10007fff8000, where
+   every window this unit maps ends ([AHIGHSH], [sh_ceiling_lt_AHI_LO]). *)
+Definition ARESX_LO : Z := 0x154555000000.
 
 (* [comment removed for export] *)
 Definition ehigh (e : word * word) : bool := AHI_LO <? KInv.ehi e.      (* [comment removed for export] *)
@@ -162,10 +174,29 @@ Section X.
 
   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  Definition akernel (mo : Model) : Prop :=
-    let h := m_vmmaps mo in
-       (* [comment removed for export] *)
-       (forall e, In e (vm_reserved h) -> bv_unsigned (fst e) + bv_unsigned (snd e) <= AIMG_TOP)
+  (* #38 RESERVED-CEILING-CLASS: [akernel] is now [akernel_pre /\ akernel_resx].
+     The eighteen conjuncts of [akernel_pre] are the pre-#38 list, in order, with
+     only the first one's LIST changed; [akernel_resx] is the split that carries
+     the launch's extra reserved intervals.  Factoring rather than appending keeps
+     the recorded body of [AS_InstMainK.akernel_main] usable for [akernel_pre]
+     verbatim: it proves exactly that conjunction and nothing else. *)
+  (* #38: an ABBREVIATION, not a Definition.  A KReplay body that binds the
+     hypothesis by name (ak_hsm_full, constr:(AK)) needs the conjunction
+     visible SYNTACTICALLY; with a Definition wrapper the replay sees
+     "akernel_pre mo" and refuses it against the spelled-out type, even
+     though the two are convertible.  Measured on the farm,
+     both mirrors, "The term proj1 AKfull has type akernel_pre mo while it is
+     expected to have type (forall e, ...) /\ ...". *)
+  #[local] Notation akernel_pre mo :=
+    ((let h := m_vmmaps mo in
+       (* #38 RESERVED-CEILING-CLASS.  This bound was stated over [vm_reserved h]
+          and is FALSE there: at 75d69e00 [init_reserved] appends [vdso_reserved]
+          (State.v:6540-6545), and this tree's own [As/AsanPlanSound.v:340 co_vdso]
+          witnesses that the pair really is in [vm_reserved].  The pair hangs off
+          [mm->mmap_base], not off the image.  SPLIT, not weakened: the bound keeps
+          its text over the IMAGE's reservations, and the launch's extra intervals
+          are carried by [akernel_resx]. *)
+       (forall e, In e (segments_reserved bsegs) -> bv_unsigned (fst e) + bv_unsigned (snd e) <= AIMG_TOP)
     /\ (* [comment removed for export] *)
        (vm_limit h = target_alloc_limit /\ alloc_top h = hceil)
     /\ (* [comment removed for export] *)
@@ -205,7 +236,74 @@ Section X.
     /\ (* [comment removed for export] *)
        (forall a n : word, (sh AHI_LO <= bv_unsigned a /\ bv_unsigned a + bv_unsigned n <= sh aceil)
                            \/ (sh AIMG_TOP <= bv_unsigned a /\ bv_unsigned a + bv_unsigned n <= sh ALOWSH_LO) ->
-          region_free (vm_noaccess h) a n = true).
+          region_free (vm_noaccess h) a n = true))) (only parsing).
+
+  (* #38 RESERVED-CEILING-CLASS, the split.  This is the shape the producer already
+     builds: [As/AsanPlanSound.v:333-337 co_res] and [Bo/BoMainFacts.v pm_reserved]
+     give exactly this [rx], and the entry facts are [As/AsanPlanSound.v:126-139
+     resx_entry_ok] transcribed into this file's own vocabulary ([img_hi BOTH_H] is
+     [AIMG_TOP]; [AsanPlanCore.v:34 KHI] is [AHI_LO], both 0x10007fff8000).  NOT a
+     claim that the pair is above the allocator's ceiling: [vdso_top =
+     page_round_down (mmap_top)] and [mmap_top = min (vm_mmap_base)
+     (page_round_down alloc_top)] (State.v:3466, :3483), so the pair is BELOW
+     [alloc_top] by construction.  What separates it from every window this unit
+     maps is [AHI_LO] - the app region ends there, the high shadow [AHIGHSH]
+     ([BSegs.v:44]) ends exactly there, and [sh aceil < AHI_LO]
+     ([sh_ceiling_lt_AHI_LO]) - with a 4096-byte margin. *)
+  Definition akernel_resx (mo : Model) : Prop :=
+    let h := m_vmmaps mo in
+    exists rx : list (word * word),
+      vm_reserved h = segments_reserved bsegs ++ rx
+      /\ (forall e, In e rx ->
+            0 < bv_unsigned (snd e)
+            /\ bv_unsigned (fst e) mod 4096 = 0
+            /\ bv_unsigned (snd e) mod 4096 = 0
+            /\ AIMG_TOP <= bv_unsigned (fst e)
+            /\ AHI_LO + 4096 <= bv_unsigned (fst e)
+            /\ bv_unsigned (fst e) + bv_unsigned (snd e) <= 2 ^ 47
+            (* the seventh component, [As/AsanPlanSound.v RESX_LO <= fst iv].
+               This is the one that makes [ak_resf] usable: [AHI_LO + 4096]
+               above is where the allocator's own windows END, so a consumer
+               placing ABOVE it gets nothing from the fifth component. *)
+            /\ ARESX_LO <= bv_unsigned (fst e))
+      (* #38: the pair's COUNT and TOTAL SIZE.  [cost] needs both and the
+         per-entry facts give neither.  Straight from [ak_reserved]:
+         [length rx <= n_resx BOTH_H] = 2 and [sum_sizes rx <= resx_bytes
+         BOTH_H] = 20 * 4096. *)
+      /\ (length rx <= 2)%nat
+      /\ zsum (map (fun e => bv_unsigned (snd e)) rx) <= 81920
+      (* #38 RESERVED-CEILING-CLASS, the MAPS-vs-RESERVED DISJOINTNESS conjunct.
+         WHY IT IS HERE AND NOT DERIVED.  [ak_resf] bounds a range away from the
+         reserved ledger by ARITHMETIC: every [rx] entry starts at or above
+         [ARESX_LO], so a range ending below [ARESX_LO] misses the pair.  That
+         route is EXHAUSTED for a consumer that cannot bound its range above.
+         [aapp_lit] ({As,Bo}/AllocRep.v:148) splits [aapp] into
+         [X + k <= ALOWSH_LO \/ AHI_LO <= X]; the low arm closes arithmetically,
+         but the HIGH arm gives only a LOWER bound on [X] and the layout permits
+         [X] to run to [2 ^ 47] = 140,737,488,355,328, SIX TIMES
+         [ARESX_LO] = 23,387,522,990,080.  So the residual is not merely unfound,
+         it is UNPROVABLE from the hypotheses the caller has, and no stronger
+         per-entry bound rescues it: the existing fifth component
+         [AHI_LO + 4096] = 17,594,333,499,392 lies BELOW [ARESX_LO], so a lemma
+         keyed on it is strictly WEAKER than [ak_resf], not stronger.
+         The sound carrier for a range that is MAPPED rather than bounded is the
+         disjointness of the live mappings from the reserved ledger - the model's
+         own [co_mres] ([As/AsanPlanSound.v:420]), whose conclusion is exactly
+         this [Forall]/[Forall] pair spelled here as two [In] quantifiers so this
+         file needs no new import and no [iv_disjoint] name.
+         IT IS INIT-ONLY, like every other conjunct of [akernel_resx]: proved once
+         at the concrete construction site ([AS_InstMainK.akernel_main]) straight
+         from [co_mres], and transported unchanged thereafter.
+         NOTHING EXISTING IS WEAKENED.  [ak_resf], the seven per-entry components,
+         the count and size bounds and [ARESX_LO] are all untouched; this is an
+         ADDED conjunct, so [akernel_resx] is strictly STRONGER than before and
+         every existing consumer keeps the fact it already used. *)
+      /\ (forall iv, In iv (vm_maps h) ->
+            forall e, In e (vm_reserved h) ->
+              bv_unsigned (fst iv) + bv_unsigned (snd iv) <= bv_unsigned (fst e)
+              \/ bv_unsigned (fst e) + bv_unsigned (snd e) <= bv_unsigned (fst iv)).
+
+  Definition akernel (mo : Model) : Prop := akernel_pre mo /\ akernel_resx mo.
 
   Definition AMODELX (mo : Model) : Prop := AMODEL s mo /\ akernel mo.
 
@@ -213,18 +311,96 @@ Section X.
   (* [comment removed for export] *)
   Section Derived.
     Variable mo : Model.
-    Hypothesis AK : akernel mo.
+    Hypothesis AKfull : akernel mo.
+    (* #38 RESERVED-CEILING-CLASS: [akernel] is now [akernel_pre /\ akernel_resx].
+       [AK] keeps naming the pre-#38 conjunction, so every projection chain below
+       and the recorded body of [ak_hsm_full] (which binds [AK] by name) are
+       unchanged; only the two lemmas that need the split mention [AKfull]. *)
+    #[local] Notation AK := (proj1 AKfull) (only parsing).
     Let h := m_vmmaps mo.
 
-    Lemma ak_resf : forall a k : word, AIMG_TOP <= bv_unsigned a -> region_free (vm_reserved h) a k = true.
+    (* #38 RESERVED-CEILING-CLASS: the split half of [akernel], re-exported so
+       consumers can take [region_free_app] over the two halves and stay
+       single-bound on each. *)
+    Lemma ak_resx : exists rx : list (word * word),
+      vm_reserved h = segments_reserved bsegs ++ rx
+      /\ (forall e, In e rx ->
+            0 < bv_unsigned (snd e)
+            /\ bv_unsigned (fst e) mod 4096 = 0
+            /\ bv_unsigned (snd e) mod 4096 = 0
+            /\ AIMG_TOP <= bv_unsigned (fst e)
+            /\ AHI_LO + 4096 <= bv_unsigned (fst e)
+            /\ bv_unsigned (fst e) + bv_unsigned (snd e) <= 2 ^ 47
+            /\ ARESX_LO <= bv_unsigned (fst e))
+      (* #38: the pair's COUNT and TOTAL SIZE.  [cost] needs both and the
+         per-entry facts give neither.  Straight from [ak_reserved]:
+         [length rx <= n_resx BOTH_H] = 2 and [sum_sizes rx <= resx_bytes
+         BOTH_H] = 20 * 4096. *)
+      /\ (length rx <= 2)%nat
+      /\ zsum (map (fun e => bv_unsigned (snd e)) rx) <= 81920
+      (* #38: the maps-vs-reserved disjointness conjunct, re-exported with the rest. *)
+      /\ (forall iv, In iv (vm_maps h) ->
+            forall e, In e (vm_reserved h) ->
+              bv_unsigned (fst iv) + bv_unsigned (snd iv) <= bv_unsigned (fst e)
+              \/ bv_unsigned (fst e) + bv_unsigned (snd e) <= bv_unsigned (fst iv)).
+    Proof. exact (proj2 AKfull). Qed.
+
+
+
+    (* #38: the whole ledger.  The upper premise is what the vDSO pair costs, and
+       [ARESX_LO] rather than [AHI_LO + 4096] is what makes it payable: every
+       caller whose range lies anywhere in this unit's address space - including
+       the large and secondary groups ABOVE [AHI_LO] - discharges it. *)
+    Lemma ak_resf : forall a k : word, AIMG_TOP <= bv_unsigned a ->
+      bv_unsigned a + bv_unsigned k <= ARESX_LO -> region_free (vm_reserved h) a k = true.
     Proof.
-      intros a k Ha. destruct AK as (K1 & _). apply region_free_introZ. intros e sz He.
-      specialize (K1 (e, sz) He). cbn [fst snd] in K1. pose proof (bv_unsigned_in_range _ k). right. lia.
+      intros a k Ha Hk. destruct ak_resx as [rx [Hr [Hok _]]]. destruct AK as (K1 & _).
+      rewrite Hr. apply region_free_introZ. intros e sz He.
+      apply in_app_or in He as [He|He].
+      - specialize (K1 (e, sz) He). cbn [fst snd] in K1. pose proof (bv_unsigned_in_range _ k). right. lia.
+      - pose proof (Hok (e, sz) He) as (_ & _ & _ & _ & _ & _ & HK). cbn [fst] in HK. left. lia.
     Qed.
-    Lemma ak_resf_hi : forall a k : word, AHI_LO <= bv_unsigned a -> region_free (vm_reserved h) a k = true.
-    Proof. intros a k Ha. apply ak_resf. unfold AHI_LO, AIMG_TOP in *. lia. Qed.
-    Lemma ak_resf_sh : forall a k : word, sh AHI_LO <= bv_unsigned a -> region_free (vm_reserved h) a k = true.
-    Proof. intros a k Ha. apply ak_resf. unfold sh, ASHADOW_BASE, AHI_LO, AIMG_TOP in *. lia. Qed.
+    (* #38 RESERVED-CEILING-CLASS: the ledger lemma for a range that is MAPPED
+       rather than arithmetically bounded.  Keyed on [map_contains] and NOT on
+       [In iv] plus containment bounds, because [map_contains] is what the caller
+       already holds: [ak_pamc] proves exactly [map_contains (vm_maps h) a n = true]
+       for the ptr-array window, on the bullet IMMEDIATELY PRECEDING the one that
+       needs this.  So the consumer passes the same term twice and derives no new
+       geometry.
+       Proof body transcribed from this unit's own [As/AsanNodesMmLib.v:1501-1514
+       reserved_free_inside], with [co_mres] replaced by the [akernel_resx]
+       conjunct that carries it and the [In iv] premise replaced by the
+       [existsb_exists] elimination of [map_contains] ([State.v:8279-8286]), which
+       yields the same containment bounds.  No upper bound on [a] is needed or
+       used - that is the whole point of this lemma. *)
+    Lemma ak_resf_inside : forall a k : word,
+      map_contains (vm_maps h) a k = true -> region_free (vm_reserved h) a k = true.
+    Proof.
+      intros a k Hmc. destruct ak_resx as [rx [_ [_ [_ [_ HD]]]]].
+      unfold map_contains in Hmc. apply existsb_exists in Hmc as [iv [Hiv Hb]].
+      cbv beta in Hb. apply andb_true_iff in Hb as [H1 H2].
+      apply Z.leb_le in H1. apply Z.leb_le in H2.
+      apply region_free_introZ. intros e sz He.
+      specialize (HD iv Hiv (e, sz) He). cbn [fst snd] in HD.
+      destruct HD as [HD|HD]; [left | right]; lia.
+    Qed.
+    (* #38 RESERVED-CEILING-CLASS: the term the allocator's [RESF] slots
+       ({As,Bo}/AS_Refill2.v, AS_Refill3.v, AS_Refill4.v, AS_Rta.v,
+       AS_LcDealloc.v, AS_RecyclePrim.v) are fed.  Keyed on [map_contains] and
+       proved from [ak_resf_inside]: those slots name windows inside the primary
+       region, whose [sb] is bounded only by [AHI_LO] and [aceil], so the former
+       upper premise [a + k <= ARESX_LO] could not be paid there.  The [AHI_LO]
+       premise is unused but kept: the recorded bodies of the AG_* callers
+       (AG_Free8, AG_FreeMid, AG_MallocCold, AG_CacheDealloc3, AG_RecyclePrim)
+       pass this lemma through a lambda that binds exactly that premise
+       ([fun a kk (Ha : AHI_LO <= bv_unsigned a) => ak_resf_hi .. a kk Ha]), so
+       the slots keep it and those bodies stay valid unchanged. *)
+    Lemma ak_resf_hi : forall a k : word, AHI_LO <= bv_unsigned a ->
+      map_contains (vm_maps h) a k = true -> region_free (vm_reserved h) a k = true.
+    Proof. intros a k _ Hmc. exact (ak_resf_inside a k Hmc). Qed.
+    Lemma ak_resf_sh : forall a k : word, sh AHI_LO <= bv_unsigned a ->
+      bv_unsigned a + bv_unsigned k <= ARESX_LO -> region_free (vm_reserved h) a k = true.
+    Proof. intros a k Ha Hk. apply ak_resf; [unfold sh, ASHADOW_BASE, AHI_LO, AIMG_TOP in *; lia | exact Hk]. Qed.
     (* [comment removed for export] *)
     Lemma ak_hcov : hcnt (vm_maps h) <= AHC0 + zlen (hsec st) /\ hlen (vm_maps h) <= AHL0 + zsum (map sc_map_size (hsec st))
                     /\ (forall sc, In sc (as_sec st) -> 0 <= sc_map_size sc <= ASECMAX).
@@ -253,7 +429,15 @@ Section X.
     Proof. intros x Hx. destruct AK as (_ & _ & K3 & _). apply K3. tauto. Qed.
 Scheme kc__4 := Elimination for Corelib.Init.Logic.and Sort Prop.
     Lemma ak_hsm_full : forall x : word, sh AHI_LO <= bv_unsigned x < AHI_LO -> in_rangesb x (vm_maps h) = true.
-    Proof. ltac2:(KReplay.run [|constr:(@stdpp.bitvector.definitions.bv); constr:(@Corelib.Numbers.BinNums.Npos); constr:(@Corelib.Numbers.BinNums.xO); constr:(@Corelib.Numbers.BinNums.xH); constr:(@Corelib.Init.Logic.and); constr:(@Stdlib.ZArith.BinInt.Z.le); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AsShadow.sh); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AsShadow.AHI_LO); constr:(@stdpp.bitvector.definitions.bv_unsigned); constr:(@Stdlib.ZArith.BinInt.Z.lt); constr:(AK); constr:(@Corelib.Init.Datatypes.prod); constr:(@Stdlib.Lists.List.In); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.vm_reserved); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.m_vmmaps); constr:(mo); constr:(@Stdlib.ZArith.BinInt.Z.add); constr:(@Corelib.Init.Datatypes.fst); constr:(@Corelib.Init.Datatypes.snd); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.BSegs.AIMG_TOP); constr:(@Corelib.Init.Logic.eq); constr:(@Corelib.Numbers.BinNums.Z); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.vm_limit); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.target_alloc_limit); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.alloc_top); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.HeapCeil.hceil); constr:(HCEIL); constr:(@Corelib.Init.Logic.or); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AllocRep.a_thr); constr:(s); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.AsanAllocModel.kPageSize); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AllocRep.a_ctx); constr:(@Corelib.Numbers.BinNums.Zpos); constr:(@Corelib.Numbers.BinNums.xI); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AllocRep.a_sb); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.AsanAllocModel.kSpaceSize); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AllocRep.a_pa); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.AsanAllocModel.kPtrArrayReserve); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AllocRep.a_fsb); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AllocRep.AFS_SIZE); constr:(@Corelib.Init.Datatypes.bool); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.LazyRestrict.in_rangesb); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.vm_maps); constr:(@Corelib.Init.Datatypes.true); constr:(@Corelib.Numbers.BinNums.Z0); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.AsanAllocModel.kNumClasses); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AllocRep.RB); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.AsanAllocModel.kRegionSize); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.map_contains); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AsShadow.aceil); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AllocRep.a_Zr); constr:(@Corelib.Init.Datatypes.false); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AllocRep.a_L); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.vm_noaccess); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.AsanAllocModel.schunk); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.AsanAllocModel.as_sec); constr:(st); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.AsanAllocModel.sc_map_beg); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.AsanAllocModel.sc_map_size); constr:(@Corelib.Init.Datatypes.pair); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Lib.TacX.wz); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AsShadow.ALOWSH_LO); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.BSegs.AIMG_LO); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AllocRepX.HCW.hcnt); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AllocRepX.HCW.AHC0); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.As.AsanAllocModel.zlen); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AllocRepX.HCW.hsec); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AllocRepX.HCW.hlen); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AllocRepX.HCW.AHL0); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.SecGap.zsum); constr:(@Corelib.Lists.ListDef.map); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AllocRepX.HCW.ASECMAX); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.region_free); constr:(@kc__4); constr:(h); constr:(@Corelib.Init.Logic.and_ind); constr:(@Corelib.Init.Logic.or_intror); constr:(@Corelib.Init.Logic.conj)|] [|@e; @x; @c; @n; @a; @sc; @H0; @H; @_H1; @K3; @_H0; @_H; @Hx|] "#&P#4#}#$#_###b#T#%#m#>#L#&#J#c#'#q#Q#U#a#e#j#o#p#s#t#1#:#8#7#B#E#F#D#H#I#M#N#O#P#S#V#X#W#Y#Z#[#\#]#^#d#f#(#h#i#k#l#n#r#u#v#y#x#w#z#}#|#{#~$#$%#*#.#2#3$($&#0#A#;#<#@#K#G#R#9#?#`$'#=#C#g$$1#o%#p%#q%#r&#s%#t%#u$#v%#w%#x&#y$#z&#{&#|()S+)#)#)#)#)#US,#US-#-J*%E$$#%$J#$#VS.((US/S0US1#.%E#WS2,,C*.#WS3..C*0#'%#$#Mk##)#k#$-#US4-&K#S5US6/US7Q&K$##&#US8G$#9'$R%;##%#US9G$#>US:s#()#)#)#)#)#US;#'+#%s#'##,#US<G$#s#*'$S='#R%s#-##&#US>G$#s#0'$S?%s#2##%#US@G$#s#5'$SA%s#7##%#(#s#6()#(/#(6#(s###US#s#9+C#&D#Fk##&#k#%s#D#$NE%ESB#$#VS$GC*s#JL$$#*s#LO'#%VS$GH'#SC$%#/2SDO&D#Fk##%#k##+#k##/#k#&K#k#'s#V#k#(s#W#*s#YC$s#*#*s#[H'#%$#s#+/?LH&D#Fk##%#k##)#k#'s#a#k#(s#b#$s#b-%N.'>-USEQ-#$%#/s#+OL&D#Fk##%#k##*#k##,#k#'s#n#k#(s#o#USFG+C#&D#S%k##s#E#k#%s#t#k##s#B%k#%s#v#%s#u2#s#u#&D*FUSGG+C#&D#F#&#k##(#k#%s$##USHs#y+E#&D#Fk###s#Ck#%s$(#USIS&.IC#US'H$#s#2UPH'%#%s#5##&#+H/&D#S%k##%#k##,#k#%s$5#k#)I#.IE0US'CUS(#UPCUS(#XSJs$<s$<%#.s$7#s#[k##)#k#)I#$S)s$>##s$=k###s#^k#%s$C#-M$#s#K-S)$s#@#k###s#<k##s#C#k##'#k#'s$K#k#(s$L#$+s$K%s$L*#$#k###s#1k#%s$Q#$SKs$P%s$QM#$#+Cs$M&D#Fk##%#k#%s$X#USLs#wUSMS&VSNI#'SO#$&#USPs#|XSQIKP'USR#'SS#$&#$Ns#+$s#,ST#$#k##s#1#k#)I##(##.#'s#ps$h$#s#b#s#g#$%s#)#s#+#(%#WSUs#NHC&D#Fk##%#k#'s$s#k#(s$t##.##@##s#(##s#.##s#8##s#=##s#G##s#V##s#\##s#f##s#i##s#o##s#}##s$-##s$A##s$m##s$t#US#SV+L#&D#Fj##&#+SW&&D#Fj##*#+SX)&D#Fj##.#*s%5S*$s%4#%$J$s${%%&s$z#$#$s$y(%)s$q#$#$s$p+%,s$n#$#$s$m.%/s$l#$#$s$k1%2s$j#$##32($#((#(,#(0#(4#*s%MSY%#J*s%OSZ$s%7#%$s%6#$#$s%5&%'s%-#$#$s%,)%*s%*#$#$s%),%-s%(#$#$s%'/%0s%&#$#$s%]2%3J#$#(&#(*#(.#(2#XS[)(CE,+(#,/(#,3(#,7(#,;(#j#*@#j#+s#9#YS\s#:s#9s#$#S]VCS*#j#,s#K#j#-s%.#V#CEj##s#N#j##s%1#0s%2s#Ps#C#Ej#+s#P#j#.s%_#V#CEj##s#S#j##s%b#0s%cs#Us#L#Ej#+s#U#j#/s%k#V#CEj##s#X#j##s%n#0s%os#Zs#U#El#(S^s#Z#j#0s%}#j#%s&'##"). Qed.
+    (* #38 RESERVED-CEILING-CLASS: was a KReplay body, which bound [AK] by name
+       and TRANSPORTED its first conjunct, so the split retyped it out from under
+       the replay (both mirrors, span 6310-6314:
+       "In e (segments_reserved bsegs)" against "In e (vm_reserved (m_vmmaps mo))").
+       It needs only the SIXTH disjunct of conjunct 3 - exactly what the five
+       lemmas above prove in one line each - so the recorded body is replaced by
+       theirs rather than re-authored.  A recorded body that transports a changed
+       fact is ~150 lines; this one was never worth encoding. *)
+    Proof. intros x Hx. destruct AK as (_ & _ & K3 & _). apply K3. tauto. Qed.
     Lemma ak_hsm : forall x : word, sh AHI_LO <= bv_unsigned x < sh aceil -> in_rangesb x (vm_maps h) = true.
     Proof. intros x Hx. apply ak_hsm_full. pose proof sh_ceiling_lt_AHI_LO. lia. Qed.
 
@@ -321,7 +505,17 @@ Scheme kc__4 := Elimination for Corelib.Init.Logic.and Sort Prop.
     Lemma ak_shrf2 : forall a n : word,
       (sh AHI_LO <= bv_unsigned a /\ bv_unsigned a + bv_unsigned n <= sh aceil) \/ (sh AIMG_TOP <= bv_unsigned a /\ bv_unsigned a + bv_unsigned n <= sh ALOWSH_LO) ->
       region_free (vm_reserved h) a n = true.
-    Proof. ltac2:(KReplay.run [|constr:(@stdpp.bitvector.definitions.bv); constr:(@Corelib.Numbers.BinNums.Npos); constr:(@Corelib.Numbers.BinNums.xO); constr:(@Corelib.Numbers.BinNums.xH); constr:(@Corelib.Init.Logic.or); constr:(@Corelib.Init.Logic.and); constr:(@Stdlib.ZArith.BinInt.Z.le); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AsShadow.sh); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AsShadow.AHI_LO); constr:(@stdpp.bitvector.definitions.bv_unsigned); constr:(@Stdlib.ZArith.BinInt.Z.add); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AsShadow.aceil); constr:(HCEIL); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.BSegs.AIMG_TOP); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AsShadow.ALOWSH_LO); constr:(@kc__2); constr:(@Corelib.Init.Logic.eq); constr:(@Corelib.Init.Datatypes.bool); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.region_free); constr:(@LinuxProcessSemantics.LinuxProcessSem.State.vm_reserved); constr:(h); constr:(@Corelib.Init.Datatypes.true); constr:(@kc__4); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Bo.AllocRepX.HCW.X.Derived.ak_resf); constr:(@Stdlib.micromega.SatDivMod.Z_div_nonneg_nonneg); constr:(@Corelib.Numbers.BinNums.Zpos); constr:(@Corelib.Numbers.BinNums.Z0); constr:(@Stdlib.ZArith.BinInt.Z.div); constr:(@Corelib.Numbers.BinNums.xI); constr:(@Stdlib.ZArith.BinInt.Z.div_mod); constr:(@Corelib.Init.Logic.not); constr:(@Corelib.Numbers.BinNums.Z); constr:(@Stdlib.ZArith.BinInt.Z.mul); constr:(@Stdlib.ZArith.BinInt.Z.modulo); constr:(@Stdlib.ZArith.BinInt.Z.mod_pos_bound); constr:(@Stdlib.ZArith.BinInt.Z.lt); constr:(@Stdlib.ZArith.BinInt.Z.mod_neg_bound); constr:(@Stdlib.omega.PreOmega.Z.div_0_r_ext); constr:(@Stdlib.omega.PreOmega.Z.mod_0_r_ext); constr:(@Corelib.Init.Logic.I); constr:(@OSSVerify.Proofs.boost_beast.http_request.lib.Lib.LiaTuning.zify_done); constr:(@Corelib.Init.Logic.eq_refl); constr:(@Corelib.Init.Datatypes.comparison); constr:(@Stdlib.ZArith.BinInt.Z.compare); constr:(@Corelib.Init.Datatypes.cons); constr:(@Stdlib.micromega.ZMicromega.ZArithProof); constr:(@Stdlib.micromega.ZMicromega.CutProof); constr:(@Stdlib.micromega.RingMicromega.PsatzAdd); constr:(@Stdlib.micromega.RingMicromega.PsatzIn); constr:(@Corelib.Init.Datatypes.S); constr:(@Corelib.Init.Datatypes.O); constr:(@Stdlib.micromega.ZMicromega.RatProof); constr:(@Stdlib.micromega.ZMicromega.DoneProof); constr:(@Corelib.Init.Datatypes.nil); constr:(@Corelib.Init.Datatypes.list); constr:(@Stdlib.micromega.VarMap.Branch); constr:(@Stdlib.micromega.VarMap.Empty); constr:(@Stdlib.micromega.VarMap.Elt); constr:(@Stdlib.micromega.VarMap.t); constr:(@Stdlib.micromega.Tauto.IMPL); constr:(@Stdlib.micromega.RingMicromega.Formula); constr:(@Stdlib.micromega.Tauto.eKind); constr:(@Corelib.Init.Datatypes.unit); constr:(@Stdlib.micromega.Tauto.isProp); constr:(@Stdlib.micromega.Tauto.AND); constr:(@Stdlib.micromega.Tauto.X); constr:(@Stdlib.micromega.Tauto.A); constr:(@Stdlib.micromega.RingMicromega.Build_Formula); constr:(@Stdlib.micromega.EnvRing.PEX); constr:(@Stdlib.micromega.RingMicromega.OpLt); constr:(@Stdlib.micromega.EnvRing.PEc); constr:(@Corelib.Init.Datatypes.tt); constr:(@Corelib.Init.Datatypes.None); constr:(@Stdlib.micromega.Tauto.NOT); constr:(@Stdlib.micromega.RingMicromega.OpEq); constr:(@Stdlib.micromega.EnvRing.PEadd); constr:(@Stdlib.micromega.EnvRing.PEmul); constr:(@Stdlib.micromega.RingMicromega.OpLe); constr:(@Stdlib.micromega.Tauto.BFormula); constr:(@Stdlib.micromega.ZMicromega.ZTautoChecker_sound); constr:(@Stdlib.micromega.ZMicromega.ZTautoChecker); constr:(@Stdlib.micromega.VarMap.find); constr:(@Corelib.Init.Logic.False)|] [|@__ff; @__varmap; @__wit; @__x1; @__x2; @__x3; @__p1; @__arith; @H0; @H8; @H12; @H11; @H10; @H9; @H7; @H6; @H5; @H4; @H3; @H; @__sat3; @__sat4; @H2; @H1; @n; @a|] "#(:#=$)#_#~#Z$##}#N###$#%#&$+#Q#U#'#g#=#C#(#*#m$.#+#M#D#R#i#r#w$/$1#1#5#W#V#A#@#H#K#L#S#T#)#^#k#j#.#s#t#n#u#l#v#x#y#z#|$%$)$$$,$-$0$2$4$5$3$6#<#9#O#B#F#\#P#E#J#I#c#{$'$&#`$*#G#Y#X#[#]#a#b#d#e#f#h#p#q#o$(?#i$#j%#k$#l&#m%#n%#o%#p%#q+#r'#s*#t%#u%#v$#w$#x%#y%#z%#{%#|%#}%#~%$#%$$%$%%$&$$'&$(%#S###########US5#US6#0S7)%J$$#)'I(%#US8S90#$%#'(#0S)$#+0H$*#'%#VS*(#)3K$2#($2$#.'%#$-'$&,'$#VS*&#US:S;WS+#LK&N#Oj##&#)@L$?#($1$#;'%#)s#%P$s#$#($)$#@'%#WS+0S$P&N#Oj##%#)s#-S$(#+$#s#')s#0S<$s#/#)s#2S%(#%$#s#,1s#92s#/#$Es#0$E%3s#2&$E#k##%#k##'##s#>############%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%###############################1#2#s#1$E$3%s#3$E#k##s#2#k##&#4)s#7&Cs#8EUS=#.s#:)5-s#;($#&C/#k##'#61s#?*Es#@$E(*)s#B'$#k##&#77s#E*s#FE*s#G.$/E'$#k##&#8=s#K&C;Ek##7#9@s#N&C6Ak##:#:s##s#Qm#Q#4s$#s#S.s#Ts#P5s$%s#U($#&Cs$'#k##A#6s$)s#Y$E'*(s#['$#k##?#7s$.s#^*s#_,$-E'$#k##>#8s$3s#c&Cs#`Ek##s#/#9s$6s#f&C4s$7k##s#2#:s$9s#im#Q#VS>Es#kVS,S?#m##s#/UP#US@$<S-<#<#;C#;C%=C$#;CS-;C)=C&#=C%#VSA#SBVSC(#USDS&WSES&$#USFS&USGCVSHCLXS.C$K#XS.C#J%USICUSJCZSK#GDDFS$%S###>C#/Cs$-,C$SL#-)GDDF#M[SM*GDDF)#USND/CE,C(S'#-.GDDF#MZSO/GDDF#/Cs#d>Cs$pWSPC-#WS/C#/,C&S'#-5GDDF#M+6GDDF)-#%5%#%#%#%#%#%#%#%#%#%#%#%#%###############################1#/C#WS/C#s#'>CS#,C$S0#-s#9GDDF#M#s#7%#%#####%#############################1#%S###%#########%#############################1#/C#,C#S0s#2-s#hGDDF#M+s#iGDDFs#2s#`#+s#jGDDFs#Vs#a#+s#kGDDFs#cs#b#VSQs#lFVS,NOVSRIK&N#Om$%#WSSCEJXSTIK$#l#$*)#l#%s#vs#u#l#&s#|s#{#j#'C#j#(C#j#)C#j#*R#*Ks%D'L#k##s$lSU.s%GL(#P&Cs$w#k##&#(s#OL$#K$@Lk##$#k##'#k##-#k#'C#k#(C#k#)C#k#*R#)s&,SV[Is$ss$ys%%#JS1S2l#+6%#l#,s$Gs$s#l#-s$Is$[#)s&1SW$s#.#m#%#l#.s$Qs$R#l#/s$Vs$T#l#0s$Zs$X#l#1s$`s$\#l#-s$fs$b#l#2s$ms$h#l#3s$os$p#l#4s$ts$r#l#5s$xs$v#l#6s%#s$z#l#,s%*s%%#l#7s%3s%,#l#8s%:s%5#l#9s%is%c#)s&BS($S)#m#%#WS3S(S%#j#:s%p#j#;s%t#V#JIj##s%x#j##s&&#YS4s&'s&%s%}#Ij#7s&*#U#Ij##s&9#$s&Ds&1$s&0s&C'$#$s&Gs&/$s&.s&F'$#j###s&,$s&*s&I$s&Ls&)$s&'s&K2Hs&&$EH3Hs&($E#k##s&'#k##&#2s#[s&,$Es#\3s#]s&.$E#k##s&-#k##&#4s#as&2.s&3'5s#cs&4($#&Cs#e#k##s%\#6s#gs&8$E'*(s&:'$#k##s%Z#7s#ls&=*s&>,$-E'$#k##s%Y#8s#qs&B&C7Ek##s%j#9s#ts&E&C4s#uk##s%m#:s#ws&Hm#Q#4Hs&J.s&Ks#%5Hs&L($#&CH#k##s%t#6Hs&P$E'*(s&R'$#k##s%r#7Hs&U*s&V,$-E'$#k##s%q#8Hs&Z&Cs#5Ek##s&&#9Hs&]&C4Hk##s&)#:Hs&`m#Q#,Cs$4S's%+-s%=GDDF#M+s%>GDDFs%1s%5#+s%?GDDF#s%6s$4+s%@GDDFs%8s%7#l#$#s$3s$-l#%s%Ds%C#l#&s%Js%I#j#'C#j#(C#j#)C#j#*R#&Cs$As$(k##s$+#k###s$$k##s$.#k#'C#k#(C#k#)C#k#*R#[Is#?s#Ds#Js$#JS1S2l#+,$#l#,s%gs#?#l#-s%is#(#m##s#}l#.<=#l#/A?#l#0s#%s###l#1s#+s#'#l#-s#1s#-#l#2s#8s#3#l#3s#:s#;#l#4s#?s#=#l#5s#Cs#A#l#6s#Is#E#l#,s#Os#K#l#7s#Vs#Q#l#8s#]s#X#l#9s#ds#_#m##s#{WS3S(S%#j#:s#h#j#;s#j#V#JIj##s#m#j##s#r#YS4s#ss#rs#p#Ij#7s#u#U#Ij##s'R#ZSXs'Vs'Ss'Ns#{#Ij#7s'\#j#<s'l#j#=s'm##"). Qed.
+    (* #38: [ak_resf] now carries the upper premise the vDSO pair costs.  Both
+       disjuncts discharge it from the band they already bound: [sh_ceiling_range]
+       puts [sh aceil] at most 0x10007fef8000 and [sh ALOWSH_LO] is smaller again,
+       both far below [ARESX_LO] = 0x154555000000.  The Bo twin was a KReplay body
+       transporting the old one-premise shape; it is replaced by this text, which
+       is the As mirror's own proof. *)
+    Proof.
+      intros a n [[H1 H2]|[H1 H2]]; pose proof sh_ceiling_range;
+        apply ak_resf;
+        unfold sh, ASHADOW_BASE, AHI_LO, AIMG_TOP, ARESX_LO, ALOWSH_LO in *; lia.
+    Qed.
     (* [comment removed for export] *)
     Lemma ak_shna : forall a n : word,
       (sh AHI_LO <= bv_unsigned a /\ bv_unsigned a + bv_unsigned n <= sh aceil) \/ (sh AIMG_TOP <= bv_unsigned a /\ bv_unsigned a + bv_unsigned n <= sh ALOWSH_LO) ->
@@ -338,7 +532,7 @@ Scheme kc__4 := Elimination for Corelib.Init.Logic.and Sort Prop.
 
   (* [comment removed for export] *)
   Lemma akernel_mat : forall mo mo', akernel mo -> same_but_materialized mo mo' -> akernel mo'.
-  Proof. intros mo mo' AK SB. unfold akernel in *. rewrite (same_but_materialized_vmmaps _ _ SB). exact AK. Qed.
+  Proof. intros mo mo' AK SB. unfold akernel, akernel_resx in *. rewrite (same_but_materialized_vmmaps _ _ SB). exact AK. Qed.
   Lemma AMODELX_mat : forall mo mo', AMODELX mo -> same_but_materialized mo mo' -> AMODELX mo'.
   Proof. intros mo mo' [A K] SB. split; [eapply AMODEL_mat; eassumption| eapply akernel_mat; eassumption]. Qed.
 
@@ -380,17 +574,53 @@ Proof.
   - unfold KInv.ehi, KInv.elo in *. pose proof (bv_unsigned_in_range _ (fst e)). lia.
   - lia.
 Qed.
+(* #38 RESERVED-CEILING-CLASS: the extra reserved intervals are ABOVE the gate,
+   so they do not vanish from the ledger - they charge.  [ecost_le] bounds each
+   entry by its own size plus [n + 4096], so a list of them costs at most its
+   total size plus its length times that.  Stated for any [E]; applied to the
+   [rx] half, where [akernel_resx] bounds both. *)
+Lemma cost_le_sizes : forall n E, 0 < n ->
+  cost n AHI_LO E <= zsum (map (fun e => bv_unsigned (snd e)) E) + Z.of_nat (length E) * (n + 4096).
+Proof.
+  intros n E Hn. induction E as [|e E IH]; [rewrite cost_nil; cbn; lia|].
+  rewrite cost_cons. cbn [map length zsum]. unfold ecost.
+  pose proof (bv_unsigned_in_range 64 (snd e)). unfold KInv.ehi, KInv.elo.
+  rewrite Nat2Z.inj_succ.
+  destruct (AHI_LO <? bv_unsigned (fst e) + bv_unsigned (snd e)); lia.
+Qed.
+
+(* #38 RESERVED-CEILING-CLASS: ROOM grows by exactly what the launch's extra
+   reserved intervals cost the ledger - at most two entries ([akernel_resx]'s
+   count bound) of at most 81920 bytes together (its size bound), each
+   charging [n + 4096].  This is the (b) obligation of the akernel split and
+   it is discharged by the caller. *)
 Theorem AGAP_of_akernel : forall s mo n, akernel s mo -> 0 < n ->
-  AHI_LO + (AHL0 + zsum (map sc_map_size (hsec (a_st s)))) + (AHC0 + zlen (hsec (a_st s))) * (n + 4096) + n <= hceil ->
+  AHI_LO + (AHL0 + zsum (map sc_map_size (hsec (a_st s)))) + (AHC0 + zlen (hsec (a_st s))) * (n + 4096) + n
+    + (81920 + 2 * (n + 4096)) <= hceil ->
   AGAP n mo.
 Proof.
   intros s mo n AK Hn ROOM. unfold AGAP.
-  pose proof AK as (K1 & (_ & K2) & _). pose proof (ak_hcov s mo AK) as (C1 & C2 & _).
+  (* #38: akernel is now akernel_pre /\ akernel_resx, so the pre-chain sits one
+     level in.  K1 is the SEGMENT half only; see R0 below. *)
+  pose proof AK as ((K1 & (_ & K2) & _) & RX). pose proof (ak_hcov s mo AK) as (C1 & C2 & _).
   rewrite K2, cost_app.
-  assert (R0 : cost n AHI_LO (vm_reserved (m_vmmaps mo)) = 0).
-  { assert (L : Forall (fun e => KInv.ehi e <= AHI_LO) (vm_reserved (m_vmmaps mo))).
+  destruct RX as [rx [Hrx [Hok [Hcnt Hsz]]]].
+  (* the IMAGE's reservations still cost nothing: K1 puts every one of them at or
+     below AIMG_TOP, hence below the AHI_LO gate. *)
+  assert (R0seg : cost n AHI_LO (segments_reserved bsegs) = 0).
+  { assert (L : Forall (fun e => KInv.ehi e <= AHI_LO) (segments_reserved bsegs)).
     { apply Forall_forall. intros e He. specialize (K1 e He). unfold KInv.ehi, AHI_LO, AIMG_TOP in *. lia. }
     clear - L Hn. induction L as [|e E He L IH]; [apply cost_nil|]. rewrite cost_cons, IH, (ecost_below n AHI_LO e He). reflexivity. }
+  (* the LAUNCH's extra intervals do charge, and this is the whole repair: the old
+     `= 0` was true of the image's list and false of the list the model builds. *)
+  assert (R0 : cost n AHI_LO (vm_reserved (m_vmmaps mo)) <= 81920 + 2 * (n + 4096)).
+  { rewrite Hrx, cost_app, R0seg. pose proof (cost_le_sizes n rx Hn) as CLS.
+    (* the count bound enters as a PRODUCT with (n + 4096), which is nonlinear in
+       two variables and beyond lia; discharge it the same way the hcnt bound is
+       discharged below, with Z.mul_le_mono_nonneg_r. *)
+    assert (ML : Z.of_nat (length rx) * (n + 4096) <= 2 * (n + 4096))
+      by (apply Z.mul_le_mono_nonneg_r; lia).
+    lia. }
   pose proof (cost_high_bound n (vm_maps (m_vmmaps mo)) Hn) as CB.
   pose proof (hcnt_nonneg (vm_maps (m_vmmaps mo))). pose proof (hlen_nonneg (vm_maps (m_vmmaps mo))).
   assert (M : hcnt (vm_maps (m_vmmaps mo)) * (n + 4096) <= (AHC0 + zlen (hsec (a_st s))) * (n + 4096)) by (apply Z.mul_le_mono_nonneg_r; lia).

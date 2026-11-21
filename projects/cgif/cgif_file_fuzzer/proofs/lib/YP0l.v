@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed sym_step. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.
@@ -249,7 +250,10 @@ end
 let a := R rs1 in
 if negb (aligned_dec G a (amo_bytes_of wd)) then SStop SR_align else
 match ss_resv ss with
-| None => SRun (mkSST (pc + 4) (sr_set (ss_regs ss) rd (SLit 1)) (ss_fregs ss) (ss_mem ss) None G)
+(* 08b1429 (Riscv/Sem.v exec, Sc): a FAILING sc still loads and stores back its bytes (the
+   store permission check), so it is no longer a pure register write; this executor stops there
+   rather than model the permission check, as it already stops on a reservation mismatch. *)
+| None => SStop SR_resv
 | Some a' =>
 if negb (sv_eqb a' a) then SStop SR_resv else
 match addr_of a with

@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the free(NULL) CALL-SITE RULE over the cf allocator contract (a Theorem Labs lane R, new file).
-   IMAGE B TWIN (row G-BCF): lib/A/CfRBridgeAjFreeN.v at c6394a5bd7e, under lib/B so the B tree is self-contained
+   IMAGE B TWIN (row G-BCF): lib/A/CfRBridgeAjFreeN.v, under lib/B so the B tree is self-contained
    (as lib/B/CfParamsReplyB.v). One change, the P'' carry of record (Reusable YGcallx.v (sha256 1dd2a7cdc3ee; internal record), YG0dcf.v): the
    model law amx_free and afree_realizes_cf take `admits (as_universe B) tr S`; the rule keeps its `In` premise and
    converts it by YG01.admits_fix from HU, as YGcallx.v's own rules do (its header, line 6). The A file's text follows.
@@ -10,7 +11,7 @@
 
    aj_free_null_at_x_ct is the free(NULL) twin of lib/Reusable/YGcallx.v aj_free_at_x_ct (:507-613), and its proof
    follows that proof step by step. It is stated in Section n at the shared shape of YGcallcf.v:
-     ARx := ARxs (YGcallcf.v:241, ARcf /\ xs_placed_cf), QM := QM_cf (:51), ft := free_cf, WFx := Wf_cf (as_universe B),
+     ARx := ARxs (YGcallcf.v:242, ARcf /\ xs_placed_cf), QM := QM_cf (:51), ft := free_cf, WFx := Wf_cf (as_universe B),
    with the Section r laws of YGcallx.v taken from YGcallcf.v: LAWS := AR_laws_x_xs L (:246), OWNLOW :=
    ARx_owned_low_law_xs L (:249), WFL := ARx_wf_law_xs (:252), the model laws := alloc_model_laws_x_cf HU (:179), and the
    contract at ARxs := afree_realizes_x_xs (:357). XSL (ARx_xs_law_xs, :258) is not used: a free writes no extent.
@@ -21,19 +22,19 @@
        YG0f.v:118-120, :257, so this is afree_realizes_x's register premise at p := PNull);
    (b) afree_realizes_x's premise `~ In (sptr_addr B lyc PNull) Hpc`, i.e. `~ In 0 Hpc`, is DERIVED, not assumed: every
        entry of Hpc is the base of a live block (ARmcf's amc_hp_live, YG0ncf.v:236) and every live block's base is at
-       least 4096 (AR_laws_x's blocks law, YCbqG.v:48);
+       least 4096 (AR_laws_x's blocks law, YCbqG.v:49);
    (c) the request size given to the contract, the model law and the leaf is n := 0. Any n is allowed at p = PNull
        (afree_realizes_x's `p = PNull \/ In (p, n) (blocks S)`); the leaf reads n only under `p <> PNull`;
-   (d) the model's free_post_x (YGcallx.v:296) at p = PNull keeps the blocks: its block-split arm would put
+   (d) the model's free_post_x (YGcallx.v:297) at p = PNull keeps the blocks: its block-split arm would put
        (PNull, 0) in blocks Sc, so (0, 0) would be a live block of address 0 < 4096. So the post has
        `Permutation (ablocks B ly2 S2) (ablocks B lyc Sc)` (here an equality), the call journal has the empty footprint
-       and the kept clause exempts nothing (fun _ => False), as aj_malloc_at_x_ct's NULL arm (YGcallx.v:988-1016);
+       and the kept clause exempts nothing (fun _ => False), as aj_malloc_at_x_ct's NULL arm (YGcallx.v:989-1017);
    (e) the post also carries the call's pre (acall_pre_x) and the GRANTED model path with its leaf at (tt, S2), as
-       aj_free_at_x_ct (YGcallx.v:721-725) does, without the trace conjunct (it is a premise here).
+       aj_free_at_x_ct (YGcallx.v:722-726) does, without the trace conjunct (it is a premise here).
    The journal's count grows by the call's own tick count, as in YGcallx.v (exception 3, the tick update).
    SK (YI16.sink_head) is a Context parameter, as in YGcallx.v. No address, no ledger, no image numeral: 0 is the
    NULL pointer and the request size, 10 / 1 / 3 / 4 are RISC-V register numbers, 16 / 4096 / 16384 are cgif's
-   LENGTH constants (YGcallx.v:95-97). *)
+   LENGTH constants (YGcallx.v:96-98). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -68,10 +69,10 @@ Hypothesis L : AR_laws_cf segs B.
 Hypothesis segs_low : forall a, in_img segs a -> 0 <= a < kLowMemEnd.
 Hypothesis errno_low : api_env segs B.
 Hypothesis HU : universe_ok (as_universe B).
-(* YGcallcf.v:241's relation, verbatim *)
+(* YGcallcf.v:242's relation, verbatim *)
 Local Abbreviation ARxs := (fun ly S Hp W mem md => ARcf segs B ly S Hp W mem md /\ xs_placed_cf ly S).
 
-(* YGcallx.v:694 aj_free_at_x_ct at p = PNull (differences (a)-(e) in the header). *)
+(* YGcallx.v:695 aj_free_at_x_ct at p = PNull (differences (a)-(e) in the header). *)
 Lemma aj_free_null_at_x_ct : afree_realizes_cf segs B ->
 forall W regsT memT STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc mdc k (o : Z) raw ch,
 ajournal_x segs B PST ARxs STK sp0 FP ly S Hp W0 mem md own lyc Sc Hpc W memT mdc k ->

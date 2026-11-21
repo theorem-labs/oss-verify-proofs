@@ -4,14 +4,15 @@
    fuzz_reply.asan-ubsan) of fuzz_reply's drain, 0x83b34 .. 0x83b9c with its exits 0x83ba0 (GA), 0x83cb4 (GF)
    and 0x83d9c -> 0x839d4 (DLN (S q)).  Proves no function (kind: segment lemma of drain's image-B walk, GS piece
    gs_scan).  The statement is lib/B/W_gsscan_cx.v's gs_scan_loop_stmt; the Section header is lib/B/W_drain_gs.v's.
-   In the form of image A's lib/A/W_gsscanb.v (a working branch 0c06ccc287f):
+   In the form of image A's lib/A/W_gsscanb.v (a working branch):
      gsc_body : GSL n (S kf) -> GSN n (S kf) | DLN (S q) | GF
      gsc_tail : GSN n (S kf) -> GSL (S n) kf (kf > 0) | GA (kf = 0)
    and gs_scan_loop is the induction on the external kf.  The loop's two UBSan traps the engine leaves open
-   are refuted with the trap kit (lib/B/W_traps.v, a working branch 6c73ae99620): 0x83b38
+   are refuted with the trap kit (lib/B/W_traps.v, a working branch): 0x83b38
    `bltu s10,s6` by trap_ptr_wrap_atom (s10 = atom 32 = hp + 8 n, s6 = atom 22 = hp), 0x83b44 `beqz (s9 xor
    0)` by trap_null_xor_folded (s9 = atom 25 = 1).  The third, 0x83b4c `beqz 168(sp)`, and the shadow check of
    &held[n] (0x83b60) are decided inside the run from the seat (atom 35 = 1; gl_SH over atom 32). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -764,7 +765,7 @@ End a.
 
 (* ============================================================================================================
    THE ARx-GENERIC TWIN of this file (image B's DR_x slice D, 2026-10-30; the B twin of lib/A/W_gsscanb.v's Section cx
-   at a working branch 50623273289): gs_scan_loop_x proves lib/B/W_gsscan_cx.v's gs_scan_loop_stmt_x over
+   at a working branch): gs_scan_loop_x proves lib/B/W_gsscan_cx.v's gs_scan_loop_stmt_x over
    lib/B/W_drain_cx_x.v's Section variables (B PST ARx MT RP MMAX RG), with the entry's ghost list Hp and budget kr after
    cx and a cut's ghost list Hp1 after S1.  Everything above this line is unchanged.
    - The tactics above (gsl_prreg_raw, gsl_absorb, gsl_clear_br) and the AR-free names of lib/B/W_gsscan_cx.v are CITED;

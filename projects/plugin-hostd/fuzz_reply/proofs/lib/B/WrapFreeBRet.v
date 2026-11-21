@@ -1,8 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: relocated to plugin-hostd/fuzz_reply's asan image A (pin 42c58610e125, unstripped twin d751b179ea49) from proofs/omx-clap-core/fuzz_preset/lib/A/WrapFreeARet.v at f6c2b01c2457 (image A' p102) by alreloc a5c53bb2bed4 (every image numeral by symbol + offset; hand check a Theorem Labs lane's RELOC-CHECK.md (sha256 6283be15fb26; internal record)); module paths changed (lib.Reusable -> lib.A for AllocG DeallocG RGtop YGcfRmodel YGcfDIface YGcfMallocCompose); YGcfBlockRange.block_user_range_cf (no reply twin) stated here with its donor proof; wf_ret_gen re-fitted to the primed Deallocate post YGcfRehidePost.dealloc_post_raw_rh as wf_ret_gen_rh; K_A renamed K_reply. *)
-(* Theorem Labs, 2026-10: RELOCATED to the #102 pins (image A' = asan 1be0f53d96cb, twin bff8519bbe3e) from a working branch cb44bc9b99c (old-pin image A) by the relocation script reloc_A2.py (named with its outputs in the commit that added this line): every code address moved by symbol + offset (reloc_A2.out), the walk's functions checked by bytecmp 1480ca2faea0 + a target pass (measure_A2.out); data addresses come by name from int102's A' tables; ARXs_cf / ARmcf follow a Theorem Labs lane's a2b14794b6e6 (xs_placed is ARmcf's field amc_xs_placed). *)
-(* Modified by Theorem Labs, 2026-10: copied from lib/AU/WrapMallocBRetRun.v (commit fe4845c761b,
+(* Modified by Theorem Labs, 2026-10: relocated to plugin-hostd/fuzz_reply's asan image A (pin 42c58610e125, unstripped twin d751b179ea49) from proofs/omx-clap-core/fuzz_preset/lib/A/WrapFreeARet.v (image A' p102) by alreloc a5c53bb2bed4 (every image numeral by symbol + offset; hand check a Theorem Labs lane's RELOC-CHECK.md (sha256 6283be15fb26; internal record)); module paths changed (lib.Reusable -> lib.A for AllocG DeallocG RGtop YGcfRmodel YGcfDIface YGcfMallocCompose); YGcfBlockRange.block_user_range_cf (no reply twin) stated here with its donor proof; wf_ret_gen re-fitted to the primed Deallocate post YGcfRehidePost.dealloc_post_raw_rh as wf_ret_gen_rh; K_A renamed K_reply. *)
+(* Theorem Labs, 2026-10: RELOCATED to the #102 pins (image A' = asan 1be0f53d96cb, twin bff8519bbe3e) from a working branch (old-pin image A) by the relocation script reloc_A2.py (named with its outputs in the commit that added this line): every code address moved by symbol + offset (reloc_A2.out), the walk's functions checked by bytecmp 1480ca2faea0 + a target pass (measure_A2.out); data addresses come by name from int102's A' tables; ARXs_cf / ARmcf follow a Theorem Labs lane's (xs_placed is ARmcf's field amc_xs_placed). *)
+(* Modified by Theorem Labs, 2026-10: copied from lib/AU/WrapMallocBRetRun.v (
    image B's malloc return run) and moved to image A's free interceptor (asan, pin 1be0f53d96cb, twin bff8519bbe3e):
    the seed is the state at Deallocate's return 0x53f9c (one frame: the interceptor's saved ra, s0, s1, s2..s5 at
    sp + 2072 .. sp + 2128 = the caller's sp - 56 .. sp, as environment atoms 32..38), the run is the epilogue
@@ -12,7 +12,8 @@
    DeallocG.dealloc_post_raw's raw frame and window (the caller's frame words and stack window are off Deallocate's
    window and errno, unowned by AR_laws_ok_cf's stack law, and below no freed block: YGcfBlockRange.block_user_range_cf)
    and AR_laws_ok_cf's frame law (memory unchanged, the model changes by materialization only). *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/WrapFreeARet.v at commit bdc582aa2c4 as lib/B/WrapFreeBRet.v, with its module paths changed (lib.A to lib.B, except the image-free ADIfaceImgA and the one params file CfParamsReply; the image twins A<r> to Y<r>, CfImgA / CfImg_A to CfImgB / CfImg_B; the walk modules WrapFreeA<x> to WrapFreeB<x>, WrapAKit to WrapBKit, WrapFreeReplyA to WrapFreeReplyB; the three exported names wrap_free_call_reply_A, wrap_free_ret_reply_A_rh, wrap_free_walk_rh_reply_A to _B), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (12 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/WrapFreeARet.v as lib/B/WrapFreeBRet.v, with its module paths changed (lib.A to lib.B, except the image-free ADIfaceImgA and the one params file CfParamsReply; the image twins A<r> to Y<r>, CfImgA / CfImg_A to CfImgB / CfImg_B; the walk modules WrapFreeA<x> to WrapFreeB<x>, WrapAKit to WrapBKit, WrapFreeReplyA to WrapFreeReplyB; the three exported names wrap_free_call_reply_A, wrap_free_ret_reply_A_rh, wrap_free_walk_rh_reply_A to _B), and its fuzz_reply.asan-ubsan addresses relocated from fuzz_reply.asan (12 numerals; per-numeral report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -163,7 +164,7 @@ H (Z_to_bv 64 a) = false -> H' (Z_to_bv 64 a) = false -> m' (Z_to_bv 64 a) = m (
 mbyte tfibsegs (mrestrict H' m') a = mbyte tfibsegs (mrestrict H m) a.
 Proof. intros H H' m m' a E1 E2 E3. unfold mbyte, mrestrict. rewrite E1, E2, E3. reflexivity. Qed.
 
-(* A live block's user range (YGcfBlockRange.block_user_range_cf at f6c2b01c2457, which has no fuzz_reply twin; same
+(* A live block's user range (YGcfBlockRange.block_user_range_cf, which has no fuzz_reply twin; same
    statement and proof): the user pointer is at least 16 bytes into its chunk, and the chunk is in one application
    region (chunk_facts_cf, YG0scf.v). *)
 Lemma block_user_range_cf : forall segs B ly S Hp W mem md p n, ARcf segs B ly S Hp W mem md -> In (p, n) (blocks S) ->
@@ -180,8 +181,8 @@ rewrite EU. unfold in_app in IA. destruct IA as [I0 [IL | [IH1 IH2]]].
 - split; [lia|]. right. lia.
 Qed.
 
-(* Field F2 wf_ret of a Theorem Labs lane's Record wrap_free_walk_cf (YGcfMallocCompose.v:502-515) at image B with ONE change:
-   Deallocate's post is the PRIMED raw post YGcfRehidePost.dealloc_post_raw_rh (lib/B/YGcfRehidePost.v:402; the hidden set
+(* Field F2 wf_ret of a Theorem Labs lane's Record wrap_free_walk_cf (YGcfMallocCompose.v:503-516) at image B with ONE change:
+   Deallocate's post is the PRIMED raw post YGcfRehidePost.dealloc_post_raw_rh (lib/B/YGcfRehidePost.v:403; the hidden set
    grows only inside dead_shadow_new, and the view frame holds outside it), in place of free_dpost_cf. For ANY call-site
    relation ARX that gives ARcf (HXA) and survives a view-equal memory and materialization (HXF) (a Theorem Labs lane's
    WrapMallocARetG.v method): segs := tfibsegs, atpD := 1, K := K_reply. The proof reads, of the primed post, ARX at the

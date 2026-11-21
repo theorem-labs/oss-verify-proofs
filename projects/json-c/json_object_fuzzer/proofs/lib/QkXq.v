@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: seed_settle_A_stmt takes it after alloc_ceiling <= lo; its sections take it as HBTlo; the jo_set_scalar, jo_set_double and lh_char_hash proofs name it; the SEED and hiA_free calls discharge it). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType State Run.
@@ -43,7 +44,7 @@ Notation blk_gran0A := (blk_gran0A HIx).
 
 Lemma set_int64_A : jo_set_scalar_A_stmt 0x9c930.
 Proof.
-unfold jo_set_scalar_A_stmt. intros until errv. intros (HP & ST & LO & LOS & SPA & HT & ERR & TP & RA) RR A0 K.
+unfold jo_set_scalar_A_stmt. intros until errv. intros (HP & ST & LO & HBT & LOS & SPA & HT & ERR & TP & RA) RR A0 K.
 unfold_consts. unfold A_ERRNO, A_TP in *. subst a0 tp. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI. cbn [hl_segs hla_base A4L A4H] in MI.
 pose proof (sb_cellsA A4L HIx _ _ _ _ _ _ _ HP) as [GOT CELL].
@@ -156,7 +157,7 @@ Qed.
 
 Lemma set_uint64_A : jo_set_scalar_A_stmt 0x9d314.
 Proof.
-unfold jo_set_scalar_A_stmt. intros until errv. intros (HP & ST & LO & LOS & SPA & HT & ERR & TP & RA) RR A0 K.
+unfold jo_set_scalar_A_stmt. intros until errv. intros (HP & ST & LO & HBT & LOS & SPA & HT & ERR & TP & RA) RR A0 K.
 unfold_consts. unfold A_ERRNO, A_TP in *. subst a0 tp. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI. cbn [hl_segs hla_base A4L A4H] in MI.
 pose proof (sb_cellsA A4L HIx _ _ _ _ _ _ _ HP) as [GOT CELL].
@@ -270,7 +271,7 @@ Qed.
 
 Lemma set_boolean_A : jo_set_scalar_A_stmt 0x9c2ac.
 Proof.
-unfold jo_set_scalar_A_stmt. intros until errv. intros (HP & ST & LO & LOS & SPA & HT & ERR & TP & RA) RR A0 K.
+unfold jo_set_scalar_A_stmt. intros until errv. intros (HP & ST & LO & HBT & LOS & SPA & HT & ERR & TP & RA) RR A0 K.
 unfold_consts. unfold A_ERRNO, A_TP in *. subst a0 tp. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI. cbn [hl_segs hla_base A4L A4H] in MI.
 pose proof (sb_cellsA A4L HIx _ _ _ _ _ _ _ HP) as [GOT CELL].
@@ -434,7 +435,7 @@ forall (x1 sp gp t0 t1 t2 s0v a0 a1 a2 a3 a4 a5 a6 a7 s4 s5 s6 s7 s8 s9 s10 s11 
 (A : ASA A4L HIx) (LB LM : list blk) (FRS : list frame) (B : bud) (lo : Z) (errv seedv : word),
 HEAPAx A LB LM FRS B m md -> lh_globA m ->
 rw_cells asegs m GSEEDA [C4 seedv] -> sx32 seedv = Z_to_bv 64 (-1) ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - SD ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - SD ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] -> frm0 fc ->
 Z.of_nat (length FRS) < 4096 ->
@@ -495,7 +496,7 @@ Qed.
 
 Lemma lh_char_hash_A_cps : forall HD, 80 + SD <= HD -> lh_char_hash_A_stmt HIx MREL HD.
 Proof.
-intros HD HHD. unfold lh_char_hash_A_stmt. intros until ks. intros HP INK CS G ST LO LOS SPA HT ERR TP RA FRM FRN A0 K.
+intros HD HHD. unfold lh_char_hash_A_stmt. intros until ks. intros HP INK CS G ST LO HBT LOS SPA HT ERR TP RA FRM FRN A0 K.
 word_range sp SPR. pose proof alloc_ceiling_ge as ACG. pose proof (hiA_top_le A4L HIx) as HTL.
 pose proof (OBL_BLK40 _ _ _ _ _ _ _ _ _ HP ltac:(apply in_or_app; left; exact INK)) as KN40.
 destruct (key_stringA _ _ _ _ _ _ _ _ _ _ HP INK CS) as (slack & STR & PAD & NN & KAL & KL & KPOS & KHI & KSL).
@@ -526,7 +527,7 @@ destruct (bv_eqb (sx32 seed) (Z_to_bv 64 (-1))) eqn:ESEED; [change (negb true) w
 evt_done5.
 eapply (SEED _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc m1 md T A LB LM FRS B lo errv seed);
 [exact HP1 | exact G1' | exact G2 | apply (proj1 (Fs.bv_eqb_eq _ _)); exact ESEED | ..]; a4l_goal; rewrite ?unsigned_lit by lia;
-[exact ST | exact LO | lia | rewrite <- Zplus_mod_idemp_l, SPA; reflexivity | lia | exact ERR | exact FRM | exact FRN |].
+[exact ST | exact LO | first [assumption | lia] | lia | rewrite <- Zplus_mod_idemp_l, SPA; reflexivity | lia | exact ERR | exact FRM | exact FRN |].
 intros ms2 md2 A2 (y1 & u0 & u1 & u2 & v0 & v1 & v2 & v3 & v4 & v5 & v6 & v7 & u3 & u4 & u5 & u6 & m2 & errv2 & -> & MR2 & ST2 & HPR2 & ERR2 & GL2 & HP2).
 a4l. rewrite ?(unsigned_lit (bv_unsigned sp + -80)) in ST2, HPR2 by lia.
 apply (heap_presx_rw_cells A4H _ _ _ _ _ _ _ HPR2) in FR; [| left; cbn; lia]. a4l.
@@ -677,6 +678,7 @@ Hypothesis KBlo : kb <= kp.
 Hypothesis KBhi : kp + Z.of_nat (length ps) + 1 <= kb + kbn.
 Hypothesis PS40 : Z.of_nat (length ps) + 1 < 2^40.
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis LOS : lo <= bv_unsigned sp - 112 - 16 - 4096.
 Hypothesis SPA : bv_unsigned sp mod 16 = 0.
 Hypothesis HT : bv_unsigned sp <= hiA_top A4L HIx.
@@ -997,6 +999,7 @@ Notation HEAPAx := (HEAPA A4L HIx).
 Variables (sp gp : word) (lo : Z) (errv : word) (LM : list blk) (FRS : list frame).
 
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis LOS : lo <= bv_unsigned sp + -112 - 4352.
 Hypothesis SPA : bv_unsigned sp mod 16 = 0.
 Hypothesis HT : bv_unsigned sp <= hiA_top A4L HIx.
@@ -1369,7 +1372,7 @@ Definition SD_STK_A : Z := 64 + 4096.
 
 Lemma set_double_A : jo_set_double_A_stmt HIx 0x9e384 SD_STK_A 512 1.
 Proof.
-unfold jo_set_double_A_stmt, SD_STK_A. intros until errv. intros (HP & ST & LO & LOS & SPA & HT & ERR & TP & RA) RR BB BD A0 K.
+unfold jo_set_double_A_stmt, SD_STK_A. intros until errv. intros (HP & ST & LO & HBT & LOS & SPA & HT & ERR & TP & RA) RR BB BD A0 K.
 unfold_consts. unfold A_ERRNO, A_TP in *. subst a0 tp. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI. cbn [hl_segs hla_base A4L A4H] in MI.
 pose proof (sb_cellsA A4L HIx _ _ _ _ _ _ _ HP) as [GOT CELL].
@@ -1630,6 +1633,7 @@ eapply (hiA_free A4L HIx) with (p := ud_) (u := UWpaid) (lo := lo) (errv := errv
 all: rewrite ?unsigned_lit by lia.
 1: eassumption.
 1: exact LO.
+1: first [assumption | lia].
 1: cbn [hl_stack_A A4L]; lia.
 1: clear - SPA; Z.div_mod_to_equations; lia.
 1: lia.
@@ -1793,7 +1797,7 @@ forall (x1 sp gp t0 t1 t2 s0v a0 a1 a2 a3 a4 a5 a6 a7 s4 s5 s6 s7 s8 s9 s10 s11 
 (A : ASA A4L HIx) (LB LM : list blk) (FRS : list frame) (B : bud) (lo : Z) (errv seedv : word),
 HEAPAx A LB LM FRS B m md -> lh_globA m ->
 rw_cells asegs m GSEEDA [C4 seedv] -> sx32 seedv = Z_to_bv 64 (-1) ->
-stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - SD ->
+stk asegs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot A4L HIx <= lo -> lo <= bv_unsigned sp - SD ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp <= hiA_top A4L HIx ->
 rw_cells asegs m A_ERRNO [C4 errv] -> frm0 fc ->
 Z.of_nat (length FRS) < 4096 ->
@@ -1854,7 +1858,7 @@ Qed.
 
 Lemma lh_char_hash_A_cps : forall HD, 112 + SD <= HD -> lh_char_hash_A_stmt HIx MREL HD.
 Proof.
-intros HD HHD. unfold lh_char_hash_A_stmt. intros until ks. intros HP INK CS G ST LO LOS SPA HT ERR TP RA FRM FRN A0 K.
+intros HD HHD. unfold lh_char_hash_A_stmt. intros until ks. intros HP INK CS G ST LO HBT LOS SPA HT ERR TP RA FRM FRN A0 K.
 word_range sp SPR. pose proof alloc_ceiling_ge as ACG. pose proof (hiA_top_le A4L HIx) as HTL.
 pose proof (OBL_BLK40 _ _ _ _ _ _ _ _ _ HP ltac:(apply in_or_app; left; exact INK)) as KN40.
 destruct (key_stringA _ _ _ _ _ _ _ _ _ _ HP INK CS) as (slack & STR & PAD & NN & KAL & KL & KPOS & KHI & KSL).
@@ -1885,7 +1889,7 @@ destruct (bv_eqb (sx32 seed) (Z_to_bv 64 (-1))) eqn:ESEED; [change (negb true) w
 evt_done5.
 eapply (SEED _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ F fc m1 md T A LB LM FRS B lo errv seed);
 [exact HP1 | exact G1' | exact G2 | apply (proj1 (Fs.bv_eqb_eq _ _)); exact ESEED | ..]; a4l_goal; rewrite ?unsigned_lit by lia;
-[exact ST | exact LO | lia | rewrite <- Zplus_mod_idemp_l, SPA; reflexivity | lia | exact ERR | exact FRM | exact FRN |].
+[exact ST | exact LO | first [assumption | lia] | lia | rewrite <- Zplus_mod_idemp_l, SPA; reflexivity | lia | exact ERR | exact FRM | exact FRN |].
 intros ms2 md2 A2 (y1 & u0 & u1 & u2 & v0 & v1 & v2 & v3 & v4 & v5 & v6 & v7 & u3 & u4 & u5 & u6 & m2 & errv2 & -> & MR2 & ST2 & HPR2 & ERR2 & GL2 & HP2).
 a4l. rewrite ?(unsigned_lit (bv_unsigned sp + -112)) in ST2, HPR2 by lia.
 apply (heap_presx_rw_cells A4H _ _ _ _ _ _ _ HPR2) in FR; [| left; cbn; lia]. a4l.
@@ -2038,6 +2042,7 @@ Hypothesis KBlo : kb <= kp.
 Hypothesis KBhi : kp + Z.of_nat (length ps) + 1 <= kb + kbn.
 Hypothesis PS40 : Z.of_nat (length ps) + 1 < 2^40.
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis LOS : lo <= bv_unsigned sp - 128 - 16 - 4096.
 Hypothesis SPA : bv_unsigned sp mod 16 = 0.
 Hypothesis HT : bv_unsigned sp <= hiA_top A4L HIx.
@@ -2368,6 +2373,7 @@ Notation HEAPAx := (HEAPA A4L HIx).
 Variables (sp gp : word) (lo : Z) (errv : word) (LM : list blk) (FRS : list frame).
 
 Hypothesis LO : alloc_ceiling <= lo.
+Hypothesis HBTlo : hiA_bot A4L HIx <= lo.
 Hypothesis LOS : lo <= bv_unsigned sp + -112 - 4352.
 Hypothesis SPA : bv_unsigned sp mod 16 = 0.
 Hypothesis HT : bv_unsigned sp <= hiA_top A4L HIx.
@@ -2756,7 +2762,7 @@ Definition SD_STK_A : Z := 64 + 4096.
 
 Lemma set_double_A : jo_set_double_A_stmt HIx 0x9fedc SD_STK_A 512 1.
 Proof.
-unfold jo_set_double_A_stmt, SD_STK_A. intros until errv. intros (HP & ST & LO & LOS & SPA & HT & ERR & TP & RA) RR BB BD A0 K.
+unfold jo_set_double_A_stmt, SD_STK_A. intros until errv. intros (HP & ST & LO & HBT & LOS & SPA & HT & ERR & TP & RA) RR BB BD A0 K.
 unfold_consts. unfold A_ERRNO, A_TP in *. subst a0 tp. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI. cbn [hl_segs hla_base A4L A4H] in MI.
 pose proof (sb_cellsA A4L HIx _ _ _ _ _ _ _ HP) as [GOT CELL].
@@ -3017,6 +3023,7 @@ eapply (hiA_free A4L HIx) with (p := ud_) (u := UWpaid) (lo := lo) (errv := errv
 all: rewrite ?unsigned_lit by lia.
 1: eassumption.
 1: exact LO.
+1: first [assumption | lia].
 1: cbn [hl_stack_A A4L]; lia.
 1: clear - SPA; Z.div_mod_to_equations; lia.
 1: lia.
@@ -3183,7 +3190,7 @@ Notation blk_gran0A := (blk_gran0A HIx).
 
 Lemma set_int64_A : jo_set_scalar_A_stmt 0x9e27c.
 Proof.
-unfold jo_set_scalar_A_stmt. intros until errv. intros (HP & ST & LO & LOS & SPA & HT & ERR & TP & RA) RR A0 K.
+unfold jo_set_scalar_A_stmt. intros until errv. intros (HP & ST & LO & HBT & LOS & SPA & HT & ERR & TP & RA) RR A0 K.
 unfold_consts. unfold A_ERRNO, A_TP in *. subst a0 tp. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI. cbn [hl_segs hla_base A4L A4H] in MI.
 pose proof (sb_cellsA A4L HIx _ _ _ _ _ _ _ HP) as [GOT CELL].
@@ -3296,7 +3303,7 @@ Qed.
 
 Lemma set_uint64_A : jo_set_scalar_A_stmt 0x9ed0c.
 Proof.
-unfold jo_set_scalar_A_stmt. intros until errv. intros (HP & ST & LO & LOS & SPA & HT & ERR & TP & RA) RR A0 K.
+unfold jo_set_scalar_A_stmt. intros until errv. intros (HP & ST & LO & HBT & LOS & SPA & HT & ERR & TP & RA) RR A0 K.
 unfold_consts. unfold A_ERRNO, A_TP in *. subst a0 tp. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI. cbn [hl_segs hla_base A4L A4H] in MI.
 pose proof (sb_cellsA A4L HIx _ _ _ _ _ _ _ HP) as [GOT CELL].
@@ -3410,7 +3417,7 @@ Qed.
 
 Lemma set_boolean_A : jo_set_scalar_A_stmt 0x9db50.
 Proof.
-unfold jo_set_scalar_A_stmt. intros until errv. intros (HP & ST & LO & LOS & SPA & HT & ERR & TP & RA) RR A0 K.
+unfold jo_set_scalar_A_stmt. intros until errv. intros (HP & ST & LO & HBT & LOS & SPA & HT & ERR & TP & RA) RR A0 K.
 unfold_consts. unfold A_ERRNO, A_TP in *. subst a0 tp. word_range sp SPR.
 pose proof (heapA_mem_inv A4L HIx _ _ _ _ _ _ _ HP) as MI. cbn [hl_segs hla_base A4L A4H] in MI.
 pose proof (sb_cellsA A4L HIx _ _ _ _ _ _ _ HP) as [GOT CELL].

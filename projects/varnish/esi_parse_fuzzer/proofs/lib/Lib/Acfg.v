@@ -1,11 +1,13 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (munmap (215) in the injected allocation family with refusal_b_215, the three vDSO step arms, and the mmap refusal tests over Linux's own placement from the caller's hint (vm_place_available)). *)
 From Stdlib Require Import ZArith NArith List Lia Bool Classical_Prop.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
 From LinuxProcessSemantics.LinuxProcessSem.Sys Require Import Uapi Syscall Dispatch SyscallTable.
 From LinuxProcessSemantics.LinuxProcessSem.Sys.Mm Require Import Mmap Mprotect Mremap.
+From LinuxProcessSemantics.LinuxProcessSem.Checks Require Placement.  (* 08b1429: read qualified, a vendored Placement exists *)
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Local Open Scope bv_scope.
@@ -56,7 +58,7 @@ Lemma acfg_family_off_no : forall i n,
 Proof.
   intros vi vn k1 k2. unfold injected_family_off. rewrite k1.
   cbn [alloc_mark_sysnos In] in k2.
-  destruct k2 as [<- | [<- | [<- | [<- | []]]]]; reflexivity.
+  destruct k2 as [<- | [<- | [<- | [<- | [<- | []]]]]]; reflexivity.
 Qed.
 
 Lemma acfg_nonspurious : forall i m eff,
@@ -121,6 +123,13 @@ Lemma refusal_b_226 : forall i m r, bv_unsigned (in_sysno i) = 226%Z ->
   refusal_b i m r = ret_in_errnos mprotect_errnos r.
 Proof.
   intros vi vm vr k1. rewrite (cr2_refusal_b_at vi vm vr 226 k1). reflexivity.
+Qed.
+
+(* 08b1429: munmap (215) is an injected alloc-family call; its refusal is ENOMEM *)
+Lemma refusal_b_215 : forall i m r, bv_unsigned (in_sysno i) = 215%Z ->
+  refusal_b i m r = ret_in_errnos munmap_errnos r.
+Proof.
+  intros vi vm vr k1. rewrite (cr2_refusal_b_at vi vm vr 215 k1). reflexivity.
 Qed.
 Lemma refusal_b_216 : forall i m r, bv_unsigned (in_sysno i) = 216%Z ->
   refusal_b i m r = ret_in_errnos mremap_errnos r.
@@ -390,6 +399,9 @@ Proof.
     [ vms vmodel vms' vmodel' k2 k3 k4
     | vms vmodel k2 k3 k4
     | vms vmodel k2 k3 k4
+    | vms vmodel vfn vn veff vmodel' vmodel'' vevs k2 k3 k4 kf1 kf2 kf3 kf4 kf5 kf6
+    | vms vmodel vfn vn veff vmodel' vevs k2 k3 k4 kg1 kg2 kg3 kg4 kg5 kg6
+    | vms vmodel vfn k2 k3 k4 kh1 kh2
     | vms vmodel vx8 veff vmodel' vmodel'' vevs k2 k3 k4 k5 k6
     | vms vmodel vx8 veff vmodel' vevs k2 k3 k4 k5 k6
     | vms vmodel vx8 veff vmodel' vevs vcode k2 k3 k4 k5 k6
@@ -398,7 +410,10 @@ Proof.
     intros k9; cbn [cfg_ms cfg_model] in k9.
   - exact (sstep_cfg_instr segs ACFG vms vmodel vms' vmodel' k2 k3 k4).
   - exact (sstep_cfg_instr_fault segs ACFG vms vmodel k2 k3 k4).
-  - exact (sstep_cfg_instr_unmodeled segs ACFG vms vmodel k2 k3 k4).
+  - eapply sstep_cfg_instr_unmodeled; eassumption.
+  - eapply sstep_cfg_vdso_call; eassumption.
+  - eapply sstep_cfg_vdso_materialization_fault; eassumption.
+  - eapply sstep_cfg_vdso_unmodeled; eassumption.
   - exact (sstep_cfg_syscall segs ACFG vms vmodel vx8 veff vmodel' vmodel'' vevs
              k2 k3 k4 (k9 vx8 veff vmodel' vevs k3 k4 k5) k5 k6).
   - exact (sstep_cfg_syscall_materialization_fault segs ACFG vms vmodel vx8 veff vmodel' vevs
@@ -503,6 +518,9 @@ Proof.
     [ vms2 vmodel2 vms' vmodel' k4 k5 k6
     | vms2 vmodel2 k4 k5 k6
     | vms2 vmodel2 k4 k5 k6
+    | vms2 vmodel2 vfn2 vn2 veff vmodel' vmodel'' vevs2 k4 k5 k6 kf1 kf2 kf3 kf4 kf5 kf6
+    | vms2 vmodel2 vfn2 vn2 veff vmodel' vevs2 k4 k5 k6 kg1 kg2 kg3 kg4 kg5 kg6
+    | vms2 vmodel2 vfn2 k4 k5 k6 kh1 kh2
     | vms2 vmodel2 vy veff vmodel' vmodel'' vevs2 k4 k5 k6 k7 k8 k9
     | vms2 vmodel2 vy veff vmodel' vevs2 k4 k5 k6 k7 k8 k9
     | vms2 vmodel2 vy veff vmodel' vevs2 vcode k4 k5 k6 k7 k8
@@ -702,12 +720,79 @@ Proof.
   split; intros [va k1]; exists va; apply cr2_vm_base_ok_iff; exact k1.
 Qed.
 
-Definition mmap_grant_refusable (flags : word) (m : Model) (nZ : Z) : bool :=
-  negb (mmap_noreserve_backed_ok flags m nZ)
-  || negb (vm_gap_available (m_vmmaps m) nZ).
+(* 08b1429: an anonymous mmap is granted at the ONE address Linux picks
+   ([Mmap.linux_place], read by the caller's hint), not at any free page, so a
+   grant is possible exactly when [Placement.linux_place_b] has an answer. *)
+Definition vm_place_available (h : VmMaps) (thp : bool) (hint : word) (nZ : Z) : bool :=
+  match LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_b h thp hint nZ with
+  | Some _ => true
+  | None => false
+  end.
 
-Definition mmap_reserve_refusable (m : Model) (nZ : Z) : bool :=
-  negb (vm_gap_available (m_vmmaps m) nZ).
+Lemma vm_place_available_of_is : forall h thp hint nZ (a : word),
+  LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is h thp hint nZ a = true ->
+  vm_place_available h thp hint nZ = true.
+Proof.
+  intros h thp hint nZ a H. unfold vm_place_available.
+  unfold LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is in H.
+  destruct (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_b h thp hint nZ);
+    [reflexivity | discriminate].
+Qed.
+
+Lemma vm_place_available_is : forall h thp hint nZ,
+  (0 < nZ)%Z -> (nZ mod page_size = 0)%Z ->
+  vm_place_available h thp hint nZ = true ->
+  exists a : word, LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is h thp hint nZ a = true.
+Proof.
+  intros h thp hint nZ Hn Hnal H. unfold vm_place_available in H.
+  destruct (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_b h thp hint nZ) as [x|] eqn:Hb;
+    [| discriminate].
+  destruct (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_b_spec h thp hint nZ Hn Hnal)
+    as [Hsome _].
+  pose proof (proj1 (Hsome x) Hb) as HL.
+  destruct (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_admissible h thp hint nZ x Hn Hnal HL)
+    as (_ & Hpos & Htop & _).
+  pose proof (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.alloc_top_lt_two_pow_64 h) as Hat.
+  assert (Hx : bv_unsigned (Z_to_bv 64 x) = x).
+  { rewrite Z_to_bv_unsigned. apply bv_wrap_small.
+    unfold bv_modulus, two_pow_64 in *. lia. }
+  exists (Z_to_bv 64 x). unfold LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_is.
+  rewrite Hb, Hx. apply Z.eqb_refl.
+Qed.
+
+Lemma vm_place_available_of_place : forall h thp hint nZ a,
+  (0 < nZ)%Z -> (nZ mod page_size = 0)%Z ->
+  linux_place h thp hint nZ a -> vm_place_available h thp hint nZ = true.
+Proof.
+  intros h thp hint nZ a Hn Hnal HL. unfold vm_place_available.
+  destruct (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_b h thp hint nZ) as [x|] eqn:Hb;
+    [reflexivity | exfalso].
+  destruct (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_b_spec h thp hint nZ Hn Hnal)
+    as [_ Hnone].
+  exact (proj1 Hnone Hb a HL).
+Qed.
+
+(* A free gap in the bottom-up window [task_unmapped_base, alloc_top) gives Linux an answer. *)
+Lemma vm_place_available_of_gap : forall h thp hint nZ g,
+  (0 < nZ)%Z -> (nZ mod page_size = 0)%Z ->
+  gap_fits (vm_reserved h ++ vm_maps h) task_unmapped_base (alloc_top h) nZ g ->
+  vm_place_available h thp hint nZ = true.
+Proof.
+  intros h thp hint nZ g Hn Hnal Hg.
+  assert (Hex : exists a, linux_place h thp hint nZ a)
+    by (apply (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.linux_place_exists h thp hint nZ Hn Hnal);
+        exists g; right; exact Hg).
+  destruct Hex as [a HL].
+  exact (vm_place_available_of_place h thp hint nZ a Hn Hnal HL).
+Qed.
+
+(* The hint is the call's address argument: Linux's search reads it, so the refusal does too. *)
+Definition mmap_grant_refusable (hint flags : word) (m : Model) (nZ : Z) : bool :=
+  negb (mmap_noreserve_backed_ok flags m nZ)
+  || negb (vm_place_available (m_vmmaps m) (kb_thp (m_kernel m)) hint nZ).
+
+Definition mmap_reserve_refusable (hint : word) (m : Model) (nZ : Z) : bool :=
+  negb (vm_place_available (m_vmmaps m) (kb_thp (m_kernel m)) hint nZ).
 
 Definition mmap_fixed_fresh_refusable (flags : word) (m : Model) (nZ : Z) : bool :=
   negb (mmap_noreserve_backed_ok flags m nZ).

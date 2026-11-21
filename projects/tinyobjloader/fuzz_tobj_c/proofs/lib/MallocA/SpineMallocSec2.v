@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (one more register fact passed to the generic mmap triple, whose statement now takes it; the law_res hypothesis states the reserved ledger as the image's entries followed by the vDSO/vvar pair). *)
 
 From Stdlib Require Import ZArith NArith List Bool PArith Lia.
 From Stdlib Require Import FunctionalExtensionality.
@@ -152,7 +153,9 @@ Hypothesis HCSTS : forall a, in_rangesZ CST a -> in_rangesZ IMG_S a -> False.
 Let AInv : AA -> valuation -> list word -> Model -> Prop := AInvA segs.
 Let J (W : list ulink) (st : ustop) (A : AA) (Kc : KcA) : jpredA := J_alloc_preT AInv W st A Kc (SVar 12).
 
-Hypothesis law_res : forall A rho tp md, AInv A rho tp md -> vm_reserved (m_vmmaps md) = segments_reserved segsA.
+(* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v [vdso_pair_ok]). *)
+Hypothesis law_res : forall A rho tp md, AInv A rho tp md ->
+  exists V, vm_reserved (m_vmmaps md) = segments_reserved segsA ++ V /\ OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysSpec.vdso_pair_ok V.
 
 Lemma JG_rigidS : forall A Kc rho rhoE tp tr md,
   JG W st A Kc rho rhoE tp tr md ->
@@ -281,7 +284,7 @@ Proof.
   assert (HEV : bv_unsigned (eval rhoX (SVar V_MS)) = secmapsize nv).
   { cbn [eval]. unfold V_MS. rewrite E142. apply u64_lit. clear -BMS Hnv. lia. }
   apply (triple1_mmap_rw_symA segs ok (JG W st A Kc rho) (JG W st A Kc rho) Jo (CS1 W st tmax) rhoX tp (SVar V_MS) (secmapsize nv)
-           Hokf Hokp HST' IC1 R17 R11 HB11 HEV (proj2 BMS) ltac:(clear -BMS Hnv; lia)).
+           Hokf Hokp HST' IC1 R17 R10 R11 HB11 HEV (proj2 BMS) ltac:(clear -BMS Hnv; lia)).
   intros tr ms md Hsp HJG.
   destruct (pending_argsA segs rhoX tp (CS1 W st tmax) tr ms md Hsp) as (Q0 & Q1 & Q2 & Q3 & Q4 & Q5).
   rewrite R10 in Q0. rewrite R11 in Q1. rewrite R12 in Q2. rewrite R13 in Q3. rewrite R14 in Q4. rewrite R15 in Q5. cbn [eval] in Q0, Q1, Q2, Q3, Q4, Q5.

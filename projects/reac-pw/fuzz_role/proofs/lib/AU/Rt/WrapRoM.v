@@ -1,11 +1,11 @@
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/A/Rt/WrapRoM.v at origin/ossv/recipes 7cbe5270d908 (donor image sha256 c954b804786c); module paths changed and addresses moved to reac-pw/fuzz_role's ASan build (fuzz_role.asan sha256 614cffc0864c) by port_core.py 1e42da8952ec, cross-checked numeral by numeral with alreloc a5c53bb2bed4 (ledger provenance/reloc/A-Rt-Strlen.tsv). *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/A/Rt/WrapRoM.v (donor image sha256 c954b804786c); module paths changed and addresses moved to reac-pw/fuzz_role's ASan build (fuzz_role.asan sha256 614cffc0864c) by port_core.py 1e42da8952ec, cross-checked numeral by numeral with alreloc a5c53bb2bed4 (ledger provenance/reloc/A-Rt-Strlen.tsv). *)
 (* libreac/fuzz_identity, build asan: from the wrappers' read-only premise (lib/A/Rt/WrapRo.v aro_unowned) to the
    musl constants the strlen and memchr walks read (lib/A/AE39.v mconsts_view: 0x10350 .. 0x10370). Those 32 bytes
    lie in a read-only segment (AE39.v mc_in_rom), are not in Tfib_owned_static (checked range by range below, so a
    core whose list covers them fails here and not in a walk), and are not errno. This replaces cgif's
    mconsts_of_rom_view (AE39.v:40), whose premise rom_view a caller cannot carry across __asan_stack_malloc_*. *)
 (* Modified by Theorem Labs, 2026-10-29: for r-identity's acceptance (cold/h-rw-ide-6-wrapacc), the record class is TfibSyms, not IdentTfibSyms (DECISIONS-LIVE 05:31Z: TfibSyms in both A and B, no --rename), and the core modules are Required by full path at the applied A core's names (lib/A/A*.v, lib/Reusable/YA0m, YE08, YE21). *)
-(* Modified by Theorem Labs, 2026-10: derived from lib/A/Rt/WrapRoM.v of this library at d428443238a6 by derive_y.py: module paths lib.A -> lib.AU (A.Axyz -> AU.Yxyz), addresses moved from reac-pw/fuzz_role's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/Rt/WrapRoM.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
+(* Modified by Theorem Labs, 2026-10: derived from lib/A/Rt/WrapRoM.v of this library by derive_y.py: module paths lib.A -> lib.AU (A.Axyz -> AU.Yxyz), addresses moved from reac-pw/fuzz_role's asan image to its asan-ubsan image. The Modified-by lines above describe how lib/A/Rt/WrapRoM.v was made and quote that file's asan-image values; the code below carries the asan-ubsan values. *)
 From OSSVerify.Proofs.reac_pw.fuzz_role.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

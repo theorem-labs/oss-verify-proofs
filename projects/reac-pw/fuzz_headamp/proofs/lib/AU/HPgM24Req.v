@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgM24F.v at 22d69e63401; image B's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_headamp/lib/A/HPgM24F.v; image B's
    modules (lib/AU/Img0U, HPgImgB, HPgSeg, HPgSegM, HPgSteps) in place of image A's, image B's pcs (0x838e4 ..
    0x83900), registers (rc in s9 = x25, 3 max(rc, 0) in s10 = x26) and cut lists (hqu_cut_FIRST, hqu_cut_C6s,
    headamp_B_L67), names hq_ / hs_ / hf_ -> hqu_ / hsu_ / hbr_. *)

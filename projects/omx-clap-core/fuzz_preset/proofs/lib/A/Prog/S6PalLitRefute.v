@@ -145,7 +145,7 @@ split.
   specialize (Hb a Hin). rewrite Hn in Hb. discriminate Hb. }
 intros ly. unfold AF0m.Tfib_const.
 (* the const cell of the literal's shadow byte, its address computed from shadow_addr (YG0f.v) on the closed term, never
-   written as a hex literal (h-rw-pre-1's audit of 18b47dcb15cf: a hand-kept shadow address goes stale on a move) *)
+   written as a hex literal (h-rw-pre-1's audit: a hand-kept shadow address goes stale on a move) *)
 assert (Hb : existsb (fun c => match c with ACell (ANum x) 1 (AV (ANum y)) => (x =? shadow_addr 0x21420) && (y =? 1)
                                 | _ => false end)
   (AF0m.Tfib_const_sym ++ AF0m.Tfib_const_abs ++ AF0m.Tfib_const_shadow) = true) by (vm_compute; reflexivity).

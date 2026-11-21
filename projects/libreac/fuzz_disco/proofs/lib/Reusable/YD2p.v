@@ -2,11 +2,12 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/YD2o.v, YD2p.v and YD1q.v
-   (ossv/recipes c8557374ad2) for fuzz_disco, in the form of fuzz_pcap's closing file lib/A/PcapClose.v
-   (a working branch fe3d720b4c7), the asan-ubsan twin of lib/A/AD2p.v: the closing of lib/A/DiscoAsanTop.v
+   (theorem-labs/oss-verify-proofs@6b32741d849a) for fuzz_disco, in the form of fuzz_pcap's closing file lib/A/PcapClose.v
+   (a working branch), the asan-ubsan twin of lib/A/AD2p.v: the closing of lib/A/DiscoAsanTop.v
    ASAN_UBSAN_T (= lib/Reusable/YZ03.v TFIB_T) from named parts; module paths changed, shape DiscoAsanTop.disco_shape,
    fuzz_disco's asan-ubsan image, ONE program part (LLVMFuzzerTestOneInput's contract) in place of cgif_file_fuzzer's
    three (TNEWGIFX / TADDFX / TCLOSEX and their wfn); the closed statements of cgif's lib/YZ05.v are here too. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The closing side of fuzz_disco's two asan-ubsan statements (rule 24: no function proved; this file is assembly).
    Since S1's split (a Theorem Labs lane, 2026-10-29): every part but the program part is closed over the landed asan-ubsan
    core in lib/Reusable/DiscoAsanUbsanT.v (the twin of lib/A/DiscoAsanT.v), so the Section below has ONE hypothesis,
@@ -14,11 +15,11 @@
 
    The donor closes TFIB_T in two steps: YD2o.v applies YD1q.v tfib_srealizesX (the twin of AD1q.v). This file
    does the same with every input a named Section variable or hypothesis below, each with the donor statement it
-   stands for and the lane that supplies it (proofs/libreac/fuzz_disco/lib/A/OBLIGATIONS.md at a working branch 37e11e67676d).
+   stands for and the lane that supplies it (proofs/libreac/fuzz_disco/lib/A/OBLIGATIONS.md at a working branch).
 
-   Types it uses beyond milestone 3 (a working branch 7287935fdf1): lib/Reusable/YCfn.v (the program contract,
+   Types it uses beyond milestone 3 (a working branch): lib/Reusable/YCfn.v (the program contract,
    floating-point state quantified across the call), lib/Reusable/YCeg.v (in_ro_tfa) and lib/Reusable/YF0m.v
-   (TfibSyms), from a Theorem Labs lane's S2b (a working branch d0f0dc0a3fa). The read-only range is the
+   (TfibSyms), from a Theorem Labs lane's S2b (a working branch). The read-only range is the
    asan-ubsan image's .data.rel.ro start to .got end, lib/Reusable/YB1w.v tfib_data_rel_ro_lo / tfib_got_hi
    (0xa0280 / 0xa15a8, checked against the image's section headers). *)
 From Stdlib Require Import ZArith NArith List Lia Bool String.

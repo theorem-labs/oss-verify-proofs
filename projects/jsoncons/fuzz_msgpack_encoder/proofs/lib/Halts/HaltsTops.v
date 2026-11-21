@@ -1,7 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: made from projects/fast_float/from_chars/proofs/lib/TopHaltsA.v and its sibling
+   TopHaltsB.v at commit theorem-labs/oss-verify-proofs@c5665593c2d8, lines 4-6 (the Stdlib/LPS import block), lines 14-15 (lim_source_le_target,
+   verbatim) and lines 17-19 of each (the halts_allowed_T_scfg_budgets theorem statement), with from_chars's Asan and
+   AsanUbsan images replaced by this harness's Plain and Ubsan, SpecHalts.HALT_CODES by this tree's HALT_CODES, and the
+   theorem names by halts_skcms_iccprofile_info_plain and _ubsan.  The proof bodies are not copied: from_chars's single
+   halts_allowed_lowered_of_realizes call is replaced here by HaltsBridge.halts_of_realizes_spec for the plain build and
+   by must_exit_of_realizes_spec composed with Halts.Lim.LimTransfer.lim_transfer_scfg for the UBSan build. *)
 (* Modified by gabelogan195, 2026-11: made in part from this harness's proofs/lib/MsgpackEncAsanTop.v at commit f92feaf8b7, lines 94-100: the valid_entry_sv48 rewrite, the destruct of the valid input and the calls of top_of_guarded with frm_safe_Ms0 and with frm_safe_Ma0, used in the proofs of the plain and ASan halting theorems (frm_safe_Ms0 in the plain one, frm_safe_Ma0 in the ASan one); the rest of the file is new. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the plain and ASan root facts are read over the run's segment list run_segments, from the valid input's launch, channel-reader and credential facts, as the update's MsgpackEncAsanTop.v reads them). *)
 (** The halting theorems of the plain and ASan builds, in the form [Statements.v] states them.
 
     The agreement theorem of the ASan pair is built from two realizations of one
@@ -26,7 +34,8 @@ From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.jsoncons.fuzz_msgpack_encoder.images Require Plain Asan.
 Require OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.Mh_0055.
-From OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib Require PropExec BMode FrmInit MsgpackEncFinalS MsgpackEncAsanBase.
+From OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib Require PropExec BMode FrmInit MsgpackEncFinalS MsgpackEncAsanBase MsgpackEncAsanTop.
+From OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.Common.Cfg Require SRomStable.
 From OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.Halts Require HaltsOff.
 From OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.Halts.Lim Require LimTransfer.
 
@@ -46,17 +55,21 @@ Proof.
   intros [sp brk0 mbase rnd] inp Hen Hinp Hbud.
   pose proof (valid_input_va_size _ Hinp) as Hsv48.
   rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen.
-  destruct Hen as (Hsp & Hbrk & Hmb & Hfit).
-  destruct Hinp as (Hargv & Henvp & Hfs & _ & Hcreds & _).
+  destruct Hen as (Hsp & Hbrk & Hmb & _ & Hlau).
+  pose proof (valid_input_launch _ Hinp) as Hvl.
+  pose proof (valid_input_either_of_valid_input inp Hinp) as Hvi.
+  destruct (OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.MsgpackEncAsanTop.vie_parts inp Hvi)
+    as (Hargv & Henvp & Hfs & Hcreds & _ & _ & Hrd & _).
   exact (OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.Mh_0055.HaltsKit.srealizes_init_must_exit
            _ _ _ _ sp brk0 mbase rnd _ inp
            OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.Mh_0055.HaltsKit.codes02 _
            (OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.FrmInit.top_of_guarded
               _ _ _ _ _ _ _ _ _ _ _
-              OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.FrmInit.frm_safe_Ms0
+              (OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.Common.Cfg.SRomStable.frm_safe_run_segments
+                 _ inp sp mbase OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.FrmInit.frm_safe_Ms0)
               (OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.MsgpackEncFinalS.msgpack_enc_src
                  OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.MsgpackEncFinalS.open_S_closed
-                 sp brk0 mbase rnd inp Hsp Hbrk Hmb Hfit Hargv Henvp Hfs Hcreds))
+                 sp brk0 mbase rnd inp Hsp Hbrk Hmb Hvl Hlau Hargv Henvp Hfs Hcreds Hrd))
            (OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.Mh_0055.HaltsKit.exit_codes_in_spec _ _)
            (OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.Mh_0055.KillFree.kill_free_spec _ _)
            Hbud).
@@ -78,17 +91,19 @@ Proof.
   intros [sp brk0 mbase rnd] inp Hen Hinp.
   pose proof (valid_input_va_size _ Hinp) as Hsv48.
   rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen.
-  destruct Hen as (Hsp & Hbrk & Hmb & Hfit).
-  destruct Hinp as (Hargv & Henvp & Hfs & _ & Hcreds & _ & _ & Hhw & _).
+  destruct Hen as (Hsp & Hbrk & Hmb & Hfit & Hlau).
+  pose proof (valid_input_launch _ Hinp) as Hvl.
+  pose proof (valid_input_either_of_valid_input inp Hinp) as Hvi.
   exact (@OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.Halts.HaltsOff.srealizes_init_must_exit_off
            OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.BMode.bm_off_inst eq_refl
            _ _ _ _ sp brk0 mbase rnd _ inp
            OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.Mh_0055.HaltsKit.codes02 _
            (OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.FrmInit.top_of_guarded
               _ _ _ _ _ _ _ _ _ _ _
-              OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.FrmInit.frm_safe_Ma0
+              (OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.Common.Cfg.SRomStable.frm_safe_run_segments
+                 _ inp sp mbase OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.FrmInit.frm_safe_Ma0)
               (OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.MsgpackEncAsanBase.na0_tgt_closed
-                 sp brk0 mbase rnd inp Hsp Hbrk Hmb Hfit Hargv Henvp Hfs Hcreds Hhw Hsv48))
+                 sp brk0 mbase rnd inp Hsp Hbrk Hmb Hfit Hlau Hvl Hvi))
            (OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.Mh_0055.HaltsKit.exit_codes_in_spec _ _)
            (OSSVerify.Proofs.jsoncons.fuzz_msgpack_encoder.lib.Mh_0055.KillFree.kill_free_spec _ _)).
 Qed.

@@ -1,6 +1,6 @@
 (* segconf's calloc (musl mallocng, ubsan 0x172a0, 312 bytes) at the concrete instance src0_msyms / MRx, for every
-   m * n <= CALLOC_BIG_CAP: calloc_realizes_big (CallocBigC.v). Adapted from libreac/fuzz_decode's U/CallocCert.v at
-   25e3d17bdb50 (relocated by alreloc a5c53bb2bed4): the cap 4096 is raised (run_entry_big), the clearing for
+   m * n <= CALLOC_BIG_CAP: calloc_realizes_big (CallocBigC.v). Adapted from libreac/fuzz_decode's U/CallocCert.v
+    (relocated by alreloc a5c53bb2bed4): the cap 4096 is raised (run_entry_big), the clearing for
    n >= 4096 runs mal0_clear's page loop (CallocPage.run_clear_big in place of CallocRun.run_clear), the pc is
    CALLOC_PC (this frame's ms_calloc is None), and malloc's certificate takes this lineage's AllocMode. *)
 From Stdlib Require Import ZArith List Lia Bool.
@@ -451,7 +451,7 @@ Proof.
     - intros x Hx Hle. cbn [Frame.outside]. split; [lia | exact I].
     - intros x Hx _. cbn [Frame.outside]. split; [unfold CALLOC_STACK, ALLOC_STACK in *; lia | exact I]. }
   eapply mreal_post.
-  { exact (@src0_malloc_realizes fx rc Cfg.AcfgMode (@src0_alloc_meta fx rc Cfg.AcfgMode)
+  { exact (@src0_malloc_realizes fx rc Cfg.AcfgMode eq_refl (@src0_alloc_meta fx rc Cfg.AcfgMode)
              (@src0_malloc_small fx rc Cfg.AcfgMode (@src0_alloc_slot fx rc Cfg.AcfgMode))
              L A regs1 mem1 md (m * n) PRE1 R10 ltac:(nia)). }
   intros r c5 (L5 & regs5 & mem5 & md5 & -> & POST & RES).

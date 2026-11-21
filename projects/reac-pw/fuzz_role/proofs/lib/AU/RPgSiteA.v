@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgSiteA.v at 0338bac0af6; the same three
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgSiteA.v; the same three
    call-site lemmas at image B's record role_himg_B (lib/AU/RPgImgA.v): the C2 / C3 pcs and cut lists are image
    B's (six kept registers and eight real-frame cells), and the strings, cells and table are image B's addresses,
    with the two further doubles its parse reads. *)

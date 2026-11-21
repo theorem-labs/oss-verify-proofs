@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/YCfi.v (link_SMP, link_FFL, link_ASF)
-   and the class-0 side stack lib/B/Rt/StackMalloc0.v (relocated from fuzz_grant's image B, a working branch
-   cce7df57aaa6), at libreac/fuzz_decode's ASan+UBSan record TfibB (lib/B/YD2l.v). *)
+   and the class-0 side stack lib/B/Rt/StackMalloc0.v (relocated from fuzz_grant's image B, a working branch),
+   at libreac/fuzz_decode's ASan+UBSan record TfibB (lib/B/YD2l.v). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Five hypotheses of lib/B/DecodeBClose.v, each proved at image B's concrete record TfibB and segments decodesegsB0
    with DecodeBClose.v's own text (its `segs` is decodesegsB0, its `B` is TfibB; the names resolve to the same modules,
    Reusable/YG0d.v and Reusable/YCbq.v, under the same local float-state instance YK11.fx0):

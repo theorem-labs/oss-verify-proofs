@@ -6,7 +6,7 @@ usage:
   k2_relocate.py [--project reac-repacer] --unit fuzz_uci --out <worktree>/proofs/<project>/<unit>/lib \
       --plain PIN:TWIN --ubsan PIN:TWIN --work <scratch dir> --git <hub clone> --pac <port_addr_check.py frozen 5033540ba83b>
       --decode-bin <dir with bin/fuzz_decode and unstripped/fuzz_decode> --donor-bin <dir with the second donors' pins>
-      [--donor-ref 25e3d17bdb50] [--kit-ref <ref>]
+      [] [--kit-ref <ref>]
 
 --project (default reac-repacer) names the unit's project: module paths become <project with - as _>.<unit>, and the
 notices say <project>/<unit>.  --kit-ref (default: --donor-ref) names the commit whose file list is the kit: K1 copies
@@ -54,8 +54,8 @@ What it does (each step prints what it changed; everything goes into <work>/k2-v
 Controls: the decode pin run through steps (d) reproduces decode's own released values (printed first).  K1 stops on a
 Prog file that fits no class above, on a file it would drop although the unit links its function, and on a kept Prog
 file that Requires a Prog module not kept.
-  K3  libc walks decode's kit lacks, from a second released donor (SECOND_DONORS: strlen from libreac/fuzz_disco at
-      25e3d17bdb50, memmove from libreac/fuzz_pcap at bdfe881c79c), copied only when the unit links the function and the
+  K3  libc walks decode's kit lacks, from a second released donor (SECOND_DONORS: strlen from libreac/fuzz_disco,
+      memmove from libreac/fuzz_pcap), copied only when the unit links the function and the
       kit has no walk of it.  Controls: the donor image's sha256 is the donor's pin; the donor's entry (symbol, or the
       unique occurrence of the unit's bytes in a stripped pin) equals the released entry literal; the two function bodies
       agree instruction by instruction, a pc-relative auipc / ld pair only when it loads equal 8 bytes.  Every hex literal

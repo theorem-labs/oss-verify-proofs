@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the recorded proof of rl_fetch_OL replaced by plain proof). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.
@@ -6,15 +7,12 @@ From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC.
 From OSSVerify.Proofs.leptonica.pix_orient_fuzzer.lib.Common Require Import PropExec SeqExec StepTac Hoare WalkTac.
 From OSSVerify.Proofs.leptonica.pix_orient_fuzzer.lib.Common.Reloc Require Import RelocKitOL.
 From OSSVerify.Proofs.leptonica.pix_orient_fuzzer.lib.Common.Musl Require Import MuslTac.
-From OSSVerify.Proofs.leptonica.pix_orient_fuzzer.lib Require KReplay.
-Ltac2 kr_t_RelocTacOL () := "I69OSSVerify5KrLib6Common5Reloc;CanonCodeOL;RelocCodeOL00C1?~~~~~~~~~~~~~~~K47Corelib7Numbers7BinNums8positive02K47Corelib7Numbers7BinNums1N02I45stdpp9bitvector;definitions2bv00C45stdpp9bitvector;definitions;bv_unsignedC69OSSVerify5KrLib6Common5Reloc9RelocCode8code_hasC1?~~~~~~~~~~~~~~~I47Corelib4Init5Logic2eq00C69OSSVerify5KrLib6Common5Reloc5Reloc7rl_segsC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common5Reloc5Reloc8rl_deltaC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common5Reloc;CanonCodeOL=rl_code_ol_okC1?~~~~~~~~~~~~~~~C69OSSVerify5KrLib6Common5Reloc9RelocCode:code_soundC1?~~~~~~~~~~~~~~~I69OSSVerify5KrLib6Common5Reloc5Reloc5Reloc00C1?~~~~~~~~~~~~~~~I47Corelib7Numbers7BinNums8positive00I47Corelib7Numbers7BinNums1Z00K47Corelib7Numbers7BinNums8positive03I47Corelib4Init9Datatypes4bool00C69OSSVerify5KrLib6Common5Reloc;CanonCodeOL=canon_code_OLC1?~~~~~~~~~~~~~~~K47Corelib4Init9Datatypes4bool01".
 Import ListNotations.
 Open Scope bv_scope.
 
 Lemma rl_fetch_OL : forall {RL : Reloc} {RC : RelocCodeOL RL} b c (w : bv 32),
   code_has canon_code_OL b c (bv_unsigned w) = true -> fetch_word rl_segs (rl (rl_delta b) c) = Some w.
-Proof.
-ltac2:(KReplay.run1 (kr_t_RelocTacOL ()) [] "h01Hh12RCh22RLh31bh41ch51wp;1p;2p;4p;3p;8g0000j1:Tg001;j10Tg001`j12Tg002>j11Tg002aj29Tg003Kj48Tg004Oj33Tg004ij14Tg005hj15Tg006hj26Tg0083j87Tg0099f0R0#:g00:8g00:]g00;;#0#0#0#0#0#2R1#1g00;`g00<@R2f2R3f1R41910C8g00=K33f5R1#4%51P2f3P3P4f4,61P0G7W0W5W4W3W1W2o"). Qed.
+Proof. intros RL RC b c w H. exact (code_sound rl_segs rl_delta canon_code_OL b c w rl_code_ol_ok H). Qed.
 
 (* [comment removed for export] *)
 Ltac rl_ret_ok_try_OL RL b c off :=

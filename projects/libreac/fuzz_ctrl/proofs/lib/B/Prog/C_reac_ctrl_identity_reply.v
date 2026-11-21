@@ -2,7 +2,7 @@
    cgif's world form (CONVENTIONS.md sections 2-5 (a working note, not in this delivery)), the image-B twin of a Theorem Labs lane's image-A draft
    (reply-A-spec-draft.md section 2 (a working note, not in this delivery)), under a Theorem Labs lane's B decisions
    decisions.md (a working note, not in this delivery): segments Reusable.YB1v.tfibsegs (items 1, 16;
-   B's core twin, planning core 9afb8c9070a), a constant entry pc (item 3), arodata_okS with RELRO_IMG (items 2, 17),
+   B's core twin, planning core), a constant entry pc (item 3), arodata_okS with RELRO_IMG (items 2, 17),
    the window of the proved B run as the stack bound (item 4), the achain premise dropped (by item 5's exception:
    the proof does not consume it).
 
@@ -11,7 +11,7 @@
    allocator events (the class-1 request __asan_stack_malloc_1, the call of reac_ctrl_parse) and at the inline
    release of its frame; nothing of the function is walked again here.
 
-   Form: cgif's CALLER-JOURNAL form (donor lib/YC20.v:311-365 of c8557374ad2e; the same form as a Theorem Labs lane's
+   Form: cgif's CALLER-JOURNAL form (donor lib/YC20.v:311-365; the same form as a Theorem Labs lane's
    treac_ctrl_parse_spec): the function writes the caller's three cells, pa (2 bytes), pp (8) and pn (8), objects
    of a caller frame, besides its own machine frame, its class-1 fake frame, that frame's shadow and its flag byte.
    Core names: acall_kept / awr_byte (YCbq.v) stand where the A draft names grant's tcj_kept / twr_ok (not in the
@@ -27,7 +27,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YK04 YA0i YA
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import
 YG00 YG0a YG01 YG0f YG0n YG0d YCbq.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require Import YM05 YE01.
-(* image B's core twin (a Theorem Labs lane's B run, planning core 9afb8c9070a): the segments.  YI16 / YK11 / YM05 are three
+(* image B's core twin (a Theorem Labs lane's B run, planning core): the segments.  YI16 / YK11 / YM05 are three
    of the SIX modules that exist twice (core lib/Reusable and ctrl lib/A/Reusable): only the CORE copy is Required,
    from the lib.Reusable path (porter 04:24Z / 04:33Z amendment (b)); the closure reaches one copy (Locate). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Reusable Require YB1v YI16.
@@ -39,7 +39,7 @@ Local Set Warnings "-abstract-large-number".
 Open Scope Z_scope.
 
 Section b. Context {fx : Reusable.YK11.FPState} {rc : Reusable.YM05.RunCeil}.
-(* := Reusable.YE2k.tfib_sink_head once B's core twin's YE2k.v builds: on 9afb8c9070a it does not
+(* := Reusable.YE2k.tfib_sink_head once B's core twin's YE2k.v builds: it does not
    (YE2k.v:12, `port_core_refused_41980` not found; log build-20261029T031344Z.log), so the sink stays a Context. *)
 Context {SK : Reusable.YI16.sink_head}.
 #[local] Notation SEGS := Reusable.YB1v.tfibsegs.
@@ -126,7 +126,7 @@ End b.
      Hypothesis TL   : TfibLib B.                       (* B image-lib record, YCeh twin (a Theorem Labs lane) *)
      Hypothesis LAWS : AR_laws SEGS B.
      Hypothesis ML   : model_laws (as_universe B).
-     (* the class-1 fake-stack rules: a Theorem Labs lane's, taken from a working branch ff613211c11 (cgif lib/A/ACed.v:125-133,
+     (* the class-1 fake-stack rules: a Theorem Labs lane's, taken from a working branch (cgif lib/A/ACed.v:125-133,
         tfibX_ASM1 / tfibX_SMP / tfibX_ASF / tfibX_FFL), never restated (a Theorem Labs lane 01:18Z) *)
      Hypothesis ASM1 : astack_malloc_realizes SEGS B 1.
      Hypothesis SMP  : stack_malloc_progressP B.
@@ -136,7 +136,7 @@ End b.
      Hypothesis TPARSE : C_reac_ctrl_parse.treac_ctrl_parse_spec B.          (* a Theorem Labs lane *)
      until lib/B/ProgWorld.v lands, as Section hypotheses named as agreed: ajournal_of_fsteps,
      ctl_fs_of_astack (class argument), ctl_post_reac_ctrl_parse, ctl_release_of_free_law (class argument); and,
-     until a Theorem Labs lane's B twin lands, img_vis_W named as A's (ProgBridge 7b850582d6a img_vis_of_Hoff / img_vis_W).
+     until a Theorem Labs lane's B twin lands, img_vis_W named as A's (ProgBridge img_vis_of_Hoff / img_vis_W).
      Theorem pb_reac_ctrl_identity_reply : treac_ctrl_identity_reply_spec B.
 
    The walk: the lifted stretches are the cut lemmas of reac_ctrl_identity_replyF.v (not in this delivery) (qualified), each by

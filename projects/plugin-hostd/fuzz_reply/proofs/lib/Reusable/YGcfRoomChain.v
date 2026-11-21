@@ -10,7 +10,7 @@
      - the counts of rest leave one unit of margin under the bounds (the held block may change class as it grows),
    and, at each step, Wf_cf and qtight at its pre state (what the rule's ARcf and its journal carry at each call) and
    the model realloc path with its side conditions, chain_inv proves at EVERY state S k, k <= N: room_live_cf (S k)
-   (by room_live_call_keep, YGcfRoomLive.v:1410, at each step), blocks (S k) = rest ++ [h k] up to order (the
+   (by room_live_call_keep, YGcfRoomLive.v:1411, at each step), blocks (S k) = rest ++ [h k] up to order (the
    allocator's own realloc post YGcfAmx2.amx_realloc_cf gives the block effect), and the counts, so every call's full
    count premise holds.  Each live count differs from rest's by the held block's class membership only: at most + 1.
    Generic in N (chain_inv), with the instance N := 72,687 (chain_inv_long).

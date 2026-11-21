@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseFV.v at afaa3cb55c1 (fv_bytes, fv_bytes_Z,
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgParseFV.v (fv_bytes, fv_bytes_Z,
    fv_rdn8, fv_word8, fv_addi_lit and the one-instruction step forms fvw_fld, fvw_addi, fvw_ret, fvw_beq_tk), restated
    over image B's table pb_tbl and over a float state given by its registers and status word (mkFP F fc); the
    segments below are new. *)

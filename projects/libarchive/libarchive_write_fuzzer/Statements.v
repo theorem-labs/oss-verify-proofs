@@ -22,10 +22,16 @@
     WHAT THE HARNESS CHECKS.  Writes up to 10 fuzz entries (file/dir/symlink,
     ids, mtime, <= 1 KiB data) in one of 8 formats (pax_restricted, gnutar,
     ustar, cpio newc, zip, 7zip, xar, pax) through one of
-    gzip/bzip2/xz/zstd/none into an in-memory vector. The produced archive is
-    never read back or inspected; header/data return codes ignored.  The harness
-    makes no check of its own beyond not crashing, so a statement about it says
-    only that the code it calls never crashes, hangs or trips a sanitizer.
+    gzip/bzip2/xz/zstd/none into a vector it never reads. It returns early if
+    archive_write_new returns NULL or archive_write_open does not return
+    ARCHIVE_OK, stops adding entries if archive_entry_new returns NULL, writes a
+    file's data only when archive_write_header returns ARCHIVE_OK and the data
+    is non-empty, and drops every other libarchive result. write_callback
+    returns -1 if appending to the vector throws std::bad_alloc.  The harness
+    makes no check of its own beyond not crashing.  Its halts statements say
+    only that the code it calls never crashes, hangs or trips a sanitizer.  Its
+    agreement statements say only that the code never crashes or trips a
+    sanitizer, and allow a run that never ends.
 
     Whether each statement is open, proved or known false is recorded in the
     harness README, not here: this file changes only when a statement does. *)

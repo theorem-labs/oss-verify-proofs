@@ -1,22 +1,23 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/PSbz_str.v, with its module paths and module names changed; 98 of its 254 lines of code are new or changed and 3 lines of the source are left out. *)
-(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMbz_str.v (cold/port-fm-rtprintf-param 3e35620c52e); relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMbz_str.table). *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMbz_str.v at 2d2ff01bb6f2 relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
+(* Copied from proofs/omx-clap-core/fuzz_manifest/lib/A/FMbz_str.v; relocated to libreac/fuzz_disco.asan by g9/tool (reloc.py target disco-A): module paths changed; 0 address numerals moved (port_addr_check 0767e70e074a predict, fm.asan -> fuzz_disco.asan, symbol + offset; table g9/tool/tables/disco-A/FMbz_str.table). *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_disco/lib/A/FMbz_str.v relocated to reac-pw/fuzz_rate's ASan image A: module paths changed; numerals by port_core 1e42da8952ec (ledger provenance/reloc/A-Snp.tsv). *)
 (* The shadow half of the bridge between the donor's ASan state and the string walks'
-   memory vocabulary.  The walks ask for `chk_ok m p n` (lib/A/Bz/A/I_qck.v:31) - what the
+   memory vocabulary.  The walks ask for `chk_ok m p n` (lib/A/Bz/A/I_qck.v:32) - what the
    interceptors' range check reads - while the donor's call-site contracts carry
-   `range_addressable` and `shadow_hull_vis` over `aview` (lib/Reusable/YG0v.v:32,
-   YG0d.v:309).  This file turns the second into the first.
+   `range_addressable` and `shadow_hull_vis` over `aview` (lib/Reusable/YG0v.v:33,
+   YG0d.v:310).  This file turns the second into the first.
 
    It is stated over the reader `aview_of H mem`, which is `aview tfibsegs H mem` written
    out (YG0n.v:17), so that it does not depend on the part of the core that is still in
-   flight (YG0n -> YA0n -> YK18, which does not compile on cold/port-fm-reloc bad0693aadc
+   flight (YG0n -> YA0n -> YK18, which does not compile
    yet).  `aview_eq` closes that gap in one line as soon as it does.
 
    RtScan owns the rest of the bridge (lib/A/FMbz_bridge.v: evt/msteps -> SRr and the frame
    vocabulary); this file is only about the shadow. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/FMbz_str.v at 71994ff034c7, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/FMbz_str.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/FMbz_str.v keeps its donor's comment text) is kept as lib/A/FMbz_str.v writes it. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/FMbz_str.v, derived by derive_y.py: addresses moved from reac-pw/fuzz_rate's asan image (image A) to its asan-ubsan image (image B), the image module Asan -> AsanUbsan; the Modified-by lines above describe how lib/A/FMbz_str.v was made and quote that file's image-A values; the code below carries image B's values; a numeral in a comment that quotes the donor's text (lib/A/FMbz_str.v keeps its donor's comment text) is kept as lib/A/FMbz_str.v writes it. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout State Run.
@@ -157,7 +158,7 @@ Proof.
   unfold word_of_mem. fold bs. rewrite Heq. exact Hbs.
 Qed.
 
-(* the donor's shadow hull (YG0d.v:309) written out, so that this file does not depend on
+(* the donor's shadow hull (YG0d.v:310) written out, so that this file does not depend on
    the part of the core that is still in flight *)
 Definition hull_vis_of (rd : Z -> option Z) (x n : Z) : Prop :=
   forall s, (FM_SHADOW_OFF + x / 8) / 8 * 8 <= s < (FM_SHADOW_OFF + (x + n - 1) / 8) / 8 * 8 + 8 -> rd s <> None.
@@ -269,9 +270,9 @@ Qed.
 End c.
 
 (* ---- mem_inv: the walks' standing fact about the mutable store ----
-   Every Bz body walk takes `mem_inv asegs m` (A/Bz/Lib/Mem.v:96-102): the store holds no
+   Every Bz body walk takes `mem_inv asegs m` (A/Bz/Lib/Mem.v:97-103): the store holds no
    byte at a read-only address or at or above 2^47, and no segment reaches that high.  The
-   donor states nothing of the kind (YG0d.v:376 defines `rom_clean` but no AR law uses it),
+   donor states nothing of the kind (YG0d.v:377 defines `rom_clean` but no AR law uses it),
    so the second half is a premise of this lane's runtime contracts - `store_clean` - while
    the first half is a fact about fm.asan's own segment table and is proved here. *)
 

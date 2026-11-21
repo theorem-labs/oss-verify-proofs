@@ -1,10 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (ast_writev proves RomBase.sys_rob for its node through RomWritev and takes the channel-reader fact, with the new iovec_entry_accesses_avoid for the entry reads; RomBase and RomWritev imported). *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
 From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.AS Require Import X0mc X0mx X0k2 X0k5.
 From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.LibA Require Import X1d7 X1cx X1cy X1cm X1cq X1d0 X1cl X1da X1d1.
+From OSSVerify.Proofs.speex.speex_decode_fuzzer_float.lib.Common.Cfg Require RomBase RomWritev.
 Import ListNotations.
 Open Scope Z_scope.
 
@@ -70,6 +72,23 @@ End WriteAll.
 
 Lemma wa_add16 : forall a, (wa a + 16)%bv = wa (a + 16).
 Proof. intros a. rewrite wa_add. change (bv_unsigned (16%bv : word)) with 16. reflexivity. Qed.
+(* At the revision one iovec entry reads only the bytes it reaches
+   ([iovec_entry_accesses]: the length word first, then the whole entry). *)
+Lemma iovec_entry_accesses_avoid : forall (H : word -> bool) mp a,
+  0 <= a -> a + 16 <= 2^64 ->
+  (forall i, (i < 16)%nat -> H (wa (a + Z.of_nat i)) = false) ->
+  ranges_avoid H (iovec_entry_accesses mp (wa a)).
+Proof.
+  intros H mp a Ha Hak Hvis. unfold iovec_entry_accesses.
+  destruct (read_u64 mp (wa a + 8)); [|apply ranges_avoid_nil'].
+  destruct (read_u64 mp (wa a)); (apply ranges_avoid_cons; [| apply ranges_avoid_nil']).
+  - apply (range_avoids_of_visible H a 16); [lia| lia| exact Hvis].
+  - assert (E : (wa a + 8)%bv = wa (a + 8)).
+    { rewrite wa_add. change (bv_unsigned (8%bv : word)) with 8. reflexivity. }
+    rewrite E. apply (range_avoids_of_visible H (a + 8) 8); [lia| lia|].
+    intros i Hi. replace (a + 8 + Z.of_nat i) with (a + Z.of_nat (8 + i)) by lia. apply Hvis. lia.
+Qed.
+
 
 Lemma copy_iovecs_accesses_avoid : forall (H : word -> bool) mp k a,
 0 <= a -> a + 16 * Z.of_nat k <= 2^64 ->
@@ -77,8 +96,8 @@ Lemma copy_iovecs_accesses_avoid : forall (H : word -> bool) mp k a,
 ranges_avoid H (copy_iovecs_accesses mp (wa a) k).
 Proof.
 intros H mp. induction k as [|k IH]; intros a Ha Hak Hvis; cbn [copy_iovecs_accesses]; [apply ranges_avoid_nil'|].
-apply ranges_avoid_cons.
-- apply (range_avoids_of_visible H a 16); [lia| lia|]. intros i Hi. apply Hvis. lia.
+  apply ranges_avoid_app.
+  - apply iovec_entry_accesses_avoid; [lia| lia|]. intros i Hi. apply Hvis. lia.
 - destruct (read_iovec_entry mp (wa a)); try apply ranges_avoid_nil'.
 rewrite wa_add16. apply IH; [lia| lia|].
 intros i Hi. replace (a + 16 + Z.of_nat i) with (a + Z.of_nat (16 + i)) by lia. apply Hvis. lia.
@@ -92,8 +111,8 @@ Proof.
 intros H mp a n Ha Han Hn Hvis. unfold import_iovecs_accesses.
 destruct (bv_eqb (Z_to_bv 64 (Z.of_nat n)) (Z_to_bv 64 1)) eqn:E1.
 - apply bv_eqb_eq in E1. apply (f_equal bv_unsigned) in E1. rewrite !unsigned_lit in E1 by lia.
-destruct (negb _); [apply ranges_avoid_nil'|]. apply ranges_avoid_cons; [|apply ranges_avoid_nil'].
-apply (range_avoids_of_visible H a 16); [lia| lia|]. intros i Hi. apply Hvis. lia.
+    destruct (negb _); [apply ranges_avoid_nil'|].
+    apply iovec_entry_accesses_avoid; [lia| lia|]. intros i Hi. apply Hvis. lia.
 - destruct (bv_eqb _ (Z_to_bv 64 0)); [apply ranges_avoid_nil'|].
 destruct (IOV_MAX <? _); [apply ranges_avoid_nil'|]. destruct (negb _); [apply ranges_avoid_nil'|].
 unfold word_to_nat. rewrite unsigned_lit by lia. rewrite Nat2Z.id.
@@ -158,6 +177,7 @@ Proof using Hwx Hsegs.
 intros A Pm PM K KM fd bufs Hnb HKM Hm HM T [ms mo] Hc Hkont.
 pose proof (AST_off segs segtop Hsegs A Pm PM _ Hc) as HH. pose proof Hc as (Hmc & HPm & HPM & _). cbn [cfg_ms cfg_model] in *.
 destruct (Hm _ HPm) as (Hat & HK). destruct (HM _ HPM) as (Hfdl & HKMm).
+  pose proof Hmc as (_ & _ & _ & _ & _ & Hrd).
 destruct (writev_at_transfer _ ms fd bufs HH Hat) as [Hat' (iovs & Hiov & Hvisa & HF)].
 pose proof Hat' as (Hsvc & Hfd & Ha0 & Ha2 & Hcnt & Htot & Hrom & Hiotop & _).
 unfold MAX_RW_COUNT in Htot.
@@ -188,8 +208,30 @@ exists k, (1 <= k <= length bs)%nat /\
 o = Ok (mkEffectU (Z_to_bv 64 (Z.of_nat k)) [] [] [] [] (CA ++ iov_prefix_accesses iovs k))
 mo (map (WriteEv (Z_to_bv 64 fd)) (firstn k bs))).
 { intros o. rewrite Hsp.
-apply (writev_chan_outcome _ _ _ i mo o (Z_to_bv 64 fd) iovs bs Hfdl Hw Himp); [|exact Hg| lia].
+    apply (writev_chan_outcome _ _ _ i mo o (Z_to_bv 64 fd) iovs bs Hfdl Hw Himp); [|exact Hg| lia | exact Hrd].
 rewrite Htotal. unfold MAX_RW_COUNT. subst bs. lia. }
+  (* LPS 08b1429: the iovec array and the buffers read the same over a larger backing, and the
+     outcome reads only them and their accesses (pem's writev_spec_ext) *)
+  assert (Hrob : RomBase.sys_rob segs (mkCfg ms mo)).
+  { intros r x8 Hr Hs o. cbn [cfg_ms cfg_model] in *. rewrite Hsvc in Hs. injection Hs as <-.
+    set (i' := sys_input segs (RomBase.wrom ms r) (Z_to_bv 64 66)).
+    assert (Hx : RomBase.mem_ext (in_mem i) (in_mem i'))
+      by (subst i i'; rewrite !in_mem_si; apply RomBase.mem_ext_read_byte_wrom; exact Hr).
+    assert (Hsp' : forall o', syscall_spec i' mo o' <->
+              writev_spec (Z_to_bv 64 fd) (areg ms 11) (Z_to_bv 64 (Z.of_nat (length iovs))) i' mo o').
+    { intros o'. subst i'. rewrite syscall_spec_66 by reflexivity. rewrite in_a0_si, in_a1_si, in_a2_si.
+      change (areg (RomBase.wrom ms r) 10) with (areg ms 10).
+      change (areg (RomBase.wrom ms r) 11) with (areg ms 11).
+      change (areg (RomBase.wrom ms r) 12) with (areg ms 12).
+      rewrite Ha0, Ha2, Hleq. rewrite fd32_id by (rewrite unsigned_lit; destruct Hfd; lia). reflexivity. }
+    pose proof (RomWritev.import_iovecs_ext _ _ _ _ _ Hx Himp) as Himp'.
+    pose proof (RomWritev.gather_iovecs_ext _ _ _ _ Hx Hg) as Hg'.
+    pose proof (RomWritev.import_iovecs_accesses_ext _ _ _ _ _ Hx Himp) as Hca.
+    assert (Htot' : (iovs_total iovs <= MAX_RW_COUNT)%Z) by (rewrite Htotal; unfold MAX_RW_COUNT; subst bs; lia).
+    fold i' i. rewrite Hsp', Hsp.
+    rewrite (writev_chan_outcome _ _ _ i' mo o (Z_to_bv 64 fd) iovs bs Hfdl Hw Himp' Htot' Hg' ltac:(lia) Hrd).
+    rewrite (writev_chan_outcome _ _ _ i mo o (Z_to_bv 64 fd) iovs bs Hfdl Hw Himp Htot' Hg ltac:(lia) Hrd).
+    cbv zeta. rewrite Hca. reflexivity. }
 
 assert (HavCA : ranges_avoid (HID A mo) CA).
 { subst CA. rewrite Hcnt32. rewrite <- (wa_unsigned_id (areg ms 11)). pose proof Hiov as (Hb0 & Hb1 & _).
@@ -214,7 +256,7 @@ apply ranges_avoid_app; [exact HavCA| apply HavP].
 - intros [k Hk]. cbn [proj1_sig]. exact (HK k Hk).
 - intros _. exact HKMm.
 - intros _. exact HKM.
-- apply (rz_node segs _ (wr_index bs) _ nx (fun k => T (proj1_sig k)) (wr_full bs Hnb) Hnd).
+  - apply (rz_node segs _ (wr_index bs) _ nx (fun k => T (proj1_sig k)) (wr_full bs Hnb) Hnd Hrob).
 intros [k Hk]. apply (Hkont k (nx (exist _ k Hk)) Hk (Hnx _)).
 Qed.
 

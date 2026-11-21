@@ -1,10 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (a decoded stack fact on the 8 MiB below the entry's stack pointer is cut at the launch's stack window, HUWin.win_cut). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List.
 From Stdlib Require Import PrimInt63 PrimString.
 From LinuxProcessSemantics.Riscv Require Import Instr.
 From OSSVerify.Proofs.openssl.hashtable.lib Require Import AxSymExec3 AsanPlanCore CxPlan HUFam.
+From OSSVerify.Proofs.openssl.hashtable.lib Require HUWin.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations. Import AX2. Import CAP.
 Open Scope Z_scope.
@@ -97,15 +99,16 @@ Definition rdke (i : int) : kentry * int :=
   let (t, j) := rd_num i F in
   match t with
   | 0 => let (a, k) := rdsa j in let (w, l) := rdnat k in let (v, m) := rde l in (KWord a w v, m)
-  | 1 => let (a, k) := rdsa j in let (n, l) := rde k in (KZero a n, l)
+  (* LPS c0dd863a: the recorded runs' stack facts are cut at the launch's window (HUWin) *)
+  | 1 => let (a, k) := rdsa j in let (n, l) := rde k in (HUWin.win_cut (KZero a n), l)
   | 2 => let (a, k) := rdsa j in let (n, l) := rde k in let (kk, m) := rdnat l in (KBlob a n kk, m)
   | 3 => let (lo, k) := rdZ j in let (hi, l) := rdZ k in (KImg lo hi, l)
   | 4 => let (e, k) := rde j in let (m, l) := rdZ k in (KAlign e m, l)
   | 5 => let (e, k) := rde j in let (lo, l) := rdZ k in let (hi, m) := rdZ l in (KRange e lo hi, m)
-  | 6 => let (a, k) := rdsa j in let (n, l) := rde k in (KWr a n, l)
+  | 6 => let (a, k) := rdsa j in let (n, l) := rde k in (HUWin.win_cut (KWr a n), l)
   | 7 => let (a1, k) := rdsa j in let (n1, l) := rde k in let (a2, m) := rdsa l in let (n2, p) := rde m in (KDisj a1 n1 a2 n2, p)
   | 8 => let (a, k) := rdsa j in let (n, l) := rde k in let (c, m) := rdZ l in (KFill a n c, m)
-  | _ => let (a, k) := rdsa j in let (n, l) := rde k in (KUnk a n, l)
+  | _ => let (a, k) := rdsa j in let (n, l) := rde k in (HUWin.win_cut (KUnk a n), l)
   end.
 Definition rdss (i : int) : sym_state * int :=
   let (p, j) := rdZ i in let (rs, k) := rdlist rde j in let (kk, m) := rdlist rdke k in let (nx, q) := rdnat m in (SS p rs [] kk nx, q).

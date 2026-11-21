@@ -6,6 +6,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3a.v, with its module names changed; 1977 of its 2075 lines of code are new or changed and 2368 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3b.v, with its module paths, module names and numbers changed; 884 of its 966 lines of code are new or changed and 1993 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/ACtlG/F13.v; 542 of its 570 lines of code are new or changed and 938 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/ACtlG/F14.v -- GLUE for stage seg_F14 of fuzz_ctrl image A's walk of LLVMFuzzerTestOneInput
    (lib/A/ACtl.v:784).  Written by a Theorem Labs lane (piece W4c); single writer.  rule 24: no function
    proved (stage glue of a walk).  Pattern: glue-pattern.md (a working note, not in this delivery).
@@ -50,15 +51,15 @@
    over ACtlCutP's text, and f14_tail is rebuilt conjunct by conjunct.
 
    ROUTE (C) (L3 switch, a Theorem Labs lane, recipe L3-recipe.md (a working note, not in this delivery)): the
-   cut carries A.ACtlRtC.ctl_rt_C B ly3 S3 mem3 (a working branch shell 1899bed1aee).  Entry:
+   cut carries A.ACtlRtC.ctl_rt_C B ly3 S3 mem3 (a working branch shell).  Entry:
    `pose proof Hrt as (Hcells & Hcut & Himg & Hroag)`; the e0 arm keeps Hrt whole (same ly3 S3 mem3 at its exit).
    dc arm: the run is Seg/F14F_on.f14_evt_dc_ro_F_on (the route (C) twin of F14F.f14_evt_dc_ro_F, F14F.v
    unchanged apart from comment text), whose shadow premise is shadow_rw_on (bcmp_wrap_shadow_R (fr + 336) (fragb fr) 72): the
    wrapper's aligned shadow words of the two 72-byte records, both in the owned class-6 frame [fr, fr + 4096), so
    the region lies in cut_shadow's (F) disjunct (shadow_rw_on_mono from Hcut).  The wrapper's contract is
-   discharged by a Theorem Labs lane's closed A.Prog.bcmp_wrap_on.bcmp_wrap_holds_F_on (bcmp_wrap_on.v 49fcbf2eeed (the blob this tree had at release c5e779efe8c), with
-   A/MemNormP.v e45ea6f496f (the blob this tree had at release c5e779efe8c) and Prog/bcmp_wrap_Fk.v 1fa5b214cf3 (the blob this tree had at release c5e779efe8c), no root lib/MemNorm*; leaf bcmp_wrap_c_on.v blob
-   ca2f37ea2b6 (the blob this tree had at release c5e779efe8c), bcmp_wrap_c.v 64293314ee8 (the blob this tree had at release c5e779efe8c); by path from a working branch f4423e55886).  Exit:
+   discharged by a Theorem Labs lane's closed A.Prog.bcmp_wrap_on.bcmp_wrap_holds_F_on (bcmp_wrap_on.v 49fcbf2eeed (the blob this tree had at release), with
+   A/MemNormP.v e45ea6f496f (the blob this tree had at release) and Prog/bcmp_wrap_Fk.v 1fa5b214cf3 (the blob this tree had at release), no root lib/MemNorm*; leaf bcmp_wrap_c_on.v blob
+   ca2f37ea2b6 (the blob this tree had at release), bcmp_wrap_c.v 64293314ee8 (the blob this tree had at release); by path from a working branch).  Exit:
    ly3 S3 are kept, so ctl_rt_C B ly3 S3 m' is rebuilt from the post's asan_cells / ro_agree and the post's
    `forall P, shadow_rw_on P mem3 -> shadow_rw_on P m'` at P := cut_shadow B ly3 S3 and P := img_shadow.
 
@@ -77,7 +78,7 @@
    from the wrapper's window); every other FRAC here is moved along registers only (Kit.kit_frac_move).  Every
    destruct of FRAC ends in `& _`.
 
-   BUILD STATE: TYPE-CHECK on a working branch shell 1899bed1aee (cb build, BASE row 23b918fe0c2e, a build machine,
+   BUILD STATE: TYPE-CHECK on a working branch shell (cb build, BASE row, a build machine,
    workspace (internal path)); the build of record is cbrec.sh's, named in the lane's report. *)
 
 From Coq Require Import ZArith List Lia Permutation Bool.
@@ -101,7 +102,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require A.Prog.Seg.F13 A.Prog.Seg.F1
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require A.Prog.Seg.F14F.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require A.ACtlG.Kit A.ACtlG.KitMem.
 (* route (C): the cut's ctl_rt_C (ACtlRtC.v), the region form (ShadowRwOn.v), the wrapper's _on leaf / proof
-   (a working branch f4423e55886, by path) and the F14F run's _on twin (Seg/F14F_on.v). *)
+   (a working branch, by path) and the F14F run's _on twin (Seg/F14F_on.v). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require A.ShadowRwOn A.ACtlRtC A.Prog.rng_asan A.Prog.sh_word_on.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require A.Prog.bcmp_wrap_c_on A.Prog.bcmp_wrap_on A.Prog.Seg.F14F_on.
 Import ListNotations.

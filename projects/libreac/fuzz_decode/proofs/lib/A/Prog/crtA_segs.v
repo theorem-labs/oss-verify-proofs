@@ -2,17 +2,18 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/boost-beast/http_request/lib/Spec/StrFun.v; 263 of its 300 lines of code are new or changed and 427 lines of the source are left out. *)
-(* crtA_segs: port of a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_segs_F.v:1-252
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* crtA_segs: port of a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_segs_F.v:1-252
    (crt_seg1_F .. crt_seg9_F), the footprint (ExecF.evtF) runs of the straight-line segments of check_round_trip in
    image A (fuzz_decode.asan).
    The addresses are re-based on the listing: every pc in a statement is a name of lib/A/Prog/crtA_iface.v
    (CRT_ENTRY, CRT_AT off with off = pc - entry, CRT_MALLOC / CRT_CALLOC / CRT_FREE / CRT_ENCODE / CRT_BCMP,
    CRT_LOOP_IN, CRT_LOOP_OUT); the frame list crt_fr and the constant CRT_A5 are crtA_iface's.
    The record imports lib/A/AsanRT.v, which is lib/A/AsanCells.v here (same names and bodies).  The record's
-   proofs/libreac/fuzz_decode/lib/A/Spec/StrFun.v (on a working branch at dc455613c81) does not exist here: its
+   proofs/libreac/fuzz_decode/lib/A/Spec/StrFun.v (on a working branch) does not exist here: its
    lemma Z_to_le_bytes_to_Z is copied below, and byte_range (same statement) comes from lib/A/Prog/AsanKAProof.v.
    The helpers crt_segs_F.v takes from
-   a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_segs.v are copied below, each
+   a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_segs.v are copied below, each
    with the lines it came from. *)
 From Stdlib Require Import ZArith List Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -28,7 +29,7 @@ Open Scope Z_scope.
 
 (* ---- helpers ---- *)
 
-(* Copied from a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Spec/StrFun.v:420-433
+(* Copied from a working branch:proofs/libreac/fuzz_decode/lib/A/Spec/StrFun.v:420-433
    (that file does not exist on this branch). *)
 Lemma Z_to_le_bytes_to_Z : forall bs : list byte, Z_to_le_bytes (length bs) (bytes_le_to_Z bs) = bs.
 Proof.
@@ -45,7 +46,7 @@ Proof.
     rewrite Z.div_add, Z.div_small by lia. cbn [Z.add]. exact IH.
 Qed.
 
-(* Copied from a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_segs.v:17-22
+(* Copied from a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_segs.v:17-22
    (needed by crt_frame_words). *)
 Lemma crt_le8_of_bytes : forall bs : list byte, length bs = 8%nat -> le8 (Z_to_bv 64 (bytes_le_to_Z bs)) = bs.
 Proof.
@@ -54,7 +55,7 @@ Proof.
   rewrite <- L at 1. apply Z_to_le_bytes_to_Z.
 Qed.
 
-(* Copied from a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_segs.v:24-28
+(* Copied from a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_segs.v:24-28
    (needed by crt_frame_words). *)
 Fixpoint crt_c8s (n : nat) (bs : list byte) : list cell :=
   match n with
@@ -62,7 +63,7 @@ Fixpoint crt_c8s (n : nat) (bs : list byte) : list cell :=
   | S n' => C8 (Z_to_bv 64 (bytes_le_to_Z (firstn 8 bs))) :: crt_c8s n' (skipn 8 bs)
   end.
 
-(* Copied from a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_segs.v:30-41
+(* Copied from a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_segs.v:30-41
    (needed by crt_frame_words). *)
 Lemma crt_c8s_spec : forall n bs, length bs = (8 * n)%nat ->
   cells_wf (crt_c8s n bs) /\ cells_bytes (crt_c8s n bs) = bs /\ cells_size (crt_c8s n bs) = (8 * n)%nat.
@@ -77,7 +78,7 @@ Proof.
     rewrite crt_le8_of_bytes, B by exact L8. apply firstn_skipn.
 Qed.
 
-(* Copied from a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_segs.v:43-51
+(* Copied from a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_segs.v:43-51
    (needed by crt_frame_words). *)
 Lemma crt_rw_c8s : forall segs m A n bs, rw_cells segs m A [CB (8 * n) bs] -> rw_cells segs m A (crt_c8s n bs).
 Proof.
@@ -89,7 +90,7 @@ Proof.
   - rewrite S. cbn [cells_size csize] in Hw. rewrite Nat.add_0_r in Hw. exact Hw.
 Qed.
 
-(* Copied from a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_segs.v:53-59. *)
+(* Copied from a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_segs.v:53-59. *)
 (* The carved 96 bytes, read as 12 words. *)
 Lemma crt_frame_words : forall m A bs, rw_cells rsegs m A [CB 96 bs] ->
   exists v0 v8 v16 v24 v32 v40 v48 v56 v64 v72 v80 v88 : word,
@@ -98,34 +99,34 @@ Proof.
   intros m A bs H. apply (crt_rw_c8s rsegs m A 12 bs) in H. cbn [crt_c8s] in H. do 12 eexists. exact H.
 Qed.
 
-(* Copied from a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_segs.v:61-65. *)
+(* Copied from a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_segs.v:61-65. *)
 (* bv_signed of a small non-negative literal word. *)
 Lemma crt_signed_lit : forall z, 0 <= z < 2^63 -> bv_signed (Z_to_bv 64 z) = z.
 Proof.
   intros z Hz. rewrite zb_signed, unsigned_lit by lia. destruct (Z.ltb_spec0 z (2^63)); lia.
 Qed.
 
-(* Copied from a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_segs.v:67-71. *)
+(* Copied from a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_segs.v:67-71. *)
 Ltac crt_regs := unfold mkR;
   repeat match goal with
   | |- TNode _ _ _ = TNode _ _ _ => f_equal
   | |- Some _ = Some _ => f_equal
   end.
 
-(* Copied from a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_segs.v:73
+(* Copied from a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_segs.v:73
    (used by crt_w). *)
 Ltac crt_usub := repeat match goal with |- context [bv_unsigned (Z_to_bv 64 ?z)] => rewrite (unsigned_lit z) by nia end.
 
-(* Copied from a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_segs.v:75
+(* Copied from a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_segs.v:75
    (used by crt_w). *)
 Ltac crt_shift := rewrite ?Z.shiftl_mul_pow2, ?Z.shiftr_div_pow2 by lia.
 
-(* Copied from a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_segs.v:77-79. *)
+(* Copied from a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_segs.v:77-79. *)
 Ltac crt_w := crt_shift; crt_usub; crt_shift; crt_usub;
   first [ reflexivity | f_equal; lia | apply Z_to_bv_eqm; f_equal; lia
         | f_equal; Z.div_mod_to_equations; nia ].
 
-(* ---- the segments: a working branch dc455613c81:proofs/libreac/fuzz_decode/lib/A/Prog/crt_segs_F.v ---- *)
+(* ---- the segments: a working branch:proofs/libreac/fuzz_decode/lib/A/Prog/crt_segs_F.v ---- *)
 
 (* crt_segs_F.v:13-19: *)
 

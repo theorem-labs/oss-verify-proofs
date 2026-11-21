@@ -14,7 +14,7 @@
    globals' payloads, which are image bytes (never hidden), that view is csw_view mem. asan_cells and the two cells'
    addresses come from the record's constant cells (DgnTransportCg.v transport_cells), and the two addressable
    premises from the zero shadow of GOT's and OW's payloads: the record's Tfib_zero_shadow rows (0x5e52e0, 0x5e53c0 -
-   0x5e52e0) and (0x5f3060, 0x5f3190 - 0x5f3060) (lib/A/AF0m.v:3105), a range of as_zero_shadow B each, read at the
+   0x5e52e0) and (0x5f3060, 0x5f3190 - 0x5f3060) (lib/A/AF0m.v:3106), a range of as_zero_shadow B each, read at the
    call state through DgnTransportCg.v decode_zshadow_at / decode_zshadow_rd (as diginet_session_config_default_cg.v
    reads g_cfg's).
    The proof of transport_check_state_settle_cg_of_F takes the kit's leaf_cg_of_evtF_stmt as the Section Hypothesis
@@ -38,11 +38,11 @@ Proof. reflexivity. Qed.
 
 Section LeafCg.
 Context {fx : YK11.FPState}.
-Variable world : Type.                                                (* YA0n.v:17 *)
-Variable w_H : world -> word -> bool.                                 (* YA0n.v:18 *)
-Variable SRr : world -> config -> (world -> config -> Prop) -> Prop.    (* YA0n.v:34 *)
-Variable alayout : Type.                                              (* YG0f.v:42 *)
-Variable astate : Type.                                               (* YG00.v:153 *)
+Variable world : Type.                                                (* YA0n.v:18 *)
+Variable w_H : world -> word -> bool.                                 (* YA0n.v:19 *)
+Variable SRr : world -> config -> (world -> config -> Prop) -> Prop.    (* YA0n.v:35 *)
+Variable alayout : Type.                                              (* YG0f.v:43 *)
+Variable astate : Type.                                               (* YG00.v:154 *)
 Variable AR : alayout -> astate -> world -> (word -> option byte) -> Model -> Prop.  (* YG0n.v:489 *)
 Variable aview : (word -> bool) -> (word -> option byte) -> Z -> option Z.          (* YG0n.v:17 *)
 Variable same_but_materialized : Model -> Model -> Prop.              (* YK04.v:538 *)

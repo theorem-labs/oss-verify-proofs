@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: PE_STATIC_A's new second conjunct, skipped where case_finish takes the depth bound from STC). *)
 
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -128,7 +129,7 @@ eapply (IHR ts'); [| exact INV' | exact Hco | exact Hcb | | | | | | | eapply fsa
 + intros E. exfalso. rewrite Ecs' in E. destruct Hstp as [E2 | E2]; rewrite E2 in E; discriminate E.
 + unfold SPOK. rewrite Ecs'. intros HH. exfalso. destruct Hstp as [E2 | E2]; rewrite E2 in HH; discriminate HH.
 + unfold ts'. eapply (tdepth_ok_pop ts l dp lp); [exact TD | exact Hl | exact Hdp | exact Hlp | reflexivity |].
-rewrite LEN32. pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & (_ & ((_ & MX) & _)) & _). lia.
+rewrite LEN32. pose proof STC as (_ & _ & _ & _ & _ & _ & _ & _ & _ & (_ & ((_ & MX) & _)) & _). lia.
 + unfold PBS. rewrite Ecs'. assert (HZP : zin (tl_st lp) [ST_array_add; ST_ovadd] = true) by (destruct Hstp as [-> | ->]; reflexivity).
 assert (HP9 : jpi (tl_st lp) (tl_ss lp) <= jpi (tl_st l) (tl_ss l)) by (rewrite Hst; destruct Hstp as [-> | ->]; jl_arith).
 destruct Hstp as [E9 | E9]; rewrite E9; pbs_norm; (eapply (PBJ_pop m m' ts dp l lp _ _ _ _ Hdp); [rewrite <- Hdp; exact Hl | exact Hlp | rewrite Hst; reflexivity | exact HZP | exact PBK | exact PBK' | lia | exact HP9]).

@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AE22.v (donor image sha256 7093581aab04), with its module paths changed and its addresses moved to libreac/fuzz_scene's ASan build. *)
-(* Modified by Theorem Labs, 2026-10: by a Theorem Labs lane, the .got canary cell (A_GOT_CANARY, V_GOT_CANARY) is row 209 of scene's generated Tfib_const_abs (AF0m / YF0m of a working branch d756770719b), not cgif's row 193. *)
+(* Modified by Theorem Labs, 2026-10: by a Theorem Labs lane, the .got canary cell (A_GOT_CANARY, V_GOT_CANARY) is row 209 of scene's generated Tfib_const_abs (AF0m / YF0m of a working branch), not cgif's row 193. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.

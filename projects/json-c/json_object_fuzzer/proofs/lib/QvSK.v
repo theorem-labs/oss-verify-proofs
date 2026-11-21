@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (RomBase.sys_rob at the nodes: srz_A_to_C_mut and srz_C_to_A_mut carry the node's sys_rob premise through srz_node and slb_node). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType.
@@ -280,13 +281,13 @@ Lemma srz_A_to_C_mut :
 Proof.
 apply (Q1lV.srealizes_slbody_mutind segs
 (fun c T _ => Q6EJ.srealizes segs c T) (fun V T c _ => Q6EJ.slbody segs V T c)).
-- intros c I evs nx T i0 Hn _ IH. exact (Q6EJ.srz_node segs c I evs nx T i0 Hn IH).
+- intros c I evs nx T i0 Hn Hrob _ IH. exact (Q6EJ.srz_node segs c I evs nx T i0 Hn Hrob IH).
 - intros c Hh. exact (Q6EJ.srz_halt segs c Hh).
 - intros c Hs Hh. exact (Q6EJ.srz_spin segs c (to_spin_A_to_C _ _ Hs) Hh).
 - intros c T T' _ IH Heq. exact (Q6EJ.srz_conseq segs c T T' IH Heq).
 - intros V T c c_e HV _ IHb Hst _ IHe. exact (Q6EJ.srz_loop segs V T c c_e HV IHb Hst IHe).
 - intros V T c _ IH. exact (Q6EJ.slb_exit segs V T c IH).
-- intros V T c I nx k Hn _ IHk HV. exact (Q6EJ.slb_node segs V T c I nx k Hn IHk HV).
+- intros V T c I nx k Hn Hrob _ IHk HV. exact (Q6EJ.slb_node segs V T c I nx k Hn Hrob IHk HV).
 Qed.
 
 Theorem srz_A_to_C : forall c T, Q1lV.srealizes segs c T -> Q6EJ.srealizes segs c T.
@@ -298,13 +299,13 @@ Lemma srz_C_to_A_mut :
 Proof.
 apply (Q6EJ.srealizes_slbody_mutind segs
 (fun c T _ => Q1lV.srealizes segs c T) (fun V T c _ => Q1lV.slbody segs V T c)).
-- intros c I evs nx T i0 Hn _ IH. exact (Q1lV.srz_node segs c I evs nx T i0 Hn IH).
+- intros c I evs nx T i0 Hn Hrob _ IH. exact (Q1lV.srz_node segs c I evs nx T i0 Hn Hrob IH).
 - intros c Hh. exact (Q1lV.srz_halt segs c Hh).
 - intros c Hs Hh. exact (Q1lV.srz_spin segs c (to_spin_C_to_A _ _ Hs) Hh).
 - intros c T T' _ IH Heq. exact (Q1lV.srz_conseq segs c T T' IH Heq).
 - intros V T c c_e HV _ IHb Hst _ IHe. exact (Q1lV.srz_loop segs V T c c_e HV IHb Hst IHe).
 - intros V T c _ IH. exact (Q1lV.slb_exit segs V T c IH).
-- intros V T c I nx k Hn _ IHk HV. exact (Q1lV.slb_node segs V T c I nx k Hn IHk HV).
+- intros V T c I nx k Hn Hrob _ IHk HV. exact (Q1lV.slb_node segs V T c I nx k Hn Hrob IHk HV).
 Qed.
 
 Theorem srz_C_to_A : forall c T, Q6EJ.srealizes segs c T -> Q1lV.srealizes segs c T.

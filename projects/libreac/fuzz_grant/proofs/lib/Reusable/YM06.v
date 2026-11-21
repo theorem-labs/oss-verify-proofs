@@ -2,12 +2,14 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YM06.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed SR_cut). *)
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From Stdlib Require Import Wellfounded.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require Import YK0n YK0i YK15.
+From OSSVerify.Proofs.libreac.fuzz_grant.lib.Reusable Require Import RomBase.
 Import ListNotations.
 Unset Lia Cache. Unset Nia Cache.
 Section d. Context {fx : YK11.FPState}.
@@ -55,9 +57,9 @@ Proof using.
 intros c I nx i0 Q Hnode H T HK.
 exact (rz_silent_allI segs c I nx i0 T Hnode (fun i => H i T HK)).
 Qed.
-Lemma SR_cut : forall c (Q : config -> Prop), budget_refused_at segs c -> SR c Q.
+Lemma SR_cut : forall c (Q : config -> Prop), budget_refused_at segs c -> sys_rob segs c -> SR c Q.
 Proof using.
-intros c Q Hb T _. apply rz_cut. exact Hb.
+intros c Q Hb Hrb T _. apply rz_cut; assumption.
 Qed.
 Lemma SR_case : forall (A : Prop) c Q,
 (A \/ ~ A) -> (A -> SR c Q) -> (~ A -> SR c Q) -> SR c Q.

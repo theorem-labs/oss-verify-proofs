@@ -1,9 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the auxv is the launch's whole vector of 27 or 29 pairs (auxv_vec, auxv_launch) in place of the old ten-pair auxv_words. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
+From LinuxProcessSemantics.LinuxProcessSem Require StackLayout.
 From OSSVerify.Proofs.jsoncons.fuzz_bigint.lib Require Import PropExec StoreOk ShapeAlg SpinAlg HeapIface.
 Import ListNotations.
 Open Scope Z_scope.
@@ -35,9 +37,26 @@ Definition in_initc (Lay : lib_layout) (a : Z) : Prop :=
 Definition cellz (segs : list Segment) (M : word -> option byte) (a : Z) (n : nat) (v : Z) : Prop :=
   rdn segs M (Z_to_bv 64 a) n = Some (word_to_le_bytes n (Z_to_bv 64 v)).
 
-(* [comment removed for export] *)
-Definition auxv_words (Lay : lib_layout) (uid rnd hw : Z) : list Z :=
-  [3; ll_phdr Lay; 4; ll_phent Lay; 5; ll_phnum Lay; 16; hw; 6; 4096; 11; uid; 12; uid; 23; 0; 25; rnd; 0; 0].
+(* The auxiliary vector the launch writes at LPS 727298f3, as Z words:
+   [StackLayout.auxv_entries] flattened (type, value, type, value, ...).
+   It is 27 pairs, or 29 under CONFIG_RSEQ ([StackLayout.auxv_count]),
+   led by AT_SYSINFO_EHDR, the eight cache words and AT_MINSIGSTKSZ. *)
+Definition auxv_vec (la : StackLayout.LaunchAuxv) (ph : PhdrInfo) (entry gid ae : word) (uid rnd hw : Z) : list Z :=
+  map (fun w : word => bv_unsigned w)
+    (flat_map (fun e : word * word => [fst e; snd e])
+       (StackLayout.auxv_entries la ph entry (Z_to_bv 64 uid) gid (Z_to_bv 64 hw) (Z_to_bv 64 rnd) ae)).
+
+(* The vector at [av], as the launch's stack image holds it: the launch's own
+   auxv facts ([la]: vDSO base, cache words, AT_MINSIGSTKSZ, CONFIG_RSEQ), its
+   program headers (pinned to the layout's), entry, gid and AT_EXECFN pointer
+   are the witnesses; [uid], [rnd] (AT_RANDOM) and [hw] (AT_HWCAP) are the
+   caller's.  Proved at the launch by [RefLayout.read_auxv_word]. *)
+Definition auxv_launch (segs : list Segment) (M : word -> option byte) (Lay : lib_layout) (av uid rnd hw : Z) : Prop :=
+  exists (la : StackLayout.LaunchAuxv) (ph : PhdrInfo) (entry gid ae : word),
+    Z.of_N (ph_addr ph) = ll_phdr Lay /\ Z.of_N (ph_ent ph) = ll_phent Lay /\ Z.of_N (ph_num ph) = ll_phnum Lay
+    /\ av + 16 * Z.of_nat (StackLayout.auxv_count (StackLayout.la_rseq la)) <= 2 ^ 47
+    /\ (forall j, (j < 2 * StackLayout.auxv_count (StackLayout.la_rseq la))%nat ->
+          cellz segs M (av + 8 * Z.of_nat j) 8 (nth j (auxv_vec la ph entry gid ae uid rnd hw) 0)).
 
 (* [comment removed for export] *)
 Definition lib_init_facts (Lay : lib_layout) (av uid rnd tid canary hw : Z) (M : word -> option byte) : Prop :=
@@ -49,8 +68,8 @@ Definition lib_init_facts (Lay : lib_layout) (av uid rnd tid canary hw : Z) (M :
   /\ (forall k, (k < 6)%nat -> cellz segs M (ll_locale Lay + 8 * Z.of_nat k) 8 0)   (* [comment removed for export] *)
   /\ cellz segs M (ll_td_canary Lay) 8 canary
   /\ cellz segs M (ll_guard Lay) 8 canary /\ 0 <= canary < 2 ^ 64
-  /\ cellz segs M (ll_auxvp Lay) 8 av /\ sptop <= av /\ av + 160 <= 2 ^ 47 /\ av mod 8 = 0
-  /\ (forall j, (j < 20)%nat -> cellz segs M (av + 8 * Z.of_nat j) 8 (nth j (auxv_words Lay uid rnd hw) 0))
+  /\ cellz segs M (ll_auxvp Lay) 8 av /\ sptop + 16 <= av /\ av + 160 <= 2 ^ 47 /\ av mod 8 = 0
+  /\ auxv_launch segs M Lay av uid rnd hw
   /\ 0 <= uid < 2 ^ 32 /\ 0 <= hw < 2 ^ 64
   /\ sptop <= rnd /\ rnd + 16 <= 2 ^ 64.
   (* [comment removed for export] *)

@@ -3,10 +3,11 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names and numbers changed; 809 of its 930 lines of code are new or changed and 890 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment R4 of fuzz_ctrl LLVMFuzzerTestOneInput (asan-ubsan, image B, libreac v1.9.0): [0x8168c, 0x81698],
    4 instructions, cut Inv_B8168c (v1.9 pc 0x8168c) -> cut Inv_B8169c (v1.9 pc 0x8169c) (R4 (plan-asan-ubsan.md
-   section 2 (a working note, not in this delivery)); section 4, MSET = checked_memset, 0x52600).  Re-fit of the v1.8 proof (a working branch
-   c439fa41c5b) onto the v1.9.0 bytes and a Theorem Labs lane's v1.9 cut bundle; the cut names are still the v1.8 names.
+   section 2 (a working note, not in this delivery)); section 4, MSET = checked_memset, 0x52600).  Re-fit of the v1.8 proof (a working branch)
+   onto the v1.9.0 bytes and a Theorem Labs lane's v1.9 cut bundle; the cut names are still the v1.8 names.
    rule 24: no function proved (a slot segment).  The code sets a2 = 72 (0x8168c li a2,72), reloads the fragment
    record address [A + 112] = fr + 2256 (0x81690 ld a0,112(s1); spilled at 0x814c0), sets a1 = 0 (0x81694 li a1,0)
    and calls checked_memset (MSET@0x81698), which writes 72 zero bytes at fr + 2256.  The range has no instrumented

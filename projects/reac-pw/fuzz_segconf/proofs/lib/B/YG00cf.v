@@ -1,5 +1,5 @@
-(* copied from proofs/cgif/cgif_file_fuzzer/lib/YG00cf.v @ 95e6f1d72b6 (c-asan, frozen), module paths changed only. *)
-(* prefix-only copy of proofs/omx-clap-core/fuzz_preset/lib/Reusable/YG00cf.v@6e9ff2e6573c487199f2990b43c5e19cce86e581, do not edit (single writer: h-mani-a8; send change requests to h-mani-a8 as diffs). *)
+(* copied from proofs/cgif/cgif_file_fuzzer/lib/YG00cf.v (c-asan, frozen), module paths changed only. *)
+(* prefix-only copy of proofs/omx-clap-core/fuzz_preset/lib/Reusable/YG00cf.v, do not edit (single writer: h-mani-a8; send change requests to h-mani-a8 as diffs). *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Theorem Labs, 2026-10: fuzz_preset's second allocator instance (suffix cf), the MODEL.
@@ -7,10 +7,11 @@
    class is "impossible". On preset a class DOES fill on accepted input (class 17 maps 3,584 MiB = kFreeArrayOffset,
    measured). This file replaces that one check by the arm the binary runs, in cgif's vocabulary, ported from
    msgpack-c's released refusal (proofs/msgpack-c/unpack_pack_fuzzer/lib/Spec/AsanCtrl.v:284, exh_report :363-371,
-   release ref b6a0088adc): report, flag the class, return NULL; no IFail.
+   release ref): report, flag the class, return NULL; no IFail.
    cgif's YG00.v is NOT edited; class 24 keeps cgif's vacuous arm, by calling cgif's own functions.
    No address: the image pcs come from the class CfImg (YGcfNames.v). *)
 (* Modified by Theorem Labs, 2026-10: the image-B copy (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca) of lib/Reusable/YG00cf.v, derived mechanically (bkit derive_b.py): its Require lines name the lib/B copies; nothing else differs. The comments are the A file's. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From OSSVerify.Proofs.reac_pw.fuzz_segconf.lib.Reusable Require Import YG00 YG0a YG01.

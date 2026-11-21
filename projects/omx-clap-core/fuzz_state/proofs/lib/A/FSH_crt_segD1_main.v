@@ -1,5 +1,5 @@
 (* rule 24: proves no function (kind: segment lemma of check_round_trip's walk, PORTED from a working branch
-   d25a984c903 proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_sd16.v (the stretch from pj_parse's return
+   proofs/omx-clap-core/fuzz_state/lib/A/Prog/check_round_trip_sd16.v (the stretch from pj_parse's return
    through the second decode and the bcmp to fuzz_free, crt16_runA :392 / crt16_runB :541), check_round_trip_sd17.v and
    check_round_trip_sd18.v (the two fuzz_free stages St17 :521 / St18 :535 of check_round_trip_stdefs.v)). The checker's
    CONFIRM for the walk (a Theorem Labs lane, role check, 2026-10-29 04:3xZ) is on the lane head

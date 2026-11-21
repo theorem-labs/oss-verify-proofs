@@ -1,7 +1,7 @@
 (* G4.ExDecl, IMAGE B: ex_seg_P (FMW_ex_base.v:191), expected's declaration body from EX_P (0x814cc) on fm.asan-ubsan,
    composed from the sub-segments of FMW_ex_decl_base.v: P -> D1 (spaces) -> D2 (name) -> D3 (spaces after ':') ->
    D3c (strchr) -> D4 (strncmp) -> D5 (plain) -> D6 -> {EX_T, EX_R}, every "continue" through B's shared block
-   EX_JUMP / EX_NEXT -> EX_L (FMW_ex_decl_n.v). B twin of lib/A/FMW_ex_decl.v (06d82004dc3). The UBSan guards on these
+   EX_JUMP / EX_NEXT -> EX_L (FMW_ex_decl_n.v). B twin of lib/A/FMW_ex_decl.v. The UBSan guards on these
    paths and the file that refutes each: 0x8151c (d1), 0x81578 and 0x815d4 (d2), 0x81604 and 0x81628 (d3), 0x816b0
    (d5), 0x816a0 (n). ex_seg_R (B's FMW_ex_ret.v) and ex_seg_T (the tok lane) are hypotheses. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_manifest.lib.Reusable Require YZ00.

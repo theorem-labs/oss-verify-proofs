@@ -5,12 +5,13 @@
    record()'s arms to the tail jump into answer, after proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v and ACh2.v (a walk
    segment: run, call out by cl_callS, resume) over fuzz_command's listing. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/descriptors_get_s3.v, with its module paths and module names changed; 445 of its 524 lines of code are new or changed and 934 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* A segment lemma of sup_host_setting's ASan+UBSan walk (plugin-hostd/fuzz_command, fuzz_command.asan-ubsan), on the
    points and statements of sup_host_setting_s0.v:
    - hs_seg_rec: from REC (0x8b64c, back from record(6), a0 = c) `mv s11,a0; mv a1,s6`, the call of arg_line
      (0x8b128, at 0x8b654) through cl_callS_wide (arg_line writes c->nargs and c->args[0], program statics in the
      whole call's footprint), back at AL (0x8b658).
-   The B twin of the ASan walk's hs_seg_al (lib/A/Prog/sup_host_setting_s4.v on e323bbe76d2, a call of arg_i there),
+   The B twin of the ASan walk's hs_seg_al (lib/A/Prog/sup_host_setting_s4.v, a call of arg_i there),
    with B's frame: every call is made at the realigned sp1 = hs_sp1 sp0, with s0 = sp0, so the callee's frame chain
    is the entry's with the prologue's frame record pushed on it (hs3_achain, achain_push). Shared helpers of the walk (the whole call's footprint, the line
    and the tokens at a later state, the frame kept by a callee) are here as hs3_*. *)

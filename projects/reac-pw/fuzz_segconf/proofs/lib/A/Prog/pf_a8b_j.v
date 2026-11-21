@@ -3,13 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: the walk of reac_box_catalogue on fuzz_segconf.asan-ubsan (image B, pin sha256
    c3796c0b38f3, twin 80e82127e8ca; entry 0x8a8a0, 84 bytes, 21 instructions, a 16-byte frame, no side-stack
    frame): reac_box_catalogue_contract of lib/B/Prog/reac_box_catalogue_c.v (image B's copy of the image-A owner's FINAL
-   text at 6f783602b5e3) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
+   text) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
    entry, SRr of apost_base at the return, over `Context {PI : PAImg seg_listing}` of image B's listing,
    lib/B/Prog/SegPa.v).
-   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane, commit
-   434ade288123, both arms): the same entry seeds, token runs and return steps over image B's listing modules and
+   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane,
+    both arms): the same entry seeds, token runs and return steps over image B's listing modules and
    B's kit copies. The UBSan alignment check is read from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_catalogue.v
-   at origin/ossv/recipes 3abc3740de97 (the same image-B code but 4 pc-relative words; caller-journal form, not
+   (the same image-B code but 4 pc-relative words; caller-journal form, not
    copied), whose token run decides it the same way.
    Image B's code differs from image A's by two instructions: `andi a1,a0,7` (0x8a8ac) and `bnez a1,0x8a8ec`
    (0x8a8b0) to `unimp` (0x8a8ec), the UBSan alignment check of the 8-byte store through c.
@@ -37,17 +37,18 @@
    definitions (SegInstA's names at image B): SegInstB.STK_reac_box_catalogue and SegInstB.catA, tied to this walk
    by the lemmas STK_reac_box_catalogue_B (the value 16) and catA_B (listing object 77 of B's seg_objs). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/reac_box_catalogue.v, with its module paths and module names changed; 496 of its 541 lines of code are new or changed and 408 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, ASan image A (fuzz_segconf.asan): the sub-walk JOIN of segment A8b of
    reac_segconf_parse_file's walk, 0x889b4 .. 0x889f4 (lib/A/Prog/pf_a8b_d.v's cut PF_A8B_JOIN). By the G3 walk
    owner, 2026-10-30.
    proves no function (kind: segment lemma of reac_segconf_parse_file's walk): one sub-walk of a walk-internal
    segment; the lane's rule-24 record is
-   the unit's internal record, commit dfb49d6ad789, path records/segp/g3-lookup.md
+   the unit's internal record, path records/segp/g3-lookup.md
    (reuse verdict: none, written new).
 
    pfa8b_join : forall n, HA_TAIL B n -> H_A8B_JOIN (fx := fx) B n.
 
-   THE CODE (the unit's internal record, commit dfb49d6ad789, path records/segp/dis/
+   THE CODE (the unit's internal record, path records/segp/dis/
    reac_segconf_parse_file.fuzz_segconf.asan.s):
      0x889b4 lb a0,0(a3); bnez a0                       check #38 (load4 c->gen; a3 = shadow_addr (c + RC_GEN))
      0x889bc addi a0,s4,0x160; srli a1,a0,3; add a1,a1,s6; lb a2,0(a1)   check #39 (store4 seg[i].seen_gen)
@@ -190,8 +191,8 @@ assert (Hn : (~ (d <= a < d + L) /\ ~ (lo <= a < hi)) /\ 0 <= a < 2 ^ 64).
 destruct Hn as ([N1 N2] & Hr). unfold pfk_keep in K. rewrite (K a Hr N1 N2). exact (HR a Ha Ho He).
 Qed.
 
-(* cur_name and buf are addressable at the line scope (segment A7's pf_a7_d.v a7_addr_buf, commit
-   0c85038238f5, for both objects; the hull from PaLibF's shadow_hull_vis_of_frame) *)
+(* cur_name and buf are addressable at the line scope (segment A7's pf_a7_d.v a7_addr_buf,
+    for both objects; the hull from PaLibF's shadow_hull_vis_of_frame) *)
 Lemma pfj_addr_frame : forall v pos lyc Sc (Wc : world SEGS) mem md q n,
   AR SEGS B lyc Sc Wc mem md -> In (5, pos) (frames Sc) -> lyc = p_ly v -> a5_G v pos ->
   pf_fsh (rdW Wc mem) (pf_SH v pos) PF_SC_LINE ->

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the write steps take the channel-reader premise (m_channel_reader) the model's new write arms read and carry it through page materialisation (sbm_reader). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -335,6 +336,7 @@ Context {Clg : Ceiling}.  (* [comment removed for export] *)
         C8 s6; C8 s5; C8 s4; C8 s3; C8 s2; C8 s1; C8 s0; C8 ra]).
   (* [comment removed for export] *)
   Hypothesis DONEK : forall m' md', ainv A m' md' -> m_fs md' = m_fs md0 -> m_fds md' = m_fds md0 -> m_halted md' = None ->
+      m_channel_reader md' = true ->   (* 08b1429: channel-reader-premise *)
       mem_inv rsegs (aview A m') -> stk rsegs (aview A m') lo (bv_unsigned sp) ->
       munch W0 v0 (aview A m') -> wmono rsegs v0 (aview A m') ->
       file_at (aview A m') Fa (mf_set_w f (Z_to_bv 64 (mf_buf f)) (Z_to_bv 64 (mf_buf f)) (Z_to_bv 64 (mf_buf f + mf_bufsize f))) ->
@@ -389,6 +391,7 @@ Context {Clg : Ceiling}.  (* [comment removed for export] *)
     ((pcv = WRITEV_ECALL1 /\ s3' = Z_to_bv 64 iovp) \/ (pcv = WRITEV_ECALL2 /\ s4' = Z_to_bv 64 iovp)) ->
     ainv A m md -> mem_inv rsegs (aview A m) ->
     fd_lookup (m_fds md) (Z_to_bv 64 fd) = Some (FdChannel (Z_to_bv 64 fd)) -> m_fs md = m_fs md0 -> m_fds md = m_fds md0 ->
+    m_channel_reader md = true ->   (* 08b1429: channel-reader-premise *)
     stk rsegs (aview A m) lo (bv_unsigned sp + -112) -> WFRAME (aview A m) j b0 l0 b1 l1 -> file_at (aview A m) Fa f ->
     ro_cells rsegs (aview A m) SSP_GUARD [C8 g] ->
     0 <= l0 -> 0 <= l1 -> 0 <= b0 -> b0 + l0 < 2^47 -> 0 <= b1 -> b1 + l1 < 2^47 ->
@@ -407,7 +410,7 @@ Context {Clg : Ceiling}.  (* [comment removed for export] *)
       (t_emit (W fd REST) K).
   Proof.
     induction n as [|n IH]; intros REST HN pcv ra' s3' s4' t0' t1' t2' a3' a4' a5' a6' t3' t4' t5' t6' iovp cnt rem m md j b0 l0 b1 l1
-      PCV AINV MI FDL FS FDS ST FR FILE CAN L0 L1 B0 B0h B1 B1h REM RR RAV SEP0 SEP1 INV MU WM.
+      PCV AINV MI FDL FS FDS RDR ST FR FILE CAN L0 L1 B0 B0h B1 B1h REM RR RAV SEP0 SEP1 INV MU WM.
     { exfalso. destruct REST; cbn in HN, REM; lia. }
     unfold file_at, file_cells in FILE. unfold SSP_GUARD in CAN.
     assert (CEILv : 0x7fff7f800000 <= lo) by (pose proof alloc_ceiling_val; lia). pose proof (zr_word sp) as SPR; unfold inr64 in SPR.
@@ -467,7 +470,9 @@ Context {Clg : Ceiling}.  (* [comment removed for export] *)
           pose proof (as_minv LPA A _ _ AINV0) as [_ HH3]. pose proof (sbm_io _ _ SBM) as (FS3 & FDS3 & _).
           rewrite skipn_all2 by lia.
           eapply srz_conseq; [| apply t_eq_sym; apply t_emit_nil_eq; exact HK].
-          apply DONEK; [exact AINV0 | rewrite FS3, FS2; exact FS | rewrite FDS3, FDS2; exact FDS | exact HH3 | assumption | exact ST9 | exact MU | exact WM | exact FILE9].
+          apply DONEK; [exact AINV0 | rewrite FS3, FS2; exact FS | rewrite FDS3, FDS2; exact FDS | exact HH3
+                       | rewrite (sbm_reader _ _ SBM), (sbm_reader _ _ SB2); exact RDR   (* 08b1429: channel-reader-premise *)
+                       | assumption | exact ST9 | exact MU | exact WM | exact FILE9].
         - (* [comment removed for export] *)
           pose proof (munch_refl [(bv_unsigned sp - 112, bv_unsigned sp)] (aview A m)) as MU3. pose proof (wmono_refl rsegs (aview A m)) as WM3.
           assert (CF3 : client_fpx (L:=LPA) A (aview A m) [(bv_unsigned sp - 112, bv_unsigned sp)]).
@@ -491,6 +496,7 @@ Context {Clg : Ceiling}.  (* [comment removed for export] *)
                 [ right; split; reflexivity
                 | exact AINV0 | exact MI9
                 | rewrite FDS3, FDS2; exact FDL | rewrite FS3, FS2; exact FS | rewrite FDS3, FDS2; exact FDS
+                | rewrite (sbm_reader _ _ SBM), (sbm_reader _ _ SB2); exact RDR   (* 08b1429: channel-reader-premise *)
                 | exact ST9 | exact FR9 | exact FILE | exact CAN
                 | lia | lia | lia | lia | lia | lia
                 | rewrite length_skipn; rewrite length_app in Hk2; lia
@@ -518,6 +524,7 @@ Context {Clg : Ceiling}.  (* [comment removed for export] *)
                 [ right; split; reflexivity
                 | exact AINV0 | exact MI9
                 | rewrite FDS3, FDS2; exact FDL | rewrite FS3, FS2; exact FS | rewrite FDS3, FDS2; exact FDS
+                | rewrite (sbm_reader _ _ SBM), (sbm_reader _ _ SB2); exact RDR   (* 08b1429: channel-reader-premise *)
                 | exact ST9 | exact FR9 | exact FILE | exact CAN
                 | lia | lia | lia | lia | lia | lia
                 | rewrite length_app, length_skipn; rewrite length_app in Hk2; lia
@@ -544,6 +551,7 @@ Context {Clg : Ceiling}.  (* [comment removed for export] *)
               [ right; split; reflexivity
               | exact AINV0 | exact MI9
               | rewrite FDS3, FDS2; exact FDL | rewrite FS3, FS2; exact FS | rewrite FDS3, FDS2; exact FDS
+              | rewrite (sbm_reader _ _ SBM), (sbm_reader _ _ SB2); exact RDR   (* 08b1429: channel-reader-premise *)
               | exact ST9 | exact FR9 | exact FILE | exact CAN
               | lia | lia | lia | lia | lia | lia
               | rewrite length_skipn; lia
@@ -574,7 +582,7 @@ Context {Clg : Ceiling}.  (* [comment removed for export] *)
       unfold W. replace (B0s ++ B1s) with (concat [B0s; B1s]) by (cbn; rewrite app_nil_r; reflexivity).
       eapply (srz_writev_hull (cl_segs LPA) (ahull A) (alhull A) (aeager A) _ md (Z_to_bv 64 66) fd (Z_to_bv 64 (bv_unsigned sp + -104))
                 [(Z_to_bv 64 b0, Z_to_bv 64 l0); (Z_to_bv 64 b1, Z_to_bv 64 l1)] [B0s; B1s] K);
-        [ reflexivity | exact HH | reflexivity | exact FDL | lia | reflexivity | reflexivity | reflexivity | reflexivity | cbn; lia
+        [ reflexivity | exact HH | reflexivity | exact FDL | exact RDR | lia | reflexivity | reflexivity | reflexivity | reflexivity | cbn; lia
         | cbn [iov_array]; rewrite !unsigned_lit by lia;
           replace (bv_unsigned sp + -104 + 16 + 8) with (bv_unsigned sp + -88 + 8) by lia; replace (bv_unsigned sp + -104 + 16) with (bv_unsigned sp + -88) by lia;
           OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib.AndN.rsplit; [exact RDb0 | exact RDl0 | lia | exact RDb1 | exact RDl1 | lia]
@@ -593,7 +601,7 @@ Context {Clg : Ceiling}.  (* [comment removed for export] *)
       unfold W. replace REST with (concat [REST]) by (cbn; rewrite app_nil_r; reflexivity).
       eapply (srz_writev_hull (cl_segs LPA) (ahull A) (alhull A) (aeager A) _ md (Z_to_bv 64 66) fd (Z_to_bv 64 (bv_unsigned sp + -88))
                 [(Z_to_bv 64 b1, Z_to_bv 64 l1)] [REST] K);
-        [ reflexivity | exact HH | reflexivity | exact FDL | lia | reflexivity | reflexivity | reflexivity | reflexivity | cbn; lia
+        [ reflexivity | exact HH | reflexivity | exact FDL | exact RDR | lia | reflexivity | reflexivity | reflexivity | reflexivity | cbn; lia
         | cbn [iov_array]; rewrite !unsigned_lit by lia; OSSVerify.Proofs.varnish.esi_parse_fuzzer.lib.Lib.AndN.rsplit; [exact RDb1 | exact RDl1 | lia]
         | cbn [iov_bufs]; unfold word_to_nat; rewrite !unsigned_lit by lia; rewrite <- REM1, REM, !Nat2Z.id; split; [exact RB1 | exact I]
         | cbn [iovs_total]; rewrite !unsigned_lit by lia; lia
@@ -617,7 +625,7 @@ Context {Clg : Ceiling}.  (* [comment removed for export] *)
   Lemma stdio_write_ok : stdio_write_stmt.
   Proof.
     unfold stdio_write_stmt. intros until K. cbv zeta.
-    intros AINV MI A0 A1 A2 FILE FDR FAlo FAhi IMGC FDL WB WP WPE PB PS LSUM LPOS B0 B1 B2 PLE S0 S1 SEP0 SEP1 [g CAN] GOT ST LO CEIL SPHI HK HKONT.
+    intros AINV MI A0 A1 A2 FILE FDR FAlo FAhi IMGC FDL RDR WB WP WPE PB PS LSUM LPOS B0 B1 B2 PLE S0 S1 SEP0 SEP1 [g CAN] GOT ST LO CEIL SPHI HK HKONT.
     unfold STDIO_WRITE_STACK in *. unfold SSP_GUARD in FAhi. subst a0 a1 a2.
     pose proof (zr_word sp) as SPR; unfold inr64 in SPR. assert (CEILv : 0x7fff7f800000 <= lo) by (pose proof alloc_ceiling_val; lia).
     pose proof CAN as CAN'. unfold SSP_GUARD in CAN'. pose proof GOT as GOT'. unfold SSP_GOT, SSP_GUARD in GOT'.
@@ -645,6 +653,7 @@ Context {Clg : Ceiling}.  (* [comment removed for export] *)
       [ left; split; [reflexivity|]; destruct (Z.of_nat (length pend) =? 0); reflexivity
       | exact AINV1 | exact MI1
       | rewrite FDS1; exact FDL | exact FS1 | exact FDS1
+      | rewrite (sbm_reader _ _ SBM); exact RDR   (* 08b1429: channel-reader-premise *)
       | exact ST1 | exact FR1 | exact FILE' | exact CAN'
       | lia | lia | lia | lia | lia | lia
       | rewrite length_app; lia | lia | pose proof (zr_word ra); unfold inr64 in *; lia
@@ -657,8 +666,11 @@ Context {Clg : Ceiling}.  (* [comment removed for export] *)
         left. split; [reflexivity|]. split; [reflexivity|]. split; [lia|].
         first [ hotw_ex2 (p0 :: pend') s | exists (p0 :: pend'), s ]. split; [reflexivity|]. split; [exact PB|]. split; [exact PS|]. split; reflexivity. }
     (* [comment removed for export] *)
-    intros m' md' AINV' FS' FDS' HH' MI' ST' MU' WM' FILE9 t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6'.
-    apply (HKONT m' md' AINV'); [split; [exact FS'| split; [exact FDS'| exact HH']] | exact FILE9 |].
+    intros m' md' AINV' FS' FDS' HH' RDR' MI' ST' MU' WM' FILE9 t0' t1' t2' a1' a2' a3' a4' a5' a6' a7' t3' t4' t5' t6'.
+    apply (HKONT m' md' AINV').
+    { split; [exact FS'| split; [exact FDS'| split; [exact HH'|]]].
+      rewrite RDR'; symmetry; exact RDR. }   (* 08b1429: channel-reader-premise *)
+    { exact FILE9. }
     hot_eexists_all. split; [reflexivity|].
     split; [exact MU'|]. split; [exact WM'|]. split; [exact MI'| exact ST'].
   Qed.
@@ -725,7 +737,8 @@ Context {Clg : Ceiling}.  (* [comment removed for export] *)
     pose proof (as_minv LPA A m3 md3 AINV3) as [_ HH3].
     pose proof (sbm_io _ md3 SBM0) as (FS3 & FDS3 & _).
     eapply (HKONT m3 md3 AINV3).
-    { split; [| split; [| exact HH3]]. rewrite FS3, FS2, FS1; reflexivity. rewrite FDS3, FDS2, FDS1; reflexivity. }
+    { split; [| split; [| split; [exact HH3 |]]]. rewrite FS3, FS2, FS1; reflexivity. rewrite FDS3, FDS2, FDS1; reflexivity.
+      rewrite (sbm_reader _ _ SBM0), (sbm_reader _ _ SBM2), (sbm_reader _ _ SBM); reflexivity.   (* 08b1429: channel-reader-premise *) }
     { exact FILE3. }
     hot_eexists_all. split; [reflexivity|].
     split. { first [exact MU | eapply munch_trans; [exact MU| exact MU2]]. }

@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6bC4.v at f3898085bda (with c2_envz /
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW6bC4.v (with c2_envz /
    c2_all256 / c2_regv from RPgW6aC2h.v and tl_val_at from RPgW6aTail.v) for reac-pw/fuzz_headamp's image B: image
    B's case-4 code (the pointer-overflow test before the input read, the input byte's shadow check with its slow block
    0x827ec, the join through 0x82610 / 0x82614), image B's entry state HPgW6bBase.hb_entry with a6 pinned to 1, the

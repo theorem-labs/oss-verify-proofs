@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's ProcInput; the launch premises valid_launch and entry_launch_ok_va; the model's m_kernel field). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool String.
@@ -69,18 +70,27 @@ Proof.
 Qed.
 
 Section T9.
-Variable sp0 : word.
-Variables av ev : list (list byte).
-Variables uid tid hw : word.
+(* LPS 08b1429: the section takes the launch ([inp], [mbase], [entry], [brk], with
+   [Hvl] and [Hlau]) instead of argv/envp/uid/hwcap, as UDrvMain's Handoff section
+   does; [Hfits] is kept so the statement is unchanged, now stated over the
+   [av]/[ev] notations. *)
+Variable inp : ProcInput.
+Variables mbase entry : word.
+Variables sp0 brk : word.
+Variable tid : word.
 Variable rdraw : EntryDraw.
 Variable regs : bvmap 5 word.
 Variable mem : word -> option byte.
+Local Notation av := (in_argv inp) (only parsing).
+Local Notation ev := (in_envp inp) (only parsing).
 Hypothesis Hsp : valid_sp sp0.
 Hypothesis Hva : valid_argv av.
 Hypothesis Hve : valid_envp ev.
+Hypothesis Hvl : valid_launch inp.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp0 brk mbase rdraw) inp.
 Hypothesis Hfits : entry_stack_fits sp0 av ev.
 Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-Hypothesis ME : main_entry sp0 av ev uid tid hw rdraw regs mem.
+Hypothesis ME : main_entry inp mbase entry sp0 rdraw tid regs mem.
 Hypothesis Hargc2 : length av = 2%nat.
 Variables IMG_LO IMG_END HTOP : Z.
 Variable STATIC : list ivl.
@@ -94,7 +104,7 @@ Hypothesis HCELL : forall hs m m' md, hi_Heap HI hs m md -> munch CELLS_NE m m' 
   (forall a, 0x65b58 <= a < 0x65b60 \/ 0x97c00 <= a < 0x97c08 -> mrd PSEGS m' (Z_to_bv 64 a) = mrd PSEGS m (Z_to_bv 64 a)) -> hi_Heap HI hs m' md.
 Hypothesis HNL : forall hs m md, hi_Heap HI hs m md -> NL m.
 Hypothesis HSTATI : forall x, ~ ioutside IMGIV x -> ioutside (CELLS_NE ++ ERRC) x -> ioutside STATIC x.
-Hypothesis HMV : forall hs m md md', hi_Heap HI hs m md -> m_vmmaps md' = m_vmmaps md -> m_halted md' = None -> m_vm_lazy md' = [] -> hi_Heap HI hs m md'.
+Hypothesis HMV : forall hs m md md', hi_Heap HI hs m md -> m_vmmaps md' = m_vmmaps md -> m_kernel md' = m_kernel md -> m_halted md' = None -> m_vm_lazy md' = [] -> hi_Heap HI hs m md'.
 Hypothesis HSTATR : forall x, RSX x -> ioutside STATIC x.
 Variable data : list byte.
 Variable fs0 : Fs.Fs.
@@ -104,20 +114,20 @@ Hypothesis HFZ : fuzz_contract PSEGS DCFG (hi_HS HI) (hi_Heap HI) (hi_blocks HI)
 Hypothesis HSRO : forall x, 0x10000 <= x < 0x22000 \/ 0x66b98 <= x < 0x66b9c -> ~ KRO x -> ioutside STATIC x.
 Hypothesis HKRO : forall hs m md, hi_Heap HI hs m md -> pristine m 0x18288 0x182a8 /\ pristine m 0x182a8 0x18327.
 
-Let E := E_main sp0 av ev tid (canary rdraw) regs.
-Local Notation ITHEAD' := (ITHEAD sp0 av ev tid rdraw regs mem IMG_LO IMG_END HTOP STATIC HI data fs0).
-Local Notation TRHEAD' := (TRHEAD sp0 av ev tid rdraw regs mem IMG_LO IMG_END HTOP STATIC HI data fs0).
+Let E := E_main inp sp0 (ed_top rdraw) tid (canary rdraw) regs.
+Local Notation ITHEAD' := (ITHEAD inp sp0 tid rdraw regs mem IMG_LO IMG_END HTOP STATIC HI data fs0).
+Local Notation TRHEAD' := (TRHEAD inp sp0 tid rdraw regs mem IMG_LO IMG_END HTOP STATIC HI data fs0).
 Local Notation KREST' := (KREST fs0).
 Local Notation CALLS := (Z.of_nat (n_calls data)).
-Local Notation it_fx' := (it_fx sp0 av ev uid tid hw rdraw regs mem Hsp Hva Hve ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB HIMG HI HOK HERR HCELL HSTATI data fs0).
-Local Notation fuzz_step' := (fuzz_step sp0 av ev uid tid hw rdraw regs mem Hsp Hva Hve ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB HIMG HI HOK HSTATI data fs0 HFZ HSRO HKRO).
-Local Notation tail1' := (tail1 sp0 av ev uid tid hw rdraw regs mem Hsp Hva Hve Htid ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB HIMG HSTATX HI HOK HERR HCELL HNL HSTATI data fs0).
-Local Notation tail2' := (tail2 sp0 av ev uid tid hw rdraw regs mem Hsp Hva Hve Htid ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB HIMG HSTATX HI HOK HERR HCELL HNL HSTATI data fs0).
-Local Notation tail3' := (tail3 sp0 av ev uid tid hw rdraw regs mem Hsp Hva Hve Htid ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB HIMG HSTATX HI HOK HERR HCELL HNL HSTATI data fs0).
-Local Notation tail4' := (tail4 sp0 av ev uid tid hw rdraw regs mem Hsp Hva Hve Htid ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB HIMG HSTATX HI HOK HERR HCELL HNL HSTATI data fs0).
-Local Notation target_front' := (target_front sp0 av ev uid tid hw rdraw regs mem Hsp Hva Hve ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB HIMG HI HOK HERR HCELL HNL HSTATI data fs0 HFZ HSRO HKRO).
+Local Notation it_fx' := (it_fx inp mbase entry sp0 brk tid rdraw regs mem Hsp Hva Hve Hvl Hlau ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB HIMG HI HOK HERR HCELL HSTATI data fs0).
+Local Notation fuzz_step' := (fuzz_step inp mbase entry sp0 brk tid rdraw regs mem Hsp Hva Hve Hvl Hlau ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB HIMG HI HOK HSTATI data fs0 HFZ HSRO HKRO).
+Local Notation tail1' := (tail1 inp mbase entry sp0 brk tid rdraw regs mem Hsp Hva Hve Hvl Hlau Htid ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB HIMG HSTATX HI HOK HERR HCELL HNL HSTATI data fs0).
+Local Notation tail2' := (tail2 inp mbase entry sp0 brk tid rdraw regs mem Hsp Hva Hve Hvl Hlau Htid ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB HIMG HSTATX HI HOK HERR HCELL HNL HSTATI data fs0).
+Local Notation tail3' := (tail3 inp mbase entry sp0 brk tid rdraw regs mem Hsp Hva Hve Hvl Hlau Htid ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB HIMG HSTATX HI HOK HERR HCELL HNL HSTATI data fs0).
+Local Notation tail4' := (tail4 inp mbase entry sp0 brk tid rdraw regs mem Hsp Hva Hve Hvl Hlau Htid ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB HIMG HSTATX HI HOK HERR HCELL HNL HSTATI data fs0).
+Local Notation target_front' := (target_front inp mbase entry sp0 brk tid rdraw regs mem Hsp Hva Hve Hvl Hlau ME Hargc2 IMG_LO IMG_END HTOP STATIC HTOPB HIMG HI HOK HERR HCELL HNL HSTATI data fs0 HFZ HSRO HKRO).
 
-#[using="av Hargc2"] Lemma calls_b : 1 <= CALLS <= 4. Proof. LiaFast.lf_pins (fun (av Hargc2 : LiaFast.U) => LiaFast.u0). pose proof (n_calls_range data). lia. Qed.
+#[using="inp Hargc2"] Lemma calls_b : 1 <= CALLS <= 4. Proof. LiaFast.lf_pins (fun (inp Hargc2 : LiaFast.U) => LiaFast.u0). pose proof (n_calls_range data). lia. Qed.
 
 (* [comment removed for export] *)
 #[using="Hargc2"] Lemma calls_at : forall (X : sst) f k lc kc E1 ms md hs len cap buf al ow,
@@ -140,13 +150,13 @@ Proof. LiaFast.lf_pins (fun (Hargc2 : LiaFast.U) => LiaFast.u0).
   exact (rv_ne E1 lc k CALLS Hlc Hk HR Hc HF).
 Qed.
 
-#[using="av Hargc2"] Lemma krest_k : forall k, CALLS = Z.of_nat k -> KREST' (n_calls data - 1) = KREST' (k - 1).
-Proof. LiaFast.lf_pins (fun (av Hargc2 : LiaFast.U) => LiaFast.u0). intros k H. f_equal. lia. Qed.
+#[using="inp Hargc2"] Lemma krest_k : forall k, CALLS = Z.of_nat k -> KREST' (n_calls data - 1) = KREST' (k - 1).
+Proof. LiaFast.lf_pins (fun (inp Hargc2 : LiaFast.U) => LiaFast.u0). intros k H. f_equal. lia. Qed.
 
 (* [comment removed for export] *)
-#[using="uid hw Hsp Hva Hve Htid ME Hargc2 HTOPB HIMG HSTATX HOK HERR HCELL HNL HSTATI HFZ HSRO HKRO"] Theorem loop_tail : forall E2 ms2 md2 hs2 len cap buf al ow,
+#[using="mbase entry brk Hsp Hva Hve Hvl Hlau Htid ME Hargc2 HTOPB HIMG HSTATX HOK HERR HCELL HNL HSTATI HFZ HSRO HKRO"] Theorem loop_tail : forall E2 ms2 md2 hs2 len cap buf al ow,
   ITHEAD' U_sw1 1 E2 ms2 md2 hs2 len cap buf al ow -> realizes PSEGS (mkCfg ms2 md2) (KREST' (n_calls data - 1)).
-Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve Htid ME Hargc2 HTOPB HIMG HSTATX HOK HERR HCELL HNL HSTATI HFZ HSRO HKRO : LiaFast.U) => LiaFast.u0).
+Proof. LiaFast.lf_pins (fun (mbase entry brk Hsp Hva Hve Hvl Hlau Htid ME Hargc2 HTOPB HIMG HSTATX HOK HERR HCELL HNL HSTATI HFZ HSRO HKRO : LiaFast.U) => LiaFast.u0).
   intros E2 ms2 md2 hs2 len cap buf al ow HIT.
   pose proof HIT as (_ & Hd2 & _ & _ & _ & _ & _ & _ & _ & _ & _ & Hhd & Hld & _).
   destruct lp1_chk as (Gsh & Gc & GcX & GcF & Gnx).
@@ -192,10 +202,10 @@ Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve Htid ME Hargc2 HTOPB HIMG HSTATX
 Qed.
 
 (* [comment removed for export] *)
-#[using="uid hw Hsp Hva Hve Htid ME Hargc2 HTOPB HIMG HSTATX HOK HERR HCELL HNL HSTATI HFZ HSRO HKRO"] Theorem target_phase : forall E3 ms md hs len cap buf,
+#[using="mbase entry brk Hsp Hva Hve Hvl Hlau Htid ME Hargc2 HTOPB HIMG HSTATX HOK HERR HCELL HNL HSTATI HFZ HSRO HKRO"] Theorem target_phase : forall E3 ms md hs len cap buf,
   TRHEAD' E3 ms md hs len cap buf ->
   realizes PSEGS (mkCfg ms md) (t_emit (W 1 (zero_lines (n_calls data))) (t_exit (exit_code 0) fs0)).
-Proof. LiaFast.lf_pins (fun (uid hw Hsp Hva Hve Htid ME Hargc2 HTOPB HIMG HSTATX HOK HERR HCELL HNL HSTATI HFZ HSRO HKRO : LiaFast.U) => LiaFast.u0).
+Proof. LiaFast.lf_pins (fun (mbase entry brk Hsp Hva Hve Hvl Hlau Htid ME Hargc2 HTOPB HIMG HSTATX HOK HERR HCELL HNL HSTATI HFZ HSRO HKRO : LiaFast.U) => LiaFast.u0).
   intros E3 ms md hs len cap buf HT.
   apply (target_front' E3 ms md hs len cap buf HT).
   intros E2 ms2 md2 hs2 al ow HI2. exact (loop_tail E2 ms2 md2 hs2 len cap buf al ow HI2).

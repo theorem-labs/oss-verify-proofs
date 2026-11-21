@@ -1,6 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-29: relocated from libreac/fuzz_grant (a working branch 97c611eec86,
+(* Modified by Theorem Labs, 2026-10-29: relocated from libreac/fuzz_grant (a working branch,
    proofs/libreac/fuzz_grant/lib/A/Rt/Strcmp.v, owner a Theorem Labs lane) to libreac/fuzz_identity's ASan build (image A) by
    an address map recorded by the porting lane: every code address of the walk moves by
    +0x5c, the common_flags GOT slot and the two flag cells move to the ones fuzz_identity.asan gives, the module
@@ -49,7 +49,8 @@
    __asan::TryAsanInitFromRtl 40 words (1 immediate-only: grant's `mv s0,a0` is identity's `addi s0,a0,1060`, which
    is identity's asan_inited address 0xa5c98). No other word differs. *)
 (* Modified by Theorem Labs, 2026-10-29: for a Theorem Labs lane's acceptance (a working branch), the record class is TfibSyms, not IdentTfibSyms (DECISIONS-LIVE: TfibSyms in both A and B, no --rename), and the core modules are Required by full path at the applied A core's names (lib/A/A*.v, lib/Reusable/YA0m, YE08, YE21). *)
-(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/A/Rt/Strcmp.v at origin/ossv/recipes 09c6822d886 for reac-pw/fuzz_headamp image A (fuzz_headamp.asan, pin f3e0669d2819); module paths changed; addresses moved to fuzz_headamp.asan by alreloc a5c53bb2bed4 in the code only (every comment is the source's, verbatim: its addresses are fuzz_identity.asan's or those of the image it names); the trampoline theorem is stated at lib/A/Rt/StrcmpDef.v's STRCMP_ENTRY_A; the walk is generalized over a set U of shadow bytes (astrcmp_realizesU, strcmp_srrU: AR at FMupoison.unpoison U of the real memory in the premise and the post, every other premise and post the released text's; sc_tail likewise; the frame steps by WrapU.AR_frame_U, the entry's read-only cells by WrapU.rodata_ok_U, the entry stack window from the contract's 2 ESTACK premise), and strcmp_srr, the source's lemma, is strcmp_srrU at U = [] (by conversion); lib/A/Rt/StrcmpHole.v takes U = a frame hole. *)
+(* Modified by Theorem Labs, 2026-10: proofs/libreac/fuzz_identity/lib/A/Rt/Strcmp.v for reac-pw/fuzz_headamp image A (fuzz_headamp.asan, pin f3e0669d2819); module paths changed; addresses moved to fuzz_headamp.asan by alreloc a5c53bb2bed4 in the code only (every comment is the source's, verbatim: its addresses are fuzz_identity.asan's or those of the image it names); the trampoline theorem is stated at lib/A/Rt/StrcmpDef.v's STRCMP_ENTRY_A; the walk is generalized over a set U of shadow bytes (astrcmp_realizesU, strcmp_srrU: AR at FMupoison.unpoison U of the real memory in the premise and the post, every other premise and post the released text's; sc_tail likewise; the frame steps by WrapU.AR_frame_U, the entry's read-only cells by WrapU.rodata_ok_U, the entry stack window from the contract's 2 ESTACK premise), and strcmp_srr, the source's lemma, is strcmp_srrU at U = [] (by conversion); lib/A/Rt/StrcmpHole.v takes U = a frame hole. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_headamp.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

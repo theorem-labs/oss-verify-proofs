@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/Rt/StrcmpU.v, with its module paths and module names changed; 27 of its 53 lines of code are new or changed and 518 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_state image A (fuzz_state.asan): the __asan_memset walk under the ARU invariant (lib/A/FSupoison.v), any U
    (the statement is lib/A/FSupoisonU.v aintrin_realizesU OSet at A's PC_memset 0x521bc, proved in lib/A/FSxMset.v):
    the walk's REGION CONDITION as one named lemma, asan_memset_regions_off_ush.
@@ -8,7 +9,7 @@
    `proof-index __asan_memset 0x521bc 0x5222c` unpiped (2026-10-29 10:39Z): 0 released lemma(s) for __asan_memset,
    0x521bc and 0x5222c; second-agent check a Theorem Labs lane: Verdict: CONFIRM.
 
-   Ported from: a working branch 53ce9e4138c lib/A/FSupoisonAsanR.v asan_memcpy_regions_off_ush (the
+   Ported from: a working branch lib/A/FSupoisonAsanR.v asan_memcpy_regions_off_ush (the
    sibling __asan_memcpy walk AE6k .. AE2q over ARU). That file is not in S0, so it is not imported: its lemma is
    mirrored here for memset's ONE range (the destination) instead of memcpy's two, plus the destination bytes that
    REAL(memset) writes. The image-free helpers it restates (icpt_ro_byte, shadow_span, low_off_ush, high_off_ush,

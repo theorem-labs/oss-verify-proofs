@@ -4,7 +4,7 @@
 (* Modified by Theorem Labs, 2026-10: the second segment of check_reply's walk (fuzz_command.asan, 0x86d78), from the
    memchr call 0x86ef8 to the return of sup_reply_code 0x86f18, ported from
    proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v (cgif_close's call steps: cl_callS, the state
-   after the return) at c8557374ad2e.
+   after the return).
 
    The pieces: 0x86ef8 jal memchr (the reply holds no NUL, so the wrapper returns 0: the not-found contract
    through PaArt.v's aj_art_at); 0x86efc bnez a0 (not taken); 0x86f00 mv a0,s3; 0x86f04 jal check_reply_answer
@@ -14,6 +14,7 @@
    (the frame (1, pos) is among the caller's frames, the saved registers lie above the callee's stack pointer, g_rec
    is a program static), and the walk is seeded again with check_reply_sd.v's cr_seed. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/check_reply_s2.v, with its module paths and module names changed; 923 of its 964 lines of code are new or changed and 544 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* sup_add's walk on the ASan build of plugin-hostd/fuzz_command, stage M3 (0x8a050) to M3b / M4: the range check
    on id, the refusal branch (answer by `jal` at 0x8a08c, then M4) and the mix of the call into g_rec.state
    (mix_call at 0x8a09c, then M3b). *)

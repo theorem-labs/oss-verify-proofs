@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: ported from this harness's lib/A/Prog/check_reply_s8.v (the ASan walk, a working branch 91059853ab1) to the ASan+UBSan build fuzz_command.asan-ubsan (lib/B, entry 0x86e64): B's addresses (a Theorem Labs lane's pairing, a Theorem Labs lane's reloc). *)
+(* Modified by Theorem Labs, 2026-10: ported from this harness's lib/A/Prog/check_reply_s8.v (the ASan walk, a working branch) to the ASan+UBSan build fuzz_command.asan-ubsan (lib/B, entry 0x86e64): B's addresses (a Theorem Labs lane's pairing, a Theorem Labs lane's reloc). *)
 (* Modified by Theorem Labs, 2026-10: segment 8 of check_reply's walk (fuzz_command.asan-ubsan, 0x86e64): the epilogue
    from 0x87114 to the return, after proofs/cgif/cgif_file_fuzzer/lib/A/ACh2.v (the return and the contract's post,
    lines 259-290) and A/AChd.v (the leaf return).
@@ -11,6 +11,7 @@
    frame (PaLibF.v aj_flag_store_pi): shadow bytes 4..7 = 0xf8, frame + 0 = 0x45e0360e, `beqz s2` not taken (the
    frame is at or above 4096), the 16 shadow bytes = 0xf5, the flag byte = 0 (`ld a0,120(s2); sb zero,0(a0)`), the
    callee-saved registers loaded back from below sp0, sp = s0 - 128 + 128. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

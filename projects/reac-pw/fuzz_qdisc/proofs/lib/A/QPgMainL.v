@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements
    are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: made for reac-pw/fuzz_qdisc image A from
-   proofs/libreac/fuzz_knock/lib/A/APgMainL.v (the loop closure) at origin/ossv/recipes 6ebe35ba632, with
+   proofs/libreac/fuzz_knock/lib/A/APgMainL.v (the loop closure), with
    its module paths changed (h-small-a3). rule 24 (reuse): no function is proved here; this file is the
    loop's induction and nothing else -- it adds no walk and no arithmetic.
 
@@ -24,6 +24,7 @@
 
    AT fuel = 0 THE HEAD IS UNREACHABLE: INV_L 0 asks for 1 <= bud and (Z.to_nat bud <= 0)%nat at once, so
    the goal follows by exfalso -- the released plain proof's `{ exfalso. lia. }`. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

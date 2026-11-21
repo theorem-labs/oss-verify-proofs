@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-29 (PresetStrRo, c-libc-stdio lane): image B's strcmp and strlen rows at the call-site texts
    with the narrow read-only premise (lib/Reusable/YGcfStrRo.v). rule 24: the functions are proved by the Qed rows
    this file cites (lib/AU/PSstrcmp.v ps_strcmp_realizes_cfm_B, lib/AU/PSstrlen.v ps_strlen_realizes_cfm_B_closed);
    this file only carries them to the other texts.
-   2026-10-29 (pstr102): presetstr-ro cc62fb91449's file (blob 2f0940b8ff76) at the #102 pin B'; only the image
+   2026-10-29 (pstr102): presetstr-ro's file (blob 2f0940b8ff76) at the #102 pin B'; only the image
    fact's text and the pcs' values in the comments change (the statements cite CfImgB's fields by name).
 
    THE IMAGE FACT. `romB_check`: every owned byte in a non-writable segment of image B' (YB1v.tfibsegs =

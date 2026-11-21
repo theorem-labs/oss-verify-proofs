@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN2d.v, with its module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/Reusable/YN2d_cf.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_decode; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_decode.lib. *)
+(* Modified by Theorem Labs, 2026-10: ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/Reusable/YN2d_cf.v for libdiginet/fuzz_decode; no image value changed; module path OSSVerify.Proofs.libdiginet.fuzz_decode.lib. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the munmap_model_maps bridge; the Checks.Placement imports and the ledger-preservation obligations); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_decode.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -58,13 +59,20 @@ intros addr n m H. unfold munmap_model, with_mmap_destroyed, vm_forget_range, wi
 cbn [m_vm_materialized]. unfold m_vm_materialized in H |- *. cbn. rewrite H. reflexivity.
 Qed.
 Lemma munmap_model_maps : forall addr n m,
+(0 < bv_unsigned n)%Z ->
+(forall b s, In (b, s) (vm_maps (m_vmmaps m)) -> (0 < bv_unsigned s)%Z) ->
+(forall b s, In (b, s) (vm_maps (m_vmmaps m)) -> b = addr -> s = n) ->
+(forall b s, In (b, s) (vm_maps (m_vmmaps m)) -> b <> addr ->
+   (bv_unsigned b + bv_unsigned s <= bv_unsigned addr
+    \/ bv_unsigned addr + bv_unsigned n <= bv_unsigned b)%Z) ->
 vm_maps (m_vmmaps (munmap_model addr n m)) = map_remove (vm_maps (m_vmmaps m)) addr /\
 vm_noaccess (m_vmmaps (munmap_model addr n m)) = maps_subtract (vm_noaccess (m_vmmaps m)) (bv_unsigned addr) (bv_unsigned addr + bv_unsigned n) /\
 vm_reserved (m_vmmaps (munmap_model addr n m)) = vm_reserved (m_vmmaps m) /\
 vm_brk (m_vmmaps (munmap_model addr n m)) = vm_brk (m_vmmaps m) /\
 vm_start_brk (m_vmmaps (munmap_model addr n m)) = vm_start_brk (m_vmmaps m) /\
 vm_limit (m_vmmaps (munmap_model addr n m)) = vm_limit (m_vmmaps m).
-Proof. intros. repeat split; reflexivity. Qed.
+Proof. intros addr n m Hn Hpos Hu Hd. repeat split; try reflexivity.
+apply maps_subtract_exact; assumption. Qed.
 Lemma vm_backing_used_le_maps : forall m,
 m_vm_lazy m = [] -> m_vm_materialized m = [] ->
 vm_backing_used m <= State.live_bytes (vm_maps (m_vmmaps m)).
@@ -422,13 +430,35 @@ unfold ranges_disjoint, iv_lo, iv_len in *. cbn [fst snd] in H. rewrite len_u in
 Qed.
 Lemma ledger_ok_A4 : ledger_ok B L3 A4 md4.
 Proof.
-pose proof (munmap_model_maps a (Z_to_bv 64 len) md3) as (VM & VN & VR & VB & VS & VL).
+pose proof Hlen as [P0 _].
+(* 08b1429: munmap_model_maps now takes maps_subtract_exact's four premises. They are
+   discharged from this file's own Y3 and r0_maps_entry, in the same shape YN27.v:140-156
+   uses for the identical bridge -- lx_maps for the size, lx_disj against the entry being
+   removed for exactness and disjointness. *)
+pose proof (munmap_model_maps a (Z_to_bv 64 len) md3
+ltac:(rewrite len_u; exact P0)
+ltac:(intros b s Hbs; exact (proj1 (lx_maps _ _ _ Y3 _ Hbs)))
+ltac:(intros b s Hbs Eb; subst b;
+destruct (lx_disj _ _ _ Y3 _ _ Hbs r0_maps_entry) as [E|D]; [injection E as ->; reflexivity|];
+exfalso; unfold ranges_disjoint, iv_lo, iv_len in D; cbn [fst snd] in D;
+pose proof (proj1 (lx_maps _ _ _ Y3 _ Hbs)) as Hs; unfold iv_len in Hs; cbn [snd] in Hs;
+rewrite len_u in D; pose proof Hlen as [P1 _]; lia)
+ltac:(intros b s Hbs Hne;
+destruct (lx_disj _ _ _ Y3 _ _ Hbs r0_maps_entry) as [E|D];
+[injection E as -> _; exfalso; exact (Hne eq_refl)|];
+(* The goal keeps `bv_unsigned (Z64 len)` while D carries `len` after its own rewrite, so
+   lia saw two opaque terms and reported "No applicable tactic". Read off the goal with
+   `fail 100` -- `idtac` does not reach this driver's log. len_u is rewritten on BOTH sides. *)
+unfold ranges_disjoint, iv_lo, iv_len in D; cbn [fst snd] in D;
+rewrite len_u in D; rewrite len_u; lia))
+as (VM & VN & VR & VB & VS & VL).
 pose proof r0_placed as (Ral & Rlo & Rhi & Rimg). pose proof Hlen as [P Pm]. pose proof (proj1 alloc_ceiling_val) as AC. pose proof aZ.
 pose proof A4_fields as (E1 & E2 & E3 & E4 & E5 & E6 & E7 & _).
 assert (PG : PGSZ = 4096) by reflexivity.
 split; unfold md4; rewrite ?VM, ?VN, ?VR, ?VB, ?VS, ?VL.
 - exact (lg_reserved _ _ _ _ G3).
 - exact (lg_limit _ _ _ _ G3).
+- exact (lg_rclim _ _ _ _ G3).
 - intros k rg Hk Hl Hkind. rewrite A4_region_of in Hk. destruct (Nat.eqb_spec k r0) as [->|Hne]; [injection Hk as <-; discriminate|].
 pose proof (lg_maps _ _ _ _ G3 k rg Hk Hl Hkind) as Hin. apply In_map_remove. split; [exact Hin|].
 apply (entry_not_at_a _ Hin). intros E.
@@ -481,6 +511,12 @@ destruct (mid_md _ _ _ _ _ MID3) as (_ & Hlz & Hmat).
 pose proof (vm_backing_used_le_maps (munmap_model a (Z_to_bv 64 len) md3) (munmap_model_no_lazy _ _ _ Hlz) (munmap_model_no_mat _ _ _ Hmat)) as VBU.
 rewrite VM in VBU. lia.
 -   exact (lg_ceil _ _ _ _ G3).
+- exact (lg_vdso _ _ _ _ G3).
+- intros k rg Hk Hl Hkind. rewrite A4_region_of in Hk.
+  destruct (Nat.eqb_spec k r0) as [->|Hne]; [injection Hk as <-; discriminate|].
+  exact (lg_rfree _ _ _ _ G3 k rg Hk Hl Hkind).
+- exact (lg_vdso_lo _ _ _ _ G3).
+- exact (lg_brk0_hi _ _ _ _ G3).
 Qed.
 Lemma ledger_x_A4 : ledger_x L3 A4 md4.
 Proof.
@@ -543,7 +579,7 @@ intros Lx A1' A2' mdx G ER EB.
 assert (RO : forall k, region_of A2' k = region_of A1' k) by (intros k; unfold region_of; rewrite ER; reflexivity).
 assert (NS : nslots A2' = nslots A1') by (unfold nslots; rewrite ER; reflexivity).
 assert (LBy : live_bytes A2' = live_bytes A1') by (unfold live_bytes; rewrite ER; reflexivity).
-split; try (exact (lg_reserved _ _ _ _ G) || exact (lg_limit _ _ _ _ G) || exact (lg_brk0 _ _ _ _ G)).
+split; try (exact (lg_reserved _ _ _ _ G) || exact (lg_limit _ _ _ _ G) || exact (lg_rclim _ _ _ _ G) || exact (lg_brk0 _ _ _ _ G)).
 - intros k rg Hk. rewrite RO in Hk. exact (lg_maps _ _ _ _ G k rg Hk).
 - intros k rg off Hk. rewrite RO in Hk. exact (lg_noaccess _ _ _ _ G k rg off Hk).
 - rewrite EB. exact (lg_brk _ _ _ _ G).
@@ -552,6 +588,10 @@ split; try (exact (lg_reserved _ _ _ _ G) || exact (lg_limit _ _ _ _ G) || exact
 - rewrite LBy. exact (lg_sizes _ _ _ _ G).
 - rewrite LBy. exact (lg_backing _ _ _ _ G).
 -   exact (lg_ceil _ _ _ _ G).
+- exact (lg_vdso _ _ _ _ G).
+- intros k rg Hk. rewrite RO in Hk. exact (lg_rfree _ _ _ _ G k rg Hk).
+- exact (lg_vdso_lo _ _ _ _ G).
+- exact (lg_brk0_hi _ _ _ _ G).
 Qed.
 Lemma layout_ok_same : forall Lx A1 A2, layout_ok Lx A1 -> st_regions A2 = st_regions A1 -> footprint A2 = footprint A1 -> layout_ok Lx A2.
 Proof.

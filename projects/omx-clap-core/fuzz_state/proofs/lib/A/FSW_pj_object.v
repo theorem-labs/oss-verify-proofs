@@ -3,12 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACem.v, with its module paths and module names changed; 1540 of its 1601 lines of code are new or changed and 390 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_pj_string.v, with its module paths, module names and addresses changed; 438 of its 566 lines of code are new or changed and 1473 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* pj_object 0x83c9c (preset_file.c pf.c:433-437) on fs.asan (sha256 64b53ff86172...), 27 words: the ASan walk of the
    READER lane's pj_object_spec (lib/A/FSH_Fn_reader.v:629, Section c, statement unchanged).
    rule 24: no released ASan-image proof of pj_object exists (second-agent check a Theorem Labs lane,
    (internal path) `pj_object: CONFIRM`, over the ossv proof
-   index v5 built 2026-10-28T21:58:24Z, ossv/recipes@566eb6ffa5df); the released plain proof is lib/Prog/pj_object.v
-   (c8557374ad2e), whose control flow this walk follows.
+   index v5 built 2026-10-28T21:58:24Z, ossv/recipes); the released plain proof is lib/Prog/pj_object.v,
+   whose control flow this walk follows.
 
    The code: `addi sp,sp,-32; sd ra,24(sp); sd s0,16(sp); sd s1,8(sp); auipc a1; ld a1,-1468(a1); ld s1,0(a1)` (s1 :=
    the shadow base through the .got slot 0x9f6f0), `mv s0,a0; li a2,56; li a1,0; jal __asan_memset` (0x83cc4), then
@@ -41,7 +42,7 @@
                                                                      tl_got_shadow / tl_shadow_cell)
    - fs_memset_realizesU : aintrin_realizesU tfibsegs B OSet PC_memset   (POISON-U, lib/A/FSupoisonU.v:244)
    Ported from: a Theorem Labs lane's proofs/omx-clap-core/fuzz_manifest/lib/A/FMW_check_reject_clean.v (a working branch) and
-   the fs walks FSH_check_reject_clean.v (bab265ebece), FSW_caw_tail.v (a working branch: token run).
+   the fs walks FSH_check_reject_clean.v, FSW_caw_tail.v (a working branch: token run).
    The frame's shadow hull is the donor's A/ACem.v:201-224 shadow_hull_vis_of_frame, imported (A/ACem.v builds here
    since the RELOC core merge). *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.

@@ -3,13 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: the walk of reac_box_catalogue on fuzz_segconf.asan-ubsan (image B, pin sha256
    c3796c0b38f3, twin 80e82127e8ca; entry 0x8a8a0, 84 bytes, 21 instructions, a 16-byte frame, no side-stack
    frame): reac_box_catalogue_contract of lib/B/Prog/reac_box_catalogue_c.v (image B's copy of the image-A owner's FINAL
-   text at 6f783602b5e3) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
+   text) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
    entry, SRr of apost_base at the return, over `Context {PI : PAImg seg_listing}` of image B's listing,
    lib/B/Prog/SegPa.v).
-   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane, commit
-   434ade288123, both arms): the same entry seeds, token runs and return steps over image B's listing modules and
+   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane,
+    both arms): the same entry seeds, token runs and return steps over image B's listing modules and
    B's kit copies. The UBSan alignment check is read from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_catalogue.v
-   at origin/ossv/recipes 3abc3740de97 (the same image-B code but 4 pc-relative words; caller-journal form, not
+   (the same image-B code but 4 pc-relative words; caller-journal form, not
    copied), whose token run decides it the same way.
    Image B's code differs from image A's by two instructions: `andi a1,a0,7` (0x8a8ac) and `bnez a1,0x8a8ec`
    (0x8a8b0) to `unimp` (0x8a8ec), the UBSan alignment check of the 8-byte store through c.
@@ -39,6 +39,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/reac_box_catalogue.v, with its module paths and module names changed; 76 of its 115 lines of code are new or changed and 414 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/pf_a8b_d.v; 203 of its 258 lines of code are new or changed and 60 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/pf_a8b_k.v, with its module paths and module names changed; 66 of its 95 lines of code are new or changed and 229 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image A (fuzz_segconf.asan): segment A11a of reac_segconf_parse_file's walk,
    ASSEMBLED. pf_pieces.v states the segment as
 
@@ -64,7 +65,7 @@
    WHAT THIS FILE ADDS: the spine step. Every piece carries the post `a11_post`, written as the match on
    by_token that the model branch of SegModel.r_key takes once the two strcasecmp results of H_MODEL are
    known; `a11_r_key_post` below turns it into H_MODEL's own post with pf_a11a_f.v's a11f_r_key (the port of
-   the plain-build walk owner's pf_p7_lemmas.v p7_r_key at commit cfdd99183965).
+   the plain-build walk owner's pf_p7_lemmas.v p7_r_key).
 
    `a11a_compose` states the chaining with the five pieces as hypotheses (it was built first, to check the
    decomposition before the pieces were proved); `pf_a11a_holds` discharges all five with the theorems above.
@@ -162,7 +163,7 @@ End g.
            (SegObj.v)                                                                    -- the hit piece
    The entry and the loop take none. No SSPX, no VRO, no ROMV: A11a calls no refuse, and both of its calls
    carry an address keep clause in their post (reac_box_catalogue_by_token_c.v's sa_kept ... (fun _ => False);
-   RtPFCmd.v:341-343 for snprintf) that reaches gotwA, guardA and RLO_A .. RHI_A. *)
+   RtPFCmd.v:342-344 for snprintf) that reaches gotwA, guardA and RLO_A .. RHI_A. *)
 Section h.
 Hypothesis BT : forall fx0 : YK11.FPState,
   reac_box_catalogue_by_token_contract (fx := fx0) SEGS B

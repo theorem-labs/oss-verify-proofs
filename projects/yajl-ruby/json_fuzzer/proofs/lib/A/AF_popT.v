@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the RES0_low hypothesis states the reserved ledger by res0_ok, which also admits the launch's vDSO/vvar pair above the high shadow). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -145,7 +146,7 @@ Variable PL0 : fs_plumb.
 Hypothesis HR0_ok : Forall (fun iv => fst iv <= snd iv) HR0 /\ A0_pages HR0 <= 8192.
 Hypothesis ENV0 : env0_ok5 E0.
 Hypothesis PL0OK : pl0_ok5 E0 PL0.
-Hypothesis RES0_low : Forall (fun e => 0x10000 <= elo e /\ ehi e <= 0x603000) RES0.
+Hypothesis RES0_low : Forall (res0_ok E0) RES0.
 
 #[local] Notation RTOKc := (RTOK E0 FSB0 HR0 L0 RES0 EB0).
 #[local] Notation ATOKc := (ATOK E0 FSB0 HR0 L0 RES0 EB0).

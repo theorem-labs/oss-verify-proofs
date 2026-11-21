@@ -2,8 +2,8 @@
    Statements.asan_halts, from NAMED Section hypotheses (rule 24: no function proved; this file is assembly only, no
    walk is written here).
 
-   Templates: a Theorem Labs lane's lib/A/FMTfibParts.v (a working branch aeb12aaa12b; the decomposition and the row
-   names) and fuzz_pcap's lib/A/PcapClose.v (a working branch 86b0e893fe8; the composition for parts whose
+   Templates: a Theorem Labs lane's lib/A/FMTfibParts.v (a working branch; the decomposition and the row
+   names) and fuzz_pcap's lib/A/PcapClose.v (a working branch; the composition for parts whose
    proofs are not done yet). The decomposition is fm's:
      TFIB_T  <-  lib/A/FSTfibParts.v:123 TFIB_T_of_lib at LI := LI_fs: the start-up, HS_ok_open, the driver main, the
                  allocator, the driver's memcpy, the read checks and the stdio sites are PROVED lemmas of the relocated
@@ -15,13 +15,13 @@
                  among them are S0's proved walks where S0 has one.
      LIK, LI0 <- lib/A/FSTfibBridge.v:103 LIK_fs and :114 LI0_fs.
 
-   REBASED onto S0 a working branch 3ba29e4479d (the CTX drop, walk folds 1-5, the stack-budget candidate,
+   REBASED onto S0 a working branch (the CTX drop, walk folds 1-5, the stack-budget candidate,
    image A's RUNTIME + ALLOCATOR set, strlen / memchr / strcmp / bcmp / memcpy / memset / set_shadow_f5, the narrowed
    crt walk, FSImgFacts, encode, the FsRt narrowings of pj_parse / pj_set and of a Theorem Labs lane, parse_value
-   A, and this file at ee384876041) plus a working branch 1450ea6d4fa (A/FSW_reader_top.v
-   reader_parse_value_0). Recorded before on S0 834df0ca5d9 (a97ae39683c), f0e2574c33c (1469f04666b, pushed as
-   a working branch), 76fc4284839 (f3acbadcba3) and 1745d9d1573 + a Theorem Labs lane.
-   What changed against the old file (a working branch cade049876a):
+   A, and this file) plus a working branch (A/FSW_reader_top.v
+   reader_parse_value_0). Recorded before on S0, (pushed as
+   a working branch), and + a Theorem Labs lane.
+   What changed against the old file (a working branch):
    - DELETED the local copies of S0 statements: tfib_lib_contract_xI / _all (now A/ACfn.v), lib_inv_stable /
      lib_inv_init (now A/AD1w.v), fs_LI and fs_lib_xI_of_x (now A/FSTfibBridge.v LI_fs / fs_lib_xI_all), drv_mainX_stmt,
      fs_drv_contract, HS_okA, startup_T1A, HS_ok_openA, DRV_MAINX, fs_srealizesX_rc and the local TFIB_T_of_lib (all
@@ -33,11 +33,11 @@
        A1  H_tfib_startup_T1     inside FSTfibParts.TFIB_T_of_lib (A/AD1q.v tfib_srealizesX over the start-up)
        A2  HB                    := TfibB_syms (A/AD2l.v:73)
        A3  H_strlen              lemma fs_strlen <- FSrtcells.fs_strlen_realizesU_s (A/FSrtcells.v:85, strfold)
-       A4  H_strcmp              lemma fs_strcmp <- StrcmpU.fs_strcmp_realizesU (A/Rt/StrcmpU.v:581)
+       A4  H_strcmp              lemma fs_strcmp <- StrcmpU.fs_strcmp_realizesU (A/Rt/StrcmpU.v:582)
        A5  H_memchr              lemma fs_memchr <- FSrtcells.fs_memchr_realizesU_s (A/FSrtcells.v:92, strfold)
        A7  H_bcmp                FSrtA_fields.rtA_bcmp (A/FSrtA_fields.v:49)
-       A8  H_memcpy              lemma fs_memcpy <- FSupoisonAsanC.tfib_asan_memcpy_realizesU (A/FSupoisonAsanC.v:5903)
-       A9  H_memset              lemma fs_memset <- FSxMset.tfib_asan_memset_realizesU (A/FSxMset.v:2230)
+       A8  H_memcpy              lemma fs_memcpy <- FSupoisonAsanC.tfib_asan_memcpy_realizesU (A/FSupoisonAsanC.v:5904)
+       A9  H_memset              lemma fs_memset <- FSxMset.tfib_asan_memset_realizesU (A/FSxMset.v:2231)
        A10 H_set_shadow_f5       lemma fs_set_shadow_f5 <- FSxSS.set_shadow_f5_contractU_x (A/FSxSS.v:57)
        A11 H_malloc              lemma fs_malloc <- FSupoisonAllocM.tfib_amalloc_realizesU (A/FSupoisonAllocM.v:34)
        A12 H_free                lemma fs_free <- FSupoisonAllocF.afree_realizes_allU (A/FSupoisonAllocF.v:88)
@@ -48,7 +48,7 @@
        A17 H_pc_stack_malloc_0   lemma pc_stack_malloc_0_B, by computation (S0's A/AF0l.v:12 is fs's class map {0,1,3})
        A18 H_pc_stack_malloc_3   lemma pc_stack_malloc_3_B, the same
        A19 AICPY                 inside FSTfibParts.TFIB_T_of_lib (A/AD2m.v tfib_AICPY)
-       A20 H_fs_img_facts        FSImgFacts.fs_img_facts_TfibB (A/FSImgFacts.v:339, a working branch 67d03ac00ad)
+       A20 H_fs_img_facts        FSImgFacts.fs_img_facts_TfibB (A/FSImgFacts.v:339, a working branch)
        A21 H_check_no_overread   FSW_check_no_overread_top.check_no_overread_ok (A/FSW_check_no_overread_top.v:1499)
        A22 H_fuzz_alloc_live     FSW_alloc_counters.fuzz_alloc_live_ok (A/FSW_alloc_counters.v:199)
        A23 H_fuzz_alloc_peak_reset  FSW_alloc_counters.fuzz_alloc_peak_reset_ok (:620)
@@ -62,7 +62,7 @@
                                  their S0 proofs (lemmas fs_pj_* .. fs_check_round_trip)
        A29 H_check_reject_clean  FSH_check_reject_clean.check_reject_clean_proof (A/FSH_check_reject_clean.v:78)
        A30 H_check_reject_clean_starved  FSH_check_reject_clean_starved.check_reject_clean_starved_proof (:1265)
-       A31 H_fuzz_free           FSW_fuzz_free.fuzz_free_holds (A/FSW_fuzz_free.v:798)
+       A31 H_fuzz_free           FSW_fuzz_free.fuzz_free_holds (A/FSW_fuzz_free.v:799)
        A32 H_entry               FSW_entry.fs_entry_proof (A/FSW_entry.v:36)
        A33 LIK                   FSTfibBridge.LIK_fs (A/FSTfibBridge.v:103)
        A34 LI0                   FSTfibBridge.LI0_fs (A/FSTfibBridge.v:114)
@@ -70,13 +70,13 @@
      The callee proofs' own Section premises are discharged here, not assumed: past_nul_spec by FSW_past_nul.past_nul_ok
      (A/FSW_past_nul.v:820), fuzz_malloc_spec by FSW_fuzz_malloc.fuzz_malloc_holds (A/FSW_fuzz_malloc.v:975),
      fuzz_alloc_fail_spec by FSW_alloc_counters.fuzz_alloc_fail_ok (:635), __asan_unpoison_memory_region by
-     FSpoisonW.tfib_unpoison16 (A/FSpoisonW.v:396), FsShadowSyms by FSrtcellsS0.fs_shadow_syms_of (A/FSrtcellsS0.v:41),
+     FSpoisonW.tfib_unpoison16 (A/FSpoisonW.v:397), FsShadowSyms by FSrtcellsS0.fs_shadow_syms_of (A/FSrtcellsS0.v:41),
      api_env / model_laws / the shadow and use-after-return cells / the stack_malloc progress law by FSW_entry_link's
      fe_api_env / fe_model_laws / fe_tl_got_shadow / fe_tl_shadow_cell / fe_tl_got_uar / fe_tl_uar_cell /
      fe_stack_malloc_progress (A/FSW_entry_link.v:26-50), all at TfibB from fs_tfib_lib; AR_laws by YG0q.AR_laws_ok,
      the depot hash by eq_refl.
      The entry premise ACeg.TfibLib TfibB is the lemma fs_tfib_lib below (port of cgif_file_fuzzer lib/A/ACed.v:40-56
-     tfibX_lib, c8557374ad2e, with fs's errno / segment / owned-static / lib_const numbers from S0's A/AF0m.v and
+     tfibX_lib, with fs's errno / segment / owned-static / lib_const numbers from S0's A/AF0m.v and
      A/ACeg.v).
    - FSTfibParts.FSTFIB_T is COMP-A's FSTfib.TFIB_T: lemma FSTFIB_T_eq (reflexivity).
    No named hypothesis left (every runtime premise and every callee spec has a theorem): H_arealloc
@@ -137,7 +137,7 @@ Local Abbreviation LSA := (ag_shape checksum_shape).
 (* ===================================================================================================== *)
 
 (* the entry premise ACeg.TfibLib TfibB (A/ACeg.v:28). Port-from: cgif_file_fuzzer lib/A/ACed.v:40-56 tfibX_lib
-   (c8557374ad2e), at fs's numbers: lib_const_addr is fs's one constant word [0x10320, 0x10328) (A/ACeg.v:27), errno
+   (theorem-labs/oss-verify-proofs@6b32741d849a), at fs's numbers: lib_const_addr is fs's one constant word [0x10320, 0x10328) (A/ACeg.v:27), errno
    is TFIB_ERRNO 0x5dae8c (A/AF0m.v:21) in fs's fourth load segment (the .data / .bss segment from 0xa1400), the owned
    statics are A/AF0m.v:1147 Tfib_owned_static, gp is TFIB_GP 0x10800 (A/AF0m.v:20). *)
 Lemma fs_tfib_lib_consts_chk :
@@ -192,8 +192,8 @@ Local Abbreviation B := TfibB (only parsing).
 
 (* ---- RUNTIME, U forms (S0 A/FSH_Rt.v:113-127 FsRt and A/FSH_Fn_entry.v:60-67 FsEntryRt) ----
    A6 snprintf: no hypothesis. Its only consumer was the whole FsRt record; with pj_parse_holds / pj_set_holds_s0
-   narrowed in S0 1745d9d1573 and check_as_written_proof / check_reject_clean_starved_proof narrowed by
-   a Theorem Labs lane (59a68c6fea6), every callee takes the FsRt fields it uses by their types, and none uses fr_snprintf. A7
+   narrowed in S0 and check_as_written_proof / check_reject_clean_starved_proof narrowed by
+   a Theorem Labs lane, every callee takes the FsRt fields it uses by their types, and none uses fr_snprintf. A7
    is FSrtA_fields.rtA_bcmp; A3, A4, A5, A8, A9 are the lemmas below. *)
 
 (* ---- RUNTIME rows with a theorem: A3, A4, A5, A8, A9 and A10-A16 (strings a Theorem Labs lane, memcpy a Theorem Labs lane, memset
@@ -207,14 +207,14 @@ Proof. intros rc fx. exact (FSrtcells.fs_strlen_realizesU_s TfibB LAWS TfibB_sym
 (* A5: A/FSrtcells.v:92 fs_memchr_realizesU_s *)
 Lemma fs_memchr : forall (rc : YM05.RunCeil) (fx : YK11.FPState), amemchr_realizesU tfibsegs B PC_memchr.
 Proof. intros rc fx. exact (FSrtcells.fs_memchr_realizesU_s TfibB LAWS TfibB_syms fs_tfib_lib). Qed.
-(* A8: A/FSupoisonAsanC.v:5903 tfib_asan_memcpy_realizesU *)
+(* A8: A/FSupoisonAsanC.v:5904 tfib_asan_memcpy_realizesU *)
 Lemma fs_memcpy : forall (rc : YM05.RunCeil) (fx : YK11.FPState),
   FSupoisonU.aintrin_realizesU tfibsegs B OCpy PC_memcpy.
 Proof. intros rc fx. exact (FSupoisonAsanC.tfib_asan_memcpy_realizesU TfibB LAWS TfibB_syms). Qed.
-(* A4: A/Rt/StrcmpU.v:581 fs_strcmp_realizesU (a Theorem Labs lane, in S0 8fee0cc526f) *)
+(* A4: A/Rt/StrcmpU.v:582 fs_strcmp_realizesU (a Theorem Labs lane, in S0) *)
 Lemma fs_strcmp : forall (rc : YM05.RunCeil) (fx : YK11.FPState), astrcmp_realizesU tfibsegs B PC_strcmp.
 Proof. intros rc fx. exact (StrcmpU.fs_strcmp_realizesU TfibB LAWS TfibB_syms). Qed.
-(* A9: A/FSxMset.v:2230 tfib_asan_memset_realizesU *)
+(* A9: A/FSxMset.v:2231 tfib_asan_memset_realizesU *)
 Lemma fs_memset : forall (rc : YM05.RunCeil) (fx : YK11.FPState),
   FSupoisonU.aintrin_realizesU tfibsegs B OSet PC_memset.
 Proof. intros rc fx. exact (FSxMset.tfib_asan_memset_realizesU TfibB LAWS TfibB_syms). Qed.
@@ -418,7 +418,7 @@ Proof.
     (fs_put rc fx) (fs_fuzz_free rc fx) (IMG rc)).
 Qed.
 (* parse_value at depth 0 (premise PV of pj_parse_holds): A/FSW_reader_top.v:71 reader_parse_value_0 (a Theorem Labs lane,
-   a working branch 1450ea6d4fa), with its callees grow (Prog/FSW_grow_holds.v grow_holds) and parse_string
+   a working branch), with its callees grow (Prog/FSW_grow_holds.v grow_holds) and parse_string
    (A/FSW_parse_string.v parse_string_proof) *)
 Lemma fs_grow : forall (rc : YM05.RunCeil) (fx : YK11.FPState),
   @FSH_Fn_reader.grow_spec fx rc AE2k.tfib_sink_head tfibsegs B.

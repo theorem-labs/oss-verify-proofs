@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFjt.v at 25e3d17bdb50 into libreac/fuzz_knock, with its module paths changed, A/AWalkFw0 imported for A/AB1v and its addresses moved to libreac/fuzz_knock's ASan build; the image bounds cited from lib/Reusable/YImgTop.v; its proofs changed for fuzz_knock's depot model, whose StackDepot blocks are mapped at the first Put: the NB / SB extents as KnBlockExt.nb_ext / sb_ext, DPOST over the layout, world and model after the Put, the NB / SB apartness hypothesis Hmap_apart and the depot zone as KnBlockExt.DZONE_at. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/A/AFjt.v at 88154566652a (donor image sha256 61768cf4739b), with its module paths changed, A/AB1v imported for A/AWalkFw0, names TfibSyms -> WireSyms and its addresses moved to reac-repacer/fuzz_wire's ASan build; the tactics zlia, numconst, off_by, addr_tac and ladder_arith, and the image-bound proof steps, which do not unfold YImgTop.IMG_LO / IMG_TOP (this unit's lib/Reusable/YImgTop.v makes them parsing-only notations for numbers), taken from proofs/libreac/fuzz_grant/lib/A/AFjt.v at 25e3d17bdb50. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFjt.v at theorem-labs/oss-verify-proofs@6b32741d849a into libreac/fuzz_knock, with its module paths changed, A/AWalkFw0 imported for A/AB1v and its addresses moved to libreac/fuzz_knock's ASan build; the image bounds cited from lib/Reusable/YImgTop.v; its proofs changed for fuzz_knock's depot model, whose StackDepot blocks are mapped at the first Put: the NB / SB extents as KnBlockExt.nb_ext / sb_ext, DPOST over the layout, world and model after the Put, the NB / SB apartness hypothesis Hmap_apart and the depot zone as KnBlockExt.DZONE_at. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/A/AFjt.v (donor image sha256 61768cf4739b), with its module paths changed, A/AB1v imported for A/AWalkFw0, names TfibSyms -> WireSyms and its addresses moved to reac-repacer/fuzz_wire's ASan build; the tactics zlia, numconst, off_by, addr_tac and ladder_arith, and the image-bound proof steps, which do not unfold YImgTop.IMG_LO / IMG_TOP (this unit's lib/Reusable/YImgTop.v makes them parsing-only notations for numbers), taken from proofs/libreac/fuzz_grant/lib/A/AFjt.v. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the vvar/vDSO pair in the initial model and its reservations; the mprotect gate over the reservations); internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -715,7 +716,7 @@ idx = res ->
 at_N Wy md1 WIN (PSR Wy SH2 R) S_V Wy c1 -> AI tfibsegs (w_H Wy) (w_A Wy) (cfg_model c1) ->
 (forall m m' : word -> option byte, (forall x : word, ~ QR (bv_unsigned x) -> m' x = m x) -> R m -> R m') ->
 amwf (cfg_model c1) ->
-vm_reserved (m_vmmaps (cfg_model c1)) = segments_reserved tfibsegs ->
+(exists rx, vm_reserved (m_vmmaps (cfg_model c1)) = segments_reserved tfibsegs ++ rx /\ region_free rx (w64 Qb) (w64 kPtrArrayResv) = true) ->
 (forall sg, In sg tfibsegs -> 4096 <= Z.of_N (seg_base sg) /\ Z.of_N (seg_base sg) + Z.of_N (seg_size sg) <= kImgEnd) ->
 In (wiv (Qb, kPtrArrayResv)) (vm_maps (m_vmmaps (cfg_model c1))) ->
 eager_used (cfg_model c1) + A_bytes (w_A Wy) + 2 ^ 19 <= vm_limit (m_vmmaps (cfg_model c1)) ->
@@ -768,9 +769,16 @@ assert (CEILT : bv_unsigned (w64 QSv) + page_round_up_Z 131072 <= alloc_top (m_v
 assert (PLACE : region_free (vm_reserved (m_vmmaps mdN)) (w64 QSv) (Z_to_bv 64 (page_round_up_Z 131072)) = true /\
 map_contains (vm_maps (m_vmmaps mdN)) (w64 QSv) (Z_to_bv 64 (page_round_up_Z 131072)) = true).
 { rewrite pru17. split.
-- rewrite RSV. pose proof high_facts as (_ & _ & _ & _ & _ & _ & _ & _ & F9z & _).
+- (* 727298f3: the reservations past the image's are clear of the pointer-array mapping
+     ([YG0n.res_tail_ok]), and QSv's range lies inside it. *)
+destruct RSV as (rx & Hrx & RQx).
+rewrite Hrx, YK13.region_free_app. apply andb_true_iff. split.
++ pose proof high_facts as (_ & _ & _ & _ & _ & _ & _ & _ & F9z & _).
 apply (tfib_region_free_reserved QSv 131072); [clear; zlia | clear - F9 F10 Q5 E1; ceil; unfold ASAN_CEIL, kPtrArrayResv in *; try unfold Qb in *; zlia |].
 clear - F9z F9 Q5 E1. unfold zone3, zone3cases, TFIB_IMG_LO, TFIB_IMG_END, kLowShadowBeg, kHighMemBeg, kPtrArrayResv in *. try unfold Qb in *. zlia.
++ apply (LinuxProcessSemantics.LinuxProcessSem.Checks.Placement.region_free_shrink rx (w64 Qb) (w64 kPtrArrayResv)); [exact RQx | |];
+unfold w64; rewrite !unsigned_lit_small by (clear - F9 F10 Q5 E1; ceil; unfold zone3, TFIB_IMG_LO, kLowShadowBeg, kHighMemBeg, ASAN_CEIL, kPtrArrayResv in *; try unfold Qb in *; zlia);
+clear - Q5 E1 Heq F9; unfold kPtrArrayResv in *; try unfold Qb in *; zlia.
 - apply (YA09.map_contains_intro _ (w64 QSv) (w64 131072) (w64 Qb) (w64 kPtrArrayResv) INQ);
 unfold w64; rewrite !unsigned_lit_small by (clear - F9 F10 Q5 E1; ceil; unfold zone3, TFIB_IMG_LO, kLowShadowBeg, kHighMemBeg, ASAN_CEIL, kPtrArrayResv in *; try unfold Qb in *; zlia);
 clear - Q5 E1 Heq F9; unfold kPtrArrayResv in *; try unfold Qb in *; zlia. }

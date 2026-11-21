@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/Rt/StackMalloc0.v of a working branch 5251b347350 (itself ported to rc.2's binaries and LPS 2afba80c, with the theorem statements in rc.2's form) as the walk of __asan_stack_malloc_0 at 0x3d474 of libreac/fuzz_disco: the same class-0 frame constants (64-byte frames, 8 shadow bytes, hint at +0, flags at +0x1000, frames at +0x9000) and probe-loop registers, fuzz_disco's image numbers, the image end through TFIB_IMG_END and YImgTop; module names; GrantSyms is TfibSyms again; the Zify division flag is set #[local]. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_grant/lib/A/Rt/StackMalloc0.v of a working branch (itself ported to rc.2's binaries and LPS 2afba80c, with the theorem statements in rc.2's form) as the walk of __asan_stack_malloc_0 at 0x3d474 of libreac/fuzz_disco: the same class-0 frame constants (64-byte frames, 8 shadow bytes, hint at +0, flags at +0x1000, frames at +0x9000) and probe-loop registers, fuzz_disco's image numbers, the image end through TFIB_IMG_END and YImgTop; module names; GrantSyms is TfibSyms again; the Zify division flag is set #[local]. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_disco.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

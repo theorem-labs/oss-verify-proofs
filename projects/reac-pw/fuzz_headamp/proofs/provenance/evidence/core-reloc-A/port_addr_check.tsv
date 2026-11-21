@@ -1,5 +1,5 @@
-# port_addr_check 3d2eee813cce (sha256 3d2eee813cce41c92be6131e56292d73e473d2582156655895ff2a1ce5c73b82, tools registry 9278eb49a9d tools/port_addr_check/3d2eee813cce/), one run over the unit:
-#   --src src4 (reac-pw/fuzz_role lib/A at 9f8c843f0e03, the 386 files this step ports) --dst the 386 committed files of a3 b0cad0df5623
+# port_addr_check 3d2eee813cce (sha256 3d2eee813cce41c92be6131e56292d73e473d2582156655895ff2a1ce5c73b82, tools registry tools/port_addr_check/3d2eee813cce/), one run over the unit:
+#   --src src4 (reac-pw/fuzz_role lib/A, the 386 files this step ports) --dst the 386 committed files of a3
 #   --src-image A=fuzz_role.asan 614cffc0864c : unstripped 6da77bafc5c0   --dst-image A=fuzz_headamp.asan f3e0669d2819 : unstripped b5f352154c54   --assign **=A   --generated A/ACej.v   --fail-on-flags
 # RESULT: 386 files paired, 166,251 numerals. Verdicts: SAME-SYMBOL 7,417, SAME-GEOMETRY 1,229, IDENT-NAME 3,227, INSN-SAME 1,296, NON-ADDRESS-SAME 152,535, SAME-CONTENT 29, ROUND-CONSTANT-SAME 47, IMAGE-EXTENT-SAME 72, LABEL-KEPT 19, GENERATOR-FILL 6, GENERATED-SKIPPED 1 (A/ACej.v).
 # FLAGGED 373 rows in 9 classes: NON-ADDRESS-CHANGED 181, UNPAIRED-SOURCE 149, UNPAIRED-PORTED 24, UNRESOLVED 6, STALE-DERIVED-QUOTIENT 5, DIFFERENT-SYMBOL 3, KIND-CHANGED 3, SAME-VALUE-DIFFERENT-OBJECT 1, FLAGS-NOT-DECOMPOSABLE 1. EVERY row read; 0 wrong values; 0 changes made.

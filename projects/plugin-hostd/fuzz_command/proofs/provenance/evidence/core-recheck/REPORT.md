@@ -2,7 +2,7 @@
 
 rule 24: no function proved (kind: measurement; a re-check of relocated proof files against the unit's pinned images).
 No .v file is changed by this record. Checked tree: plugin-hostd/fuzz_command tree (git tree 86ee7833f146; internal record) (the unit's series head; it holds the merged tree
-781f46bc05cd plus later commits, see INVENTORY.md). All paths below are relative to the unit's proof root.
+plus later commits, see INVENTORY.md). All paths below are relative to the unit's proof root.
 
 ## The ruling this record answers (method owner, 2026-10-30)
 
@@ -130,8 +130,8 @@ made, so its five named limits stand and are covered above; the later 0d24592683
 `tools/pg-reloc/d9e0589898fd/port_core.py` in the commit of the proofs repository whose tree is repository tree (git tree 0f4cc1fc13e5; internal record); record copy port_core.py (sha256 d9e0589898fd; internal record)
 (the registry holds no copy of this version). `d9e0/runs/run.sh` refuses a port_core.py whose sha256 does not start
 d9e0589898fd, and the 12 other files that the version line of `d9e0/runs/A1.log` and `A2.log` names are under the same
-directory of that commit, each with the sha256 the line gives. Trees: `git archive` of c8557374ad2e (donor cgif_file_fuzzer lib),
-plugin-hostd/fuzz_command tree (git tree 86ee7833f146; internal record) (checked) and 781f46bc05cd (merged). Images: the four pins of `inventory.tsv`'s runs and their unstripped twins
+directory of that commit, each with the sha256 the line gives. Trees: `git archive` (donor cgif_file_fuzzer lib),
+plugin-hostd/fuzz_command tree (git tree 86ee7833f146; internal record) (checked) and (merged). Images: the four pins of `inventory.tsv`'s runs and their unstripped twins
 (sha256 in `gate/GATE.md`). The scripts of each part are in its directory; host paths in them and in the run logs are
 written as placeholders: `$W` = the work directory of this check; `$IMG` = its image copies; `$RUN` = its gate runs;
 `$PLANT` = its planted copies; `$OURS` / `$MERGED` / `$DONOR` = `git archive` extracts of the checked commit, of the

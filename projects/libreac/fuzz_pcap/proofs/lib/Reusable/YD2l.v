@@ -3,7 +3,8 @@ From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YD2l.v, with its module paths changed, names TfibSyms -> PcapSyms, TfibB -> PcapB and its addresses moved to libreac/fuzz_pcap's ASan build. *)
-(* Modified by Theorem Labs, 2026-10: the four const-cell memberships of TfibB_ok are index-free (the asan-ubsan twin of lib/A/AD2l.v, commit 941e03fcea8): each cites lib/Reusable/YF0x.v:202 cell_lookup_In at the cell's ADDRESS (0xa17b8, 0xa17c0, 0x996f8, 0x99750) instead of the donor's literal position in Tfib_const_abs (nth_error_In 49 / 50 / 144 / 155), so the table's order is no longer part of the proof. *)
+(* Modified by Theorem Labs, 2026-10: the four const-cell memberships of TfibB_ok are index-free (the asan-ubsan twin of lib/A/AD2l.v): each cites lib/Reusable/YF0x.v:202 cell_lookup_In at the cell's ADDRESS (0xa17b8, 0xa17c0, 0x996f8, 0x99750) instead of the donor's literal position in Tfib_const_abs (nth_error_In 49 / 50 / 144 / 155), so the table's order is no longer part of the proof. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Bool Lia.
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib.Reusable Require Import YG00 YG01 YG0f YF0l YF0m YF0x YF0p YCej.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the SIGPIPE disposition left free, the reserved-interval ledger, the launch input's kernel build): changed E_AND, E_BK, E_KB and 25 more; added Hapc, Hbrk, Hhw and 22 more; taken in part from projects/jsoncons/fuzz_json_cursor/proofs/lib/Pm8ArtHandoffInstK.v, 82 lines within its lines 17-223. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -17,40 +18,60 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Import AxSymExec3K.AX2K AxSymExec3SoundK.AX2SK AsanPlanK.APK AsanPlanSoundK.APSK.
 Open Scope Z_scope.
+Local Ltac vmc_refl := first [ lazymatch goal with |- _ = ?b => vm_cast_no_check (@eq_refl _ b) end | vm_compute; reflexivity ].
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
 (* [comment removed for export] *)
-Definition E_KB : expr := EMd M_MUL (ELit 4096) (EVar 224).
-Definition E_BK : expr := EAlu ALU_ADD (EMd M_MUL (ELit 4096) (EVar 224)) (EMd M_MUL (ELit (-4096)) (EVar 225)).
-Definition E_AND : expr := EAlu ALU_ADD (EMd M_MUL (ELit (-4096)) (EVar 225)) (EAlu ALU_AND (EMd M_MUL (ELit 4096) (EVar 224)) (ELit 65535)).
+Definition E_KB : expr := EMd M_MUL (ELit 4096) (EVar 228).
+Definition E_BK : expr := EAlu ALU_ADD (EMd M_MUL (ELit 4096) (EVar 228)) (EMd M_MUL (ELit (-4096)) (EVar 229)).
+Definition E_AND : expr := EAlu ALU_ADD (EMd M_MUL (ELit (-4096)) (EVar 229)) (EAlu ALU_AND (EMd M_MUL (ELit 4096) (EVar 228)) (ELit 65535)).
 Definition E_PG : expr := EAlu ALU_ADD (EMd M_MUL (ELit 32768) (EVar 0)) (EMd M_MUL (ELit 4096) (EVar 10)).
-Definition E_TOP : expr := EAlu ALU_ADD (EMd M_MUL (ELit 32768) (EVar 0)) (EAlu ALU_ADD (EMd M_MUL (ELit 4096) (EVar 10)) (EMd M_MUL (ELit 4096) (EVar 376))).
+Definition E_TOP : expr := EAlu ALU_ADD (EMd M_MUL (ELit 32768) (EVar 0)) (EAlu ALU_ADD (EMd M_MUL (ELit 4096) (EVar 10)) (EMd M_MUL (ELit 4096) (EVar 380))).
 Definition E_BOT : expr := eaddz E_TOP (-8388608).
-Definition E_R : expr := EAlu ALU_ADD (EAlu ALU_ADD (EMd M_MUL (ELit 16) (EVar 6)) (EMd M_MUL (ELit (-4096)) (EVar 376))) (ELit 3935).
+Definition E_R : expr := EAlu ALU_ADD (EAlu ALU_ADD (EMd M_MUL (ELit 16) (EVar 6)) (EMd M_MUL (ELit (-4096)) (EVar 380))) (ELit 3935).
 
-(* [comment removed for export] *)
 Definition geo_chk (cs : acs) : bool :=
   let k := kn cs in
   (expr_eqb (am_base (role cs I_KSPACE)) E_KB && expr_eqb (bK cs) E_BK && expr_eqb (topE cs) E_TOP && expr_eqb (botE cs) E_BOT
-   && existsb (kentry_eqb (KRange (EVar 225) 0 15)) k && existsb (kentry_eqb (KRange E_AND 0 0)) k
-   && existsb (kentry_eqb (KRange (EVar 224) 4295491576 34326181871)) k
-   && existsb (kentry_eqb (KRange (EVar 376) 0 1)) k && existsb (kentry_eqb (KRange (EVar 6) 0 255)) k
+   && existsb (kentry_eqb (KRange (EVar 229) 0 15)) k && existsb (kentry_eqb (KRange E_AND 0 0)) k
+   && existsb (kentry_eqb (KRange (EVar 228) 4295491576 34326181871)) k
+   && existsb (kentry_eqb (KRange (EVar 380) 0 1)) k && existsb (kentry_eqb (KRange (EVar 6) 0 255)) k
    && existsb (kentry_eqb (KRange E_R 0 4095)) k
    && existsb (kentry_eqb (KRange E_PG 140735340871680 140737488351232)) k
    && lin_nowrapR k E_KB && lin_nowrapR k E_BK && lin_nowrapR k E_TOP && lin_nowrapR k E_BOT && lin_nowrapR k E_PG && lin_nowrapR k E_R
    && lin_nowrapR k e_sp0)%bool.
 
+(* THE SECTIONS' PARAMETERS, old beside new.
+     OLD  sp brk0 rdraw argv envp uid hw fs, with Hsp Hva (Hve Hfit for geo_sp16);
+          SINV0 APH0 sp rdraw brk0 argv envp uid hw, argH0 APH0 sp rdraw argv envp uid hw.
+     NEW  the launch's whole input in [HandoffBridgeK]'s Section Image order ([ifs] the
+          input's filesystem, [fs] the plan's FS0).  Section lemmas of other files are
+          called by [eapply ...; sec], since their arity is what their proofs read.
+   KNOWN TO MOVE: the literal fresh indices in [E_KB]..[E_R] and [geo_chk] were 224, 225
+   and 376 before the revision; at 75d69e00 the regenerated HS_0/HS_1 carry 228, 229 and
+   380 (read off a build round, identical in all
+   eight states).  The bounds beside them did not move. *)
 Section Geo.
-  Variable sp brk0 : word.
-  Variable rdraw : EntryDraw.
-  Variable argv envp : list (list byte).
-  Variables uid hw : word.
-  Variable fs : Fs.Fs.
+  Variables (sp : word) (rdraw : EntryDraw) (brk0 mbase : word) (argv envp : list (list byte)).
+  Variables (ifs : Fs.Fs) (stdin : InputStream) (uid gid hw : word) (groups : list word) (net : NetQueue).
+  Variables (nofile sigmask : word) (abrt : bool) (urnd : InputStream) (tmp0 : Fs.Fs).
+  Variables (kb : KernelBuild) (execfn : list byte) (sdf : bool) (apc : N) (fs : Fs.Fs).
   Hypothesis Hsp : valid_sp sp.
+  Hypothesis Hbrk : valid_brk ASEGS0 brk0.
+  Hypothesis Hmb : valid_mmap_base mbase.
   Hypothesis Hva : valid_argv argv.
-  #[local] Notation SINV := (SINV0 APH0 sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 APH0 sp rdraw argv envp uid hw).
+  Hypothesis Hve : valid_envp envp.
+  Hypothesis Hfit : entry_stack_fits sp argv envp.
+  Hypothesis Huid : valid_id uid.
+  Hypothesis Hhw : valid_hwcap hw.
+  Hypothesis Hapc : Z.of_N apc = a_entry ASAN0.
+  #[local] Notation INP := (AsanInitK.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf).
+  Hypothesis Hlaunch : valid_launch INP.
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) INP.
+  #[local] Notation SINV := (SINV0 APH0 sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf apc).
+  #[local] Notation argH := (argH0 sp rdraw argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf).
   #[local] Notation CSOK := (cs_ok ASEGS0 ASAN0 AsanInitK.LIMIT SINV argH fs).
+  Local Ltac sec := first [ eassumption | exact asan0_in_hull | exact asan0_hull_ok | exact asan0_img_facts ].
 
   Variable cs : acs.
   Hypothesis GCHK : geo_chk cs = true.
@@ -83,20 +104,20 @@ Section Geo.
   Lemma geo_spb : rbase E cs I_KSPACE < uE E (bK cs) + 0x10000 <= rbase E cs I_KSPACE + 65536 /\ (uE E (bK cs) + 0x10000) mod 65536 = 0.
   Proof.
     destruct geo_syn as (S1 & S2 & _ & _). unfold rbase. rewrite S1, S2. unfold uE.
-    remember (bv_unsigned (edenot E E_KB)) as kb eqn:Ekb. remember (bv_unsigned (edenot E E_BK)) as bk eqn:Ebk.
+    remember (bv_unsigned (edenot E E_KB)) as kbz eqn:Ekb. remember (bv_unsigned (edenot E E_BK)) as bk eqn:Ebk.
     LINEQ E_KB L1. rewrite <- Ekb in L1. LINEQ E_BK L2. rewrite <- Ebk in L2.
-    RANGE (KRange (EVar 225) 0 15) R1. RANGE (KRange (EVar 224) 4295491576 34326181871) R2. RANGE (KRange E_AND 0 0) R3.
-    cbn [edenot] in R1, R2. change (bv_unsigned (ev E 225)) with (VZ E 225) in R1. change (bv_unsigned (ev E 224)) with (VZ E 224) in R2.
-    (* [comment removed for export] *)
+    RANGE (KRange (EVar 229) 0 15) R1. RANGE (KRange (EVar 228) 4295491576 34326181871) R2. RANGE (KRange E_AND 0 0) R3.
+    cbn [edenot] in R1, R2. change (bv_unsigned (ev E 229)) with (VZ E 229) in R1. change (bv_unsigned (ev E 228)) with (VZ E 228) in R2.
+
     unfold E_AND in R3. cbn [edenot] in R3. rewrite u_add64, u_and64, !u_mul64 in R3.
     rewrite (u64_lit 65535), (u64_lit 4096) in R3 by lia.
-    replace (bv_unsigned (Z_to_bv 64 (-4096))) with 18446744073709547520 in R3 by (vm_compute; reflexivity).
-    change (bv_unsigned (ev E 225)) with (VZ E 225) in R3. change (bv_unsigned (ev E 224)) with (VZ E 224) in R3.
+    replace (bv_unsigned (Z_to_bv 64 (-4096))) with 18446744073709547520 in R3 by vmc_refl.
+    change (bv_unsigned (ev E 229)) with (VZ E 229) in R3. change (bv_unsigned (ev E 228)) with (VZ E 228) in R3.
     change 65535 with (Z.ones 16) in R3. rewrite Z.land_ones in R3 by lia. change (2 ^ 16) with 65536 in R3.
-    rewrite (Z.mod_small (4096 * VZ E 224) (2 ^ 64)) in R3 by lia.
+    rewrite (Z.mod_small (4096 * VZ E 228) (2 ^ 64)) in R3 by lia.
     Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
-    assert (HA : (4096 * VZ E 224) mod 65536 = 4096 * VZ E 225) by lia.
-    subst kb bk. rewrite L1, L2. split; [|]; lia.
+    assert (HA : (4096 * VZ E 228) mod 65536 = 4096 * VZ E 229) by lia.
+    subst kbz bk. rewrite L1, L2. split; [|]; lia.
     Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
   Qed.
 
@@ -109,14 +130,14 @@ Section Geo.
     remember (bv_unsigned (edenot E E_R)) as rr eqn:Er.
     LINEQ E_TOP L1. rewrite <- Et in L1. LINEQ E_BOT L2. rewrite <- Eb in L2. LINEQ e_sp0 L3. rewrite <- Es in L3.
     LINEQ E_PG L4. rewrite <- Ep in L4. LINEQ E_R L5. rewrite <- Er in L5.
-    RANGE (KRange (EVar 376) 0 1) R1. RANGE (KRange (EVar 6) 0 255) R2. RANGE (KRange E_R 0 4095) R3. RANGE (KRange E_PG 140735340871680 140737488351232) R4.
-    cbn [edenot] in R1, R2. change (bv_unsigned (ev E 376)) with (VZ E 376) in R1. change (bv_unsigned (ev E 6)) with (VZ E 6) in R2.
+    RANGE (KRange (EVar 380) 0 1) R1. RANGE (KRange (EVar 6) 0 255) R2. RANGE (KRange E_R 0 4095) R3. RANGE (KRange E_PG 140735340871680 140737488351232) R4.
+    cbn [edenot] in R1, R2. change (bv_unsigned (ev E 380)) with (VZ E 380) in R1. change (bv_unsigned (ev E 6)) with (VZ E 6) in R2.
     rewrite <- Er in R3. rewrite <- Ep in R4.
     Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).
     repeat split; lia.
     Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
   Qed.
-  (* [comment removed for export] *)
+
   Lemma geo_spa : uE E e_sp0 mod 16 = 0.
   Proof.
     unfold uE. remember (bv_unsigned (edenot E e_sp0)) as s0 eqn:Es. LINEQ e_sp0 L3. rewrite <- Es in L3.
@@ -124,44 +145,56 @@ Section Geo.
     lia.
     Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
   Qed.
-  (* [comment removed for export] *)
-  Hypothesis Hve : valid_envp envp.
-  Hypothesis Hfit : entry_stack_fits sp argv envp.
+
+  (* PROOF CHANGED: the old proof bounded [usp + 16] through
+     [build_stack_bytes_within_span] and [bsb_ge] over the seven positional arguments;
+     [build_stack_bytes_within_span] is retired at 727298f3.  The goal is about [sp]
+     alone and [Run.entry_stack_fits] bounds [sp] directly: its span is a sum of
+     non-negative terms with literals above 16 (fuzz_bigint's As0ArtHandoffInstK form). *)
   Lemma geo_sp16 : uE E e_sp0 + 16 <= 2 ^ 47.
   Proof.
     unfold uE. remember (bv_unsigned (edenot E e_sp0)) as s0 eqn:Es. LINEQ e_sp0 L3. rewrite <- Es in L3.
-    pose proof (hbi_sp0 ASEGS0 ASAN0 APH0 sp rdraw brk0 argv envp uid hw fs Hsp Hva Hve Hfit E cs R FULL model HC) as U0.
-    pose proof (build_stack_bytes_within_span APH0 sp argv envp uid hw rdraw) as SPAN.
-    destruct (bsb_ge APH0 sp rdraw argv envp uid hw) as [GE _].
-    unfold entry_stack_fits, sp_window_hi in Hfit. lia.
+    assert (U0 : 32768 * VZ E 0 + 16 * VZ E 6 + 4096 * VZ E 10 = bv_unsigned sp) by (eapply hbi_sp0; sec).
+    pose proof Hfit as HF. unfold entry_stack_fits, entry_stack_span, sp_window_hi in HF.
+    pose proof (total_arg_bytes_nonneg argv). pose proof (total_arg_bytes_nonneg envp).
+    pose proof (Nat2Z.is_nonneg (length argv)). pose proof (Nat2Z.is_nonneg (length envp)).
+    lia.
   Qed.
 End Geo.
 
-(* [comment removed for export] *)
-Lemma geo_chk_0 : geo_chk HS_0 = true.   Proof. vm_compute. reflexivity. Qed.
-Lemma geo_chk_1 : geo_chk HS_1 = true.   Proof. vm_compute. reflexivity. Qed.
-Lemma art_lits_chk_0 : art_lits_chk HS_0 = true.   Proof. vm_compute. reflexivity. Qed.
-Lemma art_lits_chk_1 : art_lits_chk HS_1 = true.   Proof. vm_compute. reflexivity. Qed.
-Lemma art_sym_chk_0 : art_sym_chk HS_0 = true.   Proof. vm_compute. reflexivity. Qed.
-Lemma art_sym_chk_1 : art_sym_chk HS_1 = true.   Proof. vm_compute. reflexivity. Qed.
-Lemma art_lazy_chk_0 : art_lazy_chk HS_0 = true.   Proof. vm_compute. reflexivity. Qed.
-Lemma art_lazy_chk_1 : art_lazy_chk HS_1 = true.   Proof. vm_compute. reflexivity. Qed.
+(* STATEMENT CHANGED: indexed by the run's CONFIG_RSEQ flag (OLD HS_0 / HS_1, NEW
+   HS_0 b / HS_1 b; see Pm4HandoffInstK); [b] is destructed above each [vm_compute]. *)
+Lemma geo_chk_0 : forall b, geo_chk (HS_0 b) = true.   Proof. intros [|]; vmc_refl. Qed.
+Lemma geo_chk_1 : forall b, geo_chk (HS_1 b) = true.   Proof. intros [|]; vmc_refl. Qed.
+Lemma art_lits_chk_0 : forall b, art_lits_chk (HS_0 b) = true.   Proof. intros [|]; vmc_refl. Qed.
+Lemma art_lits_chk_1 : forall b, art_lits_chk (HS_1 b) = true.   Proof. intros [|]; vmc_refl. Qed.
+Lemma art_sym_chk_0 : forall b, art_sym_chk (HS_0 b) = true.   Proof. intros [|]; vmc_refl. Qed.
+Lemma art_sym_chk_1 : forall b, art_sym_chk (HS_1 b) = true.   Proof. intros [|]; vmc_refl. Qed.
+Lemma art_lazy_chk_0 : forall b, art_lazy_chk (HS_0 b) = true.   Proof. intros [|]; vmc_refl. Qed.
+Lemma art_lazy_chk_1 : forall b, art_lazy_chk (HS_1 b) = true.   Proof. intros [|]; vmc_refl. Qed.
 
 Section Inst.
-  Variable sp brk0 : word.
-  Variable rdraw : EntryDraw.
-  Variable argv envp : list (list byte).
-  Variables uid hw : word.
-  Variable fs : Fs.Fs.
+  Variables (sp : word) (rdraw : EntryDraw) (brk0 mbase : word) (argv envp : list (list byte)).
+  Variables (ifs : Fs.Fs) (stdin : InputStream) (uid gid hw : word) (groups : list word) (net : NetQueue).
+  Variables (nofile sigmask : word) (abrt : bool) (urnd : InputStream) (tmp0 : Fs.Fs).
+  Variables (kb : KernelBuild) (execfn : list byte) (sdf : bool) (apc : N) (fs : Fs.Fs).
   Hypothesis Hsp : valid_sp sp.
+  Hypothesis Hbrk : valid_brk ASEGS0 brk0.
+  Hypothesis Hmb : valid_mmap_base mbase.
   Hypothesis Hva : valid_argv argv.
   Hypothesis Hve : valid_envp envp.
   Hypothesis Hfit : entry_stack_fits sp argv envp.
-  #[local] Notation SINV := (SINV0 APH0 sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 APH0 sp rdraw argv envp uid hw).
+  Hypothesis Huid : valid_id uid.
+  Hypothesis Hhw : valid_hwcap hw.
+  Hypothesis Hapc : Z.of_N apc = a_entry ASAN0.
+  #[local] Notation INP := (AsanInitK.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf).
+  Hypothesis Hlaunch : valid_launch INP.
+  Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) INP.
+  #[local] Notation SINV := (SINV0 APH0 sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf apc).
+  #[local] Notation argH := (argH0 sp rdraw argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf).
   #[local] Notation CSOK := (cs_ok ASEGS0 ASAN0 AsanInitK.LIMIT SINV argH fs).
+  Local Ltac sec := first [ eassumption | exact asan0_in_hull | exact asan0_hull_ok | exact asan0_img_facts ].
 
-  (* [comment removed for export] *)
   Variable BUDGET : Z.
   Hypothesis BUD_ge : 2 ^ 34 <= BUDGET.
   Hypothesis BUD_hi : BUDGET <= 2 ^ 39 - 2 ^ 35.
@@ -171,25 +204,31 @@ Section Inst.
   Lemma inst_bud : 0 <= BUDGET /\ 0 <= Pm4ArtInv.KMAX /\ 0 <= Pm4ArtInv.LENMAX < 2 ^ 62.
   Proof. unfold Pm4ArtInv.KMAX, Pm4ArtInv.LENMAX. lia. Qed.
 
-  Theorem as0_art_handoff_h : forall h, (h < 2)%nat -> forall E R FULL model, CSOK E (HSA h) R FULL model ->
-    art_handoff_target art_fsg (vm_maps (m_vmmaps model)) (segments_reserved ASEGS0) (vm_noaccess (m_vmmaps model))
-      (as0_BASEx (HSA h) E) BUDGET art_fsinv (as0_rn E (HSA h)) art_fsg0 K0D 8192 BUDGET (as0_A0x (HSA h) E) FULL (vml_of model).
+  (* STATEMENT CHANGED, old beside new: OLD [forall h, ... (HSA h) ...],
+     NEW [forall b h, ... (HSA b h) ...] over this Section's launch. *)
+  Theorem as0_art_handoff_h : forall b h, (h < 2)%nat -> forall E R FULL model, CSOK E (HSA b h) R FULL model ->
+    art_handoff_target art_fsg (vm_maps (m_vmmaps model)) (vm_reserved (m_vmmaps model)) (vm_noaccess (m_vmmaps model))
+      (as0_BASEx (HSA b h) E) BUDGET art_fsinv (as0_rn E (HSA b h)) art_fsg0 K0D 8192 BUDGET (as0_A0x (HSA b h) E) FULL (vml_of model).
   Proof.
-    intros h Hh E R FULL model HC.
-    assert (CH : as0_chk (HSA h) = true /\ art_lits_chk (HSA h) = true /\ art_sym_chk (HSA h) = true /\ geo_chk (HSA h) = true /\ art_lazy_chk (HSA h) = true).
+    intros b h Hh E R FULL model HC.
+    assert (CH : as0_chk (HSA b h) = true /\ art_lits_chk (HSA b h) = true /\ art_sym_chk (HSA b h) = true /\ geo_chk (HSA b h) = true /\ art_lazy_chk (HSA b h) = true).
     { destruct h as [|[|h]]; [| |lia].
-      - exact (conj as0_chk_0 (conj art_lits_chk_0 (conj art_sym_chk_0 (conj geo_chk_0 art_lazy_chk_0)))).
-      - exact (conj as0_chk_1 (conj art_lits_chk_1 (conj art_sym_chk_1 (conj geo_chk_1 art_lazy_chk_1)))). }
+      - exact (conj (as0_chk_0 b) (conj (art_lits_chk_0 b) (conj (art_sym_chk_0 b) (conj (geo_chk_0 b) (art_lazy_chk_0 b))))).
+      - exact (conj (as0_chk_1 b) (conj (art_lits_chk_1 b) (conj (art_sym_chk_1 b) (conj (geo_chk_1 b) (art_lazy_chk_1 b))))). }
     destruct CH as (C0 & CL & CS & CG & CZ).
-    destruct (HSA_numbers h Hh) as (N1 & N2 & N3 & N4).
-    pose proof (geo_spb sp brk0 rdraw argv envp uid hw fs (HSA h) CG E R FULL model HC) as GS.
-    pose proof (geo_stk sp brk0 rdraw argv envp uid hw fs (HSA h) CG E R FULL model HC) as GT.
-    pose proof (geo_sp16 sp brk0 rdraw argv envp uid hw fs Hsp Hva (HSA h) CG E R FULL model HC Hve Hfit) as G16.
-    pose proof (geo_spa sp brk0 rdraw argv envp uid hw fs (HSA h) CG E R FULL model HC) as GA.
-    assert (BL : a_eager (HSA h) + a_abytes (HSA h) + 2 ^ 34 + BUDGET <= AsanInitK.LIMIT) by (unfold AsanInitK.LIMIT, target_alloc_limit; lia).
-    assert (GP : AsanCeil.bottomup_floor + Pm4ArtInv.LENMAX + (a_totsz (HSA h) + BUDGET)
-                 + (Z.of_nat (length (segments_reserved ASEGS0) + length (a_maps (HSA h))) + Pm4ArtInv.KMAX) * (Pm4ArtInv.LENMAX + 4095) <= AsanCeil.alloc_ceiling).
-    { rewrite N4, asan0_res_eq. cbn [length Nat.add]. change (Z.of_nat 21) with 21. unfold Pm4ArtInv.KMAX, Pm4ArtInv.LENMAX, AsanCeil.bottomup_floor, AsanCeil.alloc_ceiling. lia. }
-    eapply (as0_art_handoff sp brk0 rdraw argv envp uid hw fs Hsp Hva (HSA h)); try eassumption; first [exact inst_bud | exact FSH].
+    destruct (HSA_numbers b h Hh) as (N1 & N2 & N3 & N4). rewrite Pm4HandoffInstK.resx0 in N1.
+    set (cs := HSA b h) in *.
+    assert (GS : rbase E cs I_KSPACE < uE E (bK cs) + 0x10000 <= rbase E cs I_KSPACE + 65536 /\ (uE E (bK cs) + 0x10000) mod 65536 = 0)
+      by (eapply geo_spb; sec).
+    assert (GT : uE E (topE cs) = uE E (botE cs) + 8388608 /\ uE E (botE cs) mod 4096 = 0
+                 /\ uE E e_sp0 - 8388608 <= uE E (botE cs) + 4096 /\ uE E (botE cs) <= uE E e_sp0 - 8388608 + 4096 /\ uE E (topE cs) <= 2 ^ 47)
+      by (eapply geo_stk; sec).
+    assert (G16 : uE E e_sp0 + 16 <= 2 ^ 47) by (eapply geo_sp16; sec).
+    assert (GA : uE E e_sp0 mod 16 = 0) by (eapply geo_spa; sec).
+    assert (BL : a_eager cs + a_abytes cs + 2 ^ 34 + BUDGET <= AsanInitK.LIMIT) by (unfold AsanInitK.LIMIT, target_alloc_limit; lia).
+    assert (GP : AsanCeil.bottomup_floor + Pm4ArtInv.LENMAX + (a_totsz cs + BUDGET)
+                 + (Z.of_nat (length (segments_reserved ASEGS0) + n_resx ASAN0 + length (a_maps cs)) + Pm4ArtInv.KMAX) * (Pm4ArtInv.LENMAX + 4095) <= AsanCeil.alloc_ceiling).
+    { rewrite N4, asan0_res_eq. cbn [length Nat.add n_resx ASAN0]. change (Z.of_nat 23) with 23. unfold Pm4ArtInv.KMAX, Pm4ArtInv.LENMAX, AsanCeil.bottomup_floor, AsanCeil.alloc_ceiling. lia. }
+    eapply as0_art_handoff; try eassumption; first [exact inst_bud | exact FSH].
   Qed.
 End Inst.

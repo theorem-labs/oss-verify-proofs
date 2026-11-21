@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (section hypothesis Hnk, that no segment is kernel-mapped, is passed to the ck-gated sound lemmas and asum_sound, since segments_reserved now filters seg_kernel_map). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith Lia Bool List.
@@ -129,6 +130,12 @@ Variable LIM : Z.
 Variable fs0 : Fs.Fs.
 Variable KT : valuation -> list byte -> TSet.
 Hypothesis Hlow : segs_low segs.
+(* NEW: the ck-gated lemmas below, and asum_sound, are each discharged with Hnk
+   immediately after Hlow, because no_lazy_img/no_lazy_imgn gained the discriminant
+   (AxSum.v:216,251) when segments_reserved began filtering seg_kernel_map
+   (LPS@75d69e00 Run.v:253-254).  Ported from openssl/bignum's built copy, where the
+   kernel confirmed it in a farm round (144/145, AxSumCk.vo built). *)
+Hypothesis Hnk : forallb (fun s => negb (seg_kernel_map s)) segs = true.
 Hypothesis KT_emit : forall ρ o bs, KT ρ (o ++ bs) [] -> t_eq (KT ρ o) (t_emit (W 2 bs) (KT ρ (o ++ bs))).
 
 Notation Snd := (Sound segs cfg LIM (MR segs fs0) KT).
@@ -138,16 +145,16 @@ Proof.
   unfold asum_ck0.
   destruct (k =? 4).
   { destruct (sum_rip_ck T segs LIM A) as [l0|] eqn:E1;
-      [intros H; injection H as <-; exact (sum_rip_sound T HT segs cfg LIM fs0 KT Hlow A l0 (sum_rip_ck_eq LIM A l0 E1))|].
+      [intros H; injection H as <-; exact (sum_rip_sound T HT segs cfg LIM fs0 KT Hlow Hnk A l0 (sum_rip_ck_eq LIM A l0 E1))|].
     destruct (sum_rip2_ck T segs LIM A) as [l0|] eqn:E2;
-      [intros H; injection H as <-; exact (sum_rip2_sound T HT segs cfg LIM fs0 KT Hlow A l0 (sum_rip2_ck_eq LIM A l0 E2))|].
-    intros H. exact (sum_rip_big_sound T HT segs cfg LIM fs0 KT Hlow A l (sum_rip_big_ck_eq LIM A l H)). }
+      [intros H; injection H as <-; exact (sum_rip2_sound T HT segs cfg LIM fs0 KT Hlow Hnk A l0 (sum_rip2_ck_eq LIM A l0 E2))|].
+    intros H. exact (sum_rip_big_sound T HT segs cfg LIM fs0 KT Hlow Hnk A l (sum_rip_big_ck_eq LIM A l H)). }
   destruct (k =? 6).
   { destruct (sum_memcpy_ck T segs LIM A) as [l0|] eqn:E1;
       [intros H; injection H as <-; exact (sum_memcpy_sound segs cfg LIM fs0 KT Hlow A l0 (sum_memcpy_ck_eq LIM A l0 E1))|].
     intros H. exact (sum_memcpy_big_sound segs cfg LIM fs0 KT Hlow A l (sum_memcpy_big_ck_eq LIM A l H)). }
-  destruct (k =? 9); [intros H; exact (sum_amc_sound T HT segs cfg LIM fs0 KT Hlow A l (sum_amc_ck_eq LIM A l H))|].
-  exact (asum_sound T HT segs cfg LIM fs0 KT Hlow KT_emit k A l).
+  destruct (k =? 9); [intros H; exact (sum_amc_sound T HT segs cfg LIM fs0 KT Hlow Hnk A l (sum_amc_ck_eq LIM A l H))|].
+  exact (asum_sound T HT segs cfg LIM fs0 KT Hlow Hnk KT_emit k A l).
 Qed.
 
 (* [comment removed for export] *)

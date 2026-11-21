@@ -22,8 +22,12 @@
     WHAT THE HARNESS CHECKS.  idn2_to_ascii_8z/_lz over 6 flag combinations,
     idn2_to_ascii_4i/_4i2/_4z for 4-byte-aligned sizes, NULL-argument
     combinations when size == 0; outputs freed unchecked.  The harness makes no
-    check of its own beyond not crashing, so a statement about it says only that
-    the code it calls never crashes, hangs or trips a sanitizer.
+    check of its own beyond not crashing.  Its halts statements say only that
+    the code it calls never crashes, hangs or trips a sanitizer.  Its agreement
+    statements say only that the code never crashes or trips a sanitizer, and
+    allow a run that never ends.  Its bound statements say only how often its
+    builds may disagree.  Its decidability statements say only that some program
+    decides where its builds agree.
 
     Whether each statement is open, proved or known false is recorded in the
     harness README, not here: this file changes only when a statement does. *)

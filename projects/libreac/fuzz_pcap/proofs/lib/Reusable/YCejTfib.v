@@ -1,10 +1,10 @@
 From OSSVerify.Proofs.libreac.fuzz_pcap.lib Require Import SymAddr.
 (* Image root: the original libreac v1.9.0 set: the pinned fuzz_pcap.asan-ubsan image (sha256 9e66f771f22a),
-   its unstripped twin (sha256 c969d83cdd59); statements of record
-   ed6b6b7b0ab. malloc_context_size 30 (kUnwindMax 30); nothing here rests on a malloc_context_size of 1. *)
+   its unstripped twin (sha256 c969d83cdd59); statements of record.
+   malloc_context_size 30 (kUnwindMax 30); nothing here rests on a malloc_context_size of 1. *)
 (* libreac/fuzz_pcap v1.9.0, fuzz_pcap.asan-ubsan: the facts about the allocation-trace universe (YCej.v, Tfib_universe)
-   that cgif_file_fuzzer's TFIB_T closing takes at its entry points, in the form its consumers use them (cgif_file_fuzzer at
-   ossv/recipes c8557374ad2e):
+   that cgif_file_fuzzer's TFIB_T closing takes at its entry points, in the form its consumers use them (cgif_file_fuzzer):
+   
    - lib/YD2l.v:34 `as_universe := Tfib_universe`: YCej.Tfib_universe (re-exported here);
    - lib/YD2l.v:75, field ts_universe (lib/YF0m.v:312) `universe_ok (as_universe B)`: YCej.Tfib_universe_ok;
    - lib/YD2l.v:76-79, field ts_universe_drv (lib/YF0m.v:313) `forall t, In t DRV_TRACES -> In t (as_universe B)`:

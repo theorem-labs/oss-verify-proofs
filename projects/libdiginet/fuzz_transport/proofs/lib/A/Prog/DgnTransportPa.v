@@ -2,11 +2,12 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YC4a.v for libreac/fuzz_grant's program walk: one listing (grant_listing over gsym), fuzz_grant.asan's image range and 34 objects, and pa_xcalls in place of PAImg2, fixing the addresses of the program functions the listing calls; module paths changed. *)
-(* Modified by Theorem Labs, 2026-10: taken by path from port-grant's copy (origin/cold/pg-prog cb6eddd4032, proofs/libreac/fuzz_grant/lib/A/Prog/GrantPa.v) for libreac/fuzz_decode's
+(* Modified by Theorem Labs, 2026-10: taken by path from port-grant's copy (proofs/libreac/fuzz_grant/lib/A/Prog/GrantPa.v) for libreac/fuzz_decode's
    program walk: module paths and the listing's names changed; one listing (decode_listing over dsym),
    fuzz_decode.asan's image range (lib/Reusable/YImgTop.v IMG_LO .. IMG_TOP), the listing's 15 objects, decode_xcalls
    (the listing's 11 program functions); pa_img_cover takes layout_ok ly, because image A's last PT_LOAD does not end
    on a page, so the page above it comes only from layout_ok's lo_img (lib/Reusable/YG0f.v:320). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require Import YImgTop.
 From Stdlib Require Import ZArith NArith List Lia Bool.

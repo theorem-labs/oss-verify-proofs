@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: auxv_bytes_u64s is added and rauxv_ok_of_core is reproved over the launch's entry image, reading the auxiliary vector and the AT_RANDOM bytes through stack_pieces under the SPAN bound from CORE_STK's launch conjunct, with the model's auxv_entries arguments as witnesses; and launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef). *)
 (* [comment removed for export] *)
 From Stdlib Require Lia.
 (* [comment removed for export] *)
@@ -175,52 +176,95 @@ Proof using Type. intros rnd0 R m. ltac2:(SecDiet.SzSec.closeP 'KS_heap_init_law
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
+(* PORTED to 75d69e00.  [auxv_bytes] is the model's own serialisation
+   (StackLayout.v:290) and [auxv_list] (E2/MA/MallocTree.v:130) is the same
+   vector as a word list, so the two agree by [InitMem.flat_map_word_le8].
+   Stated once rather than spelling a list, so no AT_ constant and no slot
+   index is written down here. *)
+Lemma auxv_bytes_u64s : forall la ph entry uid gid hwcap ar ae,
+  auxv_bytes la ph entry uid gid hwcap ar ae
+  = u64s (auxv_list la ph entry uid gid hwcap ar ae).
+Proof using Type. pin_using tt.
+  intros la ph entry uid gid hwcap ar ae.
+  unfold auxv_bytes, auxv_list. rewrite <- flat_map_word_le8.
+  generalize (auxv_entries la ph entry uid gid hwcap ar ae) as es. intros es.
+  induction es as [|[t v] es IH]; [reflexivity|].
+  cbn [build_auxv flat_map fst snd app].
+  change (build_auxv es) with
+    (flat_map (fun e : bv 64 * bv 64 => word_le8 (fst e) ++ word_le8 (snd e)) es) in IH.
+  rewrite IH, <- app_assoc. reflexivity.
+Qed.
+
+(* PORTED to 75d69e00.  The producer of [auxv_ok] (MallocTree.v:573), whose
+   ten witnesses are now (av, la, ph, entry, uid, gid, hwcap, at_random,
+   at_execfn, rnd) -- the model's own [auxv_entries] arguments, so the AT_
+   types and the terminator's index [26 + 2*r] come from the model and are
+   never written here.  The old proof walked a twenty-element literal with
+   [cbn [map]] and baked [20%nat] into the vector's length; at the revision
+   the vector is 27 pairs, 29 under CONFIG_RSEQ (StackLayout.v:276-277), and
+   [kb_rseq] is carried symbolically: every length below is
+   [auxv_size (la_rseq la)] and nothing destructs the kernel record.
+   The image's pieces come from [Printf_kit__Musl.stack_pieces], whose SPAN
+   premise (Printf_kit__Musl.v:194) is discharged from [CORE_STK]'s launch
+   conjunct. *)
 Lemma rauxv_ok_of_core : forall R m,
   CORE_LIBC R m -> CORE_STK R m -> 0x7fff80000000 <= usp0 R -> CEILZ <= rc_lo R -> auxv_ok (MSECV := MSR R) ssegs RAUXV_CELL m (usp0 R).
 Proof using Type. pin_using tt. ceil_facts.
-  (* [comment removed for export] *)
-  intros R m (LC & _) STK SPW CLO. unfold rc_lo in CLO.
-  set (sp0 := rc_sp0 R) in *. set (argv := rc_argv R) in *. set (envp := rc_envp R) in *. set (uid := rc_uid R) in *.
-  set (hw := rc_hw R) in *. set (rnd := rc_rnd R) in *.
-  set (ph := Plain.M.phdrs) in *.
-  unfold usp0 in *. fold sp0 in SPW, CLO |- *.
+  intros R m (LC & _) CSTK SPW CLO. unfold rc_lo in CLO.
+  unfold CORE_STK in CSTK. destruct CSTK as (LAUNCH & STK). unfold rc_launch in LAUNCH.
+  unfold rc_argv, rc_envp in LC.
+  set (inp := rc_inp R) in *. set (mb := rc_mb R) in *. set (ph := rc_ph R) in *.
+  set (entry := rc_entry R) in *. set (sp0 := rc_sp0 R) in *. set (rnd := rc_rnd R) in *.
+  unfold usp0 in *. fold sp0 in SPW, CLO, STK |- *.
+  (* the libc cell that publishes the auxv address: untouched by the revision *)
   unfold libc_cells in LC.
   apply (proj1 (InitMem.rw_cells_app ssegs m _ [_; _; _; _; _] _)) in LC as [_ LC]. cbn [cells_size csize Nat.add] in LC.
   apply (proj1 (InitMem.rw_cells_app ssegs m _ [_] _)) in LC as [AUX _].
   match type of AUX with rw_cells _ _ ?a _ => let v := eval vm_compute in a in change a with v in AUX end.
-  unfold CORE_STK, usp0 in STK. fold ph sp0 argv envp uid hw rnd in STK. rewrite build_stack_bytes_eq in STK.
-  pose proof (raw_bytes_length ph sp0 argv envp uid hw) as RL.
-  pose proof (raw_len_nonneg ph sp0 argv envp uid hw rnd) as RN.
-  apply bytes_at_app in STK. destruct STK as [RAW STK].
-  apply bytes_at_app in STK. destruct STK as [_ RND]. rewrite repeat_length in RND.
-  rewrite at_random_split in RND.
-  apply bytes_at_app in RND. destruct RND as [_ RND]. rewrite length_at_random_lo in RND.
-  unfold raw_bytes in RAW. apply bytes_at_app in RAW. destruct RAW as [B _].
-  cbn [u64s app] in B. rewrite u64s_app in B. cbn [u64s app] in B. rewrite u64s_app in B. cbn [u64s app] in B.
-  repeat rewrite <- app_assoc in B. cbn [app] in B.
-  apply bytes_at_app in B. destruct B as [_ B]. rewrite length_le8 in B.
-  apply bytes_at_app in B. destruct B as [_ B]. rewrite u64s_length in B. unfold argv_ptrs in B. rewrite length_map, str_ptrs_length in B.
-  apply bytes_at_app in B. destruct B as [_ B]. rewrite length_le8 in B.
-  apply bytes_at_app in B. destruct B as [_ B]. rewrite u64s_length in B. unfold envp_ptrs in B. rewrite length_map, str_ptrs_length in B.
-  apply bytes_at_app in B. destruct B as [_ B]. rewrite length_le8 in B.
-  pose proof B as BB. destruct BB as (B0 & B1 & _). rewrite u64s_length in B1. change (length (auxv_words _ _ _ _ _ _)) with 20%nat in B1.
-  pose proof RND as RR. destruct RR as (R0 & R1 & _). rewrite length_at_random_hi in R1.
+  (* SPAN: [usp + C + L + 8 <= top].  [valid_launch_sp]'s upper bound is
+     [align_down16 (top - 8 - L) - C] (75d69e00:theories/LinuxProcessSem/Run.v:3656,
+     [launch_sp_hi] at :3641) and [align_down16 x <= x] (Run.v:3851). *)
+  destruct LAUNCH as (brk & LOK). cbn [entry_launch_ok_va] in LOK.
+  destruct LOK as (TOPV & SPV & _). destruct SPV as (SPM & _ & SPHI).
+  unfold launch_sp_hi in SPHI.
+  pose proof (align_down16_le (bv_unsigned (ed_top rnd) - 8
+                 - Z.of_nat (launch_string_bytes (in_argv inp) (in_envp inp) (in_execfn inp)))) as ADL.
+  assert (SPAN : (bv_unsigned sp0 + InitMem.struct_size inp + InitMem.str_len inp + 8
+                  <= bv_unsigned (ed_top rnd))%Z)
+    by (unfold InitMem.struct_size, InitMem.str_len; lia).
+  (* the seven pieces, in [InitMem.init_pieces]' order: the random bytes are
+     the FIFTH, not the last, because at the revision they sit below the
+     strings at [usp + C - 16]. *)
+  pose proof (Printf_kit__Musl.CallKit.stack_pieces ssegs inp mb ph entry sp0 rnd SPAN m STK) as PIECES.
+  destruct PIECES as (_ & _ & _ & AUXB & RNDB & _ & _).
+  rewrite at_random_split in RNDB.
+  apply bytes_at_app in RNDB. destruct RNDB as [_ RNDHI]. rewrite length_at_random_lo in RNDHI.
+  pose proof STK as STKB. destruct STKB as (SB0 & SB1 & _).
+  rewrite (InitMem.entry_image_length_raw inp mb ph entry sp0 rnd) in SB1.
+  assert (EAV : auxv_addr sp0 (in_argv inp) (in_envp inp)
+                = (bv_unsigned sp0 + 8 * (InitMem.argc inp + InitMem.envc inp + 3))%Z)
+    by (unfold auxv_addr, InitMem.argc, InitMem.envc; lia).
   unfold auxv_ok.
-  exists (auxv_addr sp0 argv envp), (Z.of_N (ph_addr ph) mod 2^64), (Z.of_N (ph_ent ph) mod 2^64),
-         (Z.of_N (ph_num ph) mod 2^64), (bv_unsigned hw), 4096, (bv_unsigned uid), (bv_unsigned uid), 0, (rnd_addr sp0 argv envp).
-  pose proof (zr_word uid) as UR. unfold inr64 in UR. pose proof (zr_word hw) as HWR. unfold inr64 in HWR.
-  assert (EAV : auxv_addr sp0 argv envp = bv_unsigned sp0 + Z.of_nat 8 + Z.of_nat (8 * length argv) + Z.of_nat 8 + Z.of_nat (8 * length envp) + Z.of_nat 8).
-  { unfold auxv_addr, argc, envc. lia. }
+  exists (auxv_addr sp0 (in_argv inp) (in_envp inp)), (launch_auxv inp sp0 mb), ph, entry,
+         (in_uid inp), (in_gid inp), (in_hwcap inp),
+         (Z_to_bv 64 (InitMem.rnd_addr inp sp0)),
+         (at_execfn_ptr (ed_top rnd) (in_execfn inp)),
+         (InitMem.rnd_addr inp sp0).
   split. { unfold wz. exact AUX. }
-  split. { rewrite EAV. unfold auxv_list, wz. cbn [map]. rewrite !Z_to_bv_mod64, !Z_to_bv_bv_unsigned. exact B. }
+  split. { rewrite EAV, <- auxv_bytes_u64s. exact AUXB. }
   split. { replace (le8 (wz (@msecret (MSR R)))) with (at_random_hi rnd).
            2:{ rewrite msecret_of_rnd. unfold wz. rewrite Z_to_bv_bv_unsigned. symmetry. apply le8_malloc_secret. }
-           replace (rnd_addr sp0 argv envp + 8) with
-             (bv_unsigned sp0 + Z.of_nat (length (raw_bytes ph sp0 argv envp uid hw)) + Z.of_nat (Z.to_nat (pad_len argv envp)) + Z.of_nat 8).
-           2:{ unfold rnd_addr. lia. }
-           exact RND. }
-  ceil_facts. unfold rnd_addr in *.
-  repeat split; try lia; try (apply Z.mod_pos_bound; lia).
+           replace (InitMem.rnd_addr inp sp0 + 8)%Z
+             with (InitMem.rnd_addr inp sp0 + Z.of_nat 8)%Z by lia.
+           exact RNDHI. }
+  split. { unfold wz. reflexivity. }
+  rewrite (InitMem.lay_rseq inp mb). rewrite EAV.
+  pose proof (InitMem.raw_len_nonneg inp sp0 rnd) as RN.
+  pose proof (InitMem.struct_size_parts inp) as SP.
+  unfold InitMem.rnd_addr, InitMem.raw_len, InitMem.gap_len, block_items,
+         InitMem.argc, InitMem.envc in *.
+  ceil_facts.
+  repeat split; try lia.
 Qed.
 
 (* [comment removed for export] *)
@@ -319,7 +363,7 @@ Section Glue.
     eapply (implM_bind ssegs).
     { apply (hmalloc_spec (MSECV := MSR R) ra sp gp (rc_tp R) t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m s (CL ++ FB) n lo (usp0 R) e).
       - exact HH.
-      - apply rauxv_ok_of_core; try assumption; [exact (proj1 (proj1 SPW)) | exact (proj2 SPW)].
+      - apply rauxv_ok_of_core; try assumption; [exact (proj1 (proj1 SPW)) | unfold rc_lo; pose proof (proj2 SPW); lia].
       - exact HSP.
       - exact ST.
       - unfold rc_lo in *; ceil_facts. lia.
@@ -369,7 +413,7 @@ Section Glue.
     eapply (implM_bind ssegs).
     { apply (hcalloc_spec (MSECV := MSR R) ra sp gp (rc_tp R) t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m s (CL ++ FB) cnt sz lo (usp0 R) e).
       - exact HH.
-      - apply rauxv_ok_of_core; try assumption; [exact (proj1 (proj1 SPW)) | exact (proj2 SPW)].
+      - apply rauxv_ok_of_core; try assumption; [exact (proj1 (proj1 SPW)) | unfold rc_lo; pose proof (proj2 SPW); lia].
       - exact HSP.
       - exact ST.
       - unfold rc_lo in *; ceil_facts. lia.
@@ -452,7 +496,7 @@ Section Glue.
     { apply (hfree_spec (MSECV := MSR R) ra sp gp (rc_tp R) t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m s ((C1 ++ (q, A, n) :: C2) ++ FB) q A n lo (usp0 R) e).
       - exact HH.
       - exact HIN.
-      - apply rauxv_ok_of_core; try assumption; [exact (proj1 (proj1 SPW)) | exact (proj2 SPW)].
+      - apply rauxv_ok_of_core; try assumption; [exact (proj1 (proj1 SPW)) | unfold rc_lo; pose proof (proj2 SPW); lia].
       - exact HSP.
       - exact ST.
       - unfold rc_lo in *; ceil_facts. lia.
@@ -492,7 +536,7 @@ Section Glue.
                ((C1 ++ (q, A, sz) :: C2) ++ FB) q A sz n lo (usp0 R) bs e).
       - exact HH.
       - exact HIN.
-      - apply rauxv_ok_of_core; try assumption; [exact (proj1 (proj1 SPW)) | exact (proj2 SPW)].
+      - apply rauxv_ok_of_core; try assumption; [exact (proj1 (proj1 SPW)) | unfold rc_lo; pose proof (proj2 SPW); lia].
       - exact HSP.
       - exact ST.
       - unfold rc_lo in *; ceil_facts. lia.
@@ -642,7 +686,7 @@ Section Final.
     eapply (implM_bind ssegs).
     { apply (hmalloc_spec (MSECV := msec_of_rnd (rc_rnd R)) ra sp gp (rc_tp R) t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m s (CL ++ FB) n lo (usp0 R) e).
       - exact HH.
-      - apply rauxv_ok_of_core; try assumption; [exact (proj1 (proj1 SPW)) | exact (proj2 SPW)].   (* [comment removed for export] *)
+      - apply rauxv_ok_of_core; try assumption; [exact (proj1 (proj1 SPW)) | unfold rc_lo; pose proof (proj2 SPW); lia].   (* [comment removed for export] *)
       - exact HSP.
       - exact ST.
       - unfold rc_lo in *. lia.
@@ -693,7 +737,7 @@ Section Final.
     { apply (hfree_spec (MSECV := msec_of_rnd (rc_rnd R)) ra sp gp (rc_tp R) t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m s ((C1 ++ (q, A, n) :: C2) ++ FB) q A n lo (usp0 R) e).
       - exact HH.
       - exact HIN.
-      - apply rauxv_ok_of_core; try assumption; [exact (proj1 (proj1 SPW)) | exact (proj2 SPW)].   (* [comment removed for export] *)
+      - apply rauxv_ok_of_core; try assumption; [exact (proj1 (proj1 SPW)) | unfold rc_lo; pose proof (proj2 SPW); lia].   (* [comment removed for export] *)
       - exact HSP.
       - exact ST.
       - unfold rc_lo in *. lia.
@@ -812,7 +856,7 @@ Section Final.
     eapply (implM_bind usegs).
     { apply (hmalloc_spec (MSECV := msec_of_rnd (rc_rnd R)) ra sp gp (rc_tp R) t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m s (CL ++ FB) n lo (usp0 R) e).
       - exact HH.
-      - apply rauxv_ok_of_core; try assumption; [exact (proj1 (proj1 SPW)) | exact (proj2 SPW)].   (* [comment removed for export] *)
+      - apply rauxv_ok_of_core; try assumption; [exact (proj1 (proj1 SPW)) | unfold rc_lo; pose proof (proj2 SPW); lia].   (* [comment removed for export] *)
       - exact HSP.
       - exact ST.
       - unfold rc_lo in *. lia.
@@ -863,7 +907,7 @@ Section Final.
     { apply (hfree_spec (MSECV := msec_of_rnd (rc_rnd R)) ra sp gp (rc_tp R) t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6 F fc m s ((C1 ++ (q, A, n) :: C2) ++ FB) q A n lo (usp0 R) e).
       - exact HH.
       - exact HIN.
-      - apply rauxv_ok_of_core; try assumption; [exact (proj1 (proj1 SPW)) | exact (proj2 SPW)].   (* [comment removed for export] *)
+      - apply rauxv_ok_of_core; try assumption; [exact (proj1 (proj1 SPW)) | unfold rc_lo; pose proof (proj2 SPW); lia].   (* [comment removed for export] *)
       - exact HSP.
       - exact ST.
       - unfold rc_lo in *. lia.

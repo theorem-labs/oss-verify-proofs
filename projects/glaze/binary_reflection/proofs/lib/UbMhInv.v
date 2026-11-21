@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported the reserved ledger to LPS #38 and added map/reserved separation. *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -9,6 +10,7 @@ From Stdlib Require Import ZArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
   BvBase RiscvSemantics MemImageType StackLayout State Run.
 Require OSSVerify.Proofs.glaze.binary_reflection.lib.Common.PropExec OSSVerify.Proofs.glaze.binary_reflection.lib.Common.CatExec OSSVerify.Proofs.glaze.binary_reflection.lib.UbMhDefs. Import OSSVerify.Proofs.glaze.binary_reflection.lib.Common.PropExec OSSVerify.Proofs.glaze.binary_reflection.lib.Common.CatExec OSSVerify.Proofs.glaze.binary_reflection.lib.Common.CatExec.MallocDefs OSSVerify.Proofs.glaze.binary_reflection.lib.UbMhDefs.
+From OSSVerify.Proofs.glaze.binary_reflection.lib Require AzAPS.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope Z_scope.
@@ -467,6 +469,39 @@ Definition noacc_of : list (word * word) :=
   match guard_noacc (s_brk st) with Some b0 => [(Z_to_bv 64 b0, Z_to_bv 64 4096)] | None => [] end
   ++ flat_map noacc_of_region regions.
 
+(* The launch reserves the image and at most two vDSO/vvar intervals. *)
+Definition reserved_layout (vm : VmMaps) : Prop :=
+  exists rx : list (word * word),
+    vm_reserved vm = segments_reserved RSEGS ++ rx
+    /\ (length rx <= 2)%nat
+    /\ Forall (fun iv => bv_unsigned (snd iv) <= 2 ^ 35) rx
+    /\ Forall (AzAPS.APS.resx_entry_ok AzPlanCore.APC.ASAN) rx.
+
+(* Reuse the six launch-position clauses already shared with the ASan tree.
+   ASAN's image bound is redundant under KHI + 4096; it is not separation
+   from the allocator's maps.  That actual-state fact is [lg_mres] below. *)
+Lemma reserved_layout_vdso : forall vm kb top,
+  vm_reserved vm = segments_reserved RSEGS ++ vdso_reserved kb top ->
+  AzPlanCore.APC.KHI + 4096 + vdso_len kb <= top ->
+  top <= 2 ^ 47 -> top mod page_size = 0 -> reserved_layout vm.
+Proof.
+  intros vm kb top ER Hlow Htop Hal. exists (vdso_reserved kb top).
+  split; [exact ER|]. split.
+  - unfold vdso_reserved. destruct (top - vdso_len kb <? page_size); cbn; lia.
+  - split.
+    + apply Forall_forall. intros [a n] Hin. cbn [snd].
+      pose proof (vdso_reserved_above kb top a n ltac:(unfold two_pow_64; lia) Hin).
+      pose proof (vdso_len_bounds kb). unfold page_size in *. lia.
+    + apply Forall_forall. intros [a n] Hin.
+      destruct (vdso_reserved_entry_ok kb top a n
+        ltac:(unfold AzPlanCore.APC.KHI, page_size in *; lia)
+        ltac:(unfold two_pow_64; lia) Hal Hin) as (HN & HA & HS & HLO & HHI).
+      unfold AzAPS.APS.resx_entry_ok.
+      cbn [fst snd AzPlanCore.APC.img_hi AzPlanCore.APC.ASAN].
+      unfold page_size in HA, HS. unfold AzPlanCore.APC.KHI in *.
+      repeat split; try assumption; lia.
+Qed.
+
 Record LEDGER (vm : VmMaps) : Prop := LDG {
   lg_maps : Permutation (vm_maps vm) (map region_entry regions);
   lg_noacc : Permutation (vm_noaccess vm) noacc_of;
@@ -476,8 +511,9 @@ Record LEDGER (vm : VmMaps) : Prop := LDG {
            | BrkLive b0 b _ => bv_unsigned (vm_brk vm) = b /\ bv_unsigned (vm_start_brk vm) = b0
            | BrkDead _ => True
            end;
-  lg_res : vm_reserved vm = segments_reserved RSEGS;
-  lg_top : page_floor (alloc_top vm) = CEIL       (* [comment removed for export] *)
+  lg_res : reserved_layout vm;
+  lg_top : page_floor (alloc_top vm) = CEIL;       (* [comment removed for export] *)
+  lg_mres : Forall (fun iv => region_free (vm_reserved vm) (fst iv) (snd iv) = true) (vm_maps vm)
 }.
 
 End WithState.

@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/openssl/bignum/lib/BnP/BnKit2.v, with its module paths and module names changed; 1014 of its 1028 lines of code are new or changed and 33 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/tx_put.v, with its module paths and module names changed; 3018 of its 3112 lines of code are new or changed and 934 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW4e1.v, with its module names and numbers changed; 997 of its 1098 lines of code are new or changed and 3011 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/B/ACtlW4d.v -- piece W4d (frame turn, part 4: S_F17b) of fuzz_ctrl image B's (asan-ubsan) walk of
    LLVMFuzzerTestOneInput in the released cgif_file_fuzzer form.  One writer: a Theorem Labs lane's glue lane.
    rule 24: no function proved (stage glue of a walk).
@@ -40,7 +41,7 @@
        apart from each other and from the callee window); its post through B.ProgWorld.ctl_post_memcpy; the exit body by
        w4d_exit_body (V := visible in W3) with FSj (S j) = (1, gg[26], gg[27 .. 27 + gg[26])) (w4d_fsj_true), the
        frame's stk rebuilt over the stores and the copy, KIND_NAME's addressability from the post-call AR
-       (ctl_kind_name_addressable), and ctl_rt_C (route (C), a working branch 78699c46fe7) by B.ProgWorldCtlRtC.ctl_rt_C_of_AR
+       (ctl_kind_name_addressable), and ctl_rt_C (route (C), a working branch) by B.ProgWorldCtlRtC.ctl_rt_C_of_AR
        (PROVED) at the post AR with the post view's arodata_okP from ctl_base's arodata_okS
        (B.ProgWorld.arodata_okP_of_S, then Reusable.APostBase.arodata_ok_journalP across the whole journal).
        Neither arm reads a shadow_rw fact: arm 1 passes the entry's ctl_rt_C on (same ly3 S3 mem3).
@@ -65,13 +66,13 @@
    - AMEMCPY : __asan_memcpy @0x82630 (0x52164), the core's rule `aintrin_realizes segs B OCpy <pc>` (donor
      YG0d.v:317-335) at the catalogue NAME Reusable.YB1w.tfib_A_asan_memcpy (porter 23:00Z), through
      Reusable.YCbq.aj_intrin_at (YCbq.v:1953).
-   - CITED, not a Section hypothesis (RTPOST-SHARED-B.txt (a working note, not in this delivery), its 15:40Z swap, a working branch 3131914eb3ca):
+   - CITED, not a Section hypothesis (RTPOST-SHARED-B.txt (a working note, not in this delivery), its 15:40Z swap, a working branch):
      B.ProgWorld.ctl_post_memcpy (lib/B/ProgWorld.v:765), the conversion of AMEMCPY's world-form post into
      visible-address facts; WR = the written range plus the callee window [sp - ESTACK, sp).  Used at 0x82630
-     (seg_F17b step 2).  The former FEVT hypothesis is deleted too: B.ProgBridge.fevt_of_evtF (ProgBridge.v:30) states
+     (seg_F17b step 2).  The former FEVT hypothesis is deleted too: B.ProgBridge.fevt_of_evtF (ProgBridge.v:31) states
      it up to conversion (Reusable.YB1v.tfibsegs = B.Img0.rsegs by B.ProgBridge.tfibsegs_rsegs, reflexivity).
-   `_F` LEMMAS (a Theorem Labs lane; all image-B `_F` now on ONE branch, a working branch 12a7ea50807, cited from
-   there; a Theorem Labs lane: a working branch d511d09bbd7 (the F17b fix); texts in
+   `_F` LEMMAS (a Theorem Labs lane; all image-B `_F` now on ONE branch, a working branch, cited from
+   there; a Theorem Labs lane: a working branch (the F17b fix); texts in
    F17bF.md (a working note, not in this delivery) as of 02:09Z; Required qualified, never
    Imported, a Theorem Labs lane 23:38Z; split at EVERY call):
    - F17bF.seg_F17b_pre_F (seg_F17b :706, stepped :782-1049: 0x82468 -> 0x82634 when f_opens is false, memory
@@ -79,16 +80,16 @@
      F17b.f17_mid (the two stores of `first`) when f_opens is true; its premises restate the cut facts over regs / mem /
      Z and name AC.GT; CHANGED 00:3xZ by fix (b) of gap G3: the long-frame premises are one premise under
      `50 <= len ->`, and the short arm reads only [A + 248]; CHANGED 2026-10-29 by a Theorem Labs lane's fix round fixa
-     (F17bF.v:225 (written on a working branch df21f34ec20); auditor a Theorem Labs lane's REFUSED verdict on P-W4 (a working note, not in this delivery)): the
+     (F17bF.v:226 (written on a working branch); auditor a Theorem Labs lane's REFUSED verdict on P-W4 (a working note, not in this delivery)): the
      Phi/frame disjointness inside that premise is the cut's own form `phi + 50 <= fr + 2880 \/ fr + 2920 <= phi`
      (was `phi + 50 <= fr \/ fr + FRAME_BYTES <= phi`); CHANGED 2026-10-29 by a Theorem Labs lane's fix round fixf (asked by this
      lane): the Phi-side footprint premises are under `50 <= len ->` too.  This tree's F17bF.v is taken BY PATH from
-     a working branch 3e6380b9029 (blob af9e4f20842 (the blob this tree had at release c5e779efe8c)))                                  PUBLISHED, proved
+     a working branch (blob af9e4f20842 (the blob this tree had at release)))                                  PUBLISHED, proved
    - Tac_f17bF.f17_post_F (zero steps at the return 0x82634 over the memcpy's post memory, premises F17b.f17_mid /
      F17b.f17_cp; NOT applied, rule (2) of a Theorem Labs lane 00:4xZ: see seg_F17b step 2)                      PUBLISHED, proved
    - F17bF.f17_lu_evt_F (the lib.Lib -> UL engine bridge; steps nothing; not needed by this glue)   PUBLISHED, proved
    PROVENANCE: cut table row 60; plan 2.3 row 60, 4 (M12), 6.1 ("F17b's trap rows use HB, not rec_inv"), 6.2 row
-   S_F17b, F.4.1 rows 27-40; runs at 3803efccea0 (F17b.v, Tac_f17b.v); objdump L85094-L85210.
+   S_F17b, F.4.1 rows 27-40; runs (F17b.v, Tac_f17b.v); objdump L85094-L85210.
 
    ABORT-SINK / TRAP OBLIGATIONS ON W4d (all branches into 0x82fa4 / 0x82fa0 in 0x82468-0x82634): the 14 UBSan
    branches 0x82478, 0x82480, 0x82488, 0x824b0, 0x824f8, 0x8251c, 0x82540, 0x82568, 0x82588, 0x825b0, 0x825d0, 0x825f0,
@@ -179,7 +180,7 @@ Local Notation rt_post_frame W mem mem' WR :=
    aj_intrin_at and frames_bounds are stated; the same text as lib/B/ACtlW1.v / ACtlW3a.v / ACtlW4e1.v. *)
 Hypothesis LAWS : Reusable.YG0d.AR_laws segs B.
 
-(* Route (C) (a working branch 78699c46fe7; brief w4C-brief.md (a working note, not in this delivery)): ctl_rt_C at the exit state by B.ProgWorldCtlRtC.ctl_rt_C_of_AR
+(* Route (C) (a working branch; brief w4C-brief.md (a working note, not in this delivery)): ctl_rt_C at the exit state by B.ProgWorldCtlRtC.ctl_rt_C_of_AR
    (CtrlTSyms + AR_laws + AR + arodata_okP; no vis0-shadow or owned-ro premise); arodata_okP at the state
    from ctl_base's arodata_okS through Reusable.APostBase.arodata_ok_journalP (which finds RO_OFL as an instance).
    Texts token for token from lib/B/RTPOST-SHARED-B.txt (TFIB_SYMS, RELRO_IMG, RO_OFL); the top discharges them:
@@ -1305,8 +1306,8 @@ Qed.
 
 End W4d.
 
-(* Stage lemma of this file (Qed), named and stated exactly as ACtl.v's Hypothesis seg_F17b (576147dfd46; frozen
-   981c1faff75), generic in SK and FP:
+(* Stage lemma of this file (Qed), named and stated exactly as ACtl.v's Hypothesis seg_F17b (frozen),
+   generic in SK and FP:
      seg_F17b (B82468_at) : forall POST j, ctl_from POST (ix_cut C_B82634_at [Z.of_nat j]) ->
                             ctl_from POST (ix_cut C_B82468_at [Z.of_nat j])
    Trap obligations (branch -> 0x82fa0: refuting step), all with HB / LEN50 / FM / s11, never rec_inv:

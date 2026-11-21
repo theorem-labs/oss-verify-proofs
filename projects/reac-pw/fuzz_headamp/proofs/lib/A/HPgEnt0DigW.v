@@ -2,12 +2,13 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/ACez.v, with its module paths and module names changed; 80 of its 105 lines of code are new or changed and 215 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgEnt0DigW.v at 97ea9c9eafa (its walk dg_walk);
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgEnt0DigW.v (its walk dg_walk);
    re-walked on image B's own code: image B's three runs (lib/AU/HPgE0DigK.v, lib/AU/HPgE0DigR.v), its registers,
    the frame of class 4 and its shadow row in HPgMem's hmu_sh words, and the R-cell R+0xc0 the pointer-overflow
    test reads. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/AU/HPgE0DigW.v, with its module paths, module names and numbers changed; 377 of its 436 lines of code are new or changed and 46 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgEnt0DigW.v at 97ea9c9eafa; for reac-pw/fuzz_headamp image A: module paths, the rs_ / rl_ / rm_ / RS_ / RM_ prefixes renamed to hs_ / hd_ / hm_ / HS_ / HM_; every pc moved by the code's uniform shift +0xd20 over [0x80a80, 0x81af0); the frame for locals of class 4 (1024 bytes, 128 shadow bytes); hm_sh's sixth scope flag (x) out of scope. *)
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgEnt0DigW.v; for reac-pw/fuzz_headamp image A: module paths, the rs_ / rl_ / rm_ / RS_ / RM_ prefixes renamed to hs_ / hd_ / hm_ / HS_ / HM_; every pc moved by the code's uniform shift +0xd20 over [0x80a80, 0x81af0); the frame for locals of class 4 (1024 bytes, 128 shadow bytes); hm_sh's sixth scope flag (x) out of scope. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_headamp image A (fuzz_headamp.asan, pinned sha256
    f3e0669d2819724922df0556b11c2dcd22d1e16fe7e0fe1535ce784b34436c47; addresses measured on the unstripped twin
    b5f352154c54a97c66fd92dfa228e8a854498f6cd313dba0107900546b043f9a): the walk of the DIG block of ent_build's

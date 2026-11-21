@@ -1,11 +1,11 @@
 (* Provenance (route (a) bridge input, lead 22:18Z; auditor a Theorem Labs lane):
    image fuzz_ctrl.asan-ubsan v1.9.0, pau-libreac-v190,
      sha256 12136677c5cf9891b3aed0c4821499bba9dde76b0e6baadb7ac66e07e6a62c17;
-   source runs: lib/B/Prog/Seg/F5.v c_evt (:797) at a working branch 3803efccea0
+   source runs: lib/B/Prog/Seg/F5.v c_evt (:797) at a working branch
      (blob 12bbc4e36f85d5cd15d37ae8e6d16742c295b499);
-   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release c5e779efe8c),
-         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release c5e779efe8c);
-   compare: c_pre_F re-runs F5.v:855 (the four instructions 0x8214c-0x82158, F5.v:795-796), stopping AT the
+   tool: lib/Lib/StepF.v c97545265d26d5d39c131602ff95accd1bc78f07 (the blob this tree had at release),
+         lib/Lib/ExecF.v 38b86b5d83a511566e396810e9b0b51804f48e22 (the blob this tree had at release);
+   compare: c_pre_F re-runs F5.v:856 (the four instructions 0x8214c-0x82158, F5.v:796-797), stopping AT the
      reac_ctrl_parse entry. *)
 (* rule 24: no function proved. *)
 (* c_evt is split at its one call.  The pre stretch is 0x8214c mv a0,s2 / 0x82150 mv a1,s4 / 0x82154 li a2,0 /
@@ -52,7 +52,7 @@ Qed.
 
 (* ================= the inline stretch 0x82048 -> 0x8214c of seg_F5 ================= *)
 (* seg_F5 (S_F5) has no stated run lemma for this stretch; it is CUT mechanically from seg_F5_run's own steps
-   (F5.v:1874-1899, the c_run_lib bullet).  The short-frame arm: a0 = t_k j = 0 so `bnez a0,0x82fa4` is not
+   (F5.v:1875-1900, the c_run_lib bullet).  The short-frame arm: a0 = t_k j = 0 so `bnez a0,0x82fa4` is not
    taken; then [A+184] = [A+272] = [A+312] = 0, s8 = s9 = 0, a0 = 1 and [A+248] = 1.  No call, no instrumented
    check: four save-area word writes only.  Fr, fc are Section variables as in a Theorem Labs lane's F4F.v. *)
 Section F5F.

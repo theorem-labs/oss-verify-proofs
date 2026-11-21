@@ -3,7 +3,8 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YCeg.v, with its module paths changed, and its fuzz_reply.asan-ubsan addresses relocated from cgif_file_fuzzer.asan-ubsan (12 numerals; per-numeral report). *)
 (* Modified by Theorem Labs, 2026-10: lib_const_addr is empty: it named cgif's program constants (cgif .rodata 0x103b0 and its GOT slots 0x9ee80..0x9ee98), which fuzz_reply.asan-ubsan does not have. *)
-(* Modified by Theorem Labs, 2026-10: P'' (the Univ trace carrier, commit 94ab015e127b): TfibLib's tl_universe states the universe's fixed part (u_fix), fuzz_preset's own line (commit 81c003786fa, its Reusable/YCeg.v:45). *)
+(* Modified by Theorem Labs, 2026-10: P'' (the Univ trace carrier): TfibLib's tl_universe states the universe's fixed part (u_fix), fuzz_preset's own line (its Reusable/YCeg.v:45). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType.

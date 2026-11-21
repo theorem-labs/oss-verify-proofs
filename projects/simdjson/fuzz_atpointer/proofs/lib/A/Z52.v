@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor raised to the 0x5D0000 bytes below sp that the launch guarantees ([STACK_GAP])). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -87,7 +88,7 @@ Theorem lftoi_vec : forall (Σ : rts RT) PMc (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a
   rt_frames RT Σ = [] -> (forall p n, In (p, n) (rt_live RT Σ) -> 0 < n) ->
   Z.of_nat (length (rt_live RT Σ)) + FUZZ_LIVE <= LIVE_MAX -> FUZZ_COST <= rt_credit RT Σ ->
   LIB m -> ART RT Σ m -> mem_inv asegs m ->
-  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + FUZZ_STACK <= bv_unsigned sp ->
+  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN + STACK_GAP <= lo -> lo + FUZZ_STACK <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 -> frm0 fc ->
   cps_f (ASTA RT Σ PMc (eq (entry_st ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11
                                        t3 t4 t5 t6 F fc e_fuzz m)))
@@ -271,7 +272,7 @@ Proof using LIB_loc AF SM2 SPL EMP.
       replace (atp_P (chars bs)) with (length (poffs (chars bs)) + (atp_P (chars bs) - length (poffs (chars bs))))%nat by lia. apply G. }
     assert (CRB1 : 1 + vcost_pushes (length (poffs (chars bs))) 0 0 <= rt_credit RT Σ1) by (rewrite CR1; unfold FUZZ_COST in CR0; lia).
     assert (FRB1 : (length (rt_frames RT Σ1) + 1 < FRAMES_MAX2)%nat) by (rewrite FRS1, FRS0; cbn; unfold FRAMES_MAX2; lia).
-    assert (LOW1 : rt_sp0 RT Σ1 - STACK_WIN <= lo) by (rewrite SP1; exact LOW).
+    assert (LOW1 : rt_sp0 RT Σ1 - STACK_WIN + STACK_GAP <= lo) by (rewrite SP1; exact LOW).
     assert (LOR1 : lo + ATPA_SPLITINTO_STACK <= bv_unsigned (Z_to_bv 64 sp')) by (rewrite EU1; ul).
     assert (SPT1 : bv_unsigned (Z_to_bv 64 sp') + 16 <= USTACK_TOP) by (rewrite EU1; ul).
     assert (SPA1 : bv_unsigned (Z_to_bv 64 sp') mod 16 = 0) by (rewrite EU1; clear - SPA'; Z.div_mod_to_equations; lia).
@@ -418,7 +419,7 @@ Proof using LIB_loc AF SM2 SPL EMP.
       { pose proof (VMONO (Datatypes.S szN) (atp_P (chars bs) - Datatypes.S szN)%nat) as M1. replace (Datatypes.S szN + (atp_P (chars bs) - Datatypes.S szN))%nat with (atp_P (chars bs)) in M1 by lia.
         rewrite vcost_pushes_snoc, Z.add_0_l in M1. clear - M1 CRx VCB0 CR0. unfold FUZZ_COST in CR0. lia. }
       assert (STx' : stk asegs mx lo (bv_unsigned (Z_to_bv 64 sp'))) by (rewrite EU1; exact STx).
-      assert (LOWx : rt_sp0 RT Σx - STACK_WIN <= lo) by (rewrite SPx; exact LOW).
+      assert (LOWx : rt_sp0 RT Σx - STACK_WIN + STACK_GAP <= lo) by (rewrite SPx; exact LOW).
       assert (LORx : lo + ATPA_PUSH_STACK <= bv_unsigned (Z_to_bv 64 sp')) by (rewrite EU1; ul).
       apply (EMP Σx PMc (Z_to_bv 64 0x96b4c) (Z_to_bv 64 sp') gp (Z_to_bv 64 0x646eb0) u0 u1 u2 (Z_to_bv 64 usp) (Z_to_bv 64 sp')
                (Z_to_bv 64 (f + 32)) q1 q2 q3 q4 q5 q6 q7

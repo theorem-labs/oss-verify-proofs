@@ -3,7 +3,7 @@
    fuzz_alloc_ran_out_reset share. Every image number comes from the generated PwSymsB.v; the instruction words come
    from the image itself (YP02.build_table over tfibsegs, = lib/B/Img0.v rsegs = the pinned image's loaded segments).
    The B' twin of lib/A/Prog/PwBase.v (A' blob f521a87c2d46). Relocated 2026-10-29 from the old-pin file
-   (a working branch 5f6a2b85e1b9, image f8f98a95): no statement or proof changed; the numbers changed only
+   (a working branch, image f8f98a95): no statement or proof changed; the numbers changed only
    in the regenerated PwSymsB.v. PR_PST / pr_glob below are this file's own five alloc.c cells (the generator's set),
    NOT the kit's prh_pst, which on #102 also has g_most and g_own_ran_out (PRH_Base.v prh_pst, prh_img_B's seven cells);
    PwAllocSurfB.v uses only pw_rcell / pw_wcell and their region_ok lemmas. *)

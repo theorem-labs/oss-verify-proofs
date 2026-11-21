@@ -3,7 +3,7 @@
 
 libarchive's own fuzz target `libarchive_entry_fuzzer` ([source](source/libarchive_entry_fuzzer.cc), unmodified), one of the targets OSS-Fuzz builds, over libarchive (libarchive/libarchive at 3670ecf7).
 
-Builds an archive_entry from fuzz fields (pathname, size, mode, ids, 4 timestamps, uname/gname, symlink/hardlink) plus fuzz ACL entries, then archive_entry_acl_to_text (ACCESS) and parses that text back with archive_entry_acl_from_text into the same entry -- a text round trip whose result is never compared with the original ACL; also DEFAULT/NFS4/wide to_text, pathname variants, clone, clear. All results discarded.
+Builds an archive_entry from fuzz fields (pathname, size, mode, ids, 4 timestamps, uname/gname, symlink/hardlink) plus fuzz ACL entries, then, when archive_entry_acl_to_text (ACCESS) returns text, parses it back into the same entry with archive_entry_acl_from_text and never compares the result with the original ACL; also DEFAULT/NFS4/wide to_text, pathname variants, clone, clear. It returns early when archive_entry_new returns NULL and frees each to_text text and the clone when not NULL; every other libarchive result is dropped.
 
 ## How this program differs from what OSS-Fuzz runs
 - Linked against libarchive at commit 3670ecf7.
@@ -11,7 +11,7 @@ Builds an archive_entry from fuzz fields (pathname, size, mode, ids, 4 timestamp
 - A small driver reads the input file, calls the harness one to four times and prints each return value.
 
 ## What the harness checks
-The harness makes no check of its own beyond not crashing, so a statement about it says only that the code it calls never crashes, hangs or trips a sanitizer.
+The harness makes no check of its own beyond not crashing. Its halts statements say only that the code it calls never crashes, hangs or trips a sanitizer. Its agreement statements say only that the code never crashes or trips a sanitizer, and allow a run that never ends. Its bound statements say only how often its builds may disagree. Its decidability statements say only that some program decides where its builds agree.
 
 ## Statements ([Statements.v](Statements.v), [Characterise.v](Characterise.v), [Distribution.v](Distribution.v))
 

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the auxv cells, which these steps do not use, are no longer read (auxv_cells). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Lia Bool.
 From stdpp.bitvector Require Import definitions.
@@ -268,7 +269,6 @@ Proof.
   (* [comment removed for export] *)
   pose proof ES6 as (S_1 & S_2 & S_3 & S_4 & S_5 & S_6 & S_7 & S_8 & S_9 & S_10 & S_11 & S_12 & S_13 & S_14 & S_15 & S_16 & S_17 & S_18 & S_19 & S_20).
   unfold EH_CAUGHT, EH_UNCAUGHT, SYSCAT_GUARD, UW_FLAGS, TD_LOCALE, LOCALE_MSGCAT, GLOBAL_LOCALE, CANARY, AUXVP in S_1, S_2, S_3, S_4, S_5, S_6, S_7, S_8, S_9.
-  pose proof (auxv_cells M6 av uid rnd hw S_13) as (X_0 & X_1 & X_2 & X_3 & X_4 & X_5 & X_6 & X_7 & X_8 & X_9 & X_10 & X_11 & X_12 & X_13 & X_14 & X_15 & X_16 & X_17 & X_18 & X_19).
   assert (WUW: L5.writable RSEGS M6 462433 6). { apply (writable_img M6 UW_FLAGS 6 wseg_uwflags); unfold UW_FLAGS; kl. }
   assert (WUC: L5.writable RSEGS M6 459776 4). { apply (writable_img M6 EH_UNCAUGHT 4 wseg_uncaught); unfold EH_UNCAUGHT; kl. }
   unshelve epose proof (e3c1u_conc fx6 R6 M6 (S - 1008) (A + 128) msg _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)
@@ -472,7 +472,7 @@ Proof.
     constructor. apply L5PK.wr_scratch; lia.
     constructor. eapply L5PK.wr_fresh. exact FRSH_A. lia. lia.
     constructor. }
-  clear X_0 X_1 X_2 X_3 X_4 X_5 X_6 X_7 X_8 X_9 X_10 X_11 X_12 X_13 X_14 X_15 X_16 X_17 X_18 X_19 S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
+  clear S_1 S_2 S_3 S_4 S_5 S_6 S_7 S_8 S_9 S_10 S_11 S_12 S_13 S_14 S_15 S_16 S_17 S_18 S_19 S_20. try clear WUW WUC. try clear U_0 U_1 U_2 U_3 U_4 U_5.
   clear AG7 FR7 MS7. try clear STAT7. try clear K6.
   try clear c6_Sm952. try clear c6_Sm960. try clear c6_Sm968. try clear c6_Sm976. try clear c6_Sm888. try clear c6_Sm896. try clear c6_Sm904. try clear c6_Sm912. try clear c6_Sm536. try clear c6_Sm544. try clear c6_Sm552. try clear c6_Sm560. try clear c6_Sm568. try clear c6_Sm576. try clear c6_Sm584. try clear c6_Sm592. try clear c6_Sm600. try clear c6_Sm608. try clear c6_Sm616. try clear c6_Sm624. try clear c6_Sm632. try clear c6_Sm488. try clear c6_Sm496. try clear c6_Sm424. try clear c6_Sm432. try clear c6_Sm440. try clear c6_Sm72. try clear c6_Sm80. try clear c6_Sm88. try clear c6_Sm96. try clear c6_Sm104. try clear c6_Sm112. try clear c6_Sm120. try clear c6_Sm128. try clear c6_Sm136. try clear c6_Sm144. try clear c6_Sm152. try clear c6_Sm160. try clear c6_Sm168. try clear c6_Sm24. try clear c6_Sm32. try clear c6_Sm8. try clear c6_Sm16. try clear c6_Sm808w1. try clear c6_Sm744w1. try clear c6_Sm720. try clear c6_Sm728. try clear c6_Sm712w1. try clear c6_Sm688. try clear c6_Sm696. try clear c6_Sm664w1. try clear c6_Sm528w1. try clear c6_Sm472w1. try clear c6_Sm344w1. try clear c6_Sm280w1. try clear c6_Sm248w1. try clear c6_Sm224. try clear c6_Sm232. try clear c6_Sm200w1. try clear c6_Sm176. try clear c6_Sm184. try clear c6_Sm64w1. try clear c6_Om128z8. try clear c6_Om80z12. try clear c6_Sm1072. try clear c6_Sm1064. try clear c6_Sm1056. try clear c6_Sm1048. try clear c6_Sm1040. try clear c6_Sm1032. try clear c6_Sm1024. try clear c6_Sm1016. try clear c6_Gp41w1. try clear c6_Gp0. try clear c6_Gp8. try clear c6_Gp16. try clear c6_Gp24. try clear c6_Gp32. try clear c6_Gp40w1. try clear c6_Sm984. try clear c6_Sm992. try clear c6_Sm1000. try clear R6_1. try clear R6_2. try clear R6_3. try clear R6_4. try clear R6_8. try clear R6_9. try clear R6_10. try clear R6_11. try clear R6_18. try clear R6_19. try clear R6_20. try clear DEF6. try clear HH6. try clear HQ6. try clear ES6. try clear DEFmsg_6. try clear DEFA_6. try clear DEFd1_6. try clear DEFd2_6. try clear DEFd3_6. try clear DEFd4_6.
   (* [comment removed for export] *)

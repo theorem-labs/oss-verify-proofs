@@ -1,8 +1,9 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the ASan malloc invariant MI's new channel-reader conjunct named in its destruct patterns and kept, and taken by MI_intro and MI_intro_nolazy). *)
 
 
 From OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib Require TermBlob.
-#[local] Ltac2 tbs__ () := ["@stdpp.bitvector.definitions"; "bv_unsigned"; "bv"; "@Stdlib.ZArith.BinInt.Z"; "le"; "add"; "pow"; "lt"; "leb"; "modulo"; "sub"; "ge"; "@Corelib.Init.Logic"; "eq"; "and"; "ex"; "or"; "iff"; "@Corelib.Numbers.BinNums"; "Z"; "@Corelib.Init.Datatypes"; "list"; "prod"; "bool"; "pair"; "fst"; "snd"; "true"; "cons"; "false"; "app"; "None"; "andb"; "length"; "negb"; "nil"; "option"; "orb"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "Model"; "vm_maps"; "m_vmmaps"; "vm_backing_used"; "m_vm_lazy"; "vm_noaccess"; "vm_forget_range"; "with_vmmaps"; "VmMaps"; "maps_subtract"; "page_size"; "lazy_interior"; "page_in_ranges"; "vm_add_lazy"; "m_vm_materialized"; "page_base"; "vm_limit"; "region_free"; "iv_subtract"; "page_mem"; "page_outside_range"; "@Stdlib.Lists.List"; "In"; "NoDup"; "existsb"; "filter"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.BackingAlgebra"; "ivs_wf"; "model_ivs_wf"; "iv_wf"; "iv_count"; "overlap_sum"; "covered"; "ivS"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.Virt"; "hid"; "lazy_in_maps"; "unpaid"; "MI"; "lazy_clear"; "paid"; "tp_in_maps"; "headroom"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.LedgerA"; "tp_clear_of"; "page_in_range"; "@LinuxProcessSemantics.LinuxProcessSem.MemImageType"; "Segment"; "@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics"; "find_segment"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.Restrict"; "wx_segs_nowrap"; "@Corelib.Init.Peano"; "le"].
+#[local] Ltac2 tbs__ () := ["@stdpp.bitvector.definitions"; "bv_unsigned"; "bv"; "@Stdlib.ZArith.BinInt.Z"; "le"; "add"; "pow"; "lt"; "leb"; "modulo"; "sub"; "ge"; "@Corelib.Init.Logic"; "eq"; "and"; "ex"; "or"; "iff"; "@Corelib.Numbers.BinNums"; "Z"; "@Corelib.Init.Datatypes"; "list"; "prod"; "bool"; "pair"; "fst"; "snd"; "true"; "cons"; "false"; "app"; "None"; "andb"; "length"; "negb"; "nil"; "option"; "orb"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "Model"; "vm_maps"; "m_vmmaps"; "vm_backing_used"; "m_vm_lazy"; "vm_noaccess"; "vm_forget_range"; "with_vmmaps"; "VmMaps"; "maps_subtract"; "page_size"; "lazy_interior"; "page_in_ranges"; "vm_add_lazy"; "m_vm_materialized"; "page_base"; "vm_limit"; "region_free"; "iv_subtract"; "page_mem"; "page_outside_range"; "@Stdlib.Lists.List"; "In"; "NoDup"; "existsb"; "filter"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.BackingAlgebra"; "ivs_wf"; "model_ivs_wf"; "iv_wf"; "iv_count"; "overlap_sum"; "covered"; "ivS"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.Virt"; "hid"; "lazy_in_maps"; "unpaid"; "MI"; "lazy_clear"; "paid"; "tp_in_maps"; "headroom"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.LedgerA"; "tp_clear_of"; "page_in_range"; "@LinuxProcessSemantics.LinuxProcessSem.MemImageType"; "Segment"; "@LinuxProcessSemantics.LinuxProcessSem.RiscvSemantics"; "find_segment"; "@OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw3A.Restrict"; "wx_segs_nowrap"; "@Corelib.Init.Peano"; "le"; "@LinuxProcessSemantics.LinuxProcessSem.State"; "m_channel_reader"].
 #[local] Ltac2 tb__ s := OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Lib.TermBlob.dec2 (tbs__ ()) s.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -436,9 +437,9 @@ Qed.
 Lemma MI_with_vmmaps : ltac2:(tb__ "0|2|
 S21S29S10S1Q40A1M0A1SfS44Vsegs;R4R2A3SaSfS31R4A1S31S23R5A1A1A3S3aS22R5A1A1S3aS26R6A1A1S11G0G0A2M1S36G1R1S22S23R9A1A1A3S36G1R2S22R9A1A3F_;Fr;S2S24S28R8R9A2A1S3S24R9A1R6A2A2S9S48RaR8A2R7A2S44Vsegs;S28RaRbA2R9A3F_;F_;F_;F_;F_;F_;F_;Fk;Ftp;Fh';Fmd;").
 Proof.
-  intros md h' tp k (HW & HT & Hmat & Hsub & Hpaid & Hlc & Hivs & Hlm & Htm) Hlim Hwm Hwn Hgrow Hused Hroom.
+  intros md h' tp k (HW & HT & Hmat & Hsub & Hpaid & Hlc & Hivs & Hlm & Htm & Hrd) Hlim Hwm Hwn Hgrow Hused Hroom.
   unfold MI. model_proj. split; [exact HW|]. split; [exact HT|]. split; [exact Hmat|]. split; [exact Hsub|].
-  split; [|split; [exact Hlc | split; [apply model_ivs_wf_with_vmmaps; assumption | split; [apply lazy_in_maps_with_vmmaps_grow; assumption|]]]].
+  split; [|split; [exact Hlc | split; [apply model_ivs_wf_with_vmmaps; assumption | split; [apply lazy_in_maps_with_vmmaps_grow; assumption| split; [|exact Hrd]]]]].
   - rewrite paid_with_vmmaps, Hlim. unfold headroom in Hroom. lia.
   - intros p Hp. destruct (Htm p Hp) as (Hal & b & s & Hbs & X). split; [exact Hal|]. exists b, s. split; [apply Hgrow; exact Hbs | exact X].
 Qed.
@@ -446,25 +447,25 @@ Qed.
 Lemma MI_add_lazy : ltac2:(tb__ "0|5|
 S21S1Q40M0A1M1G1S10G1A1S44Vsegs;R4R1A3S2S3S0G0R4A2S0G0R3A2A2S4Z2Z40A2A2S49R3S2cR5R4A2A2SfSbS2S0G0R7A2M2R1A2S5R1S3G2S0G0R6A2A2A2A2SaS1fS4bA1S4cVsegs;R2Z1A3S1aS4bA1A3F_;Fz;ScG1G1ScG1G1SbS36S11G1G1A2S13G1G1R2R1A4S22S23RaA1A1A3SbS2S0G0R2A2M3S0G0R9A2M4A2S2S3G4S0G0R8A2A2S3G3S0G0R1A2A2A2A2A2Ls;A2Lb;A2S44Vsegs;S2eR8R7R9A3R6A3F_;F_;F_;F_;F_;Ftp;Fn;Fa;Fmd;").
 Proof.
-  intros md a n tp HMI Hend Hclr Hseg Hin. pose proof HMI as (HW & HT & Hmat & Hsub & Hpaid & Hlc & Hivs & Hlm & Htm).
+  intros md a n tp HMI Hend Hclr Hseg Hin. pose proof HMI as (HW & HT & Hmat & Hsub & Hpaid & Hlc & Hivs & Hlm & Htm & Hrd).
   unfold MI. rewrite m_vmmaps_vm_add_lazy, m_vm_materialized_vm_add_lazy, m_vm_lazy_vm_add_lazy.
   split; [exact HW|]. split; [exact HT|]. split; [exact Hmat|]. split; [exact Hsub|]. split.
   { rewrite (paid_add_lazy md a n tp Hclr). pose proof (used_add_lazy_le md a n Hivs Hend). lia. }
   split; [apply lazy_clear_app; [apply lazy_clear_interior; assumption | exact Hlc]|].
-  split; [apply model_ivs_wf_vm_add_lazy; assumption | split; [apply lazy_in_maps_add_lazy; assumption | exact Htm]].
+  split; [apply model_ivs_wf_vm_add_lazy; assumption | split; [apply lazy_in_maps_add_lazy; assumption | exact (conj Htm Hrd)]].
 Qed.
 
 Lemma MI_intro : ltac2:(tb__ "0|1|
-S21S10S1Q40A1M0A1S4dVsegs;A1S37G0R2A2S37G0S2fR4A1A2G0S36G0R1S2fR6A1A3S36G0R2R6A3F_;Fp;S2S46R6R5A2S31S23R6A1A1A2S45Vsegs;S25R7A1A2S3bR8A1S42R9A1S47RaR9A2S44Vsegs;RbRaA3F_;F_;F_;F_;F_;F_;F_;F_;F_;Ftp;Fmd;").
+S21S10S1Q40A1M0A1S4dVsegs;A1S37G0R2A2S37G0S2fR4A1A2G0S36G0R1S2fR6A1A3S36G0R2R6A3F_;Fp;S2S46R6R5A2S31S23R6A1A1A2S45Vsegs;S25R7A1A2S3bR8A1S42R9A1S47RaR9A2SaS12S4fRbA1S16A3S44Vsegs;RcRbA3F_;F_;F_;F_;F_;F_;F_;F_;F_;F_;Ftp;Fmd;").
 Proof.
   intros. unfold MI. split; [assumption|]. split; [assumption|]. split; [assumption|]. split; [assumption|].
-  split; [assumption|]. split; [assumption|]. split; [assumption|]. split; assumption.
+  split; [assumption|]. split; [assumption|]. split; [assumption|]. split; [assumption|]. split; assumption.
 Qed.
 
 Lemma MI_intro_nolazy : ltac2:(tb__ "0|3|
-S21S4dVsegs;A1SaS10S11S1Q40A1M0G0A2M1A1S25R2A1S1eG1A1A3SaS10G0A1S2fR3A1S1eG0A1M2A3S2S24R4A1S31S23R4A1A1A2S3aS22S23R5A1A1A1S3aS26S23R6A1A1A1S44Vsegs;R7G2A3F_;F_;F_;F_;F_;F_;Fmd;").
+S21S4dVsegs;A1SaS10S11S1Q40A1M0G0A2M1A1S25R2A1S1eG1A1A3SaS10G0A1S2fR3A1S1eG0A1M2A3S2S24R4A1S31S23R4A1A1A2S3aS22S23R5A1A1A1S3aS26S23R6A1A1A1SaS12S4fR7A1S16A3S44Vsegs;R8G2A3F_;F_;F_;F_;F_;F_;F_;Fmd;").
 Proof.
-  intros md HW Hl Hm Hu Hwm Hwn. apply MI_intro.
+  intros md HW Hl Hm Hu Hwm Hwn Hrd. apply MI_intro.
   - exact HW.
   - constructor.
   - rewrite Hm. constructor.
@@ -474,6 +475,7 @@ Proof.
   - apply model_ivs_wf_intro; [exact Hwm | exact Hwn | rewrite Hl; apply ivs_wf_nil].
   - intros lo sz Hin. rewrite Hl in Hin. destruct Hin.
   - intros p [].
+  - exact Hrd.
 Qed.
 
 Lemma tp_clear_of_region_free : ltac2:(tb__ "0|2|

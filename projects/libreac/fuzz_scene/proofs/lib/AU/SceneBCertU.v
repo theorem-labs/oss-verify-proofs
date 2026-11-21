@@ -5,9 +5,10 @@
    scene's B: the cells, zero ranges and owned ranges that the memory-checking runtime leaves behind at start-up,
    and the two facts the check_step and reac_ctrl_parse walks take as blanket hypotheses over every AR state,
    `img_shadow_vis` and `globs_marked`, proved here as lemmas of B. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 
-(*   Copied by method from a Theorem Labs lane's proofs/libreac/fuzz_grant/lib/A/Prog/GrantClose.v (a working branch at
-   ac3f475adac), sections "computable checks over the image" (:46-92), "generic lemmas over the checks" (:112-170),
+(*   Copied by method from a Theorem Labs lane's proofs/libreac/fuzz_grant/lib/A/Prog/GrantClose.v (a working branch),
+   sections "computable checks over the image" (:46-92), "generic lemmas over the checks" (:112-170),
    "the checks, by computation" (:172-187) and "6. the shadow of the image and of its registered globals"
    (:378-443, `grant_shadow_cell`, `grant_zs_rd`, `grant_img_shadow_vis`, `grant_globs_marked`, all Qed).
    Every address, range and cell below is scene's, read off the start-up tables of lib/A/AF0m.v; this file copies
@@ -20,7 +21,7 @@
 
    No Axiom, no admit, no Admitted.
 
-   What this file assumes about B: one Section hypothesis, `HB : TfibSyms B` (lib/AU/YF0m.v:606-630), the
+   What this file assumes about B: one Section hypothesis, `HB : TfibSyms B` (lib/AU/YF0m.v:607-631), the
    start-up record of scene's asan-ubsan image. No `asyms` instance of it exists in the tree yet, so it stays a
    hypothesis here; see the note at the end of the file. *)
 From OSSVerify.Proofs.libreac.fuzz_scene.lib.Reusable Require YZ00.
@@ -198,7 +199,7 @@ Proof. vm_compute. reflexivity. Qed.
 Section b. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Section c.
 Variable B : asyms.
-(* The only thing this file assumes: B is scene's start-up record (YF0m.v:606-630). *)
+(* The only thing this file assumes: B is scene's start-up record (YF0m.v:607-631). *)
 Hypothesis HB : TfibSyms B.
 
 (* ---- 5. B's three start-up tables ------------------------------------------------------ *)
@@ -234,7 +235,7 @@ Proof. exact (ts_tsd _ HB). Qed.
    each is the only cell of its width and value in the whole table (section 4), so the four
    addresses are determined. They are the values CHECKSTEP-REVIEW.md:66 reads off scene's
    image, and they are NOT cgif's (0xa5ff8 / 0xa6000 / 0x9df98), which a Theorem Labs lane's dry run of
-   lib/A/AD2l.v carried; this tree's AU/YD2l.v:49-51 holds scene's. *)
+   lib/A/AD2l.v carried; this tree's AU/YD2l.v:50-52 holds scene's. *)
 Lemma scene_shadow_cell_addr : forall ly : alayout, as_shadow_cell B = 0xa3af8.
 Proof.
 intro ly. destruct (aso_const_law _ (ts_ok _ HB) ly) as (I1 & _ & _ & _).
@@ -454,12 +455,12 @@ Lemma scene_zs_cframe : in_zs B 0x20da0 48.
 Proof. exists 0x20da0, (0x20dd0 - 0x20da0). split; [in_zr 1%nat | lia]. Qed.
 Lemma scene_zs_kl1 : in_zs B 0x20e20 8.
 Proof. exists 0x20e00, (0x20e28 - 0x20e00). split; [in_zr 2%nat | lia]. Qed.
-(* HB_Z_TT in a Theorem Labs lane's frozen entry form (18ba727d44b P_LLVMFuzzerTestOneInput.v:237, AU :245):
+(* HB_Z_TT in a Theorem Labs lane's frozen entry form (P_LLVMFuzzerTestOneInput.v:238, AU :245):
    in_zs B (A_TAIL_TRAILER - 0x20) (0x20 + (TAIL_TRAILER_N - TAIL_TRAILER_N mod 8)), with A_TAIL_TRAILER = 0x20e20
    and TAIL_TRAILER_N = 12, i.e. the zero range (0x20e00, 0x28) that also covers the 0x20 bytes below the trailer. *)
 Lemma scene_z_tt : in_zs B (0x20e20 - 0x20) (0x20 + (12 - 12 mod 8)).
 Proof. exists 0x20e00, (0x20e28 - 0x20e00). split; [in_zr 2%nat | lia]. Qed.
-(* HB_C_PL (a Theorem Labs lane 327f73c7513 A/P_LLVMFuzzerTestOneInput.v:247-249, AU :250-253): the eight 0xf9 shadow cells
+(* HB_C_PL (a Theorem Labs lane A/P_LLVMFuzzerTestOneInput.v:248-250, AU :250-253): the eight 0xf9 shadow cells
    starting at shadow_addr (A_reac_scene_placeholder + LLVMF_SCENE_BYTES) = shadow_addr (0x20e80 + 8904) = 0x7fffc629,
    the head of the placeholder's redzone shadow; Tfib_const_shadow entries 16..23. *)
 Lemma scene_sh_pl0 : forall ly, In (z1 (ANum 0x7fffc629) 0xf9) (as_const B ly).
@@ -495,8 +496,8 @@ Qed.
 Lemma scene_zs_placeholder : in_zs B 0x20e80 8904.
 Proof. exists 0x20e60, (0x23148 - 0x20e60). split; [in_zr 3%nat | lia]. Qed.
 
-(* CHECKSTEP-REVIEW.md R2's HB_C_CS, in the exact shape of a Theorem Labs lane's P_check_step.v:136-141
-   (at f6b5a0ae3036), with A_CS_TRAILER / A_CS_CFRAME at the values its HB_ADDR fixes. *)
+(* CHECKSTEP-REVIEW.md R2's HB_C_CS, in the exact shape of a Theorem Labs lane's P_check_step.v:136-141,
+   with A_CS_TRAILER / A_CS_CFRAME at the values its HB_ADDR fixes. *)
 Lemma scene_cs_shadow : forall ly,
   In (z1 (ANum (shadow_addr 0x20d80 + 1)) 4) (as_const B ly) /\
   In (z1 (ANum (shadow_addr 0x20d80 + 2)) 0xf9) (as_const B ly) /\
@@ -633,9 +634,9 @@ End b.
    One Section hypothesis is left, `HB : TfibSyms B` (section 4 above). It is not discharged
    here: this file is generic in B. The concrete instance is lib/AU/YD2l.v: its TfibB carries
    scene's runtime addresses (as_shadow_cell 0xa3af8, as_uar_cell 0xa3b00, as_got_shadow
-   0x9ba40, YD2l.v:49-51; section 7 above), and its `as_universe` field reads `Tfib_universe`
+   0x9ba40, YD2l.v:50-52; section 7 above), and its `as_universe` field reads `Tfib_universe`
    from lib/AU/YCej.v, fuzz_scene's measured trace universe. TfibB_syms : TfibSyms TfibB is
-   proved at YD2l.v:101-113 (Qed), and G_Close.v applies this file's lemmas at B := TfibB,
+   proved at YD2l.v:102-114 (Qed), and G_Close.v applies this file's lemmas at B := TfibB,
    HB := TfibB_syms, so every fact above holds of scene's concrete B. The five rows below are
    a separate matter: they have no cell in the start-up tables.
 

@@ -2,16 +2,16 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: new file, row G-BRI-rm of a Theorem Labs lane's B owner table (B-TOPX-OWNERS rows 78, 81,
    83, 85, 87).  proves no function (rule 24; kind: model rules): the five remove-arm RINV rules of image B's
-   lib/B/W_LLVMFuzzerTestOneInput_top_x.v (B top e43cf0c7bef, the Hypothesis lines 485 RI_rm_found, 500 RI_rm_cnl_pre,
+   lib/B/W_LLVMFuzzerTestOneInput_top_x.v (B top, the Hypothesis lines 485 RI_rm_found, 500 RI_rm_cnl_pre,
    511 RI_rm_cshe_pre, 521 RI_rm_csd, 530 RI_rm_step) at RINV := ReplyRINVB.fr_RINV, each stated word for word at the
    top_x text with RINV replaced (a Theorem Labs lane's lib/B/ReplyBTop.v Section hypotheses of the same names).
    RELOCATED, not re-proved: every proof is the image-A twin's, moved to lib/B's names, except the two new `_sat`
    lemmas RI_rm_found_sat and RI_rm_step_sat (image A has none for those two rows; they reuse the relocated states).
-     - from lib/A/ReplyRINV.v (a working branch 8da615a239d; the same text at 419c9d7c02f):
+     - from lib/A/ReplyRINV.v (a working branch; the same text):
        RI_rm_found_holds, RI_rm_step_holds and the helpers they read (fr_Forall2_r, fr_Forall2_comb, fr_comb_inj,
        fr_pair_of_open, RI_fds_holds, fr_rm_set_nth_*, fr_nopen_clear, fr_split_nth, fr_remove_perm, fr_combine_*,
        fr_F2_*, fr_sum_perm, fr_keys_total_nonneg, fr_pair_cost_nonneg, fr_ctl_*, fr_bzs_line(s), fr_ru);
-     - from lib/A/ReplyRINV_a12.v (a working branch 419c9d7c02f): the state constructions a12_*, the
+     - from lib/A/ReplyRINV_a12.v (a working branch): the state constructions a12_*, the
        `_false` lemmas, the remove-arm helpers (fr_rm_pair, fr_rm_facts, lines_nul_free, upds_nul_free, fr_rm_keys_nz,
        fr_rm_cnl_pre_core, fr_rm_ends, fr_rm_cshe_pre_core, fr_rm_csd_core, ...), the three restated `_holds` and the
        `_sat` lemmas.
@@ -19,7 +19,7 @@
    fr_RINV is lib/B/ReplyRINVB.v's and rm_at / rm_ent / rm_kb / rm_rr_ok / rm_cnl_ok / rm_cshe_ok / rm_A1 / rm_mk /
    rm_cev / rm_set_nth are lib/B/W_LLVMFuzzerTestOneInput_remove.v's own, and A's rm_capb (lib/A/ReplyRINV.v's copy
    of lib/A/W_check_no_loss.v capb) is lib/B/W_contract.v capb.
-   Each pair has the same text word for word (checked at e43cf0c7bef against lib/A at 419c9d7c02f: fr_pair_cost ..
+   Each pair has the same text word for word (checked against lib/A: fr_pair_cost ..
    fr_RINV; rm_k' .. rm_cshe_ok; W_contract.v sl_live sl_ctl sl_O dr_lines dr_tot dr_live dr_fin dr_ctl sl_sends ge_bytes
    dr_rel capb; _cut.v OPS_MAX in_byte picks nopen pick; LFCX has the same ten fields), so no proof step changes.
    Imports are A's with lib/A -> lib/B as lib/B/ReplyRINVB.v swaps them.
@@ -29,8 +29,8 @@
    RESULT at the B top text:
      RI_rm_found, RI_rm_step: PROVED (RI_rm_found_holds, RI_rm_step_holds).
      RI_rm_cnl_pre, RI_rm_cshe_pre, RI_rm_csd: FALSE for fr_RINV as it is defined (STOP; never weakened).  These are
-     the texts image A had before its restatement (A integ bb9dae5d905; restated on A at a working branch
-     3f40808c334).  RI_rm_cnl_pre_top / RI_rm_cshe_pre_top / RI_rm_csd_top copy the B top texts, and each `_top_false`
+     the texts image A had before its restatement (A integ; restated on A at a working branch).
+     RI_rm_cnl_pre_top / RI_rm_cshe_pre_top / RI_rm_csd_top copy the B top texts, and each `_top_false`
      proves the negation from a state that meets fr_RINV and the rule's premises and not its conclusion:
      - RI_rm_cnl_pre: fr_RINV does not bound the held count below 2 ^ 22.  lm_gn m = 0, one open slot 0 holding h, its
        entry at eof (h1 = h), 2 ^ 22 held records with distinct 3-byte texts and one key each; keys_total = 2 ^ 25 <=
@@ -43,6 +43,7 @@
      text of the table >= 14 bytes; _remove.v rm_mfacts conjunct 2), RI_rm_cshe_pre_nz_holds (H' NUL-free),
      RI_rm_csd_gn_holds (0 <= lm_gn m <= 1).
    Every row has a `_sat` lemma (VERIFY rule 10): from any call context, a state meeting every premise. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -1140,7 +1141,7 @@ Proof.
 Qed.
 
 (* ================================================================== the three rows with the arm's premise
-   (A's restated texts, a working branch 3f40808c334), at RINV := fr_RINV *)
+   (A's restated texts, a working branch), at RINV := fr_RINV *)
 Lemma RI_rm_cnl_pre_K14_holds : forall cx t m si h j0 e1 h1 ev LB c2 O2 cap2,
   fr_RINV cx t m -> rm_at cx m si h j0 -> rm_rr_ok m h j0 e1 h1 ev LB c2 O2 cap2 ->
   Forall (fun e => Forall (fun k => 14 <= Z.of_nat (length (gestures_end_b_c.key_text k))) (re_keys e)) (lm_es m) ->

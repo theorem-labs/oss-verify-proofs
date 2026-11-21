@@ -1,9 +1,10 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the facts of the old block layout (the 160-byte auxv, the old argv addresses and string block, the 8 MiB stack window) give way to the model's zero-filled stack window and the start state's own layout facts per CONFIG_RSEQ value, the size bound counts the vDSO pair's reservations, and the facts are read against the hand-off states the build computes through a renaming fM read off probes of the run, in place of the recorded states and their hint lists. *)
 (* [comment removed for export] *)
-From Stdlib Require Import ZArith NArith List Bool.
-From OSSVerify.Proofs.simdjson.fuzz_parser.lib.AS Require Import AxSymExec3 AsanPlan MainExport MainHint StartupHS2Both.
+From Stdlib Require Import ZArith NArith List Bool Lia.
+From OSSVerify.Proofs.simdjson.fuzz_parser.lib.AS Require Import AxSymExec3 AsanPlanCore AsanPlan BothPlanImages MainExport MainHint MainRename PlanRegen BothStartupCert2.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations. Import AX2. Import AP.
 Open Scope Z_scope.
@@ -259,7 +260,6 @@ Definition both_mem_facts : list mfact := [
   ; MCell (ZLit 6744656) 8 (ZLit 6744664)   (* [comment removed for export] *)
   ; MCell (ZLit 6744672) 8 (ZLit 1025408)   (* [comment removed for export] *)
   ; MCell (ZLit 6744928) 8 (ZLit 543680)   (* [comment removed for export] *)
-  ; MCell (ZLit 6745208) 8 (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 184))   (* [comment removed for export] *)
   ; MCell (ZLit 6745216) 1 (ZLit 1)   (* [comment removed for export] *)
   ; MCell (ZLit 6745224) 8 (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 24))   (* [comment removed for export] *)
   ; MCell (ZLit 6745232) 8 (ZLit 6744576)   (* [comment removed for export] *)
@@ -466,7 +466,7 @@ Definition both_mem_facts : list mfact := [
   ; MFill (ZLit 2148277201) 3 249   (* [comment removed for export] *)
   ; MZero (ZLit 2148277204) 17964   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  ; MWr (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit (-8388608))) 8388608   (* [comment removed for export] *)
+  ; MWr (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit (-6144513))) 6144513   (* LPS 727298f3: the zero-filled window [STK_ZDEPTH] = 6144513 below sp *)
   ; MCell (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit (-48))) 8 (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit 8))   (* [comment removed for export] *)
   ; MCell (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit (-40))) 8 (ZLit 0)   (* [comment removed for export] *)
   ; MCell (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit (-32))) 8 (ZLit 0)   (* [comment removed for export] *)
@@ -474,31 +474,8 @@ Definition both_mem_facts : list mfact := [
   ; MCell (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit (-16))) 8 (ZLit 0)   (* [comment removed for export] *)
   ; MCell (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit (-8))) 8 (ZLit 0)   (* [comment removed for export] *)
   ; MRo (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) 8 (ZV 1)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit 8)) 8 (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 184))   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) (ZLit 16)) 8 (ZMul (ZLtu (ZLit 1) (ZV 1)) (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZV 3) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10))))))) (ZLit 185)))   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 24)) 8 (ZLit 3)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 32)) 8 (ZLit 65600)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 40)) 8 (ZLit 4)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 48)) 8 (ZLit 56)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 56)) 8 (ZLit 5)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 64)) 8 (ZLit 11)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 72)) 8 (ZLit 16)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 80)) 8 (ZV 9)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 88)) 8 (ZLit 6)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 96)) 8 (ZLit 4096)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 104)) 8 (ZLit 11)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 112)) 8 (ZV 8)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 120)) 8 (ZLit 12)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 128)) 8 (ZV 8)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 136)) 8 (ZLit 23)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 144)) 8 (ZLit 0)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 152)) 8 (ZLit 25)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 160)) 8 (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 8) (ZV 4)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10))))))) (ZLit 184))   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 168)) 8 (ZLit 0)   (* [comment removed for export] *)
-  ; MRo (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))))) (ZLit 176)) 8 (ZLit 0)   (* [comment removed for export] *)
   (* [comment removed for export] *)
-  ; MBlobD (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 8) (ZV 4)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10))))))) (ZLit 184)) 16   (* [comment removed for export] *)
   (* [comment removed for export] *)
   ; MWrS (ZAdd (ZAdd (ZMul (ZLit 4096) (ZV 0)) (ZMul (ZLit 512) (ZV 10))) (ZLit 2146402304)) (ZAdd (ZAdd (ZMul (ZLit (-4096)) (ZV 0)) (ZMul (ZLit (-512)) (ZV 10))) (ZLit 17592187092992))   (* [comment removed for export] *)
   ; MZeroS (ZAdd (ZAdd (ZMul (ZLit 4096) (ZV 0)) (ZMul (ZLit 512) (ZV 10))) (ZLit 2146402304)) (ZAdd (ZAdd (ZMul (ZLit (-4096)) (ZV 0)) (ZMul (ZLit (-512)) (ZV 10))) (ZLit 17592187092992))   (* [comment removed for export] *)
@@ -983,7 +960,6 @@ Definition both_pure_facts : list pfact := [
   ; PVar 1 1 1024   (* [comment removed for export] *)
   ; PVar 2 0 256   (* [comment removed for export] *)
   ; PVar 3 0 131071   (* [comment removed for export] *)
-  ; PVar 4 0 280000   (* [comment removed for export] *)
   ; PVar 5 1649 525937   (* [comment removed for export] *)
   ; PVar 6 0 255   (* [comment removed for export] *)
   ; PVar 7 0 131071   (* [comment removed for export] *)
@@ -1019,8 +995,6 @@ Definition both_pure_facts : list pfact := [
   ; PRange (ZAdd (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit (-4096)) (ZV 344))) (ZLit 3935)) 0 4095   (* [comment removed for export] *)
   ; PRange (ZAdd (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit (-4096)) (ZV 344))) (ZLit 3935)) 0 4095   (* [comment removed for export] *)
   ; PRange (ZAdd (ZMul (ZLit (-4096)) (ZV 209)) (ZAnd (ZMul (ZLit 4096) (ZV 208)) (ZLit 65535))) 0 0   (* [comment removed for export] *)
-  ; PRange (ZAdd (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 8) (ZV 1)) (ZAdd (ZMul (ZLit 8) (ZV 2)) (ZAdd (ZMul (ZLit 8) (ZV 4)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10))))))) (ZLit 200)) 140735340871872 140737488355328   (* [comment removed for export] *)
-  ; PRange (ZAdd (ZMul (ZLit 4096) (ZV 0)) (ZAdd (ZV 1) (ZAdd (ZV 2) (ZAdd (ZV 4) (ZAdd (ZMul (ZLit 2) (ZV 6)) (ZMul (ZLit 512) (ZV 10))))))) 17591917608961 17592186044391   (* [comment removed for export] *)
   ; PRange (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZAdd (ZMul (ZLit 16) (ZV 6)) (ZMul (ZLit 4096) (ZV 10)))) 140735340871680 140737488355136   (* [comment removed for export] *)
   ; PRange (ZAdd (ZMul (ZLit 32768) (ZV 0)) (ZMul (ZLit 4096) (ZV 10))) 140735340871680 140737488351232   (* [comment removed for export] *)
   ; PRange (ZAdd (ZMul (ZLit 4096) (ZV 0)) (ZAdd (ZMul (ZLit 2) (ZV 6)) (ZMul (ZLit 512) (ZV 10)))) 17591917608960 17592186044392   (* [comment removed for export] *)
@@ -1287,45 +1261,51 @@ Definition both_ledger : list lentry := [
 ].
 
 (* [comment removed for export] *)
-Definition both_totsz : Z := 17729665052672.   (* [comment removed for export] *)
+Definition both_totsz : Z := 17729665134592.   (* LPS 727298f3: the start state counts the vDSO pair's reserved bytes too (AsanPlanCore's resx_bytes, 81920); the computed main-entry states' a_totsz (probe P6B) *)
 Definition both_ylo : Z := 23387528589312.     (* [comment removed for export] *)
 Definition both_eager : Z := 16519168.   (* [comment removed for export] *)
 Definition both_abytes : Z := 2461311488.  (* [comment removed for export] *)
 
-(* [comment removed for export] *)
-(* [comment removed for export] *)
-Definition both_mem_hints_w1 : list N := [3; 2; 809; 808; 807; 804; 797; 803; 818; 796; 783; 786; 785; 784; 633; 634; 782; 781; 780; 779; 778; 774; 776; 775; 777; 928; 894; 893; 927; 922; 909; 921; 920; 919; 918; 926; 925; 924; 923; 916; 856; 917; 915; 914; 908; 913; 912; 911; 910; 929; 1; 6; 5; 436; 465; 430; 0; 290; 48; 289; 428; 429; 828; 842; 827; 829; 831; 830; 855; 854; 825; 823; 826; 845; 772; 773; 540; 977; 852; 940; 853; 799; 798; 541; 548; 547; 546; 545; 543; 542; 544; 729; 735; 728; 690; 702; 700; 732; 731; 730; 727; 726; 725; 734; 724; 733; 749; 748; 747; 576; 746; 745; 664; 668; 667; 580; 672; 671; 670; 740; 739; 738; 737; 736; 744; 743; 742; 741; 930; 9; 843; 819; 975; 895; 939; 846; 848; 857; 858; 859; 860; 861; 862; 863; 864; 865; 866; 867; 868; 869; 870; 871; 872; 873; 874; 875; 876; 877; 878; 879; 880; 881; 882; 883; 884; 885; 886; 887; 888; 889; 890; 891; 892; 849; 635; 850; 851; 766; 630; 771; 493; 474; 473; 494; 518; 497; 517; 498; 903; 902; 901; 900; 907; 906; 905; 904; 899; 551; 558; 557; 556; 555; 553; 552; 554; 549; 550; 559; 898; 897; 896; 169; 159; 149; 139; 77; 67; 125; 57; 46; 114; 1011; 1006; 1005; 1001; 1004; 1000; 994; 987; 986; 985; 990; 992; 659; 824; 988; 989; 983; 995; 581; 636; 996; 997; 984; 1159; 767; 770; 769; 768; 1007; 993; 1010; 1003; 999; 998; 1002; 1008; 1009; 571; 564; 568; 569; 560; 561; 562; 563; 567; 821; 822; 820; 660; 844; 976; 847; 1158; 1057; 1058; 1059; 1060; 1061; 1062; 1063; 1064; 1065; 1066; 1067; 1068; 1069; 1070; 1071; 1072; 1073; 1074; 1075; 1076; 1077; 1078; 1079; 1080; 1081; 1082; 1083; 1084; 1085; 1086; 1087; 1088; 1089; 1090; 1091; 1092; 1093; 1094; 1095; 1096; 1097; 1098; 1099; 1100; 1101; 1102; 1103; 1104; 1105; 1106; 1107; 1108; 1111; 1112; 1113; 1114; 1115; 1116; 1117; 1118; 1119; 1120; 1121; 1122; 1123; 1124; 1125; 1132; 1126; 1127; 1128; 1129; 1130; 1131; 1132; 1133; 1134; 1135; 1136; 1137; 1138; 1139; 1140; 1141; 1142; 1143; 1144; 1145; 1146; 1147; 1148; 1149; 1150; 1151; 1152; 1153; 1154; 1155; 1156; 1157; 1055; 1056; 1054; 943; 944; 438; 439; 433; 434; 945; 163; 946; 153; 947; 143; 948; 133; 949; 129; 130; 950; 118; 119; 951; 108; 952; 104; 105; 953; 101; 954; 98; 955; 95; 956; 92; 957; 89; 958; 85; 86; 81; 82; 959; 71; 960; 61; 961; 51; 962; 40; 963; 37; 964; 4; 965; 34; 966; 31; 967; 28; 968; 25; 969; 22; 970; 19; 971; 16; 972; 13; 973; 10; 974; 1029; 1012; 978; 979; 980; 981; 982; 1030; 1031; 1032; 1033; 1034; 1035; 1036; 1037; 1038; 1039; 1040; 1041; 1042; 1043; 1044; 1045; 1046; 1047; 1048; 1049; 1050; 1051; 1052; 1053; 941; 942; 934; 445; 444; 443; 437; 435; 432; 431; 168; 167; 162; 161; 158; 157; 152; 151; 148; 147; 142; 141; 138; 137; 132; 131; 128; 127; 124; 123; 117; 116; 113; 112; 107; 106; 103; 102; 100; 99; 97; 96; 94; 93; 91; 90; 88; 87; 84; 83; 80; 79; 76; 75; 70; 69; 66; 65; 60; 59; 56; 55; 50; 49; 45; 44; 39; 38; 36; 35; 33; 32; 30; 29; 27; 26; 24; 23; 21; 20; 18; 17; 15; 14; 12; 11; 8; 7; 933; 835; 836; 834; 801; 802; 800; 753; 661; 605; 604; 658; 657; 656; 754; 607; 606; 603; 582; 755; 519; 756; 752; 707; 691; 695; 708; 666; 694; 709; 579; 665; 696; 710; 578; 663; 711; 577; 699; 698; 712; 697; 693; 692; 713; 662; 714; 705; 701; 706; 677; 669; 678; 675; 676; 641; 642; 632; 631; 643; 639; 640; 588; 589; 583; 590; 586; 587; 501; 502; 467; 468; 503; 499; 500; 477; 470; 475; 476; 447; 440; 441; 442; 448; 446; 292; 288; 293; 287; 294; 286; 295; 285; 296; 284; 297; 160; 156; 155; 154; 282; 299; 281; 300; 47; 43; 42; 41; 279; 302; 278; 303; 277; 304; 276; 305; 275; 306; 274; 307; 215; 366; 273; 308; 272; 309; 271; 310; 270; 311; 269; 312; 268; 313; 267; 314; 266; 315; 265; 316; 68; 64; 63; 62; 263; 318; 262; 319; 261; 320; 260; 321; 259; 322; 258; 323; 199; 382; 257; 324; 256; 325; 196; 385; 255; 326; 254; 327; 253; 328; 252; 329; 251; 330; 250; 331; 150; 146; 145; 144; 248; 333; 247; 334; 115; 111; 110; 109; 245; 336; 244; 337; 243; 338; 242; 339; 241; 340; 240; 341; 181; 400; 239; 342; 238; 343; 237; 344; 236; 345; 235; 346; 234; 347; 233; 348; 232; 349; 231; 350; 126; 122; 121; 120; 229; 352; 228; 353; 227; 354; 226; 355; 225; 356; 224; 357; 283; 298; 223; 358; 222; 359; 280; 301; 221; 360; 220; 361; 219; 362; 218; 363; 217; 364; 216; 365; 140; 136; 135; 134; 214; 367; 213; 368; 212; 369; 211; 370; 210; 371; 209; 372; 208; 373; 207; 374; 206; 375; 264; 317; 205; 376; 204; 377; 203; 378; 202; 379; 201; 380; 200; 381; 170; 166; 165; 164; 198; 383; 197; 384; 58; 54; 53; 52; 195; 386; 194; 387; 193; 388; 192; 389; 191; 390; 190; 391; 249; 332; 189; 392; 188; 393; 246; 335; 187; 394; 186; 395; 185; 396; 184; 397; 183; 398; 182; 399; 78; 74; 73; 72; 180; 401; 179; 402; 178; 403; 177; 404; 176; 405; 175; 406; 174; 407; 173; 408; 172; 409; 230; 351; 171; 410; 291; 495; 469; 466; 1109; 1110; 496; 472; 471; 478]%N.
-Lemma both_mem_facts_justified_w1 :
-  forallb (mjustify (s_know (a_ss HS_both2_1)) (var_ranges (s_know (a_ss HS_both2_1))) 65536 6754304) (both_mem_facts ++ both_mem_facts_w1) = true.
-Proof. apply (mjust_hints_sound _ _ _ _ _ both_mem_hints_w1). vm_cast_no_check (@eq_refl bool true). Qed.
-(* [comment removed for export] *)
-Definition both_pure_hints_w1 : list N := [1013; 1021; 1022; 1023; 1027; 1028; 1014; 1024; 1025; 1026; 1015; 991; 936; 838; 813; 805; 790; 758; 716; 680; 645; 618; 521; 521; 592; 527; 527; 526; 525; 525; 524; 523; 505; 480; 450; 412; 522; 522; 806; 1016; 1017; 1018; 1019; 1020; 610; 609; 833; 811; 788; 611; 751; 612; 704; 613; 674; 614; 638; 616; 585; 532; 536; 538; 534; 608; 932; 837; 839; 840; 816; 794; 764; 722; 688; 654; 628; 601; 515; 491; 463; 426; 812; 814; 815; 793; 763; 721; 687; 653; 627; 600; 514; 490; 462; 425; 789; 791; 792; 762; 720; 686; 652; 626; 599; 513; 489; 461; 424; 757; 759; 760; 761; 719; 685; 651; 625; 598; 512; 488; 460; 423; 715; 717; 718; 684; 650; 624; 597; 511; 487; 459; 422; 679; 681; 682; 683; 649; 623; 596; 510; 486; 458; 421; 644; 646; 647; 648; 622; 595; 509; 485; 457; 420; 617; 619; 620; 621; 591; 593; 594; 508; 484; 456; 419; 531; 530; 530; 529; 529; 528; 504; 506; 507; 483; 455; 418; 479; 481; 482; 454; 417; 449; 451; 452; 453; 416; 411; 413; 414; 415; 935; 937; 938; 841; 817; 795; 765; 723; 689; 655; 629; 602; 516; 492; 464; 427; 832; 810; 787; 750; 703; 673; 637; 615; 584; 533; 537; 539; 535; 931; 520]%N.
-Lemma both_pure_facts_justified_w1 :
-  forallb (pjustify (s_know (a_ss HS_both2_1)) (var_ranges (s_know (a_ss HS_both2_1)))) (both_pure_facts ++ both_pure_facts_w1) = true.
-Proof. apply (pjust_hints_sound _ _ _ both_pure_hints_w1). vm_cast_no_check (@eq_refl bool true). Qed.
-Lemma both_vis_justified_w1 :
-  vis_match (var_ranges (s_know (a_ss HS_both2_1))) (a_vis HS_both2_1) both_vis_app = true /\ vis_match (var_ranges (s_know (a_ss HS_both2_1))) (a_ghost HS_both2_1) both_ghost = true.
-Proof. split; vm_cast_no_check (@eq_refl bool true). Qed.
-Lemma both_ledger_justified_w1 :
-  ledger_xmatch (var_ranges (s_know (a_ss HS_both2_1))) (a_maps HS_both2_1) both_ledger = true.
-Proof. vm_cast_no_check (@eq_refl bool true). Qed.
-Lemma both_consts_w1 : a_totsz HS_both2_1 = both_totsz /\ a_ylo HS_both2_1 = both_ylo /\ a_eager HS_both2_1 = both_eager /\ a_abytes HS_both2_1 = both_abytes.
-Proof. repeat split; reflexivity. Qed.
-(* [comment removed for export] *)
-Definition both_mem_hints_w2 : list N := [3; 2; 808; 807; 806; 803; 796; 802; 817; 795; 782; 785; 784; 783; 632; 633; 781; 780; 779; 778; 777; 773; 775; 774; 776; 927; 893; 892; 926; 921; 908; 920; 919; 918; 917; 925; 924; 923; 922; 915; 855; 916; 914; 913; 907; 912; 911; 910; 909; 928; 1; 6; 5; 436; 465; 430; 0; 290; 48; 289; 428; 429; 827; 841; 826; 828; 830; 829; 854; 853; 824; 822; 825; 844; 771; 772; 539; 976; 851; 939; 852; 798; 797; 540; 547; 546; 545; 544; 542; 541; 543; 728; 734; 727; 689; 701; 699; 731; 730; 729; 726; 725; 724; 733; 723; 732; 748; 747; 746; 575; 745; 744; 663; 667; 666; 579; 671; 670; 669; 739; 738; 737; 736; 735; 743; 742; 741; 740; 929; 9; 842; 818; 974; 894; 938; 845; 847; 856; 857; 858; 859; 860; 861; 862; 863; 864; 865; 866; 867; 868; 869; 870; 871; 872; 873; 874; 875; 876; 877; 878; 879; 880; 881; 882; 883; 884; 885; 886; 887; 888; 889; 890; 891; 848; 634; 849; 850; 765; 629; 770; 492; 473; 472; 493; 517; 496; 516; 497; 902; 901; 900; 899; 906; 905; 904; 903; 898; 550; 557; 556; 555; 554; 552; 551; 553; 548; 549; 558; 897; 896; 895; 169; 159; 149; 139; 77; 67; 125; 57; 46; 114; 1010; 1005; 1004; 1000; 1003; 999; 993; 986; 985; 984; 989; 991; 658; 823; 987; 988; 982; 994; 580; 635; 995; 996; 983; 1158; 766; 769; 768; 767; 1006; 992; 1009; 1002; 998; 997; 1001; 1007; 1008; 570; 563; 567; 568; 559; 560; 561; 562; 566; 820; 821; 819; 659; 843; 975; 846; 1157; 1056; 1057; 1058; 1059; 1060; 1061; 1062; 1063; 1064; 1065; 1066; 1067; 1068; 1069; 1070; 1071; 1072; 1073; 1074; 1075; 1076; 1077; 1078; 1079; 1080; 1081; 1082; 1083; 1084; 1085; 1086; 1087; 1088; 1089; 1090; 1091; 1092; 1093; 1094; 1095; 1096; 1097; 1098; 1099; 1100; 1101; 1102; 1103; 1104; 1105; 1106; 1107; 1110; 1111; 1112; 1113; 1114; 1115; 1116; 1117; 1118; 1119; 1120; 1121; 1122; 1123; 1124; 1131; 1125; 1126; 1127; 1128; 1129; 1130; 1131; 1132; 1133; 1134; 1135; 1136; 1137; 1138; 1139; 1140; 1141; 1142; 1143; 1144; 1145; 1146; 1147; 1148; 1149; 1150; 1151; 1152; 1153; 1154; 1155; 1156; 1054; 1055; 1053; 942; 943; 438; 439; 433; 434; 944; 163; 945; 153; 946; 143; 947; 133; 948; 129; 130; 949; 118; 119; 950; 108; 951; 104; 105; 952; 101; 953; 98; 954; 95; 955; 92; 956; 89; 957; 85; 86; 81; 82; 958; 71; 959; 61; 960; 51; 961; 40; 962; 37; 963; 4; 964; 34; 965; 31; 966; 28; 967; 25; 968; 22; 969; 19; 970; 16; 971; 13; 972; 10; 973; 1028; 1011; 977; 978; 979; 980; 981; 1029; 1030; 1031; 1032; 1033; 1034; 1035; 1036; 1037; 1038; 1039; 1040; 1041; 1042; 1043; 1044; 1045; 1046; 1047; 1048; 1049; 1050; 1051; 1052; 940; 941; 933; 445; 444; 443; 437; 435; 432; 431; 168; 167; 162; 161; 158; 157; 152; 151; 148; 147; 142; 141; 138; 137; 132; 131; 128; 127; 124; 123; 117; 116; 113; 112; 107; 106; 103; 102; 100; 99; 97; 96; 94; 93; 91; 90; 88; 87; 84; 83; 80; 79; 76; 75; 70; 69; 66; 65; 60; 59; 56; 55; 50; 49; 45; 44; 39; 38; 36; 35; 33; 32; 30; 29; 27; 26; 24; 23; 21; 20; 18; 17; 15; 14; 12; 11; 8; 7; 932; 834; 835; 833; 800; 801; 799; 752; 660; 604; 603; 657; 656; 655; 753; 606; 605; 602; 581; 754; 518; 755; 751; 706; 690; 694; 707; 665; 693; 708; 578; 664; 695; 709; 577; 662; 710; 576; 698; 697; 711; 696; 692; 691; 712; 661; 713; 704; 700; 705; 676; 668; 677; 674; 675; 640; 641; 631; 630; 642; 638; 639; 587; 588; 582; 589; 585; 586; 500; 501; 467; 468; 502; 498; 499; 476; 470; 474; 475; 447; 440; 441; 442; 448; 446; 292; 288; 293; 287; 294; 286; 295; 285; 296; 284; 297; 160; 156; 155; 154; 282; 299; 281; 300; 47; 43; 42; 41; 279; 302; 278; 303; 277; 304; 276; 305; 275; 306; 274; 307; 215; 366; 273; 308; 272; 309; 271; 310; 270; 311; 269; 312; 268; 313; 267; 314; 266; 315; 265; 316; 68; 64; 63; 62; 263; 318; 262; 319; 261; 320; 260; 321; 259; 322; 258; 323; 199; 382; 257; 324; 256; 325; 196; 385; 255; 326; 254; 327; 253; 328; 252; 329; 251; 330; 250; 331; 150; 146; 145; 144; 248; 333; 247; 334; 115; 111; 110; 109; 245; 336; 244; 337; 243; 338; 242; 339; 241; 340; 240; 341; 181; 400; 239; 342; 238; 343; 237; 344; 236; 345; 235; 346; 234; 347; 233; 348; 232; 349; 231; 350; 126; 122; 121; 120; 229; 352; 228; 353; 227; 354; 226; 355; 225; 356; 224; 357; 283; 298; 223; 358; 222; 359; 280; 301; 221; 360; 220; 361; 219; 362; 218; 363; 217; 364; 216; 365; 140; 136; 135; 134; 214; 367; 213; 368; 212; 369; 211; 370; 210; 371; 209; 372; 208; 373; 207; 374; 206; 375; 264; 317; 205; 376; 204; 377; 203; 378; 202; 379; 201; 380; 200; 381; 170; 166; 165; 164; 198; 383; 197; 384; 58; 54; 53; 52; 195; 386; 194; 387; 193; 388; 192; 389; 191; 390; 190; 391; 249; 332; 189; 392; 188; 393; 246; 335; 187; 394; 186; 395; 185; 396; 184; 397; 183; 398; 182; 399; 78; 74; 73; 72; 180; 401; 179; 402; 178; 403; 177; 404; 176; 405; 175; 406; 174; 407; 173; 408; 172; 409; 230; 351; 171; 410; 291; 494; 469; 466; 1108; 1109; 495; 471; 477]%N.
-Lemma both_mem_facts_justified_w2 :
-  forallb (mjustify (s_know (a_ss HS_both2_2)) (var_ranges (s_know (a_ss HS_both2_2))) 65536 6754304) (both_mem_facts ++ both_mem_facts_w2) = true.
-Proof. apply (mjust_hints_sound _ _ _ _ _ both_mem_hints_w2). vm_cast_no_check (@eq_refl bool true). Qed.
-(* [comment removed for export] *)
-Definition both_pure_hints_w2 : list N := [1012; 1020; 1021; 1022; 1026; 1027; 1013; 1023; 1024; 1025; 1014; 990; 935; 837; 812; 804; 789; 757; 715; 679; 644; 617; 520; 520; 591; 526; 526; 525; 524; 524; 523; 522; 504; 479; 450; 412; 521; 521; 805; 1015; 1016; 1017; 1018; 1019; 609; 608; 832; 810; 787; 610; 750; 611; 703; 612; 673; 613; 637; 615; 584; 531; 535; 537; 533; 607; 931; 836; 838; 839; 815; 793; 763; 721; 687; 653; 627; 600; 514; 490; 463; 426; 811; 813; 814; 792; 762; 720; 686; 652; 626; 599; 513; 489; 462; 425; 788; 790; 791; 761; 719; 685; 651; 625; 598; 512; 488; 461; 424; 756; 758; 759; 760; 718; 684; 650; 624; 597; 511; 487; 460; 423; 714; 716; 717; 683; 649; 623; 596; 510; 486; 459; 422; 678; 680; 681; 682; 648; 622; 595; 509; 485; 458; 421; 643; 645; 646; 647; 621; 594; 508; 484; 457; 420; 616; 618; 619; 620; 590; 592; 593; 507; 483; 456; 419; 530; 529; 529; 528; 528; 527; 503; 505; 506; 482; 455; 418; 478; 480; 481; 454; 417; 449; 451; 452; 453; 416; 411; 413; 414; 415; 934; 936; 937; 840; 816; 794; 764; 722; 688; 654; 628; 601; 515; 491; 464; 427; 831; 809; 786; 749; 702; 672; 636; 614; 583; 532; 536; 538; 534; 930; 519]%N.
-Lemma both_pure_facts_justified_w2 :
-  forallb (pjustify (s_know (a_ss HS_both2_2)) (var_ranges (s_know (a_ss HS_both2_2)))) (both_pure_facts ++ both_pure_facts_w2) = true.
-Proof. apply (pjust_hints_sound _ _ _ both_pure_hints_w2). vm_cast_no_check (@eq_refl bool true). Qed.
-Lemma both_vis_justified_w2 :
-  vis_match (var_ranges (s_know (a_ss HS_both2_2))) (a_vis HS_both2_2) both_vis_app = true /\ vis_match (var_ranges (s_know (a_ss HS_both2_2))) (a_ghost HS_both2_2) both_ghost = true.
-Proof. split; vm_cast_no_check (@eq_refl bool true). Qed.
-Lemma both_ledger_justified_w2 :
-  ledger_xmatch (var_ranges (s_know (a_ss HS_both2_2))) (a_maps HS_both2_2) both_ledger = true.
-Proof. vm_cast_no_check (@eq_refl bool true). Qed.
-Lemma both_consts_w2 : a_totsz HS_both2_2 = both_totsz /\ a_ylo HS_both2_2 = both_ylo /\ a_eager HS_both2_2 = both_eager /\ a_abytes HS_both2_2 = both_abytes.
-Proof. repeat split; reflexivity. Qed.
+(* LPS 727298f3: the facts above are in the numbering of the start-up the plans were recorded
+   against; the computed start-up ([BothStartupCert2.HS_both2], the plans renumbered by
+   [PlanRegen.vsteps] [(78, 4); (310, 2)], the same steps as the ASan image's) names its fresh
+   variables elsewhere.  [fM] is the map read off the computed main-entry states against the
+   recorded one (probes P5 and P6B, the unit's probe notes): the launch's variables 0 .. 12 keep
+   their numbers, the recorded fresh variables 44 and 45 are 48 and 49, from 78 they move by 4 and
+   from 310 by 6.  A wrong map can only make a justification fail. *)
+Definition fM : nat -> nat := vsteps [(13%nat, 4%nat); (310%nat, 2%nat)].
+
+(* the block's layout facts at CONFIG_RSEQ value [r], read from the start state's own facts, which
+   the start-up keeps to the hand-off: argv[0]'s and argv[1]'s pointers, the [__progname_full] cell,
+   and the head of the block from the auxv to argv[0] defined ([AsanPlanCore.init_kn_with]) *)
+Definition zx (e : expr) : zexp := match zexp_of e with Some z => z | None => ZLit 0 end.
+Definition sp0_z : zexp := zx e_sp0.
+Definition str0_z (r : Z) : zexp := zx (e_str0 r).
+Definition argv1_z (r : Z) : zexp := zx (e_argv1w r).
+Definition head_base_z : zexp := mkaddr (zx (fst e_auxb)) (snd e_auxb).
+Definition head_len_z (r : Z) : zexp := zx (eaddz (eadd (escale 8 (EVar V_G)) (EVar V_W)) (AUXSZ r + 16)).
+Definition both_mem_facts_l (r : Z) : list mfact :=
+  [ MRo (mkaddr sp0_z 8) 8 (str0_z r);
+    MRo (mkaddr sp0_z 16) 8 (argv1_z r);
+    MCell (ZLit 6745208) 8 (str0_z r);
+    MDefS head_base_z (head_len_z r) ].
+Definition both_pure_facts_l (r : Z) : list pfact := [].
+
+(* the computed main-entry states: hand-offs 1 and 2 of startup2 at rz = r *)
+Definition HS2 (r : Z) (w : bool) : acs :=
+  match HS_both2 r (if w then 1%nat else 2%nat) with Some a => a | None => init_acs_of r BOTH end.
+Lemma HS2_cases : forall r h ch, 0 <= r <= 1 -> HS_both2 r h = Some ch -> exists w, ch = HS2 r w.
+Proof.
+  intros r h ch Hr Hh. unfold HS2.
+  destruct h as [|[|[|h]]].
+  - assert (r = 0 \/ r = 1) as [-> | ->] by lia; vm_compute in Hh; discriminate Hh.
+  - exists true. cbv beta iota. rewrite Hh. reflexivity.
+  - exists false. cbv beta iota. rewrite Hh. reflexivity.
+  - assert (r = 0 \/ r = 1) as [-> | ->] by lia; cbn in Hh; discriminate Hh.
+Qed.
+
+(* the registers at main's entry, one list for both hand-offs at both rz *)
+Definition REGS_MAIN : list expr := Eval vm_compute in s_regs (a_ss (HS2 0 true)).
+
+Definition both_mem_facts_w (w : bool) : list mfact := if w then both_mem_facts_w1 else both_mem_facts_w2.
+Definition both_pure_facts_w (w : bool) : list pfact := if w then both_pure_facts_w1 else both_pure_facts_w2.

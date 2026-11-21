@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: the ARx-GENERIC conversion of PHASE 6 of ARM_gone (lib/A/W_LLVMFuzzerTestOneInput_gone_p6.v,
    a Theorem Labs lane's gp6_csd_latch: from GCSD at 0x8494c through check_shape_done and the re-poison of prefix[48] to INV_K
    at the latch 0x84490) to the cut invariants of lib/A/W_LLVMFuzzerTestOneInput_cut_x.v (a Theorem Labs lane's route (b),
@@ -9,7 +10,7 @@
      converted: the run wrapper SRr_run_to_pi_AJX0_x and W_frame_x's paj_run_to_sh_x, gn_nums_x, W_journal_x's journal
      lemmas (_nil_x, _G_mono_x, _sub_x, _AR_x, _inner_x, rom_pinned_view_x), YCbqG.afn_pre_x_at, W_frame_x's
      aview_above_of_journal_x.
-   - The callee check_shape_done is W_contract_x.v:128 csd_spec_x, applied at Hp = []; its post aleaf_post_x keeps the
+   - The callee check_shape_done is W_contract_x.v:129 csd_spec_x, applied at Hp = []; its post aleaf_post_x keeps the
      ghost list it was called with, so no ghost list is read off its journal.  The journal's image clause has one
      premise more than AR's (the byte is off PST): HPST gives it.
    - Section g6k_x: the nine lemmas of _gone_p6.v's Section g6k that read AR (g6_blk, g6_ib_app, g6_alist, g6_asrc,
@@ -350,7 +351,7 @@ Variable RINV : lfcx -> Z -> lmod -> Prop.
 (* the allocator instance (W_kit.v): its api_env (pal_env) puts errno's 4 bytes below kLowMemEnd (_gone_p6.v's TL,
    verbatim) *)
 Hypothesis TL : PALib B.
-(* check_shape_done (0x85734): W_contract_x.v:128 csd_spec_x, the twin of _gone_p6.v's CSD (W_contract.v:156 csd_spec) *)
+(* check_shape_done (0x85734): W_contract_x.v:129 csd_spec_x, the twin of _gone_p6.v's CSD (W_contract.v:157 csd_spec) *)
 Hypothesis CSD : csd_spec_x B PST ARx (BASE + AF_fr_check_shape_done).
 (* what carries the model and the read-only image across that call (_gone_p6.v's HGCELLS / HROMPIN, verbatim: base
    GN_HGcells / GN_ROM_PIN): the model's cells are bytes of G_fr, so image bytes that are no allocator static, which the

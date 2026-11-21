@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names, addresses and numbers changed; 1684 of its 1797 lines of code are new or changed and 898 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/Seg/R6.v, with its module paths, module names and numbers changed; 1340 of its 1484 lines of code are new or changed and 1653 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment F1 of fuzz_ctrl LLVMFuzzerTestOneInput (asan, patched image A): the frame-loop head, turn j, from
    0x81d40 through the allocation call at 0x81da0 to its return point 0x81da4 (F2's entry).
      81d40 srli a0,s6,3; add a0,a0,s10; lb a0,0(a0); bnez a0,82978 -- the instrumented check of the byte at the
@@ -26,8 +27,8 @@
    a Theorem Labs lane's f4_fra_spill); the allocation is AC.aa_malloc on SlotInv.fra_call_pre, with the room premise from
    FRA's live-bytes bound (f1_place_room) and the per-class premises from ENT #14 (Tac_cls.sl_malloc_cls); FRA
    moves across it by Tac_slot.sl_mid_perm (f1_malloc_keep) and ENT by f1_ent_call_perm (a Theorem Labs lane's R7.v
-   ent_call_perm). The instruction-level run lemmas and the room lemmas are a Theorem Labs lane's (a working branch
-   b5a32896e10). rule 24: no function proved. *)
+   ent_call_perm). The instruction-level run lemmas and the room lemmas are a Theorem Labs lane's (a working branch).
+   rule 24: no function proved. *)
 From Stdlib Require Import ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

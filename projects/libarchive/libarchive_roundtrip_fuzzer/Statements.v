@@ -19,15 +19,19 @@
     harness.  Every statement quantifies over all of these cases and over every
     other process input (see Vocabulary in OSSVerify.Core.Shapes).
 
-    WHAT THE HARNESS CHECKS.  Despite the name and its header comment ('tests
-    write/read consistency'), NO round-trip property is checked: writes <= 5
-    regular-file entries (fuzz pathname <= 32 chars, uid/gid, <= 256 data bytes)
-    as pax_restricted/ustar/cpio newc/zip/gnutar into a memory buffer, then
-    reads the buffer back with all formats and drains the data, never comparing
-    the read-back pathname, size, ids or bytes with what was written.  The
-    harness makes no check of its own beyond not crashing, so a statement about
-    it says only that the code it calls never crashes, hangs or trips a
-    sanitizer.
+    WHAT THE HARNESS CHECKS.  Despite its name and header comment ('tests
+    write/read consistency'), it checks no round trip. It writes <= 5 regular
+    files (fuzz pathname <= 32 chars, uid/gid, <= 256 data bytes) as
+    pax_restricted/ustar/cpio newc/zip/gnutar into memory, then reads the
+    archive back with all formats and drains the data, never comparing the
+    read-back pathname, size, ids or bytes with what it wrote. If reserving or
+    resizing its buffer or allocating its read buffer throws std::bad_alloc, it
+    frees the open writer or reader, if any, and returns 0. Each call first
+    ignores SIGPIPE, as bsdtar and bsdcpio do.  The harness makes no check of
+    its own beyond not crashing.  Its halts statements say only that the code it
+    calls never crashes, hangs or trips a sanitizer.  Its agreement statements
+    say only that the code never crashes or trips a sanitizer, and allow a run
+    that never ends.
 
     Whether each statement is open, proved or known false is recorded in the
     harness README, not here: this file changes only when a statement does. *)

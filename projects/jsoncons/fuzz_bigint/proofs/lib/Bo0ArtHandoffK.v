@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: for LPS 727298f3, the sections take the full launch input (the fields of State.mkProcInput_full), the mmap base and the entry pc that AsanInitK's start state reads, and the reserved ledger is the model's, which also holds the launch's extra reservations (n_resx). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -224,12 +225,27 @@ Section Derive.
   Variable argv envp : list (list byte).
   Variables uid hw : word.
   Variable fs : Fs.Fs.
+  (* [AsanInitK]'s [Section Init] is parameterised by the full
+     [State.mkProcInput_full] field list, so [SINV0]/[argH0] discharge all
+     sixteen of [AsanInitK.inp]'s arguments plus [mbase] and [apc].  Same block
+     as [HandoffBridgeK.v:614-624]. *)
+  Variable mbase : word.
+  Variable stdin : InputStream.
+  Variable gid : word.
+  Variable groups : list word.
+  Variable net : NetQueue.
+  Variables nofile sigmask : word.
+  Variables abrt sdf : bool.
+  Variable ur : InputStream.
+  Variable kb : KernelBuild.
+  Variable execfn : list byte.
+  Variable apc : N.
   Hypothesis Hsp : valid_sp sp.
   Hypothesis Hva : valid_argv argv.
-  #[local] Notation SINV := (SINV0 APH0 sp rdraw brk0 argv envp uid hw).
-  #[local] Notation argH := (argH0 APH0 sp rdraw argv envp uid hw).
+  #[local] Notation SINV := (SINV0 APH0 sp rdraw brk0 mbase argv envp fs stdin uid gid hw groups net nofile sigmask abrt sdf ur kb execfn apc).
+  #[local] Notation argH := (argH0 sp rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt sdf ur kb execfn).
   #[local] Notation CSOK := (cs_ok ASEGS0 ASAN0 AsanInitK.LIMIT SINV argH fs).
-  Let AH := argH0_high APH0 sp rdraw argv envp uid hw Hsp Hva.
+  Let AH := argH0_high sp rdraw argv envp fs stdin uid gid hw groups net nofile sigmask abrt sdf ur kb execfn apc Hsp Hva.
 
   Variable cs : acs.
   Hypothesis CHK0 : as0_chk cs = true.
@@ -267,7 +283,7 @@ Section Derive.
     exact (proj2 (hc_word ASEGS0 ASAN0 AsanInitK.LIMIT SINV argH fs asan0_in_hull asan0_hull_ok AH E cs R FULL model b off w v HC H)).
   Qed.
   Lemma cellL : forall a w v, In (a, w, v) ART_LITW -> cellA FULL a w v.
-  Proof. exact (art_lit sp brk0 rdraw argv envp uid hw fs Hsp Hva E cs R FULL model HC CHKL). Qed.
+  Proof. exact (art_lit sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt sdf ur kb execfn apc Hsp Hva E cs R FULL model HC CHKL). Qed.
   (* [comment removed for export] *)
   Lemma cellLb : forall a w v,
     existsb (fun c => (Z.eqb (fst (fst c)) a && Nat.eqb (snd (fst c)) w && Z.eqb (snd c) v)%bool) ART_LITW = true -> cellA FULL a w v.
@@ -725,10 +741,12 @@ Section Derive.
   Hypothesis BUD_le : a_eager cs + a_abytes cs + 2 ^ 34 + BUDGET <= AsanInitK.LIMIT.
   Hypothesis BUD_ge : 2 ^ 34 <= BUDGET.
   Hypothesis GAP : AsanCeil.bottomup_floor + LENMAX + (a_totsz cs + BUDGET)
-                   + (Z.of_nat (length (segments_reserved ASEGS0) + length (a_maps cs)) + BrtInv.KMAX) * (LENMAX + 4095) <= AsanCeil.alloc_ceiling.
+                   + (Z.of_nat (length (segments_reserved ASEGS0) + n_resx ASAN0 + length (a_maps cs)) + BrtInv.KMAX) * (LENMAX + 4095) <= AsanCeil.alloc_ceiling.
 
   #[local] Notation MAPS0 := (vm_maps (m_vmmaps model)).
-  #[local] Notation RESV0 := (segments_reserved ASEGS0).
+  (* the run's reserved ledger, [segments_reserved ASEGS0] and the launch's extra
+     reservations ([co_res]), as [HandoffBInvK] states [bridge_static] *)
+  #[local] Notation RESV0 := (vm_reserved (m_vmmaps model)).
   #[local] Notation NOACC0 := (vm_noaccess (m_vmmaps model)).
   Definition as0_BASEx : Z := as0_BASE as0_EXTRA cs.
 
@@ -738,7 +756,7 @@ Section Derive.
     apply BINV_intro. unfold rn_HI. cbn [as0_rn as0_ar rn_ar ar_sptop].
     assert (Hb : a_eager cs + a_abytes cs + A_bytes as0_EXTRA + BUDGET <= AsanInitK.LIMIT).
     { unfold as0_EXTRA. cbn [A_bytes fst snd]. lia. }
-    exact (as0_binv_main sp brk0 rdraw argv envp uid hw fs Hsp Hva BUDGET LENMAX BrtInv.KMAX BUD as0_EXTRA as0_EXTRA_wf cs CHK0 Hb GAP E R FULL model HC).
+    exact (as0_binv_main sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt sdf ur kb execfn apc Hsp Hva BUDGET LENMAX BrtInv.KMAX BUD as0_EXTRA as0_EXTRA_wf cs CHK0 Hb GAP E R FULL model HC).
   Qed.
 
   (* [comment removed for export] *)
@@ -746,7 +764,7 @@ Section Derive.
   Proof.
     assert (Hb : a_eager cs + a_abytes cs + A_bytes as0_EXTRA + BUDGET <= AsanInitK.LIMIT).
     { unfold as0_EXTRA. cbn [A_bytes fst snd]. lia. }
-    pose proof (as0_binv_main sp brk0 rdraw argv envp uid hw fs Hsp Hva BUDGET LENMAX BrtInv.KMAX BUD as0_EXTRA as0_EXTRA_wf cs CHK0 Hb GAP E R FULL model HC) as B.
+    pose proof (as0_binv_main sp brk0 rdraw argv envp uid hw fs mbase stdin gid groups net nofile sigmask abrt sdf ur kb execfn apc Hsp Hva BUDGET LENMAX BrtInv.KMAX BUD as0_EXTRA as0_EXTRA_wf cs CHK0 Hb GAP E R FULL model HC) as B.
     intros a Ha. eapply bi_shdef; [exact B | exact Ha].
   Qed.
 
@@ -1135,11 +1153,12 @@ Section Derive.
     - unfold lit_len in HL. apply expr_eqb_eq in HL. pose proof (role_lit E cs i L HL HLr) as El.
       unfold ivZ, amap_den. cbn [fst snd]. unfold rbase, rlen, uE in *. lia.
   Qed.
-  Lemma seg_kn : forall b sz, In (Z_to_bv 64 b, Z_to_bv 64 sz) RESV0 -> 0 <= b < 2 ^ 64 -> 0 <= sz < 2 ^ 64 ->
+  Lemma seg_kn : forall b sz, In (Z_to_bv 64 b, Z_to_bv 64 sz) (segments_reserved ASEGS0) -> 0 <= b < 2 ^ 64 -> 0 <= sz < 2 ^ 64 ->
     exists q, In q (KN0 MAPS0 RESV0) /\ fst q <= b /\ b + sz <= snd q.
   Proof.
     intros b sz Hin Hb Hs. exists (ivZ (Z_to_bv 64 b, Z_to_bv 64 sz)). split.
-    - unfold KN0. apply in_map. apply in_or_app. left. exact Hin.
+    - unfold KN0. apply in_map. apply in_or_app. left.
+      destruct (co_res _ _ _ _ _ _ _ _ _ _ _ HC) as (rx & Hres & _). rewrite Hres. apply in_or_app. left. exact Hin.
     - unfold ivZ. cbn [fst snd]. rewrite !u64_lit by lia. lia.
   Qed.
 
@@ -1155,11 +1174,11 @@ Section Derive.
     destruct Ho as [<-|Ho]; [cbn [fst snd]; apply (role_kn I_L2 0x100000); [IDX | chk | lia | lia | lia]|].
     destruct Ho as [<-|Ho]; [cbn [fst snd]; apply (role_kn I_BLK 0x800000); [IDX | chk | lia | lia | lia]|].
     destruct Ho as [<-|Ho]; [cbn [fst snd]; apply (role_kn I_FAKE 0xb09000); [IDX | chk | lia | lia | lia]|].
-    rewrite asan0_res_eq.
-    destruct Ho as [<-|Ho]; [cbn [fst snd]; apply seg_kn; [cbn [In]; repeat (first [left; reflexivity | right]) | lia | lia]|].
-    destruct Ho as [<-|Ho]; [cbn [fst snd]; apply seg_kn; [cbn [In]; repeat (first [left; reflexivity | right]) | lia | lia]|].
-    destruct Ho as [<-|Ho]; [cbn [fst snd]; apply seg_kn; [cbn [In]; repeat (first [left; reflexivity | right]) | lia | lia]|].
-    destruct Ho as [<-|Ho]; [cbn [fst snd]; apply seg_kn; [cbn [In]; repeat (first [left; reflexivity | right]) | lia | lia]|].
+    pose proof seg_kn as SK. rewrite asan0_res_eq in SK.
+    destruct Ho as [<-|Ho]; [cbn [fst snd]; apply SK; [cbn [In]; repeat (first [left; reflexivity | right]) | lia | lia]|].
+    destruct Ho as [<-|Ho]; [cbn [fst snd]; apply SK; [cbn [In]; repeat (first [left; reflexivity | right]) | lia | lia]|].
+    destruct Ho as [<-|Ho]; [cbn [fst snd]; apply SK; [cbn [In]; repeat (first [left; reflexivity | right]) | lia | lia]|].
+    destruct Ho as [<-|Ho]; [cbn [fst snd]; apply SK; [cbn [In]; repeat (first [left; reflexivity | right]) | lia | lia]|].
     destruct Ho as [<-|[]]. cbn [fst snd]. apply (role_kn I_DTLS 4096); [IDX | chk | lia | lia | lia].      (* [comment removed for export] *)
   Qed.
 

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (slice_args drops RES_hull, grant_pin_facts takes the hint and a positive page-multiple length, a MAP_FIXED grant into free space ends at or below KHI, the null-hint mmap proof closes the model's place_declined_b at hint 0, and mprotect's range misses the vDSO pair (co_vdso)). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -83,7 +84,7 @@ Let gap_ok_sound := AsanNodesMmCs.gap_ok_sound SEGS A LIMIT SINV argH FS0 RES_le
 Let mmap_null_cs1 := AsanNodesMmCs.mmap_null_cs1 SEGS A nx0 LIMIT SINV argH FS0 RES_len HULL_ok SHADOW_ok argH_agree SINV_frame SINV_agree argH_sp0 NX0_S RES_cover.
 Let grant_vis_add := AsanNodesMmCs.grant_vis_add SEGS A LIMIT SINV argH FS0 SEGS_in_hull RES_len HULL_ok SHADOW_ok argH_high argH_sp0.
 Let slice_cs1_ok := AsanNodesMmCs.slice_cs1_ok SEGS A LIMIT SINV argH FS0 RES_len HULL_ok SHADOW_ok SINV_frame argH_sp0.
-Let slice_args := AsanNodesMmCs.slice_args SEGS A LIMIT SINV argH FS0 RES_len RES_hull HULL_ok.
+Let slice_args := AsanNodesMmCs.slice_args SEGS A LIMIT SINV argH FS0 RES_len HULL_ok.
 Let budget_slack := AsanNodesMmCs.budget_slack SEGS A LIMIT SINV argH FS0 RES_len HULL_ok.
 Let fixed_pre := AsanNodesMmCs.fixed_pre SEGS A LIMIT SINV argH FS0 RES_len HULL_ok.
 Let mmap_fixed_grant_cs1 := AsanNodesMmCs.mmap_fixed_grant_cs1 SEGS A LIMIT SINV argH FS0 RES_len HULL_ok SHADOW_ok SINV_frame argH_sp0.
@@ -129,13 +130,13 @@ Proof.
   destruct (is_fog m); [apply Forall_nil | apply ksh_disj_pure].
 Qed.
 
-Lemma grant_pin_facts : forall model a nZ, grant_ok_na_pin model a nZ = true ->
+Lemma grant_pin_facts : forall hint model a nZ, 0 < nZ -> nZ mod page_size = 0 ->
+  grant_ok_na_pin hint model a nZ = true ->
   bv_unsigned a mod 4096 = 0 /\ 0 < bv_unsigned a /\ bv_unsigned a + nZ <= alloc_top (m_vmmaps model)
   /\ region_free (vm_reserved (m_vmmaps model) ++ vm_maps (m_vmmaps model)) a (Z_to_bv 64 nZ) = true.
 Proof.
-  intros model a nZ Hg. unfold grant_ok_na_pin in Hg.
-  apply andb_prop in Hg as [Hg Hrf]. apply andb_prop in Hg as [Hg Htop]. apply andb_prop in Hg as [Hal Hpos].
-  apply Z.eqb_eq in Hal. apply Z.ltb_lt in Hpos. apply Z.leb_le in Htop. unfold page_size in Hal. auto.
+  intros hint model a nZ Hn Hal Hg.
+  destruct (grant_ok_na_pin_unpack _ _ _ _ Hn Hal Hg) as (H1 & H2 & H3 & H4). unfold page_size in H1. auto.
 Qed.
 
 Lemma mmap_null_sound1 : forall cs kd (eager visible : bool) cs' E R FULL model TB,
@@ -174,18 +175,20 @@ Proof.
   change (Z_to_bv 5 11) with (Z_to_bv 5 (Z.of_nat 11)) in R11. rewrite <- bv5_11 in R11.
   set (len := bv_unsigned (edenot E (reg cs 11))) in *. set (nZ := page_round_up_Z len) in *.
   set (n := Z_to_bv 64 nZ).
-  pose proof (gap_ok_sound E cs R FULL model nhi nZ HC Hgap ltac:(lia)) as WIT.
+  assert (HnZ0 : 0 < nZ) by lia.
+  pose proof (gap_ok_sound E cs R FULL model nhi nZ HC Hgap ltac:(lia) HnZal) as WIT.
+  rewrite <- R10 in WIT.
   pose proof (co_halt _ _ _ _ _ _ _ _ _ _ _ HC) as Hhalt.
   pose proof (cs_top _ _ _ _ _ HC) as (T1 & T2 & T3).
   (* [comment removed for export] *)
   assert (CONT : forall (a : word) model' FULL',
-            grant_ok_na_pin model a nZ = true ->
+            grant_ok_na_pin (getr R 10) model a nZ = true ->
             grant_post kd a n model model' -> grant_mem kd a n FULL FULL' -> m_fs model' = m_fs model ->
             RZ (mkCfg (mkst (regupd R 10 a) (v_addi (Z_to_bv 64 (pc cs)) 4) FULL' (seg_rom SEGS)) model') TB).
   { intros a model' FULL' Hg GPo GM Hfs.
     destruct (mmap_null_cs1 cs kd eager ne nlo nhi E R FULL model a model' FULL' HC HML Hfresh Hnev
                 ltac:(intros ->; cbn in Hbud; unfold budget_ok in Hbud; apply Z.leb_le in Hbud; exact Hbud)
-                Hylo Hkind Hkfog Hnof Hg GPo GM) as (HC1 & Hbase & HneE' & Un & Hag0 & NEW).
+                Hylo Hkind Hkfog Hnof (eq_ind _ (fun h => grant_ok_na_pin h model a nZ = true) Hg _ R10) GPo GM) as (HC1 & Hbase & HneE' & Un & Hag0 & NEW).
     fold len nZ n in HC1, HneE', Un, NEW.
     rewrite (AsanNodesMmLib.v_addi_pc (pc cs) Hp0 Hp4). rewrite bv5_10.
     set (E' := ext1 E (nxt cs) (Z_to_bv 64 (bv_unsigned a / 4096))) in *.
@@ -198,7 +201,7 @@ Proof.
     - (* [comment removed for export] *)
       assert (Hrw : kind_none kd = false) by (destruct kd; cbn in Hvisible |- *; congruence).
       pose proof (u64_range a) as Ra.
-      destruct (grant_pin_facts model a nZ Hg) as (_ & _ & Htop & _).
+      destruct (grant_pin_facts _ model a nZ HnZ0 HnZal Hg) as (_ & _ & Htop & _).
       eapply (grant_vis_add E' (null_cs1 A cs kd eager ne nlo nhi) cs' _ ne _ FULL' model' a n nZ HC1 Hn).
       + unfold null_cs1, add_entry. cbn [kn a_ss mk_ss s_know]. apply kimg_in_hull_app; [|apply kimg_clip_in_hull'].
         apply kimg_in_hull_pure. apply Forall_cons; [exact I | apply (proj2 (Forall_app _ _ _)); split; [apply null_kend_pure | apply (proj2 (Forall_app _ _ _)); split; [apply kdisj_frame_pure | apply (proj2 (Forall_app _ _ _)); split; [apply kdisj_zone_pure | apply (proj2 (Forall_app _ _ _)); split; [apply kdisj_new_pure | apply (proj2 (Forall_app _ _ _)); split; [apply kdisj_frame_sh_pure | apply kdisj_new_sh_pure]]]]]].
@@ -212,10 +215,15 @@ Proof.
     - injection Hn as <-. exact HC1. }
   (* [comment removed for export] *)
   unfold cfg_of.
+  (* LPS 727298f3: the hint register a0 is the literal 0 (R10), so [place_declined_b] is
+     false by computation ([place_declined_b_null]). *)
+  assert (HD0 : place_declined_b (m_kernel model) (m_vmmaps model) (getr R 10)
+                  (page_round_up_Z (bv_unsigned (getr R 11))) = false)
+    by (assert (E0 : getr R 10 = Z_to_bv 64 0) by exact R10; rewrite E0; apply place_declined_b_null).
   destruct kd; cbn [kind_none kind_lazy negb orb] in *; [| | | | discriminate Hkfog | discriminate Hkfog | ].   (* [comment removed for export] *)
   - (* [comment removed for export] *)
     destruct eager; [|discriminate].
-    eapply (rz_mmap_rw1_cfg SC SEGS ALLOC_OFF R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 34) TB Hf He Hhalt R17 R11 Hlen R12 R13 mmap_flags_core_22 R14 R15 WIT).
+    eapply (rz_mmap_rw1_cfg SC SEGS ALLOC_OFF R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 34) TB Hf He Hhalt R17 R11 Hlen R12 R13 mmap_flags_core_22 R14 R15 HD0 WIT).
     + unfold mmap_noreserve_backed_ok. rewrite mmap_noreserve_b_22.
       apply Z.leb_le. cbn in Hbud. eapply Z.le_trans; [|eapply (budget_slack E cs R FULL model nhi HC Hbud)]. fold nZ. lia.
     + intros a Hg. rewrite (with_mmap_backing_plain _ _ _ _ mmap_noreserve_b_22). apply (CONT a); [exact Hg | | | reflexivity].
@@ -223,30 +231,30 @@ Proof.
       * split; [intros x Hx; apply zfill_out; exact Hx | intros x Hx; apply zfill_in; exact Hx].
   - (* [comment removed for export] *)
     destruct eager; [discriminate|].
-    eapply (rz_mmap_rw1_cfg SC SEGS ALLOC_OFF R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 16418) TB Hf He Hhalt R17 R11 Hlen R12 R13 mmap_flags_core_4022 R14 R15 WIT).
+    eapply (rz_mmap_rw1_cfg SC SEGS ALLOC_OFF R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 16418) TB Hf He Hhalt R17 R11 Hlen R12 R13 mmap_flags_core_4022 R14 R15 HD0 WIT).
     + unfold mmap_noreserve_backed_ok. rewrite mmap_noreserve_b_4022. reflexivity.
     + intros a Hg. rewrite (with_mmap_backing_lazy _ _ _ _ mmap_noreserve_b_4022). apply (CONT a); [exact Hg | | | reflexivity].
-      * destruct (grant_pin_facts model a nZ Hg) as (Hal & Hpos & Htop & _).
+      * destruct (grant_pin_facts _ model a nZ HnZ0 HnZal Hg) as (Hal & Hpos & Htop & _).
         constructor; try reflexivity.
         unfold vm_add_lazy. rewrite m_vm_lazy_with_vm_backing. rewrite lazy_interior_fresh; [reflexivity | exact Hal | | |]; subst n; rewrite u64_lit by (unfold TOPMAX in T2; lia); [exact HnZal | lia | unfold TOPMAX in T2; lia].
       * split; [intros x Hx; apply zfill_out; exact Hx | intros x Hx; apply zfill_in; exact Hx].
   - (* [comment removed for export] *)
     destruct eager; [discriminate|].
-    eapply (rz_mmap_none1_cfg SC SEGS ALLOC_OFF R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 34) TB Hf He Hhalt R17 R11 Hlen R12 R13 mmap_flags_core_22 R14 R15 WIT).
+    eapply (rz_mmap_none1_cfg SC SEGS ALLOC_OFF R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 34) TB Hf He Hhalt R17 R11 Hlen R12 R13 mmap_flags_core_22 R14 R15 HD0 WIT).
     intros a Hg. rewrite (with_mmap_backing_plain _ _ _ _ mmap_noreserve_b_22). apply (CONT a); [exact Hg | | | reflexivity].
     * constructor; reflexivity.
     * split; [intros x Hx; apply unfill_out; exact Hx | intros x Hx; apply unfill_in; exact Hx].
   - (* [comment removed for export] *)
     destruct eager; [discriminate|].
-    eapply (rz_mmap_none1_cfg SC SEGS ALLOC_OFF R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 16418) TB Hf He Hhalt R17 R11 Hlen R12 R13 mmap_flags_core_4022 R14 R15 WIT).
+    eapply (rz_mmap_none1_cfg SC SEGS ALLOC_OFF R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 16418) TB Hf He Hhalt R17 R11 Hlen R12 R13 mmap_flags_core_4022 R14 R15 HD0 WIT).
     intros a Hg. rewrite (with_mmap_backing_lazy _ _ _ _ mmap_noreserve_b_4022). apply (CONT a); [exact Hg | | | reflexivity].
-    * destruct (grant_pin_facts model a nZ Hg) as (Hal & Hpos & Htop & _).
+    * destruct (grant_pin_facts _ model a nZ HnZ0 HnZal Hg) as (Hal & Hpos & Htop & _).
       constructor; try reflexivity.
       unfold vm_add_lazy. rewrite m_vm_lazy_with_vm_backing. rewrite lazy_interior_fresh; [reflexivity | exact Hal | | |]; subst n; rewrite u64_lit by (unfold TOPMAX in T2; lia); [exact HnZal | lia | unfold TOPMAX in T2; lia].
     * split; [intros x Hx; apply unfill_out; exact Hx | intros x Hx; apply unfill_in; exact Hx].
   - (* [comment removed for export] *)
     destruct eager; [|discriminate].
-    eapply (rz_mmap_rw1_cfg SC SEGS ALLOC_OFF R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 34) TB Hf He Hhalt R17 R11 Hlen R12 R13 mmap_flags_core_22 R14 R15 WIT).
+    eapply (rz_mmap_rw1_cfg SC SEGS ALLOC_OFF R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w len (Z_to_bv 64 34) TB Hf He Hhalt R17 R11 Hlen R12 R13 mmap_flags_core_22 R14 R15 HD0 WIT).
     + unfold mmap_noreserve_backed_ok. rewrite mmap_noreserve_b_22.
       apply Z.leb_le. cbn in Hbud. eapply Z.le_trans; [|eapply (budget_slack E cs R FULL model nhi HC Hbud)]. fold nZ. lia.
     + intros a Hg. rewrite (with_mmap_backing_plain _ _ _ _ mmap_noreserve_b_22). apply (CONT a); [exact Hg | | | reflexivity].
@@ -268,7 +276,7 @@ Lemma mmap_fixed_grant_sound1 : forall cs ms0 b off ne nlo nhi kd (flags : Z) (e
   reg_lit cs 14 = Some (two64 - 1) -> reg_lit cs 15 = Some 0 ->
   (kind_none kd || kind_lazy kd = negb eager)%bool -> is_tok_kind kd = false ->
   visible = eager ->
-  fixed_args A cs true CEIL = Some (b, off, ne, nlo, nhi) ->
+  fixed_args A cs true KHI = Some (b, off, ne, nlo, nhi) ->
   (negb eager || budget_ok LIMIT cs nhi)%bool = true ->
   CSOK E (with_maps0 cs ms0) R FULL model ->
   region_free (vm_reserved (m_vmmaps model) ++ vm_maps (m_vmmaps model)) (edenot E (reg cs 10))
@@ -295,7 +303,7 @@ Proof.
   destruct (reg_lit_sound' E cs R FULL model 15 0 HC ltac:(lia) H15) as [R15 _].
   rewrite <- bv5_17 in R17. rewrite <- bv5_12 in R12. rewrite <- bv5_13 in R13.
   rewrite <- bv5_14 in R14. rewrite <- bv5_15 in R15. rewrite (Z_to_bv64_m1 _ eq_refl) in R14.
-  destruct (fixed_args_sound E cs R FULL model true CEIL b off ne nlo nhi HC HFA) as (Hsp & HML & _).
+  destruct (fixed_args_sound E cs R FULL model true KHI b off ne nlo nhi HC HFA) as (Hsp & HML & _).
   destruct (mmap_len_sound E cs R FULL model ne nlo nhi HC HML) as (R11 & Hlen & _).
   change (Z_to_bv 5 11) with (Z_to_bv 5 (Z.of_nat 11)) in R11. rewrite <- bv5_11 in R11.
   set (len := bv_unsigned (edenot E (reg cs 11))) in *. set (nZ := page_round_up_Z len) in *.
@@ -303,10 +311,10 @@ Proof.
   pose proof (co_halt _ _ _ _ _ _ _ _ _ _ _ HC) as Hhalt.
   pose proof (proj2 (proj2 (proj2 (co_wf _ _ _ _ _ _ _ _ _ _ _ HC)))) as Hisp.
   (* [comment removed for export] *)
-  destruct (fixed_pre cs true CEIL b off ne nlo nhi E R FULL model HC HFA ltac:(unfold CEIL, TOPMAX; lia))
+  destruct (fixed_pre cs true KHI b off ne nlo nhi E R FULL model HC HFA ltac:(unfold KHI, TOPMAX; lia))
     as (HneE & Un & Hest & Hal & Hpos & Himg & HtopA & R10 & HnZal & HnZ).
   fold len nZ n addr in HneE, Un, Hest, Hal, Hpos, Himg, HtopA, R10, HnZal, HnZ.
-  assert (HaK : bv_unsigned addr + nZ <= CEIL) by lia.
+  assert (HaK : bv_unsigned addr + nZ <= CEIL) by (unfold KHI, CEIL in *; lia).
   rewrite <- bv5_10 in R10.
   assert (Hce : bv_unsigned addr + page_round_up_Z len <= alloc_ceiling) by (rewrite CEIL_eq; fold nZ; lia).
   (* [comment removed for export] *)
@@ -314,7 +322,7 @@ Proof.
             grant_post kd addr n model model' -> grant_mem kd addr n FULL FULL' -> m_fs model' = m_fs model ->
             RZ (mkCfg (mkst (regupd R 10 addr) (v_addi (Z_to_bv 64 (pc cs)) 4) FULL' (seg_rom SEGS)) model') TB).
   { intros model' FULL' GPo GM Hfs.
-    destruct (mmap_fixed_grant_cs1 cs ms0 kd eager CEIL b off ne nlo nhi E R FULL model model' FULL' HC HFA ltac:(lia) HC0 Hrf Hholes Hylo Hbudget Hkind Hkfog GPo GM) as (HC1 & NEW).
+    destruct (mmap_fixed_grant_cs1 cs ms0 kd eager KHI b off ne nlo nhi E R FULL model model' FULL' HC HFA ltac:(unfold KHI, CEIL; lia) HC0 Hrf Hholes Hylo Hbudget Hkind Hkfog GPo GM) as (HC1 & NEW).
     fold len nZ n addr in HC1, NEW.
     rewrite (AsanNodesMmLib.v_addi_pc (pc cs) Hp0 Hp4). rewrite bv5_10.
     assert (Hpc : pc cs' = pc cs + 4).
@@ -439,7 +447,7 @@ Lemma mmap_fixed_free_sound1 : forall cs kd (flags : Z) (eager visible : bool) c
 Proof.
   intros cs kd flags eager visible cs' E R FULL model TB HC Hec H17 H12 H13 Hflags H14 H15 Hkind Hkfog Hvisible Hn HK.
   unfold mmap_fixed_free in Hn.
-  destruct (fixed_args A cs true CEIL) as [[[[[b off] ne] nlo] nhi]|] eqn:HFA; [|discriminate].
+  destruct (fixed_args A cs true KHI) as [[[[[b off] ne] nlo] nhi]|] eqn:HFA; [|discriminate].
   match type of Hn with (if ?c then _ else _) = _ => destruct c eqn:Hcond; [|discriminate] end.
   apply andb_prop in Hcond as [Hcond Hylo]. apply andb_prop in Hcond as [Hcond Hav]. apply andb_prop in Hcond as [Hcond Hnev].
   apply andb_prop in Hcond as [Hcond Hbud]. apply andb_prop in Hcond as [Hnf Hall]. apply Z.leb_le in Hylo.
@@ -495,6 +503,10 @@ Proof.
   eapply (crz_mprotect1 SC SEGS ALLOC_OFF R (Z_to_bv 64 (pc cs)) FULL (seg_rom SEGS) model w addr len TB Hf He Hhalt R17 R10 Hal R11 ltac:(lia)).
   - unfold two_pow_64. fold nZ. unfold TOPMAX in *. lia.
   - exact R12.
+  - (* the range is apart from the vDSO pair: it is free of the whole reserved ledger
+       (slice_args), and the ledger holds the pair (co_vdso) *)
+    cbv zeta. apply RefNodes.region_free_intro. intros a' sz Hin.
+    exact (RefNodes.region_free_In _ _ _ a' sz Hrfres (co_vdso _ _ _ _ _ _ _ _ _ _ _ HC (a', sz) Hin)).
   - exact Hna.
   - exact Hmc.
   - apply mprotect_budget_ok_intro_gen; [exact Hwf|]. pose proof (budget_slack E cs R FULL model nhi HC ltac:(unfold budget_ok; apply Z.leb_le; exact Hbud)). fold nZ n. lia.

@@ -2,11 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the facts of pins_set's ASan+UBSan walk (plugin-hostd/fuzz_command,
-   fuzz_command.asan-ubsan, tpins_set_spec of lib/B/Prog/pins_set_c.v, statement from a Theorem Labs lane 917ca7ac6b1) that need
+   fuzz_command.asan-ubsan, tpins_set_spec of lib/B/Prog/pins_set_c.v, statement from a Theorem Labs lane) that need
    none of its callees' statements: the pcs and call targets of the B code, the default verdict "-" (0x21d80, the
    listing's object A_OBJ 52) as an argument string, the heap arguments, the recorder's scalars and held answer, and
    the model's two arms. After the ASan walk lib/A/Prog/pins_set.v and pins_set_s2/s3/s7/s10/s11.v
-   (a working branch 3cc8391594b: ps_blk_arg, ps_O_facts, pt_same_start, ps_rec_record_scalars and the refuse /
+   (a working branch: ps_blk_arg, ps_O_facts, pt_same_start, ps_rec_record_scalars and the refuse /
    mix arms of ps_seg_x4) and lib/A/Prog/RecBLemmas.v there (acall_at_in, lay_blocks_in).
 
    B code (fuzz_command.asan-ubsan, sha256 658cefbe806b535ba1fbe5a37c8efe02099fc39c326f300e9b1c969d479df401,
@@ -25,6 +25,7 @@
    data branches: 0x8c990 on the verdict pointer (psb_verdict_null), 0x8c9b4 on g_rec.refuse (psb_scalars and
    psb_model_refuse / psb_model_mix). Every load and store through an auipc pair goes through s1 = the A_OBJ value
    (VOBJS), none through an A_HI value, so the walk needs no cmd_val_his. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -209,7 +210,7 @@ intros a l. induction l as [|x l IH]; cbn [existsb In]; [discriminate|].
 intros H. apply orb_true_iff in H as [H|H]; [left; apply Z.eqb_eq in H; symmetry; exact H | right; exact (IH H)].
 Qed.
 
-(* the end of "-" is one of the literal ends of CmdRo (a Theorem Labs lane 917ca7ac6b1 regenerated cmd_ro_ends with all 206) *)
+(* the end of "-" is one of the literal ends of CmdRo (a Theorem Labs lane regenerated cmd_ro_ends with all 206) *)
 Lemma psb_dash_end : In 0x21d81 cmd_ro_ends.
 Proof. apply psb_z_in. vm_compute. reflexivity. Qed.
 

@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the entry segment of the image-A walk of libreac/fuzz_decode's LLVMFuzzerTestOneInput, with proof steps adapted from proofs/libreac/fuzz_grant/lib/A/Prog/CtrlStampHeadamp.v (pb_reac_ctrl_stamp_headamp's prologue and its class-0 stack malloc, a working branch), proofs/libreac/fuzz_grant/lib/A/Prog/GrantACja.v (land_m32, denot_and_m32, sp1_facts), proofs/libreac/fuzz_grant/lib/A/Prog/GrantFrame.v (val_mem_of_rd32, rdword_of_val_mem, val_mem_moved), lib/Reusable/YCbq.v (call_effect_journal) and lib/A/Prog/YC85.v (aj_stack_malloc_atS); module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* LLVMFuzzerTestOneInput_seg_entry: two of the nine segment statements of lib/A/Prog/LLVMFuzzerTestOneInput_segs.v.
 
    llvm_a_entry_ok : llvm_a_entry_stmt. The 29 instructions +0x000..+0x070 of DecodeList.v:28-56, stepped by the
@@ -17,7 +18,7 @@
    so that api_env (which the entry statement does not carry) is not needed.
 
    llvm_a_early_ret_ok : llvm_a_early_ret_stmt. The +0x104 edge is unreachable: dec_a_base bounds n below 2 ^ 26
-   (LLVMFuzzerTestOneInput_cg.v:107) and llvm_a_st_104 asks 2 ^ 26 <= n. *)
+   (LLVMFuzzerTestOneInput_cg.v:108) and llvm_a_st_104 asks 2 ^ 26 <= n. *)
 From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

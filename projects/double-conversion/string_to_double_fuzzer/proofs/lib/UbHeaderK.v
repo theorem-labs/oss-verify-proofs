@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's zero-filled stack run is the 6144513 bytes below sp0; vm_stage_seps taken at k). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -466,8 +467,8 @@ Section HeaderK.
   #[using="k p1 mb gm B e can sec content M0 R VM RP L"] Lemma stack_k : stack_writable M sp0.
   Proof.
     get_know extra Hlen HK.
-    pose proof (kf_wr _ _ _ HK (EVar 0) (-8388608) 8388608 ltac:(kin)) as W. kclean W.
-    intros d m Hd Hm. replace (bv_unsigned sp0 - 8388608 + d)%Z with (bv_unsigned sp0 + -8388608 + d)%Z by lia.
+    pose proof (kf_wr _ _ _ HK (EVar 0) (-6144513) 6144513 ltac:(kin)) as W. kclean W.
+    intros d m Hd Hm. replace (bv_unsigned sp0 - 6144513 + d)%Z with (bv_unsigned sp0 + -6144513 + d)%Z by lia.
     apply W; assumption.
   Qed.
 
@@ -478,7 +479,7 @@ Section HeaderK.
     pose proof area_eq as AE. pose proof hk_nums as (Hc1 & Hc2 & _ & Enb & _). pose proof capk_split as CS.
     pose proof world_k_intro as WK. pose proof (wk_B_rng _ _ _ _ _ _ _ _ _ WK) as RB.
     rewrite Enb in *. unfold nbk in *. pose proof sp0_facts as [SP _].
-    destruct (vm_stage_seps VM sp0 mb B (capk k + 4096) ltac:(lia) ltac:(lia) VS) as [SEPS NW].
+    destruct (vm_stage_seps VM sp0 mb B k ltac:(rewrite Enb; lia) ltac:(rewrite Enb; lia) VS) as [SEPS NW].
     get_know extra Hlen' HK.
     pose proof (kf_disj _ _ _ HK (EVar 0) (-8388608) BELOW (EVar 5) 0 (nb_of k) ltac:(kin)) as Dtop. kclean Dtop.
     unfold BELOW, nb_of, cap_of in Dtop.

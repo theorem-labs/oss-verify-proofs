@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise on the stderr writes of the read-error and cannot-open tails; the read-error stack window through stack_writable_lit). *)
 
 From Stdlib Require ZArith NArith List Lia Bool String.
 From LinuxProcessSemantics.EquivalenceDefinition Require Equivalence.
@@ -45,12 +46,13 @@ Hypothesis Hvsp : valid_sp sp0.
 Hypothesis Hh : m_halted model = None.
 Hypothesis Hlazy : m_vm_lazy model = [].
 Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+Hypothesis Hrdr : m_channel_reader model = true.   (* LPS 08b1429: the stderr write's channel reader *)
 
 Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
 Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
 Let SPal : (bv_unsigned sp0 mod 16 = 0)%Z := proj2 (proj2 Hvsp).
 
-#[using="Hvsp Hh Hlazy Hfd2"] Theorem re_tail : forall (path : list byte) (pp : word) (t8 : list byte) vals R M,
+#[using="Hvsp Hh Hlazy Hfd2 Hrdr"] Theorem re_tail : forall (path : list byte) (pp : word) (t8 : list byte) vals R M,
 ~ In (Z_to_bv 8 0) path -> (Z.of_nat (length path) <= 60)%Z ->
 length vals = 39%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = pp ->
 (bv_unsigned sp0 <= bv_unsigned pp)%Z ->
@@ -66,7 +68,7 @@ unfold t_die.
 eapply (re_segBC sp0 BL model Hvsp Hh Hlazy path pp (Z.of_nat (length path)) _ t8 vals);
 try eassumption; try lia.
 intros vals' R' M' HL' Q0 Q2 Q113 HR' HK' Hstr'.
-eapply (re_segF sp0 BL model Hvsp Hh Hlazy Hfd2 path pp _ vals'); try eassumption; lia.
+eapply (re_segF sp0 BL model Hvsp Hh Hlazy Hfd2 Hrdr path pp _ vals'); try eassumption; lia.
 Qed.
 
 Variables (pp : word) (tid : Z) (c : Z) (R : bvmap 5 word) (M : word -> option byte).
@@ -143,8 +145,8 @@ repeat (apply Forall_cons; [|try apply Forall_nil]); cbn [kentry_ok].
 - change (edenot E (EVar 0)) with sp0. lia.
 -  split; [apply flat_intro; cbn; lia|].
 intros d m Hd Hm. unfold estart. cbn [a_base a_off]. change (edenot E (EVar 0)) with sp0.
-replace (bv_unsigned sp0 + -8388608 + d)%Z with (bv_unsigned sp0 - 8388608 + d)%Z by lia.
-apply Mstack; lia.
+replace (bv_unsigned sp0 + -6144513 + d)%Z with (bv_unsigned sp0 - 6144513 + d)%Z by lia.
+apply (stack_writable_lit _ _ Mstack); lia.
 - change (edenot E (EVar 2)) with pp. lia.
 -  split; [apply flat_intro; cbn [edenot a_base a_off]; rewrite ?(u_small 0) by lia; lia|].
 intros d m Hd Hm. unfold estart. cbn [a_base a_off edenot]. rewrite (u_small 0) by lia.
@@ -161,7 +163,7 @@ apply store_ok_data; rewrite u_small by lia; lia.
 - change (edenot E (EVar 5)) with (Z_to_bv 64 tid : word). rewrite u_small by lia. lia.
 Qed.
 
-#[using="BL Hvsp Hh Hlazy Hfd2 SPlo SPhi SPal tid c Rsp Rgp Rtp Rs2 Mstack Mimg Mtid Htid Mself Mcanary Mpagesz Hpp1 E"] Theorem ref_read_error : forall (path : list byte) (t8 : list byte),
+#[using="BL Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi SPal tid c Rsp Rgp Rtp Rs2 Mstack Mimg Mtid Htid Mself Mcanary Mpagesz Hpp1 E"] Theorem ref_read_error : forall (path : list byte) (t8 : list byte),
 ~ In (Z_to_bv 8 0) path -> (Z.of_nat (length path) <= 60)%Z ->
 (bv_unsigned pp + Z.of_nat (length path) + 8 <= bv_unsigned sp0 + 4194304)%Z ->
 rdn RSEGS M pp (length path + 1) = Some (path ++ [Z_to_bv 8 0]) ->
@@ -178,7 +180,7 @@ eapply (re_tail path pp t8 valsRE R M); try eassumption.
 - apply know_okRE. lia.
 Qed.
 
-#[using="BL Hvsp Hh Hlazy Hfd2 SPlo SPhi SPal tid c Rsp Rgp Rtp Rs2 Mstack Mimg Mtid Htid Mself Mcanary Mpagesz Hpp1 E"] Corollary ref_read_error_dot : forall (t8 : list byte),
+#[using="BL Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi SPal tid c Rsp Rgp Rtp Rs2 Mstack Mimg Mtid Htid Mself Mcanary Mpagesz Hpp1 E"] Corollary ref_read_error_dot : forall (t8 : list byte),
 (bv_unsigned pp + 9 <= bv_unsigned sp0 + 4194304)%Z ->
 rdn RSEGS M pp 2 = Some [Z_to_bv 8 46; Z_to_bv 8 0] ->
 rdn RSEGS M (Z_to_bv 64 (bv_unsigned pp + 1)) 8 = Some t8 ->
@@ -310,6 +312,8 @@ Hypothesis Hvsp : valid_sp sp0.
 Hypothesis Hh : m_halted model = None.
 Hypothesis Hlazy : m_vm_lazy model = [].
 Hypothesis Hfd2 : fd_lookup (m_fds model) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)).
+(* LPS 727298f3: writev to fd 2 needs a reader at the far end ([State.m_channel_reader]) *)
+Hypothesis Hrdr : m_channel_reader model = true.
 
 Let SPlo : (0x7fff80000000 <= bv_unsigned sp0)%Z := proj1 Hvsp.
 Let SPhi : (bv_unsigned sp0 <= 0x800000000000)%Z := proj1 (proj2 Hvsp).
@@ -326,7 +330,7 @@ run_blk scr0 264%nat.
 close_exit HR HK P0 Hh Hlazy sp0.
 Qed.
 
-#[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma of_segH3 : forall vals R M,
+#[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma of_segH3 : forall vals R M,
 length vals = 232%nat -> vals_ev vals 0 = sp0 ->
 regs_ok (ENV BL vals) srH30 R -> know_ok RSEGS (ENV BL vals) M knH30 ->
 realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x5576c) M (seg_rom RSEGS)) model)
@@ -354,6 +358,7 @@ cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn 
 - reflexivity.
 - reflexivity.
 - exact Hfd2.
+- exact Hrdr.
 - exact Hh.
 - exact Hlazy.
 - apply t_exit_has_nil.
@@ -364,7 +369,7 @@ eapply (of_segI3 (vals ++ junk_vals R2));
 | exact HR | exact HK ].
 Qed.
 
-#[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma of_segG3 : forall (path : list byte), Z.of_nat (length path) = 63%Z ->
+#[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma of_segG3 : forall (path : list byte), Z.of_nat (length path) = 63%Z ->
 atG0 sp0 BL model path 63 (t_emit (W 2 (msg_cannot_open path)) (t_exit (exit_code 2) (m_fs model))).
 Proof.
 intros path HP vals R M HL P0 P113 HR HK SBp.
@@ -419,6 +424,7 @@ rewrite ?length_app, ?PRE17_len end.
 replace (17 + length path)%nat with (17 + length path)%nat by lia. exact B80.
 - cbn [edenot]. exact Hnl.
 - exact Hfd2.
+- exact Hrdr.
 - exact Hh.
 - exact Hlazy.
 - apply t_exit_has_nil.
@@ -445,7 +451,7 @@ run_blk scr0 264%nat.
 close_exit HR HK P0 Hh Hlazy sp0.
 Qed.
 
-#[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma of_segH4 : forall vals R M,
+#[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma of_segH4 : forall vals R M,
 length vals = 232%nat -> vals_ev vals 0 = sp0 ->
 regs_ok (ENV BL vals) srH40 R -> know_ok RSEGS (ENV BL vals) M knH40 ->
 realizes RSEGS (mkCfg (mkst R (Z_to_bv 64 0x55024) M (seg_rom RSEGS)) model)
@@ -476,6 +482,7 @@ cbn [sc_f sc_fd sc_ret sc_wb sc_wp sc_bufp sc_bufsz sc_s sc_l sc_sp sc_sr sc_kn 
 replace (bv_unsigned sp0 + -560)%Z with (bv_unsigned sp0 + -560)%Z by lia. exact Hb.
 - reflexivity.
 - exact Hfd2.
+- exact Hrdr.
 - exact Hh.
 - exact Hlazy.
 - apply t_exit_has_nil.
@@ -486,7 +493,7 @@ eapply (of_segI4 (vals ++ junk_vals R2));
 | exact HR | exact HK ].
 Qed.
 
-#[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Lemma of_segFG4 : forall (path : list byte) (pp : word) (P : Z) vals R M,
+#[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Lemma of_segFG4 : forall (path : list byte) (pp : word) (P : Z) vals R M,
 Z.of_nat (length path) = P -> (64 <= P <= 131071)%Z ->
 length vals = 168%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = pp -> vals_ev vals 114 = Z_to_bv 64 P ->
 (bv_unsigned sp0 <= bv_unsigned pp)%Z -> (bv_unsigned pp + P + 8 <= bv_unsigned sp0 + 4194304)%Z ->
@@ -554,6 +561,7 @@ rewrite ?PRE17_len end.
 replace (bv_unsigned sp0 + -560)%Z with (bv_unsigned sp0 + -560)%Z by lia. exact H17.
 - cbn [edenot ev ENV PX]. rewrite P2. exact Hsrc.
 - exact Hfd2.
+- exact Hrdr.
 - exact Hh.
 - exact Hlazy.
 - apply t_emit_has_nil.
@@ -621,7 +629,7 @@ change (Env (vals_ev vals2) (blobs_ev BL)) with (ENV BL vals2) in HR, HK.
 eapply (of_segH4 vals2); [exact HL2 | exact Q0 | exact HR | exact HK].
 Qed.
 
-#[using="Hvsp Hh Hlazy Hfd2 SPlo SPhi"] Theorem of_tail : forall (path : list byte) (pp : word) (t8 : list byte) vals R M,
+#[using="Hvsp Hh Hlazy Hfd2 Hrdr SPlo SPhi"] Theorem of_tail : forall (path : list byte) (pp : word) (t8 : list byte) vals R M,
 ~ In (Z_to_bv 8 0) path -> (Z.of_nat (length path) <= 131071)%Z ->
 length vals = 40%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = pp ->
 (2 ^ 64 - 4095 <= bv_unsigned (vals_ev vals 39))%Z ->
@@ -640,7 +648,7 @@ eapply (of_segBC sp0 BL model Hvsp Hh Hlazy path pp (Z.of_nat (length path)) _ t
 try eassumption; try lia.
 intros vals' R' M' HL' Q0 Q2 Q113 HR' HK' Hstr'.
 destruct (Z.le_gt_cases (Z.of_nat (length path)) 62) as [Hle | Hgt].
-- eapply (of_segF sp0 BL model Hvsp Hh Hlazy Hfd2 path pp _ vals'); try eassumption; lia.
+- eapply (of_segF sp0 BL model Hvsp Hh Hlazy Hfd2 Hrdr path pp _ vals'); try eassumption; lia.
 - destruct (Z.le_gt_cases (Z.of_nat (length path)) 63) as [Hle2 | Hgt2].
 + assert (E63 : Z.of_nat (length path) = 63%Z) by lia. rewrite E63 in Q113.
 eapply (of_segF_gen sp0 BL model Hvsp Hh Hlazy path pp 63 _ vals'); try eassumption; try lia.

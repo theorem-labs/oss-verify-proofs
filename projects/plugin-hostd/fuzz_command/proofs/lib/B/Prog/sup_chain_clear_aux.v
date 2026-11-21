@@ -3,9 +3,10 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: the callee-free helpers of the walk of sup_chain_clear on plugin-hostd/fuzz_command's
    ASan+UBSan build (fuzz_command.asan-ubsan), for a Theorem Labs lane's lib/B/Prog/sup_chain_clear_c.v. The arithmetic of the
-   realigned frame and the entry state are lib/A/Prog/answer_code.v's (a working branch 2ba4488ce71:
+   realigned frame and the entry state are lib/A/Prog/answer_code.v's (a working branch:
    land_m32, denot_and32, denot_add0, denot_off0, sp1_facts, ac_entry), moved to lib/B and to sup_chain_clear's
    B prologue; nothing here names a callee's statement. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* sup_chain_clear on B (entry BASE + AF_sup_chain_clear = 0x8c570, 122 instructions, 0x8c570 .. 0x8c754 `ret`):
    `addi sp,sp,-96`, `sd zero,0(sp)`, ra and s0 .. s8 to sp + 88 .. sp + 16, `addi s0,sp,96`, `andi sp,sp,-32`
    (0x8c5a4), s1 = the realigned sp; the shadow base through the GOT word 0xa5f50 (A_OBJ 0) and the cell 0xb0c38

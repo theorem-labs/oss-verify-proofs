@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-11: made from projects/yajl-ruby/json_fuzzer/proofs/lib/Top/HaltsSpec.v at commit
-   c395a1e0dfa, lines 23-58 (ev_ok_W, shape_ok_die, shape_ok_body, shape_ok_opened, shape_ok_opened_dir and
+   theorem-labs/oss-verify-proofs@c5665593c2d8, lines 23-58 (ev_ok_W, shape_ok_die, shape_ok_body, shape_ok_opened, shape_ok_opened_dir and
    shape_ok_spec), restated for this harness's Spec.spec: the exit-code list halts_codes becomes Corpus.HaltsFO's
    codes02, ev_ok_W becomes trace_ok_map_write plus shape_ok_emit_W over this tree's Common.ShapeAlg trace_ok, and the
    per-branch case analysis (shape_ok_zero_lines, shape_ok_exit_0_or_2, the spec_shape_step tactic) follows coturn's
    own t_body/t_opened/t_opened_dir rather than json_fuzzer's; yajl-ruby's spec_exits_in is not copied. *)
+(* Modified by Theorem Labs, 2026-11: the cited source commit is named by its public id, theorem-labs/oss-verify-proofs@c5665593c2d8. *)
 (* The exit statuses of the driver specification.
 
    [Spec.spec] is the trace set that both the plain and the UBSan build of this fuzz target realize

@@ -1,4 +1,4 @@
-(* Modified by Theorem Labs, 2026-10-29: relocated from proofs/plugin-hostd/fuzz_reply/lib/A/RGthinS4.v (hub 66a127cb11e, blob a8d63c586462) to omx-clap-core/fuzz_preset's asan image A by a Theorem Labs lane's internal file alreloc.py (frozen-c4338d099cfb8025), module paths and every image numeral moved by symbol + offset; record, the internal file A5.md. *)
+(* Modified by Theorem Labs, 2026-10-29: relocated from proofs/plugin-hostd/fuzz_reply/lib/A/RGthinS4.v (blob a8d63c586462) to omx-clap-core/fuzz_preset's asan image A by a Theorem Labs lane's internal file alreloc.py (frozen-c4338d099cfb8025), module paths and every image numeral moved by symbol + offset; record, the internal file A5.md. *)
 (* fuzz_preset.asan image A: the thin segments S4 (RGtop.seg_nret) and S6 (RGtop.seg_npost):
    - S4: Allocate's return into Reallocate with NULL -> realloc's return with a0 = 0 and errno = ENOMEM, over the
      machine run RGthinM2.m4 (ported from cgif_rgb's YF68.v:104 c_null, relocated to fuzz_reply's image);

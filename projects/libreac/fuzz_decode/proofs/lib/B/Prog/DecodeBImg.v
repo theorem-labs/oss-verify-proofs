@@ -1,14 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: taken by path from a Theorem Labs lane's copy (a working branch cb6eddd4032,
+(* Modified by Theorem Labs, 2026-10: taken by path from a Theorem Labs lane's copy (a working branch,
    proofs/libreac/fuzz_grant/lib/A/Prog/GrantImg.v, itself from proofs/cgif/cgif_file_fuzzer/lib/A/ACef.v, A/AI12.v
    and A/ACbj.v) for libreac/fuzz_decode image A: the code table of fuzz_decode.asan's program code (the listing's
    own base decode_text and its decode_nslots words), one value table over lib/A/Prog/DecodeAddr.v's addresses, the
    image bounds of lib/Reusable/YImgTop.v, the listing's 15 objects, and the listing's program-function addresses
    (decode_xcalls); module paths changed.  No address or range is written by hand: every bound is computed from the
    image modules or taken from DecodeAddr.v / DecodeList.v. *)
-(* Modified by Theorem Labs, 2026-10: image B's twin of this unit's lib/A/Prog/DecodeImg.v, in the shape of proofs/libreac/fuzz_boxreg/lib/B/Prog/BoxBImg.v (a working branch 1d92330b7ad): the segments are fuzz_decode.asan-ubsan's (lib/A/DecodeTFIB.v decodesegsB0); the code table covers decodeb_listing's decodeb_nslots words from decodeb_text; the value table runs over lib/B/Prog/DecodeBAddr.v's 16 objects and 31 auipc values; the image range check is YImgTop.segs_in_asan_ubsan; img_cover keeps image A's layout_ok premise, because image B's last PT_LOAD also ends off a page (at 0x5f5bb8); the read-only range stays empty, as in image A; module paths changed. *)
+(* Modified by Theorem Labs, 2026-10: image B's twin of this unit's lib/A/Prog/DecodeImg.v, in the shape of proofs/libreac/fuzz_boxreg/lib/B/Prog/BoxBImg.v (a working branch): the segments are fuzz_decode.asan-ubsan's (lib/A/DecodeTFIB.v decodesegsB0); the code table covers decodeb_listing's decodeb_nslots words from decodeb_text; the value table runs over lib/B/Prog/DecodeBAddr.v's 16 objects and 31 auipc values; the image range check is YImgTop.segs_in_asan_ubsan; img_cover keeps image A's layout_ok premise, because image B's last PT_LOAD also ends off a page (at 0x5f5bb8); the read-only range stays empty, as in image A; module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require YZ00.
 From OSSVerify.Proofs.libreac.fuzz_decode.lib.Reusable Require Import YImgTop.
 From Stdlib Require Import ZArith NArith List Lia Bool.

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: relocated from proofs/libreac/fuzz_grant/lib/A/Rt/StrcmpChkY.v (a working branch 97c611eec86) by port_core.py, with its module paths changed, names GrantSyms -> CtrlTSyms and its addresses moved to libreac/fuzz_ctrl's ASan build. *)
+(* Modified by Theorem Labs, 2026-10: relocated from proofs/libreac/fuzz_grant/lib/A/Rt/StrcmpChkY.v (a working branch) by port_core.py, with its module paths changed, names GrantSyms -> CtrlTSyms and its addresses moved to libreac/fuzz_ctrl's ASan build. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Written by Theorem Labs, 2026-10, for libreac/fuzz_grant's ASan build: the s2 range check of
    ___interceptor_strcmp (0x42f18), from 0x43000 (where the s1 check of StrcmpChkX.v ends) to 0x43050, in A/AE6z.v's
    form (the proof script is AE6z's, with the code addresses, registers and branch order of the strcmp interceptor,

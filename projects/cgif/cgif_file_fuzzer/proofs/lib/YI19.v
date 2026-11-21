@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: changed rdn_of_mbytes, read_cstr_of_garr8, unlink_errnos_range, segs, stdio_env_path, J_unlink_node, J_openat_node; added unlink_type_errnos_sub, unlink_type_errnos_range. *)
 From OSSVerify.Proofs.cgif.cgif_file_fuzzer.lib Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -28,17 +29,29 @@ cbn [length rdn]. pose proof (H 0%nat ltac:(cbn; lia)) as H0. cbn [nth Z.of_nat]
 unfold mbyte in H0. rewrite H0. rewrite Z_to_bv64_add1. rewrite (IH (a + 1)); [reflexivity|].
 intros j Hj. specialize (H (S j) ltac:(cbn; lia)). cbn [nth] in H. rewrite <- H. f_equal. lia.
 Qed.
+(* 75d69e00 inserted a THIRD premise into [read_cstr_of_rdn]
+   (75d69e00:theories/Common/FileSim.v:434-437; at f1006fe8:415-418 it had two), because
+   [State.read_cstr_aux] now tests [access_okb a 1] at every byte it steps.  The three
+   bullets below were therefore off by one and the [rdn] bullet landed on the TASK_SIZE
+   goal.  The bound is NOT derivable from [garr8]: [garr8] only says [mbyte] answers at
+   [a + j], and [mem] is universally quantified, so the old statement is FALSE at or above
+   TASK_SIZE.  It is taken as a premise in this file's own idiom (cf. the [iov + 32 <= 2 ^ 47]
+   and [b0 + Z.of_nat (length X0) <= 2 ^ 47] premises of [J_writev_node2] below). *)
 Lemma read_cstr_of_garr8 : forall segs mem a l,
 garr8 segs mem a (l ++ [0]) -> Forall (fun x => 0 < x < 256) l -> (length l <= 4095)%nat ->
+0 <= a -> a + Z.of_nat (length l) < TASK_SIZE ->
 read_cstr (mrb segs mem) (Z_to_bv 64 a) = CstrOk (map (fun z => Z_to_bv 8 z) l).
 Proof.
-intros segs mem a l HG Hnz Hlen.
+intros segs mem a l HG Hnz Hlen Ha0 Hahi.
 apply read_cstr_of_rdn.
 - rewrite length_map. exact Hlen.
 - intros Hin. apply in_map_iff in Hin as (x & Hx & Hxin).
 rewrite Forall_forall in Hnz. specialize (Hnz x Hxin).
 apply (f_equal bv_unsigned) in Hx. rewrite !Z_to_bv_unsigned in Hx. unfold bv_wrap, bv_modulus in Hx.
 change (2 ^ Z.of_N 8) with 256 in Hx. rewrite Z.mod_small in Hx by lia. rewrite Z.mod_small in Hx by lia. lia.
+- assert (HT : TASK_SIZE = 2 ^ 47) by reflexivity.
+rewrite length_map, Z_to_bv_unsigned. unfold bv_wrap, bv_modulus.
+change (2 ^ Z.of_N 64) with (2 ^ 64). rewrite Z.mod_small by lia. lia.
 - rewrite length_map.
 replace (map (fun z => Z_to_bv 8 z) l ++ [Z_to_bv 8 0]) with (map (fun z => Z_to_bv 8 z) (l ++ [0])) by (rewrite map_app; reflexivity).
 replace (length l + 1)%nat with (length (map (fun z => Z_to_bv 8 z) (l ++ [0]))) by (rewrite length_map, length_app; reflexivity).
@@ -54,6 +67,20 @@ Qed.
 Definition unlink_tmp_errnos : list Z := EISDIR :: ENOENT :: unlinkat_errnos.
 Lemma unlink_errnos_range : forall e, In e unlink_tmp_errnos -> 1 <= e <= 4095.
 Proof. intros e He. cbv [unlink_tmp_errnos unlinkat_errnos In] in He. repeat (destruct He as [<-|He]; [vm_compute; split; discriminate|]). destruct He. Qed.
+(* The fs_under branch of unlinkat is multi-outcome at 75d69e00 (YP0o's
+   check_unlink_type_copyins): it accepts EISDIR OR any of unlink_before_type_errnos. Every
+   one of those five is already in unlinkat_errnos, so unlink_tmp_errnos covers them all and
+   the published statements that quantify over it need no widening. This is the lemma that
+   says so, used by the YE2n/YE2o/A-twin consumers to reach unlink_errnos_range. *)
+Lemma unlink_type_errnos_sub : forall e,
+  In e (EISDIR :: unlink_before_type_errnos) -> In e unlink_tmp_errnos.
+Proof.
+intros e He. cbv [unlink_before_type_errnos unlink_tmp_errnos unlinkat_errnos In] in He |- *.
+repeat (destruct He as [<-|He]; [now repeat (first [left; reflexivity | right])|]). destruct He.
+Qed.
+Lemma unlink_type_errnos_range : forall e,
+  In e (EISDIR :: unlink_before_type_errnos) -> 1 <= e <= 4095.
+Proof. intros e He. apply unlink_errnos_range, unlink_type_errnos_sub, He. Qed.
 Lemma openat_errnos_range : forall e, In e openat_errnos -> 1 <= e <= 4095.
 Proof. intros e He. cbv [openat_errnos In] in He. repeat (destruct He as [<-|He]; [vm_compute; split; discriminate|]). destruct He. Qed.
 Lemma sink_path_eq : sink_path = sink_path_bytes.
@@ -65,12 +92,19 @@ Variable MR : MR_t.
 Hypothesis LAWS : MR_laws B MR.
 Context {SH : sink_head} {SK : sink_syms}.
 Local Notation segs := (ms_segs B).
+(* The two bounds are the [read_cstr_of_garr8] premise 75d69e00 forced, specialised to this
+   file's path object: [sink_path_Z] is 12 bytes and [env_addr] already reserves
+   [sk_path_addr .. sk_path_addr + 13) (YI14.v:118).  [sk_path_addr] is a [sink_syms] field
+   and nothing in this section bounds it, so the bound is a premise here too; every concrete
+   instance proves it outright (e.g. UI5c.v:28 [env_addr a -> 0x10000 <= a < 0x52000]). *)
 Lemma stdio_env_path : forall regs pc mem,
+0 <= sk_path_addr -> sk_path_addr + 13 <= TASK_SIZE ->
 stdio_env B mem ->
 read_cstr (ms_read_byte (pend_at regs pc mem (seg_rom segs))) (Z_to_bv 64 sk_path_addr) = CstrOk sink_path.
 Proof.
-intros regs pc mem (_ & _ & Hp & _). rewrite pend_read_byte_mrb.
-apply (read_cstr_of_garr8 segs mem sk_path_addr sink_path_Z Hp); [|cbn; lia].
+intros regs pc mem Hlo Hhi (_ & _ & Hp & _). rewrite pend_read_byte_mrb.
+apply (read_cstr_of_garr8 segs mem sk_path_addr sink_path_Z Hp);
+[ | cbn; lia | exact Hlo | change (Z.of_nat (length sink_path_Z)) with 12; lia ].
 unfold sink_path_Z. repeat (constructor; [lia|]). constructor.
 Qed.
 Definition unlink_outcome (mdc md' : Model) (RET : word) : Prop :=
@@ -81,6 +115,7 @@ Lemma J_unlink_node : forall regs pc mem0 STK sp0 FP L A mem md Lc Ac mdc Q,
 journal B MR STK sp0 FP L A mem md Lc Ac mem0 mdc ->
 sink_open_fp FP ->
 stdio_env B mem0 ->
+0 <= sk_path_addr -> sk_path_addr + 13 <= TASK_SIZE ->
 fd_names_path (m_fds mdc) sink_path = false ->
 bv_unsigned (getr regs 17) = 35 -> getr regs 10 = AT_FDCWD -> bv_unsigned (flag32 (getr regs 12)) = 0 ->
 getr regs 11 = Z_to_bv 64 sk_path_addr ->
@@ -89,14 +124,28 @@ journal B MR STK sp0 FP L A mem md Lc Ac mem0 md' -> unlink_outcome mdc md' RET 
 SR segs (mkCfg (mkst (regupd regs 10 RET) (v_addi pc 4) mem0 (seg_rom segs)) md') Q) ->
 SR segs (mkCfg (pend_at regs pc mem0 (seg_rom segs)) mdc) Q.
 Proof.
-intros regs pc mem0 STK sp0 FP L A mem md Lc Ac mdc Q HJ Hfp Henv Hfdn Hno Hdir Hfl Hpath HK.
+intros regs pc mem0 STK sp0 FP L A mem md Lc Ac mdc Q HJ Hfp Henv Hlo Hhi Hfdn Hno Hdir Hfl Hpath HK.
 destruct (heap_model B MR LAWS _ _ _ _ (proj1 HJ)) as (Hh & Hlz & _).
 destruct sink_path_facts as (F1 & F2 & F3 & _ & _ & _ & F7 & F8). rewrite <- sink_path_eq in F1, F2, F3, F7.
-pose proof (stdio_env_path regs pc mem0 Henv) as Hcstr. rewrite <- Hpath in Hcstr.
+pose proof (stdio_env_path regs pc mem0 Hlo Hhi Henv) as Hcstr. rewrite <- Hpath in Hcstr.
 destruct (fs_under (m_fs mdc) sink_path) eqn:Hun.
 {
 apply (SR_unlink_tmp_isdir segs regs pc mem0 (seg_rom segs) mdc sink_path sink_name_bytes Q Hh Hlz Hno Hdir Hfl Hcstr F1 F2 F3 F7 F8 Hun Hfdn).
-apply HK; [exact HJ|]. split; [reflexivity|]. left. split; [|reflexivity]. exists EISDIR. split; [left; reflexivity | reflexivity]. }
+(* [SR_unlink_tmp_isdir]'s last premise is QUANTIFIED at 75d69e00 -- [forall e, In e
+   (EISDIR :: unlink_before_type_errnos) -> SR ...] (YP0h.v:194-195), because the
+   fs_under arm now admits the refusals Linux reaches before [may_delete]'s type answer
+   (Sys/Fs/Namei.v:314-315, :566-568).  The old script applied [HK] straight to it, so
+   [apply] met the binder [e : Z] where the continuation used to be -- that is the "Unable
+   to unify <journal ...> with Z".  The present arm at :136 already has the [intros e He]
+   shape; this is the same shape, with [unlink_type_errnos_sub] (:74) carrying [In e
+   (EISDIR :: unlink_before_type_errnos)] into [In e unlink_tmp_errnos] so that
+   [unlink_outcome] -- and every published statement over it -- needs no widening.
+   Checked against the OTHER [apply HK] sites in this file: the present arm (:136, :138)
+   and the absent arm (:144) keep their single-outcome premises, and the openat isdir arm
+   at :343 keeps its single [errno_ret EISDIR] continuation (YP0h.v:212), so this is the
+   only site of the shape. *)
+intros e He. apply HK; [exact HJ|]. split; [reflexivity|]. left. split; [|reflexivity].
+exists e. split; [exact (unlink_type_errnos_sub e He) | reflexivity]. }
 destruct (fs_lookup (m_fs mdc) sink_path) as [d|] eqn:Hlk.
 - apply (SR_unlink_tmp_present segs regs pc mem0 (seg_rom segs) mdc sink_path sink_name_bytes d Q Hh Hlz Hno Hdir Hfl Hcstr F1 F2 F3 F7 F8 Hun Hlk Hfdn).
 + intros e He. apply HK; [exact HJ|]. split; [reflexivity|]. left. split; [|reflexivity].
@@ -290,6 +339,7 @@ Lemma J_openat_node : forall regs pc mem0 STK sp0 FP L A mem md Lc Ac mdc Q,
 journal B MR STK sp0 FP L A mem md Lc Ac mem0 mdc ->
 sink_open_fp FP ->
 stdio_env B mem0 ->
+0 <= sk_path_addr -> sk_path_addr + 13 <= TASK_SIZE ->
 bv_unsigned (getr regs 17) = 56 -> getr regs 10 = AT_FDCWD ->
 Z.ldiff (bv_unsigned (getr regs 12)) open_ignored_flags = wr_create_flags ->
 getr regs 11 = Z_to_bv 64 sk_path_addr ->
@@ -298,10 +348,10 @@ journal B MR STK sp0 FP L A mem md Lc Ac mem0 md' -> openat_outcome mdc md' RET 
 SR segs (mkCfg (mkst (regupd regs 10 RET) (v_addi pc 4) mem0 (seg_rom segs)) md') Q) ->
 SR segs (mkCfg (pend_at regs pc mem0 (seg_rom segs)) mdc) Q.
 Proof.
-intros regs pc mem0 STK sp0 FP L A mem md Lc Ac mdc Q HJ Hfp Henv Hno Hdir Hfl Hpath HK.
+intros regs pc mem0 STK sp0 FP L A mem md Lc Ac mdc Q HJ Hfp Henv Hlo Hhi Hno Hdir Hfl Hpath HK.
 destruct (heap_model B MR LAWS _ _ _ _ (proj1 HJ)) as (Hh & Hlz & _).
 destruct sink_path_facts as (F1 & F2 & F3 & F4 & F5 & F6 & F7 & F8). rewrite <- sink_path_eq in F1, F2, F3, F4, F5, F6, F7.
-pose proof (stdio_env_path regs pc mem0 Henv) as Hcstr. rewrite <- Hpath in Hcstr.
+pose proof (stdio_env_path regs pc mem0 Hlo Hhi Henv) as Hcstr. rewrite <- Hpath in Hcstr.
 destruct (fs_under (m_fs mdc) sink_path) eqn:Hun.
 {
 apply (SR_openat_tmp_isdir segs regs pc mem0 (seg_rom segs) mdc sink_path sink_name_bytes Q Hh Hlz Hno Hdir Hfl Hcstr F1 F3 F4 F5 F6 F7 F8 Hun).

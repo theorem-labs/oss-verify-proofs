@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_decode/lib/A/Prog/LLVMFuzzerTestOneInput_seg_cmp_tail.v, with its module paths and module names changed; 1621 of its 1683 lines of code are new or changed and 532 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* LLVMFuzzerTestOneInput_seg_inspect: one of the nine segment statements of lib/A/Prog/LLVMFuzzerTestOneInput_segs.v,
    proves no function (kind: segment lemma).
 
@@ -19,12 +20,12 @@
      the buffer pointer (+0x4f0) and reac_decode (+0x4f8), and the cut-point predicate llvm_a_st_4fc.
    Every leaf call goes through the shared bridge lib/A/Prog/LLVMFuzzerTestOneInput_leafb.v (dec_leafb_journal and
    the dec_leafb_* premise lemmas).
-   Follows: the engine idiom of libreac/fuzz_boxreg lib/A/Prog/ReadName.v (a working branch
-   1d92330b7ad: paj_run / paj_run_to / paj_branch, awr_ok, the shadow obligations, the journal); the branch
-   conditions of the released ubsan lib/U/Prog/fd_down.v (568db058c1d). Lemma texts copied from sibling segment
-   files are marked at each lemma with their source: a working branch f0f023a4fb8
+   Follows: the engine idiom of libreac/fuzz_boxreg lib/A/Prog/ReadName.v (a working branch:
+   paj_run / paj_run_to / paj_branch, awr_ok, the shadow obligations, the journal); the branch
+   conditions of the released ubsan lib/U/Prog/fd_down.v. Lemma texts copied from sibling segment
+   files are marked at each lemma with their source: a working branch
    LLVMFuzzerTestOneInput_seg_crt1.v (rdword_of_val_mem, cell8, cell4, mode_re, core_kept) and
-   a working branch 39c9a7df157 LLVMFuzzerTestOneInput_seg_up.v (fsh_kept). *)
+   a working branch LLVMFuzzerTestOneInput_seg_up.v (fsh_kept). *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
@@ -289,7 +290,7 @@ apply (st_ok_pi_add_region (PI := PID)); [exact HS | vm_compute; reflexivity | |
 Qed.
 End fxs.
 
-(* a working branch f0f023a4fb8, LLVMFuzzerTestOneInput_seg_crt1.v:609-623
+(* a working branch, LLVMFuzzerTestOneInput_seg_crt1.v:609-623
    c1_rdword_of_val_mem (itself GrantFrame.v rdword_of_val_mem): an 8-byte value of the view is a word of it. *)
 Lemma ins_rdword_of_val_mem : forall H mem a v,
   val_mem segs (mrestrict H mem) a 8 v -> 0 <= v < 2 ^ 64 -> rdword (aview segs H mem) a = Some v.
@@ -1074,10 +1075,10 @@ Definition ins_t_spill5 : YP09.region :=
      YP09.mkChunk 80 (CVal 8 (SOff 35 0)); YP09.mkChunk 88 (CVal 8 (SOff 36 0)); YP09.mkChunk 112 (CVal 8 (SOff 19 0))].
 
 (* ins_t_rdword_of_val_mem, ins_t_cell8, ins_t_rows and ins_t_saved_at_range are copied from
-   a working branch f0f023a4fb8,
+   a working branch,
    proofs/libreac/fuzz_decode/lib/A/Prog/LLVMFuzzerTestOneInput_seg_crt1.v:522-523, :607-700 (prefix c1_ renamed ins_t_);
-   ins_t_fsh_kept is that branch's LLVMFuzzerTestOneInput_seg_up.v:362-371 up_fsh_kept. ins_t_mode_re started as that
-   file's c1_mode_re; since the c-alpha amendment (a Theorem Labs lane cc88c36cf66) it reads no table word from dec_crt_cells. *)
+   ins_t_fsh_kept is that branch's LLVMFuzzerTestOneInput_seg_up.v:363-372 up_fsh_kept. ins_t_mode_re started as that
+   file's c1_mode_re; since the c-alpha amendment (a Theorem Labs lane) it reads no table word from dec_crt_cells. *)
 Lemma ins_t_rdword_of_val_mem : forall H mem a v,
   val_mem segs (mrestrict H mem) a 8 v -> 0 <= v < 2 ^ 64 -> rdword (aview segs H mem) a = Some v.
 Proof.
@@ -1214,7 +1215,7 @@ destruct Hmc as [Hc | [Hc | [Hc | Hc]]]; [left; left | left; right; left | left;
 Qed.
 
 (* THE one read of a table's shadow-zero granule in this file (the granule at the table's base, 0x20d40 / 0x20d80 /
-   0x20d60): the dec_tab_zshadow_at conjunct of dec_crt_cells (a Theorem Labs lane e175e3e033a), picked by statement, read at
+   0x20d60): the dec_tab_zshadow_at conjunct of dec_crt_cells (a Theorem Labs lane), picked by statement, read at
    this state by the statement's own dec_tab_zshadow_rd (AR's am_zshadow over that as_zero_shadow range). *)
 Lemma ins_t_tab_sh0 : forall ly S (W : world segs) mem md t,
   dec_crt_cells B -> @AR rc segs B ly S W mem md -> (t = 0x20d40 \/ t = 0x20d80 \/ t = 0x20d60) ->
@@ -1258,7 +1259,7 @@ destruct (Z_lt_dec x (t + 8)).
   exact (proj2 Z0).
 Qed.
 
-(* A table's two geometry words lie in the loaded image: they are DEC_RO_RD bytes (a Theorem Labs lane cc88c36cf66), every one
+(* A table's two geometry words lie in the loaded image: they are DEC_RO_RD bytes (a Theorem Labs lane), every one
    of which is a read-only image byte (dec_ro_rd_rom_clean). So no allocator block holds them. *)
 Lemma ins_t_tab_img : forall t k, (t = 0x20d40 \/ t = 0x20d80 \/ t = 0x20d60) -> 0 <= k < 8 -> LCK.in_img (t + 4 + k).
 Proof.

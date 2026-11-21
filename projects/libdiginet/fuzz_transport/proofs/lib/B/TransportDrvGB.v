@@ -1,7 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: made from proofs/libreac/fuzz_pcap/lib/B/PcapDrvG.v (origin/ossv/recipes
-   198234fa4d3) for libdiginet/fuzz_transport's ASan+UBSan image, reduced to what lib/B/YD1r.v uses: the bridge from
+(* Modified by Theorem Labs, 2026-10: made from proofs/libreac/fuzz_pcap/lib/B/PcapDrvG.v
+    for libdiginet/fuzz_transport's ASan+UBSan image, reduced to what lib/B/YD1r.v uses: the bridge from
    the program contract's journal (lib/B/YCfn.v tfib_lib_post_x, lib/A/W_journalG.v ajournal_gx at XO = 0, OUT = [],
    at the harness globals G_HARNESS_B of lib/B/TransportGB.v) to the journal the driver reads (YCbq.ajournal), and the
    side condition that the bytes the driver reads or keeps across the program call lie outside the hull
@@ -19,6 +19,7 @@
    not stated here. The image regions the driver keeps across the call are checked by lib/B/YD2f.v region_avoids_G
    (L_mem_avoids_G).
    rule 24: proves no function (invariant lemmas over the program contract's G form). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.libdiginet.fuzz_transport.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

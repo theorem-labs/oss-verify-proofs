@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_decode/lib/B/Prog/LLVMFuzzerTestOneInput_segX_exit_td.v, with its module paths, module names and numbers changed; 635 of its 665 lines of code are new or changed and 322 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S4_PsRet.v, with its module names changed; 194 of its 236 lines of code are new or changed and 623 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset lib/A, slice S4 (parse_string): THE TEXT ACROSS ONE CALL, shared by every stretch of the slice that
    calls (PsScan: fuzz_malloc; PsDec: hex4, put_utf8, fuzz_free). parse_string's text is home (prhReader_home: a live
    harness block of Lam, a registered read-only global or image string (kept_at), or a live allocator block whose base
@@ -13,7 +14,7 @@
      in_zs                 alx_zshadow over the image's zero-shadow range;
      kept_img              per granule: alx_zshadow, or the const-shadow cell kept by field 16 alx_const_cells.
    The hull of an image text is the image's shadow (ARx_img_shadow_vis, PRW_HShadow.v).
-   FILE SET: as the kit's cut 7cdbb61b5fa0 carries it (WalkS4's set of record was walk-S4 e185dcb5507: the kit walkkit
+   FILE SET: as the kit's cut carries it (WalkS4's set of record was walk-S4: the kit walkkit
    preset-tree-at-2026-10-29T06-23-27Z.tsv (sha256 64d2003c5a6a; internal record), engine / YCbqG preset-tree-at-2026-10-29T05-07-14Z.tsv (sha256 884ebeb349fe; internal record), S7B preset-tree-at-2026-10-29T05-46-34Z.tsv (sha256 262d973ec938; internal record)). Imports S4_PsBase only from the slice (no loop machinery).
    IMAGE FACTS taken as Section hypotheses (each is an image fact a generic ARx cannot give; the slice's assembly
    supplies them): ZSA, the zero-shadow ranges are granule-aligned (asyms_ok's aso_zshadow, YG0f.v:191); IMGV,

@@ -1,12 +1,15 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the must-exit walk as me_rob over a larger read-only backing, lifted to the run's start over run_segments with the no-vDSO-segment and channel-reader premises, and its step move along ms_eqv taken from RegsEquivCfg). *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.EquivalenceDefinition Require Import MustExit.
 From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Lib Require Import PropExec MState Mem Exec ITree RunCeiling Nodes RegsEquiv.
+From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Lib Require RegsEquivCfg.
+From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Common.Cfg Require Import RomBase RomMustExit.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
 Open Scope bv_scope.
@@ -62,18 +65,21 @@ Section WithSegs.
   Variable cfg : SpuriousCfg.
 
   (* [comment removed for export] *)
-  (* [comment removed for export] *)
+  (* LPS 08b1429: the walk proves [RomMustExit.me_rob] (a must-exit walk whose running states read
+     the same system-call input over a larger read-only backing), which lifts to the run's own
+     start over [run_segments] ([RomMustExit.must_exit_run_init]). *)
   (* [comment removed for export] *)
 
   Lemma mstep_must_exit_cfg : forall code ms ms1 mo,
     m_halted mo = None -> m_vm_lazy mo = [] ->
     mstep segs ms ms1 ->
-    must_exit_at_cfg cfg segs code (mkCfg ms1 mo) ->
-    must_exit_at_cfg cfg segs code (mkCfg ms mo).
+    me_rob cfg segs code (mkCfg ms1 mo) ->
+    me_rob cfg segs code (mkCfg ms mo).
   Proof.
     intros code ms ms1 mo Hh Hlz Hm Hk.
-    apply must_exit_at_cfg_running.
+    apply mer_running.
     - exact Hh.
+    - apply sys_rob_instr. exact (mstep_not_svc segs ms ms1 Hm).
     - apply (sstep_cfg_progress segs cfg ms mo [] (SNext (mkCfg ms1 mo))).
       + intros x8 Hsvc. exfalso. pose proof (mstep_not_svc segs ms ms1 Hm). congruence.
       + apply (mstep_sstep segs); assumption.
@@ -87,8 +93,8 @@ Section WithSegs.
   Lemma msteps_must_exit_cfg : forall code ms ms' mo,
     m_halted mo = None -> m_vm_lazy mo = [] ->
     msteps segs ms ms' ->
-    must_exit_at_cfg cfg segs code (mkCfg ms' mo) ->
-    must_exit_at_cfg cfg segs code (mkCfg ms mo).
+    me_rob cfg segs code (mkCfg ms' mo) ->
+    me_rob cfg segs code (mkCfg ms mo).
   Proof.
     intros code ms ms' mo Hh Hlz Hm. induction Hm as [ms | ms ms1 ms2 H1 H2 IH]; intros Hk.
     - exact Hk.
@@ -98,8 +104,8 @@ Section WithSegs.
   Lemma evt_must_exit_cfg : forall code (Q : machine_state -> Prop) ms mo,
     m_halted mo = None -> m_vm_lazy mo = [] ->
     evt segs Q ms ->
-    (forall ms', Q ms' -> must_exit_at_cfg cfg segs code (mkCfg ms' mo)) ->
-    must_exit_at_cfg cfg segs code (mkCfg ms mo).
+    (forall ms', Q ms' -> me_rob cfg segs code (mkCfg ms' mo)) ->
+    me_rob cfg segs code (mkCfg ms mo).
   Proof.
     intros code Q ms mo Hh Hlz (ms' & Hm & HQ) HK.
     eapply msteps_must_exit_cfg; [exact Hh | exact Hlz | exact Hm | exact (HK ms' HQ)].
@@ -115,12 +121,13 @@ Section WithSegs.
     at_node segs n ms -> m_halted mo = None -> minv mo -> nsafe n mo -> node_fam_on cfg n ->
     match n with NExit c => code = bv_and (Z_to_bv 64 c) (Z_to_bv 64 255) | _ => True end ->
     (forall rsp mo' evs, nstep n mo rsp mo' evs -> m_halted mo' = None -> minv mo' ->
-       must_exit_at_cfg cfg segs code (mkCfg (nret ms rsp) mo')) ->
-    must_exit_at_cfg cfg segs code (mkCfg ms mo).
+       me_rob cfg segs code (mkCfg (nret ms rsp) mo')) ->
+    me_rob cfg segs code (mkCfg ms mo).
   Proof.
     intros code n ms mo Hat Hh Hinv Hsf Hfam Hcode HK.
-    apply must_exit_at_cfg_running.
+    apply mer_running.
     - exact Hh.
+    - exact (at_node_rob segs n ms mo Hat (minv_io_of_minv mo Hinv)).
     - assert (Hprog : exists evs st, sstep segs (mkCfg ms mo) evs st).
       { destruct (ns_progress _ _ _ _ _ _ _ NS n ms mo Hat Hh Hinv Hsf) as [(rsp & mo' & evs & Hst) | (c & mo' & Hex)].
         + destruct (ns_sound _ _ _ _ _ _ _ NS n ms mo rsp mo' evs Hat Hh Hinv Hsf Hst) as (_ & _ & Hss). eauto.
@@ -137,7 +144,7 @@ Section WithSegs.
       + injection E as ->.
         destruct (ns_sound _ _ _ _ _ _ _ NS n ms mo rsp mo' evs Hat Hh Hinv Hsf Hst) as (Hh' & Hinv' & _).
         exact (HK rsp mo' evs Hst Hh' Hinv').
-      + injection E as ->. apply must_exit_at_cfg_halted; cbn [cfg_model].
+      + injection E as ->. apply mer_halted; cbn [cfg_model].
         * destruct n; try (exact (False_ind _ Hex)).
           destruct Hex as [-> ->]. cbn in Hcode. subst code. apply m_halted_with_halted.
         * destruct n; try (exact (False_ind _ Hex)).
@@ -152,7 +159,7 @@ Section WithSegs.
     impl segs (at_node segs) t Q ms ->
     exits_with_cfg cfg code t mo ->
     m_halted mo = None -> minv mo ->
-    must_exit_at_cfg cfg segs code (mkCfg ms mo).
+    me_rob cfg segs code (mkCfg ms mo).
   Proof.
     intros code R t. induction t as [r | n k IH]; intros Q ms mo Himpl Hex Hh Hinv.
     - exact (False_ind _ Hex).
@@ -169,68 +176,26 @@ Section WithSegs.
   (* [comment removed for export] *)
   (* [comment removed for export] *)
 
-  (* [comment removed for export] *)
-  Lemma sstep_scfg_ms_eqv : forall ms ms' mo evs X, ms_eqv ms ms' ->
-    sstep_cfg segs cfg (mkCfg ms mo) evs X ->
-    exists X', sstep_cfg segs cfg (mkCfg ms' mo) evs X' /\ to_eqv X X'.
+  (* LPS 08b1429: the step-level move along [ms_eqv] is [RegsEquivCfg.sstep_scfg_eqv] (it has
+     the vDSO arms); a robust must-exit walk moves with it. *)
+  Lemma me_rob_eqv : forall code c, me_rob cfg segs code c ->
+    forall c', cfg_eqv c c' -> me_rob cfg segs code c'.
   Proof.
-    intros ms ms' mo evs X Heqv Hst.
-    pose proof (mi_account_step_eqv segs ms ms' mo Heqv) as Hres.
-    pose proof Heqv as (_ & _ & _ & Hsvc & _ & _ & _ & _).
-    inversion Hst; subst.
-    - match goal with H : mi_account_step segs ms mo = _ |- _ => rewrite H in Hres end.
-      destruct (mi_account_step segs ms' mo) as [[ms1' mo1']| |] eqn:E; simpl in Hres; try contradiction.
-      destruct Hres as [Hms <-].
-      exists (SNext (mkCfg ms1' model')). split; [apply sstep_cfg_instr; auto; congruence|]. split; [exact Hms| reflexivity].
-    - match goal with H : mi_account_step segs ms mo = _ |- _ => rewrite H in Hres end.
-      destruct (mi_account_step segs ms' mo) as [[ms1' mo1']| |] eqn:E; simpl in Hres; try contradiction.
-      exists SError. split; [apply sstep_cfg_instr_fault; auto; congruence| exact I].
-    - match goal with H : mi_account_step segs ms mo = _ |- _ => rewrite H in Hres end.
-      destruct (mi_account_step segs ms' mo) as [[ms1' mo1']| |] eqn:E; simpl in Hres; try contradiction.
-      exists SError. split; [apply sstep_cfg_instr_unmodeled; auto; congruence| exact I].
-    - exists (SNext (mkCfg (advance_past_svc (apply_effect ms' eff)) model'')). split.
-      + apply (sstep_cfg_syscall segs cfg ms' mo x8 eff model' model'' evs);
-          [assumption| congruence| rewrite <- (sys_input_eqv segs ms ms' x8 Heqv); assumption
-          | rewrite <- (sys_input_eqv segs ms ms' x8 Heqv); assumption | assumption| assumption].
-      + split; [| reflexivity]. apply advance_past_svc_eqv, apply_effect_eqv, Heqv.
-    - exists SError. split; [|exact I].
-      apply (sstep_cfg_syscall_materialization_fault segs cfg ms' mo x8 eff model' evs0);
-        [assumption| congruence| rewrite <- (sys_input_eqv segs ms ms' x8 Heqv); assumption
-        | rewrite <- (sys_input_eqv segs ms ms' x8 Heqv); assumption | assumption| assumption].
-    - exists (SNext (mkCfg ms' model')). split.
-      + apply (sstep_cfg_exit segs cfg ms' mo x8 eff model' evs0 code);
-          [assumption| congruence| rewrite <- (sys_input_eqv segs ms ms' x8 Heqv); assumption| assumption| assumption].
-      + split; [exact Heqv| reflexivity].
-    - exists (SNext (mkCfg ms' model')). split.
-      + apply (sstep_cfg_killed segs cfg ms' mo x8 eff model' evs0 sig);
-          [assumption| congruence| rewrite <- (sys_input_eqv segs ms ms' x8 Heqv); assumption| assumption].
-      + split; [exact Heqv| reflexivity].
-    - exists SError. split; [|exact I].
-      apply (sstep_cfg_syscall_unmodeled segs cfg ms' mo x8);
-        [assumption| congruence| rewrite <- (sys_input_eqv segs ms ms' x8 Heqv); assumption].
-  Qed.
-
-  Lemma sstep_scfg_eqv : forall c c' evs X, cfg_eqv c c' ->
-    sstep_cfg segs cfg c evs X -> exists X', sstep_cfg segs cfg c' evs X' /\ to_eqv X X'.
-  Proof.
-    intros [ms mo] [ms' mo'] evs X [Hms Hmo] Hst; simpl in Hms, Hmo; subst.
-    apply (sstep_scfg_ms_eqv ms ms'); assumption.
-  Qed.
-
-  Lemma must_exit_at_cfg_eqv : forall code c, must_exit_at_cfg cfg segs code c ->
-    forall c', cfg_eqv c c' -> must_exit_at_cfg cfg segs code c'.
-  Proof.
-    intros code c H. induction H as [c Hh Hk | c Hnone Hprog Hnoerr Hnext IH]; intros c' Heqv.
-    - apply must_exit_at_cfg_halted; destruct Heqv as [_ Hmo]; rewrite <- Hmo; assumption.
-    - apply must_exit_at_cfg_running.
-      + destruct Heqv as [_ Hmo]. rewrite <- Hmo. exact Hnone.
+    intros code c H. induction H as [c Hh Hk | c Hh Hrob Hprog Hnoerr Hnext IH]; intros c' Heqv.
+    - apply mer_halted; destruct Heqv as [_ Hmo]; rewrite <- Hmo; assumption.
+    - apply mer_running.
+      + destruct Heqv as [_ Hmo]. rewrite <- Hmo. exact Hh.
+      + destruct Heqv as [(E1 & E2 & E3 & E4 & E5 & E6 & E7 & E8) Em].
+        apply (sys_rob_transfer segs c c'); [exact E8 | exact E4 | exact Em | | exact Hrob].
+        intros r x8. apply sys_input_eqv. unfold ms_eqv.
+        split; [|split; [|split; [|split; [|split; [|split; [|split]]]]]]; first [assumption | reflexivity].
       + destruct Hprog as (evs & st & Hss).
-        destruct (sstep_scfg_eqv c c' evs st Heqv Hss) as (X' & Hss' & _). eauto.
+        destruct (RegsEquivCfg.sstep_scfg_eqv segs cfg c c' evs st Heqv Hss) as (X' & Hss' & _). eauto.
       + intros evs Hss'.
-        destruct (sstep_scfg_eqv c' c evs SError (cfg_eqv_sym _ _ Heqv) Hss') as (X & Hss & HX).
+        destruct (RegsEquivCfg.sstep_scfg_eqv segs cfg c' c evs SError (cfg_eqv_sym _ _ Heqv) Hss') as (X & Hss & HX).
         destruct X as [c2|]; cbn in HX; [contradiction|]. exact (Hnoerr evs Hss).
       + intros evs c2' Hss'.
-        destruct (sstep_scfg_eqv c' c evs (SNext c2') (cfg_eqv_sym _ _ Heqv) Hss') as (X & Hss & HX).
+        destruct (RegsEquivCfg.sstep_scfg_eqv segs cfg c' c evs (SNext c2') (cfg_eqv_sym _ _ Heqv) Hss') as (X & Hss & HX).
         destruct X as [c2|]; cbn in HX; [|contradiction].
         apply (IH evs c2 Hss). apply cfg_eqv_sym. exact HX.
   Qed.
@@ -243,19 +208,23 @@ From OSSVerify.Proofs.yajl_ruby.json_fuzzer.lib.Lib Require Import RunInit.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 (* [comment removed for export] *)
+(* LPS 08b1429: the run starts from [init_config (run_segments ..) ..]; the binary carries no
+   vDSO segment ([vdso_image segs = None], closed on a concrete image by reflexivity). *)
 Theorem must_exit_with_scfg_of_impl : forall {RC__ : RunCeiling} cfg code segs pc ph lim en inp {R : Type} (t : itree node R) Q,
-  bv_unsigned (en_sp en) = rc_sp -> valid_sp (en_sp en) ->
+  vdso_image segs = None ->
+  bv_unsigned (en_sp en) = rc_sp -> valid_sp (en_sp en) -> in_channel_reader inp = true ->
   impl segs (at_node segs) t Q (ms0 segs pc ph en inp) ->
   exits_with_cfg cfg code t (mo0 segs lim en inp) ->
   must_exit_with_scfg cfg code (mkImage segs pc ph) lim en inp.
 Proof.
-  intros RC__ cfg code segs pc ph lim [sp brk mb dr] inp R t Q Hrc Hv Himpl Hex.
-  cbn [must_exit_with_scfg].
+  intros RC__ cfg code segs pc ph lim [sp brk mb dr] inp R t Q Hvi Hrc Hv Hch Himpl Hex.
+  cbn [must_exit_with_scfg]. cbv zeta.
+  apply (must_exit_run_init cfg segs code inp sp mb pc ph brk dr lim Hvi).
   change (init_config segs pc ph sp brk mb dr lim inp)
     with (init_config segs pc ph (en_sp (mkEntry sp brk mb dr)) (en_brk (mkEntry sp brk mb dr))
                       (en_mmap_base (mkEntry sp brk mb dr)) (en_draw (mkEntry sp brk mb dr)) lim inp).
   rewrite init_config_eq.
-  apply (must_exit_at_cfg_eqv segs cfg code (mkCfg (ms0 segs pc ph (mkEntry sp brk mb dr) inp) (mo0 segs lim (mkEntry sp brk mb dr) inp))).
+  apply (me_rob_eqv segs cfg code (mkCfg (ms0 segs pc ph (mkEntry sp brk mb dr) inp) (mo0 segs lim (mkEntry sp brk mb dr) inp))).
   - eapply impl_must_exit_cfg; [exact Himpl | exact Hex | apply mo0_not_halted | apply mo0_minv; assumption].
   - split; [| reflexivity]. cbn [cfg_ms]. apply ms_eqv_sym. apply init_machine_state_eqv.
 Qed.

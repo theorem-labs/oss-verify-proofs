@@ -1,17 +1,18 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: the event-free second allocator instance (suffix cf), the walk kit's extra-area law at
    the cf walk relation ARcf /\ xs_placed_cf.
-   ARx_extra_law below is the walk kit's ARx_extra_law (proofs/omx-clap-core/fuzz_preset/lib/Reusable/YCbqG.v:80-87
-   at b092d73a858), its body copied verbatim; the parameters are the Section variables that body uses, in their
+   ARx_extra_law below is the walk kit's ARx_extra_law (proofs/omx-clap-core/fuzz_preset/lib/Reusable/YCbqG.v:80-87),
+   its body copied verbatim; the parameters are the Section variables that body uses, in their
    declaration order (segs B ARx), the order Coq gives YCbqG.ARx_extra_law when its section closes. This file does
    not Require the kit.
-   It is not the kit's ARx_xs_law (YGcallx.v:221-226 at f3963d079661): ARx_xs_law speaks of an address in the
+   It is not the kit's ARx_xs_law (YGcallx.v:222-227): ARx_xs_law speaks of an address in the
    error-buffer extent XS (a < alloc_ceiling, app_addr, outside the image, the blocks, the frames and ly_extra);
    ARx_extra_law speaks of an address in ly_extra (not owned, outside the blocks, the frames and their shadow, the
    stack, the image and the shadow range, app_addr).
    ARx_extra_law_ok_ARcf: the law at ARcf ALONE. The proof is cgif's AR_extra_law_ok (YG0p.v:39) over ARcf, as
-   c-omx-alloc's YGcallcf.v:132-189 at f3963d079661 ports it: ARm -> ARmcf, ALedger -> ALedger_cf, chunk_facts /
+   c-omx-alloc's YGcallcf.v:133-190 ports it: ARm -> ARmcf, ALedger -> ALedger_cf, chunk_facts /
    frame_facts / owned_shadow_bound / extent_zone -> their _cf forms (YG0scf.v, YG0qcf.v); the frame-shadow bound
    is YG0s.shadow_addr_bounds, so no derived shadow numeral is written. xs_placed_cf is not needed: aowned is
    cgif's (YG0n.v:236-242), which does not name the error-buffer extent.
@@ -32,7 +33,7 @@ Local Open Scope Z_scope.
 Section E. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 
 (* ---------------------------------------------------------------------------- *)
-(* 1. The kit's ARx_extra_law (YCbqG.v:80-87 at b092d73a858), body verbatim.    *)
+(* 1. The kit's ARx_extra_law (YCbqG.v:80-87), body verbatim.    *)
 Section x.
 Variable segs : list Segment.
 Variable B : asyms.

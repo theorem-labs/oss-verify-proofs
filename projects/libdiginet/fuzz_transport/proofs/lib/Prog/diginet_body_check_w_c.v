@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libdiginet/fuzz_decode/lib/Prog/check_refusal_c.v, with its module paths changed; 11 of its 27 lines of code are new or changed and 12 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/Prog/diginet_body_check_w_c.v at b8f2ecf2c3ff0406d93584348ebba6e5957c14ce to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/Prog/diginet_body_check_w_c.v to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Wide contract of diginet_body_check in fuzz_transport.plain.
    Source: src/diginet_codec.c:47-64 at 835f336c. Address 0x17c38 (diginet_body_check_c.v).
    It is diginet_body_check_contract with one premise made wider: body is not 0, or the body is

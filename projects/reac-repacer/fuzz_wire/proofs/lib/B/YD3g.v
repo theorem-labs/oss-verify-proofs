@@ -23,7 +23,8 @@
      0x5f3000, YB1h.v:80-83).
    In fuzz_knock, lib/AU/YF0m.v (TfibSyms, TFIB_DEPOT) was not yet on this file's base: it was built from a file (blob
    held in no published commit), a build-only input. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/AU/YD3g.v at 88154566652a (donor image sha256 f834165f5002), with its module paths changed, B/YB1v imported for AU/AWalkFw0, names TfibSyms -> WireSyms, its addresses moved to reac-repacer/fuzz_wire's ASan+UBSan build and its proofs' unfolds of YImgTop.IMG_LO and YImgTop.IMG_TOP (in 13 of the donor's unfold steps) removed (this unit's lib/B/YImgTop.v states the image bounds as notations, fuzz_knock's lib/Reusable/YImgTop.v as definitions). *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/libreac/fuzz_knock/lib/AU/YD3g.v (donor image sha256 f834165f5002), with its module paths changed, B/YB1v imported for AU/AWalkFw0, names TfibSyms -> WireSyms, its addresses moved to reac-repacer/fuzz_wire's ASan+UBSan build and its proofs' unfolds of YImgTop.IMG_LO and YImgTop.IMG_TOP (in 13 of the donor's unfold steps) removed (this unit's lib/B/YImgTop.v states the image bounds as notations, fuzz_knock's lib/Reusable/YImgTop.v as definitions). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_repacer.fuzz_wire.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -48,13 +49,13 @@ Section g. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 
 (* md_takes and md_room: lib/B/YD3d.v. MOD_STK, mod_cells, mod_room, mod_contract and mod_holds: lib/B/YD3h.v. *)
 
-(* a Theorem Labs lane's helper; the same text as lib/Reusable/YG0f.v:94-96 (set_ly_NB). Encoding of "nodes block not yet
+(* a Theorem Labs lane's helper; the same text as lib/Reusable/YG0f.v:95-97 (set_ly_NB). Encoding of "nodes block not yet
    mapped": ly_NB ly = 0. *)
 Definition set_ly_NB (ly : alayout) (nb : Z) : alayout :=
 ALayout (ly_prim ly) (ly_space ly) (ly_Q ly) (ly_T ly) (ly_C ly) (ly_F ly) nb (ly_SB ly) (ly_top ly)
 (ly_stk_lo ly) (ly_stk_hi ly) (ly_tsd ly) (ly_tr0 ly) (ly_extra ly) (ly_D ly) (ly_vis0 ly) (ly_img ly) (ly_sec ly).
 
-(* static_extents ly (YG0f.v:375-385) without the nodes block's own entry (ly_NB ly, kNodesBlockSize), and with the
+(* static_extents ly (YG0f.v:376-386) without the nodes block's own entry (ly_NB ly, kNodesBlockSize), and with the
    store block's entry only once it is mapped: Put creates the nodes block (0x7118c) BEFORE StackStore creates the store
    block (Node::store 0x71114 -> Store -> Alloc -> BlockInfo::Create), so on knock's first Put ly_SB ly = 0 here too, and
    the entries (0, kNodesBlockSize), (0, kStoreBlockSize) are "not mapped" (a Theorem Labs lane's encoding), which no fact places. *)
@@ -64,7 +65,7 @@ Definition ext_but_NB (ly : alayout) : list (Z * Z) :=
    (ly_stk_lo ly, ly_stk_hi ly - ly_stk_lo ly); ly_img ly]
   ++ (if ly_SB ly =? 0 then [] else [(ly_SB ly, kStoreBlockSize)]).
 
-(* Cell offsets in StackDepotBase (as_depot B, YG0f.v:241): nodes = TwoLevelMap {mu_ (StaticSpinMutex byte, the
+(* Cell offsets in StackDepotBase (as_depot B, YG0f.v:242): nodes = TwoLevelMap {mu_ (StaticSpinMutex byte, the
    lock word's other bytes padding) at d_map1 - 8; map1_[] at d_map1}. *)
 Definition tlm_mu : Z := d_map1 - 8.
 
@@ -124,8 +125,8 @@ Definition tfib_tlm_create_nb_spec (B : asyms) : Prop :=
                (forall a, apresent H mem a -> apresent (w_H W') mem' a) /\ same_io md md' /\
       (* P6 *) layout_grow_kd ly (set_ly_NB ly x) /\
       (* P7 *) Forall (fun q => zdisjoint (x, kNodesBlockSize) (bv_unsigned (fst q), bv_unsigned (snd q))) (vm_maps (m_vmmaps md))).
-(* YD3h.v:51 md_takes md ((sp - 32) - MOD_STK, MOD_STK): from YD3g.v:101 (md_takes over ext_but_NB's stack extent, YD3g.v:64) and YD3g.v:99 (ly_stk_lo ly <= sp - TLM_STK, sp <= ly_stk_hi ly), by md_takes_sub. *)
-(* YD3h.v:50 TFIB_IMG_END <= (sp - 32) - MOD_STK: TFIB_IMG_END = IMG_TOP = 0x5f6000 (YF0x.v:28; lib/B/YImgTop.v:5) < kHighMemBeg <= ly_stk_lo ly <= sp - TLM_STK (YD3g.v:99). *)
+(* YD3h.v:51 md_takes md ((sp - 32) - MOD_STK, MOD_STK): from YD3g.v:102 (md_takes over ext_but_NB's stack extent, YD3g.v:65) and YD3g.v:100 (ly_stk_lo ly <= sp - TLM_STK, sp <= ly_stk_hi ly), by md_takes_sub. *)
+(* YD3h.v:50 TFIB_IMG_END <= (sp - 32) - MOD_STK: TFIB_IMG_END = IMG_TOP = 0x5f6000 (YF0x.v:29; lib/B/YImgTop.v:5) < kHighMemBeg <= ly_stk_lo ly <= sp - TLM_STK (YD3g.v:100). *)
 
 (* ---- The walk. Phase A: 0x71714 to MmapOrDie's entry (the run stops at the fetch of 0x64278, which tfibtbl_rtB does
    not cover); the call: YD3h's mod_holds through SRr_bind; phase B: 0x717b8 to the ret at 0x717dc. ---- *)

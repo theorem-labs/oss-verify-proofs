@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the walk of descriptors_add on fuzz_command.asan-ubsan (image B): the B
-   re-walk of lib/A/Prog/descriptors_add.v (a working branch 9a46e579716), in the shape of
+   re-walk of lib/A/Prog/descriptors_add.v (a working branch), in the shape of
    proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v (a segment through a program call and back) and of this harness's
    B walk lib/B/Prog/rec_clear.v (a working branch). A inlines record() and xstrdup; B calls record and
    arg_s, so the walk is four straight-line segments joined by three program calls.
@@ -16,13 +16,14 @@
      0x8cc8c .. 0x8cca0  g_rec.state := a0 (sd a0, -0x60c(s0)), the frame popped, ret
    The segment states, their runs and their state checks are lib/B/Prog/descriptors_add_aux.v.
 
-   Section hypotheses: the statement's own (TRECORD, TARG_S, TMIX_CALL at every FP state, VOBJS; a Theorem Labs lane
-   707acd856cb); HB and MTL; and, in the convention of the B walks (a Theorem Labs lane, 09:0xZ), a Theorem Labs lane's record facts
-   (a working branch 707acd856cb lib/B/Prog/CmdRec*.v, RecBLemmas.v) used by exact over any image from ONE
+   Section hypotheses: the statement's own (TRECORD, TARG_S, TMIX_CALL at every FP state, VOBJS; a Theorem Labs lane);
+   HB and MTL; and, in the convention of the B walks (a Theorem Labs lane, 09:0xZ), a Theorem Labs lane's record facts
+   (a working branch lib/B/Prog/CmdRec*.v, RecBLemmas.v) used by exact over any image from ONE
    pinned hypothesis cmd_img_facts_tfib (CmdRecImg.v) and CmdRecCells.v's premise PRW (the core's prog_rw); the
    facts a Theorem Labs lane states at the concrete instance only (CmdRecRest.v) are Section hypotheses under the lemma's name:
    cmd_val_his_PB (the store at 0x8cc8c goes through pa_val (A_HI 203)) and cmd_sig_prog_PB. The closing file
    DescriptorsAddClosed.v discharges them at PB_cmd. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -208,7 +209,7 @@ Let RET := paj_ret_at (PL := PL_cmd) (PI := PI).
 
 Lemma dab_STK : STK = 16592.
 Proof. reflexivity. Qed.
-(* a Theorem Labs lane's record facts over any image (a working branch 707acd856cb), used by exact *)
+(* a Theorem Labs lane's record facts over any image (a working branch), used by exact *)
 Lemma dab_prog_img : forall a, Exists (in_zr a) TFIB_PROG_STATIC -> in_img SEGS a.
 Proof. exact (CmdRecRest.cmd_prog_img SEGS B LAWS HB IMG). Qed.
 Lemma dab_ro_prog_apart : forall a, in_roP SEGS CMD_RLO CMD_RHI a -> in_img SEGS a /\ ~ Exists (in_zr a) TFIB_PROG_STATIC.

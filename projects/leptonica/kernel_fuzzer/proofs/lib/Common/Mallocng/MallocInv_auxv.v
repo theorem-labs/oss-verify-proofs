@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (AUX_KEYS, aux_env and scan_auxv_ok for the new auxv: 26 pairs, the two CONFIG_RSEQ pairs when set, then AT_NULL; aux_env_intro over the launch record and its launch facts; ts_assoc3 over the mmap node's transparent-huge-page flag; length_AUX_KEYS and AUX_KEYS_range added; AUX_KEYS_spec, aux_vals and aux_vals_spec removed; launch_auxv / vdso_text_base at the entry's stack pointer (LPS b84e73ef)). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -16,15 +17,17 @@ Local Open Scope malloc_scope.
 
 Local Abbreviation u := bv_unsigned.
 
-(* [comment removed for export] *)
-Definition AUX_KEYS : list Z := [3; 4; 5; 16; 6; 11; 12; 23; 25; 0].
+(* the auxv's types in [StackLayout.auxv_entries]' order: 26 pairs every launch
+   carries, then AT_RSEQ_FEATURE_SIZE/AT_RSEQ_ALIGN under CONFIG_RSEQ, then AT_NULL *)
+Definition AUX_KEYS (rs : bool) : list Z :=
+  [33; 40; 41; 42; 43; 44; 45; 46; 47; 51; 16; 6; 17; 3; 4; 5; 7; 8; 9; 11; 12; 13; 14; 23; 25; 31]
+  ++ (if rs then [27; 28] else []) ++ [0].
 
-Lemma AUX_KEYS_spec : forall ph rnd uid hw j, (j < 10)%nat ->
-  nth (2 * j) (auxv_words ph rnd uid hw) (Z_to_bv 64 0) = Z_to_bv 64 (nth j AUX_KEYS 0).
-Proof.
-  intros ph rnd uid hw j Hj.
-  do 10 (destruct j as [|j]; [reflexivity|]). lia.
-Qed.
+Lemma length_AUX_KEYS : forall rs, length (AUX_KEYS rs) = auxv_count rs.
+Proof. intros [|]; reflexivity. Qed.
+
+Lemma AUX_KEYS_range : forall rs j, 0 <= nth j (AUX_KEYS rs) 0 < 64.
+Proof. intros rs j. destruct rs; do 30 (destruct j as [|j]; [cbn; lia|]); cbn; lia. Qed.
 
 Section WithLayout.
 Context {ML : MallocLayout} {MLok : MallocLayoutOk ML}.
@@ -35,15 +38,15 @@ Definition aux_addr (sp0 : word) (a : word) : Prop :=
 
 (* [comment removed for export] *)
 Definition aux_env (sp0 : word) (argv envp : list (list byte)) (m : word -> option byte) : Prop :=
-  exists (auxv : Z) (vals : list word) (rnd : list byte),
-    length vals = 10%nat /\ length rnd = 8%nat /\
+  exists (auxv : Z) (rs : bool) (val : nat -> word) (rnd : list byte),
+    length rnd = 8%nat /\
     rdn ml_segs m (Z_to_bv 64 (u A_LIBC + 8)) 8 = Some (word_le8 (Z_to_bv 64 auxv)) /\
-    u sp0 <= auxv /\ auxv + 160 < 2^64 /\
-    (forall j, (j < 10)%nat ->
-       rdn ml_segs m (Z_to_bv 64 (auxv + 16 * Z.of_nat j)) 8 = Some (word_le8 (Z_to_bv 64 (nth j AUX_KEYS 0))) /\
-       rdn ml_segs m (Z_to_bv 64 (auxv + 16 * Z.of_nat j + 8)) 8 = Some (word_le8 (nth j vals (Z_to_bv 64 0)))) /\
-    u sp0 <= u (nth 8%nat vals (Z_to_bv 64 0)) + 8 /\ u (nth 8%nat vals (Z_to_bv 64 0)) + 24 < 2^64 /\
-    rdn ml_segs m (Z_to_bv 64 (u (nth 8%nat vals (Z_to_bv 64 0)) + 8)) 8 = Some rnd.
+    u sp0 <= auxv /\ auxv + 16 * Z.of_nat (length (AUX_KEYS rs)) < 2^64 /\
+    (forall j, (j < length (AUX_KEYS rs))%nat ->
+       rdn ml_segs m (Z_to_bv 64 (auxv + 16 * Z.of_nat j)) 8 = Some (word_le8 (Z_to_bv 64 (nth j (AUX_KEYS rs) 0))) /\
+       rdn ml_segs m (Z_to_bv 64 (auxv + 16 * Z.of_nat j + 8)) 8 = Some (word_le8 (val j))) /\
+    u sp0 <= u (val 24%nat) + 8 /\ u (val 24%nat) + 24 < 2^64 /\
+    rdn ml_segs m (Z_to_bv 64 (u (val 24%nat) + 8)) 8 = Some rnd.
 
 Lemma rdn_frame8 : forall m m' (a : Z) bs,
   0 <= a -> a + 8 <= 2^64 ->
@@ -57,18 +60,18 @@ Qed.
 Lemma aux_env_frame : forall sp0 argv envp m m',
   aux_env sp0 argv envp m -> (forall a : word, aux_addr sp0 a -> m' a = m a) -> aux_env sp0 argv envp m'.
 Proof.
-  intros sp0 argv envp m m' (auxv & vals & rnd & Hlv & Hlr & Hcell & Hlo & Hhi & Hent & Hrp1 & Hrp2 & Hrnd) Hf.
+  intros sp0 argv envp m m' (auxv & rs & val & rnd & Hlr & Hcell & Hlo & Hhi & Hent & Hrp1 & Hrp2 & Hrnd) Hf.
   pose proof (u64_range A_LIBC) as R1. pose proof (u64_range sp0) as R2. pose proof (mlo_order_libc (ML:=ML)) as O1.
   pose proof (mlo_order_ctx (ML:=ML)) as O2. pose proof (mlo_order_replaced (ML:=ML)) as O3. pose proof (mlo_ctx (ML:=ML)) as O4.
   pose proof (mlo_hull (ML:=ML)) as O5.
-  exists auxv, vals, rnd. split; [exact Hlv|]. split; [exact Hlr|]. split.
+  exists auxv, rs, val, rnd. split; [exact Hlr|]. split.
   { apply (rdn_frame8 m); [lia | unfold CTX_SIZE in *; lia | | exact Hcell]. intros x Hx. apply Hf. left. lia. }
   split; [exact Hlo|]. split; [exact Hhi|]. split.
   { intros j Hj. destruct (Hent j Hj) as [E1 E2]. split.
     - apply (rdn_frame8 m); [lia | lia | | exact E1]. intros x Hx. apply Hf. right. lia.
     - apply (rdn_frame8 m); [lia | lia | | exact E2]. intros x Hx. apply Hf. right. lia. }
   split; [exact Hrp1|]. split; [exact Hrp2|].
-  apply (rdn_frame8 m); [pose proof (u64_range (nth 8%nat vals (Z_to_bv 64 0))); lia | lia | | exact Hrnd].
+  apply (rdn_frame8 m); [pose proof (u64_range (val 24%nat)); lia | lia | | exact Hrnd].
   intros x Hx. apply Hf. right. lia.
 Qed.
 
@@ -130,7 +133,7 @@ Section Scan.
   Proof.
     intros A B m f g st P HH. unfold mbind in *.
     revert HH. generalize (m st). intros t.
-    induction t as [a st'| |req vm kf IH1 ko IH2|kd len vm kf IH1 ko IH2|addr len k1 IH1 k2 IH2 k3 IH3|addr len vm kf IH1 ko IH2];
+    induction t as [a st'| |req vm kf IH1 ko IH2|kd thp len vm kf IH1 ko IH2|addr len k1 IH1 k2 IH2 k3 IH3|addr len vm kf IH1 ko IH2];
       cbn; intros HH; try exact HH.
     - destruct HH as [X1 X2]; split; [intros Hb; apply IH1; exact (X1 Hb) | intros Hb; apply IH2; exact (X2 Hb)].
     - (* [comment removed for export] *)
@@ -149,50 +152,70 @@ Section Scan.
         tsafe (k sec s) P ->
         tsafe ((x <- m_scan_auxv AUXV_FUEL (Z_to_bv 64 auxv) w0 sec0 ;; k x) s) P.
   Proof.
-    intros argv envp (auxv & vals & rnd & Hlv & Hlr & Hcell & Hlo & Hhi & Hent & Hrp1 & Hrp2 & Hrnd).
+    intros argv envp (auxv & rs & val & rnd & Hlr & Hcell & Hlo & Hhi & Hent & Hrp1 & Hrp2 & Hrnd).
     pose proof (u64_range sp0) as Hsp.
+    (* [AUX_KEYS rs] is 27 or 29 long.  Both bounds are needed: the upper one
+       keeps [Hhi] usable, and the lower one is what lets [lia] bound [auxv]
+       at the AT_RANDOM entry (j = 24), where no [j < length (AUX_KEYS rs)]
+       hypothesis is in scope.  With [rs] a variable, [length (AUX_KEYS rs)]
+       is an opaque atom, so neither bound is computed by [lia] itself. *)
+    assert (HL : (length (AUX_KEYS rs) <= 29)%nat) by (destruct rs; cbn; lia).
+    assert (HLlo : (27 <= length (AUX_KEYS rs))%nat) by (destruct rs; cbn; lia).
     exists auxv, (le_val rnd). split; [exact Hcell|]. split; [lia|].
     intros k P sec0 Hk.
-    set (rp := u (nth 8%nat vals (Z_to_bv 64 0))) in *.
-    (* [comment removed for export] *)
+    set (rp := u (val 24%nat)) in *.
+    (* a key that is neither AT_RANDOM nor AT_NULL: the loop moves on *)
     assert (STEP : forall fuel (j : nat) sec,
-      (j < 8)%nat ->
+      (j < length (AUX_KEYS rs))%nat ->
+      nth j (AUX_KEYS rs) 0 <> 25 -> nth j (AUX_KEYS rs) 0 <> 0 ->
       tsafe ((x <- m_scan_auxv fuel (Z_to_bv 64 auxv) (Z_to_bv 64 (16 * Z.of_nat (S j))) sec ;; k x) s) P ->
       tsafe ((x <- m_scan_auxv (S fuel) (Z_to_bv 64 auxv) (Z_to_bv 64 (16 * Z.of_nat j)) sec ;; k x) s) P).
-    { intros fuel j sec Hj HH. rewrite scan_unfold. apply ts_assoc3.
-      destruct (Hent j ltac:(lia)) as [Hkey _].
+    { intros fuel j sec Hj Hn25 Hn0 HH. rewrite scan_unfold. apply ts_assoc3.
+      destruct (Hent j Hj) as [Hkey _].
+      pose proof (AUX_KEYS_range rs j) as Hr.
       replace (v_add (Z_to_bv 64 auxv) (Z_to_bv 64 (16 * Z.of_nat j))) with (Z_to_bv 64 (auxv + 16 * Z.of_nat j))
         by (unfold v_add; rewrite !u64_lit by lia; reflexivity).
       eapply ts_ld_above; [lia | lia | exact Hkey |]. rewrite le_val_le8.
-      assert (Hk25 : c_eq (Z_to_bv 64 (nth j AUX_KEYS 0)) (wlit 25) = false).
-      { unfold wlit. apply c_eq_neq. rewrite !u64_lit by (do 8 (destruct j as [|j]; [cbn; lia|]); lia).
-        do 8 (destruct j as [|j]; [cbn; lia|]). lia. }
-      assert (Hk0 : is0 (Z_to_bv 64 (nth j AUX_KEYS 0)) = false).
-      { apply is0_false. rewrite u64_lit by (do 8 (destruct j as [|j]; [cbn; lia|]); lia).
-        do 8 (destruct j as [|j]; [cbn; lia|]). lia. }
+      assert (Hk25 : c_eq (Z_to_bv 64 (nth j (AUX_KEYS rs) 0)) (wlit 25) = false).
+      { unfold wlit. apply c_eq_neq. rewrite !u64_lit by lia. exact Hn25. }
+      assert (Hk0 : is0 (Z_to_bv 64 (nth j (AUX_KEYS rs) 0)) = false).
+      { apply is0_false. rewrite u64_lit by lia. exact Hn0. }
       rewrite Hk25, Hk0.
       replace (v_addi (Z_to_bv 64 (16 * Z.of_nat j)) 16) with (Z_to_bv 64 (16 * Z.of_nat (S j)))
         by (unfold v_addi; rewrite u64_lit by lia; f_equal; lia).
       exact HH. }
+    (* AT_NULL at [j]: the loop returns the secret it holds *)
+    assert (NULL : forall fuel (j : nat) sec,
+      (j < length (AUX_KEYS rs))%nat -> nth j (AUX_KEYS rs) 0 = 0 ->
+      tsafe (k sec s) P ->
+      tsafe ((x <- m_scan_auxv (S fuel) (Z_to_bv 64 auxv) (Z_to_bv 64 (16 * Z.of_nat j)) sec ;; k x) s) P).
+    { intros fuel j sec Hj H0 HH. rewrite scan_unfold. apply ts_assoc3.
+      destruct (Hent j Hj) as [Hkey _].
+      replace (v_add (Z_to_bv 64 auxv) (Z_to_bv 64 (16 * Z.of_nat j))) with (Z_to_bv 64 (auxv + 16 * Z.of_nat j))
+        by (unfold v_add; rewrite !u64_lit by lia; reflexivity).
+      eapply ts_ld_above; [lia | lia | exact Hkey |]. rewrite le_val_le8. rewrite H0.
+      replace (c_eq (Z_to_bv 64 0) (wlit 25)) with false by (symmetry; apply c_eq_neq; reflexivity || (cbn; discriminate)).
+      replace (is0 (Z_to_bv 64 0)) with true by (symmetry; apply is0_true; reflexivity).
+      exact HH. }
     unfold AUXV_FUEL. unfold w0. change (Z_to_bv 64 0) with (Z_to_bv 64 (16 * Z.of_nat 0)) at 1.
-    do 8 (apply STEP; [lia|]).
+    do 24 (apply STEP; [destruct rs; cbn; lia | cbn; lia | cbn; lia |]).
     (* [comment removed for export] *)
     rewrite scan_unfold. apply ts_assoc3.
-    destruct (Hent 8%nat ltac:(lia)) as [Hkey Hval].
-    replace (v_add (Z_to_bv 64 auxv) (Z_to_bv 64 (16 * Z.of_nat 8))) with (Z_to_bv 64 (auxv + 16 * Z.of_nat 8))
+    destruct (Hent 24%nat ltac:(destruct rs; cbn; lia)) as [Hkey Hval].
+    replace (v_add (Z_to_bv 64 auxv) (Z_to_bv 64 (16 * Z.of_nat 24))) with (Z_to_bv 64 (auxv + 16 * Z.of_nat 24))
       by (unfold v_add; rewrite !u64_lit by lia; reflexivity).
     eapply ts_ld_above; [lia | lia | exact Hkey |]. rewrite le_val_le8.
-    replace (c_eq (Z_to_bv 64 (nth 8 AUX_KEYS 0)) (wlit 25)) with true by (symmetry; apply c_eq_refl).
+    replace (c_eq (Z_to_bv 64 (nth 24 (AUX_KEYS rs) 0)) (wlit 25)) with true by (symmetry; apply c_eq_refl).
     apply ts_assoc3.
-    replace (at_ (Z_to_bv 64 (auxv + 16 * Z.of_nat 8)) 8) with (Z_to_bv 64 (auxv + 16 * Z.of_nat 8 + 8))
+    replace (at_ (Z_to_bv 64 (auxv + 16 * Z.of_nat 24)) 8) with (Z_to_bv 64 (auxv + 16 * Z.of_nat 24 + 8))
       by (unfold at_; rewrite u64_lit by lia; reflexivity).
     eapply ts_ld_above; [lia | lia | exact Hval |]. rewrite le_val_le8.
     apply ts_assoc3. unfold massert.
-    replace (c_ltu (nth 8 vals (Z_to_bv 64 0)) (wlit (2^64 - 24))) with true
+    replace (c_ltu (val 24%nat) (wlit (2^64 - 24))) with true
       by (symmetry; unfold c_ltu, bv_ltu, wlit; rewrite u64_lit by lia; apply Z.ltb_lt; lia).
     unfold mbind at 1. cbn [mret tbind].
     apply ts_assoc3.
-    replace (at_ (nth 8 vals (Z_to_bv 64 0)) 8) with (Z_to_bv 64 (rp + 8))
+    replace (at_ (val 24%nat) 8) with (Z_to_bv 64 (rp + 8))
       by (unfold at_; subst rp; reflexivity).
     eapply ts_ld_above; [lia | lia | exact Hrnd |].
     apply ts_assoc3.
@@ -204,17 +227,15 @@ Section Scan.
     { destruct Hwin as (W1 & W2 & W3). unfold acc_ok. rewrite u64_lit by (unfold CTX_SIZE in *; lia).
       rewrite orb_true_iff. left. apply Z.leb_le. unfold CTX_SIZE in *. cbn. lia. }
     eapply ts_ld_acc; [exact Hacc | exact Hcell |]. rewrite le_val_le8.
-    replace (v_addi (Z_to_bv 64 (16 * Z.of_nat 8)) 16) with (Z_to_bv 64 (16 * Z.of_nat 9))
+    replace (v_addi (Z_to_bv 64 (16 * Z.of_nat 24)) 16) with (Z_to_bv 64 (16 * Z.of_nat 25))
       by (unfold v_addi; rewrite u64_lit by lia; f_equal; lia).
-    (* [comment removed for export] *)
-    rewrite scan_unfold. apply ts_assoc3.
-    destruct (Hent 9%nat ltac:(lia)) as [Hkey9 _].
-    replace (v_add (Z_to_bv 64 auxv) (Z_to_bv 64 (16 * Z.of_nat 9))) with (Z_to_bv 64 (auxv + 16 * Z.of_nat 9))
-      by (unfold v_add; rewrite !u64_lit by lia; reflexivity).
-    eapply ts_ld_above; [lia | lia | exact Hkey9 |]. rewrite le_val_le8.
-    replace (c_eq (Z_to_bv 64 (nth 9 AUX_KEYS 0)) (wlit 25)) with false by (symmetry; apply c_eq_neq; reflexivity || (cbn; discriminate)).
-    replace (is0 (Z_to_bv 64 (nth 9 AUX_KEYS 0))) with true by (symmetry; apply is0_true; reflexivity).
-    exact Hk.
+    (* AT_EXECFN, then (CONFIG_RSEQ) AT_RSEQ_FEATURE_SIZE and AT_RSEQ_ALIGN, then AT_NULL *)
+    apply STEP; [destruct rs; cbn; lia | cbn; lia | cbn; lia |].
+    destruct rs.
+    - apply STEP; [cbn; lia | cbn; lia | cbn; lia |].
+      apply STEP; [cbn; lia | cbn; lia | cbn; lia |].
+      apply NULL; [cbn; lia | reflexivity | exact Hk].
+    - apply NULL; [cbn; lia | reflexivity | exact Hk].
   Qed.
 End Scan.
 
@@ -222,57 +243,79 @@ End Scan.
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 
-(* [comment removed for export] *)
-Definition aux_vals (ph : PhdrInfo) (rnd uid hw : word) : list word :=
-  [Z_to_bv 64 (Z.of_N (ph_addr ph)); Z_to_bv 64 (Z.of_N (ph_ent ph)); Z_to_bv 64 (Z.of_N (ph_num ph)); hw;
-   Z_to_bv 64 4096; uid; uid; Z_to_bv 64 0; rnd; Z_to_bv 64 0].
-
-Lemma aux_vals_spec : forall ph rnd uid hw j, (j < 10)%nat ->
-  nth (2 * j + 1) (auxv_words ph rnd uid hw) (Z_to_bv 64 0) = nth j (aux_vals ph rnd uid hw) (Z_to_bv 64 0).
-Proof.
-  intros ph rnd uid hw j Hj.
-  do 10 (destruct j as [|j]; [reflexivity|]). lia.
-Qed.
-
-Lemma aux_env_intro : forall ph (sp0 : word) argv envp uid hw draw (m : word -> option byte),
-  valid_argv argv -> valid_envp envp ->
+Lemma aux_env_intro : forall inp mbase ph entry (sp0 brk : word) draw (m : word -> option byte),
+  valid_argv (in_argv inp) -> valid_envp (in_envp inp) -> valid_launch inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp0 brk mbase draw) inp ->
   sp_window_lo <= u sp0 -> u sp0 <= sp_window_hi -> u sp0 mod 16 = 0 ->
-  (forall a : word, u sp0 <= u a -> m a = stack_to_mem sp0 (entry_stack_image ph sp0 argv envp uid hw draw) a) ->
-  rdn ml_segs m (Z_to_bv 64 (u A_LIBC + 8)) 8 = Some (word_le8 (Z_to_bv 64 (u sp0 + Z.of_nat (auxv_off argv envp)))) ->
-  aux_env sp0 argv envp m.
+  (forall a : word, u sp0 <= u a -> m a = stack_to_mem sp0 (entry_stack_image inp mbase ph entry sp0 draw) a) ->
+  rdn ml_segs m (Z_to_bv 64 (u A_LIBC + 8)) 8
+  = Some (word_le8 (Z_to_bv 64 (u sp0 + Z.of_nat (auxv_off (in_argv inp) (in_envp inp))))) ->
+  aux_env sp0 (in_argv inp) (in_envp inp) m.
 Proof.
-  intros ph sp0 argv envp uid hw draw m Hva Hve Hlo Hhi Hal Hstk Hcell.
+  intros inp mbase ph entry sp0 brk draw m Hva Hve Hvl Hlau Hlo Hhi Hal Hstk Hcell.
   pose proof (u64_range sp0) as Hsp.
-  set (stk := stack_to_mem sp0 (entry_stack_image ph sp0 argv envp uid hw draw)) in *.
-  set (bsb := build_stack_bytes ph sp0 argv envp uid hw draw).
-  pose proof (lay_bsb_nw ph sp0 draw argv envp uid hw Hva Hve Hhi) as Hnw. fold bsb in Hnw.
-  pose proof (lay_bsb_len ph sp0 draw argv envp uid hw Hva Hve) as Hlen. fold bsb in Hlen.
-  destruct (rnd_facts ml_segs ph sp0 draw argv envp uid hw Hva Hve Hlo Hhi Hal) as (R1 & R2 & R3 & R4 & R5). fold bsb in R2, R3.
-  set (rp := at_random_ptr sp0 argv envp) in *.
-  pose proof (auxv_off_bound ph sp0 draw argv envp uid hw) as Hoff. fold bsb in Hoff.
+  set (rs := kb_rseq (in_kernel inp)).
+  set (stk := stack_to_mem sp0 (entry_stack_image inp mbase ph entry sp0 draw)) in *.
+  set (AW := auxv_words (launch_auxv inp sp0 mbase) ph entry (in_uid inp) (in_gid inp) (in_hwcap inp)
+               (at_random_ptr sp0 rs (in_argv inp) (in_envp inp))
+               (at_execfn_ptr (ed_top draw) (in_execfn inp))).
+  assert (RAW : forall j, (j < 2 * auxv_count rs)%nat ->
+            rdn ml_segs stk (sp0 + nat_to_word (auxv_off (in_argv inp) (in_envp inp) + 8 * j)) 8%nat
+            = Some (word_le8 (nth j AW (Z_to_bv 64 0)))).
+  { intros j Hj. unfold stk, AW, rs. eapply read_auxv_word;
+      first [ exact Hva | exact Hve | exact Hvl | exact Hlau | exact Hlo | exact Hhi | exact Hj ]. }
+  assert (RF :
+    (u sp0 <= u (at_random_ptr sp0 rs (in_argv inp) (in_envp inp)))
+    /\ (u (at_random_ptr sp0 rs (in_argv inp) (in_envp inp)) + 16
+        <= u sp0 + Z.of_nat (length (entry_stack_image inp mbase ph entry sp0 draw)))
+    /\ (u sp0 + Z.of_nat (length (entry_stack_image inp mbase ph entry sp0 draw)) < 2^64)
+    /\ (u (at_random_ptr sp0 rs (in_argv inp) (in_envp inp)) mod 8 = 0)
+    /\ (forall j n, (j + n <= 16)%nat ->
+          rdn ml_segs stk
+            (Z_to_bv 64 (u (at_random_ptr sp0 rs (in_argv inp) (in_envp inp)) + Z.of_nat j)) n
+          = Some (firstn n (skipn j (at_random_bytes (ed_random draw)))))).
+  { unfold stk, rs. eapply rnd_facts;
+      first [ exact Hva | exact Hve | exact Hvl | exact Hlau | exact Hlo | exact Hhi | exact Hal ]. }
+  destruct RF as (R1 & R2 & R3 & R4 & R5).
+  assert (KEYS : forall j, (j < length (AUX_KEYS rs))%nat ->
+            nth (2 * j) AW (Z_to_bv 64 0) = Z_to_bv 64 (nth j (AUX_KEYS rs) 0)).
+  { unfold AW, auxv_words, auxv_entries, rs.
+    change (la_rseq (launch_auxv inp sp0 mbase)) with (kb_rseq (in_kernel inp)).
+    destruct (kb_rseq (in_kernel inp)); intros j Hj;
+      do 29 (destruct j as [|j]; [reflexivity|]); cbn in Hj; lia. }
+  assert (HL : length (AUX_KEYS rs) = auxv_count rs) by apply length_AUX_KEYS.
+  assert (HC : (auxv_count rs <= 29)%nat) by (unfold auxv_count; destruct rs; lia).
   assert (RD : forall (a : Z) n bs, u sp0 <= a -> a + Z.of_nat n < 2^64 ->
             rdn ml_segs stk (Z_to_bv 64 a) n = Some bs -> rdn ml_segs m (Z_to_bv 64 a) n = Some bs).
   { intros a n bs Ha Hn Hr. rewrite <- Hr. apply rdn_ext; rewrite u64_lit by lia; [lia|].
     intros x Hx. apply Hstk. lia. }
-  exists (u sp0 + Z.of_nat (auxv_off argv envp)), (aux_vals ph rp uid hw), (firstn 8 (skipn 8 (at_random_bytes (ed_random draw)))).
-  split; [reflexivity|]. split; [reflexivity|]. split; [exact Hcell|].
-  split; [lia|]. split; [unfold sp_window_hi in Hhi; lia|]. split.
-  { intros j Hj. split.
+  pose proof (bsb_bound Sv48 inp mbase ph entry sp0 brk draw Hvl Hlau) as Hbl.
+  pose proof (valid_argv_len (in_argv inp) Hva) as Hla. pose proof Hve as [Hle _].
+  assert (Hoff : (Z.of_nat (auxv_off (in_argv inp) (in_envp inp)) <= 8 + 8 * 1025 + 8 * 257)%Z)
+    by (unfold auxv_off; lia).
+  assert (Hrp : nth (2 * 24 + 1) AW (Z_to_bv 64 0) = at_random_ptr sp0 rs (in_argv inp) (in_envp inp))
+    by (unfold AW, auxv_words, auxv_entries; reflexivity).
+  exists (u sp0 + Z.of_nat (auxv_off (in_argv inp) (in_envp inp))), rs,
+         (fun j => nth (2 * j + 1) AW (Z_to_bv 64 0)),
+         (firstn 8 (skipn 8 (at_random_bytes (ed_random draw)))).
+  split; [reflexivity|]. split; [exact Hcell|].
+  split; [lia|]. split; [unfold sp_window_hi in Hhi; rewrite HL; lia|]. split.
+  { intros j Hj. rewrite HL in Hj. split.
     - apply RD; [lia | unfold sp_window_hi in Hhi; lia|].
-      rewrite <- (AUX_KEYS_spec ph rp uid hw j Hj).
-      replace (Z_to_bv 64 (u sp0 + Z.of_nat (auxv_off argv envp) + 16 * Z.of_nat j))
-        with (sp0 + nat_to_word (auxv_off argv envp + 8 * (2 * j)))%bv
+      rewrite <- (KEYS j ltac:(rewrite HL; exact Hj)).
+      replace (Z_to_bv 64 (u sp0 + Z.of_nat (auxv_off (in_argv inp) (in_envp inp)) + 16 * Z.of_nat j))
+        with (sp0 + nat_to_word (auxv_off (in_argv inp) (in_envp inp) + 8 * (2 * j)))%bv
         by (rewrite word_add_nat; f_equal; lia).
-      apply (read_auxv_word ml_segs ph sp0 draw argv envp uid hw Hva Hve Hhi). lia.
+      apply RAW. lia.
     - apply RD; [lia | unfold sp_window_hi in Hhi; lia|].
-      rewrite <- (aux_vals_spec ph rp uid hw j Hj).
-      replace (Z_to_bv 64 (u sp0 + Z.of_nat (auxv_off argv envp) + 16 * Z.of_nat j + 8))
-        with (sp0 + nat_to_word (auxv_off argv envp + 8 * (2 * j + 1)))%bv
+      replace (Z_to_bv 64 (u sp0 + Z.of_nat (auxv_off (in_argv inp) (in_envp inp)) + 16 * Z.of_nat j + 8))
+        with (sp0 + nat_to_word (auxv_off (in_argv inp) (in_envp inp) + 8 * (2 * j + 1)))%bv
         by (rewrite word_add_nat; f_equal; lia).
-      apply (read_auxv_word ml_segs ph sp0 draw argv envp uid hw Hva Hve Hhi). lia. }
-  cbn [nth aux_vals].
-  split; [lia|]. split; [unfold sp_window_hi in Hhi; lia|].
-  apply RD; [lia | unfold sp_window_hi in Hhi; cbn; lia|].
+      apply RAW. lia. }
+  cbv beta. rewrite Hrp.
+  unfold sp_window_hi in Hhi.
+  split; [lia|]. split; [lia|].
+  apply RD; [lia | cbn; lia|].
   apply (R5 8%nat 8%nat). lia.
 Qed.
 

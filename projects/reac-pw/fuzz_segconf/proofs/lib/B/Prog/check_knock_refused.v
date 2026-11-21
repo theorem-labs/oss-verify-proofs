@@ -5,7 +5,8 @@
    386-392, 532-535, for libreac/fuzz_identity's ASan build (lib/A). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_identity/lib/A/Prog/reac_box_family_stem.v, with its module paths and module names changed; 95 of its 123 lines of code are new or changed and 244 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/fuzz_catalogue_rowA.v, with its module paths and module names changed; 331 of its 372 lines of code are new or changed and 82 lines of the source are left out. *)
-(* The image-B port of lib/A/Prog/check_knock_refused.v (commit 38b2a0dc4f6b): the walk of
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* The image-B port of lib/A/Prog/check_knock_refused.v: the walk of
    check_knock_refused on reac-pw/fuzz_segconf's ASan+UBSan build, image B (fuzz_segconf.asan-ubsan, 0x874c0, 52 bytes,
    13 instructions), against check_knock_refused_contract (image B's copy lib/B/Prog/check_knock_refused_c.v of the
    FINAL contract text). RELOCATION: B's words are A's up to the pc-relative offsets of the auipc/addi pair (a1 = 0x21300 in

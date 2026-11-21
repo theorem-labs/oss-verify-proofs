@@ -18,8 +18,8 @@ repository is named by its sha256.
 | `taken-by-path.txt` | the one file taken by path, not relocated: Reusable/YImgTop.v (IMG_LO 0x10000, IMG_TOP 0x5f4000) |
 | `versions.txt` | sha256 of port_core.py, resolve_code.py, gen_traces.py, adapted.patch and the symbol gate of the port_core release run.sh uses |
 
-Inputs of run.sh that are not in this directory: the port_core release (`tools/pg-reloc/0e4e065eab9f` at commit
-7f0e4b05267), fuzz_grant's released lib (origin/ossv/recipes 25e3d17bdb50, normalised as run.sh says), the images
+Inputs of run.sh that are not in this directory: the port_core release (`tools/pg-reloc/0e4e065eab9f`),
+fuzz_grant's released lib (normalised as run.sh says), the images
 fuzz_grant.asan (pin c2c7559b29bd), fuzz_uci.asan (pin 6ea017c24525), its unstripped twin (pin 56822e263d76) and
 fuzz_uci.asan-ubsan (pin a1b86e424add), and fuzz_grant.asan's symbol list
 `provenance/core-reloc/A/fuzz_grant.asan.syms.txt` (pin b46268790c46, libreac/fuzz_decode's file). run.sh checks
@@ -32,7 +32,7 @@ each pin before it runs.
 | `v10-donor-lines.tsv` | v10 global_settings 439f8e3bd463 over lib/ of a8fc5eedae69: every settings row in a file this core adds, with the identical line of its released donor file and that file's line number |
 
 The one UNMEASURED core line of v10: `lib/Reusable/YG0f.v:89` `Arguments shadow_addr _ : simpl never.` = fuzz_grant's
-released `lib/Reusable/YG0f.v:88` at 25e3d17bdb50 (a donor line, unchanged by the relocation).
+released `lib/Reusable/YG0f.v:88` (a donor line, unchanged by the relocation).
 
 ## Gate records
 

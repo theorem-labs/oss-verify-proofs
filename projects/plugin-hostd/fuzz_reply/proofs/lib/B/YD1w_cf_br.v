@@ -1,5 +1,5 @@
-(* Made by a Theorem Labs lane (2026-10-29, a Theorem Labs lane's DRIVER_CF_B) as the image-B twin of lib/A/AD1w_cf_br.v
-   (commit 46f1762ad5a): the same text over lib/B's modules and YCfn_cf.v's _b names (fr_FP_b,
+(* Made by a Theorem Labs lane (2026-10-29, a Theorem Labs lane's DRIVER_CF_B) as the image-B twin of lib/A/AD1w_cf_br.v:
+   the same text over lib/B's modules and YCfn_cf.v's _b names (fr_FP_b,
    fr_live_post_b, fr_surv_b), with YCbq / YCbqG from lib/B (A2's re-pointed copies), YE2k's sink head and A2's
    YD1w_cf (fr_lib_post_drv, fr_LI). No image numeral. *)
 (* The post half of the DriverCF bridge: from W8's program post at the walk header (cut_x's fr_lib_post_cf_x at
@@ -8,7 +8,7 @@
    conjunct goes through the three axis steps of YD1w_cf_fp.v: ajournal_x_degag (the G overlay, with the five
    placement facts named here as premises), ajournal_x_pst_weaken (subsumed: degag lands at any PST' containing PST)
    and ajournal_x_add_sink (footprint).  W8's journal conjunct is taken UNPACKED, as ajournal_gx_x unfolds at
-   XO = 0 / OUT = [] (W_journal_x.v:124: `0 <= STK /\ 0 <= 0 /\ (exists memS, ajournal_x .. W memS .. /\
+   XO = 0 / OUT = [] (W_journal_x.v:125: `0 <= STK /\ 0 <= 0 /\ (exists memS, ajournal_x .. W memS .. /\
    gagree G (w_H W) mem memS) /\ ..`), so this file needs no kitx file; the two-line unpacking happens at the
    composition, where cut_x is present.  W8's post must carry, after its header round (a Theorem Labs lane's announcement),
    NP S' and fr_surv_b in the memory-named form (YCfn_cf.v, _b names); this lemma takes them in exactly those forms. *)
@@ -63,7 +63,7 @@ Local Notation ARx := (ARcf (cp := cp) tfibsegs B).
 Local Notation ARxH := (fun ly S Hp W mem md => ARcf (cp := cp) tfibsegs B ly S Hp W mem md /\ Hp = []).
 Local Notation GF := (G_fr_c B).
 
-(* ARx occurs in ajournal_x only as its first conjunct, the post state's (YCbqG.v:216), so a journal at the
+(* ARx occurs in ajournal_x only as its first conjunct, the post state's (YCbqG.v:217), so a journal at the
    conjunction is one at ARcf with Hp' = [].  ROUTE R: at any world relation R (ajournal_xR); the strict
    ajournal_x_hp_proj is the twin at wle. *)
 Lemma ajournal_x_hp_projR {R : world segs -> world segs -> Prop} : forall PST STK sp0 FP ly S Hp (W : world segs) mem

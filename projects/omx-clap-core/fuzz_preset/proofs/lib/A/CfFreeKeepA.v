@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10-31: fuzz_preset: preset's free at image A' (#102 pin
    fuzz_preset.asan 1be0f53d96cb) in KEEP form under the re-hide, at preset's record B := lib/A/AD2l.TfibB, the cf
    instance CfImg_A / CfParams_preset.
@@ -8,11 +9,11 @@
    [afree_realizes_cf_rh_keep_A] is YGcfMallocComposeKeep.afree_realizes_cf_rh_keep at tfibsegs / TfibB, by the
    layer's afree_realizes_cf_rh_of_parts_m_keep (lib/Reusable/YGcfMallocComposeKeep.v:469) at atpD := 1 (asan_free's
    alloc_type) and ARX := WrapFreeATop.ARXq_A TfibB, from:
-   - the wrapper walk: lib/A/WrapFreeATop.v:498 wrap_free_walk_keep_rh_A, the primed keep
+   - the wrapper walk: lib/A/WrapFreeATop.v:499 wrap_free_walk_keep_rh_A, the primed keep
      record at K := WrapFreeAK.K_A, premise TfibSyms only (AD2l.TfibB_syms);
-   - Deallocate: lib/A/PresetDeallocInstA.v:89 adealloc_realizes_raw_cf_em_m_rh_preset_A, closed, at
+   - Deallocate: lib/A/PresetDeallocInstA.v:90 adealloc_realizes_raw_cf_em_m_rh_preset_A, closed, at
      ARXq_cf TfibB IOK_A.  [ARXq_A_TfibB] and [IOK_A_TfibB] state that the two parts' relations are both
-     ARXq_cf TfibB (fun i => i = as_inst TfibB), by reflexivity (lib/A/WrapFreeATop.v:431 is that text at the
+     ARXq_cf TfibB (fun i => i = as_inst TfibB), by reflexivity (lib/A/WrapFreeATop.v:432 is that text at the
      instance AImgA.AImg_A; lib/A/YGcfInstDrainTopRhA.v:40 is IOK_A), so no bridge is needed;
    - the relation's fact WrapFreeATop.ARXq_A_HXA, the relro rows (lib/A/CfAroPresetA.v relro_seg_preset_A /
      errno_relro_preset_A).

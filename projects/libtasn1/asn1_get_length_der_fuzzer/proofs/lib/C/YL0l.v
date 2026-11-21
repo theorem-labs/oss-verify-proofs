@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Trevor Hansen, 2026-11: module names. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the three hypotheses are stated over the run, with the launch premises and the CONFIG_RSEQ-indexed states. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.
@@ -15,34 +16,49 @@ Unset Lia Cache. Unset Nia Cache.
 Open Scope bv_scope.
 Open Scope Z_scope.
 Section a. Context {fx : YK11.FPState} {rc : YN05.RunCeil}.
+(* #38: the interface between YL0r/YL0s/YL0t, which prove these, and YL0m/YL0f,
+   which consume them.  [E_main] takes the run and its execfn string, and
+   [runs_main] the entry draw's top (YO3p.v); [entry_stack_fits] no longer
+   fixes the stack image, so its place is taken by the launch premises YO3p's
+   Section f takes; the states are those of the run's own CONFIG_RSEQ flag,
+   except the open-failure arm's, which is the flag-free [ss_open_c] (YL0g). *)
 Definition usage_hyp : Prop :=
-forall sp argv envp tid rnd ms model,
-valid_sp sp -> valid_argv argv -> valid_envp envp -> entry_stack_fits sp argv envp -> (length argv <> 2)%nat ->
-st_ok src2segs (E_main sp argv envp tid rnd) (add_cond ss_main_f (mkAC BC_NE (SOff 3 0) (SLit 2))) ms ->
-runs_at (bv_unsigned sp) (ms_mem ms) (runs_main false sp argv envp rnd) ->
+forall (sp brk mbase tid : word) (rnd : EntryDraw) (inp : ProcInput) ms model,
+valid_sp sp -> valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
+(length (in_argv inp) <> 2)%nat ->
+st_ok src2segs (E_main sp inp (in_argv inp) (in_envp inp) (in_execfn inp) tid rnd)
+(add_cond (ss_main false (kb_rseq (in_kernel inp))) (mkAC BC_NE (SOff 3 0) (SLit 2))) ms ->
+runs_at (bv_unsigned sp) (ms_mem ms) (runs_main false sp (ed_top rnd) (in_argv inp) (in_envp inp) (in_execfn inp) rnd) ->
 m_halted model = None -> m_vm_lazy model = [] -> fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) model ->
-realizes src2segs (mkCfg ms model) (diag (msg_usage (nth 0 argv [])) (m_fs model)).
+realizes src2segs (mkCfg ms model) (diag (msg_usage (nth 0 (in_argv inp) [])) (m_fs model)).
 Definition cannot_open_hyp : Prop :=
-forall sp a0 path envp tid rnd regs mem model e,
-valid_sp sp -> valid_argv [a0; path] -> valid_envp envp -> entry_stack_fits sp [a0; path] envp ->
+forall (sp brk mbase : word) (inp : ProcInput) (a0 path : list byte) (tid : word)
+(rnd : EntryDraw) regs mem model e,
+valid_sp sp -> in_argv inp = [a0; path] ->
+valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 0 < bv_unsigned tid < 4194304 ->
-regs_ok (E_main sp [a0; path] envp tid rnd) (ss_regs ss_open) regs ->
-mem_ok src2segs (E_main sp [a0; path] envp tid rnd) mem (ss_mem ss_open) ->
-facts_ok (E_main sp [a0; path] envp tid rnd) (ss_facts ss_open) ->
-runs_at (bv_unsigned sp) mem (runs_main true sp [a0; path] envp rnd) ->
+regs_ok (E_main sp inp [a0; path] (in_envp inp) (in_execfn inp) tid rnd) (ss_regs ss_open_c) regs ->
+mem_ok src2segs (E_main sp inp [a0; path] (in_envp inp) (in_execfn inp) tid rnd) mem (ss_mem ss_open_c) ->
+facts_ok (E_main sp inp [a0; path] (in_envp inp) (in_execfn inp) tid rnd) (ss_facts ss_open_c) ->
+runs_at (bv_unsigned sp) mem (runs_main true sp (ed_top rnd) [a0; path] (in_envp inp) (in_execfn inp) rnd) ->
 m_halted model = None -> m_vm_lazy model = [] -> fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) model ->
 0 < e < 4096 ->
 realizes src2segs
-(mkCfg (mkst (regupd regs 10%bv (errno_ret e)) (v_addi (Z_to_bv 64 (ss_pc ss_open)) 4) mem (seg_rom src2segs)) model)
+(mkCfg (mkst (regupd regs 10%bv (errno_ret e)) (v_addi (Z_to_bv 64 (ss_pc ss_open_c)) 4) mem (seg_rom src2segs)) model)
 (diag (msg_cannot_open path) (m_fs model)).
 Definition read_error_hyp : Prop :=
-forall sp a0 path envp tid rnd (E : env) ms model,
-valid_sp sp -> valid_argv [a0; path] -> valid_envp envp -> entry_stack_fits sp [a0; path] envp ->
+forall (sp brk mbase : word) (inp : ProcInput) (a0 path : list byte) (tid : word)
+(rnd : EntryDraw) (E : env) ms model,
+valid_sp sp -> in_argv inp = [a0; path] ->
+valid_argv (in_argv inp) -> valid_envp (in_envp inp) ->
+valid_launch inp -> entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 0 < bv_unsigned tid < 4194304 ->
 Z.of_nat (length path) <= 60 ->
-env_agree 10 (E_main sp [a0; path] envp tid rnd) E ->
+env_agree 10 (E_main sp inp [a0; path] (in_envp inp) (in_execfn inp) tid rnd) E ->
 st_ok src2segs E ss_rderr ms ->
-runs_at (bv_unsigned sp) (ms_mem ms) (runs_main true sp [a0; path] envp rnd) ->
+runs_at (bv_unsigned sp) (ms_mem ms) (runs_main true sp (ed_top rnd) [a0; path] (in_envp inp) (in_execfn inp) rnd) ->
 m_halted model = None -> m_vm_lazy model = [] -> fdchan (Z_to_bv 64 2) (Z_to_bv 64 2) model ->
 realizes src2segs (mkCfg ms model) (diag (msg_read_error path) (m_fs model)).
 End a.

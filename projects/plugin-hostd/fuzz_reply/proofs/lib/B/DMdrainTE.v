@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainTE.v (commit 9259077395a9, Quarantine::Drain walk set; file sha256 ea5405446b5a) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainTE.v at commit 257c1d78b5c, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMdrainTE.v (Quarantine::Drain walk set; file sha256 ea5405446b5a) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/DMdrainTE.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, WalkB1): the ERRNO and MEMNORM keeps of the drain, and the presence of the
-   quarantine's header at a cut - the first two are what MnDrain's contract (MnEnq.acall_raw_em_x, MnEnq.v:43-46)
+   quarantine's header at a cut - the first two are what MnDrain's contract (MnEnq.acall_raw_em_x, MnEnq.v:44-47)
    asks beyond the frame; the third DMiface.dmem_q no longer asks (its presence clause is stated for
-   0 <= a < 2^64 and excludes the header there, DMiface.v:122-126), so DMdrainTF takes no premise for it.  All
+   0 <= a < 2^64 and excludes the header there, DMiface.v:123-127), so DMdrainTF takes no premise for it.  All
    three follow from what Drain's entry walk may write (YFgj.WIN): errno is an image word outside that window;
    memnorm only cares that no NEW address becomes mapped, and the walk stores into bytes that were already mapped;
    and the header's own values at the cut show its bytes are still there.

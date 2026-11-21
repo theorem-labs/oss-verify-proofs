@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: a leftover Show command is removed from a proof. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -49,7 +50,6 @@ Proof.
   do 14 lstep. zstep. zstep.
   rewrite (land_m32 (S1 + -288)) by lia.
   replace (32 * ((S1 + -288) / 32)) with (S1 + -288) by (Z.div_mod_to_equations; lia).
-  Show.
   do 6 zstep. step. rewrite (sx32_small 1) by lia. zstep. zstep. zstep. if_false. zstep. zstep.
 
   lazymatch type of FR with rw_cells _ _ _ (?c0 :: ?rest) =>

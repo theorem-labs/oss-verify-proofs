@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: statements written out as text, the launch's channel reader. *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
@@ -32,9 +33,30 @@ Section Tails.
   Variables (L S Zr : list (word * word)).
 
   (* [comment removed for export] *)
-  Theorem as_refused : ltac2:(zQ "hf0!h9!jc!k1!lf!pe!s8!t1!hgb!hk7!hne!ho9!hp0!hp4!hq1!hqa!hr7!hs0!hue!ij6!ind!is5!jga!jkd!jl5!jld!jpf!jub!kie!kjd!kk6!kkb>4regs@2$h1@1$0#5@1$1@1$0#k0>3mem>0@1$1@1$0#k0@1$5@1$1@1$0#8>3msF$7>2mo$d>2sp@1$1@1$0#k0>3can$6>3tid$6>2ro@1$1@1$0#k0>3wpw@1$1@1$0#k0>0@4$h2^9^8^5^4>0@5$h3^9^6^4^3^2>0@3$3@1$1@1$0#k0@2$h6^b@3$hd@1$0#5+4Kv$b@2$he@1$0#5+4@2$2@1$0#k0+mvhjh8>0@5$h5$4?1L?1S?2Zr@2$8^a^9>0@3$3$7@3$h4?1L?1S^b@5$h7?2fx^d@2$2@1$0#k0+rurg4^c@1$h8$4>0@3$3@1$5$9@2$e@1$f^b@2$2@1$0#k0+2@2$a$9@1$c@2$2@1$0#k0+2@4$ha$4$h9@2$8^d^c@2$hc$hb@1$h0^c").
+  (* LPS 75d69e00, the channel-reader premise.  as_refused_k gained
+     [m_channel_reader mo = true] in Bs/AsRefused, so this application of it is
+     one argument short.  Measured before the edit, cold single-target from a verdict-grade
+     staging (SOURCE: a clean tree, image 2c6b6db8): VOS-FAIL Bs/AsDrvTails.v.
+     THE PROOF HERE WAS ALREADY PLAIN TEXT and already identical to the donor's except for the
+     missing intro, so only the STATEMENT is written out (the OLD encoded one plus the premise
+     after fd_lookup) and `Hrd2` is added to the intros; `try assumption` then carries it into
+     as_refused_k.  No blob re-encoded, no lzok change.
+     DONOR, statement and proof, with its branch (rule 23c):
+       a donor tree:projects/openssl/echconfiglist_parser/
+       proofs/lib/Both/As/AsDrvTails.v:30-45.
+     Constants are this tree's own, read with g3notes/zq_consts.py and confirmed by `About`:
+       donor 0xbe1c90 -> 0x6f1318 (the return address in r4)
+       donor 0x1eef6c -> 0xbeb04  (the entry pc; the SAME value Bs/AsRefused carries,
+                                   which is the cross-check) *)
+  Theorem as_refused : forall regs mem msF mo (sp : word) (can tid : Z) (ro wpw : word),
+    rfH regs mem sp can -> exitH mem sp tid ro wpw ->
+    getr regs 4 = Z_to_bv 64 0x6f1318 ->
+    lzok RSEGS L S Zr (mkCfg msF mo) -> restrict L S msF = mkst regs (Z_to_bv 64 0xbeb04) mem (seg_rom RSEGS) ->
+    fd_lookup (m_fds mo) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+    m_channel_reader mo = true ->
+    realizes RSEGS (mkCfg msF mo) (t_die msg_refused (m_fs mo)).
   Proof.
-    intros regs mem msF mo sp can tid ro wpw PH XH R4 OK RS Hfd2. unfold t_die.
+    intros regs mem msF mo sp can tid ro wpw PH XH R4 OK RS Hfd2 Hrd2. unfold t_die.
     apply (as_refused_k L S Zr regs mem msF mo sp can); try assumption; [apply t_exit_has_nil|].
     intros regs' mem' msF' mo' PO OK' SB' HS' RS'.
     rewrite <- (same_but_materialized_fs _ _ SB').

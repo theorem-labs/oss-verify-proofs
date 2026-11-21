@@ -1,10 +1,11 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the SIGPIPE disposition left free, the rseq-dependent auxv, the launch input's kernel build): changed SINV, argH, argH_high and 14 more; added BRK_RANGE, E0I, Gap and 29 more; removed Wsb, hb_res, hbi_argH. *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From OSSVerify.Proofs.jsoncons.fuzz_json_cursor.lib Require Import
-  PropExec AgentLib AsanAcct BackingAlgebra AsanPlacement AxSymExec3K AxSymExec3SoundK AxSymRun3K
+  PropExec CatExec AgentLib AsanAcct BackingAlgebra AsanPlacement AxSymExec3K AxSymExec3SoundK AxSymRun3K
   AsanPlanCoreK AsanPlanK AsanPlanSoundK AsanInitK.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations.
@@ -232,8 +233,14 @@ Proof.
   rewrite (hb_lin E cs R FULL model _ HC H1), (hb_lin E cs R FULL model _ HC H2). reflexivity.
 Qed.
 
-Lemma hb_res : forall E cs R FULL model, CSOK E cs R FULL model -> vm_reserved (m_vmmaps model) = segments_reserved SEGS.
-Proof. intros E cs R FULL model HC. exact (co_res _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
+(* [hb_res] REMOVED.  It stated
+     vm_reserved (m_vmmaps model) = segments_reserved SEGS
+   which is the false half of the old [co_res]: the ledger also carries the
+   launch's vDSO/vvar pair.  It had no consumer anywhere in this cone (the only
+   occurrences of the name were its own statement and proof), so there is
+   nothing to migrate; a caller that needs the ledger now projects [co_res]
+   directly and gets the existential.
+   Model donor [75d69e00:theories/Common/AsanPlanSound.v:346-350]. *)
 
 Lemma hb_limit : forall E cs R FULL model, CSOK E cs R FULL model -> vm_limit (m_vmmaps model) = LIMIT.
 Proof. intros E cs R FULL model HC. exact (co_limit _ _ _ _ _ _ _ _ _ _ _ HC). Qed.
@@ -527,18 +534,37 @@ Hypothesis VISLIN : forall h, (h < 2)%nat -> vis_lin (kn (HSc h)) (a_vis (HSc h)
 Hypothesis BRKLIN : forall h, (h < 2)%nat -> lin_nowrapR (kn (HSc h)) (a_brk (HSc h)) = true.
 Hypothesis FDSTD : forall h, (h < 2)%nat -> a_fd (HSc h) = FdStd.
 
-Variables (sp : word) (rdraw : EntryDraw) (brk0 : word) (argv envp : list (list byte)) (uid hw : word) (fs : Fs.Fs).
+(* The launch's whole input, as [AsanInitK]'s Section takes it (the revision's
+   twenty-place [State.mkProcInput_full]).  [ifs] is the image filesystem the
+   input carries; [fs] is the plan's [FS0], [fs_seed_tmp ifs tmp0]. *)
+Variables (sp : word) (rdraw : EntryDraw) (brk0 mbase : word) (argv envp : list (list byte)).
+Variables (ifs : Fs.Fs) (stdin : InputStream) (uid gid hw : word) (groups : list word) (net : NetQueue).
+Variables (nofile sigmask : word) (abrt : bool) (urnd : InputStream) (tmp0 : Fs.Fs).
+Variables (kb : KernelBuild) (execfn : list byte) (sdf : bool) (apc : N) (fs : Fs.Fs).
 Hypothesis Hsp : valid_sp sp.
 Hypothesis Hbrk : valid_brk SEGS brk0.
+Hypothesis Hmb : valid_mmap_base mbase.
 Hypothesis Hva : valid_argv argv.
 Hypothesis Hve : valid_envp envp.
 Hypothesis Hfit : entry_stack_fits sp argv envp.
+Hypothesis Huid : valid_id uid.
+Hypothesis Hhw : valid_hwcap hw.
+Hypothesis Hapc : Z.of_N apc = a_entry A.
 
-#[local] Notation SINV := (SINV0 ph sp rdraw brk0 argv envp uid hw).
-#[local] Notation argH := (argH0 ph sp rdraw argv envp uid hw).
+#[local] Notation INP := (AsanInitK.inp argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf).
+Hypothesis Hlaunch : valid_launch INP.
+Hypothesis Hlau : entry_launch_ok_va Sv48 (mkEntry sp brk0 mbase rdraw) INP.
+
+#[local] Notation SINV := (SINV0 ph sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf apc).
+#[local] Notation argH := (argH0 sp rdraw argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf).
+(* ARITY, old beside new: [E0 sp rdraw brk0 argv ..] -> [E0 sp rdraw brk0 mbase argv ..].  AsanInitK's
+   [vals0] gains slots 12-14 (vdso_text_base (in_kernel inp) mbase; gid; at_execfn_ptr top execfn,
+   an earlier port's key-claim change, NX0 = 15), so the initial env now reads [mbase]. *)
+#[local] Notation E0I := (E0 sp rdraw brk0 mbase argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf).
 #[local] Notation CSOK := (cs_ok SEGS A AsanInitK.LIMIT SINV argH fs).
 
-Let argH_high : forall E (a : word), argH E a = true -> CEIL <= bv_unsigned a /\ uE E e_sp0 <= bv_unsigned a := argH0_high ph sp rdraw argv envp uid hw Hsp Hva.
+Let argH_high : forall E (a : word), argH E a = true -> CEIL <= bv_unsigned a /\ uE E e_sp0 <= bv_unsigned a :=
+  argH0_high sp rdraw argv envp ifs stdin uid gid hw groups net nofile sigmask abrt urnd tmp0 kb execfn sdf apc Hsp Hva.
 
 Lemma hbi_ch : forall h ch, HSf h = Some ch -> ch = HSc h /\ (h < 2)%nat.
 Proof.
@@ -573,34 +599,66 @@ Lemma hbi_fds : forall h E R FULL model, (h < 2)%nat -> CSOK E (HSc h) R FULL mo
 Proof. intros h E R FULL model Hh HC. exact (hb_fds_std SEGS A _ _ _ _ E _ R FULL model HC (FDSTD h Hh)). Qed.
 
 Lemma hbi_E0 : forall E cs R FULL model, CSOK E cs R FULL model ->
-  forall n, (n < NX0)%nat -> ev E n = ev (E0 ph sp rdraw brk0 argv envp uid hw) n.
+  forall n, (n < NX0)%nat -> ev E n = ev E0I n.
 Proof. intros E cs R FULL model HC. exact (proj1 (hb_sinv SEGS A _ _ _ _ E cs R FULL model HC)). Qed.
 
 #[local] Notation usp := (bv_unsigned sp).
 #[local] Notation argc := (Z.of_nat (length argv)).
 #[local] Notation envc := (Z.of_nat (length envp)).
+#[local] Notation rseq := (kb_rseq (in_kernel INP)).
+#[local] Notation utop := (bv_unsigned (ed_top rdraw)).
 
-Definition Wsb : Z := (Z.of_nat (length (build_stack_bytes ph sp argv envp uid hw rdraw)) - 16 - (8 * argc + 8 * envc + 184)) / 8.
+(* STATEMENT CHANGED, old beside new:
+     OLD  Definition Wsb := (|build_stack_bytes ..| - 16 - (8*argc + 8*envc + 184)) / 8
+          -- a COUNT of string words, the strings sitting just above the auxv.
+     NEW  Definition Wpad := block_pad_len rseq sp top argv envp execfn
+          -- [arch_align_stack]'s pad, in BYTES, which is what plan variable 4
+          ([V_W]) denotes at 75d69e00 ([AsanInitK]'s [W], [vals0] slot 4).
+   The old quantity is not stale but FALSE as a description of slot 4: the
+   strings now sit at the TOP of the stack VMA, above AT_RANDOM and the pad
+   ([StackLayout.build_stack_bytes], Linux v6.18.46 [create_elf_tables]). *)
+Definition Wpad : Z := Z.of_nat (block_pad_len rseq sp (ed_top rdraw) argv envp execfn).
+(* [StackLayout.block_items mod 2], plan variable 11 ([V_G]); new at 75d69e00 *)
+Definition Gap : Z := Z.of_nat (block_items argv envp mod 2).
+(* DELETED: [STR0b := usp + Z.of_nat (cat_string_off ..)], argv[0]'s first byte.  Its only
+   use was [hbi_argH], deleted below. *)
 
+(* [AsanInitK]'s valuation facts at this Section's launch.  Their argument lists are
+   the Section variables and hypotheses each one's proof uses, so they are applied
+   by [eapply] and closed from this Section's hypotheses. *)
+Lemma UE0 : uE E0I (EVar V_S1) = usp / 32768 /\ uE E0I (EVar V_S2) = (usp mod 4096) / 16
+    /\ uE E0I (EVar V_ARGC) = argc /\ uE E0I (EVar V_ENVC) = envc /\ uE E0I (EVar V_L0) = Z.of_nat (length (nth 0 argv []))
+    /\ uE E0I (EVar V_W) = Wpad /\ uE E0I (EVar V_BRK) = bv_unsigned brk0 / 4096.
+Proof. eapply uE0; eassumption. Qed.
+Lemma UE0_s2a : uE E0I (EVar V_S2A) = (usp mod 32768) / 4096.
+Proof. eapply uE0_s2a; eassumption. Qed.
+Lemma UE0_L1 : uE E0I (EVar V_L1) = Z.of_nat (length (nth 1 argv [])).
+Proof. eapply uE0_L1; eassumption. Qed.
+Lemma UE0_G : uE E0I (EVar V_G) = Gap.
+Proof. eapply uE0_G; eassumption. Qed.
+Lemma BRK_RANGE : img_hi A <= bv_unsigned brk0 <= img_hi A + BRK_ASLR /\ bv_unsigned brk0 mod 4096 = 0.
+Proof. eapply brk_range; eassumption. Qed.
+
+(* STATEMENT CHANGED: slot 4 is [Wpad] (was [Wsb]) and slot 11 ([Gap]) is new. *)
 Lemma hbi_vals : forall E cs R FULL model, CSOK E cs R FULL model ->
   VZ E 0   = usp / 32768 /\ VZ E 6   = (usp mod 4096) / 16
   /\ VZ E 1   = argc /\ VZ E 2   = envc
   /\ VZ E 3   = Z.of_nat (length (nth 0 argv [])) /\ VZ E 7   = Z.of_nat (length (nth 1 argv []))
-  /\ VZ E 4   = Wsb /\ VZ E 5   = bv_unsigned brk0 / 4096 /\ ev E 8   = uid
-  /\ ev E 9   = hw /\ VZ E 10   = (usp mod 32768) / 4096.
+  /\ VZ E 4   = Wpad /\ VZ E 5   = bv_unsigned brk0 / 4096 /\ ev E 8   = uid
+  /\ ev E 9   = hw /\ VZ E 10   = (usp mod 32768) / 4096 /\ VZ E 11 = Gap.
 Proof.
   intros E cs R FULL model HC. pose proof (hbi_E0 E cs R FULL model HC) as HE.
-  pose proof (uE0 ph sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit) as (U1 & U2 & U3 & U4 & U5 & U6 & U7).
-  pose proof (uE0_L1 ph sp rdraw brk0 argv envp uid hw Hva) as U8.
-  pose proof (uE0_s2a ph sp rdraw brk0 argv envp uid hw Hsp Hva Hve Hfit) as U9.
-  unfold APSK.uE in *. cbn [edenot] in U1, U2, U3, U4, U5, U6, U7, U8, U9.
-  unfold V_S1, V_S2, V_S2A, V_ARGC, V_ENVC, V_L0, V_L1, V_W, V_BRK, V_UID, V_HW in *. unfold VZ. rewrite !HE by (unfold NX0; lia).
+  pose proof UE0 as (U1 & U2 & U3 & U4 & U5 & U6 & U7).
+  pose proof UE0_L1 as U8. pose proof UE0_s2a as U9. pose proof UE0_G as U10.
+  unfold APSK.uE in *. cbn [edenot] in U1, U2, U3, U4, U5, U6, U7, U8, U9, U10.
+  unfold V_S1, V_S2, V_S2A, V_ARGC, V_ENVC, V_L0, V_L1, V_W, V_BRK, V_UID, V_HW, V_G in *.
+  unfold VZ. rewrite !HE by (unfold NX0; lia).
   repeat split; try assumption; try reflexivity.
 Qed.
 
 Lemma hbi_sp0 : forall E cs R FULL model, CSOK E cs R FULL model -> 32768 * VZ E 0 + 16 * VZ E 6 + 4096 * VZ E 10 = usp.
 Proof.
-  intros E cs R FULL model HC. destruct (hbi_vals E cs R FULL model HC) as (U1 & U2 & _ & _ & _ & _ & _ & _ & _ & _ & U3). rewrite U1, U2, U3.
+  intros E cs R FULL model HC. destruct (hbi_vals E cs R FULL model HC) as (U1 & U2 & _ & _ & _ & _ & _ & _ & _ & _ & U3 & _). rewrite U1, U2, U3.
   pose proof Hsp as (_ & _ & Hal). pose proof (u64_range sp).
   Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true). lia.
 Qed.
@@ -608,7 +666,7 @@ Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 
 Lemma hbi_sppg : forall E cs R FULL model, CSOK E cs R FULL model -> 32768 * VZ E 0 + 4096 * VZ E 10 = usp / 4096 * 4096.
 Proof.
-  intros E cs R FULL model HC. destruct (hbi_vals E cs R FULL model HC) as (U1 & _ & _ & _ & _ & _ & _ & _ & _ & _ & U3). rewrite U1, U3.
+  intros E cs R FULL model HC. destruct (hbi_vals E cs R FULL model HC) as (U1 & _ & _ & _ & _ & _ & _ & _ & _ & _ & U3 & _). rewrite U1, U3.
   pose proof Hsp as (_ & _ & Hal). pose proof (u64_range sp).
   Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true). lia.
 Qed.
@@ -617,7 +675,7 @@ Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Lemma hbi_brk0 : forall E cs R FULL model, CSOK E cs R FULL model -> 4096 * VZ E 5 = bv_unsigned brk0.
 Proof.
   intros E cs R FULL model HC. destruct (hbi_vals E cs R FULL model HC) as (_ & _ & _ & _ & _ & _ & _ & U & _). rewrite U.
-  pose proof (brk_range SEGS A ph sp rdraw brk0 argv envp uid hw IMG Hbrk) as [_ Hm].
+  pose proof BRK_RANGE as [_ Hm].
   Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true). lia.
 Qed.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
@@ -625,16 +683,19 @@ Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Lemma hbi_sp_range : sp_window_lo <= usp <= sp_window_hi /\ usp mod 16 = 0.
 Proof. pose proof Hsp as (H1 & H2 & H3). auto. Qed.
 
+(* STATEMENT CHANGED: the memory the argument block reads is the revision's
+   [wrap_mem inp mbase ph entry sp draw] (was [wrap_mem ph sp argv envp uid hw rdraw]). *)
 Lemma hbi_argblock : forall E cs R FULL model, CSOK E cs R FULL model ->
-  forall a : word, argH E a = true -> FULL a = wrap_mem ph sp argv envp uid hw rdraw a.
+  forall a : word, argH E a = true -> FULL a = wrap_mem INP mbase ph (Z_to_bv 64 (Z.of_N apc)) sp rdraw a.
 Proof. intros E cs R FULL model HC. exact (proj2 (hb_sinv SEGS A _ _ _ _ E cs R FULL model HC)). Qed.
 
-Lemma hbi_argH : forall E (a : word),
-  argH E a = ((uE E e_sp0 <=? bv_unsigned a) &&
-              (((usp + 24 <=? bv_unsigned a) && (bv_unsigned a <? usp + 8 * argc + 8 * envc + 24))
-              || ((usp + 8 * argc + 8 * envc + 184 <=? bv_unsigned a) && (bv_unsigned a <? usp + 8 * argc + 8 * envc + 184 + 8 * Wsb))
-              || ((usp + Z.of_nat (length (build_stack_bytes ph sp argv envp uid hw rdraw)) <=? bv_unsigned a)
-                  && (bv_unsigned a <? usp + Z.of_nat (length (entry_stack_image ph sp argv envp uid hw rdraw))))))%bool.
-Proof. reflexivity. Qed.
+(* DELETED, old beside new: [hbi_argH], a [reflexivity] restatement of [AsanInitK.argH0]'s
+   body for consumers that navigated its [orb]s by position:
+     hbi_argH : forall E a, argH E a = ((uE E e_sp0 <=? a) &&
+                  (([usp+24, usp+8argc+8envc+24)) || ([STR0b, utop))))
+   argH0 now has five regions (Main's option 2: the auxv holes, the gap, the pad), and
+   AsanInitK exports one navigation lemma per region ([argH0_argblock] .. [argH0_strings]),
+   so no consumer restates the body.  Its consumers were Pm8/Pm9DrvEntryK.ent_argH_str and
+   ent_stack_defined, which now use those lemmas. *)
 End Image.
 

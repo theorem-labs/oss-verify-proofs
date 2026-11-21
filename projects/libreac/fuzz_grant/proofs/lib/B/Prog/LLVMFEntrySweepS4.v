@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: a phase of the entry function LLVMFuzzerTestOneInput on fuzz_grant.asan (GrantEntrySweepS4), written for libreac/fuzz_grant with proof steps adapted from proofs/cgif/cgif_file_fuzzer/lib/A/AC8a.v. *)
 (* Modified by Theorem Labs, 2026-10: image-B twin of lib/A/Prog/GrantEntrySweepS4.v. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment 4 of the sweep phase of fuzz_grant's entry function on IMAGE B:
    0x8173c .. 0x81804 (listing 0xd00 .. 0xdc8), the group-B loop, six turns, proved by
    induction on the turns left, 6 - i. One turn: the five shadow stores 0x8173c .. 0x81750
@@ -16,7 +17,7 @@
    trap 0x81f48 (0x8176c, 0x8178c, 0x817c4). The ground this walk stands on is
    LLVMFEntrySweepS1c.v and LLVMFEntrySeat.v.
 
-   Adapted from lib/A/Prog/GrantEntrySweepS4.v (a working branch afd75724b5b, blob e60961568,
+   Adapted from lib/A/Prog/GrantEntrySweepS4.v (a working branch, blob e60961568,
    1767 lines), which carries no licence header of its own.
    Image B counts the turns up with s8 = 34 i against 204
    where image A counts s5 down to 0, holds the shadow base in s3 and the row bases in s4,

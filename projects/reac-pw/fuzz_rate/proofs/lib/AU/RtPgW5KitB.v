@@ -1,9 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
-(* Modified by Theorem Labs, 2026-10: made from proofs/reac-pw/fuzz_role/lib/A/RPgCheck.v at 77f59d02b01 (the
+(* Modified by Theorem Labs, 2026-10: made from proofs/reac-pw/fuzz_role/lib/A/RPgCheck.v (the
    save-slot region, regs_ok_override / ck_regs_ok / ck_lit / ck_atom, ck_kept_run, awr_stk / kwr_stk, the run /
-   keep / leaf chain, ck_wx / ck_segs_low) and proofs/reac-pw/fuzz_role/lib/A/RPgRefuse.v at 77f59d02b01 (the .got
+   keep / leaf chain, ck_wx / ck_segs_low) and proofs/reac-pw/fuzz_role/lib/A/RPgRefuse.v (the .got
    word and shadow-offset cell regions with base None and their al_const proofs) for reac-pw/fuzz_headamp's image A
    (fuzz_headamp.asan): the common plumbing of the walks of headamp's check functions against lib/A/HPgCSpec.v's
    hd_check_*_specX. What is new against role's files: the .got word 0x9c370 and the cell 0xa4db8 of this image;
@@ -15,14 +15,15 @@
    and the cell (hc_entry_at, hc_app_apart_at, hc_prelude_with); the last block is image A's instance, and
    lib/AU/HPgChkBaseU.v is image B's. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_headamp/lib/A/HPgChkBase.v, with its module paths changed; 117 of its 167 lines of code are new or changed and 313 lines of the source are left out. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW5Kit.v at dc0c32440025 for reac-pw/fuzz_rate's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_role/lib/A/RPgW5Kit.v for reac-pw/fuzz_rate's
    image A: module paths changed; the image is fuzz_rate.asan (images.Asan) instead of a lib/A/Img0 module; the table
    holds rate's code ranges of the three pieces (SELS 0x81150, SELI 0x82280, CL 0x82484), their slow blocks and the
    error-path entries; the role vocabulary rm_ / rl_ becomes rate's rtm_ / rt_. *)
-(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW5Kit.v at a66696a9b1d1 for the same unit's
+(* Modified by Theorem Labs, 2026-10: proofs/reac-pw/fuzz_rate/lib/A/RtPgW5Kit.v for the same unit's
    image B (fuzz_rate.asan-ubsan): the image is images.AsanUbsan; the table holds image B's code ranges of the three
    pieces (SELS 0x81210 -> C 0x813a0; SELI 0x82398 -> LATCH7 0x8257c with CL 0x824c0 -> LATCH 0x82578), their slow
    blocks and the error-path entries; the image facts come from lib/AU/RtPgStepsB.v; the prefix w5_ becomes w5b_. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_rate image B (fuzz_rate.asan-ubsan, pinned sha256
    c30584a7214902c43e35abebe35194418b7fdefacb6e7ed16fe0492228ec1d14; every address measured on the unstripped twin
    a1e5fa55ae27e657ea2719297ec4c037110f10fa9047c3ea7bb6ea7fcb358cb1, same loaded bytes): the shared part of three

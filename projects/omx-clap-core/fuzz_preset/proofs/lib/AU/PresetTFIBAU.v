@@ -8,6 +8,7 @@
    no-refusal premise at the agrees budget (Budgets.Asan.lim_source, 2 GiB), which the statement grants and the top
    passes. Reason: cgif's TFIB_T has no budget premise and program-constant room premises (cgif YCfn.v:21-22, 38), so
    for preset it would be false on accepted inputs that fill an ASan size class. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the revision's launch (CONFIG_RSEQ-sized auxv, execfn, group id, launch premises)). *)
 (* What the asan-ubsan side of fuzz_preset's asan_ubsan_agrees proves: from every valid start whose plain run is never
    refused at the agrees budget, the asan-ubsan build realizes the same trace set SPECX as the plain build
    (lib/Reusable/YK18.v srealizes, no cut). *)
@@ -28,6 +29,7 @@ Definition TFIB_T_AU : Prop :=
 forall sp brk mbase rnd inp (en_p : ExecEntry),
 valid_sp sp -> valid_brk presetsegsAU brk -> valid_mmap_base mbase ->
 entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+    entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
 ~ run_scfg_budget_refused Env.alloc_forced_only Images.plain Budgets.Asan.lim_source en_p inp ->
 srealizes presetsegsAU
 (init_config presetsegsAU AsanUbsan.M.init_pc AsanUbsan.M.phdrs sp brk mbase rnd target_alloc_limit inp)

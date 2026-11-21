@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_state image B (projects/omx-clap-core/bin/fuzz_state/fuzz_state.asan-ubsan,
    sha256 5ac5ce0954f87e2d050c481b7b0599cfd55ef554eadc008e51491f44c053d204): the MACHINE WALK of realloc's
    thin segment S2a, from Allocate's return 0x32a04 to the `jalr a3` 0x32a78 that enters musl memcpy 0x98f3c.
    No allocator invariant appears here: register/memory facts in, register/memory facts out.
 
-   The B twin of lib/A/FSRealloc_S2a_walk.v (a working branch 98113525978), which is the
+   The B twin of lib/A/FSRealloc_S2a_walk.v (a working branch), which is the
    template: the same 30 instructions at +0x70, word for word except the pc-relative lo12 of the GOT load
    (A 0x329d8 d4453503 `ld a0, -0x2bc(a0)`, B 0x32a48 1f453503 `ld a0, 0x1f4(a0)`), so the same proof script
    over B's addresses (fs-addr-map.tsv's fs_asan_ubsan column, rows 10, 11, 15, 17, 18).  A's file is a port of

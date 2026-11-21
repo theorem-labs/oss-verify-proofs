@@ -1,7 +1,7 @@
 (* fs_img_facts (lib/A/FSH_Rt.v, = FSH_Gen.v fs_img_facts_at at fs.asan's numerals) for every B with TfibSyms B, and
    for fs's TfibB (A/AD2l.v): the image facts fs's walks take as a Section hypothesis (FSClose's H_fs_img_facts).
    rule 24: no function proved (an image fact about the start-up record B; no program function is walked).
-   Ported from: a working branch ca640e94dc8 proofs/omx-clap-core/fuzz_manifest/lib/A/FMInst.v
+   Ported from: a working branch proofs/omx-clap-core/fuzz_manifest/lib/A/FMInst.v
    (fm_img_facts_holds and its helpers) and FMInstB.v (fmib_pstat_chk and fm_FmB's pstat bullet), with fm's names and
    numerals moved to fs's: FM_RLO / FM_RHI / FM_RO_STRS / FM_SN_FMTS / FM_PSTAT_FP -> FS_*, str_homeA -> str_homeA_at
    FS_RLO FS_RHI ly S [] (FSH_Gen.v; U = [], the image arm), cstr_ok's ceiling bound p + len + 1 (FSH_Gen.v), and the

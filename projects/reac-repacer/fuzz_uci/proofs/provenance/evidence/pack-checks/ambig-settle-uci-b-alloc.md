@@ -1,7 +1,7 @@
 # uci-b-alloc: the ambiscan AMBIG rows, settled by address
 
 Written by PackKitScan, Fri Oct 30 19:41:43 UTC 2026. rule 24: no function proved.
-Inputs: pack slice uci-b-alloc at 769e2b95876 (= f75c58498e6); X = fuzz_uci.asan-ubsan 8d07ffcf5948; Y = fuzz_grant.asan-ubsan
+Inputs: pack slice uci-b-alloc (=); X = fuzz_uci.asan-ubsan 8d07ffcf5948; Y = fuzz_grant.asan-ubsan
 5a5ee7c02b4e (paircl Y bytes: pin fde52226dc48); for the two planted controls Y = the planted copies, rebuilt with run.sh's
 bytes (grantB-S/U-call 1c85bde94bdb / 4aabaada3a62, grantB-S/U-rodata d4c374587adc / 7a86001f9ee0; each sha256 equals the
 slice's images.sha256 row).

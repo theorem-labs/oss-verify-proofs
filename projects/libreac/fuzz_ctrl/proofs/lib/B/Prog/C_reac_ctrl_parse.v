@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac_ctrl_parse (0x83e04) of fuzz_ctrl's AsanUbsan build (image B, libreac v1.9.0): its contract, in the
    caller-journal form (it writes the caller's `struct reac_ctrl_parsed` when o <> 0).  The function takes a
    side-stack frame of class 1, calls __asan_memset once, __asan_memcpy twice, the bcmp wrapper (through
    __interceptor_trampoline_bcmp) once and kind_of_link1 once; the return code and the 36 bytes it writes are the
-   model `ctrlparse` (lib/Prog/RcParse.v).  Image-B twin of lib/A/Prog/C_reac_ctrl_parse.v (55301a93133): the same
+   model `ctrlparse` (lib/Prog/RcParse.v).  Image-B twin of lib/A/Prog/C_reac_ctrl_parse.v: the same
    text with the segment term, the entry constant and the stack window taken from image B.
    STATEMENTS ONLY: this file holds the Definitions three other lanes cite.  The walk `pb_reac_ctrl_parse` and the
    Section hypotheses it needs (AR_laws, PALib, the intrinsic realizers, the .str.4 globals) live in the proof file

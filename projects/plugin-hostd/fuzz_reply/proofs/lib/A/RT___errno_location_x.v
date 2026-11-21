@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: the runtime site contract aerrno_realizes (lib/A/W_sites.v) proved for
    fuzz_reply.asan's musl __errno_location at 0x8c9a8. *)
 (* Modified by Theorem Labs, 2026-10-29: from lib/A/RT___errno_location.v, as the module RT___errno_location_x: cut to the proof of rt___errno_location (the helper lemmas are used by Import) and restated over a generic allocator invariant ARx under lib/Rt/RTx.v's rt_laws (rt___errno_location_x); the corollaries rt___errno_location_of_x (rt___errno_location's statement, unchanged) and rt___errno_location_cf added. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/RT___errno_location.v's runtime contract rt___errno_location restated
    over a generic allocator invariant ARx (ghost head set Hp threaded) under the five-law record rt_laws of
    lib/Rt/RTx.v (a Theorem Labs lane's, the one record for both images: rtl_frame, rtl_stack, rtl_const, rtl_layout,
@@ -10,7 +11,7 @@
    W_sites_x.v's aerrno_realizes_x; the proof of rt___errno_location_x is RT___errno_location.v's with AR -> ARx
    (am_layout of proj1 HAR -> rtl_layout, al_frame / al_stack -> rtl_frame / rtl_stack, RT_kit / RT_post's AR lemmas
    -> their _x forms there).
-   Measured (lines at a working branch 9b1367c7fe1): the original reads AR through
+   Measured (lines at a working branch): the original reads AR through
    al_frame (RT___errno_location.v:112) only; no ARm field; the three-law note (RESUME.md:116-122 sha256 704eb9d3afa6; internal record) did not
    count the ARm fields, hence the record's rtl_layout and rtl_const_cells.
    At the end: rt___errno_location_of_x, whose statement is byte for byte RT___errno_location.v's

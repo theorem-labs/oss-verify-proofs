@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the stack floors handed to callees and runtime calls are measured by STACK_SPAN, the 0x5D0000-byte span the start state guarantees below the start's stack pointer, instead of 8 MiB. *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -118,7 +119,7 @@ Definition setcap_cps : Prop :=
   In (THIS, 96) (rt_live RT Σ) -> THIS mod 8 = 0 -> rw_cells asegs m THIS (impl_cells vptr nsi p12 (Z_to_bv 64 0) p24 cap0 rest) ->
   Z.of_nat (length (rt_live RT Σ)) < LIVE_MAX -> mcost (sc_idx cap) <= rt_credit RT Σ ->
   ART RT Σ m -> mem_inv asegs m ->
-  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_WIN <= lo -> lo + 80 + RT_STACK <= bv_unsigned sp ->
+  stk asegs m lo (bv_unsigned sp) -> rt_sp0 RT Σ - STACK_SPAN <= lo -> lo + 80 + RT_STACK <= bv_unsigned sp ->
   bv_unsigned sp + 16 <= USTACK_TOP -> bv_unsigned sp mod 16 = 0 -> frm0 fc ->
   cps_f (ASTA RT Σ PMc (eq (entry_st ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11
                                        t3 t4 t5 t6 F fc e_setcap m)))
@@ -185,7 +186,7 @@ Proof using AF NEWA AFC.
     assert (FPW : fp_client RT Σ1 lo [(usp - 48, usp); (THIS, THIS + 96); (p, p + 4)]).
     { constructor; [left; cbn [fst snd]; ul|]. constructor; [right; left; exists THIS, 96; cbn [fst snd]; split; [exact INT1| lia]|].
       constructor; [right; left; exists p, (sc_idx cap); cbn [fst snd]; split; [exact INP1| lia]| constructor]. }
-    assert (LOW1 : rt_sp0 RT Σ1 - STACK_WIN <= lo) by (rewrite SP1; exact LOW).
+    assert (LOW1 : rt_sp0 RT Σ1 - STACK_SPAN <= lo) by (rewrite SP1; exact LOW).
     assert (SHZ2 : sc_shz [(usp - 48, usp); (THIS, THIS + 96); (p, p + 4)] m2 THIS p).
     { intros m' MU WM. pose proof (art_fp_client RT AF Σ1 m2 m' lo _ ART2 LOW1 FPW MU WM) as ART'. split.
       - exact (shz_live RT AF Σ1 m' THIS 96 ART' INT1 T8).

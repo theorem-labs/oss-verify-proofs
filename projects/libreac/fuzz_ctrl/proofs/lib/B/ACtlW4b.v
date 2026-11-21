@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/openssl/bignum/lib/BnP/BnKit2.v, with its module paths and module names changed; 1014 of its 1028 lines of code are new or changed and 33 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Prog/tx_put.v, with its module paths and module names changed; 2422 of its 2466 lines of code are new or changed and 984 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/ACtlW3a.v, with its module names changed; 4006 of its 4152 lines of code are new or changed and 2320 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/B/ACtlW4b.v -- piece W4b (frame turn, part 2: S_F7 .. S_F12_298) of fuzz_ctrl image B's (asan-ubsan) walk of
    LLVMFuzzerTestOneInput in the released cgif_file_fuzzer form.  Stage file written by a Theorem Labs lane on
    a Theorem Labs lane's frozen interface (ACtlCut.v / ACtlCutP.v / ACtl.v).
@@ -39,7 +40,7 @@
    CALLEES (route (C): the `_on` forms, shadow premise dropped), cited by their CLOSED theorems
    (Required qualified): record_sum_closesF_on.record_sum_closes_holds_F_on, reac_identity_ingestF
    .reac_identity_ingest_F_holds_on, reac_ctrl_kind_name_F.reac_ctrl_kind_name_holds_F_on; __asan_memcpy by AMEMCPY +
-   B.ProgWorld.ctl_post_memcpy; F12F's run by a Theorem Labs lane's F12F.f12_pre_F_on (5f08e560663).  Bridges by proved
+   B.ProgWorld.ctl_post_memcpy; F12F's run by a Theorem Labs lane's F12F.f12_pre_F_on.  Bridges by proved
    lemmas: ProgBridge.fevt_of_evtF, ProgBridge.img_vis_W, w4b_wx (the Section hypotheses Hwx / tfibsegs_rsegs / RTP /
    rt_of_core stay in the header, unused by the proofs; the former FEVT / img_vis_W hypotheses are deleted: the two
    lemmas state them up to conversion, Reusable.YB1v.tfibsegs = B.Img0.rsegs by B.ProgBridge.tfibsegs_rsegs,
@@ -51,7 +52,7 @@
      by the CITED B.ProgWorld.ctl_post_memcpy (lib/B/ProgWorld.v:765; RTPOST-SHARED-B.txt's 15:40Z swap).
    - ctl_kind_name_shadow_vis (seg_F7, F8, F12, F12_298), ctl_kind_name_str_shadow, ctl_kind_name_addressable,
      ctl_kind_name_not_owned (seg_F9): shared RTPOST-SHARED-B.txt (a working note, not in this delivery) texts, owner a Theorem Labs lane (the first three proved in
-     lib/B/ProgBridgeData.v at a working branch fbe168f4d89; the top discharges them).
+     lib/B/ProgBridgeData.v at a working branch; the top discharges them).
    - TFIB_SYMS, RELRO_IMG, RO_OFL (seg_F9, seg_F12, seg_F12_298): the premises of ctl_rt_C_of_AR and of
      arodata_ok_journalP (RTPOST-SHARED-B.txt's ctl_rt block, VIS0 / OWNED_RO deleted by route (C)); the top
      discharges them (CtrlB_syms, relro_img_CtrlB, RO_OFL by computation).
@@ -60,8 +61,8 @@
      a2..a4 = fr + 256 / 272 / 304).  Owner a Theorem Labs lane; discharged by its pb_reac_ctrl_identity_reply.
 
    PROVENANCE: cut table cut-table-B.tsv rows 47-53 (a working note, not in this delivery); plan (a working note, not in this delivery) 2.3 rows 47-53, 6.2
-   rows S_F10 / S_F11, F.4.1 rows 19-24; the `_F` runs of a Theorem Labs lane (lib/B/Prog/Seg/F7F.v .. F12F.v), source runs at
-   3803efccea0 (F7-F12); objdump L84900-L85020. *)
+   rows S_F10 / S_F11, F.4.1 rows 19-24; the `_F` runs of a Theorem Labs lane (lib/B/Prog/Seg/F7F.v .. F12F.v), source runs
+    (F7-F12); objdump L84900-L85020. *)
 
 From Stdlib Require Import ZArith List Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -79,7 +80,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Frame Cells Step Mem.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require B.Img0 B.ACtlK B.ACtlCut B.ACtlCutP.
 (* a Theorem Labs lane's published `_F` modules (Required qualified, never Imported, a Theorem Labs lane 23:38Z). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog.Seg Require F7F F8F F9F F10F F11F F12F.
-(* record_sum_closes' `_on` footprint contract and its proof (a Theorem Labs lane, 3ea30e6571b: the accepted contract_F with
+(* record_sum_closes' `_on` footprint contract and its proof (a Theorem Labs lane: the accepted contract_F with
    the shadow premise dropped), Required qualified. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require record_sum_closes_c record_sum_closes_c_on.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require record_sum_closesF_on.
@@ -94,7 +95,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require B.Prog.SlotModel Prog.RcRepl
    F29F / F30F / F34F Require it), for a run whose premise is mem_inv. *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib Require B.MemNorm B.MemNormF.
 (* The footprint contracts of the two lifted callees, `_on` forms (route (C), Required qualified): reac_ctrl_kind_name
-   (0x83d98; a Theorem Labs lane 924cd2205f6) and reac_identity_ingest (0x87e0c; a Theorem Labs lane ebcd94ed838). *)
+   (0x83d98; a Theorem Labs lane) and reac_identity_ingest (0x87e0c; a Theorem Labs lane). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require reac_ctrl_kind_name_c reac_ctrl_kind_name_F.
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.B.Prog Require reac_identity_ingest_c reac_identity_ingestF.
 (* seg_F9's cut call of reac_ctrl_identity_reply: a Theorem Labs lane's shared world spec (statement only), and the pieces of

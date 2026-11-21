@@ -1,6 +1,6 @@
 (* asan_memcpy_contract_F (asan_memcpy_cF.v, form (D)) by route 1 (ROUTE1.md (a working note, not in this delivery)), in the shape of
-   lib/A/Prog/asan_memsetF.v (12ba3e8fb44): the run of this unit's own plain proof asan_memcpy_holds
-   (lib/A/Prog/asan_memcpy.v, from f1efc0a0749) on the restricted memory normalize_P m, where P keeps
+   lib/A/Prog/asan_memsetF.v: the run of this unit's own plain proof asan_memcpy_holds
+   (lib/A/Prog/asan_memcpy.v) on the restricted memory normalize_P m, where P keeps
      - the image [IMG_LO, IMG_HI) (code, GOT cells, the runtime cells of BzW.icells and BzR.m2s_cells),
      - the helper's frame [sp - 2224, sp),
      - the N bytes at D and the N bytes at S,

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (mprotect_safe_b takes the whole model, and nstep_mprotect_rw_safe handles its new vDSO-reservation check). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType Fs State Monad Specs Run.
@@ -17,7 +18,7 @@ Context {CE : Ceiling}.
 Lemma nstep_mprotect_rw_safe : forall addr mo rsp mo' evs,
   (0 <= addr)%Z -> (addr + 4096 < 2^64)%Z -> (addr mod 4096 = 0)%Z ->
   Nodes.nstep (NMprotect addr 4096 3) mo rsp mo' evs ->
-  mprotect_safe_b (Z_to_bv 64 addr) (Z_to_bv 64 4096) (Z_to_bv 64 3) (m_vmmaps mo) = true.
+  mprotect_safe_b (Z_to_bv 64 addr) (Z_to_bv 64 4096) (Z_to_bv 64 3) mo = true.
 Proof.
   intros addr mo rsp mo' evs Ha0 Ha1 Hal H.
   apply Nodes.nstep_mprotect_iff in H. unfold check_mprotect in H. unfold mprotect_safe_b.
@@ -27,6 +28,8 @@ Proof.
   rewrite (unsigned_lit 4096) in * by lia. change (page_round_up_Z 4096) with 4096%Z in *.
   replace (two_pow_64 <=? addr + 4096)%Z with false in * by (symmetry; apply Z.leb_gt; unfold two_pow_64; lia).
   change (mprotect_modeled_b (Z_to_bv 64 3)) with true in *. cbn [negb] in H. cbv iota zeta in *.
+  destruct (region_free (vdso_reserved (m_kernel mo) (vdso_top (m_vmmaps mo))) (Z_to_bv 64 addr) (Z_to_bv 64 4096));
+    [cbn [negb andb] in * | cbn [negb] in H; cbv iota in H; discriminate H].
   destruct (map_contains (vm_noaccess (m_vmmaps mo)) (Z_to_bv 64 addr) (Z_to_bv 64 4096)
             && map_contains (vm_maps (m_vmmaps mo)) (Z_to_bv 64 addr) (Z_to_bv 64 4096)); [reflexivity|].
   cbn [orb].
@@ -59,7 +62,7 @@ Qed.
 Lemma node_decided_mprotect_rw : forall addr mo,
   (0 <= addr)%Z -> (addr + 4096 < 2^64)%Z -> (addr mod 4096 = 0)%Z ->
   mprotect_budget_ok mo (Z_to_bv 64 addr) (Z_to_bv 64 4096) = true ->
-  mprotect_safe_b (Z_to_bv 64 addr) (Z_to_bv 64 4096) (Z_to_bv 64 3) (m_vmmaps mo) = true ->
+  mprotect_safe_b (Z_to_bv 64 addr) (Z_to_bv 64 4096) (Z_to_bv 64 3) mo = true ->
   node_decided (NMprotect addr 4096 3) mo.
 Proof.
   intros addr mo H1 H2 H3 H4 H5. destruct (grant_exists_mprotect_rw addr mo H1 H2 H3 H4 H5) as (eff & mo' & evs & Hn & Hr).

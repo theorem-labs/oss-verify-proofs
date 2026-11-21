@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YN19.v, with its module paths and numbers changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed lits, midrep_fmN). *)
 From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.U.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -33,7 +34,6 @@ Ltac inlist := cbn; repeat (first [left; reflexivity | right]).
 Ltac lits := unfold LOCK, CTX, LIBC, ERRNO, TP, GOT, GUARD, SCT, SCNT, MCNT, ASF, DEB, src0_D_malloc_lock, src0_D_malloc_context, src0_D_libc, src0_tp,
 src0_D_got_stack_chk_guard, src0_D_stack_chk_guard, src0_D_size_classes, src0_D_small_cnt_tab, src0_D_med_cnt_tab, src0_D_debruijn32 in *.
 Section e. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
-Context {AM : AllocMode}.
 Lemma rom_tabs : forallb (fun i => match seg_rom src0segs (Z_to_bv 64 (DEB + i)) with Some _ => true | None => false end) (zseq 0 255) = true.
 Proof. vm_compute. reflexivity. Qed.
 Lemma src0_tabs_img : forall x, DEB <= x < DEB + 255 -> in_img B x.
@@ -1147,7 +1147,7 @@ destruct (Wlow _ Wx) as [Hlo|[Hi|(q & Hq & Hqx & _)]]; [unfold CTX_SIZE in *; li
 -- destruct (key_rangeq (hd m ms) (CTX + off + Z.of_nat kk) (Kh0 Hne) ltac:(lia)) as (NI & _). apply NI. apply (so_ctx_img _ SO). change (ms_ctx B) with CTX. unfold CTX_SIZE in *. lia.
 -- destruct (key_rangeq (last ms m) (CTX + off + Z.of_nat kk) (Khp Hne) ltac:(lia)) as (NI & _). apply NI. apply (so_ctx_img _ SO). change (ms_ctx B) with CTX. unfold CTX_SIZE in *. lia.
 * destruct (key_rangeq q (CTX + off + Z.of_nat kk) Hq Hqx) as (NI & _). apply NI. apply (so_ctx_img _ SO). change (ms_ctx B) with CTX. unfold CTX_SIZE in *. lia. }
-pose proof (YN2i.ledger_same B L' sq md' (mid_ledger _ _ _ _ _ HM) (mid_ledgerx _ _ _ _ _ HM) sf md' Srg Sbrk eq_refl eq_refl eq_refl) as [LG2 LX2].
+pose proof (YN2i.ledger_same B L' sq md' (mid_ledger _ _ _ _ _ HM) (mid_ledgerx _ _ _ _ _ HM) sf md' Srg Sbrk eq_refl eq_refl eq_refl eq_refl) as [LG2 LX2].
 split.
 - exact SO.
 - exact MR'.

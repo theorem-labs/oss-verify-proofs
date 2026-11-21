@@ -2,6 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Rares Buhai, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/YM05.v, with its module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the allocation limit carried in the run's ceiling record). *)
 From OSSVerify.Proofs.reac_repacer.fuzz_lock.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase State.
@@ -16,7 +17,8 @@ Lemma CEIL_MAX_eq : 140737479966720 = sp_window_hi - stack_max_size.
 Proof. reflexivity. Qed.
 Class RunCeil := {
 alloc_ceiling : Z;
-alloc_ceiling_val : CEIL_MIN <= alloc_ceiling <= CEIL_MAX /\ alloc_ceiling mod 4096 = 0
+alloc_ceiling_val : CEIL_MIN <= alloc_ceiling <= CEIL_MAX /\ alloc_ceiling mod 4096 = 0;
+rc_lim : Z
 }.
 Lemma alloc_ceiling_value {rc : RunCeil} : CEIL_MIN <= alloc_ceiling <= CEIL_MAX /\ alloc_ceiling mod 4096 = 0.
 Proof. exact alloc_ceiling_val. Qed.
@@ -45,16 +47,16 @@ split.
 - rewrite CEIL_MIN_eq. apply page_floor_ge; [reflexivity| lia].
 - rewrite CEIL_MAX_eq. etransitivity; [apply page_floor_le|]. lia.
 Qed.
-Definition RunCeilOf (sp0 : Z) (H : sp_window_lo <= sp0 <= sp_window_hi) : RunCeil :=
-{| alloc_ceiling := run_ceil sp0 ; alloc_ceiling_val := run_ceil_ok sp0 H |}.
+Definition RunCeilOf (sp0 : Z) (H : sp_window_lo <= sp0 <= sp_window_hi) (lim : Z) : RunCeil :=
+{| alloc_ceiling := run_ceil sp0 ; alloc_ceiling_val := run_ceil_ok sp0 H ; rc_lim := lim |}.
 Definition ceil_of_top {rc : RunCeil} (top : Z) : Prop := alloc_ceiling = page_floor top.
 Lemma grant_below_ceil {rc : RunCeil} : forall top e,
 ceil_of_top top -> e mod 4096 = 0 -> e <= top -> e <= alloc_ceiling.
 Proof. intros top e -> He Hle. apply page_floor_ge; assumption. Qed.
 Lemma ceil_le_top {rc : RunCeil} : forall top, ceil_of_top top -> alloc_ceiling <= top.
 Proof. intros top ->. apply page_floor_le. Qed.
-Lemma ceil_of_top_run {sp0 : Z} (H : sp_window_lo <= sp0 <= sp_window_hi) :
-@ceil_of_top (RunCeilOf sp0 H) (sp0 - stack_max_size).
+Lemma ceil_of_top_run {sp0 : Z} (H : sp_window_lo <= sp0 <= sp_window_hi) {lim : Z} :
+@ceil_of_top (RunCeilOf sp0 H lim) (sp0 - stack_max_size).
 Proof. reflexivity. Qed.
 Ltac rc_inst :=
 repeat match goal with

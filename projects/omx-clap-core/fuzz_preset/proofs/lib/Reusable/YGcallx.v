@@ -23,6 +23,7 @@
    free_leaf_x and free_leaf_xA lose their last conjunct, the memnorm keep (YAkMemnorm.memnorm segs mem ->
    YAkMemnorm.memnorm segs mem'), as YG0dcf.v's malloc_leaf_cf / free_leaf_cf lost theirs; each now ends with the
    errno keep and the raw frame. No rule of this file read that conjunct. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Theorem Labs, 2026-10: the allocator CALL FORMS and the malloc / free CALL-SITE RULES, GENERIC over the allocator
    invariant ARx of YCbqG.v (Section Variables segs B PST ARx). No allocator instance, no image class, no address and
    no ledger is named here; YGcallcf.v shows that the cf instance's forms (YG0dcf.v) are these at ARx := ARcf.
@@ -47,7 +48,7 @@
       reads four facts off its token `atok true t Q` (asafe t, agprog t, is_spin t = false, and Q on every apath);
       the record states those four facts, not a token, so the instance supplies them from its own token (cf:
       atok_cf, YGcfTok.v, whose areq_ok_cf admits the error-buffer KMmapSec plain atok refuses; YGcallcf.v
-      alloc_model_laws_x_cf). The posts keep only what the rules read from malloc_post / free_post (YG01.v:449-461):
+      alloc_model_laws_x_cf). The posts keep only what the rules read from malloc_post / free_post (YG01.v:450-462):
       the secondary list does not shrink (cgif: secs_ext, read only through its length), the frames are kept, the
       blocks change by the call's own block, and the event count does not go down (cgif's `st_nev s' = st_nev s + 1`
       is NOT kept: an instance's model may tick several times in one call; the journal's relative count k then grows

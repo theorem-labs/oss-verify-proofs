@@ -1,8 +1,9 @@
-(* Port-from: origin/cold/c-asan-rt-stateio-n 840c4afa7e2 proofs/omx-clap-core/fuzz_state/lib/A/Ox/F80_002.v.
+(* Port-from: proofs/omx-clap-core/fuzz_state/lib/A/Ox/F80_002.v.
    Changes (R1Str, 2026-10-29): module path fuzz_state -> fuzz_reply; no address numerals. *)
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* [comment removed for export] *)
 Require OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.A.Ox.F80_001.
 From Stdlib Require Import PArray Uint63.

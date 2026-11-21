@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset, image B (ASan+UBSan build, #102 B' pin d663f82d7f48, unstripped twin c90d4fa54d43; donor pin f8f98a95; Reusable/YB1v.v AsanUbsan tfibsegs): the memcpy interceptor (__wrap_memcpy trampoline -> ___interceptor_memcpy) over the generic allocator relation ARx with the
    ghost head list hps, plus the memnorm keep - c-libc-stdio's restatement (route (a), the snprintf chain's kind) of
    preset's cgif-relocated walk lib/Reusable/YE31.v (memcpy_icpt_realizes, form AR), for the row texts YGcallMxmn.aintrin_realizes_xm
@@ -20,9 +21,9 @@
    whose variables are theirs (their Local Notations named YE30.v's lemmas at these variables; here the names are
    this Section's own lemmas). Image numerals: only those of the copied text (MC_SCR, the pc literal of the
    theorem), each as YE31.v / YE30.v state them.
-   #102 B' (c-libc-stdio rows102): this file is origin/cold/c-libc-stdio-rows-cpy 532cf8bd849e's lib/AU/PRowCpyI.v (blob b62cfe30dd04),
+   #102 B' (c-libc-stdio rows102): this file is a commit's lib/AU/PRowCpyI.v (blob b62cfe30dd04),
    relocated B (asan-ubsan f8f98a95, twin 3b5e1a09) -> B' (asan-ubsan d663f82d7f48, twin c90d4fa54d43) by the frozen
-   alreloc c4338d099cfb8025 (cold/c-asan-tools d99acc3edd9; staged at lib/B/AU, as alreloc requires for asan-ubsan),
+   alreloc c4338d099cfb8025 (staged at lib/B/AU, as alreloc requires for asan-ubsan),
    every moved value checked against the B -> B' map b-to-bprime.tsv 5a684bb2 (bmap_b2bp.py 27b4c628 for values outside
    its population): no numeral moved (the walk names its addresses through YImgCellsB); the 36 instruction words (icpt_ld8 operands 505731 / 538627) kept by --resolve and the bound 0x200000 kept. The code part comes from the tree's Reusable/YE30.v (blob 4b90275460a8, B' through YImgCellsB) over the #102 image record
    Reusable/YB1v.v b8d05529c744, Reusable/YF0l.v 4a405a3dba65, Reusable/YF0m.v f82202ebccdf, Reusable/YE34.v cc3d7182c344, Reusable/YImgCellsB.v f1cc7493a79d, Reusable/YImgTop.v d2a97d3111ce (IMG_TOP_B 0x601000).

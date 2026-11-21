@@ -7,13 +7,14 @@
    W_sites_x.v's aerrno_realizes_x; the proof of rt___errno_location_x is RT___errno_location.v's with AR -> ARx
    (am_layout of proj1 HAR -> rtl_layout, al_frame / al_stack -> rtl_frame / rtl_stack, RT_kit / RT_post's AR lemmas
    -> their _x forms there).
-   Measured (lines at a working branch 9b1367c7fe1): the original reads AR through
-   al_frame (RT___errno_location.v:112) only; no ARm field; the three-law note (RESUME.md:116-122 sha256 704eb9d3afa6; internal record) did not
+   Measured (lines at a working branch): the original reads AR through
+   al_frame (RT___errno_location.v:113) only; no ARm field; the three-law note (RESUME.md:116-122 sha256 704eb9d3afa6; internal record) did not
    count the ARm fields, hence the record's rtl_layout and rtl_const_cells.
    At the end: rt___errno_location_of_x, whose statement is byte for byte RT___errno_location.v's
    rt___errno_location, from the twin at cgif's AR (ARx := FCiface.AR_nohp, laws RTx.rt_laws_AR); and
    rt___errno_location_cf, the twin at ARx := ARcf with the laws from AR_laws_cf (RTx.rt_laws_cf). *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/RT___errno_location_x.v at commit 6b4f6082575, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/RT___errno_location_x.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

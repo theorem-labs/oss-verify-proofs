@@ -1,8 +1,9 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
-(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/Prog/LLVMFuzzerTestOneInput_c.v at bc49657c087a; module path, this image's values, LLVM_K from check_inject. *)
+(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/Prog/LLVMFuzzerTestOneInput_c.v; module path, this image's values, LLVM_K from check_inject. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_egress/lib/Prog/LLVMFuzzerTestOneInput_c.v, with its module paths, module names and addresses changed; 40 of its 62 lines of code are new or changed and 45 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* LLVMFuzzerTestOneInput (fuzz_link.c:764-790), UBSAN build: the slot. One driver call runs at most
    48 operations and answers 0.
 
@@ -36,7 +37,7 @@
    `(forall a, in_globals llvm_G a -> in_globals frame_G a)` cannot hold until frame_G is widened to
    link`s six globals; the same note as the plain twin (link/CONTRACTS.md section 3 item 6).
    The model block, calloc(1, 8856) at 0x13be0, and the marks block, calloc(1, 516) at 0x13bf0, are
-   both inside the frame's calloc_contract, which asks m * n < 2 ^ 62 (lib/U/Contract.v:153; the
+   both inside the frame's calloc_contract, which asks m * n < 2 ^ 62 (lib/U/Contract.v:154; the
    calloc lane lifted it from 4096). `llvm_calloc_model` below is calloc_contract for m = 1,
    n = MODEL_BYTES at LLVM_CALLOC; lib/U/CallocModelGap.v proves it (zlib_llvm_calloc_model, from
    lib/U/CallocSite.v calloc_model_site), so it is no longer a premise of the contract. It gives the
@@ -145,7 +146,7 @@ Definition llvm_binds : Prop :=
   /\ ms_got_guard B = LLVM_GUARD_GOT /\ ms_guard B = LLVM_GUARD
   /\ AllocExtra B MR.
 
-(* calloc_contract (lib/U/Contract.v:150-159) for calloc(1, MODEL_BYTES) at 0x13be0. Proved in
+(* calloc_contract (lib/U/Contract.v:151-160) for calloc(1, MODEL_BYTES) at 0x13be0. Proved in
    lib/U/CallocModelGap.v (zlib_llvm_calloc_model), which imports this definition, so the definition
    stays while the contract no longer takes it as a premise. The start state is written
    `YK11.mkst`, the FP-aware form lib/U/Contract.v states calloc_contract in: by import order the

@@ -2,7 +2,8 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: copied from proofs/cgif/cgif_file_fuzzer/lib/A/AFg4.v, with its module paths changed; its addresses are still cgif_file_fuzzer.asan's. *)
-(* Modified by Theorem Labs, 2026-10-30: a Theorem Labs lane's B3 weakening of the Enqueue / DoRecycle walk premises (commits ba6af81cc6b + de1e889fb0f; proofs/cgif/cgif_file_fuzzer/lib/YFg4.v, file sha256 6ea02f57895e) applied at A' by a 3-way merge: base = c5 8e0ff8e049b's YFg4.v relocated cgif -> A', theirs = de1e889fb0f's YFg4.v relocated the same way, ours = this file; 1 line changed, no conflict; this file's #102 adaptations are kept. *)
+(* Modified by Theorem Labs, 2026-10-30: a Theorem Labs lane's B3 weakening of the Enqueue / DoRecycle walk premises (commits; proofs/cgif/cgif_file_fuzzer/lib/YFg4.v, file sha256 6ea02f57895e) applied at A' by a 3-way merge: base = c5's YFg4.v relocated cgif -> A', theirs = a commit's YFg4.v relocated the same way, ours = this file; 1 line changed, no conflict; this file's #102 adaptations are kept. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_preset.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.Riscv Require Import Prelude Instr Decode DecodeC Sem.

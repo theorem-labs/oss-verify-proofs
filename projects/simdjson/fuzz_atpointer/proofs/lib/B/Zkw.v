@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the stack floor raised to the 0x5D0000 bytes below sp that the launch guarantees ([STACK_GAP])). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Monad Specs Run Fs.
@@ -1086,7 +1087,7 @@ Proof.
 Qed.
 
 Lemma rim_shadow : hs_shadow_ok A ch = true -> sp0 mod 16 = 0 ->
-  stk bsegs m (sp0 - 0x800000) (uE E (eTop ch)) ->
+  stk bsegs m (sp0 - 0x800000 + STACK_GAP) (uE E (eTop ch)) ->
   shadow_rep (lay Σ0) m.
 Proof.
   intros H Hsp16 HSTKWIN. pose proof (rim_know A nx0 LIMIT SINV argH FS0 E ch R FULL model HC) as HK. unfold hs_shadow_ok in H.
@@ -1204,7 +1205,7 @@ Hypothesis HT : hs_rt_ok A ch = true.
 #[local] Notation m := (mH FULL model (rtA_allow (sigma0 A E ch model))).
 #[local] Notation sp0 := (bv_unsigned (vm_init_sp (m_vmmaps model))).
 
-Hypothesis HSTKWIN : forall top, top mod 4096 = 0 -> top < sp0 - 0xa0 + 4096 -> stk bsegs m (sp0 - 0x800000) top.
+Hypothesis HSTKWIN : forall top, top mod 4096 = 0 -> top < sp0 - 0xa0 + 4096 -> stk bsegs m (sp0 - 0x800000 + STACK_GAP) top.
 Hypothesis HDEPZ : forall h1 b, lit_of (eH1 ch) = Some h1 -> 0 <= b < 2 ^ 20 -> b <> bkt h1 -> rw_cells bsegs m (d_tab + 4 * b) [zw4 0].
 
 Lemma ri_tests : hs_lay_ok ch = true /\ hs_consts_ok ch = true /\ hs_zero_ok ch = true /\ hs_primsh_ok A ch = true

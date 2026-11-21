@@ -6,6 +6,7 @@
    (descriptors_add_s3.v's spill arm, descriptors_add_s4.v's middle segment, descriptors_add_s2.v's last segment),
    after proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v .. ACh8.v (the segment walk of cgif_close). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/plugin-hostd/fuzz_command/lib/A/Prog/descriptors_add.v, with its module paths and module names changed; 323 of its 364 lines of code are new or changed and 213 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* sup_add's walk on the ASan+UBSan build of plugin-hostd/fuzz_command (0x8a400), stage 10: the epilogue.
 
    From M9 (0x8a634, after hand_back or answer) to `ret` (0x8a724), B listing (dis-B/sup_add.s lines 143-203): buf's
@@ -21,7 +22,7 @@
    journal with no frame of its own, the callee-saved registers and sa_postQ, which M9 carries and which the epilogue
    keeps, since it writes only the frame's first word, the frame's 16 shadow bytes and the flag byte: none of them is
    a byte of g_rec, of record.spill or of a block. The donor is the A walk's stage 7 (lib/A/Prog/sup_add_s7.v on
-   a working branch 87f17ee4716). *)
+   a working branch). *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith NArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

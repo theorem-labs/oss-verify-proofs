@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the heap interface's stack-bottom premise hiA_bot <= lo: stack_malloc_text5 takes it after alloc_ceiling <= lo; lk6_tier1 is at the interface's hiA_bot and the t1_hiA_stack_malloc call passes it). *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase RiscvSemantics MemImageType State Run.
@@ -45,7 +46,7 @@ forall (ra sp gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 
 HEAPA L HIx A LB LM FR B m c ->
 (0 <= k <= 2 \/ (k = 3 /\ hl_stack_malloc L 3 <> 0 /\ Z.of_nat (length FR) < 2048)) -> 1 <= bytes <= fr_size k -> bytes mod 8 = 0 ->
 (Z.of_nat (length FR) < 4096) ->
-stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
+stk segs m lo (bv_unsigned sp) -> alloc_ceiling <= lo -> hiA_bot L HIx <= lo -> lo <= bv_unsigned sp - hl_stack_A L ->
 bv_unsigned sp mod 16 = 0 -> bv_unsigned sp < hiA_top L HIx + 64 ->
 tp = Z_to_bv 64 (hl_tp L) ->
 a0 = Z_to_bv 64 bytes ->
@@ -120,7 +121,7 @@ lk6_ck : forall c, CK J6 c -> CK lk6_J c;
 lk6_cnext : forall c c', CNEXT lk6_J c c' -> CNEXT J6 c c';
 lk6_exit : forall X c ms, AJ J6 T c ms -> AJ lk6_J X c ms;
 lk6_back : forall c ms, ~ VV c ms -> evt segs (VV c) ms -> AJ lk6_J lk6_Tn c ms;
-lk6_tier1 : QZsi.hia_tier1 L lk6_J (QZsi.ASA L H6) (QZsi.HEAPA L H6) (QZsi.hiA_top L H6);
+lk6_tier1 : QZsi.hia_tier1 L lk6_J (QZsi.ASA L H6) (QZsi.HEAPA L H6) (QZsi.hiA_top L H6) (QZsi.hiA_bot L H6);
 lk6_getrandom : forall (F : FPF) (fc : FPC), @aj_getrandom_tagged_stmt F fc segs lk6_J lk6_wit
 }.
 
@@ -133,11 +134,11 @@ AJ J6 T c0 ms0.
 Lemma kit5_stack_malloc : forall VV T (K : loop_kit6 VV T), stack_malloc_text5 L (hi5_of_v6 L H6) (lk6_J VV T K).
 Proof.
 intros VV T K. unfold stack_malloc_text5. cbn [HEAPA hi5_of_v6 hiA_top ASA].
-intros until lo. intros HP K02 BYTES MOD8 FRL ST LO LOS SPA HT TP A0 KK HGP.
+intros until lo. intros HP K02 BYTES MOD8 FRL ST LO HBT LOS SPA HT TP A0 KK HGP.
 destruct HP as (B6 & HP6 & LK).
 assert (GP : gp = Z_to_bv 64 (hl_gp L)) by exact HGP.
-eapply (QZsi.t1_hiA_stack_malloc L _ _ _ _ (lk6_tier1 VV T K)) with (B := B6) (k := k) (bytes := bytes) (lo := lo);
-[ exact HP6 | exact K02 | exact BYTES | exact MOD8 | exact FRL | exact ST | exact LO | exact LOS | exact SPA | exact HT | exact TP | exact GP | exact A0 | ].
+eapply (QZsi.t1_hiA_stack_malloc L _ _ _ _ _ (lk6_tier1 VV T K)) with (B := B6) (k := k) (bytes := bytes) (lo := lo);
+[ exact HP6 | exact K02 | exact BYTES | exact MOD8 | exact FRL | exact ST | exact LO | exact HBT | exact LOS | exact SPA | exact HT | exact TP | exact GP | exact A0 | ].
 intros ms' m' A' Fr RS ST' HPR FRNZ BLK SHB HP'.
 eapply (KK ms' m' c A' Fr RS (model_vm_only_refl _) ST' HPR FRNZ BLK SHB).
 - eexists; split; [exact HP' | exact LK].
@@ -149,7 +150,7 @@ Proof.
 intros VV T K. unfold frame_release_text5. cbn [HEAPA hi5_of_v6 hiA_top ASA].
 intros until rX. intros HP HIN BYTES FPR REG RXNZ CODE KK HGP.
 destruct HP as (B6 & HP6 & LK).
-eapply (QZsi.t1_hiA_frame_release L _ _ _ _ (lk6_tier1 VV T K)) with (B := B6) (Fr := Fr) (k := k) (fp := fp) (rX := rX);
+eapply (QZsi.t1_hiA_frame_release L _ _ _ _ _ (lk6_tier1 VV T K)) with (B := B6) (Fr := Fr) (k := k) (fp := fp) (rX := rX);
 [ exact HP6 | exact HIN | exact BYTES | exact FPR | exact REG | exact RXNZ | exact CODE | ].
 intros m' A' HP' AGR WV.
 eapply (KK m' c A'); [ apply model_vm_only_refl | eexists; split; [exact HP' | exact LK] | exact AGR | exact WV | exact HGP ].

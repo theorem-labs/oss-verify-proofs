@@ -1,16 +1,17 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: satisfiability witnesses for the hypotheses image B's ARx SEG_EXIT
    (lib/B/W_LLVMFuzzerTestOneInput_exit_x.v) exports and the AR text did not have, at TWO instances where cut_x's
    HP0 (`ARx ly S Hp W mem md -> Hp = []`) ALSO holds, so each instance satisfies the Section as a whole:
    (1) Section ar0, ARx := W_journal_x.v's ARi0 = AR /\ Hp = [] (a Theorem Labs lane's HP0 ruling), PST := []:
      HP0 (ARi0_hp0), HPST, BLKN / BLKM (AR's al_blocks, MALLOC_MAX = 2 ^ 28), WFL (WFx := Wf (as_universe B),
-     AR's am_wf) and SFREE (the kit's W_frame_x.v:1008 SFREE_AR, from model_laws).
-   (2) Section cf, the consumer's own instance: ARx := ARcf segs B /\ Hp = [] (bint-fp2 9dbe30ddcba
-     lib/B/W_LLVMFuzzerTestOneInput_top_x.v:93 ARX), PST := [], at ANY cf parameters (generic in {ci} {cp}):
-     HP0 (proj2), HPST, BLKN / BLKM (YG0dcf.v alc_blocks + YG08cf.v:68 cf_malloc_max_bound), WFL (WFx := Wf_cf,
-     YGcallcf.v:116 ARx_wf_law_cf_x) and SFREE (YG05cf.v:109 stack_free_ok_cf).  Its one premise LCF : AR_laws_cf
-     segs B is the laws record, proved for fuzz_reply's image B as bint-fp2's Reusable/YG0lawscf.v:26 AR_laws_ok_cf.
+     AR's am_wf) and SFREE (the kit's W_frame_x.v:1009 SFREE_AR, from model_laws).
+   (2) Section cf, the consumer's own instance: ARx := ARcf segs B /\ Hp = [] (bint-fp2
+     lib/B/W_LLVMFuzzerTestOneInput_top_x.v:94 ARX), PST := [], at ANY cf parameters (generic in {ci} {cp}):
+     HP0 (proj2), HPST, BLKN / BLKM (YG0dcf.v alc_blocks + YG08cf.v:69 cf_malloc_max_bound), WFL (WFx := Wf_cf,
+     YGcallcf.v:117 ARx_wf_law_cf_x) and SFREE (YG05cf.v:110 stack_free_ok_cf).  Its one premise LCF : AR_laws_cf
+     segs B is the laws record, proved for fuzz_reply's image B as bint-fp2's Reusable/YG0lawscf.v:27 AR_laws_ok_cf.
    (A first version of this file witnessed at ARi = AR with Hp ignored, where HP0 is false; the fresh review of
    2026-10-29 found that, and this file now uses only instances where HP0 holds.)
    The hypotheses the conversion carries over unchanged (XR_HGM, XRF_ERRNO, HG_SL, GWR, XRF_ROM_OUT, AZS_s) are
@@ -97,9 +98,9 @@ Section cf.
 Context {fx : YK11.FPState} {rc : YM05.RunCeil} {ci : CfImg} {cp : CfParams}.
 #[local] Notation segs := (@pa_segs _ fr_prog_listing PB_fr).
 Variable B : asyms.
-(* the cf laws record at image B: bint-fp2 9dbe30ddcba Reusable/YG0lawscf.v:26 AR_laws_ok_cf proves it *)
+(* the cf laws record at image B: bint-fp2 Reusable/YG0lawscf.v:27 AR_laws_ok_cf proves it *)
 Hypothesis LCF : AR_laws_cf segs B.
-(* the consumer's ARX (bint-fp2 lib/B/W_LLVMFuzzerTestOneInput_top_x.v:93), generic in the cf parameters *)
+(* the consumer's ARX (bint-fp2 lib/B/W_LLVMFuzzerTestOneInput_top_x.v:94), generic in the cf parameters *)
 Local Notation ARX := (fun ly S Hp (W : world segs) mem md => ARcf segs B ly S Hp W mem md /\ Hp = []).
 
 Lemma bxi_HP0_cf : forall ly S Hp (W : world segs) mem md, ARX ly S Hp W mem md -> Hp = [].

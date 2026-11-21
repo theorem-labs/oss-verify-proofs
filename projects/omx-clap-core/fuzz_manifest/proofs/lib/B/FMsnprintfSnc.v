@@ -4,7 +4,8 @@
 (* Modified by Theorem Labs, 2026-10: copy of A/AE2b.v (fwr_check_srr) re-instanced at the vsnprintf interceptor's WRITE_RANGE check (RC_ENTRY 0x44ea0 -> RC_END 0x44ef8; the shadow loads at 0x44ee8/0x44eec), over code table tbl_vsn (tbl_icpt plus 0x44dfc..0x45114), with x19 = size >= n (slow path `bnez s3`) and x10 = res kept, stated over Poison's ARU (any U); theorem vsn_wr_check_srrU. *)
 (* Modified by Theorem Labs, 2026-10: relocated to fm.asan (module paths, addresses, code table over 0x458a0); entered at 0x45a18 (the size >= res + 1 path); icpt_rodata_okU copied from FMpfsU.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_manifest/lib/A/FMsnprintfGwrc.v; 74 of its 122 lines of code are new or changed and 2714 lines of the source are left out. *)
-(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMsnprintfSnc.v at a working branch 5d8d8a15571, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* B twin (fm.asan-ubsan, pin ca61e5c9eabc0050) of lib/A/FMsnprintfSnc.v at a working branch, relocated A->B by Theorem Labs tools over the unstripped twins; every image numeral re-derived by symbol / section (a Theorem Labs lane reloc report). *)
 (* ARU forms of the memchr interceptor contract that the strnlen walks call (A/YE39.v amemchr0_realizesM with Poison's
    ARU in and out), the not-found form, and the facts the ARU ports of A/AE6x, AE6y, AE7d, AE7e, YE7f share. The range
    premises stay on the real memory `mem`, because the interceptors' shadow checks and musl's loads read it. *)

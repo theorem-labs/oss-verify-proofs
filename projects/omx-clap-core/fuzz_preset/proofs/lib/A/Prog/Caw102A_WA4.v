@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: for omx-clap-core/fuzz_preset, the CALLER-WINDOW call kit over YCbqG.v's journal
    ajournal_x (allocator invariant a parameter ARx, ghost head set Hp after S, program statics PST), generic: no image
-   class, no address, no ledger. Credit: WalkS4, lib/A/Prog/PRW_CallerJ.v at 85a188622c5 (statements and proofs taken
+   class, no address, no ledger. Credit: WalkS4, lib/A/Prog/PRW_CallerJ.v (statements and proofs taken
    from there; changes below). Donors there: cj_kept from cgif_file_fuzzer lib/YC20.v:311-325 tlzw_kept and
    lib/YC8n.v:272-287 tlzw_kept_of_journal (origin/release/pau-projects-recipes), generalised to ajournal_x's keep
    clauses; aj_call_xW from YCbqGcall.v aj_call_x (cgif YCbq.v:1845-1883 aj_call, origin/ossv/recipes).
@@ -14,10 +14,10 @@
    - START: ajournal_x_init_W, the widened journal (STK + e) (sp + e) at the entry state.
    - CALL of a caller-window callee: aj_call_xW / aj_call_xWF (callee state in mkst form), aj_call_xW_sp /
      aj_call_xWF_sp (the entry form of YCbqGcall.v's aj_call_x_sp: st_ok, ss_resv, the machine state ms).
-     The footprint side condition is YCbqG.v's own fp_sub_x (h-hpreset-7 9052c7a7d74 :688-691), whose fourth
+     The footprint side condition is YCbqG.v's own fp_sub_x (h-hpreset-7 :688-691), whose fourth
      disjunct `sp0 - STK <= a < sp0` is the caller's window: WalkS4's fp_sub_xW is that predicate, so this file
      no longer states one and ajournal_x_sub_W (the name WalkS4's callers use) is YCbqG's ajournal_x_sub.
-   - vrd_call_W: h-verbs-3's lib/A/VrdArm.v call rule (6d4cddbdff5), premise shape kept, as a corollary of
+   - vrd_call_W: h-verbs-3's lib/A/VrdArm.v call rule, premise shape kept, as a corollary of
      aj_call_xW_sp at e1 := - o.
    - aj_call_xWF_d: WalkH6's caller-window float call rule (h-walk-identity's S8aCallW.v aj_call_xWF), verbatim: no
      fwin_x for the callee and no window-kept clause on either side.
@@ -38,9 +38,10 @@
    fpostW_x_R_lift: a plain fpostW_x (journal at wle) is fpostW_xR at every R that contains wle. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/Reusable/YCbqGcallW.v, with its module names changed; 482 of its 526 lines of code are new or changed and 767 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S4_PsFree.v, with its module paths and module names changed; 466 of its 520 lines of code are new or changed and 472 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_preset lib/A, the #102 re-walk of check_as_written on image A' (ASan build), lane CawA102R: segment WA4.
    rule 24: no function proved. rule 24: proves no function (kind: segment lemma).
-   INT102-READY on the kit's cut 7cdbb61b5fa0 (prepared on the batch kit's tip e45217a4c7ba).
+   INT102-READY on the kit's cut (prepared on the batch kit's tip).
    WHAT IT PROVES: caw_wa4_holds : caw_seg_WA4 (fx := fx) B SK CTX0 P (Caw102A_Base.v), for an ABSTRACT memory
    invariant P with PLAW : srr_inv_laws segs P and PCALL : srr_inv_call segs P (the segment calls one text,
    fuzz_alloc_ran_out, whose text has no memnorm entry premise, so no srr_inv_mn). out_of_memory () inlined, from
@@ -64,7 +65,7 @@
    tcheck_as_written_specX (lib/A/PRH_FnCheck.v c40cf3fdcd2a :832-902):
    - the run-word list DW is gone (the text's binder and prh_univ_closure's argument): the Section variable DW is
      removed, so the statement is caw_seg_WA4 (fx := fx) B SK CTX0 P. This is the only statement change.
-   - caw_pre now has 27 conjuncts (Caw102A_Base.v:229-256: the room counts sec_cnt / ccnt24 follow room_live_cf, :862-863,
+   - caw_pre now has 27 conjuncts (Caw102A_Base.v:230-257: the room counts sec_cnt / ccnt24 follow room_live_cf, :862-863,
      then the hull budget and HPOS), so a positional pattern over it mis-binds: caw_pre is read BY NAME, through the
      base's projections caw_pre_fpre / _rc / _doc / _size / _data0 / _data62 / _ran / _live / _max / _frames (the parts
      this segment reads: fpre, cw_ran D = 0 at +272, and the arithmetic facts its lia steps may use).

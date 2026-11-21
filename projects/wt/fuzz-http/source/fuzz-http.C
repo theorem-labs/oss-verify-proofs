@@ -1,3 +1,4 @@
+// Modified by Theorem Labs, 2026-11-14: return -1, not 1, for an input outside the length limits.
 /*
  * Copyright (C) 2026 Emweb bv, Herent, Belgium.
  *
@@ -19,7 +20,7 @@
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
 
     if (Size < kMinInputLength || Size > kMaxInputLength) {
-        return 1;
+        return -1;
     }
 
     std::vector<char> buf(Data, Data + Size);

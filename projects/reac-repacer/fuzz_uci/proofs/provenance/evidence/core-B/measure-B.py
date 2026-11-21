@@ -84,7 +84,7 @@ def canary_index(yf0m, ye22):
     return a, hit, len(cells)
 
 
-# YE22's index into Tfib_const_abs. GRANTLIB = fuzz_grant's released lib (recipes 4f87de75d67); CORE = this unit's tree
+# YE22's index into Tfib_const_abs. GRANTLIB = fuzz_grant's released lib (recipes); CORE = this unit's tree
 if os.environ.get('GRANTLIB') and os.environ.get('CORE'):
     gl, cl = os.environ['GRANTLIB'], os.environ['CORE'] + '/lib'
     for name, yf, ye in (('fuzz_grant B (CONTROL: the donor text says 273)', gl + '/B/YF0m.v', gl + '/B/YE22.v'),

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (fx_sysret clears the abstract reservation, as the concrete sysret does). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Uint63 PrimString.
 From stdpp Require Import bitvector.
@@ -14,8 +15,15 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Open Scope Z_scope.
 
 (* [comment removed for export] *)
+(* OLD: ... (f_resv F) -- the abstract return carried the reservation across the syscall.
+   NEW: ... None.  The concrete side clears it: this tree's own [sysret] writes
+   [ms_resv := None] (LazyNodes.v:561-564, and AllocCfg.v:24-30 the same), so
+   [R]'s [R_resv] obligation at [fxs_R_sysret] is [None = option_map (dv rho) (f_resv ..)]
+   and only a cleared abstract reservation discharges it.  Every consumer that reads a
+   post-syscall [f_resv] already demands None -- BrMain.v:333, BrTrans.v:1275,
+   Br3Trans.v:414, I2ATop.v:89 -- so this narrows nothing for them. *)
 Definition fx_sysret (F : fstate) (ret : fval) (M' : itrie region) : fstate :=
-  FS (f_pc F + 4)%uint63 (iset 10%uint63 ret (f_regs F)) M' (f_resv F).
+  FS (f_pc F + 4)%uint63 (iset 10%uint63 ret (f_regs F)) M' None.
 
 (* [comment removed for export] *)
 Definition grant_clo : int := 4096.
@@ -419,7 +427,7 @@ Proof.
     + rewrite bvmap_get_set_other; [exact Hr |].
       intros Heq. subst r. unfold bv_eqb in E10. rewrite Z.eqb_refl in E10. discriminate E10.
   - reflexivity.
-  - cbn [sysret ms_resv ms_pend fx_sysret f_resv]. exact (R_resv _ _ _ _ _ HR).
+  - cbn [sysret ms_resv ms_pend fx_sysret f_resv]. reflexivity.
   - cbn [sysret ms_mem fx_sysret f_mem]. exact Hmem.
 Qed.
 

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the launch's extra reservations in the reserved ledger). *)
 (* [comment removed for export] *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -567,7 +568,7 @@ Proof.
   destruct (brk_req_sound E cs R FULL model d HC Hreq) as (D1 & D2 & D3 & Dm).
   destruct (brk_base_ok_sound E cs R FULL model d HC Hbase) as (B1 & B2 & B3 & B4).
   pose proof (brk_req_val E cs R FULL model d HC Hreq Hbase) as G10.
-  pose proof (co_res _ _ _ _ _ _ _ _ _ _ _ _ HC) as Hres.
+  destruct (co_resx _ _ _ _ _ _ _ _ _ _ _ _ HC) as (rx & Hres & Hrx & _ & _).
   pose proof (proj1 (APS.maps_match_exact nx0 (fun _ => None) (fun _ _ _ => None) (fun _ _ _ => None) (fun _ _ _ => None) E _ _ Hnf) (co_maps _ _ _ _ _ _ _ _ _ _ _ _ HC)) as Hmaps.
   pose proof (co_limit _ _ _ _ _ _ _ _ _ _ _ _ HC) as Hlim. pose proof (co_sbrk _ _ _ _ _ _ _ _ _ _ _ _ HC) as Hsbrk.
   pose proof (co_brk _ _ _ _ _ _ _ _ _ _ _ _ HC) as Hbrk.
@@ -601,9 +602,12 @@ Proof.
   set (dw := Z_to_bv 64 d). assert (Udw : bv_unsigned dw = d) by (unfold dw; apply u64_lit; unfold KHI in *; lia).
   assert (Hrf : region_free (vm_reserved h ++ vm_maps h) b dw = true).
   { apply region_free_intro. intros a sz Hin. apply in_app_iff in Hin as [Hin|Hin].
-    - rewrite Hres in Hin.
-      pose proof (proj1 (Forall_forall _ _) RES_hull _ Hin) as [R1 R2]. cbn [fst snd] in R1, R2.
-      unfold iv_overlap. apply andb_false_iff. left. apply Z.ltb_ge. lia.
+    - rewrite Hres in Hin. apply in_app_iff in Hin as [Hin|Hin].
+      + pose proof (proj1 (Forall_forall _ _) RES_hull _ Hin) as [R1 R2]. cbn [fst snd] in R1, R2.
+        unfold iv_overlap. apply andb_false_iff. left. apply Z.ltb_ge. lia.
+      + (* the launch's extra reservations start a page above [KHI], above the heap *)
+        pose proof (proj1 (Forall_forall _ _) Hrx _ Hin) as (_ & _ & _ & _ & Hk & _). cbn [fst] in Hk.
+        unfold iv_overlap. rewrite Udw. apply andb_false_iff. right. apply Z.ltb_ge. unfold KHI, page_size in *. lia.
     - rewrite Hmaps in Hin. apply in_map_iff in Hin as (m & Em & Hin).
       unfold amap_den in Em. injection Em as <- <-.
       unfold iv_overlap. rewrite Udw. apply andb_false_iff.
@@ -613,9 +617,12 @@ Proof.
   assert (Udwg : bv_unsigned dwg = d + page_size) by (unfold dwg; apply u64_lit; unfold KHI, page_size in *; lia).
   assert (Hrfg : region_free (vm_reserved h ++ vm_maps h) b dwg = true).
   { apply region_free_intro. intros a sz Hin. apply in_app_iff in Hin as [Hin|Hin].
-    - rewrite Hres in Hin.
-      pose proof (proj1 (Forall_forall _ _) RES_hull _ Hin) as [R1 R2]. cbn [fst snd] in R1, R2.
-      unfold iv_overlap. apply andb_false_iff. left. apply Z.ltb_ge. lia.
+    - rewrite Hres in Hin. apply in_app_iff in Hin as [Hin|Hin].
+      + pose proof (proj1 (Forall_forall _ _) RES_hull _ Hin) as [R1 R2]. cbn [fst snd] in R1, R2.
+        unfold iv_overlap. apply andb_false_iff. left. apply Z.ltb_ge. lia.
+      + (* the launch's extra reservations start a page above [KHI], above the heap *)
+        pose proof (proj1 (Forall_forall _ _) Hrx _ Hin) as (_ & _ & _ & _ & Hk & _). cbn [fst] in Hk.
+        unfold iv_overlap. rewrite Udwg. apply andb_false_iff. right. apply Z.ltb_ge. unfold KHI, page_size in *. lia.
     - rewrite Hmaps in Hin. apply in_map_iff in Hin as (m & Em & Hin).
       unfold amap_den in Em. injection Em as <- <-.
       unfold iv_overlap. rewrite Udwg. apply andb_false_iff.
@@ -678,6 +685,17 @@ Proof.
         fold csB; try assumption; try reflexivity.
       all: try (change (m_halted model') with (m_halted model); assumption).
       all: lazymatch goal with
+      | |- (exists _ : list (word * word), _) /\ _ =>
+          (* the heap grant is apart from the reserved ledger: the image's part ends at
+             [img_hi], the launch's extra part starts a page above [KHI] *)
+          destruct co_res0 as (Xx & Xm & Xv);
+          split; [rewrite Hvm'; unfold h'; cbn [vm_reserved]; exact Xx|];
+          split; [|rewrite Hvm'; unfold h'; cbn [vm_reserved vm_mmap_base vm_init_sp]; exact Xv];
+          rewrite Hvm'; unfold h'; cbn [vm_reserved vm_maps]; constructor; [|exact Xm];
+          apply Forall_forall; intros [a0 s0] Hin0; unfold iv_disjoint; cbn [fst snd]; rewrite Udw;
+          rewrite Hres in Hin0; apply in_app_iff in Hin0 as [Hin0|Hin0];
+          [ pose proof (proj1 (Forall_forall _ _) RES_hull _ Hin0) as [R1 R2]; cbn [fst snd] in R1, R2; right; lia
+          | pose proof (proj1 (Forall_forall _ _) Hrx _ Hin0) as (_ & _ & _ & _ & Hk & _); cbn [fst] in Hk; left; unfold KHI in *; lia ]
       | |- regs_ok _ _ _ =>
           apply regs_ok_regupd_same; [exact co_regs0 | exact G10 | intros X; apply (f_equal bv_unsigned) in X; discriminate]
       | |- know_ok _ _ _ _ =>
@@ -847,7 +865,7 @@ Proof.
   destruct (brk_req_sound E cs R FULL model d HC Hreq) as (D1 & D2 & D3 & Dm).
   destruct (brk_base_ok_sound E cs R FULL model d HC Hbase) as (B1 & B2 & B3 & B4).
   pose proof (brk_req_val E cs R FULL model d HC Hreq Hbase) as G10.
-  pose proof (co_res _ _ _ _ _ _ _ _ _ _ _ _ HC) as Hres.
+  destruct (co_resx _ _ _ _ _ _ _ _ _ _ _ _ HC) as (rx & Hres & Hrx & _ & _).
   pose proof (proj1 (APS.maps_match_exact nx0 (fun _ => None) (fun _ _ _ => None) (fun _ _ _ => None) (fun _ _ _ => None) E _ _ Hnf) (co_maps _ _ _ _ _ _ _ _ _ _ _ _ HC)) as Hmaps.
   pose proof (co_limit _ _ _ _ _ _ _ _ _ _ _ _ HC) as Hlim. pose proof (co_sbrk _ _ _ _ _ _ _ _ _ _ _ _ HC) as Hsbrk.
   pose proof (co_brk _ _ _ _ _ _ _ _ _ _ _ _ HC) as Hbrk.
@@ -947,9 +965,12 @@ Proof.
   set (dw := Z_to_bv 64 d). assert (Udw : bv_unsigned dw = d) by (unfold dw; apply u64_lit; unfold KHI in *; lia).
   assert (Hrf : region_free (vm_reserved h ++ vm_maps h) b dw = true).
   { apply region_free_intro. intros a sz Hin. apply in_app_iff in Hin as [Hin|Hin].
-    - rewrite Hres in Hin.
-      pose proof (proj1 (Forall_forall _ _) RES_hull _ Hin) as [R1 R2]. cbn [fst snd] in R1, R2.
-      unfold iv_overlap. apply andb_false_iff. left. apply Z.ltb_ge. lia.
+    - rewrite Hres in Hin. apply in_app_iff in Hin as [Hin|Hin].
+      + pose proof (proj1 (Forall_forall _ _) RES_hull _ Hin) as [R1 R2]. cbn [fst snd] in R1, R2.
+        unfold iv_overlap. apply andb_false_iff. left. apply Z.ltb_ge. lia.
+      + (* the launch's extra reservations start a page above [KHI], above the heap *)
+        pose proof (proj1 (Forall_forall _ _) Hrx _ Hin) as (_ & _ & _ & _ & Hk & _). cbn [fst] in Hk.
+        unfold iv_overlap. rewrite Udw. apply andb_false_iff. right. apply Z.ltb_ge. unfold KHI, page_size in *. lia.
     - rewrite Hmaps in Hin. apply in_map_iff in Hin as (m & Em & Hin).
       unfold amap_den in Em. injection Em as <- <-.
       unfold iv_overlap. rewrite Udw. apply andb_false_iff.
@@ -1006,6 +1027,17 @@ Proof.
         fold csB; try assumption; try reflexivity.
       all: try (change (m_halted model') with (m_halted model); assumption).
       all: lazymatch goal with
+      | |- (exists _ : list (word * word), _) /\ _ =>
+          (* the heap grant is apart from the reserved ledger: the image's part ends at
+             [img_hi], the launch's extra part starts a page above [KHI] *)
+          destruct co_res0 as (Xx & Xm & Xv);
+          split; [rewrite Hvm'; unfold h'; cbn [vm_reserved]; exact Xx|];
+          split; [|rewrite Hvm'; unfold h'; cbn [vm_reserved vm_mmap_base vm_init_sp]; exact Xv];
+          rewrite Hvm'; unfold h'; cbn [vm_reserved vm_maps]; constructor; [|exact Xm];
+          apply Forall_forall; intros [a0 s0] Hin0; unfold iv_disjoint; cbn [fst snd]; rewrite Udw;
+          rewrite Hres in Hin0; apply in_app_iff in Hin0 as [Hin0|Hin0];
+          [ pose proof (proj1 (Forall_forall _ _) RES_hull _ Hin0) as [R1 R2]; cbn [fst snd] in R1, R2; right; lia
+          | pose proof (proj1 (Forall_forall _ _) Hrx _ Hin0) as (_ & _ & _ & _ & Hk & _); cbn [fst] in Hk; left; unfold KHI in *; lia ]
       | |- regs_ok _ _ _ =>
           apply regs_ok_regupd_same; [exact co_regs0 | exact G10 | intros X; apply (f_equal bv_unsigned) in X; discriminate]
       | |- know_ok _ _ _ _ =>
@@ -1553,7 +1585,22 @@ Proof.
   specialize (HK E (regupd R (Z_to_bv 5 (Z.of_nat 10)) (Z_to_bv 64 0)) FULL' model' (conj (env_agree_refl' _ _) (env_agree_refl' _ _))).
   unfold cfg_of in HK. replace (pc cs') with (pc cs + 4) in HK by reflexivity. rewrite bv5_10. apply HK; [|reflexivity]. clear HK.
   (* [comment removed for export] *)
-  assert (PM : vm_maps (m_vmmaps model') = map_remove (vm_maps (m_vmmaps model)) addr) by reflexivity.
+  assert (PM : vm_maps (m_vmmaps model') = map_remove (vm_maps (m_vmmaps model)) addr).
+  { (* LPS 08b1429: the exact arm cuts the range ([maps_subtract]); on this ledger the cut removes
+       the one entry [amap_den E m] fills and touches no other (pem's text) *)
+    transitivity (maps_subtract (vm_maps (m_vmmaps model)) (bv_unsigned addr)
+                    (bv_unsigned addr + bv_unsigned n)); [reflexivity|].
+    apply maps_subtract_exact.
+    - pose proof (BPOS _ HIN) as Hpn. unfold amap_den in Hpn. cbn [snd] in Hpn. exact Hpn.
+    - intros pb ps Hpin. exact (BPOS (pb, ps) Hpin).
+    - intros pb ps Hpin Hpb. pose proof (UNIQ (pb, ps) Hpin Hpb) as Hpq.
+      unfold amap_den in Hpq. injection Hpq as _ Hps. exact Hps.
+    - intros pb ps Hpin Hpne.
+      assert (Hpne' : (pb, ps) <> amap_den E m).
+      { intros Hpeq. apply Hpne. unfold amap_den in Hpeq. rewrite Haddr in Hpeq.
+        injection Hpeq as Hpb _. exact Hpb. }
+      pose proof (DISJl (pb, ps) Hpin Hpne') as Hpd. cbn [fst snd] in Hpd.
+      unfold hi, lo in Hpd. lia. }
   assert (PN : vm_noaccess (m_vmmaps model') = maps_subtract (vm_noaccess (m_vmmaps model)) lo (lo + bv_unsigned n)) by reflexivity.
   assert (PL : m_vm_lazy model' = maps_subtract (m_vm_lazy model) lo (lo + bv_unsigned n)) by reflexivity.
   assert (PISP : vm_init_sp (m_vmmaps model') = vm_init_sp (m_vmmaps model)) by reflexivity.  (* [comment removed for export] *)
@@ -1623,7 +1670,7 @@ Proof.
     split; [exact Hm'|]. split; [exact Hne'|]. intros Hnf'. exact (DISJ' m' Hm' Hnf' Hne'). }
   assert (KNF : forall m', am_kind m' = KNONE \/ am_kind m' = KNONELAZY \/ am_kind m' = KRWLAZY -> is_fog m' = false).
   { intros m' Hk. unfold is_fog. destruct Hk as [-> |[-> | ->]]; reflexivity. }
-  destruct HC as [Xregs Xlog Xknow Xhalt Xfds Xfs Xtid Xres Xlimit Xmaps Xholes Xseps Xwf Xbounds Xlazyb Xnasub Xnone Xkinds Xtotsz Xsplit Xbrk Xsbrk Xeager Xabytes Xminv Xzero Xsinv Xisp Xargh Xlazyin Xnaal].
+  destruct HC as [Xregs Xlog Xknow Xhalt Xfds Xfs Xtid Xres Xlimit Xmaps Xholes Xseps Xwf Xbounds Xlazyb Xnasub Xnone Xkinds Xtotsz Xsplit Xbrk Xsbrk Xeager Xabytes Xminv Xzero Xsinv Xisp Xargh Xlazyin Xnaal Xrdr].
   destruct Hlohi as (L1 & L2 & L3 & L4 & L5).
   assert (HAeq : ALLOW E cs' = flat_map (allow1 A E) (kept ++ gone ++ a_ghost cs)) by reflexivity.
   constructor; rewrite ?HAeq; subst cs'; cbn [a_ss a_maps a_totsz a_ylo a_eager a_vis a_ghost a_abytes a_brk a_fd a_tidset kn s_regs s_log s_know s_next mk_ss];
@@ -1650,7 +1697,10 @@ Proof.
   - unfold fds_ok in *. exact Xfds.
   - exact Xfs.
   - exact Xtid.
-  - exact Xres.
+  - (* the ledger is kept and the remaining mappings are a sublist of the old *)
+    refine (AsanNodesMmLib.co_res_frame _ _ model model' eq_refl eq_refl eq_refl PISP _ Xres).
+    rewrite PM. unfold map_remove. apply Forall_forall. intros q Hq. apply filter_In in Hq as [Hq _].
+    exact (proj1 (Forall_forall _ _) (proj1 (proj2 Xres)) q Hq).
   - exact Xlimit.
   - rewrite PM. exact MAPS'.
   - (* [comment removed for export] *)
@@ -1762,6 +1812,7 @@ Proof.
     unfold amap_den in E01, E02. cbn [fst snd] in E01, E02. rewrite Haddr in E01, E02. fold n in E02. rewrite Un in E02.
     unfold lo, hi in *. lia.
   - (* [comment removed for export] *) rewrite PN. apply maps_subtract_aligned_pos; [exact W2 | exact Xnaal | exact L4 | exact L5].
+  - (* the unmap leaves the process state, and so the reader, alone *) exact Xrdr.
 Qed.
 
 

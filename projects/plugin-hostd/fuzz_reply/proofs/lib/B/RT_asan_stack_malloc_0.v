@@ -3,7 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-10: (image A's header, kept from lib/A/RT_asan_stack_malloc_0.v for provenance; image B's own is the header below) the runtime site contract of __asan_stack_malloc_0 (FakeStack class 0) on
    fuzz_reply.asan at 0x3d168, YG0d.v's astack_malloc_realizes at class 0, which W_frame.v (palf_sm0) and the core
-   consume.  Relocated from libreac/fuzz_grant's walk of the same code, a working branch c8e8b0fa5ec
+   consume.  Relocated from libreac/fuzz_grant's walk of the same code, a working branch
    proofs/libreac/fuzz_grant/lib/A/Rt/StackMalloc0Tbl.v (module SM0Tbl below) and StackMalloc0.v (the rest),
    themselves ported from proofs/cgif/cgif_rgb_fuzzer/lib/YF9p.v + YF9q.v (trb_stack_malloc_0) into
    cgif_file_fuzzer's vocabulary.  fuzz_grant's 93 words at 0x3cda4 equal fuzz_reply's at 0x3d168 except the eight
@@ -14,13 +14,14 @@
    and the T+48/T+56 cells (generated AF0m.v), fsA_rodata (RelocA's AF0r.v, checked by fsA_rodata_chk), the image
    end 6266880 -> 6270976 (TFIB_IMG_END 0x5fb000) in the low-zone bounds, GrantSyms -> TfibSyms, module paths;
    the code table adds class 0's range on top of AF0r.tbl_fs, which (unlike fuzz_grant's) does not hold it. *)
-(* Modified by Theorem Labs, 2026-10-30 (a Theorem Labs lane): copied from lib/A/RT_asan_stack_malloc_0.v (a working branch dac32c4fd94) for fuzz_reply.asan-ubsan (image B): the code addresses, the FS_FOUND literal, TP / TSD, the T+48 / T+56 cells, fsA_rodata's .got slots, TFIB_IMG_END and the module paths changed (lib.A -> lib.B; AB1v / AF0m / AF0x / AE34 / AE2y / AE2k -> YB1v / YF0m / YF0x / YE34 / YE2y / YE2k), and the code table is built on YE34.tbl_icpt with class 1's ranges in place of AF0r.tbl_fs. *)
+(* Modified by Theorem Labs, 2026-10-30 (a Theorem Labs lane): copied from lib/A/RT_asan_stack_malloc_0.v (a working branch) for fuzz_reply.asan-ubsan (image B): the code addresses, the FS_FOUND literal, TP / TSD, the T+48 / T+56 cells, fsA_rodata's .got slots, TFIB_IMG_END and the module paths changed (lib.A -> lib.B; AB1v / AF0m / AF0x / AE34 / AE2y / AE2k -> YB1v / YF0m / YF0x / YE34 / YE2y / YE2k), and the code table is built on YE34.tbl_icpt with class 1's ranges in place of AF0r.tbl_fs. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Port notes (a Theorem Labs lane): the runtime site contract of __asan_stack_malloc_0 (FakeStack
    class 0) on fuzz_reply.asan-ubsan (image B) at 0x3d1c0, YG0d.v's astack_malloc_realizes at class 0.
    RULE 24: `proof-index __asan_stack_malloc_0 0x3d1c0`: 0 released lemmas for either key; no released FUNCTION proof found. Second-agent
    check: CONFIRM (the 25 unreleased hits are all statements or symbols; in the lemma index over 17316 refs, no lib/B class-0 walk declaration, and every stack_malloc0_contract / tfib_stack_malloc_at / asm0 / ASM0 declaration is lib/A). REUSE = this port of the image-A walk of the same function.
-   SOURCE: lib/A/RT_asan_stack_malloc_0.v at dac32c4fd94 (sha256 d1b6fdcac23c; internal record, the
-   same at meet c653c819019 and prep 1f58d4146b4), image A's walk at 0x3d168 (itself relocated from libreac/fuzz_grant's
+   SOURCE: lib/A/RT_asan_stack_malloc_0.v (sha256 d1b6fdcac23c; internal record, the
+   same at meet and prep), image A's walk at 0x3d168 (itself relocated from libreac/fuzz_grant's
    StackMalloc0Tbl.v / StackMalloc0.v, from cgif_rgb_fuzzer YF9p.v / YF9q.v). The walk's text is A's; only the items
    below move, and module paths lib.A -> lib.B (AB1v AE34 AF0l AF0m AF0x AE2y AE2k W_syms W_place -> YB1v YE34 YF0l
    YF0m YF0x YE2y YE2k W_syms W_place).

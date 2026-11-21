@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (FEAS's mmap branch takes a positive length, and BUD_feas discharges the positive page-aligned length that QSpR.grant_exists now asks for, the grant being the model's linux_place_is placement; ACC_munmap_model over munmap_model's maps_subtract cut, which is fixed_destroyed_model, with that lemma's premises: disjoint entries, a nonempty cut, no wrap; the brk grow steps carry KL's ledger and vDSO facts, the new pages missing every reserved entry). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From stdpp Require gmap.
@@ -230,7 +231,13 @@ assert (Dgm : forall b0 l0, (In (b0, l0) (ld_groups L) \/ exists k, In (b0, l0, 
 b0 + mmap_len l0 <= pbrk \/ pbrk + 2 * PGSZ <= b0).
 { intros b0 l0 H. pose proof (WB b0 l0 H) as (B1 & B2 & B3 & B4 & B5 & B6).
 pose proof (region_free_disj _ _ _ _ Hrfm B4) as D. rewrite B5, B6, Upb, Ud in D. lia. }
-kl_open HK. clear Kstart. constructor; mproj; auto.
+(* LPS 727298f3: the ledger and vDSO facts move unchanged; the guard pages miss every reserved entry *)
+lazymatch goal with |- KL _ _ ?mo' =>
+destruct (kl_vdso_move md mo' (ld_resv L) ltac:(reflexivity) ltac:(reflexivity) ltac:(reflexivity) ltac:(reflexivity) ltac:(reflexivity)
+(kl_resv _ _ _ HK) (kl_resv_top _ _ _ HK) (kl_vdso_in _ _ _ HK) (kl_vdso_above _ _ _ HK)) as (Hresv & Hrtop & Hvdi & Hvda) end.
+assert (Hvdd : forall r, In r (vm_reserved (m_vmmaps md)) -> forall e, In e ((b, Z_to_bv 64 (2 * PGSZ)) :: vm_maps (m_vmmaps md)) -> edisj e r).
+{ rewrite Eb. exact (kl_vdso_disj_cons _ _ _ _ Hrf (kl_vdso_disj _ _ _ HK)). }
+kl_open HK. clear Kstart. constructor; try exact Hresv; try exact Hrtop; try exact Hvdi; try exact Hvda; try exact Hvdd; mproj; auto.
 * apply vmwf_cons; [exact Kwf| rewrite Eb, Upb, Ud; unfold PGSZ in *; lia| rewrite Eb; exact Hrfm].
 * rewrite unsigned_lit by (unfold PGSZ in *; lia). splits; [exact S1| exact S2| lia| exact S4].
 * intros b0 l0 Hin. specialize (Kgr b0 l0 Hin). unfold brk_disj in *; cbn. intuition auto with datatypes.
@@ -323,7 +330,13 @@ assert (Dgm : forall b1 l1, (In (b1, l1) (ld_groups L) \/ exists k, In (b1, l1, 
 b1 + mmap_len l1 <= b0 + l0 \/ b0 + l0 + PGSZ <= b1).
 { intros b1 l1 H. pose proof (WB b1 l1 H) as (B1 & B2 & B3 & B4 & B5 & B6).
 pose proof (region_free_disj _ _ _ _ Hrfm B4) as D. rewrite B5, B6, Upb, Ud in D. lia. }
-kl_open HK. clear Kstart. constructor; mproj; auto.
+(* LPS 727298f3: the ledger and vDSO facts move unchanged; the new page misses every reserved entry *)
+lazymatch goal with |- KL _ _ ?mo' =>
+destruct (kl_vdso_move md mo' (ld_resv L) ltac:(reflexivity) ltac:(reflexivity) ltac:(reflexivity) ltac:(reflexivity) ltac:(reflexivity)
+(kl_resv _ _ _ HK) (kl_resv_top _ _ _ HK) (kl_vdso_in _ _ _ HK) (kl_vdso_above _ _ _ HK)) as (Hresv & Hrtop & Hvdi & Hvda) end.
+assert (Hvdd : forall r, In r (vm_reserved (m_vmmaps md)) -> forall e, In e ((b, Z_to_bv 64 PGSZ) :: vm_maps (m_vmmaps md)) -> edisj e r).
+{ rewrite Eb. exact (kl_vdso_disj_cons _ _ _ _ Hrf (kl_vdso_disj _ _ _ HK)). }
+kl_open HK. clear Kstart. constructor; try exact Hresv; try exact Hrtop; try exact Hvdi; try exact Hvda; try exact Hvdd; mproj; auto.
 * apply vmwf_cons; [exact Kwf| rewrite Eb, Upb, Ud; unfold PGSZ in *; lia| rewrite Eb; exact Hrfm].
 * rewrite unsigned_lit by (unfold PGSZ in *; lia). splits; [exact S1| exact S2| lia| exact S4].
 * intros b1 l1 Hin. pose proof (Dgm b1 l1 (or_introl Hin)) as D. specialize (Kgr b1 l1 Hin).
@@ -400,6 +413,7 @@ Definition FEAS (e : ev) (md : Model) : Prop :=
 match e with
 | EMmap a len prot flags =>
 
+0 < len ->
 alloc_top (m_vmmaps md) = alloc_ceiling ->
 forall hint, exists x, grant_ok hint md x (mmap_len len) = true
 | EMprotect a len prot => forall addr n, Mprotect.mprotect_budget_ok md addr n = true
@@ -511,15 +525,12 @@ unfold fixed_destroyed_model. constructor; macc; auto.
 unfold szok. apply maps_subtract_sizes; auto. lia.
 Qed.
 
-#[using="Type"] Lemma ACC_munmap_model c md a n : 0 <= c -> ACC c md (munmap_model a n md).
-Proof.
-intros Hc. unfold munmap_model, Mmap.with_mmap_destroyed. constructor; macc; auto.
-- intros ->. reflexivity.
-- intros ->. reflexivity.
-- unfold vm_live_bytes. cbn. pose proof (live_bytes_map_remove_le (vm_maps (m_vmmaps md)) a). lia.
-- rewrite !length_app. pose proof (length_map_remove_le (vm_maps (m_vmmaps md)) a). lia.
-- intros SZ LE. apply szok_app in SZ as [S1 S2]. apply szok_app. split; [exact S1| apply szok_map_remove; exact S2].
-Qed.
+(* LPS 727298f3: munmap_model cuts vm_maps with maps_subtract (the model's mmap_fixed_destroyed_next), so it
+   is fixed_destroyed_model, and the entry count bound needs disjoint entries as there. *)
+#[using="Type"] Lemma ACC_munmap_model c md a n : 0 <= c -> pwdisj (vm_maps (m_vmmaps md)) -> 0 < bv_unsigned n ->
+bv_unsigned a + bv_unsigned n < 2^64 ->
+ACC c md (munmap_model a n md).
+Proof. intros Hc PW Hn Hhi. exact (ACC_fixed_destroyed_model c md a n Hc PW Hn Hhi). Qed.
 
 #[using="Type"] Lemma ecost_le e : esz_ok e -> ecost e <= 2^30.
 Proof. destruct e; cbn; intros H; try lia; [destruct (addr =? 0); lia|]. destruct (is_fixed flags); [lia| exact (proj2 (H eq_refl))]. Qed.
@@ -544,8 +555,10 @@ intros md e W D (B1 & B2 & B3 & B4 & B5 & B6) EK SZ HW EG. destruct e; cbn in EG
 -
 cbn in SZ. unfold ecost in B4, B3. destruct (is_fixed flags); [discriminate|]. destruct (SZ eq_refl) as [SZ0 SZ1].
 rewrite round_up_pg_eq in SZ1, B4, B3. fold (mmap_len len) in SZ1, B4, B3.
-intros Hceil hint. apply grant_exists.
+intros Hlen0 Hceil hint. apply grant_exists.
 + pose proof (round_up_pg_ge len). rewrite round_up_pg_eq in H. fold (mmap_len len) in H. split; [lia| exact SZ1].
++ pose proof (round_up_pg_ge len). rewrite round_up_pg_eq in H. fold (mmap_len len) in H. lia.
++ unfold mmap_len, page_round_up_Z, page_size. first [apply Z_mod_mult | apply Z.mod_mul; lia].
 + exact B6.
 + unfold MAXINT in B5. unfold mints in B5. lia.
 + exact Hceil.

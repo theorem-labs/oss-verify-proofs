@@ -1,7 +1,8 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcSecFe.v (commit 6fdbdd538bcf, H4 flag-free secondary Recycle walk set; file sha256 61d2ff6d28d5) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 2 image addresses moved: 2 data addresses by port_addr_check e55e1b52a8a0 MAPS predictions; 0 function pairs; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/DMrcSecFe.v (H4 flag-free secondary Recycle walk set; file sha256 61d2ff6d28d5) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; its 2 image addresses moved: 2 data addresses by port_addr_check e55e1b52a8a0 MAPS predictions; 0 function pairs; no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10-30 (lane B1, slice H4): TWIN of YFfe.v over the CUT-READ record DMrcSecFc.sec_cut and the cut
    relation ARXr (rcc_pre_x) instead of cgif's ARm (rcc_pre); the size bounds come from lmaxd_ok / nmaxd_ok. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_reply.lib.Reusable Require YZ00.

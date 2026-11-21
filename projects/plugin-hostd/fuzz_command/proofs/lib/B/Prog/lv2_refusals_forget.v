@@ -7,9 +7,9 @@
    per-function walks: afn_pre at the entry, the symbolic executor over the position-abstract listing between the
    calls, the callee contracts record_c, arg_s_c and mix_call_c through cl_callS_wide, the return through paj_ret_at,
    and apost_base at the end. It is the B re-walk of the A walk lib/A/Prog/lv2_refusals_forget.v (+ _s1.v, _s2.v,
-   a working branch cbd8900ed8c), where A inlines record() and xstrdup and B calls record and
+   a working branch), where A inlines record() and xstrdup and B calls record and
    arg_s; the B code template was read from the Generation-N walk lib/B/Prog/lv2_refusals_forget.v (template only,
-   not ported: a working branch 543f2c3645b).
+   not ported: a working branch).
 
    B's code (capstone on fuzz_command.asan-ubsan, sha256 658cefbe..., symbol lv2_refusals_forget):
      0x8cd54 addi sp,sp,-32; sd ra,24(sp); sd s0,16(sp); sd s1,8(sp); mv s1,a0; li a0,25
@@ -27,13 +27,14 @@
    call of arg_s in the state lrfb_ssC (lrfb_canon_ok), where s1 = a1 = the atom of the recorded string.
 
    Section hypotheses beyond the statement's: HB (the allocator record) and MTL (the meter's laws), as the A walk names
-   them (lib/A/Prog/lv2_refusals_forget.v:58-60); and the per-binary facts a Theorem Labs lane proves only at the pinned image
+   them (lib/A/Prog/lv2_refusals_forget.v:59-61); and the per-binary facts a Theorem Labs lane proves only at the pinned image
    (PI := PB_cmd), each under a Theorem Labs lane's lemma name with its statement at this walk's abstract PAImg:
    `cmd_sig_prog_PB : cmd_sig_prog` (the program functions' call targets), `cmd_val_his_PB : cmd_val_his` (the auipc
    value A_HI 207 of the store at 0x8cd9c, a Theorem Labs lane 08:12Z), `cmd_img_facts_tfib` (lib/B/Prog/CmdRecImg.v), and
    `PRW : prog_rw SEGS B` (the hypothesis of lib/B/Prog/CmdRecCells.v PROG_WRITABLE). Every other per-binary fact is
    a Theorem Labs lane's lemma over them, by exact: CmdRecRo.v CMD_RO_IN, cmd_ro_ok_of_aro, RELRO_IMG, ROB; CmdRecRest.v
    cmd_ro_prog_apart, cmd_prog_img; CmdRecImg.v cmd_heap_tail_vis; CmdRecCells.v PROG_WRITABLE. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
@@ -273,7 +274,7 @@ Hypothesis TRECORD : forall fx0 : YK11.FPState, @trecord_spec fx0 rc SK PI B MT.
 Hypothesis TARG_S : forall fx0 : YK11.FPState, @targ_s_spec fx0 rc SK PI B MT.
 Hypothesis TMIX_CALL : forall fx0 : YK11.FPState, @tmix_call_spec fx0 rc SK PI B MT.
 Hypothesis VOBJS : cmd_val_objs.
-(* the walk's hypotheses, with the A walk's names (lib/A/Prog/lv2_refusals_forget.v:58-60): HB, the allocator record
+(* the walk's hypotheses, with the A walk's names (lib/A/Prog/lv2_refusals_forget.v:59-61): HB, the allocator record
    (lib/B/YF0m.v, Record CmdBSyms); MTL, the meter's laws *)
 Hypothesis HB : CmdBSyms B.
 Hypothesis MTL : ameter_laws MT.

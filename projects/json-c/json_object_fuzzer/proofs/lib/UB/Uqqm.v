@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the channel-reader premise of read_entry_stmt). *)
 
 
 From Stdlib Require Import ZArith List Lia.
@@ -14,6 +15,7 @@ Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import Uv2Y.
 From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QJyS.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache. Import QJyS.
 From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QCcH.
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QRjH.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 Import ListNotations. Local Ltac Qfw3_c1.Mq3.model_reg_tac n X mexpr ::= Qfw3_c1.Mq3.mkr__model_reg_tac_1 n X mexpr. Local Ltac Qfw3_c1.Mq3.zeq_fast ::= Qfw3_c1.Mq3.mkr__zeq_fast_0.
 Open Scope Z_scope.
@@ -40,7 +42,9 @@ Context {AMB : Amb}.
 
 Record drv_entry (usp0 pp tid : Z) (path : list byte) (m : mem) : Prop := DE {
 de_sp    : 0x7fff80000000 <= usp0 <= 0x800000000000 /\ usp0 mod 16 = 0;
-de_stk   : stk rsegs m (usp0 - 8388608) usp0;
+(* LPS 727298f3: the window every launch leaves writable below sp is the model's [stack_window_depth]
+   (Common/StoreOk.v, copied in QRjH.Mq3), not 8 MiB; the 8 MiB stays the heap's ceiling ([de_ceil]). *)
+de_stk   : stk rsegs m (usp0 - QRjH.Mq3.stack_window_depth) usp0;
 de_frame : rw_cells rsegs m (usp0 - 120) (main_frame usp0);
 de_errno : rw_cells rsegs m RERRNO [C4 (wz 0)];
 
@@ -88,7 +92,7 @@ Definition read_entry_stmt (usp0 tid : Z) (ppw : word) (path : list byte)
 forall (F : bvmap 5 word) (fc : bv 32) (t0 t1 t2 s1 a1 a2 a3 a4 a5 a6 a7 s3 t3 t4 t5 t6 : word) (m : mem) (md : Model),
 drv_entry usp0 (bv_unsigned ppw) tid path m ->
 HEAPc usp0 A0 [] m md -> BUD md DRV_W DRV_D ->
-m_fds md = fds -> m_fs md = fs -> QCcH.frm0 fc ->
+m_fds md = fds -> m_fs md = fs -> m_channel_reader md = true -> QCcH.frm0 fc ->
 realizes rsegs (mkCfg (MS (mkR (Z_to_bv 64 0x20bd8) (Z_to_bv 64 (usp0 - 128)) (Z_to_bv 64 0x10800) (Z_to_bv 64 0x77c00)
 t0 t1 t2 (Z_to_bv 64 2) s1 (Z_to_bv 64 65536) a1 a2 a3 a4 a5 a6 a7
 ppw s3 (Z_to_bv 64 3) (Z_to_bv 64 65536) (Z_to_bv 64 0) (Z_to_bv 64 0) (Z_to_bv 64 0)

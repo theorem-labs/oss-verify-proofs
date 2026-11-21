@@ -2,10 +2,11 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: segment s4 of send_message's walk on plugin-hostd/fuzz_command's ASan image
    (0x86c70 `mv a0,s5; jal verbs_receive` up to the return 0x86c78), ported from
-   proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v at c8557374ad2e — the program-call step of
+   proofs/cgif/cgif_file_fuzzer/lib/A/ACh1.v..ACh8.v, AChc.v and ACke.v — the program-call step of
    cgif_close (A/ACh1.v:321-405: cl_callS over a callee's contract, the callee's premises discharged at the call
    state, the next point's statement discharged from the call's post) over fuzz_command's listing and
    send_message's segment interface (lib/A/Prog/send_message_k.v, send_message_l.v). *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

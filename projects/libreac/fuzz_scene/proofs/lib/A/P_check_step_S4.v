@@ -3,10 +3,11 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/AChf.v, with its module paths, module names and addresses changed; 145 of its 210 lines of code are new or changed and 301 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_scene/lib/A/P_check_step_S0.v; 144 of its 196 lines of code are new or changed and 158 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: line citations renumbered for the licence lines added to the files they cite. *)
 (* Segment S4 of the ASan walk of check_step in fuzz_scene.asan (sha256 43654a025fd02e1f248bcaf6b8ac44f9e5dbded7f2fc1d9a1e90f9d74feb3026):
    0x83570 .. 0x836f0 (ret). The re-poison run (0x83570-0x835a0), the frame magic (0x835ac), `beqz s2` decided from
    the fake frame (s2 = F >= 4096), the 32 x 0xf5 inline release (0x835b4-0x83634) and the flag clear `ld a0,0xf8(s2);
-   sb zero,0(a0)` (0x83638-0x8363c) through aj_flag_store_pi (A/Prog/SceneFrame.v:459), giving own = [] and
+   sb zero,0(a0)` (0x83638-0x8363c) through aj_flag_store_pi (A/Prog/SceneFrame.v:460), giving own = [] and
    stack_free_state 2 fpos; the jump over the dead real-frame unpoison (0x83640 -> 0x836b4), the epilogue loads from
    the 13 saved slots and the `ret` to the entry ra (paj_ret_at); the post is apost_base with ablocks unchanged
    (blocks_stack_free_state, YG01.v:476). Donor: cgif exitN (A/ACk2.v:319-344).

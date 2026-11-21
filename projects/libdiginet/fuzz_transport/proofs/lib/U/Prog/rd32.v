@@ -1,5 +1,5 @@
 (* proves the UBSan contract of the static rd32 (fuzz_transport.ubsan, 0x1821c), with its two pointer-overflow traps not taken. *)
-(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/rd32.v at 9bd29914ffdef650a37285056a472ff186b4331a to fuzz_transport's images *)
+(* Modified by Theorem Labs, 2026-10: relocated from libdiginet/fuzz_frame proofs/libdiginet/fuzz_frame/lib/U/Prog/rd32.v to fuzz_transport's images *)
 (* Walk of rd32 (src/diginet_frame.c:12-15 at 835f336c) in fuzz_transport.ubsan, 0x1821c.
    The UBSan checks at 0x18220 (p = 2^64 - 1) and 0x1822c (p + 3 wraps to 0 or 1) branch to the trap
    at 0x1825c; bytes_at of the 4 bytes gives p + 4 <= 2^64, so neither is taken. *)

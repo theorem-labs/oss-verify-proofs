@@ -4,10 +4,11 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/libpcap/fuzz_pcap/lib/E2/Lib/Tac.v; 978 of its 1011 lines of code are new or changed and 2109 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/A4.v, with its module paths, module names and numbers changed; 877 of its 987 lines of code are new or changed and 901 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/Seg/R8.v, with its module paths, addresses and numbers changed; 132 of its 168 lines of code are new or changed and 951 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* lib/A/Prog/Seg/R8F_on.v -- route (C) twin of Seg/R8F.v's (not in this delivery) r8_evt_F (fuzz_ctrl image A, segment R8 = 0x81640 ->
    0x81658, the call of checked_memcpy at 0x81654).  Written by a Theorem Labs lane for the stage glue ACtlG/R8.v,
    with the standing consent of R8F.v's (not in this delivery) owner a Theorem Labs lane (12:55Z, relayed by a Theorem Labs lane).  R8F.v (not in this delivery) is unchanged
-   (blob ca7f11f02ca, a Theorem Labs lane's fold a working branch 4bae33fdf54).
+   (blob ca7f11f02ca, a Theorem Labs lane's fold a working branch).
    rule 24: no function proved (a mechanical re-run of an already-proved segment run).
 
    r8_evt_F_on is r8_evt_F (R8F.v:62) with the wave's route (C) changes (L3-recipe.md, WORKLIST.tsv:376 "additive

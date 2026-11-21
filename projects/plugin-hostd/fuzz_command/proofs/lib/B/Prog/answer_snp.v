@@ -10,14 +10,15 @@
    art_postF) and aj_art_own_atF (the journal step), as a Theorem Labs lane's PASS4-REFIT.md section E gives it; the walk continues
    with PaFx.v's srr_after_artF at the FP state fx1 the call returns.
    The contract's premises are discharged here from the caller's facts: ecall_pre and the window from the journal,
-   the read-only view rt_rom_view (a Theorem Labs lane 0934cb146c3's contract form) by a Theorem Labs lane's CmdRecImg.cmd_consts_view_snp, the guard words by
+   the read-only view rt_rom_view (a Theorem Labs lane's contract form) by a Theorem Labs lane's CmdRecImg.cmd_consts_view_snp, the guard words by
    CmdRecCells.cmd_rec_cells, va_words with no stack words, the disjointness of the read-only words, the guard cells,
    the window and the destination (the image lies below the fake stack, the fake stack below the machine stack),
    dest_ok / shadow_hull_vis from the frame (AR's frame law), the band premise `amem_range d (sn_len (n - 1) T + 8)`
-   of the shared contract at a Theorem Labs lane fc8bcbd8b42 (a Theorem Labs lane's final snprintf `+ 8`: the destination's 8 bytes past its
+   of the shared contract at a Theorem Labs lane (a Theorem Labs lane's final snprintf `+ 8`: the destination's 8 bytes past its
    written part lie in the same class-7 fake frame, a Theorem Labs lane's PASS4-REFIT.md E.0, the frame's room PaLibH.v's
    amem_range_sub_app), and dest_off_globals by a Theorem Labs lane's lib/B/Rt/RtPFDog.v pa_dest_off_globals_frame (the image hull
    below the fake stack, the frame's place in it: pa_frame_above_img), over this walk's image instance. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

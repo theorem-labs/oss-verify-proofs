@@ -1,10 +1,10 @@
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/SecGrantW.v (commit 30a1993588f, c5 + memnorm; file sha256 a04e1c05fd13) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
-(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/SecGrantW.v at commit 789778cb16f, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/SecGrantW.v (c5 + memnorm; file sha256 a04e1c05fd13) onto plugin-hostd/fuzz_reply's asan image (unstripped fuzz_reply.asan, sha256 d751b179ea49; pin 42c58610e125); module paths changed; taken by path: no numeral of it names an image address, none changed. *)
+(* Modified by Theorem Labs, 2026-10: copied from proofs/plugin-hostd/fuzz_reply/lib/A/SecGrantW.v, with its module paths changed (lib.A to lib.B; the image twins A<r> to Y<r>), taken by path: no numeral of it names an image address that differs in fuzz_reply.asan-ubsan. *)
 (* The grant-existence field of the widened secondary interface, AGif4.ifs_grant_w, from a Theorem Labs lane's parametric LPS
    placement lemma SecGrantP.sec_grant_exists_live_P (SecGrantP.v:88-99, :306-315).
 
    AGif4.ifs_grant_w ARX NOBW asks: for every pre-state of the allocator relation ARX and every size
-   0 < sz <= NOBW, a placement witness (grant_ok_na_pin) exists on the model the walk asks the kernel with, i.e.
+   0 < sz <= NOBW, a placement witness (grant_ok_na_pin_b) exists on the model the walk asks the kernel with, i.e.
    on [with_vm_backing (m_vm_lazy md) mat md] for any materialized-page list mat.  SecGrantP gives the witness on
    a model whose ledger covers its maps; the ledger facts it reads (ledger_cover, amwf's non-empty maps) depend on
    [m_vmmaps] and [m_vm_lazy] only, which with_vm_backing keeps, so the witness carries over.
@@ -48,7 +48,7 @@ Variable ARX : Z -> alayout -> astate -> world im_segs -> (word -> option byte) 
 Variables (nob lim mmax : Z).
 Hypothesis HN : 536870912 <= nob.
 Hypothesis HNal : nob mod 4096 = 0.
-Hypothesis HW : 0x2aaaaaaab000 + (257 * 25 + lim) * (2 * nob) + nob <= 0x7fff7f800000.
+Hypothesis HW : 0x2aaaaaaab000 + (257 * 25 + lim + 2) * (2 * nob) + nob <= 0x7fff7f800000.
 Hypothesis HSZ : forall n, 0 <= n < mmax -> sec_map_size n <= nob.
 (* the extra mapped extents the instance's ledger covers besides the lazy zones and the live secondaries *)
 Variable xs : alayout -> astate -> list (Z * Z).
@@ -59,11 +59,12 @@ Hypothesis HAX : forall inst ly S W mem md, ARX inst ly S W mem md ->
 
 Theorem ifs_grant_w_P : AGif4.ifs_grant_w ARX nob.
 Proof.
-intros inst ly S W mem md mat sz HA Hsz.
+intros inst ly S W mem md mat sz HA Hsz Hal.
 destruct (HAX inst ly S W mem md HA) as (LY & SC & LC & MW & LIVE & XS).
 pose proof (amwf_wvb md mat MW) as [_ NZ].
-exact (sec_grant_exists_live_P nob lim mmax im_segs ly S (with_vm_backing (m_vm_lazy md) mat md) (xs ly S) sz
-  HN HNal HW HSZ LY (ledger_cover_wvb im_segs ly md _ mat LC) NZ SC LIVE XS Hsz).
+(* 727298f3: the grant in the placement rule's form, for a page-aligned size (AGif4.ifs_grant_w) *)
+exact (sec_grant_exists_live_pin_P nob lim mmax im_segs ly S (with_vm_backing (m_vm_lazy md) mat md) (xs ly S) sz
+  HN HNal HW HSZ LY (ledger_cover_wvb im_segs ly md _ mat LC) NZ SC LIVE XS Hsz ltac:(unfold page_size; exact Hal)).
 Qed.
 End P.
 

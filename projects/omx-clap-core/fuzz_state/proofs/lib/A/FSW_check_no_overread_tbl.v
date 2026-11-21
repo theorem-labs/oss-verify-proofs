@@ -3,7 +3,7 @@
    build_table steps pc + 4 (Reusable/YP02.v:19-22), so the count is in 32-bit words: 230. MEASURED on the pinned
    fs.asan (capstone, RISCV64 + C): the 920 bytes decode to exactly 230 instructions, so the function has no
    compressed instruction and every instruction it executes is a table entry; its calls leave the range.
-   Ported from: a working branch c4bfd3bc057 lib/A/FSW_check_reject_clean_starved_tbl.v (the table
+   Ported from: a working branch lib/A/FSW_check_reject_clean_starved_tbl.v (the table
    pattern of RELOC's AB1k.v), with the CNO entry and count. *)
 From OSSVerify.Proofs.omx_clap_core.fuzz_state.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool.

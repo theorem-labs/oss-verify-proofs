@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: recorded proofs written out as text, statements written out as text, the revision's auxiliary vector (auxv_keys). *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.boost_json.fuzz_parse.lib.EH Require EH0Gc1. (* [comment removed for export] *)
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
@@ -297,16 +298,41 @@ ltac2:(KReplay.run1 (kr_t_EhGlue ()) ["Laws"] "h01Tp%0p;1p;2p;4g00I9j1bTg04W=j1a
 
 End Laws.
 
+(* LPS 727298f3: the auxv tail the chain's facts claim is [CUT.AUXV_RSEQ]'s; this chain covers the runs
+   whose CONFIG_RSEQ flag ([hrseq]) is that value ([EhClosed] picks the chain by the run's flag). *)
+Import CUT.
 Section Plain.
 Context {HCEIL : HeapCeil} {HSEC : HeapSecret}.
+Hypothesis HRSEQ : hrseq = AUXV_RSEQ.
 
 Lemma HIMG_HMF : ltac2:(zQ "70!ua!pu5!puf!qj8!ivf!ik0!qnb>1s$6>2LB@1$0$4>1m$5>0@4$1@2$3?5HCEIL?4HSEC^3^2^1@1$2^2").
 Proof.
 ltac2:(KReplay.run1z (kr_t_EhGlue ()) ["Plain"] "##-Ah02HRh12LBh22avh33canh41mh51sp;1p;2p;4p;3p;6g00>@j1KTg05O8j2JTg00`cj4<Tg00>`j28Tg05P<j3I!s/$Yj3CTg00SMj15Tg02_9j14Tg00WZj1:Tg00X:j33Tg00g=j42Tg05Q6j39Tg00GSj10Tg00U6j11Tg0143j1HTg00VVj1GTg00H8j1B!s/$Vj1?!sw$Zj2>Tg00Y4j2=!sw$Wj6@Tg05Rdj6ATg05T4j1;Tg05U:j16Tg05V@j6DTg05WKj3ETg00]Xj4FTg00^2j47Tg00iEg005;#Kg01eYp,5HCEILR0p,4HSECR1'Jf2R2f1R3f0R4C<g00G5R5/85R6g00hBR7P2AI554g00ljR8AC554#5#4%:8R533C2X26g05Wf39P7P3g00jK#0#0R6#1#0!s&&!s$'0!s4&!s>%0#0#Hg01@:#5#G=385C2R9%06!sB&B#?R6P7P2g05Y<%44!sI%X36R:'>R;'=P0P1f3R<P2P3P4E@P9P;P0P1P!s8'AP6P:%;1R:#5!tm%5ZQg05[\R6#6#!sx&P7P3P6%6:!s7+!sj/D3ECFC7C7W0W4W1W5o"). Qed.
 
-Lemma HAUX_HMF : ltac2:(zQ "50!m2!qo5!qp2!qj8!ik0>1m$4>1B$0>0@3$1@2$3?5HCEIL?4HSEC^2^1@2$2^3^2").
+(* LPS 727298f3: written out.  [rauxv_ok] claims the revision-layout auxv ([auxv_keys]: key words,
+   value words, the CONFIG_RSEQ tail tied to [hrseq]); [eh_auxv_ok] claims the same words at
+   [AUXV_RSEQ]'s tail. *)
+Lemma HAUX_HMF : forall (m : mem) (B : Z), hs_rauxv_ok (@MallocMF.HMF HCEIL HSEC) m B -> eh_auxv_ok m B.
 Proof.
-ltac2:(KReplay.run1z (kr_t_EhGlue ()) ["Plain"] "##MKh04__x1h17__arithh27__sat24h3!s0&5h42A1h51Hh64__ffh78__varmaph85__with92R3h:2R4h;2R5h<2avh=3rndh>3x11h?3x12h@3x16hA3x23hB2x3hC2x4hD2x5hE2x6hF2BAhG2HahH4__p1hI4__x2hJ2A2hK1BhL1ChM2H4hN2H5hO2H6hP2H7hQ2H8hR3R11hS3R12hT3R16hU3R23hV2R6hW2RrhX2_HhY3_H0hZ1lh[1mp&0p;2p;3p;1p;4p;9p;6p;8p;Fp;7p;@p;>g05O8k206Tg00R>k305Tg00WZj1PTg00g=k404Tg05\il97Tg00GSj1;Tg0143j19Tg00V9j2GTg05^7j1_Tg05U:j1OTg01YMj1>Tg02C\j1zTg015Jj22Tg00U6j1H!sn$mj2p!s/$Qj2:Tg00Y4R0j20Tg05_=j2?Tg00SMj1DTg05`Qj6STg02fkj4RTg02h1j1LTg01IQj1KTg02kFj1QTg02^0j1TTg00H8j1^!s/$Vk103Tg00>@j1]Tg008Yk302Tg05agk201Tg004_j6~Tg021gj2yTg022Oj3xTg01K2j2Z!s/$Pj1t!s/$nj4sTg01LLj1r!s/$jj1qTg01MUj2YTg011jj1oTg01N8j2nTg00EPj2m!s8$Zj2lTg00LQj3WTg01OFj3j!s/$ej4kTg01^Pj2ITg01_3j3UTg0233j3i!s8$Vj4VTg01k;j6hTg006Kj8NTg05bElFuTg02_9j1wTg00X:j3eTg05cKj1dTg02T[j4JTg02i9j4{Tg01`Aj7|Tg01aIj8}!s8$ej7bTg00^2j4[Tg05dKm@0!wh$ePl>aTg00ljR1f1R2#O#wf0R33ep=6g00hBR4f2R5P2%d3CJp=3%;3#;p=5P4P5P2P!s;$\1G52/23p=8g01@:R6/251:23'0p=11263p=<1:23,05p=fg00G5R7?W23p=410!s>&cf4R8f3R9!s8&'0'0p==P4P2g05fU!t:%C1262/03p=`!s@&gjR:P3C{p=MP4P2P:!sO%EP7P2g01e2P3CVp=F!s4$bLR;g01bkR<P<g01cKR=P3g01dRF|p=AP9P;P<P<P=!uU%G}p=@P5!s;+2P3Fbp=Xf6R>f5R?P8P9!v#&[C[p=BP7!s$03P2P5P9P8P?P>f7R@f8RAN@00p=g!sQ2!s$%!st&M>ap=vg01eYp,5HCEILRBp,4HSECRC+06@0523P4f<RDP:f9RE%P1R1'6H04RFPAP@P>P!tl-M9793DERGg00jKRH#;RI#5RJ#9RK,G3RL%_C#O#>RC5\DRM%zBRBf;RN'2RO12NERP%HI#;RQ#5#5#9RR%9IRS%;JRT#5RU#9RV'pRW58ERX12NLRL%9TRT=83WRYA1AAWRZA1@@WR[A1>>WR\A1??WR]A188WR^A199WR_A155WR`%<2Ra1:2WRb'0Rc%<3Rd?f3WRe%;U#5#H!tT$5#9Rf,4ARg%HH#H#;!s8$h,4@Ri%9QRQ,4>Rj'03cD=!s$%X=7XA7X?7X>7XE7X@7XD7XC7XB7X<71?52PFPGPMPOPPPXPLPYPZP[P\P]P^P_P`PcPePgPiPj1?DNf=Rjf:PE!w43M9733f>RA1G5K;\C12BAf?RB/2jA8ARWfARC1G>K'2A8@TWf@R@?1@WRKfIRi/4fP7PffORgfLR\P3fJR[PifHRZfGRLfFRXfERPfDROfCRM!t:$14\h14\QfSRGfRRk'?[[^9c]4XB7fNRlfKRmPfPiPZPLPXPPPOPMfB!sa$A1ffW14mhP7PhPfP3P\PmP[!sR'!yM$kg14lQfURMfTRO'?[^:c]4XC7fQRnPfPh!sX/PPM9773lA1hhWfMRX/4QP7PQ!sN$3PlPX!t0'!t&$MkfWRofVRp'?^;c]4XD7!sQ$Q!sO,PZ!sQ$OnA1QQWf]RQ%D>#>'C!{G/ES93Q>f\R8/2>A8>RW!w{'10ce!xk:<7PGPg!tc,%DG#>,Cp!s:/ES93pGR`12MGR_A8GR!zm$gg!z{$llWR>1:XWR?,`XRhA1\\WRfA1mmWRm%<[Rq1:[WRr'0Rs'0Rt'0Ru'0Rv'0Rw'0Rx'0Ry'0Rz'0P0P4PpP:16G1RGCR%LG#K,Mp%DO#>,CoPiP4fXR4P:16M1CRP016p1R0#QfYRM%T0'EfZR016o1#L#K'Mf[Ro%D4#>'C[P31641#Q16M1#T,E8160!sM$,MQ%^J$03RJ#]RQ%Oo#>Ro%PJ602Jf_/E3XZQP2Po201JoE~f^/EoP3bFWYWFWXP2P3O2n20010!s#$12!s-%0W5!sB=P`PzP2P_Py1ySVRy1:6S%<V1:6W[[R_%<SRzg01?BR`AxSV2UWGRV%<W\`^Gz!sA$gjR`#PRo%]`R`P71Z75P2%t7Cs%r7RJ%q7RQ1Y7HRH1Y7I'F,AQRI%o<R0PIC@1nQ=RIP3P5g01hVR1g01i6R8'm1l35=W18dAj762CkR8b6b7b8X07XI712321225[^07^I7P3PpP4PZO3b1b2b3P^PxPyP_PVPzPoP`1Z72RxPJPQ1I7R9U7H1I7S%^U5i7RU!tc%SP0PSC@PIP!t8,A83RWA82RW[^0!t4%LO2!t2&]Pw!t2/P!t-'6/FH,AQR6P7PHg01ckPUCV,AQRw5XQR]P0P]!t62R]Pc\e^07ReP3PkPC!t3+>Pv!t3+]PeP3PnP@!sD+hPu!sD1fPPB!sD+fPt!sb2gPA!sD+mPs!sD2lPj!sD+qPr!sD'p-0Rr!uX,PQ!#<r'9Eh9XQ6P0P6!uG2WH10d2Pa!wf$HrP3P?PXPD!wf+!vV7T9U7H/FU,AQP0Pw!sx2Pb\Y!wJ%XPP!tu'FB!s$'M9gW;W4PlP3P5PjGNW5W:W4P\!s6$N!s6$9W4P[P3P@PEGNW5XWKXUKXSKXRKXVKXTKX;KX:KW9WQWPWOWNWMWJW4XLFMFu!#:P@P3CvW5XK7W[o"). Qed.
+  intros m B H. hcb.
+  destruct H as (av & x3 & x4 & x5 & x16 & x6 & x11 & x12 & x23 & rnd & AC & AK & _ & HB & BAV & H464 &
+                 _ & _ & _ & _ & _ & X16 & X6 & X11 & X12 & X23 & XR & _ & _ & _).
+  destruct AK as (K0 & K16 & K32 & K48 & K64 & K80 & K96 & K112 & K128 & K144 & K160 & K176 & K192 & K208 &
+                  K224 & K240 & K256 & K272 & K288 & K304 & K320 & K336 & K352 & K368 & K384 & KR & K400 &
+                  _ & VALS & TR & TF).
+  destruct VALS as ((v33 & V33) & V16 & V6 & V17 & V3 & V4 & V5 & V7 & V8 & V9 & V11 & V12 &
+                    (v13 & V13) & (v14 & V14) & V23 & (v31 & V31)).
+  exists av, x16, x6, x11, x12, x23, rnd.
+  split; [exact (rw_cells_C8_bytes_at m _ (wz av) AC)|].
+  split.
+  2:{ repeat match goal with |- _ /\ _ => split end; lia. }
+  unfold auxv_words_ok, PH_ADDR, PH_ENT, PH_NUM.
+  repeat match goal with |- _ /\ _ => split end;
+    try lia; try eassumption; try (eexists; eassumption).
+  cbv delta [AUXV_RSEQ] beta iota. cbv delta [AUXV_RSEQ] in HRSEQ.
+  first [ destruct (TR HRSEQ) as (R1 & R2 & R3 & R4 & R5); repeat match goal with |- _ /\ _ => split end; assumption
+        | exact (TF HRSEQ) ].
+Qed.
 
 Lemma eh_static_client : ltac2:(zQ "50!m2!ua!iv2!ivf!qq0>2LB@1$1$3>2SP$0>1a$0>0@1$2^1@3$4^4^3^2").
 Proof.

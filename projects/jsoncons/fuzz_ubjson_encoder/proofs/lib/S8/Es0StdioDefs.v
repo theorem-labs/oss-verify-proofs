@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3: the channel-reader premise of writev; taken in part from projects/jsoncons/fuzz_bigint/proofs/lib/Src0StdioDefs.v, lines 142-144. *)
 (* [comment removed for export] *)
 From OSSVerify.Proofs.jsoncons.fuzz_ubjson_encoder.lib Require BvWfKernel.
 
@@ -19,6 +20,12 @@ Open Scope bv_scope.
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(false).
 Section FPX_1. Context {fx : PropExec.FPState}. Context {bmK : BMode}.
 
+
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
+(* [comment removed for export] *)
 Record sw_file (mem : word -> option byte) (f : Z) (wb wp : Z) (fd : Z) (bufp bufsz : word) : Prop := {
   swf_wpos  : rdn RSEGS mem (Z_to_bv 64 (f + 40)) 8%nat = Some (word_to_le_bytes 8 (Z_to_bv 64 wp));
   swf_wbase : rdn RSEGS mem (Z_to_bv 64 (f + 56)) 8%nat = Some (word_to_le_bytes 8 (Z_to_bv 64 wb));
@@ -27,10 +34,12 @@ Record sw_file (mem : word -> option byte) (f : Z) (wb wp : Z) (fd : Z) (bufp bu
   swf_bsz   : rdn RSEGS mem (Z_to_bv 64 (f + 96)) 8%nat = Some (word_to_le_bytes 8 bufsz)
 }.
 
+(* [comment removed for export] *)
 Definition ssp_cells (mem : word -> option byte) (can : word) : Prop :=
   rdn RSEGS mem (Z_to_bv 64 0xb82a0) 8%nat = Some (word_to_le_bytes 8 (Z_to_bv 64 0xeb2b0))
   /\ rdn RSEGS mem (Z_to_bv 64 0xeb2b0) 8%nat = Some (word_to_le_bytes 8 can).
 
+(* [comment removed for export] *)
 Record sw_post (mem : word -> option byte) (su f : Z) (bufp bufsz : word)
        (mem' : word -> option byte) : Prop := {
   swp_agree : forall x : word,
@@ -44,6 +53,7 @@ Record sw_post (mem : word -> option byte) (su f : Z) (bufp bufsz : word)
   swp_wbase : rdn RSEGS mem' (Z_to_bv 64 (f + 56)) 8%nat = Some (word_to_le_bytes 8 bufp)
 }.
 
+(* [comment removed for export] *)
 Lemma sw_post_rdn : forall mem su f bufp bufsz mem' (a : word) n bs,
   sw_post mem su f bufp bufsz mem' ->
   rdn RSEGS mem a n = Some bs ->
@@ -63,6 +73,11 @@ Lemma sw_post_store_ok : forall mem su f bufp bufsz mem' (a : word) n,
   store_ok RSEGS mem a n = true -> store_ok RSEGS mem' a n = true.
 Proof. intros mem su f bufp bufsz mem' a n P H. eapply store_ok_mono; [apply (swp_grows _ _ _ _ _ _ P) | exact H]. Qed.
 
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+(* [comment removed for export] *)
+
+(* [comment removed for export] *)
 Record exit_common (regs : bvmap 5 word) (mem : word -> option byte)
        (sp tp code : word) (tid : Z) (wp2 rp2 : word) : Prop := {
   ec_sp   : getr regs 2 = sp;
@@ -74,27 +89,28 @@ Record exit_common (regs : bvmap 5 word) (mem : word -> option byte)
   ec_tplo : (168 <= bv_unsigned tp)%Z;
   ec_tphi : (bv_unsigned tp <= 4294967296)%Z;
   ec_tid  : (0 < tid < 2147483648)%Z;
-
+  (* [comment removed for export] *)
   ec_mtid : rdn RSEGS mem (Z_to_bv 64 (bv_unsigned tp - 168)) 4%nat = Some (word_to_le_bytes 4 (Z_to_bv 64 tid));
-
+  (* [comment removed for export] *)
   ec_lock : rdn RSEGS mem (Z_to_bv 64 0xeb2a8) 4%nat = Some (word_to_le_bytes 4 (Z_to_bv 64 0));
-
+  (* [comment removed for export] *)
   ec_fe   : rdn RSEGS mem (Z_to_bv 64 0xb82a8) 8%nat = Some (word_to_le_bytes 8 (Z_to_bv 64 0xb2500));
   ec_fs   : rdn RSEGS mem (Z_to_bv 64 0xb82b0) 8%nat = Some (word_to_le_bytes 8 (Z_to_bv 64 0xb24f8));
   ec_fa   : rdn RSEGS mem (Z_to_bv 64 0xb24f8) 8%nat = Some (word_to_le_bytes 8 (Z_to_bv 64 0x344b4));
-
+  (* [comment removed for export] *)
   ec_comp : rdn RSEGS mem (Z_to_bv 64 0xb9608) 1%nat = Some [Z_to_bv 8 0];
   ec_g1   : rdn RSEGS mem (Z_to_bv 64 0xb8138) 8%nat = Some (word_to_le_bytes 8 (Z_to_bv 64 0x9bc14));
   ec_dso  : rdn RSEGS mem (Z_to_bv 64 0xb92d0) 8%nat = Some (word_to_le_bytes 8 (Z_to_bv 64 0xb92d0));
   ec_ax   : exists ax : axv, atexit_cells mem ax;
   ec_cb   : rdn RSEGS mem (Z_to_bv 64 0xc9614) 1%nat = Some [Z_to_bv 8 0];
   ec_g2   : rdn RSEGS mem (Z_to_bv 64 0xb8140) 8%nat = Some (word_to_le_bytes 8 (Z_to_bv 64 0));
-
+  (* [comment removed for export] *)
   ec_glob : stdio_globals mem;
-
+  (* [comment removed for export] *)
   ec_err  : file_clean mem 0xb93b8 wp2 rp2
 }.
 
+(* [comment removed for export] *)
 Record stdout_pending (mem : word -> option byte) (wb wp : Z) (bufp bufsz rp1 can : word)
        (pending : list byte) : Prop := {
   sp_lock  : rdn RSEGS mem (Z_to_bv 64 (0xb94a8 + 140)) 4%nat = Some (word_to_le_bytes 4 (Z_to_bv 64 4294967295));
@@ -113,6 +129,7 @@ Record stdout_pending (mem : word -> option byte) (wb wp : Z) (bufp bufsz rp1 ca
   sp_ssp   : ssp_cells mem can
 }.
 
+(* [comment removed for export] *)
 Definition exit_pre (regs : bvmap 5 word) (mem : word -> option byte) (model : Model)
            (code : word) (pending : list byte) : Prop :=
   exists (sp tp : word) (tid : Z) (wp2 rp2 : word),
@@ -121,7 +138,10 @@ Definition exit_pre (regs : bvmap 5 word) (mem : word -> option byte) (model : M
     /\ ( (pending = [] /\ exists wp1 rp1, file_clean mem 0xb94a8 wp1 rp1)
        \/ (exists (wb wp : Z) (bufp bufsz rp1 can : word),
               stdout_pending mem wb wp bufp bufsz rp1 can pending
-              /\ fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))) ).
+              /\ fd_lookup (m_fds model) (Z_to_bv 64 1) = Some (FdChannel (Z_to_bv 64 1))
+              (* 08b1429: writev_spec reads [m_channel_reader] *)
+              /\ m_channel_reader model = true) ).
 End FPX_1.
+
 
 Ltac Zify.zify_convert_to_euclidean_division_equations_flag ::= constr:(true).

@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (main_entry over the launch's ProcInput and entry point; the channel-reader premise on the leaf statements and the read entry; realizes_canon's equality argument; the heap's start-up ledger as init_reserved, with the placement base's floor proved from the launch; drv_entry_of_know declares fF and fC, which the main-entry lemmas it applies take). *)
 
 From Stdlib Require ZArith NArith List Lia Bool.
 From LinuxProcessSemantics.EquivalenceDefinition Require Equivalence.
 From LinuxProcessSemantics.LinuxProcessSem Require BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.
 From LinuxProcessSemantics.Riscv Require Prelude Instr Decode DecodeC Sem.
 From OSSVerify.json_c.json_object_fuzzer.images Require Plain.
-From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QXup QEQM QZDE QWxq_c1 QlEo_c1 QbVh QEpW QBpc QKNz Qv2Y Qqqm QJyS QsRG Qnhz Qrxj QRjH Qpox QsV0 Q9ox QBxa Qn1e QiVh QMz4 QO3A Q7m0 QSpR QuJV QCPB QH7x QqES QeDN Qdbv QFOH QWQV QSjk Q1oC Q1zM Qe4Y Qod2 Q87U Q7J3 Q4FC QCcH.
+From OSSVerify.Proofs.json_c.json_object_fuzzer.lib Require QXup QEQM QZDE QWxq_c1 QlEo_c1 QbVh QEpW QBpc QKNz QCa8 Qv2Y Qqqm QJyS QsRG Qnhz Qrxj QRjH Qpox QsV0 Q9ox QBxa Qn1e QiVh QMz4 QO3A Q7m0 QSpR QuJV QCPB QH7x QqES QeDN Qdbv QFOH QWQV QSjk Q1oC Q1zM Qe4Y Qod2 Q87U Q7J3 Q4FC QCcH.
 Unset Lia Cache. Unset Nia Cache. Unset Nra Cache.
 
 Module Mq0.
@@ -167,6 +168,35 @@ intros segs m m0 a bs (H1 & H2 & H3) E. split; [exact H1|]. split; [exact H2|].
 intros i Hi. unfold QZDE.mrd, QZDE.wa in *. rewrite E by lia. apply H3. exact Hi.
 Qed.
 
+(* LPS 727298f3: the facts of the start-up knowledge are found by what they say ([QH7x.kidx]), not by
+   their place in the list, which the revision's longer auxv facts moved. *)
+Definition drv_kimg_at (lo hi : Z) (K : kentry) : bool :=
+match K with KImg l h => Z.eqb l lo && Z.eqb h hi | _ => false end.
+Definition drv_kword_at (b : expr) (k : Z) (K : kentry) : bool :=
+match K with KWord (SA c kk) _ _ => expr_eqb b c && Z.eqb kk k | _ => false end.
+
+(* LPS 727298f3: the launch's auxv ([StackLayout.auxv_entries]) as [Qv2Y.rauxv_list] reads it: the values
+   of its 24 pairs before AT_RANDOM, AT_RANDOM's and AT_EXECFN's places, and the two CONFIG_RSEQ pairs
+   exactly when the kernel has CONFIG_RSEQ. *)
+Definition drv_auxv_vals (la : LaunchAuxv) (ph : PhdrInfo) (entry uid gid hw ar ae : word) : list Z :=
+map (fun e => bv_unsigned (snd e)) (firstn 24 (StackLayout.auxv_entries la ph entry uid gid hw ar ae)).
+Definition drv_auxv_rseq (la : LaunchAuxv) : list Z := if la_rseq la then [27; 28; 28; 32]%Z else [].
+
+Lemma drv_cons_eq : forall (x y : word) (l l' : list word), x = y -> l = l' -> x :: l = y :: l'.
+Proof. intros x y l l' -> ->. reflexivity. Qed.
+
+Lemma drv_rauxv_words : forall la ph entry uid gid hw (sp top : word) argv envp execfn,
+Qv2Y.rauxv_list
+(drv_auxv_vals la ph entry uid gid hw (Z_to_bv 64 (QBpc.rnd_addr sp (la_rseq la) argv envp)) (Z_to_bv 64 (QBpc.execfn_ptr top execfn)))
+(QBpc.rnd_addr sp (la_rseq la) argv envp) (QBpc.execfn_ptr top execfn) (drv_auxv_rseq la)
+= QBpc.auxv_words la ph entry uid gid hw sp top argv envp execfn.
+Proof.
+intros la ph entry uid gid hw sp top argv envp execfn.
+unfold Qv2Y.rauxv_list, QBpc.auxv_words, drv_auxv_vals, drv_auxv_rseq, StackLayout.auxv_entries, QCa8.Mq5.rauxv_keys0.
+destruct (la_rseq la); cbn [firstn map snd fst QCa8.Mq5.rauxv_kvw nth app flat_map];
+repeat (apply drv_cons_eq; [first [reflexivity | apply Z_to_bv_bv_unsigned] |]); reflexivity.
+Qed.
+
 Section Conv.
 Context {fF : FPF} {fC : FPC}.
 Context {AMB : Amb}.
@@ -185,12 +215,18 @@ Hypothesis Hva : valid_argv [a0s; path].
 Hypothesis Hve : valid_envp envv.
 Hypothesis Hvsp : valid_sp sp0.
 Hypothesis Htid : (0 < bv_unsigned tid < 2 ^ 22)%Z.
-Hypothesis ME : main_entry sp0 [a0s; path] envv tid regs0 mem0.
+(* LPS 727298f3: [main_entry] takes the launch's input, the mmap base and the entry point. *)
+Variable inp : ProcInput.
+Variable entry : word.
+Hypothesis ME : main_entry inp mbase entry sp0 [a0s; path] envv tid regs0 mem0.
 Hypothesis Hbrk : valid_brk RSEGS brk.
 Hypothesis Hpne : path <> [].
 Hypothesis Hplen : (length path <= 4095)%nat.
 Hypothesis FRM0 : QCcH.frm0 fC.
 Hypothesis ASP : a_sp = sp0.
+(* LPS 727298f3: the far end of the standard channels has a reader ([State.m_channel_reader]); the
+   launch seeds it from [in_channel_reader], which [Run.valid_input] pins to true *)
+Hypothesis Hrdr : a_channel_reader = true.
 Variable fd3 : FdEntry.
 Variable KB : TSet.
 
@@ -198,7 +234,7 @@ Notation ENV := (Q1zM.ENV a0s path).
 Notation model1g := (Q1zM.model1g sp0 tid brk mbase fs0 stdin0).
 Notation above_sp0 := (Q1zM.above_sp0 sp0 mem0).
 Notation usp0 := (bv_unsigned sp0).
-Notation pp := (bv_unsigned (p1 sp0 a0s path envv)).
+Notation pp := (bv_unsigned (p1 a0s path envv inp)).
 
 #[using="envv tid regs0 Hva Hvsp ME Hplen"] Lemma M_locale : forall vals M, vals_ev vals 0 = sp0 -> M = mem_denot (ENV vals) mem0 logA ->
 QZDE.bytes_at rsegs M 0x75e40 (QZDE.le8 (wz 0x96138)).
@@ -208,12 +244,12 @@ eapply (bytes_at_of_rdn _ _ 8); [lia| lia| | reflexivity].
 transitivity (rdn RSEGS mem0 (Z_to_bv 64 0x75e40) 8).
 { apply rdn_agree. intros j Hj. apply (mem_denot_below (ENV vals) mem0 logA 0 (-8388608)); [exact logA_stack| |];
 cbn [ev ENV]; rewrite P0; [lia|]. change (bv_unsigned (Z_to_bv 64 482880)) with 482880%Z. rewrite u_small; lia. }
-rewrite (main_entry_rdn_data sp0 [a0s; path] envv tid regs0 mem0 ME) by (rewrite stack_max_size_val; unorm; lia).
-apply (D_main_locale sp0 [a0s; path] envv tid Hva).
+rewrite (Qdbv.main_entry_rdn_data inp mbase entry sp0 [a0s; path] envv tid regs0 mem0 ME) by (rewrite stack_max_size_val; unorm; lia).
+eapply D_main_locale. exact Hva.
 Qed.
 
-#[using="regs0 Hva Hve Hvsp Htid ME Hplen ASP"] Lemma drv_entry_of_know : forall vals M,
-length vals = 39%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = p1 sp0 a0s path envv ->
+#[using="fF fC regs0 Hva Hve Hvsp Htid ME Hplen ASP"] Lemma drv_entry_of_know : forall vals M,
+length vals = 39%nat -> vals_ev vals 0 = sp0 -> vals_ev vals 2 = p1 a0s path envv inp ->
 vals_ev vals 3 = auxvp sp0 a0s path envv -> vals_ev vals 5 = tid -> vals_ev vals 38 = ssp_canary ->
 know_ok RSEGS (ENV vals) M knA -> above_sp0 M ->
 QZDE.bytes_at rsegs M 0x75e40 (QZDE.le8 (wz 0x96138)) ->
@@ -222,24 +258,33 @@ Proof.
 intros vals M HL P0 P2 P3 P5t P38 HK HA LOCF.
 pose proof (proj1 Hvsp) as SPlo. pose proof (proj1 (proj2 Hvsp)) as SPhi. pose proof (proj2 (proj2 Hvsp)) as SPal.
 unfold sp_window_lo, sp_window_hi in *.
+(* LPS 727298f3: the stack window below sp is the model's [stack_window_depth]; knA states it as a literal *)
+pose proof QRjH.Mq3.stack_window_depth_val as SWD.
 
 Ltac kimg HK i := let H := fresh "KI" in
 pose proof (know_nth RSEGS _ _ knA i _ HK ltac:(vm_compute; reflexivity)) as H; cbn [kentry_ok] in H;
 destruct H as (_ & _ & H).
-kimg HK 51%nat. kimg HK 52%nat. kimg HK 53%nat. kimg HK 56%nat. kimg HK 57%nat. kimg HK 58%nat. kimg HK 59%nat.
-kimg HK 61%nat. kimg HK 62%nat. kimg HK 63%nat. kimg HK 65%nat. kimg HK 66%nat. kimg HK 69%nat. kimg HK 70%nat.
+Ltac kimgp HK p := let i := kidx knA p in kimg HK i.
+kimgp HK (drv_kimg_at 0x10000 0x651a0). kimgp HK (drv_kimg_at 0x651a1 0x75da0). kimgp HK (drv_kimg_at 0x95e78 0x95e88).
+kimgp HK (drv_kimg_at 0x75dcc 0x75dd0). kimgp HK (drv_kimg_at 0x75dd4 0x75e20). kimgp HK (drv_kimg_at 0x75e28 0x75e40).
+kimgp HK (drv_kimg_at 0x75e48 0x75e60). kimgp HK (drv_kimg_at 0x75e70 0x75e80). kimgp HK (drv_kimg_at 0x75e90 0x95e78).
+kimgp HK (drv_kimg_at 0x95eb0 0x960e0). kimgp HK (drv_kimg_at 0x960e8 0x960f0). kimgp HK (drv_kimg_at 0x96101 0x96108).
+kimgp HK (drv_kimg_at 0x96138 0x96168). kimgp HK (drv_kimg_at 0x96170 0x97000).
 
 Ltac kword HK i := let H := fresh "KW" in
 pose proof (know_nth RSEGS _ _ knA i _ HK ltac:(vm_compute; reflexivity)) as H; cbn [kentry_ok] in H;
 destruct H as (_ & _ & H); rewrite adenot_lit0 in H; cbn [edenot ev eb Q1zM.ENV] in H.
-kword HK 54%nat. kword HK 55%nat. kword HK 60%nat. kword HK 64%nat. kword HK 67%nat. kword HK 68%nat.
+Ltac kwordp HK p := let i := kidx knA p in kword HK i.
+kwordp HK (drv_kword_at (ELit 0) 0x75da8). kwordp HK (drv_kword_at (ELit 0) 0x75dc8). kwordp HK (drv_kword_at (ELit 0) 0x75e60).
+kwordp HK (drv_kword_at (ELit 0) 0x960e0). kwordp HK (drv_kword_at (ELit 0) 0x96108). kwordp HK (drv_kword_at (ELit 0) 0x96130).
 rewrite ?P5t, ?P3, ?P38 in *.
 
 assert (WD : forall k m, (0x64000 <= k)%Z -> (k + Z.of_nat m <= 0x97000)%Z -> store_ok RSEGS M (Z_to_bv 64 k) m = true).
-{ intros k m Hk Hm. eapply (kwr_store_ok_lit RSEGS _ M knA 50); [exact HK| vm_compute; reflexivity| lia| lia| lia]. }
-assert (WS : forall k m, (usp0 - 8388608 <= k)%Z -> (k + Z.of_nat m <= usp0)%Z -> store_ok RSEGS M (Z_to_bv 64 k) m = true).
-{ intros k m Hk Hm.
-pose proof (kwr_store_ok RSEGS (ENV vals) M knA 21 (EVar 0) (-8388608) 8388608 (k - usp0) m HK ltac:(vm_compute; reflexivity) ltac:(lia) ltac:(lia)) as W.
+{ intros k m Hk Hm. let i := kidx knA (is_kwr_cov (ELit 0) 0x64000 0x33000) in
+eapply (kwr_store_ok_lit RSEGS _ M knA i); [exact HK| vm_compute; reflexivity| lia| lia| lia]. }
+assert (WS : forall k m, (usp0 - QRjH.Mq3.stack_window_depth <= k)%Z -> (k + Z.of_nat m <= usp0)%Z -> store_ok RSEGS M (Z_to_bv 64 k) m = true).
+{ intros k m Hk Hm. let i := kidx knA (is_kwr_cov (EVar 0) (-6144513) 6144513) in
+pose proof (kwr_store_ok RSEGS (ENV vals) M knA i (EVar 0) (-6144513) 6144513 (k - usp0) m HK ltac:(vm_compute; reflexivity) ltac:(lia) ltac:(lia)) as W.
 unfold adenot, v_addi in W. cbn [a_base a_off edenot ev Q1zM.ENV] in W. rewrite P0 in W.
 replace (usp0 + (k - usp0))%Z with k in W by lia. exact W. }
 
@@ -247,8 +292,10 @@ Ltac kwordv HK i P0 := let H := fresh "KF" in
 pose proof (know_nth RSEGS _ _ knA i _ HK ltac:(vm_compute; reflexivity)) as H; cbn [kentry_ok] in H;
 destruct H as (_ & _ & H); unfold adenot, v_addi in H; cbn [a_base a_off edenot ev eb Q1zM.ENV alu] in H;
 rewrite ?P0, ?add_lit_Z in H.
-kwordv HK 10%nat P0. kwordv HK 11%nat P0. kwordv HK 12%nat P0. kwordv HK 13%nat P0.
-kwordv HK 14%nat P0. kwordv HK 15%nat P0. kwordv HK 16%nat P0. kwordv HK 17%nat P0. kwordv HK 18%nat P0.
+Ltac kwordvp HK p P0 := let i := kidx knA p in kwordv HK i P0.
+kwordvp HK (drv_kword_at (EVar 0) (-120)) P0. kwordvp HK (drv_kword_at (EVar 0) (-112)) P0. kwordvp HK (drv_kword_at (EVar 0) (-104)) P0.
+kwordvp HK (drv_kword_at (EVar 0) (-96)) P0. kwordvp HK (drv_kword_at (EVar 0) (-88)) P0. kwordvp HK (drv_kword_at (EVar 0) (-80)) P0.
+kwordvp HK (drv_kword_at (EVar 0) (-72)) P0. kwordvp HK (drv_kword_at (EVar 0) (-64)) P0. kwordvp HK (drv_kword_at (EVar 0) (-56)) P0.
 rewrite ?alu_add_lit in *.
 pose proof (u64_range tid) as TR.
 constructor.
@@ -280,45 +327,69 @@ match goal with H : rdn RSEGS M (Z_to_bv 64 614624) 8 = _ |- _ => exact H end.
 match goal with H : rdn RSEGS M (Z_to_bv 64 482912) 8 = _ |- _ => exact H end.
 -  apply mem_inv_of_img. intros i Hi. cbn in *; first [apply KI; lia| apply KI0; lia| apply KI1; lia| apply KI2; lia| apply KI3; lia| apply KI4; lia| apply KI5; lia| apply KI6; lia| apply KI7; lia| apply KI8; lia| apply KI9; lia| apply KI10; lia| apply KI11; lia| apply KI12; lia].
 -
-assert (ABOVE : forall x, (usp0 <= x < 2^64)%Z -> M (Z_to_bv 64 x) = QsRG.Mq0.wrap_mem RPH sp0 [a0s; path] envv a_uid a_hwcap a_rnd (Z_to_bv 64 x)).
-{ intros x Hx. rewrite (HA (Z_to_bv 64 x)) by (rewrite u_small by lia; lia).
-apply (main_entry_mem_above sp0 [a0s; path] envv tid regs0 mem0 ME). rewrite u_small by lia. lia. }
-pose proof (lay_bsb_nw RPH sp0 [a0s; path] envv a_uid a_hwcap a_rnd Hva Hve ltac:(unfold sp_window_hi; lia)) as NW.
-pose proof (QBpc.build_stack_bytes_length RPH sp0 [a0s; path] envv a_uid a_hwcap a_rnd) as BL.
-pose proof (QBpc.raw_len_nonneg RPH sp0 [a0s; path] envv a_uid a_hwcap a_rnd) as RLN.
-unfold QBpc.raw_len, QBpc.struct_size, QBpc.argc, QBpc.envc in BL, RLN. cbn [length] in BL, RLN.
-destruct (QBpc.init_pieces rsegs RPH sp0 [a0s; path] envv a_uid a_hwcap a_rnd ltac:(rewrite stack_max_size_val; lia) ltac:(lia)) as (_ & _ & _ & AUXW & _ & _ & RND).
-pose proof (proj1 (@auxvp_u AMB sp0 a0s path envv Hva Hve Hvsp)) as AU.
-set (avz := (usp0 + 8 * (QBpc.argc [a0s; path] + QBpc.envc envv + 3))%Z) in AUXW.
-assert (EAV : bv_unsigned (auxvp sp0 a0s path envv) = avz).
-{ rewrite AU. subst avz. unfold auxv_off, QBpc.argc, QBpc.envc. cbn [length]. lia. }
-exists avz, (Z.of_N (ph_addr RPH)), (Z.of_N (ph_ent RPH)), (Z.of_N (ph_num RPH)), (bv_unsigned a_hwcap), 4096%Z, (bv_unsigned a_uid), (bv_unsigned a_uid), 0%Z, (QBpc.rnd_addr sp0 [a0s; path] envv).
-pose proof (u64_range a_uid) as UR. pose proof (u64_range a_hwcap) as HR'.
-assert (PH : (Z.of_N (ph_addr RPH) = 0x10040 /\ Z.of_N (ph_ent RPH) = 56 /\ Z.of_N (ph_num RPH) = 11)%Z) by (vm_compute; repeat split; reflexivity).
-destruct PH as (PH1 & PH2 & PH3).
+(* LPS 727298f3: the auxv the launch lays at [auxvp] ([QBpc.stack_pieces] over the entry image), read as
+   [rauxv_list] of its 24 values before AT_RANDOM, AT_RANDOM's and AT_EXECFN's places and the CONFIG_RSEQ pairs *)
+destruct (Qdbv.main_entry_launch inp mbase entry sp0 [a0s; path] envv tid regs0 mem0 ME) as (brk0 & Eav & Eev & _ & _ & Hvl & Hlau).
+destruct (QBpc.launch_facts inp sp0 brk0 mbase a_rnd Hvl Hlau) as (_ & PAD & _ & TOP & LW1 & LW2).
+pose proof (QBpc.launch_image_length inp sp0 brk0 mbase RPH entry a_rnd Hvl Hlau) as ILEN.
+unfold QBpc.im_stack_depth in LW1. rewrite stack_max_size_val in LW2.
+pose proof (QBpc.init_stack_bytes rsegs inp mbase RPH entry sp0 a_rnd) as SB.
+repeat lazymatch type of SB with ?P -> _ => specialize (SB ltac:(clear SB; lia)) end.
+change (kb_rseq (in_kernel inp)) with (la_rseq (launch_auxv inp sp0 mbase)) in PAD.
+pose proof (QBpc.stack_pieces rsegs _ (launch_auxv inp sp0 mbase) RPH entry sp0 (ed_top a_rnd) (in_argv inp) (in_envp inp)
+(in_execfn inp) (in_uid inp) (in_gid inp) (in_hwcap inp) a_rnd SB PAD) as (_ & _ & _ & AUXW & RND & _ & _).
+rewrite Eav, Eev in AUXW, RND, PAD.
+pose proof (QWQV.Mq0.auxvp_u sp0 a0s path envv tid regs0 mem0 inp mbase entry Hva Hve Hvsp Htid ME) as (AU & AUB).
+unfold QBxa.Mq6.auxv_off in AU, AUB. cbn [length] in AU, AUB.
+assert (EAV : bv_unsigned (auxvp sp0 a0s path envv) = (usp0 + 8 * (QBpc.argc [a0s; path] + QBpc.envc envv + 3))%Z).
+{ rewrite AU. unfold QBpc.argc, QBpc.envc. cbn [length]. lia. }
+assert (AC : (auxv_count (la_rseq (launch_auxv inp sp0 mbase)) <= 29)%nat).
+{ unfold auxv_count. destruct (la_rseq (launch_auxv inp sp0 mbase)); lia. }
+pose proof (QBpc.hsz_eq (la_rseq (launch_auxv inp sp0 mbase)) [a0s; path] envv) as HS.
+pose proof (QBpc.lstr_eq [a0s; path] envv (in_execfn inp)) as LS.
+pose proof (QBpc.total_arg_bytes_nonneg [a0s; path]) as TA1. pose proof (QBpc.total_arg_bytes_nonneg envv) as TA2.
+unfold QBpc.argc, QBpc.envc in HS. cbn [length] in HS.
+assert (RB : (usp0 + 16 <= QBpc.rnd_addr sp0 (la_rseq (launch_auxv inp sp0 mbase)) [a0s; path] envv + 16
+<= bv_unsigned (ed_top a_rnd))%Z).
+{ unfold QBpc.rnd_addr. lia. }
+assert (ABOVE : forall x, (usp0 <= x < 2^64)%Z -> M (Z_to_bv 64 x) = mem0 (Z_to_bv 64 x)).
+{ intros x Hx. apply HA. rewrite u_small by lia. lia. }
+assert (AV8 : forall k, ((usp0 + 8 * k) mod 8 = 0)%Z).
+{ intros k. pose proof (Z.div_mod usp0 16 ltac:(lia)) as DM. rewrite SPal, Z.add_0_r in DM.
+replace (usp0 + 8 * k)%Z with ((2 * (usp0 / 16) + k) * 8)%Z by lia. apply Z_mod_mult. }
+exists (usp0 + 8 * (QBpc.argc [a0s; path] + QBpc.envc envv + 3))%Z,
+(drv_auxv_vals (launch_auxv inp sp0 mbase) RPH entry (in_uid inp) (in_gid inp) (in_hwcap inp)
+(Z_to_bv 64 (QBpc.rnd_addr sp0 (la_rseq (launch_auxv inp sp0 mbase)) [a0s; path] envv))
+(Z_to_bv 64 (QBpc.execfn_ptr (ed_top a_rnd) (in_execfn inp)))),
+(QBpc.rnd_addr sp0 (la_rseq (launch_auxv inp sp0 mbase)) [a0s; path] envv),
+(QBpc.execfn_ptr (ed_top a_rnd) (in_execfn inp)), (drv_auxv_rseq (launch_auxv inp sp0 mbase)).
+rewrite (drv_rauxv_words (launch_auxv inp sp0 mbase) RPH entry (in_uid inp) (in_gid inp) (in_hwcap inp) sp0 (ed_top a_rnd)
+[a0s; path] envv (in_execfn inp)).
 split. { unfold RAUXV_CELL. eapply rw_C8_of_rdn; [lia| lia| | apply WD; lia]. unfold wz. rewrite <- EAV, Z_to_bv_bv_unsigned.
 match goal with H : rdn RSEGS M (Z_to_bv 64 614664) 8 = _ |- _ => exact H end. }
-split. { replace (rauxv_list _ _ _ _ _ _ _ _ _) with (QBpc.auxv_words RPH sp0 [a0s; path] envv a_uid a_hwcap).
-2:{ unfold rauxv_list, QBpc.auxv_words, wz. cbn [map]. rewrite PH1, PH2, PH3, !Z_to_bv_bv_unsigned. reflexivity. }
-eapply bytes_at_eqmem; [exact AUXW|]. intros x Hx. apply ABOVE.
-rewrite Q5Rg.u64s_length in Hx. unfold QBpc.auxv_words in Hx. cbn [length] in Hx.
-subst avz. unfold QBpc.argc, QBpc.envc in Hx. cbn [length] in Hx. lia. }
-split. {
-change (StackLayout.at_random_bytes (ed_random a_rnd)) with (@rnd_bytes AMB) in RND.
+split. { eapply bytes_at_eqmem; [exact AUXW|]. intros x Hx.
+rewrite Q5Rg.u64s_length, QBpc.length_auxv_words in Hx. unfold QBpc.argc, QBpc.envc in Hx. cbn [length] in Hx.
+rewrite ABOVE by lia. apply (Qdbv.main_entry_mem_above inp mbase entry sp0 [a0s; path] envv tid regs0 mem0 ME).
+rewrite u_small by lia. lia. }
+split. { unfold QBpc.rnd_bytes in RND. change (StackLayout.at_random_bytes (ed_random a_rnd)) with (@QJyS.rnd_bytes AMB) in RND.
 rewrite (@rnd_bytes_split AMB) in RND. apply QZDE.bytes_at_app in RND as [_ RND].
 change (Z.of_nat (length _)) with 8%Z in RND.
 replace (le8 (wz rc_secret)) with (@secret_bytes AMB).
 2:{ unfold le8, wz. change (@rc_secret amb_rc) with rnd_secret. unfold rnd_secret. rewrite Z_to_bv_bv_unsigned. symmetry. apply ssp_secret_bytes. }
-eapply bytes_at_eqmem; [exact RND|]. intros x Hx. apply ABOVE. rewrite secret_bytes_length in Hx.
-unfold QBpc.rnd_addr, QBpc.raw_len, QBpc.struct_size, QBpc.argc, QBpc.envc in Hx. cbn [length] in Hx. lia. }
-subst avz. unfold QBpc.argc, QBpc.envc, QBpc.rnd_addr, QBpc.raw_len, QBpc.struct_size in *. cbn [length] in *.
-repeat split; unfold QBpc.argc, QBpc.envc in *; cbn [length] in *; try lia.
-+  change (@alloc_ceiling amb_rc) with (bv_unsigned a_sp - 8388608)%Z. rewrite ASP. lia.
-+ replace (usp0 + 8 * (Z.of_nat 2 + Z.of_nat (length envv) + 3))%Z with ((Z.of_nat (length envv) + 5 + usp0 / 8) * 8)%Z.
-2:{ pose proof (Z.div_mod usp0 16 ltac:(lia)) as DM. rewrite SPal in DM.
-replace (usp0 / 8)%Z with (2 * (usp0 / 16))%Z; [lia|].
-rewrite DM at 2. replace (16 * (usp0 `div` 16) + 0)%Z with ((2 * (usp0 / 16)) * 8)%Z by lia. rewrite Z_div_mult by lia. reflexivity. }
-apply Z_mod_mult.
+eapply bytes_at_eqmem; [exact RND|]. intros x Hx. rewrite secret_bytes_length in Hx.
+rewrite ABOVE by lia. apply (Qdbv.main_entry_mem_above inp mbase entry sp0 [a0s; path] envv tid regs0 mem0 ME).
+rewrite u_small by lia. lia. }
+split. { change (@alloc_ceiling amb_rc) with (bv_unsigned a_sp - 8388608)%Z. rewrite ASP. lia. }
+split. { unfold QBpc.argc, QBpc.envc. lia. }
+split. { rewrite QBpc.length_auxv_words. unfold QBpc.argc, QBpc.envc. cbn [length]. lia. }
+split. { lia. }
+split. { lia. }
+split. { reflexivity. }
+split. { unfold drv_auxv_vals. apply Forall_forall. intros v Hv. apply in_map_iff in Hv as (e & <- & _). apply u64_range. }
+split. { unfold QBpc.execfn_ptr. lia. }
+split. { unfold drv_auxv_rseq. destruct (la_rseq (launch_auxv inp sp0 mbase)); [right | left]; reflexivity. }
+split. { lia. }
+apply AV8.
 -  split; [| lia]. eapply (bytes_at_of_rdn M _ 4); [lia| lia| | reflexivity].
 rewrite Z_to_bv_bv_unsigned. match goal with H : rdn RSEGS M (Z_to_bv 64 482760) 4 = _ |- _ => exact H end.
 -  eapply (bytes_at_of_rdn M _ 8); [lia| lia| | reflexivity]. match goal with H : rdn RSEGS M (Z_to_bv 64 482728) 8 = _ |- _ => exact H end.
@@ -327,40 +398,57 @@ cbn in *; first [apply KI; lia| apply KI0; lia| apply KI1; lia| apply KI2; lia| 
 -  intros a Ha. unfold QZDE.wa, RSTAGE, RSTAGE_SZ in *.
 cbn in *; first [apply KI; lia| apply KI0; lia| apply KI1; lia| apply KI2; lia| apply KI3; lia| apply KI4; lia| apply KI5; lia| apply KI6; lia| apply KI7; lia| apply KI8; lia| apply KI9; lia| apply KI10; lia| apply KI11; lia| apply KI12; lia].
 -
-destruct (main_str sp0 a0s path envv tid regs0 mem0 Hva Hve Hvsp ME 1%nat ltac:(lia)) as (Sr & Slo & Shi & Slen). cbn [nth app] in Sr, Slo, Shi, Slen.
-change (cat_argv_ptr sp0 [a0s; path] envv 1) with (p1 sp0 a0s path envv) in Sr, Slo, Shi.
-pose proof (u64_range (p1 sp0 a0s path envv)) as PR.
+destruct (QWQV.Mq0.main_str sp0 a0s path envv tid regs0 mem0 inp mbase entry Hva Hve Hvsp Htid ME 1%nat ltac:(lia)) as (Sr & Slo & Shi & Slen).
+cbn [nth app] in Sr, Slo, Shi, Slen.
+lazymatch type of Slo with (_ <= bv_unsigned ?P)%Z => change P with (p1 a0s path envv inp) in Sr, Slo, Shi end.
+pose proof (u64_range (p1 a0s path envv inp)) as PR.
 split; [| split; lia].
 assert (RD : rdn RSEGS M (Z_to_bv 64 pp) (length (path ++ [Z_to_bv 8 0])) = Some (path ++ [Z_to_bv 8 0])).
 { rewrite length_app. cbn [length]. rewrite Z_to_bv_bv_unsigned, <- Sr. apply rdn_agree. intros j Hj. apply HA.
 rewrite u_small by (clear -Hj PR Shi SPhi Slen; lia). clear -Hj Slo PR. lia. }
 apply (rdn_bytes_at rsegs M pp _); [clear -PR; lia| | exact RD]. rewrite length_app. cbn [length]. clear -PR Shi SPhi Slen. lia.
 -
-pose proof (lay_bsb_nw RPH sp0 [a0s; path] envv a_uid a_hwcap a_rnd Hva Hve ltac:(unfold sp_window_hi; lia)) as NW.
-pose proof (QBpc.build_stack_bytes_length RPH sp0 [a0s; path] envv a_uid a_hwcap a_rnd) as BL.
-pose proof (QBpc.raw_len_nonneg RPH sp0 [a0s; path] envv a_uid a_hwcap a_rnd) as RLN.
-unfold QBpc.raw_len, QBpc.struct_size, QBpc.argc, QBpc.envc in BL, RLN. cbn [length] in BL, RLN.
-pose proof (u_cat_argv_ptr sp0 [a0s; path] envv Hva Hve ltac:(unfold sp_window_lo; lia) ltac:(unfold sp_window_hi; lia) 1%nat ltac:(cbn; lia)) as PP.
-unfold cat_struct_size, auxv_size in PP. cbn [length firstn total_arg_bytes_nat fold_right] in PP.
-change (cat_argv_ptr sp0 [a0s; path] envv 1) with (p1 sp0 a0s path envv) in PP.
-unfold total_arg_bytes in BL, RLN. cbn [fold_right] in BL, RLN.
-pose proof (QBpc.init_stack_bytes rsegs RPH sp0 [a0s; path] envv a_uid a_hwcap a_rnd ltac:(rewrite stack_max_size_val; lia) ltac:(lia)) as SB.
-set (off := Z.to_nat (pp + Z.of_nat (length path) - usp0)).
-exists (firstn 8 (skipn off (build_stack_bytes RPH sp0 [a0s; path] envv a_uid a_hwcap a_rnd))). split.
-+ replace (pp + Z.of_nat (length path))%Z with (usp0 + Z.of_nat off)%Z by (subst off; lia).
+(* LPS 727298f3: the path's NUL and the seven bytes above it lie in the entry image, below the environment
+   strings, the exec file name and the block's eight closing zero bytes *)
+destruct (Qdbv.main_entry_launch inp mbase entry sp0 [a0s; path] envv tid regs0 mem0 ME) as (brk0 & Eav & Eev & _ & _ & Hvl & Hlau).
+destruct (QBpc.launch_facts inp sp0 brk0 mbase a_rnd Hvl Hlau) as (_ & PAD & _ & TOP & LW1 & LW2).
+pose proof (QBpc.launch_image_length inp sp0 brk0 mbase RPH entry a_rnd Hvl Hlau) as ILEN.
+unfold QBpc.im_stack_depth in LW1. rewrite stack_max_size_val in LW2.
+pose proof (QBpc.init_stack_bytes rsegs inp mbase RPH entry sp0 a_rnd) as SB.
+repeat lazymatch type of SB with ?P -> _ => specialize (SB ltac:(clear SB; lia)) end.
+rewrite Eav, Eev in PAD.
+pose proof (QBpc.lstr_eq [a0s; path] envv (in_execfn inp)) as LS.
+rewrite !QBpc.total_arg_bytes_cons, QBpc.total_arg_bytes_nil in LS.
+pose proof (QBpc.total_arg_bytes_nonneg envv) as TA2.
+pose proof (QBpc.hsz_eq (kb_rseq (in_kernel inp)) [a0s; path] envv) as HS.
+unfold QBpc.argc, QBpc.envc in HS.
+assert (SBE : QBpc.str_base (ed_top a_rnd) [a0s; path] envv (in_execfn inp)
+= (bv_unsigned (ed_top a_rnd) - 8 - QBpc.lstr [a0s; path] envv (in_execfn inp))%Z) by reflexivity.
+assert (P1E : p1 a0s path envv inp
+= Z_to_bv 64 (QBpc.str_base (ed_top a_rnd) [a0s; path] envv (in_execfn inp) + Z.of_nat (length a0s) + 1)).
+{ change (p1 a0s path envv inp) with
+(nth 1 (fst (string_addrs (string_base_addr (ed_top a_rnd) [a0s; path] envv (in_execfn inp)) [a0s; path])) (Z_to_bv 64 0)).
+rewrite QBpc.string_base_addr_eq, QBpc.string_addrs_eq. reflexivity. }
+assert (PPU : pp = (QBpc.str_base (ed_top a_rnd) [a0s; path] envv (in_execfn inp) + Z.of_nat (length a0s) + 1)%Z).
+{ rewrite P1E. apply u_small. lia. }
+pose (off := Z.to_nat (pp + Z.of_nat (length path) - usp0)).
+assert (OFFZ : Z.of_nat off = (pp + Z.of_nat (length path) - usp0)%Z) by (subst off; lia).
+assert (OFFL : (off + 8 <= length (entry_stack_image inp mbase RPH entry sp0 a_rnd))%nat) by lia.
+exists (firstn 8 (skipn off (entry_stack_image inp mbase RPH entry sp0 a_rnd))). split.
++ replace (pp + Z.of_nat (length path))%Z with (usp0 + Z.of_nat off)%Z by lia.
 eapply bytes_at_eqmem.
-* apply (QBpc.bytes_at_slice rsegs RPH sp0 [a0s; path] envv a_uid a_hwcap a_rnd). { exact SB. } subst off. lia.
+* exact (QBpc.bytes_at_slice rsegs _ _ _ off 8 SB OFFL).
 * intros x Hx. rewrite length_firstn, length_skipn in Hx.
 rewrite (HA (Z_to_bv 64 x)) by (rewrite u_small by lia; lia).
-apply (main_entry_mem_above sp0 [a0s; path] envv tid regs0 mem0 ME). rewrite u_small by lia. lia.
-+ rewrite length_firstn, length_skipn. subst off. lia.
+apply (Qdbv.main_entry_mem_above inp mbase entry sp0 [a0s; path] envv tid regs0 mem0 ME). rewrite u_small by lia. lia.
++ rewrite length_firstn, length_skipn. lia.
 -  exact LOCF.
 -  change (@alloc_ceiling amb_rc) with (bv_unsigned a_sp - 8388608)%Z. rewrite ASP. reflexivity.
 Qed.
 
-Hypothesis KLIB : read_entry_stmt usp0 (bv_unsigned tid) (p1 sp0 a0s path envv) path (Q1zM.fds1g fd3) fs0 KB.
+Hypothesis KLIB : read_entry_stmt usp0 (bv_unsigned tid) (p1 a0s path envv inp) path (Q1zM.fds1g fd3) fs0 KB.
 
-#[using="regs0 Hva Hve Hvsp Htid ME Hbrk Hplen FRM0 ASP KLIB"] Theorem conv_open_ok : open_ok_branch sp0 a0s path envv tid mem0 brk mbase fs0 stdin0 fd3 KB.
+#[using="regs0 Hva Hve Hvsp Htid ME Hbrk Hplen FRM0 ASP Hrdr KLIB"] Theorem conv_open_ok : open_ok_branch sp0 a0s path envv tid mem0 brk mbase fs0 stdin0 inp fd3 KB.
 Proof.
 intros vals R M HL P0 P1 P2 P3 P4 P5t P38 HR HK HA EQM.
 pose proof (M_locale vals M P0 EQM) as LOCF.
@@ -371,7 +459,7 @@ run_block1_keep scr0 39%nat.
 lazymatch goal with H : ?Mx = mem_denot _ M [] |- _ => assert (EM0 : Mx = M) by (rewrite H; reflexivity); subst Mx; clear H end.
 
 change (mkst R0 (Z_to_bv 64 328812) M (seg_rom RSEGS)) with (QEpW.MS R0 fF (Z_to_bv 64 328812) fC None M (seg_rom RSEGS)).
-apply (realizes_canon RSEGS). rewrite canonR_getr. rewrite !(reg_val _ _ _ _ HR).
+apply (realizes_canon RSEGS eq_refl). rewrite canonR_getr. rewrite !(reg_val _ _ _ _ HR).
 lazymatch type of HR with regs_ok _ ?SR _ => eval_sr SR end.
 cbn [edenot ev eb Q1zM.ENV alu]. rewrite ?P0, ?P2, ?alu_add_lit.
 replace (mem_denot (ENV vals) M []) with M by reflexivity.
@@ -384,9 +472,14 @@ pose proof KLIB as K. unfold read_entry_stmt in K. eapply K; clear K.
 - assert (HEX0 : forall a : Z, (QmAj.RHEX_GOT <= a < QmAj.RHEX_PTR + 8)%Z -> M (QZDE.wa a) = None).
 { intros a Ha. unfold QmAj.RHEX_GOT, QmAj.RHEX_PTR in Ha.
 exact (proj1 (Forall_forall _ _) PRS (0x10000, 0x651a0)%Z ltac:(cbn; tauto) a ltac:(cbn; lia)). }
+(* LPS 727298f3: the floor of the placement base, which drv_heap_init reads, from the launch *)
+assert (HMB : valid_mmap_base mbase).
+{ destruct (Qdbv.main_entry_launch inp mbase entry sp0 [a0s; path] envv tid regs0 mem0 ME) as (brk0 & _ & _ & _ & _ & _ & Hlau).
+exact (proj1 (valid_mmap_base_va_sv48 mbase) (entry_launch_ok_va_base Sv48 _ inp Hlau)). }
 apply (drv_heap_init M (model1g fd3) usp0 CTX NL PS GOT GUARD MI AUX CAN HEX0); try reflexivity;
 first [exact Hbrk
 |  unfold alloc_top; rewrite Q1zM.m1_vmmaps; unfold Q1zM.vm0; cbn [vm_init_sp]; rewrite stack_max_size_val; symmetry; exact CEIL
+| exact (proj1 HMB)
 | idtac].
 - apply (drv_bud_init (model1g fd3)); try reflexivity.
 all: try exact LIM_ge.
@@ -394,6 +487,7 @@ all: try (unfold DRV_W; cbn; lia).
 all: try (unfold DRV_D; cbn; lia).
 - reflexivity.
 - reflexivity.
+- exact Hrdr.
 - exact FRM0.
 Qed.
 End Conv.
@@ -539,7 +633,8 @@ Context {AMB : Amb}.
 
 Record DF (usp0 pp tid : Z) (path : list byte) (m : mem) : Prop := MKDF {
 f_sp    : 0x7fff80000000 <= usp0 <= 0x800000000000 /\ usp0 mod 16 = 0;
-f_stk   : stk rsegs m (usp0 - 8388608) usp0;
+(* LPS 727298f3: the stack window is the model's [stack_window_depth] below usp0, as [Qqqm.de_stk] *)
+f_stk   : stk rsegs m (usp0 - QRjH.Mq3.stack_window_depth) usp0;
 f_frame : rw_cells rsegs m (usp0 - 120) (main_frame usp0);
 f_tid   : bytes_at rsegs m 0x75dc8 (le4 (Z_to_bv 64 tid)) /\ 0 < tid < 2^22;
 f_self  : bytes_at rsegs m 0x75da8 (le8 (Z_to_bv 64 0x75da8));
@@ -573,10 +668,11 @@ Qed.
 #[using="Type"] Lemma DF_alloc usp0 pp tid path m m' LB0 SP lo :
 DF usp0 pp tid path m ->
 rheap_pres LB0 SP m m' -> mem_inv rsegs m' -> stk rsegs m' lo SP ->
-lo = usp0 - 8388608 -> lo <= SP <= usp0 - 120 ->
+lo = usp0 - QRjH.Mq3.stack_window_depth -> lo <= SP <= usp0 - 120 ->
 DF usp0 pp tid path m'.
 Proof.
 intros [SPB STK FRM TID SELF PRS STG PTH PTH8 LOC CEIL] HP MI' ST' -> HSP.
+pose proof QRjH.Mq3.stack_window_depth_val as SWD.
 assert (EQ : forall x, (SP <= x \/ (0x60000 <= x < 0x97000 /\ ~ (RCTX <= x < RCTX + 928) /\ ~ (RERRNO <= x < RERRNO + 4))) ->
 0 <= x < 2^64 -> m' (wa x) = m (wa x)).
 { intros x Hx Hr. apply (HP x Hr). destruct Hx as [Hx|Hx]; [left; exact Hx| right; left].
@@ -604,6 +700,7 @@ forall (ra gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 
 DF usp0 pp tid path m -> HEAPc usp0 A LB m md ->
 gp = Z_to_bv 64 0x10800 -> tp = Z_to_bv 64 0x75e70 ->
 fd_lookup (m_fds md) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+m_channel_reader md = true ->
 (pc = 0x20c28 \/ pc = 0x20c68) ->
 realizes rsegs (mkCfg (QEpW.MS (QWxq_c1.mkR ra (Z_to_bv 64 (usp0 - 128)) gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 pc) fc None m (seg_rom rsegs)) md) (t_die msg_oom (m_fs md)).
@@ -614,6 +711,7 @@ forall (ra gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 
 DF usp0 pp tid path m -> HEAPc usp0 A LB m md ->
 gp = Z_to_bv 64 0x10800 -> tp = Z_to_bv 64 0x75e70 ->
 fd_lookup (m_fds md) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+m_channel_reader md = true ->
 realizes rsegs (mkCfg (QEpW.MS (QWxq_c1.mkR ra (Z_to_bv 64 (usp0 - 128)) gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 0x20c08) fc None m (seg_rom rsegs)) md) (t_die msg_refused (m_fs md)).
 
@@ -623,6 +721,7 @@ forall (ra gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 s3 s4 s5 s6 s7 s8 s9 s10
 DF usp0 pp tid path m -> HEAPc usp0 A LB m md -> path = QBxa.Mq5.dot_path ->
 gp = Z_to_bv 64 0x10800 -> tp = Z_to_bv 64 0x75e70 ->
 fd_lookup (m_fds md) (Z_to_bv 64 2) = Some (FdChannel (Z_to_bv 64 2)) ->
+m_channel_reader md = true ->
 realizes rsegs (mkCfg (QEpW.MS (QWxq_c1.mkR ra (Z_to_bv 64 (usp0 - 128)) gp tp t0 t1 t2 s0 s1 a0 a1 a2 a3 a4 a5 a6 a7 (Z_to_bv 64 pp) s3 s4 s5 s6 s7 s8 s9 s10 s11 t3 t4 t5 t6)
 F (Z_to_bv 64 0x20bec) fc None m (seg_rom rsegs)) md) (t_die (msg_read_error path) (m_fs md)).
 End AmbL.

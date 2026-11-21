@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: changed brk_r_ok_X, check_brk_X, check_mmap_X and 2 more; added relX_mmap_fixed_overflow. *)
 (* [comment removed for export] *)
 
 From Stdlib Require Import ZArith NArith List Lia Bool.
@@ -100,6 +101,21 @@ Proof.
   intros mo mat [ret ws zs us cs ci] r e. unfold check_ret_only.
   destruct ws; [|exact I]. destruct zs; [|exact I]. destruct us; [|exact I]. destruct cs; [|exact I]. destruct ci; [|exact I].
   destruct (bv_eqb ret r); [apply relX_id| exact I].
+Qed.
+
+(* 75d69e00 (#105): each MAP_FIXED arm of check_mmap now opens with the overflow
+   test, answering check_mmap_fixed_overflow.  This is the relX leaf for that
+   call, so an enumerating proof closes the new arm WITHOUT unfolding the
+   overflow body at the enumerating site — unfolding it there would expose the
+   raw body and lose the leaf. *)
+Lemma relX_mmap_fixed_overflow : forall mo mat addr nZ eff,
+  relX mo mat (check_mmap_fixed_overflow addr nZ eff (MX mo mat))
+              (check_mmap_fixed_overflow addr nZ eff mo).
+Proof.
+  intros mo mat addr nZ [ret ws zs us cs ci]. unfold check_mmap_fixed_overflow.
+  destruct (mmap_fixed_err_addr_b addr nZ); [|apply relX_ret_only].
+  destruct ws; [|exact I]. destruct zs; [|exact I]. destruct us; [|exact I]. destruct cs; [|exact I]. destruct ci; [|exact I].
+  destruct (errno_ret_in mmap_errnos ret || bv_eqb ret addr); [apply relX_id | exact I].
 Qed.
 
 (* [comment removed for export] *)
@@ -302,7 +318,7 @@ Qed.
 
 Lemma brk_r_ok_X : forall mo mat req r,
   m_vm_materialized mo = [] -> (length mat <= NMAX)%nat ->
-  robust (nonlazy_bytes mo + bv_unsigned (bv_sub req (vm_brk (m_vmmaps mo)))) (vm_limit (m_vmmaps mo)) ->
+  robust (nonlazy_bytes mo + brk_grow_bytes (m_vmmaps mo) req) (vm_limit (m_vmmaps mo)) ->
   brk_r_ok (MX mo mat) req r = brk_r_ok mo req r.
 Proof.
   intros mo mat req r CAN LEN R. unfold brk_r_ok, brk_grow_ok, brk_budget_ok. rewrite !m_vmmaps_MX.
@@ -313,8 +329,8 @@ Proof.
   - apply bv_eqb_eq in Er. subst r.
     destruct ((0 <? bv_unsigned (vm_brk (m_vmmaps mo))) && (bv_unsigned (vm_brk (m_vmmaps mo)) <? bv_unsigned req))%bool; [|reflexivity].
     f_equal. f_equal.
-    replace (nonlazy_bytes mo + Z.of_nat (length mat) * page_size + bv_unsigned (req - vm_brk (m_vmmaps mo)))
-      with (nonlazy_bytes mo + bv_unsigned (req - vm_brk (m_vmmaps mo)) + Z.of_nat (length mat) * page_size) by lia.
+    replace (nonlazy_bytes mo + Z.of_nat (length mat) * page_size + brk_grow_bytes (m_vmmaps mo) req)
+      with (nonlazy_bytes mo + brk_grow_bytes (m_vmmaps mo) req + Z.of_nat (length mat) * page_size) by lia.
     apply robust_leb; [exact R| apply mat_bound0; exact LEN].
   - destruct (bv_eqb r (vm_brk (m_vmmaps mo))) eqn:Eb; cbn [andb]; [|reflexivity].
     apply bv_eqb_eq in Eb. subst r.
@@ -364,7 +380,9 @@ Ltac xfer_leaf :=
 (* [comment removed for export] *)
 Ltac xfer_push :=
   progress (rewrite ?m_vmmaps_MX, ?with_vmmaps_MX, ?with_mmap_backing_MX, ?with_mmap_destroyed_MX,
-                    ?with_mmap_replacement_MX, ?mprotect_model_next_MX).
+                    ?with_mmap_replacement_MX, ?mprotect_model_next_MX,
+                    (* 08b1429: check_mmap reads m_fds (EBADF arm) and m_kernel (linux_place_is) *)
+                    ?m_fds_MX, ?m_kernel_MX).
 
 Ltac xfer :=
   cbv zeta;
@@ -405,13 +423,13 @@ Lemma check_mprotect_X : forall addr len prot eff mo mat,
 Proof.
   intros addr len prot eff mo mat CAN LEN R. unfold check_mprotect.
   rewrite !(mprotect_budget_ok_X NMAX) by assumption.
-  rewrite !m_vmmaps_MX, !mprotect_model_next_MX.
+  rewrite !m_vmmaps_MX, ?m_kernel_MX, !mprotect_model_next_MX.
   xfer.
 Qed.
 
 Lemma check_brk_X : forall req eff mo mat,
   m_vm_materialized mo = [] -> (length mat <= NMAX)%nat ->
-  robust NMAX (nonlazy_bytes mo + bv_unsigned (bv_sub req (vm_brk (m_vmmaps mo)))) (vm_limit (m_vmmaps mo)) ->
+  robust NMAX (nonlazy_bytes mo + brk_grow_bytes (m_vmmaps mo) req) (vm_limit (m_vmmaps mo)) ->
   relX mo mat (check_brk req eff (MX mo mat)) (check_brk req eff mo).
 Proof.
   intros req eff mo mat CAN LEN R. unfold check_brk.
@@ -436,11 +454,11 @@ Lemma check_mmap_X : forall addr len prot flags fd off eff mo mat,
               (vm_limit (m_vmmaps mo)) ->
   relX mo mat (check_mmap addr len prot flags fd off eff (MX mo mat)) (check_mmap addr len prot flags fd off eff mo).
 Proof.
-  intros addr len prot flags fd off eff mo mat CAN LEN nZ R1 R2 R3. unfold check_mmap.
+  intros addr len prot flags fd off eff mo mat CAN LEN nZ R1 R2 R3. unfold check_mmap, check_mmap_fixed_overflow.
   rewrite !(noreserve_backed_ok_X NMAX) by assumption.
   rewrite !(fixed_rw_budget_ok_X NMAX) by assumption.
   rewrite !(fixed_rw_span_budget_ok_X NMAX) by assumption.
-  rewrite !m_vmmaps_MX, !with_vmmaps_MX, !with_mmap_backing_MX, !with_mmap_destroyed_MX, !with_mmap_replacement_MX.
+  rewrite !m_vmmaps_MX, ?m_fds_MX, ?m_kernel_MX, !with_vmmaps_MX, !with_mmap_backing_MX, !with_mmap_destroyed_MX, !with_mmap_replacement_MX.
   xfer.
 Qed.
 

@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Theorem Labs, 2026-10: fuzz_preset's non-primary room invariant room_live_cf (lib/Reusable/YGcfRoomLive.v) at
    CfParams_preset (CfParamsPreset.v). PER-UNIT file: the instance half (YGcfRoomLive.v, generic in CfParams) meets
    the harness half (lib/Spec/PresetLiveSec.v, h-hpreset-7).
@@ -10,7 +11,7 @@
      rs_live_blocks is the bridge to the allocator's live requests map snd (blocks S) (an equality, by definition of
      room_of_cf). live_premises_hold (PresetLiveSec.v) shows those premises are satisfiable.
    - room_live_np_init_u / room_live_np_step_u / room_live_np_tail_u: h-pre-b1's iface_room_np_init / _step / _tail
-     (PresetCfnA.v section 3b, frozen at 3f83c075b61f = 59de238d7ae) with NP := room_live_cf, bodies unfolded word for
+     (PresetCfnA.v section 3b, frozen =) with NP := room_live_cf, bodies unfolded word for
      word; h-pre-b1 wraps each in one exact. Their names differ from the interface's definitions on purpose.
    The keeps' side conditions are closed by computation at LSEC + DRV = 9,524 and L24 + DRV (+ 1 for a realloc's two
    blocks) = 146,223: 9,524 + QSEC_MAX 4,177 + 3 < 16,000 (the +3 is the call's new entry and RK_realloc's 2 of
@@ -92,11 +93,11 @@ Qed.
    CfParams_preset is the only CfParams instance, so Wf_cf, room_live_cf and ROOM_cf_k are at preset's. *)
 #[local] Existing Instance CfParams_preset.
 
-(* iface_room_np_init, PresetCfnA.v:454 at 3f83c075b61f (= :512 at 59de238d7ae). *)
+(* iface_room_np_init, PresetCfnA.v:455 (= :512). *)
 Lemma room_live_np_init_u : room_live_cf YG00.init_state.
 Proof. exact room_live_cf_init_preset. Qed.
 
-(* iface_room_np_step, PresetCfnA.v:455-459 at 3f83c075b61f (= :513-517 at 59de238d7ae). *)
+(* iface_room_np_step, PresetCfnA.v:456-460 (= :513-517). *)
 Lemma room_live_np_step_u :
 (forall U S n tr trc p S', Wf_cf U S -> YG01.qtight S -> room_live_cf S -> (length (YG01.blocks S) <= 3)%nat ->
   YG00.apath (YG00cf.malloc_cf n tr S) trc (p, S') -> room_live_cf S') /\
@@ -110,7 +111,7 @@ split.
   apply (room_live_step_counts U S S' W T R C1 C2). right. left. exists p, tr, trc. exact H.
 Qed.
 
-(* iface_room_np_tail, PresetCfnA.v:460 at 3f83c075b61f (= :518 at 59de238d7ae). *)
+(* iface_room_np_tail, PresetCfnA.v:461 (= :518). *)
 Lemma room_live_np_tail_u : forall S, room_live_cf S -> ROOM_cf_k S 2.
 Proof. intros S H. exact (room_live_room_k S H). Qed.
 

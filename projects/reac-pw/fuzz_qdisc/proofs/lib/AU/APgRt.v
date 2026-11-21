@@ -5,15 +5,15 @@
 (* Modified by Theorem Labs, 2026-10: made for reac-pw/fuzz_qdisc's ASan harness walk
    (LLVMFuzzerTestOneInput 0x7e68c, fuzz_qdisc.asan sha256
    980e2b8458528060633e6c98fff20d2f46b97738c06eae4307d09f59c82c890e) from
-   proofs/libreac/fuzz_knock/lib/A/APgRt.v at origin/ossv/recipes 6ebe35ba632, with its module paths changed.
+   proofs/libreac/fuzz_knock/lib/A/APgRt.v, with its module paths changed.
    rule 24 (reuse): no function is proved here; this is the walk's context record and its tactics.
    Q1 NO FAKE FRAME (no c_fpos, own = [], frames S3 = []); Q2 NO sp1 ATOM (sp stays SOff 2 (-96)); Q3 STACK
    REGION 96; Q4 NO UAR CELL (rt_regions0 = the stack, the .got slot of the shadow cell and the cell); Q5
    EV_LIB = 0 and LLVMF_STK = 32768. *)
 (* Modified by Theorem Labs, 2026-10: the asan-ubsan twin of lib/A/QPgRt.v of this library, for fuzz_qdisc's
    ASan-UBSan image (fuzz_qdisc.asan-ubsan, sha256 eb657d77bd4b27038d93f75626dcc6b37a48be09c889fda664b4f451c6602062),
-   written by hand from that file as knock's lib/AU/APgRt.v is from its lib/A/APgRt.v (origin/ossv/recipes
-   88154566652): the framework imports move to the lib/AU twins (AWalkFw0 YCef YF0l YCej YCeh YCem YCep AWalkFw1
+   written by hand from that file as knock's lib/AU/APgRt.v is from its lib/A/APgRt.v:
+   the framework imports move to the lib/AU twins (AWalkFw0 YCef YF0l YCej YCeh YCem YCep AWalkFw1
    AWalkFw2 YCfm); the callee entries, the divisor cell and the two return sites are the asan-ubsan image's;
    rt_entry's two constant-cell literals are the asan-ubsan image's: 612608 = 0x95900 (.got slot of the shadow
    base, `auipc a2,0x17` 0x7e6e4 + `ld a2,0x21c(a2)` 0x7e6e8; lib/AU/YCeh.v A_GOT_shadow) and 645304 = 0x9d8b8
@@ -22,6 +22,7 @@
    0x7e694; its prologue is `addi sp,sp,-0x60` and twelve `sd` (ra, s0..s10 at 0x58(sp)..0(sp), 0x7e698-0x7e6c4),
    so Q3's region of 96 bytes now holds twelve words; its calls are `jal` 0x7e7a8 reac_qdisc_etf_catchup_slots
    (0x7e984) and `jal` 0x7e7b4 check_slots (0x7e8a4), and the never-reached report calls. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.reac_pw.fuzz_qdisc.lib.Reusable Require YZ00.
 From Stdlib Require Import ZArith NArith List Lia Bool Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

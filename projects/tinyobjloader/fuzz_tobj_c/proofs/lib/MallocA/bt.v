@@ -1,4 +1,5 @@
 (* Machine-generated data computed from the task's compiled program image (decoder-built tables and encoded data blocks); may contain fragments of third-party object code - see NOTICE. No Anthropic licence header applies to this file. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the law_res hypotheses state the reserved ledger as the image's entries followed by the vDSO/vvar pair, written as plain text). *)
 (* [comment removed for export] *)
 Local Set Warnings "-require-in-module".
 (* [comment removed for export] *)
@@ -992,8 +993,10 @@ Hypothesis HCSTS : ltac2:(tb__ "0|0|
 S2eS3eVCST;R1A2S3eS7aR2A2S3F_;F_;Fa;").
 Let AInv : AA -> valuation -> list word -> Model -> Prop := AInvA segs.
 
-Hypothesis law_res : ltac2:(tb__ "0|1|
-S59SfS18S5bQ40A1M0A1S5cVAInv;R4R3R2R1A4S2S18S1aG0G0A2A1S5fS5dR2A1A1S70S35A1A3F_;Fmd;Ftp;Frho;FA;").
+(* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v [vdso_pair_ok]). *)
+Hypothesis law_res : forall A rho tp md, AInv A rho tp md ->
+  exists V, vm_reserved (m_vmmaps md) = segments_reserved OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocA.a0.CertStackFree.segsA ++ V
+            /\ OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysSpec.vdso_pair_ok V.
 
 Theorem malloc_sec_0 : ltac2:(tb__ "0|5|
 S66OF_;S59S4fS5bQ40A1M0S46F_;SfS18G0A1S68Vsegs;S40R2R1S54S4eVAInv;VCST;VXGL;S0S1R5R4A8A5S64S50R5A1S47Vsegs;R8S45R6A1A3S74Vsegs;R9S45R7A1A3SfS18S5eA1M1S37S5cG0S75Vsegs;R5RaS20S0S1Z2M2A3M3S1dG1S6eR4S6fR3R2A2A4A5S5aS0S1RfReRcR6RbR5R3A9S71S36R5U0A2S36R5U3A2R4S36R5U1M4A2R3A5RfR4S67R8SdS5G3A1A1R4A3RdR7S60S72S5dR5A1S36R6G4A2R4A3R5A2A5F_;F_;F_;Fa;Fmd;Fms;Ftr;FrhoX;SfG0S63Vsegs;RdS44Vsegs;RaR1A1S28S0S1G2A3S67R2S2cS0S1G2A3R1A3R8A5R7A4Fa;FrhoX;SfS63Vsegs;RdS44Vsegs;S5aS0S1RcRbR9A5S48S0S1G2Z8A4R1R8A5R7A4FrhoE;F_;F_;F_;F_;F_;TQ;Ftp;Frho;FJo;FKc;FA;Fok;").
@@ -1162,8 +1165,10 @@ Hypothesis HCSTS : ltac2:(tb__ "0|0|
 S2eS3eVCST;R1A2S3eS7aR2A2S3F_;F_;Fa;").
 Let AInv : AA -> valuation -> list word -> Model -> Prop := AInvA segs.
 
-Hypothesis law_res : ltac2:(tb__ "0|1|
-S59SfS18S5bQ40A1M0A1S5cVAInv;R4R3R2R1A4S2S18S1aG0G0A2A1S5fS5dR2A1A1S70S35A1A3F_;Fmd;Ftp;Frho;FA;").
+(* LPS 727298f3: the reserved ledger is the image's entries then the vDSO/vvar pair (Fw/SysSpec.v [vdso_pair_ok]). *)
+Hypothesis law_res : forall A rho tp md, AInv A rho tp md ->
+  exists V, vm_reserved (m_vmmaps md) = segments_reserved OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.MallocA.a0.CertStackFree.segsA ++ V
+            /\ OSSVerify.Proofs.tinyobjloader.fuzz_tobj_c.lib.Fw.SysSpec.vdso_pair_ok V.
 
 Theorem malloc_sec_2 : ltac2:(tb__ "0|5|
 S66OF_;S59S4fS5bQ40A1M0S46F_;SfS18G0A1S68Vsegs;S40R2R1S54S4eVAInv;VCST;VXGL;S0S1R5R4A8A5S64S50R5A1S47Vsegs;R8S45R6A1A3S74Vsegs;R9S45R7A1A3SfS18S5eA1M1S37S5cG0S75Vsegs;R5RaS20S0S1Z4M2A3M3S1dG1S6eR4S6fR3R2A2A4A5S5aS0S1RfReRcR6RbR5R3A9S71S36R5U0A2S36R5U3A2R4S36R5U1M4A2R3A5RfR4S67R8SdS5G3A1A1R4A3RdR7S60S72S5dR5A1S36R6G4A2R4A3R5A2A5F_;F_;F_;Fa;Fmd;Fms;Ftr;FrhoX;SfG0S63Vsegs;RdS44Vsegs;RaR1A1S28S0S1G2A3S67R2S2cS0S1G2A3R1A3R8A5R7A4Fa;FrhoX;SfS63Vsegs;RdS44Vsegs;S5aS0S1RcRbR9A5S48S0S1G2Z8A4R1R8A5R7A4FrhoE;F_;F_;F_;F_;F_;TQ;Ftp;Frho;FJo;FKc;FA;Fok;").

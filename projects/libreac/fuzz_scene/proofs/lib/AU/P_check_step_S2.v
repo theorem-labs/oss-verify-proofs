@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: ported to rc.2's binaries and LPS 2afba80c; the theorem statements are restated in the form rc.2 states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/cgif/cgif_file_fuzzer/lib/A/AChf.v, with its module paths, module names and addresses changed; 145 of its 210 lines of code are new or changed and 301 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_scene/lib/A/P_check_step_S0.v, with its module paths and module names changed; 603 of its 652 lines of code are new or changed and 161 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Segment S2 of the ASan walk of check_step in fuzz_scene.asan-ubsan (sha256
    e98b1ed286c1aa5c3d558cb2069011d2413d58b2122f741531364382a528833f): 0x835c4 .. 0x8362c, proved (rule 24: no
    function proved; this lane proves ONE segment lemma of the walk against the cut statement of
@@ -14,7 +15,7 @@
    check_step's own frame sp0 - 128; the `bnez a0` after each call is refuted from `v = w64 0 <-> bytes equal`
    and the block's bytes (s2_payload_nth / s2_trailer_nth of P_check_step_S2_aux.v).
    The UBSan guards: 0x835d8 (~blk <u 7/9) and, on the k = 0 / k = 342 arms, 0x835e0 (~body <u off) by
-   kill_not_trap (lib/AU/U_NotTrap.v, at bcd4b91d8d9); on the 1 <= k <= 341 arm the
+   kill_not_trap (lib/AU/U_NotTrap.v); on the 1 <= k <= 341 arm the
    second guard compares against the off atom, so kill_not_trap_atom (below) closes it from
    0 <= body /\ body + scene_off k < 2 ^ 64. 0x83604 and 0x83610 are decided in the run from the blk atom's
    range fact. Donor: the addframe walk's bcmp (cgif A/ACkh.v:33 tfibX_ABCMP, A/ACjf.v:152). *)

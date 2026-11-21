@@ -4,6 +4,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths and module names changed; 3060 of its 3101 lines of code are new or changed and 207 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/A/Prog/reac_box_catalogue_match.v, with its module paths, module names, addresses and numbers changed; 2488 of its 3291 lines of code are new or changed and 2298 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/libreac/fuzz_ctrl/lib/B/Prog/reac_box_catalogue_match.v, with its module paths and module names changed; 2419 of its 2557 lines of code are new or changed and 3153 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* Shared helpers for the segment lemmas of fuzz_ctrl LLVMFuzzerTestOneInput (asan-ubsan, image B): the run lemma
    sl_run (an evt run into SR Post, via PContract.evt_SR_canon; the asan evt already runs on the real memory, so
    there is no normalize step as in the ubsan twin), the ADDR-KEEP lemma sl_addr_keep (addressable survives a run
@@ -2076,7 +2077,7 @@ Proof.
   apply (sl_fra_move g fr hb regs' regs' mem' md md' HFRA'); try reflexivity; exact Hmat.
 Qed.
 
-(* ---- The S-anchored callee transport (image-A push 6b, a Theorem Labs lane's statement 3ef2305c85, a Theorem Labs lane ruling
+(* ---- The S-anchored callee transport (image-A push 6b, a Theorem Labs lane's statement, a Theorem Labs lane ruling
    2026-10-27), with the image-B values: the 448-byte save area [A, A + 448), the frame-base spill
    [A + 336, A + 344), the fr reload and selector spills [A + 40, A + 56). ---- *)
 
@@ -2750,7 +2751,7 @@ Lemma md_self : forall m : Model, m = with_vm_backing (m_vm_lazy m) (m_vm_materi
   (os_upd (m_vmmaps m) (m_fds m) (m_fs m) (m_statpins m) m).
 Proof. intros [[t p] [v l z] io [fs] [h ti c ss sm ch u sa k sp at_ pins] li tm]. reflexivity. Qed.
 
-(* ENT #14, the per-class fact, as a predicate (names agreed with the image-A lane, 0b6b7fff89f). *)
+(* ENT #14, the per-class fact, as a predicate (names agreed with the image-A lane). *)
 Definition ent_class_fact (g : ghost) : Prop :=
   exists BE : Z -> Z,
     (forall c, 0 <= c < AsanCtrl.K_NUM_CLASSES -> ClassConsDef.a_class_bytes (g_H g) c <= BE c) /\
@@ -2758,7 +2759,7 @@ Definition ent_class_fact (g : ghost) : Prop :=
 
 (* ENT at the entry cut: every conjunct is a fact of the entry state about itself, except #14, which is the slot's
    named premise ENTRY_CLASS: the entry heap's per-class bound, owed by the driver (a Theorem Labs lane's
-   drv_slot_class_entry_stmt) until a Theorem Labs lane puts it in alib_pre (48004cf7bfc's alib_pre has no class premise; it
+   drv_slot_class_entry_stmt) until a Theorem Labs lane puts it in alib_pre (a commit's alib_pre has no class premise; it
    gives only a_live_bytes H <= 5 * 2 ^ 30). It lives in this one-lemma section so that no other lemma (in
    particular no tauto proof) can capture it: only ent_entry and ent_class_entry take it. *)
 Section EntryClass.

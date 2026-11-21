@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3. *)
 (* [comment removed for export] *)
 From Stdlib Require Import List ZArith Lia Classical_Prop.
 From LinuxProcessSemantics.LinuxProcessSem Require Import Monad Specs
@@ -109,6 +110,14 @@ Proof.
     end.
   - left.
     match goal with
+    | [ K : materialize_model_accesses ?m1 _ = Some ?m2, K0 : m_halted ?m1 = None
+        |- m_halted (with_vdso_bump ?m2) = None ] =>
+        pose proof (materialize_model_accesses_frame _ _ _ K) as (_ & _ & _ & _ & _ & Hp & _);
+        change (m_halted (with_vdso_bump m2)) with (m_halted m2);
+        unfold m_halted; rewrite Hp; exact K0
+    end.
+  - left.
+    match goal with
     | [ K : materialize_model_accesses ?m1 _ = Some _, K0 : m_halted ?m1 = None |- _ ] =>
         pose proof (materialize_model_accesses_frame _ _ _ K) as (_ & _ & _ & _ & _ & Hp & _);
         unfold m_halted; rewrite Hp; exact K0
@@ -136,7 +145,7 @@ Lemma realizes_must_exit_in_gen : forall S c T,
   realizes segs c T -> shape_good S T -> leaf_ok S c ->
   must_exit_in_at_cfg the_scfg segs S c.
 Proof.
-  intros S c T Hrz. induction Hrz as [c I evs nx T i0 Hnode Hcont IH | c Hh | c T T' H IH Heq];
+  intros S c T Hrz. induction Hrz as [c I evs nx T i0 Hnode Hrob Hcont IH | c Hh | c T T' H IH Heq];
     intros Hgood Hleaf.
   - destruct Hnode as [Hcan Hall].
     assert (Hrun : m_halted (cfg_model c) = None).
@@ -161,17 +170,25 @@ Proof.
   - apply IH; [| exact Hleaf]. eapply shape_good_eq; [apply t_eq_sym; exact Heq | exact Hgood].
 Qed.
 
+End WithSegs.
+
+(* [comment removed for export] *)
+Section WithRunSegs.
+Variable segs : list Segment.
+Context {SC : StepCfg}.
+
 Theorem realizes_must_exit_in : forall S pc ph sp brk0 mb rnd lim inp T,
-  realizes segs (init_config segs pc ph sp brk0 mb rnd lim inp) T ->
+  realizes (run_segments segs inp sp mb)
+    (init_config (run_segments segs inp sp mb) pc ph sp brk0 mb rnd lim inp) T ->
   shape_good S T ->
   must_exit_in_scfg the_scfg S (mkImage segs pc ph) lim (mkEntry sp brk0 mb rnd) inp.
 Proof.
   intros S pc ph sp brk0 mb rnd lim inp T Hrz Hgood. cbn [must_exit_in_scfg].
-  eapply realizes_must_exit_in_gen; [exact Hrz | exact Hgood |].
+  eapply (realizes_must_exit_in_gen (run_segments segs inp sp mb)); [exact Hrz | exact Hgood |].
   left. reflexivity.
 Qed.
 
-End WithSegs.
+End WithRunSegs.
 
 (* [comment removed for export] *)
 (* [comment removed for export] *)

@@ -2,7 +2,7 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-10: the walk of sup_connect on fuzz_command.asan-ubsan (image B, 0x8b45c, 37
-   instructions), the B twin of lib/A/Prog/sup_connect.v (a working branch 8d55d5a2288),
+   instructions), the B twin of lib/A/Prog/sup_connect.v (a working branch),
    re-derived on B's code: the parts, each proved over the hand-over of sup_connect_s0.v, composed here from
    answer's entry back to sup_connect's entry.
      - sup_connect_s1.v `scb_seg_e`: the entry 0x8b45c, the prologue and record(4), to the return point 0x8b490;
@@ -12,6 +12,7 @@
      - sup_connect_s4.v `scb_tail_ok`: the epilogue, `j answer` (0x8b4ec) and answer's contract to the post.
    The interface sup_connect_s0.v states the statement's premises (`scb_pre`) conjunct for conjunct and its post
    (`scb_post`) word for word. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 From OSSVerify.Proofs.plugin_hostd.fuzz_command.lib.Reusable Require YZ00.
 From Stdlib Require Import String ZArith List Bool Lia Permutation.
 From LinuxProcessSemantics.LinuxProcessSem Require Import

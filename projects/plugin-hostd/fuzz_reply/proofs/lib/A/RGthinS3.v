@@ -1,13 +1,14 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10-29: copied from proofs/omx-clap-core/fuzz_preset/lib/A/RGthinS3.v (hub 9f4806388ad, blob 60334f77604b) rt_seg_ret, restated as YGcfReallocCompose.wrap_realloc_walk_cf's field rw_ret at image A (entry facts rentry_cf, Deallocate's post at any ghost set, errno / memnorm kept). *)
+(* Modified by Theorem Labs, 2026-10-29: copied from proofs/omx-clap-core/fuzz_preset/lib/A/RGthinS3.v (blob 60334f77604b) rt_seg_ret, restated as YGcfReallocCompose.wrap_realloc_walk_cf's field rw_ret at image A (entry facts rentry_cf, Deallocate's post at any ghost set, errno / memnorm kept). *)
 (* Modified by Theorem Labs, 2026-10-31: field round 3 part 3c (the record's segments no longer keep the overlay normal
    form): rw_ret_A's memnorm conjunct and its proof removed. *)
 (* Modified by Theorem Labs, 2026-10-31: rw_ret_A takes the form of the realloc keep record's field rwk_ret
    (YGcfReallocComposeKeep.wrap_realloc_walk_keep_cf): the memnorm keep right after RGtop.rwin, proved by
    RGcfSegs2a.memnorm_pw (m3 leaves memory unchanged). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/RGcfSegs3.v, with its module paths and module names changed; 36 of its 127 lines of code are new or changed and 56 lines of the source are left out. *)
-(* Modified by a Theorem Labs lane (ReallocPrimary.RealSegA), 2026-10-30: from proofs/plugin-hostd/fuzz_reply/lib/A/RGthinS3.v (commit 66a127cb11e, sha256 7d851e4e992d; internal record, reply A text, no relocation) with the statement edits preset A5 made to its copy (a Theorem Labs lane, commit d0fcb396eee): the assert PB follows rl_stack's weakened bound (ASAN_CEIL <= a); module paths: lib.Reusable -> lib.A for AllocG DeallocG ReallocG RGtop. *)
+(* Modified by a Theorem Labs lane (ReallocPrimary.RealSegA), 2026-10-30: from proofs/plugin-hostd/fuzz_reply/lib/A/RGthinS3.v (sha256 7d851e4e992d; internal record, reply A text, no relocation) with the statement edits preset A5 made to its copy (a Theorem Labs lane): the assert PB follows rl_stack's weakened bound (ASAN_CEIL <= a); module paths: lib.Reusable -> lib.A for AllocG DeallocG ReallocG RGtop. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fuzz_reply.asan: the thin segment S3 (RGtop.seg_ret): Deallocate's return into Reallocate -> realloc's return
    with a0 = the new block, over the machine run RGthinM2.m3 (the epilogues of Reallocate, asan_realloc and the
    interceptor; ported from cgif_rgb's YF78.v:437 succ_leaf, relocated to fuzz_reply's image). *)

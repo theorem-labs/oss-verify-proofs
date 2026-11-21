@@ -1,5 +1,6 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (the new arms of checked_table). *)
 (* [comment removed for export] *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import BvBase Fs State Monad Specs Run.
@@ -150,6 +151,26 @@ Proof.
 Qed.
 
 (* [comment removed for export] *)
+(* LPS 08b1429: checked_table gained this arm *)
+Lemma arm_99_frame : arm_frame_ok (mkSpecArm 99%Z (fun i => set_robust_list_spec (in_arg i 1) i)).
+Proof.
+  intros L i0 m o _ _ H _ _. cbn [sa_spec] in *.
+  assert (HL : lrel L (set_robust_list_spec (in_arg i0 1)) (set_robust_list_spec (in_arg i0 1))) by (lrel_go; try assumption).
+  exact (HL i0 m o H).
+Qed.
+Lemma arm_99_lpres : arm_lpres_ok (mkSpecArm 99%Z (fun i => set_robust_list_spec (in_arg i 1) i)).
+Proof.
+  unfold arm_lpres_ok. cbn [sa_spec]. intros i0 m x m' evs H.
+  assert (HP : lpres (set_robust_list_spec (in_arg i0 1))) by (lpres_go).
+  exact (HP i0 m x m' evs H).
+Qed.
+Lemma arm_99_inv : arm_inv_ok (mkSpecArm 99%Z (fun i => set_robust_list_spec (in_arg i 1) i)).
+Proof.
+  unfold arm_inv_ok. cbn [sa_spec]. intros i0 m x m' evs H HI.
+  assert (HV : vpres (set_robust_list_spec (in_arg i0 1))) by (first [ solve [vpres_go] | vpres_brute ]).
+  exact (vpres_inv _ HV i0 m x m' evs H HI).
+Qed.
+
 Lemma arm_113_frame : arm_frame_ok (mkSpecArm 113%Z (fun i => clock_gettime_spec (clockid32 (in_arg i 0)) (in_arg i 1) i)).
 Proof.
   intros L i0 m o _ _ H _ _. cbn [sa_spec] in *.
@@ -166,6 +187,26 @@ Lemma arm_113_inv : arm_inv_ok (mkSpecArm 113%Z (fun i => clock_gettime_spec (cl
 Proof.
   unfold arm_inv_ok. cbn [sa_spec]. intros i0 m x m' evs H HI.
   assert (HV : vpres (clock_gettime_spec (clockid32 (in_arg i0 0)) (in_arg i0 1))) by (first [ solve [vpres_go] | vpres_brute ]).
+  exact (vpres_inv _ HV i0 m x m' evs H HI).
+Qed.
+
+(* LPS 08b1429: checked_table gained this arm *)
+Lemma arm_114_frame : arm_frame_ok (mkSpecArm 114%Z (fun i => clock_getres_spec (clockid32 (in_arg i 0)) (in_arg i 1) i)).
+Proof.
+  intros L i0 m o _ _ H _ _. cbn [sa_spec] in *.
+  assert (HL : lrel L (clock_getres_spec (clockid32 (in_arg i0 0)) (in_arg i0 1)) (clock_getres_spec (clockid32 (in_arg i0 0)) (in_arg i0 1))) by (lrel_go; try assumption).
+  exact (HL i0 m o H).
+Qed.
+Lemma arm_114_lpres : arm_lpres_ok (mkSpecArm 114%Z (fun i => clock_getres_spec (clockid32 (in_arg i 0)) (in_arg i 1) i)).
+Proof.
+  unfold arm_lpres_ok. cbn [sa_spec]. intros i0 m x m' evs H.
+  assert (HP : lpres (clock_getres_spec (clockid32 (in_arg i0 0)) (in_arg i0 1))) by (lpres_go).
+  exact (HP i0 m x m' evs H).
+Qed.
+Lemma arm_114_inv : arm_inv_ok (mkSpecArm 114%Z (fun i => clock_getres_spec (clockid32 (in_arg i 0)) (in_arg i 1) i)).
+Proof.
+  unfold arm_inv_ok. cbn [sa_spec]. intros i0 m x m' evs H HI.
+  assert (HV : vpres (clock_getres_spec (clockid32 (in_arg i0 0)) (in_arg i0 1))) by (first [ solve [vpres_go] | vpres_brute ]).
   exact (vpres_inv _ HV i0 m x m' evs H HI).
 Qed.
 

@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-10: made from proofs/cgif/cgif_file_fuzzer/lib/A/AZ03.v (and its fuzz_grant form,
    a working branch's lib/A/AsanTop.v) for fuzz_scene: the plain side is fuzz_scene's released realization (built as its
    lib/AgreeFrame.v builds it for the ubsan agreement, at AgreeScene.ag_sil_shape), module paths changed. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (changed ASAN_T, asan_agrees_of_asan_side, asan_halts_of_asan_side). *)
 (* fuzz_scene's asan_agrees and asan_halts, from ONE ASan-side obligation, in the form of
    proofs/cgif/cgif_file_fuzzer/lib/A/AZ03.v:
    - ASAN_T: from every valid start, the ASan build realizes, with no cut (Reusable/YK18.v srealizes), the trace set
@@ -36,6 +37,7 @@ Definition ASAN_T : Prop :=
   forall sp brk mbase rnd inp,
   valid_sp sp -> valid_brk Asan.M.loaded_segments brk -> valid_mmap_base mbase ->
   entry_stack_fits sp (in_argv inp) (in_envp inp) -> valid_input inp ->
+  entry_launch_ok_va Sv48 (mkEntry sp brk mbase rnd) inp ->
   srealizes Asan.M.loaded_segments
     (init_config Asan.M.loaded_segments Asan.M.init_pc Asan.M.phdrs sp brk mbase rnd target_alloc_limit inp)
     (SPECX (LS:=scene_shape) inp).
@@ -48,12 +50,12 @@ Proof.
   destruct en_s as [sp brk mb rnd].
   pose proof (valid_input_va_size _ Hinp) as Hsv48.
   unfold Images.asan in Hent.
-  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent. destruct Hent as [Hsp' [Hbrk' [Hmb' Hfit']]].
+  rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hent. destruct Hent as [Hsp' [Hbrk' [Hmb' [Hfit' Hlau']]]].
   exact (shape_strong_equiv_efs_relim SanitizerBudgets.lim_source ShippedBudgets.lim_source SanitizerBudgets.lim_target
     Plain.M.loaded_segments Plain.M.init_pc Plain.M.phdrs sp brk mb rnd
     Asan.M.loaded_segments Asan.M.init_pc Asan.M.phdrs sp' brk' mb' rnd'
     (SPECX (LS:=scene_shape) inp) (SPECX (LS:=scene_shape) inp) inp
-    asan_lim_source_le SWB HP (TFIB sp' brk' mb' rnd' inp Hsp' Hbrk' Hmb' Hfit' Hinp) (t_eq_refl _)).
+    asan_lim_source_le SWB HP (TFIB sp' brk' mb' rnd' inp Hsp' Hbrk' Hmb' Hfit' Hinp Hlau') (t_eq_refl _)).
 Qed.
 
 (* The halting statement (Budgets.Standard.lim_source) from the same obligation, as cgif_file_fuzzer's
@@ -68,8 +70,8 @@ Proof.
     Asan.M.phdrs target_alloc_limit ShippedBudgets.lim_source lim_source_le_target (forced_only_cfg_least _)).
   intros sp brk mb rnd inp Hen Hinp. exists (SPECX (LS:=scene_shape) inp). split.
   - pose proof (valid_input_va_size _ Hinp) as Hsv48.
-    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb Hfit]]].
-    exact (TFIB sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hinp).
+    rewrite (valid_entry_sv48 _ _ _ Hsv48) in Hen. destruct Hen as [Hsp [Hbrk [Hmb [Hfit Hlau]]]].
+    exact (TFIB sp brk mb rnd inp Hsp Hbrk Hmb Hfit Hinp Hlau).
   - exact (SPECX_shape_ok inp).
 Qed.
 

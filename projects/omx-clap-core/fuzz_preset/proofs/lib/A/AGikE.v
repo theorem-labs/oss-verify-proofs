@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
-(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGikE.v (a working branch 29b7505aa27, file sha256 c03df2669bb1) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 f0d2e8d40c7e; pin d83eb25dbf0d); module paths changed; its 3 image addresses moved by code-verified function pairs (3 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py); no other numeral changed. *)
-(* Modified by Theorem Labs, 2026-10: relocated from the old pin A (pinned fuzz_preset.asan d83eb25dbf0d, twin f0d2e8d40c7e; this file at 3d44582d342f) to A' (#102 pin 1be0f53d96cb, twin bff8519bbe3e) by the relocation route of record, frozen alreloc ced0368250cb6538 (a working branch b85bfdee67c4), --assume-source, --resolve the internal file resolve-102.txt (0 lines name this file); 3 numerals changed. *)
+(* Modified by Theorem Labs, 2026-10: from proofs/cgif/cgif_file_fuzzer/lib/AGikE.v (a working branch, file sha256 c03df2669bb1) onto omx-clap-core/fuzz_preset's asan image (unstripped fuzz_preset.asan, sha256 f0d2e8d40c7e; pin d83eb25dbf0d); module paths changed; its 3 image addresses moved by code-verified function pairs (3 port_addr_check e55e1b52a8a0 MAPS predictions, each code one re-derived by the internal file funcpair.py; 0 code pcs the tool read as sizes, by the internal file funcpair.py); no other numeral changed. *)
+(* Modified by Theorem Labs, 2026-10: relocated from the old pin A (pinned fuzz_preset.asan d83eb25dbf0d, twin f0d2e8d40c7e; this file) to A' (#102 pin 1be0f53d96cb, twin bff8519bbe3e) by the relocation route of record, frozen alreloc ced0368250cb6538 (a working branch), --assume-source, --resolve the internal file resolve-102.txt (0 lines name this file); 3 numerals changed. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* The hit-g arm of AGik.v with errno kept: [ARM_HITG_e] is AGik.ARM_HITG with ErrnoG.alloc_leaf_e (AllocG.alloc_leaf
    plus errno's 4 bytes unchanged on the grant branch) in place of AllocG.alloc_leaf.
 
-   The hit path never writes errno.  at_RETw's raw frame MEQF (AGif0n.v:89-91) keeps every byte outside
+   The hit path never writes errno.  at_RETw's raw frame MEQF (AGif0n.v:90-92) keeps every byte outside
    ImgBaseAG.WIN, ag_dzone, the new block and its shadow; ErrnoApart puts errno outside each of them
    (errno_apart_win_g, the image fact errno_apart_dzone_ag, errno_apart_blk_g, errno_apart_shd_g).
    [errno_kept_at_RETw] states that once, over MEQF's own form.  ARM_HITG's MEQF is local to its proof and amreal has
@@ -41,7 +42,7 @@ Open Scope Z_scope.
 Section a. Context {fx : YK11.FPState} {rc : YM05.RunCeil}.
 Local Open Scope am_scope.
 
-(* errno is kept by a memory that equals [mem] outside at_RETw's raw frame zones (AGif0n.v:89-91, the clause in the
+(* errno is kept by a memory that equals [mem] outside at_RETw's raw frame zones (AGif0n.v:90-92, the clause in the
    form at_RETw states it): ImgBaseAG.WIN, ag_dzone, the new block [Kv + RZ kz, + n) and its shadow. *)
 Lemma errno_kept_at_RETw :
 ErrnoApart.errno_in_img (IM := AImg_A) -> ErrnoApart.errno_apart_shadow_ag (AG := AGImg_A) ->
@@ -80,7 +81,7 @@ Variable dpost : Z -> alayout -> astate -> world tfibsegs -> list Z -> Z -> (wor
 Variables (mtag stag : Z).
 Hypothesis IF : AIface B U mt ARX AOX rpre nmax lmax lpost dpost mtag stag.
 Hypothesis TS : TfibSyms B.
-(* copy of AGik.v:55 *)
+(* copy of AGik.v:56 *)
 Local Ltac bvne := first [cbn; lia | vm_compute; congruence | intros X; vm_compute in X; discriminate X].
 (* can_fill of the caller's call site: 1 (malloc, realloc) or 0 (calloc). *)
 Variable cf : Z.
@@ -95,7 +96,7 @@ alloc_pre tfibsegs B U ARX rpre nmax lmax 8 1 cf inst so bp ly S W regs mem md n
 amreal tfibsegs (mt n tr S) W (cfg_at tfibsegs 0x325b8 regs mem md)
 (ErrnoG.alloc_leaf_e tfibsegs B mt ARX AOX lpost TFIB_OOM inst ly S W regs mem md n tr).
 Proof.
-(* copy of AGik.v:92-277, + errno *)
+(* copy of AGik.v:93-278, + errno *)
 intros inst so bp ly S W regs mem md n tr l off PRE Nrange0 Hinited Hcache.
 destruct IF as [Finst Fview Fshape Fdepot Fdaok Fpost Fowned Funinit].
 destruct PRE as (HARX & HRP & Hra & Hra4096 & Hal & Hlo & Hbot & Hhi & Hpres0 & Hgp & Htp & Hr10 & Hr11 & Hr12 & Hr13 & Hr14 & Hr15 &

@@ -1,6 +1,7 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
+(* Modified by Theorem Labs, 2026-11: ported to LPS 727298f3 (resize_grow_long states the channel reader and the vDSO reservation inclusion). *)
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require BvWfKernel.
 From OSSVerify.Proofs.glaze.binary_reflection.lib Require WdZS.
 (* [comment removed for export] *)
@@ -138,6 +139,7 @@ Theorem resize_grow_long : forall stk bc cc, (0 <= stk)%Z ->
     blk_ok (bv_unsigned d) (cap + 1) ->
     (forall a : word, (bv_unsigned d <= bv_unsigned a < bv_unsigned d + cap + 1)%Z -> M a <> None /\ store_ok PSEGS M a 1 = true) ->
     (B + mcost (galloc n cap) <= bc)%Z -> (C + MCNT <= cc)%Z ->
+    incl (vdso_reserved (m_kernel mdl) (vdso_top (m_vmmaps mdl))) (vm_reserved (m_vmmaps mdl)) ->
     (forall fx' R' M' mdl' (p : word),
         FXOK fx' ->
         (forall r, In r callee_saved_regs -> getr R' (Z_to_bv 5 r) = getr R (Z_to_bv 5 r)) ->
@@ -156,12 +158,14 @@ Theorem resize_grow_long : forall stk bc cc, (0 <= stk)%Z ->
         AINV ((bv_unsigned p, galloc n cap) :: L1 ++ L2)
              (Z.max 0 (B + mcost (galloc n cap) - mcost (cap + 1))) (Z.max 0 (C + MCNT - MCNT)) M' mdl' ->
         m_halted mdl' = None -> m_vm_lazy mdl' = [] -> m_vm_materialized mdl' = [] -> m_fs mdl' = m_fs mdl -> m_fds mdl' = m_fds mdl ->
+        m_channel_reader mdl' = m_channel_reader mdl ->
+        incl (vdso_reserved (m_kernel mdl') (vdso_top (m_vmmaps mdl'))) (vm_reserved (m_vmmaps mdl')) ->
         RZ (mkCfg (mkstF fx' R' (Z_to_bv 64 ret) M' (seg_rom PSEGS)) mdl') T) ->
     RZ (mkCfg (mkstF fx R (Z_to_bv 64 0x57b68) M (seg_rom PSEGS)) mdl) T.
 Proof using img_ok priv_img AINV_app RZ_msteps.
   intros stk bc cc Hstk MAL FR fx R M mdl L1 L2 B C ret sp obj d w0 cw cap s n T
          Hh Hl Hm HFX HA HT0 R1 Hret Hrete R10 R11 R12 R2 Hsp16 Hceil R4 Hscr Hobjsp Hobj STO RD8 Hw0 Hcap8 Hcap23 RDs RDd
-         Hs Hn HnN HcN (Hdlo & Hdhi & Hdimg) Hblk Hb Hc K.
+         Hs Hn HnN HcN (Hdlo & Hdhi & Hdimg) Hblk Hb Hc HVDSO K.
   pose proof (@GlzConst.RunCeil.ceil_rng RC) as CR. pose proof img_ok as IMG. unfold GlzConst.PTRLO in Hdlo.
   set (Lc := L1 ++ (bv_unsigned d, cap + 1) :: L2) in *.
   set (spw := getr R (Z_to_bv 5 2)) in *. subst sp.
@@ -244,10 +248,10 @@ Proof using img_ok priv_img AINV_app RZ_msteps.
     split; [replace (bv_unsigned spw - 80)%Z with (bv_unsigned spw + (-5) * 16)%Z by lia; rewrite Z.mod_add by lia; exact Hsp16|].
     split; [lia|]. split; [exact D4|].
     split; [intros a Ha; eapply store_ok_mono; [exact M1grows|]; apply Hscr; lia|].
-    split; [exact Hb | exact Hc].
+    split; [exact Hb |]. split; [exact Hc | exact HVDSO].
   - exact HT0.
   - (* [comment removed for export] *)
-    intros fx2 R2x M2 mdl2 p (HFX2 & KEPT2 & P10 & Pal & (Plo & Phi & Pimg) & Pdisj & Pblk & FR2 & SCR2 & HA2 & Hh2 & Hl2 & Hm2 & Hfs2 & Hfds2).
+    intros fx2 R2x M2 mdl2 p (HFX2 & KEPT2 & P10 & Pal & (Plo & Phi & Pimg) & Pdisj & Pblk & FR2 & SCR2 & HA2 & Hh2 & Hl2 & Hm2 & Hfs2 & Hfds2 & Hrdr2 & Hvdso2).
     pose proof (u64_range p) as Hpr. unfold NMAX in Pblk. unfold GlzConst.PTRLO in Plo.
     assert (InD : In (bv_unsigned d, (cap + 1)%Z) Lc) by (subst Lc; apply in_app_iff; right; left; reflexivity).
     (* [comment removed for export] *)
@@ -338,8 +342,9 @@ Proof using img_ok priv_img AINV_app RZ_msteps.
     + exact G4.
     + intros a Ha. eapply store_ok_cell; [| apply SCR2; exact Ha].
       destruct (cell_kept_or_not M2 M3 a) as [E|NE]; [exact E|]. pose proof (M3p a NE). lia.
+    + exact Hvdso2.
     + (* [comment removed for export] *)
-      intros fx4 R4x M4 mdl4 HFX4 KEPT4 FR4 SCR4 HA4 Hh4 Hl4 Hm4 Hfs4 Hfds4.
+      intros fx4 R4x M4 mdl4 HFX4 KEPT4 FR4 SCR4 HA4 Hh4 Hl4 Hm4 Hfs4 Hfds4 Hrdr4 Hvdso4.
       assert (K4b : forall x : bv 5, In x [2; 3; 4; 8; 9; 18; 19; 20; 21; 22; 23; 24; 25; 26; 27]%bv -> getr R4x x = getr rG x)
         by (exact (zkept_bv rG R4x KEPT4)).
       (* [comment removed for export] *)
@@ -538,5 +543,7 @@ Proof using img_ok priv_img AINV_app RZ_msteps.
       * exact Hm4.
       * rewrite Hfs4. exact Hfs2.
       * rewrite Hfds4. exact Hfds2.
+      * rewrite Hrdr4. exact Hrdr2.
+      * exact Hvdso4.
 Qed.
 End GROW.

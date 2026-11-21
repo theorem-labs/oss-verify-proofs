@@ -1,6 +1,6 @@
 (* The per-class side of the allocator calls of fuzz_ctrl LLVMFuzzerTestOneInput (asan-ubsan, image B): ONE wrapper
    per allocator, so that a segment proof never takes the class machinery apart itself. The image-B twin of
-   lib/A/Prog/Seg/Tac_cls.v (a Theorem Labs lane, a working branch 0b6b7fff89f): the same statements and proofs with B's names.
+   lib/A/Prog/Seg/Tac_cls.v (a Theorem Labs lane, a working branch): the same statements and proofs with B's names.
 
    rule 24: no function proved here; these are the class premises of the allocator contracts.
 
@@ -17,7 +17,7 @@
    BC_MAX c is K_FREEARR_OFF minus the other three terms (ClassConsDef.v).
 
    in_class_a_size, in_class_not_0_5_31 and ctrl_req_slot_le are carried word for word from a Theorem Labs lane's
-   CtrlClassLive.v (not in this delivery) (a working branch 61aba11640, all Qed there), as image A carries them;
+   CtrlClassLive.v (not in this delivery) (a working branch, all Qed there), as image A carries them;
    BC_ctrl is SlotInv.v's (the same body). no_request_in_classes_0_5_31 is lib/B/W6/QSlot.v's (image A's text).
 
    Image B's allocator set (lib/B/Contract.v ASYMS): malloc wrapper 0x534b8 and free wrapper 0x534b4 only (calloc and

@@ -3,13 +3,13 @@
 (* Modified by Theorem Labs, 2026-10: the walk of reac_box_catalogue on fuzz_segconf.asan-ubsan (image B, pin sha256
    c3796c0b38f3, twin 80e82127e8ca; entry 0x8a8a0, 84 bytes, 21 instructions, a 16-byte frame, no side-stack
    frame): reac_box_catalogue_contract of lib/B/Prog/reac_box_catalogue_c.v (image B's copy of the image-A owner's FINAL
-   text at 6f783602b5e3) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
+   text) at image B's numbers, in plugin-hostd/fuzz_command's lib/A/Prog form (afn_pre at the
    entry, SRr of apost_base at the return, over `Context {PI : PAImg seg_listing}` of image B's listing,
    lib/B/Prog/SegPa.v).
-   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane, commit
-   434ade288123, both arms): the same entry seeds, token runs and return steps over image B's listing modules and
+   ADAPTATION (relocation + one trap) of lib/A/Prog/reac_box_catalogueA.v (the image-A m_file-family lane,
+    both arms): the same entry seeds, token runs and return steps over image B's listing modules and
    B's kit copies. The UBSan alignment check is read from proofs/libreac/fuzz_identity/lib/B/Prog/reac_box_catalogue.v
-   at origin/ossv/recipes 3abc3740de97 (the same image-B code but 4 pc-relative words; caller-journal form, not
+   (the same image-B code but 4 pc-relative words; caller-journal form, not
    copied), whose token run decides it the same way.
    Image B's code differs from image A's by two instructions: `andi a1,a0,7` (0x8a8ac) and `bnez a1,0x8a8ec`
    (0x8a8b0) to `unimp` (0x8a8ec), the UBSan alignment check of the 8-byte store through c.
@@ -38,14 +38,15 @@
    by the lemmas STK_reac_box_catalogue_B (the value 16) and catA_B (listing object 77 of B's seg_objs). *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/B/Prog/reac_box_catalogue.v, with its module paths and module names changed; 199 of its 241 lines of code are new or changed and 411 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-pw/fuzz_segconf/lib/A/Prog/pf_a10b_b2.v, with its module paths and module names changed; 443 of its 542 lines of code are new or changed and 142 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* reac-pw/fuzz_segconf, image B (fuzz_segconf.asan-ubsan, pin c3796c0b38f3, twin 80e82127e8ca): the helper lemmas of
    piece PB10_C of segment B10b of reac_segconf_parse_file's walk (lib/B/Prog/pf_seg_B10b_k.v; the five bcmp calls
    0x888e4 .. 0x8895c, INTENT -> ROLEV / BAD). No instruction is walked here. A B10b sub-lane of
    the image-B G3 walk owner, 2026-10-30. proves no function (kind: segment lemma of reac_segconf_parse_file's walk, helpers of
    piece PB10_C of segment B10b).
-   ADAPTED from a working branch's lib/A/Prog/pf_a10b_b2.v (a sub-lane of a B10b sub-lane, 861a42d8f0c4: the
+   ADAPTED from a working branch's lib/A/Prog/pf_a10b_b2.v (a sub-lane of a B10b sub-lane: the
    cut's facts across a bcmp call, the premises of aj_bcmp_at at a role-word call) and from the B10b segment lane's image-B
-   JOIN piece lib/B/Prog/pf_seg_B10b_j.v (961c19ce3f65: b10j_geo, the keep lemmas, the pf_fi form), re-derived on
+   JOIN piece lib/B/Prog/pf_seg_B10b_j.v (b10j_geo, the keep lemmas, the pf_fi form), re-derived on
    image B's frame: B's real frame is 352 bytes (s1 in [sp0 - 368, sp0 - 352]), STK 12832, pf_fi's registers
    sp / gp / tp / s0 / s1 / s4, c in slot 0xc8, cur in slot 0xc0, val in slot 0x70, low = F + 0x280 in s7.
    What the file gives:

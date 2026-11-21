@@ -1,11 +1,12 @@
 (* Copyright 2026 Anthropic PBC *)
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Copyright 2026 Theorem Labs *)
-(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/U/Prog/LLVMFuzzerTestOneInput_cgt.v
-   at bc49657c087aa7d6ab0af1ffb2cb67fa08b15de1; module path, the name egress_slot_cg_frame, LLVM_K from check_inject, and
+(* Modified by Theorem Labs: ported from reac-repacer/fuzz_uci proofs/reac-repacer/fuzz_uci/lib/U/Prog/LLVMFuzzerTestOneInput_cgt.v;
+   module path, the name egress_slot_cg_frame, LLVM_K from check_inject, and
    Section L's callees those of this unit's lib/U/Prog/LLVMFuzzerTestOneInput_link.v. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/reac-repacer/fuzz_egress/lib/U/Prog/LLVMFuzzerTestOneInput_cgt.v, with its module paths and module names changed; 10 of its 51 lines of code are new or changed and 45 lines of the source are left out. *)
-(* ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/Prog/LLVMFuzzerTestOneInput_cgt.v at bf7779f81ed764787b77895d2f5c0db2627f33f3 for libdiginet/fuzz_frame; llvm_cg_holds takes the crash-free SR contract of LLVMFuzzerTestOneInput (U/Prog/Statement.v slot_sr_cf_all) as a hypothesis in place of decode's LLVMFuzzerTestOneInput_holds_cf, the walk of the harness; the image links no calloc, so there is no calloc hypothesis; decode_slot_cg_frame is frame_slot_cg_frame and takes slot_sr_cf_all as its first hypothesis; the stack bound is LLVMFuzzerTestOneInput_c.v llvm_K_slot; module path OSSVerify.Proofs.libdiginet.fuzz_frame.lib. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* ported from libreac/fuzz_decode proofs/libreac/fuzz_decode/lib/U/Prog/LLVMFuzzerTestOneInput_cgt.v for libdiginet/fuzz_frame; llvm_cg_holds takes the crash-free SR contract of LLVMFuzzerTestOneInput (U/Prog/Statement.v slot_sr_cf_all) as a hypothesis in place of decode's LLVMFuzzerTestOneInput_holds_cf, the walk of the harness; the image links no calloc, so there is no calloc hypothesis; decode_slot_cg_frame is frame_slot_cg_frame and takes slot_sr_cf_all as its first hypothesis; the stack bound is LLVMFuzzerTestOneInput_c.v llvm_K_slot; module path OSSVerify.Proofs.libdiginet.fuzz_frame.lib. *)
 From Stdlib Require Import ZArith List Bool Lia.
 From LinuxProcessSemantics.LinuxProcessSem Require Import
 BvBase RiscvSemantics MemImageType StackLayout Fs State Monad Specs Run.

@@ -3,6 +3,7 @@
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/B/Prog/PItems_entry.v, with its module paths and module names changed; 2668 of its 2786 lines of code are new or changed and 1447 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_preset/lib/A/Prog/S7a_put.v, with its module paths and module names changed; 1917 of its 1994 lines of code are new or changed and 2709 lines of the source are left out. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/omx-clap-core/fuzz_state/lib/A/FSW_put_grow_tail.v, with its module paths, module names and numbers changed; 9 of its 316 lines of code are new or changed and 1687 lines of the source are left out. *)
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
 (* fs WRITER walk, image B (fs.asan-ubsan): put's GROW arm, second half, the piece pgt_refused: fuzz_realloc answered
    NULL (a0 = 0), put stores 1 into o->failed and returns; its post is put_spec's fpostU with o's failed = 1.
    B MEASUREMENTS (integrator a Theorem Labs lane, token engine on B, 2026-10-29T09:2xZ): from lib/B/FSW_put_grow_tail.v
@@ -11,9 +12,9 @@
    shadow check of o + 24 at 0x8466c / 0x84670 (report site 0x846b4) through pgt_SH1, stores 1 (4 bytes) at o + 24,
    restores the frame and stops at the ret 542312 = 0x84668 (A: 541460 = 0x84314), SR_jalr (SOff 37 0), sh_obls = [];
    final regs ra = SOff 37 0, sp = SOff 2 112, s0 = SOff 38 0, s1 = SOff 39 0, a0 = SLit 1, s2 .. s11 = SOff 40 .. 49 0.
-   TAKEN FROM: lib/A/FSW_put_grow_tail.v lines 1367-1594 (pgt_refused) at a working branch 860b2fb1188,
-   with the resume pc 541288 -> 542080 and the ret 541460 -> 542312; B kit: lib/B/FSW_K.v:1450 fsw_aj_run_tokU, :691
-   fsw_preserved, :109 fsw_apresent_unpoison, :123 fsw_sp, lib/B/FSW_ret.v:162 fsw_retU, lib/Reusable/YCbm.v:239
+   TAKEN FROM: lib/A/FSW_put_grow_tail.v lines 1368-1595 (pgt_refused) at a working branch,
+   with the resume pc 541288 -> 542080 and the ret 541460 -> 542312; B kit: lib/B/FSW_K.v:1451 fsw_aj_run_tokU, :691
+   fsw_preserved, :109 fsw_apresent_unpoison, :123 fsw_sp, lib/B/FSW_ret.v:163 fsw_retU, lib/Reusable/YCbm.v:239
    srr_branch_tok, lib/Reusable/YCbq.v:2189 awr_ok_cons_stack_off, :2176 awr_ok_cons_ro, :2715 shent_ok_of_range,
    lib/A/FSupoisonStack.v:89 fsw_ARU_stack_ra.
    rule 24: proves no function (kind: segment lemma). *)
@@ -50,7 +51,7 @@ Variable B : asyms.
 Hypothesis HSS : FsShadowSyms B.
 Hypothesis RT_memcpy : FSupoisonU.aintrin_realizesU tfibsegs B OCpy PC_memcpy.
 Hypothesis IMG : fs_img_facts tfibsegs B.
-(* THE CALLEE: fuzz_realloc's ASan contract, a statement only (lib/B/FSH_Fn_alloc.v, by path from dda8331bd25:
+(* THE CALLEE: fuzz_realloc's ASan contract, a statement only (lib/B/FSH_Fn_alloc.v, by path:
    CTX-free with its `cnt <> fail ->` room guards), discharged at composition. *)
 Hypothesis HREALLOC : fuzz_realloc_spec tfibsegs B.
 

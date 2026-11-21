@@ -2,8 +2,9 @@
 (* SPDX-License-Identifier: Apache-2.0 OR MIT *)
 (* Modified by Theorem Labs, 2026-10: ported to the binaries of release 2026.10.0 and LPS 2afba80c; the theorem statements are restated in the form this release states them. *)
 (* Modified by Theorem Labs, 2026-11: made from proofs/jsoncons/fuzz_bigint/lib/L5TCopyS.v, with its module paths, module names and addresses changed; 687 of its 728 lines of code are new or changed and 207 lines of the source are left out. *)
-(* Footprint (_F) re-run of stretch S3 of reac_box_catalogue_match.v (source commit d69f7c708f6, proved on FACTS
-   ed6b6b7b0ab) by the same script over lib/Lib/StepF; image fuzz_ctrl v1.9.0 asan, ELF fuzz_ctrl.debug sha256
+(* Modified by Theorem Labs, 2026-11: internal commit ids in comments replaced by public commits or removed. *)
+(* Footprint (_F) re-run of stretch S3 of reac_box_catalogue_match.v (source, proved on FACTS)
+   by the same script over lib/Lib/StepF; image fuzz_ctrl v1.9.0 asan, ELF fuzz_ctrl.debug sha256
    78efaeda1de51f8cb9208f86af7467cc8cb84e10c53295e7b6c3dce28ddcbebd; route (a) of 22:20Z; for the cgif-form walk
    C_reac_box_catalogue_match.v only.
 
@@ -58,7 +59,7 @@ From OSSVerify.Proofs.libreac.fuzz_ctrl.lib.Lib Require Import ExecF StepF.
 Import ListNotations.
 Open Scope Z_scope.
 (* The store hook the scripts below use (StepF's store_done calls it): also transport rd_mono across a store. Text of
-   lib/A/Prog/MemMono.v (at head lib/A/Prog/MemMono.v:207-217; from a working branch 8bac67328ab), Local here. *)
+   lib/A/Prog/MemMono.v (at head lib/A/Prog/MemMono.v:207-217; from a working branch), Local here. *)
 Local Ltac footprint_after_store segs m a bs ::=
   repeat match goal with
   | MU : munch ?Wq ?mq m |- _ =>
